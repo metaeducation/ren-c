@@ -73,36 +73,26 @@ emit-include-params-macro: procedure [
     paramlist [block!] "paramlist of the native"
     /ext ext-name
 ][
-    ; start emitting what will be a multi line macro (backslash as last
-    ; character on line is how macros span multiple lines in C).
-    ;
-    e/emit-line [
-        {#define} space either ext [unspaced [ext-name "_"]][""] "INCLUDE_PARAMS_OF_" (uppercase to-c-name word)
-        space "\"
-    ]
-
-    ; Collect the argument and refinements, converted to their "C names"
-    ; (so dashes become underscores, * becomes _P, etc.)
-    ;
     n: 1
-    for-each item paramlist [
-        if all [any-word? item | not set-word? item] [
-            param-name: to-c-name to-word item
+    items: collect [
+        for-each item paramlist [
+            if any [not any-word? item | set-word? item] [continue]
 
-            e/emit-line/indent [
-                either refinement? item ["REFINE"] ["PARAM"]
-                    "(" n "," space param-name ");" space "\"
+            param-name: spelling-of item
+            either refinement? item [
+                keep cscape/with {REFINE($<n>, ${param-name})} [n param-name]
+            ][
+                keep cscape/with {PARAM($<n>, ${param-name})} [n param-name]
             ]
             n: n + 1
         ]
     ]
 
-    comment [
-        ; Get rid of trailing \ for multi-line macro continuation.
-        e/unemit newline
-        e/unemit #"\"
-        e/emit newline
-    ]
-
-    e/emit-line [spaced-tab "Enter_Native(frame_);"]
+    prefix: either ext [unspaced [ext-name "_"]] [""]
+    e/emit [prefix word items] {
+        #define $<PREFIX>INCLUDE_PARAMS_OF_${WORD} \
+            $[Items]; \
+            Enter_Native(frame_);
+    }
+    e/emit newline
 ]

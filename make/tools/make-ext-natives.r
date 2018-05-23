@@ -249,24 +249,33 @@ e2/emit {
     
     #if !defined(MODULE_INCLUDE_DECLARATION_ONLY)
     
-    #define EXT_NUM_NATIVES_${MOD} $(num-native)
-    #define EXT_NAT_COMPRESSED_SIZE_${MOD} $(length-of data)
+    #define EXT_NUM_NATIVES_${MOD} $<num-native>
+    #define EXT_NAT_COMPRESSED_SIZE_${MOD} $<length-of data>
     
     const REBYTE Ext_Native_Specs_${Mod}[EXT_NAT_COMPRESSED_SIZE_${MOD}] = {
-        $(Binary-To-C Compressed)
+        $<Binary-To-C Compressed>
     };
 }
 
-either num-native > 0 [
-    e2/emit ["REBNAT Ext_Native_C_Funcs_${Mod}[EXT_NUM_NATIVES_${MOD}] = {"]
-    for-each item native-list [
-        if set-word? item [
-            e2/emit-item ["N_" u-m-name "_" to word! item]
+either num-native = 0 [ ;-- C++ doesn't support 0-length arrays
+    e2/emit {
+        REBNAT *Ext_Native_C_Funcs_${Mod} = NULL;
+    }
+][
+    names: collect [
+        for-each item native-list [
+            if set-word? item [
+                item: to word! item
+                keep cscape/with {N_${MOD}_${Item}} 'item
+            ]
         ]
     ]
-    e2/emit-end
-][
-    e2/emit ["REBNAT *Ext_Native_C_Funcs_${Mod} = NULL;"]
+
+    e2/emit {
+        REBNAT Ext_Native_C_Funcs_${Mod}[EXT_NUM_NATIVES_${MOD}] = {
+            $(Names),
+        };
+    }
 ]
 
 e2/emit {
@@ -308,7 +317,7 @@ e1/emit {
     ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
     */
 }
-e1/emit-line []
+e1/emit newline
 
 for-next native-list [
     if tail? next native-list [break]
@@ -337,7 +346,7 @@ e1/emit {
     #define REBNATIVE(n) \
         REB_R N_${MOD}_##n(REBFRM *frame_)
 }
-e1/emit-line []
+e1/emit newline
 
 
 e1/emit {
@@ -349,26 +358,36 @@ e1/emit {
     ** in an array that was Alloc_Value()'d...and rebRelease()'d on unload.
     */
 
-    #define NUM_EXT_${MOD}_WORDS $(length-of word-list)
+    #define NUM_EXT_${MOD}_WORDS $<length-of word-list>
 }
-e1/emit-line []
+e1/emit newline
 
 either empty? word-list [
-    e1/emit ["#define INIT_${MOD}_WORDS"]
+    e1/emit {
+        #define INIT_${MOD}_WORDS
+    }
 ][
-    e1/emit ["static const char* Ext_Words_${Mod}[NUM_EXT_${MOD}_WORDS] = {"]
-    for-next word-list [
-        e1/emit-line/indent [ {"} to text! word-list/1 {",} ]
+    words1: collect [
+        for-next word-list [
+            keep unspaced [{"} to text! word-list/1 {"}]
+        ]
     ]
-    e1/emit-end
 
-    e1/emit ["static REBSTR* Ext_Canons_${Mod}[NUM_EXT_${MOD}_WORDS];"]
+    e1/emit {
+        static const char* Ext_Words_${Mod}[NUM_EXT_${MOD}_WORDS] = {
+            $(Words1),
+        };
+    }
+
+    e1/emit {
+        static REBSTR* Ext_Canons_${Mod}[NUM_EXT_${MOD}_WORDS];
+    }
 
     seq: 0
     for-next word-list [
-        e1/emit [
-            "#define ${MOD}_WORD_${WORD-LIST/1} Ext_Canons_${Mod}[$(seq)]"
-        ]
+        e1/emit {
+            #define ${MOD}_WORD_${WORD-LIST/1} Ext_Canons_${Mod}[$<seq>]
+        }
         seq: seq + 1
     ]
 
@@ -392,24 +411,24 @@ e1/emit {
 }
 
 if not empty? error-list [
-    e1/emit ["enum Ext_${Mod}_Errors {"]
-    error-collected: copy []
-    for-each [key val] error-list [
-        if not set-word? key [
-            fail ["key (" mold key ") must be a set-word!"]
-        ]
-        if find error-collected key [
-            fail ["Duplicate error key" (to word! key)]
-        ]
-        append error-collected key
-        e1/emit-item/upper [
-            {RE_EXT_ENUM_} u-m-name {_} to-c-name to word! key
+    errs: collect [
+        for-each [key val] error-list [
+            if not set-word? key [
+                fail ["key (" mold key ") must be a set-word!"]
+            ]
+            key: to word! key
+            keep cscape/with {RE_EXT_ENUM_${MOD}_${KEY}} [mod key]
         ]
     ]
-    e1/emit-end
+
+    e1/emit {
+        enum Ext_${Mod}_Errors {
+            $(Errs),
+        };
+    }
 ]
 
-e1/emit-line []
+e1/emit newline
 for-each [key val] error-list [
     key: to-word key
     e1/emit 'key {

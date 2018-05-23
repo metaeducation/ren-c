@@ -136,9 +136,7 @@ REBOL [
 
 [name       class       path    make    mold     typesets]
 
-; 0 is not a real data type.  It is reserved for internal purposes.
-
-0           0           -       -       -       -
+; Note: REB_0 is reserved for internal purposes and not a "type"
 
 ; There is only one "invokable" type in Ren-C, and it takes the name ACTION!
 ; instead of the name FUNCTION!: https://forum.rebol.info/t/596

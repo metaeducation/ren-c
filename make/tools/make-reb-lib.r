@@ -92,11 +92,11 @@ emit-proto: proc [proto] [
     fn.args: copy/part next pos.lparen back tail proto
 
     append lib-struct-fields unspaced [
-        fn.declarations "(*" fn.name.lower ")" pos.lparen ";"
+        fn.declarations "(*" fn.name.lower ")" pos.lparen
     ]
 
     append undecorated-prototypes unspaced [
-        "RL_API" space proto ";"
+        "EMSCRIPTEN_KEEPALIVE RL_API" space proto
     ]
 
     ; It's not possible to make a function pointer in a struct carry the no
@@ -142,33 +142,33 @@ emit-proto: proc [proto] [
             replace inline-args "vaptr" "&va"
 
             append direct-call-macros cscape {
-                ATTRIBUTE_NO_RETURN inline static $(Inline-Proto) {
+                ATTRIBUTE_NO_RETURN inline static $<Inline-Proto> {
                     va_list va;
                     va_start(va, ${Next-To-Last-Arg});
-                    $(Proto-Parser/Proto.Id)($(Inline-Args));
+                    $<Proto-Parser/Proto.Id>($<Inline-Args>);
                     DEAD_END;
                 }
             }
 
             append struct-call-macros cscape {
-                ATTRIBUTE_NO_RETURN inline static $(Inline-Proto) {
+                ATTRIBUTE_NO_RETURN inline static $<Inline-Proto> {
                     va_list va;
                     va_start(va, ${Next-To-Last-Arg});
-                    RL->${fn.name.lower}($(Inline-Args));
+                    RL->${fn.name.lower}($<Inline-Args>);
                     DEAD_END;
                 }
             }
         ][
             append direct-call-macros cscape {
-                ATTRIBUTE_NO_RETURN inline static $(Inline-Proto) {
-                    $(Proto-Parser/Proto.Id)($(Inline-Args));
+                ATTRIBUTE_NO_RETURN inline static $<Inline-Proto> {
+                    $<Proto-Parser/Proto.Id>($<Inline-Args>);
                     DEAD_END;
                 }
             }
 
             append struct-call-macros cscape {
-                ATTRIBUTE_NO_RETURN inline static $(Inline-Proto) {
-                    RL->${fn.name.lower}($(Inline-Args));
+                ATTRIBUTE_NO_RETURN inline static $<Inline-Proto> {
+                    RL->${fn.name.lower}($<Inline-Args>);
                     DEAD_END;
                 }
             }
@@ -176,17 +176,15 @@ emit-proto: proc [proto] [
     ][
         ;-- alias version without the RL_ on it to just call the RL_ version
         append direct-call-macros cscape {
-            #define $(Api-Name) $(Proto-Parser/Proto.Id)
+            #define $<Api-Name> $<Proto-Parser/Proto.Id>
         }
 
         append struct-call-macros cscape {
-            #define $(Api-Name) RL->${fn.name.lower}
+            #define $<Api-Name> RL->${fn.name.lower}
         }
     ]
 
-    append table-init-items unspaced [
-        fn.name ","
-    ]
+    append table-init-items fn.name
 
     append cwrap-items reduce [
         fn.declarations
@@ -202,6 +200,18 @@ process: func [file] [
     proto-parser/emit-proto: :emit-proto
     proto-parser/process data
 ]
+
+;-----------------------------------------------------------------------------
+;
+; Currently only two files are searched for RL_API entries.  This makes it
+; easier to track the order of the API routines and change them sparingly
+; (such as by adding new routines to the end of the list, so as not to break
+; binary compatibility with code built to the old ordered interface).
+
+src-dir: %../../src/core/
+
+process src-dir/a-lib.c
+process src-dir/f-extension.c ; !!! is there a reason to process this file?
 
 ;-----------------------------------------------------------------------------
 
@@ -229,43 +239,18 @@ e-lib/emit {
     /* !!! These constants are part of an old R3-Alpha versioning system
      * that hasn't been paid much attention to.  Keeping as a placeholder.
      */
-    #define RL_VER $(ver/1)
-    #define RL_REV $(ver/2)
-    #define RL_UPD $(ver/3)
-}
-
-;-----------------------------------------------------------------------------
-;
-; Currently only two files are searched for RL_API entries.  This makes it
-; easier to track the order of the API routines and change them sparingly
-; (such as by adding new routines to the end of the list, so as not to break
-; binary compatibility with code built to the old ordered interface).
-
-src-dir: %../../src/core/
-
-e-lib/emit {
+    #define RL_VER $<ver/1>
+    #define RL_REV $<ver/2>
+    #define RL_UPD $<ver/3>
 
     /*
      * Function entry points for reb-lib (used for MACROS below):
      */
-    typedef struct rebol_ext_api ^{
-}
+    typedef struct rebol_ext_api {
+        $[Lib-Struct-Fields];
+    } RL_LIB;
 
-process src-dir/a-lib.c
-process src-dir/f-extension.c ; !!! is there a reason to process this file?
-
-for-each field lib-struct-fields [
-    e-lib/emit-line/indent field
-]
-
-e-lib/emit {
-    ^} RL_LIB;
-}
-
-;-----------------------------------------------------------------------------
-
-e-lib/emit {
-    #ifdef REB_EXT // can't direct call into EXE, must go through interface
+    #ifdef REB_EXT /* can't direct call into EXE, must go through interface */
         /*
          * The macros below will require this base pointer:
          */
@@ -274,34 +259,22 @@ e-lib/emit {
         /*
          * Macros to access reb-lib functions (from non-linked extensions):
          */
-}
 
-for-each macro struct-call-macros [
-    e-lib/emit macro
-]
-
-e-lib/emit {
+        $[Struct-Call-Macros]
 
     #else /* ...calling Rebol as DLL, or code built into the EXE itself */
         /*
          * Undecorated prototypes, don't call with this name directly
          */
-}
-for-each proto undecorated-prototypes [
-    e-lib/emit-line/indent spaced ["EMSCRIPTEN_KEEPALIVE" proto]
-]
 
-e-lib/emit {
-    /*
-     * Use these macros for consistency with extension code naming
-     */
-}
+        $[Undecorated-Prototypes];
 
-for-each macro direct-call-macros [
-    e-lib/emit macro
-]
+        /*
+         * Use these macros for consistency with extension code naming
+         */
 
-e-lib/emit {
+        $[Direct-Call-Macros]
+
     #endif // REB_EXT
 
     /***********************************************************************
@@ -357,9 +330,11 @@ e-lib/write-emitted
 e-table: (make-emitter
     "REBOL Interface Table Singleton" output-dir/tmp-reb-lib-table.inc)
 
-e-table/emit-line "RL_LIB Ext_Lib = {"
-e-table/emit-line/indent table-init-items
-e-table/emit-line "};"
+e-table/emit {
+    RL_LIB Ext_Lib = {
+        $(Table-Init-Items),
+    };
+}
 
 e-table/write-emitted
 
@@ -407,9 +382,16 @@ for-each [result RL_name args] cwrap-items [
             ", "
         "]);"
     ]
-    e-cwrap/emit-line either find line "<" ;\
-        [spaced ["// Unknown type: <...> --" line]]
-        [line]
+    either find line "<" [
+        e-cwrap/emit {
+            // Unknown type: <...> -- $<Line>
+        }
+    ][
+        e-cwrap/emit {
+            $<Line>
+        }
+    ]
+
     if not (find/skip map-names rebName 2) [continue] 
     ;; emit JS variant
     js-name: map-names/:rebName
@@ -420,43 +402,46 @@ for-each [result RL_name args] cwrap-items [
         ") {var p = " rebName "(" args
         "); var s = Pointer_stringify(p); rebFree(p); return s};"
     ]
-    e-cwrap/emit-line either find line "<"
-        [spaced ["// Unknown type: <...> --" line]]
-        [line]
-]
-
-extra-js-defs: {
-rebRun = function() {
-    var argc = arguments.length;
-    var va = allocate(4 * (argc+1), '', ALLOC_STACK);
-    var a, i, l, p;
-    for (i=0; i<argc; i++) {
-        a = arguments[i];
-        switch (typeof a) {
-        case 'string':
-            l = lengthBytesUTF8(a) + 4;
-            l = l&~3
-            p = allocate(l, '', ALLOC_STACK);
-            stringToUTF8(a, p, l);
-            break;
-        case 'number':
-            p = a;
-            break;
-        default:
-            throw new Error("Invalid type!");
+    either find line "<" [
+        e-cwrap/emit {
+            // Unknown type: <...> -- $<Line>
         }
-        HEAP32[(va>>2)+i] = p;
-    }
-    HEAP32[(va>>2)+argc] = _RL_rebEnd();
-    return _RL_rebRun(HEAP32[va>>2], va+4);
-}
-
-rebForm = function(s) {
-    return rebSpellingOf(0, rebRun('form', s));
-}}
-
-for-each l split extra-js-defs newline [
-    e-cwrap/emit-line l
+    ][
+        e-cwrap/emit {
+            $<Line>
+        }
+    ]
 ]
+
+e-cwrap/emit {
+    rebRun = function() {
+        var argc = arguments.length;
+        var va = allocate(4 * (argc+1), '', ALLOC_STACK);
+        var a, i, l, p;
+        for (i=0; i < argc; i++) {
+            a = arguments[i];
+            switch (typeof a) {
+            case 'string':
+                l = lengthBytesUTF8(a) + 4;
+                l = l&~3
+                p = allocate(l, '', ALLOC_STACK);
+                stringToUTF8(a, p, l);
+                break;
+            case 'number':
+                p = a;
+                break;
+            default:
+                throw new Error("Invalid type!");
+            }
+            HEAP32[(va>>2)+i] = p;
+        }
+        HEAP32[(va>>2)+argc] = _RL_rebEnd();
+        return _RL_rebRun(HEAP32[va>>2], va+4);
+    }
+
+    rebForm = function(s) {
+        return rebSpellingOf(0, rebRun('form', s));
+    }
+}
 
 e-cwrap/write-emitted

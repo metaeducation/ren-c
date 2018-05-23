@@ -332,8 +332,3 @@ Command: [
 ;   ssl-error:          [{SSL Error: } :arg1]
     command-fail:       ["Command failed"]
 ]
-
-; If new category added, be sure to update RE_MAX in %make-boot.r
-; (currently RE_COMMAND_MAX because `Command: [...]` is the last category)
-
-; Note that INT32_MAX is hardcoded constant in %make-boot.r used for RE_USER

@@ -2,7 +2,7 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Common Code for Emitting Text Files"
     Rights: {
-        Copyright 2016-2017 Rebol Open Source Contributors
+        Copyright 2016-2018 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -33,24 +33,34 @@ REBOL [
 ]
 
 cscape: function [
-    {Escape Rebol expressions in templated C source, optionally changing case}
+    {Escape Rebol expressions in templated C source, returns new string}
 
-    return: "New TRIM-med string, ${...} TO-C-NAME, $(...) UNSPACED"
+    return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
         [text!]
     template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
         [text!]
     /with "Lookup var words in additional context (besides user context)"
-    context [blank! any-word! any-context!]
+    context [any-word! any-context! block!]
 ][
     string: trim/auto copy template
 
     list: unique/case collect [
         parse string [(col: 0) any [
-            "${" copy expr: to "}" (keep/only compose [(col) #cname (expr)])
-                |
-            "$(" copy expr: to ")" (keep/only compose [(col) #unspaced (expr)])
-                |
-            "$[" copy expr: to "]" (fail "$[...] not defined yet")
+            [
+                (dlm: _)
+
+                "${" copy expr: to "}" skip (mode: #cname)
+                    |
+                "$<" copy expr: to ">" skip (mode: #unspaced)
+                    |
+                "$[" copy expr: to "]" skip (mode: #delim)
+                copy dlm: to newline
+                    |
+                "$(" copy expr: to ")" skip (mode: #delim)
+                copy dlm: remove to newline
+            ] (
+                keep/only compose [(col) (mode) (expr) (dlm)]
+            )
                 |
             newline (col: 0)
                 |
@@ -62,19 +72,25 @@ cscape: function [
 
     substitutions: collect [
         for-each item list [
-            set [col: mode: expr:] item
+            set [col: mode: expr: dlm:] item
 
             any-upper: did find/case expr charset [#"A" - #"Z"]
             any-lower: did find/case expr charset [#"a" - #"z"]
             keep expr
 
             code: load/all expr
-            if with [bind code context]
+            if with [
+                context: compose [(context)] ;-- convert to block
+                for-each item context [
+                    bind code item
+                ]
+            ]
             sub: do code
 
             sub: switch/default mode [
                 #cname [to-c-name sub]
                 #unspaced [either block? sub [unspaced sub] [form sub]]
+                #delim [delimit sub unspaced [dlm newline]]
             ][
                 fail ["Invalid CSCAPE mode:" mode]
             ]
@@ -94,7 +110,9 @@ cscape: function [
     ]
 
     string: reword/case/escape string substitutions ["${" "}"]
+    string: reword/case/escape string substitutions ["$<" ">"]
     string: reword/case/escape string substitutions ["$(" ")"]
+    string: reword/case/escape string substitutions ["$[" "]"]
     return string
 ]
 
@@ -104,12 +122,12 @@ boot-version: load %../../src/boot/version.r
 make-emitter: function [
     {Create a buffered output text file emitter}
 
-    title [text!]
-        {Title to be placed in the comment header (header matches file type)}
-    file [file!]
-        {Filename to be emitted... .r/.reb/.c/.h/.inc files supported}
-    /temporary
-        {Add a DO-NOT-EDIT warning (automatic if file begins with 'tmp-')}
+    title "Title for the comment header (header matches file type)"
+        [text!]
+    file "Filename to be emitted... .r/.reb/.c/.h/.inc files supported"
+        [file!]
+    /temporary "DO-NOT-EDIT warning (automatic if file begins with 'tmp-')"
+
     <with>
     system ;-- The `System:` SET-WORD! below overrides the global for access
 ][
@@ -146,23 +164,20 @@ make-emitter: function [
             {Write data to the emitter using CSCAPE templating (see HELP)}
 
             :look [any-value! <...>]
-            data [text! char! block! <...>]
-                {If a BLOCK!, then it's output as a line, otherwise as-is}
+            data [text! char! <...>]
         ][
             context: ()
-            if lit-word? first look [
+            firstlook: first look
+            if any [
+                lit-word? :firstlook
+                block? :firstlook
+                any-context? :firstlook
+            ][
                 context: take look
             ]
 
             data: take data
             switch type-of data [
-                block! [
-                    if 1 <> length-of data [
-                        dump data
-                        fail "1-item BLOCK! to emit means newline, only"
-                    ]
-                    emit-line cscape/with first data :context
-                ]
                 text! [
                     adjoin buf-emit cscape/with data :context
                 ]
@@ -170,89 +185,6 @@ make-emitter: function [
                     adjoin buf-emit data
                 ]
             ]
-        ]
-
-
-        unemit: proc [
-            data [char!]
-        ][
-            if data != last buf-emit [
-                probe skip (tail-of buf-emit) -100
-                fail ["UNEMIT did not match" data "as the last piece of input"]
-            ]
-            assert [data = last buf-emit]
-            take/last buf-emit
-        ]
-
-
-        emit-line: proc [data /indent] [
-            if not any [tail? buf-emit | newline = last buf-emit] [
-                probe skip (tail-of buf-emit) -100
-                fail "EMIT-LINE should always start a new line"
-            ]
-            data: reduce data
-            if find data newline [
-                probe data
-                fail "Data passed to EMIT-LINE had embedded newlines"
-            ]
-            if parse data [thru space end] [
-                probe data
-                fail "Data passed to EMIT-LINE had trailing whitespace"
-            ]
-            if indent [adjoin buf-emit spaced-tab]
-            adjoin buf-emit data
-            adjoin buf-emit newline
-        ]
-
-
-        emit-lines: procedure [block [block!] /indent] [
-            for-each data block [
-                either indent [
-                    emit-line/indent data
-                ][
-                    emit-line data
-                ]
-            ]
-        ]
-
-        emit-item: procedure [
-            {Emits identifier and comma for enums and initializer lists}
-            name
-                {Converted using TO-C-NAME which joins BLOCK! and forms WORD!}
-            /upper
-                {Make name uppercase (-after- the TO-C-NAME conversion)}
-            /assign
-                {Give the item an assigned value}
-            num [integer!]
-        ][
-            name: to-c-name name
-            if upper [uppercase name]
-            either assign [
-                emit-line/indent [name space "=" space num ","]
-            ][
-                emit-line/indent [name ","]
-            ]
-
-            ; NOTE: standard C++ and C do not like commas on the last item in
-            ; lists, so they are removed with EMIT-END, by taking the last
-            ; comma out of the emit buffer.
-        ]
-
-
-        emit-annotation: procedure [
-            {Comment using "/**/" (chosen over "//" to cue code is generated)}
-            note [word! text! integer!]
-                {Note to add to the end of the last line emitted.}
-        ][
-            unemit newline
-            adjoin buf-emit [space "/*" space note space "*/" newline]
-        ]
-
-
-        emit-end: procedure [] [
-            remove find/last buf-emit #","
-            emit-line ["};"]
-            emit newline
         ]
 
 
@@ -296,10 +228,10 @@ make-emitter: function [
             **
             ************************************************************************
             **
-            **  Title: $(Mold Title)
-            **  Build: A$(Boot-Version/3)
-            **  File: $(Mold Stem)
-            **  Author: $(Mold By)
+            **  Title: $<Mold Title>
+            **  Build: A$<Boot-Version/3>
+            **  File: $<Mold Stem>
+            **  Author: $<Mold By>
             **  License: {
             **      Licensed under the Apache License, Version 2.0.
             **      See: http://www.apache.org/licenses/LICENSE-2.0

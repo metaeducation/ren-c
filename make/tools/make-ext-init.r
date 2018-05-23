@@ -58,11 +58,11 @@ write-c-file: procedure [
 
     e/emit 'r-file {
         /*
-         * Gzip compression of $(R-File)
-         * Originally $(length-of data) bytes
+         * Gzip compression of $<R-File>
+         * Originally $<length-of data> bytes
          */
-        static const REBYTE script_bytes[$(length-of compressed)] = {
-            $(Binary-To-C Compressed)
+        static const REBYTE script_bytes[$<length-of compressed>] = {
+            $<Binary-To-C Compressed>
         };
     }
 

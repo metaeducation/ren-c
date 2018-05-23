@@ -37,13 +37,19 @@ for-each ext extensions [
         DECLARE_EXT_QUIT(${Ext});
     }
 ]
-e/emit-line []
+e/emit newline
 
-e/emit ["static CFUNC *Boot_Extensions [] = {"]
-for-each ext extensions [
-    e/emit-line/indent ["cast(CFUNC *, EXT_INIT(" ext ")),"]
-    e/emit-line/indent ["cast(CFUNC *, EXT_QUIT(" ext ")),"]
+cfuncs: collect [
+    for-each ext extensions [
+        keep cscape/with {cast(CFUNC*, EXT_INIT(${Ext}))} 'ext
+        keep cscape/with {cast(CFUNC*, EXT_QUIT(${Ext}))} 'ext
+    ]
 ]
-e/emit-end
+
+e/emit {
+    static CFUNC *Boot_Extensions [] = {
+        $(CFuncs),
+    };
+}
 
 e/write-emitted

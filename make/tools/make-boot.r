@@ -133,137 +133,150 @@ build: context [features: [help-strings]]
 type-table: load %types.r
 
 e-dispatch: make-emitter "Dispatchers" core/tmp-dispatchers.c
-e-dispatch/emit newline
 
+tafs: collect [
+    for-each-record t type-table [
+        switch/default t/class [
+            '* [
+                keep cscape/with {/* $<T/Name> */ T_Unhooked} [t]
+            ]
+        ][
+            keep cscape/with {/* $<T/Name> */ T_$<Propercase-Of t/class>} [t]
+        ]
+    ]
+]
 
-e-dispatch/emit [{#include "sys-core.h"}]
-e-dispatch/emit newline
+pds: collect [
+    for-each-record t type-table [
+        switch/default t/path [
+            '- [keep cscape/with {/* $<T/Name> */ PD_Fail} [t]]
+            '+ [
+                proper: propercase-of t/class
+                keep cscape/with {/* $<T/Name> */ PD_$<Proper>} [proper t]
+            ]
+            '* [keep cscape/with {/* $<T/Name> */ PD_Unhooked} [t]]
+        ][
+            ; !!! Today's PORT! path dispatches through context even though
+            ; that isn't its technical "class" for responding to actions.
+            ;
+            proper: propercase-of t/path
+            keep cscape/with {/* $<T/Name> */ PD_$<Proper>} [proper t]
+        ]
+    ]
+]
 
+makes: collect [
+    for-each-record t type-table [
+        switch/default t/make [
+            '- [keep cscape/with {/* $<T/Name> */ MAKE_Fail} [t]]
+            '+ [
+                proper: propercase-of t/class
+                keep cscape/with {/* $<T/Name> */ MAKE_$<Proper>} [proper t]
+            ]
+            '* [keep cscape/with {/* $<T/Name> */ MAKE_Unhooked} [t]]
+        ][
+            fail "MAKE in %types.r should be, -, +, or *"
+        ]
+    ]
+]
+
+tos: collect [
+    for-each-record t type-table [
+        switch/default t/make [
+            '- [keep cscape/with {/* $<T/Name> */ TO_Fail} [t]]
+            '+ [
+                proper: propercase-of T/Class
+                keep cscape/with {/* $<T/Name> */ TO_$<Proper>} [proper t]
+            ]
+            '* [keep cscape/with {/* $T/Name> */ TO_Unhooked} [t]]
+        ][
+            fail "TO in %types.r should be -, +, or *"
+        ]
+    ]
+]
+
+mfs: collect [
+    for-each-record t type-table [
+        switch/default t/mold [
+            '- [keep cscape/with {/* $<T/Name> */ MF_Fail"} [t]]
+            '+ [
+                proper: propercase-of t/class
+                keep cscape/with {/* $<T/Name> */ MF_$<Proper>} [proper t]
+            ]
+            '* [keep cscape/with {/* $<T/Name> */ MF_Unhooked} [t]]
+        ][
+            ; ERROR! may be a context, but it has its own special forming
+            ; beyond the class (falls through to ANY-CONTEXT! for mold), and
+            ; BINARY! has a different handler than strings
+            ;
+            proper: propercase-of t/mold
+            keep cscape/with {/* $<T/Name> */ MF_$<Proper>} [proper t]
+        ]
+    ]
+]
+
+cts: collect [
+    for-each-record t type-table [
+        either t/class = '* [
+            keep cscape/with {/* $<T/Class> */ CT_Unhooked} [t]
+        ][
+            proper: Propercase-Of T/Class
+            keep cscape/with {/* $<T/Class> */ CT_$<Proper>} [proper t]
+        ]
+    ]
+]
 
 e-dispatch/emit {
+    #include "sys-core.h"
+
     /*
-    ** VALUE DISPATCHERS: e.g. for `append value x` or `select value y`
-    */
+     * VALUE DISPATCHERS: e.g. for `append value x` or `select value y`
+     */
+    REBTAF Value_Dispatch[REB_MAX] = {
+        NULL, /* REB_0 */
+        $(Tafs),
+    };
 
-    REBTAF Value_Dispatch[REB_MAX] = ^{
-}
-for-each-record t type-table [
-    switch/default t/class [
-        0 [e-dispatch/emit-item "NULL"] ;-- never dispatch on REB_0
-        '* [e-dispatch/emit-item "T_Unhooked"] ;-- extensions replace this
-    ][
-        e-dispatch/emit-item ["T_" propercase-of ensure word! t/class]
-    ]
-    e-dispatch/emit-annotation ensure [word! integer!] t/name
-]
-e-dispatch/emit-end
-
-
-e-dispatch/emit {
     /*
-    ** PATH DISPATCHERS: for `a/b`, `:a/b`, `a/b:`, `pick a b`, `poke a b`
-    */
+     * PATH DISPATCHERS: for `a/b`, `:a/b`, `a/b:`, `pick a b`, `poke a b`
+     */
+    REBPEF Path_Dispatch[REB_MAX] = {
+        NULL, /* REB_0 */
+        $(Pds),
+    };
 
-    REBPEF Path_Dispatch[REB_MAX] = ^{
-}
-for-each-record t type-table [
-    switch/default t/path [
-        '- [e-dispatch/emit-item "PD_Fail"]
-        '+ [e-dispatch/emit-item ["PD_" propercase-of ensure word! t/class]]
-        '* [e-dispatch/emit-item "PD_Unhooked"]
-    ][
-        ; !!! Today's PORT! path dispatches through context even though
-        ; that isn't its technical "class" for responding to actions.
-        ;
-        e-dispatch/emit-item ["PD_" propercase-of ensure word! t/path]
-    ]
-    e-dispatch/emit-annotation ensure [word! integer!] t/name
-]
-e-dispatch/emit-end
-
-
-e-dispatch/emit {
     /*
-    ** MAKE DISPATCHERS: for `make datatype def`
-    */
+     * MAKE DISPATCHERS: for `make datatype def`
+     */
+    MAKE_CFUNC Make_Dispatch[REB_MAX] = {
+        NULL, /* REB_0 */
+        $(Makes),
+    };
 
-    MAKE_CFUNC Make_Dispatch[REB_MAX] = ^{
-}
-for-each-record t type-table [
-    switch/default t/make [
-        '- [e-dispatch/emit-item "MAKE_Fail"]
-        '+ [e-dispatch/emit-item ["MAKE_" propercase-of ensure word! t/class]]
-        '* [e-dispatch/emit-item "MAKE_Unhooked"]
-    ][
-        fail "MAKE in %types.r should be, -, +, or *"
-    ]
-    e-dispatch/emit-annotation ensure [word! integer!] t/name
-]
-e-dispatch/emit-end
-
-
-e-dispatch/emit {
     /*
-    ** TO DISPATCHERS: for `to datatype value`
-    */
+     * TO DISPATCHERS: for `to datatype value`
+     */
+    TO_CFUNC To_Dispatch[REB_MAX] = {
+        NULL, /* REB_0 */
+        $(Tos),
+    };
 
-    TO_CFUNC To_Dispatch[REB_MAX] = ^{
-}
-for-each-record t type-table [
-    switch/default t/make [
-        '- [e-dispatch/emit-item "TO_Fail"]
-        '+ [e-dispatch/emit-item ["TO_" propercase-of ensure word! t/class]]
-        '* [e-dispatch/emit-item "TO_Unhooked"]
-    ][
-        fail "TO in %types.r should be -, +, or *"
-    ]
-    e-dispatch/emit-annotation ensure [word! integer!] t/name
-]
-e-dispatch/emit-end
-
-
-e-dispatch/emit {
     /*
-    ** MOLD DISPATCHERS: for `mold value`
-    */
+     * MOLD DISPATCHERS: for `mold value`
+     */
+    MOLD_CFUNC Mold_Or_Form_Dispatch[REB_MAX] = {
+        NULL, /* REB_0 */
+        $(Mfs),
+    };
 
-    MOLD_CFUNC Mold_Or_Form_Dispatch[REB_MAX] = ^{
-}
-for-each-record t type-table [
-    switch/default t/mold [
-        '- [e-dispatch/emit-item "MF_Fail"]
-        '+ [e-dispatch/emit-item ["MF_" propercase-of ensure word! t/class]]
-        '* [e-dispatch/emit-item "MF_Unhooked"]
-    ][
-        ; ERROR! may be a context, but it has its own special forming
-        ; beyond the class (falls through to ANY-CONTEXT! for mold), and
-        ; BINARY! has a different handler than strings
-        ;
-        e-dispatch/emit-item ["MF_" propercase-of ensure word! t/mold]
-    ]
-    e-dispatch/emit-annotation ensure [word! integer!] t/name
-]
-e-dispatch/emit-end
-
-
-e-dispatch/emit {
     /*
-    ** COMPARISON DISPATCHERS, to support GREATER?, EQUAL?, LESSER?...
-    */
-
-    REBCTF Compare_Types[REB_MAX] = ^{
+     * COMPARISON DISPATCHERS, to support GREATER?, EQUAL?, LESSER?...
+     */
+    REBCTF Compare_Types[REB_MAX] = {
+        NULL, /* REB_0 */
+        $(Cts),
+    };
 }
-for-each-record t type-table [
-    switch/default t/class [
-        0 [e-dispatch/emit-item "NULL"]
-        '* [e-dispatch/emit-item "CT_Unhooked"]
-    ][
-        e-dispatch/emit-item ["CT_" propercase-of ensure word! t/class]
-    ]
-    e-dispatch/emit-annotation ensure [word! integer!] t/name
-]
-e-dispatch/emit-end
-
 
 e-dispatch/write-emitted
 
@@ -277,66 +290,58 @@ e-dispatch/write-emitted
 
 e-types: make-emitter "Datatype Definitions" inc/reb-types.h
 
-
-e-types/emit {
-    /*
-    ** INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
-    **
-    ** Do not export these values via libRebol, as the numbers can change.
-    ** Their ordering is for supporting certain optimizations, such as being
-    ** able to quickly check if a type IS_BINDABLE().  When types are added,
-    ** or removed, the numbers must shuffle around to preserve invariants.
-    **
-    ** Note: REB_0 is reserved for internal purposes...0 is not a "type".
-    ** But to make it easier to build the dispatch tables (which must have
-    ** an entry for index 0) it appears in %types.r
-    */
-
-    enum Reb_Kind ^{
-}
-
-n: 0
-for-each-record t type-table [
-    either t/name = 0 [
-        e-types/emit-item/assign "REB_0" 0
-    ][
+n: 1
+rebs: collect [
+    for-each-record t type-table [
         ensure word! t/name
-        e-types/emit-item/upper ["REB_" t/name]
-        e-types/emit-annotation n
+        ensure word! t/class
+
+        keep cscape/with {REB_${T/NAME} = $<n>} [n t]
+        n: n + 1
     ]
-    n: n + 1
 ]
 
-e-types/emit-item/assign "REB_MAX" n
-e-types/emit-end
-
+e-types/emit {
+    /*
+     * INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
+     *
+     * Do not export these values via libRebol, as the numbers can change.
+     * Their ordering is for supporting certain optimizations, such as being
+     * able to quickly check if a type IS_BINDABLE().  When types are added,
+     * or removed, the numbers must shuffle around to preserve invariants.
+     */
+    enum Reb_Kind {
+        REB_0 = 0, /* reserved for internal purposes...not a "type" */
+        $[Rebs],
+        REB_MAX
+    };
+}
+e-types/emit newline
 
 e-types/emit {
     /*
-    ** SINGLE TYPE CHECK MACROS, e.g. IS_BLOCK() or IS_TAG()
-    **
-    ** These routines are based on VAL_TYPE(), which does much more checking
-    ** than VAL_TYPE_RAW() in the debug build.  In some commonly called
-    ** routines, it may be worth it to use the less checked version.
-    **
-    ** Note: There's no IS_0() test for REB_0.  Usages alias it and test
-    ** against the alias for clarity, e.g. `VAL_TYPE(v) == REB_0_PARTIAL`
-    */
+     * SINGLE TYPE CHECK MACROS, e.g. IS_BLOCK() or IS_TAG()
+     *
+     * These routines are based on VAL_TYPE(), which does much more checking
+     * than VAL_TYPE_RAW() in the debug build.  In some commonly called
+     * routines, it may be worth it to use the less checked version.
+     *
+     * Note: There's no IS_0() test for REB_0.  Usages alias it and test
+     * against the alias for clarity, e.g. `VAL_TYPE(v) == REB_0_PARTIAL`
+     */
 }
 e-types/emit newline
 
 boot-types: copy []
-n: 0
+n: 1
 for-each-record t type-table [
-    if n != 0 [
-        e-types/emit 't {
-            #define IS_${T/NAME}(v) \
-                (VAL_TYPE(v) == REB_${T/NAME}) /* $(n) */
-        }
-        e-types/emit newline
+    e-types/emit 't {
+        #define IS_${T/NAME}(v) \
+            (VAL_TYPE(v) == REB_${T/NAME}) /* $<n> */
+    }
+    e-types/emit newline
 
-        append boot-types to-word adjoin form t/name "!"
-    ]
+    append boot-types to-word adjoin form t/name "!"
     n: n + 1
 ]
 
@@ -368,12 +373,14 @@ for-each-record t type-table [
 remove/part typeset-sets 2 ; the - markers
 
 for-each [ts types] typeset-sets [
-    e-types/emit 'ts "#define TS_${TS} ("
-    for-each t types [
-        e-types/emit 't "FLAGIT_KIND(REB_${T})|"
+    flagits: collect [
+        for-each t types [
+            keep cscape/with {FLAGIT_KIND(REB_${T})} 't
+        ]
     ]
-    e-types/unemit #"|" ;-- remove the last | added
-    e-types/emit unspaced [")" newline]
+    e-types/emit [flagits ts] {
+        #define TS_${TS} ($<Delimit Flagits "|">)
+    }
 ]
 
 e-types/write-emitted
@@ -396,81 +403,76 @@ e-bootdefs/emit {
     ** not be ideal, it's a standard that's been around a long time.
     */
 
-    #define REBOL_VER $(version/1)
-    #define REBOL_REV $(version/2)
-    #define REBOL_UPD $(version/3)
-    #define REBOL_SYS $(version/4)
-    #define REBOL_VAR $(version/5)
+    #define REBOL_VER $<version/1>
+    #define REBOL_REV $<version/2>
+    #define REBOL_UPD $<version/3>
+    #define REBOL_SYS $<version/4>
+    #define REBOL_VAR $<version/5>
 }
-e-bootdefs/emit-line []
+e-bootdefs/emit newline
 
+
+syms: collect [
+    n: 1
+
+    boot-words: copy [] ;-- MAP! in R3-Alpha is unreliable
+    add-word: func [
+        word
+        /skip-if-duplicate
+    ][
+        if find boot-words word [
+            if skip-if-duplicate [return blank]
+            fail ["Duplicate word specified" word]
+        ]
+
+        keep cscape/with {/* $<Word> */ SYM_${WORD} = $<n>} [n word]
+        n: n + 1
+
+        append boot-words word
+        return blank
+    ]
+
+    for-each-record t type-table [
+        add-word to-word unspaced [ensure word! t/name "!"]
+    ]
+
+    wordlist: load %words.r
+    replace wordlist '*port-modes* load %modes.r
+
+    for-each word wordlist [add-word word]
+
+    boot-actions: load boot/tmp-actions.r
+    for-each item boot-actions [
+        if set-word? :item [
+            add-word/skip-if-duplicate to-word item ;-- maybe in %words.r
+        ]
+    ]
+]
 
 e-bootdefs/emit {
     /*
-    ** CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
-    **
-    ** ANY-WORD! uses internings of UTF-8 character strings.  An arbitrary
-    ** number of these are created at runtime, and can be garbage collected
-    ** when no longer in use.  But a pre-determined set of internings are
-    ** assigned small integer "SYM" compile-time-constants, to be used in
-    ** switch() for efficiency in the core.
-    **
-    ** Datatypes are given symbol numbers at the start of the list, so that
-    ** their SYM_XXX values will be identical to their REB_XXX values.
-    **
-    ** Note: SYM_0 is not a symbol of the string "0".  It's the "SYM" constant
-    ** that is returned for any interning that *does not have* a compile-time
-    ** constant assigned to it.  Since VAL_WORD_SYM() will return SYM_0 for
-    ** all user (and extension) defined words, don't try to check equality
-    ** with `VAL_WORD_SYM(word1) == VAL_WORD_SYM(word2)`.
-    */
-
-    enum REBOL_Symbols ^{
+     * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
+     *
+     * ANY-WORD! uses internings of UTF-8 character strings.  An arbitrary
+     * number of these are created at runtime, and can be garbage collected
+     * when no longer in use.  But a pre-determined set of internings are
+     * assigned small integer "SYM" compile-time-constants, to be used in
+     * switch() for efficiency in the core.
+     *
+     * Datatypes are given symbol numbers at the start of the list, so that
+     * their SYM_XXX values will be identical to their REB_XXX values.
+     *
+     * Note: SYM_0 is not a symbol of the string "0".  It's the "SYM" constant
+     * that is returned for any interning that *does not have* a compile-time
+     * constant assigned to it.  Since VAL_WORD_SYM() will return SYM_0 for
+     * all user (and extension) defined words, don't try to check equality
+     * with `VAL_WORD_SYM(word1) == VAL_WORD_SYM(word2)`.
+     */
+    enum REBOL_Symbols {
+        SYM_0 = 0,
+        $(Syms),
+    };
 }
-
-e-bootdefs/emit-item/assign "SYM_0" 0
-
-n: 1
-boot-words: copy [] ;-- MAP! in R3-Alpha is unreliable
-add-word: func [
-    word
-    /skip-if-duplicate
-][
-    if find boot-words word [
-        if skip-if-duplicate [return blank]
-        fail ["Duplicate word specified" word]
-    ]
-
-    e-bootdefs/emit-item/upper [
-        comment [to-cname ("SYM_" word)] ;-- `...` would be SYM__DOT_DOT_DOT
-        "SYM_" (to-c-name word) ;-- `...` is recognized to make SYM_ELLIPSIS
-    ]
-    e-bootdefs/emit-annotation spaced [n "-" word]
-    n: n + 1
-
-    append boot-words word
-    return blank
-]
-
-for-each-record t type-table [
-    if t/name != 0 [
-        add-word to-word unspaced [ensure word! t/name "!"]
-    ]
-]
-
-wordlist: load %words.r
-replace wordlist '*port-modes* load %modes.r
-
-for-each word wordlist [add-word word]
-
-boot-actions: load boot/tmp-actions.r
-for-each item boot-actions [
-    if set-word? :item [
-        add-word/skip-if-duplicate to-word item ;-- maybe in %words.r already
-    ]
-]
-
-e-bootdefs/emit-end
 
 print [n "words + actions"]
 
@@ -509,30 +511,27 @@ make-obj-defs: procedure [
     depth
     /selfless
 ][
-    prefix: uppercase-of prefix
-    e/emit-line ["enum " prefix "object {"]
+    items: collect [
+        either selfless [
+            n: 1
+        ][
+            keep cscape/with {${PREFIX}_SELF = 1} [prefix]
+            n: 2
+        ]
 
-    either selfless [
-        ;
-        ; Make sure *next* value starts at 1.  Keys/vars in contexts start
-        ; at 1, and if there's no "userspace" self in the 1 slot, the first
-        ; key has to be...so we make `SYS_CTX_0 = 0` (for instance)
-        ;
-        e/emit-item/assign [prefix "0"] 0
-    ][
-        ; The internal generator currently puts SELF at the start of new
-        ; objects in key slot 1, by default.  Eventually MAKE OBJECT! will
-        ; have nothing to do with adding SELF, and it will be entirely a
-        ; by-product of generators.
-        ;
-        e/emit-item/assign [prefix "SELF"] 1
+        for-each field words-of obj [
+            keep cscape/with {${PREFIX}_${FIELD} = $<n>} [prefix field n]
+            n: n + 1
+        ]
+
+        keep cscape/with {${PREFIX}_MAX} [prefix]
     ]
 
-    for-each field words-of obj [
-        e/emit-item/upper [prefix field]
-    ]
-    e/emit-item [prefix "MAX"]
-    e/emit-end
+    e/emit [prefix items] {
+        enum ${PREFIX}_object {
+            $(Items),
+        };
+    }
 
     if depth > 1 [
         for-each field words-of obj [
@@ -540,24 +539,24 @@ make-obj-defs: procedure [
                 field != 'standard
                 object? get in obj field
             ][
-                extended-prefix: uppercase to-c-name [prefix field "_"]
+                extended-prefix: uppercase unspaced [prefix "_" field]
                 make-obj-defs e obj/:field extended-prefix (depth - 1)
             ]
         ]
     ]
 ]
 
-make-obj-defs e-sysobj ob "SYS_" 1
-make-obj-defs e-sysobj ob/catalog "CAT_" 4
-make-obj-defs e-sysobj ob/contexts "CTX_" 4
-make-obj-defs e-sysobj ob/standard "STD_" 4
-make-obj-defs e-sysobj ob/state "STATE_" 4
-;make-obj-defs e-sysobj ob/network "NET_" 4
-make-obj-defs e-sysobj ob/ports "PORTS_" 4
-make-obj-defs e-sysobj ob/options "OPTIONS_" 4
-;make-obj-defs e-sysobj ob/intrinsic "INTRINSIC_" 4
-make-obj-defs e-sysobj ob/locale "LOCALE_" 4
-make-obj-defs e-sysobj ob/view "VIEW_" 4
+make-obj-defs e-sysobj ob "SYS" 1
+make-obj-defs e-sysobj ob/catalog "CAT" 4
+make-obj-defs e-sysobj ob/contexts "CTX" 4
+make-obj-defs e-sysobj ob/standard "STD" 4
+make-obj-defs e-sysobj ob/state "STATE" 4
+;make-obj-defs e-sysobj ob/network "NET" 4
+make-obj-defs e-sysobj ob/ports "PORTS" 4
+make-obj-defs e-sysobj ob/options "OPTIONS" 4
+;make-obj-defs e-sysobj ob/intrinsic "INTRINSIC" 4
+make-obj-defs e-sysobj ob/locale "LOCALE" 4
+make-obj-defs e-sysobj ob/view "VIEW" 4
 
 e-sysobj/write-emitted
 
@@ -570,20 +569,29 @@ e-sysobj/write-emitted
 
 e-event: make-emitter "Event Types" inc/reb-evtypes.h
 
-e-event/emit-line ["enum event_types {"]
-for-each field ob/view/event-types [
-    e-event/emit-item/upper ["EVT_" field]
+evts: collect [
+    for-each field ob/view/event-types [
+        keep cscape/with {EVT_${FIELD}} 'field
+    ]
 ]
-e-event/emit-item "EVT_MAX"
-e-event/emit-end
 
-e-event/emit-line ["enum event_keys {"]
-e-event/emit-item "EVK_NONE"
-for-each field ob/view/event-keys [
-    e-event/emit-item/upper ["EVK_" field]
+evks: collect [
+    for-each field ob/view/event-keys [
+        keep cscape/with {EVK_${FIELD}} 'field
+    ]
 ]
-e-event/emit-item "EVK_MAX"
-e-event/emit-end
+
+e-event/emit {
+    enum event_types {
+        $[Evts],
+        EVT_MAX
+    };
+
+    enum event_keys {
+        $[Evks],
+        EVK_MAX
+    };
+}
 
 e-event/write-emitted
 
@@ -598,159 +606,136 @@ e-event/write-emitted
 
 e-errnums: make-emitter "Error Structure and Constants" inc/tmp-errnums.h
 
-e-errnums/emit {
-/***********************************************************************
-**
-*/  typedef struct REBOL_Error_Vars
-/*
-***********************************************************************/
-}
-e-errnums/emit-line "{"
-
-; Generate ERROR object and append it to bootdefs.h:
-e-errnums/emit-line/indent "RELVAL self;" ;-- C++ build cannot be REBVAL
-for-each word words-of ob/standard/error [
-    either word = 'near [
-        e-errnums/emit-line/indent [
-            "RELVAL nearest;" ;-- C++ build cannot be REBVAL
-        ]
-        e-errnums/emit-annotation "near/far are non-standard C keywords"
-    ][
-        e-errnums/emit-line/indent [
-            "RELVAL" space (to-c-name word) ";" ;-- C++ build cannot be REBVAL
-         ]
-    ]
-    
-]
-e-errnums/emit-line "} ERROR_VARS;"
-
-e-errnums/emit {
-/***********************************************************************
-**
-*/  enum REBOL_Errors
-/*
-***********************************************************************/
-}
-e-errnums/emit-line "{"
-
-boot-errors: load %errors.r
-
-id-list: make block! 200
-
-for-each [category info] boot-errors [
-    if not all [
-        (quote code:) == info/1
-        integer? info/2
-        (quote type:) == info/3
-        text? info/4
-    ][
-        fail ["%errors.r" category "not [code: INTEGER! type: TEXT! ...]"]
-    ]
-
-    code: info/2
-
-    new-section: true
-    for-each [key val] skip info 4 [
-        if not set-word? key [
-            fail ["Non SET-WORD! key in %errors.r:" key]
-        ]
-
-        id: to-word key
-        if find (extract id-list 2) id [
-            fail ["DUPLICATE id in %errors.r:" id]
-        ]
-
-        append id-list reduce [id val]
-
-        either new-section [
-            e-errnums/emit-item/assign/upper ["RE_" id] code
-            new-section: false
+fields: collect [
+    keep {RELVAL self}
+    for-each word words-of ob/standard/error [
+        either word = 'near [
+            keep {/* near/far are old C keywords */ RELVAL nearest}
         ][
-            e-errnums/emit-item/upper ["RE_" id]
+            keep cscape/with {RELVAL ${word}} 'word
         ]
-        e-errnums/emit-annotation spaced [code mold val]
-
-        code: code + 1
     ]
-    e-errnums/emit-item ["RE_" (uppercase-of to word! category) "_MAX"]
-    e-errnums/emit newline
 ]
 
-e-errnums/emit-end
+e-errnums/emit {
+    /*
+     * STANDARD ERROR STRUCTURE
+     */
+    typedef struct REBOL_Error_Vars {
+        $[Fields];
+    } ERROR_VARS;
+}
 
-e-errnums/emit-line {#define RE_USER INT32_MAX}
-e-errnums/emit-annotation {Hardcoded, update in %make-boot.r}
+res: collect [
+    boot-errors: load %errors.r
 
-e-errnums/emit-line {#define RE_CATEGORY_SIZE 1000}
-e-errnums/emit-annotation {Hardcoded, update in %make-boot.r}
+    id-list: make block! 200
 
-e-errnums/emit-line {#define RE_INTERNAL_FIRST RE_MISC}
-e-errnums/emit-annotation {GENERATED! update in %make-boot.r}
+    for-each [category info] boot-errors [
+        if not all [
+            (quote code:) == info/1
+            integer? info/2
+            (quote type:) == info/3
+            text? info/4
+        ][
+            fail ["%errors.r" category "not [code: INTEGER! type: TEXT! ...]"]
+        ]
 
-e-errnums/emit-line {#define RE_MAX RE_COMMAND_MAX}
-e-errnums/emit-annotation {GENERATED! update in %make-boot.r}
+        code: info/2
+
+        new-section: true
+        for-each [key val] skip info 4 [
+            if not set-word? key [
+                fail ["Non SET-WORD! key in %errors.r:" key]
+            ]
+
+            id: to-word key
+            if find (extract id-list 2) id [
+                fail ["DUPLICATE id in %errors.r:" id]
+            ]
+
+            append id-list reduce [id val]
+
+            either new-section [
+                keep cscape/with
+                    {/* $<mold val> */ RE_${ID} = $<code>} [code id val]
+                new-section: false
+            ][
+                keep cscape/with {/* $<mold val> */ RE_${ID}} [id val]
+            ]
+
+            code: code + 1
+        ]
+    ]
+]
+
+e-errnums/emit {
+    enum REBOL_Errors {
+        $(Res),
+    };
+
+    #define RE_USER INT32_MAX /* Hardcoded, update in %make-boot.r */
+    #define RE_CATEGORY_SIZE 1000 /* Hardcoded, update in %make-boot.r */
+}
+
 e-errnums/write-emitted
 
 ;-------------------------------------------------------------------------
 
 e-errfuncs: make-emitter "Error functions" inc/tmp-error-funcs.h
+
+e-errfuncs/emit {
+    /*
+     * The variadic Error() function must be passed the exact right number of
+     * fully resolved REBVAL* that the error spec specifies.  This is easy
+     * to get wrong in C, since variadics aren't checked.
+     * 
+     * These are inline function stubs made for each "raw" error in %errors.r.
+     * They that should not add overhead in release builds, but help catch
+     * mistakes at compile time.
+     */
+}
+
 for-each [id val] id-list [
-    n-args: 0
+    ;
+    ; Errors can be no-arg TEXT!, or a BLOCK! with N GET-WORD! substitutions
+    ;
+    arity: 0
     if block? val [
         parse val [
-            any [
-                get-word! (
-                    n-args: n-args + 1 ; don't use ME, not R3-Alpha compatible
-                )
-                | skip
-            ]
+            any [get-word! (arity: arity + 1) | skip]
         ]
     ]
 
-    e-errfuncs/emit-line []
-    e-errfuncs/emit-line ["//  " mold val] 
-    c-id: to-c-name id
-    f-name: uppercase/part copy c-id 1
+    ; Camel Case and make legal for C (e.g. "not-found*" => "Not_Found_P")
+    ;
+    f-name: uppercase/part to-c-name id 1
     parse f-name [
-        any [
-            #"_" w: (uppercase/part w 1)
-            | skip
-        ]
+        any [#"_" w: (uppercase/part w 1) | skip]
     ]
-    either zero? n-args [
-        e-errfuncs/emit-lines [
-            [ {static inline REBCTX *Error_} f-name {_Raw(void)}]
-            [ "^{" ]
-            [ "    return Error(RE_" uppercase c-id ", END);" ]
-            [ "^}" ]
-        ]
+
+    either arity = 0 [
+        params: ["void"] ;-- In C, f(void) has a distinct meaning from f()
+        args: ["END"]
     ][
-        e-errfuncs/emit-line [
-            {static inline REBCTX *Error_} f-name {_Raw(}
+        params: collect [
+            repeat i arity [keep unspaced ["const REBVAL *arg" i]]
         ]
-        i: 0
-        while [i < n-args] [
-            e-errfuncs/emit-line compose [ {const REBVAL *arg} (i + 1)
-                either i < (n-args - 1) [","] [""]
-            ]
-            i: i + 1 ; don't use ME, not R3-Alpha compatible 
+        args: collect [
+            repeat i arity [keep unspaced ["arg" i]]
+            keep "END"
         ]
-        e-errfuncs/emit-line [")"]
-        e-errfuncs/emit-line [ "^{" ]
-
-        args: copy ""
-        i: 0
-        while [i < n-args] [
-            append args compose [ {, arg} (i + 1)]
-            i: i + 1 ; don't use ME, not R3-Alpha comptible
-        ]
-
-        e-errfuncs/emit-line/indent [
-            "return Error(RE_" uppercase c-id args ", END);"
-        ]
-        e-errfuncs/emit-line [ "^}" ]
     ]
+
+    e-errfuncs/emit [f-name params id args val] {
+        /* $<Mold Val> */
+        static inline REBCTX *Error_${F-Name}_Raw($<Delimit Params ",">) {
+            return Error(RE_${ID}, $<Delimit Args ",">);
+        }
+    }
+    e-errfuncs/emit newline
 ]
+
 e-errfuncs/write-emitted
 
 ;----------------------------------------------------------------------------
@@ -797,7 +782,7 @@ sctx: has collect [
 ; it to have a SELF, having some objects that don't helps pave the way
 ; to the userspace choice of self-vs-no-self (as with func's `<with> return`)
 ;
-make-obj-defs/selfless e-sysctx sctx "SYS_CTX_" 1
+make-obj-defs/selfless e-sysctx sctx "SYS_CTX" 1
 
 e-sysctx/write-emitted
 
@@ -817,41 +802,29 @@ e-sysctx/write-emitted
 
 e-bootblock: make-emitter "Natives and Bootstrap" core/tmp-boot-block.c
 
-e-bootblock/emit-line {#include "sys-core.h"}
-e-bootblock/emit newline
-
-externs: make text! 2000
 boot-natives: load boot/tmp-natives.r
-num-natives: 0
 
-for-each val boot-natives [
-    if set-word? val [
-        num-natives: num-natives + 1
+nats: collect [
+    for-each val boot-natives [
+        if set-word? val [
+            keep cscape/with {N_${to word! val}} 'val
+        ]
     ]
 ]
 
-print [num-natives "natives"]
+print [length-of nats "natives"]
 
-e-bootblock/emit newline
+e-bootblock/emit {
+    #include "sys-core.h"
 
-e-bootblock/emit-line [
-    "#define NUM_NATIVES" space num-natives
-]
-e-bootblock/emit-line [
-    "const REBCNT Num_Natives = NUM_NATIVES;"
-]
+    #define NUM_NATIVES $<length-of nats>
+    const REBCNT Num_Natives = NUM_NATIVES;
+    REBVAL Natives[NUM_NATIVES];
 
-e-bootblock/emit-line {REBVAL Natives[NUM_NATIVES];}
-
-e-bootblock/emit-line "const REBNAT Native_C_Funcs[NUM_NATIVES] = {"
-
-for-each val boot-natives [
-    if set-word? val [
-        e-bootblock/emit-item ["N_" to word! val]
-    ]
-]
-e-bootblock/emit-end
-e-bootblock/emit newline
+    const REBNAT Native_C_Funcs[NUM_NATIVES] = {
+        $(Nats),
+    };
+}
 
 
 ;-- Build typespecs block (in same order as datatypes table):
@@ -874,14 +847,14 @@ compressed: gzip data
 e-bootblock/emit {
     /*
      * Gzip compression of boot block
-     * Originally $(length-of data) bytes
+     * Originally $<length-of data> bytes
      *
      * Size is a constant with storage vs. using a #define, so that relinking
      * is enough to sync up the referencing sites.
      */
-    const REBCNT Nat_Compressed_Size = $(length-of compressed);
-    const REBYTE Native_Specs[$(length-of compressed)] = {
-        $(Binary-To-C Compressed)
+    const REBCNT Nat_Compressed_Size = $<length-of compressed>;
+    const REBYTE Native_Specs[$<length-of compressed>] = {
+        $<Binary-To-C Compressed>
     };
 }
 
@@ -896,51 +869,51 @@ e-bootblock/write-emitted
 
 e-boot: make-emitter "Bootstrap Structure and Root Module" inc/tmp-boot.h
 
-e-boot/emit newline
+nat-index: 0
+nids: collect [
+    for-each val boot-natives [
+        if set-word? val [
+            keep cscape/with
+                {N_${to word! val}_ID = $<nat-index>} [nat-index val]
+            nat-index: nat-index + 1
+        ]
+    ]
+]
+
+fields: collect [
+    for-each word sections [
+        word: form word
+        remove/part word 5 ; boot_
+        keep cscape/with {RELVAL ${word}} 'word
+    ]
+]
 
 e-boot/emit {
+    /*
+     * Compressed data of the native specifications, uncompressed during boot.
+     */
+    EXTERN_C const REBCNT Nat_Compressed_Size;
+    EXTERN_C const REBYTE Native_Specs[];
 
-EXTERN_C const REBCNT Num_Natives;
-EXTERN_C const REBCNT Nat_Compressed_Size;
+    /*
+     * Raw C function pointers for natives, take REBFRM* and return REB_R.
+     */
+    EXTERN_C const REBCNT Num_Natives;
+    EXTERN_C const REBNAT Native_C_Funcs[];
 
-// Compressed data of the native specifications.  This is uncompressed during
-// boot and executed.
-//
-EXTERN_C const REBYTE Native_Specs[]; // size is Nat_Compressed_Size
+    /*
+     * A canon ACTION! REBVAL of the native, accessible by native's index #
+     */
+    EXTERN_C REBVAL Natives[]; /* size is Num_Natives */
 
-// Raw C function pointers for natives.
-//
-EXTERN_C const REBNAT Native_C_Funcs[]; // size is Num_Natives
+    enum Native_Indices {
+        $(Nids),
+    };
 
-// A canon ACTION! REBVAL of the native, accessible by the native's index #.
-//
-EXTERN_C REBVAL Natives[]; // size is Num_Natives
+    typedef struct REBOL_Boot_Block {
+        $[Fields];
+    } BOOT_BLK;
 }
-
-e-boot/emit newline
-e-boot/emit-line "enum Native_Indices {"
-
-nat-index: 0
-for-each val boot-natives [
-    if set-word? val [
-        e-boot/emit-item/assign ["N_" (to word! val) "_ID"] nat-index
-        nat-index: nat-index + 1
-    ]
-]
-
-e-boot/emit-end
-
-e-boot/emit newline
-e-boot/emit-line "typedef struct REBOL_Boot_Block {"
-
-for-each word sections [
-    word: form word
-    remove/part word 5 ; boot_
-    e-boot/emit-line/indent [
-        "RELVAL" space (to-c-name word) ";" ;-- can't be REBVAL in C++ build
-    ]
-]
-e-boot/emit-line "} BOOT_BLK;"
 
 ;-------------------
 

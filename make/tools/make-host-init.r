@@ -54,11 +54,11 @@ write-c-file: procedure [
     e/emit 'compressed {
         /*
          * Gzip compression of host initialization code
-         * Originally $(length-of data) bytes
+         * Originally $<length-of data> bytes
          */
-        #define REB_INIT_SIZE $(length-of compressed)
+        #define REB_INIT_SIZE $<length-of compressed>
         const unsigned char Reb_Init_Code[REB_INIT_SIZE] = {
-            $(Binary-To-C Compressed)
+            $<Binary-To-C Compressed>
         };
     }
 

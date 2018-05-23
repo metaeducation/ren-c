@@ -59,11 +59,13 @@ parse os-specific-objs [some rule]
 
 proto-count: 0
 
+host-lib-fields: make block! 40
+
 host-lib-externs: make text! 20000
 
 host-lib-struct: make text! 1000
 
-host-lib-instance: make text! 1000
+host-instance-fields: make block! 40
 
 rebol-lib-macros: make text! 1000
 host-lib-macros: make text! 1000
@@ -87,8 +89,7 @@ count: func [s c /local n] [
 
 emit-proto: proc [
     proto
-] [
-
+][
     if all [
         proto
         trim proto
@@ -120,11 +121,10 @@ emit-proto: proc [
         fn.name.upper: uppercase copy fn.name
         fn.name.lower: lowercase copy fn.name
 
-        append host-lib-instance reduce [spaced-tab fn.name "," newline]
+        append host-instance-fields fn.name
 
-        append host-lib-struct reduce [
-            spaced-tab fn.declarations "(*" fn.name.lower ")" pos.lparen ";"
-            newline
+        append host-lib-fields unspaced [
+            fn.declarations "(*" fn.name.lower ")" pos.lparen
         ]
 
         args: count pos.lparen #","
@@ -148,13 +148,6 @@ process: func [file] [
     proto-parser/process data
 ]
 
-append host-lib-struct {
-typedef struct REBOL_Host_Lib ^{
-    int size;
-    unsigned int ver_sum;
-    REBDEV **devices;
-}
-
 for-each file files [
     print ["scanning" file]
     if all [
@@ -162,105 +155,71 @@ for-each file files [
     ][process file]
 ]
 
-append host-lib-struct "} REBOL_HOST_LIB;"
-
-
-;
-; Do a reduce which produces the output string we will write to host-lib.h
-;
-
 e-lib: make-emitter "Host Access Library" output-dir/include/host-lib.h
 
-e-lib/emit-lines [
-    [{#define HOST_LIB_VER} space lib-version]
-    [{#define HOST_LIB_SUM} space checksum/tcp to-binary checksum-source]
-    [{#define HOST_LIB_SIZE} space proto-count]
-]
+e-lib/emit {
+    #define HOST_LIB_VER $<lib-version>
+    #define HOST_LIB_SUM $<checksum/tcp to-binary checksum-source>
+    #define HOST_LIB_SIZE $<proto-count>
 
-e-lib/emit unspaced [
-{
-// !!! SEE **WARNING** BEFORE EDITING
+    #ifdef __cplusplus
+    extern "C" ^{
+    #endif
 
-#ifdef __cplusplus
-extern "C" ^{
-#endif
+    extern REBDEV *Devices[];
 
-extern REBDEV *Devices[];
+    /*
+     * The "Rebol Host" provides a "Host Lib" interface to operating system
+     * services that can be used by "Rebol Core".  Each host provides
+     * functions with names starting with OS_ and then a mixed-case name
+     * separated by underscores (e.g. OS_Get_Time).  They are put into a
+     * table and called in a manner similar to IOCTLs in an OS:
+     *
+     * https://en.wikipedia.org/wiki/Ioctl
+     *
+     * !!! NOTE: This mechanism is being gradually deprecated in Ren-C,
+     * preferring to build interactions with code that is Rebol-API-aware vs.
+     * speaking in a C-binary protocol that doesn't know what REBVAL* is.
+     *
+     * There were 40-ish separate functions in the Linux build around the time
+     * of R3-Alpha.  Some were very narrow in what they did...such as
+     * OS_Browse which will open a web browser.  Other functions were doorways
+     * to dispatching a wide variety of requests (such as OS_Do_Device.)
+     *
+     * Note instead of directly calling OS_Get_Time, Core uses OS_GET_TIME
+     * which is a macro for 'Host_Lib->os_get_time(...)'.
+     */
+    typedef struct REBOL_Host_Lib {
+        int size;
+        unsigned int ver_sum;
+        REBDEV **devices;
 
-/***********************************************************************
-**
-**  HOST LIB TABLE DEFINITION
-**
-**      !!!
-**      !!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
-**      !!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
-**      !!!
-**
-**      The "Rebol Host" provides a "Host Lib" interface to operating
-**      system services that can be used by "Rebol Core".  Each host
-**      provides functions with names starting with OS_ and then a
-**      mixed-case name separated by underscores (e.g. OS_Get_Time).
-**
-**      Rebol cannot call these functions directly.  Instead, they are
-**      put into a table (which is actually a struct whose members are
-**      function pointers of the appropriate type for each call).  It is
-**      similar in spirit to how IOCTLs work in operating systems:
-**
-**          https://en.wikipedia.org/wiki/Ioctl
-**
-**      To give a sense of scale, there are 48 separate functions in the
-**      Linux build at time of writing.  Some functions are very narrow
-**      in what they do...such as OS_Browse which will open a web browser.
-**      Other functions are doorways to dispatching a wide variety of
-**      requests, such as OS_Do_Device.)
-**
-**      So instead of OS_Get_Time, Core uses 'Host_Lib->os_get_time(...)'.
-**      Since that is verbose, an all-caps macro is provided, which in
-**      this case would be OS_GET_TIME.  For parity, all-caps macros are
-**      provided in the host like '#define OS_GET_TIME OS_Get_Time'.  As
-**      a result, the all-caps forms should be preserved since they can
-**      be read/copied/pasted consistently between host and core code.
-**
-**      !!!
-**      !!! **WARNING!**  DO NOT EDIT THIS! (until you've checked...)
-**      !!! BE SURE YOU ARE EDITING MAKE-OS-EXT.R AND NOT HOST-LIB.H
-**      !!!
-**
-***********************************************************************/
+        $[Host-Lib-Fields];
+    } REBOL_HOST_LIB;
+
+    extern const REBOL_HOST_LIB *Host_Lib;
+
+
+    /** Included by HOST **********************************************/
+
+    #ifndef REB_DEF
+
+    $<Host-Lib-Externs>
+
+    $<Host-Lib-Macros>
+
+    #else //REB_DEF
+
+    /** Included by REBOL *********************************************/
+
+    $<Rebol-Lib-Macros>
+
+    #endif //REB_DEF
+
+    #ifdef __cplusplus
+    ^}
+    #endif
 }
-
-(host-lib-struct) newline
-
-{
-extern const REBOL_HOST_LIB *Host_Lib;
-
-
-//** Included by HOST *********************************************
-
-#ifndef REB_DEF
-}
-
-newline (host-lib-externs) newline
-
-newline (host-lib-macros) newline
-
-{
-#else //REB_DEF
-
-//** Included by REBOL ********************************************
-
-}
-
-newline newline (rebol-lib-macros)
-
-{
-#endif //REB_DEF
-
-#ifdef __cplusplus
-^}
-#endif
-}
-]
 
 e-lib/write-emitted
 
@@ -269,35 +228,29 @@ e-table: (
 )
 
 e-table/emit {
-/***********************************************************************
-**
-**  HOST LIB TABLE DEFINITION
-**
-**      This is the actual definition of the host table.  In order for
-**      the assignments to work, you must have included host-lib.h with
-**      REB_DEF undefined, to get the prototypes for the host kit
-**      functions.  (You'll get this automatically if you are doing
-**      #include "reb-host.h).
-**
-**      There can be only one instance of this table linked into your
-**      program, or you will get multiple defintitions of the Host_Lib
-**      table.  You may wish to make a .c file that only includes
-**      this, in order to easily call out which object file has the
-**      singular definition of Host_Lib that you need.
-**
-***********************************************************************/
+    /*
+     * HOST LIB TABLE DEFINITION
+     *
+     * This is the actual definition of the host table.  In order for the
+     * assignments to work, you must have included host-lib.h with REB_DEF
+     * undefined, to get the prototypes for the host kit functions.  (You'll
+     * get this automatically if you are doing #include "reb-host.h")
+     *
+     * There can be only one instance of this table linked into your program,
+     * or you will get multiple defintitions of the Host_Lib table.  You may
+     * wish to make a .c file that only includes this, in order to easily call
+     * out which obj has the singular definition of Host_Lib that you need.
+     */
 
-EXTERN_C REBOL_HOST_LIB Host_Lib_Init;
+    EXTERN_C REBOL_HOST_LIB Host_Lib_Init;
 
-REBOL_HOST_LIB Host_Lib_Init = ^{
+    REBOL_HOST_LIB Host_Lib_Init = {
+        HOST_LIB_SIZE,
+        (HOST_LIB_VER << 16) + HOST_LIB_SUM,
+        (REBDEV**)&Devices,
 
-    HOST_LIB_SIZE,
-    (HOST_LIB_VER << 16) + HOST_LIB_SUM,
-    (REBDEV**)&Devices,
+        $(Host-Instance-Fields),
+    };
 }
-
-e-table/emit host-lib-instance
-
-e-table/emit-line "};"
 
 e-table/write-emitted

@@ -91,15 +91,18 @@ emit-proto: proc [proto] [
 
     append prototypes proto
 
-    e-funcs/emit-line ["RL_API " proto "; // " the-file]
+    e-funcs/emit [proto the-file] {
+        RL_API $<Proto>; /* $<The-File> */
+    }
+
     either "REBTYPE" = proto-parser/proto.id [
-        e-syms/emit-line [
-            "    SYM_CFUNC(T_" proto-parser/proto.arg.1 "), // " the-file
-        ]
+        e-syms/emit [the-file proto-parser] {
+            /* $<The-File> */ SYM_CFUNC(T_$<Proto-Parser/Proto.Arg.1>),
+        }
     ][
-        e-syms/emit-line [
-            "    SYM_CFUNC(" proto-parser/proto.id "), // " the-file
-        ]
+        e-syms/emit [the-file proto-parser] {
+            /* $<The-File> */ SYM_CFUNC($<Proto-Parser/Proto.Id>),
+        }
     ]
 ]
 
@@ -108,10 +111,9 @@ process-conditional: procedure [
     dir-position
     emitter [object!]
 ][
-    emitter/emit-line [
-        directive
-        ;;; " // " the-file " #" text-line-of dir-position
-    ]
+    emitter/emit [directive the-file dir-position] {
+        $<Directive> /* $<The-File> #$<text-line-of dir-position> */
+    }
 
     ; Minimise conditionals for the reader - unnecessary for compilation.
     ;
@@ -144,69 +146,82 @@ process: function [
 
 ;-------------------------------------------------------------------------
 
-e-syms/emit {#include "sys-core.h"
+e-syms/emit {
+    #include "sys-core.h"
 
-// Note that cast() macro causes problems here with clang for some reason.
-//
-// !!! Also, void pointers and function pointers are not guaranteed to be
-// the same size, even if TCC assumes so for these symbol purposes.
-//
-#define SYM_CFUNC(x) {#x, (CFUNC*)(x)}
-#define SYM_DATA(x) {#x, &x}
+    /* Note that cast() macro causes problems here with clang for some reason.
+     *
+     * !!! Also, void pointers and function pointers are not guaranteed to be
+     * the same size, even if TCC assumes so for these symbol purposes.
+     */
+    #define SYM_CFUNC(x) {#x, (CFUNC*)(x)}
+    #define SYM_DATA(x) {#x, &x}
 
-struct rebol_sym_cfunc_t {
-    const char *name;
-    CFUNC *cfunc;
-};
+    struct rebol_sym_cfunc_t {
+        const char *name;
+        CFUNC *cfunc;
+    };
 
-struct rebol_sym_data_t {
-    const char *name;
-    void *data;
-};
+    struct rebol_sym_data_t {
+        const char *name;
+        void *data;
+    };
 
-extern const struct rebol_sym_cfunc_t rebol_sym_cfuncs [];
-const struct rebol_sym_cfunc_t rebol_sym_cfuncs [] = ^{
+    extern const struct rebol_sym_cfunc_t rebol_sym_cfuncs [];
+    const struct rebol_sym_cfunc_t rebol_sym_cfuncs [] = ^{
 }
+;-- !!! Note the #ifdef conditional handling here is weird, and is based on
+;-- the emitter state.  So it would take work to turn this into something
+;-- that would collect the symbols and then insert them into the emitter
+;-- all at once.  The original code seems a bit improvised, and could use a
+;-- more solid mechanism.
 
-e-funcs/emit {
-// When building as C++, the linkage on these functions should be done without
-// "name mangling" so that library clients will not notice a difference
-// between a C++ build and a C build.
-//
-// http://stackoverflow.com/q/1041866/
-//
-#ifdef __cplusplus
-extern "C" ^{
-#endif
-
-//
-// Native Prototypes: REBNATIVE is a macro which will expand such that
-// REBNATIVE(parse) will define a function named `N_parse`.  The prototypes
-// are included in a system-wide header in order to allow recognizing a
-// given native by identity in the C code, e.g.:
-//
-//     if (VAL_ACT_DISPATCHER(native) == &N_parse) { ... }
-//
-}
-e-funcs/emit newline
 
 boot-natives: load output-dir/boot/tmp-natives.r
 
+e-funcs/emit {
+    /*
+     * When building as C++, the linkage on these functions should be done
+     * without "name mangling" so that library clients will not notice a
+     * difference between a C++ build and a C build.
+     *
+     * http://stackoverflow.com/q/1041866/
+     */
+    #ifdef __cplusplus
+    extern "C" ^{
+    #endif
+
+    /*
+     * NATIVE PROTOTYPES
+     *
+     * REBNATIVE is a macro which will expand such that REBNATIVE(parse) will
+     * define a function named `N_parse`.  The prototypes are included in a
+     * system-wide header in order to allow recognizing a given native by
+     * identity in the C code, e.g.:
+     *
+     *     if (VAL_ACT_DISPATCHER(native) == &N_parse) { ... }
+     */
+}
+e-funcs/emit newline
+
 for-each val boot-natives [
     if set-word? val [
-        e-funcs/emit-line ["REBNATIVE(" to-c-name (to word! val) ");"]
+        e-funcs/emit 'val {
+            REBNATIVE(${to word! val});
+        }
     ]
 ]
 
 e-funcs/emit {
-
-//
-// Other Prototypes: These are the functions that are scanned for in the %.c
-// files by %make-headers.r, and then their prototypes placed here.  This
-// means it is not necessary to manually keep them in sync to make calls to
-// functions living in different sources.  (`static` functions are skipped
-// by the scan.)
-//
+    /*
+     * OTHER PROTOTYPES
+     *
+     * These are the functions that are scanned for in the %.c files by
+     * %make-headers.r, and then their prototypes placed here.  This means it
+     * is not necessary to manually keep them in sync to make calls to
+     * functions living in different sources.  (`static` functions are skipped
+     * by the scan.)
+     */
 }
 e-funcs/emit newline
 
@@ -238,10 +253,11 @@ for-each item file-base/core [
 ]
 
 
-e-funcs/emit newline
-e-funcs/emit-line "#ifdef __cplusplus"
-e-funcs/emit-line "}"
-e-funcs/emit-line "#endif"
+e-funcs/emit {
+    #ifdef __cplusplus
+    ^}
+    #endif
+}
 
 e-funcs/write-emitted
 
@@ -279,7 +295,9 @@ sys-globals.parser: context [
 
         declaration: [
             some [opt wsp [copy id identifier | not #";" punctuator] ] #";" thru newline (
-                e-syms/emit-line ["    SYM_DATA(" id "),"]
+                e-syms/emit 'id {
+                    SYM_DATA($<Id>),
+                }
             )
         ]
 
@@ -362,10 +380,11 @@ parse to text! read %a-constants.c [
         copy constd to "="
         (
             remove constd
-            insert constd "extern "
-            append trim/tail constd #";"
+            trim/tail constd
 
-            e-strings/emit-line constd
+            e-strings/emit {
+                extern $<Constd>;
+            }
         )
     ]
 ]

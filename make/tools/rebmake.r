@@ -1207,7 +1207,7 @@ generator-class: make object! [
                 apply any [:gen-cmd-strip :target-platform/gen-cmd-strip] compose [cmd: (cmd)]
             ]
         ][
-            fail ["Unkonwn cmd class:" cmd/class-name]
+            fail ["Unknown cmd class:" cmd/class-name]
         ]
     ]
 
