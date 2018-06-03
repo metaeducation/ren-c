@@ -2170,7 +2170,7 @@ REBNATIVE(subparse)
 
                 if (flags & (PF_INSERT | PF_CHANGE)) {
                     count = (flags & PF_INSERT) ? 0 : count;
-                    REBCNT mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
+                    REBOOL only = false;
 
                     if (FRM_AT_END(f))
                         fail (Error_Parse_End());
@@ -2179,7 +2179,7 @@ REBNATIVE(subparse)
                         REBSYM cmd = VAL_CMD(P_RULE);
                         switch (cmd) {
                         case SYM_ONLY:
-                            mod_flags |= AM_ONLY;
+                            only = true;
                             FETCH_NEXT_RULE_MAYBE_END(f);
                             if (FRM_AT_END(f))
                                 fail (Error_Parse_End());
@@ -2222,6 +2222,13 @@ REBNATIVE(subparse)
                         DECLARE_LOCAL (specified);
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
+                        REBCNT mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
+                        if (
+                            not only and
+                            Splices_Into_Type_Without_Only(P_TYPE, specified)
+                        ){
+                            mod_flags |= AM_SPLICE;
+                        }
                         P_POS = Modify_Array(
                             (flags & PF_CHANGE)
                                 ? Canon(SYM_CHANGE)
@@ -2245,6 +2252,9 @@ REBNATIVE(subparse)
                         Derelativize(specified, rule, P_RULE_SPECIFIER);
 
                         P_POS = begin;
+
+                        REBCNT mod_flags = (flags & PF_INSERT) ? 0 : AM_PART;
+
                         if (P_TYPE == REB_BINARY)
                             P_POS = Modify_Binary(
                                 P_INPUT_VALUE,

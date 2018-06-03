@@ -145,7 +145,7 @@
     all [
         lit-path? a-value
         path? eval :a-value
-        (to-path :a-value) == (eval :a-value)
+        (as path! :a-value) == (eval :a-value)
     ]
 )
 (

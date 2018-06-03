@@ -71,8 +71,33 @@ void MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     //
     // `make block! 10` => creates array with certain initial capacity
     //
-    if (IS_INTEGER(arg) || IS_DECIMAL(arg)) {
+    if (IS_INTEGER(arg) or IS_DECIMAL(arg)) {
         Init_Any_Array(out, kind, Make_Array(Int32s(arg, 0)));
+        return;
+    }
+
+    // Historically TO BLOCK! and MAKE BLOCK! of a string would scan it.
+    // Ren-C's ruleset for TO says that the TO of a value to its own type
+    // must do the same thing as COPY.  Hence, only MAKE scans.  (unbound)
+    //
+    if (IS_TEXT(arg)) {
+        //
+        // Until UTF-8 Everywhere, text must be converted to UTF-8 before
+        // using it with the scanner.
+        //
+        REBSIZ offset;
+        REBSIZ size;
+        REBSER *temp = Temp_UTF8_At_Managed(
+            &offset, &size, arg, VAL_LEN_AT(arg)
+        );
+        PUSH_GC_GUARD(temp);
+        REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+        Init_Any_Array(
+            out,
+            kind,
+            Scan_UTF8_Managed(filename, BIN_AT(temp, offset), size)
+        );
+        DROP_GC_GUARD(temp);
         return;
     }
 
@@ -145,18 +170,6 @@ void MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (IS_TYPESET(arg))
         goto bad_make;
 
-    TO_Array(out, kind, arg);
-    return;
-
-bad_make:
-    fail (Error_Bad_Make(kind, arg));
-}
-
-
-//
-//  TO_Array: C
-//
-void TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (IS_TYPESET(arg)) {
         //
         // This makes a block of types out of a typeset.  Previously it was
@@ -164,41 +177,6 @@ void TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         // a GROUP! or a PATH!, etc.
         //
         Init_Any_Array(out, kind, Typeset_To_Array(arg));
-    }
-    else if (ANY_ARRAY(arg)) {
-        //
-        // `to group! [1 2 3]` etc. -- copy the array data at the index
-        // position and change the type.  (Note: MAKE does not copy the
-        // data, but aliases it under a new kind.)
-        //
-        Init_Any_Array(
-            out,
-            kind,
-            Copy_Values_Len_Shallow(
-                VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
-            )
-        );
-    }
-    else if (IS_TEXT(arg)) {
-        //
-        // `to block! "some string"` historically scans the source, so you
-        // get an unbound code array.  Because the string may contain REBUNI
-        // characters, it may have to be converted to UTF8 before being
-        // used with the scanner.
-        //
-        REBSIZ offset;
-        REBSIZ size;
-        REBSER *temp = Temp_UTF8_At_Managed(
-            &offset, &size, arg, VAL_LEN_AT(arg)
-        );
-        PUSH_GC_GUARD(temp);
-        REBSTR * const filename = Canon(SYM___ANONYMOUS__);
-        Init_Any_Array(
-            out,
-            kind,
-            Scan_UTF8_Managed(filename, BIN_AT(temp, offset), size)
-        );
-        DROP_GC_GUARD(temp);
     }
     else if (IS_BINARY(arg)) {
         //
@@ -221,13 +199,37 @@ void TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     else if (IS_VECTOR(arg)) {
         Init_Any_Array(out, kind, Vector_To_Array(arg));
     }
+
+    TO_Array(out, kind, arg);
+    return;
+
+bad_make:
+    fail (Error_Bad_Make(kind, arg));
+}
+
+
+//
+//  TO_Array: C
+//
+void TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+    if (
+        kind == VAL_TYPE(arg) // always act as COPY if types match
+        or Splices_Into_Type_Without_Only(kind, arg) // see comments
+    ){
+        Init_Any_Array(
+            out,
+            kind,
+            Copy_Values_Len_Shallow(
+                VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg), VAL_ARRAY_LEN_AT(arg)
+            )
+        );
+    }
     else {
-        // !!! The general case of not having any special conversion behavior
-        // in R3-Alpha is just to fall through to making a 1-element block
-        // containing the value.  This may seem somewhat random, and an
-        // error may be preferable.
+        // !!! Review handling of making a 1-element PATH!, e.g. TO PATH! 10
         //
-        Init_Any_Array(out, kind, Copy_Values_Len_Shallow(arg, SPECIFIED, 1));
+        REBARR *single = Alloc_Singular(NODE_FLAG_MANAGED);
+        Move_Value(ARR_SINGLE(single), arg);
+        Init_Any_Array(out, kind, single);
     }
 }
 
@@ -868,8 +870,12 @@ REBTYPE(Array)
         index = VAL_INDEX(value);
 
         REBFLGS flags = 0;
-        if (REF(only))
-            flags |= AM_ONLY;
+        if (
+            not REF(only)
+            and Splices_Into_Type_Without_Only(VAL_TYPE(value), arg)
+        ){
+            flags |= AM_SPLICE;
+        }
         if (REF(part))
             flags |= AM_PART;
         if (REF(line))

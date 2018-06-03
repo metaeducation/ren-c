@@ -15,5 +15,5 @@
 ; lit-paths are active
 (
     a-value: first ['a/b]
-    strict-equal? to path! :a-value do reduce [:a-value]
+    strict-equal? as path! :a-value do reduce [:a-value]
 )

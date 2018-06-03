@@ -46,7 +46,7 @@ make object! compose [
         ]
 
         case [
-            error? trap [test-block: to block! load source] [
+            error? trap [test-block: make block! load source] [
                 "cannot load test source"
             ]
 
@@ -72,7 +72,7 @@ make object! compose [
             not :result [
                 "test returned #[false]"
             ]
-        ] also message => [
+        ] then message => [
             test-failures: me + 1
             log reduce [space {"failed, } message {"} newline]
         ] else [

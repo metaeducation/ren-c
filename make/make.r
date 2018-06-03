@@ -252,7 +252,9 @@ parse-ext-build-spec: function [
         return _
     ]
 
-    if set? 'config [do to block! config]
+    if set? 'config [
+        do as block! config ;-- some old Ren-Cs disallowed DO of GROUP!
+    ]
 
     append ext-body compose/only [
         modules: (map-each m modules [make module-class m])

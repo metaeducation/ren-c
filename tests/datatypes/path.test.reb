@@ -29,7 +29,7 @@
 )
 (
     blk: reduce [charset "a" 3]
-    3 == do reduce [to path! reduce ['blk charset "a"]]
+    3 == do reduce [as path! reduce ['blk charset "a"]]
 )
 (
     blk: [[] 3]

@@ -441,9 +441,9 @@ rebsource: context [
             any [nl | eol | wsp]
         ]
 
-        append/only grammar/other-segment to group! [
+        append/only grammar/other-segment quote (
             last-func-end: _
-        ]
+        )
 
     ] proto-parser c.lexical/grammar
 

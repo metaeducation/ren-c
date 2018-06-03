@@ -841,6 +841,23 @@ set 'r3-legacy* func [<local>] [
             ]
         ])
 
+        to: (func [
+            return: [any-value!]
+            type [any-value!]
+            spec [any-value!]
+        ][
+            if any-array? :type [
+                if match [text! typeset! map! any-context! vector!] :spec [
+                    return make :type :spec
+                ]
+                if binary? :spec [ ;-- would scan UTF-8 data
+                    return make :type as text! :spec
+                ]
+                return to :type :spec
+            ]
+            return to :type :spec
+        ])
+
         try: (func [
             return: [<opt> any-value!]
             block [block!]

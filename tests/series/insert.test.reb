@@ -38,16 +38,16 @@
 (
     a: make path! 0
     insert a 0
-    a == to path! [0]
+    a == as path! [0]
 )
 (
-    a: to path! [0]
+    a: copy as path! [0]
     b: make path! 0
     insert b first a
     a == b
 )
 (
-    a: to path! [0]
+    a: copy as path! [0]
     b: make path! 0
     insert :b a
     a == b

@@ -38,7 +38,7 @@ dump-obj: function [
             return clip-str any [title-of :val | mold spec-of :val]
         ]
         if object? :val [val: words of val]
-        if typeset? :val [val: to-block val]
+        if typeset? :val [val: make block! val]
         if port? :val [val: reduce [val/spec/title val/spec/ref]]
         if gob? :val [return spaced ["offset:" val/offset "size:" val/size]]
         clip-str mold :val

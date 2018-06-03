@@ -392,3 +392,18 @@ method: enfix func [
 ]
 
 meth: :func ;-- suitable enough synonym in the older Ren-C
+
+
+; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
+;
+for-each modifier [append insert change] [
+    set modifier adapt modifier [
+        if all [
+            not only
+            any-path? :value
+            not any-path? :series
+        ][
+            only: true
+        ]
+    ]
+]

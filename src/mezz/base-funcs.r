@@ -682,8 +682,8 @@ lambda: function [
     {Convenience variadic wrapper for MAKE ACTION!}
 
     return: [action!]
-    :args [<end> word! path! block!]
-        {Block of argument words, or a single word (passed via LIT-WORD!)}
+    :args [<end> word! block!]
+        {Block of argument words, or a single word (if only one argument)}
     :body [any-value! <...>]
         {Block that serves as the body or variadic elements for the body}
 ][

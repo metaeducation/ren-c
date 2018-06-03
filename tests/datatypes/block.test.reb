@@ -9,7 +9,7 @@
 ; alternative literal representation
 ([] == #[block! [[] 1]])
 ([] == make block! 0)
-([] == to block! "")
+([] == make block! "")
 ("[]" == mold [])
 
 (

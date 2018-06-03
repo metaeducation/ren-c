@@ -883,7 +883,7 @@ load-module: function [
             ]
         ]
 
-        if binary? code [code: to block! code]
+        if binary? code [code: make block! code]
 
         ensure object! hdr
         ensure block! code

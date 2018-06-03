@@ -17,9 +17,11 @@
 (
     num1: 4
     num2: 1
-    fact: to group! [either num1 = 1 [num2] [num2: num1 * num2 num1: num1 - 1]]
+    fact: copy quote (
+        either num1 = 1 [num2] [num2: num1 * num2 num1: num1 - 1]
+    )
     insert/only tail of last fact fact
-    24 = do as block! fact
+    24 = do fact
 )
 ; infinite recursion
 [#1665 (

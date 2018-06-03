@@ -563,7 +563,7 @@ host-start: function [
                     ;; suppress all known start-up files
                     [%rebol.reb %user.reb %console-skin.reb]
                 ] else [
-                    to-block param
+                    make block! param
                 ]
             )
         |

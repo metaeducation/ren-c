@@ -504,6 +504,28 @@ inline static RELVAL *VAL_ARRAY_TAIL(const RELVAL *v) {
     Init_Any_Array((v), REB_PATH, (s))
 
 
+// PATH! types will splice into each other, but not into a BLOCK! or GROUP!.
+// BLOCK! or GROUP! will splice into any other array:
+//
+//     [a b c d/e/f] -- append copy [a b c] 'd/e/f
+//      a/b/c/d/e/f  -- append copy 'a/b/c [d e f]
+//     (a b c d/e/f) -- append copy quote (a b c) 'd/e/f
+//      a/b/c/d/e/f  -- append copy 'a/b/c quote (d e f)
+//      a/b/c/d/e/f  -- append copy 'a/b/c 'd/e/f
+//
+// This rule influences the behavior of TO conversions as well:
+// https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
+//
+inline static REBOOL Splices_Into_Type_Without_Only(
+    enum Reb_Kind array_kind,
+    const REBVAL *arg
+){
+    assert(ANY_ARRAY_KIND(array_kind));
+    return IS_GROUP(arg)
+        or IS_BLOCK(arg)
+        or (ANY_PATH(arg) and ANY_PATH_KIND(array_kind));
+}
+
 
 #ifdef NDEBUG
     #define ASSERT_ARRAY(s) \

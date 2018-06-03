@@ -196,7 +196,7 @@ for-each native native-specs [
                     ]
                 ]
                 path? plat [; os-base/os-name format
-                    if plat = to path! reduce [config/os-base config/os-name][
+                    if plat = as path! reduce [config/os-base config/os-name][
                         supported?: true
                         break
                     ]

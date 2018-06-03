@@ -41,7 +41,7 @@ REBCNT Modify_Array(
     REBARR *dst_arr,        // target
     REBCNT dst_idx,         // position
     const REBVAL *src_val,  // source
-    REBCNT flags,           // AM_ONLY, AM_PART
+    REBCNT flags,           // AM_SPLICE, AM_PART
     REBINT dst_len,         // length to remove
     REBINT dups             // dup count
 ){
@@ -77,7 +77,8 @@ REBCNT Modify_Array(
     REBINT ilen;
 
     // Check /PART, compute LEN:
-    if (not (flags & AM_ONLY) and ANY_ARRAY(src_val)) {
+    if (flags & AM_SPLICE) {
+        assert(ANY_ARRAY(src_val));
         // Adjust length of insertion if changing /PART:
         if (sym != SYM_CHANGE and (flags & AM_PART))
             ilen = dst_len;
