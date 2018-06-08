@@ -135,7 +135,7 @@ console!: make object! [
             pos: molded: mold/limit :v 2048
             loop 20 [
                 pos: (next find pos newline) else [break]
-            ] then [
+            ] also [ ; e.g. didn't break
                 insert clear pos "..."
             ]
             print [result (molded)]

@@ -1032,7 +1032,7 @@ REBARR *Context_To_Array(REBCTX *context, REBINT mode)
                 // since user arrays may not contain void.
                 //
                 if (IS_VOID(var))
-                    fail (Error_Void_Object_Block_Raw());
+                    fail (Error_Null_Object_Block_Raw());
 
                 DS_PUSH(var);
             }

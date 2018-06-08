@@ -126,7 +126,7 @@ gen-obj: func [
     ; %yvals.h in MSVC tests #ifdef __has_builtin, which has to be defined
     ; to 0 to work in MSVC.  Disable the warning for now.
     ;
-    append flags <msc:/wd4754>
+    append flags <msc:/wd4574>
 
     if block? s [
         for-each flag next s [

@@ -841,7 +841,9 @@ static REB_R Case_Choose_Core(
     // CASE/ALL can get here even if D_OUT not written
 
     Drop_Frame(f);
-    return R_OUT_VOID_IF_UNWRITTEN;
+    if (IS_END(out))
+        return R_VOID; // never written to, no branches ran
+    return R_OUT;
 }
 
 

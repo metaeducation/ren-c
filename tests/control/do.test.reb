@@ -220,7 +220,7 @@
 )
 ; BREAK stops evaluation
 (
-    blank? loop 1 [
+    null? loop 1 [
         do [
             break
             2

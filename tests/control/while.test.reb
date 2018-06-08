@@ -17,7 +17,10 @@
     success
 )
 ; Test break and continue
-(cycle?: true blank? while [cycle?] [break cycle?: false])
+(
+    cycle?: true
+    null? while [cycle?] [break cycle?: false]
+)
 ; Test reactions to break and continue in the condition
 (
     was-stopped: true

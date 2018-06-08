@@ -260,17 +260,15 @@ REB_R Apply_Core_Traced(REBFRM * const f)
 
         switch (r) {
         case R_FALSE:
-        r_false:
             Debug_Values(FALSE_VALUE, 1, 50);
             break;
 
         case R_TRUE:
-        r_true:
             Debug_Values(TRUE_VALUE, 1, 50);
             break;
 
         case R_VOID:
-        r_void:
+            //
             // It's not legal to mold or form a void, it's not ANY-VALUE!
             // In this case, just don't print anything, like the console does
             // when an evaluation gives a void result.
@@ -283,12 +281,10 @@ REB_R Apply_Core_Traced(REBFRM * const f)
             break;
 
         case R_BAR:
-        r_bar:
             Debug_Values(BAR_VALUE, 1, 50);
             break;
 
         case R_OUT:
-        r_out:
             Debug_Values(f->out, 1, 50);
             break;
 
@@ -308,29 +304,6 @@ REB_R Apply_Core_Traced(REBFRM * const f)
 
             CONVERT_NAME_TO_THROWN(f->out, arg); // sets bit
             break; }
-
-        case R_OUT_TRUE_IF_WRITTEN:
-            if (IS_END(f->out))
-                goto r_true;
-            else
-                goto r_false;
-            break;
-
-        case R_OUT_VOID_IF_UNWRITTEN:
-            if (IS_END(f->out))
-                goto r_void;
-            else
-                goto r_out;
-            break;
-
-        case R_OUT_VOID_IF_UNWRITTEN_TRUTHIFY:
-            if (IS_END(f->out))
-                goto r_void;
-            else if (IS_VOID(f->out) || IS_FALSEY(f->out))
-                goto r_bar;
-            else
-                goto r_out;
-            break;
 
         case R_REDO_CHECKED:
             assert(FALSE); // shouldn't be possible for final phase

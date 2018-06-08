@@ -295,53 +295,25 @@ REB_R Apply_Core_Measured(REBFRM * const f)
         //
         switch (r) {
         case R_FALSE:
-        r_false:
             break;
 
         case R_TRUE:
-        r_true:
             break;
 
         case R_VOID:
-        r_void:
             break;
 
         case R_BLANK:
             break;
 
         case R_BAR:
-        r_bar:
             break;
 
         case R_OUT:
-        r_out:
             break;
 
         case R_OUT_IS_THROWN: {
             break; }
-
-        case R_OUT_TRUE_IF_WRITTEN:
-            if (IS_END(f->out))
-                goto r_true;
-            else
-                goto r_false;
-            break;
-
-        case R_OUT_VOID_IF_UNWRITTEN:
-            if (IS_END(f->out))
-                goto r_void;
-            else
-                goto r_out;
-            break;
-
-        case R_OUT_VOID_IF_UNWRITTEN_TRUTHIFY:
-            if (IS_END(f->out))
-                goto r_void;
-            else if (IS_VOID(f->out) || IS_FALSEY(f->out))
-                goto r_bar;
-            else
-                goto r_out;
-            break;
 
         case R_REDO_CHECKED:
             assert(FALSE); // shouldn't be possible for final phase

@@ -84,7 +84,7 @@ Script: [
 
     no-arg:             [:arg1 {is missing its} :arg2 {argument}]
     expect-arg:         [:arg1 {does not allow} :arg2 {for its} :arg3 {argument}]
-    arg-required:       [:arg1 {requires} :arg2 {argument to not be void}]
+    arg-required:       [:arg1 {requires} :arg2 {argument to not be null}]
     expect-val:         [{expected} :arg1 {not} :arg2]
     expect-type:        [:arg1 :arg2 {field must be of type} :arg3]
     cannot-use:         [{cannot use} :arg1 {on} :arg2 {value}]
@@ -199,8 +199,8 @@ Script: [
     varargs-no-look:    {VARARGS! may only lookahead by 1 if "hard quoted"}
     varargs-take-last:  {VARARGS! does not support TAKE-ing only /LAST item}
 
-    void-vararg-array:  {Can't MAKE ANY-ARRAY! from VARARGS! that allow <opt>}
-    void-object-block:  {Can't create block from object if it has void values}
+    null-vararg-array:  {Can't MAKE ANY-ARRAY! from VARARGS! that allow <opt>}
+    null-object-block:  {Can't create block from object if it has null values}
 
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 

@@ -540,7 +540,7 @@
     test: :equal?
     equal?
         test a-value b-value
-        to-logic for-each [w v] a-value [
+        not null? for-each [w v] a-value [
             if not test :v select b-value w [break]
         ]
 )]
@@ -562,7 +562,7 @@
     test: :equal?
     equal?
         test a-value b-value
-        to-logic for-each [w v] a-value [
+        not null? for-each [w v] a-value [
             if not test :v select b-value w [break]
         ]
 )

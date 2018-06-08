@@ -49,13 +49,13 @@
 )
 ; BREAK stops the evaluation
 (
-    blank? loop 1 [
+    null? loop 1 [
         either true [break 2] [2]
         2
     ]
 )
 (
-    blank? loop 1 [
+    null? loop 1 [
         either false [2] [break 2]
         2
     ]

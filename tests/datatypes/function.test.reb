@@ -197,7 +197,7 @@
 )
 ; BREAK out of a function
 (
-    blank? loop 1 [
+    null? loop 1 [
         f: does [break]
         f
         2

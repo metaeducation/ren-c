@@ -3,7 +3,7 @@
 ; just testing return values, but written as if break could fail altogether
 ; in case that becomes an issue. break failure tests are with the functions
 ; that they are failing to break from.
-(blank? loop 1 [break 2])
+(null? loop 1 [break 2])
 
 ; the "result" of break should not be assignable
 [#1515

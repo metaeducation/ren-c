@@ -10,9 +10,9 @@
 ("1 + 1" = reduce "1 + 1")
 (error? first reduce [trap [1 / 0]])
 [#1760 ; unwind functions should stop evaluation
-    (blank? loop 1 [reduce [break]])
+    (null? loop 1 [reduce [break]])
 ]
-(bar? loop 1 [reduce [continue]])
+(blank? loop 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 (1 = catch/name [reduce [throw/name 1 'a]] 'a)
 (1 = eval func [] [reduce [return 1 2] 2])

@@ -17,7 +17,7 @@
 ; THROW stops the evaluation
 (1 = catch [compose [(throw 1 2)] 2])
 ; BREAK stops the evaluation
-(blank? loop 1 [compose [(break 2)] 2])
+(null? loop 1 [compose [(break 2)] 2])
 ; Test that errors do not stop the evaluation:
 (block? compose [(trap [1 / 0])])
 (

@@ -7,7 +7,7 @@
 ; Test body-block return values
 (1 = until [1])
 ; Test break
-(blank? until [break true])
+(null? until [break true])
 ; Test continue
 (
     success: true

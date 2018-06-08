@@ -1559,22 +1559,6 @@ reevaluate:;
             //
             goto abort_action; }
 
-        case R_OUT_TRUE_IF_WRITTEN:
-            Init_Logic(f->out, NOT_END(f->out));
-            break;
-
-        case R_OUT_VOID_IF_UNWRITTEN:
-            if (IS_END(f->out))
-                Init_Void(f->out);
-            break;
-
-        case R_OUT_VOID_IF_UNWRITTEN_TRUTHIFY:
-            if (IS_END(f->out))
-                Init_Void(f->out);
-            else if (IS_VOID(f->out) or IS_FALSEY(f->out))
-                Init_Bar(f->out);
-            break;
-
         case R_REDO_CHECKED:
 
         redo_checked:

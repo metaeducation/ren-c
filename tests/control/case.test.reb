@@ -81,7 +81,7 @@
     ]
 )
 (
-    blank? loop 1 [
+    null? loop 1 [
         case [break 2]
         2
     ]

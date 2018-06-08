@@ -180,7 +180,7 @@ REBNATIVE(make)
                 + arg->payload.varargs.param_offset;
 
             if (TYPE_CHECK(param, REB_MAX_VOID))
-                fail (Error_Void_Vararg_Array_Raw());
+                fail (Error_Null_Vararg_Array_Raw());
         }
 
         REBDSP dsp_orig = DSP;

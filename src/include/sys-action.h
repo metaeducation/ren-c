@@ -74,22 +74,6 @@ enum Reb_Result {
     //
     R_OUT_IS_THROWN,
 
-    // Since all dispatchers get END markers in the f->out slot (a.k.a. D_OUT)
-    // then it can be used to tell if the output has been written "in band"
-    // by a legal value or void.  This returns TRUE if D_OUT is not END,
-    // and FALSE if it still is.
-    //
-    R_OUT_TRUE_IF_WRITTEN,
-
-    // Similar to R_OUT_TRUE_IF_WRITTEN, this converts an illegal END marker
-    // return value in R_OUT to simply a void.
-    //
-    R_OUT_VOID_IF_UNWRITTEN,
-
-    // This converts END into void, but void or conditional false into BAR!
-    //
-    R_OUT_VOID_IF_UNWRITTEN_TRUTHIFY,
-
     // If Do_Core gets back an R_REDO from a dispatcher, it will re-execute
     // the f->phase in the frame.  This function may be changed by the
     // dispatcher from what was originally called.
@@ -148,15 +132,6 @@ enum Reb_Result {
     R_END
 };
 typedef enum Reb_Result REB_R;
-
-// Convenience function for getting behaviors like WHILE/LOOPED?", and
-// doing the default thing--assuming END is being left in the D_OUT slot if
-// the tested-for condition is not met.
-//
-inline static REB_R R_OUT_Q(REBOOL q) {
-    if (q) return R_OUT_TRUE_IF_WRITTEN;
-    return R_OUT_VOID_IF_UNWRITTEN;
-}
 
 // Specially chosen 0 and 1 values for R_FALSE and R_TRUE enable this. 
 //

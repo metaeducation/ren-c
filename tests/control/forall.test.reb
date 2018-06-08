@@ -21,7 +21,7 @@
 )
 (
     blk: [1 2 3 4]
-    bar? for-next blk [false]
+    false = for-next blk [false]
 )
 ; break cycle
 (
@@ -32,7 +32,7 @@
 ; break return value
 (
     blk: [1 2 3 4]
-    blank? for-next blk [break]
+    null? for-next blk [break]
 )
 ; continue cycle
 (

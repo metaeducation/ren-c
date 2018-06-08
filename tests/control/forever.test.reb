@@ -8,7 +8,7 @@
     num = 10
 )
 ; Test break and continue
-(blank? forever [break])
+(null? forever [break])
 (
     success: true
     cycle?: true

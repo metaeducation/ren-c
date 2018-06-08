@@ -5,7 +5,7 @@
     10 = num
 )
 ; cycle return value
-(bar? loop 1 [false])
+(false = loop 1 [false])
 ; break cycle
 (
     num: 0
@@ -13,7 +13,7 @@
     num = 1
 )
 ; break return value
-(blank? loop 10 [break])
+(null? loop 10 [break])
 ; continue cycle
 (
     success: true
@@ -83,5 +83,5 @@
 ; leave the gathered material in the mold buffer
 ;
 (
-    '| = loop 2 [unspaced ["abc" continue]]
+    blank? loop 2 [unspaced ["abc" continue]]
 )

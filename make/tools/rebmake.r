@@ -2159,7 +2159,7 @@ visual-studio: make generator-class [
                             block? o/cflags
                             compile-as: find-compile-as o/cflags
                             unspaced [
-                                {        <CompileAs>} find-compile-as {</CompileAs>^/}
+                                {        <CompileAs>} compile-as {</CompileAs>^/}
                             ]
                         ]
                     ]

@@ -12,7 +12,7 @@
 )
 (
     blk: [1 2 3 4]
-    bar? for-skip blk 1 [false]
+    false = for-skip blk 1 [false]
 )
 ; break cycle
 (
@@ -25,7 +25,7 @@
 ; break return value
 (
     blk: [1 2 3 4]
-    blank? for-skip blk 2 [break]
+    null? for-skip blk 2 [break]
 )
 ; continue cycle
 (

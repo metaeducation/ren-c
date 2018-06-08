@@ -9,7 +9,7 @@
     success and (10 = num)
 )
 ; cycle return value
-(bar? repeat i 1 [false])
+(false = repeat i 1 [false])
 ; break cycle
 (
     num: 0
@@ -17,7 +17,7 @@
     num = 1
 )
 ; break return value
-(blank? repeat i 10 [break])
+(null? repeat i 10 [break])
 ; continue cycle
 (
     success: true

@@ -1186,7 +1186,8 @@ generic-format: context [
 
         while [0 != modulo (length of executable) 4096] [
             append executable #{00}
-        ] also [
+            true
+        ] then [
             print [{Executable padded to} length of executable {bytes long.}]
         ] else [
             print {No padding of executable length required.}

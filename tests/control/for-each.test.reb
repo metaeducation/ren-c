@@ -18,7 +18,7 @@
 )
 (
     blk: [1 2 3 4]
-    bar? for-each i blk [false]
+    false = for-each i blk [false]
 )
 ; break cycle
 (
@@ -32,7 +32,7 @@
 ; break return value
 (
     blk: [1 2 3 4]
-    blank? for-each i blk [break]
+    null? for-each i blk [break]
 )
 ; continue cycle
 (

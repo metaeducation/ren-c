@@ -336,7 +336,7 @@
 )
 ; BREAK stops evaluation
 (
-    blank? loop 1 [
+    null? loop 1 [
         any [
             break
             2

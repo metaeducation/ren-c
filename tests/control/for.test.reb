@@ -20,7 +20,7 @@
     success and (10 = num)
 )
 ; cycle return value
-(bar? for i 1 1 1 [false])
+(false = for i 1 1 1 [false])
 ; break cycle
 (
     num: 0
@@ -28,7 +28,7 @@
     num = 1
 )
 ; break return value
-(blank? for i 1 10 1 [break])
+(null? for i 1 10 1 [break])
 
 ; continue cycle
 [#58 (
@@ -186,7 +186,7 @@
 ; local variable changeability - this is how it works in R3
 (
     test: false
-    blank? for i 1 3 1 [
+    null? for i 1 3 1 [
         if i = 2 [
             if test [break]
             test: true

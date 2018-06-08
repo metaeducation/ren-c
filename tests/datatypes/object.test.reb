@@ -14,7 +14,7 @@
 )
 ; BREAK out of make object!
 [#846 (
-    blank? loop 1 [
+    null? loop 1 [
         make object! [break]
         2
     ]
