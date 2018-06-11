@@ -85,6 +85,8 @@ matrix:
         - STATIC=no
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="no"
+        - EXTENSIONS="ODBC + ZeroMQ +"
+      # libraries (ODBC, ZeroMQ...) added via brew in `install` step below
 
     # OSX x64, debug, clang
     #
@@ -104,6 +106,8 @@ matrix:
         - STATIC=no
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="no"
+        - EXTENSIONS="ODBC + ZeroMQ +"
+      # libraries (ODBC, ZeroMQ...) added via brew in `install` step below
 
     # OSX x64, release, clang++
     #
@@ -133,6 +137,8 @@ matrix:
         - STATIC=no
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="no"
+        - EXTENSIONS="ODBC + ZeroMQ +"
+      # libraries (ODBC, ZeroMQ...) added via brew in `install` step below
 
     # Linux x86, release, gcc
     #
@@ -149,18 +155,20 @@ matrix:
         - CONFIG=generic.r
         - OS_ID=0.4.4
         - DEBUG=none
-        - STANDARD=gnu89
+        - STANDARD=gnu89 # Note: ZeroMQ extension needs C99 or C++11
         - RIGOROUS=yes
         - STATIC=yes
         - TCC=i386-tcc
         - ARCH_CFLAGS=-m32
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="yes"
+        - EXTENSIONS="ODBC +"
       addons:
         apt:
           packages:
             - gcc-multilib
-            - unixodbc-dev:i386
+            - unixodbc-dev:i386 # for ODBC extension
+            - libzmq3-dev:i386 # for ZeroMQ extension
             - texinfo # for makeinfo, required to build FFI
 
     # Linux x64, debug, g++
@@ -182,13 +190,15 @@ matrix:
         - TCC=tcc
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="no"
+        - EXTENSIONS="ODBC + ZeroMQ +"
         - ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-3.4
         - ASAN_OPTIONS=symbolize=1
       addons:
         apt:
           packages:
             - g++-multilib
-            - unixodbc-dev
+            - unixodbc-dev # for ODBC extension
+            - libzmq3-dev # for ZeroMQ extension
             - texinfo # for makeinfo, required to build FFI
 
     # Linux x64, release, gcc
@@ -206,11 +216,13 @@ matrix:
         - TCC=tcc
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="no"
+        - EXTENSIONS="ODBC + ZeroMQ +"
       addons:
         apt:
           packages:
             - gcc-multilib
-            - unixodbc-dev
+            - unixodbc-dev # for ODBC extension
+            - libzmq3-dev # for ZeroMQ extension
             - texinfo # for makeinfo, required to build FFI
 
     # Windows x86, release, gcc
@@ -243,6 +255,7 @@ matrix:
         - ARCH_CFLAGS=-m32
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="no"
+        - EXTENSIONS="ODBC + Clipboard +"
       addons:
         apt:
           packages:
@@ -250,7 +263,7 @@ matrix:
             - gcc-mingw-w64-i686
             - mingw-w64
             - texinfo # for makeinfo, required to build FFI
-        
+
     # Windows x64, debug, gcc
     #
     - os: linux
@@ -269,6 +282,7 @@ matrix:
         - HOST=x86_64-w64-mingw32
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="no"
+        - EXTENSIONS="ODBC + Clipboard +"
       addons:
         apt:
           packages:
@@ -304,6 +318,7 @@ matrix:
         - HOST=x86_64-w64-mingw32
         - WITH_FFI="dynamic"
         - ODBC_REQUIRES_LTDL="no"
+        - EXTENSIONS="ODBC + Clipboard +"
       addons:
         apt:
           packages:
@@ -367,7 +382,7 @@ matrix:
         - STATIC=no
         - WITH_FFI="no"
         - ODBC_REQUIRES_LTDL="no"
-        - EXTRA="extensions: -"
+        - EXTENSIONS=- # requests inclusion of no extensions (default?)
 
 # The install step occurs before the `script:` step runs.  The language that
 # was specified in the `matrix:` entry for each instance will guide certain
@@ -383,9 +398,10 @@ matrix:
 # !!! Originally, the Rebol that was fetched was the last r3-alpha that was
 # published on rebol.com, to ensure that it could still be used for bootstrap.
 # Conversion of the build in mid-2017 to using %rebmake.r meant that only a
-# semi-recent Ren-C could be used to run the build prep steps.  This is
-# hopefully a temporary state of affairs, and it should be ported back to
-# support R3-Alpha at some point.
+# semi-recent Ren-C could be used to run the build prep steps.  It is now
+# looking like there will not be an attempt to go back to building with
+# R3-Alpha, though a more purposefully stable build should be picked at
+# some point to replace the ad-hoc choice which wound up in the make dir.
 #
 install:
   - |
@@ -406,7 +422,8 @@ install:
       #
       brew update
 
-      brew install unixodbc
+      brew install unixodbc # for ODBC extension
+      brew install zmq # for ZeroMQ extension
     fi
 
   - |
@@ -590,7 +607,7 @@ script:
           # we do not apply it to any of the binaries which are uploaded to s3
           # -- not even debug ones.
           #
-          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" RIGOROUS="${RIGOROUS}" DEBUG=sanitize OPTIMIZE=2 STATIC=no ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} CONFIG="configs/${CONFIG}" ${EXTRA} makefile
+          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" RIGOROUS="${RIGOROUS}" DEBUG=sanitize OPTIMIZE=2 STATIC=no ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} CONFIG="configs/${CONFIG}" EXTENSIONS="${EXTENSIONS}" ${EXTRA} makefile
           make clean prep folders
           make -j ${MAKE_JOBS} ${TARGET}
 
@@ -605,11 +622,11 @@ script:
     #
     - |
       if [[ -z ${TCC} ]]; then
-          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="{${GIT_COMMIT}}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI=${WITH_FFI} WITH_TCC="no" ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} TARGET=${TARGET} CONFIG="configs/${CONFIG}" ${EXTRA} makefile
+          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="{${GIT_COMMIT}}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI=${WITH_FFI} WITH_TCC="no" ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} TARGET=${TARGET} CONFIG="configs/${CONFIG}" EXTENSIONS="${EXTENSIONS}" ${EXTRA} makefile
           make clean prep folders
           make -j ${MAKE_JOBS} ${TARGET}
       else
-          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="{${GIT_COMMIT}}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI=${WITH_FFI} WITH_TCC="%${PWD}/tcc/${TCC}" ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} TARGET=${TARGET} CONFIG="configs/${CONFIG}" ${EXTRA} makefile
+          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="{${GIT_COMMIT}}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI=${WITH_FFI} WITH_TCC="%${PWD}/tcc/${TCC}" ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} TARGET=${TARGET} CONFIG="configs/${CONFIG}" EXTENSIONS="${EXTENSIONS}" ${EXTRA} makefile
           make clean prep folders
           make -j ${MAKE_JOBS} ${TARGET}
       fi

@@ -33,6 +33,7 @@ extensions: make map! [
     Process + 
     UUID + 
     View +
+    ZeroMQ -
 ]
 
 rebol-tool: _ ; fallback value if system/options/boot fails
