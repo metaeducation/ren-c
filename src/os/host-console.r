@@ -632,7 +632,7 @@ host-console: function [
         ;
         ; Shortcuts like `q => [quit]`, `d => [dump]`
         ;
-        if (bound? code/1) and (set? code/1) [
+        if (binding of code/1) and (set? code/1) [
             ;
             ; Help confused user who might not know about the shortcut not
             ; panic by giving them a message.  Reduce noise for the casual
