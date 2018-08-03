@@ -46,15 +46,12 @@ do*: function [
         {Files, urls and modules evaluate as scripts, other strings don't.}
     arg [<opt> any-value!]
         "Args passed as system/script/args to a script (normally a string)"
-    var [<opt> blank! word!]
-        "If do next expression only, variable updated with new block position"
     only [logic!]
         "Do not catch quits...propagate them."
 ][
     ; Refinements on the original DO, re-derive for helper
 
     args: value? :arg
-    next_DO*: value? :var
 
     next: :lib/next
 
@@ -139,7 +136,7 @@ do*: function [
             ;
             ;     do "append {abc} {de}"
             ;
-            do/next code :var ;-- If var is void, /NEXT is revoked
+            do code ;-- !!! Might args be passed implicitly somehow?
         ] :finalizer
     ] else [
         ; Otherwise we are in script mode.  When we run a script, the
@@ -186,12 +183,11 @@ do*: function [
             result: import catch/quit/with [
                 module/mixin hdr code (opt do-needs/no-user hdr)
             ] :finalizer
-            if next_DO* [set var tail of code]
         ][
             do-needs hdr  ; Load the script requirements
             intern code   ; Bind the user script
             set* quote result: catch/quit/with [
-                do/next code :var ;-- If var is void, /NEXT is revoked
+                do code
             ] :finalizer
         ]
     ]

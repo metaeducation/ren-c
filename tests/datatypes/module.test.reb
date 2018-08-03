@@ -45,7 +45,7 @@
 (1 = load "1")
 ([1] = load "[1]")
 ([1 2 3] = load "1 2 3")
-([1 2 3] = load/type "1 2 3" ())
+([1 2 3] = load/type "1 2 3" null)
 ([1 2 3] = load "rebol [] 1 2 3")
 (
     d: load/header "rebol [] 1 2 3"

@@ -578,6 +578,8 @@ inline static const RELVAL *Fetch_Next_In_Frame(REBFRM *f) {
         f->value = nullptr;
         TRASH_POINTER_IF_DEBUG(f->source.pending);
 
+        ++f->source.index; // for consistency in index termination state
+
         if (f->flags.bits & DO_FLAG_TOOK_FRAME_HOLD) {
             assert(GET_SER_INFO(f->source.array, SERIES_INFO_HOLD));
             CLEAR_SER_INFO(f->source.array, SERIES_INFO_HOLD);
@@ -956,13 +958,8 @@ inline static REBIXO Do_Array_At_Core(
         f->source.pending = f->value + 1;
     }
 
-    if (FRM_AT_END(f)) {
-        if (flags & DO_FLAG_FULFILLING_ARG)
-            Init_Endish_Nulled(out);
-        else
-            Init_Nulled(out); // shouldn't set VALUE_FLAG_UNEVALUATED
+    if (FRM_AT_END(f))
         return END_FLAG;
-    }
 
     f->out = out;
 
@@ -978,14 +975,11 @@ inline static REBIXO Do_Array_At_Core(
     if (THROWN(f->out))
         return THROWN_FLAG;
 
-    if (FRM_AT_END(f)) {
-        if (IS_END(f->out)) {
-            if (flags & DO_FLAG_FULFILLING_ARG)
-                Init_Endish_Nulled(out);
-            else
-                Init_Nulled(out); // shouldn't set VALUE_FLAG_UNEVALUATED
-        }
-
+    if (
+        (flags & DO_FLAG_TO_END) // request was made to evaluate everything
+        or (f->out->header.bits & OUT_MARKED_STALE) // was just COMMENTs/ELIDEs
+    ){
+        assert(FRM_AT_END(f));
         return END_FLAG;
     }
 
@@ -1151,10 +1145,8 @@ inline static REBIXO Do_Va_Core(
         Fetch_Next_In_Frame(f);
     }
 
-    if (FRM_AT_END(f)) {
-        Init_Nulled(out);
+    if (FRM_AT_END(f))
         return END_FLAG;
-    }
 
     f->out = out;
 
@@ -1168,7 +1160,18 @@ inline static REBIXO Do_Va_Core(
     if (THROWN(f->out))
         return THROWN_FLAG;
 
-    return FRM_AT_END(f) ? END_FLAG : VA_LIST_FLAG;
+    if (
+        (flags & DO_FLAG_TO_END) // not a DO/NEXT, but a full DO
+        or (f->out->header.bits & OUT_MARKED_STALE) // just ELIDEs and COMMENTs
+    ){
+        assert(FRM_AT_END(f));
+        return END_FLAG;
+    }
+
+    if ((flags & DO_FLAG_NO_RESIDUE) and not FRM_AT_END(f))
+        fail (Error_Apply_Too_Many_Raw());
+
+    return VA_LIST_FLAG; // frame may be at end, next call might just END_FLAG
 }
 
 
@@ -1217,27 +1220,23 @@ inline static REBOOL Apply_Only_Throws(
     Move_Value(applicand_eval, applicand);
     SET_VAL_FLAG(applicand_eval, VALUE_FLAG_EVAL_FLIP);
 
+    Init_Endish_Nulled(out); // result if it's empty or just COMMENTs/ELIDEs
+
     REBIXO indexor = Do_Va_Core(
         out,
         applicand_eval, // opt_first
         &va,
-        DO_FLAG_EXPLICIT_EVALUATE | DO_FLAG_NO_LOOKAHEAD
+        DO_FLAG_EXPLICIT_EVALUATE
+            | DO_FLAG_NO_LOOKAHEAD
+            | (fully ? DO_FLAG_NO_RESIDUE : 0)
     );
-
-    if (fully and indexor == VA_LIST_FLAG) {
-        //
-        // Not consuming all the arguments given suggests a problem if `fully`
-        // is passed in as TRUE.
-        //
-        fail (Error_Apply_Too_Many_Raw());
-    }
 
     // Note: va_end() is handled by Do_Va_Core (one way or another)
 
     assert(
         indexor == THROWN_FLAG
         or indexor == END_FLAG
-        or (not fully and indexor == VA_LIST_FLAG)
+        or indexor == VA_LIST_FLAG
     );
     return indexor == THROWN_FLAG;
 }
@@ -1250,7 +1249,8 @@ inline static REBOOL Do_At_Throws(
     REBSPC *specifier
 ){
     const REBVAL *opt_first = nullptr;
-    return THROWN_FLAG == Do_Array_At_Core(
+    Init_Void(out);
+    REBIXO indexor = Do_Array_At_Core(
         out,
         opt_first,
         array,
@@ -1258,6 +1258,10 @@ inline static REBOOL Do_At_Throws(
         specifier,
         DO_FLAG_TO_END
     );
+    if (indexor == THROWN_FLAG)
+        return true;
+    assert(indexor == END_FLAG);
+    return false;
 }
 
 // Note: It is safe for `out` and `array` to be the same variable.  The
@@ -1286,7 +1290,8 @@ inline static REBOOL Eval_Value_Core_Throws(
     const RELVAL *value,
     REBSPC *specifier
 ){
-    return THROWN_FLAG == Do_Array_At_Core(
+    Init_Endish_Nulled(out);
+    REBIXO indexor = Do_Array_At_Core(
         out,
         value,
         EMPTY_ARRAY,
@@ -1294,6 +1299,10 @@ inline static REBOOL Eval_Value_Core_Throws(
         specifier,
         DO_FLAG_TO_END
     );
+    if (indexor == THROWN_FLAG)
+        return true;
+    assert(indexor == END_FLAG);
+    return false;
 }
 
 #define Eval_Value_Throws(out,value) \

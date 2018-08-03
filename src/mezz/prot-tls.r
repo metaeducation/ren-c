@@ -75,14 +75,16 @@ emit: function [
 
     ctx [object!]
     code [block! binary!]
+    <local> result
 ][
     if block? code [
-        while-not [tail? code] [
+        while [code: try sync-invisibles code] [
             if set-word? code/1 [
                 set code/1 tail ctx/msg ;-- save position
                 code: my next
             ] else [
-                append ctx/msg ensure binary! do/next code 'code
+                code: evaluate/set code 'result
+                append ctx/msg ensure binary! result
             ]
         ]
     ] else [

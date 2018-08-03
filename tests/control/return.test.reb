@@ -11,7 +11,7 @@
 )
 ; return value tests
 (
-    f1: func [] [return ()]
+    f1: func [] [return null]
     null? f1
 )
 (

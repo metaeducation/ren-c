@@ -32,7 +32,7 @@
 
 [
     (did match2: enclose specialize 'either-test [
-        branch: [] ;-- runs on test failure
+        branch: [null] ;-- runs on test failure
     ] function [
         return: [<opt> any-value!]
         f [frame!]

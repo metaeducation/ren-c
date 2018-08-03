@@ -13,27 +13,27 @@
 )
 
 (
-    pos: _
-    val: do/next [1 + comment "a" comment "b" 2 * 3 fail "didn't stop"] 'pos
+    val: <overwritten>
+    pos: evaluate/set [1 + comment "a" comment "b" 2 * 3 fail "too far"] 'val
     did all [
         val = 9
-        pos = [fail "didn't stop"]
+        pos = [fail "too far"]
     ]
 )
 (
-    pos: _
-    val: do/next [1 comment "a" + comment "b" 2 * 3 fail "didn't stop"] 'pos
+    val: <overwritten>
+    pos: evaluate/set [1 comment "a" + comment "b" 2 * 3 fail "too far"] 'val
     did all [
         val = 9
-        pos = [fail "didn't stop"]
+        pos = [fail "too far"]
     ]
 )
 (
-    pos: _
-    val: do/next [1 comment "a" comment "b" + 2 * 3 fail "didn't stop"] 'pos
+    val: <overwritten>
+    pos: evaluate/set [1 comment "a" comment "b" + 2 * 3 fail "too far"] 'val
     did all [
         val = 9
-        pos = [fail "didn't stop"] 'pos
+        pos = [fail "too far"]
     ]
 )
 
@@ -53,23 +53,20 @@
 )
 
 (
-    pos: _
     error? trap [
-        do/next [1 elide "a" + elide "b" 2 * 3 fail "didn't stop"] 'pos
+        evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
     ]
 )
 (
-    pos: _
     error? trap [
-        do/next [1 elide "a" elide "b" + 2 * 3 fail "didn't stop"] 'pos
+        evaluate evaluate [1 elide "a" elide "b" + 2 * 3 fail "too far"]
     ]
 )
 (
-    pos: _
-    val: do/next [1 + 2 * 3 elide "a" elide "b" fail "didn't stop"] 'pos
+    pos: evaluate/set [1 + 2 * 3 elide "a" elide "b" fail "too far"] 'val
     did all [
         val = 9
-        pos = [fail "didn't stop"]
+        pos = [elide "a" elide "b" fail "too far"]
     ]
 )
 

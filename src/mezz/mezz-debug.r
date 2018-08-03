@@ -17,13 +17,15 @@ verify: function [
     return: <void>
     conditions [block!]
         {Conditions to check}
+    <local> result
 ][
-    while-not [tail? conditions] [
-        if not (result: do/next conditions quote pos:) [
+    while [pos: try evaluate/set conditions 'result] [
+        if not try :result [
             fail/where [
                 "Assertion condition returned"
                  choose [
-                    (unset? 'result) "void"
+                    (unset? 'result) "null"
+                    (void? result) "void"
                     (blank? result) "blank"
                     (result = false) "false"
                 ]

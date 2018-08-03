@@ -580,9 +580,10 @@ take: redescribe [
 )
 
 attempt: redescribe [
-    {Tries to evaluate a block and returns result or BLANK! on error.}
+    {Tries to evaluate a block and returns result or NULL on error.}
 ](
-    specialize 'trap [with: true | handler: [_]]
+    ;-- REVIEW: Voidify nulls so they are the only way to get NULL, or not?
+    specialize 'trap [with: true | handler: [null]]
 )
 
 for-next: redescribe [
@@ -717,10 +718,10 @@ right-bar: func [
         {Evaluative result of first of the following expressions.}
     expressions [<opt> any-value! <...>]
         {Any number of expression.}
+    <local> right
 ][
-    if not tail? expressions [take* expressions] ;-- return result
-
-    elide do expressions
+    do <- evaluate/set expressions 'right else [return]
+    :right
 ]
 
 

@@ -24,7 +24,7 @@ run-tests: function [tests] [
             ; check if it is a test file
             if %.tst = find/last file %. [run-tests file]
         ]
-        return ()
+        return null
     ]
 
     ; having an individual file

@@ -65,7 +65,7 @@
 )
 
 (
-    null? applique func [
+    void? applique func [
         return: [<opt> any-value!]
         x [<opt> any-value!]
     ][
@@ -75,7 +75,7 @@
     ]
 )
 (
-    null? applique func [
+    void? applique func [
         return: [<opt> any-value!]
         'x [<opt> any-value!]
     ][
@@ -85,7 +85,7 @@
     ]
 )
 (
-    null? applique func [
+    void? applique func [
         return: [<opt> any-value!]
         x [<opt> any-value!]
     ][
@@ -95,7 +95,7 @@
     ]
 )
 (
-    null? applique func [
+    void? applique func [
         return: [<opt> any-value!]
         'x [<opt> any-value!]
     ][

@@ -38,7 +38,8 @@
 
 ; ENTRAP (similar to TRAP, but puts normal result in a block)
 
-(null? entrap [])
+(void? first entrap [])
+(null? entrap [null])
 ([3] = entrap [1 + 2])
 ([[b c]] = entrap [skip [a b c] 1])
 ('no-arg = (entrap [quote])/id)

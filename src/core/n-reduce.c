@@ -238,20 +238,28 @@ REBOOL Compose_To_Stack_Throws(
         );
 
         if (match) { // only f->value if pattern is just [] or (), else deeper
-            if (Do_At_Throws(
+            Init_Endish_Nulled(out); // want () to vanish, not leave #[void]
+            REBIXO indexor = Do_Array_At_Core(
                 out, // can't do directly into stack cell, DO can expand stack
+                nullptr, // no opt_first
                 VAL_ARRAY(match),
                 VAL_INDEX(match),
-                match_specifier
-            )){
+                match_specifier,
+                DO_FLAG_TO_END
+            );
+
+            if (indexor == THROWN_FLAG) {
                 DS_DROP_TO(dsp_orig);
                 Abort_Frame(f);
                 return true;
             }
 
+            assert(indexor == END_FLAG);
+
             if (IS_NULLED(out)) {
                 //
                 // compose [("nulls *vanish*!" null)] => []
+                // compose [(elide "so do 'empty' composes")] => []
             }
             else if (not only and IS_BLOCK(out)) {
                 //

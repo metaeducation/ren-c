@@ -208,7 +208,7 @@ static void Startup_Base(REBARR *boot_base)
     if (Do_At_Throws(result, boot_base, 0, SPECIFIED))
         panic (result);
 
-    if (not IS_NULLED(result))
+    if (not IS_VOID(result))
         panic (result);
 }
 
@@ -243,7 +243,7 @@ static void Startup_Sys(REBARR *boot_sys) {
     if (Do_At_Throws(result, boot_sys, 0, SPECIFIED))
         panic (result);
 
-    if (not IS_NULLED(result))
+    if (not IS_VOID(result))
         panic (result);
 }
 
@@ -709,7 +709,7 @@ static REBARR *Startup_Actions(REBARR *boot_actions)
     if (Do_At_Throws(result, boot_actions, 0, SPECIFIED))
         panic (result);
 
-    if (not IS_NULLED(result))
+    if (not IS_VOID(result))
         panic (result);
 
     // Sanity check the symbol transformation
@@ -912,7 +912,7 @@ static void Init_System_Object(
     DECLARE_LOCAL (result);
     if (Do_At_Throws(result, boot_sysobj_spec, 0, SPECIFIED))
         panic (result);
-    if (not IS_NULLED(result))
+    if (not IS_VOID(result))
         panic (result);
 
     // Create a global value for it.  (This is why we are able to say `system`

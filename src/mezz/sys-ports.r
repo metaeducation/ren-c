@@ -53,7 +53,7 @@ make-port*: function [
     ; Get the scheme definition:
     all [
         match [word! lit-word!] name
-        scheme: try get in system/schemes as word! name
+        scheme: try get try in system/schemes as word! name
     ] else [
         cause-error 'access 'no-scheme name
     ]
@@ -272,7 +272,7 @@ init-schemes: func [
         init: func [port] [
             ;;print ["Init" title]
             port/data: copy [] ; The port wake list
-            return void
+            return
         ]
     ]
 
@@ -292,7 +292,7 @@ init-schemes: func [
                 parse port/spec/ref [thru #":" 0 2 slash path:]
                 append port/spec compose [path: (to file! path)]
             ]
-            return void
+            return
         ]
     ]
 
@@ -361,7 +361,7 @@ init-schemes: func [
                 ]
                 port/spec/path: to file! path
             ]
-            return void
+            return
         ]
     ]
 

@@ -97,7 +97,7 @@
 )
 (0:00 == all [0:00])
 (0.0.0 == all [0.0.0])
-(null? all [()])
+(null? all [null])
 ('a == all ['a])
 ; two values
 (:abs = all [true :abs])
@@ -193,7 +193,7 @@
 )
 (0:00 == all [true 0:00])
 (0.0.0 == all [true 0.0.0])
-(null? all [1020 ()])
+(null? all [1020 null])
 ('a == all [true 'a])
 (true = all [:abs true])
 (

@@ -217,20 +217,18 @@ void Do_Core_Expression_Checks_Debug(REBFRM *f) {
         or not f->prior->gotten
     );
 
+  #if defined(DEBUG_UNREADABLE_BLANKS)
+    //
     // The only thing the evaluator can take for granted between evaluations
     // about the output cell is that it's not trash.  In the debug build,
     // give this more teeth by explicitly setting it to an unreadable blank,
     // but only if it wasn't an END marker (that's how we can tell no
     // evaluations have been done yet, consider `(comment [...] + 2)`) or
     // have NODE_FLAG_MARKED by BAR! for (1 + 2 | comment "hi") to be 3.
-
-  #if defined(DEBUG_UNREADABLE_BLANKS)
-    if (
-        not IS_UNREADABLE_DEBUG(f->out)
-        and NOT_END(f->out)
-        and not (f->flags.bits & DO_FLAG_BARRIER_HIT)
-    ){
+    //
+    if (not (f->out->header.bits & OUT_MARKED_STALE)) {
         Init_Unreadable_Blank(f->out);
+        f->out->header.bits |= OUT_MARKED_STALE;
     }
 
     // Once a throw is started, no new expressions may be evaluated until
@@ -332,7 +330,7 @@ void Do_Process_Action_Checks_Debug(REBFRM *f) {
     }
 
     if (f->refine == ORDINARY_ARG) {
-        if (NOT_END(f->out))
+        if (not (f->out->header.bits & OUT_MARKED_STALE))
             assert(GET_ACT_FLAG(phase, ACTION_FLAG_INVISIBLE));
     }
     else

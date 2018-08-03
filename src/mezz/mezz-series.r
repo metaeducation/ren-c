@@ -53,11 +53,11 @@ join-all: function [
         "Will be the type of the first non-void series produced by evaluation"
     block [block!]
         "Values to join together"
-    <local> position
+    <local> position base
 ][
-    forever [
-        if tail? block [return ()]
-        if not null? base: do/next block 'block [break]
+    until [
+        block: (evaluate/set block 'base) else [return null]
+        set? 'base
     ]
 
     ; !!! It isn't especially compelling that  `join-of 3 "hello"` gives you

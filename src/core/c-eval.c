@@ -122,12 +122,7 @@ static inline REBOOL Start_New_Expression_Throws(REBFRM *f) {
 
     UPDATE_EXPRESSION_START(f); // !!! See FRM_INDEX() for caveats
 
-  #if defined(DEBUG_UNREADABLE_BLANKS)
-    assert(
-        IS_UNREADABLE_DEBUG(f->out) or IS_END(f->out) or IS_BAR(f->value)
-    );
-  #endif
-
+    assert(f->out->header.bits & OUT_MARKED_STALE);
     return false;
 }
 
@@ -230,11 +225,13 @@ inline static void Finalize_Arg(
             fail (Error_No_Arg(f_state, param));
 
         Init_Endish_Nulled(arg);
-        SET_VAL_FLAG(arg, ARG_FLAG_TYPECHECKED);
+        SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
         return;
     }
 
-    assert(NOT_VAL_FLAG(arg, ARG_FLAG_TYPECHECKED)); // no get val flag on END
+  #if defined(DEBUG_STALE_ARGS) // see notes on flag definition
+    assert(NOT_VAL_FLAG(arg, ARG_MARKED_CHECKED));
+  #endif
 
     assert(
         refine == ORDINARY_ARG // check arg type
@@ -255,7 +252,7 @@ inline static void Finalize_Arg(
                 fail (Error_Bad_Refine_Revoke(param, arg));
 
             Init_Blank(refine); // can't re-enable...
-            SET_VAL_FLAG(arg, ARG_FLAG_TYPECHECKED);
+            SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
 
             refine = ARG_TO_REVOKED_REFINEMENT;
             return; // don't type check for optionality
@@ -266,7 +263,7 @@ inline static void Finalize_Arg(
             // BLANK! means refinement already revoked, null is okay
             // false means refinement was never in use, so also okay
             //
-            SET_VAL_FLAG(arg, ARG_FLAG_TYPECHECKED);
+            SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
             return;
         }
 
@@ -284,7 +281,7 @@ inline static void Finalize_Arg(
 
     if (NOT_VAL_FLAG(param, TYPESET_FLAG_VARIADIC)) {
         if (TYPE_CHECK(param, VAL_TYPE(arg))) {
-            SET_VAL_FLAG(arg, ARG_FLAG_TYPECHECKED);
+            SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
             return;
         }
 
@@ -307,7 +304,7 @@ inline static void Finalize_Arg(
     //
     arg->payload.varargs.param_offset = arg - FRM_ARGS_HEAD(f_state);
     arg->payload.varargs.facade = ACT_FACADE(FRM_PHASE(f_state));
-    SET_VAL_FLAG(arg, ARG_FLAG_TYPECHECKED);
+    SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
 }
 
 inline static void Finalize_Current_Arg(REBFRM *f) {
@@ -390,13 +387,14 @@ void Do_Core(REBFRM * const f)
         goto post_switch;
     }
 
-    // END signals no evaluations have produced a result yet, even if some
-    // functions have run (e.g. COMMENT with ACTION_FLAG_INVISIBLE).  It also
-    // is initialized bits to be safe for the GC to inspect and protect, and
-    // triggers noisy alarms to help detect when someone attempts to evaluate
-    // into a cell in an array (which may have its memory moved).
+    // When Do_Core() is entered, whatever is in the out slot isn't a
+    // candidate for being fed into the left side of an enfix expression...
+    // it will always be treated as an END.  However it may need to be left
+    // there for use by the caller (e.g. ALL might want it if a final
+    // evaluation step turns out to be all invisibles)
     //
-    SET_END(f->out);
+    assert(not IS_TRASH_DEBUG(f->out));
+    f->out->header.bits |= OUT_MARKED_STALE;
 
     if (f->flags.bits & DO_FLAG_GOTO_PROCESS_ACTION) {
         evaluating = not (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE);
@@ -532,10 +530,9 @@ reevaluate:;
                 Begin_Action(f, VAL_WORD_SPELLING(current), ORDINARY_ARG);
 
                 if (NOT_VAL_FLAG(current_gotten, ACTION_FLAG_INVISIBLE)) {
-                  #if defined(DEBUG_UNREADABLE_BLANKS)
-                    assert(IS_UNREADABLE_DEBUG(f->out) or IS_END(f->out));
-                  #endif
+                    assert(f->out->header.bits & OUT_MARKED_STALE);
                     SET_END(f->out);
+                    f->out->header.bits |= OUT_MARKED_STALE;
                 }
                 goto process_action;
             }
@@ -767,12 +764,12 @@ reevaluate:;
                 // (jumping to unspecialized_refinement will take care of it)
 
                 if (IS_NULLED(f->special)) {
-                    assert(NOT_VAL_FLAG(f->special, ARG_FLAG_TYPECHECKED));
+                    assert(NOT_VAL_FLAG(f->special, ARG_MARKED_CHECKED));
                     goto unspecialized_refinement; // second most common
                 }
 
                 if (IS_BLANK(f->special)) // either specialized or not...
-                    goto unused_refinement; // will get ARG_FLAG_TYPECHECKED
+                    goto unused_refinement; // will get ARG_MARKED_CHECKED
 
                 // If arguments in the frame haven't already gone through
                 // some kind of processing, use the truthiness of the value.
@@ -784,7 +781,7 @@ reevaluate:;
                 // since at minimum it needs to accept any other refinement
                 // name to control it, but it could be considered.
                 //
-                if (NOT_VAL_FLAG(f->special, ARG_FLAG_TYPECHECKED)) {
+                if (NOT_VAL_FLAG(f->special, ARG_MARKED_CHECKED)) {
                     if (IS_FALSEY(f->special)) // !!! error on void, needed?
                         goto unused_refinement;
 
@@ -872,14 +869,14 @@ reevaluate:;
 
                 f->refine = ARG_TO_UNUSED_REFINEMENT; // "don't consume"
                 Init_Blank(f->arg);
-                SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
               used_refinement:;
 
                 assert(not IS_POINTER_TRASH_DEBUG(f->refine)); // must be set
                 Init_Refinement(f->arg, VAL_PARAM_SPELLING(f->param));
-                SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
 
@@ -897,14 +894,14 @@ reevaluate:;
             switch (pclass) {
             case PARAM_CLASS_LOCAL:
                 Init_Nulled(f->arg); // !!! f->special?
-                SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
             case PARAM_CLASS_RETURN:
                 assert(VAL_PARAM_SYM(f->param) == SYM_RETURN);
                 Move_Value(f->arg, NAT_VALUE(return)); // !!! f->special?
                 INIT_BINDING(f->arg, f->varlist);
-                SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 
             default:
@@ -916,7 +913,7 @@ reevaluate:;
             if (f->refine == SKIPPING_REFINEMENT_ARGS)
                 goto skip_this_arg_for_now;
 
-            if (GET_VAL_FLAG(f->special, ARG_FLAG_TYPECHECKED)) {
+            if (GET_VAL_FLAG(f->special, ARG_MARKED_CHECKED)) {
 
     //=//// SPECIALIZED OR OTHERWISE TYPECHECKED ARG //////////////////////=//
 
@@ -939,7 +936,7 @@ reevaluate:;
                     assert(NOT_VAL_FLAG(f->param, TYPESET_FLAG_VARIADIC));
 
                     Move_Value(f->arg, f->special); // won't copy the bit
-                    SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                    SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 }
                 goto continue_arg_loop;
             }
@@ -966,7 +963,7 @@ reevaluate:;
                 // Overwrite if !(DO_FLAG_FULLY_SPECIALIZED) faster than check
                 //
                 Init_Nulled(f->arg);
-                SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
 
@@ -979,8 +976,10 @@ reevaluate:;
                 //
                 f->refine = ORDINARY_ARG;
 
-                if (IS_END(f->out) or (f->flags.bits & DO_FLAG_BARRIER_HIT)) {
-                    //
+                if (
+                    (f->out->header.bits & OUT_MARKED_STALE)
+                    or (f->flags.bits & DO_FLAG_BARRIER_HIT)
+                ){
                     // Seeing an END in the output slot could mean that there
                     // was really "nothing" to the left, or it could be a
                     // consequence of a frame being in an argument gathering
@@ -1015,7 +1014,7 @@ reevaluate:;
                         fail (Error_No_Arg(f, f->param));
 
                     Init_Endish_Nulled(f->arg);
-                    SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                    SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                     goto continue_arg_loop;
                 }
 
@@ -1066,24 +1065,27 @@ reevaluate:;
                             goto abort_action;
                         }
                     }
+                    else if (IS_BAR(f->out)) {
+                        //
+                        // Hard quotes take BAR!s but they should look like an
+                        // <end> to a soft quote.
+                        //
+                        SET_END(f->arg);
+                    }
                     else {
                         Move_Value(f->arg, f->out);
                         SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
                     }
-
-                    // Hard quotes can take BAR!s but they should look like an
-                    // <end> to a soft quote.
-                    //
-                    if (IS_BAR(f->arg))
-                        SET_END(f->arg);
                     break;
 
                 default:
                     assert(false);
                 }
 
-                if (not GET_ACT_FLAG(FRM_PHASE(f), ACTION_FLAG_INVISIBLE))
+                if (not GET_ACT_FLAG(FRM_PHASE(f), ACTION_FLAG_INVISIBLE)) {
                     SET_END(f->out);
+                    f->out->header.bits |= OUT_MARKED_STALE;
+                }
 
                 // Now that we've gotten the argument figured out, make a
                 // singular array to feed it to the variadic.
@@ -1209,7 +1211,7 @@ reevaluate:;
                     fail (Error_No_Arg(f, f->param));
 
                 Init_Endish_Nulled(f->arg);
-                SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
 
@@ -1239,7 +1241,7 @@ reevaluate:;
                     fail (Error_No_Arg(f, f->param));
 
                 Init_Endish_Nulled(f->arg);
-                SET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED);
+                SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
 
@@ -1253,6 +1255,7 @@ reevaluate:;
                     flags |= DO_FLAG_EXPLICIT_EVALUATE;
 
                 DECLARE_FRAME (child); // capture DSP *now*
+                SET_END(f->arg); // Finalize_Arg() sets to Endish_Nulled
                 if (Do_Next_In_Subframe_Throws(f->arg, f, flags, child)) {
                     Move_Value(f->out, f->arg);
                     goto abort_action;
@@ -1272,6 +1275,7 @@ reevaluate:;
                     flags |= DO_FLAG_EXPLICIT_EVALUATE;
 
                 DECLARE_FRAME (child);
+                SET_END(f->arg); // Finalize_Arg() sets to Endish_Nulled
                 if (Do_Next_In_Subframe_Throws(f->arg, f, flags, child)) {
                     Move_Value(f->out, f->arg);
                     goto abort_action;
@@ -1327,7 +1331,7 @@ reevaluate:;
 
           continue_arg_loop:;
 
-            assert(GET_VAL_FLAG(f->arg, ARG_FLAG_TYPECHECKED));
+            assert(GET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED));
             continue;
 
           skip_this_arg_for_now:;
@@ -1436,7 +1440,7 @@ reevaluate:;
         // has written the out slot yet or not.
         //
         assert(
-            IS_END(f->out)
+            (f->out->header.bits & OUT_MARKED_STALE)
             or GET_ACT_FLAG(FRM_PHASE(f), ACTION_FLAG_INVISIBLE)
         );
 
@@ -1602,6 +1606,7 @@ reevaluate:;
             f->refine = ORDINARY_ARG; // no gathering, but need for assert
             assert(not GET_ACT_FLAG(FRM_PHASE(f), ACTION_FLAG_INVISIBLE));
             SET_END(f->out);
+            f->out->header.bits |= OUT_MARKED_STALE;
             assert(IS_POINTER_TRASH_DEBUG(f->deferred));
             goto process_action;
 
@@ -1613,6 +1618,7 @@ reevaluate:;
             //
             assert(not GET_ACT_FLAG(FRM_PHASE(f), ACTION_FLAG_INVISIBLE));
             SET_END(f->out);
+            f->out->header.bits |= OUT_MARKED_STALE;
             assert(IS_POINTER_TRASH_DEBUG(f->deferred));
             goto redo_unchecked;
 
@@ -1635,7 +1641,10 @@ reevaluate:;
             // that would require saving the old value somewhere...
             //
           #if defined(DEBUG_UNREADABLE_BLANKS)
-            assert(IS_END(f->out) or not IS_UNREADABLE_DEBUG(f->out));
+            assert(
+                (f->out->header.bits & OUT_MARKED_STALE)
+                or not IS_UNREADABLE_DEBUG(f->out)
+            );
           #endif
 
             // If an invisible is at the start of a frame and there's nothing
@@ -1646,7 +1655,10 @@ reevaluate:;
             //
             // Use same mechanic as EVAL by loading next item.
             //
-            if (IS_END(f->out) and not FRM_AT_END(f)) {
+            if (
+                (f->out->header.bits & OUT_MARKED_STALE)
+                and not FRM_AT_END(f)
+            ){
                 Derelativize(&f->cell, f->value, f->specifier);
                 Fetch_Next_In_Frame(f);
 
@@ -1786,15 +1798,14 @@ reevaluate:;
                 // or after ACTION_FLAG_INVISIBLE e.g. `10 comment "hi" + 20`.
                 //
                 Begin_Action(f, opt_label, LOOKBACK_ARG);
-
-              #if defined(DEBUG_UNREADABLE_BLANKS)
-                assert(IS_END(f->out) or not IS_UNREADABLE_DEBUG(f->out));
-              #endif
+                assert(f->out->header.bits & OUT_MARKED_STALE);
             }
             else {
                 Begin_Action(f, opt_label, ORDINARY_ARG);
-                if (NOT_VAL_FLAG(current_gotten, ACTION_FLAG_INVISIBLE))
+                if (NOT_VAL_FLAG(current_gotten, ACTION_FLAG_INVISIBLE)) {
                     SET_END(f->out);
+                    f->out->header.bits |= OUT_MARKED_STALE;
+                }
             }
 
             goto process_action;
@@ -1921,12 +1932,17 @@ reevaluate:;
 // If a GROUP! is seen then it generates another call into Do_Core().  The
 // resulting value for this step will be the outcome of that evaluation.
 //
+// Empty groups evaluate to #[void].  If one considers `while [] [...]`, that
+// is more appropriately an error than acting like the block is falsey, and
+// for consistency this suggests () should produce something that is neither
+// conditionally true nor false.  #[void] fits the bill, null does not.
+//
 //==//////////////////////////////////////////////////////////////////////==//
 
     case REB_GROUP: {
         REBCNT len = VAL_LEN_AT(current);
         if (len == 0) {
-            Init_Nulled(f->out);
+            Init_Void(f->out);
             break; // no VALUE_FLAG_UNEVALUATED
         }
 
@@ -1948,6 +1964,7 @@ reevaluate:;
         f->gotten = nullptr;
 
         REBSPC *derived = Derive_Specifier(f->specifier, current);
+        SET_END(f->out);
         if (Do_At_Throws(
             f->out,
             VAL_ARRAY(current), // the GROUP!'s array
@@ -1957,7 +1974,7 @@ reevaluate:;
             goto finished;
         }
 
-        assert(NOT_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
+        CLEAR_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED); // e.g. "endish" null
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
@@ -2022,6 +2039,7 @@ reevaluate:;
             //
             Begin_Action(f, opt_label, ORDINARY_ARG);
             SET_END(f->out); // loses enfix left hand side, invisible passthru
+            f->out->header.bits |= OUT_MARKED_STALE;
             goto process_action;
         }
 
@@ -2251,7 +2269,7 @@ reevaluate:;
 //
 // Expression barriers are "invisibles", and hence as many of them have to
 // be processed at the end of the loop as there are--they can't be left in
-// the source feed, else `do/next [1 + 2 | | | |] 'pos` would not be able
+// the source feed, else `evaluate [1 + 2 | | | |] 'pos` would not be able
 // to reconstitute 3 from `[| | | |]` for the next operation.
 //
 // Though they have to be processed at the end of the loop, they could also
@@ -2353,12 +2371,12 @@ reevaluate:;
     // We're sitting at what "looks like the end" of an evaluation step.
     // But we still have to consider enfix.  e.g.
     //
-    //    do/next [1 + 2 * 3] 'pos
+    //    evaluate/set [1 + 2 * 3] 'val
     //
-    // We want that to come back as 9, with `pos = []`.  So the evaluator
+    // We want that to give a position of [] and `val = 9`.  The evaluator
     // cannot just dispatch on REB_INTEGER in the switch() above, give you 1,
-    // and consider its job done.  It has to notice that the variable `+`
-    // looks up to is an ACTION! assigned with SET/ENFIX, and keep going.
+    // and consider its job done.  It has to notice that the word `+` looks up
+    // to an ACTION! that was assigned with SET/ENFIX, and keep going.
     //
     // Next, there's a subtlety with DO_FLAG_NO_LOOKAHEAD which explains why
     // processing of the 2 argument doesn't greedily continue to advance, but
@@ -2368,20 +2386,18 @@ reevaluate:;
     // Slightly more nuanced is why ACTION_FLAG_INVISIBLE functions have to be
     // considered in the lookahead also.  Consider this case:
     //
-    //    do/next [1 + 2 * 3 comment ["hi"] 4 / 5] 'pos
+    //    evaluate/set [1 + 2 * comment ["hi"] 3 4 / 5] 'val
     //
-    // We want this to evaluate to 9, with `pos = [4 / 5]`.  To do this, we
+    // We want `val = 9`, with `pos = [4 / 5]`.  To do this, we
     // can't consider an evaluation finished until all the "invisibles" have
-    // been processed.  That's because letting the comment wait until the next
-    // evaluation would preclude `do/next [1 + 2 * 3 comment ["hi"]]` being
-    // 9, since `comment ["hi"]` alone can't come up with 9 out of thin air.
+    // been processed.
     //
     // If that's not enough to consider :-) it can even be the case that
     // subsequent enfix gets "deferred".  Then, possibly later the evaluated
     // value gets re-fed back in, and we jump right to this post-switch point
     // to give it a "second chance" to take the enfix.  (See 'deferred'.)
     //
-    // So this post-switch step is where all of it happens, and it's tricky.
+    // So this post-switch step is where all of it happens, and it's tricky!
 
 post_switch:;
 
@@ -2462,40 +2478,12 @@ post_switch:;
         if (not (f->flags.bits & DO_FLAG_TO_END)) {
             //
             // Since it's a new expression, a DO/NEXT doesn't want to run it
-            // *unless* it's "invisible"
+            // even if invisible, as it's not completely invisible (enfixed)
             //
-            if (
-                not f->gotten
-                or VAL_TYPE(f->gotten) != REB_ACTION
-                or NOT_VAL_FLAG(f->gotten, ACTION_FLAG_INVISIBLE)
-            ){
-                goto finished;
-            }
-
-            // Though it's an "invisible" function, we don't want to call it
-            // unless it's our *last* chance to do so for a fulfillment (e.g.
-            // DUMP should be called for `do [x: 1 + 2 dump [x]]` only
-            // after the assignment to X is complete.)
-            //
-            // The way we test for this is to see if there's no fulfillment
-            // process above us which will get a later chance (that later
-            // chance will occur for that higher frame at this code point.)
-            //
-            if (
-                f->flags.bits
-                & (DO_FLAG_FULFILLING_ARG | DO_FLAG_FULFILLING_SET)
-            ){
-                goto finished;
-            }
-
-            // Take our last chance to run the invisible function, but shift
-            // into a mode where we *only* run such functions.  (Once this
-            // flag is set, it will have it until termination, then erased
-            // when the frame is discarded/reused.)
-            //
-            f->flags.bits |= DO_FLAG_NO_LOOKAHEAD; // might have set already
+            goto finished;
         }
-        else if (
+
+        if (
             f->gotten
             and VAL_TYPE(f->gotten) == REB_ACTION
             and GET_VAL_FLAG(f->gotten, ACTION_FLAG_INVISIBLE)
@@ -2626,6 +2614,19 @@ finished:;
 
     if (not (f->flags.bits & DO_FLAG_FULFILLING_ARG))
         f->out->header.bits &= ~VALUE_FLAG_UNEVALUATED; // may be an END cell
+
+  #if defined(DEBUG_STALE_ARGS) // see notes on flag definition
+    if (f->flags.bits & DO_FLAG_FULFILLING_ARG)
+        f->out->header.bits &= ~OUT_MARKED_STALE; // same as ARG_MARKED_CHECKED
+  #endif
+
+  #if defined(DEBUG_UNREADABLE_BLANKS)
+    if (IS_UNREADABLE_DEBUG(f->out)) {
+        assert(FRM_AT_END(f));
+        SET_END(f->out);
+        f->out->header.bits |= OUT_MARKED_STALE;
+    }
+  #endif
 
   #if !defined(NDEBUG)
     Do_Core_Exit_Checks_Debug(f); // will get called unless a fail() longjmps

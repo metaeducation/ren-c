@@ -255,7 +255,7 @@
 // If a variadic operation is not hard-quoting, all instances of a variadic
 // tied to the same frame need to see a BAR! as an end of the variadic input.
 // But evaluation cannot leave BAR!s in the input stream, because they are
-// "invisibles".  So a `do/next [1 + 2 | | |]` must run through all the bars
+// "invisibles".  So a `evaluate [1 + 2 | | |]` must run through all the bars
 // otherwise the next evaluation would be `[| | |]` and there'd be no way
 // to synthesize 3 from it.  This means after a variadic TAKE the signal
 // will be gone, so this flag is used.
@@ -276,6 +276,26 @@
     FLAG_LEFT_BIT(18)
 
 
+//=//// DO_FLAG_NO_RESIDUE ////////////////////////////////////////////////=//
+//
+// Sometimes a single step evaluation is done in which it would be considered
+// an error if all of the arguments are not used.  This requests an error if
+// the frame does not reach the end.
+//
+// !!! Interactions with ELIDE won't currently work with this, so evaluation
+// would have to take this into account to greedily run ELIDEs if the flag
+// is set.  However, it's only used in variadic apply at the moment with
+// calls from the system that do not use ELIDE.  These calls may someday
+// turn into rebRun(), in which case the mechanism would need rethinking.
+//
+// !!! A userspace tool for doing this was once conceived as `||`, which
+// was variadic and would only allow one evaluation step after it, after
+// which it would need to reach either an END or another `||`.
+//
+#define DO_FLAG_NO_RESIDUE \
+    FLAG_LEFT_BIT(19)
+
+
 #if !defined(NDEBUG)
 
 //=//// DO_FLAG_FINAL_DEBUG ///////////////////////////////////////////////=//
@@ -288,7 +308,7 @@
 //
 
 #define DO_FLAG_FINAL_DEBUG \
-    FLAG_LEFT_BIT(19)
+    FLAG_LEFT_BIT(20)
 
 #endif
 

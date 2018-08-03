@@ -297,6 +297,14 @@ Special internal defines used by RT, not Host-Kit developers:
     //
     #define DEBUG_TRACK_CELLS
 
+    // OUT_MARKED_STALE uses the same bit as ARG_MARKED_CHECKED.  But arg
+    // fulfillment uses END as the signal of when no evaluations are done,
+    // it doesn't need the stale bit.  The bit is cleared when evaluating in
+    // an arg slot in the debug build, to make it more rigorous to know that
+    // it was actually typechecked...vs just carrying the OUT_FLAG_STALE over.
+    //
+    #define DEBUG_STALE_ARGS
+
     // !!! Checking the memory alignment is an important invariant but may be
     // overkill to run on all platforms at all times.  It requires the
     // DEBUG_CELL_WRITABILITY flag to be enabled, since it's the moment of

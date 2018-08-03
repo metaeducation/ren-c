@@ -260,9 +260,12 @@ REBOOL Wait_Ports_Throws(
                     DO_FLAG_TO_END
                 );
 
-                if (indexor == THROWN_FLAG) {
+                if (indexor == THROWN_FLAG)
                     fail (Error_No_Catch_For_Throw(result));
-                }
+
+                assert(indexor == END_FLAG);
+                if (IS_END(result))
+                    Init_Endish_Nulled(result);
             }
         } else {
             fail ("system/ports/pump must be a block");
@@ -369,7 +372,7 @@ REBOOL Redo_Action_Throws(REBFRM *f, REBACT *run)
     for (; NOT_END(f->param); ++f->param, ++f->arg, ++f->special) {
         if (GET_VAL_FLAG(f->param, TYPESET_FLAG_HIDDEN))
             continue; // !!! is this still relevant?
-        if (GET_VAL_FLAG(f->special, ARG_FLAG_TYPECHECKED))
+        if (GET_VAL_FLAG(f->special, ARG_MARKED_CHECKED))
             continue; // a parameter that was "specialized out" of this phase
 
         enum Reb_Param_Class pclass = VAL_PARAM_CLASS(f->param);
@@ -419,15 +422,12 @@ REBOOL Redo_Action_Throws(REBFRM *f, REBACT *run)
         0, // index
         SPECIFIED, // reusing existing REBVAL arguments, no relative values
         DO_FLAG_EXPLICIT_EVALUATE // DON'T double-evaluate arguments
+            | DO_FLAG_NO_RESIDUE // raise an error if all args not consumed
     );
 
-    if (indexor != THROWN_FLAG and indexor != END_FLAG) {
-        //
-        // We may not have stopped the invocation by virtue of the args
-        // all not getting consumed, but we can raise an error now that it
-        // did not.
-        //
-        fail ("Function frame proxying did not consume all arguments");
+    if (IS_END(f->out)) {
+        assert(indexor == END_FLAG);
+        Init_Endish_Nulled(f->out);
     }
 
     return indexor == THROWN_FLAG;

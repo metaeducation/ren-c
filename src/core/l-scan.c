@@ -1030,11 +1030,16 @@ acquisition_loop:
             }
             else { // rebUneval()
                 assert(
-                    IS_GROUP(single)
-                    and (ANY_SER_INFOS(
-                        VAL_ARRAY(single),
-                        SERIES_INFO_HOLD | SERIES_INFO_FROZEN
-                    ))
+                    (
+                        IS_ACTION(single)
+                        and VAL_ACTION(single) == NAT_ACTION(null)
+                    ) or (
+                        IS_GROUP(single)
+                        and (ANY_SER_INFOS(
+                            VAL_ARRAY(single),
+                            SERIES_INFO_HOLD | SERIES_INFO_FROZEN
+                        ))
+                    )
                 );
 
                 DS_PUSH_TRASH;

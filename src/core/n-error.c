@@ -50,16 +50,8 @@ static REBVAL *Trap_Dangerous(REBFRM *frame_) {
         //
         // returned value is tested for THROWN() status by caller
     }
-    else {
-        if (not REF(with) and IS_ERROR(D_OUT)) {
-            fail (
-                "TRAP'ped expressions are not allowed to evaluate to a"
-                " non-*raised* ERROR! unless a /WITH handler is provided"
-            );
-        }
-    }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -84,15 +76,16 @@ REBNATIVE(trap)
     REBVAL *error = rebRescue(cast(REBDNG*, &Trap_Dangerous), frame_);
     UNUSED(ARG(code)); // gets used by the above call, via the frame_ pointer
 
-    if (not error) {
-        if (THROWN(D_OUT)) // though code didn't fail(), it may have thrown
+    if (not error) { // code didn't fail()
+        if (THROWN(D_OUT))
             return D_OUT;
 
-        if (not REF(with) and IS_ERROR(D_OUT)) // code may evaluate to ERROR!
-            return nullptr; // ...but null it so ERROR! *always* means raised
+        if (IS_ERROR(D_OUT) and not REF(with))
+            fail (
+                "TRAP'ped expressions are not allowed to evaluate to a"
+                " non-*raised* ERROR! unless a /WITH handler is provided"
+            );
 
-        if (IS_NULLED(D_OUT))
-            Init_Blank(D_OUT); // blankify output (should there be an /OPT ?)
         return D_OUT;
     }
 

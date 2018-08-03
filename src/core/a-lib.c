@@ -511,6 +511,7 @@ void RL_rebElide(const void *p, ...)
     va_start(va, p);
 
     DECLARE_LOCAL (elided);
+    SET_END(elided); // don't use the result, don't care if it never gets set
     REBIXO indexor = Do_Va_Core(
         elided,
         p, // opt_first (preloads value)
@@ -549,6 +550,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
     Enter_Api();
 
     DECLARE_LOCAL (elided);
+    SET_END(elided);
     REBIXO indexor = Do_Va_Core(
         elided,
         p, // opt_first (preloads value)
@@ -662,8 +664,17 @@ const void *RL_rebUneval(const REBVAL *v)
     REBARR *instruction = Alloc_Singular(NODE_FLAG_MANAGED);
 
     RELVAL *single = ARR_SINGLE(instruction);
-    if (not v)
-        Init_Group(single, EMPTY_ARRAY);
+    if (not v) {
+        //
+        // !!! Would like to be using a NULLED cell here, but the current
+        // indicator for whether something is a rebEval() or rebUneval() is
+        // if VALUE_FLAG_EVAL_FLIP is set, and we'd have to set that flag to
+        // get the evaluator not to choke on the nulled cell.  The mechanism
+        // should be revisited where instructions encode what they are in the
+        // header/info/link/misc.
+        //
+        Move_Value(single, NAT_VALUE(null));
+    }
     else {
         REBARR *a = Make_Array(2);
         SET_SER_INFO(a, SERIES_INFO_HOLD);
@@ -1006,6 +1017,7 @@ bool RL_rebDid(const void *p, ...) {
     va_start(va, p);
 
     DECLARE_LOCAL (condition);
+    Init_Endish_Nulled(condition);
     REBIXO indexor = Do_Va_Core(
         condition,
         p, // opt_first (preloads value)
@@ -1032,6 +1044,7 @@ bool RL_rebNot(const void *p, ...) {
     va_start(va, p);
 
     DECLARE_LOCAL (condition);
+    Init_Endish_Nulled(condition);
     REBIXO indexor = Do_Va_Core(
         condition,
         p, // opt_first (preloads value)
@@ -1062,6 +1075,7 @@ long RL_rebUnbox(const void *p, ...) {
     va_start(va, p);
 
     DECLARE_LOCAL (result);
+    Init_Void(result);
     REBIXO indexor = Do_Va_Core(
         result,
         p, // opt_first (preloads value)
@@ -1248,6 +1262,7 @@ char *RL_rebSpellAlloc(const void *p, ...)
     va_start(va, p);
 
     DECLARE_LOCAL (string);
+    Init_Endish_Nulled(string);
     REBIXO indexor = Do_Va_Core(
         string,
         p, // opt_first (preloads value)
@@ -1259,7 +1274,7 @@ char *RL_rebSpellAlloc(const void *p, ...)
         fail (Error_No_Catch_For_Throw(string));
 
     if (IS_NULLED(string))
-        return NULL; // NULL is passed through, for opting out
+        return nullptr; // NULL is passed through, for opting out
 
     size_t size = rebSpellingOf(nullptr, 0, string);
     char *result = cast(char*, rebMalloc(size + 1)); // add space for term
@@ -1345,6 +1360,7 @@ REBWCHAR *RL_rebSpellAllocW(const void *p, ...)
     va_start(va, p);
 
     DECLARE_LOCAL (string);
+    Init_Endish_Nulled(string);
     REBIXO indexor = Do_Va_Core(
         string,
         p, // opt_first (preloads value)
@@ -1356,7 +1372,7 @@ REBWCHAR *RL_rebSpellAllocW(const void *p, ...)
         fail (Error_No_Catch_For_Throw(string));
 
     if (IS_NULLED(string))
-        return NULL; // NULL is passed through, for opting out
+        return nullptr; // NULL is passed through, for opting out
 
     REBCNT len = rebSpellingOfW(nullptr, 0, string);
     REBWCHAR *result = cast(

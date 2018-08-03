@@ -561,7 +561,7 @@ REBCTX *Copy_Context_Core(REBCTX *original, REBU64 types)
     //
     REBVAL *src = CTX_VARS_HEAD(original);
     for (; NOT_END(src); ++src, ++dest)
-        Move_Var(dest, src); // keep VALUE_FLAG_ENFIXED, ARG_FLAG_TYPECHECKED
+        Move_Var(dest, src); // keep VALUE_FLAG_ENFIXED, ARG_MARKED_CHECKED
 
     TERM_ARRAY_LEN(varlist, CTX_LEN(original) + 1);
     SET_SER_FLAG(varlist, ARRAY_FLAG_VARLIST);
@@ -684,7 +684,7 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     for (; NOT_END(key); ++key, ++var) {
         if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
             continue;
-        if (GET_VAL_FLAG(var, ARG_FLAG_TYPECHECKED))
+        if (GET_VAL_FLAG(var, ARG_MARKED_CHECKED))
             continue; // specialized out, don't show
 
         if (first)
@@ -713,7 +713,7 @@ void MF_Context(REB_MOLD *mo, const RELVAL *v, REBOOL form)
     for (; NOT_END(key); var ? (++key, ++var) : ++key) {
         if (GET_VAL_FLAG(key, TYPESET_FLAG_HIDDEN))
             continue;
-        if (GET_VAL_FLAG(var, ARG_FLAG_TYPECHECKED))
+        if (GET_VAL_FLAG(var, ARG_MARKED_CHECKED))
             continue; // specialized out, don't show
 
         // Having the key mentioned in the spec and then not being assigned

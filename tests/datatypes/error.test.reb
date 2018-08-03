@@ -133,10 +133,10 @@
 (error? make error! [type: 'internal id: 'not-done])
 (error? make error! [type: 'internal id: 'bad-utf8])
 
-; are error reports for do and do/next consistent?
+; are error reports for DO and EVALUATE consistent?
 (
     val1: trap [do [1 / 0]]
-    val2: trap [do/next [1 / 0] 'pos]
+    val2: trap [evaluate [1 / 0]]
     val1/near = val2/near
 )
 

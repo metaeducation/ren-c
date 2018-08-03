@@ -102,11 +102,11 @@ end: func [
 uneval: func [
     {Make expression that when evaluated, will produce the input}
 
-    return: {`()` if null, or `(quote ...)` where ... is passed-in cell}
+    return: {`(null)` if null, or `(quote ...)` where ... is passed-in cell}
         [group!]
     optional [<opt> any-value!]
 ][
-    either null? :optional [quote ()] [reduce quote ('quote :optional)]
+    either null? :optional [quote (null)] [reduce quote ('quote :optional)]
 ]
 
 

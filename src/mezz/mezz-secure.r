@@ -131,7 +131,7 @@ secure: function [
         ] [print [space space t "-" d]]
         print "Settings for read, write, and execute are also available."
         print "Type: help/doc secure for detailed documentation and examples."
-        return ()
+        return null
     ]
 
     if policy = 'query [
@@ -165,7 +165,7 @@ secure: function [
         n: make-policy 'all policy
         for-each word words of pol-obj [set word n]
         set-policies pol-obj
-        return ()
+        return null
     ]
 
     ; Set each policy target separately:
@@ -177,7 +177,7 @@ secure: function [
 
     ; ADD: check for policy level reductions!
     set-policies pol-obj
-    return ()
+    return null
 ]
 
 

@@ -14,7 +14,7 @@
     same? a-value eval a-value
 )
 ; do block start
-(null? do [])
+(void? do [])
 (:abs = do [:abs])
 (
     a-value: #{}
@@ -107,7 +107,7 @@
 )
 (0:00 == do [0:00])
 (0.0.0 == do [0.0.0])
-(null? do [()])
+(void? do [()])
 ('a == do ['a])
 ; do block end
 (
@@ -159,7 +159,7 @@
 (true = eval true)
 (false = eval false)
 ($1 == eval $1)
-(null? eval (specialize 'of [property: 'type]) ())
+(null? eval (specialize 'of [property: 'type]) null)
 (null? do _)
 (
     a-value: make object! []
@@ -189,7 +189,7 @@
     a-value: "1"
     1 == do :a-value
 )
-(null? do "")
+(void? do "")
 (1 = do "1")
 (3 = do "1 2 3")
 (
@@ -228,22 +228,32 @@
         2
     ]
 )
-; do/next block tests
+; evaluate block tests
 (
     success: false
-    do/next [success: true success: false] 'b
+    evaluate [success: true success: false]
     success
 )
 (
-    all [
-        1 = do/next [1 2] 'b
+    b: evaluate/set [1 2] 'value
+    did all [
+        1 = value
         [2] = b
     ]
 )
-(null? do/next [] 'b)
-(error? do/next [trap [1 / 0]] 'b)
 (
-    f1: func [] [do/next [return 1 2] 'b 2]
+    value: <untouched>
+    did all [
+        null? evaluate/set [] 'value
+        value = <untouched>
+    ]
+)
+(
+    evaluate/set [trap [1 / 0]] 'value
+    error? value
+)
+(
+    f1: func [] [evaluate [return 1 2] 2]
     1 = f1
 )
 ; recursive behaviour
@@ -261,13 +271,8 @@
     str: "do str"
     error? trap [do str]
 )]
-; infinite recursion for do/next
+; infinite recursion for evaluate
 (
-    blk: [do/next blk 'b]
+    blk: [b: evaluate blk]
     error? trap blk
-)
-(
-    val1: trap [do [1 / 0]]
-    val2: trap [do/next [1 / 0] 'b]
-    val1/near = val2/near
 )

@@ -371,6 +371,13 @@ do: emulate [
         next_DO: next
         next: :lib/next
 
+        if next_DO [
+            if args [fail "Can't use DO/NEXT with ARGS"]
+            source: evaluate :source quote result:
+            if var [set var source] ;-- DO/NEXT put the *position* in the var
+            return :result ;-- DO/NEXT returned the *evaluative result*
+        ]
+
         if action? :source [
             code: reduce [:source]
             params: words of :source

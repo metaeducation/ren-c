@@ -1287,13 +1287,30 @@ REBNATIVE(quote)
 
 
 //
+//  null: native [
+//
+//  "Generator for the absence of a value"
+//
+//      return: [<opt>]
+//  ]
+//
+REBNATIVE(null)
+{
+    INCLUDE_PARAMS_OF_NULL;
+
+    return nullptr;
+}
+
+
+//
 //  null?: native/body [
 //
-//  "Tells you if the argument is not a value (e.g. `null? do []` is TRUE)"
+//  "Tells you if the argument is not a value"
 //
+//      return: [logic!]
 //      optional [<opt> any-value!]
 //  ][
-//      () = type of :optional
+//      null = type of :optional
 //  ]
 //
 REBNATIVE(null_q)

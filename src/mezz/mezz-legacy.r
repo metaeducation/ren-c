@@ -37,7 +37,7 @@ procmaker: function [
             try-inject-return :item
             keep/only :item
         ]
-        try-inject-return () ;-- in case spec was empty or all TEXT!
+        try-inject-return null ;-- in case spec was empty or all TEXT!
         keep [leave:] ;-- define local
     ] compose [
         leave: :return ;-- `return: <void>` makes RETURN 0-arity
@@ -162,14 +162,14 @@ rejoin: function [
     ; Act like REDUCE of expression, but where null does not cause an error.
     ;
     values: copy []
-    position: block
-    while-not [tail? position][
-        append/only values do/next position 'position
+    pos: block
+    while [pos: try evaluate/set pos (quote evaluated:)][
+        append/only values :evaluated
     ]
 
     ; An empty block of values should result in an empty string.
     ;
-    if empty? values [append values {}]
+    if empty? values [return copy {}]
 
     ; Take type of the first element for the result, or default to string.
     ;
@@ -225,17 +225,17 @@ applique: function [
     params: words of :action
     using-args: true
 
-    while-not [tail? block] [
-        set* quote arg: either only [
-            block/1
-            elide (block: try next block)
-        ][
-            do/next block 'block
+    while [block: try sync-invisibles block] [
+        block: if only [
+            arg: block/1
+            try next block
+        ] else [
+            try evaluate/set block quote arg:
         ]
 
-        either refinement? params/1 [
-            using-args: set (in frame params/1) to-logic :arg
-        ][
+        if refinement? params/1 [
+            using-args: did set (in frame params/1) :arg
+        ] else [
             if using-args [
                 set* (in frame params/1) :arg
             ]
@@ -255,5 +255,5 @@ applique: function [
         ]
     ]
 
-    do frame ;-- voids are optionals
+    do frame ;-- nulls are optionals
 ]

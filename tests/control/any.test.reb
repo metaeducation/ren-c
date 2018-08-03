@@ -98,7 +98,7 @@
 )
 (0:00 == any [0:00])
 (0.0.0 == any [0.0.0])
-(null? any [()])
+(null? any [null])
 ('a == any ['a])
 ; two values
 (:abs = any [false :abs])
@@ -196,7 +196,7 @@
 )
 (0:00 == any [false 0:00])
 (0.0.0 == any [false 0.0.0])
-(null? any [false ()])
+(null? any [false null])
 ('a == any [false 'a])
 (:abs = any [:abs false])
 (
@@ -292,7 +292,7 @@
 )
 (0:00 == any [0:00 false])
 (0.0.0 == any [0.0.0 false])
-(null? any [() false])
+(null? any [null false])
 ('a == any ['a false])
 ; evaluation stops after encountering something else than FALSE or NONE
 (

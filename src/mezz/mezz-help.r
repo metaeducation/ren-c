@@ -166,7 +166,7 @@ dump: func [
         ;
         set-word? first value [
             set-word: first value
-            result: do/next value (quote pos:)
+            pos: evaluate/set value (quote result:)
             ;-- Note: don't need to TAKE
             print [set-word "=>" result]
         ]

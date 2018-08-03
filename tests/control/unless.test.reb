@@ -17,7 +17,7 @@
 )(
     _ = (10 unless _) ;-- BLANK! is considered a value (use OPT if not)
 )(
-    10 = (10 unless ())
+    10 = (10 unless null)
 )(
     x: 10 + 20 unless case [
         false [<no>]

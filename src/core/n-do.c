@@ -221,10 +221,6 @@ REBNATIVE(eval_enfix)
 //          {If value is a script, this will set its system/script/args}
 //      arg
 //          "Args passed to a script (normally a string)"
-//      /next
-//          {Do next expression only, return it, update block variable}
-//      var [any-word! blank!]
-//          "If not blank, then a variable updated with new block position"
 //      /only
 //          "Don't catch QUIT (default behavior for BLOCK!)"
 //  ]
@@ -233,17 +229,10 @@ REBNATIVE(do)
 {
     INCLUDE_PARAMS_OF_DO;
 
-    // The debug build sets source to be an unwritable cell, to emphasize
-    // that since DO does a long-running operation, it's responsible for
-    // keeping the thing being run (which may have no other references)
-    // alive.  The cell should not be reused as a temporary.
-    //
-    REBVAL *source = ARG(source);
+    REBVAL *source = ARG(source); // may be only GC reference, don't lose it!
   #if !defined(NDEBUG)
     SET_VAL_FLAG(ARG(source), CELL_FLAG_PROTECTED);
   #endif
-
-    REBVAL *var = ARG(var);
 
     switch (VAL_TYPE(source)) {
     case REB_BLANK:
@@ -251,30 +240,20 @@ REBNATIVE(do)
 
     case REB_BLOCK:
     case REB_GROUP: {
-        REBVAL *opt_head = NULL;
+        Init_Void(D_OUT); // so `do []` is consistent with `while [] [...]`
         REBIXO indexor = Do_Array_At_Core(
             D_OUT,
-            opt_head,
+            nullptr, // opt_head (interpreted as no head, not nulled cell)
             VAL_ARRAY(source),
             VAL_INDEX(source),
             VAL_SPECIFIER(source),
-            REF(next) ? DO_MASK_NONE : DO_FLAG_TO_END
+            DO_FLAG_TO_END
         );
-
-        assert(NOT_VAL_FLAG(D_OUT, VALUE_FLAG_UNEVALUATED));
 
         if (indexor == THROWN_FLAG)
             return D_OUT;
 
-        if (REF(next) and not IS_BLANK(ARG(var))) {
-            if (indexor == END_FLAG)
-                VAL_INDEX(source) = VAL_LEN_HEAD(source); // e.g. TAIL?
-            else
-                VAL_INDEX(source) = cast(REBCNT, indexor) - 1; // was one past
-
-            Move_Value(Sink_Var_May_Fail(ARG(var), SPECIFIED), source);
-        }
-
+        assert(NOT_VAL_FLAG(D_OUT, VALUE_FLAG_UNEVALUATED));
         return D_OUT; }
 
     case REB_VARARGS: {
@@ -288,14 +267,14 @@ REBNATIVE(do)
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            REBVAL *opt_head = NULL;
+            Init_Void(D_OUT);
             REBIXO indexor = Do_Array_At_Core(
                 D_OUT,
-                opt_head,
+                nullptr, // opt_head (no head, not intepreted as nulled cell)
                 VAL_ARRAY(position),
                 VAL_INDEX(position),
                 VAL_SPECIFIER(source),
-                REF(next) ? DO_MASK_NONE : DO_FLAG_TO_END
+                DO_FLAG_TO_END
             );
 
             if (indexor == THROWN_FLAG) {
@@ -312,9 +291,6 @@ REBNATIVE(do)
             if (indexor == END_FLAG)
                 SET_END(position); // convention for shared data at end point
 
-            if (REF(next) and not IS_BLANK(var))
-                Move_Value(Sink_Var_May_Fail(var, SPECIFIED), source);
-
             return D_OUT;
         }
 
@@ -328,25 +304,10 @@ REBNATIVE(do)
         //
         DECLARE_FRAME (child);
         REBFLGS flags = 0;
-        if (REF(next)) {
-            if (FRM_AT_END(f))
-                Init_Nulled(D_OUT);
-            else if (Do_Next_In_Subframe_Throws(D_OUT, f, flags, child))
+        Init_Void(D_OUT);
+        while (not FRM_AT_END(f)) {
+            if (Do_Next_In_Subframe_Throws(D_OUT, f, flags, child))
                 return D_OUT;
-
-            // The variable passed in /NEXT is just set to the vararg itself,
-            // which has its positioning updated automatically by virtue of
-            // the evaluation performing a "consumption" of VARARGS! content.
-            //
-            if (not IS_BLANK(var))
-                Move_Value(Sink_Var_May_Fail(var, SPECIFIED), source);
-        }
-        else {
-            Init_Nulled(D_OUT);
-            while (not FRM_AT_END(f)) {
-                if (Do_Next_In_Subframe_Throws(D_OUT, f, flags, child))
-                    return D_OUT;
-            }
         }
 
         return D_OUT; }
@@ -371,7 +332,6 @@ REBNATIVE(do)
             sys_do_helper,
             source,
             NULLIZE(ARG(arg)), // nulled cells => nullptr for API
-            NULLIZE(ARG(var)), // nulled cells => nullptr for API
             REF(only) ? TRUE_VALUE : FALSE_VALUE,
             rebEND
         )){
@@ -467,6 +427,161 @@ REBNATIVE(do)
     }
 
     fail (Error_Use_Eval_For_Eval_Raw()); // https://trello.com/c/YMAb89dv
+}
+
+
+//
+//  evaluate: native [
+//
+//  {Perform a single evaluator step, returning the next source position}
+//
+//      return: [<opt> block! group! varargs!]
+//      source [
+//          blank! ;-- useful for `do try ...` scenarios when no match
+//          block! ;-- source code in block form
+//          group! ;-- same as block (or should it have some other nuance?)
+//          varargs! ;-- simulates as if frame! or block! is being executed
+//      ]
+//      /set "Store result in a variable (assuming something was evaluated)"
+//      var [any-word! blank!]
+//          "If not blank, then a variable updated with new position"
+//  ]
+//
+REBNATIVE(evaluate)
+{
+    INCLUDE_PARAMS_OF_EVALUATE;
+
+    REBVAL *source = ARG(source); // may be only GC reference, don't lose it!
+  #if !defined(NDEBUG)
+    SET_VAL_FLAG(ARG(source), CELL_FLAG_PROTECTED);
+  #endif
+
+    const REBVAL *var = ARG(var);
+    if (IS_BLANK(var))
+        var = NULLED_CELL;
+    UNUSED(REF(set)); // accounted for by checking var for nulled cell
+
+    switch (VAL_TYPE(source)) {
+    case REB_BLANK:
+        return nullptr; // "blank in, null out" convention
+
+    case REB_BLOCK:
+    case REB_GROUP: {
+        REBIXO indexor = Do_Array_At_Core(
+            D_CELL,
+            nullptr, // opt_head
+            VAL_ARRAY(source),
+            VAL_INDEX(source),
+            VAL_SPECIFIER(source),
+            DO_MASK_NONE
+        );
+
+        if (indexor == THROWN_FLAG)
+            return D_CELL;
+
+        if (indexor == END_FLAG)
+            return nullptr; // no disruption of output result
+
+        assert(NOT_VAL_FLAG(D_CELL, VALUE_FLAG_UNEVALUATED));
+
+        if (not IS_NULLED(var))
+            Move_Value(Sink_Var_May_Fail(ARG(var), SPECIFIED), D_CELL);
+
+        Move_Value(D_OUT, source);
+        VAL_INDEX(D_OUT) = cast(REBCNT, indexor) - 1; // was one past
+        assert(VAL_INDEX(D_OUT) <= VAL_LEN_HEAD(source));
+        return D_OUT; }
+
+    case REB_VARARGS: {
+        REBVAL *position;
+        if (Is_Block_Style_Varargs(&position, source)) {
+            //
+            // We can execute the array, but we must "consume" elements out
+            // of it (e.g. advance the index shared across all instances)
+            //
+            // !!! If any VARARGS! op does not honor the "locked" flag on the
+            // array during execution, there will be problems if it is TAKE'n
+            // or DO'd while this operation is in progress.
+            //
+            REBIXO indexor = Do_Array_At_Core(
+                D_CELL,
+                nullptr, // opt_head (interpreted as nothing, not nulled cell)
+                VAL_ARRAY(position),
+                VAL_INDEX(position),
+                VAL_SPECIFIER(source),
+                DO_MASK_NONE
+            );
+
+            if (indexor == THROWN_FLAG) {
+                //
+                // !!! A BLOCK! varargs doesn't technically need to "go bad"
+                // on a throw, since the block is still around.  But a FRAME!
+                // varargs does.  This will cause an assert if reused, and
+                // having BLANK! mean "thrown" may evolve into a convention.
+                //
+                Init_Unreadable_Blank(position);
+                return D_OUT;
+            }
+
+            if (indexor == END_FLAG) {
+                SET_END(position); // convention for shared data at end point
+                return nullptr;
+            }
+
+            if (not IS_NULLED(var))
+                Move_Value(Sink_Var_May_Fail(var, SPECIFIED), source);
+
+            return source; // original VARARGS! will have an updated position
+        }
+
+        REBFRM *f;
+        if (not Is_Frame_Style_Varargs_May_Fail(&f, source))
+            panic (source); // Frame is the only other type
+
+        // By definition, we are in the middle of a function call in the frame
+        // the varargs came from.  It's still on the stack, and we don't want
+        // to disrupt its state.  Use a subframe.
+        //
+        DECLARE_FRAME (child);
+        REBFLGS flags = 0;
+        if (FRM_AT_END(f))
+            return nullptr;
+
+        if (Do_Next_In_Subframe_Throws(D_CELL, f, flags, child))
+            return D_CELL;
+
+        if (not IS_NULLED(var))
+            Move_Value(Sink_Var_May_Fail(var, SPECIFIED), D_CELL);
+
+        return source; } // original VARARGS! will have an updated position
+
+    default:
+        panic (source);
+    }
+}
+
+
+//
+//  sync-invisibles: native [
+//
+//  {If an evaluatable source has pending invisibles, execute and advance}
+//
+//      return: [<opt> block! group! varargs!]
+//      source [block! group!]
+//  ]
+//
+REBNATIVE(sync_invisibles)
+{
+    INCLUDE_PARAMS_OF_SYNC_INVISIBLES;
+
+    // !!! This hasn't been implemented yet.  It is probably best done as
+    // an adaptation of Do_Core() with some kind of mode flag, and would take
+    // some redesign to do efficiently.
+
+    if (VAL_LEN_AT(ARG(source)) == 0)
+        return nullptr;
+
+    return ARG(source);
 }
 
 
@@ -645,7 +760,7 @@ REBNATIVE(apply)
     for (; NOT_END(key); key++, ++var) {
         if (GET_VAL_FLAG(key, TYPESET_FLAG_UNBINDABLE))
             continue; // shouldn't have been in the binder
-        if (GET_VAL_FLAG(var, ARG_FLAG_TYPECHECKED))
+        if (GET_VAL_FLAG(var, ARG_MARKED_CHECKED))
             continue; // was part of a specialization internal to the action
         Remove_Binder_Index(&binder, VAL_KEY_CANON(key));
     }
