@@ -222,6 +222,18 @@ REBOOL Update_Typeset_Bits_Core(
             //
             TYPE_SET(typeset, REB_MAX_NULLED);
         }
+        else if (
+            keywords && IS_TAG(item) &&
+                0 == Compare_String_Vals(item, Root_Skip_Tag, TRUE)
+        ){
+            if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD_QUOTE)
+                fail ("Only hard-quoted parameters are <skip>-able");
+
+            SET_VAL_FLAGS(
+                typeset,
+                TYPESET_FLAG_SKIPPABLE | TYPESET_FLAG_ENDABLE // skip->null
+            );
+        }
         else if (IS_DATATYPE(var)) {
             TYPE_SET(typeset, VAL_TYPE_KIND(var));
         }

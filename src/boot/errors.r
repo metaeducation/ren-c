@@ -100,7 +100,6 @@ Script: [
 
     hijack-blank:       {Hijacked function was captured but no body given yet}
 
-    enfix-quote-late:   [:arg1 {can't left quote a forward quoted value}]
     evaluate-null:      {null cannot be evaluated (see UNEVAL)}
 
     enfix-path-group:   [:arg1 {GROUP! can't be in a lookback quoted PATH!}]

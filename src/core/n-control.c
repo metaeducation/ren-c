@@ -945,8 +945,8 @@ REBNATIVE(switch)
 //
 //      return: "Former value or branch result, can only be null if no target"
 //          [<opt> any-value!]
-//     'target "Word or path which might be set--no target always branches"
-//          [<end> set-word! set-path!]
+//     :target "Word or path which might be set--no target always branches"
+//          [<skip> set-word! set-path!]
 //      branch "If target not set already, this is evaluated and stored there"
 //          [block! action!]
 //      :look "Variadic lookahead used to make sure at end if no target"

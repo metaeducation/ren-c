@@ -312,6 +312,35 @@ inline static void Finalize_Current_Arg(REBFRM *f) {
 }
 
 
+// !!! Somewhat hacky mechanism for getting the first argument of an action,
+// used when doing typechecks for TYPESET_FLAG_SKIPPABLE on functions that
+// quote their first argument.  Must take into account specialization, as
+// that may have changed the first actual parameter to something other than
+// the first paramlist parameter.
+//
+// Despite being implemented less elegantly than it should be, this is an
+// improtant feature, since it's how `case [true [a] default [b]]` gets the
+// enfixed DEFAULT function to realize the left side is a BLOCK! and not
+// either a SET-WORD! or a SET-PATH!, so it <skip>s the opportunity to hard
+// quote it and defers execution...in this case, meaning it won't run at all.
+//
+inline void Seek_First_Param(REBFRM *f, REBACT *action) {
+    f->param = ACT_PARAMS_HEAD(action);
+    f->special = ACT_SPECIALTY_HEAD(action);
+    for (; NOT_END(f->param); ++f->param, ++f->special) {
+        if (
+            f->special != f->param
+            and GET_VAL_FLAG(f->special, ARG_MARKED_CHECKED)
+        ){
+            continue;
+        }
+        if (VAL_PARAM_CLASS(f->param) == PARAM_CLASS_LOCAL)
+            continue;
+        return;
+    }
+    fail ("Seek_First_Param() failed");
+}
+
 //
 //  Eval_Core: C
 //
@@ -520,6 +549,12 @@ reevaluate:;
                 //
                 //     foo: ('quote) => [print quote]
                 //
+
+                Seek_First_Param(f, VAL_ACTION(current_gotten));
+                if (GET_VAL_FLAG(f->param, TYPESET_FLAG_SKIPPABLE))
+                    if (not TYPE_CHECK(f->param, VAL_TYPE(f->value)))
+                        goto give_up_forward_quote_priority;
+
                 Push_Action(
                     f,
                     VAL_ACTION(current_gotten),
@@ -575,6 +610,8 @@ reevaluate:;
             }
         }
 
+      give_up_forward_quote_priority:;
+
         f->gotten = Try_Get_Opt_Var(f->value, f->specifier);
 
         if (f->gotten and (
@@ -584,6 +621,11 @@ reevaluate:;
                 VALUE_FLAG_ENFIXED | ACTION_FLAG_QUOTES_FIRST_ARG
             )
         )){
+            Seek_First_Param(f, VAL_ACTION(f->gotten));
+            if (GET_VAL_FLAG(f->param, TYPESET_FLAG_SKIPPABLE))
+                if (not TYPE_CHECK(f->param, VAL_TYPE(current)))
+                    goto give_up_backward_quote_priority;
+
             Push_Action(f, VAL_ACTION(f->gotten), VAL_BINDING(f->gotten));
             Begin_Action(f, VAL_WORD_SPELLING(f->value), LOOKBACK_ARG);
 
@@ -601,6 +643,8 @@ reevaluate:;
             goto process_action;
         }
     }
+
+  give_up_backward_quote_priority:;
 
     //==////////////////////////////////////////////////////////////////==//
     //
@@ -1042,6 +1086,8 @@ reevaluate:;
                     assert(GET_VAL_FLAG(f->out, VALUE_FLAG_UNEVALUATED));
                   #endif
 
+                    // TYPESET_FLAG_SKIPPABLE accounted for in pre-lookback
+
                     Move_Value(f->arg, f->out);
                     SET_VAL_FLAG(f->arg, VALUE_FLAG_UNEVALUATED);
                     break;
@@ -1266,6 +1312,20 @@ reevaluate:;
     //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG /////////////////////////////=//
 
             case PARAM_CLASS_HARD_QUOTE:
+                if (GET_VAL_FLAG(f->param, TYPESET_FLAG_SKIPPABLE)) {
+                    if (not TYPE_CHECK(f->param, VAL_TYPE(f->value))) {
+                        assert(GET_VAL_FLAG(f->param, TYPESET_FLAG_ENDABLE));
+                        Init_Endish_Nulled(f->arg); // not DO_FLAG_BARRIER_HIT
+                        SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
+                        goto continue_arg_loop;
+                    }
+                    Quote_Next_In_Frame(f->arg, f);
+                    SET_VAL_FLAGS(
+                        f->arg,
+                        ARG_MARKED_CHECKED | VALUE_FLAG_UNEVALUATED
+                    );
+                    goto continue_arg_loop;
+                }
                 Quote_Next_In_Frame(f->arg, f); // has VALUE_FLAG_UNEVALUATED
                 break;
 
@@ -2473,6 +2533,8 @@ post_switch:;
         or VAL_TYPE(f->gotten) != REB_ACTION
         or NOT_VAL_FLAG(f->gotten, VALUE_FLAG_ENFIXED)
     ){
+      lookback_quote_too_late:; // run as if starting new expression
+
         if (not (f->flags.bits & DO_FLAG_TO_END)) {
             //
             // Since it's a new expression, EVALUATE doesn't want to run it
@@ -2541,9 +2603,11 @@ post_switch:;
         //     left-quote: enfix func [:value] [:value]
         //     quote <something> left-quote
         //
-        // !!! Is this the ideal place to be delivering the error?
+        // But due to the existence of <end>-able and <skip>-able parameters,
+        // the left quoting function might be okay with seeing nothing on the
+        // left.  Start a new expression and let it error if that's not ok.
         //
-        fail (Error_Lookback_Quote_Too_Late(f->value, f->specifier));
+        goto lookback_quote_too_late;
     }
 
     // !!! Once checked `not f->deferred` because it only deferred once:
