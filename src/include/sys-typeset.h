@@ -71,14 +71,9 @@ inline static REBSTR *Get_Type_Name(const RELVAL *value)
 
 enum Reb_Param_Class {
     //
-    // `PARAM_CLASS_LOCAL` is a "pure" local, which will be set to void by
+    // `PARAM_CLASS_LOCAL` is a "pure" local, which will be set to null by
     // argument fulfillment.  It is indicated by a SET-WORD! in the function
     // spec, or by coming after a <local> tag in the function generators.
-    //
-    // !!! Initially these were indicated with TYPESET_FLAG_HIDDEN.  That
-    // would allow the PARAM_CLASS to fit in just two bits (if there were
-    // no debug-purpose PARAM_CLASS_0) and free up a scarce typeset flag.
-    // But is it the case that hiding and localness should be independent?
     //
     PARAM_CLASS_LOCAL = 0,
 
@@ -217,6 +212,13 @@ enum Reb_Param_Class {
 // the arity is 1 usually as `>> help foo`)
 //
 #define TYPESET_FLAG_ENDABLE TYPESET_FLAG(3)
+
+// Skippability is used on quoted arguments to indicate that they are willing
+// to "pass" on something that isn't a matching type.  This gives an ability
+// that a variadic doesn't have, which is to make decisions about rejecting
+// a parameter *before* the function body runs.
+//
+#define TYPESET_FLAG_SKIPPABLE TYPESET_FLAG(4)
 
 
 // ^-- STOP AT TYPESET_FLAG(4) --^

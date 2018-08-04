@@ -1014,19 +1014,6 @@ REBCTX *Error_Need_Value_Core(const RELVAL *target, REBSPC *specifier) {
 
 
 //
-//  Error_Lookback_Quote_Too_Late: C
-//
-REBCTX *Error_Lookback_Quote_Too_Late(const RELVAL *word, REBSPC *specifier) {
-    assert(IS_WORD(word));
-
-    DECLARE_LOCAL (specific);
-    Derelativize(specific, word, specifier);
-
-    return Error_Enfix_Quote_Late_Raw(specific);
-}
-
-
-//
 //  Error_Non_Logic_Refinement: C
 //
 // Ren-C allows functions to be specialized, such that a function's frame can

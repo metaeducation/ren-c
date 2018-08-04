@@ -458,6 +458,7 @@ static void Init_Action_Spec_Tags(void)
     Root_Opt_Tag = rebLock(rebTag("opt"), rebEND);
     Root_End_Tag = rebLock(rebTag("end"), rebEND);
     Root_Local_Tag = rebLock(rebTag("local"), rebEND);
+    Root_Skip_Tag = rebLock(rebTag("skip"), rebEND);
 }
 
 static void Shutdown_Action_Spec_Tags(void)
@@ -468,6 +469,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebRelease(Root_Opt_Tag);
     rebRelease(Root_End_Tag);
     rebRelease(Root_Local_Tag);
+    rebRelease(Root_Skip_Tag);
 }
 
 

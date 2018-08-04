@@ -114,6 +114,7 @@ PVAR REBVAL *Root_Ellipsis_Tag; // marks variadic argument <...>
 PVAR REBVAL *Root_Opt_Tag; // marks optional argument (can be void)
 PVAR REBVAL *Root_End_Tag; // marks endable argument (void if at end of input)
 PVAR REBVAL *Root_Local_Tag; // marks beginning of a list of "pure locals"
+PVAR REBVAL *Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
 
 PVAR REBVAL *Root_Empty_String; // read-only ""
 PVAR REBVAL *Root_Empty_Block; // read-only []
