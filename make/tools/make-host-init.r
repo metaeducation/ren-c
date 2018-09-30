@@ -111,8 +111,11 @@ file-base: has load %../../make/tools/file-base.r
 ; copied from make-boot.r
 host-protocols: make block! 2
 for-each file file-base/prot-files [
-    m: load/all join-of %../mezz/ file ; not REBOL word
-    append/only append/only host-protocols m/2 skip m 2
+    m: load/all join-of %../mezz/ file
+    assert ['REBOL = m/1]
+    spec: ensure block! m/2
+    contents: skip m 2
+    append host-protocols compose/only [(spec) (contents)]
 ]
 
 insert host-start compose/only [host-prot: (host-protocols)]

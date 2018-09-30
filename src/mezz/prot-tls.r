@@ -1,21 +1,74 @@
 REBOL [
-    Title: "REBOL 3 TLSv1.0 protocol scheme"
+    Title: "REBOL 3 TLS Client 1.0 - 1.2 Protocol Scheme"
     Name: tls
     Type: module
-    Author: "Richard 'Cyphre' Smolak"
-    Version: 0.6.1
+    Version: 0.7.0
+    Rights: {
+        Copyright 2012 Richard "Cyphre" Smolak (TLS 1.0)
+        Copyright 2012-2018 Rebol Open Source Developers
+        REBOL is a trademark of REBOL Technologies
+    }
+    License: {
+        Licensed under the Apache License, Version 2.0.
+        See: http://www.apache.org/licenses/LICENSE-2.0
+    }
+    Description: {
+        This is an implementation of a TLS client layer, which can be used in
+        lieu of a plain TCP scheme for providing network connectivity.  e.g.
+        the HTTPS scheme is the same code as the HTTP scheme, only using this
+        TLS scheme instead of a TCP connection underneath.
+
+        Only the client side of the protocol is implemented ATM.  Adapting
+        it to work as a server (e.g. for use with %httpd.reb) would be more
+        work.  But it would involve most of the same general methods, as the
+        protocol is fairly symmetrical.
+
+        While this code encrypts communication according to the TLS protocol
+        it does not yet validate certificates.  So it's not checking a site's
+        credentials against a trusted certificate chain installed on the local
+        machine (the way a web browser would).  This makes it vulnerable to
+        man-in-the-middle attacks:
+
+        https://en.wikipedia.org/wiki/Man-in-the-middle_attack
+    }
+    Notes: {
+        At time of writing (Sept 2018), TLS 1.0 and TLS 1.1 are in the process
+        of formal deprecation by the IETF.  In the meantime, the payment card
+        industry (PCI) set a deadline of 30-Jun-2018 for sites to deprecate
+        1.0, with strong recommendation to deprecate 1.1 as well:
+
+        https://www.thesslstore.com/blog/june-30-to-disable-tls-1-0/
+
+        TLS 1.2 is currently requested by the client.  Legacy TLS 1.0 support
+        from Cyphre's original code, as well as 1.1 support, are retained.
+        But it may be better if the client refuses to speak to servers that
+        respond they only support those protocols.
+
+        SSL-v2 and SSL-v3 were deprecated in 2011 and 2015 respectively, and
+        %prot-tls.r never supported or tested SSL.  No support is planned:
+
+        https://tools.ietf.org/html/rfc6176
+        https://tools.ietf.org/html/rfc7568
+    }
     Todo: {
         -cached sessions
         -automagic cert data lookup
         -add more cipher suites
         -server role support
-        -SSL3.0, TLS1.1/1.2 compatibility
         -cert validation
+        -TLS 1.3
     }
 ]
 
-; These are the currently supported cipher suites.  (Additional possibilities
-; would be DSA, 3DES, ECDH, ECDHE, ECDSA, SHA256, SHA384...)
+version-to-bytes: [
+    1.0 #{03 01}
+    1.1 #{03 02}
+    1.2 #{03 03}
+]
+bytes-to-version: reverse copy version-to-bytes
+
+
+; CURRENTLY SUPPORTED CIPHER SUITES
 ;
 ; https://testssl.sh/openssl-rfc.mapping.html
 ; https://fly.io/articles/how-ciphersuites-work/
@@ -24,7 +77,16 @@ REBOL [
 ;
 ; https://www.ssllabs.com/ssltest/analyze.html
 ;
-
+; This list is sent to the server when negotiating which one to use.  Hence
+; it should be ORDERED BY CLIENT PREFERENCE (more preferred suites first).
+;
+; In TLS 1.2, the cipher suite also specifies a hash used by the pseudorandom
+; function (PRF) implementation, and to make the seed fed into the PRF when
+; generating `verify_data` in a `Finished` message.  All cipher specs that
+; are named in the RFC use SHA256, but others are possible.  Additionally, the
+; length of `verify_data` is part of the cipher spec, with 12 as default for
+; the specs in the RFC.  The table should probably encode these choices.
+;
 cipher-suites: [
     ; <key> crypt@ #hash
     ; !!! Using terminal-@ because bootstrap older Rebols can't have leading @
@@ -42,7 +104,7 @@ cipher-suites: [
         <rsa> aes@ [size 16 block 16 iv 16] #sha1 [size 20]
     ]
     #{00 35} [
-        TLS_RSA_WITH_AES_256_CBC_SHA
+        TLS_RSA_WITH_AES_256_CBC_SHA ;-- https://example.com will do this one
         <rsa> aes@ [size 32 block 16 iv 16] #sha1 [size 20]
     ]
     #{00 32} [
@@ -264,7 +326,7 @@ update-state: function [
     transitions [block!] "maps from state to a BLOCK! of legal next states"
 ][
     old: ensure [blank! issue! tag!] ctx/mode
-    debug [old unspaced ["=" direction "=>"] new]
+    debug [mold old unspaced ["=" direction "=>"] new]
 
     if old and (not find (legal: select transitions old) new) [
         fail ["Invalid write state transition, expected one of:" mold legal]
@@ -310,10 +372,48 @@ update-write-state: specialize 'update-state [
 client-hello: function [
     return: <void>
     ctx [object!]
+    /version "TLS version to request (default is minimum 1.0, maximum 1.2)"
+    ver "If block, lowest and highest version to allow"
+        [decimal! block!]
 ][
+    set [ctx/min-version: ctx/max-version:] case [
+        not set? 'ver [[1.0 1.2]]
+        decimal? ver [reduce [ver ver]]
+        block? ver [
+            parse ver [decimal! decimal!] or [
+                fail "BLOCK! /VERSION must be two DECIMAL! (min ver, max ver)"
+            ]
+            ver
+        ]
+    ]
+    min-ver-bytes: select version-to-bytes ctx/min-version else [
+        fail ["Unsupported minimum TLS version" ctx/min-version]
+    ]
+    max-ver-bytes: select version-to-bytes ctx/max-version else [
+        fail ["Unsupported maximum TLS version" ctx/max-version]
+    ]
+
     clear ctx/handshake-messages
 
-    ; generate client random struct
+    emit ctx [
+      TLSPlaintext: ; https://tools.ietf.org/html/rfc5246#section-6.2.1
+        #{16}                       ; protocol type (22=Handshake)
+        min-ver-bytes               ; TLS version for ClientHello (min? max?)
+      fragment-length:
+        #{00 00}                    ; length of handshake data (updated after)
+    ]
+
+    emit ctx [
+      Handshake: ; https://tools.ietf.org/html/rfc5246#appendix-A.4
+        #{01}                       ; protocol message type (1=ClientHello)
+      message-length:
+        #{00 00 00}                 ; protocol message length (updated after)
+    ]
+
+    ; struct {
+    ;     uint32 gmt_unix_time;
+    ;     opaque random_bytes[28];
+    ; } Random;
     ;
     ctx/client-random: to-bin to-integer difference now/precise 1-Jan-1970 4
     random/seed now/time/precise
@@ -324,34 +424,28 @@ client-hello: function [
     ]
 
     emit ctx [
-        #{16}                       ; protocol type (22=Handshake)
-        ctx/version                 ; protocol version (3|1 = TLS1.0)
-
-        ssl-record-length:
-        #{00 00}                    ; length of SSL record data
-
-        ssl-record:
-        #{01}                       ; protocol message type (1=ClientHello)
-
-        message-length:
-        #{00 00 00}                 ; protocol message length (updated after)
-
-        message:
-        ctx/version                 ; max supported version by client (TLS1.0)
+      ClientHello: ; https://tools.ietf.org/html/rfc5246#section-7.4.1.2
+        max-ver-bytes               ; max supported version by client
         ctx/client-random           ; 4 bytes gmt unix time + 28 random bytes
         #{00}                       ; session ID length
         to-bin length of cs-data 2  ; cipher suites length
         cs-data                     ; cipher suites list
+
+        comment {
+            "Secure clients will advertise that they do not support
+            compression (by passing "null" as the only algorithm) to avoid
+            the CRIME attack": https://en.wikipedia.org/wiki/CRIME
+        }
         #{01}                       ; compression method length
         #{00}                       ; no compression
     ]
 
     ; update the embedded lengths to correct values
     ;
-    change ssl-record-length (to-bin (length of ssl-record) 2)
-    change message-length (to-bin (length of message) 3)
+    change fragment-length (to-bin (length of Handshake) 2)
+    change message-length (to-bin (length of ClientHello) 3)
 
-    append ctx/handshake-messages ssl-record
+    append ctx/handshake-messages Handshake
 ]
 
 
@@ -362,7 +456,7 @@ client-key-exchange: function [
     switch ctx/key-method [
         <rsa> [
             ; generate pre-master-secret
-            ctx/pre-master-secret: copy ctx/version
+            ctx/pre-master-secret: copy ctx/ver-bytes
             random/seed now/time/precise
             loop 46 [append ctx/pre-master-secret (random/secure 256) - 1]
 
@@ -390,7 +484,7 @@ client-key-exchange: function [
 
     emit ctx [
         #{16}                       ; protocol type (22=Handshake)
-        ctx/version                 ; protocol version (3|1 = TLS1.0)
+        ctx/ver-bytes               ; protocol version
 
         ssl-record-length:
         #{00 00}                    ; length of SSL record data
@@ -424,8 +518,22 @@ client-key-exchange: function [
     ctx/server-crypt-key: copy/part skip ctx/key-block (2 * ctx/hash-size) + ctx/crypt-size ctx/crypt-size
 
     if ctx/block-size [
-        ctx/client-iv: copy/part skip ctx/key-block 2 * (ctx/hash-size + ctx/crypt-size) ctx/block-size
-        ctx/server-iv: copy/part skip ctx/key-block (2 * (ctx/hash-size + ctx/crypt-size)) + ctx/block-size ctx/block-size
+        if ctx/version = 1.0 [
+            ;
+            ; Block ciphers in TLS 1.0 used an implicit initialization vector
+            ; (IV) to seed the encryption process.  This has vulnerabilities.
+            ;
+            ctx/client-iv: copy/part skip ctx/key-block 2 * (ctx/hash-size + ctx/crypt-size) ctx/block-size
+            ctx/server-iv: copy/part skip ctx/key-block (2 * (ctx/hash-size + ctx/crypt-size)) + ctx/block-size ctx/block-size
+        ] else [
+            ;
+            ; Each encrypted message in TLS 1.1 and above carry a plaintext
+            ; initialization vector, so the ctx does not use one for the whole
+            ; session.  Unset it to make sure.
+            ;
+            unset in ctx 'client-iv
+            unset in ctx 'server-iv
+        ]
     ]
 
     append ctx/handshake-messages ssl-record
@@ -438,7 +546,7 @@ change-cipher-spec: function [
 ][
     emit ctx [
         #{14}           ; protocol type (20=ChangeCipherSpec)
-        ctx/version     ; protocol version (3|1 = TLS1.0)
+        ctx/ver-bytes   ; protocol version
         #{00 01}        ; length of SSL record data
         #{01}           ; CCS protocol type
     ]
@@ -448,31 +556,30 @@ change-cipher-spec: function [
 encrypted-handshake-msg: function [
     return: <void>
     ctx [object!]
-    message [binary!]
+    unencrypted [binary!]
 ][
-    plain-msg: message
-    message: encrypt-data/type ctx message #{16}
+    encrypted: encrypt-data/type ctx unencrypted #{16}
     emit ctx [
-        #{16}                       ; protocol type (22=Handshake)
-        ctx/version                 ; protocol version (3|1 = TLS1.0)
-        to-bin length of message 2  ; length of SSL record data
-        message
+        #{16}                         ; protocol type (22=Handshake)
+        ctx/ver-bytes                 ; protocol version
+        to-bin length of encrypted 2  ; length of SSL record data
+        encrypted
     ]
-    append ctx/handshake-messages plain-msg
+    append ctx/handshake-messages unencrypted
 ]
 
 
 application-data: function [
     return: <void>
     ctx [object!]
-    message [binary! text!]
+    unencrypted [binary! text!]
 ][
-    message: encrypt-data ctx to binary! message
+    encrypted: encrypt-data ctx to binary! unencrypted
     emit ctx [
-        #{17}                       ; protocol type (23=Application)
-        ctx/version                 ; protocol version (3|1 = TLS1.0)
-        to-bin length of message 2  ; length of SSL record data
-        message
+        #{17}                         ; protocol type (23=Application)
+        ctx/ver-bytes                 ; protocol version
+        to-bin length of encrypted 2  ; length of SSL record data
+        encrypted
     ]
 ]
 
@@ -480,12 +587,12 @@ application-data: function [
 alert-close-notify: function [
     ctx [object!]
 ][
-    message: encrypt-data ctx #{0100} ; close notify
+    encrypted: encrypt-data ctx #{0100} ; close notify
     emit ctx [
-        #{15}                       ; protocol type (21=Alert)
-        ctx/version                 ; protocol version (3|1 = TLS1.0)
-        to-bin length of message 2  ; length of SSL record data
-        message
+        #{15}                         ; protocol type (21=Alert)
+        ctx/ver-bytes                 ; protocol version
+        to-bin length of encrypted 2  ; length of SSL record data
+        encrypted
     ]
 ]
 
@@ -497,14 +604,32 @@ finished: function [
     ctx/seq-num-w: 0
     who-finished: if ctx/server? ["server finished"] else ["client finished"]
 
+    seed: if ctx/version < 1.2 [
+        join-all [
+            checksum/method ctx/handshake-messages 'md5
+            checksum/method ctx/handshake-messages 'sha1
+        ]
+    ] else [
+        ; "The Hash MUST be the Hash used as the basis for the PRF.  Any
+        ; cipher suite which defines a different PRF MUST also define the
+        ; Hash to use in the Finished computation."
+        ;
+        ; For now, assume all supported cipher suites use SHA256.
+        ;
+        sha256 ctx/handshake-messages
+    ]
+
     return join-all [
         #{14}       ; protocol message type (20=Finished)
         #{00 00 0c} ; protocol message length (12 bytes)
 
-        prf ctx/master-secret who-finished join-all [
-            checksum/method ctx/handshake-messages 'md5
-            checksum/method ctx/handshake-messages 'sha1
-        ] 12
+        apply 'prf [
+            ctx: ctx
+            secret: ctx/master-secret
+            label: who-finished
+            seed: seed
+            output-length: 12
+        ]
     ]
 ]
 
@@ -512,23 +637,40 @@ finished: function [
 encrypt-data: function [
     return: [binary!]
     ctx [object!]
-    data [binary!]
+    content [binary!]
     /type
     msg-type [binary!] "application data is default"
 ][
-    msg-type: default [#{17}]
+    msg-type: default [#{17}] ;-- #application
 
-    data: join-all [
-        data
-        ; MAC code
-        mac: checksum/method/key join-all [
-            to-bin ctx/seq-num-w 8              ; sequence number (64-bit int)
-            msg-type                            ; msg type
-            ctx/version                         ; version
-            to-bin length of data 2             ; msg content length
-            data                                ; msg content
-        ] (to word! ctx/hash-method) ctx/client-mac-key
+    ; GenericBlockCipher: https://tools.ietf.org/html/rfc5246#section-6.2.3.2
+
+    if ctx/version > 1.0 [
+        ;
+        ; "The Initialization Vector (IV) SHOULD be chosen at random, and
+        ;  MUST be unpredictable.  Note that in versions of TLS prior to 1.1,
+        ;  there was no IV field, and the last ciphertext block of the
+        ;  previous record (the "CBC residue") was used as the IV.  This was
+        ;  changed to prevent the attacks described in [CBCATT].  For block
+        ;  ciphers, the IV length is SecurityParameters.record_iv_length,
+        ;  which is equal to the SecurityParameters.block_size."
+        ;
+        ctx/client-iv: copy #{}
+        loop ctx/block-size [append ctx/client-iv (random/secure 256) - 1]
     ]
+
+    ; Message Authentication Code
+    ; https://tools.ietf.org/html/rfc5246#section-6.2.3.1
+    ;
+    MAC: checksum/method/key join-all [
+        to-bin ctx/seq-num-w 8              ; sequence number (64-bit int)
+        msg-type                            ; msg type
+        ctx/ver-bytes                       ; version
+        to-bin length of content 2          ; msg content length
+        content                             ; msg content
+    ] (to word! ctx/hash-method) ctx/client-mac-key
+
+    data: join-all [content MAC]
 
     if ctx/block-size [
         ; add the padding data in CBC mode
@@ -549,9 +691,23 @@ encrypt-data: function [
                 aes/key ctx/client-crypt-key ctx/client-iv
             ]
             data: aes/stream ctx/encrypt-stream data
+
+            if ctx/version > 1.0 [
+                ; encrypt-stream must be reinitialized each time with the
+                ; new initialization vector.
+                ;
+                ctx/encrypt-stream: _
+            ]
         ]
     ] else [
         fail ["Unsupported TLS crypt-method:" ctx/crypt-method]
+    ]
+
+    ; TLS versions 1.1 and above include the client-iv in plaintext.
+    ;
+    if ctx/version > 1.0 [
+        insert data ctx/client-iv
+        unset in ctx 'client-iv ;-- avoid accidental reuse
     ]
 
     return data
@@ -573,6 +729,13 @@ decrypt-data: function [
                 aes/key/decrypt ctx/server-crypt-key ctx/server-iv
             ]
             data: aes/stream ctx/decrypt-stream data
+
+            ; TLS 1.1 and above must use a new initialization vector each time
+            ; so the decrypt stream has to get GC'd.
+            ;
+            if ctx/version > 1.0 [
+                ctx/decrypt-stream: _
+            ]
         ]
     ] else [
         fail ["Unsupported TLS crypt-method:" ctx/crypt-method]
@@ -599,7 +762,7 @@ parse-protocol: function [
         type: select protocol-types data/1 else [
             fail ["unknown/invalid protocol type:" data/1]
         ]
-        version: pick [ssl-v3 tls-v1.0 tls-v1.1 tls-v1.2 tls-v1.3] data/3 + 1
+        version: select bytes-to-version copy/part at data 2 2
         size: to-integer/unsigned copy/part at data 4 2
         messages: copy/part at data 6 size
     ]
@@ -662,14 +825,26 @@ parse-messages: function [
     data: proto/messages
 
     if ctx/encrypted? [
+        if ctx/block-size and (ctx/version > 1.0) [
+            ;
+            ; Grab the server's initialization vector, which will be new for
+            ; each message.
+            ;
+            ctx/server-iv: take/part data ctx/block-size
+        ]
+
         change data decrypt-data ctx data
         debug ["decrypting..."]
+        
         if ctx/block-size [
             ; deal with padding in CBC mode
             data: copy/part data (
                 ((length of data) - 1) - (to-integer/unsigned last data)
             )
             debug ["depadding..."]
+            if ctx/version > 1.0 [
+                unset in ctx 'server-iv ;-- avoid reuse in TLS 1.1 and above
+            ]
         ]
         debug ["data:" data]
     ]
@@ -708,22 +883,52 @@ parse-messages: function [
                 len: to-integer/unsigned copy/part at data 2 3
                 append result switch msg-type [
                     <server-hello> [
-                        msg-content: copy/part at data 7 len
+                        ; https://tools.ietf.org/html/rfc5246#section-7.4.1.3
+
+                        msg-content: copy/part at data 5 len
+
+                        server-version: select bytes-to-version copy/part msg-content 2
+                        (msg-content: my skip 2)
+                        if server-version < ctx/min-version [
+                            fail [
+                                "Requested minimum TLS version" ctx/min-version
+                                "with maximum TLS version" ctx/max-version
+                                "but server gave back" server-version
+                            ]
+                        ]
+                        ctx/version: server-version
 
                         msg-obj: context [
                             type: msg-type
-                            version: pick [ssl-v3 tls-v1.0 tls-v1.1] data/6 + 1
                             length: len
+                            
+                            version: server-version
+
                             server-random: copy/part msg-content 32
-                            session-id: copy/part at msg-content 34 msg-content/33
-                            suite-id: copy/part at msg-content 34 + msg-content/33 2
-                            compression-method-length: first at msg-content 36 + msg-content/33
+                            (msg-content: my skip 32)
+
+                            session-id-len: msg-content/1
+                            (msg-content: my skip 1)
+
+                            session-id: copy/part msg-content session-id-len
+                            (msg-content: my skip session-id-len)
+
+                            suite-id: copy/part msg-content 2
+                            (msg-content: my skip 2)
+
+                            compression-method-length: msg-content/1
+                            (msg-content: my skip 1)
+
                             compression-method:
-                                either compression-method-length = 0 [blank] [
-                                    copy/part
-                                        at msg-content 37 + msg-content/33
-                                        compression-method-length
+                                either compression-method-length = 0 [
+                                    blank
+                                ][
+                                    fail ["Error: CRIME vulnerability"]
+                                    copy/part msg-content compression-method-length
+                                    (msg-content: my skip compression-method-length)
                                 ]
+
+                            assert [tail? msg-content]
                         ]
 
                         ctx/suite: select cipher-suites msg-obj/suite-id else [
@@ -777,7 +982,8 @@ parse-messages: function [
 
                     <server-key-exchange> [
                         switch ctx/key-method [
-                            'dhe-dss 'dhe-rsa [
+                            <dhe-dss>
+                            <dhe-rsa> [
                                 msg-content: copy/part at data 5 len
                                 msg-obj: context [
                                     type: msg-type
@@ -816,7 +1022,7 @@ parse-messages: function [
                         msg-content: copy/part at data 7 len
                         context [
                             type: msg-type
-                            version: pick [ssl-v3 tls-v1.0 tls-v1.1] data/6 + 1
+                            version: select bytes-to-version copy/part at data 5 2
                             length: len
                             content: msg-content
                         ]
@@ -830,12 +1036,23 @@ parse-messages: function [
                         ][
                             "server finished"
                         ]
-                        if (msg-content <>
-                            prf ctx/master-secret who-finished join-all [
-                                checksum/method
-                                ctx/handshake-messages 'md5
+                        seed: if ctx/version < 1.2 [
+                            join-all [
+                                checksum/method ctx/handshake-messages 'md5
                                 checksum/method ctx/handshake-messages 'sha1
-                            ] 12
+                            ]
+                        ] else [
+                            sha256 ctx/handshake-messages
+                        ]
+                        if (
+                            msg-content
+                            <> apply 'prf [
+                                ctx: ctx
+                                secret: ctx/master-secret
+                                label: who-finished
+                                seed: seed
+                                output-length: 12
+                            ]
                         )[
                             fail "Bad 'finished' MAC"
                         ]
@@ -858,7 +1075,7 @@ parse-messages: function [
                     mac-check: checksum/method/key join-all [
                         to-bin ctx/seq-num-r 8  ; 64-bit sequence number
                         #{16}                   ; msg type
-                        ctx/version             ; version
+                        ctx/ver-bytes           ; version
                         to-bin len + 4 2        ; msg content length
                         copy/part data len + 4
                     ] (to word! ctx/hash-method) ctx/server-mac-key
@@ -893,7 +1110,7 @@ parse-messages: function [
             mac-check: checksum/method/key join-all [
                 to-bin ctx/seq-num-r 8  ; sequence number (64-bit int in R3)
                 #{17}                   ; msg type
-                ctx/version             ; version
+                ctx/ver-bytes           ; version
                 to-bin len 2            ; msg content length
                 msg-obj/content         ; content
             ] (to word! ctx/hash-method) ctx/server-mac-key
@@ -937,37 +1154,67 @@ parse-response: function [
 
 
 prf: function [
-    {(P)suedo-(R)andom (F)unction, generates arbitrarily long random binaries}
+    {(P)suedo-(R)andom (F)unction, generates arbitrarily long binaries}
 
     return: [binary!]
+    ctx [object!] ;-- needed for ctx/version, prf changed in TLS 1.2
     secret [binary!]
     label [text! binary!]
     seed [binary!]
     output-length [integer!]
 ][
-    len: length of secret
-    mid: to integer! (.5 * (len + either odd? len [1] [0]))
-
-    s-1: copy/part secret mid
-    s-2: copy at secret mid + either odd? len [0] [1]
-
+    ; The seed for the underlying P_<hash> is the PRF's seed appended to the
+    ; label.  The label is hashed as-is, so no null terminator.
+    ;
+    ; PRF(secret, label, seed) = P_<hash>(secret, label + seed)
+    ;
     seed: join-all [#{} label seed]
 
-    p-md5: copy #{}
-    a: seed ; A(0)
-    while [output-length > length of p-md5] [
-        a: checksum/method/key a 'md5 s-1 ; A(n)
-        append p-md5 checksum/method/key join-all [a seed] 'md5 s-1
+    if ctx/version < 1.2 [
+        ;
+        ; Prior to TLS 1.2, the pseudo-random function was driven by a strange
+        ; mixed method that's half MD5 and half SHA-1 hashing, regardless of
+        ; cipher suite used: https://tools.ietf.org/html/rfc4346#section-5
 
+        len: length of secret
+        mid: to integer! (.5 * (len + either odd? len [1] [0]))
+
+        s-1: copy/part secret mid
+        s-2: copy at secret mid + either odd? len [0] [1]
+
+        p-md5: copy #{}
+        a: seed ; A(0)
+        while [output-length > length of p-md5] [
+            a: checksum/method/key a 'md5 s-1 ; A(n)
+            append p-md5 checksum/method/key join-all [a seed] 'md5 s-1
+        ]
+
+        p-sha1: copy #{}
+        a: seed ; A(0)
+        while [output-length > length of p-sha1] [
+            a: checksum/method/key a 'sha1 s-2 ; A(n)
+            append p-sha1 checksum/method/key join-all [a seed] 'sha1 s-2
+        ]
+        return (
+            (copy/part p-md5 output-length)
+            xor+ (copy/part p-sha1 output-length)
+        )
     ]
 
-    p-sha1: copy #{}
+    ; TLS 1.2 includes the pseudorandom function as part of its cipher
+    ; suite definition.  No cipher suites assume the md5/sha1 combination
+    ; used above by TLS 1.0 and 1.1.  All cipher suites listed in the
+    ; TLS 1.2 spec use `P_SHA256`, which is driven by the single SHA256
+    ; hash function: https://tools.ietf.org/html/rfc5246#section-5
+
+    p-sha256: copy #{}
     a: seed ; A(0)
-    while [output-length > length of p-sha1] [
-        a: checksum/method/key a 'sha1 s-2 ; A(n)
-        append p-sha1 checksum/method/key join-all [a seed] 'sha1 s-2
+    while [output-length > length of p-sha256] [
+        a: hmac-sha256 secret a
+        append p-sha256 hmac-sha256 secret join-all [a seed]
     ]
-    return ((copy/part p-md5 output-length) xor+ copy/part p-sha1 output-length)
+    take/last/part p-sha256 ((length of p-sha256) - output-length)
+    return p-sha256
 ]
 
 
@@ -975,14 +1222,16 @@ make-key-block: function [
     return: [binary!]
     ctx [object!]
 ][
-    ctx/key-block: prf
-        ctx/master-secret
-        "key expansion"
-        join-all [ctx/server-random ctx/client-random]
-        (
+    ctx/key-block: apply 'prf [
+        ctx: ctx
+        secret: ctx/master-secret
+        label: "key expansion"
+        seed: join-all [ctx/server-random ctx/client-random]
+        output-length: (
             (ctx/hash-size + ctx/crypt-size)
             + (either ctx/block-size [ctx/iv-size] [0])
         ) * 2
+    ]
 ]
 
 
@@ -991,11 +1240,13 @@ make-master-secret: function [
     ctx [object!]
     pre-master-secret [binary!]
 ][
-    ctx/master-secret: prf
-        pre-master-secret
-        "master secret"
-        join-all [ctx/client-random ctx/server-random]
-        48
+    ctx/master-secret: apply 'prf [
+        ctx: ctx
+        secret: pre-master-secret
+        label: "master secret"
+        seed: join-all [ctx/client-random ctx/server-random]
+        output-length: 48
+    ]
 ]
 
 
@@ -1010,7 +1261,7 @@ do-commands: function [
         some [
             set cmd: [
                 <client-hello> (
-                    client-hello ctx
+                    client-hello/version ctx [1.0 1.2] ;-- min/max versioning
                 )
                 | <client-key-exchange> (
                     client-key-exchange ctx
@@ -1301,7 +1552,14 @@ sys/make-scheme [
                 port-data: make binary! 32000
                 resp: _
 
-                version: #{03 01} ; protocol version used
+                min-version: _
+                max-version: _
+                version: _
+                ver-bytes: does [
+                    select version-to-bytes version else [
+                        fail ["version has no byte sequence:" version]
+                    ]
+                ]
 
                 server?: false
 
