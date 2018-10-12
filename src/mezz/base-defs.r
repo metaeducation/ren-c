@@ -26,7 +26,7 @@ REBOL [
 
 c-break-debug: :c-debug-break ;-- easy to mix up
 
-probe: func [
+??: probe: func [
     {Debug print a molded value and returns that same value.}
     return: [<opt> any-value!]
         {Same as the input value.}
@@ -254,37 +254,20 @@ eval func [
 
 
 print: func [
-    "Textually output value (evaluating elements if a block), adds newline"
+    {Textually output value (evaluating elements if a block), adds newline}
 
-    return: <void>
-    value [any-value!]
-        "Value or BLOCK! literal (NULL means print nothing)"
-    /eval
-        "Allow value to be a block and evaluated (even if not literal)"
-    <local> eval_PRINT ;quote_PRINT
+    return: "NULL if blank input, otherwise VOID!"
+        [<opt> void!]
+    line "Line of text or block to run SPACED on, blank prints nothing"
+        [blank! text! block!]
 ][
-    eval_PRINT: eval
-    eval: :lib/eval
-
-    if null? :value [return]
-
-    write-stdout case [
-        not block? value [
-            form :value
-        ]
-
-        eval_PRINT or [semiquoted? 'value] [
-            spaced value
-        ]
-
-        default [
-            fail/where
-                <- "PRINT called on non-literal block without /EVAL switch"
-                <- 'value
-        ]
+    write-stdout switch type of line [
+        blank! [return null]
+        text! [line]
+        block! [spaced line]
     ]
-
     write-stdout newline
+    return
 ]
 
 print-newline: specialize 'write-stdout [value: newline]

@@ -98,7 +98,7 @@ dump-obj: function [
 ]
 
 
-dump: func [
+!!: dump: func [
     {Show the name of a value (or block of expressions) with the value itself}
 
     return: []

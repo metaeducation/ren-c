@@ -471,3 +471,18 @@ maybe: enfix func [
 ; showing args that span multiple lines.
 ;
 set quote <- func [x [<end> any-value!]] [:x]
+
+print: func [
+    return: [<opt> blank!]
+    line [blank! text! block!]
+][
+    write-stdout switch type of line [
+        blank! [return null]
+        text! [line]
+        block! [spaced line]
+    ]
+    write-stdout newline
+    _ ;-- would be a VOID! in modern Ren-C
+]
+
+print-newline: specialize 'write-stdout [value: newline]

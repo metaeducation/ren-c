@@ -35,33 +35,17 @@ REBOL [
 ;
 host-prot: default [_]
 
-boot-print: function [
+boot-print: redescribe [
     "Prints during boot when not quiet."
-    return: <void>
-    data
-    /eval
-][
-    eval_BOOT_PRINT: eval
-    eval: :lib/eval
+](
+    enclose 'print func [f] [if not system/options/quiet [do f]]
+)
 
-    if not system/options/quiet [
-        print/(try all [any [eval_BOOT_PRINT | semiquoted? 'data] 'eval]) :data
-    ]
-]
-
-loud-print: function [
+loud-print: redescribe [
     "Prints during boot when verbose."
-    return: <void>
-    data
-    /eval
-][
-    eval_BOOT_PRINT: eval
-    eval: :lib/eval
-
-    if system/options/verbose [
-        print/(try all [any [eval_BOOT_PRINT | semiquoted? 'data] 'eval]) :data
-    ]
-]
+](
+    enclose 'print func [f] [if system/options/verbose [do f]]
+)
 
 make-banner: function [
     "Build startup banner."

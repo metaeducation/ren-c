@@ -1266,7 +1266,7 @@ for-each [label list] reduce [
 ][
     print label
     for-each ext list [
-        print/eval collect [ ;-- CHAR! values don't auto-space in Ren-C PRINT
+        print collect [ ;-- CHAR! values don't auto-space in Ren-C PRINT
             keep ["ext:" ext/name #":" space #"["]
             for-each mod ext/modules [
                 keep to-text mod/name

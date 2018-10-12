@@ -594,10 +594,19 @@ ajoin: emulate [:unspaced]
 
 reform: emulate [:spaced]
 
-; To be on the safe side, the PRINT in the box won't do evaluations on
-; blocks unless the literal argument itself is a block
-;
-print: emulate [specialize 'print [eval: true]]
+
+print: emulate [
+    func [
+        return: <void!>
+        value [any-value!] ;-- Ren-C only takes TEXT!, BLOCK!, BLANK!
+    ][
+        write-stdout case [
+            block? :value [spaced value]
+            default [form :value]
+        ]
+        write-stdout newline
+    ]
+]
 
 quit: emulate [
     function [
