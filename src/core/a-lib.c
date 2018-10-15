@@ -77,6 +77,18 @@
 #include "sys-ext.h"
 #include "tmp-boot-extensions.h"
 
+#ifdef TO_JAVASCRIPT
+    //
+    // !!! While most of the JavaScript-specific code is in the JavaScript
+    // extension (%mod-javascript.c), it's not really clear how to implement
+    // rebPromise() for the JavaScript API without wiring it in here.  It
+    // might be done by making rebPromise() depend on an exported native
+    // from the extension like MAKE-PROMISE which did the same thing but
+    // returned an INTEGER!.  For now, committing the implementation as-is.
+    //
+    #include "emscripten.h"
+#endif
+
 
 // "Linkage back to HOST functions. Needed when we compile as a DLL
 // in order to use the OS_* macro functions."
@@ -87,12 +99,17 @@
 #endif
 
 
+//
+// rebEnterApi_Internal: RL_API
+//
+// This stub is added automatically to the calling wrappers.
+//
 // !!! Review how much checking one wants to do when calling API routines,
 // and what the balance should be of debug vs. release.  Right now, this helps
 // in particular notice if the core tries to use an API function before the
 // proper moment in the boot.
 //
-inline static void Enter_Api(void) {
+void RL_rebEnterApi_internal(void) {
     if (not Host_Lib)
         panic ("rebStartup() not called before API call");
 }
@@ -137,8 +154,6 @@ inline static void Enter_Api(void) {
 //
 void *RL_rebMalloc(size_t size)
 {
-    Enter_Api();
-
     REBSER *s = Make_Series_Core(
         ALIGN_SIZE // stores REBSER* (must be at least big enough for void*)
             + size // for the actual data capacity (may be 0...see notes)
@@ -191,8 +206,6 @@ void *RL_rebMalloc(size_t size)
 //
 void *RL_rebRealloc(void *ptr, size_t new_size)
 {
-    Enter_Api();
-
     assert(new_size > 0); // realloc() deprecated this as of C11 DR 400
 
     if (not ptr) // C realloc() accepts null
@@ -224,8 +237,6 @@ void *RL_rebRealloc(void *ptr, size_t new_size)
 //
 void RL_rebFree(void *ptr)
 {
-    Enter_Api();
-
     if (not ptr)
         return;
 
@@ -275,8 +286,6 @@ void RL_rebFree(void *ptr)
 //
 REBVAL *RL_rebRepossess(void *ptr, size_t size)
 {
-    Enter_Api();
-
     REBSER **ps = cast(REBSER**, ptr) - 1;
     UNPOISON_MEMORY(ps, sizeof(REBSER*)); // need to underrun to fetch `s`
 
@@ -464,8 +473,6 @@ void rebShutdownExtensions(REBVAL *extensions)
 //
 void RL_rebShutdown(bool clean)
 {
-    Enter_Api();
-
     // At time of writing, nothing Shutdown_Core() does pertains to
     // committing unfinished data to disk.  So really there is
     // nothing to do in the case of an "unclean" shutdown...yet.
@@ -481,6 +488,22 @@ void RL_rebShutdown(bool clean)
     // caller didn't need it--to see if it triggers any alerts.
     //
     Shutdown_Core();
+}
+
+
+//
+//  rebTick: RL_API
+//
+// If the executable is built with tick counting, this will return the tick
+// without requiring any Rebol code to run (which would disrupt the tick).
+//
+long RL_rebTick(void)
+{
+  #ifdef DEBUG_COUNT_TICKS
+    return cast(long, TG_Tick);
+  #else
+    return 0;
+  #endif
 }
 
 
@@ -539,8 +562,6 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //
 REBVAL *RL_rebRun(const void *p, va_list *vaptr)
 {
-    Enter_Api();
-
     REBVAL *result = Alloc_Value();
     if (Do_Va_Throws(result, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(result)); // no need to release result
@@ -561,8 +582,6 @@ REBVAL *RL_rebRun(const void *p, va_list *vaptr)
 //
 void RL_rebElide(const void *p, va_list *vaptr)
 {
-    Enter_Api();
-
     DECLARE_LOCAL (elided);
     if (Do_Va_Throws(elided, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(elided));
@@ -592,8 +611,6 @@ void RL_rebElide(const void *p, va_list *vaptr)
 //
 void RL_rebJumps(const void *p, va_list *vaptr)
 {
-    Enter_Api();
-
     DECLARE_LOCAL (elided);
     if (Do_Va_Throws(elided, p, vaptr)) { // calls va_end()
         //
@@ -623,8 +640,6 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 //
 REBVAL *RL_rebRunInline(const REBVAL *array)
 {
-    Enter_Api();
-
     if (not IS_BLOCK(array) and not IS_GROUP(array))
         fail ("rebRunInline() only supports BLOCK! and GROUP!");
 
@@ -650,8 +665,6 @@ REBVAL *RL_rebRunInline(const REBVAL *array)
 //
 const void *RL_rebEval(const REBVAL *v)
 {
-    Enter_Api();
-
     if (IS_NULLED(v))
         fail ("Cannot pass NULL to rebEval()");
 
@@ -689,8 +702,6 @@ const void *RL_rebEval(const REBVAL *v)
 //
 const void *RL_rebUneval(const REBVAL *v)
 {
-    Enter_Api();
-
     REBARR *instruction = Alloc_Instruction();
     RELVAL *single = ARR_SINGLE(instruction);
     if (not v) {
@@ -747,7 +758,6 @@ const void *RL_rebR(REBVAL *v)
 //
 REBVAL *RL_rebVoid(void)
 {
-    Enter_Api();
     return Init_Void(Alloc_Value());
 }
 
@@ -757,7 +767,6 @@ REBVAL *RL_rebVoid(void)
 //
 REBVAL *RL_rebBlank(void)
 {
-    Enter_Api();
     return Init_Blank(Alloc_Value());
 }
 
@@ -781,8 +790,6 @@ REBVAL *RL_rebBlank(void)
 //
 REBVAL *RL_rebLogic(bool logic)
 {
-    Enter_Api();
-
     // Use DID on the bool, in case it's a "shim bool" (e.g. just some integer
     // type) and hence may have values other than strictly 0 or 1.
     //
@@ -795,8 +802,6 @@ REBVAL *RL_rebLogic(bool logic)
 //
 REBVAL *RL_rebChar(uint32_t codepoint)
 {
-    Enter_Api();
-
     if (codepoint > MAX_UNI)
         fail ("Codepoint out of range, see: https://forum.rebol.info/t/374");
 
@@ -812,7 +817,6 @@ REBVAL *RL_rebChar(uint32_t codepoint)
 //
 REBVAL *RL_rebInteger(int64_t i)
 {
-    Enter_Api();
     return Init_Integer(Alloc_Value(), i);
 }
 
@@ -824,8 +828,6 @@ REBVAL *RL_rebInteger(int64_t i)
 //
 const void *RL_rebI(int64_t i)
 {
-    Enter_Api();
-
     return rebR(rebInteger(i));
 }
 
@@ -835,7 +837,6 @@ const void *RL_rebI(int64_t i)
 //
 REBVAL *RL_rebDecimal(double dec)
 {
-    Enter_Api();
     return Init_Decimal(Alloc_Value(), dec);
 }
 
@@ -855,8 +856,6 @@ REBVAL *RL_rebDecimal(double dec)
 //
 void RL_rebHalt(void)
 {
-    Enter_Api();
-
     SET_SIGNAL(SIG_HALT);
 }
 
@@ -906,8 +905,6 @@ REBVAL *RL_rebRescue(
     REBDNG *dangerous, // !!! pure C function only if not using throw/catch!
     void *opaque
 ){
-    Enter_Api();
-
     struct Reb_State state;
     REBCTX *error_ctx;
 
@@ -1001,8 +998,6 @@ REBVAL *RL_rebRescueWith(
     REBRSC *rescuer, // errors in the rescuer function will *not* be caught
     void *opaque
 ){
-    Enter_Api();
-
     struct Reb_State state;
     REBCTX *error_ctx;
 
@@ -1032,9 +1027,8 @@ REBVAL *RL_rebRescueWith(
 //
 //  rebDid: RL_API
 //
-bool RL_rebDid(const void *p, va_list *vaptr) {
-    Enter_Api();
-
+bool RL_rebDid(const void *p, va_list *vaptr)
+{
     DECLARE_LOCAL (condition);
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(condition));
@@ -1049,9 +1043,8 @@ bool RL_rebDid(const void *p, va_list *vaptr) {
 // !!! If this were going to be a macro like (not (rebDid(...))) it would have
 // to be a variadic macro.  Just make a separate entry point for now.
 //
-bool RL_rebNot(const void *p, va_list *vaptr) {
-    Enter_Api();
-
+bool RL_rebNot(const void *p, va_list *vaptr)
+{
     DECLARE_LOCAL (condition);
     if (Do_Va_Throws(condition, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(condition));
@@ -1070,9 +1063,8 @@ bool RL_rebNot(const void *p, va_list *vaptr) {
 // an integer for INTEGER!, LOGIC!, CHAR!...assume it's most common so the
 // short name is worth it.
 //
-long RL_rebUnbox(const void *p, va_list *vaptr) {
-    Enter_Api();
-
+long RL_rebUnbox(const void *p, va_list *vaptr)
+{
     DECLARE_LOCAL (result);
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
@@ -1096,9 +1088,8 @@ long RL_rebUnbox(const void *p, va_list *vaptr) {
 //
 //  rebUnboxInteger: RL_API
 //
-long RL_rebUnboxInteger(const void *p, va_list *vaptr) {
-    Enter_Api();
-
+long RL_rebUnboxInteger(const void *p, va_list *vaptr)
+{
     DECLARE_LOCAL (result);
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
@@ -1113,26 +1104,27 @@ long RL_rebUnboxInteger(const void *p, va_list *vaptr) {
 //
 //  rebUnboxDecimal: RL_API
 //
-double RL_rebUnboxDecimal(const void *p, va_list *vaptr) {
-    Enter_Api();
-
+double RL_rebUnboxDecimal(const void *p, va_list *vaptr)
+{
     DECLARE_LOCAL (result);
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
 
-    if (VAL_TYPE(result) != REB_DECIMAL)
-        fail ("rebUnboxDecimal() called on non-DECIMAL!");
+    if (VAL_TYPE(result) == REB_DECIMAL)
+        return VAL_DECIMAL(result);
 
-    return VAL_DECIMAL(result);
+    if (VAL_TYPE(result) == REB_INTEGER)
+        return cast(double, VAL_INT64(result));
+
+    fail ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");
 }
 
 
 //
 //  rebUnboxChar: RL_API
 //
-uint32_t RL_rebUnboxChar(const void *p, va_list *vaptr) {
-    Enter_Api();
-
+uint32_t RL_rebUnboxChar(const void *p, va_list *vaptr)
+{
     DECLARE_LOCAL (result);
     if (Do_Va_Throws(result, p, vaptr))
         fail (Error_No_Catch_For_Throw(result));
@@ -1152,7 +1144,7 @@ uint32_t RL_rebUnboxChar(const void *p, va_list *vaptr) {
 // pointers.  Also, there is an optional size stored in the handle, and a
 // cleanup function the GC may call when references to the handle are gone.
 //
-REBVAL *RL_rebHandle(void *data, uintptr_t length, CLEANUP_CFUNC *cleaner)
+REBVAL *RL_rebHandle(void *data, size_t length, CLEANUP_CFUNC *cleaner)
 {
     return Init_Handle_Managed(Alloc_Value(), data, length, cleaner);
 }
@@ -1172,8 +1164,6 @@ size_t RL_rebSpellInto(
     size_t buf_size, // number of bytes
     const REBVAL *v
 ){
-    Enter_Api();
-
     const char *utf8;
     REBSIZ utf8_size;
     if (ANY_STRING(v)) {
@@ -1212,8 +1202,6 @@ size_t RL_rebSpellInto(
 //
 char *RL_rebSpell(const void *p, va_list *vaptr)
 {
-    Enter_Api();
-
     DECLARE_LOCAL (string);
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(string));
@@ -1245,8 +1233,6 @@ unsigned int RL_rebSpellIntoW(
     unsigned int buf_chars, // chars buf can hold (not including terminator)
     const REBVAL *v
 ){
-    Enter_Api();
-
     REBSER *s;
     REBCNT index;
     REBCNT len;
@@ -1299,8 +1285,6 @@ unsigned int RL_rebSpellIntoW(
 //
 REBWCHAR *RL_rebSpellW(const void *p, va_list *vaptr)
 {
-    Enter_Api();
-
     DECLARE_LOCAL (string);
     if (Do_Va_Throws(string, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(string));
@@ -1331,8 +1315,6 @@ size_t RL_rebBytesInto(
     size_t buf_size,
     const REBVAL *binary
 ){
-    Enter_Api();
-
     if (not IS_BINARY(binary))
         fail ("rebBytesInto() only works on BINARY!");
 
@@ -1364,8 +1346,6 @@ unsigned char *RL_rebBytes(
     size_t *size_out, // !!! Enforce non-null, to ensure type safety?
     const void *p, va_list *vaptr
 ){
-    Enter_Api();
-
     DECLARE_LOCAL (series);
     if (Do_Va_Throws(series, p, vaptr)) // calls va_end()
         fail (Error_No_Catch_For_Throw(series));
@@ -1398,8 +1378,6 @@ unsigned char *RL_rebBytes(
 //
 REBVAL *RL_rebBinary(const void *bytes, size_t size)
 {
-    Enter_Api();
-
     REBSER *bin = Make_Binary(size);
     memcpy(BIN_HEAD(bin), bytes, size);
     TERM_BIN_LEN(bin, size);
@@ -1415,7 +1393,6 @@ REBVAL *RL_rebBinary(const void *bytes, size_t size)
 //
 REBVAL *RL_rebSizedText(const char *utf8, size_t size)
 {
-    Enter_Api();
     return Init_Text(Alloc_Value(), Make_Sized_String_UTF8(utf8, size));
 }
 
@@ -1425,7 +1402,6 @@ REBVAL *RL_rebSizedText(const char *utf8, size_t size)
 //
 REBVAL *RL_rebText(const char *utf8)
 {
-    // Handles Enter_Api
     return rebSizedText(utf8, strsize(utf8));
 }
 
@@ -1450,8 +1426,6 @@ const void *RL_rebT(const char *utf8)
 //
 REBVAL *RL_rebLengthedTextW(const REBWCHAR *wstr, unsigned int num_chars)
 {
-    Enter_Api();
-
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
@@ -1467,8 +1441,6 @@ REBVAL *RL_rebLengthedTextW(const REBWCHAR *wstr, unsigned int num_chars)
 //
 REBVAL *RL_rebTextW(const REBWCHAR *wstr)
 {
-    Enter_Api();
-
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
@@ -1490,8 +1462,6 @@ REBVAL *RL_rebTextW(const REBWCHAR *wstr)
 //
 REBVAL *RL_rebManage(REBVAL *v)
 {
-    Enter_Api();
-
     assert(Is_Api_Value(v));
 
     REBARR *a = Singular_From_Cell(v);
@@ -1515,8 +1485,6 @@ REBVAL *RL_rebManage(REBVAL *v)
 //
 void RL_rebUnmanage(void *p)
 {
-    Enter_Api();
-
     REBNOD *nod = NOD(p);
     if (not (nod->header.bits & NODE_FLAG_CELL))
         fail ("rebUnmanage() not yet implemented for rebMalloc() data");
@@ -1556,8 +1524,6 @@ void RL_rebUnmanage(void *p)
 //
 void RL_rebRelease(const REBVAL *v)
 {
-    Enter_Api();
-
     if (not v)
         return; // less rigorous, but makes life easier for C programmers
 
@@ -1569,22 +1535,155 @@ void RL_rebRelease(const REBVAL *v)
 
 
 //
-//  rebError: RL_API
+//  rebPromise: RL_API
 //
-// Note: Over the long term, one does not want to hard-code error strings in
-// the executable.  That makes them more difficult to hook with translations,
-// or to identify systemically with some kind of "error code".  However,
-// it's a realistic quick-and-dirty way of delivering a more meaningful
-// error than just using a RE_MISC error code, and can be found just as easily
-// to clean up later.
+// The concept of promises in the API is that the code may not be able to run
+// to completion, due to a synchronous dependency on something that must be
+// fulfilled asynchronously (like trying to implement INPUT in JavaScript).
+// This means the interpreter state must be able to suspend, ask for the
+// information, and wait for an answer.  This can only be done in JavaScript
+// using the PTHREAD emulation of SharedArrayBuffer plus a web worker...so
+// that the worker can do an Atomics.wait() on a queued work request, or by
+// means of compiling to emterpreter bytecode.
 //
-// !!! Should there be a way for the caller to slip their C file and line
-// information through as the source of the FAIL?
+// What the promise does is it returns an integer of a unique memory address
+// it allocated to use in a mapping for the [resolve, reject] functions.
+// It will trigger those mappings when the promise is fulfilled.  In order to
+// come back and do that fulfillment, it either puts the code processing into
+// a timer callback (emterpreter) or queues it to a thread (pthreads).
 //
-REBVAL *RL_rebError(const char *msg)
+// The resolve will be called if it reaches the end of the input and the
+// reject if there is a failure.
+//
+intptr_t RL_rebPromise(const void *p, va_list *vaptr)
 {
-    Enter_Api();
-    return Init_Error(Alloc_Value(), Error_User(msg));
+  #if !defined(TO_JAVASCRIPT)
+    UNUSED(p);
+    UNUSED(vaptr);
+    fail ("rebPromise() is only available in JavaScript builds");
+  #else
+    // If we're using a thread model to implement the pausing, then we would
+    // have to start executing on that thread here.  The return value model
+    // right now is simple and doesn't have a notion for returning either a
+    // promise or not, so we always have to return a value that translates to
+    // a promise...hence we can't (for instance) do the calculation and notice
+    // no asynchronous information was needed.  That is an optimization which
+    // could be pursued later.
+    //
+    // But since that's not what this is doing right now, go ahead and spool
+    // the va_list into an array to be executed after a timeout.
+    //
+    // Currently such spooling is not done except with a frame, and there are
+    // a lot of details to get right.  For instance, VALUE_FLAG_EVAL_FLIP and
+    // all the rest of that.  Plus there may be some binding context
+    // information coming from the callsite (?).  So here we do a reuse of
+    // the code the GC uses to reify va_lists in frames, which we presume does
+    // all the ps and qs.  It's messy, but refactor if it turns out to work.
+
+    const REBFLGS flags = DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE;
+
+    // !!! The following code is derived from Eval_Va_Core()
+
+    DECLARE_FRAME (f);
+    f->flags = Endlike_Header(flags); // read by Set_Frame_Detected_Fetch
+
+    f->source->index = TRASHED_INDEX; // avoids warning in release build
+    f->source->array = nullptr;
+    f->source->vaptr = vaptr;
+    f->source->pending = END_NODE; // signal next fetch comes from va_list
+
+  #if defined(DEBUG_UNREADABLE_BLANKS)
+    //
+    // We reuse logic in Fetch_Next_In_Frame() and Set_Frame_Detected_Fetch()
+    // but the previous f->value will be tested for NODE_FLAG_ROOT.
+    //
+    DECLARE_LOCAL (junk);
+    f->value = Init_Unreadable_Blank(junk); // shows where garbage came from
+  #else
+    f->value = BLANK_VALUE; // less informative but faster to initialize
+  #endif
+
+    Set_Frame_Detected_Fetch(nullptr, f, p);
+
+    f->out = m_cast(REBVAL*, END_NODE);
+    f->specifier = SPECIFIED; // relative values not allowed in va_lists
+    f->gotten = nullptr;
+
+    const bool truncated = false;
+    Reify_Va_To_Array_In_Frame(f, truncated);
+
+    // The array is managed, but let's unmanage it so it doesn't get GC'd and
+    // use it as the ID of the table entry for the promise.
+    //
+    assert(GET_SER_FLAG(f->source->array, NODE_FLAG_MANAGED));
+    CLEAR_SER_FLAG(f->source->array, NODE_FLAG_MANAGED);
+
+    EM_ASM_({
+        setTimeout(function() { // evaluate the code w/no other code on GUI
+            _RL_rebPromise_callback($0); // for emscripten_sleep_with_yield()
+        }, 0);
+    }, f->source->array);
+
+    return cast(intptr_t, f->source->array);
+  #endif
+}
+
+
+//
+//  rebPromise_callback: RL_API
+//
+// In the emterpreter build, this is the code that rebPromise() defers to run
+// until there is no JavaScript above it or after it on the GUI thread stack.
+// This makes it safe to use emscripten_sleep_with_yield() inside of it.
+//
+// *However* it must be called via _RL_rebPromise_callback, not a wrapper.
+// emscripten_sleep_with_yield() sets the EmterpreterAsync.state to 1 while it
+// is unwinding, and the cwrap() implementation checks the state *after* the
+// call that it is 0...since usually, continuing to run would mean running
+// more JavaScript.  Calling directly avoids this check as we're *sure* this
+// is in an otherwise empty top-level handler.
+//
+void RL_rebPromise_callback(intptr_t promise_id)
+{
+  #if !defined(TO_JAVASCRIPT)
+    UNUSED(promise_id);
+    fail ("rebPromise() is only available in JavaScript builds");
+  #else
+    REBARR *arr = cast(REBARR*, cast(void*, promise_id));
+
+    // !!! Should probably do a Push_Trap in order to make sure the REJECT can
+    // be called.
+
+    // We took off the managed flag in order to avoid GC.  Let's put it back
+    // on... the evaluator will lock it.
+    //
+    // !!! We probably can't unmanage and free it after because it (may?) be
+    // legal for references to that array to make it out to the debugger?
+    //
+    assert(NOT_SER_FLAG(arr, NODE_FLAG_MANAGED));
+    SET_SER_FLAG(arr, NODE_FLAG_MANAGED);
+
+    REBVAL *result = Alloc_Value();
+    if (THROWN_FLAG == Eval_Array_At_Core(
+        Init_Void(result),
+        nullptr, // opt_first (null indicates nothing, not nulled cell)
+        arr,
+        0, // index
+        SPECIFIED,
+        DO_FLAG_TO_END | DO_FLAG_EXPLICIT_EVALUATE // was reified w/explicit
+    )){
+        fail (Error_No_Catch_For_Throw(result)); // no need to release result
+    }
+
+    if (IS_NULLED(result)) {
+        rebRelease(result); // recipient must release if not nullptr
+        result = nullptr;
+    }
+
+    EM_ASM_({
+        RL_Resolve($0, $1); // assumes it can now free the table entry
+    }, promise_id, result);
+  #endif
 }
 
 
@@ -1761,7 +1860,7 @@ void RL_rebFail_OS(int errnum)
 {
     REBCTX *error;
 
-#ifdef TO_WINDOWS
+  #ifdef TO_WINDOWS
     if (errnum == 0)
         errnum = GetLastError();
 
@@ -1804,7 +1903,7 @@ void RL_rebFail_OS(int errnum)
 
         error = Error(RE_USER, message, END_NODE);
     }
-#else
+  #else
     // strerror() is not thread-safe, but strerror_r is. Unfortunately, at
     // least in glibc, there are two different protocols for strerror_r(),
     // depending on whether you are using the POSIX-compliant implementation
@@ -1860,7 +1959,7 @@ void RL_rebFail_OS(int errnum)
         else
             error = Error_User("Unknown problem with strerror_r() message");
     #endif
-#endif
+  #endif
 
     DECLARE_LOCAL (temp);
     Init_Error(temp, error);

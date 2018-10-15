@@ -172,6 +172,12 @@ struct-call-inlines: make block! length of api-objects
 direct-call-inlines: make block! length of api-objects
 
 for-each api api-objects [do in api [
+    if find [
+        "rebEnterApi_internal" ; called as RL_rebEnterApi_internal
+    ] name [
+        continue
+    ]
+
     opt-va-start: _
     if va-pos: try find paramlist "va_list *" [
         assert ['vaptr first next va-pos]
@@ -211,6 +217,10 @@ for-each api api-objects [do in api [
 
     opt-return: try if returns != "void" ["return"]
 
+    enter: try if name != "rebStartup" [
+        copy "RL_rebEnterApi_internal();^/"
+    ]
+
     make-inline-proxy: func [
         return: [text!]
         internal [text!]
@@ -218,6 +228,7 @@ for-each api api-objects [do in api [
         cscape/with {
             $<OPT-NORETURN>
             inline static $<Returns> $<Name>_inline($<Wrapper-Params>) {
+                $<Enter>
                 $<Opt-Va-Start>
                 $<opt-return> $<Internal>($<Proxied-Args>);
                 $<OPT-DEAD-END>
@@ -563,12 +574,13 @@ e-cwrap: (make-emitter
 )
 
 to-js-type: func [
-    return: [<opt> text!]
+    return: [<opt> text! tag!]
     s [text!] "C type as string"
 ][
     case [
-        ; Varargs pointers need special processing...
-        s = "va_list *" ["va_ptr"]
+        s = "va_list *" [<va_ptr>] ;-- special processing, only an argument
+
+        s = "intptr_t" [<promise>] ;-- distinct handling for return vs. arg
 
         ; APIs dealing with `char *` means UTF-8 bytes.  While C must memory
         ; manage such strings (at the moment), the JavaScript wrapping assumes
@@ -579,7 +591,7 @@ to-js-type: func [
         ; !!! These APIs can also return nulls.  rebSpell("second [{a}]") is
         ; now null, as a way of doing passthru on failures.
         ;
-        s = "char *" ["'string'"]
+        (s = "char *") or [s = "const char *"] ["'string'"]
 
         ; Other pointer types aren't strings.  `unsigned char *` is a byte
         ; array, and should perhaps use ArrayBuffer.  But for now, just assume
@@ -612,7 +624,6 @@ to-js-type: func [
             "long"
             "int64_t"
             "uint32_t"
-            "uintptr_t"
             "size_t"
             "REBRXT"
         ] s ["'number'"]
@@ -626,43 +637,90 @@ to-js-type: func [
 ]
 
 map-each-api [
+    if find [
+        "rebStartup" ;-- no rebEnterApi, extra initialization in its wrapper
+        "rebPromise_callback" ;-- must be called as _RL_rebPromise_callback
+        "rebEnterApi_internal" ;-- called as _RL_rebEnterApi_internal
+    ] name [
+        continue
+    ]
+
     js-returns: to-js-type returns else [
         fail ["No JavaScript return mapping for type" returns]
     ]
 
     js-param-types: collect [
         for-each [type var] paramlist [
+            if type = "intptr_t" [ ;-- e.g. <promise>
+                keep "'number'"
+                continue
+            ]
             keep to-js-type type else [
                 fail ["No JavaScript argument mapping for type" type]
             ]
         ]
     ]
 
-    if find js-param-types "va_ptr" [
+    if find js-param-types <va_ptr> [
         if 2 < length of js-param-types [
             print cscape/with
-            "!!!^/!!! WARNING!^/!!!^/!!! Skipping mixed variadic function $<Name>^/!!!"
+            "!!! WARNING! !!! Skipping mixed variadic function $<Name> !!!"
             api
             continue
         ]
-        return-code: switch js-returns [
+
+        enter: copy {_RL_rebEnterApi_internal();}
+        if false [
+            ; It can be useful for debugging to see the API entry points;
+            ; using console.error() adds a stack trace to it.
+            ;
+            append enter unspaced [{^/console.error("Entering } name {");}]
+        ]
+
+        return-code: if false [
+            ; Similar to debugging on entry, it can be useful on exit to see
+            ; when APIs return...code comes *before* the return statement.
+            ;
+            unspaced [{console.error("Exiting } name {");^/}]
+        ] else [
+            copy {}
+        ]
+        append return-code trim/auto copy switch js-returns [
           "'string'" [
             ;
             ; If `char *` is returned, it was rebAlloc'd and needs to be freed
             ; if it is to be converted into a JavaScript string
-            ;
-            {var js_str = UTF8ToString(a)
-            rebFree(a)
-            return js_str}
+            {
+                var js_str = UTF8ToString(a)
+                rebFree(a)
+                return js_str
+            }
           ]
+          <promise> [
+            ;
+            ; The promise returns an ID of what to use to write into the table
+            ; for the [resolve, reject] pair.  It will run the code that
+            ; will call the RL_Resolve later...after a setTimeout, so it is
+            ; sure that this table entry has been entered.
+            ;
+            {
+                return new Promise(function(resolve, reject) {
+                    RL_Register(a, [resolve, reject])
+                })
+            }
+          ]
+
           ; !!! Doing return and argument transformation needs more work!
           ; See suggestions: https://forum.rebol.info/t/817
+
           default [
             {return a}
           ]
         ]
+
         e-cwrap/emit cscape/with {
             $<Name> = function() {
+                $<Enter>
                 var argc = arguments.length
                 var stack = stackSave()
                 var va = allocate(4 * (argc + 1 + 1), '', ALLOC_STACK)
@@ -674,7 +732,7 @@ map-each-api [
                         l = lengthBytesUTF8(a) + 4
                         l = l & ~3
                         p = allocate(l, '', ALLOC_STACK)
-                        stringToUTF8(a, p, l) // !!! leak
+                        stringToUTF8(a, p, l)
                         break
                       case 'number':
                         p = a
@@ -694,6 +752,7 @@ map-each-api [
 
                 a = _RL_$<Name>(HEAP32[va>>2], va + 4 * (argc + 1))
                 stackRestore(stack)
+
                 $<Return-Code>
             }
         } api
@@ -730,20 +789,73 @@ e-cwrap/emit {
 
     RL_Register = function(id, fn) {
         if (id in RL_JS_NATIVES)
-            console.log("Already registered " + id + " in JS_NATIVES table")
+            throw Error("Already registered " + id + " in JS_NATIVES table")
         RL_JS_NATIVES[id] = fn
-    }
-
-    RL_Dispatch = function(id) {
-        if (!(id in RL_JS_NATIVES))
-            console.log("Can't dispatch " + id + " in JS_NATIVES table")
-        RL_JS_NATIVES[id]()
     }
 
     RL_Unregister = function(id) {
         if (!(id in RL_JS_NATIVES))
-            console.log("Can't delete " + id + " in JS_NATIVES table")
+            throw Error("Can't delete " + id + " in JS_NATIVES table")
         delete RL_JS_NATIVES[id]
+    }
+
+    RL_Dispatch = function(id) {
+        if (!(id in RL_JS_NATIVES))
+            throw Error("Can't dispatch " + id + " in JS_NATIVES table")
+        var result = RL_JS_NATIVES[id]()
+        if (result === undefined) // no return, `return;`, `return undefined;`
+            return rebVoid() // treat equivalent to VOID! value return
+        else if (result === null) // explicit result, e.g. `return null;`
+            return 0
+        else if (Number.isInteger(result))
+            return result // treat as REBVAL* heap address (should be wrapped)
+        throw Error("JS-NATIVE must return null, undefined, or REBVAL*")
+    }
+
+    RL_AsyncDispatch = function(id, atomic_addr) {
+        if (!(id in RL_JS_NATIVES))
+            throw Error("Can't dispatch " + id + " in JS_NATIVES table")
+
+        var resolve = function(arg) {
+            if (arguments.length > 1)
+                throw Error("JS-AWAITER's resolve() can only take 1 argument")
+            if (arg === undefined) // `resolve()`, `resolve(undefined)`
+                {} // allow it
+            else if (arg === null) // explicit result, e.g. `resolve(null)`
+                {} // allow it
+            else if (typeof arg !== "function")
+                throw Error("JS-AWAITER's resolve() only takes a function")
+            RL_JS_NATIVES[atomic_addr] = arg
+            setValue(atomic_addr, 1, 'i8')
+        }
+
+        var reject = function(arg) {
+            throw Error("JS-AWAITER reject() not yet implemented")
+        }
+
+        var result = RL_JS_NATIVES[id](resolve, reject)
+        if (result !== undefined)
+            throw Error("JS-AWAITER cannot return a value, use resolve()")
+    }
+
+    RL_Await = function(atomic_addr) {
+        var fn = RL_JS_NATIVES[atomic_addr]
+        RL_Unregister(atomic_addr);
+
+        if (typeof fn == "function")
+            fn = fn()
+        if (fn === null)
+            return 0
+        if (fn === undefined)
+            return rebVoid()
+        return fn
+    }
+
+    RL_Resolve = function(id, rebval) {
+        if (!(id in RL_JS_NATIVES))
+            throw Error("Can't dispatch " + id + " in JS_NATIVES table")
+        RL_JS_NATIVES[id][0](rebval)
+        RL_Unregister(id);
     }
 }
 e-cwrap/write-emitted
