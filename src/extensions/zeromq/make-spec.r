@@ -18,7 +18,7 @@ modules: [
         libraries: switch system-config/os-base [
             'Windows [
                 [
-                    ;%odbc32
+                    %zmq
                     ;"C:\Program Files\ZeroMQ 4.0.4\lib\libzmq-v120-mt-gd-4_0_4.lib"
                 ]
             ]
