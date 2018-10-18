@@ -465,6 +465,8 @@ void Set_Location_Of_Error(
             continue;
         if (Is_Action_Frame_Fulfilling(f))
             continue;
+        if (f->original == PG_Dummy_Action)
+            continue;
 
         DS_PUSH_TRASH;
         Get_Frame_Label_Or_Blank(DS_TOP, f);
@@ -1644,7 +1646,10 @@ void MF_Error(REB_MOLD *mo, const RELVAL *v, bool form)
 
     // Form: ** Where: function
     REBVAL *where = KNOWN(&vars->where);
-    if (not IS_BLANK(where)) {
+    if (
+        not IS_BLANK(where)
+        and (not IS_BLOCK(where) and VAL_LEN_AT(where) == 0)
+    ){
         Append_Utf8_Codepoint(mo->series, '\n');
         Append_Unencoded(mo->series, RM_ERROR_WHERE);
         Form_Value(mo, where);
