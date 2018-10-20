@@ -55,7 +55,7 @@ files: sort read src-dir/core/%
 remove-each file files [
 
     not all [
-        %.c = suffix? file
+        %.c == suffix? file
         not find/match file "host-"
         not find/match file "os-"
     ]

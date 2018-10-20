@@ -79,7 +79,7 @@ dump-obj: function [
                     ][
                         all [
                             datatype? get :pat
-                            type = get :pat
+                            type is get :pat
                         ]
                     ]
                 ]
@@ -754,7 +754,7 @@ require-commit: function [
     ; If there's a specific ID then assume that if the current build does not
     ; have that ID then there *could* be a problem.
     ;
-    if id: select c 'id and [id <> commit] [
+    if id: select c 'id and [id isn't commit] [
         print [
             "This script has only been tested again commit" id LF
 

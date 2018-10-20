@@ -182,7 +182,7 @@ for-each native native-specs [
                     ]
                 ]
                 path? plat [; os-base/os-name format
-                    if plat = as path! reduce [config/os-base config/os-name][
+                    if plat == as path! reduce [config/os-base config/os-name][
                         supported?: true
                         break
                     ]
@@ -235,7 +235,7 @@ e2/emit {
     };
 }
 
-either num-native = 0 [ ;-- C++ doesn't support 0-length arrays
+either num-native == 0 [ ;-- C++ doesn't support 0-length arrays
     e2/emit {
         REBNAT *Ext_Native_C_Funcs_${Mod} = NULL;
     }
@@ -299,8 +299,8 @@ for-next native-list [
     if tail? next native-list [break]
 
     any [
-        'native = native-list/2
-        path? native-list/2 and ['native = first native-list/2]
+        'native == native-list/2
+        path? native-list/2 and ['native == first native-list/2]
     ] then [
         assert [set-word? native-list/1]
         (emit-include-params-macro/ext e1

@@ -66,8 +66,8 @@ backtrace*: function [
     stack: collect [while [f: parent-of f] [
         if not pending? f [
             if first-frame and [any [
-                action of f = :pause
-                action of f = :breakpoint
+                action of f == :pause
+                action of f == :breakpoint
             ]][
                 ; Omitting breakpoints from the list entirely presents a
                 ; skewed picture of what's going on.  But giving them
@@ -90,17 +90,17 @@ backtrace*: function [
         ; to be on the same page about the index.
         ;
         comment [
-            assert [number = backtrace-index f]
+            assert [number == backtrace-index f]
         ]
 
         if get-frame [
             if integer? :level [
-                if number <> :level [
+                if number !== :level [
                     continue
                 ]
             ] else [
                 assert [action? :level]
-                if action of f <> :level [
+                if action of f !== :level [
                     continue
                 ]
             ]

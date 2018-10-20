@@ -2,11 +2,11 @@
 (group? first [(1 + 1)])
 (not group? 1)
 ; minimum
-(group! = type of first [()])
+(group! == type of first [()])
 ; alternative literal form
-(strict-equal? first [()] first [#[group! [[] 1]]])
-(strict-equal? first [()] make group! 0)
-(strict-equal? first [()] to group! [])
+(first [()] == first [#[group! [[] 1]]])
+(first [()] == make group! 0)
+(first [()] == to group! [])
 ("()" == mold first [()])
 ; parens are active
 (
@@ -18,10 +18,10 @@
     num1: 4
     num2: 1
     fact: copy quote (
-        either num1 = 1 [num2] [num2: num1 * num2 num1: num1 - 1]
+        either num1 == 1 [num2] [num2: num1 * num2 num1: num1 - 1]
     )
     insert/only tail of last fact fact
-    24 = do fact
+    24 == do fact
 )
 ; infinite recursion
 [#1665 (

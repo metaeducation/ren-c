@@ -421,7 +421,7 @@ host-console: function [
         ; result.  These should probably be injected into the environment
         ; somehow instead.
         ;
-        assert [block? result | length of result = 2]
+        assert [block? result | length of result == 2]
         set [argv: boot-exts:] result
         return (host-start argv boot-exts :emit :return)
     ]
@@ -445,8 +445,8 @@ host-console: function [
     ;
     all [
         error? :result
-        result/id = 'no-catch
-        :result/arg2 = :QUIT ;; name
+        result/id is 'No-Catch
+        :result/arg2 == :QUIT ;; name
     ] then [
         return <- switch type of :result/arg1 [
             null [0] ;-- plain QUIT, no /WITH, call that success
@@ -465,8 +465,8 @@ host-console: function [
     ;
     all [
         error? :result
-        result/id = 'no-catch
-        :result/arg2 = :HALT ;; name
+        result/id is 'No-Catch
+        :result/arg2 == :HALT ;; name
     ] then [
         if find directives #quit-if-halt [
             return 128 + 2 ; standard cancellation exit status for bash
@@ -510,7 +510,7 @@ host-console: function [
                 print "** Hit Ctrl-C to break into the console in 5 seconds"
 
                 repeat n 25 [
-                    if remainder n 5 = 1 [
+                    if remainder n 5 == 1 [
                         write-stdout form (5 - to-integer (n / 5))
                     ] else [
                         write-stdout "."
@@ -542,7 +542,7 @@ host-console: function [
     ]
 
     if block? :result [
-        assert [length of result = 1]
+        assert [length of result == 1]
         set* quote result: :result/1
     ] else [
         assert [unset? 'result]
@@ -599,7 +599,7 @@ host-console: function [
         ; it's complete (or until an empty line signals to just report
         ; the error as-is)
         ;
-        if error/id = 'scan-missing [
+        if error/id is 'Scan-Missing [
             ;
             ; Error message tells you what's missing, not what's open and
             ; needs to be closed.  Invert the symbol.

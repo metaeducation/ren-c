@@ -7,11 +7,11 @@
     old-foo: copy :foo
 
     did all [
-        (old-foo 10) = 11
+        (old-foo 10) == 11
         hijack 'foo func [x] [(old-foo x) + 20]
-        (old-foo 10) = 11
-        (foo 10) = 31
-        (another-foo 10) = 31
+        (old-foo 10) == 11
+        (foo 10) == 31
+        (another-foo 10) == 31
     ]
 )
 
@@ -57,16 +57,16 @@
     step10: (two-30 10 20) ; 60
 
     did all [
-        step1 = 60
-        step2 = 60
-        step3 = 6000
-        step4 = 6000
+        step1 == 60
+        step2 == 60
+        step3 == 6000
+        step4 == 6000
         error? step5
-        step6 = 240000
-        step7 = 240000
-        step8 = -40
-        step9 = 60
-        step10 = 60
+        step6 == 240000
+        step7 == 240000
+        step8 == -40
+        step9 == 60
+        step10 == 60
     ]
 )
 
@@ -75,5 +75,5 @@
     two: func [a b] [a + b]
     one: specialize 'two [a: 10]
     hijack 'one func [b] [20 - b]
-    one 20 = 0
+    one 20 == 0
 )

@@ -40,7 +40,7 @@ REBOL [
 ; (It would be possible to rig up shim code for pretty much any specific other
 ; version if push came to shove, but it would be work for no obvious reward.)
 ;
-if true = attempt [null? :some-undefined-thing] [
+if true == attempt [null? :some-undefined-thing] [
     ;
     ; COPY AS TEXT! can't be made to work in the old Ren-C, so it just
     ; aliases its SPELLING-OF to COPY-AS-TEXT.  Define that for compatibilty.
@@ -69,6 +69,19 @@ unset 'foreach ;-- use FOR-EACH
 ;
 copy-as-text: :spelling-of
 
+
+; https://forum.rebol.info/t/349
+;
+; Temporarily disabling things that will become new strict equality/inequality
+;
+is: enfix get '=
+isn't: enfix get '!=
+is?: get 'equal?
+isn't?: get 'not-equal?
+unset '=
+unset '!=
+unset 'equal?
+unset 'not-equal?
 
 ; https://forum.rebol.info/t/null-in-the-librebol-api-and-void-null/597
 ;
@@ -291,12 +304,12 @@ switch: adapt 'switch [
                 fail/where ["Switch now evaluative" c] 'cases
             ]
             word? :c [
-                opt either c = 'default [
+                opt either c is 'Default [
                     default: true ;-- signal next BLOCK! to be GROUP!'d
                     continue
                 ][
                     if all [
-                        c != 'default
+                        c isn't 'Default
                         not datatype? get c
                     ][
                         fail/where ["Switch now evaluative" c] 'cases

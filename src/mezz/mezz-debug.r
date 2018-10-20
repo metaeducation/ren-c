@@ -32,7 +32,7 @@ verify: function [
                     (unset? 'result) "null"
                     (void? result) "void"
                     (blank? result) "blank"
-                    (result = false) "false"
+                    (result == false) "false"
                 ]
                 ":"
                 copy/part conditions pos

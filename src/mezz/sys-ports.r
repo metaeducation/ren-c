@@ -24,8 +24,7 @@ make-port*: function [
         "port specification"
 ][
     ; The first job is to identify the scheme specified:
-
-    really switch type of spec [
+    switch type of spec [
         file! [
             name: pick [dir file] dir? spec
             spec: join-of [ref:] spec
@@ -33,9 +32,17 @@ make-port*: function [
         url! [
             spec: join decode-url spec [to set-word! 'ref spec]
             name: select spec to set-word! 'scheme
+            if not match lit-word! name [
+                fail ["SCHEME: should be a LIT-WORD! in port spec"]
+            ]
+            name: to word! name
         ]
         block! [
             name: select spec to set-word! 'scheme
+            if not match lit-word! name [
+                fail ["SCHEME: should be a LIT-WORD! in port spec"]
+            ]
+            name: to word! name
         ]
         object! [
             name: get in spec 'scheme
@@ -48,12 +55,13 @@ make-port*: function [
             name: port/scheme/name
             spec: port/spec
         ]
+        default [fail]
     ]
 
     ; Get the scheme definition:
     all [
-        match [word! lit-word!] name
-        scheme: try get try in system/schemes as word! name
+        match word! name
+        scheme: try get try in system/schemes name
     ] else [
         cause-error 'access 'no-scheme name
     ]
@@ -103,7 +111,12 @@ make-port*: function [
             ; scheme name: [//]
             copy s1 some scheme-char ":" opt "//" ( ; "//" is optional ("URN")
                 append out compose [
-                    scheme: (to lit-word! to text! s1)
+                    ;
+                    ; !!! How the caller works, `scheme: 'http` (or whatever)
+                    ; is used as-is as a block, not to MAKE OBJECT!, but it
+                    ; still is enforced as a LIT-WORD!
+                    ;
+                    scheme: (to lit-word! s1)
                 ]
             )
 
@@ -195,7 +208,7 @@ make-scheme: function [
             ; is in only allowing FUNC vs. alternative function generators.
             assert [
                 set-word? name
-                func* = 'func
+                func* is 'Func
                 block? args
                 block? body
             ]

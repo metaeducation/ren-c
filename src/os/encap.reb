@@ -113,23 +113,23 @@ elf-format: context [
             | find [read write] mode
         ]
 
-        either mode = 'read [
+        if mode == 'read [
             bin: copy/part begin num-bytes
-            if endian = 'little [reverse bin]
+            if endian == 'little [reverse bin]
             set name (to-integer/unsigned bin)
-        ][
+        ] else [
             val: ensure integer! get name
             bin: skip (tail of to-binary val) (negate num-bytes) ; big endian
-            if endian = 'little [reverse bin]
+            if endian == 'little [reverse bin]
             change begin bin
         ]
     ]
 
     header-rule: [
         #{7F} "ELF"
-        set EI_CLASS skip (bits: either EI_CLASS = 1 [32] [64])
-        set EI_DATA skip (endian: either EI_DATA = 1 ['little] ['big])
-        set EI_VERSION skip (assert [EI_VERSION = 1])
+        set EI_CLASS skip (bits: either EI_CLASS == 1 [32] [64])
+        set EI_DATA skip (endian: either EI_DATA == 1 ['little] ['big])
+        set EI_VERSION skip (assert [EI_VERSION == 1])
         skip ; EI_OSABI
         skip ; EI_ABIVERSION
         7 skip ; EI_PAD
@@ -137,13 +137,13 @@ elf-format: context [
         2 skip ; e_machine
         4 skip ; e_version
         [
-            if (bits = 32) [
+            if (bits == 32) [
                 4 skip ; e_entry
                 begin: 4 skip (handler 'e_phoff 4)
                 begin: 4 skip (handler 'e_shoff 4)
             ]
         |
-            if (bits = 64) [
+            if (bits == 64) [
                 8 skip ; e_entry
                 begin: 8 skip (handler 'e_phoff 8)
                 begin: 8 skip (handler 'e_shoff 8)
@@ -163,7 +163,7 @@ elf-format: context [
     program-header-rule: [
         begin: 4 skip (handler 'p_type 4)
         [
-            if (bits = 32) [
+            if (bits == 32) [
                 begin: 4 skip (handler 'p_offset 4)
                 4 skip ; p_vaddr
                 4 skip ; p_paddr
@@ -171,7 +171,7 @@ elf-format: context [
                 4 skip ; p_memsz
             ]
         |
-            if (bits = 64) [
+            if (bits == 64) [
                 4 skip ; p_flags, different position in 64-bit
                 begin: 8 skip (handler 'p_offset 8)
                 8 skip ; p_vaddr
@@ -181,12 +181,12 @@ elf-format: context [
             ]
         ]
         [
-            if (bits = 32) [
+            if (bits == 32) [
                 4 skip ; p_flags, different position in 32-bit
                 4 skip ; p_align
             ]
         |
-            if (bits = 64) [
+            if (bits == 64) [
                 8 skip ; p_align
             ]
         ]
@@ -198,14 +198,14 @@ elf-format: context [
         begin: 4 skip (handler 'sh_name 4)
         begin: 4 skip (handler 'sh_type 4)
         [
-            if (bits = 32) [
+            if (bits == 32) [
                 begin: 4 skip (handler 'sh_flags 4)
                 begin: 4 skip (handler 'sh_addr 4)
                 begin: 4 skip (handler 'sh_offset 4)
                 begin: 4 skip (handler 'sh_size 4)
             ]
         |
-            if (bits = 64) [
+            if (bits == 64) [
                 begin: 8 skip (handler 'sh_flags 8)
                 begin: 8 skip (handler 'sh_addr 8)
                 begin: 8 skip (handler 'sh_offset 8)
@@ -215,12 +215,12 @@ elf-format: context [
         begin: 4 skip (handler 'sh_link 4)
         begin: 4 skip (handler 'sh_info 4)
         [
-            if (bits = 32) [
+            if (bits == 32) [
                 begin: 4 skip (handler 'sh_addralign 4)
                 begin: 4 skip (handler 'sh_entsize 4)
             ]
         |
-            if (bits = 64) [
+            if (bits == 64) [
                 begin: 8 skip (handler 'sh_addralign 8)
                 begin: 8 skip (handler 'sh_entsize 8)
             ]
@@ -247,7 +247,7 @@ elf-format: context [
                     name-start: skip string-section sh_name
                     name-end: ensure binary! find name-start #{00}
                     section-name: to-text copy/part name-start name-end
-                    if name = section-name [
+                    if name == section-name [
                         return index ;-- sh_offset, sh_size, etc. are set
                     ]
                     index: index + 1
@@ -308,7 +308,7 @@ elf-format: context [
         ;
         section-header-tail: e_shoff + (e_shnum * e_shentsize)
         case [
-            section-header-tail = length of executable [
+            section-header-tail == length of executable [
                 print "Executable has no appended data past ELF image size"
             ]
             section-header-tail > length of executable [
@@ -413,7 +413,7 @@ elf-format: context [
             parse skip executable string-header-offset [
                 (mode: 'read) pos: section-header-rule
                 (
-                    assert [sh_offset = string-section-offset]
+                    assert [sh_offset == string-section-offset]
                     sh_size: sh_size + (1 + length of encap-section-name)
                 )
                 (mode: 'write) :pos section-header-rule
@@ -709,7 +709,7 @@ pe-format: context [
         u32-le (code-base: u32)
         u32-le (data-base: u32)
         u32-le (image-base: u32
-            if signature = 'exe-64 [
+            if signature is 'Exe-64 [
                 image-base: code-base or+ shift image-base 32
                 code-base: _
             ])
@@ -866,7 +866,7 @@ pe-format: context [
         ]
 
         ;dump new-section
-        assert [size-of-section-header = length of new-section]
+        assert [size-of-section-header == length of new-section]
     ]
 
     add-section: function [
@@ -882,7 +882,7 @@ pe-format: context [
 
         ;check if there's section name conflicts
         for-each sec sections [
-            if section-name = to text! trim/with sec/name #{00} [
+            if section-name == to text! trim/with sec/name #{00} [
                 fail [
                     "There is already a section named" section-name |
                     mold sec
@@ -984,7 +984,7 @@ pe-format: context [
                 print ["There's extra exe-data at the end"]
                 insert (skip exe-data new-section-offset) section-data
             ]
-            new-section-offset = length of exe-data [
+            new-section-offset == length of exe-data [
                 print ["Appending exe-data"]
                 append exe-data section-data
             ]
@@ -1013,7 +1013,7 @@ pe-format: context [
 
         target-sec: try catch [
             for-each sec sections [
-                if section-name = to text! trim/with sec/name #{00} [
+                if section-name == to text! trim/with sec/name #{00} [
                     throw sec
                 ]
             ]
@@ -1058,7 +1058,7 @@ pe-format: context [
                 (PE-optional-header/image-size + section-size-diff)
                 PE-optional-header/section-alignment
 
-            if new-image-size != PE-optional-header/image-size [
+            if new-image-size !== PE-optional-header/image-size [
                 change skip exe-data PE-optional-header/image-size-offset new-image-size
             ]
         ]
@@ -1111,8 +1111,8 @@ pe-format: context [
             print to text! sec/name
             ;dump sec
             case [
-                sec/physical-offset = target-sec/physical-offset [
-                    assert [sec/name = target-sec/name]
+                sec/physical-offset == target-sec/physical-offset [
+                    assert [sec/name == target-sec/name]
                     ;target sec, replace with all #{00}
                     change pos head of (
                         insert/dup copy #{} #{00} size-of-section-header
@@ -1131,7 +1131,7 @@ pe-format: context [
             ]
         ]
 
-        if not (target-sec/physical-offset + 1 = index of pos) [
+        if not (target-sec/physical-offset + 1 == index of pos) [
             ;if the section to remove is not the last section, the last section
             ;must have moved forward, so erase the old section
             change pos head of (
@@ -1175,7 +1175,7 @@ generic-format: context [
         ;
         sig-location: skip tail of executable (negate length of signature)
         case [
-            sig-location = signature [
+            sig-location == signature [
                 print "Binary contains encap version 0 data block."
 
                 size-location: skip sig-location -8
@@ -1191,7 +1191,7 @@ generic-format: context [
             print "Binary contains no pre-existing encap data block"
         ]
 
-        while [0 != modulo (length of executable) 4096] [
+        while [0 !== modulo (length of executable) 4096] [
             append executable #{00}
             true
         ] then [
@@ -1203,7 +1203,7 @@ generic-format: context [
         append executable embedding
 
         size-as-binary: to-binary length of embedding
-        assert [8 = length of size-as-binary]
+        assert [8 == length of size-as-binary]
         append executable size-as-binary
 
         append executable signature
@@ -1219,7 +1219,7 @@ generic-format: context [
 
         test-sig: read/seek/part file (info/size - sig-length) sig-length
 
-        if test-sig != signature [return blank]
+        if test-sig !== signature [return blank]
 
         embed-size: to-integer/unsigned (
             read/seek/part file (info/size - sig-length - 8) 8
@@ -1248,7 +1248,7 @@ encap: function [
     ]
 
     in-rebol-path: default [system/options/boot]
-    either ".exe" = base-name: skip tail of in-rebol-path -4 [
+    either ".Exe" is base-name: skip tail of in-rebol-path -4 [
         out-rebol-path: join-of
             copy/part in-rebol-path (index of base-name) - 1
             "-encap.exe"
@@ -1313,7 +1313,7 @@ encap: function [
 
     ; !!! Currently only test the extraction for single-file, easier.
     ;
-    if single-script and [embed != extracted: get-encap out-rebol-path] [
+    if single-script and [embed !== extracted: get-encap out-rebol-path] [
         print ["Test extraction size:" length of extracted]
         print ["Embedded bytes" mold embed]
         print ["Extracted bytes" mold extracted]

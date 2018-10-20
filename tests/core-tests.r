@@ -150,6 +150,7 @@
 %math/and.test.reb
 %math/arcsine.test.reb
 %math/arctangent.test.reb
+%math/arccosine.test.reb
 %math/complement.test.reb
 %math/cosine.test.reb
 %math/difference.test.reb

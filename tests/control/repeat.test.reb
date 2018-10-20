@@ -4,17 +4,17 @@
     num: 0
     repeat i 10 [
         num: num + 1
-        success: success and [i = num]
+        success: success and [i == num]
     ]
-    success and [10 = num]
+    success and [10 == num]
 )
 ; cycle return value
-(false = repeat i 1 [false])
+(false == repeat i 1 [false])
 ; break cycle
 (
     num: 0
     repeat i 10 [num: i break]
-    num = 1
+    num == 1
 )
 ; break return value
 (null? repeat i 10 [break])
@@ -43,13 +43,13 @@
 (
     out: copy ""
     repeat i "abc" [append out i]
-    out = "abcbcc"
+    out == "abcbcc"
 )
 ; block! test
 (
     out: copy []
     repeat i [1 2 3] [append out i]
-    out = [1 2 3 2 3 3]
+    out == [1 2 3 2 3 3]
 )
 ; TODO: is hash! test and list! test needed too?
 ; zero repetition
@@ -66,13 +66,13 @@
 ; Test that return stops the loop
 (
     f1: func [] [repeat i 1 [return 1 2]]
-    1 = f1
+    1 == f1
 )
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
     e: repeat i 2 [num: i trap [1 / 0]]
-    all [error? e num = 2]
+    error? e and [num == 2]
 )
 ; "recursive safety", "locality" and "body constantness" test in one
 (repeat i 1 b: [not same? 'i b/3])
@@ -82,7 +82,7 @@
     repeat i 5 [
         repeat i 2 [num: num + 1]
     ]
-    num = 10
+    num == 10
 )
 ; local variable type safety
 (
@@ -111,10 +111,10 @@
 (
     out: copy ""
     repeat i "abc" [append out first i]
-    out = "abc"
+    out == "abc"
 )
 (
     out: copy []
     repeat i [1 2 3] [append out first i]
-    out = [1 2 3]
+    out == [1 2 3]
 )

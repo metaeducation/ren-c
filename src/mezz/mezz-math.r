@@ -30,21 +30,22 @@ modulo: function [
     b [any-number! money! time!] "Must be nonzero."
     /adjusted "Set 'almost zero' and 'almost B' to zero"
 ][
-    ; This function tries to find the remainder that is "almost non-negative"
-    ; Example: 0.15 - 0.05 - 0.1 // 0.1 is negative,
-    ; but it is "almost" zero, i.e. "almost non-negative"
-
     ; Compute the smallest remainder with the same sign as b
     r: remainder a b
-    if sign? r = negate sign? b [r: r + b]
+    if sign? r == negate sign? b [r: r + b]
     if not adjusted [return r]
-    if sign? a = negate sign? b [a: negate a]
+
+    ; This function tries to find the remainder that is "almost non-negative"
+    ; Example: modulo/adjusted (0.15 - 0.05 - 0.1) (0.1) is negative,
+    ; but it is "almost" zero, i.e. "almost non-negative"
+
+    if sign? a == negate sign? b [a: negate a]
     ; If r is "almost" b (i.e. negligible compared to b), the
     ; result will be 0. Otherwise the result will be r
     if any [
-        a + r = a | b + r = b ; 'almost zero'
+        a + r is a | b + r is b ; 'almost zero'
         all [ ; 'almost b'
-            (a + r) = (a + b)
+            (a + r) is (a + b)
             positive? (r + r) - b
         ]
     ] [return 0.0]
@@ -231,7 +232,7 @@ math: function [
     ][
         ret: reduce res
         all [
-            1 = length of ret
+            1 == length of ret
             any-number? ret/1
         ] or [
             fail [

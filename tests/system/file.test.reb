@@ -33,16 +33,16 @@
     (data: [1 1.2 10:20 "test" user@example.com [sub block]]
     true)
 
-    ((save blank []) = #{
+    ((save blank []) == #{
     0A
     })
 
-    ((save blank data) = #{
+    ((save blank data) == #{
     3120312E322031303A3230202274657374222075736572406578616D706C652E
     636F6D205B73756220626C6F636B5D0A
     })
 
-    ((save/header blank data [title: "my code"]) = #{
+    ((save/header blank data [title: "my code"]) == #{
     5245424F4C205B0A202020207469746C653A20226D7920636F6465220A5D0A31
     20312E322031303A3230202274657374222075736572406578616D706C652E63
     6F6D205B73756220626C6F636B5D0A
@@ -57,26 +57,26 @@
     ; So do not test for exact matches of BINARY! products of compression.
     ; Decompression should be consistent, however.
 
-    ([] = load (save/compress blank [] true))
+    ([] == load (save/compress blank [] true))
 
-    ([] = load #{
+    ([] == load #{
     5245424F4C205B0A202020206F7074696F6E733A205B636F6D70726573735D0A
     5D0A1F8B080000000000000AE302009306D73201000000
     })
 
-    (data = load (save/compress blank data true))
+    (data == load (save/compress blank data true))
 
-    (data = load #{
+    (data == load #{
     5245424F4C205B0A202020206F7074696F6E733A205B636F6D70726573735D0A
     5D0A1F8B080000000000000A335430D433523034B0323250502A492D2E515228
     2D4E2D7248AD48CC2DC849D54BCECF55882E2E4D5248CAC94FCE8EE502000B38
     8CB030000000
     })
 
-    (data = load (save/compress blank data 'script))
+    (data == load (save/compress blank data 'script))
 
     (
-        data = load #{
+        data == load #{
             5245424F4C205B0A202020206F7074696F6E733A205B636F6D70726573735D0A
             5D0A3634237B0A483473494141414141414141436A4E554D4E517A556A413073
             44497955464171535330755556496F4C553474636B6974534D777479456E5653
@@ -91,9 +91,9 @@
         )
         header: take loaded
         did all [
-            header/title = "my code"
-            header/options = [compress]
-            loaded = data
+            header/title == "my code"
+            header/options == [compress]
+            loaded == data
         ]
     )
 
@@ -106,9 +106,9 @@
         }
         header: take loaded
         did all [
-            header/title = "my code"
-            header/options = [compress]
-            loaded = data
+            header/title == "my code"
+            header/options == [compress]
+            loaded == data
         ]
     )
 
@@ -118,9 +118,9 @@
         )
         header: take loaded
         did all [
-            header/title = "my code"
-            header/options = [compress]
-            loaded = data
+            header/title == "my code"
+            header/options == [compress]
+            loaded == data
         ]
     )
 
@@ -134,9 +134,9 @@
         }
         header: take loaded
         did all [
-            header/title = "my code"
-            header/options = [compress]
-            loaded = data
+            header/title == "my code"
+            header/options == [compress]
+            loaded == data
         ]
     )
 
@@ -146,9 +146,9 @@
         )
         header: take loaded
         did all [
-            header/title = "my code"
-            header/options = [compress]
-            loaded = data
+            header/title == "my code"
+            header/options == [compress]
+            loaded == data
         ]
     )
 
@@ -161,9 +161,9 @@
         }
         header: take loaded
         did all [
-            header/title = "my code"
-            header/options = [compress]
-            loaded = data
+            header/title == "my code"
+            header/options == [compress]
+            loaded == data
         ]
     )
 ]

@@ -29,7 +29,7 @@ REBOL [
 ;
 ===: func [:remarks [any-value! <...>]] [
     until [
-        equal? '=== take remarks
+        strict-equal? '=== take remarks
     ]
 ]
 
@@ -89,6 +89,7 @@ to-c-name: function [
         "+" [copy "plus"]
         "~" [copy "tilde"]
         "|" [copy "bar"]
+        "'" [copy "apostrophe"]
 
         default [
             ;
@@ -132,7 +133,7 @@ to-c-name: function [
     ]
 
     for-each char string [
-        if char = space [
+        if char == space [
             ; !!! The way the callers seem to currently be written is to
             ; sometimes throw "foo = 2" kinds of strings and expect them to
             ; be converted to a "C string".  Only check the part up to the
@@ -154,16 +155,16 @@ to-c-name: function [
     ; there are no instances of that need so better to plant awareness.
 
     case [
-        string/1 != "_" []
+        string/1 !== "_" []
 
-        word = 'global [
+        word is 'global [
             fail [
                 "global identifiers in C starting with underscore"
                 "are reserved for standard library usage"
             ]
         ]
 
-        word = 'local [
+        word is 'local [
             if find charset [#"A" - #"Z"] value/2 [
                 fail [
                     "local identifiers in C starting with underscore and then"
@@ -214,7 +215,7 @@ binary-to-c: function [
         some [thru "," (comma-count: comma-count + 1)]
         to end
     ]
-    assert [(comma-count + 1) = (length of head of data)]
+    assert [(comma-count + 1) == (length of head of data)]
 
     out
 ]
@@ -280,7 +281,7 @@ find-record-unique: function [
 
     result: _
     for-each-record rec table [
-        if value <> select rec key [continue]
+        if value !== select rec key [continue]
 
         if result [
             fail [{More than one table record matches} key {=} value]
@@ -309,7 +310,7 @@ parse-args: function [
                 name: to word! copy/part value (index of idx) - 1
                 value: copy next idx
             ]
-            #":" = last value [; name=value
+            #":" == last value [; name=value
                 name: to word! copy/part value (length of value) - 1
                 args: next args
                 if empty? args [
@@ -337,7 +338,7 @@ fix-win32-path: func [
     path [file!]
     <local> letter colon
 ][
-    if 3 != fourth system/version [return path] ;non-windows system
+    if 3 !== fourth system/version [return path] ;non-windows system
 
     drive: first path
     colon: second path
@@ -347,7 +348,7 @@ fix-win32-path: func [
             (#"A" <= drive) and [#"Z" >= drive]
             (#"a" <= drive) and [#"z" >= drive]
         ]
-        #":" = colon
+        #":" == colon
     ] then [
         insert path #"/"
         remove skip path 2 ;remove ":"
@@ -394,7 +395,7 @@ write-if-changed: function [
 
     any [
         not exists? dest
-        content != read dest
+        content !== read dest
     ] then [
         write dest content
     ]
@@ -406,11 +407,11 @@ relative-to-path: func [
 ][
     target: split clean-path target "/"
     base: split clean-path base "/"
-    if "" = last base [take/last base]
+    if "" == last base [take/last base]
     while [all [
         not tail? target
         not tail? base
-        base/1 = target/1
+        base/1 is target/1 ;-- !!! should this be case-sensitive?
     ]] [
         base: next base
         target: next target

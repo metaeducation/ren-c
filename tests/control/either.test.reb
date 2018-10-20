@@ -7,8 +7,8 @@
     either false [success: false] [success: true]
     success
 )
-(1 = either true [1] [2])
-(2 = either false [1] [2])
+(1 == either true [1] [2])
+(2 == either false [1] [2])
 
 (null? either true [null] [1])
 (null? either false [1] [null])
@@ -22,14 +22,14 @@
         either true [return 1 2] [2]
         2
     ]
-    1 = f1
+    1 == f1
 )
 (
     f1: func [] [
         either false [2] [return 1 2]
         2
     ]
-    1 = f1
+    1 == f1
 )
 ; THROW stops the evaluation
 (
@@ -58,8 +58,8 @@
     ]
 )
 ; recursive behaviour
-(2 = either true [either false [1] [2]] [])
-(1 = either false [] [either true [1] [2]])
+(2 == either true [either false [1] [2]] [])
+(1 == either false [] [either true [1] [2]])
 ; infinite recursion
 (
     blk: [either true blk []]
@@ -82,7 +82,7 @@
         true
     )
 
-    (takes-2-logics (void) = void false)
+    (takes-2-logics (void) == void false)
 
-    ('arg-required = (trap [takes-2-logics true infix-voider true false])/id)
+    ('Arg-Required is (trap [takes-2-logics true infix-voider true false])/id)
 ]

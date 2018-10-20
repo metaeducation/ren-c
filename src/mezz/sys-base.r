@@ -85,12 +85,12 @@ do*: function [
         if original-script [system/script: original-script]
         if original-path [change-dir original-path]
 
-        either :name = :quit [
+        either :name == :quit [
             if only [
                 quit/with :value ;-- "rethrow" the QUIT if DO/ONLY
             ]
         ][
-            assert [:name = blank]
+            assert [:name == blank]
         ]
 
         return :value ;-- returns from DO* not FINALIZER, due to <with> return
@@ -120,7 +120,7 @@ do*: function [
     ; because even with series not at their head, LOCK NEXT CODE will lock it.
     ;
     hdr: ensure [object! blank!] take code
-    is-module: 'module = select hdr 'type
+    is-module: 'Module is select hdr 'type
 
     if text? source and [not is-module] [
         ;

@@ -56,7 +56,7 @@ helper: enfix lib/func [
 
 emulate: enfix lib/func [
     return: <void>
-    :set-word [set-word!]
+    'set-word [set-word!]
     code [block!]
 ] lib/in lib [
     set set-word do in lib code
@@ -65,13 +65,19 @@ emulate: enfix lib/func [
 
 emulate-enfix: enfix lib/func [
     return: <void>
-    :set-word [set-word!]
+    'set-word [set-word!]
     code [block!]
 ] lib/in lib [
     set/enfix set-word do in lib code
     export set-word
 ]
 
+; https://forum.rebol.info/t/349
+=: emulate-enfix [:is]
+!=: emulate-enfix [:isn't]
+(to-set-word quote <>) emulate-enfix [:isn't]
+equal?: emulate [:is?]
+not-equal?: emulate [:isn't?]
 
 any-function!: emulate [action!]
 function!: emulate [action!]
@@ -153,7 +159,7 @@ optify: helper [
 
         map-each item spec [
             case [
-                :item = [any-type!] [
+                :item is [any-type!] [
                     [<opt> any-value!]
                 ]
                 block? :item and [find item 'unset!] [
@@ -224,7 +230,7 @@ null: emulate [
 unset?: emulate [:null?] ; https://trello.com/c/shR4v8tS
 unset!: emulate [:null] ;-- Note: datatype? unset! will fail with this
 
-; NONE is reserved for `if none [x = 1 | y = 2] [...]`
+; NONE is reserved for `if none [x == 1 | y == 2] [...]`
 ;
 none: emulate [:blank]
 none!: emulate [:blank!]
@@ -407,7 +413,7 @@ do: emulate [
 
 to: emulate [
     adapt 'to [
-        if :value = group! and [find any-word! type] [
+        if :value == group! and [find any-word! type] [
             value: "paren!" ;-- make TO WORD! GROUP! give back "paren!"
         ]
         if any-array? :type [
@@ -916,7 +922,7 @@ cloaker: helper [function [ ;-- specialized as CLOAK and DECLOAK
     key [text! binary! integer!] "Encryption key or pass phrase"
     /with "Use a text! key as-is (do not generate hash)"
 ][
-    if length of data = 0 [return]
+    if length of data == 0 [return]
 
     switch type of key [
         integer! [key: to binary! to string! key] ;-- UTF-8 string conversion
@@ -926,7 +932,7 @@ cloaker: helper [function [ ;-- specialized as CLOAK and DECLOAK
     ]
 
     klen: length of key
-    if klen = 0 [
+    if klen == 0 [
         fail "Cannot CLOAK/DECLOAK with length 0 key"
     ]
 
@@ -937,7 +943,7 @@ cloaker: helper [function [ ;-- specialized as CLOAK and DECLOAK
         ]
 
         key: checksum/method src 'sha1
-        assert [length of key = 20] ;-- size of an SHA1 hash
+        assert [length of key == 20] ;-- size of an SHA1 hash
         klen: 20
     ]
 

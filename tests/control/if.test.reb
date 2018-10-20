@@ -9,7 +9,7 @@
     if false [success: false]
     success
 )
-(1 = if true [1])
+(1 == if true [1])
 
 (null? if false [])
 (void? if true [])
@@ -21,7 +21,7 @@
         if true [return 1 2]
         2
     ]
-    1 = f1
+    1 == f1
 )
 ; condition datatype tests; action
 (if get 'abs [true])
@@ -82,7 +82,7 @@
 ; recursive behaviour
 
 (void? if true [if false [1]])
-(1 = if true [if true [1]])
+(1 == if true [if true [1]])
 
 ; infinite recursion
 (
@@ -107,7 +107,7 @@
     if-not true [success: false]
     success
 )
-(1 = if-not false [1])
+(1 == if-not false [1])
 
 (null? if-not true [1])
 (void? if-not false [])
@@ -120,5 +120,5 @@
         if-not false [return 1 2]
         2
     ]
-    1 = f1
+    1 == f1
 )

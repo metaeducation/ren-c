@@ -1,7 +1,7 @@
 ; functions/control/case.r
 
-(true = case [true [true]])
-(false = case [true [false]])
+(true == case [true [true]])
+(false == case [true [false]])
 (
     success: false
     case [true [success: true]]
@@ -33,13 +33,13 @@
 )]
 
 (
-    'a = case [
+    'a == case [
         first [a b c] ;-- no corresponding branch, means "case fallout"
     ]
 )
 
 (
-    3 = case [true (reduce ['add 1 2])]
+    3 == case [true (reduce ['add 1 2])]
 )
 (
     null? case [false (reduce ['add 1 2])]
@@ -62,7 +62,7 @@
         elide (flag: true)
         true [fail "shouldn't get here"]
     ]
-    (not flag) and [result = 1020]
+    (not flag) and [result == 1020]
 )
 
 
@@ -70,10 +70,10 @@
 ; RETURN, THROW, BREAK will stop case evaluation
 (
     f1: func [] [case [return 1 2]]
-    1 = f1
+    1 == f1
 )
 (
-    1 = catch [
+    1 == catch [
         case [throw 1 2]
         2
     ]
@@ -96,7 +96,7 @@
 )]
 
 ; nested calls
-(1 = case [true [case [true [1]]]])
+(1 == case [true [case [true [1]]]])
 
 ; infinite recursion
 (

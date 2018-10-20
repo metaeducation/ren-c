@@ -17,11 +17,11 @@
     fooCB: :foo/C/B
 
     did all [
-        [/B 10 /C 20] = fooBC 10 20
-        [/A 30 /B 10 /C 20] = fooBC/A 10 20 30
+        [/B 10 /C 20] == fooBC 10 20
+        [/A 30 /B 10 /C 20] == fooBC/A 10 20 30
 
-        [/B 20 /C 10] = fooCB 10 20
-        [/A 30 /B 20 /C 10] = fooCB/A 10 20 30
+        [/B 20 /C 10] == fooCB 10 20
+        [/A 30 /B 20 /C 10] == fooCB/A 10 20 30
 
         error? trap [fooBC/B 1 2 3 4 5 6]
         error? trap [fooBC/C 1 2 3 4 5 6]
@@ -32,25 +32,25 @@
 
 (
     append-123: specialize :append [value: [1 2 3] only: true]
-    [a b c [1 2 3] [1 2 3]] = append-123/dup copy [a b c] 2
+    [a b c [1 2 3] [1 2 3]] == append-123/dup copy [a b c] 2
 )
 (
     append-123: specialize :append [value: [1 2 3] only: true]
     append-123-twice: specialize :append-123 [dup: true count: 2]
-    [a b c [1 2 3] [1 2 3]] = append-123-twice copy [a b c]
+    [a b c [1 2 3] [1 2 3]] == append-123-twice copy [a b c]
 )
 (
     append-10: specialize 'append [value: 10]
     f: make frame! :append-10
     f/series: copy [a b c]
     do copy f ;-- COPY before DO allows reuse of F, only the copy is "stolen"
-    [a b c 10 10] = do f
+    [a b c 10 10] == do f
 )
 (
     f: make frame! 'append/only
     f/series: copy [a b c]
     f/value: [d e f]
-    [a b c [d e f]] = do f
+    [a b c [d e f]] == do f
 )
 (
     foo: func [] [
@@ -58,7 +58,7 @@
         return-5
         "this shouldn't be returned"
     ]
-    foo = 5
+    foo == 5
 )
 
 (
@@ -71,14 +71,14 @@
     r: [<X> #Y A B A B A B]
 
     did all [
-        | r = apd copy xy abc 2 3
-        | r = apply 'apd [series: copy xy | value: abc | limit: 2 | count: 3]
+        | r == apd copy xy abc 2 3
+        | r == apply 'apd [series: copy xy | value: abc | limit: 2 | count: 3]
         |
-        | r = apd3 copy xy abc 2
-        | r = apply 'apd3 [series: copy xy | value: abc | limit: 2]
+        | r == apd3 copy xy abc 2
+        | r == apply 'apd3 [series: copy xy | value: abc | limit: 2]
         |
-        | r = ap2d copy xy abc 3
-        | r = apply 'ap2d [series: copy xy | value: abc | count: 3]
+        | r == ap2d copy xy abc 3
+        | r == apply 'ap2d [series: copy xy | value: abc | count: 3]
     ]
 )(
     adp: specialize 'append/dup [part: true]
@@ -90,14 +90,14 @@
     r: [<X> #Y A B A B A B]
 
     did all [
-        | r = adp copy xy abc 3 2
-        | r = apply 'adp [series: copy xy | value: abc | count: 3 | limit: 2]
+        | r == adp copy xy abc 3 2
+        | r == apply 'adp [series: copy xy | value: abc | count: 3 | limit: 2]
         |
-        | r = adp2 copy xy abc 3
-        | r = apply 'adp2 [series: copy xy | value: abc | count: 3]
+        | r == adp2 copy xy abc 3
+        | r == apply 'adp2 [series: copy xy | value: abc | count: 3]
         |
-        | r = ad3p copy xy abc 2
-        | r = apply 'ad3p [series: copy xy | value: abc | limit: 2]
+        | r == ad3p copy xy abc 2
+        | r == apply 'ad3p [series: copy xy | value: abc | limit: 2]
     ]
 )
 
@@ -110,8 +110,8 @@
     r: [a b c [d e] [d e] [d e]]
 
     did all [
-        | r = aopd3 copy [a b c] [d e]
-        | r = apply 'aopd3 [series: copy [a b c] value: [d e]]
+        | r == aopd3 copy [a b c] [d e]
+        | r == apply 'aopd3 [series: copy [a b c] value: [d e]]
     ]
 )
 
@@ -123,7 +123,7 @@
         [specialize 'append/asdf []]
         [specialize quote (specialize 'append/only [])/only []]
     ][
-        is-bad: me and ['bad-refine = (trap [do code])/id]
+        is-bad: me and ['Bad-Refine is (trap [do code])/id]
     ]
 
     is-bad
@@ -135,8 +135,8 @@
     f: make frame! :ap10d
     f/series: copy [a b c]
     did all [
-        [a b c 10] = do copy f
+        [a b c 10] == do copy f
         f/count: 2
-        [a b c 10 10 10] = do f
+        [a b c 10 10 10] == do f
     ]
 )

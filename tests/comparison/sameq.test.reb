@@ -17,7 +17,7 @@
 ; binary versus bitset
 (not same? #{00} #[bitset! #{00}])
 ; symmetry
-(equal? same? #[bitset! #{00}] #{00} same? #{00} #[bitset! #{00}])
+(is? same? #[bitset! #{00}] #{00} same? #{00} #[bitset! #{00}])
 ; email versus text
 (
     a-value: to email! ""
@@ -26,7 +26,7 @@
 ; symmetry
 (
     a-value: to email! ""
-    equal? same? to text! a-value a-value same? a-value to text! a-value
+    is? same? to text! a-value a-value same? a-value to text! a-value
 )
 (
     a-value: %""
@@ -35,14 +35,14 @@
 ; symmetry
 (
     a-value: %""
-    equal? same? a-value to text! a-value same? to text! a-value a-value
+    is? same? a-value to text! a-value same? to text! a-value a-value
 )
 (not same? #{00} #[image! [1x1 #{00}]])
 ; symmetry
-(equal? same? #{00} #[image! [1x1 #{00}]] same? #[image! [1x1 #{00}]] #{00})
+(is? same? #{00} #[image! [1x1 #{00}]] same? #[image! [1x1 #{00}]] #{00})
 (not same? #{00} to integer! #{00})
 ; symmetry
-(equal? same? #{00} to integer! #{00} same? to integer! #{00} #{00})
+(is? same? #{00} to integer! #{00} same? to integer! #{00} #{00})
 (
     a-value: #a
     not same? a-value to text! a-value
@@ -50,11 +50,11 @@
 ; symmetry
 (
     a-value: #a
-    equal? same? a-value to text! a-value same? to text! a-value a-value
+    is? same? a-value to text! a-value same? to text! a-value a-value
 )
 (not same? #{} blank)
 ; symmetry
-(equal? same? #{} blank same? blank #{})
+(is? same? #{} blank same? blank #{})
 (
     a-value: ""
     not same? a-value to binary! a-value
@@ -62,7 +62,7 @@
 ; symmetry
 (
     a-value: ""
-    equal? same? a-value to binary! a-value same? to binary! a-value a-value
+    is? same? a-value to binary! a-value same? to binary! a-value a-value
 )
 (
     a-value: to tag! ""
@@ -71,7 +71,7 @@
 ; symmetry
 (
     a-value: to tag! ""
-    equal? same? a-value to text! a-value same? to text! a-value a-value
+    is? same? a-value to text! a-value same? to text! a-value a-value
 )
 (
     a-value: 0.0.0.0
@@ -80,7 +80,7 @@
 ; symmetry
 (
     a-value: 0.0.0.0
-    equal? same? to binary! a-value a-value same? a-value to binary! a-value
+    is? same? to binary! a-value a-value same? a-value to binary! a-value
 )
 (not same? #[bitset! #{00}] #[bitset! #{00}])
 (not same? #[bitset! #{}] #[bitset! #{00}])
@@ -120,11 +120,11 @@
 (
     a-value: first ['a/b]
     parse :a-value [b-value:]
-    equal? same? :a-value :b-value same? :b-value :a-value
+    is? same? :a-value :b-value same? :b-value :a-value
 )
 (not same? [] blank)
 ; symmetry
-(equal? same? [] blank same? blank [])
+(is? same? [] blank same? blank [])
 [#1068 #1066 (
     a-value: first [()]
     parse a-value [b-value:]
@@ -134,7 +134,7 @@
 (
     a-value: first [()]
     parse a-value [b-value:]
-    equal? same? a-value b-value same? b-value a-value
+    is? same? a-value b-value same? b-value a-value
 )
 [#1068 #1066 (
     a-value: 'a/b
@@ -145,7 +145,7 @@
 (
     a-value: 'a/b
     parse a-value [b-value:]
-    equal? same? :a-value :b-value same? :b-value :a-value
+    is? same? :a-value :b-value same? :b-value :a-value
 )
 [#1068 #1066 (
     a-value: first [a/b:]
@@ -156,11 +156,11 @@
 (
     a-value: first [a/b:]
     parse :a-value [b-value:]
-    equal? same? :a-value :b-value same? :b-value :a-value
+    is? same? :a-value :b-value same? :b-value :a-value
 )
 (not same? any-number! integer!)
 ; symmetry
-(equal? same? any-number! integer! same? integer! any-number!)
+(is? same? any-number! integer! same? integer! any-number!)
 ; reflexivity
 (same? -1 -1)
 ; reflexivity
@@ -272,13 +272,13 @@
 (not same? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334})
 ; symmetry
 (
-    equal? same? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334}
+    is? same? to decimal! #{3FD3333333333333} to decimal! #{3FD3333333333334}
         same? to decimal! #{3FD3333333333334} to decimal! #{3FD3333333333333}
 )
 (not same? to decimal! #{3FB9999999999999} to decimal! #{3FB999999999999A})
 ; symmetry
 (
-    equal? same? to decimal! #{3FB9999999999999} to decimal! #{3FB999999999999A}
+    is? same? to decimal! #{3FB9999999999999} to decimal! #{3FB999999999999A}
         same? to decimal! #{3FB999999999999A} to decimal! #{3FB9999999999999}
 )
 ; datatype differences
@@ -294,29 +294,29 @@
 ; datatype differences
 (not same? $0 0%)
 ; symmetry
-(equal? same? 1 1.0 same? 1.0 1)
+(is? same? 1 1.0 same? 1.0 1)
 ; symmetry
-(equal? same? 1 $1 same? $1 1)
+(is? same? 1 $1 same? $1 1)
 ; symmetry
-(equal? same? 1 100% same? 100% 1)
+(is? same? 1 100% same? 100% 1)
 ; symmetry
-(equal? same? 1.0 $1 same? $1 1.0)
+(is? same? 1.0 $1 same? $1 1.0)
 ; symmetry
-(equal? same? 1.0 100% same? 100% 1.0)
+(is? same? 1.0 100% same? 100% 1.0)
 ; symmetry
-(equal? same? $1 100% same? 100% $1)
+(is? same? $1 100% same? 100% $1)
 ; approximate equality
 (not same? 10% + 10% + 10% 30%)
 ; symmetry
-(equal? same? 10% + 10% + 10% 30% same? 30% 10% + 10% + 10%)
+(is? same? 10% + 10% + 10% 30% same? 30% 10% + 10% + 10%)
 ; date!; approximate equality
 (not same? 2-Jul-2009 2-Jul-2009/22:20)
 ; symmetry
-(equal? same? 2-Jul-2009 2-Jul-2009/22:20 same? 2-Jul-2009/22:20 2-Jul-2009)
+(is? same? 2-Jul-2009 2-Jul-2009/22:20 same? 2-Jul-2009/22:20 2-Jul-2009)
 ; missing time is considered a difference
 (not same? 2-Jul-2009 2-Jul-2009/00:00:00+00:00)
 ; symmetry
-(equal? not same? 2-Jul-2009 2-Jul-2009/00:00 not same? 2-Jul-2009/00:00 2-Jul-2009)
+(is? not same? 2-Jul-2009 2-Jul-2009/00:00 not same? 2-Jul-2009/00:00 2-Jul-2009)
 ; no timezone math
 (not same? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00)
 ; time!
@@ -326,9 +326,9 @@
 ; no timezone math
 (not same? 22:20 20:20)
 ; char!; symmetry
-(equal? same? #"a" 97 same? 97 #"a")
+(is? same? #"a" 97 same? 97 #"a")
 ; symmetry
-(equal? same? #"a" 97.0 same? 97.0 #"a")
+(is? same? #"a" 97.0 same? 97.0 #"a")
 ; case
 (not same? #"a" #"A")
 ; case
@@ -338,57 +338,57 @@
 ; aliases
 (not same? 'a 'A)
 ; symmetry
-(equal? same? 'a 'A same? 'A 'a)
+(is? same? 'a 'A same? 'A 'a)
 ; binding
 (not same? 'a use [a] ['a])
 ; symmetry
-(equal? same? 'a use [a] ['a] same? use [a] ['a] 'a)
+(is? same? 'a use [a] ['a] same? use [a] ['a] 'a)
 ; different word types
 (not same? 'a first [:a])
 ; symmetry
-(equal? same? 'a first [:a] same? first [:a] 'a)
+(is? same? 'a first [:a] same? first [:a] 'a)
 ; different word types
 (not same? 'a first ['a])
 ; symmetry
-(equal? same? 'a first ['a] same? first ['a] 'a)
+(is? same? 'a first ['a] same? first ['a] 'a)
 ; different word types
 (not same? 'a /a)
 ; symmetry
-(equal? same? 'a /a same? /a 'a)
+(is? same? 'a /a same? /a 'a)
 ; different word types
 (not same? 'a first [a:])
 ; symmetry
-(equal? same? 'a first [a:] same? first [a:] 'a)
+(is? same? 'a first [a:] same? first [a:] 'a)
 ; reflexivity
 (same? first [:a] first [:a])
 ; different word types
 (not same? first [:a] first ['a])
 ; symmetry
-(equal? same? first [:a] first ['a] same? first ['a] first [:a])
+(is? same? first [:a] first ['a] same? first ['a] first [:a])
 ; different word types
 (not same? first [:a] /a)
 ; symmetry
-(equal? same? first [:a] /a same? /a first [:a])
+(is? same? first [:a] /a same? /a first [:a])
 ; different word types
 (not same? first [:a] first [a:])
 ; symmetry
-(equal? same? first [:a] first [a:] same? first [a:] first [:a])
+(is? same? first [:a] first [a:] same? first [a:] first [:a])
 ; reflexivity
 (same? first ['a] first ['a])
 ; different word types
 (not same? first ['a] /a)
 ; symmetry
-(equal? same? first ['a] /a same? /a first ['a])
+(is? same? first ['a] /a same? /a first ['a])
 ; different word types
 (not same? first ['a] first [a:])
 ; symmetry
-(equal? same? first ['a] first [a:] same? first [a:] first ['a])
+(is? same? first ['a] first [a:] same? first [a:] first ['a])
 ; reflexivity
 (same? /a /a)
 ; different word types
 (not same? /a first [a:])
 ; symmetry
-(equal? same? /a first [a:] same? first [a:] /a)
+(is? same? /a first [a:] same? first [a:] /a)
 ; reflexivity
 (same? first [a:] first [a:])
 ; logic! values

@@ -29,7 +29,7 @@
 (2147483648.0 == round 2147483648.0)
 (9223372036854775808.0 == round 9223372036854775808.0)
 ($101 == round $100.5)
-(-$101 = round -$100.5)
+(-$101 == round -$100.5)
 ; REBOL2 rounds to $100.5 beyond this
 ($100 == round $100.4999999999998)
 ; REBOL2 rounds to $100.5 beyond this
@@ -94,7 +94,7 @@
 (2147483647 == round/even 2147483647)
 (-2147483648 == round/even -2147483648)
 (9223372036854780000.0 == round/even 9223372036854780000.0)
-(9.2233720368547799e18 = round/even 9.2233720368547799e18)
+(9.2233720368547799e18 == round/even 9.2233720368547799e18)
 (1:03:01 == round/even 1:03:01.1)
 (1:03:02 == round/even 1:03:01.5)
 (1:03:02 == round/even 1:03:01.9)
@@ -114,6 +114,11 @@
 (zero? round/even/to -0.5 -1)
 (-2.0 == round/even/to -1.5 -1.0)
 (zero? -2 - round/even/to -1.5 -1)
+
+; !!! IMPORTANT: Rounding floating point evenly is not generally possible
+; https://www.theregister.co.uk/2006/08/12/floating_point_approximation/
+; See #2323 for discussion.
+
 (0.0 == round/even/to 0.1 1.0)
 (0.0 == round/even/to 0.1 1E-0)
 (0.0 == round/even/to -0.1 1E-0)
@@ -123,21 +128,21 @@
 (-0.12 == round/even/to -0.123 1e-2)
 (0.123 == round/even/to 0.1234 1E-3)
 (-0.123 == round/even/to -0.1234 1E-3)
-(0.1234 = round/even/to 0.12345 1E-4)
-(-0.1234 = round/even/to -0.12345 1E-4)
+(0.1234 == round/even/to 0.12345 1E-4)
+(-0.1234 == round/even/to -0.12345 1E-4)
 [#1470
     (2.6 == round/even/to $2.55 0.1)
 ]
 [#1470
     ($2.6 == round/even/to 2.55 $0.1)
 ]
-; round-up breakpoint
-(0.12346 = round/even/to 0.123456 1E-5)
-(-0.12346 = round/even/to -0.123456 1E-5)
+; round-up breaking point
+[#2323 (0.12346000000000001 == round/even/to 0.123456 1E-5)]
+[#2323 (-0.12346000000000001 == round/even/to -0.123456 1E-5)]
 (1.0 == round/even/to 0.9 1E-0)
 (-1.0 == round/even/to -0.9 1E-0)
-(0.6 = round/even/to 0.55 1E-1)
-(-0.6 = round/even/to -0.55 1E-1)
+(0.6 == round/even/to 0.55 1E-1)
+(-0.6 == round/even/to -0.55 1E-1)
 (0.56 == round/even/to 0.555 1E-2)
 (-0.56 == round/even/to -0.555 1E-2)
 (2.0 == round/even/to 1.5 1E-0)
@@ -145,16 +150,16 @@
 (1.56 == round/even/to 1.555 1E-2)
 (1.556 == round/even/to 1.5555  1E-3)
 (1.5556 == round/even/to 1.55555 1E-4)
-(1.55556 = round/even/to 1.555555 1E-5)
+[#2323 (1.5555600000000003 == round/even/to 1.555555 1E-5)]
 (1.555556 == round/even/to 1.5555555 1E-6)
 (1.5555556 == round/even/to 1.55555555 1E-7)
 (1.55555556 == round/even/to 1.555555555 1E-8)
-(1.555555556 = round/even/to 1.5555555555 1E-9)
+[#2323 (1.5555555560000003 == round/even/to 1.5555555555 1E-9)]
 (0.2 == round/even/to 0.15 1E-1)
 (-0.2 == round/even/to -0.15 1E-1)
 (0.4 == round/even/to 0.35 1E-1)
 (1.0 == round/even/to 0.95 1E-1)
-(1.2 = round/even/to 1.15 1E-1)
+(1.2 == round/even/to 1.15 1E-1)
 (2.2 == round/even/to 2.15 1E-1)
 (2.6 == round/even/to 2.55 1E-1)
 (10.0 == round/even/to 10 1E-1)

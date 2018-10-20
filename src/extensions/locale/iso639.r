@@ -3,7 +3,7 @@ REBOL []
 init: %ext-locale-init.reb
 inp: %ISO-639-2_utf-8.txt
 cnt: read inp
-if #{EFBBBF} = to binary! copy/part cnt 3 [ ;UTF8 BOM
+if #{EFBBBF} == to binary! copy/part cnt 3 [ ;UTF8 BOM
     cnt: skip cnt 3
 ]
 

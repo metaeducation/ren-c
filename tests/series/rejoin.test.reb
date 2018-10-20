@@ -1,42 +1,42 @@
 ; series/rejoin.test.reb
 (
-    [] = rejoin []
+    [] == rejoin []
 )
 (
-    [] = rejoin [[]]
+    [] == rejoin [[]]
 )
 (
-    "" = rejoin [null]
+    "" == rejoin [null]
 )
 (
-    "" = rejoin [null null]
+    "" == rejoin [null null]
 )
 (
-    [[]] = rejoin [[][]]
+    [[]] == rejoin [[][]]
 )
 (
-    [[][]] = rejoin [[][][]]
+    [[][]] == rejoin [[][][]]
 )
 (
     block: [[][]]
     not same? first block first rejoin block
 )
 (
-    [1] = rejoin [[] 1]
+    [1] == rejoin [[] 1]
 )
 (
-    'a/b/c = rejoin ['a/b 'c]
+    'a/b/c == rejoin ['a/b 'c]
 )
 (
-    'a/b/c/d = rejoin ['a/b 'c 'd]
+    'a/b/c/d == rejoin ['a/b 'c 'd]
 )
 (
-    "" = rejoin [{}]
+    "" == rejoin [{}]
 )
 (
-    "1" = rejoin [1]
+    "1" == rejoin [1]
 )
 (
     value: 1
-    "1" = rejoin [value]
+    "1" == rejoin [value]
 )

@@ -552,21 +552,29 @@ compare:
 }
 
 
-//  EQUAL? < EQUIV? < STRICT-EQUAL? < SAME?
-
 //
-//  equal?: native [
+//  is?: native [
 //
-//  {TRUE if the values are equal}
+//  {TRUE if the values are similar (e.g. case-insensitively equal)}
 //
 //      return: [logic!]
 //      value1 [<opt> any-value!]
 //      value2 [<opt> any-value!]
 //  ]
 //
-REBNATIVE(equal_q)
+REBNATIVE(is_q)
 {
-    INCLUDE_PARAMS_OF_EQUAL_Q;
+    INCLUDE_PARAMS_OF_IS_Q;
+
+    REBVAL *v1 = ARG(value1);
+    REBVAL *v2 = ARG(value2);
+
+    if (
+        ((ANY_STRING(v1) or ANY_STRING(v2)) or (ANY_WORD(v1) or ANY_WORD(v2)))
+        and (VAL_TYPE(v1) != VAL_TYPE(v2))
+    ){
+        return Init_False(D_OUT); // new behavior since R3-Alpha
+    }
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), 0))
         return Init_True(D_OUT);
@@ -576,18 +584,28 @@ REBNATIVE(equal_q)
 
 
 //
-//  not-equal?: native [
+//  isn't?: native [
 //
-//  {TRUE if the values are not equal}
+//  {TRUE if the values are not similar (e.g. case-insensitively unequal)}
 //
 //      return: [logic!]
 //      value1 [<opt> any-value!]
 //      value2 [<opt> any-value!]
 //  ]
 //
-REBNATIVE(not_equal_q)
+REBNATIVE(isnt_q)
 {
-    INCLUDE_PARAMS_OF_NOT_EQUAL_Q;
+    INCLUDE_PARAMS_OF_ISNT_Q;
+
+    REBVAL *v1 = ARG(value1);
+    REBVAL *v2 = ARG(value2);
+
+    if (
+        ((ANY_STRING(v1) or ANY_STRING(v2)) or (ANY_WORD(v1) or ANY_WORD(v2)))
+        and (VAL_TYPE(v1) != VAL_TYPE(v2))
+    ){
+        return Init_True(D_OUT); // new behavior since R3-Alpha
+    }
 
     if (Compare_Modify_Values(ARG(value1), ARG(value2), 0))
         return Init_False(D_OUT);

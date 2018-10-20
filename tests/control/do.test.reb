@@ -15,7 +15,7 @@
 )
 ; do block start
 (void? do [])
-(:abs = do [:abs])
+(:abs == do [:abs])
 (
     a-value: #{}
     same? a-value do reduce [a-value]
@@ -29,7 +29,7 @@
     same? a-value do reduce [a-value]
 )
 (same? blank! do reduce [blank!])
-(1/Jan/0000 = do [1/Jan/0000])
+(1/Jan/0000 == do [1/Jan/0000])
 (0.0 == do [0.0])
 (1.0 == do [1.0])
 (
@@ -156,8 +156,8 @@
         (to-word :a-value) == (eval :a-value)
     ]
 )
-(true = eval true)
-(false = eval false)
+(true == eval true)
+(false == eval false)
 ($1 == eval $1)
 (null? eval (specialize 'of [property: 'type]) null)
 (null? do _)
@@ -190,8 +190,8 @@
     1 == do :a-value
 )
 (void? do "")
-(1 = do "1")
-(3 = do "1 2 3")
+(1 == do "1")
+(3 == do "1 2 3")
 (
     a-value: make tag! ""
     same? :a-value eval :a-value
@@ -206,11 +206,11 @@
 ; RETURN stops the evaluation
 (
     f1: func [] [do [return 1 2] 2]
-    1 = f1
+    1 == f1
 )
 ; THROW stops evaluation
 (
-    1 = catch [
+    1 == catch [
         do [
             throw 1
             2
@@ -237,15 +237,15 @@
 (
     b: evaluate/set [1 2] 'value
     did all [
-        1 = value
-        [2] = b
+        1 == value
+        [2] == b
     ]
 )
 (
     value: <untouched>
     did all [
         null? evaluate/set [] 'value
-        value = <untouched>
+        value == <untouched>
     ]
 )
 (
@@ -254,13 +254,13 @@
 )
 (
     f1: func [] [evaluate [return 1 2] 2]
-    1 = f1
+    1 == f1
 )
 ; recursive behaviour
-(1 = do [do [1]])
-(1 = do "do [1]")
+(1 == do [do [1]])
+(1 == do "do [1]")
 (1 == 1)
-(3 = eval :eval :add 1 2)
+(3 == eval :eval :add 1 2)
 ; infinite recursion for block
 (
     blk: [do blk]

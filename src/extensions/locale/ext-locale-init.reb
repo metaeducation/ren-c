@@ -6,7 +6,7 @@ REBOL [
     license: {Apache 2.0}
 ]
 
-if 'Windows <> first system/platform [
+if 'Windows isn't first system/platform [
     ; Windows has locale implemented as a native
 
     ;DO NOT EDIT this table

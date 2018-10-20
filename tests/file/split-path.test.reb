@@ -1,16 +1,6 @@
 
-(
-    equal? [%./ _] split-path %./
-)
-(
-    equal? [%../ _] split-path %../
-)
-(
-    equal? [%./ %test] split-path %test
-)
-(
-    equal? [%./ %test/] split-path %test/
-)
-(
-    equal? [%test/ %test/] split-path %test/test/
-)
+([%./ _] == split-path %./)
+([%../ _] == split-path %../)
+([%./ %test] == split-path %test)
+([%./ %test/] == split-path %test/)
+([%test/ %test/] == split-path %test/test/)

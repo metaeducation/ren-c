@@ -1,6 +1,6 @@
 ; functions/series/remove.r
-([] = remove [])
-([] = head of remove [1])
+([] == remove [])
+([] == head of remove [1])
 
 ; bitset
 (
@@ -15,21 +15,21 @@
 )
 
 (
-    1 = take copy #{010203}
+    1 == take copy #{010203}
 )(
-    3 = take/last copy #{010203}
+    3 == take/last copy #{010203}
 )(
-    #{0102} = take/part copy #{010203} 2
+    #{0102} == take/part copy #{010203} 2
 )(
-    #{0203} = take/part copy next #{010203} 100 ;-- should clip
+    #{0203} == take/part copy next #{010203} 100 ;-- should clip
 )
 
 (
-    #"a" = take copy "abc"
+    #"a" == take copy "abc"
 )(
-    #"c" = take/last copy "abc"
+    #"c" == take/last copy "abc"
 )(
-    "ab" = take/part copy "abc" 2
+    "ab" == take/part copy "abc" 2
 )(
-    "bc" = take/part copy next "abc" 100 ;-- should clip
+    "bc" == take/part copy next "abc" 100 ;-- should clip
 )

@@ -19,31 +19,31 @@
 
 (
     res: did parse ser: [x y] [pos: skip skip]
-    all [res | pos = ser]
+    all [res | pos == ser]
 )
 (
     res: did parse ser: [x y] [skip pos: skip]
-    all [res | pos = next ser]
+    all [res | pos == next ser]
 )
 (
     res: did parse ser: [x y] [skip skip pos: end]
-    all [res | pos = tail of ser]
+    all [res | pos == tail of ser]
 )
 [#2130 (
     res: did parse ser: [x] [set val pos: word!]
-    all [res | val = 'x | pos = ser]
+    all [res | val == 'x | pos == ser]
 )]
 [#2130 (
     res: did parse ser: [x] [set val: pos: word!]
-    all [res | val = 'x | pos = ser]
+    all [res | val == 'x | pos == ser]
 )]
 [#2130 (
     res: did parse ser: "foo" [copy val pos: skip]
-    all [not res | val = "f" | pos = ser]
+    all [not res | val == "f" | pos == ser]
 )]
 [#2130 (
     res: did parse ser: "foo" [copy val: pos: skip]
-    all [not res | val = "f" | pos = ser]
+    all [not res | val == "f" | pos == ser]
 )]
 
 ; TO/THRU integer!
@@ -121,7 +121,7 @@
 )]
 [#1268 (
     i: 0
-    parse "a" [while [(i: i + 1 j: to-value if i = 2 [[fail]]) j]]
+    parse "a" [while [(i: i + 1 j: to-value if i == 2 [[fail]]) j]]
     i == 2
 )]
 
@@ -132,7 +132,7 @@
     c: ["a" | "b"]
     a2: [any [b e: (d: [:e]) then fail | [c | (d: [fail]) fail]] d]
     a4: [any [b then e: (d: [:e]) fail | [c | (d: [fail]) fail]] d]
-    equal? parse "aaaaabc" a2 parse "aaaaabc" a4
+    (parse "aaaaabc" a2) == (parse "aaaaabc" a4)
 )]
 
 ; NOT rule
@@ -185,7 +185,7 @@
 (
     https://github.com/metaeducation/ren-c/issues/377
     o: make object! [a: 1]
-    bar = parse "a" [o/a: skip]
+    bar == parse "a" [o/a: skip]
 )
 
 ; A couple of tests for the problematic DO operation
@@ -232,13 +232,13 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse "a" [any [(i: i + 1 j: if i = 2 [[end skip]]) j]]
+    parse "a" [any [(i: i + 1 j: if i == 2 [[end skip]]) j]]
     i == 2
 )
 
 ; Use MATCH to get input on success, see #2165
 (
-    "abc" = match parse "abc" ["a" "b" "c"]
+    "abc" == match parse "abc" ["a" "b" "c"]
 )
 (
     null? match parse "abc" ["a" "b" "d"]

@@ -223,7 +223,7 @@ make-emitter: function [
             return: <void>
             /tabbed
         ][
-            if newline != last buf-emit [
+            if newline !== last buf-emit [
                 probe skip (tail-of buf-emit) -100
                 fail "WRITE-EMITTED needs NEWLINE as last character in buffer"
             ]

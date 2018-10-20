@@ -2,10 +2,10 @@
 (
     num: 0
     until [num: num + 1 num > 9]
-    num = 10
+    num == 10
 )
 ; Test body-block return values
-(1 = until [1])
+(1 == until [1])
 ; Test break
 (null? until [break true])
 ; Test continue
@@ -18,10 +18,10 @@
 ; Test that return stops the loop
 (
     f1: func [] [until [return 1]]
-    1 = f1
+    1 == f1
 )
 ; Test that errors do not stop the loop
-(1 = until [trap [1 / 0] 1])
+(1 == until [trap [1 / 0] 1])
 ; Recursion check
 (
     num1: 0
@@ -34,5 +34,5 @@
         ]
         4 < (num1: num1 + 1)
     ]
-    10 = num3
+    10 == num3
 )

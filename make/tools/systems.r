@@ -495,7 +495,7 @@ use [
             | integer? platform-number
             | any [word? build-label | blank? build-label]
             | tuple? id
-            | id/1 = 0 | id/2 = platform-number
+            | id/1 == 0 | id/2 == platform-number
             | (to-text os-name) == (lowercase to-text os-name)
             | (to-text os-base) == (lowercase to-text os-base)
             | not find (to-text os-base) charset [#"-" #"_"]
@@ -564,7 +564,7 @@ config-system: function [
 
     result: _
     for-each-system s [
-        if s/id = version [
+        if s/id == version [
             result: copy s ;-- RETURN won't work in R3-Alpha in FOR-EACH-XXX
         ]
 

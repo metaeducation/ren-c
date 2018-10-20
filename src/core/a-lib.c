@@ -100,7 +100,7 @@
 
 
 //
-// rebEnterApi_Internal: RL_API
+// rebEnterApi_internal: RL_API
 //
 // This stub is added automatically to the calling wrappers.
 //

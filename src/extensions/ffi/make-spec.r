@@ -83,7 +83,7 @@ options: [
                     cfg-ffi/libraries: map-each lib libs [
                         make rebmake/ext-dynamic-class [
                             output: lib
-                            flags: either user-config/with-ffi = 'static [[static]][_]
+                            flags: either user-config/with-ffi is 'static [[static]][_]
                         ]
                     ]
                 ]

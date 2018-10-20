@@ -39,7 +39,7 @@ idate-to-date: function [date [text!]] [
         space
         copy zone: to end
     ][
-        if zone = "GMT" [zone: copy "+0"]
+        if zone is "Gmt" [zone: copy "+0"]
         to date! unspaced [day "-" month "-" year "/" time zone]
     ][
         blank
@@ -57,7 +57,7 @@ sync-op: function [port body] [
 
     do body
 
-    if state/state = 'ready [do-request port]
+    if state/state == 'ready [do-request port]
 
     ; Wait in a WHILE loop so the timeout cannot occur during 'reading-data
     ; state.  The timeout should be triggered only when the response from
@@ -67,7 +67,7 @@ sync-op: function [port body] [
         if not port? wait [state/connection port/spec/timeout] [
             fail make-http-error "Timeout"
         ]
-        if state/state = 'reading-data [
+        if state/state == 'reading-data [
             read state/connection
         ]
     ]
@@ -139,7 +139,7 @@ http-awake: function [event] [
                 'reading-data [
                     either any [
                         integer? state/info/headers/content-length
-                        state/info/headers/transfer-encoding = "chunked"
+                        state/info/headers/transfer-encoding is "Chunked"
                     ][
                         state/error: make-http-error "Server closed connection"
                         awake make event! [type: 'error port: http-port]
@@ -325,7 +325,7 @@ check-response: function [port] [
         ]
         remove/part conn/data d2
         state/state: 'reading-data
-        if quote (txt) <> last body-of :net-log [ ; net-log is in active state
+        if quote (txt) !== last body-of :net-log [ ; net-log is in active state
             print "Dumping Webserver headers and body"
             net-log/S info
             trap/with [
@@ -349,15 +349,15 @@ check-response: function [port] [
     info/response-parsed: default [
         catch [
             parse line [
-                "HTTP/1." [#"0" | #"1"] some #" " [
-                    #"1" (throw 'info)
+                "HTTP/1." ["0" | "1"] some space [
+                    "1" (throw 'info)
                     |
-                    #"2" [["04" | "05"] (throw 'no-content)
+                    "2" [["04" | "05"] (throw 'no-content)
                         | (throw 'ok)
                     ]
                     |
                     #"3" [
-                        (if spec/follow = 'ok [throw 'ok])
+                        (if spec/follow == 'ok [throw 'ok])
 
                         "02" (throw spec/follow)
                         |
@@ -383,13 +383,13 @@ check-response: function [port] [
         ]
     ]
 
-    if spec/debug = true [
+    if spec/debug == true [
         spec/debug: info
     ]
 
     switch/all info/response-parsed [
         'ok [
-            if spec/method = 'HEAD [
+            if spec/method == 'HEAD [
                 state/state: 'ready
                 res: any [
                     awake make event! [type: 'done port: port]
@@ -397,7 +397,7 @@ check-response: function [port] [
                 ]
             ] else [
                 res: check-data port
-                if not res and [state/state = 'ready] [
+                if not res and [state/state == 'ready] [
                     res: any [
                         awake make event! [type: 'done port: port]
                         awake make event! [type: 'ready port: port]
@@ -407,7 +407,7 @@ check-response: function [port] [
         ]
         'redirect
         'see-other [
-            if spec/method = 'HEAD [
+            if spec/method == 'HEAD [
                 state/state: 'ready
                 res: awake make event! [type: 'custom port: port code: 0]
             ] else [
@@ -424,10 +424,10 @@ check-response: function [port] [
                     state/state: 'ready
                 ]
             ]
-            if not res and [state/state = 'ready] [
+            if not res and [state/state == 'ready] [
                 all [
                     find [get head] spec/method or [all [
-                        info/response-parsed = 'see-other
+                        info/response-parsed == 'see-other
                         spec/method: 'get
                     ]]
                     in headers 'Location
@@ -444,7 +444,7 @@ check-response: function [port] [
         'client-error
         'server-error
         'proxy-auth [
-            if spec/method = 'HEAD [
+            if spec/method == 'HEAD [
                 state/state: 'ready
             ] else [
                 check-data port
@@ -516,7 +516,7 @@ do-redirect: func [
 ][
     spec: port/spec
     state: port/state
-    if #"/" = first new-uri [
+    if #"/" == first new-uri [
         new-uri: as url! unspaced [spec/scheme "://" spec/host new-uri]
     ]
     new-uri: decode-url new-uri
@@ -534,8 +534,8 @@ do-redirect: func [
         return state/awake make event! [type: 'error port: port]
     ]
     either all [
-        new-uri/host = spec/host
-        new-uri/port-id = spec/port-id
+        new-uri/host is spec/host
+        new-uri/port-id == spec/port-id
     ] [
         spec/path: new-uri/path
         ;we need to reset tcp connection here before doing a redirect
@@ -557,7 +557,7 @@ check-data: function [port] [
     conn: state/connection
     res: false
     case [
-        headers/transfer-encoding = "chunked" [
+        headers/transfer-encoding is "Chunked" [
             data: conn/data
             ;clear the port data only at the beginning of the request --Richard
             port/data: default [make binary! length of data]
@@ -572,7 +572,7 @@ check-data: function [port] [
                         to-integer/unsigned to issue! to text! chunk-size
                     )
 
-                    either chunk-size = 0 [
+                    either chunk-size == 0 [
                         if parse mk1 [
                             crlfbin (trailer: "") to end | copy trailer to crlf2bin to end
                         ] [
@@ -598,7 +598,7 @@ check-data: function [port] [
                     true
                 ]
             ]
-            if state/state <> 'ready [
+            if state/state !== 'ready [
                 ;
                 ; Awaken WAIT loop to prevent timeout when reading big data.
                 ;
@@ -623,7 +623,7 @@ check-data: function [port] [
         ]
     ] else [
         port/data: conn/data
-        either state/info/response-parsed = 'ok [
+        either state/info/response-parsed == 'ok [
             ;
             ; Awaken WAIT loop to prevent timeout when reading big data.
             ;
@@ -671,7 +671,7 @@ sys/make-scheme [
                 if not open? port [
                     cause-error 'Access 'not-open port/spec/ref
                 ]
-                if port/state/state <> 'ready [
+                if port/state/state !== 'ready [
                     fail make-http-error "Port not ready"
                 ]
                 port/state/awake: :port/awake
@@ -710,7 +710,7 @@ sys/make-scheme [
                 if not open? port [
                     cause-error 'Access 'not-open port/spec/ref
                 ]
-                if port/state/state <> 'ready [
+                if port/state/state !== 'ready [
                     fail make-http-error "Port not ready"
                 ]
                 port/state/awake: :port/awake
@@ -740,7 +740,7 @@ sys/make-scheme [
             ]
             port/state/connection: conn: make port! compose [
                 scheme: (
-                    to lit-word! either port/spec/scheme = 'http ['tcp]['tls]
+                    to lit-word! either port/spec/scheme is 'Http ['tcp]['tls]
                 )
                 host: port/spec/host
                 port-id: port/spec/port-id
@@ -778,9 +778,12 @@ sys/make-scheme [
         copy: func [
             port [port!]
         ][
-            either all [port/spec/method = 'HEAD | port/state] [
+            all [
+                port/spec/method == 'HEAD ;-- http methods case-sensitive
+                port/state
+            ] then [
                 reduce bind [name size date] port/state/info
-            ][
+            ] else [
                 if port/data [copy port/data]
             ]
         ]

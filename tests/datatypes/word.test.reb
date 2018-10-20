@@ -1,7 +1,7 @@
 ; datatypes/word.r
 (word? 'a)
 (not word? 1)
-(word! = type of 'a)
+(word! == type of 'a)
 ; literal form
 (word? first [a])
 ; words are active; actions are word-active
@@ -151,7 +151,7 @@
 (
     unset 'a-value
     e: trap [a-value]
-    e/id = 'no-value
+    e/id == 'no-value
 )
 (
     a-value: 'a

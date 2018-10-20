@@ -104,7 +104,7 @@ emit-proto: func [
         ;-- later commit to OS_STR_FROM_SERIES (or otherwise) this
         ;-- backwards search can be removed
         pos.id: next find/reverse pos.id space
-        pos.id: either #"*" = first pos.id [next pos.id] [pos.id]
+        pos.id: either #"*" == first pos.id [next pos.id] [pos.id]
 
         find proto #"("
     ] [
@@ -152,7 +152,7 @@ process: func [file] [
 for-each file files [
     print ["scanning" file]
     if all [
-        %.c = suffix? file
+        %.c == suffix? file
     ][process file]
 ]
 

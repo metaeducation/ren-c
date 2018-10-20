@@ -29,7 +29,7 @@
 )
 (
     blk: tail of [1 2 3]
-    equal? [3] at blk -1
+    [3] == at blk -1
 )
 (
     blk: tail of [1 2]
@@ -74,7 +74,7 @@
 )
 (
     str: tail of "123"
-    equal? "3" at str -1
+    "3" == at str -1
 )
 (
     str: tail of "12"

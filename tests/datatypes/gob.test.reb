@@ -1,7 +1,7 @@
 ; datatypes/gob.r
 ; minimum
 (gob? make gob! [])
-(gob! = type of make gob! [])
+(gob! == type of make gob! [])
 [#62 (
     g: make gob! []
     1x1 == g/offset: 1x1

@@ -638,7 +638,7 @@ REBNATIVE(zmq_getsockopt) {
         if (rc != 0)
             fail_ZeroMQ();
 
-        if (rebDid(datatype, "= logic!")) {
+        if (rebDid(datatype, "== logic!")) {
             if (value_data != 0 and value_data != 1)
                 rebJumps("FAIL {LOGIC! property didn't return a 1 or 0}");
             result = rebLogic(value_data);
@@ -658,10 +658,10 @@ REBNATIVE(zmq_getsockopt) {
             fail_ZeroMQ();
 
         value_data[value_size] = '\0';
-        if (rebDid(datatype, "= text!"))
+        if (rebDid(datatype, "== text!"))
             result = rebText(value_data);
         else {
-            rebElide("assert [", datatype, "= binary!]");
+            rebElide("assert [", datatype, "== binary!]");
             result = rebBinary(value_data, value_size);
         }
     }

@@ -543,7 +543,7 @@ host-start: function [
         |
             "--suppress" end (
                 param: param-or-die "SUPPRESS"
-                o/suppress: if param = "*" [
+                o/suppress: if param == "*" [
                     ;; suppress all known start-up files
                     [%rebol.reb %user.reb %console-skin.reb]
                 ] else [
@@ -553,7 +553,7 @@ host-start: function [
         |
             "--secure" end (
                 o/secure: to word! param-or-die "SECURE"
-                if o/secure <> 'allow [
+                if o/secure isn't 'Allow [
                     die "SECURE is disabled (never finished for R3-Alpha)"
                 ]
             )
@@ -646,14 +646,14 @@ host-start: function [
 
     ;-- !!! this was commented out.  Is it important?
     comment [
-        if slash <> first o/boot [o/boot: clean-path o/boot]
+        if slash !== first o/boot [o/boot: clean-path o/boot]
     ]
 
     if file? o/script [ ; Get the path (needed for SECURE setup)
         script-path: split-path o/script
         case [
-            slash = first first script-path []      ; absolute
-            %./ = first script-path [script-path/1: o/path]   ; curr dir
+            slash == first first script-path []      ; absolute
+            %./ == first script-path [script-path/1: o/path]   ; curr dir
         ] else [
             insert first script-path o/path ; relative
         ]
@@ -761,7 +761,7 @@ comment [
             path: what-dir
             args: script-args
         ]
-        if 'module = select first code 'type [
+        if 'Module is select first code 'type [
             code: reduce [first code | next code]
             if object? tmp: sys/do-needs/no-user first code [append code tmp]
             import do compose [module (code)]

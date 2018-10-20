@@ -85,7 +85,7 @@ for-each [math-op function-name] [
 
 ; Make top-level words for things not added by %b-init.c
 ;
-=: !=: ==: !==: =?: _
+is: isn't: ==: !==: _
 
 ; <= looks a lot like a left arrow.  In the interest of "new thought", core
 ; defines the operation in terms of =<
@@ -93,8 +93,9 @@ for-each [math-op function-name] [
 lesser-or-equal?: :equal-or-lesser?
 
 for-each [comparison-op function-name] compose [
-    =       equal?
-    <>      not-equal?
+    is      is?
+    isn't   isn't?
+
     <       lesser?
     (r3-alpha-quote "=<") equal-or-lesser?
     >       greater?
@@ -102,12 +103,16 @@ for-each [comparison-op function-name] compose [
 
     <=      lesser-or-equal? ;-- !!! https://forum.rebol.info/t/349/11
 
-    !=      not-equal? ;-- !!! http://www.rebol.net/r3blogs/0017.html
-
+    ; !!! As a transitional step, = and <> and != are undefined.  Eventually
+    ; these will have the semantics of strict equality and inequality.  !=
+    ; does not make a ton of sense as ! isn't "not" in Rebol, but it has some
+    ; value when looking at `tag <> <something>` as `tag != <something>`.
+    ; For a discussion of !=, see http://www.rebol.net/r3blogs/0017.html
+    ;
     ==      strict-equal? ;-- !!! https://forum.rebol.info/t/349
     !==     strict-not-equal? ;-- !!! bad pairing, most would think !=
 
-    =?      same?
+    ; =?      same?
 ][
     ; !!! See discussion about the future of comparison operators:
     ; https://forum.rebol.info/t/349

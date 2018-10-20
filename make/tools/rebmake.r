@@ -57,15 +57,20 @@ map-files-to-local: func [
 ]
 
 ends-with?: func [
+    {Determine if string ends with another string (formed, case-insensitive)}
+
     return: [logic!]
     s [any-string!]
     suffix [blank! any-string!]
 ][
-    did any [
-        blank? suffix
-        empty? suffix
-        suffix = (skip tail-of s negate length of suffix)
-    ]
+    if blank? suffix [return true]
+
+    ;; FORM so that if you say `ends-with "abc<de>" <de>` it will say yes.
+    ;;
+    s: (match text! s) else [form s]
+    suffix: (match text! suffix) else [form suffix]
+
+    return suffix is (skip tail of s negate length of suffix)
 ]
 
 filter-flag: function [
@@ -84,7 +89,7 @@ filter-flag: function [
         fail ["Tag must be <prefix:flag> ->" (flag)]
     ]
 
-    return all [prefix = header | to-text option]
+    return all [prefix == header | to-text option]
 ]
 
 run-command: function [
@@ -226,7 +231,7 @@ windows: make platform-class [
         cmd [object!]
     ][
         d: file-to-local cmd/file
-        if #"\" = last d [remove back tail-of d]
+        if #"\" == last d [remove back tail-of d]
         either dir? cmd/file [
             spaced ["mkdir" d]
         ][
@@ -237,7 +242,7 @@ windows: make platform-class [
         cmd [object!]
     ][
         d: file-to-local cmd/file
-        if #"\" = last d [remove back tail-of d]
+        if #"\" == last d [remove back tail-of d]
         either dir? cmd/file [
             spaced ["rmdir /S /Q" d]
         ][
@@ -488,8 +493,8 @@ gcc: make compiler-class [
             ]
             if O [
                 case [
-                    opt-level = true ["-O2"]
-                    opt-level = false ["-O0"]
+                    opt-level == true ["-O2"]
+                    opt-level == false ["-O0"]
                     integer? opt-level [unspaced ["-O" opt-level]]
                     find ["s" "z" "g" 's 'z 'g] opt-level [
                         unspaced ["-O" opt-level]
@@ -502,8 +507,8 @@ gcc: make compiler-class [
             opt if g [ ;-- "" doesn't vaporize in old Ren-C, _ doesn't in new
                 case [
                     blank? debug [] ;FIXME: _ should be passed in at all
-                    debug = true ["-g -g3"]
-                    debug = false []
+                    debug == true ["-g -g3"]
+                    debug == false []
                     integer? debug [unspaced ["-g" debug]]
                     default [
                         fail ["unrecognized debug option:" debug]
@@ -566,8 +571,8 @@ tcc: make compiler-class [
             ]
             if O [
                 case [
-                    opt-level = true ["-O2"]
-                    opt-level = false ["-O0"]
+                    opt-level == true ["-O2"]
+                    opt-level == false ["-O0"]
                     integer? opt-level [unspaced ["-O" opt-level]]
                     default [
                         fail ["unknown optimization level" opt-level]
@@ -577,8 +582,8 @@ tcc: make compiler-class [
             opt if g [ ;-- "" doesn't vaporize in old Ren-C, _ doesn't in new
                 case [
                     blank? debug [] ;FIXME: _ should be passed in at all
-                    debug = true ["-g"]
-                    debug = false []
+                    debug == true ["-g"]
+                    debug == false []
                     integer? debug [unspaced ["-g" debug]]
                     default [
                         fail ["unrecognized debug option:" debug]
@@ -645,7 +650,7 @@ cl: make compiler-class [
             ]
             if O [
                 case [
-                    opt-level = true ["/O2"]
+                    opt-level == true ["/O2"]
                     all [
                         opt-level
                         not zero? opt-level
@@ -659,12 +664,12 @@ cl: make compiler-class [
                 case [
                     blank? debug [] ;FIXME: _ shouldn't be passed in at all
                     any [
-                        debug = true
+                        debug == true
                         integer? debug ;-- doesn't map to a CL option
                     ][
                         "/Od /Zi"
                     ]
-                    debug = false []
+                    debug == false []
                     
                     default [
                         fail ["unrecognized debug option:" debug]
@@ -1165,7 +1170,7 @@ object-file-class: make object! [
             commands: command/I/D/F/O/g/(try all [
                 any [
                     PIC
-                    parent/class-name = 'dynamic-library-class
+                    parent/class-name == 'dynamic-library-class
                 ]
                 'PIC
             ])
@@ -1294,7 +1299,7 @@ generator-class: make object! [
 
         if find words-of solution 'depends [
             for-each dep solution/depends [
-                if dep/class-name = 'var-class [
+                if dep/class-name == 'var-class [
                     append vars reduce [
                         dep/name
                         any [
@@ -1316,7 +1321,7 @@ generator-class: make object! [
     ][
         if all [
             find words-of project 'generated?
-            to != project/generated?
+            to !== project/generated?
         ][
             project/generated?: to
             if find words-of project 'depends [
@@ -1549,14 +1554,14 @@ makefile: make generator-class [
                     ;dump dep
                     for-each obj dep/depends [
                         ;dump obj
-                        if obj/class-name = 'object-library-class [
+                        if obj/class-name == 'object-library-class [
                             append objs obj/depends
                         ]
                     ]
                     append buf gen-rule make entry-class [
                         target: dep/output
                         depends: join-of objs map-each ddep dep/depends [
-                            if ddep/class-name <> 'object-library-class [ddep]
+                            if ddep/class-name !== 'object-library-class [ddep]
                         ]
                         commands: append reduce [dep/command] opt dep/post-build-commands
                     ]
@@ -1564,12 +1569,12 @@ makefile: make generator-class [
                 ]
 
                 'object-library-class [
-                    ;assert [dep/class-name != 'object-library-class] ;No nested object-library-class allowed
+                    ;assert [dep/class-name !== 'object-library-class] ;No nested object-library-class allowed
                     for-each obj dep/depends [
-                        assert [obj/class-name = 'object-file-class]
+                        assert [obj/class-name == 'object-file-class]
                         if not obj/generated? [
                             obj/generated?: true
-                            append buf gen-rule obj/gen-entries/(try all [project/class-name = 'dynamic-library-class 'PIC]) dep
+                            append buf gen-rule obj/gen-entries/(try all [project/class-name == 'dynamic-library-class 'PIC]) dep
                         ]
                     ]
                 ]
@@ -1602,7 +1607,7 @@ makefile: make generator-class [
         entry-class
     ][
         buf: make binary! 2048
-        assert [solution/class-name = 'solution-class]
+        assert [solution/class-name == 'solution-class]
 
         prepare solution
 
@@ -1712,7 +1717,7 @@ Execution: make generator-class [
                 objs: make block! 8
                 for-each obj project/depends [
                     ;dump obj
-                    if obj/class-name = 'object-library-class [
+                    if obj/class-name == 'object-library-class [
                         append objs obj/depends
                     ]
                 ]
@@ -1728,10 +1733,10 @@ Execution: make generator-class [
 
             'object-library-class [
                 for-each obj project/depends [
-                    assert [obj/class-name = 'object-file-class]
+                    assert [obj/class-name == 'object-file-class]
                     if not obj/generated? [
                         obj/generated?: true
-                        run-target obj/gen-entries/(try all [p-project/class-name = 'dynamic-library-class 'PIC]) project
+                        run-target obj/gen-entries/(try all [p-project/class-name == 'dynamic-library-class 'PIC]) project
                     ]
                 ]
             ]
@@ -1832,7 +1837,11 @@ visual-studio: make generator-class [
         depends
         dep
     ][
-        project-name: either project/class-name = 'entry-class [project/target][project/name]
+        project-name: if project/class-name == 'entry-class [
+            project/target
+        ] else [
+            project/name
+        ]
         append buf unspaced [
             {Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "} to text! project-name {",}
             {"} project-name {.vcxproj", "} project/id {"} newline
@@ -1966,7 +1975,7 @@ visual-studio: make generator-class [
         <local>
         project-name
     ][
-        project-name: either project/class-name = 'entry-class [project/target][project/name]
+        project-name: either project/class-name == 'entry-class [project/target][project/name]
         if project/generated? [
             print ["project" project-name "was already generated"]
             return
@@ -1994,7 +2003,7 @@ visual-studio: make generator-class [
         project-dir: unspaced [project-name ".dir\" build-type "\"]
 
         searches: make text! 1024
-        if project/class-name <> 'entry-class [
+        if project/class-name !== 'entry-class [
             inc: make text! 1024
             for-each i project/includes [
                 if i: try filter-flag i "msc" [
@@ -2069,7 +2078,7 @@ visual-studio: make generator-class [
   <PropertyGroup Label="Globals">
     <ProjectGUID>} project/id {</ProjectGUID>
     <WindowsTargetPlatformVersion>} target-win-version {</WindowsTargetPlatformVersion>}
-    either project/class-name = 'entry-class [
+    either project/class-name == 'entry-class [
         unspaced [ {
     <RootNameSpace>} project-name {</RootNameSpace>}
         ]
@@ -2105,7 +2114,7 @@ visual-studio: make generator-class [
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
     <PropertyGroup>}
-    if project/class-name != 'entry-class [
+    if project/class-name !== 'entry-class [
         unspaced [ {
       <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
       <OutDir>} project-dir {</OutDir>
@@ -2117,7 +2126,7 @@ visual-studio: make generator-class [
     </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>}
-    if project/class-name <> 'entry-class [
+    if project/class-name !== 'entry-class [
         unspaced [ {
       <AdditionalIncludeDirectories>} inc {</AdditionalIncludeDirectories>
       <AssemblerListingLocation>} build-type {/</AssemblerListingLocation>}
@@ -2130,12 +2139,12 @@ visual-studio: make generator-class [
       <CompileAs>} compile-as {</CompileAs>}
           ]
       ] {
-      <DebugInformationFormat>} if build-type = "debug" ["ProgramDatabase"] {</DebugInformationFormat>
+      <DebugInformationFormat>} if build-type is "debug" ["ProgramDatabase"] {</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
       <InlineFunctionExpansion>} switch build-type ["debug" ["Disabled"] "release" ["AnySuitable"]] {</InlineFunctionExpansion>
       <Optimization>} find-optimization project/optimization {</Optimization>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <RuntimeLibrary>MultiThreaded} if build-type = "debug" ["Debug"] {DLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded} if build-type is "debug" ["Debug"] {DLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError></TreatWarningAsError>
@@ -2157,7 +2166,7 @@ visual-studio: make generator-class [
       <AdditionalOptions> /machine:} cpu { %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>} lib {</AdditionalDependencies>
       <AdditionalLibraryDirectories>} searches {%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>} either build-type = "debug" ["Debug"]["false"] {</GenerateDebugInformation>
+      <GenerateDebugInformation>} either build-type is "debug" ["Debug"]["false"] {</GenerateDebugInformation>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
       <ImportLibrary>} project/basename {.lib</ImportLibrary>
       <ProgramDataBaseFile>} project/basename {.pdb</ProgramDataBaseFile>
@@ -2207,7 +2216,7 @@ visual-studio: make generator-class [
     sources: make text! 1024
     for-each o project/depends [
         case [
-            o/class-name = 'object-file-class [
+            o/class-name == 'object-file-class [
                 append sources unspaced [
                     {    <ClCompile Include="} o/source {" >^/}
                     use [compile-as][
@@ -2279,7 +2288,7 @@ visual-studio: make generator-class [
                     {    </ClCompile>^/}
                 ]
             ] ;object-file-class
-            o/class-name = 'object-library-class [
+            o/class-name == 'object-library-class [
                 for-each f o/depends [
                     append sources unspaced [
                         {    <Object Include="} f/output {" />^/}
@@ -2336,7 +2345,7 @@ visual-studio: make generator-class [
         vars
     ][
         buf: make binary! 2048
-        assert [solution/class-name = 'solution-class]
+        assert [solution/class-name == 'solution-class]
 
         prepare solution
 

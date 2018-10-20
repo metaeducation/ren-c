@@ -10,12 +10,12 @@
     void? f1
 )
 [#1515 ; the "result" of an arity-0 return should not be assignable
-    (a: 1 eval func [return: <void>] [a: return] :a =? 1)
+    (a: 1 eval func [return: <void>] [a: return] :a == 1)
 ]
-(a: 1 eval func [return: <void>] [set 'a return] :a =? 1)
-(a: 1 eval func [return: <void>] [set/opt 'a return] :a =? 1)
+(a: 1 eval func [return: <void>] [set 'a return] :a == 1)
+(a: 1 eval func [return: <void>] [set/opt 'a return] :a == 1)
 [#1509 ; the "result" of an arity-0 return should not be passable to functions
-    (a: 1 eval func [return: <void>] [a: error? return] :a =? 1)
+    (a: 1 eval func [return: <void>] [a: error? return] :a == 1)
 ]
 [#1535
     (eval func [return: <void>] [words of return] true)

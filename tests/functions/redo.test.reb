@@ -4,28 +4,28 @@
 (
     foo: func [n] [
         frame: binding of 'n
-        if n = 0 [
+        if n == 0 [
             return <success>
         ]
         n: n - 1
         redo frame
     ]
 
-    <success> = foo 100
+    <success> == foo 100
 )
 
 ; REDO via extraction of FRAME! from an ANY-WORD!
 ; (has binding to a FRAME! to lookup variable value)
 (
     foo: func [n] [
-        if n = 0 [
+        if n == 0 [
            return <success>
         ]
         n: n - 1
         redo 'n
     ]
 
-    <success> = foo 100
+    <success> == foo 100
 )
 
 ; REDO locals clearing test
@@ -35,7 +35,7 @@
         if set? 'unset-me [
             return "local not cleared"
         ]
-        if n = 0 [
+        if n == 0 [
             return <success>
         ]
         n: n - 1
@@ -43,14 +43,14 @@
         redo 'return
     ]
 
-    <success> = foo 100
+    <success> == foo 100
 )
 
 ; REDO type checking test
 ; (args and refinements must pass function's type checking)
 (
     foo: func [n i [integer!]] [
-        if n = 0 [
+        if n == 0 [
             return <success> ;-- impossible for this case
         ]
         n: n - 1
@@ -65,7 +65,7 @@
 ; (shared frame compositions should redo the appropriate "phase")
 (
     inner: func [n] [
-        if n = 0 [
+        if n == 0 [
             return <success>
         ]
         n: 0
@@ -73,17 +73,17 @@
     ]
 
     outer: adapt 'inner [
-        if n = 0 [
+        if n == 0 [
             return "outer phase run by redo"
         ]
         ;-- fall through to inner, using same frame
     ]
 
-    <success> = outer 1
+    <success> == outer 1
 )
 (
     inner: func [n /captured-frame f] [
-        if n = 0 [
+        if n == 0 [
            return "inner phase run by redo"
         ]
         n: 0
@@ -91,7 +91,7 @@
     ]
 
     outer: adapt 'inner [
-        if n = 0 [
+        if n == 0 [
             return <success>
         ]
 
@@ -103,7 +103,7 @@
         ;-- F is a FRAME! value that stowed outer's "phase"
     ]
 
-    <success> = outer 1
+    <success> == outer 1
 )
 
 ; "Sibling" tail-call with compatible function
@@ -171,7 +171,7 @@
 
         n: n - delta
         if n < 0 [return "base less than zero"]
-        if n = 0 [return "base done"]
+        if n == 0 [return "base done"]
         if captured-frame [redo f]
         return "base got no frame"
     ]
@@ -188,7 +188,7 @@
         ]
             |
         func [x] [
-            if x = "base done" [
+            if x == "base done" [
                 <success>
             ] else [
                 spaced ["base exited with" x]
@@ -199,10 +199,10 @@
     s: specialize adapt 'base [
         log [{S} n delta]
 
-        if n = 1 [n: 10]
+        if n == 1 [n: 10]
     ][
         delta: 10
     ]
 
-    <success> = c 11 0
+    <success> == c 11 0
 )

@@ -1,17 +1,17 @@
 ; datatypes/time.r
 (time? 0:00)
 (not time? 1)
-(time! = type of 0:00)
-(0:0:10 = make time! 10)
-(0:0:10 = to time! 10)
+(time! == type of 0:00)
+(0:0:10 == make time! 10)
+(0:0:10 == to time! 10)
 (error? trap [to time! "a"])
-("0:00" = mold 0:00)
+("0:00" == mold 0:00)
 
 ; small value
 (
     did any [
         error? trap [t: -596522:0:0 - 1:00]
-        t = load mold t
+        t == load mold t
     ]
 )
 
@@ -19,7 +19,7 @@
 (
     did any [
         error? trap [t: 596522:0:0 + 1:00]
-        t = load mold t
+        t == load mold t
     ]
 )
 
@@ -40,17 +40,17 @@
 
 [#96 (
     time: 1:23:45.6
-    1:23:45.7 = (time + 0.1)
+    1:23:45.7 == (time + 0.1)
 )]
 [#96 (
     time: 1:23:45.6
-    0:41:52.8 = (time * .5)
+    0:41:52.8 == (time * .5)
 )]
 
 
 [#1156 (
-    0:01:00 / 0:00:07 = 8.571428571428571
+    0:01:00 / 0:00:07 == 8.571428571428571
 )]
 [#1156 (
-    8 * 0:00:07 = 0:00:56
+    8 * 0:00:07 == 0:00:56
 )]

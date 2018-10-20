@@ -62,7 +62,7 @@ ldflags: compose [
     {-s ENVIRONMENT='web'}
 
     {-s ASSERTIONS=0}
-;    (unspaced [{-s 'ASSERTIONS=} either debug = 'none [0] [1] {'}])
+;    (unspaced [{-s 'ASSERTIONS=} either debug is 'none [0] [1] {'}])
 
     (if false [[
         ; In theory, using the closure compiler will reduce the amount of

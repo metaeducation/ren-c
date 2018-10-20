@@ -6,7 +6,7 @@
     not in o 'b
 )]
 
-([] = append copy [] (null))
+([] == append copy [] (null))
 
 
 ; Slipstream in some tests of MY (there don't seem to be a lot of tests here)
@@ -22,18 +22,18 @@
     block: my insert data
     block: my head
 
-    block = [a 3 4 b c d]
+    block == [a 3 4 b c d]
 )
 (
     block: copy [a b c]
     block: my append/part/dup [d e f] 2 3
-    [a b c d e d e d e] = block
+    [a b c d e d e d e] == block
 )
 
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 ;
-([a b c d/e/f] = append copy [a b c] 'd/e/f)
-(quote a/b/c/d/e/f = append copy 'a/b/c [d e f])
-(quote (a b c d/e/f) = append copy quote (a b c) 'd/e/f)
-(quote a/b/c/d/e/f = append copy 'a/b/c quote (d e f))
-(quote a/b/c/d/e/f = append copy 'a/b/c 'd/e/f)
+([a b c d/e/f] == append copy [a b c] 'd/e/f)
+(quote a/b/c/d/e/f == append copy 'a/b/c [d e f])
+(quote (a b c d/e/f) == append copy quote (a b c) 'd/e/f)
+(quote a/b/c/d/e/f == append copy 'a/b/c quote (d e f))
+(quote a/b/c/d/e/f == append copy 'a/b/c 'd/e/f)

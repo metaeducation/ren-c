@@ -176,7 +176,7 @@ rebsource: context [
 
                 all [
                     not tail? data
-                    not equal? newline last data
+                    newline !== last data
                 ] then [
                     emit <eof-eol-missing> [(file)]
                 ]
@@ -215,7 +215,7 @@ rebsource: context [
                         ; `REBNATIVE(some_name_q)` to be correctly lined up
                         ; as the "to-c-name" of the Rebol set-word
                         ;
-                        if proto-parser/proto.arg.1 <> to-c-name name [
+                        if proto-parser/proto.arg.1 !== to-c-name name [
                             line: try text-line-of proto-parser/parse.position
                             emit <id-mismatch> [
                                 (mold proto-parser/data/1) (file) (line)
@@ -294,7 +294,7 @@ rebsource: context [
             all [
                 position: try find data #{0a}
                 1 < index of position
-                13 = first back position
+                13 == first back position
             ] then [
                 line-ending: unspaced [CR LF]
                 alt-ending: LF
@@ -370,7 +370,7 @@ rebsource: context [
 
             all [
                 not tail? data
-                not equal? 10 last data ; Check for newline.
+                10 !== last data ; Check for newline.
             ] then [
                 emit <eof-eol-missing> [
                      (file) (reduce [try text-line-of tail of to text! data])
@@ -403,7 +403,7 @@ rebsource: context [
         ][
             item: ensure file! take queue
 
-            if equal? #"/" last item [
+            if #"/" == last item [
                 contents: read join-of src-folder item
                 insert queue map-each x contents [join-of item x]
                 item: _

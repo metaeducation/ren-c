@@ -97,7 +97,7 @@ dirize: func [
     path [file! text! url!]
 ][
     path: copy path
-    if slash <> last path [append path slash]
+    if slash !== last path [append path slash]
     path
 ]
 

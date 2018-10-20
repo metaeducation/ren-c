@@ -3,7 +3,7 @@ REBOL []
 inp: %iso3166.txt
 init: %ext-locale-init.reb
 cnt: read inp
-if #{EFBBBF} = to binary! copy/part cnt 3 [ ;UTF8 BOM
+if #{EFBBBF} == to binary! copy/part cnt 3 [ ;UTF8 BOM
     cnt: skip cnt 3
 ]
 
@@ -18,10 +18,10 @@ capitalize: func [
     spaced [
         map-each w words [
             case [
-                w = "OF" [
+                w == "OF" [
                     "of"
                 ]
-                w = "U.S." [
+                w == "U.S." [
                     "U.S."
                 ]
             ] else [

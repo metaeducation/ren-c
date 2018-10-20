@@ -114,8 +114,8 @@ sys/make-scheme [
             if get in connection: port/locals 'hdbc [
                 (update-odbc
                     connection
-                    port/state/access = 'write
-                    port/state/commit = 'auto
+                    port/state/access is 'write
+                    port/state/commit is 'auto
                 )
                 return port
             ]

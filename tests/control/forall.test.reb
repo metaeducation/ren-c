@@ -5,29 +5,29 @@
     for-next str [append out first str]
     all [
         head? str
-        out = head of str
+        out == head of str
     ]
 )
 (
     blk: [1 2 3 4]
     sum: 0
     for-next blk [sum: sum + first blk]
-    sum = 10
+    sum == 10
 )
 ; cycle return value
 (
     blk: [1 2 3 4]
-    true = for-next blk [true]
+    true == for-next blk [true]
 )
 (
     blk: [1 2 3 4]
-    false = for-next blk [false]
+    false == for-next blk [false]
 )
 ; break cycle
 (
     str: "abcdef"
-    for-next str [if #"c" = char: str/1 [break]]
-    char = #"c"
+    for-next str [if #"c" == char: str/1 [break]]
+    char == #"c"
 )
 ; break return value
 (
@@ -52,14 +52,14 @@
 (
     blk: [1]
     f1: func [] [for-next blk [return 1 2]]
-    1 = f1
+    1 == f1
 )
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
     blk: [1 2]
     e: for-next blk [num: first blk trap [1 / 0]]
-    all [error? e num = 2]
+    error? e and [num == 2]
 )
 ; recursivity
 (
@@ -70,7 +70,7 @@
         num: num + first blk1
         for-next blk2 [num: num + first blk2]
     ]
-    num = 80
+    num == 80
 )
 [#81 (
     blk: [1]

@@ -84,7 +84,7 @@ was: func [
     elide take evaluation
 ]
 
-assert [null = binding of :return] ;-- it's archetypal, nowhere to return to
+assert [null == binding of :return] ;-- it's archetypal, nowhere to return to
 unset 'return ;-- so don't let the archetype be visible
 
 function: func [
@@ -344,7 +344,7 @@ redescribe: function [
                 fail [{PARAMETER-NOTES in META-OF is not a FRAME!} notes]
             ]
 
-            if :value <> action of notes [
+            if :value !== action of notes [
                 fail [{PARAMETER-NOTES in META-OF frame mismatch} notes]
             ]
         ]
@@ -376,11 +376,11 @@ redescribe: function [
     parse spec [
         opt [
             set description: text! (
-                either all [equal? description {} | not meta] [
+                either all [is? description {} | not meta] [
                     ; No action needed (no meta to delete old description in)
                 ][
                     on-demand-meta
-                    meta/description: if equal? description {} [
+                    meta/description: if is? description {} [
                         _
                     ] else [
                         description
@@ -398,13 +398,13 @@ redescribe: function [
             ;
             opt [[set note: text!] (
                 on-demand-meta
-                either equal? param (quote return:) [
+                either is? param (quote return:) [
                     meta/return-note: all [
-                        not equal? note {}
+                        not is? note {}
                         copy note
                     ]
                 ][
-                    if notes or [not equal? note {}] [
+                    if notes or [not is? note {}] [
                         on-demand-notes
 
                         if not find notes as word! param [
@@ -416,7 +416,7 @@ redescribe: function [
                             fail [param {doesn't match word type of} actual]
                         ]
 
-                        notes/(as word! param): if not equal? note {} [note]
+                        notes/(as word! param): if not is? note {} [note]
                     ]
                 ]
             )]
@@ -648,7 +648,7 @@ nfix?: function [
 ][
     case [
         not enfixed? source [false]
-        equal? n arity: arity-of source [true]
+        is? n arity: arity-of source [true]
         n < arity [
             ; If the queried arity is lower than the arity of the function,
             ; assume it's ok...e.g. PREFIX? callers know INFIX? exists (but
@@ -739,7 +739,7 @@ once-bar: func [
     elide any [
         tail? right
             |
-        '|| = look: take lookahead ;-- hack...recognize selfs
+        '|| == look: take lookahead ;-- hack...recognize selfs
     ] else [
         fail/where [
             "|| expected single expression, found residual of" :look

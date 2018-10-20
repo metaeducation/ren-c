@@ -4,7 +4,7 @@
     (integer? -0)
 ]
 (not integer? 1.1)
-(integer! = type of 0)
+(integer! == type of 0)
 (integer? 1)
 (integer? -1)
 (integer? 2)
@@ -48,6 +48,6 @@
 <64bit>
 (302961000000 == to integer! "3.02961E+11")
 (error? trap [to integer! "t"])
-("0" = mold 0)
-("1" = mold 1)
-("-1" = mold -1)
+("0" == mold 0)
+("1" == mold 1)
+("-1" == mold -1)

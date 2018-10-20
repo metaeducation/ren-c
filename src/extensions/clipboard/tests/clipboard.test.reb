@@ -32,4 +32,4 @@
 
 ; WRITE returns a PORT! in R3
 ;
-(equal? to-text read write clipboard:// c: "test" c)
+((to-text read write clipboard:// c: "test") == c)

@@ -2,7 +2,7 @@
 [#41
     (null? attempt [1 / 0])
 ]
-(1 = attempt [1])
+(1 == attempt [1])
 (void? attempt [])
 ; RETURN stops attempt evaluation
 (
@@ -14,7 +14,7 @@
 ; BREAK stops attempt evaluation
 (null? loop 1 [attempt [break 2] 2])
 ; recursion
-(1 = attempt [attempt [1]])
+(1 == attempt [attempt [1]])
 (null? attempt [attempt [1 / 0]])
 ; infinite recursion
 (

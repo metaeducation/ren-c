@@ -1,6 +1,6 @@
 ; datatypes/datatype.r
 (not datatype? 1)
-(datatype! = type of action!)
+(datatype! == type of action!)
 (datatype? action!)
 (datatype? binary!)
 (datatype? bitset!)

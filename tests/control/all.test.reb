@@ -2,7 +2,7 @@
 ; zero values
 (null? all [])
 ; one value
-(:abs = all [:abs])
+(:abs == all [:abs])
 (
     a-value: #{}
     same? a-value all [a-value]
@@ -19,7 +19,7 @@
     a-value: blank!
     same? a-value all [a-value]
 )
-(1/Jan/0000 = all [1/Jan/0000])
+(1/Jan/0000 == all [1/Jan/0000])
 (0.0 == all [0.0])
 (1.0 == all [1.0])
 (
@@ -55,7 +55,7 @@
     a-value: first ['a]
     :a-value == all [:a-value]
 )
-(true = all [true])
+(true == all [true])
 (null? all [false])
 ($1 == all [$1])
 (same? :append all [:append])
@@ -100,7 +100,7 @@
 (null? all [null])
 ('a == all ['a])
 ; two values
-(:abs = all [true :abs])
+(:abs == all [true :abs])
 (
     a-value: #{}
     same? a-value all [true a-value]
@@ -117,7 +117,7 @@
     a-value: blank!
     same? a-value all [true a-value]
 )
-(1/Jan/0000 = all [true 1/Jan/0000])
+(1/Jan/0000 == all [true 1/Jan/0000])
 (0.0 == all [true 0.0])
 (1.0 == all [true 1.0])
 (
@@ -195,103 +195,103 @@
 (0.0.0 == all [true 0.0.0])
 (null? all [1020 null])
 ('a == all [true 'a])
-(true = all [:abs true])
+(true == all [:abs true])
 (
     a-value: #{}
-    true = all [a-value true]
+    true == all [a-value true]
 )
 (
     a-value: charset ""
-    true = all [a-value true]
+    true == all [a-value true]
 )
 (
     a-value: []
-    true = all [a-value true]
+    true == all [a-value true]
 )
 (
     a-value: blank!
-    true = all [a-value true]
+    true == all [a-value true]
 )
-(true = all [1/Jan/0000 true])
-(true = all [0.0 true])
-(true = all [1.0 true])
+(true == all [1/Jan/0000 true])
+(true == all [0.0 true])
+(true == all [1.0 true])
 (
     a-value: me@here.com
-    true = all [a-value true]
+    true == all [a-value true]
 )
-(true = all [trap [1 / 0] true])
+(true == all [trap [1 / 0] true])
 (
     a-value: %""
-    true = all [a-value true]
+    true == all [a-value true]
 )
 (
     a-value: does []
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
 (
     a-value: first [:a]
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
-(true = all [#"^@" true])
+(true == all [#"^@" true])
 (
     a-value: make image! 0x0
-    true = all [a-value true]
+    true == all [a-value true]
 )
-(true = all [0 true])
-(true = all [1 true])
-(true = all [#a true])
+(true == all [0 true])
+(true == all [1 true])
+(true == all [#a true])
 (
     a-value: first ['a/b]
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
 (
     a-value: first ['a]
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
-(true = all [true true])
+(true == all [true true])
 (null? all [false true])
 (null? all [true false])
-(true = all [$1 true])
-(true = all [:append true])
+(true == all [$1 true])
+(true == all [:append true])
 (null? all [_ true])
 (
     a-value: make object! []
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
 (
     a-value: first [()]
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
-(true = all [get '+ true])
-(true = all [0x0 true])
+(true == all [get '+ true])
+(true == all [0x0 true])
 (
     a-value: 'a/b
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
 (
     a-value: make port! http://
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
-(true = all [/a true])
+(true == all [/a true])
 (
     a-value: first [a/b:]
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
 (
     a-value: first [a:]
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
 (
     a-value: ""
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
 (
     a-value: make tag! ""
-    true = all [:a-value true]
+    true == all [:a-value true]
 )
-(true = all [0:00 true])
-(true = all [0.0.0 true])
-(true = all ['a true])
+(true == all [0:00 true])
+(true == all [0.0.0 true])
+(true == all ['a true])
 ; evaluation stops after encountering FALSE or NONE
 (
     success: true
@@ -317,11 +317,11 @@
 ; RETURN stops evaluation
 (
     f1: func [] [all [return 1 2] 2]
-    1 = f1
+    1 == f1
 )
 ; THROW stops evaluation
 (
-    1 = catch [
+    1 == catch [
         all [
             throw 1
             2

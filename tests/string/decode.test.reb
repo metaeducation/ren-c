@@ -27,8 +27,8 @@
     png-bytes-bmp: encode 'png bmp-img
 
     did all [
-        png-bytes-png = png-bytes-bmp
-        (decode 'png png-bytes-png) = (decode 'png png-bytes-bmp)
+        png-bytes-png == png-bytes-bmp
+        (decode 'png png-bytes-png) == (decode 'png png-bytes-bmp)
     ]
 )
 

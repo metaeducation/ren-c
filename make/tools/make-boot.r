@@ -35,7 +35,7 @@ config: config-system try get 'args/OS_ID
 
 first-rebol-commit: "19d4f969b4f5c1536f24b023991ec11ee6d5adfb"
 
-either args/GIT_COMMIT = "unknown" [
+either args/GIT_COMMIT is "unknown" [
     ;
     ; !!! If we used blank here, then R3-Alpha would render it as the word
     ; "none" which is not defined during the execution of %sysobj.r, so by
@@ -49,7 +49,7 @@ either args/GIT_COMMIT = "unknown" [
     ]
 ][
     git-commit: args/GIT_COMMIT
-    if (length of git-commit) != (length of first-rebol-commit) [
+    if (length of git-commit) !== (length of first-rebol-commit) [
         print ["GIT_COMMIT should be a full hash, e.g." first-rebol-commit]
         print ["Invalid hash was:" git-commit]
         quit
@@ -224,7 +224,7 @@ mfs: collect [
 
 cts: collect [
     for-each-record t type-table [
-        either t/class = '* [
+        either t/class == '* [
             keep cscape/with {/* $<T/Class> */ CT_Unhooked} [t]
         ][
             proper: Propercase-Of T/Class
@@ -580,7 +580,7 @@ make-obj-defs: function [
     if depth > 1 [
         for-each field words-of obj [
             if all [
-                field != 'standard
+                field isn't 'Standard
                 object? get in obj field
             ][
                 extended-prefix: uppercase unspaced [prefix "_" field]
@@ -653,7 +653,7 @@ e-errnums: make-emitter "Error Structure and Constants" inc/tmp-errnums.h
 fields: collect [
     keep {RELVAL self}
     for-each word words-of ob/standard/error [
-        either word = 'near [
+        either word == 'near [
             keep {/* near/far are old C keywords */ RELVAL nearest}
         ][
             keep cscape/with {RELVAL ${word}} 'word
@@ -758,7 +758,7 @@ for-each [id val] id-list [
         any [#"_" w: (uppercase/part w 1) | skip]
     ]
 
-    if arity = 0 [
+    if arity == 0 [
         params: ["void"] ;-- In C, f(void) has a distinct meaning from f()
         args: ["rebEND"]
     ] else [
@@ -878,7 +878,7 @@ e-bootblock/emit {
 boot-typespecs: make block! 100
 specs: load %typespec.r
 for-each-record t type-table [
-    if t/name <> 0 [
+    if t/name !== 0 [
         append/only boot-typespecs really select specs to-word t/name
     ]
 ]

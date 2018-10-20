@@ -2,12 +2,12 @@
 (
     num: 0
     while [num < 10] [num: num + 1]
-    num = 10
+    num == 10
 )
 ; Test body-block return values
 [#37 (
     num: 0
-    1 = while [num < 1] [num: num + 1]
+    1 == while [num < 1] [num: num + 1]
 )]
 (void? while [false] [])
 ; zero repetition
@@ -54,18 +54,18 @@
 (
     num: 0
     while [true] [num: 1 break num: 2]
-    num = 1
+    num == 1
 )
 ; RETURN should stop the loop
 (
     cycle?: true
     f1: func [] [while [cycle?] [cycle?: false return 1] 2]
-    1 = f1
+    1 == f1
 )
 (  ; bug#1519
     cycle?: true
     f1: func [] [while [if cycle? [return 1] cycle?] [cycle?: false 2]]
-    1 = f1
+    1 == f1
 )
 ; UNWIND the IF should stop the loop
 (
@@ -91,7 +91,7 @@
     sum: 0
     while [n < 10] [
         n: n + 1
-        if n = 0 [
+        if n == 0 [
             while [continue] [
                 fail "inner WHILE body should not run"
             ]
@@ -99,25 +99,25 @@
         ]
         sum: sum + 1
     ]
-    sum = 9
+    sum == 9
 )
 
 ; THROW should stop the loop
-(1 = catch [cycle?: true while [cycle?] [throw 1 cycle?: false]])
+(1 == catch [cycle?: true while [cycle?] [throw 1 cycle?: false]])
 (  ; bug#1519
     cycle?: true
-    1 = catch [while [if cycle? [throw 1] false] [cycle?: false]]
+    1 == catch [while [if cycle? [throw 1] false] [cycle?: false]]
 )
-(1 = catch/name [cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]] 'a)
+(1 == catch/name [cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]] 'a)
 (  ; bug#1519
     cycle?: true
-    1 = catch/name [while [if cycle? [throw/name 1 'a] false] [cycle?: false]] 'a
+    1 == catch/name [while [if cycle? [throw/name 1 'a] false] [cycle?: false]] 'a
 )
 ; Test that disarmed errors do not stop the loop and errors can be returned
 (
     num: 0
     e: while [num < 10] [num: num + 1 trap [1 / 0]]
-    all [error? e num = 10]
+    all [error? e num == 10]
 )
 ; Recursion check
 (
@@ -131,5 +131,5 @@
         ]
         num1: num1 + 1
     ]
-    10 = num3
+    10 == num3
 )

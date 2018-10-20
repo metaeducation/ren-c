@@ -28,8 +28,8 @@
     append thing/2 'c
     append thing2 'd
     did all [
-        thing = [a [b c]]
-        thing2 = [a [b] d]
+        thing == [a [b c]]
+        thing2 == [a [b] d]
     ]
 )]
 
@@ -46,23 +46,23 @@
         true
     )
 
-    (10 = select/case m 'AA)
-    (20 = select/case m 'aa)
-    (30 = select/case m <BB>)
-    (40 = select/case m <bb>)
-    (50 = select/case m #"C")
-    (60 = select/case m #"c")
+    (10 == select/case m 'AA)
+    (20 == select/case m 'aa)
+    (30 == select/case m <BB>)
+    (40 == select/case m <bb>)
+    (50 == select/case m #"C")
+    (60 == select/case m #"c")
 
-    ('conflicting-key = (trap [m/AA])/id)
-    ('conflicting-key = (trap [m/aa])/id)
-    ('conflicting-key = (trap [select m <BB>])/id)
-    ('conflicting-key = (trap [select m <bb>])/id)
-    ('conflicting-key = (trap [m/(#"C")])/id)
-    ('conflicting-key = (trap [m/(#"c")])/id)
+    ('Conflicting-Key is (trap [m/AA])/id)
+    ('Conflicting-Key is (trap [m/aa])/id)
+    ('Conflicting-Key is (trap [select m <BB>])/id)
+    ('Conflicting-Key is (trap [select m <bb>])/id)
+    ('Conflicting-Key is (trap [m/(#"C")])/id)
+    ('Conflicting-Key is (trap [m/(#"c")])/id)
 
-    ('conflicting-key = (trap [put m 'Aa 70])/id)
-    ('conflicting-key = (trap [m/(<Bb>): 80])/id)
-    ('conflicting-key = (trap [m/(#"C"): 90])/id)
+    ('Conflicting-Key is (trap [put m 'Aa 70])/id)
+    ('Conflicting-Key is (trap [m/(<Bb>): 80])/id)
+    ('Conflicting-Key is (trap [m/(#"C"): 90])/id)
 
     (
         put/case m 'Aa 100
@@ -71,14 +71,14 @@
         true
     )
 
-    (100 = select/case m 'Aa)
-    (110 = select/case m <Bb>)
-    (120 = select/case m #"C")
+    (100 == select/case m 'Aa)
+    (110 == select/case m <Bb>)
+    (120 == select/case m #"C")
 
-    (10 = select/case m 'AA)
-    (20 = select/case m 'aa)
-    (30 = select/case m <BB>)
-    (40 = select/case m <bb>)
-    (120 = select/case m #"C")
-    (60 = select/case m #"c")
+    (10 == select/case m 'AA)
+    (20 == select/case m 'aa)
+    (30 == select/case m <BB>)
+    (40 == select/case m <bb>)
+    (120 == select/case m #"C")
+    (60 == select/case m #"c")
 ]

@@ -3,7 +3,7 @@
     error? trap [applique 'append/only [copy [a b] 'c]]
 )]
 (1 == applique :subtract [2 1])
-(1 = (applique :- [2 1]))
+(1 == (applique :- [2 1]))
 (error? trap [applique func [a] [a] []])
 (error? trap [applique/only func [a] [a] []])
 
@@ -13,18 +13,18 @@
 
 (error? applique :make [error! ""])
 
-(/a = applique func [/a] [a] [true])
-(_ = applique func [/a] [a] [false])
-(_ = applique func [/a] [a] [])
-(/a = applique/only func [/a] [a] [true])
+(/a == applique func [/a] [a] [true])
+(_ == applique func [/a] [a] [false])
+(_ == applique func [/a] [a] [])
+(/a == applique/only func [/a] [a] [true])
 ; the word 'false
-(/a = applique/only func [/a] [a] [false])
+(/a == applique/only func [/a] [a] [false])
 (_ == applique/only func [/a] [a] [])
-(use [a] [a: true /a = applique func [/a] [a] [a]])
+(use [a] [a: true /a == applique func [/a] [a] [a]])
 (use [a] [a: false _ == applique func [/a] [a] [a]])
-(use [a] [a: false /a = applique func [/a] [a] ['a]])
-(use [a] [a: false /a = applique func [/a] [a] [/a]])
-(use [a] [a: false /a = applique/only func [/a] [a] [a]])
+(use [a] [a: false /a == applique func [/a] [a] ['a]])
+(use [a] [a: false /a == applique func [/a] [a] [/a]])
+(use [a] [a: false /a == applique/only func [/a] [a] [a]])
 (group! == applique/only (specialize 'of [property: 'type]) [()])
 ([1] == head of applique :insert [copy [] [1] blank blank blank])
 ([1] == head of applique :insert [copy [] [1] blank blank false])
@@ -58,13 +58,13 @@
     o: make object! [a: 0]
     b: eval/only (quote o/a:) 1 + 2
     did all [
-        o/a = 1
-        b = 3 ;-- above acts as `b: (eval/only (quote o/a:) 1) + 2`
+        o/a == 1
+        b == 3 ;-- above acts as `b: (eval/only (quote o/a:) 1) + 2`
     ]
 )
 (
     a: func [b c :d] [reduce [b c d]]
-    [1 + 2] = (eval/only :a 1 + 2)
+    [1 + 2] == (eval/only :a 1 + 2)
 )
 
 (

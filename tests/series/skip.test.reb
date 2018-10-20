@@ -23,7 +23,7 @@
 )
 (
     blk: next [1 2 3]
-    equal? [3] skip blk 1
+    [3] == skip blk 1
 )
 (
     blk: next [1 2 3]
@@ -78,7 +78,7 @@
 )
 (
     blk: next [1 2 3]
-    equal? [3] skip* blk 1
+    [3] == skip* blk 1
 )
 (
     blk: next [1 2 3]

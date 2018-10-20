@@ -195,7 +195,7 @@ notable?: function [
     ;
 
     ;; if starts with "* " then it is notable
-    if {* } = copy/part text 2 [return true]
+    if {* } == copy/part text 2 [return true]
 
     ;; If CureCode then it is notable
     unless empty? cc [return true]

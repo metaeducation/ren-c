@@ -56,7 +56,7 @@ save: function [
         not header ; User wants to save value as script, not data file
         match [file! url!] where
         type: try file-type? where
-        type <> 'rebol ;-- handled by this routine, not by WRITE+ENCODE
+        type isn't 'Rebol ;-- handled by this routine, not by WRITE+ENCODE
     ] then [
         ; We have a codec.  Will check for valid type.
         return write where encode type :value
@@ -72,7 +72,7 @@ save: function [
     if header-data [
 
         ;-- #[true] indicates the header is the first value in the block
-        if header-data = true [
+        if header-data == true [
             header-data: first ensure block! value
             value: my next ;-- do not use TAKE (leave header in position)
         ]
@@ -133,7 +133,7 @@ save: function [
             data: gzip data
         ]
 
-        method = 'script [
+        method is 'Script [
             data: mold64 data ; File content is encoded as base-64
         ]
 

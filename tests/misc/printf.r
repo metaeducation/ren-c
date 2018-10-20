@@ -10,7 +10,7 @@ libc: make library! switch system/platform/1 [
     fail "don't know where the C library is"
 ]
 
-x64?: 40 = fifth system/version
+x64?: 40 == fifth system/version
 size_t: either x64? ['int64]['int32]
 printf: make-routine libc "printf" compose/deep [
     return: [int32]

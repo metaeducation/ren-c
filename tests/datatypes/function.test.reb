@@ -1,7 +1,7 @@
 ; datatypes/function.r
 (action? does ["OK"])
 (not action? 1)
-(action! = type of does ["OK"])
+(action! == type of does ["OK"])
 ; minimum
 (action? does [])
 ; literal form
@@ -13,7 +13,7 @@
 )
 (
     f: does [:abs]
-    :abs = f
+    :abs == f
 )
 (
     a-value: #{}
@@ -37,7 +37,7 @@
 )
 (
     f: does [1/Jan/0000]
-    1/Jan/0000 = f
+    1/Jan/0000 == f
 )
 (
     f: does [0.0]
@@ -104,11 +104,11 @@
 )
 (
     f: does [true]
-    true = f
+    true == f
 )
 (
     f: does [false]
-    false = f
+    false == f
 )
 (
     f: does [$1]
@@ -193,7 +193,7 @@
 ; two-function return tests
 (
     g: func [f [action!]] [f [return 1] 2]
-    1 = g :do
+    1 == g :do
 )
 ; BREAK out of a function
 (
@@ -205,7 +205,7 @@
 )
 ; THROW out of a function
 (
-    1 = catch [
+    1 == catch [
         f: does [throw 1]
         f
         2
@@ -221,9 +221,9 @@
 )
 ; BREAK out leaves a "running" function in a "clean" state
 (
-    1 = loop 1 [
+    1 == loop 1 [
         f: func [x] [
-            either x = 1 [
+            either x == 1 [
                 loop 1 [f 2]
                 x
             ] [break]
@@ -233,9 +233,9 @@
 )
 ; THROW out leaves a "running" function in a "clean" state
 (
-    1 = catch [
+    1 == catch [
         f: func [x] [
-            either x = 1 [
+            either x == 1 [
                 catch [f 2]
                 x
             ] [throw 1]
@@ -247,9 +247,9 @@
 ; "error out" leaves a "running" function in a "clean" state
 (
     f: func [x] [
-        either x = 1 [
+        either x == 1 [
             error? trap [f 2]
-            x = 1
+            x == 1
         ] [1 / 0]
     ]
     f 1
@@ -298,7 +298,7 @@
     i: 0
     countdown: func [n] [if n > 0 [i: i + 1 | countdown n - 1]]
     countdown 10
-    i = 10
+    i == 10
 )
 
 ; In Ren-C's specific binding, a function-local word that escapes the
@@ -335,8 +335,8 @@
     a: func [b] [a: _ c: b]
     f: func [d] [a [d] do c]
     did all [
-        1 = f 1
-        error? trap [2 = f 2]
+        1 == f 1
+        error? trap [2 == f 2]
     ]
 )
 [#1528
@@ -376,14 +376,14 @@
     ][
         data: reduce [n x y outer static]
         return case [
-            n = 0 [reduce [data]]
+            n == 0 [reduce [data]]
             true [
                append/only (f/count n - 1) data
             ]
         ]
     ]
 
-    f = [
+    f == [
         [0 "x" "y" "outer" 30]
         [1 "x" "y" "outer" 30]
         [2 "x" "y" "outer" 30]

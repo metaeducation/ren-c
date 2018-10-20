@@ -1,7 +1,7 @@
 ; datatypes/binary.r
 (binary? #{00})
 (not binary? 1)
-(binary! = type of #{00})
+(binary! == type of #{00})
 (
     system/options/binary-base: 2
     "2#{00000000}" == mold #{00}

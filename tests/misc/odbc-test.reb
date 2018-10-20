@@ -88,14 +88,14 @@ for-each [name sqltype content] tables [
     rows: copy statement
     actual: copy []
     for-each row rows [
-        assert [1 = length of row]
+        assert [1 == length of row]
         append actual first row
     ]
 
     print mold actual
     print mold content
 
-    either (sort copy actual) = (sort copy content) [
+    either (sort copy actual) == (sort copy content) [
         print "QUERY MATCHED ORIGINAL DATA"
     ][
         print "QUERY DID NOT MATCH ORIGINAL DATA"

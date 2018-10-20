@@ -2,7 +2,7 @@
 
 (
     e: trap [do make block! ":a"]
-    e/id = 'not-bound
+    e/id is 'Not-Bound
 )
 
 [#50

@@ -27,7 +27,7 @@ do-core-tests: function [return: <void>] [
 
     ; calculate interpreter checksum
     case [
-        file? system/options/boot and [#"/" = first system/options/boot] [
+        file? system/options/boot and [#"/" == first system/options/boot] [
             interpreter-checksum: checksum/method read-binary
                 system/options/boot 'sha1
         ]

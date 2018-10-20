@@ -1,39 +1,33 @@
 ; datatypes/percent.r
 (percent? 0%)
 (not percent? 1)
-(percent! = type of 0%)
+(percent! == type of 0%)
 (percent? 0.0%)
 (percent? 1%)
 (percent? -1.0%)
 (percent? 2.2%)
-(0% = make percent! 0)
-(0% = make percent! "0")
-(0% = to percent! 0)
-(0% = to percent! "0")
-(100% = to percent! 1)
-(10% = to percent! 0.1)
+(0% == make percent! 0)
+(0% == make percent! "0")
+(0% == to percent! 0)
+(0% == to percent! "0")
+(100% == to percent! 1)
+(10% == to percent! 0.1)
 (error? trap [to percent! "t"])
-(0 = to decimal! 0%)
-(0.1 = to decimal! 10%)
-(1.0 = to decimal! 100%)
-(0% = load mold 0.0%)
-(1% = load mold 1.0%)
-(1.1% = load mold 1.1%)
-(-1% = load mold -1.0%)
+(0.0 == to decimal! 0%)
+(0.1 == to decimal! 10%)
+(1.0 == to decimal! 100%)
+(0% == load mold 0.0%)
+(1% == load mold 1.0%)
+(1.1% == load mold 1.1%)
+(-1% == load mold -1.0%)
 [#57
-    (-5% = negate 5%)
-]
-[#57
-    (10% = (5% + 5%))
-]
-[#57
-    (6% = round 5.55%)
+    (-5% == negate 5%)
+    (10% == (5% + 5%))
+    (6% == round 5.55%)
 ]
 [#97
-    ($59.0 = (10% * $590))
-]
-[#97
-    ($100.6 = ($100 + 60%))
+    ($59.0 == (10% * $590))
+    ($100.6 == ($100 + 60%))
 ]
 ; 64-bit IEEE 754 maximum
 ; Minimal positive normalized
@@ -56,7 +50,7 @@
 (same? 9.9999999999999926e154% load mold/all 9.9999999999999926e154%)
 ; alternative form
 (1.1% == 1,1%)
-(110% = make percent! 110%)
-(110% = make percent! "110%")
-(1.1% = to percent! 1.1%)
-(1.1% = to percent! "1.1%")
+(110% == make percent! 110%)
+(110% == make percent! "110%")
+(1.1% == to percent! 1.1%)
+(1.1% == to percent! "1.1%")

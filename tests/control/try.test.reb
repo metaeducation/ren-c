@@ -1,7 +1,7 @@
 ; functions/control/try.r
 (
     e: trap [1 / 0]
-    e/id = 'zero-divide
+    e/id is 'Zero-Divide
 )
 (
     success: true
@@ -33,13 +33,13 @@
 ]
 
 [#1506 ((
-    10 = eval func [] [trap [return 10] 20]
+    10 == eval func [] [trap [return 10] 20]
 ))]
 
 ; ENTRAP (similar to TRAP, but puts normal result in a block)
 
 (void? first entrap [])
 (null? entrap [null])
-([3] = entrap [1 + 2])
-([[b c]] = entrap [skip [a b c] 1])
-('no-arg = (entrap [quote])/id)
+([3] == entrap [1 + 2])
+([[b c]] == entrap [skip [a b c] 1])
+('No-Arg is (entrap [quote])/id)

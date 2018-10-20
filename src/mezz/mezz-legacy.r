@@ -17,6 +17,22 @@ REBOL [
 ]
 
 
+=: !=: equal?: not-equal?: func [dummy:] [
+    fail/where [
+        {=, !=, <>, EQUAL? and NOT-EQUAL? are being re-purposed to deal with}
+        {what was formerly known as "strict equality".  The plan is to have}
+        {"equality" mean strict.  The new "lax" operators are IS and ISN'T,}
+        {with prefix forms currently called IS? and ISN'T?.}
+        {During the transitional period, the operators that are being retaken}
+        {are unavailable.  The strict equality operators are still there, so}
+        {each callsite should either be turned into an IS or ISN'T, or to}
+        {==, !==, STRICT-EQUAL?, or NOT-STRICT-EQUAL? as appropriate.}
+    ] 'dummy
+]
+
+set (quote <>) :not-equal?
+
+
 ; CONSTRUCT (arity 2) and HAS (arity 1) have arisen as the OBJECT!-making
 ; routines, parallel to FUNCTION (arity 2) and DOES (arity 1).  By not being
 ; nouns like CONTEXT and OBJECT, they free up those words for other usages.
@@ -159,7 +175,7 @@ rejoin: function [
 ;
 make: enclose 'lib/make func [f] [
     all [
-        :f/type = object!
+        :f/type == object!
         block? :f/def
         not block? first f/def
     ] then [

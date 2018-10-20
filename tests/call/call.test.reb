@@ -14,7 +14,7 @@
         {--suppress "*" call/print.reb 100}
     ] data: copy {}
 
-    length of data = 100
+    length of data == 100
 )
 (
     ; medium - note Windows doesn't do BLOCK! arg to CALL (argv style) yet
@@ -24,7 +24,7 @@
         {--suppress "*" call/print.reb 9000}
     ] data: copy {}
 
-    length of data = 9000
+    length of data == 9000
 )
 (
     ; large - note Windows doesn't do BLOCK! arg to CALL (argv style) yet
@@ -34,7 +34,7 @@
         {--suppress "*" call/print.reb 80000}
     ] data: copy {}
 
-    length of data = 80'000
+    length of data == 80'000
 )
 
 ;; extra large CALL/OUTPUT (500K+), test only run if can find git binary

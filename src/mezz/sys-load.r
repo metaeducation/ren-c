@@ -198,8 +198,8 @@ load-header: function [
         join hdr ['content data] ; as of start of header
     ]
 
-    if 13 = rest/1 [rest: next rest] ; skip CR
-    if 10 = rest/1 [rest: next rest | line: me + 1] ; skip LF
+    if 13 == rest/1 [rest: next rest] ; skip CR
+    if 10 == rest/1 [rest: next rest | line: me + 1] ; skip LF
 
     if integer? tmp: try select hdr 'length [
         end: skip rest tmp
@@ -212,7 +212,7 @@ load-header: function [
         return reduce [hdr rest end]
     ]
 
-    if :key = 'rebol [
+    if :key is 'Rebol [
         ; regular script, binary or script encoded compression supported
         case [
             find hdr/options 'compress [
@@ -317,7 +317,7 @@ load: function [
         line: 1
         ftype: default [file-type? source else ['rebol]] ; !!! rebol default?
 
-        if ftype = 'extension [
+        if ftype is 'Extension [
             if not file? source [
                 fail ["Can only load extensions from FILE!, not" source]
             ]
@@ -345,7 +345,7 @@ load: function [
         data: source
         ftype: default ['rebol]
 
-        if ftype = 'extension [
+        if ftype is 'Extension [
             fail "Extensions can only be loaded from a FILE! (.DLL, .so)"
         ]
     ]
@@ -395,8 +395,8 @@ load: function [
 
     ;-- Bind code to user context:
     not any [
-        'unbound = ftype
-        'module = select hdr 'type
+        'Unbound is ftype
+        'Module is select hdr 'type
         find try get 'hdr/options 'unbound
     ] then [
         data: intern data
@@ -453,7 +453,7 @@ do-needs: function [
                 ]
 
                 (needs and+ 0.0.0.255.255)
-                <> (system/version and+ 0.0.0.255.255) [
+                !== (system/version and+ 0.0.0.255.255) [
                     cause-error 'syntax 'needs reduce ['core needs]
                 ]
             ]
@@ -676,13 +676,13 @@ load-module: function [
         url! [
             tmp: file-type? source
             case [
-                tmp = 'rebol [
+                tmp is 'Rebol [
                     data: read source or [
                         return blank
                     ]
                 ]
 
-                tmp = 'extension [
+                tmp is 'Extension [
                     fail "Use LOAD or LOAD-EXTENSION to load an extension"
                 ]
             ] else [

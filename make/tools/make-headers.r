@@ -100,7 +100,7 @@ emit-proto: func [
         RL_API $<Proto>; /* $<The-File> */
     }
 
-    if "REBTYPE" = proto-parser/proto.id [
+    if "REBTYPE" == proto-parser/proto.id [
         e-syms/emit [the-file proto-parser] {
             /* $<The-File> */ SYM_CFUNC(T_$<Proto-Parser/Proto.Arg.1>),
         }
@@ -239,7 +239,7 @@ for-each item file-base/core [
     if block? item [
         all [
             2 <= length of item
-            <no-make-header> = item/2
+            <no-make-header> == item/2
         ] then [
             continue ; skip this file
         ]
@@ -250,7 +250,7 @@ for-each item file-base/core [
     ]
 
     assert [
-        | %.c = suffix? file
+        | %.c == suffix? file
         | not find/match file "host-"
         | not find/match file "os-"
     ]
@@ -348,7 +348,7 @@ action-list: load output-dir/boot/tmp-actions.r
 ; Search file for definition.  Will be `action-name: action [paramlist]`
 ;
 for-next action-list [
-    if 'action = pick action-list 2 [
+    if 'action == pick action-list 2 [
         assert [set-word? action-list/1]
         (emit-include-params-macro
             e-params (to-word action-list/1) (action-list/3))

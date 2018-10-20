@@ -2,7 +2,7 @@
 ; zero values
 (null? any [])
 ; one value
-(:abs = any [:abs])
+(:abs == any [:abs])
 (
     a-value: #{}
     same? a-value any [a-value]
@@ -19,7 +19,7 @@
     a-value: blank!
     same? a-value any [a-value]
 )
-(1/Jan/0000 = any [1/Jan/0000])
+(1/Jan/0000 == any [1/Jan/0000])
 (0.0 == any [0.0])
 (1.0 == any [1.0])
 (
@@ -55,7 +55,7 @@
     a-value: first ['a]
     :a-value == any [:a-value]
 )
-(true = any [true])
+(true == any [true])
 (null? any [false])
 ($1 == any [$1])
 (same? :append any [:append])
@@ -101,7 +101,7 @@
 (null? any [null])
 ('a == any ['a])
 ; two values
-(:abs = any [false :abs])
+(:abs == any [false :abs])
 (
     a-value: #{}
     same? a-value any [false a-value]
@@ -118,7 +118,7 @@
     a-value: blank!
     same? a-value any [false a-value]
 )
-(1/Jan/0000 = any [false 1/Jan/0000])
+(1/Jan/0000 == any [false 1/Jan/0000])
 (0.0 == any [false 0.0])
 (1.0 == any [false 1.0])
 (
@@ -154,7 +154,7 @@
     a-value: first ['a]
     :a-value == any [false :a-value]
 )
-(true = any [false true])
+(true == any [false true])
 (null? any [false false])
 ($1 == any [false $1])
 (same? :append any [false :append])
@@ -198,7 +198,7 @@
 (0.0.0 == any [false 0.0.0])
 (null? any [false null])
 ('a == any [false 'a])
-(:abs = any [:abs false])
+(:abs == any [:abs false])
 (
     a-value: #{}
     same? a-value any [a-value false]
@@ -215,7 +215,7 @@
     a-value: blank!
     same? a-value any [a-value false]
 )
-(1/Jan/0000 = any [1/Jan/0000 false])
+(1/Jan/0000 == any [1/Jan/0000 false])
 (0.0 == any [0.0 false])
 (1.0 == any [1.0 false])
 (
@@ -251,7 +251,7 @@
     a-value: first ['a]
     :a-value == any [:a-value false]
 )
-(true = any [true false])
+(true == any [true false])
 ($1 == any [$1 false])
 (same? :append any [:append false])
 (null? any [_ false])
@@ -319,11 +319,11 @@
 ; RETURN stops evaluation
 (
     f1: func [] [any [return 1 2] 2]
-    1 = f1
+    1 == f1
 )
 ; THROW stops evaluation
 (
-    1 = catch [
+    1 == catch [
         any [
             throw 1
             2

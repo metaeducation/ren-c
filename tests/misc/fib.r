@@ -49,7 +49,7 @@ fib: func [
 
 print ["c-fib 30:" c-r: c-fib 30]
 print ["fib 30:" r: fib 30]
-assert [r = c-r]
+assert [r == c-r]
 
 if find system/options/args "bench" [
     n-loop: 10000

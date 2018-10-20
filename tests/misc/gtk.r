@@ -198,7 +198,7 @@ on-click-callback: make-callback [
     ]
     i/i: i/i + 1
     gtk-button-set-label widget spaced [
-        "clicked" i/i either i/i = 1 ["time"]["times"]
+        "clicked" i/i either i/i == 1 ["time"]["times"]
     ]
 ]
 

@@ -222,7 +222,7 @@ ctx-zip: context [
         value [file! url!] "AnyValue to convert"
     ][
         if file? value [
-            if #"/" = first value [value: copy next value]
+            if #"/" == first value [value: copy next value]
             return value
         ]
         value: decode-url value
@@ -398,11 +398,11 @@ ctx-zip: context [
                         ; STORE(0) and DEFLATE(8) are the only widespread
                         ; methods used for .ZIP compression in the wild today
 
-                        if method = 'store [
+                        if method is 'Store [
                             throw copy/part data compressed-size
                         ]
 
-                        if method <> 'deflate [
+                        if method isn't 'Deflate [
                             info ["^- -> failed [method " method "]^/"]
                             throw blank
                         ]
@@ -415,12 +415,12 @@ ctx-zip: context [
                             throw blank
                         ]
 
-                        if uncompressed-size != length of data [
+                        if uncompressed-size !== length of data [
                             info "^- -> failed [wrong output size]^/"
                             throw blank
                         ]
 
-                        if crc != checksum/method data 'crc32 [
+                        if crc !== checksum/method data 'crc32 [
                             info "^- -> failed [bad crc32]^/"
                             print [
                                 "expected crc:" crc LF
@@ -441,12 +441,12 @@ ctx-zip: context [
                     either any-array? where [
                         where: insert where name
                         where: insert where either all [
-                            #"/" = last name
+                            #"/" == last name
                             empty? uncompressed-data
                         ][blank][uncompressed-data]
                     ][
                         ; make directory and/or write file
-                        either #"/" = last name [
+                        either #"/" == last name [
                             if not exists? where/:name [
                                 make-dir/deep where/:name
                             ]

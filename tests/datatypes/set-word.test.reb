@@ -1,27 +1,27 @@
 ; datatypes/set-word.r
 (set-word? first [a:])
 (not set-word? 1)
-(set-word! = type of first [a:])
+(set-word! == type of first [a:])
 ; set-word is active
 (
     a: :abs
-    equal? :a :abs
+    :a == :abs
 )
 (
     a: #{}
-    equal? :a #{}
+    :a == #{}
 )
 (
     a: charset ""
-    equal? :a charset ""
+    :a == charset ""
 )
 (
     a: []
-    equal? a []
+    a == []
 )
 (
     a: action!
-    equal? :a action!
+    :a == action!
 )
 [#1817 (
     a: make map! []
@@ -33,10 +33,10 @@
 
 [#1477 (
     e: trap [load "/:"]
-    error? e and [e/id = 'scan-invalid]
+    error? e and [e/id is 'Scan-Invalid]
 )]
 
 ; These are comments in Ren-C
 ;
-(load "//:" = [])
-(load "///:" = [])
+(load "//:" == [])
+(load "///:" == [])

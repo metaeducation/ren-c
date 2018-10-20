@@ -3,9 +3,9 @@
 (
     f: func [return: [action!]] [
         func [x] [
-            either x = 1 [
+            either x == 1 [
                 eval f 2
-                x = 1
+                x == 1
             ][
                 false
             ]

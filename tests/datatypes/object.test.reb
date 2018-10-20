@@ -1,7 +1,7 @@
 ; datatypes/object.r
 (object? make object! [x: 1])
 (not object? 1)
-(object! = type of make object! [x: 1])
+(object! == type of make object! [x: 1])
 ; minimum
 (object? make object! [])
 ; literal form
@@ -10,7 +10,7 @@
 (
     x: 1
     make object! [x: 2]
-    x = 1
+    x == 1
 )
 ; BREAK out of make object!
 [#846 (
@@ -21,7 +21,7 @@
 )]
 ; THROW out of make object!
 [#847 (
-    1 = catch [
+    1 == catch [
         make object! [throw 1]
         2
     ]
@@ -39,7 +39,7 @@
         make object! [return 1]
         2
     ]
-    1 = f
+    1 == f
 )]
 ; object cloning
 [#2045 (
@@ -103,12 +103,12 @@
     o1: make object! [a: 10 b: func [] [f: func [] [a] f]]
     o2: make o1 [a: 20]
 
-    o2/b = 10
+    o2/b == 10
 )(
     o1: make object! [a: 10 b: method [] [f: func [] [a] f]]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2/b == 20
 )
 
 (
@@ -152,7 +152,7 @@
     ;
     did repeat i 2048 [
         derived: make o-big [var-1: 100000 + i]
-        if derived/meth-255 <> 132639 + i [
+        if derived/meth-255 !== 132639 + i [
             break
         ]
         true
@@ -163,18 +163,18 @@
 [#2050 (
     o: make object! [n: 'o b: reduce [func [] [n]]]
     p: make o [n: 'p]
-    (o/b)/1 = 'o
+    (o/b)/1 == 'o
 )]
 
 [#2076 (
     o: make object! [x: 10]
     e: trap [append o [self: 1]]
-    error? e and [e/id = 'hidden]
+    error? e and [e/id is 'Hidden]
 )]
 
 [#187 (
     o: make object! [self]
-    [] = words of o
+    [] == words of o
 )]
 
 [#1553 (

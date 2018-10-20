@@ -1,12 +1,12 @@
 ; functions/control/switch.r
 (
-    11 = switch 1 [
+    11 == switch 1 [
         1 [11]
         2 [12]
     ]
 )
 (
-    12 = switch 2 [
+    12 == switch 2 [
         1 [11]
         2 [12]
     ]
@@ -21,8 +21,8 @@
 )
 
 [#2242 (
-    11 = eval func [] [switch/all 1 [1 [return 11 88]] 99]
+    11 == eval func [] [switch/all 1 [1 [return 11 88]] 99]
 )]
 
-(t: 1 | 1 = switch t [(t)])
-(1 = switch 1 [1])
+(t: 1 | 1 == switch t [(t)])
+(1 == switch 1 [1])

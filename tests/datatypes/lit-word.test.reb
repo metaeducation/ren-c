@@ -1,7 +1,7 @@
 ; datatypes/lit-word.r
 (lit-word? first ['a])
 (not lit-word? 1)
-(lit-word! = type of first ['a])
+(lit-word! == type of first ['a])
 ; lit-words are active
 (
     a-value: first ['a]

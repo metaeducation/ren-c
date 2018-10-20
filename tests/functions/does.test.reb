@@ -9,12 +9,12 @@
 
 (
     three: does "1 + 2"
-    3 = three
+    3 == three
 )
 
 (
     make-x: does quote x
-    make-x = 'x
+    make-x == 'x
 )
 
 ; DOES as specialization of APPEND/ONLY: captures block at DOES time
@@ -25,8 +25,8 @@
     block: copy [x y]
     f
     did all [
-        backup = [a b [c d] [c d]]
-        block = [x y]
+        backup == [a b [c d] [c d]]
+        block == [x y]
     ]
 )
 
@@ -38,8 +38,8 @@
     block: copy [x y]
     f
     did all [
-        backup = [a b [c d]]
-        block = [x y [c d]]
+        backup == [a b [c d]]
+        block == [x y [c d]]
     ]
 )
 
@@ -49,15 +49,15 @@
     flag: true
     z: does all [x: x + 1 | flag | y: y + 2 | <finish>]
     did all [
-        z = <finish> | x = 11 | y = 22
+        z == <finish> | x == 11 | y == 22
         elide (flag: false)
-        z = null | x = 12 | y = 22
+        z == null | x == 12 | y == 22
     ]
 )
 
 (
     catcher: does catch [throw 10]
-    catcher = 10
+    catcher == 10
 )
 
 ; !!! The following tests were designed before the creation of METHOD, at a
@@ -72,7 +72,7 @@
         b: bind (does [if true [a]]) binding of 'b
     ]
     o2: make o1 [a: 20]
-    o2/b = 20
+    o2/b == 20
 )(
     o1: make object! [
         a: 10
@@ -80,7 +80,7 @@
     ]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2/b == 20
 )(
     o1: make object! [
         a: 10
@@ -89,7 +89,7 @@
     ]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2/b == 20
 )(
     o1: make object! [
         a: 10
@@ -97,5 +97,5 @@
     ]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2/b == 20
 )

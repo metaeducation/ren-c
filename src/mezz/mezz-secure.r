@@ -70,7 +70,7 @@ secure: function [
                 val: file-to-local/full target
                 ; This string must have OS-local encoding, because
                 ; the check is done at a lower level of I/O.
-                if system/version/4 != 3 [val: to binary! val]
+                if system/version/4 !== 3 [val: to binary! val]
                 target: 'file
             ]
             url? target [val: target  target: 'net]
@@ -90,7 +90,7 @@ secure: function [
 
     word-policy (function [pol][
         ; Convert lower-level policy tuples to words:
-        if all [pol/1 = pol/2 pol/2 = pol/3][
+        if all [pol/1 is pol/2 | pol/2 is pol/3][
             return pick acts 1 + pol/1
         ]
         blk: make block! 4
@@ -112,11 +112,11 @@ secure: function [
 
     policy: default ['help]
 
-    if policy = 'none [policy: 'allow] ; note: NONE is a word here (like R2)
+    if policy is 'None [policy: 'allow] ; note: NONE is a word here (like R2)
 
     pol-obj: get-policies ; a deep copy
 
-    if policy = 'help [
+    if policy is 'Help [
         print "You can set policies for:"
         for-each [target pol] pol-obj [print ["  " target]]
         print "These can be set to:"
@@ -134,7 +134,7 @@ secure: function [
         return null
     ]
 
-    if policy = 'query [
+    if policy is 'Query [
         out: make block! 2 * length of pol-obj
         for-each [target pol] pol-obj [
             case [
@@ -155,7 +155,7 @@ secure: function [
     ]
 
     ; Check if SECURE is secured:
-    if pol-obj/secure <> 0.0.0 [
+    if pol-obj/secure !== 0.0.0 [
         if pol-obj/secure == 'throw [cause-error 'access 'security :policy]
         quit/now/return 101 ; an arbitrary code
     ]
@@ -181,7 +181,7 @@ secure: function [
 ]
 
 
-if system/options/secure <> 'allow [
+if system/options/secure isn't 'Allow [
     ; Remove all other access to the policies:
     protect/hide in system/state 'policies
 ]

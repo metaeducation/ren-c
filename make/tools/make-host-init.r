@@ -75,7 +75,7 @@ load-files: function [
         print ["loading:" file]
         file: load/header file
         header: take file
-        if header/type = 'module [
+        if header/type is 'module [
             file: compose/deep [
                 import module
                 [
@@ -86,7 +86,6 @@ load-files: function [
                     (file)
                 ]
             ]
-            ;probe file/2
         ]
         append data file
     ]
@@ -112,7 +111,7 @@ file-base: has load %../../make/tools/file-base.r
 host-protocols: make block! 2
 for-each file file-base/prot-files [
     m: load/all join-of %../mezz/ file
-    assert ['REBOL = m/1]
+    assert ['REBOL is m/1]
     spec: ensure block! m/2
     contents: skip m 2
     append host-protocols compose/only [(spec) (contents)]

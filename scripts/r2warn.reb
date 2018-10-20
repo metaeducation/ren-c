@@ -61,6 +61,20 @@ repurposed: deprecated: func [block [block!]] [
 ]
 
 
+set (quote <>) =: !=: equal?: not-equal?: repurposed [
+    https://forum.rebol.info/t/349
+
+    {The meaning of EQUAL? (and related operators like =, !=, <>) has changed}
+    {to be what was historically known as STRICT-EQUAL?.  The more lax}
+    {concept of equality (which considers alternate casings of the same}
+    {type to be the same) is referred to as "IS-ness".  So `"A" IS "a"`, but}
+    {`"A" <> "a"`.  The negated form of IS is ISN'T (apostrophe and all).}
+    {This means `==` is no longer an equality operator, freeing it up for}
+    {other purposes (as well as solving its bad pairing with `!==` instead}
+    {of the typical `!=` expected by other languages).}
+]
+
+
 any-function!: function!: any-function?: function?: deprecated [
     https://forum.rebol.info/t/596
 

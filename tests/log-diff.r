@@ -49,7 +49,7 @@ make-diff: function [
         case [
             all [
                 new-test
-                new-result <> 'skipped
+                new-result !== 'skipped
                 any [
                     blank? old-test
                     all [
@@ -58,7 +58,7 @@ make-diff: function [
                     ]
                     all [
                         old-test == new-test
-                        old-result = 'skipped
+                        old-result == 'skipped
                     ]
                 ]
             ] [
@@ -84,7 +84,7 @@ make-diff: function [
             ]
             all [
                 old-test
-                old-result <> 'skipped
+                old-result !== 'skipped
                 any [
                     blank? new-test
                     all [
@@ -93,7 +93,7 @@ make-diff: function [
                     ]
                     all [
                         new-test == old-test
-                        new-result = 'skipped
+                        new-result == 'skipped
                     ]
                 ]
             ] [
@@ -102,17 +102,17 @@ make-diff: function [
                 write/append diff-file spaced [old-test "removed" newline]
             ]
             any [
-                old-result = new-result
+                old-result == new-result
                 strict-not-equal? old-test new-test
             ] [unchanged: unchanged + 1]
             ; having one test with different results
             (
                 write/append diff-file new-test
                 any [
-                    old-result = 'succeeded
+                    old-result == 'succeeded
                     all [
-                        old-result = 'failed
-                        new-result = 'crashed
+                        old-result == 'failed
+                        new-result == 'crashed
                     ]
                 ]
             ) [

@@ -2,7 +2,7 @@
 (path? 'a/b)
 ('a/b == first [a/b])
 (not path? 1)
-(path! = type of 'a/b)
+(path! == type of 'a/b)
 ; the minimum
 [#1947
     (path? load "#[path! [[a] 1]]")
@@ -13,11 +13,11 @@
         2 == index? a
     ]
 )
-("a/b" = mold 'a/b)
+("a/b" == mold 'a/b)
 (
     a-word: 1
     data: #{0201}
-    2 = data/:a-word
+    2 == data/:a-word
 )
 (
     blk: reduce [:abs 2]
@@ -69,7 +69,7 @@
 )
 (
     a-value: 2x3
-    2 = a-value/1
+    2.0 == a-value/1
 )
 (
     a-value: first [(2)]
@@ -108,7 +108,7 @@
 ; WORD! actually merge with a slash.
 (
     a-value: file://a
-    #"f" = a-value/1
+    #"f" == a-value/1
 )
 
 ; calling functions through paths: function in object
@@ -132,7 +132,7 @@
 )
 [#26 (
     b: [b 1]
-    1 = b/b
+    1 == b/b
 )]
 ; recursive path
 (
@@ -145,13 +145,13 @@
 
 [#71 (
     a: "abcd"
-    "abcd/x" = a/x
+    "abcd/x" == a/x
 )]
 
 [#1820 ; Word USER can't be selected with path syntax
     (
     b: [user 1 _user 2]
-    1 = b/user
+    1 == b/user
     )
 ]
 [#1977
@@ -163,28 +163,28 @@
     a: 1x2
     did all [
         b: a/(a: [3 4] 1)
-        b = 1
-        a = [3 4]
+        b == 1.0
+        a == [3 4]
     ]
 )
 
 ; PATH! beginning with an inert item will itself be inert
 ;
 [
-    (/ref/inement/path = as path! [/ref inement path])
-    (/refinement/3 = as path! [/refinement 3])
-    ((/refinement)/3 = #"f")
-    (r: /refinement | r/3 = #"f")
+    (/ref/inement/path == as path! [/ref inement path])
+    (/refinement/3 == as path! [/refinement 3])
+    ((/refinement)/3 == #"f")
+    (r: /refinement | r/3 == #"f")
 ][
-    (#iss/ue/path = as path! [#iss ue path])
-    (#issue/3 = as path! [#issue 3])
-    ((#issue)/3 = #"s")
-    (i: #issue | i/3 = #"s")
+    (#iss/ue/path == as path! [#iss ue path])
+    (#issue/3 == as path! [#issue 3])
+    ((#issue)/3 == #"s")
+    (i: #issue | i/3 == #"s")
 ][
-    ("te"/xt/path = as path! ["te" xt path])
-    ("text"/3 = as path! ["text" 3])
-    (("text")/3 = #"x")
-    (t: "text" | t/3 = #"x")
+    ("te"/xt/path == as path! ["te" xt path])
+    ("text"/3 == as path! ["text" 3])
+    (("text")/3 == #"x")
+    (t: "text" | t/3 == #"x")
 ]
 
 
@@ -192,18 +192,18 @@
 (
     bl: [a 1 q/w [e/r 42]]
     all [
-        1 = bl/a
-        [e/r 42] = bl/('q/w)
-        [e/r 42] = reduce to-path [bl q/w]
-        42 = bl/('q/w)/('e/r)
-        42 = reduce to-path [bl q/w e/r]
+        1 == bl/a
+        [e/r 42] == bl/('q/w)
+        [e/r 42] == reduce to-path [bl q/w]
+        42 == bl/('q/w)/('e/r)
+        42 == reduce to-path [bl q/w e/r]
     ]
 )
 
 ; / is a length 0 PATH! in Ren-C
-(type of quote / = path!)
-(length of quote / = 0)
+(type of quote / == path!)
+(length of quote / == 0)
 
 ; foo/ is a length 1 PATH! in Ren-C
-(type of quote foo/ = path!)
-(length of quote foo/ = 1)
+(type of quote foo/ == path!)
+(length of quote foo/ == 1)

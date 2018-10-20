@@ -7,24 +7,24 @@
 ; https://github.com/metaeducation/ren-c/pull/730
 ;
 
-("aaa" = match parse "aaa" [some "a"])
-(null = match parse "aaa" [some "b"])
+("aaa" == match parse "aaa" [some "a"])
+(null == match parse "aaa" [some "b"])
 
-(10 = match integer! 10)
-(null = match integer! "ten")
+(10 == match integer! 10)
+(null == match integer! "ten")
 
-("ten" = match [integer! text!] "ten")
-(20 = match [integer! text!] 20)
-(null = match [integer! text!] <tag>)
+("ten" == match [integer! text!] "ten")
+(20 == match [integer! text!] 20)
+(null == match [integer! text!] <tag>)
 
-(10 = match :even? 10)
-(null = match :even? 3)
-(null = match 'odd? 20)
-(7 = match 'odd? 7)
+(10 == match :even? 10)
+(null == match :even? 3)
+(null == match 'odd? 20)
+(7 == match 'odd? 7)
 
 (bar? match blank! _)
-(null = match blank! 10)
-(null = match blank! false)
+(null == match blank! 10)
+(null == match blank! false)
 
 ; Since its other features were implemented with a fairly complex enclosed
 ; specialization, it's good to keep that usermode implementation around,
@@ -58,8 +58,8 @@
         :result ;-- return null if no match, else truthy result
     ])
 
-    (10 = match2 integer! 10)
-    (null = match2 integer! "ten")
+    (10 == match2 integer! 10)
+    (null == match2 integer! "ten")
     (bar? match2 blank! _)
-    (null = match2 blank! 10)
+    (null == match2 blank! 10)
 ]

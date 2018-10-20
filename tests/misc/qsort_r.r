@@ -50,7 +50,7 @@ cb: make-callback/fallback [
         i [int32]
     ]
     case [
-        i/i = j/i [0]
+        i/i == j/i [0]
         i/i < j/i [-1]
         i/i > j/i [1]
      ]
@@ -58,7 +58,7 @@ cb: make-callback/fallback [
 
 libc: make library! %libc.so.6
 
-x64?: 40 = fifth system/version
+x64?: 40 == fifth system/version
 size_t: either x64? ['int64]['int32]
 
 qsort_r: make-routine libc "qsort_r" compose/deep [
@@ -75,6 +75,6 @@ probe (addr-of :cb)
 qsort_r array 5 4 :cb <A Tunneled Tag>
 print ["after:" mold array]
 
-assert [array = make vector! [integer! 32 5 [2 5 8 9 10]]]
+assert [array == make vector! [integer! 32 5 [2 5 8 9 10]]]
 
 close libc

@@ -1,7 +1,7 @@
 ; datatypes/error.r
 (error? trap [1 / 0])
 (not error? 1)
-(error! = type of trap [1 / 0])
+(error! == type of trap [1 / 0])
 
 ; error evaluation
 (error? do head of insert copy [] trap [1 / 0])
@@ -14,12 +14,12 @@
 
 ; triggered errors should not be assignable
 ;
-(a: 1 error? trap [a: 1 / 0] :a =? 1)
-(a: 1 error? trap [set 'a 1 / 0] :a =? 1)
-(a: 1 error? trap [set/opt 'a 1 / 0] :a =? 1)
+(a: 1 error? trap [a: 1 / 0] :a == 1)
+(a: 1 error? trap [set 'a 1 / 0] :a == 1)
+(a: 1 error? trap [set/opt 'a 1 / 0] :a == 1)
 
 [#2190
-    (127 = catch/quit [attempt [catch/quit [1 / 0]] quit/with 127])
+    (127 == catch/quit [attempt [catch/quit [1 / 0]] quit/with 127])
 ]
 
 ; error types that should be predefined
@@ -137,12 +137,12 @@
 (
     val1: trap [do [1 / 0]]
     val2: trap [evaluate [1 / 0]]
-    val1/near = val2/near
+    val1/near == val2/near
 )
 
 (
     e: trap [1 / 0]
-    e/id = 'zero-divide
+    e/id is 'Zero-Divide
 )
 
 ; #60, #1135
@@ -158,10 +158,10 @@
     e2: trap [divide 2 0]
 
     did all [
-        e1/id = 'zero-divide
-        e2/id = 'zero-divide
-        [divide 1 0] = copy/part e1/near 3
-        [divide 2 0] = copy/part e2/near 3
-        e1 <> e2
+        e1/id is 'Zero-Divide
+        e2/id is 'Zero-Divide
+        [divide 1 0] == copy/part e1/near 3
+        [divide 2 0] == copy/part e2/near 3
+        e1 !== e2
     ]
 )

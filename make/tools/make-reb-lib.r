@@ -70,7 +70,7 @@ emit-proto: func [return: <void> proto] [
         ]
     ]
 
-    if header/2 != 'RL_API [return]
+    if header/2 !== 'RL_API [return]
     if not set-word? header/1 [
         fail ["API declaration should be a SET-WORD!, not" (header/1)]
     ]
@@ -105,7 +105,7 @@ emit-proto: func [return: <void> proto] [
         ]
     ]
 
-    if (to set-word! name) != header/1 [ ;-- e.g. `//  rebRun: RL_API`
+    if (to set-word! name) !== header/1 [ ;-- e.g. `//  rebRun: RL_API`
         fail [
             "Name in comment header (" header/1 ") isn't C function name"
             "minus RL_ prefix to match" (name)
@@ -181,8 +181,8 @@ for-each api api-objects [do in api [
     opt-va-start: _
     if va-pos: try find paramlist "va_list *" [
         assert ['vaptr first next va-pos]
-        assert ['p = first back va-pos]
-        assert ["const void *" = first back back va-pos]
+        assert ['p == first back va-pos]
+        assert ["const void *" == first back back va-pos]
         opt-va-start: {va_list va; va_start(va, p);}
     ]
 
@@ -190,7 +190,7 @@ for-each api api-objects [do in api [
         "void"
     ] else [
         delimit map-each [type var] paramlist [
-            if type = "va_list *" [
+            if type == "va_list *" [
                 "..."
             ] else [
                 spaced [type var]
@@ -199,7 +199,7 @@ for-each api api-objects [do in api [
     ]
 
     proxied-args: delimit map-each [type var] paramlist [
-        if type = "va_list *" [
+        if type == "va_list *" [
             "&va" ;-- to produce vaptr
         ] else [
             to text! var
@@ -207,7 +207,7 @@ for-each api api-objects [do in api [
     ] ", "
 
     if find spec #noreturn [
-        assert [returns = "void"]
+        assert [returns == "void"]
         opt-dead-end: "DEAD_END;"
         opt-noreturn: "ATTRIBUTE_NO_RETURN"
     ] else [
@@ -215,9 +215,9 @@ for-each api api-objects [do in api [
         opt-noreturn: _
     ]
 
-    opt-return: try if returns != "void" ["return"]
+    opt-return: try if returns !== "void" ["return"]
 
-    enter: try if name != "rebStartup" [
+    enter: try if name !== "rebStartup" [
         copy "RL_rebEnterApi_internal();^/"
     ]
 
@@ -578,9 +578,9 @@ to-js-type: func [
     s [text!] "C type as string"
 ][
     case [
-        s = "va_list *" [<va_ptr>] ;-- special processing, only an argument
+        s == "va_list *" [<va_ptr>] ;-- special processing, only an argument
 
-        s = "intptr_t" [<promise>] ;-- distinct handling for return vs. arg
+        s == "intptr_t" [<promise>] ;-- distinct handling for return vs. arg
 
         ; APIs dealing with `char *` means UTF-8 bytes.  While C must memory
         ; manage such strings (at the moment), the JavaScript wrapping assumes
@@ -591,7 +591,7 @@ to-js-type: func [
         ; !!! These APIs can also return nulls.  rebSpell("second [{a}]") is
         ; now null, as a way of doing passthru on failures.
         ;
-        (s = "char *") or [s = "const char *"] ["'string'"]
+        (s == "char *") or [s == "const char *"] ["'string'"]
 
         ; Other pointer types aren't strings.  `unsigned char *` is a byte
         ; array, and should perhaps use ArrayBuffer.  But for now, just assume
@@ -610,7 +610,7 @@ to-js-type: func [
 
         ; !!! JavaScript has a Boolean type...figure out how to use correctly
         ;
-        s = "bool" ["'Boolean'"]
+        s == "bool" ["'Boolean'"]
 
         ; !!! JavaScript does not differentiate numeric types, though it does
         ; have a BigInt, which should be considered when bignum is added:
@@ -651,7 +651,7 @@ map-each-api [
 
     js-param-types: collect [
         for-each [type var] paramlist [
-            if type = "intptr_t" [ ;-- e.g. <promise>
+            if type == "intptr_t" [ ;-- e.g. <promise>
                 keep "'number'"
                 continue
             ]

@@ -601,7 +601,7 @@ client-key-exchange: function [
     ctx/server-crypt-key: copy/part skip ctx/key-block (2 * ctx/hash-size) + ctx/crypt-size ctx/crypt-size
 
     if ctx/block-size [
-        if ctx/version = 1.0 [
+        if ctx/version == 1.0 [
             ;
             ; Block ciphers in TLS 1.0 used an implicit initialization vector
             ; (IV) to seed the encryption process.  This has vulnerabilities.
@@ -925,8 +925,8 @@ parse-messages: function [
     ]
     debug [ctx/seq-num-r ctx/seq-num-w "READ <--" proto/type]
 
-    if proto/type <> #handshake [
-        if proto/type = #alert [
+    if proto/type !== #handshake [
+        if proto/type == #alert [
             if proto/messages/1 > 1 [
                 ; fatal alert level
                 fail [select alert-descriptions data/2 else ["unknown"]]
@@ -995,7 +995,7 @@ parse-messages: function [
                             (msg-content: my skip 1)
 
                             compression-method:
-                                either compression-method-length = 0 [
+                                either compression-method-length == 0 [
                                     blank
                                 ][
                                     fail ["Error: CRIME vulnerability"]
@@ -1124,7 +1124,7 @@ parse-messages: function [
                         ]
                         if (
                             msg-content
-                            <> apply 'prf [
+                            !== apply 'prf [
                                 ctx: ctx
                                 secret: ctx/master-secret
                                 label: who-finished
@@ -1158,7 +1158,7 @@ parse-messages: function [
                         copy/part data len + 4
                     ] (to word! ctx/hash-method) ctx/server-mac-key
 
-                    if mac <> mac-check [
+                    if mac !== mac-check [
                         fail "Bad handshake record MAC"
                     ]
 
@@ -1193,7 +1193,7 @@ parse-messages: function [
                 msg-obj/content         ; content
             ] (to word! ctx/hash-method) ctx/server-mac-key
 
-            if mac <> mac-check [
+            if mac !== mac-check [
                 fail "Bad application record MAC"
             ]
         ]
@@ -1402,10 +1402,10 @@ tls-read-data: function [
     data: append ctx/data-buffer port-data
     clear port-data
 
-    ; !!! Why is this making a copy (5 = length of copy...) when just trying
+    ; !!! Why is this making a copy (5 == length of copy...) when just trying
     ; to test a size?
     ;
-    while [5 = length of copy/part data 5] [
+    while [5 == length of copy/part data 5] [
         len: 5 + to-integer/unsigned copy/part at data 4 2
 
         debug ["reading bytes:" len]
@@ -1454,7 +1454,7 @@ tls-awake: function [
     tls-awake: :tls-port/awake
 
     all [
-        tls-port/state/mode = #application
+        tls-port/state/mode == #application
         not port/data
     ] then [
         ; reset the data field when interleaving port r/w states
@@ -1475,7 +1475,7 @@ tls-awake: function [
         'connect [
             do-commands tls-port/state [<client-hello>]
 
-            if tls-port/state/resp/1/type = #handshake [
+            if tls-port/state/resp/1/type == #handshake [
                 do-commands tls-port/state [
                     <client-key-exchange>
                     <change-cipher-spec>
@@ -1519,7 +1519,7 @@ tls-awake: function [
                 switch proto/type [
                     #application [
                         for-each msg proto/messages [
-                            if msg/type = 'app-data [
+                            if msg/type == 'app-data [
                                 tls-port/data: default [
                                     clear tls-port/state/port-data
                                 ]
@@ -1531,7 +1531,7 @@ tls-awake: function [
                     ]
                     #alert [
                         for-each msg proto/messages [
-                            if msg/description = "Close notify" [
+                            if msg/description is "Close notify" [
                                 do-commands tls-port/state [<close-notify>]
                                 insert system/ports/system make event! [
                                     type: 'read

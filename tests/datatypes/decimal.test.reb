@@ -1,37 +1,37 @@
 ; datatypes/decimal.r
 (decimal? 0.0)
 (not decimal? 0)
-(decimal! = type of 0.0)
+(decimal! == type of 0.0)
 (decimal? 1.0)
 (decimal? -1.0)
 (decimal? 1.5)
 
 ; LOAD decimal and to binary! tests
 ; 64-bit IEEE 754 maximum
-(equal? #{7FEFFFFFFFFFFFFF} to binary! 1.7976931348623157e308)
+(#{7FEFFFFFFFFFFFFF} == to binary! 1.7976931348623157e308)
 ; Minimal positive normalized
-(equal? #{0010000000000000} to binary! 2.2250738585072014E-308)
+(#{0010000000000000} == to binary! 2.2250738585072014E-308)
 ; Maximal positive denormalized
-(equal? #{000FFFFFFFFFFFFF} to binary! 2.225073858507201E-308)
+(#{000FFFFFFFFFFFFF} == to binary! 2.225073858507201E-308)
 ; Minimal positive denormalized
-(equal? #{0000000000000001} to binary! 4.9406564584124654E-324)
+(#{0000000000000001} == to binary! 4.9406564584124654E-324)
 ; zero
-(equal? #{0000000000000000} to binary! 0.0)
+(#{0000000000000000} == to binary! 0.0)
 ; negative zero
-(equal? #{8000000000000000} to binary! -0.0)
+(#{8000000000000000} == to binary! -0.0)
 ; Maximal negative denormalized
-(equal? #{8000000000000001} to binary! -4.9406564584124654E-324)
+(#{8000000000000001} == to binary! -4.9406564584124654E-324)
 ; Minimal negative denormalized
-(equal? #{800FFFFFFFFFFFFF} to binary! -2.225073858507201E-308)
+(#{800FFFFFFFFFFFFF} == to binary! -2.225073858507201E-308)
 ; Maximal negative normalized
-(equal? #{8010000000000000} to binary! -2.2250738585072014E-308)
+(#{8010000000000000} == to binary! -2.2250738585072014E-308)
 ; 64-bit IEEE 754 minimum
-(equal? #{FFEFFFFFFFFFFFFF} to binary! -1.7976931348623157e308)
+(#{FFEFFFFFFFFFFFFF} == to binary! -1.7976931348623157e308)
 
 ; MOLD decimal accuracy tests
 [#729 (
     system/options/decimal-digits: 17
-    system/options/decimal-digits = 17
+    system/options/decimal-digits == 17
 )]
 
 ; 64-bit IEEE 754 maximum
@@ -122,17 +122,17 @@
 (same? 9.9999999999999926e152 load mold/all 9.9999999999999926e152)
 
 ; LOAD decimal accuracy tests
-(equal? to binary! 2.2250738585072004e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072005e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072006e-308 #{000FFFFFFFFFFFFE})
-(equal? to binary! 2.2250738585072007e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072008e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072009e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.225073858507201e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072011e-308 #{000FFFFFFFFFFFFF})
-(equal? to binary! 2.2250738585072012e-308 #{0010000000000000})
-(equal? to binary! 2.2250738585072013e-308 #{0010000000000000})
-(equal? to binary! 2.2250738585072014e-308 #{0010000000000000})
+(#{000FFFFFFFFFFFFE} == to binary! 2.2250738585072004e-308)
+(#{000FFFFFFFFFFFFE} == to binary! 2.2250738585072005e-308)
+(#{000FFFFFFFFFFFFE} == to binary! 2.2250738585072006e-308)
+(#{000FFFFFFFFFFFFF} == to binary! 2.2250738585072007e-308)
+(#{000FFFFFFFFFFFFF} == to binary! 2.2250738585072008e-308)
+(#{000FFFFFFFFFFFFF} == to binary! 2.2250738585072009e-308)
+(#{000FFFFFFFFFFFFF} == to binary! 2.225073858507201e-308)
+(#{000FFFFFFFFFFFFF} == to binary! 2.2250738585072011e-308)
+(#{0010000000000000} == to binary! 2.2250738585072012e-308)
+(#{0010000000000000} == to binary! 2.2250738585072013e-308)
+(#{0010000000000000} == to binary! 2.2250738585072014e-308)
 
 [#1753 (
     c: last mold/all 1e16
@@ -141,16 +141,16 @@
 
 ; alternative form
 (1.1 == 1,1)
-(1.1 = make decimal! 1.1)
-(1.1 = make decimal! "1.1")
-(1.1 = to decimal! 1.1)
-(1.1 = to decimal! "1.1")
+(1.1 == make decimal! 1.1)
+(1.1 == make decimal! "1.1")
+(1.1 == to decimal! 1.1)
+(1.1 == to decimal! "1.1")
 (error? trap [to decimal! "t"])
 
 ; decimal! to binary! and binary! to decimal!
-(equal? #{3ff0000000000000} to binary! 1.0)
+(#{3ff0000000000000} == to binary! 1.0)
 (same? to decimal! #{3ff0000000000000} 1.0)
 
 [#747 (
-    equal? #{3FF0000000000009} to binary! to decimal! #{3FF0000000000009}
+    #{3FF0000000000009} == to binary! to decimal! #{3FF0000000000009}
 )]

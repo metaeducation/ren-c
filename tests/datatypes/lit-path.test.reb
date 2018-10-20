@@ -1,7 +1,7 @@
 ; datatypes/lit-path.r
 (lit-path? first ['a/b])
 (not lit-path? 1)
-(lit-path! = type of first ['a/b])
+(lit-path! == type of first ['a/b])
 ; minimum
 [#1947
     (lit-path? load "#[lit-path! [[a] 1]]")

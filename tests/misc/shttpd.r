@@ -71,7 +71,7 @@ awake-client: function [event] [
 ]
 
 awake-server: func [event <local> client] [
-    if event/type = 'accept [
+    if event/type == 'accept [
         client: first event/port
         client/awake: :awake-client
         read client

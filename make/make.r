@@ -343,11 +343,11 @@ targets: [
     ]
     'vs2017
     'visual-studio [
-        x86: try all [system-config/os-name = 'Windows-x86 'x86]
+        x86: if system-config/os-name is 'Windows-x86 ['x86] else [_]
         rebmake/visual-studio/generate/(x86) %. solution
     ]
     'vs2015 [
-        x86: try all [system-config/os-name = 'Windows-x86 'x86]
+        x86: if system-config/os-name is 'Windows-x86 ['x86] else [_]
         rebmake/vs2015/generate/(x86) %. solution
     ]
 ]
@@ -457,7 +457,7 @@ help: function [topic [text! blank!]] [
     topic: try attempt [to-word topic]
     print ""
     case [
-        topic = 'all [
+        topic is 'all [
             for-each [topic msg] help-topics [
                 print msg
             ]
@@ -533,7 +533,7 @@ rebmake/default-linker: default [fail "Default linker is not set"]
 
 switch rebmake/default-compiler/name [
     'gcc [
-        if rebmake/default-linker/name != 'ld [
+        if rebmake/default-linker/name !== 'ld [
             fail [
                 "Incompatible compiler (GCC) and linker:"
                     rebmake/default-linker/name
@@ -549,7 +549,7 @@ switch rebmake/default-compiler/name [
         ]
     ]
     'cl [
-        if rebmake/default-linker/name != 'link [
+        if rebmake/default-linker/name isn't 'Link [
             fail [
                 "Incompatible compiler (CL) and linker:"
                 rebmake/default-linker/name
@@ -702,7 +702,7 @@ append app-config/cflags opt switch user-config/standard [
             ; when building as pre-C++11 where it was introduced, unless you
             ; disable that warning.
             ;
-            (if user-config/standard = 'c++98 [<gnu:-Wno-c++0x-compat>])
+            (if user-config/standard is 'c++98 [<gnu:-Wno-c++0x-compat>])
 
             ; Note: The C and C++ user-config/standards do not dictate if
             ; `char` is signed or unsigned.  Lest anyone think environments
@@ -1176,8 +1176,9 @@ os-file-block: get bind
     (to word! append-of "os-" system-config/os-base)
     file-base
 
-remove-each plus os-file-block [plus = '+] ;remove the '+ sign, we don't care here
-remove-each plus file-base/os [plus = '+] ;remove the '+ sign, we don't care here
+; + sign means scan for prototypes, remove as we don't care here
+remove-each item os-file-block [item == '+]
+remove-each item file-base/os [item == '+]
 
 libr3-os: make libr3-core [
     name: 'libr3-os
@@ -1221,11 +1222,11 @@ for-each name user-config/extensions [
         '* '- [
             item: _
             for-next builtin-extensions [
-                if builtin-extensions/1/name = name [
+                if builtin-extensions/1/name is name [
                     item: take builtin-extensions
                     all [
                         not item/loadable
-                        action = '*
+                        action == '*
                     ] then [
                         fail [{Extension} name {is not dynamically loadable}]
                     ]
@@ -1235,7 +1236,7 @@ for-each name user-config/extensions [
                 fail [{Unrecognized extension name:} name]
             ]
 
-            if action = '* [;dynamic extension
+            if action == '* [;dynamic extension
                 selected-modules: if blank? modules [
                     ; all modules in the extension
                     item/modules
@@ -1338,7 +1339,7 @@ process-module: func [
     s
     ret
 ][
-    assert [mod/class-name = 'module-class]
+    assert [mod/class-name == 'module-class]
     assert-no-blank-inside mod/includes
     assert-no-blank-inside mod/definitions
     assert-no-blank-inside mod/depends
@@ -1359,7 +1360,7 @@ process-module: func [
                 ][
                     s
                     ;object-library-class has already been taken care of above
-                    ;if s/class-name = 'object-file-class [s]
+                    ;if s/class-name == 'object-file-class [s]
                 ]
                 default [
                     dump s
@@ -1418,7 +1419,7 @@ for-each ext builtin-extensions [
             append ext-objs map-each s mod/depends [
                 if all [
                     object? s
-                    s/class-name = 'object-library-class
+                    s/class-name == 'object-library-class
                 ][
                     s
                 ]
@@ -1473,7 +1474,7 @@ calculate-sequence: function [
     for-each req ext/requires [
         invalid?: true
         for-each b builtin-extensions [
-            if b/name = req [
+            if b/name is req [
                 seq: seq + either integer? b/sequence [b/sequence][calculate-sequence b]
                 invalid?: false
             ]
@@ -1492,12 +1493,12 @@ vars: reduce [
     reb-tool: make rebmake/var-class [
         name: {REBOL_TOOL}
         if not any [
-            'file = exists? value: system/options/boot
+            'file is exists? value: system/options/boot
             all [
                 user-config/rebol-tool
-                'file = exists? value: join-of make-dir user-config/rebol-tool
+                'file is exists? value: join-of make-dir user-config/rebol-tool
             ]
-            'file = exists? value: join-of make-dir unspaced [
+            'file is exists? value: join-of make-dir unspaced [
                 {r3-make}
                 rebmake/target-platform/exe-suffix
             ]
@@ -1729,7 +1730,7 @@ for-each ext dynamic-extensions [
             opt ext/cflags
     ]
     append dynamic-libs ext-proj: make rebmake/dynamic-library-class [
-        name: join-of either system-config/os-base = 'windows ["r3-"]["libr3-"]
+        name: join-of either system-config/os-base is 'windows ["r3-"]["libr3-"]
             lowercase to text! ext/name
         output: to file! name
         depends: append compose [

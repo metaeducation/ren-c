@@ -24,12 +24,12 @@ clean-path: function [
             copy file
         ]
 
-        #"/" = first file [
+        #"/" == first file [
             file: next file
             out: next what-dir
             while [
                 all [
-                    #"/" = first file
+                    #"/" == first file
                     f: try find/tail out #"/"
                 ]
             ][
@@ -52,7 +52,7 @@ clean-path: function [
             "../" (count: me + 1)
             | "./"
             | #"/" (
-                if (not file? file) or [#"/" <> last out] [
+                if (not file? file) or [#"/" !== last out] [
                     append out #"/"
                 ]
             )
@@ -68,7 +68,7 @@ clean-path: function [
         ]
     ]
 
-    if (#"/" = last out) and [#"/" <> last file] [
+    if (#"/" == last out) and [#"/" !== last file] [
         remove back tail of out
     ]
 
@@ -91,7 +91,7 @@ input: function [
     ]
 
     data: read system/ports/input
-    if 0 = length of data [
+    if 0 == length of data [
         ;
         ; !!! Zero-length data is the protocol being used to signal a halt in
         ; the (deprecated) Host OS layer.  All those who READ from the
@@ -102,8 +102,8 @@ input: function [
     ]
 
     if all [
-        1 = length of data
-        escape = to-char data/1
+        1 == length of data
+        escape == to-char data/1
     ][
         ; Input Aborted (e.g. Ctrl-D on Windows, ESC on POSIX)--this does not
         ; try and HALT the program overall, but gives the caller the chance
@@ -235,7 +235,7 @@ undirize: function [
     path [file! text! url!]
 ][
     path: copy path
-    if #"/" = last path [clear back tail of path]
+    if #"/" == last path [clear back tail of path]
     path
 ]
 
@@ -315,6 +315,6 @@ set-net: function [
     return: <void>
     bl [block!]
 ][
-    if 6 <> length of bl [fail "Needs all 6 parameters for set-net"]
+    if 6 !== length of bl [fail "Needs all 6 parameters for set-net"]
     set (words of system/user/identity) bl
 ]

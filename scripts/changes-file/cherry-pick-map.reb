@@ -147,7 +147,7 @@ fail "Simple error"
 
 "c1c5945" [
     example: {
-if 1 = 1 [run-this] else [run-that]
+if 1 == 1 [run-this] else [run-that]
 }
     type: 'Added
     related: ["f3a5bf8" "3b3699d"]

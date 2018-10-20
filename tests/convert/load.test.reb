@@ -10,14 +10,14 @@
 ]
 [#858 (
     a: [ < ]
-    a = load mold a
+    a == load mold a
 )]
 (error? trap [load "1xyz#"])
 
 ; LOAD/NEXT removed, see #1703
 ;
 (error? trap [load/next "1"])
-([1 #{}] = transcode/next to binary! "1")
+([1 #{}] == transcode/next to binary! "1")
 
 [#1122 (
     any [

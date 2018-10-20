@@ -31,7 +31,7 @@ last?: single?: func [
     "Returns TRUE if the series length is 1."
     series [any-series! port! map! tuple! bitset! object! gob! any-word!]
 ][
-    1 = length of series
+    1 == length of series
 ]
 
 
@@ -649,7 +649,7 @@ split: function [
         ;
         switch type of dlm [
             bitset! [did find dlm try last series]
-            char! [dlm = last series]
+            char! [dlm is last series]
             text! [
                 (did find series dlm) and [empty? find/last/tail series dlm]
             ]
