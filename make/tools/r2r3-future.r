@@ -557,3 +557,13 @@ unless: enfix func [ ; https://forum.rebol.info/t/881
 ]
 
 --: :dump
+
+iterate: :for-next
+for-next: for-skip: for-back: func [dummy:] [
+    fail/where [
+        "FOR-NEXT, FOR-SKIP, and FOR-BACK different in modern R3"
+        "so don't use them in the compatibility layer."
+        "Only ITERATE is defined."
+        https://forum.rebol.info/t/892
+    ] 'dummy
+]

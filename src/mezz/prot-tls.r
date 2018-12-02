@@ -190,7 +190,7 @@ make-tls-error: func [
 parse-asn: function [
     {Create a legible Rebol-structured BLOCK! from an ASN.1 BINARY! encoding}
 
-    return: [block!]
+    return: [<opt> block!]
     data [binary!]
 
     <static>
@@ -241,7 +241,7 @@ parse-asn: function [
     class: _
     tag: _
 
-    return collect [ keep [] for-next data [
+    return collect [ iterate data [
         byte: data/1
 
         switch mode [

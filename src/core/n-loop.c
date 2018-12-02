@@ -447,7 +447,7 @@ static const REBVAL *Loop_Each(REBFRM *frame_, LOOP_MODE mode)
             // for fabricated variables is locked at fixed size.)
             //
             REBVAL *var;
-            if (GET_VAL_FLAG(pseudo_var, NODE_FLAG_MARKED)) {
+            if (GET_VAL_FLAG(pseudo_var, VAR_MARKED_REUSE)) {
                 assert(IS_LIT_WORD(pseudo_var));
                 var = Get_Mutable_Var_May_Fail(pseudo_var, SPECIFIED);
             } else
@@ -724,49 +724,53 @@ REBNATIVE(for)
 //
 //  "Evaluates a block for periodic values in a series"
 //
-//      return: [<opt> any-value!]
-//          {Last body result, or BREAK if null}
-//      'word [word! blank!]
-//          "Word that refers to the series, set to positions in the series"
-//      skip [integer!]
-//          "Number of positions to skip each time"
-//      body [block! action!]
-//          "Block to evaluate each time"
+//      return: "Last body result, or null if BREAK"
+//          [<opt> any-value!]
+//      'word "Variable set to each position in the series at skip distance"
+//          [word! lit-word! blank!]
+//      series "The series to iterate over"
+//          [any-series! blank!]
+//      skip "Number of positions to skip each time"
+//          [integer! blank!]
+//      body "Code to evaluate each time"
+//          [block! action!]
 //  ]
 //
 REBNATIVE(for_skip)
-//
-// !!! Should this fail on 0?  It could be that the loop will break for some
-// other reason, and the author didn't wish to special case to rule out zero...
-// generality may dictate allowing it.
 {
     INCLUDE_PARAMS_OF_FOR_SKIP;
 
-    REBVAL *word = ARG(word);
-
-    if (IS_BLANK(word))
+    REBVAL *series = ARG(series);
+    if (IS_BLANK(series) or IS_BLANK(ARG(skip)))
         return nullptr; // blank in, null out (same result as BREAK)
 
     Init_Blank(D_OUT); // result if body never runs
 
-    // Note that variable addresses may move on context expansion, protect
-    // status can change, etc.  It must be re-fetched on each loop.
-    //
-    REBVAL *var = Get_Mutable_Var_May_Fail(word, SPECIFIED);
-    if (IS_NULLED(var))
-        fail (Error_No_Value(word));
-    if (not ANY_SERIES(var))
-        fail (Error_Invalid(var));
-
-    // !!! We save the starting value and restore it on throws or when the
-    // loop ends, but this restoration doesn't happen on FAILs.  Doing so
-    // would require setting up a trap--should it?
-    //
-    DECLARE_LOCAL (saved);
-    Move_Value(saved, var);
-    PUSH_GC_GUARD(saved);
-
     REBINT skip = Int32(ARG(skip));
+    if (skip == 0) {
+        //
+        // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
+        //
+        return D_OUT; // blank is loop protocol if body never ran
+    }
+
+    REBCTX *context;
+    Virtual_Bind_Deep_To_New_Context(
+        ARG(body), // may be updated, will still be GC safe
+        &context,
+        ARG(word)
+    );
+    Init_Object(ARG(word), context); // keep GC safe
+
+    REBVAL *slot = CTX_VAR(context, 1); // not movable, see #2274
+    REBVAL *var; // may be movable if LIT-WORD! binding used...
+    if (NOT_VAL_FLAG(slot, VAR_MARKED_REUSE))
+        var = slot;
+    else {
+        assert(IS_LIT_WORD(slot));
+        var = Sink_Var_May_Fail(slot, SPECIFIED);
+    }
+    Move_Value(var, series);
 
     // Starting location when past end with negative skip:
     //
@@ -790,37 +794,36 @@ REBNATIVE(for_skip)
 
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke)) {
-                Move_Value(var, saved);
-                DROP_GC_GUARD(saved);
+            if (not Catching_Break_Or_Continue(D_OUT, &broke))
                 return R_THROWN;
-            }
-            if (broke) {
-                Move_Value(var, saved); // restore initial variable value
-                DROP_GC_GUARD(saved);
+            if (broke)
                 return nullptr;
-            }
         }
         Voidify_If_Nulled_Or_Blank(D_OUT); // null->BREAK, blank->empty
 
-        // `var` must be refreshed each time arbitrary code runs, since the
-        // context may expand and move the address, may get PROTECTed, etc.
         // Modifications to var are allowed, to another ANY-SERIES! value.
         //
-        var = Get_Mutable_Var_May_Fail(word, SPECIFIED);
+        // If `var` is movable (e.g. specified via LIT-WORD!) it must be
+        // refreshed each time arbitrary code runs, since the context may
+        // expand and move the address, may get PROTECTed, etc.
+        //
+        if (NOT_VAL_FLAG(slot, VAR_MARKED_REUSE))
+            var = slot;
+        else {
+            assert(IS_LIT_WORD(slot));
+            var = Get_Mutable_Var_May_Fail(slot, SPECIFIED);
+        }
+
         if (IS_NULLED(var))
-            fail (Error_No_Value(word));
+            fail (Error_No_Value(ARG(word)));
         if (not ANY_SERIES(var))
             fail (Error_Invalid(var));
 
         VAL_INDEX(var) += skip;
     }
 
-    Move_Value(var, saved); // restore initial variable value
-    DROP_GC_GUARD(saved);
     return D_OUT;
 }
-
 
 
 //

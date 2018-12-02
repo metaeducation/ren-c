@@ -506,7 +506,7 @@ static inline REBVAL *Get_Mutable_Var_May_Fail(
     //
     if (GET_VAL_FLAG(var, CELL_FLAG_PROTECTED)) {
         DECLARE_LOCAL (unwritable);
-        Init_Word(unwritable, VAL_WORD_SPELLING(unwritable));
+        Init_Word(unwritable, VAL_WORD_SPELLING(any_word));
         fail (Error_Protected_Word_Raw(unwritable));
     }
 

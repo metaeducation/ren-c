@@ -265,7 +265,7 @@ ctx-zip: context [
         ]
 
         source: to block! source
-        for-next source [
+        iterate source [
             name: source/1
             root+name: if find "\/" name/1 [
                 if verbose [print ["Warning: absolute path" name]]

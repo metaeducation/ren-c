@@ -277,7 +277,7 @@ parse-args: function [
     standalone: make block! 4
     args: any [args copy []]
     if not block? args [args: split args [some " "]]
-    for-next args [
+    iterate args [
         name: _
         value: args/1
         case [
@@ -391,7 +391,7 @@ relative-to-path: func [
         base: next base
         target: next target
     ]
-    for-next base [base/1: %..]
+    iterate base [base/1: %..]
     append base target
     to-file delimit base "/"
 ]

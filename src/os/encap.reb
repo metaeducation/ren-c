@@ -893,11 +893,10 @@ pe-format: context [
         ;print ["Section headers end at:" index of end-of-section-header]
         sort/compare sections func [a b][a/physical-offset < b/physical-offset]
 
-        secs: sections
-        first-section-by-phy-offset: secs/1 or [ catch [
-            for-next secs [
-                if not zero? secs/1/physical-offset [
-                    throw secs/1
+        first-section-by-phy-offset: sections/1 or [ catch [
+            for-each sec sections [
+                if not zero? sec/physical-offset [
+                    throw sec
                 ]
             ]
         ] ]

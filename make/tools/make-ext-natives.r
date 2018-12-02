@@ -283,7 +283,7 @@ e1/emit {
 }
 e1/emit newline
 
-for-next native-list [
+iterate native-list [
     if tail? next native-list [break]
 
     any [

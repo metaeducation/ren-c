@@ -435,14 +435,14 @@ extract: func [
         ]
         out: make (type of series) len * length of pos
         if not default_EXTRACT and [any-string? out] [value: copy ""]
-        for-skip series width [for-next pos [
+        iterate-skip series width [iterate pos [
             val: pick series pos/1 else [value]
             append/only out :val
         ]]
     ] else [
         out: make (type of series) len
         if not default_EXTRACT and [any-string? out] [value: copy ""]
-        for-skip series width [
+        iterate-skip series width [
             val: pick series pos else [value]
             append/only out :val
         ]

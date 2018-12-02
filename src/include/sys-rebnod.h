@@ -284,6 +284,7 @@ union Reb_Header {
 
 #define ARG_MARKED_CHECKED NODE_FLAG_MARKED
 #define OUT_MARKED_STALE NODE_FLAG_MARKED
+#define VAR_MARKED_REUSE NODE_FLAG_MARKED
 
 
 //=//// NODE_FLAG_TRANSIENT (fifth-leftmost bit) //////////////////////////=//

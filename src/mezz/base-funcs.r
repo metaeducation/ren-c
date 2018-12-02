@@ -253,8 +253,8 @@ function: func [
     ; COLLECT-WORDS interface to efficiently give this result, as well as
     ; a possible COLLECT-WORDS/INTO
     ;
-    for-skip locals 1 [ ;-- FOR-NEXT not specialized yet
-        append new-spec to set-word! locals/1
+    for-each loc locals [
+        append new-spec to set-word! loc
     ]
 
     ;; dump [{after} new-spec defaulters]
@@ -602,6 +602,39 @@ for-back: redescribe [
 ](
     specialize 'for-skip [skip: -1]
 )
+
+iterate-skip: redescribe [
+    "Variant of FOR-SKIP that directly modifies a series variable in a word"
+](
+    specialize enclose 'for-skip function [f] [
+        word: f/word
+        if not word [return null]
+        f/word: to lit-word! word ;-- do not create new virtual binding
+        saved: f/series: get word
+        trap/with [set* quote result: do f] func [e] [
+            ;-- If there's an error, restore series and propagate error
+            set* word saved
+            fail e
+        ]
+        set* word saved
+        :result
+    ][
+        series: <overwritten>
+    ]
+)
+
+iterate: iterate-next: redescribe [
+    "Variant of FOR-NEXT that directly modifies a series variable in a word"
+](
+    specialize 'iterate-skip [skip: 1]
+)
+
+iterate-back: redescribe [
+    "Variant of FOR-BACK that directly modifies a series variable in a word"
+](
+    specialize 'iterate-skip [skip: -1]
+)
+
 
 count-up: redescribe [
     "Loop the body, setting a word from 1 up to the end value given"
@@ -992,7 +1025,7 @@ cause-error: func [
     args: compose [(:args)]
 
     ; Filter out functional values:
-    for-next args [
+    iterate args [
         if action? first args [
             change/only args meta-of first args
         ]

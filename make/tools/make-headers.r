@@ -345,7 +345,7 @@ generic-list: load output-dir/boot/tmp-generics.r
 
 ; Search file for definition.  Will be `generic-name: generic [paramlist]`
 ;
-for-next generic-list [
+iterate generic-list [
     if 'generic = pick generic-list 2 [
         assert [set-word? generic-list/1]
         (emit-include-params-macro

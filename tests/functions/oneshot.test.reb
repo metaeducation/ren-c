@@ -4,7 +4,7 @@
     once: oneshot
     did all [
         10 = once [5 + 5]
-        null = once [5 + 5] 
+        null = once [5 + 5]
         null = once [5 + 5]
     ]
 )(

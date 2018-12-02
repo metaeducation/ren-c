@@ -77,7 +77,7 @@ extreme-of: func [
     size: default [1]
     if 1 > size [cause-error 'script 'out-of-range size]
     spot: series
-    for-skip series size [
+    iterate-skip series size [
         if (comparator first series first spot) [spot: series]
     ]
     spot

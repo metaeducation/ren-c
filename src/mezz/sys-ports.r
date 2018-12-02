@@ -263,8 +263,8 @@ init-schemes: func [
             if not block? ports [return blank]
 
             ; Are any of the requested ports awake?
-            for-next ports [
-                if port: find waked first ports [return true]
+            for-each port ports [
+                find waked port then [return true]
             ]
 
             false ; keep waiting

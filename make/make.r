@@ -470,11 +470,10 @@ help: function [topic [text! blank!]] [
 ]
 
 ; process help: {-h | -help | --help} [TOPIC]
-if commands [
-    for-next commands [
-        if find ["-h" "-help" "--help"] first commands [
-            help try second commands quit
-        ]
+
+iterate commands [
+    if find ["-h" "-help" "--help"] commands/1 [
+        help try :commands/2 quit
     ]
 ]
 
@@ -1207,7 +1206,7 @@ for-each name user-config/extensions [
         ]
         '* '- [
             item: _
-            for-next builtin-extensions [
+            iterate builtin-extensions [
                 if builtin-extensions/1/name = name [
                     item: take builtin-extensions
                     all [
@@ -1801,8 +1800,8 @@ solution: make rebmake/solution-class [
 
 target: user-config/target
 if not block? target [target: reduce [target]]
-for-next target [
-    if null? switch target/1 targets [
+iterate target [
+    switch target/1 targets else [
         fail [
             newline
             newline

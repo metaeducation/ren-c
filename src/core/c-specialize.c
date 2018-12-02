@@ -156,9 +156,10 @@ REBCTX *Make_Context_For_Action_Int_Partials(
     //=//// NON-REFINEMENT SLOT HANDLING //////////////////////////////////=//
 
         if (VAL_PARAM_CLASS(param) != PARAM_CLASS_REFINEMENT) {
-            if (GET_VAL_FLAG(special, ARG_MARKED_CHECKED)) {
+            if (Is_Param_Hidden(param)) {
+                assert(GET_VAL_FLAG(special, ARG_MARKED_CHECKED));
                 Move_Value(arg, special); // !!! copy the flag?
-                SET_VAL_FLAG(arg, ARG_MARKED_CHECKED);
+                SET_VAL_FLAG(arg, ARG_MARKED_CHECKED); // !!! not copied
                 goto continue_specialized; // Eval_Core_Throws() checks type
             }
             goto continue_unspecialized;
@@ -430,6 +431,10 @@ bool Specialize_Action_Throws(
         for (; NOT_END(key); ++key, ++var) {
             if (Is_Param_Unbindable(key))
                 continue; // !!! is this flag still relevant?
+            if (Is_Param_Hidden(key)) {
+                assert(GET_VAL_FLAG(var, ARG_MARKED_CHECKED));
+                continue;
+            }
             if (GET_VAL_FLAG(var, ARG_MARKED_CHECKED))
                 continue; // may be refinement from stack, now specialized out
             Remove_Binder_Index(&binder, VAL_KEY_CANON(key));

@@ -542,7 +542,7 @@ void Virtual_Bind_Deep_To_New_Context(
             TYPE_SET(key, REB_TS_UNBINDABLE);
             TYPE_SET(key, REB_TS_HIDDEN);
             Derelativize(var, item, specifier);
-            SET_VAL_FLAGS(var, CELL_FLAG_PROTECTED | NODE_FLAG_MARKED);
+            SET_VAL_FLAGS(var, CELL_FLAG_PROTECTED | VAR_MARKED_REUSE);
 
             // We don't want to stop `for-each ['x 'x] ...` necessarily,
             // because if we're saying we're using the existing binding they

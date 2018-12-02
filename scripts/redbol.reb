@@ -379,14 +379,14 @@ do: emulate [
         if action? :source [
             code: reduce [:source]
             params: words of :source
-            for-next params [
+            iterate params [
                 append code switch type of params/1 [
                     word! [take normals]
                     lit-word! [take softs]
                     get-word! [take hards]
                     set-word! [[]] ;-- empty block appends nothing
                     refinement! [break]
-                ] else [
+
                     fail ["bad param type" params/1]
                 ]
             ]
@@ -853,8 +853,8 @@ foreach: emulate [
 
 loop: emulate [devoider :loop]
 repeat: emulate [devoider :repeat]
-forall: emulate [devoider :for-next]
-forskip: emulate [devoider :for-skip]
+forall: emulate [devoider :iterate]
+forskip: emulate [devoider :iterate-skip]
 
 any: emulate [devoider :any]
 all: emulate [devoider :all]

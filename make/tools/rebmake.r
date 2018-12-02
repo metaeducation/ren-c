@@ -1864,23 +1864,23 @@ visual-studio: make generator-class [
     ]
 
     find-compile-as: method [
+        return: [<opt> text!]
         cflags [block!]
     ][
-        for-next cflags [
-            if i: filter-flag cflags/1 "msc" [
-                case [
-                    parse i ["/TP" to end] [
-                        comment [remove cflags] ; extensions wouldn't get it
-                        return "CompileAsCpp"
-                    ]
-                    parse i ["/TC" to end] [
-                        comment [remove cflags] ; extensions wouldn't get it
-                        return "CompileAsC"
-                    ]
+        iterate cflags [
+            i: filter-flag cflags/1 "msc" else [continue]
+            case [
+                parse i ["/TP" to end] [
+                    comment [remove cflags] ; extensions wouldn't get it
+                    return "CompileAsCpp"
+                ]
+                parse i ["/TC" to end] [
+                    comment [remove cflags] ; extensions wouldn't get it
+                    return "CompileAsC"
                 ]
             ]
         ]
-        return blank
+        return null
     ]
 
     find-stack-size: method [
