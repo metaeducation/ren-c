@@ -1102,3 +1102,40 @@ fail: function [
     ;
     do ensure error! error
 ]
+
+generate: function [ "Make a generator."
+    init [block!] "Init code"
+    condition [block! blank!] "while condition"
+    iteration [block!] "m"
+][
+    words: make block! 2
+    for-each x reduce [init condition iteration] [
+        if not block? x [continue]
+        w: collect-words/deep/set x
+        if not empty? intersect w [count result] [ fail [
+            "count: and result: set-words aren't allowed in" mold x
+        ]]
+        append words w
+    ]
+    words: unique words
+    spec: flatten map-each w words [reduce[<static> w]]
+    append spec [<static> count]
+    insert spec [/reset init [block!]]
+    body: compose/deep [
+        if reset [count: init return]
+        if block? count [
+            result: bind count 'count
+            count: 1
+            return do result
+        ]
+        count: me + 1 
+        result: (to-group (iteration))
+        (either empty? condition
+            [[ return result ]]
+            [compose [ return either (to-group (condition)) [result] [null] ]]
+        )
+    ]
+    f: function spec body
+    f/reset init
+    :f
+]
