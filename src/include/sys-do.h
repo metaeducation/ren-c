@@ -56,6 +56,8 @@ INLINE bool Do_Any_Array_At_Throws(
     Value* out,
     const Value* any_array // Note: can be same pointer as `out`
 ){
+    assert(out != any_array); // Was legal at one time, but no longer
+
     return Do_At_Throws(
         out,
         Cell_Array(any_array),

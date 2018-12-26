@@ -672,15 +672,15 @@ static REB_R Case_Choose_Core_May_Throw(
 
             f->gotten = nullptr; // can't hold onto cache, running user code
 
-            if (IS_BLOCK(OUT)) {
-                if (Do_Any_Array_At_Throws(OUT, OUT)) { // legal args
+            Move_Value(block, OUT); // can't evaluate into ARG(block)
+            if (IS_BLOCK(block)) {
+                if (Do_Any_Array_At_Throws(OUT, block)) {
                     Abort_Frame(f);
                     DROP_GC_GUARD(cell);
                     return R_THROWN;
                 }
             }
             else if (IS_ACTION(OUT)) {
-                Move_Value(block, OUT); // can't evaluate into ARG(block)
                 if (Do_Branch_With_Throws(OUT, block, cell)) {
                     Abort_Frame(f);
                     DROP_GC_GUARD(cell);
