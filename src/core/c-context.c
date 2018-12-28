@@ -658,11 +658,12 @@ REBARR *Collect_Unique_Words_Managed(
     // system doesn't know how to clean up, and the only cleanup it does
     // assumes you were collecting for a keylist...it doesn't have access to
     // the "ignore" bindings.)  Do a pre-pass to fail first.
-
-    RELVAL *check = VAL_ARRAY_AT(ignore);
-    for (; NOT_END(check); ++check) {
-        if (not ANY_WORD(check))
-            fail (Error_Invalid_Core(check, VAL_SPECIFIER(ignore)));
+    if (!IS_NULLED(ignore)){
+        RELVAL *check = VAL_ARRAY_AT(ignore);
+        for (; NOT_END(check); ++check) {
+            if (not ANY_WORD(check))
+                fail (Error_Invalid_Core(check, VAL_SPECIFIER(ignore)));
+        }
     }
 
     struct Reb_Collector collector;
