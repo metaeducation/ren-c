@@ -1129,10 +1129,10 @@ generate: function [ "Make a generator."
             return do result
         ]
         count: me + 1 
-        result: (to-group (iteration))
+        result: (to group! (iteration))
         (either empty? condition
             [[ return result ]]
-            [compose [ return either (to-group (condition)) [result] [null] ]]
+            [compose [ return either (to group! (condition)) [result] [null] ]]
         )
     ]
     f: function spec body
@@ -1142,11 +1142,14 @@ generate: function [ "Make a generator."
 
 read-lines: function [
     {Makes a generator that yields lines from a file or port.}
-    src [port! file!]
+    src [port! file! blank!]
     /delimiter eol [binary! char! text! bitset!]
     /keep "Don't remove delimiter"
     /binary "Return BINARY instead of TEXT"
 ][
+    if blank? src [src: system/ports/input]
+    if file? src [src: open src]
+
     crlf: charset "^/^M"
     rule: compose/deep/only either delimiter [
         either keep
@@ -1160,14 +1163,13 @@ read-lines: function [
             ] (if not keep ['remove]) ["^/" | "^M^/"] pos:
         ]]
     ]
-    if file? src [src: open src]
 
     f: function compose [
-        <static> buffer (to-group [mutable make binary! 4096])
+        <static> buffer (to group! [mutable make binary! 4096])
         <static> port (groupify src)
     ] compose/deep [
         data: _
-        forever [
+        cycle [
             pos: _
             parse buffer (rule)
             if pos [break]
@@ -1184,12 +1186,12 @@ read-lines: function [
         if all [empty? data empty? buffer] [
             return null
         ]
-        (if not binary [[to-text]]) take/part buffer pos
+        (if not binary [[to text!]]) take/part buffer pos
     ]
 ]
 
 input-lines: redescribe [
     {Makes a generator that yields lines from system/ports/input.}
 ](
-    specialize :read-lines [src: system/ports/input]
+    specialize :read-lines [src: _]
 )
