@@ -1139,3 +1139,57 @@ generate: function [ "Make a generator."
     f/reset init
     :f
 ]
+
+read-lines: function [
+    {Makes a generator that yields lines from a file or port.}
+    src [port! file!]
+    /delimiter eol [binary! char! text! bitset!]
+    /keep "Don't remove delimiter"
+    /binary "Return BINARY instead of TEXT"
+][
+    crlf: charset "^/^M"
+    rule: compose/deep/only either delimiter [
+        either keep
+        [ [[thru (eol) pos:]] ]
+        [ [[to (eol) remove (eol) pos:]] ]
+    ][
+        [[
+            to (crlf) any [
+                ["^M" and not "^/"]
+                to (crlf)
+            ] (if not keep ['remove]) ["^/" | "^M^/"] pos:
+        ]]
+    ]
+    if file? src [src: open src]
+
+    f: function compose [
+        <static> buffer (to-group [mutable make binary! 4096])
+        <static> port (groupify src)
+    ] compose/deep [
+        data: _
+        forever [
+            pos: _
+            parse buffer (rule)
+            if pos [break]
+            if same? port system/ports/input
+            [ data: read port ]
+            else
+            [ data: read/part port 4096 ]
+            if empty? data [
+                pos: length of buffer
+                break
+            ]
+            append buffer data
+        ]
+        if all [empty? data empty? buffer] [
+            return null
+        ]
+        (if not binary [[to-text]]) take/part buffer pos
+    ]
+]
+
+input-lines: redescribe [
+    {Makes a generator that yields lines from system/ports/input.}
+](
+    specialize :read-lines [src: system/ports/input]
+)
