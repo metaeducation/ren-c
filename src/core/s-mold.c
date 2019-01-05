@@ -355,7 +355,7 @@ void Mold_Array_At(
 
     bool indented = false;
 
-    if (sep[1])
+    if (sep[0])
         Append_Utf8_Codepoint(mo->series, sep[0]);
 
     RELVAL *item = ARR_AT(a, index);
@@ -375,9 +375,7 @@ void Mold_Array_At(
         if (IS_END(item))
             break;
 
-        if (sep[0] == '/')
-            Append_Utf8_Codepoint(mo->series, '/'); // !!! ignores newline
-        else if (NOT_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE))
+        if (NOT_VAL_FLAG(item, VALUE_FLAG_NEWLINE_BEFORE))
             Append_Utf8_Codepoint(mo->series, ' ');
     }
 

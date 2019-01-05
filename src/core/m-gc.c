@@ -293,6 +293,22 @@ inline static void Queue_Mark_Singular_Array(REBARR *a) {
 }
 
 
+static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v);
+
+inline static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
+{
+    assert(NOT_END(v)); // can be NULLED, just not END
+    Queue_Mark_Opt_End_Cell_Deep(v);
+}
+
+inline static void Queue_Mark_Value_Deep(const RELVAL *v)
+{
+    assert(NOT_END(v));
+    assert(KIND_BYTE_UNCHECKED(v) != REB_MAX_NULLED); // Unreadable blank ok
+    Queue_Mark_Opt_End_Cell_Deep(v);
+}
+
+
 //
 //  Queue_Mark_Opt_End_Cell_Deep: C
 //
@@ -400,11 +416,40 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
 
       case REB_PATH:
       case REB_SET_PATH:
-      case REB_GET_PATH:
+      case REB_GET_PATH: {
+        REBARR *a = ARR(v->payload.any_series.series);
+        assert(NOT_SER_INFO(a, SERIES_INFO_INACCESSIBLE));
+        Queue_Mark_Binding_Deep(v);
+
+        // With most arrays we may risk direct recursion, hence we have to
+        // use Queue_Mark_Array_Deep().  But paths are guaranteed to not have
+        // other paths directly in them.  Walk it here so that we can also
+        // check that there are no paths embedded.
+        //
+        // Note: This doesn't catch cases which don't wind up reachable from
+        // the root set, e.g. anything that would be GC'd.
+
+      #if !defined(NDEBUG)
+        in_mark = false;
+      #endif
+
+        assert(ARR_LEN(a) >= 2);
+        RELVAL *item = ARR_HEAD(a);
+        for (; NOT_END(item); ++item) {
+            assert(not ANY_PATH_KIND(KIND_BYTE_UNCHECKED(item)));
+            Queue_Mark_Value_Deep(item);
+        }
+        Mark_Rebser_Only(SER(a));
+      
+      #if !defined(NDEBUG)
+        in_mark = true;
+      #endif
+        break; }
+
       case REB_BLOCK:
       case REB_GROUP: {
-        REBSER *s = v->payload.any_series.series;
-        if (GET_SER_INFO(s, SERIES_INFO_INACCESSIBLE)) {
+        REBARR *a = ARR(v->payload.any_series.series);
+        if (GET_SER_INFO(a, SERIES_INFO_INACCESSIBLE)) {
             //
             // !!! Review: preserving the identity of inaccessible array nodes
             // is likely uninteresting--the only reason the node wasn't freed
@@ -413,11 +458,11 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
             // update the pointer in the cell to some global inaccessible
             // REBARR, and *not* mark the dead node at all.
             //
-            Mark_Rebser_Only(s);
+            Mark_Rebser_Only(SER(a));
             Queue_Mark_Binding_Deep(v); // !!! Review this too, is it needed?
         }
         else {
-            Queue_Mark_Array_Deep(ARR(s));
+            Queue_Mark_Array_Deep(a);
             Queue_Mark_Binding_Deep(v);
         }
         break; }
@@ -675,19 +720,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
   #if !defined(NDEBUG)
     in_mark = false;
   #endif
-}
-
-inline static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
-{
-    assert(NOT_END(v)); // can be NULLED, just not END
-    Queue_Mark_Opt_End_Cell_Deep(v);
-}
-
-inline static void Queue_Mark_Value_Deep(const RELVAL *v)
-{
-    assert(NOT_END(v));
-    assert(KIND_BYTE_UNCHECKED(v) != REB_MAX_NULLED); // Unreadable blank ok
-    Queue_Mark_Opt_End_Cell_Deep(v);
 }
 
 

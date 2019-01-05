@@ -170,8 +170,8 @@ static bool Subparse_Throws(
     REBSPC *rules_specifier,
     REBCNT find_flags
 ){
-    assert(ANY_ARRAY(rules));
-    assert(ANY_SERIES_KIND(CELL_KIND(VAL_UNESCAPED(input))));
+    assert(IS_BLOCK(rules));
+    assert(ANY_SERIES_OR_PATH_KIND(CELL_KIND(VAL_UNESCAPED(input))));
 
     // Since SUBPARSE is a native that the user can call directly, and it
     // is "effectively variadic" reading its instructions inline out of the
@@ -360,7 +360,7 @@ static void Set_Parse_Series(
     //
     Init_Integer(P_NUM_QUOTES_VALUE, VAL_NUM_QUOTES(P_INPUT_VALUE));
     Dequotify(P_INPUT_VALUE);
-    if (not ANY_SERIES(P_INPUT_VALUE)) // #1263
+    if (not ANY_SERIES_OR_PATH(P_INPUT_VALUE)) // #1263
         fail (Error_Parse_Series_Raw(P_INPUT_VALUE));
 
     if (VAL_INDEX(P_INPUT_VALUE) > VAL_LEN_HEAD(P_INPUT_VALUE))
@@ -773,7 +773,7 @@ static REBIXO To_Thru_Block_Rule(
                 rule = Get_Parse_Value(cell, rule, P_RULE_SPECIFIER);
 
             // Try to match it:
-            if (ANY_ARRAY_KIND(P_TYPE)) {
+            if (ANY_ARRAY_OR_PATH_KIND(P_TYPE)) {
                 if (ANY_ARRAY(rule))
                     fail (Error_Parse_Rule());
 
@@ -1278,7 +1278,7 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
 //  {Internal support function for PARSE (acts as variadic to consume rules)}
 //
 //      return: [<opt> integer!]
-//      input [any-series! quoted!]
+//      input [any-series! any-array! quoted!]
 //      find-flags [integer!]
 //      <local> num-quotes
 //  ]
@@ -1906,7 +1906,10 @@ REBNATIVE(subparse)
 
                     if (
                         IS_END(into)
-                        or (not ANY_BINSTR(into) and not ANY_ARRAY(into))
+                        or (
+                            not ANY_BINSTR(into)
+                            and not ANY_ARRAY_OR_PATH(into)
+                        )
                     ){
                         i = END_FLAG;
                         break;
@@ -2086,7 +2089,7 @@ REBNATIVE(subparse)
                         set_or_copy_word,
                         P_RULE_SPECIFIER
                     );
-                    if (ANY_ARRAY(P_INPUT_VALUE)) {
+                    if (ANY_ARRAY_OR_PATH(P_INPUT_VALUE)) {
                         Init_Any_Array(
                             sink,
                             P_TYPE,
@@ -2300,7 +2303,7 @@ REBNATIVE(subparse)
 //      return: "null if rules failed, else terminal position of match"
 //          [<opt> any-series! quoted!]
 //      input "Input series to parse"
-//          [<blank> any-series! quoted!]
+//          [<blank> any-series! any-path! quoted!]
 //      rules "Rules to parse by"
 //          [<blank> block!]
 //      /case "Uses case-sensitive comparison"
@@ -2309,6 +2312,9 @@ REBNATIVE(subparse)
 REBNATIVE(parse)
 {
     INCLUDE_PARAMS_OF_PARSE;
+
+    if (not ANY_SERIES_OR_PATH_KIND(CELL_KIND(VAL_UNESCAPED(ARG(input)))))
+        fail (Error_Invalid(ARG(input)));
 
     REBVAL *rules = ARG(rules);
 

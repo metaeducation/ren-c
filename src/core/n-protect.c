@@ -375,7 +375,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 //
 //  {Protect a series or a variable from being modified.}
 //
-//      value [word! any-series! bitset! map! object! module!]
+//      value [word! path! any-series! bitset! map! object! module!]
 //      /deep
 //          "Protect all sub-series/objects as well"
 //      /words
@@ -461,7 +461,7 @@ bool Is_Value_Frozen(const RELVAL *v) {
         return true;
     }
 
-    if (ANY_ARRAY(v))
+    if (ANY_ARRAY_OR_PATH(v))
         return Is_Array_Deeply_Frozen(VAL_ARRAY(v));
 
     if (ANY_CONTEXT(v))
@@ -505,7 +505,7 @@ void Ensure_Value_Frozen(const RELVAL *v, REBSER *opt_locker) {
     if (Is_Value_Frozen(v))
         return;
 
-    if (ANY_ARRAY(v)) {
+    if (ANY_ARRAY_OR_PATH(v)) {
         Deep_Freeze_Array(VAL_ARRAY(v));
         if (opt_locker)
             SET_SER_INFO(VAL_ARRAY(v), SERIES_INFO_AUTO_LOCKED);
@@ -564,7 +564,7 @@ REBNATIVE(lock)
     if (!REF(clone))
         Move_Value(D_OUT, v);
     else {
-        if (ANY_ARRAY(v)) {
+        if (ANY_ARRAY_OR_PATH(v)) {
             Init_Any_Array_At(
                 D_OUT,
                 VAL_TYPE(v),

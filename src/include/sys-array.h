@@ -473,7 +473,11 @@ inline static void INIT_VAL_ARRAY(RELVAL *v, REBARR *a) {
 // account; they strictly operate on the array series
 //
 inline static REBARR *VAL_ARRAY(const REBCEL *v) {
-    assert(ANY_ARRAY_KIND(CELL_KIND(v)));
+    if (ANY_PATH_KIND(CELL_KIND(v)))
+        assert(v->payload.any_series.index == 0);
+    else
+        assert(ANY_ARRAY_KIND(CELL_KIND(v)));
+
     REBSER *s = v->payload.any_series.series;
     if (s->info.bits & SERIES_INFO_INACCESSIBLE)
         fail (Error_Series_Data_Freed_Raw());

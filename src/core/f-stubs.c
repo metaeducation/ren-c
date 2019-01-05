@@ -284,11 +284,11 @@ REBINT Get_System_Int(REBCNT i1, REBCNT i2, REBINT default_int)
 REBVAL *Init_Any_Series_At_Core(
     RELVAL *out, // allows RELVAL slot as input, but will be filled w/REBVAL
     enum Reb_Kind type,
-    REBSER *series,
+    REBSER *s,
     REBCNT index,
     REBNOD *binding
 ) {
-    ENSURE_SERIES_MANAGED(series);
+    ENSURE_SERIES_MANAGED(s);
 
     if (type != REB_IMAGE and type != REB_VECTOR) {
         // Code in various places seemed to have different opinions of
@@ -304,21 +304,26 @@ REBVAL *Init_Any_Series_At_Core(
         //
         // Until that is consciously overturned, check the REB_BINARY too
 
-        ASSERT_SERIES_TERM(series); // doesn't apply to image/vector
+        ASSERT_SERIES_TERM(s); // doesn't apply to image/vector
     }
 
     RESET_CELL(out, type);
-    out->payload.any_series.series = series;
+    out->payload.any_series.series = s;
     VAL_INDEX(out) = index;
     INIT_BINDING(out, binding);
 
   #if !defined(NDEBUG)
-    if (ANY_STRING(out)) {
-        if (SER_WIDE(series) != 2)
-            panic(series);
-    } else if (IS_BINARY(out)) {
-        if (SER_WIDE(series) != 1)
-            panic(series);
+    if (ANY_STRING_KIND(type)) {
+        if (SER_WIDE(s) != 2)
+            panic (s);
+    }
+    else if (type == REB_BINARY) {
+        if (SER_WIDE(s) != 1)
+            panic (s);
+    }
+    else if (ANY_PATH_KIND(type)) {
+        if (ARR_LEN(ARR(s)) < 2)
+            panic (s);
     }
   #endif
 
@@ -484,7 +489,7 @@ static REBCNT Part_Len_Core(
 // subsetted range and gives back a length to the end of that subset.
 //
 REBCNT Part_Len_May_Modify_Index(REBVAL *series, const REBVAL *limit) {
-    assert(ANY_SERIES(series));
+    assert(ANY_SERIES(series) or ANY_PATH(series));
     return Part_Len_Core(series, limit);
 }
 

@@ -102,10 +102,10 @@ inline static REBSTR *Get_Type_Name(const RELVAL *value)
     (TS_SERIES & ~TS_NOT_COPIED)
 
 #define TS_SERIES_OBJ \
-    ((TS_SERIES | TS_CONTEXT) & ~TS_NOT_COPIED)
+    ((TS_SERIES | TS_CONTEXT | TS_PATH) & ~TS_NOT_COPIED)
 
 #define TS_ARRAYS_OBJ \
-    ((TS_ARRAY | TS_CONTEXT) & ~TS_NOT_COPIED)
+    ((TS_ARRAY | TS_CONTEXT | TS_PATH) & ~TS_NOT_COPIED)
 
 #define TS_CLONE \
     (TS_SERIES & ~TS_NOT_COPIED) // currently same as TS_NOT_COPIED

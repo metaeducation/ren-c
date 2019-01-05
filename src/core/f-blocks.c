@@ -149,7 +149,17 @@ void Clonify(
     if (C_STACK_OVERFLOWING(&types))
         Fail_Stack_Overflow();
 
-    if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_SERIES_OBJ) {
+    // !!! It may be possible to do this faster/better, the impacts on higher
+    // quoting levels could be incurring more cost than necessary...but for
+    // now err on the side of correctness.  Unescape the value while cloning
+    // and then escape it back.
+    //
+    REBCNT num_quotes = VAL_NUM_QUOTES(v);
+    Dequotify(v);
+
+    enum Reb_Kind kind = CELL_KIND(v);
+
+    if (types & FLAGIT_KIND(kind) & TS_SERIES_OBJ) {
         //
         // Objects and series get shallow copied at minimum
         //
@@ -191,15 +201,14 @@ void Clonify(
         // If we're going to copy deeply, we go back over the shallow
         // copied series and "clonify" the values in it.
         //
-        if (types & FLAGIT_KIND(VAL_TYPE(v)) & TS_ARRAYS_OBJ) {
+        if (types & FLAGIT_KIND(kind) & TS_ARRAYS_OBJ) {
             REBVAL *sub = KNOWN(ARR_HEAD(ARR(series)));
             for (; NOT_END(sub); ++sub)
                 Clonify(sub, flags, types);
         }
     }
-    else if (
-        types & FLAGIT_KIND(VAL_TYPE(v)) & FLAGIT_KIND(REB_ACTION)
-    ){
+    else if (types & FLAGIT_KIND(kind) & FLAGIT_KIND(REB_ACTION)) {
+        //
         // !!! While Ren-C has abandoned the concept of copying the body
         // of functions (they are black boxes which may not *have* a
         // body), it would still theoretically be possible to do what
@@ -218,6 +227,8 @@ void Clonify(
         if (NOT_VAL_FLAG(v, VALUE_FLAG_EXPLICITLY_MUTABLE))
             v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
+
+    Quotify(v, num_quotes);
 }
 
 
@@ -337,7 +348,7 @@ REBARR *Copy_Rerelativized_Array_Deep_Managed(
 
         Move_Value_Header(dest, src);
 
-        if (ANY_ARRAY(src)) {
+        if (ANY_ARRAY_OR_PATH(src)) {
             dest->payload.any_series.series = SER(
                 Copy_Rerelativized_Array_Deep_Managed(
                     VAL_ARRAY(src), before, after
@@ -392,7 +403,7 @@ void Uncolor_Array(REBARR *a)
 
     RELVAL *val;
     for (val = ARR_HEAD(a); NOT_END(val); ++val)
-        if (ANY_ARRAY(val) or IS_MAP(val) or ANY_CONTEXT(val))
+        if (ANY_ARRAY_OR_PATH(val) or IS_MAP(val) or ANY_CONTEXT(val))
             Uncolor(val);
 }
 
@@ -406,7 +417,7 @@ void Uncolor(RELVAL *v)
 {
     REBARR *array;
 
-    if (ANY_ARRAY(v))
+    if (ANY_ARRAY_OR_PATH(v))
         array = VAL_ARRAY(v);
     else if (IS_MAP(v))
         array = MAP_PAIRLIST(VAL_MAP(v));

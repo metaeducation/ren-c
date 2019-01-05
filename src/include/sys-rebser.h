@@ -229,6 +229,9 @@
 
 //=//// ARRAY_FLAG_NULLEDS_LEGAL //////////////////////////////////////////=//
 //
+// Note: This is not a debug-only flag at this time, as passing it in has
+// semantic implications (e.g. preserve VALUE_FLAG_EVAL_FLIP on copy).
+//
 // Identifies arrays in which it is legal to have nulled elements.  This is
 // true for reified C va_list()s which treated slots as if they had already
 // abeen evaluated.  (See VALUE_FLAG_EVAL_FLIP).  When those va_lists need to

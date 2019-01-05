@@ -495,7 +495,7 @@ inline static void FAIL_IF_READ_ONLY_SER(REBSER *s) {
 
 inline static REBSER *VAL_SERIES(const REBCEL *v) {
     assert(
-        ANY_SERIES_KIND(CELL_KIND(v))
+        ANY_SERIES_KIND(CELL_KIND(v)) or ANY_PATH_KIND(CELL_KIND(v))
         or CELL_KIND(v) == REB_MAP
         or CELL_KIND(v) == REB_IMAGE
     ); // !!! Note: there was a problem here once, with a gcc 5.4 -O2 bug
@@ -518,10 +518,14 @@ inline static void INIT_VAL_SERIES(RELVAL *v, REBSER *s) {
     // allows an assert, but also lvalue: `VAL_INDEX(v) = xxx`
     //
     inline static REBCNT & VAL_INDEX(REBCEL *v) { // C++ reference type
-        assert(ANY_SERIES_KIND(CELL_KIND(v)));
+        assert(ANY_SERIES_KIND(CELL_KIND(v)) or ANY_PATH_KIND(CELL_KIND(v)));
         return v->payload.any_series.index;
     }
     inline static REBCNT VAL_INDEX(const REBCEL *v) {
+        if (ANY_PATH_KIND(CELL_KIND(v))) {
+            assert(v->payload.any_series.index == 0);
+            return 0;
+        }
         assert(ANY_SERIES_KIND(CELL_KIND(v)));
         return v->payload.any_series.index;
     }

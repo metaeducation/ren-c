@@ -161,7 +161,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
     const REBVAL *spec,
     REBFLGS flags
 ) {
-    assert(ANY_ARRAY(spec));
+    assert(IS_BLOCK(spec));
 
     uintptr_t header_bits = 0;
 

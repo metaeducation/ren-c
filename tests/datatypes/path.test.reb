@@ -7,12 +7,15 @@
 [#1947
     (path? load "#[path! [[a] 1]]")
 ]
-(
-    all [
-        path? a: load "#[path! [[a b c] 2]]"
-        2 == index? a
-    ]
-)
+
+;; ANY-PATH! are no longer positional
+;;(
+;;    all [
+;;        path? a: load "#[path! [[a b c] 2]]"
+;;        2 == index? a
+;;    ]
+;;)
+
 ("a/b" = mold 'a/b)
 (
     a-word: 1

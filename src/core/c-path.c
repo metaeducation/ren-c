@@ -770,3 +770,241 @@ REBNATIVE(path_0)
     //
     return rebRun("divide", left, right, rebEND);
 }
+
+
+//
+//  PD_Path: C
+//
+// A PATH! is not an array, but if it is implemented as one it may choose to
+// dispatch path handling to its array.
+//
+REB_R PD_Path(
+    REBPVS *pvs,
+    const REBVAL *picker,
+    const REBVAL *opt_setval
+){
+    if (opt_setval)
+        fail ("PATH!s are immutable (convert to GROUP! or BLOCK! to mutate)");
+
+    return PD_Array(pvs, picker, opt_setval);
+}
+
+
+//
+//  REBTYPE: C
+//
+// The concept of PATH! is now that it is an immediate value.  While it
+// permits picking and enumeration, it may or may not have an actual REBARR*
+// node backing it.
+//
+// !!! Changing the workings of path is experimental...but it is believed that
+// the old model for PATH! as isomorphic to GROUP! and BLOCK! was flawed.
+//
+REBTYPE(Path)
+{
+    REBVAL *path = D_ARG(1);
+
+    switch (VAL_WORD_SYM(verb)) {
+      case SYM_REFLECT: {
+        INCLUDE_PARAMS_OF_REFLECT;
+        UNUSED(ARG(value));
+
+        switch (VAL_WORD_SYM(ARG(property))) {
+          case SYM_LENGTH:
+            return Series_Common_Action_Maybe_Unhandled(frame_, verb);
+
+          // !!! Any other interesting reflectors?
+
+          case SYM_INDEX: // not legal, paths always at head, no index
+          default:
+            break;
+        }
+        break; }
+
+        // Since ANY-PATH! is immutable, a shallow copy should be cheap, but
+        // it should be cheap for any similarly marked array.  Also, a /DEEP
+        // copy of a path may copy groups that are mutable.
+        //
+      case SYM_COPY:
+        goto retrigger;
+
+      default:
+        break;
+    }
+
+    fail (Error_Illegal_Action(VAL_TYPE(path), verb));
+
+  retrigger:;
+
+    return T_Array(frame_, verb);
+}
+
+
+//
+//  MF_Path: C
+//
+void MF_Path(REB_MOLD *mo, const REBCEL *v, bool form)
+{
+    UNUSED(form);
+
+    REBARR *a = VAL_ARRAY(v);
+
+    // Recursion check:
+    if (Find_Pointer_In_Series(TG_Mold_Stack, a) != NOT_FOUND) {
+        Append_Unencoded(mo->series, ".../...");
+        return;
+    }
+    Push_Pointer_To_Series(TG_Mold_Stack, a);
+
+    // Routine may be called on value that reports REB_QUOTED, even if it
+    // has no additional payload and is aliasing the cell itself.  Checking
+    // the type could be avoided if each type had its own dispatcher, but
+    // this routine seems to need to be generic.
+    //
+    enum Reb_Kind kind = CELL_KIND(v);
+
+    if (kind == REB_GET_PATH)
+        Append_Utf8_Codepoint(mo->series, ':');
+
+    assert(VAL_INDEX(v) == 0); // the new rule, not an ANY-ARRAY!, always head
+    assert(ARR_LEN(a) >= 2); // another new rule, even / is `make path! [_ _]`
+
+    RELVAL *item = ARR_HEAD(a);
+    while (NOT_END(item)) {
+        assert(not ANY_PATH(item)); // another new rule
+
+        if (not IS_BLANK(item)) { // no blank molding; indicated by slashes
+            //
+            // !!! Molding of items in paths which have slashes in them, such
+            // as URL! or FILE! (or some historical date formats) need some
+            // kind of escaping, otherwise they have to be outlawed too.
+            // FILE! has the option of `a/%"dir/file.txt"/b` to put the file
+            // in quotes, but URL does not.
+            //
+            Mold_Value(mo, item);
+
+            // Note: We ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,
+            // but any embedded BLOCK! or GROUP! which do have newlines in
+            // them can make newlines, e.g.:
+            //
+            //     a/[
+            //        b c d
+            //     ]/e
+        }
+
+        ++item;
+        if (IS_END(item))
+            break;
+
+        Append_Utf8_Codepoint(mo->series, '/');
+    }
+
+    if (kind == REB_SET_PATH)
+        Append_Utf8_Codepoint(mo->series, ':');
+
+    Drop_Pointer_From_Series(TG_Mold_Stack, a);
+}
+
+
+//
+//  MAKE_Path: C
+//
+// A MAKE of a PATH! is experimentally being thought of as evaluative.  This
+// is in line with the most popular historical interpretation of MAKE, for
+// MAKE OBJECT!--which evaluates the object body block.
+//
+REB_R MAKE_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+    if (not IS_BLOCK(arg))
+        fail (Error_Bad_Make(kind, arg)); // "make path! 0" has no meaning
+
+    DECLARE_FRAME (f);
+    Push_Frame(f, arg);
+
+    REBDSP dsp_orig = DSP;
+
+    while (NOT_END(f->value)) {
+        if (Eval_Step_Throws(SET_END(out), f)) {
+            Abort_Frame(f);
+            return R_THROWN;
+        }
+
+        if (IS_END(out))
+            break;
+        if (IS_NULLED(out))
+            continue;
+
+        if (not ANY_PATH(out)) {
+            if (DSP != dsp_orig and IS_BLANK(DS_TOP))
+                DS_DROP(); // make path! ['a/ 'b] => a/b, not a//b
+            Move_Value(DS_PUSH(), out);
+        }
+        else { // Splice any generated paths, so there are no paths-in-paths.
+
+            RELVAL *item = VAL_ARRAY_AT(out);
+            if (IS_BLANK(item) and DSP != dsp_orig) {
+                if (IS_BLANK(DS_TOP)) // make path! ['a/b/ `/c`]
+                    fail ("Cannot merge slashes in MAKE PATH!");
+                ++item;
+            }
+            else if (DSP != dsp_orig and IS_BLANK(DS_TOP))
+                DS_DROP(); // make path! ['a/ 'b/c] => a/b/c, not a//b/c
+
+            for (; NOT_END(item); ++item)
+                Derelativize(DS_PUSH(), item, VAL_SPECIFIER(out));
+        }
+    }
+
+    REBARR *arr = Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED);
+    Drop_Frame_Unbalanced(f); // !!! f->dsp_orig got captured each loop
+
+    if (ARR_LEN(arr) < 2) // !!! Should pass produced array as BLOCK! to error
+        fail ("MAKE PATH! must produce path of at least length 2");
+
+    return Init_Any_Array(out, kind, arr);
+}
+
+
+//
+//  TO_Path: C
+//
+REB_R TO_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+    if (not ANY_ARRAY(arg) or ANY_STRING(arg))
+        fail (Error_Bad_Make(kind, arg)); // "to path! 0" has no meaning
+
+    REB_R r = TO_Array(out, REB_BLOCK, arg);
+    if (r == R_THROWN)
+        return r;
+
+    assert(r == out);
+
+    if (VAL_LEN_AT(out) < 2)
+        fail ("TO PATH! must produce a path of at least length 2");
+
+    if (VAL_INDEX(out) != 0)
+        fail ("Path creation cannot utilize non-head series at this time.");
+
+    assert(VAL_INDEX(out) == 0);
+    mutable_KIND_BYTE(out) = kind;
+    return out;
+}
+
+
+//
+//  CT_Path: C
+//
+// "Compare Type" dispatcher for the following types: (list here to help
+// text searches)
+//
+//     CT_Set_Path()
+//     CT_Get_Path()
+//     CT_Lit_Path()
+//
+REBINT CT_Path(const REBCEL *a, const REBCEL *b, REBINT mode)
+{
+    REBINT num = Cmp_Array(a, b, mode == 1);
+    if (mode >= 0)
+        return (num == 0);
+    if (mode == -1)
+        return (num >= 0);
+    return (num > 0);
+}

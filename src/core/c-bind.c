@@ -85,7 +85,10 @@ void Bind_Values_Inner_Loop(
                 Quotify(head, depth); // new cell made for higher escapes
             }
         }
-        else if (ANY_ARRAY_KIND(kind) and (flags & BIND_DEEP)) {
+        else if (
+            (ANY_ARRAY_OR_PATH_KIND(kind))
+            and (flags & BIND_DEEP)
+        ){
             Bind_Values_Inner_Loop(
                 binder,
                 VAL_ARRAY_AT(cell),
@@ -161,7 +164,7 @@ void Unbind_Values_Core(RELVAL *head, REBCTX *context, bool deep)
         ){
             Unbind_Any_Word(v);
         }
-        else if (ANY_ARRAY(v) and deep)
+        else if (ANY_ARRAY_OR_PATH(v) and deep)
             Unbind_Values_Core(VAL_ARRAY_AT(v), context, true);
     }
 }
@@ -196,7 +199,7 @@ static void Bind_Relative_Inner_Loop(
     RELVAL *head,
     REBARR *paramlist,
     REBU64 bind_types
-) {
+){
     for (; NOT_END(head); ++head) {
         //
         // The two-pass copy-and-then-bind should have gotten rid of all the
@@ -226,7 +229,7 @@ static void Bind_Relative_Inner_Loop(
                 Quotify(head, depth); // new cell made for higher escapes
             }
         }
-        else if (ANY_ARRAY_KIND(kind)) {
+        else if (ANY_ARRAY_OR_PATH_KIND(kind)) {
 
             Bind_Relative_Inner_Loop(
                 binder, VAL_ARRAY_AT(cell), paramlist, bind_types
@@ -274,7 +277,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
         VAL_LEN_AT(body), // tail
         0, // extra
         ARRAY_FLAG_FILE_LINE, // ask to preserve file and line info
-        TS_SERIES & ~TS_NOT_COPIED // types to copy deeply
+        (TS_SERIES | TS_PATH) & ~TS_NOT_COPIED // types to copy deeply
     );
 
     struct Reb_Binder binder;
@@ -314,7 +317,7 @@ void Rebind_Values_Deep(
 ) {
     RELVAL *v = head;
     for (; NOT_END(v); ++v) {
-        if (ANY_ARRAY(v)) {
+        if (ANY_ARRAY_OR_PATH(v)) {
             Rebind_Values_Deep(src, dst, VAL_ARRAY_AT(v), opt_binder);
         }
         else if (ANY_WORD(v) and VAL_BINDING(v) == NOD(src)) {
@@ -469,7 +472,7 @@ void Virtual_Bind_Deep_To_New_Context(
                 ARR_LEN(VAL_ARRAY(body_in_out)), // tail
                 0, // extra
                 ARRAY_FLAG_FILE_LINE, // flags
-                TS_ARRAY // types to copy deeply
+                TS_ARRAY | TS_PATH // types to copy deeply
             )
         );
     }

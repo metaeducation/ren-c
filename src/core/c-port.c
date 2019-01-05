@@ -321,13 +321,14 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
     REBARR *code_arr = Make_Arr(FRM_NUM_ARGS(f)); // max, e.g. no refines
     RELVAL *code = ARR_HEAD(code_arr);
 
-    // The first element of our path will be the ACTION!, followed by its
-    // refinements...which in the worst case, all args will be refinements:
+    // !!! For the moment, if refinements are needed we generate a PATH! with
+    // the ACTION! at the head, and have the evaluator rediscover the stack
+    // of refinements.  This would be better if we left them on the stack
+    // and called into the evaluator with Begin_Action() already in progress
+    // on a new frame.  Improve when time permits.
     //
-    REBARR *path_arr = Make_Arr(FRM_NUM_ARGS(f) + 1);
-    RELVAL *path = ARR_HEAD(path_arr);
-    Init_Action_Unbound(path, run); // !!! What if there's a binding?
-    ++path;
+    REBDSP dsp_orig = DSP; // we push refinements as we find them
+    Move_Value(DS_PUSH(), ACT_ARCHETYPE(run)); // !!! Review: binding?
 
     assert(IS_END(f->param)); // okay to reuse, if it gets put back...
     f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
@@ -359,8 +360,7 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
 
             assert(IS_REFINEMENT(f->arg));
             ignoring = false;
-            Init_Word(path, VAL_PARAM_SPELLING(f->param));
-            ++path;
+            Init_Word(DS_PUSH(), VAL_PARAM_SPELLING(f->param));
             continue;
         }
 
@@ -375,8 +375,13 @@ bool Redo_Action_Throws(REBFRM *f, REBACT *run)
     MANAGE_ARRAY(code_arr);
 
     DECLARE_LOCAL (first);
-    TERM_ARRAY_LEN(path_arr, path - ARR_HEAD(path_arr));
-    Init_Path(first, path_arr);
+    if (DSP == dsp_orig + 1) { // no refinements, just use ACTION!
+        DS_DROP_TO(dsp_orig);
+        Move_Value(first, ACT_ARCHETYPE(run));
+    }
+    else
+        Init_Path(first, Pop_Stack_Values(dsp_orig));
+
     SET_VAL_FLAG(first, VALUE_FLAG_EVAL_FLIP); // make the PATH! invoke action
 
     // Invoke DO with the special mode requesting non-evaluation on all

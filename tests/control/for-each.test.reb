@@ -188,3 +188,10 @@
     ]
 )
 
+;; paths are immutable, but for-each is legal on them
+
+(
+    [a b c] = collect [for-each x 'a/b/c [keep x]]
+)(
+    [_ _] = collect [for-each x '/ [keep x]]
+)

@@ -81,10 +81,10 @@ emit-include-params-macro: function [
     n: 1
     items: try collect [
         for-each item paramlist [
-            if any [
+            any [
                 not match [any-word! lit-word!] item
                 set-word? item
-            ][
+            ] then [
                 continue
             ]
 

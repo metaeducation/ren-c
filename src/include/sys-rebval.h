@@ -379,13 +379,7 @@ struct Reb_Quoted_Payload {
 
 
 struct Reb_Series_Payload {
-    //
-    // `series` represents the actual physical underlying data, which is
-    // essentially a vector of equal-sized items.  The length of the item
-    // (the series "width") is kept within the REBSER abstraction.  See the
-    // file %sys-series.h for notes.
-    //
-    REBSER *series;
+    REBSER *series; // vector of equal-sized items, see %sys-series.h
 
     // `index` is the 0-based position into the series represented by this
     // ANY-VALUE! (so if it is 0 then that means a Rebol index of 1).

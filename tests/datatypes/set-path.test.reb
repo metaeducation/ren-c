@@ -6,12 +6,16 @@
 [#1947
     (set-path? load "#[set-path! [[a] 1]]")
 ]
-(
-    all [
-        set-path? a: load "#[set-path! [[a b c] 2]]"
-        2 == index? a
-    ]
-)
+
+;; ANY-PATH! are no longer positional
+;;
+;;(
+;;    all [
+;;        set-path? a: load "#[set-path! [[a b c] 2]]"
+;;        2 == index? a
+;;    ]
+;;)
+
 ("a/b:" = mold first [a/b:])
 ; set-paths are active
 (

@@ -71,7 +71,11 @@
     }
 
     inline static REBSPC *VAL_SPECIFIER(const REBCEL *v) {
-        assert(ANY_ARRAY_KIND(CELL_KIND(v)));
+        if (ANY_PATH_KIND(CELL_KIND(v)))
+            assert(v->payload.any_series.index == 0);
+        else
+            assert(ANY_ARRAY_KIND(CELL_KIND(v)));
+
         if (not v->extra.binding)
             return SPECIFIED;
 
@@ -633,7 +637,7 @@ inline static REBVAL *Derelativize(
 
       #if !defined(NDEBUG)
         enum Reb_Kind kind = CELL_KIND(VAL_UNESCAPED(v));
-        assert(ANY_WORD_KIND(kind) or ANY_ARRAY_KIND(kind));
+        assert(ANY_WORD_KIND(kind) or ANY_ARRAY_OR_PATH_KIND(kind));
 
         if (not specifier) {
             printf("Relative item used with SPECIFIED\n");

@@ -4,9 +4,12 @@
 [#1947
     (get-path? load "#[get-path! [[a] 1]]")
 ]
-(
-    all [
-        get-path? a: load "#[get-path! [[a b c] 2]]"
-        2 == index? a
-    ]
-)
+
+;; ANY-PATH! are no longer positional
+;;
+;;(
+;;    all [
+;;        get-path? a: load "#[get-path! [[a b c] 2]]"
+;;        2 == index? a
+;;    ]
+;;)

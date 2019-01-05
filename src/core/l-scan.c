@@ -1969,12 +1969,11 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             break; }
 
         case TOKEN_PATH:
-            if (ss->mode_char != '/') {
-                //
-                // If not in the process of scanning a path, this is a 0
-                // element path, so push it.
-                //
-                Init_Path(DS_PUSH(), Make_Arr(0));
+            if (ss->mode_char != '/') { // saw slash while not scanning path
+                REBARR *a = Make_Arr(2); // meaning is actually BLANK!/BLANK!
+                Init_Blank(Alloc_Tail_Array(a));
+                Init_Blank(Alloc_Tail_Array(a));
+                Init_Path(DS_PUSH(), a); // must be a minimal path (`/`)
             }
             break;
 
@@ -2084,12 +2083,9 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
                 fail (Error_Syntax(ss));
             break;
 
-        case TOKEN_STRING: {
-            //
-            // During scan above, string was stored in MOLD_BUF (UTF-8)
-            //
+        case TOKEN_STRING: // UTF-8 was pre-scanned above, and put in MOLD_BUF
             Init_Text(DS_PUSH(), Pop_Molded_String(mo));
-            break; }
+            break;
 
         case TOKEN_BINARY:
             if (ep != Scan_Binary(DS_PUSH(), bp, len))
@@ -2295,11 +2291,12 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
                 or *ss->begin == ';' // `foo/;--bar`
             ){
                 arr = Make_Arr_Core(
-                    1,
+                    2,
                     NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE
                 );
                 Append_Value(arr, DS_TOP);
                 DS_DROP();
+                Init_Blank(Alloc_Tail_Array(arr));
             }
             else {
               #if !defined(NDEBUG)

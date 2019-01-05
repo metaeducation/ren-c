@@ -430,6 +430,8 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_BLOCK:
               case REB_GROUP:
               case REB_PATH:
+              case REB_SET_PATH:
+              case REB_GET_PATH:
                 Derelativize(
                     var,
                     ARR_AT(ARR(les->data_ser), les->data_idx),
@@ -681,6 +683,11 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         else if (ANY_CONTEXT(les.data)) {
             les.data_ser = SER(CTX_VARLIST(VAL_CONTEXT(les.data)));
             les.data_idx = 1;
+        }
+        else if (ANY_PATH(les.data)) {
+            les.data_ser = VAL_SERIES(les.data);
+            assert(VAL_INDEX(les.data) == 0);
+            les.data_idx = 0;
         }
         else if (IS_MAP(les.data)) {
             les.data_ser = VAL_SERIES(les.data);
@@ -1045,16 +1052,17 @@ REBNATIVE(cycle)
 //
 //  for-each: native [
 //
-//  "Evaluates a block for each value(s) in a series."
+//  {Evaluates a block for each value(s) in a series.}
 //
-//      return: [<opt> any-value!]
-//          {Last body result, or null if BREAK}
-//      'vars [word! lit-word! block!]
-//          "Word or block of words to set each time, no new var if LIT-WORD!"
-//      data [<blank> any-series! any-context! map! datatype! action!]
-//          "The series to traverse"
-//      body [block! action!]
-//          "Block to evaluate each time"
+//      return: "Last body result, or null if BREAK"
+//          [<opt> any-value!]
+//      'vars "Word or block of words to set each time, no new var if quoted"
+//          [word! 'word! block!]
+//      data "The series to traverse"
+//          [<blank> any-series! any-context! map! any-path!
+//           datatype! action!] ;-- experimental
+//      body "Block to evaluate each time"
+//          [block! action!]
 //  ]
 //
 REBNATIVE(for_each)
@@ -1480,7 +1488,7 @@ REBNATIVE(remove_each)
 //          {Collected block (BREAK/WITH can add a final result to block)}
 //      'vars [word! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<blank> any-series! action!]
+//      data [<blank> any-series! any-path! action!]
 //          "The series to traverse"
 //      body [block!]
 //          "Block to evaluate each time"
