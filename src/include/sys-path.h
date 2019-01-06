@@ -73,6 +73,16 @@
 // been updated during investigation of what was being done.
 //
 
+// Note that paths can be initialized with an array, which they will then
+// take as immutable...or you can create a `/foo`-style path in a more
+// optimized fashion using Refinify()
+
+#define Init_Any_Path(v,k,a) \
+    Init_Any_Path_At_Core((v), (k), (a), 0, nullptr)
+
+#define Init_Path(v,a) \
+    Init_Any_Path((v), REB_PATH, (a))
+
 #define PVS_OPT_SETVAL(pvs) \
     pvs->special
 
@@ -168,4 +178,40 @@ inline static void Set_Path_Core(
     )){
         panic (out); // shouldn't be possible, no executions!
     }
+}
+
+
+// Ren-C has no REFINEMENT! datatype, so `/foo` is a PATH!, which generalizes
+// to where `/foo/bar` is a PATH! as well, etc.
+//
+// !!! Optimizations are planned to allow single element paths to fit in just
+// *one* array cell.  This will make use of the fourth header byte, to
+// encode when the type byte is a container for what is inside.  Use of this
+// routine to mutate cells into refinements marks places where that will
+// be applied.
+//
+inline static REBVAL *Refinify(REBVAL *v) {
+    //
+    // Making something into a refinement is not a generically applicable
+    // operation like Quotify that you can do any number of times.  Note
+    // you can't put paths in paths in the first place.
+    //
+    assert(CELL_KIND(VAL_UNESCAPED(v)) != REB_PATH);
+
+    REBARR *a = Make_Arr(2);
+    Init_Blank(Alloc_Tail_Array(a));
+    Move_Value(Alloc_Tail_Array(a), v);
+    return Init_Path(v, a);
+}
+
+inline static bool IS_REFINEMENT(const RELVAL *v) {
+    return IS_PATH(v)
+        and VAL_LEN_HEAD(v) == 2
+        and IS_BLANK(VAL_ARRAY_AT_HEAD(v, 0))
+        and IS_WORD(VAL_ARRAY_AT_HEAD(v, 1));
+}
+
+inline static REBSTR *VAL_REFINEMENT_SPELLING(const RELVAL *v) {
+    assert(IS_REFINEMENT(v));
+    return VAL_WORD_SPELLING(VAL_ARRAY_AT_HEAD(v, 1));
 }

@@ -133,9 +133,6 @@ inline static REBVAL *Init_Any_Word(
 #define Init_Set_Word(out,spelling) \
     Init_Any_Word((out), REB_SET_WORD, (spelling))
 
-#define Init_Refinement(out,spelling) \
-    Init_Any_Word((out), REB_REFINEMENT, (spelling))
-
 #define Init_Issue(out,spelling) \
     Init_Any_Word((out), REB_ISSUE, (spelling))
 

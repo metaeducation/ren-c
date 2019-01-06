@@ -34,6 +34,33 @@
 
 
 //
+//  Init_Any_Path_At_Core: C
+//
+REBVAL *Init_Any_Path_At_Core(
+    RELVAL *out,
+    enum Reb_Kind kind,
+    REBARR *a,
+    REBCNT index,
+    REBNOD *binding
+){
+    assert(ANY_PATH_KIND(kind));
+    ENSURE_SERIES_MANAGED(SER(a));
+    ASSERT_SERIES_TERM(SER(a));
+    assert(index == 0); // !!! current rule
+ 
+    RESET_CELL(out, kind);
+    PAYLOAD(Series, out).rebser = SER(a);
+    VAL_INDEX(out) = index;
+    INIT_BINDING(out, binding);
+
+    if (ARR_LEN(a) < 2)
+        panic (a);
+
+    return KNOWN(out);
+}
+
+
+//
 //  PD_Fail: C
 //
 // In order to avoid having to pay for a check for NULL in the path dispatch
@@ -317,6 +344,8 @@ bool Eval_Path_Throws_Core(
     const REBVAL *opt_setval, // Note: may be the same as out!
     REBFLGS flags
 ){
+    assert(index == 0); // !!! current rule, immutable proxy w/AS may relax it
+
     if (flags & EVAL_FLAG_SET_PATH_ENFIXED)
         assert(opt_setval); // doesn't make any sense for GET-PATH! or PATH!
 
@@ -340,7 +369,7 @@ bool Eval_Path_Throws_Core(
     if (ANY_INERT(ARR_AT(array, index))) {
         if (opt_setval)
             fail ("Can't perform SET_PATH! on path with inert head");
-        Init_Any_Array_At(out, REB_PATH, array, index);
+        Init_Any_Path_At_Core(out, REB_PATH, array, index, nullptr);
         return false;
     }
 
@@ -958,7 +987,7 @@ REB_R MAKE_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (ARR_LEN(arr) < 2) // !!! Should pass produced array as BLOCK! to error
         fail ("MAKE PATH! must produce path of at least length 2");
 
-    return Init_Any_Array(out, kind, arr);
+    return Init_Any_Path(out, kind, arr);
 }
 
 
@@ -993,7 +1022,7 @@ REB_R TO_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (DSP - dsp_orig < 2)
         fail ("TO PATH! must produce a path of at least length 2");
 
-    return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
+    return Init_Any_Path(out, kind, Pop_Stack_Values(dsp_orig));
 }
 
 

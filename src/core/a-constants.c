@@ -123,13 +123,13 @@ const char * const Token_Names[] = {
     "integer",
     "decimal",
     "percent",
-    "money",
     "get-group-begin",
     "group-end",
     "group-begin",
     "get-block-begin",
     "block-end",
     "block-begin",
+    "money",
     "time",
     "date",
     "char",
@@ -144,7 +144,6 @@ const char * const Token_Names[] = {
     "issue",
     "tag",
     "path",
-    "refine",
     "construct",
     NULL
 };

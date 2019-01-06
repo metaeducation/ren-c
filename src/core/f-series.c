@@ -429,7 +429,6 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool is_case)
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:
-      case REB_REFINEMENT:
       case REB_ISSUE:
         return Compare_Word(s,t,is_case);
 

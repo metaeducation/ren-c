@@ -1133,7 +1133,7 @@ REBNATIVE(default)
                 }
             }
             TERM_ARRAY_LEN(composed, VAL_LEN_AT(target));
-            Init_Any_Array(target, REB_SET_PATH, composed);
+            Init_Any_Path(target, REB_SET_PATH, composed);
         }
 
         if (Eval_Path_Throws_Core(

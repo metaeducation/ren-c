@@ -199,6 +199,7 @@ literal ;-- should both LIT and LITERAL be supported, or just LIT?
 lit
 lit-word! ;-- !!! compatibility hack; not a DATATYPE!, so parse keyword
 lit-path! ;-- !!! compatibility hack; not a DATATYPE!, so parse keyword
+refinement! ;-- !!! compatibility hack; not a DATATYPE!, so parse keyword
 match
 do
 into

@@ -182,7 +182,7 @@ REBCTX *Make_Context_For_Action_Int_Partials(
         }
 
         if (IS_REFINEMENT(special)) { // specialized REFINEMENT! => "in use"
-            Init_Refinement(arg, VAL_PARAM_SPELLING(param));
+            Refinify(Init_Word(arg, VAL_PARAM_SPELLING(param)));
             SET_CELL_FLAG(arg, ARG_MARKED_CHECKED);
             goto continue_specialized;
         }
@@ -534,14 +534,14 @@ bool Specialize_Action_Throws(
                 or (
                     IS_REFINEMENT(refine)
                     and (
-                        VAL_WORD_SPELLING(refine)
+                        VAL_REFINEMENT_SPELLING(refine)
                         == VAL_PARAM_SPELLING(param)
                     )
                 )
             );
 
             if (IS_TRUTHY(refine))
-                Init_Refinement(refine, VAL_PARAM_SPELLING(param));
+                Refinify(Init_Word(refine, VAL_PARAM_SPELLING(param)));
             else
                 Init_Blank(arg);
 
@@ -746,14 +746,14 @@ bool Specialize_Action_Throws(
         }
 
         if (KIND_BYTE(partial) != REB_X_PARTIAL_SAW_NULL_ARG) { // filled
-            Init_Refinement(
+            Refinify(Init_Word(
                 partial,
                 VAL_PARAM_SPELLING(
                     rootkey + ((PAYLOAD(Partial, partial).signed_index > 0)
                             ? PAYLOAD(Partial, partial).signed_index
                             : -(PAYLOAD(Partial, partial).signed_index))
                 )
-            );
+            ));
             SET_CELL_FLAG(partial, ARG_MARKED_CHECKED);
             goto continue_loop;
         }

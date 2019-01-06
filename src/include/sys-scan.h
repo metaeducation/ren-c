@@ -52,13 +52,13 @@ enum Reb_Token {
     TOKEN_INTEGER,
     TOKEN_DECIMAL,
     TOKEN_PERCENT,
-    TOKEN_MONEY,
     TOKEN_GET_GROUP_BEGIN, // should equal REB_GET_GROUP
     TOKEN_GROUP_END,
     TOKEN_GROUP_BEGIN, // should equal REB_GROUP
     TOKEN_GET_BLOCK_BEGIN, // should equal REB_GET_BLOCK
     TOKEN_BLOCK_END,
     TOKEN_BLOCK_BEGIN, // should equal REB_BLOCK
+    TOKEN_MONEY,
     TOKEN_TIME,
     TOKEN_DATE,
     TOKEN_CHAR,
@@ -73,7 +73,6 @@ enum Reb_Token {
     TOKEN_ISSUE,
     TOKEN_TAG,
     TOKEN_PATH,
-    TOKEN_REFINE,
     TOKEN_CONSTRUCT,
     TOKEN_MAX
 };

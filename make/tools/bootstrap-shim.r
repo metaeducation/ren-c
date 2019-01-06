@@ -43,6 +43,7 @@ REBOL [
 trap [
     func [i [<blank> integer!]] [...]
 ] else [
+    refinement-second: :second  ; Refinements aren't PATH! in older Ren-CC
     QUIT
 ]
 
@@ -133,3 +134,5 @@ join-of: func [] [
         https://forum.rebol.info/t/its-time-to-join-together/1030
     ]
 ]
+
+refinement-second: func [v [refinement!]] [as word! v]

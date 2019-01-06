@@ -365,7 +365,6 @@ static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v)
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:
-      case REB_REFINEMENT:
       case REB_ISSUE: {
         REBSTR *spelling = PAYLOAD(Word, v).spelling;
 

@@ -111,17 +111,6 @@
     error? trap [strict-equal? a-value b-value]
     true
 )]
-[#1068 #1066 (
-    a-value: first ['a/b]
-    parse :a-value [b-value: end]
-    strict-equal? :a-value :b-value
-)]
-; symmetry
-(
-    a-value: first ['a/b]
-    parse :a-value [b-value: end]
-    equal? strict-equal? :a-value :b-value strict-equal? :b-value :a-value
-)
 (not strict-equal? [] blank)
 ; symmetry
 (equal? strict-equal? [] blank strict-equal? blank [])
@@ -145,17 +134,6 @@
 (
     a-value: 'a/b
     parse a-value [b-value: end]
-    equal? strict-equal? :a-value :b-value strict-equal? :b-value :a-value
-)
-[#1068 #1066 (
-    a-value: first [a/b:]
-    parse :a-value [b-value: end]
-    strict-equal? :a-value :b-value
-)]
-; symmetry
-(
-    a-value: first [a/b:]
-    parse :a-value [b-value: end]
     equal? strict-equal? :a-value :b-value strict-equal? :b-value :a-value
 )
 (not strict-equal? any-number! integer!)

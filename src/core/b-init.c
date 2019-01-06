@@ -289,6 +289,13 @@ static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     Init_Datatype(lit_path, REB_PATH);
     Quotify(lit_path, 1);
 
+    REBVAL *refinement = Append_Context(
+        Lib_Context,
+        nullptr,
+        Canon(SYM_REFINEMENT_X)
+    );
+    Init_Datatype(refinement, REB_PATH); // imprecise, paths not all refines
+
     return catalog;
 }
 

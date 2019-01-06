@@ -289,7 +289,8 @@ REBVAL *Init_Any_Series_At_Core(
     REBSER *s,
     REBCNT index,
     REBNOD *binding
-) {
+){
+    assert(ANY_SERIES_KIND(type));
     ENSURE_SERIES_MANAGED(s);
 
     if (type != REB_IMAGE and type != REB_VECTOR) {
@@ -321,10 +322,6 @@ REBVAL *Init_Any_Series_At_Core(
     }
     else if (type == REB_BINARY) {
         if (SER_WIDE(s) != 1)
-            panic (s);
-    }
-    else if (ANY_PATH_KIND(type)) {
-        if (ARR_LEN(ARR(s)) < 2)
             panic (s);
     }
   #endif

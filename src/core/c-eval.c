@@ -1004,7 +1004,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
                 if (IS_REFINEMENT(f->special)) {
                     assert(
-                        VAL_WORD_SPELLING(f->special)
+                        VAL_REFINEMENT_SPELLING(f->special)
                         == VAL_PARAM_SPELLING(f->param)
                     ); // !!! Maybe not, if REDESCRIBE renamed args, but...
                     f->refine = f->arg;
@@ -1087,7 +1087,7 @@ bool Eval_Core_Throws(REBFRM * const f)
               used_refinement:;
 
                 assert(not IS_POINTER_TRASH_DEBUG(f->refine)); // must be set
-                Init_Refinement(f->arg, VAL_PARAM_SPELLING(f->param));
+                Refinify(Init_Word(f->arg, VAL_PARAM_SPELLING(f->param)));
                 SET_CELL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
             }
@@ -1576,7 +1576,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             assert(IS_ISSUE(DS_TOP));
 
             if (not IS_WORD_BOUND(DS_TOP)) { // the loop didn't index it
-                mutable_KIND_BYTE(DS_TOP) = REB_REFINEMENT;
+                mutable_KIND_BYTE(DS_TOP) = REB_WORD;
                 fail (Error_Bad_Refine_Raw(DS_TOP)); // so duplicate or junk
             }
 
@@ -1593,7 +1593,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             assert(
                 IS_REFINEMENT(f->refine)
                 and (
-                    VAL_WORD_SPELLING(f->refine)
+                    VAL_REFINEMENT_SPELLING(f->refine)
                     == VAL_PARAM_SPELLING(f->param - 1)
                 )
             );
@@ -2002,7 +2002,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
 //==//// INERT WORD AND STRING TYPES /////////////////////////////////////==//
 
-    case REB_REFINEMENT:
     case REB_ISSUE:
         // ^-- ANY-WORD!
         goto inert;

@@ -116,12 +116,6 @@
     parse :a-value [b-value: end]
     same? :a-value :b-value
 )]
-; symmetry
-(
-    a-value: first ['a/b]
-    parse :a-value [b-value: end]
-    equal? same? :a-value :b-value same? :b-value :a-value
-)
 (not same? [] blank)
 ; symmetry
 (equal? same? [] blank same? blank [])
@@ -145,17 +139,6 @@
 (
     a-value: 'a/b
     parse a-value [b-value: end]
-    equal? same? :a-value :b-value same? :b-value :a-value
-)
-[#1068 #1066 (
-    a-value: first [a/b:]
-    parse :a-value [b-value: end]
-    same? :a-value :b-value
-)]
-; symmetry
-(
-    a-value: first [a/b:]
-    parse :a-value [b-value: end]
     equal? same? :a-value :b-value same? :b-value :a-value
 )
 (not same? any-number! integer!)

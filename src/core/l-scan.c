@@ -1153,35 +1153,6 @@ acquisition_loop:
         case LEX_DELIMIT_SLASH:
             assert(*cp == '/');
             ++cp;
-            if (
-                IS_LEX_WORD_OR_NUMBER(*cp)
-                or *cp == '+'
-                or *cp == '-'
-                or *cp == '.'
-                or *cp == '|'
-                or *cp == '_'
-            ){
-                // ///refine not allowed
-                if (ss->begin + 1 != cp) {
-                    ss->end = cp;
-                    ss->token = TOKEN_REFINE;
-                    fail (Error_Syntax(ss));
-                }
-                ss->begin = cp;
-                TRASH_POINTER_IF_DEBUG(ss->end);
-                flags = Prescan_Token(ss);
-                ss->begin--;
-                ss->token = TOKEN_REFINE;
-                // Fast easy case:
-                if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
-                    return;
-                goto scanword;
-            }
-            if (cp[0] == '<' or cp[0] == '>') {
-                ss->end = cp + 1;
-                ss->token = TOKEN_REFINE;
-                fail (Error_Syntax(ss));
-            }
             ss->end = cp;
             ss->token = TOKEN_PATH;
             return;
@@ -1927,11 +1898,6 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             );
             break;
 
-          case TOKEN_REFINE: {
-            REBSTR *spelling = Intern_UTF8_Managed(bp + 1, len - 1);
-            Init_Refinement(DS_PUSH(), spelling);
-            break; }
-
           case TOKEN_ISSUE:
             if (ep != Scan_Issue(DS_PUSH(), bp + 1, len - 1))
                 fail (Error_Syntax(ss));
@@ -1991,17 +1957,50 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             break; }
 
         case TOKEN_PATH:
-            if (ss->mode_char != '/') { // saw slash while not scanning path
-                REBARR *a = Make_Arr(2); // meaning is actually BLANK!/BLANK!
-                Init_Blank(Alloc_Tail_Array(a));
-                Init_Blank(Alloc_Tail_Array(a));
-                Init_Path(DS_PUSH(), a); // must be a minimal path (`/`)
+            if (*ss->end == '\0' or IS_LEX_SPACE(*ss->end)) {
+                //
+                // This means you have something like `/`, `foo//`, `///`...
+                // Basically you don't expect to see a TOKEN_PATH while doing
+                // a path scan unless you wind up at the end.
+                //
+                if (ss->mode_char == '/') {
+                    Init_Blank(DS_PUSH());
+                    Init_Blank(DS_PUSH());
+                    goto loop;
+                }
+
+                // Handle the simple `/` case
+
+                REBARR *a = Make_Arr(2);
+                Init_Blank(ARR_AT(a, 0));
+                Init_Blank(ARR_AT(a, 1));
+                TERM_ARRAY_LEN(a, 2);
+                Init_Path(DS_PUSH(), a);
+                break;
             }
-            break;
+
+            Init_Blank(DS_PUSH()); // implicitly imagine blank per slash
+
+            if (*ss->begin == '\0' or IS_LEX_SPACE(*ss->begin)) {
+                Init_Blank(DS_PUSH());
+                break;
+            }
+
+            if (ss->mode_char != '/') // saw slash(es) while not scanning path
+                goto scan_path_head_is_DS_TOP;
+
+            goto loop; // otherwise, we were scanning a path already
 
           case TOKEN_BLOCK_END: {
             if (ss->mode_char == ']')
                 goto array_done;
+
+            if (ss->mode_char == '/') { // implicit end, such as `[lit /]`
+                Init_Blank(DS_PUSH());
+                --ss->begin;
+                --ss->end;
+                goto array_done;
+            }
 
             if (ss->mode_char != '\0') // expected e.g. `)` before the `]`
                 fail (Error_Mismatch(ss, ss->mode_char, ']'));
@@ -2013,6 +2012,13 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
           case TOKEN_GROUP_END: {
             if (ss->mode_char == ')')
                 goto array_done;
+
+            if (ss->mode_char == '/') { // implicit end, such as `(lit /)`
+                Init_Blank(DS_PUSH());
+                --ss->begin;
+                --ss->end;
+                goto array_done;
+            }
 
             if (ss->mode_char != '\0') // expected e.g. ']' before the ')'
                 fail (Error_Mismatch(ss, ss->mode_char, ')'));
@@ -2287,12 +2293,23 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             }
         }
 
-        // Check for end of path:
         if (ss->mode_char == '/') {
-            if (*ep != '/')
+            if (*ep != '/')  // e.g. `a/b`, just finished scanning b
                 goto array_done;
 
-            ep++;
+            ++ep;
+
+            if (*ep == '\0' or IS_LEX_SPACE(*ep)) {  // e.g. `/a/`
+                Init_Blank(DS_PUSH());  // `/a/` is path form of [_ a _]
+                ss->begin = ep;
+                goto array_done;
+            }
+
+            if (*ep == '/') {
+                ss->begin = ep;
+                goto loop;
+            }
+
             if (*ep != '(' and *ep != '[' and IS_LEX_DELIMIT(*ep)) {
                 ss->token = TOKEN_PATH;
                 fail (Error_Syntax(ss));
@@ -2306,37 +2323,29 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
 
             ++ss->begin;
 
-            REBARR *arr;
+          scan_path_head_is_DS_TOP:;
+
+            REBDSP dsp_path_head = DSP;
+
             if (
                 *ss->begin == '\0' // `foo/`
                 or IS_LEX_ANY_SPACE(*ss->begin) // `foo/ bar`
                 or *ss->begin == ';' // `foo/;--bar`
             ){
-                arr = Make_Arr_Core(
-                    2,
-                    NODE_FLAG_MANAGED | ARRAY_FLAG_HAS_FILE_LINE
-                );
-                Append_Value(arr, DS_TOP);
-                DS_DROP();
-                Init_Blank(Alloc_Tail_Array(arr));
+                // Don't bother scanning recursively if we don't have to.
+                // Note we still might come up empty (e.g. `foo/)`)
             }
             else {
-              #if !defined(NDEBUG)
-                REBDSP dsp_check = DSP;
-              #endif
+                REBYTE saved_mode_char = ss->mode_char;
 
-                // When `mode_char` is '/', the scan needs to steal the last
-                // pushed item from us...as it's the head of the path it
-                // couldn't see coming in the future.
+                ss->mode_char = '/';
+                if (ss->opts & SCAN_FLAG_RELAX)
+                    Scan_To_Stack_Relaxed(ss);
+                else
+                    Scan_To_Stack(ss);
 
-                arr = Scan_Child_Array(ss, '/');
-
-              #if !defined(NDEBUG)
-                assert(DSP == dsp_check - 1); // should only take one!
-              #endif
+                ss->mode_char = saved_mode_char;
             }
-
-            DS_PUSH(); // now push a path to take the stolen token's place
 
             // Any trailing colons should have been left on, because the child
             // scan noticed the mode_char was '/' and that we'd want it for
@@ -2346,25 +2355,69 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             // plain XXX! and make this a GET-PATH!, and also check for
             // conflicts if there's a colon at the end and making a SET-PATH!
 
-            RELVAL *head = ARR_HEAD(arr);
-            REBYTE kind_head = KIND_BYTE(head);
+            if (DSP - dsp_path_head == 0) { // nothing more added
+                //
+                // !!! Currently there is no special case optimization for
+                // leading paths with a tail blank.  It could perhaps be
+                // done by cutting out the allowance of escaping levels as
+                // meaning for the kind byte.  Not a priority.
+                //
+                REBARR *a = Make_Arr_Core(2, NODE_FLAG_MANAGED);
+                MISC(a).line = ss->line;
+                LINK(a).file = ss->file;
+                SET_ARRAY_FLAG(a, HAS_FILE_LINE);
 
-            if (ANY_GET_KIND(kind_head)) {
-                if (ss->begin and *ss->end == ':')
-                    fail (Error_Syntax(ss)); // for instance `:a/b/c:`
-
-                RESET_VAL_HEADER(DS_TOP, REB_GET_PATH);
-                mutable_KIND_BYTE(head) = UNGETIFY_ANY_GET_KIND(kind_head);
+                Append_Value(a, DS_TOP); // may be BLANK!
+                Init_Blank(Alloc_Tail_Array(a));
+                Init_Path(DS_TOP, a);
             }
-            else if (ss->begin and *ss->end == ':') {
-                RESET_VAL_HEADER(DS_TOP, REB_SET_PATH);
-                ss->begin = ++ss->end;
-            }
-            else
-                RESET_VAL_HEADER(DS_TOP, REB_PATH);
+            else if (
+                DSP - dsp_path_head == 1 // one more item added
+                and IS_BLANK(DS_AT(dsp_path_head))
+            ){
+                // This is the optimized case where we use a single cell to
+                // represent a path with a blank at the head like /FOO.  So
+                // move the one value we scanned into the position we want
+                // and apply the optimization.
 
-            INIT_VAL_ARRAY(DS_TOP, arr);
-            VAL_INDEX(DS_TOP) = 0;
+                Refinify(Move_Value(DS_TOP - 1, DS_TOP));
+                DS_DROP();
+            }
+            else {
+                REBFLGS flags = NODE_FLAG_MANAGED;
+                if (ss->newline_pending)
+                    flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+
+                REBARR *a = Pop_Stack_Values_Core(
+                    dsp_path_head - 1, // stop popping right after head pop
+                    flags
+                );
+                MISC(a).line = ss->line;
+                LINK(a).file = ss->file;
+                SET_ARRAY_FLAG(a, HAS_FILE_LINE);
+
+                DS_PUSH();
+
+                RELVAL *head = ARR_HEAD(a);
+                REBYTE kind_head = KIND_BYTE(head);
+            
+                if (ANY_GET_KIND(kind_head)) {
+                    if (ss->begin and *ss->end == ':')
+                      fail (Error_Syntax(ss)); // for instance `:a/b/c:`
+
+                    RESET_VAL_HEADER(DS_TOP, REB_GET_PATH);
+                    mutable_KIND_BYTE(head) = UNGETIFY_ANY_GET_KIND(kind_head);
+                }
+                else if (ss->begin and *ss->end == ':') {
+                    RESET_VAL_HEADER(DS_TOP, REB_SET_PATH);
+                    ss->begin = ++ss->end;
+                }
+                else
+                    RESET_VAL_HEADER(DS_TOP, REB_PATH);
+
+                INIT_VAL_ARRAY(DS_TOP, a);
+                VAL_INDEX(DS_TOP) = 0;
+            }
 
             ss->token = TOKEN_PATH;
         }

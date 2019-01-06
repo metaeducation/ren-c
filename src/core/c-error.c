@@ -1159,7 +1159,7 @@ REBCTX *Error_Bad_Refine_Revoke(const RELVAL *param, const REBVAL *arg)
         --param;
 
     DECLARE_LOCAL (refine_name);
-    Init_Refinement(refine_name, VAL_PARAM_SPELLING(param));
+    Refinify(Init_Word(refine_name, VAL_PARAM_SPELLING(param)));
 
     if (IS_NULLED(arg)) // was void and shouldn't have been
         return Error_Bad_Refine_Revoke_Raw(refine_name, param_name);

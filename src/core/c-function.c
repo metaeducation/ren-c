@@ -48,7 +48,6 @@ static bool Params_Of_Hook(
     void *opaque
 ){
     struct Params_Of_State *s = cast(struct Params_Of_State*, opaque);
-    Reb_Param_Class pclass = VAL_PARAM_CLASS(param);
 
     if (not sorted_pass) { // first pass we just count unspecialized params
         ++s->num_visible;
@@ -60,25 +59,23 @@ static bool Params_Of_Hook(
         s->dest = ARR_HEAD(s->arr);
     }
 
-    enum Reb_Kind kind;
-    bool quoted = false;
+    REBSTR *spelling = VAL_PARAM_SPELLING(param);
 
-    switch (pclass) {
+    switch (VAL_PARAM_CLASS(param)) {
       case REB_P_NORMAL:
-        kind = REB_WORD;
+        Init_Any_Word(s->dest, REB_WORD, spelling);
         break;
 
       case REB_P_REFINEMENT:
-        kind = REB_REFINEMENT;
+        Refinify(Init_Word(s->dest, spelling));
         break;
 
       case REB_P_HARD_QUOTE:
-        kind = REB_GET_WORD;
+        Init_Any_Word(s->dest, REB_GET_WORD, spelling);
         break;
 
       case REB_P_SOFT_QUOTE:
-        kind = REB_WORD;
-        quoted = true;
+        Quotify(Init_Any_Word(s->dest, REB_WORD, spelling), 1);
         break;
 
       default:
@@ -86,11 +83,7 @@ static bool Params_Of_Hook(
         DEAD_END;
     }
 
-    Init_Any_Word(s->dest, kind, VAL_PARAM_SPELLING(param));
-    if (quoted)
-        Quotify(s->dest, 1);
     ++s->dest;
-
     return true;
 }
 
@@ -436,7 +429,9 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             spelling = VAL_WORD_SPELLING(cell);
             break; }
 
-          case REB_REFINEMENT:
+          case REB_PATH:
+            if (not IS_REFINEMENT(item))
+                fail ("PATH! argument must be like /REFINEMENT");
 
             // !!! If you say [<with> x /foo y] the <with> terminates and a
             // refinement is started.  Same w/<local>.  Is this a good idea?
@@ -446,8 +441,9 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             mode = SPEC_MODE_NORMAL;
 
             refinement_seen = true;
+
             pclass = REB_P_REFINEMENT;
-            spelling = VAL_WORD_SPELLING(item);
+            spelling = VAL_WORD_SPELLING(VAL_ARRAY_AT_HEAD(item, 1));
 
             // !!! The typeset bits of a refinement are not currently used.
             // They are checked for TRUE or FALSE but this is done literally

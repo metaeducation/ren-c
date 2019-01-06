@@ -211,23 +211,14 @@
 
 
 ; Should return the same series type as input (Rebol2 did not do this)
+; PATH! cannot be PARSE'd due to restrictions of the implementation
 (
-    a-value: first ['a/b]
-    parse a-value [b-value: end]
-    same? a-value b-value
+    a-value: first [a/b]
+    parse as block! a-value [b-value: end]
+    a-value = to path! b-value
 )
 (
     a-value: first [()]
-    parse a-value [b-value: end]
-    same? a-value b-value
-)
-(
-    a-value: 'a/b
-    parse a-value [b-value: end]
-    same? a-value b-value
-)
-(
-    a-value: first [a/b:]
     parse a-value [b-value: end]
     same? a-value b-value
 )

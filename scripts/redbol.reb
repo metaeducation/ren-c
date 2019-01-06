@@ -121,8 +121,9 @@ blankify-refinement-args: helper [
             case [
                 refinement? w [
                     seen-refinement: true
-                    if f/(to-word w) [
-                        f/(to-word w): true ;-- turn REFINEMENT! into #[true]
+                    w: ensure word! second w
+                    if f/(w) [
+                        f/(w): true ;-- turn refinement PATH! into #[true]
                     ]
                 ]
                 seen-refinement [ ;-- turn any null args into BLANK!s

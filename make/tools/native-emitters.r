@@ -82,16 +82,19 @@ emit-include-params-macro: function [
     items: try collect [
         for-each item paramlist [
             any [
-                not match [any-word! lit-word!] item
+                not match [any-word! refinement! lit-word!] item
                 set-word? item
             ] then [
                 continue
             ]
 
-            param-name: copy as text! item
             either refinement? item [
+                param-name: copy as text! refinement-second item
+
                 keep cscape/with {REFINE($<n>, ${param-name})} [n param-name]
             ][
+                param-name: copy as text! item
+
                 keep cscape/with {PARAM($<n>, ${param-name})} [n param-name]
             ]
             n: n + 1

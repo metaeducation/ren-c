@@ -247,10 +247,10 @@ REB_R PD_Word(
             return pvs->out;
         }
 
-        return R_UNHANDLED;
+        fail ("ANY-WORD! picking only supports INTEGER!, currently");
     }
 
-    return R_UNHANDLED;
+    fail ("Can't use ANY-WORD! with SET-PATH");
 }
 
 

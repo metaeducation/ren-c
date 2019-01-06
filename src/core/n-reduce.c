@@ -404,11 +404,11 @@ REBNATIVE(compose)
     if (GET_ARRAY_FLAG(VAL_ARRAY(ARG(value)), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
-    return Init_Any_Array(
-        D_OUT,
-        VAL_TYPE(ARG(value)),
-        Pop_Stack_Values_Core(dsp_orig, flags)
-    );
+    REBARR *popped = Pop_Stack_Values_Core(dsp_orig, flags);
+    if (ANY_PATH(ARG(value)))
+        return Init_Any_Path(D_OUT, VAL_TYPE(ARG(value)), popped);
+
+    return Init_Any_Array(D_OUT, VAL_TYPE(ARG(value)), popped);
 }
 
 

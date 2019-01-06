@@ -173,9 +173,9 @@
 ;
 [
     (/ref/inement/path = to path! [/ref inement path])
-    (/refinement/3 = to path! [/refinement 3])
-    ((/refinement)/3 = #"f")
-    (r: /refinement | r/3 = #"f")
+    (/refinement/2 = to path! [/refinement 2])
+    ((/refinement)/2 = 'refinement)
+    (r: /refinement | r/2 = 'refinement)
 ][
     (#iss/ue/path = to path! [#iss ue path])
     (#issue/3 = to path! [#issue 3])

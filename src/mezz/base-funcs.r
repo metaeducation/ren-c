@@ -146,9 +146,14 @@ function: func [
         <void> (append new-spec <void>)
     |
         ((either var [[
-            set var: match [any-word! 'word!] (
-                append exclusions var ;-- exclude args/refines
+            set var: [
+                match [any-word! 'word!]
+                | ahead path! into [blank! word!]
+            ](
                 append new-spec var
+
+                ;-- exclude args/refines
+                append exclusions either path? var [var/2] [var]
             )
             |
             set other: block! (
@@ -411,7 +416,12 @@ redescribe: function [
             )
         ]
         any [
-            set param: [word! | get-word! | lit-word! | refinement! | set-word!]
+            set param: [
+                word! | get-word! | lit-word! | set-word!
+                | ahead path! into [word! blank!]
+            ](
+                if path? param [param: param/1]
+            )
 
             ; It's legal for the redescribe to name a parameter just to
             ; show it's there for descriptive purposes without adding notes.

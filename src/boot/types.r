@@ -185,14 +185,14 @@ REBOL [
             ANY_NUMBER_KIND(KIND_BYTE(v))
 
         /* !!! Being able to locate inert types based on range *almost* works,
-         * but REB_ISSUE and REB_REFINEMENT want to be picked up as ANY-WORD!.
-         * This trick will have to be rethought, esp if words and strings
-         * get unified, but it's here to show how choosing these values
-         * carefully can help with speeding up tests.
+         * but REB_ISSUE wants to be picked up as ANY-WORD!.  This trick will
+         * have to be rethought, esp if words and strings get unified, but
+         * it's here to show how choosing these values carefully can help with
+         * speeding up tests.
          */
         inline static bool ANY_INERT_KIND(REBYTE k) {
             return (k >= REB_BLOCK and k <= REB_BLANK)
-                or k == REB_ISSUE or k == REB_REFINEMENT;
+                or k == REB_ISSUE;
         }
 
         #define ANY_INERT(v) \
@@ -301,9 +301,6 @@ set-word    "definition of a word's value"
             word        *       *       +       [word]
 
 word        "word (symbol or variable)"
-            word        *       *       +       [word]
-
-refinement  "variation of meaning or location"
             word        *       *       +       [word]
 
 issue       "identifying marker word"

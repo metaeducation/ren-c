@@ -528,9 +528,6 @@ inline static RELVAL *VAL_ARRAY_TAIL(const RELVAL *v) {
 #define Init_Group(v,s) \
     Init_Any_Array((v), REB_GROUP, (s))
 
-#define Init_Path(v,s) \
-    Init_Any_Array((v), REB_PATH, (s))
-
 
 // PATH! types will splice into each other, but not into a BLOCK! or GROUP!.
 // BLOCK! or GROUP! will splice into any other array:
