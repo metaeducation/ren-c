@@ -61,7 +61,7 @@ make object! compose [
                 "test returned null"
             ]
             error? :result [
-                to text! result/id
+                spaced ["error" any [to text! result/id | "w/no ID"]]
             ]
 
             elide (result: first result)

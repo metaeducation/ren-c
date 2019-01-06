@@ -601,6 +601,11 @@ static REBIXO Parse_One_Rule(
                     return pos + 1;
                 return END_FLAG;
             }
+            if (VAL_WORD_SYM(rule) == SYM_REFINEMENT_X) { // another hack...
+                if (IS_REFINEMENT(item))
+                    return pos + 1;
+                return END_FLAG;
+            }
             fail (Error_Parse_Rule());
 
           default:
@@ -1842,6 +1847,7 @@ REBNATIVE(subparse)
                 //
                 case SYM_LIT_WORD_X: // lit-word!
                 case SYM_LIT_PATH_X: // lit-path!
+                case SYM_REFINEMENT_X: // refinement!
                     i = Parse_One_Rule(f, P_POS, rule);
                     break;
 

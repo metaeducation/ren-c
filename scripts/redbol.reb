@@ -121,6 +121,7 @@ blankify-refinement-args: helper [
             case [
                 refinement? w [
                     seen-refinement: true
+                    w: refinement-word w
                     if f/(to-word w) [
                         f/(to-word w): true ;-- turn REFINEMENT! into #[true]
                     ]

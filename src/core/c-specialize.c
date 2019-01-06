@@ -525,7 +525,7 @@ bool Specialize_Action_Throws(
                 or (
                     IS_REFINEMENT(refine)
                     and (
-                        VAL_WORD_SPELLING(refine)
+                        VAL_REFINEMENT_SPELLING(refine)
                         == VAL_PARAM_SPELLING(param)
                     )
                 )

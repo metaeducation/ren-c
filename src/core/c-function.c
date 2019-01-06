@@ -44,29 +44,27 @@ REBARR *Make_Action_Words_Arr(REBACT *act, bool locals)
         if (Is_Param_Hidden(param)) // specialization hides parameters
             continue;
 
-        enum Reb_Kind kind;
-        bool quoted = false;
+        REBSTR *spelling = VAL_PARAM_SPELLING(param);
 
         switch (VAL_PARAM_CLASS(param)) {
           case PARAM_CLASS_NORMAL:
-            kind = REB_WORD;
+            Init_Any_Word(DS_PUSH(), REB_WORD, spelling);
             break;
 
           case PARAM_CLASS_TIGHT:
-            kind = REB_ISSUE;
+            Init_Any_Word(DS_PUSH(), REB_ISSUE, spelling);
             break;
 
           case PARAM_CLASS_REFINEMENT:
-            kind = REB_REFINEMENT;
+            Init_Refinement(DS_PUSH(), spelling);
             break;
 
           case PARAM_CLASS_HARD_QUOTE:
-            kind = REB_GET_WORD;
+            Init_Any_Word(DS_PUSH(), REB_GET_WORD, spelling);
             break;
 
           case PARAM_CLASS_SOFT_QUOTE:
-            kind = REB_WORD;
-            quoted = true;
+            Quotify(Init_Any_Word(DS_PUSH(), REB_WORD, spelling), 1);
             break;
 
           case PARAM_CLASS_LOCAL:
@@ -74,17 +72,13 @@ REBARR *Make_Action_Words_Arr(REBACT *act, bool locals)
             if (not locals)
                 continue; // treat as invisible, e.g. for WORDS-OF
 
-            kind = REB_SET_WORD;
+            Init_Any_Word(DS_PUSH(), REB_SET_WORD, spelling);
             break;
 
           default:
             assert(false);
             DEAD_END;
         }
-
-        Init_Any_Word(DS_PUSH(), kind, VAL_PARAM_SPELLING(param));
-        if (quoted)
-            Quotify(DS_TOP, 1);
     }
 
     return Pop_Stack_Values(dsp_orig);
@@ -381,7 +375,9 @@ REBARR *Make_Paramlist_Managed_May_Fail(
             spelling = VAL_WORD_SPELLING(cell);
             break; }
 
-          case REB_REFINEMENT:
+          case REB_PATH:
+            if (not IS_REFINEMENT(item))
+                fail ("PATH! argument must be like /REFINEMENT");
 
             // !!! If you say [<with> x /foo y] the <with> terminates and a
             // refinement is started.  Same w/<local>.  Is this a good idea?
@@ -392,7 +388,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 
             refinement_seen = true;
             pclass = PARAM_CLASS_REFINEMENT;
-            spelling = VAL_WORD_SPELLING(item);
+            spelling = VAL_WORD_SPELLING(VAL_ARRAY_AT_HEAD(item, 1));
 
             // !!! The typeset bits of a refinement are not currently used.
             // They are checked for TRUE or FALSE but this is done literally

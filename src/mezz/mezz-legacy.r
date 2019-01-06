@@ -205,7 +205,7 @@ applique: function [
         ]
 
         if refinement? params/1 [
-            using-args: did set (in frame params/1) :arg
+            using-args: did set (in frame refinement-word params/1) :arg
         ] else [
             if using-args [
                 set* (in frame params/1) :arg

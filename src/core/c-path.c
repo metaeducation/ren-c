@@ -332,18 +332,10 @@ bool Eval_Path_Throws_Core(
         return false;
     }
 
-    // Paths that start with inert values do not evaluate.  So `/foo/bar` has
-    // a REFINEMENT! at its head, and it will just be inert.  This also
-    // means that `/foo/1` is inert, as opposed to #"o".  Note that this
-    // is different from `(/foo)/1` or `ref: /foo | ref/1`, both of which
-    // would be #"o".
-    //
-    if (ANY_INERT(ARR_AT(array, index))) {
-        if (opt_setval)
-            fail ("Can't perform SET_PATH! on path with inert head");
-        Init_Any_Array_At(out, REB_PATH, array, index);
-        return false;
-    }
+    // !!! At one time, paths that started with inert values did not evaluate.
+    // With the addition of generalized quoting, this was no longer true.
+    // The evaluator behavior of `/foo` or `/foo/1` is not determined yet,
+    // so it is currently an error.
 
     DECLARE_FRAME (pvs);
 

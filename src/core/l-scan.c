@@ -1153,35 +1153,6 @@ acquisition_loop:
         case LEX_DELIMIT_SLASH:
             assert(*cp == '/');
             ++cp;
-            if (
-                IS_LEX_WORD_OR_NUMBER(*cp)
-                or *cp == '+'
-                or *cp == '-'
-                or *cp == '.'
-                or *cp == '|'
-                or *cp == '_'
-            ){
-                // ///refine not allowed
-                if (ss->begin + 1 != cp) {
-                    ss->end = cp;
-                    ss->token = TOKEN_REFINE;
-                    fail (Error_Syntax(ss));
-                }
-                ss->begin = cp;
-                TRASH_POINTER_IF_DEBUG(ss->end);
-                flags = Prescan_Token(ss);
-                ss->begin--;
-                ss->token = TOKEN_REFINE;
-                // Fast easy case:
-                if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
-                    return;
-                goto scanword;
-            }
-            if (cp[0] == '<' or cp[0] == '>') {
-                ss->end = cp + 1;
-                ss->token = TOKEN_REFINE;
-                fail (Error_Syntax(ss));
-            }
             ss->end = cp;
             ss->token = TOKEN_PATH;
             return;
@@ -1929,11 +1900,6 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             Init_Any_Word(DS_PUSH(), kind, spelling);
             break; }
 
-        case TOKEN_REFINE: {
-            REBSTR *spelling = Intern_UTF8_Managed(bp + 1, len - 1);
-            Init_Refinement(DS_PUSH(), spelling);
-            break; }
-
         case TOKEN_ISSUE:
             if (ep != Scan_Issue(DS_PUSH(), bp + 1, len - 1))
                 fail (Error_Syntax(ss));
@@ -1969,17 +1935,23 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             break; }
 
         case TOKEN_PATH:
-            if (ss->mode_char != '/') { // saw slash while not scanning path
-                REBARR *a = Make_Arr(2); // meaning is actually BLANK!/BLANK!
-                Init_Blank(Alloc_Tail_Array(a));
-                Init_Blank(Alloc_Tail_Array(a));
-                Init_Path(DS_PUSH(), a); // must be a minimal path (`/`)
-            }
-            break;
+            Init_Blank(DS_PUSH()); // implicitly imagine blank per slash
+
+            if (ss->mode_char != '/') // saw slash(es) while not scanning path
+                goto scan_path_head_is_DS_TOP;
+
+            break; // otherwise, we were scanning a path already
 
         case TOKEN_BLOCK_END: {
             if (ss->mode_char == ']')
                 goto array_done;
+
+            if (ss->mode_char == '/') { // implicit end, such as `[lit /]`
+                Init_Blank(DS_PUSH());
+                --ss->begin;
+                --ss->end;
+                goto array_done;
+            }
 
             if (ss->mode_char != '\0') // expected e.g. `)` before the `]`
                 fail (Error_Mismatch(ss, ss->mode_char, ']'));
@@ -1991,6 +1963,13 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
         case TOKEN_GROUP_END: {
             if (ss->mode_char == ')')
                 goto array_done;
+
+            if (ss->mode_char == '/') { // implicit end, such as `(lit /)`
+                Init_Blank(DS_PUSH());
+                --ss->begin;
+                --ss->end;
+                goto array_done;
+            }
 
             if (ss->mode_char != '\0') // expected e.g. ']' before the ')'
                 fail (Error_Mismatch(ss, ss->mode_char, ')'));
@@ -2284,6 +2263,8 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
 
             ++ss->begin;
 
+          scan_path_head_is_DS_TOP:;
+
             REBARR *arr;
             if (
                 *ss->begin == '\0' // `foo/`
@@ -2294,7 +2275,7 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
                     2,
                     NODE_FLAG_MANAGED | ARRAY_FLAG_FILE_LINE
                 );
-                Append_Value(arr, DS_TOP);
+                Append_Value(arr, DS_TOP); // may be BLANK!
                 DS_DROP();
                 Init_Blank(Alloc_Tail_Array(arr));
             }
@@ -2316,23 +2297,38 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
 
             DS_PUSH(); // now push a path to take the stolen token's place
 
-            if (IS_GET_WORD(ARR_HEAD(arr))) {
-                if (ss->begin and *ss->end == ':')
-                    fail (Error_Syntax(ss));
-                RESET_VAL_HEADER(DS_TOP, REB_GET_PATH);
-                mutable_KIND_BYTE(ARR_HEAD(arr)) = REB_WORD;
+            if (
+                IS_BLANK(ARR_HEAD(arr))
+                and KIND_BYTE(ARR_AT(arr, 1)) == REB_WORD // end is REB_0
+                and KIND_BYTE(ARR_AT(arr, 2)) == REB_0_END
+            ){
+                // !!! This is where we would optimize the case to fit in
+                // a single cell like a refinement.  For the time being just
+                // let it be inefficient.
+                //
+                RESET_VAL_HEADER(DS_TOP, REB_PATH);
+                INIT_VAL_ARRAY(DS_TOP, arr);
+                VAL_INDEX(DS_TOP) = 0;
             }
             else {
-                if (ss->begin and *ss->end == ':') {
-                    RESET_VAL_HEADER(DS_TOP, REB_SET_PATH);
-                    ss->begin = ++ss->end;
+                if (IS_GET_WORD(ARR_HEAD(arr))) {
+                    if (ss->begin and *ss->end == ':')
+                        fail (Error_Syntax(ss));
+                    RESET_VAL_HEADER(DS_TOP, REB_GET_PATH);
+                    mutable_KIND_BYTE(ARR_HEAD(arr)) = REB_WORD;
                 }
-                else
-                    RESET_VAL_HEADER(DS_TOP, REB_PATH);
+                else {
+                    if (ss->begin and *ss->end == ':') {
+                        RESET_VAL_HEADER(DS_TOP, REB_SET_PATH);
+                        ss->begin = ++ss->end;
+                    }
+                    else
+                        RESET_VAL_HEADER(DS_TOP, REB_PATH);
+                }
+                INIT_VAL_ARRAY(DS_TOP, arr);
+                VAL_INDEX(DS_TOP) = 0;
+                ss->token = TOKEN_PATH; // !!! just for errors?
             }
-            INIT_VAL_ARRAY(DS_TOP, arr);
-            VAL_INDEX(DS_TOP) = 0;
-            ss->token = TOKEN_PATH;
         }
 
         if (lit_depth != 0) {

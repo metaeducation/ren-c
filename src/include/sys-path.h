@@ -169,3 +169,27 @@ inline static void Set_Path_Core(
         panic (out); // shouldn't be possible, no executions!
     }
 }
+
+
+// !!! These are inefficient interim implementations of what needs to be a
+// way of putting a length-2 path where the first element is a blank and the
+// second is a WORD! into a single cell.
+
+inline static REBVAL *Init_Refinement(RELVAL *out, REBSTR *spelling) {
+    REBARR *a = Make_Arr(2);
+    Init_Blank(Alloc_Tail_Array(a));
+    Init_Word(Alloc_Tail_Array(a), spelling);
+    return Init_Path(out, a);
+}
+
+inline static bool IS_REFINEMENT(const RELVAL *v) {
+    return IS_PATH(v)
+        and VAL_LEN_HEAD(v) == 2
+        and IS_BLANK(VAL_ARRAY_AT_HEAD(v, 0))
+        and IS_WORD(VAL_ARRAY_AT_HEAD(v, 1));
+}
+
+inline static REBSTR *VAL_REFINEMENT_SPELLING(const RELVAL *v) {
+    assert(IS_REFINEMENT(v));
+    return VAL_WORD_SPELLING(VAL_ARRAY_AT_HEAD(v, 1));
+}

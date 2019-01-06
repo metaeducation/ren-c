@@ -61,7 +61,6 @@ enum Reb_Token {
     TOKEN_ISSUE,
     TOKEN_TAG,
     TOKEN_PATH,
-    TOKEN_REFINE,
     TOKEN_CONSTRUCT,
     TOKEN_MAX
 };

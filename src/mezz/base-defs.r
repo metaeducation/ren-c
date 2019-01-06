@@ -209,7 +209,6 @@ eval func [
     word?:
     set-word?:
     get-word?:
-    refinement?:
     issue?:
     binary?:
     text?:
@@ -271,6 +270,21 @@ to-lit-path: func [value [any-value!]] [
     uneval to path! dequote :value
 ]
 
+refinement?: func [value [<opt> any-value!]] [
+    did all [
+        path? :value
+        equal? length of value 2 ;; Called by FUNCTION when = not defined yet
+        blank? :value/1
+        word? :value/2
+    ]
+]
+
+refinement-word: func [value [path!]] [
+    if not refinement? :value [
+        fail/where "REFINEMENT-WORD called on non-refinement" 'value
+    ]
+    :value/2
+]
 
 print: func [
     {Textually output value (evaluating elements if a block), adds newline}

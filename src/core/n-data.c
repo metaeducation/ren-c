@@ -387,7 +387,6 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
     case REB_WORD:
     case REB_SET_WORD:
     case REB_GET_WORD:
-    case REB_REFINEMENT:
     case REB_ISSUE: {
         if (IS_WORD_UNBOUND(v))
             return false;
@@ -1194,8 +1193,7 @@ REBNATIVE(as)
       case REB_WORD:
       case REB_GET_WORD:
       case REB_SET_WORD:
-      case REB_ISSUE:
-      case REB_REFINEMENT: {
+      case REB_ISSUE: {
         //
         // !!! Until UTF-8 Everywhere, turning ANY-STRING! into an ANY-WORD!
         // means you have to have an interning of it.

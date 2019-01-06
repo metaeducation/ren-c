@@ -468,7 +468,7 @@ for-each-system: function [
                 cflags: map-each x cflags [to-word to-text x]
             )
             copy ldflags [any refinement!] (
-                ldflags: map-each x ldflags [to-word x]
+                ldflags: map-each x ldflags [refinement-word x]
             )
             copy libraries [any file!] (
                 libraries: map-each x libraries [to-word to-text x]

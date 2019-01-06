@@ -125,3 +125,6 @@ uneval: func [x [<opt> any-value!]] [
         fail "UNEVAL can only work on WORD!, PATH!, NULL in old Rebols"
     ]
 ]
+
+
+refinement-word: func [v [refinement!]] [as word! v]

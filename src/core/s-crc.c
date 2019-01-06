@@ -312,7 +312,6 @@ uint32_t Hash_Value(const RELVAL *v)
     case REB_WORD:
     case REB_SET_WORD:
     case REB_GET_WORD:
-    case REB_REFINEMENT:
     case REB_ISSUE: {
         //
         // Note that the canon symbol may change for a group of word synonyms

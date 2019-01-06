@@ -357,12 +357,15 @@ REB_R PD_Action(
     // general path mechanic before reaching this dispatch.  So if it's not
     // a word/refinement or or one of those that evaluated it, then error.
     //
-    if (not IS_WORD(picker) and not IS_REFINEMENT(picker))
+    REBSTR *spelling;
+    if (IS_WORD(picker))
+        spelling = VAL_WORD_SPELLING(picker);
+    else if (IS_REFINEMENT(picker))
+        spelling = VAL_REFINEMENT_SPELLING(picker);
+    else
         fail (Error_Bad_Refine_Raw(picker));
 
-    Init_Issue(DS_PUSH(), VAL_WORD_CANON(picker)); // canonize just once
+    Init_Issue(DS_PUSH(), STR_CANON(spelling)); // canonize just once
 
-    // Leave the function value as is in pvs->out
-    //
-    return pvs->out;
+    return pvs->out; // leave ACTION! value in pvs->out, as-is
 }
