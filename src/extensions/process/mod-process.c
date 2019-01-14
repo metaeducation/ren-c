@@ -53,7 +53,7 @@
     //
     // https://stackoverflow.com/a/31347357/211160
     //
-    #if defined(TO_OSX)
+    #if defined(TO_OSX) || defined(TO_OPENBSD_X64)
         extern char **environ;
     #endif
 
