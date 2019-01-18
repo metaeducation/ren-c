@@ -1528,7 +1528,7 @@ Execution: make generator-class [
     host: switch system/platform/1 [
         'Windows [windows]
         'Linux [linux]
-        'OSX [osx]
+        'OSX 'Macintosh [osx]
         'Android [android]
 
         default [
