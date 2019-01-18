@@ -260,17 +260,6 @@ STATIC_ASSERT(DO_FLAG_7_IS_FALSE == NODE_FLAG_CELL);
 STATIC_ASSERT(DO_FLAG_EXPLICIT_EVALUATE == VALUE_FLAG_EVAL_FLIP);
 
 
-//=//// DO_FLAG_PARSE_FRAME ///////////////////////////////////////////////=//
-//
-// This flag is set when a REBFRM* is being used to hold the state of the
-// PARSE stack.  One application of knowing this is that PARSE wasn't really
-// written to use frames, and doesn't follow the same rules as the evaluator;
-// so the debugging checks have to be more lax;
-//
-#define DO_FLAG_PARSE_FRAME \
-    FLAG_LEFT_BIT(22)
-
-
 //=//// DO_FLAG_CONST /////////////////////////////////////////////////////=//
 //
 // The user is able to flip the constness flag explicitly with the CONST and
@@ -287,6 +276,20 @@ STATIC_ASSERT(DO_FLAG_EXPLICIT_EVALUATE == VALUE_FLAG_EVAL_FLIP);
 #define DO_FLAG_CONST \
     FLAG_LEFT_BIT(22)
 STATIC_ASSERT(DO_FLAG_CONST == VALUE_FLAG_CONST);
+
+
+//=//// DO_FLAG_ALREADY_DEFERRED_ENFIX ////////////////////////////////////=//
+//
+// Ren-C introduced evaluative left hand sides that looked at more than one
+// argument.  (Otherwise `IF CONDITION [...] ELSE [...]` would force ELSE to
+// produce a result solely on seeing a block on its left.)  These evaluations
+// only allow up to one function to run on their left, otherwise there would
+// be problems e.g. with `RETURN IF CONDITION [...] ELSE [...]`, which then
+// interprets as `(RETURN IF CONDITION [...]) ELSE [...]`.  This flag tracks
+// the case that e.g. ELSE already yielded to IF, and shouldn't yield again.
+//
+#define DO_FLAG_ALREADY_DEFERRED_ENFIX \
+    FLAG_LEFT_BIT(23)
 
 
 //=//// DO_FLAG_BARRIER_HIT ///////////////////////////////////////////////=//

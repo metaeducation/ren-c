@@ -1569,6 +1569,32 @@ bool Eval_Core_Throws(REBFRM * const f)
                     f->u.defer.arg,
                     f->u.defer.refine
                 );
+
+                // If we had found another argument, we would have jumped the
+                // evaluator back into the post-switch and forced the deferred
+                // enfix to go ahead and run so the next argument could be
+                // fetched.  We didn't find one, and are going ahead and
+                // running the function.  Usually this means we want to signal
+                // not to defer again, e.g. the ELSE here should run after IF
+                //
+                //     return if condition [...] else [...]
+                //
+                // But if something says it takes its argument tightly, then
+                // we should allow another deferral.  Notable case:
+                //
+                //     if condition [...] then x => [...] else [...]
+                //
+                // The lambda => wants to be an argument to THEN, ignoring
+                // the else.  Hence it declares its argument tight.  That
+                // means the ELSE waits and lets the THEN run, even though
+                // it appears as a step above it.
+                //
+                Reb_Param_Class dclass = VAL_PARAM_CLASS(f->u.defer.param);
+                if (dclass == REB_P_NORMAL)
+                    f->flags.bits |= DO_FLAG_ALREADY_DEFERRED_ENFIX;
+                else
+                    assert(dclass == REB_P_TIGHT);
+
                 TRASH_POINTER_IF_DEBUG(f->u.defer.param);
                 TRASH_POINTER_IF_DEBUG(f->u.defer.refine);
             }
@@ -2370,10 +2396,10 @@ bool Eval_Core_Throws(REBFRM * const f)
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
-      default: {
+      default:
         Derelativize(f->out, current, f->specifier);
         Unquotify_In_Situ(f->out, 1); // checks for illegal REB_XXX bytes
-        break; }
+        break;
     }
 
     //==////////////////////////////////////////////////////////////////==//
@@ -2596,25 +2622,24 @@ bool Eval_Core_Throws(REBFRM * const f)
         goto finished;
     }
 
-    // !!! Once checked `not f->deferred` because it only deferred once:
+    // A deferral occurs, e.g. with:
     //
-    //    "If we get there and there's a deferral, it doesn't matter if it
-    //     was this frame or the parent frame who deferred it...it's the
-    //     same enfix function in the same spot, and it's only willing to
-    //     give up *one* of its chances to run."
+    //     return if condition [...] else [...]
     //
-    // But it now defers indefinitely so long as it is fulfilling arguments,
-    // until it finds an <end>able one...which <- (identity) is.  Having
-    // endability control this may not be the best idea, but it keeps from
-    // introducing a new parameter convention or recognizing the specific
-    // function.  It's a rare enough property that one might imagine it to be
-    // unlikely such functions would want to run before deferred enfix.
+    // The first time the ELSE is seen, IF is fulfilling its branch argument
+    // and doesn't know if its done or not.  So this code senses that and
+    // runs, returning the output without running ELSE.  Then, the IF does
+    // not need to force the ELSE to run in order to fulfill another argument.
+    // So it concludes the typechecking on the block argument, and sets the
+    // DO_FLAG_ALREADY_DEFERRED_ENFIX flag.  That means after the IF runs
+    // its code, it will get here and run the ELSE *before* yielding the
+    // argument fulfillment to the RETURN above it.
     //
     if (
         GET_SER_FLAG(VAL_ACTION(f->gotten), PARAMLIST_FLAG_DEFERS_LOOKBACK)
         and (f->flags.bits & DO_FLAG_FULFILLING_ARG)
         and not f->prior->u.defer.arg
-        and not Is_Param_Endable(f->prior->param)
+        and not (f->flags.bits & DO_FLAG_ALREADY_DEFERRED_ENFIX)
     ){
         assert(not (f->flags.bits & DO_FLAG_TO_END));
         assert(Is_Action_Frame_Fulfilling(f->prior));
@@ -2642,6 +2667,8 @@ bool Eval_Core_Throws(REBFRM * const f)
         //
         goto finished;
     }
+
+    f->flags.bits &= ~DO_FLAG_ALREADY_DEFERRED_ENFIX;
 
     // This is a case for an evaluative lookback argument we don't want to
     // defer, e.g. a #tight argument or a normal one which is not being

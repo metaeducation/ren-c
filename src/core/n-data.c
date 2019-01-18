@@ -981,7 +981,6 @@ REBNATIVE(semiquoted_q)
 //
 //      return: [<opt> any-value!]
 //      value [<end> <opt> any-value!]
-//          {!!! <end> flag is hack to limit enfix reach to the left}
 //      /quote
 //          {Make it seem that the return result was quoted}
 //  ]
@@ -994,8 +993,7 @@ REBNATIVE(identity)
 // !!! Quoting version is currently specialized as SEMIQUOTE, for convenience.
 //
 // This is assigned to <- for convenience, but cannot be used under that name
-// in bootstrap with R3-Alpha.  It uses the <end>-ability to stop left reach,
-// since there is no specific flag for that.
+// in bootstrap with R3-Alpha.
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 

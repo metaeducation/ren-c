@@ -204,8 +204,7 @@ static bool Subparse_Throws(
     f->source->index = VAL_INDEX(rules) + 1;
     f->source->pending = f->value + 1;
 
-    f->flags.bits = DO_MASK_DEFAULT // terminates f->cell
-        | DO_FLAG_PARSE_FRAME;
+    f->flags.bits = DO_MASK_DEFAULT; // terminates f->cell
 
     Push_Frame_Core(f); // checks for C stack overflow
     Reuse_Varlist_If_Available(f);

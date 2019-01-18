@@ -155,9 +155,16 @@ my: enfix func [
 
 
 ; Lambdas are experimental quick function generators via a symbol.  The
-; identity is used to shake up enfix ordering.
+; identity is used to shake up enfix ordering.  They have to be tight (on
+; their right hand side) when enfixed, otherwise this will break:
 ;
-set/enfix (r3-alpha-lit "=>") :lambda
+;     if condition [code] then x => [code w/x] else [stuff]
+;
+; The problem is, if => wasn't right tight then ELSE would process this as:
+;
+;     if condition [code] then (x => [code w/x] else [stuff])
+;
+set/enfix (r3-alpha-lit "=>") tighten :lambda
 set (r3-alpha-lit "<-") :identity ;-- not enfix, just affects enfix
 set/enfix (r3-alpha-lit "->") :shove
 

@@ -53,15 +53,15 @@
     (did block: copy [a b c])
 
     (
-        mold block = {[a b c]}
+        {[a b c]} = mold block
     )(
         new-line block true
-        mold block = {[^/    a b c]}
+        {[^/    a b c]} = mold block
     )(
         new-line tail block true
-        mold block = {[^/    a b c^/]}
+        {[^/    a b c^/]} = mold block
     )(
-        mold tail block = {[^/]}
+        {[^/]} = mold tail block
     )
 ]
 
