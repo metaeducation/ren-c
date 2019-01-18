@@ -861,6 +861,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
         or FRM_IS_VALIST(child)
         or old_index != child->source->index
         or (flags & DO_FLAG_REEVALUATE_CELL)
+        or (flags & DO_FLAG_POST_SWITCH)
         or Is_Evaluator_Throwing_Debug()
     );
 

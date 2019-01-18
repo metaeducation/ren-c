@@ -406,6 +406,34 @@ inline static void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
 }
 
 
+// Factored out code for entering a child frame with an already evaluated
+// value in order to reuse the post-switch enfix code.
+//
+static inline bool Eval_Post_Switch_Throws(REBFRM *f, REBVAL *preload) {
+    REBFLGS flags =
+        (DO_MASK_DEFAULT & ~DO_FLAG_CONST)
+        | DO_FLAG_FULFILLING_ARG
+        | (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE)
+        | (f->flags.bits & DO_FLAG_CONST);
+
+    DECLARE_SUBFRAME (child, f); // capture DSP *now*
+
+    if (Is_Frame_Gotten_Shoved(f)) {
+        Prep_Stack_Cell(FRM_SHOVE(child));
+        Move_Value(FRM_SHOVE(child), f->gotten);
+        SET_VAL_FLAG(FRM_SHOVE(child), VALUE_FLAG_ENFIXED);
+        f->gotten = FRM_SHOVE(child);
+    }
+
+    return Eval_Step_In_Subframe_Throws(
+        preload, // preload previous f->arg as left enfix
+        f,
+        flags | DO_FLAG_POST_SWITCH,
+        child
+    );
+}
+
+
 //
 //  Eval_Core_Throws: C
 //
@@ -492,7 +520,14 @@ bool Eval_Core_Throws(REBFRM * const f)
         | DO_FLAG_REEVALUATE_CELL
     )){
         if (f->flags.bits & DO_FLAG_POST_SWITCH) {
-            assert(f->prior->u.defer.arg); // !!! EVAL-ENFIX crudely preserves
+            //
+            // !!! Previously this was only used for enfix deferral on normal
+            // arguments, but support was added for soft and hard quoted args.
+            // They run through the same procedure, even though they are not
+            // re-entering a frame after an evaluation (they directly quote
+            // the value without a recursion).  Likely could be improved.
+            //
+            /* assert(f->prior->u.defer.arg); */
             assert(NOT_END(f->out));
 
             f->flags.bits &= ~DO_FLAG_POST_SWITCH;
@@ -1332,27 +1367,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             // put off before, this time using the 10 as AND's left-hand arg.
             //
             if (f->u.defer.arg) {
-                REBFLGS flags =
-                    (DO_MASK_DEFAULT & ~DO_FLAG_CONST)
-                    | DO_FLAG_FULFILLING_ARG
-                    | (f->flags.bits & DO_FLAG_EXPLICIT_EVALUATE)
-                    | (f->flags.bits & DO_FLAG_CONST);
-
-                DECLARE_SUBFRAME (child, f); // capture DSP *now*
-
-                if (Is_Frame_Gotten_Shoved(f)) {
-                    Prep_Stack_Cell(FRM_SHOVE(child));
-                    Move_Value(FRM_SHOVE(child), f->gotten);
-                    SET_VAL_FLAG(FRM_SHOVE(child), VALUE_FLAG_ENFIXED);
-                    f->gotten = FRM_SHOVE(child);
-                }
-
-                if (Eval_Step_In_Subframe_Throws(
-                    f->u.defer.arg, // preload previous f->arg as left enfix
-                    f,
-                    flags | DO_FLAG_POST_SWITCH,
-                    child
-                )){
+                if (Eval_Post_Switch_Throws(f, f->u.defer.arg)) {
                     Move_Value(f->out, f->u.defer.arg);
                     goto abort_action;
                 }
@@ -1424,7 +1439,9 @@ bool Eval_Core_Throws(REBFRM * const f)
     //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG /////////////////////////////=//
 
               case REB_P_HARD_QUOTE:
-                if (Is_Param_Skippable(f->param)) {
+                if (not Is_Param_Skippable(f->param))
+                    Quote_Next_In_Frame(f->arg, f); // VALUE_FLAG_UNEVALUATED
+                else {
                     if (not Typecheck_Including_Quoteds(f->param, f->value)) {
                         assert(Is_Param_Endable(f->param));
                         Init_Endish_Nulled(f->arg); // not DO_FLAG_BARRIER_HIT
@@ -1436,9 +1453,25 @@ bool Eval_Core_Throws(REBFRM * const f)
                         f->arg,
                         ARG_MARKED_CHECKED | VALUE_FLAG_UNEVALUATED
                     );
-                    goto continue_arg_loop;
                 }
-                Quote_Next_In_Frame(f->arg, f); // has VALUE_FLAG_UNEVALUATED
+
+                // Have to account for enfix deferrals in cases like:
+                //
+                //     return quote 1 then (x => [x + 1])
+                //
+                // !!! This is likely inefficient, but it's brief to reuse.
+                //
+                assert(f->u.defer.arg == nullptr);
+                if (NOT_SER_FLAG(f->original, PARAMLIST_FLAG_INVISIBLE)) {
+                    if (Eval_Post_Switch_Throws(f, f->arg)) {
+                        Move_Value(f->out, f->arg);
+                        goto abort_action;
+                    }
+                }
+
+                if (GET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED))
+                    goto continue_arg_loop;
+
                 break;
 
     //=//// SOFT QUOTED ARG-OR-REFINEMENT-ARG  ////////////////////////////=//
@@ -1454,16 +1487,32 @@ bool Eval_Core_Throws(REBFRM * const f)
 
                 if (not IS_QUOTABLY_SOFT(f->value)) {
                     Quote_Next_In_Frame(f->arg, f); // VALUE_FLAG_UNEVALUATED
-                    Finalize_Current_Arg(f);
-                    goto continue_arg_loop;
+                }
+                else {
+                    if (Eval_Value_Core_Throws(
+                        f->arg,
+                        f->value,
+                        f->specifier
+                    )){
+                        Move_Value(f->out, f->arg);
+                        goto abort_action;
+                    }
+                    Fetch_Next_In_Frame(nullptr, f);
                 }
 
-                if (Eval_Value_Core_Throws(f->arg, f->value, f->specifier)) {
-                    Move_Value(f->out, f->arg);
-                    goto abort_action;
+                // Have to account for enfix deferrals in cases like:
+                //
+                //     return if false '[foo] else '[bar]
+                //
+                // !!! This is likely inefficient, but it's brief to reuse.
+                //
+                assert(f->u.defer.arg == nullptr);
+                if (NOT_SER_FLAG(f->original, PARAMLIST_FLAG_INVISIBLE)) {
+                    if (Eval_Post_Switch_Throws(f, f->arg)) {
+                        Move_Value(f->out, f->arg);
+                        goto abort_action;
+                    }
                 }
-
-                Fetch_Next_In_Frame(nullptr, f);
                 break;
 
               default:
@@ -1590,10 +1639,8 @@ bool Eval_Core_Throws(REBFRM * const f)
                 // it appears as a step above it.
                 //
                 Reb_Param_Class dclass = VAL_PARAM_CLASS(f->u.defer.param);
-                if (dclass == REB_P_NORMAL)
+                if (dclass != REB_P_TIGHT)
                     f->flags.bits |= DO_FLAG_ALREADY_DEFERRED_ENFIX;
-                else
-                    assert(dclass == REB_P_TIGHT);
 
                 TRASH_POINTER_IF_DEBUG(f->u.defer.param);
                 TRASH_POINTER_IF_DEBUG(f->u.defer.refine);

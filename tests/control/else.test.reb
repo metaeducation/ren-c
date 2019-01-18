@@ -47,3 +47,13 @@
         4 = d 20
     ]
 )
+
+; Hard quotes need to account for enfix deferral
+(
+    foo: func [y] [return lit 1 then (x => [x + y])]
+    bar: func [y] [return 1 then (x => [x + y])]
+    did all [
+        foo 10 = 11
+        bar 10 = 1
+    ]
+)
