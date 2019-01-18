@@ -159,6 +159,11 @@ inline static bool Do_Branch_Core_Throws(
 ){
     assert(branch != out and condition != out);
 
+    if (IS_QUOTED(branch)) {
+        Unquotify(Move_Value(out, branch), 1);
+        return false;
+    }
+
     if (IS_BLOCK(branch))
         return Do_Any_Array_At_Throws(out, branch);
 

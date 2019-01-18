@@ -20,12 +20,12 @@
 )
 (
     success: <bad>
-    if true does [success: true]
+    if true (does [success: true])
     success
 )
 (
     success: true
-    if false does [success: false]
+    if false (does [success: false])
     success
 )
 

@@ -72,10 +72,10 @@ make object! compose [
             not :result [
                 "test returned #[false]"
             ]
-        ] then message => [
+        ] then (message => [
             test-failures: me + 1
             log reduce [space {"failed, } message {"} newline]
-        ] else [
+        ]) else [
             successes: me + 1
             log reduce [space {"succeeded"} newline]
         ]

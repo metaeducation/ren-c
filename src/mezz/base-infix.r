@@ -164,6 +164,10 @@ my: enfix func [
 ;
 ;     if condition [code] then (x => [code w/x] else [stuff])
 ;
+; !!! This property is not relevant for the moment with soft-quoted branches,
+; which is done to allow `if condition '[block by value]`, hence a lambda
+; must be in a GROUP! anyway.
+;
 set/enfix (r3-alpha-lit "=>") tighten :lambda
 set (r3-alpha-lit "<-") :identity ;-- not enfix, just affects enfix
 set/enfix (r3-alpha-lit "->") :shove

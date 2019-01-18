@@ -116,9 +116,9 @@
 ('''[a b c] = '''''[a b c])
 
 
-(kind of lit 'foo = quoted!) ;; low level "KIND"
-(type of lit 'foo = uneval word!) ;; higher-level "TYPE"
-(type of lit ''[a b c] = uneval/depth block! 2)
+(quoted! = kind of lit 'foo) ;; low level "KIND"
+(uneval word! = type of lit 'foo) ;; higher-level "TYPE"
+((type of lit ''[a b c]) = uneval/depth block! 2)
 
 
 ;; Some generic actions have been tweaked to know to extend their

@@ -95,12 +95,12 @@ make-callback: function [
 
     safe: function r-args
         <- (if fallback [
-            compose/deep/only [
-                trap [return (as group! body)] then error => [
+            compose/deep <$> [
+                trap [return ((<$> as group! body))] then (error => [
                     print "** TRAPPED CRITICAL ERROR DURING FFI CALLBACK:"
                     print mold error
-                    (fallback-value)
-                ]
+                    ((<$> fallback-value))
+                ])
             ]
         ] else [
             body

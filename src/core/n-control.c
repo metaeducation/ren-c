@@ -59,8 +59,8 @@
 //      return: "null if branch not run, otherwise branch result"
 //          [<opt> any-value!]
 //      condition [<opt> any-value!]
-//      branch "If arity-1 ACTION!, receives the evaluated condition"
-//          [block! action!]
+//      'branch "If arity-1 ACTION!, receives the evaluated condition"
+//          [block! action! quoted!]
 //  ]
 //
 REBNATIVE(if)
@@ -85,7 +85,7 @@ REBNATIVE(if)
 //      return: "null if branch not run, otherwise branch result"
 //          [<opt> any-value!]
 //      condition [<opt> any-value!]
-//      branch [block! action!]
+//      'branch [block! action! quoted!]
 //  ]
 //
 REBNATIVE(if_not)
@@ -110,9 +110,9 @@ REBNATIVE(if_not)
 //      return: [<opt> any-value!]
 //          "Returns null if either branch returns null (unlike IF...ELSE)"
 //      condition [<opt> any-value!]
-//      true-branch "If arity-1 ACTION!, receives the evaluated condition"
-//          [block! action!]
-//      false-branch [block! action!]
+//      'true-branch "If arity-1 ACTION!, receives the evaluated condition"
+//          [block! action! quoted!]
+//      'false-branch [block! action! quoted!]
 //  ]
 //
 REBNATIVE(either)
@@ -393,7 +393,7 @@ bool Match_Core_Throws(
 //          [<opt> any-value!]
 //      optional "Run branch if this is null"
 //          [<opt> any-value!]
-//      branch [block! action!]
+//      'branch [block! action! quoted!]
 //  ]
 //
 REBNATIVE(else)
@@ -419,8 +419,8 @@ REBNATIVE(else)
 //          [<opt> any-value!]
 //      optional "Run branch if this is not null"
 //          [<opt> any-value!]
-//      branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [block! action!]
+//      'branch "If arity-1 ACTION!, receives value that triggered branch"
+//          [block! action! quoted!]
 //  ]
 //
 REBNATIVE(then)
@@ -446,8 +446,8 @@ REBNATIVE(then)
 //          [<opt> any-value!]
 //      optional "Run branch if this is not null"
 //          [<opt> any-value!]
-//      branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [block! action!]
+//      'branch "If arity-1 ACTION!, receives value that triggered branch"
+//          [block! action! quoted!]
 //  ]
 //
 REBNATIVE(also)
@@ -485,7 +485,7 @@ REBNATIVE(also)
 //          ]
 //      value [<opt> any-value!]
 //      /else "Instead of returning null on non-matches, run a branch"
-//      branch [block! action!]
+//      'branch [block! action! quoted!]
 //  ]
 //
 REBNATIVE(match)
@@ -808,16 +808,24 @@ REBNATIVE(none)
 }
 
 
-// Shared code for CASE (which runs BLOCK! clauses as code) and CHOOSE (which
-// returns values as-is, e.g. `choose [true [print "hi"]]` => `[print "hi]`
 //
-static REB_R Case_Choose_Core_May_Throw(
-    REBFRM *frame_,
-    bool choose // do not evaluate branches, just "choose" them
-){
+//  case: native [
+//
+//  {Evaluates each condition, and when true, evaluates what follows it}
+//
+//      return: [<opt> any-value!]
+//          "Last matched case evaluation, or null if no cases matched"
+//      cases [block!]
+//          "Block of cases (conditions followed by branches)"
+//      /all
+//          "Evaluate all cases (do not stop at first logically true case)"
+//  ]
+//
+REBNATIVE(case)
+{
     INCLUDE_PARAMS_OF_CASE;
 
-    REBVAL *block = ARG(cases); // for CHOOSE, it's "choices" not "cases"
+    REBVAL *block = ARG(cases);
 
     DECLARE_FRAME (f);
     Push_Frame(f, block); // array GC safe now, can re-use `block` cell
@@ -857,66 +865,68 @@ static REB_R Case_Choose_Core_May_Throw(
         }
 
         if (IS_CONDITIONAL_FALSE(cell)) { // not a matching condition
-            if (choose) {
-                Fetch_Next_In_Frame(nullptr, f); // skip next, whatever it is
-                continue;
-            }
-
-            // Even if branch is being skipped, it gets an evaluation--like
-            // how `if false (print "A" [print "B"])` prints A, but not B.
             //
-            if (Eval_Step_Throws(SET_END(cell), f)) {
-                Abort_Frame(f);
-                // preserving `out` value (may be previous match)
-                DROP_GC_GUARD(cell);
-                return Move_Value(D_OUT, cell);
-            }
-
             // Maintain symmetry with IF's typechecking of non-taken branches:
             //
             // >> if false <some-tag>
             // ** Script Error: if does not allow tag! for its branch argument
             //
-            if (not IS_BLOCK(cell) and not IS_ACTION(cell))
+            if (not (
+                IS_BLOCK(f->value)
+                or IS_ACTION(f->value)
+                or IS_QUOTED(f->value)
+                or IS_GROUP(f->value) // don't evaluate this case...
+            )){
                 fail (Error_Invalid_Core(cell, f->specifier));
+            }
 
+            Fetch_Next_In_Frame(nullptr, f); // skip next, whatever it is
             continue;
         }
 
-        if (choose) {
-            Derelativize(D_OUT, f->value, f->specifier); // null not possible
-            Fetch_Next_In_Frame(nullptr, f); // keep matching if /ALL
-        }
-        else {
-            // Note: we are preserving `cell` to pass to an arity-1 ACTION!
+        // Note: we are preserving `cell` to pass to an arity-1 ACTION!
 
-            if (Eval_Step_Throws(SET_END(D_OUT), f)) {
-                DROP_GC_GUARD(cell);
+        if (not IS_GROUP(f->value))
+            Derelativize(D_OUT, f->value, f->specifier); // null not possible
+        else {
+            if (Do_At_Throws(
+                D_OUT,
+                VAL_ARRAY(f->value),
+                VAL_INDEX(f->value),
+                f->specifier
+            )){
                 Abort_Frame(f);
+                DROP_GC_GUARD(cell);
                 return R_THROWN;
             }
-
-            f->gotten = nullptr; // can't hold onto cache, running user code
-
-            Move_Value(block, D_OUT); // can't evaluate into ARG(block)
-            if (IS_BLOCK(block)) {
-                if (Do_Any_Array_At_Throws(D_OUT, block)) {
-                    Abort_Frame(f);
-                    DROP_GC_GUARD(cell);
-                    return R_THROWN;
-                }
-            }
-            else if (IS_ACTION(D_OUT)) {
-                if (Do_Branch_With_Throws(D_OUT, block, cell)) {
-                    Abort_Frame(f);
-                    DROP_GC_GUARD(cell);
-                    return R_THROWN;
-                }
-            } else
-                fail (Error_Invalid_Core(D_OUT, f->specifier));
-
-            Voidify_If_Nulled(D_OUT); // null is reserved for no branch taken
         }
+
+        Fetch_Next_In_Frame(nullptr, f); // keep matching if /ALL
+
+        f->gotten = nullptr; // can't hold onto cache, running user code
+
+        if (IS_QUOTED(D_OUT)) {
+            Unquotify(D_OUT, 1);
+        }
+        else if (IS_BLOCK(D_OUT)) {
+            Move_Value(block, D_OUT); // can't evaluate into ARG(block)
+            if (Do_Any_Array_At_Throws(D_OUT, block)) {
+                Abort_Frame(f);
+                DROP_GC_GUARD(cell);
+                return R_THROWN;
+            }
+        }
+        else if (IS_ACTION(D_OUT)) {
+            Move_Value(block, D_OUT); // can't evaluate into ARG(block)
+            if (Do_Branch_With_Throws(D_OUT, block, cell)) {
+                Abort_Frame(f);
+                DROP_GC_GUARD(cell);
+                return R_THROWN;
+            }
+        } else
+            fail (Error_Invalid_Core(D_OUT, f->specifier));
+
+        Voidify_If_Nulled(D_OUT); // null is reserved for no branch taken
 
         if (not REF(all)) {
             DROP_GC_GUARD(cell);
@@ -928,51 +938,6 @@ static REB_R Case_Choose_Core_May_Throw(
     DROP_GC_GUARD(cell);
     Drop_Frame(f);
     return D_OUT;
-}
-
-
-//
-//  case: native [
-//
-//  {Evaluates each condition, and when true, evaluates what follows it}
-//
-//      return: [<opt> any-value!]
-//          "Last matched case evaluation, or null if no cases matched"
-//      cases [block!]
-//          "Block of cases (conditions followed by branches)"
-//      /all
-//          "Evaluate all cases (do not stop at first logically true case)"
-//  ]
-//
-REBNATIVE(case)
-{
-    const bool choose = false; // jsut a plain CASE
-    return Case_Choose_Core_May_Throw(frame_, choose);
-}
-
-
-//
-//  choose: native [
-//
-//  {Evaluates each condition, and gives back the value that follows it}
-//
-//      return: [<opt> any-value!]
-//          "Last matched choice value, or void if no choices matched"
-//      choices [block!]
-//          "Evaluate all choices (do not stop at first TRUTHY? choice)"
-//      /all ;-- see note
-//          "Return the value for the last matched choice (instead of first)"
-//  ]
-//
-REBNATIVE(choose)
-//
-// Note: The choose can't be run backwards, only forwards.  So implementation
-// means that "/LAST" really can only be done as an /ALL, there's no way to
-// go backwards in the block and get a Rebol-coherent answer.  Calling it /ALL
-// instead of /LAST helps reinforce that *all the conditions* are evaluated.
-{
-    const bool choose = true; // do a CHOOSE as opposed to a CASE
-    return Case_Choose_Core_May_Throw(frame_, choose);
 }
 
 
@@ -1128,8 +1093,8 @@ REBNATIVE(switch)
 //          [<opt> any-value!]
 //      :target "Word or path which might be set--no target always branches"
 //          [<skip> set-word! set-path!]
-//      branch "If target not set already, this is evaluated and stored there"
-//          [block! action!]
+//      'branch "If target not set already, this is evaluated and stored there"
+//          [block! action! quoted!]
 //      :look "Variadic lookahead used to make sure at end if no target"
 //          [<...>]
 //      /only "Consider target being BLANK! to be a value not to overwrite"

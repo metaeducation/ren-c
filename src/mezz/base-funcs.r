@@ -591,10 +591,10 @@ iterate-skip: redescribe [
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
-            trap [set* lit result: do f] then lambda e [
+            trap [set* lit result: do f] then (lambda e [
                 set* word saved
                 fail e
-            ]
+            ])
             set* word saved
             :result
         ]

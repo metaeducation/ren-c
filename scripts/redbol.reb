@@ -434,13 +434,13 @@ try: emulate [
     ][
         trap [
             result: do block
-        ] then err => [
+        ] then (err => [
             case [
                 null? :code [err]
                 block? :code [do code]
                 action? :code [code err]
             ]
-        ] else [
+        ]) else [
             result
         ]
     ]

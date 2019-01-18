@@ -28,7 +28,7 @@
         dump w
         if not set? w [continue]
         if action? get w
-            compose [help (w)]
+            (compose [help (w)])
         else [
             help (get w)
         ]
@@ -38,6 +38,6 @@
     for-each w words of lib [
         dump w
         if action? get w
-            compose [source (w)]
+            (compose [source (w)])
     ]
 ])

@@ -345,12 +345,12 @@ help: function [
     ;
     meta: try meta-of :value
 
-    original-name: try <- ensure [<opt> word!] any [
+    original-name: try ensure [<opt> word!] any [
         select meta 'specializee-name
         select meta 'adaptee-name
-    ] also lambda name [
-        uppercase mold name
-    ]
+    ] also (lambda name [
+        as word! uppercase mold name
+    ])
 
     specializee: try ensure [<opt> action!] select meta 'specializee
     adaptee: try ensure [<opt> action!] select meta 'adaptee
