@@ -199,11 +199,10 @@ help: function [
         issue! [ ;; HELP #TOPIC will browse r3n for the topic
             say-browser
             browse join-all [https://r3n.github.io/topics/ as text! topic]
-            leave
         ]
 
         text! [
-            types: dump-obj/match make-libuser :topic
+            types: dump-obj/match make-libuser :topic else [copy []]
             sort types
             if not empty? types [
                 print ["Found these related words:" newline types]
@@ -269,7 +268,7 @@ help: function [
     ]
 
     if datatype? :value [
-        types: dump-obj/match make-libuser :topic
+        types: try dump-obj/match make-libuser :topic
         if not empty? types [
             print ["Found these" (uppercase form topic) "words:" newline types]
         ] else [
@@ -504,36 +503,46 @@ source: function [
 what: function [
     {Prints a list of known actions}
 
-    return: <void>
+    return: [void! block!]
     'name [<end> word! lit-word!]
         "Optional module name"
     /args
         "Show arguments not titles"
+    /as-block
+        "Return data as block"
 ][
     list: make block! 400
     size: 0
 
-    ctx: all [set? 'name try select system/modules :name ] else [lib]
+    ; copy to get around error: "temporary hold for iteratione
+    ctx: copy all [set? 'name try select system/modules :name ] else [lib]
 
     for-each [word val] ctx [
-        if action? :val [
+        ;-- word val
+        if (action? :val) [
             arg: either args [
                 mold parameters of :val
             ][
-                title-of :val
+                title-of :val else '"(undocumented)"
             ]
             append list reduce [word arg]
             size: max size length of to-text word
         ]
     ]
+    list: sort/skip list 2
 
-    vals: make text! size
-    for-each [word arg] sort/skip list 2 [
-        append/dup clear vals #" " size
-        print [
-            head of change vals word LF
-            :arg
+    name: make text! size
+    either not as-block [
+        for-each [word arg] list [
+            append/dup clear name #" " size
+            change name word
+            print [
+                name ;LF
+                tab :arg
+            ]
         ]
+    ][
+         list
     ]
 ]
 
