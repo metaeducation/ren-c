@@ -66,7 +66,7 @@ for-each [name value] options [
         ]
         default [
             set in user-config (to-word replace/all to text! name #"_" #"-")
-                mutable load value
+                mutable attempt [load value] else [value]
         ]
     ]
 ]
