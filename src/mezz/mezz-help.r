@@ -537,8 +537,8 @@ what: function [
             append/dup clear name #" " size
             change name word
             print [
-                name ;LF
-                tab :arg
+                name
+                :arg
             ]
         ]
     ][
