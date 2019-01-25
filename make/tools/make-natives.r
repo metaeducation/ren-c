@@ -37,7 +37,7 @@ process: func [
     the-file: file
     if verbose [probe [file]]
 
-    source.text: read join-of src-dir/core/% file
+    source.text: read join src-dir/core/% file
     if r3 [source.text: deline to-text source.text]
     proto-parser/emit-proto: :emit-native-proto
     proto-parser/process source.text

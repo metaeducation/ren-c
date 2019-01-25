@@ -453,7 +453,7 @@ for-each-record t type-table [
         e-types/emit newline
     ]
 
-    append boot-types to-word adjoin form t/name "!"
+    append boot-types to-word unspaced [form t/name "!"]
     n: n + 1
 ]
 
@@ -792,7 +792,8 @@ mezz-files: load %../mezz/boot-files.r ; base lib, sys, mezz
 for-each section [boot-base boot-sys boot-mezz] [
     set section make block! 200
     for-each file first mezz-files [
-        append get section load join-of %../mezz/ file
+        print [file]
+        append get section load join %../mezz/ file
     ]
 
     ; Make section evaluation return a BLANK! (something like <section-done>

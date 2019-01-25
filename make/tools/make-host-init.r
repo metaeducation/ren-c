@@ -109,7 +109,7 @@ file-base: has load %../../make/tools/file-base.r
 ; copied from make-boot.r
 host-protocols: make block! 2
 for-each file file-base/prot-files [
-    m: load/all join-of %../mezz/ file
+    m: load/all join %../mezz/ file
     assert ['REBOL = m/1]
     spec: ensure block! m/2
     contents: skip m 2

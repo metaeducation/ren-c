@@ -27,7 +27,7 @@ read-deep-seq: function [
     item: take queue
 
     if equal? #"/" last item [
-        insert queue map-each x read item [join-of item x]
+        insert queue map-each x read item [join item x]
     ]
 
     item

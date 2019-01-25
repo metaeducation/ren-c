@@ -84,7 +84,7 @@ to-obj-path: func [
 ][
     ext: find/last file #"."
     remove/part ext (length of ext)
-    join-of %objs/ head-of append ext rebmake/target-platform/obj-suffix
+    join %objs/ head-of append ext rebmake/target-platform/obj-suffix
 ]
 
 gen-obj: func [
@@ -172,13 +172,13 @@ gen-obj: func [
 
     make rebmake/object-file-class compose/only [
         source: to-file case [
-            dir [join-of directory s]
+            dir [join directory s]
             main [s]
-            default [join-of src-dir s]
+            default [join src-dir s]
         ]
         output: to-obj-path to text! ;\
             either main [
-                join-of %main/ (last ensure path! s)
+                join %main/ (last ensure path! s)
             ] [s]
         cflags: either empty? flags [_] [flags]
         definitions: (mutable try get 'definitions)
@@ -969,7 +969,7 @@ case [
             tcc-dir/%
         ]
         cfg-tcc: make object! [
-            exec-file: join-of tcc-rootdir any [get-env "TCC" %tcc]
+            exec-file: join tcc-rootdir any [get-env "TCC" %tcc]
             includes: reduce [tcc-dir]
             searches: reduce [tcc-rootdir]
             libraries: reduce [tcc-rootdir/libtcc1.a tcc-rootdir/libtcc.a]
@@ -1086,7 +1086,7 @@ append app-config/ldflags opt user-config/ldflags
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
-    definitions: join-of ["REB_API"] app-config/definitions
+    definitions: join ["REB_API"] app-config/definitions
 
     ; might be modified by the generator, thus copying
     includes: append-of app-config/includes %prep/core
@@ -1114,7 +1114,7 @@ remove-each plus file-base/os [plus = '+] ;remove the '+ sign, we don't care her
 libr3-os: make libr3-core [
     name: 'libr3-os
 
-    definitions: join-of ["REB_CORE"] app-config/definitions
+    definitions: join ["REB_CORE"] app-config/definitions
     includes: append-of app-config/includes %prep/os ; generator may modify
     cflags: copy app-config/cflags ; generator may modify
 
@@ -1210,7 +1210,7 @@ for-each [label list] reduce [
     ]
 ]
 
-all-extensions: join-of builtin-extensions dynamic-extensions
+all-extensions: join builtin-extensions dynamic-extensions
 
 add-project-flags: func [
     return: <void>
@@ -1342,7 +1342,7 @@ for-each ext builtin-extensions [
     ; Modify module properties
     add-project-flags/I/D/c/O/g mod-obj
         app-config/includes
-        join-of ["REB_API"] app-config/definitions
+        join ["REB_API"] app-config/definitions
         app-config/cflags
         app-config/optimization
         app-config/debug
@@ -1401,9 +1401,9 @@ vars: reduce [
             'file = exists? value: system/options/boot
             all [
                 user-config/rebol-tool
-                'file = exists? value: join-of make-dir user-config/rebol-tool
+                'file = exists? value: join make-dir user-config/rebol-tool
             ]
-            'file = exists? value: join-of make-dir unspaced [
+            'file = exists? value: join make-dir unspaced [
                 {r3-make}
                 rebmake/target-platform/exe-suffix
             ]
@@ -1464,7 +1464,7 @@ prep: make rebmake/entry-class [
                 ]
                 output: %prep/include/sys-core.i
                 source: src-dir/include/sys-core.h
-                definitions: join-of app-config/definitions [ {DEBUG_STDIO_OK} ]
+                definitions: join app-config/definitions [ {DEBUG_STDIO_OK} ]
                 includes: append-of app-config/includes reduce [tcc-dir tcc-dir/include]
                 cflags: append-of append-of [ {-dD} {-nostdlib} ] opt cfg-ffi/cflags opt cfg-tcc/cpp-flags
             ]
@@ -1518,7 +1518,7 @@ for-each file os-file-block [
     ; For better or worse, original R3-Alpha didn't use FILE! in %file-base.r
     ; for filenames.  Note that `+` markers should be removed by this point.
     ;
-    file: join-of %objs/ (ensure [word! path!] file)
+    file: join %objs/ (ensure [word! path!] file)
     path: first split-path (ensure file! file)
     find folders path else [append folders path]
 ]
@@ -1539,7 +1539,7 @@ app: make rebmake/application-class [
     ][
         reduce [
             make rebmake/cmd-strip-class [
-                file: join-of output opt rebmake/target-platform/exe-suffix
+                file: join output opt rebmake/target-platform/exe-suffix
             ]
         ]
     ]
@@ -1589,7 +1589,7 @@ for-each ext dynamic-extensions [
         ; Modify module properties
         add-project-flags/I/D/c/O/g mod-obj
             ext-includes
-            join-of ["EXT_DLL"] app-config/definitions
+            join ["EXT_DLL"] app-config/definitions
             app-config/cflags
             app-config/optimization
             app-config/debug
@@ -1606,7 +1606,7 @@ for-each ext dynamic-extensions [
             opt ext/cflags
     ]
     append dynamic-libs ext-proj: make rebmake/dynamic-library-class [
-        name: join-of either system-config/os-base = 'windows ["r3-"]["libr3-"]
+        name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
             lowercase to text! ext/name
         output: to file! name
         depends: append compose [
@@ -1620,7 +1620,7 @@ for-each ext dynamic-extensions [
         ][
             reduce [
                 make rebmake/cmd-strip-class [
-                    file: join-of output opt rebmake/target-platform/dll-suffix
+                    file: join output opt rebmake/target-platform/dll-suffix
                 ]
             ]
         ]
@@ -1630,7 +1630,7 @@ for-each ext dynamic-extensions [
 
     add-project-flags/I/D/c/O/g ext-proj
         ext-includes
-        join-of ["EXT_DLL"] app-config/definitions
+        join ["EXT_DLL"] app-config/definitions
         app-config/cflags
         app-config/optimization
         app-config/debug
@@ -1657,20 +1657,20 @@ clean: make rebmake/entry-class [
     commands: flatten reduce [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
-        make rebmake/cmd-delete-class [file: join-of %r3 opt rebmake/target-platform/exe-suffix]
+        make rebmake/cmd-delete-class [file: join %r3 opt rebmake/target-platform/exe-suffix]
     ]
 ]
 
 check: make rebmake/entry-class [
     target: 'check ; phony target
-    depends: join-of dynamic-libs app
+    depends: join dynamic-libs app
     commands: collect [
         keep make rebmake/cmd-strip-class [
-            file: join-of app/output opt rebmake/target-platform/exe-suffix
+            file: join app/output opt rebmake/target-platform/exe-suffix
         ]
         for-each s dynamic-libs [
             keep make rebmake/cmd-strip-class [
-                file: join-of s/output opt rebmake/target-platform/dll-suffix
+                file: join s/output opt rebmake/target-platform/dll-suffix
             ]
         ]
     ]

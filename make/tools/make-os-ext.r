@@ -81,7 +81,7 @@ count: func [s c /local n] [
     output-buffer: copy "(a"
     n: 1
     while [s: find/tail s c][
-        adjoin output-buffer [#"," #"a" + n]
+        append output-buffer unspaced [#"," #"a" + n]
         n: n + 1
     ]
     append output-buffer ")"

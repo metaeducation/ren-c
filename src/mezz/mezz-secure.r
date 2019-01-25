@@ -96,7 +96,7 @@ secure: function [
         blk: make block! 4
         n: 1
         for-each act [read write execute] [
-            join blk [pick acts 1 + pol/:n act]
+            append blk reduce [pick acts 1 + pol/:n act]
             n: me + 1
         ]
         blk
@@ -139,13 +139,13 @@ secure: function [
         for-each [target pol] pol-obj [
             case [
                 ; file 0.0.0 (policies)
-                tuple? pol [join out [target word-policy pol]]
+                tuple? pol [append out reduce [target word-policy pol]]
                 ; file [allow read quit write]
                 block? pol [
                     for-each [item pol] pol [
                         if binary? item [item: to-text item] ; utf-8 decode
                         if text? item [item: local-to-file item]
-                        join out [item word-policy pol]
+                        append out reduce [item word-policy pol]
                     ]
                 ]
             ]

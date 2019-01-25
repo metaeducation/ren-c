@@ -405,8 +405,8 @@ rebsource: context [
             item: ensure file! take queue
 
             if equal? #"/" last item [
-                contents: read join-of src-folder item
-                insert queue map-each x contents [join-of item x]
+                contents: read join src-folder item
+                insert queue map-each x contents [join item x]
                 item: _
             ] else [
                 any [

@@ -970,7 +970,7 @@ link: make linker-class [
                     either ends-with? dep/output ".lib" [
                         dep/output
                     ][
-                        join-of dep/output ".lib"
+                        join dep/output ".lib"
                     ]
                 ]
             ]
@@ -983,7 +983,7 @@ link: make linker-class [
                 ]
             ]
             #application [
-                file-to-local any [dep/implib join-of dep/basename ".lib"]
+                file-to-local any [dep/implib join dep/basename ".lib"]
             ]
             #variable [
                 _
@@ -1089,7 +1089,7 @@ object-file-class: make object! [
 
         make entry-class [
             target: output
-            depends: append-of either depends [depends][[]] source
+            depends: append copy either depends [depends][[]] source
             commands: reduce [command/I/D/F/O/g/(
                 try if (PIC or [parent/class = #dynamic-library]) ['PIC]
             )
@@ -1279,7 +1279,7 @@ generator-class: make object! [
                     remove output-ext
                 ]
                 basename: project/output
-                project/output: join-of basename suffix
+                project/output: join basename suffix
             ]
             ends-with? project/output suffix [
                 basename: either suffix [
@@ -1291,7 +1291,7 @@ generator-class: make object! [
             ]
             default [
                 basename: project/output
-                project/output: join-of basename suffix
+                project/output: join basename suffix
             ]
         ]
 
@@ -1449,7 +1449,7 @@ makefile: make generator-class [
                     ]
                     append buf gen-rule make entry-class [
                         target: dep/output
-                        depends: join-of objs map-each ddep dep/depends [
+                        depends: join objs map-each ddep dep/depends [
                             if ddep/class <> #object-library [ddep]
                         ]
                         commands: append reduce [dep/command] opt dep/post-build-commands
@@ -1607,7 +1607,7 @@ Execution: make generator-class [
                 ]
                 run-target make entry-class [
                     target: project/output
-                    depends: join-of project/depends objs
+                    depends: join project/depends objs
                     commands: reduce [project/command]
                 ]
             ]

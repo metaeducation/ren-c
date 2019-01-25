@@ -79,7 +79,7 @@ awake-server: func [event <local> client] [
 ]
 
 serve: func [web-port web-root <local> listen-port] [
-    listen-port: open join-of tcp://: web-port
+    listen-port: open join tcp://: web-port
     listen-port/locals: has compose/deep [
         config: [root: (web-root)]
     ]

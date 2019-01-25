@@ -107,14 +107,6 @@ any-object!: any-object?: deprecated [
     {This is clearer than OBJECT! being a member name -and- a category name.}
 ]
 
-join: repurposed [
-    {JOIN is reserved in Ren-C for future use}
-    {(It will act like R3's REPEND, which has a slight difference}
-    {from APPEND of a REDUCE'd value: it only reduces blocks).}
-    {Use ADJOIN for the future JOIN, JOIN-OF for non-mutating.}
-    {If in <r3-legacy> mode, old JOIN meaning is available.}
-]
-
 unset?: repurposed [
     {UNSET? now tests if a WORD! or PATH! is bound to a set variable.}
     {Use NULL? to test for a value's absence, e.g. NULL? () would be true.}

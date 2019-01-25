@@ -116,6 +116,14 @@ prin: function [
 ]
 
 
+join-of: func [] [
+    fail 'return [
+        "JOIN has returned to Rebol2 semantics, JOIN-OF is no longer needed"
+        https://forum.rebol.info/t/its-time-to-join-together/1030
+    ]
+]
+
+
 ; REJOIN in R3-Alpha meant "reduce and join"; the idea of JOIN in Ren-C
 ; already implies reduction of the appended data.  JOIN-ALL is a friendlier
 ; name, suggesting the join result is the type of the first reduced element.

@@ -119,14 +119,15 @@ repend: redescribe [
 ; convenient, and not be beholden to the behavior that the name REPEND would
 ; seem to suggest.
 ;
-join: func [ ;-- renamed to ADJOIN in %sys-start.r for user context, temporary
-    "Concatenates values to the end of a series."
+join: func [
+    {Concatenates values to the end of a copy of a series}
+
     return: [any-series! port! map! gob! object! module! bitset!]
     series [any-series! port! map! gob! object! module! bitset!]
     value [<opt> any-value!]
 ][
     case [
-        block? :value [repend series :value]
+        block? :value [append copy series reduce :value]
         group? :value [
             fail 'value "Can't JOIN a GROUP! onto a series (use APPEND)."
         ]
@@ -134,26 +135,10 @@ join: func [ ;-- renamed to ADJOIN in %sys-start.r for user context, temporary
             fail 'value "Can't JOIN an ACTION! onto a series (use APPEND)."
         ]
         default [
-            append/only series :value ;-- paths, words, not in block
+            append/only copy series :value  ; paths, words, not in block
         ]
     ]
 ]
-
-join-of: redescribe [
-    "Concatenates values to the end of a copy of a series."
-](
-    adapt 'join [
-        series: copy series
-    ]
-)
-
-append-of: redescribe [
-    "APPEND variation that copies the input series first."
-](
-    adapt 'append [
-        series: copy series
-    ]
-)
 
 
 ; CHARSET was moved from "Mezzanine" because it is called by TRIM which is

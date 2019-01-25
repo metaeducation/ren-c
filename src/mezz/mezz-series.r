@@ -57,15 +57,9 @@ join-all: function [
 ][
     until [
         block: (evaluate/set block 'base) else [return null]
-        set? 'base
+        set? 'base  ; skip NULL evaluations
     ]
-
-    ; !!! It isn't especially compelling that  `join-of 3 "hello"` gives you
-    ; `3hello`; defaulting to a string doesn't make obviously more sense than
-    ; `[3 "hello"]` when using a series operation.  However, so long as
-    ; JOIN-OF is willing to do so, it will be legal to do it here.
-    ;
-    join-of base block
+    join base block
 ]
 
 

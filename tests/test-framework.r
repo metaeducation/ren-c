@@ -19,7 +19,7 @@ make object! compose [
     log-file: _
 
     log: func [report [block!]] [
-        write/append log-file join-of #{} report
+        write/append log-file join #{} report
     ]
 
     ; counters

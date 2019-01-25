@@ -32,7 +32,7 @@ libraries: switch system-config/os-base [
     ; On some systems (32-bit Ubuntu 12.04), odbc requires ltdl
     ;
     default [
-        append-of [%odbc] all [
+        append copy [%odbc] all [
             not find [no false off _ #[false]] user-config/odbc-requires-ltdl
             %ltdl
         ]

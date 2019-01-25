@@ -418,7 +418,7 @@ host-start: function [
             all [
                 homedrive: get-env 'HOMEDRIVE
                 homepath: get-env 'HOMEPATH
-                join-of homedrive homepath
+                join homedrive homepath
             ]
         ]
     ]
@@ -429,7 +429,7 @@ host-start: function [
     ][
         ;; lives under systems/options/home
 
-        path: join-of o/home <- switch system/platform/1 [
+        path: join o/home <- switch system/platform/1 [
             'Windows [%REBOL/]
         ] else [
             %.rebol/     ;; default *nix (covers Linux, MacOS (OS X) and Unix)

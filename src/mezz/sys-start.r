@@ -51,8 +51,6 @@ finish-init-core: func [
     tmp: make object! 320
     append tmp compose [
         system: (ensure object! system)
-
-        adjoin: (ensure action! get 'join)
     ]
 
     system/contexts/user: tmp

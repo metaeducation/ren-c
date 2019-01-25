@@ -44,7 +44,7 @@ encode-lines: func [
     ; Note: Preserves newline formatting of the block.
 
     ; Encode newlines.
-    bol: join-of line-prefix indent
+    bol: join line-prefix indent
     parse text [
         any [
             thru newline pos:

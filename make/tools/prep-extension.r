@@ -64,7 +64,7 @@ m-name: mod
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
-c-src: join-of %../../src/ fix-win32-path to file! ensure text! args/SRC
+c-src: join %../../src/ fix-win32-path to file! ensure text! args/SRC
 
 print ["building" m-name "from" c-src]
 
@@ -302,7 +302,7 @@ replace script-name "mod" "ext"
 inc-name: copy file-name
 replace inc-name ".c" "-init.c"
 
-dest: join-of output-dir join-of %tmp- inc-name
+dest: join output-dir join %tmp- inc-name
 
 e: make-emitter "Ext custom init code" dest
 

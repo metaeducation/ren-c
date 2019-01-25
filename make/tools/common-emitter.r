@@ -49,7 +49,7 @@ cscape: function [
     ; being ambiguous).
     ;
     num: 1
-    num-text: to text! num ;-- CHANGE won't take GROUP! to evaluate, #1279
+    num-text: to text! num  ; CHANGE won't take GROUP! to evaluate, #1279
 
     list: collect [
         parse string [(col: 0) start: any [
@@ -105,29 +105,19 @@ cscape: function [
 
             code: load/all expr
             if with [
-                context: compose [(context)] ;-- convert to block
+                context: compose [(context)]  ; convert to block
                 for-each item context [
                     bind code item
                 ]
             ]
-            sub: do code
+            sub: (try do code) or [copy "/* _ */"]  ; replaced in post-phase
 
-            sub: case [
-                blank? sub [copy "/* _ */"] ;-- replaced in post-phase
-                mode = #cname [
-                    if not all [text? sub | empty? sub] [
-                        to-c-name sub
-                    ]
-                ]
-                mode = #unspaced [
-                    either block? sub [unspaced sub] [form sub]
-                ]
-                mode = #delimit [
-                    delimit (unspaced [suffix newline]) sub
-                ]
+            sub: switch mode [
+                #cname [to-c-name sub]
+                #unspaced [either block? sub [unspaced sub] [form sub]]
+                #delimit [delimit (unspaced [suffix newline]) sub]
+
                 fail ["Invalid CSCAPE mode:" mode]
-            ] else [
-                copy ""
             ]
 
             case [
@@ -255,10 +245,10 @@ make-emitter: function [
             data: take data
             switch type of data [
                 text! [
-                    adjoin buf-emit cscape/with data opt context
+                    append buf-emit cscape/with data opt context
                 ]
                 char! [
-                    adjoin buf-emit data
+                    append buf-emit data
                 ]
             ]
         ]

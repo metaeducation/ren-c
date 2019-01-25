@@ -91,7 +91,7 @@ save: function [
                     remove find to-value select header-data 'options 'compress
                 ]
                 not block? select header-data 'options [
-                    join header-data ['options copy [compress]]
+                    append header-data compose [options: ((copy [compress]))]
                 ]
                 not find header-data/options 'compress [
                     append header-data/options 'compress

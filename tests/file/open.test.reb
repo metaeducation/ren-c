@@ -3,7 +3,7 @@
     (
     error? trap [
         repeat n 200 [
-            trap [close open open join-of tcp://localhost: n]
+            trap [close open open join tcp://localhost: n]
         ]
     ]
     true

@@ -35,7 +35,7 @@ sprintf: make routine! [
 i: 1000
 j: 0.0
 printf reduce [
-    join-of "i: %d, %f" newline
+    join "i: %d, %f" newline
     i [int32]
     j [float]
 ]

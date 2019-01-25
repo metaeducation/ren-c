@@ -467,7 +467,7 @@ elf-format: context [
             ;
             (insert
                 (skip executable string-section-offset + string-section-size)
-                (join-of (to-binary encap-section-name) #{00})
+                (join (to-binary encap-section-name) #{00})
             )
 
             ; We added a section (so another section header to account for),
@@ -969,7 +969,7 @@ pe-format: context [
             insert/dup garbage: copy #{} #{00} (
                 new-section-size - length of section-data
             )
-            section-data: join-of to binary! section-data garbage
+            section-data: join to binary! section-data garbage
         ]
 
         assert [
@@ -1078,7 +1078,7 @@ pe-format: context [
             insert/dup garbage: copy #{} #{00} (
                 new-section-size - length of section-data
             )
-            section-data: join-of to binary! section-data garbage
+            section-data: join to binary! section-data garbage
         ]
         insert pos section-data
 
@@ -1249,11 +1249,11 @@ encap: function [
 
     in-rebol-path: default [system/options/boot]
     either ".exe" = base-name: skip tail of in-rebol-path -4 [
-        out-rebol-path: join-of
+        out-rebol-path: join
             copy/part in-rebol-path (index of base-name) - 1
             "-encap.exe"
     ][
-        out-rebol-path: join-of in-rebol-path "-encap"
+        out-rebol-path: join in-rebol-path "-encap"
     ]
 
     print ["Encapping from original executable:" in-rebol-path]

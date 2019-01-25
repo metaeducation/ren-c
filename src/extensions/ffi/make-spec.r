@@ -6,7 +6,7 @@ depends: [
     %ffi/t-struct.c
     %ffi/t-routine.c
 ]
-includes: [join-of [%prep/extensions/ffi] opt cfg-ffi/includes]
+includes: [join [%prep/extensions/ffi] opt cfg-ffi/includes]
 definitions: [cfg-ffi/definitions]
 cflags: [cfg-ffi/cflags]
 searches: [cfg-ffi/searches]

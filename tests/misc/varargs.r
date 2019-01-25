@@ -36,7 +36,7 @@ i: 1000
 j: make struct! [x [double]]
 j/x: 12.34
 (printf
-    join-of "1. i: %d, %f" newline
+    join "1. i: %d, %f" newline
     i [int64]
     j [struct! [x [double]]]
 )
@@ -64,7 +64,7 @@ h: make struct! [
 ]
 len: (sprintf
     addr-of h
-    join-of "hello %s" newline
+    join "hello %s" newline
     "world" [pointer]
 )
 

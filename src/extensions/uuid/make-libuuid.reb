@@ -153,8 +153,8 @@ files: compose [
 ]
 
 for-each [file fix] files [
-    data: to-text read url: join-of ROOT file
-    target: join-of %libuuid/ (last split-path file)
+    data: to-text read url: join ROOT file
+    target: join %libuuid/ (last split-path file)
 
     print [
         url LF

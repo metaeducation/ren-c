@@ -125,3 +125,11 @@ uneval: func [x [<opt> any-value!]] [
         fail "UNEVAL can only work on WORD!, PATH!, NULL in old Rebols"
     ]
 ]
+
+join: :join-of
+join-of: func [] [
+    fail 'return [
+        "JOIN has returned to Rebol2 semantics, JOIN-OF is no longer needed"
+        https://forum.rebol.info/t/its-time-to-join-together/1030
+    ]
+]

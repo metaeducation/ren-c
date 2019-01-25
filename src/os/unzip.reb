@@ -226,7 +226,7 @@ ctx-zip: context [
             return value
         ]
         value: decode-url value
-        join-of %"" [
+        join %"" [
             value/host "/"
             any [value/path ""]
             any [value/target ""]
@@ -344,7 +344,7 @@ ctx-zip: context [
         info: either all [quiet | not verbose] [
             func [value] []
         ][
-            func [value][prin join-of "" value]
+            func [value][prin join "" value]
         ]
         if not block? where [
             where: my dirize
