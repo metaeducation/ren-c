@@ -873,9 +873,11 @@ DECLARE_NATIVE(deline)
     for (n = 0; n < len_at; ++n) {
         REBUNI c;
         src = Ucs2_Next(&c, src);
+        ++n;
         if (c == CR) {
             dest = Write_Codepoint(dest, LF);
             src = Ucs2_Next(&c, src);
+            ++n; // will see NUL terminator before loop check, so is safe
             if (c == LF) {
                 --len_head; // don't write carraige return, note loss of char
                 continue;
