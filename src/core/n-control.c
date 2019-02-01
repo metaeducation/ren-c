@@ -811,51 +811,86 @@ REBNATIVE(none)
 //
 //  {Evaluates each condition, and when true, evaluates what follows it}
 //
-//      return: [<opt> any-value!]
-//          "Last matched case evaluation, or null if no cases matched"
-//      cases [block!]
-//          "Block of cases (conditions followed by branches)"
-//      /all
-//          "Evaluate all cases (do not stop at first logically true case)"
+//      return: "Last matched case evaluation, or null if no cases matched"
+//          [<opt> any-value!]
+//      :predicate "Unary case-processing action (default is /DID)"
+//          [refinement! action! <skip>]
+//      cases "Conditions followed by branches"
+//          [block!]
+//      /all "Do not stop after finding first logically true case"
 //  ]
 //
 REBNATIVE(case)
 {
     INCLUDE_PARAMS_OF_CASE;
 
-    DECLARE_FRAME (f);
-    Push_Frame(f, ARG(cases));
-
-    REBVAL *safe = ARG(cases); // frame has array now, can re-use GC-safe cell
-
-    Init_Nulled(D_OUT); // default return result
-
-    while (NOT_END(f->value)) {
-
-        // Perform 1 EVALUATE's worth of evaluation on a "condition" to test
-        // Will consume any pending "invisibles" (COMMENT, ELIDE, DUMP...)
-
-        if (Eval_Step_Throws(SET_END(D_CELL), f)) {
-            Move_Value(D_OUT, D_CELL);
-            Abort_Frame(f);
+    REBVAL *predicate = ARG(predicate);
+    if (not IS_NULLED(predicate)) {
+        REBSTR *opt_label;
+        if (Get_If_Word_Or_Path_Throws(
+            D_OUT,
+            &opt_label,
+            predicate,
+            SPECIFIED,
+            false  // push_refinements = false, specialize for multiple uses
+        )){
             return R_THROWN;
         }
+        if (not IS_ACTION(D_OUT))
+            fail ("PREDICATE provided to CASE must look up to an ACTION!");
 
-        if (IS_END(D_CELL)) {
-            assert(IS_END(f->value));
-            break;
-        }
+        Move_Value(predicate, D_OUT);
+    }
 
-        // The last condition will "fall out" if there is no branch:
+    DECLARE_FRAME (f);
+    Push_Frame(f, ARG(cases));  // frame has array, can re-use GC-safe cell
+    REBVAL *last_branch_result = ARG(cases);
+    Init_Nulled(last_branch_result); // default return result
+
+    for (; Init_Nulled(D_OUT), NOT_END(f->value);) {
+
+        // Feed the frame forward one step for predicate argument.
         //
-        //     case [1 > 2 [...] 3 > 4 [...] 10 + 20] = 30
-        //
+        // NOTE: It may seem tempting to run PREDICATE from on `f` directly,
+        // allowing it to take arity > 2.  Don't do this.  We have to get a
+        // true/false answer *and* know what the right hand argument was, for
+        // full case coverage and for DEFAULT to work.
+
+        SET_CELL_FLAG(D_OUT, OUT_MARKED_STALE);
+        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f))
+            goto threw;
+
+        if (GET_CELL_FLAG(D_OUT, OUT_MARKED_STALE))  // could've been COMMENT
+            goto reached_end;
+
         if (IS_END(f->value)) {
-            Drop_Frame(f);
-            return Move_Value(D_OUT, D_CELL);
+            //
+            // !!! We don't want to do a IS_TRUTHY() test on something that
+            // is going to fall out, because voids are legal there.  But what
+            // about `case [... default [...] comment "?"]`
+            //
+            goto reached_end;
         }
 
-        if (IS_CONDITIONAL_FALSE(D_CELL)) { // not a matching condition
+        bool matched;
+        if (IS_NULLED(predicate)) {
+            matched = IS_TRUTHY(D_OUT);
+        }
+        else {
+            DECLARE_LOCAL (temp);
+            if (Apply_Only_Throws(
+                temp,
+                true,  // fully = true (e.g. argument must be taken)
+                predicate,
+                D_OUT,  // argument
+                rebEND
+            )){
+                goto threw;
+            }
+            matched = IS_TRUTHY(temp);
+        }
+
+        if (not matched) {
             //
             // Maintain symmetry with IF's typechecking of non-taken branches:
             //
@@ -875,55 +910,64 @@ REBNATIVE(case)
             continue;
         }
 
-        // Note: we are preserving `cell` to pass to an arity-1 ACTION!
+        // Can't use Do_Branch(), f->value is unevaluated RELVAL...simulate it
 
-        if (not IS_GROUP(f->value))
-            Derelativize(D_OUT, f->value, f->specifier); // null not possible
-        else {
+        if (IS_GROUP(f->value))
+            fail ("GROUP! support for CASE branches coming soon");
+
+        if (IS_QUOTED(f->value)) {
+            Unquotify(Derelativize(D_OUT, f->value, f->specifier), 1);
+        }
+        else if (IS_BLOCK(f->value)) {
             if (Do_At_Throws(
                 D_OUT,
                 VAL_ARRAY(f->value),
                 VAL_INDEX(f->value),
                 f->specifier
             )){
-                Abort_Frame(f);
-                return R_THROWN;
+                goto threw;
             }
         }
-
-        Fetch_Next_In_Frame(nullptr, f); // keep matching if /ALL
-
-        f->gotten = nullptr; // can't hold onto cache, running user code
-
-        if (IS_QUOTED(D_OUT)) {
-            Unquotify(D_OUT, 1);
-        }
-        else if (IS_BLOCK(D_OUT)) {
-            Move_Value(safe, D_OUT); // can't evaluate into ARG(cases)
-            if (Do_Any_Array_At_Throws(D_OUT, safe)) {
-                Abort_Frame(f);
-                return R_THROWN;
+        else if (IS_ACTION(f->value)) {
+            DECLARE_LOCAL (temp);
+            if (Do_Branch_With_Throws(temp, KNOWN(f->value), D_OUT)) {
+                Move_Value(D_OUT, temp);
+                goto threw;
             }
+            Move_Value(D_OUT, temp);
         }
-        else if (IS_ACTION(D_OUT)) {
-            Move_Value(safe, D_OUT); // can't evaluate into ARG(cases)
-            if (Do_Branch_With_Throws(D_OUT, safe, D_CELL)) {
-                Abort_Frame(f);
-                return R_THROWN;
-            }
-        } else
-            fail (Error_Bad_Value_Core(D_OUT, f->specifier));
+        else
+            fail (Error_Bad_Value_Core(f->value, f->specifier));
 
         Voidify_If_Nulled(D_OUT); // null is reserved for no branch taken
 
         if (not REF(all)) {
-            Abort_Frame(f);
+            Drop_Frame(f);
             return D_OUT;
         }
+
+        Move_Value(last_branch_result, D_OUT);
+        Fetch_Next_In_Frame(nullptr, f); // keep matching if /ALL
     }
 
+  reached_end:;
+
     Drop_Frame(f);
-    return D_OUT;
+
+    // Last evaluation will "fall out" if there is no branch:
+    //
+    //     case /not [1 < 2 [...] 3 < 4 [...] 10 + 20] = 30
+    //
+    if (not IS_NULLED(D_OUT)) // prioritize fallout result
+        return D_OUT;
+
+    assert(REF(all) or IS_NULLED(last_branch_result));
+    RETURN (last_branch_result);  // else last branch "falls out", may be null
+
+  threw:;
+
+    Abort_Frame(f);
+    return R_THROWN;
 }
 
 
@@ -936,24 +980,24 @@ REBNATIVE(case)
 //          [<opt> any-value!]
 //      value "Target value"
 //          [<opt> any-value!]
-//      :compare "Refinement PATH! to action (e.g. /equal?) or literal action"
+//      :predicate "Binary switch-processing action (default is /EQUAL?)"
 //          [refinement! action! <skip>]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
-//      /literal "Do not evaluate comparison values"
 //  ]
 //
 REBNATIVE(switch)
 {
     INCLUDE_PARAMS_OF_SWITCH;
 
-    if (not IS_NULLED(ARG(compare))) {
+    REBVAL *predicate = ARG(predicate);
+    if (not IS_NULLED(predicate)) {
         REBSTR *opt_label;
         if (Get_If_Word_Or_Path_Throws(
             D_OUT,
             &opt_label,
-            ARG(compare),
+            predicate,
             SPECIFIED,
             false  // push_refinements = false, specialize for multiple uses
         )){
@@ -962,43 +1006,50 @@ REBNATIVE(switch)
         if (not IS_ACTION(D_OUT))
             fail ("COMPARE provided to SWITCH must look up to an ACTION!");
 
-        Move_Value(ARG(compare), D_OUT);
+        Move_Value(predicate, D_OUT);
     }
 
     DECLARE_FRAME (f);
-    Push_Frame(f, ARG(cases));
+    Push_Frame(f, ARG(cases));  // frame has block, can reuse GC-safe cell
+    REBVAL *last_branch_result = ARG(cases);
+    Init_Nulled(last_branch_result);
 
     REBVAL *value = ARG(value);
-
     if (IS_BLOCK(value) and GET_CELL_FLAG(value, UNEVALUATED))
         fail (Error_Block_Switch_Raw(value));  // `switch [x] [...]` safeguard
 
-    Init_Nulled(D_CELL);  // fallout result if no branches run
-    SET_END(D_OUT);  // last evaluated branch result (needed for /ALL)
+    Init_Nulled(D_OUT);  // fallout result if no branches run
 
     while (NOT_END(f->value)) {
 
         if (IS_BLOCK(f->value) or IS_ACTION(f->value)) {
             Fetch_Next_In_Frame(nullptr, f);
-            Init_Nulled(D_CELL);  // reset fallout output to null
+            Init_Nulled(D_OUT);  // reset fallout output to null
             continue;
         }
 
-        // Feed the frame forward...evaluate one step (unless /LITERAL)
+        // Feed the frame forward...evaluate one step to get second argument.
         //
-        if (REF(literal))
-            Literal_Next_In_Frame(D_CELL, f);
-        else {
-            if (Eval_Step_Throws(SET_END(D_CELL), f))
-                goto threw;
+        // NOTE: It may seem tempting to run COMPARE from the frame directly,
+        // allowing it to take arity > 2.  Don't do this.  We have to get a
+        // true/false answer *and* know what the right hand argument was, for
+        // full switching coverage and for DEFAULT to work.
+        //
+        // !!! Advanced frame tricks *might* make this possible for N-ary
+        // functions, the same way `match parse "aaa" [some "a"]` => "aaa"
 
-            if (IS_END(D_CELL)) {  // nothing left, or was just COMMENT/etc.
-                assert(IS_END(f->value));
-                break;
-            }
+        if (Eval_Step_Throws(SET_END(D_OUT), f))
+            goto threw;
+
+        if (IS_END(D_OUT)) {  // nothing left, or was just COMMENT/etc.
+            assert(IS_END(f->value));
+            Drop_Frame(f);
+
+            assert(REF(all) or IS_NULLED(last_branch_result));
+            RETURN (last_branch_result);
         }
 
-        if (IS_NULLED(ARG(compare))) {
+        if (IS_NULLED(predicate)) {
             //
             // It's okay that we are letting the comparison change `value`
             // here, because equality is supposed to be transitive.  So if it
@@ -1013,26 +1064,30 @@ REBNATIVE(switch)
             // !!! A branch composed into the switch cases block may want to
             // see the un-mutated condition value.
             //
-            if (not Compare_Modify_Values(ARG(value), D_CELL, 0))  // 0 => lax
+            if (not Compare_Modify_Values(ARG(value), D_OUT, 0))  // 0 => lax
                 continue;
         }
         else {
-            assert(IS_ACTION(ARG(compare)));  // entry code should guarantee
+            assert(IS_ACTION(predicate));  // entry code should guarantee
 
             // `switch x /greater? [10 [...]]` acts like `case [x > 10 [...]]
-            // The ARG(value) passed is the left/first argument to compare.
+            // The ARG(value) passed in is the left/first argument to compare.
             //
             // !!! Using Apply_Only_Throws loses the labeling of the function
             // we were given (opt_label).  Consider how it might be passed
             // through for better stack traces and error messages.
             //
+            // !!! We'd like to run this faster, so we aim to be able to
+            // reuse this frame...hence D_CELL should not be expected to
+            // survive across this point.
+            //
             DECLARE_LOCAL (temp);
             if (Apply_Only_Throws(
                 temp,
                 true,  // fully = true (e.g. both arguments must be taken)
-                ARG(compare),
+                predicate,
                 ARG(value),  // first arg (left hand side if infix)
-                D_CELL,  // second arg (right hand side if infix)
+                D_OUT,  // second arg (right hand side if infix)
                 rebEND
             )){
                 goto threw;
@@ -1044,12 +1099,8 @@ REBNATIVE(switch)
         // Skip ahead to try and find BLOCK!/ACTION! branch to take the match
         //
         while (true) {
-            if (IS_END(f->value)) {
-                Drop_Frame(f);
-                if (NOT_END(D_OUT))  // prioritize last matching branch result
-                    return D_OUT;
-                RETURN (D_CELL);  // else last test "falls out", might be null
-            }
+            if (IS_END(f->value))
+                goto reached_end;
 
             if (IS_BLOCK(f->value)) {  // f->value is RELVAL, can't Do_Branch
                 if (Do_At_Throws(
@@ -1064,15 +1115,18 @@ REBNATIVE(switch)
             }
 
             if (IS_ACTION(f->value)) {  // must have been COMPOSE'd in cases
+                DECLARE_LOCAL (temp);
                 if (Apply_Only_Throws(
-                    D_OUT,
+                    temp,
                     false,  // fully = false, e.g. arity-0 functions are ok
                     KNOWN(f->value),  // actions don't need specifiers
-                    D_CELL,
+                    D_OUT,
                     rebEND
                 )){
+                    Move_Value(D_OUT, temp);
                     goto threw;
                 }
+                Move_Value(D_OUT, temp);
                 break;
             }
 
@@ -1081,17 +1135,25 @@ REBNATIVE(switch)
 
         Voidify_If_Nulled(D_OUT);  // null is reserved for no branch run
 
-        if (not REF(all))
-            break;
+        if (not REF(all)) {
+            Drop_Frame(f);
+            return D_OUT;
+        }
 
+        Move_Value(last_branch_result, D_OUT);  // save in case no fallout
+        Init_Nulled(D_OUT);  // switch back to using for fallout
         Fetch_Next_In_Frame(nullptr, f);  // keep matching if /ALL
     }
 
+  reached_end:
+
     Drop_Frame(f);
 
-    if (NOT_END(D_OUT))  // prioritize last match branch result if available
+    if (not IS_NULLED(D_OUT)) // prioritize fallout result
         return D_OUT;
-    RETURN (D_CELL);  // last test "falls out" if no last match, may be null
+
+    assert(REF(all) or IS_NULLED(last_branch_result));
+    RETURN (last_branch_result);  // else last branch "falls out", may be null
 
   threw:;
 

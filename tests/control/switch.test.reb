@@ -28,11 +28,16 @@
 (1 = switch 1 [1])
 
 
-; SWITCH/ALL gives the last branch result, then fallout as a last resort
+; SWITCH/ALL gives the last branch result, but prioritizes fallout
 
-(<b> = switch/all 10 [5 + 5 [<a>] 5 + 5 [<b>] <fallout>])
-(<b> = switch/all 10 [0 + 0 [<a>] 5 + 5 [<b>] <fallout>])
-(<a> = switch/all 10 [5 + 5 [<a>] 0 + 0 [<b>] <fallout>])
+(<b> = switch/all 10 [5 + 5 [<a>] 5 + 5 [<b>]])
+(<b> = switch/all 10 [0 + 0 [<a>] 5 + 5 [<b>]])
+(<a> = switch/all 10 [5 + 5 [<a>] 0 + 0 [<b>]])
+(null = switch/all 10 [0 + 0 [<a>] 0 + 0 [<b>]])
+
+(<fallout> = switch/all 10 [5 + 5 [<a>] 5 + 5 [<b>] <fallout>])
+(<fallout> = switch/all 10 [0 + 0 [<a>] 5 + 5 [<b>] <fallout>])
+(<fallout> = switch/all 10 [5 + 5 [<a>] 0 + 0 [<b>] <fallout>])
 (<fallout> = switch/all 10 [0 + 0 [<a>] 0 + 0 [<b>] <fallout>])
 
 
