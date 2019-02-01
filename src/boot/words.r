@@ -165,8 +165,10 @@ subparse ;-- recursions of parse use this for REBNATIVE(subparse) in backtrace
 ; PARSE - These words must not be reserved above!!  The range of consecutive
 ; index numbers are used by PARSE to detect keywords.
 ;
-set ; must be first first (SYM_SET referred to by GET_VAR() in %u-parse.c)
+set  ; must be first first (SYM_SET referred to by GET_VAR() in %u-parse.c)
 copy
+collect  ; proposed as being SET-like, by @rgchris
+keep
 some
 any
 opt

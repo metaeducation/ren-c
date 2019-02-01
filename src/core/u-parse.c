@@ -90,6 +90,13 @@
 #define P_FIND_FLAGS        VAL_INT64(FRM_ARGS_HEAD(f) + 1)
 #define P_HAS_CASE          (did (P_FIND_FLAGS & AM_FIND_CASE))
 
+#define P_NUM_QUOTES_VALUE  (f->rootvar + 3)
+#define P_NUM_QUOTES        VAL_INT32(P_NUM_QUOTES_VALUE)
+
+#define P_COLLECTION_VALUE  (f->rootvar + 4)
+#define P_COLLECTION \
+    (IS_BLANK(P_COLLECTION_VALUE) ? nullptr : VAL_ARRAY(P_COLLECTION_VALUE))
+
 #define P_OUT (f->out)
 
 #define P_CELL FRM_CELL(f)
@@ -114,7 +121,6 @@
         { FETCH_NEXT_RULE(f); }
 
 
-//
 // See the notes on `flags` in the main parse loop for how these work.
 //
 enum parse_flags {
@@ -146,7 +152,7 @@ inline static REBSYM VAL_CMD(const RELVAL *v) {
 }
 
 
-// Subparse_Throws is a helper that sets up a call frame and invokes the
+// Throws is a helper that sets up a call frame and invokes the
 // SUBPARSE native--which represents one level of PARSE recursion.
 //
 // !!! It is the intent of Ren-C that calling functions be light and fast
@@ -166,7 +172,8 @@ static bool Subparse_Throws(
     REBSPC *input_specifier,
     const RELVAL *rules,
     REBSPC *rules_specifier,
-    REBCNT find_flags
+    REBARR *opt_collection,
+    REBFLGS flags
 ){
     assert(ANY_ARRAY(rules));
     assert(ANY_SERIES(input));
@@ -214,14 +221,6 @@ static bool Subparse_Throws(
     assert(f->refine == END_NODE); // passed to Begin_Action()
     f->special = END_NODE;
 
-  #if defined(NDEBUG)
-    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 2); // elides RETURN:
-  #else
-    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 3); // checks RETURN:
-    Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 2);
-    Init_Nulled(FRM_ARGS_HEAD(f) + 2);
-  #endif
-
     Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 0);
     Derelativize(FRM_ARGS_HEAD(f) + 0, input, input_specifier);
 
@@ -229,7 +228,31 @@ static bool Subparse_Throws(
     // case-insensitive bytes for ASCII characters.
     //
     Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 1);
-    Init_Integer(FRM_ARGS_HEAD(f) + 1, find_flags);
+    Init_Integer(FRM_ARGS_HEAD(f) + 1, flags);
+
+    // Need to track NUM-QUOTES somewhere that it can be read from the frame
+    //
+    Init_Nulled(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 2));
+
+    // If there's an array for collecting into, there has to be some way of
+    // passing it between frames.
+    //
+    REBCNT collect_tail;
+    if (opt_collection) {
+        Init_Block(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 3), opt_collection);
+        collect_tail = ARR_LEN(opt_collection);  // roll back here on failure
+    }
+    else {
+        Init_Blank(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 3));
+        collect_tail = 0;
+    }
+
+  #if defined(NDEBUG)
+    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 4); // elides RETURN:
+  #else
+    assert(ACT_NUM_PARAMS(NAT_ACTION(subparse)) == 5); // checks RETURN:
+    Init_Nulled(Prep_Stack_Cell(FRM_ARGS_HEAD(f) + 4));
+  #endif
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do
@@ -240,6 +263,9 @@ static bool Subparse_Throws(
 
     Drop_Action(f);
     Drop_Frame(f);
+
+    if ((r == R_THROWN or IS_NULLED(out)) and opt_collection)
+        TERM_ARRAY_LEN(opt_collection, collect_tail);  // roll back on abort
 
     if (r == R_THROWN) {
         //
@@ -280,19 +306,28 @@ static bool Subparse_Throws(
 }
 
 
-// Very generic error.  Used to be parameterized with the parse rule in
+// Very generic errors.  Used to be parameterized with the parse rule in
 // question, but now the `where` at the time of failure will indicate the
 // location in the parse dialect that's the problem.
-//
-static REBCTX *Error_Parse_Rule(void) {
+
+inline static REBCTX *Error_Parse_Rule(void) {
     return Error_Parse_Rule_Raw();
 }
 
-
-// Also generic.
-//
-static REBCTX *Error_Parse_End(void) {
+inline static REBCTX *Error_Parse_End(void) {
     return Error_Parse_End_Raw();
+}
+
+inline static REBCTX *Error_Parse_Command(REBFRM *f) {
+    DECLARE_LOCAL (command);
+    Derelativize(command, P_RULE, P_RULE_SPECIFIER);
+    return Error_Parse_Command_Raw(command);
+}
+
+inline static REBCTX *Error_Parse_Variable(REBFRM *f) {
+    DECLARE_LOCAL (variable);
+    Derelativize(variable, P_RULE, P_RULE_SPECIFIER);
+    return Error_Parse_Variable_Raw(variable);
 }
 
 
@@ -338,7 +373,9 @@ static void Set_Parse_Series(
     REBFRM *f,
     const REBVAL *any_series
 ) {
-    Move_Value(FRM_ARGS_HEAD(f) + 0, any_series);
+    if (any_series != FRM_ARGS_HEAD(f) + 0)
+        Move_Value(FRM_ARGS_HEAD(f) + 0, any_series);
+
     VAL_INDEX(FRM_ARGS_HEAD(f) + 0) =
         (VAL_INDEX(any_series) > VAL_LEN_HEAD(any_series))
             ? VAL_LEN_HEAD(any_series)
@@ -369,11 +406,8 @@ static const RELVAL *Get_Parse_Value(
     const RELVAL *rule,
     REBSPC *specifier
 ){
-    if (IS_BAR(rule))
-        return rule;
-
     if (IS_WORD(rule)) {
-        if (VAL_CMD(rule))
+        if (VAL_CMD(rule))  // includes IS_BAR()...also a "command"
             return rule;
 
         Move_Opt_Var_May_Fail(cell, rule, specifier);
@@ -573,6 +607,7 @@ static REBIXO Parse_String_One_Rule(REBFRM *f, const RELVAL *rule) {
             SPECIFIED,
             rule,
             P_RULE_SPECIFIER,
+            P_COLLECTION,
             P_FIND_FLAGS
         )) {
             Move_Value(P_OUT, subresult);
@@ -696,6 +731,7 @@ static REBIXO Parse_Array_One_Rule_Core(
             SPECIFIED,
             rule,
             P_RULE_SPECIFIER,
+            P_COLLECTION,
             P_FIND_FLAGS
         )) {
             Move_Value(P_OUT, subresult);
@@ -734,6 +770,21 @@ static REBIXO Parse_Array_One_Rule_Core(
 //
 inline static REBIXO Parse_Array_One_Rule(REBFRM *f, const RELVAL *rule) {
     return Parse_Array_One_Rule_Core(f, P_POS, rule);
+}
+
+
+// !!! R3C does not have the Parse_One_Rule() restructuring.  This shim
+// routine works around that.
+//
+static REBIXO Parse_One_Rule(
+    REBFRM *f,
+    REBCNT pos,
+    const RELVAL *rule
+){
+    if (ANY_ARRAY(P_INPUT_VALUE))
+        return Parse_Array_One_Rule_Core(f, pos, rule);
+
+    return Parse_String_One_Rule(f, rule);
 }
 
 
@@ -1319,6 +1370,9 @@ static REBIXO Do_Eval_Rule(REBFRM *f)
 //      return: [<opt> integer!]
 //      input [any-series!]
 //      find-flags [integer!]
+//      collection "Array into which any KEEP values are collected"
+//          [blank! any-series!]
+//      <local> num-quotes
 //  ]
 //
 REBNATIVE(subparse)
@@ -1350,7 +1404,25 @@ REBNATIVE(subparse)
 // be caught by PARSE before returning.
 //
 {
+    INCLUDE_PARAMS_OF_SUBPARSE;
+
     REBFRM *f = frame_; // nice alias of implicit native parameter
+
+    Set_Parse_Series(f, ARG(input));  // doesn't reset, just checks
+    UNUSED(ARG(num_quotes));  // Set_Parse_Series sets this
+
+    // Every time we hit an alternate rule match (with |), we have to reset
+    // any of the collected values.  Remember the tail when we started.
+    //
+    // !!! Could use the VAL_INDEX() of ARG(collect) for this
+    //
+    // !!! How this interplays with throws that might be caught before the
+    // COLLECT's stack level is not clear (mostly because ACCEPT and REJECT
+    // were not clear; many cases dropped them on the floor in R3-Alpha, and
+    // no real resolution exists...see the UNUSED(interrupted) cases.)
+    //
+    REBCNT collection_tail = P_COLLECTION ? ARR_LEN(P_COLLECTION) : 0;
+    UNUSED(ARG(collection)); // implicitly accessed as P_COLLECTION
 
     assert(IS_END(P_OUT)); // invariant provided by evaluator
 
@@ -1482,11 +1554,8 @@ REBNATIVE(subparse)
 
             REBSYM cmd = VAL_CMD(rule);
             if (cmd != SYM_0) {
-                if (not IS_WORD(rule)) { // COPY: :THRU ...
-                    DECLARE_LOCAL (non_word);
-                    Derelativize(non_word, rule, P_RULE_SPECIFIER);
-                    fail (Error_Parse_Command_Raw(non_word));
-                }
+                if (not IS_WORD(rule)) // Command but not WORD! (COPY:, :THRU)
+                    fail (Error_Parse_Command(f));
 
                 if (cmd <= SYM_BREAK) { // optimization
 
@@ -1517,17 +1586,11 @@ REBNATIVE(subparse)
                     set_or_copy_pre_rule:
                         FETCH_NEXT_RULE(f);
 
-                        if (not (IS_WORD(P_RULE) or IS_SET_WORD(P_RULE))) {
-                            DECLARE_LOCAL (bad_var);
-                            Derelativize(bad_var, P_RULE, P_RULE_SPECIFIER);
-                            fail (Error_Parse_Variable_Raw(bad_var));
-                        }
+                        if (not (IS_WORD(P_RULE) or IS_SET_WORD(P_RULE)))
+                            fail (Error_Parse_Variable(f));
 
-                        if (VAL_CMD(P_RULE)) { // set set [...]
-                            DECLARE_LOCAL (keyword);
-                            Derelativize(keyword, P_RULE, P_RULE_SPECIFIER);
-                            fail (Error_Parse_Command_Raw(keyword));
-                        }
+                        if (VAL_CMD(P_RULE))  // set set [...]
+                            fail (Error_Parse_Command(f));
 
                         FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
                         continue;
@@ -1558,6 +1621,189 @@ REBNATIVE(subparse)
                         flags |= PF_INSERT;
                         FETCH_NEXT_RULE(f);
                         goto post_match_processing;
+
+
+                  case SYM_COLLECT: {
+                    FETCH_NEXT_RULE(f);
+                    if (not (IS_WORD(P_RULE) or IS_SET_WORD(P_RULE)))
+                        fail (Error_Parse_Command(f));
+
+                    FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
+                    if (not IS_BLOCK(P_RULE))
+                        fail (Error_Parse_Variable(f));
+
+                    REBARR *collection = Make_Arr_Core(
+                        10,  // !!! how big?
+                        NODE_FLAG_MANAGED
+                    );
+                    PUSH_GC_GUARD(collection);
+
+                    bool interrupted;
+                    assert(IS_END(P_OUT));  // invariant until finished
+                    bool threw = Subparse_Throws(
+                        &interrupted,
+                        P_OUT,
+                        P_INPUT_VALUE, // affected by P_POS assignment above
+                        SPECIFIED,
+                        P_RULE,
+                        P_RULE_SPECIFIER,
+                        collection,
+                        P_FIND_FLAGS
+                    );
+
+                    DROP_GC_GUARD(collection);
+                    UNUSED(interrupted);  // !!! ignore ACCEPT/REJECT (?)
+
+                    if (threw)
+                        return R_THROWN;
+
+                    if (IS_NULLED(P_OUT)) {  // match of rule failed
+                        SET_END(P_OUT);  // restore invariant
+                        goto next_alternate;  // backtrack collect, seek |
+                    }
+                    P_POS = VAL_INT32(P_OUT);
+                    SET_END(P_OUT);  // restore invariant
+
+                    Init_Block(
+                        Sink_Var_May_Fail(
+                            set_or_copy_word,
+                            P_RULE_SPECIFIER
+                        ),
+                        collection
+                    );
+
+                    FETCH_NEXT_RULE(f);
+                    continue; }
+
+                  case SYM_KEEP: {
+                    if (not P_COLLECTION)
+                        fail ("Used PARSE KEEP with no COLLECT in effect");
+
+                    FETCH_NEXT_RULE(f);  // e.g. skip the KEEP word!
+
+                    // !!! We follow the R3-Alpha principle of not using
+                    // PATH! dispatch here, so it's `keep only` instead of
+                    // `keep/only`.  But is that any good?  Review.
+                    //
+                    bool only;
+                    if (IS_WORD(P_RULE) and VAL_WORD_SYM(P_RULE) == SYM_ONLY) {
+                        only = true;
+                        FETCH_NEXT_RULE(f);
+                    }
+                    else
+                        only = false;
+
+                    REBCNT pos_before = P_POS;
+
+                    rule = Get_Parse_Value(save, P_RULE, P_RULE_SPECIFIER);
+
+                    bool reduce_instead = false;  // was IS_GET_BLOCK()
+                    if (reduce_instead) {
+                        //
+                        // Experimental use of GET-BLOCK! to mean ordinary
+                        // evaluation of material that is not matched as
+                        // a PARSE rule.  It does a REDUCE instead of a plain
+                        // DO in order to more parallel the evaluator behavior
+                        // of a GET-BLOCK!, which is probably the best idea.
+                        //
+                        // !!! There is no GET-BLOCK! or GET-GROUP! in R3C.
+                        // The change was made later.
+                        //
+                        /*REBDSP dsp_orig = DSP;
+                        assert(IS_END(P_OUT));  // should be true until finish
+                        if (Reduce_To_Stack_Throws(
+                            P_OUT,
+                            rule,
+                            P_RULE_SPECIFIER
+                        )){
+                            return R_THROWN;
+                        }
+                        SET_END(P_OUT);  // since we didn't throw, put it back
+
+                        if (DSP == dsp_orig) {
+                            // Nothing to add
+                        }
+                        else if (only) {
+                            Init_Block(
+                                Alloc_Tail_Array(P_COLLECTION),
+                                Pop_Stack_Values(dsp_orig)
+                            );
+                        }
+                        else {
+                            REBVAL *stacked = DS_AT(dsp_orig);
+                            do {
+                                ++stacked;
+                                Move_Value(
+                                    Alloc_Tail_Array(P_COLLECTION),
+                                    stacked
+                                );
+                            } while (stacked != DS_TOP);
+                        }
+                        DS_DROP_TO(dsp_orig);
+
+                        // Don't touch P_POS, we didn't consume anything from
+                        // the input series.
+                        */
+                        fail ("No GET-BLOCK! in R3C");
+                    }
+                    else {
+                        // !!! R3-Alpha parse had a weird way of doing things
+                        // like `set x some integer!` which doesn't generalize
+                        // easily.  The "Parse_One_Rule" will allow us to do
+                        // `keep integer!` but not `keep some integer!`...you
+                        // have to do `keep [some integer!]`.  This should be
+                        // reviewed as part of a general PARSE overhaul--it's
+                        // much clearer and better checked than in R3-Alpha.
+
+                        REBIXO ixo = Parse_One_Rule(f, P_POS, rule);
+                        if (ixo == THROWN_FLAG)
+                            return R_THROWN;
+
+                        if (ixo == END_FLAG)  // match of rule failed
+                            goto next_alternate;  // backtrack collect, seek |
+
+                        P_POS = cast(REBCNT, ixo);
+                        assert(P_POS >= pos_before);  // 0 or more matches
+
+                        REBARR *target;
+                        if (P_POS == pos_before and not only) {
+                            target = nullptr;
+                        }
+                        if (not IS_SER_ARRAY(P_INPUT)) {  // TEXT!, etc.
+                            target = nullptr;  // not an array, one item
+                            Init_Any_Series(
+                                Alloc_Tail_Array(P_COLLECTION),
+                                P_TYPE,
+                                Copy_Sequence_At_Len(
+                                    P_INPUT,
+                                    pos_before,
+                                    P_POS - pos_before
+                                )
+                            );
+                        }
+                        else if (only) {  // taken to mean "add as one block"
+                            target = Make_Arr_Core(
+                                P_POS - pos_before,
+                                NODE_FLAG_MANAGED
+                            );
+                            Init_Block(Alloc_Tail_Array(P_COLLECTION), target);
+                        }
+                        else
+                            target = P_COLLECTION;
+
+                        if (target) {
+                            REBCNT n;
+                            for (n = pos_before; n < P_POS; ++n)
+                                Derelativize(
+                                    Alloc_Tail_Array(target),
+                                    ARR_AT(ARR(P_INPUT), n),
+                                    P_INPUT_SPECIFIER
+                                );
+                        }
+                    }
+
+                    FETCH_NEXT_RULE(f);
+                    continue; }
 
                     case SYM_CHANGE:
                         flags |= PF_CHANGE;
@@ -1902,6 +2148,7 @@ REBNATIVE(subparse)
                         P_INPUT_SPECIFIER, // val was taken from P_INPUT
                         subrule,
                         P_RULE_SPECIFIER,
+                        P_COLLECTION,
                         P_FIND_FLAGS
                     )) {
                         Move_Value(P_OUT, P_CELL);
@@ -1955,6 +2202,7 @@ REBNATIVE(subparse)
                     SPECIFIED,
                     rule,
                     P_RULE_SPECIFIER,
+                    P_COLLECTION,
                     P_FIND_FLAGS
                 )) {
                     Move_Value(P_OUT, P_CELL);
@@ -2265,6 +2513,11 @@ REBNATIVE(subparse)
             // If a rule fails but "falls through", there may still be other
             // options later in the block to consider separated by |.
 
+          next_alternate:;
+
+            if (P_COLLECTION)
+                TERM_ARRAY_LEN(P_COLLECTION, collection_tail);
+
             FETCH_TO_BAR_OR_END(f);
             if (IS_END(P_RULE)) // no alternate rule
                 return Init_Nulled(D_OUT);
@@ -2311,6 +2564,7 @@ REBNATIVE(parse)
         SPECIFIED, // input is a non-relative REBVAL
         rules,
         SPECIFIED, // rules is a non-relative REBVAL
+        nullptr,  // start out with no COLLECT in effect, so no P_COLLECTION
         REF(case) or IS_BINARY(ARG(input)) ? AM_FIND_CASE : 0
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating

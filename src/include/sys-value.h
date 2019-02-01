@@ -582,7 +582,7 @@ inline static void Prep_Non_Stack_Cell_Core(
 #define CELL_MASK_STACK \
     (NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STACK)
 
-inline static void Prep_Stack_Cell_Core(
+inline static RELVAL *Prep_Stack_Cell_Core(
     RELVAL *c
 
   #if defined(DEBUG_TRACK_CELLS)
@@ -600,6 +600,7 @@ inline static void Prep_Stack_Cell_Core(
     c->header.bits = CELL_MASK_STACK | FLAG_KIND_BYTE(REB_0);
   #endif
     TRACK_CELL_IF_DEBUG(cast(RELVAL*, c), file, line);
+    return c;
 }
 
 #if defined(DEBUG_TRACK_CELLS)

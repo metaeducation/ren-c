@@ -30,6 +30,14 @@ REBOL [
     }
 ]
 
+read: lib/read: adapt 'lib/read [
+    ;
+    ; !!! This can be useful in R3C to get better error messages about where
+    ; a bad read is reading from.
+    ;
+    ; print ["READING:" mold source "from" what-dir]
+]
+
 ; The snapshotted Ren-C existed right before <blank> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.
 ; See if this causes an error, and if so assume it's the old Ren-C, not a

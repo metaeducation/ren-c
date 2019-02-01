@@ -117,3 +117,16 @@ inline static void Free_Instruction(REBARR *instruction) {
     TRASH_CELL_IF_DEBUG(ARR_SINGLE(instruction));
     Free_Node(SER_POOL, instruction);
 }
+
+
+// If you're going to just fail() anyway, then loose API handles are safe to
+// GC.  It's mildly inefficient to do so compared to generating a local cell:
+//
+//      DECLARE_LOCAL (specific);
+//      Derelativize(specific, relval, specifier);
+//      fail (Error_Something(specific));
+//
+// But assuming errors don't happen that often, it's cleaner to have one call.
+//
+inline static REBVAL *rebSpecific(const RELVAL *v, REBSPC *specifier)
+    { return Derelativize(Alloc_Value(), v, specifier);}

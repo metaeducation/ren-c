@@ -261,3 +261,114 @@
     count: 0
     did parse ["a" "aa" "aaa"] [some [into [((count: count + 1)) "a"]]]
 )
+
+
+; COLLECT and KEEP keywords
+;
+; Non-keyword COLLECT has issues with binding, but also does not have the
+; necessary hook to be able to "backtrack" and remove kept material when a
+; match rule containing keeps ultimately fails.  These keywords were initially
+; introduced in Red, without backtracking...and affecting the return result.
+; In Ren-C, backtracking is implemented, and also it is used to set variables
+; (like a SET or COPY) instead of affecting the return result.
+
+(all [
+    parse [1 2 3] [collect x [keep [some integer!]]]
+    x = [1 2 3]
+])
+(all [
+    parse [1 2 3] [collect x [some [keep integer!]]]
+    x = [1 2 3]
+])
+(all [
+    parse [1 2 3] [collect x [keep only [some integer!]]]
+    x = [[1 2 3]]
+])
+(all [
+    parse [1 2 3] [collect x [some [keep only integer!]]]
+    x = [[1] [2] [3]]
+])
+
+; Collecting non-array series fragments
+
+(all [
+    "bbb" = parse "aaabbb" [collect x [keep [some "a"]]]
+    x = ["aaa"]
+])
+(all [
+    "" = parse "aaabbbccc" [
+        collect x [keep [some "a"] some "b" keep [some "c"]]
+    ]
+    x = ["aaa" "ccc"]
+])
+
+; Backtracking (more tests needed!)
+
+(all [
+    [] = parse [1 2 3] [
+        collect x [
+            keep integer! keep integer! keep text!
+            |
+            keep integer! keep [some integer!]
+        ]
+    ]
+    x = [1 2 3]
+])
+
+; No change to variable on failed match (consistent with Rebol2/R3-Alpha/Red
+; behaviors w.r.t SET and COPY)
+
+(
+    x: <before>
+    all [
+        null = parse [1 2] [collect x [keep integer! keep text!]]
+        x = <before>
+    ]
+)
+
+; Nested collect
+
+(
+    all [
+        did parse [1 2 3 4] [
+            collect a [
+                keep integer!
+                collect b [keep [2 integer!]]
+                keep integer!
+            ]
+            end
+        ]
+
+        a = [1 4]
+        b = [2 3]
+    ]
+)
+
+; GET-BLOCK! can be used to keep material that did not originate from the
+; input series or a match rule.  It does a REDUCE to more closely parallel
+; the behavior of a GET-BLOCK! in the ordinary evaluator.
+;
+(all [
+    [3] = parse [1 2 3] [
+        collect x [
+            keep integer!
+            keep :['a <b> #c]
+            keep integer!
+        ]
+    ]
+    x = [1 a <b> #c 2]
+])
+(all [
+    [3] = parse [1 2 3] [
+        collect x [
+            keep integer!
+            keep only :['a <b> #c]
+            keep integer!
+        ]
+    ]
+    x = [1 [a <b> #c] 2]
+])
+(all [
+    parse [1 2 3] [collect x [keep only :[[a b c]]]]
+    x = [[[a b c]]]
+])
