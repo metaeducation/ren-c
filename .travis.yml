@@ -17,7 +17,6 @@
 # http://metaeducation.s3.amazonaws.com/index.html
 #
 
-#
 # Note: "The suggested syntax for YAML files is to use 2 spaces for
 # indentation, but YAML will follow whatever indentation system that the
 # individual file uses."
@@ -28,9 +27,37 @@
 # are indented two spaces from their container key, and then all members of
 # the list are at the same indentation level of two spaces after that dash.
 #
+# DO use [[ ]] in conditions, so `>` is greater (not redirect) and $X is "$X"
+# http://mywiki.wooledge.org/BashFAQ/031
+#
+# DON'T put variable *values* in quotes that don't need it (FOO=x not FOO="x")
+# DO put variable *substitutions* in quotes ("$X" not $X), EXCEPT in [[ ]]
+# https://unix.stackexchange.com/q/131766/
+#
+# DON'T use curly braces on variables unless needed ("$FOO" not "${FOO}")
+# https://unix.stackexchange.com/a/4910
+#
+# DO use = in [[ ]] conditions for lexical comparison (= not ==)
+# https://unix.stackexchange.com/a/16110
+#
+# DON'T put space between x=y when doing variable assignments (you can't! :-/)
+# https://unix.stackexchange.com/a/297217
+#
+# DON'T use superfluous semicolons at end of lines of shell commands:
+# https://stackoverflow.com/a/7507242/
+#
+# DO use $(...) vs. `...` for shell execution (save `...` for code comments)
+# https://stackoverflow.com/a/9406350/
+#
+# "$foo 123" -> substitues foo contents to get `foocontents 123`
+# '$foo 123' -> takes it literally, so you get `$foo 123`
+#
+# `xargs` may be a useful command when dealing with the shell:
+# http://man7.org/linux/man-pages/man1/xargs.1.html  (e.g. `... | xargs cat`)
+#
 
 notifications:
-  email: false  # committers are keeping an eye on failures, supposedly :-/
+  email: false  # committers are keeping an eye on failures, supposedly!
 
 
 # Each configured travis instance has its own customized environment variables
@@ -44,13 +71,13 @@ env:
     #
     # travis encrypt AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
     #
-    - secure: "Bex3tqrlsnv+t3+AJu6nG8bcbfHXeBNWIUUdcEeyB8gWnWnVuBsC5hTw9cUhEWJchJSsV4LeWVL51harzOQRntszyfjeNvPQozCXbTQVGd1tn5Rpt1QKN9VBK007c+ERj9L8JzFkM2HdeVusYY4Bz5tI883DSJkydyJpJp21mG9i8a17bqJsgBW0JmMsMsdv1ilaeb8/Luo8bn0ObIWTTz+4/6RF4XU9UcWLH7I4HlGb3qufR9chWCX7jTT0SLRkEgfudr+KVrY4xIspiPlVwrKvagnOTFcYLxN4JpGOgn1rnCcOxsWo4kE4dwgXZvEn8W2HJmJhzhAHDLkF0S7YhIDQaScJLwSVECI9xu68V5siWdyhzyrSb2K7V8Mtzryjzq1QueCrRRTj7XLY7sx5OxeP//RVMY0Poil5DdB84nI1wezzmT1kj7dkc1Fr1ZqdYSEfCZNd1v+DeRmAf/N70xUyx1tSxAHD96kjDM3lGILIrlt9RLWdeT0BqxQxzaKCowPVgfztH0nzPcoe1DfNfIhG9mEdjeJfLC7hAgc9Dn0KTo/oSwX/TBsTavV+6SPxH1D4q1xVdY9p4G2hS/N1xaqf7ys4DQOPwWZwvhujwGtto4fy7VMvDtX7jI6++0dJe+baG0DetlHvUGKzWpBJgk02k3mREH+9Ui8f7T9vn8Y="
+    - secure: 'Bex3tqrlsnv+t3+AJu6nG8bcbfHXeBNWIUUdcEeyB8gWnWnVuBsC5hTw9cUhEWJchJSsV4LeWVL51harzOQRntszyfjeNvPQozCXbTQVGd1tn5Rpt1QKN9VBK007c+ERj9L8JzFkM2HdeVusYY4Bz5tI883DSJkydyJpJp21mG9i8a17bqJsgBW0JmMsMsdv1ilaeb8/Luo8bn0ObIWTTz+4/6RF4XU9UcWLH7I4HlGb3qufR9chWCX7jTT0SLRkEgfudr+KVrY4xIspiPlVwrKvagnOTFcYLxN4JpGOgn1rnCcOxsWo4kE4dwgXZvEn8W2HJmJhzhAHDLkF0S7YhIDQaScJLwSVECI9xu68V5siWdyhzyrSb2K7V8Mtzryjzq1QueCrRRTj7XLY7sx5OxeP//RVMY0Poil5DdB84nI1wezzmT1kj7dkc1Fr1ZqdYSEfCZNd1v+DeRmAf/N70xUyx1tSxAHD96kjDM3lGILIrlt9RLWdeT0BqxQxzaKCowPVgfztH0nzPcoe1DfNfIhG9mEdjeJfLC7hAgc9Dn0KTo/oSwX/TBsTavV+6SPxH1D4q1xVdY9p4G2hS/N1xaqf7ys4DQOPwWZwvhujwGtto4fy7VMvDtX7jI6++0dJe+baG0DetlHvUGKzWpBJgk02k3mREH+9Ui8f7T9vn8Y='
 
     # travis encrypt AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
     #
-    - secure: "IlBRG9mRM0BDtb9ZJDKl4QVRjs/e3KxvjEdVS9e8+PlGq+xMDVGQdje9WOED/bhTcoAYabhLKkXY8YZg6rlVj4ecyjjmZRfPA4D9YVMVHZVNldLX9Ed79Kv95dTvFdn6xl9Tbk/CEqtxfDwcN2hZqv9M3TXN2+sKzny6p4ENc8O7sz0Stb4GyFgPdWSIs4SZv/r8/feMgWiUx+q1NFFarMmFsLtKVuiPIyoU6fGW1zZPyh10jKuhi9GYBStcMHIWqvU+9+jbqchMJT1t/1fyEf0fJokNMH2KXCVDbsu7nKhaVZbIxirLdZNicKfzype1uRgzAB/Crpup+TwnINd17HPSqjCnqntuS+pO0mIRcXVhNSE8TG9S8x4N0pgtKYHKyfAjElmjLwPfoMhu5VlZishn6heeUALbQ7y44YwWwG8EoW4PnRFIGg7V4EjlHJkcmDhJWrZX2hVvSGJ72lFhHXFMcr+VKhXWlmK97XdFAz/c/LlSyyrmKtIE6W5kwhJC8bbrpETA/wQ9pP3WEVY28bka24LqI1g0hiDn7cyXae7Ikss36Y8eB/9/00EovCPHw1o+dyenXI10Q8+yorQ42xrjo1bXuYRohCvI+FmV4XFLkJ+c6wDTSKhJTcUhZsQva2F0ipeyqhGQQGkLiZ8BvdoSPHHBx2odikgho9VQZ48="
+    - secure: 'IlBRG9mRM0BDtb9ZJDKl4QVRjs/e3KxvjEdVS9e8+PlGq+xMDVGQdje9WOED/bhTcoAYabhLKkXY8YZg6rlVj4ecyjjmZRfPA4D9YVMVHZVNldLX9Ed79Kv95dTvFdn6xl9Tbk/CEqtxfDwcN2hZqv9M3TXN2+sKzny6p4ENc8O7sz0Stb4GyFgPdWSIs4SZv/r8/feMgWiUx+q1NFFarMmFsLtKVuiPIyoU6fGW1zZPyh10jKuhi9GYBStcMHIWqvU+9+jbqchMJT1t/1fyEf0fJokNMH2KXCVDbsu7nKhaVZbIxirLdZNicKfzype1uRgzAB/Crpup+TwnINd17HPSqjCnqntuS+pO0mIRcXVhNSE8TG9S8x4N0pgtKYHKyfAjElmjLwPfoMhu5VlZishn6heeUALbQ7y44YwWwG8EoW4PnRFIGg7V4EjlHJkcmDhJWrZX2hVvSGJ72lFhHXFMcr+VKhXWlmK97XdFAz/c/LlSyyrmKtIE6W5kwhJC8bbrpETA/wQ9pP3WEVY28bka24LqI1g0hiDn7cyXae7Ikss36Y8eB/9/00EovCPHw1o+dyenXI10Q8+yorQ42xrjo1bXuYRohCvI+FmV4XFLkJ+c6wDTSKhJTcUhZsQva2F0ipeyqhGQQGkLiZ8BvdoSPHHBx2odikgho9VQZ48='
  
-    - AWS_S3_BUCKET_NAME: "metaeducation"
+    - AWS_S3_BUCKET_NAME: 'metaeducation'
 
   matrix:
     # Address Sanitizer output needs to be "symbolized" to get symbols and
@@ -58,7 +85,7 @@ env:
     # However, some modern gcc and clang will figure it out even if there is
     # no path set, so go ahead and put this option in all matrixes.
     #
-    - ASAN_OPTIONS=symbolize=1
+    - ASAN_OPTIONS='symbolize=1'
 
 
 # All Travis instances in the following "matrix" will run the same `script:`
@@ -246,7 +273,7 @@ matrix:
         - CONFIG=mingw-x86.r
         - OS_ID=0.3.1
         - DEBUG=none
-        - TOOLS=i686-w64-mingw32-  # trailing hyphen is intentional
+        - CROSS_PREFIX=i686-w64-mingw32-  # trailing hyphen is intentional
         - STANDARD=c
         - RIGOROUS=yes
         - STATIC=yes
@@ -272,7 +299,7 @@ matrix:
         - CONFIG=mingw-x64.r
         - OS_ID=0.3.40
         - DEBUG=asserts
-        - TOOLS=x86_64-w64-mingw32-  # trailing hyphen is intentional
+        - CROSS_PREFIX=x86_64-w64-mingw32-  # trailing hyphen is intentional
         - STANDARD=c
         - RIGOROUS=yes
         - STATIC=yes
@@ -308,7 +335,7 @@ matrix:
         - CONFIG=mingw-x64-c++.r
         - OS_ID=0.3.40
         - DEBUG=asserts
-        - TOOLS=x86_64-w64-mingw32-  # trailing hyphen is intentional
+        - CROSS_PREFIX=x86_64-w64-mingw32-  # trailing hyphen is intentional
         - STANDARD=c++98
         - RIGOROUS=yes
         - STATIC=yes
@@ -405,12 +432,12 @@ matrix:
 #
 install:
   - |
-    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      export REBOL_TOOL=./r3-linux-x64-8994d23
+    if [[ $TRAVIS_OS_NAME = linux ]]; then
+      export R3_MAKE=./r3-linux-x64-8994d23
     fi
 
   - |
-    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    if [[ $TRAVIS_OS_NAME = osx ]]; then
       #
       # The Travis OS X images have brew preinstalled, but get old and out of
       # sync with the package database.  This means brew has to update.  It's
@@ -425,13 +452,13 @@ install:
       #
       # https://github.com/Homebrew/legacy-homebrew/issues/35662
       #
-      if [[ "$BREW" == "yes" ]]; then # seems to not work on old OS X
+      if [[ $BREW = yes ]]; then  # seems to not work on old OS X
         brew update > /dev/null
 
         brew install unixodbc  # for ODBC extension
         brew install zmq  # for ZeroMQ extension
 
-        export REBOL_TOOL=./r3-osx-x64-8994d23
+        export R3_MAKE=./r3-osx-x64-8994d23
       else
         # Brew was being installed even on minimal release builds, making it
         # unnoticed that there was a .dylib dependency from the bootstrap
@@ -441,12 +468,12 @@ install:
         #
         wget http://hostilefork.com/media/shared/ren-c/r3-osx-x64-8994d23-debug
         chmod +x ./r3-osx-x64-8994d23-debug
-        export REBOL_TOOL=$PWD/r3-osx-x64-8994d23-debug
+        export R3_MAKE="$(pwd)/r3-osx-x64-8994d23-debug"
       fi
     fi
 
   - |
-    if [[ ${OS_ID} = "0.16.1" || ${OS_ID} = "0.16.2" ]]; then
+    if [[ $OS_ID = 0.16.1 || $OS_ID = 0.16.2 ]]; then
       wget https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz
       tar xf emsdk-portable.tar.gz 
       cd emsdk-portable
@@ -458,76 +485,94 @@ install:
     fi
 
 script:
-    # Nice to know what version of gcc this is
-    - ${TOOLS}gcc --version
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export MAKE_JOBS=`nproc`; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export MAKE_JOBS=`sysctl -n hw.ncpu`; fi
-
-    - TOP_DIR=${PWD}
+    # whatever home directory Travis put us in, build there
     - |
-      if [[ ${OS_ID} = "0.13.2" ]]; then
-          if [ `uname -m` = x86_64 ]; then
+      TOP_DIR="$(pwd)"  # https://stackoverflow.com/a/10795195/
+
+    - |
+      "${CROSS_PREFIX}gcc" --version  # Output version of gcc for the log
+
+    # Ask for as many parallel builds as the virtual host supports
+    - |
+      if [[ $TRAVIS_OS_NAME = linux ]]; then
+        export MAKE_JOBS="$(nproc)"
+      fi
+      if [[ $TRAVIS_OS_NAME = osx ]]; then
+        export MAKE_JOBS="$(sysctl -n hw.ncpu)"
+      fi
+
+    # Native Development Kit (NDK) is for C/C++ cross-compilation to Android.
+    # https://developer.android.com/ndk
+    # @giuliolunati is the maintainer and active user of the Android build.
+    - |
+      if [[ $OS_ID = 0.13.2 ]]; then
+          if [[ $(uname -m) = x86_64 ]]; then
               wget https://github.com/giuliolunati/android-travis/releases/download/v1.0.0/android-ndk-r13.tgz
-              export ANDROID_NDK=$TOP_DIR/android-ndk-r13
+              export ANDROID_NDK="${TOP_DIR}/android-ndk-r13"
           else
-              exit 1;
+              exit 1
           fi
           tar zxf android-ndk-r13.tgz
-          echo $PWD
-          ls -dl $PWD/android-ndk-r13
-          export TOOLS=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-
-          export SYSROOT="--sysroot=$ANDROID_NDK/platforms/android-19/arch-arm"
+          echo "$(pwd)"
+          ls -dl "$(pwd)/android-ndk-r13"
+          export CROSS_PREFIX="${ANDROID_NDK}/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi-"
+          export SYSROOT="${ANDROID_NDK}/platforms/android-19/arch-arm"
       fi
-      if [[ ${OS_ID} = "0.3.40" || ${OS_ID} = "0.3.1" ]]; then
+
+      # The FFI extension code was added by Atronix
+      # If we are building cross platform, libffi may not be available.  Hence
+      # @ShixinZeng added this code to do custom builds if needed.
+      #
+      if [[ $OS_ID = 0.3.40 || $OS_ID = 0.3.1 ]]; then
           # Use prebuilt binaries
-          if [[ ${OS_ID} = "0.3.40" ]]; then
-              export PKG_CONFIG_PATH=${TOP_DIR}/external/ffi-prebuilt/lib64/pkgconfig
+          if [[ $OS_ID = 0.3.40 ]]; then
+              export PKG_CONFIG_PATH="${TOP_DIR}/external/ffi-prebuilt/lib64/pkgconfig"
           else
-              export PKG_CONFIG_PATH=${TOP_DIR}/external/ffi-prebuilt/lib32/pkgconfig
+              export PKG_CONFIG_PATH="${TOP_DIR}/external/ffi-prebuilt/lib32/pkgconfig"
           fi
           # --define-prefix would be better, but it is not recognized
-          export PKGCONFIG="pkg-config --define-variable=prefix=${TOP_DIR}/external/ffi-prebuilt"
+          export PKGCONFIG="pkg-config --define-variable=prefix=\"${TOP_DIR}/external/ffi-prebuilt\""
           # check cflags and libs
-          ${PKGCONFIG} --cflags libffi
-          ${PKGCONFIG} --libs libffi
-      elif [[ -z ${WITH_FFI} || ${WITH_FFI} != "no" ]]; then
+          "$PKGCONFIG" --cflags libffi
+          "$PKGCONFIG" --libs libffi
+      elif [[ -z $WITH_FFI || $WITH_FFI != no ]]; then
           # Build libffi
           mkdir build
           cd external/libffi
           ./autogen.sh
-          cd ${TOP_DIR}/build
-          if [[ -z ${HOST} ]]; then
-              ${TOP_DIR}/external/libffi/configure --prefix=$PWD/fakeroot CFLAGS=${ARCH_CFLAGS}
+          cd "${TOP_DIR}/build"
+          if [[ -z $HOST ]]; then
+              "${TOP_DIR}/external/libffi/configure" --prefix="$(pwd)/fakeroot" CFLAGS="$ARCH_CFLAGS"
           else #cross-compiling
-              ${TOP_DIR}/external/libffi/configure --prefix=$PWD/fakeroot --host=${HOST}
+              "${TOP_DIR}/external/libffi/configure" --prefix="$(pwd)/fakeroot" --host="$HOST"
           fi
-          make -j ${MAKE_JOBS}
+          make -j "$MAKE_JOBS"
           make install
-          export PKG_CONFIG_PATH=$PWD/fakeroot/lib/pkgconfig
+          export PKG_CONFIG_PATH="$(pwd)/fakeroot/lib/pkgconfig"
           # check cflags and libs
           pkg-config --cflags libffi
           pkg-config --libs libffi
 
-          ls `pkg-config --variable=toolexeclibdir libffi`
+          ls "$(pkg-config --variable=toolexeclibdir libffi)"
           #remove dynamic libraries to force it to link with static libraries
-          rm -f `pkg-config --variable=toolexeclibdir libffi`/*.so*
-          rm -f `pkg-config --variable=toolexeclibdir libffi`/*.dylib*
-          rm -f `pkg-config --variable=toolexeclibdir libffi`/*.dll*
-          ls `pkg-config --variable=toolexeclibdir libffi`
+          rm -f "$(pkg-config --variable=toolexeclibdir libffi)/*.so*"
+          rm -f "$(pkg-config --variable=toolexeclibdir libffi)/*.dylib*"
+          rm -f "$(pkg-config --variable=toolexeclibdir libffi)/*.dll*"
+          ls "$(pkg-config --variable=toolexeclibdir libffi)"
       fi
 
-    - cd ${TOP_DIR}/make/
+    - cd "${TOP_DIR}/make/"
 
     # Build TCC
     - |
-      if [[ ! -z ${TCC} ]]; then
+      if [[ ! -z $TCC ]]; then
           mkdir tcc
           cd tcc
-          if [[ ${OS_ID} != "0.4.40" ]]; then
+          if [[ $OS_ID != 0.4.40 ]]; then
               #generate cross-compiler (on x86_64 host and target for i386)
               echo "Generating the cross-compiler"
-              ${TOP_DIR}/external/tcc/configure --enable-cross --extra-cflags="-DEMBEDDED_IN_R3"
-              make -j ${MAKE_JOBS}
+              "${TOP_DIR}/external/tcc/configure" --enable-cross --extra-cflags="-DEMBEDDED_IN_R3"
+              make -j "${MAKE_JOBS}"
               mkdir bin
               cp *tcc bin #save cross-compilers
               ls bin/ #take a look at the cross-compilers
@@ -535,14 +580,14 @@ script:
               #generate libtcc.a
               # libtcc.a requires --enable-mingw32, or it doesn't think it's a native compiler and disables tcc_run
               echo "Generating libtcc.a"
-              if [[ ${OS_ID} = "0.4.4" ]]; then
-                  ${TOP_DIR}/external/tcc/configure --cpu=x86 --extra-cflags="-DEMBEDDED_IN_R3 ${ARCH_CFLAGS}"
-              elif [[ ${OS_ID} == "0.3.1" ]]; then #x86-win32
-                  ${TOP_DIR}/external/tcc/configure --cpu=x86 --extra-cflags="-DEMBEDDED_IN_R3" --enable-mingw32 --cross-prefix=${TOOLS}
-              elif [[ ${OS_ID} == "0.13.2" ]]; then #arm-android5
-                  ${TOP_DIR}/external/tcc/configure --cpu=arm --extra-cflags="-DEMBEDDED_IN_R3 ${ARCH_CFLAGS} ${SYSROOT}" --cross-prefix=${TOOLS}
+              if [[ $OS_ID = 0.4.4 ]]; then
+                  "${TOP_DIR}/external/tcc/configure" --cpu=x86 --extra-cflags="-DEMBEDDED_IN_R3 $ARCH_CFLAGS"
+              elif [[ $OS_ID = 0.3.1 ]]; then #x86-win32
+                  "${TOP_DIR}/external/tcc/configure" --cpu=x86 --extra-cflags="-DEMBEDDED_IN_R3" --enable-mingw32 --cross-prefix="$CROSS_PREFIX"
+              elif [[ $OS_ID = 0.13.2 ]]; then #arm-android5
+                  "${TOP_DIR}/external/tcc/configure" --cpu=arm --extra-cflags="-DEMBEDDED_IN_R3 $ARCH_CFLAGS --sysroot=\"$SYSROOT\"" --cross-prefix="$CROSS_PREFIX"
               else #x86_64-win32
-                  ${TOP_DIR}/external/tcc/configure --enable-mingw32 --cpu=x86_64 --extra-cflags="-DEMBEDDED_IN_R3" --cross-prefix=${TOOLS}
+                  "${TOP_DIR}/external/tcc/configure" --enable-mingw32 --cpu=x86_64 --extra-cflags="-DEMBEDDED_IN_R3" --cross-prefix="$CROSS_PREFIX"
               fi
               make libtcc.a && cp libtcc.a libtcc.a.bak
 
@@ -551,41 +596,42 @@ script:
               make clean
 
               echo "Generating libtcc1.a"
-              if [[ ${OS_ID} = "0.4.4" ]]; then
-                  ${TOP_DIR}/external/tcc/configure --cpu=x86 --extra-cflags="-DEMBEDDED_IN_R3 ${ARCH_CFLAGS}"
-              elif [[ ${OS_ID} == "0.3.1" ]]; then #x86-win32
-                  ${TOP_DIR}/external/tcc/configure --cpu=x86 --extra-cflags="-DEMBEDDED_IN_R3" --cross-prefix=${TOOLS}
-              elif [[ ${OS_ID} == "0.13.2" ]]; then #arm-android5
-                  ${TOP_DIR}/external/tcc/configure --cpu=arm --extra-cflags="-DEMBEDDED_IN_R3 ${ARCH_CFLAGS} ${SYSROOT}" --cross-prefix=${TOOLS}
-              else #x86_64-win32
-                  ${TOP_DIR}/external/tcc/configure --cpu=x86_64 --extra-cflags="-DEMBEDDED_IN_R3" --cross-prefix=${TOOLS}
+              if [[ $OS_ID = 0.4.4 ]]; then
+                  "${TOP_DIR}/external/tcc/configure" --cpu=x86 --extra-cflags="-DEMBEDDED_IN_R3 $ARCH_CFLAGS"
+              elif [[ $OS_ID = 0.3.1 ]]; then  # x86-win32
+                  "${TOP_DIR}/external/tcc/configure" --cpu=x86 --extra-cflags="-DEMBEDDED_IN_R3" --cross-prefix="$CROSS_PREFIX"
+              elif [[ $OS_ID = 0.13.2 ]]; then  # arm-android5
+                  "${TOP_DIR}/external/tcc/configure" --cpu=arm --extra-cflags="-DEMBEDDED_IN_R3 $ARCH_CFLAGS --sysroot=\"$SYSROOT\"" --cross-prefix="$CROSS_PREFIX"
+              else  # x86_64-win32
+                  "${TOP_DIR}/external/tcc/configure" --cpu=x86_64 --extra-cflags="-DEMBEDDED_IN_R3" --cross-prefix="$CROSS_PREFIX"
               fi
 
               echo "make libtcc1.a"
-              make libtcc1.a XCC=${TOOLS}gcc XAR=${TOOLS}ar || echo "ignoring error in building libtcc1.a" #this could fail to build tcc due to lack of '-ldl' on Windows
-              cp bin/* . #restore cross-compilers, libtcc1.a depends on tcc
-              touch tcc #update the timestamp so it won't be rebuilt
+              # Note: Could fail to build tcc due to lack of '-ldl' on Windows
+              make libtcc1.a XCC="${CROSS_PREFIX}gcc" XAR="${CROSS_PREFIX}ar" || echo "ignoring error in building libtcc1.a"
+              cp bin/* .  # restore cross-compilers, libtcc1.a depends on tcc
+              touch tcc  # update the timestamp so it won't be rebuilt
               echo "ls"
-              ls #take a look at files under current directory
+              ls  # take a look at files under current directory
               echo "make libtcc1.a"
-              make libtcc1.a XCC=${TOOLS}gcc XAR=${TOOLS}ar
-              ${TOOLS}ar d libtcc1.a armeabi.o #avoid linking conflict with libtcc.a
+              make libtcc1.a XCC="${CROSS_PREFIX}gcc" XAR="${CROSS_PREFIX}ar"
+              "${CROSS_PREFIX}ar" d libtcc1.a armeabi.o  # avoid link conflict with libtcc.a
 
               echo "Looking for symbol r3_tcc_alloca"
-              if [[ ${OS_ID} == "0.3.1" ]]; then #x86-win32
-                ${TOOLS}objdump -t lib/i386/alloca86.o |grep alloca
-              elif [[ ${OS_ID} == "0.3.40" ]]; then
-                ${TOOLS}objdump -t lib/x86_64/alloca86_64.o |grep alloca
+              if [[ $OS_ID = 0.3.1 ]]; then  # x86-win32
+                "${CROSS_PREFIX}objdump" -t lib/i386/alloca86.o |grep alloca
+              elif [[ $OS_ID = 0.3.40 ]]; then
+                "${CROSS_PREFIX}objdump" -t lib/x86_64/alloca86_64.o |grep alloca
               fi
 
               #restore libtcc.a
               # make libtcc1.a could have generated a new libtcc.a
               cp libtcc.a.bak libtcc.a
           else
-              ${TOP_DIR}/external/tcc/configure --extra-cflags="-DEMBEDDED_IN_R3 ${ARCH_CFLAGS}"
+              "${TOP_DIR}/external/tcc/configure" --extra-cflags="-DEMBEDDED_IN_R3 $ARCH_CFLAGS"
           fi
           make
-          cd ${TOP_DIR}/make
+          cd "${TOP_DIR}/make"
       fi
 
     # Grab the abbreviated and full git commit ID into environment variables.
@@ -594,15 +640,12 @@ script:
     #
     # http://stackoverflow.com/a/42549385/211160
     #
-    - GIT_COMMIT="$(git show --format="%H" --no-patch)" 
-    - echo ${GIT_COMMIT}
-    - GIT_COMMIT_SHORT="$(git show --format="%h" --no-patch)" 
-    - echo ${GIT_COMMIT_SHORT}
+    - GIT_COMMIT="$(git show --format="%H" --no-patch)"
+    - echo "$GIT_COMMIT"
+    - GIT_COMMIT_SHORT="$(git show --format="%h" --no-patch)"
+    - echo "$GIT_COMMIT_SHORT"
 
-    # Take a look at assert.h
-    # - find /usr/include -name assert.h | xargs cat
-
-    # We have to set REBOL_TOOL explicitly to circumvent the automatic r3-make
+    # We have to set R3_MAKE explicitly to circumvent the automatic r3-make
     # filename inference, as we always use Linux "r3-make" (not "r3-make.exe")
     # even when doing windows builds, since this is a cross-compilation.
 
@@ -613,7 +656,7 @@ script:
     # been installed
     #
     - |
-      if [[("${DEBUG}" != "none") && (("${OS_ID}" = "0.4.40") || ("${OS_ID}" = "0.4.4") || ("${OS_ID}" = "0.2.40"))]]; then
+      if [[($DEBUG != none) && ($OS_ID = 0.4.40 || $OS_ID = 0.4.4) || ($OS_ID = 0.2.40))]]; then
           #
           # If building twice, don't specify GIT_COMMIT for the first build.
           # This means there's a test of the build process when one is not
@@ -625,36 +668,37 @@ script:
           # we do not apply it to any of the binaries which are uploaded to s3
           # -- not even debug ones.
           #
-          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" RIGOROUS="${RIGOROUS}" DEBUG=sanitize OPTIMIZE=2 STATIC=no ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} CONFIG="configs/${CONFIG}" EXTENSIONS="${EXTENSIONS}" ${EXTRA} makefile
+          rm makefile
+          "$R3_MAKE" make.r STANDARD="$STANDARD" OS_ID="$OS_ID" RIGOROUS="$RIGOROUS" DEBUG=sanitize OPTIMIZE=2 STATIC=no ODBC_REQUIRES_LTDL="$ODBC_REQUIRES_LTDL" CONFIG="configs/${CONFIG}" EXTENSIONS="$EXTENSIONS" "$EXTRA" makefile
           make clean prep folders
-          make -j ${MAKE_JOBS} ${TARGET}
+          make -j "$MAKE_JOBS" "$TARGET"
 
           # We do a simple HTTPS read test on the second build, but we can
           # also do a check here when it has the address sanitizer, which may
           # catch more problems.
           #
           ./r3 --do "print {Testing...} quit/with either find to-text read https://example.com {<h1>Example Domain</h1>} [0] [1]";
-          R3_EXIT_STATUS=$?;
-          echo ${R3_EXIT_STATUS}
+          R3_EXIT_STATUS=$?
+          echo $R3_EXIT_STATUS
 
-          mv r3 r3-make;
-          make clean prep folders;
+          mv r3 r3-make
+          make clean prep folders
           export R3_ALWAYS_MALLOC=1
-          export REBOL_TOOL=./r3-make
+          export R3_MAKE=./r3-make
       fi
 
     # On the second build of building twice, or just building once, include
     # the GIT_COMMIT
     #
     - |
-      if [[ -z ${TCC} ]]; then
-          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="{${GIT_COMMIT}}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI=${WITH_FFI} WITH_TCC="no" ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} TARGET=${TARGET} CONFIG="configs/${CONFIG}" EXTENSIONS="${EXTENSIONS}" ${EXTRA} makefile
+      if [[ -z $TCC ]]; then
+          "$R3_MAKE" make.r STANDARD="$STANDARD" OS_ID="$OS_ID" DEBUG="$DEBUG" GIT_COMMIT="{$GIT_COMMIT}" RIGOROUS="$RIGOROUS" STATIC="$STATIC" WITH_FFI="$WITH_FFI" WITH_TCC="no" ODBC_REQUIRES_LTDL="$ODBC_REQUIRES_LTDL" TARGET="$TARGET" CONFIG="configs/${CONFIG}" EXTENSIONS="$EXTENSIONS" "$EXTRA" makefile
           make clean prep folders
-          make -j ${MAKE_JOBS} ${TARGET}
+          make -j "$MAKE_JOBS" "$TARGET"
       else
-          ${REBOL_TOOL} make.r STANDARD="${STANDARD}" OS_ID="${OS_ID}" DEBUG="${DEBUG}" GIT_COMMIT="{${GIT_COMMIT}}" RIGOROUS="${RIGOROUS}" STATIC="${STATIC}" WITH_FFI=${WITH_FFI} WITH_TCC="%${PWD}/tcc/${TCC}" ODBC_REQUIRES_LTDL=${ODBC_REQUIRES_LTDL} TARGET=${TARGET} CONFIG="configs/${CONFIG}" EXTENSIONS="${EXTENSIONS}" ${EXTRA} makefile
+          "$R3_MAKE" make.r STANDARD="$STANDARD" OS_ID="$OS_ID" DEBUG="$DEBUG" GIT_COMMIT="{$GIT_COMMIT}" RIGOROUS="$RIGOROUS" STATIC="$STATIC" WITH_FFI="$WITH_FFI" WITH_TCC="%${PWD}/tcc/${TCC}" ODBC_REQUIRES_LTDL="$ODBC_REQUIRES_LTDL" TARGET="$TARGET" CONFIG="configs/${CONFIG}" EXTENSIONS="$EXTENSIONS" "$EXTRA" makefile
           make clean prep folders
-          make -j ${MAKE_JOBS} ${TARGET}
+          make -j "$MAKE_JOBS" "$TARGET"
       fi
 
     # take a look at the preprocess header file
@@ -662,9 +706,9 @@ script:
 
     # output the needed libraries
     - |
-      if [[ "${OS_ID}" = "0.4.40" || "${OS_ID}" = "0.4.4" ]]; then
+      if [[ $OS_ID = 0.4.40 || $OS_ID = 0.4.4 ]]; then
           ldd ./r3
-      elif [[ "${OS_ID}" = "0.2.40" ]]; then
+      elif [[ OS_ID = 0.2.40 ]]; then
           otool -L ./r3
       fi
 
@@ -680,24 +724,24 @@ script:
     # a fair amount of code.
     #
     - |
-      if [[ "${OS_ID}" = "0.4.40" || "${OS_ID}" = "0.4.4" || "${OS_ID}" = "0.2.40" ]]; then
-          ./r3 --do "print {Testing...} quit/with either find to-text read https://example.com {<h1>Example Domain</h1>} [0] [1]";
-          R3_EXIT_STATUS=$?;
+      if [[ $OS_ID = 0.4.40 || $OS_ID = 0.4.4 || $OS_ID = 0.2.40 ]]; then
+          ./r3 --do "print {Testing...} quit/with either find to-text read https://example.com {<h1>Example Domain</h1>} [0] [1]"
+          R3_EXIT_STATUS=$?
       else
-          R3_EXIT_STATUS=0;
+          R3_EXIT_STATUS=0
       fi
-    - echo ${R3_EXIT_STATUS}
+    - echo "$R3_EXIT_STATUS"
 
     # Run basic testing with FFI, this is a linux-only script
     # !!! Temporarily disabled during build system renovation (12-6-2018)
     #- |
-    #  if [[ "${OS_ID}" = "0.4.40" || "${OS_ID}" = "0.4.4" ]]; then
+    #  if [[ $OS_ID = 0.4.40 || $OS_ID = 0.4.4 ]]; then
     #      ./r3 ../tests/misc/qsort_r.r
-    #      R3_EXIT_STATUS=$?;
+    #      R3_EXIT_STATUS=$?
     #  else
-    #      R3_EXIT_STATUS=0;
+    #      R3_EXIT_STATUS=0
     #  fi
-    #- echo ${R3_EXIT_STATUS}
+    #- echo "$R3_EXIT_STATUS"
 
     # !!! Temporarily disable the TCC tests (12-6-2018).  Reason is that there
     # is a problem, and the rebmake system is being redone to better deal with
@@ -705,13 +749,13 @@ script:
     # good use of time.
     #
     #- |
-    #  if [[ ! -z "$TCC" && "$TCC" != "no" && ( "${OS_ID}" = "0.4.40" || "${OS_ID}" = "0.4.4" ) ]]; then
+    #  if [[ (! -z $TCC) && ($TCC != no) && ( $OS_ID = 0.4.40 || $OS_ID = 0.4.4 ) ]]; then
     #      ./r3 ../tests/misc/fib.r
-    #      R3_EXIT_STATUS=$?;
+    #      R3_EXIT_STATUS=$?
     #  else
-    #      R3_EXIT_STATUS=0;
+    #      R3_EXIT_STATUS=0
     #  fi
-    #- echo ${R3_EXIT_STATUS}
+    #- echo "$R3_EXIT_STATUS"
 
     # Delete the obj and prep file directory so we don't upload those to S3
     #
@@ -719,7 +763,7 @@ script:
 
     - rm -f makefile*
     - rm -f Toolchain*
-    - rm -f r3-make* #-f makes retval a success even when r3-make* doesn't exist
+    - rm -f r3-make*  # `-f` for success even when r3-make* doesn't exist
     - rm r3-android-arm-8994d23
     - rm r3-windows-x86-8994d23.exe
     - rm r3-linux-x64-8994d23
@@ -738,13 +782,13 @@ script:
     #
     # Note: -z tests if a variable is undefined
     #
-    - NEW_NAME=r3-${GIT_COMMIT_SHORT}
-    - if [[ "${DEBUG}" != "none" ]]; then NEW_NAME+="-debug"; fi
+    - NEW_NAME="r3-${GIT_COMMIT_SHORT}"
+    - if [[ $DEBUG != none ]]; then NEW_NAME+='-debug'; fi
     - |
-      if [[ "${STANDARD}" = "c++" || "${STANDARD}" = "c++0x" || "${STANDARD}" = "c++11" || "${STANDARD}" = "c++14" || "${STANDARD}" = "c++17" ]]; then
-          NEW_NAME+="-cpp";
+      if [[ $STANDARD = c++ || $STANDARD = c++0x || $STANDARD = c++11 || $STANDARD = c++14 || $STANDARD = c++17 ]]; then
+          NEW_NAME+='-cpp'
       fi
-    - echo ${NEW_NAME}
+    - echo "$NEW_NAME"
 
     # Move the executable into a directory based on its OS_ID platform.
     # This is because the deploy step is run for each OS and would
@@ -752,45 +796,43 @@ script:
     #
     # Note: [[-e]] tests for "existence"
     #
-    - mkdir ${OS_ID}
+    - mkdir "$OS_ID"
     - |
       # Windows builds end in .exe
-      if [[ -e "r3.exe" ]]; then
-           mv r3.exe ${OS_ID}/${NEW_NAME}.exe;
+      if [[ -e r3.exe ]]; then
+           mv r3.exe "${OS_ID}/${NEW_NAME}.exe"
       fi
 
       # Most other platforms have no suffix
-      if [[ -e "r3" ]]; then
-           mv r3 ${OS_ID}/${NEW_NAME};
+      if [[ -e r3 ]]; then
+           mv r3 "${OS_ID}/${NEW_NAME}"
       fi
 
       # All emscripten builds produce .js and .wasm
-      if [[ -e "libr3.js" ]]; then
-           mv libr3.js ${OS_ID}/lib${NEW_NAME}.js;
+      if [[ -e libr3.js ]]; then
+           mv libr3.js "${OS_ID}/lib${NEW_NAME}.js"
       fi
-      if [[ -e "libr3.wasm" ]]; then
-           mv libr3.wasm ${OS_ID}/lib${NEW_NAME}.wasm;
+      if [[ -e libr3.wasm ]]; then
+           mv libr3.wasm "${OS_ID}/lib${NEW_NAME}.wasm"
       fi
 
       # Only emterpreted builds produce .bytecode
-      if [[ -e "libr3.bytecode" ]]; then
-           mv libr3.bytecode ${OS_ID}/lib${NEW_NAME}.bytecode;
+      if [[ -e libr3.bytecode ]]; then
+           mv libr3.bytecode "${OS_ID}/lib${NEW_NAME}.bytecode"
       fi
 
       # Only pthreads builds produce .js.mem and .worker.js
-      if [[ -e "libr3.js.mem" ]]; then
-           mv libr3.js.mem ${OS_ID}/lib${NEW_NAME}.js.mem;
+      if [[ -e libr3.js.mem ]]; then
+           mv libr3.js.mem "${OS_ID}/lib${NEW_NAME}.js.mem"
       fi
-      if [[ -e "libr3.worker.js" ]]; then
-           mv libr3.worker.js ${OS_ID}/lib${NEW_NAME}.worker.js;
+      if [[ -e libr3.worker.js ]]; then
+           mv libr3.worker.js "${OS_ID}/lib${NEW_NAME}.worker.js"
       fi
 
     # Return whether the build succeeded or not to Travis.  If this succeeded 
-    # then the deploy step to S3 will run
+    # then the deploy step to S3 will run.  Parentheses create a "subshell"
     #
-    # http://stackoverflow.com/a/10457902/211160
-    #
-    - (exit ${R3_EXIT_STATUS})
+    - (exit "${R3_EXIT_STATUS}")  # http://stackoverflow.com/a/10457902
 
 
 # After everything is finished (e.g. script section above), upload build 
@@ -801,8 +843,8 @@ script:
 #
 deploy:
     provider: s3
-    access_key_id: $AWS_ACCESS_KEY_ID
-    secret_access_key: $AWS_SECRET_ACCESS_KEY
-    bucket: $AWS_S3_BUCKET_NAME
+    access_key_id: "$AWS_ACCESS_KEY_ID"
+    secret_access_key: "$AWS_SECRET_ACCESS_KEY"
+    bucket: "$AWS_S3_BUCKET_NAME"
     skip_cleanup: true
     upload-dir: travis-builds

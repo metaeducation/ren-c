@@ -90,8 +90,10 @@ cscape: function [
             newline (col: 0 prefix: _ suffix: _) start:
                 |
             skip (col: col + 1)
-        ]] end
-    ] else [return string]
+        ] end]
+    ] else [
+        return string
+    ]
 
     list: unique/case list
 

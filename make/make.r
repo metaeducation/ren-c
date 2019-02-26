@@ -211,6 +211,7 @@ extension-class: make object! [
 available-extensions: copy []
 
 parse-ext-build-spec: function [
+    return: [object!]
     spec [block!]
 ][
     ext: make extension-class spec
@@ -244,11 +245,9 @@ use [extension-dir entry][
             dir? entry
             find read rejoin [extension-dir entry] %make-spec.r
         ] then [
-            append available-extensions opt (
-                parse-ext-build-spec load rejoin [
-                    extension-dir entry/make-spec.r
-                ]
-            )
+            spec: load rejoin [extension-dir entry/make-spec.r]
+            parsed: parse-ext-build-spec spec
+            append available-extensions parsed
         ]
     ]
 ]

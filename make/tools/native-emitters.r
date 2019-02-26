@@ -47,8 +47,8 @@ emit-native-proto: function [
                 ;
                 to end
             ]
+            end
         ]
-        end
     ] then [
         append case [
             ;

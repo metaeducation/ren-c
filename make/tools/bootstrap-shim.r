@@ -151,3 +151,5 @@ has: null
         equal? '=== take remarks
     ]
 ]
+
+const?: func [x] [return false]
