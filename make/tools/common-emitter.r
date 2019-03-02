@@ -109,7 +109,7 @@ cscape: function [
             if with [
                 if lit-word? context [context: to word! context]
 
-                context: compose [(context)]  ; convert to block
+                context: compose [((context))]  ; convert to block
                 for-each item context [
                     bind code item
                 ]

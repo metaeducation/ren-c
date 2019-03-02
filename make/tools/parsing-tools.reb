@@ -29,9 +29,11 @@ parsing-at: func [
     use [result position][
         block: compose/only [try (as group! block)]
         if not end [
-            block: compose/deep [try if not tail? (word) [(block)]]
+            block: compose/deep [try if not tail? (word) [((block))]]
         ]
-        block: compose/deep [result: either position: (block) [[:position]] [[end skip]]]
+        block: compose/deep [
+            result: either position: ((block)) [[:position]] [[end skip]]
+        ]
         use compose [(word)] compose/deep [
             [(as set-word! :word) (as group! block) result]
         ]

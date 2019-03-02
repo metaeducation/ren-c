@@ -284,7 +284,7 @@ trim: function [
     ]
 
     line-start-rule: compose/deep [
-        remove [(if indent [[1 indent]] else ['any]) rule]
+        remove [((if indent [[1 indent]] else ['any])) rule]
     ]
 
     parse series [

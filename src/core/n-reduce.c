@@ -166,7 +166,8 @@ REB_R Compose_To_Stack_Core(
     REBSPC *specifier, // specifier for relative any_array value
     const REBVAL *label, // e.g. if <*>, only match `(<*> ...)`
     bool deep, // recurse into sub-blocks
-    bool only // pattern matches that return blocks are kept as blocks
+    bool splice_all,  // all matches that return arrays insert their values
+    bool only  // do not use (( )) to cue splicing, run normally
 ){
     REBDSP dsp_orig = DSP;
 
@@ -190,7 +191,7 @@ REB_R Compose_To_Stack_Core(
 
         REBCNT quotes = VAL_NUM_QUOTES(*v);
 
-        bool splice = not only; // can force no splice if override via ((...))
+        bool splicing = splice_all;  // can override splice with ((...))
 
         REBSPC *match_specifier = nullptr;
         const RELVAL *match = nullptr;
@@ -200,10 +201,10 @@ REB_R Compose_To_Stack_Core(
             // Don't compose at this level, but may need to walk deeply to
             // find compositions inside it if /DEEP and it's an array
         }
-        else if (Is_Any_Doubled_Group(*v)) {  // non-spliced compose, if match
+        else if (not only and Is_Any_Doubled_Group(*v)) {  // splice override
             RELVAL *inner = VAL_ARRAY_AT(*v);
             if (Match_For_Compose(inner, label)) {
-                splice = false;
+                splicing = true;
                 match = inner;
                 match_specifier = Derive_Specifier(specifier, inner);
             }
@@ -240,12 +241,12 @@ REB_R Compose_To_Stack_Core(
                 // compose [(unquoted "nulls *vanish*!" null)] => []
                 // compose [(elide "so do 'empty' composes")] => []
             }
-            else if (splice and IS_BLOCK(out)) {
+            else if (splicing and ANY_ARRAY(out)) {
                 //
-                // compose [not-only ([a b]) merges] => [not-only a b merges]
+                // compose [(([a b])) merges] => [a b merges]
 
                 if (quotes != 0 or kind != REB_GROUP)
-                    fail ("Currently cannot splice plain unquoted GROUP!s");
+                    fail ("Currently can only splice plain unquoted GROUP!s");
 
                 RELVAL *push = VAL_ARRAY_AT(out);
                 if (NOT_END(push)) {
@@ -261,12 +262,12 @@ REB_R Compose_To_Stack_Core(
                         Derelativize(DS_PUSH(), push, VAL_SPECIFIER(out));
                 }
             }
-            else if (IS_VOID(out) and splice) {
-                fail ("Must use COMPOSE/ONLY to insert VOID! values");
-            }
             else {
+                // !!! What about VOID!s?  REDUCE and other routines have
+                // become more lenient, and let you worry about it later.
+
                 // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
-                // compose/only [([a b c]) unmerged] => [[a b c] unmerged]
+                // compose [([a b c]) unmerged] => [[a b c] unmerged]
 
                 Move_Value(DS_PUSH(), out);  // can't eval to stack directly!
 
@@ -298,6 +299,7 @@ REB_R Compose_To_Stack_Core(
                 specifier,
                 label,
                 true,  // deep (guaranteed true if we get here)
+                splice_all,
                 only
             );
 
@@ -359,7 +361,8 @@ REB_R Compose_To_Stack_Core(
 //      value "Array to use as the template for substitution"
 //          [any-array! any-path!]
 //      /deep "Compose deeply into nested arrays"
-//      /only "Insert arrays as single value (not as contents of array)"
+//      /splice "Insert contents of arrays by default, even if not ((...))"
+//      /only "Do not treat ((...)) as an instruction to splice"
 //  ]
 //
 REBNATIVE(compose)
@@ -377,6 +380,7 @@ REBNATIVE(compose)
         VAL_SPECIFIER(ARG(value)),
         ARG(label),
         REF(deep),
+        REF(splice),
         REF(only)
     );
 

@@ -76,7 +76,7 @@ cycle [
                 ]
             ]
         ]
-        (libs) "read_s10"
+        ((libs)) "read_s10"
     ]
 
     a: make struct! [

@@ -43,7 +43,7 @@ spec-of: function [
         ]
         if any [return-type return-note] [
             keep compose [
-                return: ((opt return-type)) (opt return-note)
+                return: (opt return-type) (opt return-note)
             ]
         ]
 
@@ -58,7 +58,7 @@ spec-of: function [
 
         for-each param parameters of :action [
             keep compose [
-                (param) ((select types param)) (select notes param)
+                (param) (select types param) (select notes param)
             ]
         ]
     ]

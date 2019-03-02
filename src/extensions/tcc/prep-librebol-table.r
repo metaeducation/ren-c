@@ -88,7 +88,7 @@ exists? top-dir or [
 encap: compose [
     (top-dir/make/prep/include/rebol.h)
 
-    (switch system-config/os-base [
+    ((switch system-config/os-base [
         ;
         ; https://repo.or.cz/tinycc.git/blob/HEAD:/win32/tcc-win32.txt
         ;
@@ -120,9 +120,9 @@ encap: compose [
                 "(OS X looks to be possible, but it just hasn't been tried)"
             ]
         ]
-    ])
+    ]))
 
-    (tcc-libtcc1-file) ;; See README.md for an explanation of %libtcc1.a
+    (tcc-libtcc1-file)  ; See README.md for an explanation of %libtcc1.a
 ]
 
 print "== IF TCC EXTENSION ENCAPPING WERE IMPLEMENTED, IT WOULD STORE THIS =="

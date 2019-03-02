@@ -277,7 +277,7 @@ host-start: function [
             <bad> [
                 emit #no-unskin-if-error
                 emit [print (<*> mold uneval prior)]
-                emit [fail ["Bad REPL continuation:" ((<*> uneval result))]]
+                emit [fail ["Bad REPL continuation:" (<*> uneval result)]]
             ]
         ] then [
             return-to-c instruction
@@ -297,7 +297,7 @@ host-start: function [
                 state
             ]
             default [
-                emit [fail [{Bad console instruction:} ((<*> mold state))]]
+                emit [fail [{Bad console instruction:} (<*> mold state)]]
             ]
         ]
     ]
@@ -518,7 +518,7 @@ host-start: function [
                 quit-when-done: default [true] ;-- override blank, not false
 
                 emit {Use /ONLY so that QUIT/WITH quits, vs. return DO value}
-                emit [do/only ((<*> param-or-die "DO"))]
+                emit [do/only (<*> param-or-die "DO")]
             )
         |
             ["--halt" | "-h"] end (
@@ -805,7 +805,7 @@ comment [
     ;
     if file? o/script [
         emit {Use DO/ONLY so QUIT/WITH exits vs. being DO's return value}
-        emit [do/only/args ((<*> o/script)) ((<*> script-args))]
+        emit [do/only/args (<*> o/script) (<*> script-args)]
     ]
 
     host-start: 'done

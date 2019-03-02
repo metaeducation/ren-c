@@ -89,7 +89,7 @@ modernize-action: function [
         ]
     ]
     body: compose [
-        (blankers)
+        ((blankers))
         (as group! body)
     ]
     return reduce [spec body]

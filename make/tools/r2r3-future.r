@@ -393,7 +393,7 @@ actionmaker: lib/function [
         body: compose [
             real-return: :return
             return: does [real-return void]
-            (body)
+            ((body))
         ]
         chain [
             either gather-locals [:lib/function] [:lib/func]
@@ -438,7 +438,7 @@ method: enfix func [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
     ;-- Older Ren-C don't take OBJECT! literally with <in>
-    set member (function compose [(spec) <in> context] body)
+    set member (function compose [((spec)) <in> context] body)
 ]
 
 meth: :func ;-- suitable enough synonym in the older Ren-C

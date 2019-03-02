@@ -30,7 +30,7 @@ verify: function [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [
-                    (copy/part conditions pos) ** (case [
+                    ((copy/part conditions pos)) ** (case [
                         unset? 'result ['null]
                         void? result ['void]
                         blank? result ['blank]

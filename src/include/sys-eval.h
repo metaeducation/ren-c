@@ -55,7 +55,15 @@
 //
 
 
-// Simple and short variant of Eval_Core() that clears off OUT_MARKED_STALE.
+// Simple helper solving two problems that Eval_Internal_Maybe_Stale_Throws()
+// has such a long name to warn about:
+//
+//    (1) It calls through a function pointer, so that if there is a hook
+//    for tracing or debug stepping it won't be skipped.
+//
+//    (2) Clears off OUT_MARKED_STALE--an alias for NODE_FLAG_MARKED that
+//    is used for generic purposes and may be misinterpreted if it leaked.
+//
 // (Note that it is wasteful to clear the stale flag if running in a loop,
 // so the Do_XXX() versions don't use this.)
 //

@@ -685,7 +685,7 @@ append app-config/cflags opt switch user-config/standard [
             ; when building as pre-C++11 where it was introduced, unless you
             ; disable that warning.
             ;
-            (if user-config/standard = 'c++98 [<gnu:-Wno-c++0x-compat>])
+            ((if user-config/standard = 'c++98 [<gnu:-Wno-c++0x-compat>]))
 
             ; Note: The C and C++ user-config/standards do not dictate if
             ; `char` is signed or unsigned.  Lest anyone think environments
@@ -1488,8 +1488,8 @@ app: make rebmake/application-class [
     depends: compose [
         (libr3-core)
         (libr3-os)
-        (ext-objs)
-        (app-config/libraries)
+        ((ext-objs))
+        ((app-config/libraries))
         (main)
     ]
     post-build-commands: either cfg-symbols [
@@ -1516,9 +1516,9 @@ library: make rebmake/dynamic-library-class [
     output: %libr3 ;no suffix
     depends: compose [
         (libr3-core)
-        (libr3-os)
-        (ext-objs)
-        (app-config/libraries)
+        ((libr3-os))
+        ((ext-objs))
+        ((app-config/libraries))
     ]
     searches: app-config/searches
     ldflags: app-config/ldflags
@@ -1567,11 +1567,12 @@ for-each ext dynamic-extensions [
         name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
             lowercase to text! ext/name
         output: to file! name
-        depends: append compose [
-            (mod-objs)
+        depends: compose [
+            ((mod-objs))
             (app) ;all dynamic extensions depend on r3
-            (app-config/libraries)
-        ] ext-libs
+            ((app-config/libraries))
+            ((ext-libs))
+        ]
 
         post-build-commands: either cfg-symbols [
             _
@@ -1583,7 +1584,7 @@ for-each ext dynamic-extensions [
             ]
         ]
 
-        ldflags: compose [(ext-ldflags) <gnu:-Wl,--as-needed>]
+        ldflags: compose [((ext-ldflags)) <gnu:-Wl,--as-needed>]
     ]
 
     add-project-flags/I/D/c/O/g ext-proj

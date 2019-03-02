@@ -42,7 +42,7 @@ register-codec*: func [
         ; IMAGE!.  Should the argument types of the encode function be cached
         ; here, or be another parameter, or...?
 
-        suffixes: ((suffixes))
+        suffixes: (suffixes)
         identify?: lit (:identify?)
         decode: lit (:decode)
         encode: lit (:encode)

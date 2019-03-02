@@ -51,7 +51,7 @@ read-deep: function [
 
     result: copy []
 
-    queue: compose [(root)]
+    queue: compose [((root))]
 
     while [not tail? queue] [
         append result taker queue ;-- Possible null

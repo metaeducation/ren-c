@@ -101,15 +101,15 @@ cflags: compose [
     ;
     {-DDEBUG_STDIO_OK}
 
-    (if debug-javascript-extension [[
+    ((if debug-javascript-extension [[
         {-DDEBUG_JAVASCRIPT_EXTENSION}
 
         ; {-DDEBUG_STDIO_OK}  ; !!! see above
         {-DDEBUG_HAS_PROBE}
         {-DDEBUG_COUNT_TICKS}
-    ]])
+    ]]))
 
-    (if use-emterpreter [[
+    ((if use-emterpreter [[
         {-DUSE_EMTERPRETER}  ; affects rebPromise() methodology
     ]] else [[
         ; Instruction to emcc (via -s) to include pthread functionalitys
@@ -117,7 +117,7 @@ cflags: compose [
 
         ; Instruction to compiler front end (via -D) to do a #define
         {-DUSE_PTHREADS=1}  ; clearer than `#if !defined(USE_EMSCRIPTEN)`
-    ]])
+    ]]))
 ]
 
 ldflags: compose [
@@ -167,7 +167,7 @@ ldflags: compose [
         {-s ASSERTIONS=0}
     ])
 
-    (if false [[
+    ((if false [[
         ; In theory, using the closure compiler will reduce the amount of
         ; unused support code in %libr3.js, at the cost of slower compilation. 
         ; Level 2 is also available, but is not recommended as it impedes
@@ -189,7 +189,7 @@ ldflags: compose [
         {--closure 1}
     ]] else [[
         {--closure 0}
-    ]])
+    ]]))
 
     ; Minification usually tied to optimization, but can be set separately.
     ;
@@ -237,7 +237,7 @@ ldflags: compose [
     ;
     ;{-s ALLOW_MEMORY_GROWTH=0}
 
-    (if use-emterpreter [[
+    ((if use-emterpreter [[
         {-s EMTERPRETIFY=1}
         {-s EMTERPRETIFY_ASYNC=1}
         {-s EMTERPRETIFY_FILE="libr3.bytecode"}
@@ -271,7 +271,7 @@ ldflags: compose [
         ; https://emscripten.org/docs/porting/pthreads.html
         ;
         {-s PTHREAD_POOL_SIZE=1}
-    ]])
+    ]]))
 
     ; When debugging in the emterpreter, stack frames all appear to have the
     ; function name `emterpret`.  Asking to turn on profiling will inject an

@@ -67,12 +67,12 @@
 )(
     block: []
     e: trap [
-        do compose/deep [loop 2 [append ((block)) <fail>]]
+        do compose/deep [loop 2 [append (block) <fail>]]
     ]
     e/id = 'const-value
 )(
     block: mutable []
-    do compose/deep [loop 2 [append ((block)) <legal>]]
+    do compose/deep [loop 2 [append (block) <legal>]]
     block = [<legal> <legal>]
 )
 
@@ -98,7 +98,7 @@
     data = [a [b [c <success>] <success>] <success>]
 )(
     loop 1 [sub: copy/deep [b [c]]]
-    data: copy compose [a ((sub))]
+    data: copy compose [a (sub)]
     append data <success>
     append data/2 <success>
     append data/2/2 <success>
@@ -149,11 +149,9 @@
 
 ; COMPOSE should splice with awareness of const/mutability
 (
-    e: trap [loop 2 compose [append (([1 2 3])) <bad>]]
+    e: trap [loop 2 compose [append ([1 2 3]) <bad>]]
     e/id = 'const-value
 )(
-    block: loop 2 compose [append ((mutable [1 2 3])) <legal>]
+    block: loop 2 compose [append (mutable [1 2 3]) <legal>]
     block = [1 2 3 <legal> <legal>]
 )
-
-

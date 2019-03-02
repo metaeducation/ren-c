@@ -168,6 +168,7 @@ bool Add_Typeset_Bits_Core(
 
                 TYPE_SET(typeset, REB_TS_SKIPPABLE);
                 TYPE_SET(typeset, REB_TS_ENDABLE); // skip => null
+                TYPE_SET(typeset, REB_NULLED);  // null if specialized
             }
             else if (0 == Compare_String_Vals(item, Root_Dequote_Tag, true)) {
                 TYPE_SET(typeset, REB_TS_DEQUOTE_REQUOTE);

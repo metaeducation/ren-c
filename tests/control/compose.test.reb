@@ -30,7 +30,7 @@
 )
 (
     blk: []
-    same? blk first compose [(reduce [blk])]
+    same? blk first compose [((reduce [blk]))]
 )
 (
     blk: []
@@ -39,7 +39,7 @@
 ; recursion
 (
     num: 1
-    [num 1] = compose [num (compose [(num)])]
+    [num 1] = compose [num ((compose [(num)]))]
 )
 ; infinite recursion
 (
@@ -59,7 +59,7 @@
 
 (
     block: [a b c]
-    [plain: a b c only: [a b c]] = compose [plain: (block) only: ((block))]
+    [splice: a b c only: [a b c]] = compose [splice: ((block)) only: (block)]
 )
 
 ; COMPOSE with pattern, beginning tests
@@ -77,7 +77,7 @@
 (
     [(left alone) [c b a] c b a ((left alone))]
     = compose <$> [
-        (left alone) ((<$> reverse copy [a b c])) (<$> reverse copy [a b c])
+        (left alone) (<$> reverse copy [a b c]) ((<$> reverse copy [a b c]))
         ((left alone))
     ]
 )
@@ -103,20 +103,17 @@
 ([x:] = compose [(#x):])
 ([x:] = compose [("x"):])
 
-([x/y:] = compose [('x/y):])
-([x/y:] = compose [('x/y:):])
-([x/y:] = compose [(':x/y):])
+([x/y:] = compose [( 'x/y ):])
+([x/y:] = compose [( 'x/y: ):])
+([x/y:] = compose [( ':x/y ):])
 
-([(x y):] = compose [(('(x y))):])
-([(x y):] = compose [(('(x y):)):])
-([(x y):] = compose [((':(x y))):])
+([(x y):] = compose [( '(x y) ):])
+([(x y):] = compose [( '(x y): ):])
+([(x y):] = compose [( ':(x y) ):])
 
-; !!! Hopefully temporary: block splicing throws a wrench in this.  Better
-; to make (( )) the splicing operator
-
-([[x y]:] = compose [(('[x y])):])
-([[x y]:] = compose [(('[x y]:)):])
-([[x y]:] = compose [((':[x y])):])
+([[x y]:] = compose [( '[x y] ):])
+([[x y]:] = compose [( '[x y]: ):])
+([[x y]:] = compose [( ':[x y] ):])
 
 
 ; Using a GET-GROUP! will *try* to convert the composed value to a get form
@@ -127,17 +124,14 @@
 ([:x] = compose [:(#x)])
 ([:x] = compose [:("x")])
 
-([:x/y] = compose [:('x/y)])
-([:x/y] = compose [:('x/y:)])
-([:x/y] = compose [:(':x/y)])
+([:x/y] = compose [:( 'x/y )])
+([:x/y] = compose [:( 'x/y: )])
+([:x/y] = compose [:( ':x/y )])
 
-([:(x y)] = compose [:(('(x y)))])
-([:(x y)] = compose [:(('(x y):))])
-([:(x y)] = compose [:((':(x y)))])
+([:(x y)] = compose [:( '(x y) )])
+([:(x y)] = compose [:( '(x y): )])
+([:(x y)] = compose [:( ':(x y) )])
 
-; !!! Hopefully temporary: block splicing throws a wrench in this.  Better
-; to make (( )) the splicing operator
-
-([:[x y]] = compose [:(('[x y]))])
-([:[x y]] = compose [:(('[x y]:))])
-([:[x y]] = compose [:((':[x y]))])
+([:[x y]] = compose [:( '[x y] )])
+([:[x y]] = compose [:( '[x y]: )])
+([:[x y]] = compose [:( ':[x y] )])

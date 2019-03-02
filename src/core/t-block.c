@@ -116,7 +116,7 @@ REB_R MAKE_Array(
         //     == a/b/c
         //
         //     >> block: [a b c]
-        //     >> p2: make path! compose [(block) 2]
+        //     >> p2: make path! compose [((block)) 2]
         //     == b/c
         //
         //     >> append block 'd

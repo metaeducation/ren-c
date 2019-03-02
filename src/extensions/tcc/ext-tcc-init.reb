@@ -29,7 +29,7 @@ REBOL [
         * Extract embedded header files and library files to the local file
           system.  These allow a Rebol executable that is distributed as a
           single EXE to function as a "standalone" compiler.
-          
+
           !!! ^-- Planned future feature: See README.md.
 
         These features could become more imaginative, considering COMPILE as

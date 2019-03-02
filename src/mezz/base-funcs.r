@@ -469,7 +469,7 @@ so: enfix func [
         fail 'condition make error! [
             type: 'Script
             id: 'assertion-failure
-            arg1: compose [(:condition) so]
+            arg1: compose [((:condition)) so]
         ]
     ]
     if tail? feed [return void]
@@ -721,8 +721,8 @@ lambda: function [
         {Block that serves as the body or variadic elements for the body}
 ][
     make action! compose [
-        ((blockify :args))
-        ((const if block? first body [take body] else [make block! body]))
+        (blockify :args)
+        (const if block? first body [take body] else [make block! body])
     ]
 ]
 
@@ -772,7 +772,7 @@ method: enfix func [
     context: binding of member else [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
-    set member bind (function compose [(spec) <in> (context)] body) context
+    set member bind (function compose [((spec)) <in> ((context))] body) context
 ]
 
 meth: enfix func [
@@ -858,7 +858,7 @@ module: func [
         spec/version [tuple! blank!]
         spec/options [block! blank!]
     ][
-        do compose [ensure ((types)) (var)] ;-- names to show if fails
+        do compose [ensure (types) (var)]  ; names to show if fails
     ]
 
     ; In Ren-C, MAKE MODULE! acts just like MAKE OBJECT! due to the generic
@@ -965,8 +965,7 @@ cause-error: func [
     err-id [word!]
     args
 ][
-    ; Make sure it's a block:
-    args: compose [(:args)]
+    args: blockify :args  ; make sure it's a block
 
     ; Filter out functional values:
     iterate args [
@@ -1034,7 +1033,7 @@ fail: function [
     ] else [
         not set? 'reason so make error! compose [
             Type: 'Script
-            (case [
+            ((case [
                 frame and [set? blame] [[
                     id: 'invalid-arg
                     arg1: label of frame
@@ -1053,7 +1052,7 @@ fail: function [
                 default [[
                     id: 'unknown-error
                 ]]
-            ])
+            ]))
         ]
     ]
 
@@ -1096,11 +1095,11 @@ generate: function [ "Make a generator."
             return do result
         ]
         count: me + 1
-        result: (to group! (iteration))
-        (either empty? condition
+        result: (to group! iteration)
+        ((either empty? condition
             [[ return result ]]
-            [compose [ return either (to group! (condition)) [result] [null] ]]
-        )
+            [compose [ return if (to group! condition) [result] ]]
+        ))
     ]
     f: function spec body
     f/reset init

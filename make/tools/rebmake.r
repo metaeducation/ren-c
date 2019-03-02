@@ -994,9 +994,9 @@ object-file-class: make object! [
     ][
         cc: any [compiler default-compiler]
         cc/command/I/D/F/O/g/(PIC)/(E) output source
-            compose [(opt includes) (if I [ex-includes])]
-            compose [(opt definitions) (if D [ex-definitions])]
-            compose [(if F [ex-cflags]) (opt cflags)] ;; ex-cflags override
+            compose [((opt includes)) ((if I [ex-includes]))]
+            compose [((opt definitions)) ((if D [ex-definitions]))]
+            compose [((if F [ex-cflags])) ((opt cflags))] ; ex-cflags override
 
             ; current setting overwrites /refinement
             ; because the refinements are inherited from the parent
@@ -2075,7 +2075,7 @@ visual-studio: make generator-class [
                                 {        <AdditionalOptions>}
                                 spaced compose [
                                     {%(AdditionalOptions)}
-                                    (collected)
+                                    ((collected))
                                 ]
                                 {</AdditionalOptions>^/}
                             ]

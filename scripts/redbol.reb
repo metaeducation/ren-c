@@ -173,11 +173,11 @@ func: emulate [
         body [block!]
     ][
         func compose [
-           (optify spec) <local> exit
+           ((optify spec)) <local> exit
         ] compose [
             blankify-refinement-args binding of 'return
             exit: make action! [[] [unwind binding of 'return]]
-            (body)
+            ((body))
         ]
     ]
 ]
@@ -196,14 +196,14 @@ function: emulate [
         ; put everything into the spec...marked with <tags>
         ;
         function compose [
-            (optify spec)
-            (if with [<in>]) (:object) ;-- <in> replaces /WITH
-            (if extern [<with>]) (:words) ;-- <with> replaces /EXTERN
-            ;-- <local> exit, picked up since using FUNCTION as generator
+            ((optify spec))
+            (if with [<in>]) (:object)  ; <in> replaces /WITH
+            (if extern [<with>]) ((:words))  ; <with> replaces /EXTERN
+            ; <local> exit, picked up since using FUNCTION as generator
         ] compose [
             blankify-refinement-args binding of 'return
             exit: make action! [[] [unwind binding of 'return]]
-            (body)
+            ((body))
         ]
     ]
 ]
@@ -849,7 +849,7 @@ foreach: emulate [
         use :vars [
             position: data
             while [not tail? position] compose [
-                (collect [
+                ((collect [
                     for-each item vars [
                         case [
                             set-word? item [
@@ -864,8 +864,8 @@ foreach: emulate [
                             fail "non SET-WORD?/WORD? in FOREACH vars"
                         ]
                     ]
-                ])
-                (body)
+                ]))
+                ((body))
             ]
         ]
     ]

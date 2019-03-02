@@ -533,10 +533,10 @@ use [
     ]
 
     unused-flags: exclude compose [
-        (words-of compiler-flags)
-        (words-of linker-flags)
-        (words-of system-definitions)
-        (words-of system-libraries)
+        ((words-of compiler-flags))
+        ((words-of linker-flags))
+        ((words-of system-definitions))
+        ((words-of system-libraries))
     ] used-flags
 
     if not empty? unused-flags [

@@ -492,7 +492,7 @@ collect-lines: redescribe [
         keep: adapt specialize 'keep [
             line: true | only: false | part: false
         ] [value: spaced try :value]
-        ((as group! body))
+        (as group! body)
     ]
 ]
 
@@ -507,7 +507,7 @@ collect-text: redescribe [
             ][
                 value: unspaced try :value
             ]
-            ((as group! body))
+            (as group! body)
         ]
     ]
     :spaced
