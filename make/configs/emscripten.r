@@ -221,7 +221,7 @@ ldflags: compose [
     ; that doesn't seem to be the case for %reb-lib.js or things called from
     ; EM_ASM() in the C...so do it explicitly.
     ;
-    {-s 'EXTRA_EXPORTED_RUNTIME_METHODS=["ccall", "cwrap", "allocateUTF8"]'}
+    {-s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall', 'cwrap', 'allocateUTF8']"}
 
     ; WASM does not have source maps, so disabling it can aid in debugging
     ; But emcc WASM=0 does not work in VirtualBox shared folders by default
