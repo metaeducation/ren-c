@@ -159,6 +159,8 @@ ldflags: compose [
     ;
     (if (javascript-environment = #node) and [use-emterpreter] [
         {--pre-js prep/include/node-preload.js}
+    ] else [
+        {--pre-js prep/include/web-preload.js}
     ])
 
     (if debug-javascript-extension [

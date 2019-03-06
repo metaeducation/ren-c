@@ -1146,3 +1146,15 @@ e-node-preload/emit {
 }
 
 e-node-preload/write-emitted
+
+=== GENERATE %WEB-PRELOAD.JS ===
+
+e-web-preload: (make-emitter
+    "Module Preload for Web" output-dir/web-preload.js
+)
+
+e-web-preload/emit {
+    Module["noInitialRun"] = true;
+}
+
+e-web-preload/write-emitted
