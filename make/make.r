@@ -553,6 +553,7 @@ app-config: make object! [
     definitions: copy []
     includes: reduce [src-dir/include %prep/include]
     searches: make block! 8
+    output: make file! %r3
 ]
 
 cfg-sanitize: false
@@ -1026,6 +1027,7 @@ print ["cflags:" mold app-config/cflags]
 print ["ldflags:" mold app-config/ldflags]
 print ["debug:" mold app-config/debug]
 print ["optimization:" mold app-config/optimization]
+print ["output:" mold app-config/output]
 
 append app-config/definitions reduce [
     unspaced ["TO_" uppercase to-text system-config/os-base]
@@ -1039,6 +1041,8 @@ append app-config/includes opt user-config/includes
 append app-config/cflags opt user-config/cflags
 append app-config/libraries opt user-config/libraries
 append app-config/ldflags opt user-config/ldflags
+
+if user-config/output [app-config/output: user-config/output]
 
 libr3-core: make rebmake/object-library-class [
     name: 'libr3-core
@@ -1484,7 +1488,7 @@ add-new-obj-folders ext-objs folders
 
 app: make rebmake/application-class [
     name: 'r3-exe
-    output: %r3 ;no suffix
+    output: app-config/output
     depends: compose [
         (libr3-core)
         (libr3-os)

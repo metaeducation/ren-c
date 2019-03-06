@@ -48,6 +48,8 @@ debug-javascript-extension: true
 ;
 top: 'library
 
+output: %libr3
+
 os-id: default [0.16.2]
 
 gcc-path:

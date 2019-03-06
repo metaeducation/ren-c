@@ -96,3 +96,5 @@ ldflags: _
 main: _
 
 top: _
+
+output: _
