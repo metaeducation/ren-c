@@ -38,7 +38,16 @@ either commands: try find args '| [
 for-each [name value] options [
     switch name [
         'CONFIG 'LOAD 'DO [
-            user-config: make user-config load to-file value
+            config: to-file value
+            while [config] [
+                set [path: f:] split-path config
+                bak: system/options/current-path
+                cd :path
+                user-config/config: _
+                user-config: make user-config load f
+                config: try attempt [clean-path user-config/config]
+                cd :bak
+            ]
         ]
         'EXTENSIONS [
             ; [+|-|*] [NAME {+|-|*|[modules]}]... 
@@ -1599,7 +1608,7 @@ for-each ext dynamic-extensions [
 
 top: make rebmake/entry-class [
     target: 'top ; phony target
-    depends: flatten reduce ??
+    depends: flatten reduce
         either tmp: select user-config 'top
         [either block? tmp [tmp] [reduce [tmp]]]
         [[ app dynamic-libs ]]
@@ -1620,6 +1629,7 @@ clean: make rebmake/entry-class [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
         make rebmake/cmd-delete-class [file: join %r3 opt rebmake/target-platform/exe-suffix]
+        make rebmake/cmd-delete-class [file:  %libr3.*]
     ]
 ]
 

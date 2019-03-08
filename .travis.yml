@@ -434,7 +434,7 @@ matrix:
           packages:
             - gcc-multilib  # for cross-compiling
 
-    # [12] Emscripten, Webassembly, release
+    # [12] Emscripten, wasm + pthread, release
     #
     # The job of this build is to create a JavaScript library that can be
     # loaded into a web page or Node.JS.  For an example:
@@ -458,6 +458,28 @@ matrix:
         - EXTENSIONS=-  # requests inclusion of no extensions (default?)
 
 
+    # [13] Emscripten, asm.js + emterpreter, release
+    #
+    # The job of this build is to create a JavaScript library that can be
+    # loaded into a web page or Node.JS.  For an example:
+    #
+    # https://github.com/hostilefork/replpad-js
+    #
+    - os: osx
+      osx_image: xcode10.1  # was originally using xcode9.3beta
+      language: c
+      env:
+        - NUMBER=12
+        - CONFIG=emterpreter.r
+        - OS_ID=0.16.1
+        - DEBUG=none
+        - OPTIMIZE=z
+        - STANDARD=c
+        - RIGOROUS=no
+        - STATIC=no
+        - WITH_FFI=no
+        - ODBC_REQUIRES_LTDL=no
+        - EXTENSIONS=-  # requests inclusion of no extensions (default?)
 # The install step occurs before the `script:` step runs.  The language that
 # was specified in the `matrix:` entry for each instance will guide certain
 # default tools that will be installed.  But you can add custom steps:

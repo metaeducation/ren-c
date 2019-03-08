@@ -268,9 +268,11 @@ systems: [
 
     Emscripten: 16
     ;-------------------------------------------------------------------------
-    0.16.01 emscripten-asm/emscripten "asm.js"
-        #SG? #LEN /NOWASM
-    0.16.02 emscripten-wasm/emscripten "webassembly"
+    0.16.01 emterpreter/emscripten "emterpreter"
+        #SG? #LEN
+    0.16.02 pthread/emscripten "emscripten"
+        #SG? #LEN
+    0.16.03 node/emscripten "node.js"
         #SG? #LEN
 
     AIX: 17
@@ -396,7 +398,7 @@ linker-flags: make object! [
 
     CON: [<gnu:-mconsole> <msc:/subsystem:console>]
     S4M: [<gnu:-Wl,--stack=4194300> <msc:/stack:4194300>]
-    NOWASM: "-s WASM=0" ; emscripten webassembly
+    ;NOWASM: "-s WASM=0" ; emscripten webassembly
 ]
 
 system-libraries: make object! [

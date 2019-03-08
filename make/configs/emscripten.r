@@ -2,8 +2,10 @@ REBOL []
 
 ; Right now, either #web or #node
 ;
-javascript-environment: #web
+javascript-environment: default [#web]
 
+; true or false
+use-wasm: default [true]
 
 ; The inability to communicate synchronously between the worker and GUI in
 ; JavaScript means that being deep in a C-based interpreter stack on the
@@ -27,7 +29,6 @@ javascript-environment: #web
 ; will be available.  The emterpreter method is preserved as a fallback, but
 ; should not be used without good reason--only basic features are implemented.
 ;
-use-emterpreter: _  ; blank means use default for platform 
 
 if javascript-environment = #node [
     use-emterpreter: default [true]  ; no PTHREAD in Emscripten Node.js yet
@@ -230,7 +231,11 @@ ldflags: compose [
     ; SAFE_HEAP=1 does not work with WASM
     ; https://github.com/kripken/emscripten/issues/4474
     ;
-    {-s WASM=1 -s SAFE_HEAP=0}
+    (if use-wasm [
+        {-s WASM=1 -s SAFE_HEAP=0}
+    ] else [
+        {-s WASM=0 -s SAFE_HEAP=1}
+    ])
 
     ; This allows memory growth but disables asm.js optimizations (little to
     ; no effect on WASM).  Disable until it becomes an issue.
@@ -242,9 +247,12 @@ ldflags: compose [
         {-s EMTERPRETIFY_ASYNC=1}
         {-s EMTERPRETIFY_FILE="libr3.bytecode"}
 
-        ; !!! Is this yet another file, different from the .bytecode?
+        ; Memory initialization file,
+        ; used both in asm.js and wasm+pthread
+        ; unused in 'pure' wasm':
+        ; https://groups.google.com/forum/m/#!topic/emscripten-discuss/_czKmHCbeSY
         ;
-        ;{--memory-init-file 1}
+        {--memory-init-file 1}
 
         ; "There's always a blacklist.  The whitelist starts empty.  If there
         ; is a non-empty whitelist then everything not in it gets added to the
