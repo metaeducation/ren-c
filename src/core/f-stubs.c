@@ -578,7 +578,7 @@ REBVAL *Setify(REBVAL *out) {
     REBCNT quotes = Dequotify(out);
 
     enum Reb_Kind kind = VAL_TYPE(out);
-    if (ANY_PLAIN_GET_SET_WORD_KIND(kind)) {
+    if (ANY_WORD_KIND(kind)) {
         mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_SET_WORD;
     }
     else if (ANY_PATH_KIND(kind)) {
@@ -612,8 +612,8 @@ REBVAL *Setify(REBVAL *out) {
 //
 //  {If possible, convert a value to a SET-XXX! representation}
 //
-//      return: [set-word! set-path! set-group! set-block!]
-//      value [any-value!]
+//      return: [<opt> set-word! set-path! set-group! set-block!]
+//      value [<blank> any-value!]
 //  ]
 //
 REBNATIVE(setify)
@@ -642,7 +642,7 @@ REBVAL *Getify(REBVAL *out) {
     else if (ANY_PATH_KIND(kind)) {
         mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_GET_PATH;
     }
-    else if (ANY_PLAIN_GET_SET_WORD_KIND(kind)) {
+    else if (ANY_WORD_KIND(kind)) {
         mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_GET_WORD;
     }
     else if (kind == REB_NULLED) {
@@ -665,8 +665,8 @@ REBVAL *Getify(REBVAL *out) {
 //
 //  {If possible, convert a value to a GET-XXX! representation}
 //
-//      return: [get-word! get-path! get-group! get-block!]
-//      value [any-value!]
+//      return: [<opt> get-word! get-path! get-group! get-block!]
+//      value [<blank> any-value!]
 //  ]
 //
 REBNATIVE(getify)
@@ -675,3 +675,61 @@ REBNATIVE(getify)
 
     RETURN (Getify(ARG(value)));
 }
+
+
+//
+//  Symify: C
+//
+// Turn a value into its SYM-XXX! equivalent, if possible.  This tries to
+// "be smart" so even a TEXT! can be turned into a SYM-WORD! (just an
+// unbound one).
+//
+REBVAL *Symify(REBVAL *out) {
+    REBCNT quotes = Dequotify(out);
+
+    enum Reb_Kind kind = VAL_TYPE(out);
+    if (ANY_WORD_KIND(kind)) {
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_SYM_WORD;
+    }
+    else if (ANY_PATH_KIND(kind)) {
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_SYM_PATH;
+    }
+    else if (ANY_BLOCK_KIND(kind)) {
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_SYM_BLOCK;
+    }
+    else if (ANY_GROUP_KIND(kind)) {
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_SYM_GROUP;
+    }
+    else if (kind == REB_NULLED) {
+        fail ("Cannot SYMIFY a NULL");
+    }
+    else {
+        // !!! For everything else, as en experiment see if there's some
+        // kind of logic to turn into a SET-WORD!  Calling through the
+        // API is slow, but easy to do for a test.
+        //
+        REBVAL *set = rebValueQ("to sym-word!", out, rebEND);
+        Move_Value(out, set);
+        rebRelease(set);
+    }
+
+    return Quotify(out, quotes);
+}
+
+
+//
+//  symify: native [
+//
+//  {If possible, convert a value to a SYM-XXX! representation}
+//
+//      return: [<opt> sym-word! sym-path! sym-group! sym-block!]
+//      value [<blank> any-value!]
+//  ]
+//
+REBNATIVE(symify)
+{
+    INCLUDE_PARAMS_OF_SYMIFY;
+
+    RETURN (Symify(ARG(value)));
+}
+

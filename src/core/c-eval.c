@@ -2153,6 +2153,11 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
       case REB_BLOCK:
         //
+      case REB_SYM_BLOCK:
+      case REB_SYM_GROUP:
+      case REB_SYM_PATH:
+      case REB_SYM_WORD:
+        //
       case REB_BINARY:
       case REB_TEXT:
       case REB_FILE:

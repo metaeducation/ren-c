@@ -859,6 +859,8 @@ void MF_Path(REB_MOLD *mo, const REBCEL *v, bool form)
 
     if (kind == REB_GET_PATH)
         Append_Codepoint(mo->series, ':');
+    else if (kind == REB_SYM_PATH)
+        Append_Codepoint(mo->series, '@');
 
     assert(VAL_INDEX(v) == 0); // the new rule, not an ANY-ARRAY!, always head
     assert(ARR_LEN(a) >= 2); // another new rule, even / is `make path! [_ _]`

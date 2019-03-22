@@ -1068,14 +1068,30 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         }
 
       case LEX_CLASS_SPECIAL:
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT) and *cp != '<')
+        if (
+            HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)  // @ anywhere but at the head
+            and *cp != '<'  // want <foo="@"> to be a TAG!, not an EMAIL!
+        ){
+            if (*cp == '@')  // consider `@a@b`, `@@`, etc. ambiguous
+                fail (Error_Syntax(ss, TOKEN_EMAIL));
             return TOKEN_EMAIL;
+        }
 
       next_lex_special:
 
         switch (GET_LEX_VALUE(*cp)) {
-          case LEX_SPECIAL_AT:
-            fail (Error_Syntax(ss, TOKEN_EMAIL));
+          case LEX_SPECIAL_AT:  // the case where @ is actually at the head
+            if (cp[1] == '(') {
+                ss->end = cp + 2;  // whole token should be `@(`
+                return TOKEN_SYM_GROUP_BEGIN;
+            }
+            if (cp[1] == '[') {
+                ss->end = cp + 2;  // whole token should be `@[`
+                return TOKEN_SYM_BLOCK_BEGIN;
+            }
+            ++cp;  // skip @
+            token = TOKEN_SYM;
+            goto scanword;
 
           case LEX_SPECIAL_PERCENT:  // %filename
             cp = ss->end;
@@ -1680,6 +1696,10 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             ++bp;
             break;
 
+          case TOKEN_SYM: {  // !!! Similar to TOKEN_GET, try unifying
+            ++bp;
+            goto token_set; }
+            
           case TOKEN_GET:
             if (ep[-1] == ':') {
                 if (ep[0] == '/') {  // e.g. :/foo
@@ -1744,6 +1764,8 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             lit_depth = 0;
             goto loop; }  // wrap next value
 
+          case TOKEN_SYM_GROUP_BEGIN:
+          case TOKEN_SYM_BLOCK_BEGIN:
           case TOKEN_GET_GROUP_BEGIN:
           case TOKEN_GET_BLOCK_BEGIN:
             if (ep[-1] == ':') {
@@ -2281,6 +2303,19 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
                         mutable_KIND_BYTE(head)
                             = mutable_MIRROR_BYTE(head)
                             = UNGETIFY_ANY_GET_KIND(kind_head);
+                }
+                else if (ANY_SYM_KIND(kind_head)) {  // !!! TBD: blank hack
+                    if (ss->begin and *ss->end == ':')
+                      goto syntax_error;  // for instance `@a/b/c:`
+
+                    RESET_VAL_HEADER(
+                        DS_TOP,
+                        REB_SYM_PATH,
+                        CELL_FLAG_FIRST_IS_NODE
+                    );
+                    mutable_KIND_BYTE(head)
+                        = mutable_MIRROR_BYTE(head)
+                        = UNSYMIFY_ANY_SYM_KIND(kind_head);
                 }
                 else if (ss->begin and *ss->end == ':') {
                     RESET_VAL_HEADER(

@@ -367,14 +367,19 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool is_case)
       case REB_BLOCK:
       case REB_SET_BLOCK:
       case REB_GET_BLOCK:
+      case REB_SYM_BLOCK:
       case REB_GROUP:
       case REB_SET_GROUP:
       case REB_GET_GROUP:
-      case REB_MAP:
+      case REB_SYM_GROUP:
       case REB_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:
+      case REB_SYM_PATH:
         return Cmp_Array(s, t, is_case);
+
+      case REB_MAP:
+        return Cmp_Array(s, t, is_case);  // !!! Fails if wrong hash size (!)
 
       case REB_TEXT:
       case REB_FILE:

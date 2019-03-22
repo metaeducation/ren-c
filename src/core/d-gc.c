@@ -305,9 +305,11 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_BLOCK:
       case REB_SET_BLOCK:
       case REB_GET_BLOCK:
+      case REB_SYM_BLOCK:
       case REB_GROUP:
       case REB_SET_GROUP:
-      case REB_GET_GROUP: {
+      case REB_GET_GROUP:
+      case REB_SYM_GROUP: {
         if (GET_SERIES_INFO(PAYLOAD(Any, v).first.node, INACCESSIBLE))
             break;
 
@@ -318,7 +320,8 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
       case REB_PATH:
       case REB_SET_PATH:
-      case REB_GET_PATH: {
+      case REB_GET_PATH:
+      case REB_SYM_PATH: {
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         REBARR *a = ARR(PAYLOAD(Any, v).first.node);
         assert(NOT_SERIES_INFO(a, INACCESSIBLE));
@@ -343,7 +346,8 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       any_word:
       case REB_WORD:
       case REB_SET_WORD:
-      case REB_GET_WORD: {
+      case REB_GET_WORD:
+      case REB_SYM_WORD: {
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
 
         REBSTR *spelling = STR(PAYLOAD(Any, v).first.node);

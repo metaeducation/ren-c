@@ -298,6 +298,8 @@ REB_R Compose_To_Stack_Core(
                     Setify(DS_TOP);
                 else if (kind == REB_GET_GROUP)
                     Getify(DS_TOP);
+                else if (kind == REB_SYM_GROUP)
+                    Symify(DS_TOP);
                 else
                     assert(kind == REB_GROUP);
 

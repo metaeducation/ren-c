@@ -763,9 +763,13 @@ void MF_Array(REB_MOLD *mo, const REBCEL *v, bool form)
             Append_Codepoint(mo->series, ':');
             goto block;
 
+          case REB_SYM_BLOCK:
+            Append_Codepoint(mo->series, '@');
+            goto block;
+
           case REB_BLOCK:
           case REB_SET_BLOCK:
-          block:;
+          block:
             if (GET_MOLD_FLAG(mo, MOLD_FLAG_ONLY)) {
                 CLEAR_MOLD_FLAG(mo, MOLD_FLAG_ONLY); // only top level
                 sep = "\000\000";
@@ -778,9 +782,13 @@ void MF_Array(REB_MOLD *mo, const REBCEL *v, bool form)
             Append_Codepoint(mo->series, ':');
             goto group;
 
+          case REB_SYM_GROUP:
+            Append_Codepoint(mo->series, '@');
+            goto group;
+
           case REB_GROUP:
           case REB_SET_GROUP:
-          group:;
+          group:
             sep = "()";
             break;
 

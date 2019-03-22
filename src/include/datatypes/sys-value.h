@@ -249,8 +249,6 @@
     }
 #endif
 
-#define FLAGIT_KIND(t) \
-    (cast(REBU64, 1) << (t)) // makes a 64-bit bitflag
 
 // A cell may have a larger KIND_BYTE() than legal Reb_Kind to represent a
 // literal in-situ...the actual kind comes from that byte % 64.  But if you

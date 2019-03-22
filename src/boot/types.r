@@ -211,7 +211,30 @@ port        "external series, an I/O channel"
 varargs     "evaluator position for variable numbers of arguments"
             varargs     +       +       +       []
 
-; <ANY-ARRAY> (order matters, see UNSETIFY_ANY_XXX_KIND())
+; !!! At time of writing, VARARGS! is at 33...putting the following ranges
+; close to being 32.  That might be a useful number for math tricks on the
+; following sequences.  Right now there's no particularly fast test for
+; ANY_ARRAY(), ANY_PATH(), ANY_WORD()...due to those being less common than
+; testing for ANY_INERT() which requires the SYM-XXX forms to be low.
+
+; <ANY-SYM> (order matters, see UNSETIFY_ANY_XXX_KIND())
+
+sym-block   "alternative form of block (that also doesn't evaluate)"
+            array       *       *       *       [block array series]
+
+sym-group   "symbolic form of group! that does not evaluate"
+            array       *       *       *       [group array series]
+
+sym-path    "symbolic form of path! that does not evaluate"
+            path        *       *       *       [path]
+
+sym-word    "symbolic form of word! that does not evaluate"
+            word        -       *       +       [word]
+
+; <ANY-SYM> (order matters, see UNSETIFY_ANY_XXX_KIND())
+
+
+; <ANY-PLAIN> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 block       "array of values that blocks evaluation unless DO is used"
             array       *       *       *       [block array series]
@@ -220,48 +243,51 @@ block       "array of values that blocks evaluation unless DO is used"
 ; BEGIN EVALUATOR ACTIVE TYPES, SEE ANY_EVALUATIVE()
 ; ============================================================================
 
-set-block   "array of values that will element-wise SET if evaluated"
-            array       *       *       *       [block array series]
-
-get-block   "array of values that is reduced if evaluated"
-            array       *       *       *       [block array series]
-
 group       "array that evaluates expressions as an isolated group"
             array       *       *       *       [group array series]
-
-set-group   "array that evaluates and runs SET on the resulting word/path"
-            array       *       *       *       [group array series]
-
-get-group   "array that evaluates and runs GET on the resulting word/path"
-            array       *       *       *       [group array series]
-
-; </ANY-ARRAY> (contiguous with ANY-PATH below matters)
-;
-; <ANY-PATH> (order matters, same GET/SET order as with arrays)
 
 path        "refinements to functions, objects, files"
             path        *       *       *       [path]
 
+word        "evaluates a variable or action"
+            word        -       *       +       [word]
+
+; </ANY-PLAIN>
+
+
+; <ANY-SET> (order matters, see UNSETIFY_ANY_XXX_KIND())
+
+set-block   "array of values that will element-wise SET if evaluated"
+            array       *       *       *       [block array series]
+
+set-group   "array that evaluates and runs SET on the resulting word/path"
+            array       *       *       *       [group array series]
+
 set-path    "definition of a path's value"
             path        *       *       *       [path]
-
-get-path    "the value of a path"
-            path        *       *       *       [path]
-
-; </ANY-PATH>
-
-; <ANY-WORD> (order matters, see UNSETIFY_ANY_XXX_KIND())
-
-word        "word (symbol or variable)"
-            word        -       *       +       [word]
 
 set-word    "definition of a word's value"
             word        -       *       +       [word]
 
+; </ANY-SET> (contiguous with ANY-GET below matters)
+
+
+; <ANY-GET> (order matters)
+
+get-block   "array of values that is reduced if evaluated"
+            array       *       *       *       [block array series]
+
+get-group   "array that evaluates and runs GET on the resulting word/path"
+            array       *       *       *       [group array series]
+
+get-path    "the value of a path"
+            path        *       *       *       [path]
+
 get-word    "the value of a word (variable)"
             word        -       *       +       [word]
 
-; </ANY-WORD> (except for ISSUE!)
+; </ANY-GET> (except for ISSUE!)
+
 
 ; ACTION! is the "OneFunction" type in Ren-C https://forum.rebol.info/t/596
 

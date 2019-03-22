@@ -31,6 +31,14 @@
 //
 
 
+// Some of the tests are bitflag based.  This makes Rebol require a 64-bit
+// integer, so tricks that would not require it for building would be good.
+// (For instance, if all the types being tested fit in a 32-bit range.)
+//
+#define FLAGIT_KIND(t) \
+    (cast(uint_fast64_t, 1) << (t)) // makes a 64-bit bitflag
+
+
 //=//// QUOTED ////////////////////////////////////////////////////////////=//
 //
 // Testing for QUOTED! is special, as it isn't just the REB_QUOTED type, but
@@ -159,7 +167,7 @@ inline static bool ANY_BINSTR_KIND(REBYTE k)
 
 
 #define ANY_ARRAY_OR_PATH_KIND_EVIL_MACRO \
-    (k >= REB_BLOCK and k <= REB_GET_PATH)
+    (k < REB_64 and did (FLAGIT_KIND(k) & (TS_ARRAY | TS_PATH)))
 
 inline static bool ANY_ARRAY_OR_PATH_KIND(REBYTE k)
     { return ANY_ARRAY_OR_PATH_KIND_EVIL_MACRO; }
@@ -169,7 +177,7 @@ inline static bool ANY_ARRAY_OR_PATH_KIND(REBYTE k)
 
 
 #define ANY_ARRAY_KIND_EVIL_MACRO \
-    (k >= REB_BLOCK and k <= REB_GET_GROUP)
+    (k < REB_64 and did (FLAGIT_KIND(k) & TS_ARRAY))
 
 inline static bool ANY_ARRAY_KIND(REBYTE k)
     { return ANY_ARRAY_KIND_EVIL_MACRO; }
@@ -179,7 +187,7 @@ inline static bool ANY_ARRAY_KIND(REBYTE k)
 
 
 #define ANY_SERIES_KIND_EVIL_MACRO \
-    (ANY_BINSTR_KIND_EVIL_MACRO or ANY_ARRAY_KIND_EVIL_MACRO)
+    (k < 64 and did (FLAGIT_KIND(k) & TS_SERIES))
 
 inline static bool ANY_SERIES_KIND(REBYTE k)
     { return ANY_SERIES_KIND_EVIL_MACRO; }
@@ -194,7 +202,7 @@ inline static bool ANY_SERIES_KIND(REBYTE k)
 // test fast, issue is grouped with the inert types...not the other words.
 
 #define ANY_WORD_KIND_EVIL_MACRO \
-    ((k >= REB_WORD and k <= REB_GET_WORD) or k == REB_ISSUE)
+    (k < 64 and did (FLAGIT_KIND(k) & TS_WORD))
 
 inline static bool ANY_WORD_KIND(REBYTE k)
     { return ANY_WORD_KIND_EVIL_MACRO; }
@@ -203,14 +211,14 @@ inline static bool ANY_WORD_KIND(REBYTE k)
     ANY_WORD_KIND(KIND_BYTE(v))
 
 inline static bool ANY_PLAIN_GET_SET_WORD_KIND(REBYTE k)
-    { return k >= REB_WORD and k <= REB_GET_WORD; }
+    { return k == REB_WORD or k == REB_GET_WORD or k == REB_SET_WORD; }
 
 #define ANY_PLAIN_GET_SET_WORD(v) \
     ANY_PLAIN_GET_SET_WORD_KIND(KIND_BYTE(v))
 
 
 #define ANY_PATH_KIND_EVIL_MACRO \
-    (k >= REB_PATH and k <= REB_GET_PATH)
+    (k < 64 and did (FLAGIT_KIND(k) & TS_PATH))
 
 inline static bool ANY_PATH_KIND(REBYTE k)
     { return ANY_PATH_KIND_EVIL_MACRO; }
@@ -220,14 +228,16 @@ inline static bool ANY_PATH_KIND(REBYTE k)
 
 
 inline static bool ANY_BLOCK_KIND(REBYTE k)
-    { return k >= REB_BLOCK and k <= REB_GET_BLOCK; }
+    { return k == REB_BLOCK or k == REB_GET_BLOCK
+        or k == REB_SET_BLOCK or k == REB_SYM_BLOCK; }
 
 #define ANY_BLOCK(v) \
     ANY_BLOCK_KIND(KIND_BYTE(v))
 
 
 inline static bool ANY_GROUP_KIND(REBYTE k)
-    { return k >= REB_GROUP and k <= REB_GET_GROUP; }
+    { return k == REB_GROUP or k == REB_GET_GROUP
+        or k == REB_SET_GROUP or k == REB_SYM_GROUP; }
 
 #define ANY_GROUP(v) \
     ANY_GROUP_KIND(KIND_BYTE(v))
@@ -253,38 +263,49 @@ inline static bool ANY_NUMBER_KIND(REBYTE k)
 // important than some property to identify all the GETs/SETs together.
 
 inline static bool ANY_GET_KIND(REBYTE k) {
-    return k == REB_GET_WORD or k == REB_GET_PATH
-        or k == REB_GET_GROUP or k == REB_GET_BLOCK;
+    return k >= REB_GET_BLOCK and k <= REB_GET_WORD;
 }
 
 inline static bool ANY_SET_KIND(REBYTE k) {
-    return k == REB_SET_WORD or k == REB_SET_PATH
-        or k == REB_SET_GROUP or k == REB_SET_BLOCK;
+    return k >= REB_SET_BLOCK and k <= REB_SET_WORD;
 }
 
 inline static bool ANY_PLAIN_KIND(REBYTE k) {
-    return k == REB_WORD or k == REB_PATH
-        or k == REB_GROUP or k == REB_BLOCK;
+    return k >= REB_BLOCK and k <= REB_WORD;
+}
+
+inline static bool ANY_SYM_KIND(REBYTE k) {
+    return k >= REB_SYM_BLOCK and k <= REB_SYM_WORD;
 }
 
 inline static enum Reb_Kind UNGETIFY_ANY_GET_KIND(REBYTE k) {
     assert(ANY_GET_KIND(k));
-    return cast(enum Reb_Kind, k - 2);
+    return cast(enum Reb_Kind, k - 8);
 }
 
 inline static enum Reb_Kind UNSETIFY_ANY_SET_KIND(REBYTE k) {
     assert(ANY_SET_KIND(k));
-    return cast(enum Reb_Kind, k - 1);
+    return cast(enum Reb_Kind, k - 4);
+}
+
+inline static enum Reb_Kind UNSYMIFY_ANY_SYM_KIND(REBYTE k) {
+    assert(ANY_SYM_KIND(k));
+    return cast(enum Reb_Kind, k + 4);
 }
 
 inline static enum Reb_Kind SETIFY_ANY_PLAIN_KIND(REBYTE k) {
     assert(ANY_PLAIN_KIND(k));
-    return cast(enum Reb_Kind, k + 1);
+    return cast(enum Reb_Kind, k + 4);
 }
 
 inline static enum Reb_Kind GETIFY_ANY_PLAIN_KIND(REBYTE k) {
     assert(ANY_PLAIN_KIND(k));
-    return cast(enum Reb_Kind, k + 2);
+    return cast(enum Reb_Kind, k + 8);
+}
+
+inline static enum Reb_Kind SYMIFY_ANY_PLAIN_KIND(REBYTE k) {
+    assert(ANY_PLAIN_KIND(k));
+    return cast(enum Reb_Kind, k - 4);
 }
 
 

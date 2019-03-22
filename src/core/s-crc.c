@@ -273,12 +273,17 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:
+      case REB_SYM_PATH:
+        //
       case REB_GROUP:
       case REB_SET_GROUP:
       case REB_GET_GROUP:
+      case REB_SYM_GROUP:
+        //
+      case REB_BLOCK:
       case REB_SET_BLOCK:
       case REB_GET_BLOCK:
-      case REB_BLOCK:
+      case REB_SYM_BLOCK:
         //
         // !!! Lame hash just to get it working.  There will be lots of
         // collisions.  Intentionally bad to avoid writing something that

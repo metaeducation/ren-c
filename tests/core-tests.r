@@ -63,8 +63,12 @@
 %datatypes/set-group.test.reb
 %datatypes/set-path.test.reb
 %datatypes/set-word.test.reb
+%datatypes/sym-block.test.reb
+%datatypes/sym-group.test.reb
+%datatypes/sym-path.test.reb
+%datatypes/sym-word.test.reb
 %datatypes/string.test.reb
-%datatypes/symbol.test.reb
+%datatypes/tag.test.reb
 %datatypes/time.test.reb
 %datatypes/tuple.test.reb
 %datatypes/typeset.test.reb

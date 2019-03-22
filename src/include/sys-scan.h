@@ -37,15 +37,18 @@ enum Reb_Token {
     TOKEN_BLANK,
     TOKEN_GET,
     TOKEN_SET,
+    TOKEN_SYM,
     TOKEN_WORD,
     TOKEN_LOGIC,
     TOKEN_INTEGER,
     TOKEN_DECIMAL,
     TOKEN_PERCENT,
     TOKEN_GET_GROUP_BEGIN,
+    TOKEN_SYM_GROUP_BEGIN,
     TOKEN_GROUP_END,
     TOKEN_GROUP_BEGIN,
     TOKEN_GET_BLOCK_BEGIN,
+    TOKEN_SYM_BLOCK_BEGIN,
     TOKEN_BLOCK_END,
     TOKEN_BLOCK_BEGIN,
     TOKEN_MONEY,
@@ -77,6 +80,8 @@ inline static enum Reb_Kind KIND_OF_WORD_FROM_TOKEN(enum Reb_Token t) {
         return REB_SET_WORD;
     if (t == TOKEN_GET)
         return REB_GET_WORD;
+    if (t == TOKEN_SYM)
+        return REB_SYM_WORD;
     assert(!"Bad token passed to KIND_OF_WORD_FROM_TOKEN()");
     return REB_0_END;
 }
@@ -93,6 +98,10 @@ inline static enum Reb_Kind KIND_OF_ARRAY_FROM_TOKEN(enum Reb_Token t) {
         return REB_GET_GROUP;
     if (t == TOKEN_GET_BLOCK_BEGIN)
         return REB_GET_BLOCK;
+    if (t == TOKEN_SYM_GROUP_BEGIN)
+        return REB_SYM_GROUP;
+    if (t == TOKEN_SYM_BLOCK_BEGIN)
+        return REB_SYM_BLOCK;
     assert(!"Bad token passed to KIND_OF_ARRAY_FROM_TOKEN()");
     return REB_0_END;
 }

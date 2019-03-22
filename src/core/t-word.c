@@ -197,25 +197,14 @@ void MF_Get_word(REB_MOLD *mo, const REBCEL *v, bool form) {
 
 
 //
-//  MF_Lit_word: C
+//  MF_Sym_word: C
 //
-// !!! Note: will be deprecated by generic backslash literals.
-//
-void MF_Lit_word(REB_MOLD *mo, const REBCEL *v, bool form) {
+void MF_Sym_word(REB_MOLD *mo, const REBCEL *v, bool form) {
     UNUSED(form);
-    Append_Codepoint(mo->series, '\'');
+    Append_Codepoint(mo->series, '@');
     Mold_Word(mo, v);
 }
 
-
-//
-//  MF_Refinement: C
-//
-void MF_Refinement(REB_MOLD *mo, const REBCEL *v, bool form) {
-    UNUSED(form);
-    Append_Codepoint(mo->series, '/');
-    Mold_Word(mo, v);
-}
 
 
 //
