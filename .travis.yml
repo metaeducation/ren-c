@@ -908,6 +908,16 @@ script:
       fi
       echo $R3_EXIT_STATUS
 
+    # 0.16.x: patch libr3.js and upload
+    # load-r3.js, worker.js to travis-builds/
+    - |
+      if [[ $OS_ID = 0.16.1 || $OS_ID = 0.16.2 ]]
+      then
+        r3-make libr3.js-workers-patch.reb libr3.js
+        cp ../docs/load-r3.js ../docs/worker.js .
+        rm libr3.js-workers-patch.reb
+      fi
+    
     # Delete the obj and prep file directory so we don't upload those to S3
     #
     - rm -rf objs prep
@@ -922,13 +932,6 @@ script:
     - rm -f CMakeLists.txt
     - rm -rf tcc
 
-    # upload load-r3.js, worker.js to travis-builds/
-    - |
-      if [[ $OS_ID = 0.16.1 || $OS_ID = 0.16.2 ]]
-      then
-      cp ../docs/load-r3.js ../docs/worker.js .
-      fi
-    
     # check what will be uploaded
     - ls
 
