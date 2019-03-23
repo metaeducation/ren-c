@@ -54,7 +54,7 @@ if (is_localhost) {
 
 
 // THE NAME OF THIS VARIABLE MUST BE SYNCED WITH
-// http://metaeducation.s3.amazonaws.com/travis-builds/${OS_ID}/last_git_commit_short.js
+// https://metaeducation.s3.amazonaws.com/travis-builds/${OS_ID}/last_git_commit_short.js
 // that contains `last_git_commit_short = ${GIT_COMMIT_SHORT}`
 // See .travis.yml
 //
@@ -89,7 +89,7 @@ var last_git_commit_promiser = (os_id) => {
         return Promise.resolve(null)
     } else { // load from amazonaws.com
         return load_js_promiser(
-            "http://metaeducation.s3.amazonaws.com/travis-builds/"
+            "https://metaeducation.s3.amazonaws.com/travis-builds/"
             + os_id
             + "/last_git_commit_short.js"
         )
@@ -155,7 +155,7 @@ function libRebolComponentURL(suffix) {  // suffix includes the dot
     }
     let dir = (
         last_git_commit_short  // empty string ("") is falsey in JS
-        ? "http://metaeducation.s3.amazonaws.com/travis-builds/"
+        ? "https://metaeducation.s3.amazonaws.com/travis-builds/"
         : "./"
     ) + os_id
 
