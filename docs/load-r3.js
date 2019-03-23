@@ -1,5 +1,7 @@
 'use strict'  // <-- FIRST statement! https://stackoverflow.com/q/1335851
 
+// https://github.com/metaeducation/ren-c/blob/master/docs/load-r3.js
+
 // There are two possibilities for how the REPL can accomplish I/O in a way
 // that appears synchronous: using pthreads or using the "Emterpreter":
 //
