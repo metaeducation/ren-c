@@ -125,7 +125,7 @@ REBNATIVE(make)
         opt_parent = type;
     }
 
-    MAKE_HOOK hook = Make_Hooks(kind);
+    MAKE_HOOK *hook = Make_Hooks(kind);
 
     REB_R r = hook(D_OUT, kind, opt_parent, arg);  // might throw, fail...
     if (r == R_THROWN)
@@ -207,7 +207,7 @@ REBNATIVE(to)
     if (new_kind == old_kind)
         return rebValueQ("copy", v, rebEND);
 
-    TO_HOOK hook = To_Hooks(new_kind);
+    TO_HOOK* hook = To_Hooks(new_kind);
 
     REB_R r = hook(D_OUT, new_kind, v); // may fail();
     if (r == R_THROWN) {

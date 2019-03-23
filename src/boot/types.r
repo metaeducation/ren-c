@@ -130,6 +130,9 @@ handle      "arbitrary internal object or value"
 library     "external library reference"
             library     -       +       +       []
 
+custom      "instance of an extension-defined type"
+            custom      +       +       +       []
+
 ; !!! This table of fundamental types is intended to be limited (less than
 ; 64 entries) so extension types need another mechanism.  The cells will run
 ; out of bits--perhaps it could be mandated that ->extra becomes the type

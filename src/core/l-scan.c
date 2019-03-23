@@ -1994,15 +1994,14 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
 
             REBSYM sym = VAL_WORD_SYM(ARR_HEAD(array));
             if (IS_KIND_SYM(sym)) {
-                enum Reb_Kind kind = KIND_FROM_SYM(sym);
-
-                MAKE_HOOK hook = Make_Hooks(kind);
-
-                if (not hook or ARR_LEN(array) != 2) {
+                if (ARR_LEN(array) != 2) {
                     DECLARE_LOCAL (temp);
                     Init_Block(temp, array);
                     fail (Error_Malconstruct_Raw(temp));
                 }
+
+                enum Reb_Kind kind = KIND_FROM_SYM(sym);
+                MAKE_HOOK *hook = Make_Hooks(kind);
 
                 // !!! As written today, MAKE may call into the evaluator, and
                 // hence a GC may be triggered.  Performing evaluations during

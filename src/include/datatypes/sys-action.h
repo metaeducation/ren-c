@@ -465,7 +465,7 @@ inline static REB_R Run_Generic_Dispatch(
 ){
     assert(IS_WORD(verb));
 
-    GENERIC_HOOK hook = Generic_Hooks(kind);
+    GENERIC_HOOK *hook = Generic_Hooks(kind);
 
     REB_R r = hook(f, verb);  // note: QUOTED! re-dispatches to Generic_Hooks
     if (r == R_UNHANDLED)

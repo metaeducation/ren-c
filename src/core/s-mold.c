@@ -502,7 +502,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
         Append_Ascii(mo->series, "'");
 
     if (kind != REB_NULLED) {
-        MOLD_HOOK hook = Mold_Or_Form_Hooks(kind);
+        MOLD_HOOK *hook = Mold_Or_Form_Hooks(kind);
         hook(mo, cell, form);
     }
     else if (depth == 0) {

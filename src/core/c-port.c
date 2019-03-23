@@ -410,7 +410,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
     // it's some other kind of handle value this could crash.
     //
     if (Is_Native_Port_Actor(actor)) {
-        r = cast(PORT_HOOK, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
+        r = cast(PORT_HOOK*, VAL_HANDLE_CFUNC(actor))(frame_, port, verb);
         goto post_process_output;
     }
 

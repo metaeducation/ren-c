@@ -221,7 +221,7 @@ typedef REBVAL *REB_R;
 // no overrides for individual types (only if they are the only type in
 // their class).
 //
-typedef REBINT (*COMPARE_HOOK)(const REBCEL *a, const REBCEL *b, REBINT s);
+typedef REBINT (COMPARE_HOOK)(const REBCEL *a, const REBCEL *b, REBINT s);
 
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
@@ -230,7 +230,7 @@ typedef REBINT (*COMPARE_HOOK)(const REBCEL *a, const REBCEL *b, REBINT s);
 // (either in the output cell given or an API cell)...or they can return
 // R_THROWN if they throw.  (e.g. `make object! [return]` can throw)
 //
-typedef REB_R (*MAKE_HOOK)(
+typedef REB_R (MAKE_HOOK)(
     REBVAL *out,
     enum Reb_Kind kind,
     const REBVAL *opt_parent,
@@ -250,7 +250,7 @@ typedef REB_R (*MAKE_HOOK)(
 // and decided by the source type.  For now, the destination decides both,
 // which means TO-ness and MAKE-ness are a bit too similar.
 //
-typedef REB_R (*TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
+typedef REB_R (TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
 
 
 //=//// MOLDING ///////////////////////////////////////////////////////////=//
@@ -266,7 +266,7 @@ typedef struct rebol_mold REB_MOLD;
 // has a different handler than strings.  So not all molds are driven by
 // their class entirely.
 //
-typedef void (*MOLD_HOOK)(REB_MOLD *mo, const REBCEL *v, bool form);
+typedef void (MOLD_HOOK)(REB_MOLD *mo, const REBCEL *v, bool form);
 
 
 //=//// PARAMETER ENUMERATION /////////////////////////////////////////////=//
@@ -275,7 +275,7 @@ typedef void (*MOLD_HOOK)(REB_MOLD *mo, const REBCEL *v, bool form);
 // can't be used directly in a function definition and have it be picked up
 // for %tmp-internals.h, it has to be a typedef.
 //
-typedef bool (*PARAM_HOOK)(REBVAL *v, bool sorted_pass, void *opaque);
+typedef bool (PARAM_HOOK)(REBVAL *v, bool sorted_pass, void *opaque);
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in
@@ -300,21 +300,21 @@ typedef REB_R (*REBNAT)(REBFRM *frame_);
 // any behavior for a specific type can still be accomplished by testing
 // the type passed into that common hook!
 //
-typedef REB_R (*GENERIC_HOOK)(REBFRM *frame_, const REBVAL *verb);
+typedef REB_R (GENERIC_HOOK)(REBFRM *frame_, const REBVAL *verb);
 #define REBTYPE(n) \
     REB_R T_##n(REBFRM *frame_, const REBVAL *verb)
 
 
 // PER-TYPE PATH HOOKS: for `a/b`, `:a/b`, `a/b:`, `pick a b`, `poke a b`
 //
-typedef REB_R (*PATH_HOOK)(
+typedef REB_R (PATH_HOOK)(
     REBPVS *pvs, const REBVAL *picker, const REBVAL *opt_setval
 );
 
 
 // Port hook: for implementing generic ACTION!s on a PORT! class
 //
-typedef REB_R (*PORT_HOOK)(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
+typedef REB_R (PORT_HOOK)(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
 
 
 //=//// VARIADIC OPERATIONS ///////////////////////////////////////////////=//

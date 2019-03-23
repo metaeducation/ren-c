@@ -43,7 +43,10 @@
 //
 // So the next part of the structure is the "Extra".  This is the size of one
 // pointer, which sits immediately after the header (that's also the size of
-// one pointer).
+// one pointer).  For built-in types this can carry instance data for the
+// value--such as a binding, or extra bits for a fixed-point decimal.  But
+// since all extension types have the same identification (REB_UTYPE), this
+// cell slot must be yielded for a pointer to the real type information.
 //
 // This sets things up for the "Payload"--which is the size of two pointers.
 // It is broken into a separate structure at this position so that on 32-bit

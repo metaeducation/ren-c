@@ -325,12 +325,12 @@ inline static bool IS_PARAM_KIND(REBYTE k)
 //
 
 enum Reb_Type_Hook_Index {
-    IDX_GENERIC_HOOKS,
-    IDX_COMPARE_HOOKS,
-    IDX_PATH_HOOKS,
-    IDX_MAKE_HOOKS,
-    IDX_TO_HOOKS,
-    IDX_MOLD_HOOKS,
+    IDX_GENERIC_HOOK,
+    IDX_COMPARE_HOOK,
+    IDX_PATH_HOOK,
+    IDX_MAKE_HOOK,
+    IDX_TO_HOOK,
+    IDX_MOLD_HOOK,
     IDX_HOOK_NULLPTR,  // see notes on why null termination convention
     IDX_HOOKS_MAX
 };
@@ -359,19 +359,19 @@ inline static CFUNC *Type_Hooks(
 }
 
 #define Generic_Hooks(kind) \
-    cast(GENERIC_HOOK, Type_Hooks(IDX_GENERIC_HOOKS, (kind)))
+    cast(GENERIC_HOOK*, Type_Hooks(IDX_GENERIC_HOOK, (kind)))
 
 #define Path_Hooks(kind) \
-    cast(PATH_HOOK, Type_Hooks(IDX_PATH_HOOKS, (kind)))
+    cast(PATH_HOOK*, Type_Hooks(IDX_PATH_HOOK, (kind)))
 
 #define Compare_Hooks(kind) \
-    cast(COMPARE_HOOK, Type_Hooks(IDX_COMPARE_HOOKS, (kind)))
+    cast(COMPARE_HOOK*, Type_Hooks(IDX_COMPARE_HOOK, (kind)))
     
 #define Make_Hooks(kind) \
-    cast(MAKE_HOOK, Type_Hooks(IDX_MAKE_HOOKS, (kind)))
+    cast(MAKE_HOOK*, Type_Hooks(IDX_MAKE_HOOK, (kind)))
 
 #define To_Hooks(kind) \
-    cast(TO_HOOK, Type_Hooks(IDX_TO_HOOKS, (kind)))
+    cast(TO_HOOK*, Type_Hooks(IDX_TO_HOOK, (kind)))
 
 #define Mold_Or_Form_Hooks(kind) \
-    cast(MOLD_HOOK, Type_Hooks(IDX_MOLD_HOOKS, (kind)))
+    cast(MOLD_HOOK*, Type_Hooks(IDX_MOLD_HOOK, (kind)))

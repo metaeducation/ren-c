@@ -481,22 +481,22 @@ REBVAL *rebCollateExtension_internal(
 //
 void Hook_Datatype(
     enum Reb_Kind kind,
-    GENERIC_HOOK gen,
-    PATH_HOOK pef,
-    COMPARE_HOOK ctf,
-    MAKE_HOOK make_func,
-    TO_HOOK to_func,
-    MOLD_HOOK mold_func
-) {
+    GENERIC_HOOK *generic,
+    PATH_HOOK *path,
+    COMPARE_HOOK *compare,
+    MAKE_HOOK *make,
+    TO_HOOK *to,
+    MOLD_HOOK *mold
+){
     if (Generic_Hooks(kind) != &T_Unhooked)
         fail ("Cannot hook already hooked type in Hook_Datatype()");
 
-    Builtin_Type_Hooks[kind][IDX_GENERIC_HOOKS] = cast(CFUNC*, gen);
-    Builtin_Type_Hooks[kind][IDX_PATH_HOOKS] = cast(CFUNC*, pef);
-    Builtin_Type_Hooks[kind][IDX_COMPARE_HOOKS] = cast(CFUNC*, ctf);
-    Builtin_Type_Hooks[kind][IDX_MAKE_HOOKS] = cast(CFUNC*, make_func);
-    Builtin_Type_Hooks[kind][IDX_TO_HOOKS] = cast(CFUNC*, to_func);
-    Builtin_Type_Hooks[kind][IDX_MOLD_HOOKS] = cast(CFUNC*, mold_func);
+    Builtin_Type_Hooks[kind][IDX_GENERIC_HOOK] = cast(CFUNC*, generic);
+    Builtin_Type_Hooks[kind][IDX_PATH_HOOK] = cast(CFUNC*, path);
+    Builtin_Type_Hooks[kind][IDX_COMPARE_HOOK] = cast(CFUNC*, compare);
+    Builtin_Type_Hooks[kind][IDX_MAKE_HOOK] = cast(CFUNC*, make);
+    Builtin_Type_Hooks[kind][IDX_TO_HOOK] = cast(CFUNC*, to);
+    Builtin_Type_Hooks[kind][IDX_MOLD_HOOK] = cast(CFUNC*, mold);
 }
 
 
@@ -508,10 +508,99 @@ void Unhook_Datatype(enum Reb_Kind kind)
     if (Generic_Hooks(kind) == &T_Unhooked)
         fail ("Cannot unhook already unhooked type in Unhook_Datatype()");
 
-    Builtin_Type_Hooks[kind][IDX_GENERIC_HOOKS] = cast(CFUNC*, &T_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_PATH_HOOKS] = cast(CFUNC*, &PD_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_COMPARE_HOOKS] = cast(CFUNC*, &CT_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_MAKE_HOOKS] = cast(CFUNC*, &MAKE_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_TO_HOOKS] = cast(CFUNC*, &TO_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_MOLD_HOOKS] = cast(CFUNC*, &MF_Unhooked);
+    Builtin_Type_Hooks[kind][IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Unhooked);
+    Builtin_Type_Hooks[kind][IDX_PATH_HOOK] = cast(CFUNC*, &PD_Unhooked);
+    Builtin_Type_Hooks[kind][IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Unhooked);
+    Builtin_Type_Hooks[kind][IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
+    Builtin_Type_Hooks[kind][IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);
+    Builtin_Type_Hooks[kind][IDX_MOLD_HOOK] = cast(CFUNC*, &MF_Unhooked);
+}
+
+
+//
+//  CT_Custom: C
+//
+REBINT CT_Custom(const REBCEL *a, const REBCEL *b, REBINT mode)
+{
+    assert(CELL_KIND(a) == REB_CUSTOM and CELL_KIND(b) == REB_CUSTOM);
+    assert(EXTRA(Any, a).node == EXTRA(Any, b).node);
+
+    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, a).node)));
+    COMPARE_HOOK *hook = cast(COMPARE_HOOK*, hooks[IDX_COMPARE_HOOK]);
+    return hook(a, b, mode);
+}
+
+
+//
+//  MAKE_Custom: C
+//
+REB_R MAKE_Custom(
+    REBVAL *out,
+    enum Reb_Kind kind,
+    const REBVAL *opt_parent,
+    const REBVAL *arg
+){
+    assert(kind == REB_CUSTOM);  // we'll now dissect the more specific form
+
+    // !!! Need a value here that's a type, take the parent?
+    //
+    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, opt_parent).node)));
+    MAKE_HOOK *hook = cast(MAKE_HOOK*, hooks[IDX_MAKE_HOOK]);
+    return hook(out, kind, opt_parent, arg);
+}
+
+
+//
+//  TO_Custom: C
+//
+REB_R TO_Custom(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
+    assert(kind == REB_CUSTOM);  // we'll now dissect the more specific form
+
+    // !!! Dispatch of TO vs make is still being thought out.
+    //
+    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, data).node)));
+    TO_HOOK *hook = cast(TO_HOOK*, hooks[IDX_TO_HOOK]);
+    return hook(out, kind, data);
+}
+
+
+//
+//  MF_Custom: C
+//
+void MF_Custom(REB_MOLD *mo, const REBCEL *v, bool form) {
+    assert(CELL_KIND(v) == REB_CUSTOM);  // now dissect the more specific form
+
+    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, v).node)));
+    MOLD_HOOK *hook = cast(MOLD_HOOK*, hooks[IDX_MOLD_HOOK]);
+    return hook(mo, v, form);
+}
+
+
+//
+//  PD_Custom: C
+//
+REB_R PD_Custom(
+    REBPVS *pvs,
+    const REBVAL *picker,
+    const REBVAL *opt_setval
+){
+    assert(VAL_TYPE(pvs->out) == REB_CUSTOM);
+
+    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, pvs->out).node)));
+    PATH_HOOK *hook = cast(PATH_HOOK*, hooks[IDX_PATH_HOOK]);
+    return hook(pvs, picker, opt_setval);
+}
+
+
+//
+//  REBTYPE: C
+//
+REBTYPE(Custom)
+{
+    REBVAL *custom = D_ARG(1);
+    assert(VAL_TYPE(custom) == REB_CUSTOM);
+
+    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, custom).node)));
+    GENERIC_HOOK *hook = cast(GENERIC_HOOK*, hooks[IDX_GENERIC_HOOK]);
+    return hook(frame_, verb);
 }
