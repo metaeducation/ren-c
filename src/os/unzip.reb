@@ -357,26 +357,43 @@ ctx-zip: context [
         ]
 
         num-entries: 0
-        has-data-descriptor: false
-        parse source [
-            to local-file-sig
-            some [
-                to local-file-sig 4 skip
+        parse source [some [
+            to central-file-sig 4 skip
+            central-header: 
+            [
+                ; check coerence between central file header
+                ; and local file header
+                24 skip
+                copy name-length: 2 skip
+                (name-length: get-ishort name-length)
+                12 skip
+                copy local-header-offset: 4 skip
+                (flag: (0 <= local-header-offset: get-ilong local-header-offset))
+                flag
+                (local-header: at source local-header-offset + 1)
+                :local-header
+                copy tmp: 4 skip
+                (flag: (tmp = local-file-sig))
+                flag
+                22 skip
+                copy tmp: 2 skip
+                (tmp: get-ishort tmp)
+                (flag: (tmp = name-length))
+                flag
+                2 skip
+                copy name: name-length skip
+                :central-header 42 skip
+                copy tmp: name-length skip
+                (flag: (name = tmp))
+                flag
+                ; check successfull
+                (info name: to-file name)
+                :central-header
                 (num-entries: me + 1)
-                2 skip ; version
-                copy flags: 2 skip (
-                    if not zero? flags/1 and+ 1 [return false]
-                    if not zero? flags/1 and+ 8 [  ; "bit 3"
-                        ;
-                        ; "If this bit is set, the fields crc-32, compressed 
-                        ; size and uncompressed size are set to zero in the 
-                        ; local header.  The correct values are put in the 
-                        ; data descriptor immediately following the compressed
-                        ; data."
-                        ;
-                        has-data-descriptor: true
-                    ]
-                )
+                2 skip ; version made by
+                copy version: 2 skip ; version to extract
+                copy flags: 2 skip
+                (if not zero? flags/1 and+ 1 [return false])
                 copy method-number: 2 skip (
                     method-number: get-ishort method-number
                     method: select [0 store 8 deflate] method-number else [
@@ -389,32 +406,33 @@ ctx-zip: context [
                     date/time: time
                     date: date - now/zone
                 )
-                copy crc: 4 skip (   ; crc-32
+                copy crc: 4 skip ( ; crc-32
                     crc: get-ilong crc
                 )
                 copy compressed-size: 4 skip
                     (compressed-size: get-ilong compressed-size)
                 copy uncompressed-size-raw: 4 skip
                     (uncompressed-size: get-ilong uncompressed-size-raw)
-                copy name-length: 2 skip
-                    (name-length: get-ishort name-length)
+                :local-header
+                local-file-sig
+                2 skip ; version
+                copy tmp: 2 skip
+                (assert [tmp = flags])
+                copy tmp: 2 skip
+                (assert [method-number = get-ishort tmp])
+                copy tmp: 2 skip
+                (assert [time = get-msdos-time tmp])
+                2 skip ; date
+                4 skip ; crc-32
+                4 skip ; compressed-size
+                4 skip ; uncompressed-size
+                copy tmp: 2 skip
+                (assert [name-length = get-ishort tmp])
                 copy extrafield-length: 2 skip
                     (extrafield-length: get-ishort extrafield-length)
-                copy name: name-length skip (
-                    name: to-file name
-                    info name
-                )
+                copy tmp: name-length skip
+                (assert [name = to-file tmp])
                 extrafield-length skip
-                (
-                    if has-data-descriptor [
-                        assert [
-                            compressed-size = 0
-                            uncompressed-size = 0
-                            crc = 0
-                        ]
-                        fail "Data descriptor not handled"
-                    ]
-                )
                 data: compressed-size skip
                 (
                     uncompressed-data: catch [
@@ -430,7 +448,6 @@ ctx-zip: context [
                             info ["^- -> failed [method " method "]^/"]
                             throw blank
                         ]
-
                         data: copy/part data compressed-size
                         trap [
                             data: inflate/max data uncompressed-size
@@ -492,14 +509,10 @@ ctx-zip: context [
                         ]
                     ]
                 )
+            |   (?? "FAILED")
             ]
-            to end
-        ]
-        info ["^/"
-            "Files/Dirs unarchived: " num-entries "^/"
-            "Decompression errors: " num-errors "^/"
-        ]
-        return zero? num-errors
+            :central-header
+        ]]
     ]
 ]
 
