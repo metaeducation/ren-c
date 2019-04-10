@@ -130,8 +130,6 @@ REBINT CT_Unit(const REBCEL *a, const REBCEL *b, REBINT mode)
 //
 REBTYPE(Unit)
 {
-    REBVAL *unit = D_ARG(1);
-
     switch (VAL_WORD_SYM(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -171,7 +169,7 @@ REBTYPE(Unit)
       default: break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(unit), verb));
+    return R_UNHANDLED;
 }
 
 
@@ -214,6 +212,7 @@ REBINT CT_Handle(const REBCEL *a, const REBCEL *b, REBINT mode)
 REBTYPE(Handle)
 {
     UNUSED(frame_);
+    UNUSED(verb);
 
-    fail (Error_Illegal_Action(REB_HANDLE, verb));
+    return R_UNHANDLED;
 }

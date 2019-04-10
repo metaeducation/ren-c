@@ -339,7 +339,7 @@ static REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, verb));
+    return R_UNHANDLED;
 }
 
 

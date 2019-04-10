@@ -284,5 +284,5 @@ REBTYPE(Word)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(v), verb));
+    return R_UNHANDLED;
 }

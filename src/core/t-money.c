@@ -200,43 +200,42 @@ static REBVAL *Math_Arg_For_Money(REBVAL *store, REBVAL *arg, const REBVAL *verb
 REBTYPE(Money)
 {
     REBVAL *v = D_ARG(1);
-    REBVAL *arg;
 
     switch (VAL_WORD_SYM(verb)) {
       case SYM_ADD: {
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_add(
-            VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg)
-        ));
-        break; }
+        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        return Init_Money(
+            D_OUT,
+            deci_add(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
+        ); }
 
-      case SYM_SUBTRACT:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_subtract(
-            VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg)
-        ));
-        break;
+      case SYM_SUBTRACT: {
+        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        return Init_Money(
+            D_OUT,
+            deci_subtract(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
+        ); }
 
-      case SYM_MULTIPLY:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_multiply(
-            VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg)
-        ));
-        break;
+      case SYM_MULTIPLY: {
+        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        return Init_Money(
+            D_OUT,
+            deci_multiply(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
+        ); }
 
-      case SYM_DIVIDE:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_divide(
-            VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg)
-        ));
-        break;
+      case SYM_DIVIDE: {
+        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        return Init_Money(
+            D_OUT,
+            deci_divide(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
+        ); }
 
-      case SYM_REMAINDER:
-        arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
-        Init_Money(D_OUT, deci_mod(
-            VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg)
-        ));
-        break;
+      case SYM_REMAINDER: {
+        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        return Init_Money(
+            D_OUT,
+            deci_mod(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
+        ); }
 
       case SYM_NEGATE: // sign bit is the 32nd bit, highest one used
         PAYLOAD(Any, v).second.u ^= (cast(uintptr_t, 1) << 31);
@@ -277,11 +276,10 @@ REBTYPE(Money)
         else
             Init_Money(temp, int_to_deci(0));
 
-        Init_Money(D_OUT, Round_Deci(
-            VAL_MONEY_AMOUNT(v),
-            flags,
-            VAL_MONEY_AMOUNT(temp)
-        ));
+        Init_Money(
+            D_OUT,
+            Round_Deci(VAL_MONEY_AMOUNT(v), flags, VAL_MONEY_AMOUNT(temp))
+        );
 
         if (REF(to)) {
             if (IS_DECIMAL(to) or IS_PERCENT(to)) {
@@ -295,7 +293,8 @@ REBTYPE(Money)
                 return Init_Integer(D_OUT, i64);
             }
         }
-        break; }
+        RESET_VAL_HEADER(D_OUT, REB_MONEY, CELL_MASK_NONE);
+        return D_OUT; }
 
       case SYM_EVEN_Q:
       case SYM_ODD_Q: {
@@ -308,10 +307,9 @@ REBTYPE(Money)
         RETURN (v);
 
       default:
-        fail (Error_Illegal_Action(REB_MONEY, verb));
+        break;
     }
 
-    RESET_VAL_HEADER(D_OUT, REB_MONEY, CELL_MASK_NONE);
-    return D_OUT;
+    return R_UNHANDLED;
 }
 

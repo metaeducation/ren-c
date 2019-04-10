@@ -417,7 +417,7 @@ REBTYPE(Tuple)
                 break;
 
             default:
-                fail (Error_Illegal_Action(REB_TUPLE, verb));
+                return R_UNHANDLED;
             }
 
             if (v > 255)
@@ -517,5 +517,5 @@ REBTYPE(Tuple)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_TUPLE, verb));
+    return R_UNHANDLED;
 }

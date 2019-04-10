@@ -191,7 +191,7 @@ REBSER *Xandor_Binary(const REBVAL *verb, REBVAL *value, REBVAL *arg)
         return series; }
 
     default:
-        fail (Error_Illegal_Action(REB_BINARY, verb));
+        fail (Error_Cannot_Use_Raw(verb, Datatype_From_Kind(REB_BINARY)));
     }
 
     // Copy the residual

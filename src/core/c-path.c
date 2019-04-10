@@ -800,13 +800,8 @@ REB_R PD_Path(
 // permits picking and enumeration, it may or may not have an actual REBARR*
 // node backing it.
 //
-// !!! Changing the workings of path is experimental...but it is believed that
-// the old model for PATH! as isomorphic to GROUP! and BLOCK! was flawed.
-//
 REBTYPE(Path)
 {
-    REBVAL *path = D_ARG(1);
-
     switch (VAL_WORD_SYM(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -835,9 +830,9 @@ REBTYPE(Path)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(path), verb));
+    return R_UNHANDLED;
 
-  retrigger:;
+  retrigger:
 
     return T_Array(frame_, verb);
 }

@@ -1326,7 +1326,7 @@ REBTYPE(String)
             return T_Port(frame_, verb);
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(v), verb));
+    return R_UNHANDLED;
 }
 
 

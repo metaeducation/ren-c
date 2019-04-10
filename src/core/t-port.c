@@ -183,7 +183,7 @@ REBTYPE(Port)
     }
 
     if (not IS_PORT(D_ARG(1)))
-        fail (Error_Illegal_Action(VAL_TYPE(D_ARG(1)), verb));
+        fail (D_ARG(1));
 
     REBVAL *port = D_ARG(1);
 

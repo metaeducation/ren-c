@@ -481,6 +481,8 @@ REBTYPE(Logic)
         return Init_False(D_OUT); }
 
     default:
-        fail (Error_Illegal_Action(REB_LOGIC, verb));
+        break;
     }
+
+    return R_UNHANDLED;
 }

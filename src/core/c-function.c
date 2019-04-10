@@ -1385,8 +1385,7 @@ REB_R Generic_Dispatcher(REBFRM *f)
     assert(IS_WORD(verb));
 
     enum Reb_Kind kind = VAL_TYPE(FRM_ARG(f, 1));
-    GENERIC_HOOK hook = Generic_Hooks(kind);
-    return hook(f, verb);  // note: QUOTED! will re-dispatch to Generic_Hooks
+    return Run_Generic_Dispatch(f, kind, verb);
 }
 
 

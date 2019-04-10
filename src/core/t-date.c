@@ -1023,10 +1023,11 @@ REBTYPE(Date)
             return D_OUT; }
 
         default:
-            fail (Error_Illegal_Action(REB_DATE, verb));
+            break;
         }
     }
-    fail (Error_Illegal_Action(REB_DATE, verb));
+
+    return R_UNHANDLED;
 
 fixTime:
     Normalize_Time(&secs, &day);

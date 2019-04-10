@@ -299,11 +299,10 @@ REB_R Reflect_Core(REBFRM *frame_)
     if (kind == REB_BLANK)
         return nullptr; // only TYPE OF works on blank, otherwise it's null
 
-    GENERIC_HOOK hook = Generic_Hooks(kind);
     DECLARE_LOCAL (verb);
     Init_Word(verb, Canon(SYM_REFLECT));
     Dequotify(ARG(value));
-    return hook(frame_, verb); // if literal, will call REBTYPE(Literal)
+    return Run_Generic_Dispatch(frame_, kind, verb);
 }
 
 

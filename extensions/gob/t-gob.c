@@ -1061,7 +1061,7 @@ REBTYPE(Gob)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_GOB, verb));
+    return R_UNHANDLED;
 
   set_index:
 

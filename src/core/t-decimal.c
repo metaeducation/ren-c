@@ -378,8 +378,7 @@ REBTYPE(Decimal)
             Move_Value(D_OUT, D_ARG(2));
             Move_Value(D_ARG(2), D_ARG(1));
             Move_Value(D_ARG(1), D_OUT);
-            GENERIC_HOOK hook = Generic_Hooks(VAL_TYPE(D_ARG(1)));
-            return hook(frame_, verb);
+            return Run_Generic_Dispatch(frame_, VAL_TYPE(D_ARG(1)), verb);
         }
 
         // If the type of the second arg is something we can handle:
@@ -546,10 +545,10 @@ REBTYPE(Decimal)
         return Init_Integer(D_OUT, ~cast(REBINT, d1));
 
     default:
-        ; // put fail outside switch() to catch any leaks
+        break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(val), verb));
+    return R_UNHANDLED;
 
 setDec:
     if (not FINITE(d1))

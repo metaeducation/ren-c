@@ -1584,5 +1584,5 @@ REBTYPE(Struct)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_STRUCT, verb));
+    return R_UNHANDLED;
 }

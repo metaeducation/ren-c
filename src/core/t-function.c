@@ -302,7 +302,7 @@ REBTYPE(Action)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(value), verb));
+    return R_UNHANDLED;
 }
 
 

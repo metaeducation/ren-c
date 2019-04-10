@@ -805,7 +805,7 @@ REBTYPE(Context)
 
         FAIL_IF_READ_ONLY(value);
         if (not IS_OBJECT(value) and not IS_MODULE(value))
-            fail (Error_Illegal_Action(VAL_TYPE(value), verb));
+            return R_UNHANDLED;
         Append_To_Context(c, arg);
         RETURN (value);
 
@@ -853,7 +853,7 @@ REBTYPE(Context)
         break;
     }
 
-    fail (Error_Illegal_Action(VAL_TYPE(value), verb));
+    return R_UNHANDLED;
 }
 
 

@@ -793,5 +793,5 @@ REBTYPE(Map)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_MAP, verb));
+    return R_UNHANDLED;
 }

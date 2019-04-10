@@ -709,5 +709,5 @@ REBTYPE(Time)
         }
     }
 
-    fail (Error_Illegal_Action(REB_TIME, verb));
+    return R_UNHANDLED;
 }

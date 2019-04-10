@@ -291,7 +291,7 @@ REBTYPE(Char)
         break; }
 
     default:
-        fail (Error_Illegal_Action(REB_CHAR, verb));
+        return R_UNHANDLED;
     }
 
     if (chr < 0) // DEBUG_UTF8_EVERYWHERE

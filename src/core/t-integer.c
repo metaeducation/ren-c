@@ -414,8 +414,7 @@ REBTYPE(Integer)
                 Move_Value(D_OUT, val2);  // Use as temp workspace
                 Move_Value(val2, val);
                 Move_Value(val, D_OUT);
-                GENERIC_HOOK hook = Generic_Hooks(VAL_TYPE(val));
-                return hook(frame_, verb); }
+                return Run_Generic_Dispatch(frame_, VAL_TYPE(val), verb); }
 
             // Only type valid to subtract from, divide into, is decimal/money:
             case SYM_SUBTRACT:
@@ -584,5 +583,5 @@ REBTYPE(Integer)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_INTEGER, verb));
+    return R_UNHANDLED;
 }

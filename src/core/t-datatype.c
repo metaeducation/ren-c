@@ -130,15 +130,14 @@ REBTYPE(Datatype)
                 }
             }
 
-            Init_Object(D_OUT, context);
+            return Init_Object(D_OUT, context);
         }
-        else
-            fail (Error_Cannot_Reflect(VAL_TYPE(value), arg));
-        break;}
+
+        fail (Error_Cannot_Reflect(VAL_TYPE(value), arg)); }
 
     default:
-        fail (Error_Illegal_Action(REB_DATATYPE, verb));
+        break;
     }
 
-    return D_OUT;
+    return R_UNHANDLED;
 }

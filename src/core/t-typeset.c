@@ -396,5 +396,5 @@ REBTYPE(Typeset)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_TYPESET, verb));
+    return R_UNHANDLED;
 }

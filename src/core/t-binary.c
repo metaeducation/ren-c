@@ -945,5 +945,5 @@ REBTYPE(Binary)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_BINARY, verb));
+    return R_UNHANDLED;
 }

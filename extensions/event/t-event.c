@@ -424,8 +424,9 @@ REB_R PD_Event(
 REBTYPE(Event)
 {
     UNUSED(frame_);
+    UNUSED(verb);
 
-    fail (Error_Illegal_Action(REB_EVENT, verb));
+    return R_UNHANDLED;
 }
 
 

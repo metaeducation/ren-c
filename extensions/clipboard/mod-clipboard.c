@@ -207,7 +207,7 @@ static REB_R Clipboard_Actor(
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PORT, verb));
+    return R_UNHANDLED;
 }
 
 

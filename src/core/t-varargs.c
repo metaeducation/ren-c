@@ -521,7 +521,7 @@ REBTYPE(Varargs)
         break;
     }
 
-    fail (Error_Illegal_Action(REB_VARARGS, verb));
+    return R_UNHANDLED;
 }
 
 
