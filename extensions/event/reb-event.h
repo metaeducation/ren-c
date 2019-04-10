@@ -196,7 +196,12 @@ extern void Shutdown_Event_Scheme(void);
 inline static REBVAL *Init_Gob(RELVAL *out, REBGOB *g) {
     assert(GET_SERIES_FLAG(g, MANAGED));
 
-    RESET_CELL(out, REB_GOB, CELL_FLAG_FIRST_IS_NODE);
+    // !!! HACK... way of getting EG_Gob_Type.
+    //
+    REBVAL *hack = rebValue("make gob! []", rebEND);
+    Move_Value(out, hack);
+    rebRelease(hack);
+
     mutable_VAL_GOB(out) = g;
     VAL_GOB_INDEX(out) = 0;
     return KNOWN(out);

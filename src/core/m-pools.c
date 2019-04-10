@@ -324,8 +324,9 @@ void Shutdown_Pools(void)
             if (IS_FREE_NODE(series))
                 continue;
 
-            assert(NOT_SERIES_FLAG(series, MANAGED));
             printf("At least one leaked series at shutdown...\n");
+            if (GET_SERIES_FLAG(series, MANAGED))
+                printf("And it's MANAGED, which *really* shouldn't happen\n");
             panic (series);
         }
     }

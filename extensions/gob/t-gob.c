@@ -368,7 +368,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
 
       case SYM_IMAGE:
         CLR_GOB_OPAQUE(gob);
-        if (IS_IMAGE(val)) {
+        if (rebDid("image?", val, rebEND)) {
             REBVAL *size = rebValue("pick", val, "'size", rebEND);
             int32_t w = rebUnboxInteger("pick", size, "'x", rebEND);
             int32_t h = rebUnboxInteger("pick", size, "'y", rebEND);
@@ -526,7 +526,7 @@ static REBVAL *Get_GOB_Var(RELVAL *out, REBGOB *gob, const REBVAL *word)
 
       case SYM_IMAGE:
         if (GOB_TYPE(gob) == GOBT_IMAGE) {
-            assert(IS_IMAGE(GOB_CONTENT(gob)));
+            assert(rebDid("image?", GOB_CONTENT(gob), rebEND));
             return Move_Value(out, GOB_CONTENT(gob));
         }
         return Init_Blank(out);
@@ -709,7 +709,7 @@ void Extend_Gob_Core(REBGOB *gob, const REBVAL *arg) {
         GOB_Y(gob) = VAL_PAIR_Y_DEC(arg);
     }
     else
-        fail (Error_Bad_Make(REB_GOB, arg));
+        fail (Error_Bad_Make(REB_CUSTOM, arg));
 }
 
 
@@ -722,7 +722,7 @@ REB_R MAKE_Gob(
     const REBVAL *opt_parent,
     const REBVAL *arg
 ){
-    assert(kind == REB_GOB);
+    assert(kind == REB_CUSTOM);
     UNUSED(kind);
 
     if (not IS_GOB(arg)) { // call Extend() on an empty GOB with BLOCK!, etc.
@@ -736,7 +736,7 @@ REB_R MAKE_Gob(
         assert(IS_GOB(opt_parent));  // current invariant for MAKE dispatch
 
         if (not IS_BLOCK(arg))
-            fail (Error_Bad_Make(REB_GOB, arg));
+            fail (arg);
 
         // !!! Compatibility for `MAKE gob [...]` or `MAKE gob NxN` from
         // R3-Alpha GUI.  Start by copying the gob (minus pane and parent),
@@ -767,7 +767,7 @@ REB_R MAKE_Gob(
 //
 REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    assert(kind == REB_GOB);
+    assert(kind == REB_CUSTOM);
     UNUSED(kind);
 
     UNUSED(out);
@@ -939,7 +939,7 @@ REBTYPE(Gob)
         UNUSED(PAR(value)); // handled as `arg`
 
         if (!IS_GOB(arg))
-            fail (Error_Unexpected_Type(REB_GOB, VAL_TYPE(arg)));
+            fail (arg);
 
         if (REF(line))
             fail (Error_Bad_Refines_Raw());
@@ -988,7 +988,7 @@ REBTYPE(Gob)
             arg = KNOWN(VAL_ARRAY_AT(arg)); // !!! REVIEW
         }
         else
-            fail (Error_Unexpected_Type(REB_GOB, VAL_TYPE(arg)));
+            fail (arg);
 
         Insert_Gobs(gob, arg, index, len, false);
 
@@ -1065,7 +1065,7 @@ REBTYPE(Gob)
 
   set_index:
 
-    RESET_CELL(D_OUT, REB_GOB, CELL_FLAG_FIRST_IS_NODE);
+    RESET_CUSTOM_CELL(D_OUT, EG_Gob_Type, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_NODE(D_OUT, gob);
     VAL_GOB_INDEX(D_OUT) = index;
     return D_OUT;

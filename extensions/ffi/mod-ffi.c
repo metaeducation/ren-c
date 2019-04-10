@@ -96,23 +96,30 @@ static ffi_abi Abi_From_Word(const REBVAL *word) {
 }
 
 
+REBTYP *EG_Struct_Type = nullptr;
+
 //
 //  register-struct-hooks: native [
 //
 //  {Make the STRUCT! datatype work with GENERIC actions, comparison ops, etc}
 //
 //      return: [void!]
+//      generics "List for HELP of which generics are supported (unused)"
+//          [block!]
 //  ]
 //
 REBNATIVE(register_struct_hooks)
 {
     FFI_INCLUDE_PARAMS_OF_REGISTER_STRUCT_HOOKS;
 
+    Extend_Generics_Someday(ARG(generics));  // !!! vaporware, see comments
+
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
     //
-    Hook_Datatype(
-        REB_STRUCT,
+    EG_Vector_Type = Hook_Datatype(
+        "http://datatypes.rebol.info/struct",
+        "native structure definition",
         &T_Struct,
         &PD_Struct,
         &CT_Struct,
@@ -137,7 +144,7 @@ REBNATIVE(unregister_struct_hooks)
 {
     FFI_INCLUDE_PARAMS_OF_UNREGISTER_STRUCT_HOOKS;
 
-    Unhook_Datatype(REB_STRUCT);
+    Unhook_Datatype(EG_Vector_Type);
 
     return Init_Void(D_OUT);
 }

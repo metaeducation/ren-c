@@ -174,6 +174,8 @@ typedef struct Reb_Map REBMAP;
 
 typedef REBARR REBBMK;  // "bookmark" (list of UTF-8 index=>offset singulars)
 
+typedef REBSER REBTYP;  // Rebol Type (list of hook function pointers)
+
 
 //=//// BINDING ///////////////////////////////////////////////////////////=//
 

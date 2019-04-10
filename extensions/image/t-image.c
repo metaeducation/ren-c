@@ -359,11 +359,11 @@ bad_make:
 //
 REB_R TO_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
-    assert(kind == REB_IMAGE);
+    assert(kind == REB_CUSTOM);
     UNUSED(kind);
     UNUSED(out);
 
-    fail (Error_Invalid_Type(VAL_TYPE(arg)));
+    fail (arg);
 }
 
 

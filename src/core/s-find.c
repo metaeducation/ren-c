@@ -35,12 +35,8 @@ REBINT Compare_Binary_Vals(const REBCEL *v1, const REBCEL *v2)
     REBCNT l1 = VAL_LEN_AT(v1);
     REBCNT l2 = VAL_LEN_AT(v2);
     REBCNT len = MIN(l1, l2);
-    REBINT n;
-
-    if (CELL_KIND(v1) == REB_IMAGE)
-        len *= 4;
-
-    n = memcmp(
+    
+    REBINT n = memcmp(
         SER_AT_RAW(SER_WIDE(VAL_SERIES(v1)), VAL_SERIES(v1), VAL_INDEX(v1)),
         SER_AT_RAW(SER_WIDE(VAL_SERIES(v2)), VAL_SERIES(v2), VAL_INDEX(v2)),
         len

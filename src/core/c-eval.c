@@ -2161,8 +2161,6 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
       case REB_TAG:
         //
       case REB_BITSET:
-      case REB_IMAGE:
-      case REB_VECTOR:
         //
       case REB_MAP:
         //
@@ -2198,11 +2196,11 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
       case REB_DATATYPE:
       case REB_TYPESET:
         //
-      case REB_GOB:
       case REB_EVENT:
       case REB_HANDLE:
-      case REB_STRUCT:
       case REB_LIBRARY:
+
+      case REB_CUSTOM:  // custom types (IMAGE!, VECTOR!) are all inert
 
       inert:
 
@@ -2210,7 +2208,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         break;
 
 
-//==//// QUOTED! (at 4 or more levels of escaping) ///////////////////////==//
+//=//// QUOTED! (at 4 or more levels of escaping) /////////////////////////=//
 //
 // This is the form of literal that's too escaped to just overlay in the cell
 // by using a higher kind byte.  See the `default:` case in this switch for

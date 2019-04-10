@@ -514,7 +514,7 @@ static void ffi_to_rebol(
         );
         memcpy(SER_HEAD(REBYTE, data), ffi_rvalue, FLD_WIDE(top));
 
-        RESET_CELL(out, REB_STRUCT, CELL_FLAG_FIRST_IS_NODE);
+        RESET_CUSTOM_CELL(out, EG_Struct_Type, CELL_FLAG_FIRST_IS_NODE);
         INIT_VAL_NODE(out, stu);
         VAL_STRUCT_OFFSET(out) = 0;
 

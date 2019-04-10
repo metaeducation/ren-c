@@ -19,7 +19,13 @@ REBOL [
 
 ; !!! Should call UNREGISTER-STRUCT-HOOKS at some point (module finalizer?)
 ;
-register-struct-hooks
+register-struct-hooks [
+    change: generic [
+        return: [<requote> struct!]
+        series [<dequote> struct!]
+        value [<opt> any-value!]
+    ]
+]
 
 ffi-type-mappings: [
     void [<opt>]

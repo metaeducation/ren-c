@@ -45,8 +45,8 @@
 //      make typeset! [<hide> <quote> <protect> text! integer!]
 //
 
-#define IS_KIND_SYM(s) \
-    ((s) < cast(REBSYM, REB_MAX))
+inline static bool IS_KIND_SYM(REBSYM s)
+  { return s != SYM_0 and s < cast(REBSYM, REB_MAX); }
 
 inline static enum Reb_Kind KIND_FROM_SYM(REBSYM s) {
     assert(IS_KIND_SYM(s));
@@ -56,8 +56,27 @@ inline static enum Reb_Kind KIND_FROM_SYM(REBSYM s) {
 #define SYM_FROM_KIND(k) \
     cast(REBSYM, cast(enum Reb_Kind, (k)))
 
-#define VAL_TYPE_SYM(v) \
-    SYM_FROM_KIND(EXTRA(Datatype, (v)).kind)
+inline static REBSYM VAL_TYPE_SYM(const REBCEL *v) {
+    //
+    // !!! The extension type list is limited to a finite set as a first step
+    // of generalizing the approach.  Bridge compatibility for things like
+    // molding the type with some built-in symbols.
+    //
+    enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(v);
+    if (k != REB_CUSTOM)
+        return SYM_FROM_KIND(k);
+
+    RELVAL *ext = ARR_HEAD(PG_Extension_Types);
+    REBTYP *t = VAL_TYPE_CUSTOM(v);
+    if (t == VAL_TYPE_CUSTOM(ext + 0))
+        return SYM_IMAGE_X;
+    if (t == VAL_TYPE_CUSTOM(ext + 1))
+        return SYM_VECTOR_X;
+    if (t == VAL_TYPE_CUSTOM(ext + 2))
+        return SYM_GOB_X;
+    assert(t == VAL_TYPE_CUSTOM(ext + 3));
+    return SYM_STRUCT_X;
+}
 
 inline static REBSTR *Get_Type_Name(const RELVAL *value)
     { return Canon(SYM_FROM_KIND(VAL_TYPE(value))); }

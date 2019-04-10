@@ -300,8 +300,6 @@ uint32_t Hash_Value(const RELVAL *v)
         break; }
 
       case REB_BITSET:
-      case REB_IMAGE:
-      case REB_VECTOR:
       case REB_TYPESET:
         //
         // These types are currently not supported.
@@ -365,13 +363,19 @@ uint32_t Hash_Value(const RELVAL *v)
         hash = cast(uint32_t, cast(uintptr_t, VAL_MAP(cell)) >> 4);
         break;
 
-      case REB_GOB:
       case REB_EVENT:
       case REB_HANDLE:
-      case REB_STRUCT:
       case REB_LIBRARY:
         //
         // !!! Review hashing behavior or needs of these types if necessary.
+        //
+        fail (Error_Invalid_Type(kind));
+
+      case REB_CUSTOM:
+        //
+        // !!! We don't really know how to hash a custom value.  Knowing what
+        // the answer is ties into the equality operator.  It should be one
+        // of the extensibility hooks.
         //
         fail (Error_Invalid_Type(kind));
 

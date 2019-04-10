@@ -16,9 +16,11 @@ REBOL [
         !!! REVIEW IMPACT ON %sys-ordered.h ANY TIME YOU CHANGE THE ORDER !!!
 
         name        - name of datatype (generates words)
-        class       - how type actions are dispatched (T_type)
+        description - short statement of type's purpose (used by HELP)
+        class       - how "generic" actions are dispatched (T_type)
         path        - it supports various path forms
         make        - it can be made with #[datatype] method
+        mold        - code implementing both MOLD and FORM (hook gets a flag)
         typesets    - what typesets the type belongs to
 
         What is in the table can be `+` to mean the method exists and has the
@@ -33,13 +35,16 @@ REBOL [
         If it is `-` then it is not available at all, and will substitute with
         an implementation that fails, e.g. CT_Fail()
 
+        If it is 0 then it really should not happen, ever--so just null is
+        used to generate an exception (for now).
+
         Note that if there is `somename` in the class column, that means you
         will find the ACTION! dispatch for that type in `REBTYPE(Somename)`.
     }
 ]
 
 
-[name       description  ; used by HELP
+[name       description
             class       path    make    mold    typesets]  ; makes TS_XXX
 
 ; REB_0_END is an array terminator, and not a "type".  It has the 0 as part
@@ -84,7 +89,7 @@ percent     "special form of decimals (used mainly for layout)"
 money       "high precision decimals with denomination (opt)"
             money       -       +       +       [scalar]
 
-char        "8bit and 16bit character"
+char        "single unicode codepoint (up to 0x0010FFFF)"
             char        -       +       +       [scalar]
 
 time        "time of day or duration"
@@ -130,28 +135,22 @@ handle      "arbitrary internal object or value"
 library     "external library reference"
             library     -       +       +       []
 
+
+; This table of fundamental types is intended to be limited (less than
+; 64 entries).  Yet there can be an arbitrary number of extension types.
+; Those types use the REB_CUSTOM cell class, and give up their ->extra field
+; of their cell instances to point to their specific datatype.
+;
+; Exceptions may be permitted.  As an example, EVENT! is implemented in an
+; extension (because not all builds need it).  But it reserves a type byte
+; and fills in its entry in this table when it is loaded (hence `?`)
+
 custom      "instance of an extension-defined type"
-            custom      +       +       +       []
-
-; !!! This table of fundamental types is intended to be limited (less than
-; 64 entries) so extension types need another mechanism.  The cells will run
-; out of bits--perhaps it could be mandated that ->extra becomes the type
-; and there is a single "utype!"
-
-gob         "graphical object"  ; %extensions/gob/README.md
-            ?           ?       ?       ?       []
+            -           -       -       -       []
 
 event       "user interface event"  ; %extensions/event/README.md
             ?           ?       ?       ?       []
 
-struct      "native structure definition"  ; %extensions/ffi/README.md
-            ?           ?       ?       ?       []
-
-image       "RGB image with alpha channel"  ; %extensions/image/README.md
-            ?           ?       ?       ?       []
-
-vector      "compact scalar array"  ; %extensions/vector/README.md
-            ?           ?       ?       ?       []
 
 ; <BINARY>
 ;

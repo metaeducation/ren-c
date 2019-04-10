@@ -459,17 +459,26 @@ static inline REBVAL *Init_Action_Maybe_Bound(
 
 
 inline static REB_R Run_Generic_Dispatch(
+    const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
     REBFRM *f,
-    enum Reb_Kind kind,
     const REBVAL *verb
 ){
     assert(IS_WORD(verb));
 
-    GENERIC_HOOK *hook = Generic_Hooks(kind);
+    GENERIC_HOOK *hook = Generic_Hook_For_Type_Of(first_arg);
 
-    REB_R r = hook(f, verb);  // note: QUOTED! re-dispatches to Generic_Hooks
-    if (r == R_UNHANDLED)
-        fail (Error_Cannot_Use_Raw(verb, Datatype_From_Kind(kind)));
+    REB_R r = hook(f, verb);  // Note that QUOTED! has its own hook & handling
+    if (r == R_UNHANDLED) {
+        //
+        // !!! Improve this error message when used with REB_CUSTOM (right now
+        // will just say "cannot use verb with CUSTOM!", regardless of if it
+        // is an IMAGE! or VECTOR! or GOB!...)
+        //
+        fail (Error_Cannot_Use_Raw(
+            verb,
+            Datatype_From_Kind(VAL_TYPE(first_arg))
+        ));
+    }
 
     return r;
 }

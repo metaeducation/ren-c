@@ -33,9 +33,10 @@
 //   is made.  A `make image!` that did not use a foreign source could
 //   optimize this and consider it the binary owner, at same cost as R3-Alpha.
 
+extern REBTYP* EG_Image_Type;
 
 inline static REBVAL *VAL_IMAGE_BIN(const REBCEL *v) {
-    assert(REB_IMAGE == CELL_KIND(v));
+    assert(CELL_CUSTOM_TYPE(v) == EG_Image_Type);
     return KNOWN(ARR_SINGLE(ARR(PAYLOAD(Any, v).first.node)));
 }
 
@@ -46,7 +47,7 @@ inline static REBVAL *VAL_IMAGE_BIN(const REBCEL *v) {
     MISC(ARR(PAYLOAD(Any, v).first.node)).custom.i
 
 inline static REBYTE *VAL_IMAGE_HEAD(const REBCEL *v) {
-    assert(REB_IMAGE == CELL_KIND(v));
+    assert(CELL_CUSTOM_TYPE(v) == EG_Image_Type);
     return SER_DATA_RAW(VAL_BINARY(VAL_IMAGE_BIN(v)));
 }
 
@@ -78,6 +79,15 @@ inline static REBCNT VAL_IMAGE_LEN_AT(const REBCEL *v) {
     return VAL_IMAGE_LEN_HEAD(v) - VAL_IMAGE_POS(v);
 }
 
+inline static bool IS_IMAGE(const RELVAL *v) {
+    //
+    // Note that for this test, if there's a quote level it doesn't count...
+    // that would be QUOTED! (IS_QUOTED()).  To test for quoted images, you
+    // have to call CELL_CUSTOM_TYPE() on the VAL_UNESCAPED() cell.
+    //
+    return IS_CUSTOM(v) and CELL_CUSTOM_TYPE(v) == EG_Image_Type;
+}
+
 inline static REBVAL *Init_Image(
     RELVAL *out,
     REBSER *bin,
@@ -91,7 +101,7 @@ inline static REBVAL *Init_Image(
     LINK(a).custom.i = width;  // see notes on why this isn't put on bin...
     MISC(a).custom.i = height;  // (...it would corrupt shared series!)
 
-    RESET_CELL(out, REB_IMAGE, CELL_FLAG_FIRST_IS_NODE);
+    RESET_CUSTOM_CELL(out, EG_Image_Type, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_NODE(out, a);
 
     assert(VAL_IMAGE_POS(out) == 0);  // !!! sketchy concept, is in BINARY!

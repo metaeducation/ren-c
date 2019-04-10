@@ -17,6 +17,27 @@ REBOL [
 ]
 
 
+=== EXTENSION DATATYPE DEFINITIONS ===
+
+; Even though Ren-C does not build in things like IMAGE! or GOB! to the core,
+; there's a mechanical issue about the words for the datatypes being defined
+; so that the extension can load.  This means at least some kind of stub type
+; has to be available when the specs are being processed, else they could not
+; mention the types.  The extension mechanism should account for this with
+; some kind of "preload" script material (right now it only has a "postload"
+; hook to run a script).  Until then, define here.  (Note these types won't
+; be usable for anything but identity comparisons until the extension loads.)
+
+image!: make datatype! http://datatypes.rebol.info/image
+image?: typechecker image!
+vector!: make datatype! http://datatypes.rebol.info/vector
+vector?: typechecker vector!
+gob!: make datatype! http://datatypes.rebol.info/gob
+gob?: typechecker gob!
+struct!: make datatype! http://datatypes.rebol.info/struct
+struct?: typechecker struct!
+
+
 ; CONSTRUCT is a "verb-ish" word slated to replace the "noun-ish" CONTEXT:
 ;
 ; http://forum.rebol.info/t/has-hasnt-worked-rethink-construct/1058

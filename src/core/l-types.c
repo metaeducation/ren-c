@@ -114,18 +114,21 @@ REBNATIVE(make)
     if (NOT_CELL_FLAG(arg, CONST))
         SET_CELL_FLAG(arg, EXPLICITLY_MUTABLE);
 
+    MAKE_HOOK *hook;
+
     REBVAL *opt_parent;
     enum Reb_Kind kind;
     if (IS_DATATYPE(type)) {
-        kind = VAL_TYPE_KIND(type);
+        hook = Make_Hook_For_Type(type);
+        kind = VAL_TYPE_KIND_OR_CUSTOM(type);
         opt_parent = nullptr;
     }
     else {
         kind = VAL_TYPE(type);
         opt_parent = type;
+        hook = Make_Hook_For_Kind(kind);
     }
 
-    MAKE_HOOK *hook = Make_Hooks(kind);
 
     REB_R r = hook(D_OUT, kind, opt_parent, arg);  // might throw, fail...
     if (r == R_THROWN)
@@ -204,10 +207,17 @@ REBNATIVE(to)
     enum Reb_Kind new_kind = VAL_TYPE_KIND(D_OUT);
     enum Reb_Kind old_kind = VAL_TYPE(v);
 
-    if (new_kind == old_kind)
+    if (
+        new_kind == old_kind
+        and (
+            new_kind != REB_CUSTOM
+            or CELL_CUSTOM_TYPE(D_OUT) == CELL_CUSTOM_TYPE(v)
+        )
+    ){
         return rebValueQ("copy", v, rebEND);
+    }
 
-    TO_HOOK* hook = To_Hooks(new_kind);
+    TO_HOOK* hook = To_Hook_For_Type(D_OUT);
 
     REB_R r = hook(D_OUT, new_kind, v); // may fail();
     if (r == R_THROWN) {
@@ -267,13 +277,15 @@ REB_R Reflect_Core(REBFRM *frame_)
       case SYM_KIND: // simpler answer, low-level datatype (e.g. QUOTED!)
         if (kind == REB_NULLED)
             return nullptr;
-        return Init_Datatype(D_OUT, VAL_TYPE(v));
+        return Init_Builtin_Datatype(D_OUT, VAL_TYPE(v));
 
       case SYM_TYPE: // higher order-answer, may build structured result
         if (kind == REB_NULLED)  // not a real "datatype"
             Init_Nulled(D_OUT);  // `null = type of null`
+        else if (kind == REB_CUSTOM)
+            Init_Custom_Datatype(D_OUT, CELL_CUSTOM_TYPE(cell));
         else
-            Init_Datatype(D_OUT, kind);
+            Init_Builtin_Datatype(D_OUT, kind);
 
         // `type of lit '''[a b c]` is `'''#[block!]`.  Until datatypes get
         // a firm literal notation, you can say `uneval uneval block!`
@@ -302,7 +314,7 @@ REB_R Reflect_Core(REBFRM *frame_)
     DECLARE_LOCAL (verb);
     Init_Word(verb, Canon(SYM_REFLECT));
     Dequotify(ARG(value));
-    return Run_Generic_Dispatch(frame_, kind, verb);
+    return Run_Generic_Dispatch(ARG(value), frame_, verb);
 }
 
 

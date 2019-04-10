@@ -378,7 +378,7 @@ REBTYPE(Decimal)
             Move_Value(D_OUT, D_ARG(2));
             Move_Value(D_ARG(2), D_ARG(1));
             Move_Value(D_ARG(1), D_OUT);
-            return Run_Generic_Dispatch(frame_, VAL_TYPE(D_ARG(1)), verb);
+            return Run_Generic_Dispatch(D_ARG(1), frame_, verb);
         }
 
         // If the type of the second arg is something we can handle:

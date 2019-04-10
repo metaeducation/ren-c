@@ -203,42 +203,10 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
     //=//// CUSTOM EXTENSION TYPES ////////////////////////////////////////=//
 
-      case REB_GOB: {  // 7-element REBARR
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        REBARR *gob = ARR(PAYLOAD(Any, v).first.node);
-        assert(GET_SERIES_FLAG(gob, LINK_NODE_NEEDS_MARK));
-        assert(GET_SERIES_FLAG(gob, MISC_NODE_NEEDS_MARK));
-        assert(Is_Marked(PAYLOAD(Any, v).first.node));
-        break; }
-
       case REB_EVENT: {  // packed cell structure with one GC-able slot
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         REBNOD *n = PAYLOAD(Any, v).first.node;  // REBGOB*, REBREQ*, etc.
         assert(n == nullptr or n->header.bits & NODE_FLAG_NODE);
-        assert(Is_Marked(PAYLOAD(Any, v).first.node));
-        break; }
-
-      case REB_STRUCT: {  // like an OBJECT!, but the "varlist" can be binary
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        REBSER *data = SER(PAYLOAD(Any, v).first.node);
-        assert(SER_WIDE(data) == 1 or IS_SER_ARRAY(data));
-        assert(Is_Marked(PAYLOAD(Any, v).first.node));
-        break; }
-
-      case REB_IMAGE: {  // currently a 3-element array (could be a pairing)
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        REBARR *arr = ARR(PAYLOAD(Any, v).first.node);
-        assert(ARR_LEN(arr) == 1);
-        assert(NOT_SERIES_FLAG(arr, LINK_NODE_NEEDS_MARK));  // stores width
-        assert(NOT_SERIES_FLAG(arr, MISC_NODE_NEEDS_MARK));  // stores hieght
-        assert(Is_Marked(PAYLOAD(Any, v).first.node));
-        break; }
-
-      case REB_VECTOR: {  // currently a pairing (BINARY! and an info cell)
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        REBVAL *p = VAL(PAYLOAD(Any, v).first.node);
-        assert(IS_BINARY(p));
-        assert(KIND_BYTE(PAIRING_KEY(p)) == REB_V_SIGN_INTEGRAL_WIDE);
         assert(Is_Marked(PAYLOAD(Any, v).first.node));
         break; }
 
@@ -472,6 +440,9 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         break;
 
       case REB_X_BOOKMARK:  // ANY-STRING! index and offset cache
+        break;
+
+      case REB_CUSTOM:  // !!! Might it have an "integrity check" hook?
         break;
 
       default:

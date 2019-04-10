@@ -469,138 +469,42 @@ REBVAL *rebCollateExtension_internal(
 
 
 //
-//  Hook_Datatype: C
+//  Extend_Generics_Someday: C
 //
-// Poor-man's user-defined type hack: this really just gives the ability to
-// have the only thing the core knows about a "user-defined-type" be its
-// value cell structure and datatype enum number...but have the behaviors
-// come from functions that are optionally registered in an extension.
+// !!! R3-Alpha's "generics" (like APPEND or TAKE) dispatched to code based on
+// the first argument.  So APPEND to a BLOCK! would call the array dispatcher,
+// while APPEND to a GOB! would call the gob dispatcher.  The list of legal
+// datatypes that could be operated on was fixed as part of the declaration
+// in %generics.r (though R3-Alpha called them "actions").
 //
-// (Actual facets of user-defined types will ultimately be dispatched through
-// Rebol-frame-interfaced functions, not raw C structures like this.)
+// Ren-C attempts to streamline the core so it can be used for more purposes,
+// where suppport code for GOB! (or IMAGE!, or VECTOR!) may be redundant or
+// otherwise wasteful.  These types are moved to extensions, which may be
+// omitted from the build (or optionally loaded as DLLs).   That means that
+// when the system is booting, it might not know what a GOB! is...and other
+// extensions may wish to add types to the generic after-the-fact as well.
 //
-void Hook_Datatype(
-    enum Reb_Kind kind,
-    GENERIC_HOOK *generic,
-    PATH_HOOK *path,
-    COMPARE_HOOK *compare,
-    MAKE_HOOK *make,
-    TO_HOOK *to,
-    MOLD_HOOK *mold
-){
-    if (Generic_Hooks(kind) != &T_Unhooked)
-        fail ("Cannot hook already hooked type in Hook_Datatype()");
-
-    Builtin_Type_Hooks[kind][IDX_GENERIC_HOOK] = cast(CFUNC*, generic);
-    Builtin_Type_Hooks[kind][IDX_PATH_HOOK] = cast(CFUNC*, path);
-    Builtin_Type_Hooks[kind][IDX_COMPARE_HOOK] = cast(CFUNC*, compare);
-    Builtin_Type_Hooks[kind][IDX_MAKE_HOOK] = cast(CFUNC*, make);
-    Builtin_Type_Hooks[kind][IDX_TO_HOOK] = cast(CFUNC*, to);
-    Builtin_Type_Hooks[kind][IDX_MOLD_HOOK] = cast(CFUNC*, mold);
-}
-
-
+// Hence extension types are taken off the generic definitions.  The concept
+// is that they would be added dynamically.  How this would be done is not
+// known at this time...as an extensible generics system hasn't been made yet.
+// What's done instead is the hack of just saying that all generics are
+// willing to dispatch to a custom type, and it's the job of the handler to
+// raise an error if it doesn't know what the generic means.  The key downside
+// of this is that HELP doesn't give you information about what specific
+// generics are applicable to extension types.
 //
-//  Unhook_Datatype: C
+// This function is a placeholder to keep track of the unimplemented feature.
+// What was done is that for all the definitions in %generics.r that took an
+// extension type previously, a bit of that spec was copied into the extension
+// and then passed in to the type registration routine as a block.  In theory
+// this *kind* of information could be used to more strategically update the
+// type specs and help to reflect the legal operations.
 //
-void Unhook_Datatype(enum Reb_Kind kind)
-{
-    if (Generic_Hooks(kind) == &T_Unhooked)
-        fail ("Cannot unhook already unhooked type in Unhook_Datatype()");
-
-    Builtin_Type_Hooks[kind][IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_PATH_HOOK] = cast(CFUNC*, &PD_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);
-    Builtin_Type_Hooks[kind][IDX_MOLD_HOOK] = cast(CFUNC*, &MF_Unhooked);
-}
-
-
+// (It would be expected that the ability to extend generics via usermode
+// functions would be done through whatever this mechanism for extending them
+// with native code would be.)
 //
-//  CT_Custom: C
-//
-REBINT CT_Custom(const REBCEL *a, const REBCEL *b, REBINT mode)
-{
-    assert(CELL_KIND(a) == REB_CUSTOM and CELL_KIND(b) == REB_CUSTOM);
-    assert(EXTRA(Any, a).node == EXTRA(Any, b).node);
-
-    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, a).node)));
-    COMPARE_HOOK *hook = cast(COMPARE_HOOK*, hooks[IDX_COMPARE_HOOK]);
-    return hook(a, b, mode);
-}
-
-
-//
-//  MAKE_Custom: C
-//
-REB_R MAKE_Custom(
-    REBVAL *out,
-    enum Reb_Kind kind,
-    const REBVAL *opt_parent,
-    const REBVAL *arg
-){
-    assert(kind == REB_CUSTOM);  // we'll now dissect the more specific form
-
-    // !!! Need a value here that's a type, take the parent?
-    //
-    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, opt_parent).node)));
-    MAKE_HOOK *hook = cast(MAKE_HOOK*, hooks[IDX_MAKE_HOOK]);
-    return hook(out, kind, opt_parent, arg);
-}
-
-
-//
-//  TO_Custom: C
-//
-REB_R TO_Custom(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
-    assert(kind == REB_CUSTOM);  // we'll now dissect the more specific form
-
-    // !!! Dispatch of TO vs make is still being thought out.
-    //
-    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, data).node)));
-    TO_HOOK *hook = cast(TO_HOOK*, hooks[IDX_TO_HOOK]);
-    return hook(out, kind, data);
-}
-
-
-//
-//  MF_Custom: C
-//
-void MF_Custom(REB_MOLD *mo, const REBCEL *v, bool form) {
-    assert(CELL_KIND(v) == REB_CUSTOM);  // now dissect the more specific form
-
-    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, v).node)));
-    MOLD_HOOK *hook = cast(MOLD_HOOK*, hooks[IDX_MOLD_HOOK]);
-    return hook(mo, v, form);
-}
-
-
-//
-//  PD_Custom: C
-//
-REB_R PD_Custom(
-    REBPVS *pvs,
-    const REBVAL *picker,
-    const REBVAL *opt_setval
-){
-    assert(VAL_TYPE(pvs->out) == REB_CUSTOM);
-
-    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, pvs->out).node)));
-    PATH_HOOK *hook = cast(PATH_HOOK*, hooks[IDX_PATH_HOOK]);
-    return hook(pvs, picker, opt_setval);
-}
-
-
-//
-//  REBTYPE: C
-//
-REBTYPE(Custom)
-{
-    REBVAL *custom = D_ARG(1);
-    assert(VAL_TYPE(custom) == REB_CUSTOM);
-
-    CFUNC** hooks = cast(CFUNC**, BIN_HEAD(SER(EXTRA(Any, custom).node)));
-    GENERIC_HOOK *hook = cast(GENERIC_HOOK*, hooks[IDX_GENERIC_HOOK]);
-    return hook(frame_, verb);
+void Extend_Generics_Someday(REBVAL *block) {
+    assert(IS_BLOCK(block));
+    UNUSED(block);
 }

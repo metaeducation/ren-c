@@ -29,6 +29,7 @@
 
 #include "sys-image.h"
 
+REBTYP *EG_Image_Type = nullptr;
 
 //
 //  register-image-hooks: native [
@@ -36,17 +37,22 @@
 //  {Make the IMAGE! datatype work with GENERIC actions, comparison ops, etc}
 //
 //      return: [void!]
+//      generics "List for HELP of which generics are supported (unused)"
+//          [block!]
 //  ]
 //
 REBNATIVE(register_image_hooks)
 {
     IMAGE_INCLUDE_PARAMS_OF_REGISTER_IMAGE_HOOKS;
 
+    Extend_Generics_Someday(ARG(generics));  // !!! vaporware, see comments
+
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
     //
-    Hook_Datatype(
-        REB_IMAGE,
+    EG_Image_Type = Hook_Datatype(
+        "http://datatypes.rebol.info/image",
+        "RGB image with alpha channel",
         &T_Image,
         &PD_Image,
         &CT_Image,
@@ -71,7 +77,7 @@ REBNATIVE(unregister_image_hooks)
 {
     IMAGE_INCLUDE_PARAMS_OF_UNREGISTER_IMAGE_HOOKS;
 
-    Unhook_Datatype(REB_IMAGE);
+    Unhook_Datatype(EG_Image_Type);
 
     return Init_Void(D_OUT);
 }

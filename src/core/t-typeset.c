@@ -179,8 +179,14 @@ bool Add_Typeset_Bits_Core(
             }
         }
         else if (IS_DATATYPE(item)) {
-            if (num_quotes == 0)
-                TYPE_SET(typeset, VAL_TYPE_KIND(item));
+            if (num_quotes == 0) {
+                //
+                // !!! For the moment, all REB_CUSTOM types are glommed
+                // together into the same typeset test.  Doing better will
+                // involve a redesign of typesets from R3-Alpha's 64 bits.
+                //
+                TYPE_SET(typeset, VAL_TYPE_KIND_OR_CUSTOM(item));
+            }
             else {
                 const REBCEL *cell = VAL_UNESCAPED(item);
                 if (num_quotes > 1)
@@ -289,7 +295,7 @@ REBARR *Typeset_To_Array(const REBVAL *tset)
                 Init_Blank(DS_PUSH());
             }
             else
-                Init_Datatype(DS_PUSH(), cast(enum Reb_Kind, n));
+                Init_Builtin_Datatype(DS_PUSH(), cast(enum Reb_Kind, n));
         }
     }
 

@@ -70,10 +70,10 @@ join: function [
 
     return:
         [<requote> any-series! any-path! tuple! port!
-            map! gob! object! module! bitset!]
+            map! object! module! bitset!]
     head
         [<dequote> any-series! any-path! tuple! port!
-            map! gob! object! module! bitset!]
+            map! object! module! bitset!]
     value [<opt> any-value!]
 ][
     type: type of head

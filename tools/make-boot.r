@@ -396,8 +396,7 @@ e-types/emit {
      */
 
     #define TS_NOT_COPIED \
-        (FLAGIT_KIND(REB_IMAGE) \
-        | FLAGIT_KIND(REB_VECTOR) \
+        (FLAGIT_KIND(REB_CUSTOM) \
         | FLAGIT_KIND(REB_PORT))
 
     #define TS_STD_SERIES \

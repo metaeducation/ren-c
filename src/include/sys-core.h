@@ -495,7 +495,6 @@ inline static void INIT_BINDING_MAY_MANAGE(RELVAL *out, REBNOD* binding);
 #include "datatypes/sys-integer.h"
 #include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
 #include "datatypes/sys-decimal.h"
-#include "datatypes/sys-datatype.h"
 
 inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
     Eval_Signals |= f;
@@ -503,8 +502,9 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 }
 
 #include "datatypes/sys-series.h"
-
 #include "datatypes/sys-array.h"  // REBARR used by UTF-8 string bookmarks
+
+#include "datatypes/sys-datatype.h"
 
 #include "datatypes/sys-binary.h"  // BIN_XXX(), etc. used by strings
 #include "datatypes/sys-string.h"  // REBSYM needed for typesets

@@ -280,6 +280,11 @@ inline static const REBCEL *VAL_UNESCAPED(const RELVAL *v);
     #endif
 #endif
 
+inline static REBTYP *CELL_CUSTOM_TYPE(const REBCEL *v) {
+    assert(CELL_KIND(v) == REB_CUSTOM);
+    return SER(EXTRA(Any, v).node);
+}
+
 
 //=//// VALUE TYPE (always REB_XXX <= REB_MAX) ////////////////////////////=//
 //
@@ -422,6 +427,17 @@ inline static REBVAL *RESET_VAL_HEADER_at(
     #define RESET_CELL(out,kind,flags) \
        RESET_VAL_HEADER((out), (kind), (flags))
 #endif
+
+inline static REBVAL *RESET_CUSTOM_CELL(
+    RELVAL *out,
+    REBTYP *type,
+    REBFLGS flags
+){
+    RESET_CELL(out, REB_CUSTOM, flags);
+    EXTRA(Any, out).node = NOD(type);
+    return cast(REBVAL*, out);
+}
+
 
 // This is another case where the debug build doesn't inline functions, and
 // for such central routines the overhead of passing 3 args is on the radar.
@@ -657,22 +673,10 @@ inline static RELVAL *Prep_Stack_Cell_Core(
 //
 
 
-#if defined(NDEBUG)
-    #define INIT_VAL_NODE(v,n) \
-        (PAYLOAD(Any, (v)).first.node = NOD(n))
-#else
-    inline static void INIT_VAL_NODE(RELVAL *v, void *p) {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        REBNOD *node = NOD(p);
-        assert(
-            node == nullptr
-            or (node->header.bits
-                & (NODE_FLAG_NODE | NODE_FLAG_FREE)
-            ) == NODE_FLAG_NODE
-        );
-        PAYLOAD(Any, v).first.node = node;
-    }
-#endif
+inline static void INIT_VAL_NODE(RELVAL *v, void *p) {
+    assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+    PAYLOAD(Any, v).first.node = NOD(p);
+}
 
 #define VAL_NODE(v) \
     PAYLOAD(Any, (v)).first.node
@@ -712,18 +716,12 @@ inline static bool IS_RELATIVE(const REBCEL *v) {
     return false;
 }
 
-#if defined(__cplusplus) && __cplusplus >= 201103L
-    //
-    // Take special advantage of the fact that C++ can help catch when we are
-    // trying to see if a REBVAL is specific or relative (it will always
-    // be specific, so the call is likely in error).  In the C build, they
-    // are the same type so there will be no error.
-    //
-    bool IS_RELATIVE(const REBVAL *v);
+#ifdef CPLUSPLUS_11
+    bool IS_RELATIVE(const REBVAL *v) = delete;  // error on superfluous check
 #endif
 
 #define IS_SPECIFIC(v) \
-    cast(bool, not IS_RELATIVE(v))
+    (not IS_RELATIVE(v))
 
 inline static REBACT *VAL_RELATIVE(const RELVAL *v) {
     assert(IS_RELATIVE(v));

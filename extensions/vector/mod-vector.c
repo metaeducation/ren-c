@@ -30,6 +30,8 @@
 #include "sys-vector.h"
 
 
+REBTYP *EG_Vector_Type;  // (E)xtension (G)lobal
+
 //
 //  register-vector-hooks: native [
 //
@@ -45,8 +47,9 @@ REBNATIVE(register_vector_hooks)
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
     //
-    Hook_Datatype(
-        REB_VECTOR,
+   EG_Vector_Type = Hook_Datatype(
+        "http://datatypes.rebol.info/vector",
+        "compact scalar array",
         &T_Vector,
         &PD_Vector,
         &CT_Vector,
@@ -71,7 +74,7 @@ REBNATIVE(unregister_vector_hooks)
 {
     VECTOR_INCLUDE_PARAMS_OF_UNREGISTER_VECTOR_HOOKS;
 
-    Unhook_Datatype(REB_VECTOR);
+    Unhook_Datatype(EG_Vector_Type);
 
     return Init_Void(D_OUT);
 }

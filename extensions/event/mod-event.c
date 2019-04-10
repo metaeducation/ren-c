@@ -45,15 +45,20 @@ REBNATIVE(register_event_hooks)
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
     //
-    Hook_Datatype(
-        REB_EVENT,
-        &T_Event,
-        &PD_Event,
-        &CT_Event,
-        &MAKE_Event,
-        &TO_Event,
-        &MF_Event
-    );
+    // !!! EVENT has a specific desire to use *all* of the bits in the cell.
+    // However, extension types generally do not have this option.  So we
+    // make a special exemption and allow REB_EVENT to take one of the
+    // builtin type bytes, so it can use the EXTRA() for more data.  This
+    // may or may not be worth it for this case...but it's a demonstration of
+    // a degree of freedom that we have.
+
+    const enum Reb_Kind k = REB_EVENT;
+    Builtin_Type_Hooks[k][IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Event);
+    Builtin_Type_Hooks[k][IDX_PATH_HOOK] = cast(CFUNC*, &PD_Event);
+    Builtin_Type_Hooks[k][IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Event);
+    Builtin_Type_Hooks[k][IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Event);
+    Builtin_Type_Hooks[k][IDX_TO_HOOK] = cast(CFUNC*, &TO_Event);
+    Builtin_Type_Hooks[k][IDX_MOLD_HOOK] = cast(CFUNC*, &MF_Event);
 
     Startup_Event_Scheme();
 
@@ -75,7 +80,16 @@ REBNATIVE(unregister_event_hooks)
 
     Shutdown_Event_Scheme();
 
-    Unhook_Datatype(REB_EVENT);
+    // !!! See notes in register-event-hooks for why we reach below the
+    // normal custom type machinery to pack an event into a single cell
+    //
+    const enum Reb_Kind k = REB_EVENT;
+    Builtin_Type_Hooks[k][IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Unhooked);
+    Builtin_Type_Hooks[k][IDX_PATH_HOOK] = cast(CFUNC*, &PD_Unhooked);
+    Builtin_Type_Hooks[k][IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Unhooked);
+    Builtin_Type_Hooks[k][IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
+    Builtin_Type_Hooks[k][IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);
+    Builtin_Type_Hooks[k][IDX_MOLD_HOOK] = cast(CFUNC*, &MF_Unhooked);
 
     return Init_Void(D_OUT);
 }

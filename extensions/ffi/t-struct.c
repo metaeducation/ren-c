@@ -1070,7 +1070,7 @@ REB_R MAKE_Struct(
     const REBVAL *opt_parent,
     const REBVAL *arg
 ){
-    assert(kind == REB_STRUCT);
+    assert(kind == REB_CUSTOM);
     if (opt_parent)
         fail (Error_Bad_Make_Parent(kind, opt_parent));
 
@@ -1344,7 +1344,7 @@ REB_R MAKE_Struct(
     Manage_Array(schema);
     LINK(stu).schema = schema;
 
-    RESET_CELL(out, REB_STRUCT, CELL_FLAG_FIRST_IS_NODE);
+    RESET_CELL(out, EG_Struct_Type, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_NODE(out, stu);
     VAL_STRUCT_OFFSET(out) = 0;
 

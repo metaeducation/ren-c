@@ -172,90 +172,6 @@ void Set_Stack_Limit(void *base) {
 
 
 //
-//  Startup_Datatypes: C
-//
-// Create library words for each type, (e.g. make INTEGER! correspond to
-// the integer datatype value).  Returns an array of words for the added
-// datatypes to use in SYSTEM/CATALOG/DATATYPES.  See %boot/types.r
-//
-static REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
-{
-    if (ARR_LEN(boot_types) != REB_MAX - 2)  // exclude REB_0_END, REB_NULLED
-        panic (boot_types);  // every other type should have a WORD!
-
-    RELVAL *word = ARR_HEAD(boot_types);
-
-    if (VAL_WORD_SYM(word) != SYM_VOID_X)
-        panic (word);  // First "real" type should be VOID!
-
-    REBARR *catalog = Make_Array(REB_MAX - 2);
-
-    // Put a nulled cell in position [1], just to have something there (the
-    // 0 slot is reserved in contexts, so there's no worry about filling space
-    // to line up with REB_0_END).  Note this is different from NULL the
-    // native, which generates a null (since you'd have to type :NULLED to
-    // get a null value, which is awkward).
-    //
-    REBVAL *nulled = Append_Context(Lib_Context, nullptr, Canon(SYM_NULLED));
-    Init_Nulled(nulled);
-
-    REBINT n;
-    for (n = 2; NOT_END(word); word++, n++) {
-        assert(n < REB_MAX);
-
-        REBVAL *value = Append_Context(Lib_Context, KNOWN(word), NULL);
-        RESET_CELL(value, REB_DATATYPE, CELL_FLAG_FIRST_IS_NODE);
-        VAL_TYPE_KIND(value) = cast(enum Reb_Kind, n);
-        VAL_TYPE_SPEC_NODE(value) = NOD(
-            VAL_ARRAY(ARR_AT(boot_typespecs, n - 2))
-        );
-
-        // !!! The system depends on these definitions, as they are used by
-        // Get_Type and Type_Of.  Lock it for safety...though consider an
-        // alternative like using the returned types catalog and locking
-        // that.  (It would be hard to rewrite lib to safely change a type
-        // definition, given the code doing the rewriting would likely depend
-        // on lib...but it could still be technically possible, even in
-        // a limited sense.)
-        //
-        assert(value == Datatype_From_Kind(cast(enum Reb_Kind, n)));
-        SET_CELL_FLAG(CTX_VAR(Lib_Context, n), PROTECTED);
-
-        Append_Value(catalog, KNOWN(word));
-    }
-
-    // !!! Near-term hack to create LIT-WORD! and LIT-PATH!, to try and keep
-    // the typechecks working in function specs.  They are set to the words
-    // themselves, so that parse rules will work with them (e.g. bootstrap)
-
-    REBVAL *lit_word = Append_Context(
-        Lib_Context,
-        nullptr,
-        Canon(SYM_LIT_WORD_X)
-    );
-    Init_Datatype(lit_word, REB_WORD);
-    Quotify(lit_word, 1);
-
-    REBVAL *lit_path = Append_Context(
-        Lib_Context,
-        nullptr,
-        Canon(SYM_LIT_PATH_X)
-    );
-    Init_Datatype(lit_path, REB_PATH);
-    Quotify(lit_path, 1);
-
-    REBVAL *refinement = Append_Context(
-        Lib_Context,
-        nullptr,
-        Canon(SYM_REFINEMENT_X)
-    );
-    Init_Issue(refinement, Canon(SYM_REFINEMENT_X));
-
-    return catalog;
-}
-
-
-//
 //  Startup_True_And_False: C
 //
 // !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the literal
@@ -307,18 +223,21 @@ REBNATIVE(generic)
         MKF_KEYWORDS | MKF_RETURN  // return type checked only in debug build
     );
 
-    // !!! Some Generic_Dispatcher()s retrigger on a literal version of a
-    // type and do the same thing as to the plain version, on the thing that
-    // is inside the literal, but add escaping.
+    // !!! There is no system yet for extension types to register which of
+    // the generic actions they can handle.  So for the moment, we just say
+    // that any custom type will have its action dispatcher run--and it's
+    // up to the handler to give an error if there's a problem.  This works,
+    // but it limits discoverability of types in HELP.  A better answeer would
+    // be able to inventory which types had registered generic dispatchers
+    // and list the appropriate types from HELP.
     //
-    //     >> add (lit ''1) 2
-    //     == ''3
-    //
-    // Whether this makes any sense or not is decided by the generic code for
-    // QUOTED! at the moment.  It picks the few it thinks it can handle and
-    // does one thing or another with it.
-    //
-    TYPE_SET(ARR_AT(paramlist, 1), REB_QUOTED);
+    RELVAL *first_param = ARR_AT(paramlist, 1);
+    TYPE_SET(first_param, REB_CUSTOM);
+    if (SER(paramlist)->header.bits & PARAMLIST_FLAG_HAS_RETURN) {
+        RELVAL *return_param = ARR_AT(paramlist, ARR_LEN(paramlist) - 1);
+        assert(VAL_PARAM_SYM(return_param) == SYM_RETURN);
+        TYPE_SET(return_param, REB_CUSTOM);
+    }
 
     REBACT *generic = Make_Action(
         paramlist,
@@ -1534,6 +1453,10 @@ void Shutdown_Core(void)
     Shutdown_Root_Vars();
 
     Shutdown_Frame_Stack();
+
+    Shutdown_Datatypes();
+
+//=//// ALL MANAGED SERIES MUST HAVE THE KEEPALIVE REFERENCES GONE NOW ////=//
 
     const bool shutdown = true; // go ahead and free all managed series
     Recycle_Core(shutdown, NULL);

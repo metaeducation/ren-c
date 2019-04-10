@@ -588,8 +588,8 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, REBINT strictness)
     // At this point, the types should match...e.g. be able to be passed to
     // the same comparison dispatcher.  They might not be *exactly* equal.
     //
-    COMPARE_HOOK *hook = Compare_Hooks(kind);
-    assert(Compare_Hooks(VAL_TYPE(b)) == hook);
+    COMPARE_HOOK *hook = Compare_Hook_For_Type_Of(a);
+    assert(Compare_Hook_For_Type_Of(b) == hook);
 
     REBINT result = hook(a, b, strictness);
     if (result < 0)

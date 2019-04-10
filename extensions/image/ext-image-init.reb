@@ -13,6 +13,11 @@ REBOL [
 
 ; !!! Should call UNREGISTER-IMAGE-HOOKS at some point (module finalizer?)
 ;
-register-image-hooks
+register-image-hooks [
+    complement: generic [
+        value [image!]
+    ]
+]
+
 
 sys/export []  ; current hacky mechanism is to put any exports here

@@ -210,7 +210,7 @@ open?: specialize 'reflect [property: 'open?]
 empty?: func [
     {TRUE if empty or BLANK!, or if series is at or beyond its tail.}
     return: [logic!]
-    series [any-series! object! gob! port! bitset! map! blank!]
+    series [any-series! object! port! bitset! map! blank!]
 ][
     did any [blank? series | tail? series]
 ]
@@ -258,8 +258,6 @@ eval func [
     url?:
     tag?:
     bitset?:
-    image?:
-    vector?:
     path?:
     set-path?:
     get-path?:
@@ -279,10 +277,8 @@ eval func [
     module?:
     error?:
     port?:
-    gob?:
     event?:
     handle?:
-    struct?:
     library?:
 
     ; Typesets predefined during bootstrap.

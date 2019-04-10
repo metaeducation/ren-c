@@ -1384,8 +1384,7 @@ REB_R Generic_Dispatcher(REBFRM *f)
     REBVAL *verb = KNOWN(ARR_HEAD(details));
     assert(IS_WORD(verb));
 
-    enum Reb_Kind kind = VAL_TYPE(FRM_ARG(f, 1));
-    return Run_Generic_Dispatch(f, kind, verb);
+    return Run_Generic_Dispatch(FRM_ARG(f, 1), f, verb);
 }
 
 
@@ -1446,11 +1445,21 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 {
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     RELVAL *datatype = ARR_HEAD(details);
-    assert(IS_DATATYPE(datatype));
 
-    return Init_Logic(
+    if (VAL_TYPE_KIND_OR_CUSTOM(datatype) == REB_CUSTOM) {
+        if (VAL_TYPE(FRM_ARG(f, 1)) != REB_CUSTOM)
+            return Init_False(f->out);
+
+        REBTYP *typ = VAL_TYPE_CUSTOM(datatype);
+        return Init_Logic(
+            f->out,
+            CELL_CUSTOM_TYPE(FRM_ARG(f, 1)) == typ
+        );
+    }
+
+    return Init_Logic(  // otherwise won't be equal to any custom type
         f->out,
-        VAL_TYPE(FRM_ARG(f, 1)) == VAL_TYPE_KIND(datatype)
+        VAL_TYPE(FRM_ARG(f, 1)) == VAL_TYPE_KIND_OR_CUSTOM(datatype)
     );
 }
 

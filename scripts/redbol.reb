@@ -706,7 +706,7 @@ collect: emulate [
 
 repend: emulate [
     function [
-        series [any-series! port! map! gob! object! bitset!]
+        series [any-series! port! map! object! bitset!]
         value
         /part [any-number! any-series! pair!]
         /only

@@ -220,17 +220,6 @@ const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 
 
 //
-//  Init_Datatype: C
-//
-REBVAL *Init_Datatype(RELVAL *out, enum Reb_Kind kind)
-{
-    assert(kind > REB_0 and kind < REB_MAX);
-    Move_Value(out, Datatype_From_Kind(kind));
-    return KNOWN(out);
-}
-
-
-//
 //  Type_Of: C
 //
 // Returns the datatype value for the given value.

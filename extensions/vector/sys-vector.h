@@ -32,6 +32,8 @@
 // * See %extensions/vector/README.md
 //
 
+extern REBTYP *EG_Vector_Type;
+
 #define VAL_VECTOR_BINARY(v) \
     VAL(PAYLOAD(Any, (v)).first.node)  // pairing[0]
 
@@ -42,7 +44,7 @@
     PAYLOAD(Any, VAL_VECTOR_SIGN_INTEGRAL_WIDE(v)).first.flag
 
 inline static bool VAL_VECTOR_INTEGRAL(const REBCEL *v) {
-    assert(CELL_KIND(v) == REB_VECTOR);
+    assert(CELL_CUSTOM_TYPE(v) == EG_Vector_Type);
     REBVAL *siw = VAL_VECTOR_SIGN_INTEGRAL_WIDE(v);
     if (PAYLOAD(Any, siw).second.flag != 0)
         return true;
@@ -61,12 +63,12 @@ inline static REBYTE VAL_VECTOR_WIDE(const REBCEL *v) {  // "wide" REBSER term
     (VAL_VECTOR_WIDE(v) * 8)
 
 inline static REBYTE *VAL_VECTOR_HEAD(const REBCEL *v) {
-    assert(CELL_KIND(v) == REB_VECTOR);
+    assert(CELL_CUSTOM_TYPE(v) == EG_Vector_Type);
     return VAL_BIN_HEAD(VAL(PAYLOAD(Any, v).first.node));
 }
 
 inline static REBCNT VAL_VECTOR_LEN_AT(const REBCEL *v) {
-    assert(CELL_KIND(v) == REB_VECTOR);
+    assert(CELL_CUSTOM_TYPE(v) == EG_Vector_Type);
     return VAL_LEN_HEAD(VAL_VECTOR_BINARY(v)) / VAL_VECTOR_WIDE(v);
 }
 
@@ -80,7 +82,7 @@ inline static REBVAL *Init_Vector(
     bool integral,
     REBYTE bitsize
 ){
-    RESET_CELL(out, REB_VECTOR, CELL_FLAG_FIRST_IS_NODE);
+    RESET_CUSTOM_CELL(out, EG_Vector_Type, CELL_FLAG_FIRST_IS_NODE);
 
     REBVAL *paired = Alloc_Pairing();
 

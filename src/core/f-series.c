@@ -414,24 +414,12 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool is_case)
       case REB_LIBRARY:
         return VAL_LIBRARY(s) - VAL_LIBRARY(t);
 
-      case REB_GOB:
-        fail ("Temporary disablement of comparison of GOB!");
+      case REB_CUSTOM:
         /* return Cmp_Gob(s, t); */
-
-      case REB_VECTOR:
-        fail ("Temporary disablement of comparison of VECTOR!");
         /* return Compare_Vector(s, t); */
-
-      case REB_IMAGE:
-        fail ("Temporary disablement of comparison of IMAGE!");
-
-      case REB_STRUCT:
-        fail ("Temporary disablement of comparison of STRUCT!");
         /* return Cmp_Struct(s, t); */
-
-      case REB_EVENT:
-        fail ("Temporary disablement of comparison of EVENT!");
         /* return Cmp_Event(s, t); */
+        fail ("Temporary disablement of CUSTOM! comparisons");
 
       case REB_BLANK:
       case REB_NULLED: // !!! should nulls be allowed at this level?

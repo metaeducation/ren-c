@@ -267,7 +267,16 @@ inline static void SET_GOB_OWNER(REBGOB *g, REBGOB *owner) {
 #define IS_GOB_TEXT(g)   (GOB_TYPE(g) == GOBT_TEXT)
 
 extern REBGOB *Gob_Root;  // Top level GOB (the screen)
+extern REBTYP *EG_Gob_Type;
 
+inline static bool IS_GOB(const RELVAL *v) {
+    //
+    // Note that for this test, if there's a quote level it doesn't count...
+    // that would be QUOTED! (IS_QUOTED()).  To test for quoted images, you
+    // have to call CELL_CUSTOM_TYPE() on the VAL_UNESCAPED() cell.
+    //
+    return IS_CUSTOM(v) and CELL_CUSTOM_TYPE(v) == EG_Gob_Type;
+}
 
 #if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     #define VAL_GOB(v) \
@@ -277,17 +286,17 @@ extern REBGOB *Gob_Root;  // Top level GOB (the screen)
         PAYLOAD(Any, v).second.u
 #else
     inline static REBGOB* VAL_GOB(const REBCEL *v) {
-        assert(CELL_KIND(v) == REB_GOB);
+        assert(CELL_CUSTOM_TYPE(v) == EG_Gob_Type);
         return cast(REBGOB*, VAL_NODE(v));
     }
 
     inline static uintptr_t const &VAL_GOB_INDEX(const REBCEL *v) {
-        assert(CELL_KIND(v) == REB_GOB);
+        assert(CELL_CUSTOM_TYPE(v) == EG_Gob_Type);
         return PAYLOAD(Any, v).second.u;
     }
 
     inline static uintptr_t &VAL_GOB_INDEX(REBCEL *v) {
-        assert(CELL_KIND(v) == REB_GOB);
+        assert(CELL_CUSTOM_TYPE(v) == EG_Gob_Type);
         return PAYLOAD(Any, v).second.u;
     }
 #endif
@@ -295,14 +304,14 @@ extern REBGOB *Gob_Root;  // Top level GOB (the screen)
 inline static REBVAL *Init_Gob(RELVAL *out, REBGOB *g) {
     assert(GET_SERIES_FLAG(g, MANAGED));
 
-    RESET_CELL(out, REB_GOB, CELL_FLAG_FIRST_IS_NODE);
+    RESET_CUSTOM_CELL(out, EG_Gob_Type, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_NODE(out, g);
     VAL_GOB_INDEX(out) = 0;
     return KNOWN(out);
 }
 
 
-// !!! These hooks allow the REB_GOB cell type to dispatch to code in the
+// !!! These hooks allow the GOB! cell type to dispatch to code in the
 // GOB! extension if it is loaded.
 //
 extern REBINT CT_Gob(const REBCEL *a, const REBCEL *b, REBINT mode);

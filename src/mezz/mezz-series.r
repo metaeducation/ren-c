@@ -29,7 +29,7 @@ offset-of: func [
 
 last?: single?: func [
     "Returns TRUE if the series length is 1."
-    series [any-series! port! map! tuple! bitset! object! gob! any-word!]
+    series [any-series! port! map! tuple! bitset! object! any-word!]
 ][
     1 = length of series
 ]

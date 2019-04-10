@@ -13,7 +13,88 @@ REBOL [
 
 ; !!! Should call UNREGISTER-GOB-HOOKS at some point (module finalizer?)
 ;
-register-gob-hooks
+register-gob-hooks [  ; !!! See remarks, block of generics is vaporware ATM
+    skip: generic [
+        return: [<opt> <dequote> gob!]
+        series [<blank> <requote> gob!]
+        offset [any-number! logic! pair!]
+        /only
+    ]
+
+    at: generic [
+        return: [<opt> <requote> gob!]
+        series [<blank> <dequote> gob!]
+        index [any-number! logic! pair!]
+        /only
+    ]
+
+    find: generic [
+        return: [<opt> <requote> gob!]
+        series [<blank> <dequote> gob!]
+        pattern [gob!]
+    ]
+
+    take*: generic [
+        {Removes and returns one or more elements}
+
+        return: [<opt> any-value!]
+        series [gob!]
+        /part [any-number! pair!]
+        /deep
+        /last
+    ]
+
+    insert: generic [
+        return: [<requote> gob!]
+        series [<dequote> gob!]
+        value [<opt> gob! block!]
+        /part [any-number! pair!]
+        /only
+        /dup [any-number! pair!]
+        /line
+    ]
+
+    append: generic [
+        return: [<requote> gob!]
+        series [<dequote> gob!]
+        value [<opt> gob! block!]
+        /part [any-number! any-series! pair!]
+        /only
+        /dup [any-number! pair!]
+        /line
+    ]
+
+    change: generic [
+        return: [<requote> gob!]
+        series [<dequote> gob!]
+        value [<opt> gob! block!]
+        /part [any-number! any-series! pair!]
+        /only
+        /dup [any-number! pair!]
+        /line
+    ]
+
+    remove: generic [
+        return: [<requote> gob!]
+        series [<dequote> gob!]
+        /part [any-number! any-series! pair! char!]
+    ]
+
+    clear: generic [
+        series [gob!] 
+    ]
+
+    swap: generic [
+        series1 [gob!]
+        series2 [gob!]
+    ]
+
+    reverse: generic [
+        series [gob!]
+        ; GOB! was not mentioned in the /PART refinement
+    ]
+]
+
 
 sys/make-scheme [
     title: "GUI Events"

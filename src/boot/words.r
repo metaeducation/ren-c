@@ -35,8 +35,14 @@ datatypes
 ; this list is applied, so you only see typesets in this file.
 ;-----------------------------------------------------------------------------
 
-none ; !!! Kept to be able to LOAD #[none] for legacy reasons
-unset ; !!! Kept to be able to LOAD #[unset] for legacy reasons
+;=== LEGACY HELPERS ===
+
+none  ; !!! for LOAD #[none]
+unset  ; !!! for LOAD #[unset]
+image!  ; !!! for LOAD #[image! [...]] (used in tests), and molding, temporary
+vector!  ; !!! for molding, temporary
+gob!  ; !!! for molding, temporary
+struct!  ; !!! for molding, temporary
 
 generic ;-- used in boot, see %generics.r
 

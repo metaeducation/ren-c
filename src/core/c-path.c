@@ -143,8 +143,8 @@ bool Next_Path_Throws(REBPVS *pvs)
 
   redo:;
 
-    enum Reb_Kind kind = VAL_TYPE(pvs->out);
-    PATH_HOOK *hook = Path_Hooks(kind);  // &PD_Fail is used instead of NULL
+    bool was_custom = (KIND_BYTE(pvs->out) == REB_CUSTOM);  // !!! for hack
+    PATH_HOOK *hook = Path_Hook_For_Type_Of(pvs->out);
 
     if (IS_END(*v) and PVS_IS_SET_PATH(pvs)) {
 
@@ -238,15 +238,12 @@ bool Next_Path_Throws(REBPVS *pvs)
 
           case REB_R_INVISIBLE:
             assert(PVS_IS_SET_PATH(pvs));
-            if (
-                hook != Path_Hooks(REB_STRUCT)
-                and hook != Path_Hooks(REB_GOB)
-            ){
+            if (not was_custom)
                 panic("SET-PATH! evaluation ran assignment before path end");
-            }
 
-            // !!! Temporary exception for STRUCT! and GOB!, the hack the
-            // dispatcher uses to do "sub-value addressing" is to call
+            // !!! All REB_CUSTOM types do not do this check at the moment
+            // But the exemption was made for STRUCT! and GOB!, due to the
+            // dispatcher hack to do "sub-value addressing" is to call
             // Next_Path_Throws inside of them, to be able to do a write
             // while they still have memory of what the struct and variable
             // are (which would be lost in this protocol otherwise).
@@ -632,8 +629,7 @@ REBNATIVE(pick)
 
   redo: ;  // semicolon is intentional, next line is declaration
 
-    enum Reb_Kind kind = VAL_TYPE(D_OUT);
-    PATH_HOOK *hook = Path_Hooks(kind);
+    PATH_HOOK *hook = Path_Hook_For_Type_Of(D_OUT);
 
     REB_R r = hook(pvs, PVS_PICKER(pvs), NULL);
     if (not r or r == pvs->out or GET_CELL_FLAG(r, ROOT))
@@ -716,8 +712,7 @@ REBNATIVE(poke)
     pvs->opt_label = NULL; // applies to e.g. :append/only returning APPEND
     pvs->special = ARG(value);
 
-    enum Reb_Kind kind = VAL_TYPE(location);
-    PATH_HOOK *hook = Path_Hooks(kind);
+    PATH_HOOK *hook = Path_Hook_For_Type_Of(location);
 
     const REBVAL *r = hook(pvs, PVS_PICKER(pvs), ARG(value));
     switch (KIND_BYTE(r)) {

@@ -30,23 +30,30 @@
 
 #include "reb-gob.h"
 
+REBTYP *EG_Gob_Type = nullptr;  // (E)xtension (G)lobal
+
 //
 //  register-gob-hooks: native [
 //
 //  {Make the GOB! datatype work with GENERIC actions, comparison ops, etc}
 //
 //      return: [void!]
+//      generics "List for HELP of which generics are supported (unused)"
+//          [block!]
 //  ]
 //
 REBNATIVE(register_gob_hooks)
 {
     GOB_INCLUDE_PARAMS_OF_REGISTER_GOB_HOOKS;
 
+    Extend_Generics_Someday(ARG(generics));  // !!! vaporware, see comments
+
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
     //
-    Hook_Datatype(
-        REB_GOB,
+    EG_Gob_Type = Hook_Datatype(
+        "http://datatypes.rebol.info/gob",
+        "graphical object",
         &T_Gob,
         &PD_Gob,
         &CT_Gob,
@@ -71,7 +78,7 @@ REBNATIVE(unregister_gob_hooks)
 {
     GOB_INCLUDE_PARAMS_OF_UNREGISTER_GOB_HOOKS;
 
-    Unhook_Datatype(REB_GOB);
+    Unhook_Datatype(EG_Gob_Type);
 
     return Init_Void(D_OUT);
 }

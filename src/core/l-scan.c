@@ -1993,15 +1993,33 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
             }
 
             REBSYM sym = VAL_WORD_SYM(ARR_HEAD(array));
-            if (IS_KIND_SYM(sym)) {
+            if (
+                IS_KIND_SYM(sym)
+                or sym == SYM_IMAGE_X
+            ){
                 if (ARR_LEN(array) != 2) {
                     DECLARE_LOCAL (temp);
                     Init_Block(temp, array);
                     fail (Error_Malconstruct_Raw(temp));
                 }
 
-                enum Reb_Kind kind = KIND_FROM_SYM(sym);
-                MAKE_HOOK *hook = Make_Hooks(kind);
+                // !!! Having an "extensible scanner" is something that has
+                // not been designed.  So the syntax `#[image! [...]]` for
+                // loading images doesn't have a strategy now that image is
+                // not baked in.  It adds to the concerns the scanner already
+                // has about evaluation, etc.  However, there are tests based
+                // on this...so we keep them loading and working for now.
+                //
+                enum Reb_Kind kind;
+                MAKE_HOOK *hook;
+                if (sym == SYM_IMAGE_X) {
+                    kind = REB_CUSTOM;
+                    hook = Make_Hook_For_Image();
+                }
+                else {
+                    kind = KIND_FROM_SYM(sym);
+                    hook = Make_Hook_For_Kind(kind);
+                }
 
                 // !!! As written today, MAKE may call into the evaluator, and
                 // hence a GC may be triggered.  Performing evaluations during
