@@ -345,9 +345,9 @@ move: func [
     {Move a value or span of values in a series}
 
     source "Source series (modified)"
-        [any-series!] 
+        [any-series!]
     offset "Offset to move by, or index to move to"
-        [integer!] 
+        [integer!]
     /part "Move part of a series by length"
         [integer!]
     /skip "Treat the series as records of fixed size"
@@ -372,7 +372,7 @@ extract: function [
 
     series [any-series!]
     width "Size of each entry (the skip)"
-        [integer!] 
+        [integer!]
     /index "Extract from offset position(s)"
         [any-number! logic! block!]
     /default "Default value to use (will be called each time if a function)"

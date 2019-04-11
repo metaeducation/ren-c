@@ -75,7 +75,7 @@ inline static bool IS_QUOTED_KIND(REBYTE k)
 // the CELL_KIND() as opposed to the VAL_TYPE
 
 #define IS_BINDABLE_KIND(k) \
-    ((k) >= REB_ISSUE)
+    ((k) >= REB_OBJECT)
 
 #define Is_Bindable(v) \
     IS_BINDABLE_KIND(CELL_KIND_UNCHECKED(v))  // checked elsewhere
@@ -150,13 +150,13 @@ inline static bool ANY_SCALAR_KIND(REBYTE k)
     ANY_SCALAR_KIND(KIND_BYTE(v))
 
 inline static bool ANY_STRING_KIND(REBYTE k)
-    { return k >= REB_TEXT and k <= REB_TAG; }
+    { return k >= REB_TEXT and k <= REB_ISSUE; }
 
 #define ANY_STRING(v) \
     ANY_STRING_KIND(KIND_BYTE(v))
 
 #define ANY_BINSTR_KIND_EVIL_MACRO \
-    (k >= REB_BINARY and k <= REB_TAG)
+    (k >= REB_BINARY and k <= REB_ISSUE)
 
 
 inline static bool ANY_BINSTR_KIND(REBYTE k)

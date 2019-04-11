@@ -177,17 +177,16 @@ url         "uniform resource locator or identifier"
 tag         "markup string (HTML or XML)"
             string      *       *       *       [series string]
 
+issue       "identifying marker"
+            string      *       *       *       [series string]
+
 ; </ANY-STRING>
+
 
 ; ============================================================================
 ; BEGIN BINDABLE TYPES - SEE Is_Bindable() - Reb_Value.extra USED FOR BINDING
 ; ============================================================================
 
-; !!! Issue is not grouped with the other ANY-WORD! becase it is inert.  But
-; it still has a binding, so it has to be here.
-
-issue       "identifying marker word"
-            word        -       *       +       [word]
 
 ; <ANY-CONTEXT>
 

@@ -686,7 +686,7 @@ REBTYPE(Time)
                 RESET_VAL_HEADER(to, REB_INTEGER, CELL_MASK_NONE);
                 RETURN (to);
             }
-            
+
             fail (PAR(to)); }
 
         case SYM_RANDOM: {

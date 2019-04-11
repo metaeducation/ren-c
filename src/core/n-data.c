@@ -370,7 +370,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
     case REB_WORD:
     case REB_SET_WORD:
     case REB_GET_WORD:
-    case REB_ISSUE: {
+    case REB_SYM_WORD: {
         if (IS_WORD_UNBOUND(v))
             return false;
 
@@ -1144,7 +1144,7 @@ REBNATIVE(as)
       case REB_WORD:
       case REB_GET_WORD:
       case REB_SET_WORD:
-      case REB_ISSUE: {
+      case REB_SYM_WORD: {
         if (ANY_STRING(v)) {  // aliasing data as an ANY-WORD! freezes data
             REBSTR *s = VAL_STRING(v);
             if (not IS_STR_SYMBOL(s)) {

@@ -790,7 +790,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
             continue;
 
           skip_this_arg_for_now:  // the GC marks args up through f->arg...
-            
+
             Init_Unreadable_Blank(f->arg);  // ...so cell must have valid bits
             continue;
 
@@ -871,16 +871,16 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
                     goto continue_arg_loop;  // !!! Double-check?
                 }
 
-                // A non-checked ISSUE! with binding indicates a partial
+                // A non-checked SYM-WORD! with binding indicates a partial
                 // refinement with parameter index that needs to be pushed
                 // to top of stack, hence HIGHER priority for fulfilling
                 // @ the callsite than any refinements added by a PATH!.
                 //
-                if (IS_ISSUE(f->special)) {
+                if (IS_SYM_WORD(f->special)) {
                     REBCNT partial_index = VAL_WORD_INDEX(f->special);
                     REBSTR *partial_canon = VAL_STORED_CANON(f->special);
 
-                    Init_Issue(DS_PUSH(), partial_canon);
+                    Init_Sym_Word(DS_PUSH(), partial_canon);
                     INIT_BINDING(DS_TOP, f->varlist);
                     INIT_WORD_INDEX(DS_TOP, partial_index);
                 }
@@ -1382,11 +1382,11 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         // second time through, and we were just jumping up to check the
         // parameters in response to a R_REDO_CHECKED; if so, skip this.
         //
-        if (DSP != f->dsp_orig and IS_ISSUE(DS_TOP)) {
+        if (DSP != f->dsp_orig and IS_SYM_WORD(DS_TOP)) {
 
           next_pickup:
 
-            assert(IS_ISSUE(DS_TOP));
+            assert(IS_SYM_WORD(DS_TOP));
 
             if (not IS_WORD_BOUND(DS_TOP)) { // the loop didn't index it
                 mutable_KIND_BYTE(DS_TOP) = REB_WORD;
@@ -1786,13 +1786,6 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         break;
 
 
-//==//// INERT WORD AND STRING TYPES /////////////////////////////////////==//
-
-    case REB_ISSUE:
-        // ^-- ANY-WORD!
-        goto inert;
-
-
 //==//// GROUP! ///////////////////////////////////////////////////////////=//
 //
 // If a GROUP! is seen then it generates another call into Eval_Core().  The
@@ -2159,11 +2152,13 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
       case REB_SYM_WORD:
         //
       case REB_BINARY:
+        //
       case REB_TEXT:
       case REB_FILE:
       case REB_EMAIL:
       case REB_URL:
       case REB_TAG:
+      case REB_ISSUE:
         //
       case REB_BITSET:
         //

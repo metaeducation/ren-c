@@ -812,6 +812,8 @@ inline static REBCNT Num_Codepoints_For_Bytes(
 #define Init_Email(v,s)     Init_Any_String((v), REB_EMAIL, (s))
 #define Init_Tag(v,s)       Init_Any_String((v), REB_TAG, (s))
 #define Init_Url(v,s)       Init_Any_String((v), REB_URL, (s))
+#define Init_Issue(v,s)     Init_Any_String((v), REB_ISSUE, (s))
+
 
 
 //=//// REBSTR CREATION HELPERS ///////////////////////////////////////////=//

@@ -21,17 +21,17 @@
 )
 
 (
-    no-decimal-add: reskinned [return: #remove [decimal!]] adapt :add []
+    no-decimal-add: reskinned [return: @remove [decimal!]] adapt :add []
     did all [
         10 = no-decimal-add 5 5
         (trap [no-decimal-add 5.0 5.0])/id = 'bad-return-type
     ]
 )
 
-; The #add instruction adds an accepted type, leaving the old
+; The @add instruction adds an accepted type, leaving the old
 (
     foo: func [x [integer!]] [x]
-    skin: reskinned [x #add [text!]] (adapt :foo [x: to integer! x])
+    skin: reskinned [x @add [text!]] (adapt :foo [x: to integer! x])
 
     did all [
         10 = skin "10"
@@ -50,11 +50,11 @@
     ]
 )
 
-; #remove takes away types; doesn't need to be ADAPT-ed or ENCLOSE'd to do so
+; @remove takes away types; doesn't need to be ADAPT-ed or ENCLOSE'd to do so
 
 (
     foo: func [x [integer! text!]] [x]
-    skin: reskinned [x #remove [integer!]] :foo
+    skin: reskinned [x @remove [integer!]] :foo
 
     did all [
         "10" = skin "10"
@@ -65,12 +65,12 @@
 ; You can change the conventions of a function from quoting to non, etc.
 
 (
-    skin: reskinned [#change value] :lit
+    skin: reskinned [@change value] :lit
     3 = skin 1 + 2
 )
 
 (
-    append-lit: reskinned [#change :value] :append
+    append-lit: reskinned [@change :value] :append
     [a b c d] = append-lit [a b c] d
 )
 
@@ -89,7 +89,7 @@
 ; sneak through unchecked.
 
 (
-    skin: reskinned [series #add [integer!]] (adapt :append [])
+    skin: reskinned [series @add [integer!]] (adapt :append [])
 
     e: trap [
         skin 10 "this would crash if there wasn't a recheck"

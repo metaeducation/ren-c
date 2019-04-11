@@ -62,7 +62,7 @@
             ]
             return sum + 1
         ]
-        tweak :defers #defer on
+        tweak :defers 'defer on
         true
     )
 

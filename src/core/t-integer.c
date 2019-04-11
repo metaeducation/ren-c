@@ -263,7 +263,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
         // more sense as these would be hexes likely typed in by users,
         // who rarely do 2s-complement math in their head.
 
-        REBSTR *spelling = VAL_WORD_SPELLING(value);
+        REBSTR *spelling = VAL_STRING(value);
         const REBYTE *bp = STR_HEAD(spelling);
         size_t size = STR_SIZE(spelling);
 

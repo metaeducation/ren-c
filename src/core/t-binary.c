@@ -757,7 +757,7 @@ REBTYPE(Binary)
 
         if (REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
- 
+
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 
         return Init_Any_Series(

@@ -555,7 +555,7 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, REBINT strictness)
           case REB_WORD:
           case REB_SET_WORD:
           case REB_GET_WORD:
-          case REB_ISSUE:
+          case REB_SYM_WORD:
             if (ANY_WORD(b)) goto compare;
             break;
 
@@ -564,6 +564,7 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, REBINT strictness)
           case REB_EMAIL:
           case REB_URL:
           case REB_TAG:
+          case REB_ISSUE:
             if (ANY_STRING(b)) goto compare;
             break;
 

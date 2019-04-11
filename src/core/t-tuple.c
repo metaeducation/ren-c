@@ -109,7 +109,7 @@ REB_R MAKE_Tuple(
     REBCNT alen;
 
     if (IS_ISSUE(arg)) {
-        REBSTR *spelling = VAL_WORD_SPELLING(arg);
+        REBSTR *spelling = VAL_STRING(arg);
         const REBYTE *ap = STR_HEAD(spelling);
         size_t size = STR_SIZE(spelling); // UTF-8 len
         if (size & 1)

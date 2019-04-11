@@ -94,7 +94,7 @@
 (equal? equal? #{00} to integer! #{00} equal? to integer! #{00} #{00})
 ; issue! vs. text!
 ; RAMBO #3518
-(not-equal? a-value: #a to text! a-value)
+(equal? a-value: #a to text! a-value)
 (
     a-value: #a
     equal? equal? a-value to text! a-value equal? to text! a-value a-value

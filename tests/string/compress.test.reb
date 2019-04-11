@@ -23,7 +23,7 @@
     ]
 )
 
-;  test a "foreign" file 
+;  test a "foreign" file
 (
     did all [
         unzip (unzipped: copy []) %fixtures/test.docx

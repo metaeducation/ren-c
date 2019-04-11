@@ -168,7 +168,7 @@ round: generic [
     {Rounds a numeric value; halves round up (away from zero) by default}
 
     value "The value to round"
-        [any-number! pair! money! time!] 
+        [any-number! pair! money! time!]
     /to "Return the nearest multiple of the parameter (must be non-zero)"
         [any-number! money! time!]
     /even "Halves round toward even results"
@@ -372,7 +372,7 @@ clear: generic [
     {Removes elements from current position to tail; returns at new tail}
 
     series "At position (modified)"
-        [any-series! port! map! bitset!] 
+        [any-series! port! map! bitset!]
 ]
 
 swap: generic [
@@ -395,7 +395,7 @@ sort: generic [
     {Sorts a series; default sort order is ascending}
 
     series "At position (modified)"
-        [any-series!] 
+        [any-series!]
     /case "Case sensitive sort"
     /skip "Treat the series as records of fixed size"
         [integer!]

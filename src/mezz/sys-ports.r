@@ -186,7 +186,6 @@ make-scheme: function [
         [block!]
     /with "Scheme name to use as base"
         [word!]
-        
 ][
     with: either with [get in system/schemes with][system/standard/scheme]
     if not with [cause-error 'access 'no-scheme with]

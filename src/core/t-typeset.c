@@ -219,7 +219,7 @@ bool Add_Typeset_Bits_Core(
             else
                 fail ("WORD!/PATH! quote typechecking only, use QUOTED!");
         }
-        else if (IS_ISSUE(item)) {  // !!! Hacks !!!
+        else if (IS_SYM_WORD(item)) {  // !!! Hacks !!!
             //
             // Allow type-checking to filter on paths which start with BLANK!,
             // especially useful to combine with <skip>, e.g. `switch /equal?`

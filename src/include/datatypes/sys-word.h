@@ -273,7 +273,7 @@ inline static REBVAL *Init_Any_Word(
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
 #define Init_Set_Word(out,str)      Init_Any_Word((out), REB_SET_WORD, (str))
-#define Init_Issue(out,str)         Init_Any_Word((out), REB_ISSUE, (str))
+#define Init_Sym_Word(out,str)      Init_Any_Word((out), REB_SYM_WORD, (str))
 
 inline static REBVAL *Init_Any_Word_Bound(
     RELVAL *out,

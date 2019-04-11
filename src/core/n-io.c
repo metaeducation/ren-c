@@ -593,14 +593,7 @@ REBNATIVE(local_to_file)
         if (not REF(pass))
             fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
 
-        return Init_File(  // Copy (callers frequently modify result)
-            D_OUT,
-            STR(Copy_Sequence_At_Len(
-                VAL_SERIES(path),
-                VAL_INDEX(path),
-                VAL_LEN_AT(path)
-            ))
-        );
+        return Init_File(D_OUT, Copy_String_At(path));  // many callers modify
     }
 
     return Init_File(
@@ -638,14 +631,7 @@ REBNATIVE(file_to_local)
         if (not REF(pass))
             fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
 
-        return Init_Text(  // Copy (callers frequently modify result)
-            D_OUT,
-            STR(Copy_Sequence_At_Len(
-                VAL_SERIES(path),
-                VAL_INDEX(path),
-                VAL_LEN_AT(path)
-            ))
-        );
+        return Init_Text(D_OUT, Copy_String_At(path));  // callers modify
     }
 
     return Init_Text(
@@ -663,12 +649,15 @@ REBNATIVE(file_to_local)
 
 //
 //  what-dir: native [
-//  "Returns the current directory path."
-//      ; No arguments
+//
+//  {Returns the current directory path}
+//
 //  ]
 //
 REBNATIVE(what_dir)
 {
+    INCLUDE_PARAMS_OF_WHAT_DIR;
+
     REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
     if (IS_FILE(current_path) || IS_BLANK(current_path)) {
@@ -693,16 +682,7 @@ REBNATIVE(what_dir)
         fail (current_path);
     }
 
-    // Note the expectation is that WHAT-DIR will return a value that can be
-    // mutated by the caller without affecting future calls to WHAT-DIR, so
-    // the variable holding the current path must be copied.
-    //
-    return Init_Any_Series_At(
-        D_OUT,
-        VAL_TYPE(current_path),
-        Copy_Sequence_Core(VAL_SERIES(current_path), NODE_FLAG_MANAGED),
-        VAL_INDEX(current_path)
-    );
+    return rebValue("copy", current_path, rebEND);  // caller mutates, copy
 }
 
 

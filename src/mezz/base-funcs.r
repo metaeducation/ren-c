@@ -479,7 +479,7 @@ so: enfix func [
     ]
     return :feed
 ]
-tweak :so #postpone on
+tweak :so 'postpone on
 
 
 matched: enfix redescribe [
@@ -499,7 +499,7 @@ matched: enfix redescribe [
         :value
     ]
 )
-tweak :matched #postpone on
+tweak :matched 'postpone on
 
 ; Rare case where a `?` variant is useful, to avoid VOID! on falsey matches
 match?: chain [:match | :value?]
@@ -519,7 +519,7 @@ was: enfix redescribe [
         :left  ; choose left in case binding or case matters somehow
     ]
 )
-tweak :was #postpone on
+tweak :was 'postpone on
 
 
 zdeflate: redescribe [

@@ -90,14 +90,9 @@ REB_R MAKE_Word(
         REBSIZ size;
         const REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
-        if (kind == REB_ISSUE) {
-            if (NULL == Scan_Issue(out, bp, size))
-                fail (Error_Bad_Char_Raw(arg));
-        }
-        else {
-            if (NULL == Scan_Any_Word(out, kind, bp, size))
-                fail (Error_Bad_Char_Raw(arg));
-        }
+        if (NULL == Scan_Any_Word(out, kind, bp, size))
+            fail (Error_Bad_Char_Raw(arg));
+
         return out;
     }
     else if (IS_CHAR(arg)) {
@@ -205,16 +200,6 @@ void MF_Sym_word(REB_MOLD *mo, const REBCEL *v, bool form) {
     Mold_Word(mo, v);
 }
 
-
-
-//
-//  MF_Issue: C
-//
-void MF_Issue(REB_MOLD *mo, const REBCEL *v, bool form) {
-    UNUSED(form);
-    Append_Codepoint(mo->series, '#');
-    Mold_Word(mo, v);
-}
 
 
 //

@@ -137,7 +137,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         if (REF(new) or REF(read) or REF(write) or REF(seek) or REF(allow))
             fail (Error_Bad_Refines_Raw());
- 
+
         OS_DO_DEVICE_SYNC(req, RDC_OPEN);
         RETURN (port); }
 

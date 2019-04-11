@@ -357,7 +357,7 @@ REB_R PD_Action(
     else
         fail (Error_Bad_Refine_Raw(picker));
 
-    Init_Issue(DS_PUSH(), STR_CANON(spelling)); // canonize just once
+    Init_Sym_Word(DS_PUSH(), STR_CANON(spelling)); // canonize just once
 
     return pvs->out; // leave ACTION! value in pvs->out, as-is
 }

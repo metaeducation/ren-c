@@ -148,6 +148,6 @@ my: enfix redescribe [
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
 ; `return: []`) permit a more flexible version of the mechanic.
 
-set (r3-alpha-lit "<|") tweak copy :eval-all #postpone on
-set/enfix (r3-alpha-lit "|>") tweak copy :shove #postpone on
+set (r3-alpha-lit "<|") tweak copy :eval-all 'postpone on
+set/enfix (r3-alpha-lit "|>") tweak copy :shove 'postpone on
 ||: :once-bar

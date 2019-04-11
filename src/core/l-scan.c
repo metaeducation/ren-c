@@ -1699,7 +1699,7 @@ REBVAL *Scan_To_Stack(SCAN_STATE *ss) {
           case TOKEN_SYM: {  // !!! Similar to TOKEN_GET, try unifying
             ++bp;
             goto token_set; }
-            
+
           case TOKEN_GET:
             if (ep[-1] == ':') {
                 if (ep[0] == '/') {  // e.g. :/foo
@@ -2832,6 +2832,6 @@ const REBYTE *Scan_Issue(RELVAL *out, const REBYTE *cp, REBCNT len)
         }
     }
 
-    Init_Issue(out, Intern_UTF8_Managed(cp, len));
+    Init_Issue(out, Make_Sized_String_UTF8(cs_cast(cp), len));
     return bp;
 }

@@ -264,6 +264,7 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_EMAIL:
       case REB_URL:
       case REB_TAG:
+      case REB_ISSUE:
         hash = Hash_UTF8_Caseless(
             VAL_STRING_AT(cell),
             VAL_LEN_AT(cell)
@@ -316,7 +317,7 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:
-      case REB_ISSUE: {
+      case REB_SYM_WORD: {
         //
         // Note that the canon symbol may change for a group of word synonyms
         // if that canon is GC'd--it picks another synonym.  Thus the pointer

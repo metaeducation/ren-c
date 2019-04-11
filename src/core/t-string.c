@@ -960,6 +960,11 @@ void MF_String(REB_MOLD *mo, const REBCEL *v, bool form)
         Mold_Tag(mo, v);
         break;
 
+      case REB_ISSUE:
+        Append_Codepoint(mo->series, '#');
+        Append_String(mo->series, v, VAL_LEN_AT(v));
+        break;
+
       default:
         panic (v);
     }
@@ -1195,7 +1200,7 @@ REBTYPE(String)
 
         if (REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
- 
+
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 
         return Init_Any_String(

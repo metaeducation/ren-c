@@ -456,8 +456,8 @@ bool Eval_Path_Throws_Core(
         REBVAL *top = DS_TOP;
 
         while (top > bottom) {
-            assert(IS_ISSUE(bottom) and not IS_WORD_BOUND(bottom));
-            assert(IS_ISSUE(top) and not IS_WORD_BOUND(top));
+            assert(IS_SYM_WORD(bottom) and not IS_WORD_BOUND(bottom));
+            assert(IS_SYM_WORD(top) and not IS_WORD_BOUND(top));
 
             // It's faster to just swap the spellings.  (If binding
             // mattered, we'd need to swap the whole cells).

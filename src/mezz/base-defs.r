@@ -46,7 +46,7 @@ set/enfix lit enfix: func [
     ;-- Note: actually *faster* than a native, due to Commenter_Dispatcher()
 ]
 
-tweak :| #postpone on
+tweak :| 'postpone on
 
 
 ??: ;; shorthand form to use in debug sessions, not intended to be committed
@@ -73,9 +73,9 @@ probe: func [
 ; known what would be best for them.  They aren't parameter conventions, they
 ; apply to the whole action.
 ;
-tweak :else #defer on
-tweak :then #defer on
-tweak :also #defer on
+tweak :else 'defer on
+tweak :then 'defer on
+tweak :also 'defer on
 
 
 ; Convenience helper for making enfixed functions

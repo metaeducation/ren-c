@@ -386,6 +386,7 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool is_case)
       case REB_EMAIL:
       case REB_URL:
       case REB_TAG:
+      case REB_ISSUE:
         return Compare_String_Vals(s, t, not is_case);
 
       case REB_BITSET: {  // !!! Temporarily init as binaries at index 0
@@ -404,7 +405,7 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool is_case)
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:
-      case REB_ISSUE:
+      case REB_SYM_WORD:
         return Compare_Word(s,t,is_case);
 
       case REB_ERROR:

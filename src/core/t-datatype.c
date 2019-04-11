@@ -274,7 +274,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
         nullptr,
         Canon(SYM_REFINEMENT_X)
     );
-    Init_Issue(refinement, Canon(SYM_REFINEMENT_X));
+    Init_Sym_Word(refinement, Canon(SYM_REFINEMENT_X));
 
     // Extensions can add datatypes.  These types are not identified by a
     // single byte, but give up the `extra` portion of their cell to hold
@@ -331,7 +331,7 @@ REBTYP *Hook_Datatype(
     MOLD_HOOK *mold
 ){
     UNUSED(description);
-    
+
     REBVAL *url_value = rebText(url);
     REBVAL *datatype = Datatype_From_Url(url_value);
 

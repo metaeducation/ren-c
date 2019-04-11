@@ -214,7 +214,8 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_FILE:
       case REB_EMAIL:
       case REB_URL:
-      case REB_TAG: {
+      case REB_TAG:
+      case REB_ISSUE: {
         if (GET_SERIES_INFO(PAYLOAD(Any, v).first.node, INACCESSIBLE))
             break;
 
@@ -241,9 +242,6 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         break; }
 
     //=//// BEGIN BINDABLE TYPES ////////////////////////////////////////=//
-
-      case REB_ISSUE:
-          goto any_word;  // !!! this is being changed back to ANY-STRING!
 
       case REB_OBJECT:
       case REB_MODULE:
@@ -343,7 +341,6 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         assert(Is_Marked(a));
         break; }
 
-      any_word:
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:

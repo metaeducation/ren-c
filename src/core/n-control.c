@@ -300,12 +300,12 @@ inline static bool Single_Test_Throws(
         );
         return false;
 
-      case REB_ISSUE: {
+      case REB_SYM_WORD: {
         //
         // !!! Currently a hack for the absence of higher-level typecheck
         // functions.  e.g. there's no way to make a typecheck that says
         // "PATH! with a BLANK! at the head".  You can only say PATH.  So
-        // for now, #REFINEMENT is that test.  Generalizations of typechecks
+        // for now, @REFINEMENT is that test.  Generalizations of typechecks
         // should improve the state of this.
         //
         if (VAL_WORD_SYM(test_cell) == SYM_REFINEMENT_X) {

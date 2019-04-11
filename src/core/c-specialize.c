@@ -155,20 +155,20 @@ REBCTX *Make_Context_For_Action_Push_Partials(
             continue;
         }
 
-        // Unspecialized refinement slots may have an ISSUE! in them that
+        // Unspecialized refinement slots may have an SYM-WORD! in them that
         // reflects a partial that needs to be pushed to the stack.  (They
         // are in *reverse* order of use.)
 
         assert(
             (special == param and IS_PARAM(special))
-            or (IS_ISSUE(special) or IS_NULLED(special))
+            or (IS_SYM_WORD(special) or IS_NULLED(special))
         );
 
-        if (IS_ISSUE(special)) {
+        if (IS_SYM_WORD(special)) {
             REBCNT partial_index = VAL_WORD_INDEX(special);
-            Init_Any_Word_Bound( // push an ISSUE! to data stack
+            Init_Any_Word_Bound( // push a SYM-WORD! to data stack
                 DS_PUSH(),
-                REB_ISSUE,
+                REB_SYM_WORD,
                 VAL_STORED_CANON(special),
                 exemplar,
                 partial_index
@@ -379,7 +379,7 @@ bool Specialize_Action_Throws(
                         //
                         Init_Any_Word_Bound(
                             arg,
-                            REB_ISSUE,
+                            REB_SYM_WORD,
                             VAL_STORED_CANON(ordered),
                             exemplar,
                             VAL_WORD_INDEX(ordered)
@@ -431,7 +431,7 @@ bool Specialize_Action_Throws(
         assert(NOT_CELL_FLAG(arg, ARG_MARKED_CHECKED));
         assert(
             IS_NULLED(arg)
-            or (IS_ISSUE(arg) and TYPE_CHECK(param, REB_TS_REFINEMENT))
+            or (IS_SYM_WORD(arg) and TYPE_CHECK(param, REB_TS_REFINEMENT))
         );
         Move_Value(DS_PUSH(), param);
         continue;
@@ -672,7 +672,7 @@ void For_Each_Unspecialized_Param(
             return;
         }
 
-        if (IS_ISSUE(special)) {
+        if (IS_SYM_WORD(special)) {
             assert(TYPE_CHECK(param, REB_TS_REFINEMENT));
             Move_Value(DS_PUSH(), special);
         }

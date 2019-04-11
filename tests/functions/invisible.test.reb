@@ -137,8 +137,8 @@
         left-normal*: enfix right-normal*:
             func [return: [<opt> word!] x [word! <end>]] [:x]
 
-        left-defer: enfix tweak (copy :left-normal) #defer on
-        left-defer*: enfix tweak (copy :left-normal*) #defer on
+        left-defer: enfix tweak (copy :left-normal) 'defer on
+        left-defer*: enfix tweak (copy :left-normal*) 'defer on
 
         left-soft: enfix right-soft:
             func [return: [<opt> word!] 'x [word!]] [:x]

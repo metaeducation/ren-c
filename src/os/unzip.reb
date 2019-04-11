@@ -359,7 +359,7 @@ ctx-zip: context [
         num-entries: 0
         parse source [some [
             to central-file-sig 4 skip
-            central-header: 
+            central-header:
             [
                 ; check coerence between central file header
                 ; and local file header

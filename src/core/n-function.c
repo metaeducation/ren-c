@@ -834,7 +834,7 @@ REB_R Skinner_Dispatcher(REBFRM *f)
 //
 //      return: "A new action value with the modified parameter conventions"
 //          [action!]
-//      skin "Mutation spec, e.g. [param1 #add [integer!] 'param2 [tag!]]"
+//      skin "Mutation spec, e.g. [param1 @add [integer!] 'param2 [tag!]]"
 //          [block!]
 //      action [action!]
 //  ]
@@ -892,8 +892,12 @@ REBNATIVE(reskinned)
     Reb_Param_Class pclass;
     while (NOT_END(item)) {
         bool change;
-        if (KIND_BYTE(item) != REB_ISSUE or VAL_WORD_SYM(item) != SYM_CHANGE)
+        if (
+            KIND_BYTE(item) != REB_SYM_WORD
+            or VAL_WORD_SYM(item) != SYM_CHANGE
+        ){
             change = false;
+        }
         else {
             change = true;
             ++item;
@@ -955,19 +959,19 @@ REBNATIVE(reskinned)
         ++item;
 
         // The next thing is either a BLOCK! (in which case we take its type
-        // bits verbatim), or #add or #remove, so you can tweak w.r.t. just
+        // bits verbatim), or @add or @remove, so you can tweak w.r.t. just
         // some bits.
 
         REBSYM sym = SYM_0;
-        if (REB_ISSUE == KIND_BYTE(item)) {
+        if (REB_SYM_WORD == KIND_BYTE(item)) {
             sym = VAL_WORD_SYM(item);
             if (sym != SYM_REMOVE and sym != SYM_ADD)
-                fail ("RESKIN only supports #add and #remove instructions");
+                fail ("RESKIN only supports @add and @remove instructions");
             ++item;
         }
 
         if (REB_BLOCK != KIND_BYTE(item)) {
-            if (change) // [#change 'arg] is okay w/no block
+            if (change) // [@change 'arg] is okay w/no block
                 continue;
             fail ("Expected BLOCK! after instruction");
         }
@@ -1103,8 +1107,8 @@ REBNATIVE(reskinned)
 //          [action!]
 //      action "(modified) Action to modify property of"
 //          [action!]
-//      property "Currently must be [#defer #postpone]"
-//          [issue!]
+//      property "Currently must be [defer postpone]"
+//          [word!]
 //      enable [logic!]
 //  ]
 //
@@ -1123,18 +1127,18 @@ REBNATIVE(tweak)
     switch (VAL_WORD_SYM(ARG(property))) {
       case SYM_DEFER: // Special enfix behavior used by THEN, ELSE, ALSO...
         if (pclass != REB_P_NORMAL)
-            fail ("TWEAK #defer only actions with evaluative 1st params");
+            fail ("TWEAK defer only actions with evaluative 1st params");
         flag = PARAMLIST_FLAG_DEFERS_LOOKBACK;
         break;
 
       case SYM_POSTPONE: // Wait as long as it can to run w/o changing order
         if (pclass != REB_P_NORMAL and pclass != REB_P_SOFT_QUOTE)
-            fail ("TWEAK #postpone only actions with evaluative 1st params");
+            fail ("TWEAK postpone only actions with evaluative 1st params");
         flag = PARAMLIST_FLAG_POSTPONES_ENTIRELY;
         break;
 
       default:
-        fail ("TWEAK currently only supports [#defer #postpone]");
+        fail ("TWEAK currently only supports [defer postpone]");
     }
 
     if (VAL_LOGIC(ARG(enable)))

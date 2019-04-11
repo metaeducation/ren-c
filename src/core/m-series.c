@@ -115,19 +115,16 @@ void Append_Values_Len(REBARR *a, const REBVAL *head, REBCNT len)
 //
 //  Copy_Sequence_Core: C
 //
-// Copy any series that *isn't* an "array" (such as STRING!,
-// BINARY!, BITSET!, VECTOR!...).  Includes the terminator.
+// Copy underlying series that *isn't* an "array" (such as STRING!, BINARY!,
+// BITSET!, VECTOR!...).  Includes the terminator.
 //
-// Use Copy_Array routines (which specify Shallow, Deep, etc.) for
-// greater detail needed when expressing intent for Rebol Arrays.
+// Use Copy_Array routines (which specify Shallow, Deep, etc.) for greater
+// detail needed when expressing intent for Rebol Arrays.
 //
-// Note: No suitable name for "non-array-series" has been picked.
-// "Sequence" is used for now because Copy_Non_Array() doesn't
-// look good and lots of things aren't "Rebol Arrays" that aren't
-// series.  The main idea was just to get rid of the generic
-// Copy_Series() routine, which doesn't call any attention
-// to the importance of stating one's intentions specifically
-// about semantics when copying an array.
+// The reason this can be used on strings or binaries is because it copies
+// from the head position.  Copying from a non-head position might be in the
+// middle of a UTF-8 codepoint, hence a string series aliased as a binary
+// could only have its copy used in a BINARY!.
 //
 REBSER *Copy_Sequence_Core(REBSER *s, REBFLGS flags)
 {
@@ -161,11 +158,16 @@ REBSER *Copy_Sequence_Core(REBSER *s, REBFLGS flags)
 //
 //  Copy_Sequence_At_Len_Extra: C
 //
-// Copy a subseries out of a series that is not an array.
-// Includes the terminator for it.
+// Copy a subseries out of a series that is not an array.  Includes the
+// terminator for it.
 //
 // Use Copy_Array routines (which specify Shallow, Deep, etc.) for
 // greater detail needed when expressing intent for Rebol Arrays.
+//
+// Note: This cannot be used to make a series that will be used in a string
+// *unless* you are sure that the copy is on a correct UTF-8 codepoint
+// boundary.  This is a low-level routine, so the caller must fix up the
+// length information, or Init_Any_String() will complain.
 //
 REBSER *Copy_Sequence_At_Len_Extra(
     REBSER *s,
@@ -174,7 +176,6 @@ REBSER *Copy_Sequence_At_Len_Extra(
     REBCNT extra
 ){
     assert(not IS_SER_ARRAY(s));
-    assert(not (IS_SER_STRING(s) and not IS_STR_SYMBOL(s)));
 
     REBSER *copy = Make_Series(len + 1 + extra, SER_WIDE(s));
     memcpy(
