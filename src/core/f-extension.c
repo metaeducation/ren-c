@@ -141,7 +141,7 @@ REBNATIVE(load_extension)
 
         //Check_Security(SYM_EXTENSION, POL_EXEC, val);
 
-        MAKE_Library(lib, REB_LIBRARY, nullptr, ARG(where));
+        MAKE_Library(lib, REB_CUSTOM, nullptr, ARG(where));
 
         // !!! This code used to check for loading an already loaded
         // extension.  It looked in an "extensions list", but now that the

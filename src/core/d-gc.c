@@ -193,16 +193,6 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         }
         break; }
 
-
-      case REB_LIBRARY: {
-        assert(Is_Marked(VAL_LIBRARY(v)));
-        REBCTX *meta = VAL_LIBRARY_META(v);
-        if (meta)
-            assert(Is_Marked(meta));
-        break; }
-
-    //=//// CUSTOM EXTENSION TYPES ////////////////////////////////////////=//
-
       case REB_EVENT: {  // packed cell structure with one GC-able slot
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         REBNOD *n = PAYLOAD(Any, v).first.node;  // REBGOB*, REBREQ*, etc.

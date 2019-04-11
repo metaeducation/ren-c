@@ -132,9 +132,6 @@ map         "name-value pairs (hash associative)"
 handle      "arbitrary internal object or value"
             handle      -       -       +       []
 
-library     "external library reference"
-            library     -       +       +       []
-
 
 ; This table of fundamental types is intended to be limited (less than
 ; 64 entries).  Yet there can be an arbitrary number of extension types.

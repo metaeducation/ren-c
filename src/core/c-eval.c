@@ -2198,7 +2198,6 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         //
       case REB_EVENT:
       case REB_HANDLE:
-      case REB_LIBRARY:
 
       case REB_CUSTOM:  // custom types (IMAGE!, VECTOR!) are all inert
 

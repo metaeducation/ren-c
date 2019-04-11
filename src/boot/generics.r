@@ -434,7 +434,7 @@ open: generic [
 close: generic [
     {Closes a port/library.}
     return: [<opt> any-value!]
-    port [port! library!]
+    port [port!]  ; !!! See Extend_Generics_Someday() for why LIBRARY! works
 ]
 
 read: generic [

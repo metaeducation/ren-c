@@ -69,12 +69,14 @@ inline static REBSYM VAL_TYPE_SYM(const REBCEL *v) {
     RELVAL *ext = ARR_HEAD(PG_Extension_Types);
     REBTYP *t = VAL_TYPE_CUSTOM(v);
     if (t == VAL_TYPE_CUSTOM(ext + 0))
-        return SYM_IMAGE_X;
+        return SYM_LIBRARY_X;
     if (t == VAL_TYPE_CUSTOM(ext + 1))
-        return SYM_VECTOR_X;
+        return SYM_IMAGE_X;
     if (t == VAL_TYPE_CUSTOM(ext + 2))
+        return SYM_VECTOR_X;
+    if (t == VAL_TYPE_CUSTOM(ext + 3))
         return SYM_GOB_X;
-    assert(t == VAL_TYPE_CUSTOM(ext + 3));
+    assert(t == VAL_TYPE_CUSTOM(ext + 4));
     return SYM_STRUCT_X;
 }
 

@@ -132,7 +132,7 @@ PVAR REBVAL *Root_Stats_Map;
 PVAR REBVAL *Root_Stackoverflow_Error; // made in advance, avoids extra calls
 
 PVAR REBARR *PG_Extension_Types;  // array of datatypes created by extensions
-
+PVAR REBTYP *PG_Library_Type;  // LIBRARY! type (not a "Built-in Type")
 
 // This signal word should be thread-local, but it will not work
 // when implemented that way. Needs research!!!!

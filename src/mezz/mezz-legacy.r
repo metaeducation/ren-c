@@ -37,6 +37,14 @@ gob?: typechecker gob!
 struct!: make datatype! http://datatypes.rebol.info/struct
 struct?: typechecker struct!
 
+; LIBRARY! is a bit different, because it may not be feasible to register it
+; in an extension, because it's used to load extensions from DLLs.  But it
+; doesn't really need all 3 cell fields, so it gives up being in the base
+; types list for types that need it.
+;
+library!: make datatype! http://datatypes.rebol.info/library
+library?: typechecker library!
+
 
 ; CONSTRUCT is a "verb-ish" word slated to replace the "noun-ish" CONTEXT:
 ;

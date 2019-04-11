@@ -411,14 +411,17 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool is_case)
       case REB_ACTION:
         return VAL_ACT_PARAMLIST(s) - VAL_ACT_PARAMLIST(t);
 
-      case REB_LIBRARY:
-        return VAL_LIBRARY(s) - VAL_LIBRARY(t);
-
       case REB_CUSTOM:
+        //
+        // !!! Comparison in R3-Alpha never had a design document; it's not
+        // clear what all the variations were for.  Extensions have a CT_XXX
+        // hook, what's different about that from the Cmp_XXX functions?
+        //
         /* return Cmp_Gob(s, t); */
         /* return Compare_Vector(s, t); */
         /* return Cmp_Struct(s, t); */
         /* return Cmp_Event(s, t); */
+        /* return VAL_LIBRARY(s) - VAL_LIBRARY(t); */
         fail ("Temporary disablement of CUSTOM! comparisons");
 
       case REB_BLANK:

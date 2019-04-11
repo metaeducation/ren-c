@@ -180,4 +180,5 @@ inline static CFUNC** HOOKS_FOR_TYPE_OF(const REBCEL *v) {
 // not there for an "extensible scanner".
 //
 #define Make_Hook_For_Image() \
-    cast(MAKE_HOOK*, VAL_TYPE_HOOKS(ARR_HEAD(PG_Extension_Types))[IDX_MAKE_HOOK])
+    cast(MAKE_HOOK*, \
+        VAL_TYPE_HOOKS(ARR_AT(PG_Extension_Types, 1))[IDX_MAKE_HOOK])

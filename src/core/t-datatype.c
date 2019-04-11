@@ -167,10 +167,11 @@ REBTYPE(Datatype)
 REBVAL *Datatype_From_Url(const REBVAL *url) {
     int i = rebUnbox(
         "switch", url, "[",
-            "http://datatypes.rebol.info/image [0]",
-            "http://datatypes.rebol.info/vector [1]",
-            "http://datatypes.rebol.info/gob [2]",
-            "http://datatypes.rebol.info/struct [3]",
+            "http://datatypes.rebol.info/library [0]",
+            "http://datatypes.rebol.info/image [1]",
+            "http://datatypes.rebol.info/vector [2]",
+            "http://datatypes.rebol.info/gob [3]",
+            "http://datatypes.rebol.info/struct [4]",
             "-1",
         "]",
     rebEND);
@@ -285,7 +286,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     //
     REBARR *a = Make_Array(4);
     int i;
-    for (i = 0; i < 4; ++i) {
+    for (i = 0; i < 5; ++i) {
         REBTYP *type = Make_Binary(sizeof(CFUNC*) * IDX_HOOKS_MAX);
         CFUNC** hooks = cast(CFUNC**, BIN_HEAD(type));
 
@@ -300,9 +301,10 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
         Manage_Series(type);
         Init_Custom_Datatype(Alloc_Tail_Array(a), type);
     }
-    TERM_ARRAY_LEN(a, 4);
+    TERM_ARRAY_LEN(a, 5);
 
     PG_Extension_Types = a;
+
     return catalog;
 }
 

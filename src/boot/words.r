@@ -43,6 +43,8 @@ image!  ; !!! for LOAD #[image! [...]] (used in tests), and molding, temporary
 vector!  ; !!! for molding, temporary
 gob!  ; !!! for molding, temporary
 struct!  ; !!! for molding, temporary
+library!  ; !!! for molding, temporary
+
 
 generic ;-- used in boot, see %generics.r
 

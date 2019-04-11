@@ -1376,6 +1376,8 @@ void Startup_Core(void)
     //
     Startup_Stackoverflow();
 
+    Startup_Library_Datatype();  // see notes on why LIBRARY! isn't Built-In
+
 //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED /////////=//
 
     PG_Boot_Phase = BOOT_MEZZ;
@@ -1443,6 +1445,8 @@ void Shutdown_Core(void)
     assert(Saved_State == NULL);
 
     Shutdown_Data_Stack();
+
+    Shutdown_Library_Datatype();
 
     Shutdown_Stackoverflow();
     Shutdown_System_Object();

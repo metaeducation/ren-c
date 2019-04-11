@@ -46,7 +46,8 @@ REB_R MAKE_Library(
     const REBVAL *opt_parent,
     const REBVAL *arg
 ){
-    assert(kind == REB_LIBRARY);
+    assert(kind == REB_CUSTOM);
+
     if (opt_parent)
         fail (Error_Bad_Make_Parent(kind, opt_parent));
 
@@ -56,10 +57,10 @@ REB_R MAKE_Library(
     void *fd = OS_OPEN_LIBRARY(arg);
 
     if (fd == NULL)
-        fail (Error_Bad_Make(REB_LIBRARY, arg));
+        fail (arg);
 
     REBARR *singular = Alloc_Singular(NODE_FLAG_MANAGED);
-    RESET_CELL(ARR_SINGLE(singular), REB_LIBRARY, CELL_MASK_NONE);
+    RESET_CUSTOM_CELL(ARR_SINGLE(singular), PG_Library_Type, CELL_MASK_NONE);
     VAL_LIBRARY_SINGULAR_NODE(ARR_SINGLE(singular)) = NOD(singular);
 
     LINK(singular).fd = fd;
@@ -120,4 +121,46 @@ REBTYPE(Library)
     }
 
     return R_UNHANDLED;
+}
+
+
+//
+//  Startup_Library_Datatype: C
+//
+// The LIBRARY! datatype is important to loading extensions in the first
+// place (e.g. if extension types live in DLLs, how would the LIBRARY! type
+// load out of a DLL?)  So generally it shouldn't be in an extension.
+//
+// However, they are uncommon types to have instances of (relative to things
+// like INTEGER!, BLOCK!, or WORD!).  And they require a series node
+// allocation.  So they don't really need all three platform pointers in a
+// cell available...making them a good candidate for not using the scarce
+// basic cell kinds.  Hence they are registered as extension types.
+//
+void Startup_Library_Datatype(void) {
+    //
+    // !!! See notes on Hook_Datatype for this poor-man's substitute for a
+    // coherent design of an extensible object system (as per Lisp's CLOS)
+    //
+    PG_Library_Type = Hook_Datatype(
+        "http://datatypes.rebol.info/library",
+        "external library reference",
+        &T_Library,
+        &PD_Fail,
+        &CT_Library,
+        &MAKE_Library,
+        &TO_Library,
+        &MF_Library
+    );
+
+    Extend_Generics_Someday(EMPTY_BLOCK);  // !!! See comments, extends CLOSE
+}
+
+
+//
+//  Shutdown_Library_Datatype: C
+//
+void Shutdown_Library_Datatype(void) {
+    Unhook_Datatype(PG_Library_Type);
+    PG_Library_Type = nullptr;
 }
