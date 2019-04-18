@@ -370,7 +370,7 @@ map-each-api [
                         p = a
                         break
                       default:
-                        throw Error("Invalid type!")
+                        err("Invalid type!")
                     }
                     HEAP32[(va>>2) + i] = p
                 }
@@ -450,7 +450,7 @@ e-cwrap/emit {
         else if (array instanceof Uint8Array)
             view = array
         else
-            throw Error("Unknown array type in reb.Binary " + typeof array)
+            err("Unknown array type in reb.Binary " + typeof array)
 
         let binary = reb.UninitializedBinary_internal(view.length)
         let head = reb.BinaryHead_internal(binary)
@@ -471,19 +471,19 @@ e-cwrap/emit {
 
     reb.RegisterId_internal = function(id, fn) {
         if (id in RL_JS_NATIVES)
-            throw Error("Already registered " + id + " in JS_NATIVES table")
+            err("Already registered " + id + " in JS_NATIVES table")
         RL_JS_NATIVES[id] = fn
     }
 
     reb.UnregisterId_internal = function(id) {
         if (!(id in RL_JS_NATIVES))
-            throw Error("Can't delete " + id + " in JS_NATIVES table")
+            err("Can't delete " + id + " in JS_NATIVES table")
         delete RL_JS_NATIVES[id]
     }
 
     reb.RunNative_internal = function(id, frame_id) {
         if (!(id in RL_JS_NATIVES))
-            throw Error("Can't dispatch " + id + " in JS_NATIVES table")
+            err("Can't dispatch " + id + " in JS_NATIVES table")
         var result = RL_JS_NATIVES[id]()
         if (result === undefined)  /* `return;` or `return undefined;` */
             result = reb.Void()  /* treat equivalent to VOID! value return */
@@ -492,7 +492,7 @@ e-cwrap/emit {
         else if (Number.isInteger(result))
             {}  /* treat as REBVAL* heap address (TBD: object wrap?) */
         else
-            throw Error("JS-NATIVE must return null, undefined, or REBVAL*")
+            err("JS-NATIVE must return null, undefined, or REBVAL*")
 
         /* store the result for consistency with emterpreter's asynchronous
          * need to save JS value across emterpreter_sleep_with_yield()
@@ -506,7 +506,7 @@ e-cwrap/emit {
      */
     reb.RunNativeAwaiter_internal = function(id, frame_id) {
         if (!(id in RL_JS_NATIVES))
-            throw Error("Can't dispatch " + id + " in JS_NATIVES table")
+            err("Can't dispatch " + id + " in JS_NATIVES table")
 
         /* Is an `async` function and hence returns a Promise.  In JS, you
          * can't synchronously determine if it is a resolved Promise, e.g.
@@ -522,7 +522,7 @@ e-cwrap/emit {
           .then(function(arg) {
 
             if (arguments.length > 1)
-                throw Error("JS-AWAITER's resolve() takes 1 argument")
+                err("JS-AWAITER's resolve() takes 1 argument")
 
             /* JS-AWAITER results become Rebol ACTION! returns, and must be
              * received by arbitrary Rebol code.  Hence they can't be any old
@@ -541,7 +541,7 @@ e-cwrap/emit {
             else if (typeof arg !== "number") {
                 console.log("typeof " + typeof arg)
                 console.log(arg)
-                throw Error("AWAITER resolve takes REBVAL*, null, undefined")
+                err("AWAITER resolve takes REBVAL*, null, undefined")
             }
 
             RL_JS_NATIVES[frame_id] = arg  /* stow for RL_Await */
@@ -550,7 +550,7 @@ e-cwrap/emit {
           }).catch(function(arg) {
 
             if (arguments.length > 1)
-                throw Error("JS-AWAITER's reject() takes 1 argument")
+                err("JS-AWAITER's reject() takes 1 argument")
 
             /* If a JavaScript throw() happens in the body of a JS-AWAITER's
              * textual JS code, that throw's arg will wind up here.  The
@@ -590,7 +590,7 @@ e-cwrap/emit {
 
     reb.ResolvePromise_internal = function(promise_id, rebval) {
         if (!(promise_id in RL_JS_NATIVES))
-            throw Error(
+            err(
                 "Can't find promise_id " + promise_id + " in JS_NATIVES"
             )
         RL_JS_NATIVES[promise_id][0](rebval)  /* [0] is resolve() */
@@ -599,14 +599,14 @@ e-cwrap/emit {
 
     reb.RejectPromise_internal = function(promise_id, throw_id) {
         if (!(throw_id in RL_JS_NATIVES))  // frame_id of throwing JS-AWAITER
-            throw Error(
+            err(
                 "Can't find throw_id " + throw_id + " in JS_NATIVES"
             )
         let error = RL_JS_NATIVES[throw_id]  /* typically JS Error() Object */
         reb.UnregisterId_internal(throw_id)
 
         if (!(promise_id in RL_JS_NATIVES))
-            throw Error(
+            err(
                 "Can't find promise_id " + promise_id + " in JS_NATIVES"
             )
         RL_JS_NATIVES[promise_id][1](error)  /* [1] is reject() */

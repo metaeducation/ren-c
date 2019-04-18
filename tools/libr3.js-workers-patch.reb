@@ -32,7 +32,7 @@ patch1: {
      .then(function(response) {
        // https://www.tjvantoll.com/2015/09/13/fetch-and-errors/
        if (!response.ok)
-           throw Error(response.statusText)
+           err(response.statusText)
        return response.blob()
      })
      .then(function(blob) ^{
