@@ -453,7 +453,7 @@ source: function [
             f: copy "unknown tag"
             for-each location words of system/locale/library [
                 if location: select load get location arg [
-                    f: location/1
+                    f: form location/1
                     break
                 ]
             ]
