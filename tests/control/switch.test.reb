@@ -21,7 +21,7 @@
 )
 
 [#2242 (
-    11 = eval func [] [switch/all 1 [1 [return 11 88]] 99]
+    11 = reeval func [] [switch/all 1 [1 [return 11 88]] 99]
 )]
 
 (t: 1 | 1 = switch t [(t)])

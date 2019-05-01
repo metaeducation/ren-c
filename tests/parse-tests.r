@@ -252,11 +252,11 @@
 ;; Doubled groups inject their material into the PARSE, if it is not null.
 ;; They act like a COMPOSE/ONLY that runs each time the GROUP! is passed.
 
-(did parse "aaabbb" [(([some "a"])) (([some "b"]))])
-(did parse "aaabbb" [(([some "a"])) ((if false [some "c"])) (([some "b"]))])
-(did parse "aaa" [(('some)) "a"])
-(not parse "aaa" [((1 + 1)) "a"])
-(did parse "aaa" [((1 + 2)) "a"])
+(did parse "aaabbb" [(([some "a"])) (([some "b"])) end])
+(did parse "aaabbb" [(([some "a"])) ((if false [some "c"])) (([some "b"])) end])
+(did parse "aaa" [(('some)) "a" end])
+(not parse "aaa" [((1 + 1)) "a" end])
+(did parse "aaa" [((1 + 2)) "a" end])
 (
     count: 0
     did parse ["a" "aa" "aaa"] [some [into [((count: count + 1)) "a"]]]
@@ -348,27 +348,30 @@
 ; input series or a match rule.  It does a REDUCE to more closely parallel
 ; the behavior of a GET-BLOCK! in the ordinary evaluator.
 ;
-(all [
-    [3] = parse [1 2 3] [
-        collect x [
-            keep integer!
-            keep :['a <b> #c]
-            keep integer!
-        ]
-    ]
-    x = [1 a <b> #c 2]
-])
-(all [
-    [3] = parse [1 2 3] [
-        collect x [
-            keep integer!
-            keep only :['a <b> #c]
-            keep integer!
-        ]
-    ]
-    x = [1 [a <b> #c] 2]
-])
-(all [
-    parse [1 2 3] [collect x [keep only :[[a b c]]]]
-    x = [[[a b c]]]
-])
+; !!! There is no GET-BLOCK! in the R3C branch, and patching it on would be
+; somewhat prohibitive.
+;
+;(all [
+;    [3] = parse [1 2 3] [
+;        collect x [
+;            keep integer!
+;            keep :['a <b> #c]
+;            keep integer!
+;        ]
+;    ]
+;    x = [1 a <b> #c 2]
+;])
+;(all [
+;    [3] = parse [1 2 3] [
+;        collect x [
+;            keep integer!
+;            keep only :['a <b> #c]
+;            keep integer!
+;        ]
+;    ]s
+;    x = [1 [a <b> #c] 2]
+;])
+;(all [
+;    parse [1 2 3] [collect x [keep only :[[a b c]]]]
+;    x = [[[a b c]]]
+;])

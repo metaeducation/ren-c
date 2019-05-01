@@ -35,36 +35,36 @@
 ;-- #1760 --
 
 (
-    1 == eval func [] [applique does [] [return 1] 2]
+    1 == reeval func [] [applique does [] [return 1] 2]
 )
 (
-    1 == eval func [] [applique func [a] [a] [return 1] 2]
+    1 == reeval func [] [applique func [a] [a] [return 1] 2]
 )
 (
-    1 == eval func [] [applique does [] [return 1]]
+    1 == reeval func [] [applique does [] [return 1]]
 )
 (
-    1 == eval func [] [applique func [a] [a] [return 1]]
+    1 == reeval func [] [applique func [a] [a] [return 1]]
 )
 (
-    1 == eval func [] [applique func [a b] [a] [return 1 2]]
+    1 == reeval func [] [applique func [a b] [a] [return 1 2]]
 )
 (
-    1 == eval func [] [applique func [a b] [a] [2 return 1]]
+    1 == reeval func [] [applique func [a b] [a] [2 return 1]]
 )
 
-; EVAL/ONLY
+; REEVAL/ONLY
 (
     o: make object! [a: 0]
-    b: eval/only (quote o/a:) 1 + 2
+    b: reeval/only (quote o/a:) 1 + 2
     did all [
         o/a = 1
-        b = 3 ;-- above acts as `b: (eval/only (quote o/a:) 1) + 2`
+        b = 3 ;-- above acts as `b: (reeval/only (quote o/a:) 1) + 2`
     ]
 )
 (
     a: func [b c :d] [reduce [b c d]]
-    [1 + 2] = (eval/only :a 1 + 2)
+    [1 + 2] = (reeval/only :a 1 + 2)
 )
 
 (
@@ -155,7 +155,7 @@
 
 ; MAKE FRAME! :RETURN should preserve binding in the FUNCTION OF the frame
 ;
-(1 == eval func [] [applique :return [1] 2])
+(1 == reeval func [] [applique :return [1] 2])
 
 (_ == applique/only func [/a] [a] [#[false]])
 (group! == applique/only :type-of [()])

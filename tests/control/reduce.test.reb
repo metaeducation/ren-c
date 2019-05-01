@@ -15,8 +15,8 @@
 (void? loop 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 ([a 1] = catch/name [reduce [throw/name 1 'a]] 'a)
-(1 = eval func [] [reduce [return 1 2] 2])
-(null? if 1 < 2 [eval does [reduce [unwind :if 1] 2]])
+(1 = reeval func [] [reduce [return 1 2] 2])
+(null? if 1 < 2 [reeval does [reduce [unwind :if 1] 2]])
 ; recursive behaviour
 (1 = first reduce [first reduce [1]])
 ; infinite recursion

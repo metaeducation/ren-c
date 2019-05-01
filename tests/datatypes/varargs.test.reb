@@ -15,7 +15,7 @@
 
 (
     ;-- leaked VARARGS! cannot be accessed after call is over
-    error? trap [take eval (foo: func [x [integer! <...>]] [x])]
+    error? trap [take reeval (foo: func [x [integer! <...>]] [x])]
 )
 
 (

@@ -4,14 +4,14 @@
     do [success: true]
     success
 )
-(1 == eval :abs -1)
+(1 == reeval :abs -1)
 (
     a-value: to binary! "1 + 1"
     2 == do a-value
 )
 (
     a-value: charset ""
-    same? a-value eval a-value
+    same? a-value reeval a-value
 )
 ; do block start
 (void? do [])
@@ -112,58 +112,58 @@
 ; do block end
 (
     a-value: blank!
-    same? a-value eval a-value
+    same? a-value reeval a-value
 )
-(1/Jan/0000 == eval 1/Jan/0000)
-(0.0 == eval 0.0)
-(1.0 == eval 1.0)
+(1/Jan/0000 == reeval 1/Jan/0000)
+(0.0 == reeval 0.0)
+(1.0 == reeval 1.0)
 (
     a-value: me@here.com
-    same? a-value eval a-value
+    same? a-value reeval a-value
 )
 (error? trap [do trap [1 / 0] 1])
 (
     a-value: does [5]
-    5 == eval :a-value
+    5 == reeval :a-value
 )
 (
     a: 12
     a-value: first [:a]
-    :a == eval :a-value
+    :a == reeval :a-value
 )
-(#"^@" == eval #"^@")
+(#"^@" == reeval #"^@")
 (
     a-value: make image! 0x0
-    same? a-value eval a-value
+    same? a-value reeval a-value
 )
-(0 == eval 0)
-(1 == eval 1)
-(#a == eval #a)
+(0 == reeval 0)
+(1 == reeval 1)
+(#a == reeval #a)
 ;-- CC#2101, #1434
 (
     a-value: first ['a/b]
     all [
         lit-path? a-value
-        path? eval :a-value
-        (as path! :a-value) == (eval :a-value)
+        path? reeval :a-value
+        (as path! :a-value) == (reeval :a-value)
     ]
 )
 (
     a-value: first ['a]
     all [
         lit-word? a-value
-        word? eval :a-value
-        (to-word :a-value) == (eval :a-value)
+        word? reeval :a-value
+        (to-word :a-value) == (reeval :a-value)
     ]
 )
-(true = eval true)
-(false = eval false)
-($1 == eval $1)
-(null? eval (specialize 'of [property: 'type]) null)
+(true = reeval true)
+(false = reeval false)
+($1 == reeval $1)
+(null? reeval (specialize 'of [property: 'type]) null)
 (null? do _)
 (
     a-value: make object! []
-    same? :a-value eval :a-value
+    same? :a-value reeval :a-value
 )
 (
     a-value: first [(2)]
@@ -172,17 +172,17 @@
 (
     a-value: 'a/b
     a: make object! [b: 1]
-    1 == eval :a-value
+    1 == reeval :a-value
 )
 (
     a-value: make port! http://
-    port? eval :a-value
+    port? reeval :a-value
 )
 (
     a-value: first [a/b:]
     all [
         set-path? :a-value
-        error? trap [eval :a-value] ;-- no value to assign after it...
+        error? trap [reeval :a-value] ;-- no value to assign after it...
     ]
 )
 (
@@ -194,14 +194,14 @@
 (3 = do "1 2 3")
 (
     a-value: make tag! ""
-    same? :a-value eval :a-value
+    same? :a-value reeval :a-value
 )
-(0:00 == eval 0:00)
-(0.0.0 == eval 0.0.0)
+(0:00 == reeval 0:00)
+(0.0.0 == reeval 0.0.0)
 (
     a-value: 'b-value
     b-value: 1
-    1 == eval :a-value
+    1 == reeval :a-value
 )
 ; RETURN stops the evaluation
 (
@@ -260,7 +260,7 @@
 (1 = do [do [1]])
 (1 = do "do [1]")
 (1 == 1)
-(3 = eval :eval :add 1 2)
+(3 = reeval :reeval :add 1 2)
 ; infinite recursion for block
 (
     blk: [do blk]

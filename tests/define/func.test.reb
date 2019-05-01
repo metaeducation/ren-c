@@ -4,12 +4,12 @@
     f: func [return: [action!]] [
         func [x] [
             either x = 1 [
-                eval f 2
+                reeval f 2
                 x = 1
             ][
                 false
             ]
         ]
     ]
-    eval f 1
+    reeval f 1
 )

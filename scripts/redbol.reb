@@ -562,7 +562,7 @@ collect: emulate [
             series: <remove-unused-series-parameter>
         ]
 
-        eval func compose [(name) [action!] <with> return] body :keeper
+        reeval func compose [(name) [action!] <with> return] body :keeper
         either into [output] [head of output]
     ]
 ]

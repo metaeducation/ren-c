@@ -706,9 +706,10 @@ static REB_R Case_Choose_Core_May_Throw(
             return R_THROWN;
         }
 
-        if (IS_END(cell)) {
-            assert(IS_END(f->value));
-            break;
+        if (IS_END(cell)) {  // !!! R3C patch for permissive invisibility
+            if (IS_END(f->value))
+                break;
+            continue;
         }
 
         // The last condition will "fall out" if there is no branch/choice:
@@ -737,6 +738,9 @@ static REB_R Case_Choose_Core_May_Throw(
                 DROP_GC_GUARD(cell);
                 return Move_Value(D_OUT, cell);
             }
+
+            if (IS_END(cell))
+                continue;  // a COMMENT
 
             // Maintain symmetry with IF's typechecking of non-taken branches:
             //

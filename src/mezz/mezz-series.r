@@ -512,7 +512,7 @@ collect-with: func [
     either word? name [
         ;-- body not bound to word, use FUNC do binding work
 
-        eval func compose [(name) [action!] <with> return] body :keeper
+        reeval func compose [(name) [action!] <with> return] body :keeper
     ][
         ;-- lit-word! means variable exists, just set it and DO body as-is
 

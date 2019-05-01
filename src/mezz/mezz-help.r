@@ -172,7 +172,7 @@ help: function [
     ; must hard quote and simulate its own soft quote semantics.
     ;
     if match [group! get-word! get-path!] :topic [
-        topic: eval topic else [
+        topic: reeval topic else [
             fail "HELP requested on NULL" ;-- should this PRINT vs. FAIL?
         ]
     ]

@@ -346,7 +346,7 @@
     (action? func [self] [])
 ]
 [#1756
-    (eval does [reduce reduce [:self] true])
+    (reeval does [reduce reduce [:self] true])
 ]
 [#2025 (
     ; ensure x and y are unset from previous tests, as the test here

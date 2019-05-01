@@ -110,10 +110,10 @@
     3 = do [1 + 2 end 10 + 20 | 100 + 200]
 )
 (
-    ok? trap [eval (func [x [<end>]] []) end 1 2 3]
+    ok? trap [reeval (func [x [<end>]] []) end 1 2 3]
 )
 (
-    error? trap [eval (func [x [<opt>]] []) end 1 2 3]
+    error? trap [reeval (func [x [<opt>]] []) end 1 2 3]
 )
 
 (
@@ -286,3 +286,31 @@
 (304 = (1000 + 20 ** (
     foo <baz> (bar)
 ) 300 + 4))
+
+
+; It's likely more useful for EVAL to give VOID! than error if asked to
+; evaluate something that turns out to be invisible.
+;
+(void? reeval quote (comment "void is better than failing here"))
+(
+    x: <before>
+    did all [
+        void? reeval :elide x: <after>
+        x = <after>
+    ]
+)
+
+
+; !!! Tests of invisibles interacting with functions should be in the file
+; where those functions are defined, when test file structure gets improved.
+;
+(null? spaced [])
+(null? spaced [comment "hi"])
+(null? spaced [()])
+
+
+; GROUP!s are able to "vaporize" if they are empty or invisible
+; https://forum.rebol.info/t/permissive-group-invisibility/1153
+;
+(() 1 + () 2 = () 3)
+((comment "one") 1 + (comment "two") 2 = (comment "three") 3)

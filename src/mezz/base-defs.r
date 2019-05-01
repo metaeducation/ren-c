@@ -182,7 +182,7 @@ empty?: func [
 ]
 
 
-eval func [
+reeval func [
     {Make fast type testing functions (variadic to quote "top-level" words)}
     return: <void>
     'set-word... [set-word! <...>]

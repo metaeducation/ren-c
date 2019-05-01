@@ -115,7 +115,7 @@ void Append_Values_Len(REBARR *a, const REBVAL *head, REBCNT len)
     // `char*` casts needed: https://stackoverflow.com/q/57721104
     memcpy(
         cast(char*, ARR_AT(a, old_len)),
-        cast(char*, head),
+        cast(const char*, head),
         sizeof(REBVAL) * len
     );
 

@@ -32,7 +32,7 @@
 ]
 
 [#1506 ((
-    10 = eval func [] [trap [return 10] 20]
+    10 = reeval func [] [trap [return 10] 20]
 ))]
 
 ; ENTRAP (similar to TRAP, but puts normal result in a block)

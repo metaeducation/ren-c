@@ -41,7 +41,7 @@
 
 
 //
-//  eval: native [
+//  reeval: native [
 //
 //  {Process received value *inline* as the evaluator loop would.}
 //
@@ -54,9 +54,9 @@
 //          {Suppress evaluation on any ensuing arguments value consumes}
 //  ]
 //
-REBNATIVE(eval)
+REBNATIVE(reeval)
 {
-    INCLUDE_PARAMS_OF_EVAL;
+    INCLUDE_PARAMS_OF_REEVAL;
 
     // EVAL only *acts* variadic, but uses DO_FLAG_REEVALUATE_CELL
     //
@@ -74,6 +74,8 @@ REBNATIVE(eval)
         flags |= DO_FLAG_EXPLICIT_EVALUATE;
         ARG(value)->header.bits ^= VALUE_FLAG_EVAL_FLIP;
     }
+
+    Init_Void(D_OUT);  // !!! R3C patch, better than error on `reeval :elide`
 
     if (Eval_Step_In_Subframe_Throws(D_OUT, frame_, flags, child))
         return R_THROWN;

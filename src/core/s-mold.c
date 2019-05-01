@@ -590,6 +590,9 @@ bool Form_Reduce_Throws(
             return true;
         }
 
+        if (IS_END(out))
+            break;  // e.g. `spaced [comment "hi"]`
+
         if (IS_NULLED_OR_BLANK(out))
             continue; // opt-out and maybe keep option open to return NULL
 

@@ -21,7 +21,7 @@
     1 = f1
 )
 ; Test that arity-0 return stops the loop
-(void? eval func [return: <void>] [cycle [return]])
+(void? reeval func [return: <void>] [cycle [return]])
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0

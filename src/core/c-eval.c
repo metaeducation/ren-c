@@ -1944,16 +1944,14 @@ bool Eval_Core_Throws(REBFRM * const f)
 // The current frame is not reused, as the source array from which values are
 // being gathered changes.
 //
-// Empty groups vaporize, as do ones that only consist of invisibles.
-// However, they cannot combine with surrounding code, e.g.
+// Empty groups vaporize, as do ones that only consist of invisibles.  If
+// this is not desired, one should use DO or lead with `(void ...)`
 //
 //     >> 1 + 2 (comment "vaporize")
 //     == 3
 //
 //     >> 1 + () 2
-//     ** Script error: + is missing its value2 argument
-//
-//==//////////////////////////////////////////////////////////////////////==//
+//     == 3
 
       case REB_GROUP: {
         if (not EVALUATING(current))
@@ -1968,50 +1966,36 @@ bool Eval_Core_Throws(REBFRM * const f)
         REBCNT index = VAL_INDEX(current); // index may not be @ head
         REBSPC *derived = Derive_Specifier(f->specifier, current);
 
-        if (IS_END(f->out)) {
-            //
-            // No need for a temporary cell...we know we're starting from an
-            // END cell so determining if the GROUP! is invisible is easy.
-            //
-            REBIXO indexor = Eval_Array_At_Core(
-                f->out,
-                nullptr, // opt_first (null means nothing, not nulled cell)
-                array,
-                index,
-                derived,
-                DO_FLAG_TO_END
-            );
-            if (indexor == THROWN_FLAG)
-                goto return_thrown;
-            if (GET_VAL_FLAG(f->out, OUT_MARKED_STALE))
-                goto finished;
-            f->out->header.bits &= ~VALUE_FLAG_UNEVALUATED; // (1) "evaluates"
+        // We want `3 = (1 + 2 ()) 4` to not treat the 1 + 2 as "stale", thus
+        // skipping it and trying to compare `3 = 4`.  But `3 = () 1 + 2`
+        // should consider the empty group stale.
+        //
+        // Note we might have something like (1 + 2 elide "Hi") that would
+        // show up as having the stale bit.
+        //
+        REBIXO indexor = Eval_Array_At_Core(
+            SET_END(FRM_CELL(f)),
+            nullptr, // opt_first (null means nothing, not nulled cell)
+            array,
+            index,
+            derived,
+            DO_FLAG_TO_END
+        );
+        if (indexor == THROWN_FLAG) {
+            Move_Value(f->out, FRM_CELL(f));
+            goto return_thrown;
         }
-        else {
-            // Not as lucky... we might have something like (1 + 2 elide "Hi")
-            // that would show up as having the stale bit.
-            //
-            REBIXO indexor = Eval_Array_At_Core(
-                SET_END(FRM_CELL(f)),
-                nullptr, // opt_first (null means nothing, not nulled cell)
-                array,
-                index,
-                derived,
-                DO_FLAG_TO_END
-            );
-            if (indexor == THROWN_FLAG) {
-                Move_Value(f->out, FRM_CELL(f));
-                goto return_thrown;
+        if (IS_END(FRM_CELL(f))) {
+            current = f->value;
+            eval_type = VAL_TYPE_RAW(f->value);
+            if (eval_type != REB_0_END) {
+                Fetch_Next_In_Frame(nullptr, f); // advances f->value
+                goto reevaluate;
             }
-            if (IS_END(FRM_CELL(f))) {
-                eval_type = VAL_TYPE_RAW(f->value);
-                if (eval_type == REB_0_END)
-                    goto finished;
-                goto do_next; // quickly process next item, no infix test
-            }
+            goto finished;
+        }
 
-            Move_Value(f->out, FRM_CELL(f)); // no VALUE_FLAG_UNEVALUATED
-        }
+        Move_Value(f->out, FRM_CELL(f)); // no VALUE_FLAG_UNEVALUATED
         break; }
 
 //==//////////////////////////////////////////////////////////////////////==//
