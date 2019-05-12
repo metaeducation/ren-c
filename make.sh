@@ -30,7 +30,7 @@ fi
 
 echo ""
 echo "Get the list of available prebuilt binaries from S3"
-s3url=https://s3.amazonaws.com/r3bootstraps/
+s3url=https://r3bootstraps.s3.amazonaws.com/
 
 if [ $dltool = "wget" ] ; then
     xml=$(wget -q $s3url -O -)
