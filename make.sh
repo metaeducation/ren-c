@@ -19,7 +19,7 @@ which wget > /dev/null
 if [ $? -eq 0 ] ; then
     dltool="wget"
 else
-    which curl /dev/null
+    which curl > /dev/null
     if [ $? -eq 0 ] ; then
         dltool="curl"
     else
@@ -61,7 +61,7 @@ done
 
 echo ""
 echo "Make executable prebuilt binaries"
-chmod +x -f r3-*
+chmod -f +x r3-*
 
 
 echo ""
