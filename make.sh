@@ -67,8 +67,8 @@ else
             xml=$(curl -s $s3url)
         fi
         
-        pblist=$(echo "$xml" | perl -nle '@f = $_ =~  m{<Key>([^<]+)}g; for (@f) {print "$_\n"}')
         
+        pblist=$(echo "$xml" |  tr "<" "\n" | sed -n -e 's/^Key>\(+*\)/\1/p')
         
         echo "Download prebuilt binaries"
         echo ""
