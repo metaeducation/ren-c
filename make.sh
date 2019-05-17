@@ -67,7 +67,7 @@ else
             xml=$(curl -s $s3url)
         fi
         
-        
+        # Use tr instead of sed to replace newlines because sed is not really powerful on Mac/BSD
         pblist=$(echo "$xml" |  tr "<" "\n" | sed -n -e 's/^Key>\(+*\)/\1/p')
         
         echo "Download prebuilt binaries"
