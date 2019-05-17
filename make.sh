@@ -75,14 +75,17 @@ else
         
         for pb in $pblist
         do
-            s3pb="$s3url$pb"
-        
-            if [ $dltool = "wget" ] ; then
-                wget -nv -o - "$s3pb"
-            else
-                echo "$s3pb"
-                curl "$s3pb" > "$pb"
-                echo ""
+            # Download only prebuilt binaries for the current OS
+            if [[ $pb == *"$localsys"* ]]; then
+                s3pb="$s3url$pb"
+                
+                if [ $dltool = "wget" ] ; then
+                    wget -nv -o - "$s3pb"
+                else
+                    echo "$s3pb"
+                    curl "$s3pb" > "$pb"
+                    echo ""
+                fi
             fi
         done
         
@@ -108,4 +111,4 @@ fi
 
 echo "Run a build with yours parameters"
 echo "$r3bin ../make.r $@"
-#$r3bin ../make.r $@
+$r3bin ../make.r $@
