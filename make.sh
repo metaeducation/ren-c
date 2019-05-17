@@ -18,8 +18,12 @@ case $usys in
     *mingw*)   localsys="windows";;
     *msys*)    localsys="windows";;
     *windows*) localsys="windows";;
-    *linux*)   localsys="linux";;
-    *android*) localsys="android";;
+    *linux*)   localsys="linux"
+        case $(uname -o | tr '[:upper:]' '[:lower:]') in
+            *android*) localsys="android";;
+            *)         localsys="linux";;
+        esac
+    ;;
     *openbsd*) localsys="openbsd";;
     *darwin*)  localsys="osx";;
     *)         localsys="none";;
@@ -104,4 +108,4 @@ fi
 
 echo "Run a build with yours parameters"
 echo "$r3bin ../make.r $@"
-$r3bin ../make.r $@
+#$r3bin ../make.r $@
