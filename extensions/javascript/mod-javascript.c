@@ -967,88 +967,10 @@ REB_R JavaScript_Dispatcher(REBFRM *f)
 }
 
 
-// The table mapping IDs to JavaScript objects only exists on the main thread.
-// See notes at callsite about why MAIN_THREAD_EM_ASM() can't run "scripts".
-// Thus the JS-NATIVE generator calls this as a service routine that it can
-// ask to be executed by proxy to the main thread.
-//
-EXTERN_C void RL_rebRegisterNative_internal(intptr_t native_id) {
-    ASSERT_ON_MAIN_THREAD();
-
-    REBACT *act = ACT(Pointer_From_Heapaddr(native_id));
-
-    REBARR *details = ACT_DETAILS(act);
-    RELVAL *source = ARR_AT(details, IDX_NATIVE_BODY);
-    bool is_awaiter = VAL_LOGIC(ARR_AT(details, IDX_JS_NATIVE_IS_AWAITER));
-
-    // The generation of the function called by JavaScript.  It takes no
-    // arguments, as giving it arguments would make calling it more complex
-    // as well as introduce several issues regarding mapping legal Rebol
-    // names to names for JavaScript parameters.  libRebol APIs must be used
-    // to access the arguments out of the frame.
-
-    DECLARE_MOLD (mo);
-    Push_Mold(mo);
-
-    Append_Ascii(mo->series, "let f = ");  // variable we store function in
-
-    // A JS-AWAITER can only be triggered from Rebol on the worker thread as
-    // part of a rebPromise().  Making it an async function means it will
-    // return an ES6 Promise, and allows use of the AWAIT JavaScript feature
-    // inside the body:
-    //
-    // https://javascript.info/async-await
-    //
-    // Using plain return inside an async function returns a fulfilled promise
-    // while using AWAIT causes the execution to pause and return a pending
-    // promise.  When that promise is fulfilled it will jump back in and
-    // pick up code on the line after that AWAIT.
-    //
-    if (is_awaiter)
-        Append_Ascii(mo->series, "async ");
-
-    // We do not try to auto-translate the Rebol arguments into JS args.  It
-    // would make calling it more complex, and introduce several issues of
-    // mapping Rebol names to legal JavaScript identifiers.  reb.Arg() or
-    // reb.ArgR() must be used to access the arguments out of the frame.
-    //
-    Append_Ascii(mo->series, "function () {");
-    Append_String(mo->series, source, VAL_LEN_AT(source));
-    Append_Ascii(mo->series, "};\n");  // end `function() {`
-
-    if (is_awaiter)
-        Append_Ascii(mo->series, "f.is_awaiter = true;\n");
-    else
-        Append_Ascii(mo->series, "f.is_awaiter = false;\n");
-
-    REBYTE id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
-    REBINT len = Emit_Integer(id_buf, native_id);
-
-    // Rebol cannot hold onto JavaScript objects directly, so there has to be
-    // a table mapping some numeric ID (that we *can* hold onto) to the
-    // corresponding JS function entity.
-    //
-    Append_Ascii(mo->series, "reb.RegisterId_internal(");
-    Append_Ascii_Len(mo->series, s_cast(id_buf), len);
-    Append_Ascii(mo->series, ", f);\n");
-
-    // The javascript code for registering the function body is now the last
-    // thing in the mold buffer.  Get a pointer to it.
-    //
-    TERM_SERIES(SER(mo->series));
-    const char *js = cs_cast(BIN_AT(SER(mo->series), mo->offset));
-
-    TRACE("Registering native_id %ld", cast(long, native_id));
-    emscripten_run_script(js);
-
-    Drop_Mold(mo);
-}
-
-
 //
 //  export js-native: native [
 //
-//  {Create ACTION! from textual JavaScript code, works only on main thread}
+//  {Create ACTION! from textual JavaScript code}
 //
 //      return: [action!]
 //      spec "Function specification (similar to the one used by FUNCTION)"
@@ -1097,17 +1019,79 @@ REBNATIVE(js_native)
     //
     Init_Logic(ARR_AT(details, IDX_JS_NATIVE_IS_AWAITER), REF(awaiter));
 
-    // In the pthread build, if we're on the worker we have to synchronously
-    // run the registration on the main thread.  Continuing without blocking
-    // would be bad (what if they run the function right after declaring it?)
+    // The generation of the function called by JavaScript.  It takes no
+    // arguments, as giving it arguments would make calling it more complex
+    // as well as introduce several issues regarding mapping legal Rebol
+    // names to names for JavaScript parameters.  libRebol APIs must be used
+    // to access the arguments out of the frame.
+
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
+
+    Append_Ascii(mo->series, "let f = ");  // variable we store function in
+
+    // A JS-AWAITER can only be triggered from Rebol on the worker thread as
+    // part of a rebPromise().  Making it an async function means it will
+    // return an ES6 Promise, and allows use of the AWAIT JavaScript feature
+    // inside the body:
     //
-    // However, there is no `main_thread_emscripten_run_script()`.  :-(
-    // But there is MAIN_THREAD_EM_ASM(), so call a service routine w/that.
-    // (The EM_ASMs compile JS inline directly with limited parameterization.
-    // If we tried to use it with the text of a whole function body to add
-    // to JS here, we'd have to escape it for `eval()-ing`...it gets ugly.)
+    // https://javascript.info/async-await
     //
-    MAIN_THREAD_EM_ASM("_RL_rebRegisterNative_internal($0)", native_id);
+    // Using plain return inside an async function returns a fulfilled promise
+    // while using AWAIT causes the execution to pause and return a pending
+    // promise.  When that promise is fulfilled it will jump back in and
+    // pick up code on the line after that AWAIT.
+    //
+    if (REF(awaiter))
+        Append_Ascii(mo->series, "async ");
+
+    // We do not try to auto-translate the Rebol arguments into JS args.  It
+    // would make calling it more complex, and introduce several issues of
+    // mapping Rebol names to legal JavaScript identifiers.  reb.Arg() or
+    // reb.ArgR() must be used to access the arguments out of the frame.
+    //
+    Append_Ascii(mo->series, "function () {");
+    Append_String(mo->series, source, VAL_LEN_AT(source));
+    Append_Ascii(mo->series, "};\n");  // end `function() {`
+
+    if (REF(awaiter))
+        Append_Ascii(mo->series, "f.is_awaiter = true;\n");
+    else
+        Append_Ascii(mo->series, "f.is_awaiter = false;\n");
+
+    REBYTE id_buf[60];  // !!! Why 60?  Copied from MF_Integer()
+    REBINT len = Emit_Integer(id_buf, native_id);
+
+    // Rebol cannot hold onto JavaScript objects directly, so there has to be
+    // a table mapping some numeric ID (that we *can* hold onto) to the
+    // corresponding JS function entity.
+    //
+    Append_Ascii(mo->series, "reb.RegisterId_internal(");
+    Append_Ascii_Len(mo->series, s_cast(id_buf), len);
+    Append_Ascii(mo->series, ", f);\n");
+
+    // The javascript code for registering the function body is now the last
+    // thing in the mold buffer.  Get a pointer to it.
+    //
+    TERM_SERIES(SER(mo->series));
+    const char *js = cs_cast(BIN_AT(SER(mo->series), mo->offset));
+
+    TRACE("Registering native_id %ld", cast(long, native_id));
+
+    // The table mapping IDs to JavaScript objects only exists on the main
+    // thread.  So in the pthread build, if we're on the worker we have to
+    // synchronously wait on the registration.  (Continuing without blocking
+    // would be bad--what if they ran the function right after declaring it?)
+    //
+    // Note: There is no main_thread_emscripten_run_script(), but all that
+    // emscripten_run_script() does is call eval() anyway.  :-/
+    //
+    MAIN_THREAD_EM_ASM(
+        { eval(UTF8ToString($0)) },
+        js
+    );
+
+    Drop_Mold(mo);
 
     // !!! Natives on the stack can specify where APIs like reb.Run() should
     // look for bindings.  For the moment, set user natives to use the user
@@ -1129,6 +1113,81 @@ REBNATIVE(js_native)
     SET_ACTION_FLAG(native, IS_NATIVE);
 
     return Init_Action_Unbound(D_OUT, native);
+}
+
+
+//
+//  export js-eval*: native [
+//
+//  {Evaluate textual JavaScript code}
+//
+//      return: "Note: Only supports types that reb.Box() supports"
+//          [<opt> integer! text! void!]
+//      source "JavaScript code as a text string" [text!]
+//      /local "Evaluate in local scope (as opposed to global)"
+//      /value "Return a Rebol value"
+//  ]
+//
+REBNATIVE(js_eval_p)
+//
+// Note: JS-EVAL is a higher-level routine built on this JS-EVAL* native, that
+// can accept a BLOCK! with escaped-in Rebol values, via JS-DO-DIALECT-HELPER.
+// In order to make that code easier to change without having to recompile and
+// re-ship the JS extension, it lives in a separate script.
+//
+// !!! If the JS-DO-DIALECT stabilizes it may be worth implementing natively.
+{
+    JAVASCRIPT_INCLUDE_PARAMS_OF_JS_EVAL_P;
+
+    const char *utf8 = s_cast(VAL_STRING_AT(ARG(source)));
+
+    // Methods for global evaluation:
+    // http://perfectionkills.com/global-eval-what-are-the-options/
+    //
+    // !!! Note that if `eval()` is redefined, then all invocations will be
+    // "indirect" and there will hence be no local evaluations.
+    //
+    if (not REF(value)) {
+        if (REF(local))
+            MAIN_THREAD_EM_ASM(
+                { eval(UTF8ToString($0)) },
+                utf8
+            );
+        else
+            MAIN_THREAD_EM_ASM(
+                { (1,eval)(UTF8ToString($0)) },
+                utf8
+            );
+        return Init_Void(D_OUT);
+    }
+
+    // Currently, reb.Box() only translates to INTEGER!, TEXT!, VOID!, NULL
+    //
+    // !!! All other types come back as VOID!.  Should they error?
+    //
+    // !!! There was an emscripten link step error when `addr` was factored
+    // out in the code below.  But giving each branch its own `addr` seemed
+    // to work around whatever bug that was:
+    // https://github.com/emscripten-core/emscripten/issues/8731
+    //
+    REBVAL *result;
+
+    if (REF(local)) {
+        heapaddr_t addr = MAIN_THREAD_EM_ASM_INT(
+            { return reb.Box(eval(UTF8ToString($0))) },  // direct (local)
+            utf8
+        );
+        result = cast(REBVAL*, addr);
+    }
+    else {
+        heapaddr_t addr = MAIN_THREAD_EM_ASM_INT(
+            { return reb.Box((1,eval)(UTF8ToString($0))) },  // indirect
+            utf8
+        );
+        result = cast(REBVAL*, addr);
+    }
+
+    return result;  // evaluator takes ownership of API handle
 }
 
 

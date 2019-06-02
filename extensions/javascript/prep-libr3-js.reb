@@ -250,17 +250,6 @@ append api-objects make object! [
 
 append api-objects make object! [
     spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
-    name: "rebRegisterNative_internal"  ; !!! see %mod-javascript.c
-    returns: "void"
-    paramlist: ["intptr_t" native_id]
-    proto: unspaced [
-        "void rebRegisterNative_internal(intptr_t native_id)"
-    ]
-    is-variadic: false
-]
-
-append api-objects make object! [
-    spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebSignalResolveNative_internal"  ; !!! see %mod-javascript.c
     returns: "void"
     paramlist: ["intptr_t" frame_id]
@@ -791,7 +780,7 @@ e-cwrap/emit {
     }
 
     reb.RejectPromise_internal = function(promise_id, throw_id) {
-        if (!(throw_id in RL_JS_NATIVES))  // frame_id of throwing JS-AWAITER
+        if (!(throw_id in RL_JS_NATIVES))  /* frame_id of throwing awaiter */
             throw Error(
                 "Can't find throw_id " + throw_id + " in JS_NATIVES"
             )
@@ -804,6 +793,25 @@ e-cwrap/emit {
             )
         RL_JS_NATIVES[promise_id][1](error)  /* [1] is reject() */
         reb.UnregisterId_internal(promise_id)
+    }
+
+    reb.Box = function(js_value) {  /* primordial generic "boxing" routine */
+        if (null === js_value)  /* typeof test doesn't work */
+            return null  /* See https://stackoverflow.com/a/18808270/ */
+
+        switch (typeof js_value) {
+          case 'undefined':
+            return reb.Void()
+
+          case 'number':
+            return reb.Integer(js_value)
+
+          case 'string':
+            return reb.Text(js_value)
+
+          default:  /* used by JS-EVAL* with /VALUE; should it error here? */
+            return reb.Void()
+        }
     }
 }
 
