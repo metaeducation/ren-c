@@ -103,6 +103,8 @@ Script: [
     ambiguous-infix:    {Ambiguous infix expression--use GROUP! to clarify}
     literal-left-path:  {Use -> to pass literal left PATH! parameters right}
 
+    only-if-non-block:  {Must use /ONLY if not splicing BLOCK! into ANY-ARRAY!}
+
     bad-get-group:      {GET-GROUP! gets WORD!/PATH!/BLOCK!, arity-0 ACTION!}
     bad-set-group:      {SET-GROUP! sets WORD!/PATH!/BLOCK!, arity-1 ACTION!}
 

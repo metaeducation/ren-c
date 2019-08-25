@@ -206,7 +206,9 @@ compile: function [
         ; that TCC can find %libtcc1.a.  So adding the runtime path as a
         ; normal library directory.
         ;
-        insert config/library-path file-to-local/full config/runtime-path
+        insert config/library-path @(
+            file-to-local/full config/runtime-path
+        )
     ]
 
     ; Note: The few header files in %tcc/include/ must out-prioritize the ones
@@ -216,7 +218,9 @@ compile: function [
     ;
     ; https://stackoverflow.com/questions/53154898/
 
-    insert config/include-path file-to-local/full config/runtime-path/include
+    insert config/include-path @(
+        file-to-local/full config/runtime-path/include
+    )
 
     ; The other complicating factor is that once emitted code has these
     ; references to TCC-specific internal routines not in libc, the
@@ -299,7 +303,7 @@ compile: function [
 
     librebol: _
 
-    compilables: map-each item compilables [
+    compilables: map-each/only item compilables [
         item: maybe if match [word! path!] :item [get item]
 
         switch type of :item [
@@ -320,7 +324,7 @@ compile: function [
     ]
 
     if librebol [
-        insert compilables trim/auto mutable {
+        insert/only compilables trim/auto mutable {
             /* TCC's override of <stddef.h> defines int64_t in a way that
              * might not be compatible with glibc's <stdint.h> (which at time
              * of writing defines it as a `__int64_t`.)  You might get:
@@ -376,7 +380,7 @@ compile: function [
             ]
         ]
 
-        insert config/include-path file-to-local config/librebol-path
+        insert config/include-path @(file-to-local config/librebol-path)
     ]
 
     ; Having paths as Rebol FILE! is useful for doing work, but the TCC calls

@@ -21,6 +21,7 @@
     ]
     adapted-append-v: adapt 'append-v [
         value: to integer! value
+        only: true
     ]
     adapted-append-v "10"
     adapted-append-v "20"

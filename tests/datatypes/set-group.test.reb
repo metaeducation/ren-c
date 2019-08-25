@@ -30,6 +30,6 @@
 (
     count: 0
     [1] = collect [
-        (if count != 1 [fail] :keep): (count: count + 1)
+        (if count != 1 [fail] :keep/only): count: count + 1
     ]
 )

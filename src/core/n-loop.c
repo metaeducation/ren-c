@@ -29,7 +29,7 @@ typedef enum {
     LOOP_FOR_EACH,
     LOOP_EVERY,
     LOOP_MAP_EACH,
-    LOOP_MAP_EACH_SPLICED
+    LOOP_MAP_EACH_ONLY
 } LOOP_MODE;
 
 
@@ -589,13 +589,13 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_MAP_EACH:
-          case LOOP_MAP_EACH_SPLICED:
+          case LOOP_MAP_EACH_ONLY:
             if (IS_NULLED(les->out))
                 Init_Void(les->out);  // nulled used to signal breaking only
-            else if (
-                les->mode == LOOP_MAP_EACH_SPLICED
-                and IS_BLOCK(les->out)
-            ){
+            else if (les->mode == LOOP_MAP_EACH) {
+                if (not IS_BLOCK(les->out))
+                    fail (Error_Only_If_Non_Block_Raw());
+
                 RELVAL *v = VAL_ARRAY_AT(les->out);
                 for (; NOT_END(v); ++v)
                     Derelativize(DS_PUSH(), v, VAL_SPECIFIER(les->out));
@@ -718,14 +718,14 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
     //=//// NOW FINISH UP /////////////////////////////////////////////////=//
 
     if (r == R_THROWN) {  // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
-        if (mode == LOOP_MAP_EACH or mode == LOOP_MAP_EACH_SPLICED)
+        if (mode == LOOP_MAP_EACH or mode == LOOP_MAP_EACH_ONLY)
             DS_DROP_TO(dsp_orig);
         return R_THROWN;
     }
 
     if (r) {
         assert(IS_ERROR(r));
-        if (mode == LOOP_MAP_EACH or mode == LOOP_MAP_EACH_SPLICED)
+        if (mode == LOOP_MAP_EACH or mode == LOOP_MAP_EACH_ONLY)
             DS_DROP_TO(dsp_orig);
         rebJumps ("FAIL", rebR(r), rebEND);
     }
@@ -754,7 +754,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         return D_OUT;
 
       case LOOP_MAP_EACH:
-      case LOOP_MAP_EACH_SPLICED:
+      case LOOP_MAP_EACH_ONLY:
         if (IS_NULLED(D_OUT)) {  // e.g. there was a BREAK. *must* return null
             DS_DROP_TO(dsp_orig);
             return nullptr;
@@ -1488,7 +1488,7 @@ REBNATIVE(remove_each)
 //          "The series to traverse"
 //      body [<const> <modal> block!]
 //          "Block to evaluate each time"
-//      /splice "Splice body result if it's a block"
+//      /only "Do not splice body result if it's a block"
 //  ]
 //
 REBNATIVE(map_each)
@@ -1500,7 +1500,7 @@ REBNATIVE(map_each)
 
     return Loop_Each(
         frame_,
-        REF(splice) ? LOOP_MAP_EACH_SPLICED : LOOP_MAP_EACH
+        REF(only) ? LOOP_MAP_EACH_ONLY : LOOP_MAP_EACH
     );
 }
 

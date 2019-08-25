@@ -297,9 +297,9 @@ reword: function [
                 compose lit (keyword-match: lit (keyword))
             ]
 
-            keep/line '|
+            keep/line [|]
         ]
-        keep 'false  ; add failure if no match, instead of removing last |
+        keep [false]  ; add failure if no match, instead of removing last |
     ]
 
     rule: [
@@ -444,9 +444,9 @@ collect*-with: func [
         [<opt> block!]
     'name [word! lit-word!]
         "Name to which keep function will be assigned (<local> if word!)"
-    body [<blank> block!]
-        "Block to evaluate"
-
+    @body "Block to evaluate"
+        [<blank> block!]
+    /only "Always keep values atomically (e.g. KEEP has no /ONLY)"
     <local> out keeper
 ][
     ; Derive from APPEND to inherit /ONLY, /LINE, /DUP automatically
@@ -465,6 +465,7 @@ collect*-with: func [
         ]
     )[
         series: <replaced>
+        only: if only [/only]
     ]
 
     either word? name [
@@ -506,7 +507,7 @@ collect-lines: redescribe [
 ] adapt 'collect [  ; https://forum.rebol.info/t/945/1
     body: compose [
         keep: adapt specialize 'keep [
-            line: true | only: false | part: _
+            line: true | only: true | part: _
         ] [value: spaced try :value]
         (as group! body)
     ]
@@ -519,7 +520,7 @@ collect-text: redescribe [
     adapt 'collect [
         body: compose [
             keep: adapt specialize 'keep [
-                line: false | only: false | part: _
+                line: false | only: true | part: _
             ][
                 value: unspaced try :value
             ]
@@ -607,7 +608,7 @@ split: function [
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
     parse (try match block! dlm) [some integer! end] then [
-        return map-each len dlm [
+        return map-each len dlm @[
             if len <= 0 [
                 series: skip series negate len
                 continue  ; don't add to output

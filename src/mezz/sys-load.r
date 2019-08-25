@@ -285,7 +285,7 @@ load: function [
         ; A BLOCK! means multiple sources, calls LOAD recursively for each
 
         a: self/all  ; !!! Some bad interaction requires this, review
-        return map-each s source [
+        return map-each/only s source [
             applique 'load [
                 source: s
                 header: header
@@ -374,7 +374,7 @@ load: function [
     ]
 
     if header [
-        insert data hdr
+        insert/only data hdr
     ]
 
     ; Bind code to user context
@@ -482,7 +482,7 @@ do-needs: function [
 
     ; Import the modules:
     ;
-    mods: map-each [name vers hash] mods [
+    mods: map-each/only [name vers hash] mods [
         mod: applique 'import [
             module: name
 
@@ -644,7 +644,7 @@ load-module: function [
                 cause-error 'script 'invalid-arg tmp
             ]
 
-            return map-each [mod ver name] source [
+            return map-each/only [mod ver name] source [
                 applique 'load-module [
                     source: mod
                     version: version
@@ -695,7 +695,7 @@ load-module: function [
         line: 1
     ]
     if no-share [
-        hdr/options: append any [hdr/options make block! 1] 'isolate
+        hdr/options: append any [hdr/options make block! 1] [isolate]
     ]
 
     ; Unify hdr/name and /AS name
@@ -715,7 +715,7 @@ load-module: function [
         ; But make it a mixin and it will be imported directly later
 
         if not find hdr/options 'private [
-            hdr/options: append any [hdr/options make block! 1] 'private
+            hdr/options: append any [hdr/options make block! 1] [private]
         ]
     ]
     if not tuple? set 'modver :hdr/version [
@@ -796,7 +796,7 @@ load-module: function [
             set [hdr: code:] load-ext-module code
             hdr/name: name ; in case of delayed rename
             if all [no-share not find hdr/options 'isolate] [
-                hdr/options: append any [hdr/options make block! 1] 'isolate
+                hdr/options: append any [hdr/options make block! 1] [isolate]
             ]
         ]
 

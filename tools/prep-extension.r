@@ -133,7 +133,7 @@ native-defs: collect [
         ]
         opt [quote platforms: set n-platforms block!]
         (
-            keep make natdef compose/only [
+            keep/only make natdef compose/only [
                 export: (n-export)
                 name: lit (to word! n-name)
                 spec: (n-spec)  ; includes NATIVE or NATIVE/BODY
@@ -187,7 +187,7 @@ for-each native native-defs [
     num-natives: num-natives + 1
 
     if native/export [
-        append native-list 'export
+        append native-list [export]
 
         ; !!! This used to add to an "export-list" in the header of a module
         ; whose source was entirely generated.  The idea was that there could
@@ -210,7 +210,7 @@ for-each native native-defs [
         ; http://www.rebol.net/r3blogs/0300.html
         ;
         comment [
-            append export-list to word! native/name
+            append/only export-list to word! native/name
             ...
             compose/only [
                 Module [
@@ -233,7 +233,7 @@ names: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item
-            keep cscape/with {N_${MOD}_${Item}} 'item
+            keep/only cscape/with {N_${MOD}_${Item}} 'item
         ]
     ]
 ]
@@ -242,7 +242,7 @@ native-forward-decls: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item
-            keep cscape/with {REBNATIVE(${Item})} 'item
+            keep/only cscape/with {REBNATIVE(${Item})} 'item
         ]
     ]
 ]

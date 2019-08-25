@@ -36,7 +36,7 @@ options: [
         ]
         either block? user-config/with-ffi [
             cfg-ffi: make cfg-ffi user-config/with-ffi
-            cfg-ffi/libraries: map-each lib cfg-ffi/libraries [
+            cfg-ffi/libraries: map-each/only lib cfg-ffi/libraries [
                 case [
                     file? lib [
                         make rebmake/ext-dynamic-class [
@@ -71,7 +71,7 @@ options: [
                         'libraries
                         %libffi
 
-                    cfg-ffi/libraries: map-each lib libs [
+                    cfg-ffi/libraries: map-each/only lib libs [
                         make rebmake/ext-dynamic-class [
                             output: lib
                             flags: either user-config/with-ffi = 'static [[static]][_]

@@ -1041,7 +1041,8 @@ REBTYPE(String)
         UNUSED(PAR(series));
         UNUSED(PAR(value));
 
-        UNUSED(REF(only)); // all strings appends are /ONLY...currently unused
+        if (REF(only))
+            fail ("/ONLY modifications are only relevant to ANY-ARRAY! args");
 
         REBLEN len; // length of target
         if (VAL_WORD_SYM(verb) == SYM_CHANGE)

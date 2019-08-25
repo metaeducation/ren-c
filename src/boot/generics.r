@@ -313,10 +313,10 @@ insert: generic [
         [<requote> any-series! port! map! object! bitset! port!]
     series "At position (modified)"
         [<dequote> any-series! port! map! object! bitset! port!]
-    value [<opt> any-value!] {The value to insert}
+    value [<opt> <modal> any-value!] {The value to insert}
+    /only "Add value atomically to an array (not the contents of the block)"
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
-    /only "Insert a block as a single value (not the contents of the block)"
     /dup "Duplicates the insert a specified number of times"
         [any-number! pair!]
     /line "Data should be its own line (use as formatting cue if ANY-ARRAY!)"
@@ -331,10 +331,10 @@ append: generic [
     return: [<requote> any-series! port! map! object! module! bitset!]
     series "Any position (modified)"
         [<dequote> any-series! port! map! object! module! bitset!]
-    value [<opt> any-value!]
+    value [<opt> <modal> any-value!]
+    /only "Add value atomically to an array (not the contents of the block)"
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
-    /only "Insert a block as a single value (not the contents of the block)"
     /dup "Duplicates the insert a specified number of times"
         [any-number! pair!]
     /line "Data should be its own line (use as formatting cue if ANY-ARRAY!)"
@@ -349,10 +349,10 @@ change: generic [
     return: [<requote> any-series! port!]
     series "At position (modified)"
         [<dequote> any-series! port!]
-    value [<opt> any-value!] {The new value}
+    value [<opt> <modal> any-value!] {The new value}
+    /only "Add value atomically to an array (not the contents of the block)"
     /part "Limits the amount to change to a given length or position"
         [any-number! any-series! pair!]
-    /only "Change a block as a single value (not the contents of the block)"
     /dup "Duplicates the change a specified number of times"
         [any-number! pair!]
     /line "Data should be its own line (use as formatting cue if ANY-ARRAY!)"

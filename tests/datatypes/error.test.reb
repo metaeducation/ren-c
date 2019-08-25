@@ -4,7 +4,7 @@
 (error! = type of trap [1 / 0])
 
 ; error evaluation
-(error? do head of insert copy [] trap [1 / 0])
+('zero-divide = (do head of insert copy [] @(trap [1 / 0]))/id)
 
 ; error that does not exist in the SCRIPT category--all of whose ids are
 ; reserved by the system and must be formed from mezzanine/user code in

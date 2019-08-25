@@ -70,7 +70,7 @@
 )
 
 (
-    append-lit: reskinned [@change :value] :append
+    append-lit: reskinned [@change :value] :append/only
     [a b c d] = append-lit [a b c] d
 )
 

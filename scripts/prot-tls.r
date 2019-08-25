@@ -431,7 +431,7 @@ client-hello: function [
     random/seed now/time/precise
     loop 28 [append ctx/client-random (random-secure 256) - 1]
 
-    cs-data: join-all map-each item cipher-suites [
+    cs-data: join-all map-each item cipher-suites @[
         if binary? item [item]
     ]
 
@@ -971,7 +971,7 @@ parse-messages: function [
                 )
 
                 len: to-integer/unsigned copy/part at data 2 3
-                append result switch msg-type [
+                append/only result switch msg-type [
                     <server-hello> [
                         ; https://tools.ietf.org/html/rfc5246#section-7.4.1.3
 
@@ -1044,7 +1044,7 @@ parse-messages: function [
                             certificate-list: make block! 4
                             while [not tail? msg-content] [
                                 if 0 < clen: to-integer/unsigned copy/part skip msg-content 3 3 [
-                                    append certificate-list copy/part at msg-content 7 clen
+                                    append certificate-list @(copy/part at msg-content 7 clen)
                                 ]
                                 msg-content: skip msg-content 3 + clen
                             ]
@@ -1188,13 +1188,13 @@ parse-messages: function [
 
         <change-cipher-spec> [
             ctx/encrypted?: true
-            append result context [
+            append/only result context [
                 type: 'ccs-message-type
             ]
         ]
 
         #application [
-            append result msg-obj: context [
+            append/only result msg-obj: context [
                 type: 'app-data
                 content: copy/part data (length of data) - ctx/hash-size
             ]
@@ -1438,7 +1438,7 @@ tls-read-data: function [
 
         debug ["received bytes:" length of fragment | "parsing response..."]
 
-        append ctx/resp parse-response ctx fragment
+        append ctx/resp @(parse-response ctx fragment)
 
         data: skip data len
 
@@ -1481,7 +1481,7 @@ tls-awake: function [
         'lookup [
             open port
             tls-init tls-port/state
-            insert system/ports/system make event! [
+            insert/only system/ports/system make event! [
                 type: 'lookup
                 port: tls-port
             ]
@@ -1498,7 +1498,7 @@ tls-awake: function [
                     <finished>
                 ]
             ]
-            insert system/ports/system make event! [
+            insert/only system/ports/system make event! [
                 type: 'connect
                 port: tls-port
             ]
@@ -1511,7 +1511,7 @@ tls-awake: function [
                     return true
                 ]
                 #application [
-                    insert system/ports/system make event! [
+                    insert/only system/ports/system make event! [
                         type: 'wrote
                         port: tls-port
                     ]
@@ -1549,7 +1549,7 @@ tls-awake: function [
                         for-each msg proto/messages [
                             if msg/description = "Close notify" [
                                 do-commands tls-port/state [<close-notify>]
-                                insert system/ports/system make event! [
+                                insert/only system/ports/system make event! [
                                     type: 'read
                                     port: tls-port
                                 ]
@@ -1563,7 +1563,7 @@ tls-awake: function [
             debug ["data complete?:" complete? "application?:" application?]
 
             if application? [
-                insert system/ports/system make event! [
+                insert/only system/ports/system make event! [
                     type: 'read
                     port: tls-port
                 ]
@@ -1574,7 +1574,7 @@ tls-awake: function [
         ]
 
         'close [
-            insert system/ports/system make event! [
+            insert/only system/ports/system make event! [
                 type: 'close
                 port: tls-port
             ]

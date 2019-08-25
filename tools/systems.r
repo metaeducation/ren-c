@@ -466,16 +466,16 @@ for-each-system: function [
                 )
             ]
             copy definitions [any issue!] (
-                definitions: map-each x definitions [to-word x]
+                definitions: map-each/only x definitions [to-word x]
             )
             copy cflags [any tag!] (
-                cflags: map-each x cflags [to-word to-text x]
+                cflags: map-each/only x cflags [to-word to-text x]
             )
             copy ldflags [any refinement!] (
-                ldflags: map-each x ldflags [to-word x]
+                ldflags: map-each/only x ldflags [to-word x]
             )
             copy libraries [any file!] (
-                libraries: map-each x libraries [to-word to-text x]
+                libraries: map-each/only x libraries [to-word to-text x]
             )
 
             (

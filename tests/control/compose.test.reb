@@ -47,13 +47,12 @@
     error? trap blk
 )
 
-; #1906
-(
-    b: copy [] insert/dup b 1 32768 compose b
+[#1906 (
+    b: copy [] insert/dup b [1] 32768 compose b
     sum: 0
     for-each i b [sum: me + i]
     sum = 32768
-)
+)]
 
 ; COMPOSE with implicit /ONLY-ing
 

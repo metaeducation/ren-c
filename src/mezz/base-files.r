@@ -135,7 +135,7 @@ make-dir: func [
         ; work, but seems to cause a problem.  Review why when time permits.
         ;
         end: find-last/tail path slash else [path]
-        insert dirs copy end
+        insert dirs @(copy end)
         clear end
     ]
 
@@ -148,7 +148,7 @@ make-dir: func [
             for-each dir created [attempt [delete dir]]
             fail e
         ])
-        insert created path
+        insert created @path
     ]
     path
 ]

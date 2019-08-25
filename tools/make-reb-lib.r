@@ -46,7 +46,7 @@ ver: load %../src/boot/version.r
 api-objects: make block! 50
 
 map-each-api: func [code [block!]] [
-    map-each api api-objects compose/only [
+    map-each/only api api-objects compose/only [
         do in api (code)  ; want API variable visible to `code` while running 
     ]
 ]
@@ -93,8 +93,8 @@ emit-proto: func [return: <void> proto] [
                     while [find identifier-chars pos/1] [
                         pos: back pos
                     ]
-                    keep trim/tail copy/part param next pos  ; TEXT! of type
-                    keep to word! next pos  ; WORD! of the parameter name
+                    keep/only trim/tail copy/part param next pos  ; TEXT! type
+                    keep/only to word! next pos  ; WORD! of the parameter name
                 )
             ]]
             end
@@ -135,7 +135,7 @@ emit-proto: func [return: <void> proto] [
     ; Note: Cannot set object fields directly from PARSE, tried it :-(
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
-    append api-objects make object! compose/only [
+    append/only api-objects make object! compose/only [
         spec: try match block! third header  ; Rebol metadata API comment
         name: (ensure text! name)
         returns: (ensure text! trim/tail returns)
@@ -172,7 +172,7 @@ extern-prototypes: map-each-api [
 lib-struct-fields: map-each-api [
     cfunc-params: delimit ", " compose [
         (if is-variadic ["unsigned char quotes"])
-        ((map-each [type var] paramlist [spaced [type var]]))
+        ((map-each/only [type var] paramlist [spaced [type var]]))
         (if is-variadic ["const void *p"])
         (if is-variadic ["va_list *vaptr"])
     ]
@@ -236,7 +236,7 @@ for-each api api-objects [do in api [
         opt-va-start: {va_list va; va_start(va, p);}
 
         wrapper-params: delimit ", " compose [
-            ((map-each [type var] paramlist [spaced [type var]]))
+            ((map-each/only [type var] paramlist [spaced [type var]]))
             "const void *p"
             "..."
         ]
@@ -245,39 +245,39 @@ for-each api api-objects [do in api [
         ; quote spliced slots and one normal.
 
         proxied-args: delimit ", " compose [
-            "0" ((map-each [type var] paramlist [to-text var])) "p" "&va"
+            "0" ((map-each/only [type var] paramlist [to-text var])) "p" "&va"
         ]
-        append direct-call-inlines make-inline-proxy "RL_"
-        append struct-call-inlines make-inline-proxy "RL->"
+        append/only direct-call-inlines make-inline-proxy "RL_"
+        append/only struct-call-inlines make-inline-proxy "RL->"
 
         proxied-args: delimit ", " compose [
-            "1" ((map-each [type var] paramlist [to-text var])) "p" "&va"
+            "1" ((map-each/only [type var] paramlist [to-text var])) "p" "&va"
         ]
-        append direct-call-inlines make-inline-proxy/Q "RL_"
-        append struct-call-inlines make-inline-proxy/Q "RL->"
+        append/only direct-call-inlines make-inline-proxy/Q "RL_"
+        append/only struct-call-inlines make-inline-proxy/Q "RL->"
     ]
     else [
         opt-va-start: _
 
-        wrapper-params: try delimit ", " map-each [type var] paramlist [
+        wrapper-params: try delimit ", " map-each/only [type var] paramlist [
             spaced [type var]
         ]
 
-        proxied-args: try delimit ", " map-each [type var] paramlist [
+        proxied-args: try delimit ", " map-each/only [type var] paramlist [
             to text! var
         ]
 
-        append direct-call-inlines make-inline-proxy "RL_"
-        append struct-call-inlines make-inline-proxy "RL->"
+        append/only direct-call-inlines make-inline-proxy "RL_"
+        append/only struct-call-inlines make-inline-proxy "RL->"
     ]
 ]]
 
 c89-macros: collect [ map-each-api [
     if is-variadic [
-        keep cscape/with {#define $<Name> $<Name>_inline} api
-        keep cscape/with {#define $<Name>Q $<Name>Q_inline} api
+        keep/only cscape/with {#define $<Name> $<Name>_inline} api
+        keep/only cscape/with {#define $<Name>Q $<Name>Q_inline} api
     ] else [
-        keep cscape/with {#define $<Name> $<Name>_inline} api
+        keep/only cscape/with {#define $<Name> $<Name>_inline} api
     ]
 ] ]
 
@@ -297,15 +297,15 @@ c99-or-c++11-macros: collect [ map-each-api [
     ; a given, it would just make the header file larger to add that variant.
     ;
     if is-variadic [
-        keep cscape/with
+        keep/only cscape/with
             {#define $<Name>(...) $<Name>_inline(__VA_ARGS__, rebEND)} api
-        keep cscape/with
+        keep/only cscape/with
             {#define $<Name>Q(...) $<Name>Q_inline(__VA_ARGS__, rebEND)} api
     ] else [
         ;
         ; For non-variadics just call the inline form directly
         ;
-        keep cscape/with {#define $<Name> $<Name>_inline} api
+        keep/only cscape/with {#define $<Name> $<Name>_inline} api
     ]
 ] ]
 

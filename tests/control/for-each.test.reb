@@ -148,7 +148,7 @@
         if count = 5 [return null]
         return count: count + 1
     ]
-    [10 20 30 40 50] = map-each i :make-one-thru-five [
+    [10 20 30 40 50] = map-each i :make-one-thru-five @[
         i * 10
     ]
 )(
@@ -156,7 +156,7 @@
         if count = 5 [return null]
         return count: count + 1
     ]
-    [[1 2] [3 4] [5]]  = map-each [a b] :make-one-thru-five [
+    [[1 2] [3 4] [5]]  = map-each/only [a b] :make-one-thru-five [
         compose [(:a) (:b)]
     ]
 )
@@ -173,25 +173,25 @@
                 throw <thrown>
             ]
         ]
-        [a b c 10] = append block 10
+        [a b c 10] = append block [10]
     ]
 )(
     block: copy [a b c]
     all [
         e: trap [
             for-each item block [
-                append block <failure>
+                append block [<failure>]
             ]
         ]
         e/id = 'series-held
-        [a b c 10] = append block 10
+        [a b c 10] = append block [10]
     ]
 )
 
 ; paths are immutable, but for-each is legal on them
 
 (
-    [a b c] = collect [for-each x 'a/b/c [keep x]]
+    [a b c] = collect [for-each x 'a/b/c [keep @x]]
 )(
-    [_ _] = collect [for-each x '/ [keep x]]
+    [_ _] = collect [for-each x '/ [keep @x]]
 )

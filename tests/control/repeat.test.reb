@@ -35,10 +35,10 @@
     success
 )
 ; decimal! test
-([1 2 3] == collect [repeat i 3.0 [keep i]])
-([1 2 3] == collect [repeat i 3.1 [keep i]])
-([1 2 3] == collect [repeat i 3.5 [keep i]])
-([1 2 3] == collect [repeat i 3.9 [keep i]])
+([1 2 3] == collect [repeat i 3.0 [keep @i]])
+([1 2 3] == collect [repeat i 3.1 [keep @i]])
+([1 2 3] == collect [repeat i 3.5 [keep @i]])
+([1 2 3] == collect [repeat i 3.9 [keep @i]])
 ; text! test
 (
     out: copy ""
@@ -115,6 +115,6 @@
 )
 (
     out: copy []
-    repeat i [1 2 3] [append out first i]
+    repeat i [1 2 3] [append out @(first i)]
     out = [1 2 3]
 )

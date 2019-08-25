@@ -22,7 +22,7 @@
 
 (<result> = loop 1 [continue <result> <not-result>])
 (
-    [2 <big> <big>] = map-each x [1 2000 3000] [
+    [2 <big> <big>] = map-each x [1 2000 3000] @[
         if x > 1000 [continue <big>]
         x + 1
     ]

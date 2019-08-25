@@ -32,7 +32,7 @@ call*: adapt 'call-internal* [
             if empty? command [  ; !!! should this be a no-op?
                 fail "Empty argv[] block passed to CALL"
             ]
-            map-each arg command [
+            map-each/only arg command [
                 switch type of arg [
                     text! [arg]  ; pass through as is
                     file! [file-to-local arg]
@@ -94,7 +94,7 @@ argv-block-to-command*: function [
     return: [text!]
     argv [block!]
 ][
-    return spaced map-each arg argv [
+    return spaced map-each/only arg argv [
         any [
             find arg space
             find arg {"}

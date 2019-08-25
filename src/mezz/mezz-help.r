@@ -28,7 +28,7 @@ spec-of: function [
     ]
 
     return collect [
-        keep/line ensure [<opt> text!] any [
+        keep/line/only ensure [<opt> text!] any [
             select meta 'description
             select original-meta 'description
         ]
@@ -296,17 +296,17 @@ help: function [
         print collect [
             keep [(uppercase mold topic) "is" an (mold type of :value)]
             if free? :value [
-                keep "that has been FREEd"
+                keep ["that has been FREEd"]
             ] else [
-                keep "of value:"
+                keep ["of value:"]
                 if match [object! port!] value [
-                    keep newline
+                    keep @newline
                     for-each line summarize-obj value [
-                        keep line
-                        keep newline
+                        keep @line
+                        keep @newline
                     ]
                 ] else [
-                    keep mold value
+                    keep @(mold value)
                 ]
             ]
         ]

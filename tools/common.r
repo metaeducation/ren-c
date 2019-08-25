@@ -195,7 +195,7 @@ for-each-record: function [
         fail {Table of records does not start with a header block}
     ]
 
-    headings: map-each word first table [
+    headings: map-each/only word first table [
         if not word? word [
             fail [{Heading} word {is not a word}]
         ]
@@ -211,7 +211,7 @@ for-each-record: function [
 
         spec: collect [
             for-each column-name headings [
-                keep column-name
+                keep/only column-name
                 keep compose/only [lit (table/1)]
                 table: next table
             ]
@@ -418,14 +418,14 @@ stripload: function [
             |
             "^^}"  ; (actually `^}`) escaped brace, never count
             |
-            "{" (if <Q> != last pushed [append pushed <B>])
+            "{" (if <Q> != last pushed [append pushed [<B>]])
             |
             "}" (if <B> = last pushed [take/last pushed])
             |
             {"} (
                 case [
                     <Q> = last pushed [take/last pushed]
-                    empty? pushed [append pushed <Q>]
+                    empty? pushed [append pushed [<Q>]]
                 ]
             )
             |

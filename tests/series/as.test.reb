@@ -1,13 +1,13 @@
 (
     block: copy [a b c]
     path: to path! block
-    append block 'd
+    append block [d]
     path = 'a/b/c  ; AS was not legal
 )
 (
     block: copy [a b c]
     group: as group! block
-    append block 'd
+    append block [d]
     group = lit (a b c d)
 )
 

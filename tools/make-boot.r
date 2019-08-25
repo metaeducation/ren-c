@@ -162,12 +162,12 @@ add-sym: function [
         fail ["Duplicate word specified" word]
     ]
 
-    append syms cscape/with {/* $<Word> */ SYM_${FORM WORD} = $<sym-n>} [
+    append/only syms cscape/with {/* $<Word> */ SYM_${FORM WORD} = $<sym-n>} [
         sym-n word
     ]
     sym-n: sym-n + 1
 
-    append boot-words word
+    append/only boot-words word
     return null
 ]
 
@@ -192,7 +192,7 @@ rebs: collect [
 
             assert [sym-n == n]  ; SYM_XXX should equal REB_XXX value
             add-sym to-word unspaced [ensure word! t/name "!"]
-            keep cscape/with {REB_${T/NAME} = $<n>} [n t]
+            keep/only cscape/with {REB_${T/NAME} = $<n>} [n t]
         ]
         n: n + 1
     ]
@@ -343,7 +343,7 @@ for-each-record t type-table [
         e-types/emit newline
     ]
 
-    append boot-types to-word unspaced [form t/name "!"]
+    append/only boot-types to-word unspaced [form t/name "!"]
     n: n + 1
 ]
 
@@ -377,14 +377,14 @@ for-each-record t type-table [
             select typeset-sets ts
             first back insert tail typeset-sets reduce [ts copy []]
         ]
-        append spot t/name
+        append/only spot t/name
     ]
 ]
 
 for-each [ts types] typeset-sets [
     flagits: collect [
         for-each t types [
-            keep cscape/with {FLAGIT_KIND(REB_${T})} 't
+            keep/only cscape/with {FLAGIT_KIND(REB_${T})} 't
         ]
     ]
     e-types/emit [flagits ts] {
@@ -446,7 +446,7 @@ hook-list: collect [
     for-each-record t type-table [
         name: either issue? t/name [as word! t/name] [unspaced [t/name "!"]]
 
-        keep cscape/with {
+        keep/only cscape/with {
             {  /* $<NAME> = $<n> */
                 cast(CFUNC*, ${"T_" Hookname T 'Class}),  /* generic */
                 cast(CFUNC*, ${"CT_" Hookname T 'Class}),  /* compare */
@@ -508,10 +508,10 @@ e-sysobj: make-emitter "System Object" inc/tmp-sysobj.h
 at-value: func ['field] [next find boot-sysobj to-set-word field]
 
 boot-sysobj: load %sysobj.r
-change at-value version version
-change at-value commit git-commit
-change at-value build now/utc
-change at-value product quote to word! product
+change/only at-value version version
+change/only at-value commit git-commit
+change/only at-value build now/utc
+change/only at-value product quote to word! product
 
 change/only at-value platform reduce [
     any [config/platform-name | "Unknown"]
@@ -535,16 +535,16 @@ make-obj-defs: function [
         either selfless [
             n: 1
         ][
-            keep cscape/with {${PREFIX}_SELF = 1} [prefix]
+            keep/only cscape/with {${PREFIX}_SELF = 1} [prefix]
             n: 2
         ]
 
         for-each field words-of obj [
-            keep cscape/with {${PREFIX}_${FIELD} = $<n>} [prefix field n]
+            keep/only cscape/with {${PREFIX}_${FIELD} = $<n>} [prefix field n]
             n: n + 1
         ]
 
-        keep cscape/with {${PREFIX}_MAX} [prefix]
+        keep/only cscape/with {${PREFIX}_MAX} [prefix]
     ]
 
     e/emit [prefix items] {
@@ -608,12 +608,12 @@ evks: collect [
 e-errfuncs: make-emitter "Error structure and functions" inc/tmp-error-funcs.h
 
 fields: collect [
-    keep {RELVAL self}
+    keep/only {RELVAL self}
     for-each word words-of ob/standard/error [
         either word = 'near [
-            keep {/* near/far are old C keywords */ RELVAL nearest}
+            keep/only {/* near/far are old C keywords */ RELVAL nearest}
         ][
-            keep cscape/with {RELVAL ${word}} 'word
+            keep/only cscape/with {RELVAL ${word}} 'word
         ]
     ]
 ]
@@ -679,11 +679,11 @@ for-each [sw-cat list] boot-errors [
             args: ["rebEND"]
         ] else [
             params: collect [
-                count-up i arity [keep unspaced ["const REBVAL *arg" i]]
+                count-up i arity [keep/only unspaced ["const REBVAL *arg" i]]
             ]
             args: collect [
-                count-up i arity [keep unspaced ["arg" i]]
-                keep "rebEND"
+                count-up i arity [keep/only unspaced ["arg" i]]
+                keep/only "rebEND"
             ]
         ]
 
@@ -720,7 +720,7 @@ for-each section [:boot-base boot-sys :boot-mezz] [
         for-each file first mezz-files [
             append s load join %../mezz/ file
         ]
-        append s _  ; !!! would <section-done> be better?
+        append s [_]  ; !!! would <section-done> be better?
     ]
     else [
         set section s: make text! 20000
@@ -748,8 +748,8 @@ e-sysctx: make-emitter "Sys Context" inc/tmp-sysctx.h
 sctx: make object! collect [
     for-each item boot-sys [
         if set-word? :item [
-            keep item
-            keep "stub proxy for %sys-base.r item"
+            keep/only item
+            keep/only "stub proxy for %sys-base.r item"
         ]
     ]
 ]
@@ -793,7 +793,7 @@ boot-natives: load boot/tmp-natives.r
 nats: collect [
     for-each val boot-natives [
         if set-word? val [
-            keep cscape/with {N_${to word! val}} 'val
+            keep/only cscape/with {N_${to word! val}} 'val
         ]
     ]
 ]
@@ -864,7 +864,7 @@ nat-index: 0
 nids: collect [
     for-each val boot-natives [
         if set-word? val [
-            keep cscape/with
+            keep/only cscape/with
                 {N_${to word! val}_ID = $<nat-index>} [nat-index val]
             nat-index: nat-index + 1
         ]
@@ -875,7 +875,7 @@ fields: collect [
     for-each word sections [
         word: form as word! word
         remove/part word 5 ; boot_
-        keep cscape/with {RELVAL ${word}} 'word
+        keep/only cscape/with {RELVAL ${word}} 'word
     ]
 ]
 

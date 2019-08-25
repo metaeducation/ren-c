@@ -13,7 +13,7 @@
         save/header script compose [quit (value)] []
         do script
     ]
-    all map-each value reduce [
+    all map-each/only value reduce [
         42
         {foo}
         #{CAFE}

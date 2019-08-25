@@ -71,9 +71,8 @@
 (use [a] [a: false /a = redbol-apply func [/a] [a] [/a]])
 (use [a] [a: false /a = redbol-apply/only func [/a] [/a] [/a]])
 (group! == redbol-apply/only (specialize 'of [property: 'type]) [()])
-([1] == head of redbol-apply :insert [copy [] [1] blank blank])
-([1] == head of redbol-apply :insert [copy [] [1] blank false])
-([[1]] == head of redbol-apply :insert [copy [] [1] blank true])
+([1] == head of redbol-apply :insert [copy [] [1] blank blank blank])
+([[1]] == head of redbol-apply :insert [copy [] [1] true blank blank])
 (action! == redbol-apply (specialize 'of [property: 'type]) [:print])
 (get-word! == redbol-apply/only (specialize 'of [property: 'type]) [:print])
 
@@ -139,12 +138,12 @@
 (
     error? redbol-apply/only func [x [<opt> any-value!]] [
         return get 'x
-    ] head of insert copy [] make error! ""
+    ] head of insert/only copy [] make error! ""
 )
 (
     error? redbol-apply/only func ['x [<opt> any-value!]] [
         return get 'x
-    ] head of insert copy [] make error! ""
+    ] head of insert/only copy [] make error! ""
 )
 (use [x] [x: 1 strict-equal? 1 redbol-apply func ['x] [:x] [:x]])
 (use [x] [x: 1 strict-equal? 1 redbol-apply func ['x] [:x] [:x]])

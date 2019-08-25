@@ -480,8 +480,8 @@ ctx-zip: context [
                     ]
 
                     either any-array? where [
-                        where: insert where name
-                        where: insert where either all [
+                        where: insert/only where name
+                        where: insert/only where either all [
                             #"/" = last name
                             empty? uncompressed-data
                         ][blank][uncompressed-data]

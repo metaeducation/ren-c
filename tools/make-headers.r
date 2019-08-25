@@ -89,7 +89,7 @@ emit-proto: func [
         fail ["Duplicate prototype:" the-file ":" proto]
     ]
 
-    append prototypes proto
+    append/only prototypes proto
 
     e-funcs/emit [proto the-file] {
         RL_API $<Proto>; /* $<The-File> */

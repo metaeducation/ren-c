@@ -945,6 +945,9 @@ REBTYPE(Array)
         UNUSED(PAR(series));
         UNUSED(PAR(value));
 
+        if (not ANY_ARRAY(arg) and not IS_NULLED(arg) and not REF(only))
+            fail (Error_Only_If_Non_Block_Raw());
+
         REBLEN len; // length of target
         if (VAL_WORD_SYM(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(array, ARG(part));

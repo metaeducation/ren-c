@@ -288,7 +288,7 @@ DEVICE_CMD Lookup_Socket(REBREQ *sock)
     req->flags &= ~RRF_DONE;
 
     rebElide(
-        "insert system/ports/system make event! [",
+        "insert/only system/ports/system make event! [",
             "type: 'lookup",
             "port:", CTX_ARCHETYPE(CTX(ReqPortCtx(sock))),
         "]",
@@ -330,7 +330,7 @@ DEVICE_CMD Connect_Socket(REBREQ *sock)
         req->state |= RSM_CONNECT;
 
         rebElide(
-            "insert system/ports/system make event! [",
+            "insert/only system/ports/system make event! [",
                 "type: 'connect",
                 "port:", CTX_ARCHETYPE(CTX(ReqPortCtx(sock))),
             "]",
@@ -381,7 +381,7 @@ DEVICE_CMD Connect_Socket(REBREQ *sock)
     Get_Local_IP(sock);
 
     rebElide(
-        "insert system/ports/system make event! [",
+        "insert/only system/ports/system make event! [",
             "type: 'connect",
             "port:", CTX_ARCHETYPE(CTX(ReqPortCtx(sock))),
         "]",
@@ -456,7 +456,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
             req->actual += result;
             if (req->actual >= req->length) {
                 rebElide(
-                    "insert system/ports/system make event! [",
+                    "insert/only system/ports/system make event! [",
                         "type: 'wrote",
                         "port:", CTX_ARCHETYPE(CTX(ReqPortCtx(sock))),
                     "]",
@@ -492,7 +492,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
             TERM_BIN_LEN(bin, old_len + result);
 
             rebElide(
-                "insert system/ports/system make event! [",
+                "insert/only system/ports/system make event! [",
                     "type: 'read",
                     "port:", CTX_ARCHETYPE(CTX(ReqPortCtx(sock))),
                 "]",
@@ -505,7 +505,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
             req->state &= ~RSM_CONNECT; // But, keep RRF_OPEN true
 
             rebElide(
-                "insert system/ports/system make event! [",
+                "insert/only system/ports/system make event! [",
                     "type: 'close",
                     "port:", CTX_ARCHETYPE(CTX(ReqPortCtx(sock))),
                 "]",
@@ -682,7 +682,7 @@ DEVICE_CMD Accept_Socket(REBREQ *sock)
     // must be accepted, however, to recvfrom() data in the future.
     //
     if (req->modes & RST_UDP) {
-            rebElide("insert system/ports/system make event! [",
+            rebElide("insert/only system/ports/system make event! [",
                 "type: 'accept",
                 "port:", CTX_ARCHETYPE(CTX(ReqPortCtx(sock))),
             "]",
@@ -749,7 +749,7 @@ DEVICE_CMD Accept_Socket(REBREQ *sock)
     // find out about it and get an `accept` event.  Signal that.
     //
     rebElide(
-        "insert system/ports/system make event! [",
+        "insert/only system/ports/system make event! [",
             "type: 'accept",
             "port:", CTX_ARCHETYPE(listener),
         "]",

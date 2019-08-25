@@ -265,7 +265,7 @@ make-changes-file: function [
 
             ; any related hash (cherry-pick collated)
             if related: select co 'related [
-                map-each n related [
+                map-each n related @[
                     md-link n join-all [url/ren-c n]
                 ]
             ]
@@ -279,7 +279,7 @@ make-changes-file: function [
 
             ; show CC issues (for now just list them)
             if cc: select co 'cc [
-                map-each n cc [
+                map-each n cc @[
                     md-link join-all [{#CC-} n] join-all [url/rebol-issues n]
                 ]
             ]

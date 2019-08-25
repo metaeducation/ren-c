@@ -246,14 +246,14 @@ main-startup: function [
     ][
         switch type of item [
             issue! [
-                if not empty? instruction [append/line instruction '|]
-                insert instruction item
+                if not empty? instruction [append/line instruction [|]]
+                insert instruction @item
             ]
             text! [
                 append/line instruction compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append/line instruction '|]
+                if not empty? instruction [append/line instruction [|]]
                 append/line instruction compose/deep <*> item
             ]
             unreachable

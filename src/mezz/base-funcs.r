@@ -114,17 +114,17 @@ function: func [
     ; !!! REVIEW: ignore self too if binding object?
     ;
     parse spec [any [
-        <void> (append new-spec <void>)
+        <void> (append new-spec [<void>])
     |
         :(either var '[
             set var: [
                 match [any-word! 'word!]
                 | ahead any-path! into [blank! word!]
             ](
-                append new-spec var
+                append new-spec @var
 
                 ; exclude args/refines
-                append exclusions either any-path? var [var/2] [var]
+                append exclusions @(either any-path? var [var/2] [var])
             )
             |
             set other: block! (
@@ -136,8 +136,8 @@ function: func [
             )
         ] '[
             set var: set-word! (  ; locals legal anywhere
-                append exclusions var
-                append new-spec var
+                append exclusions @var
+                append new-spec @var
                 var: _
             )
         ])
@@ -162,8 +162,8 @@ function: func [
     |
         <local>
         any [set var: word! (other: _) opt set other: group! (
-            append new-spec as set-word! var
-            append exclusions var
+            append new-spec @(as set-word! var)
+            append exclusions @var
             if other [
                 defaulters: default [copy []]
                 append defaulters compose [  ; always sets
@@ -175,7 +175,7 @@ function: func [
     |
         <in> (
             new-body: default [
-                append exclusions 'self
+                append exclusions [self]
                 copy/deep body
             ]
         )
@@ -184,13 +184,13 @@ function: func [
                 if not object? other [other: ensure any-context! get other]
                 bind new-body other
                 for-each [key val] other [
-                    append exclusions key
+                    append exclusions @key
                 ]
             )
         ]
     |
         <with> any [
-            set other: [word! | path!] (append exclusions other)
+            set other: [word! | path!] (append exclusions @other)
         |
             text!  ; skip over as commentary
         ]
@@ -198,15 +198,15 @@ function: func [
         <static> (
             statics: default [copy []]
             new-body: default [
-                append exclusions 'self
+                append exclusions [self]
                 copy/deep body
             ]
         )
         any [
             set var: word! (other: _) opt set other: group! (
-                append exclusions var
+                append exclusions @var
                 append statics compose [
-                    (as set-word! var) ((other))
+                    (var): (other)
                 ]
             )
         ]
@@ -237,7 +237,7 @@ function: func [
     ; a possible COLLECT-WORDS/INTO
     ;
     for-each loc locals [
-        append new-spec to set-word! loc
+        append new-spec @(to set-word! loc)
     ]
 
     func new-spec either defaulters [

@@ -791,7 +791,7 @@ redbol-form: form: emulate [
             ]
             block? value [
                 delimit: either unspaced [:lib/unspaced] [:lib/spaced]
-                delimit map-each item value [
+                delimit map-each item value @[
                     redbol-form :item
                 ]
             ]

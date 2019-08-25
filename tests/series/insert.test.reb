@@ -1,13 +1,13 @@
 ; functions/series/insert.r
 (
     a: make block! 0
-    insert a 0
+    insert a [0]
     a == [0]
 )
 (
     a: [0]
     b: make block! 0
-    insert b first a
+    insert/only b first a
     a == b
 )
 (
@@ -19,13 +19,13 @@
 ; paren
 (
     a: make group! 0
-    insert a 0
+    insert a [0]
     a == first [(0)]
 )
 (
     a: first [(0)]
     b: make group! 0
-    insert b first a
+    insert/only b first a
     a == b
 )
 (
@@ -201,26 +201,26 @@
 ; insert/dup
 (
     a: make block! 0
-    insert/dup a 0 2
+    insert/dup a [0] 2
     a == [0 0]
 )
 (
     a: make block! 0
-    insert/dup a 0 0
+    insert/dup a [0] 0
     a == []
 )
 (
     a: make block! 0
-    insert/dup a 0 -1
+    insert/dup a [0] -1
     a == []
 )
 (
     a: make block! 0
-    insert/dup a 0 -2147483648
+    insert/dup a [0] -2147483648
     a == []
 )
 (
     a: make block! 0
-    insert/dup a 0 -2147483648
+    insert/dup a [0] -2147483648
     empty? a
 )

@@ -217,7 +217,7 @@ int main(int argc, char *argv_ansi[])
         // needing more than two bytes to be represented will cause a failure.
         //
         rebElide(
-            "append", argv_block, rebR(rebTextWide(argv_ucs2[i])),
+            "append/only", argv_block, rebR(rebTextWide(argv_ucs2[i])),
         rebEND);
     }
   #else
@@ -228,7 +228,7 @@ int main(int argc, char *argv_ansi[])
         if (argv_ansi[i] == nullptr)
             continue;  // !!! R3-Alpha commented here saying "shell bug" (?)
 
-        rebElide("append", argv_block, rebT(argv_ansi[i]), rebEND);
+        rebElide("append/only", argv_block, rebT(argv_ansi[i]), rebEND);
     }
   #endif
 

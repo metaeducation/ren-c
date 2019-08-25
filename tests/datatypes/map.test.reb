@@ -27,8 +27,8 @@
     m: make map! reduce [1 thing]
     m2: copy/deep m
     thing2: select m2 1
-    append thing/2 'c
-    append thing2 'd
+    append thing/2 [c]
+    append thing2 [d]
     did all [
         thing = [a [b c]]
         thing2 = [a [b] d]
@@ -117,6 +117,6 @@
     ('II = m/[x y])
     ('IIII = m/[m n o p])
 
-    ((trap [append b2 'z])/id = 'series-auto-locked)
-    ((trap [append b4 'q])/id = 'series-auto-locked)
+    ((trap [append/only b2 'z])/id = 'series-auto-locked)
+    ((trap [append/only b4 'q])/id = 'series-auto-locked)
 ]

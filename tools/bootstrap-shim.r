@@ -320,3 +320,20 @@ eval: func [] [
         https://forum.rebol.info/t/eval-evaluate-and-reeval-reevaluate/1173
     ]
 ]
+
+map-each: function [
+    {https://forum.rebol.info/t/1155}
+    return: [block!]
+    'vars [blank! word! block!]
+    data [any-series! any-path! action!]
+    body [block!]
+    /only
+][
+    collect [
+        for-each (vars) :data compose [
+            set* lit item: (as group! body)
+            if void? :item [continue]  ; assume it was a CONTINUE :-/
+            keep/(try if only ['only]) :item
+        ]
+    ]
+]

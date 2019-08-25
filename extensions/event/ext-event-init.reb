@@ -69,7 +69,7 @@ sys/make-scheme [
                     ; Add port to wake list:
                     ;
                     ** -- /system-waked port/spec/ref
-                    if not find waked port [append waked port]
+                    if not find waked port [append waked @port]
                 ]
                 n-event: n-event + 1
             ]

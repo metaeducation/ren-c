@@ -143,6 +143,7 @@ to-obj-path: func [
 ]
 
 gen-obj: func [
+    return: [object!]
     s
     /dir "directory" [any-string!]
     /D "definitions" [block!]
@@ -166,18 +167,18 @@ gen-obj: func [
     ;     'function' : no function prototype given:
     ;     converting '()' to '(void)'
 
-    append flags <msc:/wd4255>
+    append flags [<msc:/wd4255>]
 
     ; The May 2018 update of Visual Studio 2017 added a warning for when you
     ; use an #ifdef on something that is #define'd, but 0.  Then the internal
     ; %yvals.h in MSVC tests #ifdef __has_builtin, which has to be defined
     ; to 0 to work in MSVC.  Disable the warning for now.
     ;
-    append flags <msc:/wd4574>
+    append flags [<msc:/wd4574>]
 
     if block? s [
         for-each flag next s [
-            append flags opt switch flag [
+            append flags switch flag [
                 <no-uninitialized> [
                     [
                         <gnu:-Wno-uninitialized>
@@ -204,32 +205,31 @@ gen-obj: func [
                     ]
                 ]
                 <no-unused-parameter> [
-                    <gnu:-Wno-unused-parameter>
+                    [<gnu:-Wno-unused-parameter>]
                 ]
                 <no-shift-negative-value> [
-                    <gnu:-Wno-shift-negative-value>
+                    [<gnu:-Wno-shift-negative-value>]
                 ]
                 <no-make-header> [
-                    ;for make-header. ignoring
-                    _
+                    [] ; for make-header. ignoring
                 ]
                 <no-unreachable> [
-                    <msc:/wd4702>
+                    [<msc:/wd4702>]
                 ]
                 <no-hidden-local> [
-                    <msc:/wd4456>
+                    [<msc:/wd4456>]
                 ]
                 <no-constant-conditional> [
-                    <msc:/wd4127>
+                    [<msc:/wd4127>]
                 ]
 
                 #prefer-O2-optimization [
                     prefer-O2: true
-                    _
+                    []
                 ]
 
                 default [
-                    ensure [text! tag!] flag
+                    reduce [ensure [text! tag!] flag]
                 ]
             ]
         ]
@@ -325,12 +325,12 @@ use [extension-dir entry][
         ] then [
             spec: load rejoin [extension-dir entry/make-spec.r]
             parsed: parse-ext-build-spec spec
-            append available-extensions parsed
+            append/only available-extensions parsed
         ]
     ]
 ]
 
-extension-names: map-each x available-extensions [to-lit-word x/name]
+extension-names: map-each/only x available-extensions [to-lit-word x/name]
 
 === TARGETS ===
 
@@ -406,11 +406,11 @@ targets: [
 target-names: make block! 16
 for-each x targets [
     if lit-word? x [
-        append target-names to word! x
-        append target-names '|
+        append/only target-names to word! x
+        append/only target-names '|
     ] else [
         take/last target-names
-        append target-names newline
+        append/only target-names newline
     ]
 ]
 
@@ -451,7 +451,7 @@ MORE HELP:^/
     { config: | load: | do: } PATH/TO/CONFIG-FILE^/
 FILES IN %make/configs/ SUBFOLDER:^/
     }
-    indent/space form sort map-each x ;\
+    indent/space form sort map-each/only x ;\
         load repo-dir/configs/%
         [to-text x]
     newline ]
@@ -476,7 +476,7 @@ CURRENT OS:^/
 LIST:^/
     OS-ID:  OS-NAME:}
     indent form collect [for-each-system s [
-        keep unspaced [
+        keep/only unspaced [
             newline format 8 s/id s/os-name
         ]
     ]]
@@ -507,7 +507,7 @@ CURRENT VALUE:
 ]
 ; dynamically fill help topics list ;-)
 replace help-topics/usage "HELP-TOPICS" ;\
-    form append map-each x help-topics [either text? x ['|] [x]] 'all
+    form append map-each/only x help-topics [either text? x ['|] [x]] [all]
 
 help: function [topic [text! blank!]] [
     topic: try attempt [to-word topic]
@@ -1068,7 +1068,7 @@ add-app-cflags: adapt specialize :append [series: app-config/cflags] [
 add-app-lib: adapt specialize :append [series: app-config/libraries] [
     value: either block? value [
         value: flatten/deep reduce bind value system-libraries
-        map-each w flatten value [
+        map-each/only w flatten value [
             make rebmake/ext-dynamic-class [
                 output: w
             ]
@@ -1130,10 +1130,10 @@ libr3-core: make rebmake/object-library-class [
 
     optimization: app-config/optimization
     debug: app-config/debug
-    depends: map-each w file-base/core [
+    depends: map-each/only w file-base/core [
         gen-obj/dir w src-dir/core/%
     ]
-    append depends map-each w file-base/generated [
+    append depends map-each/only w file-base/generated [
         gen-obj/dir w "prep/core/"
     ]
 ]
@@ -1191,7 +1191,7 @@ for-each name user-config/extensions [
                     ; all modules in the extension
                     item/modules
                 ] else [
-                    map-each m item/modules [
+                    map-each/only m item/modules [
                         if find modules m/name [
                             m
                         ]
@@ -1222,9 +1222,9 @@ for-each [label list] reduce [
         print collect [  ; CHAR! values don't auto-space in Ren-C PRINT
             keep ["ext:" ext/name #":" space #"["]
             for-each mod ext/modules [
-                keep to-text mod/name
+                keep/only to-text mod/name
             ]
-            keep #"]"
+            keep/only #"]"
         ]
     ]
 ]
@@ -1287,7 +1287,7 @@ process-module: func [
     assert [mod/class = #extension]
     ret: make rebmake/object-library-class [
         name: mod/name
-        depends: map-each s (append reduce [mod/source] opt mod/depends) [
+        depends: map-each/only s (append reduce [mod/source] opt mod/depends) [
             case [
                 match [file! block!] s [
                     gen-obj/dir s repo-dir/extensions/%
@@ -1305,7 +1305,7 @@ process-module: func [
         ]
         libraries: try all [
             mod/libraries
-            map-each lib mod/libraries [
+            map-each/only lib mod/libraries [
                 case [
                     file? lib [
                         make rebmake/ext-dynamic-class [
@@ -1347,12 +1347,12 @@ for-each ext builtin-extensions [
         block? ext/depends
         not empty? ext/depends
     ] then [
-        append ext-objs map-each s ext/depends [
+        append ext-objs map-each/only s ext/depends [
             all [object? s | s/class = #object-library] then [s]
         ]
     ]
 
-    append ext-objs mod-obj: process-module ext
+    append/only ext-objs mod-obj: process-module ext
 
     append app-config/libraries opt mod-obj/libraries
     append app-config/searches opt ext/searches
@@ -1375,7 +1375,7 @@ for-each ext builtin-extensions [
     ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
-    append any [all [mod-obj mod-obj/depends] ext-objs] gen-obj/dir/I/D/F
+    append/only any [all [mod-obj mod-obj/depends] ext-objs] gen-obj/dir/I/D/F
         ext-init-source
         unspaced ["prep/extensions/" ext-name-lower "/"]
         opt ext/includes
@@ -1487,7 +1487,8 @@ prep: make rebmake/entry-class [
 
         keep [{$(REBOL)} tools-dir/make-boot-ext-header.r
             unspaced [
-                {EXTENSIONS=} delimit ":" map-each ext builtin-extensions [
+                {EXTENSIONS=}
+                delimit ":" map-each/only ext builtin-extensions [
                     to text! ext/name
                 ]
             ]
@@ -1529,7 +1530,7 @@ add-new-obj-folders: function [
         for-each obj lib [
             dir: first split-path obj/output
             if not find folders dir [
-                append folders dir
+                append/only folders dir
             ]
         ]
     ]
@@ -1661,7 +1662,10 @@ top: make rebmake/entry-class [
 
 t-folders: make rebmake/entry-class [
     target: 'folders ; phony target
-    commands: map-each dir sort folders [;sort it so that the parent folder gets created first
+
+    ; Sort it so that the parent folder gets created first
+    ;
+    commands: map-each/only dir sort folders [
         make rebmake/cmd-create-class compose [
             file: (dir)
         ]
@@ -1682,11 +1686,11 @@ check: make rebmake/entry-class [
     target: 'check ; phony target
     depends: join dynamic-libs app
     commands: collect [
-        keep make rebmake/cmd-strip-class [
+        keep/only make rebmake/cmd-strip-class [
             file: join app/output opt rebmake/target-platform/exe-suffix
         ]
         for-each s dynamic-libs [
-            keep make rebmake/cmd-strip-class [
+            keep/only make rebmake/cmd-strip-class [
                 file: join s/output opt rebmake/target-platform/dll-suffix
             ]
         ]

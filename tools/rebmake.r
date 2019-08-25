@@ -49,7 +49,7 @@ map-files-to-local: function [
     files [file! block!]
 ][
     if not block? files [files: reduce [files]]
-    map-each f files [
+    map-each/only f files [
         file-to-local f
     ]
 ]
@@ -132,7 +132,7 @@ pkg-config: function [
                 thru dlm
                 copy item: to [dlm | end] (
                     ;dump item
-                    append ret to file! item
+                    append/only ret to file! item
                 )
             ]
             end
@@ -714,7 +714,7 @@ ld: make linker-class [
                 file-to-local dep/output
             ]
             #object-library [
-                spaced map-each ddep dep/depends [
+                spaced map-each/only ddep dep/depends [
                     file-to-local ddep/output
                 ]
             ]
@@ -809,7 +809,7 @@ llvm-link: make linker-class [
                 _
             ]
             #object-library [
-                spaced map-each ddep dep/depends [
+                spaced map-each/only ddep dep/depends [
                     file-to-local ddep/output
                 ]
             ]
@@ -903,7 +903,7 @@ link: make linker-class [
                 file-to-local dep/output
             ]
             #object-library [
-                spaced map-each ddep dep/depends [
+                spaced map-each/only ddep dep/depends [
                     file-to-local to-file ddep/output
                 ]
             ]
@@ -1026,7 +1026,7 @@ object-file-class: make object! [
 
         make entry-class [
             target: output
-            depends: append copy either depends [depends][[]] source
+            depends: append/only copy either depends [depends][[]] source
             commands: reduce [command/I/D/F/O/g/(
                 try if (PIC or [parent/class = #dynamic-library]) ['PIC]
             )
@@ -1399,7 +1399,7 @@ makefile: make generator-class [
                     ]
                     append buf gen-rule make entry-class [
                         target: dep/output
-                        depends: join objs map-each ddep dep/depends [
+                        depends: join objs map-each/only ddep dep/depends [
                             if ddep/class <> #object-library [ddep]
                         ]
                         commands: append reduce [dep/command] opt dep/post-build-commands
@@ -1981,7 +1981,7 @@ visual-studio: make generator-class [
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <AdditionalOptions>}
       if project/cflags [
-          spaced map-each i project/cflags [
+          spaced map-each/only i project/cflags [
               filter-flag i "msc"
           ]
       ] {</AdditionalOptions>}
@@ -2022,7 +2022,7 @@ visual-studio: make generator-class [
         ][
             unspaced [ {
     <PreBuildEvent>
-      <Command>} delimit newline map-each cmd project/commands [reify cmd] {
+      <Command>} delimit newline map-each/only cmd project/commands [reify cmd] {
       </Command>
     </PreBuildEvent>}
             ]
@@ -2034,7 +2034,7 @@ visual-studio: make generator-class [
     ][
         unspaced [ {
     <PostBuildEvent>
-      <Command>} delimit newline map-each cmd project/post-build-commands [reify cmd] {
+      <Command>} delimit newline map-each/only cmd project/post-build-commands [reify cmd] {
       </Command>
     </PostBuildEvent>}
         ]
@@ -2100,7 +2100,7 @@ visual-studio: make generator-class [
                     ]
 
                     if o/cflags [
-                        collected: map-each i o/cflags [
+                        collected: map-each/only i o/cflags [
                             filter-flag i "msc"
                         ]
                         if not empty? collected [

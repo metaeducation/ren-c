@@ -27,7 +27,7 @@ read-deep-seq: function [
     item: take queue
 
     if equal? #"/" last item [
-        insert queue map-each x read item [join item x]
+        insert queue map-each/only x read item [join item x]
     ]
 
     item
@@ -51,7 +51,7 @@ read-deep: function [
     queue: blockify root
 
     while [not tail? queue] [
-        append result taker queue  ; Possible null
+        append result @(taker queue)  ; Possible null
     ]
 
     if not full [

@@ -46,7 +46,7 @@ args: parse-args system/options/args
 output-dir: system/options/path/prep
 mkdir/deep output-dir/include
 
-extensions: map-each e (split args/EXTENSIONS #":") [
+extensions: map-each/only e (split args/EXTENSIONS #":") [
     to-c-name e  ; so SOME-EXTENSION becomes SOME_EXTENSION for C macros
 ]
 

@@ -53,7 +53,9 @@ register-codec*: func [
     ; Media-types block format: [.abc .def type ...]
     ; !!! Should be a map, with blocks of codecs on collisions
     ;
-    append append system/options/file-types suffixes (bind name system/codecs)
+    append/only append system/options/file-types suffixes (
+        bind name system/codecs
+    )
 
     return codec
 ]

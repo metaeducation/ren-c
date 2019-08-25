@@ -120,7 +120,7 @@ rebsource: context [
         body [block!]
     ][
         body: new-line/all compose/only body false
-        append/line log (head insert body label)
+        append/line log (head insert body @label)
     ]
 
     analyse: context [
@@ -172,7 +172,7 @@ rebsource: context [
 
                 malloc-check: [
                     and identifier "malloc" (
-                        append malloc-found try text-line-of position
+                        append/only malloc-found try text-line-of position
                     )
                 ]
 
@@ -213,7 +213,7 @@ rebsource: context [
                                 )
                                 append
                                     non-std-func-space: default [copy []]
-                                    line  ; should it be appending BLANK! ?
+                                    @line  ; should it be appending BLANK! ?
                             ]
                         ]
                     ]
@@ -322,9 +322,9 @@ rebsource: context [
                 (
                     line-len: subtract index of position index of bol
                     if line-len > standard/std-line-length [
-                        append over-std-len line
+                        append over-std-len @line
                         if line-len > standard/max-line-length [
-                            append over-max-len line
+                            append over-max-len @line
                         ]
                     ]
                     line: 1 + line
@@ -420,7 +420,7 @@ rebsource: context [
 
             if equal? #"/" last item [
                 contents: read join src-folder item
-                insert queue map-each x contents [join item x]
+                insert queue map-each/only x contents [join item x]
                 item: _
             ] else [
                 any [

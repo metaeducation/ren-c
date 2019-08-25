@@ -20,7 +20,7 @@
 (
     comment [
         {enumeration temporarily not supported}
-        all map-each x make vector! [integer! 32 16] [zero? x]
+        all map-each x make vector! [integer! 32 16] @[zero? x]
     ]
     true
 )

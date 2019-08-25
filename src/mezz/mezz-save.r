@@ -110,7 +110,7 @@ save: function [
     case/all [
         tmp: find header 'checksum [
             ; Checksum uncompressed data, if requested
-            change next tmp (checksum-core data 'crc32)
+            change next tmp @(checksum-core data 'crc32)
         ]
 
         compress [

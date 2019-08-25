@@ -4,19 +4,19 @@
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [insert value 4]
+    not error? trap [insert value [4]]
 )]
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [append value 4]
+    not error? trap [append value [4]]
 )
 (
     value: copy original: [1 + 2 + 3]
     protect value
     unprotect value
-    not error? trap [change value 4]
+    not error? trap [change value [4]]
 )
 (
     value: copy original: [1 + 2 + 3]

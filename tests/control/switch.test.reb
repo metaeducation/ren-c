@@ -16,7 +16,7 @@
 (void? switch 1 [1 []])
 
 (
-    cases: reduce [1 head of insert copy [] trap [1 / 0]]
+    cases: reduce [1 head of insert/only copy [] trap [1 / 0]]
     error? switch 1 cases
 )
 

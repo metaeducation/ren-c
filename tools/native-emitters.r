@@ -94,7 +94,9 @@ emit-include-params-macro: function [
                 seen-refinement: true
                 param-name: as text! to word! item
 
-                keep cscape/with {REFINE($<n>, ${param-name})} [n param-name]
+                keep/only cscape/with {REFINE($<n>, ${param-name})} [
+                    n param-name
+                ]
             ][
                 ; !!! As a transition to refinements-being-the-arg, we don't
                 ; generate macros for things that look like refinement args.
@@ -102,12 +104,14 @@ emit-include-params-macro: function [
                 ; it will be legal to order normal parameters after refines.
                 ;
                 if seen-refinement [
-                    keep cscape/with {#error "${param-name}"} [param-name]
+                    keep/only cscape/with {#error "${param-name}"} [param-name]
                 ]
                 else [
                     param-name: as text! item
 
-                    keep cscape/with {PARAM($<n>, ${param-name})} [n param-name]
+                    keep/only cscape/with {PARAM($<n>, ${param-name})} [
+                        n param-name
+                    ]
                 ]
             ]
             n: n + 1

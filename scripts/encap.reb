@@ -598,7 +598,7 @@ pe-format: context [
             any [
                 find words to word! word
                 find def to set-word! word
-                append def to set-word! word
+                append def @(to set-word! word)
             ]
         ]
 
@@ -631,7 +631,7 @@ pe-format: context [
         parse rule [any block-rule end]
 
         ;dump def
-        set name make object! append def _
+        set name make object! append def [_]
         bind rule get name
     ]
 
@@ -756,7 +756,7 @@ pe-format: context [
     data-directory-rule: gen-rule [
         u32-le (RVA: u32)
         u32-le (size: u32)
-        (append data-directories copy data-directory)
+        (append data-directories @(copy data-directory))
     ] data-directory
 
     section: _
@@ -768,7 +768,7 @@ pe-format: context [
         u32-le (physical-offset: u32)
         copy reserved [12 byte]
         u32-le (flags: u32)
-        (append sections copy section)
+        (append sections @(copy section))
     ] section
 
     garbage: _

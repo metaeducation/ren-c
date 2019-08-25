@@ -103,7 +103,7 @@ cscape: function [
 
             any-upper: did find/case expr charset [#"A" - #"Z"]
             any-lower: did find/case expr charset [#"a" - #"z"]
-            keep pattern
+            keep/only pattern
 
             code: load/all expr
             if with [
@@ -139,10 +139,10 @@ cscape: function [
             ; If the substitution started at a certain column, make any line
             ; breaks continue at the same column.
             ;
-            indent: unspaced collect [keep newline | keep prefix]
+            indent: unspaced collect [keep/only newline | keep/only prefix]
             replace/all sub newline indent
 
-            keep sub
+            keep/only sub
         ]
     ]
 

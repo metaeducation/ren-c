@@ -101,7 +101,7 @@ lines-exceeding: function [  ; !!! Doesn't appear used, except in tests (?)
         (
             line: 1 + any [line 0]
             if line-length < subtract index-of eol index of bol [
-                append line-list: any [line-list copy []] line
+                append/only line-list: any [line-list copy []] line
             ]
         )
     ]

@@ -93,7 +93,11 @@ join: function [
             fail @value "Can't JOIN an ACTION! onto a series (use APPEND)."
         ]
         default [
-            append/only head :value
+            if any-array? head [
+                append/only head :value
+            ] else [
+                append head :value
+            ]
         ]
     ]
 

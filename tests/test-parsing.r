@@ -102,7 +102,7 @@ make object! [
             return
         ]) else [
             change-dir current-dir
-            append collected-tests test-file
+            append collected-tests @test-file
         ]
 
         types: context [
@@ -134,7 +134,7 @@ make object! [
             copy vector ["(" test-source-rule ")"] (
                 type: in types 'tst
                 append/only collected-tests flags
-                append collected-tests vector
+                append collected-tests @vector
             )
         ]
 
@@ -150,7 +150,7 @@ make object! [
                 [
                     :(tag? value) (
                         type: in types 'flag
-                        append flags value
+                        append flags @value
                     )
                         |
                     :(issue? value) (type: in types 'isu)
@@ -180,14 +180,14 @@ make object! [
             [
                 :(tag? get 'value) (
                     type: in types 'flg
-                    append flags value
+                    append flags @value
                 )
                 |
                 :(file? get 'value) (
                     type: in types 'fil
                     collect-tests collected-tests value
                     print ["file:" mold test-file]
-                    append collected-tests test-file
+                    append collected-tests @test-file
                 )
             ]
         ]

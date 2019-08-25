@@ -239,7 +239,7 @@ to-js-type: func [
 ; process them with the other APIs on matters like EMSCRIPTEN_KEEPALIVE and
 ; EMTERPRETER_BLACKLIST.
 
-append api-objects make object! [
+append/only api-objects make object! [
     spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebPromise"
     returns: "intptr_t"
@@ -248,7 +248,7 @@ append api-objects make object! [
     is-variadic: true
 ]
 
-append api-objects make object! [
+append/only api-objects make object! [
     spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebSignalResolveNative_internal"  ; !!! see %mod-javascript.c
     returns: "void"
@@ -259,7 +259,7 @@ append api-objects make object! [
     is-variadic: false
 ]
 
-append api-objects make object! [
+append/only api-objects make object! [
     spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
     name: "rebSignalRejectNative_internal"  ; !!! see %mod-javascript.c
     returns: "void"
@@ -271,7 +271,7 @@ append api-objects make object! [
 ]
 
 if args/OS_ID = "0.16.2" [  ; APIs for only for pthreads build
-    append api-objects make object! [
+    append/only api-objects make object! [
         spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
         name: "rebTakeAwaitLock_internal"  ; !!! see %mod-javascript.c
         returns: "void"
@@ -282,7 +282,7 @@ if args/OS_ID = "0.16.2" [  ; APIs for only for pthreads build
         is-variadic: false
     ]
 ] else [  ; APIs only for emterpreter build
-    append api-objects make object! [
+    append/only api-objects make object! [
         spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
         name: "rebIdle_internal"  ; !!! see %mod-javascript.c
         returns: "void"
@@ -293,7 +293,7 @@ if args/OS_ID = "0.16.2" [  ; APIs for only for pthreads build
 ]
 
 if false [  ; Only used if DEBUG_JAVASCRIPT_SILENT_TRACE (how to know here?)
-    append api-objects make object! [
+    append/only api-objects make object! [
         spec: _  ; e.g. `name: RL_API [...this is the spec, if any...]`
         name: "rebGetSilentTrace_internal"  ; !!! see %mod-javascript.c
         returns: "intptr_t"
@@ -330,7 +330,7 @@ map-each-api [
 
     js-param-types: try collect* [
         for-each [type var] paramlist [
-            keep to-js-type type else [
+            keep/only to-js-type type else [
                 fail [
                     {No JavaScript argument mapping for type} type
                     {used by} name {with paramlist} mold paramlist
@@ -840,6 +840,7 @@ json-collect: function [body [block!]] [
     results: collect compose [
         keep: adapt 'keep [  ; Emscripten prefixes functions w/underscore
             value: unspaced [{"} {_} value {"}]
+            only: true
         ]
         ((body))
     ]

@@ -41,7 +41,7 @@
     [a b c [1 2 3] [1 2 3]] = append-123-twice copy [a b c]
 )
 (
-    append-10: specialize 'append [value: 10]
+    append-10: specialize 'append [value: [10]]
     f: make frame! :append-10
     f/series: copy [a b c]
 
@@ -138,7 +138,7 @@
 
 
 (
-    ap10d: specialize 'append/dup [value: 10]
+    ap10d: specialize 'append/dup [value: [10]]
     f: make frame! :ap10d
     f/series: copy [a b c]
     did all [
