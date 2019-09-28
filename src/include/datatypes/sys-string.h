@@ -560,7 +560,10 @@ inline static REBCHR(*) STR_AT(REBSTR *s, REBLEN at) {
     else {
         if (len < sizeof(REBVAL)) {
             if (not IS_STR_SYMBOL(s))
-                assert(not bookmark);  // mutations must ensure this
+                assert(
+                    not bookmark  // mutations must ensure this usually but...
+                    or GET_SERIES_FLAG(s, ALWAYS_DYNAMIC)  // !!! mold buffer?
+                );
             goto scan_from_tail;  // good locality, avoid bookmark logic
         }
         if (not bookmark and not IS_STR_SYMBOL(s)) {

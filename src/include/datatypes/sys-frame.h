@@ -363,7 +363,7 @@ inline static void UPDATE_EXPRESSION_START(REBFRM *f) {
 
 inline static void Abort_Frame(REBFRM *f) {
     if (f->varlist and NOT_SERIES_FLAG(f->varlist, MANAGED))
-        GC_Kill_Series(SER(f->varlist)); // not alloc'd with manuals tracking
+        GC_Kill_Series(SER(f->varlist));  // not alloc'd with manuals tracking
     TRASH_POINTER_IF_DEBUG(f->varlist);
 
     // Abort_Frame() handles any work that wouldn't be done done naturally by
@@ -409,7 +409,7 @@ inline static void Abort_Frame(REBFRM *f) {
         }
     }
 
-pop:;
+  pop:
 
     assert(TG_Top_Frame == f);
     TG_Top_Frame = f->prior;
@@ -702,17 +702,29 @@ inline static void Drop_Action(REBFRM *f) {
     }
     else if (GET_SERIES_FLAG(f->varlist, MANAGED)) {
         //
-        // The varlist wound up getting referenced in a cell that will outlive
-        // this Drop_Action().  The pointer needed to stay working up until
-        // now, but the args memory won't be available.  But since we know
-        // there were outstanding references to the varlist, we need to
-        // convert it into a "stub" that's enough to avoid crashes.
+        // Varlist wound up getting referenced in a cell that will outlive
+        // this Drop_Action().
+        //
+        // !!! The new concept is to let frames survive indefinitely in this
+        // case.  This is in order to not let JavaScript have the upper hand
+        // in "closure"-like scenarios.  See:
+        //
+        // "What Happens To Function Args/Locals When The Call Ends"
+        // https://forum.rebol.info/t/234
+        //
+        // Previously this said:
+        //
+        // "The pointer needed to stay working up until now, but the args
+        // memory won't be available.  But since we know there are outstanding
+        // references to the varlist, we need to convert it into a "stub"
+        // that's enough to avoid crashes.
         //
         // ...but we don't free the memory for the args, we just hide it from
         // the stub and get it ready for potential reuse by the next action
         // call.  That's done by making an adjusted copy of the stub, which
-        // steals its dynamic memory (by setting the stub not HAS_DYNAMIC).
+        // steals its dynamic memory (by setting the stub not HAS_DYNAMIC)."
         //
+      #if 0
         f->varlist = CTX_VARLIST(
             Steal_Context_Vars(
                 CTX(f->varlist),
@@ -721,6 +733,10 @@ inline static void Drop_Action(REBFRM *f) {
         );
         assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
         INIT_LINK_KEYSOURCE(f->varlist, NOD(f));
+      #endif
+
+        INIT_LINK_KEYSOURCE(f->varlist, NOD(f->original));
+        f->varlist = nullptr;
     }
     else {
         // We can reuse the varlist and its data allocation, which may be

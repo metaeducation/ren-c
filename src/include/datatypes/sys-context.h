@@ -189,6 +189,11 @@ static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBARR *keylist) {
 #define CTX_KEYS_HEAD(c) \
     SER_AT(REBVAL, SER(CTX_KEYLIST(c)), 1) // a CTX_KEY can't hold a RELVAL
 
+inline static bool Is_Frame_On_Stack(REBCTX *c) {
+    assert(IS_FRAME(CTX_ARCHETYPE(c)));
+    return (LINK_KEYSOURCE(c)->header.bits & NODE_FLAG_CELL);
+}
+
 inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     REBNOD *keysource = LINK_KEYSOURCE(c);
     if (not (keysource->header.bits & NODE_FLAG_CELL))

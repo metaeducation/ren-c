@@ -508,30 +508,31 @@ static void Mark_Root_Series(void)
                 assert(not IS_SER_DYNAMIC(s));
                 assert(
                     not LINK(s).owner
-                    or LINK(s).owner->header.bits & NODE_FLAG_MANAGED
+                    or (LINK(s).owner->header.bits & NODE_FLAG_MANAGED)
                 );
 
                 if (not (s->header.bits & NODE_FLAG_MANAGED)) {
                     assert(not LINK(s).owner);
                 }
-                else if (GET_SERIES_INFO(LINK(s).owner, INACCESSIBLE)) {
-                    if (NOT_SERIES_FLAG(LINK(s).owner, VARLIST_FRAME_FAILED)) {
-                        //
-                        // Long term, it is likely that implicit managed-ness
-                        // will allow users to leak API handles.  It will
-                        // always be more efficient to not do that, so having
-                        // the code be strict for now is better.
-                        //
-                      #if !defined(NDEBUG)
-                        printf("handle not rebReleased(), not legal ATM\n");
-                      #endif
-                        panic (s);
-                    }
-
-                    GC_Kill_Series(s);
+                else if (
+                    GET_SERIES_FLAG(LINK(s).owner, VARLIST_FRAME_FAILED)
+                ){
+                    GC_Kill_Series(s);  // auto-free API handles on failure
                     continue;
                 }
-                else // note that Mark_Frame_Stack_Deep() will mark the owner
+                else if (not Is_Frame_On_Stack(CTX(LINK(s).owner))) {
+                    //
+                    // Long term, it is likely that implicit managed-ness
+                    // will allow users to leak API handles.  It will
+                    // always be more efficient to not do that, so having
+                    // the code be strict for now is better.
+                    //
+                  #if !defined(NDEBUG)
+                    printf("handle not rebReleased(), not legal ATM\n");
+                  #endif
+                    panic (s);
+                }
+                else  // Note that Mark_Frame_Stack_Deep() will mark the owner
                     s->header.bits |= NODE_FLAG_MARKED;
 
                 // Note: Eval_Core() might target API cells, uses END
