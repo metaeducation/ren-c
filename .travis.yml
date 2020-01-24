@@ -304,7 +304,7 @@ matrix:
     # https://forum.rebol.info/t/ffi-updates-and-notes/1201
     #
     - os: linux
-      dist: trusty  # Note: released in 2013
+      dist: xenial # trusty being decommissioned by Travis, Note: it was released in 2013
       sudo: false  # force new container-based infrastructure.
       language: cpp
       env:
