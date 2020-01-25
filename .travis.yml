@@ -1057,7 +1057,11 @@ script:
       # Most other platforms have no suffix
       if [[ -e r3 ]]; then
            cp r3 "${OS_ID}/${NEW_NAME}"
-           mv r3 "${OS_ID}/r3"
+           if [[ $DEBUG != none ]]; then 
+              mv r3.exe "${OS_ID}/r3{-debug}"
+           else
+              mv r3.exe "${OS_ID}/r3"
+           fi
       fi
 
       # All emscripten builds produce .js and .wasm
