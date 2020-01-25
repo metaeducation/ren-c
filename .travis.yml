@@ -1048,7 +1048,7 @@ script:
       if [[ -e r3.exe ]]; then
            cp r3.exe "${OS_ID}/${NEW_NAME}.exe"
            if [[ $DEBUG != none ]]; then 
-              mv r3.exe "${OS_ID}/r3{-debug}.exe"
+              mv r3.exe "${OS_ID}/r3-debug.exe"
            else
               mv r3.exe "${OS_ID}/r3.exe"
            fi
@@ -1058,7 +1058,7 @@ script:
       if [[ -e r3 ]]; then
            cp r3 "${OS_ID}/${NEW_NAME}"
            if [[ $DEBUG != none ]]; then 
-              mv r3.exe "${OS_ID}/r3{-debug}"
+              mv r3.exe "${OS_ID}/r3-debug"
            else
               mv r3.exe "${OS_ID}/r3"
            fi
