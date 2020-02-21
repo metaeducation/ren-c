@@ -122,14 +122,42 @@ bytes-to-version: reverse copy version-to-bytes
 ; length of `verify_data` is part of the cipher spec, with 12 as default for
 ; the specs in the RFC.  The table should probably encode these choices.
 ;
-; RC4-based cipher suites present in the original implementation are removed
-; from the negotiation list based on a 2015 ruling from the IETF:
+; If ECHDE is mentioned in the cipher suite, then that doesn't imply a
+; specific elliptic curve--but rather a *category* of curves.  Hence another
+; layer of negotiation is slipstreamed into TLS 1.2 via a "protocol extension"
+; to narrow it further, where the client offers which curves it has.  We only
+; support secp256r1 for now, as a kind of "lowest common denominator".
+;
+; RC4-based cipher suites present in the original Saphirion implementation are
+; removed from the negotiation list based on a 2015 ruling from the IETF:
 ;
 ; https://tools.ietf.org/html/rfc7465
 ;
-cipher-suites: [
-    ; <key> crypt@ #hash
-    ; !!! Using terminal-@ because bootstrap older Rebols can't have leading @
+cipher-suites: compose [
+    ;
+    ; #{XX XX} [  ; two byte cipher suite identification code
+    ;    CIPHER_SUITE_NAME
+    ;    <key-exchange> @block-cipher [...] #message-authentication [...]
+    ; ]
+
+    #{C0 14} [
+        TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
+        <echde-rsa> @aes [size 32 block 16 iv 16] #sha1 [size 20]
+    ]
+
+    #{C0 13} [
+        TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
+        <echde-rsa> @aes [size 16 block 16 iv 16] #sha1 [size 20]
+    ]
+
+    ; The Discourse server on forum.rebol.info offers these choices too:
+    ;
+    ; TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 (0xc02f)
+    ; TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (0xc030)
+    ; TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384 (0xc028)  "weak"
+    ; TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 (0xc027)  "weak"
+    ;
+    ; We don't have "GCM" or SHA384 at this time.
 
     #{00 2F} [
         TLS_RSA_WITH_AES_128_CBC_SHA
@@ -536,21 +564,62 @@ client-hello: function [
         change list_length (to-bin (length of list_item_1) 2)
     ]
 
+    ; When your cipher suites mention ECHDE, that doesn't imply any particular
+    ; curve.  So the "extensions" in the hello message should say which curves
+    ; you support (if you don't, then the server can just pick whatever it
+    ; chooses).  At time of writing, we are experimenting with secp256r1
+    ; and not building in any others.
+    ;
+    if true [  ; should depend on if any "_ECHDE_" ciphers are in the table
+        emit ctx [
+            #{00 0A}                    ; extension type (supported_groups=10)
+          extension_length:
+            #{00 00}
+        Curves:
+          curves_length:
+            #{00 00}
+          curves_list:
+            ; https://tools.ietf.org/html/rfc8422#section-5.1.1
+            #{00 17}                    ; hex iana code for secp256r1=23
+        ]
+        change curves_length (to-bin (length of curves_list) 2)
+        change extension_length (to-bin (length of Curves) 2)
+    ]
+
+    ; During elliptic curve (EC) cryptography the client and server will
+    ; exchange information on the points selected, in either compressed or
+    ; uncompressed form.  We use uncompressed form because the TLS RFC
+    ; says: "The uncompressed point format is the default format in that
+    ; implementations of this document MUST support it for all of their
+    ; supported curves."  Compressed forms are optional.
+    ;
+    ; We've modified the "easy-ecc" library providing secp256r1 to accept
+    ; uncompressed format keys (it initially only took X coordinate and sign).
+    ;
+    if true [  ; should depend on if any "_ECHDE_" ciphers are in the table
+        emit ctx [
+            #{00 0b}                    ; extension type (ec_points_format=11)
+          extension_length:
+            #{00 00}                    ; filled in later
+        PointsFormat:
+          formats_length:
+            #{00}
+          supported_formats:
+            #{00}                       ; uncompressed form (server MUST do)
+        ]
+        change formats_length (to-bin (length of supported_formats) 1)
+        change extension_length (to-bin (length of PointsFormat) 2)
+    ]
+
     ; These extensions are commonly sent by OpenSSL or browsers, so turning
     ; them on might be a good first step with a server rejecting ClientHello
     ; that seems to work in curl/wget.
     ;
     comment [
         emit ctx [
-            #{00 0b 00 04 03 00 01 02}  ; ec_point_formats
-
             #{00 23 00 00}  ; SessionTicket TLS
 
             #{00 0f 00 01 01}  ; heartbeat
-
-            #{00 0a 00 1c 00 1a 00 17 00 19 00 1c 00
-             1b 00 18 00 1a 00 16 00 0e 00 0d 00 0b 00 0c 00
-             09 00 0a}  ; supported_groups
         ]
     ]
 
@@ -593,6 +662,19 @@ client-key-exchange: function [
             ; supply the client's public key to server
             key-data: ctx/dh-keypair/public
             key-len: to-bin length of key-data 2  ; Two bytes for this case
+        ]
+
+        <echde-rsa> [
+            ctx/ecdh-keypair: ecc-generate-keypair  ; specifically secp256r1
+            ctx/pre-master-secret: (
+                ecdh-shared-secret ctx/ecdh-keypair/private ctx/ecdh-pub
+            )
+
+            ; we use the 65-byte uncompressed format to send our key back
+            key-data: join-all [
+                #{04} ctx/ecdh-keypair/public/x ctx/ecdh-keypair/public/y
+            ]
+            key-len: to-bin length of key-data 1  ; One byte for this case
         ]
     ]
 
@@ -1065,12 +1147,17 @@ parse-messages: function [
                             extensions-list-length: grab-int 'bin 2
                             check-length: 0
 
+                            curve-list: _
                             while [not tail? bin] [
                                 extension-id: grab 'bin 2
                                 extension-length: grab-int 'bin 2
                                 check-length: me + 2 + 2 + extension-length
 
                                 switch extension-id [
+                                    #{00 0A} [  ; elliptic curve groups
+                                        curve-list-length: grab-int 'bin 2
+                                        curve-list: grab 'bin curve-list-length
+                                    ]
                                     default [
                                         dummy: grab 'bin extension-length
                                     ]
@@ -1124,7 +1211,8 @@ parse-messages: function [
                                 ctx/rsa-pub: next temp/1/<sequence>/4/1/<integer>/4
                             ]
                             <dhe-dss>
-                            <dhe-rsa> [
+                            <dhe-rsa>
+                            <echde-rsa> [
                                 ; for DH cipher suites the certificate is used
                                 ; just for signing the key exchange data
                             ]
@@ -1169,6 +1257,77 @@ parse-messages: function [
                                 ; verified using DSA or RSA algorithm to be
                                 ; sure the dh-key params are safe
 
+                                msg-obj
+                            ]
+
+                            <echde-rsa> [
+                                msg-obj: context [
+                                    type: msg-type
+                                    length: len
+
+                                    curve-info: grab 'bin 3
+                                    if curve-info <> #{03 00 17} [
+                                        fail [
+                                            "ECHDE only works for secp256r1"
+                                        ]
+                                    ]
+
+                                    ; Public key format in secp256r1 is two
+                                    ; 32-byte numbers.
+                                    ; https://superuser.com/q/1465455/
+                                    ;
+                                    server-public-length: grab-int 'bin 1
+                                    assert [server-public-length = 65]
+                                    prefix: grab 'bin 1
+                                    assert [prefix = #{04}]
+                                    ctx/ecdh-pub: copy/part bin 64
+                                    x: grab 'bin 32
+                                    y: grab 'bin 32
+
+                                    ; https://crypto.stackexchange.com/a/26355
+                                    ;
+                                    hash-algorithm: grab-int 'bin 1
+                                    hash-algorithm: select [
+                                        0 <none>
+                                        1 <md5>
+                                        2 <sha1>
+                                        3 <sha224>
+                                        4 <sha256>
+                                        5 <sha384>
+                                        6 <sha512>
+                                    ] hash-algorithm else [
+                                        fail "Unknown hash algorithm"
+                                    ]
+
+                                    ; https://crypto.stackexchange.com/a/26355
+                                    ;
+                                    signature-algorithm: grab-int 'bin 1
+                                    signature-algorithm: select [
+                                        0 #anonymous
+                                        1 #rsa
+                                        2 #dsa
+                                        3 #ecsda
+                                    ] signature-algorithm else [
+                                        fail "Unkown signature algorithm"
+                                    ]
+                                    signature-length: grab-int 'bin 2
+                                    signature: grab 'bin signature-length
+
+                                    ; The signature is supposed to be, e.g.
+                                    ;
+                                    ; SHA256(
+                                    ;     client_hello_random
+                                    ;     + server_hello_random
+                                    ;     + curve_info
+                                    ;     + public_key)
+                                    ;
+                                    ; Which we should calculate and check.
+                                    ; But we don't currently have all the
+                                    ; algorithms, and having connectivity is
+                                    ; driving the patching of this for now. :(
+                                ]
+
+                                assert [tail? bin]
                                 msg-obj
                             ]
 
@@ -1769,6 +1928,10 @@ sys/make-scheme [
                 dh-p: _  ; modulus
                 dh-keypair: _
                 dh-pub: _
+
+                ; secp256r1 currently assumed for ECDH
+                ecdh-keypair: _
+                ecdh-pub: _
 
                 encrypt-stream: _
                 decrypt-stream: _
