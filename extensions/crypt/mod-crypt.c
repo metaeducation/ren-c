@@ -1,6 +1,6 @@
 //
 //  File: %mod-crypt.c
-//  Summary: "Native Functions for cryptography"
+//  Summary: "Native Functions for Cryptography"
 //  Section: Extension
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Rebol Open Source Contributors
+// Copyright 2012-2020 Rebol Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,25 +21,25 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// The original cryptography additions to Rebol were done by Saphirion, at
-// a time prior to Rebol's open sourcing.  They had to go through a brittle,
-// incomplete, and difficult to read API for extending the interpreter with
-// C code.  This was in a file called %host-core.c.
-//
-// As a transitional phase, the routines from that file were changed to
-// directly use the internal API--the same one used by natives exposed from
-// %sys-core.  The longstanding (but not standard, and not particularly
-// secure) ENCLOAK and DECLOAK operations from R3-Alpha were moved here too.
-//
-// That made it easier to see what the code was doing, but the ultimate goal
-// is to retarget it to use the new "libRebol" API.  So dependencies on the
-// internal API are being slowly cut, as that functionality improves.
+// R3-Alpha originally had a few hand-picked routines for hashing picked from
+// OpenSSL.  Saphirion added support for the AES streaming cipher and Diffie
+// Hellman keys in order to do Transport Layer Security (TLS, e.g. the "S" in
+// for "Secure" in HTTPS).  But cryptography represents something of a moving
+// target; and in the interest of being relatively lightweight a pragmatic
+// set of "current" crypto is included by default.
 //
 
 #include "rc4/rc4.h"
 #include "rsa/rsa.h" // defines gCryptProv and rng_fd (used in Init/Shutdown)
 #include "dh/dh.h"
 #include "aes/aes.h"
+
+// The "Easy ECC" supports four elliptic curves, but is only set up to do one
+// of them at a time you pick with a #define.  We pick secp256r1, in part
+// because Discourse supports it on the Rebol forum.
+//
+#define ECC_CURVE secp256r1
+#include "easy-ecc/ecc.h"
 
 // %bigint_impl.h defines min and max, which triggers warnings in clang about
 // C++ compatibility even if building as C...due to some header file that
@@ -49,7 +49,7 @@
 #undef max
 
 #ifdef IS_ERROR
-#undef IS_ERROR //winerror.h defines this, so undef it to avoid the warning
+    #undef IS_ERROR  // winerror.h defines, so undef it to avoid the warning
 #endif
 #include "sys-core.h"
 
@@ -732,6 +732,87 @@ REBNATIVE(sha256)
     REBYTE *buf = rebAllocN(REBYTE, SHA256_BLOCK_SIZE);
     sha256_final(&ctx, buf);
     return rebRepossess(buf, SHA256_BLOCK_SIZE);
+}
+
+
+//
+//  export ecc-generate-keypair: native [
+//      {Generates an uncompressed secp256r1 key}
+//
+//      return: "object with PUBLIC/X, PUBLIC/Y, and PRIVATE key members"
+//          [object!]
+//  ]
+//
+REBNATIVE(ecc_generate_keypair)
+{
+    CRYPT_INCLUDE_PARAMS_OF_ECC_GENERATE_KEYPAIR;
+
+    // Allocate into memory that can be retaken directly as BINARY! in Rebol
+    //
+    uint8_t *p_publicX = rebAllocN(uint8_t, ECC_BYTES);
+    uint8_t *p_publicY = rebAllocN(uint8_t, ECC_BYTES);
+    uint8_t *p_privateKey = rebAllocN(uint8_t, ECC_BYTES);
+    if (1 != ecc_make_key_xy(p_publicX, p_publicY, p_privateKey))
+        fail ("ecc_make_key_xy() did not return 1");
+
+    return rebValue(
+        "make object! [",
+            "public: make object! [",
+                "x:", rebR(rebRepossess(p_publicX, ECC_BYTES)),
+                "y:", rebR(rebRepossess(p_publicY, ECC_BYTES)),
+            "]",
+            "private:", rebR(rebRepossess(p_privateKey, ECC_BYTES)),
+        "]",
+    rebEND);
+}
+
+
+//
+//  export ecdh-shared-secret: native [
+//      return: "secret"
+//          [binary!]
+//      private "32-byte private key"
+//          [binary!]
+//      public "64-byte public key of peer (or OBJECT! with 32-byte X and Y)"
+//          [binary! object!]
+//  ]
+//
+REBNATIVE(ecdh_shared_secret)
+{
+    CRYPT_INCLUDE_PARAMS_OF_ECDH_SHARED_SECRET;
+
+    assert(ECC_BYTES == 32);
+
+    uint8_t public_key[ECC_BYTES * 2];
+    rebBytesInto(public_key, ECC_BYTES * 2, "use [bin] [",
+        "bin: either binary?", ARG(public), "[", ARG(public), "] [",
+            "append copy pick", ARG(public), "'x", "pick", ARG(public), "'y"
+        "]",
+        "if 64 != length of bin [",
+            "fail {Public BINARY! must be 64 bytes total for secp256r1}"
+        "]",
+        "bin",
+    "]", rebEND);
+
+    uint8_t private_key[ECC_BYTES];
+    rebBytesInto(private_key, ECC_BYTES,
+        "if 32 != length of", ARG(private), "[",
+            "fail {Size of PRIVATE key must be 32 bytes for secp256r1}"
+        "]",
+        ARG(private),
+    rebEND);
+
+    uint8_t *secret = rebAllocN(uint8_t, ECC_BYTES);
+    if (1 != ecdh_shared_secret_xy(
+        public_key,  // x component
+        public_key + ECC_BYTES,  // y component
+        private_key,
+        secret
+    )){
+        fail ("ecdh_shared_secret_xy() did not return 1");
+    }
+
+    return rebRepossess(secret, ECC_BYTES);
 }
 
 

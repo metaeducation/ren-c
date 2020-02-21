@@ -34,6 +34,13 @@ Returns 1 if the key pair was generated successfully, 0 if an error occurred.
 */
 int ecc_make_key(uint8_t p_publicKey[ECC_BYTES+1], uint8_t p_privateKey[ECC_BYTES]);
 
+int ecc_make_key_xy(
+    uint8_t p_publicX[ECC_BYTES],
+    uint8_t p_publicY[ECC_BYTES],
+    uint8_t p_privateKey[ECC_BYTES]
+);  /* added for Ren-C: doesn't compress the Y to just a sign byte */
+
+
 /* ecdh_shared_secret() function.
 Compute a shared secret given your secret key and someone else's public key.
 Note: It is recommended that you hash the result of ecdh_shared_secret before using it for symmetric encryption or HMAC.
@@ -48,6 +55,14 @@ Outputs:
 Returns 1 if the shared secret was generated successfully, 0 if an error occurred.
 */
 int ecdh_shared_secret(const uint8_t p_publicKey[ECC_BYTES+1], const uint8_t p_privateKey[ECC_BYTES], uint8_t p_secret[ECC_BYTES]);
+
+int ecdh_shared_secret_xy(
+    const uint8_t p_publicX[ECC_BYTES],
+    const uint8_t p_publicY[ECC_BYTES],
+    const uint8_t p_privateKey[ECC_BYTES],
+    uint8_t p_secret[ECC_BYTES]
+);  /* added for Ren-C: doesn't compress the Y to just a sign byte */
+
 
 /* ecdsa_sign() function.
 Generate an ECDSA signature for a given hash value.
