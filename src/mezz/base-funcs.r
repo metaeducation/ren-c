@@ -569,20 +569,6 @@ really: func [
 oneshot: specialize 'n-shot [n: 1]
 upshot: specialize 'n-shot [n: -1]
 
-take: redescribe [
-    {Variant of TAKE* that will give an error if it can't take, vs. null}
-](
-    chain [
-        :take*
-            |
-        specialize 'else [
-            branch: [
-                fail "Can't TAKE from series end (see TAKE* to get null)"
-            ]
-        ]
-    ]
-)
-
 attempt: func [
     {Tries to evaluate a block and returns result or NULL on error.}
 
@@ -799,7 +785,7 @@ once-bar: func [
     :lookahead [any-value! <...>]
     look:
 ][
-    take* right ;-- returned value
+    take right  ; returned value
 
     elide any [
         tail? right

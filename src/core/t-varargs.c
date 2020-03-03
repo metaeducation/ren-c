@@ -527,8 +527,8 @@ REBTYPE(Varargs)
 
         break; }
 
-    case SYM_TAKE_P: {
-        INCLUDE_PARAMS_OF_TAKE_P;
+    case SYM_TAKE: {
+        INCLUDE_PARAMS_OF_TAKE;
 
         UNUSED(PAR(series));
         if (REF(deep))

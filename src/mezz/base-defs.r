@@ -92,7 +92,7 @@ end: func [
     return: []
     :omit [any-value! <...>]
 ][
-    while-not [tail? omit] [take omit]
+    until [null? take omit]
 ]
 
 uneval: func [
@@ -185,11 +185,11 @@ empty?: func [
 reeval func [
     {Make fast type testing functions (variadic to quote "top-level" words)}
     return: <void>
-    'set-word... [set-word! <...>]
+    'set-word... [tag! set-word! <...>]
     <local>
         set-word type-name tester meta
 ][
-    while [set-word: take* set-word...] [
+    while [not equal? <end> set-word: take set-word...] [
         type-name: copy as text! set-word
         change back tail of type-name "!" ;-- change ? at tail to !
         tester: typechecker (get bind (as word! type-name) set-word)
@@ -262,7 +262,7 @@ reeval func [
     any-series?:
     any-scalar?:
     any-array?:
-|
+    <end>
 
 
 print: func [

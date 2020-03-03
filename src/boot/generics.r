@@ -284,8 +284,9 @@ copy: generic [
     kinds [typeset! datatype!]
 ]
 
-take*: generic [
-    {Removes and returns one or more elements.}
+take: generic [
+    {Removes and returns one or more elements}
+
     return: [<opt> any-value!]
     series [any-series! port! gob! blank! varargs!] {At position (modified)}
     /part {Specifies a length or end position}

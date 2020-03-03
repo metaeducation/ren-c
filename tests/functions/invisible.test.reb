@@ -195,47 +195,47 @@
         left-normal: enfix right-normal:
             <- func [return: [<opt> bar!] x [bar! <...>]] [take x]
         left-normal*: enfix right-normal*:
-            <- func [return: [<opt> bar!] x [bar! <...> <end>]] [take* x]
+            <- func [return: [<opt> bar!] x [bar! <...> <end>]] [take x]
 
         left-tight: enfix right-tight:
             <- func [return: [<opt> bar!] #x [bar! <...>]] [take x]
         left-tight*: enfix right-tight*:
-            <- func [return: [<opt> bar!] #x [bar! <...> <end>]] [take* x]
+            <- func [return: [<opt> bar!] #x [bar! <...> <end>]] [take x]
 
         left-soft: enfix right-soft:
             <- func [return: [<opt> bar!] 'x [bar! <...>]] [take x]
         left-soft*: enfix right-soft*:
-            <- func [return: [<opt> bar!] 'x [bar! <...> <end>]] [take* x]
+            <- func [return: [<opt> bar!] 'x [bar! <...> <end>]] [take x]
 
         left-hard: enfix right-hard:
             <- func [return: [<opt> bar!] :x [bar! <...>]] [take x]
         left-hard*: enfix right-hard*:
-            <- func [return: [<opt> bar!] :x [bar! <...> <end>]] [take* x]
+            <- func [return: [<opt> bar!] :x [bar! <...> <end>]] [take x]
 
         true
     )
 
-    (error? trap [right-normal |])
+    (null? trap [right-normal |])
     (null? do [right-normal* |])
     (null? do [right-normal*])
 
-    (error? trap [| left-normal])
+    (null? trap [| left-normal])
     (null? do [| left-normal*])
     (null? do [left-normal*])
 
-    (error? trap [right-tight |])
+    (null? trap [right-tight |])
     (null? do [right-tight* |])
     (null? do [right-tight*])
 
-    (error? trap [| left-tight])
+    (null? trap [| left-tight])
     (null? do [| left-tight*])
     (null? do [left-tight*])
 
-    (error? trap [right-soft |])
+    (null? trap [right-soft |])
     (null? do [right-soft* |])
     (null? do [right-soft*])
 
-    (error? trap [| left-soft])
+    (null? trap [| left-soft])
     (null? do [| left-soft*])
     (null? do [left-soft*])
 

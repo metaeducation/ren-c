@@ -415,8 +415,8 @@ static REB_R Transport_Actor(
         Init_Blank(CTX_VAR(ctx, STD_PORT_DATA));
         RETURN (port); }
 
-    case SYM_TAKE_P: {
-        INCLUDE_PARAMS_OF_TAKE_P;
+    case SYM_TAKE: {
+        INCLUDE_PARAMS_OF_TAKE;
         UNUSED(PAR(series));
 
         if (not (sock->modes & RST_LISTEN) or (sock->modes & RST_UDP))
@@ -425,7 +425,7 @@ static REB_R Transport_Actor(
         UNUSED(REF(part)); // non-null limit accounts for
 
         return rebRun(
-            "take*/part/(", ARG(deep), ")/(", ARG(last), ")",
+            "take/part/(", ARG(deep), ")/(", ARG(last), ")",
                 CTX_VAR(ctx, STD_PORT_CONNECTIONS),
                 NULLIZE(ARG(limit)),
                 rebEND

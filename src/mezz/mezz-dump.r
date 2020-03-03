@@ -285,8 +285,10 @@ dump-obj: function [
         [<opt> <end> any-value!]
     :args [any-value! <...>]
 ][
-    while [not new-line? args and [value: take* args]] [
-        if any-array? :value and [contains-newline :value] [
+    while [(not new-line? args) and [value: take args]] [
+        all [
+            any-array? :value
+            contains-newline value
             return
         ]
     ]

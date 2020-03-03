@@ -1126,8 +1126,8 @@ REBTYPE(Gob)
         Move_Value(D_OUT, val);
         return D_OUT; }
 
-    case SYM_TAKE_P: {
-        INCLUDE_PARAMS_OF_TAKE_P;
+    case SYM_TAKE: {
+        INCLUDE_PARAMS_OF_TAKE;
 
         UNUSED(PAR(series));
 
