@@ -1405,6 +1405,7 @@ REBNATIVE(subparse)
 //
 {
     INCLUDE_PARAMS_OF_SUBPARSE;
+    UNUSED(ARG(find_flags));  // !!! access via macro
 
     REBFRM *f = frame_; // nice alias of implicit native parameter
 

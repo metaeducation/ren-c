@@ -586,3 +586,249 @@ REBTYPE(Integer)
 
     fail (Error_Illegal_Action(REB_INTEGER, verb));
 }
+
+
+//
+//  enbin: native [
+//
+//  {Encode value as a Little Endian or Big Endian BINARY!, signed/unsigned}
+//
+//      return: [binary!]
+//      settings "[<LE or BE> <+ or +/-> <number of bytes>] (pre-COMPOSE'd)"
+//          [block!]
+//      value "Value to encode (currently only integers are supported)"
+//          [integer!]
+//  ]
+//
+REBNATIVE(enbin)
+//
+// !!! This routine may wind up being folded into ENCODE as a block-oriented
+// syntax for talking to the "little endian" and "big endian" codecs, but
+// giving it a unique name for now.
+//
+// !!! Patched in from %t-binary.c for R3C, with TO-INTEGER left alone.
+{
+    INCLUDE_PARAMS_OF_ENBIN;
+
+    REBVAL *settings = rebRun("compose", ARG(settings), rebEND);
+    if (VAL_LEN_AT(settings) != 3)
+        fail ("ENBIN requires array of length 3 for settings for now");
+    bool little = rebDid(
+        "switch first", settings, "[",
+            "'BE [false] 'LE [true]",
+            "fail {First element of ENBIN settings must be BE or LE}",
+        "]",
+        rebEND);
+    REBCNT index = VAL_INDEX(settings);
+    bool no_sign = rebDid(
+        "switch second", settings, "[",
+            "'+ [true] '+/- [false]",
+            "fail {Second element of ENBIN settings must be + or +/-}",
+        "]",
+        rebEND);
+    RELVAL *third = VAL_ARRAY_AT_HEAD(settings, index + 2);
+    if (not IS_INTEGER(third))
+        fail ("Third element of ENBIN settings must be an integer}");
+    REBINT num_bytes = VAL_INT32(third);
+    if (num_bytes <= 0)
+        fail ("Size for ENBIN encoding must be at least 1");
+    rebRelease(settings);
+
+    // !!! Implementation is somewhat inefficient, but trying to not violate
+    // the C standard and write code that is general (and may help generalize
+    // with BigNum conversions as well).  Improvements welcome, but trying
+    // to be correct for starters...
+
+    REBSER* bin = Make_Binary(num_bytes);
+
+    REBINT delta = little ? 1 : -1;
+    REBYTE* bp = BIN_HEAD(bin);
+    if (not little)
+        bp += num_bytes - 1;  // go backwards for big endian
+
+    REBI64 i = VAL_INT64(ARG(value));
+    if (no_sign and i < 0)
+        fail ("ENBIN request for unsigned but passed-in value is signed");
+
+    // Negative numbers are encoded with two's complement: process we use here
+    // is simple: take the absolute value, inverting each byte, add one.
+    //
+    bool negative = i < 0;
+    if (negative)
+        i = -(i);
+
+    REBINT carry = negative ? 1 : 0;
+    REBINT n = 0;
+    while (n != num_bytes) {
+        REBINT byte = negative ? ((i % 256) ^ 0xFF) + carry : (i % 256);
+        if (byte > 0xFF) {
+            assert(byte == 0x100);
+            carry = 1;
+            byte = 0;
+        }
+        else
+            carry = 0;
+        *bp = byte;
+        bp += delta;
+        i = i / 256;
+        ++n;
+    }
+    if (i != 0)
+        rebJumps (
+            "fail [", ARG(value), "{exceeds}", rebI(num_bytes), "{bytes}]",
+        rebEND);
+
+    // The process of byte production of a positive number shouldn't give us
+    // something with the high bit set in a signed representation.
+    //
+    if (not no_sign and not negative and *(bp - delta) >= 0x80)
+        rebJumps (
+            "fail [",
+                ARG(value), "{aliases a negative value with signed}",
+                "{encoding of only}", rebI(num_bytes), "{bytes}",
+            "]",
+        rebEND);
+
+    TERM_BIN_LEN(bin, num_bytes);
+    return Init_Binary(D_OUT, bin);
+}
+
+
+//
+//  debin: native [
+//
+//  {Decode BINARY! as Little Endian or Big Endian, signed/unsigned value}
+//
+//      return: [integer!]
+//      settings "[<LE or BE> <+ or +/-> <number of bytes>] (pre-COMPOSE'd)"
+//          [block!]
+//      binary "Decoded (defaults length of binary for number of bytes)"
+//          [binary!]
+//  ]
+//
+REBNATIVE(debin)
+//
+// !!! This routine may wind up being folded into DECODE as a block-oriented
+// syntax for talking to the "little endian" and "big endian" codecs, but
+// giving it a unique name for now.
+//
+// !!! Patched in from %t-binary.c for R3C, with TO-INTEGER left alone.
+{
+    INCLUDE_PARAMS_OF_DEBIN;
+
+    REBVAL* settings = rebRun("compose", ARG(settings), rebEND);
+    if (VAL_LEN_AT(settings) != 2 and VAL_LEN_AT(settings) != 3)
+        fail("DEBIN requires array of length 2 or 3 for settings for now");
+    bool little = rebDid(
+        "switch first", settings, "[",
+            "'BE [false] 'LE [true]",
+            "fail {First element of DEBIN settings must be BE or LE}",
+        "]",
+        rebEND);
+    REBCNT index = VAL_INDEX(settings);
+    bool no_sign = rebDid(
+        "switch second", settings, "[",
+            "'+ [true] '+/- [false]",
+            "fail {Second element of DEBIN settings must be + or +/-}",
+        "]",
+        rebEND);
+    REBCNT num_bytes;
+    RELVAL *third = VAL_ARRAY_AT_HEAD(settings, index + 2);
+    if (IS_END(third))
+        num_bytes = VAL_LEN_AT(ARG(binary));
+    else {
+        if (not IS_INTEGER(third))
+            fail ("Third element of DEBIN settings must be an integer}");
+        num_bytes = VAL_INT32(third);
+        if (VAL_LEN_AT(ARG(binary)) != num_bytes)
+            fail ("Input binary is longer than number of bytes to DEBIN");
+    }
+    if (num_bytes <= 0) {
+        //
+        // !!! Should #{} empty binary be 0 or error?  (Historically, 0, but
+        // if we are going to do this then ENBIN should accept 0 and make #{})
+        //
+        fail("Size for DEBIN decoding must be at least 1");
+    }
+    rebRelease(settings);
+
+    // !!! Implementation is somewhat inefficient, but trying to not violate
+    // the C standard and write code that is general (and may help generalize
+    // with BigNum conversions as well).  Improvements welcome, but trying
+    // to be correct for starters...
+
+    REBINT delta = little ? -1 : 1;
+    REBYTE* bp = VAL_BIN_AT(ARG(binary));
+    if (little)
+        bp += num_bytes - 1;  // go backwards
+
+    REBINT n = num_bytes;
+
+    if (n == 0)
+        return Init_Integer(D_OUT, 0);  // !!! Only if we let num_bytes = 0
+
+    // default signedness interpretation to high-bit of first byte, but
+    // override if the function was called with `no_sign`
+    //
+    bool negative = no_sign ? false : (*bp >= 0x80);
+
+    // Consume any leading 0x00 bytes (or 0xFF if negative).  This is just
+    // a stopgap measure for reading larger-looking sizes once INTEGER! can
+    // support BigNums.
+    //
+    while (n != 0 and *bp == (negative ? 0xFF : 0x00)) {
+        bp += delta;
+        --n;
+    }
+
+    // If we were consuming 0xFFs and passed to a byte that didn't have
+    // its high bit set, we overstepped our bounds!  Go back one.
+    //
+    if (negative and n > 0 and *bp < 0x80) {
+        bp += -(delta);
+        ++n;
+    }
+
+    // All 0x00 bytes must mean 0 (or all 0xFF means -1 if negative)
+    //
+    if (n == 0) {
+        if (negative) {
+            assert(not no_sign);
+            return Init_Integer(D_OUT, -1);
+        }
+        return Init_Integer(D_OUT, 0);
+    }
+
+    // Not using BigNums (yet) so max representation is 8 bytes after
+    // leading 0x00 or 0xFF stripped away
+    //
+    if (n > 8)
+        fail (Error_Out_Of_Range_Raw(ARG(binary)));
+
+    REBI64 i = 0;
+
+    // Pad out to make sure any missing upper bytes match sign
+    //
+    REBINT fill;
+    for (fill = n; fill < 8; fill++)
+        i = cast(REBI64,
+            (cast(REBU64, i) << 8) | (negative ? 0xFF : 0x00)
+        );
+
+    // Use binary data bytes to fill in the up-to-8 lower bytes
+    //
+    while (n != 0) {
+        i = cast(REBI64, (cast(REBU64, i) << 8) | *bp);
+        bp += delta;
+        n--;
+    }
+
+    if (no_sign and i < 0) {
+        //
+        // bits may become signed via shift due to 63-bit limit
+        //
+        fail (Error_Out_Of_Range_Raw(ARG(binary)));
+    }
+
+    return Init_Integer(D_OUT, i);
+}
