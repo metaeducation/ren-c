@@ -577,7 +577,7 @@ inline static REBSER *Alloc_Series_Node(REBFLGS flags) {
     s->header.bits = NODE_FLAG_NODE | flags | SERIES_FLAG_8_IS_TRUE; // #1
     TRASH_POINTER_IF_DEBUG(LINK(s).trash); // #2
   #if !defined(NDEBUG)
-    memset(&s->content.fixed, 0xBD, sizeof(s->content)); // #3 - #6
+    memset(cast(char*, &s->content.fixed), 0xBD, sizeof(s->content)); // #3-#6
     memset(&s->info, 0xAE, sizeof(s->info)); // #7, caller sets SER_WIDE()
   #endif
     TRASH_POINTER_IF_DEBUG(MISC(s).trash); // #8

@@ -118,6 +118,39 @@ gen-obj: func [
     ;
     append flags <msc:/wd4574>
 
+    ; !!! MSVC added warnings for "Spectre mitigation".  The main branch of
+    ; Ren-C worked around these to try and avoid performance hits, but
+    ; patching that onto the older R3C would be work for little benefit...as
+    ; it only matters if /Qspectre builds are done of R3C (which they probably
+    ; will not)...and would only mean a small slowdown if they were.  Disable
+    ; these warnings.
+    ;
+    append flags <msc:/wd5045>
+
+    ; !!! Using MSVC 2019 to try and build an upgraded MSVC 2017 solution
+    ; seems to trigger problems with #pragma warning(push) and warning(pop),
+    ; which developer forums confirm is some kind of Windows platform issue.
+    ; This only happens in backwards-builds for R3C, disable warning pair.
+    ;
+    append flags <msc:/wd5031>
+    append flags <msc:/wd5032>
+
+    ;   Arithmetic overflow: Using operator '*' on a 4 byte value
+    ;   and then casting the result to a 8 byte value. Cast the
+    ;   value to the wider type before calling operator '*' to
+    ;   avoid overflow
+    ;
+    ; Overflow issues are widespread in Rebol, and this warning is not
+    ; particularly high priority in the scope of what the project is
+    ; exploring.  Disable for now.
+    ;
+    <msc:/wd26451>
+
+    ; Later MSVCs complain if you use an `enum` instead of an `enum class`.
+    ; Since Ren-C wants to build C as C++, this isn't a useful warning.
+    ;
+    append flags <msc:/wd26812>
+
     if block? s [
         for-each flag next s [
             append flags opt switch flag [

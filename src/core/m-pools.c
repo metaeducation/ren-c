@@ -848,7 +848,12 @@ void Expand_Series(REBSER *s, REBCNT index, REBCNT delta)
         size_old = SER_TOTAL(s);
     }
     else {
-        memcpy(&content_old, &s->content, sizeof(union Reb_Series_Content));
+        // `char*` casts needed: https://stackoverflow.com/q/57721104
+        memcpy(
+            cast(char*, &content_old),
+            cast(char*, &s->content),
+            sizeof(union Reb_Series_Content)
+        );
         data_old = cast(char*, &content_old);
     }
 
@@ -928,9 +933,23 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
     LEN_BYTE_OR_255(b) = a_len;
 
     union Reb_Series_Content a_content;
-    memcpy(&a_content, &a->content, sizeof(union Reb_Series_Content));
-    memcpy(&a->content, &b->content, sizeof(union Reb_Series_Content));
-    memcpy(&b->content, &a_content, sizeof(union Reb_Series_Content));
+
+    // `char*` casts needed: https://stackoverflow.com/q/57721104
+    memcpy(
+        cast(char*, &a_content),
+        cast(char*, &a->content),
+        sizeof(union Reb_Series_Content)
+    );
+    memcpy(
+        cast(char*, &a->content),
+        cast(char*, &b->content),
+        sizeof(union Reb_Series_Content)
+    );
+    memcpy(
+        cast(char*, &b->content),
+        cast(char*, &a_content),
+        sizeof(union Reb_Series_Content)
+    );
 }
 
 
@@ -977,7 +996,12 @@ void Remake_Series(REBSER *s, REBCNT units, REBYTE wide, REBFLGS flags)
         size_old = SER_TOTAL(s);
     }
     else {
-        memcpy(&content_old, &s->content, sizeof(union Reb_Series_Content));
+        // `char*` casts needed: https://stackoverflow.com/q/57721104
+        memcpy(
+            cast(char*, &content_old),
+            cast(char*, &s->content),
+            sizeof(union Reb_Series_Content)
+        );
         data_old = cast(char*, &content_old);
     }
 
@@ -1050,8 +1074,14 @@ void Decay_Series(REBSER *s)
         // Preserving ACTION!'s archetype is speculative--to point out the
         // possibility exists for the other array with a "canon" [0]
         //
-        if (ANY_SER_FLAGS(s, ARRAY_FLAG_VARLIST | ARRAY_FLAG_PARAMLIST))
-            memcpy(&s->content.fixed, ARR_HEAD(ARR(s)), sizeof(REBVAL));
+        if (ANY_SER_FLAGS(s, ARRAY_FLAG_VARLIST | ARRAY_FLAG_PARAMLIST)) {
+            // `char*` casts needed: https://stackoverflow.com/q/57721104
+            memcpy(
+                cast(char*, &s->content.fixed),
+                cast(char*, ARR_HEAD(ARR(s))),
+                sizeof(REBVAL)
+            );
+        }
 
         Free_Unbiased_Series_Data(unbiased, total);
 

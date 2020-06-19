@@ -157,7 +157,7 @@ inline static int FRM_LINE(REBFRM *f) {
 }
 
 #define FRM_OUT(f) \
-    cast(REBVAL * const, (f)->out) // writable rvalue
+    (f)->out
 
 
 // Note about FRM_NUM_ARGS: A native should generally not detect the arity it

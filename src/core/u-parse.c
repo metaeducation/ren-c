@@ -101,8 +101,10 @@
 // a word to be in the same condition, so it can't use opt_lookback yet.
 //
 #define FETCH_NEXT_RULE_KEEP_LAST(opt_lookback,f) \
-    *opt_lookback = P_RULE; \
-    Fetch_Next_In_Frame(nullptr, (f))
+    do { \
+        *opt_lookback = P_RULE; \
+        Fetch_Next_In_Frame(nullptr, (f)); \
+    } while (0)
 
 #define FETCH_NEXT_RULE(f) \
     Fetch_Next_In_Frame(nullptr, (f))

@@ -112,7 +112,12 @@ void Append_Values_Len(REBARR *a, const REBVAL *head, REBCNT len)
     //
     EXPAND_SERIES_TAIL(SER(a), len);
 
-    memcpy(ARR_AT(a, old_len), head, sizeof(REBVAL) * len);
+    // `char*` casts needed: https://stackoverflow.com/q/57721104
+    memcpy(
+        cast(char*, ARR_AT(a, old_len)),
+        cast(char*, head),
+        sizeof(REBVAL) * len
+    );
 
     TERM_ARRAY_LEN(a, ARR_LEN(a));
 }
