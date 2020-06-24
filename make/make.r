@@ -1090,13 +1090,11 @@ add-app-def copy system-config/definitions
 add-app-cflags copy system-config/cflags
 add-app-lib copy system-config/libraries
 add-app-ldflags copy system-config/ldflags
-write-stdout "..Good"
-print-newline
+print "..Good"
 
 write-stdout "Sanity checking on app config.."
 ; !!! TBD: checks
-write-stdout "..Good"
-print-newline
+print "..Good"
 
 print ["definitions:" mold app-config/definitions]
 print ["includes:" mold app-config/includes]

@@ -266,23 +266,21 @@ reeval func [
 
 
 print: func [
-    {Textually output value (evaluating elements if a block), adds newline}
+    {Textually output spaced line (evaluating elements if a block)}
 
-    return: "NULL if blank input, otherwise VOID!"
+    return: "NULL if blank input or effectively empty block, otherwise VOID!"
         [<opt> void!]
-    line "Line of text or block to run SPACED on, blank prints nothing"
-        [blank! text! block!]
+    line "Line of text or block, blank or [] has NO output, newline allowed"
+        [<blank> char! text! block!]
 ][
-    ; WRITE-STDOUT will return NULL if given a blank input, and SPACED will
-    ; return null if either the block given to it is all nulls or if it
-    ; gets a blank input.  `print []` is equivalent to `print _`, no newline.
-    ; To print a newline, use `print {}`.
-    ;
-    write-stdout try spaced line then [write-stdout newline]
-]
+    if char? line [
+        if not equal? line newline [
+            fail "PRINT only allows CHAR! of newline (see WRITE-STDOUT)"
+        ]
+        return write-stdout line
+    ]
 
-print-newline: specialize 'write-stdout [ ;-- or use `print {}`
-    value: newline
+    (write-stdout try spaced line) then [write-stdout newline]
 ]
 
 

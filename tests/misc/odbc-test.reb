@@ -101,7 +101,7 @@ for-each [name sqltype content] tables [
         print "QUERY DID NOT MATCH ORIGINAL DATA"
     ]
 
-    print-newline
+    print newline
 ]
 
 close statement
