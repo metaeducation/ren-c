@@ -1075,7 +1075,9 @@ REBNATIVE(default)
 //          [<opt> any-value!]
 //      block "Block to evaluate"
 //          [block!]
-//      /name "Catches a named throw" ;-- should it be called /named ?
+//      /result "Optional evaluation result if not thrown"
+//      uncaught [word! path!]
+//      /name "Catches a named throw"  ;-- should it be called /named ?
 //      names "Names to catch (single name if not block)"
 //          [block! word! action! object!]
 //      /quit "Special catch for QUIT native"
@@ -1087,6 +1089,20 @@ REBNATIVE(catch)
 // There's a refinement for catching quits, and CATCH/ANY will not alone catch
 // it (you have to CATCH/ANY/QUIT).  Currently the label for quitting is the
 // NATIVE! function value for QUIT.
+//
+// !!! R3C lacks multiple return value handling, but this gives parity with
+// a /RESULT refinement for getting the mechanical result.  In mainline you
+// could write:
+//
+//     [caught uncaught]: catch [...]
+//
+// But R3C will have to do this as:
+//
+//     catch: catch/result [...] 'uncaught
+//
+// When the value being set is VOID!, SET/ANY must be used at this time.  This
+// is a bit more inefficient in the API since it requires scanning.  Non-void
+// cases are done with directly referencing the SET native.
 {
     INCLUDE_PARAMS_OF_CATCH;
 
@@ -1095,8 +1111,17 @@ REBNATIVE(catch)
     if (REF(any) and REF(name))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Do_Any_Array_At_Throws(D_OUT, ARG(block)))
-        return nullptr; // no throw means just return null
+    if (not Do_Any_Array_At_Throws(D_OUT, ARG(block))) {
+        if (REF(result))
+            if (IS_VOID(D_OUT) or IS_NULLED(D_OUT))
+                rebElide("set/opt", ARG(uncaught), D_OUT, rebEND);
+            else
+                rebElide(
+                    rebEval(NAT_VALUE(set)), ARG(uncaught), D_OUT, rebEND
+                );
+
+        return nullptr;  // no throw means just return null
+    }
 
     if (REF(any) and not (
         IS_ACTION(D_OUT)
@@ -1159,7 +1184,7 @@ REBNATIVE(catch)
     else {
         // Return THROW's arg only if it did not have a /NAME supplied
         //
-        if (IS_BLANK(D_OUT))
+        if (IS_BLANK(D_OUT) and (REF(any) or not REF(quit)))
             goto was_caught;
     }
 
@@ -1178,8 +1203,15 @@ REBNATIVE(catch)
             TERM_ARRAY_LEN(a, 2);
         return Init_Block(D_OUT, a);
     }
+    else
+        CATCH_THROWN(D_OUT, D_OUT);  // thrown value
 
-    CATCH_THROWN(D_OUT, D_OUT); // thrown value
+    // !!! You are not allowed to run evaluations while a throw is in effect,
+    // so this assignment has to wait until the end.
+    //
+    if (REF(result))  // caught case voids result to minimize likely use
+        rebElide("set/opt", ARG(uncaught), VOID_VALUE, rebEND);
+
     return D_OUT;
 }
 

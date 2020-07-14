@@ -55,25 +55,58 @@ static const REBVAL *Trap_Dangerous(REBFRM *frame_) {
 //
 //  {Tries to DO a block, trapping raised errors}
 //
-//      return: "ERROR! if raised, else null"
-//          [<opt> error!]
+//      return: "ERROR! if raised, else null (ANY-VALUE! for ENCLOSE & CHAIN)"
+//          [<opt> error! any-value!]  ; see note about why ANY-VALUE!
 //      code "Code to execute and monitor"
 //          [block! action!]
+//      /result "Optional output result of the evaluation if not an error"
+//      valid [word! path!]
 //  ]
 //
 REBNATIVE(trap)
+//
+// !!! R3C lacks multiple return value handling, but this gives parity with
+// a /RESULT refinement for getting the mechanical result in case of no error.
+// In mainline you could write:
+//
+//     [error valid]: trap [...]
+//
+// But R3C will have to do this as:
+//
+//     error: trap/result [...] 'valid
+//
+// !!! When the value being set is VOID!, SET/ANY must be used at this time.
+// This is a bit more inefficient in the API since it requires scanning.
+// Non-void cases are done with directly referencing the SET native.
+//
+// !!! Type widening of datatypes returned from derived functions is an
+// imperfect science at time of writing, and much of the work is post-R3C.
+// So the result is set to ANY-VALUE! so that ENCLOSE or ADAPT can make
+// wrappers more compatible with historical Rebol TRY's behavior.
 {
     INCLUDE_PARAMS_OF_TRAP;
 
     REBVAL *error = rebRescue(cast(REBDNG*, &Trap_Dangerous), frame_);
-    UNUSED(ARG(code)); // gets used by the above call, via the frame_ pointer
-    if (not error)
-        return nullptr; // code didn't fail() or throw
+    UNUSED(ARG(code));  // gets used by the above call, via the frame_ pointer
 
-    if (IS_VOID(error)) // signal used to indicate a throw
+    if (not error) {  // code didn't fail() or throw
+        if (REF(result))
+            if (IS_VOID(D_OUT) or IS_NULLED(D_OUT))
+                rebElide("set/opt", ARG(valid), D_OUT, rebEND);
+            else
+                rebElide(rebEval(NAT_VALUE(set)), ARG(valid), D_OUT, rebEND);
+
+        return nullptr;
+    }
+
+    if (IS_VOID(error))  // signal used to indicate a throw
         return R_THROWN;
 
     assert(IS_ERROR(error));
+
+    if (REF(result))  // error case voids result to minimize likely use
+        rebElide("set/opt", ARG(valid), VOID_VALUE, rebEND);
+
     return error;
 }
 
