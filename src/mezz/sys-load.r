@@ -141,7 +141,7 @@ load-header: function [
     ;    bad-header
     ;    bad-compress
     ;
-    end: _ ;-- locals are now unset by default, added after that change
+    end: _ ;-- locals are now void by default, added after that change
 
     if binary? source [
         ;
@@ -541,6 +541,8 @@ load-module: function [
     as_LOAD_MODULE: :as
     as: :lib/as
 
+    hdr: null
+
     ; NOTES:
     ;
     ; This is a variation of LOAD that is used by IMPORT. Unlike LOAD, the
@@ -707,7 +709,7 @@ load-module: function [
     ]
 
     ; Unify hdr/name and /as name
-    if set? 'name [
+    if name [
         hdr/name: name  ; rename /as name
     ] else [
         name: :hdr/name

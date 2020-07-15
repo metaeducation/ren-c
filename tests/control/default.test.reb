@@ -1,5 +1,5 @@
 (
-    unset 'x
+    x: null
     x: default [10]
     x = 10
 )

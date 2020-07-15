@@ -136,7 +136,7 @@ newlined: chain [
     ]
         |
     func [t [<opt> text!]] [
-        if unset? 't [return null]
+        if null? t [return null]
         append t newline ;; Terminal newline is POSIX standard, more useful
     ]
 ]

@@ -820,43 +820,6 @@ REBNATIVE(resolve)
 
 
 //
-//  unset: native [
-//
-//  {Unsets the value of a word (in its current context.)}
-//
-//      return: [<opt>]
-//      target [any-word! block!]
-//          "Word or block of words"
-//  ]
-//
-REBNATIVE(unset)
-{
-    INCLUDE_PARAMS_OF_UNSET;
-
-    REBVAL *target = ARG(target);
-
-    if (ANY_WORD(target)) {
-        REBVAL *var = Sink_Var_May_Fail(target, SPECIFIED);
-        Init_Nulled(var);
-        return nullptr;
-    }
-
-    assert(IS_BLOCK(target));
-
-    RELVAL *word;
-    for (word = VAL_ARRAY_AT(target); NOT_END(word); ++word) {
-        if (!ANY_WORD(word))
-            fail (Error_Invalid_Core(word, VAL_SPECIFIER(target)));
-
-        REBVAL *var = Sink_Var_May_Fail(word, VAL_SPECIFIER(target));
-        Init_Nulled(var);
-    }
-
-    return nullptr;
-}
-
-
-//
 //  enfixed?: native [
 //
 //  {TRUE if looks up to a function and gets first argument before the call}
@@ -1316,6 +1279,36 @@ REBNATIVE(null_q)
     INCLUDE_PARAMS_OF_NULL_Q;
 
     return Init_Logic(D_OUT, IS_NULLED(ARG(optional)));
+}
+
+
+//
+//  Is_Voided: C
+//
+bool Is_Voided(const REBVAL *location) {
+    if (ANY_WORD(location))
+        return IS_VOID(Get_Opt_Var_May_Fail(location, SPECIFIED));
+
+    DECLARE_LOCAL (temp); // result may be generated
+    Get_Path_Core(temp, location, SPECIFIED);
+    return IS_VOID(temp);
+}
+
+
+//
+//  voided?: native [
+//
+//  {Tells you if a path or variable are set to VOID!}
+//
+//      return: [logic!]
+//      var [word! path!]
+//  ]
+//
+REBNATIVE(voided_q)
+{
+    INCLUDE_PARAMS_OF_VOIDED_Q;
+
+    return Init_Logic(D_OUT, Is_Voided(ARG(var)));
 }
 
 

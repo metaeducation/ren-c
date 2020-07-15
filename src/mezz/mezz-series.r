@@ -491,8 +491,9 @@ collect-with: func [
 
     <local> out keeper
 ][
-    ;-- Derive from APPEND to inherit /ONLY, /LINE, /DUP automatically
+    out: null
 
+    ;-- Derive from APPEND to inherit /ONLY, /LINE, /DUP automatically
     keeper: specialize (
         ;-- SPECIALIZE in order to remove series argument
 

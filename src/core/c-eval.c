@@ -1052,7 +1052,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
             switch (pclass) {
               case PARAM_CLASS_LOCAL:
-                Init_Nulled(f->arg); // !!! f->special?
+                Init_Void(f->arg);  // !!! f->special?
                 SET_VAL_FLAG(f->arg, ARG_MARKED_CHECKED);
                 goto continue_arg_loop;
 

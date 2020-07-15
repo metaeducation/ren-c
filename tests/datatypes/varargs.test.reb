@@ -107,18 +107,18 @@
 ; here to do the same thing.
 
 ; <| and |> were originally enfix, so the following tests would have meant x
-; would be unset
+; would be void
 (
-    unset 'value
-    unset 'x
+    value: void
+    x: void
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
     did all [value = 3 | x = 3]
 )
 (
-    unset 'value
-    unset 'x
+    value: void
+    x: void
 
     70 = (value: 1 + 2 |> 30 + 40 x: value () () ())
 

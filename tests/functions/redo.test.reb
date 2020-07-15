@@ -31,15 +31,15 @@
 ; REDO locals clearing test
 ; (locals should be cleared on each redo)
 (
-    foo: func [n <local> unset-me] [
-        if set? 'unset-me [
+    foo: func [n <local> void-me] [
+        if not voided? 'void-me [
             return "local not cleared"
         ]
         if n = 0 [
             return <success>
         ]
         n: n - 1
-        unset-me: #some-junk
+        void-me: #some-junk
         redo 'return
     ]
 

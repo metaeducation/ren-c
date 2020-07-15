@@ -134,7 +134,7 @@
 )
 (
     use [x] [
-        unset 'x
+        x: null
         strict-equal? first [:x] applique/only func ['x [<opt> any-value!]] [
             return get 'x
         ] [:x]
@@ -146,7 +146,7 @@
 (use [x] [x: 1 strict-equal? 'x applique/only func [:x] [return :x] [x]])
 (
     use [x] [
-        unset 'x
+        x: null
         strict-equal? 'x applique/only func ['x [<opt> any-value!]] [
             return get 'x
         ] [x]

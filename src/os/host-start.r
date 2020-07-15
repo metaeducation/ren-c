@@ -201,10 +201,10 @@ host-start: function [
     argv {Raw command line argument block received by main() as STRING!s}
         [block!]
     <with>
-    host-start host-prot ;-- unset when finished with them
-    about usage license ;-- exported to lib, see notes
+    host-start host-prot  ; voided when finished with them
+    about usage license  ; exported to lib, see notes
     <static>
-        o (system/options) ;-- shorthand since options are often read/written
+        o (system/options)  ; shorthand since options are often read/written
 ][
     ; !!! The whole host startup/console is currently very manually loaded
     ; into its own isolated context by the C startup code.  This way, changes

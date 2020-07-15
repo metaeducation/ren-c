@@ -1086,8 +1086,13 @@ REBNATIVE(default)
         Get_Path_Core(D_OUT, target, SPECIFIED); // will fail() on GROUP!s
     }
 
-    if (not IS_NULLED(D_OUT) and (not IS_BLANK(D_OUT) or REF(only)))
-        return D_OUT; // count it as "already set" !!! what about VOID! ?
+    if (
+        not IS_NULLED(D_OUT)
+        and not IS_VOID(D_OUT)
+        and (not IS_BLANK(D_OUT) or REF(only))
+    ){
+        return D_OUT;  // count it as "already set"
+    }
 
     if (Do_Branch_Throws(D_OUT, ARG(branch)))
         return R_THROWN;

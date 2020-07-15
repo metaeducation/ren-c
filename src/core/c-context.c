@@ -237,7 +237,7 @@ REBVAL *Append_Context(
     //
     EXPAND_SERIES_TAIL(SER(CTX_VARLIST(context)), 1);
 
-    REBVAL *value = Init_Nulled(ARR_LAST(CTX_VARLIST(context)));
+    REBVAL *value = Init_Void(ARR_LAST(CTX_VARLIST(context)));
     TERM_ARRAY_LEN(CTX_VARLIST(context), ARR_LEN(CTX_VARLIST(context)));
 
     if (not opt_any_word)
@@ -253,7 +253,7 @@ REBVAL *Append_Context(
         INIT_WORD_INDEX(opt_any_word, len);
     }
 
-    return value; // location we just added (nulled cell)
+    return value;  // location we just added (void cell)
 }
 
 
@@ -1237,10 +1237,10 @@ void Resolve_Context(
             // "the remove succeeded, so it's marked as set now" (old comment)
             if (
                 NOT_VAL_FLAG(var, CELL_FLAG_PROTECTED)
-                and (all or IS_NULLED(var))
+                and (all or IS_VOID(var))
             ){
                 if (m < 0)
-                    Init_Nulled(var); // no value in source context
+                    Init_Void(var);  // treat as undefined in source context
                 else
                     Move_Var(var, CTX_VAR(source, m)); // preserves enfix
             }

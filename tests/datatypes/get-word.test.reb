@@ -8,7 +8,7 @@
     e/id = 'not-bound
 )
 (
-    unset 'a
+    a: null
     null? :a
 )
 

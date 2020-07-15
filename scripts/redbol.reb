@@ -221,8 +221,8 @@ null: emulate [
     #"^@" ; NUL in Ren-C https://en.wikipedia.org/wiki/Null_character
 ]
 
-unset?: emulate [:null?] ; https://trello.com/c/shR4v8tS
-unset!: emulate [:null] ;-- Note: datatype? unset! will fail with this
+unset?: emulate [:void?]
+unset!: emulate [get/any 'void]
 
 ; NONE is reserved for `if none [x = 1 | y = 2] [...]`
 ;
@@ -812,7 +812,7 @@ switch: emulate [redescribe [
                 if default [ ;-- convert to fallout
                     keep/only as group! default-branch
                     default: false
-                    unset 'default-branch
+                    default-branch: null
                 ]
             ]
         ]

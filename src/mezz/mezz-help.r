@@ -104,7 +104,7 @@ help: function [
     /doc
         "Open web browser to related documentation."
 ][
-    if unset? 'topic [
+    if null? topic [
         ;
         ; Was just `>> help` or `do [help]` or similar.
         ; Print out generic help message.
@@ -214,10 +214,17 @@ help: function [
         ]
 
         path! word! [
-            value: get/any topic else [
-                print ["No information on" topic "(has no value)"]
+            switch type of value: get/any topic [
+                null [
+                    print ["No information on" topic "(is null)"]
+                ]
+                void! [
+                    print [topic "is unset (e.g. a VOID! value)"]
+                ]
+            ] then [
                 return
             ]
+
             enfixed: enfixed? topic
         ]
     ] else [

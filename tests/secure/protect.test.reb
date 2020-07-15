@@ -130,6 +130,6 @@
     ]
 )
 [#1764
-    (unset 'blk protect/deep 'blk true)
+    (blk: void protect/deep 'blk true)
 ]
 (unprotect 'blk true)

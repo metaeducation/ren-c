@@ -72,14 +72,14 @@
 
 
 (
-    unset 'x
+    x: void
     x: 1 + 2 * 3
     elide (y: :x)
 
     did all [x = 9 | y = 9]
 )
 (
-    unset 'x
+    x: void
     x: 1 + elide (y: 10) 2 * 3
     did all [
         x = 9
@@ -88,9 +88,7 @@
 )
 
 (
-    unset 'x
-    unset 'y
-    unset 'z
+    x: y: z: void
 
     x: 10
     y: 1 comment [+ 2
@@ -99,7 +97,7 @@
     did all [
         x = 10
         y = 8
-        not set? 'z
+        voided? 'z
     ]
 )
 

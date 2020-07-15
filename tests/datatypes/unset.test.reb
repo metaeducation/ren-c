@@ -29,8 +29,7 @@
 (not error? trap [set 'a void])
 
 (
-    a-value: 10
-    unset 'a-value
+    a-value: null
     e: trap [a-value/foo]
     e/id = 'no-value
 )

@@ -349,10 +349,10 @@
     (reeval does [reduce reduce [:self] true])
 ]
 [#2025 (
-    ; ensure x and y are unset from previous tests, as the test here
+    ; ensure x and y are void from previous tests, as the test here
     ; is trying to cause an error...
-    unset 'x
-    unset 'y
+    x: void
+    y: void
 
     body: [x + y]
     f: make action! reduce [[x] body]

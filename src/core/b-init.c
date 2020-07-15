@@ -431,7 +431,8 @@ static void Add_Lib_Keys_R3Alpha_Cant_Make(void)
     for (i = 0; names[i] != NULL; ++i) {
         REBSTR *str = Intern_UTF8_Managed(cb_cast(names[i]), strlen(names[i]));
         REBVAL *val = Append_Context(Lib_Context, NULL, str);
-        Init_Nulled(val); // functions will fill in (no-op, since void already)
+        assert(IS_VOID(val));  // functions will fill in
+        UNUSED(val);
     }
 }
 

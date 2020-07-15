@@ -97,7 +97,7 @@ was: func [
 ]
 
 assert [null = binding of :return] ;-- it's archetypal, nowhere to return to
-unset 'return ;-- so don't let the archetype be visible
+return: void  ; so don't let the archetype be visible
 
 function: func [
     {Make action with set-words as locals, <static>, <in>, <with>, <local>}

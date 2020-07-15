@@ -485,8 +485,8 @@ if 'Windows <> first system/platform [
         ]
     ]
 
-    unset 'iso-3166-table
-    unset 'iso-639-table
+    iso-3166-table: void
+    iso-639-table: void
 ]
 
 ; initialize system/locale

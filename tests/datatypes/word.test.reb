@@ -149,7 +149,7 @@
     same? :a-value a-value
 )
 (
-    unset 'a-value
+    a-value: null
     null = a-value
 )
 (

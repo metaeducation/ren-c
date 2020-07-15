@@ -209,6 +209,11 @@ bool Next_Path_Throws(REBPVS *pvs)
         else if (not r) {
             Init_Nulled(pvs->out);
         }
+        else if (r == R_UNHANDLED) {
+            if (IS_NULLED(PVS_PICKER(pvs)))
+                fail ("NULL used in path picking but was not handled");
+            fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
+        }
         else if (VAL_TYPE_RAW(r) <= REB_MAX_NULLED) {
             Handle_Api_Dispatcher_Result(pvs, r);
         }

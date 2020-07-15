@@ -50,7 +50,7 @@
     ; Enfixed skipped left arguments mean that a function will not be executed
     ; greedily...it will run in its own step, as if the left was an end.
     (
-        unset 'var
+        var: void
         block: [<tag> lefty "hi"]
         did all [
             [lefty "hi"] = block: evaluate/set block 'var
@@ -64,7 +64,7 @@
     ; making the left-quoting operation see nothing on the left, even if the
     ; type matched what it was looking for.
     (
-        unset 'var
+        var: void
         block: [quote 1 lefty "hi"]
         did all [
             [lefty "hi"] = block: evaluate/set block 'var
