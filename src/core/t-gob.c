@@ -515,10 +515,10 @@ static REBVAL *Get_GOB_Var(RELVAL *out, REBGOB *gob, const REBVAL *word)
 {
     switch (VAL_WORD_SYM(word)) {
       case SYM_OFFSET:
-        return Init_Pair(out, GOB_X(gob), GOB_Y(gob));
+        return Init_Pair_Dec(out, GOB_X(gob), GOB_Y(gob));
 
       case SYM_SIZE:
-        return Init_Pair(out, GOB_W(gob), GOB_H(gob));
+        return Init_Pair_Dec(out, GOB_W(gob), GOB_H(gob));
 
       case SYM_IMAGE:
         if (GOB_TYPE(gob) == GOBT_IMAGE)
@@ -632,8 +632,8 @@ static REBARR *Gob_To_Array(REBGOB *gob)
         vals[n] = Init_Blank(Alloc_Tail_Array(arr));
     }
 
-    Init_Pair(vals[0], GOB_X(gob), GOB_Y(gob));
-    Init_Pair(vals[1], GOB_W(gob), GOB_H(gob));
+    Init_Pair_Dec(vals[0], GOB_X(gob), GOB_Y(gob));
+    Init_Pair_Dec(vals[1], GOB_W(gob), GOB_H(gob));
     Init_Integer(vals[2], GOB_ALPHA(gob));
 
     if (!GOB_TYPE(gob)) return arr;
@@ -789,7 +789,7 @@ REBNATIVE(map_gob_offset)
 
     REBARR *arr = Make_Arr(2);
     Init_Gob(Alloc_Tail_Array(arr), gob);
-    Init_Pair(Alloc_Tail_Array(arr), xo, yo);
+    Init_Pair_Dec(Alloc_Tail_Array(arr), xo, yo);
 
     return Init_Block(D_OUT, arr);
 }

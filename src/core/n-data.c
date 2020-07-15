@@ -104,12 +104,14 @@ REBNATIVE(as_pair)
     REBVAL *x = ARG(x);
     REBVAL *y = ARG(y);
 
-    return Init_Pair(
-        D_OUT,
-        IS_INTEGER(x) ? VAL_INT64(x) : VAL_DECIMAL(x),
-        IS_INTEGER(y) ? VAL_INT64(y) : VAL_DECIMAL(y)
-    );
-;
+    if (
+        not (IS_INTEGER(x) or IS_DECIMAL(x))
+        or not (IS_INTEGER(y) or IS_DECIMAL(y))
+    ){
+        fail ("PAIR! must currently have INTEGER! or DECIMAL! x and y values");
+    }
+
+    return Init_Pair(D_OUT, x, y);
 }
 
 

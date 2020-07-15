@@ -281,7 +281,7 @@ static REBVAL *Get_Event_Var(RELVAL *out, const RELVAL *v, REBSTR *name)
     case SYM_OFFSET: {
         if (VAL_EVENT_TYPE(v) == EVT_KEY || VAL_EVENT_TYPE(v) == EVT_KEY_UP)
             return Init_Blank(out);
-        return Init_Pair(out, VAL_EVENT_X(v), VAL_EVENT_Y(v)); }
+        return Init_Pair_Dec(out, VAL_EVENT_X(v), VAL_EVENT_Y(v)); }
 
     case SYM_KEY: {
         if (VAL_EVENT_TYPE(v) != EVT_KEY && VAL_EVENT_TYPE(v) != EVT_KEY_UP)

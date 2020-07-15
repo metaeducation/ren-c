@@ -431,10 +431,12 @@ bool Scan_Hex2(REBUNI *out, const void *p, bool unicode)
 //
 const REBYTE *Scan_Dec_Buf(
     REBYTE *out, // may live in data stack (do not call DS_PUSH, GC, eval)
+    bool *found_point,  // found a comma or a dot
     const REBYTE *cp,
     REBCNT len // max size of buffer
 ) {
     assert(len >= MAX_NUM_LEN);
+    *found_point = false;
 
     REBYTE *bp = out;
     REBYTE *be = bp + len - 1;
@@ -454,8 +456,10 @@ const REBYTE *Scan_Dec_Buf(
             ++cp;
     }
 
-    if (*cp == ',' || *cp == '.')
+    if (*cp == ',' || *cp == '.') {
+        *found_point = true;
         cp++;
+    }
 
     *bp++ = '.';
     if (bp >= be)
@@ -1112,7 +1116,8 @@ const REBYTE *Scan_Pair(
 
     REBYTE buf[MAX_NUM_LEN + 4];
 
-    const REBYTE *ep = Scan_Dec_Buf(&buf[0], cp, MAX_NUM_LEN);
+    bool found_x_point;
+    const REBYTE *ep = Scan_Dec_Buf(&buf[0], &found_x_point, cp, MAX_NUM_LEN);
     if (ep == NULL)
         return_NULL;
     if (*ep != 'x' && *ep != 'X')
@@ -1123,16 +1128,23 @@ const REBYTE *Scan_Pair(
     RESET_CELL(out->payload.pair, REB_DECIMAL);
     RESET_CELL(PAIRING_KEY(out->payload.pair), REB_DECIMAL);
 
-    VAL_PAIR_X(out) = cast(float, atof(cast(char*, &buf[0]))); //n;
+    if (found_x_point)
+        Init_Decimal(VAL_PAIR_FIRST(out), atof(cast(char*, &buf[0])));
+    else
+        Init_Integer(VAL_PAIR_FIRST(out), atoi(cast(char*, &buf[0])));
     ep++;
 
-    const REBYTE *xp = Scan_Dec_Buf(&buf[0], ep, MAX_NUM_LEN);
+    bool found_y_point;
+    const REBYTE *xp = Scan_Dec_Buf(&buf[0], &found_y_point, ep, MAX_NUM_LEN);
     if (!xp) {
         Free_Pairing(out->payload.pair);
         return_NULL;
     }
 
-    VAL_PAIR_Y(out) = cast(float, atof(cast(char*, &buf[0]))); //n;
+    if (found_y_point)
+        Init_Decimal(VAL_PAIR_SECOND(out), atof(cast(char*, &buf[0])));
+    else
+        Init_Integer(VAL_PAIR_SECOND(out), atoi(cast(char*, &buf[0])));
 
     if (len > cast(REBCNT, xp - cp)) {
         Free_Pairing(out->payload.pair);

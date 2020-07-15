@@ -47,19 +47,37 @@ inline static REBVAL *PAIRING_KEY(REBVAL *paired) {
 #define VAL_PAIR(v) \
     ((v)->payload.pair)
 
-#define VAL_PAIR_X(v) \
-    VAL_DECIMAL(PAIRING_KEY((v)->payload.pair))
+#define VAL_PAIR_FIRST(v) \
+    PAIRING_KEY((v)->payload.pair)
 
-#define VAL_PAIR_Y(v) \
-    VAL_DECIMAL((v)->payload.pair)
+#define VAL_PAIR_SECOND(v) \
+    ((v)->payload.pair)
 
-#define VAL_PAIR_X_INT(v) \
-    ROUND_TO_INT(VAL_PAIR_X(v))
+inline static REBDEC VAL_PAIR_X(const RELVAL *v) {
+    if (IS_INTEGER(VAL_PAIR_FIRST(v)))
+        return VAL_INT64(VAL_PAIR_FIRST(v));
+    return VAL_DECIMAL(VAL_PAIR_FIRST(v));
+}
 
-#define VAL_PAIR_Y_INT(v) \
-    ROUND_TO_INT(VAL_PAIR_Y(v))
+inline static REBDEC VAL_PAIR_Y(const RELVAL *v) {
+    if (IS_INTEGER(VAL_PAIR_SECOND(v)))
+        return VAL_INT64(VAL_PAIR_SECOND(v));
+    return VAL_DECIMAL(VAL_PAIR_SECOND(v));
+}
 
-inline static REBVAL *Init_Pair(RELVAL *out, float x, float y) {
+inline static REBI64 VAL_PAIR_X_INT(const RELVAL *v) {
+    if (IS_INTEGER(VAL_PAIR_FIRST(v)))
+        return VAL_INT64(v);
+    return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_FIRST(v)));
+}
+
+inline static REBI64 VAL_PAIR_Y_INT(const RELVAL *v) {
+    if (IS_INTEGER(VAL_PAIR_SECOND(v)))
+        return VAL_INT64(v);
+    return ROUND_TO_INT(VAL_DECIMAL(VAL_PAIR_SECOND(v)));
+}
+
+inline static REBVAL *Init_Pair_Dec(RELVAL *out, float x, float y) {
     RESET_CELL(out, REB_PAIR);
     out->payload.pair = Alloc_Pairing();
     Init_Decimal(PAIRING_KEY(out->payload.pair), x);
@@ -67,6 +85,22 @@ inline static REBVAL *Init_Pair(RELVAL *out, float x, float y) {
     Manage_Pairing(out->payload.pair);
     return KNOWN(out);
 }
+
+inline static REBVAL *Init_Pair(
+    RELVAL *out,
+    const REBVAL *first,
+    const REBVAL *second
+){
+    RESET_CELL(out, REB_PAIR);
+    assert(IS_INTEGER(first) or IS_DECIMAL(first));
+    assert(IS_INTEGER(second) or IS_DECIMAL(second));
+    out->payload.pair = Alloc_Pairing();
+    Move_Value(PAIRING_KEY(out->payload.pair), first);
+    Move_Value(out->payload.pair, second);
+    Manage_Pairing(out->payload.pair);
+    return KNOWN(out);
+}
+
 
 inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
     //

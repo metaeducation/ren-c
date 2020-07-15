@@ -70,42 +70,29 @@ REB_R MAKE_Pair(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         return out;
     }
 
-    REBDEC x;
-    REBDEC y;
+    const RELVAL *x;
+    const RELVAL *y;
 
-    if (IS_INTEGER(arg)) {
-        x = VAL_INT32(arg);
-        y = VAL_INT32(arg);
-    }
-    else if (IS_DECIMAL(arg)) {
-        x = VAL_DECIMAL(arg);
-        y = VAL_DECIMAL(arg);
-    }
-    else if (IS_BLOCK(arg) && VAL_LEN_AT(arg) == 2) {
-        RELVAL *item = VAL_ARRAY_AT(arg);
-
-        if (IS_INTEGER(item))
-            x = cast(REBDEC, VAL_INT64(item));
-        else if (IS_DECIMAL(item))
-            x = cast(REBDEC, VAL_DECIMAL(item));
-        else
+    if (IS_BLOCK(arg)) {
+        if (VAL_LEN_AT(arg) != 2)
             goto bad_make;
 
-        ++item;
-        if (IS_END(item))
-            goto bad_make;
-
-        if (IS_INTEGER(item))
-            y = cast(REBDEC, VAL_INT64(item));
-        else if (IS_DECIMAL(item))
-            y = cast(REBDEC, VAL_DECIMAL(item));
-        else
-            goto bad_make;
+        x = VAL_ARRAY_AT(arg);
+        y = VAL_ARRAY_AT(arg) + 1;
     }
-    else
+    else {
+        x = arg;
+        y = arg;
+    }
+
+    if (
+        not (IS_INTEGER(x) or IS_DECIMAL(x))
+        or not (IS_INTEGER(y) or IS_DECIMAL(y))
+    ){
         goto bad_make;
+    }
 
-    return Init_Pair(out, x, y);
+    return Init_Pair(out, KNOWN(x), KNOWN(y));
 
   bad_make:
     fail (Error_Bad_Make(REB_PAIR, arg));
@@ -170,9 +157,9 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
         fail (Error_Invalid(b));
 
     if (maxed)
-        Init_Pair(out, MAX(ax, bx), MAX(ay, by));
+        Init_Pair_Dec(out, MAX(ax, bx), MAX(ay, by));
     else
-        Init_Pair(out, MIN(ax, bx), MIN(ay, by));
+        Init_Pair_Dec(out, MIN(ax, bx), MIN(ay, by));
 }
 
 
@@ -185,7 +172,6 @@ REB_R PD_Pair(
     const REBVAL *opt_setval
 ){
     REBINT n = 0;
-    REBDEC dec;
 
     if (IS_WORD(picker)) {
         if (VAL_WORD_SYM(picker) == SYM_X)
@@ -204,22 +190,24 @@ REB_R PD_Pair(
         return R_UNHANDLED;
 
     if (opt_setval == NULL) {
-        dec = (n == 1 ? VAL_PAIR_X(pvs->out) : VAL_PAIR_Y(pvs->out));
-        Init_Decimal(pvs->out, dec);
+        if (n == 1)
+            Move_Value(pvs->out, VAL_PAIR_FIRST(pvs->out));
+        else
+            Move_Value(pvs->out, VAL_PAIR_SECOND(pvs->out));
         return pvs->out;
     }
 
-    if (IS_INTEGER(opt_setval))
-        dec = cast(REBDEC, VAL_INT64(opt_setval));
-    else if (IS_DECIMAL(opt_setval))
-        dec = VAL_DECIMAL(opt_setval);
-    else
+    // PAIR! can mechanically store any pair of values efficiently (more
+    // efficiently than a 2-element block, for example).  But only INTEGER!
+    // and DECIMAL! are currently allowed.
+    //
+    if (not IS_INTEGER(opt_setval) and not IS_DECIMAL(opt_setval))
         return R_UNHANDLED;
 
     if (n == 1)
-        VAL_PAIR_X(pvs->out) = dec;
+        Move_Value(VAL_PAIR_FIRST(pvs->out), opt_setval);
     else
-        VAL_PAIR_Y(pvs->out) = dec;
+        Move_Value(VAL_PAIR_SECOND(pvs->out), opt_setval);
 
     // Using R_IMMEDIATE means that although we've updated pvs->out, we'll
     // leave it to the path dispatch to figure out if that can be written back
@@ -234,33 +222,6 @@ REB_R PD_Pair(
 }
 
 
-static void Get_Math_Arg_For_Pair(
-    REBDEC *x_out,
-    REBDEC *y_out,
-    REBVAL *arg,
-    REBVAL *verb
-){
-    switch (VAL_TYPE(arg)) {
-    case REB_PAIR:
-        *x_out = VAL_PAIR_X(arg);
-        *y_out = VAL_PAIR_Y(arg);
-        break;
-
-    case REB_INTEGER:
-        *x_out = *y_out = cast(REBDEC, VAL_INT64(arg));
-        break;
-
-    case REB_DECIMAL:
-    case REB_PERCENT:
-        *x_out = *y_out = cast(REBDEC, VAL_DECIMAL(arg));
-        break;
-
-    default:
-        fail (Error_Math_Args(REB_PAIR, verb));
-    }
-}
-
-
 //
 //  MF_Pair: C
 //
@@ -268,24 +229,9 @@ void MF_Pair(REB_MOLD *mo, const RELVAL *v, bool form)
 {
     UNUSED(form); // currently no distinction between MOLD and FORM
 
-    REBYTE buf[60];
-    REBINT len = Emit_Decimal(
-        buf,
-        VAL_PAIR_X(v),
-        DEC_MOLD_MINIMAL,
-        '.', // use dot as opposed to comma in pair rendering of decimals
-        mo->digits / 2
-    );
-    Append_Unencoded_Len(mo->series, s_cast(buf), len);
+    Mold_Value(mo, VAL_PAIR_FIRST(v));
     Append_Utf8_Codepoint(mo->series, 'x');
-    len = Emit_Decimal(
-        buf,
-        VAL_PAIR_Y(v),
-        DEC_MOLD_MINIMAL,
-        '.', // use dot as opposed to comma in pair rendering of decimals
-        mo->digits / 2
-    );
-    Append_Unencoded_Len(mo->series, s_cast(buf), len);
+    Mold_Value(mo, VAL_PAIR_SECOND(v));
 }
 
 
@@ -294,100 +240,61 @@ void MF_Pair(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 REBTYPE(Pair)
 {
-    REBVAL *val = D_ARG(1);
+    REBVAL *v = D_ARG(1);
 
-    REBDEC x1 = VAL_PAIR_X(val);
-    REBDEC y1 = VAL_PAIR_Y(val);
+    REBVAL *first1 = VAL_PAIR_FIRST(v);
+    REBVAL *second1 = VAL_PAIR_SECOND(v);
 
-    REBDEC x2;
-    REBDEC y2;
+    REBVAL *first2 = nullptr;
+    REBVAL *second2 = nullptr;
 
     switch (VAL_WORD_SYM(verb)) {
+      case SYM_REVERSE:
+        return Init_Pair(D_OUT, second1, first1);
 
-    case SYM_COPY:
-        return Init_Pair(D_OUT, x1, y1);
-
-    case SYM_ADD:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
-        return Init_Pair(D_OUT, x1 + x2, y1 + y2);
-
-    case SYM_SUBTRACT:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
-        return Init_Pair(D_OUT, x1 - y2, y1 - y2);
-
-    case SYM_MULTIPLY:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
-        return Init_Pair(D_OUT, x1 * x2, y1 * y2);
-
-    case SYM_DIVIDE:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
-        if (x2 == 0 or y2 == 0)
-            fail (Error_Zero_Divide_Raw());
-        return Init_Pair(D_OUT, x1 / x2, y1 / y2);
-
-    case SYM_REMAINDER:
-        Get_Math_Arg_For_Pair(&x2, &y2, D_ARG(2), verb);
-        if (x2 == 0 or y2 == 0)
-            fail (Error_Zero_Divide_Raw());
-        return Init_Pair(D_OUT, fmod(x1, x2), fmod(y1, y2));
-
-    case SYM_NEGATE:
-        return Init_Pair(D_OUT, -x1, -y1);
-
-    case SYM_ABSOLUTE:
-        return Init_Pair(D_OUT, x1 < 0 ? -x1 : x1, y1 < 0 ? -y1 : y1);
-
-    case SYM_ROUND: {
-        INCLUDE_PARAMS_OF_ROUND;
-
-        UNUSED(PAR(value));
-
-        REBFLGS flags = (
-            (REF(to) ? RF_TO : 0)
-            | (REF(even) ? RF_EVEN : 0)
-            | (REF(down) ? RF_DOWN : 0)
-            | (REF(half_down) ? RF_HALF_DOWN : 0)
-            | (REF(floor) ? RF_FLOOR : 0)
-            | (REF(ceiling) ? RF_CEILING : 0)
-            | (REF(half_ceiling) ? RF_HALF_CEILING : 0)
-        );
-
-        if (REF(to))
-            return Init_Pair(
-                D_OUT,
-                Round_Dec(x1, flags, Dec64(ARG(scale))),
-                Round_Dec(y1, flags, Dec64(ARG(scale)))
-            );
-
-        return Init_Pair(
-            D_OUT,
-            Round_Dec(x1, flags | RF_TO, 1.0L),
-            Round_Dec(y1, flags | RF_TO, 1.0L)
-        ); }
-
-    case SYM_REVERSE:
-        return Init_Pair(D_OUT, y1, x1);
-
-    case SYM_RANDOM: {
-        INCLUDE_PARAMS_OF_RANDOM;
-
-        UNUSED(PAR(value));
-
-        if (REF(only))
-            fail (Error_Bad_Refines_Raw());
-        if (REF(seed))
-            fail (Error_Bad_Refines_Raw());
-
-        return Init_Pair(
-            D_OUT,
-            Random_Range(cast(REBINT, x1), REF(secure)),
-            Random_Range(cast(REBINT, y1), REF(secure))
-        ); }
-
-    default:
+      case SYM_ADD:
+      case SYM_SUBTRACT:
+      case SYM_MULTIPLY:
+      case SYM_DIVIDE:
+      case SYM_REMAINDER: {  // !!! Longer list?
+        if (IS_PAIR(D_ARG(2))) {
+            first2 = VAL_PAIR_FIRST(D_ARG(2));
+            second2 = VAL_PAIR_SECOND(D_ARG(2));
+        }
         break;
     }
 
-    fail (Error_Illegal_Action(REB_PAIR, verb));
+    default:  // !!! Should we limit the actions?
+        break;  /* fail (Error_Illegal_Action(REB_PAIR, verb)); */
+    }
+
+   // !!! The only way we can generically guarantee the ability to retrigger
+    // an action multiple times without it ruining its arguments is to copy
+    // the FRAME!.  Technically we don't need two copies, we could reuse
+    // this frame...but then the retriggering would have to be done with a
+    // mechanical trick vs. the standard DO, because the frame thinks it is
+    // already running...and the check for that would be subverted.
+
+    REBVAL *frame = Init_Frame(D_OUT, Context_For_Frame_May_Manage(frame_));
+
+    Move_Value(D_ARG(1), first1);
+    if (first2)
+        Move_Value(D_ARG(2), first2);  // use extracted arg x vs pair arg
+    REBVAL *x_frame = rebRun("copy", frame, rebEND);
+
+    Move_Value(D_ARG(1), second1);
+    if (second2)
+        Move_Value(D_ARG(2), second2);  // use extracted arg y vs pair arg
+    REBVAL *y_frame = rebRun("copy", frame, rebEND);
+
+    REBVAL *x = rebRun(rebEval(NAT_VALUE(do)), rebR(x_frame), rebEND);
+    REBVAL *y = rebRun(rebEval(NAT_VALUE(do)), rebR(y_frame), rebEND);
+
+    Init_Pair(D_OUT, x, y);
+
+    rebRelease(x);
+    rebRelease(y);
+
+    return D_OUT;
 }
 
