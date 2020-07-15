@@ -13,7 +13,6 @@
     (a: 1 reeval func [return: <void>] [a: return] :a =? 1)
 ]
 (a: 1 reeval func [return: <void>] [set 'a return] :a =? 1)
-(a: 1 reeval func [return: <void>] [set/opt 'a return] :a =? 1)
 [#1509 ; the "result" of an arity-0 return should not be passable to functions
     (a: 1 reeval func [return: <void>] [a: error? return] :a =? 1)
 ]

@@ -50,12 +50,12 @@
         ; Rather than have MATCH return a falsey result in these cases of
         ; success, pass back a BAR! in the hopes of drawing attention.
 
-        set* quote result: do f ;-- can't access f/arg after the DO
+        set quote result: do f  ; can't access f/arg after the DO
 
         if not :arg and [not null? :result] [
             return '| ;-- BAR! if matched a falsey type
         ]
-        :result ;-- return null if no match, else truthy result
+        :result  ; return null if no match, else truthy result
     ])
 
     (10 = match2 integer! 10)

@@ -205,7 +205,7 @@ applique: function [
             using-args: did set (in frame params/1) :arg
         ] else [
             if using-args [
-                set* (in frame params/1) :arg
+                set (in frame params/1) :arg
             ]
         ]
 

@@ -214,7 +214,7 @@ help: function [
         ]
 
         path! word! [
-            value: get topic else [
+            value: get/any topic else [
                 print ["No information on" topic "(has no value)"]
                 return
             ]

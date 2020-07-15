@@ -4,10 +4,8 @@
     (a: 1 catch [a: throw 2] :a =? 1)
 ]
 (a: 1 catch [set 'a throw 2] :a =? 1)
-(a: 1 catch [set/opt 'a throw 2] :a =? 1)
 (a: 1 catch/name [a: throw/name 2 'b] 'b :a =? 1)
 (a: 1 catch/name [set 'a throw/name 2 'b] 'b :a =? 1)
-(a: 1 catch/name [set/opt 'a throw/name 2 'b] 'b :a =? 1)
 [#1509 ; the "result" of throw should not be passable to functions
     (a: 1 catch [a: error? throw 2] :a =? 1)
 ]

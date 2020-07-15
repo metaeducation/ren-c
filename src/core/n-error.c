@@ -42,6 +42,8 @@
 //
 static const REBVAL *Trap_Dangerous(REBFRM *frame_) {
     INCLUDE_PARAMS_OF_TRAP;
+    UNUSED(ARG(result));
+    UNUSED(ARG(valid));
 
     if (Do_Branch_Throws(D_OUT, ARG(code)))
         return VOID_VALUE;
@@ -91,10 +93,7 @@ REBNATIVE(trap)
 
     if (not error) {  // code didn't fail() or throw
         if (REF(result))
-            if (IS_VOID(D_OUT) or IS_NULLED(D_OUT))
-                rebElide("set/opt", ARG(valid), D_OUT, rebEND);
-            else
-                rebElide(rebEval(NAT_VALUE(set)), ARG(valid), D_OUT, rebEND);
+            rebElide(rebEval(NAT_VALUE(set)), ARG(valid), D_OUT, rebEND);
 
         return nullptr;
     }
@@ -105,7 +104,7 @@ REBNATIVE(trap)
     assert(IS_ERROR(error));
 
     if (REF(result))  // error case voids result to minimize likely use
-        rebElide("set/opt", ARG(valid), VOID_VALUE, rebEND);
+        rebElide(NAT_VALUE(set), ARG(valid), VOID_VALUE, rebEND);
 
     return error;
 }

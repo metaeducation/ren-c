@@ -306,7 +306,7 @@ load: function [
                 source: s
                 header: header
                 all: a
-                set* quote ftype: :ftype
+                set quote ftype: :ftype
             ]
         ]
     ]
@@ -499,11 +499,11 @@ do-needs: function [
             module: name
 
             version: true
-            set* quote ver: opt vers
+            set quote ver: opt vers
 
-            set* quote no-share: no-share
-            set* quote no-lib: no-lib
-            set* quote no-user: no-user
+            set quote no-share: no-share
+            set quote no-lib: no-lib
+            set quote no-user: no-user
         ]
 
         ; Collect any mixins into the object (if we are doing that)
@@ -656,9 +656,9 @@ load-module: function [
                 apply 'load-module [
                     source: mod
                     version: version
-                    set* quote ver: :ver
+                    set quote ver: :ver
                     as: true
-                    set* quote name: opt name
+                    set quote name: opt name
                     no-share: no-share
                     no-lib: no-lib
                     import: import
@@ -896,7 +896,7 @@ import: function [
     set [name: mod:] apply 'load-module [
         source: module
         version: version
-        set* quote ver: :ver
+        set quote ver: :ver
         no-share: no-share
         no-lib: no-lib
         import: true ;-- !!! original code always passed /IMPORT, should it?
@@ -918,7 +918,7 @@ import: function [
                     apply 'load-module [
                         source: path/:file
                         version: version
-                        set* quote ver: :ver
+                        set quote ver: :ver
                         no-share: :no-share
                         no-lib: :no-lib
                         import: true

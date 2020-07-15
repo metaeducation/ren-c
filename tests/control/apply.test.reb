@@ -72,7 +72,7 @@
         return: [<opt> any-value!]
         x [<opt> any-value!]
     ][
-        get 'x
+        get/any 'x
     ][
         void
     ]
@@ -82,7 +82,7 @@
         return: [<opt> any-value!]
         'x [<opt> any-value!]
     ][
-        get 'x
+        get/any 'x
     ][
         void
     ]
@@ -92,7 +92,7 @@
         return: [<opt> any-value!]
         x [<opt> any-value!]
     ][
-        return get 'x
+        return get/any 'x
     ][
         void
     ]
@@ -102,7 +102,7 @@
         return: [<opt> any-value!]
         'x [<opt> any-value!]
     ][
-        return get 'x
+        return get/any 'x
     ][
         void
     ]

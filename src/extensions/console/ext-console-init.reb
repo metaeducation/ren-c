@@ -127,7 +127,7 @@ console!: make object! [
     ]
 
     print-result: function [return: <void> v [<opt> any-value!]]  [
-        set* (quote last-result:) :v
+        set (quote last-result:) :v
         case [
             null? :v [
                 ; Because NULL has no representation, there's nothing really
@@ -604,7 +604,7 @@ ext-console-impl: function [
 
     if block? :result [
         assert [length of result = 1]
-        set* quote result: :result/1
+        set quote result: :result/1
     ] else [
         assert [unset? 'result]
     ]

@@ -150,8 +150,7 @@
 )
 (
     unset 'a-value
-    e: trap [a-value]
-    e/id = 'no-value
+    null = a-value
 )
 (
     a-value: 'a

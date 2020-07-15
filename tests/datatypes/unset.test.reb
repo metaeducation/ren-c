@@ -10,19 +10,27 @@
 (void! = type of (do []))
 (not void? 1)
 
-[#68 ;-- also, https://github.com/metaeducation/ren-c/issues/876
-    ('need-non-void = (trap [a: ()])/id)
+[
+    ('need-non-void = (trap [a: void | a])/id)
 ]
 
-(error? trap [set* quote a: null a])
-(not error? trap [set* 'a null])
-
-(error? trap [set* quote a: void a])
-(not error? trap [set* 'a void])
+; NULL and VOID! assignments via SET are legal.  You are expected to do your
+; own checks with ENSURE and NON.
+;
+(
+    value: null
+    error? trap [set quote a: non null value]
+)
+(not error? trap [set 'a null])
+(
+    value: void
+    error? trap [set quote a: non void! :value]
+)
+(not error? trap [set 'a void])
 
 (
     a-value: 10
     unset 'a-value
-    e: trap [a-value]
+    e: trap [a-value/foo]
     e/id = 'no-value
 )

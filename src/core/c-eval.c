@@ -1841,11 +1841,8 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto process_action;
         }
 
-        if (IS_NULLED_OR_VOID(current_gotten)) { // need `:x` if `x` is unset
-            if (IS_NULLED(current_gotten))
-                fail (Error_No_Value_Core(current, f->specifier));
+        if (IS_VOID(current_gotten))  // need `:x` if `x` is unset
             fail (Error_Need_Non_Void_Core(current, f->specifier));
-        }
 
         Move_Value(f->out, current_gotten); // no copy VALUE_FLAG_UNEVALUATED
         break;
@@ -1862,6 +1859,9 @@ bool Eval_Core_Throws(REBFRM * const f)
 // So it reuses `f` in a lighter-weight approach, gathering state only on the
 // data stack (which provides GC protection).  Eval_Step_Mid_Frame_Throws()
 // has remarks on how this is done.
+//
+// Note that Ren-C deemed it better to allow NULL and VOID! cells to be
+// assigned via SET-WORD! without erroring.  Use ENSURE or NON to check value.
 //
 //==//////////////////////////////////////////////////////////////////////==//
 
@@ -1885,11 +1885,6 @@ bool Eval_Core_Throws(REBFRM * const f)
             if (Eval_Step_Mid_Frame_Throws(f, flags)) // light reuse of `f`
                 goto return_thrown;
         }
-
-        // Nulled cells are allowed: https://forum.rebol.info/t/895/4
-        //
-        if (IS_VOID(f->out))
-            fail (Error_Need_Non_Void_Core(current, f->specifier));
 
         Move_Value(Sink_Var_May_Fail(current, f->specifier), f->out);
         break; }
@@ -2094,6 +2089,9 @@ bool Eval_Core_Throws(REBFRM * const f)
 //     left
 //     == 20
 //
+// Note that Ren-C deemed it better to allow NULL and VOID! cells to be
+// assigned via SET-PATH! without erroring, use ENSURE or NON to check value.
+//
 //==//////////////////////////////////////////////////////////////////////==//
 
       case REB_SET_PATH: {
@@ -2116,11 +2114,6 @@ bool Eval_Core_Throws(REBFRM * const f)
             if (Eval_Step_Mid_Frame_Throws(f, flags)) // light reuse of `f`
                 goto return_thrown;
         }
-
-        // Nulled cells are allowed: https://forum.rebol.info/t/895/4
-        //
-        if (IS_VOID(f->out))
-            fail (Error_Need_Non_Void_Core(current, f->specifier));
 
         if (Eval_Path_Throws_Core(
             FRM_CELL(f), // output if thrown, used as scratch space otherwise

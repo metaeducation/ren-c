@@ -135,7 +135,7 @@ do*: function [
             ;
             ;     do "append {abc} {de}"
             ;
-            set* quote result: do code ;-- !!! pass args implicitly?
+            set quote result: do code ;-- !!! pass args implicitly?
         ] then :finalizer/quit
     ] else [
         ; Otherwise we are in script mode.  When we run a script, the
@@ -186,7 +186,7 @@ do*: function [
             do-needs hdr  ; Load the script requirements
             intern code   ; Bind the user script
             catch/quit [
-                set* quote result: do code
+                set quote result: do code
             ] then :finalizer/quit
         ]
     ]

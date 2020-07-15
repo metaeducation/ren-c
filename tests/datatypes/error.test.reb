@@ -16,7 +16,6 @@
 ;
 (a: 1 error? trap [a: 1 / 0] :a =? 1)
 (a: 1 error? trap [set 'a 1 / 0] :a =? 1)
-(a: 1 error? trap [set/opt 'a 1 / 0] :a =? 1)
 
 [#2190
     (127 = catch/quit [attempt [catch/quit [1 / 0]] quit/with 127])

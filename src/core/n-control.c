@@ -549,6 +549,46 @@ either_test:;
 
 
 //
+//  non: native [
+//
+//  {Make sure a value does NOT match a type constraint (see also: ENSURE)}
+//
+//      return: "Input value if it passes the type test"
+//          [<opt> any-value!]
+//      test "The test to apply (limited to DATATYPE! and NULL at this time)"
+//          [<opt> datatype!]
+//      value "Value to test (will either be returned as result or error)"
+//          [<opt> any-value!]
+// ]
+//
+REBNATIVE(non)
+//
+// !!! This is a partial implementation of NON implemented for R3C, just good
+// enough for `non void!` and `non null` cases to give validation options to
+// those wanting a less permissive SET (now that it has no /ANY refinement).
+{
+    INCLUDE_PARAMS_OF_NON;
+
+    REBVAL *test = ARG(test);
+    REBVAL *value = ARG(value);
+
+    if (IS_NULLED(test)) {  // not a datatype, needs special case
+        if (IS_NULLED(value))
+            fail ("NON expected value to not be NULL, but it was");
+    } 
+    else if (VAL_TYPE_KIND(test) == REB_VOID) {  // specialize common case
+        if (IS_VOID(value))
+            fail ("NON expected value to not be VOID!, but it was");
+    }
+    else if (not TYPE_CHECK(value, VAL_TYPE_KIND(test))) {
+        fail ("NON expected value to not match a type, but it did match");
+    }
+
+    RETURN (value);
+}
+
+
+//
 //  all: native [
 //
 //  {Short-circuiting variant of AND, using a block of expressions as input}
@@ -1011,10 +1051,10 @@ REBNATIVE(switch)
 //          return do :branch
 //      ]
 //      either all [
-//          value? set* quote gotten: get target
+//          value? set quote gotten: get target
 //          only or [not blank? :gotten]
 //      ][
-//          :gotten ;; so that `x: y: default z` leads to `x = y`
+//          :gotten  ; so that `x: y: default z` leads to `x = y`
 //      ][
 //          set target <- do :branch else [
 //              fail ["DEFAULT for" target "came back NULL"]
@@ -1113,12 +1153,7 @@ REBNATIVE(catch)
 
     if (not Do_Any_Array_At_Throws(D_OUT, ARG(block))) {
         if (REF(result))
-            if (IS_VOID(D_OUT) or IS_NULLED(D_OUT))
-                rebElide("set/opt", ARG(uncaught), D_OUT, rebEND);
-            else
-                rebElide(
-                    rebEval(NAT_VALUE(set)), ARG(uncaught), D_OUT, rebEND
-                );
+            rebElide(rebEval(NAT_VALUE(set)), ARG(uncaught), D_OUT, rebEND);
 
         return nullptr;  // no throw means just return null
     }
@@ -1210,7 +1245,7 @@ REBNATIVE(catch)
     // so this assignment has to wait until the end.
     //
     if (REF(result))  // caught case voids result to minimize likely use
-        rebElide("set/opt", ARG(uncaught), VOID_VALUE, rebEND);
+        rebElide(NAT_VALUE(set), ARG(uncaught), VOID_VALUE, rebEND);
 
     return D_OUT;
 }

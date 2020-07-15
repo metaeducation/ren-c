@@ -53,7 +53,7 @@ make object! compose [
             elide (
                 print mold test-block ;-- !!! make this an option
 
-                set* quote result: entrap test-block
+                set quote result: entrap test-block
                 recycle
             )
 

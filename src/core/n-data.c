@@ -441,7 +441,8 @@ REBNATIVE(collect_words)
 inline static void Get_Opt_Polymorphic_May_Fail(
     REBVAL *out,
     const RELVAL *v,
-    REBSPC *specifier
+    REBSPC *specifier,
+    bool any
 ){
     if (IS_BAR(v)) {
         //
@@ -453,7 +454,7 @@ inline static void Get_Opt_Polymorphic_May_Fail(
         Init_Bar(out);
     }
     else if (IS_BLANK(v)) {
-        Init_Nulled(out); // may be turned to blank after loop, or error
+        Init_Nulled(out);  // may be turned to VOID! after loop, or error
     }
     else if (ANY_WORD(v)) {
         Move_Opt_Var_May_Fail(out, v, specifier);
@@ -467,6 +468,9 @@ inline static void Get_Opt_Polymorphic_May_Fail(
     }
     else
         fail (Error_Invalid_Core(v, specifier));
+
+    if (not any and IS_VOID(out))
+        fail (Error_Need_Non_Void_Core(v, specifier));
 }
 
 
@@ -478,8 +482,7 @@ inline static void Get_Opt_Polymorphic_May_Fail(
 //      return: [<opt> any-value!]
 //      source [blank! any-word! any-path! block!]
 //          {Word or path to get, or block of words or paths (blank is no-op)}
-//      /try
-//          {Return blank for variables that are unset}
+//      /any "Retrieve ANY-VALUE! (e.g. do not error on VOID!)"
 //  ]
 //
 REBNATIVE(get)
@@ -491,9 +494,7 @@ REBNATIVE(get)
     REBVAL *source = ARG(source);
 
     if (not IS_BLOCK(source)) {
-        Get_Opt_Polymorphic_May_Fail(D_OUT, source, SPECIFIED);
-        if (IS_NULLED(D_OUT) and REF(try))
-            Init_Blank(D_OUT);
+        Get_Opt_Polymorphic_May_Fail(D_OUT, source, SPECIFIED, REF(any));
         return D_OUT;
     }
 
@@ -502,13 +503,13 @@ REBNATIVE(get)
     RELVAL *item = VAL_ARRAY_AT(source);
 
     for (; NOT_END(item); ++item, ++dest) {
-        Get_Opt_Polymorphic_May_Fail(dest, item, VAL_SPECIFIER(source));
-        if (IS_NULLED(dest)) { // can't put nulls in blocks
-            if (REF(try))
-                Init_Blank(dest);
-            else
-                fail (Error_No_Value_Core(item, VAL_SPECIFIER(source)));
-        }
+        Get_Opt_Polymorphic_May_Fail(
+            dest,
+            item,
+            VAL_SPECIFIER(source),
+            REF(any)
+        );
+        Voidify_If_Nulled(dest);  // !!! can't put nulls in blocks (blankify?)
     }
 
     TERM_ARRAY_LEN(results, VAL_LEN_AT(source));
@@ -572,7 +573,6 @@ inline static void Set_Opt_Polymorphic_May_Fail(
 //      /single "If target and value are blocks, set each to the same value"
 //      /some "blank values (or values past end of block) are not set."
 //      /enfix "ACTION! calls through this word get first arg from left"
-//      /opt "If value is null, then consider this to be an UNSET operation"
 //  ]
 //
 REBNATIVE(set)
@@ -590,18 +590,17 @@ REBNATIVE(set)
 //     1
 //     >> print b
 //     2
+//
+// Note: Initial prescriptivisim about not allowing VOID! in SET has been
+// changed to allow void assignments, with the idea that preventing it can
+// be done e.g. with `set var non void! (...)` or more narrow ideas like
+// `set numeric-var ensure integer (...)`.  SET thus mirrors SET-WORD! in
+// allowing void assignments.
 {
     INCLUDE_PARAMS_OF_SET;
 
     REBVAL *target = ARG(target);
     REBVAL *value = ARG(value);
-
-    if (not REF(opt)) {
-        if (IS_NULLED(value))
-            fail (Error_Need_Non_Null_Raw(target));
-        if (IS_VOID(value))
-            fail (Error_Need_Non_Void_Raw(target));
-    }
 
     if (not IS_BLOCK(target)) {
         assert(ANY_WORD(target) or ANY_PATH(target));

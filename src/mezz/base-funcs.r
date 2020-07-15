@@ -498,12 +498,6 @@ skip*: redescribe [
     specialize 'skip [only: true]
 )
 
-set*: redescribe [
-    {Variant of SET that allows a null to actually unset the variable}
-](
-    specialize 'set [opt: true]
-)
-
 ensure: redescribe [
     {Pass through value if it matches test, otherwise trigger a FAIL}
 ](
@@ -604,16 +598,16 @@ iterate-skip: redescribe [
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
-            trap [set* quote result: do f] then lambda e [
-                set* word saved
+            trap [set quote result: do f] then lambda e [
+                set word saved
                 fail e
             ]
-            set* word saved
+            set word saved
             :result
         ]
 
         do f
-        elide set* word saved
+        elide set word saved
     ][
         series: <overwritten>
     ]

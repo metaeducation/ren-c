@@ -302,7 +302,7 @@ set: emulate [
         return: [<opt> any-value!]
         target [blank! any-word! any-path! block! any-context!]
         value [<opt> any-value!]
-        /any "Renamed to /OPT, with SET/OPT specialized as SET*"
+        /any "No longer needed (SET and SET-WORD! accept VOID!)"
         /some
     ][
         set_ANY: any
@@ -310,9 +310,8 @@ set: emulate [
 
         apply 'set [
             target: either any-context? target [words of target] [target]
-            set* (quote value:) :value
+            set (quote value:) either any [:value] [non null :value]
             some: some
-            opt: set_ANY
         ]
     ]
 ]
@@ -331,13 +330,13 @@ get: emulate [
         if block? :source [
             return source ;-- this is what it did :-/
         ]
-        set* quote result: either any-context? source [
+        set quote result: either any-context? source [
             get words of source
         ][
             get source
         ]
-        if not any_GET and [null? :result] [
-            fail "Legacy GET won't get an unset variable without /ANY"
+        if not any_GET and [void? :result] [
+            fail "GET won't get a VOID! variable without /ANY"
         ]
         return :result
     ]
@@ -524,14 +523,14 @@ compose: emulate [
             not block? value [:value]
             into [
                 insert out apply 'compose [
-                    set* (quote value:) :value
+                    set (quote value:) :value
                     deep: deep
                     only: only
                 ]
             ]
         ] else [
             apply 'compose [
-                set* (quote value:) :value
+                set (quote value:) :value
                 deep: deep
                 only: only
             ]

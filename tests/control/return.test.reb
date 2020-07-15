@@ -22,7 +22,6 @@
     (a: 1 reeval func [] [a: return 2] :a =? 1)
 ]
 (a: 1 reeval func [] [set 'a return 2] :a =? 1)
-(a: 1 reeval func [] [set/opt 'a return 2] :a =? 1)
 [#1509 ; the "result" of return should not be passable to functions
     (a: 1 reeval func [] [a: error? return 2] :a =? 1)
 ]

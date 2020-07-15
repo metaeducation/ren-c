@@ -14,7 +14,7 @@
     x = 20
 )
 (
-    o: make object! [x: 10 y: _ set* quote z: null]
+    o: make object! [x: 10 y: _ set quote z: null]
     o/x: default [20]
     o/y: default [20]
     o/z: default [20]
