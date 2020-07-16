@@ -543,7 +543,7 @@ REBNATIVE(get_p)
         SPECIFIED,
         true  // allow VOID!, e.g. GET/ANY
     );
- 
+
     return D_OUT;
 }
 

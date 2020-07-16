@@ -575,7 +575,7 @@ REBNATIVE(non)
     if (IS_NULLED(test)) {  // not a datatype, needs special case
         if (IS_NULLED(value))
             fail ("NON expected value to not be NULL, but it was");
-    } 
+    }
     else if (VAL_TYPE_KIND(test) == REB_VOID) {  // specialize common case
         if (IS_VOID(value))
             fail ("NON expected value to not be VOID!, but it was");
