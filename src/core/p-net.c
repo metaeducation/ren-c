@@ -45,7 +45,7 @@ enum Transport_Types {
 //
 static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
 {
-    REBVAL *info = rebRun(
+    REBVAL *info = rebValue(
         "copy ensure object! (", port , ")/scheme/info", rebEND
     ); // shallow copy
 
@@ -424,7 +424,7 @@ static REB_R Transport_Actor(
 
         UNUSED(REF(part)); // non-null limit accounts for
 
-        return rebRun(
+        return rebValue(
             "take/part/(", ARG(deep), ")/(", ARG(last), ")",
                 CTX_VAR(ctx, STD_PORT_CONNECTIONS),
                 NULLIZE(ARG(limit)),

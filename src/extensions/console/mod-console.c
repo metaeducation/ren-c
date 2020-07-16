@@ -182,14 +182,14 @@ void Enable_Ctrl_C(void)
 static REBVAL *Run_Sandboxed_Code(REBVAL *group_or_block) {
     //
     // Don't want to use DO here, because that would add an extra stack
-    // level of Rebol ACTION! in the backtrace.  See notes on rebRunInline()
+    // level of Rebol ACTION! in the backtrace.  See notes on rebValueInline()
     // for its possible future.
     //
-    REBVAL *result = rebRunInline(group_or_block);
+    REBVAL *result = rebValueInline(group_or_block);
     if (not result)
         return nullptr;
 
-    return rebRun("[", rebR(result), "]", rebEND); // ownership gets proxied
+    return rebValue("[", rebR(result), "]", rebEND); // ownership gets proxied
 }
 
 
@@ -251,7 +251,7 @@ REBNATIVE(console)
 
     REBVAL *code;
     if (REF(provoke)) {
-        code = rebRun("quote", ARG(provocation), rebEND);
+        code = rebValue("quote", ARG(provocation), rebEND);
         goto provoked;
     }
     else
@@ -269,7 +269,7 @@ REBNATIVE(console)
         // done in Run_Sandboxed_Code().
         //
         REBVAL *trapped; // goto crosses initialization
-        trapped = rebRun(
+        trapped = rebValue(
             "lib/entrap [",
                 "ext-console-impl", // action! that takes 2 args, run it
                 rebUneval(code), // group!/block! executed prior (or blank!)
@@ -295,13 +295,13 @@ REBNATIVE(console)
             if (no_recover)
                 rebJumps("PANIC", trapped, rebEND);
 
-            code = rebRun("[#host-console-error]", rebEND);
+            code = rebValue("[#host-console-error]", rebEND);
             result = trapped;
             no_recover = true; // no second chances until user code runs
             goto recover;
         }
 
-        code = rebRun("first", trapped, rebEND); // entrap []'s the output
+        code = rebValue("first", trapped, rebEND); // entrap []'s the output
         rebRelease(trapped); // don't need the outer block any more
 
       provoked:;

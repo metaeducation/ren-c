@@ -303,7 +303,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     if (Is_Dir(dir_utf8, file_utf8))
         file_req->modes |= RFM_DIR;
 
-    file->path = rebRun(
+    file->path = rebValue(
         "applique 'local-to-file [",
             "path:", rebT(file_utf8),
             "dir:", rebR(rebLogic(file_req->modes & RFM_DIR)),

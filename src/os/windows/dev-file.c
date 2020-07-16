@@ -195,7 +195,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
     if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         file_req->modes |= RFM_DIR;
 
-    file->path = rebRun(
+    file->path = rebValue(
         "applique 'local-to-file [",
             "path:", rebR(rebTextW(info.cFileName)),
             "dir:", rebR(rebLogic(file_req->modes & RFM_DIR)),

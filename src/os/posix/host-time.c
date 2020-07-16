@@ -134,7 +134,7 @@ REBVAL *Convert_Date(time_t *stime, long usec)
 
     int zone = Get_Timezone(&utc_tm);
 
-    return rebRun("ensure date! (make-date-ymdsnz",
+    return rebValue("ensure date! (make-date-ymdsnz",
         rebI(utc_tm.tm_year + 1900), // year
         rebI(utc_tm.tm_mon + 1), // month
         rebI(utc_tm.tm_mday), // day

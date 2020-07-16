@@ -316,8 +316,8 @@ inline static void Set_Frame_Detected_Fetch(
         // Eval_Core_Throws() is wants the old f->value, but we're going to
         // free it.  It has to be kept alive -and- kept safe from GC.  e.g.
         //
-        //     REBVAL *word = rebRun("make word! {hello}");
-        //     rebRun(rebR(word), "-> (recycle :quote)");
+        //     REBVAL *word = rebValue("make word! {hello}");
+        //     rebValue(rebR(word), "-> (recycle :quote)");
         //
         // The `current` cell the evaluator is looking at is the WORD!, then
         // f->value receives the "shove" `->`.  The shove runs the code in
@@ -410,7 +410,7 @@ inline static void Set_Frame_Detected_Fetch(
 
         if (DSP == dsp_orig) {
             //
-            // This happens when somone says rebRun(..., "", ...) or similar,
+            // This happens when somone says rebValue(..., "", ...) or similar,
             // and gets an empty array from a string scan.  It's not legal
             // to put an END in f->value, and it's unknown if the variadic
             // feed is actually over so as to put null... so get another
@@ -1102,7 +1102,7 @@ inline static bool Eval_Value_Core_Throws(
 // The evaluator accepts API handles back from action dispatchers, and the
 // path evaluator accepts them from path dispatch.  This code does common
 // checking used by both, which includes automatic release of the handle
-// so the dispatcher can write things like `return rebRun(...);` and not
+// so the dispatcher can write things like `return rebValue(...);` and not
 // encounter a leak.
 //
 inline static void Handle_Api_Dispatcher_Result(REBFRM *f, const REBVAL* r) {

@@ -226,7 +226,7 @@ inline static REBVAL *ACT_SPECIALTY_HEAD(REBACT *a) {
 // order to say that their ACT_DETAILS() follow the protocol that the [0]
 // slot is "equivalent source" (may be a TEXT!, as in user natives, or a
 // BLOCK!).  The [1] slot is a module or other context into which APIs like
-// rebRun() etc. should consider for binding, in addition to lib.  A BLANK!
+// rebValue() etc. should consider for binding, in addition to lib.  A BLANK!
 // in the 1 slot means no additional consideration...bind to lib only.
 //
 #define ACTION_FLAG_NATIVE ACTION_FLAG(4)

@@ -47,7 +47,7 @@
 // But a more compelling case is the usage through the API, so variadic
 // combinations of strings and values can be intermixed, as in:
 //
-//     rebRun("poke", series, "1", value)
+//     rebValue("poke", series, "1", value)
 //
 // Internally, the ability to discern these types helps certain structures or
 // arrangements from having to find a place to store a kind of "flavor" bit

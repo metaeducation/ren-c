@@ -145,7 +145,7 @@ REBNATIVE(setlocale)
 
     // GNU extensions are #define'd to -1 above this routine if not available
     //
-    REBVAL *map = rebRun(
+    REBVAL *map = rebValue(
         "make map! [",
             "all", rebI(LC_ALL),
             "address", rebI(LC_ADDRESS), // GNU extension

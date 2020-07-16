@@ -983,7 +983,7 @@ acquisition_loop:
             DS_PUSH_TRASH;
             Move_Value(DS_TOP, splice);
 
-            // !!! The needs of rebRun() are such that it wants to preserve
+            // !!! The needs of rebValue() are such that it wants to preserve
             // the non-user-visible EVAL_FLIP bit, which is usually not copied
             // by Move_Value.
             //
@@ -2674,9 +2674,9 @@ REBARR *Scan_Va_Managed(
     Init_Va_Scan_State_Core(&ss, filename, start_line, NULL, &va);
     Scan_To_Stack(&ss);
 
-    // Because a variadic rebRun() can have rebEval() entries, when it
+    // Because a variadic rebValue() can have rebEval() entries, when it
     // delegates to the scanner that may mean it sees those entries.  They
-    // should only be accepted in the shallowest level of the rebRun().
+    // should only be accepted in the shallowest level of the rebValue().
     //
     // (See also Pop_Stack_Values_Keep_Eval_Flip(), which we don't want to use
     // since we're setting the file and line information from scan state.)

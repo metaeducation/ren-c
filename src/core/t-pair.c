@@ -280,15 +280,15 @@ REBTYPE(Pair)
     Move_Value(D_ARG(1), first1);
     if (first2)
         Move_Value(D_ARG(2), first2);  // use extracted arg x vs pair arg
-    REBVAL *x_frame = rebRun("copy", frame, rebEND);
+    REBVAL *x_frame = rebValue("copy", frame, rebEND);
 
     Move_Value(D_ARG(1), second1);
     if (second2)
         Move_Value(D_ARG(2), second2);  // use extracted arg y vs pair arg
-    REBVAL *y_frame = rebRun("copy", frame, rebEND);
+    REBVAL *y_frame = rebValue("copy", frame, rebEND);
 
-    REBVAL *x = rebRun(rebEval(NAT_VALUE(do)), rebR(x_frame), rebEND);
-    REBVAL *y = rebRun(rebEval(NAT_VALUE(do)), rebR(y_frame), rebEND);
+    REBVAL *x = rebValue(rebEval(NAT_VALUE(do)), rebR(x_frame), rebEND);
+    REBVAL *y = rebValue(rebEval(NAT_VALUE(do)), rebR(y_frame), rebEND);
 
     Init_Pair(D_OUT, x, y);
 

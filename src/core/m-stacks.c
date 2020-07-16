@@ -195,7 +195,7 @@ void Shutdown_Frame_Stack(void)
 // stack.  But the story for ACTION!s that are implemented in C is different,
 // as they have one Rebol action in effect while their C code is in control.
 //
-// This is used to an advantage in the APIs like rebRun(), to be able to get
+// This is used to an advantage in the APIs like rebValue(), to be able to get
 // a notion of a "current context" applicable *only* to when natives run.
 //
 REBCTX *Get_Context_From_Stack(void)

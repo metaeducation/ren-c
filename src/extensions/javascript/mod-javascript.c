@@ -240,7 +240,7 @@ REBACT *Make_JavaScript_Action_Common(
 
     Drop_Mold(mo);
 
-    // !!! Natives on the stack can specify where APIs like rebRun() should
+    // !!! Natives on the stack can specify where APIs like rebValue() should
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //

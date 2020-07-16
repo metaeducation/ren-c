@@ -1729,7 +1729,7 @@ REBNATIVE(get_os_browsers)
 {
     PROCESS_INCLUDE_PARAMS_OF_GET_OS_BROWSERS;
 
-    REBVAL *list = rebRun("copy []", rebEND);
+    REBVAL *list = rebValue("copy []", rebEND);
 
   #if defined(TO_WINDOWS)
 
@@ -2112,7 +2112,7 @@ REBNATIVE(list_env)
 {
     PROCESS_INCLUDE_PARAMS_OF_LIST_ENV;
 
-    REBVAL *map = rebRun("make map! []", rebEND);
+    REBVAL *map = rebValue("make map! []", rebEND);
 
   #ifdef TO_WINDOWS
     //

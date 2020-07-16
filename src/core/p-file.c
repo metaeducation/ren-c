@@ -88,7 +88,7 @@ void Query_File_Or_Dir(REBVAL *out, REBVAL *port, struct devreq_file *file)
 {
     REBREQ *req = AS_REBREQ(file);
 
-    REBVAL *info = rebRun(
+    REBVAL *info = rebValue(
         "copy ensure object! (", port , ")/scheme/info", rebEND
     ); // shallow copy
 

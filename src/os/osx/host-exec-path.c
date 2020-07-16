@@ -73,7 +73,7 @@ REBVAL *OS_Get_Current_Exec(void)
 
     char *resolved_path_utf8 = realpath(path_utf8, NULL);
     if (resolved_path_utf8) {
-        REBVAL *result = rebRun(
+        REBVAL *result = rebValue(
             "local-to-file", rebT(resolved_path_utf8),
             rebEND
         );
@@ -82,7 +82,7 @@ REBVAL *OS_Get_Current_Exec(void)
         return result;
     }
 
-    REBVAL *result = rebRun(
+    REBVAL *result = rebValue(
         "local-to-file", rebT(path_utf8), // just return unresolved path
         rebEND
     );

@@ -121,8 +121,8 @@ inline static REBCNT FRM_EXPR_INDEX(REBFRM *f) {
 
 inline static REBSTR* FRM_FILE(REBFRM *f) {
     //
-    // !!! the rebRun function could be a variadic macro in C99 or higher, as
-    // `rebRunFileLine(__FILE__, __LINE__, ...`.  This could let the file and
+    // !!! the rebValue function could be a variadic macro in C99 or higher, as
+    // `rebValueFileLine(__FILE__, __LINE__, ...`.  This could let the file and
     // line information make it into the frame, and be used when loading new
     // source material -or- if no source material were loaded, it could just
     // be kept as a UTF-8 string inside the frame without needing interning

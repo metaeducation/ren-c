@@ -75,7 +75,7 @@ REBVAL *OS_Get_Current_Dir(void)
         return rebBlank();
     }
 
-    REBVAL *result = rebRun(
+    REBVAL *result = rebValue(
         "local-to-file/dir", rebT(path),
         rebEND
     );

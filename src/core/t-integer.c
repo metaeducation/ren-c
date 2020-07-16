@@ -610,7 +610,7 @@ REBNATIVE(enbin)
 {
     INCLUDE_PARAMS_OF_ENBIN;
 
-    REBVAL *settings = rebRun("compose", ARG(settings), rebEND);
+    REBVAL *settings = rebValue("compose", ARG(settings), rebEND);
     if (VAL_LEN_AT(settings) != 3)
         fail ("ENBIN requires array of length 3 for settings for now");
     bool little = rebDid(
@@ -716,7 +716,7 @@ REBNATIVE(debin)
 {
     INCLUDE_PARAMS_OF_DEBIN;
 
-    REBVAL* settings = rebRun("compose", ARG(settings), rebEND);
+    REBVAL* settings = rebValue("compose", ARG(settings), rebEND);
     if (VAL_LEN_AT(settings) != 2 and VAL_LEN_AT(settings) != 3)
         fail("DEBIN requires array of length 2 or 3 for settings for now");
     bool little = rebDid(

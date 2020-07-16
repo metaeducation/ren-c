@@ -252,7 +252,7 @@ REBNATIVE(new_line_q)
                 // process of using string components which *might* have
                 // newlines.  Review edge cases, like:
                 //
-                //    REBVAL *new_line_q = rebRun(":new-line?");
+                //    REBVAL *new_line_q = rebValue(":new-line?");
                 //    bool case_one = rebDid("new-line?", "[\n]");
                 //    bool case_two = rebDid(new_line_q, "[\n]");
                 //

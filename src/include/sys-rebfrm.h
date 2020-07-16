@@ -313,7 +313,7 @@
 // would have to take this into account to greedily run ELIDEs if the flag
 // is set.  However, it's only used in variadic apply at the moment with
 // calls from the system that do not use ELIDE.  These calls may someday
-// turn into rebRun(), in which case the mechanism would need rethinking.
+// turn into rebValue(), in which case the mechanism would need rethinking.
 //
 // !!! A userspace tool for doing this was once conceived as `||`, which
 // was variadic and would only allow one evaluation step after it, after

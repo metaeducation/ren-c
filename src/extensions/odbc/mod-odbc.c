@@ -306,7 +306,7 @@ REBNATIVE(open_statement)
     ODBC_INCLUDE_PARAMS_OF_OPEN_STATEMENT;
 
     REBVAL *connection = ARG(connection);
-    REBVAL *hdbc_value = rebRun(
+    REBVAL *hdbc_value = rebValue(
         "ensure handle! pick", connection, "'hdbc", rebEND
     );
     SQLHDBC hdbc = VAL_HANDLE_POINTER(SQLHDBC, hdbc_value);
@@ -505,7 +505,7 @@ SQLRETURN ODBC_GetCatalog(
         // !!! What if not at head?  Original code seems incorrect, because
         // it passed the array at the catalog word, vs TEXT!.
         //
-        REBVAL *value = rebRun(
+        REBVAL *value = rebValue(
             "ensure* text! pick", block, rebI(arg + 1), rebEND
         );
         if (value) {
@@ -671,7 +671,7 @@ SQLRETURN ODBC_DescribeResults(
         //
         // int length = ODBC_UnCamelCase(column->title, title);
 
-        column->title_word = rebRun(
+        column->title_word = rebValue(
             "as word!", rebLengthedTextW(title, title_length), rebEND
         );
         rebUnmanage(column->title_word);
@@ -845,7 +845,7 @@ REBNATIVE(insert_odbc)
     ODBC_INCLUDE_PARAMS_OF_INSERT_ODBC;
 
     REBVAL *statement = ARG(statement);
-    REBVAL *hstmt_value = rebRun(
+    REBVAL *hstmt_value = rebValue(
         "ensure handle! pick", statement, "'hstmt", rebEND
     );
     SQLHSTMT hstmt = VAL_HANDLE_POINTER(SQLHSTMT, hstmt_value);
@@ -870,7 +870,7 @@ REBNATIVE(insert_odbc)
     // The block passed in is used to form a query.
 
     REBCNT sql_index = 1;
-    REBVAL *value = rebRun(
+    REBVAL *value = rebValue(
         "pick", ARG(sql), rebI(sql_index),
         "else [fail {Empty array passed for SQL dialect}]", rebEND
     );
@@ -932,7 +932,7 @@ REBNATIVE(insert_odbc)
 
             REBCNT n;
             for (n = 0; n < num_params; ++n, ++sql_index) {
-                value = rebRun("pick", ARG(sql), rebI(sql_index), rebEND);
+                value = rebValue("pick", ARG(sql), rebI(sql_index), rebEND);
                 rc = ODBC_BindParameter(
                     hstmt,
                     &params[n],
@@ -996,13 +996,13 @@ REBNATIVE(insert_odbc)
     // routine does this.
 
     if (use_cache) {
-        REBVAL *cache = rebRun(
+        REBVAL *cache = rebValue(
             "ensure block! pick", statement, "'titles", rebEND
         );
         return cache;
     }
 
-    REBVAL *old_columns_value = rebRun(
+    REBVAL *old_columns_value = rebValue(
         "opt ensure [handle! blank!] pick", statement, "'columns", rebEND
     );
     if (old_columns_value) {
@@ -1027,7 +1027,7 @@ REBNATIVE(insert_odbc)
     if (rc != SQL_SUCCESS and rc != SQL_SUCCESS_WITH_INFO)
         fail (Error_ODBC_Stmt(hstmt));
 
-    REBVAL *titles = rebRun("make block!", rebI(num_columns), rebEND);
+    REBVAL *titles = rebValue("make block!", rebI(num_columns), rebEND);
     int col;
     for (col = 0; col != num_columns; ++col)
         rebElide("append", titles, columns[col].title_word, rebEND);
@@ -1088,7 +1088,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col) {
 
     case SQL_TYPE_DATE: {
         DATE_STRUCT *date = cast(DATE_STRUCT*, col->buffer);
-        return rebRun(
+        return rebValue(
             "make date! [",
                 rebI(date->year), rebI(date->month), rebI(date->day),
             "]", rebEND
@@ -1101,7 +1101,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col) {
         // but when it is retrieved it will just be 17:32:19
         //
         TIME_STRUCT *time = cast(TIME_STRUCT*, col->buffer);
-        return rebRun(
+        return rebValue(
             "make time! [",
                 rebI(time->hour), rebI(time->minute), rebI(time->second),
             "]", rebEND
@@ -1120,7 +1120,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col) {
         // be done with Rebol code vs. some special C date API.  See
         // GitHub issue #2313 regarding improving the Rebol side.
         //
-        return rebRun("ensure date! (make-date-ymdsnz",
+        return rebValue("ensure date! (make-date-ymdsnz",
             rebI(stamp->year),
             rebI(stamp->month),
             rebI(stamp->day),
@@ -1185,13 +1185,13 @@ REBNATIVE(copy_odbc)
 {
     ODBC_INCLUDE_PARAMS_OF_COPY_ODBC;
 
-    REBVAL *hstmt_value = rebRun(
+    REBVAL *hstmt_value = rebValue(
         "ensure handle! pick", ARG(statement), "'hstmt", rebEND
     );
     SQLHSTMT hstmt = cast(SQLHSTMT, VAL_HANDLE_VOID_POINTER(hstmt_value));
     rebRelease(hstmt_value);
 
-    REBVAL *columns_value = rebRun(
+    REBVAL *columns_value = rebValue(
         "ensure handle! pick", ARG(statement), "'columns", rebEND
     );
     COLUMN *columns = VAL_HANDLE_POINTER(COLUMN, columns_value);
@@ -1253,7 +1253,7 @@ REBNATIVE(update_odbc)
 
     // Get connection handle
     //
-    REBVAL *hdbc_value = rebRun(
+    REBVAL *hdbc_value = rebValue(
         "ensure handle! pick", connection, "'hdbc", rebEND
     );
     SQLHDBC hdbc = cast(SQLHDBC, VAL_HANDLE_VOID_POINTER(hdbc_value));
@@ -1304,7 +1304,7 @@ REBNATIVE(close_statement)
 
     REBVAL *statement = ARG(statement);
 
-    REBVAL *columns_value = rebRun(
+    REBVAL *columns_value = rebValue(
         "opt ensure [handle! blank!] pick", statement, "'columns", rebEND
     );
     if (columns_value) {
@@ -1323,7 +1323,7 @@ REBNATIVE(close_statement)
         rebRelease(columns_value);
     }
 
-    REBVAL *hstmt_value = rebRun(
+    REBVAL *hstmt_value = rebValue(
         "opt ensure [handle! blank!] pick", statement, "'hstmt", rebEND
     );
     if (hstmt_value) {
@@ -1357,7 +1357,7 @@ REBNATIVE(close_connection)
     // Close the database connection before the environment, since the
     // connection was opened from the environment.
 
-    REBVAL *hdbc_value = rebRun(
+    REBVAL *hdbc_value = rebValue(
         "opt ensure [handle! blank!] pick", connection, "'hdbc", rebEND
     );
     if (hdbc_value) {
@@ -1374,7 +1374,7 @@ REBNATIVE(close_connection)
 
     // Close the environment
     //
-    REBVAL *henv_value = rebRun(
+    REBVAL *henv_value = rebValue(
         "opt ensure [handle! blank!] pick", connection, "'henv", rebEND
     );
     if (henv_value) {

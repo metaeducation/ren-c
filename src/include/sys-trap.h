@@ -183,7 +183,7 @@
 //
 // !!! An assertion that you don't try to push a trap with no saved state
 // unless FS_TOP == FS_BOTTOM is commented out for this moment, because a
-// top level rebRun() currently executes and then runs a trap inside of it.
+// top level rebValue() currently executes and then runs a trap inside of it.
 // The API model is still being worked out, and so this is tolerated while
 // the code settles--until the right answer can be seen more clearly.
 //

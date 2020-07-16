@@ -211,23 +211,23 @@ REBNATIVE(rsa)
 
     // N and E are required
     //
-    REBVAL *n = rebRun("ensure binary! pick", obj, "'n", rebEND);
-    REBVAL *e = rebRun("ensure binary! pick", obj, "'e", rebEND);
+    REBVAL *n = rebValue("ensure binary! pick", obj, "'n", rebEND);
+    REBVAL *e = rebValue("ensure binary! pick", obj, "'e", rebEND);
 
     RSA_CTX *rsa_ctx = NULL;
 
     REBINT binary_len;
     if (REF(private)) {
-        REBVAL *d = rebRun("ensure binary! pick", obj, "'d", rebEND);
+        REBVAL *d = rebValue("ensure binary! pick", obj, "'d", rebEND);
 
         if (not d)
             fail ("No d returned BLANK, can we assume error for cleanup?");
 
-        REBVAL *p = rebRun("ensure binary! pick", obj, "'p", rebEND);
-        REBVAL *q = rebRun("ensure binary! pick", obj, "'q", rebEND);
-        REBVAL *dp = rebRun("ensure binary! pick", obj, "'dp", rebEND);
-        REBVAL *dq = rebRun("ensure binary! pick", obj, "'dq", rebEND);
-        REBVAL *qinv = rebRun("ensure binary! pick", obj, "'qinv", rebEND);
+        REBVAL *p = rebValue("ensure binary! pick", obj, "'p", rebEND);
+        REBVAL *q = rebValue("ensure binary! pick", obj, "'q", rebEND);
+        REBVAL *dp = rebValue("ensure binary! pick", obj, "'dp", rebEND);
+        REBVAL *dq = rebValue("ensure binary! pick", obj, "'dq", rebEND);
+        REBVAL *qinv = rebValue("ensure binary! pick", obj, "'qinv", rebEND);
 
         // !!! Because BINARY! is not locked in memory or safe from GC, the
         // libRebol API doesn't allow direct pointer access.  Use the
@@ -371,8 +371,8 @@ REBNATIVE(dh_generate_key)
 
     // !!! This used to ensure that all other fields, besides SELF, were blank
     //
-    REBVAL *g = rebRun("ensure binary! pick", obj, "'g", rebEND); // generator
-    REBVAL *p = rebRun("ensure binary! pick", obj, "'p", rebEND); // modulus
+    REBVAL *g = rebValue("ensure binary! pick", obj, "'g", rebEND); // generator
+    REBVAL *p = rebValue("ensure binary! pick", obj, "'p", rebEND); // modulus
 
     dh_ctx.g = VAL_BIN_AT(g);
     dh_ctx.glen = rebUnbox("length of", g, rebEND);
@@ -431,8 +431,8 @@ REBNATIVE(dh_compute_key)
     // !!! used to ensure object only had other fields SELF, PUB-KEY, G
     // otherwise gave Error(RE_EXT_CRYPT_INVALID_KEY_FIELD)
 
-    REBVAL *p = rebRun("ensure binary! pick", obj, "'p", rebEND);
-    REBVAL *priv_key = rebRun("ensure binary! pick", obj, "'priv-key", rebEND);
+    REBVAL *p = rebValue("ensure binary! pick", obj, "'p", rebEND);
+    REBVAL *priv_key = rebValue("ensure binary! pick", obj, "'priv-key", rebEND);
 
     dh_ctx.p = VAL_BIN_AT(p);
     dh_ctx.len = rebUnbox("length of", p, rebEND);

@@ -137,7 +137,7 @@ REB_R Retrigger_Append_As_Write(REBFRM *frame_) {
     if (REF(line))
         fail (Error_Bad_Refines_Raw());
 
-    return rebRun("write/append", D_ARG(1), D_ARG(2), rebEND);
+    return rebValue("write/append", D_ARG(1), D_ARG(2), rebEND);
 }
 
 
@@ -172,7 +172,7 @@ REBTYPE(Port)
             // are going to read the D_ARG(1) slot *implicitly* regardless of
             // what value points to.
             //
-            const REBVAL *made = rebRun("make port!", D_ARG(1), rebEND);
+            const REBVAL *made = rebValue("make port!", D_ARG(1), rebEND);
             assert(IS_PORT(made));
             Move_Value(D_ARG(1), made);
             rebRelease(made);

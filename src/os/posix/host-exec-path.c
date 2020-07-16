@@ -102,7 +102,7 @@ REBVAL *OS_Get_Current_Exec(void)
 
     path_utf8[r] = '\0';
 
-    REBVAL *result = rebRun(
+    REBVAL *result = rebValue(
         "local-to-file", rebT(path_utf8),
         rebEND
     );

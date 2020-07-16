@@ -251,7 +251,7 @@ REB_R MAKE_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         //
         REBDSP dsp_orig = DSP;
         while (true) {
-            REBVAL *generated = rebRun(rebEval(arg), rebEND);
+            REBVAL *generated = rebValue(rebEval(arg), rebEND);
             if (not generated)
                 break;
             DS_PUSH(generated);

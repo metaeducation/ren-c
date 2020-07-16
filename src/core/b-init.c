@@ -626,7 +626,7 @@ REBVAL *Make_Native(
     else
         Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
 
-    // When code in the core calls APIs like `rebRun()`, it consults the
+    // When code in the core calls APIs like `rebValue()`, it consults the
     // stack and looks to see where the native function that is running
     // says its "module" is.  For natives, we default to Lib_Context.
     //
@@ -1109,7 +1109,7 @@ void Startup_Task(void)
     TG_Max_Ballast = MEM_BALLAST;
 
     // RECYCLE/TORTURE is a useful test, but we might want to be running it
-    // from the very beginning... before we can rebRun("recycle/torture")...
+    // from the very beginning... before we can rebValue("recycle/torture")...
     // and before command-line processing.  Make it an environment option.
     //
   #ifndef NDEBUG

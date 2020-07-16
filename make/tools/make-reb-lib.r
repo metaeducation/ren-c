@@ -106,7 +106,7 @@ emit-proto: func [return: <void> proto] [
         ]
     ]
 
-    if (to set-word! name) != header/1 [ ;-- e.g. `//  rebRun: RL_API`
+    if (to set-word! name) != header/1 [ ;-- e.g. `//  rebValue: RL_API`
         fail [
             "Name in comment header (" header/1 ") isn't C function name"
             "minus RL_ prefix to match" (name)
@@ -505,7 +505,7 @@ e-lib/emit {
      *
      *     Memory is freed automatically in the case of a failure in the
      *     frame where the rebMalloc() occured.  This is especially useful
-     *     when mixing C code involving allocations with rebRun(), etc.
+     *     when mixing C code involving allocations with rebValue(), etc.
      *
      *     Memory gets counted in Rebol's knowledge of how much memory the
      *     system is using, for the purposes of triggering GC.

@@ -1579,7 +1579,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         //
         // !!! Could get complicated if a manual lifetime is used and freed
         // during an evaluation.  Not currently possible since there's nothing
-        // like a rebRun() which targets a cell passed in by the user.  But if
+        // like a rebValue() which targets a cell passed in by the user.  But if
         // such a thing ever existed it would have that problem...and would
         // need to take a "hold" on the cell to prevent a rebFree() while the
         // evaluation was in progress.
@@ -2323,7 +2323,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 // [NULL]
 //
 // NULLs are not an ANY-VALUE!.  Usually a DO shouldn't be able to see them.
-// An exception is in API calls, such as `rebRun("null?", some_null)`.  That
+// An exception is in API calls, such as `rebValue("null?", some_null)`.  That
 // is legal due to VALUE_FLAG_EVAL_FLIP, which avoids "double evaluation",
 // and is used by the API when constructing runs of values from C va_args.
 //

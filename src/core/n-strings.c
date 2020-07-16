@@ -114,7 +114,7 @@ REBNATIVE(delimit)
 
     REBVAL *line = ARG(line);
     if (IS_TEXT(line))
-        return rebRun("copy", line, rebEND); // !!! Review performance
+        return rebValue("copy", line, rebEND); // !!! Review performance
 
     assert(IS_BLOCK(line));
 

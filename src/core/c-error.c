@@ -443,9 +443,9 @@ void Set_Location_Of_Error(
     for (; f != FS_BOTTOM; f = f->prior) {
         if (not f->source->array) {
             //
-            // !!! We currently skip any calls from C (e.g. rebRun()) and look
+            // !!! We currently skip any calls from C (e.g. rebValue()) and look
             // for calls from Rebol files for the file and line.  However,
-            // rebRun() might someday supply its C code __FILE__ and __LINE__,
+            // rebValue() might someday supply its C code __FILE__ and __LINE__,
             // which might be interesting to put in the error instead.
             //
             continue;

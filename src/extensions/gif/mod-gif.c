@@ -283,7 +283,7 @@ REBNATIVE(decode_gif)
     cp += 13;
     transparency_index = -1;
 
-    REBVAL *frames = rebRun("copy []", rebEND);
+    REBVAL *frames = rebValue("copy []", rebEND);
 
     for (;;) {
         if (cp >= end) break;
@@ -357,7 +357,7 @@ REBNATIVE(decode_gif)
     //
     // !!! Should formats that can act as containers always return a BLOCK!?
     //
-    REBVAL *result = rebRun("case [",
+    REBVAL *result = rebValue("case [",
         "empty?", frames, "[FAIL {No frames found in GIF}]",
         "length of", frames, "= 1", "[first", frames, "]",
         "default [", frames, "]"

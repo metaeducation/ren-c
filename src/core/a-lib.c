@@ -471,7 +471,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 
 
 //
-//  rebRun: RL_API
+//  rebValue: RL_API
 //
 // C variadic function which calls the evaluator on multiple pointers.
 // Each pointer may either be a REBVAL* or a UTF-8 string which will be
@@ -481,7 +481,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 // product already.  Use rebEval() to "retrigger" them (which wraps them in
 // a singular REBARR*, another type of detectable pointer.)
 //
-REBVAL *RL_rebRun(const void *p, va_list *vaptr)
+REBVAL *RL_rebValue(const void *p, va_list *vaptr)
 {
     REBVAL *result = Alloc_Value();
     if (Do_Va_Throws(result, p, vaptr)) // calls va_end()
@@ -498,7 +498,7 @@ REBVAL *RL_rebRun(const void *p, va_list *vaptr)
 //
 //  rebElide: RL_API
 //
-// Variant of rebRun() which assumes you don't need the result.  This saves on
+// Variant of rebValue() which assumes you don't need the result.  This saves on
 // allocating an API handle, or the caller needing to manage its lifetime.
 //
 void RL_rebElide(const void *p, va_list *vaptr)
@@ -548,7 +548,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 
 
 //
-//  rebRunInline: RL_API
+//  rebValueInline: RL_API
 //
 // Non-variadic function which takes a single argument which must be a single
 // value that is a BLOCK! or GROUP!.  The goal is that it not add an extra
@@ -556,32 +556,32 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 // the console, so that BACKTRACE does not look up and see a Rebol function
 // like DO on the stack.
 //
-// !!! May be replaceable with `rebRun(rebInline(v), rebEND);` or something
+// !!! May be replaceable with `rebValue(rebInline(v), rebEND);` or something
 // similar.
 //
-REBVAL *RL_rebRunInline(const REBVAL *array)
+REBVAL *RL_rebValueInline(const REBVAL *array)
 {
     if (not IS_BLOCK(array) and not IS_GROUP(array))
-        fail ("rebRunInline() only supports BLOCK! and GROUP!");
+        fail ("rebValueInline() only supports BLOCK! and GROUP!");
 
     DECLARE_LOCAL (group);
     Move_Value(group, array);
     CHANGE_VAL_TYPE_BITS(group, REB_GROUP);
 
-    return rebRun(rebEval(group), rebEND);
+    return rebValue(rebEval(group), rebEND);
 }
 
 
 //
 //  rebEval: RL_API
 //
-// When rebRun() receives a REBVAL*, the default is to assume it should be
+// When rebValue() receives a REBVAL*, the default is to assume it should be
 // spliced into the input stream as if it had already been evaluated.  It's
 // only segments of code supplied via UTF-8 strings, that are live and can
 // execute functions.
 //
-// This instruction is used with rebRun() in order to mark a value as being
-// evaluated.  So `rebRun(rebEval(some_word), ...)` will execute that word
+// This instruction is used with rebValue() in order to mark a value as being
+// evaluated.  So `rebValue(rebEval(some_word), ...)` will execute that word
 // if it's bound to an ACTION! and dereference if it's a variable.
 //
 const void *RL_rebEval(const REBVAL *v)
@@ -617,7 +617,7 @@ const void *RL_rebEval(const REBVAL *v)
 //
 // There's a parallel Rebol action! that does this called UNEVAL, which is
 // for use with REDUCE and COMPOSE/ONLY.  However, rather than return REBVAL*
-// directly, this acts as an "instruction" that can be passed to the rebRun()
+// directly, this acts as an "instruction" that can be passed to the rebValue()
 // variadic stream.  This leaves the implementation method more open, and
 // has the benefit of not requiring a rebRelease().
 //

@@ -94,7 +94,7 @@ inline static void Free_Value(REBVAL *v)
 // (and tripping assert mechanisms).  So they can leak if used incorrectly.
 //
 // Instructions should be returned as a const void *, in order to discourage
-// using these anywhere besides as arguments to a variadic API like rebRun().
+// using these anywhere besides as arguments to a variadic API like rebValue().
 //
 inline static REBARR *Alloc_Instruction(void) {
     REBSER *s = Alloc_Series_Node(

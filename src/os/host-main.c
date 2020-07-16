@@ -179,7 +179,7 @@ int main(int argc, char *argv_ansi[])
     // That way the command line argument processing can be taken care of by
     // PARSE in the HOST-STARTUP user function, instead of C code!
     //
-    REBVAL *argv_block = rebRun("lib/copy []", rebEND);
+    REBVAL *argv_block = rebValue("lib/copy []", rebEND);
 
   #ifdef TO_WINDOWS
     //
@@ -230,7 +230,7 @@ int main(int argc, char *argv_ansi[])
 
     // Use TRANSCODE to get a BLOCK! from the BINARY!, then release the binary
     //
-    REBVAL *host_code = rebRun(
+    REBVAL *host_code = rebValue(
         "lib/transcode/file", host_bin, "%tmp-host-start.inc", rebEND
     );
     rebElide(
@@ -244,7 +244,7 @@ int main(int argc, char *argv_ansi[])
     // redefines PRINT in their script, the console should keep working.
     //
     // !!! In the API source here calling methods textually, the current way
-    // of insulating by using lib, e.g. `rebRun("lib/error?", ...)`, is still
+    // of insulating by using lib, e.g. `rebValue("lib/error?", ...)`, is still
     // using *the user context's notion of `lib`*.  So if they said `lib: 10`
     // then the console would die.  General API point to consider, as the
     // design emerges.
@@ -282,7 +282,7 @@ int main(int argc, char *argv_ansi[])
     //
     rebElide("lib/lock", host_code, rebEND);
 
-    REBVAL *host_start = rebRunInline(host_code); // HOST-START is an ACTION!
+    REBVAL *host_start = rebValueInline(host_code); // HOST-START is an ACTION!
     rebRelease(host_code);
 
     if (rebNot("lib/action?", host_start, rebEND))
@@ -308,7 +308,7 @@ int main(int argc, char *argv_ansi[])
     // arbitrary code by way of its return results.  The TRAP and CATCH
     // are thus here to intercept bugs *in HOST-START itself*.
     //
-    REBVAL *trapped = rebRun(
+    REBVAL *trapped = rebValue(
         "lib/entrap [",
             rebR(host_start), // action! that takes 2 args
             rebR(argv_block),
@@ -318,7 +318,7 @@ int main(int argc, char *argv_ansi[])
     if (rebDid("lib/error?", trapped, rebEND)) // error in HOST-START itself
         rebJumps("lib/PANIC", trapped, rebEND);
 
-    REBVAL *code = rebRun("lib/first", trapped, rebEND); // entrap []'s output
+    REBVAL *code = rebValue("lib/first", trapped, rebEND); // entrap []'s output
     rebRelease(trapped); // don't need the outer block any more
 
     // !!! For the moment, the CONSOLE extension does all the work of running
@@ -329,7 +329,7 @@ int main(int argc, char *argv_ansi[])
     // kinds of errors.  Hence there is a /PROVOKE refinement to CONSOLE
     // which feeds it an instruction, as if the console gave it to itself.
 
-    REBVAL *result = rebRun("console/provoke", rebR(code), rebEND);
+    REBVAL *result = rebValue("console/provoke", rebR(code), rebEND);
 
     int exit_status = rebUnboxInteger(rebR(result), rebEND);
 
