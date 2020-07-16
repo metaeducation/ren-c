@@ -1333,7 +1333,7 @@ void Poke_Image_Fail_If_Read_Only(
     if (IS_WORD(picker)) {
         switch (VAL_WORD_SYM(picker)) {
         case SYM_SIZE:
-            if (!IS_PAIR(poke) || !VAL_PAIR_X(poke))
+            if (!IS_PAIR(poke) || !VAL_PAIR_X_DEC(poke))
                 fail (Error_Invalid(poke));
 
             VAL_IMAGE_WIDE(value) = VAL_PAIR_X_INT(poke);

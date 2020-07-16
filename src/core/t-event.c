@@ -120,8 +120,8 @@ static bool Set_Event_Var(REBVAL *event, const REBVAL *word, const REBVAL *val)
         if (IS_PAIR(val)) {
             SET_EVENT_XY(
                 event,
-                Float_Int16(VAL_PAIR_X(val)),
-                Float_Int16(VAL_PAIR_Y(val))
+                Float_Int16(VAL_PAIR_X_DEC(val)),
+                Float_Int16(VAL_PAIR_Y_DEC(val))
             );
         }
         else

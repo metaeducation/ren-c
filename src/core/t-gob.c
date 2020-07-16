@@ -101,8 +101,8 @@ REBINT Cmp_Gob(const RELVAL *g1, const RELVAL *g2)
 static bool Set_Pair(REBXYF *pair, const REBVAL *val)
 {
     if (IS_PAIR(val)) {
-        pair->x = VAL_PAIR_X(val);
-        pair->y = VAL_PAIR_Y(val);
+        pair->x = VAL_PAIR_X_DEC(val);
+        pair->y = VAL_PAIR_Y_DEC(val);
     }
     else if (IS_INTEGER(val)) {
         pair->x = pair->y = (REBD32)VAL_INT64(val);
@@ -762,8 +762,8 @@ REBNATIVE(map_gob_offset)
     UNUSED(REF(reverse));
 
     REBGOB *gob = VAL_GOB(ARG(gob));
-    REBD32 xo = VAL_PAIR_X(ARG(xy));
-    REBD32 yo = VAL_PAIR_Y(ARG(xy));
+    REBD32 xo = VAL_PAIR_X_DEC(ARG(xy));
+    REBD32 yo = VAL_PAIR_Y_DEC(ARG(xy));
 
     if (REF(reverse)) {
         REBINT max_depth = 1000; // avoid infinite loops
@@ -779,9 +779,9 @@ REBNATIVE(map_gob_offset)
     }
     else {
         REBXYF xy;
-        xy.x = VAL_PAIR_X(ARG(xy));
+        xy.x = VAL_PAIR_X_DEC(ARG(xy));
         xy.x = VAL_DECIMAL(ARG(xy)->payload.pair + 1);
-        xy.y = VAL_PAIR_Y(ARG(xy));
+        xy.y = VAL_PAIR_Y_DEC(ARG(xy));
         gob = Map_Gob_Inner(gob, &xy);
         xo = xy.x;
         yo = xy.y;
@@ -816,8 +816,8 @@ void Extend_Gob_Core(REBGOB *gob, const REBVAL *arg) {
         Set_GOB_Vars(gob, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg));
     }
     else if (IS_PAIR(arg)) {
-        gob->size.x = VAL_PAIR_X(arg);
-        gob->size.y = VAL_PAIR_Y(arg);
+        gob->size.x = VAL_PAIR_X_DEC(arg);
+        gob->size.y = VAL_PAIR_Y_DEC(arg);
     }
     else
         fail (Error_Bad_Make(REB_GOB, arg));

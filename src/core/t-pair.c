@@ -39,8 +39,8 @@ REBINT CT_Pair(const RELVAL *a, const RELVAL *b, REBINT mode)
     if (mode >= 0) return Cmp_Pair(a, b) == 0; // works for INTEGER=0 too (spans x y)
     if (IS_PAIR(b) && 0 == VAL_INT64(b)) { // for negative? and positive?
         if (mode == -1)
-            return (VAL_PAIR_X(a) >= 0 || VAL_PAIR_Y(a) >= 0); // not LT
-        return (VAL_PAIR_X(a) > 0 && VAL_PAIR_Y(a) > 0); // NOT LTE
+            return (VAL_PAIR_X_DEC(a) >= 0 || VAL_PAIR_Y_DEC(a) >= 0); // not LT
+        return (VAL_PAIR_X_DEC(a) > 0 && VAL_PAIR_Y_DEC(a) > 0); // NOT LTE
     }
     return -1;
 }
@@ -117,8 +117,8 @@ REBINT Cmp_Pair(const RELVAL *t1, const RELVAL *t2)
 {
     REBDEC diff;
 
-    if ((diff = VAL_PAIR_Y(t1) - VAL_PAIR_Y(t2)) == 0)
-        diff = VAL_PAIR_X(t1) - VAL_PAIR_X(t2);
+    if ((diff = VAL_PAIR_Y_DEC(t1) - VAL_PAIR_Y_DEC(t2)) == 0)
+        diff = VAL_PAIR_X_DEC(t1) - VAL_PAIR_X_DEC(t2);
     return (diff > 0.0) ? 1 : ((diff < 0.0) ? -1 : 0);
 }
 
@@ -137,8 +137,8 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
     float ax;
     float ay;
     if (IS_PAIR(a)) {
-        ax = VAL_PAIR_X(a);
-        ay = VAL_PAIR_Y(a);
+        ax = VAL_PAIR_X_DEC(a);
+        ay = VAL_PAIR_Y_DEC(a);
     }
     else if (IS_INTEGER(a))
         ax = ay = cast(REBDEC, VAL_INT64(a));
@@ -148,8 +148,8 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
     float bx;
     float by;
     if (IS_PAIR(b)) {
-        bx = VAL_PAIR_X(b);
-        by = VAL_PAIR_Y(b);
+        bx = VAL_PAIR_X_DEC(b);
+        by = VAL_PAIR_Y_DEC(b);
     }
     else if (IS_INTEGER(b))
         bx = by = cast(REBDEC, VAL_INT64(b));
