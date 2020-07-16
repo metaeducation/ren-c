@@ -196,7 +196,7 @@ static int Read_Directory(struct devreq_file *dir, struct devreq_file *file)
         file_req->modes |= RFM_DIR;
 
     file->path = rebRun(
-        "apply 'local-to-file [",
+        "applique 'local-to-file [",
             "path:", rebR(rebTextW(info.cFileName)),
             "dir:", rebR(rebLogic(file_req->modes & RFM_DIR)),
         "]", rebEND
@@ -267,7 +267,7 @@ DEVICE_CMD Open_File(REBREQ *req)
         rebJumps("FAIL {No access modes provided to Open_File()}", rebEND);
 
     WCHAR *path_wide = rebSpellW(
-        "apply 'file-to-local [",
+        "applique 'file-to-local [",
             "path:", file->path,
             "wild:", rebR(rebLogic(req->modes & RFM_DIR)),
             "full: true",

@@ -710,7 +710,7 @@ REBNATIVE(redo)
 
 
 //
-//  apply: native [
+//  applique: native [
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
@@ -722,9 +722,9 @@ REBNATIVE(redo)
 //      /opt "Treat nulls as unspecialized <<experimental!>>"
 //  ]
 //
-REBNATIVE(apply)
+REBNATIVE(applique)
 //
-// !!! Because APPLY is being written as a regular native (and not a
+// !!! Because APPLIQUE is being written as a regular native (and not a
 // special exception case inside of Eval_Core) it has to "re-enter" Eval_Core
 // and jump to the argument processing.
 //
@@ -735,7 +735,7 @@ REBNATIVE(apply)
 // experiment with for other reasons (e.g. continuations), so that is what
 // is used here.
 {
-    INCLUDE_PARAMS_OF_APPLY;
+    INCLUDE_PARAMS_OF_APPLIQUE;
 
     REBVAL *applicand = ARG(applicand);
 

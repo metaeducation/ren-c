@@ -706,7 +706,7 @@ finished: function [
         #{14}       ; protocol message type (20=Finished)
         #{00 00 0c} ; protocol message length (12 bytes)
 
-        apply 'prf [
+        applique 'prf [
             ctx: ctx
             secret: ctx/master-secret
             label: who-finished
@@ -1124,7 +1124,7 @@ parse-messages: function [
                         ]
                         if (
                             msg-content
-                            <> apply 'prf [
+                            <> applique 'prf [
                                 ctx: ctx
                                 secret: ctx/master-secret
                                 label: who-finished
@@ -1300,7 +1300,7 @@ make-key-block: function [
     return: [binary!]
     ctx [object!]
 ][
-    ctx/key-block: apply 'prf [
+    ctx/key-block: applique 'prf [
         ctx: ctx
         secret: ctx/master-secret
         label: "key expansion"
@@ -1318,7 +1318,7 @@ make-master-secret: function [
     ctx [object!]
     pre-master-secret [binary!]
 ][
-    ctx/master-secret: apply 'prf [
+    ctx/master-secret: applique 'prf [
         ctx: ctx
         secret: pre-master-secret
         label: "master secret"

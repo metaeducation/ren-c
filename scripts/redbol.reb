@@ -308,7 +308,7 @@ set: emulate [
         set_ANY: any
         any: :lib/any
 
-        apply 'set [
+        applique 'set [
             target: either any-context? target [words of target] [target]
             set (quote value:) either any [:value] [non null :value]
             some: some
@@ -391,7 +391,7 @@ do: emulate [
             ]
             do code
         ] else [
-            apply 'do [
+            applique 'do [
                 source: :source
                 if args: args [
                     arg: :arg
@@ -522,14 +522,14 @@ compose: emulate [
         case [
             not block? value [:value]
             into [
-                insert out apply 'compose [
+                insert out applique 'compose [
                     set (quote value:) :value
                     deep: deep
                     only: only
                 ]
             ]
         ] else [
-            apply 'compose [
+            applique 'compose [
                 set (quote value:) :value
                 deep: deep
                 only: only
@@ -580,7 +580,7 @@ repend: emulate [
     ][
         ;-- R3-alpha REPEND with block behavior called out
         ;
-        apply 'append/part/dup [
+        applique 'append/part/dup [
             series: series
             value: block? :value and [reduce :value] or [:value]
             if part [limit: :limit]
@@ -597,7 +597,7 @@ join: emulate [
     ][
         ;-- double-inline of R3-alpha `repend value :rest`
         ;
-        apply 'append [
+        applique 'append [
             series: if series? :value [copy value] else [form :value]
             value: if block? :rest [reduce :rest] else [rest]
         ]
@@ -627,7 +627,7 @@ quit: emulate [
         /return {use /WITH in Ren-C: https://trello.com/c/3hCNux3z}
         value
     ][
-        apply 'quit [
+        applique 'quit [
             with: ensure [refinement! blank!] return
             if return [value: :value]
         ]

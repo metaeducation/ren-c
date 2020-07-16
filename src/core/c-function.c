@@ -1703,12 +1703,12 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 //
 //  Get_If_Word_Or_Path_Throws: C
 //
-// Some routines like APPLY and SPECIALIZE are willing to take a WORD! or
+// Some routines like APPLIQUE and SPECIALIZE are willing to take a WORD! or
 // PATH! instead of just the value type they are looking for, and perform
 // the GET for you.  By doing the GET inside the function, they are able
 // to preserve the symbol:
 //
-//     >> apply 'append [value: 'c]
+//     >> applique 'append [value: 'c]
 //     ** Script error: append is missing its series argument
 //
 // If push_refinements is used, then it avoids intermediate specializations...

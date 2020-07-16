@@ -1152,13 +1152,13 @@ generator-class: make object! [
     ][
         switch cmd/class [
             #cmd-create [
-                apply any [:gen-cmd-create :target-platform/gen-cmd-create] compose [cmd: (cmd)]
+                applique any [:gen-cmd-create :target-platform/gen-cmd-create] compose [cmd: (cmd)]
             ]
             #cmd-delete [
-                apply any [:gen-cmd-delete :target-platform/gen-cmd-delete] compose [cmd: (cmd)]
+                applique any [:gen-cmd-delete :target-platform/gen-cmd-delete] compose [cmd: (cmd)]
             ]
             #cmd-strip [
-                apply any [:gen-cmd-strip :target-platform/gen-cmd-strip] compose [cmd: (cmd)]
+                applique any [:gen-cmd-strip :target-platform/gen-cmd-strip] compose [cmd: (cmd)]
             ]
 
             fail ["Unknown cmd class:" cmd/class]

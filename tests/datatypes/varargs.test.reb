@@ -24,12 +24,12 @@
        either tail? args [b] ["not at end"]
     ]
     x: make varargs! [_]
-    blank? apply :f [args: x]
+    blank? applique :f [args: x]
 )
 
 (
     f: func [:look [<...>]] [to-value first look]
-    blank? apply 'f [look: make varargs! []]
+    blank? applique 'f [look: make varargs! []]
 )
 
 ; !!! Experimental behavior of enfixed variadics, is to act as either 0 or 1

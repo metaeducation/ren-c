@@ -262,7 +262,7 @@ void Do_Process_Action_Checks_Debug(REBFRM *f) {
         //
         assert(
             FRM_PHASE(f->prior) == NAT_ACTION(do)
-            or FRM_PHASE(f->prior) == NAT_ACTION(apply)
+            or FRM_PHASE(f->prior) == NAT_ACTION(applique)
         );
     }
 

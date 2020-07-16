@@ -302,7 +302,7 @@ load: function [
     if block? source [
         a: self/all ;-- !!! Some bad interaction requires this, review
         return map-each s source [
-            apply 'load [
+            applique 'load [
                 source: s
                 header: header
                 all: a
@@ -495,7 +495,7 @@ do-needs: function [
     ; Import the modules:
     ;
     mods: map-each [name vers hash] mods [
-        mod: apply 'import [
+        mod: applique 'import [
             module: name
 
             version: true
@@ -655,7 +655,7 @@ load-module: function [
             ]
 
             return map-each [mod ver name] source [
-                apply 'load-module [
+                applique 'load-module [
                     source: mod
                     version: version
                     set quote ver: :ver
@@ -886,7 +886,7 @@ import: function [
     ;
     if block? module [
         assert [not version] ; can only apply to one module
-        return apply 'do-needs [
+        return applique 'do-needs [
             needs: module
             no-share: :no-share
             no-lib: :no-lib
@@ -895,7 +895,7 @@ import: function [
         ]
     ]
 
-    set [name: mod:] apply 'load-module [
+    set [name: mod:] applique 'load-module [
         source: module
         version: version
         set quote ver: :ver
@@ -917,7 +917,7 @@ import: function [
 
             for-each path system/options/module-paths [
                 if set [name: mod:] (
-                    apply 'load-module [
+                    applique 'load-module [
                         source: path/:file
                         version: version
                         set quote ver: :ver

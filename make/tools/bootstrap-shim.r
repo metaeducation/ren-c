@@ -56,6 +56,14 @@ trap [
 
 print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 
+; The "real apply" hasn't really been designed, but it would be able to mix
+; positional arguments with named ones.  This is changed by the nature of
+; "refinements are their arguments" to empower more clean options.  What Ren-C
+; originally called its APPLY is thus moved to the weird name APPLIQUE, that
+; had previously been taken for compatibility apply (now REDBOL-APPLY)
+;
+applique: :apply
+unset 'apply
 
 modernize-action: function [
     "Account for the <blank> annotation as a usermode feature"
