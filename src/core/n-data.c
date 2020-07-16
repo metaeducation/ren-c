@@ -519,6 +519,38 @@ REBNATIVE(get)
 }
 
 
+//
+//  get*: native [
+//
+//  {Gets the value of a word or path, allows VOID!}
+//
+//      return: [<opt> any-value!]
+//      source "Word or path to get"
+//          [<blank> <dequote> any-word! any-path!]
+//  ]
+//
+REBNATIVE(get_p)
+//
+// This is added as a compromise, as `:var` won't efficiently get ANY-VALUE!.
+// At least `get* 'var` doesn't make you pay for path processing, and it's
+// not a specialization so it doesn't incur that overhead.
+{
+    INCLUDE_PARAMS_OF_GET_P;
+
+    Get_Opt_Polymorphic_May_Fail(
+        D_OUT,
+        ARG(source),
+        SPECIFIED,
+        true  // allow VOID!, e.g. GET/ANY
+    );
+ 
+    return D_OUT;
+}
+
+
+//
+//  Set_Opt_Polymorphic_May_Fail: C
+//
 inline static void Set_Opt_Polymorphic_May_Fail(
     const RELVAL *target,
     REBSPC *target_specifier,

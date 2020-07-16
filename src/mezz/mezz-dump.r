@@ -221,9 +221,9 @@ dump-obj: function [
         wild: did all [set? 'pat | text? pat | find pat "*"]
 
         for-each [word val] obj [
-            if not set? 'val [continue] ;-- !!! review
-
-            type: type of :val
+            if void! = type: type of get* 'val [
+                continue  ; !!! review
+            ]
 
             str: if lib/match [action! object!] :type [
                 spaced [word | mold spec-of :val | words of :val]

@@ -89,10 +89,10 @@ do*: function [
         if original-path [change-dir original-path]
 
         if quit_FINALIZER and [only] [
-            quit/with :value ;-- "rethrow" the QUIT if DO/ONLY
+            quit/with get* 'value  ; "rethrow" the QUIT if DO/ONLY
         ]
 
-        return :value ;-- returns from DO*, because of <with> return
+        return get* 'value  ; returns from DO*, because of <with> return
     ]
 
     ; If a file is being mentioned as a DO location and the "current path"
@@ -191,7 +191,7 @@ do*: function [
         ]
     ]
 
-    finalizer :result
+    finalizer get* 'result
 ]
 
 export: func [

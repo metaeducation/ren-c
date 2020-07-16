@@ -127,20 +127,20 @@ console!: make object! [
     ]
 
     print-result: function [return: <void> v [<opt> any-value!]]  [
-        set (quote last-result:) :v
+        if void? last-result: get/any 'v [
+            ; Actions that by contract return no information return void.
+            ; Since it's what comes back from things like HELP it's best
+            ; that the console not print anything in response.
+
+            return
+        ]
+
         case [
             null? :v [
                 ; Because NULL has no representation, there's nothing really
-                ; to print after an "==".  It could use invalid forms, e.g.
-                ; "== \\null\\" or just go with a comment.
+                ; to print after "==".  Just go with a comment.
                 ;
-                print "// null"
-            ]
-
-            void? :v [
-                ; Actions that by contract return no information return void.
-                ; Since it's what comes back from things like HELP it's best
-                ; that the console not print anything in response.
+                print "; null"
             ]
 
             free? :v [
@@ -604,13 +604,13 @@ ext-console-impl: function [
 
     if block? :result [
         assert [length of result = 1]
-        set quote result: :result/1
+        result: get/any 'result/1
     ] else [
         assert [unset? 'result]
     ]
 
     if group? prior [ ;-- plain execution of user code
-        emit [system/console/print-result ((| uneval :result |))]
+        emit [system/console/print-result ((| uneval get/any 'result |))]
         return <prompt>
     ]
 

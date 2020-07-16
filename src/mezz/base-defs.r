@@ -95,6 +95,9 @@ end: func [
     until [null? take omit]
 ]
 
+; Note: UNEVAL is done far more elegantly as the new QUOTE in a generalized
+; way in mainline.  This exists in R3C prior to arbitrary quoting.
+;
 uneval: func [
     {Make expression that when evaluated, will produce the input}
 
@@ -102,7 +105,11 @@ uneval: func [
         [group!]
     optional [<opt> any-value!]
 ][
-    either null? :optional [quote (null)] [reduce quote ('quote :optional)]
+    either null? get* 'optional [
+        quote (null)
+    ][
+        reduce quote ('quote get* 'optional)
+    ]
 ]
 
 

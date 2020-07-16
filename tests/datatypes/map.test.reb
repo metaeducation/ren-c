@@ -8,7 +8,7 @@
 (m: make map! [a 1 b 2] 2 == m/b)
 (
     m: make map! [a 1 b 2]
-    error? trap [m/c]
+    null = m/c
 )
 (m: make map! [a 1 b 2] m/c: 3 3 == m/c)
 ; Maps contain key/value pairs and must be created from blocks of even length.
