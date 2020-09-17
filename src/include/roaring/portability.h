@@ -29,6 +29,9 @@
 #endif
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(_MSC_VER) && !defined(__clang__) && !defined(_WIN64) && !defined(ROARING_ACK_32BIT)
 #pragma message( \
@@ -162,7 +165,7 @@ inline int __builtin_popcountll(unsigned long long input_num) {
 }
 #else
 /* software implementation avoids POPCNT */
-/*static */ inline int __builtin_popcountll(unsigned long long input_num) {
+inline int __builtin_popcountll(unsigned long long input_num) {
 	const uint64_t m1 = 0x5555555555555555; //binary: 0101...
 	const uint64_t m2 = 0x3333333333333333; //binary: 00110011..
 	const uint64_t m4 = 0x0f0f0f0f0f0f0f0f; //binary:  4 zeros,  4 ones ...
@@ -245,6 +248,10 @@ static inline int hamming(uint64_t x) {
 
 #ifndef UINT32_C
 #define UINT32_C(c) (c##UL)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* INCLUDE_PORTABILITY_H_ */

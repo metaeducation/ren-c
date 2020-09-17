@@ -219,6 +219,48 @@ core: [
         ;
         <msc:/wd5045>  ; https://stackoverflow.com/q/50399940
     ]
+
+    (elide roar-flags: [
+        <no-make-header>  ; !!! Note: must be second item in block, fix that!
+
+        ; The roaring library will put code after __builtin_unreachable() to
+        ; handle it "just in case", but the compiler complains such handling
+        ; is unreachable code.  Ignore the warning on roaring's files only.
+        ;
+        <msc:/wd4702>
+
+        <gnu:-Wno-error=redundant-decls>  ; stops warning from being an error
+
+        "-DROARING_DONT_INCLUDE_MALLOC_H"
+        "-DROARING_DONT_EXTERN_POSIX_MEMALIGN"
+    ])
+
+    ; https://roaringbitmap.org/
+    ; Roaring Bitmaps handles problems of compacting BITSET!s that are sparse
+    ; or negated.  These issues were not handled in R3-Alpha; so a single bit
+    ; set for a high number would generate giant BINARY! blobs.  Negated
+    ; bitsets could not be used in union or exclusion operations due to bugs.
+    ;
+    ; The code for roaring bitmaps has not yet been compacted into a single
+    ; file in the way that e.g. zlib has been.
+    ;
+    [roaring/array_util.c  ((roar-flags))]
+    [roaring/bitset_util.c  ((roar-flags))]
+    [roaring/containers/array.c  ((roar-flags))]
+    [roaring/containers/bitset.c  ((roar-flags))]
+    [roaring/containers/containers.c  ((roar-flags))]
+    [roaring/containers/convert.c  ((roar-flags))]
+    [roaring/containers/mixed_intersection.c  ((roar-flags))]
+    [roaring/containers/mixed_union.c  ((roar-flags))]
+    [roaring/containers/mixed_equal.c  ((roar-flags))]
+    [roaring/containers/mixed_subset.c  ((roar-flags))]
+    [roaring/containers/mixed_negation.c  ((roar-flags))]
+    [roaring/containers/mixed_xor.c  ((roar-flags))]
+    [roaring/containers/mixed_andnot.c  ((roar-flags))]
+    [roaring/containers/run.c  ((roar-flags))]
+    [roaring/roaring.c  ((roar-flags))]
+    ; roaring_priority_queue.c would go here
+    [roaring/roaring_array.c  ((roar-flags))]
 ]
 
 ; Files created by the make-boot process
