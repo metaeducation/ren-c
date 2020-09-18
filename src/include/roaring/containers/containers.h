@@ -566,7 +566,6 @@ static inline bool container_contains(const void *container, uint16_t val,
         default:
             assert(false);
             __builtin_unreachable();
-            return false;
     }
 }
 
