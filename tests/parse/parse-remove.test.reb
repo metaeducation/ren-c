@@ -35,7 +35,7 @@
 [
     (
         ws: charset " ^- ^/^M"
-        not-ws: complement ws
+        not-ws: complement copy ws
         true
     )
     (error? trap [uparse? "" [remove]])

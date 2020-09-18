@@ -122,6 +122,7 @@ enum Reb_Series_Flavor {
 
     FLAVOR_HASHLIST,  // outlier, sizeof(REBLEN)...
     FLAVOR_BOOKMARKLIST,  // also outlier, sizeof(struct Reb_Bookmark)
+    FLAVOR_BITSET,  // outlier, sizeof(void* + uint16_t + uint8_t)
 
     // v-- everything below this line has width=1
 
@@ -167,6 +168,12 @@ inline static size_t Wide_For_Flavor(enum Reb_Series_Flavor flavor) {
         return sizeof(struct Reb_Bookmark);
     if (flavor == FLAVOR_HASHLIST)
         return sizeof(REBLEN);
+    if (flavor == FLAVOR_BITSET)  // roaring bitmap
+        return (
+            sizeof(void*)  // container
+            + sizeof(uint16_t)  // key
+            + sizeof(uint8_t)  // type
+        );
     return sizeof(void*);
 }
 

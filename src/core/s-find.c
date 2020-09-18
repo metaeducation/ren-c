@@ -440,7 +440,7 @@ REBLEN Find_Bitset_In_Binstr(
     REBCEL(const*) binstr,
     REBLEN end_unsigned,
     REBINT skip,
-    const REBBIN *bset,
+    const REBBIT *bits,
     REBFLGS flags
 ){
   #if !defined(NDEBUG)
@@ -478,7 +478,7 @@ REBLEN Find_Bitset_In_Binstr(
     }
 
     while (skip < 0 ? index >= start : index < end) {
-        if (Check_Bit(bset, c1, uncase)) {
+        if (Bitset_Contains_Core(bits, c1, uncase)) {
             //
             // !!! Now the output will always match 1 character or 1 byte.
             // If you were matching BINARY! in a mode that would match a

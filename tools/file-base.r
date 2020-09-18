@@ -15,7 +15,7 @@ REBOL [
     }
 ]
 
-core: [
+core: compose/deep [
     ; (A)???
     a-constants.c
     a-globals.c
@@ -233,6 +233,11 @@ core: [
 
         "-DROARING_DONT_INCLUDE_MALLOC_H"
         "-DROARING_DONT_EXTERN_POSIX_MEMALIGN"
+
+        "-DROARING_HOOK_ARRAY"
+        "-DROARING_REALLOC_ARRAY=roaring_realloc_array"
+        "-DROARING_SIZE_UPDATED=roaring_size_updated"
+        "-DROARING_FLAGS_UPDATED=roaring_flags_updated"
     ])
 
     ; https://roaringbitmap.org/

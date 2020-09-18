@@ -687,7 +687,7 @@ REBNATIVE(same_q)
     if (VAL_TYPE(v1) != VAL_TYPE(v2))
         return Init_False(D_OUT);  // can't be "same" value if not same type
 
-    if (IS_BITSET(v1))  // same if binaries are same
+    if (IS_BITSET(v1))  // same if series nodes are same
         return Init_Logic(D_OUT, VAL_BITSET(v1) == VAL_BITSET(v2));
 
     if (ANY_SERIES(v1))  // pointers -and- indices must match

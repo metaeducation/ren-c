@@ -300,7 +300,7 @@ REB_R MAKE_Image(
             // MAKE IMAGE! format allowed you to specify it.
 
             if (item != tail and IS_INTEGER(item)) {
-                VAL_IMAGE_POS(out) = (Int32s(SPECIFIC(item), 1) - 1);
+                VAL_IMAGE_POS(out) = (Int32s(item, 1) - 1);
                 ++item;
             }
         }

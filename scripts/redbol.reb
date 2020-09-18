@@ -1415,6 +1415,9 @@ encloak: emulate [
     )
 ]
 
+complement: emulate [  ; Rebol2 and Red do not mutate bitsets on complement
+    adapt :complement [value: copy value]
+]
 
 write: emulate [
     adapt (augment :write [

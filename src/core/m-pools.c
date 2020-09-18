@@ -1073,9 +1073,16 @@ void Remake_Series(REBSER *s, REBLEN units, REBFLGS flags)
         Free_Unbiased_Series_Data(data_old - (wide * bias_old), size_old);
 }
 
+#include "roaring/roaring_array.h"  // for ra_clear_containers() lowlevel func
 
 //
 //  Decay_Series: C
+//
+// Any series components which are allocated outside of the bits of the
+// actual series data pointer need some kind of manual freeing process.  This
+// applies to any Alloc_Mem()'d or malloc()'d data from a third party data
+// structure, as well as any non-managed nodes that are tucked into the
+// LINK or MISC fields.
 //
 void Decay_Series(REBSER *s)
 {
@@ -1118,6 +1125,27 @@ void Decay_Series(REBSER *s)
         //
         if (s->misc.cleaner)
             (s->misc.cleaner)(SPECIFIC(v));
+        break; }
+
+      case FLAVOR_BITSET: {
+        if (SER_USED(s) > 0) {
+            //
+            // !!! Roaring Bitmaps use a lot of malloc()s (1 for each container
+            // in the series vector, and then the containers themselves do
+            // allocation).  So we only auto-manage memory at the topmost level.
+            // The rest has to be freed normally.  Some changes could improve
+            // that situation, e.g.:
+            // https://github.com/RoaringBitmap/CRoaring/issues/47
+            //
+            // Use the lower-level ra_clear_containers() function here to avoid
+            // the baggage that would come with roaring_bitmap_clear()...we do
+            // not want to allocate another node at this moment via the
+            // shrink_to_fit() call that employs.  Hence we use roaring_array.h
+            //
+            roaring_bitmap_t r;
+            Roaring_From_Bitset(&r, s);
+            ra_clear_containers(&r.high_low_container);  // ^-- see note
+        }
         break; }
 
       default:

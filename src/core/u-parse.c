@@ -736,9 +736,8 @@ static REB_R Parse_One_Rule(
                 uncased = not (P_FLAGS & AM_FIND_CASE);
             }
 
-            if (Check_Bit(VAL_BITSET(rule), uni, uncased))
+            if (Bitset_Contains_Core(VAL_BITSET(rule), uni, uncased))
                 return Init_Integer(D_OUT, P_POS + 1);
-
             return R_UNHANDLED; }
 
           default:
@@ -940,8 +939,10 @@ static REBIXO To_Thru_Block_Rule(
                     }
                 }
                 else if (IS_BITSET(rule)) {
+                    const REBBIT *bits = VAL_BITSET(rule);
                     bool uncased = not (P_FLAGS & AM_FIND_CASE);
-                    if (Check_Bit(VAL_BITSET(rule), ch, uncased)) {
+
+                    if (Bitset_Contains_Core(bits, ch, uncased)) {
                         if (is_thru)
                             return VAL_INDEX(iter) + 1;
                         return VAL_INDEX(iter);

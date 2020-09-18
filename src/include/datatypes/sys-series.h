@@ -303,7 +303,11 @@ inline static REBLEN SER_REST(const REBSER *s) {
     if (IS_SER_ARRAY(s))
         return 2; // includes info bits acting as trick "terminator"
 
-    assert(sizeof(s->content) % SER_WIDE(s) == 0);
+    // There's no particular reason to force irregular-sized series to evenly
+    // fit into the node evenly.  So this assert was removed:
+    //  
+    //     assert(sizeof(s->content) % SER_WIDE(s) == 0);
+
     return sizeof(s->content) / SER_WIDE(s);
 }
 

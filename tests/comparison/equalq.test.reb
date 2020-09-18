@@ -113,9 +113,11 @@
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
 )
 (equal? #[bitset! #{00}] #[bitset! #{00}])
-; bitset! with no bits set does not equal empty bitset
-; This is because of the COMPLEMENT problem: bug#1085.
-(not equal? #[bitset! #{}] #[bitset! #{00}])
+
+[#1085  ; wasn't equal in R3-Alpha due to a COMPLEMENT problem, fixed
+    (equal? #[bitset! #{}] #[bitset! #{00}])
+]
+
 ; No implicit to binary! from bitset!
 (not equal? #{00} #[bitset! #{00}])
 (equal? equal? #[bitset! #{00}] #{00} equal? #{00} #[bitset! #{00}])

@@ -81,8 +81,10 @@
     a-value: 0.0.0.0
     equal? strict-equal? to binary! a-value a-value strict-equal? a-value to binary! a-value
 )
+
 (strict-equal? #[bitset! #{00}] #[bitset! #{00}])
-(not strict-equal? #[bitset! #{}] #[bitset! #{00}])
+(strict-equal? #[bitset! #{}] #[bitset! #{00}])
+
 ; block!
 (strict-equal? [] [])
 ; reflexivity

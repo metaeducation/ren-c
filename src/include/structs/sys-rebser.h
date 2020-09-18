@@ -691,12 +691,11 @@ union Reb_Series_Misc {
     //
     CLEANUP_CFUNC *cleaner;
 
-    // Because a bitset can get very large, the negation state is stored
-    // as a boolean in the series.  Since negating a bitset is intended
-    // to affect all values, it has to be stored somewhere that all
-    // REBVALs would see a change--hence the field is in the series.
+    // Whether the bits in a bitset are the inverse of their meanings.  This
+    // is to address the fact that a pure roaring "flip" won't compress:
+    // https://github.com/RoaringBitmap/CRoaring/issues/241
     //
-    bool negated;
+    bool inverted;
 
     // rebQ() and rebU() use this with ARRAY_FLAG_INSTRUCTION_ADJUST_QUOTING.
     //
@@ -858,4 +857,3 @@ typedef const REBSYM *REBKEY;
 //
 // So keep this file limited to structs and constants.  It's too long already.
 //
-//=////////////////////////////////////////////////////////////////////////=//

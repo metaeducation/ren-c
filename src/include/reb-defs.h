@@ -126,6 +126,7 @@ typedef struct Reb_Pool_Unit REBPLU;
 struct Reb_Series;
 typedef struct Reb_Series REBSER;
 
+#define REBBIT REBSER  // bitset, checked by SER_FLAVOR() not at compile time
 
 struct Reb_Bookmark {
     REBLEN index;
