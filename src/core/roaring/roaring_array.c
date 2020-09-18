@@ -67,6 +67,9 @@ if (!ra->keys || !ra->containers || !ra->typecodes) {
       ra->allocation_size = 0;
       return true;
     }
+
+    if (new_capacity > INT32_MAX) { return false; }
+
     const size_t memoryneeded =
         new_capacity * (sizeof(uint16_t) + sizeof(void *) + sizeof(uint8_t));
     void *bigalloc = malloc(memoryneeded);
@@ -96,20 +99,7 @@ if (!ra->keys || !ra->containers || !ra->typecodes) {
 bool ra_init_with_capacity(roaring_array_t *new_ra, uint32_t cap) {
     if (!new_ra) return false;
     ra_init(new_ra);
-
-    if (cap > INT32_MAX) { return false; }
-
-    if(cap > 0) {
-      void *bigalloc =
-        malloc(cap * (sizeof(uint16_t) + sizeof(void *) + sizeof(uint8_t)));
-      if( bigalloc == NULL ) return false;
-      new_ra->containers = (void **)bigalloc;
-      new_ra->keys = (uint16_t *)(new_ra->containers + cap);
-      new_ra->typecodes = (uint8_t *)(new_ra->keys + cap);
-      // Narrowing is safe because of above check
-      new_ra->allocation_size = (int32_t)cap;
-    }
-    return true;
+    return realloc_array(new_ra, cap);
 }
 
 int ra_shrink_to_fit(roaring_array_t *ra) {
