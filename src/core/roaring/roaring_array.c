@@ -30,6 +30,20 @@ extern inline void ra_set_container_at_index(const roaring_array_t *ra,
                                              int32_t i, void *c,
                                              uint8_t typecode);
 
+
+#if defined(ROARING_HOOK_ARRAY)
+
+    #ifdef __cplusplus
+        extern "C" {
+    #endif
+    extern bool ROARING_REALLOC_ARRAY(roaring_array_t *ra, int32_t new_capacity);
+    #ifdef __cplusplus
+        }
+    #endif
+    #define realloc_array ROARING_REALLOC_ARRAY
+
+#else
+
 static bool realloc_array(roaring_array_t *ra, int32_t new_capacity) {
     // because we combine the allocations, it is not possible to use realloc
     /*ra->keys =
@@ -76,6 +90,9 @@ if (!ra->keys || !ra->containers || !ra->typecodes) {
     return true;
 }
 
+#endif  // defined(ROARING_REALLOC_ARRAY)
+
+
 bool ra_init_with_capacity(roaring_array_t *new_ra, uint32_t cap) {
     if (!new_ra) return false;
     ra_init(new_ra);
@@ -96,12 +113,13 @@ bool ra_init_with_capacity(roaring_array_t *new_ra, uint32_t cap) {
 }
 
 int ra_shrink_to_fit(roaring_array_t *ra) {
-    int savings = (ra->allocation_size - ra->size) *
-                  (sizeof(uint16_t) + sizeof(void *) + sizeof(uint8_t));
+    int32_t old_allocation_size = ra->allocation_size;
     if (!realloc_array(ra, ra->size)) {
       return 0;
     }
-    ra->allocation_size = ra->size;
+    assert(ra->allocation_size <= old_allocation_size);
+    int savings = (old_allocation_size - ra->allocation_size) *
+                  (sizeof(uint16_t) + sizeof(void *) + sizeof(uint8_t));
     return savings;
 }
 
@@ -120,7 +138,7 @@ bool ra_copy(const roaring_array_t *source, roaring_array_t *dest,
              bool copy_on_write) {
     if (!ra_init_with_capacity(dest, source->size)) return false;
     dest->size = source->size;
-    dest->allocation_size = source->size;
+    ra_size_updated(dest);
     if(dest->size > 0) {
       memcpy(dest->keys, source->keys, dest->size * sizeof(uint16_t));
     }
@@ -166,6 +184,7 @@ bool ra_overwrite(const roaring_array_t *source, roaring_array_t *dest,
         }
     }
     dest->size = source->size;
+    ra_size_updated(dest);
     memcpy(dest->keys, source->keys, dest->size * sizeof(uint16_t));
     // we go through the containers, turning them into shared containers...
     if (copy_on_write) {
@@ -205,12 +224,14 @@ void ra_clear_containers(roaring_array_t *ra) {
 void ra_reset(roaring_array_t *ra) {
   ra_clear_containers(ra);
   ra->size = 0;
+  ra_size_updated(ra);
   ra_shrink_to_fit(ra);
 }
 
 void ra_clear_without_containers(roaring_array_t *ra) {
     free(ra->containers);    // keys and typecodes are allocated with containers
     ra->size = 0;
+    ra_size_updated(ra);
     ra->allocation_size = 0;
     ra->containers = NULL;
     ra->keys = NULL;
@@ -246,6 +267,7 @@ void ra_append(roaring_array_t *ra, uint16_t key, void *container,
     ra->containers[pos] = container;
     ra->typecodes[pos] = typecode;
     ra->size++;
+    ra_size_updated(ra);
 }
 
 void ra_append_copy(roaring_array_t *ra, const roaring_array_t *sa,
@@ -267,6 +289,7 @@ void ra_append_copy(roaring_array_t *ra, const roaring_array_t *sa,
         ra->typecodes[pos] = sa->typecodes[index];
     }
     ra->size++;
+    ra_size_updated(ra);
 }
 
 void ra_append_copies_until(roaring_array_t *ra, const roaring_array_t *sa,
@@ -295,6 +318,7 @@ void ra_append_copy_range(roaring_array_t *ra, const roaring_array_t *sa,
             ra->typecodes[pos] = sa->typecodes[i];
         }
         ra->size++;
+        ra_size_updated(ra);
     }
 }
 
@@ -319,6 +343,7 @@ void ra_append_move_range(roaring_array_t *ra, roaring_array_t *sa,
         ra->containers[pos] = sa->containers[i];
         ra->typecodes[pos] = sa->typecodes[i];
         ra->size++;
+        ra_size_updated(ra);
     }
 }
 
@@ -341,6 +366,7 @@ void ra_append_range(roaring_array_t *ra, roaring_array_t *sa,
             ra->typecodes[pos] = sa->typecodes[i];
         }
         ra->size++;
+        ra_size_updated(ra);
     }
 }
 
@@ -401,6 +427,7 @@ void ra_insert_new_key_value_at(roaring_array_t *ra, int32_t i, uint16_t key,
     ra->containers[i] = container;
     ra->typecodes[i] = typecode;
     ra->size++;
+    ra_size_updated(ra);
 }
 
 // note: Java routine set things to 0, enabling GC.
@@ -411,6 +438,7 @@ void ra_insert_new_key_value_at(roaring_array_t *ra, int32_t i, uint16_t key,
 void ra_downsize(roaring_array_t *ra, int32_t new_length) {
     assert(new_length <= ra->size);
     ra->size = new_length;
+    ra_size_updated(ra);
 }
 
 void ra_remove_at_index(roaring_array_t *ra, int32_t i) {
@@ -421,6 +449,7 @@ void ra_remove_at_index(roaring_array_t *ra, int32_t i) {
     memmove(&(ra->typecodes[i]), &(ra->typecodes[i + 1]),
             sizeof(uint8_t) * (ra->size - i - 1));
     ra->size--;
+    ra_size_updated(ra);
 }
 
 void ra_remove_at_index_and_free(roaring_array_t *ra, int32_t i) {
@@ -464,6 +493,7 @@ void ra_shift_tail(roaring_array_t *ra, int32_t count, int32_t distance) {
     memmove(&(ra->typecodes[dstpos]), &(ra->typecodes[srcpos]),
             sizeof(uint8_t) * count);
     ra->size += distance;
+    ra_size_updated(ra);
 }
 
 
@@ -846,6 +876,7 @@ bool ra_portable_deserialize(roaring_array_t *answer, const char *buf, const siz
               return false;
             }
             answer->size++;
+            ra_size_updated(answer);
             buf += bitset_container_read(thiscard, c, buf);
             answer->containers[k] = c;
             answer->typecodes[k] = BITSET_CONTAINER_TYPE_CODE;
@@ -875,6 +906,7 @@ bool ra_portable_deserialize(roaring_array_t *answer, const char *buf, const siz
               return false;
             }
             answer->size++;
+            ra_size_updated(answer);
             buf += run_container_read(thiscard, c, buf);
             answer->containers[k] = c;
             answer->typecodes[k] = RUN_CONTAINER_TYPE_CODE;
@@ -896,6 +928,7 @@ bool ra_portable_deserialize(roaring_array_t *answer, const char *buf, const siz
               return false;
             }
             answer->size++;
+            ra_size_updated(answer);
             buf += array_container_read(thiscard, c, buf);
             answer->containers[k] = c;
             answer->typecodes[k] = ARRAY_CONTAINER_TYPE_CODE;

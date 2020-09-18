@@ -22,6 +22,7 @@ static inline bool compare(roaring_pq_element_t *t1, roaring_pq_element_t *t2) {
 static void pq_add(roaring_pq_t *pq, roaring_pq_element_t *t) {
     uint64_t i = pq->size;
     pq->elements[pq->size++] = *t;
+    ra_size_updated(pq);
     while (i > 0) {
         uint64_t p = (i - 1) >> 1;
         roaring_pq_element_t ap = pq->elements[p];
@@ -66,6 +67,7 @@ static roaring_pq_t *create_pq(const roaring_bitmap_t **arr, uint32_t length) {
     answer->elements =
         (roaring_pq_element_t *)malloc(sizeof(roaring_pq_element_t) * length);
     answer->size = length;
+    ra_size_updated(answer);
     for (uint32_t i = 0; i < length; i++) {
         answer->elements[i].bitmap = (roaring_bitmap_t *)arr[i];
         answer->elements[i].is_temporary = false;
@@ -83,8 +85,10 @@ static roaring_pq_element_t pq_poll(roaring_pq_t *pq) {
     if (pq->size > 1) {
         pq->elements[0] = pq->elements[--pq->size];
         percolate_down(pq, 0);
-    } else
+    } else {
         --pq->size;
+        ra_size_updated(pq);
+    }
     // memmove(pq->elements,pq->elements+1,(pq->size-1)*sizeof(roaring_pq_element_t));--pq->size;
     return ans;
 }

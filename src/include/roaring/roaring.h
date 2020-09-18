@@ -41,6 +41,13 @@ roaring_bitmap_t *roaring_bitmap_create_with_capacity(uint32_t cap);
  */
 roaring_bitmap_t *roaring_bitmap_of_ptr(size_t n_args, const uint32_t *vals);
 
+#if defined(ROARING_FLAGS_UPDATED)
+    extern void ROARING_FLAGS_UPDATED(roaring_array_t *ra);
+    #define ra_flags_updated ROARING_FLAGS_UPDATED
+#else
+    #define ra_flags_updated(ra)  /* default to no-op */
+#endif
+
 /*
  * Whether you want to use copy-on-write.
  * Saves memory and avoids copies but needs more care in a threaded context.
@@ -58,6 +65,7 @@ static inline void roaring_bitmap_set_copy_on_write(roaring_bitmap_t* r, bool co
     } else {
         r->high_low_container.flags &= ~ROARING_FLAG_COW;
     }
+    ra_flags_updated(&r->high_low_container);
 }
 
 /**

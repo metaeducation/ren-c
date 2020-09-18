@@ -43,7 +43,18 @@ typedef struct roaring_array_s {
     uint16_t *keys;
     uint8_t *typecodes;
     uint8_t flags;
+
+  #ifdef ROARING_HOOK_ARRAY
+    void *hookdata;
+  #endif
 } roaring_array_t;
+
+#if defined (ROARING_HOOK_ARRAY)
+    extern void ROARING_SIZE_UPDATED(roaring_array_t *ra);
+    #define ra_size_updated ROARING_SIZE_UPDATED
+#else
+    #define ra_size_updated(ra)  /* default to no-op */
+#endif
 
 /**
  * Create a new roaring array
