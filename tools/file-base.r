@@ -211,6 +211,23 @@ core: [
         ;
         <msc:/wd5045>  ; https://stackoverflow.com/q/50399940
     ]
+
+    ; We use the implementation of BigNums that comes with the embedded TLS
+    ; library (mbedTLS).  An advantage of this implementation is that it is
+    ; pure C code that is well-vetted by the community, and where dependencies
+    ; are carefully managed to be able to run on embedded platforms.  But also
+    ; it means that the cryptography module uses the same code to implement
+    ; the usermode TLS/HTTPS - vs. having several variant bignum codebases
+    ; in memory at once.
+    ;
+    [
+        mbedtls/bignum.c  #no-c++
+
+        ; The way this works is with `#include MBEDTLS_CONFIG_FILE`, so the
+        ; quotes can get mixed up with the shell on the command line.  This
+        ; string is not auto-escaped by rebmake.
+        {-DMBEDTLS_CONFIG_FILE=\"mbedtls/mbedtls-rebol-config.h\"}
+    ]
 ]
 
 ; Files created by the make-boot process

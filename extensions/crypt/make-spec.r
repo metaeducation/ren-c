@@ -9,7 +9,7 @@ includes: reduce [
     %prep/extensions/crypt  ; for %tmp-extensions-crypt-init.inc
 ]
 definitions: [
-    {MBEDTLS_CONFIG_FILE="mbedtls-rebol-config.h"}
+    {MBEDTLS_CONFIG_FILE="mbedtls/mbedtls-rebol-config.h"}
 ]
 depends: [
     [%crypt/mbedtls/library/rsa.c  #no-c++]
@@ -22,12 +22,6 @@ depends: [
     ;
     [%crypt/mbedtls/library/platform.c  #no-c++]
     [%crypt/mbedtls/library/platform_util.c  #no-c++]
-
-    ; The current plan is to embed the bignum implementation into Rebol itself
-    ; to power its INTEGER! type (when the integers exceed the cell size).
-    ; So it should be shareable across the various crypto that uses it.
-    ;
-    [%crypt/mbedtls/library/bignum.c  #no-c++]
 
     ; Generic message digest and cipher abstraction layers (write code to one
     ; C interface, get all the digests and ciphers adapted to it for "free",

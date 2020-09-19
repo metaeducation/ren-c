@@ -1,0 +1,3 @@
+This file is located in %src/include/mbedtls/, not here.
+It is related to bignum support and needed for the core interpreter.
+Crypt extension should find it via %src/core/include/ in the -I path.
