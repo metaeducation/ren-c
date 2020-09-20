@@ -30,6 +30,15 @@
 // clear whether it's worth it or not.
 
 
+// This is a custom flag, which would be nice if mbedTLS would be willing to
+// maintain, but it's not a big deal if they don't.  Allows not just a custom
+// allocation for the bignums, but a deeper relationship to the host allocator
+// which can use the structs as merely a cache of an alternative memory
+// strategy (e.g. a series node which already has sunk costs for mpi fields).
+//
+#define MBEDTLS_HOOK_BIGNUM
+
+
 /**
  * \file config.h
  *

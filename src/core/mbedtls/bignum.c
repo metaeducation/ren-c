@@ -72,6 +72,9 @@
 #define BITS_TO_LIMBS(i)  ( (i) / biL + ( (i) % biL != 0 ) )
 #define CHARS_TO_LIMBS(i) ( (i) / ciL + ( (i) % ciL != 0 ) )
 
+
+#if !defined(MBEDTLS_HOOK_BIGNUM)
+
 /* Implementation that should never be optimized out by the compiler */
 static void mbedtls_mpi_zeroize( mbedtls_mpi_uint *v, size_t n )
 {
@@ -180,6 +183,9 @@ int mbedtls_mpi_shrink( mbedtls_mpi *X, size_t nblimbs )
 
     return( 0 );
 }
+
+#endif  /* !defined(MBEDTLS_HOOK_BIGNUM) */
+
 
 /*
  * Copy the contents of Y into X

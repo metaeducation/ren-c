@@ -186,6 +186,10 @@ typedef struct mbedtls_mpi
     int s;              /*!<  Sign: -1 if the mpi is negative, 1 otherwise */
     size_t n;           /*!<  total # of limbs  */
     mbedtls_mpi_uint *p;          /*!<  pointer to limbs  */
+
+  #ifdef MBEDTLS_HOOK_BIGNUM
+    void *hookdata;     /* allow custom allocator to point back to itself */
+  #endif
 }
 mbedtls_mpi;
 
