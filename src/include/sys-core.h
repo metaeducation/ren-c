@@ -374,13 +374,6 @@ inline static void INIT_BINDING_MAY_MANAGE(RELVAL *out, REBNOD* binding);
 #include "datatypes/sys-track.h"
 #include "datatypes/sys-value.h"  // these defines don't need series accessors
 
-#include "datatypes/sys-nulled.h"
-#include "datatypes/sys-void.h"
-#include "datatypes/sys-blank.h"
-#include "datatypes/sys-logic.h"
-#include "datatypes/sys-integer.h"
-#include "datatypes/sys-decimal.h"
-
 enum rebol_signals {
     //
     // SIG_RECYCLE indicates a need to run the garbage collector, when
@@ -422,6 +415,13 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 
 #include "datatypes/sys-series.h"
 #include "datatypes/sys-array.h"  // REBARR used by UTF-8 string bookmarks
+
+#include "datatypes/sys-nulled.h"
+#include "datatypes/sys-void.h"
+#include "datatypes/sys-blank.h"
+#include "datatypes/sys-logic.h"
+#include "datatypes/sys-integer.h"
+#include "datatypes/sys-decimal.h"
 
 #include "sys-protect.h"
 
