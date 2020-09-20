@@ -1352,6 +1352,24 @@ void Startup_Core(void)
   #endif
 
     Recycle(); // necessary?
+
+    char buf[100];
+    size_t olen;
+    mbedtls_mpi mpi;
+    mbedtls_mpi_init(&mpi);
+    mbedtls_mpi_lset(&mpi, 1024);
+    int ret = mbedtls_mpi_write_string(&mpi, 10, buf, 100, &olen);
+    switch (ret) {
+      case 0:
+        break;  // yay it worked
+      case MBEDTLS_ERR_MPI_BUFFER_TOO_SMALL:
+        printf("Buffer too small?\n");
+        break;
+      default:
+        printf("Some other error...\n");
+        break;
+    }
+    mbedtls_mpi_free(&mpi);
 }
 
 

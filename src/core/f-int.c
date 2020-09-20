@@ -25,7 +25,6 @@
 //
 
 #include "sys-core.h"
-#include "sys-int-funcs.h"
 
 bool reb_i32_add_overflow(int32_t x, int32_t y, int *sum)
 {
@@ -45,7 +44,7 @@ bool reb_u32_add_overflow(uint32_t x, uint32_t y, unsigned int *sum)
     return false;
 }
 
-bool reb_i64_add_overflow(int64_t x, int64_t y, int64_t *sum)
+bool reb_intptr_add_overflow(int64_t x, int64_t y, int64_t *sum)
 {
     *sum = cast(uint64_t, x) + cast(uint64_t, y); // unsigned never overflows
     if (((x < 0) == (y < 0)) && ((x < 0) != (*sum < 0)))
@@ -53,7 +52,7 @@ bool reb_i64_add_overflow(int64_t x, int64_t y, int64_t *sum)
     return false;
 }
 
-bool reb_u64_add_overflow(uint64_t x, uint64_t y, uint64_t *sum)
+bool reb_uintptr_add_overflow(uint64_t x, uint64_t y, uint64_t *sum)
 {
     *sum = x + y;
     if (*sum < x || *sum < y)
@@ -69,7 +68,7 @@ bool reb_i32_sub_overflow(int32_t x, int32_t y, int32_t *diff)
     return false;
 }
 
-bool reb_i64_sub_overflow(int64_t x, int64_t y, int64_t *diff)
+bool reb_intptr_sub_overflow(int64_t x, int64_t y, int64_t *diff)
 {
     *diff = cast(uint64_t, x) - cast(uint64_t, y);
     if (((x < 0) != (y < 0)) && ((x < 0) != (*diff < 0)))
@@ -95,7 +94,7 @@ bool reb_u32_mul_overflow(uint32_t x, uint32_t y, uint32_t *prod)
     return false;
 }
 
-bool reb_i64_mul_overflow(int64_t x, int64_t y, int64_t *prod)
+bool reb_intptr_mul_overflow(int64_t x, int64_t y, int64_t *prod)
 {
     bool sgn;
     uint64_t p = 0;
@@ -143,7 +142,7 @@ bool reb_i64_mul_overflow(int64_t x, int64_t y, int64_t *prod)
     }
 
     if (
-        REB_U64_MUL_OF(x, y, cast(uint64_t*, &p))
+        REB_UINTPTR_MUL_OF(x, y, cast(uint64_t*, &p))
         || (!sgn && p > INT64_MAX)
         || (sgn && p - 1 > INT64_MAX)
     ){
@@ -163,7 +162,7 @@ bool reb_i64_mul_overflow(int64_t x, int64_t y, int64_t *prod)
     return false;
 }
 
-bool reb_u64_mul_overflow(uint64_t x, uint64_t y, uint64_t *prod)
+bool reb_uintptr_mul_overflow(uint64_t x, uint64_t y, uint64_t *prod)
 {
     uint64_t b = UINT64_C(1) << 32;
 
@@ -181,5 +180,5 @@ bool reb_u64_mul_overflow(uint64_t x, uint64_t y, uint64_t *prod)
     if (tmp >= b)
         return true; // (x0 * y1 + x1 * y0) * b overflows
 
-    return did (REB_U64_ADD_OF(tmp << 32, x0 * y0, prod));
+    return did (REB_UINTPTR_ADD_OF(tmp << 32, x0 * y0, prod));
 }

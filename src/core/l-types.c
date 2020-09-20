@@ -734,7 +734,7 @@ const REBYTE *Scan_Integer(
 
     RESET_VAL_HEADER(out, REB_INTEGER, CELL_MASK_NONE);
 
-    VAL_INT64(out) = CHR_TO_INT(buf);
+    VAL_INT_SMALL(out) = CHR_TO_INT(buf);
     if (errno != 0)
         return_NULL; // overflow
 

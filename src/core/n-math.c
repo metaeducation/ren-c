@@ -359,36 +359,36 @@ REBNATIVE(shift)
 {
     INCLUDE_PARAMS_OF_SHIFT;
 
-    REBI64 b = VAL_INT64(ARG(bits));
+    REBSML b = VAL_INT_SMALL(ARG(bits));
     REBVAL *a = ARG(value);
 
     if (b < 0) {
         REBU64 c = - cast(REBU64, b); // defined, see note on #pragma above
         if (c >= 64) {
             if (REF(logical))
-                VAL_INT64(a) = 0;
+                VAL_INT_SMALL(a) = 0;
             else
-                VAL_INT64(a) >>= 63;
+                VAL_INT_SMALL(a) >>= 63;
         }
         else {
             if (REF(logical))
-                VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) >> c;
+                VAL_INT_SMALL(a) = cast(REBU64, VAL_INT_SMALL(a)) >> c;
             else
-                VAL_INT64(a) >>= cast(REBI64, c);
+                VAL_INT_SMALL(a) >>= cast(REBI64, c);
         }
     }
     else {
         if (b >= 64) {
             if (REF(logical))
-                VAL_INT64(a) = 0;
-            else if (VAL_INT64(a) != 0)
+                VAL_INT_SMALL(a) = 0;
+            else if (VAL_INT_SMALL(a) != 0)
                 fail (Error_Overflow_Raw());
         }
         else {
             if (REF(logical))
-                VAL_INT64(a) = cast(REBU64, VAL_INT64(a)) << b;
+                VAL_INT_SMALL(a) = cast(REBU64, VAL_INT_SMALL(a)) << b;
             else {
-                REBU64 c = cast(REBU64, INT64_MIN) >> b;
+                REBU64 c = cast(REBU64, INTPTR_MIN) >> b;
                 REBU64 d = VAL_INT64(a) < 0
                     ? - cast(REBU64, VAL_INT64(a)) // again, see #pragma
                     : cast(REBU64, VAL_INT64(a));
@@ -396,10 +396,10 @@ REBNATIVE(shift)
                     if ((c < d) || (VAL_INT64(a) >= 0))
                         fail (Error_Overflow_Raw());
 
-                    VAL_INT64(a) = INT64_MIN;
+                    VAL_INT_SMALL(a) = INTPTR_MIN;
                 }
                 else
-                    VAL_INT64(a) <<= b;
+                    VAL_INT_SMALL(a) <<= b;
             }
         }
     }

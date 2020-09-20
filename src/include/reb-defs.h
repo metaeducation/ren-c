@@ -210,6 +210,10 @@ typedef struct Reb_Series REBSER;
 
 typedef REBSER REBBIN;  // generic binary series, e.g. for BINARY! (byte-size)
 
+#if !defined(REBBIG)  // mbedtls needs inclusion before %sys-core.h in Crypt
+    #define REBBIG REBSER  // big integer support (mbedTLS hooked to a REBSER)
+#endif
+
 struct Reb_String;
 typedef struct Reb_String REBSTR;  // see %sys-string.h
 

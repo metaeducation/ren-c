@@ -62,8 +62,6 @@
 
 #include "sys-core.h"
 
-#include "sys-int-funcs.h"
-
 
 //
 // !!! In R3-Alpha, the core included specialized structures which required

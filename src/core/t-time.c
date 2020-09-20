@@ -673,7 +673,7 @@ REBTYPE(Time)
                 RETURN (to);
             }
             else if (IS_INTEGER(to)) {
-                VAL_INT64(to)
+                VAL_INT_SMALL(to)
                     = Round_Int(secs, frame_, Int32(to) * SEC_SEC) / SEC_SEC;
                 RESET_VAL_HEADER(to, REB_INTEGER, CELL_MASK_NONE);
                 RETURN (to);

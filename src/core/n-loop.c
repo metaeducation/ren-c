@@ -23,8 +23,6 @@
 //
 
 #include "sys-core.h"
-#include "sys-int-funcs.h" //REB_I64_ADD_OF
-
 typedef enum {
     LOOP_FOR_EACH,
     LOOP_EVERY,
@@ -219,7 +217,7 @@ static REB_R Loop_Integer_Common(
     // it must be checked for changing to a non-integer form.
     //
     RESET_CELL(var, REB_INTEGER, CELL_MASK_NONE);
-    REBI64 *state = &VAL_INT64(var);
+    REBSML *state = &VAL_INT_SMALL(var);
     *state = start;
 
     // Run only once if start is equal to end...edge case.
@@ -256,7 +254,7 @@ static REB_R Loop_Integer_Common(
         if (not IS_INTEGER(var))
             fail (Error_Invalid_Type(VAL_TYPE(var)));
 
-        if (REB_I64_ADD_OF(*state, bump, state))
+        if (REB_INTPTR_ADD_OF(*state, bump, reinterpret_cast<int64_t*>(state)))
             fail (Error_Overflow_Raw());
     }
 

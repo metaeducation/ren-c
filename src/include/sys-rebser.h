@@ -752,6 +752,11 @@ union Reb_Series_Misc {
     //
     bool negated;
 
+    // mbedtls_mpi integers have 1 for sign positive and -1 for sign negative.
+    // this could be compressed into an info or series bit if necessary.
+    //
+    int sign;
+
     // rebQ() and rebU() use this with ARRAY_FLAG_INSTRUCTION_ADJUST_QUOTING.
     //
     int quoting_delta;

@@ -57,30 +57,30 @@
 
 #if __has_builtin(__builtin_saddl_overflow) && __has_builtin(__builtin_saddll_overflow) || GCC_VERSION_AT_LEAST(5, 1)
     #ifdef __LP64__
-        #define REB_I64_ADD_OF(x, y, sum) \
+        #define REB_INTPTR_ADD_OF(x, y, sum) \
             __builtin_saddl_overflow((x), (y), cast(long*, sum))
     #else // presumably __LLP64__ or __LP32__
-        #define REB_I64_ADD_OF(x, y, sum) \
+        #define REB_INTPTR_ADD_OF(x, y, sum) \
             __builtin_saddll_overflow((x), (y), (sum))
     #endif
 #else
-    bool reb_i64_add_overflow(int64_t x, int64_t y, int64_t *sum);
-    #define REB_I64_ADD_OF(x, y, sum) \
-        reb_i64_add_overflow((x), (y), (sum))
+    bool reb_intptr_add_overflow(int64_t x, int64_t y, int64_t *sum);
+    #define REB_INTPTR_ADD_OF(x, y, sum) \
+        reb_intptr_add_overflow((x), (y), (sum))
 #endif
 
 #if __has_builtin(__builtin_uaddl_overflow) && __has_builtin(__builtin_uaddll_overflow) || GCC_VERSION_AT_LEAST(5, 1)
     #ifdef __LP64__
-        #define REB_U64_ADD_OF(x, y, sum) \
+        #define REB_UINTPTR_ADD_OF(x, y, sum) \
             __builtin_uaddl_overflow((x), (y), cast(unsigned long*, sum))
     #else // presumably __LLP64__ or __LP32__
-        #define REB_U64_ADD_OF(x, y, sum) \
+        #define REB_UINTPTR_ADD_OF(x, y, sum) \
             __builtin_uaddll_overflow((x), (y), (sum))
     #endif
 #else
-    bool reb_u64_add_overflow(uint64_t x, uint64_t y, uint64_t *sum);
-    #define REB_U64_ADD_OF(x, y, sum) \
-        reb_u64_add_overflow((x), (y), (sum))
+    bool reb_uintptr_add_overflow(uint64_t x, uint64_t y, uint64_t *sum);
+    #define REB_UINTPTR_ADD_OF(x, y, sum) \
+        reb_uintptr_add_overflow((x), (y), (sum))
 #endif
 
 #if __has_builtin(__builtin_ssub_overflow) || GCC_VERSION_AT_LEAST(5, 1)
@@ -94,18 +94,18 @@
 
 #if __has_builtin(__builtin_ssubl_overflow) && __has_builtin(__builtin_ssubll_overflow) || GCC_VERSION_AT_LEAST(5, 1)
     #ifdef __LP64__
-        #define REB_I64_SUB_OF(x, y, diff) \
+        #define REB_INTPTR_SUB_OF(x, y, diff) \
             __builtin_ssubl_overflow((x), (y), cast(long*, (diff)))
     #else
         // presumably __LLP64__ or __LP32__
         //
-        #define REB_I64_SUB_OF(x, y, diff) \
+        #define REB_INTPTR_SUB_OF(x, y, diff) \
             __builtin_ssubll_overflow((x), (y), (diff))
     #endif
 #else
-    bool reb_i64_sub_overflow(int64_t x, int64_t y, int64_t *diff);
-    #define REB_I64_SUB_OF(x, y, diff) \
-        reb_i64_sub_overflow((x), (y), (diff))
+    bool reb_intptr_sub_overflow(int64_t x, int64_t y, int64_t *diff);
+    #define REB_INTPTR_SUB_OF(x, y, diff) \
+        reb_intptr_sub_overflow((x), (y), (diff))
 #endif
 
 #if __has_builtin(__builtin_smul_overflow) || GCC_VERSION_AT_LEAST(5, 1)
@@ -128,41 +128,41 @@
 
 #if __has_builtin(__builtin_smull_overflow) && __has_builtin(__builtin_smulll_overflow) || GCC_VERSION_AT_LEAST(5, 1)
     #ifdef __LP64__
-        #define REB_I64_MUL_OF(x, y, prod) \
+        #define REB_INTPTR_MUL_OF(x, y, prod) \
             __builtin_smull_overflow((x), (y), cast(long*, prod))
     #elif !defined(__clang__)
         //
         // __builtin_smulll_overflow doesn't work on 32-bit systems yet, causing
         // undefined reference to __mulodi4
         //
-        #define REB_I64_MUL_OF(x, y, prod) \
+        #define REB_INTPTR_MUL_OF(x, y, prod) \
             __builtin_smulll_overflow((x), (y), cast(long long*, prod))
     #else
         // presumably __LLP64__ or __LP32__
         //
-        bool reb_i64_mul_overflow(int64_t x, int64_t y, int64_t *prod);
-        #define REB_I64_MUL_OF(x, y, prod) \
-            reb_i64_mul_overflow((x), (y), cast(long long*, prod))
+        bool reb_intptr_mul_overflow(int64_t x, int64_t y, int64_t *prod);
+        #define REB_INTPTR_MUL_OF(x, y, prod) \
+            reb_intptr_mul_overflow((x), (y), cast(long long*, prod))
     #endif
 #else
-    bool reb_i64_mul_overflow(int64_t x, int64_t y, int64_t *prod);
-    #define REB_I64_MUL_OF(x, y, prod) \
-        reb_i64_mul_overflow((x), (y), (prod))
+    bool reb_intptr_mul_overflow(int64_t x, int64_t y, int64_t *prod);
+    #define REB_INTPTR_MUL_OF(x, y, prod) \
+        reb_intptr_mul_overflow((x), (y), (prod))
 #endif
 
 #if __has_builtin(__builtin_umull_overflow) && __has_builtin(__builtin_umulll_overflow) || GCC_VERSION_AT_LEAST(5, 1)
     #ifdef __LP64__
-        #define REB_U64_MUL_OF(x, y, prod) \
+        #define REB_UINTPTR_MUL_OF(x, y, prod) \
             __builtin_umull_overflow((x), (y), cast(unsigned long*, (prod)))
     #else
         // presumably __LLP64__ or __LP32__
         //
-        #define REB_U64_MUL_OF(x, y, prod) __builtin_umulll_overflow((x), (y), (prod))
+        #define REB_UINTPTR_MUL_OF(x, y, prod) __builtin_umulll_overflow((x), (y), (prod))
     #endif
 #else
-    bool reb_u64_mul_overflow(uint64_t x, uint64_t y, uint64_t *prod);
-    #define REB_U64_MUL_OF(x, y, prod) \
-        reb_u64_mul_overflow((x), (y), (prod))
+    bool reb_uintptr_mul_overflow(uint64_t x, uint64_t y, uint64_t *prod);
+    #define REB_UINTPTR_MUL_OF(x, y, prod) \
+        reb_uintptr_mul_overflow((x), (y), (prod))
 #endif
 
 #endif //__SYS_INT_FUNCS_H_

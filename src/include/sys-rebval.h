@@ -438,8 +438,6 @@ struct Reb_Character_Payload {  // see %sys-char.h
     REBYTE size_then_encoded[8];
 };
 
-struct Reb_Integer_Payload { REBI64 i64; };  // see %sys-integer.h
-
 struct Reb_Decimal_Payload { REBDEC dec; };  // see %sys-decimal.h
 
 struct Reb_Time_Payload {  // see %sys-time.h
@@ -504,7 +502,6 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
     struct Reb_Logic_Payload Logic;
     struct Reb_Character_Payload Character;
-    struct Reb_Integer_Payload Integer;
     struct Reb_Decimal_Payload Decimal;
     struct Reb_Time_Payload Time;
 

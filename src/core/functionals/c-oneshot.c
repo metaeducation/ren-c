@@ -55,9 +55,9 @@ REB_R Downshot_Dispatcher(REBFRM *f)  // runs until count is reached
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
     RELVAL *n = ARR_AT(details, IDX_ONESHOT_COUNTER);
-    if (VAL_INT64(n) == 0)
+    if (VAL_INT_SMALL(n) == 0)
         return nullptr;  // always return null once 0 is reached
-    --VAL_INT64(n);
+    --VAL_INT_SMALL(n);
 
     REBVAL *code = FRM_ARG(f, 1);
     if (Do_Branch_Throws(f->out, FRM_SPARE(f), code))
@@ -73,8 +73,8 @@ REB_R Upshot_Dispatcher(REBFRM *f)  // won't run until count is reached
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
     RELVAL *n = ARR_AT(details, IDX_ONESHOT_COUNTER);
-    if (VAL_INT64(n) < 0) {
-        ++VAL_INT64(ARR_HEAD(details));
+    if (VAL_INT_SMALL(n) < 0) {
+        ++VAL_INT_SMALL(ARR_HEAD(details));
         return nullptr;  // return null until 0 is reached
     }
 
