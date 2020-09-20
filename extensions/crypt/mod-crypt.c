@@ -38,6 +38,11 @@
 
 #include "mbedtls/ecdh.h"  // Elliptic curve (Diffie-Hellman)
 
+#include "mbedtls/dhm.h"  // Diffie-Hellman (credits Merkel, by their request)
+
+#include "mbedtls/arc4.h"  // RC4 is technically trademarked, so it's "ARC4"
+
+
 #ifdef TO_WINDOWS
     #undef _WIN32_WINNT  // https://forum.rebol.info/t/326/4
     #define _WIN32_WINNT 0x0501  // Minimum API target: WinXP
@@ -54,13 +59,9 @@
     #include <unistd.h>
 #endif
 
+#include "sys-zlib.h"  // needed for the ADLER32 hash, must be after Windows.h
+
 #include "sys-core.h"
-
-#include "mbedtls/dhm.h"  // Diffie-Hellman (credits Merkel, by their request)
-
-#include "mbedtls/arc4.h"  // RC4 is technically trademarked, so it's "ARC4"
-
-#include "sys-zlib.h"  // needed for the ADLER32 hash
 
 #include "tmp-mod-crypt.h"
 
