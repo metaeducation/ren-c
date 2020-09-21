@@ -235,10 +235,6 @@ uint32_t Hash_Value(const RELVAL *v)
         hash ^= Hash_Value(VAL_PAIR_Y(cell));
         break;
 
-      case REB_TUPLE:
-        hash = Hash_Bytes(VAL_TUPLE(cell), VAL_TUPLE_LEN(cell));
-        break;
-
       case REB_TIME:
       case REB_DATE:
         hash = cast(REBLEN, VAL_NANO(cell) ^ (VAL_NANO(cell) / SEC_SEC));
@@ -272,6 +268,11 @@ uint32_t Hash_Value(const RELVAL *v)
         );
         break;
 
+      case REB_TUPLE:
+      case REB_SET_TUPLE:
+      case REB_GET_TUPLE:
+      case REB_SYM_TUPLE:
+        //
       case REB_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:

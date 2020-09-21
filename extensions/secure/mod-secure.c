@@ -132,7 +132,7 @@ const REBYTE *Security_Policy(
     }
 
     if (IS_TUPLE(policy))  // just a tuple (e.g. [file rrrr.wwww.xxxx])
-        return VAL_TUPLE(policy);
+        fail ("This returned VAL_TUPLE(policy)...review");
 
     if (not IS_BLOCK(policy))  // only other form is detailed block
         fail (policy);
@@ -152,7 +152,7 @@ const REBYTE *Security_Policy(
 
         if (IS_WORD(item)) { // !!! Comment said "any word works here"
             if (len == 0)  // !!! "If no strings found, use the default"
-                flags = VAL_TUPLE(item + 1);
+                fail ("This set flags = VAL_TUPLE(item + 1), review");
         }
         else if (name and (IS_TEXT(item) or IS_FILE(item))) {
             //
@@ -161,7 +161,7 @@ const REBYTE *Security_Policy(
             if (Match_Sub_Path(VAL_STRING(item), VAL_STRING(name))) {
                 if (VAL_LEN_HEAD(name) >= len) {  // "Is the match adequate?"
                     len = VAL_LEN_HEAD(name);
-                    flags = VAL_TUPLE(item + 1);
+                    fail ("This set flags = VAL_TUPLE(item + 1), review");
                 }
             }
         }

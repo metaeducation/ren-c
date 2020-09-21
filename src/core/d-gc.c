@@ -121,7 +121,6 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         assert(Is_Marked(paired));
         break; }
 
-      case REB_TUPLE:
       case REB_TIME:
       case REB_DATE:
         break;
@@ -306,10 +305,19 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         assert(Is_Marked(a));
         break; }
 
+      case REB_TUPLE:
+      case REB_SET_TUPLE:
+      case REB_GET_TUPLE:
+      case REB_SYM_TUPLE:
+        goto any_sequence;
+
       case REB_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:
-      case REB_SYM_PATH: {
+      case REB_SYM_PATH:
+        goto any_sequence;
+
+      any_sequence: {
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         REBARR *a = ARR(PAYLOAD(Any, v).first.node);
         assert(NOT_SERIES_INFO(a, INACCESSIBLE));

@@ -1526,7 +1526,7 @@ prf: function [
         ; cipher suite used: https://tools.ietf.org/html/rfc4346#section-5
 
         len: length of secret
-        mid: to integer! (.5 * (len + either odd? len [1] [0]))
+        mid: to integer! (0.5 * (len + either odd? len [1] [0]))
 
         s-1: copy/part secret mid
         s-2: copy at secret mid + either odd? len [0] [1]

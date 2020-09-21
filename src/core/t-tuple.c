@@ -24,31 +24,6 @@
 
 #include "sys-core.h"
 
-//
-//  CT_Tuple: C
-//
-REBINT CT_Tuple(REBCEL(const*) a, REBCEL(const*) b, bool strict)
-{
-    UNUSED(strict);
-
-    REBLEN len = MAX(VAL_TUPLE_LEN(a), VAL_TUPLE_LEN(b));
-    assert(len < MAX_TUPLE);
-
-    const REBYTE *vp1 = VAL_TUPLE(a);
-    const REBYTE *vp2 = VAL_TUPLE(b);
-
-    // Note: unused bytes in tuples are 0, so that 1.0.0 can = 1.0.0.0
-
-    REBINT n;
-    for (; len > 0; len--, ++vp1, ++vp2) {
-        n = cast(REBINT, *vp1) - *vp2;
-        if (n != 0)
-            return n > 0 ? 1 : -1;
-    }
-    return 0;
-}
-
-
 
 //
 //  MAKE_Tuple: C
@@ -66,9 +41,6 @@ REB_R MAKE_Tuple(
     if (IS_TUPLE(arg))
         return Move_Value(out, arg);
 
-    REBYTE buf[MAX_TUPLE];
-    REBYTE *vp = buf;
-
     // !!! Net lookup parses IP addresses out of `tcp://93.184.216.34` or
     // similar URL!s.  In Rebol3 these captures come back the same type
     // as the input instead of as STRING!, which was a latent bug in the
@@ -80,13 +52,44 @@ REB_R MAKE_Tuple(
     // URL! here fixes it, though there are still open questions.
     //
     if (IS_TEXT(arg) or IS_URL(arg)) {
-        REBSIZ size;
-        const REBYTE *bp
-            = Analyze_String_For_Scan(&size, arg, MAX_SCAN_TUPLE);
+        REBSIZ len;
+        const REBYTE *cp
+            = Analyze_String_For_Scan(&len, arg, MAX_SCAN_TUPLE);
 
-        if (Scan_Tuple(out, bp, size) == nullptr)
+        if (len == 0)
             fail (arg);
-        return out;
+
+        const REBYTE *ep;
+        REBLEN size = 1;
+        REBINT n;
+        for (n = cast(REBINT, len), ep = cp; n > 0; n--, ep++) { // count '.'
+            if (*ep == '.')
+                ++size;
+        }
+
+        if (size > MAX_TUPLE)
+            fail (arg);
+
+        if (size < 3)
+            size = 3;
+
+        REBYTE buf[MAX_TUPLE];
+
+        REBYTE *tp = buf;
+        for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
+            ep = Grab_Int(ep, &n);
+            if (n < 0 || n > 255)
+                fail (arg);
+
+            *tp++ = cast(REBYTE, n);
+            if (*ep != '.')
+                break;
+        }
+
+        if (len > cast(REBLEN, ep - cp))
+            fail (arg);
+
+        return Init_Tuple_Bytes(out, buf, size);
     }
 
     if (ANY_ARRAY(arg)) {
@@ -94,6 +97,9 @@ REB_R MAKE_Tuple(
         REBINT n;
 
         const RELVAL *item = VAL_ARRAY_AT(arg);
+
+        REBYTE buf[MAX_TUPLE];
+        REBYTE *vp = buf;
 
         for (; NOT_END(item); ++item, ++vp, ++len) {
             if (len >= MAX_TUPLE)
@@ -112,12 +118,15 @@ REB_R MAKE_Tuple(
             *vp = n;
         }
 
-        return Init_Tuple(out, buf, len);
+        return Init_Tuple_Bytes(out, buf, len);
     }
 
     REBLEN alen;
 
     if (IS_ISSUE(arg)) {
+        REBYTE buf[MAX_TUPLE];
+        REBYTE *vp = buf;
+
         const REBSTR *spelling = VAL_STRING(arg);
         const REBYTE *ap = STR_HEAD(spelling);
         size_t size = STR_SIZE(spelling); // UTF-8 len
@@ -132,19 +141,17 @@ REB_R MAKE_Tuple(
                 fail (arg);
             *vp++ = decoded;
         }
-        Init_Tuple(out, buf, size);
+        Init_Tuple_Bytes(out, buf, size);
     }
     else if (IS_BINARY(arg)) {
         REBLEN len = VAL_LEN_AT(arg);
         if (len > MAX_TUPLE)
             len = MAX_TUPLE;
-        Init_Tuple(out, VAL_BIN_AT(arg), len);
-        alen = len;
+        Init_Tuple_Bytes(out, VAL_BIN_AT(arg), len);
     }
     else
         fail (arg);
 
-    for (; alen < MAX_TUPLE; alen++) *vp++ = 0;
     return out;
 
   bad_make:
@@ -166,13 +173,11 @@ REB_R TO_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 void Pick_Tuple(REBVAL *out, const REBVAL *value, const RELVAL *picker)
 {
-    const REBYTE *dat = VAL_TUPLE(value);
-
     REBINT len = VAL_TUPLE_LEN(value);
     if (len < 3)
         len = 3;
 
-    REBINT n = Get_Num_From_Arg(picker);
+    REBINT pick = Get_Num_From_Arg(picker);
 
     // This uses modulus to avoid having a conditional access into the array,
     // which would trigger Spectre mitigation:
@@ -182,9 +187,8 @@ void Pick_Tuple(REBVAL *out, const REBVAL *value, const RELVAL *picker)
     // By always accessing the array and always being in bounds, there's no
     // speculative execution accessing unbound locations.
     //
-    REBYTE byte = dat[(n - 1) % len];
-    if (n > 0 and n <= len)
-        Init_Integer(out, byte);
+    if (pick > 0 and pick <= len)
+        Init_Integer(out, VAL_TUPLE_AT(value, (pick - 1) % len));
     else
         Init_Nulled(out);
 }
@@ -207,41 +211,6 @@ REB_R PD_Tuple(
 
 
 //
-//  MF_Tuple: C
-//
-void MF_Tuple(REB_MOLD *mo, REBCEL(const*) v, bool form)
-{
-    UNUSED(form);
-
-    // "Buffer must be large enough to hold longest tuple.
-    //  Longest is: (3 digits + '.') * 11 nums + 1 term => 45"
-    //
-    // !!! ^-- Out of date comments; TUPLE! needs review and replacement.
-    //
-    REBYTE buf[60];
-
-    REBLEN len = VAL_TUPLE_LEN(v);
-    const REBYTE *tp = cast(const REBYTE *, VAL_TUPLE(v));
-
-    REBYTE *out = buf;
-
-    for (; len > 0; len--, tp++) {
-        out = Form_Int(out, *tp);
-        *out++ = '.';
-    }
-
-    len = VAL_TUPLE_LEN(v);
-    while (len++ < 3) {
-        *out++ = '0';
-        *out++ = '.';
-    }
-    *--out = 0;
-
-    Append_Ascii_Len(mo->series, s_cast(buf), out - buf);
-}
-
-
-//
 //  REBTYPE: C
 //
 // !!! The TUPLE type from Rebol is something of an oddity, plus written as
@@ -251,14 +220,10 @@ void MF_Tuple(REB_MOLD *mo, REBCEL(const*) v, bool form)
 REBTYPE(Tuple)
 {
     REBVAL *value = D_ARG(1);
-    const REBYTE *ap;
-    REBLEN alen;
-    REBINT  a;
-    REBDEC  dec;
 
     REBYTE buf[MAX_TUPLE];
     REBLEN len = VAL_TUPLE_LEN(value);
-    memcpy(buf, VAL_TUPLE(value), len);
+    Get_Tuple_Bytes(buf, value, len);
     REBYTE *vp = buf;
 
     REBSYM sym = VAL_WORD_SYM(verb);
@@ -279,22 +244,29 @@ REBTYPE(Tuple)
     ){
         assert(vp);
 
+        REBYTE abuf[MAX_TUPLE];
+        const REBYTE *ap;
+        REBLEN alen;
+        REBINT a;
+        REBDEC dec;
+
         REBVAL *arg = D_ARG(2);
 
         if (IS_INTEGER(arg)) {
             dec = -207.6382; // unused but avoid maybe uninitialized warning
             a = VAL_INT32(arg);
-            ap = 0;
+            ap = nullptr;
         }
         else if (IS_DECIMAL(arg) || IS_PERCENT(arg)) {
             dec = VAL_DECIMAL(arg);
             a = cast(REBINT, dec);
-            ap = 0;
+            ap = nullptr;
         }
         else if (IS_TUPLE(arg)) {
             dec = -251.8517; // unused but avoid maybe uninitialized warning
-            ap = VAL_TUPLE(arg);
             alen = VAL_TUPLE_LEN(arg);
+            Get_Tuple_Bytes(abuf, arg, alen);
+            ap = abuf;
             if (len < alen)
                 len = alen;
             a = 646699; // unused but avoid maybe uninitialized warning
@@ -376,7 +348,7 @@ REBTYPE(Tuple)
                 v = 0;
             *vp = cast(REBYTE, v);
         }
-        return Init_Tuple(D_OUT, buf, len);
+        return Init_Tuple_Bytes(D_OUT, buf, len);
     }
 
     // !!!! merge with SWITCH below !!!
@@ -384,7 +356,7 @@ REBTYPE(Tuple)
         REBLEN temp = len;
         for (; temp > 0; --temp, vp++)
             *vp = cast(REBYTE, ~*vp);
-        return Init_Tuple(D_OUT, buf, len);
+        return Init_Tuple_Bytes(D_OUT, buf, len);
     }
     if (sym == SYM_RANDOM) {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -400,7 +372,7 @@ REBTYPE(Tuple)
             if (*vp)
                 *vp = cast(REBYTE, Random_Int(did REF(secure)) % (1 + *vp));
         }
-        return Init_Tuple(D_OUT, buf, len);
+        return Init_Tuple_Bytes(D_OUT, buf, len);
     }
 
     switch (sym) {
@@ -438,12 +410,12 @@ REBTYPE(Tuple)
         if (len > 0) {
             REBLEN i;
             for (i = 0; i < temp/2; i++) {
-                a = vp[temp - i - 1];
+                REBINT a = vp[temp - i - 1];
                 vp[temp - i - 1] = vp[i];
                 vp[i] = a;
             }
         }
-        return Init_Tuple(D_OUT, buf, len); }
+        return Init_Tuple_Bytes(D_OUT, buf, len); }
 /*
   poke_it:
         a = Get_Num_From_Arg(arg);

@@ -345,7 +345,7 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
         return CT_Pair(s, t, strict);
 
       case REB_TUPLE:
-        return CT_Tuple(s, t, strict);
+        return CT_Path(s, t, strict);
 
       case REB_TIME:
         return CT_Time(s, t, strict);

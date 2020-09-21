@@ -261,7 +261,7 @@ static REBSER *MAKE_TO_Binary_Common(const REBVAL *arg)
         return Copy_Sequence_Core(BYTE_BUF, SERIES_FLAGS_NONE);
 
     case REB_TUPLE:
-        return Copy_Bytes(VAL_TUPLE(arg), VAL_TUPLE_LEN(arg));
+        fail ("Revisit TUPLE! to BINARY!");
 
     case REB_CHAR: {
         REBUNI c = VAL_CHAR(arg);

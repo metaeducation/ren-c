@@ -305,7 +305,7 @@ raw-size
 extern
 rebval
 
-...
+~~~  ; !!! Temporary placeholder for ellipsis; will have to be special trick
 varargs
 
 ; Gobs:

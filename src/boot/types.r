@@ -250,7 +250,7 @@ path        "refinements to functions, objects, files"
             path        *       *       *       [path]
 
 tuple       "sequence of small integers (colors, versions, IP)"
-            tuple       +       +       +       [scalar]
+            path        +       +       *       [path]
 
 word        "evaluates a variable or action"
             word        -       *       +       [word]

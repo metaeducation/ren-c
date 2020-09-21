@@ -50,7 +50,7 @@ static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
 
     REBCTX *ctx = VAL_CONTEXT(info);
 
-    Init_Tuple(
+    Init_Tuple_Bytes(
         CTX_VAR(ctx, STD_NET_INFO_LOCAL_IP),
         cast(REBYTE*, &sock->local_ip),
         4
@@ -60,7 +60,7 @@ static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
         sock->local_port
     );
 
-    Init_Tuple(
+    Init_Tuple_Bytes(
         CTX_VAR(ctx, STD_NET_INFO_REMOTE_IP),
         cast(REBYTE*, &sock->remote_ip),
         4
@@ -182,7 +182,7 @@ static REB_R Transport_Actor(
             else if (IS_TUPLE(arg)) { // Host IP specified:
                 ReqNet(sock)->remote_port =
                     IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
-                memcpy(&(ReqNet(sock)->remote_ip), VAL_TUPLE(arg), 4);
+                Get_Tuple_Bytes(&(ReqNet(sock)->remote_ip), arg, 4);
                 goto open_socket_actions;
             }
             else if (IS_BLANK(arg)) { // No host, must be a LISTEN socket:
@@ -607,8 +607,8 @@ REBNATIVE(set_udp_multicast)
         rebJumps("FAIL {SET-UDP-MULTICAST used on non-UDP port}", rebEND);
 
     struct ip_mreq mreq;
-    memcpy(&mreq.imr_multiaddr.s_addr, VAL_TUPLE(ARG(group)), 4);
-    memcpy(&mreq.imr_interface.s_addr, VAL_TUPLE(ARG(member)), 4);
+    Get_Tuple_Bytes(&mreq.imr_multiaddr.s_addr, ARG(group), 4);
+    Get_Tuple_Bytes(&mreq.imr_interface.s_addr, ARG(member), 4);
 
     int result = setsockopt(
         req->requestee.socket,

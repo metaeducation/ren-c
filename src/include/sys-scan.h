@@ -61,13 +61,13 @@ enum Reb_Token {
     TOKEN_STRING,
     TOKEN_BINARY,
     TOKEN_PAIR,
-    TOKEN_TUPLE,
+    TOKEN_TUPLE,  // only triggered in leading dot cases (. .. .foo .foo.bar)
     TOKEN_FILE,
     TOKEN_EMAIL,
     TOKEN_URL,
     TOKEN_ISSUE,
     TOKEN_TAG,
-    TOKEN_PATH,
+    TOKEN_PATH,  // only triggered in leading slash cases (/ // /foo /foo.bar)
     TOKEN_CONSTRUCT,
     TOKEN_MAX
 };

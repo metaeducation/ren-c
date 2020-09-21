@@ -36,36 +36,70 @@
 #define MAX_TUPLE \
     ((sizeof(uint32_t) * 2)) // for same properties on 64-bit and 32-bit
 
-inline static const REBYTE *VAL_TUPLE(REBCEL(const*) v) {
+inline static const REBYTE VAL_TUPLE_AT(REBCEL(const*) v, REBLEN n) {
     assert(CELL_KIND(v) == REB_TUPLE);
-    return PAYLOAD(Bytes, v).common + 1;
+    return VAL_INT32(ARR_AT(ARR(VAL_NODE(v)), n));
+    /* return PAYLOAD(Bytes, v).common[n + 1]; */  // 0 is size, compact form
 }
 
 inline static REBYTE VAL_TUPLE_LEN(REBCEL(const*) v) {
     assert(CELL_KIND(v) == REB_TUPLE);
-    return PAYLOAD(Bytes, v).common[0];
+    return ARR_LEN(ARR(VAL_NODE(v)));
+    /* return PAYLOAD(Bytes, v).common[0]; */  // 0 is size, compact form
 }
 
-inline static REBVAL *Init_Tuple(
+// Tuple has a compact form that allows it to represent bytes with more
+// optimal storage.  It can pack as many bytes in the tuple as space
+// available in the cell.  This is the size of the payload (which varies on
+// 32 and 64 bit systems).  So it should be willing to expand to an
+// arbitrary size if need be.
+//
+inline static REBVAL *Init_Tuple_Bytes(
     RELVAL *out,
     const REBYTE *data,
     REBLEN len
 ){
-    RESET_CELL(out, REB_TUPLE, CELL_MASK_NONE);
+    RESET_CELL(out, REB_TUPLE, CELL_FLAG_FIRST_IS_NODE);
+
+    REBARR *a = Make_Array_Core(len, NODE_FLAG_MANAGED);
+    TERM_ARRAY_LEN(a, len);
+    for (; len > 0; --len, ++data)
+        Init_Integer(Alloc_Tail_Array(a), *data);
+
+    INIT_VAL_NODE(out, Freeze_Array_Shallow(a));  // immutable
+
+    /*  // optimized version
+
+    if (len > MAX_TUPLE)  // need to make some kind of series
+        fail ("Extension of optimized binary tuples not yet implemented");
+
+    PAYLOAD(Bytes, out).common[0] = len;  // length goes in the first byte
 
     REBLEN n = len;
-    REBYTE *bp = PAYLOAD(Bytes, out).common + 1;
+    REBYTE *bp = PAYLOAD(Bytes, out).common + 1;  // content is after length
     for (; n > 0; --n)
         *bp++ = *data++;
 
     // !!! Historically, 1.0.0 = 1.0.0.0 under non-strict equality.  Make the
-    // comparison easier just by setting all the bytes to zero.
+    // comparison easier just by setting all the bytes to zero.  This is
+    // kind of superfluous; and ZERO? is basically a hack...review.
     //
     memset(bp, 0, MAX_TUPLE - len);
-    PAYLOAD(Bytes, out).common[0] = len;
+    */
 
-    INIT_BINDING(out, UNBOUND);
+    INIT_BINDING(out, UNBOUND);  // generic tuples execute, need bindings
     return cast(REBVAL*, out);
+}
+
+inline static void Get_Tuple_Bytes(
+    void *buf,
+    const RELVAL *tuple,
+    REBSIZ size
+){
+    REBYTE *dp = cast(REBYTE*, buf);
+    REBSIZ i;
+    for (i = 0; i < size; ++i)
+        dp[i] = VAL_TUPLE_AT(tuple, i);
 }
 
 inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
@@ -78,7 +112,7 @@ inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
         Init_Pair_Int(out, 0, 0);
     }
     else if (kind == REB_TUPLE) {
-        Init_Tuple(out, nullptr, 0);
+        Init_Tuple_Bytes(out, nullptr, 0);
     }
     else {
         RESET_CELL(out, kind, CELL_MASK_NONE);

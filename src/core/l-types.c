@@ -1151,57 +1151,6 @@ const REBYTE *Scan_Pair(
 
 
 //
-//  Scan_Tuple: C
-//
-// Scan and convert a tuple.
-//
-const REBYTE *Scan_Tuple(
-    RELVAL *out, // may live in data stack (do not call DS_PUSH(), GC, eval)
-    const REBYTE *cp,
-    REBLEN len
-) {
-    TRASH_CELL_IF_DEBUG(out);
-
-    if (len == 0)
-        return_NULL;
-
-    const REBYTE *ep;
-    REBLEN size = 1;
-    REBINT n;
-    for (n = cast(REBINT, len), ep = cp; n > 0; n--, ep++) { // count '.'
-        if (*ep == '.')
-            ++size;
-    }
-
-    if (size > MAX_TUPLE)
-        return_NULL;
-
-    if (size < 3)
-        size = 3;
-
-    REBYTE buf[MAX_TUPLE];
-
-    REBYTE *tp = buf;
-    for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
-        ep = Grab_Int(ep, &n);
-        if (n < 0 || n > 255)
-            return_NULL;
-
-        *tp++ = cast(REBYTE, n);
-        if (*ep != '.')
-            break;
-    }
-
-    if (len > cast(REBLEN, ep - cp))
-        return_NULL;
-
-    Init_Tuple(out, buf, size);
-
-    return ep;
-}
-
-
-//
 //  Scan_Binary: C
 //
 // Scan and convert binary strings.

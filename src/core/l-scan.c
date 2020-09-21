@@ -39,6 +39,13 @@
 
 #include "sys-core.h"
 
+static inline bool Is_Dot_Or_Slash(char c)
+  { return c == '/' or c == '.'; }
+
+static inline bool Interstitial_Match(char c, char mode) {
+    assert(mode == '/' or mode == '.');
+    return c == mode;
+}
 
 //
 // Maps each character to its lexical attributes, using
@@ -1272,14 +1279,13 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             return TOKEN_APOSTROPHE;
 
           case LEX_SPECIAL_COMMA:  // ,123
-          case LEX_SPECIAL_PERIOD:  // .123 .123.456.789 */
-            SET_LEX_FLAG(flags, (GET_LEX_VALUE(*cp)));
             if (IS_LEX_NUMBER(cp[1]))
                 goto num;
-            if (GET_LEX_VALUE(*cp) != LEX_SPECIAL_PERIOD)
-                fail (Error_Syntax(ss, TOKEN_WORD));
-            token = TOKEN_WORD;
-            goto scanword;
+            fail (Error_Syntax(ss, TOKEN_WORD));
+
+          case LEX_SPECIAL_PERIOD:  // .123 .123.456.789 */
+            SET_LEX_FLAG(flags, (GET_LEX_VALUE(*cp)));
+            return TOKEN_TUPLE;  // tuple like .abc .abc.1
 
           case LEX_SPECIAL_GREATER:  // arrow words like `>` handled above
             fail (Error_Syntax(ss, TOKEN_TAG));
@@ -1412,10 +1418,12 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
       case LEX_CLASS_NUMBER:  // Note: "order of tests is important"
       num:;
-        if (flags == 0)  // simple integer
-            return TOKEN_INTEGER;
+        if (flags == 0)
+            return TOKEN_INTEGER;  // simple integer e.g. `123`
+
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT))
-            return TOKEN_EMAIL;
+            return TOKEN_EMAIL;  // `123@example.com`
+
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {
             if (cp == ss->begin) {  // no +2 +16 +64 allowed
                 if (
@@ -1441,27 +1449,13 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             }
             fail (Error_Syntax(ss, TOKEN_INTEGER));
         }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON))  // 12:34
-            return TOKEN_TIME;
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD)) {
-            // 1.2 1.2.3 1,200.3 1.200,3 1.E-2
-            if (Skip_To_Byte(cp, ss->end, 'x'))
-                return TOKEN_PAIR;
-            cp = Skip_To_Byte(cp, ss->end, '.');
-            // Note: no comma in bytes
-            if (
-                not HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA)
-                and Skip_To_Byte(cp + 1, ss->end, '.')
-            ){
-                return TOKEN_TUPLE;
-            }
-            return TOKEN_DECIMAL;
-        }
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA)) {
-            if (Skip_To_Byte(cp, ss->end, 'x'))
-                return TOKEN_PAIR;
-            return TOKEN_DECIMAL;  // 1,23;
-        }
+
+        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON))
+            return TOKEN_TIME;  // `12:34`
+
+        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA))
+            return TOKEN_DECIMAL;  // `1,23`  !!! is this worth supporting?
+
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
             if (
                 HAS_LEX_FLAGS(
@@ -1475,14 +1469,13 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             ){
                 fail (Error_Syntax(ss, TOKEN_INTEGER));
             }
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_PERIOD))
-                return TOKEN_TUPLE;
             return TOKEN_INTEGER;
         }
 
-        // "Note: cannot detect dates of the form 1/2/1998 because they
-        // may appear within a path, where they are not actually dates!
-        // Special parsing is required at the next level up."
+        // Note: R3-Alpha supported dates like `1/2/1998`, despite the main
+        // date rendering showing as 2-Jan-1998.  This format was removed
+        // because it is more useful to have `1/2` and other numeric-styled
+        // PATH!s for use in dialecting.
         //
         for (; cp != ss->end; cp++) {
             // what do we hit first? 1-AUG-97 or 123E-4
@@ -1497,6 +1490,11 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             }
             if (*cp == '%')
                 return TOKEN_PERCENT;
+
+            if (Is_Dot_Or_Slash(*cp)) {  // will be part of a TUPLE! or PATH!
+                ss->end = cp;
+                return TOKEN_INTEGER;
+            }
         }
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_APOSTROPHE))  // 1'200
             return TOKEN_INTEGER;
@@ -1515,7 +1513,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             return token;
         cp = Skip_To_Byte(cp, ss->end, ':');
         assert(*cp == ':');
-        if (cp[1] != '/' and Lex_Map[cp[1]] < LEX_SPECIAL) {
+        if (not Is_Dot_Or_Slash(cp[1]) and Lex_Map[cp[1]] < LEX_SPECIAL) {
             // a valid delimited word SET?
             if (HAS_LEX_FLAGS(
                 flags,
@@ -1526,7 +1524,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             return TOKEN_SET;
         }
         cp = ss->end;  // then, must be a URL
-        while (*cp == '/') {  // deal with path delimiter
+        while (Is_Dot_Or_Slash(*cp)) {  // deal with path delimiter
             cp++;
             while (IS_LEX_NOT_DELIMIT(*cp) or not IS_LEX_DELIMIT_HARD(*cp))
                 ++cp;
@@ -1699,7 +1697,6 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 
 #define CELL_FLAG_BLANK_MARKED_GET NODE_FLAG_MARKED
 
-
 static REBARR *Scan_Child_Array(SCAN_LEVEL *level, REBYTE mode);
 
 //
@@ -1774,7 +1771,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
           case TOKEN_GET:
             if (ep[-1] == ':') {
-                if (ep[0] == '/') {  // e.g. :/foo
+                if (Is_Dot_Or_Slash(ep[0])) {  // e.g. :/foo
                     Init_Blank(DS_PUSH());  // let blank be head of path
 
                     // !!! Ugly hack due to lack of GET-BLANK! (which we
@@ -1786,7 +1783,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
                     break;  // mode will be changed to '/'
                 }
-                if (len == 1 or level->mode != '/')
+                if (len == 1 or not Is_Dot_Or_Slash(level->mode))
                     fail (Error_Syntax(ss, token));
                 --len;
                 --ss->end;
@@ -1797,7 +1794,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
           case TOKEN_SET:
           token_set:
             len--;
-            if (level->mode == '/' and token == TOKEN_SET) {
+            if (Is_Dot_Or_Slash(level->mode) and token == TOKEN_SET) {
                 token = TOKEN_WORD;  // will be a PATH_SET
                 ss->end--;  // put ':' back on end but not beginning
             }
@@ -1841,7 +1838,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
           case TOKEN_GET_GROUP_BEGIN:
           case TOKEN_GET_BLOCK_BEGIN:
             if (ep[-1] == ':') {
-                if (len == 1 or level->mode != '/')
+                if (len == 1 or not Is_Dot_Or_Slash(level->mode))
                     fail (Error_Syntax(ss, token));
                 --len;
                 --ss->end;
@@ -1859,7 +1856,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             enum Reb_Kind kind = KIND_OF_ARRAY_FROM_TOKEN(token);
             if (
                 *ss->end == ':'  // `...(foo):` or `...[bar]:`
-                and level->mode != '/'  // leave `:` to make SET-PATH!
+                and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
             ){
                 if (
                     token == TOKEN_GET_BLOCK_BEGIN
@@ -1876,6 +1873,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             ep = ss->end;
             break; }
 
+        case TOKEN_TUPLE:
         case TOKEN_PATH:
             if (*ss->end == '\0' or IS_LEX_SPACE(*ss->end)) {
                 //
@@ -1883,13 +1881,16 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 // Basically you don't expect to see a TOKEN_PATH while doing
                 // a path scan unless you wind up at the end.
                 //
-                if (level->mode == '/') {
+                if (
+                    (token == TOKEN_TUPLE and level->mode == '.')
+                    or (token == TOKEN_PATH and level->mode == '/')
+                ){
                     Init_Blank(DS_PUSH());
                     Init_Blank(DS_PUSH());
                     goto loop;
                 }
 
-                // Handle the `/` case
+                // Handle the `/` or '.' case
                 //
                 // There is an unusual finesse at work here where the cell
                 // format used is that of WORD! `-slash-1-`, so that it has a
@@ -1897,6 +1898,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 // gives that array as the global `PG_Path_2_Blanks_Array`,
                 // for what you get as `make path! [_ _]`.
 
+                assert(token == TOKEN_PATH);
                 Init_Word(DS_PUSH(), PG_Slash_1_Canon);  // mirror is REB_WORD
                 mutable_KIND_BYTE(DS_TOP) = REB_PATH;  // but kind is REB_PATH
                 break;
@@ -1909,8 +1911,8 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 break;
             }
 
-            if (level->mode != '/')  // saw slash(es), not scanning path
-                goto scan_path_head_is_DS_TOP;
+            if (not Is_Dot_Or_Slash(level->mode))  // saw slash(es) or dots
+                goto scan_path_or_tuple_head_is_DS_TOP;
 
             goto loop;  // otherwise, we were scanning a path already
 
@@ -1918,7 +1920,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             if (level->mode == ']')
                 goto array_done;
 
-            if (level->mode == '/') {  // implicit end, such as `[lit /]`
+            if (Is_Dot_Or_Slash(level->mode)) {  // implicit end, e.g. [lit /]
                 Init_Blank(DS_PUSH());
                 --ss->begin;
                 --ss->end;
@@ -1936,7 +1938,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             if (level->mode == ')')
                 goto array_done;
 
-            if (level->mode == '/') {  // implicit end, such as `(lit /)`
+            if (Is_Dot_Or_Slash(level->mode)) {  // implicit end e.g. (lit /)
                 Init_Blank(DS_PUSH());
                 --ss->begin;
                 --ss->end;
@@ -1950,12 +1952,44 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             //
             fail (Error_Extra(ss, ')')); }
 
-          case TOKEN_INTEGER:  // INTEGER! or start of DATE!
-            if (*ep != '/' or level->mode == '/') {
-                if (ep != Scan_Integer(DS_PUSH(), bp, len))
-                    fail (Error_Syntax(ss, token));
+          case TOKEN_INTEGER:
+            if (*ep == '.' and not Is_Dot_Or_Slash(level->mode)) {
+                //
+                // If we're scanning a TUPLE!, then we're at the head of it.
+                // But it could also be a DECIMAL!.
+                //
+                // We can't merely start with assuming it's a TUPLE!, scan
+                // two integers, and then decide it's a DECIMAL! if both are
+                // integer.  Because integer scanning will lose leading digits
+                // on the second number (1.002 would become 1.2 as a decimal).
+                //
+                // So we scan ahead to see if it's a case followed by just
+                // one dot, and is actually a DECIMAL!.  We don't want
+                // Locate_Token() to do this, because if as we scanned the
+                // tuple one element at a time it looked ahead to see if only
+                // one dot was ahead of it...all TUPLE!s would seem to end
+                // with a DECIMAL!.  It has to be done uniquely when looking
+                // at the first element.
+                //
+                // For Locate_Token() to realize if it was at the head it
+                // would have to use `level->mode`, which it was not designed
+                // to do.  This is one of the many things that should be
+                // revisited with a state-machine-based proper rewrite of the
+                // R3 scanner, but this is just a patch to prove the concept.
+                //
+                const REBYTE *temp = ep + 1;
+                REBLEN temp_len = len + 1;
+                for (; *temp != '.'; ++temp, ++temp_len) {
+                    if (IS_LEX_DELIMIT(*temp)) {
+                        token = TOKEN_DECIMAL;
+                        ss->begin = ss->end = ep = temp;
+                        len = temp_len;
+                        goto scan_decimal;
+                    }
+                }
+                goto scan_integer;
             }
-            else {  // saw a `/` not in block
+            else if (*ep == '-') {
                 token = TOKEN_DATE;
                 while (*ep == '/' or IS_LEX_NOT_DELIMIT(*ep))
                     ++ep;
@@ -1969,11 +2003,25 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
                 ss->begin = ss->end = ep;
             }
+            else if (*ep == '/') {
+                //
+                // Historically  might be PATH!, or might be DATE!.  But the
+                // date format of 1/2/3 is inferior to 12-Dec-2012, and we
+                // want things like 1/2 to be a PATH! (good for fractions)
+                //
+                goto scan_integer;
+            }
+            else {
+              scan_integer:
+                if (ep != Scan_Integer(DS_PUSH(), bp, len))
+                    fail (Error_Syntax(ss, token));
+            }
             break;
 
           case TOKEN_DECIMAL:
           case TOKEN_PERCENT:
-            if (*ep == '/')
+          scan_decimal:
+            if (Is_Dot_Or_Slash(*ep))
                 fail (Error_Syntax(ss, token));  // Do not allow 1.2/abc
 
             if (ep != Scan_Decimal(DS_PUSH(), bp, len, false))
@@ -1986,7 +2034,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             break;
 
           case TOKEN_MONEY:
-            if (*ep == '/') {  // Do not allow $1/$2
+            if (Is_Dot_Or_Slash(*ep)) {  // Do not allow $1/$2
                 ++ep;
                 fail (Error_Syntax(ss, token));
             }
@@ -1997,7 +2045,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
           case TOKEN_TIME:
             if (
                 bp[len - 1] == ':'
-                and level->mode == '/'  // could be path/10: set
+                and Is_Dot_Or_Slash(level->mode)  // could be path/10: set
             ){
                 if (ep - 1 != Scan_Integer(DS_PUSH(), bp, len - 1))
                     fail (Error_Syntax(ss, token));
@@ -2042,11 +2090,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
           case TOKEN_PAIR:
             if (ep != Scan_Pair(DS_PUSH(), bp, len))
-                fail (Error_Syntax(ss, token));
-            break;
-
-          case TOKEN_TUPLE:
-            if (ep != Scan_Tuple(DS_PUSH(), bp, len))
                 fail (Error_Syntax(ss, token));
             break;
 
@@ -2266,9 +2309,9 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             }
         }
 
-        if (level->mode == '/') {
-            if (*ep != '/')  // e.g. `a/b`, just finished scanning b
-                goto array_done;
+        if (Is_Dot_Or_Slash(level->mode)) {
+            if (not Interstitial_Match(*ep, level->mode))
+                goto array_done;  // e.g. `a/b`, just finished scanning b
 
             ++ep;
 
@@ -2281,7 +2324,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 goto array_done;
             }
 
-            if (*ep == '/') {
+            if (Interstitial_Match(*ep, level->mode)) {
                 ss->begin = ep;
                 goto loop;
             }
@@ -2292,14 +2335,28 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             }
             ss->begin = ep;  // skip next /
         }
-        else if (*ep == '/') {
+        else if (Is_Dot_Or_Slash(*ep)) {
             //
             // We're noticing a path was actually starting with the token
             // that just got pushed, so it should be a part of that path.
 
             ++ss->begin;
 
-          scan_path_head_is_DS_TOP: ;  // precedes declaration, need `;`
+            char child_mode;  // jump to goto labels also needs to initialize
+            child_mode = *ep;
+            goto scan_interstitial_head_is_DS_TOP;
+
+          scan_path_or_tuple_head_is_DS_TOP:
+
+            assert(token == TOKEN_TUPLE or token == TOKEN_PATH);
+            if (token == TOKEN_TUPLE)
+                child_mode = '.';
+            else {
+                assert(token == TOKEN_PATH);
+                child_mode = '/';
+            }
+
+          scan_interstitial_head_is_DS_TOP: ;
 
             REBDSP dsp_path_head = DSP;
 
@@ -2317,7 +2374,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 child.start_line = level->start_line;
                 child.start_line_head = level->start_line_head;
                 child.opts = level->opts;
-                child.mode = '/';
+                child.mode = child_mode;
                 child.newline_pending = false;
 
                 Scan_To_Stack(&child);
@@ -2399,6 +2456,12 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             if (not check)
                 fail (Error_Syntax(ss, token));
  
+            if (child_mode == '.') {
+                mutable_KIND_BYTE(temp)
+                    = mutable_MIRROR_BYTE(temp)
+                    = REB_TUPLE;
+            }
+
             assert(ANY_PATH(temp));
             Move_Value(DS_PUSH(), temp);
 

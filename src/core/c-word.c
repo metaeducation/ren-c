@@ -554,6 +554,7 @@ void Startup_Symbols(REBARR *words)
 
     RELVAL *word = ARR_HEAD(words);
     for (; NOT_END(word); ++word) {
+        assert(IS_WORD(word));  // real word, not fake (e.g. `/` as -slash-0-)
         REBSTR *canon = VAL_STORED_CANON(word);
 
         sym = cast(REBSYM, cast(REBLEN, sym) + 1);

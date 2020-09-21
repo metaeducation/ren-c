@@ -31,17 +31,16 @@
 //
 //  Tuples_To_RGBA: C
 //
+// Read BLOCK! of TUPLE! into sequential RGBA memory runs.
+//
 void Tuples_To_RGBA(REBYTE *rgba, REBLEN size, const REBVAL *head, REBLEN len)
 {
-    if (len > size) len = size; // avoid over-run
+    if (len > size)
+        len = size;  // avoid over-run
 
-    for (; len > 0; len--, rgba += 4, ++head) {
-        const REBYTE *bin = VAL_TUPLE(head);
-        rgba[0] = bin[0];
-        rgba[1] = bin[1];
-        rgba[2] = bin[2];
-        rgba[3] = bin[3];
-    }
+    const REBVAL *item = head;
+    for (; len > 0; len--, rgba += 4, ++head)
+        Get_Tuple_Bytes(rgba, item, 4);
 }
 
 
@@ -50,14 +49,13 @@ void Tuples_To_RGBA(REBYTE *rgba, REBLEN size, const REBVAL *head, REBLEN len)
 //
 void Set_Pixel_Tuple(REBYTE *dp, const RELVAL *tuple)
 {
-    const REBYTE *tup = VAL_TUPLE(tuple);
-    dp[0] = tup[0]; // red
-    dp[1] = tup[1]; // green
-    dp[2] = tup[2]; // blue
+    dp[0] = VAL_TUPLE_AT(tuple, 0);  // red
+    dp[1] = VAL_TUPLE_AT(tuple, 1);  // green
+    dp[2] = VAL_TUPLE_AT(tuple, 2); // blue
     if (VAL_TUPLE_LEN(tuple) > 3)
-        dp[3] = tup[3]; // alpha
+        dp[3] = VAL_TUPLE_AT(tuple, 3);  // alpha
     else
-        dp[3] = 0xff; // default alpha to opaque
+        dp[3] = 0xff;  // default alpha to opaque
 }
 
 
@@ -379,7 +377,7 @@ void Reset_Height(REBVAL *value)
 //
 REBVAL *Init_Tuple_From_Pixel(RELVAL *out, const REBYTE *dp)
 {
-    return Init_Tuple(out, dp, 4);
+    return Init_Tuple_Bytes(out, dp, 4);
 }
 
 

@@ -112,11 +112,9 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
                 fail ("Reverse DNS lookup requires length 4 TUPLE!");
 
             // 93.184.216.34 => example.com
-            HOSTENT *he = gethostbyaddr(
-                cast(char*, VAL_TUPLE(host)),
-                4,
-                AF_INET
-            );
+            char buf[MAX_TUPLE];
+            Get_Tuple_Bytes(buf, host, 4);
+            HOSTENT *he = gethostbyaddr(buf, 4, AF_INET);
             if (he != nullptr)
                 return Init_Text(D_OUT, Make_String_UTF8(he->h_name));
 
@@ -139,7 +137,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
             rebFree(name);
             if (he != nullptr)
-                return Init_Tuple(D_OUT, cast(REBYTE*, *he->h_addr_list), 4);
+                return Init_Tuple_Bytes(D_OUT, cast(REBYTE*, *he->h_addr_list), 4);
 
             // ...else fall through to error handling...
         }

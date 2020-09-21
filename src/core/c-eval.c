@@ -2032,6 +2032,9 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 // cell with no series allocation (if desired).
 
       case REB_TUPLE:
+      case REB_GET_TUPLE:
+      case REB_SET_TUPLE:
+      case REB_SYM_TUPLE:
         Derelativize(f->out, v, *specifier);
         break;
 

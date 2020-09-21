@@ -59,7 +59,10 @@ to-c-name: function [
     string: switch string [
         ; Used specifically by t-routine.c to make SYM_ELLIPSIS
         ;
-        "..." [copy "ellipsis"]
+        ; !!! Note: this was ... but that is now a TUPLE!  So this has to
+        ; be changed for the moment.
+        ;
+        "~~~" [copy "ellipsis"]
 
         ; Used to make SYM_HYPHEN which is needed by `charset [#"A" - #"Z"]`
         ;

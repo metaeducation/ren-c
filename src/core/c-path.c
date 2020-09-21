@@ -895,7 +895,10 @@ void MF_Path(REB_MOLD *mo, REBCEL(const*) v, bool form)
             if (IS_END(item))
                 break;
 
-            Append_Codepoint(mo->series, '/');
+            if (kind == REB_TUPLE)
+                Append_Codepoint(mo->series, '.');
+            else
+                Append_Codepoint(mo->series, '/');
         }
 
         Drop_Pointer_From_Series(TG_Mold_Stack, a);
