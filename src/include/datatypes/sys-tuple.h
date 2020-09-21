@@ -36,36 +36,15 @@
 #define MAX_TUPLE \
     ((sizeof(uint32_t) * 2)) // for same properties on 64-bit and 32-bit
 
-#if !defined(CPLUSPLUS_11)
+inline static const REBYTE *VAL_TUPLE(REBCEL(const*) v) {
+    assert(CELL_KIND(v) == REB_TUPLE);
+    return PAYLOAD(Bytes, v).common + 1;
+}
 
-    #define VAL_TUPLE(v)        PAYLOAD(Bytes, (v)).common
-    #define VAL_TUPLE_LEN(v)    EXTRA(Any, (v)).u
-
-#else
-    // C++ build can inject a check that it's a tuple, and still give l-value
-
-    inline static const REBYTE *VAL_TUPLE(REBCEL(const*) v) {
-        assert(CELL_KIND(v) == REB_TUPLE);
-        return PAYLOAD(Bytes, v).common;
-    }
-
-    inline static REBYTE *VAL_TUPLE(RELVAL *v) {
-        assert(VAL_TYPE(v) == REB_TUPLE);
-        return PAYLOAD(Bytes, v).common;
-    }
-
-    inline static REBYTE VAL_TUPLE_LEN(REBCEL(const*) v) {
-        assert(CELL_KIND(v) == REB_TUPLE);
-        assert(EXTRA(Any, v).u <= MAX_TUPLE);
-        return EXTRA(Any, v).u;
-    }
-
-    inline static uintptr_t & VAL_TUPLE_LEN(RELVAL *v) {
-        assert(VAL_TYPE(v) == REB_TUPLE);
-        return EXTRA(Any, v).u;
-    }
-#endif
-
+inline static REBYTE VAL_TUPLE_LEN(REBCEL(const*) v) {
+    assert(CELL_KIND(v) == REB_TUPLE);
+    return PAYLOAD(Bytes, v).common[0];
+}
 
 inline static REBVAL *Init_Tuple(
     RELVAL *out,
@@ -75,15 +54,36 @@ inline static REBVAL *Init_Tuple(
     RESET_CELL(out, REB_TUPLE, CELL_MASK_NONE);
 
     REBLEN n = len;
-    REBYTE *bp;
-    for (bp = VAL_TUPLE(out); n > 0; --n)
+    REBYTE *bp = PAYLOAD(Bytes, out).common + 1;
+    for (; n > 0; --n)
         *bp++ = *data++;
 
     // !!! Historically, 1.0.0 = 1.0.0.0 under non-strict equality.  Make the
     // comparison easier just by setting all the bytes to zero.
     //
     memset(bp, 0, MAX_TUPLE - len);
+    PAYLOAD(Bytes, out).common[0] = len;
 
-    VAL_TUPLE_LEN(out) = len;
+    INIT_BINDING(out, UNBOUND);
     return cast(REBVAL*, out);
+}
+
+inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
+    //
+    // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
+    // that clearing the payload of a value and then setting the header made
+    // it the `zero?` of that type.  Review uses.
+    //
+    if (kind == REB_PAIR) {
+        Init_Pair_Int(out, 0, 0);
+    }
+    else if (kind == REB_TUPLE) {
+        Init_Tuple(out, nullptr, 0);
+    }
+    else {
+        RESET_CELL(out, kind, CELL_MASK_NONE);
+        CLEAR(&out->extra, sizeof(union Reb_Value_Extra));
+        CLEAR(&out->payload, sizeof(union Reb_Value_Payload));
+    }
+    return SPECIFIC(out);
 }

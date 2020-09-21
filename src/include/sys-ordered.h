@@ -259,53 +259,50 @@ inline static bool ANY_NUMBER_KIND(REBYTE k)
 
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//
 //
-// Note that grouping the blocks and paths and words together is more
-// important than some property to identify all the GETs/SETs together.
+// See reasoning in %types.r on why ANY-INERT! optimization is favored over
+// grouping the sets/gets/plains/syms together (to speed up ANY_ARRAY()/etc.)
+// This could be reviewed and formally tested to see what's best.
 
-inline static bool ANY_GET_KIND(REBYTE k) {
-    return k >= REB_GET_BLOCK and k <= REB_GET_WORD;
-}
+inline static bool ANY_PLAIN_KIND(REBYTE k)
+  { return k >= REB_BLOCK and k <= REB_WORD; }
 
-inline static bool ANY_SET_KIND(REBYTE k) {
-    return k >= REB_SET_BLOCK and k <= REB_SET_WORD;
-}
+inline static bool ANY_SYM_KIND(REBYTE k)
+  { return k >= REB_SYM_BLOCK and k <= REB_SYM_WORD; }
 
-inline static bool ANY_PLAIN_KIND(REBYTE k) {
-    return k >= REB_BLOCK and k <= REB_WORD;
-}
+inline static bool ANY_SET_KIND(REBYTE k)
+  { return k >= REB_SET_BLOCK and k <= REB_SET_WORD; }
 
-inline static bool ANY_SYM_KIND(REBYTE k) {
-    return k >= REB_SYM_BLOCK and k <= REB_SYM_WORD;
-}
+inline static bool ANY_GET_KIND(REBYTE k)
+  { return k >= REB_GET_BLOCK and k <= REB_GET_WORD; }
 
 inline static enum Reb_Kind PLAINIFY_ANY_GET_KIND(REBYTE k) {
     assert(ANY_GET_KIND(k));
-    return cast(enum Reb_Kind, k - 8);
+    return cast(enum Reb_Kind, k - 10);
 }
 
 inline static enum Reb_Kind PLAINIFY_ANY_SET_KIND(REBYTE k) {
     assert(ANY_SET_KIND(k));
-    return cast(enum Reb_Kind, k - 4);
+    return cast(enum Reb_Kind, k - 5);
 }
 
 inline static enum Reb_Kind PLAINIFY_ANY_SYM_KIND(REBYTE k) {
     assert(ANY_SYM_KIND(k));
-    return cast(enum Reb_Kind, k + 4);
+    return cast(enum Reb_Kind, k + 5);
 }
 
 inline static enum Reb_Kind SETIFY_ANY_PLAIN_KIND(REBYTE k) {
     assert(ANY_PLAIN_KIND(k));
-    return cast(enum Reb_Kind, k + 4);
+    return cast(enum Reb_Kind, k + 5);
 }
 
 inline static enum Reb_Kind GETIFY_ANY_PLAIN_KIND(REBYTE k) {
     assert(ANY_PLAIN_KIND(k));
-    return cast(enum Reb_Kind, k + 8);
+    return cast(enum Reb_Kind, k + 10);
 }
 
 inline static enum Reb_Kind SYMIFY_ANY_PLAIN_KIND(REBYTE k) {
     assert(ANY_PLAIN_KIND(k));
-    return cast(enum Reb_Kind, k - 4);
+    return cast(enum Reb_Kind, k - 5);
 }
 
 

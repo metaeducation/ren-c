@@ -1179,9 +1179,9 @@ const REBYTE *Scan_Tuple(
     if (size < 3)
         size = 3;
 
-    Init_Tuple(out, nullptr, 0);
+    REBYTE buf[MAX_TUPLE];
 
-    REBYTE *tp = VAL_TUPLE(out);
+    REBYTE *tp = buf;
     for (ep = cp; len > cast(REBLEN, ep - cp); ++ep) {
         ep = Grab_Int(ep, &n);
         if (n < 0 || n > 255)
@@ -1195,7 +1195,7 @@ const REBYTE *Scan_Tuple(
     if (len > cast(REBLEN, ep - cp))
         return_NULL;
 
-    VAL_TUPLE_LEN(out) = cast(REBYTE, size);
+    Init_Tuple(out, buf, size);
 
     return ep;
 }

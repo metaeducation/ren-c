@@ -66,8 +66,8 @@ REB_R MAKE_Tuple(
     if (IS_TUPLE(arg))
         return Move_Value(out, arg);
 
-    RESET_CELL(out, REB_TUPLE, CELL_MASK_NONE);
-    REBYTE *vp = VAL_TUPLE(out);
+    REBYTE buf[MAX_TUPLE];
+    REBYTE *vp = buf;
 
     // !!! Net lookup parses IP addresses out of `tcp://93.184.216.34` or
     // similar URL!s.  In Rebol3 these captures come back the same type
@@ -112,10 +112,7 @@ REB_R MAKE_Tuple(
             *vp = n;
         }
 
-        VAL_TUPLE_LEN(out) = len;
-
-        for (; len < MAX_TUPLE; len++) *vp++ = 0;
-        return out;
+        return Init_Tuple(out, buf, len);
     }
 
     REBLEN alen;
@@ -129,20 +126,20 @@ REB_R MAKE_Tuple(
         size /= 2;
         if (size > MAX_TUPLE)
             fail (arg); // valid even for UTF-8
-        VAL_TUPLE_LEN(out) = size;
         for (alen = 0; alen < size; alen++) {
             REBYTE decoded;
             if ((ap = Scan_Hex2(&decoded, ap)) == NULL)
                 fail (arg);
             *vp++ = decoded;
         }
+        Init_Tuple(out, buf, size);
     }
     else if (IS_BINARY(arg)) {
-        const REBYTE *ap = VAL_BIN_AT(arg);
         REBLEN len = VAL_LEN_AT(arg);
-        if (len > MAX_TUPLE) len = MAX_TUPLE;
-        VAL_TUPLE_LEN(out) = len;
-        for (alen = 0; alen < len; alen++) *vp++ = *ap++;
+        if (len > MAX_TUPLE)
+            len = MAX_TUPLE;
+        Init_Tuple(out, VAL_BIN_AT(arg), len);
+        alen = len;
     }
     else
         fail (arg);
@@ -194,50 +191,6 @@ void Pick_Tuple(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 
 
 //
-//  Poke_Tuple_Immediate: C
-//
-// !!! Note: In the current implementation, tuples are immediate values.
-// So a POKE only changes the `value` in your hand.
-//
-void Poke_Tuple_Immediate(
-    REBVAL *value,
-    const REBVAL *picker,
-    const REBVAL *poke
-) {
-    REBYTE *dat = VAL_TUPLE(value);
-
-    REBINT len = VAL_TUPLE_LEN(value);
-    if (len < 3)
-        len = 3;
-
-    REBINT n = Get_Num_From_Arg(picker);
-    if (n <= 0 || n > cast(REBINT, MAX_TUPLE))
-        fail (Error_Out_Of_Range(picker));
-
-    REBINT i;
-    if (IS_INTEGER(poke) || IS_DECIMAL(poke))
-        i = Int32(poke);
-    else if (IS_BLANK(poke)) {
-        n--;
-        CLEAR(dat + n, MAX_TUPLE - n);
-        VAL_TUPLE_LEN(value) = n;
-        return;
-    }
-    else
-        fail (poke);
-
-    if (i < 0)
-        i = 0;
-    else if (i > 255)
-        i = 255;
-
-    dat[n - 1] = i;
-    if (n > len)
-        VAL_TUPLE_LEN(value) = n;
-}
-
-
-//
 //  PD_Tuple: C
 //
 REB_R PD_Tuple(
@@ -245,14 +198,8 @@ REB_R PD_Tuple(
     const REBVAL *picker,
     const REBVAL *opt_setval
 ){
-    if (opt_setval) {
-        //
-        // Returning R_IMMEDIATE means it is up to the caller to decide if
-        // they can meaningfully find a variable to store any updates to.
-        //
-        Poke_Tuple_Immediate(pvs->out, picker, opt_setval);
-        return R_IMMEDIATE;
-    }
+    if (opt_setval)
+        fail ("TUPLE!s are immutable, convert to BLOCK! and back to mutate");
 
     Pick_Tuple(pvs->out, pvs->out, picker);
     return pvs->out;
@@ -309,10 +256,10 @@ REBTYPE(Tuple)
     REBINT  a;
     REBDEC  dec;
 
-    assert(IS_TUPLE(value));
-
-    REBYTE *vp = VAL_TUPLE(value);
+    REBYTE buf[MAX_TUPLE];
     REBLEN len = VAL_TUPLE_LEN(value);
+    memcpy(buf, VAL_TUPLE(value), len);
+    REBYTE *vp = buf;
 
     REBSYM sym = VAL_WORD_SYM(verb);
 
@@ -349,13 +296,14 @@ REBTYPE(Tuple)
             ap = VAL_TUPLE(arg);
             alen = VAL_TUPLE_LEN(arg);
             if (len < alen)
-                len = VAL_TUPLE_LEN(value) = alen;
+                len = alen;
             a = 646699; // unused but avoid maybe uninitialized warning
         }
         else
             fail (Error_Math_Args(REB_TUPLE, verb));
 
-        for (;len > 0; len--, vp++) {
+        REBLEN temp = len;
+        for (; temp > 0; --temp, ++vp) {
             REBINT v = *vp;
             if (ap)
                 a = (REBINT) *ap++;
@@ -428,14 +376,15 @@ REBTYPE(Tuple)
                 v = 0;
             *vp = cast(REBYTE, v);
         }
-        RETURN (value);
+        return Init_Tuple(D_OUT, buf, len);
     }
 
     // !!!! merge with SWITCH below !!!
     if (sym == SYM_COMPLEMENT) {
-        for (; len > 0; len--, vp++)
+        REBLEN temp = len;
+        for (; temp > 0; --temp, vp++)
             *vp = cast(REBYTE, ~*vp);
-        RETURN (value);
+        return Init_Tuple(D_OUT, buf, len);
     }
     if (sym == SYM_RANDOM) {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -451,7 +400,7 @@ REBTYPE(Tuple)
             if (*vp)
                 *vp = cast(REBYTE, Random_Int(did REF(secure)) % (1 + *vp));
         }
-        RETURN (value);
+        return Init_Tuple(D_OUT, buf, len);
     }
 
     switch (sym) {
@@ -480,20 +429,21 @@ REBTYPE(Tuple)
 
         UNUSED(PAR(series));
 
+        REBLEN temp = len;
+
         if (REF(part)) {
-            len = Get_Num_From_Arg(ARG(part));
-            len = MIN(len, VAL_TUPLE_LEN(value));
+            REBLEN part = Get_Num_From_Arg(ARG(part));
+            temp = MIN(part, VAL_TUPLE_LEN(value));
         }
         if (len > 0) {
             REBLEN i;
-            //len = MAX(len, 3);
-            for (i = 0; i < len/2; i++) {
-                a = vp[len - i - 1];
-                vp[len - i - 1] = vp[i];
+            for (i = 0; i < temp/2; i++) {
+                a = vp[temp - i - 1];
+                vp[temp - i - 1] = vp[i];
                 vp[i] = a;
             }
         }
-        RETURN (value); }
+        return Init_Tuple(D_OUT, buf, len); }
 /*
   poke_it:
         a = Get_Num_From_Arg(arg);

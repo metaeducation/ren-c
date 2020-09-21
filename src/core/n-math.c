@@ -982,7 +982,7 @@ REBNATIVE(zero_q)
 
     if (not ANY_SCALAR_KIND(type))
         return Init_False(D_OUT);
-        
+ 
     DECLARE_LOCAL (zero);
     Init_Zeroed_Hack(zero, type);
 

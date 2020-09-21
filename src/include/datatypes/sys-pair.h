@@ -111,20 +111,3 @@ inline static REBVAL *Init_Pair_Dec(RELVAL *out, REBDEC x, REBDEC y) {
     VAL_PAIR_NODE(out) = NOD(p);
     return SPECIFIC(out);
 }
-
-inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
-    //
-    // !!! This captures of a dodgy behavior of R3-Alpha, which was to assume
-    // that clearing the payload of a value and then setting the header made
-    // it the `zero?` of that type.  Review uses.
-    //
-    if (kind == REB_PAIR) {
-        Init_Pair_Int(out, 0, 0);
-    }
-    else {
-        RESET_CELL(out, kind, CELL_MASK_NONE);
-        CLEAR(&out->extra, sizeof(union Reb_Value_Extra));
-        CLEAR(&out->payload, sizeof(union Reb_Value_Payload));
-    }
-    return SPECIFIC(out);
-}

@@ -101,8 +101,6 @@ date        "day, month, year, time of day, and timezone"
 integer     "64 bit integer"
             integer     -       +       +       [number scalar]
 
-tuple       "sequence of small integers (colors, versions, IP)"
-            tuple       +       +       +       [scalar]
 
 ; ============================================================================
 ; BEGIN TYPES THAT NEED TO BE GC-MARKED
@@ -227,6 +225,9 @@ sym-group   "symbolic form of group! that does not evaluate"
 sym-path    "symbolic form of path! that does not evaluate"
             path        *       *       *       [path]
 
+sym-tuple   "symbolic form of tuple! that does not evaluate"
+            path        *       *       *       [path]
+
 sym-word    "symbolic form of word! that does not evaluate"
             word        -       *       +       [word]
 
@@ -248,6 +249,9 @@ group       "array that evaluates expressions as an isolated group"
 path        "refinements to functions, objects, files"
             path        *       *       *       [path]
 
+tuple       "sequence of small integers (colors, versions, IP)"
+            tuple       +       +       +       [scalar]
+
 word        "evaluates a variable or action"
             word        -       *       +       [word]
 
@@ -265,6 +269,9 @@ set-group   "array that evaluates and runs SET on the resulting word/path"
 set-path    "definition of a path's value"
             path        *       *       *       [path]
 
+set-tuple   "definition of a tuple's value"
+            path        *       *       *       [path]
+
 set-word    "definition of a word's value"
             word        -       *       +       [word]
 
@@ -280,6 +287,9 @@ get-group   "array that evaluates and runs GET on the resulting word/path"
             array       *       *       *       [group array series]
 
 get-path    "the value of a path"
+            path        *       *       *       [path]
+
+get-tuple   "the value of a tuple"
             path        *       *       *       [path]
 
 get-word    "the value of a word (variable)"

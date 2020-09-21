@@ -2022,6 +2022,19 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         break; }
 
 
+//==//// TUPLE! //////////////////////////////////////////////////////////==//
+//
+// R3-Alpha's TUPLE! was a type dedicated to storing a short sequence of
+// byte-sized integers (e.g. IP addresses, 192.0.0.1).  The new concept is to
+// make TUPLE! a peer type to PATH!, providing a nuance on how dispatch is
+// performed.  Due to the immutability rules for paths, optimizations of
+// byte sequences can still be pursued...to store payloads directly in the
+// cell with no series allocation (if desired).
+
+      case REB_TUPLE:
+        Derelativize(f->out, v, *specifier);
+        break;
+
 //==//// SET-PATH! ///////////////////////////////////////////////////////==//
 //
 // See notes on SET-WORD!  SET-PATH!s are handled in a similar way, by
@@ -2452,7 +2465,6 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
       case REB_MONEY:
       case REB_CHAR:
       case REB_PAIR:
-      case REB_TUPLE:
       case REB_TIME:
       case REB_DATE:
         //
