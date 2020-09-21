@@ -125,7 +125,7 @@ REB_R Skinner_Dispatcher(REBFRM *f)
     REBVAL *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
     REBVAL *arg = FRM_ARGS_HEAD(f);
     for (; NOT_END(param); ++param, ++arg) {
-        if (TYPE_CHECK(param, REB_TS_SKIN_EXPANDED))
+        if (Is_Param_Skin_Expanded(param))  // !!! always says true (for now)
             CLEAR_CELL_FLAG(arg, ARG_MARKED_CHECKED);
     }
 
@@ -320,13 +320,13 @@ REBNATIVE(reskinned)
             VAL_TYPESET_LOW_BITS(param) = 0;
             VAL_TYPESET_HIGH_BITS(param) = 0;
             Add_Typeset_Bits_Core(param, VAL_ARRAY_AT(item), specifier);
-            TYPE_SET(param, REB_TS_SKIN_EXPANDED);
+            Set_Param_Skin_Expanded(param);
             need_skin_phase = true;  // !!! Worth it to check for expansion?
             break;
 
           case SYM_ADD:  // leave existing bits, add new ones
             Add_Typeset_Bits_Core(param, VAL_ARRAY_AT(item), specifier);
-            TYPE_SET(param, REB_TS_SKIN_EXPANDED);
+            Set_Param_Skin_Expanded(param);
             need_skin_phase = true;
             break;
 
