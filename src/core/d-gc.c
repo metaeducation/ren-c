@@ -419,9 +419,6 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         //
         break;
 
-      case REB_X_BOOKMARK:  // ANY-STRING! index and offset cache
-        break;
-
       case REB_CUSTOM:  // !!! Might it have an "integrity check" hook?
         break;
 
