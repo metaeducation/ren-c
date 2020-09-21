@@ -568,7 +568,7 @@ static REBINT Int_From_Date_Arg(const REBVAL *opt_poke) {
 void Pick_Or_Poke_Date(
     REBVAL *opt_out,
     REBVAL *v,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_poke
 ){
     REBSYM sym;
@@ -590,11 +590,11 @@ void Pick_Or_Poke_Date(
         case 11: sym = SYM_MINUTE; break;
         case 12: sym = SYM_SECOND; break;
         default:
-            fail (picker);
+            fail (SPECIFIC(picker));
         }
     }
     else
-        fail (picker);
+        fail (rebUnrelativize(picker));
 
     if (opt_poke == NULL) {
         assert(opt_out != NULL);
@@ -773,7 +773,7 @@ void Pick_Or_Poke_Date(
         case SYM_JULIAN:
         case SYM_WEEKDAY:
         case SYM_UTC:
-            fail (picker);
+            fail (rebUnrelativize(picker));
 
         case SYM_DATE:
             if (!IS_DATE(opt_poke))
@@ -823,7 +823,7 @@ void Pick_Or_Poke_Date(
             break; }
 
         default:
-            fail (picker);
+            fail (rebUnrelativize(picker));
         }
 
         // !!! We've gone through and updated the date or time, but we could
@@ -853,7 +853,7 @@ void Pick_Or_Poke_Date(
 //
 REB_R PD_Date(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     if (opt_setval != NULL) {

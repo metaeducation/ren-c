@@ -164,7 +164,7 @@ REB_R TO_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  Pick_Tuple: C
 //
-void Pick_Tuple(REBVAL *out, const REBVAL *value, const REBVAL *picker)
+void Pick_Tuple(REBVAL *out, const REBVAL *value, const RELVAL *picker)
 {
     const REBYTE *dat = VAL_TUPLE(value);
 
@@ -195,7 +195,7 @@ void Pick_Tuple(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 //
 REB_R PD_Tuple(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     if (opt_setval)

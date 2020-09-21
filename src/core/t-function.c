@@ -345,7 +345,7 @@ REBTYPE(Action)
 //
 REB_R PD_Action(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     UNUSED(opt_setval);
@@ -376,7 +376,7 @@ REB_R PD_Action(
     else if (IS_REFINEMENT(picker))
         spelling = VAL_REFINEMENT_SPELLING(picker);
     else
-        fail (Error_Bad_Refine_Raw(picker));
+        fail (Error_Bad_Refine_Raw(rebUnrelativize(picker)));
 
     Init_Sym_Word(DS_PUSH(), STR_CANON(spelling)); // canonize just once
 

@@ -401,7 +401,7 @@ REB_R TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Context(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     REBCTX *c = VAL_CONTEXT(pvs->out);
@@ -437,7 +437,7 @@ REB_R PD_Context(
         ENSURE_MUTABLE(pvs->out);
 
         if (GET_CELL_FLAG(var, PROTECTED))
-            fail (Error_Protected_Word_Raw(picker));
+            fail (Error_Protected_Word_Raw(rebUnrelativize(picker)));
     }
 
     pvs->u.ref.cell = var;

@@ -529,7 +529,7 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 //
 REB_R PD_String(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     // Note: There was some more careful management of overflow here in the
@@ -642,12 +642,12 @@ REB_R PD_String(
 
     REBINT n = Int32(picker);
     if (n == 0)
-        fail (Error_Out_Of_Range(picker)); // Rebol2/Red convention for 0
+        fail (Error_Out_Of_Range(SPECIFIC(picker))); // Rebol2/Red convention
     if (n < 0)
         ++n;
     n += VAL_INDEX(pvs->out) - 1;
     if (n < 0 or cast(REBLEN, n) >= STR_LEN(s))
-        fail (Error_Out_Of_Range(picker));
+        fail (Error_Out_Of_Range(SPECIFIC(picker)));
 
 
     if (IS_CHAR(opt_setval)) {

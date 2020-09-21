@@ -358,7 +358,7 @@ REB_R TO_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  Pick_Time: C
 //
-void Pick_Time(REBVAL *out, const REBVAL *value, const REBVAL *picker)
+void Pick_Time(REBVAL *out, const REBVAL *value, const RELVAL *picker)
 {
     REBINT i;
     if (IS_WORD(picker)) {
@@ -367,13 +367,13 @@ void Pick_Time(REBVAL *out, const REBVAL *value, const REBVAL *picker)
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
         default:
-            fail (picker);
+            fail (rebUnrelativize(picker));
         }
     }
     else if (IS_INTEGER(picker))
         i = VAL_INT32(picker) - 1;
     else
-        fail (picker);
+        fail (rebUnrelativize(picker));
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(value), &tf); // loses sign
@@ -402,7 +402,7 @@ void Pick_Time(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 //
 void Poke_Time_Immediate(
     REBVAL *value,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *poke
 ) {
     REBINT i;
@@ -412,13 +412,13 @@ void Poke_Time_Immediate(
         case SYM_MINUTE: i = 1; break;
         case SYM_SECOND: i = 2; break;
         default:
-            fail (picker);
+            fail (rebUnrelativize(picker));
         }
     }
     else if (IS_INTEGER(picker))
         i = VAL_INT32(picker) - 1;
     else
-        fail (picker);
+        fail (rebUnrelativize(picker));
 
     REB_TIMEF tf;
     Split_Time(VAL_NANO(value), &tf); // loses sign
@@ -454,7 +454,7 @@ void Poke_Time_Immediate(
         break;
 
     default:
-        fail (picker);
+        fail (rebUnrelativize(picker));
     }
 
     PAYLOAD(Time, value).nanoseconds = Join_Time(&tf, false);
@@ -466,7 +466,7 @@ void Poke_Time_Immediate(
 //
 REB_R PD_Time(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     if (opt_setval) {

@@ -155,7 +155,7 @@ static void get_scalar(
 //
 //  Get_Struct_Var: C
 //
-static bool Get_Struct_Var(REBVAL *out, REBSTU *stu, const REBVAL *word)
+static bool Get_Struct_Var(REBVAL *out, REBSTU *stu, const RELVAL *word)
 {
     REBARR *fieldlist = STU_FIELDLIST(stu);
 
@@ -486,7 +486,7 @@ inline static bool assign_scalar(
 //
 static bool Set_Struct_Var(
     REBSTU *stu,
-    const REBVAL *word,
+    const RELVAL *word,
     const REBVAL *elem,
     const REBVAL *val
 ){
@@ -1353,7 +1353,7 @@ REB_R TO_Struct(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Struct(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     REBSTU *stu = VAL_STRUCT(pvs->out);
@@ -1394,7 +1394,7 @@ REB_R PD_Struct(
             // evaluation may not protect the result...)
             //
             DECLARE_LOCAL (sel_orig);
-            Move_Value(sel_orig, picker);
+            Blit_Cell(cast(RELVAL*, sel_orig), picker);
             PUSH_GC_GUARD(sel_orig);
 
             if (Next_Path_Throws(pvs)) { // updates pvs->out, PVS_PICKER()

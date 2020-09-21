@@ -1160,7 +1160,7 @@ makeCopy2:
 inline static bool Adjust_Image_Pick_Index_Is_Valid(
     REBINT *index, // gets adjusted
     const REBVAL *value, // image
-    const REBVAL *picker
+    const RELVAL *picker
 ) {
     REBINT n;
     if (IS_PAIR(picker)) {
@@ -1176,7 +1176,7 @@ inline static bool Adjust_Image_Pick_Index_Is_Valid(
     else if (IS_LOGIC(picker))
         n = VAL_LOGIC(picker) ? 1 : 2;
     else
-        fail (picker);
+        fail (rebUnrelativize(picker));
 
     *index += n;
     if (n > 0)
@@ -1197,7 +1197,7 @@ inline static bool Adjust_Image_Pick_Index_Is_Valid(
 //
 //  Pick_Image: C
 //
-void Pick_Image(REBVAL *out, const REBVAL *value, const REBVAL *picker)
+void Pick_Image(REBVAL *out, const REBVAL *value, const RELVAL *picker)
 {
     REBINT index = cast(REBINT, VAL_IMAGE_POS(value));
     REBINT len = VAL_IMAGE_LEN_HEAD(value) - index;
@@ -1232,7 +1232,7 @@ void Pick_Image(REBVAL *out, const REBVAL *value, const REBVAL *picker)
             break; }
 
         default:
-            fail (picker);
+            fail (rebUnrelativize(picker));
         }
         return;
     }
@@ -1249,7 +1249,7 @@ void Pick_Image(REBVAL *out, const REBVAL *value, const REBVAL *picker)
 //
 void Poke_Image_Fail_If_Read_Only(
     REBVAL *value,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *poke
 ){
     ENSURE_MUTABLE(value);
@@ -1324,13 +1324,13 @@ void Poke_Image_Fail_If_Read_Only(
             break;
 
         default:
-            fail (picker);
+            fail (rebUnrelativize(picker));
         }
         return;
     }
 
     if (!Adjust_Image_Pick_Index_Is_Valid(&index, value, picker))
-        fail (Error_Out_Of_Range(picker));
+        fail (Error_Out_Of_Range(SPECIFIC(picker)));
 
     if (IS_TUPLE(poke)) { // set whole pixel
         Set_Pixel_Tuple(VAL_IMAGE_AT_HEAD(value, index), poke);
@@ -1362,7 +1362,7 @@ void Poke_Image_Fail_If_Read_Only(
 //
 REB_R PD_Image(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     if (opt_setval != NULL) {

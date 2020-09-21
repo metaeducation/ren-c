@@ -528,12 +528,12 @@ REBINT CT_Vector(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 //  Pick_Vector: C
 //
-void Pick_Vector(REBVAL *out, const REBVAL *value, const REBVAL *picker) {
+void Pick_Vector(REBVAL *out, const REBVAL *value, const RELVAL *picker) {
     REBINT n;
     if (IS_INTEGER(picker) or IS_DECIMAL(picker)) // #2312
         n = Int32(picker);
     else
-        fail (picker);
+        fail (rebUnrelativize(picker));
 
     if (n == 0) {
         Init_Nulled(out);
@@ -559,7 +559,7 @@ void Pick_Vector(REBVAL *out, const REBVAL *value, const REBVAL *picker) {
 //
 void Poke_Vector_Fail_If_Read_Only(
     REBVAL *value,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *poke
 ){
     // Because the vector uses Alloc_Pairing() for its 2-cells-of value,
@@ -576,17 +576,17 @@ void Poke_Vector_Fail_If_Read_Only(
     if (IS_INTEGER(picker) or IS_DECIMAL(picker)) // #2312
         n = Int32(picker);
     else
-        fail (picker);
+        fail (rebUnrelativize(picker));
 
     if (n == 0)
-        fail (Error_Out_Of_Range(picker)); // Rebol2/Red convention
+        fail (Error_Out_Of_Range(SPECIFIC(picker)));  // Rebol2/Red convention
     if (n < 0)
         ++n; // Rebol2/Red convention, poking -1 from tail sets last item
 
     n += VAL_VECTOR_INDEX(value);
 
     if (n <= 0 or cast(REBLEN, n) > VAL_VECTOR_LEN_AT(value))
-        fail (Error_Out_Of_Range(picker));
+        fail (Error_Out_Of_Range(SPECIFIC(picker)));
 
     Set_Vector_At(value, n - 1, poke);
 }
@@ -599,7 +599,7 @@ void Poke_Vector_Fail_If_Read_Only(
 //
 REB_R PD_Vector(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     if (opt_setval) {

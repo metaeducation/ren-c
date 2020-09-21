@@ -577,7 +577,7 @@ void Shuffle_Array(REBARR *arr, REBLEN idx, bool secure)
 //
 REB_R PD_Array(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     REBINT n;
@@ -654,7 +654,7 @@ REB_R PD_Array(
 //
 // Fills out with void if no pick.
 //
-RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const REBVAL *picker)
+RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const RELVAL *picker)
 {
     REBINT n = Get_Num_From_Arg(picker);
     n += VAL_INDEX(block) - 1;

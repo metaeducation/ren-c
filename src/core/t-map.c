@@ -319,7 +319,7 @@ REBLEN Find_Map_Entry(
 //
 REB_R PD_Map(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     assert(IS_MAP(pvs->out));

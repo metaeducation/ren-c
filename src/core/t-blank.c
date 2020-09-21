@@ -79,7 +79,7 @@ void MF_Void(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 REB_R PD_Blank(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     UNUSED(picker);

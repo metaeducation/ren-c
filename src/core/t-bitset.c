@@ -268,7 +268,7 @@ void Set_Bit(REBSER *bset, REBLEN n, bool set)
 //
 // Set/clear bits indicated by strings and chars and ranges.
 //
-bool Set_Bits(REBSER *bset, const REBVAL *val, bool set)
+bool Set_Bits(REBSER *bset, const RELVAL *val, bool set)
 {
     if (IS_CHAR(val)) {
         Set_Bit(bset, VAL_CHAR(val), set);
@@ -413,7 +413,7 @@ bool Set_Bits(REBSER *bset, const REBVAL *val, bool set)
 // Check bits indicated by strings and chars and ranges.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bits(const REBSER *bset, const REBVAL *val, bool uncased)
+bool Check_Bits(const REBSER *bset, const RELVAL *val, bool uncased)
 {
     if (IS_CHAR(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
@@ -520,7 +520,7 @@ bool Check_Bits(const REBSER *bset, const REBVAL *val, bool uncased)
 //
 REB_R PD_Bitset(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     if (opt_setval == NULL) {

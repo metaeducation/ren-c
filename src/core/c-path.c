@@ -96,7 +96,7 @@ REBVAL *Try_Init_Any_Path_At_Arraylike_Core(
 //
 REB_R PD_Fail(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     UNUSED(picker);
@@ -114,7 +114,7 @@ REB_R PD_Fail(
 //
 REB_R PD_Unhooked(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     UNUSED(picker);
@@ -147,7 +147,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         fail (Error_No_Value_Core(*v, *specifier));
 
     if (IS_GET_WORD(*v)) {  // e.g. object/:field
-        Get_Word_May_Fail(PVS_PICKER(pvs), *v, *specifier);
+        PVS_PICKER(pvs) = Get_Word_May_Fail(FRM_SPARE(pvs), *v, *specifier);
     }
     else if (
         IS_GROUP(*v)  // object/(expr) case:
@@ -157,13 +157,14 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         REBSPC *derived = Derive_Specifier(*specifier, *v);
-        if (Do_Any_Array_At_Throws(PVS_PICKER(pvs), *v, derived)) {
-            Move_Value(pvs->out, PVS_PICKER(pvs));
+        if (Do_Any_Array_At_Throws(FRM_SPARE(pvs), *v, derived)) {
+            Move_Value(pvs->out, FRM_SPARE(pvs));
             return true; // thrown
         }
+        PVS_PICKER(pvs) = FRM_SPARE(pvs);
     }
     else { // object/word and object/value case:
-        Derelativize(PVS_PICKER(pvs), *v, *specifier);
+        PVS_PICKER(pvs) = *v;  // relative value--cannot look up
     }
 
     Fetch_Next_Forget_Lookback(pvs);  // may be at end
@@ -178,9 +179,12 @@ bool Next_Path_Throws(REBPVS *pvs)
         const REBVAL *r = hook(pvs, PVS_PICKER(pvs), PVS_OPT_SETVAL(pvs));
 
         switch (KIND_BYTE(r)) {
-          case REB_0_END: // unhandled
+          case REB_0_END: { // unhandled
             assert(r == R_UNHANDLED); // shouldn't be other ends
-            fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
+            DECLARE_LOCAL (specific);
+            Derelativize(specific, PVS_PICKER(pvs), *specifier);
+            fail (Error_Bad_Path_Poke_Raw(specific));
+          }
 
           case REB_R_THROWN:
             panic ("Path dispatch isn't allowed to throw, only GROUP!s");
@@ -246,7 +250,9 @@ bool Next_Path_Throws(REBPVS *pvs)
         else if (r == R_UNHANDLED) {
             if (IS_NULLED(PVS_PICKER(pvs)))
                 fail ("NULL used in path picking but was not handled");
-            fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
+            DECLARE_LOCAL (specific);
+            Derelativize(specific, PVS_PICKER(pvs), *specifier);
+            fail (Error_Bad_Path_Pick_Raw(specific));
         }
         else if (GET_CELL_FLAG(r, ROOT)) { // API, from Alloc_Value()
             Handle_Api_Dispatcher_Result(pvs, r);
@@ -365,7 +371,7 @@ bool Eval_Path_Throws_Core(
         not opt_setval
         or not IN_DATA_STACK_DEBUG(opt_setval) // evaluation might relocate it
     );
-    assert(out != opt_setval and out != PVS_PICKER(pvs));
+    assert(out != opt_setval and out != FRM_SPARE(pvs));
 
     pvs->special = opt_setval; // a.k.a. PVS_OPT_SETVAL()
     assert(PVS_OPT_SETVAL(pvs) == opt_setval);
@@ -491,7 +497,7 @@ bool Eval_Path_Throws_Core(
             // pushes to the stack itself, hence may move it on expansion.)
             //
             if (Specialize_Action_Throws(
-                PVS_PICKER(pvs),
+                FRM_SPARE(pvs),
                 pvs->out,
                 nullptr, // opt_def
                 dsp_orig // first_refine_dsp
@@ -499,7 +505,7 @@ bool Eval_Path_Throws_Core(
                 panic ("REFINE-only specializations should not THROW");
             }
 
-            Move_Value(pvs->out, PVS_PICKER(pvs));
+            Move_Value(pvs->out, FRM_SPARE(pvs));
         }
     }
 
@@ -628,7 +634,7 @@ REBNATIVE(pick)
     Move_Value(D_OUT, location);
     pvs->out = D_OUT;
 
-    Move_Value(PVS_PICKER(pvs), ARG(picker));
+    PVS_PICKER(pvs) = ARG(picker);
 
     pvs->opt_label = NULL; // applies to e.g. :append/only returning APPEND
     pvs->special = NULL;
@@ -642,7 +648,7 @@ REBNATIVE(pick)
         return r;
     if (IS_END(r)) {
         assert(r == R_UNHANDLED);
-        fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs)));
+        fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(PVS_PICKER(pvs))));
     }
     if (GET_CELL_FLAG(r, ROOT))
         return r;
@@ -715,7 +721,7 @@ REBNATIVE(poke)
     Move_Value(D_OUT, location);
     pvs->out = D_OUT;
 
-    Move_Value(PVS_PICKER(pvs), ARG(picker));
+    PVS_PICKER(pvs) = ARG(picker);
 
     pvs->opt_label = NULL; // applies to e.g. :append/only returning APPEND
     pvs->special = ARG(value);
@@ -724,9 +730,10 @@ REBNATIVE(poke)
 
     const REBVAL *r = hook(pvs, PVS_PICKER(pvs), ARG(value));
     switch (KIND_BYTE(r)) {
-    case REB_0_END:
+    case REB_0_END: {
         assert(r == R_UNHANDLED);
-        fail (Error_Bad_Path_Poke_Raw(PVS_PICKER(pvs)));
+        fail (Error_Bad_Path_Poke_Raw(rebUnrelativize(PVS_PICKER(pvs))));
+    }
 
     case REB_R_INVISIBLE: // is saying it did the write already
         break;
@@ -737,7 +744,7 @@ REBNATIVE(poke)
 
     default:
         assert(false); // shouldn't happen, complain in the debug build
-        fail (PVS_PICKER(pvs)); // raise error in release build
+        fail (rebUnrelativize(PVS_PICKER(pvs)));  // error in release build
     }
 
     RETURN (ARG(value)); // return the value we got in
@@ -752,7 +759,7 @@ REBNATIVE(poke)
 //
 REB_R PD_Path(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     if (opt_setval)
@@ -767,7 +774,7 @@ REB_R PD_Path(
         n = n - 1;
     }
     else
-        fail (picker);
+        fail (rebUnrelativize(picker));
 
     if (n < 0 or n >= cast(REBINT, VAL_PATH_LEN(pvs->out)))
         return nullptr;

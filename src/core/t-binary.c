@@ -395,7 +395,7 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 //
 REB_R PD_Binary(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     // Note: There was some more careful management of overflow here in the
@@ -437,7 +437,7 @@ REB_R PD_Binary(
 
     REBINT n = Int32(picker) + VAL_INDEX(pvs->out) - 1;
     if (n < 0 or cast(REBLEN, n) >= BIN_LEN(bin))
-        fail (Error_Out_Of_Range(picker));
+        fail (Error_Out_Of_Range(SPECIFIC(picker)));
 
     if (IS_CHAR(opt_setval)) {
         Init_Integer(pvs->out, VAL_CHAR(opt_setval));

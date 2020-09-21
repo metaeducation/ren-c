@@ -313,4 +313,4 @@ extern REB_R MAKE_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *opt_parent,
 extern REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
 extern void MF_Gob(REB_MOLD *mo, REBCEL(const*) v, bool form);
 extern REBTYPE(Gob);
-extern REB_R PD_Gob(REBPVS *pvs, const REBVAL *picker, const REBVAL *opt_setval);
+extern REB_R PD_Gob(REBPVS *pvs, const RELVAL *picker, const REBVAL *opt_setval);

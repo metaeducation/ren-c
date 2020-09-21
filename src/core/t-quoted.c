@@ -101,7 +101,7 @@ REB_R TO_Quoted(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
 //
 REB_R PD_Quoted(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     UNUSED(picker);

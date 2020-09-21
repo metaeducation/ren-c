@@ -356,7 +356,7 @@ static void Set_Gob_Flag(REBGOB *gob, REBSTR *name)
 //
 //  Did_Set_GOB_Var: C
 //
-static bool Did_Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
+static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
 {
     switch (VAL_WORD_SYM(word)) {
       case SYM_OFFSET:
@@ -514,7 +514,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const REBVAL *word, const REBVAL *val)
 // !!! Things like this Get_GOB_Var routine could be replaced with ordinary
 // OBJECT!-style access if GOB! was an ANY-CONTEXT.
 //
-static REBVAL *Get_GOB_Var(RELVAL *out, REBGOB *gob, const REBVAL *word)
+static REBVAL *Get_GOB_Var(RELVAL *out, REBGOB *gob, const RELVAL *word)
 {
     switch (VAL_WORD_SYM(word)) {
       case SYM_OFFSET:
@@ -780,7 +780,7 @@ REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Gob(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     REBGOB *gob = VAL_GOB(pvs->out);
@@ -806,7 +806,7 @@ REB_R PD_Gob(
                 // Have to copy -and- protect.
                 //
                 DECLARE_LOCAL (orig_picker);
-                Move_Value(orig_picker, picker);
+                Blit_Cell(orig_picker, picker);
                 PUSH_GC_GUARD(orig_picker);
 
                 if (Next_Path_Throws(pvs)) // sets value in pvs->store

@@ -66,7 +66,7 @@ REBINT CT_Event(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 //  Set_Event_Var: C
 //
-static bool Set_Event_Var(REBVAL *event, const REBVAL *word, const REBVAL *val)
+static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
 {
     switch (VAL_WORD_SYM(word)) {
       case SYM_TYPE: {
@@ -396,7 +396,7 @@ REB_R TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Event(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     if (IS_WORD(picker)) {

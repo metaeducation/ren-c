@@ -144,4 +144,4 @@ extern REB_R MAKE_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *opt_paren
 extern REB_R TO_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
 extern void MF_Image(REB_MOLD *mo, REBCEL(const*) v, bool form);
 extern REBTYPE(Image);
-extern REB_R PD_Image(REBPVS *pvs, const REBVAL *picker, const REBVAL *opt_setval);
+extern REB_R PD_Image(REBPVS *pvs, const RELVAL *picker, const REBVAL *opt_setval);

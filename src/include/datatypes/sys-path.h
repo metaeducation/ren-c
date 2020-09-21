@@ -345,7 +345,7 @@ inline static REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
     (PVS_OPT_SETVAL(pvs) != nullptr)
 
 #define PVS_PICKER(pvs) \
-    FRM_SPARE(pvs)
+    pvs->param
 
 inline static bool Get_Path_Throws_Core(
     REBVAL *out,

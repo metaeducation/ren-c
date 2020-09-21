@@ -405,13 +405,13 @@ REB_R TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Varargs(
     REBPVS *pvs,
-    const REBVAL *picker,
+    const RELVAL *picker,
     const REBVAL *opt_setval
 ){
     UNUSED(opt_setval);
 
     if (not IS_INTEGER(picker))
-        fail (picker);
+        fail (rebUnrelativize(picker));
 
     if (VAL_INT32(picker) != 1)
         fail (Error_Varargs_No_Look_Raw());

@@ -34,24 +34,24 @@
 // Allow multiple types. Throw error if not valid.
 // Note that the result is one-based.
 //
-REBINT Get_Num_From_Arg(const REBVAL *val)
+REBINT Get_Num_From_Arg(const RELVAL *val)
 {
     REBINT n;
 
     if (IS_INTEGER(val)) {
         if (VAL_INT64(val) > INT32_MAX or VAL_INT64(val) < INT32_MIN)
-            fail (Error_Out_Of_Range(val));
+            fail (Error_Out_Of_Range(SPECIFIC(val)));
         n = VAL_INT32(val);
     }
     else if (IS_DECIMAL(val) or IS_PERCENT(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
-            fail (Error_Out_Of_Range(val));
+            fail (Error_Out_Of_Range(SPECIFIC(val)));
         n = cast(REBINT, VAL_DECIMAL(val));
     }
     else if (IS_LOGIC(val))
         n = (VAL_LOGIC(val) ? 1 : 2);
     else
-        fail (val);
+        fail (rebUnrelativize(val));
 
     return n;
 }
