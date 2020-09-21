@@ -102,8 +102,6 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         REBVAL *host = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
-        HOSTENT *he;
-
         // A DNS read e.g. of `read dns://66.249.66.140` should do a reverse
         // lookup.  The scheme handler may pass in either a TUPLE! or a string
         // that scans to a tuple, at this time (currently uses a string)
@@ -114,21 +112,32 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
                 fail ("Reverse DNS lookup requires length 4 TUPLE!");
 
             // 93.184.216.34 => example.com
-            he = gethostbyaddr(cast(char*, VAL_TUPLE(host)), 4, AF_INET);
+            HOSTENT *he = gethostbyaddr(
+                cast(char*, VAL_TUPLE(host)),
+                4,
+                AF_INET
+            );
             if (he != nullptr)
                 return Init_Text(D_OUT, Make_String_UTF8(he->h_name));
 
             // ...else fall through to error handling...
         }
         else if (IS_TEXT(host)) {
-            REBSIZ utf8_size;
-            const REBYTE *utf8 = VAL_UTF8_AT(&utf8_size, host);
-
-            if (Scan_Tuple(host, utf8, utf8_size) != NULL)
+            REBVAL *tuple = rebValue(
+                "match tuple! [' ' ']: transcode", host,
+            rebEND);
+            if (tuple) {
+                Move_Value(host, tuple);
+                rebRelease(tuple);
                 goto reverse_lookup;
+            }
+
+            char *name = rebSpell(host, rebEND);
 
             // example.com => 93.184.216.34
-            he = gethostbyname(cs_cast(utf8));
+            HOSTENT *he = gethostbyname(name);
+
+            rebFree(name);
             if (he != nullptr)
                 return Init_Tuple(D_OUT, cast(REBYTE*, *he->h_addr_list), 4);
 
