@@ -1583,7 +1583,7 @@ void Init_Va_Scan_Level_Core(
     //
     level->start_line_head = ss->line_head = nullptr;
     level->start_line = ss->line = line;
-    level->mode_char = '\0';
+    level->mode = '\0';
     level->newline_pending = false;
     level->opts = 0;
 }
@@ -1613,7 +1613,7 @@ void Init_Scan_Level(
     ss->feed = nullptr;
     ss->depth = 0;
 
-    out->mode_char = '\0';
+    out->mode = '\0';
     out->start_line_head = ss->line_head = utf8;
     out->start_line = ss->line = line;
     out->newline_pending = false;
@@ -1700,12 +1700,12 @@ static REBINT Scan_Head(SCAN_STATE *ss)
 #define CELL_FLAG_BLANK_MARKED_GET NODE_FLAG_MARKED
 
 
-static REBARR *Scan_Child_Array(SCAN_LEVEL *level, REBYTE mode_char);
+static REBARR *Scan_Child_Array(SCAN_LEVEL *level, REBYTE mode);
 
 //
 //  Scan_To_Stack: C
 //
-// Scans values to the data stack, based on a mode_char.  This mode can be
+// Scans values to the data stack, based on a mode.  This mode can be
 // ']', ')', or '/' to indicate the processing type...or '\0'.
 //
 // If the source bytes are "1" then it will be the array [1]
@@ -1786,7 +1786,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
                     break;  // mode will be changed to '/'
                 }
-                if (len == 1 or level->mode_char != '/')
+                if (len == 1 or level->mode != '/')
                     fail (Error_Syntax(ss, token));
                 --len;
                 --ss->end;
@@ -1797,7 +1797,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
           case TOKEN_SET:
           token_set:
             len--;
-            if (level->mode_char == '/' and token == TOKEN_SET) {
+            if (level->mode == '/' and token == TOKEN_SET) {
                 token = TOKEN_WORD;  // will be a PATH_SET
                 ss->end--;  // put ':' back on end but not beginning
             }
@@ -1841,7 +1841,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
           case TOKEN_GET_GROUP_BEGIN:
           case TOKEN_GET_BLOCK_BEGIN:
             if (ep[-1] == ':') {
-                if (len == 1 or level->mode_char != '/')
+                if (len == 1 or level->mode != '/')
                     fail (Error_Syntax(ss, token));
                 --len;
                 --ss->end;
@@ -1859,7 +1859,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             enum Reb_Kind kind = KIND_OF_ARRAY_FROM_TOKEN(token);
             if (
                 *ss->end == ':'  // `...(foo):` or `...[bar]:`
-                and level->mode_char != '/'  // leave `:` to make SET-PATH!
+                and level->mode != '/'  // leave `:` to make SET-PATH!
             ){
                 if (
                     token == TOKEN_GET_BLOCK_BEGIN
@@ -1883,7 +1883,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 // Basically you don't expect to see a TOKEN_PATH while doing
                 // a path scan unless you wind up at the end.
                 //
-                if (level->mode_char == '/') {
+                if (level->mode == '/') {
                     Init_Blank(DS_PUSH());
                     Init_Blank(DS_PUSH());
                     goto loop;
@@ -1909,49 +1909,49 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 break;
             }
 
-            if (level->mode_char != '/')  // saw slash(es), not scanning path
+            if (level->mode != '/')  // saw slash(es), not scanning path
                 goto scan_path_head_is_DS_TOP;
 
             goto loop;  // otherwise, we were scanning a path already
 
           case TOKEN_BLOCK_END: {
-            if (level->mode_char == ']')
+            if (level->mode == ']')
                 goto array_done;
 
-            if (level->mode_char == '/') {  // implicit end, such as `[lit /]`
+            if (level->mode == '/') {  // implicit end, such as `[lit /]`
                 Init_Blank(DS_PUSH());
                 --ss->begin;
                 --ss->end;
                 goto array_done;
             }
 
-            if (level->mode_char != '\0')  // expected e.g. `)` before the `]`
-                fail (Error_Mismatch(level, level->mode_char, ']'));
+            if (level->mode != '\0')  // expected e.g. `)` before the `]`
+                fail (Error_Mismatch(level, level->mode, ']'));
 
             // just a stray unexpected ']'
             //
             fail (Error_Extra(ss, ']')); }
 
           case TOKEN_GROUP_END: {
-            if (level->mode_char == ')')
+            if (level->mode == ')')
                 goto array_done;
 
-            if (level->mode_char == '/') {  // implicit end, such as `(lit /)`
+            if (level->mode == '/') {  // implicit end, such as `(lit /)`
                 Init_Blank(DS_PUSH());
                 --ss->begin;
                 --ss->end;
                 goto array_done;
             }
 
-            if (level->mode_char != '\0')  // expected e.g. ']' before the ')'
-                fail (Error_Mismatch(level, level->mode_char, ')'));
+            if (level->mode != '\0')  // expected e.g. ']' before the ')'
+                fail (Error_Mismatch(level, level->mode, ')'));
 
             // just a stray unexpected ')'
             //
             fail (Error_Extra(ss, ')')); }
 
           case TOKEN_INTEGER:  // INTEGER! or start of DATE!
-            if (*ep != '/' or level->mode_char == '/') {
+            if (*ep != '/' or level->mode == '/') {
                 if (ep != Scan_Integer(DS_PUSH(), bp, len))
                     fail (Error_Syntax(ss, token));
             }
@@ -1997,7 +1997,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
           case TOKEN_TIME:
             if (
                 bp[len - 1] == ':'
-                and level->mode_char == '/'  // could be path/10: set
+                and level->mode == '/'  // could be path/10: set
             ){
                 if (ep - 1 != Scan_Integer(DS_PUSH(), bp, len - 1))
                     fail (Error_Syntax(ss, token));
@@ -2009,7 +2009,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             break;
 
           case TOKEN_DATE:
-            while (*ep == '/' and level->mode_char != '/') {  // Is date/time?
+            while (*ep == '/' and level->mode != '/') {  // Is date/time?
                 ep++;
                 while (IS_LEX_NOT_DELIMIT(*ep)) ep++;
                 len = cast(REBLEN, ep - bp);
@@ -2266,7 +2266,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             }
         }
 
-        if (level->mode_char == '/') {
+        if (level->mode == '/') {
             if (*ep != '/')  // e.g. `a/b`, just finished scanning b
                 goto array_done;
 
@@ -2317,14 +2317,14 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 child.start_line = level->start_line;
                 child.start_line_head = level->start_line_head;
                 child.opts = level->opts;
-                child.mode_char = '/';
+                child.mode = '/';
                 child.newline_pending = false;
 
                 Scan_To_Stack(&child);
             }
 
             // Any trailing colons should have been left on, because the child
-            // scan noticed the mode_char was '/' and that we'd want it for
+            // scan noticed the mode was '/' and that we'd want it for
             // a SET-PATH!.  But if there was a leading colon, it got absorbed
             // into the first element of the array.  We need to account for
             // this by mutating any first element that's a GET-XXX! into a
@@ -2453,8 +2453,8 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     // At some point, a token for an end of block or group needed to jump to
     // the array_done.  If it didn't, we never got a proper closing.
     //
-    if (level->mode_char == ']' or level->mode_char == ')')
-        fail (Error_Missing(level, level->mode_char));
+    if (level->mode == ']' or level->mode == ')')
+        fail (Error_Missing(level, level->mode));
 
   array_done:
 
@@ -2546,9 +2546,9 @@ bool Scan_To_Stack_Relaxed_Failed(SCAN_LEVEL *level) {
 // reflection, allowing for better introspection and error messages.  (This
 // is similar to the benefits of Reb_Frame.)
 //
-static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode_char)
+static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode)
 {
-    assert(mode_char == ')' or mode_char == ']');
+    assert(mode == ')' or mode == ']');
 
     SCAN_STATE *ss = parent->ss;
     ++ss->depth;
@@ -2566,7 +2566,7 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode_char)
 
     REBDSP dsp_orig = DSP;
 
-    child.mode_char = mode_char;
+    child.mode = mode;
     Scan_To_Stack(&child);
 
     REBARR *a = Pop_Stack_Values_Core(

@@ -330,13 +330,14 @@ typedef struct rebol_scan_level {  // each array scan corresponds to a level
 
     // '\0' => top level scan
     // ']' => this level is scanning a block
-    // '/' => this level is scanning a path
     // ')' => this level is scanning a group
+    // '/' => this level is scanning a path
+    // '.' => this level is scanning a tuple
     //
     // (Chosen as the terminal character to use in error messages for the
     // character we are seeking to find a match for).
     //
-    REBYTE mode_char;
+    REBYTE mode;
 
     REBLEN start_line;
     const REBYTE *start_line_head;
