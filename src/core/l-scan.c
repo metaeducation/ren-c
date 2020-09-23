@@ -859,6 +859,16 @@ static REBLEN Prescan_Token(SCAN_STATE *ss)
     DEAD_END;
 }
 
+// We'd like to test the fingerprint for lex flags that would be in an arrow
+// but all 16 bits are used.  Here's a set of everything *but* =.  It might
+// be that backslash for invalid word is wasted and could be retaken if it
+// were checked for another way.
+//
+#define LEX_FLAGS_ARROW_EXCEPT_EQUAL \
+    (LEX_FLAG(LEX_SPECIAL_GREATER) | LEX_FLAG(LEX_SPECIAL_LESSER) | \
+    LEX_FLAG(LEX_SPECIAL_PLUS) | LEX_FLAG(LEX_SPECIAL_MINUS) | \
+    LEX_FLAG(LEX_SPECIAL_BAR))
+
 
 //
 //  Locate_Token_May_Push_Mold: C
@@ -1020,6 +1030,64 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
     const REBYTE *cp = ss->begin;
 
     enum Reb_Token token;  // only set if falling through to `scan_word`
+
+    // Up-front, do a check for "arrow words".  This test bails out if any
+    // non-arrow word characters are seen.
+    //
+    if (*cp == '<' and *ss->end == '>') {  // "tag-shaped" <...> so not a word
+        if (cp + 1 == ss->end)  // `<>`
+            return TOKEN_WORD;  // !!! TBD: TOKEN_TAG with executable "magic"
+
+        // Fall through to old validation in switch() for tag validation
+    }
+    else if (
+        0 == (flags & ~(  // check flags for any obvious non-arrow characters
+            LEX_FLAGS_ARROW_EXCEPT_EQUAL
+            // don't count LEX_SPECIAL_AT; only valid at head, so not in flags
+            | LEX_FLAG(LEX_SPECIAL_COLON)  // may be last char if SET-WORD!
+            | LEX_FLAG(LEX_SPECIAL_WORD)  // `=` is WORD!-character, sets this
+        ))
+    ){
+        const REBYTE *temp = cp;
+        if (*temp == ':' or *temp == '@')
+            ++temp;
+
+        while (
+            *temp == '<' or *temp == '>'
+            or *temp == '+' or *temp == '-'
+            or *temp == '=' or *temp == '|'
+        ){
+            ++temp;
+            if (temp != ss->end)
+                continue;
+            if (*cp == '<' and *temp == '/') {
+                //
+                // The prescan for </foo> thinks that it might be a PATH! like
+                // `</foo` so it stops at the slash.  To solve this, we only
+                // support the `</foo>` and <foo />` cases of slashes in TAG!.
+                // We know this is not the latter, because we did not hit a
+                // space while we were processing.  For the former case, we
+                // look to see if we get to a `>` before we hit a delimiter.
+                //
+                const REBYTE *seek = temp + 1;
+                for (; not IS_LEX_DELIMIT(*seek); ++seek) {
+                    if (*seek == '>') {  // hit close of tag first
+                        ss->end = seek + 1;
+                        return TOKEN_TAG;
+                    }
+                }
+                // Hit a delimiter first, so go ahead with our arrow and let
+                // the scan of a PATH! proceed after that.
+            }
+            if (*cp == ':')
+                return TOKEN_GET;
+            if (*cp == '@')
+                return TOKEN_SYM;
+            return TOKEN_WORD;
+        }
+        if (*temp == ':' and temp + 1 == ss->end)
+            return TOKEN_SET;
+    }
 
     switch (GET_LEX_CLASS(*cp)) {
       case LEX_CLASS_DELIMIT:
@@ -1190,16 +1258,6 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             if (cp[1] == '\'')
                 fail (Error_Syntax(ss, TOKEN_WORD));
 
-            // Various special cases of < << <> >> > >= <=
-            if (cp[1] == '<' or cp[1] == '>') {
-                cp++;
-                if (cp[1] == '<' or cp[1] == '>' or cp[1] == '=')
-                    ++cp;
-                if (not IS_LEX_DELIMIT(cp[1]))
-                    fail (Error_Syntax(ss, TOKEN_GET));
-                ss->end = cp + 1;
-                return TOKEN_GET;
-            }
             token = TOKEN_GET;
             ++cp; // skip ':'
             goto scanword;
@@ -1221,41 +1279,10 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             goto scanword;
 
           case LEX_SPECIAL_GREATER:
-            if (IS_LEX_DELIMIT(cp[1]))
-                return TOKEN_WORD;
-            if (cp[1] == '>') {
-                if (IS_LEX_DELIMIT(cp[2]))
-                    return TOKEN_WORD;
-                fail (Error_Syntax(ss, TOKEN_WORD));
-            }
             goto special_lesser;
 
           case LEX_SPECIAL_LESSER:
           special_lesser:;
-            if (
-                IS_LEX_ANY_SPACE(cp[1])
-                or cp[1] == ']' or cp[1] == ')' or cp[1] == 0
-            ){
-                return TOKEN_WORD;  // changed for </tag>
-            }
-            if (
-                (cp[0] == '<' and cp[1] == '<')
-                or cp[1] == '='
-                or cp[1] == '>'
-            ){
-                if (IS_LEX_DELIMIT(cp[2]))
-                    return TOKEN_WORD;
-                fail (Error_Syntax(ss, TOKEN_WORD));
-            }
-            if (
-                cp[0] == '<' and (cp[1] == '-' or cp[1] == '|')
-                and (IS_LEX_DELIMIT(cp[2]) or IS_LEX_ANY_SPACE(cp[2]))
-            ){
-                return TOKEN_WORD;  // "<|" and "<-"
-            }
-            if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_GREATER)
-                fail (Error_Syntax(ss, TOKEN_WORD));
-
             cp = Skip_Tag(cp);
             if (not cp)
                 fail (Error_Syntax(ss, TOKEN_TAG));
@@ -1288,24 +1315,12 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                     token = TOKEN_WORD;
                     goto scanword;
                 }
-                if (
-                    *cp == '>'
-                    and (IS_LEX_DELIMIT(cp[1]) or IS_LEX_ANY_SPACE(cp[1]))
-                ){
-                    return TOKEN_WORD;  // Special exemption for ->
-                }
                 fail (Error_Syntax(ss, TOKEN_WORD));
             }
             token = TOKEN_WORD;
             goto scanword;
 
           case LEX_SPECIAL_BAR:
-            if (
-                cp[1] == '>'
-                and (IS_LEX_DELIMIT(cp[2]) or IS_LEX_ANY_SPACE(cp[2]))
-            ){
-                return TOKEN_WORD;  // for `|>`
-            }
             token = TOKEN_WORD;
             goto scanword;
 
@@ -1519,9 +1534,6 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
     if (HAS_LEX_FLAG(flags, LEX_SPECIAL_LESSER)) {
         // Allow word<tag> and word</tag> but not word< word<= word<> etc.
-
-        if (*cp == '=' and cp[1] == '<' and IS_LEX_DELIMIT(cp[2]))
-            return TOKEN_WORD;  // enable `=<`
 
         cp = Skip_To_Byte(cp, ss->end, '<');
         if (
