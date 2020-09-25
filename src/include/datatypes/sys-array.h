@@ -473,7 +473,7 @@ inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
 // account; they strictly operate on the array series
 //
 inline static const REBARR *VAL_ARRAY(REBCEL(const*) v) {
-    assert(ANY_ARRAY_KIND(CELL_KIND(v)) or ANY_PATH_KIND(CELL_KIND(v)));
+    assert(ANY_ARRAY_KIND(CELL_KIND(v)));
 
     const REBARR *a = ARR(PAYLOAD(Any, v).first.node);
     if (GET_SERIES_INFO(a, INACCESSIBLE))

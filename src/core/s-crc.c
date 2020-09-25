@@ -276,7 +276,9 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_SYM_PATH:
-        //
+        hash = ARR_LEN(ARR(VAL_PATH_NODE(cell)));
+        break;
+
       case REB_GROUP:
       case REB_SET_GROUP:
       case REB_GET_GROUP:

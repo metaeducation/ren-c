@@ -533,8 +533,7 @@ inline static void Get_Var_May_Fail(
         //
         if (Eval_Path_Throws_Core(
             out,
-            VAL_ARRAY(source),
-            VAL_INDEX(source),
+            ARR(VAL_PATH_NODE(source)),
             Derive_Specifier(specifier, source),
             NULL, // not requesting value to set means it's a get
             hard ? EVAL_FLAG_PATH_HARD_QUOTE : EVAL_FLAG_NO_PATH_GROUPS
@@ -673,8 +672,7 @@ void Set_Var_May_Fail(
         DECLARE_LOCAL (dummy);
         if (Eval_Path_Throws_Core(
             dummy,
-            VAL_ARRAY(target),
-            VAL_INDEX(target),
+            ARR(VAL_PATH_NODE(target)),
             Derive_Specifier(target_specifier, target),
             specific,
             flags
@@ -1159,8 +1157,10 @@ REBNATIVE(as)
     switch (new_kind) {
       case REB_BLOCK:
       case REB_GROUP:
-        if (ANY_PATH(v)) {
+        if (ANY_PATH(v)) {  // !!! May not be an array form!
+            mutable_KIND_BYTE(v) = mutable_MIRROR_BYTE(v) = REB_BLOCK;
             assert(Is_Array_Frozen_Shallow(VAL_ARRAY(v)));
+            VAL_INDEX(v) = 0;  // must be REB_BLOCK to allow this
             break;
         }
 

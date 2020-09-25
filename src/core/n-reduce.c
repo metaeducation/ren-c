@@ -164,7 +164,7 @@ bool Match_For_Compose(const RELVAL *group, const REBVAL *label) {
 //
 REB_R Compose_To_Stack_Core(
     REBVAL *out, // if return result is R_THROWN, will hold the thrown value
-    const RELVAL *any_array, // the template
+    const RELVAL *composee, // the template
     REBSPC *specifier, // specifier for relative any_array value
     const REBVAL *label, // e.g. if <*>, only match `(<*> ...)`
     bool deep, // recurse into sub-blocks
@@ -177,7 +177,26 @@ REB_R Compose_To_Stack_Core(
 
     bool changed = false;
 
+    // !!! At the moment, COMPOSE is written to use frame enumeration...and
+    // frames are only willing to enumerate arrays.  But the path may be in
+    // a more compressed form.  While this is being rethought, we just reuse
+    // the logic of AS so it's in one place and gets tested more.
+    //
+    const RELVAL *any_array;
+    if (ANY_PATH(composee)) {
+        DECLARE_LOCAL (temp);
+        Derelativize(temp, composee, specifier);
+        PUSH_GC_GUARD(temp);
+        any_array = rebValueQ("as block!", temp, rebEND);
+        DROP_GC_GUARD(temp);
+    }
+    else
+        any_array = composee;
+
     DECLARE_FEED_AT_CORE (feed, any_array, specifier);
+
+    if (ANY_PATH(composee))
+        rebRelease(cast(REBVAL*, m_cast(RELVAL*, any_array)));
 
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT);
     SHORTHAND (v, f->feed->value, const RELVAL*);
@@ -360,25 +379,35 @@ REB_R Compose_To_Stack_Core(
                 continue;
             }
 
-            REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-            if (GET_ARRAY_FLAG(VAL_ARRAY(cell), NEWLINE_AT_TAIL))
-                pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
-
-            REBARR *popped = Pop_Stack_Values_Core(dsp_deep, pop_flags);
             if (ANY_PATH_KIND(kind)) {
-                Freeze_Array_Shallow(popped);
-                Init_Any_Path(
-                    DS_PUSH(),
+                DECLARE_LOCAL (temp);
+                if (not Try_Pop_Path_Or_Element_Or_Nulled(
+                    temp,
                     kind,
-                    popped  // can't push and pop in same step, need variable
-                );
+                    dsp_deep
+                )){
+                    if (Is_Valid_Path_Element(temp))  // `compose '(null)/1:`
+                        fail (Error_Cant_Decorate_Type_Raw(temp));
+
+                    fail (Error_Bad_Path_Element_Raw(DS_TOP));
+                }
+                Move_Value(DS_PUSH(), temp);
             }
-            else
+            else {
+                REBFLGS pop_flags
+                    = NODE_FLAG_MANAGED
+                    | ARRAY_MASK_HAS_FILE_LINE;
+
+                if (GET_ARRAY_FLAG(VAL_ARRAY(cell), NEWLINE_AT_TAIL))
+                    pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+
+                REBARR *popped = Pop_Stack_Values_Core(dsp_deep, pop_flags);
                 Init_Any_Array(
                     DS_PUSH(),
                     kind,
                     popped  // can't push and pop in same step, need variable
                 );
+            }
 
             Quotify(DS_TOP, quotes);  // match original quoting
 
@@ -404,7 +433,8 @@ REB_R Compose_To_Stack_Core(
 //
 //  {Evaluates only contents of GROUP!-delimited expressions in an array}
 //
-//      return: [any-array! any-path! any-word! action!]
+//      return: "May return NULL if PATH! compose dissolves"
+//          [<opt> any-array! any-path! any-word! action! integer! text! tag!]
 //      :predicate [<skip> action!]  ; !!! PATH! may be meant as value (!)
 //          "Function to run on composed slots (default: ENBLOCK)"
 //      :label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
@@ -465,6 +495,20 @@ REBNATIVE(compose)
     else
         assert(r == nullptr); // normal result, changed
 
+    if (ANY_PATH(ARG(value))) {
+        if (not Try_Pop_Path_Or_Element_Or_Nulled(
+            D_OUT, 
+            VAL_TYPE(ARG(value)),
+            dsp_orig
+        )){
+            if (Is_Valid_Path_Element(D_OUT))  // `compose '(null)/1:`
+                fail (Error_Cant_Decorate_Type_Raw(D_OUT));
+
+            fail (Error_Bad_Path_Element_Raw(D_OUT));
+        }
+        return D_OUT;  // note: may not be an ANY-PATH!  See Try_Pop_Path...
+    }
+
     // The stack values contain N NEWLINE_BEFORE flags, and we need N + 1
     // flags.  Borrow the one for the tail directly from the input REBARR.
     //
@@ -473,12 +517,6 @@ REBNATIVE(compose)
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     REBARR *popped = Pop_Stack_Values_Core(dsp_orig, flags);
-    if (ANY_PATH(ARG(value)))
-        return Init_Any_Path(
-            D_OUT,
-            VAL_TYPE(ARG(value)),
-            Freeze_Array_Shallow(popped)
-        );
 
     return Init_Any_Array(D_OUT, VAL_TYPE(ARG(value)), popped);
 }

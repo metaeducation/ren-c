@@ -156,7 +156,7 @@
     )
 ]
 [#1977
-    (f: func [/r] [1] error? trap [f/r/%])
+    (f: func [/r] [1] error? trap [do load "f/r/%"])
 ]
 
 ; path evaluation order
@@ -177,15 +177,16 @@
     ((/refinement)/2 = 'refinement)
     (r: /refinement | r/2 = 'refinement)
 ][
-    (#iss/ue/path = to path! [#iss ue path])
-    (#issue/3 = to path! [#issue 3])
-][
     ("te"/xt/path = to path! ["te" xt path])
     ("text"/3 = to path! ["text" 3])
     (("text")/3 = #"x")
     (t: "text" | t/3 = #"x")
 ]
 
+; ISSUE! has internal slashes (like FILE!), and does not load as a path
+[
+    ("iss/ue/path" = as text! ensure issue! "#iss/ue/path")
+]
 
 ; https://gitter.im/red/red?at=5b23be5d1ee2d149ecc4c3fd
 (

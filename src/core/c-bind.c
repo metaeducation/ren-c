@@ -79,18 +79,25 @@ void Bind_Values_Inner_Loop(
                 Quotify(head, depth); // new cell made for higher escapes
             }
         }
-        else if (
-            (ANY_ARRAY_OR_PATH_KIND(kind))
-            and (flags & BIND_DEEP)
-        ){
-            Bind_Values_Inner_Loop(
-                binder,
-                VAL_ARRAY_AT_MUTABLE_HACK(CELL_TO_VAL(cell)),
-                context,
-                bind_types,
-                add_midstream_types,
-                flags
-            );
+        else if (flags & BIND_DEEP) {
+            if (ANY_ARRAY_KIND(kind))
+                Bind_Values_Inner_Loop(
+                    binder,
+                    VAL_ARRAY_AT_MUTABLE_HACK(CELL_TO_VAL(cell)),
+                    context,
+                    bind_types,
+                    add_midstream_types,
+                    flags
+                );
+            else if (ANY_PATH_KIND(kind))
+                Bind_Values_Inner_Loop(
+                    binder,
+                    ARR_HEAD(ARR(VAL_PATH_NODE(cell))),  // !!! maybe not ARR
+                    context,
+                    bind_types,
+                    add_midstream_types,
+                    flags
+                );
         }
     }
 }
@@ -167,7 +174,11 @@ void Unbind_Values_Core(RELVAL *head, REBCTX *context, bool deep)
         ){
             Unbind_Any_Word(v);
         }
-        else if (ANY_ARRAY_OR_PATH_KIND(kind) and deep)
+        else if (ANY_PATH_KIND(kind) and deep) {
+            REBNOD *n = m_cast(REBNOD*, VAL_PATH_NODE(v));  // !!! hack!
+            Unbind_Values_Core(ARR_HEAD(ARR(n)), context, true);
+        }
+        else if (ANY_ARRAY_KIND(kind) and deep)
             Unbind_Values_Core(VAL_ARRAY_AT_MUTABLE_HACK(v), context, true);
 
         Quotify(v, num_quotes);
@@ -291,38 +302,50 @@ static void Clonify_And_Bind_Relative(
             series = SER(CTX_VARLIST(VAL_CONTEXT(v)));
             sub_src = BLANK_VALUE;  // don't try to look for LETs
         }
-        else {
-            if (IS_SER_ARRAY(VAL_SERIES(v))) {
-                series = SER(
-                    Copy_Array_At_Extra_Shallow(
-                        VAL_ARRAY(v),
-                        0, // !!! what if VAL_INDEX() is nonzero?
-                        VAL_SPECIFIER(v),
-                        0,
-                        NODE_FLAG_MANAGED
-                    )
-                );
+        else if (ANY_PATH_KIND(kind)) {
+            REBNOD *n = VAL_NODE(v);
+            assert(not (FIRST_BYTE(n) & NODE_BYTEMASK_0x01_CELL));  // TBD
 
-                INIT_VAL_NODE(v, series); // copies args
-
-                // If it was relative, then copying with a specifier
-                // means it isn't relative any more.
-                //
-                INIT_BINDING(v, UNBOUND);
-
-                sub_src = VAL_ARRAY_AT(v);  // look for LETs
-
-                if (ANY_PATH_KIND(kind))  // must freeze the copy shallow
-                    Freeze_Array_Shallow(ARR(series));
-            }
-            else {
-                series = Copy_Sequence_Core(
-                    VAL_SERIES(v),
+            series = SER(
+                Copy_Array_At_Extra_Shallow(
+                    ARR(n),
+                    0,
+                    VAL_SPECIFIER(v),
+                    0,
                     NODE_FLAG_MANAGED
-                );
-                INIT_VAL_NODE(v, series);
-                sub_src = BLANK_VALUE;  // don't try to look for LETs
-            }
+                )
+            );
+
+            INIT_VAL_NODE(v, series);  // copies args
+            INIT_BINDING(v, UNBOUND);  // copied w/specifier--not relative
+
+            sub_src = ARR_HEAD(ARR(series));  // !!! look for LETs (?)
+
+            Freeze_Array_Shallow(ARR(series));
+        }
+        else if (IS_SER_ARRAY(VAL_SERIES(v))) {
+            series = SER(
+                Copy_Array_At_Extra_Shallow(
+                    VAL_ARRAY(v),
+                    0, // !!! what if VAL_INDEX() is nonzero?
+                    VAL_SPECIFIER(v),
+                    0,
+                    NODE_FLAG_MANAGED
+                )
+            );
+
+            INIT_VAL_NODE(v, series);  // copies args
+            INIT_BINDING(v, UNBOUND);  // copied w/specifier--not relative
+
+            sub_src = VAL_ARRAY_AT(v);  // look for LETs
+        }
+        else {
+            series = Copy_Sequence_Core(
+                VAL_SERIES(v),
+                NODE_FLAG_MANAGED
+            );
+            INIT_VAL_NODE(v, series);
+            sub_src = BLANK_VALUE;  // don't try to look for LETs
         }
 
         // If we're going to copy deeply, we go back over the shallow

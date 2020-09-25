@@ -28,9 +28,9 @@
 
 
 //
-//  Init_Any_Path_At_Core: C
+//  Try_Init_Any_Path_At_Arraylike_Core: C
 //
-REBVAL *Init_Any_Path_At_Core(
+REBVAL *Try_Init_Any_Path_At_Arraylike_Core(
     RELVAL *out,
     enum Reb_Kind kind,
     REBARR *a,
@@ -43,15 +43,43 @@ REBVAL *Init_Any_Path_At_Core(
     assert(index == 0);  // !!! current rule
     assert(Is_Array_Frozen_Shallow(a));  // must be immutable (may be aliased)
 
-    RESET_CELL(out, kind, CELL_FLAG_FIRST_IS_NODE);
-    INIT_VAL_NODE(out, a);
-    VAL_INDEX(out) = index;
-    INIT_BINDING(out, binding);
+    if (a == PG_2_Blanks_Array) {
+        assert(false);  // !!! Can you ever incidentally get this array?
+        assert(binding == UNBOUND);
+        return Init_Any_Path_Slash_1(out, kind);
+    }
 
     if (ARR_LEN(a) < 2)
         panic (a);
 
-    assert(a != PG_2_Blanks_Array);  // should always be SYM__SLASH_1_ cell
+    if (ARR_LEN(a) == 2) {
+        //
+        // If someone tries to make a path out of a 2-element array, we could
+        // use it as-is or create an optimized storage for it.  Whether that's
+        // a good idea or not depends on whether the array exists for some
+        // reason in its own right, and is being aliased as a path...so making
+        // another version to hang around as optimized storage is wasteful.
+        // Also, each time someone wants to create an array back from the
+        // path they'll have to expand it.
+        //
+        // Since the optimization isn't done at time of writing, reuse array.
+    }
+
+    RELVAL *v = ARR_HEAD(a);
+    for (; NOT_END(v); ++v) {
+        if (not Is_Valid_Path_Element(v)) {
+            Unrelativize(out, v);
+            return nullptr;
+        }
+    }
+
+    RESET_CELL(out, kind, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_NODE(out, a);
+    // !!! spot where index would be might be used for other things like
+    // counting blanks at head and tail, could also be an index if aliased
+    // arrays not at the head are decided to be a good thing.
+    INIT_BINDING(out, binding);
+
     assert(not (  // v-- also should never be initialized like this
         ARR_LEN(a) == 2 and IS_BLANK(ARR_AT(a, 0)) and IS_BLANK(ARR_AT(a, 1))
     ));
@@ -311,12 +339,11 @@ bool Next_Path_Throws(REBPVS *pvs)
 bool Eval_Path_Throws_Core(
     REBVAL *out, // if opt_setval, this is only used to return a thrown value
     const REBARR *array,
-    REBLEN index,
     REBSPC *specifier,
     const REBVAL *opt_setval, // Note: may be the same as out!
     REBFLGS flags
 ){
-    assert(index == 0); // !!! current rule, immutable proxy w/AS may relax it
+    REBLEN index = 0;
 
     while (KIND_BYTE(ARR_AT(array, index)) == REB_BLANK)
         ++index; // pre-feed any blanks
@@ -523,24 +550,31 @@ void Get_Simple_Value_Into(REBVAL *out, const RELVAL *val, REBSPC *specifier)
 //
 REBCTX *Resolve_Path(const REBVAL *path, REBLEN *index_out)
 {
-    const REBARR *array = VAL_ARRAY(path);
-    const RELVAL *picker = ARR_HEAD(array);
+    REBLEN len = VAL_PATH_LEN(path);
+    if (len == 0)  // !!! e.g. `/`, what should this do?
+        return nullptr;
+    if (len == 1)  // !!! "does not handle single element paths"
+        return nullptr;
 
-    if (IS_END(picker) or not ANY_WORD(picker))
-        return NULL; // !!! only handles heads of paths that are ANY-WORD!
+    DECLARE_LOCAL (temp);
+
+    REBLEN index = 0;
+    REBCEL(const*) picker = VAL_PATH_AT(temp, path, index);
+
+    if (not ANY_WORD_KIND(CELL_KIND(picker)))
+        return nullptr;  // !!! only handles heads of paths that are ANY-WORD!
 
     const RELVAL *var = Lookup_Word_May_Fail(picker, VAL_SPECIFIER(path));
 
-    ++picker;
-    if (IS_END(picker))
-        return NULL; // !!! does not handle single-element paths
+    ++index;
+    picker = VAL_PATH_AT(temp, path, index);
 
-    while (ANY_CONTEXT(var) and IS_WORD(picker)) {
+    while (ANY_CONTEXT(var) and REB_WORD == CELL_KIND(picker)) {
         REBLEN i = Find_Canon_In_Context(
             VAL_CONTEXT(var), VAL_WORD_CANON(picker), false
         );
-        ++picker;
-        if (IS_END(picker)) {
+        ++index;
+        if (index == len) {
             *index_out = i;
             return VAL_CONTEXT(var);
         }
@@ -548,7 +582,7 @@ REBCTX *Resolve_Path(const REBVAL *path, REBLEN *index_out)
         var = CTX_VAR(VAL_CONTEXT(var), i);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -724,9 +758,24 @@ REB_R PD_Path(
     if (opt_setval)
         fail ("PATH!s are immutable (convert to GROUP! or BLOCK! to mutate)");
 
-    Init_Block(pvs->out, VAL_PATH(pvs->out));
+    REBINT n;
 
-    return PD_Array(pvs, picker, opt_setval);
+    if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
+        n = Int32(picker);
+        if (n == 0)
+            return nullptr; // Rebol2/Red convention: 0 is not a pick
+        n = n - 1;
+    }
+    else
+        fail (picker);
+
+    if (n < 0 or n >= cast(REBINT, VAL_PATH_LEN(pvs->out)))
+        return nullptr;
+
+    REBSPC *specifier = VAL_PATH_SPECIFIER(pvs->out);
+    REBCEL(const*) at = VAL_PATH_AT(FRM_SPARE(pvs), pvs->out, n);
+
+    return Derelativize(pvs->out, CELL_TO_VAL(at), specifier);
 }
 
 
@@ -748,15 +797,9 @@ REBTYPE(Path)
 
         switch (VAL_WORD_SYM(ARG(property))) {
           case SYM_LENGTH:
-            if (MIRROR_BYTE(path) == REB_WORD) {
-                assert(VAL_WORD_SYM(path) == SYM__SLASH_1_);
-                return Init_Integer(frame_->out, 2);
-            }
-            return Series_Common_Action_Maybe_Unhandled(frame_, verb);
+            return Init_Integer(D_OUT, VAL_PATH_LEN(path));
 
-          // !!! Any other interesting reflectors?
-
-          case SYM_INDEX: // not legal, paths always at head, no index
+          case SYM_INDEX:  // Note: not legal, paths always at head, no index
           default:
             break;
         }
@@ -804,8 +847,11 @@ void MF_Path(REB_MOLD *mo, REBCEL(const*) v, bool form)
         assert(VAL_WORD_SYM(v) == SYM__SLASH_1_);
         Append_Ascii(mo->series, "/");
     }
+    else if (FIRST_BYTE(VAL_NODE(v)) & NODE_BYTEMASK_0x01_CELL) {
+        assert(!"Not implemented yet, pair optimization...");
+    }
     else {
-        const REBARR *a = VAL_ARRAY(v);
+        const REBARR *a = ARR(VAL_PATH_NODE(v));
 
         // Recursion check:
         if (Find_Pointer_In_Series(TG_Mold_Stack, a) != NOT_FOUND) {
@@ -813,9 +859,7 @@ void MF_Path(REB_MOLD *mo, REBCEL(const*) v, bool form)
             return;
         }
         Push_Pointer_To_Series(TG_Mold_Stack, a);
-
-        assert(VAL_INDEX(v) == 0);  // new rule, not ANY-ARRAY!, always head
-        assert(ARR_LEN(a) >= 2); // another rule, even / is `make path! [_ _]`
+        assert(ARR_LEN(a) >= 2);  // else other optimizations should apply
 
         const RELVAL *item = ARR_HEAD(a);
         while (NOT_END(item)) {
@@ -912,39 +956,35 @@ REB_R MAKE_Path(
         }
     }
 
-    REBARR *arr = Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED);
+    REBVAL *p = Try_Pop_Path_Or_Element_Or_Nulled(out, kind, dsp_orig);
+
     Drop_Frame_Unbalanced(f); // !!! f->dsp_orig got captured each loop
 
-    if (ARR_LEN(arr) < 2) // !!! Should pass produced array as BLOCK! to error
-        fail ("MAKE PATH! must produce path of at least length 2");
+    if (not p)
+        fail (Error_Bad_Path_Element_Raw(out));
 
-    // Need special case code if the array needs to be a disguised WORD!
-    // (See -SLASH-1- for details)
-    //
-    if (ARR_LEN(arr) == 2)
-        if (IS_BLANK(ARR_AT(arr, 0)) and IS_BLANK(ARR_AT(arr, 1))) {
-            Free_Unmanaged_Array(arr);
-            Init_Word(out, PG_Slash_1_Canon);
-            mutable_KIND_BYTE(out) = REB_PATH;
-            return out;
-        }
+    if (not ANY_PATH(out))  // e.g. `make path! ['x]` giving us the WORD! `x`
+        fail ("Can't MAKE PATH! from less than 2 elements (use COMPOSE)");
 
-    return Init_Any_Path(out, kind, Freeze_Array_Shallow(arr));
+    return out;
 }
 
 
-static void Push_Path_Recurses(const RELVAL *path, REBSPC *specifier)
+static void Push_Path_Recurses(REBCEL(const*) path, REBSPC *specifier)
 {
-    const RELVAL *item = ARR_HEAD(VAL_PATH(path));
-    for (; NOT_END(item); ++item) {
-        if (IS_PATH(item)) {
+    DECLARE_LOCAL (temp);
+    REBLEN len = VAL_PATH_LEN(path);
+    REBLEN i;
+    for (i = 0; i < len; ++i) {
+        REBCEL(const*) item = VAL_PATH_AT(temp, path, i);
+        if (CELL_KIND(item) == REB_PATH) {
             if (IS_SPECIFIC(item))
                 Push_Path_Recurses(item, VAL_SPECIFIER(item));
             else
                 Push_Path_Recurses(item, specifier);
         }
         else
-            Derelativize(DS_PUSH(), item, specifier);
+            Derelativize(DS_PUSH(), CELL_TO_VAL(item), specifier);
     }
 }
 
@@ -952,49 +992,92 @@ static void Push_Path_Recurses(const RELVAL *path, REBSPC *specifier)
 //
 //  TO_Path: C
 //
+// BLOCK! is the "universal container".  So note the following behavior:
+//
+//     >> to path! 'a
+//     == /a
+//
+//     >> to path! '(a b c)
+//     == /(a b c)  ; does not splice
+//
+//     >> to path! [a b c]
+//     == a/b/c  ; not /[a b c]
+//
+// There is no "TO/ONLY" to address this as with APPEND.  But there are
+// other options:
+//
+//     >> to path! [_ [a b c]]
+//     == /[a b c]
+//
+//     >> compose /(block)
+//     == /[a b c]
+//
+// TO must return the exact type requested, so this wouldn't be legal:
+//
+//     >> to path! 'a:
+//     == /a:  ; !!! a SET-PATH!, which is not the promised PATH! return type
+//
+// So the only choice is to discard the decorators, or error.  Discarding is
+// consistent with ANY-WORD! interconversion, and also allows another avenue
+// for putting blocks as-is in paths by using the decorated type:
+//
+//     >> to path! @[a b c]
+//     == /[a b c]
+//
 REB_R TO_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
-    if (ANY_PATH(arg)) {  // e.g. `to set-path! 'a/b/c`
-        assert(kind != VAL_TYPE(arg));  // TO should have called COPY
+    enum Reb_Kind arg_kind = VAL_TYPE(arg);
 
-        Move_Value(out, arg);
-        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = kind;
+    if (ANY_PATH_KIND(arg_kind)) {  // e.g. `to set-path! 'a/b/c`
+        assert(arg_kind != VAL_TYPE(arg));  // TO should have called COPY
+
+        Move_Value(out, arg);  // don't need to copy, paths are immutable
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = arg_kind;
         return out;
     }
 
-    if (not ANY_ARRAY(arg)) {  // e.g. `to path! foo` becomes `/foo`
-        //
-        // !!! This is slated to be able to fit into a single cell, with no
-        // array allocation.
-        //
-        REBARR *a = Make_Array(2);
-        Init_Blank(ARR_AT(a, 0));
-        Move_Value(ARR_AT(a, 1), arg);
-        TERM_ARRAY_LEN(a, 2);
-        return Init_Any_Path(out, kind, Freeze_Array_Shallow(a));
+    if (arg_kind != REB_BLOCK) {
+        Move_Value(out, arg);  // move value so we can modify it
+        Dequotify(out);  // remove quotes (should TO take a REBCEL()?)
+        Plainify(out);  // remove any decorations like @ or :
+        if (not Try_Leading_Blank_Pathify(out, kind))
+            fail ("Value invalid as a path element");
+        return out;
     }
 
-    REBDSP dsp_orig = DSP;
-    const RELVAL *item = VAL_ARRAY_AT(arg);
-    for (; NOT_END(item); ++item) {
-        if (IS_PATH(item))
-            Push_Path_Recurses(item, VAL_SPECIFIER(arg));
-        else
-            Derelativize(DS_PUSH(), item, VAL_SPECIFIER(arg));
+    // BLOCK! is universal container, and the only type that is converted.
+    // Paths are not allowed... use MAKE PATH! for that.  Not all paths
+    // will be valid here, so the Init_Any_Path_Arraylike may fail (should
+    // probably be Try_Init_Any_Path_Arraylike()...)
+
+    REBLEN len = VAL_LEN_AT(arg);
+    if (len < 2)
+        fail ("paths must contain at least two values");
+
+    if (len == 2) {
+        DECLARE_LOCAL (first);
+        DECLARE_LOCAL (second);
+        Derelativize(first, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg));
+        Derelativize(second, VAL_ARRAY_AT(arg) + 1, VAL_SPECIFIER(arg));
+        if (not Try_Init_Any_Path_Pairlike(out, kind, first, second))
+            fail (Error_Bad_Path_Element_Raw(out));
+    }
+    else {
+        // Assume it needs an array.  This might be a wrong assumption, e.g.
+        // if it knows other compressions (if there's no index, it could have
+        // "head blank" and "tail blank" bits, for instance).
+
+        REBARR *a = Copy_Array_At_Shallow(
+            VAL_ARRAY(arg),
+            VAL_INDEX(arg),
+            VAL_SPECIFIER(arg)
+        );
+        Freeze_Array_Shallow(a);
+
+        if (not Try_Init_Any_Path_Arraylike(out, kind, a))
+            fail (Error_Bad_Path_Element_Raw(out));
     }
 
-    if (DSP - dsp_orig < 2)
-        fail ("TO PATH! must produce a path of at least length 2");
-
-    if (DSP - dsp_orig == 2)
-        if (IS_BLANK(DS_TOP) and IS_BLANK(DS_TOP - 1)) {
-            DS_DROP_TO(dsp_orig);
-            Init_Word(out, PG_Slash_1_Canon);
-            mutable_KIND_BYTE(out) = REB_PATH;
-            return out;
-        }
-
-    REBARR *a = Pop_Stack_Values(dsp_orig);
-    return Init_Any_Path(out, kind, Freeze_Array_Shallow(a));
+    return out;
 }
 
 
@@ -1013,7 +1096,13 @@ REBINT CT_Path(REBCEL(const*) a, REBCEL(const*) b, bool strict)
     if (MIRROR_BYTE(a) == REB_WORD and MIRROR_BYTE(b) == REB_WORD)
         return CT_Word(a, b, strict);
     else if (MIRROR_BYTE(a) != REB_WORD and MIRROR_BYTE(b) != REB_WORD)
-        return CT_Array(a, b,strict);
+        return Compare_Arrays_At_Indexes(
+            ARR(VAL_PATH_NODE(a)),
+            0,
+            ARR(VAL_PATH_NODE(b)),
+            0,
+            strict
+        );
     else
         return -1;  // !!! what is the right answer here?
 }

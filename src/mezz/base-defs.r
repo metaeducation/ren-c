@@ -473,13 +473,19 @@ reeval func* [
 ; %words.r for bootstrap compatibility as a parse keyword.
 
 lit-word?: func* [value [<opt> any-value!]] [
-    lit-word! == type of :value  ; note plain = would not work here
+    did all [
+        quoted? :value
+        word! = type of unquote value
+    ]
 ]
 to-lit-word: func* [value [any-value!]] [
     quote to word! dequote :value
 ]
 lit-path?: func* [value [<opt> any-value!]] [
-    lit-path! == type of :value  ; note plain = would not work here
+    did all [
+        quoted? :value
+        path! = type of unquote value
+    ]
 ]
 to-lit-path: func* [value [any-value!]] [
     quote to path! dequote :value

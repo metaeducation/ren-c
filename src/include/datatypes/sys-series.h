@@ -667,7 +667,7 @@ inline static void DROP_GC_GUARD(const void *p) {
 inline static const REBSER *VAL_SERIES(REBCEL(const*) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = CELL_KIND(v);
-    assert(ANY_SERIES_KIND_EVIL_MACRO or ANY_PATH_KIND_EVIL_MACRO);
+    assert(ANY_SERIES_KIND_EVIL_MACRO);
   #endif
     const REBSER *s = SER(PAYLOAD(Any, v).first.node);
     if (GET_SERIES_INFO(s, INACCESSIBLE))
@@ -697,12 +697,12 @@ inline static const REBSER *VAL_SERIES(REBCEL(const*) v) {
     //
     inline static REBLEN VAL_INDEX(REBCEL(const*) v) { // C++ reference type
         enum Reb_Kind k = CELL_KIND(v);
-        assert(ANY_SERIES_KIND_EVIL_MACRO or ANY_PATH_KIND_EVIL_MACRO);
+        assert(ANY_SERIES_KIND_EVIL_MACRO);
         return VAL_INDEX_UNCHECKED(v);
     }
     inline static REBLEN & VAL_INDEX(RELVAL *v) {
         enum Reb_Kind k = VAL_TYPE(v);
-        assert(ANY_SERIES_KIND_EVIL_MACRO or ANY_PATH_KIND_EVIL_MACRO);
+        assert(ANY_SERIES_KIND_EVIL_MACRO);
         return VAL_INDEX_UNCHECKED(v);
     }
 #endif

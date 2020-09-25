@@ -36,24 +36,24 @@
 [#2312 (
     data: [<a> <b>]
     did all [
-        null = :data/0.5
-        null = :data/0.999999
-        <a> = data/1.0
-        <a> = data/1.5
-        <b> = data/2.0
-        <b> = data/2.000000001
-        null = :data/3.0
+        null = :data/(0.5)
+        null = :data/(0.999999)
+        <a> = data/(1.0)
+        <a> = data/(1.5)
+        <b> = data/(2.0)
+        <b> = data/(2.000000001)
+        null = :data/(3.0)
     ]
 )]
 [#2312 (
     data: "ab"
     did all [
-        null = :data/0.5
-        null = :data/0.999999
-        #"a" = data/1.0
-        #"a" = data/1.5
-        #"b" = data/2.0
-        #"b" = data/2.000000001
-        null = :data/3.0
+        null = :data/(0.5)
+        null = :data/(0.999999)
+        #"a" = data/(1.0)
+        #"a" = data/(1.5)
+        #"b" = data/(2.0)
+        #"b" = data/(2.000000001)
+        null = :data/(3.0)
     ]
 )]

@@ -521,11 +521,12 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const RELVAL *head)
         if (not (cl->flags & COLLECT_DEEP))
             continue;
 
-        // Recurse into arrays and groups (R3-Alpha did not consider PATH!s,
-        // but a path may have a group in it):
+        // !!! Should this consider paths, or their embedded groups/arrays?
+        // This is less certain as the purpose of collect words is not clear
+        // given stepping away from SET-WORD! gathering as locals.
         // https://github.com/rebol/rebol-issues/issues/2276
         //
-        if (ANY_ARRAY_OR_PATH_KIND(kind))
+        if (ANY_ARRAY_KIND(kind))
             Collect_Inner_Loop(cl, VAL_ARRAY_AT(cell));
     }
 }

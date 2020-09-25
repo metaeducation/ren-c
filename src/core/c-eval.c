@@ -1966,23 +1966,16 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
             goto process_word;
         }
 
-        assert(VAL_INDEX_UNCHECKED(v) == 0);  // this is the rule for now
+        REBVAL *where = GET_EVAL_FLAG(f, NEXT_ARG_FROM_OUT) ? spare : f->out;
 
-        if (ANY_INERT(ARR_HEAD(VAL_ARRAY(v)))) {
-            //
-            // !!! TODO: Make special exception for `/` here, look up function
-            // it is bound to.
-            //
+        if (ANY_INERT_KIND(CELL_KIND(VAL_PATH_AT(where, v, 0)))) {
             Derelativize(f->out, v, *specifier);
             break;
         }
 
-        REBVAL *where = GET_EVAL_FLAG(f, NEXT_ARG_FROM_OUT) ? spare : f->out;
-
         if (Eval_Path_Throws_Core(
             where,
-            VAL_ARRAY(v),
-            VAL_INDEX(v),
+            ARR(VAL_PATH_NODE(v)),
             Derive_Specifier(*specifier, v),
             nullptr, // `setval`: null means don't treat as SET-PATH!
             EVAL_FLAG_PUSH_PATH_REFINES
@@ -2064,8 +2057,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
         if (Eval_Path_Throws_Core(
             spare,  // output if thrown, used as scratch space otherwise
-            VAL_ARRAY(v),
-            VAL_INDEX(v),
+            ARR(VAL_PATH_NODE(v)),
             Derive_Specifier(*specifier, v),
             f->out,
             EVAL_MASK_DEFAULT  // evaluating GROUP!s ok

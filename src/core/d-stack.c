@@ -161,8 +161,13 @@ REBVAL *Init_Near_For_Frame(RELVAL *out, REBFRM *f)
     // GET-PATH!.  It has one bit to say whether it's in a path mode or not,
     // so assume that will help a little bit with making the error clear.
     //
-    if (GET_EVAL_FLAG(f, PATH_MODE))
-        Init_Path(out, Freeze_Array_Shallow(near));
+    if (GET_EVAL_FLAG(f, PATH_MODE)) {
+        Freeze_Array_Shallow(near);
+
+        REBVAL *p = Try_Init_Any_Path_Arraylike(out, REB_PATH, near);
+        assert(p);  // !!! Do we know the array is a valid path?
+        UNUSED(p);
+    }
     else
         Init_Block(out, near);
 

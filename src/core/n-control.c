@@ -196,30 +196,46 @@ inline static bool Single_Test_Throws(
         break;
 
       case REB_PATH: { // AND the tests together
-        const RELVAL *item = VAL_ARRAY_AT(test_cell);
         REBSPC *specifier = Derive_Specifier(test_specifier, test);
 
-        for (; NOT_END(item); ++item) {
-            if (IS_GET_WORD(item))
-                fail ("GET-WORD! may be slated to be illegal in PATH!s");
+        // !!! The array case can extract VAL_ARRAY() from the test and
+        // reuse `out`, but paths may not have series to extract... have to
+        // cache the test in a GC-safe slot
+        //
+        DECLARE_LOCAL (test_cache);  // have to keep `out` alive
+        Move_Value(test_cache, SPECIFIC(CELL_TO_VAL(test_cell)));
+        PUSH_GC_GUARD(test_cache);
 
-            if (IS_QUOTED(item))
-                fail ("QUOTED! items may be slated to be illegal in PATH!s");
+        DECLARE_LOCAL (temp);  // path element extraction buffer (if needed)
+        SET_END(temp);
+        PUSH_GC_GUARD(temp);
+
+        REBLEN len = VAL_PATH_LEN(test_cache);
+        REBLEN i;
+        for (i = 0; i < len; ++i) {
+            REBCEL(const*) item = VAL_PATH_AT(temp, test_cache, i);
 
             if (Single_Test_Throws(
                 out,
-                item,
+                CELL_TO_VAL(item),
                 specifier,
                 arg,
                 arg_specifier,
                 sum_quotes
             )){
+                DROP_GC_GUARD(temp);
+                DROP_GC_GUARD(test_cache);
                 return true;
             }
 
-            if (not VAL_LOGIC(out)) // any ANDing failing skips block
-                return false; // false=no throw
+            if (not VAL_LOGIC(out))  {  // any ANDing failing skips block
+                DROP_GC_GUARD(temp);
+                DROP_GC_GUARD(test_cache);
+                return false;  // false=no throw
+            }
         }
+        DROP_GC_GUARD(temp);
+        DROP_GC_GUARD(test_cache);
         assert(VAL_LOGIC(out)); // if all tests succeeded in block
         return false; } // return the LOGIC! truth, false=no throw
 
@@ -1264,41 +1280,52 @@ REBNATIVE(default)
         // COMPOSE on the PATH! and then use GET/HARD and SET/HARD.  To make
         // a faster native we just do a more optimal version of that.
         //
+        REBLEN len = VAL_PATH_LEN(target);
         bool has_groups = false;
-        const RELVAL *item = VAL_ARRAY_AT(target);
-        for (; NOT_END(item); ++item) {
-            if (IS_GROUP(item))
+        REBLEN i;
+        for (i = 0; i < len; ++i) {
+            REBCEL(const*) item = VAL_PATH_AT(D_SPARE, target, i);
+
+            if (REB_GROUP == CELL_KIND(item))
                 has_groups = true;
         }
         if (has_groups) {
-            REBARR *composed = Make_Array(VAL_LEN_AT(target));
+            REBARR *composed = Make_Array(len);
             RELVAL *dest = ARR_HEAD(composed);
-            item = VAL_ARRAY_AT(target);
             REBSPC *specifier = VAL_SPECIFIER(target);
-            for (; NOT_END(item); ++item, ++dest) {
-                if (not IS_GROUP(item))
-                    Derelativize(dest, item, VAL_SPECIFIER(target));
+            for (i = 0; i < len; ++i, ++dest) {
+                REBCEL(const*) item = VAL_PATH_AT(D_SPARE, target, i);
+
+                if (CELL_KIND(item) != REB_GROUP)
+                    Derelativize(dest, CELL_TO_VAL(item), VAL_SPECIFIER(target));
                 else {
-                    // !!! This only does GROUP!s, but if there are GET-WORD!
-                    // in the path the group evaluation could have side
-                    // effects that change them as they go.  That's a weird
-                    // edge case...not going to address it yet, as perhaps
-                    // GET-WORD! in paths aren't good anyway.
-                    //
-                    if (Do_Any_Array_At_Throws(D_OUT, item, specifier))
+                    if (Do_Any_Array_At_Throws(D_OUT, CELL_TO_VAL(item), specifier))
                         return R_THROWN;
                     Move_Value(dest, D_OUT);
                 }
             }
-            TERM_ARRAY_LEN(composed, VAL_LEN_AT(target));
+            TERM_ARRAY_LEN(composed, len);
             Freeze_Array_Shallow(composed);
-            Init_Any_Path(target, REB_SET_PATH, composed);
+
+            // !!! The limiting of path contents messes this up; you cannot
+            // generically store path picking info if it's an arbitrary value
+            // because not all values are allowed in paths.  This will require
+            // rethinking!
+            //
+            if (not Try_Init_Any_Path_Arraylike(
+                target,
+                REB_SET_PATH,
+                composed
+            )){
+                fail ("Cannot compose arbitrary path, review implications");
+            }
         }
+
+        const REBNOD *n = VAL_PATH_NODE(target);
 
         if (Eval_Path_Throws_Core(
             D_OUT,
-            VAL_ARRAY(target),
-            VAL_INDEX(target),
+            ARR(n),
             VAL_SPECIFIER(target),
             NULL, // not requesting value to set means it's a get
             EVAL_FLAG_PATH_HARD_QUOTE // pre-COMPOSE'd, so GROUP!s are literal
@@ -1325,8 +1352,7 @@ REBNATIVE(default)
         DECLARE_LOCAL (dummy);
         if (Eval_Path_Throws_Core(
             dummy,
-            VAL_ARRAY(target),
-            VAL_INDEX(target),
+            ARR(VAL_PATH_NODE(target)),
             VAL_SPECIFIER(target),
             D_OUT,
             EVAL_FLAG_PATH_HARD_QUOTE  // precomposed, no double evaluating

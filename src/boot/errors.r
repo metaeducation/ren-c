@@ -107,6 +107,9 @@ Script: [
     ambiguous-infix:    {Ambiguous infix expression--use GROUP! to clarify}
     literal-left-path:  {Use >- to pass literal left PATH! parameters right}
 
+    bad-path-element:   [{Value is not a valid PATH! element type:} :arg1]
+    cant-decorate-type: [{Cannot apply `:` or `@` decoration to:} :arg1]
+
     bad-get-group:      {GET-GROUP! gets WORD!/PATH!/BLOCK!, arity-0 ACTION!}
     bad-set-group:      {SET-GROUP! sets WORD!/PATH!/BLOCK!, arity-1 ACTION!}
 

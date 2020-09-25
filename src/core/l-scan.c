@@ -2331,118 +2331,95 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             // plain XXX! and make this a GET-PATH!, and also check for
             // conflicts if there's a colon at the end and making a SET-PATH!
 
-            if (DSP - dsp_path_head == 0) {  // nothing more added
-                //
-                // !!! Currently there is no special case optimization for
-                // leading paths with a tail blank.  It could perhaps be
-                // done by cutting out the allowance of escaping levels as
-                // meaning for the kind byte.  Not a priority.
-                //
-                bool is_get_path = GET_CELL_FLAG(DS_TOP, BLANK_MARKED_GET);
-                if (IS_BLANK(DS_TOP)) {  // `/` or `:/`
-                    Init_Word(DS_TOP, PG_Slash_1_Canon);
-                    mutable_KIND_BYTE(DS_TOP) = is_get_path
-                        ? REB_GET_PATH
-                        : REB_PATH;
-                }
-                else {
-                    REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-                    MISC(a).line = ss->line;
-                    LINK_FILE_NODE(a) = NOD(ss->file);
-                    SET_ARRAY_FLAG(a, HAS_FILE_LINE_UNMASKED);
-                    SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
+            // If we didn't push anything after the head, push a blank to
+            // make it effectively a two element path (could optimize, but
+            // try running through the generic code for now)...
+            //
+            if (DSP == dsp_path_head)
+                Init_Blank(DS_PUSH());
 
-                    Append_Value(a, DS_TOP);  // may be BLANK!
-                    Init_Blank(Alloc_Tail_Array(a));
-                    Freeze_Array_Shallow(a);
-                    if (GET_CELL_FLAG(DS_TOP, BLANK_MARKED_GET))
-                        Init_Any_Path(DS_TOP, REB_GET_PATH, a);
-                    else
-                        Init_Path(DS_TOP, a);
-                }
-            }
-            else if (
-                DSP - dsp_path_head == 1  // one more item added
-                and IS_BLANK(DS_AT(dsp_path_head))
-                and NOT_CELL_FLAG(DS_AT(dsp_path_head), BLANK_MARKED_GET)
-            ){
-                // This is the optimized case where we use a single cell to
-                // represent a path with a blank at the head like /FOO.  So
-                // move the one value we scanned into the position we want
-                // and apply the optimization.
-
-                Refinify(Move_Value(DS_TOP - 1, DS_TOP));
-                DS_DROP();
+            REBVAL *head = DS_AT(dsp_path_head);
+            enum Reb_Kind path_kind = REB_PATH;
+            if (GET_CELL_FLAG(head, BLANK_MARKED_GET)) {
+                assert(IS_BLANK(head));  // can't carry get encoded in type
+                path_kind = REB_GET_PATH;
             }
             else {
-                REBFLGS flags = NODE_FLAG_MANAGED;
-                if (level->newline_pending)
-                    flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+                enum Reb_Kind top_kind = VAL_TYPE(head);
+                if (ANY_GET_KIND(top_kind)) {  // need to plainify it
+                    mutable_KIND_BYTE(head)
+                        = mutable_MIRROR_BYTE(head)
+                        = PLAINIFY_ANY_GET_KIND(top_kind);
+                    path_kind = REB_GET_PATH;
+                }
+                else if (ANY_SYM_KIND(top_kind)) {
+                    mutable_KIND_BYTE(head)
+                        = mutable_MIRROR_BYTE(head)
+                        = PLAINIFY_ANY_SYM_KIND(top_kind);
+                    path_kind = REB_SYM_PATH;
+                }
+            }
 
-                bool blank_marked_get =
-                    GET_CELL_FLAG(DS_AT(dsp_path_head), BLANK_MARKED_GET);
-                if (blank_marked_get)
-                    assert(IS_BLANK(DS_AT(dsp_path_head)));
+            if (ss->begin and *ss->end == ':') {  // !!! ss-begin?
+                if (path_kind != REB_PATH)  // first element cued GET or SYM
+                    fail (Error_Syntax(ss, token));  // for instance `:a/b/c:`
+                path_kind = REB_SET_PATH;
+                ss->begin = ++ss->end;  // !!! ?
+            }
 
-                REBARR *a = Pop_Stack_Values_Core(
-                    dsp_path_head - 1,  // stop popping right after head pop
-                    flags
-                );
+            // R3-Alpha permitted GET-WORD! and other aberrations internally
+            // to PATH!.  Ren-C does not, and it will optimize the immutable
+            // GROUP! so that it lives in a cell (TBD).
+            //
+            // For interim compatibility, allow GET-WORD! at LOAD-time by
+            // mutating it into a single element GROUP!.
+            //
+            REBVAL *cleanup = head + 1;
+            for (; cleanup <= DS_TOP; ++cleanup) {
+                if (IS_GET_WORD(DS_TOP)) {
+                    REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
+                    mutable_KIND_BYTE(DS_TOP)
+                        = mutable_MIRROR_BYTE(DS_TOP)
+                        = REB_GET_WORD;
+
+                    Move_Value(ARR_SINGLE(a), DS_TOP);
+                    Init_Group(DS_TOP, a);
+                }
+            }
+
+            // Run through the generalized pop path code, which does any
+            // applicable compression...and validates the array.
+            //
+            DECLARE_LOCAL (temp);
+            REBVAL *check = Try_Pop_Path_Or_Element_Or_Nulled(
+                temp,
+                path_kind,
+                dsp_path_head - 1
+            );
+            if (not check)
+                fail (Error_Syntax(ss, token));
+ 
+            assert(ANY_PATH(temp));
+            Move_Value(DS_PUSH(), temp);
+
+            // Can only store file and line information if it has an array
+            //
+            if (
+                GET_CELL_FLAG(DS_TOP, FIRST_IS_NODE)
+                and IS_SER_ARRAY(VAL_NODE(DS_TOP))
+            ){
+                REBARR *a = ARR(VAL_NODE(DS_TOP));
                 MISC(a).line = ss->line;
                 LINK_FILE_NODE(a) = NOD(ss->file);
                 SET_ARRAY_FLAG(a, HAS_FILE_LINE_UNMASKED);
                 SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
 
-                DS_PUSH();
-
-                RELVAL *head = ARR_HEAD(a);
-                REBYTE kind_head = KIND_BYTE(head);
-
-                if (ANY_GET_KIND(kind_head) or blank_marked_get) {
-                    if (ss->begin and *ss->end == ':')
-                      fail (Error_Syntax(ss, token));  // like `:a/b/c:`
-
-                    RESET_VAL_HEADER(
-                        DS_TOP,
-                        REB_GET_PATH,
-                        CELL_FLAG_FIRST_IS_NODE
-                    );
-                    if (not blank_marked_get)  // undecorated
-                        mutable_KIND_BYTE(head)
-                            = mutable_MIRROR_BYTE(head)
-                            = UNGETIFY_ANY_GET_KIND(kind_head);
-                }
-                else if (ANY_SYM_KIND(kind_head)) {  // !!! TBD: blank hack
-                    if (ss->begin and *ss->end == ':')
-                      fail (Error_Syntax(ss, token));  // like `@a/b/c:`
-
-                    RESET_VAL_HEADER(
-                        DS_TOP,
-                        REB_SYM_PATH,
-                        CELL_FLAG_FIRST_IS_NODE
-                    );
-                    mutable_KIND_BYTE(head)
-                        = mutable_MIRROR_BYTE(head)
-                        = UNSYMIFY_ANY_SYM_KIND(kind_head);
-                }
-                else if (ss->begin and *ss->end == ':') {
-                    RESET_VAL_HEADER(
-                        DS_TOP,
-                        REB_SET_PATH,
-                        CELL_FLAG_FIRST_IS_NODE
-                    );
-                    ss->begin = ++ss->end;
-                }
-                else
-                    RESET_VAL_HEADER(
-                        DS_TOP,
-                        REB_PATH,
-                        CELL_FLAG_FIRST_IS_NODE
-                    );
-
-                INIT_VAL_NODE(DS_TOP, Freeze_Array_Shallow(a));
-                VAL_INDEX(DS_TOP) = 0;
-                INIT_BINDING(DS_TOP, UNBOUND);
+                // !!! Does this mean anything for paths?  The initial code
+                // had it, but it was exploratory and predates the ideas that
+                // are currently being used to solidify paths.
+                //
+                if (level->newline_pending)
+                    SET_ARRAY_FLAG(a, NEWLINE_AT_TAIL);
             }
 
             token = TOKEN_PATH;  // for error message !!! unused?

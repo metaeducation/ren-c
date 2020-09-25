@@ -172,32 +172,44 @@ void Clonify(
             );
             series = SER(CTX_VARLIST(VAL_CONTEXT(v)));
         }
-        else {
-            if (IS_SER_ARRAY(VAL_SERIES(v))) {
-                series = SER(
-                    Copy_Array_At_Extra_Shallow(
-                        VAL_ARRAY(v),
-                        0, // !!! what if VAL_INDEX() is nonzero?
-                        VAL_SPECIFIER(v),
-                        0,
-                        NODE_FLAG_MANAGED
-                    )
-                );
-
-                INIT_VAL_NODE(v, series); // copies args
-
-                // If it was relative, then copying with a specifier
-                // means it isn't relative any more.
-                //
-                INIT_BINDING(v, UNBOUND);
-            }
-            else {
-                series = Copy_Sequence_Core(
-                    VAL_SERIES(v),
+        else if (ANY_PATH_KIND(kind)) {
+            REBNOD *n = VAL_NODE(v);
+            assert(not (FIRST_BYTE(n->header.bits) & NODE_BYTEMASK_0x01_CELL));
+            series = SER(
+                Copy_Array_At_Extra_Shallow(
+                    ARR(n),
+                    0,  // index
+                    VAL_SPECIFIER(v),
+                    0,  // extra
                     NODE_FLAG_MANAGED
-                );
-                INIT_VAL_NODE(v, series);
-            }
+                )
+            );
+
+            Freeze_Array_Shallow(ARR(series));
+
+            INIT_VAL_NODE(v, series);
+            INIT_BINDING(v, UNBOUND);  // copying w/specifier makes specific
+        }
+        else if (IS_SER_ARRAY(VAL_SERIES(v))) {
+            series = SER(
+                Copy_Array_At_Extra_Shallow(
+                    VAL_ARRAY(v),
+                    0,  // !!! what if VAL_INDEX() is nonzero?
+                    VAL_SPECIFIER(v),
+                    0,
+                    NODE_FLAG_MANAGED
+                )
+            );
+
+            INIT_VAL_NODE(v, series);
+            INIT_BINDING(v, UNBOUND);  // copying w/specifier makes specific
+        }
+        else {
+            series = Copy_Sequence_Core(
+                VAL_SERIES(v),
+                NODE_FLAG_MANAGED
+            );
+            INIT_VAL_NODE(v, series);
         }
 
         // If we're going to copy deeply, we go back over the shallow
@@ -369,10 +381,11 @@ void Uncolor_Array(const REBARR *a)
 
     Flip_Series_To_White(SER(a));
 
-    const RELVAL *val;
-    for (val = ARR_HEAD(a); NOT_END(val); ++val)
-        if (ANY_ARRAY_OR_PATH(val) or IS_MAP(val) or ANY_CONTEXT(val))
-            Uncolor(val);
+    const RELVAL *v;
+    for (v = ARR_HEAD(a); NOT_END(v); ++v) {
+        if (ANY_PATH(v) or ANY_ARRAY(v) or IS_MAP(v) or ANY_CONTEXT(v))
+            Uncolor(v);
+    }
 }
 
 
@@ -383,16 +396,21 @@ void Uncolor_Array(const REBARR *a)
 //
 void Uncolor(const RELVAL *v)
 {
-    const REBARR *array;
-
     if (ANY_ARRAY(v))
-        array = VAL_ARRAY(v);
-    else if (ANY_PATH(v))
-        array = VAL_PATH(v);
+        Uncolor_Array(VAL_ARRAY(v));
+    else if (ANY_PATH(v)) {
+        REBLEN len = VAL_PATH_LEN(v);
+        REBLEN i;
+        DECLARE_LOCAL (temp);
+        for (i = 0; i < len; ++i) {
+            REBCEL(const*) item = VAL_PATH_AT(temp, v, i);
+            Uncolor(CELL_TO_VAL(item));
+        }
+    }
     else if (IS_MAP(v))
-        array = MAP_PAIRLIST(VAL_MAP(v));
+        Uncolor_Array(MAP_PAIRLIST(VAL_MAP(v)));
     else if (ANY_CONTEXT(v))
-        array = CTX_VARLIST(VAL_CONTEXT(v));
+        Uncolor_Array(CTX_VARLIST(VAL_CONTEXT(v)));
     else {
         // Shouldn't have marked recursively any non-array series (no need)
         //
@@ -400,8 +418,5 @@ void Uncolor(const RELVAL *v)
             not ANY_SERIES(v)
             or Is_Series_White(VAL_SERIES(v))
         );
-        return;
     }
-
-    Uncolor_Array(array);  // ignore constness
 }

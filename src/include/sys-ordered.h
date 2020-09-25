@@ -278,17 +278,17 @@ inline static bool ANY_SYM_KIND(REBYTE k) {
     return k >= REB_SYM_BLOCK and k <= REB_SYM_WORD;
 }
 
-inline static enum Reb_Kind UNGETIFY_ANY_GET_KIND(REBYTE k) {
+inline static enum Reb_Kind PLAINIFY_ANY_GET_KIND(REBYTE k) {
     assert(ANY_GET_KIND(k));
     return cast(enum Reb_Kind, k - 8);
 }
 
-inline static enum Reb_Kind UNSETIFY_ANY_SET_KIND(REBYTE k) {
+inline static enum Reb_Kind PLAINIFY_ANY_SET_KIND(REBYTE k) {
     assert(ANY_SET_KIND(k));
     return cast(enum Reb_Kind, k - 4);
 }
 
-inline static enum Reb_Kind UNSYMIFY_ANY_SYM_KIND(REBYTE k) {
+inline static enum Reb_Kind PLAINIFY_ANY_SYM_KIND(REBYTE k) {
     assert(ANY_SYM_KIND(k));
     return cast(enum Reb_Kind, k + 4);
 }
@@ -306,6 +306,57 @@ inline static enum Reb_Kind GETIFY_ANY_PLAIN_KIND(REBYTE k) {
 inline static enum Reb_Kind SYMIFY_ANY_PLAIN_KIND(REBYTE k) {
     assert(ANY_PLAIN_KIND(k));
     return cast(enum Reb_Kind, k - 4);
+}
+
+
+//=//// SET-WORD! <=> SET-PATH! <=> SET-BLOCK! TRANSFORMATION /////////////=//
+//
+// This keeps the PLAIN/GET/SET/SYM class the same, changes the type.
+//
+// Order is: block, group, path, word.
+
+inline static enum Reb_Kind WORDIFY_KIND(REBYTE k) {
+    if (ANY_BLOCK_KIND(k))
+        return cast(enum Reb_Kind, k + 3);
+    if (ANY_GROUP_KIND(k))
+        return cast(enum Reb_Kind, k + 2);
+    if (ANY_PATH_KIND(k))
+        return cast(enum Reb_Kind, k + 1);
+    assert(ANY_WORD_KIND(k));
+    return cast(enum Reb_Kind, k);
+}
+
+inline static enum Reb_Kind PATHIFY_KIND(REBYTE k) {
+    if (ANY_BLOCK_KIND(k))
+        return cast(enum Reb_Kind, k + 2);
+    if (ANY_GROUP_KIND(k))
+        return cast(enum Reb_Kind, k + 1);
+    if (ANY_PATH_KIND(k))
+        return cast(enum Reb_Kind, k);
+    assert(ANY_WORD_KIND(k));
+    return cast(enum Reb_Kind, k - 1);
+}
+
+inline static enum Reb_Kind GROUPIFY_KIND(REBYTE k) {
+    if (ANY_BLOCK_KIND(k))
+        return cast(enum Reb_Kind, k + 1);
+    if (ANY_GROUP_KIND(k))
+        return cast(enum Reb_Kind, k);
+    if (ANY_PATH_KIND(k))
+        return cast(enum Reb_Kind, k - 1);
+    assert(ANY_WORD_KIND(k));
+    return cast(enum Reb_Kind, k - 2);
+}
+
+inline static enum Reb_Kind BLOCKIFY_KIND(REBYTE k) {
+    if (ANY_BLOCK_KIND(k))
+        return cast(enum Reb_Kind, k);
+    if (ANY_GROUP_KIND(k))
+        return cast(enum Reb_Kind, k - 1);
+    if (ANY_PATH_KIND(k))
+        return cast(enum Reb_Kind, k - 2);
+    assert(ANY_WORD_KIND(k));
+    return cast(enum Reb_Kind, k - 3);
 }
 
 

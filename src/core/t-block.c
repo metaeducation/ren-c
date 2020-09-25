@@ -43,36 +43,13 @@ REBINT CT_Array(REBCEL(const*) a, REBCEL(const*) b, bool strict)
     if (C_STACK_OVERFLOWING(&strict))
         Fail_Stack_Overflow();
 
-    if (
-        VAL_SERIES(a) == VAL_SERIES(b)
-        and VAL_INDEX(a) == VAL_INDEX(b)
-    ){
-        return 0;
-    }
-
-    const RELVAL *aval = VAL_ARRAY_AT(a);
-    const RELVAL *bval = VAL_ARRAY_AT(b);
-
-    for (; ; ++aval, ++bval) {
-        if (IS_END(aval)) {
-            if (IS_END(bval))
-                return 0;
-            return -1;
-        }
-        else if (IS_END(bval))
-            return 1;
-
-        if (
-            VAL_TYPE(aval) != VAL_TYPE(bval)
-            and not (ANY_NUMBER(aval) and ANY_NUMBER(bval))
-        ){
-            return VAL_TYPE(aval) > VAL_TYPE(bval) ? 1 : -1;
-        }
- 
-        REBINT diff = Cmp_Value(aval, bval, strict);
-        if (diff != 0)
-            return diff;
-    }
+    return Compare_Arrays_At_Indexes(
+        VAL_ARRAY(a),
+        VAL_INDEX(a),
+        VAL_ARRAY(b),
+        VAL_INDEX(b),
+        strict
+    );
 }
 
 
@@ -317,11 +294,16 @@ REB_R MAKE_Array(
 //
 REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (ANY_PATH(arg)) {
-        return Init_Any_Array(
-            out,
-            kind,
-            Copy_Array_Shallow(VAL_PATH(arg), VAL_PATH_SPECIFIER(arg))
-        );
+        REBDSP dsp_orig = DSP;
+        REBLEN len = VAL_PATH_LEN(arg);
+        REBLEN i;
+        for (i = 0; i < len; ++i)
+            Derelativize(
+                DS_PUSH(),
+                CELL_TO_VAL(VAL_PATH_AT(out, arg, i)),
+                VAL_PATH_SPECIFIER(arg)
+            );
+        return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
     }
     else if (ANY_ARRAY(arg)) {
         return Init_Any_Array(

@@ -357,13 +357,8 @@ void Push_Paramlist_Triads_May_Fail(
 
         bool refinement = false;  // paths with blanks at head are refinements
         if (ANY_PATH_KIND(CELL_KIND(cell))) {
-            if (
-                KIND_BYTE(VAL_ARRAY_AT(cell)) != REB_BLANK
-                or KIND_BYTE(VAL_ARRAY_AT(cell) + 1) != REB_WORD
-                or KIND_BYTE(VAL_ARRAY_AT(cell) + 2) != REB_0_END
-            ){
+            if (not IS_REFINEMENT_CELL(cell))
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
-            }
 
             refinement = true;
             refinement_seen = true;
@@ -375,7 +370,7 @@ void Push_Paramlist_Triads_May_Fail(
             //
             mode = SPEC_MODE_NORMAL;
 
-            spelling = VAL_WORD_SPELLING(VAL_ARRAY_AT(cell) + 1);
+            spelling = VAL_REFINEMENT_SPELLING(cell);
             if (STR_SYMBOL(spelling) == SYM_LOCAL)  // /LOCAL
                 if (ANY_WORD_KIND(KIND_BYTE(item + 1)))  // END is 0
                     fail (Error_Legacy_Local_Raw(spec));  // -> <local>
@@ -1370,8 +1365,7 @@ bool Get_If_Word_Or_Path_Throws(
         REBSPC *derived = Derive_Specifier(specifier, v);
         if (Eval_Path_Throws_Core(
             out,
-            VAL_ARRAY(v),
-            VAL_INDEX(v),
+            ARR(VAL_PATH_NODE(v)),
             derived,
             NULL,  // `setval`: null means don't treat as SET-PATH!
             EVAL_MASK_DEFAULT | (push_refinements

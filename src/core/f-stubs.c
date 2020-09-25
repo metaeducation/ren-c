@@ -709,3 +709,31 @@ REBNATIVE(symify)
     RETURN (Symify(ARG(value)));
 }
 
+
+//
+//  Plainify: C
+//
+// Turn a value into its "plain" equivalent.  This works for all values,
+// since 
+//
+REBVAL *Plainify(REBVAL *out) {
+    REBLEN quotes = Dequotify(out);
+
+    enum Reb_Kind kind = VAL_TYPE(out);
+    if (ANY_WORD_KIND(kind)) {
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_WORD;
+    }
+    else if (ANY_PATH_KIND(kind)) {
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_PATH;
+    }
+    else if (ANY_BLOCK_KIND(kind)) {
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_BLOCK;
+    }
+    else if (ANY_GROUP_KIND(kind)) {
+        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = REB_GROUP;
+    }
+    else if (kind == REB_NULLED)
+        fail ("Cannot PLAINIFY a NULL");
+
+    return Quotify(out, quotes);
+}

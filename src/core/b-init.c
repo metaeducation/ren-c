@@ -398,13 +398,12 @@ REBVAL *Make_Native(
         has_body = false;
     }
     else {
+        DECLARE_LOCAL (temp);
+        REBCEL(const*) first = VAL_PATH_AT(temp, *item, 0);
+        REBCEL(const*) second = VAL_PATH_AT(temp, *item, 1);
         if (
-            not IS_PATH(*item)
-            or VAL_LEN_HEAD(*item) != 2
-            or not IS_WORD(ARR_HEAD(VAL_ARRAY(*item)))
-            or VAL_WORD_SYM(ARR_HEAD(VAL_ARRAY(*item))) != SYM_NATIVE
-            or not IS_WORD(ARR_AT(VAL_ARRAY(*item), 1))
-            or VAL_WORD_SYM(ARR_AT(VAL_ARRAY(*item), 1)) != SYM_BODY
+            VAL_WORD_SYM(first) != SYM_NATIVE
+            or VAL_WORD_SYM(second) != SYM_BODY
         ){
             panic (*item);
         }

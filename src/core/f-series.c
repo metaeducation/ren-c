@@ -217,6 +217,59 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
 
 //
+// Compare_Arrays_At_Indexes: C
+//
+REBINT Compare_Arrays_At_Indexes(
+    const REBARR *s_array,
+    REBLEN s_index,
+    const REBARR *t_array,
+    REBLEN t_index,
+    bool is_case
+){
+    if (C_STACK_OVERFLOWING(&is_case))
+        Fail_Stack_Overflow();
+
+    if (s_array == t_array and s_index == t_index)
+         return 0;
+
+    const RELVAL *s = ARR_AT(s_array, s_index);
+    const RELVAL *t = ARR_AT(t_array, t_index);
+
+    if (IS_END(s) or IS_END(t))
+        goto diff_of_ends;
+
+    while (
+        VAL_TYPE(s) == VAL_TYPE(t)
+        or (ANY_NUMBER(s) and ANY_NUMBER(t))
+    ){
+        REBINT diff;
+        if ((diff = Cmp_Value(s, t, is_case)) != 0)
+            return diff;
+
+        s++;
+        t++;
+
+        if (IS_END(s) or IS_END(t))
+            goto diff_of_ends;
+    }
+
+    return VAL_TYPE(s) > VAL_TYPE(t) ? 1 : -1;
+
+  diff_of_ends:
+    //
+    // Treat end as if it were a REB_xxx type of 0, so all other types would
+    // compare larger than it.
+    //
+    if (IS_END(s)) {
+        if (IS_END(t))
+            return 0;
+        return -1;
+    }
+    return 1;
+}
+
+
+//
 //  Cmp_Value: C
 //
 // Compare two values and return the difference.
@@ -308,11 +361,13 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
       case REB_SET_GROUP:
       case REB_GET_GROUP:
       case REB_SYM_GROUP:
+        return CT_Array(s, t, strict);
+
       case REB_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_SYM_PATH:
-        return CT_Array(s, t, strict);
+        return CT_Path(s, t, strict);
 
       case REB_MAP:
         return CT_Map(s, t, strict);  // !!! Not implemented

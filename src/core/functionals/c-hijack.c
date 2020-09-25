@@ -95,7 +95,13 @@ bool Redo_Action_Throws(REBVAL *out, REBFRM *f, REBACT *run)
     // on a new frame.  Improve when time permits.
     //
     REBDSP dsp_orig = DSP; // we push refinements as we find them
-    Move_Value(DS_PUSH(), ACT_ARCHETYPE(run)); // !!! Review: binding?
+
+    // !!! Action has to be in a GROUP!, according to Is_Valid_Path_Element()
+    //
+    REBARR *group = Alloc_Singular(NODE_FLAG_MANAGED);
+    Move_Value(ARR_SINGLE(group), ACT_ARCHETYPE(run));  // Review: binding?
+    Quotify(ARR_SINGLE(group), 1);  // suppress evaluation until pathing
+    Init_Group(DS_PUSH(), group);
 
     assert(IS_END(f->param)); // okay to reuse, if it gets put back...
     f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
@@ -147,8 +153,12 @@ bool Redo_Action_Throws(REBVAL *out, REBFRM *f, REBACT *run)
         DS_DROP_TO(dsp_orig);
         Move_Value(first, ACT_ARCHETYPE(run));
     }
-    else
-        Init_Path(first, Freeze_Array_Shallow(Pop_Stack_Values(dsp_orig)));
+    else {
+        REBARR *a = Freeze_Array_Shallow(Pop_Stack_Values(dsp_orig));
+        REBVAL *p = Try_Init_Any_Path_Arraylike(first, REB_PATH, a);
+        assert(p);
+        UNUSED(p);
+    }
 
     bool threw = Do_At_Mutable_Maybe_Stale_Throws(
         out,  // invisibles allow for out to not be Init_Void()'d
