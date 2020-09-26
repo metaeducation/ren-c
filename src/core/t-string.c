@@ -1037,7 +1037,18 @@ void MF_String(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
       case REB_ISSUE:
         Append_Codepoint(mo->series, '#');
-        Append_String(mo->series, v, VAL_LEN_AT(v));
+
+        if (VAL_LEN_AT(v) == 0) {
+            Append_Ascii(mo->series, "\"\"");  // !!! alternate #{} TBD...
+        }
+        else if (VAL_LEN_AT(v) == 1 and *VAL_UTF8_AT(nullptr, v) == ' ') {
+            //
+            // This is a special case, that `#` is actually the representation
+            // for a space character (#" "), not an empty issue (#"").  It's
+            // a *very* advantageous decision, e.g. `unspaced [x # y]`.
+        }
+        else
+            Append_String(mo->series, v, VAL_LEN_AT(v));
         break;
 
       default:

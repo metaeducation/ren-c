@@ -177,9 +177,6 @@
     ((/refinement)/2 = 'refinement)
     (r: /refinement | r/2 = 'refinement)
 ][
-    (#iss/ue/path = to path! [#iss ue path])
-    (#issue/3 = to path! [#issue 3])
-][
     ("te"/xt/path = to path! ["te" xt path])
     ("text"/3 = to path! ["text" 3])
     (("text")/3 = #"x")
