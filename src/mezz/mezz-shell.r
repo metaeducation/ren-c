@@ -25,7 +25,7 @@ cd: func [
 
     return: [file!]
         {The directory after the change}
-    'path [<end> file! word! path! text!]
+    'path [<end> file! word! path! tuple! text!]
         "Accepts %file, :variables and just words (as dirs)"
 ][
     switch type of :path [
@@ -38,7 +38,7 @@ cd: func [
             ;
             change-dir lib/local-to-file path
         ]
-        word! path! [change-dir to-file path]
+        tuple! word! path! [change-dir to-file path]
     ]
 
     return what-dir
