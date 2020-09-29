@@ -148,6 +148,7 @@ enum LEX_DELIMIT_ENUM {
     LEX_DELIMIT_RIGHT_BRACE,        /* 7D } */
     LEX_DELIMIT_DOUBLE_QUOTE,       /* 22 " */
     LEX_DELIMIT_SLASH,              /* 2F / - date, path, file */
+    LEX_DELIMIT_PERIOD,             /* 2E . - decimal, tuple, file */
 
     LEX_DELIMIT_UTF8_ERROR,
 
@@ -216,10 +217,10 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
     LEX_SPECIAL_BLANK,              /* 5F _ - blank */
 
                                     /** Any of these can follow - or ~ : */
-    LEX_SPECIAL_PERIOD,             /* 2E . - decimal number */
     LEX_SPECIAL_COMMA,              /* 2C , - decimal number */
     LEX_SPECIAL_POUND,              /* 23 # - hex number */
     LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
+    LEX_SPECIAL_14,                 /* unused */
 
     // LEX_SPECIAL_WORD is not a LEX_VALUE() of anything in LEX_CLASS_SPECIAL,
     // it is used to set a flag by Prescan_Token().

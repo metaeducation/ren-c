@@ -103,7 +103,7 @@ const REBYTE Lex_Map[256] =
     /* 2B +   */    LEX_SPECIAL|LEX_SPECIAL_PLUS,
     /* 2C ,   */    LEX_SPECIAL|LEX_SPECIAL_COMMA,
     /* 2D -   */    LEX_SPECIAL|LEX_SPECIAL_MINUS,
-    /* 2E .   */    LEX_SPECIAL|LEX_SPECIAL_PERIOD,
+    /* 2E .   */    LEX_DELIMIT|LEX_DELIMIT_PERIOD,
     /* 2F /   */    LEX_DELIMIT|LEX_DELIMIT_SLASH,
 
     /* 30 0   */    LEX_NUMBER|0,
@@ -1188,6 +1188,12 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             ss->end = cp;
             return TOKEN_PATH;
 
+          case LEX_DELIMIT_PERIOD:  // a .PREDICATE-style TUPLE!
+            assert(*cp == '.');
+            ++cp;
+            ss->end = cp;
+            return TOKEN_TUPLE;
+
           case LEX_DELIMIT_END:
             //
             // We've reached the end of this string token's content.  By
@@ -1214,7 +1220,9 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         ){
             if (*cp == '@')  // consider `@a@b`, `@@`, etc. ambiguous
                 fail (Error_Syntax(ss, TOKEN_EMAIL));
-            return TOKEN_EMAIL;
+
+            token = TOKEN_EMAIL;
+            goto prescan_subsume_all_dots;
         }
 
       next_lex_special:
@@ -1231,7 +1239,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             }
             ++cp;  // skip @
             token = TOKEN_SYM;
-            goto scanword;
+            goto prescan_word;
 
           case LEX_SPECIAL_PERCENT:  // %filename
             cp = ss->end;
@@ -1242,7 +1250,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 ss->end = cp;
                 return TOKEN_FILE;
             }
-            while (*cp == '/') {  // deal with path delimiter
+            while (*cp == '/' or *cp == '.') {  // deal path/tuple delimiters
                 cp++;
                 while (IS_LEX_NOT_DELIMIT(*cp))
                     ++cp;
@@ -1259,8 +1267,10 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 ss->end = cp + 2;  // whole token should be `:[`
                 return TOKEN_GET_BLOCK_BEGIN;
             }
-            if (IS_LEX_NUMBER(cp[1]))
-                return TOKEN_TIME;
+            if (IS_LEX_NUMBER(cp[1])) {
+                token = TOKEN_TIME;
+                goto prescan_subsume_up_to_one_dot;
+            }
 
             if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
                 return TOKEN_GET;  // "common case"
@@ -1270,7 +1280,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
             token = TOKEN_GET;
             ++cp; // skip ':'
-            goto scanword;
+            goto prescan_word;
 
           case LEX_SPECIAL_APOSTROPHE:
             while (*cp == '\'')  // get sequential apostrophes as one token
@@ -1282,10 +1292,6 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             if (IS_LEX_NUMBER(cp[1]))
                 goto num;
             fail (Error_Syntax(ss, TOKEN_WORD));
-
-          case LEX_SPECIAL_PERIOD:  // .123 .123.456.789 */
-            SET_LEX_FLAG(flags, (GET_LEX_VALUE(*cp)));
-            return TOKEN_TUPLE;  // tuple like .abc .abc.1
 
           case LEX_SPECIAL_GREATER:  // arrow words like `>` handled above
             fail (Error_Syntax(ss, TOKEN_TAG));
@@ -1306,10 +1312,15 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_PLUS:  // +123 +123.45 +$123
           case LEX_SPECIAL_MINUS:  // -123 -123.45 -$123
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT))
-                return TOKEN_EMAIL;
-            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR))
-                return TOKEN_MONEY;
+            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+                token = TOKEN_EMAIL;
+                goto prescan_subsume_all_dots;
+            }
+            if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) {
+                ++cp;
+                token = TOKEN_MONEY;
+                goto prescan_subsume_up_to_one_dot;
+            }
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
                 cp = Skip_To_Byte(cp, ss->end, ':');
                 if (cp and (cp + 1) != ss->end)  // 12:34
@@ -1317,27 +1328,27 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 cp = ss->begin;
                 if (cp[1] == ':') {  // +: -:
                     token = TOKEN_WORD;
-                    goto scanword;
+                    goto prescan_word;
                 }
             }
             cp++;
             if (IS_LEX_NUMBER(*cp))
                 goto num;
             if (IS_LEX_SPECIAL(*cp)) {
-                if ((GET_LEX_VALUE(*cp)) >= LEX_SPECIAL_PERIOD)
+                if ((GET_LEX_VALUE(*cp)) == LEX_SPECIAL_WORD)
                     goto next_lex_special;
                 if (*cp == '+' or *cp == '-') {
                     token = TOKEN_WORD;
-                    goto scanword;
+                    goto prescan_word;
                 }
                 fail (Error_Syntax(ss, TOKEN_WORD));
             }
             token = TOKEN_WORD;
-            goto scanword;
+            goto prescan_word;
 
           case LEX_SPECIAL_BAR:
             token = TOKEN_WORD;
-            goto scanword;
+            goto prescan_word;
 
           case LEX_SPECIAL_BLANK:
             //
@@ -1348,7 +1359,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             if (IS_LEX_DELIMIT(cp[1]) or IS_LEX_ANY_SPACE(cp[1]))
                 return TOKEN_BLANK;
             token = TOKEN_WORD;
-            goto scanword;
+            goto prescan_word;
 
           case LEX_SPECIAL_POUND:
           pound:
@@ -1402,9 +1413,11 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
           case LEX_SPECIAL_DOLLAR:
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
-                return TOKEN_EMAIL;
+                token = TOKEN_EMAIL;
+                goto prescan_subsume_all_dots;
             }
-            return TOKEN_MONEY;
+            token = TOKEN_MONEY;
+            goto prescan_subsume_up_to_one_dot;
 
           default:
             fail (Error_Syntax(ss, TOKEN_WORD));
@@ -1414,15 +1427,17 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
             return TOKEN_WORD;
         token = TOKEN_WORD;
-        goto scanword;
+        goto prescan_word;
 
       case LEX_CLASS_NUMBER:  // Note: "order of tests is important"
       num:;
         if (flags == 0)
             return TOKEN_INTEGER;  // simple integer e.g. `123`
 
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT))
-            return TOKEN_EMAIL;  // `123@example.com`
+        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+            token = TOKEN_EMAIL;
+            goto prescan_subsume_all_dots;  // `123@example.com`
+        }
 
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) {
             if (cp == ss->begin) {  // no +2 +16 +64 allowed
@@ -1450,8 +1465,10 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             fail (Error_Syntax(ss, TOKEN_INTEGER));
         }
 
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON))
-            return TOKEN_TIME;  // `12:34`
+        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
+            token = TOKEN_TIME;  // `12:34`
+            goto prescan_subsume_up_to_one_dot;
+        }
 
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA))
             return TOKEN_DECIMAL;  // `1,23`  !!! is this worth supporting?
@@ -1462,7 +1479,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                     flags,
                     ~(
                         LEX_FLAG(LEX_SPECIAL_POUND)
-                        | LEX_FLAG(LEX_SPECIAL_PERIOD)
+                        /* | LEX_FLAG(LEX_SPECIAL_PERIOD) */  // !!! What?
                         | LEX_FLAG(LEX_SPECIAL_APOSTROPHE)
                     )
                 )
@@ -1506,7 +1523,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
     panic ("Invalid LEX class");
 
-  scanword:;  // `token` should be set, compiler warnings should catch if not
+  prescan_word:  // `token` should be set, compiler warnings catch if not
 
     if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) { // word:  url:words
         if (token != TOKEN_WORD)  // only valid with WORD (not set or lit)
@@ -1532,10 +1549,14 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         ss->end = cp;
         return TOKEN_URL;
     }
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT))
-        return TOKEN_EMAIL;
-    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR))
-        return TOKEN_MONEY;
+    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
+        token = TOKEN_EMAIL;
+        goto prescan_subsume_all_dots;
+    }
+    if (HAS_LEX_FLAG(flags, LEX_SPECIAL_DOLLAR)) {  // !!! XYZ$10.20 ??
+        token = TOKEN_MONEY;
+        goto prescan_subsume_up_to_one_dot;
+    }
     if (HAS_LEX_FLAGS(flags, LEX_WORD_FLAGS))
         fail (Error_Syntax(ss, TOKEN_WORD));  // has non-word chars (eg % \ )
 
@@ -1547,6 +1568,51 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
     }
 
     return token;
+
+  prescan_subsume_up_to_one_dot:
+    assert(token == TOKEN_MONEY or token == TOKEN_TIME);
+
+    // By default, `.` is a delimiter class which stops token scaning.  So if
+    // scanning +$10.20 or -$10.20 or $3.04, there is common code to look
+    // past the delimiter hit.  The same applies to times.  (DECIMAL! has
+    // its own code)
+    
+    if (*ss->end != '.')
+        return token;
+
+    cp = ss->end + 1;
+    while (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
+        ++cp;
+    ss->end = cp;
+
+    return token;
+
+  prescan_subsume_all_dots:
+    assert(token == TOKEN_EMAIL);
+
+    // Similar to the above, email scanning in R3-Alpha relied on the non
+    // delimiter status of periods to incorporate them into the EMAIL!.
+    // (Unlike FILE! or URL!, it did not already have code for incorporating
+    // the otherwise-delimiting `/`)  It may be that since EMAIL! is not
+    // legal in PATH! there's no real reason not to allow slashes in it, and
+    // it could be based on the same code.
+    //
+    // (This is just good enough to lets the existing tests work on EMAIL!)
+
+    if (*ss->end != '.')
+        return token;
+
+    cp = ss->end + 1;
+    while (
+        *cp == '.'
+        or (not IS_LEX_DELIMIT(*cp) and not IS_LEX_ANY_SPACE(*cp))
+    ){
+        ++cp;
+    }
+    ss->end = cp;
+
+    return token;
+
 }
 
 
@@ -2934,14 +3000,16 @@ const REBYTE *Scan_Issue(RELVAL *out, const REBYTE *cp, REBLEN len)
     while (l > 0) {
         switch (GET_LEX_CLASS(*bp)) {
           case LEX_CLASS_DELIMIT:
-            return nullptr;
+            if (GET_LEX_VALUE(*bp) != LEX_DELIMIT_PERIOD)
+                return nullptr;
+
+            goto lex_word_or_number;
 
           case LEX_CLASS_SPECIAL: {  // Flag all but first special char
             REBLEN c = GET_LEX_VALUE(*bp);
             if (
                 LEX_SPECIAL_APOSTROPHE != c
                 and LEX_SPECIAL_COMMA != c
-                and LEX_SPECIAL_PERIOD != c
                 and LEX_SPECIAL_PLUS != c
                 and LEX_SPECIAL_MINUS != c
                 and LEX_SPECIAL_BAR != c

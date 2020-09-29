@@ -223,7 +223,6 @@
 %series/clear.test.reb
 %series/copy.test.reb
 %series/delimit.test.reb
-%series/difference.test.reb
 %series/emptyq.test.reb
 %series/exclude.test.reb
 %series/find.test.reb

@@ -27,14 +27,3 @@
     (3 == pick 3x4 'x)
     (4 == pick 3x4 'y)
 ]
-
-[
-    (1.5 = pick 1.5x3.2 'x)
-    (3.2 = pick 1.5x3.2 'y)
-]
-
-; Ren-C's generic dispatcher runs whatever you asked to do on the pair to
-; the pairwise components
-
-(1.5x2.3 + 2.5x3.3 = 4.0x5.6)
-(1.5x2.3 + 1 = 2.5x3.3)
