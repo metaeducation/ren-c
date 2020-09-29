@@ -1238,7 +1238,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
     //=//// NON-ENFIX VARIADIC ARG (doesn't consume anything *yet*) ///////=//
 
             // Evaluation argument "hook" parameters (marked in MAKE ACTION!
-            // by a `[[]]` in the spec, and in FUNC by `<...>`).  They point
+            // by a `[[]]` in the spec, and in FUNC by `<variadic>`).  They point
             // back to this call through a reified FRAME!, and are able to
             // consume additional arguments during the function run.
             //

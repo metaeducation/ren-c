@@ -271,7 +271,7 @@ static void Init_Action_Spec_Tags(void)
 {
     Root_Void_Tag = Make_Locked_Tag("void");
     Root_With_Tag = Make_Locked_Tag("with");
-    Root_Ellipsis_Tag = Make_Locked_Tag("...");
+    Root_Variadic_Tag = Make_Locked_Tag("variadic");
     Root_Opt_Tag = Make_Locked_Tag("opt");
     Root_End_Tag = Make_Locked_Tag("end");
     Root_Blank_Tag = Make_Locked_Tag("blank");
@@ -291,7 +291,7 @@ static void Shutdown_Action_Spec_Tags(void)
 {
     rebRelease(Root_Void_Tag);
     rebRelease(Root_With_Tag);
-    rebRelease(Root_Ellipsis_Tag);
+    rebRelease(Root_Variadic_Tag);
     rebRelease(Root_Opt_Tag);
     rebRelease(Root_End_Tag);
     rebRelease(Root_Blank_Tag);

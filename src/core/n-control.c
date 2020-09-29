@@ -542,7 +542,7 @@ REBNATIVE(either_match)
 //              integer!  ; matches length of series
 //              quoted!  ; same test, but make quote level part of the test
 //          ]
-//      :args [<opt> any-value! <...>]
+//      :args [<opt> any-value! <variadic>]
 //  ]
 //
 REBNATIVE(match)
@@ -1232,7 +1232,7 @@ REBNATIVE(switch)
 //      'branch "If target not set already, this is evaluated and stored there"
 //          [block! action! quoted!]
 //      :look "Variadic lookahead used to make sure at end if no target"
-//          [<...>]
+//          [<variadic>]
 //      /only "Consider target being BLANK! to be a value not to overwrite"
 //  ][
 //      if unset? 'target [  ; `case [... default [...]]`

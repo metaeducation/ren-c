@@ -42,7 +42,7 @@
 //      return: [<opt> any-value!]
 //      value [any-value!]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
-//      expressions [<opt> any-value! <...>]
+//      expressions [<opt> any-value! <variadic>]
 //          {Depending on VALUE, more expressions may be consumed}
 //  ]
 //
@@ -82,7 +82,7 @@ REBNATIVE(reeval)
 //          "REVIEW: How might this handle shoving enfix invisibles?"
 //      'left [<end> <opt> any-value!]
 //          "Requests parameter convention based on enfixee's first argument"
-//      :right [<...> <end> any-value!]
+//      :right [<variadic> <end> any-value!]
 //          "(uses magic -- SHOVE can't be written easily in usermode yet)"
 //      /prefix "Force either prefix or enfix behavior (vs. acting as is)"
 //          [logic!]

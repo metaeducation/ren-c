@@ -171,6 +171,12 @@ modernize-action: function [
                     spec: my next
                     continue
                 ]
+
+                if find (try match block! spec/1) <variadic> [
+                    keep/only replace copy spec/1 <variadic> <...>
+                    spec: my next
+                    continue
+                ]
             ]
 
             if refinement? spec/1 [
@@ -239,7 +245,7 @@ has: null
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
-===: func [:remarks [any-value! <...>]] [
+===: func [:remarks [any-value! <...>]] [  ; note: <...> is now a TUPLE!
     until [
         equal? '=== take remarks
     ]

@@ -523,9 +523,9 @@ do: emulate [
         source [<opt> blank! block! group! text! binary! url! file! tag!
             error! action!
         ]
-        normals [any-value! <...>]
-        'softs [any-value! <...>]
-        :hards [any-value! <...>]
+        normals [any-value! <variadic>]
+        'softs [any-value! <variadic>]
+        :hards [any-value! <variadic>]
         /args [any-value!]
         /next [word!]
     ][

@@ -232,8 +232,8 @@ make-emitter: function [
             {Write data to the emitter using CSCAPE templating (see HELP)}
 
             return: <void>
-            :look [any-value! <...>]
-            data [text! char! <...>]
+            :look [any-value! <variadic>]
+            data [text! char! <variadic>]
             <with> buf-emit
         ][
             context: _

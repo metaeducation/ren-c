@@ -1,5 +1,5 @@
 (
-    foo: func [x [integer! <...>]] [
+    foo: func [x [integer! <variadic>]] [
         sum: 0
         while [not tail? x] [
             sum: sum + take x
@@ -9,17 +9,17 @@
     all [y = 5 | z = 6]
 )
 (
-    foo: func [x [integer! <...>]] [make block! x]
+    foo: func [x [integer! <variadic>]] [make block! x]
     [1 2 3 4] = foo 1 2 3 4
 )
 
 ; leaked VARARGS! cannot be accessed after call is over
 (
-    error? trap [take reeval (foo: func [x [integer! <...>]] [x])]
+    error? trap [take reeval (foo: func [x [integer! <variadic>]] [x])]
 )
 
 (
-    f: func [args [any-value! <opt> <...>]] [
+    f: func [args [any-value! <opt> <variadic>]] [
        b: take args
        either tail? args [b] ["not at end"]
     ]
@@ -28,7 +28,7 @@
 )
 
 (
-    f: func [:look [<...>]] [to-value first look]
+    f: func [:look [<variadic>]] [to-value first look]
     blank? applique 'f [look: make varargs! []]
 )
 
@@ -38,7 +38,7 @@
 ; the TAKE is called, but theorized that's still more useful than erroring.
 [
     (
-        normal: enfixed function [v [integer! <...>]] [
+        normal: enfixed function [v [integer! <variadic>]] [
             sum: 0
             while [not tail? v] [
                 sum: sum + take v
@@ -55,7 +55,7 @@
     (30 = do [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
 ][
     (
-        defers: enfixed function [v [integer! <...>]] [
+        defers: enfixed function [v [integer! <variadic>]] [
             sum: 0
             while [not tail? v] [
                 sum: sum + take v
@@ -73,7 +73,7 @@
     (28 = do [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
-        soft: enfixed function ['v [any-value! <...>]] [
+        soft: enfixed function ['v [any-value! <variadic>]] [
             collect [
                 while [not tail? v] [
                     keep/only take v
@@ -91,7 +91,7 @@
     ([7] = do [(1 + 2) (3 + 4) soft])
 ][
     (
-        hard: enfixed function [:v [any-value! <...>]] [
+        hard: enfixed function [:v [any-value! <variadic>]] [
             collect [
                 while [not tail? v] [
                     keep/only take v
@@ -151,7 +151,7 @@
 (
     vblock: collect [
         log: adapt 'keep [value: reduce value]
-        variadic2: func [v [any-value! <...>]] [
+        variadic2: func [v [any-value! <variadic>]] [
            log [<1> take v]
            log [<2> take v]
            if not tail? v [fail "THEN SHOULD APPEAR AS IF IT IS VARARGS END"]
@@ -183,8 +183,8 @@
 
         return: "Input if it matched, otherwise null (void if falsey match)"
             [<opt> any-value!]
-        :args [<opt> any-value! <...>]
-        :args-normal [<opt> any-value! <...>]
+        :args [<opt> any-value! <variadic>]
+        :args-normal [<opt> any-value! <variadic>]
         <local> first-arg
     ][
         test: first args

@@ -77,7 +77,7 @@ inline static bool Is_Block_Style_Varargs(
     }
 
     // Came from MAKE VARARGS! on some random block, hence not implicitly
-    // filled by the evaluator on a <...> parameter.  Should be a singular
+    // filled by the evaluator on a <variadic> parameter.  Should be a singular
     // array with one BLOCK!, that is the actual array and index to advance.
     //
     REBARR *array1 = ARR(EXTRA(Binding, vararg).node);

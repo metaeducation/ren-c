@@ -92,7 +92,7 @@ Hello
 - ``` *experimental* VARARGS! - highly flexible variadics ```  *@hostilefork* |  [efbaef9](https://github.com/metaeducation/ren-c/commit/efbaef9) [2aac4ed](https://github.com/metaeducation/ren-c/commit/2aac4ed) [trello](https://trello.com/c/Y17CEywN/)
 ```rebol
 
->> foo: func [x [integer! <...>]] [
+>> foo: func [x [integer! <variadic>]] [
         print ["foo takes" take x "and then" take x]
     ]
 

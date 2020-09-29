@@ -19,7 +19,7 @@ dump: function [
         []
     :value [any-value!]
     :extra "Optional variadic data for SET-WORD!, e.g. `dump x: 1 + 2`"
-        [any-value! <...>]
+        [any-value! <variadic>]
     /prefix "Put a custom marker at the beginning of each output line"
         [text!]
 
@@ -141,7 +141,7 @@ dumps: enfixed function [
     :value "If issue, create non-specialized dumper...#on or #off by default"
         [issue! text! integer! word! set-word! set-path! group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
-        [<opt> any-value! <...>]
+        [<opt> any-value! <variadic>]
 ][
     if issue? value [
         d: specialize 'dump-to-newline [prefix: as text! name]
@@ -277,7 +277,7 @@ summarize-obj: function [
     return: []
     left "Enfix required for 'fully invisible' enfix behavior (ignored)"
         [<opt> <end> any-value!]
-    :args [any-value! <...>]
+    :args [any-value! <variadic>]
 ][
     while [(not new-line? args) and [value: take args]] [
         all [

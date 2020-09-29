@@ -134,8 +134,8 @@ unless: checked [
 
         return: [<opt> any-value!]
         left [<end> any-value!]
-        :right [any-value! <...>]
-        :look [any-value! <...>]
+        :right [any-value! <variadic>]
+        :look [any-value! <variadic>]
     ][
         right: take right
         if (unset? 'left) or [not group? right] or [block? first look] [

@@ -16,7 +16,7 @@ REBOL [
     }
 ]
 
-reeval function [:terms [tag! set-word! <...>]] [
+reeval function [:terms [tag! set-word! <variadic>]] [
     n: 1
     while [<end> != w: take terms] [
         set w redescribe reduce [

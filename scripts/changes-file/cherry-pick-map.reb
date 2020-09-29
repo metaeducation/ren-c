@@ -190,7 +190,7 @@ if 1 = 1 [run-this] else [run-that]
 "5a006d1" [type: 'Fixed]  ; Fixes so Ren-C can be used as R3-MAKE 
 "efbaef9" [
     example: {
->> foo: func [x [integer! <...>]] [
+>> foo: func [x [integer! <variadic>]] [
         print ["foo takes" take x "and then" take x]
     ]
 

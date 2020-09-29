@@ -104,7 +104,7 @@ nihil: enfixed func* [  ; 0-arg so enfix doesn't matter, but tests issue below
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
-===: func* [:remarks [any-value! <...>]] [
+===: func* [:remarks [any-value! <variadic>]] [
     until [
         equal? '=== take remarks
     ]
@@ -114,7 +114,7 @@ nihil: enfixed func* [  ; 0-arg so enfix doesn't matter, but tests issue below
     {Inertly consumes all subsequent data, evaluating to previous result.}
 
     return: []
-    :omit [any-value! <...>]
+    :omit [any-value! <variadic>]
 ][
     until [null? take omit]
 ]
@@ -294,7 +294,7 @@ pointfree: enclose (specialize* 'pointfree* [action: :void]) func* [f] [
     return: [action!]
     :args [<end> word! block!]
         {Block of argument words, or a single word (if only one argument)}
-    :body [any-value! <...>]
+    :body [any-value! <variadic>]
         {Block that serves as the body, or pointfree expression if no block}
 ][
     if strict-equal? block! type of pick body 1 [
@@ -390,11 +390,11 @@ empty?: func* [
 reeval func* [
     {Make fast type testing functions (variadic to quote "top-level" words)}
     return: <void>
-    'set-word... [set-word! tag! <...>]
+    'set-words [<variadic> set-word! tag!]
     <local>
         set-word type-name tester meta
 ][
-    while [not equal? <end> set-word: take set-word...] [
+    while [not equal? <end> set-word: take set-words] [
         type-name: copy as text! set-word
         change back tail of type-name "!"  ; change ? at tail to !
         tester: typechecker (get bind (as word! type-name) set-word)

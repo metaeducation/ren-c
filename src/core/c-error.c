@@ -1077,7 +1077,7 @@ REBCTX *Error_Not_Varargs(
     assert(Is_Param_Variadic(param));
     assert(kind != REB_VARARGS);
 
-    // Since the "types accepted" are a lie (an [integer! <...>] takes
+    // Since the "types accepted" are a lie (an [integer! <variadic>] takes
     // VARARGS! when fulfilled in a frame directly, not INTEGER!) then
     // an "honest" parameter has to be made to give the error.
     //

@@ -195,19 +195,19 @@
 [
     (
         left-normal: enfixed right-normal:
-            func [return: [<opt> word!] x [word! <...>]] [take x]
+            func [return: [<opt> word!] x [word! <variadic>]] [take x]
         left-normal*: enfixed right-normal*:
-            func [return: [<opt> word!] x [word! <...> <end>]] [take x]
+            func [return: [<opt> word!] x [word! <variadic> <end>]] [take x]
 
         left-soft: enfixed right-soft:
-            func [return: [<opt> word!] 'x [word! <...>]] [take x]
+            func [return: [<opt> word!] 'x [word! <variadic>]] [take x]
         left-soft*: enfixed right-soft*:
-            func [return: [<opt> word!] 'x [word! <...> <end>]] [take x]
+            func [return: [<opt> word!] 'x [word! <variadic> <end>]] [take x]
 
         left-hard: enfixed right-hard:
-            func [return: [<opt> word!] :x [word! <...>]] [take x]
+            func [return: [<opt> word!] :x [word! <variadic>]] [take x]
         left-hard*: enfixed right-hard*:
-            func [return: [<opt> word!] :x [word! <...> <end>]] [take x]
+            func [return: [<opt> word!] :x [word! <variadic> <end>]] [take x]
 
         true
     )

@@ -66,9 +66,9 @@ steal: func* [
 
     return: [<opt> any-value!]
         {Value of the following SET-WORD! or SET-PATH! before assignment}
-    evaluation [<opt> any-value! <...>]
+    evaluation [<opt> any-value! <variadic>]
         {Used to take the assigned value}
-    :look [set-word! set-path! <...>]
+    :look [set-word! set-path! <variadic>]
 ][
     get first look  ; returned value
 
@@ -455,7 +455,7 @@ so: enfixed func [
     return: [<opt> any-value!]
     condition "Condition to test, must resolve to a LOGIC! (use DID, NOT)"
         [logic!]
-    feed [<opt> <end> any-value! <...>]
+    feed [<opt> <end> any-value! <variadic>]
 ][
     if not condition [
         fail 'condition make error! [
@@ -729,7 +729,7 @@ eval-all: func [
     {Evaluate any number of expressions and discard them}
 
     return: []
-    expressions [<opt> any-value! <...>]
+    expressions [<opt> any-value! <variadic>]
         {Any number of expressions on the right.}
 ][
     do expressions
@@ -740,8 +740,8 @@ once-bar: func [
     {Expression barrier that's willing to only run one expression after it}
 
     return: [<opt> any-value!]
-    right [<opt> <end> any-value! <...>]
-    :lookahead [any-value! <...>]
+    right [<opt> <end> any-value! <variadic>]
+    :lookahead [any-value! <variadic>]
     look:
 ][
     take right  ; returned value
