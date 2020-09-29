@@ -107,8 +107,7 @@ integer     "64 bit integer"
 ; ============================================================================
 ;
 ; !!! Note that INTEGER! may become arbitrary precision, and thus could have
-; a node in it to mark in some cases.  TUPLE! will be changing categories
-; entirely and becoming more like PATH!.
+; a node in it to mark in some cases.
 
 pair        "two dimensional point or size"
             pair        +       +       +       [scalar]
@@ -223,10 +222,10 @@ sym-group   "symbolic form of group! that does not evaluate"
             array       *       *       *       [group array series]
 
 sym-path    "symbolic form of path! that does not evaluate"
-            path        *       *       *       [path]
+            sequence    *       *       *       [path sequence]
 
 sym-tuple   "symbolic form of tuple! that does not evaluate"
-            path        *       *       *       [path]
+            sequence    *       *       *       [tuple sequence]
 
 sym-word    "symbolic form of word! that does not evaluate"
             word        -       *       +       [word]
@@ -246,11 +245,11 @@ block       "array of values that blocks evaluation unless DO is used"
 group       "array that evaluates expressions as an isolated group"
             array       *       *       *       [group array series]
 
-path        "refinements to functions, objects, files"
-            path        *       *       *       [path]
+path        "member or refinement selection with execution bias"
+            sequence    *       *       *       [path sequence]
 
-tuple       "sequence of small integers (colors, versions, IP)"
-            path        +       +       *       [path]
+tuple       "member selection with inert bias"
+            sequence    *       *       *       [tuple sequence]
 
 word        "evaluates a variable or action"
             word        -       *       +       [word]
@@ -267,10 +266,10 @@ set-group   "array that evaluates and runs SET on the resulting word/path"
             array       *       *       *       [group array series]
 
 set-path    "definition of a path's value"
-            path        *       *       *       [path]
+            sequence    *       *       *       [path sequence]
 
 set-tuple   "definition of a tuple's value"
-            path        *       *       *       [path]
+            sequence    *       *       *       [tuple sequence]
 
 set-word    "definition of a word's value"
             word        -       *       +       [word]
@@ -287,10 +286,10 @@ get-group   "array that evaluates and runs GET on the resulting word/path"
             array       *       *       *       [group array series]
 
 get-path    "the value of a path"
-            path        *       *       *       [path]
+            sequence    *       *       *       [path sequence]
 
 get-tuple   "the value of a tuple"
-            path        *       *       *       [path]
+            sequence    *       *       *       [tuple sequence]
 
 get-word    "the value of a word (variable)"
             word        -       *       +       [word]

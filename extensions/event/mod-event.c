@@ -341,7 +341,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
         Append_Value(a, awake);
         Init_Word(Alloc_Tail_Array(a), Canon(SYM_ONLY));
 
-        REBVAL *p = Try_Init_Any_Path_Arraylike(D_SPARE, REB_PATH, a);
+        REBVAL *p = Try_Init_Path_Arraylike(D_SPARE, a);
         assert(p);  // `awake/only` doesn't contain any non-path-elements
         UNUSED(p);
     }

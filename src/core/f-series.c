@@ -344,9 +344,6 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
       case REB_PAIR:
         return CT_Pair(s, t, strict);
 
-      case REB_TUPLE:
-        return CT_Path(s, t, strict);
-
       case REB_TIME:
         return CT_Time(s, t, strict);
 
@@ -367,7 +364,11 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_SYM_PATH:
-        return CT_Path(s, t, strict);
+      case REB_TUPLE:
+      case REB_SET_TUPLE:
+      case REB_GET_TUPLE:
+      case REB_SYM_TUPLE:
+        return CT_Sequence(s, t, strict);
 
       case REB_MAP:
         return CT_Map(s, t, strict);  // !!! Not implemented

@@ -87,11 +87,11 @@ inline static bool Is_Valid_Path_Element(const RELVAL *v) {
         or IS_TAG(v);
 }
 
-#define Try_Init_Any_Path_Arraylike(v,k,a) \
-    Try_Init_Any_Path_At_Arraylike_Core((v), (k), (a), 0, nullptr)
+#define Try_Init_Any_Sequence_Arraylike(v,k,a) \
+    Try_Init_Any_Sequence_At_Arraylike_Core((v), (k), (a), 0, nullptr)
 
 #define Try_Init_Path_Arraylike(v,a) \
-    Try_Init_Any_Path_Arraylike((v), REB_PATH, (a))
+    Try_Init_Any_Sequence_Arraylike((v), REB_PATH, (a))
 
 // The `/` path maps to the 2-element array [_ _].  But to save on storage,
 // no array is used and paths of this form are always optimized into a single
@@ -119,7 +119,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     REBVAL *v,
     enum Reb_Kind kind
 ){
-    assert(ANY_PATH_KIND(kind));
+    assert(ANY_SEQUENCE_KIND(kind));
 
     if (IS_BLANK(v))
         return Init_Any_Path_Slash_1(v, kind);
@@ -132,7 +132,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     Move_Value(Alloc_Tail_Array(a), v);
     Freeze_Array_Shallow(a);
 
-    REBVAL *check = Try_Init_Any_Path_Arraylike(v, kind, a);
+    REBVAL *check = Try_Init_Any_Sequence_Arraylike(v, kind, a);
     assert(check);
     UNUSED(check);
 
@@ -148,7 +148,7 @@ inline static REBVAL *Refinify(REBVAL *v) {
 // !!! Making paths out of two items is intended to be optimized as well,
 // using the "pairing" nodes.
 //
-inline static REBVAL *Try_Init_Any_Path_Pairlike(
+inline static REBVAL *Try_Init_Any_Sequence_Pairlike(
     RELVAL *out,
     enum Reb_Kind kind,
     const REBVAL *v1,
@@ -161,7 +161,8 @@ inline static REBVAL *Try_Init_Any_Path_Pairlike(
     Move_Value(ARR_AT(a, 0), v1);
     Move_Value(ARR_AT(a, 1), v2);
     TERM_ARRAY_LEN(a, 2);
-    return Try_Init_Any_Path_Arraylike(out, kind, Freeze_Array_Shallow(a));
+    Freeze_Array_Shallow(a);
+    return Try_Init_Any_Sequence_Arraylike(out, kind, a);
 
 }
 
@@ -227,7 +228,12 @@ inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
     }
 
     if (DSP - dsp_orig == 2) {  // two-element path optimization
-        if (not Try_Init_Any_Path_Pairlike(out, kind, DS_TOP - 1, DS_TOP)) {
+        if (not Try_Init_Any_Sequence_Pairlike(
+            out,
+            kind,
+            DS_TOP - 1,
+            DS_TOP
+        )){
             DS_DROP_TO(dsp_orig);
             return nullptr;
         }
@@ -241,7 +247,8 @@ inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
     // so it's yet another step of optimization we'd use here.
 
     REBARR *a = Pop_Stack_Values(dsp_orig);
-    if (not Try_Init_Any_Path_Arraylike(out, kind, Freeze_Array_Shallow(a)))
+    Freeze_Array_Shallow(a);
+    if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
         return nullptr;
 
     return SPECIFIC(out);
@@ -252,11 +259,11 @@ inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
 // take as immutable...or you can create a `/foo`-style path in a more
 // optimized fashion using Refinify()
 
-inline static REBLEN VAL_PATH_LEN(REBCEL(const*) path) {
-    assert(ANY_PATH_KIND(CELL_TYPE(path)));
-    if (MIRROR_BYTE(path) == REB_WORD)
-        return 2;  // simulated 2-blanks path
-    REBARR *a = ARR(VAL_NODE(path));
+inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
+    assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
+    if (MIRROR_BYTE(sequence) == REB_WORD)
+        return 2;  // simulated 2-blanks sequence
+    REBARR *a = ARR(VAL_NODE(sequence));
     assert(ARR_LEN(a) >= 2);
     assert(Is_Array_Frozen_Shallow(a));
     return ARR_LEN(a);
@@ -268,11 +275,11 @@ inline static REBLEN VAL_PATH_LEN(REBCEL(const*) path) {
 // compressed by means of the second payload slot, which counts the number
 // of blanks at the head and the tail.
 //
-inline static const REBNOD *VAL_PATH_NODE(REBCEL(const*) path) {
-    assert(ANY_PATH_KIND(CELL_TYPE(path)));
-    assert(MIRROR_BYTE(path) != REB_WORD);
+inline static const REBNOD *VAL_SEQUENCE_NODE(REBCEL(const*) sequence) {
+    assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
+    assert(MIRROR_BYTE(sequence) != REB_WORD);
 
-    const REBNOD *n = VAL_NODE(path);
+    const REBNOD *n = VAL_NODE(sequence);
     assert(not (FIRST_BYTE(n) & NODE_BYTEMASK_0x01_CELL));  // !!! not yet...
     return n;
 }
@@ -281,23 +288,23 @@ inline static const REBNOD *VAL_PATH_NODE(REBCEL(const*) path) {
 // be used to read the pointers.  If the value is not in an array, it may
 // need to be written to a passed-in storage location.
 //
-inline static REBCEL(const*) VAL_PATH_AT(
+inline static REBCEL(const*) VAL_SEQUENCE_AT(
     RELVAL *store,  // return result may or may not point at this cell
-    REBCEL(const*) path,
+    REBCEL(const*) sequence,
     REBLEN n
 ){
-    assert(store != path);  // cannot be the same
+    assert(store != sequence);  // cannot be the same
 
-    assert(ANY_PATH_KIND(CELL_TYPE(path)));
-    if (MIRROR_BYTE(path) == REB_WORD) {
-        assert(VAL_WORD_SYM(path) == SYM__SLASH_1_);
+    assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
+    if (MIRROR_BYTE(sequence) == REB_WORD) {
+        assert(VAL_WORD_SYM(sequence) == SYM__SLASH_1_);
         assert(n < 2);
       #if !defined(NDEBUG)
         Init_Unreadable_Void(store);
       #endif
         return BLANK_VALUE;
     }
-    REBARR *a = ARR(VAL_NODE(path));
+    REBARR *a = ARR(VAL_NODE(sequence));
     assert(ARR_LEN(a) >= 2);
     if (not Is_Array_Frozen_Shallow(a))
         panic (a);
@@ -305,9 +312,16 @@ inline static REBCEL(const*) VAL_PATH_AT(
     return ARR_AT(a, n);
 }
 
-inline static REBSPC *VAL_PATH_SPECIFIER(const RELVAL *path)
+inline static REBYTE VAL_SEQUENCE_BYTE_AT(REBCEL(const*) path, REBLEN n)
 {
-    assert(ANY_PATH_KIND(CELL_TYPE(path)));
+    DECLARE_LOCAL (temp);
+    REBCEL(const*) at = VAL_SEQUENCE_AT(temp, path, n);
+    return VAL_UINT8(at);  // !!! All callers of this routine need vetting
+}
+
+inline static REBSPC *VAL_SEQUENCE_SPECIFIER(const RELVAL *path)
+{
+    assert(ANY_SEQUENCE_KIND(CELL_TYPE(path)));
     if (MIRROR_BYTE(path) == REB_WORD) {
         assert(VAL_WORD_SYM(VAL_UNESCAPED(path)) == SYM__SLASH_1_);
         return SPECIFIED;
@@ -354,7 +368,7 @@ inline static bool Get_Path_Throws_Core(
 ){
     return Eval_Path_Throws_Core(
         out,
-        ARR(VAL_PATH_NODE(any_path)),
+        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
         Derive_Specifier(specifier, any_path),
         NULL, // not requesting value to set means it's a get
         0 // Name contains Get_Path_Throws() so it shouldn't be neutral
@@ -371,7 +385,7 @@ inline static void Get_Path_Core(
 
     if (Eval_Path_Throws_Core(
         out,
-        ARR(VAL_PATH_NODE(any_path)),
+        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
         Derive_Specifier(specifier, any_path),
         NULL, // not requesting value to set means it's a get
         EVAL_FLAG_NO_PATH_GROUPS
@@ -391,7 +405,7 @@ inline static bool Set_Path_Throws_Core(
 
     return Eval_Path_Throws_Core(
         out,
-        ARR(VAL_PATH_NODE(any_path)),
+        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
         Derive_Specifier(specifier, any_path),
         setval,
         0 // Name contains Set_Path_Throws() so it shouldn't be neutral
@@ -415,7 +429,7 @@ inline static void Set_Path_Core(  // !!! Appears to be unused.  Unnecessary?
 
     if (Eval_Path_Throws_Core(
         out,
-        ARR(VAL_PATH_NODE(any_path)),
+        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
         Derive_Specifier(specifier, any_path),
         setval,
         flags

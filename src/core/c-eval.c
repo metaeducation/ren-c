@@ -1968,14 +1968,14 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
         REBVAL *where = GET_EVAL_FLAG(f, NEXT_ARG_FROM_OUT) ? spare : f->out;
 
-        if (ANY_INERT_KIND(CELL_KIND(VAL_PATH_AT(where, v, 0)))) {
+        if (ANY_INERT_KIND(CELL_KIND(VAL_SEQUENCE_AT(where, v, 0)))) {
             Derelativize(f->out, v, *specifier);
             break;
         }
 
         if (Eval_Path_Throws_Core(
             where,
-            ARR(VAL_PATH_NODE(v)),
+            ARR(VAL_SEQUENCE_NODE(v)),  // !!! may not be array-based
             Derive_Specifier(*specifier, v),
             nullptr, // `setval`: null means don't treat as SET-PATH!
             EVAL_FLAG_PUSH_PATH_REFINES
@@ -2073,7 +2073,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
         if (Eval_Path_Throws_Core(
             spare,  // output if thrown, used as scratch space otherwise
-            ARR(VAL_PATH_NODE(v)),
+            ARR(VAL_SEQUENCE_NODE(v)),  // !!! may not be array-based
             Derive_Specifier(*specifier, v),
             f->out,
             EVAL_MASK_DEFAULT  // evaluating GROUP!s ok

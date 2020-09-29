@@ -210,10 +210,10 @@ inline static bool Single_Test_Throws(
         SET_END(temp);
         PUSH_GC_GUARD(temp);
 
-        REBLEN len = VAL_PATH_LEN(test_cache);
+        REBLEN len = VAL_SEQUENCE_LEN(test_cache);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            REBCEL(const*) item = VAL_PATH_AT(temp, test_cache, i);
+            REBCEL(const*) item = VAL_SEQUENCE_AT(temp, test_cache, i);
 
             if (Single_Test_Throws(
                 out,
@@ -1280,11 +1280,11 @@ REBNATIVE(default)
         // COMPOSE on the PATH! and then use GET/HARD and SET/HARD.  To make
         // a faster native we just do a more optimal version of that.
         //
-        REBLEN len = VAL_PATH_LEN(target);
+        REBLEN len = VAL_SEQUENCE_LEN(target);
         bool has_groups = false;
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            REBCEL(const*) item = VAL_PATH_AT(D_SPARE, target, i);
+            REBCEL(const*) item = VAL_SEQUENCE_AT(D_SPARE, target, i);
 
             if (REB_GROUP == CELL_KIND(item))
                 has_groups = true;
@@ -1294,7 +1294,7 @@ REBNATIVE(default)
             RELVAL *dest = ARR_HEAD(composed);
             REBSPC *specifier = VAL_SPECIFIER(target);
             for (i = 0; i < len; ++i, ++dest) {
-                REBCEL(const*) item = VAL_PATH_AT(D_SPARE, target, i);
+                REBCEL(const*) item = VAL_SEQUENCE_AT(D_SPARE, target, i);
 
                 if (CELL_KIND(item) != REB_GROUP)
                     Derelativize(dest, CELL_TO_VAL(item), VAL_SPECIFIER(target));
@@ -1312,7 +1312,7 @@ REBNATIVE(default)
             // because not all values are allowed in paths.  This will require
             // rethinking!
             //
-            if (not Try_Init_Any_Path_Arraylike(
+            if (not Try_Init_Any_Sequence_Arraylike(
                 target,
                 REB_SET_PATH,
                 composed
@@ -1321,11 +1321,11 @@ REBNATIVE(default)
             }
         }
 
-        const REBNOD *n = VAL_PATH_NODE(target);
+        const REBNOD *n = VAL_SEQUENCE_NODE(target);
 
         if (Eval_Path_Throws_Core(
             D_OUT,
-            ARR(n),
+            ARR(n),  // !!! May not be array-based
             VAL_SPECIFIER(target),
             NULL, // not requesting value to set means it's a get
             EVAL_FLAG_PATH_HARD_QUOTE // pre-COMPOSE'd, so GROUP!s are literal
@@ -1352,7 +1352,7 @@ REBNATIVE(default)
         DECLARE_LOCAL (dummy);
         if (Eval_Path_Throws_Core(
             dummy,
-            ARR(VAL_PATH_NODE(target)),
+            ARR(VAL_SEQUENCE_NODE(target)),  // !!! may not be array-based
             VAL_SPECIFIER(target),
             D_OUT,
             EVAL_FLAG_PATH_HARD_QUOTE  // precomposed, no double evaluating

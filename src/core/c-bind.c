@@ -89,10 +89,10 @@ void Bind_Values_Inner_Loop(
                     add_midstream_types,
                     flags
                 );
-            else if (ANY_PATH_KIND(kind))
+            else if (ANY_SEQUENCE_KIND(kind))
                 Bind_Values_Inner_Loop(
-                    binder,
-                    ARR_HEAD(ARR(VAL_PATH_NODE(cell))),  // !!! maybe not ARR
+                    binder,   // !!! v-- maybe not ARR
+                    ARR_HEAD(ARR(VAL_SEQUENCE_NODE(cell))),
                     context,
                     bind_types,
                     add_midstream_types,
@@ -174,8 +174,8 @@ void Unbind_Values_Core(RELVAL *head, REBCTX *context, bool deep)
         ){
             Unbind_Any_Word(v);
         }
-        else if (ANY_PATH_KIND(kind) and deep) {
-            REBNOD *n = m_cast(REBNOD*, VAL_PATH_NODE(v));  // !!! hack!
+        else if (ANY_SEQUENCE_KIND(kind) and deep) {  // v-- may not be ARR()
+            REBNOD *n = m_cast(REBNOD*, VAL_SEQUENCE_NODE(v));
             Unbind_Values_Core(ARR_HEAD(ARR(n)), context, true);
         }
         else if (ANY_ARRAY_KIND(kind) and deep)

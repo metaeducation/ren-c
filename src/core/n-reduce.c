@@ -389,7 +389,7 @@ REB_R Compose_To_Stack_Core(
                     if (Is_Valid_Path_Element(temp))  // `compose '(null)/1:`
                         fail (Error_Cant_Decorate_Type_Raw(temp));
 
-                    fail (Error_Bad_Path_Element_Raw(DS_TOP));
+                    fail (Error_Bad_Sequence_Item_Raw(DS_TOP));
                 }
                 Move_Value(DS_PUSH(), temp);
             }
@@ -504,7 +504,7 @@ REBNATIVE(compose)
             if (Is_Valid_Path_Element(D_OUT))  // `compose '(null)/1:`
                 fail (Error_Cant_Decorate_Type_Raw(D_OUT));
 
-            fail (Error_Bad_Path_Element_Raw(D_OUT));
+            fail (Error_Bad_Sequence_Item_Raw(D_OUT));
         }
         return D_OUT;  // note: may not be an ANY-PATH!  See Try_Pop_Path...
     }

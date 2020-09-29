@@ -533,7 +533,7 @@ inline static void Get_Var_May_Fail(
         //
         if (Eval_Path_Throws_Core(
             out,
-            ARR(VAL_PATH_NODE(source)),
+            ARR(VAL_SEQUENCE_NODE(source)),  // !!! may not be array-based
             Derive_Specifier(specifier, source),
             NULL, // not requesting value to set means it's a get
             hard ? EVAL_FLAG_PATH_HARD_QUOTE : EVAL_FLAG_NO_PATH_GROUPS
@@ -672,7 +672,7 @@ void Set_Var_May_Fail(
         DECLARE_LOCAL (dummy);
         if (Eval_Path_Throws_Core(
             dummy,
-            ARR(VAL_PATH_NODE(target)),
+            ARR(VAL_SEQUENCE_NODE(target)),  // !!! may not be array-based
             Derive_Specifier(target_specifier, target),
             specific,
             flags

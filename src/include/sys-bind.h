@@ -90,7 +90,7 @@
     }
 
     inline static REBSPC *VAL_SPECIFIER(REBCEL(const*) v) {
-        if (ANY_PATH_KIND(CELL_KIND(v)))
+        if (ANY_SEQUENCE_KIND(CELL_KIND(v)))
             assert(MIRROR_BYTE(v) == CELL_KIND(v));
         else
             assert(ANY_ARRAY_KIND(CELL_KIND(v)));

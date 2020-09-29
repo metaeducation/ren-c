@@ -28,16 +28,16 @@
 
 
 //
-//  Try_Init_Any_Path_At_Arraylike_Core: C
+//  Try_Init_Any_Sequence_At_Arraylike_Core: C
 //
-REBVAL *Try_Init_Any_Path_At_Arraylike_Core(
+REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
     RELVAL *out,
     enum Reb_Kind kind,
     REBARR *a,
     REBLEN index,
     REBNOD *binding
 ){
-    assert(ANY_PATH_KIND(kind));
+    assert(ANY_SEQUENCE_KIND(kind));
     Force_Series_Managed(SER(a));
     ASSERT_SERIES_TERM(SER(a));
     assert(index == 0);  // !!! current rule
@@ -556,7 +556,7 @@ void Get_Simple_Value_Into(REBVAL *out, const RELVAL *val, REBSPC *specifier)
 //
 REBCTX *Resolve_Path(const REBVAL *path, REBLEN *index_out)
 {
-    REBLEN len = VAL_PATH_LEN(path);
+    REBLEN len = VAL_SEQUENCE_LEN(path);
     if (len == 0)  // !!! e.g. `/`, what should this do?
         return nullptr;
     if (len == 1)  // !!! "does not handle single element paths"
@@ -565,7 +565,7 @@ REBCTX *Resolve_Path(const REBVAL *path, REBLEN *index_out)
     DECLARE_LOCAL (temp);
 
     REBLEN index = 0;
-    REBCEL(const*) picker = VAL_PATH_AT(temp, path, index);
+    REBCEL(const*) picker = VAL_SEQUENCE_AT(temp, path, index);
 
     if (not ANY_WORD_KIND(CELL_KIND(picker)))
         return nullptr;  // !!! only handles heads of paths that are ANY-WORD!
@@ -573,7 +573,7 @@ REBCTX *Resolve_Path(const REBVAL *path, REBLEN *index_out)
     const RELVAL *var = Lookup_Word_May_Fail(picker, VAL_SPECIFIER(path));
 
     ++index;
-    picker = VAL_PATH_AT(temp, path, index);
+    picker = VAL_SEQUENCE_AT(temp, path, index);
 
     while (ANY_CONTEXT(var) and REB_WORD == CELL_KIND(picker)) {
         REBLEN i = Find_Canon_In_Context(
@@ -752,164 +752,6 @@ REBNATIVE(poke)
 
 
 //
-//  PD_Path: C
-//
-// A PATH! is not an array, but if it is implemented as one it may choose to
-// dispatch path handling to its array.
-//
-REB_R PD_Path(
-    REBPVS *pvs,
-    const RELVAL *picker,
-    const REBVAL *opt_setval
-){
-    if (opt_setval)
-        fail ("PATH!s are immutable (convert to GROUP! or BLOCK! to mutate)");
-
-    REBINT n;
-
-    if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
-        n = Int32(picker);
-        if (n == 0)
-            return nullptr; // Rebol2/Red convention: 0 is not a pick
-        n = n - 1;
-    }
-    else
-        fail (rebUnrelativize(picker));
-
-    if (n < 0 or n >= cast(REBINT, VAL_PATH_LEN(pvs->out)))
-        return nullptr;
-
-    REBSPC *specifier = VAL_PATH_SPECIFIER(pvs->out);
-    REBCEL(const*) at = VAL_PATH_AT(FRM_SPARE(pvs), pvs->out, n);
-
-    return Derelativize(pvs->out, CELL_TO_VAL(at), specifier);
-}
-
-
-//
-//  REBTYPE: C
-//
-// The concept of PATH! is now that it is an immediate value.  While it
-// permits picking and enumeration, it may or may not have an actual REBARR*
-// node backing it.
-//
-REBTYPE(Path)
-{
-    REBVAL *path = D_ARG(1);
-
-    switch (VAL_WORD_SYM(verb)) {
-      case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value));
-
-        switch (VAL_WORD_SYM(ARG(property))) {
-          case SYM_LENGTH:
-            return Init_Integer(D_OUT, VAL_PATH_LEN(path));
-
-          case SYM_INDEX:  // Note: not legal, paths always at head, no index
-          default:
-            break;
-        }
-        break; }
-
-        // Since ANY-PATH! is immutable, a shallow copy should be cheap, but
-        // it should be cheap for any similarly marked array.  Also, a /DEEP
-        // copy of a path may copy groups that are mutable.
-        //
-      case SYM_COPY:
-        if (MIRROR_BYTE(path) == REB_WORD) {
-            assert(VAL_WORD_SYM(path) == SYM__SLASH_1_);
-            return Move_Value(frame_->out, path);
-        }
-
-        goto retrigger;
-
-      default:
-        break;
-    }
-
-    return R_UNHANDLED;
-
-  retrigger:
-
-    return T_Array(frame_, verb);
-}
-
-
-//
-//  MF_Path: C
-//
-void MF_Path(REB_MOLD *mo, REBCEL(const*) v, bool form)
-{
-    UNUSED(form);
-
-    enum Reb_Kind kind = CELL_TYPE(v);  // Note: CELL_KIND() might be WORD!
-
-    if (kind == REB_GET_PATH)
-        Append_Codepoint(mo->series, ':');
-    else if (kind == REB_SYM_PATH)
-        Append_Codepoint(mo->series, '@');
-
-    if (MIRROR_BYTE(v) == REB_WORD) {  // optimized for `/`, allows binding
-        assert(VAL_WORD_SYM(v) == SYM__SLASH_1_);
-        Append_Ascii(mo->series, "/");
-    }
-    else if (FIRST_BYTE(VAL_NODE(v)) & NODE_BYTEMASK_0x01_CELL) {
-        assert(!"Not implemented yet, pair optimization...");
-    }
-    else {
-        const REBARR *a = ARR(VAL_PATH_NODE(v));
-
-        // Recursion check:
-        if (Find_Pointer_In_Series(TG_Mold_Stack, a) != NOT_FOUND) {
-            Append_Ascii(mo->series, ".../...");
-            return;
-        }
-        Push_Pointer_To_Series(TG_Mold_Stack, a);
-        assert(ARR_LEN(a) >= 2);  // else other optimizations should apply
-
-        const RELVAL *item = ARR_HEAD(a);
-        while (NOT_END(item)) {
-            assert(not ANY_PATH(item)); // another new rule
-
-            if (not IS_BLANK(item)) { // no blank molding; slashes convey it
-                //
-                // !!! Molding of items in paths which have slashes in them,
-                // like URL! or FILE! (or some historical date formats) need
-                // some kind of escaping, otherwise they have to be outlawed
-                // too.  FILE! has the option of `a/%"dir/file.txt"/b` to put
-                // the file in quotes, but URL does not.
-                //
-                Mold_Value(mo, item);
-
-                // Note: Ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,
-                // but any embedded BLOCK! or GROUP! which do have newlines in
-                // them can make newlines, e.g.:
-                //
-                //     a/[
-                //        b c d
-                //     ]/e
-            }
-
-            ++item;
-            if (IS_END(item))
-                break;
-
-            if (kind == REB_TUPLE)
-                Append_Codepoint(mo->series, '.');
-            else
-                Append_Codepoint(mo->series, '/');
-        }
-
-        Drop_Pointer_From_Series(TG_Mold_Stack, a);
-    }
-
-    if (kind == REB_SET_PATH)
-        Append_Codepoint(mo->series, ':');
-}
-
-
-//
 //  MAKE_Path: C
 //
 // A MAKE of a PATH! is experimentally being thought of as evaluative.  This
@@ -971,10 +813,10 @@ REB_R MAKE_Path(
     Drop_Frame_Unbalanced(f); // !!! f->dsp_orig got captured each loop
 
     if (not p)
-        fail (Error_Bad_Path_Element_Raw(out));
+        fail (Error_Bad_Sequence_Item_Raw(out));
 
     if (not ANY_PATH(out))  // e.g. `make path! ['x]` giving us the WORD! `x`
-        fail ("Can't MAKE PATH! from less than 2 elements (use COMPOSE)");
+        fail ("Can't MAKE ANY-SEQUENCE! with < 2 elements (use COMPOSE)");
 
     return out;
 }
@@ -983,10 +825,10 @@ REB_R MAKE_Path(
 static void Push_Path_Recurses(REBCEL(const*) path, REBSPC *specifier)
 {
     DECLARE_LOCAL (temp);
-    REBLEN len = VAL_PATH_LEN(path);
+    REBLEN len = VAL_SEQUENCE_LEN(path);
     REBLEN i;
     for (i = 0; i < len; ++i) {
-        REBCEL(const*) item = VAL_PATH_AT(temp, path, i);
+        REBCEL(const*) item = VAL_SEQUENCE_AT(temp, path, i);
         if (CELL_KIND(item) == REB_PATH) {
             if (IS_SPECIFIC(item))
                 Push_Path_Recurses(item, VAL_SPECIFIER(item));
@@ -1034,7 +876,7 @@ static void Push_Path_Recurses(REBCEL(const*) path, REBSPC *specifier)
 //     >> to path! @[a b c]
 //     == /[a b c]
 //
-REB_R TO_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
+REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     enum Reb_Kind arg_kind = VAL_TYPE(arg);
 
     if (ANY_PATH_KIND(arg_kind)) {  // e.g. `to set-path! 'a/b/c`
@@ -1068,8 +910,8 @@ REB_R TO_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         DECLARE_LOCAL (second);
         Derelativize(first, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg));
         Derelativize(second, VAL_ARRAY_AT(arg) + 1, VAL_SPECIFIER(arg));
-        if (not Try_Init_Any_Path_Pairlike(out, kind, first, second))
-            fail (Error_Bad_Path_Element_Raw(out));
+        if (not Try_Init_Any_Sequence_Pairlike(out, kind, first, second))
+            fail (Error_Bad_Sequence_Item_Raw(out));
     }
     else {
         // Assume it needs an array.  This might be a wrong assumption, e.g.
@@ -1083,8 +925,8 @@ REB_R TO_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         );
         Freeze_Array_Shallow(a);
 
-        if (not Try_Init_Any_Path_Arraylike(out, kind, a))
-            fail (Error_Bad_Path_Element_Raw(out));
+        if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
+            fail (Error_Bad_Sequence_Item_Raw(out));
     }
 
     return out;
@@ -1092,7 +934,7 @@ REB_R TO_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
 
 //
-//  CT_Path: C
+//  CT_Sequence: C
 //
 // "Compare Type" dispatcher for the following types: (list here to help
 // text searches)
@@ -1101,15 +943,15 @@ REB_R TO_Path(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //     CT_Get_Path()
 //     CT_Lit_Path()
 //
-REBINT CT_Path(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Sequence(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
     if (MIRROR_BYTE(a) == REB_WORD and MIRROR_BYTE(b) == REB_WORD)
         return CT_Word(a, b, strict);
     else if (MIRROR_BYTE(a) != REB_WORD and MIRROR_BYTE(b) != REB_WORD)
         return Compare_Arrays_At_Indexes(
-            ARR(VAL_PATH_NODE(a)),
+            ARR(VAL_SEQUENCE_NODE(a)),
             0,
-            ARR(VAL_PATH_NODE(b)),
+            ARR(VAL_SEQUENCE_NODE(b)),
             0,
             strict
         );

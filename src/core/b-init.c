@@ -399,8 +399,8 @@ REBVAL *Make_Native(
     }
     else {
         DECLARE_LOCAL (temp);
-        REBCEL(const*) first = VAL_PATH_AT(temp, *item, 0);
-        REBCEL(const*) second = VAL_PATH_AT(temp, *item, 1);
+        REBCEL(const*) first = VAL_SEQUENCE_AT(temp, *item, 0);
+        REBCEL(const*) second = VAL_SEQUENCE_AT(temp, *item, 1);
         if (
             VAL_WORD_SYM(first) != SYM_NATIVE
             or VAL_WORD_SYM(second) != SYM_BODY

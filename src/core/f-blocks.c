@@ -399,11 +399,11 @@ void Uncolor(const RELVAL *v)
     if (ANY_ARRAY(v))
         Uncolor_Array(VAL_ARRAY(v));
     else if (ANY_PATH(v)) {
-        REBLEN len = VAL_PATH_LEN(v);
+        REBLEN len = VAL_SEQUENCE_LEN(v);
         REBLEN i;
         DECLARE_LOCAL (temp);
         for (i = 0; i < len; ++i) {
-            REBCEL(const*) item = VAL_PATH_AT(temp, v, i);
+            REBCEL(const*) item = VAL_SEQUENCE_AT(temp, v, i);
             Uncolor(CELL_TO_VAL(item));
         }
     }

@@ -108,7 +108,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         //
         if (IS_TUPLE(host)) {
           reverse_lookup:
-            if (VAL_TUPLE_LEN(host) != 4)
+            if (VAL_SEQUENCE_LEN(host) != 4)
                 fail ("Reverse DNS lookup requires length 4 TUPLE!");
 
             // 93.184.216.34 => example.com

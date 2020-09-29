@@ -186,6 +186,16 @@ inline static bool ANY_ARRAY_KIND(REBYTE k)
     ANY_ARRAY_KIND(KIND_BYTE(v))
 
 
+#define ANY_SEQUENCE_KIND_EVIL_MACRO \
+    (k < REB_64 and did (FLAGIT_KIND(k) & TS_SEQUENCE))
+
+inline static bool ANY_SEQUENCE_KIND(REBYTE k)
+    { return ANY_SEQUENCE_KIND_EVIL_MACRO; }
+
+#define ANY_SEQUENCE(v) \
+    ANY_SEQUENCE_KIND(KIND_BYTE(v))
+
+
 #define ANY_SERIES_KIND_EVIL_MACRO \
     (k < 64 and did (FLAGIT_KIND(k) & TS_SERIES))
 

@@ -164,7 +164,7 @@ REBVAL *Init_Near_For_Frame(RELVAL *out, REBFRM *f)
     if (GET_EVAL_FLAG(f, PATH_MODE)) {
         Freeze_Array_Shallow(near);
 
-        REBVAL *p = Try_Init_Any_Path_Arraylike(out, REB_PATH, near);
+        REBVAL *p = Try_Init_Any_Sequence_Arraylike(out, REB_PATH, near);
         assert(p);  // !!! Do we know the array is a valid path?
         UNUSED(p);
     }

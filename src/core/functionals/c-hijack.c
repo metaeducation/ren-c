@@ -155,7 +155,7 @@ bool Redo_Action_Throws(REBVAL *out, REBFRM *f, REBACT *run)
     }
     else {
         REBARR *a = Freeze_Array_Shallow(Pop_Stack_Values(dsp_orig));
-        REBVAL *p = Try_Init_Any_Path_Arraylike(first, REB_PATH, a);
+        REBVAL *p = Try_Init_Path_Arraylike(first, a);
         assert(p);
         UNUSED(p);
     }

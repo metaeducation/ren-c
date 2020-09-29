@@ -142,17 +142,17 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
         DECLARE_LOCAL (temp);
 
-        REBLEN len = VAL_PATH_LEN(arg);
+        REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            REBCEL(const*) item = VAL_PATH_AT(temp, arg, i);
+            REBCEL(const*) item = VAL_SEQUENCE_AT(temp, arg, i);
             if (REB_BLANK == CELL_KIND(item))
                 continue;
             if (REB_WORD != CELL_KIND(item))
                 fail ("Can't make ANY-WORD! from path unless it's one WORD!");
             if (not IS_END(out))
                 fail ("Can't make ANY-WORD! from path w/more than one WORD!");
-            Derelativize(out, CELL_TO_VAL(item), VAL_PATH_SPECIFIER(arg));
+            Derelativize(out, CELL_TO_VAL(item), VAL_SEQUENCE_SPECIFIER(arg));
         }
 
         if (IS_END(out))

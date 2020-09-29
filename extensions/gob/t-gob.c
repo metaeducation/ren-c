@@ -427,8 +427,12 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         CLR_GOB_OPAQUE(gob);
         if (IS_TUPLE(val)) {
             SET_GOB_TYPE(gob, GOBT_COLOR);
-            if (VAL_TUPLE_LEN(val) < 4 or VAL_TUPLE_AT(val, 3) == 0)
+            if (
+                VAL_SEQUENCE_LEN(val) < 4
+                or VAL_SEQUENCE_BYTE_AT(val, 3) == 0
+            ){
                 SET_GOB_OPAQUE(gob);
+            }
         }
         else if (IS_BLANK(val))
             SET_GOB_TYPE(gob, GOBT_NONE);

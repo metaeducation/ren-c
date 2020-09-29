@@ -26,14 +26,21 @@
 
 
 //
-//  MAKE_Tuple: C
+//  MAKE_Sequence: C
 //
-REB_R MAKE_Tuple(
+// !!! There was no original TO TUPLE! code besides calling this MAKE, so
+// PATH!'s TO ANY-PATH! was used for TO ANY-TUPLE!.  But this contains some
+// unique behavior which might be interesting for numeric MAKEs.
+//
+REB_R MAKE_Sequence(
     REBVAL *out,
     enum Reb_Kind kind,
     const REBVAL *opt_parent,
     const REBVAL *arg
 ){
+    if (ANY_PATH_KIND(kind))  // delegate for now
+        return MAKE_Path(out, kind, opt_parent, arg);
+
     assert(kind == REB_TUPLE);
     if (opt_parent)
         fail (Error_Bad_Make_Parent(kind, opt_parent));
@@ -160,70 +167,24 @@ REB_R MAKE_Tuple(
 
 
 //
-//  TO_Tuple: C
-//
-REB_R TO_Tuple(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
-{
-    return MAKE_Tuple(out, kind, nullptr, arg);
-}
-
-
-//
-//  Pick_Tuple: C
-//
-void Pick_Tuple(REBVAL *out, const REBVAL *value, const RELVAL *picker)
-{
-    REBINT len = VAL_TUPLE_LEN(value);
-    if (len < 3)
-        len = 3;
-
-    REBINT pick = Get_Num_From_Arg(picker);
-
-    // This uses modulus to avoid having a conditional access into the array,
-    // which would trigger Spectre mitigation:
-    //
-    // https://stackoverflow.com/questions/50399940/
-    //
-    // By always accessing the array and always being in bounds, there's no
-    // speculative execution accessing unbound locations.
-    //
-    if (pick > 0 and pick <= len)
-        Init_Integer(out, VAL_TUPLE_AT(value, (pick - 1) % len));
-    else
-        Init_Nulled(out);
-}
-
-
-//
-//  PD_Tuple: C
-//
-REB_R PD_Tuple(
-    REBPVS *pvs,
-    const RELVAL *picker,
-    const REBVAL *opt_setval
-){
-    if (opt_setval)
-        fail ("TUPLE!s are immutable, convert to BLOCK! and back to mutate");
-
-    Pick_Tuple(pvs->out, pvs->out, picker);
-    return pvs->out;
-}
-
-
-//
 //  REBTYPE: C
 //
-// !!! The TUPLE type from Rebol is something of an oddity, plus written as
-// more-or-less spaghetti code.  It is likely to be replaced with something
-// generalized better, but is grudgingly kept working in the meantime.
+// !!! This is shared code between TUPLE! and PATH!.  The math operations
+// predate the unification, and are here to document what expected operations
+// were...though they should use the method of PAIR! to generate frames for
+// each operation and run them against each other.
 //
-REBTYPE(Tuple)
+REBTYPE(Sequence)
 {
-    REBVAL *value = D_ARG(1);
+    REBVAL *sequence = D_ARG(1);
 
+    // !!! We get bytes for the sequence even if it's not a legitimate byte
+    // tuple (or path), for compatibility in the below code for when it is.
+    // This is a work in progress, just to try to get to booting.
+    //
     REBYTE buf[MAX_TUPLE];
-    REBLEN len = VAL_TUPLE_LEN(value);
-    Get_Tuple_Bytes(buf, value, len);
+    REBLEN len = VAL_SEQUENCE_LEN(sequence);
+    Get_Tuple_Bytes(buf, sequence, len);
     REBYTE *vp = buf;
 
     REBSYM sym = VAL_WORD_SYM(verb);
@@ -264,7 +225,7 @@ REBTYPE(Tuple)
         }
         else if (IS_TUPLE(arg)) {
             dec = -251.8517; // unused but avoid maybe uninitialized warning
-            alen = VAL_TUPLE_LEN(arg);
+            alen = VAL_SEQUENCE_LEN(arg);
             Get_Tuple_Bytes(abuf, arg, alen);
             ap = abuf;
             if (len < alen)
@@ -378,23 +339,29 @@ REBTYPE(Tuple)
     switch (sym) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
-
         UNUSED(ARG(value));
-        REBSYM property = VAL_WORD_SYM(ARG(property));
-        assert(property != SYM_0);
 
-        switch (property) {
-        case SYM_LENGTH:
-            return Init_Integer(D_OUT, MAX(len, 3));
+        switch (VAL_WORD_SYM(ARG(property))) {
+          case SYM_LENGTH:
+            return Init_Integer(D_OUT, VAL_SEQUENCE_LEN(sequence));
 
-        default:
+          case SYM_INDEX:  // Note: not legal, paths always at head, no index
+          default:
             break;
         }
-
         break; }
 
+        // ANY-SEQUENCE! is immutable, so a shallow copy should be a no-op,
+        // but it should be cheap for any similarly marked array.  Also, a
+        // /DEEP copy of a path may copy groups that are mutable.
+        //
       case SYM_COPY:
-        RETURN (value);
+        if (MIRROR_BYTE(sequence) == REB_WORD) {
+            assert(VAL_WORD_SYM(sequence) == SYM__SLASH_1_);
+            return Move_Value(frame_->out, sequence);
+        }
+
+        goto retrigger;
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
@@ -405,7 +372,7 @@ REBTYPE(Tuple)
 
         if (REF(part)) {
             REBLEN part = Get_Num_From_Arg(ARG(part));
-            temp = MIN(part, VAL_TUPLE_LEN(value));
+            temp = MIN(part, VAL_SEQUENCE_LEN(sequence));
         }
         if (len > 0) {
             REBLEN i;
@@ -416,30 +383,123 @@ REBTYPE(Tuple)
             }
         }
         return Init_Tuple_Bytes(D_OUT, buf, len); }
-/*
-  poke_it:
-        a = Get_Num_From_Arg(arg);
-        if (a <= 0 || a > len) {
-            if (action == A_PICK) return nullptr;
-            fail (Error_Out_Of_Range(arg));
-        }
-        if (action == A_PICK)
-            return Init_Integer(D_OUT, vp[a-1]);
-        // Poke:
-        if (not IS_INTEGER(D_ARG(3)))
-            fail (D_ARG(3));
-        v = VAL_INT32(D_ARG(3));
-        if (v < 0)
-            v = 0;
-        if (v > 255)
-            v = 255;
-        vp[a-1] = v;
-        RETURN (value);
-*/
 
       default:
         break;
     }
 
     return R_UNHANDLED;
+
+  retrigger:
+
+    return T_Array(frame_, verb);
+}
+
+
+//
+//  PD_Sequence: C
+//
+// Shared code for picking/setting items out of PATH!s and TUPLE!s.
+// Note that compressed storage choices for these immutable types means they
+// may not be implemented underneath as arrays.
+//
+REB_R PD_Sequence(
+    REBPVS *pvs,
+    const RELVAL *picker,
+    const REBVAL *opt_setval
+){
+    if (opt_setval)
+        fail ("PATH!s are immutable (convert to GROUP! or BLOCK! to mutate)");
+
+    REBINT n;
+
+    if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
+        n = Int32(picker);
+        if (n == 0)
+            return nullptr; // Rebol2/Red convention: 0 is not a pick
+        n = n - 1;
+    }
+    else
+        fail (rebUnrelativize(picker));
+
+    if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(pvs->out)))
+        return nullptr;
+
+    REBSPC *specifier = VAL_SEQUENCE_SPECIFIER(pvs->out);
+    REBCEL(const*) at = VAL_SEQUENCE_AT(FRM_SPARE(pvs), pvs->out, n);
+
+    return Derelativize(pvs->out, CELL_TO_VAL(at), specifier);
+}
+
+
+//
+//  MF_Sequence: C
+//
+void MF_Sequence(REB_MOLD *mo, REBCEL(const*) v, bool form)
+{
+    UNUSED(form);
+
+    enum Reb_Kind kind = CELL_TYPE(v);  // Note: CELL_KIND() might be WORD!
+
+    if (kind == REB_GET_PATH)
+        Append_Codepoint(mo->series, ':');
+    else if (kind == REB_SYM_PATH)
+        Append_Codepoint(mo->series, '@');
+
+    if (MIRROR_BYTE(v) == REB_WORD) {  // optimized for `/`, allows binding
+        assert(VAL_WORD_SYM(v) == SYM__SLASH_1_);
+        Append_Ascii(mo->series, "/");
+    }
+    else if (FIRST_BYTE(VAL_NODE(v)) & NODE_BYTEMASK_0x01_CELL) {
+        assert(!"Not implemented yet, pair optimization...");
+    }
+    else {
+        const REBARR *a = ARR(VAL_SEQUENCE_NODE(v));
+
+        // Recursion check:
+        if (Find_Pointer_In_Series(TG_Mold_Stack, a) != NOT_FOUND) {
+            Append_Ascii(mo->series, ".../...");
+            return;
+        }
+        Push_Pointer_To_Series(TG_Mold_Stack, a);
+        assert(ARR_LEN(a) >= 2);  // else other optimizations should apply
+
+        const RELVAL *item = ARR_HEAD(a);
+        while (NOT_END(item)) {
+            assert(not ANY_PATH(item)); // another new rule
+
+            if (not IS_BLANK(item)) { // no blank molding; slashes convey it
+                //
+                // !!! Molding of items in paths which have slashes in them,
+                // like URL! or FILE! (or some historical date formats) need
+                // some kind of escaping, otherwise they have to be outlawed
+                // too.  FILE! has the option of `a/%"dir/file.txt"/b` to put
+                // the file in quotes, but URL does not.
+                //
+                Mold_Value(mo, item);
+
+                // Note: Ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,
+                // but any embedded BLOCK! or GROUP! which do have newlines in
+                // them can make newlines, e.g.:
+                //
+                //     a/[
+                //        b c d
+                //     ]/e
+            }
+
+            ++item;
+            if (IS_END(item))
+                break;
+
+            if (kind == REB_TUPLE)
+                Append_Codepoint(mo->series, '.');
+            else
+                Append_Codepoint(mo->series, '/');
+        }
+
+        Drop_Pointer_From_Series(TG_Mold_Stack, a);
+    }
+
+    if (kind == REB_SET_PATH)
+        Append_Codepoint(mo->series, ':');
 }

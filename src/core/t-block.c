@@ -295,13 +295,13 @@ REB_R MAKE_Array(
 REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (ANY_PATH(arg)) {
         REBDSP dsp_orig = DSP;
-        REBLEN len = VAL_PATH_LEN(arg);
+        REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
         for (i = 0; i < len; ++i)
             Derelativize(
                 DS_PUSH(),
-                CELL_TO_VAL(VAL_PATH_AT(out, arg, i)),
-                VAL_PATH_SPECIFIER(arg)
+                CELL_TO_VAL(VAL_SEQUENCE_AT(out, arg, i)),
+                VAL_SEQUENCE_SPECIFIER(arg)
             );
         return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
     }
@@ -564,16 +564,10 @@ void Shuffle_Array(REBARR *arr, REBLEN idx, bool secure)
 //
 //  PD_Array: C
 //
-// Path dispatch for the following types:
+// Path dispatch for ANY-ARRAY! (covers ANY-BLOCK! and ANY-GROUP!)
 //
-//     PD_Block
-//     PD_Group
-//
-// It is delegated to by path dispatch if the path payload is an array:
-//
-//     PD_Path
-//     PD_Get_Path
-//     PD_Set_Path
+// !!! There is currently some delegation to this routine by ANY-SEQUENCE! if
+// the underlying implementation is a REBARR*.
 //
 REB_R PD_Array(
     REBPVS *pvs,
@@ -759,14 +753,7 @@ void MF_Array(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 //  REBTYPE: C
 //
-// Implementation of type dispatch of the following:
-//
-//     REBTYPE(Block)
-//     REBTYPE(Group)
-//     REBTYPE(Path)
-//     REBTYPE(Get_Path)
-//     REBTYPE(Set_Path)
-//     REBTYPE(Lit_Path)
+// Implementation of type dispatch for ANY-ARRAY! (ANY-BLOCK! and ANY-GROUP!)
 //
 REBTYPE(Array)
 {

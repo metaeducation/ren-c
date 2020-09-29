@@ -804,12 +804,12 @@ REBNATIVE(to_hex)
         if (
             len == UNKNOWN
             || len > 2 * MAX_TUPLE
-            || len > cast(REBLEN, 2 * VAL_TUPLE_LEN(arg))
+            || len > cast(REBLEN, 2 * VAL_SEQUENCE_LEN(arg))
         ){
-            len = 2 * VAL_TUPLE_LEN(arg);
+            len = 2 * VAL_SEQUENCE_LEN(arg);
         }
-        for (n = 0; n != VAL_TUPLE_LEN(arg); n++)
-            Form_Hex2(mo, VAL_TUPLE_AT(arg, n));
+        for (n = 0; n != VAL_SEQUENCE_LEN(arg); n++)
+            Form_Hex2(mo, VAL_SEQUENCE_BYTE_AT(arg, n));
         for (; n < 3; n++)
             Form_Hex2(mo, 0);
     }

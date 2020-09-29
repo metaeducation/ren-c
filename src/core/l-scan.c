@@ -2527,8 +2527,9 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                     = mutable_MIRROR_BYTE(temp)
                     = REB_TUPLE;
             }
+            else
+                assert(ANY_PATH(temp));
 
-            assert(ANY_PATH(temp));
             Move_Value(DS_PUSH(), temp);
 
             // Can only store file and line information if it has an array

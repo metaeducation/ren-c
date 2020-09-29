@@ -36,17 +36,6 @@
 #define MAX_TUPLE \
     ((sizeof(uint32_t) * 2)) // for same properties on 64-bit and 32-bit
 
-inline static const REBYTE VAL_TUPLE_AT(REBCEL(const*) v, REBLEN n) {
-    assert(CELL_KIND(v) == REB_TUPLE);
-    return VAL_INT32(ARR_AT(ARR(VAL_NODE(v)), n));
-    /* return PAYLOAD(Bytes, v).common[n + 1]; */  // 0 is size, compact form
-}
-
-inline static REBYTE VAL_TUPLE_LEN(REBCEL(const*) v) {
-    assert(CELL_KIND(v) == REB_TUPLE);
-    return ARR_LEN(ARR(VAL_NODE(v)));
-    /* return PAYLOAD(Bytes, v).common[0]; */  // 0 is size, compact form
-}
 
 // Tuple has a compact form that allows it to represent bytes with more
 // optimal storage.  It can pack as many bytes in the tuple as space
@@ -91,6 +80,9 @@ inline static REBVAL *Init_Tuple_Bytes(
     return cast(REBVAL*, out);
 }
 
+// !!! This is a simple compatibility routine that will just set bytes in
+// the buffer to 0 if the element is not an integer.
+//
 inline static void Get_Tuple_Bytes(
     void *buf,
     const RELVAL *tuple,
@@ -98,8 +90,11 @@ inline static void Get_Tuple_Bytes(
 ){
     REBYTE *dp = cast(REBYTE*, buf);
     REBSIZ i;
-    for (i = 0; i < size; ++i)
-        dp[i] = VAL_TUPLE_AT(tuple, i);
+    DECLARE_LOCAL (temp);
+    for (i = 0; i < size; ++i) {
+        REBCEL(const*) cell = VAL_SEQUENCE_AT(temp, tuple, i);
+        dp[i] = CELL_KIND(cell) == REB_INTEGER ? VAL_UINT32(cell) : 0;
+    }
 }
 
 inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {

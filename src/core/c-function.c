@@ -1365,7 +1365,7 @@ bool Get_If_Word_Or_Path_Throws(
         REBSPC *derived = Derive_Specifier(specifier, v);
         if (Eval_Path_Throws_Core(
             out,
-            ARR(VAL_PATH_NODE(v)),
+            ARR(VAL_SEQUENCE_NODE(v)),  // !!! may not be array based
             derived,
             NULL,  // `setval`: null means don't treat as SET-PATH!
             EVAL_MASK_DEFAULT | (push_refinements

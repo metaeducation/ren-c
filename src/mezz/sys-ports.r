@@ -149,9 +149,17 @@ make-port*: function [
                     ; captured content in PARSE of a URL! was a URL! and not
                     ; a STRING!, and so the attempt to convert `s1` to TUPLE!
                     ; would always fail.  Ren-C permits this conversion.
+                    ;
+                    ; !!! Now that things are updated, should it *always* be
+                    ; a TUPLE!, instead of only when it's an IP address?
 
                     if not empty? trim s1 [
-                        attempt [s1: to tuple! s1]
+                        use [tup] [
+                            tup: to tuple! s1
+                            if integer? last tup [
+                                s1: tup
+                            ]
+                        ]
                         emit host s1
                     ]
                 )

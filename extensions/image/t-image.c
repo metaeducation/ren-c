@@ -49,11 +49,11 @@ void Tuples_To_RGBA(REBYTE *rgba, REBLEN size, const REBVAL *head, REBLEN len)
 //
 void Set_Pixel_Tuple(REBYTE *dp, const RELVAL *tuple)
 {
-    dp[0] = VAL_TUPLE_AT(tuple, 0);  // red
-    dp[1] = VAL_TUPLE_AT(tuple, 1);  // green
-    dp[2] = VAL_TUPLE_AT(tuple, 2); // blue
-    if (VAL_TUPLE_LEN(tuple) > 3)
-        dp[3] = VAL_TUPLE_AT(tuple, 3);  // alpha
+    dp[0] = VAL_SEQUENCE_BYTE_AT(tuple, 0);  // red
+    dp[1] = VAL_SEQUENCE_BYTE_AT(tuple, 1);  // green
+    dp[2] = VAL_SEQUENCE_BYTE_AT(tuple, 2); // blue
+    if (VAL_SEQUENCE_LEN(tuple) > 3)
+        dp[3] = VAL_SEQUENCE_BYTE_AT(tuple, 3);  // alpha
     else
         dp[3] = 0xff;  // default alpha to opaque
 }
@@ -818,7 +818,7 @@ void Find_Image(REBFRM *frame_)
         if (REF(only))
             only = true;
         else
-            only = (VAL_TUPLE_LEN(arg) < 4);
+            only = (VAL_SEQUENCE_LEN(arg) < 4);
 
         REBYTE pixel[4];
         Set_Pixel_Tuple(pixel, arg);
