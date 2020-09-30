@@ -247,6 +247,14 @@ inline static bool ANY_TUPLE_KIND(REBYTE k)
     ANY_TUPLE_KIND(KIND_BYTE(v))
 
 
+// Used by scanner; it figures out what kind of path something would be, then
+// switches it to a tuple if necessary.
+//
+inline static enum Reb_Kind TUPLIFY_ANY_PATH_KIND(REBYTE k) {
+    assert(ANY_PATH_KIND(k));
+    return cast(enum Reb_Kind, k + 1);
+}
+
 
 inline static bool ANY_BLOCK_KIND(REBYTE k)
     { return k == REB_BLOCK or k == REB_GET_BLOCK

@@ -2034,7 +2034,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
       case REB_TUPLE:
       case REB_GET_TUPLE:
       case REB_SET_TUPLE:
-      case REB_SYM_TUPLE:
+      // SYM_TUPLE is an inert kind
         Derelativize(f->out, v, *specifier);
         break;
 

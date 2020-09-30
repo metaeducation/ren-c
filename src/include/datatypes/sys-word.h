@@ -189,7 +189,7 @@ inline static OPT_REBSYM STR_SYMBOL(REBSTR *s) {
 
 inline static REBSTR *Canon(REBSYM sym) {
     assert(cast(REBLEN, sym) != 0);
-    assert(cast(REBLEN, sym) < SER_USED(PG_Symbol_Canons));
+    assert(cast(REBLEN, sym) < SER_USED(PG_Symbol_Canons));  // null if boot!
     return *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym));
 }
 
@@ -237,6 +237,7 @@ inline static REBSTR *VAL_STORED_CANON(REBCEL(const*) v) {
 }
 
 inline static OPT_REBSYM VAL_WORD_SYM(REBCEL(const*) v) {
+    assert(PG_Symbol_Canons);  // all syms are 0 prior to Init_Symbols()
     assert(ANY_WORD_KIND(CELL_KIND(v)));
     return STR_SYMBOL(STR(PAYLOAD(Any, v).first.node));
 }

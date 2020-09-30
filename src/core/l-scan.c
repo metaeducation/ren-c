@@ -1184,14 +1184,14 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
           case LEX_DELIMIT_SLASH:  // a /REFINEMENT-style PATH!
             assert(*cp == '/');
-            ++cp;
-            ss->end = cp;
+            assert(ss->begin == cp);
+            ss->end = cp + 1;
             return TOKEN_PATH;
 
           case LEX_DELIMIT_PERIOD:  // a .PREDICATE-style TUPLE!
             assert(*cp == '.');
-            ++cp;
-            ss->end = cp;
+            assert(ss->begin == cp);
+            ss->end = cp + 1;
             return TOKEN_TUPLE;
 
           case LEX_DELIMIT_END:
@@ -1940,40 +1940,86 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             break; }
 
         case TOKEN_TUPLE:
+            assert(*bp == '.');
+            goto slash_or_dot_needs_blank_on_left;
+
         case TOKEN_PATH:
-            if (*ss->end == '\0' or IS_LEX_SPACE(*ss->end)) {
+            assert(*bp == '/');
+            goto slash_or_dot_needs_blank_on_left;
+
+        slash_or_dot_needs_blank_on_left:
+            assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
+
+            // A "normal" path like `a/b/c` always has a token on the left.
+            // But unusual paths like `a//b/c` have a case where a slash is
+            // seen before a different token arises.  This happens with
+            // slashes that occur on their own as well (`/`, `///`).  All
+            // such cases mean at least pushing a blank.
+            //
+            Init_Blank(DS_PUSH());
+
+            if (level->mode == '/') {  // in process of scanning a path
                 //
-                // This means you have something like `/`, `foo//`, `///`...
-                // Basically you don't expect to see a TOKEN_PATH while doing
-                // a path scan unless you wind up at the end.
+                // If you are scanning a PATH! already and encounter a slash
+                // of this form, it's just a doubled/tripled/etc. slash.
+                // Now that blank is pushed, continue considering the token
+                // to have been processed.
                 //
-                if (
-                    (token == TOKEN_TUPLE and level->mode == '.')
-                    or (token == TOKEN_PATH and level->mode == '/')
-                ){
-                    Init_Blank(DS_PUSH());
-                    Init_Blank(DS_PUSH());
+                if (token == TOKEN_PATH)
                     goto loop;
-                }
 
-                Init_Any_Sequence_1(  // trick for bindable `/` and `.`
-                    DS_PUSH(),
-                    token == TOKEN_PATH ? REB_PATH : REB_TUPLE
-                );
-                break;
-            }
-
-            Init_Blank(DS_PUSH());  // implicitly imagine blank per slash
-
-            if (*ss->begin == '\0' or IS_LEX_SPACE(*ss->begin)) {
-                Init_Blank(DS_PUSH());
-                break;
-            }
-
-            if (not Is_Dot_Or_Slash(level->mode))  // saw slash(es) or dots
+                // If you are scanning a PATH! but encounter a tuple, you
+                // don't want to disrupt the path scanning...but rather wish
+                // to start a child scan with that tuple, potentially resuming
+                // the path scan afterwards.
+                //
+                assert(token == TOKEN_TUPLE);
                 goto scan_path_or_tuple_head_is_DS_TOP;
+            }
+            else if (level->mode == '.') {  // scanning a tuple
+                //
+                // If you are scanning a tuple and see a dot, it's again just
+                // a situation of a doubled-up dot, like `a..b` or `a.` so
+                // now that the blank is pushed, continue an d consider the
+                // token to be processed.
+                //
+                if (token == TOKEN_TUPLE)
+                    goto loop;
 
-            goto loop;  // otherwise, we were scanning a path already
+                // This is a slightly tricky situation of scanning a tuple
+                // and seeing a slash.  Paths can't go inside tuples, so
+                // this needs to terminate the current tuple scan and either
+                // start a new path scan or resume one in progress.
+                //
+                // This means we want to leave the `/` to be seen by the loop
+                // and processed appropriately, while ending the tuple scan.
+                //
+                ss->end = bp;  // put the slash back to be found!
+                goto array_done;
+            }
+
+            assert(
+                level->mode == ']'
+                or level->mode == ')'
+                or level->mode == '\0'
+            );  // e.g. not currently scanning a path or tuple
+
+            // Here we must be starting a new blank-headed path or tuple scan.
+            // Fall through to the same detection that would start a path
+            // or tuple after a WORD! had been pushed, except it's a blank.
+            //
+            // However, that detection thinks it's implicitly consuming a
+            // token (usually done at the start of this loop by setting
+            // ss->begin to ss->end).  So it expects to see a "/" or "." at
+            // `ep`, and then bump ss->begin to consume it.  But this token
+            // was consumed by the loop.  Put it back.
+            //
+            // !!! Rather than "unconsume" it would make more sense to put
+            // the code here, and then have the end-of-loop consume and then
+            // jump up to this point with token set appropriately.
+            //
+            ep = ss->begin = ss->end = bp;  // "unconsume" `.` or `/` token
+            break;
 
           case TOKEN_BLOCK_END: {
             if (level->mode == ']')
@@ -2368,6 +2414,10 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             }
         }
 
+        // At this point the item at DS_TOP is the last token pushed.  It
+        // might be a BLANK! (if it was `_` or if a TOKEN_TUPLE or TOKEN_PATH
+        // was seen as a `/` or `.` when not in a path or tuple scanning mode.
+        //
         if (Is_Dot_Or_Slash(level->mode)) {
             //
             // If we are scanning `a/b` and see `.c`, then we want the tuple
@@ -2421,21 +2471,12 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
             ++ss->begin;
 
-            char child_mode;  // jump to goto labels also needs to initialize
-            child_mode = *ep;
-            goto scan_interstitial_head_is_DS_TOP;
+            if (*ep == '.')
+                token = TOKEN_TUPLE;
+            else
+                token = TOKEN_PATH;
 
           scan_path_or_tuple_head_is_DS_TOP:
-
-            assert(token == TOKEN_TUPLE or token == TOKEN_PATH);
-            if (token == TOKEN_TUPLE)
-                child_mode = '.';
-            else {
-                assert(token == TOKEN_PATH);
-                child_mode = '/';
-            }
-
-          scan_interstitial_head_is_DS_TOP: ;
 
             REBDSP dsp_path_head = DSP;
 
@@ -2453,7 +2494,10 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 child.start_line = level->start_line;
                 child.start_line_head = level->start_line_head;
                 child.opts = level->opts;
-                child.mode = child_mode;
+                if (token == TOKEN_TUPLE)
+                    child.mode = '.';
+                else
+                    child.mode = '/';
                 child.newline_pending = false;
 
                 Scan_To_Stack(&child);
@@ -2467,18 +2511,21 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             // plain XXX! and make this a GET-PATH!, and also check for
             // conflicts if there's a colon at the end and making a SET-PATH!
 
-            // If we didn't push anything after the head, push a blank to
-            // make it effectively a two element path (could optimize, but
-            // try running through the generic code for now)...
+            // If the last thing that got pushed in path or tupel scanning was
+            // a BLANK! then it was pushed by TOKEN_PATH or TOKEN_TUPLE upon
+            // seeing a `/` or `.` "out-of-turn".  It was expecting to push
+            // another token, but if it didn't then we need another BLANK!
+            // to take its place.  e.g. `//` pushes BLANK!, then BLANK!, then
+            // gets here...so it needs another blank to get to [_ _ _].
             //
-            if (DSP == dsp_path_head)
+            if (IS_BLANK(DS_TOP))
                 Init_Blank(DS_PUSH());
 
             REBVAL *head = DS_AT(dsp_path_head);
-            enum Reb_Kind path_kind = REB_PATH;
+            enum Reb_Kind child_kind = REB_PATH;  // gets "tuplififed" if `.`
             if (GET_CELL_FLAG(head, BLANK_MARKED_GET)) {
                 assert(IS_BLANK(head));  // can't carry get encoded in type
-                path_kind = REB_GET_PATH;
+                child_kind = REB_GET_PATH;
             }
             else {
                 enum Reb_Kind top_kind = VAL_TYPE(head);
@@ -2486,22 +2533,27 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                     mutable_KIND_BYTE(head)
                         = mutable_MIRROR_BYTE(head)
                         = PLAINIFY_ANY_GET_KIND(top_kind);
-                    path_kind = REB_GET_PATH;
+                    child_kind = REB_GET_PATH;
                 }
                 else if (ANY_SYM_KIND(top_kind)) {
                     mutable_KIND_BYTE(head)
                         = mutable_MIRROR_BYTE(head)
                         = PLAINIFY_ANY_SYM_KIND(top_kind);
-                    path_kind = REB_SYM_PATH;
+                    child_kind = REB_SYM_PATH;
                 }
             }
 
             if (ss->begin and *ss->end == ':') {  // !!! ss-begin?
-                if (path_kind != REB_PATH)  // first element cued GET or SYM
+                if (child_kind != REB_PATH)  // first element cued GET or SYM
                     fail (Error_Syntax(ss, token));  // for instance `:a/b/c:`
-                path_kind = REB_SET_PATH;
+                child_kind = REB_SET_PATH;
                 ss->begin = ++ss->end;  // !!! ?
             }
+
+            if (token == TOKEN_TUPLE)
+                child_kind = TUPLIFY_ANY_PATH_KIND(child_kind);
+            else
+                assert(ANY_PATH_KIND(child_kind));
 
             // R3-Alpha permitted GET-WORD! and other aberrations internally
             // to PATH!.  Ren-C does not, and it will optimize the immutable
@@ -2529,20 +2581,12 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             DECLARE_LOCAL (temp);
             REBVAL *check = Try_Pop_Path_Or_Element_Or_Nulled(
                 temp,
-                path_kind,
+                child_kind,
                 dsp_path_head - 1
             );
             if (not check)
                 fail (Error_Syntax(ss, token));
  
-            if (child_mode == '.') {
-                mutable_KIND_BYTE(temp)
-                    = mutable_MIRROR_BYTE(temp)
-                    = REB_TUPLE;
-            }
-            else
-                assert(ANY_PATH(temp));
-
             Move_Value(DS_PUSH(), temp);
 
             // Can only store file and line information if it has an array
@@ -2565,7 +2609,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                     SET_ARRAY_FLAG(a, NEWLINE_AT_TAIL);
             }
 
-            if (child_mode == '.') {
+            if (token == TOKEN_TUPLE) {
                 assert(level->mode != '.');  // shouldn't scan tuple-in-tuple!
 
                 if (level->mode == '/') {
@@ -2590,13 +2634,11 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                     //
                     if (ss->begin != nullptr and *ss->begin == '/') {
                         ++ss->begin;
-                        child_mode = '/';
-                        goto scan_interstitial_head_is_DS_TOP;
+                        token = TOKEN_PATH;
+                        goto scan_path_or_tuple_head_is_DS_TOP;
                     }
                 }
             }
-
-            token = TOKEN_PATH;  // for error message !!! unused?
         }
 
         if (lit_depth != 0) {

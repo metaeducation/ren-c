@@ -210,6 +210,8 @@
 
 %reflectors/body-of.test.reb
 
+%scanner/path-tuple.test.reb
+
 %secure/const.test.reb
 %secure/protect.test.reb
 %secure/unprotect.test.reb

@@ -100,15 +100,13 @@ inline static bool Is_Valid_Path_Element(const RELVAL *v) {
 // bindings.  That allows it to be bound to a function that runs divide.
 //
 inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
-    if (ANY_PATH_KIND(kind)) {
+    if (ANY_PATH_KIND(kind))
         Init_Word(out, PG_Slash_1_Canon);
-        mutable_KIND_BYTE(out) = kind;  // leave MIRROR_BYTE as REB_WORD
-    }
     else {
         assert(ANY_TUPLE_KIND(kind));
         Init_Word(out, PG_Dot_1_Canon);
-        mutable_KIND_BYTE(out) = kind;  // leave MIRROR_BYTE as REB_WORD
     }
+    mutable_KIND_BYTE(out) = kind;  // leave MIRROR_BYTE as REB_WORD
     return SPECIFIC(out);
 }
 
@@ -301,14 +299,14 @@ inline static REBCEL(const*) VAL_SEQUENCE_AT(
 ){
     assert(store != sequence);  // cannot be the same
 
-    enum Reb_Kind kind = CELL_TYPE(sequence);  // Not *cell* kind, may be word
+    enum Reb_Kind kind = CELL_TYPE(sequence);  // Not *CELL_KIND*, may be word
     assert(ANY_SEQUENCE_KIND(kind));
 
     if (MIRROR_BYTE(sequence) == REB_WORD) {
         if (ANY_TUPLE_KIND(kind))
-            assert(VAL_WORD_SYM(sequence) == SYM__DOT_1_);
+            assert(VAL_STRING(sequence) == PG_Dot_1_Canon);
         else
-            assert(VAL_WORD_SYM(sequence) == SYM__SLASH_1_);
+            assert(VAL_STRING(sequence) == PG_Slash_1_Canon);
         assert(n < 2);
       #if !defined(NDEBUG)
         Init_Unreadable_Void(store);
@@ -329,14 +327,19 @@ inline static REBYTE VAL_SEQUENCE_BYTE_AT(REBCEL(const*) path, REBLEN n)
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
-inline static REBSPC *VAL_SEQUENCE_SPECIFIER(const RELVAL *path)
+inline static REBSPC *VAL_SEQUENCE_SPECIFIER(const RELVAL *sequence)
 {
-    assert(ANY_SEQUENCE_KIND(CELL_TYPE(path)));
-    if (MIRROR_BYTE(path) == REB_WORD) {
-        assert(VAL_WORD_SYM(VAL_UNESCAPED(path)) == SYM__SLASH_1_);
+    enum Reb_Kind kind = CELL_TYPE(sequence);  // not *CELL_KIND*, may be word
+    assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
+
+    if (MIRROR_BYTE(sequence) == REB_WORD) {
+        if (ANY_TUPLE_KIND(kind))
+            assert(VAL_WORD_SYM(VAL_UNESCAPED(sequence)) == SYM__DOT_1_);
+        else
+            assert(VAL_WORD_SYM(VAL_UNESCAPED(sequence)) == SYM__SLASH_1_);
         return SPECIFIED;
     }
-    return VAL_SPECIFIER(path);
+    return VAL_SPECIFIER(sequence);
 }
 
 inline static bool IS_REFINEMENT_CELL(REBCEL(const*) v) {
