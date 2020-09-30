@@ -1229,7 +1229,7 @@ void Startup_Core(void)
         SYM_GZIP
     );
 
-    Startup_Slash_1_Symbol();  // see notes--needed before scanning
+    Startup_Sequence_1_Symbol();  // see notes--needed before scanning
 
     REBARR *boot_array = Scan_UTF8_Managed(
         Intern("tmp-boot.r"),

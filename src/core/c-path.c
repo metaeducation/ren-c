@@ -46,7 +46,7 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
     if (a == PG_2_Blanks_Array) {
         assert(false);  // !!! Can you ever incidentally get this array?
         assert(binding == UNBOUND);
-        return Init_Any_Path_Slash_1(out, kind);
+        return Init_Any_Sequence_1(out, kind);
     }
 
     if (ARR_LEN(a) < 2)

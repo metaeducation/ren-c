@@ -440,66 +440,41 @@ void MF_Sequence(REB_MOLD *mo, REBCEL(const*) v, bool form)
     UNUSED(form);
 
     enum Reb_Kind kind = CELL_TYPE(v);  // Note: CELL_KIND() might be WORD!
+    char interstitial = ANY_TUPLE_KIND(kind) ? '.' : '/';
 
-    if (kind == REB_GET_PATH)
+    if (kind == REB_GET_PATH or kind == REB_GET_TUPLE)
         Append_Codepoint(mo->series, ':');
-    else if (kind == REB_SYM_PATH)
+    else if (kind == REB_SYM_PATH or kind == REB_SYM_TUPLE)
         Append_Codepoint(mo->series, '@');
 
-    if (MIRROR_BYTE(v) == REB_WORD) {  // optimized for `/`, allows binding
-        assert(VAL_WORD_SYM(v) == SYM__SLASH_1_);
-        Append_Ascii(mo->series, "/");
-    }
-    else if (FIRST_BYTE(VAL_NODE(v)) & NODE_BYTEMASK_0x01_CELL) {
-        assert(!"Not implemented yet, pair optimization...");
-    }
-    else {
-        const REBARR *a = ARR(VAL_SEQUENCE_NODE(v));
+    bool first = true;
 
-        // Recursion check:
-        if (Find_Pointer_In_Series(TG_Mold_Stack, a) != NOT_FOUND) {
-            Append_Ascii(mo->series, ".../...");
-            return;
-        }
-        Push_Pointer_To_Series(TG_Mold_Stack, a);
-        assert(ARR_LEN(a) >= 2);  // else other optimizations should apply
+    DECLARE_LOCAL (temp);
+    REBLEN len = VAL_SEQUENCE_LEN(v);
+    REBLEN i;
+    for (i = 0; i < len; ++i) {
+        REBCEL(const*) element = VAL_SEQUENCE_AT(temp, v, i);
+        enum Reb_Kind element_kind = CELL_KIND(element);
 
-        const RELVAL *item = ARR_HEAD(a);
-        while (NOT_END(item)) {
-            assert(not ANY_PATH(item)); // another new rule
+        if (first)
+            first = false;  // don't print `.` or `/` before first element
+        else
+            Append_Codepoint(mo->series, interstitial);
 
-            if (not IS_BLANK(item)) { // no blank molding; slashes convey it
-                //
-                // !!! Molding of items in paths which have slashes in them,
-                // like URL! or FILE! (or some historical date formats) need
-                // some kind of escaping, otherwise they have to be outlawed
-                // too.  FILE! has the option of `a/%"dir/file.txt"/b` to put
-                // the file in quotes, but URL does not.
-                //
-                Mold_Value(mo, item);
+        if (element_kind != REB_BLANK) {  // no blank molding; implicit
+            Mold_Value(mo, CELL_TO_VAL(element));
 
-                // Note: Ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,
-                // but any embedded BLOCK! or GROUP! which do have newlines in
-                // them can make newlines, e.g.:
-                //
-                //     a/[
-                //        b c d
-                //     ]/e
-            }
-
-            ++item;
-            if (IS_END(item))
-                break;
-
-            if (kind == REB_TUPLE)
-                Append_Codepoint(mo->series, '.');
-            else
-                Append_Codepoint(mo->series, '/');
+            // Note: Ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,
+            // but any embedded BLOCK! or GROUP! which do have newlines in
+            // them can make newlines, e.g.:
+            //
+            //     a/[
+            //        b c d
+            //     ]/e
         }
 
-        Drop_Pointer_From_Series(TG_Mold_Stack, a);
     }
 
-    if (kind == REB_SET_PATH)
+    if (kind == REB_SET_PATH or kind == REB_SET_TUPLE)
         Append_Codepoint(mo->series, ':');
 }

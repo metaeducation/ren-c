@@ -30,7 +30,7 @@ REBOL [
 ;
 ; Note that `/` is actually path containing two elements, both of which are
 ; BLANK! so they do not render.  A special mechanism through a word binding
-; hidden in the cell allows it to dispatch.  See Startup_Slash_1_Symbol()
+; hidden in the cell allows it to dispatch.  See Startup_Sequence_1_Symbol()
 
 +: enfixed :add
 -: enfixed :subtract

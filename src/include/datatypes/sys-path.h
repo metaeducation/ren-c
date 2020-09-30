@@ -99,10 +99,16 @@ inline static bool Is_Valid_Path_Element(const RELVAL *v) {
 // underlying contents of a word cell...which makes it pick up and carry
 // bindings.  That allows it to be bound to a function that runs divide.
 //
-inline static REBVAL *Init_Any_Path_Slash_1(RELVAL *out, enum Reb_Kind kind) {
-    assert(ANY_PATH_KIND(kind));
-    Init_Word(out, PG_Slash_1_Canon);
-    mutable_KIND_BYTE(out) = REB_PATH;
+inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
+    if (ANY_PATH_KIND(kind)) {
+        Init_Word(out, PG_Slash_1_Canon);
+        mutable_KIND_BYTE(out) = kind;  // leave MIRROR_BYTE as REB_WORD
+    }
+    else {
+        assert(ANY_TUPLE_KIND(kind));
+        Init_Word(out, PG_Dot_1_Canon);
+        mutable_KIND_BYTE(out) = kind;  // leave MIRROR_BYTE as REB_WORD
+    }
     return SPECIFIC(out);
 }
 
@@ -122,7 +128,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     assert(ANY_SEQUENCE_KIND(kind));
 
     if (IS_BLANK(v))
-        return Init_Any_Path_Slash_1(v, kind);
+        return Init_Any_Sequence_1(v, kind);
 
     if (not Is_Valid_Path_Element(v))
         return nullptr;
@@ -295,19 +301,23 @@ inline static REBCEL(const*) VAL_SEQUENCE_AT(
 ){
     assert(store != sequence);  // cannot be the same
 
-    assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
+    enum Reb_Kind kind = CELL_TYPE(sequence);  // Not *cell* kind, may be word
+    assert(ANY_SEQUENCE_KIND(kind));
+
     if (MIRROR_BYTE(sequence) == REB_WORD) {
-        assert(VAL_WORD_SYM(sequence) == SYM__SLASH_1_);
+        if (ANY_TUPLE_KIND(kind))
+            assert(VAL_WORD_SYM(sequence) == SYM__DOT_1_);
+        else
+            assert(VAL_WORD_SYM(sequence) == SYM__SLASH_1_);
         assert(n < 2);
       #if !defined(NDEBUG)
         Init_Unreadable_Void(store);
       #endif
         return BLANK_VALUE;
     }
+
     REBARR *a = ARR(VAL_NODE(sequence));
     assert(ARR_LEN(a) >= 2);
-    if (not Is_Array_Frozen_Shallow(a))
-        panic (a);
     assert(Is_Array_Frozen_Shallow(a));
     return ARR_AT(a, n);
 }

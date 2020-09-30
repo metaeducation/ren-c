@@ -486,7 +486,7 @@ void Startup_Interning(void)
 
 
 //
-//  Startup_Slash_1_Symbol: C
+//  Startup_Sequence_1_Symbol: C
 //
 // It's very desirable to have `/`, `/foo`, `/foo/`, `/foo/(bar)` etc. be
 // instances of the same datatype of PATH!.  In this scheme, `/` would act
@@ -510,11 +510,15 @@ void Startup_Interning(void)
 // available during scanning.  But scanning is what loads the %words.r symbol
 // list!  Break the Catch-22 by manually interning the symbol used.
 //
-void Startup_Slash_1_Symbol(void)
+void Startup_Sequence_1_Symbol(void)
 {
     const char *slash1 = "-slash-1-";
     assert(PG_Slash_1_Canon == nullptr);
     PG_Slash_1_Canon = Intern_UTF8_Managed(cb_cast(slash1), strsize(slash1));
+
+    const char *dot1 = "-dot-1-";
+    assert(PG_Dot_1_Canon == nullptr);
+    PG_Dot_1_Canon = Intern_UTF8_Managed(cb_cast(dot1), strsize(dot1));
 }
 
 
@@ -562,6 +566,8 @@ void Startup_Symbols(REBARR *words)
 
         if (sym == SYM__SLASH_1_)
             assert(canon == PG_Slash_1_Canon);  // make sure it lined up!
+        else if (sym == SYM__DOT_1_)
+            assert(canon == PG_Dot_1_Canon);
 
         // More code was loaded than just the word list, and it might have
         // included alternate-case forms of the %words.r words.  Walk any
@@ -610,6 +616,7 @@ void Shutdown_Symbols(void)
     PG_Symbol_Canons = nullptr;
 
     PG_Slash_1_Canon = nullptr;
+    PG_Dot_1_Canon = nullptr;
 }
 
 

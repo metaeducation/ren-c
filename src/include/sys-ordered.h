@@ -237,6 +237,17 @@ inline static bool ANY_PATH_KIND(REBYTE k)
     ANY_PATH_KIND(KIND_BYTE(v))
 
 
+#define ANY_TUPLE_KIND_EVIL_MACRO \
+    (k < 64 and did (FLAGIT_KIND(k) & TS_TUPLE))
+
+inline static bool ANY_TUPLE_KIND(REBYTE k)
+    { return ANY_TUPLE_KIND_EVIL_MACRO; }
+
+#define ANY_TUPLE(v) \
+    ANY_TUPLE_KIND(KIND_BYTE(v))
+
+
+
 inline static bool ANY_BLOCK_KIND(REBYTE k)
     { return k == REB_BLOCK or k == REB_GET_BLOCK
         or k == REB_SET_BLOCK or k == REB_SYM_BLOCK; }

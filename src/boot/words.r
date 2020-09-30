@@ -435,7 +435,8 @@ exclude
 ;write  ; covered above
 exec
 
-; This word is the actual underlying cell for `/` paths, which allows for
-; binding and execution of operations like division, in spite of being PATH!.
+; Actual underlying words for cells in lone `/` paths and lone `.` tuples,
+; allowing binding and execution of operations like division or identity.
 ;
 -slash-1-
+-dot-1-

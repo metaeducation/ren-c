@@ -571,8 +571,11 @@ REB_R PD_String(
             //
             picker = EMPTY_TEXT;
         }
-        else if (not (IS_WORD(picker) or ANY_STRING(picker)))
+        else if (
+            not (IS_WORD(picker) or IS_TUPLE(picker) or ANY_STRING(picker))
+        ){
             return R_UNHANDLED;
+        }
 
         // !!! This is a historical and questionable feature, where path
         // picking a string or word or otherwise out of a FILE! or URL! will

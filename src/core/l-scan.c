@@ -1956,17 +1956,10 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                     goto loop;
                 }
 
-                // Handle the `/` or '.' case
-                //
-                // There is an unusual finesse at work here where the cell
-                // format used is that of WORD! `-slash-1-`, so that it has a
-                // binding and a spelling.  Yet when arrays are requested, it
-                // gives that array as the global `PG_Path_2_Blanks_Array`,
-                // for what you get as `make path! [_ _]`.
-
-                assert(token == TOKEN_PATH);
-                Init_Word(DS_PUSH(), PG_Slash_1_Canon);  // mirror is REB_WORD
-                mutable_KIND_BYTE(DS_TOP) = REB_PATH;  // but kind is REB_PATH
+                Init_Any_Sequence_1(  // trick for bindable `/` and `.`
+                    DS_PUSH(),
+                    token == TOKEN_PATH ? REB_PATH : REB_TUPLE
+                );
                 break;
             }
 
@@ -2376,6 +2369,26 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         }
 
         if (Is_Dot_Or_Slash(level->mode)) {
+            //
+            // If we are scanning `a/b` and see `.c`, then we want the tuple
+            // to stick to the `b`...which means using the `b` as the head
+            // of a new child scan.
+            //
+            if (level->mode == '/' and *ep == '.') {
+                token = TOKEN_TUPLE;
+                ++ss->begin;
+                goto scan_path_or_tuple_head_is_DS_TOP;
+            }
+
+            // If we are scanning `a.b` and see `/c`, we want to defer to the
+            // path scanning and consider the tuple finished.  This means we
+            // want the level above to finish but then see the `/`.  Review.
+
+            if (level->mode == '.' and *ep == '/') {
+                token = TOKEN_PATH;  // ...?
+                goto array_done;  // !!! need to return, but...?
+            }
+
             if (not Interstitial_Match(*ep, level->mode))
                 goto array_done;  // e.g. `a/b`, just finished scanning b
 
@@ -2550,6 +2563,37 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 //
                 if (level->newline_pending)
                     SET_ARRAY_FLAG(a, NEWLINE_AT_TAIL);
+            }
+
+            if (child_mode == '.') {
+                assert(level->mode != '.');  // shouldn't scan tuple-in-tuple!
+
+                if (level->mode == '/') {
+                    //
+                    // If we were scanning a PATH! and interrupted it to scan
+                    // a tuple, then we did so at a moment that a `/` was
+                    // being tested for.  Now that we're resuming, we need
+                    // to pick that test back up and quit picking up tokens
+                    // if we don't see a `/` after that tuple we just scanned.
+                    //
+                    if (*ss->begin != '/')
+                        goto array_done;
+
+                    ++ss->begin;  // absorb the `/` and stay in path mode
+                }
+                else {
+                    // If we just finished a TUPLE! that was being scanned
+                    // all on its own (not as part of a path), then if a
+                    // slash follows, we want to process that like a PATH! on
+                    // the same level (otherwise we would start a new token,
+                    // and "a.b/c" would be `a.b /c`).
+                    //
+                    if (ss->begin != nullptr and *ss->begin == '/') {
+                        ++ss->begin;
+                        child_mode = '/';
+                        goto scan_interstitial_head_is_DS_TOP;
+                    }
+                }
             }
 
             token = TOKEN_PATH;  // for error message !!! unused?
