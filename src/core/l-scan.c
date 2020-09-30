@@ -1800,7 +1800,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     if (just_once)
         level->opts &= ~SCAN_FLAG_NEXT;  // recursion loads an entire BLOCK!
 
-    REBLEN lit_depth = 0;
+    REBLEN num_quotes_for_next_token = 0;
 
   loop: {
     Drop_Mold_If_Pushed(mo);
@@ -1894,17 +1894,18 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         break;
 
       case TOKEN_APOSTROPHE: {
-        if (lit_depth != 0)  // e.g. `' '`, nothing seen since last one
-            Quotify(Init_Nulled(DS_PUSH()), lit_depth);
+        assert(*bp == '\'');  // should be `len` sequential apostrophes
 
-        assert(ss->end > bp);
-        lit_depth = ss->end - bp;
-
-        if (*ss->begin != '\0' and not IS_LEX_ANY_SPACE(*ss->begin))
-            goto loop;  // isn't a lone quoting, apply lit_depth to next
-
-        Quotify(Init_Nulled(DS_PUSH()), lit_depth);
-        lit_depth = 0;
+        if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+            //
+            // If we have something like ['''] there won't be another token
+            // push coming along to apply the quotes to, so quote a null.
+            //
+            assert(num_quotes_for_next_token == 0);
+            Quotify(Init_Nulled(DS_PUSH()), len);
+        }
+        else
+            num_quotes_for_next_token = len;  // apply quoting to next token
         goto loop; }
 
       case TOKEN_SYM_GROUP_BEGIN:
@@ -2649,13 +2650,13 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         }
     }
 
-    if (lit_depth != 0) {
+    if (num_quotes_for_next_token != 0) {
         //
         // Transform the topmost value on the stack into a QUOTED!, to
         // account for the ''' that was preceding it.
         //
-        Quotify(DS_TOP, lit_depth);
-        lit_depth = 0;
+        Quotify(DS_TOP, num_quotes_for_next_token);
+        num_quotes_for_next_token= 0;
     }
 
     // Set the newline on the new value, indicating molding should put a
@@ -2679,8 +2680,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
   done: {
     Drop_Mold_If_Pushed(mo);
 
-    if (lit_depth != 0)
-        Quotify(Init_Nulled(DS_PUSH()), lit_depth);
+    assert(num_quotes_for_next_token == 0);
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 
