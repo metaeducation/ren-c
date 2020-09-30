@@ -1769,7 +1769,7 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *level, REBYTE mode);
 //  Scan_To_Stack: C
 //
 // Scans values to the data stack, based on a mode.  This mode can be
-// ']', ')', or '/' to indicate the processing type...or '\0'.
+// ']', ')', '/' or '.' to indicate the processing type...or '\0'.
 //
 // If the source bytes are "1" then it will be the array [1]
 // If the source bytes are "[1]" then it will be the array [[1]]
@@ -1805,11 +1805,24 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
   loop: {
     Drop_Mold_If_Pushed(mo);
     enum Reb_Token token = Locate_Token_May_Push_Mold(mo, level);
-    if (token == TOKEN_END)
-        goto done_if_not_array;
 
-    assert(ss->begin and ss->end and ss->begin < ss->end);
+    if (token == TOKEN_END) {  // reached '\0'
+        //
+        // If we were scanning a BLOCK! or a GROUP!, then we should have hit
+        // an ending `]` or `)` and jumped to `done`.  If an end token gets
+        // hit first, there was never a proper closing.
+        //
+        if (level->mode == ']' or level->mode == ')')
+            fail (Error_Missing(level, level->mode));
 
+        goto done;
+      }
+
+    assert(ss->begin and ss->end and ss->begin < ss->end);  // else good token
+
+    // "bp" and "ep" capture the beginning and end pointers of the token.
+    // They may be manipulated during the scan process if desired.
+    //
     const REBYTE *bp = ss->begin;
     const REBYTE *ep = ss->end;
     REBLEN len = cast(REBLEN, ep - bp);
@@ -1990,7 +2003,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             // and processed appropriately, while ending the tuple scan.
             //
             ss->end = bp;  // put the slash back to be found!
-            goto array_done;
+            goto done;
         }
 
         assert(
@@ -2018,13 +2031,13 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
       case TOKEN_BLOCK_END: {
         if (level->mode == ']')
-            goto array_done;
+            goto done;
 
         if (Is_Dot_Or_Slash(level->mode)) {  // implicit end, e.g. [lit /]
             Init_Blank(DS_PUSH());
             --ss->begin;
             --ss->end;
-            goto array_done;
+            goto done;
         }
 
         if (level->mode != '\0')  // expected e.g. `)` before the `]`
@@ -2036,13 +2049,13 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
       case TOKEN_GROUP_END: {
         if (level->mode == ')')
-            goto array_done;
+            goto done;
 
         if (Is_Dot_Or_Slash(level->mode)) {  // implicit end e.g. (lit /)
             Init_Blank(DS_PUSH());
             --ss->begin;
             --ss->end;
-            goto array_done;
+            goto done;
         }
 
         if (level->mode != '\0')  // expected e.g. ']' before the ')'
@@ -2431,11 +2444,11 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
         if (level->mode == '.' and *ep == '/') {
             token = TOKEN_PATH;  // ...?
-            goto array_done;  // !!! need to return, but...?
+            goto done;  // !!! need to return, but...?
         }
 
         if (not Interstitial_Match(*ep, level->mode))
-            goto array_done;  // e.g. `a/b`, just finished scanning b
+            goto done;  // e.g. `a/b`, just finished scanning b
 
         ++ep;
 
@@ -2445,7 +2458,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         ){  // e.g. `/a/`
             Init_Blank(DS_PUSH());  // `/a/` is path form of [_ a _]
             ss->begin = ep;
-            goto array_done;
+            goto done;
         }
 
         if (Interstitial_Match(*ep, level->mode)) {
@@ -2616,7 +2629,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 // if we don't see a `/` after that tuple we just scanned.
                 //
                 if (*ss->begin != '/')
-                    goto array_done;
+                    goto done;
 
                 ++ss->begin;  // absorb the `/` and stay in path mode
             }
@@ -2658,20 +2671,12 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     // Added for TRANSCODE/NEXT (LOAD/NEXT is deprecated, see #1703)
     //
     if (just_once)
-        goto array_done;
+        goto done;
 
     goto loop;
   }
 
-    // At some point, a token for an end of block or group needed to jump to
-    // the array_done.  If it didn't, we never got a proper closing.
-    //
-  done_if_not_array: {
-    if (level->mode == ']' or level->mode == ')')
-        fail (Error_Missing(level, level->mode));
-  }
-
-  array_done: {
+  done: {
     Drop_Mold_If_Pushed(mo);
 
     if (lit_depth != 0)
