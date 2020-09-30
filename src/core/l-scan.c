@@ -1771,9 +1771,6 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *level, REBYTE mode);
 // Scans values to the data stack, based on a mode.  This mode can be
 // ']', ')', '/' or '.' to indicate the processing type...or '\0'.
 //
-// If the source bytes are "1" then it will be the array [1]
-// If the source bytes are "[1]" then it will be the array [[1]]
-//
 // BLOCK! and GROUP! use fairly ordinary recursions of this routine to make
 // arrays.  PATH! scanning is a bit trickier...it starts after an element was
 // scanned and is immediately followed by a `/`.  The stack pointer is marked
@@ -1839,36 +1836,55 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         Init_Blank(DS_PUSH());
         break;
 
-      case TOKEN_SYM: {  // !!! Similar to TOKEN_GET, try unifying
-        ++bp;
-        goto token_set; }
+      case TOKEN_SYM:
+        assert(*bp == '@');
+        goto token_prefixable_sigil;
 
       case TOKEN_GET:
-        if (ep[-1] == ':') {
-            if (Is_Dot_Or_Slash(ep[0])) {  // e.g. :/foo
-                Init_Blank(DS_PUSH());  // let blank be head of path
-
-                // !!! Ugly hack due to lack of GET-BLANK! (which we
-                // probably do not want...)  Since path scanning converts
-                // values in the first slot that are GET-XXX! to mean the
-                // overall path is a GET-PATH!, we need another signal.
-                //
-                SET_CELL_FLAG(DS_TOP, BLANK_MARKED_GET);
-
-                break;  // mode will be changed to '/'
-            }
-            if (len == 1 or not Is_Dot_Or_Slash(level->mode))
-                fail (Error_Syntax(ss, token));
+        assert(*bp == ':');
+        goto token_prefixable_sigil;
+        
+      token_prefixable_sigil: {
+        if (len > 1) {  // common case of `:` or `@` followed by WORD!-chars
+            ++bp;  // skip the sigil
             --len;
-            --ss->end;
+            goto token_word;  // `token` cues making SYM-WORD! or GET-WORD!
         }
-        bp++;
-        goto token_set;
+
+        // Locate_Token() may have been stopped by something like a `/` or
+        // a `.` delimiter, e.g. `:/foo` for a BLANK!-headed PATH!/TUPLE!
+        //
+        if (Is_Dot_Or_Slash(*ep)) {
+            Init_Blank(DS_PUSH());  // let blank be head of path
+
+            // !!! Ugly hack due to lack of GET-BLANK! (which we
+            // probably do not want...)  Since path scanning converts
+            // values in the first slot that are GET-XXX! to mean the
+            // overall path is a GET-PATH!, we need another signal.
+            //
+            SET_CELL_FLAG(DS_TOP, BLANK_MARKED_GET);
+
+            break;  // fall through where mode will be changed to '/'
+        }
+
+        // The other possibility is that we saw a raw colon in the process of
+        // scanning a PATH! or TUPLE!, like `foo/:` which should terminate
+        // the path or tuple scan.  This is not an option for `@`, just `:`.
+        //
+        if (Is_Dot_Or_Slash(level->mode)) {
+            if (token == TOKEN_SYM)
+                fail (Error_Syntax(ss, token));
+
+            Init_Blank(DS_PUSH());
+            SET_CELL_FLAG(DS_TOP, BLANK_MARKED_GET);
+            goto done;
+        }
+
+        fail (Error_Syntax(ss, token)); }
 
       case TOKEN_SET:
-      token_set:
         len--;
-        if (Is_Dot_Or_Slash(level->mode) and token == TOKEN_SET) {
+        if (Is_Dot_Or_Slash(level->mode)) {
             token = TOKEN_WORD;  // will be a PATH_SET
             ss->end--;  // put ':' back on end but not beginning
         }
@@ -2111,11 +2127,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             if (ep != Scan_Date(DS_PUSH(), bp, len))
                 fail (Error_Syntax(ss, token));
 
-            // !!! used to just set ss->begin to ep...which tripped up an
-            // assert that ss->end is greater than ss->begin at the start
-            // of the loop.  So this sets both to ep.  Review.
-
-            ss->begin = ss->end = ep;
+            ss->begin = ep;
         }
         else if (*ep == '/') {
             //
@@ -2126,7 +2138,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             goto scan_integer;
         }
         else {
-            scan_integer:
+          scan_integer:
             if (ep != Scan_Integer(DS_PUSH(), bp, len))
                 fail (Error_Syntax(ss, token));
         }
@@ -2134,7 +2146,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
       case TOKEN_DECIMAL:
       case TOKEN_PERCENT:
-        scan_decimal:
+      scan_decimal:
         if (Is_Dot_Or_Slash(*ep))
             fail (Error_Syntax(ss, token));  // Do not allow 1.2/abc
 
