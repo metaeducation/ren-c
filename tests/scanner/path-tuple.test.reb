@@ -55,7 +55,19 @@
         "a.. /b"  ->  (a _ _)  [_ b]
         "a../b"  ->  [(a _ _) b]
 
+        "/./(a b)/./"  ->  [_ (_ _) :(a b) (_ _) _]
+
         "a.1.(x)/[a b c]/<d>.2"  ->  [(a 1 @(x)) @[a b c] (<d> 2)]
+
+        ; === R3-Alpha compatibility hacks ===
+
+        ; GET-WORD! is not legal in Ren-C as a path element due to ambiguities
+        ; about `:a/b` being a GET-WORD! in the head position of a PATH! or
+        ; a plain WORD! at the head of a GET-PATH!.  Instead, single-element
+        ; GROUP!s are made as cheap as GET-WORD! cells in path.
+
+        "a/:b"  ->  [a @(:b)]
+        "a/:b/c  ->  [a @(:b) c]
     ]
 
 

@@ -1831,7 +1831,24 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 ss->end = ss->begin = ep = bp;  // let parent see `:` 
                 goto done;
             }
-            // allow GET-WORD! and transform it in the pathing process
+
+          #if !defined(NO_GET_WORDS_IN_PATHS)  // R3-Alpha compatibility hack
+            //
+            // !!! This is about the least invasive way to shove a GET-WORD!
+            // into a PATH!, as trying to use ordinary token processing
+            // only sets a pending get state which applies to the whole path,
+            // not to individual tokens.
+            //
+            ++bp;
+            ++ep;
+            while (not (IS_LEX_ANY_SPACE(*ep) or IS_LEX_DELIMIT(*ep)))
+                ++ep;
+            Init_Get_Word(DS_PUSH(), Intern_UTF8_Managed(bp, ep - bp));
+            ss->begin = ss->end = ep;
+            break;
+          #else
+            fail (Error_Syntax(ss, token));
+          #endif
         }
 
         goto token_prefixable_sigil;
@@ -2638,6 +2655,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     Drop_Mold_If_Pushed(mo);
 
     assert(quotes_pending == 0);
+    assert(prefix_pending == TOKEN_END);
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 
