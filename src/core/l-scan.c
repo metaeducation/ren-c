@@ -931,9 +931,6 @@ static LEXFLAGS Prescan_Token(SCAN_STATE *ss)
 //
 // Examples with ss's (B)egin (E)nd and return value:
 //
-//     foo: baz bar => TOKEN_SET
-//     B   E
-//
 //     [quick brown fox] => TOKEN_BLOCK_BEGIN
 //     B
 //      E
@@ -1044,11 +1041,11 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
     if (*cp == ':') {
         ss->end = cp + 1;
-        return TOKEN_GET;
+        return TOKEN_COLON;
     }
     if (*cp == '@') {
         ss->end = cp + 1;
-        return TOKEN_SYM;
+        return TOKEN_AT;
     }
 
     enum Reb_Token token;  // only set if falling through to `scan_word`
@@ -1068,9 +1065,6 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         ))
     ){
         const REBYTE *temp = cp;
-        if (*temp == ':' or *temp == '@')
-            ++temp;
-
         while (
             *temp == '<' or *temp == '>'
             or *temp == '+' or *temp == '-'
@@ -1098,14 +1092,12 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 // Hit a delimiter first, so go ahead with our arrow and let
                 // the scan of a PATH! proceed after that.
             }
-            if (*cp == ':')
-                return TOKEN_GET;
-            if (*cp == '@')
-                return TOKEN_SYM;
             return TOKEN_WORD;
         }
-        if (*temp == ':' and temp + 1 == ss->end)
-            return TOKEN_SET;
+        if (*temp == ':' and temp + 1 == ss->end) {
+            ss->end = temp;
+            return TOKEN_WORD;
+        }
     }
 
     switch (GET_LEX_CLASS(*cp)) {
@@ -1524,7 +1516,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             )){
                 fail (Error_Syntax(ss, TOKEN_WORD));
             }
-            return TOKEN_SET;
+            --ss->end;  // don't actually include the colon
+            return TOKEN_WORD;
         }
         cp = ss->end;  // then, must be a URL
         while (Is_Dot_Or_Slash(*cp)) {  // deal with path delimiter
@@ -1635,7 +1628,6 @@ void Init_Va_Scan_Level_Core(
     level->start_line = ss->line = line;
     level->mode = '\0';
     level->newline_pending = false;
-    level->sigil_pending = TOKEN_END;
     level->opts = 0;
 }
 
@@ -1668,7 +1660,6 @@ void Init_Scan_Level(
     out->start_line_head = ss->line_head = utf8;
     out->start_line = ss->line = line;
     out->newline_pending = false;
-    out->sigil_pending = TOKEN_END;
     out->opts = 0;
 }
 
@@ -1783,8 +1774,8 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     if (just_once)
         level->opts &= ~SCAN_FLAG_NEXT;  // recursion loads an entire BLOCK!
 
-    REBLEN num_quotes_for_next_token = 0;
-    assert(level->sigil_pending == TOKEN_END);
+    REBLEN quotes_pending = 0;
+    enum Reb_Token prefix_pending = TOKEN_END;
 
   loop: {
     Drop_Mold_If_Pushed(mo);
@@ -1823,41 +1814,40 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         Init_Blank(DS_PUSH());
         break;
 
-      case TOKEN_SYM:
+      case TOKEN_AT:
         assert(*bp == '@');
         goto token_prefixable_sigil;
 
-      case TOKEN_GET:
+      case TOKEN_COLON:
         assert(*bp == ':');
+
+        // !!! If we are scanning a PATH! and see `:`, then classically that
+        // could mean a GET-WORD! as they were allowed in paths.  Now the
+        // only legal case of seeing a colon would be to end a PATH!, as
+        // with `a/: 10`.  We temporarily discern the cases.
+        //
+        if (level->mode == '/' or level->mode == '.') {
+            if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+                ss->end = ss->begin = ep = bp;  // let parent see `:` 
+                goto done;
+            }
+            // allow GET-WORD! and transform it in the pathing process
+        }
+
         goto token_prefixable_sigil;
         
       token_prefixable_sigil:
-        if (level->sigil_pending != TOKEN_END)
+        if (prefix_pending != TOKEN_END)
             fail (Error_Syntax(ss, token));  // can't make a GET-GET-WORD!
 
-        level->sigil_pending = token;
+        prefix_pending = token;
         goto loop;
 
-      case TOKEN_SET:
-        len--;
-        if (Is_Dot_Or_Slash(level->mode)) {
-            token = TOKEN_WORD;  // will be a PATH_SET
-            ss->end--;  // put ':' back on end but not beginning
-        }
-        goto token_word;
-
       case TOKEN_WORD:
-      token_word:
-        if (len == 0) {
-            --bp;
+        if (len == 0)
             fail (Error_Syntax(ss, token));
-        }
 
-        Init_Any_Word(
-            DS_PUSH(),
-            KIND_OF_WORD_FROM_TOKEN(token),
-            Intern_UTF8_Managed(bp, len)
-        );
+        Init_Word(DS_PUSH(), Intern_UTF8_Managed(bp, len));
         break;
 
       case TOKEN_ISSUE:
@@ -1868,7 +1858,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
-        if (level->sigil_pending != TOKEN_END)  // can't do @'foo: or :'foo
+        if (prefix_pending != TOKEN_END)  // can't do @'foo: or :'foo
             fail (Error_Syntax(ss, token));
 
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
@@ -1876,11 +1866,11 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             // If we have something like ['''] there won't be another token
             // push coming along to apply the quotes to, so quote a null.
             //
-            assert(num_quotes_for_next_token == 0);
+            assert(quotes_pending == 0);
             Quotify(Init_Nulled(DS_PUSH()), len);
         }
         else
-            num_quotes_for_next_token = len;  // apply quoting to next token
+            quotes_pending = len;  // apply quoting to next token
         goto loop; }
 
       case TOKEN_GROUP_BEGIN:
@@ -1890,7 +1880,9 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             token == TOKEN_BLOCK_BEGIN ? ']' : ')'
         );
 
-        enum Reb_Kind kind = KIND_OF_ARRAY_FROM_TOKEN(token);
+        enum Reb_Kind kind =
+            (token == TOKEN_GROUP_BEGIN) ? REB_GROUP : REB_BLOCK;
+
         if (
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
@@ -1915,41 +1907,41 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
       slash_or_dot_needs_blank_on_left:
         assert(ep == bp + 1 and ss->begin == ep and ss->end == ep);
 
-        // A "normal" path like `a/b/c` always has a token on the left.
-        // But unusual paths like `a//b/c` have a case where a slash is
-        // seen before a different token arises.  This happens with
-        // slashes that occur on their own as well (`/`, `///`).  All
-        // such cases mean at least pushing a blank.
-        //
-        Init_Blank(DS_PUSH());
+        // A "normal" path or tuple like `a/b/c` or `a.b.c` always has a token
+        // on the left of the interstitial.  So the dot or slash gets picked
+        // up after the switch().  This point is reached when a slash or dot
+        // gets seen "out-of-turn", like `/a` or `a//b` or `a./b` etc
 
         if (level->mode == '/') {  // in process of scanning a path
             //
-            // If you are scanning a PATH! already and encounter a slash
-            // of this form, it's just a doubled/tripled/etc. slash.
-            // Now that blank is pushed, continue considering the token
-            // to have been processed.
+            // If you are scanning a PATH! already and see a slash like this
+            // (e.g. not glued to the end of another token), it's a trailing
+            // slash or an internal double/triple slash.  Like `a//b` or `a/`
             //
-            if (token == TOKEN_PATH)
+            if (token == TOKEN_PATH) {
+                Init_Blank(DS_PUSH());  // internal path blank
                 goto loop;
+            }
 
-            // If you are scanning a PATH! but encounter a tuple, you
-            // don't want to disrupt the path scanning...but rather wish
-            // to start a child scan with that tuple, potentially resuming
-            // the path scan afterwards.
+            // If you are scanning a PATH! but encounter a dot, it's a
+            // BLANK!-headed tuple.  Don't disrupt the path scanning...but
+            // start a child scan for that tuple, and resume the path
+            // processing when that is done.
             //
             assert(token == TOKEN_TUPLE);
+            Init_Blank(DS_PUSH());  // the new head of blank-headed tuple
             goto scan_path_or_tuple_head_is_DS_TOP;
         }
         else if (level->mode == '.') {  // scanning a tuple
             //
-            // If you are scanning a tuple and see a dot, it's again just
-            // a situation of a doubled-up dot, like `a..b` or `a.` so
-            // now that the blank is pushed, continue an d consider the
-            // token to be processed.
+            // If you are scanning a TUPLE! already and see a dot like this
+            // (e.g. not glued to the end of another token), it's a trailing
+            // dot or an internal doubled up dot.  Like `a..b` or `a.`
             //
-            if (token == TOKEN_TUPLE)
+            if (token == TOKEN_TUPLE) {
+                Init_Blank(DS_PUSH());  // internal tuple blank
                 goto loop;
+            }
 
             // This is a slightly tricky situation of scanning a tuple
             // and seeing a slash.  Paths can't go inside tuples, so
@@ -1983,6 +1975,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         // the code here, and then have the end-of-loop consume and then
         // jump up to this point with token set appropriately.
         //
+        Init_Blank(DS_PUSH());
         ep = ss->begin = ss->end = bp;  // "unconsume" `.` or `/` token
         break;
 
@@ -2408,8 +2401,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         if (
             *ep == '\0' or IS_LEX_SPACE(*ep) or ANY_CR_LF_END(*ep)
             or *ep == ')' or *ep == ']'
-        ){  // e.g. `/a/`
-            Init_Blank(DS_PUSH());  // `/a/` is path form of [_ a _]
+        ){
             ss->begin = ep;
             goto done;
         }
@@ -2460,7 +2452,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             else
                 child.mode = '/';
             child.newline_pending = false;
-            child.sigil_pending = TOKEN_END;
 
             Scan_To_Stack(&child);
         }
@@ -2483,21 +2474,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         if (IS_BLANK(DS_TOP))
             Init_Blank(DS_PUSH());
 
-        REBVAL *head = DS_AT(dsp_path_head);
-        enum Reb_Kind child_kind = REB_PATH;  // gets "tuplififed" if `.`
-
-        if (ss->begin and *ss->end == ':') {  // !!! ss-begin?
-            if (child_kind != REB_PATH)  // first element cued GET or SYM
-                fail (Error_Syntax(ss, token));  // for instance `:a/b/c:`
-            child_kind = REB_SET_PATH;
-            ss->begin = ++ss->end;  // !!! ?
-        }
-
-        if (token == TOKEN_TUPLE)
-            child_kind = TUPLIFY_ANY_PATH_KIND(child_kind);
-        else
-            assert(ANY_PATH_KIND(child_kind));
-
         // R3-Alpha permitted GET-WORD! and other aberrations internally
         // to PATH!.  Ren-C does not, and it will optimize the immutable
         // GROUP! so that it lives in a cell (TBD).
@@ -2505,16 +2481,17 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         // For interim compatibility, allow GET-WORD! at LOAD-time by
         // mutating it into a single element GROUP!.
         //
+        REBVAL *head = DS_AT(dsp_path_head);
         REBVAL *cleanup = head + 1;
         for (; cleanup <= DS_TOP; ++cleanup) {
-            if (IS_GET_WORD(DS_TOP)) {
+            if (IS_GET_WORD(cleanup)) {
                 REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
-                mutable_KIND_BYTE(DS_TOP)
-                    = mutable_MIRROR_BYTE(DS_TOP)
+                mutable_KIND_BYTE(cleanup)
+                    = mutable_MIRROR_BYTE(cleanup)
                     = REB_GET_WORD;
 
-                Move_Value(ARR_SINGLE(a), DS_TOP);
-                Init_Group(DS_TOP, a);
+                Move_Value(ARR_SINGLE(a), cleanup);
+                Init_Group(cleanup, a);
             }
         }
 
@@ -2524,7 +2501,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         DECLARE_LOCAL (temp);
         REBVAL *check = Try_Pop_Path_Or_Element_Or_Nulled(
             temp,
-            child_kind,
+            token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             dsp_path_head - 1
         );
         if (not check)
@@ -2584,38 +2561,59 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         }
     }
 
-    if (level->sigil_pending != TOKEN_END) {
+    // If we get here without jumping somewhere else, we have pushed a
+    // *complete* token (vs. just a component of a path).  While we know that
+    // no whitespace has been consumed, this is a good time to tell that a
+    // colon means "SET" and not "GET".  We also apply any pending prefix
+    // or quote levels that were noticed at the beginning of a token scan,
+    // but had to wait for the completed token to be used.
+
+    if (ss->begin and *ss->begin == ':') {  // no whitespace, interpret as SET
+        if (prefix_pending)
+            fail (Error_Syntax(ss, token));
+
         enum Reb_Kind kind = VAL_TYPE(DS_TOP);
         if (not IS_ANY_SIGIL_KIND(kind))
             fail (Error_Syntax(ss, token));
 
-        switch (level->sigil_pending) {
-          case TOKEN_GET:
+        mutable_KIND_BYTE(DS_TOP)
+            = mutable_MIRROR_BYTE(DS_TOP)
+            = SETIFY_ANY_PLAIN_KIND(kind);
+
+        ss->begin = ++ss->end;  // !!! ?
+    }
+    else if (prefix_pending != TOKEN_END) {
+        enum Reb_Kind kind = VAL_TYPE(DS_TOP);
+        if (not IS_ANY_SIGIL_KIND(kind))
+            fail (Error_Syntax(ss, token));
+
+        switch (prefix_pending) {
+          case TOKEN_COLON:
             mutable_KIND_BYTE(DS_TOP)
                 = mutable_MIRROR_BYTE(DS_TOP)
                 = GETIFY_ANY_PLAIN_KIND(kind);
             break;
 
-          case TOKEN_SYM:
+          case TOKEN_AT:
             mutable_KIND_BYTE(DS_TOP)
                 = mutable_MIRROR_BYTE(DS_TOP)
                 = SYMIFY_ANY_PLAIN_KIND(kind);
             break;
 
           default:
-            token = level->sigil_pending;
+            token = prefix_pending;
             fail (Error_Syntax(ss, token));
         }
-        level->sigil_pending = TOKEN_END;
+        prefix_pending = TOKEN_END;
     }
 
-    if (num_quotes_for_next_token != 0) {
+    if (quotes_pending != 0) {
         //
         // Transform the topmost value on the stack into a QUOTED!, to
         // account for the ''' that was preceding it.
         //
-        Quotify(DS_TOP, num_quotes_for_next_token);
-        num_quotes_for_next_token= 0;
+        Quotify(DS_TOP, quotes_pending);
+        quotes_pending = 0;
     }
 
     // Set the newline on the new value, indicating molding should put a
@@ -2639,7 +2637,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
   done: {
     Drop_Mold_If_Pushed(mo);
 
-    assert(num_quotes_for_next_token == 0);
+    assert(quotes_pending == 0);
 
     // Note: ss->newline_pending may be true; used for ARRAY_NEWLINE_AT_TAIL
 
@@ -2741,7 +2739,6 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode)
     child.start_line = ss->line;
     child.start_line_head = ss->line_head;
     child.newline_pending = false;
-    child.sigil_pending = TOKEN_END;
     child.opts = parent->opts &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
 
     REBDSP dsp_orig = DSP;
