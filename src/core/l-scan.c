@@ -2532,9 +2532,12 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         if (not IS_ANY_SIGIL_KIND(kind))
             fail (Error_Syntax(ss, token));
 
-        mutable_KIND_BYTE(DS_TOP)
-            = mutable_MIRROR_BYTE(DS_TOP)
-            = SETIFY_ANY_PLAIN_KIND(kind);
+        mutable_KIND_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
+        if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
+            mutable_MIRROR_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
+
+        if (VAL_TYPE(DS_TOP) == REB_SET_TUPLE)
+            ss->begin = ss->begin;
 
         ss->begin = ++ss->end;  // !!! ?
     }
@@ -2545,15 +2548,15 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
         switch (prefix_pending) {
           case TOKEN_COLON:
-            mutable_KIND_BYTE(DS_TOP)
-                = mutable_MIRROR_BYTE(DS_TOP)
-                = GETIFY_ANY_PLAIN_KIND(kind);
+            mutable_KIND_BYTE(DS_TOP) = GETIFY_ANY_PLAIN_KIND(kind);
+            if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
+                mutable_MIRROR_BYTE(DS_TOP) = GETIFY_ANY_PLAIN_KIND(kind);
             break;
 
           case TOKEN_AT:
-            mutable_KIND_BYTE(DS_TOP)
-                = mutable_MIRROR_BYTE(DS_TOP)
-                = SYMIFY_ANY_PLAIN_KIND(kind);
+            mutable_KIND_BYTE(DS_TOP) = SYMIFY_ANY_PLAIN_KIND(kind);
+            if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
+                mutable_MIRROR_BYTE(DS_TOP) = SYMIFY_ANY_PLAIN_KIND(kind);
             break;
 
           default:

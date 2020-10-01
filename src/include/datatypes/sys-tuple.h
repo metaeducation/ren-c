@@ -43,59 +43,85 @@
 // 32 and 64 bit systems).  So it should be willing to expand to an
 // arbitrary size if need be.
 //
-inline static REBVAL *Init_Tuple_Bytes(
+inline static REBVAL *Init_Sequence_Bytes(
     RELVAL *out,
+    enum Reb_Kind kind,
     const REBYTE *data,
     REBLEN len
 ){
-    RESET_CELL(out, REB_TUPLE, CELL_FLAG_FIRST_IS_NODE);
+    if (len > sizeof(EXTRA(Bytes, out).common)) {
+        //
+        // If there are more bytes than fit in the cell on this architecture,
+        // don't fail...but fall back on doing an allocation.  This should
+        // be able to use a byte-sized series, but wait to do that until
+        // CHAR! and TUPLE! get unified.
+        //
+        REBARR *a = Make_Array_Core(len, NODE_FLAG_MANAGED);
+        TERM_ARRAY_LEN(a, len);
+        for (; len > 0; --len, ++data)
+            Init_Integer(Alloc_Tail_Array(a), *data);
 
-    REBARR *a = Make_Array_Core(len, NODE_FLAG_MANAGED);
-    TERM_ARRAY_LEN(a, len);
-    for (; len > 0; --len, ++data)
-        Init_Integer(Alloc_Tail_Array(a), *data);
+        INIT_VAL_NODE(out, Freeze_Array_Shallow(a));  // immutable
+        Init_Block(out, a);
+    }
+    else {
+        REBLEN n = len;
+        REBYTE *bp = PAYLOAD(Bytes, out).common;
+        for (; n > 0; --n)
+            *bp++ = *data++;
+        RESET_CELL(out, REB_CHAR, CELL_MASK_NONE);
+    }
 
-    INIT_VAL_NODE(out, Freeze_Array_Shallow(a));  // immutable
-
-    /*  // optimized version
-
-    if (len > MAX_TUPLE)  // need to make some kind of series
-        fail ("Extension of optimized binary tuples not yet implemented");
-
-    PAYLOAD(Bytes, out).common[0] = len;  // length goes in the first byte
-
-    REBLEN n = len;
-    REBYTE *bp = PAYLOAD(Bytes, out).common + 1;  // content is after length
-    for (; n > 0; --n)
-        *bp++ = *data++;
-
-    // !!! Historically, 1.0.0 = 1.0.0.0 under non-strict equality.  Make the
-    // comparison easier just by setting all the bytes to zero.  This is
-    // kind of superfluous; and ZERO? is basically a hack...review.
-    //
-    memset(bp, 0, MAX_TUPLE - len);
-    */
-
-    INIT_BINDING(out, UNBOUND);  // generic tuples execute, need bindings
+    mutable_KIND_BYTE(out) = kind;  // "veneer" over "heart" type
     return cast(REBVAL*, out);
 }
 
-// !!! This is a simple compatibility routine that will just set bytes in
-// the buffer to 0 if the element is not an integer.
+#define Init_Tuple_Bytes(out,data,len) \
+    Init_Sequence_Bytes((out), REB_TUPLE, (data), (len));
+
+
+// !!! This is a simple compatibility routine for all the tuple-using code
+// that was hanging around before (IMAGE!, networking) which assumed that
+// tuples could only contain byte-sized integers.  All callsites referring
+// to it are transitional.
 //
-inline static void Get_Tuple_Bytes(
+inline static bool Try_Get_Sequence_Bytes(
     void *buf,
-    const RELVAL *tuple,
-    REBSIZ size
+    const RELVAL *sequence,
+    REBSIZ buf_size
 ){
+    REBLEN len = VAL_SEQUENCE_LEN(sequence);
+
     REBYTE *dp = cast(REBYTE*, buf);
     REBSIZ i;
     DECLARE_LOCAL (temp);
-    for (i = 0; i < size; ++i) {
-        REBCEL(const*) cell = VAL_SEQUENCE_AT(temp, tuple, i);
-        dp[i] = CELL_KIND(cell) == REB_INTEGER ? VAL_UINT32(cell) : 0;
+    for (i = 0; i < buf_size; ++i) {
+        if (i >= len) {
+            dp[i] = 0;
+            continue;
+        }
+        REBCEL(const*) cell = VAL_SEQUENCE_AT(temp, sequence, i);
+        if (CELL_KIND(cell) != REB_INTEGER)
+            return false;
+        REBI64 i64 = VAL_INT64(cell);
+        if (i64 < 0 or i64 > 255)
+            return false;
+
+        dp[i] = cast(REBYTE, i64);
     }
+    return true;
 }
+
+inline static void Get_Tuple_Bytes(
+    void *buf,
+    const RELVAL *tuple,
+    REBSIZ buf_size
+){
+    assert(IS_TUPLE(tuple));
+    if (not Try_Get_Sequence_Bytes(buf, tuple, buf_size))
+        fail ("non-INTEGER! found used with Get_Tuple_Bytes()");
+}
+
 
 inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
     //
@@ -106,8 +132,8 @@ inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
     if (kind == REB_PAIR) {
         Init_Pair_Int(out, 0, 0);
     }
-    else if (kind == REB_TUPLE) {
-        Init_Tuple_Bytes(out, nullptr, 0);
+    else if (ANY_SEQUENCE_KIND(kind)) {
+        Init_Sequence_Bytes(out, kind, nullptr, 0);
     }
     else {
         RESET_CELL(out, kind, CELL_MASK_NONE);

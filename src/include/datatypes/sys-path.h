@@ -170,6 +170,49 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike(
 
 }
 
+
+//
+//  Try_Init_Any_Sequence_All_Integers: C
+//
+// If a sequence is all INTEGER!, then there may be some compressions that
+// can be applied to it.
+//
+inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
+    RELVAL *out,
+    enum Reb_Kind kind,
+    const RELVAL *head,
+    REBLEN len
+){
+  #if !defined(NDEBUG)
+    Init_Unreadable_Void(out);  // not used for "blaming" a non-integer
+  #endif
+
+    if (len > sizeof(PAYLOAD(Bytes, out)).common)
+        return nullptr;  // no optimization yet if won't fit in payload bytes
+
+    RESET_CELL(out, kind, CELL_MASK_NONE);
+
+    REBYTE *bp = PAYLOAD(Bytes, out).common;
+
+    const RELVAL *item = head;
+    REBLEN n;
+    for (n = 0; n < len; ++n, ++item, ++bp) {
+        if (not IS_INTEGER(item))
+            return nullptr;
+        REBI64 i64 = VAL_INT64(item);
+        if (i64 < 0 or i64 > 255)
+            return nullptr;  // only packing byte form for now
+        *bp = cast(REBYTE, i64);
+    }
+
+    EXTRA(Any, out).u = len;
+
+    mutable_MIRROR_BYTE(out) = REB_CHAR;
+
+    return SPECIFIC(out);
+}
+
+
 // This is a general utility for turning stack values into something that is
 // either pathlike or value like.  It is used in COMPOSE of paths, which
 // allows things like:
@@ -246,9 +289,19 @@ inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
         return SPECIFIC(out);
     }
 
-    // !!! Tuples will have optimizations for "all byte-sized integers", which
-    // will compact into the cell itself.  This should be reusable by path,
-    // so it's yet another step of optimization we'd use here.
+    // Attempt optimization for all-INTEGER! tuple or path, e.g. IP addresses
+    // (192.0.0.1) or RGBA color constants 255.0.255.  If optimization fails,
+    // use normal array.
+    //
+    if (Try_Init_Any_Sequence_All_Integers(
+        out,
+        kind,
+        DS_AT(dsp_orig) + 1,
+        DSP - dsp_orig
+    )){
+        DS_DROP_TO(dsp_orig);
+        return SPECIFIC(out);
+    }
 
     REBARR *a = Pop_Stack_Values(dsp_orig);
     Freeze_Array_Shallow(a);
@@ -267,6 +320,8 @@ inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
     if (MIRROR_BYTE(sequence) == REB_WORD)
         return 2;  // simulated 2-blanks sequence
+    if (MIRROR_BYTE(sequence) == REB_CHAR)
+        return EXTRA(Any, sequence).u;  // cell-packed byte-oriented sequence
     REBARR *a = ARR(VAL_NODE(sequence));
     assert(ARR_LEN(a) >= 2);
     assert(Is_Array_Frozen_Shallow(a));
@@ -281,7 +336,7 @@ inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
 //
 inline static const REBNOD *VAL_SEQUENCE_NODE(REBCEL(const*) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
-    assert(MIRROR_BYTE(sequence) != REB_WORD);
+    assert(ANY_SEQUENCE_KIND(MIRROR_BYTE(sequence)));
 
     const REBNOD *n = VAL_NODE(sequence);
     assert(not (FIRST_BYTE(n) & NODE_BYTEMASK_0x01_CELL));  // !!! not yet...
@@ -314,6 +369,11 @@ inline static REBCEL(const*) VAL_SEQUENCE_AT(
         return BLANK_VALUE;
     }
 
+    if (MIRROR_BYTE(sequence) == REB_CHAR) {
+        assert(n < EXTRA(Any, sequence).u);
+        return Init_Integer(store, PAYLOAD(Bytes, sequence).common[n]);
+    }
+
     REBARR *a = ARR(VAL_NODE(sequence));
     assert(ARR_LEN(a) >= 2);
     assert(Is_Array_Frozen_Shallow(a));
@@ -339,6 +399,10 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(const RELVAL *sequence)
             assert(VAL_WORD_SYM(VAL_UNESCAPED(sequence)) == SYM__SLASH_1_);
         return SPECIFIED;
     }
+
+    if (MIRROR_BYTE(sequence) == REB_CHAR)
+        return SPECIFIED;
+
     return VAL_SPECIFIER(sequence);
 }
 

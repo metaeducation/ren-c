@@ -155,7 +155,7 @@ make-port*: function [
 
                     if not empty? trim s1 [
                         use [tup] [
-                            tup: to tuple! s1
+                            tup: make tuple! s1
                             if integer? last tup [
                                 s1: tup
                             ]

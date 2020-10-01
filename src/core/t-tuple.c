@@ -38,7 +38,7 @@ REB_R MAKE_Sequence(
     const REBVAL *opt_parent,
     const REBVAL *arg
 ){
-    if (ANY_PATH_KIND(kind))  // delegate for now
+    if (kind == REB_TEXT or ANY_PATH_KIND(kind))  // delegate for now
         return MAKE_Path(out, kind, opt_parent, arg);
 
     assert(kind == REB_TUPLE);
@@ -58,7 +58,7 @@ REB_R MAKE_Sequence(
     // All attempts to convert a URL!-flavored IP address failed.  Taking
     // URL! here fixes it, though there are still open questions.
     //
-    if (IS_TEXT(arg) or IS_URL(arg)) {
+    if (IS_URL(arg)) {
         REBSIZ len;
         const REBYTE *cp
             = Analyze_String_For_Scan(&len, arg, MAX_SCAN_TUPLE);
@@ -184,7 +184,8 @@ REBTYPE(Sequence)
     //
     REBYTE buf[MAX_TUPLE];
     REBLEN len = VAL_SEQUENCE_LEN(sequence);
-    Get_Tuple_Bytes(buf, sequence, len);
+    bool all_byte_sized_ints = Try_Get_Sequence_Bytes(buf, sequence, len);
+    UNUSED(all_byte_sized_ints);
     REBYTE *vp = buf;
 
     REBSYM sym = VAL_WORD_SYM(verb);
