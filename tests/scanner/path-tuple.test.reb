@@ -59,6 +59,14 @@
 
         "a.1.(x)/[a b c]/<d>.2"  ->  [(a 1 @(x)) @[a b c] (<d> 2)]
 
+        ; === Bad Path Element Tests ===
+        ;
+        ; TUPLE! can go in PATH! but not vice-versa.  Besides that, only
+        ; INTEGER!, WORD!, GROUP!, BLOCK!, TEXT!, and TAG! are currently
+        ; allowed in either sequence form.
+
+        "/#a"  !!  <scan-invalid>
+
         ; === R3-Alpha compatibility hacks ===
 
         ; GET-WORD! is not legal in Ren-C as a path element due to ambiguities
@@ -98,8 +106,31 @@
     iter: tests
     while [not tail? iter] [
         text: ensure text! iter/1
-        items: transcode text
         iter: my next
+
+        trap [
+            items: transcode text
+        ] then error -> [
+            if iter/1 <> '!! [
+                fail ["Unexpected failure on" mold text "->" error/id] 
+            ]
+            iter: my next
+            if iter/1 <> to tag! error/id [
+                fail ["Error mismatch on" mold text "->" error/id "and not" iter/1]
+            ]
+            iter: my next
+            any [
+                tail? iter
+                new-line? iter
+            ] then [
+                continue
+            ]
+            if error/arg1 <> iter/1 [
+                fail ["Error argument mismatch on" mold text "->" error/arg1 "and not" iter/1]
+            ]
+            iter: my next
+            continue
+        ]
 
         assert [iter/1 = '->]
         iter: my next 
