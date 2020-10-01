@@ -1231,7 +1231,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         switch (GET_LEX_VALUE(*cp)) {
           case LEX_SPECIAL_AT:  // the case where @ is actually at the head
             assert(false);  // already taken care of
-            break;
+            panic ("@ dead end");
 
           case LEX_SPECIAL_PERCENT:  // %filename
             cp = ss->end;
@@ -1258,8 +1258,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 goto prescan_subsume_up_to_one_dot;
             }
 
-            break;
-            
+            panic (": dead end");
+
           case LEX_SPECIAL_APOSTROPHE:
             while (*cp == '\'')  // get sequential apostrophes as one token
                 ++cp;
@@ -1926,71 +1926,15 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
         // A "normal" path or tuple like `a/b/c` or `a.b.c` always has a token
         // on the left of the interstitial.  So the dot or slash gets picked
-        // up after the switch().  This point is reached when a slash or dot
-        // gets seen "out-of-turn", like `/a` or `a//b` or `a./b` etc
-
-        if (level->mode == '/') {  // in process of scanning a path
-            //
-            // If you are scanning a PATH! already and see a slash like this
-            // (e.g. not glued to the end of another token), it's a trailing
-            // slash or an internal double/triple slash.  Like `a//b` or `a/`
-            //
-            if (token == TOKEN_PATH) {
-                Init_Blank(DS_PUSH());  // internal path blank
-                goto loop;
-            }
-
-            // If you are scanning a PATH! but encounter a dot, it's a
-            // BLANK!-headed tuple.  Don't disrupt the path scanning...but
-            // start a child scan for that tuple, and resume the path
-            // processing when that is done.
-            //
-            assert(token == TOKEN_TUPLE);
-            Init_Blank(DS_PUSH());  // the new head of blank-headed tuple
-            goto scan_path_or_tuple_head_is_DS_TOP;
-        }
-        else if (level->mode == '.') {  // scanning a tuple
-            //
-            // If you are scanning a TUPLE! already and see a dot like this
-            // (e.g. not glued to the end of another token), it's a trailing
-            // dot or an internal doubled up dot.  Like `a..b` or `a.`
-            //
-            if (token == TOKEN_TUPLE) {
-                Init_Blank(DS_PUSH());  // internal tuple blank
-                goto loop;
-            }
-
-            // This is a slightly tricky situation of scanning a tuple
-            // and seeing a slash.  Paths can't go inside tuples, so
-            // this needs to terminate the current tuple scan and either
-            // start a new path scan or resume one in progress.
-            //
-            // This means we want to leave the `/` to be seen by the loop
-            // and processed appropriately, while ending the tuple scan.
-            //
-            ss->end = bp;  // put the slash back to be found!
-            goto done;
-        }
-
-        assert(
-            level->mode == ']'
-            or level->mode == ')'
-            or level->mode == '\0'
-        );  // e.g. not currently scanning a path or tuple
-
-        // Here we must be starting a new blank-headed path or tuple scan.
-        // Fall through to the same detection that would start a path
-        // or tuple after a WORD! had been pushed, except it's a blank.
+        // up by a lookahead step after this switch().
         //
-        // However, that detection thinks it's implicitly consuming a
-        // token (usually done at the start of this loop by setting
-        // ss->begin to ss->end).  So it expects to see a "/" or "." at
-        // `ep`, and then bump ss->begin to consume it.  But this token
-        // was consumed by the loop.  Put it back.
+        // This point is reached when a slash or dot gets seen "out-of-turn",
+        // like `/a` or `a//b` or `a./b` etc
         //
-        // !!! Rather than "unconsume" it would make more sense to put
-        // the code here, and then have the end-of-loop consume and then
-        // jump up to this point with token set appropriately.
+        // Easiest thing to do here is to push a blank and then let whatever
+        // processing would happen for a non-blank run (either start a new
+        // path or tuple, or continuing one in progress).  So just do that
+        // push and "unconsume" the token so the lookahead sees it.
         //
         Init_Blank(DS_PUSH());
         ep = ss->begin = ss->end = bp;  // "unconsume" `.` or `/` token
@@ -2385,11 +2329,15 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         }
     }
 
-    // At this point the item at DS_TOP is the last token pushed.  It
-    // might be a BLANK! (if it was `_` or if a TOKEN_TUPLE or TOKEN_PATH
-    // was seen as a `/` or `.` when not in a path or tuple scanning mode.
-    //
-    if (Is_Dot_Or_Slash(level->mode)) {
+  lookahead:
+
+    // At this point the item at DS_TOP is the last token pushed.  It has
+    // not had any `pending_prefix` or `pending_quotes` applied...so when
+    // processing something like `:foo/bar` on the first step we'd only see
+    // `foo` pushed.  This is the point where we look for the `/` or `.`
+    // to either start or continue a tuple or path.
+
+    if (Is_Dot_Or_Slash(level->mode)) {  // adding to existing path or tuple
         //
         // If we are scanning `a/b` and see `.c`, then we want the tuple
         // to stick to the `b`...which means using the `b` as the head
@@ -2428,13 +2376,9 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             goto loop;
         }
 
-        if (*ep != '(' and *ep != '[' and IS_LEX_DELIMIT(*ep)) {
-            token = TOKEN_PATH;  // so error says "bad path"
-            fail (Error_Syntax(ss, token));
-        }
-        ss->begin = ep;  // skip next /
+        ss->begin = ep;  // skip next / or .
     }
-    else if (Is_Dot_Or_Slash(*ep)) {
+    else if (Is_Dot_Or_Slash(*ep)) {  // starting a new path or tuple
         //
         // We're noticing a path was actually starting with the token
         // that just got pushed, so it should be a part of that path.
@@ -2473,23 +2417,17 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             Scan_To_Stack(&child);
         }
 
-        // Any trailing colons should have been left on, because the child
-        // scan noticed the mode was '/' and that we'd want it for
-        // a SET-PATH!.  But if there was a leading colon, it got absorbed
-        // into the first element of the array.  We need to account for
-        // this by mutating any first element that's a GET-XXX! into a
-        // plain XXX! and make this a GET-PATH!, and also check for
-        // conflicts if there's a colon at the end and making a SET-PATH!
-
-        // If the last thing that got pushed in path or tupel scanning was
-        // a BLANK! then it was pushed by TOKEN_PATH or TOKEN_TUPLE upon
-        // seeing a `/` or `.` "out-of-turn".  It was expecting to push
-        // another token, but if it didn't then we need another BLANK!
-        // to take its place.  e.g. `//` pushes BLANK!, then BLANK!, then
-        // gets here...so it needs another blank to get to [_ _ _].
+        // The scanning process for something like `.` or `a/` will not have
+        // pushed anything to represent the last "blank".  Doing so would
+        // require lookahead, which would overlap with this lookahead logic.
+        // So notice if a trailing `.` or `/` requires pushing a blank.
         //
-        if (IS_BLANK(DS_TOP))
+        if (ss->begin and (
+            (token == TOKEN_TUPLE and *ss->end == '.')
+            or (token == TOKEN_PATH and *ss->end == '/')
+        )){
             Init_Blank(DS_PUSH());
+        }
 
         // R3-Alpha permitted GET-WORD! and other aberrations internally
         // to PATH!.  Ren-C does not, and it will optimize the immutable
@@ -2517,7 +2455,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         //
         DECLARE_LOCAL (temp);
         REBVAL *check = Try_Pop_Path_Or_Element_Or_Nulled(
-            temp,
+            temp,  // doesn't write directly to stack since popping stack
             token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             dsp_path_head - 1
         );
@@ -2560,7 +2498,8 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 if (*ss->begin != '/')
                     goto done;
 
-                ++ss->begin;  // absorb the `/` and stay in path mode
+                ep = ss->end;
+                goto lookahead;  // stay in path mode
             }
             else {
                 // If we just finished a TUPLE! that was being scanned
