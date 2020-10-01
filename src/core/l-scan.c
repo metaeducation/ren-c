@@ -1042,6 +1042,15 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
     const REBYTE *cp = ss->begin;
 
+    if (*cp == ':') {
+        ss->end = cp + 1;
+        return TOKEN_GET;
+    }
+    if (*cp == '@') {
+        ss->end = cp + 1;
+        return TOKEN_SYM;
+    }
+
     enum Reb_Token token;  // only set if falling through to `scan_word`
 
     // Up-front, do a check for "arrow words".  This test bails out if any
@@ -1229,17 +1238,8 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 
         switch (GET_LEX_VALUE(*cp)) {
           case LEX_SPECIAL_AT:  // the case where @ is actually at the head
-            if (cp[1] == '(') {
-                ss->end = cp + 2;  // whole token should be `@(`
-                return TOKEN_SYM_GROUP_BEGIN;
-            }
-            if (cp[1] == '[') {
-                ss->end = cp + 2;  // whole token should be `@[`
-                return TOKEN_SYM_BLOCK_BEGIN;
-            }
-            ++cp;  // skip @
-            token = TOKEN_SYM;
-            goto prescan_word;
+            assert(false);  // already taken care of
+            break;
 
           case LEX_SPECIAL_PERCENT:  // %filename
             cp = ss->end;
@@ -1259,29 +1259,15 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             return TOKEN_FILE;
 
           case LEX_SPECIAL_COLON:  // :word :12 (time)
-            if (cp[1] == '(') {
-                ss->end = cp + 2;  // whole token should be `:(`
-                return TOKEN_GET_GROUP_BEGIN;
-            }
-            if (cp[1] == '[') {
-                ss->end = cp + 2;  // whole token should be `:[`
-                return TOKEN_GET_BLOCK_BEGIN;
-            }
+            assert(false);  // !!! Time form not supported ATM (use 0:12)
+
             if (IS_LEX_NUMBER(cp[1])) {
                 token = TOKEN_TIME;
                 goto prescan_subsume_up_to_one_dot;
             }
 
-            if (ONLY_LEX_FLAG(flags, LEX_SPECIAL_WORD))
-                return TOKEN_GET;  // "common case"
-
-            if (cp[1] == '\'')
-                fail (Error_Syntax(ss, TOKEN_WORD));
-
-            token = TOKEN_GET;
-            ++cp; // skip ':'
-            goto prescan_word;
-
+            break;
+            
           case LEX_SPECIAL_APOSTROPHE:
             while (*cp == '\'')  // get sequential apostrophes as one token
                 ++cp;
@@ -1649,6 +1635,7 @@ void Init_Va_Scan_Level_Core(
     level->start_line = ss->line = line;
     level->mode = '\0';
     level->newline_pending = false;
+    level->sigil_pending = TOKEN_END;
     level->opts = 0;
 }
 
@@ -1681,6 +1668,7 @@ void Init_Scan_Level(
     out->start_line_head = ss->line_head = utf8;
     out->start_line = ss->line = line;
     out->newline_pending = false;
+    out->sigil_pending = TOKEN_END;
     out->opts = 0;
 }
 
@@ -1761,8 +1749,6 @@ static REBINT Scan_Head(SCAN_STATE *ss)
     DEAD_END;
 }
 
-#define CELL_FLAG_BLANK_MARKED_GET NODE_FLAG_MARKED
-
 static REBARR *Scan_Child_Array(SCAN_LEVEL *level, REBYTE mode);
 
 //
@@ -1798,6 +1784,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         level->opts &= ~SCAN_FLAG_NEXT;  // recursion loads an entire BLOCK!
 
     REBLEN num_quotes_for_next_token = 0;
+    assert(level->sigil_pending == TOKEN_END);
 
   loop: {
     Drop_Mold_If_Pushed(mo);
@@ -1844,43 +1831,12 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         assert(*bp == ':');
         goto token_prefixable_sigil;
         
-      token_prefixable_sigil: {
-        if (len > 1) {  // common case of `:` or `@` followed by WORD!-chars
-            ++bp;  // skip the sigil
-            --len;
-            goto token_word;  // `token` cues making SYM-WORD! or GET-WORD!
-        }
+      token_prefixable_sigil:
+        if (level->sigil_pending != TOKEN_END)
+            fail (Error_Syntax(ss, token));  // can't make a GET-GET-WORD!
 
-        // Locate_Token() may have been stopped by something like a `/` or
-        // a `.` delimiter, e.g. `:/foo` for a BLANK!-headed PATH!/TUPLE!
-        //
-        if (Is_Dot_Or_Slash(*ep)) {
-            Init_Blank(DS_PUSH());  // let blank be head of path
-
-            // !!! Ugly hack due to lack of GET-BLANK! (which we
-            // probably do not want...)  Since path scanning converts
-            // values in the first slot that are GET-XXX! to mean the
-            // overall path is a GET-PATH!, we need another signal.
-            //
-            SET_CELL_FLAG(DS_TOP, BLANK_MARKED_GET);
-
-            break;  // fall through where mode will be changed to '/'
-        }
-
-        // The other possibility is that we saw a raw colon in the process of
-        // scanning a PATH! or TUPLE!, like `foo/:` which should terminate
-        // the path or tuple scan.  This is not an option for `@`, just `:`.
-        //
-        if (Is_Dot_Or_Slash(level->mode)) {
-            if (token == TOKEN_SYM)
-                fail (Error_Syntax(ss, token));
-
-            Init_Blank(DS_PUSH());
-            SET_CELL_FLAG(DS_TOP, BLANK_MARKED_GET);
-            goto done;
-        }
-
-        fail (Error_Syntax(ss, token)); }
+        level->sigil_pending = token;
+        goto loop;
 
       case TOKEN_SET:
         len--;
@@ -1912,6 +1868,9 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
       case TOKEN_APOSTROPHE: {
         assert(*bp == '\'');  // should be `len` sequential apostrophes
 
+        if (level->sigil_pending != TOKEN_END)  // can't do @'foo: or :'foo
+            fail (Error_Syntax(ss, token));
+
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
             //
             // If we have something like ['''] there won't be another token
@@ -1924,24 +1883,11 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             num_quotes_for_next_token = len;  // apply quoting to next token
         goto loop; }
 
-      case TOKEN_SYM_GROUP_BEGIN:
-      case TOKEN_SYM_BLOCK_BEGIN:
-      case TOKEN_GET_GROUP_BEGIN:
-      case TOKEN_GET_BLOCK_BEGIN:
-        if (ep[-1] == ':') {
-            if (len == 1 or not Is_Dot_Or_Slash(level->mode))
-                fail (Error_Syntax(ss, token));
-            --len;
-            --ss->end;
-        }
-        bp++;
-        goto token_array_begin;
-
-      token_array_begin:
       case TOKEN_GROUP_BEGIN:
       case TOKEN_BLOCK_BEGIN: {
         REBARR *a = Scan_Child_Array(
-            level, (token >= TOKEN_GET_BLOCK_BEGIN) ? ']' : ')'
+            level,
+            token == TOKEN_BLOCK_BEGIN ? ']' : ')'
         );
 
         enum Reb_Kind kind = KIND_OF_ARRAY_FROM_TOKEN(token);
@@ -1949,12 +1895,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             *ss->end == ':'  // `...(foo):` or `...[bar]:`
             and not Is_Dot_Or_Slash(level->mode)  // leave `:` for SET-PATH!
         ){
-            if (
-                token == TOKEN_GET_BLOCK_BEGIN
-                or token == TOKEN_GET_GROUP_BEGIN
-            ){
-                fail (Error_Syntax(ss, token));  // `:(foo):` or `:[bar]:`
-            }
             Init_Any_Array(DS_PUSH(), SETIFY_ANY_PLAIN_KIND(kind), a);
             ++ss->begin;
             ++ss->end;
@@ -2497,7 +2437,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         else
             token = TOKEN_PATH;
 
-        scan_path_or_tuple_head_is_DS_TOP:
+      scan_path_or_tuple_head_is_DS_TOP: ;
 
         REBDSP dsp_path_head = DSP;
 
@@ -2520,6 +2460,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             else
                 child.mode = '/';
             child.newline_pending = false;
+            child.sigil_pending = TOKEN_END;
 
             Scan_To_Stack(&child);
         }
@@ -2544,25 +2485,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
         REBVAL *head = DS_AT(dsp_path_head);
         enum Reb_Kind child_kind = REB_PATH;  // gets "tuplififed" if `.`
-        if (GET_CELL_FLAG(head, BLANK_MARKED_GET)) {
-            assert(IS_BLANK(head));  // can't carry get encoded in type
-            child_kind = REB_GET_PATH;
-        }
-        else {
-            enum Reb_Kind top_kind = VAL_TYPE(head);
-            if (ANY_GET_KIND(top_kind)) {  // need to plainify it
-                mutable_KIND_BYTE(head)
-                    = mutable_MIRROR_BYTE(head)
-                    = PLAINIFY_ANY_GET_KIND(top_kind);
-                child_kind = REB_GET_PATH;
-            }
-            else if (ANY_SYM_KIND(top_kind)) {
-                mutable_KIND_BYTE(head)
-                    = mutable_MIRROR_BYTE(head)
-                    = PLAINIFY_ANY_SYM_KIND(top_kind);
-                child_kind = REB_SYM_PATH;
-            }
-        }
 
         if (ss->begin and *ss->end == ':') {  // !!! ss-begin?
             if (child_kind != REB_PATH)  // first element cued GET or SYM
@@ -2660,6 +2582,31 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 }
             }
         }
+    }
+
+    if (level->sigil_pending != TOKEN_END) {
+        enum Reb_Kind kind = VAL_TYPE(DS_TOP);
+        if (not IS_ANY_SIGIL_KIND(kind))
+            fail (Error_Syntax(ss, token));
+
+        switch (level->sigil_pending) {
+          case TOKEN_GET:
+            mutable_KIND_BYTE(DS_TOP)
+                = mutable_MIRROR_BYTE(DS_TOP)
+                = GETIFY_ANY_PLAIN_KIND(kind);
+            break;
+
+          case TOKEN_SYM:
+            mutable_KIND_BYTE(DS_TOP)
+                = mutable_MIRROR_BYTE(DS_TOP)
+                = SYMIFY_ANY_PLAIN_KIND(kind);
+            break;
+
+          default:
+            token = level->sigil_pending;
+            fail (Error_Syntax(ss, token));
+        }
+        level->sigil_pending = TOKEN_END;
     }
 
     if (num_quotes_for_next_token != 0) {
@@ -2794,6 +2741,7 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode)
     child.start_line = ss->line;
     child.start_line_head = ss->line_head;
     child.newline_pending = false;
+    child.sigil_pending = TOKEN_END;
     child.opts = parent->opts &= ~(SCAN_FLAG_NULLEDS_LEGAL | SCAN_FLAG_NEXT);
 
     REBDSP dsp_orig = DSP;

@@ -45,12 +45,8 @@ enum Reb_Token {
     TOKEN_INTEGER,
     TOKEN_DECIMAL,
     TOKEN_PERCENT,
-    TOKEN_GET_GROUP_BEGIN,
-    TOKEN_SYM_GROUP_BEGIN,
     TOKEN_GROUP_END,
     TOKEN_GROUP_BEGIN,
-    TOKEN_GET_BLOCK_BEGIN,
-    TOKEN_SYM_BLOCK_BEGIN,
     TOKEN_BLOCK_END,
     TOKEN_BLOCK_BEGIN,
     TOKEN_MONEY,
@@ -96,14 +92,6 @@ inline static enum Reb_Kind KIND_OF_ARRAY_FROM_TOKEN(enum Reb_Token t) {
         return REB_GROUP;
     if (t == TOKEN_BLOCK_BEGIN)
         return REB_BLOCK;
-    if (t == TOKEN_GET_GROUP_BEGIN)
-        return REB_GET_GROUP;
-    if (t == TOKEN_GET_BLOCK_BEGIN)
-        return REB_GET_BLOCK;
-    if (t == TOKEN_SYM_GROUP_BEGIN)
-        return REB_SYM_GROUP;
-    if (t == TOKEN_SYM_BLOCK_BEGIN)
-        return REB_SYM_BLOCK;
     assert(!"Bad token passed to KIND_OF_ARRAY_FROM_TOKEN()");
     return REB_0_END;
 }
@@ -348,6 +336,8 @@ typedef struct rebol_scan_level {  // each array scan corresponds to a level
     // value to be scanned will receive the flag.
     //
     bool newline_pending;
+
+    enum Reb_Token sigil_pending;
 
     REBFLGS opts;
 } SCAN_LEVEL;

@@ -335,6 +335,12 @@ inline static enum Reb_Kind SYMIFY_ANY_PLAIN_KIND(REBYTE k) {
 }
 
 
+inline static bool IS_ANY_SIGIL_KIND(REBYTE k) {
+    assert(k < REB_64);  // can't do `@''x`
+    return k >= REB_SYM_BLOCK and k < REB_GET_WORD;
+}
+
+
 //=//// SET-WORD! <=> SET-PATH! <=> SET-BLOCK! TRANSFORMATION /////////////=//
 //
 // This keeps the PLAIN/GET/SET/SYM class the same, changes the type.
