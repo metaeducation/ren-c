@@ -904,27 +904,30 @@ inline static REBVAL *Move_Var(RELVAL *out, const REBVAL *v)
 // for the rare cases where it's legal, e.g. shuffling a cell from one place
 // in an array to another cell in the same array.
 //
-inline static void Blit_Cell(RELVAL *out, const RELVAL *v)
+inline static RELVAL *Blit_Cell(RELVAL *out, const RELVAL *v)
 {
-    assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(KIND_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
-
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(out, __FILE__, __LINE__);
-
-    // Examine just the cell's preparation bits.  Are they identical?  If so,
-    // we are not losing any information by blindly copying the header in
-    // the release build.
+    // It's imaginable that you might try to blit a cell from a source that
+    // could be an API node.  But it should never be *actually* relative
+    // (just tunneled down through some chain of RELVAL*-accepting functions).
     //
-    assert(
-        (out->header.bits & CELL_MASK_PERSIST)
-        == (v->header.bits & CELL_MASK_PERSIST)
-    );
+    assert(not ((v->header.bits & NODE_FLAG_ROOT) and IS_RELATIVE(v)));
 
-    out->header = v->header;
+    // However, you should not write relative bits into API destinations,
+    // not even hypothetically.  The target should not be an API cell.
+    //
+    assert(not (out->header.bits & (NODE_FLAG_ROOT | NODE_FLAG_MANAGED)));
+
+    Move_Value_Header(out, v);
+
     out->payload = v->payload;
     out->extra = v->extra;
+
+    return out;  // still (potentially) relative!
 }
 
+#ifdef __cplusplus  // avoid blitting into REBVAL*, and use without specifier
+    inline static RELVAL *Blit_Cell(REBVAL *out, const RELVAL *v) = delete;
+#endif
 
 // !!! Super primordial experimental `const` feature.  Concept is that various
 // operations have to be complicit (e.g. SELECT or FIND) in propagating the

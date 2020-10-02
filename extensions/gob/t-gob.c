@@ -810,7 +810,7 @@ REB_R PD_Gob(
                 // Have to copy -and- protect.
                 //
                 DECLARE_LOCAL (orig_picker);
-                Blit_Cell(orig_picker, picker);
+                Blit_Cell(cast(RELVAL*, orig_picker), picker);
                 PUSH_GC_GUARD(orig_picker);
 
                 if (Next_Path_Throws(pvs)) // sets value in pvs->store
