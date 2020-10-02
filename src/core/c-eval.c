@@ -1142,58 +1142,47 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
                     if (not GET_CELL_FLAG(f->out, UNEVALUATED))
                         goto enfix_normal_handling;
 
-                  handle_modal_in_out: ;  // declaration, semicolon necessary
+                  handle_modal_in_out:
 
-                    enum Reb_Kind new_kind = REB_0;
                     switch (VAL_TYPE(f->out)) {
                       case REB_SYM_WORD:
-                        new_kind = REB_GET_WORD;  // so @append doesn't run it
-                        break;
-
                       case REB_SYM_PATH:
-                        new_kind = REB_GET_PATH;  // @append/only won't, too
-                        break;
+                        Getify(f->out);  // don't run @append or @append/only
+                        goto enable_modal;
 
                       case REB_SYM_GROUP:
-                        new_kind = REB_GROUP;
-                        break;
-
                       case REB_SYM_BLOCK:
-                        new_kind = REB_BLOCK;
-                        break;
+                        Plainify(f->out);  // run GROUP!, pass block as-is
+                        goto enable_modal;
 
                       default:
-                        break;
+                        goto skip_enable_modal;
                     }
 
-                    if (new_kind != REB_0) {  // The mode is on
-                        //
-                        // !!! We could (should?) pre-check the paramlists to
-                        // make sure users don't try and make a modal argument
-                        // not followed by a refinement.  That would cost
-                        // extra, but avoid the test on every call.
-                        //
-                        const RELVAL *enable = f->param + 1;
-                        if (
-                            IS_END(enable)
-                            or not TYPE_CHECK(enable, REB_TS_REFINEMENT)
-                        ){
-                            fail ("Refinement must follow modal parameter");
-                        }
-                        if (not Is_Typeset_Invisible(enable))
-                            fail ("Modal refinement cannot take arguments");
-
-                        // Signal refinement as being in use.
-                        //
-                        Init_Sym_Word(DS_PUSH(), VAL_PARAM_CANON(enable));
-
-                        // Update the datatype to the non-@ form for eval
-                        //
-                        mutable_KIND_BYTE(f->out)
-                            = mutable_MIRROR_BYTE(f->out)
-                            = new_kind;
+                  enable_modal: {
+                    //
+                    // !!! We could (should?) pre-check the paramlists to
+                    // make sure users don't try and make a modal argument
+                    // not followed by a refinement.  That would cost
+                    // extra, but avoid the test on every call.
+                    //
+                    const RELVAL *enable = f->param + 1;
+                    if (
+                        IS_END(enable)
+                        or not TYPE_CHECK(enable, REB_TS_REFINEMENT)
+                    ){
+                        fail ("Refinement must follow modal parameter");
                     }
+                    if (not Is_Typeset_Invisible(enable))
+                        fail ("Modal refinement cannot take arguments");
 
+                    // Signal refinement as being in use.
+                    //
+                    Init_Sym_Word(DS_PUSH(), VAL_PARAM_CANON(enable));
+                  }
+
+                  skip_enable_modal:
+                    //
                     // Because the possibility of needing to see the uneval'd
                     // value existed, the parameter had to act quoted.  Eval.
                     //
@@ -1922,7 +1911,8 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 //     >> 1 + () 2
 //     == 3
 
-      case REB_GROUP: {
+      case REB_GROUP:
+      eval_group: {
         *next_gotten = nullptr;  // arbitrary code changes fetched variables
 
         DECLARE_FEED_AT_CORE (subfeed, v, *specifier);
@@ -1978,8 +1968,8 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
         if (Eval_Path_Throws_Core(
             where,
-            ARR(VAL_SEQUENCE_NODE(v)),  // !!! may not be array-based
-            Derive_Specifier(*specifier, v),
+            v,  // !!! may not be array-based
+            *specifier,
             nullptr, // `setval`: null means don't treat as SET-PATH!
             EVAL_FLAG_PUSH_PATH_REFINES
         )){
@@ -2076,8 +2066,8 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
         if (Eval_Path_Throws_Core(
             spare,  // output if thrown, used as scratch space otherwise
-            ARR(VAL_SEQUENCE_NODE(v)),  // !!! may not be array-based
-            Derive_Specifier(*specifier, v),
+            v,  // !!! may not be array-based
+            *specifier,
             f->out,
             EVAL_MASK_DEFAULT  // evaluating GROUP!s ok
         )){

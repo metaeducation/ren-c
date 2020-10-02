@@ -157,22 +157,27 @@ void Clonify(
     REBLEN num_quotes = VAL_NUM_QUOTES(v);
     Dequotify(v);
 
-    enum Reb_Kind kind = CELL_KIND(cast(REBCEL(const*), v));
+    enum Reb_Kind kind = cast(enum Reb_Kind, KIND_BYTE_UNCHECKED(v));
     assert(kind < REB_MAX_PLUS_MAX); // we dequoted it (pseudotypes ok)
+
+    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), v));
 
     if (deep_types & FLAGIT_KIND(kind) & TS_SERIES_OBJ) {
         //
         // Objects and series get shallow copied at minimum
         //
         REBSER *series;
-        if (ANY_CONTEXT_KIND(kind)) {
+        bool would_need_deep;
+
+        if (ANY_CONTEXT_KIND(heart)) {
             INIT_VAL_CONTEXT_VARLIST(
                 v,
                 CTX_VARLIST(Copy_Context_Shallow_Managed(VAL_CONTEXT(v)))
             );
             series = SER(CTX_VARLIST(VAL_CONTEXT(v)));
+            would_need_deep = true;
         }
-        else if (ANY_PATH_KIND(kind)) {
+        else if (ANY_ARRAY_KIND(heart)) {
             REBNOD *n = VAL_NODE(v);
             assert(not (FIRST_BYTE(n->header.bits) & NODE_BYTEMASK_0x01_CELL));
             series = SER(
@@ -185,37 +190,35 @@ void Clonify(
                 )
             );
 
-            Freeze_Array_Shallow(ARR(series));
+            // Despite their immutability, new instances of PATH! need to be
+            // able to bind their word components differently from the path
+            // they are copied from...which requires new cells.  (Also any
+            // nested blocks or groups need to be copied deeply.)
+            //
+            if (ANY_PATH_KIND(kind))
+                Freeze_Array_Shallow(ARR(series));
 
             INIT_VAL_NODE(v, series);
             INIT_BINDING(v, UNBOUND);  // copying w/specifier makes specific
+            would_need_deep = true;
         }
-        else if (IS_SER_ARRAY(VAL_SERIES(v))) {
-            series = SER(
-                Copy_Array_At_Extra_Shallow(
-                    VAL_ARRAY(v),
-                    0,  // !!! what if VAL_INDEX() is nonzero?
-                    VAL_SPECIFIER(v),
-                    0,
-                    NODE_FLAG_MANAGED
-                )
-            );
-
-            INIT_VAL_NODE(v, series);
-            INIT_BINDING(v, UNBOUND);  // copying w/specifier makes specific
-        }
-        else {
+        else if (ANY_SERIES_KIND(heart)) {
             series = Copy_Series_Core(
                 VAL_SERIES(v),
                 NODE_FLAG_MANAGED
             );
             INIT_VAL_NODE(v, series);
+            would_need_deep = false;
+        }
+        else {
+            series = nullptr;
+            would_need_deep = false;
         }
 
         // If we're going to copy deeply, we go back over the shallow
         // copied series and "clonify" the values in it.
         //
-        if (deep_types & FLAGIT_KIND(kind) & TS_ARRAYS_OBJ) {
+        if (would_need_deep and (deep_types & FLAGIT_KIND(kind))) {
             REBVAL *sub = SPECIFIC(ARR_HEAD(ARR(series)));
             for (; NOT_END(sub); ++sub)
                 Clonify(sub, flags, deep_types);

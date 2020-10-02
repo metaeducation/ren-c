@@ -1362,11 +1362,10 @@ bool Get_If_Word_Or_Path_Throws(
         if (MIRROR_BYTE(v) == REB_WORD)  // e.g. `/`
             goto get_as_word;
 
-        REBSPC *derived = Derive_Specifier(specifier, v);
         if (Eval_Path_Throws_Core(
             out,
-            ARR(VAL_SEQUENCE_NODE(v)),  // !!! may not be array based
-            derived,
+            v,  // !!! may not be array based
+            specifier,
             NULL,  // `setval`: null means don't treat as SET-PATH!
             EVAL_MASK_DEFAULT | (push_refinements
                 ? EVAL_FLAG_PUSH_PATH_REFINES  // pushed in reverse order

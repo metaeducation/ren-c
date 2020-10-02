@@ -45,9 +45,16 @@ void Bind_Values_Inner_Loop(
 ){
     for (; NOT_END(head); ++head) {
         REBCEL(const*) cell = VAL_UNESCAPED(head); // may equal v, e.g. `\x`
-        enum Reb_Kind kind = CELL_KIND(cell);
+        enum Reb_Kind kind = CELL_TYPE(cell);
+        UNUSED(kind);  // !!! TBD: be influenced by KIND vs HEART?
 
-        REBU64 type_bit = FLAGIT_KIND(kind);
+        enum Reb_Kind heart = CELL_HEART(cell);
+
+        // !!! Review use of `heart` bit here, e.g. when a REB_PATH has an
+        // REB_BLOCK heart, why would it be bound?  Problem is that if we
+        // do not bind `/` when REB_WORD is asked then `/` won't be bound.
+        //
+        REBU64 type_bit = FLAGIT_KIND(heart);
 
         if (type_bit & bind_types) {
             REBSTR *canon = VAL_WORD_CANON(cell);
@@ -80,19 +87,10 @@ void Bind_Values_Inner_Loop(
             }
         }
         else if (flags & BIND_DEEP) {
-            if (ANY_ARRAY_KIND(kind))
+            if (ANY_ARRAY_KIND(heart))
                 Bind_Values_Inner_Loop(
                     binder,
                     VAL_ARRAY_AT_MUTABLE_HACK(CELL_TO_VAL(cell)),
-                    context,
-                    bind_types,
-                    add_midstream_types,
-                    flags
-                );
-            else if (ANY_SEQUENCE_KIND(kind))
-                Bind_Values_Inner_Loop(
-                    binder,   // !!! v-- maybe not ARR
-                    ARR_HEAD(ARR(VAL_SEQUENCE_NODE(cell))),
                     context,
                     bind_types,
                     add_midstream_types,
@@ -166,19 +164,15 @@ void Unbind_Values_Core(RELVAL *head, REBCTX *context, bool deep)
         // damage shared bindings; review more efficient means of doing this.
         //
         REBLEN num_quotes = Dequotify(v);
-        enum Reb_Kind kind = CELL_KIND(cast(REBCEL(const*), v));
+        enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), v));
 
         if (
-            ANY_WORD_KIND(kind)
+            ANY_WORD_KIND(heart)
             and (not context or VAL_BINDING(v) == NOD(context))
         ){
             Unbind_Any_Word(v);
         }
-        else if (ANY_SEQUENCE_KIND(kind) and deep) {  // v-- may not be ARR()
-            REBNOD *n = m_cast(REBNOD*, VAL_SEQUENCE_NODE(v));
-            Unbind_Values_Core(ARR_HEAD(ARR(n)), context, true);
-        }
-        else if (ANY_ARRAY_KIND(kind) and deep)
+        else if (ANY_ARRAY_KIND(heart) and deep)
             Unbind_Values_Core(VAL_ARRAY_AT_MUTABLE_HACK(v), context, true);
 
         Quotify(v, num_quotes);
@@ -285,8 +279,10 @@ static void Clonify_And_Bind_Relative(
     REBLEN num_quotes = VAL_NUM_QUOTES(v);
     Dequotify(v);
 
-    enum Reb_Kind kind = CELL_KIND(cast(REBCEL(const*), v));
+    enum Reb_Kind kind = cast(enum Reb_Kind, KIND_BYTE_UNCHECKED(v));
     assert(kind < REB_MAX_PLUS_MAX);  // we dequoted it (pseudotypes ok)
+
+    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), v));
 
     if (deep_types & FLAGIT_KIND(kind) & TS_SERIES_OBJ) {
         //
@@ -294,36 +290,20 @@ static void Clonify_And_Bind_Relative(
         //
         REBSER *series;
         const RELVAL *sub_src;
-        if (ANY_CONTEXT_KIND(kind)) {
+        
+        bool would_need_deep;
+
+        if (ANY_CONTEXT_KIND(heart)) {
             INIT_VAL_CONTEXT_VARLIST(
                 v,
                 CTX_VARLIST(Copy_Context_Shallow_Managed(VAL_CONTEXT(v)))
             );
             series = SER(CTX_VARLIST(VAL_CONTEXT(v)));
             sub_src = BLANK_VALUE;  // don't try to look for LETs
+
+            would_need_deep = true;
         }
-        else if (ANY_PATH_KIND(kind)) {
-            REBNOD *n = VAL_NODE(v);
-            assert(not (FIRST_BYTE(n) & NODE_BYTEMASK_0x01_CELL));  // TBD
-
-            series = SER(
-                Copy_Array_At_Extra_Shallow(
-                    ARR(n),
-                    0,
-                    VAL_SPECIFIER(v),
-                    0,
-                    NODE_FLAG_MANAGED
-                )
-            );
-
-            INIT_VAL_NODE(v, series);  // copies args
-            INIT_BINDING(v, UNBOUND);  // copied w/specifier--not relative
-
-            sub_src = ARR_HEAD(ARR(series));  // !!! look for LETs (?)
-
-            Freeze_Array_Shallow(ARR(series));
-        }
-        else if (IS_SER_ARRAY(VAL_SERIES(v))) {
+        else if (ANY_ARRAY_KIND(heart)) {
             series = SER(
                 Copy_Array_At_Extra_Shallow(
                     VAL_ARRAY(v),
@@ -338,20 +318,35 @@ static void Clonify_And_Bind_Relative(
             INIT_BINDING(v, UNBOUND);  // copied w/specifier--not relative
 
             sub_src = VAL_ARRAY_AT(v);  // look for LETs
+
+            // See notes in Clonify()...need to copy immutable paths so that
+            // binding pointers can be changed in the "immutable" copy.
+            //
+            if (ANY_PATH_KIND(kind))
+                Freeze_Array_Shallow(ARR(series));
+
+            would_need_deep = true;
         }
-        else {
+        else if (ANY_SERIES_KIND(heart)) {
             series = Copy_Series_Core(
                 VAL_SERIES(v),
                 NODE_FLAG_MANAGED
             );
             INIT_VAL_NODE(v, series);
             sub_src = BLANK_VALUE;  // don't try to look for LETs
+
+            would_need_deep = false;
+        }
+        else {
+            would_need_deep = false;
+            sub_src = nullptr;
+            series = nullptr;
         }
 
         // If we're going to copy deeply, we go back over the shallow
         // copied series and "clonify" the values in it.
         //
-        if (deep_types & FLAGIT_KIND(kind) & TS_ARRAYS_OBJ) {
+        if (would_need_deep and (deep_types & FLAGIT_KIND(kind))) {
             REBVAL *sub = SPECIFIC(ARR_HEAD(ARR(series)));
             for (; NOT_END(sub); ++sub, ++sub_src)
                 Clonify_And_Bind_Relative(
@@ -374,7 +369,9 @@ static void Clonify_And_Bind_Relative(
             v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
 
-    if (FLAGIT_KIND(kind) & bind_types) {
+    // !!! Review use of `heart` here, in terms of meaning
+    //
+    if (FLAGIT_KIND(heart) & bind_types) {
         REBINT n = Get_Binder_Index_Else_0(binder, VAL_WORD_CANON(v));
         if (n != 0) {
             //
@@ -393,7 +390,7 @@ static void Clonify_And_Bind_Relative(
             INIT_WORD_INDEX_UNCHECKED(v, n);
         }
     }
-    else if (ANY_ARRAY_OR_PATH_KIND(kind)) {
+    else if (ANY_ARRAY_OR_PATH_KIND(heart)) {
 
         // !!! Technically speaking it is not necessary for an array to
         // be marked relative if it doesn't contain any relative words

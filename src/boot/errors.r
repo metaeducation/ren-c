@@ -107,6 +107,7 @@ Script: [
     ambiguous-infix:    {Ambiguous infix expression--use GROUP! to clarify}
     literal-left-path:  {Use >- to pass literal left PATH! parameters right}
 
+    sequence-too-short: {ANY-PATH! and ANY-TUPLE! must have more than 2 items}
     bad-sequence-item:  [{Value is not a valid ANY-SEQUENCE! element:} :arg1]
     cant-decorate-type: [{Cannot apply `:` or `@` decoration to:} :arg1]
 

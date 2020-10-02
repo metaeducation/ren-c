@@ -28,15 +28,11 @@
 //
 //  CT_Array: C
 //
-// "Compare Type" dispatcher for the following types: (list here to help
-// text searches)
+// "Compare Type" dispatcher for arrays.
 //
-//     CT_Block()
-//     CT_Group()
-//     CT_Path()
-//     CT_Set_Path()
-//     CT_Get_Path()
-//     CT_Lit_Path()
+// Note this routine is delegated to when something like a PATH! is using an
+// array for its implementation, so ANY_ARRAY(CELL_TYPE()) may not be true...
+// just ANY_ARRAY(CELL_HEART()).
 //
 REBINT CT_Array(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {

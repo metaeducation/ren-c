@@ -73,15 +73,26 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
         }
     }
 
-    RESET_CELL(out, kind, CELL_FLAG_FIRST_IS_NODE);
-    INIT_VAL_NODE(out, a);
-    // !!! spot where index would be might be used for other things like
-    // counting blanks at head and tail, could also be an index if aliased
-    // arrays not at the head are decided to be a good thing.
-    INIT_BINDING(out, binding);
+    // Since sequences are always at their head, it might seem the index
+    // could be storage space for other forms of compaction (like counting
+    // blanks at head and tail).  Otherwise it just sits at zero.
+    //
+    // One *big* reason to not use the space is because that creates a new
+    // basic type that would require special handling in things like binding
+    // code, vs. just running the paths for blocks.  A smaller reason not to
+    // do it is that leaving it as an index allows for aliasing BLOCK! as
+    // PATH! from non-head positions.
+
+    Init_Any_Series_At_Core(out, REB_BLOCK, SER(a), index, binding);
+    mutable_KIND_BYTE(out) = kind;
+    assert(MIRROR_BYTE(out) == REB_BLOCK);
 
     assert(not (  // v-- also should never be initialized like this
         ARR_LEN(a) == 2 and IS_BLANK(ARR_AT(a, 0)) and IS_BLANK(ARR_AT(a, 1))
+    ));
+
+    assert(not (  // v-- IS_REFINEMENT() would not detect this representation
+        ARR_LEN(a) == 2 and IS_BLANK(ARR_AT(a, 0)) and IS_WORD(ARR_AT(a, 1))
     ));
 
     return SPECIFIC(out);
@@ -344,12 +355,43 @@ bool Next_Path_Throws(REBPVS *pvs)
 //
 bool Eval_Path_Throws_Core(
     REBVAL *out, // if opt_setval, this is only used to return a thrown value
-    const REBARR *array,
-    REBSPC *specifier,
+    const RELVAL *any_path,
+    REBSPC *any_path_specifier,
     const REBVAL *opt_setval, // Note: may be the same as out!
     REBFLGS flags
 ){
     REBLEN index = 0;
+
+    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), any_path));
+    
+    if (heart == REB_CHAR) {
+        Move_Value(out, SPECIFIC(any_path));  // byte compressed (`1.2.3.4`)
+        return false;
+    }
+
+    if (heart == REB_WORD) {
+        if (
+            VAL_WORD_SPELLING(any_path) == PG_Slash_1_Canon
+            or VAL_WORD_SPELLING(any_path) == PG_Dot_1_Canon
+        ){
+            assert(false);
+            // needs special handling as if it were a WORD!
+            return false;
+        }
+
+        Derelativize(out, any_path, any_path_specifier);  // like REFINEMENT!
+        return false;  // didn't throw
+    }
+
+    assert(heart == REB_BLOCK);
+
+    // We extract the array.  Note that if the input value was a REBVAL* it
+    // may have been "specific" because it was coupled with a specifier that
+    // was passed in, but to get the specifier of the embedded array we have
+    // to use Derive_Specifier().
+    //
+    const REBARR *array = VAL_ARRAY(any_path);
+    REBSPC *specifier = Derive_Specifier(any_path_specifier, any_path);
 
     while (KIND_BYTE(ARR_AT(array, index)) == REB_BLANK)
         ++index; // pre-feed any blanks
@@ -882,8 +924,11 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     if (ANY_PATH_KIND(arg_kind)) {  // e.g. `to set-path! 'a/b/c`
         assert(arg_kind != VAL_TYPE(arg));  // TO should have called COPY
 
-        Move_Value(out, arg);  // don't need to copy, paths are immutable
-        mutable_KIND_BYTE(out) = mutable_MIRROR_BYTE(out) = arg_kind;
+        // !!! If we don't copy an array, we don't get a new form to use for
+        // new bindings in lookups.  Review!
+        //
+        Move_Value(out, arg);
+        mutable_KIND_BYTE(out) = arg_kind;
         return out;
     }
 
@@ -947,14 +992,23 @@ REBINT CT_Sequence(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
     if (MIRROR_BYTE(a) == REB_WORD and MIRROR_BYTE(b) == REB_WORD)
         return CT_Word(a, b, strict);
-    else if (MIRROR_BYTE(a) != REB_WORD and MIRROR_BYTE(b) != REB_WORD)
-        return Compare_Arrays_At_Indexes(
-            ARR(VAL_SEQUENCE_NODE(a)),
-            0,
-            ARR(VAL_SEQUENCE_NODE(b)),
-            0,
-            strict
+    else if (MIRROR_BYTE(a) == REB_BLOCK and MIRROR_BYTE(b) == REB_BLOCK)
+        return CT_Array(a, b, strict);
+    else if (MIRROR_BYTE(a) == REB_CHAR and MIRROR_BYTE(b) == REB_CHAR) {
+        REBLEN a_len = VAL_SEQUENCE_LEN(a);
+        int diff = cast(int, a_len) - VAL_SEQUENCE_LEN(b);
+        if (diff != 0)
+            return diff > 0 ? 1 : -1;
+
+        int cmp = memcmp(
+            &PAYLOAD(Bytes, a).common,
+            &PAYLOAD(Bytes, b).common,
+            a_len  // same as b_len at this point
         );
+        if (cmp == 0)
+            return 0;
+        return cmp > 0 ? 1 : -1;
+    }
     else
         return -1;  // !!! what is the right answer here?
 }

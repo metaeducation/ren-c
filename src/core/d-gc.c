@@ -51,12 +51,12 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         assert(Is_Marked(PAYLOAD(Any, v).first.node));
         return;
     }
-    enum Reb_Kind kind = CELL_KIND_UNCHECKED(cast(REBCEL(const*), v));
-    assert(kind == MIRROR_BYTE(v));
+
+    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), v));
 
     REBNOD *binding;
     if (
-        IS_BINDABLE_KIND(kind)
+        IS_BINDABLE_KIND(heart)
         and (binding = VAL_BINDING(v))
         and NOT_SERIES_INFO(binding, INACCESSIBLE)
     ){
@@ -98,7 +98,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
     // Since this is debug-only, it's not as important any more.  But it
     // still can speed things up to go in order.
     //
-    switch (kind) {
+    switch (heart) {
       case REB_0_END:
       case REB_NULLED:
       case REB_VOID:
@@ -263,17 +263,17 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
         REBACT *phase = ACT(PAYLOAD(Any, v).second.node);
         if (phase) {
-            assert(kind == REB_FRAME); // may be heap-based frame
+            assert(heart == REB_FRAME); // may be heap-based frame
             assert(Is_Marked(phase));
         }
         else
-            assert(kind != REB_FRAME); // phase if-and-only-if frame
+            assert(heart != REB_FRAME); // phase if-and-only-if frame
 
         if (GET_SERIES_INFO(context, INACCESSIBLE))
             break;
 
         const REBVAL *archetype = CTX_ARCHETYPE(context);
-        assert(CTX_TYPE(context) == kind);
+        assert(CTX_TYPE(context) == heart);
         assert(VAL_CONTEXT(archetype) == context);
 
         // Note: for VAL_CONTEXT_FRAME, the FRM_CALL is either on the stack
@@ -432,6 +432,25 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
       default:
         panic (v);
+    }
+
+    enum Reb_Kind kind = CELL_TYPE(cast(REBCEL(const*), v));
+    switch (kind) {
+      case REB_TUPLE:
+      case REB_SET_TUPLE:
+      case REB_GET_TUPLE:
+      case REB_SYM_TUPLE:
+      case REB_PATH:
+      case REB_SET_PATH:
+      case REB_GET_PATH:
+      case REB_SYM_PATH:
+         assert(heart == REB_CHAR or heart == REB_WORD or heart == REB_BLOCK);
+         break;
+
+      default:
+        if (kind < REB_MAX)  // psuedotypes for parameter are actually typeset
+           assert(kind == heart);
+        break;
     }
 }
 

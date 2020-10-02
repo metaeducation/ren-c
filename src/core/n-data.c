@@ -520,7 +520,7 @@ inline static void Get_Var_May_Fail(
     bool hard  // should GROUP!s in paths not be evaluated
 ){
     REBCEL(const*) source = VAL_UNESCAPED(source_orig);
-    enum Reb_Kind kind = CELL_KIND(source);
+    enum Reb_Kind kind = CELL_TYPE(source);
 
     if (ANY_WORD_KIND(kind)) {
         Move_Value(out, Lookup_Word_May_Fail(source, specifier));
@@ -533,8 +533,8 @@ inline static void Get_Var_May_Fail(
         //
         if (Eval_Path_Throws_Core(
             out,
-            ARR(VAL_SEQUENCE_NODE(source)),  // !!! may not be array-based
-            Derive_Specifier(specifier, source),
+            CELL_TO_VAL(source),
+            specifier,
             NULL, // not requesting value to set means it's a get
             hard ? EVAL_FLAG_PATH_HARD_QUOTE : EVAL_FLAG_NO_PATH_GROUPS
         )){
@@ -672,8 +672,8 @@ void Set_Var_May_Fail(
         DECLARE_LOCAL (dummy);
         if (Eval_Path_Throws_Core(
             dummy,
-            ARR(VAL_SEQUENCE_NODE(target)),  // !!! may not be array-based
-            Derive_Specifier(target_specifier, target),
+            CELL_TO_VAL(target),
+            target_specifier,
             specific,
             flags
         )){
@@ -1179,10 +1179,10 @@ REBNATIVE(as)
                 }
                 break;
 
-              case REB_PATH:  // !!! should be REB_BLOCK probably
-                mutable_KIND_BYTE(v) = mutable_MIRROR_BYTE(v) = REB_BLOCK;
+              case REB_BLOCK:
+                mutable_KIND_BYTE(v) = REB_BLOCK;
                 assert(Is_Array_Frozen_Shallow(VAL_ARRAY(v)));
-                VAL_INDEX(v) = 0;  // must be REB_BLOCK to allow this
+                assert(VAL_INDEX(v) == 0);
                 break;
 
               default:

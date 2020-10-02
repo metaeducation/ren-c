@@ -290,11 +290,15 @@ inline static REBCEL(const*) VAL_UNESCAPED(const RELVAL *v);
 #if defined(NDEBUG)
     #define CELL_KIND CELL_KIND_UNCHECKED
     #define CELL_TYPE CELL_TYPE_UNCHECKED
+    #define CELL_HEART CELL_KIND_UNCHECKED
 #else
     #define CELL_TYPE CELL_TYPE_UNCHECKED  // develop this more rigorously
 
     #if !defined(CPLUSPLUS_11)
         #define CELL_KIND(cell) \
+            cast(enum Reb_Kind, MIRROR_BYTE(cast(const RELVAL*, cell)))
+
+        #define CELL_HEART(cell) \
             cast(enum Reb_Kind, MIRROR_BYTE(cast(const RELVAL*, cell)))
     #else
         inline static enum Reb_Kind CELL_KIND(REBCEL(const*) cell) {
@@ -305,6 +309,18 @@ inline static REBCEL(const*) VAL_UNESCAPED(const RELVAL *v);
         // it may be REB_QUOTED and we need to call VAL_UNESCAPED() first!
         //
         inline static enum Reb_Kind CELL_KIND(const RELVAL *v) = delete;
+
+        // !!! New name for mirror byte is "heart byte" (WIP)
+
+        inline static enum Reb_Kind CELL_HEART(REBCEL(const*) cell) {
+            return cast(enum Reb_Kind, MIRROR_BYTE(cast(const RELVAL*, cell)));
+        }
+
+        // Don't want to ask an ordinary value cell its kind modulo 64 is;
+        // it may be REB_QUOTED and we need to call VAL_UNESCAPED() first!
+        //
+        inline static enum Reb_Kind CELL_HEART(const RELVAL *v) = delete;
+
     #endif
 #endif
 

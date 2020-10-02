@@ -464,35 +464,14 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, bool strict)
     // This code wants to modify the value, but we can't modify the
     // embedded values in highly-escaped literals.  Move the data out.
 
-    enum Reb_Kind ta;
-    if (KIND_BYTE(a) == REB_QUOTED) { // 4 or more quote levels
-        REBCEL(const*) acell = VAL_UNESCAPED(a);
-        Move_Value_Header(a, cast(const RELVAL*, acell));
-        a->extra = acell->extra;
-        a->payload = acell->payload;
-        ta = CELL_KIND(acell);
-    }
-    else {
-        mutable_KIND_BYTE(a)
-            = ta
-            = CELL_KIND_UNCHECKED(a); // quoted or not
-        assert(ta == MIRROR_BYTE(a));
-    }
+    Dequotify(a);
+    Dequotify(b);
 
-    enum Reb_Kind tb;
-    if (KIND_BYTE(b) == REB_QUOTED) { // 4 or more quote levels
-        REBCEL(const*) bcell = VAL_UNESCAPED(b);
-        Move_Value_Header(b, cast(const RELVAL*, bcell));
-        b->extra = bcell->extra;
-        b->payload = bcell->payload;
-        tb = CELL_KIND(bcell);
-    }
-    else {
-        mutable_KIND_BYTE(b)
-            = tb
-            = CELL_KIND_UNCHECKED(b); // quoted or not
-        assert(tb == MIRROR_BYTE(b));
-    }
+    enum Reb_Kind ta = cast(enum Reb_Kind, KIND_BYTE_UNCHECKED(a));
+    enum Reb_Kind tb = cast(enum Reb_Kind, KIND_BYTE_UNCHECKED(b));
+
+    assert(ta < REB_MAX);  // we dequoted it
+    assert(tb < REB_MAX);  // we dequoted this as well
 
     if (ta != tb) {
         //

@@ -1321,11 +1321,9 @@ REBNATIVE(default)
             }
         }
 
-        const REBNOD *n = VAL_SEQUENCE_NODE(target);
-
         if (Eval_Path_Throws_Core(
             D_OUT,
-            ARR(n),  // !!! May not be array-based
+            target,  // !!! May not be array-based
             VAL_SPECIFIER(target),
             NULL, // not requesting value to set means it's a get
             EVAL_FLAG_PATH_HARD_QUOTE // pre-COMPOSE'd, so GROUP!s are literal
@@ -1352,7 +1350,7 @@ REBNATIVE(default)
         DECLARE_LOCAL (dummy);
         if (Eval_Path_Throws_Core(
             dummy,
-            ARR(VAL_SEQUENCE_NODE(target)),  // !!! may not be array-based
+            target,  // !!! may not be array-based
             VAL_SPECIFIER(target),
             D_OUT,
             EVAL_FLAG_PATH_HARD_QUOTE  // precomposed, no double evaluating

@@ -209,9 +209,9 @@ REB_R Compose_To_Stack_Core(
 
     for (; NOT_END(*v); Fetch_Next_Forget_Lookback(f)) {
         REBCEL(const*) cell = VAL_UNESCAPED(*v);
-        enum Reb_Kind kind = CELL_KIND(cell); // notice `''(...)`
+        enum Reb_Kind heart = CELL_HEART(cell); // notice `''(...)`
 
-        if (not ANY_ARRAY_OR_PATH_KIND(kind)) { // won't substitute/recurse
+        if (not ANY_ARRAY_OR_PATH_KIND(heart)) { // won't substitute/recurse
             Derelativize(DS_PUSH(), *v, specifier); // keep newline flag
             continue;
         }
@@ -223,7 +223,7 @@ REB_R Compose_To_Stack_Core(
         REBSPC *match_specifier = nullptr;
         const RELVAL *match = nullptr;
 
-        if (not ANY_GROUP_KIND(kind)) {
+        if (not ANY_GROUP_KIND(heart)) {
             //
             // Don't compose at this level, but may need to walk deeply to
             // find compositions inside it if /DEEP and it's an array
@@ -270,7 +270,7 @@ REB_R Compose_To_Stack_Core(
             } else
                 insert = IS_NULLED(out) ? nullptr : out;
 
-            if (insert == nullptr and kind == REB_GROUP and quotes == 0) {
+            if (insert == nullptr and heart == REB_GROUP and quotes == 0) {
                 //
                 // compose [(unquoted "nulls *vanish*!" null)] => []
                 // compose [(elide "so do 'empty' composes")] => []
@@ -285,7 +285,7 @@ REB_R Compose_To_Stack_Core(
 
                 // compose [(([a b])) merges] => [a b merges]
 
-                if (quotes != 0 or kind != REB_GROUP)
+                if (quotes != 0 or heart != REB_GROUP)
                     fail ("Currently can only splice plain unquoted GROUP!s");
 
                 const RELVAL *push = VAL_ARRAY_AT(insert);
@@ -320,14 +320,14 @@ REB_R Compose_To_Stack_Core(
                 else
                     Move_Value(DS_PUSH(), insert);  // can't stack eval direct
 
-                if (kind == REB_SET_GROUP)
+                if (heart == REB_SET_GROUP)
                     Setify(DS_TOP);
-                else if (kind == REB_GET_GROUP)
+                else if (heart == REB_GET_GROUP)
                     Getify(DS_TOP);
-                else if (kind == REB_SYM_GROUP)
+                else if (heart == REB_SYM_GROUP)
                     Symify(DS_TOP);
                 else
-                    assert(kind == REB_GROUP);
+                    assert(heart == REB_GROUP);
 
                 Quotify(DS_TOP, quotes);  // match original quotes
 
@@ -379,7 +379,8 @@ REB_R Compose_To_Stack_Core(
                 continue;
             }
 
-            if (ANY_PATH_KIND(kind)) {
+            enum Reb_Kind kind = CELL_TYPE(cell);
+            if (ANY_SEQUENCE_KIND(kind)) {
                 DECLARE_LOCAL (temp);
                 if (not Try_Pop_Path_Or_Element_Or_Nulled(
                     temp,

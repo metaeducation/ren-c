@@ -84,8 +84,8 @@ inline static bool Get_Path_Throws_Core(
 ){
     return Eval_Path_Throws_Core(
         out,
-        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
-        Derive_Specifier(specifier, any_path),
+        any_path,  // !!! may not be array-based
+        specifier,
         NULL, // not requesting value to set means it's a get
         0 // Name contains Get_Path_Throws() so it shouldn't be neutral
     );
@@ -101,8 +101,8 @@ inline static void Get_Path_Core(
 
     if (Eval_Path_Throws_Core(
         out,
-        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
-        Derive_Specifier(specifier, any_path),
+        any_path,  // !!! may not be array-based
+        specifier,
         NULL, // not requesting value to set means it's a get
         EVAL_FLAG_NO_PATH_GROUPS
     )){
@@ -121,8 +121,8 @@ inline static bool Set_Path_Throws_Core(
 
     return Eval_Path_Throws_Core(
         out,
-        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
-        Derive_Specifier(specifier, any_path),
+        any_path,  // !!! may not be array-based
+        specifier,
         setval,
         0 // Name contains Set_Path_Throws() so it shouldn't be neutral
     );
@@ -145,8 +145,8 @@ inline static void Set_Path_Core(  // !!! Appears to be unused.  Unnecessary?
 
     if (Eval_Path_Throws_Core(
         out,
-        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
-        Derive_Specifier(specifier, any_path),
+        any_path,  // !!! may not be array-based
+        specifier,
         setval,
         flags
     )){

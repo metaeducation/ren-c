@@ -58,6 +58,16 @@
 // than a plain WORD!.  There are also optimizations for encoding short
 // numeric sequences like IP addresses or colors into cells.
 //
+//=//// NOTES /////////////////////////////////////////////////////////////=//
+//
+// * All ANY-PATH! and ANY-TUPLE! types have an implementation type which
+//   is stored in the MIRROR_BYTE().  This says which actual cell format is
+//   being used for the format of the cell:
+//
+//       REB_CHAR has raw bytes in the payload (similar to an R3-Alpha TUPLE!)
+//       REB_WORD is used for refinements and the `/` and '.' cases
+//       REB_BLOCK is when the path is stored fully in an array.
+//
 
 
 // The Try_Init_Any_Sequence_XXX variants will return nullptr if any of the
@@ -379,31 +389,23 @@ inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
 inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
 
-    if (MIRROR_BYTE(sequence) == REB_WORD)
-        return 2;  // simulated 2-blanks sequence
-
-    if (MIRROR_BYTE(sequence) == REB_CHAR)
+    switch (MIRROR_BYTE(sequence)) {
+      case REB_CHAR:
         return EXTRA(Any, sequence).u;  // cell-packed byte-oriented sequence
 
-    REBARR *a = ARR(VAL_NODE(sequence));
-    assert(ARR_LEN(a) >= 2);
-    assert(Is_Array_Frozen_Shallow(a));
-    return ARR_LEN(a);
-}
+      case REB_WORD:
+        return 2;  // simulated 2-blanks sequence, or compressed refinement
 
-// !!! This is intended to return either a pairing node or an array node.
-// If it is a pairing it will not be terminated.  Either way, it usually
-// only represents the non-BLANK! contents of the path...blank contents are
-// compressed by means of the second payload slot, which counts the number
-// of blanks at the head and the tail.
-//
-inline static const REBNOD *VAL_SEQUENCE_NODE(REBCEL(const*) sequence) {
-    assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
-    assert(ANY_SEQUENCE_KIND(MIRROR_BYTE(sequence)));
+      case REB_BLOCK: {
+        REBARR *a = ARR(VAL_NODE(sequence));
+        assert(ARR_LEN(a) >= 2);
+        assert(Is_Array_Frozen_Shallow(a));
+        return ARR_LEN(a); }
 
-    const REBNOD *n = VAL_NODE(sequence);
-    assert(not (FIRST_BYTE(n) & NODE_BYTEMASK_0x01_CELL));  // !!! not yet...
-    return n;
+      default:
+        assert(false);
+        DEAD_END;
+    }
 }
 
 // Paths may not always be implemented as arrays, so this mechanism needs to
@@ -423,7 +425,12 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
     enum Reb_Kind kind = CELL_TYPE(sequence);  // Not *CELL_KIND*, may be word
     assert(ANY_SEQUENCE_KIND(kind));
 
-    if (MIRROR_BYTE(sequence) == REB_WORD) {
+    switch (MIRROR_BYTE(sequence)) {
+      case REB_CHAR:
+        assert(n < EXTRA(Any, sequence).u);
+        return Init_Integer(store, PAYLOAD(Bytes, sequence).common[n]);
+
+      case REB_WORD: {
         assert(n < 2);
  
         if (
@@ -439,18 +446,18 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
         //
         Blit_Cell(store, CELL_TO_VAL(sequence));
         mutable_KIND_BYTE(store) = REB_WORD;
-        return store;
-    }
+        return store; }
 
-    if (MIRROR_BYTE(sequence) == REB_CHAR) {
-        assert(n < EXTRA(Any, sequence).u);
-        return Init_Integer(store, PAYLOAD(Bytes, sequence).common[n]);
-    }
+      case REB_BLOCK: {
+        REBARR *a = ARR(VAL_NODE(sequence));
+        assert(ARR_LEN(a) >= 2);
+        assert(Is_Array_Frozen_Shallow(a));
+        return ARR_AT(a, n); }
 
-    REBARR *a = ARR(VAL_NODE(sequence));
-    assert(ARR_LEN(a) >= 2);
-    assert(Is_Array_Frozen_Shallow(a));
-    return ARR_AT(a, n);
+      default:
+        assert(false);
+        DEAD_END;
+    }
 }
 
 inline static REBYTE VAL_SEQUENCE_BYTE_AT(REBCEL(const*) path, REBLEN n)
@@ -470,7 +477,7 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(const RELVAL *sequence)
       case REB_WORD:
         return SPECIFIED;
 
-      case REB_PATH:
+      case REB_BLOCK:
         return VAL_SPECIFIER(sequence);
 
       default:
