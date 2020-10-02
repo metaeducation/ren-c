@@ -565,9 +565,9 @@ REBCTX *Resolve_Path(const REBVAL *path, REBLEN *index_out)
     DECLARE_LOCAL (temp);
 
     REBLEN index = 0;
-    REBCEL(const*) picker = VAL_SEQUENCE_AT(temp, path, index);
+    const RELVAL *picker = VAL_SEQUENCE_AT(temp, path, index);
 
-    if (not ANY_WORD_KIND(CELL_KIND(picker)))
+    if (not ANY_WORD(picker))
         return nullptr;  // !!! only handles heads of paths that are ANY-WORD!
 
     const RELVAL *var = Lookup_Word_May_Fail(picker, VAL_SPECIFIER(path));
@@ -575,7 +575,7 @@ REBCTX *Resolve_Path(const REBVAL *path, REBLEN *index_out)
     ++index;
     picker = VAL_SEQUENCE_AT(temp, path, index);
 
-    while (ANY_CONTEXT(var) and REB_WORD == CELL_KIND(picker)) {
+    while (ANY_CONTEXT(var) and IS_WORD(picker)) {
         REBLEN i = Find_Canon_In_Context(
             VAL_CONTEXT(var), VAL_WORD_CANON(picker), false
         );
@@ -828,8 +828,8 @@ static void Push_Path_Recurses(REBCEL(const*) path, REBSPC *specifier)
     REBLEN len = VAL_SEQUENCE_LEN(path);
     REBLEN i;
     for (i = 0; i < len; ++i) {
-        REBCEL(const*) item = VAL_SEQUENCE_AT(temp, path, i);
-        if (CELL_KIND(item) == REB_PATH) {
+        const RELVAL *item = VAL_SEQUENCE_AT(temp, path, i);
+        if (IS_PATH(item)) {
             if (IS_SPECIFIC(item))
                 Push_Path_Recurses(item, VAL_SPECIFIER(item));
             else

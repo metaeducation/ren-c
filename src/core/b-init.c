@@ -399,11 +399,9 @@ REBVAL *Make_Native(
     }
     else {
         DECLARE_LOCAL (temp);
-        REBCEL(const*) first = VAL_SEQUENCE_AT(temp, *item, 0);
-        REBCEL(const*) second = VAL_SEQUENCE_AT(temp, *item, 1);
         if (
-            VAL_WORD_SYM(first) != SYM_NATIVE
-            or VAL_WORD_SYM(second) != SYM_BODY
+            VAL_WORD_SYM(VAL_SEQUENCE_AT(temp, *item, 0)) != SYM_NATIVE
+            or VAL_WORD_SYM(VAL_SEQUENCE_AT(temp, *item, 1)) != SYM_BODY
         ){
             panic (*item);
         }

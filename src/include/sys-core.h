@@ -442,7 +442,9 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #include "datatypes/sys-bitset.h"
 
 #include "sys-stack.h"
+
 #include "sys-bind.h" // needs DS_PUSH() and DS_TOP from %sys-stack.h
+#include "datatypes/sys-sequence.h"  // also needs DS_PUSH()
 
 #include "sys-roots.h"
 
@@ -461,8 +463,7 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #include "sys-eval.h"  // low-level single-step evaluation API
 #include "sys-do.h"  // higher-level evaluate-until-end API
 
-#include "datatypes/sys-path.h"
-#include "datatypes/sys-tuple.h"
+#include "sys-pick.h"
 
 
 // !!! The SECURE dialect and subsystem is now in an extension.  But

@@ -510,7 +510,7 @@ static inline void Flip_Series_To_White(const REBSER *s) {
 // Freezing and Locking
 //
 
-inline static void Freeze_Sequence(const REBSER *s) {  // there is no unfreeze
+inline static void Freeze_Series(const REBSER *s) {  // there is no unfreeze
     assert(not IS_SER_ARRAY(s)); // use Deep_Freeze_Array
     SET_SERIES_INFO(s, FROZEN_SHALLOW);
     SET_SERIES_INFO(s, FROZEN_DEEP);  // so generic deep frozen checks faster

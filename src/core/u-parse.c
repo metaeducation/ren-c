@@ -622,7 +622,7 @@ static REB_R Parse_One_Rule(
             or (rule_cell_kind == REB_INTEGER and VAL_NUM_QUOTES(rule) == 1)
         ){
             REBLEN len;
-            REBLEN index = Find_In_Any_Sequence(
+            REBLEN index = Find_In_Any_Series(
                 &len,
                 P_INPUT_VALUE,
                 P_POS,
@@ -938,7 +938,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (ANY_STRING(rule)) {
                     REBLEN len = VAL_LEN_AT(rule);
-                    REBLEN i = Find_In_Any_Sequence(
+                    REBLEN i = Find_In_Any_Series(
                         &len,
                         P_INPUT_VALUE,
                         pos,
@@ -1042,7 +1042,7 @@ static REBIXO To_Thru_Non_Block_Rule(
     //=//// PARSE INPUT IS A STRING OR BINARY, USE A FIND ROUTINE /////////=//
 
     REBLEN len;  // e.g. if a TAG!, match length includes < and >
-    REBLEN i = Find_In_Any_Sequence(
+    REBLEN i = Find_In_Any_Series(
         &len,
         P_INPUT_VALUE,
         P_POS,
@@ -1755,7 +1755,7 @@ REBNATIVE(subparse)
                             Init_Any_Series(
                                 Alloc_Tail_Array(P_COLLECTION),
                                 P_TYPE,
-                                Copy_Sequence_At_Len(
+                                Copy_Series_At_Len(
                                     P_INPUT,
                                     pos_before,
                                     pos_after - pos_before
@@ -2442,7 +2442,7 @@ REBNATIVE(subparse)
                     else if (IS_BINARY(P_INPUT_VALUE)) {
                         Init_Binary(  // R3-Alpha behavior (e.g. not AS TEXT!)
                             sink,
-                            Copy_Sequence_At_Len(P_INPUT, begin, count)
+                            Copy_Series_At_Len(P_INPUT, begin, count)
                         );
                     }
                     else {

@@ -1227,7 +1227,7 @@ REBNATIVE(as)
                     if (GET_CELL_FLAG(v, CONST))
                         fail (Error_Alias_Constrains_Raw());
 
-                Freeze_Sequence(VAL_SERIES(v));
+                Freeze_Series(VAL_SERIES(v));
 
                 REBSIZ utf8_size;
                 const REBYTE *utf8 = VAL_UTF8_AT(&utf8_size, v);
@@ -1268,7 +1268,7 @@ REBNATIVE(as)
                 // the more efficient reuse.
                 //
                 SET_SERIES_FLAG(bin, IS_STRING);  // might be set already
-                Freeze_Sequence(bin);
+                Freeze_Series(bin);
             }
 
             return Inherit_Const(Init_Any_Word(D_OUT, new_kind, str), v);

@@ -300,7 +300,7 @@ REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         for (i = 0; i < len; ++i)
             Derelativize(
                 DS_PUSH(),
-                CELL_TO_VAL(VAL_SEQUENCE_AT(out, arg, i)),
+                VAL_SEQUENCE_AT(out, arg, i),
                 VAL_SEQUENCE_SPECIFIER(arg)
             );
         return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));

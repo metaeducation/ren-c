@@ -537,7 +537,7 @@ void Force_Value_Frozen_Core(
             SET_SERIES_INFO(VAL_CONTEXT(cell), AUTO_LOCKED);
     }
     else if (ANY_SERIES_KIND(kind)) {
-        Freeze_Sequence(VAL_SERIES(cell));
+        Freeze_Series(VAL_SERIES(cell));
         UNUSED(deep);
         if (opt_locker)
             SET_SERIES_INFO(VAL_SERIES(cell), AUTO_LOCKED);

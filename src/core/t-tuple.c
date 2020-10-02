@@ -184,7 +184,7 @@ REBTYPE(Sequence)
     //
     REBYTE buf[MAX_TUPLE];
     REBLEN len = VAL_SEQUENCE_LEN(sequence);
-    bool all_byte_sized_ints = Try_Get_Sequence_Bytes(buf, sequence, len);
+    bool all_byte_sized_ints = Did_Get_Sequence_Bytes(buf, sequence, len);
     UNUSED(all_byte_sized_ints);
     REBYTE *vp = buf;
 
@@ -427,9 +427,9 @@ REB_R PD_Sequence(
         return nullptr;
 
     REBSPC *specifier = VAL_SEQUENCE_SPECIFIER(pvs->out);
-    REBCEL(const*) at = VAL_SEQUENCE_AT(FRM_SPARE(pvs), pvs->out, n);
+    const RELVAL *at = VAL_SEQUENCE_AT(FRM_SPARE(pvs), pvs->out, n);
 
-    return Derelativize(pvs->out, CELL_TO_VAL(at), specifier);
+    return Derelativize(pvs->out, at, specifier);
 }
 
 
@@ -454,8 +454,8 @@ void MF_Sequence(REB_MOLD *mo, REBCEL(const*) v, bool form)
     REBLEN len = VAL_SEQUENCE_LEN(v);
     REBLEN i;
     for (i = 0; i < len; ++i) {
-        REBCEL(const*) element = VAL_SEQUENCE_AT(temp, v, i);
-        enum Reb_Kind element_kind = CELL_KIND(element);
+        const RELVAL *element = VAL_SEQUENCE_AT(temp, v, i);
+        enum Reb_Kind element_kind = VAL_TYPE(element);
 
         if (first)
             first = false;  // don't print `.` or `/` before first element
@@ -463,7 +463,7 @@ void MF_Sequence(REB_MOLD *mo, REBCEL(const*) v, bool form)
             Append_Codepoint(mo->series, interstitial);
 
         if (element_kind != REB_BLANK) {  // no blank molding; implicit
-            Mold_Value(mo, CELL_TO_VAL(element));
+            Mold_Value(mo, element);
 
             // Note: Ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,
             // but any embedded BLOCK! or GROUP! which do have newlines in

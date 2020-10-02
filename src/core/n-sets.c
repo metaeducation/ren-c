@@ -93,7 +93,7 @@ REBSER *Make_Set_Operation_Series(
         // efficient.
         //
         REBSER *buffer = SER(Make_Array(i));
-        hret = Make_Hash_Sequence(i);   // allocated
+        hret = Make_Hash_Series(i);   // allocated
 
         // Optimization note: !!
         // This code could be optimized for small blocks by not hashing them

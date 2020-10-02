@@ -610,7 +610,7 @@ REBTYPE(Bitset)
 
       case SYM_COMPLEMENT:
       case SYM_NEGATE: {
-        REBBIN *copy = Copy_Sequence_Core(VAL_BITSET(v), NODE_FLAG_MANAGED);
+        REBBIN *copy = Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED);
         INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(D_OUT, copy); }
 
@@ -653,7 +653,7 @@ REBTYPE(Bitset)
         if (REF(part) or REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
 
-        REBBIN *copy = Copy_Sequence_Core(VAL_BITSET(v), NODE_FLAG_MANAGED);
+        REBBIN *copy = Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED);
         INIT_BITS_NOT(copy, BITS_NOT(VAL_BITSET(v)));
         return Init_Bitset(D_OUT, copy); }
 

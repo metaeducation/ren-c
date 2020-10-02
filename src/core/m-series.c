@@ -117,7 +117,7 @@ void Append_Values_Len(REBARR *a, const REBVAL *head, REBLEN len)
 
 
 //
-//  Copy_Sequence_Core: C
+//  Copy_Series_Core: C
 //
 // Copy underlying series that *isn't* an "array" (such as STRING!, BINARY!,
 // BITSET!, VECTOR!...).  Includes the terminator.
@@ -130,7 +130,7 @@ void Append_Values_Len(REBARR *a, const REBVAL *head, REBLEN len)
 // middle of a UTF-8 codepoint, hence a string series aliased as a binary
 // could only have its copy used in a BINARY!.
 //
-REBSER *Copy_Sequence_Core(const REBSER *s, REBFLGS flags)
+REBSER *Copy_Series_Core(const REBSER *s, REBFLGS flags)
 {
     assert(not IS_SER_ARRAY(s));
 
@@ -160,7 +160,7 @@ REBSER *Copy_Sequence_Core(const REBSER *s, REBFLGS flags)
 
 
 //
-//  Copy_Sequence_At_Len_Extra: C
+//  Copy_Series_At_Len_Extra: C
 //
 // Copy a subseries out of a series that is not an array.  Includes the
 // terminator for it.
@@ -173,7 +173,7 @@ REBSER *Copy_Sequence_Core(const REBSER *s, REBFLGS flags)
 // boundary.  This is a low-level routine, so the caller must fix up the
 // length information, or Init_Any_String() will complain.
 //
-REBSER *Copy_Sequence_At_Len_Extra(
+REBSER *Copy_Series_At_Len_Extra(
     const REBSER *s,
     REBLEN index,
     REBLEN len,

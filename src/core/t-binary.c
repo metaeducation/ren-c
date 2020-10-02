@@ -258,7 +258,7 @@ static REBSER *MAKE_TO_Binary_Common(const REBVAL *arg)
 
     case REB_BLOCK:
         Join_Binary_In_Byte_Buf(arg, -1);
-        return Copy_Sequence_Core(BYTE_BUF, SERIES_FLAGS_NONE);
+        return Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE);
 
     case REB_TUPLE:
         fail ("Revisit TUPLE! to BINARY!");
@@ -657,7 +657,7 @@ REBTYPE(Binary)
         else {
             Init_Binary(
                 D_OUT,
-                Copy_Sequence_At_Len(bin, VAL_INDEX(v), len)
+                Copy_Series_At_Len(bin, VAL_INDEX(v), len)
             );
         }
         Remove_Any_Series_Len(v, VAL_INDEX(v), len);  // bad UTF-8 alias fails
@@ -694,7 +694,7 @@ REBTYPE(Binary)
         return Init_Any_Series(
             D_OUT,
             REB_BINARY,
-            Copy_Sequence_At_Len(VAL_SERIES(v), VAL_INDEX(v), len)
+            Copy_Series_At_Len(VAL_SERIES(v), VAL_INDEX(v), len)
         ); }
 
     //-- Bitwise:

@@ -205,7 +205,7 @@ void Clonify(
             INIT_BINDING(v, UNBOUND);  // copying w/specifier makes specific
         }
         else {
-            series = Copy_Sequence_Core(
+            series = Copy_Series_Core(
                 VAL_SERIES(v),
                 NODE_FLAG_MANAGED
             );
@@ -403,8 +403,8 @@ void Uncolor(const RELVAL *v)
         REBLEN i;
         DECLARE_LOCAL (temp);
         for (i = 0; i < len; ++i) {
-            REBCEL(const*) item = VAL_SEQUENCE_AT(temp, v, i);
-            Uncolor(CELL_TO_VAL(item));
+            const RELVAL *item = VAL_SEQUENCE_AT(temp, v, i);
+            Uncolor(item);
         }
     }
     else if (IS_MAP(v))

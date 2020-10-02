@@ -638,14 +638,14 @@ REBLEN Next_Line(REBYTE **bin)
 
 
 //
-//  Find_In_Any_Sequence: C
+//  Find_In_Any_Series: C
 //
 // !!! In R3-Alpha, the code for PARSE shared some of the same subroutines in
 // %s-find.c as the FIND action.  However, there was still a lot of parallel
 // logic in their invocation.  This is an attempt to further factor the common
 // code, which hopefully will mean more consistency (as well as less code).
 //
-REBLEN Find_In_Any_Sequence(
+REBLEN Find_In_Any_Series(
     REBLEN *len,  // length of match (e.g. if pattern is a TAG!, includes <>)
     const RELVAL *any_series,  // VAL_INDEX() will be ignored...
     REBLEN index,  // ...overrides VAL_INDEX(any_series) for sliding searches
@@ -665,5 +665,5 @@ REBLEN Find_In_Any_Sequence(
             len, VAL_STRING(any_series), index, end, pattern, flags, skip
         );
 
-    fail ("Unknown sequence type for Find_In_Any_Sequence()");
+    fail ("Unknown series type for Find_In_Any_Series()");
 }

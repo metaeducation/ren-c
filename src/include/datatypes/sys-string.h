@@ -999,12 +999,12 @@ inline static REBINT First_Hash_Candidate_Slot(
 #define Copy_String_At(v) \
     Copy_String_At_Limit((v), -1)
 
-inline static REBSER *Copy_Sequence_At_Len(
+inline static REBSER *Copy_Series_At_Len(
     const REBSER *s,
     REBLEN index,
     REBLEN len
 ){
-    return Copy_Sequence_At_Len_Extra(s, index, len, 0);
+    return Copy_Series_At_Len_Extra(s, index, len, 0);
 }
 
 

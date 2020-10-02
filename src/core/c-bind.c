@@ -340,7 +340,7 @@ static void Clonify_And_Bind_Relative(
             sub_src = VAL_ARRAY_AT(v);  // look for LETs
         }
         else {
-            series = Copy_Sequence_Core(
+            series = Copy_Series_Core(
                 VAL_SERIES(v),
                 NODE_FLAG_MANAGED
             );

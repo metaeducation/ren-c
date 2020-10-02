@@ -1,13 +1,13 @@
 //
-//  File: %sys-path.h
-//  Summary: "Definition of Structures for Path Processing"
+//  File: %sys-sequence.h
+//  Summary: "Common Definitions for Immutable Interstitially-Delimited Lists"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2020 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,60 +20,47 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// When a path like `a/(b + c)/d` is evaluated, it moves in steps.  The
-// evaluative result of chaining the prior steps is offered as input to
-// the next step.  The path evaluator `Eval_Path_Throws` delegates steps to
-// type-specific "(P)ath (D)ispatchers" with names like PD_Context,
-// PD_Array, etc.
+// A "Sequence" is a constrained form of list of items, separated by an
+// interstitial delimiter.  The two basic forms are PATH! (separated by `/`)
+// and TUPLE! (separated by `.`)
 //
-// R3-Alpha left several open questions about the handling of paths.  One
-// of the trickiest regards the mechanics of how to use a SET-PATH! to
-// write data into native structures when more than one path step is
-// required.  For instance:
+//     append/dup/only   ; a 3-element PATH!
+//     192.168.0.1       ; a 4-element TUPLE!
 //
-//     >> gob/size
-//     == 10x20
+// Both forms are allowed to contain WORD!, INTEGER!, GROUP!, BLOCK!, TEXT!,
+// and TAG! elements.  They also come in SET-, GET-, and SYM- forms:
 //
-//     >> gob/size/x: 304
-//     >> gob/size
-//     == 10x304
+//     <abc>/(d e f)/[g h i]:   ; a 3-element SET-PATH!
+//     :foo.1.bar               ; a 3-element GET-TUPLE!
+//     @abc.(def)               ; a 2-element SYM-TUPLE!
 //
-// Because GOB! stores its size as packed bits that are not a full PAIR!,
-// the `gob/size` path dispatch can't give back a pointer to a REBVAL* to
-// which later writes will update the GOB!.  It can only give back a
-// temporary value built from its internal bits.  So workarounds are needed,
-// as they are for a similar situation in trying to set values inside of
-// C arrays in STRUCT!.
+// It is also legal to put BLANK! in sequence slots.  They will render
+// invisibly, allowing you to begin or terminate sequences with the delimiter:
 //
-// The way the workaround works involves allowing a SET-PATH! to run forward
-// and write into a temporary value.  Then in these cases the temporary
-// REBVAL is observed and used to write back into the native bits before the
-// SET-PATH! evaluation finishes.  This means that it's not currently
-// prohibited for the effect of a SET-PATH! to be writing into a temporary.
+//     .foo.bar     ; a 3-element tuple with BLANK! in the first slot
+//     1/2/3/:      ; a 4-element PATH! with BLANK! in the last slot
 //
-// Further, the `value` slot is writable...even when it is inside of the path
-// that is being dispatched:
+// PATH!s may contain TUPLE!s, but not vice versa.  This leads to unambiguous
+// interpretation of sequences:
 //
-//     >> code: compose [(make set-path! [12-Dec-2012 day]) 1]
-//     == [12-Dec-2012/day: 1]
+//     a.b.c/d.e.f    ; a 2-element PATH! containing 3-element TUPLEs
+//     a/b/c.d/e/f    ; a 5-element PATH! with 2-element TUPLE! in the middle
 //
-//     >> do code
+// Sequences must contain at least two elements.  They are also immutable,
+// so this constraint can be validated at creation time.  Reduced cases like
+// the 2-element path `/` and the 2-element tuple `.` have special handling
+// that allows them to store a hidden WORD! and binding, which lets them be
+// used in the evaluator as functions.
 //
-//     >> probe code
-//     [1-Dec-2012/day: 1]
-//
-// Ren-C has largely punted on resolving these particular questions in order
-// to look at "more interesting" ones.  However, names and functions have
-// been updated during investigation of what was being done.
+// The immutability of sequences allows important optimizations in the
+// implementation of sequences that minimize allocations.  For instance, the
+// 2-element PATH! of `/foo` can be specially encoded to use no more space
+// than a plain WORD!.  There are also optimizations for encoding short
+// numeric sequences like IP addresses or colors into cells.
 //
 
-// Paths cannot mechanically contain other paths, and allowing anything that
-// does not require delimiters would be bad as well (e.g. FILE! or URL!).
-// So some types must be ruled out.  There may be more types than in this
-// list which *could* work in theory (e.g. DECIMAL! or BINARY!), but they
-// would likely cause more trouble than they were worth.
-//
-// The Try_Init_Any_Path_XXX variants will return nullptr if any of the
+
+// The Try_Init_Any_Sequence_XXX variants will return nullptr if any of the
 // requested path elements are not valid.
 //
 inline static bool Is_Valid_Path_Element(const RELVAL *v) {
@@ -87,18 +74,24 @@ inline static bool Is_Valid_Path_Element(const RELVAL *v) {
         or IS_TAG(v);
 }
 
+
+//=//// UNCOMPRESSED ARRAY SEQUENCE FORM //////////////////////////////////=//
+
 #define Try_Init_Any_Sequence_Arraylike(v,k,a) \
     Try_Init_Any_Sequence_At_Arraylike_Core((v), (k), (a), 0, nullptr)
 
 #define Try_Init_Path_Arraylike(v,a) \
     Try_Init_Any_Sequence_Arraylike((v), REB_PATH, (a))
 
+
+//=//// ALL-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////////=//
+//
 // The `/` path maps to the 2-element array [_ _].  But to save on storage,
 // no array is used and paths of this form are always optimized into a single
 // cell.  Though the cell reports its VAL_TYPE() as a PATH!, it uses the
 // underlying contents of a word cell...which makes it pick up and carry
 // bindings.  That allows it to be bound to a function that runs divide.
-//
+
 inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
     if (ANY_PATH_KIND(kind))
         Init_Word(out, PG_Slash_1_Canon);
@@ -110,6 +103,9 @@ inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
     return SPECIFIC(out);
 }
 
+
+//=//// Leading-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////=//
+//
 // Ren-C has no REFINEMENT! datatype, so `/foo` is a PATH!, which generalizes
 // to where `/foo/bar` is a PATH! as well, etc.
 //
@@ -118,7 +114,7 @@ inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
 // encode when the type byte is a container for what is inside.  Use of this
 // routine to mutate cells into refinements marks places where that will
 // be applied.
-//
+
 inline static REBVAL *Try_Leading_Blank_Pathify(
     REBVAL *v,
     enum Reb_Kind kind
@@ -149,9 +145,35 @@ inline static REBVAL *Refinify(REBVAL *v) {
     return v;
 }
 
-// !!! Making paths out of two items is intended to be optimized as well,
-// using the "pairing" nodes.
+inline static bool IS_REFINEMENT_CELL(REBCEL(const*) v) {
+    if (CELL_KIND(v) != REB_PATH)
+        return false;
+
+    if (ANY_WORD_KIND(MIRROR_BYTE(v)))
+        return false;  // all refinements *should* be this form!
+
+/*    if (not (FIRST_BYTE(node) & NODE_BYTEMASK_0x01_CELL))
+        return false;  */  // should be only pairings
+
+    REBARR *a = ARR(VAL_NODE(v));
+    return IS_BLANK(ARR_AT(a, 0)) and IS_WORD(ARR_AT(a, 1));
+}
+
+inline static bool IS_REFINEMENT(const RELVAL *v)
+  { return IS_PATH(v) and IS_REFINEMENT_CELL(VAL_UNESCAPED(v)); }
+
+inline static REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
+    assert(IS_REFINEMENT_CELL(v));
+    return VAL_WORD_SPELLING(ARR_AT(ARR(VAL_NODE(v)), 1));
+}
+
+
+//=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
 //
+// !!! Making paths out of two items is intended to be optimized as well,
+// using the "pairing" nodes.  This should eliminate the need for a separate
+// REB_PAIR type, making PAIR! just a type constraint on TUPLE!s.
+
 inline static REBVAL *Try_Init_Any_Sequence_Pairlike(
     RELVAL *out,
     enum Reb_Kind kind,
@@ -171,12 +193,50 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike(
 }
 
 
+//=//// BYTE-SIZED INTEGER! SEQUENCE OPTIMIZATION /////////////////////////=//
 //
-//  Try_Init_Any_Sequence_All_Integers: C
+// Rebol's historical TUPLE! was limited to a compact form of representing
+// byte-sized integers in a cell.  That optimization is used when possible,
+// either when initialization is called explicitly with a byte buffer or
+// when it is detected as applicable to a generated TUPLE!.
 //
-// If a sequence is all INTEGER!, then there may be some compressions that
-// can be applied to it.
+// This allows 8 single-byte integers to fit in a cell on 32-bit platforms,
+// and 16 single-byte integers on 64-bit platforms.  If that is not enough
+// space, then an array is allocated.
 //
+// !!! Since arrays use full cells for INTEGER! values, it would be more
+// optimal to allocate an immutable binary series for larger allocations.
+// This will likely be easy to reuse in an ISSUE!+CHAR! unification, so
+// revisit this low-priority idea at that time.
+
+inline static REBVAL *Init_Any_Sequence_Bytes(
+    RELVAL *out,
+    enum Reb_Kind kind,
+    const REBYTE *data,
+    REBLEN len
+){
+    if (len > sizeof(EXTRA(Bytes, out).common)) {  // use plain array for now
+        REBARR *a = Make_Array_Core(len, NODE_FLAG_MANAGED);
+        for (; len > 0; --len, ++data)
+            Init_Integer(Alloc_Tail_Array(a), *data);
+
+        Init_Block(out, Freeze_Array_Shallow(a));
+    }
+    else {
+        REBLEN n = len;
+        REBYTE *bp = PAYLOAD(Bytes, out).common;
+        for (; n > 0; --n, ++data, ++bp)
+            *bp = *data;
+        RESET_CELL(out, REB_CHAR, CELL_MASK_NONE);
+    }
+
+    mutable_KIND_BYTE(out) = kind;  // "veneer" over "heart" type
+    return cast(REBVAL*, out);
+}
+
+#define Init_Tuple_Bytes(out,data,len) \
+    Init_Any_Sequence_Bytes((out), REB_TUPLE, (data), (len));
+
 inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
     RELVAL *out,
     enum Reb_Kind kind,
@@ -318,10 +378,13 @@ inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
 
 inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
+
     if (MIRROR_BYTE(sequence) == REB_WORD)
         return 2;  // simulated 2-blanks sequence
+
     if (MIRROR_BYTE(sequence) == REB_CHAR)
         return EXTRA(Any, sequence).u;  // cell-packed byte-oriented sequence
+
     REBARR *a = ARR(VAL_NODE(sequence));
     assert(ARR_LEN(a) >= 2);
     assert(Is_Array_Frozen_Shallow(a));
@@ -347,7 +410,7 @@ inline static const REBNOD *VAL_SEQUENCE_NODE(REBCEL(const*) sequence) {
 // be used to read the pointers.  If the value is not in an array, it may
 // need to be written to a passed-in storage location.
 //
-inline static REBCEL(const*) VAL_SEQUENCE_AT(
+inline static const RELVAL *VAL_SEQUENCE_AT(
     RELVAL *store,  // return result may or may not point at this cell
     REBCEL(const*) sequence,
     REBLEN n
@@ -383,7 +446,7 @@ inline static REBCEL(const*) VAL_SEQUENCE_AT(
 inline static REBYTE VAL_SEQUENCE_BYTE_AT(REBCEL(const*) path, REBLEN n)
 {
     DECLARE_LOCAL (temp);
-    REBCEL(const*) at = VAL_SEQUENCE_AT(temp, path, n);
+    const RELVAL *at = VAL_SEQUENCE_AT(temp, path, n);
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
@@ -406,111 +469,48 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(const RELVAL *sequence)
     return VAL_SPECIFIER(sequence);
 }
 
-inline static bool IS_REFINEMENT_CELL(REBCEL(const*) v) {
-    if (CELL_KIND(v) != REB_PATH)
-        return false;
 
-    if (ANY_WORD_KIND(MIRROR_BYTE(v)))
-        return false;  // all refinements *should* be this form!
-
-/*    if (not (FIRST_BYTE(node) & NODE_BYTEMASK_0x01_CELL))
-        return false;  */  // should be only pairings
-
-    REBARR *a = ARR(VAL_NODE(v));
-    return IS_BLANK(ARR_AT(a, 0)) and IS_WORD(ARR_AT(a, 1));
-}
-
-inline static bool IS_REFINEMENT(const RELVAL *v)
-  { return IS_PATH(v) and IS_REFINEMENT_CELL(VAL_UNESCAPED(v)); }
-
-inline static REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
-    assert(IS_REFINEMENT_CELL(v));
-    return VAL_WORD_SPELLING(ARR_AT(ARR(VAL_NODE(v)), 1));
-}
-
-
-#define PVS_OPT_SETVAL(pvs) \
-    pvs->special
-
-#define PVS_IS_SET_PATH(pvs) \
-    (PVS_OPT_SETVAL(pvs) != nullptr)
-
-#define PVS_PICKER(pvs) \
-    pvs->param
-
-inline static bool Get_Path_Throws_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
-    REBSPC *specifier
+// !!! This is a simple compatibility routine for all the tuple-using code
+// that was hanging around before (IMAGE!, networking) which assumed that
+// tuples could only contain byte-sized integers.  All callsites referring
+// to it are transitional.
+//
+inline static bool Did_Get_Sequence_Bytes(
+    void *buf,
+    const RELVAL *sequence,
+    REBSIZ buf_size
 ){
-    return Eval_Path_Throws_Core(
-        out,
-        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
-        Derive_Specifier(specifier, any_path),
-        NULL, // not requesting value to set means it's a get
-        0 // Name contains Get_Path_Throws() so it shouldn't be neutral
-    );
-}
+    REBLEN len = VAL_SEQUENCE_LEN(sequence);
 
+    REBYTE *dp = cast(REBYTE*, buf);
+    REBSIZ i;
+    DECLARE_LOCAL (temp);
+    for (i = 0; i < buf_size; ++i) {
+        if (i >= len) {
+            dp[i] = 0;
+            continue;
+        }
+        const RELVAL *at = VAL_SEQUENCE_AT(temp, sequence, i);
+        if (not IS_INTEGER(at))
+            return false;
+        REBI64 i64 = VAL_INT64(at);
+        if (i64 < 0 or i64 > 255)
+            return false;
 
-inline static void Get_Path_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
-    REBSPC *specifier
-){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
-
-    if (Eval_Path_Throws_Core(
-        out,
-        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
-        Derive_Specifier(specifier, any_path),
-        NULL, // not requesting value to set means it's a get
-        EVAL_FLAG_NO_PATH_GROUPS
-    )){
-        panic (out); // shouldn't be possible... no executions!
+        dp[i] = cast(REBYTE, i64);
     }
+    return true;
 }
 
-
-inline static bool Set_Path_Throws_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
-    REBSPC *specifier,
-    const REBVAL *setval
+inline static void Get_Tuple_Bytes(
+    void *buf,
+    const RELVAL *tuple,
+    REBSIZ buf_size
 ){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
-
-    return Eval_Path_Throws_Core(
-        out,
-        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
-        Derive_Specifier(specifier, any_path),
-        setval,
-        0 // Name contains Set_Path_Throws() so it shouldn't be neutral
-    );
+    assert(IS_TUPLE(tuple));
+    if (not Did_Get_Sequence_Bytes(buf, tuple, buf_size))
+        fail ("non-INTEGER! found used with Get_Tuple_Bytes()");
 }
 
-
-inline static void Set_Path_Core(  // !!! Appears to be unused.  Unnecessary?
-    const RELVAL *any_path,
-    REBSPC *specifier,
-    const REBVAL *setval
-){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
-
-    // If there's no throw, there's no result of setting a path (hence it's
-    // not in the interface)
-    //
-    DECLARE_LOCAL (out);
-
-    REBFLGS flags = EVAL_FLAG_NO_PATH_GROUPS;
-
-    if (Eval_Path_Throws_Core(
-        out,
-        ARR(VAL_SEQUENCE_NODE(any_path)),  // !!! may not be array-based
-        Derive_Specifier(specifier, any_path),
-        setval,
-        flags
-    )){
-        panic (out); // shouldn't be possible, no executions!
-    }
-}
+#define MAX_TUPLE \
+    ((sizeof(uint32_t) * 2))  // !!! No longer a "limit", review callsites

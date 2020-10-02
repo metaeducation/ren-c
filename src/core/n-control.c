@@ -213,11 +213,11 @@ inline static bool Single_Test_Throws(
         REBLEN len = VAL_SEQUENCE_LEN(test_cache);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            REBCEL(const*) item = VAL_SEQUENCE_AT(temp, test_cache, i);
+            const RELVAL *item = VAL_SEQUENCE_AT(temp, test_cache, i);
 
             if (Single_Test_Throws(
                 out,
-                CELL_TO_VAL(item),
+                item,
                 specifier,
                 arg,
                 arg_specifier,
@@ -1284,9 +1284,9 @@ REBNATIVE(default)
         bool has_groups = false;
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            REBCEL(const*) item = VAL_SEQUENCE_AT(D_SPARE, target, i);
+            const RELVAL *item = VAL_SEQUENCE_AT(D_SPARE, target, i);
 
-            if (REB_GROUP == CELL_KIND(item))
+            if (IS_GROUP(item))
                 has_groups = true;
         }
         if (has_groups) {
@@ -1294,12 +1294,12 @@ REBNATIVE(default)
             RELVAL *dest = ARR_HEAD(composed);
             REBSPC *specifier = VAL_SPECIFIER(target);
             for (i = 0; i < len; ++i, ++dest) {
-                REBCEL(const*) item = VAL_SEQUENCE_AT(D_SPARE, target, i);
+                const RELVAL *item = VAL_SEQUENCE_AT(D_SPARE, target, i);
 
-                if (CELL_KIND(item) != REB_GROUP)
+                if (not IS_GROUP(item))
                     Derelativize(dest, CELL_TO_VAL(item), VAL_SPECIFIER(target));
                 else {
-                    if (Do_Any_Array_At_Throws(D_OUT, CELL_TO_VAL(item), specifier))
+                    if (Do_Any_Array_At_Throws(D_OUT, item, specifier))
                         return R_THROWN;
                     Move_Value(dest, D_OUT);
                 }

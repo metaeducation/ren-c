@@ -397,9 +397,9 @@ uint32_t Hash_Value(const RELVAL *v)
 
 
 //
-//  Make_Hash_Sequence: C
+//  Make_Hash_Series: C
 //
-REBSER *Make_Hash_Sequence(REBLEN len)
+REBSER *Make_Hash_Series(REBLEN len)
 {
     REBLEN n = Get_Hash_Prime_May_Fail(len * 2);  // best when 2X # of keys
     REBSER *ser = Make_Series(n + 1, sizeof(REBLEN));
@@ -443,7 +443,7 @@ REBVAL *Init_Map(RELVAL *out, REBMAP *map)
 REBSER *Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
 {
     // Create the hash array (integer indexes):
-    REBSER *hashlist = Make_Hash_Sequence(VAL_LEN_AT(block));
+    REBSER *hashlist = Make_Hash_Series(VAL_LEN_AT(block));
 
     const RELVAL *value = VAL_ARRAY_AT(block);
     if (IS_END(value))

@@ -1968,7 +1968,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
         REBVAL *where = GET_EVAL_FLAG(f, NEXT_ARG_FROM_OUT) ? spare : f->out;
 
-        if (ANY_INERT_KIND(CELL_KIND(VAL_SEQUENCE_AT(where, v, 0)))) {
+        if (ANY_INERT(VAL_SEQUENCE_AT(where, v, 0))) {
             Derelativize(f->out, v, *specifier);
             break;
         }

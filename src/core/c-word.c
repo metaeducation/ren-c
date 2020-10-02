@@ -296,7 +296,7 @@ REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
     // The UTF-8 series can be aliased with AS to become an ANY-STRING! or a
     // BINARY!.  If it is, then it should not be modified.
     //
-    Freeze_Sequence(s);
+    Freeze_Series(s);
 
     if (not canon) {  // no canon found, so this interning must become canon
         SET_SERIES_INFO(s, STRING_CANON);

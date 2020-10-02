@@ -642,7 +642,7 @@ REBTYPE(Vector)
         if (REF(part) or REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
 
-        REBBIN *bin = Copy_Sequence_Core(
+        REBBIN *bin = Copy_Series_Core(
             VAL_BINARY(VAL_VECTOR_BINARY(v)),
             NODE_FLAG_MANAGED
         );

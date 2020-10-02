@@ -51,7 +51,7 @@ REBINT CT_Map(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 REBMAP *Make_Map(REBLEN capacity)
 {
     REBARR *pairlist = Make_Array_Core(capacity * 2, SERIES_MASK_PAIRLIST);
-    LINK_HASHLIST_NODE(pairlist) = NOD(Make_Hash_Sequence(capacity));
+    LINK_HASHLIST_NODE(pairlist) = NOD(Make_Hash_Series(capacity));
 
     return MAP(pairlist);
 }
@@ -447,7 +447,7 @@ inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
     // a literal copy of the hashlist can still be used, as a start (needs
     // its own copy so new map's hashes will reflect its own mutations)
     //
-    LINK_HASHLIST_NODE(copy) = NOD(Copy_Sequence_Core(
+    LINK_HASHLIST_NODE(copy) = NOD(Copy_Series_Core(
         MAP_HASHLIST(map),
         SERIES_FLAGS_NONE // !!! No NODE_FLAG_MANAGED?
     ));
