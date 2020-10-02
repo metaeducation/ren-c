@@ -2205,7 +2205,7 @@ REBNATIVE(subparse)
                         i = END_FLAG;  // `parse [] [into [...]]`, rejects
                         break;
                     }
-                    else if (ANY_PATH_KIND(CELL_KIND(VAL_UNESCAPED(into)))) {
+                    else if (ANY_PATH_KIND(CELL_TYPE(VAL_UNESCAPED(into)))) {
                         //
                         // Can't PARSE an ANY-PATH! because it has no position
                         // But would be inconvenient if INTO did not support.

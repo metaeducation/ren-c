@@ -1962,8 +1962,11 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
       case REB_PATH: {
         if (MIRROR_BYTE(v) == REB_WORD) {
-            assert(VAL_WORD_SYM(v) == SYM__SLASH_1_);
-            goto process_word;
+            if (VAL_WORD_SPELLING(v) == PG_Slash_1_Canon)
+                goto process_word;  // special `/` case with hidden word
+
+            Derelativize(f->out, v, *specifier);
+            break;  // optimized refinement (act like a blank-headed-path)
         }
 
         REBVAL *where = GET_EVAL_FLAG(f, NEXT_ARG_FROM_OUT) ? spare : f->out;
@@ -2610,7 +2613,8 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         // words.)  Operations based on VAL_TYPE() or CELL_TYPE() will see it
         // as PATH!, but CELL_KIND() will interpret the cell bits as a word.
         //
-        assert(VAL_WORD_SYM(VAL_UNESCAPED(*next)) == SYM__SLASH_1_);
+        if (VAL_WORD_SPELLING(*next) != PG_Slash_1_Canon)
+            goto finished;  // optimized refinement (see IS_REFINEMENT())
     }
     else if (kind.byte != REB_WORD) {
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);

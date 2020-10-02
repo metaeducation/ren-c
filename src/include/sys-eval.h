@@ -220,9 +220,11 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         return true;  // paths do enfix processing if '/'
 
     if (MIRROR_BYTE(feed->value) == REB_WORD) {
-        assert(VAL_WORD_SYM(feed->value) == SYM__SLASH_1_);
-        *flags |= EVAL_FLAG_POST_SWITCH | EVAL_FLAG_INERT_OPTIMIZATION;
-        return false;  // Let evaluator handle `/`
+        if (VAL_WORD_SPELLING(feed->value) == PG_Slash_1_Canon) {
+            *flags |= EVAL_FLAG_POST_SWITCH | EVAL_FLAG_INERT_OPTIMIZATION;
+            return false;  // Let evaluator handle `/`
+        }
+        return true;  // refinement!s are inert, we're done
     }
 
     return true;

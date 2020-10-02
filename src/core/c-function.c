@@ -356,7 +356,7 @@ void Push_Paramlist_Triads_May_Fail(
         Reb_Param_Class pclass = REB_P_DETECT;
 
         bool refinement = false;  // paths with blanks at head are refinements
-        if (ANY_PATH_KIND(CELL_KIND(cell))) {
+        if (ANY_PATH_KIND(CELL_TYPE(cell))) {
             if (not IS_REFINEMENT_CELL(cell))
                 fail (Error_Bad_Func_Def_Core(item, VAL_SPECIFIER(spec)));
 
@@ -375,11 +375,11 @@ void Push_Paramlist_Triads_May_Fail(
                 if (ANY_WORD_KIND(KIND_BYTE(item + 1)))  // END is 0
                     fail (Error_Legacy_Local_Raw(spec));  // -> <local>
 
-            if (CELL_KIND(cell) == REB_GET_PATH) {
+            if (CELL_TYPE(cell) == REB_GET_PATH) {
                 if (not quoted)
                     pclass = REB_P_HARD_QUOTE;
             }
-            else if (CELL_KIND(cell) == REB_PATH) {
+            else if (CELL_TYPE(cell) == REB_PATH) {
                 if (quoted)
                     pclass = REB_P_SOFT_QUOTE;
                 else

@@ -1157,10 +1157,37 @@ REBNATIVE(as)
     switch (new_kind) {
       case REB_BLOCK:
       case REB_GROUP:
-        if (ANY_PATH(v)) {  // !!! May not be an array form!
-            mutable_KIND_BYTE(v) = mutable_MIRROR_BYTE(v) = REB_BLOCK;
-            assert(Is_Array_Frozen_Shallow(VAL_ARRAY(v)));
-            VAL_INDEX(v) = 0;  // must be REB_BLOCK to allow this
+        if (ANY_PATH(v)) {  // internal representations vary on optimization
+            switch (MIRROR_BYTE(v)) {
+              case REB_CHAR:
+                fail ("Array Conversions of byte-oriented sequences TBD");
+
+              case REB_WORD:
+                if (
+                    VAL_WORD_SPELLING(v) == PG_Dot_1_Canon
+                    or VAL_WORD_SPELLING(v) == PG_Slash_1_Canon
+                ){
+                    Init_Block(v, PG_2_Blanks_Array);
+                }
+                else {
+                    REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                    Init_Blank(ARR_HEAD(a));
+                    Blit_Cell(ARR_AT(a, 1), v);
+                    mutable_KIND_BYTE(ARR_AT(a, 1)) = REB_WORD;
+                    TERM_ARRAY_LEN(a, 2);
+                    Init_Block(v, a);
+                }
+                break;
+
+              case REB_PATH:  // !!! should be REB_BLOCK probably
+                mutable_KIND_BYTE(v) = mutable_MIRROR_BYTE(v) = REB_BLOCK;
+                assert(Is_Array_Frozen_Shallow(VAL_ARRAY(v)));
+                VAL_INDEX(v) = 0;  // must be REB_BLOCK to allow this
+                break;
+
+              default:
+                assert(false);
+            }
             break;
         }
 

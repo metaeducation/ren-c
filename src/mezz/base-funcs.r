@@ -142,10 +142,7 @@ func: func* [
         <void> (append new-spec <void>)
     |
         :(either var '[
-            set var: [
-                match [any-word! lit-word!]
-                | ahead any-path! into [blank! word!]
-            ](
+            set var: [any-word! | lit-word! | refinement!] (
                 append new-spec var
 
                 ; exclude args/refines
