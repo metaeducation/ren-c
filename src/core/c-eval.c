@@ -2125,45 +2125,15 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
 //==//// GET-GROUP! //////////////////////////////////////////////////////==//
 //
-// Evaluates the group, and then executes GET-WORD!/GET-PATH!/GET-BLOCK!
-// operation on it, if it's a WORD! or a PATH! or BLOCK!.  If it's an arity-0
-// action, it is allowed to execute as a form of "functional getter".
+// This was initially conceived such that `:(x)` was a shorthand for the
+// expression `get x`.  But that's already pretty short--and arguably a
+// cleaner way of saying the same thing.  So instead, it's given the same
+// meaning in the evaluator as plain GROUP!...which seems wasteful on the
+// surface, but it means dialects can be free to use it to make a distinction.
+// Branches use it to mean "do not voidify the result".
 
-      case REB_GET_GROUP: {
-        *next_gotten = nullptr; // arbitrary code changes fetched variables
-
-        if (Do_Any_Array_At_Throws(spare, v, *specifier)) {
-            Move_Value(f->out, spare);
-            goto return_thrown;
-        }
-
-        if (ANY_WORD(spare))
-            kind.byte
-                = mutable_KIND_BYTE(spare)
-                = mutable_MIRROR_BYTE(spare)
-                = REB_GET_WORD;
-        else if (ANY_PATH(spare))
-            kind.byte
-                = mutable_KIND_BYTE(spare)
-                = mutable_MIRROR_BYTE(spare)
-                = REB_GET_PATH;
-        else if (ANY_BLOCK(spare))
-            kind.byte
-                = mutable_KIND_BYTE(spare)
-                = mutable_MIRROR_BYTE(spare)
-                = REB_GET_BLOCK;
-        else if (IS_ACTION(spare)) {
-            if (Eval_Value_Throws(f->out, spare, SPECIFIED))  // only arity-0
-                goto return_thrown;
-            goto post_switch;
-        }
-        else
-            fail (Error_Bad_Get_Group_Raw());
-
-        v = spare;
-        *next_gotten = nullptr;
-
-        goto reevaluate; }
+      case REB_GET_GROUP:
+        goto eval_group;
 
 
 //==//// SET-GROUP! //////////////////////////////////////////////////////==//
@@ -2212,59 +2182,13 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         v = spare;
 
         if (ANY_WORD(spare)) {
-            kind.byte
-                = mutable_KIND_BYTE(spare)
-                = mutable_MIRROR_BYTE(spare)
-                = REB_SET_WORD;
             goto set_word_with_out;
         }
         else if (ANY_PATH(spare)) {
-            kind.byte
-                = mutable_KIND_BYTE(spare)
-                = mutable_MIRROR_BYTE(spare)
-                = REB_SET_PATH;
             goto set_path_with_out;
         }
         else if (ANY_BLOCK(spare)) {
-            kind.byte
-                = mutable_KIND_BYTE(spare)
-                = mutable_MIRROR_BYTE(spare)
-                = REB_SET_BLOCK;
-
-            // !!! This code used to be jumped to as part of the implementation of
-            // SET-BLOCK!, as "set_block_with_out".  It is likely to be discarded
-            // in light of the new purpose of SET-BLOCK! as multiple returns,
-            // but was moved here for now.
-
-            if (IS_NULLED(f->out)) // `[x y]: null` is illegal
-                fail (Error_Need_Non_Null_Core(v, *specifier));
-
-            const RELVAL *dest = VAL_ARRAY_AT(v);
-
-            const RELVAL *src;
-            if (IS_BLOCK(f->out))
-                src = VAL_ARRAY_AT(f->out);
-            else
-                src = f->out;
-
-            for (
-                ;
-                NOT_END(dest);
-                ++dest,
-                IS_END(src) or not IS_BLOCK(f->out) ? NOOP : (++src, NOOP)
-            ){
-                Set_Var_May_Fail(
-                    dest,
-                    *specifier,
-                    IS_END(src) ? BLANK_VALUE : src,  // R3-Alpha blanks > END
-                    IS_BLOCK(f->out)
-                        ? VAL_SPECIFIER(f->out)
-                        : SPECIFIED,
-                    false  // doesn't use "hard" semantics on groups in paths
-                );
-            }
-
-            break;
+            fail ("Retriggering multi-returns not implemented ATM");
         }
 
         fail (Error_Bad_Set_Group_Raw()); }
