@@ -382,15 +382,19 @@ REB_R Compose_To_Stack_Core(
             enum Reb_Kind kind = CELL_TYPE(cell);
             if (ANY_SEQUENCE_KIND(kind)) {
                 DECLARE_LOCAL (temp);
-                if (not Try_Pop_Path_Or_Element_Or_Nulled(
+                if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
                     temp,
                     kind,
                     dsp_deep
                 )){
-                    if (Is_Valid_Path_Element(temp))  // `compose '(null)/1:`
+                    if (Is_Valid_Sequence_Element(kind, temp)) {
+                        //
+                        // `compose '(null)/1:` would leave beind 1:
+                        //
                         fail (Error_Cant_Decorate_Type_Raw(temp));
+                    }
 
-                    fail (Error_Bad_Sequence_Item_Raw(DS_TOP));
+                    fail (Error_Bad_Sequence_Init(DS_TOP));
                 }
                 Move_Value(DS_PUSH(), temp);
             }
@@ -496,16 +500,20 @@ REBNATIVE(compose)
     else
         assert(r == nullptr); // normal result, changed
 
-    if (ANY_PATH(ARG(value))) {
-        if (not Try_Pop_Path_Or_Element_Or_Nulled(
+    if (ANY_SEQUENCE(ARG(value))) {
+        if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
             D_OUT, 
             VAL_TYPE(ARG(value)),
             dsp_orig
         )){
-            if (Is_Valid_Path_Element(D_OUT))  // `compose '(null)/1:`
+            if (Is_Valid_Sequence_Element(VAL_TYPE(ARG(value)), D_OUT)) {
+                //
+                // `compose '(null)/1:` would leave behind 1:
+                //
                 fail (Error_Cant_Decorate_Type_Raw(D_OUT));
+            }
 
-            fail (Error_Bad_Sequence_Item_Raw(D_OUT));
+            fail (Error_Bad_Sequence_Init(D_OUT));
         }
         return D_OUT;  // note: may not be an ANY-PATH!  See Try_Pop_Path...
     }

@@ -27,12 +27,8 @@
     2 == blk/:abs
 )
 (
-    blk: [#{} 2]
-    2 == blk/#{}
-)
-(
     blk: reduce [charset "a" 3]
-    3 == do reduce [to path! reduce ['blk charset "a"]]
+    'bad-sequence-item = (trap [to path! reduce ['blk charset "a"]])/id
 )
 (
     blk: [[] 3]
@@ -176,8 +172,8 @@
 ; PATH! beginning with an inert item will itself be inert
 ;
 [
-    (/ref/inement/path = to path! [/ref inement path])
-    (/refinement/2 = to path! [/refinement 2])
+    ('bad-sequence-item = (trap [to path! [/ref inement path]])/id)
+    ('bad-sequence-item = (trap [to path! [/refinement 2]])/id)
     ((/refinement)/2 = 'refinement)
     (r: /refinement | r/2 = 'refinement)
 ][

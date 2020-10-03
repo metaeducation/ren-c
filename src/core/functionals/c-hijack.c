@@ -96,7 +96,7 @@ bool Redo_Action_Throws(REBVAL *out, REBFRM *f, REBACT *run)
     //
     REBDSP dsp_orig = DSP; // we push refinements as we find them
 
-    // !!! Action has to be in a GROUP!, according to Is_Valid_Path_Element()
+    // !!! Is_Valid_Sequence_Element() requires action to be in a GROUP!
     //
     REBARR *group = Alloc_Singular(NODE_FLAG_MANAGED);
     Move_Value(ARR_SINGLE(group), ACT_ARCHETYPE(run));  // Review: binding?
@@ -155,6 +155,7 @@ bool Redo_Action_Throws(REBVAL *out, REBFRM *f, REBACT *run)
     }
     else {
         REBARR *a = Freeze_Array_Shallow(Pop_Stack_Values(dsp_orig));
+        Force_Array_Managed(a);
         REBVAL *p = Try_Init_Path_Arraylike(first, a);
         assert(p);
         UNUSED(p);

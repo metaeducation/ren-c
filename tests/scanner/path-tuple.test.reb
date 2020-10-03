@@ -66,6 +66,7 @@
         ; allowed in either sequence form.
 
         "/#a"  !!  <scan-invalid>
+        "blk/#{}"  !!  <scan-invalid>
 
         ; === R3-Alpha compatibility hacks ===
 

@@ -149,7 +149,7 @@ REBVAL *Init_Near_For_Frame(RELVAL *out, REBFRM *f)
     }
     */
 
-    REBARR *near = Pop_Stack_Values(dsp_start);
+    REBARR *near = Pop_Stack_Values_Core(dsp_start, NODE_FLAG_MANAGED);
 
     // Simplify overly-deep blocks embedded in the where so they show (...)
     // instead of printing out fully.

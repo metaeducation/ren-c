@@ -31,44 +31,61 @@
 //  Try_Init_Any_Sequence_At_Arraylike_Core: C
 //
 REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
-    RELVAL *out,
+    RELVAL *out,  // NULL if array is too short, violating value otherwise
     enum Reb_Kind kind,
-    REBARR *a,
-    REBLEN index,
-    REBNOD *binding
+    const REBARR *a,
+    REBSPC *specifier,
+    REBLEN index
 ){
     assert(ANY_SEQUENCE_KIND(kind));
-    Force_Series_Managed(SER(a));
+    assert(GET_SERIES_FLAG(a, MANAGED));
     ASSERT_SERIES_TERM(SER(a));
     assert(index == 0);  // !!! current rule
     assert(Is_Array_Frozen_Shallow(a));  // must be immutable (may be aliased)
 
-    if (a == PG_2_Blanks_Array) {
-        assert(false);  // !!! Can you ever incidentally get this array?
-        assert(binding == UNBOUND);
-        return Init_Any_Sequence_1(out, kind);
+    assert(index < ARR_LEN(a));
+    REBLEN len_at = ARR_LEN(a) - index;
+
+    if (len_at < 2) {
+        Init_Nulled(out);  // signal that array is too short
+        return nullptr;
     }
 
-    if (ARR_LEN(a) < 2)
-        panic (a);
+    if (len_at == 2) {
+        if (a == PG_2_Blanks_Array) {  // can get passed back in
+            assert(specifier == SPECIFIED);
+            return Init_Any_Sequence_1(out, kind);
+        }
 
-    if (ARR_LEN(a) == 2) {
+        // !!! Note: at time of writing, this may just fall back and make
+        // a 2-element array vs. a pair optimization.
         //
-        // If someone tries to make a path out of a 2-element array, we could
-        // use it as-is or create an optimized storage for it.  Whether that's
-        // a good idea or not depends on whether the array exists for some
-        // reason in its own right, and is being aliased as a path...so making
-        // another version to hang around as optimized storage is wasteful.
-        // Also, each time someone wants to create an array back from the
-        // path they'll have to expand it.
-        //
-        // Since the optimization isn't done at time of writing, reuse array.
+        if (Try_Init_Any_Sequence_Pairlike_Core(
+            out,
+            kind,
+            ARR_AT(a, index),
+            ARR_AT(a, index + 1),
+            specifier
+        )){
+            return SPECIFIC(out);
+        }
+
+        return nullptr;
     }
 
-    RELVAL *v = ARR_HEAD(a);
+    if (Try_Init_Any_Sequence_All_Integers(
+        out,
+        kind,
+        ARR_AT(a, index),
+        len_at
+    )){
+        return SPECIFIC(out);
+    }
+
+    const RELVAL *v = ARR_HEAD(a);
     for (; NOT_END(v); ++v) {
-        if (not Is_Valid_Path_Element(v)) {
-            Unrelativize(out, v);
+        if (not Is_Valid_Sequence_Element(kind, v)) {
+            Derelativize(out, v, specifier);
             return nullptr;
         }
     }
@@ -83,17 +100,9 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
     // do it is that leaving it as an index allows for aliasing BLOCK! as
     // PATH! from non-head positions.
 
-    Init_Any_Series_At_Core(out, REB_BLOCK, SER(a), index, binding);
+    Init_Any_Series_At_Core(out, REB_BLOCK, SER(a), index, specifier);
     mutable_KIND_BYTE(out) = kind;
     assert(MIRROR_BYTE(out) == REB_BLOCK);
-
-    assert(not (  // v-- also should never be initialized like this
-        ARR_LEN(a) == 2 and IS_BLANK(ARR_AT(a, 0)) and IS_BLANK(ARR_AT(a, 1))
-    ));
-
-    assert(not (  // v-- IS_REFINEMENT() would not detect this representation
-        ARR_LEN(a) == 2 and IS_BLANK(ARR_AT(a, 0)) and IS_WORD(ARR_AT(a, 1))
-    ));
 
     return SPECIFIC(out);
 }
@@ -850,15 +859,15 @@ REB_R MAKE_Path(
         }
     }
 
-    REBVAL *p = Try_Pop_Path_Or_Element_Or_Nulled(out, kind, dsp_orig);
+    REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(out, kind, dsp_orig);
 
     Drop_Frame_Unbalanced(f); // !!! f->dsp_orig got captured each loop
 
     if (not p)
-        fail (Error_Bad_Sequence_Item_Raw(out));
+        fail (Error_Bad_Sequence_Init(out));
 
     if (not ANY_PATH(out))  // e.g. `make path! ['x]` giving us the WORD! `x`
-        fail ("Can't MAKE ANY-SEQUENCE! with < 2 elements (use COMPOSE)");
+        fail (Error_Sequence_Too_Short_Raw());
 
     return out;
 }
@@ -954,7 +963,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         Dequotify(out);  // remove quotes (should TO take a REBCEL()?)
         Plainify(out);  // remove any decorations like @ or :
         if (not Try_Leading_Blank_Pathify(out, kind))
-            fail ("Value invalid as a path element");
+            fail (Error_Bad_Sequence_Init(out));
         return out;
     }
 
@@ -965,15 +974,18 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
     REBLEN len = VAL_LEN_AT(arg);
     if (len < 2)
-        fail ("paths must contain at least two values");
+        fail (Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
-        DECLARE_LOCAL (first);
-        DECLARE_LOCAL (second);
-        Derelativize(first, VAL_ARRAY_AT(arg), VAL_SPECIFIER(arg));
-        Derelativize(second, VAL_ARRAY_AT(arg) + 1, VAL_SPECIFIER(arg));
-        if (not Try_Init_Any_Sequence_Pairlike(out, kind, first, second))
-            fail (Error_Bad_Sequence_Item_Raw(out));
+        if (not Try_Init_Any_Sequence_Pairlike_Core(
+            out,
+            kind,
+            VAL_ARRAY_AT(arg),
+            VAL_ARRAY_AT(arg) + 1,
+            VAL_SPECIFIER(arg)
+        )){
+            fail (Error_Bad_Sequence_Init(out));
+        }
     }
     else {
         // Assume it needs an array.  This might be a wrong assumption, e.g.
@@ -986,9 +998,10 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
             VAL_SPECIFIER(arg)
         );
         Freeze_Array_Shallow(a);
+        Force_Series_Managed(a);
 
         if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
-            fail (Error_Bad_Sequence_Item_Raw(out));
+            fail (Error_Bad_Sequence_Init(out));
     }
 
     return out;

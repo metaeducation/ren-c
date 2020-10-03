@@ -644,7 +644,7 @@ void Set_Var_May_Fail(
     bool hard
 ){
     REBCEL(const*) target = VAL_UNESCAPED(target_orig);
-    enum Reb_Kind kind = CELL_KIND(target);
+    enum Reb_Kind kind = CELL_TYPE(target);
 
     if (ANY_WORD_KIND(kind)) {
         REBVAL *var = Sink_Word_May_Fail(target, target_specifier);
@@ -1138,9 +1138,9 @@ bool Try_As_String(
 //
 //  {Aliases underlying data of one value to act as another of same class}
 //
-//      return: [<opt> any-path! any-series! any-word!]
+//      return: [<opt> any-sequence! any-series! any-word!]
 //      type [datatype!]
-//      value [<dequote> <blank> any-path! any-series! any-word!]
+//      value [<dequote> <blank> any-sequence! any-series! any-word!]
 //  ]
 //
 REBNATIVE(as)
@@ -1195,25 +1195,43 @@ REBNATIVE(as)
             goto bad_cast;
         break;
 
+      case REB_TUPLE:
+      case REB_GET_TUPLE:
+      case REB_SET_TUPLE:
+      case REB_SYM_TUPLE:
       case REB_PATH:
       case REB_GET_PATH:
       case REB_SET_PATH:
-        //
-        // !!! If AS aliasing were to be permitted, it gets pretty complex.
-        // See notes above in aliasing paths as group or block.  We can
-        // only alias it if we ensure it is frozen.  Not only that, a path
-        // may be optimized to not have an array, hence we may have to
-        // fabricate one.  It would create some complexity with arrays not
-        // at their head, because paths would wind up having an index that
-        // they heeded but could not change.  Also, the array would have
-        // to be checked for validity, e.g. not containing any PATH! or
-        // FILE! or types that wouldn't be allowed.  There's less flexibility
-        // than in a TO conversion to do adjustments.  Long story short: it
-        // is probably not worth it...and TO should be used instead.
+      case REB_SYM_PATH:
+        if (ANY_ARRAY(v)) {
+            //
+            // Even if we optimize the array, we don't want to give the
+            // impression that we would not have frozen it.
+            //
+            if (not Is_Array_Frozen_Shallow(VAL_ARRAY(v)))
+                Freeze_Array_Shallow(VAL_ARRAY_ENSURE_MUTABLE(v));
 
-        if (not ANY_PATH(v))
-            goto bad_cast;
-        break;
+            if (Try_Init_Any_Sequence_At_Arraylike_Core(
+                D_OUT,  // if failure, nulled if too short...else bad element
+                new_kind,
+                VAL_ARRAY(v),
+                VAL_SPECIFIER(v),
+                VAL_INDEX(v)
+            )){
+                return D_OUT;
+            }
+
+            fail (Error_Bad_Sequence_Init(D_OUT));
+        }
+
+        if (ANY_PATH(v)) {
+            Move_Value(D_OUT, v);
+            mutable_KIND_BYTE(D_OUT)
+                = new_kind;
+            return Trust_Const(D_OUT);
+        }
+
+        goto bad_cast;
 
       case REB_TEXT:
       case REB_TAG:

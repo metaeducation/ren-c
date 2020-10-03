@@ -6,8 +6,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012 REBOL Technologies
 // Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,15 +20,20 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "Sequence" is a constrained form of list of items, separated by an
-// interstitial delimiter.  The two basic forms are PATH! (separated by `/`)
+// A "Sequence" is a constrained type of item list, with elements separated by
+// interstitial delimiters.  The two basic forms are PATH! (separated by `/`)
 // and TUPLE! (separated by `.`)
 //
 //     append/dup/only   ; a 3-element PATH!
 //     192.168.0.1       ; a 4-element TUPLE!
 //
+// Because they are defined by separators *between* elements, sequences of
+// zero or one item are not legal.  This is one reason why they are immutable:
+// so the constraint of having at least two items can be validated at the time
+// of creation.
+//
 // Both forms are allowed to contain WORD!, INTEGER!, GROUP!, BLOCK!, TEXT!,
-// and TAG! elements.  They also come in SET-, GET-, and SYM- forms:
+// and TAG! elements.  There are SET-, GET-, and SYM- forms:
 //
 //     <abc>/(d e f)/[g h i]:   ; a 3-element SET-PATH!
 //     :foo.1.bar               ; a 3-element GET-TUPLE!
@@ -37,58 +42,81 @@
 // It is also legal to put BLANK! in sequence slots.  They will render
 // invisibly, allowing you to begin or terminate sequences with the delimiter:
 //
-//     .foo.bar     ; a 3-element tuple with BLANK! in the first slot
+//     .foo.bar     ; a 3-element TUPLE! with BLANK! in the first slot
 //     1/2/3/:      ; a 4-element PATH! with BLANK! in the last slot
+//     /            ; a 2-element PATH! with BLANK! in the first and last slot
+//     ...          ; a 4-element TUPLE! of blanks
 //
-// PATH!s may contain TUPLE!s, but not vice versa.  This leads to unambiguous
-// interpretation of sequences:
+// PATH!s may contain TUPLE!s, but not vice versa.  This means that mixed
+// usage can be interpreted unambiguously:
 //
 //     a.b.c/d.e.f    ; a 2-element PATH! containing 3-element TUPLEs
 //     a/b/c.d/e/f    ; a 5-element PATH! with 2-element TUPLE! in the middle
 //
-// Sequences must contain at least two elements.  They are also immutable,
-// so this constraint can be validated at creation time.  Reduced cases like
-// the 2-element path `/` and the 2-element tuple `.` have special handling
-// that allows them to store a hidden WORD! and binding, which lets them be
-// used in the evaluator as functions.
-//
-// The immutability of sequences allows important optimizations in the
-// implementation of sequences that minimize allocations.  For instance, the
-// 2-element PATH! of `/foo` can be specially encoded to use no more space
-// than a plain WORD!.  There are also optimizations for encoding short
-// numeric sequences like IP addresses or colors into cells.
-//
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * All ANY-PATH! and ANY-TUPLE! types have an implementation type which
-//   is stored in the MIRROR_BYTE().  This says which actual cell format is
-//   being used for the format of the cell:
+// * Reduced cases like the 2-element path `/` and the 2-element tuple `.`
+//   have special handling that allows them to store a hidden WORD! and
+//   binding, which lets them be used in the evaluator as functions.  (It
+//   was considered non-negotiable that `/` be allowed to mean divide, and
+//   also non-negotiable that it be a PATH!...so this was the compromise.)
 //
-//       REB_CHAR has raw bytes in the payload (similar to an R3-Alpha TUPLE!)
-//       REB_WORD is used for refinements and the `/` and '.' cases
-//       REB_BLOCK is when the path is stored fully in an array.
+// * The immutability of sequences allows important optimizations in the
+//   implementation that minimize allocations.  For instance, the 2-element
+//   PATH! of `/foo` can be specially encoded to use no more space
+//   than a plain WORD!.  There are also optimizations for encoding short
+//   numeric sequences like IP addresses or colors into single cells.
 //
+// * Which compressed implementation form that an ANY-PATH! or ANY-TUPLE! is
+//   using is indicated by the MIRROR_BYTE().  This says which actual cell
+//   format is in effect:
+//
+//   - REB_CHAR has raw bytes in the payload (similar to an R3-Alpha TUPLE!)
+//   - REB_WORD is used for refinements and the `/` and '.' cases
+//   - REB_BLOCK is when the path or tuple are stored as an ordinary array
+//
+
+inline static bool Is_Valid_Sequence_Element(
+    enum Reb_Kind sequence_kind,
+    const RELVAL *v
+){
+    assert(ANY_SEQUENCE_KIND(sequence_kind));
+
+    enum Reb_Kind k = VAL_TYPE(v);
+    if (k == REB_BLANK
+        or k == REB_INTEGER
+        or k == REB_WORD
+        or k == REB_GROUP
+        or k == REB_BLOCK
+        or k == REB_TEXT
+        or k == REB_TAG
+    ){
+        return true;
+    }
+
+    if (k == REB_TUPLE)  // PATH! can have TUPLE!, not vice-versa
+        return ANY_PATH_KIND(sequence_kind);
+
+    return false;
+}
 
 
 // The Try_Init_Any_Sequence_XXX variants will return nullptr if any of the
-// requested path elements are not valid.
+// requested path elements are not valid.  Instead of an initialized sequence,
+// the output cell passed in will be either a REB_NULLED (if the data was
+// too short) or it will be the first badly-typed value that was problematic.
 //
-inline static bool Is_Valid_Path_Element(const RELVAL *v) {
-    return IS_BLANK(v)
-        or IS_INTEGER(v)
-        or IS_WORD(v)
-        or IS_TUPLE(v)
-        or IS_GROUP(v)
-        or IS_BLOCK(v)
-        or IS_TEXT(v)
-        or IS_TAG(v);
+inline static REBCTX *Error_Bad_Sequence_Init(const REBVAL *v) {
+    if (IS_NULLED(v))
+        return Error_Sequence_Too_Short_Raw();
+    fail (Error_Bad_Sequence_Item_Raw(v));
 }
 
 
 //=//// UNCOMPRESSED ARRAY SEQUENCE FORM //////////////////////////////////=//
 
 #define Try_Init_Any_Sequence_Arraylike(v,k,a) \
-    Try_Init_Any_Sequence_At_Arraylike_Core((v), (k), (a), 0, nullptr)
+    Try_Init_Any_Sequence_At_Arraylike_Core((v), (k), (a), SPECIFIED, 0)
 
 #define Try_Init_Path_Arraylike(v,a) \
     Try_Init_Any_Sequence_Arraylike((v), REB_PATH, (a))
@@ -119,11 +147,10 @@ inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
 // Ren-C has no REFINEMENT! datatype, so `/foo` is a PATH!, which generalizes
 // to where `/foo/bar` is a PATH! as well, etc.
 //
-// !!! Optimizations are planned to allow single element paths to fit in just
-// *one* array cell.  This will make use of the fourth header byte, to
-// encode when the type byte is a container for what is inside.  Use of this
-// routine to mutate cells into refinements marks places where that will
-// be applied.
+// In order to make this not cost more than a REFINEMENT! ANY-WORD! did in
+// R3-Alpha, the underlying representation of `/foo` in the cell is the same
+// as an ANY-WORD!.  The KIND_BYTE() returned by VAL_TYPE() will reflect
+// the any sequence, while MIRROR_BYTE() reveals its word-oriented storage.
 
 inline static REBVAL *Try_Leading_Blank_Pathify(
     REBVAL *v,
@@ -134,8 +161,8 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     if (IS_BLANK(v))
         return Init_Any_Sequence_1(v, kind);
 
-    if (not Is_Valid_Path_Element(v))
-        return nullptr;
+    if (not Is_Valid_Sequence_Element(kind, v))
+        return nullptr;  // leave element in v to indicate "the bad element"
 
     // !!! Start by just optimizing refinements as a proof-of-concept, and
     // to get efficiency parity with R3-Alpha for that situation.  Should
@@ -148,14 +175,13 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
         return v;
     }
 
-    REBARR *a = Make_Array(2);  // optimize with pairlike storage!
+    REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);  // optimize "pairlike"
     Init_Blank(Alloc_Tail_Array(a));
     Move_Value(Alloc_Tail_Array(a), v);
     Freeze_Array_Shallow(a);
 
-    REBVAL *check = Try_Init_Any_Sequence_Arraylike(v, kind, a);
-    assert(check);
-    UNUSED(check);
+    Init_Block(v, a);
+    mutable_KIND_BYTE(v) = kind;
 
     return v;
 }
@@ -175,31 +201,6 @@ inline static bool IS_REFINEMENT(const RELVAL *v)
 inline static REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
     assert(IS_REFINEMENT_CELL(v));
     return VAL_WORD_SPELLING(v);
-}
-
-
-//=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
-//
-// !!! Making paths out of two items is intended to be optimized as well,
-// using the "pairing" nodes.  This should eliminate the need for a separate
-// REB_PAIR type, making PAIR! just a type constraint on TUPLE!s.
-
-inline static REBVAL *Try_Init_Any_Sequence_Pairlike(
-    RELVAL *out,
-    enum Reb_Kind kind,
-    const REBVAL *v1,
-    const REBVAL *v2
-){
-    if (IS_BLANK(v1))
-        return Try_Leading_Blank_Pathify(Move_Value(out, v2), kind);
-
-    REBARR *a = Make_Array(2);
-    Move_Value(ARR_AT(a, 0), v1);
-    Move_Value(ARR_AT(a, 1), v2);
-    TERM_ARRAY_LEN(a, 2);
-    Freeze_Array_Shallow(a);
-    return Try_Init_Any_Sequence_Arraylike(out, kind, a);
-
 }
 
 
@@ -233,11 +234,12 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
         Init_Block(out, Freeze_Array_Shallow(a));
     }
     else {
+        RESET_CELL(out, REB_CHAR, CELL_MASK_NONE);
         REBLEN n = len;
         REBYTE *bp = PAYLOAD(Bytes, out).common;
         for (; n > 0; --n, ++data, ++bp)
             *bp = *data;
-        RESET_CELL(out, REB_CHAR, CELL_MASK_NONE);
+        EXTRA(Any, out).u = len;
     }
 
     mutable_KIND_BYTE(out) = kind;  // "veneer" over "heart" type
@@ -259,6 +261,11 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
 
     if (len > sizeof(PAYLOAD(Bytes, out)).common)
         return nullptr;  // no optimization yet if won't fit in payload bytes
+
+    if (len < 2) {
+        Init_Nulled(out);
+        return nullptr;
+    }
 
     RESET_CELL(out, kind, CELL_MASK_NONE);
 
@@ -283,6 +290,64 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
 }
 
 
+//=//// 2-Element "PAIR" SEQUENCE OPTIMIZATION ////////////////////////////=//
+//
+// !!! Making paths out of two items is intended to be optimized as well,
+// using the "pairing" nodes.  This should eliminate the need for a separate
+// REB_PAIR type, making PAIR! just a type constraint on TUPLE!s.
+
+inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
+    RELVAL *out,
+    enum Reb_Kind kind,
+    const RELVAL *v1,
+    const RELVAL *v2,
+    REBSPC *specifier  // assumed to apply to both v1 and v2
+){
+    if (IS_BLANK(v1)) {
+        return Try_Leading_Blank_Pathify(
+            Derelativize(out, v2, specifier),
+            kind
+        );
+    }
+
+    if (IS_INTEGER(v1) and IS_INTEGER(v2)) {
+        REBYTE buf[2];
+        REBI64 i1 = VAL_INT64(v1);
+        REBI64 i2 = VAL_INT64(v2);
+        if (i1 >= 0 and i2 >= 0 and i1 <= 255 and i2 <= 255) {
+            buf[0] = cast(REBYTE, i1);
+            buf[1] = cast(REBYTE, i2);
+            return Init_Any_Sequence_Bytes(out, kind, buf, 2);
+        }
+
+        // fall through
+    }
+
+    if (not Is_Valid_Sequence_Element(kind, v1)) {
+        Derelativize(out, v1, specifier);
+        return nullptr;
+    }
+
+    if (not Is_Valid_Sequence_Element(kind, v2)) {
+        Derelativize(out, v2, specifier);
+        return nullptr;
+    }
+
+    REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);  // optimize "pairlike"
+    Derelativize(ARR_AT(a, 0), v1, specifier);
+    Derelativize(ARR_AT(a, 1), v2, specifier);
+    TERM_ARRAY_LEN(a, 2);
+    Freeze_Array_Shallow(a);
+
+    Init_Block(out, a);
+    mutable_KIND_BYTE(out) = kind;
+    return SPECIFIC(out);
+}
+
+#define Try_Init_Any_Sequence_Pairlike(out,kind,v1,v2) \
+    Try_Init_Any_Sequence_Pairlike_Core((out), (kind), (v1), (v2), SPECIFIED)
+
+
 // This is a general utility for turning stack values into something that is
 // either pathlike or value like.  It is used in COMPOSE of paths, which
 // allows things like:
@@ -301,7 +366,7 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
 // it's not a PATH!...because the optimizations on special cases are all
 // in this code.
 //
-inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
+inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
     RELVAL *out,  // will be the error-triggering value if nullptr returned
     enum Reb_Kind kind,
     REBDSP dsp_orig
@@ -312,7 +377,7 @@ inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
         return Init_Nulled(out);
 
     if (DSP - 1 == dsp_orig) {  // only one item, use as-is if possible
-        if (not Is_Valid_Path_Element(DS_TOP))
+        if (not Is_Valid_Sequence_Element(kind, DS_TOP))
             return nullptr;
 
         Move_Value(out, DS_TOP);
@@ -373,7 +438,7 @@ inline static REBVAL *Try_Pop_Path_Or_Element_Or_Nulled(
         return SPECIFIC(out);
     }
 
-    REBARR *a = Pop_Stack_Values(dsp_orig);
+    REBARR *a = Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED);
     Freeze_Array_Shallow(a);
     if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
         return nullptr;
@@ -390,8 +455,8 @@ inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
 
     switch (MIRROR_BYTE(sequence)) {
-      case REB_CHAR:
-        return EXTRA(Any, sequence).u;  // cell-packed byte-oriented sequence
+      case REB_CHAR:  // packed sequence of bytes directly in cell
+        return EXTRA(Any, sequence).u;
 
       case REB_WORD:
         return 2;  // simulated 2-blanks sequence, or compressed refinement

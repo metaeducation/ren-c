@@ -2466,7 +2466,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         // applicable compression...and validates the array.
         //
         DECLARE_LOCAL (temp);
-        REBVAL *check = Try_Pop_Path_Or_Element_Or_Nulled(
+        REBVAL *check = Try_Pop_Sequence_Or_Element_Or_Nulled(
             temp,  // doesn't write directly to stack since popping stack
             token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             dsp_path_head - 1
