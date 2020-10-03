@@ -20,6 +20,8 @@ any-value!  ; signal typesets start (SYM_ANY_VALUE_X hardcoded reference)
 any-word!
 any-path!
 any-number!
+any-sequence!
+any-tuple!
 any-scalar!
 any-series!
 any-string!

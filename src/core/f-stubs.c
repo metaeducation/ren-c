@@ -402,18 +402,30 @@ void Extra_Init_Action_Checks_Debug(REBACT *a) {
 
 
 //
-//  Part_Len_Core: C
+//  Part_Len_May_Modify_Index: C
 //
-// When an ACTION! that takes a series also takes a /PART argument, this
-// determines if the position for the part is before or after the series
+// This is the common way of normalizing a series with a position against a
+// /PART limit, so that the series index points to the beginning of the
+// subsetted range and gives back a length to the end of that subset.
+//
+// It determines if the position for the part is before or after the series
 // position.  If it is before (e.g. a negative integer limit was passed in,
 // or a prior position) the series value will be updated to the earlier
 // position, so that a positive length for the partial region is returned.
 //
-static REBLEN Part_Len_Core(
+REBLEN Part_Len_May_Modify_Index(
     REBVAL *series,  // ANY-SERIES! value whose index may be modified
     const REBVAL *part  // /PART (number, position in value, or BLANK! cell)
 ){
+    if (ANY_SEQUENCE(series)) {
+        if (not IS_NULLED(part))
+            fail ("/PART cannot be used with ANY-SEQUENCE");
+
+        return VAL_SEQUENCE_LEN(series);
+    }
+
+    assert(ANY_SERIES(series));
+
     if (IS_NULLED(part))  // indicates /PART refinement unused
         return VAL_LEN_AT(series);  // leave index alone, use plain length
 
@@ -457,19 +469,6 @@ static REBLEN Part_Len_Core(
     assert(len >= 0);
     assert(VAL_LEN_HEAD(series) >= cast(REBLEN, len));
     return cast(REBLEN, len);
-}
-
-
-//
-//  Part_Len_May_Modify_Index: C
-//
-// This is the common way of normalizing a series with a position against a
-// /PART limit, so that the series index points to the beginning of the
-// subsetted range and gives back a length to the end of that subset.
-//
-REBLEN Part_Len_May_Modify_Index(REBVAL *series, const REBVAL *limit) {
-    assert(ANY_SERIES(series) or ANY_PATH(series));
-    return Part_Len_Core(series, limit);
 }
 
 
