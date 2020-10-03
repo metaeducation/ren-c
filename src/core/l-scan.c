@@ -1301,8 +1301,10 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             }
             if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COLON)) {
                 cp = Skip_To_Byte(cp, ss->end, ':');
-                if (cp and (cp + 1) != ss->end)  // 12:34
-                    return TOKEN_TIME;
+                if (cp and (cp + 1) != ss->end) {  // 12:34
+                    token = TOKEN_TIME;
+                    goto prescan_subsume_up_to_one_dot;  // -596523:14:07.9999
+                }
                 cp = ss->begin;
                 if (cp[1] == ':') {  // +: -:
                     token = TOKEN_WORD;
@@ -1411,6 +1413,11 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
       num:;
         if (flags == 0)
             return TOKEN_INTEGER;  // simple integer e.g. `123`
+
+        if (*(ss->end - 1) == ':') {  // terminal only valid if `a/1:`
+            --ss->end;
+            return TOKEN_INTEGER;
+        }
 
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_AT)) {
             token = TOKEN_EMAIL;
@@ -1841,8 +1848,13 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             //
             ++bp;
             ++ep;
-            while (not (IS_LEX_ANY_SPACE(*ep) or IS_LEX_DELIMIT(*ep)))
+            while (not (
+                IS_LEX_ANY_SPACE(*ep)
+                or IS_LEX_DELIMIT(*ep)
+                or *ep == ':'  // The dreaded `foo/:x: 10` syntax
+            )){
                 ++ep;
+            }
             Init_Get_Word(DS_PUSH(), Intern_UTF8_Managed(bp, ep - bp));
             ss->begin = ss->end = ep;
             break;

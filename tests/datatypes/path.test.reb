@@ -48,7 +48,11 @@
 )
 (
     a-value: 1/Jan/0000
-    0 == a-value/1
+    did all [
+        1 == a-value/1
+        'Jan == a-value/2
+        0 == a-value/3
+    ]
 )
 (
     a-value: me@here.com
