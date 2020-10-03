@@ -32,8 +32,11 @@
 )]
 
 [#1477 (
-    e: trap [load "/:"]
-    (error? e) and [e/id = 'scan-invalid]
+    set-slash: load "/:"
+    did all [
+        set-path? set-slash
+        '/: = set-slash
+    ]
 )]
 
 [https://github.com/metaeducation/ren-c/issues/876 (

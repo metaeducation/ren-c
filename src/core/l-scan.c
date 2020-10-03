@@ -1835,6 +1835,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         //
         if (level->mode == '/' or level->mode == '.') {
             if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
+                Init_Blank(DS_PUSH());  // `a.:` or `b/:` need a blank
                 ss->end = ss->begin = ep = bp;  // let parent see `:` 
                 goto done;
             }
@@ -2374,21 +2375,21 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             goto done;  // e.g. `a/b`, just finished scanning b
 
         ++ep;
+        ss->begin = ep;
 
         if (
             *ep == '\0' or IS_LEX_SPACE(*ep) or ANY_CR_LF_END(*ep)
             or *ep == ')' or *ep == ']'
         ){
-            ss->begin = ep;
             goto done;
         }
 
-        if (Interstitial_Match(*ep, level->mode)) {
-            ss->begin = ep;
-            goto loop;
-        }
-
-        ss->begin = ep;  // skip next / or .
+        // Since we aren't "done" we are still in the sequence mode, which
+        // means we don't want the "lookahead" to run and see any colons
+        // that might be following, because it would apply them to the last
+        // thing pushed...which is supposed to go internally to the sequence.
+        //
+        goto loop;
     }
     else if (Is_Dot_Or_Slash(*ep)) {  // starting a new path or tuple
         //
@@ -2547,9 +2548,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         mutable_KIND_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
         if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
             mutable_MIRROR_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
-
-        if (VAL_TYPE(DS_TOP) == REB_SET_TUPLE)
-            ss->begin = ss->begin;
 
         ss->begin = ++ss->end;  // !!! ?
     }
