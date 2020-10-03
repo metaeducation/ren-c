@@ -260,8 +260,14 @@ static REBSER *MAKE_TO_Binary_Common(const REBVAL *arg)
         Join_Binary_In_Byte_Buf(arg, -1);
         return Copy_Series_Core(BYTE_BUF, SERIES_FLAGS_NONE);
 
-    case REB_TUPLE:
-        fail ("Revisit TUPLE! to BINARY!");
+    case REB_TUPLE: {
+        REBLEN len = VAL_SEQUENCE_LEN(arg);
+        REBBIN *bin = Make_Binary(len);
+        if (Did_Get_Sequence_Bytes(BIN_HEAD(bin), arg, len)) {
+            TERM_BIN_LEN(bin, len);
+            return bin;
+        }
+        fail ("TUPLE! did not consist entirely of INTEGER! values 0-255"); }
 
     case REB_CHAR: {
         REBUNI c = VAL_CHAR(arg);
