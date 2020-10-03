@@ -356,13 +356,27 @@ REBTYPE(Sequence)
         // but it should be cheap for any similarly marked array.  Also, a
         // /DEEP copy of a path may copy groups that are mutable.
         //
-      case SYM_COPY:
-        if (MIRROR_BYTE(sequence) == REB_WORD) {
+      case SYM_COPY: {
+        if (
+            MIRROR_BYTE(sequence) == REB_WORD
+            or MIRROR_BYTE(sequence) == REB_CHAR
+        ){
             assert(VAL_WORD_SYM(sequence) == SYM__SLASH_1_);
             return Move_Value(frame_->out, sequence);
         }
 
-        goto retrigger;
+        assert(MIRROR_BYTE(sequence) == REB_BLOCK);
+
+        enum Reb_Kind kind = VAL_TYPE(sequence);
+        mutable_KIND_BYTE(sequence) = REB_BLOCK;
+
+        REB_R r = T_Array(frame_, verb);
+
+        assert(KIND_BYTE(r) == REB_BLOCK);
+        Freeze_Array_Shallow(VAL_ARRAY_KNOWN_MUTABLE(r));
+        mutable_KIND_BYTE(r) = kind;
+
+        return r; }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
@@ -390,10 +404,6 @@ REBTYPE(Sequence)
     }
 
     return R_UNHANDLED;
-
-  retrigger:
-
-    return T_Array(frame_, verb);
 }
 
 
