@@ -72,8 +72,13 @@
 //   format is in effect:
 //
 //   - REB_CHAR has raw bytes in the payload (similar to an R3-Alpha TUPLE!)
-//   - REB_WORD is used for refinements and the `/` and '.' cases
 //   - REB_BLOCK is when the path or tuple are stored as an ordinary array
+//   - REB_WORD is used for the `/` and '.' cases
+//   - REB_GET_WORD is used for the `/a` and `.a` cases
+//   - REB_SYM_WORD is used for the `a/` and `a.` cases
+//        (REB_SET_WORD is currently avoided due to complications if binding
+//        were to see this "gimmick" as if it were a real SET-WORD! and
+//        treat this binding unusually...review)
 //
 
 inline static bool Is_Valid_Sequence_Element(
@@ -137,7 +142,8 @@ inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
         assert(ANY_TUPLE_KIND(kind));
         Init_Word(out, PG_Dot_1_Canon);
     }
-    mutable_KIND_BYTE(out) = kind;  // leave MIRROR_BYTE as REB_WORD
+    mutable_KIND_BYTE(out) = kind;
+    assert(MIRROR_BYTE(out) == REB_WORD);  // leave as-is
     return SPECIFIC(out);
 }
 
@@ -164,13 +170,14 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     if (not Is_Valid_Sequence_Element(kind, v))
         return nullptr;  // leave element in v to indicate "the bad element"
 
-    // !!! Start by just optimizing refinements as a proof-of-concept, and
-    // to get efficiency parity with R3-Alpha for that situation.  Should
-    // be able to apply to more types (and possibly take in things like
-    // `'foo` to make `/('foo)` with an artificial GROUP!).  Review.
+    // The current optimization only covers WORD!s, to get parity with
+    // R3-Alpha on REFINEMENT! fitting in a cell (plus `a/`, `.a`, `a.`) 
+    // How creative one gets to using the MIRROR_BYTE() depends on how much
+    // complication you want to bear in code like binding.
     //
     if (VAL_TYPE(v) == REB_WORD) {
         assert(MIRROR_BYTE(v) == REB_WORD);
+        mutable_MIRROR_BYTE(v) = REB_GET_WORD;  // "refinement-style" signal
         mutable_KIND_BYTE(v) = kind;
         return v;
     }
@@ -189,14 +196,15 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
 inline static REBVAL *Refinify(REBVAL *v) {
     bool success = (Try_Leading_Blank_Pathify(v, REB_PATH) != nullptr);
     assert(success);
+    UNUSED(success);
     return v;
 }
 
 inline static bool IS_REFINEMENT_CELL(REBCEL(const*) v)
-  { return CELL_TYPE(v) == REB_PATH and MIRROR_BYTE(v) == REB_WORD; }
+  { return CELL_TYPE(v) == REB_PATH and MIRROR_BYTE(v) == REB_GET_WORD; }
 
 inline static bool IS_REFINEMENT(const RELVAL *v)
-  { return IS_PATH(v) and MIRROR_BYTE(v) == REB_WORD; }
+  { return IS_PATH(v) and MIRROR_BYTE(v) == REB_GET_WORD; }
 
 inline static REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
     assert(IS_REFINEMENT_CELL(v));
@@ -303,11 +311,22 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     const RELVAL *v2,
     REBSPC *specifier  // assumed to apply to both v1 and v2
 ){
-    if (IS_BLANK(v1)) {
+    if (IS_BLANK(v1))
         return Try_Leading_Blank_Pathify(
             Derelativize(out, v2, specifier),
             kind
         );
+
+    if (not Is_Valid_Sequence_Element(kind, v1)) {
+        Derelativize(out, v1, specifier);
+        return nullptr;
+    }
+
+    if (IS_WORD(v1) and IS_BLANK(v2)) {  // `foo.` and `foo/` cases
+        Derelativize(out, v1, specifier);
+        mutable_KIND_BYTE(out) = kind;
+        mutable_MIRROR_BYTE(out) = REB_SYM_WORD;  // signal trailing
+        return SPECIFIC(out);
     }
 
     if (IS_INTEGER(v1) and IS_INTEGER(v2)) {
@@ -321,11 +340,6 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
         }
 
         // fall through
-    }
-
-    if (not Is_Valid_Sequence_Element(kind, v1)) {
-        Derelativize(out, v1, specifier);
-        return nullptr;
     }
 
     if (not Is_Valid_Sequence_Element(kind, v2)) {
@@ -458,8 +472,10 @@ inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
       case REB_CHAR:  // packed sequence of bytes directly in cell
         return EXTRA(Any, sequence).u;
 
-      case REB_WORD:
-        return 2;  // simulated 2-blanks sequence, or compressed refinement
+      case REB_WORD:  // simulated [_ _] sequence (`/`, `.`)
+      case REB_GET_WORD:  // compressed [_ word] sequence (`.foo`, `/foo`)
+      case REB_SYM_WORD:  // compressed [word _] sequence (`foo.`, `foo.`)
+        return 2;
 
       case REB_BLOCK: {
         REBARR *a = ARR(VAL_NODE(sequence));
@@ -479,38 +495,45 @@ inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
 //
 inline static const RELVAL *VAL_SEQUENCE_AT(
     RELVAL *store,  // return result may or may not point at this cell
-    REBCEL(const*) sequence,
+    REBCEL(const*) sequence,  // allowed to be the same as sequence
     REBLEN n
 ){
-    assert(store != sequence);  // cannot be the same
   #if !defined(NDEBUG)
-    Init_Unreadable_Void(store);  // catch store use in case we don't write it
+    if (store != sequence)
+        Init_Unreadable_Void(store);  // catch use in case we don't write it
   #endif
 
-    enum Reb_Kind kind = CELL_TYPE(sequence);  // Not *CELL_KIND*, may be word
-    assert(ANY_SEQUENCE_KIND(kind));
+    assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));  // TYPE, not HEART
 
-    switch (MIRROR_BYTE(sequence)) {
+    enum Reb_Kind heart = CELL_HEART(sequence);
+    switch (heart) {
       case REB_CHAR:
         assert(n < EXTRA(Any, sequence).u);
         return Init_Integer(store, PAYLOAD(Bytes, sequence).common[n]);
 
       case REB_WORD: {
         assert(n < 2);
- 
-        if (
-            n == 0
-            or VAL_STRING(sequence) == PG_Dot_1_Canon
+        assert(
+            VAL_STRING(sequence) == PG_Dot_1_Canon
             or VAL_STRING(sequence) == PG_Slash_1_Canon
-        ){
+        );
+        return BLANK_VALUE; }
+
+      case REB_GET_WORD:
+      case REB_SYM_WORD: {
+        assert(n < 2);
+        if (heart == REB_SYM_WORD and n == 1)
             return BLANK_VALUE;
-        }
+        if (heart == REB_GET_WORD and n == 0)
+            return BLANK_VALUE;
 
         // Because the cell is being viewed as a PATH!, we cannot view it as
         // a WORD! also unless we fiddle the bits at a new location.
         //
-        Blit_Cell(store, CELL_TO_VAL(sequence));
-        mutable_KIND_BYTE(store) = REB_WORD;
+        if (sequence != store)
+            Blit_Cell(store, CELL_TO_VAL(sequence));
+        mutable_KIND_BYTE(store) = REB_WORD;  // not ANY-SEQUENCE!
+        mutable_MIRROR_BYTE(store) = REB_WORD;  // not the fake REB_GET_WORD
         return store; }
 
       case REB_BLOCK: {
@@ -529,17 +552,20 @@ inline static REBYTE VAL_SEQUENCE_BYTE_AT(REBCEL(const*) path, REBLEN n)
 {
     DECLARE_LOCAL (temp);
     const RELVAL *at = VAL_SEQUENCE_AT(temp, path, n);
+    if (not IS_INTEGER(at))
+        fail ("VAL_SEQUENCE_BYTE_AT() used on non-byte ANY-SEQUENCE!");
     return VAL_UINT8(at);  // !!! All callers of this routine need vetting
 }
 
 inline static REBSPC *VAL_SEQUENCE_SPECIFIER(const RELVAL *sequence)
 {
-    enum Reb_Kind kind = CELL_TYPE(sequence);  // not *CELL_KIND*, may be word
-    assert(ANY_SEQUENCE_KIND(kind));
+    assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));  // TYPE, not HEART
 
     switch (MIRROR_BYTE(sequence)) {
       case REB_CHAR:
       case REB_WORD:
+      case REB_GET_WORD:
+      case REB_SYM_WORD:
         return SPECIFIED;
 
       case REB_BLOCK:

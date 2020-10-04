@@ -1942,7 +1942,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         break; }
 
 
-//==//// PATH! ///////////////////////////////////////////////////////////==//
+//==//// PATH! and TUPLE! ////////////////////////////////////////////////==//
 //
 // Paths starting with inert values do not evaluate.  `/foo/bar` has a blank
 // at its head, and it evaluates to itself.
@@ -1950,21 +1950,36 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 // Other paths run through the GET-PATH! mechanism and then EVAL the result.
 // If the get of the path is null, then it will be an error.
 
-      case REB_PATH: {
-        if (MIRROR_BYTE(v) == REB_WORD) {
-            if (VAL_WORD_SPELLING(v) == PG_Slash_1_Canon)
-                goto process_word;  // special `/` case with hidden word
+      case REB_PATH:
+      case REB_TUPLE: {
+        if (MIRROR_BYTE(v) == REB_WORD)
+            goto process_word;  // special `/` or `.` case with hidden word
 
-            Derelativize(f->out, v, *specifier);
-            break;  // optimized refinement (act like a blank-headed-path)
-        }
-
-        REBVAL *where = GET_EVAL_FLAG(f, NEXT_ARG_FROM_OUT) ? spare : f->out;
-
-        if (ANY_INERT(VAL_SEQUENCE_AT(where, v, 0))) {
+        const RELVAL *head = VAL_SEQUENCE_AT(spare, v, 0);
+        if (ANY_INERT(head)) {
             Derelativize(f->out, v, *specifier);
             break;
         }
+
+        // !!! This is a special exemption added so that BLANK!-headed tuples
+        // at the head of a PATH! carry over the inert evaluative behavior.
+        // (The concept of evaluator treatment of PATH!s and TUPLE!s is to
+        // not heed them structurally, but merely to see them as a sequence
+        // of ordered dots and slashes...it will have to be seen how this
+        // ultimately plays out.)
+        //
+        if (IS_TUPLE(head)) {
+            //
+            // VAL_SEQUENCE_AT() allows the same use of the `store` as the
+            // sequence, which may be the case if it wrote spare above.
+            //
+            if (IS_BLANK(VAL_SEQUENCE_AT(spare, head, 0))) {
+                Derelativize(f->out, v, *specifier);
+                break;
+            }
+        }
+
+        REBVAL *where = GET_EVAL_FLAG(f, NEXT_ARG_FROM_OUT) ? spare : f->out;
 
         if (Eval_Path_Throws_Core(
             where,
@@ -2015,23 +2030,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         break; }
 
 
-//==//// TUPLE! //////////////////////////////////////////////////////////==//
-//
-// R3-Alpha's TUPLE! was a type dedicated to storing a short sequence of
-// byte-sized integers (e.g. IP addresses, 192.0.0.1).  The new concept is to
-// make TUPLE! a peer type to PATH!, providing a nuance on how dispatch is
-// performed.  Due to the immutability rules for paths, optimizations of
-// byte sequences can still be pursued...to store payloads directly in the
-// cell with no series allocation (if desired).
-
-      case REB_TUPLE:
-      case REB_GET_TUPLE:
-      case REB_SET_TUPLE:
-      // SYM_TUPLE is an inert kind
-        Derelativize(f->out, v, *specifier);
-        break;
-
-//==//// SET-PATH! ///////////////////////////////////////////////////////==//
+//==//// SET-PATH! and SET-TUPLE! ////////////////////////////////////////==//
 //
 // See notes on SET-WORD!  SET-PATH!s are handled in a similar way, by
 // pushing them to the stack, continuing the evaluation via a lightweight
@@ -2053,7 +2052,8 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 //
 // Note that nulled cells are allowed: https://forum.rebol.info/t/895/4
 
-      case REB_SET_PATH: {
+      case REB_SET_PATH:
+      case REB_SET_TUPLE: {
         if (MIRROR_BYTE(v) == REB_WORD) {
             assert(VAL_WORD_SYM(v) == SYM__SLASH_1_);
             goto process_set_word;
@@ -2078,7 +2078,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
         break; }
 
 
-//==//// GET-PATH! ///////////////////////////////////////////////////////==//
+//==//// GET-PATH! and GET-TUPLE! ////////////////////////////////////////==//
 //
 // Note that the GET native on a PATH! won't allow GROUP! execution:
 //
@@ -2094,6 +2094,7 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 // Consistent with GET-WORD!, a GET-PATH! acts as GET and won't return VOID!.
 
       case REB_GET_PATH:
+      case REB_GET_TUPLE:
         if (MIRROR_BYTE(v) == REB_WORD) {
             assert(VAL_WORD_SYM(v) == SYM__SLASH_1_);
             goto process_get_word;

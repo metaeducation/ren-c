@@ -36,7 +36,7 @@
 )
 (
     blk: [_ 3]
-    3 == do [blk/_]
+    3 == do [blk/(_)]
 )
 (
     blk: [blank 3]

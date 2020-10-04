@@ -111,6 +111,9 @@ Script: [
     bad-sequence-item:  [{Value is not a valid ANY-SEQUENCE! element:} :arg1]
     cant-decorate-type: [{Cannot apply `:` or `@` decoration to:} :arg1]
 
+    action-with-dotted: {ACTION! used with dotted sequence access form}
+    inert-with-slashed: {ANY-INERT! used with slashed sequence access form}
+
     bad-get-group:      {GET-GROUP! gets WORD!/PATH!/BLOCK!, arity-0 ACTION!}
     bad-set-group:      {SET-GROUP! sets WORD!/PATH!/BLOCK!, arity-1 ACTION!}
 

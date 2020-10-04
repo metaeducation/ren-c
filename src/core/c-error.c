@@ -961,7 +961,7 @@ REBCTX *Error_Need_Non_Void_Core(const RELVAL *target, REBSPC *specifier) {
     //
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
-    assert(ANY_WORD(target) or ANY_PATH(target) or ANY_BLOCK(target));
+    assert(ANY_WORD(target) or ANY_SEQUENCE(target) or ANY_BLOCK(target));
 
     DECLARE_LOCAL (specific);
     Derelativize(specific, target, specifier);

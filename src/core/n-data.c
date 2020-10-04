@@ -525,7 +525,7 @@ inline static void Get_Var_May_Fail(
     if (ANY_WORD_KIND(kind)) {
         Move_Value(out, Lookup_Word_May_Fail(source, specifier));
     }
-    else if (ANY_PATH_KIND(kind)) {
+    else if (ANY_SEQUENCE_KIND(kind)) {
         //
         // `get 'foo/bar` acts as `:foo/bar`
         // except GET doesn't allow GROUP!s in the PATH!, unless you use
@@ -556,7 +556,7 @@ inline static void Get_Var_May_Fail(
 //
 //      return: [<opt> any-value!]
 //      source "Word or path to get, or block of words or paths"
-//          [<blank> <dequote> any-word! any-path! block!]
+//          [<blank> <dequote> any-word! any-sequence! block!]
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on VOID!)"
 //      /hard "Do not evaluate GROUP!s in PATH! (assume pre-COMPOSE'd)"
 //  ]
@@ -650,7 +650,7 @@ void Set_Var_May_Fail(
         REBVAL *var = Sink_Word_May_Fail(target, target_specifier);
         Derelativize(var, setval, setval_specifier);
     }
-    else if (ANY_PATH_KIND(kind)) {
+    else if (ANY_SEQUENCE_KIND(kind)) {
         DECLARE_LOCAL (specific);
         Derelativize(specific, setval, setval_specifier);
         PUSH_GC_GUARD(specific);
@@ -694,7 +694,7 @@ void Set_Var_May_Fail(
 //
 //      return: [<opt> any-value!]
 //          {Will be the values set to, or void if any set values are void}
-//      target [any-word! any-path! block! quoted!]
+//      target [any-word! any-sequence! block! quoted!]
 //          {Word or path, or block of words and paths}
 //      value [<opt> any-value!]
 //          "Value or block of values (NULL means unset)"
@@ -1157,27 +1157,38 @@ REBNATIVE(as)
     switch (new_kind) {
       case REB_BLOCK:
       case REB_GROUP:
-        if (ANY_PATH(v)) {  // internal representations vary on optimization
+        if (ANY_SEQUENCE(v)) {  // internals vary based on optimization
             switch (MIRROR_BYTE(v)) {
               case REB_CHAR:
                 fail ("Array Conversions of byte-oriented sequences TBD");
 
               case REB_WORD:
-                if (
+                assert(
                     VAL_WORD_SPELLING(v) == PG_Dot_1_Canon
                     or VAL_WORD_SPELLING(v) == PG_Slash_1_Canon
-                ){
-                    Init_Block(v, PG_2_Blanks_Array);
-                }
-                else {
-                    REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-                    Init_Blank(ARR_HEAD(a));
-                    Blit_Cell(ARR_AT(a, 1), v);
-                    mutable_KIND_BYTE(ARR_AT(a, 1)) = REB_WORD;
-                    TERM_ARRAY_LEN(a, 2);
-                    Init_Block(v, a);
-                }
+                );
+                Init_Block(v, PG_2_Blanks_Array);
                 break;
+
+              case REB_GET_WORD: {
+                REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                Init_Blank(ARR_HEAD(a));
+                Blit_Cell(ARR_AT(a, 1), v);
+                mutable_KIND_BYTE(ARR_AT(a, 1)) = REB_WORD;
+                mutable_MIRROR_BYTE(ARR_AT(a, 1)) = REB_WORD;
+                TERM_ARRAY_LEN(a, 2);
+                Init_Block(v, a);
+                break; }
+
+              case REB_SYM_WORD: {
+                REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
+                Blit_Cell(ARR_HEAD(a), v);
+                mutable_KIND_BYTE(ARR_HEAD(a)) = REB_WORD;
+                mutable_MIRROR_BYTE(ARR_HEAD(a)) = REB_WORD;
+                Init_Blank(ARR_AT(a, 1));
+                TERM_ARRAY_LEN(a, 2);
+                Init_Block(v, a);
+                break; }
 
               case REB_BLOCK:
                 mutable_KIND_BYTE(v) = REB_BLOCK;

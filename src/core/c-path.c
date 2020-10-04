@@ -166,7 +166,56 @@ bool Next_Path_Throws(REBPVS *pvs)
     if (IS_NULLED(pvs->out))
         fail (Error_No_Value_Core(*v, *specifier));
 
-    if (IS_GET_WORD(*v)) {  // e.g. object/:field
+    bool actions_illegal = false;
+
+    if (IS_BLANK(*v) and not IS_FILE(pvs->out)) {  // !!! File hack...
+        //
+        // !!! Literal BLANK!s in sequences are for internal "doubling up"
+        // of delimiters, like `a..b`, or they can be used for prefixes like
+        // `/foo` or suffixes like `bar/` -- the meaning of blanks at prefixes
+        // is to cause the sequence to behave inertly.  But terminal blanks
+        // were conceived as ensuring things are either actions or not.
+        //
+        // At the moment this point in the code doesn't know if we're dealing
+        // with a PATH! or a TUPLE!, but assume we're dealing with slashes and
+        // raise an error if the thing on the left of a slash is not a
+        // function when we are at the end.
+        //
+        Fetch_Next_Forget_Lookback(pvs);  // may be at end
+
+        if (NOT_END(*v))
+           fail ("Literal BLANK!s not executable internal to sequences ATM");
+
+        if (not IS_ACTION(pvs->out))
+            fail (Error_Inert_With_Slashed_Raw());
+
+        PVS_PICKER(pvs) = NULLED_CELL;  // no-op
+        goto redo;
+    }
+    else if (ANY_TUPLE(*v) and not IS_FILE(pvs->out)) {  // ignore file hack
+        //
+        // !!! Tuples in PATH!s will require some thinking...especially since
+        // it's not necessarily going to be useful to reflect the hierarchy
+        // of tuples-in-paths for picking.  However, the special case of
+        // a terminal tuple enforcing a non-action is very useful.  This
+        // tweak implements *just that*.
+        //
+        DECLARE_LOCAL (temp);
+        if (
+            VAL_SEQUENCE_LEN(*v) != 2 or
+            not IS_BLANK(VAL_SEQUENCE_AT(temp, *v, 1))
+        ){
+            fail ("TUPLE! support in PATH! processing limited to `a.` forms");
+        }
+        Derelativize(
+            FRM_SPARE(pvs),
+            VAL_SEQUENCE_AT(temp, *v, 0),
+            VAL_SEQUENCE_SPECIFIER(*v)
+        );
+        PVS_PICKER(pvs) = FRM_SPARE(pvs);
+        actions_illegal = true;
+    }
+    else if (IS_GET_WORD(*v)) {  // e.g. object/:field
         PVS_PICKER(pvs) = Get_Word_May_Fail(FRM_SPARE(pvs), *v, *specifier);
     }
     else if (
@@ -324,10 +373,15 @@ bool Next_Path_Throws(REBPVS *pvs)
     // be captured the first time the function is seen, otherwise it would
     // capture the last refinement's name, so check label for non-NULL.
     //
-    if (IS_ACTION(pvs->out) and IS_WORD(PVS_PICKER(pvs))) {
-        if (not pvs->opt_label) {  // !!! only used for this "bit" signal ATM
-            pvs->opt_label = VAL_WORD_SPELLING(PVS_PICKER(pvs));
-            INIT_ACTION_LABEL(pvs->out, pvs->opt_label);
+    if (IS_ACTION(pvs->out)) {
+        if (actions_illegal)
+            fail (Error_Action_With_Dotted_Raw());
+
+        if (IS_WORD(PVS_PICKER(pvs))) {
+            if (not pvs->opt_label) {  // !!! only used for this "bit" signal
+                pvs->opt_label = VAL_WORD_SPELLING(PVS_PICKER(pvs));
+                INIT_ACTION_LABEL(pvs->out, pvs->opt_label);
+            }
         }
     }
 
@@ -364,43 +418,92 @@ bool Next_Path_Throws(REBPVS *pvs)
 //
 bool Eval_Path_Throws_Core(
     REBVAL *out, // if opt_setval, this is only used to return a thrown value
-    const RELVAL *any_path,
-    REBSPC *any_path_specifier,
+    const RELVAL *sequence,
+    REBSPC *sequence_specifier,
     const REBVAL *opt_setval, // Note: may be the same as out!
     REBFLGS flags
 ){
     REBLEN index = 0;
 
-    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), any_path));
+    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), sequence));
     
-    if (heart == REB_CHAR) {
-        Move_Value(out, SPECIFIC(any_path));  // byte compressed (`1.2.3.4`)
-        return false;
-    }
+    // The evaluator has the behavior that inert-headed paths will just
+    // give themselves back.  But this code path is for GET, where getting
+    // something like `/a` will actually look up the word.
 
-    if (heart == REB_WORD) {
-        if (
-            VAL_WORD_SPELLING(any_path) == PG_Slash_1_Canon
-            or VAL_WORD_SPELLING(any_path) == PG_Dot_1_Canon
-        ){
-            assert(false);
-            // needs special handling as if it were a WORD!
-            return false;
+    switch (heart) {
+      case REB_CHAR:
+        fail ("Cannot GET or SET a numeric-headed ANY-SEQUENCE!");
+
+      case REB_WORD:  // get or set `'/` or `'.`
+        assert(
+            VAL_WORD_SPELLING(sequence) == PG_Slash_1_Canon
+            or VAL_WORD_SPELLING(sequence) == PG_Dot_1_Canon
+        );
+        goto handle_word;
+
+      case REB_GET_WORD:  // get or set `/foo` or `.foo`
+        //
+        // The idea behind terminal dots and slashes is to distinguish "never
+        // a function" vs. "always a function".  These sequence forms fit
+        // entirely inside a cell, so they make this a relatively cheap way
+        // to make asserts which can help toughen library code.
+        //
+        goto handle_word;
+
+      case REB_SYM_WORD:  // get or set `foo/` or `foo.`
+      handle_word: {
+        if (opt_setval) {  // nullptr is GET (note IS_NULLED() to set NULLED)
+            //
+            // This is the SET case, which means the `foo.:` and `foo/:`
+            // forms pre-check the action status of the value being assigned.
+            //
+            if (heart == REB_SYM_WORD) {
+                if (ANY_TUPLE_KIND(VAL_TYPE(sequence))) {
+                    if (IS_ACTION(opt_setval))
+                        fail (Error_Action_With_Dotted_Raw());
+                }
+                else {
+                    if (not IS_ACTION(opt_setval))
+                        fail (Error_Inert_With_Slashed_Raw());
+                }
+            }
+
+            Move_Value(
+                Lookup_Mutable_Word_May_Fail(sequence, sequence_specifier),
+                opt_setval
+            );
         }
+        else {
+            Get_Word_May_Fail(out, sequence, sequence_specifier);
 
-        Derelativize(out, any_path, any_path_specifier);  // like REFINEMENT!
-        return false;  // didn't throw
+            if (heart == REB_SYM_WORD) {
+                if (ANY_TUPLE_KIND(VAL_TYPE(sequence))) {
+                    if (IS_ACTION(out))
+                        fail (Error_Action_With_Dotted_Raw());
+                }
+                else {
+                    if (not IS_ACTION(out))
+                        fail (Error_Inert_With_Slashed_Raw());
+                }
+            }
+        }
+        return false; }
+
+      case REB_BLOCK:
+        break;
+
+      default:
+        panic (nullptr);
     }
-
-    assert(heart == REB_BLOCK);
 
     // We extract the array.  Note that if the input value was a REBVAL* it
     // may have been "specific" because it was coupled with a specifier that
     // was passed in, but to get the specifier of the embedded array we have
     // to use Derive_Specifier().
     //
-    const REBARR *array = VAL_ARRAY(any_path);
-    REBSPC *specifier = Derive_Specifier(any_path_specifier, any_path);
+    const REBARR *array = VAL_ARRAY(sequence);
+    REBSPC *specifier = Derive_Specifier(sequence_specifier, sequence);
 
     while (KIND_BYTE(ARR_AT(array, index)) == REB_BLANK)
         ++index; // pre-feed any blanks
@@ -432,7 +535,35 @@ bool Eval_Path_Throws_Core(
     // Seed the path evaluation process by looking up the first item (to
     // get a datatype to dispatch on for the later path items)
     //
-    if (IS_WORD(*v)) {
+    if (IS_TUPLE(*v)) {
+        //
+        // !!! As commented upon multiple times in this work-in-progress,
+        // the meaning of a TUPLE! in a PATH! needs work as it's a "new thing"
+        // but a few limited forms are supported for now.  In this case,
+        // we allow a leading TUPLE! in a PATH! of the form `.a` to act like
+        // `a` when requested via GET or SET (the whole path would be inert
+        // in the evaluator with such a tuple in the first position)
+        //
+        DECLARE_LOCAL (temp);
+        if (
+            VAL_SEQUENCE_LEN(*v) != 2
+            or not IS_BLANK(VAL_SEQUENCE_AT(temp, *v, 0))
+        ){
+            fail ("Head TUPLE! support in PATH! limited to `.a` at moment");
+        }
+        const RELVAL *second = VAL_SEQUENCE_AT(temp, *v, 1);
+        if (not IS_WORD(second))
+            fail ("Head TUPLE support in PATH! limited to `.a` at moment");
+
+        pvs->u.ref.cell = Lookup_Mutable_Word_May_Fail(
+            second,
+            VAL_SEQUENCE_SPECIFIER(*v)
+        );
+        Move_Value(pvs->out, SPECIFIC(pvs->u.ref.cell));
+        if (IS_ACTION(pvs->out))
+            pvs->opt_label = VAL_WORD_SPELLING(second);
+    }
+    else if (IS_WORD(*v)) {
         //
         // Remember the actual location of this variable, not just its value,
         // in case we need to do R_IMMEDIATE writeback (e.g. month/day: 1)
@@ -1011,20 +1142,28 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  CT_Sequence: C
 //
-// "Compare Type" dispatcher for the following types: (list here to help
-// text searches)
+// "Compare Type" dispatcher for ANY-PATH! and ANY-TUPLE!.
 //
-//     CT_Set_Path()
-//     CT_Get_Path()
-//     CT_Lit_Path()
+// Note: R3-Alpha considered TUPLE! with any number of trailing zeros to
+// be equivalent.  This meant `255.255.255.0` was equal to `255.255.255`.
+// Why this was considered useful is not clear...as that would make a
+// fully transparent alpha channel pixel equal to a fully opaque color.
+// This behavior is not preserved in Ren-C, so `same-color?` or something
+// else would be needed to get that intent.
 //
 REBINT CT_Sequence(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
-    if (MIRROR_BYTE(a) == REB_WORD and MIRROR_BYTE(b) == REB_WORD)
-        return CT_Word(a, b, strict);
-    else if (MIRROR_BYTE(a) == REB_BLOCK and MIRROR_BYTE(b) == REB_BLOCK)
-        return CT_Array(a, b, strict);
-    else if (MIRROR_BYTE(a) == REB_CHAR and MIRROR_BYTE(b) == REB_CHAR) {
+    // If the internal representations used do not match, then the sequences
+    // can't match.  For this to work reliably, there can't be aliased
+    // internal representations like [1 2] the array and #{0102} the bytes.
+    // See the Try_Init_Sequence() pecking order for how this is guaranteed.
+    //
+    int heart_diff = cast(int, MIRROR_BYTE(a)) - MIRROR_BYTE(b);
+    if (heart_diff != 0)
+        return heart_diff > 0 ? 1 : -1;
+
+    switch (MIRROR_BYTE(a)) {  // now known to be same as MIRROR_BYTE(b)
+      case REB_CHAR: {  // packed bytes
         REBLEN a_len = VAL_SEQUENCE_LEN(a);
         int diff = cast(int, a_len) - VAL_SEQUENCE_LEN(b);
         if (diff != 0)
@@ -1037,8 +1176,17 @@ REBINT CT_Sequence(REBCEL(const*) a, REBCEL(const*) b, bool strict)
         );
         if (cmp == 0)
             return 0;
-        return cmp > 0 ? 1 : -1;
+        return cmp > 0 ? 1 : -1; }
+
+      case REB_WORD:  // `/` or `.`
+      case REB_GET_WORD:  // `/foo` or `.foo`
+      case REB_SYM_WORD:  // `foo/ or `foo.`
+        return CT_Word(a, b, strict);
+
+      case REB_BLOCK:
+        return CT_Array(a, b, strict);
+
+      default:
+        panic (nullptr);
     }
-    else
-        return -1;  // !!! what is the right answer here?
 }

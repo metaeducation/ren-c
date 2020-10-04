@@ -444,7 +444,13 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_SYM_PATH:
-         assert(heart == REB_CHAR or heart == REB_WORD or heart == REB_BLOCK);
+         assert(
+            heart == REB_CHAR
+            or heart == REB_WORD
+            or heart == REB_GET_WORD
+            or heart == REB_SYM_WORD
+            or heart == REB_BLOCK
+         );
          break;
 
       default:
