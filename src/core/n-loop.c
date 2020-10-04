@@ -635,6 +635,18 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
     Init_Blank(D_OUT);  // result if body never runs (MAP-EACH gives [])
 
+    if (ANY_SEQUENCE(ARG(data))) {
+        //
+        // !!! Temporarily turn any sequences into a BLOCK!, rather than
+        // worry about figuring out how to iterate optimized series.  Review
+        // as part of an overall vetting of "generic iteration" (which this
+        // is a poor substitute for).
+        //
+        REBVAL *block = rebValueQ("as block!", ARG(data), rebEND);
+        Move_Value(ARG(data), block);
+        rebRelease(block);
+    }
+
     struct Loop_Each_State les;
     les.mode = mode;
     les.out = D_OUT;
@@ -679,18 +691,6 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         else if (ANY_CONTEXT(les.data)) {
             les.data_ser = SER(CTX_VARLIST(VAL_CONTEXT(les.data)));
             les.data_idx = 1;
-            les.data_len = SER_USED(les.data_ser);  // has HOLD, won't change
-        }
-        else if (ANY_PATH(les.data)) {
-            if (
-                NOT_CELL_FLAG(les.data, FIRST_IS_NODE)
-                or not IS_SER_ARRAY(VAL_NODE(les.data))
-            ){
-                fail ("LOOP-EACH not written to handle non-array PATH!s");
-            }
-            les.data_ser = SER(VAL_NODE(les.data));
-            les.data_idx = 0;
-            les.specifier = VAL_SEQUENCE_SPECIFIER(les.data);
             les.data_len = SER_USED(les.data_ser);  // has HOLD, won't change
         }
         else if (IS_MAP(les.data)) {
