@@ -19,6 +19,8 @@ REBOL [
 
 do %bootstrap-shim.r
 
+do %make-file.r  ; Experimental!  Trying to replace PD_File...
+
 ; When you run a Rebol script, the `current-path` is the directory where the
 ; script is.  We assume that the Rebol source enlistment's root directory is
 ; one level above this file (which should be %tools/common.r)

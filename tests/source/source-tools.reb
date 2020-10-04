@@ -40,9 +40,10 @@ REBOL [
 ren-c-repo: clean-path %../
 
 do %../../tools/common.r
-do repo/tools/common-parsers.r
-do repo/tools/text-lines.reb
-do repo/tools/%read-deep.reb
+
+do make-file '(repo/tools)/common-parsers.r
+do make-file '(repo/tools)/text-lines.reb
+do make-file '(repo/tools)/read-deep.reb
 
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
