@@ -389,7 +389,7 @@ static const RELVAL *Get_Parse_Value(
         return cell;
     }
 
-    if (IS_PATH(rule)) {
+    if (IS_PATH(rule) or IS_TUPLE(rule)) {
         //
         // !!! REVIEW: how should GET-PATH! be handled?
         //
@@ -822,7 +822,7 @@ static REBIXO To_Thru_Block_Rule(
                     rule = cell;
                 }
             }
-            else if (IS_PATH(rule))
+            else if (IS_PATH(rule) or IS_TUPLE(rule))
                 rule = Get_Parse_Value(cell, rule, P_RULE_SPECIFIER);
 
             // Try to match it:
@@ -1233,7 +1233,10 @@ static void Handle_Mark_Rule(
             P_INPUT_VALUE
         );
     }
-    else if (k == REB_PATH or k == REB_SET_PATH) {
+    else if (
+        k == REB_PATH or k == REB_SET_PATH
+        or k == REB_TUPLE or k == REB_SET_TUPLE
+    ){
         if (Set_Path_Throws_Core(
             P_OUT, rule, specifier, P_INPUT_VALUE
         )){
@@ -1257,7 +1260,7 @@ static REB_R Handle_Seek_Rule_Dont_Update_Begin(
         rule = Lookup_Word_May_Fail(rule, specifier);
         k = KIND_BYTE(rule);
     }
-    else if (k == REB_PATH) {
+    else if (k == REB_PATH or k == REB_TUPLE) {
         if (Get_Path_Throws_Core(P_CELL, rule, specifier))
             fail (Error_No_Catch_For_Throw(P_CELL));
         rule = P_CELL;
@@ -1954,20 +1957,20 @@ REBNATIVE(subparse)
                 }
             }
         }
-        else if (ANY_PATH(rule)) {
-            if (IS_PATH(rule)) {
+        else if (ANY_SEQUENCE(rule)) {
+            if (IS_PATH(rule) or IS_TUPLE(rule)) {
                 if (Get_Path_Throws_Core(save, rule, P_RULE_SPECIFIER)) {
                     Move_Value(P_OUT, save);
                     return R_THROWN;
                 }
                 rule = save;
             }
-            else if (IS_SET_PATH(rule)) {
+            else if (IS_SET_PATH(rule) or IS_SET_TUPLE(rule)) {
                 Handle_Mark_Rule(f, rule, P_RULE_SPECIFIER);
                 FETCH_NEXT_RULE(f);
                 continue;
             }
-            else if (IS_GET_PATH(rule)) {
+            else if (IS_GET_PATH(rule) or IS_GET_TUPLE(rule)) {
                 HANDLE_SEEK_RULE_UPDATE_BEGIN(f, rule, P_RULE_SPECIFIER);
                 FETCH_NEXT_RULE(f);
                 continue;
