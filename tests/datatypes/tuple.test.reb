@@ -3,7 +3,21 @@
 (tuple? 1.2.3)
 (not tuple? 1)
 (tuple! = type of 1.2.3)
+
+; Test that scanner compacted forms match forms built from arrays
+;
 (1.2.3 = to tuple! [1 2 3])
+;(1x2 = to tuple! [1 2])  ; !!! TBD when unified with pairs
+;(1. = to tuple! [1 _])  ; !!! TBD
+(.1 = to tuple! [_ 1])
+
+; !!! Should dot be inert?  Is there value to having it as an inert predicate
+; form for something like identity that does not execute on its own?  It is
+; both leading -and- trailing blank, which suggests non-executability...
+; (while slash can argue that trailing slashes execute)
+;
+('. = to tuple! [_ _])
+
 ("1.2.3" = mold 1.2.3)
 
 ; minimum
@@ -42,3 +56,28 @@
     ]
     true
 )
+
+; No implicit to binary! from tuple!
+(
+    a-value: 0.0.0.0
+    not equal? to binary! a-value a-value
+)
+
+(
+    a-value: 0.0.0.0
+    equal? equal? to binary! a-value a-value equal? a-value to binary! a-value
+)
+
+(equal? 0.0.0 0.0.0)
+(not equal? 0.0.1 0.0.0)
+
+
+; These tests were for padding in R3-Alpha of TUPLE! which is not supported
+; by the generalized tuple mechanics.
+;
+(comment [
+    ; tuple! right-pads with 0
+    (equal? 1.0.0 1.0.0.0.0.0.0)
+    ; tuple! right-pads with 0
+    (equal? 1.0.0.0.0.0.0 1.0.0)
+] true)

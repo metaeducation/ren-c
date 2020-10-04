@@ -249,7 +249,7 @@ path        "member or refinement selection with execution bias"
             sequence    *       *       *       [path sequence]
 
 tuple       "member selection with inert bias"
-            sequence    *       *       *       [tuple sequence]
+            sequence    *       *       *       [tuple sequence scalar]
 
 word        "evaluates a variable or action"
             word        -       *       +       [word]

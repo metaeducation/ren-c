@@ -271,9 +271,9 @@
     ])
 
     ((lit '''304) = f lit '''303)
-    ((lit '''304) = :(specialize 'f [x: lit '''303]))
+    ( (lit '''304) = reeval (specialize 'f [x: lit '''303]) )
     (null = f lit '''1020)
-    (null = :(specialize 'f [x: lit '''1020]))
+    ( null = (specialize 'f [x: lit '''1020])/ )
 ]
 
 [
@@ -286,7 +286,7 @@
     ])
 
     ((lit '''304) = f lit '''303)
-    ((lit '''304) = :(specialize 'f [x: lit '''303]))
+    ( (lit '''304) = reeval (specialize 'f [x: lit '''303]) )
     ((lit ''') = f lit ''')
-    ((lit ''') = :(specialize 'f [x: lit ''']))
+    ( (lit ''') = (specialize 'f [x: lit '''])/ )
 ]

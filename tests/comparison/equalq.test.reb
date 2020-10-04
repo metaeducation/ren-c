@@ -112,21 +112,6 @@
     a-value: to tag! ""
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
 )
-(equal? 0.0.0 0.0.0)
-(not equal? 0.0.1 0.0.0)
-; tuple! right-pads with 0
-(equal? 1.0.0 1.0.0.0.0.0.0)
-; tuple! right-pads with 0
-(equal? 1.0.0.0.0.0.0 1.0.0)
-; No implicit to binary! from tuple!
-(
-    a-value: 0.0.0.0
-    not equal? to binary! a-value a-value
-)
-(
-    a-value: 0.0.0.0
-    equal? equal? to binary! a-value a-value equal? a-value to binary! a-value
-)
 (equal? #[bitset! #{00}] #[bitset! #{00}])
 ; bitset! with no bits set does not equal empty bitset
 ; This is because of the COMPLEMENT problem: bug#1085.
