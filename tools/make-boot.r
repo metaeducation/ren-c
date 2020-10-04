@@ -108,8 +108,9 @@ comment [
 e-version: make-emitter "Version Information" inc/tmp-version.h
 
 version: load %version.r
-version/4: config/id/2
-version/5: config/id/3
+version: to tuple! reduce [
+    version/1 version/2 version/3 config/id/2 config/id/3
+ ]
 
 e-version/emit {
     /*
