@@ -77,7 +77,7 @@ verbose: false
 proto-count: 0
 module-header: _
 
-source.text: read/string c-src
+source-text: read/string c-src
 
 ; When the header information in the comments at the top of the file is
 ; seen, save it into a variable.
@@ -94,7 +94,7 @@ proto-parser/emit-proto: :emit-native-proto
 
 the-file: c-src  ; global used for comments in the native emitter
 
-proto-parser/process source.text
+proto-parser/process source-text
 
 
 ;

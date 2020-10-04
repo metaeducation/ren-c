@@ -104,7 +104,7 @@ load-until-blank: function [
 
 
 collapse-whitespace: [some [change some white-space space | skip] end]
-bind collapse-whitespace c.lexical/grammar
+bind collapse-whitespace c-lexical/grammar
 
 
 proto-parser: context [
@@ -112,11 +112,11 @@ proto-parser: context [
     emit-fileheader: _
     emit-proto: _
     emit-directive: _
-    parse.position: _
+    parse-position: _
     notes: _
     lines: _
-    proto.id: _
-    proto.arg.1: _
+    proto-id: _
+    proto-arg-1: _
     data: _
     eoh: _ ; End of file header.
 
@@ -127,8 +127,8 @@ proto-parser: context [
     grammar: context bind [
 
         rule: [
-            parse.position: opt fileheader
-            any [parse.position: segment]
+            parse-position: opt fileheader
+            any [parse-position: segment]
         ]
 
         fileheader: [
@@ -142,7 +142,7 @@ proto-parser: context [
         ]
 
         segment: [
-            (proto.id: proto.arg.1: _)
+            (proto-id: proto-arg-1: _)
             format-func-section
             | span-comment
             | line-comment any [newline line-comment] newline
@@ -264,7 +264,7 @@ proto-parser: context [
                     typemacro-parentheses
                     | [
                         not "(" not "="
-                        [white-space | copy proto.id identifier | skip]
+                        [white-space | copy proto-id identifier | skip]
                     ]
                 ]
                 "("
@@ -272,14 +272,14 @@ proto-parser: context [
                 opt [
                     not typemacro-parentheses
                     not ")"
-                    copy proto.arg.1 identifier
+                    copy proto-arg-1 identifier
                 ]
                 any [typemacro-parentheses | not ")" [white-space | skip]]
                 ")"
             ]
         ]
 
-    ] c.lexical/grammar
+    ] c-lexical/grammar
 ]
 
 rewrite-if-directives: function [

@@ -20,7 +20,7 @@ REBOL [
     }
 ]
 
-c.lexical: context [
+c-lexical: context [
 
     grammar: [
 
@@ -59,8 +59,8 @@ c.lexical: context [
         ;
         ; -- A.1.3 Identifiers
 
-        identifier: [id.nondigit any id.char]
-        id.nondigit: [nondigit | universal-character-name]
+        identifier: [id-nondigit any id-char]
+        id-nondigit: [nondigit | universal-character-name]
 
         ;
         ; -- A.1.4 Universal character names
@@ -103,7 +103,7 @@ c.lexical: context [
             opt encoding-prefix #"^"" any s-char #"^""
         ]
         encoding-prefix: [{u8} | #"L" | #"u" | #"U"]
-        s-char: [s-char.cs | escape-sequence]
+        s-char: [s-char-cs | escape-sequence]
 
         ;
         ; -- A.1.7 Punctuators
@@ -128,7 +128,7 @@ c.lexical: context [
             [digit | #"." digit]
             any [
                 digit
-                | id.nondigit
+                | id-nondigit
                 | #"."
                 | [#"e" | #"p" | #"E" | #"P"] sign
             ]
@@ -155,7 +155,7 @@ c.lexical: context [
         nondigit: charset [#"_" #"a" - #"z" #"A" - #"Z"]
         digit: charset {0123456789}
         octal-digit: charset {01234567}
-        id.char: union nondigit digit
+        id-char: union nondigit digit
         hexadecimal-digit: charset [#"0" - #"9" #"a" - #"f" #"A" - #"F"]
 
         ; pp-number
@@ -165,7 +165,7 @@ c.lexical: context [
         c-char: complement charset {'\^/}
 
         ; string-literal
-        s-char.cs: complement charset {"\^/}
+        s-char-cs: complement charset {"\^/}
 
         ; punctuator
         p-char: charset "[](){}.&*+-~!/%<>^^|?:;=,#"

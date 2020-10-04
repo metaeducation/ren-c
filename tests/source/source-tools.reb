@@ -162,8 +162,8 @@ rebsource: context [
 
                 data: as text! data
 
-                identifier: c.lexical/grammar/identifier
-                c-pp-token: c.lexical/grammar/c-pp-token
+                identifier: c-lexical/grammar/identifier
+                c-pp-token: c-lexical/grammar/c-pp-token
 
                 malloc-found: copy []
 
@@ -203,10 +203,10 @@ rebsource: context [
                                     position:
                                     to end
                                 ]
-                                same? position proto-parser/parse.position
+                                same? position proto-parser/parse-position
                             ] else [
                                 line: try (
-                                    text-line-of proto-parser/parse.position
+                                    text-line-of proto-parser/parse-position
                                 )
                                 append
                                     non-std-func-space: default [copy []]
@@ -227,8 +227,8 @@ rebsource: context [
                         ; `REBNATIVE(some_name_q)` to be correctly lined up
                         ; as the "to-c-name" of the Rebol set-word
                         ;
-                        if proto-parser/proto.arg.1 <> to-c-name name [
-                            line: try text-line-of proto-parser/parse.position
+                        if proto-parser/proto-arg-1 <> to-c-name name [
+                            line: try text-line-of proto-parser/parse-position
                             emit <id-mismatch> [
                                 (mold proto-parser/data/1) (file) (line)
                             ]
@@ -238,14 +238,14 @@ rebsource: context [
                         ; ... ? (not a native)
                         ;
                         any [
-                            (proto-parser/proto.id =
+                            (proto-parser/proto-id =
                                 form to word! proto-parser/data/1)
-                            (proto-parser/proto.id
+                            (proto-parser/proto-id
                                 unspaced [
                                     "RL_" to word! proto-parser/data/1
                                 ])
                         ] else [
-                            line: try text-line-of proto-parser/parse.position
+                            line: try text-line-of proto-parser/parse-position
                             emit <id-mismatch> [
                                 (mold proto-parser/data/1) (file) (line)
                             ]
@@ -443,7 +443,7 @@ rebsource: context [
         braced: [lbrace any [braced | not rbrace skip] rbrace]
 
         function-spacing-rule: (
-            bind/copy standard/function-spacing c.lexical/grammar
+            bind/copy standard/function-spacing c-lexical/grammar
         )
 
         grammar/function-body: braced
@@ -457,7 +457,7 @@ rebsource: context [
             last-func-end: _
         )
 
-    ] proto-parser c.lexical/grammar
+    ] proto-parser c-lexical/grammar
 
     extension-of: function [
         {Return file extension for file.}

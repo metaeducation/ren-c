@@ -20,7 +20,7 @@ emit-native-proto: function [
     proto
     <with> proto-count
 ][
-    line: try text-line-of proto-parser/parse.position
+    line: try text-line-of proto-parser/parse-position
 
     all [
         block? proto-parser/data

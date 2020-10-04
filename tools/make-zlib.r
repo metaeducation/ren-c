@@ -165,7 +165,7 @@ fix-kr: function [
             any white-space
             any [#"*" any white-space]
         ]
-    ] c.lexical/grammar
+    ] c-lexical/grammar
 
     parse source bind [
         while [
@@ -296,7 +296,7 @@ fix-kr: function [
             | skip
         ]
         end
-    ] c.lexical/grammar
+    ] c-lexical/grammar
 
     source
 ]
@@ -313,7 +313,7 @@ fix-const-char: func [
             | skip
         ]
         end
-    ] c.lexical/grammar
+    ] c-lexical/grammar
     source
 ]
 

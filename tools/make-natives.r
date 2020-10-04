@@ -81,9 +81,9 @@ process: function [
     the-file: file
     if verbose [probe [file]]
 
-    source.text: read/string file
+    source-text: read/string file
     proto-parser/emit-proto: :emit-native-proto
-    proto-parser/process source.text
+    proto-parser/process source-text
 ]
 
 ;-------------------------------------------------------------------------

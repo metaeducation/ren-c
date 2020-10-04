@@ -21,11 +21,11 @@ do %native-emitters.r ; for emit-include-params-macro
 file-base: make object! load %file-base.r
 
 tools-dir: system/options/current-path
-output-dir: system/options/path/prep
-mkdir/deep output-dir/include
+output-dir: make-file [(system/options/path) 'prep lit /]
+mkdir/deep make-file [(output-dir) 'include lit /]
 
-mkdir/deep output-dir/include
-mkdir/deep output-dir/core
+mkdir/deep make-file [(output-dir) 'include lit /]
+mkdir/deep make-file [(output-dir) 'core lit /]
 
 change-dir %../src/core/
 
@@ -119,7 +119,7 @@ process-conditional: function [
 ]
 
 emit-directive: function [return: <void> directive] [
-    process-conditional directive proto-parser/parse.position e-funcs
+    process-conditional directive proto-parser/parse-position e-funcs
 ]
 
 process: function [
@@ -231,11 +231,11 @@ print [length of prototypes "function prototypes"]
 
 ;-------------------------------------------------------------------------
 
-sys-globals.parser: context [
+sys-globals-parser: context [
 
     emit-directive: _
     emit-identifier: _
-    parse.position: _
+    parse-position: _
     id: _
 
     process: func [return: <void> text] [
@@ -246,7 +246,7 @@ sys-globals.parser: context [
 
         rule: [
             any [
-                parse.position:
+                parse-position:
                 segment
             ]
         ]
@@ -284,19 +284,19 @@ sys-globals.parser: context [
                 ; preprocessor, so things that were #ifdef'd out would not
                 ; make it into the list.
                 ;
-                comment [process-conditional data parse.position e-syms]
+                comment [process-conditional data parse-position e-syms]
             )
         ]
 
         other-segment: [thru newline]
 
-    ] c.lexical/grammar
+    ] c-lexical/grammar
 
 ]
 
 
 the-file: %sys-globals.h
-sys-globals.parser/process read/string %../include/sys-globals.h
+sys-globals-parser/process read/string %../include/sys-globals.h
 
 ;-------------------------------------------------------------------------
 
