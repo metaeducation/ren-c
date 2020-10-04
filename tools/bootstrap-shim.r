@@ -379,3 +379,53 @@ split: function [
     apply :lib/split [series: series dlm: dlm into: into]
 ]
 
+; Unfortunately, bootstrap delimit treated "" as not wanting a delimiter.
+; Also it didn't have the "literal BLANK!s are space characters" behavior.
+;
+delimit: func [
+    return: [<opt> text!]
+    delimiter [<opt> blank! char! text!]
+    line [blank! text! block!]
+    <local> text value pending anything
+][
+    if blank? line [return null]
+    if text? line [return copy line]
+
+    text: copy ""
+    pending: false
+    anything: false
+
+    cycle [
+        if tail? line [stop]
+        if blank? line/1 [
+            append text space
+            line: next line
+            anything: true
+            pending: false
+            continue
+        ]
+        line: evaluate/set line 'value
+        any [unset? 'value | blank? value] then [continue]
+        any [char? value | issue? value] then [
+            append text form value
+            anything: true
+            pending: false
+            continue
+        ]
+        if pending [
+            if delimiter [append text delimiter]
+            pending: false
+        ]
+        append text form value
+        anything: true
+        pending: true
+    ]
+    if not anything [
+        assert [text = ""]
+        return null
+    ]
+    text
+]
+
+unspaced: specialize 'delimit [delimiter: _]
+spaced: specialize 'delimit [delimiter: space]
