@@ -21,11 +21,11 @@ do %native-emitters.r ; for emit-include-params-macro
 file-base: make object! load %file-base.r
 
 tools-dir: system/options/current-path
-output-dir: make-file [(system/options/path) 'prep lit /]
-mkdir/deep make-file [(output-dir) 'include lit /]
+output-dir: make-file [(system/options/path) prep /]
+mkdir/deep make-file [(output-dir) include /]
 
-mkdir/deep make-file [(output-dir) 'include lit /]
-mkdir/deep make-file [(output-dir) 'core lit /]
+mkdir/deep make-file [(output-dir) include /]
+mkdir/deep make-file [(output-dir) core /]
 
 change-dir %../src/core/
 

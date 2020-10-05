@@ -21,8 +21,8 @@ do %common-emitter.r
 print "--- Make Reb-Lib Headers ---"
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-output-dir: system/options/path/prep
-output-dir: output-dir/include
+output-dir: make-file [(system/options/path) prep /]
+output-dir: make-file [(output-dir) include /]
 mkdir/deep output-dir
 
 ver: load %../src/boot/version.r

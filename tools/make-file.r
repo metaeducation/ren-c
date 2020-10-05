@@ -53,7 +53,7 @@ make-file-block-parts: func [
 
     last-was-slash: false
 
-    probe collect [iterate block [
+    collect [iterate block [
         item: either group? block/1 [do block/1] [block/1]
         switch type of item [
             refinement! [  ; bootstrap only
@@ -217,11 +217,11 @@ make-file: func [
             block! [make-file-block-parts def]
         ]
         def
-    ]) also (func [file] [
+    ]) also file -> [
         if find file "//" [
             fail ["MAKE-FILE of" def "produced double slashes:" file]
         ]
-    ]) else [
+    ] else [
         fail "Empty filename produced in MAKE-FILE"
     ]
 ]

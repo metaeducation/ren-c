@@ -66,9 +66,9 @@ do %native-emitters.r ;for emit-native-proto
 
 print "------ Generate tmp-natives.r"
 
-src-dir: %../src
-output-dir: system/options/path/prep
-mkdir/deep output-dir/boot
+src-dir: %../src/
+output-dir: make-file [(system/options/path) prep /]
+mkdir/deep make-file [(output-dir) boot /]
 
 verbose: false
 
@@ -108,12 +108,12 @@ gather-natives: func [dir] [
     ]
 ]
 
-gather-natives src-dir/core/%
+gather-natives make-file [(src-dir) core /]
 
 
 append output-buffer unsorted-buffer
 
-write-if-changed output-dir/boot/tmp-natives.r output-buffer
+write-if-changed make-file [(output-dir) boot/tmp-natives.r] output-buffer
 
 print [proto-count "natives"]
 print newline
@@ -149,4 +149,4 @@ append output-buffer unspaced [
     newline
 ]
 
-write-if-changed output-dir/boot/tmp-generics.r output-buffer
+write-if-changed make-file [(output-dir) boot/tmp-generics.r] output-buffer

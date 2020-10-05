@@ -145,6 +145,8 @@ to-obj-path: func [
 ]
 
 gen-obj: func [
+    return: "Rebmake specification object for OBJ"
+        [object!]
     s
     /dir "directory" [any-string!]
     /D "definitions" [block!]
@@ -721,7 +723,7 @@ parse-ext-build-spec: function [
 
 ; Discover extensions:
 use [extension-dir entry][
-    extension-dir: repo-dir/extensions/%
+    extension-dir: make-file [(repo-dir) extensions /]
     for-each entry read extension-dir [
         all [
             dir? entry
@@ -862,7 +864,7 @@ MORE HELP:^/
 FILES IN %make/configs/ SUBFOLDER:^/
     }
     indent/space form sort map-each x ;\
-        load repo-dir/configs/%
+        load make-file [(repo-dir) configs /]
         [to-text x]
     newline ]
 
@@ -1261,7 +1263,7 @@ libr3-core: make rebmake/object-library-class [
     optimization: app-config/optimization
     debug: app-config/debug
     depends: map-each w file-base/core [
-        gen-obj/dir w src-dir/core/%
+        gen-obj/dir w make-file [(src-dir) core /]
     ]
     append depends map-each w file-base/generated [
         gen-obj/dir w "prep/core/"
@@ -1276,9 +1278,11 @@ main: make libr3-core [
     cflags: copy app-config/cflags  ; generator may modify
 
     depends: reduce [
-        either user-config/main
-        [gen-obj/main user-config/main]
-        [gen-obj/dir file-base/main src-dir/main/%]
+        either user-config/main [
+            gen-obj/main user-config/main
+        ][
+            gen-obj/dir file-base/main make-file [(src-dir) main /]
+        ]
     ]
 ]
 
@@ -1420,7 +1424,7 @@ process-module: func [
         depends: map-each s (append reduce [mod/source] opt mod/depends) [
             case [
                 match [file! block!] s [
-                    gen-obj/dir s repo-dir/extensions/%
+                    gen-obj/dir s make-file [(repo-dir) extensions /]
                 ]
                 (object? s) and [find [#object-library #object-file] s/class] [
                     s
@@ -1680,16 +1684,20 @@ for-each [category entries] file-base [
         continue  ; these categories are taken care of elsewhere
     ]
     switch type of entries [
-        word! [
+        word!  ; if bootstrap
+        tuple! [  ; if generic-tuple enabled
             assert [entries = 'main.c]  ; !!! anomaly, ignore it for now
         ]
         block! [
             for-each entry entries [
                 entry: maybe if block? entry [first entry]
                 switch type of entry [
-                    word! []  ; assume taken care of
+                    word!  ; if bootstrap executable
+                    tuple! [  ; if generic-tuple enabled
+                        ; assume taken care of
+                    ]
                     path! [
-                        dir: first split-path to file! entry
+                        dir: first split-path make-file entry
                         if not find folders dir [
                             append folders join %objs/ dir
                         ]
@@ -1776,7 +1784,7 @@ for-each ext dynamic-extensions [
     if ext/source [
         append mod-objs gen-obj/dir/I/D/F
             ext/source
-            repo-dir/extensions/%
+            make-file [(repo-dir) extensions /]
             opt ext/includes
             append copy ["EXT_DLL"] opt ext/definitions
             opt ext/cflags

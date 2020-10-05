@@ -314,7 +314,7 @@ REBNATIVE(terminate)
 //      return: "String the variable was set to, or null if not set"
 //          [<opt> text!]
 //      variable "Name of variable to get (case-insensitive in Windows)"
-//          [text! word!]
+//          [<blank> text! word!]
 //  ]
 //
 REBNATIVE(get_env)

@@ -43,15 +43,15 @@ do %common-emitter.r
 r3: system/version > 2.100.0
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-output-dir: system/options/path/prep
-mkdir/deep output-dir/include
+output-dir: make-file [(system/options/path) prep /]
+mkdir/deep make-file [(output-dir) include /]
 
 extensions: map-each e (split args/EXTENSIONS #":") [
     to-c-name e  ; so SOME-EXTENSION becomes SOME_EXTENSION for C macros
 ]
 
-e: (make-emitter
-    "Boot Modules" output-dir/include/tmp-boot-extensions.inc)
+e: (make-emitter "Boot Modules"
+        make-file [(output-dir) include/tmp-boot-extensions.inc])
 
 e/emit {
     #include "sys-ext.h"

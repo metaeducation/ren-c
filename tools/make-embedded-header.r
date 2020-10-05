@@ -21,7 +21,7 @@ do %common-parsers.r
 print "------ Building embedded header file"
 args: parse-args system/script/args  ; either from command line or DO/ARGS
 output-dir: system/options/path/prep
-mkdir/deep output-dir/core
+mkdir/deep make-file [(output-dir) core /]
 
 inp: read fix-win32-path to file! output-dir/include/sys-core.i
 replace/all inp "// #define" "#define"

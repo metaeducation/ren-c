@@ -384,6 +384,8 @@ relative-to-path: func [
     target [file!]
     base [file!]
 ][
+    assert [dir? target]
+    assert [dir? base]
     target: split clean-path target "/"
     base: split clean-path base "/"
     if "" = last base [take/last base]
@@ -397,7 +399,10 @@ relative-to-path: func [
     ]
     iterate base [base/1: %..]
     append base target
-    to-file delimit "/" base
+
+    base: to-file delimit "/" base
+    assert [dir? base]
+    return base
 ]
 
 

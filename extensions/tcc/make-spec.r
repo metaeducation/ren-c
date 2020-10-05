@@ -20,18 +20,30 @@ includes: [
 ; and built in--not just where the helper library libtcc1.a was installed.
 
 config-tccdir-with-libtcc-h: try all [
-    config-tccdir: get-env "CONFIG_TCCDIR"  ; TEXT! (e.g. backslash windows)
-    exists? local-to-file config-tccdir/libtcc.h
+    ;
+    ; CONFIG_TCCDIR will have backslashes on Windows, use LOCAL-TO-FILE on it.
+    ;
+    config-tccdir: local-to-file (try get-env "CONFIG_TCCDIR")
+
+    elide (if #"/" <> last config-tccdir [
+        print "NOTE: CONFIG_TCCDIR environment variable doesn't end in '/'"
+        print "That's *usually* bad, but since TCC documentation tends to"
+        print "suggest you write it that way, so this extension allows it."
+        print unspaced ["CONFIG_TCCDIR=" config-tccdir]
+        append config-tccdir "/"  ; normalize to the standard DIR? rule
+    ])
+
+    exists? make-file [(config-tccdir) libtcc.h]
     config-tccdir
 ]
 
 libtcc-include-dir: try any [
-    get-env "LIBTCC_INCLUDE_DIR"
+    local-to-file try get-env "LIBTCC_INCLUDE_DIR"
     config-tccdir-with-libtcc-h
 ]
 
 libtcc-lib-dir: try any [
-    get-env "LIBTCC_LIB_DIR"
+    local-to-file try get-env "LIBTCC_LIB_DIR"
     config-tccdir-with-libtcc-h
 ]
 
@@ -45,11 +57,15 @@ cflags: compose [
     ;
     (if "1" = get-env "NEEDS_FAKE_STRTOLD" ["-DNEEDS_FAKE_STRTOLD"])
 
-    (if libtcc-include-dir [unspaced [{-I} {"} libtcc-include-dir {"}]])
+    (if libtcc-include-dir [
+        unspaced [{-I} {"} file-to-local libtcc-include-dir {"}]
+    ])
 ]
 
 ldflags: compose [
-    (if libtcc-lib-dir [unspaced [{-L} {"} libtcc-lib-dir {"}]])
+    (if libtcc-lib-dir [
+        unspaced [{-L} {"} file-to-local libtcc-lib-dir {"}]
+    ])
 ]
 
 libraries: compose [  ; Note: dependent libraries first, dependencies after.

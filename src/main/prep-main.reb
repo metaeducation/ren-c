@@ -27,8 +27,8 @@ do %../../tools/common.r  ; for PARSE-ARGS, STRIPLOAD, BINARY-TO-C...
 do %../../tools/common-emitter.r  ; for splicing Rebol into templated strings
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-output-dir: system/options/path/prep
-mkdir/deep output-dir/main
+output-dir: make-file [(system/options/path) prep /]
+mkdir/deep make-file [(output-dir) main /]
 
 
 ; !!! The "host protocols" are embedded in a way that is very similar to the
@@ -117,7 +117,7 @@ append/line buf ":main-startup"
 ; It's helpful to have an uncompressed readable copy of the bundled and
 ; stripped init code for inspection.
 ;
-write-if-changed output-dir/main/tmp-main-startup.r buf
+write-if-changed make-file [(output-dir) main /tmp-main-startup.r] buf
 
 
 (e: make-emitter

@@ -47,10 +47,10 @@ if args/GIT_COMMIT = "unknown" [
 
 === SETUP PATHS AND MAKE DIRECTORIES (IF NEEDED) ===
 
-output-dir: system/options/path/prep
-inc: output-dir/include
-core: output-dir/core
-boot: output-dir/boot
+output-dir: make-file [(system/options/path) prep /]
+inc: make-file [(output-dir) include /]
+core: make-file [(output-dir) core /]
+boot: make-file [(output-dir) boot /]
 mkdir/deep probe inc
 mkdir/deep probe boot
 mkdir/deep probe core
@@ -819,7 +819,7 @@ for-each sec sections [
 ]
 append/line boot-molded "]"
 
-write-if-changed boot/tmp-boot-block.r boot-molded
+write-if-changed make-file [(boot) tmp-boot-block.r] boot-molded
 data: as binary! boot-molded
 
 compressed: gzip data
