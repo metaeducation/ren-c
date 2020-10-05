@@ -2,6 +2,8 @@
 
 # Loaded into .travis.yml ("install" step)
 
+set -x  # turn on debug mode (want to see the command lines being run)
+
 ## INSTALL PRE-REQUISITES FOR BUILD ##
 
 # Fetch a Rebol binary to use as the "r3-make".
@@ -470,5 +472,7 @@ if [[ $R3_EXIT_STATUS != 0 ]]; then
 fi
 
 cd $TOP_DIR
+
+set +x  # turn off debug mode (Travis outputs the commands in .travis.yml)
 
 # vim: set et sw=2:

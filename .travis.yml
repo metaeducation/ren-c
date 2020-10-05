@@ -564,8 +564,9 @@ install:
 # The install step is performed in build.sh
 
 script:
-  - . build.sh
-
+  - echo "<<< DEFERRING FROM TRAVIS.YML TO BUILD.SH SCRIPT >>>"
+  - source build.sh  # Need `source` to see effects of environment SET vars
+  - echo "<<< BUILD.SH STEP COMPLETED, RETURNING TO .TRAVIS.YML >>>"
   - TOP_DIR=$(pwd)
   - cd build
 
