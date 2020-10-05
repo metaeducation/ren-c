@@ -1104,9 +1104,11 @@ REBNATIVE(switch)
         if (Eval_Step_Throws(SET_END(D_OUT), f))
             goto threw;
 
-        if (IS_END(D_OUT)) {  // nothing left, or was just COMMENT/etc.
-            assert(IS_END(*v));
-            Drop_Frame(f);
+        if (IS_END(D_OUT)) {
+            if (NOT_END(*v))  // was just COMMENT/etc. so more to go
+                continue;
+
+            Drop_Frame(f);  // nothing left, so drop frame and return
 
             assert(REF(all) or IS_NULLED(last_branch_result));
             RETURN (last_branch_result);
