@@ -274,6 +274,9 @@ e-types/emit {
         REB_V_SIGN_INTEGRAL_WIDE = PSEUDOTYPE_EIGHT,  /* used by VECTOR! */
         REB_TS_REFINEMENT = PSEUDOTYPE_EIGHT,
 
+        PSEUDOTYPE_NINE,
+        REB_TS_PREDICATE = PSEUDOTYPE_NINE,
+
         REB_MAX_PLUS_MAX
     };
 

@@ -402,6 +402,11 @@ inline static REBVAL *Init_Param(
     Init_Param((out), REB_P_NORMAL, (spelling), TS_VALUE)
 
 
+inline static REBVAL *Refinify(REBVAL *v);  // forward declaration
+inline static bool IS_REFINEMENT(const RELVAL *v);  // forward declaration
+inline static bool IS_PREDICATE(const RELVAL *v);  // forward declaration
+
+
 // This is an interim workaround for the need to be able check constrained
 // data types (e.g. PATH!-with-BLANK!-at-head being REFINEMENT!).  See
 // Startup_Fake_Type_Constraint() for an explanation.
@@ -418,6 +423,12 @@ inline static bool Typecheck_Including_Constraints(
     if (TYPE_CHECK(param, VAL_TYPE(v)))
         return true;
 
+    if (TYPE_CHECK(param, REB_TS_REFINEMENT) and IS_REFINEMENT(v))
+        return true;
+
+    if (TYPE_CHECK(param, REB_TS_PREDICATE) and IS_PREDICATE(v))
+        return true;
+
     return false;
 }
 
@@ -427,9 +438,6 @@ inline static bool Is_Typeset_Invisible(const RELVAL *param) {
     bits |= cast(REBU64, VAL_TYPESET_HIGH_BITS(param)) << 32;
     return (bits & TS_OPT_VALUE) == 0;  // e.g. `return: []` or `[/refine]`
 }
-
-
-inline static REBVAL *Refinify(REBVAL *v);  // forward declaration needed
 
 
 // During the process of specialization, a NULL refinement means that it has

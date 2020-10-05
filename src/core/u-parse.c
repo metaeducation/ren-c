@@ -2131,7 +2131,8 @@ REBNATIVE(subparse)
                 //
                 case SYM_LIT_WORD_X:  // actually a QUOTED!
                 case SYM_LIT_PATH_X:  // actually a QUOTED!
-                case SYM_REFINEMENT_X: {  // actually a PATH!
+                case SYM_REFINEMENT_X:  // actually a PATH!
+                case SYM_PREDICATE_X: {  // actually a TUPLE!
                     REB_R r = Parse_One_Rule(f, P_POS, rule);
                     assert(r != R_IMMEDIATE);
                     if (r == R_THROWN)

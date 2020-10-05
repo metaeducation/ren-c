@@ -241,6 +241,10 @@ bool Add_Typeset_Bits_Core(
                 TYPE_SET(typeset, REB_PATH);
                 break;
 
+              case SYM_PREDICATE_X:
+                TYPE_SET(typeset, REB_TS_PREDICATE);
+                break;
+
               default:
                 fail ("Unknown fake type constraint!");
             }

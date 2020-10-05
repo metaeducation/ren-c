@@ -1358,9 +1358,12 @@ bool Get_If_Word_Or_Path_Throws(
         if (IS_ACTION(out))
             INIT_ACTION_LABEL(out, VAL_WORD_SPELLING(v));
     }
-    else if (IS_PATH(v) or IS_GET_PATH(v) or IS_SYM_PATH(v)) {
-        if (MIRROR_BYTE(v) == REB_WORD)  // e.g. `/`
-            goto get_as_word;
+    else if (
+        IS_PATH(v) or IS_GET_PATH(v) or IS_SYM_PATH(v)
+        or IS_TUPLE(v) or IS_GET_TUPLE(v) or IS_SYM_TUPLE(v)
+    ){
+        if (ANY_WORD_KIND(MIRROR_BYTE(v)))  // e.g. `/`
+            goto get_as_word;  // faster than calling Eval_Path_Throws_Core?
 
         if (Eval_Path_Throws_Core(
             out,

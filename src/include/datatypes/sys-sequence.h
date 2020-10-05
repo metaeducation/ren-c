@@ -193,24 +193,6 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     return v;
 }
 
-inline static REBVAL *Refinify(REBVAL *v) {
-    bool success = (Try_Leading_Blank_Pathify(v, REB_PATH) != nullptr);
-    assert(success);
-    UNUSED(success);
-    return v;
-}
-
-inline static bool IS_REFINEMENT_CELL(REBCEL(const*) v)
-  { return CELL_TYPE(v) == REB_PATH and MIRROR_BYTE(v) == REB_GET_WORD; }
-
-inline static bool IS_REFINEMENT(const RELVAL *v)
-  { return IS_PATH(v) and MIRROR_BYTE(v) == REB_GET_WORD; }
-
-inline static const REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
-    assert(IS_REFINEMENT_CELL(v));
-    return VAL_WORD_SPELLING(v);
-}
-
 
 //=//// BYTE-SIZED INTEGER! SEQUENCE OPTIMIZATION /////////////////////////=//
 //
@@ -622,3 +604,33 @@ inline static void Get_Tuple_Bytes(
 
 #define MAX_TUPLE \
     ((sizeof(uint32_t) * 2))  // !!! No longer a "limit", review callsites
+
+
+
+//=//// REFINEMENTS AND PREDICATES ////////////////////////////////////////=//
+
+inline static REBVAL *Refinify(REBVAL *v) {
+    bool success = (Try_Leading_Blank_Pathify(v, REB_PATH) != nullptr);
+    assert(success);
+    UNUSED(success);
+    return v;
+}
+
+inline static bool IS_REFINEMENT_CELL(REBCEL(const*) v)
+  { return CELL_TYPE(v) == REB_PATH and MIRROR_BYTE(v) == REB_GET_WORD; }
+
+inline static bool IS_REFINEMENT(const RELVAL *v)
+  { return IS_PATH(v) and MIRROR_BYTE(v) == REB_GET_WORD; }
+
+inline static bool IS_PREDICATE(const RELVAL *v) {
+    if (not IS_TUPLE(v))
+        return false;
+
+    DECLARE_LOCAL (temp);
+    return IS_BLANK(VAL_SEQUENCE_AT(temp, v, 0));
+}
+
+inline static const REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
+    assert(IS_REFINEMENT_CELL(v));
+    return VAL_WORD_SPELLING(v);
+}

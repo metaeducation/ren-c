@@ -232,6 +232,9 @@ bool Matches_Fake_Type_Constraint(const RELVAL *v, enum Reb_Symbol sym) {
       case SYM_REFINEMENT_X:
         return IS_REFINEMENT(v);
 
+      case SYM_PREDICATE_X:
+        return IS_PREDICATE(v);
+
       default:
         fail ("Invalid fake type constraint");
     }
@@ -311,6 +314,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     Startup_Fake_Type_Constraint(SYM_LIT_WORD_X);
     Startup_Fake_Type_Constraint(SYM_LIT_PATH_X);
     Startup_Fake_Type_Constraint(SYM_REFINEMENT_X);
+    Startup_Fake_Type_Constraint(SYM_PREDICATE_X);
 
     // Extensions can add datatypes.  These types are not identified by a
     // single byte, but give up the `extra` portion of their cell to hold
