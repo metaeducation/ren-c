@@ -1610,7 +1610,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
 void Init_Va_Scan_Level_Core(
     SCAN_LEVEL *level,
     SCAN_STATE *ss,
-    REBSTR *file,
+    const REBSTR *file,
     REBLIN line,
     const REBYTE *opt_begin,  // preload the scanner outside the va_list
     struct Reb_Feed *feed
@@ -1645,7 +1645,7 @@ void Init_Va_Scan_Level_Core(
 void Init_Scan_Level(
     SCAN_LEVEL *out,
     SCAN_STATE *ss,
-    REBSTR *file,
+    const REBSTR *file,
     REBLIN line,
     const REBYTE *utf8,
     REBLEN limit  // !!! limit feature not implemented in R3-Alpha
@@ -2296,7 +2296,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             Init_Interning_Binder(ss->feed->binder, ss->feed->context);
         }
 
-        REBSTR *canon = VAL_WORD_CANON(DS_TOP);
+        const REBSTR *canon = VAL_WORD_CANON(DS_TOP);
         REBINT n = Get_Binder_Index_Else_0(ss->feed->binder, canon);
         if (n > 0) {
             //
@@ -2739,12 +2739,12 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode)
 //
 // Scan source code. Scan state initialized. No header required.
 //
-REBARR *Scan_UTF8_Managed(REBSTR *filename, const REBYTE *utf8, REBSIZ size)
+REBARR *Scan_UTF8_Managed(const REBSTR *file, const REBYTE *utf8, REBSIZ size)
 {
     SCAN_STATE ss;
     SCAN_LEVEL level;
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, filename, start_line, utf8, size);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, size);
 
     REBDSP dsp_orig = DSP;
     Scan_To_Stack(&level);
@@ -2773,9 +2773,9 @@ REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
 {
     SCAN_LEVEL level;
     SCAN_STATE ss;
-    REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+    const REBSTR *file= Canon(SYM___ANONYMOUS__);
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, filename, start_line, utf8, len);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, len);
 
     REBINT result = Scan_Head(&ss);
     if (result == 0)
@@ -2857,7 +2857,7 @@ REBNATIVE(transcode)
 
     // !!! Should the base name and extension be stored, or whole path?
     //
-    REBSTR *filename = REF(file)
+    const REBSTR *file = REF(file)
         ? Intern(ARG(file))
         : Canon(SYM___ANONYMOUS__);
 
@@ -2884,7 +2884,7 @@ REBNATIVE(transcode)
 
     SCAN_LEVEL level;
     SCAN_STATE ss;
-    Init_Scan_Level(&level, &ss, filename, start_line, bp, size);
+    Init_Scan_Level(&level, &ss, file, start_line, bp, size);
 
     if (REF(next))
         level.opts |= SCAN_FLAG_NEXT;
@@ -2982,9 +2982,9 @@ const REBYTE *Scan_Any_Word(
 ) {
     SCAN_LEVEL level;
     SCAN_STATE ss;
-    REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+    const REBSTR *file = Canon(SYM___ANONYMOUS__);
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, filename, start_line, utf8, len);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, len);
 
     DECLARE_MOLD (mo);
 

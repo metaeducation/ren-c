@@ -168,7 +168,7 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
 inline static void Mold_Word(REB_MOLD *mo, REBCEL(const*) v)
 {
-    REBSTR *spelling = VAL_WORD_SPELLING(v);
+    const REBSTR *spelling = VAL_WORD_SPELLING(v);
     Append_Utf8(mo->series, STR_UTF8(spelling), STR_SIZE(spelling));
 }
 
@@ -236,7 +236,7 @@ REBTYPE(Word)
 
         switch (property) {
         case SYM_LENGTH: {
-            REBSTR *spelling = VAL_WORD_SPELLING(v);
+            const REBSTR *spelling = VAL_WORD_SPELLING(v);
             const REBYTE *bp = STR_HEAD(spelling);
             REBSIZ size = STR_SIZE(spelling);
             REBLEN len = 0;

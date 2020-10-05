@@ -236,9 +236,12 @@ void Set_Event_Vars(REBVAL *evt, const RELVAL *head, REBSPC *specifier)
 //
 // Will return BLANK! if the variable is not available.
 //
-static REBVAL *Get_Event_Var(RELVAL *out, REBCEL(const*) v, REBSTR *name)
-{
-    switch (STR_SYMBOL(name)) {
+static REBVAL *Get_Event_Var(
+    RELVAL *out,
+    REBCEL(const*) v,
+    const REBSTR *canon
+){
+    switch (STR_SYMBOL(canon)) {
       case SYM_TYPE: {
         if (VAL_EVENT_TYPE(v) == SYM_NONE)  // !!! Should this ever happen?
             return nullptr;
@@ -454,7 +457,7 @@ void MF_Event(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
         New_Indented_Line(mo);
 
-        REBSTR *canon = Canon(fields[field]);
+        const REBSTR *canon = Canon(fields[field]);
         Append_Utf8(mo->series, STR_UTF8(canon), STR_SIZE(canon));
         Append_Ascii(mo->series, ": ");
         if (IS_WORD(var))

@@ -69,7 +69,7 @@ static void Schema_From_Block_May_Fail(
     RELVAL *schema_out,  // => INTEGER! or HANDLE! for struct
     RELVAL *opt_param_out,  // => parameter for use in ACTION!s
     const REBVAL *blk,
-    REBSTR *opt_spelling
+    const REBSTR *opt_spelling
 ){
     TRASH_CELL_IF_DEBUG(schema_out);
     if (not opt_spelling)
@@ -1072,7 +1072,7 @@ REBACT *Alloc_Ffi_Action_For_Spec(REBVAL *ffi_spec, ffi_abi abi) {
 
         switch (VAL_TYPE(item)) {
           case REB_WORD: {
-            REBSTR *name = VAL_WORD_SPELLING(item);
+            const REBSTR *name = VAL_WORD_SPELLING(item);
 
             if (SAME_STR(name, Canon(SYM_ELLIPSIS))) {  // variadic
                 if (is_variadic)

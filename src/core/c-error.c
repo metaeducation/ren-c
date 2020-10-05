@@ -403,7 +403,7 @@ REBLEN Stack_Depth(void)
 //
 const REBVAL *Find_Error_For_Sym(enum Reb_Symbol id_sym)
 {
-    REBSTR *id_canon = Canon(id_sym);
+    const REBSTR *id_canon = Canon(id_sym);
 
     REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
     assert(CTX_KEY_SYM(categories, 1) == SYM_SELF);

@@ -69,7 +69,7 @@ static void update(REBREQ *signal, REBINT len, REBVAL *arg)
     req->actual = 0; /* avoid duplicate updates */
 }
 
-static int sig_word_num(REBSTR *canon)
+static int sig_word_num(const REBSTR *canon)
 {
     switch (STR_SYMBOL(canon)) {
         case SYM_SIGALRM:

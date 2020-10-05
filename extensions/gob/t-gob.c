@@ -313,7 +313,7 @@ static REBARR *Gob_Flags_To_Array(REBGOB *gob)
 //
 //  Set_Gob_Flag: C
 //
-static void Set_Gob_Flag(REBGOB *gob, REBSTR *name)
+static void Set_Gob_Flag(REBGOB *gob, const REBSTR *name)
 {
     REBSYM sym = STR_SYMBOL(name);
     if (sym == SYM_0) return; // !!! fail?

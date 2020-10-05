@@ -760,7 +760,7 @@ const void *RL_rebArgR(unsigned char quotes, const void *p, va_list *vaptr)
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
         fail ("rebArg() isn't actually variadic, it's arity-1");
 
-    REBSTR *spelling = Intern_UTF8_Managed(cb_cast(name), strsize(name));
+    const REBSTR *spelling = Intern_UTF8_Managed(cb_cast(name), strsize(name));
 
     REBVAL *param = ACT_PARAMS_HEAD(act);
     REBVAL *arg = FRM_ARGS_HEAD(f);
@@ -1224,7 +1224,7 @@ static unsigned int Spell_Into_Wide(
         len = VAL_LEN_AT(v);
     }
     else if (ANY_WORD(v)) {
-        REBSTR *spelling = VAL_WORD_SPELLING(v);
+        const REBSTR *spelling = VAL_WORD_SPELLING(v);
         cp = STR_HEAD(spelling);
 
         // !!! Inefficient way of asking "how long is this UTF-8 series", fix!

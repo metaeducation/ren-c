@@ -370,7 +370,7 @@ REB_R PD_Action(
     // general path mechanic before reaching this dispatch.  So if it's not
     // a word/refinement or or one of those that evaluated it, then error.
     //
-    REBSTR *spelling;
+    const REBSTR *spelling;
     if (IS_WORD(picker))
         spelling = VAL_WORD_SPELLING(picker);
     else if (IS_REFINEMENT(picker))

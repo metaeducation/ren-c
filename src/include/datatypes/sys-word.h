@@ -171,7 +171,7 @@ inline static bool SAME_SYM_NONZERO(REBSYM a, REBSYM b) {
     return cast(REBLEN, a) == cast(REBLEN, b);
 }
 
-inline static REBSTR *STR_CANON(REBSTR *s) {
+inline static const REBSTR *STR_CANON(const REBSTR *s) {
     assert(IS_STR_SYMBOL(STR(s)));
 
     while (NOT_SERIES_INFO(s, STRING_CANON))
@@ -179,7 +179,7 @@ inline static REBSTR *STR_CANON(REBSTR *s) {
     return s;
 }
 
-inline static OPT_REBSYM STR_SYMBOL(REBSTR *s) {
+inline static OPT_REBSYM STR_SYMBOL(const REBSTR *s) {
     assert(IS_STR_SYMBOL(STR(s)));
 
     uint16_t sym = SECOND_UINT16(SER(s)->header);
@@ -187,13 +187,13 @@ inline static OPT_REBSYM STR_SYMBOL(REBSTR *s) {
     return cast(REBSYM, sym);
 }
 
-inline static REBSTR *Canon(REBSYM sym) {
+inline static const REBSTR *Canon(REBSYM sym) {
     assert(cast(REBLEN, sym) != 0);
     assert(cast(REBLEN, sym) < SER_USED(PG_Symbol_Canons));  // null if boot!
-    return *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym));
+    return *SER_AT(const REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym));
 }
 
-inline static bool SAME_STR(REBSTR *s1, REBSTR *s2) {
+inline static bool SAME_STR(const REBSTR *s1, const REBSTR *s2) {
     assert(IS_STR_SYMBOL(STR(s1)));
     assert(IS_STR_SYMBOL(STR(s2)));
 
@@ -211,12 +211,12 @@ inline static bool IS_WORD_UNBOUND(REBCEL(const*) v) {
 #define IS_WORD_BOUND(v) \
     (not IS_WORD_UNBOUND(v))
 
-inline static REBSTR *VAL_WORD_SPELLING(REBCEL(const*) v) {
+inline static const REBSTR *VAL_WORD_SPELLING(REBCEL(const*) v) {
     assert(ANY_WORD_KIND(CELL_KIND(v)));
     return STR(PAYLOAD(Any, v).first.node);
 }
 
-inline static REBSTR *VAL_WORD_CANON(REBCEL(const*) v) {
+inline static const REBSTR *VAL_WORD_CANON(REBCEL(const*) v) {
     assert(ANY_WORD_KIND(CELL_KIND(v)));
     return STR_CANON(STR(PAYLOAD(Any, v).first.node));
 }
@@ -288,7 +288,7 @@ inline static REBVAL *Init_Any_Word(
 inline static REBVAL *Init_Any_Word_Bound(
     RELVAL *out,
     enum Reb_Kind type,
-    REBSTR *spelling,
+    const REBSTR *spelling,
     REBCTX *context,
     REBLEN index
 ){
@@ -329,7 +329,7 @@ inline static const REBYTE *VAL_BYTES_LIMIT_AT(
     assert(ANY_WORD(v));
     assert(limit == VAL_LEN_AT(v)); // !!! TBD: string unification
 
-    REBSTR *spelling = VAL_WORD_SPELLING(v);
+    const REBSTR *spelling = VAL_WORD_SPELLING(v);
     *size_out = STR_SIZE(spelling);
     return STR_HEAD(spelling); 
 }
@@ -378,7 +378,7 @@ inline static const REBYTE *VAL_UTF8_LIMIT_AT(
     else {
         assert(ANY_WORD_KIND(CELL_KIND(v)));
 
-        REBSTR *spelling = VAL_WORD_SPELLING(v);
+        const REBSTR *spelling = VAL_WORD_SPELLING(v);
         utf8 = STR_HEAD(spelling);
 
         if (size_out or length_out) {
@@ -416,7 +416,7 @@ inline static const REBYTE *VAL_UTF8_LIMIT_AT(
 //
 #ifdef CPLUSPLUS_11
 template<typename T>
-inline static REBSTR* Intern(const T *p)
+inline static const REBSTR* Intern(const T *p)
 {
     static_assert(
         std::is_same<T, REBVAL>::value
@@ -425,7 +425,7 @@ inline static REBSTR* Intern(const T *p)
         "STR works on: char*, REBVAL*, REBSTR*"
     );
 #else
-inline static REBSTR* Intern(const void *p)
+inline static const REBSTR* Intern(const void *p)
 {
 #endif
     switch (Detect_Rebol_Pointer(p)) {

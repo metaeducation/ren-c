@@ -884,8 +884,8 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
 
               unspecialized_refinement: {
 
-                REBVAL *ordered = DS_TOP;
-                REBSTR *param_canon = VAL_PARAM_CANON(f->param);  // #2258
+                REBVAL *ordered = DS_TOP;  // v-- #2258
+                const REBSTR *param_canon = VAL_PARAM_CANON(f->param);
 
                 for (; ordered != DS_AT(f->dsp_orig); --ordered) {
                     if (VAL_STORED_CANON(ordered) != param_canon)

@@ -50,7 +50,7 @@ struct Reb_Context {
 #if !defined(DEBUG_CHECK_CASTS)
 
     #define CTX(p) \
-        cast(REBCTX*, (p))
+        m_cast(REBCTX*, (const REBCTX*)(p))  // don't check const in C or C++
 
 #else
 

@@ -236,11 +236,11 @@ inline static REBVAL *CTX_VAR(REBCTX *c, REBLEN n) {
     return cast(REBVAL*, cast(REBSER*, c)->content.dynamic.data) + n;
 }
 
-inline static REBSTR *CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
+inline static const REBSTR *CTX_KEY_SPELLING(REBCTX *c, REBLEN n) {
     return VAL_TYPESET_STRING(CTX_KEY(c, n));
 }
 
-inline static REBSTR *CTX_KEY_CANON(REBCTX *c, REBLEN n) {
+inline static const REBSTR *CTX_KEY_CANON(REBCTX *c, REBLEN n) {
     return STR_CANON(CTX_KEY_SPELLING(c, n));
 }
 

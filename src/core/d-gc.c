@@ -345,7 +345,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_SYM_WORD: {
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
 
-        REBSTR *spelling = STR(PAYLOAD(Any, v).first.node);
+        const REBSTR *spelling = STR(PAYLOAD(Any, v).first.node);
 
         // A word marks the specific spelling it uses, but not the canon
         // value.  That's because if the canon value gets GC'd, then

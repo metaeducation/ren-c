@@ -1285,7 +1285,7 @@ REBNATIVE(scan_net_header)
 
         REBVAL *val = NULL; // rigorous checks worry it could be uninitialized
 
-        REBSTR *name = Intern_UTF8_Managed(start, cp - start);
+        const REBSTR *name = Intern_UTF8_Managed(start, cp - start);
         RELVAL *item;
 
         cp++;

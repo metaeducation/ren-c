@@ -653,7 +653,7 @@ bool Eval_Path_Throws_Core(
             // It's faster to just swap the spellings.  (If binding
             // mattered, we'd need to swap the whole cells).
             //
-            REBSTR *temp = VAL_WORD_SPELLING(bottom);
+            const REBSTR *temp = VAL_WORD_SPELLING(bottom);
             INIT_VAL_NODE(bottom, VAL_WORD_SPELLING(top));
             INIT_VAL_NODE(top, temp);
 

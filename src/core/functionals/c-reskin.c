@@ -256,7 +256,7 @@ REBNATIVE(reskinned)
         else
             fail (Error_Bad_Value_Core(item, VAL_SPECIFIER(ARG(skin))));
 
-        REBSTR *canon = VAL_WORD_CANON(VAL_UNESCAPED(item));
+        const REBSTR *canon = VAL_WORD_CANON(VAL_UNESCAPED(item));
 
         // We assume user gives us parameters in order, but if they don't we
         // cycle around to the beginning again.  So it's most efficient if

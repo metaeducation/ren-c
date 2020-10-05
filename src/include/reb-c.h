@@ -405,7 +405,7 @@
 // a CFUNC*, and non-C++14 builds are allowing cast of `const void*` to
 // non-const `char` with plain `cast()`.  Investigate as time allows.
 
-#if !defined(__cplusplus) or !defined(DEBUG_CHECK_CASTS)
+#if !defined(__cplusplus)
     /* These macros are easier-to-spot variants of the parentheses cast.
      * The 'm_cast' is when getting [M]utablity on a const is okay (RARELY!)
      * Plain 'cast' can do everything else (except remove volatile)

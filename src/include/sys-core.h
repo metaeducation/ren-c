@@ -472,7 +472,7 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 // from having to be documented that it's effectively a no-op.
 //
 inline static void Check_Security_Placeholder(
-    REBSTR *subsystem,
+    const REBSTR *subsystem,
     enum Reb_Symbol policy,
     const REBVAL *value
 ){

@@ -57,7 +57,7 @@ void Bind_Values_Inner_Loop(
         REBU64 type_bit = FLAGIT_KIND(heart);
 
         if (type_bit & bind_types) {
-            REBSTR *canon = VAL_WORD_CANON(cell);
+            const REBSTR *canon = VAL_WORD_CANON(cell);
             REBINT n = Get_Binder_Index_Else_0(binder, canon);
             if (n > 0) {
                 //
@@ -247,7 +247,7 @@ static void Clonify_And_Bind_Relative(
 
     if (param_num and IS_WORD(src) and VAL_WORD_SYM(src) == SYM_LET) {
         if (IS_WORD(src + 1) or IS_SET_WORD(src + 1)) {
-            REBSTR *canon = VAL_WORD_CANON(src + 1);
+            const REBSTR *canon = VAL_WORD_CANON(src + 1);
             if (Try_Add_Binder_Index(binder, canon, *param_num)) {
                 Init_Word(DS_PUSH(), canon);
                 ++(*param_num);
@@ -495,7 +495,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
 
             REBDSP dsp = dsp_orig;
             while (dsp != DSP) {
-                REBSTR *spelling = VAL_WORD_SPELLING(DS_AT(dsp + 1));
+                const REBSTR *spelling = VAL_WORD_SPELLING(DS_AT(dsp + 1));
                 Init_Param(param, REB_P_LOCAL, spelling, 0);
                 ++dsp;
                 ++param;
@@ -725,7 +725,7 @@ void Virtual_Bind_Deep_To_New_Context(
     if (rebinding)
         INIT_BINDER(&binder);
 
-    REBSTR *duplicate = NULL;
+    const REBSTR *duplicate = nullptr;
 
     REBVAL *key = CTX_KEYS_HEAD(c);
     REBVAL *var = CTX_VARS_HEAD(c);
@@ -935,7 +935,7 @@ void Init_Interning_Binder(
         REBVAL *key = CTX_KEYS_HEAD(Lib_Context);
         REBINT index = 1;
         for (; NOT_END(key); ++key, ++index) {
-            REBSTR *canon = VAL_KEY_CANON(key);
+            const REBSTR *canon = VAL_KEY_CANON(key);
             REBINT n = Get_Binder_Index_Else_0(binder, canon);
             if (n == 0)
                 Add_Binder_Index(binder, canon, - index);

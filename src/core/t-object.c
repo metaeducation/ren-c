@@ -72,7 +72,7 @@ static void Append_To_Context(REBCTX *context, REBVAL *arg)
             goto collect_end;
         }
 
-        REBSTR *canon = VAL_WORD_CANON(word);
+        const REBSTR *canon = VAL_WORD_CANON(word);
 
         if (Try_Add_Binder_Index(
             &collector.binder, canon, ARR_LEN(BUF_COLLECT))
@@ -182,8 +182,8 @@ REBINT CT_Context(REBCEL(const*) a, REBCEL(const*) b, bool strict)
             goto no_advance;
         }
 
-        REBSTR *canon1 = VAL_KEY_CANON(key1);
-        REBSTR *canon2 = VAL_KEY_CANON(key2);
+        const REBSTR *canon1 = VAL_KEY_CANON(key1);
+        const REBSTR *canon2 = VAL_KEY_CANON(key2);
         if (canon1 != canon2)  // case-insensitive, even in `strict` compare
             return canon1 > canon2 ? 1 : -1;
 
@@ -656,7 +656,7 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
         New_Indented_Line(mo);
 
-        REBSTR *spelling = VAL_KEY_SPELLING(key);
+        const REBSTR *spelling = VAL_KEY_SPELLING(key);
         Append_Utf8(s, STR_UTF8(spelling), STR_SIZE(spelling));
 
         Append_Ascii(s, ": ");

@@ -696,7 +696,7 @@ static REB_R Parse_One_Rule(
 
           case REB_TYPESET:
           case REB_DATATYPE: {
-            REBSTR *filename = Canon(SYM___ANONYMOUS__);
+            const REBSTR *file = Canon(SYM___ANONYMOUS__);
 
             REBLIN start_line = 1;
 
@@ -705,7 +705,7 @@ static REB_R Parse_One_Rule(
 
             SCAN_LEVEL level;
             SCAN_STATE ss;
-            Init_Scan_Level(&level, &ss, filename, start_line, bp, size);
+            Init_Scan_Level(&level, &ss, file, start_line, bp, size);
             level.opts |= SCAN_FLAG_NEXT;  // _ONLY?
 
             REBDSP dsp_orig = DSP;

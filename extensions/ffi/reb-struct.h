@@ -174,7 +174,7 @@ enum {
 #define FLD_AT(a, n) \
     SER_AT(REBVAL, SER(a), (n))  // locate index access
 
-inline static REBSTR *FLD_NAME(REBFLD *f) {
+inline static const REBSTR *FLD_NAME(REBFLD *f) {
     if (IS_BLANK(FLD_AT(f, IDX_FIELD_NAME)))
         return nullptr;
     return VAL_WORD_SPELLING(FLD_AT(f, IDX_FIELD_NAME));

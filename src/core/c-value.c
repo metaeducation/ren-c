@@ -231,7 +231,7 @@ void* Probe_Core_Debug(
         if (IS_PARAM(v)) {
             Probe_Print_Helper(p, expr, "Param Cell", file, line);
 
-            REBSTR *spelling = VAL_KEY_SPELLING(v);
+            const REBSTR *spelling = VAL_KEY_SPELLING(v);
             Append_Ascii(mo->series, "(");
             Append_Utf8(
                 mo->series,

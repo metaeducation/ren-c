@@ -206,7 +206,7 @@ inline static bool IS_REFINEMENT_CELL(REBCEL(const*) v)
 inline static bool IS_REFINEMENT(const RELVAL *v)
   { return IS_PATH(v) and MIRROR_BYTE(v) == REB_GET_WORD; }
 
-inline static REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
+inline static const REBSTR *VAL_REFINEMENT_SPELLING(REBCEL(const*) v) {
     assert(IS_REFINEMENT_CELL(v));
     return VAL_WORD_SPELLING(v);
 }

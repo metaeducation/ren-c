@@ -261,7 +261,7 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     //
     struct Reb_Feed *feed;
 
-    REBSTR *file;  // file currently being scanned (or anonymous)
+    const REBSTR *file;  // file currently being scanned (or anonymous)
 
     REBLIN line;  // line number where current scan position is
     const REBYTE *line_head;  // pointer to head of current line (for errors)

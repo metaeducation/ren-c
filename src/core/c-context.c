@@ -209,7 +209,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 REBVAL *Append_Context(
     REBCTX *context,
     RELVAL *opt_any_word,
-    REBSTR *opt_spelling
+    const REBSTR *opt_spelling
 ) {
     REBARR *keylist = CTX_KEYLIST(context);
 
@@ -385,7 +385,7 @@ void Collect_End(struct Reb_Collector *cl)
             ? ARR_HEAD(BUF_COLLECT) + 1
             : ARR_HEAD(BUF_COLLECT);
     for (; NOT_END(v); ++v) {
-        REBSTR *canon =
+        const REBSTR *canon =
             (cl == NULL or (cl->flags & COLLECT_AS_TYPESET))
                 ? VAL_KEY_CANON(v)
                 : VAL_WORD_CANON(v);
@@ -444,7 +444,7 @@ void Collect_Context_Keys(
 
     if (check_dups) {
         for (; NOT_END(key); key++) {
-            REBSTR *canon = VAL_KEY_CANON(key);
+            const REBSTR *canon = VAL_KEY_CANON(key);
             if (not Try_Add_Binder_Index(&cl->binder, canon, cl->index))
                 continue; // don't collect if already in bind table
 
@@ -494,7 +494,7 @@ static void Collect_Inner_Loop(struct Reb_Collector *cl, const RELVAL *head)
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue; // kind of word we're not interested in collecting
 
-            REBSTR *canon = VAL_WORD_CANON(cell);
+            const REBSTR *canon = VAL_WORD_CANON(cell);
             if (not Try_Add_Binder_Index(&cl->binder, canon, cl->index)) {
                 if (cl->flags & COLLECT_NO_DUP) {
                     DECLARE_LOCAL (duplicate);
@@ -678,7 +678,7 @@ REBARR *Collect_Unique_Words_Managed(
         const RELVAL *item = VAL_ARRAY_AT(ignore);
         for (; NOT_END(item); ++item) {
             REBCEL(const*) unescaped = VAL_UNESCAPED(item); // allow 'X, ''#Y
-            REBSTR *canon = VAL_WORD_CANON(unescaped);
+            const REBSTR *canon = VAL_WORD_CANON(unescaped);
 
             // A block may have duplicate words in it (this situation could
             // arise when `function [/test /test] []` calls COLLECT-WORDS
@@ -716,7 +716,7 @@ REBARR *Collect_Unique_Words_Managed(
         const RELVAL *item = VAL_ARRAY_AT(ignore);
         for (; NOT_END(item); ++item) {
             REBCEL(const*) unescaped = VAL_UNESCAPED(item); // allow 'X, ''#Y
-            REBSTR *canon = VAL_WORD_CANON(unescaped);
+            const REBSTR *canon = VAL_WORD_CANON(unescaped);
 
           #if !defined(NDEBUG)
             REBINT i = Get_Binder_Index_Else_0(&cl->binder, canon);
@@ -1215,7 +1215,7 @@ void Resolve_Context(
     REBVAL *key = CTX_KEYS_HEAD(source);
     REBINT n = 1;
     for (; NOT_END(key); n++, key++) {
-        REBSTR *canon = VAL_KEY_CANON(key);
+        const REBSTR *canon = VAL_KEY_CANON(key);
         if (IS_NULLED(only_words))
             Add_Binder_Index(&binder, canon, n);
         else {
@@ -1252,7 +1252,7 @@ void Resolve_Context(
         REBVAL *key = CTX_KEYS_HEAD(source);
         REBINT n = 1;
         for (; NOT_END(key); n++, key++) {
-            REBSTR *canon = VAL_KEY_CANON(key);
+            const REBSTR *canon = VAL_KEY_CANON(key);
             if (Remove_Binder_Index_Else_0(&binder, canon) != 0) {
                 //
                 // Note: no protect check is needed here
@@ -1298,8 +1298,11 @@ void Resolve_Context(
 // Search a context looking for the given canon symbol.  Return the index or
 // 0 if not found.
 //
-REBLEN Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
-{
+REBLEN Find_Canon_In_Context(
+    REBCTX *context,
+    const REBSTR *canon,
+    bool always
+){
     assert(GET_SERIES_INFO(canon, STRING_CANON));
 
     REBVAL *key = CTX_KEYS_HEAD(context);
@@ -1327,7 +1330,7 @@ REBLEN Find_Canon_In_Context(REBCTX *context, REBSTR *canon, bool always)
 // Search a context's keylist looking for the given canon symbol, and return
 // the value for the word.  Return NULL if the canon is not found.
 //
-REBVAL *Select_Canon_In_Context(REBCTX *context, REBSTR *canon)
+REBVAL *Select_Canon_In_Context(REBCTX *context, const REBSTR *canon)
 {
     const bool always = false;
     REBLEN n = Find_Canon_In_Context(context, canon, always);

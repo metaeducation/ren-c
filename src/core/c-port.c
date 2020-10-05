@@ -199,7 +199,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 // matter at the moment--but is a placeholder for finding the right place.
 //
 void Secure_Port(
-    REBSTR *kind,
+    const REBSTR *kind,
     REBREQ *req,
     const REBVAL *name
     /* , const REBVAL *path */

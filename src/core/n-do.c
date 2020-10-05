@@ -467,7 +467,7 @@ REBNATIVE(do)
         assert(FRM_PHASE(f) == phase);
         FRM_BINDING(f) = VAL_BINDING(source); // !!! should archetype match?
 
-        REBSTR *opt_label = nullptr;
+        const REBSTR *opt_label = nullptr;
         Begin_Prefix_Action(f, opt_label);
 
         bool threw = Eval_Throws(f);

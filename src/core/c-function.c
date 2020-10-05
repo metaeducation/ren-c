@@ -352,7 +352,7 @@ void Push_Paramlist_Triads_May_Fail(
 
         REBCEL(const*) cell = VAL_UNESCAPED(item);
 
-        REBSTR* spelling;
+        const REBSTR* spelling;
         Reb_Param_Class pclass = REB_P_DETECT;
 
         bool refinement = false;  // paths with blanks at head are refinements
@@ -426,7 +426,7 @@ void Push_Paramlist_Triads_May_Fail(
                 pclass = REB_P_LOCAL;
         }
 
-        REBSTR* canon = STR_CANON(spelling);
+        const REBSTR* canon = STR_CANON(spelling);
         if (STR_SYMBOL(canon) == SYM_RETURN and pclass != REB_P_LOCAL) {
             //
             // Cancel definitional return if any non-SET-WORD! uses the name
@@ -631,7 +631,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
 
-    REBSTR *duplicate = nullptr;
+    const REBSTR *duplicate = nullptr;
 
     REBVAL *src = DS_AT(dsp_orig + 1) + 3;
 
@@ -930,7 +930,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 //
 REBLEN Find_Param_Index(REBARR *paramlist, REBSTR *spelling)
 {
-    REBSTR *canon = STR_CANON(spelling); // don't recalculate each time
+    const REBSTR *canon = STR_CANON(spelling); // don't recalculate each time
 
     RELVAL *param = ARR_AT(paramlist, 1);
     REBLEN len = ARR_LEN(paramlist);

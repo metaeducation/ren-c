@@ -337,12 +337,12 @@ inline static Reb_Param_Class VAL_PARAM_CLASS(const RELVAL *v) {
 //
 // Name should be NULL unless typeset in object keylist or func paramlist
 
-inline static REBSTR *VAL_KEY_SPELLING(const RELVAL *v) {
+inline static const REBSTR *VAL_KEY_SPELLING(const RELVAL *v) {
     assert(IS_PARAM_KIND(KIND_BYTE_UNCHECKED(v)));
     return VAL_TYPESET_STRING(v);
 }
 
-inline static REBSTR *VAL_KEY_CANON(const RELVAL *v) {
+inline static const REBSTR *VAL_KEY_CANON(const RELVAL *v) {
     assert(IS_PARAM_KIND(KIND_BYTE_UNCHECKED(v)));
     return STR_CANON(VAL_KEY_SPELLING(v));
 }
@@ -374,7 +374,7 @@ inline static REBVAL *Init_Typeset(RELVAL *out, REBU64 bits)
 inline static REBVAL *Init_Param(
     RELVAL *out,
     Reb_Param_Class pclass,
-    REBSTR *spelling,
+    const REBSTR *spelling,
     REBU64 bits
 ){
     RESET_CELL(out, REB_TYPESET, CELL_FLAG_FIRST_IS_NODE);

@@ -169,7 +169,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 
         assert(NOT_CELL_FLAG(special, ARG_MARKED_CHECKED));
 
-        REBSTR *canon = VAL_PARAM_CANON(param);  // for adding to binding
+        const REBSTR *canon = VAL_PARAM_CANON(param);  // to add to binding
         if (not TYPE_CHECK(param, REB_TS_REFINEMENT)) {  // nothing to push
 
           continue_unspecialized:

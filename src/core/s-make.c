@@ -205,7 +205,7 @@ REBSTR *Append_Utf8(REBSTR *dst, const char *utf8, size_t size)
 //
 // Append the spelling of a REBSTR to a UTF8 binary.  Terminates.
 //
-void Append_Spelling(REBSTR *dst, REBSTR *spelling)
+void Append_Spelling(REBSTR *dst, const REBSTR *spelling)
 {
     Append_Utf8(dst, STR_UTF8(spelling), STR_SIZE(spelling));
 }

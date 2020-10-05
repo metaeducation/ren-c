@@ -50,8 +50,8 @@ PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR REBSTR *PG_Slash_1_Canon;  // Finesse preallocated "fake" word for `/`
-PVAR REBSTR *PG_Dot_1_Canon;  // Finesse preallocated "fake" word for `.`
+PVAR const REBSTR *PG_Slash_1_Canon;  // Preallocated "fake" word for `/`
+PVAR const REBSTR *PG_Dot_1_Canon;  // Preallocated "fake" word for `.`
 
 PVAR REBSER *PG_Symbol_Canons; // Canon symbol pointers for words in %words.r
 PVAR REBSER *PG_Canons_By_Hash; // Canon REBSER pointers indexed by hash
@@ -59,7 +59,7 @@ PVAR REBLEN PG_Num_Canon_Slots_In_Use; // Total canon hash slots (+ deleteds)
 #if !defined(NDEBUG)
     PVAR REBLEN PG_Num_Canon_Deleteds; // Deleted canon hash slots "in use"
 #endif
-PVAR REBSTR *PG_Bar_Canon;  // fast canon value for testing for `|`
+PVAR const REBSTR *PG_Bar_Canon;  // fast canon value for testing for `|`
 
 PVAR REBCTX *Lib_Context;
 PVAR REBCTX *Sys_Context;

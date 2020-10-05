@@ -82,11 +82,11 @@ REB_R MAKE_Array(
         //
         REBSIZ size = VAL_SIZE_LIMIT_AT(nullptr, arg, UNKNOWN);
 
-        REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+        const REBSTR *file = Canon(SYM___ANONYMOUS__);
         Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(filename, VAL_STRING_AT(arg), size)
+            Scan_UTF8_Managed(file, VAL_STRING_AT(arg), size)
         );
         return out;
     }
@@ -179,11 +179,11 @@ REB_R MAKE_Array(
         //
         REBSIZ utf8_size;
         const REBYTE *utf8 = VAL_UTF8_AT(&utf8_size, arg);
-        REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+        const REBSTR *file = Canon(SYM___ANONYMOUS__);
         return Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(filename, utf8, utf8_size)
+            Scan_UTF8_Managed(file, utf8, utf8_size)
         );
     }
     else if (IS_BINARY(arg)) {
@@ -191,11 +191,11 @@ REB_R MAKE_Array(
         // `to block! #{00BDAE....}` assumes the binary data is UTF8, and
         // goes directly to the scanner to make an unbound code array.
         //
-        REBSTR * const filename = Canon(SYM___ANONYMOUS__);
+        const REBSTR *file = Canon(SYM___ANONYMOUS__);
         return Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(filename, VAL_BIN_AT(arg), VAL_LEN_AT(arg))
+            Scan_UTF8_Managed(file, VAL_BIN_AT(arg), VAL_LEN_AT(arg))
         );
     }
     else if (IS_MAP(arg)) {
@@ -351,7 +351,7 @@ REBLEN Find_In_Array(
     if (ANY_WORD(target)) {
         for (; index >= start and index < end; index += skip) {
             const RELVAL *item = ARR_AT(array, index);
-            REBSTR *target_canon = VAL_WORD_CANON(target); // canonize once
+            const REBSTR *target_canon = VAL_WORD_CANON(target);
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
@@ -587,7 +587,7 @@ REB_R PD_Array(
         //
         n = -1;
 
-        REBSTR *canon = VAL_WORD_CANON(picker);
+        const REBSTR *canon = VAL_WORD_CANON(picker);
         const RELVAL *item = VAL_ARRAY_AT(pvs->out);
         REBLEN index = VAL_INDEX(pvs->out);
         for (; NOT_END(item); ++item, ++index) {

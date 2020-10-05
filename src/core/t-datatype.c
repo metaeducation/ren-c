@@ -93,7 +93,7 @@ void MF_Datatype(REB_MOLD *mo, REBCEL(const*) v, bool form)
     if (not form)
         Pre_Mold_All(mo, v);  // e.g. `#[datatype!`
 
-    REBSTR *name = Canon(VAL_TYPE_SYM(v));
+    const REBSTR *name = Canon(VAL_TYPE_SYM(v));
     Append_Spelling(mo->series, name);
 
     if (not form)
@@ -210,8 +210,8 @@ REBVAL *Datatype_From_Url(const REBVAL *url) {
 //
 static void Startup_Fake_Type_Constraint(REBSYM sym)
 {
-    REBSTR *canon = Canon(sym);
-    REBVAL *char_x = Append_Context(Lib_Context, nullptr, Canon(sym));
+    const REBSTR *canon = Canon(sym);
+    REBVAL *char_x = Append_Context(Lib_Context, nullptr, canon);
     Init_Sym_Word(char_x, canon);
 }
 

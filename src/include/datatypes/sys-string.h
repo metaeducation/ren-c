@@ -979,7 +979,7 @@ inline static REBSTR *Make_Sized_String_UTF8(const char *utf8, size_t size) {
 
 //=//// REBSTR HASHING ////////////////////////////////////////////////////=//
 
-inline static REBINT Hash_String(REBSTR *str)
+inline static REBINT Hash_String(const REBSTR *str)
     { return Hash_UTF8(STR_HEAD(str), STR_SIZE(str)); }
 
 inline static REBINT First_Hash_Candidate_Slot(

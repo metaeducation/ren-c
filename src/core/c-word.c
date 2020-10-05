@@ -196,7 +196,7 @@ static void Expand_Word_Table(void)
 // one "canon" interning to use for fast case-insensitive compares.  If that
 // canon form is GC'd, the agreed upon canon for the group will change.
 //
-REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
+const REBSTR *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
 {
     // The hashing technique used is called "linear probing":
     //

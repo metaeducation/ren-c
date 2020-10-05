@@ -216,7 +216,7 @@ inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 //
 inline static bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
-    REBSTR *canon,
+    const REBSTR *canon,
     REBINT index
 ){
     assert(index != 0);
@@ -241,7 +241,7 @@ inline static bool Try_Add_Binder_Index(
 
 inline static void Add_Binder_Index(
     struct Reb_Binder *binder,
-    REBSTR *canon,
+    const REBSTR *canon,
     REBINT index
 ){
     bool success = Try_Add_Binder_Index(binder, canon, index);
@@ -252,7 +252,7 @@ inline static void Add_Binder_Index(
 
 inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
-    REBSTR *canon
+    const REBSTR *canon
 ){
     assert(GET_SERIES_INFO(canon, STRING_CANON));
 
@@ -265,7 +265,7 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
 
 inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
-    REBSTR *canon
+    const REBSTR *canon
 ){
     assert(GET_SERIES_INFO(canon, STRING_CANON));
 
@@ -293,7 +293,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
 
 inline static void Remove_Binder_Index(
     struct Reb_Binder *binder,
-    REBSTR *canon
+    const REBSTR *canon
 ){
     REBINT old_index = Remove_Binder_Index_Else_0(binder, canon);
     assert(old_index != 0);
