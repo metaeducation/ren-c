@@ -289,7 +289,7 @@ REB_R MAKE_Array(
 //  TO_Array: C
 //
 REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
-    if (ANY_PATH(arg)) {
+    if (ANY_SEQUENCE(arg)) {
         REBDSP dsp_orig = DSP;
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;

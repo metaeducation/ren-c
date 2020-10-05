@@ -590,7 +590,7 @@ REBVAL *Setify(REBVAL *out) {
 //
 //  {If possible, convert a value to a SET-XXX! representation}
 //
-//      return: [<opt> set-word! set-path! set-group! set-block!]
+//      return: [<opt> set-word! set-path! set-tuple! set-group! set-block!]
 //      value [<blank> any-value!]
 //  ]
 //
@@ -646,7 +646,7 @@ REBVAL *Getify(REBVAL *out) {
 //
 //  {If possible, convert a value to a GET-XXX! representation}
 //
-//      return: [<opt> get-word! get-path! get-group! get-block!]
+//      return: [<opt> get-word! get-path! get-tuple! get-group! get-block!]
 //      value [<blank> any-value!]
 //  ]
 //
@@ -706,7 +706,7 @@ REBVAL *Symify(REBVAL *out) {
 //
 //  {If possible, convert a value to a SYM-XXX! representation}
 //
-//      return: [<opt> sym-word! sym-path! sym-group! sym-block!]
+//      return: [<opt> sym-word! sym-path! sym-tuple! sym-group! sym-block!]
 //      value [<blank> any-value!]
 //  ]
 //
