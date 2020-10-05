@@ -55,6 +55,19 @@ trap [
     QUIT
 ]
 
+; Lambda was redefined to `->` to match Haskell/Elm vs. `=>` for JavaScript.
+; It is lighter to look at, but also if the symbol `<=` is deemed to be
+; "less than or equal" there's no real reason why `=>` shouldn't be "equal
+; or greater".  So it's more consistent to make the out-of-the-box definition
+; not try to suggest `<=` and `=>` are "arrows".
+;
+; !!! Due to scanner problems in the bootstrap build inherited from R3-Alpha,
+; and a notion that ENFIX is applied to SET-WORD!s not ACTION!s (which was
+; later overturned), remapping lambda to `->` is complicated.
+;
+do compose [(to set-word! first [->]) enfix :lambda]
+unset first [=>]
+
 ; SET was changed to accept VOID!, use SET VAR NON VOID! (...EXPRESSION...)
 ; if that is what was intended.
 ;
