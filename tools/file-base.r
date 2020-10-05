@@ -53,6 +53,11 @@ core: [
         ; internal limits (like in a web browser for JS/WASM calls)
         ;
         #prefer-O2-optimization
+
+        ; !!! See notes on Finalize_Arg() call in %c-eval.c; investigations
+        ; make the need to disable this seem like a possible optimizer bug.
+        ;
+        <gnu:-Wno-array-bounds>
     ]
     c-function.c
     c-path.c

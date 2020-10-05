@@ -1452,6 +1452,25 @@ bool Eval_Internal_Maybe_Stale_Throws(REBFRM * const f)
                 or NOT_EVAL_FLAG(f, FULLY_SPECIALIZED)  // ...this!
             );
 
+            // !!! In GCC 9.3.0-10 at -O2 optimization level in the C++ build
+            // this Finalize_Arg() call seems to trigger:
+            //
+            //   error: array subscript 2 is outside array bounds
+            //      of 'const char [9]'
+            //
+            // It points to the problem being at VAL_STRING_AT()'s line:
+            //
+            //     const REBSTR *s = VAL_STRING(v);
+            //
+            // There was no indication that this Finalize_Arg() was involved,
+            // but commenting it out makes the complaint go away.  Attempts
+            // to further isolate it down were made by deleting and inlining
+            // bits of code until one low-level line would trigger it.  This
+            // led to seemingly unrelated declaration of an unused byte
+            // variable being able to cause it or not.  It may be a compiler
+            // optimization bug...in any cae, that warning is disabled for
+            // now on this file.  Review.
+            //
             Finalize_Arg(f);
             goto continue_arg_loop;
         }
