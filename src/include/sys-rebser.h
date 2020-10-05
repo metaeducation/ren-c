@@ -605,7 +605,7 @@ union Reb_Series_Content {
         //
         RELVAL values[1];
 
-      #if !defined(NDEBUG)  // https://en.wikipedia.org/wiki/Type_punning
+      #if defined(DEBUG_USE_UNION_PUNS)
         char utf8_pun[sizeof(RELVAL)];  // debug watchlist insight into UTF-8
         REBWCHAR ucs2_pun[sizeof(RELVAL)/sizeof(REBUNI)];  // wchar_t insight
       #endif

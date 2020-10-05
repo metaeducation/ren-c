@@ -341,7 +341,7 @@ union Reb_Header {
     // array in the header.  There's probably a workaround, but for now skip
     // this debugging pun if __TINYC__ is defined.
     //
-  #if !defined(NDEBUG) && !defined(__TINYC__)
+  #if defined(DEBUG_USE_UNION_PUNS) && !defined(__TINYC__)
     char bytes_pun[4];
 
     #ifdef DEBUG_USE_BITFIELD_HEADER_PUNS

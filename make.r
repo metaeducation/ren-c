@@ -1130,6 +1130,7 @@ switch user-config/debug [
             ;
             "DEBUG_STDIO_OK"
             "DEBUG_HAS_PROBE"
+            "DEBUG_USE_UNION_PUNS"
             "INCLUDE_C_DEBUG_BREAK_NATIVE"
 
             ; Adds CALLGRIND, see REBNATIVE(callgrind) for implementation

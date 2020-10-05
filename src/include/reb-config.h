@@ -338,6 +338,14 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_BINDING_NAME_MATCH
   #endif
 
+    // It can be nice to see aliases of platform pointers as if they were
+    // individual bytes, through union "puns".  Though this behavior is not
+    // well defined, it can be useful a lot of the time.
+    //
+    // https://en.wikipedia.org/wiki/Type_punning
+    //
+    #define DEBUG_USE_UNION_PUNS
+
     // Bitfields are poorly specified, and so even if it looks like your bits
     // should pack into a struct exactly, they might not.  Only try this on
     // Linux, where it has seemed to work out (MinGW64 build on Cygwin made

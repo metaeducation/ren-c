@@ -364,7 +364,7 @@ union Reb_Any {  // needed to beat strict aliasing, used in payload
     // the only field that should be assigned and read.  These "type puns"
     // are unreliable, and for debug viewing only--in case they help.
     //
-  #if !defined(NDEBUG)
+  #if defined(DEBUG_USE_UNION_PUNS)
     REBSER *rebser_pun;
     REBVAL *rebval_pun;
   #endif
@@ -386,7 +386,7 @@ union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
     union Reb_Any Any;
     union Reb_Bytes_Extra Bytes;
 
-  #if !defined(NDEBUG)
+  #if defined(DEBUG_COUNT_TICKS)
     //
     // A tick field is included in all debug builds, not just those which
     // DEBUG_TRACK_CELLS...because negative signs are used to give a distinct
