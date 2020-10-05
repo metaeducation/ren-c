@@ -31,7 +31,7 @@
 #if !defined(DEBUG_CHECK_CASTS)
 
     #define NOD(p) \
-        ((REBNOD*)p)  // Note: cast() currently won't work w/nullptr (!)
+        m_cast(REBNOD*, (const REBNOD*)(p))  // don't check const in C or C++
 
 #else
 

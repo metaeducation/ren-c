@@ -885,7 +885,7 @@ struct Reb_Series {
 #if !defined(DEBUG_CHECK_CASTS)
 
     #define SER(p) \
-        ((REBSER*)(p))  // don't use `cast` so casting away const is allowed
+        m_cast(REBSER*, (const REBSER*)(p))  // don't check const in C or C++
 
 #else
 

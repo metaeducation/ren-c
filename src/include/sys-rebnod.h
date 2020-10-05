@@ -518,7 +518,7 @@ struct Reb_Node {
 
 #ifdef NDEBUG
     #define IS_FREE_NODE(p) \
-        (did (FIRST_BYTE(cast(struct Reb_Node*, (p))->header) \
+        (did (FIRST_BYTE(cast(const struct Reb_Node*, (p))->header) \
             & NODE_BYTEMASK_0x40_FREE))  // byte access defeats strict alias
 #else
     inline static bool IS_FREE_NODE(const void *p) {

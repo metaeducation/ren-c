@@ -193,7 +193,7 @@ STATIC_ASSERT(ARRAY_FLAG_CONST_SHALLOW == CELL_FLAG_CONST);
 #if !defined(DEBUG_CHECK_CASTS)
 
     #define ARR(p) \
-        ((REBARR*)(p))  // don't use `cast` so casting away const is allowed
+        m_cast(REBARR*, (const REBARR*)(p))  // don't check const in C or C++
 
 #else
 

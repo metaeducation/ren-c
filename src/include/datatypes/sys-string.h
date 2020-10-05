@@ -345,7 +345,7 @@ struct Reb_String {
 #if !defined(DEBUG_CHECK_CASTS)
 
     #define STR(p) \
-        ((REBSTR*)(p))  // don't use `cast` so casting away const is allowed
+        m_cast(REBSTR*, (const REBSTR*)(p))  // don't check const in C or C++
 
 #else  // !!! Enhance with more checks, like SER() does.
 
