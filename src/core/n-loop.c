@@ -1632,12 +1632,18 @@ REBNATIVE(repeat)
 //
 //      return: [<opt> any-value!]
 //          {Last body result, or null if a BREAK occurred}
+//      :predicate "Function to apply to body result (default is .DID)"
+//          [<skip> predicate! action!]
 //      body [<const> block! action!]
 //  ]
 //
 REBNATIVE(until)
 {
     INCLUDE_PARAMS_OF_UNTIL;
+
+    REBVAL *predicate = ARG(predicate);
+    if (Cache_Predicate_Throws(D_OUT, predicate))
+        return R_THROWN;
 
     do {
         if (Do_Branch_Throws(D_OUT, nullptr, ARG(body))) {
@@ -1656,8 +1662,14 @@ REBNATIVE(until)
             // continue to run the loop.
         }
 
-        if (IS_TRUTHY(D_OUT))  // will fail on voids (neither true nor false)
-            return D_OUT;  // body evaluated conditionally true, return value
+        if (not REF(predicate)) {
+            if (IS_TRUTHY(D_OUT))  // fail on voids (neither true nor false)
+                return D_OUT;  // body evaluated truthily, return value
+        }
+        else {
+            if (rebDid(REF(predicate), rebQ(D_OUT), rebEND))
+                return D_OUT;
+        }
 
     } while (true);
 }

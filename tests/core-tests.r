@@ -161,6 +161,7 @@
 %functions/modal.test.reb
 %functions/multi.test.reb
 %functions/oneshot.test.reb
+%functions/predicate.test.reb
 %functions/redescribe.test.reb
 %functions/redo.test.reb
 %functions/specialize.test.reb

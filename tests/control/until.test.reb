@@ -36,3 +36,26 @@
     ]
     10 = num3
 )
+
+
+; === PREDICATES ===
+
+(
+    x: [2 4 6 8 7 9 11 30]
+    did all [
+        7 = until .not.even? [take x]  ; array storage TUPLE!
+        x = [9 11 30]
+    ]
+)(
+    x: [1 "hi" <foo> _ <bar> "baz" 2]
+    did all [
+        blank? until .not [take x]  ; cell-optimized single-element TUPLE!
+        x = [<bar> "baz" 2]
+    ]
+)(
+    x: [1 2 3 4 5 6]
+    did all [
+        5 = until .(-> greater? _ 4) [take x]
+        x = [6]
+    ]
+)

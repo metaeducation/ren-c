@@ -105,11 +105,11 @@
 )
 
 
-; New feature for specifying predicates with a refinement
+; New feature for specifying predicates with a TUPLE!
 
-(<a> = case /not [1 = 2 [<a>]])
-(<b> = case /even? [1 [<a>] 2 [<b>]])
-(<b> = case /not [1 = 1 [<a>] default [<b>]])
+(<a> = case .not [1 = 2 [<a>]])
+(<b> = case .even? [1 [<a>] 2 [<b>]])
+(<b> = case .not [1 = 1 [<a>] default [<b>]])
 
 ; Errors on bad branches
 (

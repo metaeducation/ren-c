@@ -440,8 +440,8 @@ REB_R Compose_To_Stack_Core(
 //
 //      return: "May return NULL if PATH! compose dissolves"
 //          [<opt> any-array! any-path! any-word! action! integer! text! tag!]
-//      :predicate [<skip> action!]  ; !!! PATH! may be meant as value (!)
-//          "Function to run on composed slots (default: ENBLOCK)"
+//      :predicate "Function to run on composed slots (default: ENBLOCK)"
+//          [<skip> predicate! action!]
 //      :label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [<skip> tag! file!]
 //      value "Array to use as the template (no-op if WORD! or ACTION!)"
@@ -458,20 +458,8 @@ REBNATIVE(compose)
     INCLUDE_PARAMS_OF_COMPOSE;
 
     REBVAL *predicate = ARG(predicate);
-    if (not IS_NULLED(predicate)) {
-        if (Get_If_Word_Or_Path_Throws(
-            D_OUT,
-            predicate,
-            SPECIFIED,
-            false  // push_refinements = false, specialize for multiple uses
-        )){
-            return R_THROWN;
-        }
-        if (not IS_ACTION(D_OUT))
-            fail ("PREDICATE provided to COMPOSE must look up to an ACTION!");
-
-        Move_Value(predicate, D_OUT);
-    }
+    if (Cache_Predicate_Throws(D_OUT, predicate))
+        return R_THROWN;
 
     if (ANY_WORD(ARG(value)) or IS_ACTION(ARG(value)))
         RETURN (ARG(value));  // makes it easier to `set/hard compose target`

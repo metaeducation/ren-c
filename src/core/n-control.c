@@ -869,7 +869,7 @@ REBNATIVE(none)
 //      return: "Last matched case evaluation, or null if no cases matched"
 //          [<opt> any-value!]
 //      :predicate "Unary case-processing action (default is /DID)"
-//          [refinement! action! <skip>]
+//          [<skip> predicate! action!]
 //      cases "Conditions followed by branches"
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
@@ -880,20 +880,8 @@ REBNATIVE(case)
     INCLUDE_PARAMS_OF_CASE;
 
     REBVAL *predicate = ARG(predicate);
-    if (not IS_NULLED(predicate)) {
-        if (Get_If_Word_Or_Path_Throws(
-            D_OUT,
-            predicate,
-            SPECIFIED,
-            false  // push_refinements = false, specialize for multiple uses
-        )){
-            return R_THROWN;
-        }
-        if (not IS_ACTION(D_OUT))
-            fail ("PREDICATE provided to CASE must look up to an ACTION!");
-
-        Move_Value(predicate, D_OUT);
-    }
+    if (Cache_Predicate_Throws(D_OUT, predicate))
+        return R_THROWN;
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
     SHORTHAND (v, f->feed->value, const RELVAL*);
@@ -1018,7 +1006,7 @@ REBNATIVE(case)
 
     // Last evaluation will "fall out" if there is no branch:
     //
-    //     case /not [1 < 2 [...] 3 < 4 [...] 10 + 20] = 30
+    //     case .not [1 < 2 [...] 3 < 4 [...] 10 + 20] = 30
     //
     if (not IS_NULLED(D_OUT)) // prioritize fallout result
         return D_OUT;
@@ -1042,8 +1030,8 @@ REBNATIVE(case)
 //          [<opt> any-value!]
 //      value "Target value"
 //          [<opt> any-value!]
-//      :predicate "Binary switch-processing action (default is /EQUAL?)"
-//          [refinement! action! <skip>]
+//      :predicate "Binary switch-processing action (default is .EQUAL?)"
+//          [<skip> predicate! action!]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
@@ -1054,20 +1042,8 @@ REBNATIVE(switch)
     INCLUDE_PARAMS_OF_SWITCH;
 
     REBVAL *predicate = ARG(predicate);
-    if (not IS_NULLED(predicate)) {
-        if (Get_If_Word_Or_Path_Throws(
-            D_OUT,
-            predicate,
-            SPECIFIED,
-            false  // push_refinements = false, specialize for multiple uses
-        )){
-            return R_THROWN;
-        }
-        if (not IS_ACTION(D_OUT))
-            fail ("COMPARE provided to SWITCH must look up to an ACTION!");
-
-        Move_Value(predicate, D_OUT);
-    }
+    if (Cache_Predicate_Throws(D_OUT, predicate))
+        return R_THROWN;
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
     SHORTHAND (v, f->feed->value, const RELVAL*);
@@ -1136,7 +1112,7 @@ REBNATIVE(switch)
         else {
             assert(IS_ACTION(predicate));  // entry code should guarantee
 
-            // `switch x /greater? [10 [...]]` acts like `case [x > 10 [...]]
+            // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]
             // The ARG(value) passed in is the left/first argument to compare.
             //
             // !!! Using Run_Throws loses the labeling of the function we were
