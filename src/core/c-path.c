@@ -1004,25 +1004,6 @@ REB_R MAKE_Path(
 }
 
 
-static void Push_Path_Recurses(REBCEL(const*) path, REBSPC *specifier)
-{
-    DECLARE_LOCAL (temp);
-    REBLEN len = VAL_SEQUENCE_LEN(path);
-    REBLEN i;
-    for (i = 0; i < len; ++i) {
-        const RELVAL *item = VAL_SEQUENCE_AT(temp, path, i);
-        if (IS_PATH(item)) {
-            if (IS_SPECIFIC(item))
-                Push_Path_Recurses(item, VAL_SPECIFIER(item));
-            else
-                Push_Path_Recurses(item, specifier);
-        }
-        else
-            Derelativize(DS_PUSH(), CELL_TO_VAL(item), specifier);
-    }
-}
-
-
 //
 //  TO_Path: C
 //
