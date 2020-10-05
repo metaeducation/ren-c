@@ -522,6 +522,12 @@ static REBARR *Startup_Natives(const REBVAL *boot_natives)
             CTX_ARCHETYPE(Lib_Context)
         );
 
+        // Cache the native's original name in the value cell, so that there
+        // can be a coherent name in the stack trace if we use NATIVE_VAL()
+        // in an call namewhere.
+        //
+        INIT_ACTION_LABEL(native, VAL_WORD_SPELLING(name));
+
         // While the lib context natives can be overwritten, the system
         // currently depends on having a permanent list of the natives that
         // does not change, see uses via NATIVE_VAL() and NAT_ACT().
