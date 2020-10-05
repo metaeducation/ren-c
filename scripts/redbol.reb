@@ -716,12 +716,12 @@ collect: emulate [
         let out: any [into | make block! 16]
 
         let keeper: specialize* (
-            enclose* 'insert func [
+            enclose* 'insert func* [
                 f [frame!]
                 <with> out
             ][
-                f/series: out
-                :f/value  ; capture before the DO to be return result
+                f/series: out  ; want new series position capture each time
+                :f/value  ; evalutate input before the DO to be return result
                 elide out: do f  ; update position on each insertion
 
                 ; original f/value will be returned due to ELIDE
@@ -730,7 +730,7 @@ collect: emulate [
             series: <remove-unused-series-parameter>
         ]
 
-        reeval func compose [(name) [action!] <with> return] body :keeper
+        reeval func* compose [(name) [action!] <with> return] body :keeper
         either into [out] [head of out]
     ]
 ]

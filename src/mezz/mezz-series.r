@@ -483,7 +483,7 @@ collect*: func [
 
     ; use FUNC for binding work of connecting KEEP with the keeper function
     ;
-    reeval func compose [keep [action!] <with> return] body :keeper
+    reeval func* [keep [action!] <with> return] body :keeper
 
     :out
 ]
