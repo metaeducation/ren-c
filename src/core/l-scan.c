@@ -1990,8 +1990,11 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         fail (Error_Extra(ss, ')')); }
 
       case TOKEN_INTEGER:
-        if (*ep == '.' and not Is_Dot_Or_Slash(level->mode)) {
-            //
+        if (
+            *ep == '.'
+            and not Is_Dot_Or_Slash(level->mode)
+            and IS_LEX_NUMBER(ep[1])
+        ){
             // If we're scanning a TUPLE!, then we're at the head of it.
             // But it could also be a DECIMAL!.
             //
@@ -2474,8 +2477,31 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         );
         if (not check)
             fail (Error_Syntax(ss, token));
- 
+
+        assert(ANY_SEQUENCE(temp));  // Should be >= 2 elements, no decaying
+        
         Move_Value(DS_PUSH(), temp);
+
+        // !!! Temporarily raise attention to usage like `.5` or `5.` to guide
+        // people that these are contentious with tuples.  There is no way
+        // to represent such tuples--while DECIMAL! has an alternative by
+        // including the zero.  This doesn't put any decision in stone, but
+        // reserves the right to make a decision at a later time.
+        //
+        if (VAL_SEQUENCE_LEN(DS_TOP) == 2) {
+            if (
+                IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
+                and IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
+            ){
+                fail ("Notation of `5.` currently reserved, please use 5.0");
+            }
+            if (
+                IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
+                and IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
+            ){
+                fail ("Notation of `.5` currently reserved, please use 0.5");
+            }
+        }
 
         // Can only store file and line information if it has an array
         //
