@@ -431,7 +431,7 @@ bool Eval_Path_Throws_Core(
     // something like `/a` will actually look up the word.
 
     switch (heart) {
-      case REB_CHAR:
+      case REB_ISSUE:
         fail ("Cannot GET or SET a numeric-headed ANY-SEQUENCE!");
 
       case REB_WORD:  // get or set `'/` or `'.`

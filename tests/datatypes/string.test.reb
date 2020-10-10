@@ -168,7 +168,7 @@
 
 
 [#207
-    ('illegal-zero-byte = (trap [to text! to char! 0])/id)
+    ('illegal-zero-byte = (trap [to text! as issue! 0])/id)
 ]
 
 [#2280 (  ; Byte-Order-Mark ("BOM") deprecated in UTF-8, don't hide it

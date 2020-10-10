@@ -296,13 +296,11 @@ REBLEN Find_Str_In_Str(
     REBLEN index_unsigned,
     REBLEN limit_unsigned,
     REBINT skip,
-    const REBSTR *str2,
-    REBINT index2,
+    REBCEL(const*) str2,
     REBLEN len,
     REBFLGS flags
 ){
     assert(index_unsigned <= STR_LEN(str1));
-    assert(index2 <= cast(REBINT, STR_LEN(str2)));
 
     assert((flags & ~(AM_FIND_CASE | AM_FIND_MATCH)) == 0);
     bool uncase = not (flags & AM_FIND_CASE);  // case insenstive
@@ -316,11 +314,12 @@ REBLEN Find_Str_In_Str(
     // `str2` is always stepped through forwards in FIND, even with a negative
     // value for skip.  If the position is at the tail, it cannot be found.
     //
-    if (index2 == cast(REBINT, STR_LEN(str2)))
+    REBCHR(const*) head2 = VAL_UTF8_AT(str2);
+    if (*cast(const REBYTE*, head2) == '\0')
         return NOT_FOUND;  // getting c2 would be '\0' (LO_CASE illegal)
 
     REBUNI c2_canon;  // calculate first char lowercase once, vs. each step
-    REBCHR(const*) next2 = NEXT_CHR(&c2_canon, STR_AT(str2, index2));
+    REBCHR(const*) next2 = NEXT_CHR(&c2_canon, head2);
     if (uncase)
         c2_canon = LO_CASE(c2_canon);
 
@@ -427,7 +426,8 @@ REBLEN Find_Char_In_Str(
     if (uni == 0)
         return NOT_FOUND;  // there can be no `\0` codepoints in ANY-STRING!
 
-    REBSTR *temp = Make_Codepoint_String(uni);
+    DECLARE_LOCAL (temp);
+    Init_Char_May_Fail(temp, uni);
 
     REBLEN i = Find_Str_In_Str(
         s,
@@ -435,8 +435,7 @@ REBLEN Find_Char_In_Str(
         highest,
         skip,
         temp,
-        0,
-        1,
+        1,  // `len`
         flags
     );
     Free_Unmanaged_Series(SER(temp));

@@ -17,14 +17,14 @@
 (lit a/b/c = to path! [a b c])
 (lit a/b/c = to path! lit (a b c))
 
-; Single-character strings and words can TO-convert to CHAR!
+; strings and words can TO-convert to ISSUE!
 [
-    (#"x" = to char! 'x)
-    ('bad-cast = pick trap [to char! 'xx] 'id)
+    (#x = to issue! 'x)
+    (#xx = to issue! 'xx)
 
-    (#"x" = to char! "x")
-    ('bad-cast = pick trap [to char! 'xx] 'id)
+    (#x = to issue! "x")
+    (#xx = to issue! "xx")
 
-    ; !!! Should this be rethought, e.g. to return NULL?
-    ('bad-cast = pick trap [to char! ""] 'id)
+    ; !!! Should this be legal and return `#`?
+    ('illegal-zero-byte = pick trap [to issue! ""] 'id)
 ]

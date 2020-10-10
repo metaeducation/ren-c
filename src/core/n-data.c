@@ -1122,7 +1122,30 @@ bool Try_As_String(
         Init_Any_String_At(out, new_kind, str, index);
         Inherit_Const(Quotify(out, quotes), v);
     }
+    else if (IS_ISSUE(v)) {
+        if (CELL_KIND(cast(REBCEL(const*), v)) != REB_BYTES) {
+            assert(Is_Series_Frozen(SER(VAL_STRING(v))));
+            goto any_string;  // ISSUE! series must be immutable
+        }
+
+        // If payload of an ISSUE! lives in the cell itself, a read-only
+        // series must be created for the data...because otherwise there isn't
+        // room for an index (which ANY-STRING! needs).  For behavior parity
+        // with if the payload *was* in the series, this alias must be frozen.
+
+        REBLEN len;
+        REBSIZ size;
+        REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, &size, v);
+        assert(size + 1 < sizeof(PAYLOAD(Bytes, v).at_least_8));  // must fit
+
+        REBSTR *str = Make_String_Core(size, SERIES_FLAGS_NONE);
+        memcpy(SER_DATA(SER(str)), utf8, size + 1);  // +1 to include '\0'
+        SET_STR_LEN_SIZE(str, len, size);
+        Freeze_Series(SER(str));
+        Init_Any_String(out, new_kind, str);
+    }
     else if (ANY_STRING(v)) {
+      any_string:
         Move_Value(out, v);
         mutable_KIND_BYTE(out)
             = mutable_MIRROR_BYTE(out)
@@ -1141,9 +1164,12 @@ bool Try_As_String(
 //
 //  {Aliases underlying data of one value to act as another of same class}
 //
-//      return: [<opt> any-sequence! any-series! any-word!]
+//      return: [<opt> integer! issue! any-sequence! any-series! any-word!]
 //      type [datatype!]
-//      value [<dequote> <blank> any-sequence! any-series! any-word!]
+//      value [
+//          <dequote> <blank>
+//          integer! issue! any-sequence! any-series! any-word!
+//      ]
 //  ]
 //
 REBNATIVE(as)
@@ -1158,11 +1184,16 @@ REBNATIVE(as)
         RETURN (v);
 
     switch (new_kind) {
+      case REB_INTEGER: {
+        if (not IS_CHAR(v))
+            fail ("AS INTEGER! only supports what-were-CHAR! issues ATM");
+        return Init_Integer(D_OUT, VAL_CHAR(v)); }
+
       case REB_BLOCK:
       case REB_GROUP:
         if (ANY_SEQUENCE(v)) {  // internals vary based on optimization
             switch (MIRROR_BYTE(v)) {
-              case REB_CHAR:
+              case REB_ISSUE:
                 fail ("Array Conversions of byte-oriented sequences TBD");
 
               case REB_WORD:
@@ -1247,12 +1278,49 @@ REBNATIVE(as)
 
         goto bad_cast;
 
+      case REB_ISSUE: {
+        if (IS_INTEGER(v))
+            return Init_Char_May_Fail(D_OUT, VAL_UINT32(v));
+
+        if (ANY_STRING(v)) {
+            REBLEN len;
+            REBSIZ utf8_size = VAL_SIZE_LIMIT_AT(&len, v, UNKNOWN);
+
+            if (utf8_size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8)) {
+                //
+                // Payload can fit in a single issue cell.
+                //
+                RESET_CELL(D_OUT, REB_BYTES, CELL_MASK_NONE);
+                memcpy(
+                    PAYLOAD(Bytes, D_OUT).at_least_8,
+                    VAL_STRING_AT(v),
+                    utf8_size + 1  // copy the '\0' terminator
+                );
+                EXTRA(Bytes, D_OUT).exactly_4[IDX_EXTRA_USED] = utf8_size;
+                EXTRA(Bytes, D_OUT).exactly_4[IDX_EXTRA_LEN] = len;
+            }
+            else {
+                if (not Try_As_String(
+                    D_OUT,
+                    REB_TEXT,
+                    v,
+                    0,  // no quotes
+                    STRMODE_ALL_CODEPOINTS  // See AS-TEXT/STRICT for stricter
+                )){
+                    goto bad_cast;
+                }
+            }
+            mutable_KIND_BYTE(D_OUT) = REB_ISSUE;
+            return D_OUT;
+        }
+
+        goto bad_cast; }
+
       case REB_TEXT:
       case REB_TAG:
       case REB_FILE:
       case REB_URL:
       case REB_EMAIL:
-      case REB_ISSUE:
         if (not Try_As_String(
             D_OUT,
             new_kind,
@@ -1268,32 +1336,73 @@ REBNATIVE(as)
       case REB_GET_WORD:
       case REB_SET_WORD:
       case REB_SYM_WORD: {
-        if (ANY_STRING(v)) {  // aliasing data as an ANY-WORD! freezes data
-            const REBSTR *s = VAL_STRING(v);
-            if (not IS_STR_SYMBOL(s)) {
+        if (IS_ISSUE(v)) {
+            if (CELL_KIND(cast(REBCEL(const*), v)) == REB_TEXT) {
                 //
-                // If the string isn't already a symbol, it could contain
-                // characters invalid for words...like spaces or newlines, or
-                // start with a number.  We want the same rules here as used
-                // in the scanner.
+                // Handle the same way we'd handle any other read-only text
+                // with a series allocation...e.g. reuse it if it's already
+                // been validated as a WORD!, or mark it word-valid if it's
+                // frozen and hasn't been marked yet.
                 //
-                // !!! For the moment, we don't check and just freeze the
-                // prior sequence and make a new interning.  This wastes
-                // space and lets bad words through, but gives the idea of
-                // what behavior it would have when it reused the series.
+                // Note: We may jump back up to use the intern_utf8 branch if
+                // that falls through.
+                //
+                goto any_string;
+            }
 
-                if (not Is_Series_Frozen(SER(s)))
-                    if (GET_CELL_FLAG(v, CONST))
-                        fail (Error_Alias_Constrains_Raw());
+            // Data that's just living in the payload needs to be handled
+            // and validated as a WORD!.
+
+          intern_utf8: {
+            //
+            // !!! This uses the same path as Scan_Word() to try and run
+            // through the same validation.  Review efficiency.
+            //
+            REBSIZ size;
+            REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
+            if (nullptr == Scan_Any_Word(D_OUT, new_kind, utf8, size))
+                fail (Error_Bad_Char_Raw(v));
+
+            return Inherit_Const(D_OUT, v);
+          }
+        }
+
+        if (ANY_STRING(v)) {  // aliasing data as an ANY-WORD! freezes data
+          any_string: {
+            const REBSTR *s = VAL_STRING(v);
+
+            if (not Is_Series_Frozen(SER(s))) {
+                //
+                // We always force strings used with AS to frozen, so that the
+                // effect of freezing doesn't appear to mystically happen just
+                // in those cases where the efficient reuse works out.
+
+                if (GET_CELL_FLAG(v, CONST))
+                    fail (Error_Alias_Constrains_Raw());
 
                 Freeze_Series(VAL_SERIES(v));
-
-                REBSIZ utf8_size;
-                REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
-                s = Intern_UTF8_Managed(utf8, utf8_size);
             }
+
+            if (VAL_INDEX(v) != 0)  // can't reuse non-head series AS WORD!
+                goto intern_utf8;
+
+            if (IS_STR_SYMBOL(s)) {
+                //
+                // This string's content was already frozen and checked, e.g.
+                // the string came from something like `as text! 'some-word`
+            }
+            else {
+                // !!! If this spelling is already interned we'd like to
+                // reuse the existing series, and if not we'd like to promote
+                // this series to be the interned one.  This efficiency has
+                // not yet been implemented, so we just intern it.
+                //
+                goto intern_utf8;
+            }
+
             Init_Any_Word(D_OUT, new_kind, s);
             return Inherit_Const(D_OUT, v);
+          }
         }
 
         if (IS_BINARY(v)) {
@@ -1338,7 +1447,24 @@ REBNATIVE(as)
         break; }
 
       case REB_BINARY: {
+        if (IS_ISSUE(v)) {
+            if (CELL_KIND(cast(REBCEL(const*), v)) == REB_TEXT)
+                goto any_string_as_binary;  // had a series allocation
+
+            // Data lives in payload--make new frozen series for BINARY!
+
+            REBSIZ size;
+            REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, v);
+            REBBIN *bin = Make_Binary_Core(size, NODE_FLAG_MANAGED);
+            memcpy(BIN_HEAD(bin), utf8, size + 1);
+            SET_SERIES_USED(bin, size);
+            Freeze_Series(bin);
+            Init_Binary(D_OUT, bin);
+            return Inherit_Const(D_OUT, v);
+        }
+
         if (ANY_WORD(v) or ANY_STRING(v)) {
+          any_string_as_binary:
             Init_Binary_At(
                 D_OUT,
                 SER(VAL_STRING(v)),

@@ -51,8 +51,8 @@ enum {
 //
 REBINT CT_String(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
-    assert(ANY_STRING_KIND(CELL_KIND(a)));
-    assert(ANY_STRING_KIND(CELL_KIND(b)));
+    assert(ANY_STRING_KIND(CELL_TYPE(a)) or REB_ISSUE == CELL_TYPE(a));
+    assert(ANY_STRING_KIND(CELL_TYPE(b)) or REB_ISSUE == CELL_TYPE(b));
 
     REBLEN l1;
     REBCHR(const*) cp1 = VAL_UTF8_LEN_SIZE_AT(&l1, nullptr, a);
@@ -179,10 +179,12 @@ REBLEN find_string(
     //
     assert(end >= index);
 
+    enum Reb_Kind type = CELL_TYPE(pattern);
     if (
-        ANY_STRING_KIND(CELL_KIND(pattern))
-        or ANY_WORD_KIND(CELL_KIND(pattern))
-        or REB_INTEGER == CELL_KIND(pattern)  // `find "ab10cd" 10` -> "10cd"
+        ANY_STRING_KIND(type)
+        or ANY_WORD_KIND(type)
+        or REB_INTEGER == type  // `find "ab10cd" 10` -> "10cd"
+        or REB_ISSUE == type
     ){
         bool str_is_all_ascii = false;  // !!! future string flag feature
         bool pattern_is_all_ascii = false;
@@ -198,8 +200,9 @@ REBLEN find_string(
         REBCHR(const*) bp2;
         REBSIZ size2;
         if (
-            CELL_KIND(pattern) != REB_TEXT
-            and CELL_KIND(pattern) != REB_WORD
+            CELL_TYPE(pattern) != REB_ISSUE
+            and CELL_TYPE(pattern) != REB_TEXT
+            and CELL_TYPE(pattern) != REB_WORD
          ){
             // !!! `<tag>`, `set-word:` but FILE!, etc?
             //
@@ -245,20 +248,11 @@ REBLEN find_string(
                 );
         }
         else {
-            const REBSTR *pattern_str;
-            REBLEN pattern_index;
+            DECLARE_LOCAL (temp);  // !!! Note: unmanaged
             if (formed) {
-                pattern_str = formed;
-                pattern_index = 0;
-            }
-            else if (ANY_STRING_KIND(CELL_KIND(pattern))) {
-                pattern_str = VAL_STRING(pattern);
-                pattern_index = VAL_INDEX(pattern);
-            }
-            else {
-                assert(ANY_WORD_KIND(CELL_KIND(pattern)));
-                pattern_str = VAL_WORD_SPELLING(pattern);
-                pattern_index = 0;
+                RESET_CELL(temp, REB_TEXT, CELL_FLAG_FIRST_IS_NODE);
+                PAYLOAD(Any, temp).first.node = NOD(formed);
+                PAYLOAD(Any, temp).second.u = 0;  // index
             }
 
             result = Find_Str_In_Str(
@@ -266,8 +260,7 @@ REBLEN find_string(
                 index,
                 end,
                 skip,
-                pattern_str,
-                pattern_index,
+                formed ? temp : pattern,
                 *len,
                 flags & (AM_FIND_MATCH | AM_FIND_CASE)
             );
@@ -278,19 +271,7 @@ REBLEN find_string(
 
         return result;
     }
-    else if (CELL_KIND(pattern) == REB_CHAR) {
-        *len = 1;
-
-        return Find_Char_In_Str(
-            VAL_CHAR(pattern),
-            str,
-            index,
-            end,
-            skip,
-            flags & (AM_FIND_MATCH | AM_FIND_CASE)
-        );
-    }
-    else if (CELL_KIND(pattern) == REB_BITSET) {
+    else if (type == REB_BITSET) {
         *len = 1;
 
         return Find_Str_Bitset(
@@ -302,7 +283,7 @@ REBLEN find_string(
             flags & (AM_FIND_MATCH | AM_FIND_CASE)
         );
     }
-    else if (CELL_KIND(pattern) == REB_BINARY) {
+    else if (type == REB_BINARY) {
         //
         // Finding an arbitrary binary (which may not be UTF-8) in a string
         // is probably most sensibly done by thinking of the string itself
@@ -374,9 +355,6 @@ static REBSTR *MAKE_TO_String_Common(
 
     if (ANY_WORD(arg))
         return Copy_Mold_Value(arg, MOLD_FLAG_0);
-
-    if (IS_CHAR(arg))
-        return Make_Codepoint_String(VAL_CHAR(arg));
 
     return Copy_Form_Value(arg, MOLD_FLAG_TIGHT);
 }
@@ -453,6 +431,23 @@ REB_R MAKE_String(
 //
 REB_R TO_String(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+    if (kind == REB_ISSUE) {  // encompasses what would have been TO CHAR!
+        if (IS_INTEGER(arg)) {
+            //
+            // `to issue! 1` is slated to keep the visual consistency intact,
+            // so that you'd get #1 back.  With issue! and char! unified,
+            // that means a way to get a codepoint is needed.  Since this is
+            // more about capturing an internal implementation, that falls
+            // under AS ISSUE!, which could handle multi-codepoint TUPLE! too.
+            //
+            fail ("Use AS ISSUE! to convert integer codepoint to ISSUE!");
+        }
+        if (IS_CHAR(arg) and VAL_CHAR(arg) == 0)
+            fail (Error_Illegal_Zero_Byte_Raw());  // `#` acts as codepoint 0
+
+        // Fall through
+    }
+
     return Init_Any_String(
         out,
         kind,
@@ -992,16 +987,6 @@ void MF_String(REB_MOLD *mo, REBCEL(const*) v, bool form)
         Mold_Tag(mo, v);
         break;
 
-      case REB_ISSUE:
-        Append_Codepoint(mo->series, '#');
-
-        if (VAL_LEN_AT(v) == 0) {
-            // Just be `#` (Note `#""` would LOAD as invalid character ATM)
-        }
-        else
-            Append_String(mo->series, v, VAL_LEN_AT(v));
-        break;
-
       default:
         panic (v);
     }
@@ -1018,12 +1003,13 @@ REBTYPE(String)
     REBVAL *v = D_ARG(1);
     assert(ANY_STRING(v));
 
+    REBSYM sym = VAL_WORD_SYM(verb);
+
     REBLEN index = VAL_INDEX(v);
     REBLEN tail = VAL_LEN_HEAD(v);
 
     REBFLGS sop_flags;  // SOP_XXX "Set Operation" flags
 
-    REBSYM sym = VAL_WORD_SYM(verb);
     switch (sym) {
         //
         // !!! INTERSECT, UNION, DIFFERENCE temporarily unavailable on STRING!

@@ -94,7 +94,7 @@
 (equal? equal? #{00} to integer! #{00} equal? to integer! #{00} #{00})
 ; issue! vs. text!
 ; RAMBO #3518
-(equal? a-value: #a to text! a-value)
+(not equal? a-value: #a to text! a-value)
 (
     a-value: #a
     equal? equal? a-value to text! a-value equal? to text! a-value a-value
@@ -401,11 +401,11 @@
 ; char! vs. decimal! symmetry
 (equal? equal? #"a" 97.0 equal? 97.0 #"a")
 ; char! case
-(equal? #"a" #"A")
+(not equal? #"a" #"A")
 ; text! case
 (equal? "a" "A")
 ; issue! case
-(equal? #a #A)
+(not equal? #a #A)
 ; tag! case
 (equal? <a a="a"> <A A="A">)
 ; url! case

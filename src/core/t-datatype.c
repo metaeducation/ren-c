@@ -223,8 +223,11 @@ static void Startup_Fake_Type_Constraint(REBSYM sym)
 //
 bool Matches_Fake_Type_Constraint(const RELVAL *v, enum Reb_Symbol sym) {
     switch (sym) {
+      case SYM_CHAR_X:
+        return IS_CHAR(v);
+
       case SYM_BLACKHOLE_X:
-        return IS_ISSUE(v) and VAL_LEN_AT(v) == 0;
+        return IS_CHAR(v) and VAL_CHAR(v) == 0;
 
       case SYM_LIT_WORD_X:
         return IS_QUOTED_WORD(v);
@@ -311,6 +314,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
 
     // !!! Temporary solution until actual type constraints exist.
     //
+    Startup_Fake_Type_Constraint(SYM_CHAR_X);
     Startup_Fake_Type_Constraint(SYM_LIT_WORD_X);
     Startup_Fake_Type_Constraint(SYM_LIT_PATH_X);
     Startup_Fake_Type_Constraint(SYM_REFINEMENT_X);

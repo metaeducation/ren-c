@@ -740,6 +740,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
 
 inline static const REBSTR *VAL_STRING(REBCEL(const*) v) {
     assert(ANY_STRING_KIND(CELL_KIND(v)) or ANY_WORD_KIND(CELL_KIND(v)));
+    assert(GET_CELL_FLAG(v, FIRST_IS_NODE));  // might be optimized form
     return STR(VAL_NODE(v));  // VAL_SERIES() would assert
 }
 
@@ -786,6 +787,20 @@ inline static REBCHR(const*) VAL_STRING_AT(REBCEL(const*) v) {
     return STR_AT(s, VAL_INDEX(v));
 }
 
+
+inline static REBCHR(const*) VAL_STRING_TAIL(REBCEL(const*) v) {
+    if (NOT_CELL_FLAG(v, FIRST_IS_NODE)) {
+        assert(ANY_STRING_KIND(CELL_KIND(v)));  // heart must be stringlike
+        return PAYLOAD(Bytes, v).at_least_8
+            + EXTRA(Bytes, v).exactly_4[IDX_EXTRA_USED];
+    }
+
+    const REBSTR *s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
+    return STR_TAIL(s);
+}
+
+
+
 #define VAL_STRING_AT_ENSURE_MUTABLE(v) \
     m_cast(REBCHR(*), VAL_STRING_AT(ENSURE_MUTABLE(v)))
 
@@ -807,7 +822,7 @@ inline static REBSIZ VAL_SIZE_LIMIT_AT(
     if (limit >= len_at) {
         if (length != nullptr)
             *length = len_at;
-        tail = STR_TAIL(VAL_STRING(v));  // byte count known (fast)
+        tail = VAL_STRING_TAIL(v);  // byte count known (fast)
     }
     else {
         if (length != nullptr)
@@ -962,8 +977,6 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 #define Init_Email(v,s)     Init_Any_String((v), REB_EMAIL, (s))
 #define Init_Tag(v,s)       Init_Any_String((v), REB_TAG, (s))
 #define Init_Url(v,s)       Init_Any_String((v), REB_URL, (s))
-#define Init_Issue(v,s)     Init_Any_String((v), REB_ISSUE, (s))
-
 
 
 //=//// REBSTR CREATION HELPERS ///////////////////////////////////////////=//

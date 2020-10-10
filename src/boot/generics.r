@@ -49,37 +49,37 @@ REBOL [
 
 add: generic [
     {Returns the addition of two values.}
-    return: [<requote> any-scalar! date! binary!]
-    value1 [<dequote> any-scalar! date! binary!]
+    return: [<requote> char! any-scalar! date! binary!]
+    value1 [<dequote> char! any-scalar! date! binary!]
     value2
 ]
 
 subtract: generic [
     {Returns the second value subtracted from the first.}
-    return: [<requote> any-scalar! date! binary!]
-    value1 [<dequote> any-scalar! date! binary!]
-    value2 [any-scalar! date!]
+    return: [<requote> char! any-scalar! date! binary!]
+    value1 [<dequote> char! any-scalar! date! binary!]
+    value2 [char! any-scalar! date!]
 ]
 
 multiply: generic [
     {Returns the first value multiplied by the second.}
-    return: [<requote> any-scalar!]
-    value1 [<dequote> any-scalar!]
-    value2 [any-scalar!]
+    return: [<requote> char! any-scalar!]
+    value1 [<dequote> char! any-scalar!]
+    value2 [char! any-scalar!]
 ]
 
 divide: generic [
     {Returns the first value divided by the second.}
-    return: [<requote> any-scalar!]
-    value1 [<dequote> any-scalar!]
-    value2 [any-scalar!]
+    return: [<requote> char! any-scalar!]
+    value1 [<dequote> char! any-scalar!]
+    value2 [char! any-scalar!]
 ]
 
 remainder: generic [
     {Returns the remainder of first value divided by second.}
-    return: [<requote> any-scalar!]
-    value1 [<dequote> any-scalar!]
-    value2 [any-scalar!]
+    return: [<requote> char! any-scalar!]
+    value1 [<dequote> char! any-scalar!]
+    value2 [char! any-scalar!]
 ]
 
 power: generic [

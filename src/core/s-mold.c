@@ -545,11 +545,7 @@ bool Form_Reduce_Throws(
 
         nothing = false;
 
-        if (IS_CHAR(out)) {  // don't delimit CHAR! (e.g. space, newline)
-            Append_Codepoint(mo->series, VAL_CHAR(out));
-            pending = false;
-        }
-        else if (IS_ISSUE(out)) {  // ISSUE! pending unification w/CHAR!
+        if (IS_ISSUE(out)) {  // do not delimit (unified w/char)
             Form_Value(mo, out);
             pending = false;
         }

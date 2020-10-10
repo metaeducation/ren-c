@@ -226,10 +226,6 @@ uint32_t Hash_Value(const RELVAL *v)
         hash ^= EXTRA(Any, cell).u;
         break; }
 
-      case REB_CHAR:
-        hash = LO_CASE(VAL_CHAR(cell));
-        break;
-
       case REB_PAIR:
         hash = Hash_Value(VAL_PAIR_X(cell));
         hash ^= Hash_Value(VAL_PAIR_Y(cell));
@@ -261,7 +257,7 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_EMAIL:
       case REB_URL:
       case REB_TAG:
-      case REB_ISSUE: {
+      case REB_ISSUE: {  // ISSUE! heart may be REB_BYTES, VAL_UTF8_X handles
         REBSIZ size;
         REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, cell);
         hash = Hash_UTF8_Caseless(utf8, size);

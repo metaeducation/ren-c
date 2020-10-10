@@ -92,6 +92,7 @@ make object! [
                 change-dir first split-path test-file
             ]
             test-sources: get in load-testfile test-file 'contents
+            ensure binary! test-sources  ; this is how they are passed ATM
         ] then err -> [
             ; probe err
             append collected-tests reduce [

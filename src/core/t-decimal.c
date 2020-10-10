@@ -160,7 +160,7 @@ REB_R MAKE_Decimal(
         d = VAL_LOGIC(arg) ? 1.0 : 0.0;
         goto dont_divide_if_percent;
 
-      case REB_CHAR:
+      case REB_ISSUE:
         d = cast(REBDEC, VAL_CHAR(arg));
         goto dont_divide_if_percent;
 
@@ -495,7 +495,7 @@ REBTYPE(Decimal)
             || type == REB_INTEGER
             || type == REB_PERCENT
             || type == REB_MONEY
-            || type == REB_CHAR
+            || type == REB_ISSUE
         ){
             if (type == REB_DECIMAL) {
                 d2 = VAL_DECIMAL(arg);
@@ -511,7 +511,7 @@ REBTYPE(Decimal)
                 Init_Money(val, decimal_to_deci(VAL_DECIMAL(val)));
                 return T_Money(frame_, verb);
             }
-            else if (type == REB_CHAR) {
+            else if (type == REB_ISSUE) {
                 d2 = cast(REBDEC, VAL_CHAR(arg));
                 type = REB_DECIMAL;
             }

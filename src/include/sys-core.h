@@ -379,7 +379,6 @@ inline static void INIT_BINDING_MAY_MANAGE(RELVAL *out, REBNOD* binding);
 #include "datatypes/sys-blank.h"
 #include "datatypes/sys-logic.h"
 #include "datatypes/sys-integer.h"
-#include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
 #include "datatypes/sys-decimal.h"
 
 enum rebol_signals {
@@ -429,8 +428,10 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #include "datatypes/sys-datatype.h"
 
 #include "datatypes/sys-binary.h"  // BIN_XXX(), etc. used by strings
+#include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
 #include "datatypes/sys-string.h"  // REBSYM needed for typesets
 #include "datatypes/sys-word.h"
+#include "datatypes/sys-token.h"
 
 #include "datatypes/sys-pair.h"
 #include "datatypes/sys-quoted.h"  // requires pairings for cell storage

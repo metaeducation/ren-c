@@ -456,7 +456,6 @@ reeval func* [
     decimal?:
     percent?:
     money?:
-    char?:
     pair?:
     tuple?:
     time?:
@@ -542,7 +541,13 @@ refinement?: func* [value [<opt> any-value!]] [
         word? :value/2
     ]
 ]
-; !!! refinement! is set to #refinement! during boot; signals a PATH! filter
+
+char?: func* [value [<opt> any-value!]] [
+    did all [
+        issue? :value
+        1 >= length of value
+    ]
+]
 
 print: func* [
     {Textually output spaced line (evaluating elements if a block)}

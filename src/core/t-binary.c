@@ -84,7 +84,8 @@ REBLEN find_binary(
     else
         start = index;
 
-    if (ANY_STRING_KIND(CELL_KIND(pattern))) {
+    enum Reb_Kind cell_kind = CELL_TYPE(pattern);
+    if (ANY_UTF8_KIND(cell_kind)) {
         if (skip != 1)
             fail ("String search in BINARY! only supports /SKIP 1 for now.");
 
@@ -92,7 +93,7 @@ REBLEN find_binary(
 
         REBCHR(const*) bp2;
         REBLEN len2;
-        if (CELL_KIND(pattern) != REB_TEXT) { // !!! <tag>...but FILE! etc?
+        if (cell_kind == REB_TAG) {  // !!! <tag>...but FILE! etc?
             formed = Copy_Form_Cell(pattern, 0);
             len2 = STR_LEN(formed);
             bp2 = STR_HEAD(formed);
@@ -118,7 +119,7 @@ REBLEN find_binary(
 
         return result;
     }
-    else if (CELL_KIND(pattern) == REB_BINARY) {
+    else if (cell_kind == REB_BINARY) {
         if (skip != 1)
             fail ("Search for BINARY! in BINARY! only supports /SKIP 1 ATM");
 
@@ -131,25 +132,7 @@ REBLEN find_binary(
             flags & AM_FIND_MATCH
         );
     }
-    else if (CELL_KIND(pattern) == REB_CHAR) {
-        //
-        // Technically speaking the upper and lowercase sizes of a character
-        // may not be the same.  It's okay here since we only do cased.
-        //
-        // https://stackoverflow.com/q/14792841/
-        //
-        *size = VAL_CHAR_ENCODED_SIZE(pattern);
-        return Find_Char_In_Bin(
-            VAL_CHAR(pattern),
-            bin,
-            start,
-            index,
-            end,
-            skip,
-            flags & (AM_FIND_CASE | AM_FIND_MATCH)
-        );
-    }
-    else if (CELL_KIND(pattern) == REB_INTEGER) {  // specific byte (exact)
+    else if (cell_kind == REB_INTEGER) {  // specific byte (exact)
         if (VAL_INT64(pattern) < 0 or VAL_INT64(pattern) > 255)
             fail (Error_Out_Of_Range(SPECIFIC(CELL_TO_VAL(pattern))));
 
@@ -165,7 +148,7 @@ REBLEN find_binary(
             flags & AM_FIND_MATCH
         );
     }
-    else if (CELL_KIND(pattern) == REB_BITSET) {
+    else if (cell_kind == REB_BITSET) {
         *size = 1;
 
         return Find_Bin_Bitset(
@@ -265,15 +248,6 @@ static REBSER *MAKE_TO_Binary_Common(const REBVAL *arg)
             return bin;
         }
         fail ("TUPLE! did not consist entirely of INTEGER! values 0-255"); }
-
-    case REB_CHAR: {
-        REBUNI c = VAL_CHAR(arg);
-        REBSIZ encoded_size = Encoded_Size_For_Codepoint(c);
-        REBSER *bin = Make_Binary(encoded_size);
-        Encode_UTF8_Char(BIN_HEAD(bin), c, encoded_size);
-        TERM_SEQUENCE_LEN(bin, encoded_size);
-        return bin;
-    }
 
     case REB_BITSET:
         return Copy_Bytes(BIN_HEAD(VAL_BINARY(arg)), VAL_LEN_HEAD(arg));

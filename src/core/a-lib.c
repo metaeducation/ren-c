@@ -1036,7 +1036,7 @@ intptr_t RL_rebUnbox(unsigned char quotes, const void *p, va_list *vaptr)
       case REB_INTEGER:
         return VAL_INT64(result);
 
-      case REB_CHAR:
+      case REB_ISSUE:
         return VAL_CHAR(result);
 
       case REB_LOGIC:
@@ -1102,8 +1102,8 @@ uint32_t RL_rebUnboxChar(
     DECLARE_LOCAL (result);
     Run_Va_May_Fail(result, quotes, p, vaptr);  // calls va_end()
 
-    if (VAL_TYPE(result) != REB_CHAR)
-        fail ("rebUnboxChar() called on non-CHAR!");
+    if (not IS_CHAR(result))
+        fail ("rebUnboxChar() called on non-CHAR");
 
     return VAL_CHAR(result);
 }
@@ -1137,8 +1137,8 @@ static size_t Spell_Into(
     size_t buf_size,  // number of bytes
     const REBVAL *v
 ){
-    if (not (ANY_STRING(v) or ANY_WORD(v)))
-        fail ("rebSpell() APIs only accept ANY-STRING! or ANY-WORD!");
+    if (not ANY_UTF8(v))
+        fail ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
 
     REBSIZ utf8_size;
     REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
@@ -1217,10 +1217,11 @@ static unsigned int Spell_Into_Wide(
     unsigned int buf_chars,  // chars buf can hold (not including terminator)
     const REBVAL *v
 ){
+    if (not ANY_UTF8(v))
+        fail ("rebSpell() APIs require UTF-8 types (strings, words, tokens)");
+
     REBLEN len;
     REBCHR(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, v);
-    if (not ANY_STRING(v) and not ANY_WORD(v))
-        fail ("rebSpell() APIs only accept ANY-STRING! or ANY-WORD!");
 
     if (not buf) {  // querying for size
         assert(buf_chars == 0);

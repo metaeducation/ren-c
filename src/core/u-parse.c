@@ -614,10 +614,11 @@ static REB_R Parse_One_Rule(
         // Rebol2, and leverages quoting.  It's being experimented with.
         //
         REBCEL(const*) rule_cell = VAL_UNESCAPED(rule);
-        enum Reb_Kind rule_cell_kind = CELL_KIND(rule_cell);
+        enum Reb_Kind rule_cell_kind = CELL_TYPE(rule_cell);
         if (
             (ANY_WORD_KIND(rule_cell_kind) and VAL_NUM_QUOTES(rule) == 1)
             or (ANY_STRING_KIND(rule_cell_kind) and VAL_NUM_QUOTES(rule) <= 1)
+            or (rule_cell_kind == REB_ISSUE and VAL_NUM_QUOTES(rule) <= 1)
             or (rule_cell_kind == REB_BINARY and VAL_NUM_QUOTES(rule) == 0)
             or (rule_cell_kind == REB_INTEGER and VAL_NUM_QUOTES(rule) == 1)
         ){
@@ -628,52 +629,13 @@ static REB_R Parse_One_Rule(
                 P_POS,
                 rule_cell,
                 P_FIND_FLAGS | AM_FIND_MATCH
+                    | (IS_ISSUE(rule) ? AM_FIND_CASE : 0)
             );
             if (index == NOT_FOUND)
                 return R_UNHANDLED;
             return Init_Integer(P_OUT, index + len);
         }
         else switch (VAL_TYPE(rule)) {
-          case REB_CHAR:
-            if (P_TYPE == REB_BINARY) {
-                //
-                // See if current binary position matches UTF-8 encoded char
-                //
-                if (P_POS + VAL_CHAR_ENCODED_SIZE(rule) > BIN_LEN(P_INPUT))
-                    return R_UNHANDLED;
-
-                const REBYTE *ep = VAL_CHAR_ENCODED(rule);
-                assert(*ep != 0);
-                const REBYTE *bp = BIN_AT(P_INPUT, P_POS);
-                do {
-                    if (*ep++ != *bp++)
-                        return R_UNHANDLED;
-                } while (*ep);
-
-                return Init_Integer(
-                    P_OUT,
-                    P_POS + VAL_CHAR_ENCODED_SIZE(rule)
-                );
-            }
-
-            // Otherwise it's a string and may have case sensitive behavior.
-            //
-            // !!! Could this unify with above method for binary, somehow?
-
-            if (P_HAS_CASE) {
-                if (VAL_CHAR(rule) != GET_CHAR_AT(STR(P_INPUT), P_POS))
-                    return R_UNHANDLED;
-            }
-            else {
-                if (
-                    UP_CASE(VAL_CHAR(rule))
-                    != UP_CASE(GET_CHAR_AT(STR(P_INPUT), P_POS))
-                ){
-                    return R_UNHANDLED;
-                }
-            }
-            return Init_Integer(P_OUT, P_POS + 1);
-
           case REB_BITSET: {
             //
             // Check current char/byte against character set, advance matches
@@ -2129,6 +2091,7 @@ REBNATIVE(subparse)
 
                 // !!! Simulate constrained types since they do not exist yet.
                 //
+                case SYM_CHAR_X:  // actually an ISSUE!
                 case SYM_BLACKHOLE_X:  // actually an ISSUE!
                 case SYM_LIT_WORD_X:  // actually a QUOTED!
                 case SYM_LIT_PATH_X:  // actually a QUOTED!

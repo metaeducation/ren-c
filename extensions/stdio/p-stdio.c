@@ -120,35 +120,35 @@ REBVAL *Read_Line(STD_TERM *t)
             Term_Insert(t, e);
         }
         else if (rebDidQ("word?", e, rebEND)) {  // recognized "virtual key"
-            uint32_t ch = rebUnboxChar(
-                "to char! switch", rebQ(e), "[",
-                    "'escape ['E]",
+            uint32_t c = rebUnboxChar(
+                "switch", rebQ(e), "[",
+                    "'escape [#E]",
 
-                    "'up ['U]",
-                    "'down ['D]",
+                    "'up [#U]",
+                    "'down [#D]",
                     "'ctrl-b",  // Backward One Character (bash)
-                        "'left ['L]",
+                        "'left [#L]",
                     "'ctrl-f",  // Forward One Character (bash)
-                        "'right ['R]",
+                        "'right [#R]",
 
-                    "'backspace ['b]",
+                    "'backspace [#b]",
                     "'ctrl-d",  // Delete Character Under Cursor (bash)
-                        "'delete ['d]",
+                        "'delete [#d]",
 
-                    "'tab ['t]",  // completion logic (bash)
+                    "'tab [#t]",  // completion logic (bash)
 
                     "'ctrl-a",  // Beginning of Line (bash)
-                        "'home ['h]",
+                        "'home [#h]",
                     "'ctrl-e",  // CTRL-E, end of Line (bash)
-                        "'end ['e]",
+                        "'end [#e]",
 
-                    "'clear ['c]",
+                    "'clear [#c]",
 
-                    "default [0]",
+                    "default [#]",
                 "]",
             rebEND);
 
-            switch (ch) {
+            switch (c) {
               case 0:  // Ignored (e.g. unknown Ctrl-XXX)
                 break;
 

@@ -99,9 +99,6 @@ percent     "special form of decimals (used mainly for layout)"
 money       "high precision decimals with denomination (opt)"
             money       -       +       +       [scalar]
 
-char        "single unicode codepoint (up to 0x0010FFFF)"
-            char        -       +       +       [scalar]
-
 time        "time of day or duration"
             time        +       +       +       [scalar]
 
@@ -184,8 +181,8 @@ url         "uniform resource locator or identifier"
 tag         "markup string (HTML or XML)"
             string      *       *       *       [series string]
 
-issue       "identifying marker"
-            string      *       *       *       [series string]
+issue       "immutable codepoint or codepoint sequence"
+            issue       *       *       *       []  ; !!! sequence of INTEGER?
 
 ; </ANY-STRING>
 

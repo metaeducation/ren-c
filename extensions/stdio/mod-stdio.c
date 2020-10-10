@@ -196,19 +196,8 @@ REBNATIVE(write_stdout)
         //
         Prin_OS_String(VAL_BIN_AT(v), VAL_LEN_AT(v), OPT_ENC_RAW);
     }
-    else if (IS_CHAR(v)) {
-        //
-        // Useful for `write-stdout newline`, etc.
-        //
-        // !!! Temporarily just support ASCII codepoints, since making a
-        // codepoint out of a string pre-UTF8-everywhere makes a REBUNI string.
-        //
-        if (VAL_CHAR(v) > 0x7f)
-            fail ("non-ASCII CHAR! output temporarily disabled.");
-        Prin_OS_String(cast(REBYTE*, &VAL_CHAR(v)), 1, OPT_ENC_0);
-    }
     else {
-        assert(IS_TEXT(v));
+        assert(IS_TEXT(v) or IS_ISSUE(v));
 
         // !!! Should be passing the STRING!, so the printing port gets the
         // number of codepoints as well as the UTF-8 size.

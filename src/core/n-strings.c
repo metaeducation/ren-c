@@ -33,10 +33,10 @@
 //  {Joins a block of values into TEXT! with delimiters}
 //
 //      return: "Null if blank input or block's contents are all null"
-//          [<opt> text!]
+//          [<opt> text! issue!]
 //      delimiter [<opt> blank! char! text!]
 //      line "Will be copied if already a text value"
-//          [<blank> text! block!]
+//          [<blank> text! block! issue!]
 //  ]
 //
 REBNATIVE(delimit)
@@ -44,7 +44,7 @@ REBNATIVE(delimit)
     INCLUDE_PARAMS_OF_DELIMIT;
 
     REBVAL *line = ARG(line);
-    if (IS_TEXT(line))
+    if (IS_TEXT(line) or IS_ISSUE(line))
         return rebValueQ("copy", line, rebEND); // !!! Review performance
 
     assert(IS_BLOCK(line));

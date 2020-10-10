@@ -112,10 +112,6 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_MONEY:
         break;
 
-      case REB_CHAR:
-        assert(VAL_CHAR_ENCODED_SIZE(v) <= 4);
-        break;
-
       case REB_PAIR: {
         REBVAL *paired = VAL(VAL_NODE(v));
         assert(Is_Marked(paired));
@@ -204,8 +200,8 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_FILE:
       case REB_EMAIL:
       case REB_URL:
-      case REB_TAG:
-      case REB_ISSUE: {
+      case REB_TAG: {
+        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         if (GET_SERIES_INFO(PAYLOAD(Any, v).first.node, INACCESSIBLE))
             break;
 
@@ -347,6 +343,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
 
         const REBSTR *spelling = STR(PAYLOAD(Any, v).first.node);
+        assert(Is_Series_Frozen(SER(spelling)));
 
         // A word marks the specific spelling it uses, but not the canon
         // value.  That's because if the canon value gets GC'd, then
@@ -453,6 +450,27 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
             or heart == REB_BLOCK
          );
          break;
+
+      case REB_ISSUE: {
+        if (heart == REB_TEXT) {
+            REBSER *s = SER(VAL_STRING(v));
+            assert(Is_Series_Frozen(s));
+
+            // We do not want ISSUE!s to use series if the payload fits in
+            // a cell.  It would offer some theoretical benefits for reuse,
+            // e.g. an `as text! as issue! "foo"` would share the same
+            // small series...the way it would share a larger one.  But this
+            // fringe-ish benefit comes at the cost of keeping a GC reference
+            // live on something that doesn't need to be live, and also makes
+            // the invariants more complex.
+            //
+            assert(SER_USED(s) + 1 > sizeof(PAYLOAD(Bytes, v).at_least_8));
+        }
+        else {
+            assert(heart == REB_BYTES);
+            assert(NOT_CELL_FLAG(v, FIRST_IS_NODE));
+        }
+        break; }
 
       default:
         if (kind < REB_MAX)  // psuedotypes for parameter are actually typeset

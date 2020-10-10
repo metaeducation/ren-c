@@ -5,7 +5,6 @@
 (datatype? binary!)
 (datatype? bitset!)
 (datatype? block!)
-(datatype? char!)
 (datatype? datatype!)
 (datatype? date!)
 (datatype? decimal!)

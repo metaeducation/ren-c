@@ -224,7 +224,7 @@ void Append_Spelling(REBSTR *dst, const REBSTR *spelling)
 void Append_String(REBSTR *dst, REBCEL(const*) src, REBLEN limit)
 {
     assert(not IS_STR_SYMBOL(dst));
-    assert(ANY_STRING_KIND(CELL_KIND(src)));
+    assert(ANY_UTF8_KIND(CELL_TYPE(src)));
 
     REBLEN len;
     REBSIZ size;
@@ -397,6 +397,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
             memcpy(BIN_AT(buf, tail), VAL_BIN_AT(val), len);
             break; }
 
+        case REB_ISSUE:
         case REB_TEXT:
         case REB_FILE:
         case REB_EMAIL:
@@ -408,14 +409,6 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
             EXPAND_SERIES_TAIL(buf, utf8_size);
             memcpy(BIN_AT(buf, tail), utf8, utf8_size);
             SET_SERIES_LEN(buf, tail + utf8_size);
-            break; }
-
-        case REB_CHAR: {
-            REBUNI c = VAL_CHAR(val);
-            REBSIZ encoded_size = Encoded_Size_For_Codepoint(c);
-            EXPAND_SERIES_TAIL(buf, encoded_size);
-            Encode_UTF8_Char(BIN_AT(buf, tail), c, encoded_size);
-            SET_SERIES_LEN(buf, tail + encoded_size);
             break; }
 
         default:

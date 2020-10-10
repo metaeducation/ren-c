@@ -24,7 +24,7 @@ REBOL [
 ; Note that TO-LOGIC and TO-TEXT are currently their own natives (even with
 ; additional refinements), and thus should not be overwritten here.
 
-to-integer: to-decimal: to-percent: to-money: to-char: to-pair:
+to-integer: to-decimal: to-percent: to-money: to-pair:
 to-tuple: to-time: to-date: to-binary: to-file: to-email: to-url: to-tag:
 to-bitset: to-image: to-vector: to-block: to-group:
 to-path: to-set-path: to-get-path: to-map: to-datatype: to-typeset:

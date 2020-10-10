@@ -93,6 +93,14 @@ REB_R MAKE_Word(
     }
 
     if (ANY_STRING(arg)) {
+        if (Is_Series_Frozen(SER(VAL_STRING(arg))))
+            goto as_word;  // just reuse AS mechanics on frozen strings
+
+        // Otherwise, we'll have to copy the data for a TO conversion
+        //
+        // !!! Note this permits `TO WORD! "    spaced-out"` ... it's not
+        // clear that it should do so.  Review `Analyze_String_For_Scan()`
+
         REBSIZ size;
         const REBYTE *bp = Analyze_String_For_Scan(&size, arg, MAX_SCAN_WORD);
 
@@ -101,12 +109,15 @@ REB_R MAKE_Word(
 
         return out;
     }
-    else if (IS_CHAR(arg)) {  // CHAR! caches the UTF-8 encoding in the cell
-        const REBYTE *encoded = VAL_CHAR_ENCODED(arg);
-        REBSIZ encoded_size = VAL_CHAR_ENCODED_SIZE(arg);
+    else if (IS_ISSUE(arg)) {
+        //
+        // Run the same mechanics that AS WORD! would, since it's immutable.
+        //
+      as_word:
+        REBVAL *as = rebValue("as", Datatype_From_Kind(kind), arg, rebEND);
+        Move_Value(out, as);
+        rebRelease(as);
 
-        if (nullptr == Scan_Any_Word(out, kind, encoded, encoded_size))
-            fail (Error_Bad_Char_Raw(arg));
         return out;
     }
     else if (IS_DATATYPE(arg)) {

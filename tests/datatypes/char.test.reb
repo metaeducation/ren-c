@@ -1,7 +1,7 @@
 ; datatypes/char.r
 (char? #"a")
 (not char? 1)
-(char! = type of #"a")
+(issue! = type of #"a")
 
 ; !!! Workaround for test scanner's use of TRANSCODE that violates the ability
 ; to actually work with 0 byte representations in strings (even for a test
@@ -149,19 +149,22 @@
 (#"^(esc)" = #"^(1B)")
 (#"^(back)" = #"^(08)")
 (#"^(del)" = #"^(7f)")
-({#"a"} = mold #"a")
+
+; Quotes are removed if not necessary in molding
+({#a} = mold #"a")
+({#a} = mold #a)
 
 (
     c: make char! 0
     did all [
         char? c
-        0 = to integer! c
+        0 = codepoint of c
     ]
 )(
-    c: to char! 0
+    c: as issue! 0
     did all [
         char? c
-        0 = to integer! c
+        0 = codepoint of c
     ]
 )
 
@@ -237,18 +240,18 @@
 
 [#1031
     ; 1 UTF-8 byte
-    (#"b" = to char! #{62})
+    (#"b" = make char! #{62})
     (#{62} = to binary! #"b")
 
     ; 2 UTF-8 bytes
-    (#"à" = to char! #{C3A0})
+    (#"à" = make char! #{C3A0})
     (#{C3A0} = to binary! #"à")
 
     ; 3 UTF-8 bytes
-    (#"漢" = to char! #{E6BCA2})
+    (#"漢" = make char! #{E6BCA2})
     (#{E6BCA2} = to binary! #"漢")
 
     ; 4 UTF-8 bytes
-    (#"😺" = to char! #{F09F98BA})
+    (#"😺" = make char! #{F09F98BA})
     (#{F09F98BA} = to binary! #"😺")
 ]

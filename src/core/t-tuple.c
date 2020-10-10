@@ -361,7 +361,7 @@ REBTYPE(Sequence)
       case SYM_COPY: {
         if (
             MIRROR_BYTE(sequence) == REB_WORD
-            or MIRROR_BYTE(sequence) == REB_CHAR
+            or MIRROR_BYTE(sequence) == REB_ISSUE
         ){
             assert(VAL_WORD_SYM(sequence) == SYM__SLASH_1_);
             return Move_Value(frame_->out, sequence);

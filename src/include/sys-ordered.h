@@ -150,13 +150,13 @@ inline static bool ANY_SCALAR_KIND(REBYTE k)  // !!! Should use TS_SCALAR?
     ANY_SCALAR_KIND(KIND_BYTE(v))
 
 inline static bool ANY_STRING_KIND(REBYTE k)
-    { return k >= REB_TEXT and k <= REB_ISSUE; }
+    { return k >= REB_TEXT and k <= REB_TAG; }
 
 #define ANY_STRING(v) \
     ANY_STRING_KIND(KIND_BYTE(v))
 
 #define ANY_BINSTR_KIND_EVIL_MACRO \
-    (k >= REB_BINARY and k <= REB_ISSUE)
+    (k >= REB_BINARY and k <= REB_TAG)
 
 
 inline static bool ANY_BINSTR_KIND(REBYTE k)
@@ -406,3 +406,12 @@ inline static bool IS_PARAM_KIND(REBYTE k)
 
 #define IS_PARAM(v) \
     IS_PARAM_KIND(KIND_BYTE(v))
+
+
+// If a type can be used with the VAL_UTF8_XXX accessors
+
+inline static bool ANY_UTF8_KIND(REBYTE k)
+    { return ANY_STRING_KIND(k) or ANY_WORD_KIND(k) or k == REB_ISSUE; }
+
+#define ANY_UTF8(v) \
+    ANY_UTF8_KIND(KIND_BYTE(v))

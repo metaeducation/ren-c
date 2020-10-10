@@ -3027,13 +3027,13 @@ const REBYTE *Scan_Any_Word(
     REBVAL *out,
     enum Reb_Kind kind,
     const REBYTE *utf8,
-    REBLEN len
+    REBSIZ size
 ) {
     SCAN_LEVEL level;
     SCAN_STATE ss;
     const REBSTR *file = Canon(SYM___ANONYMOUS__);
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, len);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, size);
 
     DECLARE_MOLD (mo);
 
@@ -3041,7 +3041,11 @@ const REBYTE *Scan_Any_Word(
     if (token != TOKEN_WORD)
         return nullptr;
 
-    Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, len));
+    assert(ss.end >= ss.begin);
+    if (size != cast(REBSIZ, ss.end - ss.begin))
+        return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
+
+    Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, size));
     Drop_Mold_If_Pushed(mo);
     return ss.begin;
 }
@@ -3059,21 +3063,20 @@ const REBYTE *Scan_Any_Word(
 // !!! Since this follows the same rules as FILE!, the code should merge,
 // though FILE! will make mutable strings and not have in-cell optimization.
 //
-const REBYTE *Scan_Issue(RELVAL *out, const REBYTE *cp, REBLEN len)
+const REBYTE *Scan_Issue(RELVAL *out, const REBYTE *cp, REBSIZ size)
 {
-    if (len == 0) {  // Lone `#` means empty issue!, TBD: alias 0 codepoint
-        Init_Issue(out, VAL_STRING(EMPTY_TEXT));
-        return cp;
-    }
-
-    while (IS_LEX_SPACE(*cp))  // skip whitespace
-        ++cp;
-
     const REBYTE *bp = cp;
 
-    REBLEN l = len;
-    while (l > 0) {
-        //
+    // !!! ISSUE! loading should use the same escaping as FILE!, and have a
+    // pre-counted mold buffer, with UTF-8 validation done on the prescan.
+    //
+    REBLEN len = 0;
+
+    REBSIZ n = size;
+    while (n > 0) {
+        if (not Is_Continuation_Byte_If_Utf8(*bp))
+            ++len;
+
         // Allows nearly every visible character that isn't a delimiter
         // as a char surrogate, e.g. #\ or #@ are legal, as are #<< and #>>
         //
@@ -3105,9 +3108,10 @@ const REBYTE *Scan_Issue(RELVAL *out, const REBYTE *cp, REBLEN len)
         }
 
         ++bp;
-        --l;
+        --n;
     }
 
-    Init_Issue(out, Make_Sized_String_UTF8(cs_cast(cp), len));
+    Init_Issue_Utf8(out, cp, size, len);
+
     return bp;
 }

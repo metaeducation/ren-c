@@ -16,10 +16,10 @@
     repeat n 512 [
         if n = 1 [continue]
 
-        if not parse (append copy "" to char! n - 1) [set c any-char end] [
+        if not parse (append copy "" make char! n - 1) [set c any-char end] [
             fail "Parse didn't work"
         ]
-        if c != to char! n - 1 [fail "Char didn't match"]
+        if c != make char! n - 1 [fail "Char didn't match"]
     ]
     true
 )]
@@ -27,7 +27,7 @@
 
 ; Don't leak internal detail that BINARY! or ANY-STRING! are 0-terminated
 [
-    (NUL = to char! 0)
+    (NUL = as issue! 0)
 
     (null = parse "" [to NUL])
     (null = parse "" [thru NUL])

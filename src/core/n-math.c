@@ -534,7 +534,6 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, bool strict)
           case REB_EMAIL:
           case REB_URL:
           case REB_TAG:
-          case REB_ISSUE:
             if (ANY_STRING(b)) goto compare;
             break;
 
@@ -977,6 +976,12 @@ REBNATIVE(zero_q)
 
     REBVAL *v = ARG(value);
     enum Reb_Kind type = VAL_TYPE(v);
+
+    if (type == REB_ISSUE)  // special case, `#` represents the '\0' codepoint
+        return Init_Logic(
+            D_OUT,
+            IS_CHAR(cast(REBCEL(const*), v)) and VAL_CHAR(v) == 0
+        );
 
     if (not ANY_SCALAR_KIND(type))
         return Init_False(D_OUT);

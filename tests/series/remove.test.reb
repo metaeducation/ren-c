@@ -25,7 +25,7 @@
 )
 (
     a-bitset: charset "a"
-    remove/part a-bitset to integer! #"a"
+    remove/part a-bitset as integer! #"a"
     null? find a-bitset #"a"
 )
 

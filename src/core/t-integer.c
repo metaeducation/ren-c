@@ -89,8 +89,37 @@ REB_R TO_Integer(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     assert(kind == REB_INTEGER);
     UNUSED(kind);
 
+    if (IS_ISSUE(arg))
+        fail ("Use CODEPOINT OF for INTEGER! from single-character ISSUE!");
+
     Value_To_Int64(out, arg, false);
     return out;
+}
+
+
+// Like converting a binary, except uses a string of ASCII characters.  Does
+// not allow for signed interpretations, e.g. #FFFF => 65535, not -1.
+// Unsigned makes more sense as these would be hexes likely typed in by users,
+// who rarely do 2s-complement math in their head.
+//
+void Hex_String_To_Integer(REBVAL *out, const REBVAL *value)
+{
+    REBSIZ utf8_size;
+    REBCHR(const*) bp = VAL_UTF8_SIZE_AT(&utf8_size, value);
+
+    if (utf8_size > MAX_HEX_LEN) {
+        // Lacks BINARY!'s accommodation of leading 00s or FFs
+        fail (Error_Out_Of_Range_Raw(value));
+    }
+
+    if (not Scan_Hex(out, bp, utf8_size, utf8_size))
+        fail (Error_Bad_Make(REB_INTEGER, value));
+
+    // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
+    // might run afoul of 64-bit range limit.
+    //
+    if (VAL_INT64(out) < 0)
+        fail (Error_Out_Of_Range_Raw(value));
 }
 
 
@@ -159,34 +188,7 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
         rebRelease(result);
         return;
     }
-    else if (IS_ISSUE(value)) {
-        //
-        // Like converting a binary, except uses a string of codepoints
-        // from the word name conversion.  Does not allow for signed
-        // interpretations, e.g. #FFFF => 65535, not -1.  Unsigned makes
-        // more sense as these would be hexes likely typed in by users,
-        // who rarely do 2s-complement math in their head.
-
-        REBSIZ utf8_size;
-        REBCHR(const*) bp = VAL_UTF8_SIZE_AT(&utf8_size, value);
-
-        if (utf8_size > MAX_HEX_LEN) {
-            // Lacks BINARY!'s accommodation of leading 00s or FFs
-            fail (Error_Out_Of_Range_Raw(value));
-        }
-
-        if (!Scan_Hex(out, bp, utf8_size, utf8_size))
-            fail (Error_Bad_Make(REB_INTEGER, value));
-
-        // !!! Unlike binary, always assumes unsigned (should it?).  Yet still
-        // might run afoul of 64-bit range limit.
-        //
-        if (VAL_INT64(out) < 0)
-            fail (Error_Out_Of_Range_Raw(value));
-
-        return;
-    }
-    else if (ANY_STRING(value)) {
+    else if (IS_ISSUE(value) or ANY_STRING(value)) {
         REBSIZ size;
         const REBLEN max_len = VAL_LEN_AT(value); // e.g. "no maximum"
         const REBYTE *bp = Analyze_String_For_Scan(&size, value, max_len);
@@ -220,10 +222,6 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
         // say TO LOGIC! 0 is FALSE would be disingenuous.
         //
         fail (Error_Bad_Make(REB_INTEGER, value));
-    }
-    else if (IS_CHAR(value)) {
-        Init_Integer(out, VAL_CHAR(value)); // always unsigned
-        return;
     }
     else if (IS_TIME(value)) {
         Init_Integer(out, SECS_FROM_NANO(VAL_NANO(value))); // always unsigned

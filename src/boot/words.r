@@ -89,6 +89,7 @@ index
 xy  ; !!! There was an INDEX?/XY, which is an XY reflector for the time being
 ;bytes  ; IMAGE! uses this to give back the underlying BINARY!--in %types.r
 length
+codepoint
 head
 tail
 head?
@@ -216,6 +217,7 @@ lit-path!  ; !!! simulated datatype costraint (a QUOTED! like 'x/y)
 refinement!  ; !!! simulated datatype constraint (a PATH! like `/word`)
 predicate!  ; !!! simulated datatype constraint (a TUPLE! like `.word`)
 blackhole!  ; !!! simulated datatype constraint (the ISSUE! `#`)
+char!  ; !!! simulated datatype constraint (single-element ISSUE!)
 match
 do
 into

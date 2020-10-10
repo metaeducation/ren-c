@@ -2361,7 +2361,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
       case REB_DECIMAL:
       case REB_PERCENT:
       case REB_MONEY:
-      case REB_CHAR:
       case REB_PAIR:
       case REB_TIME:
       case REB_DATE:

@@ -90,31 +90,6 @@
 //
 #define UNI_ENCODED_MAX 4
 
-#if !defined(__cplusplus)
-    #define VAL_CHAR(v) \
-        EXTRA(Character, (v)).codepoint
-#else
-    inline static REBUNI VAL_CHAR(REBCEL(const*) v) {
-        assert(CELL_KIND(v) == REB_CHAR);
-        return EXTRA(Character, v).codepoint;
-    }
-
-    inline static REBUNI & VAL_CHAR(RELVAL *v) {
-        assert(VAL_TYPE(v) == REB_CHAR);
-        return EXTRA(Character, v).codepoint;
-    }
-#endif
-
-inline static REBYTE VAL_CHAR_ENCODED_SIZE(REBCEL(const*) v) {
-    assert(CELL_KIND(v) == REB_CHAR);
-    assert(PAYLOAD(Character, (v)).size_then_encoded[0] <= UNI_ENCODED_MAX);
-    return PAYLOAD(Character, (v)).size_then_encoded[0];
-}
-
-inline static const REBYTE *VAL_CHAR_ENCODED(REBCEL(const*) v) {
-    assert(CELL_KIND(v) == REB_CHAR);
-    return &(PAYLOAD(Character, (v)).size_then_encoded[1]);  // [0] is size
-}
 
 #define Is_Continuation_Byte_If_Utf8(b) \
     (((b) & 0xC0) == 0x80)  // only certain if UTF-8 validity is already known
@@ -179,37 +154,6 @@ inline static void Encode_UTF8_Char(
 }
 
 
-// If you know that a codepoint is good (e.g. it came from an ANY-STRING!)
-// this routine can be used.
-//
-inline static REBVAL *Init_Char_Unchecked(RELVAL *out, REBUNI c) {
-    RESET_CELL(out, REB_CHAR, CELL_MASK_NONE);
-    VAL_CHAR(out) = c;
-
-    REBSIZ size = Encoded_Size_For_Codepoint(c);
-    Encode_UTF8_Char(
-        &PAYLOAD(Character, out).size_then_encoded[1],
-        c,
-        size
-    );
-    PAYLOAD(Character, out).size_then_encoded[0] = size;
-    PAYLOAD(Character, out).size_then_encoded[size + 1] = '\0';
-    return cast(REBVAL*, out);
-}
-
-inline static REBVAL *Init_Char_May_Fail(RELVAL *out, REBUNI uni) {
-    if (uni > MAX_UNI) {
-        DECLARE_LOCAL (temp);
-        fail (Error_Codepoint_Too_High_Raw(Init_Integer(temp, uni)));
-    }
-
-    // !!! Should other values that can't be read be forbidden?  Byte order
-    // mark?  UTF-16 surrogate stuff?  If something is not legitimate in a
-    // UTF-8 codepoint stream, it shouldn't be used.
-
-    return Init_Char_Unchecked(out, uni);
-}
-
 #define SPACE_VALUE \
     Root_Space_Char
 
@@ -226,6 +170,13 @@ enum {
 };
 
 #define UNICODE_CASES 0x2E00  // size of unicode folding table
+
+// !!! Cases present a lot of problems.  Technically speaking the upper and
+// lowercase sizes of a character may not be the same:
+//
+// https://stackoverflow.com/q/14792841/
+//
+// Unicode "case folding" is more complex than this table used by R3-Alpha.
 
 inline static REBUNI UP_CASE(REBUNI c)
   { assert(c != '\0'); return c < UNICODE_CASES ? Upper_Cases[c] : c; }

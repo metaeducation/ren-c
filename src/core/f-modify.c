@@ -304,16 +304,54 @@ REBLEN Modify_String_Or_Binary(
 
     REBYTE src_byte;  // only used by BINARY! (mold buffer is UTF-8 legal)
 
-    if (IS_CHAR(src)) {  // characters store their encoding in their payload
-        if (VAL_CHAR(src) == '\0' and IS_SER_STRING(dst_ser))
-            fail (Error_Illegal_Zero_Byte_Raw());
+    if (IS_ISSUE(src)) {  // characters store their encoding in their payload
+        //
+        // !!! We pass in an UNKNOWN for the limit of how long the input is
+        // because currently /PART speaks in terms of the destination series.
+        // However, if that were changed to /LIMIT then we would want to
+        // be cropping the /PART of the input via passing a parameter here.
+        //
+        src_ptr = VAL_UTF8_LEN_SIZE_AT_LIMIT(
+            &src_len_raw,
+            &src_size_raw,
+            src,
+            UNKNOWN
+        );
 
-        src_ptr = VAL_CHAR_ENCODED(src);
-        src_size_raw = VAL_CHAR_ENCODED_SIZE(src);
+        if (IS_SER_STRING(dst_ser)) {
+            if (src_len_raw == 0)
+                fail (Error_Illegal_Zero_Byte_Raw());  // no '\0' in strings
+        }
+        else {
+            if (src_len_raw == 0)
+                src_len_raw = src_size_raw = 1;  // Use the '\0' null term
+            else
+                src_len_raw = src_size_raw;  // binary counts length in bytes
+        }
+    }
+    else if (
+        ANY_STRING(src)
+        and not IS_TAG(src)  // tags need `<` and `>` to render
+    ){
+        // !!! Branch is very similar to the one for ISSUE! above (merge?)
+ 
+        // If Source == Destination we must prevent possible conflicts in
+        // the memory regions being moved.  Clone the series just to be safe.
+        //
+        // !!! It may be possible to optimize special cases like append.
+        //
+        if (VAL_SERIES(dst) == VAL_SERIES(src))
+            goto form;
 
-        if (IS_SER_STRING(dst_ser))
-            src_len_raw = 1;
-        else
+        src_ptr = VAL_STRING_AT(src);
+
+        // !!! We pass in an UNKNOWN for the limit of how long the input is
+        // because currently /PART speaks in terms of the destination series.
+        // However, if that were changed to /LIMIT then we would want to
+        // be cropping the /PART of the input via passing a parameter here.
+        //
+        src_size_raw = VAL_SIZE_LIMIT_AT(&src_len_raw, src, UNKNOWN);
+        if (not IS_SER_STRING(dst_ser))
             src_len_raw = src_size_raw;
     }
     else if (IS_INTEGER(src)) {
@@ -434,33 +472,6 @@ REBLEN Modify_String_Or_Binary(
                 Form_Value(mo, item);
             goto use_mold_buffer;
         }
-    }
-    else if (
-        ANY_STRING(src)
-        and not IS_TAG(src)  // tags need `<` and `>` to render
-    ){
-        // If Source == Destination we must prevent possible conflicts in
-        // the memory regions being moved.  Clone the series just to be safe.
-        //
-        // !!! It may be possible to optimize special cases like append.
-        //
-        if (VAL_SERIES(dst) == VAL_SERIES(src))
-            goto form;
-
-        // !!! We pass in an UNKNOWN for the limit of how long the input is
-        // because currently /PART speaks in terms of the destination series.
-        // However, if that were changed to /LIMIT then we would want to
-        // be cropping the /PART of the input via passing a parameter here.
-        //
-        src_ptr = VAL_UTF8_LEN_SIZE_AT_LIMIT(
-            &src_len_raw,
-            &src_size_raw,
-            src,
-            UNKNOWN
-        );
-
-        if (not IS_SER_STRING(dst_ser))
-            src_len_raw = src_size_raw;
     }
     else { form:
 

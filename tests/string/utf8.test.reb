@@ -39,7 +39,7 @@
         tcopy: copy t
         pos: find tcopy braille
         change/part pos warning length of braille
-        assert [pos/1 = to char! warning]
+        assert [pos/1 = as issue! warning]
         (length of tcopy) = (tlen + 1 - length of braille)
     )
 

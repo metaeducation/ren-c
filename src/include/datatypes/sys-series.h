@@ -698,11 +698,13 @@ inline static const REBSER *VAL_SERIES(REBCEL(const*) v) {
     inline static REBLEN VAL_INDEX(REBCEL(const*) v) { // C++ reference type
         enum Reb_Kind k = CELL_KIND(v);
         assert(ANY_SERIES_KIND_EVIL_MACRO);
+        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         return VAL_INDEX_UNCHECKED(v);
     }
     inline static REBLEN & VAL_INDEX(RELVAL *v) {
         enum Reb_Kind k = VAL_TYPE(v);
-        assert(ANY_SERIES_KIND_EVIL_MACRO);
+        assert(k == REB_ISSUE or ANY_SERIES_KIND_EVIL_MACRO);
+        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         return VAL_INDEX_UNCHECKED(v);
     }
 #endif

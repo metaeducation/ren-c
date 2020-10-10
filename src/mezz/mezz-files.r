@@ -113,7 +113,7 @@ read-line: function [
 
     all [
         1 = length of data
-        escape = to-char data/1
+        escape = as issue! data/1
     ] then [
         ; Input Aborted--this does not try and HALT the program overall like
         ; Ctrl-C, but gives the caller the chance to process NULL as distinct

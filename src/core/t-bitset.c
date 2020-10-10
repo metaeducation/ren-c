@@ -141,10 +141,6 @@ REBLEN Find_Max_Bit(const RELVAL *val)
 
     switch (VAL_TYPE(val)) {
 
-    case REB_CHAR:
-        maxi = VAL_CHAR(val) + 1;
-        break;
-
     case REB_INTEGER:
         maxi = Int32s(val, 0);
         break;
@@ -153,7 +149,7 @@ REBLEN Find_Max_Bit(const RELVAL *val)
     case REB_FILE:
     case REB_EMAIL:
     case REB_URL:
-//  case REB_ISSUE:
+    case REB_ISSUE:
     case REB_TAG: {
         REBLEN len;
         REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
@@ -167,7 +163,8 @@ REBLEN Find_Max_Bit(const RELVAL *val)
         break; }
 
     case REB_BINARY:
-        maxi = VAL_LEN_AT(val) * 8 - 1;
+        if (VAL_LEN_AT(val) != 0)
+            maxi = VAL_LEN_AT(val) * 8 - 1;
         break;
 
     case REB_BLOCK:
@@ -263,11 +260,6 @@ void Set_Bit(REBSER *bset, REBLEN n, bool set)
 //
 bool Set_Bits(REBSER *bset, const RELVAL *val, bool set)
 {
-    if (IS_CHAR(val)) {
-        Set_Bit(bset, VAL_CHAR(val), set);
-        return true;
-    }
-
     if (IS_INTEGER(val)) {
         REBLEN n = Int32s(val, 0);
         if (n > MAX_BITSET)
@@ -286,7 +278,7 @@ bool Set_Bits(REBSER *bset, const RELVAL *val, bool set)
         return true;
     }
 
-    if (ANY_STRING(val)) {
+    if (IS_ISSUE(val) or ANY_STRING(val)) {
         REBLEN len;
         REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, val);
         for (; len > 0; --len) {
@@ -317,7 +309,11 @@ bool Set_Bits(REBSER *bset, const RELVAL *val, bool set)
     for (; NOT_END(item); item++) {
 
         switch (VAL_TYPE(item)) {
-        case REB_CHAR: {
+        case REB_ISSUE: {
+            if (not IS_CHAR(item)) {  // no special handling for hyphen
+                Set_Bits(bset, SPECIFIC(item), set);
+                break;
+            }
             REBUNI c = VAL_CHAR(item);
             if (
                 NOT_END(item + 1)
@@ -371,7 +367,6 @@ bool Set_Bits(REBSER *bset, const RELVAL *val, bool set)
         case REB_EMAIL:
         case REB_URL:
         case REB_TAG:
-//      case REB_ISSUE:
             Set_Bits(bset, SPECIFIC(item), set);
             break;
 
@@ -446,7 +441,11 @@ bool Check_Bits(const REBSER *bset, const RELVAL *val, bool uncased)
 
         switch (VAL_TYPE(item)) {
 
-        case REB_CHAR: {
+        case REB_ISSUE: {
+            if (not IS_CHAR(item)) {
+                if (Check_Bits(bset, SPECIFIC(item), uncased))
+                    return true;
+            }
             REBUNI c = VAL_CHAR(item);
             if (IS_WORD(item + 1) && VAL_WORD_SYM(item + 1) == SYM_HYPHEN) {
                 item += 2;
