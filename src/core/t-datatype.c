@@ -272,6 +272,10 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
             Init_Nulled(value);
             continue;
         }
+        if (kind == REB_BYTES) {
+            Init_Void(value);
+            continue;
+        }
         if (kind == REB_CUSTOM) {
             //
             // There shouldn't be any literal CUSTOM! datatype instances.

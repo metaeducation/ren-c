@@ -371,9 +371,12 @@ union Reb_Any {  // needed to beat strict aliasing, used in payload
 };
 
 union Reb_Bytes_Extra {
-    REBYTE common[sizeof(uint32_t) * 1];
-    REBYTE varies[sizeof(void*) * 1];
+    REBYTE exactly_4[sizeof(uint32_t) * 1];
+    REBYTE at_least_4[sizeof(void*) * 1];
 };
+
+#define IDX_EXTRA_USED 0  // index into exactly_4 when used for in cell storage
+#define IDX_EXTRA_LEN 1  // index into exactly_4 when used for in cell storage
 
 union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 
@@ -448,8 +451,8 @@ struct Reb_Any_Payload  // generic, for adding payloads after-the-fact
 
 union Reb_Bytes_Payload  // IMPORTANT: Do not cast, use `Pointers` instead
 {
-    REBYTE common[sizeof(uint32_t) * 2];  // same on 32-bit/64-bit platforms
-    REBYTE varies[sizeof(void*) * 2];  // size depends on platform
+    REBYTE exactly_8[sizeof(uint32_t) * 2];  // same on 32-bit/64-bit platforms
+    REBYTE at_least_8[sizeof(void*) * 2];  // size depends on platform
 };
 
 #if defined(DEBUG_TRACK_CELLS)

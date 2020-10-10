@@ -285,8 +285,8 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
 
     REBCEL(const*) s = VAL_UNESCAPED(sval);
     REBCEL(const*) t = VAL_UNESCAPED(tval);
-    enum Reb_Kind s_kind = CELL_KIND(s);
-    enum Reb_Kind t_kind = CELL_KIND(t);
+    enum Reb_Kind s_kind = CELL_TYPE(s);
+    enum Reb_Kind t_kind = CELL_TYPE(t);
 
     if (
         s_kind != t_kind

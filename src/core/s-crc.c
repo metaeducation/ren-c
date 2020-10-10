@@ -183,11 +183,11 @@ REBINT Hash_UTF8(const REBYTE *utf8, REBSIZ size)
 uint32_t Hash_Value(const RELVAL *v)
 {
     REBCEL(const*) cell = VAL_UNESCAPED(v); // hash contained quoted content
-    enum Reb_Kind heart = CELL_HEART(cell);
+    enum Reb_Kind type = CELL_TYPE(cell);
 
     uint32_t hash;
 
-    switch (heart) {
+    switch (type) {
       case REB_NULL:
         panic ("Cannot hash NULL");  // nulls can't be values or keys in MAP!s
 
@@ -238,7 +238,7 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_TIME:
       case REB_DATE:
         hash = cast(REBLEN, VAL_NANO(cell) ^ (VAL_NANO(cell) / SEC_SEC));
-        if (heart == REB_DATE) {
+        if (type == REB_DATE) {
             //
             // !!! This hash used to be done with an illegal-in-C union alias
             // of bit fields.  This shift is done to account for the number
@@ -275,9 +275,31 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:
-      case REB_SYM_PATH:
-        panic (nullptr);  // heart of type should never be ANY_SEQUENCE().
+      case REB_SYM_PATH: {
+        enum Reb_Kind heart = CELL_KIND(cell);  // use correct hash for heart
+        switch (heart) {
+          case REB_BYTES:
+            hash = Hash_Bytes(
+                PAYLOAD(Bytes, cell).at_least_8,
+                EXTRA(Bytes, cell).exactly_4[IDX_EXTRA_USED]
+            );
+            break;
 
+          case REB_WORD:
+          case REB_GET_WORD:
+          case REB_SYM_WORD:
+            goto hash_any_word;
+
+          case REB_BLOCK:
+            goto hash_any_array;
+
+          default:
+            panic (nullptr);
+        }
+        break; }
+ 
+      hash_any_array:
+        //
       case REB_GROUP:
       case REB_SET_GROUP:
       case REB_GET_GROUP:
@@ -310,12 +332,14 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_BITSET:
       case REB_TYPESET:
         //
-        // These types are currently not supported.
+        // "These types are currently not supported."
         //
         // !!! Why not?
         //
-        fail (Error_Invalid_Type(heart));
+        fail (Error_Invalid_Type(type));
 
+      hash_any_word:
+        //
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:
@@ -376,7 +400,7 @@ uint32_t Hash_Value(const RELVAL *v)
         //
         // !!! Review hashing behavior or needs of these types if necessary.
         //
-        fail (Error_Invalid_Type(heart));
+        fail (Error_Invalid_Type(type));
 
       case REB_CUSTOM:
         //
@@ -384,13 +408,13 @@ uint32_t Hash_Value(const RELVAL *v)
         // the answer is ties into the equality operator.  It should be one
         // of the extensibility hooks.
         //
-        fail (Error_Invalid_Type(heart));
+        fail (Error_Invalid_Type(type));
 
       default:
         panic (nullptr); // List should be comprehensive
     }
 
-    return hash ^ crc32_table[heart];
+    return hash ^ crc32_table[type];
 }
 
 

@@ -190,6 +190,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         break; }
 
       case REB_BINARY: {
+        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         REBBIN *s = SER(PAYLOAD(Any, v).first.node);
         if (GET_SERIES_INFO(s, INACCESSIBLE))
             break;
@@ -445,7 +446,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_GET_PATH:
       case REB_SYM_PATH:
          assert(
-            heart == REB_CHAR
+            heart == REB_BYTES
             or heart == REB_WORD
             or heart == REB_GET_WORD
             or heart == REB_SYM_WORD

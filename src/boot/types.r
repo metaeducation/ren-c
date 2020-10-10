@@ -87,6 +87,9 @@ logic       "boolean true or false"
 ; BEGIN TYPES THAT ARE ALWAYS "TRUTHY" - IS_TRUTHY()/IS_CONDITIONALLY_TRUE()
 ; ============================================================================
 
+#bytes      "!!! `BYTES!` isn't a datatype, `heart` type  for optimizations"
+            0           0       0       0       []
+
 decimal     "64bit floating point number (IEEE standard)"
             decimal     -       *       +       [number scalar]
 

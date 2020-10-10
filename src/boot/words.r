@@ -87,7 +87,7 @@ system
 ;
 index
 xy  ; !!! There was an INDEX?/XY, which is an XY reflector for the time being
-bytes  ; IMAGE! uses this to give back the underlying BINARY!
+;bytes  ; IMAGE! uses this to give back the underlying BINARY!--in %types.r
 length
 head
 tail

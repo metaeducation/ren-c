@@ -1148,15 +1148,15 @@ REBINT CT_Sequence(REBCEL(const*) a, REBCEL(const*) b, bool strict)
         return heart_diff > 0 ? 1 : -1;
 
     switch (MIRROR_BYTE(a)) {  // now known to be same as MIRROR_BYTE(b)
-      case REB_CHAR: {  // packed bytes
+      case REB_BYTES: {  // packed bytes
         REBLEN a_len = VAL_SEQUENCE_LEN(a);
         int diff = cast(int, a_len) - VAL_SEQUENCE_LEN(b);
         if (diff != 0)
             return diff > 0 ? 1 : -1;
 
         int cmp = memcmp(
-            &PAYLOAD(Bytes, a).varies,
-            &PAYLOAD(Bytes, b).varies,
+            &PAYLOAD(Bytes, a).at_least_8,
+            &PAYLOAD(Bytes, b).at_least_8,
             a_len  // same as b_len at this point
         );
         if (cmp == 0)

@@ -204,13 +204,13 @@ typedef struct gob_window {  // Maps gob to window
 #define CLR_GOB_FLAG(g,f)       cast(void, GOB_FLAGS(g) &= ~(f))
 
 #define GOB_ALPHA(g) \
-    EXTRA(Bytes, ARR_AT((g), IDX_GOB_SIZE_AND_ALPHA)).common[0]
+    EXTRA(Bytes, ARR_AT((g), IDX_GOB_SIZE_AND_ALPHA)).exactly_4[0]
 
 #define GOB_CONTENT(g)              SPECIFIC(ARR_AT((g), IDX_GOB_CONTENT))
 #define mutable_GOB_CONTENT(g)      ARR_AT((g), IDX_GOB_CONTENT)
 
 #define GOB_TYPE(g) \
-    EXTRA(Bytes, ARR_AT(g, IDX_GOB_TYPE_AND_OLD_SIZE)).common[0]
+    EXTRA(Bytes, ARR_AT(g, IDX_GOB_TYPE_AND_OLD_SIZE)).exactly_4[0]
 
 #define SET_GOB_TYPE(g,t)       (GOB_TYPE(g) = (t))
 

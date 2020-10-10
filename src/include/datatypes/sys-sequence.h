@@ -71,7 +71,7 @@
 //   using is indicated by the MIRROR_BYTE().  This says which actual cell
 //   format is in effect:
 //
-//   - REB_CHAR has raw bytes in the payload (similar to an R3-Alpha TUPLE!)
+//   - REB_BYTES has raw bytes in the payload
 //   - REB_BLOCK is when the path or tuple are stored as an ordinary array
 //   - REB_WORD is used for the `/` and '.' cases
 //   - REB_GET_WORD is used for the `/a` and `.a` cases
@@ -214,22 +214,21 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
     RELVAL *out,
     enum Reb_Kind kind,
     const REBYTE *data,
-    REBLEN len
+    REBSIZ size
 ){
-    if (len > sizeof(EXTRA(Bytes, out).varies)) {  // use plain array for now
-        REBARR *a = Make_Array_Core(len, NODE_FLAG_MANAGED);
-        for (; len > 0; --len, ++data)
+    if (size > sizeof(PAYLOAD(Bytes, out).at_least_8)) {  // too big for cell
+        REBARR *a = Make_Array_Core(size, NODE_FLAG_MANAGED);
+        for (; size > 0; --size, ++data)
             Init_Integer(Alloc_Tail_Array(a), *data);
 
-        Init_Block(out, Freeze_Array_Shallow(a));
+        Init_Block(out, Freeze_Array_Shallow(a));  // !!! TBD: compact BINARY!
     }
     else {
-        RESET_CELL(out, REB_CHAR, CELL_MASK_NONE);
-        REBLEN n = len;
-        REBYTE *bp = PAYLOAD(Bytes, out).varies;
-        for (; n > 0; --n, ++data, ++bp)
-            *bp = *data;
-        EXTRA(Any, out).u = len;
+        RESET_CELL(out, REB_BYTES, CELL_MASK_NONE);  // no FIRST_IS_NODE flag
+        EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = size;
+        REBYTE *dest = PAYLOAD(Bytes, out).at_least_8;
+        for (; size > 0; --size, ++data, ++dest)
+            *dest = *data;
     }
 
     mutable_KIND_BYTE(out) = kind;  // "veneer" over "heart" type
@@ -249,7 +248,7 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
     Init_Unreadable_Void(out);  // not used for "blaming" a non-integer
   #endif
 
-    if (len > sizeof(PAYLOAD(Bytes, out)).varies)
+    if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8)
         return nullptr;  // no optimization yet if won't fit in payload bytes
 
     if (len < 2) {
@@ -257,9 +256,9 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
         return nullptr;
     }
 
-    RESET_CELL(out, kind, CELL_MASK_NONE);
+    RESET_CELL(out, REB_BYTES, CELL_MASK_NONE);  // no FIRST_IS_NODE flag!
 
-    REBYTE *bp = PAYLOAD(Bytes, out).varies;
+    REBYTE *bp = PAYLOAD(Bytes, out).at_least_8;
 
     const RELVAL *item = head;
     REBLEN n;
@@ -272,10 +271,9 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
         *bp = cast(REBYTE, i64);
     }
 
-    EXTRA(Any, out).u = len;
+    EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = len;
 
-    mutable_MIRROR_BYTE(out) = REB_CHAR;
-
+    mutable_KIND_BYTE(out) = kind;
     return SPECIFIC(out);
 }
 
@@ -451,8 +449,9 @@ inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));
 
     switch (MIRROR_BYTE(sequence)) {
-      case REB_CHAR:  // packed sequence of bytes directly in cell
-        return EXTRA(Any, sequence).u;
+      case REB_BYTES:  // packed sequence of bytes directly in cell
+        assert(NOT_CELL_FLAG(sequence, FIRST_IS_NODE));  // TBD: series form
+        return EXTRA(Bytes, sequence).exactly_4[IDX_EXTRA_USED];
 
       case REB_WORD:  // simulated [_ _] sequence (`/`, `.`)
       case REB_GET_WORD:  // compressed [_ word] sequence (`.foo`, `/foo`)
@@ -495,9 +494,9 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
 
     enum Reb_Kind heart = CELL_HEART(sequence);
     switch (heart) {
-      case REB_CHAR:
-        assert(n < EXTRA(Any, sequence).u);
-        return Init_Integer(store, PAYLOAD(Bytes, sequence).varies[n]);
+      case REB_BYTES:
+        assert(n < EXTRA(Bytes, sequence).exactly_4[IDX_EXTRA_USED]);
+        return Init_Integer(store, PAYLOAD(Bytes, sequence).at_least_8[n]);
 
       case REB_WORD: {
         assert(n < 2);
@@ -550,7 +549,7 @@ inline static REBSPC *VAL_SEQUENCE_SPECIFIER(const RELVAL *sequence)
     assert(ANY_SEQUENCE_KIND(CELL_TYPE(sequence)));  // TYPE, not HEART
 
     switch (MIRROR_BYTE(sequence)) {
-      case REB_CHAR:
+      case REB_BYTES:
       case REB_WORD:
       case REB_GET_WORD:
       case REB_SYM_WORD:
