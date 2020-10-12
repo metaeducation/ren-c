@@ -188,8 +188,7 @@ rebs: collect [
         ] else [
             ensure issue! t/name
             assert [t/class = 0]  ; e.g. REB_NULL
-            t/name: mold t/name  ; TO TEXT! of ISSUE! includes # in bootstrap
-            take t/name  ; ...so mold and remove the #
+            t/name: as text! t/name  ; TO TEXT! of ISSUE! has # in bootstrap
         ]
 
         if n <> 0 [
@@ -351,7 +350,8 @@ for-each-record t type-table [
 nontypes: collect [
     for-each-record t type-table [
         if issue? t/name [
-            keep cscape/with {FLAGIT_KIND(REB_${TO WORD! T/NAME})} 't
+            nontype: mold t/name
+            keep cscape/with {FLAGIT_KIND(REB_${AS TEXT! T/NAME})} 't
         ]
     ]
 ]

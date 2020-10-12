@@ -49,13 +49,20 @@ REBOL [
 
 ; REB_0_END is an array terminator, and not a "type".  It has the 0 as part
 ; of the name to indicate its zero-ness and C falsey-ness is intrinsic to the
-; design--huge parts of the system would not work if it were not zero.
+; design--huge parts of the system would not work if it were not zero.  Plus,
+; making it a leading digit means it's an invalid word, catching if anything
+; leaks it to being an actual word (it can't have a symbol, due to SYM_0
+; having other purposes in the system).
 
 #0-end      "!!! `END!` isn't a datatype, this isn't exposed to the user"
             0           0       0       0       []
 
-; REB_NULLED takes value 1, but it being 1 is less intrinsic.  It is also not
-; a "type"...but it is falsey, hence it has to be before LOGIC! in the table
+; REB_NULL takes value 1, but it being 1 is less intrinsic.  It is also not
+; a "type"...but it is falsey, hence it has to be before LOGIC! in the table.
+; In the API, a cell isn't used but it is transformed into the language NULL.
+; To help distinguish it from C's NULL in places where it is undecorated,
+; functions are given names like `Init_Nulled` or `IS_NULLED()`, but the
+; type itself is simply called REB_NULL...which is distinct enough.
 
 #null       "!!! `NULL!` isn't a datatype, `null` can't be stored in blocks"
             0           0       0       +       []
