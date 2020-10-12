@@ -65,22 +65,22 @@ const REBYTE *Analyze_String_For_Scan(
     const REBVAL *any_string,
     REBLEN max_len  // maximum length in *codepoints*
 ){
-    REBCHR(const*) up = VAL_STRING_AT(any_string);
-    REBLEN index = VAL_INDEX(any_string);
-    REBLEN len = VAL_LEN_AT(any_string);
+    REBLEN len;
+    REBCHR(const*) up = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, any_string);
     if (len == 0)
         fail (Error_Past_End_Raw());
 
-    REBUNI c;  // we know there is at least one character
-    up = NEXT_CHR(&c, up);
-
     // Skip leading whitespace
     //
-    for (; index < len; ++index, --len) {
-        if (not IS_SPACE(c))
-            break;
-        up = NEXT_CHR(&c, up);
-    }
+    REBUNI c;
+    REBUNI i;
+    for (i = 0; IS_SPACE(c = CHR_CODE(up)) and (i < len); ++i, --len)
+        up = NEXT_STR(up);
+
+    if (len == 0)
+        fail (Error_Past_End_Raw());
+
+    REBCHR(const*) at_index = up;
 
     // Skip up to max_len non-space characters.
     //
@@ -97,11 +97,11 @@ const REBYTE *Analyze_String_For_Scan(
             fail (Error_Too_Long_Raw());
 
         --len;
-        if (len == 0)
-            break;
+        up = NEXT_STR(up);
+    } while (len > 0 and not IS_SPACE(c = CHR_CODE(up)));
 
-        up = NEXT_CHR(&c, up);
-    } while (not IS_SPACE(c));
+    if (opt_size_out)  // give back byte size before trailing spaces
+        *opt_size_out = up - at_index;
 
     // Rest better be just spaces
     //
@@ -111,14 +111,7 @@ const REBYTE *Analyze_String_For_Scan(
         up = NEXT_CHR(&c, up);
     }
 
-    if (num_chars == 0)
-        fail (Error_Past_End_Raw());
-
-    DECLARE_LOCAL (reindexed);
-    Move_Value(reindexed, any_string);
-    VAL_INDEX(reindexed) = index;
-
-    return VAL_UTF8_SIZE_AT(opt_size_out, reindexed);
+    return at_index;
 }
 
 

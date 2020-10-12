@@ -526,7 +526,7 @@ REBNATIVE(enline)
     REBLEN idx = VAL_INDEX(val);
 
     REBLEN len;
-    REBSIZ size = VAL_SIZE_LIMIT_AT(&len, val, UNKNOWN);
+    REBSIZ size = VAL_SIZE_LIMIT_AT(&len, val, UNLIMITED);
 
     REBLEN delta = 0;
 
@@ -788,13 +788,13 @@ REBNATIVE(to_hex)
     if (REF(size))
         len = cast(REBLEN, VAL_INT64(ARG(size)));
     else
-        len = UNKNOWN;
+        len = UNLIMITED;
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
     if (IS_INTEGER(arg)) {
-        if (len == UNKNOWN || len > MAX_HEX_LEN)
+        if (len == UNLIMITED || len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(mo, VAL_INT64(arg), len);
@@ -802,7 +802,7 @@ REBNATIVE(to_hex)
     else if (IS_TUPLE(arg)) {
         REBLEN n;
         if (
-            len == UNKNOWN
+            len == UNLIMITED
             || len > 2 * MAX_TUPLE
             || len > cast(REBLEN, 2 * VAL_SEQUENCE_LEN(arg))
         ){

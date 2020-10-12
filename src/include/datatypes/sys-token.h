@@ -219,7 +219,7 @@ inline static const REBYTE *VAL_BYTES_LIMIT_AT(
     const RELVAL *v,
     REBLEN limit
 ){
-    if (limit == UNKNOWN || limit > VAL_LEN_AT(v))
+    if (limit == UNLIMITED || limit > VAL_LEN_AT(v))
         limit = VAL_LEN_AT(v);
 
     if (IS_BINARY(v)) {
@@ -241,7 +241,7 @@ inline static const REBYTE *VAL_BYTES_LIMIT_AT(
 }
 
 #define VAL_BYTES_AT(size_out,v) \
-    VAL_BYTES_LIMIT_AT((size_out), (v), UNKNOWN)
+    VAL_BYTES_LIMIT_AT((size_out), (v), UNLIMITED)
 
 
 // Analogous to VAL_BYTES_AT, some routines were willing to accept either an
@@ -311,7 +311,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         utf8 = STR_HEAD(spelling);
 
         if (size_out or length_out) {
-            if (limit == UNKNOWN and not length_out)
+            if (limit == UNLIMITED and not length_out)
                 *size_out = STR_SIZE(spelling);
             else {
                 // WORD!s don't cache their codepoint length, must calculate
@@ -334,10 +334,10 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
 }
 
 #define VAL_UTF8_LEN_SIZE_AT(length_out,size_out,v) \
-    VAL_UTF8_LEN_SIZE_AT_LIMIT((length_out), (size_out), (v), UNKNOWN)
+    VAL_UTF8_LEN_SIZE_AT_LIMIT((length_out), (size_out), (v), UNLIMITED)
 
 #define VAL_UTF8_SIZE_AT(size_out,v) \
-    VAL_UTF8_LEN_SIZE_AT_LIMIT(nullptr, (size_out), (v), UNKNOWN)
+    VAL_UTF8_LEN_SIZE_AT_LIMIT(nullptr, (size_out), (v), UNLIMITED)
 
 #define VAL_UTF8_AT(v) \
-    VAL_UTF8_LEN_SIZE_AT_LIMIT(nullptr, nullptr, (v), UNKNOWN)
+    VAL_UTF8_LEN_SIZE_AT_LIMIT(nullptr, nullptr, (v), UNLIMITED)

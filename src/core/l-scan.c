@@ -1672,7 +1672,8 @@ void Init_Scan_Level(
 ){
     out->ss = ss;
 
-    assert(utf8[limit] == '\0');  // if limit used, make sure it was the end
+    if (limit != UNLIMITED)
+        assert(utf8[limit] == '\0');  // !!! for now, only limit allowed
     UNUSED(limit);
 
     ss->feed = nullptr;  // signal Locate_Token this isn't a variadic scan
@@ -3033,7 +3034,12 @@ const REBYTE *Scan_Any_Word(
     SCAN_STATE ss;
     const REBSTR *file = Canon(SYM___ANONYMOUS__);
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, size);
+
+    // !!! We use UNLIMITED here instead of `size` because the R3-Alpha
+    // scanner did not implement scan limits; it always expected the input
+    // to end at '\0'.  We crop the word based on the size after the scan.
+    //
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, UNLIMITED);
 
     DECLARE_MOLD (mo);
 
@@ -3042,7 +3048,7 @@ const REBYTE *Scan_Any_Word(
         return nullptr;
 
     assert(ss.end >= ss.begin);
-    if (size != cast(REBSIZ, ss.end - ss.begin))
+    if (size > cast(REBSIZ, ss.end - ss.begin))
         return nullptr;  // e.g. `as word! "ab cd"` just sees "ab"
 
     Init_Any_Word(out, kind, Intern_UTF8_Managed(utf8, size));

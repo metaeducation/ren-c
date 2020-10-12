@@ -306,7 +306,7 @@ REBLEN Modify_String_Or_Binary(
 
     if (IS_ISSUE(src)) {  // characters store their encoding in their payload
         //
-        // !!! We pass in an UNKNOWN for the limit of how long the input is
+        // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently /PART speaks in terms of the destination series.
         // However, if that were changed to /LIMIT then we would want to
         // be cropping the /PART of the input via passing a parameter here.
@@ -315,7 +315,7 @@ REBLEN Modify_String_Or_Binary(
             &src_len_raw,
             &src_size_raw,
             src,
-            UNKNOWN
+            UNLIMITED
         );
 
         if (IS_SER_STRING(dst_ser)) {
@@ -345,12 +345,12 @@ REBLEN Modify_String_Or_Binary(
 
         src_ptr = VAL_STRING_AT(src);
 
-        // !!! We pass in an UNKNOWN for the limit of how long the input is
+        // !!! We pass in UNLIMITED for the limit of how long the input is
         // because currently /PART speaks in terms of the destination series.
         // However, if that were changed to /LIMIT then we would want to
         // be cropping the /PART of the input via passing a parameter here.
         //
-        src_size_raw = VAL_SIZE_LIMIT_AT(&src_len_raw, src, UNKNOWN);
+        src_size_raw = VAL_SIZE_LIMIT_AT(&src_len_raw, src, UNLIMITED);
         if (not IS_SER_STRING(dst_ser))
             src_len_raw = src_size_raw;
     }
@@ -560,7 +560,7 @@ REBLEN Modify_String_Or_Binary(
                 dst_len_at = STR_INDEX_AT(STR(dst_ser), dst_size_at);
             }
             else
-                dst_size_at = VAL_SIZE_LIMIT_AT(&dst_len_at, dst, UNKNOWN);
+                dst_size_at = VAL_SIZE_LIMIT_AT(&dst_len_at, dst, UNLIMITED);
         }
         else {
             dst_len_at = VAL_LEN_AT(dst);

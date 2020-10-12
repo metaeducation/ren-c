@@ -1284,7 +1284,7 @@ REBNATIVE(as)
 
         if (ANY_STRING(v)) {
             REBLEN len;
-            REBSIZ utf8_size = VAL_SIZE_LIMIT_AT(&len, v, UNKNOWN);
+            REBSIZ utf8_size = VAL_SIZE_LIMIT_AT(&len, v, UNLIMITED);
 
             if (utf8_size + 1 <= sizeof(PAYLOAD(Bytes, v).at_least_8)) {
                 //

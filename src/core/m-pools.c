@@ -1445,7 +1445,7 @@ void Dump_All_Series_Of_Width(REBSIZ wide)
 //
 //  Dump_Series_In_Pool: C
 //
-// Dump all series in pool @pool_id, UNKNOWN (-1) for all pools
+// Dump all series in pool @pool_id, UNLIMITED (-1) for all pools
 //
 void Dump_Series_In_Pool(REBLEN pool_id)
 {
@@ -1461,7 +1461,7 @@ void Dump_Series_In_Pool(REBLEN pool_id)
                 continue; // pairing
 
             if (
-                pool_id == UNKNOWN
+                pool_id == UNLIMITED
                 or (
                     IS_SER_DYNAMIC(s)
                     and pool_id == FIND_POOL(SER_TOTAL(s))

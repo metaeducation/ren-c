@@ -86,7 +86,7 @@ typedef uintptr_t REBTCK; // type the debug build uses for evaluator "ticks"
 // https://github.com/LambdaSchool/CS-Wiki/wiki/Casting-Signed-to-Unsigned-in-C
 //
 #define NOT_FOUND ((REBLEN)-1)
-#define UNKNOWN ((REBLEN)-1)
+#define UNLIMITED ((REBLEN)-1)
 
 
 // !!! Review this choice from R3-Alpha:
