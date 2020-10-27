@@ -20,7 +20,7 @@ Carl Sassenrath, Rebol Technologies
 
 _REBOL is a trademark of REBOL Technologies_
 
-Rebol 3 Alpha was [released to the open source community][1] under an Apache 2
+Rebol 3 Alpha was [released to the open-source community][1] under an Apache 2
 license on 12-Dec-2012:
 
 [1]: http://www.rebol.com/cgi-bin/blog.r?view=0519#comments
@@ -45,7 +45,7 @@ one-line summary and a link to a landing webpage of their choice:
 **Brian Dickens**
 - [@hostilefork](https://github.com/hostilefork) on GitHub
 - http://hostilefork.com
-- "Ren-C" branch founder, core evaluator rethinking and design...
+- "Ren-C" branch founder, core evaluator rethinking, and design...
 
 **Brett Handley**
 - [@codebybrett](https://github.com/codebybrett) on GitHub
@@ -78,7 +78,7 @@ one-line summary and a link to a landing webpage of their choice:
 
 **Shixin Zeng**
 * [@zsx](https://github.com/zsx) on GitHub
-- FFI library, CALL implementation, unix signals, native math, GUI support...
+- FFI library, CALL implementation, UNIX signals, native math, GUI support...
 
 
 Corporate Support
