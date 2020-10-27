@@ -960,7 +960,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // cleaner way of saying the same thing.  So instead, it's given the same
     // meaning in the evaluator as plain GROUP!...which seems wasteful on the
     // surface, but it means dialects can be free to use it to make a
-    // distinction.  Branches use it to mean "do not voidify the result".
+    // distinction.  For instance, it's used to escape soft quoted slots.
 
       case REB_GET_GROUP:
         goto eval_group;
@@ -1138,9 +1138,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                         "set f/(output) void",
                     "]",
                 "]",
-                "either first", f->out, "[",
+                "either first", f->out, "@[",
                     "set first", f->out, "do f",
-                "] [do f]",
+                "] @[do f]",
             "]",
         rebEND);
 

@@ -40,7 +40,7 @@
 // !!! Find a better place for this!
 //
 inline static bool IS_QUOTABLY_SOFT(const RELVAL *v) {
-    return IS_GROUP(v) or IS_GET_WORD(v) or IS_GET_PATH(v);
+    return IS_GET_GROUP(v) or IS_GET_WORD(v) or IS_GET_PATH(v);
 }
 
 

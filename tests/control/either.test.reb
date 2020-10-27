@@ -10,8 +10,11 @@
 (1 = either true [1] [2])
 (2 = either false [1] [2])
 
-(null? either true [null] [1])
-(null? either false [1] [null])
+(void? either true [null] [1])
+(void? either false [1] [null])
+
+(null? either true @[null] [1])
+(null? either false [1] @[null])
 
 (error? either true [trap [1 / 0]] [])
 (error? either false [] [trap [1 / 0]])

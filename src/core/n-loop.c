@@ -1388,6 +1388,9 @@ REBNATIVE(remove_each)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
+    if (IS_BLOCK(ARG(body)))
+        Symify(ARG(body));  // request that body "branch" not be voidified
+
     struct Remove_Each_State res;
     res.data = ARG(data);
 
@@ -1518,7 +1521,9 @@ REBNATIVE(map_each)
     INCLUDE_PARAMS_OF_MAP_EACH;
     UNUSED(PAR(vars));
     UNUSED(PAR(data));
-    UNUSED(PAR(body));
+
+    if (IS_BLOCK(ARG(body)))
+        Symify(ARG(body));  // request not to voidify body execution as branch 
 
     return Loop_Each(
         frame_,
@@ -1654,6 +1659,9 @@ REBNATIVE(until)
     if (Cache_Predicate_Throws(D_OUT, predicate))
         return R_THROWN;
 
+    if (IS_BLOCK(ARG(body)))
+        Symify(ARG(body));  // request no branch voidification
+
     do {
         if (Do_Branch_Throws(D_OUT, nullptr, ARG(body))) {
             bool broke;
@@ -1700,6 +1708,9 @@ REBNATIVE(while)
     INCLUDE_PARAMS_OF_WHILE;
 
     Init_Blank(D_OUT); // result if body never runs
+
+    if (IS_BLOCK(ARG(condition)))
+        Symify(ARG(condition));  // request no branch voidification
 
     do {
         if (Do_Branch_Throws(D_SPARE, nullptr, ARG(condition))) {

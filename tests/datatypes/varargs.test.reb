@@ -88,7 +88,7 @@
         a: void
         (trap [a soft])/id = 'need-non-void
     )
-    ([7] = do [(1 + 2) (3 + 4) soft])
+    ([7] = do [:(1 + 2) :(3 + 4) soft])
 ][
     (
         hard: enfixed function [:v [any-value! <variadic>]] [
@@ -199,7 +199,7 @@
             ]
         ]
 
-        either-match (take args) (take args-normal) [null]
+        either-match :(take args) (take args-normal) @null
     ]
     true)
 

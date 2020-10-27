@@ -289,7 +289,7 @@
     (lit 'a == litf 'a)
     (a: 10 | 10 == litf :a)
     (lit a: == litf a:)
-    (30 == litf (10 + 20))
+    (30 == litf :(10 + 20))
     (
         o: context [f: 10]
         10 == litf :o/f
@@ -328,7 +328,7 @@
 ]
 ; inline function test
 [#1659 (
-    f: does (reduce [does [true]])
+    f: does :(reduce [does [true]])
     f
 )]
 

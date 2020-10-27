@@ -54,7 +54,7 @@
 //          [<opt> any-value!]
 //      condition [<opt> any-value!]
 //      'branch "If arity-1 ACTION!, receives the evaluated condition"
-//          [block! action! quoted! sym-word! sym-path! sym-group! blank!]
+//          [any-branch!]
 //  ]
 //
 REBNATIVE(if)
@@ -67,7 +67,7 @@ REBNATIVE(if)
     if (Do_Branch_With_Throws(D_OUT, D_SPARE, ARG(branch), ARG(condition)))
         return R_THROWN;
 
-    return Voidify_If_Nulled(D_OUT); // null means no branch (cues ELSE, etc.)
+    return D_OUT;  // Note: NULL means no branch (cues ELSE, etc.)
 }
 
 
@@ -80,9 +80,9 @@ REBNATIVE(if)
 //          "Returns null if either branch returns null (unlike IF...ELSE)"
 //      condition [<opt> any-value!]
 //      'true-branch "If arity-1 ACTION!, receives the evaluated condition"
-//          [block! action! quoted! sym-word! sym-path! sym-group! blank!]
+//          [any-branch!]
 //      'false-branch
-//          [block! action! quoted! sym-word! sym-path! sym-group! blank!]
+//          [any-branch!]
 //  ]
 //
 REBNATIVE(either)
@@ -406,7 +406,7 @@ bool Match_Core_Throws(
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is null"
 //          [<opt> any-value!]
-//      'branch [block! action! quoted! blank!]
+//      'branch [any-branch!]
 //  ]
 //
 REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
@@ -419,7 +419,7 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
     if (Do_Branch_With_Throws(D_OUT, D_SPARE, ARG(branch), NULLED_CELL))
         return R_THROWN;
 
-    return Voidify_If_Nulled(D_OUT);
+    return D_OUT;
 }
 
 
@@ -433,7 +433,7 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
 //      optional "<deferred argument> Run branch if this is not null"
 //          [<opt> any-value!]
 //      'branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [block! action! quoted! blank!]
+//          [any-branch!]
 //  ]
 //
 REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
@@ -446,7 +446,7 @@ REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
     if (Do_Branch_With_Throws(D_OUT, D_SPARE, ARG(branch), ARG(optional)))
         return R_THROWN;
 
-    return Voidify_If_Nulled(D_OUT);  // avoid mistakes w/`then [] else []`
+    return D_OUT;  // nominally voidifies, avoids mistakes w/`then [] else []`
 }
 
 
@@ -460,7 +460,7 @@ REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
 //      optional "<deferred argument> Run branch if this is not null"
 //          [<opt> any-value!]
 //      'branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [blank! block! action! quoted!]
+//          [any-branch!]
 //  ]
 //
 REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
@@ -498,7 +498,7 @@ REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
 //          ]
 //       value [<opt> any-value!]
 //      'branch "Branch to run on non-matches, passed VALUE if ACTION!"
-//          [block! action! quoted!]
+//          [any-branch!]
 //      /not "Invert the result of the the test (used by NON)"
 //  ]
 //
@@ -877,6 +877,7 @@ REBNATIVE(none)
 //      cases "Conditions followed by branches"
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
+//      <local> branch last  ; temp GC-safe holding locations
 //  ]
 //
 REBNATIVE(case)
@@ -889,8 +890,7 @@ REBNATIVE(case)
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
 
-    REBVAL *last_branch_result = ARG(cases);  // can reuse--frame holds cases
-    Init_Nulled(last_branch_result);  // default return result
+    Init_Nulled(ARG(last));  // default return result
 
     Push_Frame(nullptr, f);
 
@@ -934,80 +934,51 @@ REBNATIVE(case)
             matched = IS_TRUTHY(temp);
         }
 
+        if (IS_GET_GROUP(f_value)) {
+            //
+            // IF evaluates branches that are GET-GROUP! even if it does
+            // not run them.  This implies CASE should too.
+            //
+            // Note: Can't evaluate directly into ARG(branch)...frame cell.
+            //
+            if (Eval_Value_Throws(D_SPARE, f_value, f_specifier)) {
+                Move_Value(D_OUT, D_SPARE);
+                goto threw;
+            }
+            Move_Value(ARG(branch), D_SPARE);
+        }
+        else
+            Derelativize(ARG(branch), f_value, f_specifier);
+
+        Fetch_Next_Forget_Lookback(f);  // branch now in ARG(branch), so skip
+
         if (not matched) {
-            if (
-                IS_BLOCK(f_value)
-                or IS_ACTION(f_value)
-                or IS_QUOTED(f_value)
-            ){
-                // Accepted branches for IF/etc. that are skipped on no match
-            }
-            else if (IS_GROUP(f_value)) {
+            if (not (FLAGIT_KIND(VAL_TYPE(ARG(branch))) & TS_BRANCH)) {
                 //
-                // IF evaluates branches that are GROUP! even if it does not
-                // run them.  This implies CASE should too.
-                //
-                if (Eval_Value_Throws(D_SPARE, f_value, f_specifier)) {
-                    Move_Value(D_OUT, D_SPARE);
-                    goto threw;
-                }
-            }
-            else {
-                //
-                // Maintain symmetry with IF's on non-taken branches:
+                // Maintain symmetry with IF on non-taken branches:
                 //
                 // >> if false <some-tag>
                 // ** Script Error: if does not allow tag! for its branch...
                 //
-                fail (Error_Bad_Value_Core(f_value, f_specifier));
+                fail (Error_Bad_Value_Raw(ARG(branch)));
             }
 
-            Fetch_Next_Forget_Lookback(f); // skip next, whatever it is
             continue;
         }
 
-        // Can't use Do_Branch(), *v is unevaluated RELVAL...simulate it
-
-        if (IS_GROUP(f_value)) {
-            if (Do_Any_Array_At_Throws(D_SPARE, f_value, f_specifier)) {
-                Move_Value(D_OUT, D_SPARE);
-                goto threw;
-            }
-            f_value = D_SPARE;
-        }
-
-        if (IS_QUOTED(f_value)) {
-            Unquotify(Derelativize(D_OUT, f_value, f_specifier), 1);
-        }
-        else if (IS_BLOCK(f_value)) {
-            if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
-                goto threw;
-        }
-        else if (IS_ACTION(f_value)) {
-            DECLARE_LOCAL (temp);
-            if (Do_Branch_With_Throws(
-                temp,
-                nullptr,  // no temporary cell needed
-                SPECIFIC(f_value),
-                D_OUT
-            )){
-                Move_Value(D_OUT, temp);
-                goto threw;
-            }
+        DECLARE_LOCAL (temp);
+        if (Do_Branch_With_Throws(temp, D_SPARE, ARG(branch), D_OUT)) {
             Move_Value(D_OUT, temp);
+            goto threw;
         }
-        else
-            fail (Error_Bad_Value_Core(f_value, f_specifier));
-
-        Voidify_If_Nulled(D_OUT); // null is reserved for no branch taken
+        Move_Value(D_OUT, temp);
 
         if (not REF(all)) {
             Drop_Frame(f);
             return D_OUT;
         }
 
-        Move_Value(last_branch_result, D_OUT);
-        Fetch_Next_Forget_Lookback(f);  // keep matching if /ALL
+        Move_Value(ARG(last), D_OUT);
     }
 
   reached_end:;
@@ -1021,8 +992,8 @@ REBNATIVE(case)
     if (not IS_NULLED(D_OUT)) // prioritize fallout result
         return D_OUT;
 
-    assert(REF(all) or IS_NULLED(last_branch_result));
-    RETURN (last_branch_result);  // else last branch "falls out", may be null
+    assert(REF(all) or IS_NULLED(ARG(last)));
+    RETURN (ARG(last));  // else last branch "falls out", may be null
 
   threw:;
 
@@ -1045,6 +1016,7 @@ REBNATIVE(case)
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
+//      <local> last  ; GC-safe storage loation
 //  ]
 //
 REBNATIVE(switch)
@@ -1058,8 +1030,8 @@ REBNATIVE(switch)
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
 
     Push_Frame(nullptr, f);
-    REBVAL *last_branch_result = ARG(cases); // frame holds cases, can reuse
-    Init_Nulled(last_branch_result);
+
+    Init_Nulled(ARG(last));
 
     REBVAL *left = ARG(value);
     if (IS_BLOCK(left) and GET_CELL_FLAG(left, UNEVALUATED))
@@ -1094,8 +1066,8 @@ REBNATIVE(switch)
 
             Drop_Frame(f);  // nothing left, so drop frame and return
 
-            assert(REF(all) or IS_NULLED(last_branch_result));
-            RETURN (last_branch_result);
+            assert(REF(all) or IS_NULLED(ARG(last)));
+            RETURN (ARG(last));
         }
 
         if (IS_NULLED(predicate)) {
@@ -1184,7 +1156,7 @@ REBNATIVE(switch)
             return D_OUT;
         }
 
-        Move_Value(last_branch_result, D_OUT);  // save in case no fallout
+        Move_Value(ARG(last), D_OUT);  // save in case no fallout
         Init_Nulled(D_OUT);  // switch back to using for fallout
         Fetch_Next_Forget_Lookback(f);  // keep matching if /ALL
     }
@@ -1196,8 +1168,8 @@ REBNATIVE(switch)
     if (not IS_NULLED(D_OUT)) // prioritize fallout result
         return D_OUT;
 
-    assert(REF(all) or IS_NULLED(last_branch_result));
-    RETURN (last_branch_result);  // else last branch "falls out", may be null
+    assert(REF(all) or IS_NULLED(ARG(last)));
+    RETURN (ARG(last));  // else last branch "falls out", may be null
 
   threw:;
 
@@ -1216,7 +1188,7 @@ REBNATIVE(switch)
 //      :target "Word or path which might be set--no target always branches"
 //          [<skip> set-word! set-path!]
 //      'branch "If target not set already, this is evaluated and stored there"
-//          [block! action! quoted!]
+//          [any-branch!]
 //      :look "Variadic lookahead used to make sure at end if no target"
 //          [<variadic>]
 //      /only "Consider target being BLANK! to be a value not to overwrite"

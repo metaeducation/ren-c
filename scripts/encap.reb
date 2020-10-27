@@ -1332,11 +1332,11 @@ get-encap: function [
 ][
     trap [
         read/part rebol-path 1
-    ] then (func [e <with> return] [
+    ] then e -> [
         print [e]
         print ["Can't check for embedded code in Rebol path:" rebol-path]
         return blank
-    ])
+    ]
 
     compressed-data: any [
         elf-format/get-embedding rebol-path

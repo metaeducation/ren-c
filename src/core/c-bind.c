@@ -638,7 +638,7 @@ void Virtual_Bind_Deep_To_New_Context(
     REBCTX **context_out,
     const REBVAL *spec
 ) {
-    assert(IS_BLOCK(body_in_out));
+    assert(IS_BLOCK(body_in_out) or IS_SYM_BLOCK(body_in_out));
 
     REBLEN num_vars = IS_BLOCK(spec) ? VAL_LEN_AT(spec) : 1;
     if (num_vars == 0)
@@ -689,8 +689,9 @@ void Virtual_Bind_Deep_To_New_Context(
         // go BACK on it before the index.
         //
         bool in_const = GET_CELL_FLAG(body_in_out, CONST);
-        Init_Block(
+        Init_Any_Array(
             body_in_out,
+            VAL_TYPE(body_in_out),
             Copy_Array_Core_Managed(
                 VAL_ARRAY(body_in_out),
                 VAL_INDEX(body_in_out), // at

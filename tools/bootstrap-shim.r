@@ -49,7 +49,8 @@ trap [
     ; Bypass the voidification for the refinement sake.
     ;
     opt: func [v [<opt> any-value!]] [
-        either blank? :v [null] [:v]
+        if blank? :v [return null]
+        return :v
     ]
 
     QUIT

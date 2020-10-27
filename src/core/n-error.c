@@ -113,6 +113,9 @@ REBNATIVE(entrap)
 {
     INCLUDE_PARAMS_OF_ENTRAP;
 
+    if (IS_BLOCK(ARG(code)))
+        Symify(ARG(code));  // request that branch is not voidified
+
     REB_R error = rebRescue(cast(REBDNG*, &Entrap_Dangerous), frame_);
     UNUSED(ARG(code)); // gets used by the above call, via the frame_ pointer
 

@@ -55,6 +55,7 @@ const struct {
     {SYM_ANY_STRING_X, TS_STRING},
     {SYM_ANY_CONTEXT_X, TS_CONTEXT},
     {SYM_ANY_ARRAY_X, TS_ARRAY},
+    {SYM_ANY_BRANCH_X, TS_BRANCH},
 
     {SYM_0, 0}
 };

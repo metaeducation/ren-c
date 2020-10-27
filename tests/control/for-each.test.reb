@@ -109,7 +109,7 @@
     did all [
         error? trap [for-each [x x] [1 2 3 4] [sum: sum + x]]
         error? trap [
-            for-each (compose [  ; see above
+            for-each :(compose [  ; see above
                 x (bind lit 'x obj1)
             ])[
                 1 2 3 4
@@ -118,7 +118,7 @@
             ]
         ]
         error? trap [
-            for-each (compose [  ; see above
+            for-each :(compose [  ; see above
                 (bind lit 'x obj2) x
             ])[
                 1 2 3 4
@@ -127,7 +127,7 @@
             ]
         ]
         not error? trap [
-            for-each (compose [  ; see above
+            for-each :(compose [  ; see above
                 (bind lit 'x obj1) (bind lit 'x obj2)
             ])[
                 1 2 3 4

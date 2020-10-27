@@ -74,7 +74,7 @@ void        "returned by actions with no result (neither true nor false)"
             unit        -       -       +       []
 
 blank       "placeholder unit type which acts as conditionally false"
-            unit        +       -       +       []
+            unit        +       -       +       [branch]
 
 ; </ANY-UNIT>
 
@@ -223,19 +223,19 @@ varargs     "evaluator position for variable numbers of arguments"
 ; <ANY-SYM> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 sym-block   "alternative form of block (that also doesn't evaluate)"
-            array       *       *       *       [block array series]
+            array       *       *       *       [block array series branch]
 
 sym-group   "symbolic form of group! that does not evaluate"
-            array       *       *       *       [group array series]
+            array       *       *       *       [group array series branch]
 
 sym-path    "symbolic form of path! that does not evaluate"
-            sequence    *       *       *       [path sequence]
+            sequence    *       *       *       [path sequence branch]
 
 sym-tuple   "symbolic form of tuple! that does not evaluate"
-            sequence    *       *       *       [tuple sequence]
+            sequence    *       *       *       [tuple sequence branch]
 
 sym-word    "symbolic form of word! that does not evaluate"
-            word        -       *       +       [word]
+            word        -       *       +       [word branch]
 
 ; <ANY-SYM> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
@@ -243,14 +243,14 @@ sym-word    "symbolic form of word! that does not evaluate"
 ; <ANY-PLAIN> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 block       "array of values that blocks evaluation unless DO is used"
-            array       *       *       *       [block array series]
+            array       *       *       *       [block array series branch]
 
 ; ============================================================================
 ; BEGIN EVALUATOR ACTIVE TYPES, SEE ANY_EVALUATIVE()
 ; ============================================================================
 
 group       "array that evaluates expressions as an isolated group"
-            array       *       *       *       [group array series]
+            array       *       *       *       [group array series branch]
 
 path        "member or refinement selection with execution bias"
             sequence    *       *       *       [path sequence]
@@ -293,13 +293,13 @@ get-group   "array that evaluates and runs GET on the resulting word/path"
             array       *       *       *       [group array series]
 
 get-path    "the value of a path"
-            sequence    *       *       *       [path sequence]
+            sequence    *       *       *       [path sequence branch]
 
 get-tuple   "the value of a tuple"
             sequence    *       *       *       [tuple sequence]
 
 get-word    "the value of a word (variable)"
-            word        -       *       +       [word]
+            word        -       *       +       [word branch]
 
 ; </ANY-GET> (except for ISSUE!)
 
@@ -307,7 +307,7 @@ get-word    "the value of a word (variable)"
 ; ACTION! is the "OneFunction" type in Ren-C https://forum.rebol.info/t/596
 
 action      "an invokable Rebol subroutine"
-            action      +       +       +       []
+            action      +       +       +       [branch]
 
 ; ============================================================================
 ; BEGIN QUOTED RANGE (> 64) AND PSEUDOTYPES (REB_QUOTED < type < 64)
@@ -318,4 +318,4 @@ action      "an invokable Rebol subroutine"
 ; which use the value + REB_64, + REB_64*2, or + REB_64*3)
 
 quoted     "container for arbitrary levels of quoting"
-            quoted       +       +       -      [quoted]
+            quoted       +       +       -      [branch]

@@ -54,24 +54,22 @@ make object! compose [
             elide (
                 print mold test-block  ; !!! make this an option
 
-                result: entrap test-block
+                [error result]: trap test-block
                 recycle
             )
 
+            error [
+                spaced ["error" any [to text! error/id | "w/no ID"]]
+            ]
+
+            undefined? 'result [
+                "test returned void"
+            ]
             null? :result [
                 "test returned null"
             ]
-            error? :result [
-                spaced ["error" any [to text! result/id | "w/no ID"]]
-            ]
-
-            elide (result: first result)
-
-            void? :result [
-                "test returned void"
-            ]
             not logic? :result [
-                spaced ["was" (an type of get/any 'result) ", not logic!"]
+                spaced ["was" (an type of :result) ", not logic!"]
             ]
             not :result [
                 "test returned #[false]"
