@@ -41,13 +41,13 @@ strings and spliced Rebol values:
 
     // Would print 304--e.g. `1020 + (2 * -358)`, rebElide() returns C void.
 
-The way this is able to work is described in another talk from Rebol 2019,
+The way this can work is described in another talk from Rebol 2019,
 entitled ["Abusing UTF-8 For Fun and Profit"][7]
 
 [7]: https://www.youtube.com/watch?v=6nsKTpArTCE
 
 Beyond the API and Web Build, improvements to the language itself *range in
-the hundreds*.  They are ever-evolving, but are tracked periodically on the
+the hundreds*.  They are ever-evolving but are tracked periodically on the
 [Trello board][8] and posts on the forum.
 
 [8]: https://trello.com/b/l385BE7a/rebol3-porting-guide-ren-c-branch
@@ -91,7 +91,7 @@ appropriate command lines.
 [12]: http://www.rebol.com/docs/shell.html
 
 Several platforms are supported, including Linux, Windows, OS X, Android, and
-support for JavaScript via Webassembly.  Configurations for each platform are
+support for JavaScript via WebAssembly.  Configurations for each platform are
 in the %configs/ directory.  When the build process is run, you should be in
 the directory where you want the build products to go (e.g. %build/).  Here
 is a sample of how to compile under Linux:
@@ -146,7 +146,7 @@ code to be taken back to the Rebol GitHub or other branches.
 [15]: http://www.rebol.com/cgi-bin/blog.r?view=0519
 [16]: https://www.gnu.org/philosophy/shouldbefree.en.html
 
-Due to limited cases of such any take over an eight year span, the Ren-C
+Due to limited cases of such any take over an eight-year span, the Ren-C
 license was [changed to the Apache-2-compatible LGPL 3][17].
 
 [17]: https://forum.rebol.info/t/ren-c-license-changed-to-lgpl-3-0/1342
