@@ -2,7 +2,7 @@
 >
 > The Ren-C fork was moved from a submodule directly into the %tests/ subdirectory.  This is because development on the original repository ceased, and it makes keeping the tests in sync with the Ren-C version easier.
 >
-> In the Ren-C version, an extensive source analysis script was added by Brett Handley.  This has parse rules for C, and is used to check the source codebase itself for static analysis properties.
+> In the Ren-C version, an extensive source analysis script was added by Brett Handley.  This has parse rules for C and is used to check the source codebase itself for static analysis properties.
 >
 > The test suite itself as well as the test framework are Licensed under the [Apache License, Version 2.0][2].
 >
@@ -37,7 +37,7 @@ A run-recover.r result in Kubuntu running a build of the 2.101.0.4.4 interpreter
 
 The first character of the log file name, #"r" is common to all run-recover log files. The next part describes the version of the interpreter, the following 6 characters are a part of the interpreter executable checksum, and the last 6 characters preceding the file extension are a part of the core-tests.r file checksum.
 
-*(Note: The test framework needs a path to the interpreter executable to be able to calculate the interpreter checksum.  If the full path to the interpreter executable isn't obtained from the command line, the argument of the run-recover.r script will be used as the path to the executable.  Otherwise the system/build variable will be used.)*
+*(Note: The test framework needs a path to the interpreter executable to be able to calculate the interpreter checksum.  If the full path to the interpreter executable isn't obtained from the command line, the argument of the run-recover.r script will be used as the path to the executable.  Otherwise, the system/build variable will be used.)*
 
 
 # Test File Format
@@ -100,9 +100,9 @@ Comments following the semicolon character until the end of the line are allowed
 
 ### Flags
 
-Tags are used to signal special handling of the test. They are handled by the environment as flags excluding the marked test from processing. Only if all flags used are in the set of acceptable flags, the specific test is processed by the environment, otherwise it is skipped.
+Tags are used to signal special handling of the test. They are handled by the environment as flags excluding the marked test from processing. Only if all flags used are in the set of acceptable flags, the specific test is processed by the environment, otherwise, it is skipped.
 
-Tags are used to indicate special character of tests. For example,
+Tags are used to indicate a special character of tests. For example,
 
     <64bit>
 
@@ -127,7 +127,7 @@ Currently available flags are:
 
 Files or URLs specify what to include, i.e., they allow a file to contain references to other test files.
 
-*(Note: Despite the existence of this feature, the core-tests were created as a giant monolithic file.  @HostileFork didn't even know this feature existed, because it wasn't used.  If this test suite's methodology is to be used going forward, then certainly multiple files must be used!)*
+*(Note: Despite the existence of this feature, the core-tests were created as a giant monolithic file.  @HostileFork didn't even know this feature existed because it wasn't used.  If this test suite's methodology is to be used going forward, then certainly multiple files must be used!)*
 
 
 # Summary
@@ -160,15 +160,15 @@ The summary (can be found at the end of the log file), e.g.:
 
 The test-checksums and the total number of the tests are equal. That is because we used the same version of the tests.
 
-However, the numbers of succeeded tests, failed tests, crashing tests and skipped tests differ.
+However, the numbers of succeeded tests, failed tests, crashing tests, and skipped tests differ.
 
-The reason why the number of skipped tests differ is that 2.7.8 is R2 while 2.101.0 is R3. These interpreter versions are different in many aspects and it does not make sense to perform some R2 tests in R3 environment and vice versa, which leads to the necessity to skip some tests depending on the interpreter type.
+The reason why the number of skipped tests differs is that 2.7.8 is R2 while 2.101.0 is R3. These interpreter versions are different in many aspects and it does not make sense to perform some R2 tests in the R3 environment and vice versa, which leads to the necessity to skip some tests depending on the interpreter type.
 
 The "Dialect failures" number counts the cases when the test framework found incorrectnesses in the test file, cases when the test file was not written in accordance with the formatting rules described below.
 
 If you get more than zero dialect failures, you should correct the respective test file.
 
-The test environment counts successful tests, failed tests, crashing tests, skipped tests and test dialect failures, i.e., the cases when the test file is not properly formatted.
+The test environment counts successful tests, failed tests, crashing tests, skipped tests, and test dialect failures, i.e., the cases when the test file is not properly formatted.
 
 Files or URLs in the test file "outside" of tests are handled as directives for the test environment to process the tests in the respective file as well.
 
@@ -223,6 +223,6 @@ Where, again, we see that the total number of tests was 4598.
 
 - **unchanged**: how many tests have the same result both in the old and in the new log
 
-The log difference is useful if for knowing the effect of an interpreter code update. In this case it is most convenient (but not required) to perform the same test suite in both the old as well as the new interpreter version.
+The log difference is useful if for knowing the effect of an interpreter code update. In this case, it is most convenient (but not required) to perform the same test suite in both the old as well as the new interpreter version.
 
-The difference can also be used to find the effect of test suite changes. In this case it is most convenient (but not required) to perform both the old and new test suite version using the same interpreter and compare the logs.
+The difference can also be used to find the effect of test suite changes. In this case, it is most convenient (but not required) to perform both the old and new test suite version using the same interpreter and compare the logs.
