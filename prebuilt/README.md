@@ -1,6 +1,6 @@
 ## DIRECTORY FOR DOWNLOADING PRE-BUILT BOOTSTRAP REBOL EXECUTABLES TO
 
-By convention this `prebuilt` directory is where Rebol executables are kept
+By convention, this `prebuilt` directory is where Rebol executables are kept
 which are able to do the configuration and C code generation to do a 
 bootstrap build.
 
@@ -19,7 +19,7 @@ The bootstrap commit is currently at git commit short hash: 8994d23
 At one point the executables were committed directly into the Git repository.
 This was decided to be undesirable.  So instead, the files are now stored on
 an S3 instance.  Having the build process get these files automatically is a
-goal, but in the meantime these are the current links:
+goal, but in the meantime, these are the current links:
 
 LINUX:
 https://s3.amazonaws.com/r3bootstraps/r3-linux-x64-8994d23
@@ -33,5 +33,5 @@ https://s3.amazonaws.com/r3bootstraps/r3-osx-x64-8994d23
 ANDROID:
 https://s3.amazonaws.com/r3bootstraps/r3-android-arm-8994d23
 
-OPENBSD: (submitted by Stéphane Aulery)
+OPENBSD: (submitted by StÃ©phane Aulery)
 https://s3.amazonaws.com/r3bootstraps/r3-openbsd-x64-8994d23
