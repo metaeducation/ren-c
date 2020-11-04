@@ -652,9 +652,6 @@ inline static void Begin_Action_Core(
     f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
   #endif
 
-    assert(NOT_EVAL_FLAG(f, REQUOTE_NULL));
-    f->requotes = 0;
-
     // Cache the feed lookahead state so it can be restored in the event that
     // the evaluation turns out to be invisible.
     // 
@@ -834,7 +831,6 @@ inline static void Drop_Action(REBFRM *f) {
 
     CLEAR_EVAL_FLAG(f, RUNNING_ENFIX);
     CLEAR_EVAL_FLAG(f, FULFILL_ONLY);
-    CLEAR_EVAL_FLAG(f, REQUOTE_NULL);
 
     assert(
         GET_SERIES_INFO(f->varlist, INACCESSIBLE)

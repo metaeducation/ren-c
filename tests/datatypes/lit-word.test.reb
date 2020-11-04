@@ -12,7 +12,7 @@
 ; lit-words are active
 (
     a-value: first ['a]
-    strict-equal? to word! :a-value do reduce [:a-value]
+    strict-equal? to word! unquote :a-value do reduce [:a-value]
 )
 
 [#1342

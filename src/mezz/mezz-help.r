@@ -372,10 +372,10 @@ help: function [
     print-args: function [list /indent-words] [
         for-each param list [
             type: ensure [<opt> block!] (
-                select try :meta/parameter-types to-word param
+                select try :meta/parameter-types to-word dequote param
             )
             note: ensure [<opt> text!] (
-                select try :meta/parameter-notes to-word param
+                select try :meta/parameter-notes to-word dequote param
             )
 
             print [_ _ _ _ param (if type [unspaced ["[" type "]"]])]

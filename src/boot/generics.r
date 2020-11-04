@@ -49,43 +49,43 @@ REBOL [
 
 add: generic [
     {Returns the addition of two values.}
-    return: [<requote> char! any-scalar! date! binary!]
-    value1 [<dequote> char! any-scalar! date! binary!]
+    return: [char! any-scalar! date! binary!]
+    value1 [char! any-scalar! date! binary!]
     value2 [char! any-scalar! date!]
 ]
 
 subtract: generic [
     {Returns the second value subtracted from the first.}
-    return: [<requote> char! any-scalar! date! binary!]
-    value1 [<dequote> char! any-scalar! date! binary!]
+    return: [char! any-scalar! date! binary!]
+    value1 [char! any-scalar! date! binary!]
     value2 [char! any-scalar! date!]
 ]
 
 multiply: generic [
     {Returns the first value multiplied by the second.}
-    return: [<requote> char! any-scalar!]
-    value1 [<dequote> char! any-scalar!]
+    return: [char! any-scalar!]
+    value1 [char! any-scalar!]
     value2 [char! any-scalar!]
 ]
 
 divide: generic [
     {Returns the first value divided by the second.}
-    return: [<requote> char! any-scalar!]
-    value1 [<dequote> char! any-scalar!]
+    return: [char! any-scalar!]
+    value1 [char! any-scalar!]
     value2 [char! any-scalar!]
 ]
 
 remainder: generic [
     {Returns the remainder of first value divided by second.}
-    return: [<requote> char! any-scalar!]
-    value1 [<dequote> char! any-scalar!]
+    return: [char! any-scalar!]
+    value1 [char! any-scalar!]
     value2 [char! any-scalar!]
 ]
 
 power: generic [
     {Returns the first number raised to the second number.}
-    return: [<requote> any-number!]
-    number [<dequote> any-number!]
+    return: [any-number!]
+    number [any-number!]
     exponent [any-number!]
 ]
 
@@ -259,8 +259,8 @@ even?: generic [
 skip: generic [
     {Returns the series forward or backward from the current position.}
     return: "Input skipped by offset, or null if out of bounds"
-        [<opt> <dequote> any-series! port!]
-    series [<blank> <requote> any-series! port!]
+        [<opt> any-series! port!]
+    series [<blank> any-series! port!]
     offset [any-number! logic! pair!]
     /unbounded "Return out of bounds series if before tail or after head"
 ]
@@ -268,8 +268,8 @@ skip: generic [
 at: generic [
     {Returns the series at the specified index.}
     return: "Input at the given index, not clipped to head/tail by default"
-        [<opt> <requote> any-series! port!]
-    series [<blank> <dequote> any-series! port!]
+        [<opt> any-series! port!]
+    series [<blank> any-series! port!]
     index [any-number! logic! pair!]
     /bounded "Return null if index is before tail or after head"
 ]
@@ -280,9 +280,9 @@ find: generic [
     {Searches for the position where a matching value is found}
 
     return: "position found, else null - logic true if non-positional find"
-        [<opt> <requote> any-series! logic!]
+        [<opt> any-series! logic!]
     series [
-        <blank> <dequote> any-series! any-context! map! bitset! typeset!
+        <blank> any-series! any-context! map! bitset! typeset!
     ]
     pattern [any-value!]
     /part "Limits the search to a given length or position"
@@ -335,9 +335,9 @@ copy: generic [
     {Copies a series, object, or other value.}
 
     return: "Return type will match the input type, or void if blank"
-        [<opt> <requote> any-value!]
+        [<opt> any-value!]
     value "If an ANY-SERIES!, it is only copied from its current position"
-        [<dequote> any-value!]
+        [any-value!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
     /deep "Also copies series values within the block"
@@ -364,10 +364,10 @@ insert: generic [
     {Inserts element(s); for series, returns just past the insert.}
 
     return: "Just past the insert"
-        [<requote> any-series! port! map! object! bitset! port!
+        [any-series! port! map! object! bitset! port!
         integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
     series "At position (modified)"
-        [<dequote> any-series! port! map! object! bitset! port!]
+        [any-series! port! map! object! bitset! port!]
     value [<opt> any-value!] {The value to insert}
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
@@ -383,9 +383,9 @@ insert: generic [
 append: generic [
     {Inserts element(s) at tail; for series, returns head.}
 
-    return: [<requote> any-series! port! map! object! module! bitset!]
+    return: [any-series! port! map! object! module! bitset!]
     series "Any position (modified)"
-        [<dequote> any-series! port! map! object! module! bitset!]
+        [any-series! port! map! object! module! bitset!]
     value [<opt> any-value!]
     /part "Limits to a given length or position"
         [any-number! any-series! pair!]
@@ -401,9 +401,9 @@ append: generic [
 change: generic [
     {Replaces element(s); returns just past the change}
 
-    return: [<requote> any-series! port!]
+    return: [any-series! port!]
     series "At position (modified)"
-        [<dequote> any-series! port!]
+        [any-series! port!]
     value [<opt> any-value!] {The new value}
     /part "Limits the amount to change to a given length or position"
         [any-number! any-series! pair!]
@@ -416,9 +416,9 @@ change: generic [
 remove: generic [
     {Removes element(s); returns same position}
 
-    return: [<requote> any-series! map! port! bitset!]
+    return: [any-series! map! port! bitset!]
     series "At position (modified)"
-        [<dequote> any-series! map! port! bitset!]
+        [any-series! map! port! bitset!]
     /part "Removes multiple elements or to a given position"
         [any-number! any-series! pair! char!]
 ]

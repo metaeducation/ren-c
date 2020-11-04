@@ -253,36 +253,3 @@
         void? get/any 'x
     ]
 )
-
-
-; <dequote> and <requote> make it more convenient to take and return QUOTED!
-
-[
-    (did f: func [
-        return: [<opt> <requote> integer!]
-        x [<dequote> integer!]
-    ][
-        if x > 304 [return null]
-        return x + 1
-    ])
-
-    ((lit '''304) = f lit '''303)
-    ( (lit '''304) = reeval (specialize 'f [x: lit '''303]) )
-    (null = f lit '''1020)
-    ( null = (specialize 'f [x: lit '''1020])/ )
-]
-
-[
-    (did f: func [
-        return: [<opt> <requote> integer!]
-        x [<dequote> <opt> integer!]
-    ][
-        if not set? 'x [return null]
-        return x + 1
-    ])
-
-    ((lit '''304) = f lit '''303)
-    ( (lit '''304) = reeval (specialize 'f [x: lit '''303]) )
-    ((lit ''') = f lit ''')
-    ( (lit ''') = (specialize 'f [x: lit '''])/ )
-]

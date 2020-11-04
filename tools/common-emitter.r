@@ -107,7 +107,7 @@ cscape: function [
 
             code: load/all expr
             if with [
-                if lit-word? with [with: to word! with]
+                if lit-word? with [with: dequote with]
 
                 with: compose [((with))]  ; convert to block
                 for-each item with [

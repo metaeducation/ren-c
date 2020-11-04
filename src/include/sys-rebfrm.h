@@ -265,18 +265,9 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(23)
 
 
-//=//// EVAL_FLAG_REQUOTE_NULL ////////////////////////////////////////////=//
+//=//// EVAL_FLAG_24 //////////////////////////////////////////////////////=//
 //
-// Most routines that try to pass through the quoted level of their input
-// can't process a dequoted null (e.g. don't have <opt> input).  Hence if
-// a quoted input comes in like '''FOO, but the routine decides to return
-// null as a signal, it wants to give back plain null and not ''' as a
-// triple-quoted null.
-//
-// But we use the heuristic that if a routine intentionally takes nulls, then
-// a quoted null on input signals requoting a null on output.
-//
-#define EVAL_FLAG_REQUOTE_NULL \
+#define EVAL_FLAG_24 \
     FLAG_LEFT_BIT(24)
 
 
@@ -715,8 +706,6 @@ struct Reb_Frame {
     // look ahead with alternate handling).
     //
     const REBVAL *special;
-
-    REBLEN requotes; // negative means null result should be requoted
 
   union {
     //

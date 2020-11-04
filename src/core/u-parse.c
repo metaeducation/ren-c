@@ -2753,9 +2753,9 @@ REBNATIVE(subparse)
 //  "Parse series according to grammar rules, return last match position"
 //
 //      return: "null if rules failed, else terminal position of match"
-//          [<opt> any-series! quoted!]
+//          [<opt> any-series!]
 //      input "Input series to parse"
-//          [<blank> any-series! quoted!]
+//          [<blank> any-series!]
 //      rules "Rules to parse by"
 //          [<blank> block!]
 //      /case "Uses case-sensitive comparison"
@@ -2764,10 +2764,6 @@ REBNATIVE(subparse)
 //  ]
 //
 REBNATIVE(parse)
-//
-// !!! We currently don't use <dequote> and <requote> so that the parse COPY
-// can persist the type of the input.  This complicates things, but also it
-// may not have been a great change in R3-Alpha in the first place:
 //
 // https://forum.rebol.info/t/1084
 {

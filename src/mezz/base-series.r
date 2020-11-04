@@ -69,10 +69,10 @@ join: function [
     {Concatenates values to the end of a copy of a value}
 
     return:
-        [<requote> any-series! issue! any-sequence! port!
+        [any-series! issue! any-sequence! port!
             map! object! module! bitset!]
     base
-        [<dequote> any-series! issue! any-sequence! port!
+        [any-series! issue! any-sequence! port!
             map! object! module! bitset!]
     value [<opt> any-value!]
 ][

@@ -117,8 +117,8 @@
     ('II = m/[x y])
     ('IIII = m/[m n o p])
 
-    ((trap [append b2 'z])/id = 'series-auto-locked)
-    ((trap [append b4 'q])/id = 'series-auto-locked)
+    ((trap [append dequote b2 'z])/id = 'series-auto-locked)
+    ((trap [append dequote b4 'q])/id = 'series-auto-locked)
 ]
 
 

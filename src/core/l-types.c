@@ -186,7 +186,7 @@ REB_R TO_Unhooked(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //      return: "VALUE converted to TYPE, null if type or value are blank"
 //          [<opt> any-value!]
 //      type [<blank> datatype! sym-word!]
-//      value [<blank> <dequote> any-value!]
+//      value [<blank> any-value!]
 //  ]
 //
 REBNATIVE(to)

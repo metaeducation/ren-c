@@ -129,25 +129,39 @@ REB_R PD_Quoted(
 //
 //  REBTYPE: C
 //
-// There is no obvious general rule for what a "generic" should do when
-// faced with a QUOTED!.  Since they are very new, currently just a fixed
-// list of actions are chosen to mean "do whatever the non-quoted version
-// would do, then add the quotedness onto the result".
+// It was for a time considered whether generics should be willing to operate
+// on QUOTED!.  e.g. "do whatever the non-quoted version would do, then add
+// the quotedness onto the result".
 //
 //     >> add lit '''1 2
 //     == '''3
 //
-// It seems to make sense to do this for FIND but not SELECT, for example.
-// Long term, if there's any patterns found they should probably become
-// annotations on the generic itself, and are probably useful for non-generics
-// as well.
+// While a bit outlandish for ADD, it might seem to make more sense for FIND
+// and SELECT when you have a QUOTED! block or GROUP!.  However, the solution
+// that emerged after trying other options was to make REQUOTE:
+//
+// https://forum.rebol.info/t/1035
+//
+// So the number of things supported by QUOTED is limited to COPY.
 //
 REBTYPE(Quoted)
 {
-    UNUSED(verb);
-    UNUSED(frame_);
+    // Note: SYM_REFLECT is handled directly in the REFLECT native
+    //
+    switch (VAL_WORD_SYM(verb)) {
+      case SYM_COPY: {  // D_ARG(1) skips RETURN in first arg slot
+        REBLEN num_quotes = Dequotify(D_ARG(1));
+        REB_R r = Run_Generic_Dispatch(D_ARG(1), frame_, verb);
+        assert(r != R_THROWN);  // can't throw
+        if (r == nullptr)
+            r = Init_Nulled(FRM_OUT(frame_));
+        return Quotify(r, num_quotes); }
 
-    fail ("QUOTED! only supported in generics via <dequote> / <requote>");
+      default:
+        break;
+    } 
+
+    fail ("QUOTED! has no GENERIC operations (use DEQUOTE/REQUOTE)");
 }
 
 

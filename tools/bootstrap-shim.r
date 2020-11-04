@@ -443,3 +443,10 @@ delimit: func [
 
 unspaced: specialize 'delimit [delimiter: _]
 spaced: specialize 'delimit [delimiter: space]
+
+dequote: func [x] [
+    switch type of x [
+        lit-word! [to word! x]
+        lit-path! [to path! x]
+    ] else [x]
+]

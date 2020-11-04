@@ -472,16 +472,6 @@ bool Specialize_Action_Throws(
         if (Is_Param_Variadic(param))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
-        if (TYPE_CHECK(param, REB_TS_DEQUOTE_REQUOTE) and IS_QUOTED(arg)) {
-            //
-            // Have to leave the quotes on, but still want to type check.
-
-            if (not TYPE_CHECK(param, CELL_KIND(VAL_UNESCAPED(arg))))
-                fail (arg);  // !!! merge w/Error_Invalid_Arg()
-        }
-        else if (not TYPE_CHECK(param, VAL_TYPE(arg)))
-            fail (arg);  // !!! merge w/Error_Invalid_Arg()
-
        SET_CELL_FLAG(arg, ARG_MARKED_CHECKED);
 
       specialized_arg_no_typecheck:

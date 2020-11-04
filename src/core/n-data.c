@@ -104,9 +104,9 @@ REBNATIVE(as_pair)
 //
 //  {Binds words or words in arrays to the specified context}
 //
-//      return: [<requote> action! any-array! any-path! any-word!]
+//      return: [action! any-array! any-path! any-word!]
 //      value "Value whose binding is to be set (modified) (returned)"
-//          [<dequote> action! any-array! any-path! any-word!]
+//          [action! any-array! any-path! any-word!]
 //      target "Target context or a word whose binding should be the target"
 //          [any-word! any-context!]
 //      /copy "Bind and return a deep copy of a block, don't modify original"
@@ -229,7 +229,7 @@ REBNATIVE(bind)
 //
 //      return: [<opt> <requote> any-word! block! group!]
 //      context [any-context! block!]
-//      word [<dequote> any-word! block! group!] "(modified if series)"
+//      word [any-word! block! group!] "(modified if series)"
 //  ]
 //
 REBNATIVE(in)
@@ -557,7 +557,7 @@ inline static void Get_Var_May_Fail(
 //
 //      return: [<opt> any-value!]
 //      source "Word or path to get, or block of words or paths"
-//          [<blank> <dequote> any-word! any-sequence! block!]
+//          [<blank> any-word! any-sequence! block!]
 //      /any "Retrieve ANY-VALUE! (e.g. do not error on VOID!)"
 //      /hard "Do not evaluate GROUP!s in PATH! (assume pre-COMPOSE'd)"
 //  ]
@@ -610,7 +610,7 @@ REBNATIVE(get)
 //
 //      return: [<opt> any-value!]
 //      source "Word or path to get"
-//          [<blank> <dequote> any-word! any-path!]
+//          [<blank> any-word! any-path!]
 //  ]
 //
 REBNATIVE(get_p)
@@ -1168,7 +1168,7 @@ bool Try_As_String(
 //      return: [<opt> integer! issue! any-sequence! any-series! any-word!]
 //      type [datatype!]
 //      value [
-//          <dequote> <blank>
+//          <blank>
 //          integer! issue! any-sequence! any-series! any-word!
 //      ]
 //  ]
@@ -1585,7 +1585,7 @@ inline static bool Is_Defined(const REBVAL *location)
 //  "Whether a bound word or path is set (!!! shouldn't eval GROUP!s)"
 //
 //      return: [logic!]
-//      location [<dequote> any-word! any-path!]
+//      location [any-word! any-path!]
 //  ][
 //      not null? get/any location
 //  ]
@@ -1604,7 +1604,7 @@ REBNATIVE(set_q)
 //  "Whether a bound word or path is unset (!!! shouldn't eval GROUP!s)"
 //
 //      return: [logic!]
-//      location [<dequote> any-word! any-path!]
+//      location [any-word! any-path!]
 //  ][
 //      null? get/any location
 //  ]
@@ -1623,7 +1623,7 @@ REBNATIVE(unset_q)
 //  "Whether a bound word or path is not void (!!! shouldn't eval GROUP!s)"
 //
 //      return: [logic!]
-//      location [<dequote> any-word! any-path!]
+//      location [any-word! any-path!]
 //  ][
 //      not void? get/any location
 //  ]
@@ -1642,7 +1642,7 @@ REBNATIVE(defined_q)
 //  "Whether a bound word or path is void (!!! shouldn't eval GROUP!s)"
 //
 //      return: [logic!]
-//      location [<dequote> any-word! any-path!]
+//      location [any-word! any-path!]
 //  ][
 //      void? get/any location
 //  ]

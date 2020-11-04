@@ -488,7 +488,7 @@ REBNATIVE(do)
 //          [<opt> quoted! block! group! varargs!]
 //      source [
 //          <blank>  ; useful for `evaluate try ...` scenarios when no match
-//          <dequote>  ; tolerate quoted input (quotes discarded)
+//          quoted!  ; accepts quoted source (may carry bit from prior eval)
 //          block!  ; source code in block form
 //          group!  ; same as block (or should it have some other nuance?)
 //          varargs!  ; simulates as if frame! or block! is being executed
@@ -502,6 +502,8 @@ REBNATIVE(evaluate)
     INCLUDE_PARAMS_OF_EVALUATE;
 
     REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
+    Dequotify(source);  // May have quotes if indicating invisible eval
+
   #if !defined(NDEBUG)
     SET_CELL_FLAG(ARG(source), PROTECTED);
   #endif

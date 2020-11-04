@@ -198,22 +198,16 @@ STATIC_ASSERT(PARAMLIST_FLAG_IS_NATIVE == SERIES_INFO_HOLD);
     ARRAY_FLAG_30
 
 
-//=//// PARAMLIST_FLAG_RETURN_REQUOTES ////////////////////////////////////=//
+//=//// PARAMLIST_FLAG_31 /////////////////////////////////////////////////=//
 //
-// This is a cached property with a slight performance advantage for the
-// evaluator, as it doesn't have to go find the RETURN parameter to know if
-// it should apply the requote.  It is a minor optimization, and could be
-// sacrificed if this bit were needed for something else.
-//
-#define PARAMLIST_FLAG_RETURN_REQUOTES \
+#define PARAMLIST_FLAG_31 \
     ARRAY_FLAG_31
 
 
 // These are the flags which are scanned for and set during Make_Action
 //
 #define PARAMLIST_MASK_CACHED \
-    (PARAMLIST_FLAG_RETURN_REQUOTES \
-        | PARAMLIST_FLAG_QUOTES_FIRST | PARAMLIST_FLAG_SKIPPABLE_FIRST)
+    (PARAMLIST_FLAG_QUOTES_FIRST | PARAMLIST_FLAG_SKIPPABLE_FIRST)
 
 // These flags should be copied when specializing or adapting.  They may not
 // be derivable from the paramlist (e.g. a native with no RETURN does not
@@ -480,7 +474,9 @@ inline static REB_R Run_Generic_Dispatch(
 ){
     assert(IS_WORD(verb));
 
-    GENERIC_HOOK *hook = Generic_Hook_For_Type_Of(first_arg);
+    GENERIC_HOOK *hook = IS_QUOTED(first_arg)
+        ? &T_Quoted  // a few things like COPY are supported by QUOTED!
+        : Generic_Hook_For_Type_Of(first_arg);
 
     REB_R r = hook(f, verb);  // Note that QUOTED! has its own hook & handling
     if (r == R_UNHANDLED) {

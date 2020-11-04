@@ -137,36 +137,6 @@ inline static void Finalize_Arg(REBFRM *f) {
         if (TYPE_CHECK(f->param, REB_TS_CONST))
             SET_CELL_FLAG(f->arg, CONST);
 
-    // If the <dequote> tag was used on an argument, we want to remove the
-    // quotes (and queue them to be added back in if the return was marked
-    // with <requote>).
-    //
-    if (TYPE_CHECK(f->param, REB_TS_DEQUOTE_REQUOTE) and IS_QUOTED(f->arg)) {
-        if (GET_EVAL_FLAG(f, FULFILL_ONLY)) {
-            //
-            // We can only take the quote levels off now if the function is
-            // going to be run now.  Because if we are filling a frame to
-            // reuse later, it would forget the f->dequotes count.
-            //
-            if (not TYPE_CHECK(f->param, CELL_KIND(VAL_UNESCAPED(f->arg))))
-                fail (Error_Arg_Type(f, f->param, VAL_TYPE(f->arg)));
-
-            SET_CELL_FLAG(f->arg, ARG_MARKED_CHECKED);
-            return;
-        }
-
-        // Some routines want to requote but also want to be able to
-        // return a null without turning it into a single apostrophe.
-        // Use the heuristic that if the argument wasn't legally null,
-        // then a returned null should duck the requote.
-        //
-        f->requotes += VAL_NUM_QUOTES(f->arg);
-        if (CELL_KIND(VAL_UNESCAPED(f->arg)) == REB_NULL)
-            SET_EVAL_FLAG(f, REQUOTE_NULL);
-
-        Dequotify(f->arg);
-    }
-
     if (TYPE_CHECK(f->param, REB_TS_REFINEMENT)) {
         Typecheck_Refinement_And_Canonize(f->param, f->arg);
         return;
@@ -533,15 +503,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 Prep_Cell(f->arg);
                 Move_Value(f->arg, f->special);  // won't copy the bit
                 SET_CELL_FLAG(f->arg, ARG_MARKED_CHECKED);
-            }
-
-            if (
-                TYPE_CHECK(f->param, REB_TS_DEQUOTE_REQUOTE)
-                and IS_QUOTED(f->arg)
-                and NOT_EVAL_FLAG(f, FULFILL_ONLY)
-            ){
-                f->requotes += VAL_NUM_QUOTES(f->arg);
-                Dequotify(f->arg);
             }
 
             // The flag's whole purpose is that it's not set if the type
@@ -1358,20 +1319,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         DS_DROP();
 
         goto arg_loop;
-    }
-
-    // We assume that null return results don't count for the requoting,
-    // unless the dequoting was explicitly of a quoted null parameter.
-    // Just a heuristic--if it doesn't work for someone, they'll have to
-    // take QUOTED! themselves and do whatever specific logic they need.
-    //
-    if (GET_ACTION_FLAG(f->original, RETURN_REQUOTES)) {
-        if (
-            KIND3Q_BYTE_UNCHECKED(f->out) != REB_NULL
-            or GET_EVAL_FLAG(f, REQUOTE_NULL)
-        ){
-            Quotify(f->out, f->requotes);
-        }
     }
 
     Drop_Action(f);

@@ -15,22 +15,22 @@ REBOL [
 ;
 register-gob-hooks [  ; !!! See remarks, block of generics is vaporware ATM
     skip: generic [
-        return: [<opt> <dequote> gob!]
-        series [<blank> <requote> gob!]
+        return: [<opt> gob!]
+        series [<blank> gob!]
         offset [any-number! logic! pair!]
         /only
     ]
 
     at: generic [
-        return: [<opt> <requote> gob!]
-        series [<blank> <dequote> gob!]
+        return: [<opt> gob!]
+        series [<blank> gob!]
         index [any-number! logic! pair!]
         /only
     ]
 
     find: generic [
-        return: [<opt> <requote> gob!]
-        series [<blank> <dequote> gob!]
+        return: [<opt> gob!]
+        series [<blank> gob!]
         pattern [gob!]
     ]
 
@@ -45,8 +45,8 @@ register-gob-hooks [  ; !!! See remarks, block of generics is vaporware ATM
     ]
 
     insert: generic [
-        return: [<requote> gob!]
-        series [<dequote> gob!]
+        return: [gob!]
+        series [gob!]
         value [<opt> gob! block!]
         /part [any-number! pair!]
         /only
@@ -55,8 +55,8 @@ register-gob-hooks [  ; !!! See remarks, block of generics is vaporware ATM
     ]
 
     append: generic [
-        return: [<requote> gob!]
-        series [<dequote> gob!]
+        return: [gob!]
+        series [gob!]
         value [<opt> gob! block!]
         /part [any-number! any-series! pair!]
         /only
@@ -65,8 +65,8 @@ register-gob-hooks [  ; !!! See remarks, block of generics is vaporware ATM
     ]
 
     change: generic [
-        return: [<requote> gob!]
-        series [<dequote> gob!]
+        return: [gob!]
+        series [gob!]
         value [<opt> gob! block!]
         /part [any-number! any-series! pair!]
         /only
@@ -75,8 +75,8 @@ register-gob-hooks [  ; !!! See remarks, block of generics is vaporware ATM
     ]
 
     remove: generic [
-        return: [<requote> gob!]
-        series [<dequote> gob!]
+        return: [gob!]
+        series [gob!]
         /part [any-number! any-series! pair! char!]
     ]
 

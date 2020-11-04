@@ -205,12 +205,6 @@ bool Add_Typeset_Bits_Core(
                 TYPE_SET(typeset, REB_TS_ENDABLE); // skip => null
                 TYPE_SET(typeset, REB_NULL);  // null if specialized
             }
-            else if (0 == CT_String(item, Root_Dequote_Tag, strict)) {
-                TYPE_SET(typeset, REB_TS_DEQUOTE_REQUOTE);
-            }
-            else if (0 == CT_String(item, Root_Requote_Tag, strict)) {
-                TYPE_SET(typeset, REB_TS_DEQUOTE_REQUOTE);
-            }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
                 TYPE_SET(typeset, REB_TS_CONST);
             }

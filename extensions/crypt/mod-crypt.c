@@ -197,6 +197,8 @@ REBNATIVE(checksum)
 {
     CRYPT_INCLUDE_PARAMS_OF_CHECKSUM;
 
+    Dequotify(ARG(settings));
+
     REBLEN len = Part_Len_May_Modify_Index(ARG(data), ARG(part));
 
     REBSIZ size;

@@ -21,8 +21,8 @@ REBOL [
 ;
 register-struct-hooks [
     change: generic [
-        return: [<requote> struct!]
-        series [<dequote> struct!]
+        return: [struct!]
+        series [struct!]
         value [<opt> any-value!]
     ]
 ]
