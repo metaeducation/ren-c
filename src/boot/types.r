@@ -299,6 +299,13 @@ get-word    "the value of a word (variable)"
 ; </ANY-GET> (except for ISSUE!)
 
 
+; COMMA! has a high number with bindable types it's evaluative, and the
+; desire is to make the ANY_INERT() test fast with a single comparison.
+
+comma       "separator between full evaluations (that is otherwise invisible)"
+            comma       -       -       +       []
+
+
 ; ACTION! is the "OneFunction" type in Ren-C https://forum.rebol.info/t/596
 
 action      "an invokable Rebol subroutine"

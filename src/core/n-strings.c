@@ -217,6 +217,7 @@ REBNATIVE(enhex)
                   case LEX_DELIMIT_SLASH:
                   case LEX_DELIMIT_PERIOD:
                   case LEX_DELIMIT_TILDE:
+                  case LEX_DELIMIT_COMMA:
                     goto leave_as_is;
 
                   case LEX_DELIMIT_SPACE:  // includes control characters
@@ -242,7 +243,6 @@ REBNATIVE(enhex)
                   case LEX_SPECIAL_PLUS:
                   case LEX_SPECIAL_MINUS:
                   case LEX_SPECIAL_BLANK:
-                  case LEX_SPECIAL_COMMA:
                   case LEX_SPECIAL_POUND:
                   case LEX_SPECIAL_DOLLAR:
                   case LEX_SPECIAL_SEMICOLON:

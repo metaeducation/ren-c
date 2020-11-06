@@ -103,6 +103,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_NULL:
       case REB_VOID:
       case REB_BLANK:
+      case REB_COMMA:
         break;
 
       case REB_LOGIC:

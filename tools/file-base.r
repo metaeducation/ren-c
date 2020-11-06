@@ -177,6 +177,7 @@ core: [
     t-blank.c
     t-block.c
     t-char.c
+    t-comma.c
     t-datatype.c
     t-date.c
     t-decimal.c

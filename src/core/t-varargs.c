@@ -55,6 +55,11 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         return true;
     }
 
+    if (pclass == REB_P_NORMAL and IS_COMMA(opt_look)) {
+        Init_For_Vararg_End(out, op);  // non-quoted COMMA!
+        return true;
+    }
+
     if (pclass == REB_P_NORMAL and IS_WORD(opt_look)) {
         //
         // When a variadic argument is being TAKE-n, deferred left hand side

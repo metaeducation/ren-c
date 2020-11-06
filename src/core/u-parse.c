@@ -1498,6 +1498,29 @@ REBNATIVE(subparse)
     if (IS_BAR(rule))  // reached BAR! without a match failure, good!
         return Init_Integer(D_OUT, P_POS);  // indicate match @ current pos
 
+    //=//// HANDLE COMMA! (BEFORE GROUP...?) //////////////////////////////=//
+
+    // The R3-Alpha PARSE design wasn't based on any particular notion of
+    // "instruction format"; it fiddled a lot of flags like PF_WHILE to know
+    // what construct you were in.  So things like `parse "a" [some]` were not
+    // set up to deliver errors in a sense of "keywords that take arguments".
+    //
+    // Hence in this formulation, an expression barrier is a little hard to
+    // make.  PARSE should be rewritten in a better way, but until it is
+    // the we have to intuit the rule situation.
+    //
+    // !!! For now we assume that a GROUP! evaluation to produce a comma
+    // will just error, vs. be okay in interstitial positions.  But unlike
+    // BAR! there's no scan skipping that *requires* commas to be at source
+    // level, so this could be relaxed if there was a good reason to.
+
+    if (IS_COMMA(rule)) {
+        if (mincount != 1 or maxcount != 1 or (P_FLAGS & PF_STATE_MASK))
+            fail (Error_Expression_Barrier_Raw());
+        FETCH_NEXT_RULE(f);
+        goto pre_rule;
+    }
+
     //=//// (GROUP!) AND :(GET-GROUP!) PROCESSING /////////////////////////=//
 
     if (IS_BLANK(rule)) {  // pre-evaluative source blanks act like SKIP

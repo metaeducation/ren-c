@@ -38,6 +38,7 @@ enum Reb_Token {
     TOKEN_NEWLINE,
     TOKEN_BLANK,
     TOKEN_VOID,
+    TOKEN_COMMA,
     TOKEN_COLON,
     TOKEN_AT,
     TOKEN_WORD,
@@ -89,19 +90,20 @@ enum LEX_DELIMIT_ENUM {
     LEX_DELIMIT_END,                /* 00 null terminator, end of input */
     LEX_DELIMIT_LINEFEED,           /* 0A line-feed */
     LEX_DELIMIT_RETURN,             /* 0D return */
+    LEX_DELIMIT_COMMA,              /* 2C , - expression barrier */
     LEX_DELIMIT_LEFT_PAREN,         /* 28 ( */
     LEX_DELIMIT_RIGHT_PAREN,        /* 29 ) */
     LEX_DELIMIT_LEFT_BRACKET,       /* 5B [ */
     LEX_DELIMIT_RIGHT_BRACKET,      /* 5D ] */
-
-    // As a step toward "Plan -4", the above delimiters are considered to
+    
+    LEX_DELIMIT_HARD = LEX_DELIMIT_RIGHT_BRACKET,
+    //
+    // ^-- As a step toward "Plan -4", the above delimiters are considered to
     // always terminate, e.g. a URL `http://example.com/a)` will not pick up
     // the parenthesis as part of the URL.  But the below delimiters will be
     // picked up, so that `http://example.com/{a} is valid:
     //
     // https://github.com/metaeducation/ren-c/issues/1046
-    //
-    // Note: If you rearrange these, update IS_LEX_DELIMIT_HARD !
 
     LEX_DELIMIT_LEFT_BRACE,         /* 7B } */
     LEX_DELIMIT_RIGHT_BRACE,        /* 7D } */
@@ -157,7 +159,7 @@ typedef uint16_t LEXFLAGS;  // 16 flags per lex class
 
 inline static bool IS_LEX_DELIMIT_HARD(REBYTE c) {
     assert(IS_LEX_DELIMIT(c));
-    return GET_LEX_VALUE(c) <= LEX_DELIMIT_RIGHT_BRACKET;
+    return GET_LEX_VALUE(c) <= LEX_DELIMIT_HARD;
 }
 
 //
@@ -177,7 +179,6 @@ enum LEX_SPECIAL_ENUM {             /* The order is important! */
     LEX_SPECIAL_BLANK,              /* 5F _ - blank */
 
                                     /** Any of these can follow - or ~ : */
-    LEX_SPECIAL_COMMA,              /* 2C , - decimal number */
     LEX_SPECIAL_POUND,              /* 23 # - hex number */
     LEX_SPECIAL_DOLLAR,             /* 24 $ - money */
     LEX_SPECIAL_SEMICOLON,          /* 3B ; - comment */
@@ -214,7 +215,6 @@ STATIC_ASSERT(LEX_SPECIAL_MAX <= 16);
 #define LEX_WORD_FLAGS (LEX_FLAG(LEX_SPECIAL_AT) |              \
                         LEX_FLAG(LEX_SPECIAL_PERCENT) |         \
                         LEX_FLAG(LEX_SPECIAL_BACKSLASH) |       \
-                        LEX_FLAG(LEX_SPECIAL_COMMA) |           \
                         LEX_FLAG(LEX_SPECIAL_POUND) |           \
                         LEX_FLAG(LEX_SPECIAL_DOLLAR) |          \
                         LEX_FLAG(LEX_SPECIAL_COLON) |           \

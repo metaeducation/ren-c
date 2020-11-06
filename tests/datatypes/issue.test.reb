@@ -42,7 +42,7 @@
         {#[} {#]} #\
         #; #'  ; as with URL!, semicolons are allowed in the token
         #: {#"}  ; quotes for ISSUE! with internal spaces (braces in future)
-        #, #. #/
+        #"," #. #/  ; COMMA! is a delimiter, so `#,` is like `(#)`
         #< #> #?
     ][
         case [

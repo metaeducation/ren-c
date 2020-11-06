@@ -111,6 +111,7 @@ const char * const Token_Names[] = {
     "newline",
     "blank",
     "void",
+    "comma",
     "colon",
     "at",
     "word",

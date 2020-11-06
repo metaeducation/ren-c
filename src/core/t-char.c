@@ -237,6 +237,10 @@ void MF_Issue(REB_MOLD *mo, REBCEL(const*) v, bool form)
             no_quotes = false;
             break;
         }
+        if (IS_LEX_DELIMIT(c) and IS_LEX_DELIMIT_HARD(c)) {
+            no_quotes = false;  // comma, bracket, parentheses...
+            break;
+        }
     }
 
     if (no_quotes or heart == REB_BYTES) {  // !!! hack

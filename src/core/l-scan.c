@@ -101,7 +101,7 @@ const REBYTE Lex_Map[256] =
     /* 29 )   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_PAREN,
     /* 2A *   */    LEX_WORD,
     /* 2B +   */    LEX_SPECIAL|LEX_SPECIAL_PLUS,
-    /* 2C ,   */    LEX_SPECIAL|LEX_SPECIAL_COMMA,
+    /* 2C ,   */    LEX_DELIMIT|LEX_DELIMIT_COMMA,
     /* 2D -   */    LEX_SPECIAL|LEX_SPECIAL_MINUS,
     /* 2E .   */    LEX_DELIMIT|LEX_DELIMIT_PERIOD,
     /* 2F /   */    LEX_DELIMIT|LEX_DELIMIT_SLASH,
@@ -1213,6 +1213,15 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             ss->end = cp + 1;
             return TOKEN_VOID; }
 
+          case LEX_DELIMIT_COMMA:
+            ++cp;
+            ss->end = cp;
+            if (*cp == ',' or not IS_LEX_DELIMIT(*cp)) {
+                ++ss->end;  // don't allow `,,` or `a,b` etc.
+                fail (Error_Syntax(ss, TOKEN_COMMA));
+            }
+            return TOKEN_COMMA;
+
           case LEX_DELIMIT_UTF8_ERROR:
             fail (Error_Syntax(ss, TOKEN_WORD));
 
@@ -1300,11 +1309,6 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 ++cp;
             ss->end = cp;
             return TOKEN_APOSTROPHE;
-
-          case LEX_SPECIAL_COMMA:  // ,123
-            if (IS_LEX_NUMBER(cp[1]))
-                goto num;
-            fail (Error_Syntax(ss, TOKEN_WORD));
 
           case LEX_SPECIAL_GREATER:  // arrow words like `>` handled above
             fail (Error_Syntax(ss, TOKEN_TAG));
@@ -1493,9 +1497,6 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             goto prescan_subsume_up_to_one_dot;
         }
 
-        if (HAS_LEX_FLAG(flags, LEX_SPECIAL_COMMA))
-            return TOKEN_DECIMAL;  // `1,23`  !!! is this worth supporting?
-
         if (HAS_LEX_FLAG(flags, LEX_SPECIAL_POUND)) { // -#123 2#1010
             if (
                 HAS_LEX_FLAGS(
@@ -1601,7 +1602,7 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
     // past the delimiter hit.  The same applies to times.  (DECIMAL! has
     // its own code)
 
-    if (*ss->end != '.')
+    if (*ss->end != '.' and *ss->end != ',')
         return token;
 
     cp = ss->end + 1;
@@ -1872,6 +1873,10 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         }
         break; }
 
+      case TOKEN_COMMA:
+        Init_Comma(DS_PUSH());
+        break;
+
       case TOKEN_AT:
         assert(*bp == '@');
         goto token_prefixable_sigil;
@@ -2042,7 +2047,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
       case TOKEN_INTEGER:
         if (
-            *ep == '.'
+            (*ep == '.' or *ep == ',')
             and not Is_Dot_Or_Slash(level->mode)
             and IS_LEX_NUMBER(ep[1])
         ){

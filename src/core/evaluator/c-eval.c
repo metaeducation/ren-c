@@ -493,6 +493,19 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         fail (Error_Evaluate_Null_Raw());
 
 
+    //=//// COMMA! ////////////////////////////////////////////////////////=//
+    //
+    // A comma is a lightweight looking expression barrier.
+
+       case REB_COMMA:
+        if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
+            CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+            SET_FEED_FLAG(f->feed, BARRIER_HIT);
+            goto finished;
+        }
+        break;
+
+
     //=//// ACTION! ///////////////////////////////////////////////////////=//
     //
     // If an action makes it to the SWITCH statement, that means it is either

@@ -377,6 +377,8 @@ inline static void INIT_BINDING_MAY_MANAGE(RELVAL *out, REBNOD* binding);
 
 #include "datatypes/sys-nulled.h"
 #include "datatypes/sys-blank.h"
+#include "datatypes/sys-comma.h"
+
 #include "datatypes/sys-logic.h"
 #include "datatypes/sys-integer.h"
 #include "datatypes/sys-decimal.h"
