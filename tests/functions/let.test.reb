@@ -4,7 +4,7 @@
 
 (
     b: <global>
-    plus1000: func [j] [let b: 1000 | b + j]
+    plus1000: func [j] [let b: 1000, b + j]
     did all [
         1020 = plus1000 20
         b = <global>

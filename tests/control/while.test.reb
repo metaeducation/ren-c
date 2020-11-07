@@ -48,7 +48,7 @@
 (
     success: true
     cycle?: true
-    while [cycle?] [cycle?: false continue | success: false]
+    while [cycle?] [cycle?: false, continue, success: false]
     success
 )
 (

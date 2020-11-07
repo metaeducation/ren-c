@@ -162,7 +162,7 @@ make-port*: function [
                             ; it made a tuple with an integer as last value.
                             ;
                             tup: load as text! s1  ; was "textlike" URL!
-                            if all [tuple? tup | integer? last tup] [
+                            if all [tuple? tup, integer? last tup] [
                                 s1: tup
                             ]
                         ]

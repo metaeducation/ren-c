@@ -387,7 +387,7 @@ check-response: function [port] [
                 ]
             ] else [
                 res: check-data port
-                all [not res | state/mode = 'ready] then [
+                all [not res, state/mode = 'ready] then [
                     res: any [
                         awake make event! [type: 'done port: port]
                         awake make event! [type: 'ready port: port]
@@ -414,7 +414,7 @@ check-response: function [port] [
                     state/mode: 'ready
                 ]
             ]
-            all [not res | state/mode = 'ready] then [
+            all [not res, state/mode = 'ready] then [
                 all [
                     find [get head] spec/method else [all [
                         info/response-parsed = 'see-other
@@ -778,7 +778,7 @@ sys/make-scheme [
         reflect: func [port [port!] property [word!]] [
             switch property [
                 'open? [
-                    did all [port/state | open? port/state/connection]
+                    did all [port/state, open? port/state/connection]
                 ]
 
                 'length [

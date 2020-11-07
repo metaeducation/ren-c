@@ -12,7 +12,7 @@
 (
     block: copy [1 2 3 4]
     remove-each i block [
-        all [i > 1 | i < 4]
+        all [i > 1, i < 4]
     ]
     block = [1 4]
 )
@@ -76,7 +76,7 @@
 (
     string: copy "1234"
     remove-each i string [
-        any [i = #"2" | i = #"3"]
+        any [i = #"2", i = #"3"]
     ]
     string = "14"
 )
@@ -120,7 +120,7 @@
 (
     binary: copy #{01020304}
     remove-each i binary [
-        any [i = 2 | i = 3]
+        any [i = 2, i = 3]
     ]
     binary = #{0104}
 )

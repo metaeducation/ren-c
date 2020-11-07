@@ -17,7 +17,7 @@
 ; continue cycle
 (
     success: true
-    loop 1 [continue | success: false]
+    loop 1 [continue, success: false]
     success
 )
 ; zero repetition
@@ -91,7 +91,7 @@
 [
     (did branch: does [if nbreak = n [break] n: n + 1])
 
-    (nbreak: '... n: 0 | blank? loop 0 :branch)
-    (nbreak: '... n: 0 | 3 = loop 3 :branch)
-    (nbreak: 2 n: 0 | null? loop 3 :branch)
+    (nbreak: ('...), n: 0, blank? loop 0 :branch)
+    (nbreak: ('...), n: 0, 3 = loop 3 :branch)
+    (nbreak: 2, n: 0, null? loop 3 :branch)
 ]

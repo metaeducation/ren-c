@@ -87,31 +87,31 @@
 
 (
     res: did parse ser: [x y] [pos: skip skip]
-    all [res | pos = ser]
+    all [res, pos = ser]
 )
 (
     res: did parse ser: [x y] [skip pos: skip]
-    all [res | pos = next ser]
+    all [res, pos = next ser]
 )
 (
     res: did parse ser: [x y] [skip skip pos:]
-    all [res | pos = tail of ser]
+    all [res, pos = tail of ser]
 )
 [#2130 (
     res: did parse ser: [x] [set val pos: word!]
-    all [res | val = 'x | pos = ser]
+    all [res, val = 'x, pos = ser]
 )]
 [#2130 (
     res: did parse ser: [x] [set val: pos: word!]
-    all [res | val = 'x | pos = ser]
+    all [res, val = 'x, pos = ser]
 )]
 [#2130 (
     res: did parse ser: "foo" [copy val pos: skip]
-    all [not res | val = "f" | pos = ser]
+    all [not res, val = "f", pos = ser]
 )]
 [#2130 (
     res: did parse ser: "foo" [copy val: pos: skip]
-    all [not res | val = "f" | pos = ser]
+    all [not res, val = "f", pos = ser]
 )]
 
 ; SEEK INTEGER! (replaces TO/THRU integer!

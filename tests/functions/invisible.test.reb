@@ -84,7 +84,7 @@
     x: 1 + 2 * 3
     elide (y: :x)
 
-    did all [x = 9 | y = 9]
+    did all [x = 9, y = 9]
 )
 (
     unset 'x
@@ -111,11 +111,43 @@
     ]
 )
 
+; ONCE-BAR was an experiment created to see if it could be done, and was
+; thought about putting in the box.  Notationally it was || to correspond as
+; a stronger version of |.  Not only was it not used, but since COMMA! has
+; overtaken the | it no longer makes sense.
+;
+; Keeping as a test of the variadic feature it exercised.
+[
+    (|1|: func [
+        {Barrier that's willing to only run one expression after it}
+
+        return: [<opt> any-value!]
+        right [<opt> <end> any-value! <variadic>]
+        :lookahead [any-value! <variadic>]
+        look:
+    ][
+        take right  ; returned value
+
+        elide any [
+            tail? right,
+            '|1| = look: take lookahead  ; hack...recognize selfs
+        ] else [
+            fail 'right [
+                "|1| expected single expression, found residual of" :look
+            ]
+        ]
+    ]
+    true)
+
+    (7 = (1 + 2 |1| 3 + 4))
+    (error? trap [1 + 2 |1| 3 + 4 5 + 6])
+]
+
 (
     ~empty~ = do [|||]
 )
 (
-    3 = do [1 + 2 ||| 10 + 20 | 100 + 200]
+    3 = do [1 + 2 ||| 10 + 20, 100 + 200]
 )
 (
     ok? trap [reeval (func [x [<end>]] []) ||| 1 2 3]
@@ -129,12 +161,14 @@
 )
 
 
-; BAR! is invisible, and acts as an expression barrier
+; Test expression barrier invisibility
 
 (
-    3 = (1 + 2 |)
+    3 = (1 + 2,)  ; COMMA! barrier
 )(
-    3 = (1 + 2 | comment "invisible")
+    3 = (1 + 2 ||)  ; usermode expression barrier
+)(
+    3 = (1 + 2 comment "invisible")
 )
 
 ; Non-variadic
@@ -161,38 +195,38 @@
         true
     )
 
-    ('no-arg = (trap [right-normal |])/id)
-    (null? do [right-normal* |])
+    ('no-arg = (trap [right-normal ||])/id)
+    (null? do [right-normal* ||])
     (null? do [right-normal*])
 
-    ('no-arg = (trap [| left-normal])/id)
-    (null? do [| left-normal*])
+    ('no-arg = (trap [|| left-normal])/id)
+    (null? do [|| left-normal*])
     (null? do [left-normal*])
 
-    ('no-arg = (trap [| left-defer])/id)
-    (null? do [| left-defer*])
+    ('no-arg = (trap [|| left-defer])/id)
+    (null? do [|| left-defer*])
     (null? do [left-defer*])
 
-    ('| = do [right-soft |])
-    ('| = do [right-soft* |])
+    ('|| = do [right-soft ||])
+    ('|| = do [right-soft* ||])
     (null? do [right-soft*])
 
     ; !!! This was legal at one point, but the special treatment of left
     ; quotes when there is nothing to their right means you now get errors.
     ; It's not clear what the best behavior is, so punting for now.
     ;
-    ('literal-left-path = (trap [<bug> 'left-soft = do [| left-soft]])/id)
-    ('literal-left-path = (trap [<bug> 'left-soft* = do [| left-soft*]])/id)
+    ('literal-left-path = (trap [<bug> 'left-soft = do [|| left-soft]])/id)
+    ('literal-left-path = (trap [<bug> 'left-soft* = do [|| left-soft*]])/id)
     (null? do [left-soft*])
 
-    ('| = do [right-hard |])
-    ('| = do [right-hard* |])
+    ('|| = do [right-hard ||])
+    ('|| = do [right-hard* ||])
     (null? do [right-hard*])
 
     ; !!! See notes above.
     ;
-    ('literal-left-path = (trap [<bug> 'left-hard = do [| left-hard]])/id)
-    ('literal-left-path = (trap [<bug> 'left-hard* = do [| left-hard*]])/id)
+    ('literal-left-path = (trap [<bug> 'left-hard = do [|| left-hard]])/id)
+    ('literal-left-path = (trap [<bug> 'left-hard* = do [|| left-hard*]])/id)
     (null? do [left-hard*])
 ]
 
@@ -226,39 +260,39 @@
 ; fuzzy:
 ; https://github.com/metaeducation/ren-c/issues/1057
 ;
-;    (error? trap [right-normal |])
-;    (error? trap [| left-normal])
+;    (error? trap [right-normal ||])
+;    (error? trap [|| left-normal])
 
-    (null? do [right-normal* |])
+    (null? do [right-normal* ||])
     (null? do [right-normal*])
 
-    (null? do [| left-normal*])
+    (null? do [|| left-normal*])
     (null? do [left-normal*])
 
-    (null? trap [| left-defer])  ; !!! Should likely be an error, as above
-    (null? do [| left-defer*])
+    (null? trap [|| left-defer])  ; !!! Should likely be an error, as above
+    (null? do [|| left-defer*])
     (null? do [left-defer*])
 
-    ('| = do [right-soft |])
-    ('| = do [right-soft* |])
+    ('|| = do [right-soft ||])
+    ('|| = do [right-soft* ||])
     (null? do [right-soft*])
 
     ; !!! This was legal at one point, but the special treatment of left
     ; quotes when there is nothing to their right means you now get errors.
     ; It's not clear what the best behavior is, so punting for now.
     ;
-    ('literal-left-path = (trap [<bug> 'left-soft = do [| left-soft]])/id)
-    ('literal-left-path = (trap [<bug> 'left-soft* = do [| left-soft*]])/id)
+    ('literal-left-path = (trap [<bug> 'left-soft = do [|| left-soft]])/id)
+    ('literal-left-path = (trap [<bug> 'left-soft* = do [|| left-soft*]])/id)
     (null? do [left-soft*])
 
-    ('| = do [right-hard |])
-    ('| = do [right-hard* |])
+    ('|| = do [right-hard ||])
+    ('|| = do [right-hard* ||])
     (null? do [right-hard*])
 
     ; !!! See notes above.
     ;
-    ('literal-left-path = (trap [<bug> 'left-hard = do [| left-hard]])/id)
-    ('literal-left-path = (trap [<bug> 'left-hard* = do [| left-hard*]])/id)
+    ('literal-left-path = (trap [<bug> 'left-hard = do [|| left-hard]])/id)
+    ('literal-left-path = (trap [<bug> 'left-hard* = do [|| left-hard*]])/id)
     (null? do [left-hard*])
 ]
 

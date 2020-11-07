@@ -1,7 +1,7 @@
 ; functions/control/leave.r
 (
     success: true
-    f1: func [return: <void>] [return | success: false]
+    f1: func [return: <void>] [return, success: false]
     f1
     success
 )

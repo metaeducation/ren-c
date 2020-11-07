@@ -25,11 +25,11 @@ verify: function [
             continue
         ]
 
-        any [void? :result | not :result] then [
+        any [void? :result, not :result] then [
             ;
-            ; including bars in the failure report looks messy, skip them
+            ; including commas in the failure report looks messy, skip them
             ;
-            while ['| = first conditions] [conditions: my next]
+            while [', = first conditions] [conditions: my next]
 
             fail 'conditions make error! [
                 type: 'Script

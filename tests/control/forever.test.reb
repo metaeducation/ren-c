@@ -12,7 +12,7 @@
 (
     success: true
     cycle?: true
-    cycle [if cycle? [cycle?: false continue | success: false] break]
+    cycle [if cycle? [cycle?: false, continue, success: false] break]
     success
 )
 ; Test that arity-1 return stops the loop
@@ -31,7 +31,7 @@
         if num = 10 [e: trap [1 / 0] break]
         trap [1 / 0]
     ]
-    all [error? e | num = 10]
+    all [error? e, num = 10]
 )
 ; Recursion check
 (

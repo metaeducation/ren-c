@@ -243,7 +243,7 @@ help: function [
             ] then [
                 return
             ]
-            enfixed: did all [action? :value | enfixed? :value]
+            enfixed: did all [action? :value, enfixed? :value]
         ]
     ] else [
         ; !!! There may be interesting meanings to apply to things like
@@ -260,7 +260,7 @@ help: function [
     ]
 
     ; Open the web page for it?
-    all [doc | match [action! datatype!] :value] then [
+    all [doc, match [action! datatype!] :value] then [
         item: form :topic
         if action? get :topic [
             ;
@@ -355,7 +355,7 @@ help: function [
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
     ; !!! Should refinement args be shown for enfixed case??
     ;
-    all [enfixed | not empty? args] then [
+    all [enfixed, not empty? args] then [
         print [_ _ _ _ args/1 (uppercase mold topic) next args]
     ] else [
         print [_ _ _ _ (uppercase mold topic) args refinements]
@@ -571,7 +571,7 @@ require-commit: function [
     ; If there's a specific ID then assume that if the current build does not
     ; have that ID then there *could* be a problem.
     ;
-    all [id: select c 'id | id <> commit] then [
+    all [id: select c 'id, id <> commit] then [
         print [
             "This script has only been tested again commit" id LF
 

@@ -29,16 +29,6 @@ c-break-debug: :c-debug-break  ; easy to mix up
 
 lit: :literal  ; because it's shorter
 
-|: func* [
-    "Expression barrier - invisible so it vanishes, but blocks evaluation"
-    return: <elide>
-][
-    ; Note: actually *faster* than a native, due to Commenter_Dispatcher()
-]
-
-tweak :| 'barrier on
-
-
 ??:  ; shorthand form to use in debug sessions, not intended to be committed
 probe: func* [
     {Debug print a molded value and returns that same value.}
@@ -148,6 +138,19 @@ nihil: enfixed func* [  ; 0-arg so enfix doesn't matter, but tests issue below
         equal? '=== take remarks
     ]
 ]
+
+; COMMA! is the new expression barrier.  But `||` is included as a redefine of
+; the old `|`, so that the barrier-making properties of a usermode entity can
+; stay tested.  But outside of testing, use `,` instead.
+;
+||: func* [
+    "Expression barrier - invisible so it vanishes, but blocks evaluation"
+    return: <elide>
+][
+    ; Note: actually *faster* than a native, due to Commenter_Dispatcher()
+]
+
+tweak :|| 'barrier on
 
 |||: func* [
     {Inertly consumes all subsequent data, evaluating to previous result.}
@@ -298,6 +301,19 @@ adapt: enclose 'adapt* func* [f] [
 ]
 
 chain: enclose 'chain* func* [f] [
+    ;
+    ; !!! Historically CHAIN supported | for "pipe" but it was really just an
+    ; expression barrier.  Review this idea, but for now let it work in a
+    ; dialect way by replacing with commas.
+    ;
+    f/pipeline: map-each x f/pipeline [
+        either :x = '| [
+            ',
+        ][
+            :x
+        ]
+    ]
+
     let pipeline: f/pipeline: reduce :f/pipeline
     inherit-meta do f pick pipeline 1
 ]
@@ -423,7 +439,7 @@ empty?: func* [
     return: [logic!]
     series [any-series! object! port! bitset! map! blank!]
 ][
-    did any [blank? series | tail? series]
+    did any [blank? series, tail? series]
 ]
 
 

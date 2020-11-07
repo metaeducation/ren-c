@@ -82,7 +82,10 @@ filter-flag: function [
         fail ["Tag must be <prefix:flag> ->" (flag)]
     ]
 
-    return all [prefix = header | to-text option]
+    return all [
+        prefix = header
+        to-text option
+    ]
 ]
 
 run-command: function [
@@ -345,7 +348,10 @@ application-class: make project-class [
     ]
 
     command: method [return: [text!]] [
-        ld: any [linker | default-linker]
+        ld: any [
+            linker
+            default-linker
+        ]
         ld/command
             output
             depends
@@ -372,7 +378,10 @@ dynamic-library-class: make project-class [
         <with>
         default-linker
     ][
-        l: any [linker | default-linker]
+        l: any [
+            linker
+            default-linker
+        ]
         l/command/dynamic
             output
             depends

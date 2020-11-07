@@ -198,7 +198,7 @@
     count: 0
     o: make object! [x: _]
     nuller: function [y] [null]
-    o/(count: count + 1 | first [x]): my nuller
+    o/(count: count + 1, first [x]): my nuller
     did all [
         :o/x = null
         count = 1

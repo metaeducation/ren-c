@@ -38,7 +38,7 @@
 (
     success: true
     x: "a"
-    iterate x [continue | success: false]
+    iterate x [continue, success: false]
     success
 )
 ; zero repetition

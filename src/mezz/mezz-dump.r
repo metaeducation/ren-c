@@ -58,15 +58,15 @@ dump: function [
             ]
 
             word! [
-                print [to set-word! item | val-to-text get item]
+                print [to set-word! item, val-to-text get item]
             ]
 
             path! [
-                print [to set-path! item | val-to-text reduce item]
+                print [to set-path! item, val-to-text reduce item]
             ]
 
             group! [
-                print [unspaced [mold item ":"] | val-to-text reeval item]
+                print [unspaced [mold item ":"], val-to-text reeval item]
             ]
 
             issue! [
@@ -83,14 +83,14 @@ dump: function [
         swp: match [set-word! set-path!] :value [ ; `dump x: 1 + 2`
             pos: evaluate/result extra (lit result:)
             set swp :result
-            print [swp | result]
+            print [swp, result]
         ]
 
         b: match block! :value [
             while [not tail? b] [
                 if swp: match [set-word! set-path!] :b/1 [ ; `dump [x: 1 + 2]`
                     b: evaluate/result b (lit result:)
-                    print [swp | result]
+                    print [swp, result]
                 ] else [
                     dump-one b/1
                     b: next b
@@ -230,7 +230,7 @@ summarize-obj: function [
             type: type of get/any 'val
 
             str: if match [object!] type [
-                spaced [word | words of :val]
+                spaced [word, words of :val]
             ] else [
                 form word
             ]

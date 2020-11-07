@@ -5,8 +5,8 @@
             sum: sum + take x
         ]
     ]
-    y: (z: foo 1 2 3 | 4 5)
-    all [y = 5 | z = 6]
+    y: (z: foo 1 2 3, 4 5)
+    all [y = 5, z = 6]
 )
 (
     foo: func [x [integer! <variadic>]] [make block! x]
@@ -51,7 +51,7 @@
     (1 = do [normal])
     (11 = do [10 normal])
     (21 = do [10 20 normal])
-    (31 = do [x: 30 | y: 'x | 1 2 x normal])
+    (31 = do [x: 30, y: 'x, 1 2 x normal])
     (30 = do [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
 ][
     (
@@ -69,7 +69,7 @@
     (1 = do [defers])
     (11 = do [10 defers])
     (21 = do [10 20 defers])
-    (31 = do [x: 30 | y: 'x | 1 2 x defers])
+    (31 = do [x: 30, y: 'x, 1 2 x defers])
     (28 = do [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
@@ -121,7 +121,7 @@
 
     3 = (value: 1 + 2 <| 30 + 40 x: value  () ())
 
-    did all [value = 3 | x = 3]
+    did all [value = 3, x = 3]
 )
 (
     unset 'value
@@ -140,7 +140,7 @@
 )
 
 (
-    1 = (1 <| 2 | 3 + 4 | 5 + 6)
+    1 = (1 <| 2, 3 + 4, 5 + 6)
 )
 
 ; WATERSHED TEST: This involves the parity of variadics with normal actions,

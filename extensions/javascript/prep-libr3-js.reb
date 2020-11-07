@@ -951,7 +951,10 @@ write/lines output-dir/asyncify-blacklist.json collect-lines [
 
 write output-dir/emterpreter.blacklist.json json-collect [
     map-each-api [
-        all [is-variadic | name != "rebPromise"] then [
+        all [
+            is-variadic
+            name != "rebPromise"
+        ] then [
             ;
             ; Currently, all variadic APIs are variadic because they evaluate.
             ; The exception is rebPromise, which takes its variadic list as

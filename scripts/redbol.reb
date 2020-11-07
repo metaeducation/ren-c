@@ -386,7 +386,7 @@ null: emulate [
 unset!: ~unset!~
 unset?: emulate [:void?]
 
-; NONE is reserved for `if none [x = 1 | y = 2] [...]`
+; NONE is reserved for `if none [x = 1, y = 2] [...]`
 ;
 none: emulate [:blank]
 none!: emulate [:blank!]
@@ -718,7 +718,7 @@ collect: emulate [
         /into "https://forum.rebol.info/t/stopping-the-into-virus/705"
             [any-series!]
     ][
-        let out: any [into | make block! 16]
+        let out: any [into, make block! 16]
 
         let keeper: specialize* (
             enclose* 'insert func* [
@@ -1160,7 +1160,7 @@ bound?: emulate [denuller specialize 'of [property: 'binding]]
 oldsplicer: helper [
     func [action [action!]] [
         adapt :action [
-            all [not only | any-array? series | any-path? :value] then [
+            all [not only, any-array? series, any-path? :value] then [
                 value: as block! value  ; guarantees splicing
             ]
 
@@ -1302,7 +1302,7 @@ write: emulate [
         /as {(Red) Write with the specified encoding, default is 'UTF-8}
             [word!]
     ]) [
-        all [binary? data | not binary] then [
+        all [binary? data, not binary] then [
             fail [
                 {Rebol2 would do LF => CR LF substitution in BINARY! WRITE}
                 {unless you specified /BINARY.  Doing this quietly is a bad}

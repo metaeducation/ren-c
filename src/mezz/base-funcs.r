@@ -495,15 +495,15 @@ unset: redescribe [
 me: enfixed redescribe [
     {Update variable using it as the left hand argument to an enfix operator}
 ](
-    ; /ENFIX so `x: 1 | x: me + 1 * 10` is 20, not 11
+    ; /ENFIX so `x: 1, x: me + 1 * 10` is 20, not 11
     ;
-    specialize 'shove [set: true | prefix: false]
+    specialize 'shove [set: true, prefix: false]
 )
 
 my: enfixed redescribe [
     {Update variable using it as the first argument to a prefix operator}
 ](
-    specialize 'shove [set: true | prefix: true]
+    specialize 'shove [set: true, prefix: true]
 )
 
 
@@ -524,7 +524,7 @@ so: enfixed func [
     ]
     if tail? feed [return]
     feed: take feed
-    all [block? :feed | semiquoted? 'feed] then [
+    all [block? :feed, semiquoted? 'feed] then [
         fail "Don't use literal block as SO right hand side, use ([...])"
     ]
     return :feed
@@ -754,7 +754,7 @@ iterate-back: redescribe [
 count-up: redescribe [
     "Loop the body, setting a word from 1 up to the end value given"
 ](
-    specialize 'for [start: 1 | bump: 1]
+    specialize 'for [start: 1, bump: 1]
 )
 
 count-down: redescribe [
@@ -787,28 +787,6 @@ eval-all: func [
 ]
 
 
-once-bar: func [
-    {Expression barrier that's willing to only run one expression after it}
-
-    return: [<opt> any-value!]
-    right [<opt> <end> any-value! <variadic>]
-    :lookahead [any-value! <variadic>]
-    look:
-][
-    take right  ; returned value
-
-    elide any [
-        tail? right
-            |
-        '|| = look: take lookahead  ; hack...recognize selfs
-    ] else [
-        fail 'right [
-            "|| expected single expression, found residual of" :look
-        ]
-    ]
-]
-
-
 ; These constructs used to be enfix to complete their left hand side.  Yet
 ; that form of completion was only one expression's worth, when they wanted
 ; to allow longer runs of evaluation.  "Invisible functions" (those which
@@ -816,7 +794,6 @@ once-bar: func [
 
 <|: tweak copy :eval-all 'postpone on
 |>: tweak enfixed :shove 'postpone on
-||: :once-bar
 
 
 meth: enfixed func [
@@ -1101,7 +1078,7 @@ fail: func [
         ; If no specific location specified, and error doesn't already have a
         ; location, make it appear to originate from the frame calling FAIL.
         ;
-        where: default [any [frame | binding of 'return]]
+        where: default [any [frame, binding of 'return]]
 
         set-location-of-error error where  ; !!! why is this native?
     ]

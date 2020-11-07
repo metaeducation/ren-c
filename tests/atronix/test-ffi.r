@@ -60,6 +60,6 @@ time: make routine! compose [[t [pointer] return: [int64]] (libc) "time"]
 print ["time:" time (reflect time_t 'addr)]
 localtime_r: make routine! compose [[t [pointer] tm [pointer] return: [int64]] (libc) "localtime_r"]
 
-print ["localtime:" localtime_r | reflect time_t 'addr | reflect tm 'addr]
+print ["localtime:" localtime_r, reflect time_t 'addr, reflect tm 'addr]
 
 print ["tm:" mold tm]

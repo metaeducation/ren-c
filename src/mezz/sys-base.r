@@ -101,7 +101,7 @@ do*: func [
     ; If a file is being mentioned as a DO location and the "current path"
     ; is a URL!, then adjust the source to be a URL! based from that path.
     ;
-    if all [url? original-path | file? source] [
+    if all [url? original-path, file? source] [
          source: join original-path source
     ]
 

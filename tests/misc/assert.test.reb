@@ -7,9 +7,9 @@
     e: trap [assert [1 = 2]]
     e/id = 'assertion-failure
 )(
-    null? e: trap [assert [1 = 1 | 2 = 2]]
+    null? e: trap [assert [1 = 1, 2 = 2]]
 )(
-    e: trap [assert [1 = 1 | 304 = 1020]]
+    e: trap [assert [1 = 1, 304 = 1020]]
     e/id = 'assertion-failure
 )(
     10 = all [

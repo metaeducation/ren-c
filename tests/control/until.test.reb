@@ -12,7 +12,7 @@
 (
     success: true
     cycle?: true
-    until [if cycle? [cycle?: false continue | success: false] true]
+    until [if cycle? [cycle?: false, continue, success: false] true]
     success
 )
 ; Test that return stops the loop

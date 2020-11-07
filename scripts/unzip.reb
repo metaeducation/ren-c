@@ -225,7 +225,7 @@ ctx-zip: context [
         offset: num-entries: 0
         central-directory: copy #{}
 
-        all [not only | file? source | dir? source] then [
+        all [not only, file? source, dir? source] then [
             root: source
             source: read source
         ] else [
@@ -240,9 +240,9 @@ ctx-zip: context [
                 name
             ] else [root/:name]
 
-            no-modes: did any [url? root+name | dir? root+name]
+            no-modes: did any [url? root+name, dir? root+name]
 
-            all [deep | dir? name] then [
+            all [deep, dir? name] then [
                 name: dirize name
                 files: ensure block! read root+name
                 for-each file files [
@@ -317,7 +317,7 @@ ctx-zip: context [
         /quiet "Don't lists files while decompressing"
     ][
         num-errors: 0
-        info: all [quiet | not verbose] then [:elide] else [:print]
+        info: all [quiet, not verbose] then [:elide] else [:print]
 
         if not block? where [
             where: my dirize

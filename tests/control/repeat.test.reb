@@ -21,17 +21,17 @@
 ; continue cycle
 (
     success: true
-    repeat i 1 [continue | success: false]
+    repeat i 1 [continue, success: false]
     success
 )
 (
     success: true
-    repeat i "a" [continue | success: false]
+    repeat i "a" [continue, success: false]
     success
 )
 (
     success: true
-    repeat i [a] [continue | success: false]
+    repeat i [a] [continue, success: false]
     success
 )
 ; decimal! test

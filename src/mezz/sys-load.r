@@ -189,7 +189,7 @@ load-header: function [
         append hdr compose [content (data)]  ; as of start of header
     ]
 
-    if 10 = rest/1 [rest: next rest | line: me + 1]  ; skip LF
+    if 10 = rest/1 [rest: next rest, line: me + 1]  ; skip LF
 
     if integer? tmp: select hdr 'length [
         end: skip rest tmp
@@ -283,7 +283,7 @@ load: function [
     ; Note that IMPORT has its own loader, and does not use LOAD directly.
     ; /TYPE with anything other than 'EXTENSION disables extension loading.
 
-    all [header | all_LOAD] then [
+    all [header, all_LOAD] then [
         fail "Cannot use /ALL and /HEADER refinements together"
     ]
 
@@ -502,7 +502,7 @@ do-needs: function [
         ]
 
         ; Collect any mixins into the object (if we are doing that)
-        if all [set? 'mixins | mixin? mod] [
+        if all [set? 'mixins, mixin? mod] [
             resolve/extend/only mixins mod select meta-of mod 'exports
         ]
         mod
@@ -578,7 +578,7 @@ load-module: func [
 
             ; If no further processing is needed, shortcut return
 
-            all [not version | any [delay | module? :mod]] then [
+            all [not version, any [delay, module? :mod]] then [
                 return reduce [source (try match module! :mod)]
             ]
         ]
@@ -774,7 +774,7 @@ load-module: func [
                 pos: _   ; just override, don't replace
                 if ver0 >= modver [
                     ; it's at least as new, use it instead
-                    mod: mod0 | hdr: hdr0 | code: _
+                    mod: mod0, hdr: hdr0, code: _
                     modver: ver0
                     override?: false
                 ]
@@ -795,7 +795,7 @@ load-module: func [
         mod: _   ; don't need/want the block reference now
     ]
 
-    all [version | version > modver] then [
+    all [version, version > modver] then [
         cause-error 'syntax 'needs reduce [name version]
     ]
 
@@ -897,7 +897,7 @@ import: function [
     ; is forced to `import <mod2>`
     ;
     if tag? module [set 'force-remote-import true]
-    if all [force-remote-import | word? module] [
+    if all [force-remote-import, word? module] [
         module: to tag! module
     ]
     if tag? module [

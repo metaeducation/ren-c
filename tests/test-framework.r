@@ -59,7 +59,7 @@ make object! compose [
             )
 
             error [
-                spaced ["error" any [to text! error/id | "w/no ID"]]
+                spaced ["error" any [to text! error/id, "w/no ID"]]
             ]
 
             undefined? 'result [

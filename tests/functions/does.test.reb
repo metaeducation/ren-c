@@ -47,11 +47,11 @@
     x: 10
     y: 20
     flag: true
-    z: does all [x: x + 1 | flag | y: y + 2 | <finish>]
+    z: does all [x: x + 1, flag, y: y + 2, <finish>]
     did all [
-        z = <finish> | x = 11 | y = 22
+        z = <finish>, x = 11, y = 22
         elide (flag: false)
-        z = null | x = 12 | y = 22
+        z = null, x = 12, y = 22
     ]
 )
 

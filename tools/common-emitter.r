@@ -139,14 +139,24 @@ cscape: function [
             sub: default [copy "/* _ */"]  ; replaced in post phase
 
             case [
-                all [any-upper | not any-lower] [uppercase sub]
-                all [any-lower | not any-upper] [lowercase sub]
+                all [
+                    any-upper
+                    not any-lower
+                ] [uppercase sub]
+
+                all [
+                    any-lower
+                    not any-upper
+                ] [lowercase sub]
             ]
 
             ; If the substitution started at a certain column, make any line
             ; breaks continue at the same column.
             ;
-            indent: unspaced collect [keep newline | keep prefix]
+            indent: unspaced collect [
+                keep newline
+                keep prefix
+            ]
             replace/all sub newline indent
 
             keep sub
@@ -172,7 +182,10 @@ cscape: function [
                 ; IF deprecated in Ren-C, but :(...) with logic not available
                 ; in the bootstrap build.
                 ;
-                if (did all [not nonwhite | removed])
+                if (did all [
+                    not nonwhite
+                    removed
+                ])
 
                 :start-line remove thru [newline | end]
                 |
@@ -217,7 +230,10 @@ make-emitter: function [
 
     stem: second split-path file
 
-    temporary: did any [temporary | parse stem ["tmp-" to end]]
+    temporary: did any [
+        temporary
+        parse stem ["tmp-" to end]
+    ]
 
     is-c: did parse stem [thru [".c" | ".h" | ".inc"] end]
 

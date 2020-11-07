@@ -109,8 +109,8 @@ elf-format: context [
     mode: _
     handler: function [name [word!] num-bytes [integer!]] [
         assert [
-            binary? begin | num-bytes <= length of begin
-            | find [read write] mode
+            binary? begin, num-bytes <= length of begin,
+            find [read write] mode
         ]
 
         either mode = 'read [
@@ -825,7 +825,7 @@ pe-format: context [
         reset
         parse exe-data exe-rule
         if err [
-            fail ["err:" err | "at:" copy/part fail-at 16]
+            fail ["err:" err, "at:" copy/part fail-at 16]
         ]
         true
     ]
@@ -1081,7 +1081,7 @@ pe-format: context [
         ]
         insert pos section-data
 
-        return (head of exe-data | elide reset)
+        return (head of exe-data, elide reset)
     ]
 
     remove-section: function [
@@ -1140,7 +1140,7 @@ pe-format: context [
 
         remove/part skip exe-data target-sec/physical-offset target-sec/physical-size
 
-        return (head of exe-data | elide reset)
+        return (head of exe-data, elide reset)
     ]
 
     update-embedding: specialize 'update-section [section-name: encap-section-name]
@@ -1151,7 +1151,7 @@ pe-format: context [
         ;print ["Geting embedded from" mold file]
         exe-data: read file
 
-        return (find-section/data exe-data encap-section-name | elide reset)
+        return (find-section/data exe-data encap-section-name, elide reset)
     ]
 ]
 
@@ -1312,7 +1312,7 @@ encap: function [
 
     ; !!! Currently only test the extraction for single-file, easier.
     ;
-    all [single-script | embed != extracted: get-encap out-rebol-path] then [
+    all [single-script, embed != extracted: get-encap out-rebol-path] then [
         print ["Test extraction size:" length of extracted]
         print ["Embedded bytes" mold embed]
         print ["Extracted bytes" mold extracted]
@@ -1339,11 +1339,9 @@ get-encap: function [
     ]
 
     compressed-data: any [
-        elf-format/get-embedding rebol-path
-            |
-        pe-format/get-embedding rebol-path
-            |
-        generic-format/get-embedding rebol-path
+        , elf-format/get-embedding rebol-path
+        , pe-format/get-embedding rebol-path
+        , generic-format/get-embedding rebol-path
     ] else [
         return blank
     ]

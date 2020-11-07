@@ -152,7 +152,7 @@
 
             all [
                 not start
-                any [tail? iter | new-line? iter]
+                any [tail? iter, new-line? iter]
             ] then [
                 fail ["Transcode produced unexpected results for:" text]
             ]

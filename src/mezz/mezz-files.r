@@ -20,7 +20,7 @@ clean-path: function [
     /dir "Add a trailing / if missing"
 ][
     file: case [
-        any [only | not file? file] [
+        any [only, not file? file] [
             copy file
         ]
 
@@ -42,7 +42,7 @@ clean-path: function [
         append what-dir file
     ]
 
-    all [dir | not dir? file] then [append file #"/"]
+    all [dir, not dir? file] then [append file #"/"]
 
     out: make type of file length of file ; same datatype
     count: 0 ; back dir counter
@@ -52,7 +52,7 @@ clean-path: function [
             "../" (count: me + 1)
             | "./"
             | "/" (
-                any [not file? file | #"/" <> last out] then [
+                any [not file? file, #"/" <> last out] then [
                     append out #"/"
                 ]
             )
@@ -69,7 +69,7 @@ clean-path: function [
         end
     ]
 
-    all [#/ = last out | #/ <> last file] then [
+    all [#/ = last out, #/ <> last file] then [
         remove back tail of out
     ]
 
@@ -294,8 +294,8 @@ list-dir: function [
 
     for-each file files [
         any [
-            all [f | dir? file]
-            all [d | not dir? file]
+            all [f, dir? file]
+            all [d, not dir? file]
         ] then [
             continue
         ]
@@ -308,13 +308,13 @@ list-dir: function [
             info: get (words of query file)
             change info second split-path info/1
             printf [i 16 -8 #" " 24 #" " 6] info
-            if all [r | dir? file] [
+            if all [r, dir? file] [
                 list-dir/l/r/i :file join i "    "
             ]
         ]
     ]
 
-    all [text? l | not empty? l] then [print l]
+    all [text? l, not empty? l] then [print l]
 
     change-dir save-dir
 ]

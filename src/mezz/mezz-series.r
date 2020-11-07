@@ -509,7 +509,7 @@ collect-lines: redescribe [
 ] adapt 'collect [  ; https://forum.rebol.info/t/945/1
     body: compose [
         keep: adapt* specialize* 'keep [
-            line: true | only: false | part: _
+            line: true, only: false, part: _
         ] [value: spaced try :value]
         (as group! body)
     ]
@@ -522,7 +522,7 @@ collect-text: redescribe [
     adapt 'collect [
         body: compose [
             keep: adapt* specialize* 'keep [
-                line: false | only: false | part: _
+                line: false, only: false, part: _
             ][
                 value: unspaced try :value
             ]
@@ -724,8 +724,8 @@ find-all: function [
 ][
     verify [any-series? orig: get series]
     while [any [
-        | set series find get series :value
-        | (set series orig | false)  ; reset series and break loop
+        , set series find get series :value
+        , (set series orig, false)  ; reset series and break loop
     ]][
         do body
         series: next series

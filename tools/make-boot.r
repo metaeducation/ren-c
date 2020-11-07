@@ -90,7 +90,10 @@ args: any [
     fail "No platform specified."
 ]
 
-product: to-word any [try get 'args/PRODUCT | "core"]
+product: to-word any [
+    try get 'args/PRODUCT
+    "core"
+]
 
 platform-data: context [type: 'windows]
 build: context [features: [help-strings]]
@@ -526,8 +529,8 @@ change at-value build now/utc
 change at-value product quote to word! product
 
 change/only at-value platform reduce [
-    any [config/platform-name | "Unknown"]
-    any [config/build-label | ""]
+    any [config/platform-name "Unknown"]
+    any [config/build-label ""]
 ]
 
 ob: make object! boot-sysobj

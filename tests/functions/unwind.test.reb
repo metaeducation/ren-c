@@ -1,14 +1,14 @@
 ; UNWIND allows one to name specific stack levels to jump up to
 ; and return a value from.  It uses the same mechanism as RETURN
 
-(<good> = if 1 < 2 [reeval does [reduce [unwind :if <good> | <bad1>] <bad2>]])
+(<good> = if 1 < 2 [reeval does [reduce [unwind :if <good>, <bad1>] <bad2>]])
 
 ; UNWIND the IF should stop the loop
 (
     cycle?: true
     f1: does [
         if 1 < 2 [
-            while [cycle?] [cycle?: false | unwind :if]
+            while [cycle?] [cycle?: false, unwind :if]
             <bad>
         ]
         <good>

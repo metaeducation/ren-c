@@ -116,7 +116,7 @@ make-dir: func [
 
     if exists? path [return path]
 
-    any [not deep | url? path] then [
+    any [not deep, url? path] then [
         create path
         return path
     ]
@@ -201,8 +201,7 @@ split-path: func [
         [#"/" | 1 2 #"." opt #"/"] end (dir: dirize target) |
         pos: any [thru #"/" [end | pos:]] (
             all [
-                empty? dir: copy/part target at head of target index of pos
-                    |
+                empty? dir: copy/part target (at head of target index of pos),
                 dir: %./
             ]
             all [find [%. %..] pos: to file! pos insert tail of pos #"/"]

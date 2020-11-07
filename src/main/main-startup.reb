@@ -250,14 +250,14 @@ main-startup: function [
     ][
         switch type of item [
             issue! [
-                if not empty? instruction [append/line instruction '|]
+                if not empty? instruction [append/line instruction ',]
                 insert instruction item
             ]
             text! [
                 append/line instruction compose [comment (item)]
             ]
             block! [
-                if not empty? instruction [append/line instruction '|]
+                if not empty? instruction [append/line instruction ',]
                 append/line instruction compose/deep <*> item
             ]
             unreachable
@@ -698,7 +698,7 @@ main-startup: function [
     ; As long as there was no `--script` or `--do` passed on the command line
     ; explicitly, the first item after the options is implicitly the script.
     ;
-    all [is-script-implicit | not tail? argv] then [
+    all [is-script-implicit, not tail? argv] then [
         o/script: local-to-file take argv
         quit-when-done: default [true]
     ]
@@ -816,7 +816,7 @@ main-startup: function [
                 args: script-args
             ]
             if 'module = select first code 'type [
-                code: reduce [first code | next code]
+                code: reduce [first code, next code]
                 if object? tmp: sys/do-needs/no-user first code [
                     append code tmp
                 ]
