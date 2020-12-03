@@ -3,7 +3,7 @@ REBOL [
     Title: "Zip and Unzip Services"
     Rights: {
         Copyright 2009 Vincent Ecuyer
-        Copyright 2009-2018 Rebol Open Source Contributors
+        Copyright 2009-2020 Rebol Open Source Contributors
         REBOL is a trademark of REBOL Technologies
 
         See README.md and CREDITS.md for more information.
@@ -59,7 +59,6 @@ ctx-zip: context [
         copy skip to binary! checksum/method data 'crc32 4
     ]
 
-    ;signatures
     local-file-sig: #{504B0304}
     central-file-sig: #{504B0102}
     end-of-central-sig: #{504B0506}
@@ -161,12 +160,12 @@ ctx-zip: context [
 
         compressed-data: deflate data
 
-        if length of compressed-data < length of data [
+        if (length of compressed-data) < (length of data) [
             method: 'deflate
         ] else [
-            method: 'store ;-- deflating didn't help
+            method: 'store  ; deflating didn't help
 
-            clear compressed-data ;-- !!! doesn't reclaim memory (...FREE ?)
+            clear compressed-data  ; !!! doesn't reclaim memory (...FREE ?)
             compressed-data: data
         ]
 
@@ -176,43 +175,46 @@ ctx-zip: context [
             ; local file entry
             join-all [
                 local-file-sig
-                #{0000} ; version
-                #{0000} ; flags
-                really switch method ['store [#{0000}] 'deflate [#{0800}]]
+                #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
+                #{0000}  ; flags
+                switch method ['store [#{0000}] 'deflate [#{0800}] fail]
                 to-msdos-time date/time
                 to-msdos-date date/date
-                crc     ; crc-32
+                crc  ; crc-32
                 compressed-size
                 uncompressed-size
-                to-ishort length of name ; filename length
-                #{0000} ; extrafield length
-                name    ; filename
-                        ; no extrafield
+                to-ishort length of name  ; filename length
+                #{0000}  ; extrafield length
+                name  ; filename
+                comment <extrafield>  ; not used
                 compressed-data
             ]
 
-            ; central-dir file entry
+            ; central-dir file entry.  note that the file attributes are
+            ; interpreted based on the OS of origin--can't say Amiga :-(
+            ;
             join-all [
                 central-file-sig
-                #{0000} ; version source
-                #{0000} ; version min
-                #{0000} ; flags
-                really switch method ['store [#{0000}] 'deflate [#{0800}]]
+                #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
+                #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
+                #{0A00}  ; minimum spec version for decoder (#{0A00}=1.0)
+                #{0000}  ; flags
+                switch method ['store [#{0000}] 'deflate [#{0800}] fail]
                 to-msdos-time date/time
                 to-msdos-date date/date
-                crc     ; crc-32
+                crc  ; crc-32
                 compressed-size
                 uncompressed-size
-                to-ishort length of name ; filename length
-                #{0000} ; extrafield length
-                #{0000} ; filecomment length
-                #{0000} ; disknumber start
-                #{0000} ; internal attributes
-                #{00000000} ; external attributes
-                to-ilong offset ; header offset
-                name    ; filename
-                        ; extrafield
-                        ; comment
+                to-ishort length of name  ; filename length
+                #{0000}  ; extrafield length
+                #{0000}  ; filecomment length
+                #{0000}  ; disknumber start
+                #{0100}  ; internal attributes (Mac puts #{0100} vs. #{0000})
+                #{0000A481}  ; external attributes, this is `-rw-r--r--`
+                to-ilong offset  ; header offset
+                name  ; filename
+                comment <extrafield>  ; not used
+                comment <filecomment>  ; not used
             ]
         ]
     ]
@@ -234,7 +236,7 @@ ctx-zip: context [
     ]
 
     zip: function [
-        {Builds a zip archive from a file or block of files.}
+        {Builds a ZIP archive from a file or block of files.}
         return: [integer!]
             {Number of entries in archive.}
         where [file! url! binary! text!]
@@ -257,7 +259,7 @@ ctx-zip: context [
         offset: num-entries: 0
         central-directory: copy #{}
 
-        if not only and [all [file? source | dir? source]] [
+        if (not only) and [all [file? source | dir? source]] [
             root: source
             source: read source
         ] else [
@@ -284,7 +286,7 @@ ctx-zip: context [
             ]
 
             num-entries: num-entries + 1
-            date: now ;; !!! Each file gets a slightly later compression date?
+            date: now  ; !!! Each file gets a slightly later compression date?
 
             ; is next one data or filename?
             data: if match [file! url! blank!] try :source/2 [
@@ -316,22 +318,22 @@ ctx-zip: context [
         append where join-all [
             central-directory
             end-of-central-sig
-            #{0000} ; disk num
-            #{0000} ; disk central dir
-            to-ishort num-entries ; num entries disk
-            to-ishort num-entries ; num entries
+            #{0000}  ; disk num
+            #{0000}  ; disk central dir
+            to-ishort num-entries  ; num entries disk
+            to-ishort num-entries  ; num entries
             to-ilong length of central-directory
-            to-ilong offset ; offset of the central directory
-            #{0000} ; zip file comment length
-                    ; zip file comment
+            to-ilong offset  ; offset of the central directory
+            #{0000}  ; zip file comment length
+            comment <zipfilecomment>  ; not used
         ]
         if port? where [close where]
         return num-entries
     ]
 
     unzip: function [
-        {Decompresses a zip archive with to a directory or a block.}
-        where  [file! url! any-array!]
+        {Decompresses a ZIP archive with to a directory or a block.}
+        where [file! url! any-array!]
             "Where to decompress it"
         source [file! url! binary!]
             "Archive to decompress (only STORE and DEFLATE methods supported)"
@@ -456,12 +458,14 @@ ctx-zip: context [
                                 make-dir/deep where/:path
                             ]
                             if uncompressed-data [
-                                write where/:name
-                                    uncompressed-data
-;not supported in R3 yet :-/
-;                                set-modes where/:name [
-;                                    modification-date: date
-;                                ]
+                                write where/:name uncompressed-data
+
+                                ; !!! R3-Alpha didn't support SET-MODES
+                                comment [
+                                    set-modes where/:name [
+                                        modification-date: date
+                                    ]
+                                ]
                             ]
                         ]
                     ]

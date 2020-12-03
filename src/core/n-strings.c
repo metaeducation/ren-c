@@ -337,15 +337,17 @@ REBNATIVE(deflate)
         bp = BIN_AT(temp, offset);
     }
 
-    REBSTR *envelope = nullptr;
-    if (REF(envelope)) {
+    REBSTR *envelope;
+    if (not REF(envelope))
+        envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
+    else {
         envelope = VAL_WORD_SPELLING(ARG(format));
         switch (STR_SYMBOL(envelope)) {
-        case SYM_ZLIB:
-        case SYM_GZIP:
+          case SYM_ZLIB:
+          case SYM_GZIP:
             break;
 
-        default:
+          default:
             fail (Error_Invalid(ARG(format)));
         }
     }
@@ -400,19 +402,18 @@ REBNATIVE(inflate)
     REBCNT len = Part_Len_May_Modify_Index(data, ARG(limit));
     UNUSED(REF(part)); // checked by if limit is nulled
 
-    REBSTR *envelope = nullptr;
-    if (not REF(envelope)) {
-        // use default
-    }
-    else if (REF(envelope)) {
+    REBSTR *envelope;
+    if (not REF(envelope))
+        envelope = Canon(SYM_NONE);  // Note: nullptr is gzip (for bootstrap)
+    else {
         switch (VAL_WORD_SYM(ARG(format))) {
-        case SYM_ZLIB:
-        case SYM_GZIP:
-        case SYM_DETECT:
+          case SYM_ZLIB:
+          case SYM_GZIP:
+          case SYM_DETECT:
             envelope = VAL_WORD_SPELLING(ARG(format));
             break;
 
-        default:
+          default:
             fail (Error_Invalid(ARG(format)));
         }
     }
