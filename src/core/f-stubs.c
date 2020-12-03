@@ -188,9 +188,12 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 {
     REBI64 n;
     if (IS_DECIMAL(val)) {
-        if (VAL_DECIMAL(val) > INT64_MAX or VAL_DECIMAL(val) < INT64_MIN)
+        if (
+            VAL_DECIMAL(val) > cast(REBDEC, INT64_MAX)
+            or VAL_DECIMAL(val) < cast(REBDEC, INT64_MIN)
+        ){
             fail (Error_Out_Of_Range(val));
-
+        }
         n = cast(REBI64, VAL_DECIMAL(val));
     }
     else

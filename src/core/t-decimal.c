@@ -170,7 +170,7 @@ REB_R MAKE_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         goto dont_divide_if_percent;
 
     case REB_TIME:
-        d = VAL_NANO(arg) * NANO;
+        d = cast(REBDEC, VAL_NANO(arg)) * NANO;
         break;
 
     case REB_TEXT: {

@@ -603,13 +603,13 @@ REBTYPE(Time)
                 goto fixTime;
 
             case SYM_MULTIPLY:
-                secs = cast(int64_t, secs * dec);
+                secs = cast(int64_t, cast(REBDEC, secs) * dec);
                 goto setTime;
 
             case SYM_DIVIDE:
                 if (dec == 0.0)
                     fail (Error_Zero_Divide_Raw());
-                secs = cast(int64_t, secs / dec);
+                secs = cast(int64_t, cast(REBDEC, secs) / dec);
                 goto setTime;
 
 //          case SYM_REMAINDER:

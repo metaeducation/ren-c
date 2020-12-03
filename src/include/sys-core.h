@@ -510,7 +510,7 @@ typedef int cmp_t(void *, const void *, const void *);
 extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 #define ROUND_TO_INT(d) \
-    cast(int32_t, floor((MAX(INT32_MIN, MIN(INT32_MAX, d))) + 0.5))
+    cast(int32_t, floor((MAX(cast(REBD32, INT32_MIN), MIN(cast(REBD32, INT32_MAX), d))) + 0.5))
 
 
 

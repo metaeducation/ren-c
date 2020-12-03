@@ -295,8 +295,8 @@ void Value_To_Int64(REBVAL *out, const REBVAL *value, bool no_sign)
             DECLARE_LOCAL (d);
             if (Scan_Decimal(d, bp, size, true)) {
                 if (
-                    VAL_DECIMAL(d) < INT64_MAX
-                    && VAL_DECIMAL(d) >= INT64_MIN
+                    VAL_DECIMAL(d) < cast(REBDEC, INT64_MAX)
+                    && VAL_DECIMAL(d) >= cast(REBDEC, INT64_MIN)
                 ){
                     Init_Integer(out, cast(REBI64, VAL_DECIMAL(d)));
                     goto check_sign;

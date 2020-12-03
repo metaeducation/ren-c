@@ -5354,7 +5354,7 @@ static unsigned filter(unsigned char* out, const unsigned char* in, unsigned w, 
         sum[type] = 0;
         for(x = 0; x != 256; ++x)
         {
-          float p = count[x] / (float)(linebytes + 1);
+          float p = (float)count[x] / (float)(linebytes + 1);
           sum[type] += count[x] == 0 ? 0 : flog2(1 / p) * p;
         }
         /*check if this is smallest sum (or if type == 0 it's the first case so always store the values)*/
