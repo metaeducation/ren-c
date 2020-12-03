@@ -557,7 +557,7 @@ make-obj-defs: function [
     depth
     /selfless
 ][
-    items: try collect [
+    items: collect [
         either selfless [
             n: 1
         ][

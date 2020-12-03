@@ -215,7 +215,7 @@ trim: function [
         if any [head_TRIM tail_TRIM auto lines all_TRIM with] [
             fail "Invalid refinements for TRIM of ANY-CONTEXT!"
         ]
-        trimmed: make (type of series) collect-block [
+        trimmed: make (type of series) collect [
             for-each [key val] series [
                 if something? :val [keep key]
             ]

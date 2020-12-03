@@ -27,7 +27,7 @@ spec-of: function [
         meta-of :adaptee
     ]
 
-    return collect-block [
+    return collect [
         keep/line ensure* text! any [
             select meta 'description
             select original-meta 'description

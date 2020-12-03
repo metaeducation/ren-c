@@ -467,7 +467,7 @@ ext-console-impl: function [
     ; BLOCK! code execution represents an instruction sent by the console to
     ; itself.  Some #directives may be at the head of these blocks.
     ;
-    directives: try collect [
+    directives: collect [
         if block? prior [
             parse prior [some [set i: issue! (keep i)] end]
         ]

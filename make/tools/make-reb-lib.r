@@ -75,7 +75,7 @@ emit-proto: func [return: <void> proto] [
         fail ["API declaration should be a SET-WORD!, not" (header/1)]
     ]
 
-    paramlist: collect-block [
+    paramlist: collect [
         parse proto [
             copy returns to "RL_" "RL_" copy name to "(" skip
             ["void)" | some [ ;-- C void, or at least one parameter expected
@@ -646,7 +646,7 @@ map-each-api [
         fail ["No JavaScript return mapping for type" returns]
     ]
 
-    js-param-types: try collect [
+    js-param-types: collect [
         for-each [type var] paramlist [
             if type = "intptr_t" [ ;-- e.g. <promise>
                 keep "'number'"

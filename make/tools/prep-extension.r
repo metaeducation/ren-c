@@ -117,7 +117,7 @@ natdef: make object! [
 
 ; === PARSE NATIVES INTO NATIVE-DEFINITION OBJECTS, CHECKING FOR VALIDITY ===
 
-native-defs: try collect [
+native-defs: collect [
     native-rule: [
         (
             n-export: _
@@ -230,7 +230,7 @@ for-each native native-defs [
 specs-compressed: gzip (specs-uncompressed: to-binary mold/only native-list)
 
 
-names: try collect [
+names: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item
@@ -239,7 +239,7 @@ names: try collect [
     ]
 ]
 
-native-forward-decls: try collect [
+native-forward-decls: collect [
     for-each item native-list [
         if set-word? item [
             item: to word! item

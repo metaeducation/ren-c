@@ -805,7 +805,7 @@ switch: emulate [redescribe [
 ](
     chain [
         adapt 'switch [
-            cases: try collect [
+            cases: collect [
                 for-each c cases [
                     keep/only either block? :c [:c] [uneval :c]
                 ]
