@@ -91,11 +91,13 @@ cscape: function [
                 |
             skip (col: col + 1)
         ]] end
-    ] else [return string]
+    ]
+
+    if empty? list [return string]
 
     list: unique/case list
 
-    substitutions: try collect [
+    substitutions: collect [
         for-each item list [
             set [pattern: col: mode: expr: prefix: suffix:] item
 
@@ -120,10 +122,10 @@ cscape: function [
                     ]
                 ]
                 mode = #unspaced [
-                    either block? sub [unspaced sub] [form sub]
+                    try either block? sub [unspaced sub] [form sub]
                 ]
                 mode = #delimit [
-                    delimit (unspaced [suffix newline]) sub
+                    try delimit (unspaced [suffix newline]) sub
                 ]
                 fail ["Invalid CSCAPE mode:" mode]
             ] or [

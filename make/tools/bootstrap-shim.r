@@ -65,6 +65,9 @@ print "== SHIMMING OLDER R3 TO MODERN LANGUAGE DEFINITIONS =="
 applique: :apply
 unset 'apply
 
+collect*: :collect
+collect: :collect-block
+
 modernize-action: function [
     "Account for the <blank> annotation as a usermode feature"
     return: [block!]
@@ -72,7 +75,7 @@ modernize-action: function [
     body [block!]
 ][
     blankers: copy []
-    spec: collect-block [
+    spec: collect [
         iterate spec [
             ;
             ; Find ANY-WORD!s (args/locals)
