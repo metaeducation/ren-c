@@ -31,7 +31,7 @@
 //
 //      return: "New array or value"
 //          [<opt> any-value!]
-//      :predicate "Applied after evaluation, default is .IDENTITY"
+//      'predicate "Applied after evaluation, default is .IDENTITY"
 //          [<skip> predicate! action!]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [any-value!]
@@ -443,9 +443,9 @@ REB_R Compose_To_Stack_Core(
 //  {Evaluates only contents of GROUP!-delimited expressions in an array}
 //
 //      return: [blackhole! any-array! any-path! any-word! action!]
-//      :predicate [<skip> action!]  ; !!! PATH! may be meant as value (!)
+//      'predicate [<skip> action!]  ; !!! PATH! may be meant as value (!)
 //          "Function to run on composed slots (default: ENBLOCK)"
-//      :label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
+//      'label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [<skip> tag! file!]
 //      value "The template to fill in (no-op if WORD!, ACTION! or SPACE!)"
 //          [blackhole! any-array! any-path! any-word! action!]

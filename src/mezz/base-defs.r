@@ -133,7 +133,7 @@ nihil: enfixed func* [  ; 0-arg so enfix doesn't matter, but tests issue below
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
-===: func* [:remarks [any-value! <variadic>]] [
+===: func* ['remarks [any-value! <variadic>]] [
     until [
         equal? '=== take remarks
     ]

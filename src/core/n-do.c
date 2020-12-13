@@ -79,9 +79,9 @@ REBNATIVE(reeval)
 //
 //      return: [<opt> any-value!]
 //          "REVIEW: How might this handle shoving enfix invisibles?"
-//      'left [<end> <opt> any-value!]
+//      :left [<end> <opt> any-value!]
 //          "Requests parameter convention based on enfixee's first argument"
-//      :right [<variadic> <end> any-value!]
+//      'right [<variadic> <end> any-value!]
 //          "(uses magic -- SHOVE can't be written easily in usermode yet)"
 //      /prefix "Force either prefix or enfix behavior (vs. acting as is)"
 //          [logic!]

@@ -590,12 +590,12 @@ void MF_Varargs(REB_MOLD *mo, REBCEL(const*) v, bool form) {
             break;
 
         case REB_P_HARD_QUOTE:
-            kind = REB_GET_WORD;
+            kind = REB_WORD;
+            quoted = true;
             break;
 
         case REB_P_SOFT_QUOTE:
-            kind = REB_WORD;
-            quoted = true;
+            kind = REB_GET_WORD;
             break;
 
         default:

@@ -73,7 +73,7 @@
     (28 = do [multiply 3 9 defers])  ; seen as (multiply 3 9) defers))
 ][
     (
-        soft: enfixed function ['v [any-value! <variadic>]] [
+        soft: enfixed function [:v [any-value! <variadic>]] [
             collect [
                 while [not tail? v] [
                     keep/only take v
@@ -183,8 +183,8 @@
 
         return: "Input if it matched, otherwise null (void if falsey match)"
             [<opt> any-value!]
-        :args [<opt> any-value! <variadic>]
-        :args-normal [<opt> any-value! <variadic>]
+        'args [<opt> any-value! <variadic>]
+        'args-normal [<opt> any-value! <variadic>]
         <local> first-arg
     ][
         test: first args

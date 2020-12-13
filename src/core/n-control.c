@@ -53,7 +53,7 @@
 //      return: "null if branch not run, otherwise branch result"
 //          [<opt> any-value!]
 //      condition [<opt> any-value!]
-//      'branch "If arity-1 ACTION!, receives the evaluated condition"
+//      :branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
 //  ]
 //
@@ -79,9 +79,9 @@ REBNATIVE(if)
 //      return: [<opt> any-value!]
 //          "Returns null if either branch returns null (unlike IF...ELSE)"
 //      condition [<opt> any-value!]
-//      'true-branch "If arity-1 ACTION!, receives the evaluated condition"
+//      :true-branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
-//      'false-branch
+//      :false-branch
 //          [any-branch!]
 //  ]
 //
@@ -402,7 +402,7 @@ bool Match_Core_Throws(
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is null"
 //          [<opt> any-value!]
-//      'branch [any-branch!]
+//      :branch [any-branch!]
 //  ]
 //
 REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
@@ -445,7 +445,7 @@ REBNATIVE(else_q)
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is not null"
 //          [<opt> any-value!]
-//      'branch "If arity-1 ACTION!, receives value that triggered branch"
+//      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //  ]
 //
@@ -489,7 +489,7 @@ REBNATIVE(then_q)
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is not null"
 //          [<opt> any-value!]
-//      'branch "If arity-1 ACTION!, receives value that triggered branch"
+//      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //  ]
 //
@@ -514,7 +514,7 @@ REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
 //
 //      return: "Input if it matched, otherwise branch result"
 //          [<opt> any-value!]
-//      'test "Typeset membership, LOGIC! to test for truth, filter function"
+//      :test "Typeset membership, LOGIC! to test for truth, filter function"
 //          [
 //              word!  ; GET to find actual test
 //              action! get-word! get-path!  ; arity-1 filter function
@@ -526,8 +526,8 @@ REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
 //              integer!  ; matches length of series
 //              quoted!  ; same test, but make quote level part of the test
 //          ]
-//       value [<opt> any-value!]
-//      'branch "Branch to run on non-matches, passed VALUE if ACTION!"
+//      value [<opt> any-value!]
+//      :branch "Branch to run on non-matches, passed VALUE if ACTION!"
 //          [any-branch!]
 //      /not "Invert the result of the the test (used by NON)"
 //  ]
@@ -775,7 +775,7 @@ REBNATIVE(matches)
 //
 //      return: "Product of last passing evaluation if all truthy, else null"
 //          [<opt> any-value!]
-//      :predicate "Test for whether an evaluation passes (default is .DID)"
+//      'predicate "Test for whether an evaluation passes (default is .DID)"
 //          [<skip> predicate! action!]
 //      block "Block of expressions"
 //          [block!]
@@ -856,7 +856,7 @@ REBNATIVE(all)
 //
 //      return: "First passing evaluative result, or null if none pass"
 //          [<opt> any-value!]
-//      :predicate "Test for whether an evaluation passes (default is .DID)"
+//      'predicate "Test for whether an evaluation passes (default is .DID)"
 //          [<skip> predicate! action!]
 //      block "Block of expressions"
 //          [block!]
@@ -923,7 +923,7 @@ REBNATIVE(any)
 //
 //      return: "Last matched case evaluation, or null if no cases matched"
 //          [<opt> any-value!]
-//      :predicate "Unary case-processing action (default is /DID)"
+//      'predicate "Unary case-processing action (default is /DID)"
 //          [<skip> predicate! action!]
 //      cases "Conditions followed by branches"
 //          [block!]
@@ -1059,7 +1059,7 @@ REBNATIVE(case)
 //
 //      return: "Last case evaluation, or null if no cases matched"
 //          [<opt> any-value!]
-//      :predicate "Binary switch-processing action (default is .EQUAL?)"
+//      'predicate "Binary switch-processing action (default is .EQUAL?)"
 //          [<skip> predicate! action!]
 //      value "Target value"
 //          [<opt> any-value!]
@@ -1238,9 +1238,9 @@ REBNATIVE(switch)
 //          [<opt> any-value!]
 //      :target "Word or path which might be set appropriately (or not)"
 //          [set-word! set-path!]  ; to left of DEFAULT
-//      :predicate "Test beyond null/void for defaulting, else .NOT.BLANK?"
+//      'predicate "Test beyond null/void for defaulting, else .NOT.BLANK?"
 //          [<skip> predicate! action!]  ; to right of DEFAULT
-//      'branch "If target needs default, this is evaluated and stored there"
+//      :branch "If target needs default, this is evaluated and stored there"
 //          [any-branch!]
 //  ]
 //

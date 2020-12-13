@@ -70,7 +70,7 @@ static bool Params_Of_Hook(
             break;
 
           case REB_P_HARD_QUOTE:
-            Getify(SPECIFIC(s->dest));
+            Quotify(SPECIFIC(s->dest), 1);
             break;
 
           case REB_P_MODAL:
@@ -82,7 +82,7 @@ static bool Params_Of_Hook(
             break;
 
           case REB_P_SOFT_QUOTE:
-            Quotify(SPECIFIC(s->dest), 1);
+            Getify(SPECIFIC(s->dest));
             break;
 
           default:
@@ -387,11 +387,11 @@ void Push_Paramlist_Triads_May_Fail(
 
             if (CELL_KIND(cell) == REB_GET_PATH) {
                 if (not quoted)
-                    pclass = REB_P_HARD_QUOTE;
+                    pclass = REB_P_SOFT_QUOTE;
             }
             else if (CELL_KIND(cell) == REB_PATH) {
                 if (quoted)
-                    pclass = REB_P_SOFT_QUOTE;
+                    pclass = REB_P_HARD_QUOTE;
                 else
                     pclass = REB_P_NORMAL;
             }
@@ -431,11 +431,11 @@ void Push_Paramlist_Triads_May_Fail(
 
                 if (kind == REB_GET_WORD) {
                     if (not quoted)
-                        pclass = REB_P_HARD_QUOTE;
+                        pclass = REB_P_SOFT_QUOTE;
                 }
                 else if (kind == REB_WORD) {
                     if (quoted)
-                        pclass = REB_P_SOFT_QUOTE;
+                        pclass = REB_P_HARD_QUOTE;
                     else
                         pclass = REB_P_NORMAL;
                 }

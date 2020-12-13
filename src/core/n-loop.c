@@ -1634,7 +1634,7 @@ REBNATIVE(repeat)
 //
 //      return: [<opt> any-value!]
 //          {Last body result, or null if a BREAK occurred}
-//      :predicate "Function to apply to body result (default is .DID)"
+//      'predicate "Function to apply to body result (default is .DID)"
 //          [<skip> predicate! action!]
 //      body [<const> block! action!]
 //  ]

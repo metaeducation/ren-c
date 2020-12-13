@@ -258,41 +258,42 @@
     f 1
 )
 
-; Argument passing of "get arguments" ("get-args")
+; Argument passing of "hard literal arguments"
 [
     (
-        getf: func [:x] [:x]
+        hard: func ['x] [:x]
         true
     )
 
-    (10 == getf 10)
-    ('a == getf a)
-    (lit 'a == getf 'a)
-    (lit :a == getf :a)
-    (lit a: == getf a:)
-    (lit (10 + 20) == getf (10 + 20))
+    (10 == hard 10)
+    ('a == hard a)
+    (lit 'a == hard 'a)
+    (lit :a == hard :a)
+    (lit a: == hard a:)
+    (lit (10 + 20) == hard (10 + 20))
     (
         o: context [f: 10]
-        lit :o/f == getf :o/f
+        lit :o/f == hard :o/f
     )
 ]
 
-; Argument passing of "literal arguments" ("lit-args")
+; Argument passing of "soft literal arguments"
 [
     (
-        litf: func ['x] [:x]
+        soft: func [:x] [:x]
         true
     )
 
-    (10 == litf 10)
-    ('a == litf a)
-    (lit 'a == litf 'a)
-    (a: 10, 10 == litf :a)
-    (lit a: == litf a:)
-    (30 == litf :(10 + 20))
+    (10 == soft 10)
+    ('a == soft a)
+    (lit 'a == soft 'a)
+    (a: 10, 10 == soft :a)
+    (lit a: == soft a:)
+    ('(10 + 20) = soft (10 + 20))
+    (30 == soft :(10 + 20))
     (
         o: context [f: 10]
-        10 == litf :o/f
+        10 == soft :o/f
     )
 ]
 

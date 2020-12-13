@@ -68,7 +68,7 @@ steal: func* [
         {Value of the following SET-WORD! or SET-PATH! before assignment}
     evaluation [<opt> any-value! <variadic>]
         {Used to take the assigned value}
-    :look [set-word! set-path! <variadic>]
+    'look [set-word! set-path! <variadic>]
 ][
     get first look  ; returned value
 
@@ -1005,7 +1005,7 @@ cause-error: func [
 fail: func [
     {Interrupts execution by reporting an error (a TRAP can intercept it).}
 
-    :blame "Point to variable or parameter to blame"
+    'blame "Point to variable or parameter to blame"
         [<skip> sym-word! sym-path!]
     reason "ERROR! value, ID, URL, message text, or failure spec"
         [<end> error! word! path! url! text! block!]

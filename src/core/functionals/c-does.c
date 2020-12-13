@@ -143,9 +143,9 @@ REB_R Block_Dispatcher(REBFRM *f)
 //  {Specializes DO for a value (or for args of another named function)}
 //
 //      return: [action!]
-//      'specializee [any-value!]
+//      :specializee [any-value!]
 //          {WORD! or PATH! names function to specialize, else arg to DO}
-//      :args [any-value! <variadic>]
+//      'args [any-value! <variadic>]
 //          {arguments which will be consumed to fulfill a named function}
 //  ]
 //

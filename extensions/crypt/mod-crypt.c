@@ -158,7 +158,7 @@ int get_random(void *p_rng, unsigned char *output, size_t output_len)
 //
 //      return: "Warning: likely to be changed to always be BINARY!"
 //          [binary! integer!]  ; see note below
-//      :settings "Temporarily literal word, evaluative after /METHOD purged"
+//      'settings "Temporarily literal word, evaluative after /METHOD purged"
 //          [<skip> lit-word!]
 //      data "Input data to digest (TEXT! is interpreted as UTF-8 bytes)"
 //          [binary! text!]

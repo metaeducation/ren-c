@@ -176,7 +176,18 @@ modernize-action: function [
 
             ; Find ANY-WORD!s (args/locals)
             ;
-            if keep w: match any-word! spec/1 [
+            if w: match any-word! spec/1 [
+                ;
+                ; Transform the escapable argument convention, to line up
+                ; GET-WORD! with things that are escaped by GET-WORD!s
+                ; https://forum.rebol.info/t/1433
+                ;
+                keep case [
+                    lit-word? w [to get-word! w]
+                    get-word? w [to lit-word! w]
+                    true [w]
+                ]
+
                 if last-refine-word [
                     fail [
                         "Refinements now *are* the arguments:" mold head spec
@@ -274,7 +285,7 @@ has: null
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
-===: func [:remarks [any-value! <...>]] [  ; note: <...> is now a TUPLE!
+===: func ['remarks [any-value! <...>]] [  ; note: <...> is now a TUPLE!
     until [
         equal? '=== take remarks
     ]

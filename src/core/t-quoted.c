@@ -172,11 +172,11 @@ REBTYPE(Quoted)
 //
 //      return: {The input value, verbatim--unless /SOFT and soft quoted type}
 //          [<opt> any-value!]
-//      :value {Value to quote, <opt> is impossible (see UNEVAL)}
+//      'value {Value to quote}
 //          [any-value!]
-//      /soft {Evaluate if a GROUP!, GET-WORD!, or GET-PATH!}
+//      /soft {Evaluate if a GET-GROUP!, GET-WORD!, or GET-PATH!}
 //  ][
-//      if soft and (match [group! get-word! get-path!] :value) [
+//      if soft and (match [get-group! get-word! get-path!] :value) [
 //          reeval value
 //      ] else [
 //          :value  ; also sets unevaluated bit, how could a user do so?

@@ -208,7 +208,7 @@ REBLEN Try_Bind_Word(const RELVAL *context, REBVAL *word)
 //  {LET is noticed by FUNC to mean "create a local binding"}
 //
 //      return: [<invisible>]
-//      :word [<skip> word!]
+//      'word [<skip> word!]
 //  ]
 //
 REBNATIVE(let)

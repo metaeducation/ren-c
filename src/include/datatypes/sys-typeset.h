@@ -219,32 +219,32 @@ typedef enum Reb_Kind Reb_Param_Class;
     //     ** Script error: + does not allow void! for its value1 argument
     //
 
-    // `REB_P_HARD_QUOTE` is cued by a GET-WORD! in the function spec
+    // `REB_P_HARD_QUOTE` is cued by a quoted WORD! in the function spec
     // dialect.  It indicates that a single value of content at the callsite
     // should be passed through *literally*, without any evaluation:
     //
     //     >> foo: function [:a] [print [{a is} a]]
     //
-    //     >> foo 1 + 2
-    //     a is 1
-    //
     //     >> foo (1 + 2)
     //     a is (1 + 2)
+    //
+    //     >> foo :(1 + 2)
+    //     a is :(1 + 2)
     //
 
     // `REB_P_REFINEMENT`
     //
 
-    // `REB_P_SOFT_QUOTE` is cued by a LIT-WORD! in the function spec
-    // dialect.  It quotes with the exception of GROUP!, GET-WORD!, and
+    // `REB_P_SOFT_QUOTE` is cued by a GET-WORD! in the function spec
+    // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
     // GET-PATH!...which will be evaluated:
     //
     //     >> foo: function ['a] [print [{a is} a]
     //
-    //     >> foo 1 + 2
-    //     a is 1
-    //
     //     >> foo (1 + 2)
+    //     a is (1 + 2)
+    //
+    //     >> foo :(1 + 2)
     //     a is 3
     //
     // Although possible to implement soft quoting with hard quoting, it is

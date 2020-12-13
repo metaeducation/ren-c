@@ -44,7 +44,7 @@
 
 [
     (
-        skippy: func [:x [<skip> integer!] y] [reduce [try :x y]]
+        skippy: func ['x [<skip> integer!] y] [reduce [try :x y]]
         lefty: enfixed :skippy
         true
     )
@@ -225,7 +225,7 @@
     )
 
     (
-        ifoo: func [:i [<skip> integer!]] [
+        ifoo: func ['i [<skip> integer!]] [
             fail "ifoo should not run, it tests <skip> on *next* step"
         ]
         did all [
@@ -240,7 +240,7 @@
             ]
         ]
     )(
-        enifoo: enfixed func [:i [<skip> integer!]] [
+        enifoo: enfixed func ['i [<skip> integer!]] [
             fail [
                 {enifoo should not run; when arguments are skipped this}
                 {defers the enfix until the next evaluator step.  Otherwise}
@@ -260,7 +260,7 @@
             ]
         ]
     )(
-        enifoo: enfixed func [:i [<skip> integer!]] [compose '<enifoo>/(i)]
+        enifoo: enfixed func ['i [<skip> integer!]] [compose '<enifoo>/(i)]
         did all [
             did all [
                 [304] == evaluate/result [1020 enifoo 304] 'var
@@ -292,7 +292,7 @@
     )
 
     (
-        ibar: func [:i [<skip> integer!]] [ibar: _]
+        ibar: func ['i [<skip> integer!]] [ibar: _]
         did all [
             ignored: func [] [
                 ignored: _
@@ -306,7 +306,7 @@
             comment {skip irrelevant (tests right on *next* step)}
         ]
     )(
-        enibar: enfixed func [return: <elide> :i [<skip> integer!]] [
+        enibar: enfixed func [return: <elide> 'i [<skip> integer!]] [
             fail {
                 When arguments are skipped, this defers the enfix until the
                 next evaluator step.  Doing otherwise would mean that
@@ -326,7 +326,7 @@
             ]
         ]
     )(
-        enibar: enfixed func [return: <elide> :i [<skip> integer!]] [
+        enibar: enfixed func [return: <elide> 'i [<skip> integer!]] [
             enibar: _
         ]
         did all [
@@ -348,13 +348,13 @@
 ; first.
 [
     (
-        rightq: func ['x] [compose [<rightq> was (x)]]
-        leftq: enfixed func ['y] [compose [<leftq> was (y)]]
+        rightq: func [:x] [compose [<rightq> was (x)]]
+        leftq: enfixed func [:y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )(
-        rightq: func ['x] [compose [<rightq> was (x)]]
-        leftq: enfixed func [:y] [compose [<leftq> was (y)]]
+        rightq: func [:x] [compose [<rightq> was (x)]]
+        leftq: enfixed func ['y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )

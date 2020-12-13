@@ -349,7 +349,7 @@ REBNATIVE(reflect)
 //  {Infix form of REFLECT which quotes its left (X OF Y => REFLECT Y 'X)}
 //
 //      return: [<opt> any-value!]
-//      :property "Hard quoted so that `integer! = type of 1` works`"
+//      'property "Hard quoted so that `integer! = type of 1` works`"
 //          [word! group!]
 //      value "Accepts null so TYPE OF NULL can be returned as null"
 //          [<opt> any-value!]
