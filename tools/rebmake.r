@@ -223,7 +223,7 @@ windows: make platform-class [
         d: file-to-local cmd/file
         if #"\" = last d [remove back tail-of d]
         either dir? cmd/file [
-            spaced ["mkdir" d]
+            spaced ["if not exist" d "mkdir" d]
         ][
             unspaced ["echo . 2>" d]
         ]
@@ -476,6 +476,19 @@ gcc: make compiler-class [
             ]
             if D [
                 for-each flg definitions [
+                    ;
+                    ; !!! For cases like `#include MBEDTLS_CONFIG_FILE` then
+                    ; quotes are expected to work in defines...but when you
+                    ; pass quotes on the command line it's different than
+                    ; inside of a visual studio project (for instance) because
+                    ; bash strips them out unless escaped with backslash.
+                    ; This is a stopgap workaround that ultimately would
+                    ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
+                    ;
+                    if find [gcc g++ cl] name [
+                        flg: replace/all copy flg {"} {\"}
+                    ]
+
                     keep ["-D" (filter-flag flg id else [continue])]
                 ]
             ]
@@ -631,6 +644,16 @@ cl: make compiler-class [
             ]
             if D [
                 for-each flg definitions [
+                    ; !!! For cases like `#include MBEDTLS_CONFIG_FILE` then
+                    ; quotes are expected to work in defines...but when you
+                    ; pass quotes on the command line it's different than
+                    ; inside of a visual studio project (for instance) because
+                    ; bash strips them out unless escaped with backslash.
+                    ; This is a stopgap workaround that ultimately would
+                    ; permit cross-platform {MBEDTLS_CONFIG_FILE="filename.h"}
+                    ;
+                    flg: replace/all copy flg {"} {\"}
+
                     keep ["/D" (filter-flag flg id else [continue])]
                 ]
             ]
@@ -955,10 +978,10 @@ link: make linker-class [
                 comment [import file] ;-- static property is ignored
 
                 either tag? dep/output [
-                    filter-flag dep/output id
+                    try filter-flag dep/output id
                 ][
                     ;dump dep/output
-                    either ends-with? dep/output ".lib" [
+                    file-to-local/pass either ends-with? dep/output ".lib" [
                         dep/output
                     ][
                         join-of dep/output ".lib"

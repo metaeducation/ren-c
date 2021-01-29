@@ -131,6 +131,17 @@ gen-obj: func [
     ; it only matters if /Qspectre builds are done of R3C (which they probably
     ; will not)...and would only mean a small slowdown if they were.  Disable
     ; these warnings.
+
+    ; Building as C++ using nmake seems to trigger this warning to say there
+    ; is no exception handling policy in place.  We don't use C++ exceptions
+    ; in the C++ build, so we ignore the warning...but if exceptions were used
+    ; there'd have to be an implementation choice made there.
+    ;
+    append flags <msc:/wd4577>
+
+    ; There's a warning on reinterpret_cast between related classes, trying to
+    ; suggest you use static_cast instead.  This complicates the `cast` macro
+    ; tricks, which just use reinterpret_cast.
     ;
     append flags <msc:/wd5045>
 
@@ -919,6 +930,10 @@ append app-config/cflags opt switch user-config/rigorous [
             ;
             <msc:/wd4061>
 
+            ; implicit fall-through looking for [[fallthrough]]
+            ;
+            <msc:/wd5262>
+
             ; setjmp() and longjmp() cannot be combined with C++ objects due
             ; to bypassing destructors.  Yet the Microsoft compiler seems to
             ; think even "POD" (plain-old-data) structs qualify as
@@ -970,6 +985,10 @@ append app-config/cflags opt switch user-config/rigorous [
             ; codebase being built as C++, so there shouldn't be throws.
             ;
             <msc:/wd5039>
+
+            ; const variable is not used, triggers in MS's type_traits
+            ;
+            <msc:/wd5264>
         ]
     ]
     _ #[false] 'no 'off 'false [
@@ -1378,7 +1397,7 @@ sort/compare builtin-extensions func [a b] [a/sequence < b/sequence]
 vars: reduce [
     reb-tool: make rebmake/var-class [
         name: {REBOL_TOOL}
-        if not any [
+        any [
             'file = exists? value: system/options/boot
             all [
                 user-config/rebol-tool
@@ -1388,7 +1407,15 @@ vars: reduce [
                 {r3-make}
                 rebmake/target-platform/exe-suffix
             ]
-        ] [fail "^/^/!! Cannot find a valid REBOL_TOOL !!^/"]
+        ] else [
+            fail "^/^/!! Cannot find a valid REBOL_TOOL !!^/"
+        ]
+
+        ; Originally this didn't transform to a local file path (e.g. with
+        ; backslashes instead of slashes on Windows).  There was some reason it
+        ; worked in visual studio, but not with nmake.
+        ;
+        value: file-to-local value
     ]
     make rebmake/var-class [
         name: {REBOL}
