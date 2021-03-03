@@ -225,7 +225,7 @@ reword: function [
         make typeset! [char! any-string! integer! word! binary!]
     )
 ][
-    case_REWORD: case
+    case_REWORD: if case [/case]
     case: :lib/case
 
     out: make (type of source) length of source
@@ -319,10 +319,10 @@ reword: function [
     ]
 
     rule: [
-        a:  ; Begin marking text to copy verbatim to output
+        a: here  ; Begin marking text to copy verbatim to output
         any [
             to prefix  ; seek to prefix (may be blank!, this could be a no-op)
-            b:  ; End marking text to copy verbatim to output
+            b: here  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)
             [
                 [
@@ -343,7 +343,7 @@ reword: function [
                             :v
                         ]
                     )
-                    a:  ; Restart mark of text to copy verbatim to output
+                    a: here  ; Restart mark of text to copy verbatim to output
                 ]
                     |
                 skip  ; if wasn't at match, keep the ANY rule scanning ahead
@@ -639,7 +639,7 @@ split: function [
             ;
 
             [
-                any [mk1: while [mk2: [dlm | end] break | skip] (
+                any [mk1: here, while [mk2: here, [dlm | end] break | skip] (
                     keep/only copy/part mk1 mk2
                 )]
                 end

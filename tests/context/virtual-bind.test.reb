@@ -27,7 +27,7 @@
     make-rule: func [/make-rule] [  ; refinement helps recognize in C Probe()
         use [rule position][
             rule: compose/deep [
-                [[position: "a"]]
+                [[position: here, "a"]]
             ]
             use [x] compose/deep [
                 [(as group! rule) rule]

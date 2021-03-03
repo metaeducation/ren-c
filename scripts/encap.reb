@@ -267,9 +267,9 @@ elf-format: context [
 
         parse skip executable e_phoff [
             e_phnum [
-                (mode: 'read) pos: program-header-rule
+                (mode: 'read) pos: here, program-header-rule
                 (if p_offset >= offset [p_offset: p_offset + delta])
-                (mode: 'write) :pos program-header-rule
+                (mode: 'write) seek pos, program-header-rule
             ]
             to end
         ] else [
@@ -281,9 +281,9 @@ elf-format: context [
         let pos
         parse skip executable e_shoff [
             e_shnum [
-                (mode: 'read) pos: section-header-rule
+                (mode: 'read) pos: here, section-header-rule
                 (if sh_offset >= offset [sh_offset: sh_offset + delta])
-                (mode: 'write) :pos section-header-rule
+                (mode: 'write) seek pos, section-header-rule
             ]
             to end
         ] else [
@@ -407,12 +407,12 @@ elf-format: context [
             ; Update string table size in its corresponding header.
             ;
             parse skip executable string-header-offset [
-                (mode: 'read) pos: section-header-rule
+                (mode: 'read) pos: here, section-header-rule
                 (
                     assert [sh_offset = string-section-offset]
                     sh_size: sh_size + (1 + length of encap-section-name)
                 )
-                (mode: 'write) :pos section-header-rule
+                (mode: 'write) seek pos, section-header-rule
                 to end
             ] else [
                 fail "Error updating string table size in string header"
@@ -662,7 +662,7 @@ pe-format: context [
             | #{6602} (machine: 'MIPS16)
         ]
         u16-le (machine-value: u16)
-        pos: u16-le (
+        pos: here, u16-le (
             number-of-sections: u16
             number-of-sections-offset: (index of pos) - 1
         )
@@ -706,8 +706,10 @@ pe-format: context [
         u16-le (major-subsystem-version: u16)
         u16-le (minor-subsystem-version: u16)
         u32-le (win32-version-value: u32)
-        pos: u32-le (image-size: u32
-                image-size-offset: (index of pos) - 1)
+        pos: here, u32-le (
+            image-size: u32
+            image-size-offset: (index of pos) - 1
+        )
         u32-le (size-of-headers: u32)
         u32-le (checksum: u32)
         and [
@@ -724,7 +726,7 @@ pe-format: context [
             | #{1300} (subsystem: 'EFI-ROM)
             | #{1400} (subsystem: 'Xbox)
             | #{1600} (subsystem: 'Windows-Boot-application)
-            | fail-at: (err: 'unrecoginized-subsystem) fail
+            | fail-at: here, (err: 'unrecoginized-subsystem), false
         ]
         u16-le (subsystem-value: u16)
         u16-le (dll-characteristics: u16)
@@ -760,15 +762,16 @@ pe-format: context [
     end-of-section-header: _
 
     exe-rule: [
-        DOS-header-rule pos: (garbage: DOS-header/e-lfanew + 1 - index of pos)
+        DOS-header-rule
+        pos: here, (garbage: DOS-header/e-lfanew + 1 - index of pos)
         garbage skip
         PE-header-rule
         COFF-header-rule
         PE-optional-header-rule
         PE-optional-header/number-of-RVA-and-sizes data-directory-rule
-        start-of-section-header:
+        start-of-section-header: here
         COFF-header/number-of-sections section-rule
-        end-of-section-header:
+        end-of-section-header: here
 
         ; !!! stop here, no END ?
     ]

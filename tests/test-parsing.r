@@ -33,7 +33,7 @@ make object! [
 
     set 'test-source-rule [
         any [
-            position:
+            position: here
 
             ["{" | {"}] (  ; handle string using TRANSCODE
                 success-rule: trap [
@@ -41,11 +41,11 @@ make object! [
                 ] then [
                     [end skip]
                 ] else [
-                    [:position]
+                    [seek position]
                 ]
             ) success-rule
                 |
-            ["{" | {"}] :position break
+            ["{" | {"}] seek position, break
                 |
             "[" test-source-rule "]"  ; plain BLOCK! in code for a test
                 |
@@ -58,9 +58,9 @@ make object! [
             ; too far".  It's either a syntax error, or the closing bracket of
             ; a multi-test block.
             ;
-            "]" :position break
+            "]", seek position, break
                 |
-            ")" :position break
+            ")", seek position, break
                 |
             skip
         ]
@@ -166,7 +166,7 @@ make object! [
         ]
 
         token: [
-            position:
+            position: here
 
             (type: value: _)
 
@@ -195,14 +195,14 @@ make object! [
         ]
 
         emit-token: [
-            token-end: (
+            token-end: here, (
                 comment [
                     prin "emit: " probe compose [
                         (type) (to text! copy/part position token-end)
                     ]
                 ]
             )
-            position: (type: value: _)
+            position: here, (type: value: _)
         ]
 
         rule: [any token]
@@ -275,7 +275,7 @@ make object! [
                     (fail "collect-logs - log file parsing problem")
                 ] position: guard break ; Break when error detected.
                     |
-                :position
+                seek position
             ]
             end
         ]

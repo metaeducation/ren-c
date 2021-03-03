@@ -117,7 +117,7 @@
     ; https://forum.rebol.info/t/1084
     (
         a-value: first [a/b]
-        parse as block! :a-value [b-value: end]
+        parse as block! :a-value [b-value: here, end]
         same? as block! :a-value :b-value
     )
 ]
@@ -127,13 +127,13 @@
 (equal? same? [] blank same? blank [])
 [#1068 #1066 (
     a-value: first [()]
-    parse a-value [b-value: end]
+    parse a-value [b-value: here, end]
     same? a-value b-value
 )]
 ; symmetry
 (
     a-value: first [()]
-    parse a-value [b-value: end]
+    parse a-value [b-value: here, end]
     equal? same? a-value b-value same? b-value a-value
 )
 (not same? any-number! integer!)

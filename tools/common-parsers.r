@@ -295,8 +295,10 @@ rewrite-if-directives: function [
                     change ["#if" thru newline "#endif" thru newline] ""
                     | change ["#elif" thru newline "#endif"] "#endif"
                     | change ["#else" thru newline "#endif"] "#endif"
-                ] (rewritten: true) :position
-                | thru newline
+                ] (rewritten: true)
+                seek :position  ; GET-WORD! for bootstrap (SEEK is no-op)
+
+              | thru newline
             ]
             end
         ]

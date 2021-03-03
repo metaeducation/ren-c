@@ -176,7 +176,7 @@ func: func* [
             )
         ])
     |
-        other:
+        other: here
         group! (
             if not var [
                 fail [

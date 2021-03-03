@@ -18,6 +18,8 @@ REBOL [
     }
 ]
 
+seek: []  ; Temporary measure, SEEK as no-op in bootstrap
+here: []  ; Temporary measure, HERE as no-op in bootstrap
 
 parsing-at: func [
     {Defines a rule which evaluates a block for the next input position, fails otherwise.}
@@ -32,10 +34,10 @@ parsing-at: func [
             block: compose/deep [try if not tail? (word) [((block))]]
         ]
         block: compose/deep [
-            result: either position: ((block)) [[:position]] [[end skip]]
+            result: either position: ((block)) [[seek :position]] [[end skip]]
         ]
         use compose [(word)] compose/deep [
-            [(as set-word! :word) (as group! block) result]
+            [(as set-word! :word) here (as group! block) result]
         ]
     ]
 ]

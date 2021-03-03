@@ -86,31 +86,31 @@
 ; SET-WORD! (store current input position)
 
 (
-    res: did parse ser: [x y] [pos: skip skip]
+    res: did parse ser: [x y] [pos: here, skip, skip]
     all [res, pos = ser]
 )
 (
-    res: did parse ser: [x y] [skip pos: skip]
+    res: did parse ser: [x y] [skip, pos: here, skip]
     all [res, pos = next ser]
 )
 (
-    res: did parse ser: [x y] [skip skip pos:]
+    res: did parse ser: [x y] [skip, skip, pos: here]
     all [res, pos = tail of ser]
 )
 [#2130 (
-    res: did parse ser: [x] [set val pos: word!]
+    res: did parse ser: [x] [pos: here, set val word!]
     all [res, val = 'x, pos = ser]
 )]
 [#2130 (
-    res: did parse ser: [x] [set val: pos: word!]
+    res: did parse ser: [x] [pos: here, set val: word!]
     all [res, val = 'x, pos = ser]
 )]
 [#2130 (
-    res: did parse ser: "foo" [copy val pos: skip]
+    res: did parse ser: "foo" [pos: here, copy val skip]
     all [not res, val = "f", pos = ser]
 )]
 [#2130 (
-    res: did parse ser: "foo" [copy val: pos: skip]
+    res: did parse ser: "foo" [pos: here, copy val: skip]
     all [not res, val = "f", pos = ser]
 )]
 
@@ -194,8 +194,8 @@
 [#1267 (
     b: "abc"
     c: ["a" | "b"]
-    a2: [any [b e: (d: [:e]) then fail | [c | (d: [fail]) fail]] d]
-    a4: [any [b then e: (d: [:e]) fail | [c | (d: [fail]) fail]] d]
+    a2: [any [b, e: here, (d: [seek e]) then fail | [c | (d: [fail]) fail]] d]
+    a4: [any [b then e: here (d: [seek e]) fail | [c | (d: [fail]) fail]] d]
     equal? parse "aaaaabc" a2 parse "aaaaabc" a4
 )]
 
@@ -269,12 +269,12 @@
 ; PATH! cannot be PARSE'd due to restrictions of the implementation
 (
     a-value: first [a/b]
-    parse as block! a-value [b-value:]
+    parse as block! a-value [b-value: here]
     a-value = to path! b-value
 )
 (
     a-value: first [()]
-    parse a-value [b-value:]
+    parse a-value [b-value: here]
     same? a-value b-value
 )
 

@@ -337,7 +337,7 @@ ctx-zip: context [
         num-entries: 0
         parse source [some [
             to central-file-sig 4 skip
-            central-header:
+            central-header: here
             [
                 ; check coerence between central file header
                 ; and local file header
@@ -393,7 +393,7 @@ ctx-zip: context [
                     (compressed-size: get-ilong compressed-size)
                 copy uncompressed-size-raw: 4 skip
                     (uncompressed-size: get-ilong uncompressed-size-raw)
-                :local-header
+                seek local-header
                 local-file-sig
                 2 skip ; version
                 copy tmp: 2 skip
@@ -413,7 +413,7 @@ ctx-zip: context [
                 copy tmp: name-length skip
                 (assert [name = to-file tmp])
                 extrafield-length skip
-                data: compressed-size skip
+                data: here, compressed-size skip
                 (
                     uncompressed-data: catch [
 

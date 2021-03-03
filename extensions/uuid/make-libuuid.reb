@@ -42,7 +42,7 @@ comment-out-includes: [
             ] (insert pos {//} pos: skip pos 2)
             | skip
         ] (pos: skip pos 8)
-    ] :pos
+    ] seek pos
 ]
 
 

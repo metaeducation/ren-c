@@ -1907,46 +1907,48 @@ REBNATIVE(subparse)
         else {
             // It's not a PARSE command, get or set it
 
-            // word: - set a variable to the series at current index
+            // Historically SET-WORD! was used to capture the parse position.
+            // However it is being repurposed as the tool for any form of
+            // assignment...a new generalized SET.
+            //
+            // UPARSE2 should be used with code that wants the old semantics.
+            // The performance on that should increase with time.
+            //
             if (IS_SET_WORD(rule)) {
                 //
                 // !!! Review meaning of marking the parse in a slot that
                 // is a target of a rule, e.g. `thru pos: xxx`
                 //
                 // https://github.com/rebol/rebol-issues/issues/2269
+
+                FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
+
+                // As an interim measure, permit `pos: here` to act as
+                // setting the position, just as `pos:` did historically.
+                // This will change to be generic SET after this has had some
+                // time to settle.
                 //
-                // if (flags != 0) fail (Error_Parse_Rule());
-
-                if (false) {  // Redbol emulation 
-                    Handle_Mark_Rule(f, rule, P_RULE_SPECIFIER);
+                if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_HERE)
                     FETCH_NEXT_RULE(f);
-                }
-                else {
-                    FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
+                else
+                    fail ("PARSE SET-WORD! only usable with HERE for now");
 
-                    // As an interim measure, permit `pos: here` to act as
-                    // setting the position, just as `pos:` did historically.
-                    //
-                    if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_HERE)
-                        FETCH_NEXT_RULE(f);
-
-                    Handle_Mark_Rule(f, set_or_copy_word, P_RULE_SPECIFIER);
-                }
+                Handle_Mark_Rule(f, set_or_copy_word, P_RULE_SPECIFIER);
                 goto pre_rule;
             }
-
-            // :word - change the index for the series to a new position
-            if (IS_GET_WORD(rule)) {
-                HANDLE_SEEK_RULE_UPDATE_BEGIN(f, rule, P_RULE_SPECIFIER);
-                FETCH_NEXT_RULE(f);
-                goto pre_rule;
+            else if (IS_GET_WORD(rule)) {
+                //
+                // :word - change the index for the series to a new position
+                //
+                fail ("PARSE GET-WORD! must be used with SEEK only for now");
             }
+            else {
+                assert(IS_WORD(rule));  // word - some other variable
 
-            assert(IS_WORD(rule));  // word - some other variable
-
-            if (rule != P_SAVE) {
-                Get_Word_May_Fail(P_SAVE, rule, P_RULE_SPECIFIER);
-                rule = P_SAVE;
+                if (rule != P_SAVE) {
+                    Get_Word_May_Fail(P_SAVE, rule, P_RULE_SPECIFIER);
+                    rule = P_SAVE;
+                }
             }
         }
     }

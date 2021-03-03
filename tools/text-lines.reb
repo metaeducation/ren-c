@@ -20,7 +20,12 @@ decode-lines: function [
 ] [
     pattern: compose/only [(line-prefix)]
     if not empty? indent [append pattern compose/only [opt (indent)]]
-    line: [pos: pattern rest: (rest: remove/part pos rest) :rest thru newline]
+    line: [
+        pos: here pattern rest: here
+        (rest: remove/part pos rest)
+        seek :rest  ; GET-WORD! for bootstrap (SEEK is no-op)
+        thru newline
+    ]
     parse text [any line end] else [
         fail [
             {Expected line} (try text-line-of text pos)
@@ -45,8 +50,11 @@ encode-lines: func [
     bol: join line-prefix indent
     parse text [
         any [
-            thru newline pos:
-            [newline (pos: insert pos line-prefix) | (pos: insert pos bol)] :pos
+            thru newline pos: here
+            [
+                newline (pos: insert pos line-prefix)
+              | (pos: insert pos bol)
+            ] seek :pos  ; GET-WORD! for bootstrap (SEEK is no-op)
         ]
         end
     ]
@@ -107,8 +115,8 @@ lines-exceeding: function [  ; !!! Doesn't appear used, except in tests (?)
     ]
 
     parse text [
-        any [bol: to newline eol: skip count-line]
-        bol: skip to end eol: count-line
+        any [bol: here to newline eol: here skip count-line]
+        bol: here skip to end eol: here count-line
         end
     ]
 
@@ -131,7 +139,7 @@ text-line-of: function [
 
     parse text [
         any [
-            to newline cursor:
+            to newline cursor: here
 
             ; IF deprecated in Ren-C, but :(...) with logic not available
             ; in the bootstrap build.
@@ -161,7 +169,7 @@ text-location-of: function [
     idx: index of position
     line: 0
 
-    advance: [eol: skip (line: line + 1)]
+    advance: [eol: here skip (line: line + 1)]
 
     parse text [
         any [

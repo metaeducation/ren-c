@@ -199,7 +199,7 @@ split-path: func [
     pos: _
     parse target [
         [#"/" | 1 2 #"." opt #"/"] end (dir: dirize target) |
-        pos: any [thru #"/" [end | pos:]] (
+        pos: here, any [thru #"/" [end | pos: here]] (
             all [
                 empty? dir: copy/part target (at head of target index of pos),
                 dir: %./
