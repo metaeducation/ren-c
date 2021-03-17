@@ -140,21 +140,13 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
       case DETECTED_AS_UTF8: {
         REBDSP dsp_orig = DSP;
 
-        // Allocate space for a binder, but don't initialize it until needed
-        // (e.g. a WORD! is seen in a text portion).  This way things like
-        // `rebElide(foo_func, "1")` or `block = rebValue("[", item, "]")`
-        // won't trigger it.
-        //
-        // Note that the binder is only used on loaded text.  The scanner
-        // leaves all spliced values with whatever bindings they have (even
-        // if that is none).
+        // Note that the context is only used on loaded text from C string
+        // data.  The scanner leaves all spliced values with whatever bindings
+        // they have (even if that is none).
         //
         // !!! Some kind of "binding instruction" might allow other uses?
         //
-        struct Reb_Binder binder;
-        feed->binder = &binder;
-        feed->context = nullptr;  // made non-nullptr when binder initialized
-        feed->lib = nullptr;
+        feed->context = Get_Context_From_Stack();
 
         SCAN_LEVEL level;
         SCAN_STATE ss;
@@ -169,8 +161,6 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         );
 
         REBVAL *error = rebRescue(cast(REBDNG*, &Scan_To_Stack), &level);
-        if (feed->context)
-            Shutdown_Interning_Binder(&binder, unwrap(feed->context));
 
         if (error) {
             REBCTX *error_ctx = VAL_CONTEXT(error);

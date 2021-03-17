@@ -51,6 +51,7 @@ PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
 #if !defined(NDEBUG)
     PVAR REBLEN PG_Num_Symbol_Deleteds; // Deleted symbol hash slots "in use"
 #endif
+PVAR REBSTR PG_Deleted_Symbol;  // pointer used to indicate a deletion
 PVAR const REBSYM *PG_Bar_Canon;  // fast canon value for testing for `|`
 PVAR const REBSYM *PG_Bar_Bar_Canon;  // same, but for testing `||`
 

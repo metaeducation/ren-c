@@ -562,13 +562,23 @@ bool Eval_Path_Throws_Core(
             pvs->label = VAL_WORD_SYMBOL(second);
     }
     else if (IS_WORD(f_value)) {
-        //
-        // Remember the actual location of this variable, not just its value,
-        // in case we need to do R_IMMEDIATE writeback (e.g. month/day: 1)
-        //
-        pvs->u.ref.cell = Lookup_Mutable_Word_May_Fail(f_value, specifier);
+        if (setval) {
+            //
+            // Remember the actual location of this variable, not just its
+            // value, in case we need R_IMMEDIATE writeback (e.g. month/day: 1)
+            //
+            // !!! Writability rules now won't inherit, so this could block
+            // things like `system/blah/blah: 10` if system is inherited from
+            // the lib context.  Hack it up for now...
 
-        Copy_Cell(pvs->out, SPECIFIC(pvs->u.ref.cell));
+            pvs->u.ref.cell = m_cast(REBVAL*, Lookup_Word_May_Fail(f_value, specifier));
+            /* pvs->u.ref.cell = Lookup_Mutable_Word_May_Fail(f_value, specifier); */
+            Copy_Cell(pvs->out, SPECIFIC(pvs->u.ref.cell));
+        }
+        else {  // won't be writing back
+            pvs->u.ref.cell = nullptr;
+            Copy_Cell(pvs->out, Lookup_Word_May_Fail(f_value, specifier));
+        }
 
         if (IS_ACTION(pvs->out)) {
             pvs->label = VAL_WORD_SYMBOL(f_value);

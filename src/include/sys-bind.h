@@ -188,13 +188,15 @@ inline static bool Try_Add_Binder_Index(
     REBSTR *s = m_cast(REBSYM*, sym);
     assert(index != 0);
     REBSER *old_hitch = MISC(Hitch, s);
-    if (old_hitch != s and NOT_SERIES_FLAG(old_hitch, MANAGED))
+    if (old_hitch != s and GET_SERIES_FLAG(old_hitch, BLACK))
         return false;  // already has a mapping
 
     // Not actually managed...but GC doesn't run while binders are active,
     // and we don't want to pay for putting this in the manual tracking list.
     //
-    REBARR *new_hitch = Alloc_Singular(NODE_FLAG_MANAGED | FLAG_FLAVOR(HITCH));
+    REBARR *new_hitch = Alloc_Singular(
+        NODE_FLAG_MANAGED | SERIES_FLAG_BLACK | FLAG_FLAVOR(HITCH)
+    );
     CLEAR_SERIES_FLAG(new_hitch, MANAGED);
     Init_Integer(ARR_SINGLE(new_hitch), index);
     node_MISC(Hitch, new_hitch) = old_hitch;
@@ -230,7 +232,7 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
 
     // Only unmanaged hitches are used for binding.
     //
-    if (hitch == s or GET_SERIES_FLAG(hitch, MANAGED))
+    if (hitch == s or NOT_SERIES_FLAG(hitch, BLACK))
         return 0;
     return VAL_INT32(ARR_SINGLE(ARR(hitch)));
 }
@@ -241,7 +243,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     const REBSYM *str
 ){
     REBSTR *s = m_cast(REBSYM*, str);
-    if (MISC(Hitch, s) == s or GET_SERIES_FLAG(MISC(Hitch, s), MANAGED))
+    if (MISC(Hitch, s) == s or NOT_SERIES_FLAG(MISC(Hitch, s), BLACK))
         return 0;
 
     REBARR *hitch = ARR(MISC(Hitch, s));
@@ -457,6 +459,12 @@ inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
 //
 
 
+enum Reb_Attach_Mode {
+    ATTACH_READ,
+    ATTACH_WRITE,
+    ATTACH_COPY
+};
+
 // Find the context a word is bound into.  This must account for the various
 // binding forms: Relative Binding, Derived Binding, and Virtual Binding.
 //
@@ -470,16 +478,17 @@ inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
 // failure mode while it's running...even if the context is inaccessible or
 // the word is unbound.  Errors should be raised by callers if applicable.
 //
-inline static option(REBARR*) Get_Word_Container(
+inline static option(REBSER*) Get_Word_Container(
     REBLEN *index_out,
     const RELVAL* any_word,
-    REBSPC *specifier
+    REBSPC *specifier,
+    enum Reb_Attach_Mode mode
 ){
   #if !defined(NDEBUG)
     *index_out = 0xDECAFBAD;  // trash index to make sure it gets set
   #endif
 
-    REBARR *binding = VAL_WORD_BINDING(any_word);
+    REBSER *binding = VAL_WORD_BINDING(any_word);
 
     if (specifier == SPECIFIED or not IS_PATCH(specifier))
         goto not_virtually_bound;
@@ -588,6 +597,61 @@ inline static option(REBARR*) Get_Word_Container(
     }
 
     if (IS_VARLIST(binding)) {
+        //
+        // !!! Work in progress...shortcut that allows finding variables
+        // in Lib_Context, that is to be designed with a "force reified vs not"
+        // concept.  Idea would be (I guess) that a special form of mutable
+        // lookup would say "I want that but be willing to make it."
+        //
+        if (CTX_TYPE(CTX(binding)) == REB_MODULE) {
+            const REBSYM *symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+            REBSER *patch = MISC(Hitch, symbol);
+            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+                patch = SER(node_MISC(Hitch, patch));
+
+            for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
+                if (LINK(PatchContext, patch) != binding)
+                    continue;
+
+                *index_out = cast(REBLEN, VAL_INT32(ARR_SINGLE(ARR(patch))));
+                return CTX_VARLIST(LINK(PatchContext, patch));
+            }
+
+            // !!! One original goal with Sea of Words was to enable something
+            // like JavaScript's "strict mode", to prevent writing to variables
+            // that had not been somehow previously declared.  However, that
+            // is a bit too ambitious for a first rollout...as just having the
+            // traditional behavior of "any assignment works" is something
+            // people are used to.  Don't do it for the Lib_Context (so
+            // mezzanine is still guarded) but as a first phase, permit the
+            // "emergence" of any variable that is attached to a module.
+            //
+            if (mode == ATTACH_WRITE and binding != VAL_CONTEXT(Lib_Context)) {
+                REBLEN index = CTX_LEN(CTX(binding));
+                Append_Context(CTX(binding), nullptr, symbol);
+                *index_out = index;
+                return CTX_VARLIST(CTX(binding));
+            }
+
+            // non generic inheritance; inherit only from Lib for now
+            //
+            if (mode != ATTACH_READ or binding == VAL_CONTEXT(Lib_Context))
+                return nullptr;
+
+            patch = MISC(Hitch, symbol);
+            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+                patch = SER(node_MISC(Hitch, patch));
+
+            for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
+                if (LINK(PatchContext, patch) != VAL_CONTEXT(Lib_Context))
+                    continue;
+
+                *index_out = cast(REBLEN, VAL_INT32(ARR_SINGLE(ARR(patch))));
+                return CTX_VARLIST(LINK(PatchContext, patch));
+            }
+
+            return nullptr;
+        }
 
         // SPECIFIC BINDING: The context the word is bound to is explicitly
         // contained in the `any_word` REBVAL payload.  Extract it, but check
@@ -654,17 +718,20 @@ inline static option(REBARR*) Get_Word_Container(
   }
 }
 
+
 static inline const REBVAL *Lookup_Word_May_Fail(
     const RELVAL *any_word,
     REBSPC *specifier
 ){
     REBLEN index;
-    REBARR *a = try_unwrap(Get_Word_Container(&index, any_word, specifier));
-    if (not a)
+    REBSER *s = try_unwrap(
+        Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
+    );
+    if (not s)
         fail (Error_Not_Bound_Raw(SPECIFIC(any_word)));
-    if (IS_PATCH(a))
-        return SPECIFIC(ARR_SINGLE(a));
-    REBCTX *c = CTX(a);
+    if (IS_PATCH(s))
+        return SPECIFIC(ARR_SINGLE(ARR(s)));
+    REBCTX *c = CTX(s);
     if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
         fail (Error_No_Relative_Core(any_word));
 
@@ -676,12 +743,14 @@ static inline option(const REBVAL*) Lookup_Word(
     REBSPC *specifier
 ){
     REBLEN index;
-    REBARR *a = try_unwrap(Get_Word_Container(&index, any_word, specifier));
-    if (not a)
+    REBSER *s = try_unwrap(
+        Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
+    );
+    if (not s)
         return nullptr;
-    if (IS_PATCH(a))
-        return SPECIFIC(ARR_SINGLE(a));
-    REBCTX *c = CTX(a);
+    if (IS_PATCH(s))
+        return SPECIFIC(ARR_SINGLE(ARR(s)));
+    REBCTX *c = CTX(s);
     if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
         return nullptr;
 
@@ -708,15 +777,17 @@ static inline REBVAL *Lookup_Mutable_Word_May_Fail(
     REBSPC *specifier
 ){
     REBLEN index;
-    REBARR *a = try_unwrap(Get_Word_Container(&index, any_word, specifier));
-    if (not a)
+    REBSER *s = try_unwrap(
+        Get_Word_Container(&index, any_word, specifier, ATTACH_WRITE)
+    );
+    if (not s)
         fail (Error_Not_Bound_Raw(SPECIFIC(any_word)));
 
     REBVAL *var;
-    if (IS_PATCH(a))
-        var = SPECIFIC(ARR_SINGLE(a));
+    if (IS_PATCH(s))
+        var = SPECIFIC(ARR_SINGLE(ARR(s)));
     else {
-        REBCTX *c = CTX(a);
+        REBCTX *c = CTX(s);
 
         // A context can be permanently frozen (`lock obj`) or temporarily
         // protected, e.g. `protect obj | unprotect obj`.  A native will
@@ -803,22 +874,24 @@ inline static REBVAL *Derelativize(
 
     enum Reb_Kind heart = CELL_HEART(VAL_UNESCAPED(v));
 
-    // For words, we go ahead and pay for the lookup at the moment of a
-    // derelativize.  While this is a bit unfortunate to have to pay the cost
-    // even if a WORD!s binding is not going to be used, it helps reduce the
-    // spread of patch specifier nodes in the system.
+    // The specifier is not going to have a say in the derelativized cell.
+    // This means any information it encodes must be taken into account now.
+    //
     //
     if (ANY_WORD_KIND(heart)) {
         REBLEN index;
-        REBARR *a = try_unwrap(Get_Word_Container(&index, v, specifier));
-        if (not a) {
-            assert(VAL_WORD_BINDING(v) == UNBOUND);
+        REBSER *s = try_unwrap(
+            Get_Word_Container(&index, v, specifier, ATTACH_COPY)
+        );
+        if (not s) {
+            // Getting back NULL here could mean that it's actually unbound,
+            // or that it's bound to a "sea" context like User or Lib and
+            // there's nothing there...yet.
+            //
             out->extra = v->extra;
-            Unbind_Any_Word(out);  // !!! do this more efficiently
         }
         else {
-            out->extra = v->extra;  // !!! to know spelling in binding, temp
-            INIT_BINDING_MAY_MANAGE(out, a);
+            INIT_BINDING_MAY_MANAGE(out, s);
             INIT_VAL_WORD_PRIMARY_INDEX(out, index);
         }
 

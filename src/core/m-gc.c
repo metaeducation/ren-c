@@ -1150,6 +1150,28 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
         Mark_Devices_Deep();
     }
 
+    // The last thing we do is go through all the "sea contexts" and make sure
+    // that if anyone referenced the context, then their variables remain live.
+    //
+    REBSYM **psym = SER_HEAD(REBSYM*, PG_Symbols_By_Hash);
+    REBSYM **psym_tail = SER_TAIL(REBSYM*, PG_Symbols_By_Hash);
+    for (; psym != psym_tail; ++psym) {
+        if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
+            continue;
+        REBSER *patch = MISC(Hitch, *psym);
+        for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
+            REBCTX *context = LINK(PatchContext, patch);
+            if (GET_SERIES_FLAG(CTX_VARLIST(context), MARKED)) {
+                SET_SERIES_FLAG(patch, MARKED);
+
+                // We also have to keep the word alive, but not necessarily
+                // keep all the other declarations in other modules alive.
+                //
+                SET_SERIES_FLAG(*psym, MARKED);
+            }
+        }
+    }
+
     // SWEEPING PHASE
 
     ASSERT_NO_GC_MARKS_PENDING();

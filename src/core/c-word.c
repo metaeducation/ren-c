@@ -115,7 +115,6 @@ REBINT Get_Hash_Prime_May_Fail(REBLEN minimum)
 // is GC'd, a special pointer signaling "deletedness" is used.  It does not
 // cause a linear probe to terminate, but it is reused on insertions.
 //
-static REBSTR PG_Deleted_Symbol;
 #define DELETED_SYMBOL &PG_Deleted_Symbol
 
 
@@ -384,7 +383,16 @@ void GC_Kill_Interning(REBSTR *intern)
         temp = LINK(Synonym, temp);
     mutable_LINK(Synonym, temp) = synonym;  // cut the intern out (or no-op)
 
-    assert(MISC(Hitch, intern) == intern);  // shouldn't GC during binds?
+    // We should only be GC'ing a symbol if all the sea-of-words module
+    // variables referring to it are also being freed.  Make sure that is
+    // the case, and remove from the circularly linked list.
+    //
+    REBSER *patch = intern;
+    while (SER(node_MISC(Hitch, patch)) != intern) {
+        assert(NOT_SERIES_FLAG(patch, MARKED));
+        patch = SER(node_MISC(Hitch, patch));
+    }
+    node_MISC(Hitch, patch) = node_MISC(Hitch, intern);  // may be no-op
 
     REBLEN num_slots = SER_USED(PG_Symbols_By_Hash);
     REBSTR* *symbols_by_hash = SER_HEAD(REBSTR*, PG_Symbols_By_Hash);

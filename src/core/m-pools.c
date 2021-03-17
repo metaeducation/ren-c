@@ -1095,11 +1095,17 @@ void Decay_Series(REBSER *s)
         // Remove patch from circularly linked list of variants.
         // (if it's the last one, this winds up making no meaningful change)
         //
-        REBARR *temp = MISC(Variant, s);
-        while (MISC(Variant, temp) != s) {
-            temp = MISC(Variant, temp);
+        // Note: If this is a LET, the chain should be to other examples
+        // of the LET.  However, if it's a variable definition for a module,
+        // then it will circle back to the symbol for the variable.  This
+        // means it may hit a REBSYM* or may not in this encircling.
+        //
+        REBSER *temp = MISC(Variant, s);
+        while (node_MISC(Variant, temp) != s) {
+            temp = SER(node_MISC(Variant, temp));
+            assert(IS_PATCH(temp) or IS_SYMBOL(temp));
         }
-        mutable_MISC(Variant, temp) = MISC(Variant, s);
+        node_MISC(Variant, temp) = node_MISC(Variant, s);
         break; }
 
       case FLAVOR_HANDLE: {

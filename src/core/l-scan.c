@@ -2391,62 +2391,16 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         panic ("Invalid TOKEN in Scanner.");
     }
 
-    // !!! If there is a binder in effect, we also bind the item while
-    // we have loaded it.  For now, assume any negative numbers are into
-    // the lib context (which we do not expand) and any positive numbers
-    // are into the user context (which we will expand).
+    // We are able to bind code as we go into any "module", where the ambient
+    // hashing is available.
     //
-    if (ss->feed and ss->feed->binder and ANY_WORD(DS_TOP)) {
-        struct Reb_Binder *binder = unwrap(ss->feed->binder);
-
-        // We don't initialize the binder until the first WORD! seen.
-        //
-        if (not ss->feed->context) {
-            ss->feed->context = Get_Context_From_Stack();
-            ss->feed->lib =
-                (ss->feed->context != VAL_CONTEXT(Lib_Context))
-                    ? VAL_CONTEXT(Lib_Context)
-                    : nullptr;
-
-            Init_Interning_Binder(binder, unwrap(ss->feed->context));
-        }
-
-        REBCTX *context = unwrap(ss->feed->context);
-        REBCTX *lib = try_unwrap(ss->feed->lib);
-
-        const REBSYM *symbol = VAL_WORD_SYMBOL(DS_TOP);
-        REBINT n = Get_Binder_Index_Else_0(binder, symbol);
-        if (n > 0) {
-            //
-            // Exists in user context at the given positive index.
-            //
-            INIT_VAL_WORD_BINDING(DS_TOP, context);
-            INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, n);
-        }
-        else if (n < 0) {
-            //
-            // Index is the negative of where the value exists in lib.
-            // A proxy needs to be imported from lib to context.
-            //
-            Expand_Context(context, 1);
-            Copy_Cell(
-                Append_Context(context, DS_TOP, nullptr),
-                CTX_VAR(lib, -n)  // -n is positive
-            );
-            REBINT check = Remove_Binder_Index_Else_0(binder, symbol);
-            assert(check == n);  // n is negative
-            UNUSED(check);
-            Add_Binder_Index(binder, symbol, VAL_WORD_INDEX(DS_TOP));
-        }
-        else {
-            // Doesn't exist in either lib or user, create a new binding
-            // in user (this is not the preferred behavior for modules
-            // and isolation, but going with it for the API for now).
-            //
-            Expand_Context(context, 1);
-            Append_Context(context, DS_TOP, nullptr);
-            Add_Binder_Index(binder, symbol, VAL_WORD_INDEX(DS_TOP));
-        }
+    // !!! While it wouldn't be impossible to do this with a binder for any
+    // object, it would be more complex...only for efficiency, and nothing
+    // like it existed before.
+    //
+    if (ss->feed and ss->feed->context and ANY_WORD(DS_TOP)) {
+        INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->feed->context)));
+        INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, INDEX_ATTACHED);
     }
 
   lookahead:

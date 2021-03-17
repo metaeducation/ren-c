@@ -58,12 +58,32 @@
 
 
 
-// The link slot for patches is available for use...
+// The LINK() slot in a patch can be:
+//
+// * a REBSYM, if it's a standalone LET variable; there'd be no way to know
+//   its name otherwise.
+//
+// * a REBCTX, if it's an field in a "sea context" like Lib or User.  In this
+//   case, the spelling is found by following the MISC linkages, which are
+//   part of the "Hitch" circularly linked list that ends in the symbol
+//
+// * Currently unused if the payload is for a virtual binding patch.
 //
 #define LINK_PatchSymbol_TYPE           const REBSYM*
 #define LINK_PatchSymbol_CAST           SYM
 #define HAS_LINK_PatchSymbol            FLAVOR_PATCH
 
+#define LINK_PatchContext_TYPE          REBCTX*
+#define LINK_PatchContext_CAST          CTX
+#define HAS_LINK_PatchContext           FLAVOR_PATCH
+
+
+// For the moment, the NextPatch pointer is stored where the node's INFO would
+// go.  This is a bit unfortunate, since the INFO is slated to be used for
+// GC acceleration.  But with LET variables using the singular array area
+// for an arbitrary value, symbol + variant exhausts the space.  It may be
+// that variant effectiveness needs to be rethought.  Review.
+//
 #define INODE_NextPatch_TYPE            REBARR*
 #define INODE_NextPatch_CAST            ARR
 #define HAS_INODE_NextPatch             FLAVOR_PATCH

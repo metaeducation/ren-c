@@ -564,8 +564,12 @@ REB_R PD_Context(
     // no need to go hunting).  'x
     //
     REBLEN n;
-    if (BINDING(picker) == c)
+    if (
+        BINDING(picker) == c
+        and VAL_WORD_PRIMARY_INDEX_UNCHECKED(picker) != INDEX_ATTACHED
+    ){
         n = VAL_WORD_INDEX(picker);
+    }
     else {
         const bool strict = false;
         n = Find_Symbol_In_Context(pvs->out, VAL_WORD_SYMBOL(picker), strict);

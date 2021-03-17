@@ -362,10 +362,23 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         if (IS_WORD_UNBOUND(v))
             assert(Is_Marked(spelling));
 
-        assert(MISC(Hitch, spelling) == spelling);  // GC can't run during bind
+        // GC can't run during bind
+        //
+        assert(NOT_SERIES_FLAG(MISC(Hitch, spelling), BLACK));
 
-        if (IS_WORD_BOUND(v))
-            assert(VAL_WORD_PRIMARY_INDEX_UNCHECKED(v) != 0);
+        REBLEN index = VAL_WORD_PRIMARY_INDEX_UNCHECKED(v);
+        if (IS_WORD_BOUND(v)) {
+            if (IS_VARLIST(BINDING(v))) {
+                if (CTX_TYPE(CTX(BINDING(v))) == REB_MODULE)
+                    assert(index != 0);
+                else
+                    assert(index != 0 and index != INDEX_ATTACHED);
+            }
+            else if (IS_PATCH(BINDING(v)))
+                assert(index == 1);
+            else
+                assert(index != 0);
+        }
         else
             assert(VAL_WORD_PRIMARY_INDEX_UNCHECKED(v) == 0);
         break; }

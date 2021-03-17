@@ -221,7 +221,7 @@ REBCTX *Get_Context_From_Stack(void)
         // (no TRAP is in effect yet).  For the moment, say such code binds
         // into the user context.
         //
-        return VAL_CONTEXT(Get_System(SYS_CONTEXTS, CTX_USER));
+        return VAL_CONTEXT(User_Context);
     }
 
     // This would happen if you call the API from something like a traced

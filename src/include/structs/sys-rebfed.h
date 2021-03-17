@@ -277,23 +277,11 @@ struct Reb_Feed {
     //
     REBSER singular;
 
-    // If the binder isn't NULL, then any words or arrays are bound into it
-    // during the loading process.  
-    //
     // !!! Note: At the moment a UTF-8 string is seen in the feed, it sets
-    // these fields on-demand, and then runs a scan of the entire rest of the
-    // feed, caching it.  It doesn't have a choice as only one binder can
-    // be in effect at a time, and so it can't run code as it goes.
+    // this field on-demand, and then runs a scan of the entire rest of the
+    // feed, caching it.
     //
-    // Hence these fields aren't in use at the same time as the lookback
-    // at this time; since no evaluations are being done.  They could be put
-    // into a pseudotype cell there, if this situation of scanning-to-end
-    // is a going to stick around.  But it is slow and smarter methods are
-    // going to be necessary.
-    //
-    option(struct Reb_Binder*) binder;
-    option(REBCTX*) lib;  // does not expand, has negative indices in binder
-    option(REBCTX*) context;  // expands, has positive indices in binder
+    option(REBCTX*) context;
 
     // There is a lookahead step to see if the next item in an array is a
     // WORD!.  If so it is checked to see if that word is a "lookback word"

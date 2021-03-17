@@ -864,10 +864,7 @@ REBNATIVE(js_native)
     // look for bindings.  For the moment, set user natives to use the user
     // context...it could be a parameter of some kind (?)
     //
-    Copy_Cell(
-        ARR_AT(details, IDX_NATIVE_CONTEXT),
-        Get_System(SYS_CONTEXTS, CTX_USER)
-    );
+    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), User_Context);
 
     Init_Handle_Cdata_Managed(
         ARR_AT(details, IDX_JS_NATIVE_OBJECT),

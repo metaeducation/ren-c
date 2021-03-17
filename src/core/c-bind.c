@@ -1269,3 +1269,51 @@ void Shutdown_Interning_Binder(struct Reb_Binder *binder, REBCTX *ctx)
 
     SHUTDOWN_BINDER(binder);
 }
+
+
+
+void Bind_Nonspecifically(RELVAL *head, const RELVAL *tail, REBCTX *context)
+{
+    RELVAL *v = head;
+    for (; v != tail; ++v) {
+        REBCEL(const*) cell = VAL_UNESCAPED(v);
+        enum Reb_Kind heart = CELL_HEART(cell);
+
+        if (ANY_ARRAY_KIND(heart)) {
+            const RELVAL *sub_tail;
+            RELVAL *sub_head = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, cell);
+            Bind_Nonspecifically(sub_head, sub_tail, context);
+        }
+        else if (ANY_WORD_KIND(heart)) {
+            //
+            // Give context but no index; this is how we attach to modules.
+            //
+            mutable_BINDING(v) = context;
+            INIT_VAL_WORD_PRIMARY_INDEX(v, INDEX_ATTACHED);  // may be quoted
+        }
+    }
+}
+
+
+//
+//  intern: native [
+//      {Temporary: Just binds everything nonspecifically to user context}
+//
+//      return: [block!]
+//      data [block!]
+//  ]
+//
+REBNATIVE(intern)
+{
+    INCLUDE_PARAMS_OF_INTERN;
+
+    assert(IS_BLOCK(ARG(data)));
+
+    const RELVAL *tail;
+    RELVAL *head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));
+    Bind_Nonspecifically(head, tail, VAL_CONTEXT(User_Context));
+
+    rebElide("bind/set/only", ARG(data), User_Context);
+
+    RETURN (ARG(data));
+}

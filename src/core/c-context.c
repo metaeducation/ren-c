@@ -187,9 +187,63 @@ REBVAL *Append_Context(
         //
         assert(not symbol);
 
-        REBLEN len = CTX_LEN(context); // length we just bumped
+        REBLEN len = CTX_LEN(context);  // length we just bumped
         INIT_VAL_WORD_BINDING(unwrap(any_word), context);
         INIT_VAL_WORD_PRIMARY_INDEX(unwrap(any_word), len);
+    }
+
+    if (CTX_TYPE(context) == REB_MODULE) {
+        REBARR *patch = Alloc_Singular(
+            NODE_FLAG_MANAGED
+            | FLAG_FLAVOR(PATCH)
+            //
+            // Note: The GC behavior of these patches is special and does not
+            // fit into the usual patterns.  There is a pass in the GC
+            // that propagates context survival into the patches from the
+            // global bind table.  Although we say LINK_NODE_NEEDS_MARK to
+            // keep a context alive, that marking isn't done in that pass...
+            // otherwise the variables could never GC.  Instead, it only
+            // happens if the patch is cached in a variable...then that
+            // reference touches the patch which touches the context.  But
+            // if not cached, the context keeps vars alive; not vice-versa
+            // (e.g. the mere existence of a variable--not cached in a cell
+            // reference--should not keep it alive).  MISC_NODE_NEEDS_MARK
+            // is not done as that would keep alive patches from other
+            // contexts in the hitch chain.
+            //
+            // !!! Should there be a "decay and forward" general mechanic,
+            // so a node can tell the GC to touch up all references and point
+            // to something else...e.g. to forward references to a cache back
+            // to the context in order to "delete" variables?
+            //
+            | SERIES_FLAG_LINK_NODE_NEEDS_MARK  // mark context through cache
+        );
+
+        // We circularly link the variable into the list of hitches so that you
+        // can find the spelling again.
+        //
+        if (any_word) {
+            assert(symbol == nullptr);
+            symbol = VAL_WORD_SYMBOL(unwrap(any_word));
+        }
+
+        // skip over binding-related hitches
+        //
+        REBSER *updating = m_cast(REBSYM*, unwrap(symbol));
+        while (GET_SERIES_FLAG(SER(node_MISC(Hitch, updating)), BLACK))
+            updating = SER(node_MISC(Hitch, updating));
+
+        node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
+        mutable_LINK(PatchContext, patch) = context;
+        node_MISC(Hitch, updating) = patch;
+
+        // Temporary: Store the index in lib in the patch.  (Ultimately this
+        // cell would serve as the location for the variable itself.)
+        //
+        Init_Integer(ARR_SINGLE(patch), CTX_LEN(context));
+
+        if (any_word)  // put it back
+            symbol = nullptr;
     }
 
     return value;  // location we just added (void cell)
@@ -732,28 +786,14 @@ REBARR *Context_To_Array(const RELVAL *context, REBINT mode)
 //
 //  Resolve_Context: C
 //
-// Only_words can be a block of words or an index in the target
-// (for new words).
-//
 void Resolve_Context(
     REBCTX *target,
     REBCTX *source,
-    REBVAL *only_words,
+    REBVAL *only_words,  // block of words
     bool all,
     bool expand
 ) {
     FAIL_IF_READ_ONLY_SER(CTX_VARLIST(target));  // !!! should heed CONST
-
-    REBLEN i;
-    if (IS_INTEGER(only_words)) { // Must be: 0 < i <= tail
-        i = VAL_INT32(only_words);
-        if (i == 0)
-            i = 1;
-        if (i > CTX_LEN(target))
-            return;
-    }
-    else
-        i = 0;
 
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
@@ -761,17 +801,7 @@ void Resolve_Context(
   blockscope {
     REBINT n = 0;
 
-    // If limited resolve, tag the word ids that need to be copied:
-    if (i != 0) {
-        // Only the new words of the target:
-        const REBKEY *tail;
-        const REBKEY *key = CTX_KEYS(&tail, target);
-        key += (i - 1);
-        for (; key != tail; key++)
-            Add_Binder_Index(&binder, KEY_SYMBOL(key), -1);
-        n = CTX_LEN(target);
-    }
-    else if (IS_BLOCK(only_words)) {
+    if (IS_BLOCK(only_words)) {
         // Limit exports to only these words:
         const RELVAL *tail;
         const RELVAL *word = VAL_ARRAY_AT(&tail, only_words);
@@ -785,6 +815,8 @@ void Resolve_Context(
             }
         }
     }
+    else
+        assert(IS_NULLED(only_words));
 
     // Expand target as needed:
     if (expand and n > 0) {
@@ -828,10 +860,8 @@ void Resolve_Context(
   blockscope {
     const REBKEY *tail;
     const REBKEY *key = CTX_KEYS(&tail, target);
-    if (i != 0)
-        key += (i - 1);
 
-    REBVAL *var = i != 0 ? CTX_VAR(target, i) : CTX_VARS_HEAD(target);
+    REBVAL *var = CTX_VARS_HEAD(target);
     for (; key != tail; key++, var++) {
         REBINT m = Remove_Binder_Index_Else_0(&binder, KEY_SYMBOL(key));
         if (m != 0) {
@@ -878,14 +908,7 @@ void Resolve_Context(
         // that the keys are there.  Hence doesn't use Remove_Binder_Index()
         // but the fault-tolerant Remove_Binder_Index_Else_0()
         //
-        if (i != 0) {
-            const REBKEY *tail;
-            const REBKEY *key = CTX_KEYS(&tail, target);
-            key += (i - 1);
-            for (; key != tail; key++)
-                Remove_Binder_Index_Else_0(&binder, KEY_SYMBOL(key));
-        }
-        else if (IS_BLOCK(only_words)) {
+        if (IS_BLOCK(only_words)) {
             const RELVAL *tail;
             const RELVAL *word = VAL_ARRAY_AT(&tail, only_words);
             for (; word != tail; word++) {

@@ -914,17 +914,17 @@ void Startup_Core(void)
 
     // !!! Have MAKE-BOOT compute # of words
     //
-    REBCTX *lib = Alloc_Context_Core(REB_OBJECT, 600, NODE_FLAG_MANAGED);
+    REBCTX *lib = Alloc_Context_Core(REB_MODULE, 600, NODE_FLAG_MANAGED);
     Lib_Context = Alloc_Value();
-    Init_Object(Lib_Context, lib);
+    Init_Any_Context(Lib_Context, REB_MODULE, lib);
 
-    REBCTX *sys = Alloc_Context_Core(REB_OBJECT, 50, NODE_FLAG_MANAGED);
+    REBCTX *sys = Alloc_Context_Core(REB_MODULE, 50, NODE_FLAG_MANAGED);
     Sys_Context = Alloc_Value();
-    Init_Object(Sys_Context, sys);
+    Init_Any_Context(Sys_Context, REB_MODULE, sys);
 
-    REBCTX *user = Alloc_Context_Core(REB_OBJECT, 320, NODE_FLAG_MANAGED);
+    REBCTX *user = Alloc_Context_Core(REB_MODULE, 320, NODE_FLAG_MANAGED);
     User_Context = Alloc_Value();
-    Init_Object(User_Context, user);
+    Init_Any_Context(User_Context, REB_MODULE, user);
 
     REBARR *datatypes_catalog = Startup_Datatypes(
         VAL_ARRAY_KNOWN_MUTABLE(&boot->types),

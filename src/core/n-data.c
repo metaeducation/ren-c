@@ -863,7 +863,7 @@ REBNATIVE(opt)
 //      target [any-context!] "(modified)"
 //      source [any-context!]
 //      /only "Only specific words (exports) or new words in target"
-//          [block! integer!]
+//          [block!]
 //      /all "Set all words, even those in the target that already have a value"
 //      /extend "Add source words to the target if necessary"
 //  ]
@@ -872,8 +872,10 @@ REBNATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    if (IS_INTEGER(ARG(only)))
-        Int32s(ARG(only), 1);  // check range and sign
+    assert(
+        VAL_CONTEXT(ARG(source)) == VAL_CONTEXT(Lib_Context)
+        or VAL_CONTEXT(ARG(target)) == VAL_CONTEXT(Lib_Context)
+    );
 
     Resolve_Context(
         VAL_CONTEXT(ARG(target)),
