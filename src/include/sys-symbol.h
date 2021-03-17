@@ -22,7 +22,7 @@
 //
 // A SYM refers to one of the built-in words and can be used in C switch
 // statements.  A canon STR is used to identify everything else.
-// 
+//
 // R3-Alpha's concept was that all words got persistent integer values, which
 // prevented garbage collection.  Ren-C only gives built-in words integer
 // values--or SYMIDs--while others must be compared by pointers to their
@@ -47,6 +47,14 @@
 #define LINK_Synonym_TYPE       const REBSYM*
 #define LINK_Synonym_CAST       SYM
 #define HAS_LINK_Synonym        FLAVOR_SYMBOL
+
+// Hitches are a circularly linked list that includes transient binding info
+// for the word, as well as declared variables in "sea" contexts.
+//
+#define MISC_Hitch_TYPE         REBSER*
+#define MISC_Hitch_CAST         SER
+#define HAS_MISC_Hitch          FLAVOR_SYMBOL
+
 
 #if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     //

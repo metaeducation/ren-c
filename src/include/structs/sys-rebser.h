@@ -687,27 +687,6 @@ union Reb_Series_Misc {
     //
     REBLEN length;
 
-    // When binding words into a context, it's necessary to keep a table
-    // mapping those words to indices in the context's keylist.  R3-Alpha
-    // had a global "binding table" for the spellings of words, where
-    // those spellings were not garbage collected.  Ren-C uses REBSERs
-    // to store word spellings, and then has a hash table indexing them.
-    //
-    // So the "binding table" is chosen to be indices reachable from the
-    // REBSER nodes of the words themselves.  If it were necessary for
-    // multiple clients to have bindings at the same time, this could be
-    // done through a pointer that would "pop out" into some kind of
-    // linked list.  For now, the binding API just demonstrates having
-    // up to 2 different indices in effect at once.
-    //
-    // Note that binding indices can be negative, so the sign can be used
-    // to encode a property of that particular binding.
-    //
-    struct {
-        int high:16;
-        int low:16;
-    } bind_index;
-
     // some HANDLE!s use this for GC finalization
     //
     CLEANUP_CFUNC *cleaner;

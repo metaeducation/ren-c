@@ -276,7 +276,7 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
     // The UTF-8 series can be aliased with AS to become an ANY-STRING! or a
     // BINARY!.  If it is, then it should not be modified.
     //
-    Freeze_Series(s); 
+    Freeze_Series(s);
 
     if (not synonym) {
         mutable_LINK(Synonym, s) = SYM(s);  // 1-item in circular list
@@ -311,16 +311,13 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
         SET_SECOND_UINT16(s->info, ID_OF_SYMBOL(synonym));
     }
 
-    // Symbols use their MISC() to hold binding information.  Long term, it
-    // may become a design that lets multiple binds run at once.  So the slot
-    // could hold an atomic pointer that would "pop out" to a structure.
-    // But for the moment only one bind runs at a time, and it's randomized to
-    // keep its information in high bits or low bits as a poor-man's demo that
-    // there is an infrastructure in place for sharing (start with 2, grow to
-    // N eventually).
+    // Symbols use their MISC() as a linked list of binding information.  The
+    // list is circular, so that the symbol can be found from any element.
     //
-    s->misc.bind_index.high = 0;
-    s->misc.bind_index.low = 0;
+    // !!! This is expected to grow into a list that will include statically
+    // the list of declared variables in things like `user` and `lib`.
+    //
+    mutable_MISC(Hitch, s) = s;
 
     if (deleted_slot) {
         *deleted_slot = SYM(s);  // reuse the deleted slot
@@ -387,8 +384,7 @@ void GC_Kill_Interning(REBSTR *intern)
         temp = LINK(Synonym, temp);
     mutable_LINK(Synonym, temp) = synonym;  // cut the intern out (or no-op)
 
-    assert(intern->misc.bind_index.high == 0);  // shouldn't GC during binds?
-    assert(intern->misc.bind_index.low == 0);
+    assert(MISC(Hitch, intern) == intern);  // shouldn't GC during binds?
 
     REBLEN num_slots = SER_USED(PG_Symbols_By_Hash);
     REBSTR* *symbols_by_hash = SER_HEAD(REBSTR*, PG_Symbols_By_Hash);

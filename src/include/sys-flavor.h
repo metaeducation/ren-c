@@ -73,6 +73,15 @@ enum Reb_Series_Flavor {
     //
     FLAVOR_PATCH,
 
+    // A FLAVOR_HITCH is an ephemeral element which is chained into the
+    // "hitch" list on a symbol, when that symbol is being bound.  Currently
+    // it holds an integer for a binding position, but allowing it to hold
+    // arbitrary things for a mapping is being considered.
+    //
+    // !!! Think how this might relate to locking and inodes.  Does it?
+    //
+    FLAVOR_HITCH,
+
     // To make it possible to reuse exemplars and paramlists in action
     // variations that have different partial specializations, a splice of
     // partial refinements sit between the action cell and its "speciality".
