@@ -967,29 +967,15 @@ module: func [
     ; Add exported words at top of context (performance):
     if block? select spec 'exports [bind/new spec/exports mod]
 
-    if find spec/options [isolate] [
-        ;
-        ; All words of the module body are module variables:
-        ;
-        bind/new body mod
+    ; Only top level defined words are module variables.
+    ;
+    bind/only/set body mod
 
-        ; The module keeps its own variables (not shared with system):
-        ;
-        if object? mixin [resolve mod mixin]
+    ; The module shares system exported variables:
+    ;
+    bind body lib
 
-        resolve mod lib
-    ]
-    else [
-        ; Only top level defined words are module variables.
-        ;
-        bind/only/set body mod
-
-        ; The module shares system exported variables:
-        ;
-        bind body lib
-
-        if object? mixin [bind body mixin]
-    ]
+    if object? mixin [bind body mixin]
 
     bind body mod  ; !!! "Redundant?" (said the comment...)
     do body

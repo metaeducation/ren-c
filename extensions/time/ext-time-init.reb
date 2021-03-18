@@ -2,7 +2,6 @@ REBOL [
     Title: "Time Extension"
     Name: Time
     Type: Module
-    Options: [isolate]
     Version: 1.0.0
     License: {Apache 2.0}
 ]

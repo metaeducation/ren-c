@@ -384,7 +384,6 @@ do-needs: function [
     return: [blank! block!]
     needs "Needs block, header or version"
         [block! object! tuple! blank!]  ; has to handle blank! if in object!
-    /no-share "Force module to use its own non-shared global namespace"
     /no-lib "Don't export to the runtime library"
     /no-user "Don't export to the user context (mixins returned)"
     /block "Return all the imported modules in a block, instead"
@@ -466,7 +465,6 @@ do-needs: function [
             version: true  ; !!! automatic from VERS?
             ver: opt vers
 
-            no-share: no-share
             no-lib: no-lib
             no-user: no-user
         ]
@@ -489,11 +487,10 @@ load-module: func [
     {Loads a module and inserts it into the system module list.}
 
     return: [blank! block!]
-    source {Source (file, URL, binary, etc.) or block of sources}
-        [word! file! url! text! binary! module! block!]
+    source {Source (file, URL, binary, etc.)}
+        [word! file! url! text! binary!]
     /version "Module must be this version or greater"
         [tuple!]
-    /no-share "Force module to use its own non-shared global namespace"
     /no-lib "Don't export to the runtime library (lib)"
     /import "Do module import now, overriding /delay and 'delay option"
     /as "New name for the module (not valid for reloads)"
@@ -517,7 +514,6 @@ load-module: func [
     ; module init may be delayed. The module may be stored as binary or as an
     ; unbound block, then init'd later, as needed.
     ;
-    ; /no-share and /delay are ignored for module! source because it's too late.
     ; A name is required for all imported modules, delayed or not; /as can be
     ; specified for unnamed modules. If you don't want to name it, don't import.
     ; If source is a module that is loaded already, /as name is an error.
@@ -543,9 +539,7 @@ load-module: func [
                 return blank
             ]
 
-            set [mod:] next tmp
-
-            ensure [module! block!] mod
+            ensure [module! block!] mod: next tmp
 
             ; If no further processing is needed, shortcut return
 
@@ -554,11 +548,6 @@ load-module: func [
             ]
         ]
 
-        ; !!! Transcoding is currently based on UTF-8.  "UTF-8 Everywhere"
-        ; will use that as the internal representation of STRING!, but until
-        ; then any strings passed in to loading have to be UTF-8 converted,
-        ; which means making them into BINARY!.
-        ;
         binary!  ; bytes are not known to be valid UTF-8
         text! [  ; bytes are known to be valid UTF-8
             data: source
@@ -581,71 +570,13 @@ load-module: func [
                 cause-error 'access 'no-script source  ; !!! need better error
             ]
         ]
-
-        module! [
-            ; see if the same module is already in the list
-            if let tmp: find/skip next system/modules mod: source 2 [
-                if name [
-                    ; already imported
-                    cause-error 'script 'bad-parameter /as
-                ]
-
-                all [
-                    ; not /VERSION, same as top module of that name
-                    not version
-                    same? mod select system/modules pick tmp 0
-                ] then [
-                    return copy/part back tmp 2
-                ]
-
-                set [mod:] tmp
-            ]
-        ]
-
-        block! [
-            if any [version name] [
-                cause-error 'script 'bad-parameter blank
-            ]
-
-            data: make block! length of source
-
-            let tmp
-            parse source [
-                while [
-                    tmp: here
-                    set name opt set-word!
-                    set mod [
-                        word! | module! | file! | url! | text! | binary!
-                    ]
-                    set version opt tuple! (
-                        append data reduce [
-                            mod version if name [to word! name]
-                        ]
-                    )
-                ]
-            ] else [
-                cause-error 'script 'invalid-arg tmp
-            ]
-
-            return map-each [mod ver name] source [
-                applique :load-module [
-                    source: mod
-                    version: version
-                    as: name
-                    no-share: no-share
-                    no-lib: no-lib
-                    import: import
-                    delay: delay
-                ]
-            ]
-        ]
     ]
 
     mod: default [_]
 
     ; Get info from preloaded or delayed modules
     if module? mod [
-        delay: no-share: _ hdr: meta-of mod
+        delay: _ hdr: meta-of mod
         ensure [block! blank!] hdr/options
     ]
     if block? mod [
@@ -680,9 +611,6 @@ load-module: func [
         ; rest of the code does not complain.
         ;
         line: 1
-    ]
-    if no-share [
-        hdr/options: append (any [hdr/options, make block! 1]) [isolate]
     ]
 
     ; Unify hdr/name and /AS name
@@ -781,16 +709,11 @@ load-module: func [
     if not mod [
         ; not prebuilt or delayed, make a module
 
-        if find hdr/options just isolate [no-share: true]  ; in case of delay
-
         if object? code [ ; delayed extension
             fail "Code has not been updated for LOAD-EXT-MODULE"
 
             set [hdr: code:] load-ext-module code
             hdr/name: name ; in case of delayed rename
-            if all [no-share, not find hdr/options just isolate] [
-                hdr/options: append (any [hdr/options, make block! 1]) [isolate]
-            ]
         ]
 
         if binary? code [code: make block! code]
@@ -854,7 +777,6 @@ import: function [
     module [word! file! url! text! binary! module! block! tag!]
     /version "Module must be this version or greater"
         [tuple!]
-    /no-share "Force module to use its own non-shared global namespace"
     /no-lib "Don't export to the runtime library (lib)"
     /no-user "Don't export to the user context"
 ][
@@ -893,7 +815,6 @@ import: function [
         assert [not version] ; can only apply to one module
         return applique :do-needs [
             needs: module
-            no-share: no-share
             no-lib: no-lib
             no-user: no-user
             block: #
@@ -903,7 +824,6 @@ import: function [
     set [name: mod:] applique :load-module [
         source: module
         version: version
-        no-share: no-share
         no-lib: no-lib
         import: #  ; !!! original code always passed /IMPORT, should it?
     ]
@@ -924,7 +844,6 @@ import: function [
                     applique :load-module [
                         source: join path file  ; Note: %% not defined yet
                         version: version
-                        no-share: no-share
                         no-lib: no-lib
                         import: #
                     ]

@@ -3,7 +3,6 @@ REBOL [
 
     Name: Javascript
     Type: Module
-    Options: [isolate]
 
     Version: 0.1.0
     Date: 15-Sep-2018

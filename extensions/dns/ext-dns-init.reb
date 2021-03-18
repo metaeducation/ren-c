@@ -2,7 +2,6 @@ REBOL [
     Title: "Domain Name Lookup / Reverse-Lookup Extension"
     Name: DNS
     Type: Module
-    Options: [isolate]
     Version: 1.0.0
     License: {Apache 2.0}
 ]

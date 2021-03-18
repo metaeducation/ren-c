@@ -2,7 +2,6 @@ REBOL [
     Title: "File and Directory Access"
     Name: Filesystem
     Type: Module
-    Options: [isolate]
     Version: 1.0.0
     License: {Apache 2.0}
 ]

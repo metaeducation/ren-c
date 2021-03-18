@@ -2,7 +2,6 @@ REBOL [
     Title: "Locale Extension"
     Name: Locale
     Type: Module
-    Options: [isolate]
     Version: 1.0.0
     License: {Apache 2.0}
 ]

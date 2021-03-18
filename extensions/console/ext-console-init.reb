@@ -4,8 +4,6 @@ REBOL [
     Name: console
     Type: Module
 
-    Options: []  ; !!! If ISOLATE, wouldn't see LIB/PRINT changes, etc.
-
     Rights: {
         Copyright 2016-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
@@ -862,34 +860,16 @@ upgrade: func [
 ]
 
 
-; !!! It should likely be the case that the namespace for the user natives in
-; an extension would be shared with the Rebol code for a module, but there's
-; also a likely need to be able to have several source-level Rebol files
-; (and possibly several independent modules) in an extension.  This hasn't
-; been completely hammered out yet.
-;
-; As a result, for the C code in %mod-console.c to be able to find the Rebol
-; entry point for its mechanics, we export it to lib.  But this needs a much
-; better solution.
-;
-append lib compose [
-    console!: (ensure object! console!)
-    ext-console-impl: (:ext-console-impl)
-]
-
-; !!! The whole host startup/console is currently very manually loaded
-; into its own isolated context by the C startup code.  This way, changes
-; to functions the console loop depends on (like PRINT or INPUT) that the
-; user makes will not break the console's functionality.  It would be
-; better if it used the module system, but since it doesn't, it does not
-; have a place to put "exports" to lib or user.  We'd like people to be
-; able to access the ABOUT, WHY, and USAGE functions... so export them
-; here to LIB.  Again--this should be done by making this a module!
-;
 append lib compose [
     ;
-    ; These must be <with>'d to be exported, otherwise the ABOUT: in
-    ; the object key would be gathered as a local.
+    ; !!! The concept was that users should be able to create new instances of
+    ; the console object; this hasn't been really worked through.
+    ;
+    console!: (ensure object! console!)
+
+    ; We can choose to expose certain functionality only in the console prompt,
+    ; vs. needing to be added to global visibility.  Adding to the lib context
+    ; means these will be seen by scripts, e.g. `do "why"` will work.
     ;
     why: (ensure action! :why)
     upgrade: (ensure action! :upgrade)

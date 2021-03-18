@@ -3,7 +3,6 @@ REBOL [
     Name: Debugger
 
     Type: Module
-    Options: []  ; !!! If ISOLATE, wouldn't see LIB/PRINT changes, etc.
 
     Version: 1.0.0
     License: {Apache 2.0}
