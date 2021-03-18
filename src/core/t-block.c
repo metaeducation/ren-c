@@ -128,10 +128,11 @@ REB_R MAKE_Array(
         REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, arg);
 
         const REBSTR *file = ANONYMOUS;
+        option(REBCTX*) context = nullptr;
         Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(file, utf8, size)
+            Scan_UTF8_Managed(file, utf8, size, context)
         );
         return out;
     }
@@ -223,10 +224,11 @@ REB_R MAKE_Array(
         REBSIZ utf8_size;
         REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, arg);
         const REBSTR *file = ANONYMOUS;
+        option(REBCTX*) context = nullptr;
         return Init_Any_Array(
             out,
             kind,
-            Scan_UTF8_Managed(file, utf8, utf8_size)
+            Scan_UTF8_Managed(file, utf8, utf8_size, context)
         );
     }
     else if (IS_BINARY(arg)) {
@@ -238,8 +240,12 @@ REB_R MAKE_Array(
 
         REBSIZ size;
         const REBYTE *at = VAL_BINARY_SIZE_AT(&size, arg);
-
-        return Init_Any_Array(out, kind, Scan_UTF8_Managed(file, at, size));
+        option(REBCTX*) context = nullptr;
+        return Init_Any_Array(
+            out,
+            kind,
+            Scan_UTF8_Managed(file, at, size, context)
+        );
     }
     else if (IS_MAP(arg)) {
         return Init_Any_Array(out, kind, Map_To_Array(VAL_MAP(arg), 0));

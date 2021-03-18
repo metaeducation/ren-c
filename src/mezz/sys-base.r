@@ -132,7 +132,7 @@ do*: func [
         ; working directory to the base of the file path supplied)
         ;
         do-needs hdr  ; Load the script requirements
-        intern code   ; Bind the user script
+        intern code system/contexts/user   ; Bind the user script
         catch/quit [
             ;
             ; The source string may have been mutable or immutable, but the
@@ -191,7 +191,7 @@ do*: func [
             ] then :finalizer/quit
         ][
             do-needs hdr  ; Load the script requirements
-            intern code   ; Bind the user script
+            intern code system/contexts/user  ; Bind the user script
             catch/quit [
                 result: do code
             ] then :finalizer/quit

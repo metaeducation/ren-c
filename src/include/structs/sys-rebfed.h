@@ -277,12 +277,6 @@ struct Reb_Feed {
     //
     REBSER singular;
 
-    // !!! Note: At the moment a UTF-8 string is seen in the feed, it sets
-    // this field on-demand, and then runs a scan of the entire rest of the
-    // feed, caching it.
-    //
-    option(REBCTX*) context;
-
     // There is a lookahead step to see if the next item in an array is a
     // WORD!.  If so it is checked to see if that word is a "lookback word"
     // (e.g. one that refers to an ACTION! value set with SET/ENFIX).

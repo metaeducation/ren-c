@@ -96,7 +96,7 @@ enum LEX_DELIMIT_ENUM {
     LEX_DELIMIT_RIGHT_PAREN,        /* 29 ) */
     LEX_DELIMIT_LEFT_BRACKET,       /* 5B [ */
     LEX_DELIMIT_RIGHT_BRACKET,      /* 5D ] */
-    
+
     LEX_DELIMIT_HARD = LEX_DELIMIT_RIGHT_BRACKET,
     //
     // ^-- As a step toward "Plan -4", the above delimiters are considered to
@@ -266,6 +266,11 @@ typedef struct rebol_scan_state {  // shared across all levels of a scan
     // strings and values that are spliced in.
     //
     REBFED *feed;
+
+    // Module to bind words to while scanning.  Splices from the feed will
+    // not count...only words bound from text portions of the scan.
+    //
+    option(REBCTX*) context;
 
     const REBSTR *file;  // file currently being scanned (or anonymous)
 

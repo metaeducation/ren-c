@@ -883,7 +883,8 @@ void Startup_Core(void)
     REBARR *boot_array = Scan_UTF8_Managed(
         Intern_Unsized_Managed("-tmp-boot-"),
         utf8,
-        utf8_size
+        utf8_size,
+        nullptr  // !!! Review: take advantage of bind-while-scan
     );
     PUSH_GC_GUARD(boot_array); // managed, so must be guarded
 

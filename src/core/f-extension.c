@@ -180,33 +180,6 @@ REBNATIVE(load_extension)
     REBLEN num_natives = VAL_HANDLE_LEN(dispatchers_handle);
     REBNAT *dispatchers = VAL_HANDLE_POINTER(REBNAT, dispatchers_handle);
 
-    size_t specs_size;
-    REBYTE *specs_utf8 = Decompress_Alloc_Core(
-        &specs_size,
-        VAL_HANDLE_POINTER(REBYTE, specs_compressed),
-        VAL_HANDLE_LEN(specs_compressed),
-        -1,  // max
-        SYM_GZIP
-    );
-
-    REBARR *specs = Scan_UTF8_Managed(
-        ANONYMOUS,  // !!! Name of DLL if available?
-        specs_utf8,
-        specs_size
-    );
-    rebFree(specs_utf8);
-    PUSH_GC_GUARD(specs);
-
-    // !!! Specs have datatypes in them which are looked up via Get_Var().
-    // This is something that raises questions, but go ahead and bind them
-    // into lib for the time being (don't add any new words).
-    //
-    Bind_Values_Deep(ARR_HEAD(specs), ARR_TAIL(specs), Lib_Context);
-
-    // Some of the things being tacked on here (like the DLL info etc.) should
-    // reside in the META OF portion, vs. being in-band in the module itself.
-    // For the moment, go ahead and bind the code to its own copy of lib.
-
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
     REBCTX *module_ctx = Alloc_Context_Core(
@@ -217,6 +190,36 @@ REBNATIVE(load_extension)
     DECLARE_LOCAL (module);
     Init_Any_Context(module, REB_MODULE, module_ctx);
     PUSH_GC_GUARD(module);
+
+    size_t specs_size;
+    REBYTE *specs_utf8 = Decompress_Alloc_Core(
+        &specs_size,
+        VAL_HANDLE_POINTER(REBYTE, specs_compressed),
+        VAL_HANDLE_LEN(specs_compressed),
+        -1,  // max
+        SYM_GZIP
+    );
+
+    // !!! Specs have datatypes in them which are looked up via Get_Var().
+    // This is something that raises questions, but necessitates binding to
+    // lib to get them.
+    //
+    // However, the module context inherits from Lib.  So binding specs to the
+    // module gives an opportunity to tweak the definitions if necessary so
+    // that the specs would see more than what was in lib.  Review.
+    //
+    REBARR *specs = Scan_UTF8_Managed(
+        ANONYMOUS,  // !!! Name of DLL if available?
+        specs_utf8,
+        specs_size,
+        module_ctx
+    );
+    rebFree(specs_utf8);
+    PUSH_GC_GUARD(specs);
+
+    // Some of the things being tacked on here (like the DLL info etc.) should
+    // reside in the META OF portion, vs. being in-band in the module itself.
+    // For the moment, go ahead and bind the code to its own copy of lib.
 
     REBDSP dsp_orig = DSP; // for accumulating exports
 
@@ -310,8 +313,8 @@ REBNATIVE(load_extension)
     UNUSED(REF(no_lib));
 
     DROP_GC_GUARD(exports);
-    DROP_GC_GUARD(module);
     DROP_GC_GUARD(specs);
+    DROP_GC_GUARD(module);
     DROP_GC_GUARD(details);
     DROP_GC_GUARD(path);
     DROP_GC_GUARD(lib);

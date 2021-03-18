@@ -1676,7 +1676,6 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
     ss->end = cp;
 
     return token;
-
 }
 
 
@@ -1691,10 +1690,12 @@ void Init_Va_Scan_Level_Core(
     const REBSTR *file,
     REBLIN line,
     const REBYTE *opt_begin,  // preload the scanner outside the va_list
-    REBFED *feed
+    REBFED *feed,
+    REBCTX *context
 ){
     level->ss = ss;
     ss->feed = feed;
+    ss->context = context;
 
     ss->begin = opt_begin;  // if null, Locate_Token's first fetch from vaptr
     TRASH_POINTER_IF_DEBUG(ss->end);
@@ -1726,7 +1727,8 @@ void Init_Scan_Level(
     const REBSTR *file,
     REBLIN line,
     const REBYTE *utf8,
-    REBLEN limit  // !!! limit feature not implemented in R3-Alpha
+    REBLEN limit,  // !!! limit feature not implemented in R3-Alpha
+    REBCTX *context
 ){
     out->ss = ss;
 
@@ -1740,6 +1742,7 @@ void Init_Scan_Level(
 
     ss->file = file;
     ss->feed = nullptr;
+    ss->context = context;
     ss->depth = 0;
 
     out->mode = '\0';
@@ -2398,8 +2401,8 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     // object, it would be more complex...only for efficiency, and nothing
     // like it existed before.
     //
-    if (ss->feed and ss->feed->context and ANY_WORD(DS_TOP)) {
-        INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->feed->context)));
+    if (ss->context and ANY_WORD(DS_TOP)) {
+        INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
         INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, INDEX_ATTACHED);
     }
 
@@ -2832,12 +2835,16 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode)
 //
 // Scan source code. Scan state initialized. No header required.
 //
-REBARR *Scan_UTF8_Managed(const REBSTR *file, const REBYTE *utf8, REBSIZ size)
-{
+REBARR *Scan_UTF8_Managed(
+    const REBSTR *file,
+    const REBYTE *utf8,
+    REBSIZ size,
+    REBCTX *context
+){
     SCAN_STATE ss;
     SCAN_LEVEL level;
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, size);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, size, context);
 
     REBDSP dsp_orig = DSP;
     Scan_To_Stack(&level);
@@ -2868,7 +2875,7 @@ REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
     SCAN_STATE ss;
     const REBSTR *file = ANONYMOUS;
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, len);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, len, nullptr);
 
     REBINT result = Scan_Head(&ss);
     if (result == 0)
@@ -2927,6 +2934,8 @@ void Shutdown_Scanner(void)
 //          [file! url!]
 //      /line "Line number for start of scan, word variable will be updated"
 //          [integer! any-word!]
+//      /where "Where you want to bind words to (default unbound)"
+//          [module!]
 //  ]
 //
 REBNATIVE(transcode)
@@ -2989,9 +2998,11 @@ REBNATIVE(transcode)
     REBSIZ size;
     const REBYTE *bp = VAL_BYTES_AT(&size, source);
 
+    REBCTX *context = REF(where) ? VAL_CONTEXT(ARG(where)) : nullptr;
+
     SCAN_LEVEL level;
     SCAN_STATE ss;
-    Init_Scan_Level(&level, &ss, file, start_line, bp, size);
+    Init_Scan_Level(&level, &ss, file, start_line, bp, size, context);
 
     if (REF(next))
         level.opts |= SCAN_FLAG_NEXT;
@@ -3103,7 +3114,7 @@ const REBYTE *Scan_Any_Word(
     // scanner did not implement scan limits; it always expected the input
     // to end at '\0'.  We crop the word based on the size after the scan.
     //
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, UNLIMITED);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, UNLIMITED, nullptr);
 
     DECLARE_MOLD (mo);
 

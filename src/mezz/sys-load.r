@@ -352,7 +352,7 @@ load: function [
         'module = select hdr 'type
         find (try get 'hdr/options) [unbound]
     ] then [
-        data: intern data
+        data: intern data system/contexts/user
     ]
 
     if header [

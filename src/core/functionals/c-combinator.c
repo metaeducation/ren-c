@@ -207,7 +207,15 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
     SCAN_STATE ss;
     SCAN_LEVEL level;
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, ANONYMOUS, start_line, utf8, strsize(utf8));
+    Init_Scan_Level(
+        &level,
+        &ss,
+        ANONYMOUS,
+        start_line,
+        utf8,
+        strsize(utf8),
+        nullptr
+    );
 
     Scan_To_Stack(&level);  // Note: Unbound code, won't find FRAME! etc.
   }

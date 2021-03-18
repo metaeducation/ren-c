@@ -146,8 +146,6 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         //
         // !!! Some kind of "binding instruction" might allow other uses?
         //
-        feed->context = Get_Context_From_Stack();
-
         SCAN_LEVEL level;
         SCAN_STATE ss;
         const REBLIN start_line = 1;
@@ -157,7 +155,8 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
             Intern_Unsized_Managed("-variadic-"),
             start_line,
             cast(const REBYTE*, p),
-            feed
+            feed,
+            Get_Context_From_Stack()
         );
 
         REBVAL *error = rebRescue(cast(REBDNG*, &Scan_To_Stack), &level);
