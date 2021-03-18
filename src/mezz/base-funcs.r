@@ -898,8 +898,8 @@ module: func [
         do compose [ensure (types) (var)]  ; names to show if fails
     ]
 
-    ; In Ren-C, MAKE MODULE! acts just like MAKE OBJECT! due to the generic
-    ; facility for SET-META.
+    ; !!! The plan for MAKE MODULE! is not to heed the size, because it uses
+    ; the global hash table of words to access its variables.
 
     into: default [
         make module! 7 ; arbitrary starting size
@@ -964,20 +964,21 @@ module: func [
 
     set-meta mod spec
 
-    ; Add exported words at top of context (performance):
-    if block? select spec 'exports [bind/new spec/exports mod]
+    ; The INTERN process makes *all* the words "opportunistically bound" to
+    ; mod, with inheritance of lib.  While words bound in this way can read
+    ; from LIB, they cannot write to lib.  This process does not create any
+    ; new storage space for variables.
+    ;
+    intern body mod
 
-    ; Only top level defined words are module variables.
+    ; We do create storage space for all the top level SET-WORD!s in the
+    ; module.  Doing so without any special markings is a historical policy
+    ; which hasn't yet been replaced with any better ideas.
     ;
     bind/only/set body mod
 
-    ; The module shares system exported variables:
-    ;
-    bind body lib
-
     if object? mixin [bind body mixin]
 
-    bind body mod  ; !!! "Redundant?" (said the comment...)
     do body
 
     return mod

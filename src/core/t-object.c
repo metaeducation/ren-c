@@ -36,7 +36,6 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             VAL_WORD_SYMBOL(arg),
             strict
         )){
-            Expand_Context(c, 1);
             Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg));
         }
         return;
@@ -474,7 +473,7 @@ REB_R MAKE_Context(
         const RELVAL *at = VAL_ARRAY_AT(&tail, arg);
 
         REBCTX *ctx = Make_Context_Detect_Managed(
-            REB_OBJECT,
+            kind,
             at,
             tail,
             parent_ctx
