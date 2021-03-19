@@ -27,54 +27,14 @@ REBOL [
     }
 ]
 
-; BASICS:
-;
-; Code gets loaded in two ways:
-;   1. As user code/data - residing in user context
-;   2. As module code/data - residing in its own context
-;
-; Module loading can be delayed. This allows special modules like CGI,
-; protocols, or HTML formatters to be available, but not require extra space.
-; The system/modules list holds modules for fully init'd modules, otherwise it
-; holds their headers, along with the binary or block that will be used to
-; init them.
 
+; !!! R3-Alpha Module loading had the ability to be delayed.  This was so
+; that special modules like CGI protocols or HTML formatters could be available
+; in the system/modules list...held as just headers and the BINARY! or BLOCK!
+; that would be used to initialize them.  The feature obfuscated more
+; foundational design points, so was temporarily removed...but should be
+; brought back once the code solidifies.
 
-export-words: func [
-    {Exports words of a context into both the system lib and user contexts.}
-
-    ctx "Module context"
-        [module! object!]
-    words "The exports words block of the module"
-        [block! blank!]
-][
-    if words [
-        ; words already set in lib are not overriden
-        resolve/extend/only lib ctx words
-
-        ; lib, because of above
-        resolve/extend/only system/contexts/user lib words
-    ]
-]
-
-
-mixin?: func [
-    "Returns TRUE if module is a mixin with exports."
-    return: [logic!]
-    mod [module! object!] "Module or spec header"
-][
-    ; Note: Unnamed modules DO NOT default to being mixins
-
-    if module? mod [mod: meta-of mod]  ; Get the header object
-
-    return did all [
-        find (select mod 'options) [private]
-
-        ; If there are no exports, there's no difference
-        block? select mod 'exports
-        not empty? select mod 'exports
-    ]
-]
 
 
 load-header: function [
@@ -325,13 +285,7 @@ load: function [
 
     ; Try to load the header, handle error
 
-    hdr: line: _  ; for SET-WORD! gathering, evolving...
-    either object? data [
-        fail "Code has not been updated for LOAD-EXT-MODULE"
-        load-ext-module data
-    ][
-        [hdr data line]: load-header/file data file
-    ]
+    let [hdr 'data line]: load-header/file data file
 
     if word? hdr [cause-error 'syntax hdr source]
 
@@ -378,282 +332,107 @@ load-value: redescribe [
 )
 
 
+; This is code that is reused by both IMPORT and LOAD-EXTENSION.
+;
+; We don't want to load the same module more than once.  This is standard
+; in languages like Python and JavaScript:
+;
+; https://dmitripavlutin.com/javascript-module-import-twice
+; https://stackoverflow.com/q/19077381/
+;
+; This means there needs to be some way of knowing a "key" for the module
+; without running it.  Unfortunately we can't tell the key from just the
+; information given as the "source"...so it might require an HTTP fetch of
+; a URL! or reading from a file.  But we could notice when the same filename
+; or URL was used.
+;
+; !!! Previously this had the ability to /DELAY running the module; which
+; could hold it even as a BINARY! and wait until it was needed.  This was not
+; fully realized, and has been culled to try and get more foundational
+; features (e.g. binding) working.
+;
 load-module: func [
-    {Loads a module and inserts it into the system module list.}
+    {Inserts a module into the system module list (creating if necessary)}
 
-    return: [blank! block!]
-    source {Source (file, URL, binary, etc.)}
-        [word! file! url! text! binary!]
-    /version "Module must be this version or greater"
-        [tuple!]
-    /no-lib "Don't export to the runtime library (lib)"
-    /import "Do module import now, overriding /delay and 'delay option"
-    /as "New name for the module (not valid for reloads)"
-        [word!]
-    /delay "Delay module init until later (ignored if source is module!)"
+    return: [<opt> module!]
+    source {Source (file, URL, binary, etc.) or name of already loaded module}
+        [module! file! url! text! binary! word!]
     /into "Load into an existing module (e.g. populated with some natives)"
         [module!]
     /exports "Add exports on top of those in the EXPORTS: section"
         [block!]
 ][
-    let name: as
-    as: :lib/as
+    if module? source [  ; Register only, don't create
+        let name: noquote (meta-of source)/name
 
-    let mod: null
-    let hdr: null
-    let tmp: null
-
-    ; NOTES:
-    ;
-    ; This is a variation of LOAD that is used by IMPORT. Unlike LOAD, the
-    ; module init may be delayed. The module may be stored as binary or as an
-    ; unbound block, then init'd later, as needed.
-    ;
-    ; A name is required for all imported modules, delayed or not; /as can be
-    ; specified for unnamed modules. If you don't want to name it, don't import.
-    ; If source is a module that is loaded already, /as name is an error.
-    ;
-    ; Returns block of name, and either built module or blank if delayed.
-    ; Returns blank if source is word and no module of that name is loaded.
-    ; Returns blank if source is file/url and read or load-extension fails.
-
-    if import [delay: _]  ; /import overrides /delay
-
-    ; Process the source, based on its type
-
-    let data
-    switch type of source [
-        word! [ ; loading the preloaded
-            if name [
-                cause-error 'script 'bad-parameter /as  ; no renaming
-            ]
-
-            ; Return blank if no module of that name found
-
-            tmp: find/skip system/modules ^source 2 else [
-                return blank
-            ]
-
-            ensure [module! block!] mod: next tmp
-
-            ; If no further processing is needed, shortcut return
-
-            all [not version, any [delay, module? :mod]] then [
-                return reduce [source (try match module! :mod)]
-            ]
-        ]
-
-        binary!  ; bytes are not known to be valid UTF-8
-        text! [  ; bytes are known to be valid UTF-8
-            data: source
-        ]
-
-        file!
-        url! [
-            let tmp: file-type? source
-            case [
-                tmp = 'rebol [
-                    data: read source else [
-                        return blank
-                    ]
-                ]
-
-                tmp = 'extension [
-                    fail "Use LOAD or LOAD-EXTENSION to load an extension"
-                ]
-            ] else [
-                cause-error 'access 'no-script source  ; !!! need better error
-            ]
-        ]
-    ]
-
-    mod: default [_]
-
-    ; Get info from preloaded or delayed modules
-    if module? mod [
-        delay: _ hdr: meta-of mod
-        ensure [block! blank!] hdr/options
-    ]
-    if block? mod [
-        set [hdr: code:] mod
-    ]
-
-    ; module/block mod used later for override testing
-
-    ; Get and process the header
-
-    let code
-    let line
-    if null? hdr [
-        ; Only happens for string, binary or non-extension file/url source
-
-        [hdr code line]: load-header/file/required data (
-            match [file! url!] source
-        )
-        case [
-            word? hdr [cause-error 'syntax hdr source]
-            import [
-                ; /IMPORT overrides 'delay option
-            ]
-            not delay [delay: did find hdr/options just delay]
-        ]
-    ] else [
-        ; !!! Some circumstances, e.g. `do <json>`, will wind up not passing
-        ; a URL! to this routine, but a MODULE!.  If so, it has already been
-        ; transcoded...so line numbers in the text are already accounted for.
-        ; These mechanics need to be better understood, but until it's known
-        ; exactly why it's working that way fake a line number so that the
-        ; rest of the code does not complain.
+        ; The module they're passing in may or may not have a name.  If it
+        ; has a name, we want to add it to the module list if it's not
+        ; already there.
         ;
-        line: 1
-    ]
-
-    ; Unify hdr/name and /AS name
-    if name [
-        hdr/name: name  ; rename /AS name
-    ] else [
-        name: :hdr/name
-    ]
-
-    if (not no-lib) and (not word? :name) [
-        ;
-        ; Requires name for full import
-        ; Unnamed module can't be imported to lib, so /NO-LIB here
-
-        no-lib: true  ; Still not /NO-LIB in IMPORT
-
-        ; But make it a mixin and it will be imported directly later
-
-        if not find hdr/options just private [
-            hdr/options: append any [hdr/options, make block! 1] [private]
+        if not name [
+            return source
         ]
-    ]
-    if not tuple? let modver: :hdr/version [
-        modver: 0.0.0 ; get version
-    ]
-
-    ; See if it's there already, or there is something more recent
-
-    let name0
-    let mod0
-    let ver0
-    let hdr0
-    let override?
-    let pos
-    all [
-        override?: not no-lib  ; set to false later if existing module is used
-        set [name0 mod0] pos: try find/skip system/modules ^name 2
-    ]
-    then [  ; Get existing module's info
-
-        if module? :mod0 [hdr0: meta-of mod0] ; final header
-        if block? :mod0 [hdr0: first mod0] ; cached preparsed header
-
-        ensure word! name0
-        ensure object! hdr0
-
-        if not tuple? ver0: :hdr0/version [
-            ver0: 0.0.0
+        let mod: select/skip system/modules name 2 else [
+            append system/modules reduce [name source]
+            return source
         ]
-
-        ; Compare it to the module we want to load
-        case [
-            same? mod mod0 [
-                override?: not any [delay module? mod]  ; here already
-            ]
-
-            module? mod0 [
-                ; premade module
-                pos: _   ; just override, don't replace
-                if ver0 >= modver [
-                    ; it's at least as new, use it instead
-                    mod: mod0, hdr: hdr0, code: _
-                    modver: ver0
-                    override?: false
-                ]
-            ]
-
-            ; else is delayed module
-
-            ver0 > modver [  ; and it's newer, use it instead
-                mod: _ set [hdr code] mod0
-                modver: ver0
-                ext: all [(object? code) code]  ; delayed extension
-                override?: not delay  ; stays delayed if /delay
-            ]
+        if mod != source [
+            print mold meta-of mod
+            print mold meta-of source
+            fail ["Conflict: more than one module instance named" name]
         ]
+        return source
     ]
 
-    if not module? mod [
-        mod: _   ; don't need/want the block reference now
+    let data: null
+    let [hdr code line]
+
+    ; Figure out the name of the module desired, by examining the header
+
+    let file: match [file! url!] source  ; used for file/line info during scan
+
+    let name: match word! source else [
+        data: match [binary! text!] source else [read source]
+
+        [hdr code line]: load-header/file/required data file
+        name: noquote hdr/name
     ]
 
-    all [version, version > modver] then [
-        cause-error 'syntax 'needs reduce [name version]
+    ; See if a module by that name is already loaded, and return it if so
+
+    let mod: select/skip system/modules name 2 then [
+        return mod
     ]
 
-    ; If no further processing is needed, shortcut return
-    if (not override?) and (mod or delay) [return reduce [name mod]]
+    if not data [return null]  ; If source was a WORD!, can't fallback on load
 
-    ; If /DELAY, save the intermediate form
-    if delay [
-        mod: reduce [hdr either object? ext [ext] [code]]
-    ]
+    code: transcode/line/file code line file
 
-    ; Else not /DELAY, make the module if needed
-    if not mod [
-        ; not prebuilt or delayed, make a module
+    ensure object! hdr
+    ensure block! code
 
-        if object? code [ ; delayed extension
-            fail "Code has not been updated for LOAD-EXT-MODULE"
+    ; !!! The /EXPORTS parameter allows the adding of more exports, it's used
+    ; by the extension mechanism when it sees "export" in the spec on a native.
+    ; That doesn't correspond to an actual execution of an export command.
+    ; This code added it to the header, but it's not clear if the header
+    ; needs to be the canon list of exports.
 
-            set [hdr: code:] load-ext-module code
-            hdr/name: name ; in case of delayed rename
-        ]
-
-        if binary? code [code: make block! code]
-
-        ensure object! hdr
-        ensure block! code
-
-        if exports [
-            if null? select hdr 'exports [
-                append hdr compose [exports: (exports)]
-            ] else [
-                append exports hdr/exports
-                hdr/exports: exports
-            ]
-        ]
-
-        catch/quit [
-            mod: module/into hdr code into
-        ]
-    ]
-
-    all [
-        not no-lib
-        override?
-    ] then [
-        if pos [
-            pos/2: mod  ; replace delayed module
+    if exports [
+        if null? select hdr 'exports [
+            append hdr compose [exports: (exports)]
         ] else [
-            append system/modules reduce [name mod]
-        ]
-
-        all [
-            module? mod
-            not mixin? hdr
-            block? select hdr 'exports
-        ] then [
-            resolve/extend/only lib mod hdr/exports  ; no-op if empty
+            append exports hdr/exports
+            hdr/exports: exports
         ]
     ]
 
-    return reduce [
-        name
-        match module! mod
-        ensure integer! line
+    catch/quit [
+        mod: module/into hdr code into
     ]
+
+    append system/modules reduce [name, ensure module! mod]
+
+    return mod
 ]
 
 ; If TRUE, IMPORT 'MOD acts as IMPORT <MOD>
@@ -663,15 +442,11 @@ force-remote-import: false
 ; See also: SYS/MAKE-MODULE*, SYS/LOAD-MODULE
 ;
 import: function [
-    {Imports a module; locate, load, make, and setup its bindings.}
+    {Imports a module; locate, load, make, and setup its bindings}
 
-    return: "Loaded module (or block of modules if argument was block)"
-        [<opt> module! block!]
-    module [word! file! url! text! binary! module! tag!]
-    /version "Module must be this version or greater"
-        [tuple!]
-    /no-lib "Don't export to the runtime library (lib)"
-    /no-user "Don't export to the user context"
+    return: "Loaded module"
+        [<opt> module!]
+    source [word! file! url! text! binary! module! tag!]
 ][
     old-force-remote-import: force-remote-import
     ; `import <name>` will look in the module library for the "actual"
@@ -681,18 +456,18 @@ import: function [
     ; then every nested `import 'mod2`
     ; is forced to `import <mod2>`
     ;
-    if tag? module [set 'force-remote-import true]
-    if all [force-remote-import, word? module] [
-        module: to tag! module
+    if tag? source [set 'force-remote-import true]
+    if all [force-remote-import, word? source] [
+        source: to tag! source
     ]
-    if tag? module [
-        tmp: (select load system/locale/library/modules module) else [
+    if tag? source [
+        tmp: (select load system/locale/library/modules source) else [
             cause-error 'access 'cannot-open reduce [
                 module "module not found in system/locale/library/modules"
             ]
         ]
 
-        module: (first tmp) else [
+        source: (first tmp) else [
             cause-error 'access 'cannot-open reduce [
                 module "error occurred in loading module"
                     "from system/locale/library/modules"
@@ -700,78 +475,55 @@ import: function [
         ]
     ]
 
-    set [name: mod:] applique :load-module [
-        source: module
-        version: version
-        no-lib: no-lib
-        import: #  ; !!! original code always passed /IMPORT, should it?
-    ]
+    mod: load-module source
 
     case [
         mod [
             ; success!
         ]
 
-        word? module [
+        word? source [
             ;
             ; Module (as word!) is not loaded already, so try to find it.
             ;
             file: append to file! module system/options/default-suffix
 
             for-each path system/options/module-paths [
-                if set [name: mod:] (
-                    applique :load-module [
-                        source: join path file  ; Note: %% not defined yet
-                        version: version
-                        no-lib: no-lib
-                        import: #
-                    ]
-                ) [
+                if mod: load-module join path file [  ; Note: %% not defined yet
                     break
                 ]
             ]
         ]
 
-        match [file! url!] module [
+        match [file! url!] source [
             cause-error 'access 'cannot-open reduce [
-                module "not found or not valid"
+                source "not found or not valid"
             ]
         ]
     ]
 
     if not mod [
-        cause-error 'access 'cannot-open reduce [module "module not found"]
+        cause-error 'access 'cannot-open reduce [source "module not found"]
     ]
 
-    ; Do any imports to the user context that are necessary.
-    ; The lib imports were handled earlier by LOAD-MODULE.
-
-    case [
-        any [
-            no-user
-            not block? exports: select hdr: meta-of mod 'exports
-            empty? exports
-        ][
-            ; Do nothing if /NO-USER or no exports.
-        ]
-
-        any [
-            no-lib
-            find (select hdr 'options) [private]  ; /NO-LIB causes private
-        ][
-            ; It's a private module (mixin)
-            ; we must add *all* of its exports to user
-
-            resolve/extend/only system/contexts/user mod exports
-        ]
-
-        ; Unless /NO-LIB its exports are in lib already
-        ; ...so just import what we need.
-        ;
-        not no-lib [
-            resolve/only system/contexts/user lib exports
-        ]
+    ; !!! Previously the idea was that HDR/EXPORTS would go into lib.  Many
+    ; modules are manually using EXPORT at the moment to do this, because
+    ; modules were so exasperating.  The new idea is that exports would only
+    ; be given to those who imported the features.
+    ;
+    ; !!! LIB imports handled should be implicitly picked up by virtue of
+    ; inheritance of the lib context.
+    ;
+    ; !!! The idea of `import *` is frowned upon as a practice, as it adds
+    ; an unknown number of things to the namespace of the caller.  Most
+    ; languages urge you not to do it, but JavaScript bans it entirely.  We
+    ; should probably ban it as well.  But do it for the moment since that
+    ; is how it has worked in the past.
+    ;
+    if let exports: select (meta-of mod) 'exports [
+        resolve/extend/only lib mod try exports  ; no-op if empty
     ]
+
     set 'force-remote-import old-force-remote-import
     return ensure module! mod
 ]

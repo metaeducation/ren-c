@@ -107,13 +107,20 @@ REBNATIVE(builtin_extensions)
 //      return: [module!]
 //      where "Path to extension file or block of builtin extension details"
 //          [file! block!]  ; !!! Should it take a LIBRARY! instead?
-//      /no-user "Do not export to the user context"
-//      /no-lib "Do not export to the lib context"
 //  ]
 //
 REBNATIVE(load_extension)
-// !!! It is not ideal that this code be all written as C, as it is really
-// kind of a variation of LOAD-MODULE and will have to repeat a lot of work.
+//
+// An "Extension" is a form of module which has associated native code.  There
+// are two ways of getting that native code: one is through a "DLL", and
+// another is by means of having it passed in through a HANDLE! of information
+// that was "collated" together to build the extension into the executable.
+//
+// !!! The DLL form has not been tested and maintained, so it needs to be
+// hammered back into shape and tested.  However, higher priority is to make
+// the extension mechanism work in the WebAssembly build with so-called
+// "side modules", so that extra bits of native code functionality can be
+// pulled into web sessions that want them.
 {
     INCLUDE_PARAMS_OF_LOAD_EXTENSION;
 
@@ -212,7 +219,7 @@ REBNATIVE(load_extension)
         ANONYMOUS,  // !!! Name of DLL if available?
         specs_utf8,
         specs_size,
-        module_ctx
+        module_ctx  // !!! LOAD-MODULE redundantly interns
     );
     rebFree(specs_utf8);
     PUSH_GC_GUARD(specs);
@@ -301,16 +308,10 @@ REBNATIVE(load_extension)
     // do that here.
     //
     rebElide(
-        "sys/load-module/into/exports", rebR(script_bin), module, exports
+        "import sys/load-module/into/exports", rebR(script_bin), module, exports
     );
 
     // !!! Ideally we would be passing the lib, path,
-
-    // !!! If these were the right refinements that should be tunneled through
-    // they'd be tunneled here, but isn't this part of the module's spec?
-    //
-    UNUSED(REF(no_user));
-    UNUSED(REF(no_lib));
 
     DROP_GC_GUARD(exports);
     DROP_GC_GUARD(specs);
