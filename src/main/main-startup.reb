@@ -2,6 +2,8 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Command line processing and startup code called by %main.c"
     File: %main-startup.r
+    Type: 'Module
+    Name: 'Ren-C-Startup
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors
@@ -23,16 +25,6 @@ REBOL [
         with (see the /PROVOKE refinement of CONSOLE for more information).
     }
 ]
-
-; These used to be loaded by the core, but prot-tls depends on crypt, thus it
-; needs to be loaded after crypt. It was not an issue when crypt was builtin.
-; But when it's converted to a module, it breaks the dependency of prot-tls.
-;
-; Moving protocol loading from core to host fixes the problem.
-;
-; Should be initialized by make-host-init.r, but set a default just in case.
-;
-host-prot: default [_]
 
 boot-print: redescribe [
     "Prints during boot when not quiet."
@@ -201,11 +193,11 @@ host-script-pre-load: func [
 ; document the issue.  So we make them SET-WORD!s added to lib up front, so
 ; the lib modification gets picked up.
 ;
-get-current-exec:
-file-to-local:
-local-to-file:
-what-dir:
-change-dir: '~unset~
+; NOTE: We depend on...
+;
+; [get-current-exec file-to-local local-to-file what-dir change-dir]
+;
+; These are implicitly picked up from LIB but would need to be done different
 
 
 main-startup: func [
@@ -215,7 +207,7 @@ main-startup: func [
     argv {Raw command line argument block received by main() as STRING!s}
         [block!]
     <with>
-    main-startup host-prot  ; unset when finished with them
+    main-startup  ; unset when finished with itself
     about usage license  ; exported to lib, see notes
     <static>
         o (system/options)  ; shorthand since options are often read/written
@@ -715,12 +707,6 @@ main-startup: func [
     ; Convert command line arg strings as needed:
     let script-args: o/args  ; save for below
 
-    ; version, import, secure are all of valid type or blank
-
-
-    for-each [spec body] host-prot [module spec body]
-    host-prot: '~host-protocols-registered~  ; frees up data for GC
-
     ;
     ; start-up scripts, o/loaded tracks which ones are loaded (with full path)
     ;
@@ -818,3 +804,5 @@ main-startup: func [
 
     return <start-console>
 ]
+
+export [main-startup about usage license]

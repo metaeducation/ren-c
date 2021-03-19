@@ -3,8 +3,8 @@ REBOL [
     Title: "Create C .inc file with const data of r3.exe startup code"
     File: %prep-main.reb
     Rights: {
+        Copyright 2012-2021 Ren-C Open Source Contributors
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -31,48 +31,7 @@ output-dir: make-file [(system/options/path) prep /]
 mkdir/deep make-file [(output-dir) main /]
 
 
-; !!! The "host protocols" are embedded in a way that is very similar to the
-; extensions.  However, they do not have any native code directly associated
-; with them.  It would be nice to unify this, to blur the distinction between
-; an "extension" and a "module" a bit more.
-;
-; But what's happening here is just that the header and contents of the
-; modules are being put into blocks so that they can be instantiated at the
-; right moment, by reading blocks out of the HOST-PROT variable.
-
 buf: make text! 200000
-
-comment [  ; if LOAD were used this would need a header
-    append/line buf "REBOL []"
-]
-
-append/line buf "host-prot: ["
-
-
-for-each file [
-    %prot-tls.r  ; TLS (a.k.a. the "S" in HTTPS)
-    %prot-http.r  ; HTTP Client (HTTPS if used with TLS)
-][
-    header: _  ; was a SET-WORD!...for locals gathering?
-    contents: stripload/header (join %../../scripts/ file) 'header
-
-    ; We go ahead and LOAD the header in this case, so we can write only the
-    ; module fields we care about ("Description" is not needed, for instance.)
-    ;
-    header: ensure block! load header  ; Loaded as BLOCK!, not object
-
-    append/line buf mold/flat compose [
-        Title: (header/Title else [fail])  ; !!! Affected by case-sensitivity
-        Version: (header/Version else [fail])
-        Name: (header/Name else [fail])
-    ]
-
-    append/line buf "["
-    append/line buf contents
-    append/line buf "]"
-]
-
-append/line buf "]"
 
 
 ; In order to get the whole process rolling for the r3.exe, it needs to do
@@ -80,25 +39,32 @@ append/line buf "]"
 ; It would likely want to build on ZIP files to do this, so the unzip script
 ; is embedded as well.
 ;
-; !!! Unlike the %prot-http.r and %prot-tls.r, this would be a difficult
-; process to abstract to extensions...since de-encapping might be important
-; to booting to the point of being able to load anything at all.
-
 for-each file [
-    %../../scripts/encap.reb
     %../../scripts/unzip.reb
+    %../../scripts/encap.reb
 
     %../../scripts/make-file.r  ; Work in progress for FILE! conversion
     %../../scripts/shell.r  ; SHELL dialect (requires CALL, here for editing)
 
+    ; %prot-http.r and %prot-tls.r don't have any native code directly in them,
+    ; so they don't need to be "extensions".  They could just be encapped
+    ; (unlike the encap and compression code itself.)  But they represnt
+    ; another level of "bootstrap" for those who want to run scripts off the
+    ; web, so they make sense to build into the executable.
+    ;
+    ; Note that these depend on the crypto extension being initialized to run.
+
+    %../../scripts/prot-tls.r  ; TLS (a.k.a. the "S" in HTTPS)
+    %../../scripts/prot-http.r  ; HTTP Client (HTTPS if used with TLS)
+
     %main-startup.reb
 ][
-    print ["loading:" file]
+    print ["Emulating LOAD of header for:" file]
 
     header: _  ; !!! Was a SET-WORD!...for locals gathering?
     contents: stripload/header file 'header
 
-    is-module: false  ; currently none of these files are modules
+    is-module: true  ; Everything *should* be a module
     if is-module [
         append/line buf "import module ["
         append/line buf header

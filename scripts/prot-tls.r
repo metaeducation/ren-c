@@ -1,7 +1,7 @@
 REBOL [
     Title: "REBOL 3 TLS Client 1.0 - 1.2 Protocol Scheme"
-    Name: tls
-    Type: module
+    Type: 'Module
+    Name: 'TLS-Protocol
     Version: 0.7.0
     Rights: {
         Copyright 2012 Richard "Cyphre" Smolak (TLS 1.0)

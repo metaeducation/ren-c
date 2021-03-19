@@ -1,9 +1,11 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Zip and Unzip Services"
+    Type: 'Module
+    Name: 'Zip
     Rights: {
+        Copyright 2009-2021 Ren-C Open Source Contributors
         Copyright 2009 Vincent Ecuyer
-        Copyright 2009-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
 
         See README.md and CREDITS.md for more information.
@@ -55,7 +57,6 @@ REBOL [
     }
 ]
 
-ctx-zip: context [
 local-file-sig: #{504B0304}
 central-file-sig: #{504B0102}
 end-of-central-sig: #{504B0506}
@@ -611,9 +612,9 @@ unzip: function [
     if block? where [return where]
     return none
 ]
-]
+
 
 append lib compose [
-    zip: (:ctx-zip/zip)
-    unzip: (:ctx-zip/unzip)
+    zip: (:zip)
+    unzip: (:unzip)
 ]

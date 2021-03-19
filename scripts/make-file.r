@@ -1,6 +1,9 @@
 REBOL [
     File: %make-file.r
     Title: "MAKE-FILE Experiments"
+    Type: 'Module
+    Name: 'Make-File
+    Exports: [make-file]  ; NOTE: bootstrap EXE lacks EXPORT command
     Description: {
         This is a very experimental starter file for defining a dialect that
         can take advantage of generic TUPLE! and PATH! to create FILE!s.
@@ -44,6 +47,8 @@ REBOL [
         evolves into something that can be the main behavior for MAKE FILE!.
     }
 ]
+
+; See %bootstrap-shim.r, this comment must end with ===FIND/TAIL THIS===
 
 doubled-file-slash-error: func [item] [
     make error! [
