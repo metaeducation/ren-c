@@ -844,17 +844,16 @@ module: func [
     return: [module!]
     spec "The header block of the module (modified)"
         [block! object!]
-    body "The body block of the module (modified)"
+    body "The body block of the module (all bindings will be overwritten)"
         [block!]
-    /mixin "Mix in words collected into an object from other modules"
+    /mixin "Bind body to this additional object before running with DO"
         [object!]
     /into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
 ][
-    ; !!! Is it a good idea to mess with the given spec and body bindings?
-    ; This was done by MODULE but not seemingly automatically by MAKE MODULE!
-    ;
-    unbind/deep body
+    ; Originally, UNBIND/DEEP was run on the body as a first step.  We now use
+    ; INTERN or the implicit interning done by TRANSCODE to set the baseline of
+    ; binding to the module (and things it inherits, like LIB).
 
     ; Convert header block to standard header object:
     ;
@@ -905,10 +904,6 @@ module: func [
         make module! 7 ; arbitrary starting size
     ]
     let mod: into
-
-    if find spec/options just extension [
-        append mod 'lib-base ; specific runtime values MUST BE FIRST
-    ]
 
     if not spec/type [spec/type: 'module] ; in case not set earlier
 

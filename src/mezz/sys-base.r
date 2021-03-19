@@ -107,7 +107,9 @@ do*: func [
 
     ; Load the code (do this before CHANGE-DIR so if there's an error in the
     ; LOAD it will trigger before the failure of changing the working dir)
-    ; It is loaded as UNBOUND so that DO-NEEDS runs before INTERN.
+    ;
+    ; !!! This said "It is loaded as UNBOUND so that DO-NEEDS runs before
+    ; INTERN."  Now that DO-NEEDS no longer exists, what does it mean?
     ;
     let hdr
     let code
@@ -131,7 +133,6 @@ do*: func [
         ; Return result without "script overhead" (e.g. don't change the
         ; working directory to the base of the file path supplied)
         ;
-        do-needs hdr  ; Load the script requirements
         intern code system/contexts/user   ; Bind the user script
         catch/quit [
             ;
@@ -177,7 +178,7 @@ do*: func [
         ; Eval the block or make the module, returned
         either is-module [ ; Import the module and set the var
             catch/quit [
-                import module/mixin hdr code (opt do-needs/no-user hdr)
+                import module hdr code
 
                 ; !!! It would be nice if you could modularize a script and
                 ; still be able to get a result.  Until you can, make module
@@ -190,7 +191,6 @@ do*: func [
                 result: ~void~  ; console won't show BAD-WORD!s named ~void~
             ] then :finalizer/quit
         ][
-            do-needs hdr  ; Load the script requirements
             intern code system/contexts/user  ; Bind the user script
             catch/quit [
                 result: do code

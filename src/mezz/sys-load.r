@@ -378,111 +378,6 @@ load-value: redescribe [
 )
 
 
-do-needs: function [
-    {Process the NEEDS block of a program header. Returns unapplied mixins.}
-
-    return: [blank! block!]
-    needs "Needs block, header or version"
-        [block! object! tuple! blank!]  ; has to handle blank! if in object!
-    /no-lib "Don't export to the runtime library"
-    /no-user "Don't export to the user context (mixins returned)"
-    /block "Return all the imported modules in a block, instead"
-][
-    ; This is a low-level function and its use and return values reflect that.
-    ;
-    ; In user mode, the mixins are applied by IMPORT, so they don't need to
-    ; be returned. In /NO-USER mode the mixins are collected into an object
-    ; and returned, if the object isn't empty. This object can then be passed
-    ; to MAKE module! to be applied there.
-    ;
-    ; The /BLOCK option returns a block of all the modules imported, not any
-    ; mixins.  This is for when IMPORT is called with a `Needs: [...]` block.
-
-    if object? needs [  ; header object
-        needs: select needs 'needs  ; (protected)
-    ]
-
-    switch type of needs [
-        blank! [return blank]  ; may have come from SELECT, not just arg
-
-        tuple! [  ; simple version number check for interpreter itself
-            case [
-                needs > system/version [
-                    cause-error 'syntax 'needs reduce ['core needs]
-                ]
-
-                3 >= length of needs [  ; no platform id
-                    blank
-                ]
-
-                (needs and+ 0.0.0.255.255)
-                <> (system/version and+ 0.0.0.255.255) [
-                    cause-error 'syntax 'needs reduce ['core needs]
-                ]
-            ]
-            return blank
-        ]
-
-        block! [
-            if empty? needs [return blank]
-        ]
-    ] else [
-        needs: reduce [needs]  ; If it's an inline value, put it in a block
-    ]
-
-    ; Parse the needs dialect [source <version>]
-
-    mods: make block! length of needs
-    name: vers: hash: _
-    parse ensure block! needs [
-        problem-pos: here
-        opt [opt 'core set vers tuple! (do-needs vers)]
-        while [
-            problem-pos: here
-            set name [word! | file! | url! | tag!]
-            set vers opt tuple!
-            set hash opt binary!
-            (append mods reduce [name vers hash])
-        ]
-        end
-    ] else [
-        cause-error 'script 'invalid-arg problem-pos
-    ]
-
-    ; Temporary object to collect exports of "mixins" (private modules).
-    ; Don't bother if returning all the modules in a block, or if in user mode.
-    ;
-    if no-user and (not block) [
-        mixins: make object! 0  ; Minimal length since it may persist later
-    ]
-
-    ; Import the modules:
-    ;
-    mods: map-each [name vers hash] mods [
-        mod: applique :import [
-            module: name
-
-            version: true  ; !!! automatic from VERS?
-            ver: opt vers
-
-            no-lib: no-lib
-            no-user: no-user
-        ]
-
-        ; Collect any mixins into the object (if we are doing that)
-        if all [set? 'mixins, mixin? mod] [
-            resolve/extend/only mixins mod select meta-of mod 'exports
-        ]
-        mod
-    ]
-
-    return try case [
-        block [mods]  ; /BLOCK refinement asks for block of modules
-        not empty? try :mixins [mixins]  ; if any mixins, return them
-    ]
-]
-
-
 load-module: func [
     {Loads a module and inserts it into the system module list.}
 
@@ -731,9 +626,7 @@ load-module: func [
         ]
 
         catch/quit [
-            mod: module/mixin/into hdr code (
-                opt do-needs/no-user hdr
-            ) :into
+            mod: module/into hdr code into
         ]
     ]
 
@@ -767,14 +660,14 @@ load-module: func [
 ;
 force-remote-import: false
 
-; See also: SYS/MAKE-MODULE*, SYS/LOAD-MODULE, SYS/DO-NEEDS
+; See also: SYS/MAKE-MODULE*, SYS/LOAD-MODULE
 ;
 import: function [
     {Imports a module; locate, load, make, and setup its bindings.}
 
     return: "Loaded module (or block of modules if argument was block)"
         [<opt> module! block!]
-    module [word! file! url! text! binary! module! block! tag!]
+    module [word! file! url! text! binary! module! tag!]
     /version "Module must be this version or greater"
         [tuple!]
     /no-lib "Don't export to the runtime library (lib)"
@@ -804,20 +697,6 @@ import: function [
                 module "error occurred in loading module"
                     "from system/locale/library/modules"
             ]
-        ]
-    ]
-
-    ; If it's a needs dialect block, call DO-NEEDS with /BLOCK:
-    ;
-    ; Note: IMPORT block! returns a block of all the modules imported.
-    ;
-    if block? module [
-        assert [not version] ; can only apply to one module
-        return applique :do-needs [
-            needs: module
-            no-lib: no-lib
-            no-user: no-user
-            block: #
         ]
     ]
 
