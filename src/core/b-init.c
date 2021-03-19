@@ -619,86 +619,6 @@ void Startup_Task(void)
 #endif
 
 
-//
-//  Startup_Base: C
-//
-// The code in "base" is the lowest level of Rebol initialization written as
-// Rebol code.  This is where things like `+` being an infix form of ADD is
-// set up, or FIRST being a specialization of PICK.  It's also where the
-// definition of the locals-gathering FUNCTION currently lives.
-//
-static void Startup_Base(REBARR *boot_base)
-{
-    RELVAL *head = ARR_HEAD(boot_base);
-    const RELVAL *tail = ARR_TAIL(boot_base);
-
-    // By this point, the Lib_Context contains basic definitions for things
-    // like true, false, the natives, and the generics.  But before deeply
-    // binding the code in the base block to those definitions, add all the
-    // top-level SET-WORD! in the base block to Lib_Context as well.
-    //
-    // Without this shallow walk looking for set words, an assignment like
-    // `foo: func [...] [...]` would not have a slot in the Lib_Context
-    // for FOO to bind to.  So FOO: would be an unbound SET-WORD!,
-    // and give an error on the assignment.
-    //
-    Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Context);
-
-    // With the base block's definitions added to the mix, deep bind the code
-    // and execute it.
-
-    Bind_Values_Deep(head, tail, Lib_Context);
-
-    DECLARE_LOCAL (result);
-    if (Do_At_Mutable_Throws(result, boot_base, 0, SPECIFIED))
-        panic (result);
-
-    if (not IS_BLANK(result))  // sanity check...script ends with `_`
-        panic (result);
-}
-
-
-//
-//  Startup_Sys: C
-//
-// The SYS context contains supporting Rebol code for implementing "system"
-// features.  The code has natives, generics, and the definitions from
-// Startup_Base() available for its implementation.
-//
-// (Note: The SYS context should not be confused with "the system object",
-// which is a different thing.)
-//
-// The sys context has a #define constant for the index of every definition
-// inside of it.  That means that you can access it from the C code for the
-// core.  Any work the core C needs to have done that would be more easily
-// done by delegating it to Rebol can use a function in sys as a service.
-//
-static void Startup_Sys(REBARR *boot_sys) {
-    RELVAL *head = ARR_HEAD(boot_sys);
-    const RELVAL *tail = ARR_TAIL(boot_sys);
-
-    // Add all new top-level SET-WORD! found in the sys boot-block to Lib,
-    // and then bind deeply all words to Lib and Sys.  See Startup_Base() notes
-    // for why the top-level walk is needed first.
-    //
-    Bind_Values_Set_Midstream_Shallow(head, tail, Sys_Context);
-    Bind_Values_Deep(head, tail, Lib_Context);
-    Bind_Values_Deep(head, tail, Sys_Context);
-
-    DECLARE_LOCAL (result);
-    if (Do_At_Mutable_Throws(result, boot_sys, 0, SPECIFIED))
-        panic (result);
-
-    if (not IS_BLANK(result))
-        panic (result);
-
-    // !!! It was a stated goal at one point that it should be possible to
-    // protect the entire system object and still run the interpreter.  That
-    // was commented out in R3-Alpha
-    //
-    //    comment [if :lib/secure [protect-system-object]]
-}
-
 
 #if !defined(NDEBUG)
 //
@@ -718,19 +638,80 @@ REBVAL *Get_Sys_Function_Debug(REBLEN index, const char *name)
 #endif
 
 
-// By this point in the boot, it's possible to trap failures and exit in
-// a graceful fashion.  This is the routine protected by rebRescue() so that
-// initialization can handle exceptions.
+// By this point, the Lib_Context contains basic definitions for things
+// like true, false, the natives, and the generics.
+//
+// It's also possible to trap failures and exit in a graceful fashion.  This is
+// the routine protected by rebRescue() so initialization can handle exceptions.
 //
 static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
 {
-    Startup_Base(VAL_ARRAY_KNOWN_MUTABLE(&boot->base));
+  //=//// BASE STARTUP /////////////////////////////////////////////////////=//
 
-    Startup_Sys(VAL_ARRAY_KNOWN_MUTABLE(&boot->sys));
+    // The code in "base" is the lowest level of initialization written as
+    // Rebol code.  This is where things like `+` being an infix form of ADD is
+    // set up, or FIRST being a specialization of PICK.  It also has wrappers
+    // for more basic natives like FUNC* or SPECIALIZE*, that handle aspects
+    // that are easier to write in usermode than in C (like inheriting HELP
+    // information).
 
     rebElide(
-        "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context,   // not BIND/NEW !
-        "bind", SPECIFIC(&boot->mezz), Lib_Context,
+        //
+        // Code is already interned to Lib_Context by TRANSCODE.  Create
+        // actual variables for top-level SET-WORD!s only, and run.
+        //
+        "bind/only/set", &boot->base, Lib_Context,
+        "do", &boot->base
+    );
+
+
+  //=//// SYS STARTUP //////////////////////////////////////////////////////=//
+
+    // The SYS context contains supporting Rebol code for implementing "system"
+    // features.  The code has natives, generics, and the definitions from
+    // Startup_Base() available for its implementation.
+    //
+    // (Note: The SYS context should not be confused with "the system object",
+    // which is a different thing.)
+    //
+    // The sys context has a #define constant for the index of every definition
+    // inside of it.  That means that you can access it from the C code for the
+    // core.  Any work the core C needs to have done that would be more easily
+    // done by delegating it to Rebol can use a function in sys as a service.
+
+    rebElide(
+        //
+        // The scan of the boot block interned everything to Lib_Context, but
+        // we want to overwrite that with the Sys_Context here.
+        //
+        "intern", &boot->sys, Sys_Context,
+
+        "bind/only/set", &boot->sys, Sys_Context,
+        "ensure blank! do", &boot->sys
+    );
+
+    // !!! It was a stated goal at one point that it should be possible to
+    // protect the entire system object and still run the interpreter.  That
+    // was commented out in R3-Alpha
+    //
+    //    comment [if :lib/secure [protect-system-object]]
+
+
+  //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//
+
+    rebElide(
+        //
+        // The code is already bound non-specifically to the Lib_Context during
+        // scanning.
+        //
+        // (It's not necessarily the greatest idea to have LIB be this
+        // flexible.  But as it's not hardened from mutations altogether then
+        // prohibiting it doesn't offer any real security...and only causes
+        // headaches when trying to do something weird.)
+
+        // Create actual variables for top-level SET-WORD!s only, and run.
+        //
+        "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context,
         "do", SPECIFIC(&boot->mezz)
     );
 
@@ -862,6 +843,20 @@ void Startup_Core(void)
 
     Init_Action_Spec_Tags(); // Note: uses MOLD_BUF, not available until here
 
+//=//// CREATE SYSTEM MODULES //////////////////////////////////////////////=//
+
+    REBCTX *lib = Alloc_Context_Core(REB_MODULE, 600, NODE_FLAG_MANAGED);
+    Lib_Context = Alloc_Value();
+    Init_Any_Context(Lib_Context, REB_MODULE, lib);
+
+    REBCTX *sys = Alloc_Context_Core(REB_MODULE, 50, NODE_FLAG_MANAGED);
+    Sys_Context = Alloc_Value();
+    Init_Any_Context(Sys_Context, REB_MODULE, sys);
+
+    REBCTX *user = Alloc_Context_Core(REB_MODULE, 320, NODE_FLAG_MANAGED);
+    User_Context = Alloc_Value();
+    Init_Any_Context(User_Context, REB_MODULE, user);
+
 //=//// LOAD BOOT BLOCK ///////////////////////////////////////////////////=//
 
     // The %make-boot.r process takes all the various definitions and
@@ -880,11 +875,18 @@ void Startup_Core(void)
         SYM_GZIP
     );
 
+    // The boot code contains portions that are supposed to be interned to the
+    // SYS context instead of the LIB context.  But the Base and Mezzanine
+    // are interned to the Lib, so go ahead and take advantage of that.
+    //
+    // (We could separate the text of the SYS portion out, and scan that
+    // separately to avoid the extra work.  Not a high priority.)
+    //
     REBARR *boot_array = Scan_UTF8_Managed(
         Intern_Unsized_Managed("-tmp-boot-"),
         utf8,
         utf8_size,
-        nullptr  // !!! Review: take advantage of bind-while-scan
+        VAL_CONTEXT(Lib_Context)  // used by Base + Mezzanine, overruled in SYS
     );
     PUSH_GC_GUARD(boot_array); // managed, so must be guarded
 
@@ -912,20 +914,6 @@ void Startup_Core(void)
     // undefined.  And while analyzing the function specs during the
     // definition of natives, things like the <opt> tag are needed as a basis
     // for comparison to see if a usage matches that.
-
-    // !!! Have MAKE-BOOT compute # of words
-    //
-    REBCTX *lib = Alloc_Context_Core(REB_MODULE, 600, NODE_FLAG_MANAGED);
-    Lib_Context = Alloc_Value();
-    Init_Any_Context(Lib_Context, REB_MODULE, lib);
-
-    REBCTX *sys = Alloc_Context_Core(REB_MODULE, 50, NODE_FLAG_MANAGED);
-    Sys_Context = Alloc_Value();
-    Init_Any_Context(Sys_Context, REB_MODULE, sys);
-
-    REBCTX *user = Alloc_Context_Core(REB_MODULE, 320, NODE_FLAG_MANAGED);
-    User_Context = Alloc_Value();
-    Init_Any_Context(User_Context, REB_MODULE, user);
 
     REBARR *datatypes_catalog = Startup_Datatypes(
         VAL_ARRAY_KNOWN_MUTABLE(&boot->types),
