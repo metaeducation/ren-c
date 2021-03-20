@@ -41,3 +41,5 @@ parsing-at: func [
         ]
     ]
 ]
+
+export [parsing-at]

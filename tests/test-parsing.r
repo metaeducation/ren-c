@@ -1,6 +1,8 @@
 Rebol [
     Title: "Test parsing"
     File: %test-parsing.r
+    Type: 'Module
+    Name: 'Test-Parsing
     Copyright: [2012 "Saphirion AG"]
     License: {
         Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +15,14 @@ Rebol [
     Purpose: "Test framework"
 ]
 
-do %line-numberq.r
-do %../tools/parsing-tools.reb
-do %../tools/text-lines.reb
+import %line-numberq.r
+import %../tools/parsing-tools.reb
+import %../tools/text-lines.reb
 
 whitespace: charset [#"^A" - #" " "^(7F)^(A0)"]
 digit: charset {0123456789}
 
-make object! [
+success-rule: ~
 
 position: ~
 success: ~
@@ -28,9 +30,7 @@ success: ~
 ; TEST-SOURCE-RULE matches the internal text of a test, even if that text
 ; is invalid rebol syntax.
 
-success-rule: ~
-
-set 'test-source-rule [
+test-source-rule: [
     while [
         position: here
 
@@ -65,7 +65,7 @@ set 'test-source-rule [
     ]
 ]
 
-set 'load-testfile function [
+load-testfile: function [
     {Read the test source, preprocessing if necessary.}
     test-file [file!]
 ][
@@ -76,7 +76,7 @@ set 'load-testfile function [
     test-source
 ]
 
-set 'collect-tests function [
+collect-tests: function [
     return: <none>
     collected-tests [block!]
         {collect the tests here (modified)}
@@ -133,7 +133,7 @@ set 'collect-tests function [
     ]
 
     single-test: [
-        copy vector ["(" test-source-rule ")"] (
+        let vector: across ["(" test-source-rule ")"] (
             type: in types 'tst
             append/only collected-tests flags
             append collected-tests vector
@@ -219,7 +219,7 @@ set 'collect-tests function [
     ]
 ]
 
-set 'collect-logs function [
+collect-logs: function [
     collected-logs [block!]
         {collect the logged results here (modified)}
     log-file [file!]
@@ -280,4 +280,5 @@ set 'collect-logs function [
         end
     ]
 ]
-]
+
+export [collect-tests collect-logs]

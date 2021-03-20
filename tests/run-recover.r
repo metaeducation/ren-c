@@ -13,7 +13,7 @@ Rebol [
     Purpose: "Core tests"
 ]
 
-do %test-framework.r
+import %test-framework.r
 
 ; Example runner for the REBOL/Core tests which chooses
 ; appropriate flags depending on the interpreter version.

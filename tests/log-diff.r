@@ -13,7 +13,7 @@ Rebol [
     Purpose: "Test framework"
 ]
 
-do %test-parsing.r
+import %test-parsing.r
 
 make-diff: function [
     old-log [file!]

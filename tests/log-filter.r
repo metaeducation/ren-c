@@ -13,7 +13,7 @@ Rebol [
     Purpose: "Test framework"
 ]
 
-do %test-parsing.r
+import %test-parsing.r
 
 log-filter: function [
     source-log [file!]
