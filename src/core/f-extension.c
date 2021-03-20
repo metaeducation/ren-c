@@ -307,8 +307,13 @@ REBNATIVE(load_extension)
     // didn't really run through the full module system...but pretend it does
     // do that here.
     //
+    // !!! We currently are pushing all extensions into the lib context so
+    // they are seen by every module.  This is an interim step to keep things
+    // running, but a better strategy is needed.
+    //
     rebElide(
-        "import sys/load-module/into/exports", rebR(script_bin), module, exports
+        "import* lib sys/load-module/into/exports",
+            rebR(script_bin), module, exports
     );
 
     // !!! Ideally we would be passing the lib, path,

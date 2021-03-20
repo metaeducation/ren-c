@@ -66,7 +66,7 @@ for-each file [
 
     is-module: true  ; Everything *should* be a module
     if is-module [
-        append/line buf "import module ["
+        append/line buf "import* lib module ["
         append/line buf header
         append/line buf "]["
         append/line buf contents

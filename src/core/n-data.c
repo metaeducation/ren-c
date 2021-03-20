@@ -860,30 +860,44 @@ REBNATIVE(opt)
 //  {Copy context by setting values in the target from those in the source.}
 //
 //      return: [any-context!]
-//      target [any-context!] "(modified)"
-//      source [any-context!]
-//      /only "Only specific words (exports) or new words in target"
-//          [block!]
-//      /all "Set all words, even those in the target that already have a value"
-//      /extend "Add source words to the target if necessary"
+//      target [module!] "(modified)"
+//      source [module!]
+//      exports "Which words to export from the source"
+//          [<blank> block!]
 //  ]
 //
 REBNATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    assert(
-        VAL_CONTEXT(ARG(source)) == VAL_CONTEXT(Lib_Context)
-        or VAL_CONTEXT(ARG(target)) == VAL_CONTEXT(Lib_Context)
-    );
+    REBCTX *target = VAL_CONTEXT(ARG(target));
+    REBCTX *source = VAL_CONTEXT(ARG(source));
 
-    Resolve_Context(
-        VAL_CONTEXT(ARG(target)),
-        VAL_CONTEXT(ARG(source)),
-        ARG(only),
-        did REF(all),
-        did REF(extend)
-    );
+    const RELVAL *tail;
+    const RELVAL *v = VAL_ARRAY_AT(&tail, ARG(exports));
+    for (; v != tail; ++v) {
+        if (not IS_WORD(v))
+            fail (ARG(exports));
+
+        const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+
+        bool strict = true;
+
+        REBLEN s_index = Find_Symbol_In_Context(ARG(source), symbol, strict);
+        if (s_index == 0)
+            fail (rebUnrelativize(v));  // fail if unset value, also?
+
+        REBLEN t_index = Find_Symbol_In_Context(ARG(target), symbol, strict);
+        if (t_index != 0) {
+            // Fail if found?
+        }
+        else {
+            Append_Context(target, nullptr, symbol);
+            t_index = CTX_LEN(target);
+        }
+
+        Copy_Cell(CTX_VAR(target, t_index), CTX_VAR(source, s_index));
+    }
 
     RETURN (ARG(target));
 }

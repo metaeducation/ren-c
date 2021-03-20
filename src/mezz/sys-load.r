@@ -443,11 +443,12 @@ force-remote-import: false
 
 ; See also: SYS/MAKE-MODULE*, SYS/LOAD-MODULE
 ;
-import: function [
+import*: function [
     {Imports a module; locate, load, make, and setup its bindings}
 
     return: "Loaded module"
         [<opt> module!]
+    where [module!]
     source [word! file! url! text! binary! module! tag!]
 ][
     old-force-remote-import: force-remote-import
@@ -508,14 +509,6 @@ import: function [
         cause-error 'access 'cannot-open reduce [source "module not found"]
     ]
 
-    ; !!! Previously the idea was that HDR/EXPORTS would go into lib.  Many
-    ; modules are manually using EXPORT at the moment to do this, because
-    ; modules were so exasperating.  The new idea is that exports would only
-    ; be given to those who imported the features.
-    ;
-    ; !!! LIB imports handled should be implicitly picked up by virtue of
-    ; inheritance of the lib context.
-    ;
     ; !!! The idea of `import *` is frowned upon as a practice, as it adds
     ; an unknown number of things to the namespace of the caller.  Most
     ; languages urge you not to do it, but JavaScript bans it entirely.  We
@@ -523,7 +516,7 @@ import: function [
     ; is how it has worked in the past.
     ;
     if let exports: select (meta-of mod) 'exports [
-        resolve/extend/only lib mod try exports  ; no-op if empty
+        resolve where mod try exports  ; no-op if empty
     ]
 
     set 'force-remote-import old-force-remote-import
@@ -531,4 +524,4 @@ import: function [
 ]
 
 
-export [load load-value import]
+export [load load-value import*]

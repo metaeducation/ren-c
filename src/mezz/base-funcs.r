@@ -893,6 +893,14 @@ module: func [
     ]
     let mod: into
 
+    ; We give each module a dedicated IMPORT command that knows the identity
+    ; of the module, and hence knows where to import to.  (The lower-level
+    ; IMPORT* is still available, to specify a "where" to import.)
+    ;
+    append mod compose [
+        import: (specialize :import* [where: mod])
+    ]
+
     if not spec/type [spec/type: 'module] ; in case not set earlier
 
     ; Collect 'export keyword exports, removing the keywords
