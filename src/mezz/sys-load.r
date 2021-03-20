@@ -430,7 +430,9 @@ load-module: func [
         mod: module/into hdr code into
     ]
 
-    append system/modules reduce [name, ensure module! mod]
+    if name [
+        append system/modules reduce [name, ensure module! mod]
+    ]
 
     return mod
 ]
