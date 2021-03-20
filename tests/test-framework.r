@@ -31,6 +31,10 @@ successes: _
 
 allowed-flags: _
 
+test-block: _
+
+error: _
+
 process-vector: func [
     return: <none>
     flags [block!]
@@ -219,6 +223,7 @@ set 'do-recover func [
                         mold/limit as text! position 240
                     ])
                 ]
+                end
             ] else [
                 fail "do-recover log file parsing problem"
             ]
@@ -238,7 +243,7 @@ set 'do-recover func [
             process-tests test-sources :process-vector
         ]
     ] then [
-        summary: spaced [
+        let summary: spaced [
             "system/version:" system/version LF
             "code-checksum:" code-checksum LF
             "test-checksum:" test-checksum LF

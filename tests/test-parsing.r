@@ -20,16 +20,15 @@ do %../tools/text-lines.reb
 whitespace: charset [#"^A" - #" " "^(7F)^(A0)"]
 digit: charset {0123456789}
 
-
-read-binary: :read
-
 make object! [
 
-position: _
-success: _
+position: ~
+success: ~
 
 ; TEST-SOURCE-RULE matches the internal text of a test, even if that text
 ; is invalid rebol syntax.
+
+success-rule: ~
 
 set 'test-source-rule [
     while [
@@ -122,6 +121,7 @@ set 'collect-tests function [
     any-wsp: [while [wsp emit-token]]
 
     single-value: parsing-at x [
+        let next-position
         trap [
             value: _  ; !!! for collecting with SET-WORD!, evolving
             next-position: _  ; !!! ...same
@@ -235,7 +235,7 @@ set 'collect-logs function [
             [
                 position: "%"
                 (next-position: transcode/next (the value:) position)
-                :next-position
+                seek next-position
                     |
                 ; dialect failure?
                 some whitespace

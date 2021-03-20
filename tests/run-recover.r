@@ -46,6 +46,8 @@ do-core-tests: function [return: <none>] [
 
     print "Testing ..."
     result: do-recover %core-tests.r flags check log-file-prefix
+    let log-file
+    let summary
     set [log-file summary] result
 
     print ["Done, see the log file:" log-file]
