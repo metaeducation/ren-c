@@ -748,6 +748,7 @@ ext-console-impl: func [
         ; e.g. `load "word"` => `[word]`
         ;
         code: load delimit newline result
+        bind/set code system/contexts/user
         assert [block? code]
 
     ] then error -> [

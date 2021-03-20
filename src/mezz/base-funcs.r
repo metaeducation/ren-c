@@ -826,6 +826,9 @@ module: func [
     {Creates a new module}
 
     return: [module!]
+    product: "The result of running the body"
+        [<opt> any-value!]
+
     spec "The header block of the module (modified)"
         [block! object!]
     body "The body block of the module (all bindings will be overwritten)"
@@ -834,6 +837,7 @@ module: func [
         [object!]
     /into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
+    /deep "Bind SET-WORD!s deeply (temp for making DO transition easier)"
 ][
     ; Originally, UNBIND/DEEP was run on the body as a first step.  We now use
     ; INTERN or the implicit interning done by TRANSCODE to set the baseline of
@@ -950,15 +954,25 @@ module: func [
     ;
     intern body mod
 
-    ; We do create storage space for all the top level SET-WORD!s in the
-    ; module.  Doing so without any special markings is a historical policy
-    ; which hasn't yet been replaced with any better ideas.
+    ; Historically, modules had a rule of only creating storage space for the
+    ; top-level SET-WORD!s in the body.  You might argue that is too much (and
+    ; top level words need to be marked with a LET-like construct).  Or it
+    ; may be too little (historical DO would bind all ANY-WORD!s into the
+    ; user context).
     ;
-    bind/only/set body mod
+    ; As a transition to DO of all strings/file/url to getting their own
+    ; context, offer a /DEEP switch used by DO to say that SET-WORD! at any
+    ; depth gets bound.
+    ;
+    either deep [
+        bind/set body mod
+    ][
+        bind/only/set body mod
+    ]
 
     if object? mixin [bind body mixin]
 
-    do body
+    set (product: default [#]) do body
 
     return mod
 ]

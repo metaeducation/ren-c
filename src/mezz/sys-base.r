@@ -20,12 +20,6 @@ REBOL [
     }
 ]
 
-; It is desirable to express the logic of PRINT as user code, but it is
-; also desirable to use PRINT from the C code.  This should likely be
-; optimized as a native, but is easier to explore at the moment like this.
-;
-print*: :print
-
 
 ; If the host wants to know if a script or module is loaded, e.g. to print out
 ; a message.  (Printing directly from this code would be presumptuous.)
@@ -125,78 +119,69 @@ do*: func [
     ensure [object! blank!] hdr: default [_]
     let is-module: 'module = select hdr 'type
 
-    let result
+    ; When we run code from a file, the "current" directory is changed to the
+    ; directory of that script.  This way, relative path lookups to find
+    ; dependent files will look relative to the script.  This is believed to
+    ; be the best interpretation of shorthands like `read %foo.dat` or
+    ; `do %utilities.r`.
+    ;
+    ; We want this behavior for both FILE! and for URL!, which means
+    ; that the "current" path may become a URL!.  This can be processed
+    ; with change-dir commands, but it will be protocol dependent as
+    ; to whether a directory listing would be possible (HTTP does not
+    ; define a standard for that)
+    ;
     all [
-        text? source
-        not is-module
+        match [file! url!] source
+        let file: find-last/tail source slash
+        elide change-dir copy/part source file
     ] then [
-        ; Return result without "script overhead" (e.g. don't change the
-        ; working directory to the base of the file path supplied)
-        ;
-        intern code system/contexts/user   ; Bind the user script
-        catch/quit [
-            ;
-            ; The source string may have been mutable or immutable, but the
-            ; loaded code is not locked for this case.  So this works:
-            ;
-            ;     do "append {abc} {de}"
-            ;
-            result: do code  ; !!! pass args implicitly?
-        ] then :finalizer/quit
-    ] else [
-        ; Otherwise we are in script mode.  When we run a script, the
-        ; "current" directory is changed to the directory of that script.
-        ; This way, relative path lookups to find dependent files will look
-        ; relative to the script.
-        ;
-        ; We want this behavior for both FILE! and for URL!, which means
-        ; that the "current" path may become a URL!.  This can be processed
-        ; with change-dir commands, but it will be protocol dependent as
-        ; to whether a directory listing would be possible (HTTP does not
-        ; define a standard for that)
-        ;
-        all [
-            match [file! url!] source
-            let file: find-last/tail source slash
-            elide change-dir copy/part source file
-        ]
+        === PRINT SCRIPT INFO IF EXECUTING FROM FILE OR URL ===
 
-        ; Make the new script object
-        original-script: system/script  ; and save old one
-        system/script: make system/standard/script compose [
-            title: try select hdr 'title
-            header: hdr
-            parent: :original-script
-            path: what-dir
-            args: (try :args)
-        ]
+        ; !!! What should govern the decision to do this?
 
         if set? 'script-pre-load-hook [
-            script-pre-load-hook is-module hdr  ; chance to print it out
-        ]
-
-        ; Eval the block or make the module, returned
-        either is-module [ ; Import the module and set the var
-            catch/quit [
-                import module hdr code
-
-                ; !!! It would be nice if you could modularize a script and
-                ; still be able to get a result.  Until you can, make module
-                ; execution return void so that it doesn't give a verbose
-                ; output when you DO it (so you can see whatever the script
-                ; might have PRINT-ed)
-                ;
-                ; https://github.com/rebol/rebol-issues/issues/2373
-                ;
-                result: ~void~  ; console won't show BAD-WORD!s named ~void~
-            ] then :finalizer/quit
-        ][
-            intern code system/contexts/user  ; Bind the user script
-            catch/quit [
-                result: do code
-            ] then :finalizer/quit
+            script-pre-load-hook is-module hdr
         ]
     ]
+
+    ; Make the new script object
+    original-script: system/script  ; and save old one
+    system/script: make system/standard/script compose [
+        title: try select hdr 'title
+        header: hdr
+        parent: :original-script
+        path: what-dir
+        args: (try :args)
+    ]
+
+    let result
+    catch/quit [
+        either is-module [
+            import module hdr code
+
+            ; !!! It would be nice if you could modularize a script and
+            ; still be able to get a result.  Until you can, make module
+            ; execution return void so that it doesn't give a verbose
+            ; output when you DO it (so you can see whatever the script
+            ; might have PRINT-ed)
+            ;
+            ; https://github.com/rebol/rebol-issues/issues/2373
+            ;
+            result: ~void~  ; console won't show VOID!s named ~void~
+        ][
+            ; !!! A module expects to be able to UNBIND/DEEP the spec it is
+            ; given, because it doesn't want stray bindings on any of the words
+            ; to leak into the module header.  We COPY here, but as with most
+            ; things related to binding, a better solution is needed.
+            ;
+            ; !!! Using a /DEEP switch to bind all the SET-WORD!s deeply, not
+            ; just top-level ones.  This is to ease work on transitioning to
+            ; isolated DO.  Review once this basic step is taken.
+            ;
+            [# result]: module/deep copy [] code
+        ]
+    ] then :finalizer/quit
 
     return finalizer get/any 'result
 ]
