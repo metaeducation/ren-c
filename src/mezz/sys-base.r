@@ -324,7 +324,12 @@ do*: func [
     let result
     catch/quit [
         either is-module [
-            import module hdr code
+            ;
+            ; !!! DO of code that one is not certain if it is a module or a
+            ; script is a sketchy concept.  It should be reviewed, since
+            ; modules are not supposed to have side-effects.
+            ;
+            module hdr code
 
             ; !!! It would be nice if you could modularize a script and
             ; still be able to get a result.  Until you can, make module
