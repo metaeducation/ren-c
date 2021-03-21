@@ -528,7 +528,16 @@ static void Init_Contexts_Object(void)
     Copy_Cell(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context);
 
     Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context);
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_USER), User_Context);
+
+    // We don't initialize the USER context...yet.  Make it more obvious what
+    // is wrong if it's used during boot.
+    //
+    const char *label = "startup-mezz-not-finished-yet";
+    Init_Bad_Word_Core(
+        Get_System(SYS_CONTEXTS, CTX_USER),
+        Intern_UTF8_Managed(cb_cast(label), strsize(label)),
+        CELL_MASK_NONE
+    );
 }
 
 
@@ -725,6 +734,23 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
         "do", SPECIFIC(&boot->mezz)
     );
 
+
+  //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
+
+    // None of the above code should have needed the "user" context, which is
+    // purely application-space.  We probably shouldn't even create it during
+    // boot at all.  But at the moment, code like JS-NATIVE or TCC natives
+    // need to bind the code they run somewhere.  It's also where API called
+    // code runs if called from something like an int main() after boot.
+    //
+    // Doing this as a proper module creation gives us IMPORT and INTERN (as
+    // well as EXPORT...?  When do you export from the user context?)
+    //
+    assert(User_Context == nullptr);  // shouldn't have existed up to now
+    rebElide("system/contexts/user: module [Name: 'User] []");
+    User_Context = Copy_Cell(Alloc_Value(), Get_System(SYS_CONTEXTS, CTX_USER));
+    rebUnmanage(User_Context);
+
     return nullptr;
 }
 
@@ -862,10 +888,6 @@ void Startup_Core(void)
     REBCTX *sys = Alloc_Context_Core(REB_MODULE, 50, NODE_FLAG_MANAGED);
     Sys_Context = Alloc_Value();
     Init_Any_Context(Sys_Context, REB_MODULE, sys);
-
-    REBCTX *user = Alloc_Context_Core(REB_MODULE, 320, NODE_FLAG_MANAGED);
-    User_Context = Alloc_Value();
-    Init_Any_Context(User_Context, REB_MODULE, user);
 
 //=//// LOAD BOOT BLOCK ///////////////////////////////////////////////////=//
 
@@ -1076,8 +1098,11 @@ void Shutdown_Core(void)
     Shutdown_Datatypes();
 
     rebRelease(Lib_Context);
+    Lib_Context = nullptr;
     rebRelease(Sys_Context);
+    Sys_Context = nullptr;
     rebRelease(User_Context);
+    User_Context = nullptr;
 
     Shutdown_Frame_Stack();  // all API calls (e.g. rebRelease()) before this
     Shutdown_Api();

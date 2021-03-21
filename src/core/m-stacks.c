@@ -217,11 +217,15 @@ REBCTX *Get_Context_From_Stack(void)
     if (f == FS_BOTTOM) {
         //
         // No natives are in effect, so this is API code running directly from
-        // an `int main()`.  This is dangerous, as it means any failures will
-        // (no TRAP is in effect yet).  For the moment, say such code binds
-        // into the user context.
+        // an `int main()`.  Previously this always ran in the user context,
+        // but the user context is now no longer available during much of the
+        // boot...so we fall back to the Lib_Context during boot.
         //
-        return VAL_CONTEXT(User_Context);
+        // Note: This can be dangerous if no rebRescue() or TRAP is in effect.
+        //
+        return User_Context != nullptr
+            ? VAL_CONTEXT(User_Context)
+            : VAL_CONTEXT(Lib_Context);
     }
 
     // This would happen if you call the API from something like a traced
