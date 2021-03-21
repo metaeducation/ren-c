@@ -11,14 +11,14 @@ REBOL [
     }
 ]
 
-ls: does [list-dir]
-pwd: does [what-dir]
+ls: ensure action! :list-dir
+pwd: ensure action! :what-dir
 
 rm: does [
     fail "Use DELETE, not RM (Rebol REMOVE is different, shell dialect coming)"
 ]
 
-mkdir: does [make-dir]
+mkdir: ensure action! :make-dir
 
 cd: func [
     "Change directory (shell shortcut function)."
