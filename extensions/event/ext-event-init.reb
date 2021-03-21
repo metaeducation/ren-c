@@ -101,4 +101,4 @@ sys/make-scheme [
 
 system/ports/system: open [scheme: 'system]
 
-sys/export [wait]  ; current hacky mechanism is to put any exports here
+export [wait]

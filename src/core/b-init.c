@@ -661,7 +661,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
         // actual variables for top-level SET-WORD!s only, and run.
         //
         "bind/only/set", &boot->base, Lib_Context,
-        "do", &boot->base
+        "do", &boot->base  // ENSURE not available yet (but returns blank)
     );
 
 
@@ -684,10 +684,20 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
         // The scan of the boot block interned everything to Lib_Context, but
         // we want to overwrite that with the Sys_Context here.
         //
-        "intern", &boot->sys, Sys_Context,
+        "intern*", Sys_Context, &boot->sys,
 
         "bind/only/set", &boot->sys, Sys_Context,
-        "ensure blank! do", &boot->sys
+        "ensure blank! do", &boot->sys,
+
+        // SYS contains the implementation of the module machinery itself, so
+        // we don't have MODULE or EXPORT available.  Do the exports manually,
+        // and then import the results to lib.
+        //
+        "set-meta", Sys_Context, "make object! [",
+            "Name: 'System",
+            "Exports: [module load load-value decode encode encoding-of]",
+        "]",
+        "sys/import*", Lib_Context, Sys_Context
     );
 
     // !!! It was a stated goal at one point that it should be possible to

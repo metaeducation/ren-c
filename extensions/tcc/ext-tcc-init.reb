@@ -662,4 +662,4 @@ bootstrap: func [
 ]
 
 
-sys/export [compile c99 bootstrap]
+export [compile c99 bootstrap]

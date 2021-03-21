@@ -133,6 +133,3 @@ encoding-of: function [
     ]
     return null
 ]
-
-
-export [decode encode encoding-of]

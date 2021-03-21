@@ -19,4 +19,4 @@ register-image-hooks [
 ]
 
 
-sys/export []  ; current hacky mechanism is to put any exports here
+export []

@@ -30,4 +30,4 @@ rsa-make-key: func [
 
 ; !!! Kludgey export mechanism; review correct approach for modules
 ;
-sys/export [rsa-make-key]
+export [rsa-make-key]

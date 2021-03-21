@@ -312,7 +312,7 @@ REBNATIVE(load_extension)
     // running, but a better strategy is needed.
     //
     rebElide(
-        "import* lib sys/load-module/into/exports",
+        "sys/import* lib sys/load-module/into/exports",
             rebR(script_bin), module, exports
     );
 

@@ -375,4 +375,4 @@ debug-console: adapt :console [
 ; of associated state at some point, which means that STEP (or whatever
 ; registers the hook) could make INTERRUPT part of that state at that time.
 ;
-sys/export [backtrace debug locals breakpoint interrupt]
+export [backtrace debug locals breakpoint interrupt]

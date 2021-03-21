@@ -306,7 +306,7 @@ load: function [
         'module = select hdr 'type
         find (try get 'hdr/options) [unbound]
     ] then [
-        data: intern data system/contexts/user
+        data: intern* system/contexts/user data
     ]
 
     if header [
@@ -524,4 +524,18 @@ import*: function [
 ]
 
 
-export [load load-value import*]
+export*: func [
+    {Add words to module's `Exports: []` list}
+
+    return: <void>
+    where "Specialized for each module via EXPORT"
+        [module!]
+    words [block!] "Block of words (already defined in local context)"
+][
+    let hdr: meta-of where
+    let list: ensure block! select hdr 'Exports
+    for-each word words [
+        ensure word! word
+    ]
+    append list words
+]

@@ -171,9 +171,10 @@ text-location-of: func [
     let text: head of position
     let idx: index of position
     let line: 0
+    let eol
 
-    advance-rule: [eol: here skip (line: line + 1)]
-
+    let advance-rule: [eol: here skip (line: line + 1)]
+    let cursor
     parse text [
         while [
             to newline cursor: here
@@ -194,4 +195,13 @@ text-location-of: func [
     ]
 
     line
+]
+
+export [
+    decode-lines
+    encode-lines
+    for-each-line
+    lines-exceeding
+    text-line-of
+    text-location-of
 ]

@@ -212,20 +212,6 @@ main-startup: func [
     <static>
         o (system/options)  ; shorthand since options are often read/written
 ][
-    ; !!! The whole host startup/console is currently very manually loaded
-    ; into its own isolated context by the C startup code.  This way, changes
-    ; to functions the console loop depends on (like PRINT or INPUT) that the
-    ; user makes will not break the console's functionality.  It would be
-    ; better if it used the module system, but since it doesn't, it does not
-    ; have a place to put "exports" to lib or user.  We'd like people to be
-    ; able to access the ABOUT, WHY, and USAGE functions... so export them
-    ; here to LIB.  Again--this should be done by making this a module!
-    ;
-    ensure action! :license
-    ensure action! :about
-    ensure action! :usage
-    sys/export [about usage license]
-
     ; We hook the RETURN function so that it actually returns an instruction
     ; that the code can build up from multiple EMIT statements.
 

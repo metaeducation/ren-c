@@ -17,4 +17,4 @@ init-javascript-extension
 
 js-awaiter: :js-native/awaiter
 
-sys/export [js-native js-awaiter]  ; !!! Hacky export scheme
+export [js-native js-awaiter]

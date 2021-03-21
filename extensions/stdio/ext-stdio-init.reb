@@ -47,4 +47,4 @@ tab-complete: func [
     return 3
 ]
 
-sys/export [tab-complete]
+export [tab-complete]

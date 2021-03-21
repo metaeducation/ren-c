@@ -184,4 +184,4 @@ odbc-execute: func [
     insert statement compose [(query) ((parameters))]
 ]
 
-sys.export [odbc-execute]
+export [odbc-execute]

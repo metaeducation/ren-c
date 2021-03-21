@@ -64,16 +64,15 @@ for-each file [
     header: _  ; !!! Was a SET-WORD!...for locals gathering?
     contents: stripload/header file 'header
 
-    is-module: true  ; Everything *should* be a module
-    if is-module [
-        append/line buf "import* lib module ["
-        append/line buf header
-        append/line buf "]["
-        append/line buf contents
-        append/line buf "]"
-    ] else [
-        append/line buf contents
-    ]
+    ; !!! This currently imports all these modules into LIB, which is an
+    ; unsustainable pattern set by historical Redbols that needs to be
+    ; rethought.
+    ;
+    append/line buf "sys/import* lib module ["
+    append/line buf header
+    append/line buf "]["
+    append/line buf contents
+    append/line buf "]"
 ]
 
 ; The code evaluates to the MAIN-STARTUP function, so it is easily found
