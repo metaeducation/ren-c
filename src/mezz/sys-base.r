@@ -110,55 +110,11 @@ module: func [
 
     if not spec/type [spec/type: 'module]  ; in case not set earlier
 
-    ; Collect 'export keyword exports, removing the keywords
-    if find body [export] [
-        if not block? select spec [exports] [
-            append spec compose [exports (make block! 10)]
-        ]
-
-        ; Note: 'export overrides 'hidden, silently for now
-        let w
-        parse body [while [
-            to 'export remove skip opt remove 'hidden opt
-            [
-                set w any-word! (
-                    if not find spec/exports w: to word! w [
-                        append spec/exports w
-                    ]
-                )
-            |
-                set w block! (
-                    append spec/exports collect-words/ignore w spec/exports
-                )
-            ]
-        ] to end]
+    ; Default to having an Exports block in the spec.
+    ;
+    if not block? select spec 'Exports [
+        append spec compose [Exports: (make block! 10)]
     ]
-
-    ; Collect 'hidden keyword words, removing the keywords. Ignore exports.
-    let hidden: _
-    if find body [hidden] [
-        hidden: make block! 10
-        ; Note: Exports are not hidden, silently for now
-        parse body [while [
-            to 'hidden remove skip opt
-            [
-                set w any-word! (
-                    if not find (select spec [exports]) ^(w: to word! w) [
-                        append hidden w
-                    ]
-                )
-            |
-                set w block! (
-                    append hidden collect-words/ignore w select spec [exports]
-                )
-            ]
-        ] to end]
-    ]
-
-    ; Add hidden words next to the context (performance):
-    if block? hidden [bind/new hidden mod]
-
-    if block? hidden [protect/hide/words hidden]
 
     set-meta mod spec
 
