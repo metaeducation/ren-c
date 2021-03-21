@@ -6,6 +6,8 @@ REBOL [
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
+    Type: 'Module
+    Name: 'Redbol
     License: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
@@ -42,13 +44,6 @@ REBOL [
 ; into EMULATE, which lets you select whether you want to replace the
 ; functionality or just warn about it.
 ;
-export: lib/func [
-    {!!! `export` should be a module feature !!!}
-    set-word [set-word!]
-] lib/in lib [
-    ; !!! Not actually "exporting" yet...
-]
-
 helper: enfixed lib/func [
     return: <none>
     :set-word [set-word!]
@@ -63,7 +58,8 @@ emulate: enfixed lib/func [
     code [block!]
 ] lib/in lib [
     set set-word do in lib code
-    elide export set-word
+    elide export reduce [as word! set-word]
+    ; ^-- elide so we return what we evaluated to.
 ]
 
 
@@ -395,11 +391,11 @@ apply: emulate [
 ?: emulate [:help]
 
 to-local-file: emulate [
-    get/any 'file-to-local  ; not available in web build
+    trap [get 'file-to-local]  ; not available in web build
 ]
 
 to-rebol-file: emulate [
-    get/any 'local-to-file  ; not available in web build
+    trap [get 'local-to-file]  ; not available in web build
 ]
 
 why?: emulate [does [lib/why]]  ; not exported yet, :why not bound
@@ -1531,7 +1527,7 @@ hijack :lib/transcode enclose copy :lib/transcode function [f [frame!]] [
 
 
 call: emulate [  ; brings back the /WAIT switch (Ren-C waits by default)
-    get/any 'call*  ; use GET/ANY because not available in web build
+    trap [get 'call*]  ; use GET/ANY because not available in web build
 ]
 
 
@@ -1559,15 +1555,3 @@ load: emulate [
         return result  ; "1 2" loads as `[1 2]`, leave it that way
     ]
 ]
-
-
-=== LEAVE NONE AS LAST LINE ===
-;
-; So that `do <redbol>` doesn't show any output.  While the console displays
-; most voids, by default it won't display ones specifically labeled ~none~
-;
-; !!! This may not be the last word on what signals the console's silence.
-;
-; https://forum.rebol.info/t/1413
-
-~none~
