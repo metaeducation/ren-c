@@ -416,6 +416,8 @@ inline static void Unbind_Any_Word(RELVAL *v) {
 inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
     REBARR *binding = VAL_WORD_BINDING(v);
+    if (SER_FLAVOR(binding) == FLAVOR_PATCH)
+        binding = CTX_VARLIST(LINK(PatchContext, binding));
     assert(
         GET_SERIES_FLAG(binding, MANAGED) or
         FRM(LINK(KeySource, binding))->key
@@ -500,7 +502,7 @@ inline static option(REBSER*) Get_Word_Container(
     // this word is overridden without doing a linear search.  Do it
     // and then save the hit or miss information in the word for next use.
     //
-    const REBSTR *spelling = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+    const REBSYM *symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
 
     // !!! Virtual binding could use the bind table as a kind of next
     // level cache if it encounters a large enough object to make it
@@ -508,9 +510,19 @@ inline static option(REBSER*) Get_Word_Container(
     //
     do {
         if (GET_SUBCLASS_FLAG(PATCH, specifier, LET)) {
-            if (LINK(PatchSymbol, specifier) == spelling) {
+            if (LINK(PatchSymbol, specifier) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return specifier;
+            }
+            goto skip_miss_patch;
+        }
+
+        if (IS_MODULE(ARR_SINGLE(specifier))) {
+            REBCTX *mod = VAL_CONTEXT(ARR_SINGLE(specifier));
+            REBVAL *var = MOD_VAR(mod, symbol, true);
+            if (var) {
+                *index_out = INDEX_PATCHED;
+                return Singular_From_Cell(var);
             }
             goto skip_miss_patch;
         }
@@ -518,7 +530,7 @@ inline static option(REBSER*) Get_Word_Container(
         REBARR *overbind;  // avoid goto-past-initialization warning
         overbind = ARR(BINDING(ARR_SINGLE(specifier)));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
-            if (LINK(PatchSymbol, overbind) == spelling) {
+            if (LINK(PatchSymbol, overbind) == symbol) {
                 *index_out = 1;
                 return overbind;
             }
@@ -543,7 +555,7 @@ inline static option(REBSER*) Get_Word_Container(
         REBLEN index = 1;
         const REBKEY *key = CTX_KEYS_HEAD(overload);
         for (; index <= cached_len; ++key, ++index) {
-            if (KEY_SYMBOL(key) != spelling)
+            if (KEY_SYMBOL(key) != symbol)
                 continue;
 
             // !!! FOR-EACH uses the slots in an object to count how
@@ -613,8 +625,17 @@ inline static option(REBSER*) Get_Word_Container(
                 if (LINK(PatchContext, patch) != binding)
                     continue;
 
-                *index_out = cast(REBLEN, VAL_INT32(ARR_SINGLE(ARR(patch))));
-                return CTX_VARLIST(LINK(PatchContext, patch));
+                // Since this is now resolving to the context, update the
+                // cache inside the word itself.  Don't do this for inherited
+                // variables, since if we hardened the reference to the
+                // inherited variable we'd not see an override if it came
+                // into existence in the actual context.
+                //
+                INIT_VAL_WORD_BINDING(m_cast(RELVAL*, any_word), patch);
+                INIT_VAL_WORD_PRIMARY_INDEX(m_cast(RELVAL*, any_word), 1);
+
+                *index_out = 1;
+                return patch;
             }
 
             // !!! One original goal with Sea of Words was to enable something
@@ -646,8 +667,13 @@ inline static option(REBSER*) Get_Word_Container(
                 if (LINK(PatchContext, patch) != VAL_CONTEXT(Lib_Context))
                     continue;
 
-                *index_out = cast(REBLEN, VAL_INT32(ARR_SINGLE(ARR(patch))));
-                return CTX_VARLIST(LINK(PatchContext, patch));
+                // We return it, but don't cache it in the cell.  Note that
+                // Derelativize() or other operations should not cache either
+                // as it would commit to the inherited version, never seeing
+                // derived overrides.
+                //
+                *index_out = 1;
+                return patch;
             }
 
             return nullptr;

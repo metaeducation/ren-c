@@ -90,11 +90,8 @@ module: func [
         do compose [ensure (types) (var)]  ; names to show if fails
     ]
 
-    ; !!! The plan for MAKE MODULE! is not to heed the size, because it uses
-    ; the global hash table of words to access its variables.
-
     into: default [
-        make module! 7  ; arbitrary starting size
+        make module! #  ; !!! currently you can only make module from #
     ]
     let mod: into
 
@@ -312,4 +309,3 @@ do*: func [
 
     return finalizer get/any 'result
 ]
-

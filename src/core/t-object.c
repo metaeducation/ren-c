@@ -47,12 +47,14 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     const RELVAL *tail;
     const RELVAL *item = VAL_ARRAY_AT(&tail, arg);
 
+    struct Reb_Collector collector;
+    //
     // Can't actually fail() during a collect, so make sure any errors are
     // set and then jump to a Collect_End()
     //
     REBCTX *error = nullptr;
 
-    struct Reb_Collector collector;
+  if (not IS_MODULE(context)) {
     Collect_Start(&collector, COLLECT_ANY_WORD);
 
   blockscope {  // Start out binding table with words already in context
@@ -100,20 +102,28 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     for (; new_word != DS_TOP + 1; ++new_word)
         Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word));
   }
+  }  // end the non-module part
 
   blockscope {  // Set new values to obj words
     const RELVAL *word = item;
     for (; word != tail; word += 2) {
-        REBLEN i = Get_Binder_Index_Else_0(
-            &collector.binder, VAL_WORD_SYMBOL(word)
-        );
-        assert(i != 0);
-
-        const REBKEY *key = CTX_KEY(c, i);
-        REBVAR *var = CTX_VAR(c, i);
+        const REBSYM *symbol = VAL_WORD_SYMBOL(word);
+        REBVAR *var;
+        if (IS_MODULE(context)) {
+            bool strict = true;
+            var = MOD_VAR(c, symbol, strict);
+            if (not var)
+                var = Append_Context(c, nullptr, symbol);
+        }
+        else {
+            REBLEN i = Get_Binder_Index_Else_0(&collector.binder, symbol);
+            assert(i != 0);
+            assert(*CTX_KEY(c, i) == symbol);
+            var = CTX_VAR(c, i);
+        }
 
         if (GET_CELL_FLAG(var, PROTECTED)) {
-            error = Error_Protected_Key(key);
+            error = Error_Protected_Key(&symbol);
             goto collect_end;
         }
 
@@ -141,7 +151,8 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
   }
 
   collect_end:
-    Collect_End(&collector);
+    if (not IS_MODULE(context))
+        Collect_End(&collector);
 
     if (error)
         fail (error);
@@ -172,7 +183,6 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 // adjusted order, and if this code unified with the enumeration for ACTION!
 // (so just had the evars.var be nullptr in that case).
 
-
 //
 //  Init_Evars: C
 //
@@ -180,11 +190,11 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 // Did_Advance_Evars() on even the first.
 //
 void Init_Evars(EVARS *e, REBCEL(const*) v) {
-    e->index = 0;  // will be bumped to 1
-
     enum Reb_Kind kind = CELL_KIND(v);
 
     if (kind == REB_ACTION) {
+        e->index = 0;  // will be bumped to 1
+
         TRASH_POINTER_IF_DEBUG(e->ctx);
 
         REBACT *act = VAL_ACTION(v);
@@ -200,8 +210,62 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
         // set `e->locals_visible = true` if they think they should be.
         //
         e->locals_visible = false;
+
+        e->wordlist = Make_Array(1);  // dummy to catch missing shutdown
+        e->word = nullptr;
+        TRASH_POINTER_IF_DEBUG(e->word_tail);
+    }
+    else if (kind == REB_MODULE) {
+        //
+        // !!! Module enumeration is slow, and you should not do it often...it
+        // requires walking over the global word table.  The global table gets
+        // rehashed in a way that we would have a hard time maintaining a
+        // consistent enumerator state in the current design.  So for the
+        // moment we fabricate an array to enumerate.
+
+        e->index = INDEX_ATTACHED;
+
+        e->ctx = VAL_CONTEXT(v);
+
+        REBDSP dsp_orig = DSP;
+
+        REBSYM **psym = SER_HEAD(REBSYM*, PG_Symbols_By_Hash);
+        REBSYM **psym_tail = SER_TAIL(REBSYM*, PG_Symbols_By_Hash);
+        for (; psym != psym_tail; ++psym) {
+            if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
+                continue;
+
+            REBSER *patch = MISC(Hitch, *psym);
+            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+                patch = SER(node_MISC(Hitch, patch));
+
+            REBSER *found = nullptr;
+
+            for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
+                if (e->ctx == LINK(PatchContext, patch)) {
+                    found = patch;
+                    break;
+                }
+             /*   if (VAL_CONTEXT(Lib_Context) == LINK(PatchContext, patch))
+                    found = patch;  // will match if not overridden */
+            }
+            if (found) {
+                Init_Any_Word(DS_PUSH(), REB_WORD, *psym);
+                mutable_BINDING(DS_TOP) = found;
+                INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, INDEX_ATTACHED);
+            }
+        }
+
+        e->wordlist = Pop_Stack_Values(dsp_orig);
+        e->word = cast(REBVAL*, ARR_HEAD(e->wordlist)) - 1;
+        e->word_tail = cast(REBVAL*, ARR_TAIL(e->wordlist));
+
+        TRASH_POINTER_IF_DEBUG(e->key_tail);
+        e->var = nullptr;
+        e->param = nullptr;
     }
     else {
+        e->index = 0;  // will be bumped to 1
 
         e->ctx = VAL_CONTEXT(v);
 
@@ -253,6 +317,12 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
             e->key = ACT_KEYS(&e->key_tail, phase) - 1;
             assert(SER_USED(ACT_KEYLIST(phase)) <= ACT_NUM_PARAMS(phase));
         }
+
+      #if !defined(NDEBUG)
+        e->wordlist = Make_Array(1);  // dummy to catch missing Shutdown
+      #endif
+        e->word = nullptr;
+        UNUSED(e->word_tail);
     }
 }
 
@@ -269,11 +339,23 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
 // levels.  Ultimately there should probably be a Shutdown_Evars().
 //
 bool Did_Advance_Evars(EVARS *e) {
-    ++e->key;  // !! Note: keys can move if an ordinary context expands (!)
+    if (e->word) {
+        while (++e->word != e->word_tail) {
+            e->var = MOD_VAR(e->ctx, VAL_WORD_SYMBOL(e->word), true);
+            if (GET_CELL_FLAG(e->var, VAR_MARKED_HIDDEN))
+                continue;
+            e->keybuf = VAL_WORD_SYMBOL(e->word);
+            e->key = &e->keybuf;
+            return true;
+        }
+        return false;
+    }
+
+    ++e->key;  // !! Note: keys can move if an ordinary context expands
     if (e->param)
         ++e->param;  // params are locked and should never move
     if (e->var)
-        ++e->var;  // !! Note: vars can move if an ordinary context expands (!)
+        ++e->var;  // !! Note: vars can move if an ordinary context expands
     ++e->index;
 
     for (
@@ -330,7 +412,13 @@ bool Did_Advance_Evars(EVARS *e) {
 //
 void Shutdown_Evars(EVARS *e)
 {
-    UNUSED(e);
+    if (e->word)
+        Free_Unmanaged_Series(e->wordlist);
+    else {
+      #if !defined(NDEBUG)
+        Free_Unmanaged_Series(e->wordlist);  // dummy to catch missing shutdown
+      #endif
+    }
 }
 
 
@@ -486,6 +574,16 @@ REB_R MAKE_Context(
     //
     assert(kind == REB_OBJECT or kind == REB_MODULE);
 
+    if (kind == REB_MODULE) {
+        if (not Is_Blackhole(arg))
+            fail ("Currently only (MAKE MODULE! #) is allowed.  Review.");
+
+        assert(not parent);
+
+        REBCTX *ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+        return Init_Any_Context(out, REB_MODULE, ctx);
+    }
+
     option(REBCTX*) parent_ctx = parent
         ? VAL_CONTEXT(unwrap(parent))
         : nullptr;
@@ -581,22 +679,31 @@ REB_R PD_Context(
     if (not IS_WORD(picker))
         return R_UNHANDLED;
 
+    const bool strict = false;
+
     // See if the binding of the word is already to the context (so there's
     // no need to go hunting).  'x
     //
-    REBLEN n;
-    if (
-        BINDING(picker) == c
-        and VAL_WORD_PRIMARY_INDEX_UNCHECKED(picker) != INDEX_ATTACHED
-    ){
-        n = VAL_WORD_INDEX(picker);
+    REBVAL *var;
+    if (IS_MODULE(pvs->out)) {
+        var = MOD_VAR(c, VAL_WORD_SYMBOL(picker), strict);
+        if (var == nullptr)
+            return R_UNHANDLED;
+    }
+    else if (BINDING(picker) == c) {
+        var = CTX_VAR(c, VAL_WORD_INDEX(picker));
     }
     else {
-        const bool strict = false;
-        n = Find_Symbol_In_Context(pvs->out, VAL_WORD_SYMBOL(picker), strict);
+        REBLEN n = Find_Symbol_In_Context(
+            pvs->out,
+            VAL_WORD_SYMBOL(picker),
+            strict
+        );
 
         if (n == 0)
             return R_UNHANDLED;
+
+        var = CTX_VAR(c, n);
 
         // !!! As an experiment, try caching the binding index in the word.
         // This "corrupts" it, but if we say paths effectively own their
@@ -608,7 +715,6 @@ REB_R PD_Context(
         INIT_VAL_WORD_PRIMARY_INDEX(m_cast(RELVAL*, picker), n);
     }
 
-    REBVAL *var = CTX_VAR(c, n);
     if (setval) {
         ENSURE_MUTABLE(pvs->out);
 
@@ -708,11 +814,12 @@ REBCTX *Copy_Context_Extra_Managed(
     REBLEN extra,
     REBU64 types
 ){
-    ASSERT_SERIES_MANAGED(CTX_KEYLIST(original));
     assert(NOT_SERIES_FLAG(CTX_VARLIST(original), INACCESSIBLE));
 
+    REBLEN len = (CTX_TYPE(original) == REB_MODULE) ? 0 : CTX_LEN(original);
+
     REBARR *varlist = Make_Array_For_Copy(
-        CTX_LEN(original) + extra + 1,
+        len + extra + 1,
         SERIES_MASK_VARLIST | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
@@ -724,6 +831,56 @@ REBCTX *Copy_Context_Extra_Managed(
     //
     Copy_Cell(dest, CTX_ARCHETYPE(original));
     INIT_VAL_CONTEXT_VARLIST(dest, varlist);
+
+    if (CTX_TYPE(original) == REB_MODULE) {
+        //
+        // Copying modules is different because they have no data in the
+        // varlist and no keylist.  The symbols themselves point to a linked
+        // list of variable instances from all the modules that use that
+        // symbol.  So copying requires walking the global symbol list and
+        // duplicating those links.
+
+        assert(extra == 0);
+
+        SET_SERIES_USED(varlist, 1);
+
+        if (CTX_META(original)) {
+            mutable_MISC(VarlistMeta, varlist) = Copy_Context_Shallow_Managed(
+                CTX_META(original)
+            );
+        }
+        else {
+            mutable_MISC(VarlistMeta, varlist) = nullptr;
+        }
+        INIT_LINK_KEYSOURCE(varlist, nullptr);
+        mutable_BONUS(Patches, varlist) = nullptr;
+
+        REBCTX *copy = CTX(varlist); // now a well-formed context
+        assert(IS_SER_DYNAMIC(varlist));
+
+        REBSYM **psym = SER_HEAD(REBSYM*, PG_Symbols_By_Hash);
+        REBSYM **psym_tail = SER_TAIL(REBSYM*, PG_Symbols_By_Hash);
+        for (; psym != psym_tail; ++psym) {
+            if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
+                continue;
+
+            REBSER *patch = MISC(Hitch, *psym);
+            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+                patch = SER(node_MISC(Hitch, patch));
+
+            for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
+                if (original == LINK(PatchContext, patch)) {
+                    REBVAL *var = Append_Context(copy, nullptr, *psym);
+                    Copy_Cell(var, SPECIFIC(ARR_SINGLE(ARR(patch))));
+                    break;
+                }
+            }
+        }
+
+        return copy;
+    }
+
+    ASSERT_SERIES_MANAGED(CTX_KEYLIST(original));
 
     ++dest;
 

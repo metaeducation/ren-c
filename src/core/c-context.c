@@ -142,20 +142,84 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 //
 // !!! Review if it would make more sense to use TRASH.
 //
-// If word is not NULL, use the word sym and bind the word value, otherwise
+// If word is not nullptr, use the word sym and bind the word value, otherwise
 // use sym.  When using a word, it will be modified to be specifically bound
 // to this context after the operation.
 //
-// !!! Should there be a clearer hint in the interface, with a REBVAL* out,
-// to give a fully bound value as a result?  Given that the caller passed
-// in the context and can get the index out of a relatively bound word,
-// they usually likely don't need the result directly.
-//
-REBVAL *Append_Context(
+REBVAR *Append_Context(
     REBCTX *context,
-    option(RELVAL*) any_word,  // allowed to be quoted as well
+    option(RELVAL*) any_word,  // binding modified (Note: quoted words allowed)
     option(const REBSYM*) symbol
 ) {
+    if (CTX_TYPE(context) == REB_MODULE) {
+        //
+        // !!! In order to make MODULE more friendly to the idea of very
+        // large number of words, variable instances for a module are stored
+        // not in an indexed block form...but distributed as individual series
+        // node allocations.  The variables are linked reachable from the
+        // symbol node for the word's spelling, and can be directly linked
+        // to from a word as a singular value (with binding index "1").
+
+        REBARR *patch = Alloc_Singular(
+            NODE_FLAG_MANAGED
+            | FLAG_FLAVOR(PATCH)
+            //
+            // Note: The GC behavior of these patches is special and does not
+            // fit into the usual patterns.  There is a pass in the GC
+            // that propagates context survival into the patches from the
+            // global bind table.  Although we say LINK_NODE_NEEDS_MARK to
+            // keep a context alive, that marking isn't done in that pass...
+            // otherwise the variables could never GC.  Instead, it only
+            // happens if the patch is cached in a variable...then that
+            // reference touches the patch which touches the context.  But
+            // if not cached, the context keeps vars alive; not vice-versa
+            // (e.g. the mere existence of a variable--not cached in a cell
+            // reference--should not keep it alive).  MISC_NODE_NEEDS_MARK
+            // is not done as that would keep alive patches from other
+            // contexts in the hitch chain.
+            //
+            // !!! Should there be a "decay and forward" general mechanic,
+            // so a node can tell the GC to touch up all references and point
+            // to something else...e.g. to forward references to a cache back
+            // to the context in order to "delete" variables?
+            //
+            | SERIES_FLAG_LINK_NODE_NEEDS_MARK  // mark context through cache
+
+            // Not technically a "LET" but this is checked by the binding
+            // machinery at the moment as the only patch form you can use
+            // as the binding of a word.  It's a little different since it
+            // holds a context instead of a key in LINK()...and you have to
+            // walk the circular links to find the symbol if you need it.
+            //
+            | PATCH_FLAG_LET
+        );
+
+        // We circularly link the variable into the list of hitches so that you
+        // can find the spelling again.
+        //
+        if (any_word) {
+            assert(symbol == nullptr);
+            symbol = VAL_WORD_SYMBOL(unwrap(any_word));
+        }
+
+        // skip over binding-related hitches
+        //
+        REBSER *updating = m_cast(REBSYM*, unwrap(symbol));
+        while (GET_SERIES_FLAG(SER(node_MISC(Hitch, updating)), BLACK))
+            updating = SER(node_MISC(Hitch, updating));
+
+        node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
+        mutable_LINK(PatchContext, patch) = context;
+        node_MISC(Hitch, updating) = patch;
+
+        if (any_word) {  // bind word while we're at it
+            INIT_VAL_WORD_BINDING(unwrap(any_word), patch);
+            INIT_VAL_WORD_PRIMARY_INDEX(unwrap(any_word), 1);
+        }
+
+        return cast(REBVAR*, Init_Unset(ARR_SINGLE(patch)));
+    }
+
     REBSER *keylist = CTX_KEYLIST(context);
 
     // Add the key to key list
@@ -192,61 +256,7 @@ REBVAL *Append_Context(
         INIT_VAL_WORD_PRIMARY_INDEX(unwrap(any_word), len);
     }
 
-    if (CTX_TYPE(context) == REB_MODULE) {
-        REBARR *patch = Alloc_Singular(
-            NODE_FLAG_MANAGED
-            | FLAG_FLAVOR(PATCH)
-            //
-            // Note: The GC behavior of these patches is special and does not
-            // fit into the usual patterns.  There is a pass in the GC
-            // that propagates context survival into the patches from the
-            // global bind table.  Although we say LINK_NODE_NEEDS_MARK to
-            // keep a context alive, that marking isn't done in that pass...
-            // otherwise the variables could never GC.  Instead, it only
-            // happens if the patch is cached in a variable...then that
-            // reference touches the patch which touches the context.  But
-            // if not cached, the context keeps vars alive; not vice-versa
-            // (e.g. the mere existence of a variable--not cached in a cell
-            // reference--should not keep it alive).  MISC_NODE_NEEDS_MARK
-            // is not done as that would keep alive patches from other
-            // contexts in the hitch chain.
-            //
-            // !!! Should there be a "decay and forward" general mechanic,
-            // so a node can tell the GC to touch up all references and point
-            // to something else...e.g. to forward references to a cache back
-            // to the context in order to "delete" variables?
-            //
-            | SERIES_FLAG_LINK_NODE_NEEDS_MARK  // mark context through cache
-        );
-
-        // We circularly link the variable into the list of hitches so that you
-        // can find the spelling again.
-        //
-        if (any_word) {
-            assert(symbol == nullptr);
-            symbol = VAL_WORD_SYMBOL(unwrap(any_word));
-        }
-
-        // skip over binding-related hitches
-        //
-        REBSER *updating = m_cast(REBSYM*, unwrap(symbol));
-        while (GET_SERIES_FLAG(SER(node_MISC(Hitch, updating)), BLACK))
-            updating = SER(node_MISC(Hitch, updating));
-
-        node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
-        mutable_LINK(PatchContext, patch) = context;
-        node_MISC(Hitch, updating) = patch;
-
-        // Temporary: Store the index in lib in the patch.  (Ultimately this
-        // cell would serve as the location for the variable itself.)
-        //
-        Init_Integer(ARR_SINGLE(patch), CTX_LEN(context));
-
-        if (any_word)  // put it back
-            symbol = nullptr;
-    }
-
-    return value;  // location we just added (void cell)
+    return cast(REBVAR*, value);  // location we just added (void cell)
 }
 
 
@@ -586,6 +596,8 @@ REBCTX *Make_Context_Detect_Managed(
     const RELVAL *tail,
     option(REBCTX*) parent
 ) {
+    assert(kind != REB_MODULE);
+
     REBSER *keylist = Collect_Keylist_Managed(
         head,
         tail,
@@ -798,6 +810,15 @@ REBLEN Find_Symbol_In_Context(
     const REBSYM *symbol,
     bool strict
 ){
+    if (IS_MODULE(context)) {
+        //
+        // Modules hang their variables off the symbol itself, in a linked
+        // list with other modules who also have variables of that name.
+        //
+        REBCTX *c = VAL_CONTEXT(context);
+        return MOD_VAR(c, symbol, strict) ? INDEX_ATTACHED : 0;
+    }
+
     EVARS e;
     Init_Evars(&e, context);
 

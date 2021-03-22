@@ -860,11 +860,11 @@ void Startup_Core(void)
 
 //=//// CREATE SYSTEM MODULES //////////////////////////////////////////////=//
 
-    REBCTX *lib = Alloc_Context_Core(REB_MODULE, 600, NODE_FLAG_MANAGED);
+    REBCTX *lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     Lib_Context = Alloc_Value();
     Init_Any_Context(Lib_Context, REB_MODULE, lib);
 
-    REBCTX *sys = Alloc_Context_Core(REB_MODULE, 50, NODE_FLAG_MANAGED);
+    REBCTX *sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     Sys_Context = Alloc_Value();
     Init_Any_Context(Sys_Context, REB_MODULE, sys);
 

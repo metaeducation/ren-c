@@ -107,7 +107,10 @@ inline static REBARR *Make_Patch_Core(
 ){
     assert(kind == REB_WORD or kind == REB_SET_WORD);
     if (IS_VARLIST(binding))
-        assert(limit <= CTX_LEN(CTX(binding)));
+        assert(
+            (CTX_TYPE(CTX(binding)) == REB_MODULE and limit == INDEX_ATTACHED)
+            or limit <= CTX_LEN(CTX(binding))
+        );
     else
         assert(GET_SUBCLASS_FLAG(PATCH, binding, LET));
 
@@ -211,15 +214,27 @@ inline static REBARR *Make_Patch_Core(
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK
     );
 
-    Init_Any_Word_Bound_Core(
-        TRACK_CELL_IF_DEBUG(ARR_SINGLE(patch)),
-        kind,
-        binding,
-        IS_VARLIST(binding)
-            ? *CTX_KEY(CTX(binding), limit)
-            : LINK(PatchSymbol, binding),
-        limit
-    );
+    if (IS_VARLIST(binding) and CTX_TYPE(CTX(binding)) == REB_MODULE) {
+        //
+        // Modules have a hash table so they can be searched somewhat quickly
+        // for keys.  But keys can be added and removed without a good way
+        // of telling the historical order.  Punt on figuring out the answer
+        // for it and just let virtual binds see the latest situation.
+        //
+        assert(limit == INDEX_ATTACHED);
+        Init_Any_Context(ARR_SINGLE(patch), REB_MODULE, CTX(binding));
+    }
+    else {
+        Init_Any_Word_Bound_Core(
+            TRACK_CELL_IF_DEBUG(ARR_SINGLE(patch)),
+            kind,
+            binding,
+            IS_VARLIST(binding)
+                ? *CTX_KEY(CTX(binding), limit)
+                : LINK(PatchSymbol, binding),
+            limit
+        );
+    }
 
     // The way it is designed, the list of patches terminates in either a
     // nullptr or a context pointer that represents the specifying frame for
@@ -296,7 +311,7 @@ inline static void Virtual_Bind_Patchify(
         any_array,
         Make_Or_Reuse_Patch(
             ctx,
-            CTX_LEN(ctx),
+            CTX_TYPE(ctx) == REB_MODULE ? INDEX_ATTACHED : CTX_LEN(ctx),
             VAL_SPECIFIER(any_array),
             kind
         )

@@ -163,6 +163,9 @@ inline static const REBVAL *CTX_ARCHETYPE(REBCTX *c) {  // read-only form
     return cast(const REBVAL*, varlist->content.dynamic.data);
 }
 
+#define CTX_TYPE(c) \
+    VAL_TYPE(CTX_ARCHETYPE(c))
+
 inline static REBVAL *CTX_ROOTVAR(REBCTX *c)  // mutable archetype access
   { return m_cast(REBVAL*, CTX_ARCHETYPE(c)); }  // inline checks mutability
 
@@ -239,6 +242,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 //
 
 inline static REBSER *CTX_KEYLIST(REBCTX *c) {
+    assert(CTX_TYPE(c) != REB_MODULE);
     if (Is_Node_Cell(LINK(KeySource, CTX_VARLIST(c)))) {
         //
         // running frame, source is REBFRM*, so use action's paramlist.
@@ -275,11 +279,9 @@ static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBSER *keylist) {
 //
 
 inline static REBLEN CTX_LEN(REBCTX *c) {
+    assert(CTX_TYPE(c) != REB_MODULE);
     return CTX_VARLIST(c)->content.dynamic.used - 1;  // -1 for archetype
 }
-
-#define CTX_TYPE(c) \
-    VAL_TYPE(CTX_ARCHETYPE(c))
 
 inline static const REBKEY *CTX_KEY(REBCTX *c, REBLEN n) {
     //
@@ -307,14 +309,8 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
             patch = SER(node_MISC(Hitch, patch));
 
         for (; patch != sym; patch = SER(node_MISC(Hitch, patch))) {
-            if (LINK(PatchContext, patch) == c) {
-                //
-                // Currently it holds the index of which context variable the
-                // actual data is in.  This will become the actual storage.
-                //
-                REBLEN index = VAL_UINT32(ARR_SINGLE(ARR(patch)));
-                return cast(REBVAR*, CTX_VAR(c, index));
-            }
+            if (LINK(PatchContext, patch) == c)
+                return cast(REBVAR*, ARR_SINGLE(ARR(patch)));
         }
         if (strict)
             return nullptr;
@@ -525,7 +521,8 @@ static inline REBVAL *Init_Any_Context(
   #endif
     UNUSED(kind);
     ASSERT_SERIES_MANAGED(CTX_VARLIST(c));
-    ASSERT_SERIES_MANAGED(CTX_KEYLIST(c));
+    if (CTX_TYPE(c) != REB_MODULE)
+        ASSERT_SERIES_MANAGED(CTX_KEYLIST(c));
     return Copy_Cell(out, CTX_ARCHETYPE(c));
 }
 

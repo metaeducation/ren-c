@@ -1164,12 +1164,15 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
             if (GET_SERIES_FLAG(CTX_VARLIST(context), MARKED)) {
                 SET_SERIES_FLAG(patch, MARKED);
 
+                Queue_Mark_Opt_Value_Deep(ARR_SINGLE(ARR(patch)));
+
                 // We also have to keep the word alive, but not necessarily
                 // keep all the other declarations in other modules alive.
                 //
                 SET_SERIES_FLAG(*psym, MARKED);
             }
         }
+        Propagate_All_GC_Marks();
     }
 
     // SWEEPING PHASE

@@ -211,7 +211,7 @@ summarize-obj: function [
 
     return: "Block of short lines (fitting in roughly 80 columns)"
         [<opt> block!]
-    obj [object! port!]
+    obj [object! port! module!]
     /match "Include only fields that match a string or datatype"
         [text! datatype!]
 ][

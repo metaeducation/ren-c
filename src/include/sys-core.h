@@ -219,7 +219,23 @@ struct Reb_Enum_Vars {
     bool locals_visible;
     REBVAR *var;
     REBLEN index;  // important for enumerations that are binding
+
+    // !!! Enumerating key/val pairs in modules in the "sea of words" model is
+    // tricky, as what it really is hooks the variables in a linked list off
+    // the REBSYM series node for the symbol.  This is accessed via a global
+    // hash table that can expand and rearrange freely...it's not possible
+    // to lock the table during enumeration.  Locking the module itself may
+    // be possible, but the iteration order could get messed up by a hash
+    // table resize.  There are technical ways to attack such problems that
+    // are within the realm of possibility, but building an array and then
+    // enumerating the array is the easiest near-term option.  This is a list
+    // of the bound words.
+    //
     REBCTX *ctx;
+    REBARR *wordlist;
+    REBVAL *word;
+    REBVAL *word_tail;
+    const REBSYM *keybuf;  // backing store for key
 };
 
 typedef struct Reb_Enum_Vars EVARS;

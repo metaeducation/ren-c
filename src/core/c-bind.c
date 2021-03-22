@@ -57,6 +57,19 @@ void Bind_Values_Inner_Loop(
 
         if (type_bit & bind_types) {
             const REBSYM *symbol = VAL_WORD_SYMBOL(cell);
+
+          if (CTX_TYPE(context) == REB_MODULE) {
+            bool strict = true;
+            REBVAL *lookup = MOD_VAR(context, symbol, strict);
+            if (lookup) {
+                INIT_VAL_WORD_BINDING(v, Singular_From_Cell(lookup));
+                INIT_VAL_WORD_PRIMARY_INDEX(v, 1);
+            }
+            else if (type_bit & add_midstream_types) {
+                Append_Context(context, v, nullptr);
+            }
+          }
+          else {
             REBINT n = Get_Binder_Index_Else_0(binder, symbol);
             if (n > 0) {
                 //
@@ -80,6 +93,7 @@ void Bind_Values_Inner_Loop(
                 Append_Context(context, v, nullptr);
                 Add_Binder_Index(binder, symbol, VAL_WORD_INDEX(v));
             }
+          }
         }
         else if (flags & BIND_DEEP) {
             if (ANY_ARRAY_KIND(heart)) {
@@ -130,7 +144,7 @@ void Bind_Values_Core(
     // is done by poking the index into the REBSER of the series behind the
     // ANY-WORD!, so it must be cleaned up to not break future bindings.)
     //
-  blockscope {
+  if (not IS_MODULE(context)) {
     REBLEN index = 1;
     const REBKEY *key_tail;
     const REBKEY *key = CTX_KEYS(&key_tail, c);
@@ -149,7 +163,7 @@ void Bind_Values_Core(
         flags
     );
 
-  blockscope {  // Reset all the binder indices to zero
+  if (not IS_MODULE(context)) {  // Reset all the binder indices to zero
     const REBKEY *key_tail;
     const REBKEY *key = CTX_KEYS(&key_tail, c);
     const REBVAR *var = CTX_VARS_HEAD(c);

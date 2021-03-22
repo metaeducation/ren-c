@@ -531,7 +531,10 @@ void Assert_Array_Marked_Correctly(const REBARR *a) {
         // to Queue_Mark_Context_Deep.
 
         REBNOD *keysource = LINK(KeySource, a);
-        if (Is_Node_Cell(keysource)) {
+        if (not keysource) {
+            assert(VAL_TYPE(archetype) == REB_MODULE);
+        }
+        else if (Is_Node_Cell(keysource)) {
             //
             // Must be a FRAME! and it must be on the stack running.  If
             // it has stopped running, then the keylist must be set to

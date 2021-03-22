@@ -213,7 +213,12 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 {
     assert(kind > REB_0 and kind < REB_MAX);
-    REBVAL *type = CTX_VAR(VAL_CONTEXT(Lib_Context), SYM_FROM_KIND(kind));
+    bool strict = true;
+    REBVAL *type = MOD_VAR(
+        VAL_CONTEXT(Lib_Context),
+        Canon(SYM_FROM_KIND(kind)),
+        strict
+    );
     assert(IS_DATATYPE(type));
     return type;
 }
@@ -227,7 +232,12 @@ const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 //
 REBVAL *Type_Of(const RELVAL *value)
 {
-    return CTX_VAR(VAL_CONTEXT(Lib_Context), SYM_FROM_KIND(VAL_TYPE(value)));
+    bool strict = true;
+    return MOD_VAR(
+        VAL_CONTEXT(Lib_Context),
+        Canon(SYM_FROM_KIND(VAL_TYPE(value))),
+        strict
+    );
 }
 
 
@@ -291,8 +301,10 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
     // Keylists are uniformly managed, or certain routines would return
     // "sometimes managed, sometimes not" keylists...a bad invariant.
     //
-    REBSER *keylist = CTX_KEYLIST(c);
-    ASSERT_SERIES_MANAGED(keylist);
+    if (CTX_TYPE(c) != REB_MODULE) {  // keylist is global symbol table
+        REBSER *keylist = CTX_KEYLIST(c);
+        ASSERT_SERIES_MANAGED(keylist);
+    }
 
     assert(not CTX_META(c) or ANY_CONTEXT_KIND(CTX_TYPE(CTX_META(c))));
 

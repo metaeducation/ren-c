@@ -87,7 +87,10 @@ inline static REBVAL *Init_Any_Word_Bound_Core(
     INIT_VAL_WORD_SYMBOL(out, symbol);
 
     if (IS_VARLIST(binding)) {
-        assert(symbol == *CTX_KEY(CTX(binding), index));
+        if (CTX_TYPE(CTX(binding)) == REB_MODULE)
+            assert(index == INDEX_ATTACHED);
+        else
+            assert(symbol == *CTX_KEY(CTX(binding), index));
     }
     else {
         assert(GET_SUBCLASS_FLAG(PATCH, binding, LET));
