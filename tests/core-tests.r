@@ -109,6 +109,7 @@
 %control/forall.test.reb
 %control/for-each.test.reb
 %control/forever.test.reb
+%control/for-next.test.reb
 %control/forskip.test.reb
 %control/halt.test.reb
 %control/if.test.reb
@@ -127,7 +128,6 @@
 %control/unless.test.reb
 %control/until.test.reb
 %control/wait.test.reb
-%control/while.test.reb
 %control/quit.test.reb
 %convert/as-binary.test.reb
 %convert/as-string.test.reb

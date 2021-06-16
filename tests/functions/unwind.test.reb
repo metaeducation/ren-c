@@ -8,7 +8,7 @@
     cycle?: true
     f1: does [
         if 1 < 2 [
-            while [cycle?] [cycle?: false, unwind :if]
+            loop [cycle?] [cycle?: false, unwind :if]
             <bad>
         ]
         <good>
@@ -22,7 +22,7 @@
     if-not: adapt :if [condition: not :condition]
     f1: does [
         if-not 1 > 2 [
-            while [if cycle? [unwind :if-not <ret>] cycle?] [cycle?: false 2]
+            loop [if cycle? [unwind :if-not <ret>] cycle?] [cycle?: false 2]
         ]
     ]
     f1 = <ret>

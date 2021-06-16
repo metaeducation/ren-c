@@ -39,7 +39,7 @@ rebol-fib: function [
     if n <= 1 [return n]
     i0: 0
     i1: 1
-    while [n > 1] [
+    loop [n > 1] [
         t: i1
         i1: i0 + i1
         i0: t

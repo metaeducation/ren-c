@@ -893,7 +893,7 @@ REBNATIVE(for_skip)
 
     REBVAL *series = ARG(series);
 
-    Init_Heavy_Nulled(D_OUT);  // if body never runs, `while [null] [...]`
+    Init_Heavy_Nulled(D_OUT);  // if body never runs, `loop [null] [...]`
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
@@ -1714,19 +1714,28 @@ REBNATIVE(until)
 
 
 //
-//  while: native [
+//  loop: native [
 //
-//  {While a condition is conditionally true, evaluates the body}
+//  {So long as a condition is truthy, evaluate the body}
 //
 //      return: [<opt> any-value!]
 //          "Last body result, or null if BREAK"
-//      condition [<const> block! action!]
+//      condition "!!! if INTEGER! condition, tells you to use REPEAT"
+//          [<const> block! action! integer!]
 //      body [<const> block! action!]
 //  ]
 //
-REBNATIVE(while)
+REBNATIVE(loop)
+//
+// Note: It was considered if `loop true [...]` should infinite loop, and then
+// `loop false [...]` never ran.  However, that could lead to accidents of
+// like `loop x > 10 [...]` instead of `loop [x > 10] [...]`.  It is probably
+// safer to require a BLOCK! and not accept just a LOGIC!.
 {
-    INCLUDE_PARAMS_OF_WHILE;
+    INCLUDE_PARAMS_OF_LOOP;
+
+    if (IS_INTEGER(ARG(condition)))
+        fail ("Please use REPEAT instead of LOOP with integers");
 
     Init_Heavy_Nulled(D_OUT);  // result if body never runs
 

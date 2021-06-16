@@ -75,6 +75,7 @@ trap [
         the: :literal
 
         repeat: :loop
+        loop: :while
 
         ; Workaround the <void> => <none> spec change, for same version
 
@@ -149,7 +150,8 @@ load-value: :load
 load-all: :load/all
 
 repeat: :loop
-loop: func [] [fail "Use REPEAT not LOOP"]
+loop: :while
+while: func [] [fail "Use LOOP not WHILE"]
 
 any-inert!: make typeset! [text! tag! issue! binary! char! object! file!]
 
@@ -294,7 +296,7 @@ modernize-action: function [
     proxiers: copy []
 
     spec: collect [
-        while [not tail? spec] [
+        loop [not tail? spec] [
             if tag? spec/1 [
                 last-refine-word: _
                 keep/only spec/1
@@ -308,7 +310,7 @@ modernize-action: function [
 
                 ; Feed through any TEXT!s following the PATH!
                 ;
-                while [if (tail? spec: my next) [break] | text? spec/1] [
+                loop [if (tail? spec: my next) [break] | text? spec/1] [
                     keep/only spec/1
                 ]
 
@@ -353,7 +355,7 @@ modernize-action: function [
 
                 ; Feed through any TEXT!s following the ANY-WORD!
                 ;
-                while [if (tail? spec: my next) [break] | text? spec/1] [
+                loop [if (tail? spec: my next) [break] | text? spec/1] [
                     keep/only spec/1
                 ]
 
@@ -422,7 +424,7 @@ method: func [/dummy] [
 
 trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
     if auto [
-        while [(not tail? series) and (series/1 = LF)] [
+        loop [(not tail? series) and (series/1 = LF)] [
             take series
         ]
     ]

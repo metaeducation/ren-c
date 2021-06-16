@@ -112,7 +112,7 @@
 
 
     iter: tests
-    while [not tail? iter] [
+    loop [not tail? iter] [
         text: ensure text! iter/1
         iter: my next
 

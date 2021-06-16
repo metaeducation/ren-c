@@ -174,7 +174,7 @@ replace: function [
         any-array? :pattern [length of :pattern]
     ]
 
-    while [pos: find/(if case_REPLACE [/case]) target :pattern] [
+    loop [pos: find/(if case_REPLACE [/case]) target :pattern] [
         either action? :replacement [
             ;
             ; If arity-0 action, value gets replacement and pos discarded
@@ -713,7 +713,7 @@ find-all: function [
         "Evaluated for each occurrence"
 ][
     verify [any-series? orig: get series]
-    while [any [
+    loop [any [
         , set series find get series :value
         , (set series orig, false)  ; reset series and break loop
     ]][

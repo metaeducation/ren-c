@@ -330,7 +330,7 @@ static REB_R Transport_Actor(
             // In R3-Alpha, the client could leave data in the buffer of the
             // port and just accumulate it, as in SYNC-OP from %prot-http.r:
             //
-            //     while [not find [ready close] state/state] [
+            //     loop [not find [ready close] state/state] [
             //         if not port? wait [state/connection port/spec/timeout] [
             //             fail make-http-error "Timeout"
             //         ]

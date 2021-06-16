@@ -45,7 +45,7 @@ make-diff: function [
     set [new-test new-result] new-log-contents
     new-log-contents: skip new-log-contents 2
 
-    while [any [old-test new-test]] [
+    loop [any [old-test new-test]] [
         case [
             all [
                 new-test

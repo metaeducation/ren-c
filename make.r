@@ -110,7 +110,7 @@ for-each [name value] options [
             ; config fields visible when the run.
             ;
             config-stack: copy []
-            while [:config] [
+            loop [:config] [
                 set [path: file:] split-path config
                 change-dir path
                 append/only config-stack transcode read file
@@ -125,7 +125,7 @@ for-each [name value] options [
                 config: select ensure block! second last config-stack 'Inherits
                 take/part last config-stack 2  ; drop the REBOL [...] header
             ]
-            while [not empty? config-stack] [
+            loop [not empty? config-stack] [
                 user-config: make user-config intern take/last config-stack
             ]
 

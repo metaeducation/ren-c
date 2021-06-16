@@ -1352,7 +1352,7 @@ default-combinators: make map! reduce [
 
         let result': '~void~  ; non-isotope version
 
-        while [not tail? rules] [
+        loop [not tail? rules] [
             if state.verbose [
                 print ["RULE:" mold/limit rules 60]
                 print ["INPUT:" mold/limit pos 60]
@@ -1383,7 +1383,7 @@ default-combinators: make map! reduce [
                 ;
                 catch [  ; use CATCH to continue outer loop
                     let r
-                    while [r: rules.1] [
+                    loop [r: rules.1] [
                         rules: my next
                         if r = '|| [
                             input: pos  ; don't roll back past current pos
@@ -1448,7 +1448,7 @@ default-combinators: make map! reduce [
                 ;
                 pos: catch [
                     let r
-                    while [r: rules.1] [
+                    loop [r: rules.1] [
                         rules: my next
                         if r = '| [throw input]  ; reset POS
 

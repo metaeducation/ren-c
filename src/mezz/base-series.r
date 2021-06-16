@@ -18,7 +18,7 @@ REBOL [
 
 reeval function [:terms [tag! set-word! <variadic>]] [
     n: 1
-    while [<end> != w: take terms] [
+    loop [<end> != w: take terms] [
         set w redescribe reduce [
             spaced [{Returns the} to word! w {value of a series}]
         ](

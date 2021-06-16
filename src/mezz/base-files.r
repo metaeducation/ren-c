@@ -124,7 +124,7 @@ make-dir: func [
     ; Scan reverse looking for first existing dir:
     path: copy path
     dirs: copy []
-    while [
+    loop [
         all [
             not empty? path
             not exists? path

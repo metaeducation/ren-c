@@ -62,7 +62,7 @@ sync-op: function [port body] [
     ; state.  The timeout should be triggered only when the response from
     ; the other side exceeds the timeout value.
     ;
-    while [not find [ready close] ^state/mode] [
+    loop [not find [ready close] ^state/mode] [
         if not port? wait [state/connection port/spec/timeout] [
             fail make-http-error "Timeout"
         ]
@@ -576,7 +576,7 @@ check-data: function [
             ]
             out: port/data
 
-            while [parse? data [
+            loop [parse? data [
                 copy chunk-size: some hex-digits, thru crlfbin
                 mk1: here, to end
             ]][

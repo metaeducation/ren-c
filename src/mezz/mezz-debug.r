@@ -19,7 +19,7 @@ verify: function [
         {Conditions to check}
     <local> result
 ][
-    while [pos: evaluate/result conditions 'result] [
+    loop [pos: evaluate/result conditions 'result] [
         if quoted? pos [  ; invisible that vaporized
             conditions: pos
             continue
@@ -31,7 +31,7 @@ verify: function [
             ;
             ; including commas in the failure report looks messy, skip them
             ;
-            while [', = first conditions] [conditions: my next]
+            loop [', = first conditions] [conditions: my next]
 
             fail ^conditions make error! [
                 type: 'Script

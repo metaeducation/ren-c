@@ -1,97 +1,127 @@
-; functions/control/loop.r
+; %loop-test.reb
+;
+; LOOP in Ren-C acts as an arity-2 looping operation, like WHILE from Rebol2
+; and R3-Alpha.
+;
+; The reason for the name change is to be consistent with PARSE's use of WHILE
+; as arity-1.  That also naturally makes WHILE and UNTIL pair together as
+; taking a single argument.
+
 (
     num: 0
-    repeat 10 [num: num + 1]
-    10 = num
+    loop [num < 10] [num: num + 1]
+    num = 10
 )
-; cycle return value
-(false = repeat 1 [false])
-; break cycle
-(
+; Test body-block return values
+[#37 (
     num: 0
-    repeat 10 [num: num + 1 break]
-    num = 1
-)
-; break return value
-(null? repeat 10 [break])
-; continue cycle
-(
-    success: true
-    repeat 1 [continue, success: false]
-    success
-)
+    1 = loop [num < 1] [num: num + 1]
+)]
+((the ') = ^ loop [false] [])
 ; zero repetition
 (
     success: true
-    repeat 0 [success: false]
+    loop [false] [success: false]
     success
+)
+; Test break and continue
+(
+    cycle?: true
+    null? loop [cycle?] [break cycle?: false]
+)
+; Test reactions to break and continue in the condition
+(
+    was-stopped: true
+    loop [true] [
+        loop [break] []
+        was-stopped: false
+        break
+    ]
+    was-stopped
+)
+(
+    first-time: true
+    was-continued: false
+    loop [true] [
+        if not first-time [
+            was-continued: true
+            break
+        ]
+        first-time: false
+        loop [continue] [break]
+        break
+    ]
+    was-continued
 )
 (
     success: true
-    repeat -1 [success: false]
+    cycle?: true
+    loop [cycle?] [cycle?: false, continue, success: false]
     success
 )
-; Test that return stops the loop
 (
-    f1: func [] [repeat 1 [return 1 2]]
+    num: 0
+    loop [true] [num: 1 break num: 2]
+    num = 1
+)
+; RETURN should stop the loop
+(
+    cycle?: true
+    f1: func [] [loop [cycle?] [cycle?: false return 1] 2]
     1 = f1
 )
-; Test that errors do not stop the loop and errors can be returned
-(
-    num: 0
-    e: repeat 2 [num: num + 1 trap [1 / 0]]
-    all [error? e num = 2]
-)
-; loop recursivity
-(
-    num: 0
-    repeat 5 [
-        repeat 2 [num: num + 1]
-    ]
-    num = 10
-)
-; recursive use of 'break
-(
-    f: func [x] [
-        repeat 1 [
-            either x = 1 [
-                use [break] [
-                    break: 1
-                    f 2
-                    1 = get 'break
-                ]
-            ][
-                false
-            ]
-        ]
-    ]
-    f 1
+(  ; bug#1519
+    cycle?: true
+    f1: func [] [loop [if cycle? [return 1] cycle?] [cycle?: false 2]]
+    1 = f1
 )
 
-; mutating the loop variable of a REPEAT affects the loop (Red keeps its own
-; internal state, overwritten each body call) https://trello.com/c/V4NKWh5E
+; CONTINUE out of a condition continues any enclosing loop (it does not mean
+; continue the LOOP whose condition it appears in)
 (
+    n: 1
     sum: 0
-    count-up i 10 [
-        sum: me + 1
-        i: 10
+    loop [n < 10] [
+        n: n + 1
+        if n = 0 [
+            loop [continue] [
+                fail "inner LOOP body should not run"
+            ]
+            fail "code after inner LOOP should not run"
+        ]
+        sum: sum + 1
     ]
-    sum = 1
+    sum = 9
 )
 
-; test that a continue which interrupts code using the mold buffer does not
-; leave the gathered material in the mold buffer
-;
+; THROW should stop the loop
+(1 = catch [cycle?: true loop [cycle?] [throw 1 cycle?: false]])
+(  ; bug#1519
+    cycle?: true
+    1 = catch [loop [if cycle? [throw 1] false] [cycle?: false]]
+)
+([a 1] = catch/name [cycle?: true loop [cycle?] [throw/name 1 'a cycle?: false]] 'a)
+(  ; bug#1519
+    cycle?: true
+    [a 1] = catch/name [loop [if cycle? [throw/name 1 'a] false] [cycle?: false]] 'a
+)
+; Test that disarmed errors do not stop the loop and errors can be returned
 (
-    (the ') = ^ repeat 2 [unspaced ["abc" continue]]
+    num: 0
+    e: loop [num < 10] [num: num + 1 trap [1 / 0]]
+    all [error? e num = 10]
 )
-
-; Test ACTION! as branch
-;
-[
-    (did branch: does [if nbreak = n [break] n: n + 1])
-
-    (nbreak: ('...), n: 0, (the ') = ^ repeat 0 :branch)
-    (nbreak: ('...), n: 0, 3 = repeat 3 :branch)
-    (nbreak: 2, n: 0, null? repeat 3 :branch)
-]
+; Recursion check
+(
+    num1: 0
+    num3: 0
+    loop [num1 < 5] [
+        num2: 0
+        loop [num2 < 2] [
+            num3: num3 + 1
+            num2: num2 + 1
+        ]
+        num1: num1 + 1
+    ]
+    10 = num3
+)

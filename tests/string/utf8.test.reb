@@ -46,7 +46,7 @@
     (
         tcopy: copy t
         n: 0
-        while [c: take tcopy] [
+        loop [c: take tcopy] [
             n: n + 1
             assert [c = t/(n)]
         ]
@@ -56,7 +56,7 @@
     (
         tcopy: copy t
         n: length of t
-        while [c: take/last tcopy] [
+        loop [c: take/last tcopy] [
             assert [c = t/(n)]
             n: n - 1
         ]

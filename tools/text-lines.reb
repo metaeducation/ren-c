@@ -83,7 +83,7 @@ for-each-line: func [
     body "Block to evaluate each time"
         [block!]
 ] [
-    while [not tail? text] [
+    loop [not tail? text] [
         let eol: any [
             find text newline
             tail of text

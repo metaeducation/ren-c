@@ -90,7 +90,7 @@ dump: function [
         ]
 
         b: match block! :value [
-            while [not tail? b] [
+            loop [not tail? b] [
                 if swp: match [set-word! set-path!] :b/1 [ ; `dump [x: 1 + 2]`
                     b: evaluate/result b (the result:)
                     print [swp, result]
@@ -106,7 +106,7 @@ dump: function [
 ]
 
 contains-newline: function [return: [logic!] pos [block! group!]] [
-    while [pos] [
+    loop [pos] [
         any [
             new-line? pos
             all [
@@ -126,7 +126,7 @@ dump-to-newline: adapt :dump [
         ; Mutate VARARGS! into a BLOCK!, with passed-in value at the head
         ;
         value: reduce [:value]
-        while [any [
+        loop [any [
             not new-line? extra
             tail? extra
             '| = extra/1
@@ -289,7 +289,7 @@ summarize-obj: function [
         [<opt> <end> any-value!]
     :args [any-value! <variadic>]
 ][
-    while [all [
+    loop [all [
         not new-line? args
         value: take args
     ]] [

@@ -157,7 +157,7 @@ backtrace*: function [
 
     f: start
 
-    stack: collect [while [f: parent of f] [
+    stack: collect [loop [f: parent of f] [
         a: action of f
 
         if :a = :console [

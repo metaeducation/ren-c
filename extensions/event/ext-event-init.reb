@@ -57,7 +57,7 @@ sys/make-scheme [
 
         n-event: 0
         event-list: sport/state
-        while [not empty? event-list] [
+        loop [not empty? event-list] [
             ;
             ; Do only 8 events at a time (to prevent polling lockout)
             ;

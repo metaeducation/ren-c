@@ -99,7 +99,7 @@ compile: func [
     ]
 
     let b: settings
-    while [not tail? b] [
+    loop [not tail? b] [
         var: (select config try match word! key: b/1) else [
             fail [{COMPILE/OPTIONS parameter} key {is not supported}]
         ]

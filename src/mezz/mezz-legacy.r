@@ -24,13 +24,11 @@ REBOL [
 lit: :the
 
 
-loop: func [] [
+while: func [] [
     fail ^return [
-        "The previous functionality of LOOP is now done by REPEAT."
-        "Ultimately LOOP is intended to replace WHILE as an arity-2 loop"
-        "operation, and WHILE will be arity-1 to match PARSE.  Though it"
-        "may be the case that LOOP of INTEGER! will be made to work, it will"
-        "be clearer to use REPEAT...so LOOP *may* not support integer"
+        "The previous functionality of WHILE is now done by LOOP."
+        "Ultimately, WHILE will be arity-1 to help match the behavior in"
+        "PARSE, and better parallel UNTIL."
     ]
 ]
 
