@@ -128,24 +128,24 @@ lesser-or-equal?: :equal-or-lesser?
 ; Common "Invisibles"
 
 comment: enfixed func* [
-    {Ignores the argument value, but does no evaluation (see also ELIDE).}
+    {Ignores the argument value, but does no evaluation (see also ELIDE)}
 
-    return: <void>
-        {The evaluator will skip over the result (not seen, not even void)}
-    returned [<opt> <end> any-value!]
-        {The returned value.}  ; by protocol of enfixed `return: <invisible>`
-    :discarded [block! any-string! binary! any-scalar!]
-        "Literal value to be ignored."  ; `comment print "hi"` disallowed
+    return: "Evaluator will skip over the result (not seen)"
+        <void>
+    ^returned "The returned value"  ; by protocol of enfixed `return: <void>`
+        [<opt> <end> any-value!]
+    :discarded "Literal value to be ignored."  ; `comment print "x"` disallowed
+        [block! any-string! binary! any-scalar!]
 ][
 ]
 
 elide: func* [
     {Argument is evaluative, but discarded (see also COMMENT).}
 
-    return: <void>
-        {The evaluator will skip over the result (not seen, not even void)}
-    ^discarded [<opt> any-value!]
-        {Evaluated value to be ignored.}
+    return: "The evaluator will skip over the result (not seen)"
+        <void>
+    ^discarded "Evaluated value to be ignored"
+        [<opt> any-value!]
 ][
 ]
 
