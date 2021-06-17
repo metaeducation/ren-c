@@ -777,7 +777,7 @@ REBNATIVE(set)
 //
 REBNATIVE(try)
 {
-    INCLUDE_PARAMS_OF_TRY;
+    INCLUDE_PARAMS_OF_TRY;  // Was once known as TO-VALUE, but TRY has stuck
 
     REBVAL *optional = ARG(optional);
 

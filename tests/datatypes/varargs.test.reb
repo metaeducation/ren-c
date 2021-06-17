@@ -28,7 +28,7 @@
 )
 
 (
-    f: func ['look [<variadic>]] [to-value first look]
+    f: func ['look [<variadic>]] [try first look]
     blank? applique :f [look: make varargs! []]
 )
 

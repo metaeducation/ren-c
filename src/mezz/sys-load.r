@@ -479,7 +479,7 @@ do-needs: function [
 
     return try case [
         block [mods]  ; /BLOCK refinement asks for block of modules
-        not empty? to-value :mixins [mixins]  ; if any mixins, return them
+        not empty? try :mixins [mixins]  ; if any mixins, return them
     ]
 ]
 

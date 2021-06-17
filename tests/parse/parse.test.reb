@@ -146,7 +146,7 @@
 (
     i: 0
     parse "a." [
-        while [thru "a" (i: i + 1 j: to-value if i > 1 [end skip]) j]
+        while [thru "a" (i: i + 1 j: try if i > 1 [end skip]) j]
     ]
     i == 1
 )
@@ -189,7 +189,7 @@
 )]
 [#1268 (
     i: 0
-    parse "a" [while [(i: i + 1 j: to-value if i = 2 [[fail]]) j]]
+    parse "a" [while [(i: i + 1 j: try if i = 2 [[fail]]) j]]
     i == 2
 )]
 

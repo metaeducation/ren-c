@@ -96,7 +96,7 @@ save: function [
                 compress: did find try (select header 'options) [compress]
             ]
             compress = false [
-                remove find to-value select header 'options 'compress
+                remove find try select header 'options 'compress
             ]
             not block? select header 'options [
                 append header compose [Options: (copy [compress])]
