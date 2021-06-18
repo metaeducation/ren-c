@@ -52,7 +52,7 @@ repend: redescribe [
     "APPEND a reduced value to a series."
 ](
     adapt :append [
-        if set? 'value [
+        if :value [
             value: reduce :value
         ]
     ]

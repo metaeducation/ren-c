@@ -470,7 +470,7 @@ what: function [
     size: 0
 
     ; copy to get around error: "temporary hold for iteration"
-    ctx: copy all [set? 'name try select system/modules :name ] else [lib]
+    ctx: (copy try select system/modules try :name) else [lib]
 
     for-each [word val] ctx [
         ; word val

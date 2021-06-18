@@ -32,7 +32,7 @@
 ; (locals should be cleared on each redo)
 (
     foo: func [n <local> unset-me] [
-        if defined? 'unset-me [
+        if set? 'unset-me [
             return "local not cleared"
         ]
         if n = 0 [

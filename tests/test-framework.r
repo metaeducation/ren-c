@@ -62,8 +62,8 @@ make object! compose [
                 spaced ["error" any [to text! error/id, "w/no ID"]]
             ]
 
-            undefined? 'result [
-                "test returned void"
+            bad-word? ^result [
+                "test returned" (mold ^result) "(isotope)"
             ]
             null? :result [
                 "test returned null"

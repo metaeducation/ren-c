@@ -462,11 +462,35 @@ redescribe [
     {Create an ACTION, implicity gathering SET-WORD!s as <local> by default}
 ] :function
 
-unset: redescribe [
-    {Clear the value of a word to null (in its current context.)}
-](
-    specialize :set [value: null]
-)
+
+unset: func [
+    {Clear the value of a word to an unset isotope (in its current context.)}
+    return: [bad-word!]  ; is returning the ~unset~ appropriate? 
+    var [word! path!]  ; Rebol2/R3-Alpha/Red support blocks of vars here
+][
+    ; !!! Note: this would be a tricky case for SPECIALIZE of SET, because
+    ; specialization usually can't make things an ~unset~ isotope unless the
+    ; frame field is hidden.  That's a work in progress, so it is left out
+    ; of the mezzanine at this time for simplicity.
+    ;
+    set var ~unset~
+]
+
+unset?: func [
+    {Determine if a variable looks up to an ~unset~ isotope}
+    return: [logic!]
+    var [word! path!]
+][
+    '~unset~ = ^ get/any var
+]
+
+set?: func [
+    {Determine if a variable does not look up to an ~unset~ isotope}
+    return: [logic!]
+    var [word! path!]
+][
+    '~unset~ <> ^ get/any var
+]
 
 
 ; >- is the SHOVE operator.  It uses the item immediately to its left for

@@ -25,8 +25,7 @@
 (not error? trap [
     for-each w words of lib [
         dump w
-        if unset? w [continue]
-        if undefined? w [continue]
+        if bad-word? ^w [continue]
         if action? get w
             (compose [help (w)])
         else [
@@ -39,7 +38,8 @@
 (not error? trap [
     for-each w words of lib [
         dump w
-        if action? friendly get/any w
+        if bad-word? ^w [continue]
+        if action? get w
             (compose [source (w)])
     ]
 ])

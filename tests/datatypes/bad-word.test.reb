@@ -1,4 +1,4 @@
-; datatypes/unset.r
+; bad-word.test.reb
 
 (not bad-word? 1)
 
@@ -7,7 +7,6 @@
     v: make bad-word! 'labeled
     did all [
         bad-word? friendly get/any 'v
-        undefined? 'v
         '~labeled~ = friendly get/any 'v
         'labeled = label of friendly get/any 'v
     ]

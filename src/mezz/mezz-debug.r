@@ -38,7 +38,7 @@ verify: function [
                 id: 'assertion-failure
                 arg1: compose [
                     ((copy/part conditions pos)) ** (case [
-                        unset? 'result ['null]
+                        null? result ['null]
                         bad-word? result [quote result]
                         blank? result ['blank]
                         result = false ['false]

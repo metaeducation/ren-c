@@ -19,7 +19,7 @@
         10 = select data 'a
         20 = data/b
         20 = select data 'b
-        not set? 'data/c
+        null = get 'data/c
         null? select data 'c
     ]
 )

@@ -14,7 +14,7 @@
 
 ; initialization (lack of)
 (a: 10 did all [use [a] ['~unset~ = ^ get/any 'a] a = 10])
-(use [a] [undefined? 'a])
+(use [a] [unset? 'a])
 
 ; BREAK out of USE
 (

@@ -56,6 +56,6 @@
     [e v]: trap [fail "Hello"]
     did all [
         error? e
-        undefined? 'v
+        unset? 'v
     ]
 )

@@ -413,8 +413,8 @@
     unset 'y
 
     body: [x + y]
-    f: func reduce [x] body
-    g: func reduce [y] body
+    f: func [x] body
+    g: func [y] body
     error? trap [f 1]
 )]
 [#2044 (

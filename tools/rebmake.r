@@ -1043,7 +1043,7 @@ object-file-class: make object! [
 
         if optimization = #prefer-O2-optimization [
             any [
-                not set? 'O
+                not O
                 O = "s"
             ] then [
                 O: 2  ; don't override e.g. "-Oz"

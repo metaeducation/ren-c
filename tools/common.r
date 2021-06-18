@@ -476,13 +476,11 @@ stripload: function [
         append get gather collect [
             for-next t text [
                 newline-pos: find t newline else [tail text]
-                colon-pos: find/part t ":" newline-pos
-                if unset? 'colon-pos [
+                if not colon-pos: find/part t ":" newline-pos [
                     t: newline-pos
                     continue
                 ]
-                space-pos: find/part t space colon-pos
-                if set? 'space-pos [
+                if space-pos: find/part t space colon-pos [
                     t: newline-pos
                     continue
                 ]

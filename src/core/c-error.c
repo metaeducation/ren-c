@@ -925,16 +925,24 @@ REBCTX *Error_Need_Non_End_Core(
 REBCTX *Error_Bad_Word_Get_Core(
     const RELVAL *target,
     REBSPC *specifier,
-    const RELVAL *voided
+    const RELVAL *bad
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
     assert(ANY_WORD(target) or ANY_SEQUENCE(target) or ANY_BLOCK(target));
-    assert(IS_BAD_WORD(voided));
+    assert(IS_BAD_WORD(bad));
 
     DECLARE_LOCAL (specific);
     Derelativize(specific, target, specifier);
-    return Error_Bad_Word_Get_Raw(specific, SPECIFIC(voided));
+
+    // Don't want the error message to have an isotope version as argument, as
+    // they're already paying for an error regarding the state.
+    //
+    DECLARE_LOCAL (bad_safe);
+    Copy_Cell(bad_safe, SPECIFIC(bad));
+    CLEAR_CELL_FLAG(bad_safe, ISOTOPE);
+
+    return Error_Bad_Word_Get_Raw(specific, bad_safe);
 }
 
 

@@ -7,9 +7,18 @@
     e: trap [do make block! ":a"]
     e/id = 'not-bound
 )
+
+; R3-Alpha and Red permit GET-WORD! access to subvert unsetness.  But Ren-C
+; sides with Rebol2, making it clearer that GET-WORD!'s main use is to
+; suppress the execution of functions.
 (
     unset 'a
-    null? :a
+    e: trap [:a]
+    did all [
+       'bad-word-get = e.id
+       ':a = e.arg1
+       '~unset~ = e.arg2
+    ]
 )
 
 [#1477

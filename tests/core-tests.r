@@ -18,6 +18,7 @@
 %api/librebol.test.reb
 
 %datatypes/action.test.reb
+%datatypes/bad-word.test.reb
 %datatypes/binary.test.reb
 %datatypes/bitset.test.reb
 %datatypes/blank.test.reb
@@ -69,7 +70,6 @@
 %datatypes/tuple.test.reb
 %datatypes/typeset.test.reb
 %datatypes/url.test.reb
-%datatypes/void.test.reb
 %datatypes/varargs.test.reb
 %datatypes/word.test.reb
 

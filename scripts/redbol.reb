@@ -408,13 +408,16 @@ null: emulate [
     make char! 0  ; NUL in Ren-C https://en.wikipedia.org/wiki/Null_character
 ]
 
-; We use the case of Ren-C's "stable" variant of the BAD-WORD! ~unset~ as a
+; We use the case of Ren-C's "isotope" variant of the BAD-WORD! ~unset~ as a
 ; parallel of historical Rebol's UNSET!.  It cannot be retrieved via a
 ; GET-WORD! (as in R3-Alpha or Red), but only with a special access function
 ; (like in Rebol2).
 ;
 unset!: bad-word!
-unset?: emulate [:bad-word?]
+unset?: emulate [func [^x] [x = '~unset~]]  ; checks *value* is unset, not var
+unset: func [var [word! path! block!]] [  ; historically blocks are legal
+    set/any var ~unset~
+]
 
 ; Note: Ren-C once reserved NONE for `if none [x = 1, y = 2] [...]`
 ; Currently that is covered by `ALL .NOT [...]`, but a specialization may
@@ -456,10 +459,10 @@ comment: emulate [
 
 value?: emulate [
     func [
-        {See DEFINED? in Ren-C: https://trello.com/c/BlktEl2M}
+        {See SET? in Ren-C: https://trello.com/c/BlktEl2M}
         value
     ][
-        either any-word? :value [defined? value] [true]  ; bizarre.  :-/
+        either any-word? :value [set? value] [true]  ; bizarre.  :-/
     ]
 ]
 
@@ -470,7 +473,7 @@ type?: emulate [
     ][
         case [
             not word [type of :value]
-            undefined? 'value ['unset!]  ; https://trello.com/c/rmsTJueg
+            unset? 'value ['unset!]  ; https://trello.com/c/rmsTJueg
             blank? :value ['none!]  ; https://trello.com/c/vJTaG3w5
             group? :value ['paren!]  ; https://trello.com/c/ANlT44nH
             (match ['word!] :value) ['lit-word!]
@@ -506,7 +509,7 @@ set: emulate [
 
         all [
             not set_ANY
-            undefined? 'value
+            unset? 'value
             fail "Can't SET a value to UNSET! unless SET/ANY is used"
         ]
 
@@ -646,7 +649,7 @@ default: emulate [
         value
     ][
         any [
-            undefined? word
+            unset? word
             blank? get word
         ] then [
             set word :value

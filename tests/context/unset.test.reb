@@ -1,11 +1,11 @@
 ; functions/context/unset.r
 (
-    a: _
+    a: <something>
     unset 'a
     not set? 'a
 )
 (
-    a: _
+    a: <something>
     unset 'a
     unset 'a
     not set? 'a

@@ -89,7 +89,7 @@
     [c v]: catch [throw 304]
     did all [
         c = 304
-        undefined? 'v
+        unset? 'v
     ]
 )
 (

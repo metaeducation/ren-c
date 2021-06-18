@@ -12,7 +12,7 @@
     set the 'a <seta>
     <seta> = get dequote the '''''''a
 )(
-    unset [a b]
+    a: b: ~unset~
     set reduce dequote ['''''a ''b] [<seta> <setb>]
     [<seta> <setb>] = get reduce [dequote 'a dequote '''''''b]
 )

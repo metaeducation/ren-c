@@ -561,7 +561,7 @@ ext-console-impl: func [
         ;
         assert [blank? :result]
         any [
-            undefined? 'system/console
+            unset? 'system/console
             not system/console
         ] then [
             emit [start-console/skin '(<*> skin)]

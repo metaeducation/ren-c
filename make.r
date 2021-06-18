@@ -779,7 +779,7 @@ parse-ext-build-spec: function [
             fail ["Could not parse extension build spec" mold spec]
         ]
 
-        if defined? 'config [
+        if set? 'config [
             do as block! config  ; Note: old Ren-Cs disallowed DO of GROUP!
         ]
     ]
@@ -1059,7 +1059,7 @@ parse user-config/toolset [
         | 'strip opt set strip-exec [file! | text! | blank!] (
             rebmake/default-strip: rebmake/strip
             rebmake/default-strip/options: [<gnu:-S> <gnu:-x> <gnu:-X>]
-            if all [set? 'strip-exec strip-exec][
+            if get 'strip-exec [
                 set-exec-path rebmake/default-strip strip-exec
             ]
         )
@@ -1104,16 +1104,10 @@ switch rebmake/default-compiler/name [
     fail ["Unrecognized compiler (gcc, clang or cl):" cc]
 ]
 
-all [
-    set? 'cc-exec
-    cc-exec
-] then [
+if get 'cc-exec [
     set-exec-path rebmake/default-compiler cc-exec
 ]
-all [
-    set? 'linker-exec
-    linker-exec
-] then [
+if get 'linker-exec [
     set-exec-path rebmake/default-linker linker-exec
 ]
 

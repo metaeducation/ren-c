@@ -28,6 +28,14 @@ REBOL [
         since it was created.  This is facilitated by Ren-C's compositional
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     }
+    Notes: {
+        Version 8994d23 does not allow WORD!-access of NULL, because the null
+        state was conflated with the "unset" state at that time.  This is
+        not something that can be overridden by a shim.  So the easiest way
+        to do `null? var` in a forward-compatible way is `null? get 'var`, but
+        if the intent is on a variable that would be considered actually
+        "unset" in modern versions then use `unset?` (it will be null though)
+    }
 ]
 
 ; Define HERE and SEEK as no-ops for compatibility in parse
@@ -71,8 +79,15 @@ trap [
     ; https://forum.rebol.info/t/just-vs-lit-literal-literally/1453
     ; bootstrap executable on GitHub CI doesn't have this change
     ;
-    if undefined? 'the [
+    trap [the <the>] then [
         the: :literal
+
+        ; This version still considered SET? and UNSET? as tests for null, but
+        ; unset variables were set to "voids".  GET 'VAR works for getting
+        ; nulls but plain word fetches allowed null access.
+        ;
+        set?: :defined?
+        unset?: :undefined?
 
         repeat: :loop
         loop: :while
@@ -237,15 +252,6 @@ parse: chain [
 ; mutating directly.
 ;
 enfixed: enfix :enfix
-
-; NULL was used for cases that were non-set variables that were unmentioned,
-; which could be also thought of as typos.  This was okay because NULL access
-; would cause errors through word or path access.  As NULL became more
-; normalized, the idea of an "unset" variable (no value) was complemented with
-; "undefined" variables (set to ~unset~ value).  Older Ren-C conflated these.
-;
-defined?: :set?
-undefined?: :unset?
 
 ; COLLECT was changed back to default to returning an empty block on no
 ; collect, but it is built on a null collect lower-level primitive COLLECT*
@@ -626,7 +632,7 @@ delimit: func [
             continue
         ]
         line: evaluate/set line 'value
-        any [unset? 'value | blank? value] then [continue]
+        any [null? get 'value | blank? value] then [continue]
         any [char? value | issue? value] then [
             append text form value
             anything: true
