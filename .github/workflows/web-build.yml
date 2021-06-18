@@ -128,9 +128,9 @@ jobs:
         echo "But that executable won't run on GitHub for some reason"
         # "$r3make" --do "print {TESTING 1 2 3}"  # NOT WORKING, dunno why
         cd prebuilt
-        wget http://hostilefork.com/media/shared/github/r3-linux-dec-2020
-        chmod +x r3-linux-dec-2020
-        r3make=$(pwd)/r3-linux-dec-2020
+        wget http://hostilefork.com/media/shared/github/r3-linux-8994d23-patched
+        chmod +x r3-linux-8994d23-patched
+        r3make=$(pwd)/r3-linux-8994d23-patched
         echo "So now R3MAKE is $r3make"
         echo "R3MAKE=$r3make" >> $GITHUB_ENV  # pass to next step
 

@@ -60,112 +60,15 @@ trap [
     func [i [<blank> integer!]] [...]
 ] else [
     ;
-    ; While things are in flux with MAKE-FILE, do it in order to sync any
-    ; bootstrapping executables more recent than the one that didn't have it.
-    ; It will overwrite the MAKE-FILE that's built in.
+    ; LOAD changed to have no /ALL, so it always enforces getting a block.
+    ; But LOAD-VALUE comes in the box to load a single value.
     ;
-    do %../scripts/make-file.r  ; Experimental!  Trying to replace PD_File...
-
-    ; OPT has behavior of turning NULLs into ~nulled~ to keep you from opting
-    ; something you don't need to, but with refinement changes bootstrap code
-    ; would get ugly if it had to turn every OPT of a refinement into OPT TRY.
-    ; Bypass the voidification for the refinement sake.
-    ;
-    opt: func [v [<opt> any-value!]] [
-        if blank? :v [return null]
-        return :v
-    ]
-
-    ; https://forum.rebol.info/t/just-vs-lit-literal-literally/1453
-    ; bootstrap executable on GitHub CI doesn't have this change
-    ;
-    trap [the <the>] then [
-        the: :literal
-
-        ; This version still considered SET? and UNSET? as tests for null, but
-        ; unset variables were set to "voids".  GET 'VAR works for getting
-        ; nulls but plain word fetches allowed null access.
-        ;
-        set?: :defined?
-        unset?: :undefined?
-
-        ; `~:` comes up as an "invalid void", use SET.
-        ;
-        set '~ does ['~unset~]  ; labeled VOID!, before isotopes
-
-        repeat: :loop
-        loop: :while
-
-        ; Workaround the <void> => <none> spec change, for same version
-
-        func: adapt :func [
-            if find spec <none> [
-                spec: replace (copy spec) <none> <void>
-            ]
-        ]
-
-        meth: enfixed adapt :meth [
-            if find spec <none> [
-                spec: replace (copy spec) <none> <void>
-            ]
-        ]
-
-        function: adapt :function [
-            if find spec <none> [
-                spec: replace (copy spec) <none> <void>
-            ]
-        ]
-
-        any-inert!: make typeset! [text! tag! issue! binary! char! object! file!]
-
-        append: adapt :append [
-            value: case [
-                only [:value]
-                blank? :value [null]
-                block? :value [:value]
-                match any-inert! :value [:value]
-                fail ^value ["APPEND takes block, blank, ANY-INERT!"]
-            ]
-        ]
-
-        insert: adapt :insert [
-            value: case [
-                only [:value]
-                blank? :value [null]
-                block? :value [:value]
-                match any-inert! :value [:value]
-                fail ^value ["INSERT takes block, blank, ANY-INERT!"]
-            ]
-        ]
-
-        change: adapt :change [
-            value: case [
-                only [:value]
-                blank? :value [null]
-                block? :value [:value]
-                match any-inert! :value [:value]
-                fail ^value ["CHANGE takes block, blank, ANY-INERT!"]
-            ]
-        ]
-
-        parse?: chain [:lib/parse | :did]
-    ]
-
-    ; LOAD changed to have no /ALL so enforcing getting a block is weird
-    ;
-    if find parameters of :load [/all] [
-        load-all: :load/all
-        load-value: :load  ; imperfect...works for rebmake
-    ] else [
-        load-all: :load
-    ]
+    load-all: :load
 
     quit
 ]
 
-; Dec-2020 executable can't load `~:`, use SET
-;
-set '~ does [null]  ; labeled VOID!, before isotopes
+~: does [null]  ; labeled VOID!, before isotopes
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;
