@@ -89,6 +89,10 @@ trap [
         set?: :defined?
         unset?: :undefined?
 
+        ; `~:` comes up as an "invalid void", use SET.
+        ;
+        set '~ does ['~unset~]  ; labeled VOID!, before isotopes
+
         repeat: :loop
         loop: :while
 
@@ -158,6 +162,10 @@ trap [
 
     quit
 ]
+
+; Dec-2020 executable can't load `~:`, use SET
+;
+set '~ does [null]  ; labeled VOID!, before isotopes
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;

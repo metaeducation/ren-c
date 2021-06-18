@@ -732,7 +732,7 @@ gen-obj: func [
 
 extension-class: make object! [
     class: #extension
-    name: _
+    name: ~
     loadable: yes ;can be loaded at runtime
     modules: _
     source: _ ; main script
@@ -1903,16 +1903,22 @@ for-each ext dynamic-extensions [
 ]
 
 top: make rebmake/entry-class [
-    target: 'top ; phony target
+    target: 'top  ; phony target
+
     depends: flatten reduce
         either tmp: select user-config 'top
         [either block? tmp [tmp] [reduce [tmp]]]
         [[ app dynamic-libs ]]
+    
+    commands: []
 ]
 
 t-folders: make rebmake/entry-class [
-    target: 'folders ; phony target
-    commands: map-each dir sort folders [;sort it so that the parent folder gets created first
+    target: 'folders  ; phony target
+
+    ; Sort it so that the parent folder gets created first
+    ;
+    commands: map-each dir sort folders [
         make rebmake/cmd-create-class compose [
             file: (dir)
         ]
@@ -1920,18 +1926,23 @@ t-folders: make rebmake/entry-class [
 ]
 
 clean: make rebmake/entry-class [
-    target: 'clean ; phony target
-    commands: flatten reduce [
+    target: 'clean  ; phony target
+
+    commands: reduce [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
-        make rebmake/cmd-delete-class [file: join %r3 opt rebmake/target-platform/exe-suffix]
-        make rebmake/cmd-delete-class [file:  %libr3.*]
+        make rebmake/cmd-delete-class [
+            file: join %r3 opt rebmake/target-platform/exe-suffix
+        ]
+        make rebmake/cmd-delete-class [file: %libr3.*]
     ]
 ]
 
 check: make rebmake/entry-class [
-    target: 'check ; phony target
+    target: 'check  ; phony target
+
     depends: join dynamic-libs app
+
     commands: collect [
         keep make rebmake/cmd-strip-class [
             file: join app/output opt rebmake/target-platform/exe-suffix
@@ -1946,6 +1957,7 @@ check: make rebmake/entry-class [
 
 solution: make rebmake/solution-class [
     name: 'app
+
     depends: flatten reduce [
         vars
         top
@@ -1961,13 +1973,14 @@ solution: make rebmake/solution-class [
         check
         clean
     ]
+
     debug: app-config/debug
 ]
 
 target: user-config/target
 if not block? target [target: reduce [target]]
-iterate target [
-    switch target/1 targets else [
+for-each t target [
+    switch t targets else [
         fail [
             newline
             newline

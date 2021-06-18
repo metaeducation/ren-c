@@ -981,7 +981,7 @@ strip-class: make object! [
     class: #strip
     name: _
     id: _ ;flag prefix
-    exec-file: _
+    exec-file: ~
     options: _
     commands: meth [
         return: [block!]
@@ -1016,9 +1016,9 @@ object-file-class: make object! [
     compiler: _
     cflags: _
     definitions: _
-    source: _
-    output: _
-    basename: _ ;output without extension part
+    source: ~
+    output: ~
+    basename: _  ; output without extension part
     optimization: _
     debug: _
     includes: _
@@ -1103,35 +1103,35 @@ object-file-class: make object! [
 entry-class: make object! [
     class: #entry
     id: _
-    target:
-    depends:
-    commands: _
+    target: ~
+    depends: _
+    commands: ~
     generated?: false
 ]
 
 var-class: make object! [
     class: #variable
-    name: _
-    value: _
-    default: _
+    name: ~
+    value: _  ; behavior is `any [value, default]`, so start as blank
+    default: ~
     generated?: false
 ]
 
 cmd-create-class: make object! [
     class: #cmd-create
-    file: _
+    file: ~
 ]
 
 cmd-delete-class: make object! [
     class: #cmd-delete
-    file: _
+    file: ~
 ]
 
 cmd-strip-class: make object! [
     class: #cmd-strip
-    file: _
+    file: ~
     options: _
-    strip: _
+    strip: ~
 ]
 
 generator-class: make object! [
@@ -1360,10 +1360,10 @@ makefile: make generator-class [
             ; Makefile variable, defined on a line by itself
             ;
             #variable [
-                keep either entry/default [
-                    [entry/name either nmake? ["="]["?="] entry/default]
-                ][
+                keep either entry/value [
                     [entry/name "=" entry/value]
+                ][
+                    [entry/name either nmake? ["="]["?="] entry/default]
                 ]
             ]
 
