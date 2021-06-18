@@ -222,6 +222,7 @@ osx: make posix [
 
 windows: make platform-class [
     name: 'Windows
+
     exe-suffix: ".exe"
     dll-suffix: ".dll"
     obj-suffix: ".obj"
@@ -231,24 +232,30 @@ windows: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        let d: file-to-local cmd/file
-        if #"\" = last d [remove back tail-of d]
+        let f: file-to-local cmd/file
+        if #"\" = last f [remove back tail-of f]
         either dir? cmd/file [
-            spaced ["if not exist" d "mkdir" d]
+            spaced ["if not exist" f "mkdir" f]
         ][
-            unspaced ["echo . 2>" d]
+            unspaced ["echo . 2>" f]
         ]
     ]
+
     gen-cmd-delete: meth [
         return: [text!]
         cmd [object!]
     ][
-        let d: file-to-local cmd/file
-        if #"\" = last d [remove back tail-of d]
+        let f: file-to-local cmd/file
+        if #"\" = last f [remove back tail-of f]
         either dir? cmd/file [
-            spaced ["rmdir /S /Q" d]
+            ;
+            ; Note: If you have Git shell tools installed on Windows, then
+            ; `rmdir` here might run `C:\Program Files\Git\usr\bin\rmdir.EXE`
+            ; and not understand the /S /Q flags.  `rd` is an alias.
+            ;
+            spaced ["if exist" f "rd /S /Q" f]
         ][
-            spaced ["del" d]
+            spaced ["if exist" f "del /Q" f]
         ]
     ]
 
