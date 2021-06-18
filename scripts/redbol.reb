@@ -1229,15 +1229,15 @@ bound?: emulate [denuller specialize :of [property: 'binding]]
 ;
 ; https://forum.rebol.info/t/1133/7
 
-dequoter: helper [
-    func [f] [adapt :f [value1: my dequote, value2: my dequote]]
+noquoter: helper [
+    func [f] [adapt :f [value1: my noquote, value2: my noquote]]
 ]
 
-equal?: emulate [dequoter :equal?]
-not-equal?: emulate [dequoter :not-equal?]
-=: emulate [enfixed dequoter :=]
-<>: emulate [enfixed dequoter :<>]
-!=: emulate [enfixed dequoter :!=]
+equal?: emulate [noquoter :equal?]
+not-equal?: emulate [noquoter :not-equal?]
+=: emulate [enfixed noquoter :=]
+<>: emulate [enfixed noquoter :<>]
+!=: emulate [enfixed noquoter :!=]
 
 
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751

@@ -6,15 +6,15 @@
 (
     unset 'a
     set the '''''a <seta>
-    <seta> = get dequote the ''a
+    <seta> = get noquote the ''a
 )(
     unset 'a
     set the 'a <seta>
-    <seta> = get dequote the '''''''a
+    <seta> = get noquote the '''''''a
 )(
     a: b: ~unset~
-    set reduce dequote ['''''a ''b] [<seta> <setb>]
-    [<seta> <setb>] = get reduce [dequote 'a dequote '''''''b]
+    set reduce noquote ['''''a ''b] [<seta> <setb>]
+    [<seta> <setb>] = get reduce [noquote 'a noquote '''''''b]
 )
 
 ; Test basic binding, e.g. to make sure functions detect SET-WORD!
@@ -81,7 +81,7 @@
     word: ''''''''''a:
     w1: bind word o1
     w2: bind word o2
-    (0 = get dequote word) and (1 = get dequote w1) and (2 = get dequote w2)
+    (0 = get noquote word) and (1 = get noquote w1) and (2 = get noquote w2)
 )(
     foo: function [] [
         a: 0
@@ -90,7 +90,7 @@
         word: ''''''''''a:
         w1: bind word o1
         w2: bind word o2
-        (0 = get dequote word) and (1 = get dequote w1) and (2 = get dequote w2)
+        (0 = get noquote word) and (1 = get noquote w1) and (2 = get noquote w2)
     ]
     foo
 )
@@ -171,8 +171,8 @@
     w2: bind word o2
     did all [
         a = 0
-        1 = get dequote w1
-        2 = get dequote w2
+        1 = get noquote w1
+        2 = get noquote w2
     ]
 )
 

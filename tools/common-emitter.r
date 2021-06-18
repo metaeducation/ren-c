@@ -116,7 +116,7 @@ cscape: function [
             code: load-all lowercase expr
 
             if with [
-                if lit-word? with [with: dequote with]
+                if lit-word? with [with: noquote with]
 
                 with: compose [((with))]  ; convert to block
                 for-each item with [

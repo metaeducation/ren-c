@@ -53,7 +53,7 @@ make-port*: function [
     ]
 
     ; Get the scheme definition:
-    name: dequote name
+    name: noquote name
     all [
         word? name
         scheme: get try in system/schemes name

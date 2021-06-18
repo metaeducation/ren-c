@@ -143,7 +143,7 @@ func: func* [
             set var: [any-word! | any-path! | quoted!] (
                 append new-spec ^var  ; need quote level as-is in new spec
 
-                var: dequote var
+                var: noquote var
                 case [
                     match [get-path! path!] var [
                         if (length of var != 2) or (_ <> first var) [
@@ -867,11 +867,11 @@ module: func [
     ; it temporarily.
     ;
     if lit-word? spec/name [
-        spec/name: as word! dequote spec/name
+        spec/name: as word! unquote spec/name
         ;fail ["Ren-C module Name:" (spec/name) "must be WORD!, not LIT-WORD!"]
     ]
     if lit-word? spec/type [
-        spec/type: as word! dequote spec/type
+        spec/type: as word! unquote spec/type
         ;fail ["Ren-C module Type:" (spec/type) "must be WORD!, not LIT-WORD!"]
     ]
 

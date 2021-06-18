@@ -392,7 +392,7 @@ requote: reframer func* [
 
     num-quotes: quotes of f/(p)
 
-    f/(p): dequote f/(p)
+    f/(p): noquote f/(p)
 
     if null? result: do f [return null]
 
@@ -577,7 +577,7 @@ lit-word?: func* [value [<opt> any-value!]] [
     ]
 ]
 to-lit-word: func* [value [any-value!]] [
-    quote to word! dequote :value
+    quote to word! noquote :value
 ]
 lit-path?: func* [value [<opt> any-value!]] [
     did all [
@@ -586,7 +586,7 @@ lit-path?: func* [value [<opt> any-value!]] [
     ]
 ]
 to-lit-path: func* [value [any-value!]] [
-    quote to path! dequote :value
+    quote to path! noquote :value
 ]
 
 refinement?: func* [value [<opt> any-value!]] [

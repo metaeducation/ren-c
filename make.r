@@ -885,7 +885,7 @@ targets: [
 target-names: make block! 16
 for-each x targets [
     if lit-word? x [
-        append/only target-names dequote x
+        append/only target-names noquote x
         append/only target-names '|
     ] else [
         take/last target-names

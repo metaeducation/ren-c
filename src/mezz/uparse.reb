@@ -624,7 +624,7 @@ default-combinators: make map! reduce [
         ; !!! This makes sense if-and-only-if the top level UPARSE will take
         ; quoted series.  Figure out a consistent answer.
         ;
-        if not any-series? subseries: my dequote [
+        if not any-series? subseries: my noquote [
             fail "Need ANY-SERIES! datatype for use with INTO in UPARSE"
         ]
 

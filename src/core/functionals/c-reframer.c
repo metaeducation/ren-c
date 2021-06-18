@@ -32,7 +32,7 @@
 //         p: first parameters of f
 //         num-quotes: quotes of f/(p)
 //
-//         f/(p): dequote f/(p)
+//         f/(p): noquote f/(p)
 //
 //         return quote/depth do f num-quotes
 //     ]

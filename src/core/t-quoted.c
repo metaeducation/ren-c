@@ -161,7 +161,7 @@ REBTYPE(Quoted)
         break;
     }
 
-    fail ("QUOTED! has no GENERIC operations (use DEQUOTE/REQUOTE)");
+    fail ("QUOTED! has no GENERIC operations (use NOQUOTE/REQUOTE)");
 }
 
 
@@ -414,7 +414,7 @@ REBNATIVE(quoted_q)
 
 
 //
-//  dequote: native [
+//  noquote: native [
 //
 //  {Removes all levels of quoting from a quoted value}
 //
@@ -422,9 +422,9 @@ REBNATIVE(quoted_q)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(dequote)
+REBNATIVE(noquote)
 {
-    INCLUDE_PARAMS_OF_DEQUOTE;
+    INCLUDE_PARAMS_OF_NOQUOTE;
 
     REBVAL *v = ARG(optional);
     Unquotify(v, VAL_NUM_QUOTES(v));

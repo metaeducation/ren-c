@@ -666,7 +666,7 @@ unspaced: specialize :delimit [delimiter: _]
 spaced: specialize :delimit [delimiter: space]
 
 
-dequote: func [x] [
+noquote: func [x] [
     switch type of x [
         lit-word! [to word! x]
         lit-path! [to path! x]
