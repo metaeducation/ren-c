@@ -45,6 +45,7 @@ here: []
 seek: []
 
 for: func [] [fail "FOR DEPRECATED, USE CFOR"]
+unless: func [] [fail "Don't use UNLESS in Bootstrap, definition in flux"]
 
 ; The snapshotted Ren-C existed right before <blank> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.

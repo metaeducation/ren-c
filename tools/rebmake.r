@@ -490,9 +490,10 @@ gcc: make compiler-class [
         /E "only preprocessing"
     ][
         collect-text [
-            keep (file-to-local/pass exec-file else [
-                to text! name  ; the "gcc" may get overridden as "g++"
-            ])
+            keep any [
+                (file-to-local/pass exec-file)
+                (to text! name)  ; the "gcc" may get overridden as "g++"
+            ]
 
             keep either E ["-E"]["-c"]
 
@@ -598,7 +599,7 @@ cl: make compiler-class [
         /E "only preprocessing"
     ][
         collect-text [
-            keep ("cl" unless file-to-local/pass exec-file)
+            keep any [(file-to-local/pass exec-file) "cl"]
             keep "/nologo"  ; don't show startup banner (must be lowercase)
             keep either E ["/P"]["/c"]
 
@@ -716,7 +717,7 @@ ld: make linker-class [
             target-platform/exe-suffix
         ]
         collect-text [
-            keep ("gcc" unless file-to-local/pass exec-file)
+            keep any [(file-to-local/pass exec-file) "gcc"]
 
             ; !!! This breaks emcc at the moment; no other DLLs are being
             ; made, so leave it off.
@@ -825,7 +826,7 @@ llvm-link: make linker-class [
         ]
 
         collect-text [
-            keep ("llvm-link" unless file-to-local/pass exec-file)
+            keep any [(file-to-local/pass exec-file) "llvm-link"]
 
             keep "-o"
 
@@ -908,7 +909,7 @@ link: make linker-class [
             target-platform/exe-suffix
         ]
         collect-text [
-            keep (file-to-local/pass exec-file else [{link}])
+            keep any [(file-to-local/pass exec-file) "link"]
 
             ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
             if debug [keep "/DEBUG"]
@@ -987,8 +988,8 @@ link: make linker-class [
 strip-class: make object! [
     class: #strip
     name: _
-    id: _ ;flag prefix
-    exec-file: ~
+    id: _  ; flag prefix
+    exec-file: _
     options: _
     commands: meth [
         return: [block!]
@@ -996,7 +997,7 @@ strip-class: make object! [
         /params [block! any-string!]
     ][
         reduce [collect-text [
-            keep ("strip" unless file-to-local/pass exec-file)
+            keep any [(file-to-local/pass exec-file) "strip"]
             params: default [options]
             switch type of params [
                 block! [
