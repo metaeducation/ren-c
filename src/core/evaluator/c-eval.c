@@ -445,7 +445,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (
             VAL_PARAM_CLASS(first) == REB_P_SOFT
-            or VAL_PARAM_CLASS(first) == REB_P_LITERAL
+            or VAL_PARAM_CLASS(first) == REB_P_META
         ){
             goto give_up_backward_quote_priority;  // yield as an exemption
         }
@@ -741,7 +741,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // https://forum.rebol.info/t/1301
 
       case REB_META_WORD:
-        STATE_BYTE(f) = ST_EVALUATOR_SYM_WORD;
+        STATE_BYTE(f) = ST_EVALUATOR_META_WORD;
         goto process_get_word;
 
       case REB_GET_WORD:
@@ -750,7 +750,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
       process_get_word:
         assert(
-            STATE_BYTE(f) == ST_EVALUATOR_SYM_WORD
+            STATE_BYTE(f) == ST_EVALUATOR_META_WORD
             || STATE_BYTE(f) == ST_EVALUATOR_GET_WORD
         );
 
@@ -765,8 +765,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         Decay_If_Nulled(f->out);  // !!! Should Lookup_Word() handle this?
 
-        if (STATE_BYTE(f) == ST_EVALUATOR_SYM_WORD)
-            Literalize(f->out);
+        if (STATE_BYTE(f) == ST_EVALUATOR_META_WORD)
+            Meta_Quotify(f->out);
         else {
             if (IS_BAD_WORD(f->out) and GET_CELL_FLAG(f->out, ISOTOPE))
                 fail (Error_Bad_Word_Get_Core(v, v_specifier, f->out));
@@ -817,7 +817,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // the parent frame, e.g. to pick up the 3 above.
 
       case REB_META_GROUP:
-        STATE_BYTE(f) = ST_EVALUATOR_SYM_GROUP;
+        STATE_BYTE(f) = ST_EVALUATOR_META_GROUP;
         goto eval_group;
 
       case REB_GROUP:
@@ -828,7 +828,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         assert(
             STATE_BYTE(f) == ST_EVALUATOR_GROUP
-            || STATE_BYTE(f) == ST_EVALUATOR_SYM_GROUP
+            || STATE_BYTE(f) == ST_EVALUATOR_META_GROUP
         );
 
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
@@ -858,7 +858,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         // We thus need to signal staleness in the META-GROUP! case.
         //
-        if (STATE_BYTE(f) == ST_EVALUATOR_SYM_GROUP) {
+        if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
             SET_END(f->out);  // want to avoid UNDO_NOTE_STALE behavior
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
         }
@@ -880,13 +880,13 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         }
 
         if (IS_END(f->out)) {
-            if (STATE_BYTE(f) == ST_EVALUATOR_SYM_GROUP) {
+            if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
                 //
-                // The SYM_GROUP! is a contained evaluation that never acts
+                // The META-GROUP! is a contained evaluation that never acts
                 // invisible, e.g. ^(comment "hi") is ~void~.  That's the
                 // value...so there's no need to keep feeding for one.
                 //
-                Literalize(f->out);
+                Meta_Quotify(f->out);
             }
             else {
                 // Plain group is different.  We want `3 = (1 + 2 ()) 4` to not
@@ -910,8 +910,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // `(1)` considered evaluative
         CLEAR_CELL_FLAG(f->out, OUT_NOTE_STALE);  // any [(10 elide "hi")]
 
-        if (STATE_BYTE(f) == ST_EVALUATOR_SYM_GROUP)
-            Literalize(f->out);
+        if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP)
+            Meta_Quotify(f->out);
 
         STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
@@ -1070,7 +1070,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
       case REB_META_PATH:
       case REB_META_TUPLE:
-        STATE_BYTE(f) = ST_EVALUATOR_SYM_PATH_OR_SYM_TUPLE;
+        STATE_BYTE(f) = ST_EVALUATOR_META_PATH_OR_META_TUPLE;
         goto eval_path_or_tuple;
 
       case REB_GET_PATH:
@@ -1082,7 +1082,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         assert(
             STATE_BYTE(f) == ST_EVALUATOR_PATH_OR_TUPLE
-            or STATE_BYTE(f) == ST_EVALUATOR_SYM_PATH_OR_SYM_TUPLE
+            or STATE_BYTE(f) == ST_EVALUATOR_META_PATH_OR_META_TUPLE
         );
 
         if (HEART_BYTE(v) == REB_WORD) {
@@ -1100,8 +1100,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         /* assert(NOT_CELL_FLAG(f->out, CELL_FLAG_UNEVALUATED)); */
         CLEAR_CELL_FLAG(f->out, UNEVALUATED);
 
-        if (STATE_BYTE(f) == ST_EVALUATOR_SYM_PATH_OR_SYM_TUPLE)
-            Literalize(f->out);
+        if (STATE_BYTE(f) == ST_EVALUATOR_META_PATH_OR_META_TUPLE)
+            Meta_Quotify(f->out);
         else {
             if (IS_BAD_WORD(f->out) and GET_CELL_FLAG(f->out, ISOTOPE))
                 fail (Error_Bad_Word_Get_Core(v, v_specifier, f->out));
@@ -1322,7 +1322,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             SET_CELL_FLAG(DS_AT(f->dsp_orig + 1), STACK_NOTE_CIRCLED);
      }
 
-        bool literalize = false;
+        bool meta = false;
 
         // !!! There is not currently support for `[x]: ^(do/vanishable code)`
         // due to the problems of multi-return and groups...which should be
@@ -1332,7 +1332,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // in the same feed.
         //
         if (IS_META(f_next)) {
-            literalize = true;
+            meta = true;
             Fetch_Next_Forget_Lookback(f);  // pushed all we needed to know
         }
 
@@ -1389,8 +1389,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             goto return_thrown;
         }
 
-        if (literalize)
-            Literalize(f->out);  // Note: turns END to ~void~ isotope
+        if (meta)
+            Meta_Quotify(f->out);  // Note: turns END to ~void~ isotope
 
         // Take care of the SET for the main result.
         //
@@ -1451,7 +1451,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
             goto return_thrown;
 
-        Literalize(f->out);  // Note: allows END, e.g. (@) -> ~void~
+        Meta_Quotify(f->out);  // allows END, e.g. (^) -> ~void~ isotope
         break;
 
 

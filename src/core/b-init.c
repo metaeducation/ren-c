@@ -230,7 +230,7 @@ static void Init_Action_Spec_Tags(void)
 
     // !!! Needed for bootstrap, as `@arg` won't LOAD in old r3
     //
-    Root_Literal_Tag = Make_Locked_Tag("literal");
+    Root_Meta_Tag = Make_Locked_Tag("meta");
 }
 
 static void Shutdown_Action_Spec_Tags(void)
@@ -247,7 +247,7 @@ static void Shutdown_Action_Spec_Tags(void)
     rebRelease(Root_Invisible_Tag);
     rebRelease(Root_Void_Tag);
 
-    rebRelease(Root_Literal_Tag);  // !!! only needed for bootstrap with old r3
+    rebRelease(Root_Meta_Tag);  // !!! only needed for bootstrap with old r3
 }
 
 

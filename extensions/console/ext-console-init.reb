@@ -116,14 +116,14 @@ console!: make object! [
 
     print-result: meth [
         return: <none>
-        ^v "Value (done with literal parameter to discern isotope status)"
+        ^v "Value (done with meta parameter to discern isotope status)"
             [<opt> any-value!]
     ] [
         last-result: unquote v  ; keeps bad word isotope flag (except ~null~'s)
 
-        === PLAIN BAD WORDS (typically would fail on WORD!/PATH! access) ===
+        === ISOTOPE BAD WORDS (passed as plain bad-words due to meta ^v) ===
 
-        if v = '~void~ [
+        if v = '~void~ [  ; void isotope, don't show
             ;
             ; ~void~ is an intent of invisibility.  This happens when an
             ; expression's entire results vaporize:
@@ -151,7 +151,7 @@ console!: make object! [
             return
         ]
 
-        if v = '~none~ [
+        if v = '~none~ [  ; none isotope, don't show
             ;
             ; We also suppress display of the ~none~ state, which is the
             ; default return value from RETURN with no arguments.  It is for
@@ -166,28 +166,27 @@ console!: make object! [
             return
         ]
 
-        if bad-word? v [  ; gets isotope from stable form
+        if bad-word? v [  ; all other isotopes
             ;
-            ; All other non-isotope bads are printed as normal output values.
-            ; They can be LOAD-ed naturally, so this seems consistent:
+            ; All other isotope bad words display with an "isotope" annotation.
             ;
-            ;     >> x: ~something~
+            ;     >> do [~something~]
             ;     == ~something~  ; isotope
             ;
-            ; The "unnatural" aspect only happens when you access them without
-            ; using GET/ANY or literalize them with ^x:
+            ; Isotopes are evaluative products only, so you won't see the
+            ; annotation for anything you picked out of a block:
             ;
-            ;     >> x
-            ;     ** Error: x is the isotope form of ~something~
+            ;     >> first [~something~]
+            ;     == ~something~
             ;
-            ; But the console seems like it's giving you the right feedback to
-            ; show it undecorated.
+            ; That handling is below, since non-isotope bad-words are passed
+            ; as being a QUOTED! bad-word due to the parameter being `^v`. 
             ;
             print [result mold v space space "; isotope"]
             return
         ]
 
-        === NULL ISOTOPES ===
+        === NULL and THE ~NULL~ ISOTOPE ===
 
         if v = null [  ; not an isotope, e.g. can trigger ELSE
             ;
@@ -197,7 +196,7 @@ console!: make object! [
             ; would look like the WORD! null), and no special syntax exists for
             ; them...that's by design.
             ;
-            ; It might seem that giving no output would be the most natural
+            ; It might seem that giving *no* output would be the most natural
             ; case for such a situation.  But it provides more grounding to
             ; show *something*, so we are tricky here in the text medium and
             ; display a line in comment form, without the ==.  It has settled

@@ -402,8 +402,8 @@ bool Specialize_Action_Throws(
         // !!! As part of the special escaping, might it consider a non
         // isotope `~null-2~` to be a signal it translates to heavy-null?
         //
-        if (VAL_PARAM_CLASS(param) == REB_P_LITERAL)
-            Literalize(arg);
+        if (VAL_PARAM_CLASS(param) == REB_P_META)
+            Meta_Quotify(arg);
 
         // Specialized-out arguments must still be in the parameter list,
         // for enumeration in the evaluator to line up with the frame values

@@ -60,8 +60,9 @@
         ;
         ; !!! Note that RETURN's parameter is done with the ^-convention.  This
         ; is an implementation detail that affects code that subverts the
-        ; traditional calling mode.  But SPECIALIZE tries to literalize it,
-        ; even though that can't work for everything (at least not for NULL-2)
+        ; traditional calling mode.  But SPECIALIZE tries to meta-quotify it,
+        ; even though that can't work for everything (at least not for a ~Null~
+        ; isotope)
         ;
         return-5: specialize :return [value: 5]
         return-5

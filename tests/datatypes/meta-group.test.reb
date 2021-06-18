@@ -2,8 +2,8 @@
 
 (meta-group! = type of '^(a b c))
 
-; ENDs make unfriendly voids when literalized, that if you further literalize
-; will make friendly ones.
+; ENDs make unfriendly voids when meta quoted, that if you further meta
+; quote it will make friendly ones.
 [
     ('~void~ = ^ ^())
     ('~void~ = ^ ^(comment "hi"))

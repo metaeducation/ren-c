@@ -166,7 +166,7 @@ enum Reb_Param_Class {
     REB_P_NORMAL,
     REB_P_RETURN,
     REB_P_OUTPUT,
-    REB_P_LITERAL,
+    REB_P_META,
     REB_P_SOFT,
     REB_P_MEDIUM,
     REB_P_HARD,

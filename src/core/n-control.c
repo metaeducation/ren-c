@@ -373,7 +373,7 @@ bool Match_Core_Throws(
 //      return: "Input value if not null, or branch result (possibly null)"
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is null"
-//          [<opt> <literal> any-value!]
+//          [<opt> <meta> any-value!]
 //      :branch [any-branch!]
 //  ]
 //
@@ -383,12 +383,12 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
 
     if (not IS_NULLED(ARG(optional))) {
         //
-        // We have to use a literalized parameter in order to detect the
-        // difference between NULL (which runs the branch) and NULL-2 (which
-        // does not run the branch).  But we don't want to actually return a
-        // quoted parameter.
+        // We have to use a ^meta parameter in order to detect the
+        // difference between NULL (which runs the branch) and a ~null~
+        // isotope (which does not run the branch).  But we don't want to
+        // actually return a quoted parameter.
         //
-        RETURN (Unliteralize(ARG(optional)));
+        RETURN (Meta_Unquotify(ARG(optional)));
     }
 
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), NULLED_CELL))
@@ -405,7 +405,7 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
 //
 //      return: [logic!]
 //      optional "Argument to test (note that WORD!-fetch would decay NULL-2)"
-//          [<opt> <literal> any-value!]
+//          [<opt> <meta> any-value!]
 //  ]
 //
 REBNATIVE(else_q)
@@ -423,7 +423,7 @@ REBNATIVE(else_q)
 //      return: "null if input is null, or branch result (voided if null)"
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <literal> any-value!]
+//          [<opt> <meta> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //  ]
@@ -437,11 +437,11 @@ REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
     if (IS_NULLED(optional))
         return nullptr;  // left didn't run, so signal THEN didn't run either
 
-    // We received the left hand side literalized, so it's quoted in order
+    // We received the left hand side as ^meta, so it's quoted in order
     // to tell the difference between the NULL and ~null~ isotope.  Now that's
-    // tested, unliteralize it.
+    // tested, unquote it back to normal.
     //
-    Unliteralize(optional);
+    Meta_Unquotify(optional);
 
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), optional))
         return R_THROWN;
@@ -457,7 +457,7 @@ REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
 //
 //      return: [logic!]
 //      optional "Argument to test (note that WORD!-fetch would decay NULL-2)"
-//          [<opt> <literal> any-value!]
+//          [<opt> <meta> any-value!]
 //  ]
 //
 REBNATIVE(then_q)
@@ -475,7 +475,7 @@ REBNATIVE(then_q)
 //      return: "The same value as input, regardless of if branch runs"
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <literal> any-value!]
+//          [<opt> <meta> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //  ]
@@ -489,11 +489,11 @@ REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
     if (IS_NULLED(optional))
         return nullptr;  // telegraph original input, but don't run
 
-    // We received the left hand side literalized, so it's quoted in order
-    // to tell the difference between the NULL and NULL-2.  Now that's tested
-    // we know it's not a stable NULL, so Unliteralize it.
+    // We received the left hand side as ^meta, so it's quoted in order
+    // to tell the difference between the NULL and a ~null~ isotope.  Now
+    // that's tested we know it's not plain NULL, so put it back to normal.
     //
-    Unliteralize(optional);
+    Meta_Unquotify(optional);
 
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), optional))
         return R_THROWN;

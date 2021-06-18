@@ -296,8 +296,8 @@ REBNATIVE(console)
             // means "truly invisible", e.g. END...like the user hit return on
             // a prompt with no evaluations.  We conflate that with as if you
             // got regular ~void~ here as it otherwise means EXT-CONSOLE-IMPL
-            // would have to take its result literalized.  It could be another
-            // signal, like BLANK!...
+            // would have to take its result as a ^meta parameter.  (It could
+            // be another signal, like BLANK!...)
             //
             rebRelease(result);
             result = rebValue("'~void~");

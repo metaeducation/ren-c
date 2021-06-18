@@ -683,7 +683,7 @@ void Set_Var_May_Fail(
 //          {Will be the values set to, or void if any set values are void}
 //      target [blackhole! any-word! any-sequence! block! quoted!]
 //          {Word or path, or block of words and paths}
-//      value [<opt> <literal> any-value!]
+//      value [<opt> <meta> any-value!]
 //          "Value or block of values (NULL means unset)"
 //      /hard "Do not evaluate GROUP!s in PATH! (assume pre-COMPOSE'd)"
 //      /single "If target and value are blocks, set each to the same value"
@@ -709,7 +709,7 @@ REBNATIVE(set)
     INCLUDE_PARAMS_OF_SET;
 
     REBVAL *target = ARG(target);
-    REBVAL *value = Unliteralize(ARG(value));
+    REBVAL *value = Meta_Unquotify(ARG(value));
 
     if (not IS_BLOCK(target)) {
         Set_Var_May_Fail(
@@ -1606,13 +1606,13 @@ REBNATIVE(null_q)
 //  {Make the heavy form of NULL (passes through all other values)}
 //
 //      return: [<opt> any-value!]
-//      optional [<opt> <literal> any-value!]
+//      optional [<opt> <meta> any-value!]
 //  ]
 //
 REBNATIVE(heavy) {
     INCLUDE_PARAMS_OF_HEAVY;
 
-    Move_Cell(D_OUT, Unliteralize(ARG(optional)));
+    Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     if (IS_NULLED(D_OUT))
         Init_Heavy_Nulled(D_OUT);
@@ -1627,13 +1627,13 @@ REBNATIVE(heavy) {
 //  {Make the light form of NULL (passes through all other values)}
 //
 //      return: [<opt> any-value!]
-//      optional [<opt> <literal> any-value!]
+//      optional [<opt> <meta> any-value!]
 //  ]
 //
 REBNATIVE(light) {
     INCLUDE_PARAMS_OF_LIGHT;
 
-    Move_Cell(D_OUT, Unliteralize(ARG(optional)));
+    Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     Decay_If_Nulled(D_OUT);
 
@@ -1662,14 +1662,14 @@ REBNATIVE(none) {
 //  "Make BAD-WORD!s friendly, passing through all other values"
 //
 //      return: [<opt> any-value!]
-//      optional [<opt> <literal> any-value!]
+//      optional [<opt> <meta> any-value!]
 //  ]
 //
 REBNATIVE(friendly)
 {
     INCLUDE_PARAMS_OF_FRIENDLY;
 
-    Move_Cell(D_OUT, Unliteralize(ARG(optional)));
+    Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     if (IS_BAD_WORD(D_OUT))
         CLEAR_CELL_FLAG(D_OUT, ISOTOPE);
@@ -1684,14 +1684,14 @@ REBNATIVE(friendly)
 //  "Make BAD-WORD!s unfriendly, passing through all other values"
 //
 //      return: [<opt> any-value!]
-//      optional [<opt> <literal> any-value!]
+//      optional [<opt> <meta> any-value!]
 //  ]
 //
 REBNATIVE(unfriendly)
 {
     INCLUDE_PARAMS_OF_UNFRIENDLY;
 
-    Move_Cell(D_OUT, Unliteralize(ARG(optional)));
+    Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     if (IS_BAD_WORD(D_OUT))
         SET_CELL_FLAG(D_OUT, ISOTOPE);
@@ -1727,7 +1727,7 @@ REBNATIVE(voidify)
 //  "Make non-isotope ~void~ vanish, passing through all other values"
 //
 //      return: [<opt> <invisible> any-value!]
-//      optional [<opt> <literal> any-value!]
+//      optional [<opt> <meta> any-value!]
 //  ]
 //
 REBNATIVE(devoid)
@@ -1741,7 +1741,7 @@ REBNATIVE(devoid)
     if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID)
         return D_OUT;
 
-    RETURN (Unliteralize(v));
+    RETURN (Meta_Unquotify(v));
 }
 
 

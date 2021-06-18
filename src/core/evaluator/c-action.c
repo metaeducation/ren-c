@@ -297,7 +297,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // data in cases like `(1 + 2 | comment "hi")` => 3, but
                 // left enfix should treat that just like an end.
 
-                if (pclass == REB_P_LITERAL)
+                if (pclass == REB_P_META)
                     Init_Void(f->arg);
                 else
                     Init_Endish_Nulled(f->arg);
@@ -320,13 +320,13 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             else switch (pclass) {
               case REB_P_NORMAL:
               case REB_P_OUTPUT:
-              case REB_P_LITERAL:
+              case REB_P_META:
                 Copy_Cell(f->arg, f->out);
                 if (GET_CELL_FLAG(f->out, UNEVALUATED))
                     SET_CELL_FLAG(f->arg, UNEVALUATED);
 
-                if (pclass == REB_P_LITERAL)
-                    Literalize(f->arg);
+                if (pclass == REB_P_META)
+                    Meta_Quotify(f->arg);
                 else if (pclass == REB_P_NORMAL)
                     Normalize(f->arg);  // !!! avoid assign ~void~ to f->arg?
                 break;
@@ -481,7 +481,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (IS_END(f_next)) {
-            if (pclass == REB_P_LITERAL) {
+            if (pclass == REB_P_META) {
                 Init_Void(f->arg);
                 SET_CELL_FLAG(f->arg, UNEVALUATED);
             }
@@ -496,9 +496,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
           case REB_P_NORMAL:
           case REB_P_OUTPUT:
-          case REB_P_LITERAL: {
+          case REB_P_META: {
             if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
-                if (pclass == REB_P_LITERAL)
+                if (pclass == REB_P_META)
                     Init_Void(f->arg);
                 else
                     Init_Endish_Nulled(f->arg);
@@ -514,13 +514,13 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             }
 
             if (IS_END(f->arg)) {
-                if (pclass == REB_P_LITERAL)
+                if (pclass == REB_P_META)
                     Init_Void(f->arg);
                 else
                     Init_Endish_Nulled(f->arg);
             }
-            else if (pclass == REB_P_LITERAL)
-                Literalize(f->arg);
+            else if (pclass == REB_P_META)
+                Meta_Quotify(f->arg);
             else if (pclass == REB_P_NORMAL)
                 Normalize(f->arg);
             break; }
@@ -846,7 +846,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             continue;
         }
 
-        if (REB_P_LITERAL == VAL_PARAM_CLASS(f->param)) {
+        if (REB_P_META == VAL_PARAM_CLASS(f->param)) {
             if (
                 kind_byte != REB_BAD_WORD
                 and kind_byte != REB_NULL
@@ -856,7 +856,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             }
         }
         else if (kind_byte == REB_BAD_WORD and GET_CELL_FLAG(f->arg, ISOTOPE)) {
-            fail ("Only literal parameters allow isotope BAD-WORD!s");
+            fail ("Only ^META parameters allow isotope BAD-WORD!s");
         }
 
         // Apply constness if requested.

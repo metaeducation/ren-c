@@ -182,7 +182,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // this argument happens.  Review if that should be an error.
 
         switch (pclass) {
-        case REB_P_LITERAL:
+        case REB_P_META:
             fail ("Variadic literal parameters not yet implemented");
 
         case REB_P_NORMAL: {

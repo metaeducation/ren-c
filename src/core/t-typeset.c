@@ -193,13 +193,13 @@ bool Add_Typeset_Bits_Core(
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
                 TYPE_SET(typeset, REB_TS_CONST);
             }
-            else if (0 == CT_String(item, Root_Literal_Tag, strict)) {
+            else if (0 == CT_String(item, Root_Meta_Tag, strict)) {
                 //
-                // !!! <literal> is not the general way to make literal args
+                // !!! <meta> is not the general way to make literal args
                 // (`@arg` notation is used), but the native specs are loaded
                 // by a boostrap r3 that can't read them.
                 //
-                VAL_TYPESET_PARAM_CLASS_U32(typeset) = REB_P_LITERAL;
+                VAL_TYPESET_PARAM_CLASS_U32(typeset) = REB_P_META;
             }
         }
         else if (IS_DATATYPE(item)) {

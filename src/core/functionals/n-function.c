@@ -611,7 +611,7 @@ REBNATIVE(unwind)
 //  {RETURN, giving a result to the caller}
 //
 //      value "If no argument is given, result will be ~void~"
-//          [<end> <opt> <literal> any-value!]
+//          [<end> <opt> <meta> any-value!]
 //      /isotope "Relay isotope status of NULL or void return values"
 //  ]
 //
@@ -669,7 +669,7 @@ REBNATIVE(return)
         goto skip_type_check;
     }
 
-    Unliteralize(v);  // we will read the ISOTOPE flags (don't want it quoted)
+    Meta_Unquotify(v);  // we will read the ISOTOPE flags (don't want it quoted)
 
     if (not REF(isotope)) {
         //

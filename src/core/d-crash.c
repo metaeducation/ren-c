@@ -199,20 +199,20 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //
 //  "Terminate abnormally with a message, optionally diagnosing a value cell"
 //
-//      reason [<opt> <literal> any-value!]
+//      reason [<opt> <meta> any-value!]
 //          "Cause of the panic"
 //      /value "Interpret reason as a value cell to debug dump, vs. a message"
 //  ]
 //
 REBNATIVE(panic)
 //
-// Note: The @reason parameter is literalized so that `panic ~bad-word~` won't
+// Note: The ^reason parameter is meta so that `panic ~bad-word~` won't
 // cause a parameter type check error, but actually runs this panic() code.
 // Since it allows bad-word!, we treat it as a message if /VALUE is not used.
 {
     INCLUDE_PARAMS_OF_PANIC;
 
-    REBVAL *v = Unliteralize(ARG(reason));  // remove quote level from @reason
+    REBVAL *v = Meta_Unquotify(ARG(reason));  // remove quote level from @reason
 
     // Use frame tick (if available) instead of TG_Tick, so tick count dumped
     // is the exact moment before the PANIC ACTION! was invoked.

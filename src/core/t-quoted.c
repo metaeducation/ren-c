@@ -270,20 +270,20 @@ REBNATIVE(quote)
 
 
 //
-//  literalize: native [
+//  metaquote: native [
 //
 //  {Like single quote, but keeps ordinary NULL as-is}
 //
 //      return: "Quoted value (if depth = 0, may not be quoted)"
 //          [<opt> any-value!]
-//      optional [<opt> <literal> any-value!]
+//      optional [<opt> <meta> any-value!]
 //  ]
 //
-REBNATIVE(literalize)
+REBNATIVE(metaquote)
 {
-    INCLUDE_PARAMS_OF_LITERALIZE;
+    INCLUDE_PARAMS_OF_METAQUOTE;
 
-    return Move_Cell(D_OUT, ARG(optional));  // argument is ^literal
+    return Move_Cell(D_OUT, ARG(optional));  // argument is ^meta
 }
 
 
@@ -294,14 +294,14 @@ REBNATIVE(literalize)
 //
 //      return: "Value with quotes removed (NULL is passed through as NULL)"
 //          [<opt> any-value!]
-//      value [<opt> <literal> any-value!]
+//      value [<opt> <meta> any-value!]
 //      /depth "Number of quoting levels to remove (default 1)"
 //          [integer!]
 //  ]
 //
 REBNATIVE(unquote)
 //
-// Note: Taking literalized parameters allows `unquote ~meanie~` e.g. on what
+// Note: Taking ^meta parameters allows `unquote ~meanie~` e.g. on what
 // would usually be an error-inducing stable bad word.  This was introduced as
 // a way around a situation like this:
 //
@@ -315,9 +315,9 @@ REBNATIVE(unquote)
 //     ]
 //
 // DETECT-ISOTOPE wants to avoid forcing its caller to use a quoted argument
-// calling convention.  Yet it still wants to know if its argument is a NULL-2
-// vs. a NULL, or a stable BAD-WORD! vs. an isotope BAD-WORD!.  That's what
-// ^literal arguments are for...but it runs up against a wall when forced to
+// calling convention.  Yet it still wants to know if its argument is a ~null~
+// isopte vs/ NULL, or a BAD-WORD! vs. an isotope BAD-WORD!.  That's what
+// ^meta arguments are for...but it runs up against a wall when forced to
 // run from code hardened into a BLOCK!.
 //
 // This could go another route with an added operation, something along the
@@ -343,8 +343,8 @@ REBNATIVE(unquote)
     // Had it been a void isotope inside the GROUP!, the literalization would
     // have been a *non*-isotope ~void~.
     //
-    // But since we take literalized parameter here, we get that isotope void
-    // as a non-isotope void.  If we were to try and "unquote" the intent of
+    // But since we take a ^meta parameter here, we get that ~void~ isotope
+    // as a non-isotope ~void~.  If we were to try and "unquote" the intent of
     // invisibility, then UNQUOTE would return invisibily...but that idea is
     // being saved for DEVOID to keep UNQUOTE more predictable.
     //
@@ -359,13 +359,13 @@ REBNATIVE(unquote)
         return D_OUT;
     }
 
-    // The value we get in has been literalized, and we want to take that
-    // literalization into account while still being consistent isotopically.
+    // The value we get in has been meta-quoted, and we want to take that
+    // conversion into account while still being consistent isotopically.
     // Add 1 to how much we're asked to unquote to account for that.
 
     REBINT depth = 1 + (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
 
-    // Critical to the design of literalization is that ^(null) => null, and
+    // Critical to the design of meta quoting is that ^(null) => null, and
     // not ' (if you want ' then use QUOTE instead).  And critical to reversing
     // that is that UNQUOTE NULL => NULL
     //
@@ -384,7 +384,7 @@ REBNATIVE(unquote)
     Unquotify(Copy_Cell(D_OUT, v), depth - 1);
 
     // Now the last unquoting step is isotopic.  Accept true null, as UNQUOTE
-    // is used as UNLITERALIZE.  (Should it be UNQUOTE* or similar?)
+    // is used as Meta_Unquotify.  (Should it be UNQUOTE* or similar?)
     //
     if (IS_NULLED(D_OUT))
         return nullptr;

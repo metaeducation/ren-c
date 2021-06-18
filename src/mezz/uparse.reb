@@ -1155,12 +1155,14 @@ default-combinators: make map! reduce [
         ]
     ]
 
-    === LIT-XXX! COMBINATORS (Currently SYM-XXX!, but name will change) ===
+    === META-XXX! COMBINATORS ===
 
-    ; The LIT-XXX! combinators add a quoting level to their result.  This
-    ; is particularly important with functions like KEEP.
+    ; The META-XXX! combinators add a quoting level to their result, with
+    ; some quirks surrounding nulls and BAD-WORD! isotopes.  The quoting is
+    ; important with functions like KEEP...but advanced tunneling of behavior
+    ; regarding unsets, nulls, and invisibility requires the feature.
     ;
-    ; Note: These are NOT fixed as `[:block-combinator | :literalize]`, because
+    ; Note: These are NOT fixed as `[:block-combinator | :metaquote]`, because
     ; they want to inherit whatever combinator that is currently in use for
     ; their un-lit'd type (by default).  This means dynamically reacting to
     ; the set of combinators chosen for the particular parse.
@@ -1168,7 +1170,7 @@ default-combinators: make map! reduce [
     ; !!! These follow a simple pattern, could generate at a higher level.
 
     meta-word! combinator [
-        return: "Literalized" [<opt> any-value!]
+        return: "Meta quoted" [<opt> any-value!]
         value [meta-word!]
         <local> result' parser
     ][
@@ -1178,7 +1180,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-tuple! combinator [
-        return: "Literalized" [<opt> any-value!]
+        return: "Meta quoted" [<opt> any-value!]
         value [meta-tuple!]
         <local> result' parser
     ][
@@ -1188,7 +1190,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-group! combinator [
-        return: "Literalized" [<opt> any-value!]
+        return: "Meta quoted" [<opt> any-value!]
         value [meta-group!]
         <local> result' parser
     ][
@@ -1198,7 +1200,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-block! combinator [
-        return: "Literalized" [<opt> any-value!]
+        return: "Meta quoted" [<opt> any-value!]
         value [meta-block!]
         <local> result' parser
     ][

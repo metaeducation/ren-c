@@ -305,15 +305,15 @@ inline static RELVAL *Isotopic_Quote(RELVAL *v) {
 }
 
 inline static RELVAL *Isotopic_Unquote(RELVAL *v) {
-    assert(not IS_NULLED(v));  // use Unliteralize
+    assert(not IS_NULLED(v));  // use Meta_Unquotify() instead
     if (KIND3Q_BYTE(v) == REB_NULL + REB_64) {  // plain '
         Init_Curse_Word(v, SYM_NULL);  // ' <=> ~null~ isotope
     }
-    else if (IS_BAD_WORD(v))  // Literalize flipped isotope off, flip back on.
+    else if (IS_BAD_WORD(v))  // Meta quote flipped isotope off, flip back on.
         SET_CELL_FLAG(v, ISOTOPE);
     else {
         Unquotify_Core(v, 1);
-        if (IS_BAD_WORD(v))  // ...was friendly before Literalizez quoted it...
+        if (IS_BAD_WORD(v))  // ...was friendly before meta-quoting it...
             assert(NOT_CELL_FLAG(v, ISOTOPE));  // ...should still be friendly
     }
     return v;
@@ -333,7 +333,7 @@ inline static RELVAL *Isotopic_Quotify(RELVAL *v, REBLEN depth) {
 }
 
 inline static RELVAL *Isotopic_Unquotify(RELVAL *v, REBLEN depth) {
-    assert(not IS_NULLED(v));  // see Unliteralize
+    assert(not IS_NULLED(v));  // see Meta_Unquotify
     if (depth == 0)
         return v;
     Unquotify(v, depth - 1);
@@ -355,14 +355,14 @@ inline static RELVAL *Isotopic_Unquotify(RELVAL *v, REBLEN depth) {
 #endif
 
 
-//=//// LITERALIZATION /////////////////////////////////////////////////////=//
+//=//// META QUOTING ///////////////////////////////////////////////////////=//
 
-// Literalization is almost exactly like isotopic quoting, but it has a twist
+// Meta quoting is almost exactly like isotopic quoting, but it has a twist
 // that NULL does not become a single tick mark (') but rather it stays as
 // NULL.  It also translates emptiness (e.g. an END marker) into an isotope
 // BAD-WORD! of ~void~.  It is done by ^ and the the REB_META_XXX family.
 
-inline static RELVAL *Literalize(RELVAL *v) {
+inline static RELVAL *Meta_Quotify(RELVAL *v) {
     if (IS_END(v))
         return Init_Void(v);  // *unfriendly*
     if (IS_NULLED(v))
@@ -370,18 +370,18 @@ inline static RELVAL *Literalize(RELVAL *v) {
     return Isotopic_Quote(v);
 }
 
-inline static RELVAL *Unliteralize(RELVAL *v) {
+inline static RELVAL *Meta_Unquotify(RELVAL *v) {
     if (IS_NULLED(v))
         return v;  // do nothing
     return Isotopic_Unquote(v);
 }
 
 #ifdef __cplusplus
-    inline static REBVAL *Literalize(REBVAL *v)
-        { return SPECIFIC(Literalize(cast(RELVAL*, v))); }
+    inline static REBVAL *Meta_Quotify(REBVAL *v)
+        { return SPECIFIC(Meta_Quotify(cast(RELVAL*, v))); }
 
-    inline static REBVAL *Unliteralize(REBVAL *v)
-        { return SPECIFIC(Unliteralize(cast(RELVAL*, v))); }
+    inline static REBVAL *Meta_Unquotify(REBVAL *v)
+        { return SPECIFIC(Meta_Unquotify(cast(RELVAL*, v))); }
 #endif
 
 

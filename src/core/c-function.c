@@ -58,7 +58,7 @@ static bool Params_Of_Hook(
           case REB_P_NORMAL:
             break;
 
-          case REB_P_LITERAL:
+          case REB_P_META:
             Metafy(DS_TOP);
             break;
 
@@ -375,7 +375,7 @@ void Push_Paramlist_Triads_May_Fail(
                 }
                 else if (kind == REB_META_WORD) {
                     if (not quoted)
-                        pclass = REB_P_LITERAL;
+                        pclass = REB_P_META;
                 }
             }
         }
@@ -943,7 +943,7 @@ REBACT *Make_Action(
           case REB_P_RETURN:
           case REB_P_OUTPUT:
           case REB_P_NORMAL:
-          case REB_P_LITERAL:
+          case REB_P_META:
             break;
 
           case REB_P_SOFT:
@@ -1242,7 +1242,7 @@ REBNATIVE(tweak)
         break;
 
       case SYM_DEFER:  // Special enfix behavior used by THEN, ELSE, ALSO...
-        if (pclass != REB_P_NORMAL and pclass != REB_P_LITERAL)
+        if (pclass != REB_P_NORMAL and pclass != REB_P_META)
             fail ("TWEAK defer only actions with evaluative 1st params");
         flag = DETAILS_FLAG_DEFERS_LOOKBACK;
         break;
@@ -1251,7 +1251,7 @@ REBNATIVE(tweak)
         if (
             pclass != REB_P_NORMAL
             and pclass != REB_P_SOFT
-            and pclass != REB_P_LITERAL
+            and pclass != REB_P_META
         ){
             fail ("TWEAK postpone only actions with evaluative 1st params");
         }
