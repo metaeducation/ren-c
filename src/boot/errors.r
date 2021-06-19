@@ -146,6 +146,7 @@ Script: [
     bad-value:          [{Failure on bad value (no additional info):} :arg1]
 
     invalid-arg:        [:arg1 {has an invalid} :arg2 {argument:} :arg3]
+    isotope-arg:        [:arg1 {needs} :arg2 {as ^^META for} :arg3 {isotope}]
     no-arg:             [:arg1 {is missing its} :arg2 {argument}]
     expect-arg:         [:arg1 {does not allow} :arg2 {for its} :arg3 {argument}]
     arg-required:       [:arg1 {requires} :arg2 {argument to not be null}]

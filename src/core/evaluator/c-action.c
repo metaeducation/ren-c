@@ -855,9 +855,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 fail ("Literal arguments must be quoted!, bad-word!, or null");
             }
         }
-        else if (kind_byte == REB_BAD_WORD and GET_CELL_FLAG(f->arg, ISOTOPE)) {
-            fail ("Only ^META parameters allow isotope BAD-WORD!s");
-        }
+        else if (kind_byte == REB_BAD_WORD and GET_CELL_FLAG(f->arg, ISOTOPE))
+            fail (Error_Isotope_Arg(f, f->param));
 
         // Apply constness if requested.
         //

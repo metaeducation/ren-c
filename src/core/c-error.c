@@ -1101,6 +1101,38 @@ REBCTX *Error_Invalid_Arg(REBFRM *f, const REBPAR *param)
 
 
 //
+//  Error_Isotope_Arg: C
+//
+// This directs the user that they can't take something like an ~unset~ isotope
+// as an argument to a function unless the ^META parameter convention is used.
+//
+REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
+{
+    assert(IS_TYPESET(param));
+
+    const REBPAR *headparam = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    assert(param >= headparam);
+    assert(param <= headparam + FRM_NUM_ARGS(f));
+
+    REBLEN index = 1 + (param - headparam);
+
+    DECLARE_LOCAL (label);
+    if (not f->label)
+        Init_Blank(label);
+    else
+        Init_Word(label, unwrap(f->label));
+
+    DECLARE_LOCAL (param_name);
+    Init_Word(param_name, KEY_SYMBOL(ACT_KEY(FRM_PHASE(f), index)));
+
+    REBVAL *arg = FRM_ARG(f, index);
+    assert(IS_BAD_WORD(arg) and GET_CELL_FLAG(arg, ISOTOPE));
+
+    return Error_Isotope_Arg_Raw(label, param_name, arg);
+}
+
+
+//
 //  Error_Bad_Value_Core: C
 //
 // Will turn into an unknown error if a nulled cell is passed in.
