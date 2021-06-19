@@ -44,8 +44,13 @@ REBOL [
 here: []
 seek: []
 
-for: func [] [fail "FOR DEPRECATED, USE CFOR"]
-unless: func [] [fail "Don't use UNLESS in Bootstrap, definition in flux"]
+for: func [] [
+    fail/where "FOR is being repurposed, use CFOR" 'return
+]
+
+unless: func [] [
+    fail/where "Don't use UNLESS in Bootstrap, definition in flux"
+]
 
 ; The snapshotted Ren-C existed right before <blank> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.
@@ -78,7 +83,7 @@ load-all: :load/all
 
 repeat: :loop
 loop: :while
-while: func [] [fail "Use LOOP not WHILE"]
+while: func [] [fail/where "Use LOOP not WHILE" 'return]
 
 any-inert!: make typeset! [text! tag! issue! binary! char! object! file!]
 
@@ -266,9 +271,9 @@ modernize-action: function [
                 ]
 
                 if last-refine-word [
-                    fail [
+                    fail/where [
                         "Refinements now *are* the arguments:" mold head spec
-                    ]
+                    ] 'spec
                 ]
 
                 ; Feed through any TEXT!s following the ANY-WORD!
@@ -336,8 +341,8 @@ func: adapt :func [set [spec body] modernize-action spec body]
 function: adapt :function [set [spec body] modernize-action spec body]
 
 meth: enfixed adapt :meth [set [spec body] modernize-action spec body]
-method: func [/dummy] [
-    fail ^dummy "METHOD deprecated temporarily, use METH"
+method: func [] [
+    fail/where "METHOD deprecated temporarily, use METH" 'return
 ]
 
 trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
@@ -365,7 +370,9 @@ quote: func [x [<opt> any-value!]] [
         word! [to lit-word! x]
         path! [to lit-path! x]
 
-        fail "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
+        fail/where [
+            "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
+        ] 'x
     ]
 ]
 
@@ -596,7 +603,9 @@ zip: enclose :zip func [f] [
     let old-print: :print
 
     if f/verbose [
-        fail "/VERBOSE not working due to PRINT problem, broken in bootstrap"
+        fail/where [
+            "/VERBOSE not working due to PRINT problem, broken in bootstrap"
+        ] 'f
     ]
 
     ; !!! This workaround is crashing the bootstrap EXE, let it go for now
