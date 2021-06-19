@@ -130,7 +130,7 @@ static REB_R Loop_Series_Common(
     REBINT end,
     REBINT bump
 ){
-    Init_Heavy_Nulled(out);  // result if body never runs
+    Init_Void(out);  // result if body never runs
 
     // !!! This bounds incoming `end` inside the array.  Should it assert?
     //
@@ -212,7 +212,7 @@ static REB_R Loop_Integer_Common(
     REBI64 end,
     REBI64 bump
 ){
-    Init_Heavy_Nulled(out);  // result if body never runs
+    Init_Void(out);  // result if body never runs
 
     // A value cell exposed to the user is used to hold the state.  This means
     // if they change `var` during the loop, it affects the iteration.  Hence
@@ -274,7 +274,7 @@ static REB_R Loop_Number_Common(
     REBVAL *end,
     REBVAL *bump
 ){
-    Init_Heavy_Nulled(out);  // result if body never runs
+    Init_Void(out);  // result if body never runs
 
     REBDEC s;
     if (IS_INTEGER(start))
@@ -324,7 +324,7 @@ static REB_R Loop_Number_Common(
     //
     const bool counting_up = (s < e); // equal checked above
     if ((counting_up and b <= 0) or (not counting_up and b >= 0))
-        return Init_Heavy_Nulled(out);  // avoid inf. loop, means never ran
+        return Init_Void(out);  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(out, body)) {
@@ -639,7 +639,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
 
-    Init_Heavy_Nulled(D_OUT);  // if body never runs (MAP-EACH gives [])
+    Init_Void(D_OUT);  // if body never runs (MAP-EACH gives [])
 
     if (ANY_SEQUENCE(ARG(data))) {
         //
@@ -714,7 +714,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
             SET_SERIES_INFO(m_cast(REBSER*, les.data_ser), HOLD);
 
         if (les.data_idx >= les.data_len) {
-            assert(Is_Heavy_Nulled(D_OUT));  // result if loop body never runs
+            assert(Is_Void(D_OUT));  // result if loop body never runs
             r = nullptr;
             goto cleanup;
         }
@@ -771,7 +771,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // only illegal value here is void (would cause error if body gave it)
         //
         if (IS_BAD_WORD(D_OUT) and GET_CELL_FLAG(D_OUT, ISOTOPE))
-            assert(Is_Heavy_Nulled(D_OUT));
+            assert(Is_Void(D_OUT));
         return D_OUT;
 
       case LOOP_MAP_EACH:
@@ -893,7 +893,7 @@ REBNATIVE(for_skip)
 
     REBVAL *series = ARG(series);
 
-    Init_Heavy_Nulled(D_OUT);  // if body never runs, `loop [null] [...]`
+    Init_Void(D_OUT);  // if body never runs, `loop [null] [...]`
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
@@ -1555,7 +1555,7 @@ REBNATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Init_Heavy_Nulled(D_OUT);  // if body never runs, `loop 0 [...]`
+    Init_Void(D_OUT);  // if body never runs, `loop 0 [...]`
 
     if (IS_FALSEY(ARG(count))) {
         assert(IS_LOGIC(ARG(count)));  // is false (opposite of infinite loop)
@@ -1655,7 +1655,7 @@ REBNATIVE(for)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return Init_Heavy_Nulled(D_OUT);  // if loop condition never runs
+        return Init_Void(D_OUT);  // if loop condition never runs
 
     return Loop_Integer_Common(
         D_OUT, var, body, 1, VAL_INT64(value), 1
@@ -1737,7 +1737,7 @@ REBNATIVE(loop)
     if (IS_INTEGER(ARG(condition)))
         fail ("Please use REPEAT instead of LOOP with integers");
 
-    Init_Heavy_Nulled(D_OUT);  // result if body never runs
+    Init_Void(D_OUT);  // result if body never runs
 
     do {
         if (Do_Branch_With_Throws(D_SPARE, ARG(condition), D_OUT)) {

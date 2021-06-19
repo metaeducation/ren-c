@@ -47,4 +47,4 @@
     ]
 )
 
-('~null~ = ^ every x [] [fail ~unreachable~])
+('~void~ = ^ every x [] [fail ~unreachable~])

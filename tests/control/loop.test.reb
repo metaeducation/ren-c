@@ -17,7 +17,7 @@
     num: 0
     1 = loop [num < 1] [num: num + 1]
 )]
-('~null~ = ^ loop [false] [])
+('~void~ = ^ loop [false] [])
 ; zero repetition
 (
     success: true

@@ -747,6 +747,22 @@
 ]
 
 
+; A WHILE that never actually has a succeeding rule gives back a match that is
+; a void isotope, as do 0-iteration REPEAT and INTEGER! rules.
+;
+; !!! These isotopes currently mean invisibility (in the evaluator, these cases
+; would wind up becoming ~stale~ isotopes).  Review the difference.
+[
+    ("a" = uparse "a" ["a" while "b"])
+    ("a" = uparse "a" ["a" repeat (0) "b"])
+    ("a" = uparse "a" ["a" 0 "b"])
+
+    ("a" = uparse "a" ["a" [while "b"]])
+    ("a" = uparse "a" ["a" [repeat (0) "b"]])
+    ("a" = uparse "a" ["a" [0 "b"]])
+]
+
+
 ; INLINE SEQUENCING is the idea of using || to treat everyting on the left
 ; as if it's in a block.
 ;
