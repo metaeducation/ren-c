@@ -1,6 +1,8 @@
 ; functions/control/any.r
+
 ; zero values
-(null? any [])
+(null = any [])
+
 ; one value
 (:abs = any [:abs])
 (
@@ -355,8 +357,17 @@
 (10 = any .even? [1 + 2, comment "Hello", 3 + 4, 5 + 5, 6 + 7])
 (10 = any .not.odd? [1 + 2, 3 + 4 comment "No Comma" 5 + 5, 6 + 7])
 
-(_ = any .not [1 _ 2])
-('~null~ = ^ any .not [1 null 2])
+('~falsey~ = ^ any .not [1 _ 2])
+('~falsey~ = ^ any .not [1 null 2])
 ("this is why" = any .not [1 null 2] then ["this is why"])
 
 (10 = any [(10 elide "stale")])
+
+
+; INVISIBILITY: Both ANY and ALL treat void isotopes the same as void functions.
+[
+    (
+        two: ~
+        3 = any [all [do [comment "hi"], elide two: 2], 1 + two]
+    )
+]

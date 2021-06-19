@@ -1,6 +1,8 @@
 ; functions/control/all.r
+
 ; zero values
-(null? all [])
+('~void~ = ^ all [])
+
 ; one value
 (:abs = all [:abs])
 (
@@ -353,6 +355,12 @@
 (15 = all .odd? [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8])
 (15 = all .not.even? [1 + 2, 3 + 4 5 + 6, 7 + 8,])
 
-(_ = all .not [false null _])
-('~null~ = ^ all .not [false _ null])
+('~falsey~ = ^ all .not [false null _])
+('~falsey~ = ^ all .not [false _ null])
 ("this is why" = all .not [false _ null] then ["this is why"])
+
+
+; INVISIBILITY: Both ANY and ALL treat void isotopes the same as void functions.
+[
+    ("A" = all ["A", all [comment "hi", do []]])
+]

@@ -599,60 +599,69 @@ REBNATIVE(all)
     DECLARE_FRAME_AT (f, ARG(block), EVAL_MASK_DEFAULT);
     Push_Frame(nullptr, f);
 
-    Init_Nulled(D_OUT);  // so `all []` sees stale falsey value, returns null
-
+    Init_Void(D_OUT);  // `all []` is a ~void~ isotope
+    
     do {
-        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
+        // We write to the spare in case evaluation produces a ~void~ isotope
+        // and we want to keep the previous value in D_OUT.
+        //
+        Init_Void(D_SPARE);
+        if (Eval_Step_Maybe_Stale_Throws(D_SPARE, f)) {
+            Move_Cell(D_OUT, D_SPARE);
             Abort_Frame(f);
             return R_THROWN;
         }
-        if (GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE)) {
+        CLEAR_CELL_FLAG(D_SPARE, OUT_NOTE_STALE);  // don't leak stale flag
+
+        if (Is_Void(D_SPARE)) {  // may have been stale or not
             if (IS_END(f->feed->value))  // `all []`
                 break;
             continue;  // `all [comment "hi" 1]`, first step is stale
         }
 
         if (IS_NULLED(predicate)) {  // default predicate effectively .DID
-            if (IS_FALSEY(D_OUT)) {  // false/blank/null triggers failure
+            if (IS_FALSEY(D_SPARE)) {  // false/blank/null triggers failure
                 Abort_Frame(f);
                 return nullptr;
             }
         }
         else {
+            DECLARE_LOCAL (temp);  // D_SPARE and D_OUT both in use
             if (RunQ_Throws(
-                D_SPARE,
+                temp,
                 true,
                 rebINLINE(predicate),
-                NULLIFY_NULLED(D_OUT),
+                NULLIFY_NULLED(D_SPARE),
                 rebEND
             )){
                 return R_THROWN;
             }
 
-            if (IS_FALSEY(D_SPARE)) {
+            if (IS_FALSEY(temp)) {
                 Abort_Frame(f);
                 return nullptr;
             }
         }
+
+        // spare passed the test and wasn't invisible, make it the new result
+        //
+        Move_Cell(D_OUT, D_SPARE);
+
     } while (NOT_END(f->feed->value));
 
     Drop_Frame(f);
 
-    if (IS_NULLED(D_OUT)) {
-        if (NOT_CELL_FLAG(D_OUT, OUT_NOTE_STALE)) {
-            //
-            // The only way a NULL evaluation that isn't the initial loaded
-            // NULL should make it to the end is if a predicate passed it,
-            // so we voidify it for: `all .not [null] then [<runs>]`
-            //
-            assert(not IS_NULLED(predicate));
-            return Init_Heavy_Nulled(D_OUT);
-        }
+    if (not IS_BAD_WORD(D_OUT) and IS_FALSEY(D_OUT)) {
+        //
+        // The only way a falsey evaluation should make it to the end is if a
+        // predicate passed it.  Don't want that to trip up `if all` so make
+        // it an isotope...but this way `all .not [null] then [<runs>]`
+        //
+        assert(not IS_NULLED(predicate));
+        return Init_Curse_Word(D_OUT, SYM_FALSEY);
     }
 
-    CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);  // `all [true elide 1 + 2]`
-
-    return D_OUT;  // successful ALL when the last D_OUT assignment passed
+    return D_OUT;
 }
 
 
@@ -680,15 +689,16 @@ REBNATIVE(any)
     DECLARE_FRAME_AT (f, ARG(block), EVAL_MASK_DEFAULT);
     Push_Frame(nullptr, f);
 
-    Init_Nulled(D_OUT);  // preload output with falsey value
-
     do {
+        Init_Void(D_OUT);
         if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
             Abort_Frame(f);
             return R_THROWN;
         }
-        if (GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE)) {
-            if (IS_END(f->feed->value))  // `any []`
+        CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);  // don't leak stale flag
+
+        if (Is_Void(D_OUT)) {  // may have been stale or not
+            if (IS_END(f->feed->value))
                 break;
             continue;  // `any [comment "hi" 1]`, first step is stale
         }
@@ -711,11 +721,17 @@ REBNATIVE(any)
             }
 
             if (IS_TRUTHY(D_SPARE)) {
-                Isotopify_If_Nulled(D_OUT);  // `any .not [null] then [<run>]`
+                //
+                // Don't let ANY return something falsey, but using an isotope
+                // makes `any .not [null] then [<run>]` work
+                //
+                if (not IS_BAD_WORD(D_OUT) and IS_FALSEY(D_OUT))
+                    Init_Curse_Word(D_OUT, SYM_FALSEY);
                 Abort_Frame(f);
                 return D_OUT;  // return input to the test, not result
             }
         }
+
     } while (NOT_END(f->feed->value));
 
     Drop_Frame(f);
