@@ -4,7 +4,7 @@ REBOL [
         Rebol 3 Language Interpreter and Run-time Environment
         "Ren-C" branch @ https://github.com/metaeducation/ren-c
 
-        Copyright 2012-2018 Ren-C Open Source Contributors
+        Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -29,12 +29,18 @@ REBOL [
         operations, like ADAPT, CHAIN, SPECIALIZE, and ENCLOSE.
     }
     Notes: {
-        Version 8994d23 does not allow WORD!-access of NULL, because the null
+        * Version 8994d23 does not allow WORD!-access of NULL, because the null
         state was conflated with the "unset" state at that time.  This is
         not something that can be overridden by a shim.  So the easiest way
         to do `null? var` in a forward-compatible way is `null? get 'var`, but
         if the intent is on a variable that would be considered actually
         "unset" in modern versions then use `unset?` (it will be null though)
+
+        * There was an issue with the Linux bootstrap executable not working
+        on GitHub Actions, due to some strange issue with the binary and the
+        container.  Rebuilding with a newer version of GCC seemed to resolve
+        that, but Linux executables compiled circa 2018 in the wild may not
+        work on some modern systems.
     }
 ]
 
@@ -74,16 +80,31 @@ trap [
     quit
 ]
 
+
+;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
+
+
+repeat: :loop
+loop: :while
+while: lib/func [] [fail/where "Use LOOP not WHILE" 'return]
+
 ~: does [null]  ; labeled VOID!, before isotopes
+
+|: lib/func [] [
+    fail/where [
+        "| is replaced by COMMA! for expression barriers"
+        "Unfortunately this means there's no expression barrier in bootstrap"
+    ] 'return
+]
 
 ; !!! This isn't perfect, but it should work for the cases in rebmake
 ;
 load-value: :load
 load-all: :load/all
 
-repeat: :loop
-loop: :while
-while: func [] [fail/where "Use LOOP not WHILE" 'return]
+
+;=== BELOW THIS LINE, TRY NOT TO USE FUNCTIONS IN THE SHIM IMPLEMENTATION ===
+
 
 any-inert!: make typeset! [text! tag! issue! binary! char! object! file!]
 
@@ -140,7 +161,7 @@ set: specialize :lib/set [opt: true]
 
 ; PRINT was changed to tolerate NEWLINE to mean print a newline only
 ;
-print: func [value] [
+print: lib/func [value] [
     lib/print either value == newline [""][value]
 ]
 
@@ -176,7 +197,7 @@ enfixed: enfix :enfix
 collect*: :collect
 collect: :collect-block
 
-collect-lets: func [
+collect-lets: lib/func [
     return: [block!]
     array [block! group!]
     <local> lets
@@ -199,7 +220,7 @@ collect-lets: func [
 ]
 
 
-let: func [
+let: lib/func [
     return: []  ; old-style invisibility
     :look [any-value! <...>]  ; old-style variadic
 ][
@@ -207,7 +228,7 @@ let: func [
 ]
 
 
-modernize-action: function [
+modernize-action: lib/function [
     "Account for <blank> annotation, refinements as own arguments"
     return: [block!]
     spec [block!]
@@ -218,7 +239,9 @@ modernize-action: function [
     blankers: copy []
     proxiers: copy []
 
-    spec: collect [
+    spec: lib/collect [  ; Note: offers KEEP/ONLY
+        keep []  ; so bootstrap COLLECT won't be NULL if no KEEPs
+
         loop [not tail? spec] [
             if tag? spec/1 [
                 last-refine-word: _
@@ -233,7 +256,10 @@ modernize-action: function [
 
                 ; Feed through any TEXT!s following the PATH!
                 ;
-                loop [if (tail? spec: my next) [break] | text? spec/1] [
+                loop [  ; v-- e.g. this is the condition of a historical WHILE
+                    if (tail? spec: my next) [break]
+                    text? spec/1
+                ][
                     keep/only spec/1
                 ]
 
@@ -248,7 +274,7 @@ modernize-action: function [
                 keep/only proxy
                 keep/only spec/1
 
-                append proxiers compose [
+                lib/append proxiers compose [
                     (as set-word! last-refine-word) try (as get-word! proxy)
                     set (as lit-word! proxy) void
                 ]
@@ -278,7 +304,10 @@ modernize-action: function [
 
                 ; Feed through any TEXT!s following the ANY-WORD!
                 ;
-                loop [if (tail? spec: my next) [break] | text? spec/1] [
+                loop [  ; v-- e.g. this is the condition of a historical WHILE
+                    if (tail? spec: my next) [break]
+                    text? spec/1
+                ][
                     keep/only spec/1
                 ]
 
@@ -297,16 +326,16 @@ modernize-action: function [
                 ; Substitute BLANK! for any <blank> found, and save some code
                 ; to inject for that parameter to return null if it's blank
                 ;
-                if find (try match block! spec/1) <blank> [
+                if lib/find (try match block! spec/1) <blank> [
                     keep/only replace copy spec/1 <blank> 'blank!
-                    append blankers compose [
+                    lib/append blankers compose [
                         if blank? (as get-word! w) [return null]
                     ]
                     spec: my next
                     continue
                 ]
 
-                if find (try match block! spec/1) <variadic> [
+                if lib/find (try match block! spec/1) <variadic> [
                     keep/only replace copy spec/1 <variadic> <...>
                     spec: my next
                     continue
@@ -326,8 +355,8 @@ modernize-action: function [
     ; We approximate it by searching the body for LET followed by SET-WORD!
     ; or WORD! and add that to locals.
     ;
-    append spec <local>
-    append spec collect-lets body
+    lib/append spec <local>
+    lib/append spec collect-lets body
 
     body: compose [
         ((blankers))
@@ -337,11 +366,11 @@ modernize-action: function [
     return reduce [spec body]
 ]
 
-func: adapt :func [set [spec body] modernize-action spec body]
-function: adapt :function [set [spec body] modernize-action spec body]
+func: adapt :lib/func [set [spec body] modernize-action spec body]
+function: adapt :lib/function [set [spec body] modernize-action spec body]
 
-meth: enfixed adapt :meth [set [spec body] modernize-action spec body]
-method: func [] [
+meth: enfixed adapt :lib/meth [set [spec body] modernize-action spec body]
+method: lib/func [] [
     fail/where "METHOD deprecated temporarily, use METH" 'return
 ]
 
@@ -353,7 +382,7 @@ trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
     ]
 ]
 
-mutable: func [x [any-value!]] [
+mutable: lib/func [x [any-value!]] [
     ;
     ; Some cases which did not notice immutability in the bootstrap build
     ; now do, e.g. MAKE OBJECT! on a block that you LOAD.  This is a no-op
@@ -364,7 +393,7 @@ mutable: func [x [any-value!]] [
 ]
 
 the: :quote  ; Renamed due to the QUOTED! datatype
-quote: func [x [<opt> any-value!]] [
+quote: lib/func [x [<opt> any-value!]] [
     switch type of x [
         null [the ()]
         word! [to lit-word! x]
@@ -377,7 +406,7 @@ quote: func [x [<opt> any-value!]] [
 ]
 
 join: :join-of
-join-of: func [] [
+join-of: lib/func [] [
     fail/where [  ; bootstrap EXE does not support @word
         "JOIN has returned to Rebol2 semantics, JOIN-OF is no longer needed"
         https://forum.rebol.info/t/its-time-to-join-together/1030
@@ -385,19 +414,22 @@ join-of: func [] [
 ]
 
 ; https://forum.rebol.info/t/has-hasnt-worked-rethink-construct/1058
-has: null
+has: ~
 
 ; Simple "divider-style" thing for remarks.  At a certain verbosity level,
 ; it could dump those remarks out...perhaps based on how many == there are.
 ; (This is a good reason for retaking ==, as that looks like a divider.)
 ;
-===: func ['remarks [any-value! <...>]] [  ; note: <...> is now a TUPLE!
+===: lib/func [
+    ; note: <...> is now a TUPLE!, and : used to be "hard quote" (vs ')
+    :remarks [any-value! <...>]
+][
     until [
         equal? '=== take remarks
     ]
 ]
 
-const?: func [x] [return false]
+const?: lib/func [x] [return false]
 
 call*: :call
 call: specialize :call* [wait: true]
@@ -443,7 +475,7 @@ find-last: specialize :find [
 ; So augment the READ with a bit more information.
 ;
 lib-read: copy :lib/read
-lib/read: read: enclose :lib-read function [f [frame!]] [
+lib/read: read: enclose :lib-read lib/function [f [frame!]] [
     saved-source: :f/source
     if e: trap [bin: do f] [
         parse e/message [
@@ -461,12 +493,15 @@ lib/read: read: enclose :lib-read function [f [frame!]] [
     bin
 ]
 
-transcode: function [
+transcode: lib/function [
     return: [<opt> any-value!]
     source [text! binary!]
-    /next [word!]
+    /next
+    next-arg [word!]
     ; /relax not supported in shim... it could be
 ][
+    next: try :next-arg
+
     values: lib/transcode/(either next ['next] [blank])
         either text? source [to binary! source] [source]
     pos: take/last values
@@ -491,27 +526,35 @@ transcode: function [
 ]
 
 reeval: :eval
-eval: func [] [
+eval: lib/func [] [
     fail/where [
         "EVAL is now REEVAL:"
         https://forum.rebol.info/t/eval-evaluate-and-reeval-reevaluate/1173
     ] 'return
 ]
 
-split: function [
-    {Split series in pieces: fixed/variable size, fixed number, or delimited}
-
+split: lib/function [
     return: [block!]
-    series "The series to split"
-        [any-series!]
+    series [any-series!]
     dlm "Split size, delimiter(s) (if all integer block), or block rule(s)"
         [block! integer! char! bitset! text! tag! word! bar!]
     /into "If dlm is integer, split in n pieces (vs. pieces of length n)"
 ][
-    if all [any-string? series tag? dlm] [dlm: form dlm]
-    if any [word? dlm bar? dlm tag? dlm] [
-        return collect [parse series [
-            [
+    all [
+        any-string? series
+        tag? dlm
+    ] then [
+        dlm: form dlm
+    ]
+    any [
+        word? dlm
+        bar? dlm  ; just a WORD! `|` in non-bootstrap executable
+        tag? dlm
+    ] then [
+        return lib/collect [  ; Note: offers KEEP/ONLY
+            keep []  ; so bootstrap COLLECT won't be NULL if no KEEPs
+
+            parse series [
                 some [
                     copy t: [to dlm | to end]
                     (keep/only t)
@@ -519,7 +562,7 @@ split: function [
                 ]
                 end
             ]
-        ]]
+        ]
     ]
 
     apply :lib/split [series: series dlm: dlm into: into]
@@ -528,7 +571,7 @@ split: function [
 ; Unfortunately, bootstrap delimit treated "" as not wanting a delimiter.
 ; Also it didn't have the "literal BLANK!s are space characters" behavior.
 ;
-delimit: func [
+delimit: lib/func [
     return: [<opt> text!]
     delimiter [<opt> blank! char! text!]
     line [blank! text! block!]
@@ -544,25 +587,33 @@ delimit: func [
     cycle [
         if tail? line [stop]
         if blank? line/1 [
-            append text space
+            lib/append text space
             line: next line
             anything: true
             pending: false
             continue
         ]
         line: evaluate/set line 'value
-        any [null? get 'value | blank? value] then [continue]
-        any [char? value | issue? value] then [
-            append text form value
+        any [
+            null? get 'value
+            blank? value
+        ] then [
+            continue
+        ]        
+        any [
+            char? value
+            issue? value
+        ] then [
+            lib/append text form value
             anything: true
             pending: false
             continue
         ]
         if pending [
-            if delimiter [append text delimiter]
+            if delimiter [lib/append text delimiter]
             pending: false
         ]
-        append text form value
+        lib/append text form value
         anything: true
         pending: true
     ]
@@ -577,7 +628,7 @@ unspaced: specialize :delimit [delimiter: _]
 spaced: specialize :delimit [delimiter: space]
 
 
-noquote: func [x] [
+noquote: lib/func [x] [
     switch type of x [
         lit-word! [to word! x]
         lit-path! [to path! x]
@@ -598,9 +649,9 @@ noquote: func [x] [
 ; Temporarily make falsey matches just return true for duration of the zip.
 ; Also, make PRINT accept FILE! and TEXT! so the /VERBOSE option will work.
 ;
-zip: enclose :zip func [f] [
-    let old-match: :match
-    let old-print: :print
+zip: enclose :zip lib/function [f] [
+    old-match: :match
+    old-print: :print
 
     if f/verbose [
         fail/where [
@@ -615,15 +666,14 @@ zip: enclose :zip func [f] [
     ;    ]
     ;]
 
-    lib/match: func [type value [<opt> any-value!]] [
-        let answer
+    lib/match: lib/func [type value [<opt> any-value!] <local> answer] [
         if bad-word? set* 'answer match type value [
             return true
         ]
         return get 'answer
     ]
 
-    let result: do f
+    result: do f
 
     lib/match: :old-match
     ;lib/print: :old-print
