@@ -46,7 +46,7 @@
 [
     (null = ^ null)
     (null? heavy null)
-    ((the ') = ^ heavy null)
+    ('~null~ = ^ heavy null)
 
     (x: heavy null, null = ^ x)
     (x: heavy null, null = ^ :x)
@@ -59,14 +59,14 @@
 ; executes and evaluates to either NULL or ~null~ isotope.  If the branch
 ; wishes to pass the null "as-is" it should use the ^ forms.
 [
-    ((the ') = ^ if true [null])
-    ((the ') = ^ if true [heavy null])
+    ('~null~ = ^ if true [null])
+    ('~null~ = ^ if true [heavy null])
     ('~void~ = ^ if true [])
     ('~custom~ = ^ if true [~custom~])
     (''~custom~ = ^ if true ['~custom~])
 
     (null = ^ if true ^[null])
-    ((the ') = ^ if true ^[heavy null])
+    ('~null~ = ^ if true ^[heavy null])
     ('~void~ = ^ if true ^[])
     ('~custom~ = ^ if true ^[~custom~])
     (''~custom~ = ^ if true ^['~custom~])

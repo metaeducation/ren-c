@@ -1543,17 +1543,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         assert(NOT_CELL_FLAG(v, ISOTOPE));
 
-        if (VAL_BAD_WORD_ID(v) == SYM_NULL) {
-            //
-            // ~null~ evaluating to NULL instead of the isotope form of ~null~
-            // is a "twist" but a useful one.
-            //
-            Init_Nulled(f->out);
-        }
-        else {
-            Derelativize(f->out, v, v_specifier);
-            SET_CELL_FLAG(f->out, ISOTOPE);
-        }
+        Derelativize(f->out, v, v_specifier);
+        SET_CELL_FLAG(f->out, ISOTOPE);
         break;
 
 
@@ -1615,42 +1606,19 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         Derelativize(f->out, v, v_specifier);
         Unquotify_In_Situ(f->out, 1);  // checks for illegal REB_XXX bytes
 
-        // The evaluator decays a plain quote to "stable" null:
+        // Note: the evaluator decays a lone quote to plain null:
         //
         //    >> '
         //    ; null
         //
-        // That's because there is no reified representation for NULL that
-        // exists besides '
+        // So you don't get "null isotopes" from dequoting, only via the
+        // BAD-WORD! evaluation:
         //
-        //     >> make object! [n: null, v1: ~void~, v2: '~void~]
-        //     == make object! [
-        //         n: '
-        //         v1: ~void~
-        //         v2: '~void~
-        //     ]
+        //   >> ~null~
+        //   == ~null~  ; isotope
         //
-        // There's no way to have ' represent an isotope state and something
-        // else represent the stable state.  There is no "something else".  So
-        // to produce nulls in blocks (like `do compose [null? (the ')]`) you
-        // have no other way to do it either.
-        //
-        // This is why ~null~ is solely a transient state, and once you store
-        // an evaluation into a variable it can no longer be detected.  But
-        // with bad words, the whole idea is that unquoted turns them into an
-        // isotope form.  Since their quoted forms and unquoted forms can
-        // both appear in blocks, it doesn't run into the same problems.
-        //
-        if (IS_BAD_WORD(f->out)) {
+        if (IS_BAD_WORD(f->out))
             assert(NOT_CELL_FLAG(f->out, ISOTOPE));
-        }
-        else if (IS_NULLED(f->out)) {
-            //
-            // If we didn't decay ' to the isotopic form of ~null~, we would
-            // not have a way to *get* an isotopic null.
-            //
-            Init_Curse_Word(f->out, SYM_NULL);
-        } 
         break;
     }
 

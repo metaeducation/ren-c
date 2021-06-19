@@ -288,16 +288,6 @@ inline static RELVAL *Unquotify_Core(RELVAL *v, REBLEN unquotes) {
 
 inline static RELVAL *Isotopic_Quote(RELVAL *v) {
     if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE)) {
-        if (VAL_BAD_WORD_ID(v) == SYM_NULL) {
-            //
-            // ~null~ isotope goes to ' because ~null~ BAD-WORD! evaluates to
-            // true null.  There has to be *a* way to get the null isotope,
-            // so the transition between (' <=> ~null~ isotope) is that.
-            //
-            Init_Nulled(v);
-            Quotify(v, 1);
-            return v;
-        }
         CLEAR_CELL_FLAG(v, ISOTOPE);  // ...make it "friendly" now...
         return v;  // ...but differentiate its status by not quoting it...
     }
@@ -306,10 +296,7 @@ inline static RELVAL *Isotopic_Quote(RELVAL *v) {
 
 inline static RELVAL *Isotopic_Unquote(RELVAL *v) {
     assert(not IS_NULLED(v));  // use Meta_Unquotify() instead
-    if (KIND3Q_BYTE(v) == REB_NULL + REB_64) {  // plain '
-        Init_Curse_Word(v, SYM_NULL);  // ' <=> ~null~ isotope
-    }
-    else if (IS_BAD_WORD(v))  // Meta quote flipped isotope off, flip back on.
+    if (IS_BAD_WORD(v))  // Meta quote flipped isotope off, flip back on.
         SET_CELL_FLAG(v, ISOTOPE);
     else {
         Unquotify_Core(v, 1);
@@ -323,11 +310,8 @@ inline static RELVAL *Isotopic_Unquote(RELVAL *v) {
 // step, and then N - 1 non-isotopic steps.
 
 inline static RELVAL *Isotopic_Quotify(RELVAL *v, REBLEN depth) {
-    if (depth == 0) {
-        if (IS_NULLED(v))  // !!! should this be handled here?
-            Init_Bad_Word_Core(v, Canon(SYM_NULL), CELL_MASK_NONE);
+    if (depth == 0)
         return v;
-    }
     Isotopic_Quote(v);
     return Quotify(v, depth - 1);
 }

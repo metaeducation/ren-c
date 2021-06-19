@@ -80,7 +80,7 @@
 
 ; recursive behaviour
 
-((the ') = ^ if true [if false [1]])
+('~null~ = ^ if true [if false [1]])
 (1 = if true [if true [1]])
 
 ; infinite recursion
@@ -102,7 +102,7 @@
 (1 = if not false [1])
 
 (null? if not true [1])
-((the ') = ^ if not false [null])
+('~null~ = ^ if not false [null])
 
 (error? if not false [trap [1 / 0]])
 

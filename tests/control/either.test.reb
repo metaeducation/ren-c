@@ -10,8 +10,8 @@
 (1 = either true [1] [2])
 (2 = either false [1] [2])
 
-((the ') = ^ either true [null] [1])
-((the ') = ^ either false [1] [null])
+('~null~ = ^ either true [null] [1])
+('~null~ = ^ either false [1] [null])
 
 (null? either true ^[null] [1])
 (null? either false [1] ^[null])

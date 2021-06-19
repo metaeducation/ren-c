@@ -11,7 +11,7 @@
 [#1760 ; unwind functions should stop evaluation
     (null? repeat 1 [reduce [break]])
 ]
-((the ') = ^ repeat 1 [reduce [continue]])
+('~null~ = ^ repeat 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 ([a 1] = catch/name [reduce [throw/name 1 'a]] 'a)
 (1 = reeval func [] [reduce [return 1 2] 2])

@@ -9,7 +9,7 @@
     ('~stale~ = ^ (10 + 20 do [comment "hi"]))
     ('~stale~ = ^ (10 + 20 do make frame! :void))
     (else? do [null])
-    ((the ') = ^ do [if true [null]])
+    ('~null~ = ^ do [if true [null]])
 
     ('~void~ = ^ comment "HI" do [comment "HI"])
 
@@ -17,22 +17,22 @@
     ('~void~ = (10 + 20 ^(do [comment "hi"])))
     ('~void~ = (10 + 20 ^(do make frame! :void)))
     (else? ^(do [null]))
-    ((the ') = ^(do [if true [null]]))
+    ('~null~ = ^(do [if true [null]]))
 
     (30 = (10 + 20 devoid do []))
     (30 = (10 + 20 devoid do [comment "hi"]))
     (30 = (10 + 20 devoid do make frame! :void))
     (else? ^(devoid do [null]))
-    ('' = ^(devoid do [heavy null]))
-    ('' = ^(devoid do [if true [null]]))
+    ('~null~ = ^(devoid do [heavy null]))
+    ('~null~ = ^(devoid do [if true [null]]))
 
     ; Try standalone ^ operator so long as we're at it.
     ('~void~ = ^ ^ devoid do [])
     ('~void~ = ^ ^ devoid do [comment "hi"])
     ('~void~ = ^ ^ devoid do make frame! :void)
     (else? ^ devoid do [null])
-    ((the ') = ^ devoid do [heavy null])
-    ((the ') = ^ devoid do [if true [null]])
+    ('~null~ = ^ devoid do [heavy null])
+    ('~null~ = ^ devoid do [if true [null]])
 ]
 
 

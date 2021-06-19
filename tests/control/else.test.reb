@@ -67,7 +67,7 @@
 )
 
 (
-    <isotope> = (' then [<isotope>])  ; ' decays to isotope null
+    <isotope> = (~null~ then [<isotope>])
 )
 
-(' then x -> [null = ^x])  ; isotope decays as argument to lambda
+(~null~ then x -> [null = ^x])  ; isotope decays as non-meta argument to lambda

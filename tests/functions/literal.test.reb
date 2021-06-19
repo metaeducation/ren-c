@@ -8,7 +8,7 @@
 
     ((the '10) = detector 10)
     (null = detector null)
-    ((the ') = detector if true [null])
+    ('~null~ = detector if true [null])
 
     ('~void~ = ^ detector (comment "hi"))
     ('~void~ = ^ detector)

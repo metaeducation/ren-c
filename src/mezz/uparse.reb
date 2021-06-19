@@ -244,7 +244,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> last-result' result' pos
     ][
-        last-result': '~null~  ; (unquote '~null~) => ~null~ isotope
+        last-result': '~null~  ; !!! `while [false]` => ~void~ or ~null~ ?
         cycle [
             ([result' pos]: ^ parser input) else [
                 set remainder input  ; overall WHILE never fails (but REJECT?)
@@ -1056,7 +1056,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> result'
     ][
-        result': quote null  ; !!! should `0 skip` resolve to ' like this?
+        result': '~null~  ; !!! `0 <any>` => ~void~ or ~null~ ?
         repeat value [
             ([result' input]: ^ parser input) else [
                 return null
@@ -1079,7 +1079,7 @@ default-combinators: make map! reduce [
             fail "REPEAT requires first synthesized argument to be an integer"
         ]
 
-        result': quote null  ; !!! should `repeat 0 <any>` resolve to '?
+        result': '~null~  ; `repeat 0 <any>` => ~null~ or ~void~ ?
         repeat unquote times' [
             ([result' input]: ^ parser input) else [
                 return null
@@ -1352,7 +1352,7 @@ default-combinators: make map! reduce [
         let collect-baseline: tail try state.collecting  ; see COLLECT
         let gather-baseline: tail try state.gathering  ; see GATHER
 
-        let result': '~void~  ; non-isotope version
+        let result': '~void~  ; non-isotope version, unquotes to isotope
 
         loop [not tail? rules] [
             if state.verbose [

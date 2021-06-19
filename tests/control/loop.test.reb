@@ -17,7 +17,7 @@
     num: 0
     1 = loop [num < 1] [num: num + 1]
 )]
-((the ') = ^ loop [false] [])
+('~null~ = ^ loop [false] [])
 ; zero repetition
 (
     success: true

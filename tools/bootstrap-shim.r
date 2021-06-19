@@ -194,7 +194,7 @@ parse?: chain [:lib/parse | :did]
 parse: chain [
     :lib/parse
     |
-    func [x [<opt> any-series! bar!]] [if :x ['~use-parse?-for-logic~]]
+    func [x [<opt> any-series! bar!]] [if :x [lib/void]]
 ]
 
 ; Enfixedness was conceived as not a property of an action itself, but of a

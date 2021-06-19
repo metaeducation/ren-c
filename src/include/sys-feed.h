@@ -112,18 +112,26 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 
     if (not p) {  // libRebol's null/<opt> (IS_NULLED prohibited in CELL case)
 
-        // This is the compromise of convenience, where ~null~ is put in
-        // to the feed.  If it's converted into an array we've told a
-        // small lie (~null~ is a BAD-WORD! and a thing, so not the same
-        // as the NULL non-thing).  But it's a mean enough thing that
-        // any misunderstandings should cause a problem...while typical
-        // uses will be all right.
-        //
-        // !!! "We could make a global QUOTED_NULLED_VALUE with a stable
-        // pointer and not have to use fetched." <- probably silly optimization
+        if (QUOTING_BYTE(feed) == 0) {
 
-        Init_Nulled(&feed->fetched);
-        Isotopic_Quotify(&feed->fetched, QUOTING_BYTE(feed));
+            // This is the compromise of convenience, where ~null~ is put in
+            // to the feed.  If it's converted into an array we've told a
+            // small lie (~null~ is a BAD-WORD! and a thing, so not the same
+            // as the NULL non-thing).  It will evaluate to a ~null~ isotope
+            // which *usually* acts like NULL, but not with ELSE/THEN directly.
+            //
+            // We must use something legal to put in arrays, so non-isotope.
+            //
+            Init_Bad_Word_Core(&feed->fetched, Canon(SYM_NULL), CELL_MASK_NONE);
+        }
+        else {
+            // !!! "We could make a global QUOTED_NULLED_VALUE with a stable
+            // pointer and not have to use fetched." <- silly optimization
+
+            Init_Nulled(&feed->fetched);
+            Isotopic_Quotify(&feed->fetched, QUOTING_BYTE(feed));
+        }
+
         assert(FEED_SPECIFIER(feed) == SPECIFIED);  // !!! why assert this?
         feed->value = &feed->fetched;
 

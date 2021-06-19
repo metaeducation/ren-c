@@ -83,7 +83,7 @@
 ; leave the gathered material in the mold buffer
 ;
 (
-    (the ') = ^ repeat 2 [unspaced ["abc" continue]]
+    '~null~ = ^ repeat 2 [unspaced ["abc" continue]]
 )
 
 ; Test ACTION! as branch
@@ -91,7 +91,7 @@
 [
     (did branch: does [if nbreak = n [break] n: n + 1])
 
-    (nbreak: ('...), n: 0, (the ') = ^ repeat 0 :branch)
+    (nbreak: ('...), n: 0, '~null~ = ^ repeat 0 :branch)
     (nbreak: ('...), n: 0, 3 = repeat 3 :branch)
     (nbreak: 2, n: 0, null? repeat 3 :branch)
 ]
