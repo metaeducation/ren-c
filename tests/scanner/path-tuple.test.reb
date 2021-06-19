@@ -103,7 +103,7 @@
         if mtype [
             value: to mtype collect [
                 count-up index (length of value) [
-                    keep/only transform pick value index
+                    keep ^(transform pick value index)
                 ]
             ]
         ]

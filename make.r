@@ -113,7 +113,7 @@ for-each [name value] options [
             loop [:config] [
                 set [path: file:] split-path config
                 change-dir path
-                append/only config-stack transcode read file
+                append config-stack ^(transcode read file)
 
                 ; !!! LOAD has changed between bootstrap versions, for the
                 ; handling of the /HEADER.  This hacks it together by doing a
@@ -885,8 +885,8 @@ targets: [
 target-names: make block! 16
 for-each x targets [
     if lit-word? x [
-        append/only target-names noquote x
-        append/only target-names '|
+        append target-names ^(noquote x)
+        append target-names [|]
     ] else [
         take/last target-names
         append target-names newline
@@ -988,7 +988,7 @@ CURRENT VALUE:
 
 ; dynamically fill help topics list ;-)
 replace help-topics/usage "HELP-TOPICS" ;\
-    form append/only map-each x help-topics [either text? x ['|] [x]] 'all
+    form append (map-each x help-topics [either text? x ['|] [x]]) [all]
 
 help: function [topic [text! blank!]] [
     topic: try attempt [to-word topic]

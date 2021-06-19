@@ -626,15 +626,15 @@ split: function [
                 [
                     repeat (count) [
                         copy series [repeat (piece-size) skip] (
-                            keep/only series
+                            keep ^series
                         )
                     ]
-                    copy series to end (keep/only series)
+                    copy series to end (keep ^series)
                 ]
             ] else [
                 [while [
                     copy series [skip, repeat (size - 1) opt skip] (
-                        keep/only series
+                        keep ^series
                     )
                 ]]
             ]
@@ -647,7 +647,7 @@ split: function [
             [
                 while [not end [
                     mk1: here, while [mk2: here, [dlm | end] break | skip] (
-                    keep/only copy/part mk1 mk2
+                    keep ^ copy/part mk1 mk2
                 )]]
                 end
             ]
@@ -657,7 +657,7 @@ split: function [
         [
             some [not end [
                 copy mk1: [to dlm | to end]
-                (keep/only mk1)
+                (keep ^mk1)
                 opt thru dlm
             ]]
         ]

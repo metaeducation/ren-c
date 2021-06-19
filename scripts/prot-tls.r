@@ -351,7 +351,7 @@ parse-asn: func [
                     data: skip data old-size
                 ]
                 if zero? size [
-                    keep/only/line compose/deep [
+                    keep/line ^ compose/deep [
                         (tag) [
                             (either constructed ["constructed"] ["primitive"])
                             (index)
@@ -369,7 +369,7 @@ parse-asn: func [
                 switch class [
                     '^universal [
                         val: copy/part data size
-                        keep/only/line compose/deep/only [
+                        keep/line ^ compose/deep/only [
                             (tag) [
                                 (either constructed ["constructed"] ["primitive"])
                                 (index)
@@ -380,7 +380,7 @@ parse-asn: func [
                     ]
 
                     '^context-specific [
-                        keep/only/line compose/deep [(tag) [(val) (size)]]
+                        keep/line ^ compose/deep [(tag) [(val) (size)]]
                         parse-asn copy/part data size  ; !!! ensures valid?
                     ]
                 ]

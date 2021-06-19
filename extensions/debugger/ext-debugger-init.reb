@@ -252,7 +252,7 @@ backtrace*: function [
             continue
         ]
 
-        keep/only near of f
+        keep ^(near of f)
 
         ; If building a backtrace, we just keep accumulating results as long
         ; as there are stack levels left and the limit hasn't been hit.

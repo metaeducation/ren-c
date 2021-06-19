@@ -106,38 +106,59 @@ load-all: :load/all
 ;=== BELOW THIS LINE, TRY NOT TO USE FUNCTIONS IN THE SHIM IMPLEMENTATION ===
 
 
-any-inert!: make typeset! [text! tag! issue! binary! char! object! file!]
+any-inert!: make typeset! [
+    any-string! binary! char! any-context! time! date!
+]
+
+; The ^ is legal in words, so we're able to make a ^ operator that puts things
+; into blocks as an alternative to /ONLY.  But while `^ a` and `^(a)` can work
+; as the latter is interpreted as `^ (a)` in old versions, you can't have `^a`
+; work since that makes a new WORD!.
+;
+; Use LIB/APPEND etc. in this shim file for historical semantics (and will run
+; faster).
+
+set '^ lib/func [x [<opt> any-value!]] [
+    :x then [
+        if void? :x ['~bad-word~] else [reduce [:x]]
+    ]
+]
 
 append: adapt :append [
-    if not only [
-        value: opt case [
-            blank? :value [_]
-            block? :value [:value]
-            match any-inert! :value [:value]
-            fail/where ["APPEND takes block, blank, ANY-INERT!"] 'value
-        ]
+    if only [
+        fail/where "APPEND/ONLY no longer allowed, use ^^" 'series
+    ]
+    value: opt case [
+        blank? :value [_]
+        block? :value [:value]
+        match any-inert! :value [:value]
+        fail/where ["APPEND takes block, blank, ANY-INERT!"] 'value
     ]
 ]
 
 insert: adapt :insert [
-    if not only [
-        value: opt case [
-            blank? :value [_]
-            block? :value [:value]
-            match any-inert! :value [:value]
-            fail/where ["INSERT takes block, blank, ANY-INERT!"] 'value
-        ]
+    if only [
+        fail/where "INSERT/ONLY no longer allowed, use ^^" 'series
+    ]
+
+    value: opt case [
+        blank? :value [_]
+        block? :value [:value]
+        match any-inert! :value [:value]
+        fail/where ["INSERT takes block, blank, ANY-INERT!"] 'value
     ]
 ]
 
 change: adapt :change [
-    if not only [
-        value: opt case [
-            blank? :value [_]
-            block? :value [:value]
-            match any-inert! :value [:value]
-            fail/where ["CHANGE takes block, blank, ANY-INERT!"] 'value
-        ]
+    if only [
+        fail/where "CHANGE/ONLY no longer allowed, use ^^" 'series
+    ]
+
+    value: opt case [
+        blank? :value [_]
+        block? :value [:value]
+        match any-inert! :value [:value]
+        fail/where ["CHANGE takes block, blank, ANY-INERT!"] 'value
     ]
 ]
 
@@ -191,11 +212,39 @@ parse: chain [
 ;
 enfixed: enfix :enfix
 
-; COLLECT was changed back to default to returning an empty block on no
-; collect, but it is built on a null collect lower-level primitive COLLECT*
+
+; COLLECT in the bootstrap version would return NULL on no keeps.  But beyond
+; wanting to change that, we also want KEEP to be based on the new rules and
+; not have /ONLY.  So redo it here in the shim.
 ;
-collect*: :collect
-collect: :collect-block
+collect*: func [  ; variant that gives NULL if no actual keeps (none or blanks)
+    return: [<opt> block!]
+    body [block!]
+    <local> out keeper
+][
+    keeper: specialize (  ; SPECIALIZE to remove series argument
+        enclose 'append function [f [frame!] <with> out] [  ; gets /LINE, /DUP
+            if blank? :f/value [return null]  ; doesn't "count" as collected
+
+            f/series: out: default [make block! 16]  ; won't return null now
+            :f/value  ; ELIDE leaves as result (F/VALUE invalid after DO F)
+            elide do f
+        ]
+    )[
+        series: <replaced>
+    ]
+
+    lib/eval lib/func [keep [action!] <with> return] body :keeper
+
+    :out
+]
+
+collect: chain [  ; Gives empty block instead of null if no keeps
+    :collect*
+        |
+    specialize 'else [branch: [copy []]]
+]
+
 
 collect-lets: lib/func [
     return: [block!]

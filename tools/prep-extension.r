@@ -184,7 +184,7 @@ for-each native native-defs [
     num-natives: num-natives + 1
 
     if native/export [
-        append/only native-list 'export
+        append native-list [export]
 
         ; !!! This used to add to an "export-list" in the header of a module
         ; whose source was entirely generated.  The idea was that there could
@@ -207,7 +207,7 @@ for-each native native-defs [
         ; http://www.rebol.net/r3blogs/0300.html
         ;
         comment [
-            append/only export-list to word! native/name
+            append export-list ^(to word! native/name)
             ...
             compose/only [
                 Module [

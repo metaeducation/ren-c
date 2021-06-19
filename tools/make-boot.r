@@ -171,7 +171,7 @@ add-sym: function [
     ]
     sym-n: sym-n + 1
 
-    append/only boot-words word
+    append boot-words ^(word)
     return null
 ]
 
@@ -313,10 +313,10 @@ n: 0
 
 for-each-record t type-table [
     if n != 0 [
-        append/only boot-types either issue? t/name [
-            to-word t/name
+        append boot-types either issue? t/name [
+            ^(to-word t/name)
         ][
-            to-word unspaced [form t/name "!"]
+            ^(to-word unspaced [form t/name "!"])
         ]
     ]
 
@@ -375,7 +375,7 @@ for-each-record t type-table [
             select typeset-sets ts
             first back insert tail typeset-sets reduce [ts copy []]
         ]
-        append/only spot t/name
+        append spot ^(t/name)
     ]
 ]
 
@@ -511,12 +511,12 @@ for-each item boot-generics [
 at-value: func ['field] [next find/only boot-sysobj to-set-word field]
 
 boot-sysobj: load %sysobj.r
-change/only at-value version version
-change/only at-value commit git-commit
-change/only at-value build now/utc
-change/only at-value product quote to word! product  ; /ONLY to keep quote
+change at-value version ^(version)
+change at-value commit git-commit
+change at-value build now/utc
+change at-value product ^(quote to word! product)  ; ^ to keep quote
 
-change/only at-value platform reduce [
+change at-value platform ^ reduce [
     any [config/platform-name "Unknown"]
     any [config/build-label ""]
 ]
@@ -751,7 +751,7 @@ for-each section [boot-base boot-sys boot-mezz] [
 
 sctx: make object! collect [
     for-each item sys-toplevel [
-        keep/only as set-word! item
+        keep ^(as set-word! item)
         keep "stub proxy for %sys-base.r item"
     ]
 ]
@@ -827,7 +827,7 @@ e-bootblock/emit {
 
 boot-typespecs: collect [
     for-each-record t type-table [
-        keep/only reduce [t/description]
+        keep ^ reduce [t/description]
     ]
 ]
 

@@ -80,7 +80,7 @@ cscape: function [
                 )
                 copy suffix: remove to newline
             ] (
-                keep/only compose [
+                keep ^ compose [
                     (pattern) (col) (mode) (expr) (prefix) (suffix)
                 ]
                 num: num + 1
@@ -90,7 +90,7 @@ cscape: function [
             newline (col: 0 prefix: _ suffix: _) start: here
                 |
             skip (col: col + 1)
-        ] end]
+        ]]
     ] else [
         return string
     ]

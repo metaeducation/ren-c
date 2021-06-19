@@ -453,7 +453,7 @@ rebsource: context [
             while [nl | eol | wsp]
         ]
 
-        append/only grammar/other-segment just (
+        append grammar/other-segment ^ the (
             last-func-end: _
         )
 

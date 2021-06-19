@@ -100,7 +100,7 @@ emit-proto: func [return: <none> proto] [
                         pos: back pos
                     ]
                     keep trim/tail copy/part param next pos  ; TEXT! of type
-                    keep/only to word! next pos  ; WORD! of the parameter name
+                    keep ^(to word! next pos)  ; WORD! of the parameter name
                 )
             ]]
         ] else [

@@ -242,7 +242,7 @@ for-each-record: function [
 
         spec: collect [
             for-each column-name headings [
-                keep/only column-name
+                keep ^(column-name)
                 keep compose/only [the (table/1)]
                 table: next table
             ]
@@ -313,13 +313,13 @@ parse-args: function [
         ][value: mold split value ","]
         either name [
             append ret reduce [name value]
-        ][; standalone-arg
-            append/only standalone value
+        ][  ; standalone-arg
+            append standalone ^(value)
         ]
     ]
     if empty? standalone [return ret]
-    append/only ret '|
-    append/only ret standalone
+    append ret [|]
+    append ret ^(standalone)
 ]
 
 uppercase-of: func [
@@ -492,7 +492,7 @@ stripload: function [
                     not find str {"}
                     not find str "/"
                 ] then [
-                    keep/only as word! str
+                    keep ^(as word! str)
                 ]
                 t: newline-pos
             ]

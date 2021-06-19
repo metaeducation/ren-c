@@ -76,7 +76,7 @@
         soft: enfixed function [:v [any-value! <variadic>]] [
             collect [
                 loop [not tail? v] [
-                    keep/only take v
+                    keep ^(take v)
                 ]
             ]
         ]
@@ -94,7 +94,7 @@
         hard: enfixed function [:v [any-value! <variadic>]] [
             collect [
                 loop [not tail? v] [
-                    keep/only take v
+                    keep ^(take v)
                 ]
             ]
         ]
