@@ -123,34 +123,6 @@ console!: make object! [
 
         === ISOTOPE BAD WORDS (passed as plain bad-words due to meta ^v) ===
 
-        if v = '~void~ [  ; void isotope, don't show
-            ;
-            ; ~void~ is an intent of invisibility.  This happens when an
-            ; expression's entire results vaporize:
-            ;
-            ;     >> comment "hi" elide 1 + 2
-            ;
-            ; Some functions that run arbitrary code and other functions will
-            ; return it even though they don't "vaporize" by default:
-            ;
-            ;     >> do [comment "all this code" comment "is invisible"]
-            ;
-            ; But if the system notices that the expression on the whole would
-            ; not vaporize, the result of such a relayer (like DO) is changed
-            ; from ~void~ to ~stale~:
-            ;
-            ;     >> 1 + 2 do [comment "DO is invisible, but whole line isn't"]
-            ;     == ~stale~
-            ;
-            ; At the moment you get this by just hitting enter or any other
-            ; variation of empty whitespace, in addition to `>> comment "hi"`
-            ; or other all-invisible evaluations.  It just cycles the prompt
-            ; and shows no output for cleanliness, but perhaps if the input
-            ; was non-trivial it should say `; invisible` ?
-            ;
-            return
-        ]
-
         if v = '~none~ [  ; none isotope, don't show
             ;
             ; We also suppress display of the ~none~ state, which is the
@@ -558,7 +530,7 @@ ext-console-impl: func [
         ; something like that) then whoever broke into the REPL takes
         ; care of that.
         ;
-        assert [blank? :result]
+        assert [result = ~start~]
         any [
             unset? 'system/console
             not system/console
@@ -606,7 +578,9 @@ ext-console-impl: func [
         ]
     ]
 
-    === {HALT handling (e.g. Ctrl-C or Escape)} ===
+    === {HALT handling (e.g. Ctrl-C)} ===
+
+    ; Note: Escape is handled during input gathering by a dedicated signal.
 
     all [
         error? :result
@@ -713,7 +687,14 @@ ext-console-impl: func [
 
     === {HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF} ===
 
-    ensure [<opt> quoted! bad-word!] result
+    ensure [<opt> quoted! bad-word! blank!] result
+
+    ; Console C loop translated ~void~ isotope of meta result, e.g. absolutely
+    ; nothing from hitting enter or evaluating `comment "hi"` into BLANK!
+    ;
+    if blank? result [
+        return <prompt>
+    ]
 
     if group? prior [
         ;
@@ -760,7 +741,6 @@ ext-console-impl: func [
         ; APIs on windows, on a keystroke-by-keystroke basis vs reading a
         ; whole line at a time.
         ;
-        emit [system/console/print-result ~void~]
         return <prompt>
     ]
 

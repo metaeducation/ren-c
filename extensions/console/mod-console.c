@@ -281,7 +281,7 @@ REBNATIVE(console)
     }
     else {
         code = rebBlank();
-        result = rebBlank();
+        result = rebValue("'~start~");  // signal starting
     }
 
     while (true) {
@@ -294,13 +294,14 @@ REBNATIVE(console)
             // If you get a ~void~ isotope even after literalization, that
             // is distinct from the execution of the BAD-WORD! of ~void~.  It
             // means "truly invisible", e.g. END...like the user hit return on
-            // a prompt with no evaluations.  We conflate that with as if you
-            // got regular ~void~ here as it otherwise means EXT-CONSOLE-IMPL
-            // would have to take its result as a ^meta parameter.  (It could
-            // be another signal, like BLANK!...)
+            // a prompt with no evaluations, or `comment "hi"`
+            //
+            // Usually this intent requires a higher level of "meta" as a show
+            // that you handle it.  But we turn it into a BLANK! here, so that
+            // EXT-CONSOLE-IMPL doesn't require a meta (`^result`) parameter.
             //
             rebRelease(result);
-            result = rebValue("'~void~");
+            result = rebBlank();
         }
 
         // This runs the HOST-CONSOLE, which returns *requests* to execute
