@@ -576,6 +576,27 @@ REBNATIVE(match_p)
 
 
 //
+//  must: native [
+//
+//  {Ensure that the argument is not NULL}
+//
+//      return: "Same as input value if non-NULL"
+//          [any-value!]
+//      value [<opt> any-value!]
+//  ]
+//
+REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
+{
+    INCLUDE_PARAMS_OF_MUST;
+
+    if (IS_NULLED(ARG(value)))
+        fail ("MUST requires argument to not be NULL");
+
+    RETURN (ARG(value));
+}
+
+
+//
 //  all: native [
 //
 //  {Short-circuiting variant of AND, using a block of expressions as input}

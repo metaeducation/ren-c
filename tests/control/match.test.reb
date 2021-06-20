@@ -105,6 +105,13 @@
 ]
 
 
+; MUST is an optimized form of NON NULL
+[
+    ("bc" = must find "abc" "b")
+    (error? trap [must find "abc" "q"])
+]
+
+
 ; MATCH was an early function for trying a REFRAMER-like capacity for
 ; building a frame of an invocation, stealing its first argument, and then
 ; returning that in the case of a match.  But now that REFRAMER exists,
