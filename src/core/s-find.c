@@ -517,6 +517,9 @@ REBLEN Find_Value_In_Binstr(
         or REB_INTEGER == kind  // `find "ab10cd" 10` -> "10cd"
         or REB_ISSUE == kind
     ){
+        if (IS_CHAR_CELL(pattern) and VAL_CHAR(pattern) == 0)
+            return NOT_FOUND;  // can't find # in strings, only BINARY!
+
       find_binstr_in_binstr: ;
 
         // !!! A TAG! does not have its delimiters in it.  The logic of the
