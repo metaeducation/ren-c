@@ -132,3 +132,15 @@
     e: trap [a-value]
     e/id = 'bad-word-get
 )
+
+
+; REIFY is used to make isotopes into the non-isotope form, pass through all
+; other values.
+[
+    ('~foo~ = reify ~foo~)
+    ('~null~ = reify null)
+    ('~null~ = reify ~null~)
+
+    (10 = reify 10)
+    ((the '''a) = reify the '''a) 
+]

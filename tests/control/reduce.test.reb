@@ -63,7 +63,7 @@
 (error? trap [reduce .non.null [null]])
 
 ([3 _ 300] = reduce .try [1 + 2 if false [10 + 20] 100 + 200])
-([3 ~nulled~ 300] = reduce .voidify [1 + 2 if false [10 + 20] 100 + 200])
+([3 ~null~ 300] = reduce .reify [1 + 2 if false [10 + 20] 100 + 200])
 ([3 300] = reduce .identity [1 + 2 if false [10 + 20] 100 + 200])
 
 ([#[true] #[false]] = reduce .even? [2 + 2 3 + 4])

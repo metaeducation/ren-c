@@ -522,7 +522,7 @@ REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
 //          ]
 //      value [<opt> any-value!]
 //      /not "Invert the result of the the test (used by NON)"
-//      /safe "Voidify falsey results to avoid IF MATCH LOGIC! FALSE bugs"
+//      /safe "Return ~falsey~ isotopes to avoid IF MATCH LOGIC! FALSE bugs"
 //  ]
 //
 REBNATIVE(match_p)

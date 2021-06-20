@@ -1701,22 +1701,28 @@ REBNATIVE(unfriendly)
 
 
 //
-//  voidify: native [
+//  reify: native [
 //
-//  "Turn nulls into voids, passing through all other values"
+//  "Turn NULL and isotopes into plain BAD-WORD!s, pass through other values"
 //
 //      return: [any-value!]
-//      optional [<opt> any-value!]
+//      optional [<opt> <meta> any-value!]
 //  ]
 //
-REBNATIVE(voidify)
+REBNATIVE(reify)
 {
-    INCLUDE_PARAMS_OF_VOIDIFY;
+    INCLUDE_PARAMS_OF_REIFY;
 
-    if (IS_NULLED(ARG(optional)))
-        return Init_Curse_Word(D_OUT, SYM_NULL);
+    REBVAL *v = ARG(optional);
 
-    RETURN (ARG(optional));
+    if (IS_NULLED(v))
+        return Init_Bad_Word_Core(D_OUT, Canon(SYM_NULL), CELL_MASK_NONE);
+
+    if (IS_BAD_WORD(v))  // e.g. the input was an isotope form
+        RETURN (v);
+
+    assert(IS_QUOTED(v));
+    RETURN (Unquotify(v, 1));
 }
 
 

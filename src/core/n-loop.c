@@ -1039,7 +1039,7 @@ REBNATIVE(cycle)
             if (broke)
                 return nullptr;
         }
-        // No need to voidify result, it doesn't escape...
+        // No need to isotopfy result, it doesn't escape...
     } while (true);
 
     DEAD_END;

@@ -195,7 +195,7 @@ tweak :|| 'barrier on
 
 ; MATCH isn't always used with ELSE and THEN.  So its result can trigger false
 ; negatives on matches when CASE clauses and `IF MATCH` when the matched value
-; returned is falsey.  By default, make matches voidify falsey results.
+; returned is falsey.  By default, make falsey matches give ~falsey~ isotope.
 ;
 match: :match*/safe
 
