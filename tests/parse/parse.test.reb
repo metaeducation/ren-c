@@ -476,18 +476,15 @@
     (not parse? "aabb" [some [#"a" reject] to end])
 ]
 
-; !!! R3-Alpha introduced a controversial "must make progress" rule, where
-; something like an empty string does not make progress on a string parse
-; so even if it doesn't fail, it fails the whole parse.  Red has all of
-; these tests pass.  Ren-C is questioning the progress rule, believing the
-; benefit of infinite-loop-avoidance is not worth the sacrifice of logic.
+; Ren-C does not mandate that rules make progress, so matching empty strings
+; works, as it does in Red.
 [
-    (not parse? "ab" [to [""] "ab"])
+    (parse? "ab" [to [""] "ab"])
     (parse? "ab" [to ["a"] "ab"])
     (parse? "ab" [to ["ab"] "ab"])
-    (not parse? "ab" [thru [""] "ab"])
+    (parse? "ab" [thru [""] "ab"])
     (parse? "ab" [thru ["a"] "b"])
-    (not parse? "ab" [thru ["ab"] ""])
+    (parse? "ab" [thru ["ab"] ""])
 ]
 
 ; Ren-C made it possible to use quoted WORD!s in place of CHAR! or TEXT! to

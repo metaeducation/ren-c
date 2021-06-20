@@ -613,8 +613,28 @@ static REB_R Parse_One_Rule(
             // For instance, `parse [] [[[_ _ _]]]` should be able to match,
             // but we have to process the block to know for sure.
         }
-        else
+        else if (
+            (IS_TEXT(rule) or IS_BINARY(rule))
+            and (VAL_LEN_AT(rule) == 0)
+            and (ANY_STRING_KIND(P_TYPE) or P_TYPE == REB_BINARY) 
+        ){
+            // !!! The way this old R3-Alpha code was structured is now very
+            // archaic (compared to UPARSE).  But while that design stabilizes,
+            // this patch handles the explicit case of wanting to match
+            // something like:
+            //
+            //     >> parse? "ab" [thru ["ab"] ""]
+            //     == #[true]
+            //
+            // Just to show what should happen in the new model (R3-Alpha did
+            // not have that working for multiple reasons...lack of making
+            // progress in the "" rule, for one.)
+            //
+            return Init_Integer(D_OUT, pos);
+        }
+        else {
             return R_UNHANDLED;  // Other cases below assert if item is END
+        }
     }
 
     switch (KIND3Q_BYTE(rule)) {  // handle w/same behavior for all P_INPUT
