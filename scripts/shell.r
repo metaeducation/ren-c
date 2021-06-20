@@ -19,20 +19,20 @@ REBOL [
         or fetch Ren-C variables:
 
             >> extension: "txt"
-            >> shell [ls -alF *.(extension)]
-            ; acts equivalent to `ls -alF *.txt`
+            >> shell/inspect [ls -alF *.(extension)]
+            == {ls -alF *.txt}
 
         TEXT! strings will literally include their quotes, and GROUP!s imply
         quotation as well.  In order to "splice in" a TEXT! without putting
         it in quotes, use a GET-GROUP!
 
             >> command: "ls -alF"
-            >> shell [(command)]
-            ; acts equivalent to `"ls -alF"`
+            >> shell/inspect [(command)]
+            == {"ls -alF"}
 
             >> command "ls -alF"
             >> shell [:(command)]
-            ; acts equivalent to `ls -alF` (no quotes)
+            == {ls -alF}
 
         For a literal form that does not escape with quotes, ISSUE! may be
         used.  Hence `#"foo bar"` acts the same as `:("foo bar")`.
@@ -156,8 +156,15 @@ shell: func [
             file! [item]
 
             tag! [shellify-tag item]
+
+            ; !!! For the moment, slashes are left in the forward direction
+            ; in paths.  They are converted to text without quotes, and with
+            ; variable substitutions via TAG!.  This means Windows doesn't
+            ; get the variable substitution feature unless an operator like %%
+            ; were to be used.
+            ;
             path! tuple! block! [
-                file-to-local make-file/predicate item :shellify-tag
+                as issue! make-file/predicate item :shellify-tag
             ]
 
             fail ["SHELL doesn't know what this means:" mold item]
