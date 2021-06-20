@@ -50,16 +50,6 @@
 )
 
 
-; MATCHED POSTFIX
-; Checks for MATCHES of the left to the right
-
-(
-    20 = (10 + 10 matched integer!)
-)(
-    e: trap [10 + 10 matched text!]
-    e/id = 'assertion-failure
-)
-
 ; Invisibles
 [
     (assert [] true)

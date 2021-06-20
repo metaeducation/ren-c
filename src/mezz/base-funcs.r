@@ -565,31 +565,6 @@ so: enfixed func [
 tweak :so 'postpone on
 
 
-matches: enfixed redescribe [
-    {Check value using tests (match types, TRUE or FALSE, or filter action)}
-](
-    chain [:match | :then?]
-)
-
-matched: enfixed redescribe [
-    "Assert that the left hand side--when fully evaluated--MATCHES the right"
-](
-    enclose :matches func [f [frame!]] [
-        let test: :f/test  ; note DO F makes F/XXX unavailable
-        let value: :f/value  ; returned value
-
-        if not do f [
-            fail ^f make error! [
-                type: 'Script
-                id: 'assertion-failure
-                arg1: compose [(:value) matches (:test)]
-            ]
-        ]
-        return :value
-    ]
-)
-tweak :matched 'postpone on
-
 ; Rare case where a `?` variant is useful, to avoid BAD-WORD! on falsey matches
 match?: chain [:match | :value?]
 
