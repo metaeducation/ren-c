@@ -33,12 +33,16 @@ dump: function [
         ]
     ]
 
-    val-to-text: function [return: [text!] val [<opt> any-value!]] [
+    val-to-text: function [return: [text!] ^val [<opt> any-value!]] [
         case [
-            null? :val ["\null\"]
+            null? val ["; null"]
+            bad-word? val [unspaced [mold val space space "; isotope"]]
+
+            (elide val: unquote val)
+
             object? :val [unspaced ["make object! [" (summarize-obj val) "]"]]
         ] else [
-            trunc: '~void~
+            trunc: ~
             append (
                 mold/limit/truncated :val system.options.dump-size 'trunc
             ) try if trunc ["..."]
@@ -50,14 +54,14 @@ dump: function [
             refinement!  ; treat as label, /a no shift and shorter than "a"
             text! [  ; good for longer labeling when you need spaces/etc.
                 print unspaced [
-                    elide trunc: '~void~
+                    elide trunc: ~
                     mold/limit/truncated item system.options.dump-size 'trunc
                     if trunc ["..."]
                 ]
             ]
 
             word! [
-                print [to set-word! item, val-to-text get item]
+                print [to set-word! item, val-to-text get/any item]
             ]
 
             tuple! [
