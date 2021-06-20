@@ -1045,7 +1045,6 @@ void RL_rebJumps(unsigned char quotes, const void *p, va_list *vaptr)
 //
 // Simply returns the logical result, with no returned handle to release.
 //
-//
 bool RL_rebDid(unsigned char quotes, const void *p, va_list *vaptr)
 {
     ENTER_API;
@@ -1053,7 +1052,7 @@ bool RL_rebDid(unsigned char quotes, const void *p, va_list *vaptr)
     DECLARE_LOCAL (condition);
     Run_Va_May_Fail(condition, quotes, p, vaptr);  // calls va_end()
 
-    return IS_TRUTHY(condition);  // will fail() on voids
+    return IS_TRUTHY(condition);  // will fail() on BAD-WORD!s
 }
 
 
