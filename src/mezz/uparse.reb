@@ -808,7 +808,7 @@ default-combinators: make map! reduce [
         ]
 
         if '~void~ = result' [
-            fail "Can't assign invisible synthesized rule result, use ^[...]"
+            fail "Can't assign invisible synthesized rule result, use ^^[...]"
         ]
 
         assert [any [
