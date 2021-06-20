@@ -1147,6 +1147,12 @@ void Virtual_Bind_Deep_To_New_Context(
         Init_Word(word, duplicate);
         fail (Error_Dup_Vars_Raw(word));
     }
+
+    // If the user gets ahold of these contexts, we don't want them to be
+    // able to expand them...because things like FOR-EACH have historically
+    // not been robust to the memory moving.
+    //
+    SET_SERIES_FLAG(CTX_VARLIST(c), FIXED_SIZE);
 }
 
 
