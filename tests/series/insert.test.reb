@@ -31,7 +31,7 @@
 (
     a: first [(0)]
     b: make group! 0
-    insert b a
+    insert b ^a
     b == '((0))
 )
 ; text
