@@ -136,15 +136,16 @@
 
 
 ; Reskinning capabilities can remove the <const> default
-(
-    func-r2: reskinned [body [block!]] adapt :func []
-    aggregator: func-r2 [x] [data: [] append data x]
-    did all [
-        [10] = aggregator 10
-        [10 20] = aggregator 20
-    ]
-)
-
+; !!! RESKINNED is temporarily out of service, pending reworking of the way
+; functions are built from frames.
+;
+;    func-r2: reskinned [body [block!]] adapt :func []
+;    aggregator: func-r2 [x] [data: [] append data x]
+;    did all [
+;        [10] = aggregator 10
+;        [10 20] = aggregator 20
+;    ]
+;
 
 ; COMPOSE should splice with awareness of const/mutability
 (
