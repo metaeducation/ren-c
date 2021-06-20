@@ -555,7 +555,7 @@ so: enfixed func [
             arg1: compose [((:condition)) so]
         ]
     ]
-    if tail? feed [return]
+    if tail? feed [return none]
     feed: take feed
     all [block? :feed, semiquoted? 'feed] then [
         fail "Don't use literal block as SO right hand side, use ([...])"

@@ -24,7 +24,7 @@
 ; next value given
 
 (
-    '~void~ = ^ (1 = 1 so)
+    '~none~ = ^ (1 = 1 so)
 )(
     e: trap [1 = 2 so]
     e/id = 'assertion-failure
