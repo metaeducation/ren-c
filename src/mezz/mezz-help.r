@@ -156,6 +156,20 @@ help: function [
         return none
     ]
 
+    ; HELP quotes, but someone might want to use an expression, e.g.
+    ; `help (...)`.  However, enfix functions which hard quote the left would
+    ; win over a soft-quoting non-enfix function that quotes to the right.
+    ; (It is generally discouraged to make hard-quoting left enfix functions,
+    ; but they exist...e.g. DEFAULT.)  To make sure HELP DEFAULT works, HELP
+    ; must hard quote and simulate its own soft quote semantics.
+    ;
+    if match [group! get-word! get-path! get-tuple!] :topic [
+        topic: reeval topic else [
+            print "NULL is a non-valued state that cannot be put in arrays"
+            return none
+        ]
+    ]
+
     ; !!! R3-Alpha permitted "multiple inheritance" in objects, in the sense
     ; that it would blindly overwrite fields of one object with another, which
     ; wreaked havoc on the semantics of functions in unrelated objects.  It
