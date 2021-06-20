@@ -908,7 +908,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         }
 
         CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // `(1)` considered evaluative
-        CLEAR_CELL_FLAG(f->out, OUT_NOTE_STALE);  // any [(10 elide "hi")]
 
         if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP)
             Meta_Quotify(f->out);

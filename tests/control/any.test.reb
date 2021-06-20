@@ -371,3 +371,5 @@
         3 = any [all [do [comment "hi"], elide two: 2], 1 + two]
     )
 ]
+
+(10 = any [(10 elide "hi")])
