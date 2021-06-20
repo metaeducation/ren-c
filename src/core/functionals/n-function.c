@@ -738,7 +738,15 @@ REBNATIVE(inherit_meta)
     if (not m1)  // nothing to copy
         RETURN (ARG(derived));
 
-    REBCTX *m2 = Copy_Context_Shallow_Managed(m1);
+    // Often the derived function won't have its own meta information yet.  But
+    // if it was created via an AUGMENT, it will have some...only the notes
+    // and types for the added parameters, the others will be NULL.
+    //
+    REBCTX *m2 = ACT_META(VAL_ACTION(derived));
+    if (not m2) {  // doesn't have its own information
+        m2 = Copy_Context_Shallow_Managed(VAL_CONTEXT(Root_Action_Meta));
+        mutable_ACT_META(VAL_ACTION(derived)) = m2;
+    }
 
     REBLEN which = 0;
     SYMID syms[] = {SYM_PARAMETER_NOTES, SYM_PARAMETER_TYPES, SYM_0};
@@ -748,46 +756,56 @@ REBNATIVE(inherit_meta)
             CTX_ARCHETYPE(m1),
             Canon(syms[which])
         );
-        if (not val1 or IS_FALSEY(val1))
-            continue;
+        if (not val1 or IS_NULLED(val1) or Is_Unset(val1))
+            continue;  // nothing to inherit from
         if (not ANY_CONTEXT(val1))
-            fail ("Expected context in meta information");
+            fail ("Expected context in original meta information");
         
         REBCTX *ctx1 = VAL_CONTEXT(val1);
 
-        REBCTX *ctx2 = Make_Context_For_Action(
-            derived,  // the action
-            DSP,  // will weave in any refinements pushed (none apply)
-            nullptr  // !!! review, use fast map from names to indices
+        REBVAL *val2 = Select_Symbol_In_Context(
+            CTX_ARCHETYPE(m2),
+            Canon(syms[which])
         );
+        if (not val2)
+            continue;
+
+        REBCTX *ctx2;
+        if (IS_NULLED(val2) or Is_Unset(val2)) {
+            ctx2 = Make_Context_For_Action(
+                derived,  // the action
+                DSP,  // will weave in any refinements pushed (none apply)
+                nullptr  // !!! review, use fast map from names to indices
+            );
+            Init_Frame(val2, ctx2, ANONYMOUS); 
+        }
+        else if (ANY_CONTEXT(val2)) {  // already had context (e.g. augment)
+            ctx2 = VAL_CONTEXT(val2);
+        }
+        else
+            fail ("Expected context in derived meta information");
 
         const REBKEY *key_tail;
-        const REBKEY *key = CTX_KEYS(&key_tail, ctx1);
-        REBPAR *param = ACT_PARAMS_HEAD(VAL_ACTION(original));
-        REBVAR *var = CTX_VARS_HEAD(ctx1);
+        const REBKEY *key = CTX_KEYS(&key_tail, ctx2);
+        REBPAR *param = ACT_PARAMS_HEAD(VAL_ACTION(derived));
+        REBVAR *var = CTX_VARS_HEAD(ctx2);
         for (; key != key_tail; ++key, ++param, ++var) {
             if (Is_Param_Hidden(param))
                 continue;  // e.g. locals
 
+            if (not (IS_NULLED(var) or Is_Unset(var)))
+                continue;  // already set to something
+
             REBVAL *slot = Select_Symbol_In_Context(
-                CTX_ARCHETYPE(ctx2),
+                CTX_ARCHETYPE(ctx1),
                 KEY_SYMBOL(key)
             );
             if (slot)
-                Copy_Cell(slot, var);
+                Copy_Cell(var, slot);
+            else
+                Init_Nulled(var);  // don't want to leave ~unset~
         }
-
-        Init_Frame(
-            Select_Symbol_In_Context(
-                CTX_ARCHETYPE(m2),
-                Canon(syms[which])
-            ),
-            ctx2,
-            ANONYMOUS
-        );
     }
-
-    mutable_ACT_META(VAL_ACTION(derived)) = m2;
 
     RETURN (ARG(derived));
 }

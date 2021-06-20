@@ -49,7 +49,9 @@ onlify: func [
     /param [word!]
 ][
     param: default ['value]
-    adapt (augment :action [/only]) compose/deep [
+    adapt (
+        augment :action [/only "DEPRECATED: Use QUOTE, JUST, [] or ^^ instead"]
+    ) compose/deep [
         all [only, any-array? series] then [
             (param): ^(param)
         ]
