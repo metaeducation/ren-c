@@ -1066,18 +1066,25 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
     if (IS_TEXT(arg)) {
         //
-        // R3-Alpha considered `to tuple "1.2.3"` to be 1.2.3, consistent with
-        // `to path "a/b/c"` being `a/b/c`...but it allowed `to path "a b c"`
+        // R3-Alpha considered `to tuple! "1.2.3"` to be 1.2.3, consistent with
+        // `to path! "a/b/c"` being `a/b/c`...but it allowed `to path! "a b c"`
         // as well.  :-/
         //
         // Essentially, this sounds like "if it's a string, invoke the
         // scanner and then see if the thing you get back can be converted".
         // Try something along those lines for now...use LOAD so that it
-        // gets TUPLE! on "1.2.3" and a BLOCK! on both "[1 2 3]" and "1 2 3".
+        // gets [1.2.3] on "1.2.3" and a [[1 2 3]] on "[1 2 3]" and
+        // [1 2 3] on "1 2 3".
+        //
         // (Inefficient!  But just see how it feels before optimizing.)
         //
         return rebValue(
-            "as", Datatype_From_Kind(kind), "load-value", arg
+            "as", Datatype_From_Kind(kind), "catch [",
+                "parse let v: load @", arg, "[",
+                    "[any-sequence! | any-array!] end (throw first v)",
+                    "| (throw v)",  // try to convert whatever other block
+                "]",
+            "]"
         );
     }
 
