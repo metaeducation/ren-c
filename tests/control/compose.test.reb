@@ -125,12 +125,18 @@
 
 
 ; Using a GET-GROUP! will *try* to convert the composed value to a get form
+;
+; Note: string conversions to unbound words were done at one point, but have
+; been dropped, at least for the moment:
+;
+;    ([:x] = compose [:(#x)])
+;    ([:x] = compose [:("x")])
+;
+; They may be worth considering for the future.
 
 ([:x] = compose [:('x)])
 ([:x] = compose [:('x:)])
 ([:x] = compose [:(':x)])
-([:x] = compose [:(#x)])
-([:x] = compose [:("x")])
 
 ([:x/y] = compose [:( 'x/y )])
 ([:x/y] = compose [:( 'x/y: )])
