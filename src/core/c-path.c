@@ -1194,7 +1194,12 @@ REBINT CT_Sequence(REBCEL(const*) a, REBCEL(const*) b, bool strict)
       case REB_META_WORD:  // `foo/ or `foo.`
         return CT_Word(a, b, strict);
 
+      case REB_GROUP:
+      case REB_GET_GROUP:
+      case REB_META_GROUP:
       case REB_BLOCK:
+      case REB_GET_BLOCK:
+      case REB_META_BLOCK:
         return CT_Array(a, b, strict);
 
       default:

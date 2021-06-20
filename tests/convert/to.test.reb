@@ -15,7 +15,7 @@
 ([a b c] = to block! the (a b c))
 (the (a b c) = to group! [a b c])
 (the a/b/c = to path! [a b c])
-(the a/b/c = to path! the (a b c))
+(the /(a b c) = to path! the (a b c))
 
 ; strings and words can TO-convert to ISSUE!
 [
