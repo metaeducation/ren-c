@@ -108,6 +108,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
 ] [
     let line-list: _
     let line: _
+    let [eol bol]
 
     count-line-rule: [
         (
@@ -118,10 +119,9 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
         )
     ]
 
-    let [eol bol]
     parse text [
         while [bol: here to newline eol: here skip count-line-rule]
-        bol: here skip to end eol: here count-line
+        bol: here skip to end eol: here count-line-rule
         end
     ]
 
