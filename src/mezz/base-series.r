@@ -87,6 +87,17 @@ join: function [
 
     result: switch type of :value [
         block! [append base reduce .identity :value]
+        path! tuple! [
+            ;
+            ; e.g. `join 'a/b/c 'd/e/f`, need to turn the PATH! into a block
+            ; because `as path! [a b c d/e/f]` will fail
+            ;
+            if type = type of value [
+                append base as block! value
+            ] else [
+                append base ^value
+            ]
+        ]
         group! [
             fail ^base "Can't JOIN a GROUP! onto a series (use AS BLOCK!)."
         ]

@@ -137,7 +137,7 @@
 
 ((the '(1 2 3 <four>)) == requote append ''(1 2 3) <four>)
 
-('''a/b/c/d/e/f = requote join the '''a/b/c 'd/e/f)
+((the '''a/b/c/d/e/f) = requote join the '''a/b/c 'd/e/f)
 
 ((the '[1]) = (requote match-parse the '[1] [some integer!]))
 
