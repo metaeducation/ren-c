@@ -163,8 +163,8 @@
 ; and other enfix situations.
 [
     (
-        foo: function [/A [integer!] '/B [<skip> word!]] [
-            reduce [/A (try A) /B (try B)]
+        foo: function [/a [integer!] '/b [<skip> word!]] [
+            reduce [/A (try a) /B (try b)]
         ]
         foob: enfixed :foo/b
         true
