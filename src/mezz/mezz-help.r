@@ -165,10 +165,10 @@ help: function [
     ; does that manually, review.
     ;
     make-libuser: does [
-        libuser: copy system/contexts/lib
-        for-each [key val] system/contexts/user [
+        libuser: copy system.contexts.lib
+        for-each [key val] system.contexts.user [
             if set? 'val [
-               append libuser reduce [key get/any 'val]
+               append libuser reduce [key ^val]
             ]
         ]
         libuser
