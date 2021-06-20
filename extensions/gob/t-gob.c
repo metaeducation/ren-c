@@ -733,7 +733,7 @@ static REBARR *Gob_To_Array(REBGOB *gob)
         // Gobs used none (blank) historically.
         //
         if (IS_NULLED(slot))
-            Init_Bad_Word_Core(slot, Canon(SYM_NULL), CELL_MASK_NONE);
+            Init_Bad_Word(slot, SYM_NULL);
     }
 
     return arr;

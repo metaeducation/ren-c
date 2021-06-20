@@ -560,7 +560,7 @@ REBNATIVE(match_p)
         // In "safe" operation, falsey matched values return BAD-WORD! to show
         // they did match, but to avoid misleading falseness of the result.
         //
-        return Init_Curse_Word(D_OUT, SYM_FALSEY);
+        return Init_Isotope(D_OUT, SYM_FALSEY);
     }
 
     Move_Cell(D_OUT, v);  // Otherwise, input is the result
@@ -679,7 +679,7 @@ REBNATIVE(all)
         // it an isotope...but this way `all .not [null] then [<runs>]`
         //
         assert(not IS_NULLED(predicate));
-        return Init_Curse_Word(D_OUT, SYM_FALSEY);
+        return Init_Isotope(D_OUT, SYM_FALSEY);
     }
 
     return D_OUT;
@@ -747,7 +747,7 @@ REBNATIVE(any)
                 // makes `any .not [null] then [<run>]` work
                 //
                 if (not IS_BAD_WORD(D_OUT) and IS_FALSEY(D_OUT))
-                    Init_Curse_Word(D_OUT, SYM_FALSEY);
+                    Init_Isotope(D_OUT, SYM_FALSEY);
                 Abort_Frame(f);
                 return D_OUT;  // return input to the test, not result
             }

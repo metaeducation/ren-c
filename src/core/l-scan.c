@@ -2372,11 +2372,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 //
                 // BAD-WORD!s are put in blocks, are "friendly" non-isotopes.
                 //
-                Init_Bad_Word_Core(
-                    DS_PUSH(),
-                    Canon(SYM_UNSET),
-                    CELL_MASK_NONE
-                );
+                Init_Bad_Word(DS_PUSH(), SYM_UNSET);
                 break;
 
               default: {

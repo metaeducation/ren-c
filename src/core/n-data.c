@@ -628,7 +628,7 @@ void Set_Var_May_Fail(
     if (Is_Blackhole(target))  // name for a space-bearing ISSUE! ('#')
         return;
 
-    if (Is_Heavy_Nulled(setval))
+    if (Is_Nulled_Isotope(setval))
         setval = NULLED_CELL;
 
     enum Reb_Kind kind = CELL_KIND(VAL_UNESCAPED(target));
@@ -807,7 +807,7 @@ REBNATIVE(opt)
     // creating a likely error in those cases.  To get around it, OPT TRY
     //
     if (IS_NULLED(ARG(optional)))
-        return Init_Curse_Word(D_OUT, SYM_NULL);
+        return Init_Isotope(D_OUT, SYM_NULL);
 
     RETURN (ARG(optional));
 }
@@ -1615,7 +1615,7 @@ REBNATIVE(heavy) {
     Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     if (IS_NULLED(D_OUT))
-        Init_Heavy_Nulled(D_OUT);
+        Init_Isotope(D_OUT, SYM_NULL);
 
     return D_OUT;
 }

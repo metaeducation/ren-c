@@ -1610,7 +1610,7 @@ REBVAL *RL_rebRescueWith(
         if (Is_Api_Value(result))
             rebRelease(result);
 
-        Init_Curse_Word(result, SYM_ERRORED);
+        Init_Isotope(result, SYM_ERRORED);
         goto proxy_result;
     }
     else {

@@ -81,6 +81,9 @@
 #define Init_Bad_Word_Core(out,label,flags) \
     Init_Bad_Word_Untracked(TRACK_CELL_IF_DEBUG(out), (label), (flags))
 
+#define Init_Bad_Word(out,sym) \
+    Init_Bad_Word_Core((out), Canon(sym), CELL_MASK_NONE)
+
 inline static const REBSYM* VAL_BAD_WORD_LABEL(
     REBCEL(const*) v
 ){
@@ -93,12 +96,13 @@ inline static const REBSYM* VAL_BAD_WORD_LABEL(
     ID_OF_SYMBOL(VAL_BAD_WORD_LABEL(v))
 
 
-//=//// CURSE WORDS ////////////////////////////////////////////////////////=//
+//=//// BAD-WORD! ISOTOPES (or just "isotopes") ////////////////////////////=//
 
-// A "curse word" is when a BAD-WORD! does not have the friendly bit set (e.g.
-// it has been evaluated, and is not being manipulated as raw material)
+// A bad word isotope is produced by the evaluator when an ordinary BAD-WORD!
+// is evaluated.  These cannot live in blocks, and most are "unfriendly" and
+// cannot be passed as normal parameters.
 
-inline static bool Is_Curse_Word(const RELVAL *v, enum Reb_Symbol_Id sym) {
+inline static bool Is_Isotope(const RELVAL *v, enum Reb_Symbol_Id sym) {
     assert(sym != SYM_0);
     if (not IS_BAD_WORD(v))
         return false;
@@ -109,34 +113,33 @@ inline static bool Is_Curse_Word(const RELVAL *v, enum Reb_Symbol_Id sym) {
     return false;
 }
 
-#define Init_Curse_Word(out,sym) \
+#define Init_Isotope(out,sym) \
     Init_Bad_Word_Core((out), Canon(sym), CELL_FLAG_ISOTOPE)
 
 
 // ~unset~ is chosen in particular by the system to represent variables that
-// have not been  assigned.
+// have not been assigned.
 
 #define UNSET_VALUE         c_cast(const REBVAL*, &PG_Unset_Value)
-#define Init_Unset(out)     Init_Curse_Word((out), SYM_UNSET)
-#define Is_Unset(v)         Is_Curse_Word(v, SYM_UNSET)
+#define Init_Unset(out)     Init_Isotope((out), SYM_UNSET)
+#define Is_Unset(v)         Is_Isotope(v, SYM_UNSET)
 
 
 // `~void~` is treated specially by the system, to convey "invisible intent".
-// It is what `do []` evaluates to, as well as `do [comment "hi"])`.
-//
-// This is hidden by the console, though perhaps there could be better ideas
-// (like printing `; == ~void~` if the command you ran had no other output
-// printed, just so you know it wasn't a no-op?)
+// It is what `do []` evaluates to, as well as `do [comment "hi"])`.  Some
+// constructs will actually implicitly assume the invisible intent means
+// invisibility, such as `all [do [comment "hi"], 1 + 2]` being 3...despite
+// the fact that a ~void~ isotope is not generally "true or fales".
 
-#define Init_Void(out)      Init_Curse_Word((out), SYM_VOID)
-#define Is_Void(v)          Is_Curse_Word((v), SYM_VOID)
+#define Init_Void(out)      Init_Isotope((out), SYM_VOID)
+#define Is_Void(v)          Is_Isotope((v), SYM_VOID)
 
 
 // See EVAL_FLAG_INPUT_WAS_INVISIBLE for the rationale behind ~stale~, that
 // has a special relationship with ~void~.
 //
-#define Init_Stale(out)     Init_Curse_Word((out), SYM_STALE)
-#define Is_Stale(v)         Is_Curse_Word((v), SYM_STALE)
+#define Init_Stale(out)     Init_Isotope((out), SYM_STALE)
+#define Is_Stale(v)         Is_Isotope((v), SYM_STALE)
 
 
 // `~none~` is the default RETURN for when you just write something like
@@ -151,8 +154,8 @@ inline static bool Is_Curse_Word(const RELVAL *v, enum Reb_Symbol_Id sym) {
 // and you couldn't write `print [...] else [...]` if it would be sometimes
 // invisible and sometimes not.
 //
-#define Init_None(out)      Init_Curse_Word((out), SYM_NONE)
-#define Is_None(v)          Is_Curse_Word((v), SYM_NONE)
+#define Init_None(out)      Init_Isotope((out), SYM_NONE)
+#define Is_None(v)          Is_Isotope((v), SYM_NONE)
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//
@@ -185,26 +188,23 @@ inline static bool Is_Curse_Word(const RELVAL *v, enum Reb_Symbol_Id sym) {
 // it has actually gotten much easier with ^(...) behaviors.)
 //
 
-inline static REBVAL *Init_Heavy_Nulled(RELVAL *out) {
-    Init_Curse_Word(out, SYM_NULL);
+inline static REBVAL *Init_Nulled_Isotope(RELVAL *out) {
+    Init_Isotope(out, SYM_NULL);
     return cast(REBVAL*, out);
 }
 
-inline static bool Is_Light_Nulled(const RELVAL *v)
-  { return IS_NULLED(v); }
-
-inline static bool Is_Heavy_Nulled(const RELVAL *v)
-  { return Is_Curse_Word(v, SYM_NULL); }
+inline static bool Is_Nulled_Isotope(const RELVAL *v)
+  { return Is_Isotope(v, SYM_NULL); }
 
 inline static RELVAL *Decay_If_Nulled(RELVAL *v) {
-    if (Is_Curse_Word(v, SYM_NULL))
+    if (Is_Nulled_Isotope(v))
         Init_Nulled(v);
     return v;
 }
 
 inline static RELVAL *Isotopify_If_Nulled(RELVAL *v) {
     if (IS_NULLED(v))
-        Init_Heavy_Nulled(v);
+        Init_Nulled_Isotope(v);
     return v;
 }
 

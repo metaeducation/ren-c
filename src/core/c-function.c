@@ -568,7 +568,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     const REBSYM *duplicate = nullptr;
 
   blockscope {
-    REBVAL *param = Init_Curse_Word(ARR_HEAD(paramlist), SYM_ROOTVAR) + 1;
+    REBVAL *param = Init_Isotope(ARR_HEAD(paramlist), SYM_ROOTVAR) + 1;
     REBKEY *key = SER_HEAD(REBKEY, keylist);
 
     if (definitional_return_dsp != 0) {
@@ -865,7 +865,7 @@ REBACT *Make_Action(
 
     assert(GET_SERIES_FLAG(paramlist, MANAGED));
     assert(
-        Is_Curse_Word(ARR_HEAD(paramlist), SYM_ROOTVAR)  // must fill in
+        Is_Isotope(ARR_HEAD(paramlist), SYM_ROOTVAR)  // must fill in
         or CTX_TYPE(CTX(paramlist)) == REB_FRAME
     );
 
@@ -920,7 +920,7 @@ REBACT *Make_Action(
     // !!! We may have to initialize the exemplar rootvar.
     //
     REBVAL *rootvar = SER_HEAD(REBVAL, paramlist);
-    if (Is_Curse_Word(rootvar, SYM_ROOTVAR)) {
+    if (Is_Isotope(rootvar, SYM_ROOTVAR)) {
         INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, act, UNBOUND);
     }
 

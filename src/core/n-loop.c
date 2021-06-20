@@ -589,8 +589,8 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
           case LOOP_MAP_EACH:
           case LOOP_MAP_EACH_SPLICED:
-            if (IS_NULLED(les->out) or Is_Curse_Word(les->out, SYM_NULL))
-                Init_Curse_Word(les->out, SYM_NULL);  // null signals break
+            if (IS_NULLED(les->out) or Is_Isotope(les->out, SYM_NULL))
+                Init_Isotope(les->out, SYM_NULL);  // null signals break
             else if (
                 IS_BAD_WORD(les->out)
                 and GET_CELL_FLAG(les->out, ISOTOPE)
@@ -776,7 +776,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
       case LOOP_MAP_EACH:
       case LOOP_MAP_EACH_SPLICED:
-        if (Is_Light_Nulled(D_OUT)) {  // BREAK, so *must* return null
+        if (IS_NULLED(D_OUT)) {  // BREAK, so *must* return null
             DS_DROP_TO(dsp_orig);
             return nullptr;
         }

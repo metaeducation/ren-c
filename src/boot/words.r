@@ -36,7 +36,7 @@ datatypes
 
 ; === NAMED BAD WORDS ===
 ; A new Ren-C feature is that voids are interned like WORD!, so they can be
-; more communicative.  These are standard symbols passed to Init_Curse_Word().
+; more communicative.  These are standard symbols passed to Init_Isotope().
 ;
 void
 stale  ; for non-/VOID DO, e.g. `(1 + 2 do [comment "hi"])` is ~stale~
