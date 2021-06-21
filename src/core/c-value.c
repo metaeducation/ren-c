@@ -187,7 +187,7 @@ void* Probe_Core_Debug(
 
         if (SER_WIDE(s) == sizeof(REBYTE)) {
             if (IS_SER_UTF8(s)) {
-                if (IS_METABOL(s))
+                if (IS_SYMBOL(s))
                     Probe_Print_Helper(p, expr, "WORD! series", file, line);
                 else
                     Probe_Print_Helper(p, expr, "STRING! series", file, line);

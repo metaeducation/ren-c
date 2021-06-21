@@ -431,7 +431,7 @@ inline static void INIT_VAL_FRAME_PHASE(RELVAL *v, REBACT *phase) {
 
 inline static REBACT *VAL_FRAME_PHASE(REBCEL(const*) v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
-    if (not s or IS_METABOL(s))  // ANONYMOUS or label, not a phase
+    if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_ACTION(VAL_CONTEXT(v));  // so use archetype
     return ACT(s);  // cell has its own phase, return it
 }
@@ -439,12 +439,12 @@ inline static REBACT *VAL_FRAME_PHASE(REBCEL(const*) v) {
 inline static bool IS_FRAME_PHASED(REBCEL(const*) v) {
     assert(CELL_KIND(v) == REB_FRAME);
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
-    return s and not IS_METABOL(s);
+    return s and not IS_SYMBOL(s);
 }
 
 inline static option(const REBSYM*) VAL_FRAME_LABEL(const RELVAL *v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
-    if (s and IS_METABOL(s))  // label in value
+    if (s and IS_SYMBOL(s))  // label in value
         return SYM(s);
     return ANONYMOUS;  // has a phase, so no label (maybe findable if running)
 }

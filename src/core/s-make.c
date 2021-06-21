@@ -110,7 +110,7 @@ REBSTR *Append_Codepoint(REBSTR *dst, REBUNI c)
     }
 
     assert(c <= MAX_UNI);
-    assert(not IS_METABOL(dst));
+    assert(not IS_SYMBOL(dst));
 
     REBLEN old_len = STR_LEN(dst);
 
@@ -223,7 +223,7 @@ void Append_Spelling(REBSTR *dst, const REBSTR *spelling)
 //
 void Append_String_Limit(REBSTR *dst, REBCEL(const*) src, REBLEN limit)
 {
-    assert(not IS_METABOL(dst));
+    assert(not IS_SYMBOL(dst));
     assert(ANY_UTF8_KIND(CELL_KIND(src)));
 
     REBLEN len;

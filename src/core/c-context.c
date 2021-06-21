@@ -1069,7 +1069,7 @@ void Assert_Context_Core(REBCTX *c)
 
     REBLEN n;
     for (n = 1; n < vars_len; n++, var++, key++) {
-        if (not IS_METABOL(*key))
+        if (not IS_SYMBOL(*key))
             panic (*key);
 
       #ifdef DEBUG_TERM_ARRAYS

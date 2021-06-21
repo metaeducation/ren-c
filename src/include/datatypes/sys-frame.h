@@ -580,7 +580,7 @@ inline static void Begin_Action_Core(
     f->arg = f->rootvar + 1;
 
     assert(IS_OPTION_TRASH_DEBUG(f->label));  // ACTION! makes valid
-    assert(not label or IS_METABOL(unwrap(label)));
+    assert(not label or IS_SYMBOL(unwrap(label)));
     f->label = label;
   #if defined(DEBUG_FRAME_LABELS) // helpful for looking in the debugger
     f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
@@ -750,7 +750,7 @@ inline static void Push_Action(
 
 
 inline static void Drop_Action(REBFRM *f) {
-    assert(not f->label or IS_METABOL(unwrap(f->label)));
+    assert(not f->label or IS_SYMBOL(unwrap(f->label)));
 
     if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);

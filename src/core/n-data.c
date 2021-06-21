@@ -1376,7 +1376,7 @@ REBNATIVE(as)
             if (VAL_INDEX(v) != 0)  // can't reuse non-head series AS WORD!
                 goto intern_utf8;
 
-            if (IS_METABOL(s)) {
+            if (IS_SYMBOL(s)) {
                 //
                 // This string's content was already frozen and checked, e.g.
                 // the string came from something like `as text! 'some-word`
@@ -1408,7 +1408,7 @@ REBNATIVE(as)
                     fail (Error_Alias_Constrains_Raw());
 
             const REBSTR *str;
-            if (IS_METABOL(bin))
+            if (IS_SYMBOL(bin))
                 str = STR(bin);
             else {
                 // !!! There isn't yet a mechanic for interning an existing

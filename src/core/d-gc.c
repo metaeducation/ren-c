@@ -62,7 +62,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
     if (
         IS_BINDABLE_KIND(heart)
         and (binding = BINDING(v))
-        and not IS_METABOL(binding)
+        and not IS_SYMBOL(binding)
         and NOT_SERIES_FLAG(binding, INACCESSIBLE)
     ){
         if (not IS_SER_ARRAY(binding))
