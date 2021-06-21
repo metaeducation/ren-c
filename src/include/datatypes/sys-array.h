@@ -75,12 +75,8 @@ inline static bool Has_File_Line(const REBARR *a) {
 }
 
 
-// HEAD, TAIL, and LAST refer to specific value pointers in the array.  An
-// empty array should have an END marker in its head slot, and since it has
-// no last value then ARR_LAST should not be called (this is checked in
-// debug builds).  A fully constructed array should always have an END
-// marker in its tail slot, which is one past the last position that is
-// valid for writing a full REBVAL.
+// HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
+// empty arrays have no "last" value then ARR_LAST should not be called on it.
 
 inline static RELVAL *ARR_AT(const_if_c REBARR *a, REBLEN n)
   { return SER_AT(RELVAL, a, n); }
@@ -133,17 +129,9 @@ inline static REBARR *Singular_From_Cell(const RELVAL *v) {
     return singular;
 }
 
-// As with an ordinary REBSER, a REBARR has separate management of its length
-// and its terminator.  Many routines seek to choose the precise moment to
-// sync these independently for performance reasons (for better or worse).
-//
 inline static REBLEN ARR_LEN(const REBARR *a)
   { return SER_USED(a); }
 
-
-inline static void RESET_ARRAY(REBARR *a) {
-    SET_SERIES_LEN(a, 0);
-}
 
 
 //

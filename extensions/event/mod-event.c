@@ -436,7 +436,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
   post_wait_loop:
 
     if (not did_port_action) {  // timeout
-        RESET_ARRAY(VAL_ARRAY_KNOWN_MUTABLE(waked));  // just reset the waked list
+        SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(waked), 0);  // !!! Reset_Array?
         return nullptr;
     }
 
@@ -453,7 +453,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
     Copy_Cell(D_OUT, sieved);
     rebRelease(sieved);
 
-    RESET_ARRAY(VAL_ARRAY_KNOWN_MUTABLE(waked));  // clear waked list
+    SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(waked), 0);  // !!! Reset_Array?
 
     if (REF(all))
         return D_OUT;  // caller wants all the ports that waked us
