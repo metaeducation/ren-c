@@ -852,7 +852,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 and kind_byte != REB_NULL
                 and not IS_QUOTED_KIND(kind_byte)
             ){
-                fail ("Literal arguments must be quoted!, bad-word!, or null");
+                fail ("^META arguments must be quoted!, bad-word!, or null");
             }
         }
         else if (kind_byte == REB_BAD_WORD and GET_CELL_FLAG(f->arg, ISOTOPE))

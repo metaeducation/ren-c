@@ -479,12 +479,46 @@ inline static bool Typecheck_Including_Constraints(
         return (ts_out & FLAGIT_KIND(VAL_TYPE(v))) != 0;
     }
 
-    if (TYPE_CHECK(param, VAL_TYPE(v)))
+    // We do an adjustment of the argument to accommodate meta parameters,
+    // which check the unquoted type.  But what's built for the frame must be
+    // quoted--e.g. MAKE FRAME! or specialized, since isotopes can't be passed
+    // legally in frames.
+    //
+    enum Reb_Kind kind;
+
+    if (VAL_PARAM_CLASS(param) == REB_P_META) {
+        if (IS_BAD_WORD(v)) {
+            assert(Is_Void(v) or NOT_CELL_FLAG(v, ISOTOPE));
+            return true;  // all META parameters take BAD-WORD! isotopes
+        }
+        else if (IS_NULLED(v)) {
+            kind = REB_NULL;  // meaningful to check <opt> for ^META
+        }
+        else {
+            assert(IS_QUOTED(v));  // must be quoted otherwise
+            if (VAL_NUM_QUOTES(v) > 1)
+                kind = REB_QUOTED;
+            else
+                kind = CELL_KIND(VAL_UNESCAPED(v));
+        }
+    }
+    else {
+        kind = VAL_TYPE(v);
+    }
+
+    if (TYPE_CHECK(param, kind))
         return true;
+
+    // !!! Predicates check more complex properties than just the kind, and
+    // so will mess up on meta parameters.  All of this needs review, but
+    // the main point is to realize that a frame built for a meta parameter
+    // has already "leveled up" and removed isotope status and added quotes,
+    // so the type checking must effectively unquote (if not actually do so,
+    // which may be the easiest approach)
 
     if (
         TYPE_CHECK(param, REB_TS_REFINEMENT)
-        and IS_PATH(v)
+        and kind == REB_PATH
         and IS_REFINEMENT(v)
     ){
         return true;
