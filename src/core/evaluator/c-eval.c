@@ -1456,25 +1456,43 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     //=//// THE! ///////////////////////////////////////////////////////////=//
     //
-    // Acts just like THE, useful in particular to put in API strings to
+    // Acts mostly like THE, useful in particular to put in API strings to
     // indicate the coming variadic slot is to be taken as-is:
     //
     //    >> @ x
     //    == x
+    //
+    // The exception is that @ does not accept BAD-WORD!s, *except* for ~null~,
+    // which it turns into true NULL.
+    //
+    //     >> @ ~null~
+    //     ; null
+    //
+    // This is done as a convenience for the API so people can write:
+    //
+    //     rebElide("append block try @", value_might_be_null);
+    //
+    // ...instead of:
+    //
+    //     rebElide("append block try", rebQ(value_might_be_null));
+    //
+    // Because the API machinery will put a plain `~null~` into the stream as
+    // a surrogate for a NULL instead of asserting/erroring.  If you know that
+    // what you are dealing with might be a BAD-WORD!, then you should use
+    // rebQ() instead...and if you're sure it's not a real NULL, then you can
+    // use THE.
 
       case REB_THE:
         if (IS_END(f_next))
             fail ("@ hit end of input");
         Inertly_Derelativize_Inheriting_Const(f->out, f_next, f->feed);
         
-        // Particularly in the API, we want the case of `@ ~null~` to give
-        // something that can be operated on as if it were falsey/null.
-        // Consider if this distortion should apply to ~null~ only.  If people
-        // don't like this behavior they can use THE as a function.
-        //
         if (IS_BAD_WORD(f->out)) {
             assert(NOT_CELL_FLAG(f->out, ISOTOPE));
-            SET_CELL_FLAG(f->out, ISOTOPE);
+            if (VAL_BAD_WORD_ID(f->out) == SYM_NULL)
+                Init_Nulled(f->out);
+            else
+                fail ("@ can only accept the BAD-WORD! of ~NULL~ to make NULL");
         }
 
         Fetch_Next_Forget_Lookback(f);  // advances next
