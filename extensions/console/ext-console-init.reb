@@ -530,7 +530,7 @@ ext-console-impl: func [
         ; something like that) then whoever broke into the REPL takes
         ; care of that.
         ;
-        assert [result = ~start~]
+        assert [result = '~startup~]
         any [
             unset? 'system/console
             not system/console

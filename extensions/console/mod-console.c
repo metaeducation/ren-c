@@ -281,7 +281,7 @@ REBNATIVE(console)
     }
     else {
         code = rebBlank();
-        result = rebValue("'~start~");  // signal starting
+        result = rebValue("'~startup~");  // signal starting
     }
 
     while (true) {
