@@ -107,7 +107,7 @@ load-all: :load/all
 
 
 any-inert!: make typeset! [
-    any-string! binary! char! any-context! time! date!
+    any-string! binary! char! any-context! time! date! any-number!
 ]
 
 ; The ^ is legal in words, so we're able to make a ^ operator that puts things

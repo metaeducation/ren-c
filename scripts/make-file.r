@@ -124,7 +124,7 @@ make-file-block-parts: func [
             ]
 
             integer! [
-                keep to text! item
+                keep item
             ]
 
             file! [
