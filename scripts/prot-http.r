@@ -414,7 +414,7 @@ check-response: function [port] [
             ]
             all [not res, state/mode = 'ready] then [
                 all [
-                    find [get head] spec/method else [all [
+                    find [get head] ^spec/method else [all [
                         info/response-parsed = 'see-other
                         spec/method: 'get
                     ]]
@@ -513,8 +513,8 @@ do-redirect: func [
     ]
 
     new-uri: decode-url new-uri
-    if not find new-uri 'port-id [
-        switch new-uri/scheme [
+    if not find new-uri [port-id] [
+        switch noquote new-uri/scheme [  ; !!! Scheme is quoted
             'https [append new-uri [port-id: 443]]
             'http [append new-uri [port-id: 80]]
             fail ["Unknown scheme:" new-uri/scheme]
@@ -522,7 +522,7 @@ do-redirect: func [
     ]
 
     new-uri: construct/with/only new-uri port/scheme/spec
-    if not find [http https] new-uri/scheme [
+    if not find [http https] new-uri/scheme [  ; !!! scheme is quoted
         port/error: make-http-error
             {Redirect to a protocol different from HTTP or HTTPS not supported}
         return state/awake make event! [type: 'error port: port]
