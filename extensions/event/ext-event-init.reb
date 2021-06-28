@@ -49,8 +49,8 @@ sys/make-scheme [
     ][
         waked: sport/data ; The wake list (pending awakes)
 
-        all [only | not block? ports] then [
-            return blank ; short cut for a pause
+        all [only, not block? ports] then [
+            return blank  ; short cut for a pause
         ]
 
         ; Process all events (even if no awake ports)
@@ -73,7 +73,6 @@ sys/make-scheme [
                     ;
                     ; Add port to wake list:
                     ;
-                    ** -- /system-waked port/spec/ref
                     if not find waked port [append waked port]
                 ]
                 n-event: n-event + 1
