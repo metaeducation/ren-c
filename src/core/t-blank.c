@@ -162,14 +162,60 @@ void MF_Handle(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 //  CT_Handle: C
 //
+// !!! Comparing handles is something that wasn't in R3-Alpha and wasn't
+// specially covered by Cmp_Value() in R3-Alpha...it fell through to the
+// `default:` that just returned a "difference" of 0, so all handles were
+// equal.  Ren-C eliminated the default case and instead made comparison of
+// handles an error...but that meant comparing objects that contained
+// fields that were handles an error.  This meant code looking for "equal"
+// PORT!s via FIND did not work.  This raises a larger issue about sameness
+// vs. equality that should be studied.
+//
 REBINT CT_Handle(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
-    // Would it be meaningful to allow user code to compare HANDLE!?
-    //
-    UNUSED(a);
-    UNUSED(b);
     UNUSED(strict);
-    fail ("Currently comparing HANDLE! types is not allowed.");
+
+    // Shared handles are equal if their nodes are equal.  (It may not make
+    // sense to have other ideas of equality, e.g. if two nodes incidentally
+    // point to the same thing?)
+    //
+    if (GET_CELL_FLAG(a, FIRST_IS_NODE)) {
+        if (NOT_CELL_FLAG(b, FIRST_IS_NODE))
+            return 1;
+
+        if (VAL_NODE1(a) == VAL_NODE1(b))
+            return 0;
+
+        return VAL_NODE1(a) > VAL_NODE1(b) ? 1 : -1;
+    }
+    else if (GET_CELL_FLAG(b, FIRST_IS_NODE))
+        return -1;
+
+    // There is no "identity" when it comes to a non-shared handles, so we
+    // can only compare the pointers.
+    //
+    if (Is_Handle_Cfunc(a)) {
+        if (not Is_Handle_Cfunc(b))
+            return 1;
+
+        if (VAL_HANDLE_CFUNC(a) == VAL_HANDLE_CFUNC(b))
+            return 0;
+
+        return VAL_HANDLE_CFUNC(a) > VAL_HANDLE_CFUNC(b) ? 1 : -1;
+    }
+    else if (Is_Handle_Cfunc(b))
+        return -1;
+
+    if (VAL_HANDLE_POINTER(REBYTE, a) == VAL_HANDLE_POINTER(REBYTE, b)) {
+        if (VAL_HANDLE_LEN(a) == VAL_HANDLE_LEN(b))
+            return 0;
+
+        return VAL_HANDLE_LEN(a) > VAL_HANDLE_LEN(b) ? 1 : -1;
+    }
+
+    return VAL_HANDLE_POINTER(REBYTE, a) > VAL_HANDLE_POINTER(REBYTE, b)
+        ? 1
+        : -1;
 }
 
 
