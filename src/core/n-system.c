@@ -63,7 +63,7 @@ REBNATIVE(quit)
         // This returns a BAD-WORD! if there is no arg, in sync with RETURN that
         // has no arg.  But labels it ~quit~.
         //
-        Init_Isotope(ARG(value), SYM_QUIT);
+        Init_Bad_Word(ARG(value), SYM_QUIT);
     }
 
     return Init_Thrown_With_Label(D_OUT, ARG(value), NATIVE_VAL(quit));
