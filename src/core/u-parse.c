@@ -2728,10 +2728,12 @@ REBNATIVE(parse_p)
         and IS_BLOCK(rules_at + 1)
     ){
         REBCTX *frame_ctx = Context_For_Frame_May_Manage(frame_);
+        DECLARE_LOCAL (specific);
+        Derelativize(specific, rules_at + 1, P_RULE_SPECIFIER);
         return rebValue(
             "let temp",
             "let f: copy", CTX_ARCHETYPE(frame_ctx),
-            "f.rules: [temp: collect", rules_at + 1, "]",
+            "f.rules: [temp: collect", specific, "]",
             "do f",
             "temp"
         );
