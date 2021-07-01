@@ -157,7 +157,7 @@ usage: func [
         REBOL script.reb
         REBOL -s script.reb
         REBOL script.reb 10:30 test@example.com
-        REBOL --do "print 1 + 1"
+        REBOL --do "print [1 + 1]"
         #!/sbin/REBOL -cs
 
     Console (no script/arguments or Standard option used):
