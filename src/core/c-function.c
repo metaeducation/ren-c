@@ -680,10 +680,21 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         REBVAL *dest = SPECIFIC(rootvar) + 1;
         const RELVAL *param = ARR_AT(paramlist, 1);
 
+        if (definitional_return_dsp != 0) {
+            assert(flags & MKF_RETURN);
+            ++param;
+
+            Copy_Cell(dest, TYPES_SLOT(definitional_return_dsp));
+            ++dest;
+        }
+
         REBDSP dsp = dsp_orig + 8;
         for (; dsp <= DSP; dsp += 4) {
             STKVAL(*) types = TYPES_SLOT(dsp);
             assert(IS_NULLED(types) or IS_BLOCK(types));
+
+            if (dsp == definitional_return_dsp)
+                continue;  // was added to the head of the list already
 
             Copy_Cell(dest, types);
             if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN))
@@ -718,10 +729,21 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         const RELVAL *param = ARR_AT(paramlist, 1);
         REBVAL *dest = SPECIFIC(rootvar) + 1;
 
+        if (definitional_return_dsp != 0) {
+            assert(flags & MKF_RETURN);
+            ++param;
+
+            Copy_Cell(dest, NOTES_SLOT(definitional_return_dsp));
+            ++dest;
+        }
+
         REBDSP dsp = dsp_orig + 8;
         for (; dsp <= DSP; dsp += 4) {
             STKVAL(*) notes = NOTES_SLOT(dsp);
             assert(IS_TEXT(notes) or IS_NULLED(notes));
+
+            if (dsp == definitional_return_dsp)
+                continue;  // was added to the head of the list already
 
             Copy_Cell(dest, notes);
 

@@ -73,3 +73,17 @@
         50 = two-a-plus-six-plus-four-c/c 2 10
     ]
 )
+
+; Check to see that AUGMENT of the help expands it.
+[(
+    did all [
+        orig: func ["description" a "a" /b "b"] []
+        aug: augment :orig [c "c" /d "d"]
+        m: meta-of :aug
+        m.description = null  ; does not currently keep description
+        m.parameter-notes.a = "a"
+        m.parameter-notes.b = "b"
+        m.parameter-notes.c = "c"
+        m.parameter-notes.d = "d"
+    ]
+)]
