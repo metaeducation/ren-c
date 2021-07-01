@@ -397,6 +397,21 @@
         ]
         str = "(AA)"
     ]
+)(
+    s: {a}
+    did all [
+        null = uparse s [opt change "b" ("x")]
+        s = {a}
+    ]
+)(
+    s: {aba}
+    did all [
+        '~changed~ = ^ uparse s [while [
+            opt change "b" ("x")
+            skip
+        ]]
+        s = {axa}
+    ]
 )]
 
 

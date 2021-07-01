@@ -1265,7 +1265,7 @@ default-combinators: make map! reduce [
     'skip combinator [
         {Skip one series element if available}
         return: "Should be invisible (handling TBD)"
-            [<invisible>]
+            [<opt> <invisible>]
     ][
         if tail? input [return null]
         set remainder next input
