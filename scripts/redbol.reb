@@ -1081,15 +1081,14 @@ xor: emulate [enfixed :difference]
 mod: emulate [:modulo]  ; MOD is enfix in Ren-C, MODULO still prefix
 
 ; Ren-C NULL means no branch ran, Rebol2 this is communicated by #[none]
-; Ren-C ~branched~ when branch ran w/null result, Rebol2 calls that #[unset]
 ;
 denuller: helper [
     func [action [action!]] [
         chain [
             :action
                 |
-            func [x] [
-                get/any 'x else '_
+            func [^x] [  ; needs to be META to handle ~none~ isotopes/etc.
+                x then [unquote x] else [_]
             ]
         ]
     ]
