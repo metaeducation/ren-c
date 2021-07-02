@@ -1616,6 +1616,12 @@ parsify: func [
     ; this cannot be abstracted (beyond the GET-GROUP! method above), e.g.
     ; you can't say `s: 'some, parse "aaa" [s "a"]`
     ;
+    ; !!! Should there be WORD!, TUPLE!, and PATH! combinators?  This would
+    ; slow things down through a double-dispatch.  However, it would make it
+    ; easier to make subtly hooked behaviors.  A particular case comes up that
+    ; for Rebol2/R3-Alpha PARSE emulation, PATH!s fetch rules that live in
+    ; objects...while Ren-C doesn't want that.
+    ;
     case [
         word? :r [
             if let c: select state.combinators r [
@@ -1624,6 +1630,10 @@ parsify: func [
                 set advanced rules  ; !!! Should `[:advanced]: ...` be ok?
                 return make action! f
             ]
+            r: get r else [fail [r "is NULL, not legal in UPARSE"]]
+        ]
+
+        tuple? :r [
             r: get r else [fail [r "is NULL, not legal in UPARSE"]]
         ]
 
@@ -1673,28 +1683,35 @@ parsify: func [
                 ]
 
                 [f rules]: combinatorize/value rules state :c :action
+
+                set advanced rules  ; !!! Should `[:advanced]: ...` be ok?
+                return make action! f
             ]
-            else [
-                let word: ensure word! first r
-                if not let c: select state.combinators word [
-                    fail ["Unknown combinator:" word]
-                ]
+
+            ; !!! This hack was added to make /ONLY work; it only works
+            ; for refinements with no arguments by looking at what's in
+            ; the path when it doesn't end in /.  Now /ONLY is not used.
+            ; Review general mechanisms for refinements on combinators.
+            ;
+            let word: ensure word! first r
+            if let c: select state.combinators word [
                 [f rules]: combinatorize rules state :c
 
-                ; !!! This hack was added to make /ONLY work; it only works
-                ; for refinements with no arguments by looking at what's in
-                ; the path when it doesn't end in /.  Now /ONLY is not used.
-                ; Review general mechanisms for refinements on combinators.
-                ;
                 for-each refinement next as block! r [
                     if not blank? refinement [
                         f.(refinement): #
                     ]
                 ]
+
+                set advanced rules  ; !!! Should `[:advanced]: ...` be ok?
+                return make action! f
             ]
 
-            set advanced rules  ; !!! Should `[:advanced]: ...` be ok?
-            return make action! f
+            ; !!! Originally this would just say "unknown combinator" at this
+            ; point, but for compatibility with historical Rebol we handle
+            ; paths in UPARSE for now as being gotten as if they were tuples.
+            ;
+            r: get r else [fail [r "is NULL, not legal in UPARSE"]]
         ]
 
         ; !!! Here is where we would let GET-PATH! and GET-WORD! be used to
