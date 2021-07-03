@@ -273,16 +273,21 @@
 (not strict-equal? 10% + 10% + 10% 30%)
 ; symmetry
 (equal? strict-equal? 10% + 10% + 10% 30% strict-equal? 30% 10% + 10% + 10%)
-; date!; approximate equality
-(not strict-equal? 2-Jul-2009 2-Jul-2009/22:20)
-; symmetry
-(equal? strict-equal? 2-Jul-2009 2-Jul-2009/22:20 strict-equal? 2-Jul-2009/22:20 2-Jul-2009)
-; missing time = 00:00:00+00:00, by time compatibility standards
-(not strict-equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00)
-; symmetry
-(equal? strict-equal? 2-Jul-2009 2-Jul-2009/00:00 strict-equal? 2-Jul-2009/00:00 2-Jul-2009)
-; no timezone math in date!
-(not strict-equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00)
+
+('invalid-compare = pick trap [strict-equal? 2-Jul-2009 2-Jul-2009/22:20] 'id)
+('invalid-compare = pick trap [
+    equal? strict-equal? 2-Jul-2009 2-Jul-2009/22:20 strict-equal? 2-Jul-2009/22:20 2-Jul-2009
+] 'id)
+('invalid-compare = pick trap [
+    strict-equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
+] 'id)
+('invalid-compare = pick trap [
+    equal? strict-equal? 2-Jul-2009 2-Jul-2009/00:00 strict-equal? 2-Jul-2009/00:00 2-Jul-2009
+] 'id)
+('invalid-compare = pick trap [
+    strict-equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
+] 'id)
+
 ; time!
 (strict-equal? 00:00 00:00)
 ; char!; symmetry

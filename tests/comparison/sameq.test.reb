@@ -287,16 +287,21 @@
 (not same? 10% + 10% + 10% 30%)
 ; symmetry
 (equal? same? 10% + 10% + 10% 30% same? 30% 10% + 10% + 10%)
-; date!; approximate equality
-(not same? 2-Jul-2009 2-Jul-2009/22:20)
-; symmetry
-(equal? same? 2-Jul-2009 2-Jul-2009/22:20 same? 2-Jul-2009/22:20 2-Jul-2009)
-; missing time is considered a difference
-(not same? 2-Jul-2009 2-Jul-2009/00:00:00+00:00)
-; symmetry
-(equal? not same? 2-Jul-2009 2-Jul-2009/00:00 not same? 2-Jul-2009/00:00 2-Jul-2009)
-; no timezone math
-(not same? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00)
+
+('invalid-compare = pick trap [not same? 2-Jul-2009 2-Jul-2009/22:20] 'id)
+('invalid-compare = pick trap [
+    equal? same? 2-Jul-2009 2-Jul-2009/22:20 same? 2-Jul-2009/22:20 2-Jul-2009
+] 'id)
+('invalid-compare = pick trap [
+    not same? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
+] 'id)
+('invalid-compare = pick trap [
+    equal? not same? 2-Jul-2009 2-Jul-2009/00:00 not same? 2-Jul-2009/00:00 2-Jul-2009
+] 'id)
+('invalid-compare = pick trap [
+    same? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
+] 'id)
+
 ; time!
 (same? 00:00 00:00)
 ; missing components are 0

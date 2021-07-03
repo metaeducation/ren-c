@@ -108,8 +108,18 @@
     (null = date-100/zone)
     (null = date-100/time)
 
-    (not equal? date-110 date-100)
-    (not equal? date-111 date-100)
+    ; !!! In Brett's original tests the EQUAL? test would allow comparisons
+    ; to be made for equality between things with time zones and without, and
+    ; say they were not equal.  This might be as misleading as doing a
+    ; comparison for greater or less than...if the date component is the same
+    ; but one has a time of 00:00 in the 00:00 time zone, then the intent
+    ; might have been for them to be equal.  It's better to make them match
+    ; in precision before saying one way or another.  In either case, the
+    ; comparison machinery can't tell if you're doing a test for equality or
+    ; otherwise because it is only returning -1, 0, or 1 at this time.
+    ;
+    ('invalid-compare = pick trap [equal? date-110 date-100] 'id)
+    ('invalid-compare = pick trap [equal? date-111 date-100] 'id)
 
     ;
     ; Math
@@ -117,14 +127,14 @@
     (0 = subtract date-111 date-111)
     (0 = subtract date-110 date-110)
     (0 = subtract date-100 date-100)
-    ;('invalid-compare = pick trap [subtract date-111 date-110] 'id)
-    ;('invalid-compare = pick trap [subtract date-110 date-100] 'id)
+    ('invalid-compare = pick trap [subtract date-111 date-110] 'id)
+    ('invalid-compare = pick trap [subtract date-110 date-100] 'id)
 
     (0:00 = difference date-111 date-111)
     (0:00 = difference date-110 date-110)
-    ;('invalid-compare = pick trap [difference date-111 date-110] 'id)
-    ;('invalid-compare = pick trap [difference date-110 date-100] 'id)
-    ;('invalid-compare = pick trap [difference date-100 date-100] 'id)
+    ('invalid-compare = pick trap [difference date-111 date-110] 'id)
+    ('invalid-compare = pick trap [difference date-110 date-100] 'id)
+    ('invalid-compare = pick trap [difference date-100 date-100] 'id)
 
     (date-100 <= date-100)
     (date-110 <= date-110)
@@ -207,8 +217,18 @@
         same? d date-111
     )
 
-    (  ; Set zone without time.
+    ; !!! Originally Brett made it so setting the zone without a time was an
+    ; error.  However, it could also be argued that if you are setting the
+    ; zone on something with no time component that making the time component
+    ; 00:00:00 is expedient.
+    ;
+    (
         d: date-100
-        error? trap [d/zone: 10:00]
+        d/zone: 10:00
+        did all [
+            d/date = date-100/date
+            d/time = 0:00
+            d/zone = 10:00
+        ]
     )
 ]

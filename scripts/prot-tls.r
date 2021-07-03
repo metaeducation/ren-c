@@ -495,7 +495,8 @@ client-hello: func [
     ;     opaque random_bytes[28];
     ; } Random;
     ;
-    ctx/client-random: to-4bin to-integer difference now/precise 1-Jan-1970
+    let epoch: 1-Jan-1970/0:00+0:00
+    ctx/client-random: to-4bin to-integer difference now/precise epoch
     random/seed now/time/precise
     repeat 28 [append ctx/client-random (random-secure 256) - 1]
 

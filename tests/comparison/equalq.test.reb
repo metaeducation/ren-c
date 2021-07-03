@@ -367,19 +367,30 @@
 ; percent! approximate equality symmetry
 (equal? equal? 10% + 10% + 10% 30% equal? 30% 10% + 10% + 10%)
 (equal? 2-Jul-2009 2-Jul-2009)
+
 ; date! doesn't ignore time portion
-(not equal? 2-Jul-2009 2-Jul-2009/22:20)
-(equal? equal? 2-Jul-2009 2-Jul-2009/22:20 equal? 2-Jul-2009/22:20 2-Jul-2009)
+('invalid-compare = pick trap [
+    not equal? 2-Jul-2009 2-Jul-2009/22:20
+] 'id)
+('invalid-compare = pick trap [
+    equal? equal? 2-Jul-2009 2-Jul-2009/22:20 equal? 2-Jul-2009/22:20 2-Jul-2009
+] 'id)
 
 ; R3-Alpha considered date! missing time and zone = 00:00:00+00:00.  But
 ; in Ren-C, dates without a time are semantically distinct from a date with
 ; a time at midnight.
 ;
-(not equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00)
+('invalid-compare = pick trap [
+    equal? 2-Jul-2009 2-Jul-2009/00:00:00+00:00
+] 'id)
 
-(equal? equal? 2-Jul-2009 2-Jul-2009/00:00 equal? 2-Jul-2009/00:00 2-Jul-2009)
-; Timezone math in date!
-(equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00)
+('invalid-compare = pick trap [
+    equal? equal? 2-Jul-2009 2-Jul-2009/00:00 equal? 2-Jul-2009/00:00 2-Jul-2009
+] 'id)
+('invalid-compare = pick trap [
+    equal? 2-Jul-2009/22:20 2-Jul-2009/20:20-2:00
+] 'id)
+
 (equal? 00:00 00:00)
 ; time! missing components are 0
 (equal? 0:0 00:00:00.0000000000)

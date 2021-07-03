@@ -116,7 +116,7 @@ REBNATIVE(now)
         RESET_VAL_HEADER(D_OUT, REB_TIME, CELL_MASK_NONE);
     }
     else if (REF(weekday))
-        n = Week_Day(VAL_DATE(D_OUT));
+        n = Week_Day(D_OUT);
     else if (REF(yearday))
         n = Julian_Date(VAL_DATE(D_OUT));
     else if (REF(year))

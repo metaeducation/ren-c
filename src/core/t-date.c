@@ -32,8 +32,8 @@
 static REBCTX *Error_Bad_Date_Compare(REBCEL(const*) a, REBCEL(const*) b)
 {
     return Error_Invalid_Compare_Raw(
-        rebUnrelativize(cast(const RELVAL*, a)),
-        rebUnrelativize(cast(const RELVAL*, b))
+        cast(const REBVAL*, a),
+        cast(const REBVAL*, b)
     );
 }
 
@@ -97,7 +97,10 @@ REBINT CT_Date(REBCEL(const*) a, REBCEL(const*) b, bool strict)
     // https://forum.rebol.info/t/comparison-semantics/1318
     //
 
-    REBINT days_diff = Days_Between_Dates(VAL_DATE(a), VAL_DATE(b));
+    REBINT days_diff = Days_Between_Dates(
+        cast(const REBVAL*, a),
+        cast(const REBVAL*, b)
+    );
     if (days_diff == 0)
         return days_diff;
 
@@ -219,11 +222,30 @@ REBLEN Julian_Date(REBYMD date)
 //
 // Calculate the (signed) difference in days between two dates.
 //
-REBINT Days_Between_Dates(REBYMD d1, REBYMD d2)
+REBINT Days_Between_Dates(const REBVAL *a, const REBVAL *b)
 {
-    // !!! Time zones (and times) throw a wrench into this calculation.
-    // This just keeps R3-Alpha behavior going as flaky as it was,
-    // and doesn't heed the time zones.
+    if (Does_Date_Have_Time(a) != Does_Date_Have_Time(b))
+        fail (Error_Invalid_Compare_Raw(a, b));
+
+    DECLARE_LOCAL (utc_a);
+    DECLARE_LOCAL (utc_b);
+
+    if (Does_Date_Have_Zone(a) != Does_Date_Have_Zone(b))
+        fail (Error_Invalid_Compare_Raw(a, b));
+        
+    if (Does_Date_Have_Zone(a)) {
+        Copy_Cell(utc_a, a);
+        Copy_Cell(utc_b, b);
+
+        Adjust_Date_UTC(utc_a);
+        Adjust_Date_UTC(utc_b);
+
+        a = utc_a;
+        b = utc_b;
+    }
+
+    REBYMD d1 = VAL_DATE(a);
+    REBYMD d2 = VAL_DATE(b);
 
     REBINT sign = 1;
 
@@ -275,12 +297,14 @@ REBINT Days_Between_Dates(REBYMD d1, REBYMD d2)
 //
 // Return the day of the week for a specific date.
 //
-REBLEN Week_Day(REBYMD date)
+REBLEN Week_Day(const REBVAL *date)
 {
-    REBYMD year1;
-    memset(&year1, 0, sizeof(REBYMD));
-    year1.day = 1;
-    year1.month = 1;
+    DECLARE_LOCAL (year1);
+    VAL_DATE(year1).year = 0;
+    VAL_DATE(year1).month = 1;
+    VAL_DATE(year1).day = 1;
+    VAL_DATE(year1).zone = VAL_DATE(date).zone;  // match to avoid diffing error
+    PAYLOAD(Time, year1).nanoseconds = NO_DATE_TIME;
 
     return ((Days_Between_Dates(date, year1) + 5) % 7) + 1;
 }
@@ -460,24 +484,32 @@ void Adjust_Date_UTC(RELVAL *d)
 //
 REBVAL *Time_Between_Dates(REBVAL *out, const REBVAL *d1, const REBVAL *d2)
 {
-    REBINT diff = Days_Between_Dates(VAL_DATE(d1), VAL_DATE(d2));
+    // DIFFERENCE is supposed to calculate a time difference, and dates without
+    // time components will lead to misleading answers for that.  The user is
+    // expected to explicitly ensure that if a 0:00 time is intended as
+    // equivalent, that they default to that:
+    //
+    //     >> t: 3-Jul-2021
+    //
+    //     >> t/zone: default [0:00]
+    //     == 0:00
+    //
+    //     >> t
+    //     == 3-Jul-2021/0:00+0:00
+    //
+    if (not Does_Date_Have_Time(d1) or not Does_Date_Have_Time(d2))
+        fail (Error_Invalid_Compare_Raw(d1, d2));
+
+    REBI64 t1 = VAL_NANO(d1);
+    REBI64 t2 = VAL_NANO(d2);
+
+    REBINT diff = Days_Between_Dates(d1, d2);
 
     // Note: abs() takes `int`, but there is a labs(), and C99 has llabs()
     //
     if (cast(REBLEN, abs(cast(int, diff))) > (((1U << 31) - 1) / SECS_IN_DAY))
         fail (Error_Overflow_Raw());
 
-    REBI64 t1;
-    if (Does_Date_Have_Time(d1))
-        t1 = VAL_NANO(d1);
-    else
-        t1 = 0L;
-
-    REBI64 t2;
-    if (Does_Date_Have_Time(d2))
-        t2 = VAL_NANO(d2);
-    else
-        t2 = 0L;
 
     return Init_Time_Nanoseconds(
         out,
@@ -720,7 +752,7 @@ void Pick_Or_Poke_Date(
             break; }
 
           case SYM_WEEKDAY:
-            Init_Integer(out, Week_Day(VAL_DATE(adjusted)));  // adjusted date
+            Init_Integer(out, Week_Day(adjusted));  // adjusted date
             break;
 
           case SYM_JULIAN:
@@ -841,8 +873,12 @@ void Pick_Or_Poke_Date(
                 zone = NO_DATE_ZONE;
             }
             else {
+                // Make it easier to turn a time into one that math can be
+                // done on by letting you set the time zone even if it does
+                // not have a time component.  Will become 00:00:00
+                //
                 if (not Does_Date_Have_Time(v))
-                    fail (Error_Out_Of_Range(poke));
+                    nano = 0;
 
                 if (IS_TIME(poke))
                     zone = cast(REBINT, VAL_NANO(poke) / (ZONE_MINS * MIN_SEC));
@@ -995,7 +1031,7 @@ REBTYPE(Date)
 
         if (type == REB_DATE) {
             if (sym == SYM_SUBTRACT)
-                return Init_Integer(D_OUT, Days_Between_Dates(date, VAL_DATE(arg)));
+                return Init_Integer(D_OUT, Days_Between_Dates(v, arg));
         }
         else if (type == REB_TIME) {
             if (sym == SYM_ADD) {
