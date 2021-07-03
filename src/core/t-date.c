@@ -29,17 +29,65 @@
 #include "sys-core.h"
 
 
+static REBCTX *Error_Bad_Date_Compare(REBCEL(const*) a, REBCEL(const*) b)
+{
+    return Error_Invalid_Compare_Raw(
+        rebUnrelativize(cast(const RELVAL*, a)),
+        rebUnrelativize(cast(const RELVAL*, b))
+    );
+}
+
+
 //
 //  CT_Date: C
 //
 REBINT CT_Date(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
-    // If the dates are in different time zones, they have to be canonized
-    // to compare them.
-    //
-    // !!! How should dates and times without time zones be treated?  It
-    // seems bad to make them dependent on the system time zone.
-    //
+    DECLARE_LOCAL (adjusted_a);
+    DECLARE_LOCAL (adjusted_b);
+
+    REBINT tiebreaker = 0;
+
+    // Dates which lack times cannot be compared directly with dates that
+    // do have times.
+
+    if (Does_Date_Have_Time(a)) {
+        if (not Does_Date_Have_Time(b))
+            fail (Error_Bad_Date_Compare(a, b));
+
+        if (Does_Date_Have_Zone(a)) {
+            if (not Does_Date_Have_Zone(b))
+                fail (Error_Bad_Date_Compare(a, b));
+
+            // If the dates are in different time zones, they have to be
+            // canonized to compare them.  But if we're doing strict equality
+            // then we can't consider actually equal unless zones the same.
+
+            if (VAL_DATE(a).zone != VAL_DATE(b).zone)
+                tiebreaker = VAL_DATE(a).zone > VAL_DATE(b).zone ? 1 : -1;
+
+            Dequotify(Copy_Cell(adjusted_a, SPECIFIC(CELL_TO_VAL(a))));
+            Dequotify(Copy_Cell(adjusted_b, SPECIFIC(CELL_TO_VAL(b))));
+
+            Adjust_Date_UTC(adjusted_a);
+            Adjust_Date_UTC(adjusted_b);
+
+            a = adjusted_a;
+            b = adjusted_b;
+        }
+        else if (Does_Date_Have_Zone(b))
+            fail (Error_Bad_Date_Compare(a, b));
+
+        REBINT time_ct = CT_Time(a, b, strict);  // guaranteed [-1 0 1]
+        if (time_ct != 0)
+            return time_ct;
+
+        if (strict and tiebreaker != 0)
+            return tiebreaker;  // don't allow equal unless time zones equal
+    }
+    else if (Does_Date_Have_Time(b))
+        fail (Error_Bad_Date_Compare(a, b));
+
     // !!! This comparison doesn't know if it's being asked on behalf of
     // equality or not; and `strict` is passed in as true for plain > and <.
     // In those cases, strictness needs to be accurate for inequality but
@@ -48,41 +96,12 @@ REBINT CT_Date(REBCEL(const*) a, REBCEL(const*) b, bool strict)
     //
     // https://forum.rebol.info/t/comparison-semantics/1318
     //
-    REBINT tiebreaker = 0;
 
-    DECLARE_LOCAL (adjusted_a);
-    DECLARE_LOCAL (adjusted_b);
-    if (VAL_DATE(a).zone != VAL_DATE(b).zone) {
-        tiebreaker = VAL_DATE(a).zone > VAL_DATE(b).zone ? 1 : -1;
+    REBINT days_diff = Days_Between_Dates(VAL_DATE(a), VAL_DATE(b));
+    if (days_diff == 0)
+        return days_diff;
 
-        Dequotify(Copy_Cell(adjusted_a, SPECIFIC(CELL_TO_VAL(a))));
-        Dequotify(Copy_Cell(adjusted_b, SPECIFIC(CELL_TO_VAL(b))));
-
-        Adjust_Date_UTC(adjusted_a);
-        Adjust_Date_UTC(adjusted_a);
-
-        a = adjusted_a;
-        b = adjusted_b;
-    }
-
-    REBINT days_diff = Diff_Date(VAL_DATE(a), VAL_DATE(b));  // delta in days
-    if (days_diff != 0)
-        return days_diff > 0 ? 1 : -1;
-
-    if (not Does_Date_Have_Time(a)) {
-        if (not Does_Date_Have_Time(b))
-            return 0;  // equal if no diff and neither has a time
-
-        return -1;  // b is bigger if no time on a
-    }
-
-    if (not Does_Date_Have_Time(b))
-        return 1;  // a is bigger if no time on b
-
-    REBINT time_ct = CT_Time(a, b, strict);  // guaranteed [-1 0 1]
-    if (time_ct == 0 and strict)
-        return tiebreaker;  // don't allow equal unless time zones equal
-    return time_ct;
+    return days_diff > 0 ? 1 : -1;
 }
 
 
@@ -196,11 +215,11 @@ REBLEN Julian_Date(REBYMD date)
 
 
 //
-//  Diff_Date: C
+//  Days_Between_Dates: C
 //
-// Calculate the difference in days between two dates.
+// Calculate the (signed) difference in days between two dates.
 //
-REBINT Diff_Date(REBYMD d1, REBYMD d2)
+REBINT Days_Between_Dates(REBYMD d1, REBYMD d2)
 {
     // !!! Time zones (and times) throw a wrench into this calculation.
     // This just keeps R3-Alpha behavior going as flaky as it was,
@@ -263,7 +282,7 @@ REBLEN Week_Day(REBYMD date)
     year1.day = 1;
     year1.month = 1;
 
-    return ((Diff_Date(date, year1) + 5) % 7) + 1;
+    return ((Days_Between_Dates(date, year1) + 5) % 7) + 1;
 }
 
 
@@ -435,13 +454,13 @@ void Adjust_Date_UTC(RELVAL *d)
 
 
 //
-//  Subtract_Date: C
+//  Time_Between_Dates: C
 //
 // Called by DIFFERENCE function.
 //
-void Subtract_Date(REBVAL *d1, REBVAL *d2, REBVAL *result)
+REBVAL *Time_Between_Dates(REBVAL *out, const REBVAL *d1, const REBVAL *d2)
 {
-    REBINT diff = Diff_Date(VAL_DATE(d1), VAL_DATE(d2));
+    REBINT diff = Days_Between_Dates(VAL_DATE(d1), VAL_DATE(d2));
 
     // Note: abs() takes `int`, but there is a labs(), and C99 has llabs()
     //
@@ -460,8 +479,8 @@ void Subtract_Date(REBVAL *d1, REBVAL *d2, REBVAL *result)
     else
         t2 = 0L;
 
-    Init_Time_Nanoseconds(
-        result,
+    return Init_Time_Nanoseconds(
+        out,
         (t1 - t2) + (cast(REBI64, diff) * TIME_IN_DAY)
     );
 }
@@ -976,7 +995,7 @@ REBTYPE(Date)
 
         if (type == REB_DATE) {
             if (sym == SYM_SUBTRACT)
-                return Init_Integer(D_OUT, Diff_Date(date, VAL_DATE(arg)));
+                return Init_Integer(D_OUT, Days_Between_Dates(date, VAL_DATE(arg)));
         }
         else if (type == REB_TIME) {
             if (sym == SYM_ADD) {
@@ -1087,8 +1106,7 @@ REBTYPE(Date)
             if (not IS_DATE(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
-            Subtract_Date(val1, val2, D_OUT);
-            return D_OUT; }
+            return Time_Between_Dates(D_OUT, val1, val2); }
 
           default:
             break;

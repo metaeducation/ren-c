@@ -129,8 +129,8 @@
     (date-100 <= date-100)
     (date-110 <= date-110)
     (date-111 <= date-111)
-    ;('invalid-compare = pick trap [date-111 <= date-110] 'id)
-    ;('invalid-compare = pick trap [date-110 <= date-100] 'id)
+    ('invalid-compare = pick trap [date-111 <= date-110] 'id)
+    ('invalid-compare = pick trap [date-110 <= date-100] 'id)
 
     ;
     ; Mappings
