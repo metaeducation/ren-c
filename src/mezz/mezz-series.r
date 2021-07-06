@@ -450,12 +450,12 @@ collect*: func [
             f [frame!]
             <with> out
         ][
-            (get/any 'f/value) then [  ; null won't run block (not collected)
-                f/series: out: default [make block! 16]  ; no null return now
-                get/any 'f/value  ; ELIDE leaves as result
-                elide do f  ; would invalidate f/value (hence ELIDE)
+            if not blank? :f.value [  ; BLANK! is not collected
+                f.series: out: default [make block! 16]  ; no null return now
+                :f.value  ; ELIDE leaves as result
+                elide do f  ; would invalidate f.value (hence ELIDE)
             ]
-            ; ^-- failed THEN returns NULL
+            ; ^-- failed IF returns NULL (blank in, null out)
         ]
     )[
         series: <replaced>
@@ -465,19 +465,17 @@ collect*: func [
     ;
     reeval func* [keep [action!] <with> return] body :keeper
 
-    :out
+    :out  ; might be null if no non-BLANK! KEEPs yet
 ]
 
 
-; Classic version of COLLECT which assumes that the word you want to use
-; is KEEP, and that the body needs to be deep copied and rebound (via FUNC)
-; to a new variable to hold the keeping function.  Returns an empty block
-; if nothing is collected.
+; Classic version of COLLECT which returns an empty block if nothing is
+; collected, as opposed to the NULL that COLLECT* returns.
 ;
 collect: redescribe [
     {Evaluate body, and return block of values collected via KEEP function.
     Returns empty block if nothing KEEPed.}
-] chain [  ; Gives empty block instead of null if no keeps
+] chain [
     :collect*
         |
     specialize :else [branch: [copy []]]

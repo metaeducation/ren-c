@@ -236,6 +236,7 @@
 %series/change.test.reb
 %series/charset.test.reb
 %series/clear.test.reb
+%series/collect.test.reb
 %series/copy.test.reb
 %series/delimit.test.reb
 %series/emptyq.test.reb
