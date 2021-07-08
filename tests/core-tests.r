@@ -208,6 +208,7 @@
 %misc/fail.test.reb
 %misc/make-file.test.reb
 %misc/shell.test.reb
+%misc/unpack.test.reb
 
 %network/http.test.reb
 

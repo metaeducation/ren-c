@@ -719,3 +719,44 @@ find-all: function [
         series: next series
     ]
 ]
+
+
+unpack: enfixed func [
+    {Unpack a BLOCK! of values and store each in a variable}
+    'vars [set-block!]
+    block "Reduced by default, but values taken as-is if quoted"
+        [block! quoted!]
+][
+    let result': ~unset~
+    reduce-each val block [
+        if vars.1 = '... [  ; ignore all other values (but must reduce all)
+            continue
+        ]
+        if tail? vars [
+            fail "Too many values for vars in UNPACK (use ... if on purpose)"
+        ]
+        if not blank? vars.1 [
+            set vars.1 unmeta ^val
+            if unset? @ result' [
+                result': ^val
+            ]
+        ]
+        vars: my next
+    ]
+    if vars.1 = '... [
+        if not last? vars [
+            fail "... must appear only at the tail of UNPACK variable list"
+        ]
+    ] else [
+        ; We do not error on too few values (such as `[a b c]: [1 2]`) but
+        ; instead set the remaining variables (e.g. `c` above) to ~unset~.
+        ; There could be a refinement to choose whether to error on this case. 
+        ;
+        for-each var vars [  ; if not enough values for variables, unset
+            if not blank? var [
+                unset var
+            ]
+        ]
+    ]
+    return unmeta result'
+]

@@ -158,7 +158,7 @@ REBNATIVE(reduce_each)
             fail ("Only BLOCK! and QUOTED!-BLOCK! supported by REDUCE-EACH");
 
         return rebValue(
-            NATIVE_VAL(for_each), rebQ(ARG(vars)), block, ARG(body)
+            NATIVE_VAL(for_each), ARG(vars), block, ARG(body)
         );
     }
 
