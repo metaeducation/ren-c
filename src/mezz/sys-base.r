@@ -91,11 +91,11 @@ do*: func [
         if original-path [change-dir original-path]
 
         if quit_FINALIZER and (only) [
-            quit unquote value'  ; "rethrow" the QUIT if DO/ONLY
+            quit unmeta value'  ; "rethrow" the QUIT if DO/ONLY
         ]
 
         set 'force-remote-import old-force-remote-import
-        return unquote value'  ; returns from DO*, because of <with> return
+        return unmeta value'  ; returns from DO*, because of <with> return
     ]
 
     ; If a file is being mentioned as a DO location and the "current path"

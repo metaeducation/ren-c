@@ -119,7 +119,7 @@ console!: make object! [
         ^v "Value (done with meta parameter to discern isotope status)"
             [<opt> any-value!]
     ] [
-        last-result: unquote v  ; keeps bad word isotope flag (except ~null~'s)
+        last-result: unmeta v  ; keeps bad word isotope flag (except ~null~'s)
 
         === ISOTOPE BAD WORDS (passed as plain bad-words due to meta ^v) ===
 
@@ -195,7 +195,7 @@ console!: make object! [
 
         === ORDNARY RETURN VALUES (^ parameter convention passes as quoted) ===
 
-        v: unquote v  ; Now handle everything else
+        v: unmeta v  ; Now handle everything else
 
         case [
             bad-word? :v [
@@ -703,7 +703,7 @@ ext-console-impl: func [
         ; the invocation.  This is more pleasing than making PRINT-RESULT
         ; speak in a quoted protocol for the sake of sensing isotopes.
         ;
-        emit [system/console/print-result unquote (<*> quote result)]
+        emit [system/console/print-result unmeta (<*> quote result)]
         return <prompt>
     ]
 
@@ -716,7 +716,7 @@ ext-console-impl: func [
     ; GROUP! - code to be run in a sandbox on behalf of the user
     ; BLOCK! - block of gathered input lines so far, need another one
     ;
-    result: unquote result
+    result: unmeta result
 
     if group? result [
         return result  ; GROUP! signals we're running user-requested code

@@ -97,7 +97,7 @@ combinator: func [
             if state.verbose [
                 print ["RESULT:" (friendly get/any 'result') else ["; null"]]
             ]
-            return/isotope unquote (get/any 'result' also [
+            return/isotope unmeta (get/any 'result' also [
                 all [  ; if success, mark state.furthest
                     state.furthest
                     (index? remainder: get remainder) > (index? get state.furthest)
@@ -175,7 +175,7 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         ([result' (remainder)]: ^ parser input) then [
-            return unquote result'  ; return successful parser result
+            return unmeta result'  ; return successful parser result
         ]
         set remainder input  ; on parser failure, make OPT remainder input
         return heavy null  ; succeed on parser failure, "heavy null" result
@@ -202,7 +202,7 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         ([result' #]: ^ parser input) then [  ; don't care about remainder
-            return unquote result'
+            return unmeta result'
         ]
         return null
     ]
@@ -224,7 +224,7 @@ default-combinators: make map! reduce [
             return null  ; the rule matched, but did not advance the input
         ]
         set remainder pos
-        return unquote result'
+        return unmeta result'
     ]
 
     === LOOPING CONSTRUCT KEYWORDS ===
@@ -248,7 +248,7 @@ default-combinators: make map! reduce [
         cycle [
             ([result' pos]: ^ parser input) else [
                 set remainder input  ; overall WHILE never fails (but REJECT?)
-                return unquote last-result'
+                return unmeta last-result'
             ]
             last-result': result'
             input: pos
@@ -269,7 +269,7 @@ default-combinators: make map! reduce [
         cycle [  ; if first try succeeds, flip to same code as WHILE
             ([result' pos]: ^ parser input) else [
                 set remainder input
-                return unquote last-result'
+                return unmeta last-result'
             ]
             last-result': result'
             input: pos
@@ -337,7 +337,7 @@ default-combinators: make map! reduce [
 
         ; CHANGE returns tail, use as new remainder
         ;
-        set remainder change/part input (unquote replacement') (get remainder)
+        set remainder change/part input (unmeta replacement') (get remainder)
         return ~changed~
     ]
 
@@ -373,7 +373,7 @@ default-combinators: make map! reduce [
 
         assert [quoted? insertion']
 
-        set remainder insert input (unquote insertion')
+        set remainder insert input (unmeta insertion')
         return ~inserted~
     ]
 
@@ -389,7 +389,7 @@ default-combinators: make map! reduce [
         cycle [
             ([result' #]: ^ parser input) then [
                 set remainder input  ; TO means do not include match range
-                return unquote result'
+                return unmeta result'
             ]
             if tail? input [  ; could be `to end`, so check tail *after*
                 return null
@@ -409,7 +409,7 @@ default-combinators: make map! reduce [
         cycle [
             ([result' pos]: ^ parser input) then [
                 set remainder pos
-                return unquote result'
+                return unmeta result'
             ]
             if tail? input [  ; could be `thru end`, check TAIL? *after*
                 return null
@@ -431,7 +431,7 @@ default-combinators: make map! reduce [
         if '~void~ = where [
             fail "Cannot SEEK to invisible parse rule result"
         ]
-        where: my unquote
+        where: my unmeta
         case [
             integer? where [
                 set remainder at head input where
@@ -695,8 +695,8 @@ default-combinators: make map! reduce [
             '~null~ = result'  ; true null if and only if parser failed
             quoted? result'
         ]]
-        append state.collecting unquote result'
-        return unquote result'
+        append state.collecting unmeta result'
+        return unmeta result'
     ]
 
     === GATHER AND EMIT ===
@@ -782,7 +782,7 @@ default-combinators: make map! reduce [
         ]]
         append state.gathering ^target
         append state.gathering ^result'
-        return unquote result'
+        return unmeta result'
     ]
 
     === SET-WORD! COMBINATOR ===
@@ -815,8 +815,8 @@ default-combinators: make map! reduce [
             '~null~ = result'  ; true null if and only if parser failed
             quoted? result'
         ]]
-        set value unquote result'  ; value is the SET-WORD!
-        return unquote result'
+        set value unmeta result'  ; value is the SET-WORD!
+        return unmeta result'
     ]
 
     === TEXT! COMBINATOR ===
@@ -1015,9 +1015,9 @@ default-combinators: make map! reduce [
         ; Arguably there is a null match at every position.  An ^null might
         ; also be chosen to match)...while NULL rules do not.
         ;
-        if :input.1 = unquote value [
+        if :input.1 = unmeta value [
             set remainder next input
-            return unquote value
+            return unmeta value
         ]
         return null
     ]
@@ -1063,7 +1063,7 @@ default-combinators: make map! reduce [
             ]
         ]
         set remainder input
-        return unquote result'
+        return unmeta result'
     ]
 
     'repeat combinator [
@@ -1075,18 +1075,18 @@ default-combinators: make map! reduce [
     ][
         ([times' input]: ^ times-parser input) else [return null]
 
-        if integer! <> type of unquote times' [
+        if integer! <> type of unmeta times' [
             fail "REPEAT requires first synthesized argument to be an integer"
         ]
 
         result': '~void~  ; `repeat 0 <any>` => ~void~ isotope
-        repeat unquote times' [
+        repeat unmeta times' [
             ([result' input]: ^ parser input) else [
                 return null
             ]
         ]
         set remainder input
-        return unquote result'
+        return unmeta result'
     ]
 
     === DATATYPE! COMBINATOR ===
@@ -1400,7 +1400,7 @@ default-combinators: make map! reduce [
                 ; successful alternate means the whole block is done.
                 ;
                 set remainder pos
-                return unquote result'
+                return unmeta result'
             ]
 
             ; If you hit an inline sequencing operator here then it's the last
@@ -1469,7 +1469,7 @@ default-combinators: make map! reduce [
         ]
 
         set remainder pos
-        return unquote result'
+        return unmeta result'
     ]
 ]
 
@@ -1806,7 +1806,7 @@ uparse*: func [
         return null  ; full parse was requested but tail was not reached
     ]
 
-    return/isotope unquote get/any 'synthesized'
+    return/isotope unmeta get/any 'synthesized'
 ]
 
 uparse: comment [redescribe [  ; redescribe not working at te moment (?)
@@ -1840,13 +1840,13 @@ uparse: comment [redescribe [  ; redescribe not working at te moment (?)
         ; with it.
         ;
         if auto-gather [
-            for-each key try unquote result' [
-                return/isotope unquote result'  ; return object if not empty
+            for-each key try unmeta result' [
+                return/isotope unmeta result'  ; return object if not empty
             ]
-            return/isotope unquote get/any 'synthesized'  ; capture if obj empty
+            return/isotope unmeta get/any 'synthesized'  ; capture if obj empty
         ]
 
-        return/isotope unquote result'  ; don't return void isotope
+        return/isotope unmeta result'  ; don't return void isotope
     ]
 )
 

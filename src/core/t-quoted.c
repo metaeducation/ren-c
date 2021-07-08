@@ -292,14 +292,44 @@ REBNATIVE(metaquote)
 //
 //  {Remove quoting levels from the evaluated argument}
 //
-//      return: "Value with quotes removed (NULL is passed through as NULL)"
+//      return: "Value with quotes removed"
 //          [<opt> any-value!]
-//      value [<opt> <meta> any-value!]
+//      value "Any value allowed in case /DEPTH is 0"
+//          [<opt> any-value!]
 //      /depth "Number of quoting levels to remove (default 1)"
 //          [integer!]
 //  ]
 //
 REBNATIVE(unquote)
+{
+    INCLUDE_PARAMS_OF_UNQUOTE;
+
+    REBVAL *v = ARG(value);
+
+    REBINT depth = (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
+
+    if (depth < 0)
+        fail (PAR(depth));
+
+    if (cast(REBLEN, depth) > VAL_NUM_QUOTES(v))
+        fail ("Value not quoted enough for unquote depth requested");
+
+    Unquotify(Copy_Cell(D_OUT, v), depth);
+    return D_OUT;
+}
+
+
+//
+//  unmeta: native [
+//
+//  {Variant of UNQUOTE that accepts BAD-WORD! and makes isotopes}
+//
+//      return: "Potentially an isotope"
+//          [<opt> any-value!]
+//      value [<opt> <meta> bad-word! quoted!]
+//  ]
+//
+REBNATIVE(unmeta)
 //
 // Note: Taking ^meta parameters allows `unquote ~meanie~` e.g. on what
 // would usually be an error-inducing stable bad word.  This was introduced as
@@ -307,7 +337,7 @@ REBNATIVE(unquote)
 //
 //     result: ^(some expression)  ; NULL -> NULL, NULL-2 -> '
 //     do compose [
-//         detect-isotope unquote (
+//         detect-isotope unmeta (
 //              match bad-word! result else [
 //                  quote result  ; NULL -> ' and ' -> ''
 //              ]
@@ -321,17 +351,20 @@ REBNATIVE(unquote)
 // run from code hardened into a BLOCK!.
 //
 // This could go another route with an added operation, something along the
-// lines of `unquote make-friendly ~meanie~`.  But given that the output from
-// an unquote on a plain BAD-WORD! will be mean regardless of the input makes
-// it superfluous...the UNQUOTE doesn't have any side effects to worry about,
+// lines of `unmeta make-friendly ~meanie~`.  But given that the output from
+// an unmeta on a plain BAD-WORD! will be mean regardless of the input makes
+// it superfluous...the UNMETA doesn't have any side effects to worry about,
 // and if the output is just going to be mean again it's not somehow harmful
 // to understanding.
 //
 // (It's also not clear offering a MAKE-FRIENDLY operation is a good idea.)
 {
-    INCLUDE_PARAMS_OF_UNQUOTE;
+    INCLUDE_PARAMS_OF_UNMETA;
 
     REBVAL *v = ARG(value);
+
+    if (IS_NULLED(v))
+        RETURN (v);  // ^(null) => null, so the reverse must be true
 
     // !!! This needs to be handled more generally, but the idea is that if you
     // are to write:
@@ -346,54 +379,23 @@ REBNATIVE(unquote)
     // But since we take a ^meta parameter here, we get that ~void~ isotope
     // as a non-isotope ~void~.  If we were to try and "unquote" the intent of
     // invisibility, then UNQUOTE would return invisibily...but that idea is
-    // being saved for DEVOID to keep UNQUOTE more predictable.
+    // being saved for DEVOID to keep UNMETA more predictable.
     //
     // So we just return a void isotope in this case that DEVOID can handle.
-    // This is not generalized to /DEPTH, and may need more thinking.  But
     //
     if (IS_BAD_WORD(v)) {
         if (GET_CELL_FLAG(v, ISOTOPE))
-            fail ("Cannot UNQUOTE end of input");  // no <end>, shouldn't happen
+           fail ("Cannot UNMETA end of input");  // no <end>, shouldn't happen
         Move_Cell(D_OUT, v);
         SET_CELL_FLAG(D_OUT, ISOTOPE);
         return D_OUT;
     }
+    else
+        Unquotify(v, 1);  // Remove meta level caused by parameter convention
 
-    // The value we get in has been meta-quoted, and we want to take that
-    // conversion into account while still being consistent isotopically.
-    // Add 1 to how much we're asked to unquote to account for that.
-
-    REBINT depth = 1 + (REF(depth) ? VAL_INT32(ARG(depth)) : 1);
-
-    // Critical to the design of meta quoting is that ^(null) => null, and
-    // not ' (if you want ' then use QUOTE instead).  And critical to reversing
-    // that is that UNQUOTE NULL => NULL
-    //
-    if (IS_NULLED(v))
-        return nullptr;
-
-    if (depth < 0)
-        fail (PAR(depth));
-
-    // Make sure there are at least depth - 1 steps of quoting to remove.
-    // (The last step may be isotopic, and not change a quoting level).
-    //
-    if (cast(REBLEN, depth - 1) > VAL_NUM_QUOTES(v))
-        fail ("Value not quoted enough for unquote depth requested");
-
-    Unquotify(Copy_Cell(D_OUT, v), depth - 1);
-
-    // Now the last unquoting step is isotopic.  Accept true null, as UNQUOTE
-    // is used as Meta_Unquotify.  (Should it be UNQUOTE* or similar?)
-    //
-    if (IS_NULLED(D_OUT))
-        return nullptr;
-
-    if (IS_QUOTED(D_OUT) or IS_BAD_WORD(D_OUT))
-        return Isotopic_Unquote(D_OUT);
-
-    fail ("Final unquote level is not of QUOTED! or BAD-WORD!");
-}
+    Meta_Unquotify(v);  // now remove the level of meta the user was intending
+    RETURN (v);
+} 
 
 
 //
