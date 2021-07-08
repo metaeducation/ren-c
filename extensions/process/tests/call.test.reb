@@ -7,25 +7,22 @@
     https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb0319635f81f
 
     (
-        call/shell/output spaced [
-            (file-to-local system/options/boot)
-            {--suppress "*" print.reb 100}  ; small
+        call/shell/output [
+            (system.options.boot) --suppress "*" print.reb 100  ; small
         ] data: {}
 
         100 = length of data
     )
     (
-        call/shell/output spaced [
-            (file-to-local system/options/boot)
-            {--suppress "*" print.reb 9000}  ; medium
+        call/shell/output [
+            (system.options.boot) --suppress "*" print.reb 9000  ; medium
         ] data: {}
 
         9000 = length of data
     )
     (
-        call/shell/output spaced [
-            (file-to-local system/options/boot)
-            {--suppress "*" print.reb 80000}  ; large
+        call/shell/output [
+            (system.options.boot) --suppress "*" print.reb 80000  ; large
         ] data: {}
 
         80'000 = length of data
@@ -35,8 +32,8 @@
     (
         if not exists? %/usr/bin/git [true] else [
             data: {}
-            call/output compose [
-                %/usr/bin/git "log" (spaced [
+            call/output [
+                %/usr/bin/git log (spaced [
                     "--pretty=format:'["
                         "commit: {%h}"
                         "author: {%an}"
@@ -57,9 +54,9 @@
 ; Tests feeding input and taking output from various sources
 [
     (did echoer: enclose specialize :call/input/output [
-        command: spaced [
-            file-to-local system/options/boot {--suppress "*"} {-q}
-            {--do} {"write-stdout read system/ports/input"}
+        command: [
+            (system.options.boot) --suppress "*" -q
+            --do "write-stdout read system.ports.input"
         ]
     ] function [frame [frame!]] [
         out: frame/output

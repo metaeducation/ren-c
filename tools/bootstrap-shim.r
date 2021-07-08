@@ -480,7 +480,9 @@ has: ~
 
 const?: lib/func [x] [return false]
 
-call*: :call
+call*: adapt 'call [
+    if block? command [command: compose command]
+]
 call: specialize :call* [wait: true]
 
 ; Due to various weaknesses in the historical Rebol APPLY, a frame-based

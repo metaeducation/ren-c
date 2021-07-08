@@ -32,10 +32,20 @@ call*: adapt :call-internal* [
             if empty? command [  ; !!! should this be a no-op?
                 fail "Empty argv[] block passed to CALL"
             ]
-            map-each arg command [
+
+            ; We COMPOSE the command for convenience.  If you use WORD!s like
+            ; `--do` or tuples like `foo.bar` or paths like `/Wd2070` they are
+            ; turned into their text equivalents.  This lets you write code in
+            ; the CALL block that looks a bit more like a shell invocation.
+            ;
+            map-each arg compose command [
                 switch type of arg [
                     text! [arg]  ; pass through as is
                     file! [file-to-local arg]
+                    word! [as text! arg]
+                    path! [to text! arg]
+                    tuple! [to text! arg]
+                    integer! [to text! arg]
 
                     fail ["invalid item in argv[] block for CALL:" arg]
                 ]

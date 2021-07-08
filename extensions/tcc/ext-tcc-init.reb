@@ -652,8 +652,8 @@ bootstrap: func [
     ; make.r will notice we are in the same directory as itself, and so it
     ; will make a %build/ subdirectory to do the building in.
     ;
-    let status: lib/call compose [
-        (system/options/boot) "make.r"
+    let status: lib/call [
+        (system/options/boot) make.r
             "config=configs/bootstrap.r"
             ((if options [system/options/args]))
     ]

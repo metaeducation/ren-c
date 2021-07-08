@@ -457,7 +457,7 @@ gcc: make compiler-class [
         version: copy ""
         attempt [
             exec-file: exec: default ["gcc"]
-            call/output reduce [exec "--version"] version
+            call/output [(exec) "--version"] version
             parse version [
                 {gcc (GCC)} space
                 copy major: some digit "."
@@ -800,7 +800,7 @@ ld: make linker-class [
         let version: copy ""
         ;attempt [
             exec-file: exec: default ["gcc"]
-            call/output reduce [exec "--version"] version
+            call/output [(exec) "--version"] version
         ;]
     ]
 ]
