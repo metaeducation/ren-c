@@ -1088,7 +1088,7 @@ denuller: helper [
             :action
                 |
             func [^x] [  ; needs to be META to handle ~none~ isotopes/etc.
-                x then [unquote x] else [_]
+                x then [unmeta x] else [_]
             ]
         ]
     ]
