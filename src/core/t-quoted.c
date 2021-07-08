@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018 Ren-C Open Source Contributors
+// Copyright 2018-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -27,9 +27,20 @@
 //
 // Ren-C has a generic QUOTED! datatype, a container which can be arbitrarily
 // deep in escaping.  This faciliated a more succinct way to QUOTE, as well as
-// new features.  It also cleared up a naming issue (1 is a "literal integer",
-// not `'1`).  They are "quoted", while JUST takes the place of the former
-// QUOTE operator (e.g. `just 1` => `1`).
+// new features.  THE takes the place of the former literalizing operator,
+// and JUST will be literalizing but add a quoting level.
+//
+//    >> quote 1 + 2  ; now evaluative, adds a quoting level 
+//    == '3
+//
+//    >> the a  ; acts like Rebol2 QUOTE
+//    == a
+//
+//    >> the 'a
+//    == 'a
+//
+//    >> just a
+//    == 'a
 //
 
 #include "sys-core.h"
@@ -335,7 +346,7 @@ REBNATIVE(unmeta)
 // would usually be an error-inducing stable bad word.  This was introduced as
 // a way around a situation like this:
 //
-//     result: ^(some expression)  ; NULL -> NULL, NULL-2 -> '
+//     result: ^(some expression)  ; NULL -> NULL, ~null~ isotope => ~null~
 //     do compose [
 //         detect-isotope unmeta (
 //              match bad-word! result else [
@@ -346,7 +357,7 @@ REBNATIVE(unmeta)
 //
 // DETECT-ISOTOPE wants to avoid forcing its caller to use a quoted argument
 // calling convention.  Yet it still wants to know if its argument is a ~null~
-// isopte vs/ NULL, or a BAD-WORD! vs. an isotope BAD-WORD!.  That's what
+// isotope vs/ NULL, or a BAD-WORD! vs. an isotope BAD-WORD!.  That's what
 // ^meta arguments are for...but it runs up against a wall when forced to
 // run from code hardened into a BLOCK!.
 //
@@ -390,10 +401,10 @@ REBNATIVE(unmeta)
         SET_CELL_FLAG(D_OUT, ISOTOPE);
         return D_OUT;
     }
-    else
-        Unquotify(v, 1);  // Remove meta level caused by parameter convention
 
-    Meta_Unquotify(v);  // now remove the level of meta the user was intending
+    assert(IS_QUOTED(v));  // already handled NULL and BAD-WORD! possibilities
+    Unquotify(v, 1);  // Remove meta level caused by parameter convention
+    Meta_Unquotify(v);  // now remove the level of meta the user was asking for
     RETURN (v);
 } 
 

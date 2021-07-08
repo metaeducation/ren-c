@@ -336,7 +336,7 @@ help: function [
     refinements: _  ; refinements and refinement arguments
 
     parse parameters of :value [
-        copy args while [word! | get-word! | lit-word! | issue!]
+        copy args while [word! | meta-word! | get-word! | lit-word!]
         copy refinements while path!  ; !!! Refinements may become intermixed!
     ]
 
