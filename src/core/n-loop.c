@@ -1322,8 +1322,6 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 // CONTINUE - res->out may not be void if /WITH refinement used
             }
         }
-        if (IS_BAD_WORD(res->out))
-            fail (Error_Bad_Conditional_Raw());  // neither true nor false
 
         if (ANY_ARRAY(res->data)) {
             if (IS_NULLED(res->out) or IS_FALSEY(res->out)) {
@@ -1396,9 +1394,6 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 REBNATIVE(remove_each)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
-
-    if (IS_BLOCK(ARG(body)))
-        Metafy(ARG(body));  // request that body "branch" not be voidified
 
     struct Remove_Each_State res;
     res.data = ARG(data);

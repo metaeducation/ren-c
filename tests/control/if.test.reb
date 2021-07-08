@@ -123,19 +123,19 @@
     1020 = if true '1020
 )
 
-; Lit-Branching
-(
-    j: 304
-    304 = if true ^j
-)(
-    o: make object! [b: 1020]
-    1020 = if true ^o/b
-)(
-    var: <something>
-    did all [
-        null? if false ^(var: <something-else> [1000 + 20])
-        var = <something>
-        1020 = if true ^(var: <something-else> [1000 + 20])
-        var = <something-else>
-    ]
-)
+; THE-XXX! Branching (TBD)
+;(
+;    j: 304
+;    304 = if true @j
+;)(
+;    o: make object! [b: 1020]
+;    1020 = if true @o/b
+;)(
+;    var: <something>
+;    did all [
+;        null? if false @(var: <something-else> [1000 + 20])
+;        var = <something>
+;        1020 = if true @(var: <something-else> [1000 + 20])
+;        var = <something-else>
+;    ]
+;)

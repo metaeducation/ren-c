@@ -768,7 +768,7 @@ load-module: func [
     ]
 
     ; If no further processing is needed, shortcut return
-    if (not override?) and (mod or ^delay) [return reduce [name mod]]
+    if (not override?) and (mod or delay) [return reduce [name mod]]
 
     ; If /DELAY, save the intermediate form
     if delay [

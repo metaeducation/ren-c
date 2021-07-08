@@ -153,12 +153,12 @@
                 if action? get test [
                     f: make frame! args
                     first-arg: get in f first parameters of action of f
-                    return ((match true do f) then ^first-arg)
+                    return ((match true do f) then [:first-arg])
                 ]
             ]
         ]
 
-        match :(take args) (take args-normal) else ^null
+        match :(take args) (take args-normal)
     ]
     true)
 

@@ -13,8 +13,10 @@
 ('~null~ = ^ either true [null] [1])
 ('~null~ = ^ either false [1] [null])
 
-(null? either true ^[null] [1])
-(null? either false [1] ^[null])
+; !!! @ forms are pending.
+;
+; (null? either true @[null] [1])
+; (null? either false [1] @[null])
 
 (error? either true [trap [1 / 0]] [])
 (error? either false [] [trap [1 / 0]])
@@ -102,19 +104,19 @@
     1020 = either true '1020 '304
 )
 
-; Lit-Branching
-(
-    j: 304
-    304 = either true ^j [fail "Shouldn't run"]
-)(
-    o: make object! [b: 1020]
-    1020 = either true ^o/b [fail "Shouldn't run"]
-)(
-    var: <something>
-    did all [
-        304 = either false ^(var: <something-else> [1000 + 20]) [300 + 4]
-        var = <something>
-        1020 = if true ^(var: <something-else> [1000 + 20]) [300 + 4]
-        var = <something-else>
-    ]
-)
+; THE-XXX! Branching (TBD)
+;(
+;    j: 304
+;    304 = either true @j [fail "Shouldn't run"]
+;)(
+;    o: make object! [b: 1020]
+;    1020 = either true @o/b [fail "Shouldn't run"]
+;)(
+;    var: <something>
+;    did all [
+;        304 = either false @(var: <something-else> [1000 + 20]) [300 + 4]
+;        var = <something>
+;        1020 = if true @(var: <something-else> [1000 + 20]) [300 + 4]
+;        var = <something-else>
+;    ]
+;)

@@ -57,7 +57,7 @@
 
 ; Conditionals return NULL on failure, and ~null~ isotope on a branch that
 ; executes and evaluates to either NULL or ~null~ isotope.  If the branch
-; wishes to pass the null "as-is" it should use the ^ forms.
+; wishes to pass the null "as-is" it should use the @ forms.
 [
     ('~null~ = ^ if true [null])
     ('~null~ = ^ if true [heavy null])
@@ -65,9 +65,18 @@
     ('~custom~ = ^ if true [~custom~])
     (''~custom~ = ^ if true ['~custom~])
 
-    (null = ^ if true ^[null])
-    ('~null~ = ^ if true ^[heavy null])
-    ('~void~ = ^ if true ^[])
-    ('~custom~ = ^ if true ^[~custom~])
-    (''~custom~ = ^ if true ^['~custom~])
+    ; Because ^[] forms replaced @[] forms, there are some stale references
+    ; that need to be cleaned up before this behavior is enabled.
+    ;
+    ; (null = if true ^[null])
+    ; ('~null~ = if true ^[heavy null])
+    ; ('~void~ = if true ^[])
+    ; ('~custom~ = if true ^[~custom~])
+    ; (''~custom~ = if true ^['~custom~])
+
+    ; (null = ^ if true @[null])
+    ; ('~null~ = ^ if true @[heavy null])
+    ; ('~void~ = ^ if true @[])
+    ; ('~custom~ = ^ if true @[~custom~])
+    ; (''~custom~ = ^ if true @['~custom~])
 ]

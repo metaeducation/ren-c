@@ -212,7 +212,7 @@ inline static bool Do_Branch_Core_Throws(
     DECLARE_LOCAL (cell);
 
     enum Reb_Kind kind = VAL_TYPE(branch);
-    bool as_is = (kind == REB_QUOTED or ANY_META_KIND(kind));
+    bool as_is = (kind == REB_QUOTED);  // TBD: add ANY_THE_KIND() e.g. @[...]
 
   redo:
 
@@ -226,7 +226,6 @@ inline static bool Do_Branch_Core_Throws(
         break;
 
       case REB_BLOCK:
-      case REB_META_BLOCK:
         if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
             return true;
         break;
@@ -246,14 +245,12 @@ inline static bool Do_Branch_Core_Throws(
             return true;
         break; }
 
-      case REB_META_WORD:
       case REB_META_PATH:
         Plainify(Copy_Cell(cell, branch));
         if (Eval_Value_Throws(out, cell, SPECIFIED))
             return true;
         break;
 
-      case REB_META_GROUP:
       case REB_GROUP:
         if (Do_Any_Array_At_Throws(cell, branch, SPECIFIED))
             return true;
@@ -273,9 +270,10 @@ inline static bool Do_Branch_Core_Throws(
     //     >> if true [null]
     //     == ~null~  ; isotope
     //
-    // To get things to pass through unmodified, you use a different branch:
+    // To get things to pass through unmodified, a different branch would be
+    // used.  This would be covered by THE-BLOCK! and its friends.
     //
-    //     >> if true ^[null]  ; currently ^, may become @
+    //     >> if true @[null]
     //     ; null
     //
     if (not as_is)

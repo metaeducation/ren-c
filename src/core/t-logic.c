@@ -124,6 +124,40 @@ REBNATIVE(_not_)  // see TO-C-NAME
 }
 
 
+// At the moment, it is permitted to use plain words or paths on the right
+// hand side of an OR, XOR, AND.  This was for a time not allowed and you had
+// to use @word or @pa/th.  However that datatype has (temporarily) been
+// removed to make way for the more critical ^word and ^path.  Because of this
+// the idea of going ahead and allowing the plain words was done.
+//
+inline static bool Do_Logic_Right_Side_Throws(
+    REBVAL *out,
+    REBVAL *right,  // Note: mutates type!
+    const REBVAL *left
+){
+    if (IS_GROUP(right) or IS_GET_GROUP(right))  { // don't double execute
+        mutable_KIND3Q_BYTE(right) = mutable_HEART_BYTE(right) = REB_BLOCK;
+
+        if (Do_Branch_With_Throws(out, right, left))
+            return true;
+    }
+    else {
+        if (IS_WORD(right))
+            Get_Word_May_Fail(out, right, SPECIFIED);
+        else {
+            assert (IS_PATH(right));
+            if (Get_Path_Throws_Core(out, right, SPECIFIED))
+                return true;
+        }
+
+        if (IS_ACTION(out))
+            fail ("words/paths can't be ACTION! as right hand of OR, AND, XOR");
+    }
+
+    return false;
+}
+
+
 //
 //  and: enfix native [
 //
@@ -132,7 +166,7 @@ REBNATIVE(_not_)  // see TO-C-NAME
 //      return: [logic!]
 //      left [<opt> any-value!]
 //      'right "Right is evaluated if left is true, or if GET-GROUP!"
-//          [group! get-group! meta-path! meta-word!]
+//          [group! get-group! path! word!]
 //  ]
 //
 REBNATIVE(_and_)  // see TO-C-NAME
@@ -154,10 +188,7 @@ REBNATIVE(_and_)  // see TO-C-NAME
         return Init_False(D_OUT);
     }
 
-    if (IS_GROUP(right) or IS_GET_GROUP(right))  // don't double execute
-        mutable_KIND3Q_BYTE(right) = mutable_HEART_BYTE(right) = REB_META_BLOCK;
-
-    if (Do_Branch_With_Throws(D_OUT, right, left))
+    if (Do_Logic_Right_Side_Throws(D_OUT, right, left))
         return R_THROWN;
 
     return Init_Logic(D_OUT, IS_TRUTHY(D_OUT));
@@ -171,7 +202,7 @@ REBNATIVE(_and_)  // see TO-C-NAME
 //      return: [logic!]
 //      left [<opt> any-value!]
 //      'right "Right is evaluated if left is false, or if GET-GROUP!"
-//          [group! get-group! meta-path! meta-word!]
+//          [group! get-group! path! word!]
 //  ]
 //
 REBNATIVE(_or_)  // see TO-C-NAME
@@ -193,10 +224,7 @@ REBNATIVE(_or_)  // see TO-C-NAME
         return Init_True(D_OUT);
     }
 
-    if (IS_GROUP(right) or IS_GET_GROUP(right))  // don't double execute
-        mutable_KIND3Q_BYTE(right) = mutable_HEART_BYTE(right) = REB_META_BLOCK;
-
-    if (Do_Branch_With_Throws(D_OUT, right, left))
+    if (Do_Logic_Right_Side_Throws(D_OUT, right, left))
         return R_THROWN;
 
     return Init_Logic(D_OUT, IS_TRUTHY(D_OUT));
@@ -211,7 +239,7 @@ REBNATIVE(_or_)  // see TO-C-NAME
 //      return: [logic!]
 //      left [<opt> any-value!]
 //      'right "Always evaluated, but is a GROUP! for consistency with AND/OR"
-//          [group! get-group! meta-path! meta-word!]
+//          [group! get-group! path! word!]
 //  ]
 //
 REBNATIVE(_xor_)  // see TO-C-NAME
@@ -225,10 +253,7 @@ REBNATIVE(_xor_)  // see TO-C-NAME
         if (IS_BLOCK(left) or ANY_META_KIND(VAL_TYPE(left)))
             fail (Error_Unintended_Literal_Raw(left));
 
-    if (IS_GROUP(right) or IS_GET_GROUP(right))  // don't double execute
-        mutable_KIND3Q_BYTE(right) = mutable_HEART_BYTE(right) = REB_META_BLOCK;
-
-    if (Do_Branch_With_Throws(D_OUT, right, left))
+    if (Do_Logic_Right_Side_Throws(D_OUT, right, left))
         return R_THROWN;
 
     if (IS_FALSEY(left))
