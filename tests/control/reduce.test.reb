@@ -67,3 +67,14 @@
 ([3 300] = reduce .identity [1 + 2 if false [10 + 20] 100 + 200])
 
 ([#[true] #[false]] = reduce .even? [2 + 2 3 + 4])
+
+
+; REDUCE-EACH is a variant which lets you intercept the values, and thus
+; intervene in questions of how isotopes and nulls will be handled.
+[
+    ([<null> 3] = collect [reduce-each x [null 1 + 2] [keep (x else '<null>)]])
+
+    ([3 7] = collect [reduce-each x [1 + 2 3 + 4] [keep x]])
+
+    ([1 + 2] = collect [reduce-each x ^[1 + 2] [keep ^x]])
+]

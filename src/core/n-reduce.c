@@ -130,6 +130,83 @@ REBNATIVE(reduce)
 }
 
 
+//
+//  reduce-each: native [
+//
+//  {Evaluates expressions, keeping each result (DO only gives last result)}
+//
+//      return: "Last body result"
+//          [<opt> any-value!]
+//      :vars "Variable to receive each reduced value (multiple TBD)"
+//          [word!]
+//      block "Input block of expressions (quoted block acts like FOR-EACH)"
+//          [block! quoted!]
+//      body "Code to run on each step"
+//          [block!]
+//  ]
+//
+REBNATIVE(reduce_each)
+{
+    INCLUDE_PARAMS_OF_REDUCE_EACH;
+
+    // `reduce-each x ^[1 + 2] [...]` gives x as 1, +, and 2.
+    //
+    REBVAL *block = ARG(block);
+    if (IS_QUOTED(block)) {
+        Unquotify(block, 1);
+        if (not IS_BLOCK(block))
+            fail ("Only BLOCK! and QUOTED!-BLOCK! supported by REDUCE-EACH");
+
+        return rebValue(
+            NATIVE_VAL(for_each), rebQ(ARG(vars)), block, ARG(body)
+        );
+    }
+
+    REBCTX *context;
+    Virtual_Bind_Deep_To_New_Context(
+        ARG(body),  // may be updated, will still be GC safe
+        &context,
+        ARG(vars)
+    );
+    Init_Object(ARG(vars), context);  // keep GC safe
+
+    DECLARE_FEED_AT (feed, ARG(block));
+    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+
+    Push_Frame(nullptr, f);
+
+    do {
+        if (Eval_Step_Throws(D_SPARE, f)) {
+            Abort_Frame(f);
+            return R_THROWN;
+        }
+
+        if (IS_END(D_SPARE)) {
+            if (IS_END(f_value))
+                break;  // `reduce []`
+            continue;  // `reduce [comment "hi"]`
+        }
+
+        Move_Cell(CTX_VAR(context, 1), D_SPARE);
+
+        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+            bool broke;
+            if (not Catching_Break_Or_Continue(D_OUT, &broke))
+                return R_THROWN;
+            if (broke)
+                return Init_Nulled(D_OUT);
+
+            // The way a CONTINUE with a value works is to act as if the loop
+            // body evaluated to the value.  (CONTINUE) acts as (CONTINUE NULL)
+        }
+    } while (NOT_END(f_value));
+
+    Drop_Frame(f);
+
+    return D_OUT;
+}
+
+
 bool Match_For_Compose(const RELVAL *group, const REBVAL *label) {
     if (IS_NULLED(label))
         return true;
