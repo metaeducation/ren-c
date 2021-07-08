@@ -425,10 +425,21 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             enum Reb_Kind kind = VAL_TYPE(les->data);
             switch (kind) {
               case REB_BLOCK:
+              case REB_SET_BLOCK:
+              case REB_GET_BLOCK:
+              case REB_META_BLOCK:
               case REB_GROUP:
+              case REB_SET_GROUP:
+              case REB_GET_GROUP:
+              case REB_META_GROUP:
               case REB_PATH:
               case REB_SET_PATH:
               case REB_GET_PATH:
+              case REB_META_PATH:
+              case REB_TUPLE:
+              case REB_SET_TUPLE:
+              case REB_GET_TUPLE:
+              case REB_META_TUPLE:
                 if (var)
                     Derelativize(
                         var,
