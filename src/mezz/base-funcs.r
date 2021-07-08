@@ -463,18 +463,11 @@ redescribe [
 ] :function
 
 
-unset: func [
-    {Clear the value of a word to an unset isotope (in its current context.)}
-    return: [bad-word!]  ; is returning the ~unset~ appropriate? 
-    var [word! path!]  ; Rebol2/R3-Alpha/Red support blocks of vars here
-][
-    ; !!! Note: this would be a tricky case for SPECIALIZE of SET, because
-    ; specialization usually can't make things an ~unset~ isotope unless the
-    ; frame field is hidden.  That's a work in progress, so it is left out
-    ; of the mezzanine at this time for simplicity.
-    ;
-    set var ~unset~
-]
+unset: redescribe [
+    {Clear the value of a word to an unset isotope (in its current context)}
+](
+    specialize :set [value: ~unset~]  ; tricky case, but supported!
+)
 
 unset?: func [
     {Determine if a variable looks up to an ~unset~ isotope}

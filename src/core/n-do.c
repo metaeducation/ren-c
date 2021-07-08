@@ -784,7 +784,8 @@ REBNATIVE(applique)
     REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
         applicand,
         f->dsp_orig, // lowest_ordered_dsp of refinements to weave in
-        &binder
+        &binder,
+        UNSET_VALUE
     );
     REBARR *varlist = CTX_VARLIST(exemplar);
     Manage_Series(varlist); // binding code into it

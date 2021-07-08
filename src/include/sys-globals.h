@@ -117,6 +117,8 @@ PVAR REBVAL *Root_Invisible_Tag;  // return value can be invisible
 PVAR REBVAL *Root_Void_Tag;  // will make any return result act invisibly
 PVAR REBVAL *Root_Meta_Tag;  // !!! needed for bootstrap, vs ^meta parameter
 
+PVAR REBVAL *Root_Unspecialized_Tag;  // unique unspecialized slot identity
+
 PVAR REBVAL *Root_Empty_Text; // read-only ""
 PVAR REBVAL *Root_Empty_Binary; // read-only #{}
 PVAR REBVAL *Root_Empty_Block; // read-only []

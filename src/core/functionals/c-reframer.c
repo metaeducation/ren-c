@@ -306,7 +306,8 @@ REBNATIVE(reframer_p)
     REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
         ARG(shim),
         dsp_orig,
-        &binder
+        &binder,
+        UNSET_VALUE
     );
 
     option(REBCTX*) error = nullptr;  // can't fail() with binder in effect

@@ -78,13 +78,6 @@ REB_R Specializer_Dispatcher(REBFRM *f)
 //
 //  Make_Context_For_Action_Push_Partials: C
 //
-// This creates a FRAME! context with `~unset~` cells in the unspecialized
-// slots.  The reason this is chosen instead of NULL is that specialization
-// with NULL is frequent, and this takes only *one* void state away.  To
-// actually specialize with `~unset~` one must either write a temporary
-// value and then adapt over it, or use the PROTECT/HIDE mechanic to hide
-// the field from view (thus making it presumed specialized).
-//
 // For partial refinement specializations in the action, this will push the
 // refinement to the stack.  In this way it retains the ordering information
 // implicit in the partial refinements of an action's existing specialization.
@@ -102,7 +95,8 @@ REB_R Specializer_Dispatcher(REBFRM *f)
 REBCTX *Make_Context_For_Action_Push_Partials(
     const REBVAL *action,  // need ->binding, so can't just be a REBACT*
     REBDSP lowest_ordered_dsp,  // caller can add refinement specializations
-    option(struct Reb_Binder*) binder
+    option(struct Reb_Binder*) binder,
+    const REBVAL *unspecialized  // what to put in unspecialized slots
 ){
     REBDSP highest_ordered_dsp = DSP;
 
@@ -160,7 +154,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 
           continue_unspecialized:
 
-            Init_Unset(arg);  // *not* VAR_MARKED_HIDDEN
+            Copy_Cell(arg, unspecialized);  // *not* VAR_MARKED_HIDDEN
             if (binder)
                 Add_Binder_Index(unwrap(binder), symbol, index);
 
@@ -215,6 +209,12 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 //
 //  Make_Context_For_Action: C
 //
+// This creates a FRAME! context with `~unset~` isotopes in the unspecialized
+// slots.  The reason this is chosen instead of NULL is that specialization
+// with NULL is frequent, while frame values may not be isotopes when a
+// function is called.  The only way to take isotopes is to use a ^meta
+// argument, and they are represented as non-isotopes in the frame.
+//
 // !!! The ultimate concept is that it would be possible for a FRAME! to
 // preserve ordering information such that an ACTION! could be made from it.
 // Right now the information is the stack ordering numbers of the refinements
@@ -229,7 +229,8 @@ REBCTX *Make_Context_For_Action(
     REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
         action,
         lowest_ordered_dsp,
-        binder
+        binder,
+        UNSET_VALUE
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
@@ -269,12 +270,15 @@ bool Specialize_Action_Throws(
     // will be on the stack (including any we are adding "virtually", from
     // the current DSP down to the lowest_ordered_dsp).
     //
-    // All unspecialized slots (including partials) will be ~unset~
+    // All unspecialized slots (including partials) will be a unique tag
+    // identity, specific to SPECIALIZE.  This allows a full spectrum of
+    // specialization values, including to ~unset~ isotopes.
     //
     REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
         lowest_ordered_dsp,
-        def ? &binder : nullptr
+        def ? &binder : nullptr,
+        Root_Unspecialized_Tag  // is checked for by *identity*, not value!
     );
     Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded
 
@@ -338,7 +342,8 @@ bool Specialize_Action_Throws(
 
         if (TYPE_CHECK(param, REB_TS_REFINEMENT)) {
             if (
-                Is_Unset(arg)
+                IS_TAG(arg)
+                and VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag)
                 and NOT_CELL_FLAG(arg, VAR_MARKED_HIDDEN)
             ){
                 // Undefined refinements not explicitly marked hidden are
@@ -359,7 +364,8 @@ bool Specialize_Action_Throws(
         // It's an argument, either a normal one or a refinement arg.
 
         if (
-            Is_Unset(arg)
+            IS_TAG(arg)
+            and VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag)
             and NOT_CELL_FLAG(arg, VAR_MARKED_HIDDEN)
         ){
             goto unspecialized_arg;
@@ -370,7 +376,8 @@ bool Specialize_Action_Throws(
       unspecialized_arg:
 
         assert(NOT_CELL_FLAG(arg, VAR_MARKED_HIDDEN));
-        assert(Is_Unset(arg));
+        assert(IS_TAG(arg));
+        assert(VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag));
         assert(IS_TYPESET(param));
         Copy_Cell(arg, param);
         continue;

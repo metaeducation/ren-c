@@ -231,6 +231,11 @@ static void Init_Action_Spec_Tags(void)
     // !!! Needed for bootstrap, as `@arg` won't LOAD in old r3
     //
     Root_Meta_Tag = Make_Locked_Tag("meta");
+
+    // Used by SPECIALIZE as a unique identity for telling what's been
+    // specialized and what hasn't.
+    //
+    Root_Unspecialized_Tag = Make_Locked_Tag("unspecialized");
 }
 
 static void Shutdown_Action_Spec_Tags(void)
@@ -248,6 +253,8 @@ static void Shutdown_Action_Spec_Tags(void)
     rebRelease(Root_Void_Tag);
 
     rebRelease(Root_Meta_Tag);  // !!! only needed for bootstrap with old r3
+
+    rebRelease(Root_Unspecialized_Tag);
 }
 
 
