@@ -201,7 +201,14 @@ REBINT CT_Handle(REBCEL(const*) a, REBCEL(const*) b, bool strict)
         if (VAL_HANDLE_CFUNC(a) == VAL_HANDLE_CFUNC(b))
             return 0;
 
-        return VAL_HANDLE_CFUNC(a) > VAL_HANDLE_CFUNC(b) ? 1 : -1;
+        // !!! Function pointers aren't > or < comparable in ISO C.  This is
+        // indicative of what we know already, that HANDLE!s are members of
+        // "Eq" but not "Ord" (in Haskell speak).  Comparison is designed to
+        // not know whether we're asking for equality or orderedness and must
+        // return -1, 0, or 1...so until that is remedied, give back an
+        // inconsistent result that just conveys inequality.
+        //
+        return 1;
     }
     else if (Is_Handle_Cfunc(b))
         return -1;
