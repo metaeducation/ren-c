@@ -433,6 +433,9 @@ default-combinators: make map! reduce [
         ]
         where: my unmeta
         case [
+            blank? where [
+                ; Allow opting out
+            ]
             integer? where [
                 set remainder at head input where
             ]
@@ -442,7 +445,7 @@ default-combinators: make map! reduce [
                 ]
                 set remainder where
             ]
-            fail "SEEK requires INTEGER! or series position"
+            fail "SEEK requires INTEGER!, series position, or BLANK!"
         ]
         return get remainder
     ]

@@ -834,6 +834,15 @@
 )]
 
 
+; SEEK allows you to seek an arbitrary position in the input series, either
+; by integer index or by position.  It tolerates BLANK! to mean no-op.
+[
+    (uparse? "a" [seek (_) "a"])
+    (uparse? "aaabbb" ["a" pos: <here> 2 "a" seek (pos) 2 "a" 3 "b"])
+    (uparse? "aaabbb" ["a" 2 "a" seek (2) 2 "a" 3 "b"])
+]
+
+
 ; UPARSE2 should have a more comprehensive test as part of Redbol, but until
 ; that is done here are just a few basics to make sure it's working at all.
 [
