@@ -1271,7 +1271,10 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 
     REBLEN index = res->start;  // up here to avoid longjmp clobber warnings
 
-    REBLEN len = SER_USED(res->series);  // temp read-only, this won't change
+    REBLEN len = ANY_STRING(res->data)
+        ? STR_LEN(STR(res->series))
+        : SER_USED(res->series);  // temp read-only, this won't change
+
     while (index < len) {
         assert(res->start == index);
 

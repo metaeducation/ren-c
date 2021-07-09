@@ -115,6 +115,13 @@
     ]
     b-was-null
 )
+(
+    string: "cօʊʀֆօռǟɢɢօռi"
+    remove-each x string [
+        x = #"օ"
+    ]
+    string = "cʊʀֆռǟɢɢռi"
+)
 
 ; BINARY!
 (
