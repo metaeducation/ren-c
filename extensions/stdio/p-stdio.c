@@ -363,22 +363,37 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         const REBLEN readbuf_size = 30 * 1024;  // may back off to smaller size
 
         REBVAL *data = CTX_VAR(ctx, STD_PORT_DATA);
-        if (not IS_BINARY(data))
+        if (not IS_BINARY(data)) {
             Init_Binary(data, Make_Binary(readbuf_size));
-        else {
-            assert(VAL_INDEX(data) == 0);
-            assert(VAL_LEN_AT(data) == 0);
+        }
+        else if (SER_REST(VAL_BINARY(data)) < readbuf_size) {
+            REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(data);
+            EXPAND_SERIES_TAIL(bin, readbuf_size - SER_REST(bin));
         }
 
-        Req(req)->common.binary = data;  // appends to tail (but it's empty)
-        Req(req)->length = readbuf_size;
-
-        // Since we're not using the terminal code, we don't have per-char
-        // control to eliminate the CR characters.  Raw READ from stdio must
-        // be able to go byte level, however.  Those wishing to interpret
-        // Windows data as text with lines will thus have to deline it (!)
+        // !!! An egregious hack in READ-LINE to try and coax the system to
+        // work with piped input actually puts data back into the buffer.
+        // So it may have all the input that was left and the pipe could be
+        // closed.  We do not want to get ERROR_BROKEN_PIPE by asking for a
+        // read on a closed handle, so if we have enough data in the buffer
+        // that a line could be read, pass it back.
         //
-        OS_DO_DEVICE_SYNC(req, RDC_READ);
+        // All of this code is bad and needs to be thrown out; redirection
+        // of stdio is tricky and R3-Alpha was not designed for it.  These
+        // hacks are just to try and facilitate the automated testing of more
+        // critical design features.
+        //
+        if (rebNot("find", data, "lf")) {
+            Req(req)->common.binary = data;  // appends to tail
+            Req(req)->length = readbuf_size - VAL_LEN_AT(data);
+
+            // Since we're not using the terminal code, we don't have per-char
+            // control to eliminate the CR characters.  Raw READ from stdio must
+            // be able to go byte level, however.  Those wishing to interpret
+            // Windows data as text with lines will thus have to deline it (!)
+            //
+            OS_DO_DEVICE_SYNC(req, RDC_READ);
+        }
 
         // Give back a BINARY! which is as large as the portion of the buffer
         // actually used, and clear the buffer for reuse.

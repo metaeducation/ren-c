@@ -192,17 +192,13 @@ DEVICE_CMD Write_IO(REBREQ *io)
 DEVICE_CMD Read_IO(REBREQ *io)
 {
     struct rebol_devreq *req = Req(io);
-    long total = 0;
-    int len = req->length;
 
     // !!! While transitioning away from the R3-Alpha "abstract OS" model,
     // this hook now receives a BINARY! in req->text which it is expected to
     // fill with UTF-8 data, with req->length bytes.
     //
-    assert(VAL_INDEX(req->common.binary) == 0);
-    assert(VAL_LEN_AT(req->common.binary) == 0);
-
     REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(req->common.binary);
+    REBLEN orig_len = VAL_LEN_AT(req->common.binary);
     assert(SER_AVAIL(bin) >= req->length);
 
     // Null redirection (should be handled at PORT! level to not ask for read)
@@ -215,10 +211,12 @@ DEVICE_CMD Read_IO(REBREQ *io)
 
     req->actual = 0;
 
-    total = read(Std_Inp, BIN_HEAD(bin), len);  // restarts on signal
+    // read restarts on signal
+    //
+    long total = read(Std_Inp, BIN_AT(bin, orig_len), req->length);
     if (total < 0)
         rebFail_OS (errno);
-    TERM_BIN_LEN(bin, total);
+    TERM_BIN_LEN(bin, orig_len + total);
 
     return DR_DONE;
 }

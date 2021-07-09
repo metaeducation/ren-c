@@ -175,6 +175,33 @@ read-line: function [
         return null
     ]
 
+    ; !!! THIS IS A TERRIBLE HACK, ON TOP OF AN ABYSMAL PORT DESIGN !!!
+    ;
+    ; To make a long story short, R3-Alpha ports lacked an articulated design.
+    ; (Their chief benefit is being separate from the core so they could be
+    ; thrown out.)  But among the many things they didn't have a good answer
+    ; for was incremental input.  When we are trying to read a line of input
+    ; from a non-"smart" console (e.g. redirected input) we might get multiple
+    ; lines all at once.  But the port gave us all the data and cleared its
+    ; buffer.  As a terrible hack just to get this life-support continuing
+    ; until most of this gets thrown out...put everything after a newline
+    ; *back* into the buffer.
+    ;
+    ; The buffer appending mechanics are not vetted and were not redesigned for
+    ; handling things like partial UTF-8 characters.  Among other gotchas of
+    ; doing something crazy like this is that the UTF-8 string length counts
+    ; can get out of sync with the binary data if it's interpreted as a string.
+    ; Avoid doing anything like AS-aliasing the BINARY! as a string to
+    ; exacerbate this problem.
+    ;
+    ; The real answer for all of this is a serious rewrite.  But this is to
+    ; try and get input redirection to work at least on small samples to drive
+    ; some tests.
+    ;
+    if pos: find data lf [
+        insert system.ports.input.data (take/part next pos tail pos)
+    ]
+
     ; !!! On Windows, reading lines gives CR LF sequences.  It has to be that
     ; the stdio port itself stays "pure" if it is to work with CGI, etc.  This
     ; balance of agnostic byte-level READ/WRITE has to be balanced with the
@@ -256,6 +283,12 @@ ask: function [
         ; space.  This assumes that is the caller's responsibility.
         ;
         if type = text! [return line]
+
+        ; If not asking for text, currently we assume empty lines mean you
+        ; want to ask again.  (This is questionable...should `ask tag!` allow
+        ; you to give an empty string and return an empty tag?)
+        ;
+        if empty? line [continue]
 
         e: trap [return to type line]
 

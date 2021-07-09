@@ -317,11 +317,10 @@ DEVICE_CMD Read_IO(REBREQ *io)
     // this hook now receives a BINARY! in req->text which it is expected to
     // fill with UTF-8 data, with req->length bytes.
     //
-    assert(VAL_INDEX(req->common.binary) == 0);
-    assert(VAL_LEN_AT(req->common.binary) == 0);
-
     REBBIN *bin = VAL_BINARY_KNOWN_MUTABLE(req->common.binary);
     assert(SER_AVAIL(bin) >= req->length);
+
+    REBLEN orig_len = BIN_LEN(bin);
 
     if (Stdin_Handle == nullptr) {
         TERM_BIN_LEN(bin, 0);
@@ -340,7 +339,7 @@ DEVICE_CMD Read_IO(REBREQ *io)
     DWORD total;
     BOOL ok = ReadFile(
         Stdin_Handle,
-        BIN_HEAD(bin),
+        BIN_AT(bin, orig_len),
         bytes_to_read,
         &total,
         0
@@ -367,7 +366,7 @@ DEVICE_CMD Read_IO(REBREQ *io)
         rebFail_OS (GetLastError());
     }
 
-    TERM_BIN_LEN(bin, total);
+    TERM_BIN_LEN(bin, total + orig_len);
     return DR_DONE;
 }
 
