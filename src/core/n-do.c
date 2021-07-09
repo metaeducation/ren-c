@@ -240,6 +240,7 @@ REBNATIVE(shove)
 
     if (REF(set)) {
         if (IS_SET_WORD(left)) {
+            Decay_If_Nulled(D_OUT);
             Copy_Cell(Sink_Word_May_Fail(left, SPECIFIED), D_OUT);
         }
         else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {
