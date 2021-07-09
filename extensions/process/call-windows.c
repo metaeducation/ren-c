@@ -461,10 +461,17 @@ REB_R Call_Core(REBFRM *frame_) {
         CloseHandle(hErrorWrite);
 
     if (result != 0 and flag_wait) {  // Wait for termination
-        HANDLE handles[3];
+        HANDLE handles[4];
         int count = 0;
         DWORD outbuf_capacity = 0;
         DWORD errbuf_capacity = 0;
+
+        // The original Atronix code only waited on the file handles, and then
+        // waited on the process after the handle wait loop.  But it seems to
+        // be cleaner if we add the process handle to the waited-on set, so
+        // that process exit will break the wait loop.
+        //
+        handles[count++] = pi.hProcess;
 
         if (hInputWrite and inbuf_size > 0) {
             handles[count++] = hInputWrite;
@@ -484,6 +491,8 @@ REB_R Call_Core(REBFRM *frame_) {
             handles[count++] = hErrorRead;
         }
 
+        DWORD inbuf_pos = 0;
+
         while (count > 0) {
             DWORD wait_result = WaitForMultipleObjects(
                 count, handles, FALSE, INFINITE
@@ -497,10 +506,18 @@ REB_R Call_Core(REBFRM *frame_) {
             assert(WAIT_OBJECT_0 == 0);
             if (wait_result < WAIT_OBJECT_0 + count) {
                 int i = wait_result - WAIT_OBJECT_0;
-                DWORD inbuf_pos = 0;
                 DWORD n = 0;
 
-                if (handles[i] == hInputWrite) {
+                if (handles[i] == pi.hProcess) {
+                    //
+                    // Process terminated.
+                    //
+                    GetExitCodeProcess(pi.hProcess, &exit_code);
+                    CloseHandle(pi.hThread);
+                    CloseHandle(pi.hProcess);
+                    goto cleanup;
+                }
+                else if (handles[i] == hInputWrite) {
                     if (not WriteFile(
                         hInputWrite,
                         inbuf + inbuf_pos,
@@ -520,8 +537,18 @@ REB_R Call_Core(REBFRM *frame_) {
                     else {
                         inbuf_pos += n;
                         if (inbuf_pos >= inbuf_size) {  // done with input
+                            //
+                            // If we close the handle of the pipe we are using
+                            // to provide input to the child before it is done
+                            // reading the data we wrote, it will get an
+                            // ERROR_BROKEN_PIPE.  So hopefully the client has
+                            // looked at the data it has already read and
+                            // decided it does not need more...because if it
+                            // reads past the protocol that will happen.
+                            // 
                             CloseHandle(hInputWrite);
                             hInputWrite = NULL;
+
                             rebFree(inbuf);
                             inbuf = nullptr;
                             if (i < count - 1) {
@@ -614,13 +641,9 @@ REB_R Call_Core(REBFRM *frame_) {
             }
         }
 
-        WaitForSingleObject(pi.hProcess, INFINITE);  // check result??
-
-        GetExitCodeProcess(pi.hProcess, &exit_code);
-
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
-    } else if (result) {
+        assert(!"WaitForMultipleObjects() loop ended but process didn't end");
+    }
+    else if (result) {
         //
         // No wait, close handles to avoid leaks
         //
