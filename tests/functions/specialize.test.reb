@@ -182,12 +182,12 @@
 ]
 
 ; Making a FRAME! from an ACTION!, and making an ACTION! from a FRAME!
-; (here, NULL in the frame is considered unspecialized)
+; (here, ~unset~ isotope in the frame is considered unspecialized)
 (
     data: [a b c]
 
     f: make frame! :append
-    f/series: data
+    f.series: data
 
     apd: make action! f
     apd [d e f]
