@@ -140,7 +140,14 @@ bool Interpreted_Dispatch_Details_1_Throws(
     if (ACT_HAS_RETURN(phase)) {
         assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
         REBVAL *cell = FRM_ARG(f, 1);
-        Copy_Cell(cell, NATIVE_VAL(return));
+
+        // Hardcoded hack to make COMBINATOR's RETURN use /ISOTOPE by default.
+        //
+        if (ACT_DISPATCHER(FRM_PHASE(f)) == &Combinator_Dispatcher)
+            Copy_Cell(cell, NATIVE_VAL(return_isotope));
+        else
+            Copy_Cell(cell, NATIVE_VAL(return));
+
         INIT_VAL_ACTION_BINDING(cell, CTX(f->varlist));
         SET_CELL_FLAG(cell, VAR_MARKED_HIDDEN);  // necessary?
     }
@@ -605,22 +612,8 @@ REBNATIVE(unwind)
 }
 
 
-//
-//  return: native [
-//
-//  {RETURN, giving a result to the caller}
-//
-//      value "If no argument is given, result will be ~void~"
-//          [<end> <opt> <meta> any-value!]
-//      /isotope "Relay isotope status of NULL or void return values"
-//  ]
-//
-REBNATIVE(return)
-{
-    INCLUDE_PARAMS_OF_RETURN;
-
-    REBFRM *f = frame_; // implicit parameter to REBNATIVE()
-
+static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
+    //
     // Each ACTION! cell for RETURN has a piece of information in it that can
     // can be unique (the binding).  When invoked, that binding is held in the
     // REBFRM*.  This generic RETURN dispatcher interprets that binding as the
@@ -651,8 +644,6 @@ REBNATIVE(return)
     //
     REBACT *target_fun = target_frame->original;
 
-    REBVAL *v = ARG(value);
-
     // Defininitional returns are "locals"--there's no argument type check.
     // So TYPESET! bits in the RETURN param are used for legal return types.
     //
@@ -671,7 +662,7 @@ REBNATIVE(return)
 
     Meta_Unquotify(v);  // we will read the ISOTOPE flags (don't want it quoted)
 
-    if (not REF(isotope)) {
+    if (not isotope) {
         //
         // If we aren't paying attention to isotope status, then remove it
         // from the value...so ~null~ decays to null.
@@ -700,11 +691,50 @@ REBNATIVE(return)
     }
 
   skip_type_check: {
-    Copy_Cell(D_OUT, NATIVE_VAL(unwind)); // see also Make_Thrown_Unwind_Value
-    INIT_VAL_ACTION_BINDING(D_OUT, f_binding);
+    Copy_Cell(f->out, NATIVE_VAL(unwind)); // see also Make_Thrown_Unwind_Value
+    INIT_VAL_ACTION_BINDING(f->out, f_binding);
 
-    return Init_Thrown_With_Label(D_OUT, v, D_OUT);  // preserves UNEVALUATED
+    return Init_Thrown_With_Label(f->out, v, f->out);  // preserves UNEVALUATED
   }
+}
+
+
+//
+//  return: native [
+//
+//  {RETURN, giving a result to the caller}
+//
+//      value "If no argument is given, result will be ~void~"
+//          [<end> <opt> <meta> any-value!]
+//      /isotope "Relay isotope status of NULL or void return values"
+//  ]
+//
+REBNATIVE(return)
+{
+    INCLUDE_PARAMS_OF_RETURN;
+
+    return Return_Core(frame_, ARG(value), did REF(isotope));
+}
+
+
+//
+//  return-isotope: native [
+//
+//  {RETURN/ISOTOPE native specialization}
+//
+//      value "If no argument is given, result will be ~void~"
+//          [<end> <opt> <meta> any-value!]
+//  ]
+//
+REBNATIVE(return_isotope)
+//
+// The COMBINATOR wants to distinguish NULL isotopes from NULL in all cases.
+// Rather than inject the body with `return: :return/isotope` we get a small
+// speedup by just putting this variant of RETURN in the frame slot.
+{
+    INCLUDE_PARAMS_OF_RETURN_ISOTOPE;
+
+    return Return_Core(frame_, ARG(value), true);
 }
 
 

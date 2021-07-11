@@ -75,7 +75,13 @@ Rebol [
 ; parameters and also lets the engine get its hooks into the execution of
 ; parsers...for instance to diagnose the furthest point the parsing reached.
 
-combinator: func [
+; !!! COMBINATOR is used so heavily that having it be usermode makes UPARSE
+; prohibitively slow.  So it was made native.  However the usermode version is
+; kept as a proof of concept that a user *could* have made such a thing.  It
+; should be swapped in occasionally in the tests to overwrite the native
+; version just to keep tabs on it.
+;
+if false [combinator: func [
     {Make a stylized ACTION! that fulfills the interface of a combinator}
 
     spec [block!]
@@ -154,7 +160,7 @@ combinator: func [
     ; after each combinator is executed.
     ;
     enclose :action :wrapper
-]
+]]
 
 
 ; !!! We use a MAP! here instead of an OBJECT! because if it were MAKE OBJECT!
