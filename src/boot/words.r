@@ -80,6 +80,8 @@ poke
 enfix
 native
 native-combinator
+input
+remainder
 blank
 true
 false

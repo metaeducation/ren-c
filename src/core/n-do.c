@@ -257,6 +257,40 @@ REBNATIVE(shove)
 
 
 //
+//  Do_Frame_Ctx_Throws: C
+//
+bool Do_Frame_Ctx_Throws(
+    REBVAL *out,
+    REBCTX *c, 
+    REBCTX *binding,
+    option(const REBSYM*) label
+){
+    REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_FULLY_SPECIALIZED
+        | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING);
+
+    DECLARE_END_FRAME (f, flags);
+    Push_Frame(out, f);
+
+    REBARR *varlist = CTX_VARLIST(c);
+    f->varlist = varlist;
+    f->rootvar = CTX_ROOTVAR(c);
+    INIT_LINK_KEYSOURCE(varlist, f);
+
+    assert(FRM_PHASE(f) == CTX_FRAME_ACTION(c));
+    INIT_FRM_BINDING(f, binding);
+
+    Begin_Prefix_Action(f, label);
+
+    bool threw = Process_Action_Maybe_Stale_Throws(f);
+    assert(threw or IS_END(f->feed->value));  // we started at END_FLAG
+
+    Drop_Frame(f);
+    return threw;
+}
+
+
+//
 //  Do_Frame_Maybe_Stale_Throws: C
 //
 bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
@@ -265,31 +299,15 @@ bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
 
     REBCTX *c = VAL_CONTEXT(frame);  // checks for INACCESSIBLE
 
-    REBARR *varlist = CTX_VARLIST(c);
-    if (GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
+    if (GET_SUBCLASS_FLAG(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
         fail (Error_Stale_Frame_Raw());
 
-    REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_FULLY_SPECIALIZED
-        | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING);
-
-    DECLARE_END_FRAME (f, flags);
-    Push_Frame(out, f);
-
-    f->varlist = varlist;
-    f->rootvar = CTX_ROOTVAR(c);
-    INIT_LINK_KEYSOURCE(varlist, f);
-
-    assert(FRM_PHASE(f) == CTX_FRAME_ACTION(c));
-    INIT_FRM_BINDING(f, VAL_FRAME_BINDING(frame));
-
-    Begin_Prefix_Action(f, VAL_FRAME_LABEL(frame));
-
-    bool threw = Process_Action_Maybe_Stale_Throws(f);
-    assert(threw or IS_END(f->feed->value));  // we started at END_FLAG
-
-    Drop_Frame(f);
-    return threw;
+    return Do_Frame_Ctx_Throws(
+        out,
+        c,
+        VAL_FRAME_BINDING(frame),
+        VAL_FRAME_LABEL(frame)
+    );
 }
 
 

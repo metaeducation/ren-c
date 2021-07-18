@@ -282,6 +282,52 @@ REBNATIVE(combinator)
 
 
 //
+//  Call_Parser_Throws: C
+//
+// This service routine does a faster version of something like:
+//
+//     REBVAL *result = rebValue("applique @", ARG(parser), "[",
+//         "input:", rebQ(ARG(input)),  // quote avoids becoming const
+//         "remainder: @", ARG(remainder),
+//     "]");
+//
+// But it only works on parsers that were created from specializations of
+// COMBINATOR or NATIVE-COMBINATOR.  Because it expects the parameters to be
+// in the right order in the frame.
+//
+bool Call_Parser_Throws(
+    REBVAL *out,
+    const REBVAL *remainder,
+    const REBVAL *parser,
+    const REBVAL *input
+){
+    assert(ANY_SERIES(input));
+    assert(IS_ACTION(parser));
+
+    REBCTX *ctx = Make_Context_For_Action(parser, DSP, nullptr);
+
+    const REBKEY* remainder_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_REMAINDER);
+    const REBKEY* input_key = CTX_KEY(ctx, IDX_COMBINATOR_PARAM_INPUT);
+    if (
+        KEY_SYM(remainder_key) != SYM_REMAINDER
+        or KEY_SYM(input_key) != SYM_INPUT
+    ){
+        fail ("Call_Parser_Throws() only works for unadulterated combinators");
+    }
+
+    Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_REMAINDER), remainder);
+    Copy_Cell(CTX_VAR(ctx, IDX_COMBINATOR_PARAM_INPUT), input);
+
+    return Do_Frame_Ctx_Throws(
+        out,
+        ctx,
+        VAL_ACTION_BINDING(parser),
+        VAL_ACTION_LABEL(parser)
+    );
+}
+
+
+//
 //  opt-combinator: native-combinator [
 //
 //  {If supplied parser fails, succeed anyway without advancing the input}
@@ -292,32 +338,17 @@ REBNATIVE(combinator)
 //  ]
 //
 REBNATIVE(opt_combinator)
-//
-// In usermode this was:
-//
-//     ([result' (remainder)]: ^ parser input) then [
-//         return unmeta result'  ; return successful parser result
-//     ]
-//     set remainder input  ; on parser failure, make OPT remainder input
-//     return heavy null  ; succeed on parser failure, "heavy null" result
-//
-// The parser has most parameters filled (e.g. if it were BETWEEN it has both
-// parsers connected up) as well as the state, so no need to pass those.  All
-// it wants is the input and to know where you want it to put the remainder.
 {
     INCLUDE_PARAMS_OF_OPT_COMBINATOR;
 
     UNUSED(ARG(state));
 
-    // we don't have to ask for a "meta result", I don't think (?)  Maybe.
-    //
-    REBVAL *result = rebValue("applique @", ARG(parser), "[",
-        "input:", rebQ(ARG(input)),  // quote avoids becoming const
-        "remainder: @", ARG(remainder),
-    "]");
-    if (result != nullptr) {  // null isotope does not count
-        return result;  // ...so may be null isotope.  rebRelease() via return
-    }
-    rebElide("set @", ARG(remainder), ARG(input)); 
-    return Init_Nulled_Isotope(D_OUT);  // success, but nullness
+    if (Call_Parser_Throws(D_OUT, ARG(remainder), ARG(parser), ARG(input)))
+        return R_THROWN;
+
+    if (not IS_NULLED(D_OUT))  // parser succeeded...
+        return D_OUT;  // so return it's result (note: may be null *isotope*)
+
+    Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input), SPECIFIED, false);
+    return Init_Nulled_Isotope(D_OUT);  // success, but convey nothingness
 }
