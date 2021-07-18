@@ -1515,14 +1515,20 @@ non-comma: func [
 ]
 
 
-combinatorize: func [
-    return: [frame!]
+comment [combinatorize: func [
+
+    {Analyze combinator parameters in rules to produce a specialized "parser"}
+
+    return: "Parser function taking only input, returning value + remainder"
+        [action!]
     advanced: [block!]
 
+    combinator "Parser combinator taking input, but also other parameters"
+        [action!]
     rules [block!]
     state "Parse State" [frame!]
-    c "Combinator" [action!]
     /value "Initiating value (if datatype)" [any-value!]
+    /path "Invoking Path" [path!]
 ][
     ; Combinators take arguments.  If the arguments are quoted, then they are
     ; taken literally from the rules feed.  If they are not quoted, they will
@@ -1540,9 +1546,13 @@ combinatorize: func [
     ; received "literal" literally.  The definition of the combinator is used
     ; to determine the arguments and which kind they are.
 
-    let f: make frame! :c
+    if path [  ; was for /ONLY but not in use now, will be rethought
+        fail "Refinements not supported currently with combinators"
+    ]
+ 
+    let f: make frame! :combinator
 
-    for-each param parameters of :c [
+    for-each param parameters of :combinator [
         case [
             param = 'input [
                 ; All combinators should have an input.  But the
@@ -1582,8 +1592,8 @@ combinatorize: func [
     ]
 
     set advanced rules
-    return f
-]
+    return make action! f
+]]  ; commented out due to replacement by native
 
 
 identity-combinator: combinator [
@@ -1638,10 +1648,7 @@ parsify: func [
     case [
         word? :r [
             if let c: select state.combinators r [
-                let [f 'rules]: combinatorize rules state :c
-
-                set advanced rules  ; !!! Should `[:advanced]: ...` be ok?
-                return make action! f
+                return [# (advanced)]: combinatorize :c rules state 
             ]
             r: get r else [fail [r "is NULL, not legal in UPARSE"]]
         ]
@@ -1695,29 +1702,12 @@ parsify: func [
                     ]
                 ]
 
-                [f rules]: combinatorize/value rules state :c :action
-
-                set advanced rules  ; !!! Should `[:advanced]: ...` be ok?
-                return make action! f
+                return [# (advanced)]: combinatorize/value :c rules state :action
             ]
 
-            ; !!! This hack was added to make /ONLY work; it only works
-            ; for refinements with no arguments by looking at what's in
-            ; the path when it doesn't end in /.  Now /ONLY is not used.
-            ; Review general mechanisms for refinements on combinators.
-            ;
             let word: ensure word! first r
             if let c: select state.combinators word [
-                [f rules]: combinatorize rules state :c
-
-                for-each refinement next as block! r [
-                    if not blank? refinement [
-                        f.(refinement): #
-                    ]
-                ]
-
-                set advanced rules  ; !!! Should `[:advanced]: ...` be ok?
-                return make action! f
+                return [# (advanced)]: combinatorize/path :c rules state r
             ]
 
             ; !!! Originally this would just say "unknown combinator" at this
@@ -1742,11 +1732,7 @@ parsify: func [
         fail ["Unhandled type in PARSIFY:" kind of :r]
     ]
 
-    let [f 'rules]: combinatorize/value rules state :c r
-
-    set advanced rules
-
-    return make action! f  ; leave INPUT unspecialized
+    return [# (advanced)]: combinatorize/value :c rules state r
 ]
 
 

@@ -352,3 +352,175 @@ REBNATIVE(opt_combinator)
     Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input), SPECIFIED, false);
     return Init_Nulled_Isotope(D_OUT);  // success, but convey nothingness
 }
+
+
+struct Combinator_Param_State {
+    REBCTX *ctx;
+    REBFRM *frame_;
+};
+
+static bool Combinator_Param_Hook(
+    const REBKEY *key,
+    const REBPAR *param,
+    REBFLGS flags,
+    void *opaque
+){
+    UNUSED(flags);
+
+    struct Combinator_Param_State *s
+        = cast(struct Combinator_Param_State*, opaque);
+
+    REBFRM *frame_ = s->frame_;
+    INCLUDE_PARAMS_OF_COMBINATORIZE;
+
+    USED(REF(path));  // currently path checking is
+
+    OPT_SYMID symid = KEY_SYM(key);
+
+    if (symid == SYM_INPUT or symid == SYM_REMAINDER) {
+        //
+        // The idea is that INPUT is always left unspecialized (a completed
+        // parser produced from a combinator takes it as the only parameter).
+        // And the REMAINDER is an output, so it's the callers duty to fill.
+        //
+        return true;  // keep iterating the parameters.
+    }
+    
+    if (TYPE_CHECK(param, REB_TS_REFINEMENT)) {
+        //
+        // !!! Behavior of refinements is a bit up in the air, the idea is
+        // that refinements that don't take arguments can be supported...
+        // examples would be things like KEEP/ONLY.  But refinements that
+        // take arguments...e.g. additional rules...is open to discussion.
+        //
+        return true;  // just leave unspecialized for now
+    }
+
+    // we need to calculate what variable slot this lines up with.  Can be
+    // done based on the offset of the param from the head.
+
+    REBLEN offset = param - ACT_PARAMS_HEAD(VAL_ACTION(ARG(c)));
+    REBVAR *var = CTX_VARS_HEAD(s->ctx) + offset;
+
+    if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
+        Copy_Cell(var, ARG(state));
+    }
+    else if (symid == SYM_VALUE and REF(value)) {
+        //
+        // The "value" parameter only has special meaning for datatype
+        // combinators, e.g. TEXT!.  Otherwise a combinator can have an
+        // argument named value for other purposes.
+        //
+        Copy_Cell(var, REF(value));
+    }
+    else if (VAL_PARAM_CLASS(param) == REB_P_HARD) {
+        //
+        // Quoted parameters represent a literal element captured from rules.
+        //
+        // !!! <skip>-able parameters would be useful as well.
+        //
+        const RELVAL *tail;
+        const RELVAL *item = VAL_ARRAY_AT(&tail, ARG(rules));
+        if (IS_COMMA(item))
+            fail ("Commas only permitted between rules in UPARSE");
+        if (item == tail)
+            fail ("Quoted combinator parameter asked for at end of rule");
+
+        Derelativize(var, item, VAL_SPECIFIER(ARG(rules)));
+        ++VAL_INDEX_UNBOUNDED(ARG(rules));
+    }
+    else {  // assume the default is another parser to combine with
+        //
+        // Need to make PARSIFY a native!  Work around it for now...
+        //
+        // !!! Getting more than one value back from a libRebol API is not
+        // currently supported.  But it should be, somehow.  For the moment
+        // we abuse the ADVANCED variable by setting it prematurely and then
+        // extract it back to the rules.
+        //
+        REBVAL *parser = rebValue(
+            "[#", ARG(advanced), "]: parsify", ARG(state), ARG(rules)
+        );
+        Copy_Cell(var, parser);
+        Get_Var_May_Fail(ARG(rules), ARG(advanced), SPECIFIED, true, false);
+        rebRelease(parser);
+    }
+
+    return true;  // want to see all parameters
+}
+
+
+//
+//  combinatorize: native [
+//
+//  {Analyze combinator parameters in rules to produce a specialized "parser"}
+//
+//      return: "Parser function taking only input, returning value + remainder"
+//          [action!]
+//      advanced: [block!]
+//
+//      c "Parser combinator taking input, but also other parameters"
+//          [action!]
+//      rules [block!]
+//      state "Parse State" [frame!]
+//      /value "Initiating value (if datatype)" [any-value!]
+//      /path "Invoking Path" [path!]
+//  ]
+//
+REBNATIVE(combinatorize)
+//
+// While *parsers* take one argument (the input), *parser combinators* may take
+// more.  If the arguments are quoted, then they are taken literally from the
+// rules feed.  If they are not quoted, they will be another "parser" generated
+// from the rules...that comes from UPARSE orchestrating the specialization of
+// other "parser combinators".
+//
+// For instance: the old form of CHANGE took two arguments.  The first would
+// still be a parser and has to be constructed with PARSIFY from the rules.
+// But the replacement would be a literal value, e.g.
+//
+//      rebol2>> data: "aaabbb"
+//      rebol2>> parse data [change some "a" "literal" some "b"]
+//      == "literalbbb"
+//
+// So we see that CHANGE got SOME "A" turned into a parser action, but it
+// received "literal" literally.  The definition of the combinator is used
+// to determine the arguments and which kind they are.
+{
+    INCLUDE_PARAMS_OF_COMBINATORIZE;
+
+    REBACT *act = VAL_ACTION(ARG(c));
+
+    // !!! The hack for PATH! handling was added to make /ONLY work; it only
+    // works for refinements with no arguments by looking at what's in the path
+    // when it doesn't end in /.  Now /ONLY is not used.  Review general
+    // mechanisms for refinements on combinators.
+    //
+    if (REF(path))
+        fail ("PATH! mechanics in COMBINATORIZE not supported ATM");
+
+    struct Combinator_Param_State s;
+    s.ctx = Make_Context_For_Action(ARG(c), DSP, nullptr);
+    s.frame_ = frame_;
+
+    PUSH_GC_GUARD(s.ctx);  // Combinator_Param_Hook may call evaluator
+
+    USED(REF(state));
+    USED(REF(value));
+    For_Each_Unspecialized_Param(act, &Combinator_Param_Hook, &s);
+
+    // Set the advanced parameter to how many rules were consumed (the hook
+    // steps through ARG(rules), updating its index)
+    //
+    Set_Var_May_Fail(ARG(advanced), SPECIFIED, ARG(rules), SPECIFIED, false);
+
+    REBACT *parser = Make_Action_From_Exemplar(s.ctx);
+    DROP_GC_GUARD(s.ctx);
+
+    return Init_Action(  // note: MAKE ACTION! copies the context, this won't
+        D_OUT,
+        parser,
+        VAL_ACTION_LABEL(ARG(c)),
+        VAL_ACTION_BINDING(ARG(c))
+    );
+}

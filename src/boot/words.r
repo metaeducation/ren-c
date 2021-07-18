@@ -82,6 +82,7 @@ native
 native-combinator
 input
 remainder
+state
 blank
 true
 false
