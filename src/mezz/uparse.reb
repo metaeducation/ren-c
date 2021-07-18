@@ -842,6 +842,7 @@ default-combinators: make map! reduce [
     ; value is the rule in the string and binary case, but the item in the
     ; data in the block case.
 
+  comment [
     text! combinator [
         return: "The rule series matched against (not input value)"
             [<opt> text!]
@@ -875,6 +876,9 @@ default-combinators: make map! reduce [
         set remainder input
         return value
     ]
+  ]  ; replaced by native
+
+    text! :text!-combinator
 
     === TOKEN! COMBINATOR (currently ISSUE! and CHAR!) ===
 

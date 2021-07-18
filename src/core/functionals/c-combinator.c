@@ -354,6 +354,65 @@ REBNATIVE(opt_combinator)
 }
 
 
+//
+//  text!-combinator: native-combinator [
+//
+//  {Match a TEXT! value as an array item or at current position of bin/string}
+//
+//      return: "The rule series matched against (not input value)"
+//          [<opt> text!]
+//      value [text!]
+//  ]
+//
+REBNATIVE(text_x_combinator)
+{
+    INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
+
+    UNUSED(ARG(state));
+
+    REBVAL *v = ARG(value);
+    REBVAL *input = ARG(input);
+
+    if (ANY_ARRAY(input)) {
+        const RELVAL *tail;
+        const RELVAL *at = VAL_ARRAY_AT(&tail, input);
+        if (at == tail)  // no item to match against
+            return nullptr;
+        if (Cmp_Value(at, v, true) != 0)  // not case-insensitive equal
+            return nullptr;
+
+        ++VAL_INDEX_UNBOUNDED(input);
+        Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED, false);
+
+        Derelativize(D_OUT, at, VAL_SPECIFIER(input));
+        return D_OUT;  // Note: returns item in array, not rule, when an array!
+    }
+
+    assert(ANY_STRING(input) or IS_BINARY(input));
+
+    REBLEN len;
+    REBLEN index = Find_Value_In_Binstr(
+        &len,
+        input,
+        VAL_LEN_HEAD(input),
+        v,
+        AM_FIND_MATCH,  // review issues like case matching
+        1  // skip
+    );
+    if (index == NOT_FOUND)
+        return nullptr;
+
+    assert(index == VAL_INDEX(input));  // we asked for AM_FIND_MATCH
+    VAL_INDEX_UNBOUNDED(input) += len;
+    Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED, false);
+
+    // If not an array, we have return the rule on match since there's
+    // no isolated value to capture.
+
+    RETURN (v);
+}
+
+
 struct Combinator_Param_State {
     REBCTX *ctx;
     REBFRM *frame_;
