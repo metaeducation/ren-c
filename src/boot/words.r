@@ -79,6 +79,7 @@ poke
 
 enfix
 native
+native-combinator
 blank
 true
 false

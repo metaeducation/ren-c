@@ -173,6 +173,7 @@ default-combinators: make map! reduce [
 
     === BASIC KEYWORDS ===
 
+  comment [
     'opt combinator [
         {If the parser given as a parameter fails, return input undisturbed}
         return: "PARSER's result if it succeeds, otherwise NULL"
@@ -186,6 +187,9 @@ default-combinators: make map! reduce [
         set remainder input  ; on parser failure, make OPT remainder input
         return heavy null  ; succeed on parser failure, "heavy null" result
     ]
+  ]
+
+    'opt :opt-combinator  ; First test of a native-combinator (!)
 
     'not combinator [
         {Fail if the parser rule given succeeds, else continue}

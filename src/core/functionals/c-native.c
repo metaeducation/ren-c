@@ -33,8 +33,6 @@
 //
 //  native: native [
 //      spec [block!]
-//      /body "Body of equivalent usermode code (for documentation)}
-//          [block!]
 //  ]
 //
 
@@ -71,6 +69,7 @@ REBVAL *Make_Native(
     const REBVAL *module
 ){
     assert(specifier == SPECIFIED); // currently a requirement
+    UNUSED(specifier);
 
     // Get the name the native will be started at with in Lib_Context
     //
@@ -88,7 +87,18 @@ REBVAL *Make_Native(
     else
         enfix = false;
 
-    if (not IS_WORD(*item) or VAL_WORD_ID(*item) != SYM_NATIVE)
+    // See if it's being invoked with NATIVE or NATIVE/BODY
+    //
+    bool is_combinator;
+    if (not IS_WORD(*item))
+        panic (*item);
+    if (VAL_WORD_ID(*item) == SYM_NATIVE) {
+        is_combinator = false;
+    }
+    else if (VAL_WORD_ID(*item) == SYM_NATIVE_COMBINATOR) {
+        is_combinator = true;
+    }
+    else
         panic (*item);
     ++*item;
 
@@ -96,6 +106,18 @@ REBVAL *Make_Native(
     ++*item;
     if (spec == tail or not IS_BLOCK(spec))
         panic (spec);
+
+    // There are implicit parameters to both NATIVE-COMBINATOR and usermode
+    // COMBINATOR.  The native needs the full spec.
+    //
+    // !!! Note: This will manage the combinator's array.  Changing this would
+    // need a version of Make_Paramlist_Managed() which took an array + index
+    //
+    DECLARE_LOCAL (expanded_spec);
+    if (is_combinator) {
+        Init_Block(expanded_spec, Expanded_Combinator_Spec(spec));
+        spec = expanded_spec;
+    }
 
     // With the components extracted, generate the native and add it to
     // the Natives table.  The associated C function is provided by a
@@ -125,9 +147,6 @@ REBVAL *Make_Native(
         IDX_NATIVE_MAX // details array capacity
     );
 
-    assert(ACT_META(native) == nullptr);
-    mutable_ACT_META(native) = meta;
-
     SET_ACTION_FLAG(native, IS_NATIVE);
     if (enfix)
         SET_ACTION_FLAG(native, ENFIXED);
@@ -141,6 +160,31 @@ REBVAL *Make_Native(
     // says its "module" is.  Core natives default to Lib_Context.
     //
     Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), module);
+
+    // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
+    // all share a common hook to help with tracing and doing things like
+    // calculating the furthest amount of progress in the parse.  So we call
+    // that the actual "native" in that case.
+    //
+    if (is_combinator) {
+        REBACT *native_combinator = native;
+        native = Make_Action(
+            ACT_SPECIALTY(native_combinator),
+            &Combinator_Dispatcher,
+            2 // IDX_COMBINATOR_MAX  // details array capacity
+        );
+
+        Copy_Cell(
+            ARR_AT(ACT_DETAILS(native), 1),  // IDX_COMBINATOR_BODY
+            ACT_ARCHETYPE(native_combinator)
+        );
+    }
+
+    // We want the meta information on the wrapped version if it's a
+    // NATIVE-COMBINATOR.
+    //
+    assert(ACT_META(native) == nullptr);
+    mutable_ACT_META(native) = meta;
 
     // Append the native to the module under the name given.
     //

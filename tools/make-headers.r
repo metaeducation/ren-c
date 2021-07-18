@@ -318,15 +318,55 @@ iterate generic-list [
     ]
 ]
 
+is-combinator: ~
 native-list: load make-file [(output-dir) boot/tmp-natives.r]
 parse native-list [
     some [
         opt 'export
         set name: set-word! (name: to-word name)
         opt 'enfix
-        'native
+        [
+            'native (is-combinator: false)
+            | 'native-combinator (is-combinator: true)
+        ]
         set spec: block!
         (
+            if is-combinator [
+                ;
+                ; NATIVE-COMBINATOR instances have implicit parameters just
+                ; like usermode COMBINATORs do.  We want those implicit
+                ; parameters in the ARG() macro list so the native bodies
+                ; see them (again, just as the usermode combinators can use
+                ; `state` and `input` and `remainder` in their body code)
+                ;
+                spec: collect [  ; no PARSE COLLECT in bootstrap exe :-(
+                    assert [text? spec/1]
+                    keep ^ spec/1
+                    spec: my next
+
+                    assert [spec/1 = the return:]
+                    keep ^ spec/1
+                    spec: my next
+
+                    assert [text? spec/1]  ; description
+                    keep ^ spec/1
+                    spec: my next
+
+                    assert [block? spec/1]  ; type spec
+                    keep ^ spec/1
+                    spec: my next
+                    
+                    keep [
+                        remainder: [<opt> any-series!]
+
+                        state [frame!]
+                        input [any-series!]
+                    ]
+    
+                    keep spec
+                ]
+            ]
+
             emit-include-params-macro e-params name spec
             e-params/emit newline
         )

@@ -29,7 +29,10 @@ emit-native-proto: func [
             opt 'export
             set name: set-word!
             opt 'enfix
-            'native
+            [
+                'native
+                | 'native-combinator
+            ]
             [
                 set spec: block!
             | (
@@ -39,7 +42,6 @@ emit-native-proto: func [
                     (mold the-file) (line)
                 ]
             )]
-            opt block!  ; optional body
             [
                 end
             |
@@ -73,7 +75,7 @@ emit-include-params-macro: function [
 
     return: <none>
     e [object!] "where to emit (see %common-emitters.r)"
-    word [word!] "name of the native"
+    native-name [word!] "native name (add -combinator if combinator)"
     paramlist [block!] "paramlist of the native"
     /ext [text!] "extension name"
 ][
@@ -111,8 +113,8 @@ emit-include-params-macro: function [
     ]
 
     prefix: try if ext [unspaced [ext "_"]]
-    e/emit [prefix word items] {
-        #define ${PREFIX}INCLUDE_PARAMS_OF_${WORD} \
+    e/emit [prefix native-name items] {
+        #define ${PREFIX}INCLUDE_PARAMS_OF_${NATIVE-NAME} \
             $[Items]; \
             assert(GET_SERIES_INFO(frame_->varlist, HOLD))
     }

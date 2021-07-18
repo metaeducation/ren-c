@@ -215,7 +215,10 @@ rebsource: context [
                         opt 'export
                         set name: set-word! (name: to-word name)
                         opt 'enfix
-                        'native
+                        [
+                            'native
+                            | 'native-combinator
+                        ]
                         to end
                     ] also [
                         ;

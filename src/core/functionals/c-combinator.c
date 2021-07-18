@@ -83,7 +83,21 @@ enum {
 //
 REB_R Combinator_Dispatcher(REBFRM *f)
 {
-    REB_R r = Returner_Dispatcher(f);
+    REBACT *phase = FRM_PHASE(f);
+    REBARR *details = ACT_DETAILS(phase);
+    RELVAL *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+
+    REB_R r;
+    if (IS_ACTION(body)) {  // NATIVE-COMBINATOR
+        SET_SERIES_INFO(f->varlist, HOLD);  // mandatory for natives.
+        REBNAT dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
+        r = dispatcher(f);
+    }
+    else {  // usermode COMBINATOR
+        assert(IS_BLOCK(body));
+        r = Returner_Dispatcher(f);
+    }
+
     if (r == R_THROWN)
         return r;
 
@@ -122,6 +136,97 @@ REB_R Combinator_Dispatcher(REBFRM *f)
 
 
 //
+//  Expanded_Combinator_Spec: C
+//
+// The original usermode version of this was:
+//
+//     compose [
+//         ; Get the text description if given
+//
+//         ((if text? spec.1 [spec.1, elide spec: my next]))
+//
+//         ; Get the RETURN: definition if there is one, otherwise add one
+//         ; so that we are sure that we know the position/order of the
+//         ; arguments.
+//
+//         ((if set-word? spec.1 [
+//             assert [spec.1 = 'return:]
+//             assert [text? spec.2]
+//             assert [block? spec.3]
+//
+//             reduce [spec.1 spec.2 spec.3]
+//             elide spec: my skip 3
+//         ] else [
+//             [return: [<opt> <invisible> any-value!]]",
+//         ]))
+//
+//         remainder: [<opt> any-series!]
+//
+//         state [frame!]
+//         input [any-series!]
+//
+//         ((spec))  ; arguments the combinator takes, if any.
+//      ]
+//
+// !!! Optimizing it was at first considered unnecessary because the speed
+// at which combinators were created wasn't that important.  However, at the
+// time of setting up native-combinators there is no COMPOSE function available
+// and the rebValue("...") function won't work, so it had to be hacked up as
+// a handcoded routine.  Review.
+//
+REBARR *Expanded_Combinator_Spec(const REBVAL *original)
+{
+    REBDSP dsp_orig = DSP;
+
+    const RELVAL *tail;
+    const RELVAL *item = VAL_ARRAY_AT(&tail, original);
+    REBSPC *specifier = VAL_SPECIFIER(original);
+
+    if (IS_TEXT(item)) {
+        Derelativize(DS_PUSH(), item, specifier);  // {combinator description}
+        if (item == tail) fail("too few combinator args");
+        ++item;
+    }
+    Derelativize(DS_PUSH(), item, specifier);  // return:
+    if (item == tail) fail("too few combinator args");
+    ++item;
+    Derelativize(DS_PUSH(), item, specifier);  // "return description"
+    if (item == tail) fail("too few combinator args");
+    ++item;
+    Derelativize(DS_PUSH(), item, specifier);  // [return type block]
+    if (item == tail) fail("too few combinator args");
+    ++item;
+
+  blockscope {
+    const REBYTE utf8[] = 
+        "remainder: [<opt> any-series!]\n"
+        "state [frame!]\n"
+        "input [any-series!]\n";
+
+    SCAN_STATE ss;
+    SCAN_LEVEL level;
+    const REBLIN start_line = 1;
+    Init_Scan_Level(&level, &ss, ANONYMOUS, start_line, utf8, strsize(utf8));
+
+    Scan_To_Stack(&level);  // Note: Unbound code, won't find FRAME! etc.
+  }
+
+    for (; item != tail; ++item) {
+        Derelativize(DS_PUSH(), item, specifier);  // everything else
+    }
+
+    // The scanned material is not bound.  The natives were bound into the
+    // Lib_Context initially.  Hack around the issue by repeating that binding
+    // on the product.
+    //
+    REBARR *expanded = Pop_Stack_Values(dsp_orig); 
+    Bind_Values_Deep(ARR_HEAD(expanded), ARR_TAIL(expanded), Lib_Context);
+
+    return expanded;
+}
+
+
+//
 //  combinator: native [
 //
 //  {Make a stylized ACTION! that fulfills the interface of a combinator}
@@ -134,43 +239,12 @@ REBNATIVE(combinator)
 {
     INCLUDE_PARAMS_OF_COMBINATOR;
 
-    // Building an expanded spec could be done more laboriously with raw code
-    // pushing symbols to the data stack.  But we're not particularly concerned
-    // about the performance of making a combinator at the moment...just
-    // running one.  This code is directly from the original userspace
-    // combinator implementation.
-
-    REBVAL *expanded_spec = rebValue(
-        "let spec:", ARG(spec),  // alias input spec to variable for easier use
-
-        "compose [",
-            // Get the text description if given
-
-            "((if text? spec.1 [spec.1, elide spec: my next]))",
-
-            // Get the RETURN: definition if there is one, otherwise add one
-            // so that we are sure that we know the position/order of the
-            // arguments.
-
-            "((if set-word? spec.1 [",
-                "assert [spec.1 = 'return:]",
-                "assert [text? spec.2]",
-                "assert [block? spec.3]",
-
-                "reduce [spec.1 spec.2 spec.3]",
-                "elide spec: my skip 3",
-            "] else [",
-                "[return: [<opt> <invisible> any-value!]]",
-            "]))",
-
-            "remainder: [<opt> any-series!]",
-
-            "state [frame!]",
-            "input [any-series!]",
-
-            "((spec))",  // arguments the combinator takes, if any.
-        "]"
-    );
+    // This creates the expanded spec and puts it in a block which manages it.
+    // That might not be needed if the Make_Paramlist_Managed() could take an
+    // array and an index.
+    //
+    DECLARE_LOCAL (expanded_spec);
+    Init_Block(expanded_spec, Expanded_Combinator_Spec(ARG(spec)));
     
     REBCTX *meta;
     REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
@@ -179,8 +253,6 @@ REBNATIVE(combinator)
         expanded_spec,
         &flags
     );
-
-    rebRelease(expanded_spec);  // was an API handle allocated by rebValue
 
     REBACT *combinator = Make_Action(
         paramlist,
@@ -206,4 +278,46 @@ REBNATIVE(combinator)
     );
 
     return Init_Action(D_OUT, combinator, ANONYMOUS, UNBOUND);
+}
+
+
+//
+//  opt-combinator: native-combinator [
+//
+//  {If supplied parser fails, succeed anyway without advancing the input}
+//
+//      return: "PARSER's result if it succeeds, otherwise ~null~ isotope"
+//          [any-value!]
+//      parser [action!]
+//  ]
+//
+REBNATIVE(opt_combinator)
+//
+// In usermode this was:
+//
+//     ([result' (remainder)]: ^ parser input) then [
+//         return unmeta result'  ; return successful parser result
+//     ]
+//     set remainder input  ; on parser failure, make OPT remainder input
+//     return heavy null  ; succeed on parser failure, "heavy null" result
+//
+// The parser has most parameters filled (e.g. if it were BETWEEN it has both
+// parsers connected up) as well as the state, so no need to pass those.  All
+// it wants is the input and to know where you want it to put the remainder.
+{
+    INCLUDE_PARAMS_OF_OPT_COMBINATOR;
+
+    UNUSED(ARG(state));
+
+    // we don't have to ask for a "meta result", I don't think (?)  Maybe.
+    //
+    REBVAL *result = rebValue("applique @", ARG(parser), "[",
+        "input:", rebQ(ARG(input)),  // quote avoids becoming const
+        "remainder: @", ARG(remainder),
+    "]");
+    if (result != nullptr) {  // null isotope does not count
+        return result;  // ...so may be null isotope.  rebRelease() via return
+    }
+    rebElide("set @", ARG(remainder), ARG(input)); 
+    return Init_Nulled_Isotope(D_OUT);  // success, but nullness
 }
