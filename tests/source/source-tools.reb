@@ -215,7 +215,7 @@ rebsource: context [
                         opt 'export
                         set name: set-word! (name: to-word name)
                         opt 'enfix
-                        ['native | ahead path! into ['native to end]]
+                        'native
                         to end
                     ] also [
                         ;

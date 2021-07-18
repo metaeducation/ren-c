@@ -269,9 +269,21 @@ inline static REBPAR *ACT_PARAMS_HEAD(REBACT *a) {
 // These are indices into the details array agreed upon by actions which have
 // the PARAMLIST_FLAG_IS_NATIVE set.
 //
-#define IDX_NATIVE_BODY 1 // text string source code of native (for SOURCE)
-#define IDX_NATIVE_CONTEXT 2 // libRebol binds strings here (and lib)
-#define IDX_NATIVE_MAX (IDX_NATIVE_CONTEXT + 1)
+enum {
+    // !!! Originally the body was introduced as a feature to let natives
+    // specify "equivalent usermode code".  As the types of natives expanded,
+    // it was used for things like storing the text source of C user natives...
+    // or the "verb" WORD! of a "generic" (like APPEND).  So ordinary natives
+    // just store blank here, and the usages are sometimes dodgy (e.g. a user
+    // native checks to see if it's a user native if this is a TEXT!...which
+    // might collide with other natives in the future).  The idea needs review. 
+    //
+    IDX_NATIVE_BODY = 1,
+
+    IDX_NATIVE_CONTEXT,  // libRebol binds strings here (and lib)
+
+    IDX_NATIVE_MAX
+};
 
 
 inline static const REBSYM *KEY_SYMBOL(const REBKEY *key)

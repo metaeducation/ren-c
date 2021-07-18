@@ -177,7 +177,7 @@ REBTYPE(Quoted)
 
 
 //
-//  the: native/body [
+//  the: native [
 //
 //  "Returns value passed in without evaluation"
 //
@@ -185,12 +185,6 @@ REBTYPE(Quoted)
 //          [<opt> any-value!]
 //      'value [any-value!]
 //      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-PATH!"
-//  ][
-//      if soft and (match [get-group! get-word! get-path!] :value) [
-//          reeval value
-//      ] else [
-//          :value  ; also sets unevaluated bit, how could a user do so?
-//      ]
 //  ]
 //
 REBNATIVE(the)
@@ -212,7 +206,7 @@ REBNATIVE(the)
 
 
 //
-//  just: native/body [
+//  just: native [
 //
 //  "Returns quoted eversion of value passed in without evaluation"
 //
@@ -220,12 +214,6 @@ REBNATIVE(the)
 //          [<opt> any-value!]
 //      'value [any-value!]
 //      /soft "Evaluate if a GET-GROUP!, GET-WORD!, or GET-PATH!"
-//  ][
-//      if soft and (match [get-group! get-word! get-path!] :value) [
-//          reeval value
-//      ] else [
-//          :value  ; also sets unevaluated bit, how could a user do so?
-//      ]
 //  ]
 //
 REBNATIVE(just)

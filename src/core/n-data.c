@@ -1752,45 +1752,41 @@ REBNATIVE(devoid)
 
 
 //
-//  nothing?: native/body [
+//  nothing?: native [
 //
-//  "Returns TRUE if argument is either a BLANK! or NULL"
+//  "Returns TRUE if argument is BLANK! or NULL"
 //
 //      value [<opt> any-value!]
-//  ][
-//      did any [
-//          unset? 'value
-//          blank? value
-//          null? value
-//      ]
 //  ]
 //
 REBNATIVE(nothing_q)
+//
+// !!! Note that today's concept of allowing an ~unset~ isotope to be passed
+// here would require this taking value as a ^META parameter.  This might
+// be a good idea; when writing a function like DEFAULT it should overwrite
+// the variable if it's ~unset~ too...so that might be a concept of "nothing".
+// But meta functions should be rare, and it raises the question of how other
+// isotopes should be handled... what if it's a ~void~ isotope?  Should it
+// say it's not nothing, or error?  What about an ~asdf~ isotope?  For now
+// keep it at nulled and blank.
 {
     INCLUDE_PARAMS_OF_NOTHING_Q;
 
-    return Init_Logic(
-        D_OUT,
-        IS_BAD_WORD(ARG(value))  // Should unset be also considered "nothing"?
-            or IS_NULLED_OR_BLANK(ARG(value))
-    );
+    return Init_Logic(D_OUT, IS_NULLED_OR_BLANK(ARG(value)));
 }
 
 
 //
-//  something?: native/body [
+//  something?: native [
 //
-//  "Returns TRUE if a value is passed in and it isn't NULL or a BLANK!"
+//  "Returns FALSE if a argument is BLANK!, NULL, or an ~unset~ isotope"
 //
 //      value [<opt> any-value!]
-//  ][
-//      all [
-//          set? 'value
-//          not blank? value
-//      ]
 //  ]
 //
 REBNATIVE(something_q)
+//
+// !!! See remarks on `nothing?` regarding ~unset~ and isotopes.
 {
     INCLUDE_PARAMS_OF_SOMETHING_Q;
 

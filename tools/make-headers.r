@@ -81,7 +81,7 @@ emit-proto: func [
         ]
         ; Natives handled by searching for REBNATIVE() currently.  If it
         ; checked for the word NATIVE it would also have to look for paths
-        ; like NATIVE/BODY
+        ; if natives took refinements (as they once took NATIVE/BODY)
 
         fail "%make-headers.r only understands C functions"
     ]
@@ -324,9 +324,8 @@ parse native-list [
         opt 'export
         set name: set-word! (name: to-word name)
         opt 'enfix
-        ['native | and path! into ['native to end]]
+        'native
         set spec: block!
-        opt block!  ; optional body if native/body
         (
             emit-include-params-macro e-params name spec
             e-params/emit newline

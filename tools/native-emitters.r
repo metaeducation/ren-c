@@ -29,7 +29,7 @@ emit-native-proto: func [
             opt 'export
             set name: set-word!
             opt 'enfix
-            ['native | and path! into ['native to end]]
+            'native
             [
                 set spec: block!
             | (

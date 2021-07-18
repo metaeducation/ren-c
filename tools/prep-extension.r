@@ -125,15 +125,13 @@ native-defs: collect [
         ['export (n-export: true) | (n-export: false)]
         set n-name set-word! copy n-spec [
             'native block!
-                |
-            'native/body 2 block!
         ]
         opt [quote platforms: set n-platforms block!]
         (
             keep make natdef compose/only [
                 export: (n-export)
                 name: the (to word! n-name)
-                spec: (n-spec)  ; includes NATIVE or NATIVE/BODY
+                spec: (n-spec)  ; e.g. NATIVE
                 platforms: (try copy n-platforms)
             ]
         )
@@ -259,7 +257,6 @@ iterate native-list [
     if tail? next native-list [break]
     any [
         'native = native-list/2
-        all [path? native-list/2 | 'native = first native-list/2]
     ] then [
         assert [set-word? native-list/1]
         (emit-include-params-macro/ext e1

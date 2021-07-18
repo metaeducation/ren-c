@@ -48,15 +48,13 @@
 // which can be parameterized with a different context in which to look up
 // bindings by deafault in the API when that native is on the stack.
 //
-// Each entry should be one of these forms:
+// Entries look like:
 //
 //    some-name: native [spec content]
 //
-//    some-name: native/body [spec content] [equivalent user code]
-//
 // It is optional to put ENFIX between the SET-WORD! and the spec.
 //
-// If more refinements are added, this will have to get more sophisticated.
+// If refinements are added, this will have to get more sophisticated.
 //
 // Though the manual building of this table is not as "nice" as running the
 // evaluator, the evaluator makes comparisons against native values.  Having
@@ -90,24 +88,8 @@ REBVAL *Make_Native(
     else
         enfix = false;
 
-    // See if it's being invoked with NATIVE or NATIVE/BODY
-    //
-    bool has_body;
-    if (IS_WORD(*item)) {
-        if (VAL_WORD_ID(*item) != SYM_NATIVE)
-            panic (*item);
-        has_body = false;
-    }
-    else {
-        DECLARE_LOCAL (temp);
-        if (
-            VAL_WORD_ID(VAL_SEQUENCE_AT(temp, *item, 0)) != SYM_NATIVE
-            or VAL_WORD_ID(VAL_SEQUENCE_AT(temp, *item, 1)) != SYM_BODY
-        ){
-            panic (*item);
-        }
-        has_body = true;
-    }
+    if (not IS_WORD(*item) or VAL_WORD_ID(*item) != SYM_NATIVE)
+        panic (*item);
     ++*item;
 
     const REBVAL *spec = SPECIFIC(*item);
@@ -152,18 +134,7 @@ REBVAL *Make_Native(
 
     REBARR *details = ACT_DETAILS(native);
 
-    // If a user-equivalent body was provided, we save it in the native's
-    // REBVAL for later lookup.
-    //
-    if (has_body) {
-        if (not IS_BLOCK(*item))
-            panic (*item);
-
-        Derelativize(ARR_AT(details, IDX_NATIVE_BODY), *item, specifier);
-        ++*item;
-    }
-    else
-        Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
+    Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));  // !!! See IDX_NATIVE_BODY
 
     // When code in the core calls APIs like `rebValue()`, it consults the
     // stack and looks to see where the native function that is running

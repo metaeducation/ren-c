@@ -100,7 +100,7 @@ int tcc_set_lib_path_i(TCCState *s, const char *path)
 
 
 // COMPILE replaces &Pending_Native_Dispatcher that user natives start with,
-// so the dispatcher alone can't be usd to detect them.  ACTION_FLAG_XXX are
+// so the dispatcher alone can't be used to detect them.  ACTION_FLAG_XXX are
 // in too short of a supply to give them their own flag.  Other natives put
 // their source in ACT_DETAILS [0] and their context in ACT_DETAILS [1], so
 // for the moment just assume if the source is text it's a user native.

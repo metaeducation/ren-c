@@ -87,15 +87,13 @@ REBNATIVE(nand_q)
 
 
 //
-//  did: native/body [
+//  did: native [
 //
 //  "Synonym for TO-LOGIC"
 //
 //      return: "true if value is NOT a LOGIC! false, BLANK!, or NULL"
 //          [logic!]
 //      optional [<opt> any-value!]
-//  ][
-//      not not :optional
 //  ]
 //
 REBNATIVE(_did_)  // see TO-C-NAME
