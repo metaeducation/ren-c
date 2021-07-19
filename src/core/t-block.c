@@ -1022,11 +1022,10 @@ REBTYPE(Array)
         REBLEN index = VAL_INDEX(array);
 
         if (index < VAL_LEN_HEAD(array)) {
-            if (index == 0) Reset_Array(arr);
-            else {
-                SET_END(ARR_AT(arr, index));
+            if (index == 0)
+                Reset_Array(arr);
+            else
                 SET_SERIES_LEN(arr, cast(REBLEN, index));
-            }
         }
         RETURN (array);
     }

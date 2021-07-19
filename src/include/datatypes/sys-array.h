@@ -20,21 +20,19 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A "Rebol Array" is a series of REBVAL values which is terminated by an
-// END marker.  In R3-Alpha, the END marker was itself a full-sized REBVAL
-// cell...so code was allowed to write one cell past the capacity requested
-// when Make_Array() was called.  But this always had to be an END.
+// A "Rebol Array" is a series of REBVAL value cells.  In R3-Alpha, there was
+// a full-sized cell that would hold an END signal--much like a string
+// terminator.  Ren-C does not terminate arrays but relies on the known length,
+// in order to save on space--and avoid the cost of keeping the terminator up
+// to date as the array grows or resizes.
 //
-// In Ren-C, there is an implicit END marker just past the last cell in the
-// capacity.  Allowing a SET_END() on this position could corrupt the END
-// signaling slot, which only uses a bit out of a Reb_Header sized item to
-// signal.  Use SET_SERIES_LEN() to safely terminate arrays and respect not
-// writing if it's past capacity.
+// (Note: The debug build may put "trash" at the termination location whenever
+// the array size is updated, to make it easier to catch out-of-bounds access.
+// But the release build does not do this)
 //
-// While many operations are shared in common with REBSER, there is a
+// While many array operations are shared in common with REBSER, there is a
 // (deliberate) type incompatibility introduced.  The type compatibility is
-// implemented in a way that works in C or C++ (though it should be reviewed
-// for strict aliasing compliance).  To get the underlying REBSER of a REBARR
+// only present when building as C++.  To get the underlying REBSER of a REBARR
 // use the SER() operation.
 //
 // An ARRAY is the main place in the system where "relative" values come
