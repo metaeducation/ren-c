@@ -413,6 +413,98 @@ REBNATIVE(text_x_combinator)
 }
 
 
+//
+//  some-combinator: native-combinator [
+//
+//  {Must run at least one match}
+//
+//      return: "Result of last successful match"
+//          [<opt> any-value!]
+//      parser [action!]
+//  ]
+//
+REBNATIVE(some_combinator)
+{
+    INCLUDE_PARAMS_OF_SOME_COMBINATOR;
+
+    REBVAL *remainder = ARG(remainder);
+    REBVAL *parser = ARG(parser);
+    REBVAL *input = ARG(input);
+    UNUSED(ARG(state));
+
+    if (Call_Parser_Throws(D_OUT, remainder, parser, input))
+        return R_THROWN;
+
+    if (IS_NULLED(D_OUT))
+        return nullptr;  // didn't match even once, so not enough.
+
+    while (true) {
+        //
+        // Make the remainder from previous call the new input
+        //
+        Get_Var_May_Fail(input, remainder, SPECIFIED, true, false);
+
+        // Don't overwrite the last output (if it's null we want the previous
+        // iteration's successful output value)
+        //
+        if (Call_Parser_Throws(D_SPARE, remainder, parser, input))
+            return R_THROWN;
+
+        if (IS_NULLED(D_SPARE)) {
+            //
+            // There's no guarantee that a parser that fails leaves the
+            // remainder as-is (in fact multi-returns have historically unset
+            // variables to hide their previous values from acting as input).
+            // So we have to put the remainder back to the input we just tried
+            // but didn't work.
+            //
+            Set_Var_May_Fail(remainder, SPECIFIED, input, SPECIFIED, false);
+
+            return D_OUT;  // return previous successful parser result
+        }
+
+        Move_Cell(D_OUT, D_SPARE);  // update last successful result
+    }
+}
+
+
+//
+//  further-combinator: native-combinator [
+//
+//  {Pass through the result only if the input was advanced by the rule}
+//
+//      return: "parser result if it succeeded and advanced input, else NULL"
+//          [<opt> any-value!]
+//      parser [action!]
+//  ]
+//
+REBNATIVE(further_combinator)
+{
+    INCLUDE_PARAMS_OF_FURTHER_COMBINATOR;
+
+    REBVAL *remainder = ARG(remainder);
+    REBVAL *input = ARG(input);
+    REBVAL *parser = ARG(parser);
+    UNUSED(ARG(state));
+    
+    if (Call_Parser_Throws(D_OUT, remainder, parser, input))
+        return R_THROWN;
+
+    if (IS_NULLED(D_OUT))
+        return nullptr;  // the parse rule did not match
+
+    if (GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE))
+        fail ("Rule passed to FURTHER must synthesize a product");
+
+    Get_Var_May_Fail(D_SPARE, remainder, SPECIFIED, true, false);
+
+    if (VAL_INDEX(D_SPARE) <= VAL_INDEX(input))
+        return nullptr;  // the rule matched but did not advance the input
+
+    return D_OUT;
+}
+
+
 struct Combinator_Param_State {
     REBCTX *ctx;
     REBFRM *frame_;

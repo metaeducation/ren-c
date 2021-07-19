@@ -217,6 +217,7 @@ default-combinators: make map! reduce [
         return null
     ]
 
+  comment [
     'further combinator [
         {Pass through the result only if the input was advanced by the rule}
         return: "parser result if it succeeded and advanced input, else NULL"
@@ -236,6 +237,8 @@ default-combinators: make map! reduce [
         set remainder pos
         return unmeta result'
     ]
+  ]  ; replaced by native
+    'further :further-combinator
 
     === LOOPING CONSTRUCT KEYWORDS ===
 
@@ -266,6 +269,7 @@ default-combinators: make map! reduce [
         fail ~unreachable~
     ]
 
+  comment [
     'some combinator [
         {Must run at least one match}
         return: "Result of last successful match"
@@ -286,6 +290,8 @@ default-combinators: make map! reduce [
         ]
         fail ~unreachable~
     ]
+  ]  ; replaced by native
+    'some :some-combinator
 
     'tally combinator [
         {Iterate a rule and count the number of times it matches}
