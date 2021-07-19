@@ -447,6 +447,7 @@ REBNATIVE(some_combinator)
         // Don't overwrite the last output (if it's null we want the previous
         // iteration's successful output value)
         //
+        SET_END(D_SPARE);  // spare can be trash
         if (Call_Parser_Throws(D_SPARE, remainder, parser, input))
             return R_THROWN;
 
