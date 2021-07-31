@@ -1080,7 +1080,7 @@ REBNATIVE(switch)
 //      return: "Former value or branch result, can only be null if no target"
 //          [<opt> any-value!]
 //      :target "Word or path which might be set appropriately (or not)"
-//          [set-word! set-path!]  ; to left of DEFAULT
+//          [set-word! set-path! set-tuple!]  ; to left of DEFAULT
 //      'predicate "Test beyond null/void for defaulting, else .NOT.BLANK?"
 //          [<skip> predicate! action!]  ; to right of DEFAULT
 //      :branch "If target needs default, this is evaluated and stored there"
@@ -1100,7 +1100,7 @@ REBNATIVE(default)
     if (IS_SET_WORD(target))
         Copy_Cell(D_OUT, Lookup_Word_May_Fail(target, SPECIFIED));
     else {
-        assert(IS_SET_PATH(target));
+        assert(IS_SET_PATH(target) or IS_SET_TUPLE(target));
 
         // We want to be able to default a path with groups in it, but don't
         // want to double-evaluate.  In a userspace DEFAULT we would do
@@ -1189,7 +1189,7 @@ REBNATIVE(default)
     if (IS_SET_WORD(target))
         Copy_Cell(Sink_Word_May_Fail(target, SPECIFIED), D_OUT);
     else {
-        assert(IS_SET_PATH(target));
+        assert(IS_SET_PATH(target) or IS_SET_TUPLE(target));
         DECLARE_LOCAL (dummy);
         if (Eval_Path_Throws_Core(
             dummy,
