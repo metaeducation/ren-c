@@ -232,3 +232,19 @@
         ]
     )
 ]
+
+(
+    date1: 3-Feb-2021/16:09:02.786-5:00
+    date2: 4-Feb-2021
+
+    date1.zone: default [0]
+    date2.zone: default [0]
+
+    did all [
+        date1 == 3-Feb-2021/16:09:02.786-5:00
+
+        date2 == 4-Feb-2021/0:00+0:00
+
+        equal-or-lesser? date1 date2
+    ]
+)

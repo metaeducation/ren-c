@@ -43,50 +43,40 @@ static REBCTX *Error_Bad_Date_Compare(REBCEL(const*) a, REBCEL(const*) b)
 //
 REBINT CT_Date(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
+    // Dates which lack times or time zones cannot be compared directly with
+    // dates that do have times or time zones.  Error on those.
+    //
+    if (
+        Does_Date_Have_Time(a) != Does_Date_Have_Time(b)
+        or Does_Date_Have_Zone(a) != Does_Date_Have_Zone(b)
+    ){
+        fail (Error_Bad_Date_Compare(a, b));
+    }
+
     DECLARE_LOCAL (adjusted_a);
     DECLARE_LOCAL (adjusted_b);
 
     REBINT tiebreaker = 0;
 
-    // Dates which lack times cannot be compared directly with dates that
-    // do have times.
+    if (Does_Date_Have_Zone(a)) {
+        assert(Does_Date_Have_Zone(b));  // we checked for matching above
 
-    if (Does_Date_Have_Time(a)) {
-        if (not Does_Date_Have_Time(b))
-            fail (Error_Bad_Date_Compare(a, b));
+        // If the dates are in different time zones, they have to be canonized
+        // to compare them.  But if we're doing strict equality then we can't
+        // consider actually equal unless zones the same.
 
-        if (Does_Date_Have_Zone(a)) {
-            if (not Does_Date_Have_Zone(b))
-                fail (Error_Bad_Date_Compare(a, b));
+        if (VAL_DATE(a).zone != VAL_DATE(b).zone)
+            tiebreaker = VAL_DATE(a).zone > VAL_DATE(b).zone ? 1 : -1;
 
-            // If the dates are in different time zones, they have to be
-            // canonized to compare them.  But if we're doing strict equality
-            // then we can't consider actually equal unless zones the same.
+        Dequotify(Copy_Cell(adjusted_a, SPECIFIC(CELL_TO_VAL(a))));
+        Dequotify(Copy_Cell(adjusted_b, SPECIFIC(CELL_TO_VAL(b))));
 
-            if (VAL_DATE(a).zone != VAL_DATE(b).zone)
-                tiebreaker = VAL_DATE(a).zone > VAL_DATE(b).zone ? 1 : -1;
+        Adjust_Date_UTC(adjusted_a);
+        Adjust_Date_UTC(adjusted_b);
 
-            Dequotify(Copy_Cell(adjusted_a, SPECIFIC(CELL_TO_VAL(a))));
-            Dequotify(Copy_Cell(adjusted_b, SPECIFIC(CELL_TO_VAL(b))));
-
-            Adjust_Date_UTC(adjusted_a);
-            Adjust_Date_UTC(adjusted_b);
-
-            a = adjusted_a;
-            b = adjusted_b;
-        }
-        else if (Does_Date_Have_Zone(b))
-            fail (Error_Bad_Date_Compare(a, b));
-
-        REBINT time_ct = CT_Time(a, b, strict);  // guaranteed [-1 0 1]
-        if (time_ct != 0)
-            return time_ct;
-
-        if (strict and tiebreaker != 0)
-            return tiebreaker;  // don't allow equal unless time zones equal
+        a = adjusted_a;
+        b = adjusted_b;
     }
-    else if (Does_Date_Have_Time(b))
-        fail (Error_Bad_Date_Compare(a, b));
 
     // !!! This comparison doesn't know if it's being asked on behalf of
     // equality or not; and `strict` is passed in as true for plain > and <.
@@ -97,14 +87,25 @@ REBINT CT_Date(REBCEL(const*) a, REBCEL(const*) b, bool strict)
     // https://forum.rebol.info/t/comparison-semantics/1318
     //
 
-    REBINT days_diff = Days_Between_Dates(
+    REBINT days_diff = Days_Between_Dates(  // compare date component first
         cast(const REBVAL*, a),
         cast(const REBVAL*, b)
     );
-    if (days_diff == 0)
-        return days_diff;
+    if (days_diff != 0)
+        return days_diff > 0 ? 1 : -1;
 
-    return days_diff > 0 ? 1 : -1;
+    if (Does_Date_Have_Time(a)) {
+        assert(Does_Date_Have_Time(b));  // we checked for matching above
+
+        REBINT time_ct = CT_Time(a, b, strict);  // guaranteed [-1 0 1]
+        if (time_ct != 0)
+            return time_ct;
+    }
+
+    if (strict)
+        return tiebreaker;  // don't allow equal unless time zones equal
+    
+    return 0;
 }
 
 
