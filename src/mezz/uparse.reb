@@ -1346,6 +1346,40 @@ default-combinators: make map! reduce [
         return devoid do f
     ]
 
+    === WORD! COMBINATOR ===
+
+    ; The WORD! combinator handles *non-keyword* WORD! dispatches.  It cannot
+    ; also handle keywords, because that would mean it would have to be able
+    ; to take the parameters to those keywords...hence needing to advance the
+    ; rules--or be a "variadic" combinator.
+
+    word! combinator [
+        return: "Result of running combinator from fetching the WORD!"
+            [<opt> <invisible> any-value!]
+        value [word!]
+        <local> r c result parser
+    ][
+        r: get value else [
+            fail "WORD! fetches cannot be NULL in UPARSE (use BLANK!)"
+        ]
+        if blank? :r [  ; no-op; fetching a blank acts just like []
+            set remainder input
+            return ~void~
+        ]
+        match [block! text! datatype!] :r else [
+            fail "Currently WORD! only looks up TEXT! or BLOCK! rules"
+        ]
+        if not c: select state.combinators kind of :r [
+            fail ["Unhandled type in WORD! combinator:" kind of :r]
+        ]
+
+        ; passing in [] for rules, because no arguments available here...!
+        ;
+        parser: [# #]: combinatorize/value :c [] state r 
+
+        return [# (remainder)]: parser input
+    ]
+
     === BLOCK! COMBINATOR ===
 
     ; Handling of BLOCK! is the central combinator.  The contents are processed
@@ -1658,9 +1692,19 @@ parsify: func [
     case [
         word? :r [
             if let c: select state.combinators r [
+                ;
+                ; It's a keyword (the word itself is named in the combinators)
+                ;
                 return [# (advanced)]: combinatorize :c rules state 
             ]
-            r: get r else [fail [r "is NULL, not legal in UPARSE"]]
+
+            ; It's not a keyword, so we let the WORD! combinator decide what
+            ; to do with it.  The most basic thing to do is look it up and
+            ; see if it's a block, string, blank, NULL, etc. and give that
+            ; some sort of behavior.  This also offers a hookpoint.
+            ;
+            c: select state.combinators word!
+            return [# (advanced)]: combinatorize/value :c rules state r
         ]
 
         tuple? :r [

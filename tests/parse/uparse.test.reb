@@ -215,7 +215,7 @@
         uparse? "<<<stuff>>>" [
             left: across some "<"
             (n: length of left)
-            x: between <here> n ">"
+            x: between <here> repeat (n) ">"
         ]
         x = "stuff"
     ]
