@@ -1191,11 +1191,20 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     //=//// GET-BLOCK! ////////////////////////////////////////////////////=//
     //
-    // !!! Currently just inert, which may end up being its ultimate usage
+    // The most useful evaluative operation for GET-BLOCK! was deemed to be
+    // a REDUCE.  This does not correspond to what one would think of as an
+    // "itemwise get" of a block as GET of BLOCK! acted in historical Rebol.
+    // But most usages of that have been superseded by the UNPACK operation.
+    //
+    // The existence of GET-BLOCK! means that operations like "REPEND" are not
+    // necessary, as it's very easy for users to ask for blocks to be reduced.
 
-      case REB_GET_BLOCK:
-        Derelativize(f->out, v, v_specifier);
-        break;
+      case REB_GET_BLOCK: {
+        Derelativize(f_spare, v, v_specifier);
+        mutable_HEART_BYTE(f_spare) = mutable_KIND3Q_BYTE(f_spare) = REB_BLOCK;
+        if (RunQ_Throws(f->out, true, rebU(NATIVE_VAL(reduce)), f_spare, rebEND))
+            goto return_thrown;
+        break; }
 
 
     //=//// SET-BLOCK! ////////////////////////////////////////////////////=//
