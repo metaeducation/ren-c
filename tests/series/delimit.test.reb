@@ -29,7 +29,30 @@
     str = "<<Ren-C>> The NEW War On Software Complexity"
 )
 
-; Empty moldings vaporize and do not add delimiters.
+; Empty blocks vaporize and do not add delimiters
 ;
-("some**stuff" = delimit "**" [{} "some" [] "stuff" {}])
-("some**stuff" = delimit "**" [[] "some" {} "stuff" []])
+("some**stuff" = delimit "**" [[] "some" [] "stuff" []])
+
+; Empty strings do NOT vaporize, because DELIMIT needs to be able to point
+; out empty fields.  Use NULL, BLANK!, or [] to convey true emptiness.
+;
+("some**stuff" = delimit "**" [{} "some" {} "stuff" {}])
+
+; BLOCK! acts the same as if doing an APPEND to an empty TEXT!; e.g. items are
+; not reduced and no spacing is introduced.  They actually run the same code
+; path as APPEND of BLOCK! to TEXT!.
+;
+; GET-BLOCK! can be used when reducing is desired.
+[
+    (
+        word: "part"
+        "Mixing unspacedword with spaced part" = spaced [
+            "Mixing" ["unspaced" word] "with" "spaced" word
+        ]
+    )(
+        word: "part"
+        "Mixing unspacedpart with spaced part" = spaced [
+            "Mixing" :["unspaced" word] "with" "spaced" word
+        ]
+    )
+]

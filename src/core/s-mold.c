@@ -563,30 +563,37 @@ bool Form_Reduce_Throws(
             Form_Value(mo, out);
             pending = false;
         }
-        else if (IS_NULLED(delimiter))
-            Form_Value(mo, out);
+        else if (ANY_ARRAY(out)) {
+            if (not IS_BLOCK(out))
+                fail ("Only BLOCK! array types can be used in DELIMIT");
+
+            // BLOCK!s are methods for gathering material to be part of the
+            // delimit.  The behavior is defined as being not reduced and
+            // without spaces between...the main place you find this behavior
+            // is in the APPEND of a block to a string.  So this code delegates
+            // to that.
+            //
+            // !!! Unify with the Modify_String() code so this doesn't need
+            // to call through the API.
+            //
+            if (VAL_LEN_AT(out) != 0) {
+                if (pending)
+                    Form_Value(mo, delimiter);
+
+                Move_Cell(f_spare, out);
+                if (RunQ_Throws(out, true, "append copy {}", f_spare, rebEND)) {
+                    Drop_Mold(mo);
+                    Abort_Frame(f);
+                    return true;
+                }
+                Form_Value(mo, out);
+
+                pending = true;
+            }
+        }
         else {
-            // We do not want things that produce no mold output to actually
-            // get a delimiter, e.g.:
-            //
-            //     >> print ["here's" [] "some stuff"]
-            //     here's some stuff
-            //
-            //     >> print ["here's" {} "some stuff"]
-            //     here's some stuff
-            //
-            // But we can't be psychic about whether any particular molding
-            // operation will have output.  The delimiter has to go into the
-            // mold buffer beforehand.  So remember how much the delimiter
-            // added, and we'll roll it back if nothing additional molds.
-
-            REBLEN pre_delimit_len = STR_LEN(mo->series);
-            REBLEN pre_delimit_used = SER_USED(mo->series);
-
             if (pending)
                 Form_Value(mo, delimiter);
-
-            REBLEN post_delimit_used = SER_USED(mo->series);
 
             if (IS_QUOTED(out)) {
                 Unquotify(out, 1);
@@ -595,17 +602,16 @@ bool Form_Reduce_Throws(
             else
                 Form_Value(mo, out);
 
-            if (SER_USED(mo->series) == post_delimit_used) {  // nothing added
-                TERM_STR_LEN_SIZE(
-                    mo->series,
-                    pre_delimit_len,
-                    pre_delimit_used
-                );
+            // Note that empty strings are distinct from blanks/nulls/[] in
+            // terms of still being delimited.  This is important, e.g. in
+            // comma-delimited formats to denote empty fields.
+            //
+            //    >> delimit "," [field1 field2 field3]  ; field2 is ""
+            //    one,,three
+            //
+            // The same principle would apply to a "space-delimited format".
 
-                // leave pending as it was (true or false)
-            }
-            else
-                pending = true;  // something added, so delimiter pending
+            pending = true;
         }
     } while (NOT_END(f->feed->value));
 
