@@ -1366,9 +1366,26 @@ default-combinators: make map! reduce [
             set remainder input
             return ~void~
         ]
-        match [block! text! datatype!] :r else [
-            fail "Currently WORD! only looks up TEXT! or BLOCK! rules"
+
+        ; !!! It's not clear exactly what set of things should be allowed or
+        ; disallowed here.  Letting you do INTEGER! has been rejected as too
+        ; obfuscating, since the INTEGER! combinator takes an argument.  Letting
+        ; Allowing WORD! to run the WORD! combinator again would not be letting
+        ; you do anything with recursion you couldn't do with BLOCK! rules, but
+        ; still seems kind of bad.  Allowing LOGIC! seems like it may be
+        ; confusing but if it weren't allowed you couldn't break rules just
+        ; by using the word FALSE.
+        ;
+        ; Basically, for the moment, we rule out anything that takes arguments.
+        ; Right now that's integers and keywords, so just prohibit those.
+        ;
+        if integer? :r [
+            fail [value "can't be INTEGER!, use REPEAT" :["(" value ")"]]
         ]
+        if word? :r [
+            fail [value "can't be WORD!, use" :["[" value "]"] "BLOCK! rule"]
+        ]
+
         if not c: select state.combinators kind of :r [
             fail ["Unhandled type in WORD! combinator:" kind of :r]
         ]

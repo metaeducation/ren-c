@@ -36,7 +36,7 @@
 ; Empty strings do NOT vaporize, because DELIMIT needs to be able to point
 ; out empty fields.  Use NULL, BLANK!, or [] to convey true emptiness.
 ;
-("some**stuff" = delimit "**" [{} "some" {} "stuff" {}])
+("**some****stuff**" = delimit "**" [{} "some" {} "stuff" {}])
 
 ; BLOCK! acts the same as if doing an APPEND to an empty TEXT!; e.g. items are
 ; not reduced and no spacing is introduced.  They actually run the same code
