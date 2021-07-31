@@ -28,3 +28,8 @@
 
     str = "<<Ren-C>> The NEW War On Software Complexity"
 )
+
+; Empty moldings vaporize and do not add delimiters.
+;
+("some**stuff" = delimit "**" [{} "some" [] "stuff" {}])
+("some**stuff" = delimit "**" [[] "some" {} "stuff" []])

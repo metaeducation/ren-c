@@ -566,8 +566,27 @@ bool Form_Reduce_Throws(
         else if (IS_NULLED(delimiter))
             Form_Value(mo, out);
         else {
+            // We do not want things that produce no mold output to actually
+            // get a delimiter, e.g.:
+            //
+            //     >> print ["here's" [] "some stuff"]
+            //     here's some stuff
+            //
+            //     >> print ["here's" {} "some stuff"]
+            //     here's some stuff
+            //
+            // But we can't be psychic about whether any particular molding
+            // operation will have output.  The delimiter has to go into the
+            // mold buffer beforehand.  So remember how much the delimiter
+            // added, and we'll roll it back if nothing additional molds.
+
+            REBLEN pre_delimit_len = STR_LEN(mo->series);
+            REBLEN pre_delimit_used = SER_USED(mo->series);
+
             if (pending)
                 Form_Value(mo, delimiter);
+
+            REBLEN post_delimit_used = SER_USED(mo->series);
 
             if (IS_QUOTED(out)) {
                 Unquotify(out, 1);
@@ -576,7 +595,17 @@ bool Form_Reduce_Throws(
             else
                 Form_Value(mo, out);
 
-            pending = true;
+            if (SER_USED(mo->series) == post_delimit_used) {  // nothing added
+                TERM_STR_LEN_SIZE(
+                    mo->series,
+                    pre_delimit_len,
+                    pre_delimit_used
+                );
+
+                // leave pending as it was (true or false)
+            }
+            else
+                pending = true;  // something added, so delimiter pending
         }
     } while (NOT_END(f->feed->value));
 
