@@ -245,7 +245,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
   //=//// A /REFINEMENT ARG ///////////////////////////////////////////////=//
 
-        if (TYPE_CHECK(f->param, REB_TS_REFINEMENT)) {
+        if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
             assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));  // jump lower
             Init_Nulled(f->arg);  // null means refinement not used
             goto continue_fulfilling;
@@ -287,7 +287,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // slot which will react with TRUE to TAIL?, so feed it
                 // from the global empty array.
                 //
-                if (Is_Param_Variadic(f->param)) {
+                if (GET_PARAM_FLAG(f->param, VARIADIC)) {
                     Init_Varargs_Untyped_Enfix(f->arg, END_CELL);
                     goto continue_fulfilling;
                 }
@@ -304,7 +304,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 goto continue_fulfilling;
             }
 
-            if (Is_Param_Variadic(f->param)) {
+            if (GET_PARAM_FLAG(f->param, VARIADIC)) {
                 //
                 // Stow unevaluated cell into an array-form variadic, so
                 // the user can do 0 or 1 TAKEs of it.
@@ -343,7 +343,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                     fail (Error_Evaluative_Quote_Raw());
                 }
 
-                // Is_Param_Skippable() accounted for in pre-lookback
+                // PARAM_FLAG_SKIPPABLE accounted for in pre-lookback
 
                 Copy_Cell(f->arg, f->out);
                 SET_CELL_FLAG(f->arg, UNEVALUATED);
@@ -426,7 +426,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // back to this call through a reified FRAME!, and are able to
         // consume additional arguments during the function run.
         //
-        if (Is_Param_Variadic(f->param)) {
+        if (GET_PARAM_FLAG(f->param, VARIADIC)) {
             Init_Varargs_Untyped_Normal(f->arg, f);
             goto continue_fulfilling;
         }
@@ -528,11 +528,11 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
           case REB_P_HARD:
-            if (not Is_Param_Skippable(f->param))
+            if (NOT_PARAM_FLAG(f->param, SKIPPABLE))
                 Literal_Next_In_Frame(f->arg, f);  // CELL_FLAG_UNEVALUATED
             else {
                 if (not Typecheck_Including_Constraints(f->param, f_next)) {
-                    assert(Is_Param_Endable(f->param));
+                    assert(GET_PARAM_FLAG(f->param, ENDABLE));
                     Init_Endish_Nulled(f->arg);  // not EVAL_FLAG_BARRIER_HIT
                     goto continue_fulfilling;
                 }
@@ -639,7 +639,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             break;
 
           case REB_P_RETURN:  // should not happen!
-            assert(TYPE_CHECK(f->param, REB_TS_REFINEMENT));
+            assert(GET_PARAM_FLAG(f->param, REFINEMENT));
             assert(false);
             break;
 
@@ -768,7 +768,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // The data feed is unchanged (can come from this frame, or another,
         // or just an array from MAKE VARARGS! of a BLOCK!)
         //
-        if (Is_Param_Variadic(f->param)) {
+        if (GET_PARAM_FLAG(f->param, VARIADIC)) {
             //
             // The types on the parameter are for the values fetched later.
             // Actual argument must be a VARARGS!
@@ -797,7 +797,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // Refinements have a special rule beyond plain type checking, in that
         // they don't just want an ISSUE! or NULL, they want # or NULL.
         //
-        if (TYPE_CHECK(f->param, REB_TS_REFINEMENT)) {
+        if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
             if (
                 GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
                 and Is_Unset(f->arg)
@@ -830,7 +830,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             //
             // Note: `1 + comment "foo"` => `1 +`, arg is END
             //
-            if (not Is_Param_Endable(f->param))
+            if (NOT_PARAM_FLAG(f->param, ENDABLE))
                 fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
 
             continue;
@@ -840,7 +840,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
         if (
             kind_byte == REB_BLANK  // v-- e.g. <blank> param
-            and TYPE_CHECK(f->param, REB_TS_NOOP_IF_BLANK)
+            and GET_PARAM_FLAG(f->param, NOOP_IF_BLANK)
         ){
             SET_EVAL_FLAG(f, TYPECHECK_ONLY);
             continue;
@@ -864,11 +864,11 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // like `foo: func [...] mutable [...]` ?  This seems bad, because the
         // contract of the function hasn't been "tweaked" with reskinning.
         //
-        if (TYPE_CHECK(f->param, REB_TS_CONST))
+        if (GET_PARAM_FLAG(f->param, CONST))
             SET_CELL_FLAG(f->arg, CONST);
 
         // !!! Review when # is used here
-        if (TYPE_CHECK(f->param, REB_TS_REFINEMENT)) {
+        if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
             Typecheck_Refinement(f->param, f->arg);
             continue;
         }

@@ -47,7 +47,7 @@ static bool Params_Of_Hook(
     if (not s->just_words) {
         if (
             not (flags & PHF_UNREFINED)
-            and TYPE_CHECK(param, REB_TS_REFINEMENT)
+            and GET_PARAM_FLAG(param, REFINEMENT)
         ){
             Refinify(DS_TOP);
         }
@@ -254,7 +254,7 @@ void Push_Paramlist_Triads_May_Fail(
             // Turn block into typeset for parameter at current index.
             // Leaves VAL_TYPESET_SYM as-is.
 
-            bool was_refinement = TYPE_CHECK(param, REB_TS_REFINEMENT);
+            bool was_refinement = GET_PARAM_FLAG(param, REFINEMENT);
             VAL_TYPESET_LOW_BITS(param) = 0;
             VAL_TYPESET_HIGH_BITS(param) = 0;
 
@@ -267,7 +267,7 @@ void Push_Paramlist_Triads_May_Fail(
                 derived
             );
             if (was_refinement)
-                TYPE_SET(param, REB_TS_REFINEMENT);
+                SET_PARAM_FLAG(param, REFINEMENT);
 
             *flags |= MKF_HAS_TYPES;
             continue;
@@ -345,11 +345,11 @@ void Push_Paramlist_Triads_May_Fail(
                 // in the unspecialized slot.  This is under review.
                 //
                 if (VAL_WORD_ID(cell) == SYM_RETURN and not quoted) {
-                    refinement = true;  // sets REB_TS_REFINEMENT (optional)
+                    refinement = true;  // sets PARAM_FLAG_REFINEMENT (optional)
                     pclass = REB_P_RETURN;
                 }
                 else if (not quoted) {
-                    refinement = true;  // sets REB_TS_REFINEMENT (optional)
+                    refinement = true;  // sets PARAM_FLAG_REFINEMENT (optional)
                     pclass = REB_P_OUTPUT;
                 }
             }
@@ -436,14 +436,15 @@ void Push_Paramlist_Triads_May_Fail(
         else if (refinement) {
             Init_Param(
                 param,
-                pclass,
-                FLAGIT_KIND(REB_TS_REFINEMENT)  // must preserve if type block
+                FLAG_PARAM_CLASS_BYTE(pclass)
+                    | PARAM_FLAG_REFINEMENT,  // must preserve if type block
+                TS_NOTHING
             );
         }
         else
             Init_Param(
                 param,
-                pclass,
+                FLAG_PARAM_CLASS_BYTE(pclass),
                 TS_OPT_VALUE  // By default <opt> ANY-VALUE! is legal
             );
 
@@ -511,10 +512,10 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             //
             Init_Param(
                 param,
-                REB_P_RETURN,
+                FLAG_PARAM_CLASS_BYTE(REB_P_RETURN)
+                    | PARAM_FLAG_ENDABLE  // return/void ok
+                    | PARAM_FLAG_REFINEMENT,  // need slot for types
                 TS_OPT_VALUE
-                    | FLAGIT_KIND(REB_TS_ENDABLE)  // return/void ok
-                    | FLAGIT_KIND(REB_TS_REFINEMENT)  // need slot for types
             );
 
             Init_Nulled(TYPES_SLOT(DSP));
@@ -978,7 +979,7 @@ REBACT *Make_Action(
             assert(false);
         }
 
-        if (TYPE_CHECK(first, REB_TS_SKIPPABLE))
+        if (GET_PARAM_FLAG(first, SKIPPABLE))
             SET_ACTION_FLAG(act, SKIPPABLE_FIRST);
     }
 

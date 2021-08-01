@@ -86,8 +86,11 @@ inline static SYMID VAL_TYPE_SYM(REBCEL(const*) v) {
 // Operations when typeset is done with a bitset (currently all typesets)
 
 
-#define VAL_TYPESET_PARAM_CLASS_U32(v) \
-    PAYLOAD(Any, (v)).first.u32
+#define VAL_TYPESET_PARAM_CLASS_BYTE(v) \
+    FIRST_BYTE(PAYLOAD(Any, (v)).first.u)
+
+#define mutable_VAL_TYPESET_PARAM_CLASS_BYTE(v) \
+    mutable_FIRST_BYTE(PAYLOAD(Any, (v)).first.u)
 
 #define VAL_TYPESET_LOW_BITS(v) \
     PAYLOAD(Any, (v)).second.u32
@@ -262,8 +265,11 @@ inline static void CLEAR_ALL_TYPESET_BITS(RELVAL *v) {
 
 inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
     assert(IS_TYPESET(param));
-    return cast(enum Reb_Param_Class, VAL_TYPESET_PARAM_CLASS_U32(param));
+    return cast(enum Reb_Param_Class, VAL_TYPESET_PARAM_CLASS_BYTE(param));
 }
+
+#define VAL_PARAM_FLAGS(v)           PAYLOAD(Any, (v)).first.u
+#define FLAG_PARAM_CLASS_BYTE(b)     FLAG_FIRST_BYTE(b)
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -276,14 +282,16 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
 // bits using out-of-range of 1...REB_MAX datatypes as "psuedo-types".
 //
 
+#define TS_NOTHING 0
+
 // Endability is distinct from optional, and it means that a parameter is
 // willing to accept being at the end of the input.  This means either
 // an infix dispatch's left argument is missing (e.g. `do [+ 5]`) or an
 // ordinary argument hit the end (e.g. the trick used for `>> help` when
 // the arity is 1 usually as `>> help foo`)
 //
-#define Is_Param_Endable(v) \
-    TYPE_CHECK((v), REB_TS_ENDABLE)
+#define PARAM_FLAG_ENDABLE \
+    FLAG_LEFT_BIT(8)
 
 // Indicates that when this parameter is fulfilled, it will do so with a
 // value of type VARARGS!, that actually just holds a pointer to the frame
@@ -294,16 +302,45 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
 // a VARARGS! type are different things.  (A function may accept a
 // variadic number of VARARGS! values, for instance.)
 //
-#define Is_Param_Variadic(v) \
-    TYPE_CHECK((v), REB_TS_VARIADIC)
+#define PARAM_FLAG_VARIADIC \
+    FLAG_LEFT_BIT(9)
 
 // Skippability is used on quoted arguments to indicate that they are willing
 // to "pass" on something that isn't a matching type.  This gives an ability
 // that a variadic doesn't have, which is to make decisions about rejecting
 // a parameter *before* the function body runs.
 //
-#define Is_Param_Skippable(v) \
-    TYPE_CHECK((v), REB_TS_SKIPPABLE)
+#define PARAM_FLAG_SKIPPABLE \
+    FLAG_LEFT_BIT(10)
+
+#define PARAM_FLAG_REFINEMENT \
+    FLAG_LEFT_BIT(11)
+
+#define PARAM_FLAG_PREDICATE \
+    FLAG_LEFT_BIT(12)
+
+// Parameters can be marked such that if they are blank, the action will not
+// be run at all.  This is done via the `<blank>` annotation, which indicates
+// "handle blanks specially" (in contrast to BLANK!, which just means a
+// parameter can be passed in as a blank, and the function runs normally)
+//
+#define PARAM_FLAG_NOOP_IF_BLANK \
+    FLAG_LEFT_BIT(13)
+
+#define PARAM_FLAG_CONST \
+    FLAG_LEFT_BIT(14)
+
+#define SET_PARAM_FLAG(v,name) \
+    (VAL_PARAM_FLAGS(v) |= PARAM_FLAG_##name)
+
+#define GET_PARAM_FLAG(v,name) \
+    ((VAL_PARAM_FLAGS(v) & PARAM_FLAG_##name) != 0)
+
+#define CLEAR_PARAM_FLAG(v,name) \
+    (VAL_PARAM_FLAGS(v) &= ~PARAM_FLAG_##name)
+
+#define NOT_PARAM_FLAG(v,name) \
+    ((VAL_PARAM_FLAGS(v) & PARAM_FLAG_##name) == 0)
 
 
 // All hidden parameters in the exemplar frame of an ACTION! are not shown
@@ -386,14 +423,6 @@ inline static bool Is_Param_Sealed(const REBPAR *param) {
     return false;  // !!! temporary, needs to use cell flag
 }
 
-// Parameters can be marked such that if they are blank, the action will not
-// be run at all.  This is done via the `<blank>` annotation, which indicates
-// "handle blanks specially" (in contrast to BLANK!, which just means a
-// parameter can be passed in as a blank, and the function runs normally)
-//
-#define Is_Param_Noop_If_Blank(v) \
-    TYPE_CHECK((v), REB_TS_NOOP_IF_BLANK
-
 
 //=//// PARAMETER SYMBOL //////////////////////////////////////////////////=//
 //
@@ -402,7 +431,7 @@ inline static bool Is_Param_Sealed(const REBPAR *param) {
 inline static REBVAL *Init_Typeset(RELVAL *out, REBU64 bits)
 {
     RESET_CELL(out, REB_TYPESET, CELL_MASK_NONE);
-    VAL_TYPESET_PARAM_CLASS_U32(out) = REB_P_NORMAL;
+    VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(REB_P_NORMAL);
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
     VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
     return cast(REBVAL*, out);
@@ -417,19 +446,19 @@ inline static REBVAL *Init_Typeset(RELVAL *out, REBU64 bits)
 //
 inline static REBVAL *Init_Param_Core(
     RELVAL *out,
-    enum Reb_Param_Class pclass,
+    REBFLGS param_flags,
     REBU64 bits
 ){
     RESET_VAL_HEADER(out, REB_TYPESET, CELL_MASK_NONE);
 
-    VAL_TYPESET_PARAM_CLASS_U32(out) = pclass;
+    VAL_PARAM_FLAGS(out) = param_flags;
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
     VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
     return cast(REBVAL*, out);
 }
 
-#define Init_Param(out,pclass,bits) \
-    Init_Param_Core(TRACK_CELL_IF_DEBUG(out), (pclass), (bits))
+#define Init_Param(out,param_flags,bits) \
+    Init_Param_Core(TRACK_CELL_IF_DEBUG(out), (param_flags), (bits))
 
 
 inline static REBVAL *Refinify(REBVAL *v);  // forward declaration
@@ -471,8 +500,8 @@ inline static bool Typecheck_Including_Constraints(
         // typeset for the value being written... they just check that you've
         // given a location to write.
         //
-        const REBU64 ts_out = FLAGIT_KIND(REB_TS_REFINEMENT)
-            | FLAGIT_KIND(REB_NULL)
+        const REBU64 ts_out =
+            FLAGIT_KIND(REB_NULL)
             | FLAGIT_KIND(REB_ISSUE)  // for Is_Blackhole() use with SET
             | FLAGIT_KIND(REB_WORD)
             | FLAGIT_KIND(REB_PATH);
@@ -517,14 +546,14 @@ inline static bool Typecheck_Including_Constraints(
     // which may be the easiest approach)
 
     if (
-        TYPE_CHECK(param, REB_TS_REFINEMENT)
+        GET_PARAM_FLAG(param, REFINEMENT)
         and kind == REB_PATH
         and IS_REFINEMENT(v)
     ){
         return true;
     }
 
-    if (TYPE_CHECK(param, REB_TS_PREDICATE) and IS_PREDICATE(v))
+    if (GET_PARAM_FLAG(param, PREDICATE) and IS_PREDICATE(v))
         return true;
 
     return false;
@@ -558,7 +587,7 @@ inline static void Typecheck_Refinement(
     const REBPAR *param,
     REBVAL *arg
 ){
-    assert(TYPE_CHECK(param, REB_TS_REFINEMENT));
+    assert(GET_PARAM_FLAG(param, REFINEMENT));
 
     if (IS_NULLED(arg)) {
         //

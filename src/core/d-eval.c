@@ -269,7 +269,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);
         if (GET_CELL_FLAG(f->out, OUT_NOTE_STALE)) {
-            if (not TYPE_CHECK(param, REB_TS_ENDABLE)) {
+            if (NOT_PARAM_FLAG(param, ENDABLE)) {
                 printf("Native code violated return type contract!\n");
                 panic (Error_Bad_Invisible(f));
             }
@@ -277,7 +277,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
         else if (
             not Typecheck_Including_Constraints(param, f->out)
             and not (
-                TYPE_CHECK(param, REB_TS_ENDABLE)
+                GET_PARAM_FLAG(param, ENDABLE)
                 and GET_EVAL_FLAG(f, RUNNING_ENFIX)
             )  // exemption, e.g. `1 comment "hi" + 2` infix non-stale
         ){

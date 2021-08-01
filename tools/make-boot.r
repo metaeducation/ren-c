@@ -237,35 +237,28 @@ e-types/emit {
         /*** ALIASES FOR REB_0_END ***/
 
         REB_0 = REB_0_END,  /* REB_0 when used for signals besides ENDness */
-        REB_TS_ENDABLE = REB_0,  /* in typesets for endability/invisibility */
 
         /*** PSEUDOTYPES ***/
 
         PSEUDOTYPE_ONE = REB_MAX,
         REB_R_THROWN = PSEUDOTYPE_ONE,
-        REB_TS_VARIADIC = PSEUDOTYPE_ONE,
 
         PSEUDOTYPE_TWO,
         REB_R_INVISIBLE = PSEUDOTYPE_TWO,
-        REB_TS_SKIPPABLE = PSEUDOTYPE_TWO,
       #if defined(DEBUG_REFORMAT_CELLS)
         REB_T_UNSAFE = PSEUDOTYPE_TWO,  /* simulate lack of GC safety*/
       #endif
 
         PSEUDOTYPE_THREE,
         REB_R_REDO = PSEUDOTYPE_THREE,
-        REB_TS_REFINEMENT = PSEUDOTYPE_THREE,
 
         PSEUDOTYPE_FOUR,
         REB_R_REFERENCE = PSEUDOTYPE_FOUR,
-        REB_TS_PREDICATE = PSEUDOTYPE_FOUR,
 
         PSEUDOTYPE_FIVE,
         REB_R_IMMEDIATE = PSEUDOTYPE_FIVE,
-        REB_TS_NOOP_IF_BLANK = PSEUDOTYPE_FIVE,
 
         PSEUDOTYPE_SIX,
-        REB_TS_CONST = PSEUDOTYPE_SIX,
 
         REB_MAX_PLUS_MAX
     };

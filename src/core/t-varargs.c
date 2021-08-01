@@ -687,7 +687,7 @@ REBNATIVE(variadic_q)
     const REBKEY *key = ACT_KEYS(&key_tail, action);
     const REBVAL *param = ACT_PARAMS_HEAD(action);
     for (; key != key_tail; ++param, ++key) {
-        if (Is_Param_Variadic(param))
+        if (GET_PARAM_FLAG(param, VARIADIC))
             return Init_True(D_OUT);
     }
 

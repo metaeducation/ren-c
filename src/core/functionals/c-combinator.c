@@ -198,7 +198,7 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
     ++item;
 
   blockscope {
-    const REBYTE utf8[] = 
+    const REBYTE utf8[] =
         "remainder: [<opt> any-series!]\n"
         "state [frame!]\n"
         "input [any-series!]\n";
@@ -219,7 +219,7 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
     // Lib_Context initially.  Hack around the issue by repeating that binding
     // on the product.
     //
-    REBARR *expanded = Pop_Stack_Values(dsp_orig); 
+    REBARR *expanded = Pop_Stack_Values(dsp_orig);
     Bind_Values_Deep(ARR_HEAD(expanded), ARR_TAIL(expanded), Lib_Context);
 
     return expanded;
@@ -245,7 +245,7 @@ REBNATIVE(combinator)
     //
     DECLARE_LOCAL (expanded_spec);
     Init_Block(expanded_spec, Expanded_Combinator_Spec(ARG(spec)));
-    
+
     REBCTX *meta;
     REBFLGS flags = MKF_KEYWORDS | MKF_RETURN;
     REBARR *paramlist = Make_Paramlist_Managed_May_Fail(
@@ -487,7 +487,7 @@ REBNATIVE(further_combinator)
     REBVAL *input = ARG(input);
     REBVAL *parser = ARG(parser);
     UNUSED(ARG(state));
-    
+
     if (Call_Parser_Throws(D_OUT, remainder, parser, input))
         return R_THROWN;
 
@@ -537,8 +537,8 @@ static bool Combinator_Param_Hook(
         //
         return true;  // keep iterating the parameters.
     }
-    
-    if (TYPE_CHECK(param, REB_TS_REFINEMENT)) {
+
+    if (GET_PARAM_FLAG(param, REFINEMENT)) {
         //
         // !!! Behavior of refinements is a bit up in the air, the idea is
         // that refinements that don't take arguments can be supported...

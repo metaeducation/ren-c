@@ -30,7 +30,7 @@
 // new features.  THE takes the place of the former literalizing operator,
 // and JUST will be literalizing but add a quoting level.
 //
-//    >> quote 1 + 2  ; now evaluative, adds a quoting level 
+//    >> quote 1 + 2  ; now evaluative, adds a quoting level
 //    == '3
 //
 //    >> the a  ; acts like Rebol2 QUOTE
@@ -221,7 +221,7 @@ REBNATIVE(just)
 // Note: This could be defined as `chain [:the | :quote]`.  However, it can be
 // needed early in the boot (before REDESCRIBE is available), and it is also
 // something that needs to perform well due to common use.  Having it be its
-// own native is probably worthwhile. 
+// own native is probably worthwhile.
 {
     INCLUDE_PARAMS_OF_THE;
 
@@ -258,7 +258,7 @@ REBNATIVE(quote)
     REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
 
     if (depth == 0)
-        RETURN (ARG(optional));  
+        RETURN (ARG(optional));
 
     if (depth < 0)
         fail (PAR(depth));
@@ -394,7 +394,7 @@ REBNATIVE(unmeta)
     Unquotify(v, 1);  // Remove meta level caused by parameter convention
     Meta_Unquotify(v);  // now remove the level of meta the user was asking for
     RETURN (v);
-} 
+}
 
 
 //
@@ -471,7 +471,7 @@ REBTYPE(Meta)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.
 
-        // !!! REFLECT cannot use REB_TS_NOOP_IF_BLANK, because of the special
+        // !!! REFLECT cannot use PARAM_FLAG_NOOP_IF_BLANK, due to the special
         // case of TYPE OF...where a BLANK! in needs to provide BLANK! the
         // datatype out.  Also, there currently exist "reflectors" that
         // return LOGIC!, e.g. TAIL?...and logic cannot blindly return null:
@@ -547,7 +547,7 @@ REBTYPE(The)
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.
 
-        // !!! REFLECT cannot use REB_TS_NOOP_IF_BLANK, because of the special
+        // !!! REFLECT cannot use PARAM_FLAG_NOOP_IF_BLANK, due to the special
         // case of TYPE OF...where a BLANK! in needs to provide BLANK! the
         // datatype out.  Also, there currently exist "reflectors" that
         // return LOGIC!, e.g. TAIL?...and logic cannot blindly return null:

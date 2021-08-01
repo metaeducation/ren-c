@@ -150,7 +150,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
         assert(NOT_CELL_FLAG(param, VAR_MARKED_HIDDEN));
 
         const REBSYM *symbol = KEY_SYMBOL(key);  // added to binding
-        if (not TYPE_CHECK(param, REB_TS_REFINEMENT)) {  // nothing to push
+        if (NOT_PARAM_FLAG(param, REFINEMENT)) {  // nothing to push
 
           continue_unspecialized:
 
@@ -340,7 +340,7 @@ bool Specialize_Action_Throws(
         if (Is_Param_Hidden(param))
             continue;
 
-        if (TYPE_CHECK(param, REB_TS_REFINEMENT)) {
+        if (GET_PARAM_FLAG(param, REFINEMENT)) {
             if (
                 IS_TAG(arg)
                 and VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag)
@@ -387,7 +387,7 @@ bool Specialize_Action_Throws(
         // !!! If argument was previously specialized, should have been type
         // checked already... don't type check again (?)
         //
-        if (Is_Param_Variadic(param))
+        if (GET_PARAM_FLAG(param, VARIADIC))
             fail ("Cannot currently SPECIALIZE variadic arguments.");
 
         if (not TYPE_CHECK(param, VAL_TYPE(arg)))
@@ -575,7 +575,7 @@ void For_Each_Unspecialized_Param(
         if (Is_Param_Hidden(param))
             continue;
 
-        if (TYPE_CHECK(param, REB_TS_REFINEMENT))
+        if (GET_PARAM_FLAG(param, REFINEMENT))
             continue;
 
         REBFLGS flags = 0;
@@ -631,7 +631,7 @@ void For_Each_Unspecialized_Param(
             continue;
 
         if (
-            not TYPE_CHECK(param, REB_TS_REFINEMENT)
+            NOT_PARAM_FLAG(param, REFINEMENT)
             or VAL_PARAM_CLASS(param) == REB_P_RETURN
         ){
             continue;
@@ -674,7 +674,7 @@ static bool First_Param_Hook(
     struct Find_Param_State *s = cast(struct Find_Param_State*, opaque);
     assert(not s->key);  // should stop enumerating if found
 
-    if (not (flags & PHF_UNREFINED) and TYPE_CHECK(param, REB_TS_REFINEMENT))
+    if (not (flags & PHF_UNREFINED) and GET_PARAM_FLAG(param, REFINEMENT))
         return false;  // we know WORD!-based invocations will be 0 arity
 
     s->key = key;
@@ -690,7 +690,7 @@ static bool Last_Param_Hook(
 ){
     struct Find_Param_State *s = cast(struct Find_Param_State*, opaque);
 
-    if (not (flags & PHF_UNREFINED) and TYPE_CHECK(param, REB_TS_REFINEMENT))
+    if (not (flags & PHF_UNREFINED) and GET_PARAM_FLAG(param, REFINEMENT))
         return false;  // we know WORD!-based invocations will be 0 arity
 
     s->key = key;
@@ -793,7 +793,7 @@ REBACT *Alloc_Action_From_Exemplar(
             continue;
         }
 
-        if (TYPE_CHECK(param, REB_TS_REFINEMENT))
+        if (GET_PARAM_FLAG(param, REFINEMENT))
             Typecheck_Refinement(param, arg);
         else
             Typecheck_Including_Constraints(param, arg);

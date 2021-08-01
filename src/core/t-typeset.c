@@ -164,13 +164,13 @@ bool Add_Typeset_Bits_Core(
                 // core sources were changed to `<variadic>`, asking users
                 // to shuffle should only be done once (when final is known).
                 //
-                TYPE_SET(typeset, REB_TS_VARIADIC);
+                SET_PARAM_FLAG(typeset, VARIADIC);
             }
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
-                TYPE_SET(typeset, REB_TS_ENDABLE);
+                SET_PARAM_FLAG(typeset, ENDABLE);
             }
             else if (0 == CT_String(item, Root_Blank_Tag, strict)) {
-                TYPE_SET(typeset, REB_TS_NOOP_IF_BLANK);
+                SET_PARAM_FLAG(typeset, NOOP_IF_BLANK);
             }
             else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
                 //
@@ -180,18 +180,18 @@ bool Add_Typeset_Bits_Core(
                 TYPE_SET(typeset, REB_NULL);
             }
             else if (0 == CT_String(item, Root_Invisible_Tag, strict)) {
-                TYPE_SET(typeset, REB_TS_ENDABLE);  // !!! REB_BYTES hack
+                SET_PARAM_FLAG(typeset, ENDABLE);  // !!! REB_BYTES hack
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
                 if (VAL_PARAM_CLASS(typeset) != REB_P_HARD)
                     fail ("Only hard-quoted parameters are <skip>-able");
 
-                TYPE_SET(typeset, REB_TS_SKIPPABLE);
-                TYPE_SET(typeset, REB_TS_ENDABLE); // skip => null
+                SET_PARAM_FLAG(typeset, SKIPPABLE);
+                SET_PARAM_FLAG(typeset, ENDABLE); // skip => null
                 TYPE_SET(typeset, REB_NULL);  // null if specialized
             }
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
-                TYPE_SET(typeset, REB_TS_CONST);
+                SET_PARAM_FLAG(typeset, CONST);
             }
             else if (0 == CT_String(item, Root_Meta_Tag, strict)) {
                 //
@@ -199,7 +199,7 @@ bool Add_Typeset_Bits_Core(
                 // (`@arg` notation is used), but the native specs are loaded
                 // by a boostrap r3 that can't read them.
                 //
-                VAL_TYPESET_PARAM_CLASS_U32(typeset) = REB_P_META;
+                mutable_VAL_TYPESET_PARAM_CLASS_BYTE(typeset) = REB_P_META;
             }
         }
         else if (IS_DATATYPE(item)) {
@@ -231,7 +231,7 @@ bool Add_Typeset_Bits_Core(
                 break;
 
               case SYM_PREDICATE_X:
-                TYPE_SET(typeset, REB_TS_PREDICATE);
+                SET_PARAM_FLAG(typeset, PREDICATE);
                 break;
 
               default:
@@ -360,7 +360,7 @@ void MF_Typeset(REB_MOLD *mo, REBCEL(const*) v, bool form)
     if (TYPE_CHECK(v, REB_NULL))
         Append_Ascii(mo->series, "<opt> ");
 
-    // !!! What about REB_TS_SKIPPABLE and other parameter properties, that
+    // !!! What about PARAM_FLAG_SKIPPABLE and other parameter properties, that
     // don't really fit into "types", but you can get with TYPESETS OF action?
 
     for (n = REB_NULL + 1; n < REB_MAX; n++) {

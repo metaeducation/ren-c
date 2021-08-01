@@ -113,12 +113,12 @@ bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
             continue;
 
         if (VAL_PARAM_CLASS(f->param) == REB_P_RETURN)
-            continue;  // !!! hack, has REB_TS_REFINEMENT, don't add to stack
+            continue;  // !!! hack, has PARAM_FLAG_REFINEMENT, don't stack it
 
-        if (TYPE_CHECK(f->param, REB_TS_SKIPPABLE) and IS_NULLED(f->arg))
+        if (GET_PARAM_FLAG(f->param, SKIPPABLE) and IS_NULLED(f->arg))
             continue;  // don't throw in skippable args that are nulled out
 
-        if (TYPE_CHECK(f->param, REB_TS_REFINEMENT)) {
+        if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
             if (IS_NULLED(f->arg))  // don't add to PATH!
                 continue;
 

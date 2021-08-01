@@ -1038,7 +1038,7 @@ REBCTX *Error_Not_Varargs(
     const REBVAL *param,
     enum Reb_Kind kind
 ){
-    assert(Is_Param_Variadic(param));
+    assert(GET_PARAM_FLAG(param, VARIADIC));
     assert(kind != REB_VARARGS);
     UNUSED(param);
 
@@ -1049,8 +1049,9 @@ REBCTX *Error_Not_Varargs(
     DECLARE_LOCAL (honest_param);
     Init_Param(
         honest_param,
-        REB_P_NORMAL,
-        FLAGIT_KIND(REB_VARARGS) // actually expected
+        FLAG_PARAM_CLASS_BYTE(REB_P_NORMAL)
+            | PARAM_FLAG_VARIADIC,
+        TS_NOTHING
     );
     UNUSED(honest_param);  // !!! pass to Error_Arg_Type(?)
 
