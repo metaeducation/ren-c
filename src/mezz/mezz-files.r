@@ -222,6 +222,41 @@ read-line: function [
     return trim/with line newline
 ]
 
+read-char: function [
+    {Inputs a single character from the input}
+
+    return: "Null if the input was aborted (e.g. via ESCAPE)"
+        [<opt> char!]
+][
+    ; !!! See comments on the bad design in READ-LINE above, this repeats the
+    ; code to try and get READ-CHAR to do *something*.
+
+    all [
+        port? system/ports/input
+        open? system/ports/input
+    ] else [
+        system/ports/input: open [scheme: 'console]
+    ]
+
+    if bad-word? data: read system/ports/input [
+        HALT
+    ]
+
+    all [
+        1 = length of data
+        escape = as issue! data/1
+    ] then [
+        return null
+    ]
+
+    if pos: next data [
+        system.ports.input.data: default [copy #{}]
+        insert system.ports.input.data (take/part pos tail pos)
+    ]
+
+    return make issue! first data
+]
+
 
 ask: function [
     {Ask the user for input}
@@ -258,6 +293,14 @@ ask: function [
         ]
         fail
     ]
+
+    ; !!! Reading a single character is not something possible in buffered line
+    ; I/O...you have to either be piping from a file or have a smart console.
+    ; The PORT! model in R3-Alpha was less than half-baked, but this READ-CHAR
+    ; has been added to try and help some piped I/O scenarios work (e.g. the
+    ; Whitespace interpreter test scripts.)
+    ;
+    if type = issue! [return read-char]
 
     ; Loop indefinitely so long as the input can't be converted to the type
     ; requested (and there's no cancellation).  Print prompt each time.  Note
