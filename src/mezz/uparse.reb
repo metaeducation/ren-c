@@ -52,6 +52,7 @@ Rebol [
     }
 ]
 
+
 ; All combinators receive the INPUT to be processed.  They are also given an
 ; object representing the STATE of the parse (currently that is just the
 ; FRAME! of the main UPARSE call which triggered the operation, so any of the
@@ -81,7 +82,15 @@ Rebol [
 ; should be swapped in occasionally in the tests to overwrite the native
 ; version just to keep tabs on it.
 ;
-if false [combinator: func [
+; We would like it to be possible to write an "easy" combinator that does not
+; do piping of the pending elements, but takes it for granted as coming from
+; the success or failure of each parser called in order.
+;
+; It's hard to be able to tell which it would be, but...hm...maybe not so hard.
+; If you formally declare a return value for the `pending:` then that means
+; you're going to manage it yourself, otherwise it will be automagic.
+
+combinator: func [
     {Make a stylized ACTION! that fulfills the interface of a combinator}
 
     spec [block!]
@@ -113,6 +122,8 @@ if false [combinator: func [
         ]
     )
 ][
+    let autopipe: ~
+
     let action: func compose [
         ; Get the text description if given
         ((if text? spec.1 [spec.1, elide spec: my next]))
@@ -128,7 +139,17 @@ if false [combinator: func [
             elide spec: my skip 3
         ]))
 
-        remainder: [<opt> any-series!]
+        remainder: [<opt> any-series!]  ; all combinators have remainder
+
+        ((if spec.1 = 'pending: [
+            assert [spec.2 = [blank! block!]]
+            autopipe: false  ; they're asking to handle pending themselves
+            reduce [spec.1 spec.2]
+            elide spec: my skip 2
+        ] else [
+            autopipe: true  ; they didn't mention pending, handle automatically
+            [pending: [blank! block!]]
+        ]))
 
         state [frame!]
         input [any-series!]
@@ -137,6 +158,39 @@ if false [combinator: func [
         ;
         ((spec))
     ] compose [
+        ;
+        ; !!! If we are "autopipe" then we need to make it so the parsers that
+        ; we receive in will automatically bubble up their pending contents in
+        ; order of being called.
+
+        ((if autopipe '[
+            let f: binding of 'return
+
+            set pending _
+            let in-args: false
+            for-each [key val] f [
+                if not in-args [
+                    if key = 'input [in-args: true]
+                    continue
+                ]
+                all [
+                    not unset? 'val
+                    action? :val
+                ] then [
+                    ; All parsers passed as arguments, we want it to be
+                    ; rigged so that their results append to an aggregator in
+                    ; the order they are run (if they succeed).
+                    ;
+                    f.(key): enclose (augment :val [/modded]) func [f2] [
+                        f2.pending: let subpending
+                        return/isotope do f2 also [  ; don't change result
+                            set pending glom (get pending) subpending
+                        ]
+                    ]
+                ]
+            ]
+        ]))
+
         ; Functions typically need to control whether they are "piping"
         ; another function.  So there are delicate controls for passing
         ; through invisibility and isotope status.  But parser combinators
@@ -153,14 +207,20 @@ if false [combinator: func [
         ;
         return: :return/isotope
 
-        (as group! body)
+        ; We want results that "fall out" the bottom of the combinator body to
+        ; also preserve the isotope status.
+        ;
+        ; !!! Should this be the default?  Should isotope-preservation be a
+        ; property of the function spec and not the RETURN?
+        ;
+        return (as group! body)
     ]
 
     ; Enclosing with the wrapper permits us to inject behavior before and
     ; after each combinator is executed.
     ;
     enclose :action :wrapper
-]]
+]
 
 
 ; It should be possible to find out if something is a combinator in a more
@@ -191,7 +251,6 @@ default-combinators: make map! reduce [
 
     === BASIC KEYWORDS ===
 
-  comment [
     'opt combinator [
         {If the parser given as a parameter fails, return input undisturbed}
         return: "PARSER's result if it succeeds, otherwise NULL"
@@ -205,9 +264,6 @@ default-combinators: make map! reduce [
         set remainder input  ; on parser failure, make OPT remainder input
         return heavy null  ; succeed on parser failure, "heavy null" result
     ]
-  ]
-
-    'opt :opt-combinator  ; First test of a native-combinator (!)
 
     'not combinator [
         {Fail if the parser rule given succeeds, else continue}
@@ -227,15 +283,10 @@ default-combinators: make map! reduce [
         return: "parser result if success, NULL if failure"
             [<opt> any-value!]
         parser [action!]
-        <local> result'
     ][
-        ([result' #]: ^ parser input) then [  ; don't care about remainder
-            return unmeta result'
-        ]
-        return null
+        [# #]: parser input  ; don't care about remainder
     ]
 
-  comment [
     'further combinator [
         {Pass through the result only if the input was advanced by the rule}
         return: "parser result if it succeeded and advanced input, else NULL"
@@ -255,8 +306,6 @@ default-combinators: make map! reduce [
         set remainder pos
         return unmeta result'
     ]
-  ]  ; replaced by native
-    'further :further-combinator
 
     === LOOPING CONSTRUCT KEYWORDS ===
 
@@ -290,7 +339,6 @@ default-combinators: make map! reduce [
         fail ~unreachable~
     ]
 
-  comment [
     'some combinator [
         {Must run at least one match}
         return: "Result of last successful match"
@@ -315,8 +363,6 @@ default-combinators: make map! reduce [
         ]
         fail ~unreachable~
     ]
-  ]  ; replaced by native
-    'some :some-combinator
 
     'tally combinator [
         {Iterate a rule and count the number of times it matches}
@@ -566,14 +612,15 @@ default-combinators: make map! reduce [
         {Special noun-like keyword subdispatcher for TAG!s}
         return: "What the delegated-to tag returned"
             [<opt> any-value!]
+        pending: [blank! block!]
         value [tag!]
-        <local> parser
+        <local> comb
     ][
-        if not parser: :(state.combinators)/(value) [
+        if not comb: :(state.combinators).(value) [
             fail ["No TAG! Combinator registered for" value]
         ]
 
-        return [# (remainder)]: parser state input
+        return [# (remainder) (pending)]: comb state input
     ]
 
     <here> combinator [
@@ -727,46 +774,37 @@ default-combinators: make map! reduce [
     ; rollback across any KEEPs that happened when a parse rule failed, which
     ; makes the feature of limited use.
     ;
-    ; This is a kind of lousy implementation that leverages a baked-in
-    ; mechanism to manage collecting where the UPARSE holds the collect buffer
-    ; and the block combinator is complicit.  It's just to show a first
-    ; working option...but a more general architecture for designing features
-    ; that want "rollback" is desired.
+    ; UPARSE has a generic framework for bubbling up gathered items.  We look
+    ; through that list of items here for anything marked as collect material
+    ; and remove it.
 
     'collect combinator [
         return: "Block of collected values"
             [<opt> block!]
+        pending: [blank! block!]
         parser [action!]
+        <local> subpending
     ][
-        if not state.collecting [
-            state.collecting: make block! 10
-        ]
-
-        let collect-base: tail state.collecting
-        ([# (remainder)]: ^ parser input) else [
-            ;
-            ; Although the block rules roll back, COLLECT might be used with
-            ; other combinators that run more than one rule...and one rule
-            ; might succeed, then the next fail:
-            ;
-            ;     uparse "(abc>" [x: collect between keep "(" keep ")"]
-            ;
-            clear collect-base
+        ([# (remainder) subpending]: ^ parser input) else [
             return null
         ]
-        return (copy collect-base, elide clear collect-base)
+
+        ; For starters, let's just try assuming all the pendings are COLLECT,
+        ; so don't filter.  Create entirely new empty list to bubble up and
+        ; return the pending list.  (BLANK! denotes empty list here.)
+        ;
+        set pending _
+        return any [subpending, copy []]
     ]
 
     'keep combinator [
         return: "The kept value (same as input)"
             [<opt> any-value!]
+        pending: [blank! block!]
         parser [action!]
-        <local> result'
+        <local> result' subpending
     ][
-        if not state.collecting [
-            fail "UPARSE cannot KEEP with no COLLECT rule in effect"
-        ]
-        ([result' (remainder)]: ^ parser input) else [
+        ([result' (remainder) subpending]: ^ parser input) else [
             return null
         ]
         if bad-word? result' [
@@ -776,7 +814,14 @@ default-combinators: make map! reduce [
             '~null~ = result'  ; true null if and only if parser failed
             quoted? result'
         ]]
-        append state.collecting unmeta result'
+
+        ; !!! If the pending mechanism is generic, then what we'd be doing here
+        ; would actually be tagging the entry to the pendings as being a KEEP
+        ; so the COLLECT would know it was for it.  Plain GROUP! might mean
+        ; "code to run if we actually reach complete match".  For the moment
+        ; try building pending arrays just for collect itself.
+
+        set pending (glom subpending unmeta result')
         return unmeta result'
     ]
 
@@ -910,7 +955,6 @@ default-combinators: make map! reduce [
     ; value is the rule in the string and binary case, but the item in the
     ; data in the block case.
 
-  comment [
     text! combinator [
         return: "The rule series matched against (not input value)"
             [<opt> text!]
@@ -944,9 +988,6 @@ default-combinators: make map! reduce [
         set remainder input
         return value
     ]
-  ]  ; replaced by native
-
-    text! :text!-combinator
 
     === TOKEN! COMBINATOR (currently ISSUE! and CHAR!) ===
 
@@ -1087,8 +1128,9 @@ default-combinators: make map! reduce [
     quoted! combinator [
         return: "The matched value"
             [<opt> any-value!]
+        pending: [blank! block!]
         value [quoted!]
-        <local> parser
+        <local> comb
     ][
         ; Review: should it be legal to say:
         ;
@@ -1101,6 +1143,7 @@ default-combinators: make map! reduce [
         if any-array? input [
             if :input.1 = unquote value [
                 set remainder next input
+                set pending _
                 return unquote value
             ]
             return null
@@ -1114,18 +1157,20 @@ default-combinators: make map! reduce [
             ;
             value: append copy {} unquote value
 
-            parser: :(state.combinators).(text!)
-            return [# (remainder)]: parser state input value
+            comb: :(state.combinators).(text!)
+            return [# (remainder) (pending)]: comb state input value
         ]
 
         assert [binary? input]
 
-        parser: :(state.combinators)/(binary!)
-        return [# (remainder)]: parser state input (to binary! unquote value)
+        value: to binary! unquote value
+        comb: :(state.combinators).(binary!)
+        return [# (remainder) (pending)]: comb state input value
     ]
 
     'the combinator [
         return: "Literal value" [<opt> any-value!]
+        pending: [blank! block!]
         'value [any-value!]
         <local> comb
     ][
@@ -1133,7 +1178,7 @@ default-combinators: make map! reduce [
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: :(state.combinators).(quoted!)
-        [# (remainder)]: comb state input ^value
+        [# (remainder) (pending)]: comb state input ^value
     ]
 
 
@@ -1310,48 +1355,58 @@ default-combinators: make map! reduce [
 
     the-word! combinator [
         return: "Literal value" [<opt> any-value!]
+        pending: [blank! block!]
         value [the-word!]
-        <local> parser
+        <local> comb
     ][
-        parser: :(state.combinators)/(quoted!)
-        [# (remainder)]: parser state input quote get value
+        comb: :(state.combinators).(quoted!)
+        [# (remainder) (pending)]: comb state input quote get value
     ]
 
     the-path! combinator [
         return: "Literal value" [<opt> any-value!]
+        pending: [blank! block!]
         value [the-word!]
-        <local> result' parser
+        <local> comb
     ][
-        parser: :(state.combinators)/(quoted!)
-        [# (remainder)]: parser state input quote get value
+        comb: :(state.combinators).(quoted!)
+        [# (remainder) (pending)]: comb state input quote get value
     ]
 
     the-tuple! combinator [
         return: "Literal value" [<opt> any-value!]
+        pending: [blank! block!]
         value [the-tuple!]
-        <local> result' parser
+        <local> comb
     ][
-        parser: :(state.combinators)/(quoted!)
-        [# (remainder)]: parser state input quote get value
+        comb: :(state.combinators).(quoted!)
+        [# (remainder) (pending)]: comb state input quote get value
     ]
 
     the-group! combinator [
         return: "Literal value" [<opt> any-value!]
+        pending: [blank! block!]
         value [the-group!]
-        <local> result' parser
+        <local> result' comb totalpending
     ][
+        totalpending: copy []
         value: as group! value
-        parser: :(state.combinators)/(group!)
-        ([result' input]: ^ parser state input value) then @[
-            parser: :(state.combinators)/(quoted!)
-            [# (remainder)]: parser state input result'
+        comb: :(state.combinators).(group!)
+        ([result' input (pending)]: ^ comb state input value) then @[
+            totalpending: glom totalpending (get pending)
+            comb: :(state.combinators).(quoted!)
+            ([# (remainder) (pending)]: comb state input result') also [
+                totalpending: glom totalpending (get pending)
+                set pending totalpending
+            ]
         ]
     ]
 
     the-block! combinator [
         return: "Literal value" [<opt> any-value!]
+        pending: [blank! block!]
         value [the-block!]
-        <local> result' parser
+        <local> result' comb totalpending
     ][
         ; !!! THE-BLOCK! acting as just matching the block is redundant with
         ; a quoted block.  Suggestions have been to repurpose @[...] for a
@@ -1362,11 +1417,16 @@ default-combinators: make map! reduce [
         ; as useless as it sounds, since a rule can synthesize an arbitrary
         ; value.
 
+        totalpending: copy []
         value: as block! value
-        parser: :(state.combinators)/(block!)
-        ([result' input]: ^ parser state input value) then @[
-            parser: :(state.combinators)/(quoted!)
-            [# (remainder)]: parser state input result'
+        comb: :(state.combinators).(block!)
+        ([result' input (pending)]: ^ comb state input value) then @[
+            totalpending: glom totalpending (get pending)
+            comb: :(state.combinators).(quoted!)
+            ([# (remainder) (pending)]: comb state input result') also [
+                totalpending: glom totalpending (get pending)
+                set pending totalpending
+            ]
         ]
     ]
 
@@ -1383,7 +1443,8 @@ default-combinators: make map! reduce [
     ; their un-lit'd type (by default).  This means dynamically reacting to
     ; the set of combinators chosen for the particular parse.
     ;
-    ; !!! These follow a simple pattern, could generate at a higher level.
+    ; !!! These follow a simple pattern, could all use the same combinator and
+    ; just be sensitive to the received type of value.
 
     meta! combinator [
         return: "Meta quoted" [<opt> bad-word! quoted!]
@@ -1393,43 +1454,58 @@ default-combinators: make map! reduce [
     ]
 
     meta-word! combinator [
-        return: "Meta quoted" [<opt> any-value!]
+        return: "Meta quoted" [<opt> bad-word! quoted!]
+        pending: [blank! block!]
         value [meta-word!]
-        <local> result' parser
+        <local> comb
     ][
         value: as word! value
-        parser: :(state.combinators)/(word!)
-        ([result' (remainder)]: ^ parser state input value) then [result']
+        comb: :(state.combinators).(word!)
+        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
     ]
 
     meta-tuple! combinator [
-        return: "Meta quoted" [<opt> any-value!]
+        return: "Meta quoted" [<opt> bad-word! quoted!]
+        pending: [blank! block!]
         value [meta-tuple!]
-        <local> result' parser
+        <local> comb
     ][
         value: as tuple! value
-        parser: :(state.combinators)/(tuple!)
-        ([result' (remainder)]: ^ parser state input value) then [result']
+        comb: :(state.combinators).(tuple!)
+        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
+    ]
+
+    meta-path! combinator [
+        return: "Meta quoted" [<opt> bad-word! quoted!]
+        pending: [blank! block!]
+        value [meta-path!]
+        <local> comb
+    ][
+        value: as path! value
+        comb: :(state.combinators).(path!)
+        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
     ]
 
     meta-group! combinator [
-        return: "Meta quoted" [<opt> any-value!]
+        return: "Meta quoted" [<opt> bad-word! quoted!]
+        pending: [blank! block!]
         value [meta-group!]
-        <local> result' parser
+        <local> comb
     ][
         value: as group! value
-        parser: :(state.combinators)/(group!)
-        ([result' (remainder)]: ^ parser state input value) then [result']
+        comb: :(state.combinators).(group!)
+        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
     ]
 
     meta-block! combinator [
-        return: "Meta quoted" [<opt> any-value!]
+        return: "Meta quoted" [<opt> bad-word! quoted!]
+        pending: [blank! block!]
         value [meta-block!]
-        <local> result' parser
+        <local> comb
     ][
         value: as block! value
-        parser: :(state.combinators)/(block!)
-        ([result' (remainder)]: ^ parser state input value) then [result']
+        comb: :(state.combinators).(block!)
+        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
     ]
 
 
@@ -1512,11 +1588,12 @@ default-combinators: make map! reduce [
         {Run an ordinary ACTION! with parse rule products as its arguments}
         return: "The return value of the action"
             [<opt> <invisible> any-value!]
+        pending: [blank! block!]
         value [action!]
         ; AUGMENT is used to add param1, param2, param3, etc.
         /parsers "Sneaky argument of parsers collected from arguments"
             [block!]
-        <local> arg
+        <local> arg totalpending
     ][
         ; !!! We very inelegantly pass a block of PARSERS for the argument in
         ; because we can't reach out to the augmented frame (rule of the
@@ -1526,24 +1603,32 @@ default-combinators: make map! reduce [
         ; tricky because the variadic step is before this function actually
         ; runs...review as the prototype evolves.
 
+        ; !!! We cannot use the autopipe mechanism because the hooked combinator
+        ; does not see the augmented frame.  Have to do it manually.
+        ;
+        totalpending: _
+
         let f: make frame! :value
         for-each param (parameters of action of f) [
             if not path? param [
                 ensure action! :parsers/1
                 if meta-word? param [
-                    f.(to word! param): ([# input]: ^ parsers/1 input) else [
+                    param: to word! param
+                    f.(param): ([# input (pending)]: ^ parsers/1 input) else [
                         return null
                     ]
                 ] else [
-                    f.(param): ([# input]: parsers/1 input) else [
+                    f.(param): ([# input (pending)]: parsers/1 input) else [
                         return null
                     ]
                 ]
+                totalpending: glom totalpending (get pending)
                 parsers: next parsers
             ]
         ]
         assert [tail? parsers]
         set remainder input
+        set pending totalpending
         return devoid do f
     ]
 
@@ -1557,8 +1642,9 @@ default-combinators: make map! reduce [
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
             [<opt> <invisible> any-value!]
+        pending: [blank! block!]
         value [word!]
-        <local> r c result parser
+        <local> r comb
     ][
         r: case [
             ; !!! The CHAR!=ISSUE! => TOKEN! change has not really been fully
@@ -1574,6 +1660,7 @@ default-combinators: make map! reduce [
 
         if blank? :r [  ; no-op; fetching a blank acts just like []
             set remainder input
+            set pending _
             return ~void~
         ]
 
@@ -1624,15 +1711,15 @@ default-combinators: make map! reduce [
             ]
         ]
 
-        if not c: select state.combinators kind of :r [
+        if not comb: select state.combinators kind of :r [
             fail ["Unhandled type in WORD! combinator:" kind of :r]
         ]
 
-        ; passing in [] for rules, because no arguments available here...!
+        ; !!! We don't need to call COMBINATORIZE because we can't handle
+        ; arguments here, but this should have better errors if the datatype
+        ; combinator takes arguments.
         ;
-        parser: [# #]: combinatorize/value :c [] state r
-
-        return [# (remainder)]: parser input
+        [# (remainder) (pending)]: comb state input :r
     ]
 
     === BLOCK! COMBINATOR ===
@@ -1655,13 +1742,14 @@ default-combinators: make map! reduce [
     block! combinator [
         return: "Last result value"
             [<opt> <invisible> any-value!]
+        pending: [blank! block!]
         value [block!]
-        <local> result
+        <local> result subpending
     ][
         let rules: value
         let pos: input
 
-        let collect-baseline: tail try state.collecting  ; see COLLECT
+        let totalpending: _  ; can become GLOM'd into a BLOCK!
         let gather-baseline: tail try state.gathering  ; see GATHER
 
         let result': '~void~  ; [] => ~void~ isotope
@@ -1712,6 +1800,7 @@ default-combinators: make map! reduce [
                 ; successful alternate means the whole block is done.
                 ;
                 set remainder pos
+                set pending totalpending
                 return unmeta result'
             ]
 
@@ -1731,21 +1820,18 @@ default-combinators: make map! reduce [
             let f: make frame! :action
             f.input: pos
             f.remainder: 'pos
+            f.pending: 'subpending
 
             ^(do f) then temp -> [
                 if '~void~ != temp  [  ; overwrite if was visible
                     result': temp
                 ]
+                totalpending: glom totalpending subpending
             ] else [
                 result': '~void~  ; reset, e.g. `[false |]` => ~void~ isotope
 
-                if state.collecting [  ; toss collected values from this pass
-                    if collect-baseline [  ; we marked how far along we were
-                        clear collect-baseline
-                    ] else [
-                        clear state.collecting  ; no mark, must have been empty
-                    ]
-                ]
+                free totalpending  ; proactively release memory
+                totalpending: _
 
                 if state.gathering [  ; toss gathered values from this pass
                     if gather-baseline [  ; we marked how far along we were
@@ -1781,6 +1867,7 @@ default-combinators: make map! reduce [
         ]
 
         set remainder pos
+        set pending totalpending
         return unmeta result'
     ]
 ]
@@ -1844,6 +1931,11 @@ comment [combinatorize: func [
             param = '/remainder [
                 ; The remainder is a return; responsibility of the caller, also
                 ; left unspecialized.
+            ]
+            param = '/pending [
+                ; same for pending, this is the data being gathered that may
+                ; need to be discarded (gives impression of "rollback") and
+                ; is the feature behind COLLECT etc.
             ]
             param = 'value [
                 f.value: :value
@@ -1915,7 +2007,7 @@ comment [combinatorize: func [
 
     set advanced rules
     return make action! f
-]]  ; commented out due to replacement by native
+]]
 
 
 identity-combinator: combinator [
@@ -1940,8 +2032,9 @@ parsify: func [
         [frame!]
     rules "Parse rules to (partially) convert to a combinator action"
         [block!]
+    <local> r comb
 ][
-    let r: rules.1
+    r: rules.1
 
     ; The concept behind COMMA! is to provide a delimiting between rules.
     ; That is handled by the block combinator.  So if you see a thing like
@@ -1982,11 +2075,11 @@ parsify: func [
     ;
     case [
         word? :r [
-            if let c: select state.combinators r [
+            if comb: select state.combinators r [
                 ;
                 ; It's a keyword (the word itself is named in the combinators)
                 ;
-                return [# (advanced)]: combinatorize :c rules state
+                return [# (advanced)]: combinatorize :comb rules state
             ]
 
             ; Allow the user to invoke a COMBINATOR if it's in scope, even if
@@ -1995,9 +2088,9 @@ parsify: func [
             ; !!! Should COMBINATOR? take ANY-VALUE! and include the action
             ; test as part of it?
             ;
-            if action? c: get r [
-                if combinator? :c [
-                    return [# (advanced)]: combinatorize :c rules state
+            if action? comb: get r [
+                if combinator? :comb [
+                    return [# (advanced)]: combinatorize :comb rules state
                 ]
                 fail "For non-COMBINATOR actions in parse, use terminal/slash/"
             ]
@@ -2007,8 +2100,8 @@ parsify: func [
             ; see if it's a block, string, blank, NULL, etc. and give that
             ; some sort of behavior.  This also offers a hookpoint.
             ;
-            c: select state.combinators word!
-            return [# (advanced)]: combinatorize/value :c rules state r
+            comb: select state.combinators word!
+            return [# (advanced)]: combinatorize/value :comb rules state r
         ]
 
         tuple? :r [
@@ -2026,7 +2119,7 @@ parsify: func [
                 if not action? let action: get :r [
                     fail "In UPARSE PATH ending in / must resolve to ACTION!"
                 ]
-                if not let c: select state.combinators action! [
+                if not comb: select state.combinators action! [
                     fail "No ACTION! combinator, can't use PATH ending in /"
                 ]
 
@@ -2038,7 +2131,7 @@ parsify: func [
                 ; combinator with AUGMENT for each argument (parser1, parser2
                 ; parser3).
                 ;
-                c: adapt augment :c collect [
+                comb: adapt augment :comb collect [
                     let n: 1
                     for-each param parameters of :action [
                         if not path? param [
@@ -2065,12 +2158,13 @@ parsify: func [
                     ]
                 ]
 
-                return [# (advanced)]: combinatorize/value :c rules state :action
+                return [# (advanced)]:
+                        combinatorize/value :comb rules state :action
             ]
 
             let word: ensure word! first r
-            if let c: select state.combinators word [
-                return [# (advanced)]: combinatorize/path :c rules state r
+            if comb: select state.combinators word [
+                return [# (advanced)]: combinatorize/path :comb rules state r
             ]
 
             ; !!! Originally this would just say "unknown combinator" at this
@@ -2091,11 +2185,11 @@ parsify: func [
     ; arguments.  Does this mean the block rule has to hardcode handling of
     ; integers, or that when we do these rules they may have skippable types?
 
-    if not let c: select state.combinators kind of :r [
+    if not comb: select state.combinators kind of :r [
         fail ["Unhandled type in PARSIFY:" kind of :r]
     ]
 
-    return [# (advanced)]: combinatorize/value :c rules state r
+    return [# (advanced)]: combinatorize/value :comb rules state r
 ]
 
 
@@ -2137,7 +2231,7 @@ uparse*: func [
 
     /verbose "Print some additional debug information"
 
-    <local> collecting (null) gathering (null) loops
+    <local> gathering (null) loops
 ][
     loops: copy []  ; need new loop copy each invocation
 
@@ -2174,6 +2268,12 @@ uparse*: func [
     f.input: series
     f.value: rules
     f.remainder: let pos
+
+    ; !!! When we get to the end here, success is kind of the only moment when
+    ; we can know it's okay to run the "only if this completely succeeds" stuff
+    ; if there's not some other checkpoint.
+    ;
+    f.pending: let subpending
 
     let synthesized': ^(do f)
     assert [empty? state.loops]
@@ -2463,7 +2563,7 @@ append redbol-combinators reduce [
         return: "Redbol rules don't return results"
             [<opt> bad-word!]
         subparser [action!]
-        <local> subseries pos result
+        <local> subseries
     ][
         if tail? input [
             fail "At END cannot use INTO"

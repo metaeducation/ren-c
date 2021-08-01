@@ -212,14 +212,6 @@
 
 %network/http.test.reb
 
-%parse/examples/argtest.parse.test.reb
-%parse/examples/breaker.parse.test.reb
-%parse/examples/countify.parse.test.reb
-%parse/examples/expression.parse.test.reb
-%parse/examples/html-parser.parse.test.reb
-%parse/examples/nanbnc.parse.test.reb
-%parse/examples/reword.parse.test.reb
-%parse/examples/split.parse.test.reb
 %parse/parse3.test.reb
 %parse/parse3-collect.test.reb
 %parse/parse3-inside.test.reb
@@ -270,6 +262,15 @@
 %parse/parse-while.test.reb
 %parse/parse-word.test.reb
 %parse/uparse2.test.reb
+%parse/examples/argtest.parse.test.reb
+%parse/examples/breaker.parse.test.reb
+%parse/examples/countify.parse.test.reb
+%parse/examples/expression.parse.test.reb
+%parse/examples/html-parser.parse.test.reb
+%parse/examples/maxmatch.parse.test.reb
+%parse/examples/nanbnc.parse.test.reb
+%parse/examples/reword.parse.test.reb
+%parse/examples/split.parse.test.reb
 
 %redbol/redbol-apply.test.reb
 
