@@ -378,7 +378,7 @@ ctx-zip: context [
             ; contains the end-of-central-sig, which is not formally prohibited
             ; by the spec (though some suggest it should be).
             ;
-            archive-comment-len <any>
+            repeat (archive-comment-len) <any>
 
             [<end> | (fail "Extra information at end of ZIP file")]
         ] else [
@@ -412,10 +412,10 @@ ctx-zip: context [
             internal-attributes: across 2 <any>  ; not in local header
             external-attributes: across 4 <any>  ; not in local header
             local-header-offset: uint32-rule  ; (for finding local header)
-            name: [temp: across name-length <any>, (to-file temp)]
+            name: [temp: across repeat (name-length) <any>, (to-file temp)]
 
-            extra-field-length <any>  ; !!! Expose "extra" field?
-            file-comment-length <any>  ; !!! Expose file comment?
+            repeat (extra-field-length) <any>  ; !!! Expose "extra" field?
+            repeat (file-comment-length) <any>  ; !!! Expose file comment?
         ]
 
         ; When it was realized that the old rebzip.r method of relying on the
@@ -468,16 +468,16 @@ ctx-zip: context [
             ;
             local-extra-field-length: uint16-rule
 
-            x: across name-length <any>, (assert [(to-file x) = name])
+            x: across repeat (name-length) <any>, (assert [(to-file x) = name])
 
-            local-extra-field-length <any>
+            repeat (local-extra-field-length) <any>
         ]
 
         ; While this is by no means broken up perfectly into subrules, it is
         ; clearer than it was.
         ;
         uparse (skip source central-directory-offset) [
-            num-central-entries [  ; we expect to repeat this loop num times
+            repeat (num-central-entries) [
                 ;
                 ; Process one central directory entry, extracting its fields
                 ; into local variables for this function.
