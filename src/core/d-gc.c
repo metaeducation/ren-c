@@ -289,10 +289,12 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         break; }
 
       case REB_BLOCK:
+      case REB_THE_BLOCK:
       case REB_SET_BLOCK:
       case REB_GET_BLOCK:
       case REB_META_BLOCK:
       case REB_GROUP:
+      case REB_THE_GROUP:
       case REB_SET_GROUP:
       case REB_GET_GROUP:
       case REB_META_GROUP: {
@@ -307,12 +309,14 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         break; }
 
       case REB_TUPLE:
+      case REB_THE_TUPLE:
       case REB_SET_TUPLE:
       case REB_GET_TUPLE:
       case REB_META_TUPLE:
         goto any_sequence;
 
       case REB_PATH:
+      case REB_THE_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_META_PATH:
@@ -342,6 +346,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         break; }
 
       case REB_WORD:
+      case REB_THE_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:
       case REB_META_WORD: {
@@ -405,10 +410,12 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         break;
 
       case REB_TUPLE:
+      case REB_THE_TUPLE:
       case REB_SET_TUPLE:
       case REB_GET_TUPLE:
       case REB_META_TUPLE:
       case REB_PATH:
+      case REB_THE_PATH:
       case REB_SET_PATH:
       case REB_GET_PATH:
       case REB_META_PATH:
