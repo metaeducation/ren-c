@@ -123,19 +123,33 @@
     1020 = if true '1020
 )
 
-; THE-XXX! Branching (TBD)
-;(
+; THE-XXX! Branching
+;
+; !!! At one point this allowed cases of @word, @pa/th, and @tu.p.le as a
+; shorthand for `if xxx [:word]` etc.
+;
 ;    j: 304
 ;    304 = if true @j
-;)(
+;
 ;    o: make object! [b: 1020]
 ;    1020 = if true @o/b
-;)(
-;    var: <something>
-;    did all [
-;        null? if false @(var: <something-else> [1000 + 20])
-;        var = <something>
-;        1020 = if true @(var: <something-else> [1000 + 20])
-;        var = <something-else>
-;    ]
-;)
+;
+; However since the operative property of @ is to return pure NULL when used
+; with block and group, that doesn't seem like a terribly useful combo--too
+; much chance for accidents.  Might be good for code golf, however (?) but
+; even better would be to wedge in tailored support for plain WORD! etc.
+[(
+    x: ~
+    did all [
+        <else> = if true @[x: <branch>, null] else [<else>]
+        x = <branch>
+    ]
+)(
+    var: <something>
+    did all [
+        null = ^ if false @(var: <something-else> [null])
+        var = <something>
+        null = ^ if true @(var: <something-else> [null])
+        var = <something-else>
+    ]
+)]

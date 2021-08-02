@@ -281,6 +281,9 @@ inline static bool ANY_NUMBER_KIND(REBYTE k)
 // grouping the sets/gets/plains/syms together (to speed up ANY_ARRAY()/etc.)
 // This could be reviewed and formally tested to see what's best.
 
+inline static bool ANY_THE_KIND(REBYTE k)
+  { return k >= REB_THE_BLOCK and k <= REB_THE_WORD; }
+
 inline static bool ANY_PLAIN_KIND(REBYTE k)
   { return k >= REB_BLOCK and k <= REB_WORD; }
 

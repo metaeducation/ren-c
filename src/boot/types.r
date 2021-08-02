@@ -216,13 +216,13 @@ the-group   "inert form of group"
             array       *       *       *       [group array series branch]
 
 the-path    "inert form of path"
-            sequence    *       *       *       [path sequence]
+            sequence    *       *       *       [path sequence]  ; branch?
 
 the-tuple   "inert form of tuple"
-            sequence    *       *       *       [tuple sequence scalar]
+            sequence    *       *       *       [tuple sequence scalar]  ; ?
 
 the-word    "inert form of word"
-            word        -       *       +       [word]
+            word        -       *       +       [word]  ; branch?
 
 ; </ANY-THE>
 

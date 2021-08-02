@@ -202,6 +202,10 @@ inline static bool RunQ_Maybe_Stale_Throws(
 // Allowing other values was deemed to do more harm than good:
 // https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
 //
+// Review if @word, @pa/th, @tu.p.le would make good branch types.  Issue
+// would be that it would only be a shorthand for what could be said another
+// way, and would conflate a fetching shorthand with non-isotopifying.  :-/
+//
 inline static bool Do_Branch_Core_Throws(
     REBVAL *out,
     const REBVAL *branch,
@@ -212,7 +216,7 @@ inline static bool Do_Branch_Core_Throws(
     DECLARE_LOCAL (cell);
 
     enum Reb_Kind kind = VAL_TYPE(branch);
-    bool as_is = (kind == REB_QUOTED);  // TBD: add ANY_THE_KIND() e.g. @[...]
+    bool as_is = (kind == REB_QUOTED) or ANY_THE_KIND(kind);
 
   redo:
 
@@ -225,6 +229,7 @@ inline static bool Do_Branch_Core_Throws(
         Unquotify(Copy_Cell(out, branch), 1);
         break;
 
+      case REB_THE_BLOCK:
       case REB_BLOCK:
         if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
             return true;
@@ -251,6 +256,7 @@ inline static bool Do_Branch_Core_Throws(
             return true;
         break;
 
+      case REB_THE_GROUP:
       case REB_GROUP:
         if (Do_Any_Array_At_Throws(cell, branch, SPECIFIED))
             return true;
@@ -265,16 +271,24 @@ inline static bool Do_Branch_Core_Throws(
     }
 
     // If we're not returning the branch result purely "as-is" then we change
-    // NULL to NULL-2:
+    // NULL to a ~null~ isotope, so an ELSE branch knows not to run:
     //
     //     >> if true [null]
     //     == ~null~  ; isotope
     //
-    // To get things to pass through unmodified, a different branch would be
-    // used.  This would be covered by THE-BLOCK! and its friends.
+    //     >> if true [print "BRANCH", null] else [print "ELSE"]
+    //     BRANCH
+    //     == ~null~  ; isotope
+    //
+    // To get things to pass through unmodified, because you actually *want*
+    // to be able to run both branches...use THE-BLOCK! and its friends.
     //
     //     >> if true @[null]
     //     ; null
+    //
+    //     >> if true @[print "BRANCH", null] else [print "ELSE"]
+    //     BRANCH
+    //     ELSE
     //
     if (not as_is)
         Isotopify_If_Nulled(out);
