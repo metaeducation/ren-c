@@ -207,6 +207,26 @@ varargs     "evaluator position for variable numbers of arguments"
             varargs     +       +       +       []
 
 
+; <ANY-THE> (order matters, see UNTHEIFY_ANY_XXX_KIND())
+
+the-block   "alternative inert form of block"
+            array       *       *       *       [block array series branch]
+
+the-group   "inert form of group"
+            array       *       *       *       [group array series branch]
+
+the-path    "inert form of path"
+            sequence    *       *       *       [path sequence]
+
+the-tuple   "inert form of tuple"
+            sequence    *       *       *       [tuple sequence scalar]
+
+the-word    "inert form of word"
+            word        -       *       +       [word]
+
+; </ANY-THE>
+
+
 ; <ANY-PLAIN> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 block       "array of values that blocks evaluation unless DO is used"
@@ -347,12 +367,8 @@ quoted     "container for arbitrary levels of quoting"
 
 
 ; This is the end of the value cell enumerations (after REB_QUOTED is REB_MAX)
-; and no valid cell should have bits in this range.
+; and no valid cell should have bits between REB_QUOTED and REB_MAX.
 ;
-; However, higher values are currently in use in places like typesets,
-; where bits that flag types are merged with bits that flag other things.
-; These end at the 64th bit.
-;
-; The long term hope is that those flags move out of the way, permitting more
-; growth in this fundamental set of types to use all 64 cases...while keeping
-; the three levels of quote optimization that fits the cell kind in a byte.
+; But after the 64 case, the remaining 196 possibilities in the byte are used
+; for an optimization that allows up to three levels of quote optimization to
+; fit into a single byte.

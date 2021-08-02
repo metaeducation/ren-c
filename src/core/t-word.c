@@ -240,6 +240,15 @@ void MF_Meta_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 }
 
 
+//
+//  MF_The_word: C
+//
+void MF_The_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
+    UNUSED(form);
+    Append_Codepoint(mo->series, '@');
+    Mold_Word(mo, v);
+}
+
 
 //
 //  REBTYPE: C

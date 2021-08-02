@@ -1514,6 +1514,12 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     //=////////////////////////////////////////////////////////////////////=//
 
+      case REB_THE_BLOCK:
+      case REB_THE_WORD:
+      case REB_THE_PATH:
+      case REB_THE_TUPLE:
+      case REB_THE_GROUP:
+        //
       case REB_BLOCK:
         //
       case REB_BINARY:

@@ -1939,11 +1939,12 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         goto token_prefixable_sigil;
 
       case TOKEN_AT:
+        assert(*bp == '@');
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
             Init_The(DS_PUSH());
             break;
         }
-        fail (Error_Syntax(ss, token));
+        goto token_prefixable_sigil;
 
       case TOKEN_COLON:
         assert(*bp == ':');
@@ -2699,6 +2700,12 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             mutable_KIND3Q_BYTE(DS_TOP) = METAFY_ANY_PLAIN_KIND(kind);
             if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
                 mutable_HEART_BYTE(DS_TOP) = METAFY_ANY_PLAIN_KIND(kind);
+            break;
+
+          case TOKEN_AT:
+            mutable_KIND3Q_BYTE(DS_TOP) = THEIFY_ANY_PLAIN_KIND(kind);
+            if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
+                mutable_HEART_BYTE(DS_TOP) = THEIFY_ANY_PLAIN_KIND(kind);
             break;
 
           default:

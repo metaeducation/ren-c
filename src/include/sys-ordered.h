@@ -323,6 +323,11 @@ inline static enum Reb_Kind METAFY_ANY_PLAIN_KIND(REBYTE k) {
     return cast(enum Reb_Kind, k + 15);
 }
 
+inline static enum Reb_Kind THEIFY_ANY_PLAIN_KIND(REBYTE k) {
+    assert(ANY_PLAIN_KIND(k));
+    return cast(enum Reb_Kind, k - 5);
+}
+
 
 inline static bool IS_ANY_SIGIL_KIND(REBYTE k) {
     assert(k < REB_64);  // can't do `@''x`

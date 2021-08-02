@@ -274,10 +274,11 @@ e-types/emit {
     /*
      * SINGLE TYPE CHECK MACROS, e.g. IS_BLOCK() or IS_TAG()
      *
-     * These routines are based on VAL_TYPE(), which is distinct and costs
-     * more than KIND3Q_BYTE() in the debug build.  In some commonly called
-     * routines that don't differentiate literal types, it may be worth it
-     * to use KIND3Q_BYTE() for optimization purposes.
+     * These routines are based on KIND3Q_BYTE(), which is cheaper than
+     * VAL_TYPE() but still does a number of checks in the debug build for cell
+     * validity.  In some commonly called routines where performance in the
+     * debug build would suffer too much, it may be better to do comparisons
+     * like (REB_INTEGER == KIND3Q_BYTE_UNCHECKED()) instead of IS_INTEGER().
      *
      * Note that due to a raw type encoding trick, IS_QUOTED() is unusual.
      * `KIND3Q_BYTE(v) == REB_QUOTED` isn't `VAL_TYPE(v) == REB_QUOTED`,
