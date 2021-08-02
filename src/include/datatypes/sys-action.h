@@ -101,8 +101,32 @@
 // evaluator.
 //
 
+inline static REBVAL *Init_Return_Signal_Untracked(RELVAL *out, char ch) {
+    RESET_VAL_HEADER(out, REB_T_RETURN_SIGNAL, CELL_MASK_NONE);
+    mutable_BINDING(out) = nullptr;
+
+    PAYLOAD(Any, out).first.u = ch;
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, out).second.trash = nullptr;
+  #endif
+    return cast(REBVAL*, out);
+}
+
+#define Init_Return_Signal(out,ch) \
+    Init_Return_Signal_Untracked(TRACK_CELL_IF_DEBUG(out), (ch))
+
+#define IS_RETURN_SIGNAL(v) \
+    (KIND3Q_BYTE(v) == REB_T_RETURN_SIGNAL)
+
+inline static char VAL_RETURN_SIGNAL(const RELVAL *v) {
+    assert(IS_RETURN_SIGNAL(v));
+    return PAYLOAD(Any, v).first.u;
+}
+
+
 // This signals that the evaluator is in a "thrown state".
 //
+#define C_THROWN 'T'
 #define R_THROWN \
     cast(REBVAL*, &PG_R_Thrown)
 
@@ -111,6 +135,7 @@
 // into the output slot...instead leaving that to the evaluator (as a
 // SET-PATH! should always evaluate to what was just set)
 //
+#define C_INVISIBLE 'I'
 #define R_INVISIBLE \
     cast(REBVAL*, &PG_R_Invisible)
 
@@ -123,9 +148,11 @@
 // frame from expected types, and then let those reach an underlying native
 // who thought the types had been checked.
 //
+#define C_REDO_UNCHECKED 'r'
 #define R_REDO_UNCHECKED \
     cast(REBVAL*, &PG_R_Redo_Unchecked)
 
+#define C_REDO_CHECKED 'R'
 #define R_REDO_CHECKED \
     cast(REBVAL*, &PG_R_Redo_Checked)
 
@@ -143,6 +170,7 @@
 // than that.  It hasn't been addressed much in Ren-C yet, but needs a more
 // generalized design.
 //
+#define C_REFERENCE 'F'
 #define R_REFERENCE \
     cast(REBVAL*, &PG_R_Reference)
 
@@ -150,11 +178,13 @@
 // resulted in the updating of an immediate expression in pvs->out, meaning
 // it will have to be copied back into whatever reference cell it had been in.
 //
+#define C_IMMEDIATE 'M'
 #define R_IMMEDIATE \
     cast(REBVAL*, &PG_R_Immediate)
 
+#define C_UNHANDLED 'U'
 #define R_UNHANDLED \
-    cast(REBVAL*, &PG_End_Cell)
+    cast(REBVAL*, &PG_R_Unhandled)
 
 
 #define CELL_MASK_ACTION \
@@ -276,7 +306,7 @@ enum {
     // or the "verb" WORD! of a "generic" (like APPEND).  So ordinary natives
     // just store blank here, and the usages are sometimes dodgy (e.g. a user
     // native checks to see if it's a user native if this is a TEXT!...which
-    // might collide with other natives in the future).  The idea needs review. 
+    // might collide with other natives in the future).  The idea needs review.
     //
     IDX_NATIVE_BODY = 1,
 

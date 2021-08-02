@@ -1495,7 +1495,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (IS_END(f_next))
             fail ("@ hit end of input");
         Inertly_Derelativize_Inheriting_Const(f->out, f_next, f->feed);
-        
+
         if (IS_BAD_WORD(f->out)) {
             assert(NOT_CELL_FLAG(f->out, ISOTOPE));
             if (VAL_BAD_WORD_ID(f->out) == SYM_NULL)

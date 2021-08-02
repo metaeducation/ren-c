@@ -897,7 +897,7 @@ static void Run_Va_May_Fail_Core(
     // provides a compromise, and it decays into a regular null several
     // places in the system (e.g. normal arguments).  Here is another place
     // the tolerance is extended to.
-    // 
+    //
     Decay_If_Nulled(out);
 }
 

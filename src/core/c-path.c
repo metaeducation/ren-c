@@ -247,25 +247,25 @@ bool Next_Path_Throws(REBPVS *pvs)
 
         const REBVAL *r = hook(pvs, PVS_PICKER(pvs), PVS_OPT_SETVAL(pvs));
 
-        switch (KIND3Q_BYTE(r)) {
-          case REB_0_END: { // unhandled
-            assert(r == R_UNHANDLED); // shouldn't be other ends
+        switch (VAL_RETURN_SIGNAL(r)) {
+          case C_UNHANDLED: {
+            assert(r == R_UNHANDLED);
             DECLARE_LOCAL (specific);
             Derelativize(specific, PVS_PICKER(pvs), f_specifier);
             fail (Error_Bad_Path_Poke_Raw(specific));
           }
 
-          case REB_R_THROWN:
+          case C_THROWN:
             panic ("Path dispatch isn't allowed to throw, only GROUP!s");
 
-          case REB_R_INVISIBLE: // dispatcher assigned target with setval
+          case C_INVISIBLE:  // dispatcher assigned target with setval
             break; // nothing left to do, have to take the dispatcher's word
 
-          case REB_R_REFERENCE: { // dispatcher wants a set *if* at end of path
+          case C_REFERENCE: {  // dispatcher wants a set *if* at end of path
             Copy_Cell(pvs->u.ref.cell, PVS_OPT_SETVAL(pvs));
             break; }
 
-          case REB_R_IMMEDIATE: {
+          case C_IMMEDIATE: {
             //
             // Imagine something like:
             //
@@ -287,7 +287,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             Copy_Cell(pvs->u.ref.cell, pvs->out);
             break; }
 
-          case REB_R_REDO: // e.g. used by REB_QUOTED to retrigger, sometimes
+          case C_REDO_CHECKED:  // sometimes used by REB_QUOTED to retrigger
             goto redo;
 
           default:
@@ -305,32 +305,28 @@ bool Next_Path_Throws(REBPVS *pvs)
 
         const REBVAL *r = hook(pvs, PVS_PICKER(pvs), nullptr);  // no "setval"
 
-        if (r and r != END_CELL) {
-            assert(r->header.bits & NODE_FLAG_CELL);
-            /* assert(not (r->header.bits & NODE_FLAG_ROOT)); */
-        }
-
         if (r == pvs->out) {
             // Common case... result where we expect it
         }
         else if (not r) {
             Init_Nulled(pvs->out);
         }
-        else if (r == R_UNHANDLED) {
+        else if (not IS_RETURN_SIGNAL(r)) {
+            assert(GET_CELL_FLAG(r, ROOT));  // API, from Alloc_Value()
+            Handle_Api_Dispatcher_Result(pvs, r);
+        }
+        else switch (VAL_RETURN_SIGNAL(r)) {
+          case C_UNHANDLED: {
             if (IS_NULLED(PVS_PICKER(pvs)))
                 fail ("NULL used in path picking but was not handled");
             DECLARE_LOCAL (specific);
             Derelativize(specific, PVS_PICKER(pvs), f_specifier);
-            fail (Error_Bad_Path_Pick_Raw(specific));
-        }
-        else if (GET_CELL_FLAG(r, ROOT)) { // API, from Alloc_Value()
-            Handle_Api_Dispatcher_Result(pvs, r);
-        }
-        else switch (KIND3Q_BYTE(r)) {
-          case REB_R_THROWN:
+            fail (Error_Bad_Path_Pick_Raw(specific)); }
+
+          case C_THROWN:
             panic ("Path dispatch isn't allowed to throw, only GROUP!s");
 
-          case REB_R_INVISIBLE:
+          case C_INVISIBLE:
             assert(PVS_IS_SET_PATH(pvs));
             if (not was_custom)
                 panic("SET-PATH! evaluation ran assignment before path end");
@@ -345,7 +341,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             assert(IS_END(f_value));
             break;
 
-          case REB_R_REFERENCE: {
+          case C_REFERENCE: {
             bool was_const = GET_CELL_FLAG(pvs->out, CONST);
             Derelativize(
                 pvs->out,
@@ -359,7 +355,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             // to be R_IMMEDIATE, and it is needed.
             break; }
 
-          case REB_R_REDO: // e.g. used by REB_QUOTED to retrigger, sometimes
+          case C_REDO_CHECKED: // sometimes used by REB_QUOTED to retrigger
             goto redo;
 
           default:
@@ -842,24 +838,25 @@ REBNATIVE(pick)
     if (not r or r == pvs->out) {
         // Do nothing, let caller handle
     }
-    else if (IS_END(r)) {
-        assert(r == R_UNHANDLED);
-        fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(PVS_PICKER(pvs))));
-    }
-    else if (GET_CELL_FLAG(r, ROOT)) {  // API value
+    else if (not IS_RETURN_SIGNAL(r)) {
         //
         // It was parented to the PVS frame, we have to read it out.
         //
+        assert(GET_CELL_FLAG(r, ROOT));  // API value
         Copy_Cell(D_OUT, r);
         rebRelease(r);
         r = D_OUT;
     }
-    else switch (CELL_KIND_UNCHECKED(r)) {
-      case REB_R_INVISIBLE:
+    else switch (VAL_RETURN_SIGNAL(r)) {
+      case C_UNHANDLED: {
+        assert(r == R_UNHANDLED);
+        fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(PVS_PICKER(pvs)))); }
+
+      case C_INVISIBLE:
         assert(false); // only SETs should do this
         break;
 
-      case REB_R_REFERENCE: {
+      case C_REFERENCE: {
         assert(pvs->out == D_OUT);
         bool was_const = GET_CELL_FLAG(D_OUT, CONST);
         Derelativize(
@@ -872,7 +869,7 @@ REBNATIVE(pick)
         r = D_OUT;
         break; }
 
-      case REB_R_REDO:
+      case C_REDO_CHECKED:
         goto redo;
 
       default:
@@ -932,15 +929,15 @@ REBNATIVE(poke)
     PATH_HOOK *hook = Path_Hook_For_Type_Of(location);
 
     const REBVAL *r = hook(pvs, PVS_PICKER(pvs), ARG(value));
-    switch (KIND3Q_BYTE(r)) {
-      case REB_0_END:
+    switch (VAL_RETURN_SIGNAL(r)) {
+      case C_UNHANDLED:
         assert(r == R_UNHANDLED);
         fail (Error_Bad_Path_Poke_Raw(rebUnrelativize(PVS_PICKER(pvs))));
 
-      case REB_R_INVISIBLE:  // is saying it did the write already
+      case C_INVISIBLE:  // is saying it did the write already
         break;
 
-      case REB_R_REFERENCE:  // wants us to write it
+      case C_REFERENCE:  // wants us to write it
         Copy_Cell(pvs->u.ref.cell, ARG(value));
         break;
 

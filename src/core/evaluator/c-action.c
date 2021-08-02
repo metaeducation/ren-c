@@ -952,11 +952,12 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         Init_Nulled(f->out);
         goto dispatch_completed;  // skips invisible check
     }
-    else if (GET_CELL_FLAG(r, ROOT)) {  // API, from Alloc_Value()
+    else if (not IS_RETURN_SIGNAL(r)) {
+        assert(GET_CELL_FLAG(r, ROOT));  // API, from Alloc_Value()
         Handle_Api_Dispatcher_Result(f, r);
         goto dispatch_completed;  // skips invisible check
     }
-    else switch (KIND3Q_BYTE(r)) {  // it's a "pseudotype" instruction
+    else switch (VAL_RETURN_SIGNAL(r)) {  // it's a "pseudotype" instruction
         //
         // !!! Thrown values used to be indicated with a bit on the value
         // itself, but now it's conveyed through a return value.  This
@@ -966,7 +967,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // a performance win either way, but recovering the bit in the
         // values is a definite advantage--as header bits are scarce!
         //
-      case REB_R_THROWN: {
+      case C_THROWN: {
         const REBVAL *label = VAL_THROWN_LABEL(f->out);
         if (IS_ACTION(label)) {
             if (
@@ -1040,18 +1041,28 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         //
         goto abort_action; }
 
-      case REB_R_REDO:
-        //
-        // This instruction represents the idea that it is desired to
-        // run the f->phase again.  The dispatcher may have changed the
-        // value of what f->phase is, for instance.
+    //
+    // REDO instructions represent the idea that it is desired to run the
+    // f->phase again.  The dispatcher may have changed the value of what
+    // f->phase is, for instance.
+    //
 
+      case C_REDO_UNCHECKED:
         CLEAR_EVAL_FLAG(f, UNDO_NOTE_STALE);
+        goto dispatch;
 
-        if (not EXTRA(Any, r).flag)  // R_REDO_UNCHECKED
-            goto dispatch;
-
+      case C_REDO_CHECKED:
+        CLEAR_EVAL_FLAG(f, UNDO_NOTE_STALE);
         goto typecheck_then_dispatch;
+
+        // !!! There were generic dispatchers that were returning this, and
+        // it wasn't noticed when unhandled was the same as END.  For instance
+        // this was arising in the ISSUE! dispatcher when you said `#a + 1`.
+        // Path dispatchers make use of this, but should regular actions?  Is
+        // there a meaningful enough error to fabricate?
+        //
+      case C_UNHANDLED:
+        fail ("Not handled (review instances of this error!)");
 
       default:
         assert(!"Invalid pseudotype returned from action dispatcher");

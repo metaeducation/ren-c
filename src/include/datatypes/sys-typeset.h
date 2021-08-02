@@ -104,7 +104,7 @@ inline static bool TYPE_CHECK(REBCEL(const*) v, REBYTE n) {
     if (n < 32)
         return did (VAL_TYPESET_LOW_BITS(v) & FLAGIT_KIND(n));
 
-    assert(n < REB_MAX_PLUS_MAX);
+    assert(n < REB_MAX);
     return did (VAL_TYPESET_HIGH_BITS(v) & FLAGIT_KIND(n - 32));
 }
 
@@ -146,7 +146,7 @@ inline static void TYPE_SET(RELVAL *v, REBYTE n) {
         VAL_TYPESET_LOW_BITS(v) |= FLAGIT_KIND(n);
         return;
     }
-    assert(n < REB_MAX_PLUS_MAX);
+    assert(n < REB_MAX);
     VAL_TYPESET_HIGH_BITS(v) |= FLAGIT_KIND(n - 32);
 }
 
@@ -157,7 +157,7 @@ inline static void TYPE_CLEAR(RELVAL *v, REBYTE n) {
         VAL_TYPESET_HIGH_BITS(v) &= ~FLAGIT_KIND(n);
         return;
     }
-    assert(n < REB_MAX_PLUS_MAX);
+    assert(n < REB_MAX);
     VAL_TYPESET_HIGH_BITS(v) &= ~FLAGIT_KIND(n - 32);
 }
 

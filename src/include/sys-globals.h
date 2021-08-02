@@ -95,6 +95,7 @@ PVAR REBVAL PG_R_Redo_Unchecked;  // "pseudotype" REB_R_REDO + false extra
 PVAR REBVAL PG_R_Redo_Checked;  // "pseudotype" REB_R_REDO + true extra
 PVAR REBVAL PG_R_Reference;  // "pseudotype" REB_R_REFERENCE
 PVAR REBVAL PG_R_Thrown;  // has "pseudotype" REB_R_THROWN
+PVAR REBVAL PG_R_Unhandled;  // has "pseudotype" REB_R_THROWN
 
 // These are root variables which used to be described in %root.r and kept
 // alive by keeping that array alive.  Now they are API handles, kept alive

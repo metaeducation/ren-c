@@ -69,7 +69,7 @@ inline static REBVAL *Init_Bad_Word_Untracked(
     // because trash can be put anywhere as an implementation detail--including
     // array slots which cannot legally hold isotopes.  So if by some chance
     // that trash leaks, we don't want to further corrupt the state.
-    // 
+    //
     #define Init_Trash(v) \
         Init_Bad_Word_Untracked((v), PG_Trash_Canon, CELL_MASK_NONE)
 #else
@@ -83,6 +83,9 @@ inline static REBVAL *Init_Bad_Word_Untracked(
         // usually clear from the assert that it's unreadable, anyway.
         //
         INIT_VAL_NODE1(out, nullptr);  // FIRST_IS_NODE needed to do this
+      #ifdef ZERO_UNUSED_CELL_FIELDS
+        PAYLOAD(Any, out).second.trash = nullptr;
+      #endif
         return cast(REBVAL*, out);
     }
 

@@ -331,17 +331,13 @@ static void Init_Root_Vars(void)
     Init_False(Prep_Cell(&PG_False_Value));
     Init_True(Prep_Cell(&PG_True_Value));
 
-    RESET_CELL(Prep_Cell(&PG_R_Thrown), REB_R_THROWN, CELL_MASK_NONE);
-    RESET_CELL(Prep_Cell(&PG_R_Invisible), REB_R_INVISIBLE, CELL_MASK_NONE);
-    RESET_CELL(Prep_Cell(&PG_R_Immediate), REB_R_IMMEDIATE, CELL_MASK_NONE);
-
-    RESET_CELL(Prep_Cell(&PG_R_Redo_Unchecked), REB_R_REDO, CELL_MASK_NONE);
-    EXTRA(Any, &PG_R_Redo_Unchecked).flag = false;  // "unchecked"
-
-    RESET_CELL(Prep_Cell(&PG_R_Redo_Checked), REB_R_REDO, CELL_MASK_NONE);
-    EXTRA(Any, &PG_R_Redo_Checked).flag = true;  // "checked"
-
-    RESET_CELL(Prep_Cell(&PG_R_Reference), REB_R_REFERENCE, CELL_MASK_NONE);
+    Init_Return_Signal(Prep_Cell(&PG_R_Thrown), C_THROWN);
+    Init_Return_Signal(Prep_Cell(&PG_R_Invisible), C_INVISIBLE);
+    Init_Return_Signal(Prep_Cell(&PG_R_Immediate), C_IMMEDIATE);
+    Init_Return_Signal(Prep_Cell(&PG_R_Redo_Unchecked), C_REDO_UNCHECKED);
+    Init_Return_Signal(Prep_Cell(&PG_R_Redo_Checked), C_REDO_CHECKED);
+    Init_Return_Signal(Prep_Cell(&PG_R_Reference), C_REFERENCE);
+    Init_Return_Signal(Prep_Cell(&PG_R_Unhandled), C_UNHANDLED);
 
     Root_Empty_Block = Init_Block(Alloc_Value(), PG_Empty_Array);
     Force_Value_Frozen_Deep(Root_Empty_Block);

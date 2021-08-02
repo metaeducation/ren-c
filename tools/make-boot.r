@@ -208,20 +208,19 @@ rebs: collect [
 
 e-types/emit {
     /*
+     * Current hard limit, higher types used for QUOTED!.  In code which
+     * is using the 64 split to implement the literal trick, use REB_64
+     * instead of just 64 to make places dependent on that trick findable.
+     */
+    #define REB_64 64
+
+    /*
      * INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
      *
      * Do not export these values via libRebol, as the numbers can change.
      * Their ordering is for supporting certain optimizations, such as being
      * able to quickly check if a type IS_BINDABLE().  When types are added,
      * or removed, the numbers must shuffle around to preserve invariants.
-     *
-     * While REB_MAX indicates the maximum legal VAL_TYPE(), there is also a
-     * list of PSEUDOTYPE_ONE, PSEUDOTYPE_TWO, etc. values which are used
-     * for special internal states and flags.  Some of these are used in the
-     * KIND3Q_BYTE() of value cells to mark their usage of alternate payloads
-     * during algorithmic transformations (e.g. specialization).  Others are
-     * used to signal special behaviors when returned from native dispatchers.
-     * Still others are used as special indicators in typeset bitsets.
      *
      * NOTE ABOUT C++11 ENUM TYPING: It is best not to specify an "underlying
      * type" because that prohibits certain optimizations, which the compiler
@@ -232,54 +231,42 @@ e-types/emit {
         /*** TYPES AND INTERNALS GENERATED FROM %TYPES.R ***/
 
         $[Rebs],
-        REB_MAX, /* one past valid types */
+        REB_MAX,  /* one past valid types */
 
-        /*** ALIASES FOR REB_0_END ***/
+        /*
+        * Alias for REB_0 when used for signals besides ENDness.
+        */
+        REB_0 = REB_0_END,
 
-        REB_0 = REB_0_END,  /* REB_0 when used for signals besides ENDness */
+        /*
+        * There are no "quoted ends" and there are no "quoted REB_QUOTEDs".
+        * So these six distinct states are available for other uses.
+        */
 
-        /*** PSEUDOTYPES ***/
+        REB_T_RETURN_SIGNAL = (REB_0 + REB_64),  /* signals throws, etc. */
 
-        PSEUDOTYPE_ONE = REB_MAX,
-        REB_R_THROWN = PSEUDOTYPE_ONE,
-
-        PSEUDOTYPE_TWO,
-        REB_R_INVISIBLE = PSEUDOTYPE_TWO,
       #if defined(DEBUG_REFORMAT_CELLS)
-        REB_T_UNSAFE = PSEUDOTYPE_TWO,  /* simulate lack of GC safety*/
+        REB_T_UNSAFE = (REB_0 + 2 * REB_64),  /* simulate lack of GC safety*/
       #endif
 
-        PSEUDOTYPE_THREE,
-        REB_R_REDO = PSEUDOTYPE_THREE,
+        REB_PSEUDOTYPE_THREE = (REB_0 + 3 * REB_64),
 
-        PSEUDOTYPE_FOUR,
-        REB_R_REFERENCE = PSEUDOTYPE_FOUR,
+        REB_PSEUDOTYPE_FOUR = (REB_QUOTED + REB_64),
 
-        PSEUDOTYPE_FIVE,
-        REB_R_IMMEDIATE = PSEUDOTYPE_FIVE,
+        REB_PSEUDOTYPE_FIVE = (REB_QUOTED + 2 * REB_64),
 
-        PSEUDOTYPE_SIX,
-
-        REB_MAX_PLUS_MAX
+        REB_PSEUDOTYPE_SIX = (REB_QUOTED + 3 * REB_64)
     };
 
-    /*
-     * Current hard limit, higher types used for QUOTED!.  In code which
-     * is using the 64 split to implement the literal trick, use REB_64
-     * instead of just 64 to make places dependent on that trick findable.
-     *
-     * !!! If one were desperate for "special" types, things like 64/128/192
-     * could be used, as there is no such thing as a "literal END", etc.
-     */
-    #define REB_64 64
 
     /*
      * While the VAL_TYPE() is a full byte, only 64 states can fit in the
-     * payload of a TYPESET! at the moment.  Some rethinking would be
-     * necessary if this number exceeds 64 (note some values beyond the
-     * real DATATYPE! values set special signal bits in parameter typesets.)
+     * payload of a TYPESET! at the moment.  Significant rethinking would be
+     * necessary if this number exceeds 64, especially since the optimization
+     * of allowing up to three levels of quoting cheaply relies on using the
+     * gap between 64 and 256 in the KIND3Q_BYTE().
      */
-    STATIC_ASSERT(REB_MAX_PLUS_MAX <= REB_64);
+    STATIC_ASSERT(REB_MAX <= REB_64);
 }
 e-types/emit newline
 

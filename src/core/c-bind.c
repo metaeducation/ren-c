@@ -616,7 +616,7 @@ static void Clonify_And_Bind_Relative(
     Dequotify(v);
 
     enum Reb_Kind kind = cast(enum Reb_Kind, KIND3Q_BYTE_UNCHECKED(v));
-    assert(kind < REB_MAX_PLUS_MAX);  // we dequoted it (pseudotypes ok)
+    assert(kind < REB_MAX);  // we dequoted it
 
     enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), v));
 
