@@ -1022,13 +1022,14 @@ default-combinators: make map! reduce [
 
     === QUOTED! COMBINATOR ===
 
-    ; Recognizes the value literally.  Test making it work only on the
-    ; ANY-ARRAY! type, just to see if type checking can work.
+    ; When used with ANY-ARRAY! input, recognizes values literally.  When used
+    ; with ANY-STRING! it will convert the value to a string before matching.
 
     quoted! combinator [
         return: "The matched value"
             [<opt> any-value!]
         value [quoted!]
+        <local> parser
     ][
         ; Review: should it be legal to say:
         ;
@@ -1038,11 +1039,23 @@ default-combinators: make map! reduce [
         ; Arguably there is a null match at every position.  An ^null might
         ; also be chosen to match)...while NULL rules do not.
         ;
-        if :input.1 = unmeta value [
-            set remainder next input
-            return unmeta value
+        if any-array? input [
+            if :input.1 = unquote value [
+                set remainder next input
+                return unquote value
+            ]
+            return null
         ]
-        return null
+
+        if any-string? input [
+            parser: :(state.combinators)/(text!)
+            return [# (remainder)]: parser state input (to text! unquote value)
+        ]
+
+        assert [binary? input]
+
+        parser: :(state.combinators)/(binary!)
+        return [# (remainder)]: parser state input (to binary! unquote value)
     ]
 
     === LOGIC! COMBINATOR ===
@@ -1178,6 +1191,86 @@ default-combinators: make map! reduce [
         ]
     ]
 
+
+    === THE-XXX! COMBINATORS ===
+
+    ; The THE-XXX! combinators are just for doing literal matches instead of
+    ; by rule, e.g.
+    ;
+    ;     >> block: [some "a"]
+    ;
+    ;     >> uparse [[some "a"] [some "a"]] [some @block]
+    ;     == [some "a"]
+    ;
+    ; However they need to have logic in them to do things like partial string
+    ; matches on text.  That logic has to be in the QUOTED! combinator, so
+    ; this code builds on that instead of repeating it.
+    ;
+    ; !!! These follow a simple pattern, could generate at a higher level.
+
+    the-word! combinator [
+        return: "Literal value" [<opt> any-value!]
+        value [the-word!]
+        <local> parser
+    ][
+        parser: :(state.combinators)/(quoted!)
+        [# (remainder)]: parser state input quote get value
+    ]
+
+    the-path! combinator [
+        return: "Literal value" [<opt> any-value!]
+        value [the-word!]
+        <local> result' parser
+    ][
+        parser: :(state.combinators)/(quoted!)
+        [# (remainder)]: parser state input quote get value
+    ]
+
+    the-tuple! combinator [
+        return: "Literal value" [<opt> any-value!]
+        value [the-tuple!]
+        <local> result' parser
+    ][
+        parser: :(state.combinators)/(quoted!)
+        [# (remainder)]: parser state input quote get value
+    ]
+
+    the-group! combinator [
+        return: "Literal value" [<opt> any-value!]
+        value [the-group!]
+        <local> result' parser
+    ][
+        value: as group! value
+        parser: :(state.combinators)/(group!)
+        ([result' input]: ^ parser state input value) then @[
+            parser: :(state.combinators)/(quoted!)
+            [# (remainder)]: parser state input result'
+        ]
+    ]
+
+    the-block! combinator [
+        return: "Literal value" [<opt> any-value!]
+        value [the-block!]
+        <local> result' parser
+    ][
+        ; !!! THE-BLOCK! acting as just matching the block is redundant with
+        ; a quoted block.  Suggestions have been to repurpose @[...] for a
+        ; datatype representation, but that's inconsistent with other uses.
+        ;
+        ; So the most "logical" thing to do here is to say it means "literally
+        ; match the result of running the block as a rule".  This is not quite
+        ; as useless as it sounds, since a rule can synthesize an arbitrary
+        ; value.
+
+        value: as block! value
+        parser: :(state.combinators)/(block!)
+        ([result' input]: ^ parser state input value) then @[
+            parser: :(state.combinators)/(quoted!)
+            [# (remainder)]: parser state input result'
+        ]
+    ]
+
+
     === META-XXX! COMBINATORS ===
 
     ; The META-XXX! combinators add a quoting level to their result, with
@@ -1232,6 +1325,7 @@ default-combinators: make map! reduce [
         ([result' (remainder)]: ^ parser state input value) then [result']
     ]
 
+
     === INVISIBLE COMBINATORS ===
 
     ; If BLOCK! is asked for a result, it will accumulate results from any
@@ -1283,7 +1377,7 @@ default-combinators: make map! reduce [
     ; It's still a bit jarring to have SKIP mean something that is used as
     ; a series skipping operation (with a skip count) have completely different
     ; semantic.  But, this is at least a bit better, and points people to use
-    ; <any> instead if you want to say `parse [10] [x: <any>]` and get x as 10. 
+    ; <any> instead if you want to say `parse [10] [x: <any>]` and get x as 10.
     ;
     'skip combinator [
         {Skip one series element if available}
@@ -1392,7 +1486,7 @@ default-combinators: make map! reduce [
 
         ; passing in [] for rules, because no arguments available here...!
         ;
-        parser: [# #]: combinatorize/value :c [] state r 
+        parser: [# #]: combinatorize/value :c [] state r
 
         return [# (remainder)]: parser input
     ]
@@ -1499,7 +1593,7 @@ default-combinators: make map! reduce [
                     result': temp
                 ]
             ] else [
-                result': '~void~  ; reset, e.g. `[false |]` => ~void~ isotope 
+                result': '~void~  ; reset, e.g. `[false |]` => ~void~ isotope
 
                 if state.collecting [  ; toss collected values from this pass
                     if collect-baseline [  ; we marked how far along we were
@@ -1610,7 +1704,7 @@ comment [combinatorize: func [
     if path [  ; was for /ONLY but not in use now, will be rethought
         fail "Refinements not supported currently with combinators"
     ]
- 
+
     let f: make frame! :combinator
 
     for-each param parameters of :combinator [
@@ -1712,7 +1806,7 @@ parsify: func [
                 ;
                 ; It's a keyword (the word itself is named in the combinators)
                 ;
-                return [# (advanced)]: combinatorize :c rules state 
+                return [# (advanced)]: combinatorize :c rules state
             ]
 
             ; It's not a keyword, so we let the WORD! combinator decide what
@@ -1738,7 +1832,7 @@ parsify: func [
             if blank? last r [
                 if not action? let action: get :r [
                     fail "In UPARSE PATH ending in / must resolve to ACTION!"
-                ]                
+                ]
                 if not let c: select state.combinators action! [
                     fail "No ACTION! combinator, can't use PATH ending in /"
                 ]
@@ -2092,7 +2186,7 @@ append redbol-combinators reduce [
     ; just a WORD!.
     ;
     ; At time of writing, variadic combinators don't exist, and this isn't
-    ; a sufficient priority to make them for.  Review later. 
+    ; a sufficient priority to make them for.  Review later.
 
     === OLD-STYLE INTO BEHAVIOR ===
 

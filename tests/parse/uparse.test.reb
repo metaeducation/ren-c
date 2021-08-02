@@ -54,7 +54,8 @@
 )]
 
 
-; SOME and WHILE have become value-bearing; giving back blocks if they match.
+; SOME and WHILE have become value-bearing; giving back the result of the
+; last successful call to the parser they are parameterized with.
 ;
 ; Note: currently a WHILE that never matches leads to errors since it is a
 ; ~void~ isotope in that case (succeeds but reified invisible).  UPARSE is
@@ -187,7 +188,7 @@
 ; that might want to know about invisibility status.
 [
     (did all  [
-        then? uparse "" [synthesized: ^[]]  ; NULL-2 result (success)
+        then? uparse "" [synthesized: ^[]]  ; ~null~ isotope result (success)
         '~void~ = synthesized
     ])
     (did all  [
@@ -199,6 +200,32 @@
         '~void~ = synthesized  ; user didn't quote it, so suggests unfriendly
     ])
     ((the '~friendly~) = ^(uparse [~friendly~] [bad-word!]))
+]
+
+
+; THE-XXX! types are based around matching things literally.  GROUP!s will
+; evaluate, and BLOCK!s will use th synthesized value of the rule to be the
+; thing that gets matched.
+[
+    (
+        x: ~
+        tag: <hello>
+        did all [
+            <world> = uparse [<hello> <world>] [x: @tag, '<world>]
+            x = <hello>
+        ]
+    )
+    (
+        x: ~
+        obj: make object! [field: <hello>]
+        did all [
+            <world> = uparse [<hello> <world>] [x: @obj.field, '<world>]
+            x = <hello>
+        ]
+    )
+    (1 = uparse [1 1 1] [some @(3 - 2)])
+    (2 = uparse [1 1 1 2] [@[some @(3 - 2), (1 + 1)]])
+    ("b" = uparse "aaab" [@[some "x" ("y") | some "a" ("b")]])
 ]
 
 
@@ -285,8 +312,8 @@
             ]
             some '*
         ]
-        g/i = 1
-        g/t = <foo>
+        g.i = 1
+        g.t = <foo>
     ]
 )(
     let result
@@ -480,8 +507,8 @@
 ; trigger ELSE, but match failures do.
 ;
 ; !!! Is it worth it to add a way to do something like ^[...] block rules to
-; say you don't want the NULL-2, or does that just confuse things?  Is it
-; better to just rig that up from the outside?
+; say you don't want the ~null~ isotope, or does that just confuse things?  Is
+; it better to just rig that up from the outside?
 ;
 ;     uparse data rules then result -> [
 ;         ; If RESULT is null we can react differently here
