@@ -116,6 +116,7 @@ spec
 body
 words
 parameters
+exemplar
 values
 types
 title

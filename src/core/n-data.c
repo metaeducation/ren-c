@@ -1467,28 +1467,6 @@ REBNATIVE(as)
 
         fail (v); }
 
-      case REB_FRAME: {
-        if (IS_ACTION(v)) {
-            //
-            // We give back the exemplar of the frame, which contains the
-            // parameter descriptions.  Since exemplars are reused, this is
-            // not enough to make the right action out of...so the phase has
-            // to be set to the action that we are returning.
-            //
-            // !!! This loses the label information.  Technically the space
-            // for the varlist could be reclaimed in this case and a label
-            // used, as the read-only frame is archetypal.
-            //
-            RESET_VAL_HEADER(D_OUT, REB_FRAME, CELL_MASK_CONTEXT);
-            INIT_VAL_CONTEXT_VARLIST(D_OUT, ACT_PARAMLIST(VAL_ACTION(v)));
-            mutable_BINDING(D_OUT) = VAL_ACTION_BINDING(v);
-            INIT_VAL_FRAME_PHASE_OR_LABEL(D_OUT, VAL_ACTION(v));
-            return D_OUT;
-        }
-
-        fail (v);
-      }
-
     case REB_ACTION: {
       if (IS_FRAME(v)) {
         //
