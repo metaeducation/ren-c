@@ -288,6 +288,7 @@ void Push_Paramlist_Triads_May_Fail(
         const REBSYM* symbol = nullptr;  // avoids compiler warning
         enum Reb_Param_Class pclass = PARAM_CLASS_0;  // error if not changed
 
+        bool local = false;
         bool refinement = false;  // paths with blanks at head are refinements
         if (ANY_PATH_KIND(kind)) {
             if (not IS_REFINEMENT_CELL(cell))
@@ -330,7 +331,7 @@ void Push_Paramlist_Triads_May_Fail(
             // but it's now another way to name locals.
             //
             if (IS_PREDICATE1_CELL(cell) and not quoted) {
-                pclass = PARAM_CLASS_LOCAL;
+                local = true;
                 symbol = VAL_PREDICATE1_SYMBOL(cell);
             }
         }
@@ -382,15 +383,15 @@ void Push_Paramlist_Triads_May_Fail(
         else
             fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
 
-        if (pclass == PARAM_CLASS_0)  // didn't match
+        if (not local and pclass == PARAM_CLASS_0)  // didn't match
             fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
 
         if (mode != SPEC_MODE_NORMAL) {
-            if (pclass != PARAM_CLASS_NORMAL and pclass != PARAM_CLASS_LOCAL)
+            if (pclass != PARAM_CLASS_NORMAL and not local)
                 fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
 
             if (mode == SPEC_MODE_LOCAL)
-                pclass = PARAM_CLASS_LOCAL;
+                local = true;
         }
 
         if (ID_OF_SYMBOL(symbol) == SYM_RETURN and pclass != PARAM_CLASS_RETURN) {
@@ -429,7 +430,7 @@ void Push_Paramlist_Triads_May_Fail(
         // If the typeset bits contain REB_NULL, that indicates <opt>.
         // But Is_Param_Endable() indicates <end>.
 
-        if (pclass == PARAM_CLASS_LOCAL) {
+        if (local) {
             Init_Unset(param);
             SET_CELL_FLAG(param, STACK_NOTE_LOCAL);
         }

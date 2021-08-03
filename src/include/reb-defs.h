@@ -249,9 +249,7 @@ enum Reb_Param_Class {
     //     >> foo get/any 'asdfasfasdf
     //     a is ~unset~
     //
-    PARAM_CLASS_META,
-
-    PARAM_CLASS_LOCAL
+    PARAM_CLASS_META
 };
 
 
