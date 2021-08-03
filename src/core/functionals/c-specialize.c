@@ -409,7 +409,7 @@ bool Specialize_Action_Throws(
         // !!! As part of the special escaping, might it consider a non
         // isotope `~null-2~` to be a signal it translates to heavy-null?
         //
-        if (VAL_PARAM_CLASS(param) == REB_P_META)
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(arg);
 
         // Specialized-out arguments must still be in the parameter list,
@@ -632,7 +632,7 @@ void For_Each_Unspecialized_Param(
 
         if (
             NOT_PARAM_FLAG(param, REFINEMENT)
-            or VAL_PARAM_CLASS(param) == REB_P_RETURN
+            or VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN
         ){
             continue;
         }

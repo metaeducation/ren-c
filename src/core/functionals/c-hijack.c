@@ -112,7 +112,7 @@ bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
         if (Is_Param_Hidden(f->param))  // specialized or local
             continue;
 
-        if (VAL_PARAM_CLASS(f->param) == REB_P_RETURN)
+        if (VAL_PARAM_CLASS(f->param) == PARAM_CLASS_RETURN)
             continue;  // !!! hack, has PARAM_FLAG_REFINEMENT, don't stack it
 
         if (GET_PARAM_FLAG(f->param, SKIPPABLE) and IS_NULLED(f->arg))

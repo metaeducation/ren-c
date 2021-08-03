@@ -163,16 +163,95 @@ typedef uint_fast32_t REBDSP; // Note: 0 for empty stack ([0] entry is trash)
 //=//// PARAMETER CLASSES ////////////////////////////////////////////////=//
 
 enum Reb_Param_Class {
-    REB_P_NORMAL,
-    REB_P_RETURN,
-    REB_P_OUTPUT,
-    REB_P_META,
-    REB_P_SOFT,
-    REB_P_MEDIUM,
-    REB_P_HARD,
+    PARAM_CLASS_0,  // used to indicate an "unset" state
 
-    REB_P_DETECT,
-    REB_P_LOCAL
+    // `PARAM_CLASS_NORMAL` is cued by an ordinary WORD! in the function spec
+    // to indicate that you would like that argument to be evaluated normally.
+    //
+    //     >> foo: function [a] [print [{a is} a]]
+    //
+    //     >> foo 1 + 2
+    //     a is 3
+    //
+    PARAM_CLASS_NORMAL,
+
+    PARAM_CLASS_RETURN,
+
+    PARAM_CLASS_OUTPUT,
+
+    // `PARAM_CLASS_HARD` is cued by a quoted WORD! in the function spec
+    // dialect.  It indicates that a single value of content at the callsite
+    // should be passed through *literally*, without any evaluation:
+    //
+    //     >> foo: function ['a] [print [{a is} a]]
+    //
+    //     >> foo (1 + 2)
+    //     a is (1 + 2)
+    //
+    //     >> foo :(1 + 2)
+    //     a is :(1 + 2)
+    //
+    //
+    PARAM_CLASS_HARD,
+
+    // `PARAM_CLASS_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
+    // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
+    // GET-PATH!...which will be evaluated:
+    //
+    //     >> foo: function [':a] [print [{a is} a]
+    //
+    //     >> foo (1 + 2)
+    //     a is (1 + 2)
+    //
+    //     >> foo :(1 + 2)
+    //     a is 3
+    //
+    // Although possible to implement medium quoting with hard quoting, it is
+    // a convenient way to allow callers to "escape" a quoted context when
+    // they need to.
+    //
+    PARAM_CLASS_MEDIUM,
+
+    // `PARAM_CLASS_SOFT` is cued by a PLAIN GET-WORD!.  It's a more nuanced
+    // version of PARAM_CLASS_MEDIUM which is escapable but will defer to enfix.
+    // This covers cases like:
+    //
+    //     if true [...] then :(func [...] [...])  ; want escapability
+    //     if true [...] then x -> [...]  ; but want enfix -> lookback to win
+    //
+    // Hence it is the main mode of quoting for branches.  It would be
+    // unsuitable for cases like OF, however, due to this problem:
+    //
+    //     integer! = type of 1  ; want left quoting semantics on `type` WORD!
+    //     integer! = :(first [type length]) of 1  ; want escapability
+    //
+    // OF wants its left hand side to be escapable, however it wants the
+    // quoting behavior to out-prioritize the completion of enfix on the
+    // left.  Contrast this with how THEN wants the enfix on the right to
+    // win out ahead of its quoting.
+    //
+    // This is a subtlety that most functions don't have to worry about, so
+    // using soft quoting is favored to medium quoting for being one less
+    // character to type.
+    //
+    PARAM_CLASS_SOFT,
+
+    // `PARAM_CLASS_META` is the only parameter type that can accept isotope
+    // forms of BAD-WORD!.  They become plain forms of BAD-WORD! when they
+    // are an argument, and all other types receive one added quote level
+    // (except for pure NULL, which is left as NULL).
+    //
+    //     >> foo: function [^a] [print [{a is} a]
+    //
+    //     >> foo 1 + 2
+    //     a is '3
+    //
+    //     >> foo get/any 'asdfasfasdf
+    //     a is ~unset~
+    //
+    PARAM_CLASS_META,
+
+    PARAM_CLASS_LOCAL
 };
 
 

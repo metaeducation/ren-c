@@ -297,7 +297,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // data in cases like `(1 + 2 | comment "hi")` => 3, but
                 // left enfix should treat that just like an end.
 
-                if (pclass == REB_P_META)
+                if (pclass == PARAM_CLASS_META)
                     Init_Void(f->arg);
                 else
                     Init_Endish_Nulled(f->arg);
@@ -318,20 +318,20 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 Init_Varargs_Untyped_Enfix(f->arg, f->out);
             }
             else switch (pclass) {
-              case REB_P_NORMAL:
-              case REB_P_OUTPUT:
-              case REB_P_META:
+              case PARAM_CLASS_NORMAL:
+              case PARAM_CLASS_OUTPUT:
+              case PARAM_CLASS_META:
                 Copy_Cell(f->arg, f->out);
                 if (GET_CELL_FLAG(f->out, UNEVALUATED))
                     SET_CELL_FLAG(f->arg, UNEVALUATED);
 
-                if (pclass == REB_P_META)
+                if (pclass == PARAM_CLASS_META)
                     Meta_Quotify(f->arg);
-                else if (pclass == REB_P_NORMAL)
+                else if (pclass == PARAM_CLASS_NORMAL)
                     Normalize(f->arg);  // !!! avoid assign ~void~ to f->arg?
                 break;
 
-              case REB_P_HARD:
+              case PARAM_CLASS_HARD:
                 if (NOT_CELL_FLAG(f->out, UNEVALUATED)) {
                     //
                     // This can happen e.g. with `x: 10 | x >- lit`.  We
@@ -352,7 +352,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                     assert(NOT_CELL_FLAG(f->arg, ISOTOPE));
                 break;
 
-              case REB_P_SOFT:
+              case PARAM_CLASS_SOFT:
                 //
                 // SOFT permits f->out to not carry the UNEVALUATED
                 // flag--enfixed operations which have evaluations on
@@ -362,7 +362,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 //
                 goto escapable;
 
-              case REB_P_MEDIUM:
+              case PARAM_CLASS_MEDIUM:
                 //
                 // MEDIUM escapability means that it only allows the escape
                 // of one unit.  Thus when reaching this point, it must carry
@@ -481,7 +481,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (IS_END(f_next)) {
-            if (pclass == REB_P_META) {
+            if (pclass == PARAM_CLASS_META) {
                 Init_Void(f->arg);
                 SET_CELL_FLAG(f->arg, UNEVALUATED);
             }
@@ -494,11 +494,11 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
   //=//// REGULAR ARG-OR-REFINEMENT-ARG (consumes 1 EVALUATE's worth) /////=//
 
-          case REB_P_NORMAL:
-          case REB_P_OUTPUT:
-          case REB_P_META: {
+          case PARAM_CLASS_NORMAL:
+          case PARAM_CLASS_OUTPUT:
+          case PARAM_CLASS_META: {
             if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
-                if (pclass == REB_P_META)
+                if (pclass == PARAM_CLASS_META)
                     Init_Void(f->arg);
                 else
                     Init_Endish_Nulled(f->arg);
@@ -514,20 +514,20 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             }
 
             if (IS_END(f->arg)) {
-                if (pclass == REB_P_META)
+                if (pclass == PARAM_CLASS_META)
                     Init_Void(f->arg);
                 else
                     Init_Endish_Nulled(f->arg);
             }
-            else if (pclass == REB_P_META)
+            else if (pclass == PARAM_CLASS_META)
                 Meta_Quotify(f->arg);
-            else if (pclass == REB_P_NORMAL)
+            else if (pclass == PARAM_CLASS_NORMAL)
                 Normalize(f->arg);
             break; }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
-          case REB_P_HARD:
+          case PARAM_CLASS_HARD:
             if (NOT_PARAM_FLAG(f->param, SKIPPABLE))
                 Literal_Next_In_Frame(f->arg, f);  // CELL_FLAG_UNEVALUATED
             else {
@@ -576,8 +576,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     // notice a quoting enfix construct afterward looking left, we call
     // into a nested evaluator before finishing the operation.
 
-          case REB_P_SOFT:
-          case REB_P_MEDIUM:
+          case PARAM_CLASS_SOFT:
+          case PARAM_CLASS_MEDIUM:
             Literal_Next_In_Frame(f->arg, f);  // CELL_FLAG_UNEVALUATED
 
             // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
@@ -594,7 +594,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             //
             if (
                 Lookahead_To_Sync_Enfix_Defer_Flag(f->feed) and  // ensure got
-                (pclass == REB_P_SOFT and GET_ACTION_FLAG(
+                (pclass == PARAM_CLASS_SOFT and GET_ACTION_FLAG(
                     VAL_ACTION(unwrap(f->feed->gotten)),  // ensured
                     QUOTES_FIRST
                 ))
@@ -638,7 +638,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             }
             break;
 
-          case REB_P_RETURN:  // should not happen!
+          case PARAM_CLASS_RETURN:  // should not happen!
             assert(GET_PARAM_FLAG(f->param, REFINEMENT));
             assert(false);
             break;
@@ -791,7 +791,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             continue;
         }
 
-        if (VAL_PARAM_CLASS(f->param) == REB_P_RETURN)
+        if (VAL_PARAM_CLASS(f->param) == PARAM_CLASS_RETURN)
             continue;  // !!! hack
 
         // Refinements have a special rule beyond plain type checking, in that
@@ -846,7 +846,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             continue;
         }
 
-        if (REB_P_META == VAL_PARAM_CLASS(f->param)) {
+        if (PARAM_CLASS_META == VAL_PARAM_CLASS(f->param)) {
             if (
                 kind_byte != REB_BAD_WORD
                 and kind_byte != REB_NULL

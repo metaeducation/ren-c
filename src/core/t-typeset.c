@@ -183,7 +183,7 @@ bool Add_Typeset_Bits_Core(
                 SET_PARAM_FLAG(typeset, ENDABLE);  // !!! REB_BYTES hack
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {
-                if (VAL_PARAM_CLASS(typeset) != REB_P_HARD)
+                if (VAL_PARAM_CLASS(typeset) != PARAM_CLASS_HARD)
                     fail ("Only hard-quoted parameters are <skip>-able");
 
                 SET_PARAM_FLAG(typeset, SKIPPABLE);
@@ -199,7 +199,7 @@ bool Add_Typeset_Bits_Core(
                 // (`@arg` notation is used), but the native specs are loaded
                 // by a boostrap r3 that can't read them.
                 //
-                mutable_VAL_TYPESET_PARAM_CLASS_BYTE(typeset) = REB_P_META;
+                mutable_VAL_TYPESET_PARAM_CLASS_BYTE(typeset) = PARAM_CLASS_META;
             }
         }
         else if (IS_DATATYPE(item)) {

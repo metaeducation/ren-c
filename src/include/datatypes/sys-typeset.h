@@ -196,72 +196,6 @@ inline static void CLEAR_ALL_TYPESET_BITS(RELVAL *v) {
 // packed in with the TYPESET_FLAG_XXX bits.
 //
 
-    // `REB_P_NORMAL` is cued by an ordinary WORD! in the function spec
-    // to indicate that you would like that argument to be evaluated normally.
-    //
-    //     >> foo: function [a] [print [{a is} a]]
-    //
-    //     >> foo 1 + 2
-    //     a is 3
-    //
-    // Special outlier EVAL/ONLY can be used to subvert this:
-    //
-    //     >> eval/only :foo 1 + 2
-    //     a is 1
-    //     ** Script error: + does not allow bad-word! for its value1 argument
-    //
-
-    // `REB_P_HARD` is cued by a quoted WORD! in the function spec
-    // dialect.  It indicates that a single value of content at the callsite
-    // should be passed through *literally*, without any evaluation:
-    //
-    //     >> foo: function ['a] [print [{a is} a]]
-    //
-    //     >> foo (1 + 2)
-    //     a is (1 + 2)
-    //
-    //     >> foo :(1 + 2)
-    //     a is :(1 + 2)
-    //
-
-    // `REB_P_MEDIUM` is cued by a QUOTED GET-WORD! in the function spec
-    // dialect.  It quotes with the exception of GET-GROUP!, GET-WORD!, and
-    // GET-PATH!...which will be evaluated:
-    //
-    //     >> foo: function [':a] [print [{a is} a]
-    //
-    //     >> foo (1 + 2)
-    //     a is (1 + 2)
-    //
-    //     >> foo :(1 + 2)
-    //     a is 3
-    //
-    // Although possible to implement soft quoting with hard quoting, it is
-    // a convenient way to allow callers to "escape" a quoted context when
-    // they need to.
-
-    // `REB_P_SOFT` is cued by a PLAIN GET-WORD!.  It acts as a more nuanced
-    // version of REB_P_MEDIUM which is escapable but will defer to enfix.
-    // This covers cases like:
-    //
-    //     if true [...] then :(func [...] [...])  ; want escapability
-    //     if true [...] then x -> [...]  ; but want enfix -> lookback to win
-    //
-    // Hence it is the main mode of quoting for branches.  It would be
-    // unsuitable for cases like OF, however, due to this problem:
-    //
-    //     integer! = type of 1  ; want left quoting semantics on `type` WORD!
-    //     integer! = :(first [type length]) of 1  ; want escapability
-    //
-    // OF wants its left hand side to be escapable, however it wants the
-    // quoting behavior to out-prioritize the completion of enfix on the
-    // left.  Contrast this with how THEN wants the enfix on the right to
-    // win out ahead of its quoting.
-    //
-    // This is a subtlety that most functions don't have to worry about, so
-    // using soft quoting is favored to medium quoting for being one less
-    // character to type.
-
 
 inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
     assert(IS_TYPESET(param));
@@ -431,7 +365,7 @@ inline static bool Is_Param_Sealed(const REBPAR *param) {
 inline static REBVAL *Init_Typeset(RELVAL *out, REBU64 bits)
 {
     RESET_CELL(out, REB_TYPESET, CELL_MASK_NONE);
-    VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(REB_P_NORMAL);
+    VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_NORMAL);
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
     VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
     return cast(REBVAL*, out);
@@ -479,7 +413,7 @@ inline static bool Typecheck_Including_Constraints(
     const REBPAR *param,
     const RELVAL *v
 ){
-    if (VAL_PARAM_CLASS(param) == REB_P_RETURN) {
+    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
         if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE)) {
             //
             // The strategy is that you can return any "mean" bad-word you
@@ -494,7 +428,7 @@ inline static bool Typecheck_Including_Constraints(
         }
     }
 
-    if (VAL_PARAM_CLASS(param) == REB_P_OUTPUT) {
+    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_OUTPUT) {
         //
         // !!! For the moment, output parameters don't actually check the
         // typeset for the value being written... they just check that you've
@@ -515,7 +449,7 @@ inline static bool Typecheck_Including_Constraints(
     //
     enum Reb_Kind kind;
 
-    if (VAL_PARAM_CLASS(param) == REB_P_META) {
+    if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
         if (IS_BAD_WORD(v)) {
             assert(Is_Void(v) or NOT_CELL_FLAG(v, ISOTOPE));
             return true;  // all META parameters take BAD-WORD! isotopes
@@ -595,7 +529,7 @@ inline static void Typecheck_Refinement(
     }
     else if (
         Is_Typeset_Empty(param)
-        and VAL_PARAM_CLASS(param) != REB_P_OUTPUT
+        and VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT
     ){
         if (not Is_Blackhole(arg))
             fail ("Parameterless Refinements Must be either # or NULL");

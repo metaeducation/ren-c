@@ -55,12 +55,12 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         return true;
     }
 
-    if (pclass == REB_P_NORMAL and IS_COMMA(opt_look)) {
+    if (pclass == PARAM_CLASS_NORMAL and IS_COMMA(opt_look)) {
         Init_For_Vararg_End(out, op);  // non-quoted COMMA!
         return true;
     }
 
-    if (pclass == REB_P_NORMAL and IS_WORD(opt_look)) {
+    if (pclass == PARAM_CLASS_NORMAL and IS_WORD(opt_look)) {
         //
         // When a variadic argument is being TAKE-n, deferred left hand side
         // argument needs to be seen as end of variadic input.  Otherwise,
@@ -81,7 +81,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
         if (child_gotten and VAL_TYPE(child_gotten) == REB_ACTION) {
             if (GET_ACTION_FLAG(VAL_ACTION(child_gotten), ENFIXED)) {
                 if (
-                    pclass == REB_P_NORMAL or
+                    pclass == PARAM_CLASS_NORMAL or
                     GET_ACTION_FLAG(VAL_ACTION(child_gotten), DEFERS_LOOKBACK)
                 ){
                     Init_For_Vararg_End(out, op);
@@ -100,7 +100,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
     }
 
     if (op == VARARG_OP_FIRST) {
-        if (pclass != REB_P_HARD)
+        if (pclass != PARAM_CLASS_HARD)
             fail (Error_Varargs_No_Look_Raw()); // hard quote only
 
         Derelativize(out, opt_look, specifier);
@@ -138,13 +138,13 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     REBVAL *out,
     enum Reb_Vararg_Op op,
     const RELVAL *vararg,
-    enum Reb_Param_Class pclass  // REB_P_DETECT to use what's in the vararg
+    enum Reb_Param_Class pclass  // PARAM_CLASS_0 to use vararg's class
 ){
     REFORMAT_CELL_IF_DEBUG(out);
 
     const REBKEY *key;
     const REBPAR *param = Param_For_Varargs_Maybe_Null(&key, vararg);
-    if (pclass == REB_P_DETECT)
+    if (pclass == PARAM_CLASS_0)
         pclass = VAL_PARAM_CLASS(param);
 
     REBVAL *arg; // for updating CELL_FLAG_UNEVALUATED
@@ -182,10 +182,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // this argument happens.  Review if that should be an error.
 
         switch (pclass) {
-        case REB_P_META:
+        case PARAM_CLASS_META:
             fail ("Variadic literal parameters not yet implemented");
 
-        case REB_P_NORMAL: {
+        case PARAM_CLASS_NORMAL: {
             REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_FULFILLING_ARG;
 
             DECLARE_FRAME_AT (f_temp, shared, flags);
@@ -217,7 +217,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             Drop_Frame(f_temp);
             break; }
 
-        case REB_P_HARD:
+        case PARAM_CLASS_HARD:
             Derelativize(
                 out,
                 VAL_ARRAY_ITEM_AT(shared),
@@ -227,10 +227,10 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             VAL_INDEX_UNBOUNDED(shared) += 1;
             break;
 
-        case REB_P_MEDIUM:
+        case PARAM_CLASS_MEDIUM:
             fail ("Variadic medium parameters not yet implemented");
 
-        case REB_P_SOFT:
+        case PARAM_CLASS_SOFT:
             if (ANY_ESCAPABLE_GET(VAL_ARRAY_ITEM_AT(shared))) {
                 if (Eval_Value_Throws(
                     out, VAL_ARRAY_ITEM_AT(shared), VAL_SPECIFIER(shared)
@@ -273,9 +273,9 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             arg = FRM_ARG(f, VAL_VARARGS_SIGNED_PARAM_INDEX(vararg));
 
         bool hit_barrier = GET_FEED_FLAG(f->feed, BARRIER_HIT)
-            and (pclass != REB_P_SOFT)
-            and (pclass != REB_P_MEDIUM)
-            and (pclass != REB_P_HARD);
+            and (pclass != PARAM_CLASS_SOFT)
+            and (pclass != PARAM_CLASS_MEDIUM)
+            and (pclass != PARAM_CLASS_HARD);
 
         if (Vararg_Op_If_No_Advance_Handled(
             out,
@@ -294,18 +294,18 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         // overwritten by an arbitrary evaluation.
         //
         switch (pclass) {
-        case REB_P_NORMAL: {
+        case PARAM_CLASS_NORMAL: {
             REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_FULFILLING_ARG;
             if (Eval_Step_In_Subframe_Throws(out, f, flags))
                 return true;
             break; }
 
-        case REB_P_HARD:
+        case PARAM_CLASS_HARD:
             Literal_Next_In_Frame(out, f);
             break;
 
-        case REB_P_MEDIUM:  // !!! Review nuance
-        case REB_P_SOFT:
+        case PARAM_CLASS_MEDIUM:  // !!! Review nuance
+        case PARAM_CLASS_SOFT:
             if (ANY_ESCAPABLE_GET(f_value)) {
                 if (Eval_Value_Throws(
                     SET_END(out),
@@ -594,28 +594,28 @@ void MF_Varargs(REB_MOLD *mo, REBCEL(const*) v, bool form) {
     const REBKEY *key;
     const REBPAR *param = Param_For_Varargs_Maybe_Null(&key, v);
     if (param == NULL) {
-        pclass = REB_P_HARD;
+        pclass = PARAM_CLASS_HARD;
         Append_Ascii(mo->series, "???"); // never bound to an argument
     }
     else {
         enum Reb_Kind kind;
         bool quoted = false;
         switch ((pclass = VAL_PARAM_CLASS(param))) {
-        case REB_P_NORMAL:
+        case PARAM_CLASS_NORMAL:
             kind = REB_WORD;
             break;
 
-        case REB_P_HARD:
+        case PARAM_CLASS_HARD:
             kind = REB_WORD;
             quoted = true;
             break;
 
-        case REB_P_MEDIUM:
+        case PARAM_CLASS_MEDIUM:
             kind = REB_GET_WORD;
             quoted = true;
             break;
 
-        case REB_P_SOFT:
+        case PARAM_CLASS_SOFT:
             kind = REB_GET_WORD;
             break;
 
@@ -637,7 +637,7 @@ void MF_Varargs(REB_MOLD *mo, REBCEL(const*) v, bool form) {
     if (Is_Block_Style_Varargs(&shared, v)) {
         if (IS_END(shared))
             Append_Ascii(mo->series, "[]");
-        else if (pclass == REB_P_HARD)
+        else if (pclass == PARAM_CLASS_HARD)
             Mold_Value(mo, shared); // full feed can be shown if hard quoted
         else
             Append_Ascii(mo->series, "[...]"); // can't look ahead
@@ -651,7 +651,7 @@ void MF_Varargs(REB_MOLD *mo, REBCEL(const*) v, bool form) {
         ){
             Append_Ascii(mo->series, "[]");
         }
-        else if (pclass == REB_P_HARD) {
+        else if (pclass == PARAM_CLASS_HARD) {
             Append_Ascii(mo->series, "[");
             Mold_Value(mo, f->feed->value); // one value shown if hard quoted
             Append_Ascii(mo->series, " ...]");

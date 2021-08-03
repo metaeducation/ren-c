@@ -130,7 +130,7 @@ REBNATIVE(generic)
     }
     while (
         not Is_Param_Hidden(param)
-        and VAL_PARAM_CLASS(param) != REB_P_NORMAL
+        and VAL_PARAM_CLASS(param) != PARAM_CLASS_NORMAL
     ){
         ++param;
     }

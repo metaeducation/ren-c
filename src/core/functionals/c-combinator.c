@@ -565,7 +565,7 @@ static bool Combinator_Param_Hook(
         //
         Copy_Cell(var, REF(value));
     }
-    else if (VAL_PARAM_CLASS(param) == REB_P_HARD) {
+    else if (VAL_PARAM_CLASS(param) == PARAM_CLASS_HARD) {
         //
         // Quoted parameters represent a literal element captured from rules.
         //

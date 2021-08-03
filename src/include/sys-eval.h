@@ -187,7 +187,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             // !!! Cache this test?
             //
             const REBPAR *first = First_Unspecialized_Param(nullptr, action);
-            if (VAL_PARAM_CLASS(first) == REB_P_SOFT)
+            if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT)
                 return true;  // don't look back, yield the lookahead
 
             *flags |=

@@ -1049,7 +1049,7 @@ REBCTX *Error_Not_Varargs(
     DECLARE_LOCAL (honest_param);
     Init_Param(
         honest_param,
-        FLAG_PARAM_CLASS_BYTE(REB_P_NORMAL)
+        FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_NORMAL)
             | PARAM_FLAG_VARIADIC,
         TS_NOTHING
     );

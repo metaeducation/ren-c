@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -20,27 +20,25 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Using a technique parallel to contexts, an action is a combination of an
-// array of named keys (that is potentially shared) as well as an array that
-// represents the identity of the action.  The 0th element of that array
-// is an archetypal value of the ACTION!.
+// As in historical Rebol, Ren-C has several different kinds of functions...
+// each of which have a different implementation path inside the system.
+// But in Ren-C there is only one user-visible datatype from the user's
+// perspective for all of them, which is called ACTION!.
 //
-// The keylist for an action is referred to as a "paramlist", but it has the
-// same form as a keylist so that it can be used -as- a keylist for FRAME!
-// contexts, that represent the instantiated state of an action.  The [0]
-// cell is currently unused, while the 1..NUM_PARAMS cells have REB_XXX types
-// higher than REB_MAX (e.g. "pseudotypes").  These PARAM cells are not
-// intended to be leaked to the user...they indicate the parameter type
-// (normal, quoted, local).  The parameter cell's payload holds a typeset, and
-// the extra holds the symbol.
+// Each ACTION! has an associated C function that runs when it is invoked, and
+// this is called the "dispatcher".  A dispatcher may be general and reused
+// by many different actions.  For example: the same dispatcher code is used
+// mfor most `FUNC [...] [...]` instances--but each one has a different body
+// array and spec, so the behavior is different.  Other times a dispatcher can
+// be for a single function, such as with natives like IF that have C code
+// which is solely used to implement IF.
 //
-// The identity array for an action is called its "details".  Beyond having
-// an archetype in the [0] position, it is different from a varlist because
-// the values have no correspondence with the keys.  Instead, this is the
-// instance data used by the C native "dispatcher" function (which lives in
-// details's LINK field).
+// The identity array for an action is called its "details".  It has an
+// archetypal value for the ACTION! in its [0] slot, but the other slots are
+// dispatcher-specific.  Different dispatchers lay out the details array with
+// different values that define the action instance.
 //
-// What the details array holds varies by dispatcher.  Some examples:
+// Some examples:
 //
 //     USER FUNCTIONS: 1-element array w/a BLOCK!, the body of the function
 //     GENERICS: 1-element array w/WORD! "verb" (OPEN, APPEND, etc)
@@ -48,8 +46,19 @@
 //     ROUTINES/CALLBACKS: stylized array (REBRIN*)
 //     TYPECHECKERS: the TYPESET! to check against
 //
-// See the comments in the %src/core/functionals/ directory for each function
-// variation for descriptions of how they use their details arrays.
+// (See the comments in the %src/core/functionals/ directory for each function
+// variation for descriptions of how they use their details arrays.)
+//
+// Every action has an associated context known as the "exemplar" that defines
+// the parameters and locals.  The keylist of this exemplar is reused for
+// FRAME! instances of invocations (or pending invocations) of the action.
+//
+// The varlist of the exemplar context is referred to as a "paramlist".  It
+// is an array that serves two overlapping purposes: any *unspecialized*
+// slots in the paramlist holds the TYPESET! definition of legal types for
+// that argument, as well as the PARAM_FLAG_XXX for other properties of the
+// parameter.  But a *specialized* parameter slot holds the specialized value
+// itself, which is presumed to have been type-checked upon specialization.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -71,7 +80,6 @@
 //   instead of in the value cell itself, it also means the dispatcher can be
 //   HIJACKed--or otherwise hooked to affect all instances of a function.
 //
-
 
 
 // The method for generating system indices isn't based on LOAD of an object,
@@ -221,16 +229,8 @@ inline static void INIT_VAL_ACTION_BINDING(
 
 //=//// PARAMLIST, EXEMPLAR, AND PARTIALS /////////////////////////////////=//
 //
-// Space in action arrays is fairly tight--considering the number of parts
-// that are packed in.  Since partial specialization is somewhat rare, it
-// is an optional splice before the place where the paramlist or the
-// exemplar is to be found.
-//
-// !!! Once the partial specialization information is pulled out of the
-// exemplar frame, the likely plan is to merge type information into full
-// cells in the exemplar; based on the idea that it's not needed if the
-// cell has been specialized.  This means specialization would have to
-// count as type checking.
+// Since partial specialization is somewhat rare, it is an optional splice
+// before the place where the exemplar is to be found.
 //
 
 #define ACT_SPECIALTY(a) \

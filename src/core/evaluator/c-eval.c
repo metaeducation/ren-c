@@ -444,8 +444,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (
-            VAL_PARAM_CLASS(first) == REB_P_SOFT
-            or VAL_PARAM_CLASS(first) == REB_P_META
+            VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT
+            or VAL_PARAM_CLASS(first) == PARAM_CLASS_META
         ){
             goto give_up_backward_quote_priority;  // yield as an exemption
         }
@@ -1376,7 +1376,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 break;  // no more outputs requested
             if (Is_Param_Hidden(param))
                 continue;
-            if (VAL_PARAM_CLASS(param) != REB_P_OUTPUT)
+            if (VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT)
                 continue;
             if (not IS_BLANK(DS_AT(dsp_output))) {
                 Copy_Cell(var, DS_AT(dsp_output));
@@ -1826,7 +1826,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             fail (Error_Literal_Left_Path_Raw());
 
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
-        if (VAL_PARAM_CLASS(first) == REB_P_SOFT) {
+        if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
             if (GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)) {
                 CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
                 goto finished;

@@ -53,24 +53,24 @@ static bool Params_Of_Hook(
         }
 
         switch (VAL_PARAM_CLASS(param)) {
-          case REB_P_RETURN:
-          case REB_P_OUTPUT:
-          case REB_P_NORMAL:
+          case PARAM_CLASS_RETURN:
+          case PARAM_CLASS_OUTPUT:
+          case PARAM_CLASS_NORMAL:
             break;
 
-          case REB_P_META:
+          case PARAM_CLASS_META:
             Metafy(DS_TOP);
             break;
 
-          case REB_P_SOFT:
+          case PARAM_CLASS_SOFT:
             Getify(DS_TOP);
             break;
 
-          case REB_P_MEDIUM:
+          case PARAM_CLASS_MEDIUM:
             Quotify(Getify(DS_TOP), 1);
             break;
 
-          case REB_P_HARD:
+          case PARAM_CLASS_HARD:
             Quotify(DS_TOP, 1);
             break;
 
@@ -286,7 +286,7 @@ void Push_Paramlist_Triads_May_Fail(
         enum Reb_Kind kind = CELL_KIND(cell);
 
         const REBSYM* symbol = nullptr;  // avoids compiler warning
-        enum Reb_Param_Class pclass = REB_P_DETECT;  // error if not changed
+        enum Reb_Param_Class pclass = PARAM_CLASS_0;  // error if not changed
 
         bool refinement = false;  // paths with blanks at head are refinements
         if (ANY_PATH_KIND(kind)) {
@@ -310,15 +310,15 @@ void Push_Paramlist_Triads_May_Fail(
 
             if (CELL_KIND(cell) == REB_GET_PATH) {
                 if (quoted)
-                    pclass = REB_P_MEDIUM;
+                    pclass = PARAM_CLASS_MEDIUM;
                 else
-                    pclass = REB_P_SOFT;
+                    pclass = PARAM_CLASS_SOFT;
             }
             else if (CELL_KIND(cell) == REB_PATH) {
                 if (quoted)
-                    pclass = REB_P_HARD;
+                    pclass = PARAM_CLASS_HARD;
                 else
-                    pclass = REB_P_NORMAL;
+                    pclass = PARAM_CLASS_NORMAL;
             }
         }
         else if (ANY_TUPLE_KIND(kind)) {
@@ -330,7 +330,7 @@ void Push_Paramlist_Triads_May_Fail(
             // but it's now another way to name locals.
             //
             if (IS_PREDICATE1_CELL(cell) and not quoted) {
-                pclass = REB_P_LOCAL;
+                pclass = PARAM_CLASS_LOCAL;
                 symbol = VAL_PREDICATE1_SYMBOL(cell);
             }
         }
@@ -346,11 +346,11 @@ void Push_Paramlist_Triads_May_Fail(
                 //
                 if (VAL_WORD_ID(cell) == SYM_RETURN and not quoted) {
                     refinement = true;  // sets PARAM_FLAG_REFINEMENT (optional)
-                    pclass = REB_P_RETURN;
+                    pclass = PARAM_CLASS_RETURN;
                 }
                 else if (not quoted) {
                     refinement = true;  // sets PARAM_FLAG_REFINEMENT (optional)
-                    pclass = REB_P_OUTPUT;
+                    pclass = PARAM_CLASS_OUTPUT;
                 }
             }
             else {
@@ -363,37 +363,37 @@ void Push_Paramlist_Triads_May_Fail(
 
                 if (kind == REB_GET_WORD) {
                     if (quoted)
-                        pclass = REB_P_MEDIUM;
+                        pclass = PARAM_CLASS_MEDIUM;
                     else
-                        pclass = REB_P_SOFT;
+                        pclass = PARAM_CLASS_SOFT;
                 }
                 else if (kind == REB_WORD) {
                     if (quoted)
-                        pclass = REB_P_HARD;
+                        pclass = PARAM_CLASS_HARD;
                     else
-                        pclass = REB_P_NORMAL;
+                        pclass = PARAM_CLASS_NORMAL;
                 }
                 else if (kind == REB_META_WORD) {
                     if (not quoted)
-                        pclass = REB_P_META;
+                        pclass = PARAM_CLASS_META;
                 }
             }
         }
         else
             fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
 
-        if (pclass == REB_P_DETECT)  // didn't match
+        if (pclass == PARAM_CLASS_0)  // didn't match
             fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
 
         if (mode != SPEC_MODE_NORMAL) {
-            if (pclass != REB_P_NORMAL and pclass != REB_P_LOCAL)
+            if (pclass != PARAM_CLASS_NORMAL and pclass != PARAM_CLASS_LOCAL)
                 fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
 
             if (mode == SPEC_MODE_LOCAL)
-                pclass = REB_P_LOCAL;
+                pclass = PARAM_CLASS_LOCAL;
         }
 
-        if (ID_OF_SYMBOL(symbol) == SYM_RETURN and pclass != REB_P_RETURN) {
+        if (ID_OF_SYMBOL(symbol) == SYM_RETURN and pclass != PARAM_CLASS_RETURN) {
             //
             // Cancel definitional return if any non-SET-WORD! uses the name
             // RETURN when defining a FUNC.
@@ -429,7 +429,7 @@ void Push_Paramlist_Triads_May_Fail(
         // If the typeset bits contain REB_NULL, that indicates <opt>.
         // But Is_Param_Endable() indicates <end>.
 
-        if (pclass == REB_P_LOCAL) {
+        if (pclass == PARAM_CLASS_LOCAL) {
             Init_Unset(param);
             SET_CELL_FLAG(param, STACK_NOTE_LOCAL);
         }
@@ -464,7 +464,7 @@ void Push_Paramlist_Triads_May_Fail(
                 Init_Word(word, symbol);
                 fail (Error_Dup_Vars_Raw(word));  // most dup checks are later
             }
-            if (pclass == REB_P_RETURN)
+            if (pclass == PARAM_CLASS_RETURN)
                 *definitional_return_dsp = DSP;  // RETURN: explicit
             else
                 *flags &= ~MKF_RETURN;
@@ -512,7 +512,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             //
             Init_Param(
                 param,
-                FLAG_PARAM_CLASS_BYTE(REB_P_RETURN)
+                FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_RETURN)
                     | PARAM_FLAG_ENDABLE  // return/void ok
                     | PARAM_FLAG_REFINEMENT,  // need slot for types
                 TS_OPT_VALUE
@@ -963,15 +963,15 @@ REBACT *Make_Action(
     const REBPAR *first = First_Unspecialized_Param(nullptr, act);
     if (first) {
         switch (VAL_PARAM_CLASS(first)) {
-          case REB_P_RETURN:
-          case REB_P_OUTPUT:
-          case REB_P_NORMAL:
-          case REB_P_META:
+          case PARAM_CLASS_RETURN:
+          case PARAM_CLASS_OUTPUT:
+          case PARAM_CLASS_NORMAL:
+          case PARAM_CLASS_META:
             break;
 
-          case REB_P_SOFT:
-          case REB_P_MEDIUM:
-          case REB_P_HARD:
+          case PARAM_CLASS_SOFT:
+          case PARAM_CLASS_MEDIUM:
+          case PARAM_CLASS_HARD:
             SET_ACTION_FLAG(act, QUOTES_FIRST);
             break;
 
@@ -1255,7 +1255,7 @@ REBNATIVE(tweak)
 
     enum Reb_Param_Class pclass = first
         ? VAL_PARAM_CLASS(first)
-        : REB_P_NORMAL;  // imagine it as <end>able
+        : PARAM_CLASS_NORMAL;  // imagine it as <end>able
 
     REBFLGS flag;
 
@@ -1265,16 +1265,16 @@ REBNATIVE(tweak)
         break;
 
       case SYM_DEFER:  // Special enfix behavior used by THEN, ELSE, ALSO...
-        if (pclass != REB_P_NORMAL and pclass != REB_P_META)
+        if (pclass != PARAM_CLASS_NORMAL and pclass != PARAM_CLASS_META)
             fail ("TWEAK defer only actions with evaluative 1st params");
         flag = DETAILS_FLAG_DEFERS_LOOKBACK;
         break;
 
       case SYM_POSTPONE:  // Wait as long as it can to run w/o changing order
         if (
-            pclass != REB_P_NORMAL
-            and pclass != REB_P_SOFT
-            and pclass != REB_P_META
+            pclass != PARAM_CLASS_NORMAL
+            and pclass != PARAM_CLASS_SOFT
+            and pclass != PARAM_CLASS_META
         ){
             fail ("TWEAK postpone only actions with evaluative 1st params");
         }
