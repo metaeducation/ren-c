@@ -687,34 +687,22 @@ REBCTX *Construct_Context_Managed(
 //
 REBARR *Context_To_Array(const RELVAL *context, REBINT mode)
 {
-    REBCTX *c = VAL_CONTEXT(context);
-    REBDSP dsp_orig = DSP;
-
-    bool honor_hidden = true;  // default to not  showing hidden things
-    if (IS_FRAME(context))
-        honor_hidden = not IS_FRAME_PHASED(context);
-
-    const REBKEY *tail;
-    const REBKEY *key = CTX_KEYS(&tail, c);
-    const REBVAR *var = CTX_VARS_HEAD(c);
-
-    const REBPAR *param = IS_FRAME(context)
-        ? ACT_PARAMS_HEAD(VAL_FRAME_PHASE(context))
-        : cast_PAR(var);
-
     assert(!(mode & 4));
 
-    REBLEN n = 1;
-    for (; key != tail; ++key, ++var, ++param, ++n) {
-        if (honor_hidden and Is_Param_Hidden(param))
-            continue;
+    REBDSP dsp_orig = DSP;
 
+    REBCTX *ctx = VAL_CONTEXT(context);
+
+    EVARS e;
+    Init_Evars(&e, context);
+
+    while (Did_Advance_Evars(&e)) {
         if (mode & 1) {
             Init_Any_Word_Bound(
                 DS_PUSH(),
                 (mode & 2) ? REB_SET_WORD : REB_WORD,
-                VAL_CONTEXT(context),
-                n
+                ctx,
+                e.index
             );
 
             if (mode & 2)
@@ -727,10 +715,10 @@ REBARR *Context_To_Array(const RELVAL *context, REBINT mode)
             // been set.  These contexts cannot be converted to blocks,
             // since user arrays may not contain void.
             //
-            if (IS_NULLED(var))
+            if (IS_NULLED(e.var))
                 fail (Error_Null_Object_Block_Raw());
 
-            Copy_Cell(DS_PUSH(), var);
+            Copy_Cell(DS_PUSH(), e.var);
         }
     }
 
@@ -931,42 +919,20 @@ REBLEN Find_Symbol_In_Context(
     const REBSYM *symbol,
     bool strict
 ){
-    REBCTX *c = VAL_CONTEXT(context);
+    EVARS e;
+    Init_Evars(&e, context);
 
-    bool honor_hidden = true;
-    if (IS_FRAME(context)) {
-        if (IS_FRAME_PHASED(context))
-            honor_hidden = false;
-        else {
-            REBARR *varlist = CTX_VARLIST(c);
-            if (GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
-                fail (Error_Stale_Frame_Raw());
-        }
-    }
-
-    const REBKEY *tail;
-    const REBKEY *key = CTX_KEYS(&tail, c);
-    const REBVAR *var = CTX_VARS_HEAD(c);
-
-    const REBPAR *param = IS_FRAME(context)
-        ? ACT_PARAMS_HEAD(VAL_FRAME_PHASE(context))
-        : cast_PAR(var);
-
-    REBLEN n;
-    for (n = 1; key != tail; ++n, ++key, ++var, ++param) {
+    while (Did_Advance_Evars(&e)) {
         if (strict) {
-            if (symbol != KEY_SYMBOL(key))
+            if (symbol != KEY_SYMBOL(e.key))
                 continue;
         }
         else {
-            if (not Are_Synonyms(symbol, KEY_SYMBOL(key)))
+            if (not Are_Synonyms(symbol, KEY_SYMBOL(e.key)))
                 continue;
         }
 
-        if (honor_hidden and Is_Param_Hidden(param))
-            return 0;
-
-        return n;
+        return e.index;
     }
 
     return 0;

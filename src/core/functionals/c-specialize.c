@@ -25,26 +25,21 @@
 // refinements available as APPEND, but otherwise just takes one series arg,
 // as it will always be appending 10.
 //
-// The method used is to store a FRAME! in the specialization's ACT_DETAILS().
-// Frame cells which carry the VAR_MARKED_HIDDEN bit are considered to be
-// specialized out.
+// Specialization is done by means of making a new "exemplar" frame for the
+// action.  Slots in that frame that would have held TYPESET! information for
+// the parameter are replaced by the fixed value, which is type checked.
 //
-// !!! Future directions would make use of unused frame cells to store the
-// information for gathering the argument, e.g. its parameter modality and
-// its type..
-//
-// The code for partial specialization is unified with the code for full
-// specialization, because while `:append/part` doesn't fulfill a frame slot,
-// `:append/only` does.  The code for this is still being designed.
+// Partial specialization uses a different mechanism.  While `:append/only`
+// fulfills a frame slot value since /ONLY has no arguments, `:append/part`
+// does not.  Distinctions between `:append/dup/part` and `:append/part/dup`
+// require ordering information that has to be tracked outside of the
+// exemplar frame.
 //
 
 #include "sys-core.h"
 
-// Originally, the ACT_DETAILS() of a paramlist held the partially or fully
-// filled FRAME! to be executed.  However, it turned out that since a
-// specialization's exemplar is available through ACT_SPECIALTY(), there's
-// no need to have a redundant copy.  This means a specialization can use
-// the compact singular array form for ACT_DETAILS()
+// The exemplar alone is sufficient information for the specialization frame.
+// Hence a compact "singular" array of 1 cell can be used for the details.
 //
 enum {
     IDX_SPECIALIZER_MAX = 1  // has just ACT_DETAILS[0], the ACT_ARCHETYPE()
@@ -135,26 +130,25 @@ REBCTX *Make_Context_For_Action_Push_Partials(
     for (; key != tail; ++key, ++param, ++arg, ++index) {
         Prep_Cell(arg);
 
-        if (Is_Param_Hidden(param)) {  // local or specialized
-            Copy_Cell_Core(
-                arg,
-                param,
-                CELL_MASK_COPY | CELL_FLAG_VAR_MARKED_HIDDEN
-            );
+        if (Is_Specialized(param)) {  // includes locals
+            Copy_Cell(arg, param);
 
           continue_specialized:
 
             continue;
         }
 
-        assert(NOT_CELL_FLAG(param, VAR_MARKED_HIDDEN));
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
+            Copy_Cell(arg, unspecialized);
+            continue;
+        }
 
         const REBSYM *symbol = KEY_SYMBOL(key);  // added to binding
         if (NOT_PARAM_FLAG(param, REFINEMENT)) {  // nothing to push
 
           continue_unspecialized:
 
-            Copy_Cell(arg, unspecialized);  // *not* VAR_MARKED_HIDDEN
+            Copy_Cell(arg, unspecialized);
             if (binder)
                 Add_Binder_Index(unwrap(binder), symbol, index);
 
@@ -191,7 +185,6 @@ REBCTX *Make_Context_For_Action_Push_Partials(
             //     specialize :append/only [only: #]  ; only not bound
             //
             Init_Blackhole(arg);
-            SET_CELL_FLAG(arg, VAR_MARKED_HIDDEN);
             goto continue_specialized;
         }
 
@@ -304,8 +297,11 @@ bool Specialize_Action_Throws(
         const REBKEY *key = ACT_KEYS(&tail, unspecialized);
         const REBPAR *param = ACT_PARAMS_HEAD(unspecialized);
         for (; key != tail; ++key, ++param) {
-            if (Is_Param_Hidden(param))
+            if (Is_Specialized(param))
                 continue;  // maybe refinement from stack, now specialized out
+
+            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
+                continue;
 
             Remove_Binder_Index(&binder, KEY_SYMBOL(key));
         }
@@ -332,19 +328,13 @@ bool Specialize_Action_Throws(
     REBDSP ordered_dsp = lowest_ordered_dsp;
 
     for (; key != tail; ++key, ++param, ++arg) {
-        //
-        // Note: We check VAR_MARKED_HIDDEN on `special` from the *original*
-        // varlist...as the user may have used PROTECT/HIDE to force `arg`
-        // to be hidden and still needs a typecheck here.
-
-        if (Is_Param_Hidden(param))
+        if (Is_Specialized(param))
             continue;
 
         if (GET_PARAM_FLAG(param, REFINEMENT)) {
             if (
                 IS_TAG(arg)
                 and VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag)
-                and NOT_CELL_FLAG(arg, VAR_MARKED_HIDDEN)
             ){
                 // Undefined refinements not explicitly marked hidden are
                 // still candidates for usage at the callsite.
@@ -352,12 +342,7 @@ bool Specialize_Action_Throws(
                 goto unspecialized_arg;  // ran out...no pre-empt needed
             }
 
-            if (GET_CELL_FLAG(arg, VAR_MARKED_HIDDEN))
-                assert(IS_NULLED(arg) or Is_Blackhole(arg));
-            else
-                Typecheck_Refinement(param, arg);
-
-            SET_CELL_FLAG(arg, VAR_MARKED_HIDDEN);
+            Typecheck_Refinement(param, arg);
             goto specialized_arg_no_typecheck;
         }
 
@@ -366,7 +351,6 @@ bool Specialize_Action_Throws(
         if (
             IS_TAG(arg)
             and VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag)
-            and NOT_CELL_FLAG(arg, VAR_MARKED_HIDDEN)
         ){
             goto unspecialized_arg;
         }
@@ -375,7 +359,6 @@ bool Specialize_Action_Throws(
 
       unspecialized_arg:
 
-        assert(NOT_CELL_FLAG(arg, VAR_MARKED_HIDDEN));
         assert(IS_TAG(arg));
         assert(VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag));
         assert(IS_TYPESET(param));
@@ -392,8 +375,6 @@ bool Specialize_Action_Throws(
 
         if (not TYPE_CHECK(param, VAL_TYPE(arg)))
             fail (arg);  // !!! merge w/Error_Invalid_Arg()
-
-       SET_CELL_FLAG(arg, VAR_MARKED_HIDDEN);
 
       specialized_arg_no_typecheck:
 
@@ -412,11 +393,6 @@ bool Specialize_Action_Throws(
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(arg);
 
-        // Specialized-out arguments must still be in the parameter list,
-        // for enumeration in the evaluator to line up with the frame values
-        // of the underlying function.
-
-        assert(GET_CELL_FLAG(arg, VAR_MARKED_HIDDEN));
         continue;
     }
 
@@ -450,9 +426,8 @@ bool Specialize_Action_Throws(
             }
 
             REBVAL *slot = CTX_VAR(exemplar, VAL_WORD_INDEX(ordered));
-            if (NOT_CELL_FLAG(slot, VAR_MARKED_HIDDEN)) {
-                assert(IS_TYPESET(slot));
-
+            if (not Is_Specialized(cast(REBPAR*, slot))) {
+                //
                 // It's still partial...
                 //
                 Init_Any_Word_Bound(
@@ -572,10 +547,13 @@ void For_Each_Unspecialized_Param(
     // Loop through and pass just the normal args.
     //
     for (; key != tail; ++key, ++param) {
-        if (Is_Param_Hidden(param))
+        if (Is_Specialized(param))
             continue;
 
         if (GET_PARAM_FLAG(param, REFINEMENT))
+            continue;
+
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
             continue;
 
         REBFLGS flags = 0;
@@ -627,7 +605,7 @@ void For_Each_Unspecialized_Param(
     const REBPAR *param = ACT_PARAMS_HEAD(act);
 
     for (; key != key_tail; ++key, ++param) {
-        if (Is_Param_Hidden(param))
+        if (Is_Specialized(param))
             continue;
 
         if (
@@ -777,7 +755,7 @@ REBACT *Alloc_Action_From_Exemplar(
     const REBPAR *param = ACT_PARAMS_HEAD(unspecialized);
     REBVAL *arg = CTX_VARS_HEAD(exemplar);
     for (; key != tail; ++key, ++arg, ++param) {
-        if (Is_Param_Hidden(param))
+        if (Is_Specialized(param))
             continue;
 
         // We leave non-hidden ~unset~ to be handled by the evaluator as
@@ -787,7 +765,7 @@ REBACT *Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Is_Unset(arg) and NOT_CELL_FLAG(arg, VAR_MARKED_HIDDEN)) {
+        if (Is_Unset(arg)) {
             assert(IS_TYPESET(param));
             Copy_Cell(arg, param);
             continue;
@@ -797,8 +775,6 @@ REBACT *Alloc_Action_From_Exemplar(
             Typecheck_Refinement(param, arg);
         else
             Typecheck_Including_Constraints(param, arg);
-
-        SET_CELL_FLAG(arg, VAR_MARKED_HIDDEN);
     }
 
     // This code parallels Specialize_Action_Throws(), see comments there

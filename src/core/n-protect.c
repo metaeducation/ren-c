@@ -147,7 +147,7 @@ static void Protect_Key(REBCTX *context, REBLEN index, REBFLGS flags)
         //
         // R3-Alpha implemented hiding via typeset flags, which would have
         // meant making a new keylist.  Ren-C does this with a flag that lives
-        // in the cell of the variable; see `Is_Param_Hidden()`.
+        // in the cell of the variable.
 
         if (flags & PROT_SET)
             var->header.bits |= CELL_FLAG_VAR_MARKED_HIDDEN;

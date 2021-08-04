@@ -132,9 +132,11 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // we might as well mutably bind it--there's no incentive to virtual
     // bind things that are copied.
     //
+    const bool locals_visible = false;
     REBARR *prelude = Copy_And_Bind_Relative_Deep_Managed(
         ARG(prelude),
         adaptation,
+        locals_visible,
         TS_WORD
     );
 

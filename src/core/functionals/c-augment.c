@@ -109,8 +109,15 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
         Init_Word(DS_PUSH(), KEY_SYMBOL(key));
 
         Copy_Cell(DS_PUSH(), param);
-        if (Is_Param_Hidden(param))  // !!! This should hide locals
-            SET_CELL_FLAG(DS_TOP, STACK_NOTE_LOCAL);
+
+        // For any specialized (incl. local) parameters in the paramlist we are
+        // copying, we want to "seal" them from view.  We wouldn't have access
+        // to them if we were an ADAPT and not making a copy (since the action
+        // in the exemplar would not match the phase).  So making a copy should
+        // not suddenly subvert the access.
+        //
+        if (Is_Specialized(param))
+            SET_CELL_FLAG(DS_TOP, STACK_NOTE_SEALED);
 
         Init_Nulled(DS_PUSH());  // types (inherits via INHERIT-META)
         Init_Nulled(DS_PUSH());  // notes (inherits via INHERIT-META)

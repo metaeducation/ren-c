@@ -451,7 +451,7 @@ redescribe: func [
         notes
         every [param note] notes [null? :note]
     ] then [
-        meta/parameter-notes: _
+        meta/parameter-notes: null
     ]
 
     return :value  ; should have updated the meta

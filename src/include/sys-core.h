@@ -205,6 +205,25 @@
 #include "sys-hooks.h"  // function pointer definitions
 
 
+// There is a significant amount of code that wants to enumerate the parameters
+// of functions or keys of a frame.  It's fairly complex logic, because the
+// same frame context is viewed different ways depending on what phase is
+// encoded in the FRAME! value cell.  Doing it in a callback style creates a
+// lot of inconvenience for C code, needing to wrap up state...so this does
+// it with an enumeration struct.
+
+struct Reb_Enum_Vars {
+    const REBKEY *key;
+    const REBKEY *key_tail;
+    REBPAR *param;
+    bool locals_visible;
+    REBVAR *var;
+    REBLEN index;  // important for enumerations that are binding
+};
+
+typedef struct Reb_Enum_Vars EVARS;
+
+
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // #INCLUDE THE AUTO-GENERATED FUNCTION PROTOTYPES FOR THE INTERNAL API

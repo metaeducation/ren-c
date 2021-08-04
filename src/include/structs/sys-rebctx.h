@@ -52,7 +52,7 @@
 // the frame on all but the last time (e.g. `do copy frame, do frame`)
 //
 // The initial implementation of DO of FRAME! would actually create a new
-// varlist node and move the data to id--expiring the old node.  That is
+// varlist node and move the data to it--expiring the old node.  That is
 // expensive, so the cheaper way to do it is to set a flag on the frame.
 // Then, if a frame is archetypal (no phase) it can check this flag before
 // a DO and say the frame can't be run again...nor can fields be assigned

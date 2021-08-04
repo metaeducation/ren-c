@@ -136,8 +136,7 @@ void Bind_Values_Core(
     const REBKEY *key = CTX_KEYS(&key_tail, c);
     const REBVAR *var = CTX_VARS_HEAD(c);
     for (; key != key_tail; key++, var++, index++)
-        if (not Is_Var_Hidden(var))
-            Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
+        Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
   }
 
     Bind_Values_Inner_Loop(
@@ -155,8 +154,7 @@ void Bind_Values_Core(
     const REBKEY *key = CTX_KEYS(&key_tail, c);
     const REBVAR *var = CTX_VARS_HEAD(c);
     for (; key != key_tail; ++key, ++var)
-        if (not Is_Var_Hidden(var))
-            Remove_Binder_Index(&binder, KEY_SYMBOL(key));
+        Remove_Binder_Index(&binder, KEY_SYMBOL(key));
   }
 
     SHUTDOWN_BINDER(&binder);
@@ -737,22 +735,24 @@ static void Clonify_And_Bind_Relative(
 REBARR *Copy_And_Bind_Relative_Deep_Managed(
     const REBVAL *body,
     REBACT *relative,
+    bool locals_visible,
     REBU64 bind_types
 ){
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
 
-    REBLEN param_num = 1;
-
-  blockscope {  // Setup binding table from the argument word list
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, relative);
-    const REBPAR *param = ACT_PARAMS_HEAD(relative);
-    for (; key != tail; ++key, ++param, ++param_num) {
-        if (Is_Param_Sealed(param))
-            continue;
-        Add_Binder_Index(&binder, KEY_SYMBOL(key), param_num);
-    }
+    // Setup binding table from the argument word list.  Note that some cases
+    // (like an ADAPT) reuse the exemplar from the function they are adapting,
+    // and should not have the locals visible from their binding.  Other cases
+    // such as the plain binding of the body of a FUNC created the exemplar
+    // from scratch, and should see the locals.  Caller has to decide.
+    //
+  blockscope {
+    EVARS e;
+    Init_Evars(&e, ACT_ARCHETYPE(relative));
+    e.locals_visible = locals_visible;
+    while (Did_Advance_Evars(&e))
+        Add_Binder_Index(&binder, KEY_SYMBOL(e.key), e.index);
   }
 
     REBARR *copy;
@@ -793,16 +793,12 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     SET_SERIES_LEN(copy, len);
   }
 
-  blockscope {  // Reset binding table
-    const REBKEY *tail;
-    const REBKEY *key = ACT_KEYS(&tail, relative);
-    const REBPAR *param = ACT_PARAMS_HEAD(relative);
-    for (; key != tail; ++key, ++param) {
-        if (Is_Param_Sealed(param))
-            continue;
-
-        Remove_Binder_Index(&binder, KEY_SYMBOL(key));
-    }
+  blockscope {  // Reset binding table, see notes above regarding locals
+    EVARS e;
+    Init_Evars(&e, ACT_ARCHETYPE(relative));
+    e.locals_visible = locals_visible;
+    while (Did_Advance_Evars(&e))
+        Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
   }
 
     SHUTDOWN_BINDER(&binder);
@@ -990,7 +986,6 @@ void Virtual_Bind_Deep_To_New_Context(
 
             REBVAL *var = Append_Context(c, nullptr, symbol);
             Init_Blank(var);
-            Hide_Param(var);
             SET_CELL_FLAG(var, BIND_NOTE_REUSE);
             SET_CELL_FLAG(var, PROTECTED);
 
@@ -1039,7 +1034,6 @@ void Virtual_Bind_Deep_To_New_Context(
 
           blockscope {
             REBVAL *var = Append_Context(c, nullptr, symbol);
-            Hide_Param(var);
             Derelativize(var, item, specifier);
             SET_CELL_FLAG(var, BIND_NOTE_REUSE);
             SET_CELL_FLAG(var, PROTECTED);

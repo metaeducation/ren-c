@@ -1374,7 +1374,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         for (; key != key_tail; ++key, ++var, ++param) {
             if (dsp_output == DSP + 1)
                 break;  // no more outputs requested
-            if (Is_Param_Hidden(param))
+            if (Is_Specialized(param))
                 continue;
             if (VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT)
                 continue;

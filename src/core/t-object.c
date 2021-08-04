@@ -118,7 +118,16 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             goto collect_end;
         }
 
-        if (Is_Var_Hidden(var)) {
+        // !!! There was discussion in R3-Alpha that errors which exposed the
+        // existence of hidden variables were bad in a "security" sense,
+        // because they were supposed to be effectively "not there".  Putting
+        // security aside; once a variable has been hidden from binding, is
+        // there a reason to disallow a new variable of that name from being
+        // added to the context?  Functions are being rigged up to allow the
+        // addition of public parameters that overlap the names of private
+        // fields on the black box internals...perhaps contexts should too?
+        //
+        if (GET_CELL_FLAG(var, VAR_MARKED_HIDDEN)) {
             error = Error_Hidden_Raw();
             goto collect_end;
         }
@@ -137,6 +146,182 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 
     if (error)
         fail (error);
+}
+
+
+//=//// CONTEXT ENUMERATION ////////////////////////////////////////////////=//
+//
+// All hidden parameters in the exemplar frame of an ACTION! are not shown
+// on the public interface of that function.  This means type information
+// is not relevant (though the type information for later phases of that
+// slot may be pertinent).  So instead of type information, hidden param slots
+// hold the initialization value for that position.
+//
+// In terms of whether the parameter is truly "hidden" from a view of a FRAME!
+// with MOLD or to BIND depends on the frame's phase.  For instance, while a
+// frame is running the body of an interpreted function...that phase has to
+// see the locals defined for that function.  This means you can't tell from a
+// frame context node pointer alone whether a key is visible...the full FRAME!
+// cell--phase included--must be used.
+//
+// Because this logic is tedious to honor every time a context is enumerated,
+// it is abstracted into an enumeration routine.
+//
+// !!! This enumeration does not take into account the adjusted positions of
+// parameters in functions caused by partials and explicit reordering.  It
+// goes in order of the frame.  It would probably be best if it went in the
+// adjusted order, and if this code unified with the enumeration for ACTION!
+// (so just had the evars.var be nullptr in that case).
+
+
+//
+//  Init_Evars: C
+//
+// The init initializes to one behind the enumeration, so you have to call
+// Did_Advance_Evars() on even the first.
+//
+void Init_Evars(EVARS *e, REBCEL(const*) v) {
+    e->index = 0;  // will be bumped to 1
+
+    enum Reb_Kind kind = CELL_KIND(v);
+
+    if (kind == REB_ACTION) {
+        REBACT *act = VAL_ACTION(v);
+        e->key = ACT_KEYS(&e->key_tail, act) - 1;
+        e->var = nullptr;
+        e->param = ACT_PARAMS_HEAD(act) - 1;
+
+        assert(SER_USED(ACT_KEYLIST(act)) <= ACT_NUM_PARAMS(act));
+
+        // There's no clear best answer to whether the locals should be
+        // visible when enumerating an action, only the caller knows if it's
+        // a context where they should be.  Guess conservatively and let them
+        // set `e->locals_visible = true` if they think they should be.
+        //
+        e->locals_visible = false;
+    }
+    else {
+        REBCTX *ctx = VAL_CONTEXT(v);
+        e->var = CTX_VARS_HEAD(ctx) - 1;
+
+        assert(SER_USED(CTX_KEYLIST(ctx)) <= CTX_LEN(ctx));
+
+        if (kind != REB_FRAME) {
+            e->param = nullptr;
+            e->key = CTX_KEYS(&e->key_tail, ctx) - 1;
+        }
+        else {
+            e->var = CTX_VARS_HEAD(ctx) - 1;
+
+            // The frame can be phaseless, which means it is not running (such
+            // as the direct result of a MAKE FRAME! call, which is awaiting a
+            // DO to begin running).  These frames should only show variables
+            // on the public interface.  Or it can be running, in which case
+            // the phase determines which additional fields should be seen.
+            //
+            REBACT *phase;
+            if (not IS_FRAME_PHASED(v)) {
+                //
+                // See FRAME_HAS_BEEN_INVOKED about the efficiency trick used
+                // to make sure archetypal frame views do not DO a frame after
+                // being run where the action could've tainted the arguments.
+                //
+                REBARR *varlist = CTX_VARLIST(ctx);
+                if (GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
+                    fail (Error_Stale_Frame_Raw());
+
+                phase = CTX_FRAME_ACTION(ctx);
+                e->locals_visible = false;
+            }
+            else {
+                phase = VAL_FRAME_PHASE(v);
+
+                // Since phases can reuse exemplars, we have to check for an
+                // exact match of the action of the exemplar with the phase in
+                // order to know if the locals should be visible.  If you ADAPT
+                // a function that reuses its exemplar, but should not be able
+                // to see the locals (for instance).
+                //
+                REBCTX *exemplar = ACT_EXEMPLAR(phase);
+                e->locals_visible = (CTX_FRAME_ACTION(exemplar) == phase);
+            }
+
+            e->param = ACT_PARAMS_HEAD(phase) - 1;
+            e->key = ACT_KEYS(&e->key_tail, phase) - 1;
+            assert(SER_USED(ACT_KEYLIST(phase)) <= ACT_NUM_PARAMS(phase));
+        }
+    }
+}
+
+
+//
+//  Did_Advance_Evars: C
+//
+// !!! When enumerating an ordinary context, this currently does not put a
+// HOLD on the context.  So running user code during the enumeration that can
+// modify the object and add fields is dangerous.  The FOR-EACH variants do
+// put on the hold and use a rebRescue() to make sure the hold gets removed
+// in case of errors.  That becomes cheaper in the stackless model where a
+// single setjmp/exception boundary can wrap an arbitrary number of stack
+// levels.  Ultimately there should probably be a Shutdown_Evars().
+//
+bool Did_Advance_Evars(EVARS *e) {
+    ++e->key;  // !! Note: keys can move if an ordinary context expands (!)
+    if (e->param)
+        ++e->param;  // params are locked and should never move
+    if (e->var)
+        ++e->var;  // !! Note: vars can move if an ordinary context expands (!)
+    ++e->index;
+
+    for (
+        ;
+        e->key != e->key_tail;
+        (++e->index, ++e->key,
+            e->param ? ++e->param : nullptr,
+            e->var ? ++e->var : nullptr
+        )
+    ){
+        if (e->var and GET_CELL_FLAG(e->var, VAR_MARKED_HIDDEN))
+            continue;  // user-specified hidden bit, on the variable itself
+
+        // A simple specialization of a function would provide a value that
+        // the function should see as an argument when it runs.  But layers
+        // above that will use VAR_MARKED_HIDDEN so higher abstractions will
+        // not be aware of that specialized out variable.
+        //
+        // (Put another way: when a function copies an exemplar and uses it
+        // as its own, the fact that exemplar points at the phase does not
+        // suddenly give access to the private variables that would have been
+        // inaccessible before the copy.  The hidden bit must be added during
+        // that copy to honor this property.)
+        //
+        if (e->param) {  // v-- system-level hidden bit on *exemplar*
+            if (GET_CELL_FLAG(e->param, VAR_MARKED_HIDDEN)) {
+                assert(Is_Specialized(e->param));  // don't hide param typesets
+                continue;
+            }
+
+            if (Is_Specialized(e->param)) {  // not TYPESET! with a PARAM_CLASS
+                if (e->locals_visible)
+                    return true;  // private sees ONE level of specialization
+                continue;  // public should not see specialized args
+            }
+
+            // RETURN: param is a typeset (types of returned variables) but the
+            // return function is filled in when it gets called.  It should
+            // not be shown on the public interface.
+            //
+            if (VAL_PARAM_CLASS(e->param) == PARAM_CLASS_RETURN) {
+                if (e->locals_visible)
+                    return true;
+                continue;
+            }
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 
@@ -160,12 +345,11 @@ REBINT CT_Context(REBCEL(const*) a, REBCEL(const*) b, bool strict)
     // fields of objects do not figure into the `equal?` of their public
     // portions.
 
-    const REBKEY *tail1;
-    const REBKEY *key1 = CTX_KEYS(&tail1, c1);
-    const REBKEY *tail2;
-    const REBKEY *key2 = CTX_KEYS(&tail2, c2);
-    const REBVAR *var1 = CTX_VARS_HEAD(c1);
-    const REBVAR *var2 = CTX_VARS_HEAD(c2);
+    EVARS e1;
+    Init_Evars(&e1, a);
+
+    EVARS e2;
+    Init_Evars(&e2, b);
 
     // Compare each entry, in order.  Skip any hidden fields, field names are
     // compared case-insensitively.
@@ -173,49 +357,26 @@ REBINT CT_Context(REBCEL(const*) a, REBCEL(const*) b, bool strict)
     // !!! The order dependence suggests that `make object! [a: 1 b: 2]` will
     // not be equal to `make object! [b: 1 a: 2]`.  See #2341
     //
-    for (
-        ;
-        key1 != tail1 and key2 != tail2;
-        ++key1, ++key2, ++var1, ++var2
-    ){
-      no_advance:
-        if (Is_Var_Hidden(var1)) {
-            ++key1;
-            ++var1;
-            if (key1 == tail1)
-                break;
-            goto no_advance;
+    while (true) {
+        if (not Did_Advance_Evars(&e1)) {
+            if (not Did_Advance_Evars(&e2))
+                return 0;  // if both exhausted, they're equal
+            return -1;  // else the first had fewer fields
         }
-        if (Is_Var_Hidden(var2)) {
-            ++key2;
-            ++var2;
-            if (key2 == tail2)
-                break;
-            goto no_advance;
+        else {
+            if (not Did_Advance_Evars(&e2))
+                return 1;  // the second had fewer fields
         }
 
-        const REBSYM *symbol1 = KEY_SYMBOL(key1);
-        const REBSYM *symbol2 = KEY_SYMBOL(key2);
+        const REBSYM *symbol1 = KEY_SYMBOL(e1.key);
+        const REBSYM *symbol2 = KEY_SYMBOL(e2.key);
         REBINT spell_diff = Compare_Spellings(symbol1, symbol2, strict);
         if (spell_diff != 0)
             return spell_diff;
 
-        REBINT diff = Cmp_Value(var1, var2, strict);
+        REBINT diff = Cmp_Value(e1.var, e2.var, strict);
         if (diff != 0)
             return diff;
-    }
-
-    // Either key1 or key2 is at the end here, but the other might contain
-    // all hidden values.  Which is okay.  But if a value isn't hidden,
-    // they don't line up.
-    //
-    for (; key1 != tail1; key1++, var1++) {
-        if (not Is_Var_Hidden(var1))
-            return 1;
-    }
-    for (; key2 != tail2; key2++, var2++) {
-        if (not Is_Var_Hidden(var2))
-            return -1;
     }
 
     return 0;
@@ -628,32 +789,27 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
     }
     Push_Pointer_To_Series(TG_Mold_Stack, c);
 
-    // Simple rule for starters: don't honor the hidden status of parameters
-    // if the frame phase is executing.
-    //
-    bool honor_hidden = true;
-    if (CELL_KIND(v) == REB_FRAME)
-        honor_hidden = not IS_FRAME_PHASED(v);
+    if (CELL_KIND(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
+        REBARR *varlist = CTX_VARLIST(VAL_CONTEXT(v));
+        if (GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
+            Append_Ascii(s, "make frame! [...invoked frame...]\n");
+            Drop_Pointer_From_Series(TG_Mold_Stack, c);
+            return;
+        }
+    }
+
+    EVARS e;
+    Init_Evars(&e, v);
 
     if (form) {
         //
         // Mold all words and their values ("key: <molded value>")
         //
-        const REBKEY *tail;
-        const REBKEY *key = CTX_KEYS(&tail, c);
-        REBVAR *var = CTX_VARS_HEAD(c);
-        REBPAR *param = (CELL_KIND(v) == REB_FRAME)
-            ? ACT_PARAMS_HEAD(VAL_FRAME_PHASE(v))
-            : cast_PAR(var);
-
         bool had_output = false;
-        for (; key != tail; ++key, ++var, ++param) {
-            if (honor_hidden and Is_Param_Hidden(param))
-                continue;
-
-            Append_Spelling(mo->series, KEY_SYMBOL(key));
+        while (Did_Advance_Evars(&e)) {
+            Append_Spelling(mo->series, KEY_SYMBOL(e.key));
             Append_Ascii(mo->series, ": ");
-            Mold_Value(mo, var);
+            Mold_Value(mo, e.var);
             Append_Codepoint(mo->series, LF);
             had_output = true;
         }
@@ -675,25 +831,15 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
     mo->indent++;
 
-    const REBKEY *tail;
-    const REBKEY *key = CTX_KEYS(&tail, c);
-    REBVAR *var = CTX_VARS_HEAD(c);
-    REBPAR *param = (CELL_KIND(v) == REB_FRAME)
-        ? ACT_PARAMS_HEAD(VAL_FRAME_PHASE(v))
-        : cast_PAR(var);
-
-    for (; key != tail; ++key, ++var, ++param) {
-        if (honor_hidden and Is_Param_Hidden(param))
-            continue;
-
+    while (Did_Advance_Evars(&e)) {
         New_Indented_Line(mo);
 
-        const REBSTR *spelling = KEY_SYMBOL(key);
+        const REBSTR *spelling = KEY_SYMBOL(e.key);
         Append_Utf8(s, STR_UTF8(spelling), STR_SIZE(spelling));
 
         Append_Ascii(s, ": ");
 
-        if (IS_NULLED(var))
+        if (IS_NULLED(e.var))
             Append_Ascii(s, "'");  // `field: '` would evaluate to null
         else {
             // We want the molded object to be able to "round trip" back to
@@ -702,14 +848,14 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
             // that don't need it because they are inert, but maybe that
             // isn't a good idea...depends on the whole block/object model.
             //
-            if (IS_BAD_WORD(var)) {
-                if (NOT_CELL_FLAG(var, ISOTOPE))
+            if (IS_BAD_WORD(e.var)) {
+                if (NOT_CELL_FLAG(e.var, ISOTOPE))
                     Append_Ascii(s, "'");
             }
-            else if (not ANY_INERT(var)) {
+            else if (not ANY_INERT(e.var)) {
                 Append_Ascii(s, "'");
             }
-            Mold_Value(mo, var);
+            Mold_Value(mo, e.var);
         }
     }
 

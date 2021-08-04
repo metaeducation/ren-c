@@ -261,7 +261,7 @@ REBNATIVE(shove)
 //
 bool Do_Frame_Ctx_Throws(
     REBVAL *out,
-    REBCTX *c, 
+    REBCTX *c,
     REBCTX *binding,
     option(const REBSYM*) label
 ){
@@ -818,22 +818,24 @@ REBNATIVE(applique)
 
     // Reset all the binder indices to zero, balancing out what was added.
     //
-    const REBKEY *tail;
-    const REBKEY *key = CTX_KEYS(&tail, exemplar);
-    REBVAR *var = CTX_VARS_HEAD(exemplar);
-    for (; key != tail; key++, ++var) {
-        if (Is_Var_Hidden(var))
-            continue; // was part of a specialization internal to the action
+  blockscope {
+    Init_Frame(D_SPARE, exemplar, ANONYMOUS);
 
+    EVARS e;
+    Init_Evars(&e, D_SPARE);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
+
+    while (Did_Advance_Evars(&e)) {
+        //
         // !!! This is another case where if you want to literaly apply
         // with ~unset~ you have to manually hide the frame key.
         //
-        if (Is_Unset(var))
-            Init_Nulled(var);
+        if (Is_Unset(e.var))
+            Init_Nulled(e.var);
 
-        Remove_Binder_Index(&binder, KEY_SYMBOL(key));
+        Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
     }
     SHUTDOWN_BINDER(&binder); // must do before running code that might BIND
+  }
 
     // Run the bound code, ignore evaluative result (unless thrown)
     //

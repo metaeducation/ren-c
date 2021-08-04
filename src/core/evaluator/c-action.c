@@ -167,24 +167,20 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
       fulfill_loop_body:
 
-  //=//// NEVER-FULFILLED ARGUMENTS ///////////////////////////////////////=//
+  //=//// SPECIALIZED ARGUMENTS ////////////////////////////////////////////=//
 
-        // Parameters that are hidden from the public interface will never
-        // come from argument fulfillment.  If there is an exemplar, they are
-        // set from that, otherwise they are undefined.
+        // Parameters that are specialized (which includes locals, that are
+        // specialized to ~unset~ isotopes) are hidden from the public
+        // interface.  So they will never come from argument fulfillment.
+        // Their value comes from the exemplar frame in the slot where typesets
+        // would be if it was unspecialized.
         //
-        if (Is_Param_Hidden(f->param)) {  // hidden includes local
+        if (Is_Specialized(f->param)) {  // specialized includes local
             //
             // For specialized cases, we assume type checking was done
             // when the parameter is hidden.  It cannot be manipulated
             // from the outside (e.g. by REFRAMER) so there is no benefit
             // to deferring the check, only extra cost on each invocation.
-            //
-            // !!! At one point, this would copy the hidden bit, so that the
-            // local itself carried the flag.  However, using the local bit
-            // for values actually in the frame creates an issue that the
-            // higher level phases were hiding parameters from specialization
-            // that lower levels should see.  Review.
             //
             Copy_Cell(f->arg, f->param);
 
@@ -256,6 +252,16 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
       fulfill_arg: ;  // semicolon needed--next statement is declaration
 
         enum Reb_Param_Class pclass = VAL_PARAM_CLASS(f->param);
+
+  //=//// SKIP OVER RETURN /////////////////////////////////////////////////=//
+
+        // The return function is filled in by the dispatchers that provide it.
+
+        if (pclass == PARAM_CLASS_RETURN) {
+            assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));
+            Init_Nulled(f->arg);
+            goto continue_fulfilling;
+        }
 
   //=//// HANDLE IF NEXT ARG IS IN OUT SLOT (e.g. ENFIX, CHAIN) ///////////=//
 
@@ -639,7 +645,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             break;
 
           case PARAM_CLASS_RETURN:  // should not happen!
-            assert(GET_PARAM_FLAG(f->param, REFINEMENT));
             assert(false);
             break;
 
@@ -757,7 +762,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // modified.  Even though it's hidden, it may need to be typechecked
         // again, unless it was fully hidden.
         //
-        if (GET_CELL_FLAG(f->param, VAR_MARKED_HIDDEN))
+        if (Is_Specialized(f->param))
             continue;
 
         // We can't a-priori typecheck the variadic argument, since the values
@@ -1020,13 +1025,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 f->param = ACT_PARAMS_HEAD(redo_phase);
                 f->arg = FRM_ARGS_HEAD(f);
                 for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
-                    if (Is_Param_Hidden(f->param)) {
-                        Copy_Cell_Core(
-                            f->arg,
-                            f->param,
-                            CELL_MASK_COPY | CELL_FLAG_VAR_MARKED_HIDDEN
-                        );
-                        assert(GET_CELL_FLAG(f->arg, VAR_MARKED_HIDDEN));
+                    if (Is_Specialized(f->param)) {
+                        Copy_Cell(f->arg, f->param);
                     }
                 }
 

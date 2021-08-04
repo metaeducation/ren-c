@@ -122,7 +122,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     const REBPAR *param = ACT_PARAMS_HEAD(reorderee);
     REBLEN index = 1;
     for (; key != tail; ++key, ++param, ++index) {
-        if (Is_Param_Hidden(param))
+        if (Is_Specialized(param))
             continue;
         Add_Binder_Index(&binder, KEY_SYMBOL(key), index);
     }
@@ -203,7 +203,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     const REBPAR *param = ACT_PARAMS_HEAD(reorderee);
     REBLEN index = 1;
     for (; key != tail; ++key, ++param, ++index) {
-        if (Is_Param_Hidden(param))
+        if (Is_Specialized(param))
             continue;
 
         const REBSYM *symbol = KEY_SYMBOL(key);

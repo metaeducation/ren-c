@@ -218,7 +218,7 @@
 //   cache it in some other location.  Stale out cells cannot be used as
 //   left side input for enfix.
 //
-// * STACK_NOTE_LOCAL -- When building exemplar frames on the stack, you want
+// * STACK_NOTE_SEALED -- When building exemplar frames on the stack, you want
 //   to observe when a value should be marked as VAR_MARKED_HIDDEN.  But you
 //   aren't allowed to write "sticky" cell format bits on stack elements.  So
 //   the more ephemeral "note" is used on the stack element and then changed
@@ -236,7 +236,7 @@
 #define CELL_FLAG_OUT_NOTE_STALE CELL_FLAG_NOTE
 #define CELL_FLAG_NOTE_REMOVE CELL_FLAG_NOTE
 #define CELL_FLAG_BIND_NOTE_REUSE CELL_FLAG_NOTE
-#define CELL_FLAG_STACK_NOTE_LOCAL CELL_FLAG_NOTE
+#define CELL_FLAG_STACK_NOTE_SEALED CELL_FLAG_NOTE
 #define CELL_FLAG_STACK_NOTE_CIRCLED CELL_FLAG_NOTE
 
 

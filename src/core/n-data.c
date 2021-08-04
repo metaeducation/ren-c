@@ -360,7 +360,19 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
         // have a longer lifetime than the REBFRM* or other node)
         //
         REBCTX *c = VAL_WORD_CONTEXT(v);
-        Copy_Cell(out, CTX_ARCHETYPE(c));
+
+        // If it's a FRAME! we want the phase to match the execution phase at
+        // the current moment of execution.
+        //
+        if (CTX_TYPE(c) == REB_FRAME) {
+            REBFRM *f = CTX_FRAME_IF_ON_STACK(c);
+            if (f == nullptr)
+                Copy_Cell(out, CTX_ARCHETYPE(c));
+            else
+                Copy_Cell(out, f->rootvar);  // rootvar has phase, binding
+        }
+        else
+            Copy_Cell(out, CTX_ARCHETYPE(c));
         break; }
 
     default:

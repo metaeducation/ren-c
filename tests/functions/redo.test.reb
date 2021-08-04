@@ -91,18 +91,19 @@
         redo captured-frame  comment {should redo OUTER, not INNER}
     ]
 
-    outer: adapt :inner [
-        if n = 0 [
+    outer: enclose :inner func [f] [
+        if f.n = 0 [
             return <success>
         ]
 
-        captured-frame: binding of 'n
+        f.captured-frame: binding of 'f
 
         comment {
             Fall through to inner
             It is running in the same frame's memory, but...
             CAPURED-FRAME is a FRAME! value that stowed outer's "phase"
         }
+        do f
     ]
 
     <success> = outer 1

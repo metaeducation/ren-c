@@ -1857,7 +1857,12 @@ parsify: func [
                     ]
                 ][
                     parsers: copy []
-                    let f: binding of 'return
+
+                    ; No RETURN visible in ADAPT.  :-/  Should we use ENCLOSE
+                    ; to more legitimately get the frame as a parameter?
+                    ;
+                    let f: binding of 'param1
+
                     let n: 1
                     for-each param (parameters of :value) [
                         if not path? param [

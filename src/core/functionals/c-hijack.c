@@ -109,7 +109,7 @@ bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
     f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
-        if (Is_Param_Hidden(f->param))  // specialized or local
+        if (Is_Specialized(f->param))  // specialized or local
             continue;
 
         if (VAL_PARAM_CLASS(f->param) == PARAM_CLASS_RETURN)

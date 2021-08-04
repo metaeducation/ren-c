@@ -26,24 +26,20 @@
 // optimization for common parameter cases.)
 //
 // While available to the user to manipulate directly as a TYPESET!, cells
-// of this category have another use in describing the fields of objects
-// ("KEYS") or parameters of function frames ("PARAMS").  When used for that
-// purpose, they not only list the legal types...but also hold a symbol for
-// naming the field or parameter.  R3-Alpha made these a special kind of WORD!
-// called an "unword", but they lack bindings and have more technically
-// in common with the evolving requirements of typesets.
-//
-// If values beyond REB_MAX (but still < 64) are used in the bitset, they are
-// "pseudotypes", which signal properties of the typeset when acting in a
-// paramlist or keylist.  REB_0 is also a pseduotype, as when the first bit
-// (for 0) is set in the typeset, that means it is "<end>-able".
+// of this category have another use in describing the parameters of function
+// frames ("PARAMS").  When used for that purpose, they not only list the legal
+// types...but also hold a byte indicating the parameter class (PARAM_CLASS)
+// as well as flags describing other attributes of the parameter (if it is
+// optional/refinement, or const, etc.)
 //
 // !!! At present, a TYPESET! created with MAKE TYPESET! cannot set the
-// internal symbol.  Nor can it set the pseudotype flags, though that might
-// someday be allowed with a syntax like:
+// parameter flags:
 //
 //      make typeset! [<hide> <quote> <protect> text! integer!]
 //
+
+
+#define TS_NOTHING 0
 
 inline static bool IS_KIND_SYM(SYMID s)
   { return s != SYM_0 and s < cast(SYMID, REB_MAX); }
@@ -183,40 +179,11 @@ inline static void CLEAR_ALL_TYPESET_BITS(RELVAL *v) {
 }
 
 
-//=//// PARAMETER CLASS ///////////////////////////////////////////////////=//
-//
-// R3-Alpha called parameter cells that were used to make keys "unwords", and
-// their VAL_TYPE() dictated their parameter behavior.  Ren-C saw them more
-// as being like TYPESET!s with an optional symbol, which made the code easier
-// to understand and less likely to crash, which would happen when the special
-// "unwords" fell into any context that would falsely interpret their bindings
-// as bitsets.
-//
-// Yet there needed to be a place to put the parameter's class.  So it is
-// packed in with the TYPESET_FLAG_XXX bits.
-//
-
-
-inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
-    assert(IS_TYPESET(param));
-    return cast(enum Reb_Param_Class, VAL_TYPESET_PARAM_CLASS_BYTE(param));
-}
+//=//// PARAMETER TYPESET PROPERTIES ///////////////////////////////////////=//
 
 #define VAL_PARAM_FLAGS(v)           PAYLOAD(Any, (v)).first.u
 #define FLAG_PARAM_CLASS_BYTE(b)     FLAG_FIRST_BYTE(b)
 
-
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// TYPESET FLAGS and PSEUDOTYPES USED AS FLAGS
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-// At the moment, typeset flags are folded into the 64-bit test of the typeset
-// bits using out-of-range of 1...REB_MAX datatypes as "psuedo-types".
-//
-
-#define TS_NOTHING 0
 
 // Endability is distinct from optional, and it means that a parameter is
 // willing to accept being at the end of the input.  This means either
@@ -277,108 +244,45 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
     ((VAL_PARAM_FLAGS(v) & PARAM_FLAG_##name) == 0)
 
 
-// All hidden parameters in the exemplar frame of an ACTION! are not shown
-// on the public interface of that function.  This means type information
-// is not relevant (though the type information for later phases of that
-// slot may be pertinent).  So instead of type information, hidden param slots
-// hold the initialization value for that position.
-//
-// In terms of whether the parameter is truly "hidden" from a view of a FRAME!
-// with MOLD or to BIND depends on the frame's phase.  For instance, while a
-// frame is running the body of an interpreted function...that phase has to
-// see the locals defined for that function.  This means you can't tell from a
-// frame context node pointer alone whether a key is visible...the full FRAME!
-// cell--phase included--must be used.
-//
-// Hiding is used to accomplish the desire of signaling that an ~unset~ be
-// removed rom the interface for a frame, so you can actualy specialize a
-// value out as ~unset~:
-//
-//     >> f: make frame! :append
-//     >> f/value: '~unset~  ; typically this would mean "unspecialized"
-//     >> protect/hide 'f/value  ; hiding it means "no, it's the final value"
-//     >> apu: make action! f
-//     >> apu [a b c]
-//     == [a b c ~unset~]
-//
-// For this mechanic to work, there has to be a bit on frames that tracks
-// visibility on a per-instance basis.  To avoid having to make a new keylist
-// each time this happens, the NODE_FLAG_MARKED bit on a context is taken
-// to mean this.  It won't be copied by Copy_Cell() that reads the variable,
-// and it is heeded here as VAR_MARKED_HIDDEN if a value cell is given.
-//
-inline static bool Is_Param_Hidden(const REBPAR *param)
-{
-    if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN))
-        return true;
 
-    // unchecked parameters in an exemplar frame may be PARAM!, but if they
-    // are an ordinary FRAME! they will not be.  Review if better asserts are
-    // needed here that make it worth passing in the context being checked.
-    //
-    return false;
-}
-
-inline static bool Is_Var_Hidden(const REBVAR *var)
-{
-    if (GET_CELL_FLAG(var, VAR_MARKED_HIDDEN))
-        return true;
-
-    // unchecked parameters in an exemplar frame may be PARAM!, but if they
-    // are an ordinary FRAME! they will not be.  Review if better asserts are
-    // needed here that make it worth passing in the context being checked.
-    //
-    return false;
-}
-
-inline static void Hide_Param(RELVAL *param) {
-    UNUSED(param);
-}
-
-inline static void Seal_Param(RELVAL *param) {
-    UNUSED(param);
+inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
+    assert(IS_TYPESET(param));
+    enum Reb_Param_Class pclass = cast(enum Reb_Param_Class,
+        VAL_TYPESET_PARAM_CLASS_BYTE(param)
+    );
+    if (pclass == PARAM_CLASS_RETURN)
+        assert(NOT_PARAM_FLAG(param, REFINEMENT));
+    return pclass;
 }
 
 
-// Can't be bound to beyond the current bindings.
-//
-// !!! This flag was implied in R3-Alpha by TYPESET_FLAG_HIDDEN.  However,
-// the movement of SELF out of being a hardcoded keyword in the binding
-// machinery made it start to be considered as being a by-product of the
-// generator, and hence a "userspace" word (like definitional return).
-// To avoid disrupting all object instances with a visible SELF, it was
-// made hidden...which worked until a bugfix restored the functionality
-// of checking to not bind to hidden things.  UNBINDABLE is an interim
-// solution to separate the property of bindability from visibility, as
-// the SELF solution shakes out--so that SELF may be hidden but bind.
-//
-inline static bool Is_Param_Sealed(const REBPAR *param) {
-    UNUSED(param);
-    return false;  // !!! temporary, needs to use cell flag
+inline static bool Is_Specialized(const REBPAR *param) {
+    if (IS_TYPESET(param)) {
+        if (VAL_PARAM_CLASS(param) != PARAM_CLASS_0) {
+            if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN))
+                assert(!"Unspecialized parameter is marked hidden!");
+            return false;
+        }
+    }
+    return true;
 }
 
+// Parameter class should be PARAM_CLASS_0 unless typeset in func paramlist.
 
-//=//// PARAMETER SYMBOL //////////////////////////////////////////////////=//
-//
-// Name should be NULL unless typeset in object keylist or func paramlist
-
-inline static REBVAL *Init_Typeset(RELVAL *out, REBU64 bits)
+inline static REBVAL *Init_Typeset_Core(RELVAL *out, REBU64 bits)
 {
     RESET_CELL(out, REB_TYPESET, CELL_MASK_NONE);
-    VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_NORMAL);
+    VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_0);
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
     VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
     return cast(REBVAL*, out);
 }
 
+#define Init_Typeset(out,bits) \
+    Init_Typeset_Core(TRACK_CELL_IF_DEBUG(out), (bits))
 
-// For the moment, a param has a cell kind that is a REB_TYPESET, but then
-// overlays an actual kind as being a pseudotype for a parameter.  This would
-// be better done with bits in the typeset node...which requires making
-// typesets more complex (the original "64 bit flags" design is insufficient
-// for a generalized typeset!)
-//
-inline static REBVAL *Init_Param_Core(
+
+inline static REBPAR *Init_Param_Core(
     RELVAL *out,
     REBFLGS param_flags,
     REBU64 bits
@@ -388,7 +292,12 @@ inline static REBVAL *Init_Param_Core(
     VAL_PARAM_FLAGS(out) = param_flags;
     VAL_TYPESET_LOW_BITS(out) = bits & cast(uint32_t, 0xFFFFFFFF);
     VAL_TYPESET_HIGH_BITS(out) = bits >> 32;
-    return cast(REBVAL*, out);
+
+    REBPAR *param = cast(REBPAR*, cast(REBVAL*, out));
+    assert(VAL_PARAM_CLASS(param) != PARAM_CLASS_0);  // must set
+
+    assert(NOT_CELL_FLAG(param, VAR_MARKED_HIDDEN));
+    return param;
 }
 
 #define Init_Param(out,param_flags,bits) \

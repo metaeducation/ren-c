@@ -365,7 +365,10 @@ REBNATIVE(reframer_p)
     const REBKEY *key = ACT_KEYS(&tail, shim);
     const REBPAR *param = ACT_PARAMS_HEAD(shim);
     for (; key != tail; ++key, ++param) {
-        if (Is_Param_Hidden(param))
+        if (Is_Specialized(param))
+            continue;
+
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
             continue;
 
         const REBSYM *symbol = KEY_SYMBOL(key);
@@ -390,7 +393,6 @@ REBNATIVE(reframer_p)
     //
     REBVAL *var = CTX_VAR(exemplar, param_index);
     Copy_Cell(var, CTX_ARCHETYPE(exemplar));
-    SET_CELL_FLAG(var, VAR_MARKED_HIDDEN);
 
     // Make action with enough space to store the implementation phase and
     // which parameter to fill with the *real* frame instance.

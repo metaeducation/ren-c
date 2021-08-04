@@ -378,6 +378,7 @@ struct Loop_Each_State {
     REBCTX *pseudo_vars_ctx;  // vars made by Virtual_Bind_To_New_Context()
     REBVAL *data;  // the data argument passed in
     const REBSER *data_ser;  // series data being enumerated (if applicable)
+    EVARS evars;
     REBSPC *specifier;  // specifier (if applicable)
     REBLEN data_idx;  // index into the data for filling current variable
     REBLEN data_len;  // length of the data
@@ -455,27 +456,12 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_PORT:
               case REB_MODULE:
               case REB_FRAME: {
-                REBCTX *c = VAL_CONTEXT(les->data);
-
-                REBVAR *val;
-                REBLEN bind_index;
-                while (true) {  // find next non-hidden key (if any)
-                    val = CTX_VAR(c, les->data_idx);
-                    bind_index = les->data_idx;
-                    if (++les->data_idx == les->data_len)
-                        more_data = false;
-                    if (not Is_Var_Hidden(val))
-                        break;
-                    if (not more_data)
-                        goto finished;
-                }
-
                 if (var)
                     Init_Any_Word_Bound(  // key is typeset, user wants word
                         var,
                         REB_WORD,
                         VAL_CONTEXT(les->data),
-                        bind_index
+                        les->evars.index
                     );
 
                 if (CTX_LEN(les->pseudo_vars_ctx) == 1) {
@@ -488,10 +474,13 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                     //
                     ++pseudo_var;
                     var = Real_Var_From_Pseudo(pseudo_var);
-                    Copy_Cell(var, val);
+                    Copy_Cell(var, les->evars.var);
                 }
                 else
                     fail ("Loop enumeration of contexts must be 1 or 2 vars");
+
+                more_data = Did_Advance_Evars(&les->evars);
+
                 break; }
 
               case REB_MAP: {
@@ -707,8 +696,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         }
         else if (ANY_CONTEXT(les.data)) {
             les.data_ser = CTX_VARLIST(VAL_CONTEXT(les.data));
-            les.data_idx = 1;
-            les.data_len = SER_USED(les.data_ser);  // has HOLD, won't change
+            Init_Evars(&les.evars, les.data);
         }
         else if (IS_MAP(les.data)) {
             les.data_ser = MAP_PAIRLIST(VAL_MAP(les.data));
@@ -724,7 +712,14 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         if (took_hold)
             SET_SERIES_INFO(m_cast(REBSER*, les.data_ser), HOLD);
 
-        if (les.data_idx >= les.data_len) {
+        if (ANY_CONTEXT(les.data)) {
+            if (not Did_Advance_Evars(&les.evars)) {
+                assert(Is_Void(D_OUT));
+                r = nullptr;
+                goto cleanup;
+            }
+        }
+        else if (les.data_idx >= les.data_len) {
             assert(Is_Void(D_OUT));  // result if loop body never runs
             r = nullptr;
             goto cleanup;

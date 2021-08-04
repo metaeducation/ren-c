@@ -32,7 +32,7 @@ struct Params_Of_State {
 // Reconstitute parameter back into a full value, e.g. REB_P_REFINEMENT
 // becomes `/spelling`.
 //
-// !!! See notes on Is_Param_Hidden() for why caller isn't filtering locals.
+// !!! Review why caller isn't filtering locals.
 //
 static bool Params_Of_Hook(
     const REBKEY *key,
@@ -234,12 +234,8 @@ void Push_Paramlist_Triads_May_Fail(
 
             STKVAL(*) param = PARAM_SLOT(DSP);
 
-            if (
-                GET_CELL_FLAG(param, STACK_NOTE_LOCAL)
-                and VAL_WORD_ID(KEY_SLOT(DSP)) == SYM_RETURN
-            ){
-                continue;  // !!! allow because of RETURN, still figuring...
-            }
+            if (Is_Specialized(cast(REBPAR*, cast(REBVAL*, param))))
+                continue;
 
             REBSPC* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
             Init_Block(
@@ -340,17 +336,14 @@ void Push_Paramlist_Triads_May_Fail(
 
             if (kind == REB_SET_WORD) {
                 //
-                // Outputs are set to refinements, and that includes RETURN,
-                // because if it were set to a local there would be nowhere
-                // to put its type information.  The information is resident
-                // in the unspecialized slot.  This is under review.
+                // Outputs are set to refinements, because they can act like
+                // refinements and be passed the word to set.
                 //
                 if (VAL_WORD_ID(cell) == SYM_RETURN and not quoted) {
-                    refinement = true;  // sets PARAM_FLAG_REFINEMENT (optional)
                     pclass = PARAM_CLASS_RETURN;
                 }
                 else if (not quoted) {
-                    refinement = true;  // sets PARAM_FLAG_REFINEMENT (optional)
+                    refinement = true;  // sets PARAM_FLAG_REFINEMENT
                     pclass = PARAM_CLASS_OUTPUT;
                 }
             }
@@ -432,7 +425,6 @@ void Push_Paramlist_Triads_May_Fail(
 
         if (local) {
             Init_Unset(param);
-            SET_CELL_FLAG(param, STACK_NOTE_LOCAL);
         }
         else if (refinement) {
             Init_Param(
@@ -514,8 +506,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             Init_Param(
                 param,
                 FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_RETURN)
-                    | PARAM_FLAG_ENDABLE  // return/void ok
-                    | PARAM_FLAG_REFINEMENT,  // need slot for types
+                    | PARAM_FLAG_ENDABLE,  // return/void ok
                 TS_OPT_VALUE
             );
 
@@ -587,7 +578,16 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         const REBSYM *symbol = VAL_WORD_SYMBOL(KEY_SLOT(dsp));
 
         STKVAL(*) slot = PARAM_SLOT(dsp);
-        if (not Is_Param_Sealed(cast_PAR(slot))) {  // sealed reusable
+
+        // "Sealed" parameters do not count in the binding.  See AUGMENT for
+        // notes on why we do this (you can augment a function that has a
+        // local called `x` with a new parameter called `x`, and that's legal.)
+        //
+        if (GET_CELL_FLAG(slot, STACK_NOTE_SEALED)) {
+            assert(Is_Specialized(cast(REBPAR*, cast(REBVAL*, slot))));
+            SET_CELL_FLAG(param, VAR_MARKED_HIDDEN);  // survives copy over
+        }
+        else {
             if (not Try_Add_Binder_Index(&binder, symbol, 1020))
                 duplicate = symbol;
         }
@@ -597,9 +597,11 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
 
         Init_Key(key, symbol);
 
-        Copy_Cell(param, slot);
-        if (GET_CELL_FLAG(slot, STACK_NOTE_LOCAL))
-            SET_CELL_FLAG(param, VAR_MARKED_HIDDEN);
+        Copy_Cell_Core(
+            param,
+            slot,
+            CELL_MASK_COPY | CELL_FLAG_VAR_MARKED_HIDDEN
+        );
 
       #if !defined(NDEBUG)
         SET_CELL_FLAG(param, PROTECTED);
@@ -625,10 +627,17 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     const REBKEY *key = SER_HEAD(REBKEY, keylist);
     const REBPAR *param = SER_AT(REBPAR, paramlist, 1);
     for (; key != tail; ++key, ++param) {
-        if (Is_Param_Sealed(param))
-            continue;
-        if (Remove_Binder_Index_Else_0(&binder, KEY_SYMBOL(key)) == 0)
-            assert(duplicate);  // erroring on this is pending
+        //
+        // See notes in AUGMENT on why we don't do binder indices on "sealed"
+        // arguments (we can add `x` to the interface of a func with local `x`)
+        //
+        if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN)) {
+            assert(Is_Specialized(param));
+        }
+        else {
+            if (Remove_Binder_Index_Else_0(&binder, KEY_SYMBOL(key)) == 0)
+                assert(duplicate);  // erroring on this is pending
+        }
     }
 
     SHUTDOWN_BINDER(&binder);
@@ -699,8 +708,6 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
                 continue;  // was added to the head of the list already
 
             Copy_Cell(dest, types);
-            if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN))
-                SET_CELL_FLAG(dest, VAR_MARKED_HIDDEN);
 
             ++dest;
             ++param;
@@ -749,8 +756,6 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
 
             Copy_Cell(dest, notes);
 
-            if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN))
-                SET_CELL_FLAG(dest, VAR_MARKED_HIDDEN);
             ++dest;
             ++param;
         }

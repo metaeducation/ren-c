@@ -149,7 +149,6 @@ bool Interpreted_Dispatch_Details_1_Throws(
             Copy_Cell(cell, NATIVE_VAL(return));
 
         INIT_VAL_ACTION_BINDING(cell, CTX(f->varlist));
-        SET_CELL_FLAG(cell, VAR_MARKED_HIDDEN);  // necessary?
     }
 
     // The function body contains relativized words, that point to the
@@ -419,9 +418,11 @@ REBACT *Make_Interpreted_Action_May_Fail(
         else
             INIT_ACT_DISPATCHER(a, &Unchecked_Dispatcher); // unchecked f->out
 
+        const bool locals_visible = true;  // we created exemplar, see all!
         copy = Copy_And_Bind_Relative_Deep_Managed(
             body,  // new copy has locals bound relatively to the new action
             a,
+            locals_visible,
             TS_WORD
         );
     }
@@ -790,7 +791,7 @@ REBNATIVE(inherit_meta)
             continue;  // nothing to inherit from
         if (not ANY_CONTEXT(val1))
             fail ("Expected context in original meta information");
-        
+
         REBCTX *ctx1 = VAL_CONTEXT(val1);
 
         REBVAL *val2 = Select_Symbol_In_Context(
@@ -807,7 +808,7 @@ REBNATIVE(inherit_meta)
                 DSP,  // will weave in any refinements pushed (none apply)
                 nullptr  // !!! review, use fast map from names to indices
             );
-            Init_Frame(val2, ctx2, ANONYMOUS); 
+            Init_Frame(val2, ctx2, ANONYMOUS);
         }
         else if (ANY_CONTEXT(val2)) {  // already had context (e.g. augment)
             ctx2 = VAL_CONTEXT(val2);
@@ -815,25 +816,21 @@ REBNATIVE(inherit_meta)
         else
             fail ("Expected context in derived meta information");
 
-        const REBKEY *key_tail;
-        const REBKEY *key = CTX_KEYS(&key_tail, ctx2);
-        REBPAR *param = ACT_PARAMS_HEAD(VAL_ACTION(derived));
-        REBVAR *var = CTX_VARS_HEAD(ctx2);
-        for (; key != key_tail; ++key, ++param, ++var) {
-            if (Is_Param_Hidden(param))
-                continue;  // e.g. locals
+        EVARS e;
+        Init_Evars(&e, val2);
 
-            if (not (IS_NULLED(var) or Is_Unset(var)))
+        while (Did_Advance_Evars(&e)) {
+            if (not IS_NULLED(e.var) and not Is_Unset(e.var))
                 continue;  // already set to something
 
             REBVAL *slot = Select_Symbol_In_Context(
                 CTX_ARCHETYPE(ctx1),
-                KEY_SYMBOL(key)
+                KEY_SYMBOL(e.key)
             );
             if (slot)
-                Copy_Cell(var, slot);
+                Copy_Cell(e.var, slot);
             else
-                Init_Nulled(var);  // don't want to leave ~unset~
+                Init_Nulled(e.var);  // don't want to leave ~unset~
         }
     }
 

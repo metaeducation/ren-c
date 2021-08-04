@@ -167,7 +167,11 @@ REBNATIVE(lambda)
 
         Init_Word(DS_PUSH(), VAL_WORD_SYMBOL(word));
 
-        Init_Typeset(DS_PUSH(), TS_OPT_VALUE);
+        Init_Param(
+            DS_PUSH(),
+            FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_NORMAL),
+            TS_OPT_VALUE
+        );
 
         Init_Nulled(DS_PUSH());  // types (not supported)
         Init_Nulled(DS_PUSH());  // notes (not supported)

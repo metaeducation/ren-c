@@ -129,8 +129,8 @@ REBNATIVE(generic)
         ++param;
     }
     while (
-        not Is_Param_Hidden(param)
-        and VAL_PARAM_CLASS(param) != PARAM_CLASS_NORMAL
+        Is_Specialized(param)
+        or VAL_PARAM_CLASS(param) != PARAM_CLASS_NORMAL
     ){
         ++param;
     }
