@@ -1392,6 +1392,116 @@ REBNATIVE(engroup)
 }
 
 
+//
+//  glom: native [
+//
+//  {Efficient destructive appending operation that will reuse appended memory}
+//
+//      return: [blank! block!]
+//      accumulator [blank! block!]
+//      result [any-value!]
+//  ]
+//
+REBNATIVE(glom)
+//
+// GLOM was designed to bubble up `pending` values (e.g. collected values) in
+// UPARSE, which are lists...but often they will be empty.  So creating lots of
+// empty blocks was undesirable.  So having the accumulators start at BLANK!
+// and be willing to start by taking over a bubbled up BLOCK! was desirable.
+//
+// https://forum.rebol.info/t/efficient-consuming-append-like-operator-glom/1647
+{
+    INCLUDE_PARAMS_OF_GLOM;
+
+    // NOTE: if the accumulator or result are blocks, there's no guarantee they
+    // are at the head.  VAL_INDEX() might be nonzero.  GLOM could prohibit
+    // that or just take advantage of it if it's expedient (e.g. avoid a
+    // resize by moving the data within an array and returning a 0 index).
+
+    REBVAL *accumulator = ARG(accumulator);
+    REBVAL *result = ARG(result);
+
+    // !!! This logic is repeated in APPEND/etc.  It should be factored out.
+    //
+    bool splice = false;
+
+    assert(not IS_NULLED(result));  // type checking should prevent
+
+    if (IS_BLANK(result)) {
+        RETURN (accumulator);
+    }
+    else if (IS_QUOTED(result)) {
+        Unquotify(result, 1);
+    }
+    else if (not ANY_INERT(result)) {
+        fail ("Cannot GLOM evaluative values w/o QUOTE");
+    }
+    else if (IS_BLOCK(result)) {  // ANY_ARRAY inert, or just BLOCK!?
+        splice = true;
+    }
+
+    if (IS_BLANK(accumulator)) {
+        if (splice)  // it was a non-quoted block initially
+            RETURN (result);  // see note: index may be nonzero
+
+        REBARR *a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
+        Copy_Cell(ARR_HEAD(a), result);  // we know it was inert or quoted
+        SET_SERIES_LEN(a, 1);
+        return Init_Block(D_OUT, a);
+    }
+
+    assert(IS_BLOCK(accumulator));
+    REBARR *a = VAL_ARRAY_ENSURE_MUTABLE(accumulator);
+
+    if (not splice) {
+        //
+        // Here we are just appending one item.  We don't do anything special
+        // at this time, but we should be willing to return VAL_INDEX()=0 and
+        // reclaim any bias or space at the head vs. doing an expansion.  In
+        // practice all GLOM that exist for the moment will be working on
+        // series that are at their head, so this won't help.
+        //
+        Copy_Cell(Alloc_Tail_Array(a), result);
+    }
+    else {
+        // We're appending multiple items from result.  But we want to avoid
+        // allocating new arrays if at all possible...and we are fluidly
+        // willing to promote the result array to be the accumulator if that
+        // is necessary.
+        //
+        // But in the interests of time, just expand the target array for now
+        // if necessary--work on other details later.
+        //
+        REBARR *r = VAL_ARRAY_ENSURE_MUTABLE(result);
+        REBSPC *r_specifier = VAL_SPECIFIER(result);
+        REBLEN a_len = ARR_LEN(a);
+        REBLEN r_len = ARR_LEN(r);
+        EXPAND_SERIES_TAIL(a, r_len);  // can move memory, get `at` after
+        RELVAL *dst = ARR_AT(a, a_len);  // old tail position
+        RELVAL *src = ARR_HEAD(r);
+
+        REBLEN index;
+        for (index = 0; index < r_len; ++index, ++src, ++dst)
+            Derelativize(dst, src, r_specifier);
+
+        assert(ARR_LEN(a) == a_len + r_len);  // EXPAND_SERIES_TAIL sets
+
+     #ifdef DEBUG_TERM_ARRAYS  // need trash at tail with this debug setting
+        TERM_SERIES_IF_NECESSARY(a);
+     #endif
+
+        // GLOM only works with mutable arrays, as part of its efficiency.  We
+        // show a hint of the optimizations to come by trashing the incoming
+        // result array (we might sporadically do it the other way just to
+        // establish that the optimizations could trash either).
+        //
+        Decay_Series(r);
+    }
+
+    RETURN (accumulator);
+}
+
+
 #if !defined(NDEBUG)
 
 //

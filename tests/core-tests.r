@@ -283,6 +283,7 @@
 %series/extract.test.reb
 %series/find.test.reb
 %series/free.test.reb
+%series/glom.test.reb
 %series/indexq.test.reb
 %series/insert.test.reb
 %series/intersect.test.reb
