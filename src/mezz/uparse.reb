@@ -941,11 +941,8 @@ default-combinators: make map! reduce [
                 ]
                 return null
             ]
-            any-string? input [
-                fail "Can't match BINARY! against TEXT! (use AS to alias)"
-            ]
-            true [
-                assert [binary? input]
+            true [  ; Note: BITSET! acts as "byteset" here
+                ; binary or any-string input
                 if set remainder find/match input value [
                     return value
                 ]
