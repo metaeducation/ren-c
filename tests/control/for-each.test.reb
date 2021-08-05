@@ -183,7 +183,7 @@
                 append block <failure>
             ]
         ]
-        e/id = 'series-held
+        e/id = 'locked-series
         [a b c 10] = append block 10
     ]
 )

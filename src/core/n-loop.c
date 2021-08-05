@@ -708,9 +708,9 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
         // HOLD so length can't change
 
-        took_hold = NOT_SERIES_INFO(les.data_ser, HOLD);
+        took_hold = NOT_SERIES_FLAG(les.data_ser, FIXED_SIZE);
         if (took_hold)
-            SET_SERIES_INFO(m_cast(REBSER*, les.data_ser), HOLD);
+            SET_SERIES_FLAG(m_cast(REBSER*, les.data_ser), FIXED_SIZE);
 
         if (ANY_CONTEXT(les.data)) {
             if (not Did_Advance_Evars(&les.evars)) {
@@ -726,8 +726,8 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         }
     }
 
-    // If there is a fail() and we took a SERIES_INFO_HOLD, that hold needs
-    // to be released.  For this reason, the code has to trap errors.
+    // If there is a fail() and we took a SERIES_INFO_FIXED_SIZE, that hold
+    // needs to be released.  For this reason, the code has to trap errors.
 
     r = rebRescue(cast(REBDNG*, &Loop_Each_Core), &les);
 
@@ -736,7 +736,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
   cleanup:;
 
     if (took_hold)  // release read-only lock
-        CLEAR_SERIES_INFO(m_cast(REBSER*, les.data_ser), HOLD);
+        CLEAR_SERIES_FLAG(m_cast(REBSER*, les.data_ser), FIXED_SIZE);
 
     if (IS_DATATYPE(les.data))  // must free temp array of instances
         Free_Unmanaged_Series(m_cast(REBARR*, ARR(les.data_ser)));
