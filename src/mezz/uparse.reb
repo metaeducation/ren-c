@@ -378,7 +378,7 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> insertion'
     ][
-        ([insertion #]: ^ parser input) else [  ; remainder ignored
+        ([insertion' #]: ^ parser input) else [  ; remainder ignored
             return null
         ]
 
