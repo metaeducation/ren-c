@@ -257,7 +257,7 @@
 ; Test the very non-generic rollback mechanism.  The only two constructs that
 ; do any rollback are BLOCK! and COLLECT itself.
 [(
-    x: <before>
+    x: ~
     did all [
         uparse? [1 2] [x: collect [
             keep integer! keep tag! | keep integer! keep integer!
@@ -265,7 +265,7 @@
         x = [1 2]
     ]
 )(
-    x: <before>
+    x: ~
     did all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
         uparse? "(abc)" [x: collect between keep "(" keep ")"]
         x = ["(" ")"]
@@ -277,7 +277,7 @@
         x = <before>
     ]
 )(
-    x: <before>
+    x: ~
     did all [
         uparse? "aaa" [x: collect [some [
             keep (try if false [<not kept>])
@@ -446,19 +446,19 @@
 ; (Note: more on this later in this file; review when breaking out separate
 ; tests for UPARSE into separate files.)
 [(
-    x: <before>
+    x: ~
     did all [
         uparse? [1 "hello"] [x: [tag! | integer!] text!]
         x = 1  ; not [1]
     ]
 )(
-    x: <before>
+    x: ~
     did all [
         uparse? [1 "hello"] [x: [tag! integer! | integer! text!]]
         x = "hello"
     ]
 )(
-    x: <before>
+    x: ~
     did all [
         uparse? [] [x: [opt integer!]]
         x = null
@@ -470,7 +470,7 @@
         x = <before>
     ]
 )(
-    x: <before>
+    x: ~
     did all [
         uparse? [] [x: opt [integer!]]
         x = null
@@ -644,7 +644,7 @@
 ; A BLOCK! rule is allowed to return NULL, distinct from failure
 [
     (
-        x: <before>
+        x: ~
         did all [
             uparse? [1] [x: [integer! opt text!]]
             x = null
@@ -652,7 +652,7 @@
     )
 
     (
-        x: <before>
+        x: ~
         did all [
             uparse? [1] [integer! x: [(null)]]
             x = null
