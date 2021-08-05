@@ -872,6 +872,7 @@ default-combinators: make map! reduce [
                 ]
             ]
             true [
+                assert [binary? input]
                 if not input: find/match/(if state.case 'case) input value [
                     return null
                 ]

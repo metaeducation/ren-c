@@ -370,7 +370,8 @@ REBNATIVE(text_x_combinator)
 {
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
-    UNUSED(ARG(state));
+    REBCTX *state = VAL_CONTEXT(ARG(state));
+    bool cased = IS_TRUTHY(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
 
     REBVAL *v = ARG(value);
     REBVAL *input = ARG(input);
@@ -398,7 +399,7 @@ REBNATIVE(text_x_combinator)
         input,
         VAL_LEN_HEAD(input),
         v,
-        AM_FIND_MATCH,  // review issues like case matching
+        AM_FIND_MATCH | (cased ? AM_FIND_CASE : 0),
         1  // skip
     );
     if (index == NOT_FOUND)
