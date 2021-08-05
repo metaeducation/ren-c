@@ -265,12 +265,6 @@ inline static bool Do_Branch_Core_Throws(
             return true;
         break; }
 
-      case REB_META_PATH:
-        Plainify(Copy_Cell(cell, branch));
-        if (Eval_Value_Throws(out, cell, SPECIFIED))
-            return true;
-        break;
-
       case REB_THE_GROUP:
       case REB_GROUP:
         if (Do_Any_Array_At_Throws(cell, branch, SPECIFIED))
