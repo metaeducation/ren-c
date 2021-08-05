@@ -954,7 +954,7 @@ REBNATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 //  {Releases the underlying data of a value so it can no longer be accessed}
 //
 //      return: []
-//      memory [any-series! any-context! handle!]
+//      memory [<blank> any-series! any-context! handle!]
 //  ]
 //
 REBNATIVE(free)
