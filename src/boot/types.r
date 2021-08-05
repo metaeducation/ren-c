@@ -274,19 +274,19 @@ set-word    "definition of a word's value"
 ; <ANY-GET> (order matters)
 
 get-block   "array of values that is reduced if evaluated"
-            array       *       *       *       [block array series]
+            array       *       *       *       [block array series branch]
 
 get-group   "array that evaluates and runs GET on the resulting word/path"
             array       *       *       *       [group array series]
 
 get-path    "the value of a path"
-            sequence    *       *       *       [path sequence branch]
+            sequence    *       *       *       [path sequence]
 
 get-tuple   "the value of a tuple"
             sequence    *       *       *       [tuple sequence]
 
 get-word    "the value of a word (variable)"
-            word        -       *       +       [word branch]
+            word        -       *       +       [word]
 
 ; </ANY-GET> (except for ISSUE!)
 
@@ -298,19 +298,19 @@ get-word    "the value of a word (variable)"
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 meta-block  "block that evaluates to produce a quoted block"
-            array       *       *       *       [block array series branch]
+            array       *       *       *       [block array series]
 
 meta-group  "group that quotes its product or removes isotope status"
-            array       *       *       *       [group array series branch]
+            array       *       *       *       [group array series]
 
 meta-path   "path that quotes its product or removes isotope status"
-            sequence    *       *       *       [path sequence branch]
+            sequence    *       *       *       [path sequence]
 
 meta-tuple  "tuple that quotes its product or removes isotope status"
-            sequence    *       *       *       [tuple sequence branch]
+            sequence    *       *       *       [tuple sequence]
 
 meta-word   "word that quotes its product or removes isotope status"
-            word        -       *       +       [word branch]
+            word        -       *       +       [word]
 
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 

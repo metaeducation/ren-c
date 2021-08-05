@@ -235,6 +235,21 @@ inline static bool Do_Branch_Core_Throws(
             return true;
         break;
 
+      case REB_GET_BLOCK: {
+        PUSH_GC_GUARD(branch);
+
+        bool threw = RunQ_Throws(
+            out,
+            true,
+            rebU(NATIVE_VAL(reduce)),
+            "as block!", branch,
+            rebEND
+        );
+        DROP_GC_GUARD(branch);
+        if (threw)
+            return true;
+        break; }
+
       case REB_ACTION: {
         PUSH_GC_GUARD(branch);  // may be stored in `cell`, needs protection
 

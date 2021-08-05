@@ -40,9 +40,17 @@
 // !!! Find a better place for this!
 //
 inline static bool ANY_ESCAPABLE_GET(const RELVAL *v) {
-    if (IS_GET_BLOCK(v))
-        fail ("GET-BLOCK! in escapable parameter slots currently reserved");
-    return IS_GET_GROUP(v) or IS_GET_WORD(v) or IS_GET_PATH(v);
+    //
+    // !!! Note: GET-BLOCK! is used to mean reduce, e.g.
+    //
+    //     >> if true :[1 + 2 10 + 20]
+    //     == [3 30]
+    //
+    // This is a useful enough concept in branching that it makes more sense
+    // than "escaping a block", whatever that would be.
+    //
+    return IS_GET_GROUP(v) or IS_GET_WORD(v)
+        or IS_GET_PATH(v) or IS_GET_TUPLE(v);
 }
 
 
