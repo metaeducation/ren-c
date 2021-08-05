@@ -992,7 +992,7 @@ default-combinators: make map! reduce [
 
     bitset! combinator [
         return: "The matched input value"
-            [<opt> char!]
+            [<opt> char! integer!]
         value [bitset!]
     ][
         case [
