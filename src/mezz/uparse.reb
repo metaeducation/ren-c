@@ -872,8 +872,7 @@ default-combinators: make map! reduce [
                 ]
             ]
             true [
-                assert [binary? input]
-                if not input: find/match input as binary! value [
+                if not input: find/match/(if state.case 'case) input value [
                     return null
                 ]
             ]
@@ -1048,8 +1047,15 @@ default-combinators: make map! reduce [
         ]
 
         if any-string? input [
-            parser: :(state.combinators)/(text!)
-            return [# (remainder)]: parser state input (to text! unquote value)
+            ;
+            ; Not exactly sure what this operation is, but it's becoming more
+            ; relevant...it's like FORM by putting < > on tags (TO TEXT! won't)
+            ; and it will merge strings in blocks without spacing.
+            ;
+            value: append copy {} unquote value
+
+            parser: :(state.combinators).(text!)
+            return [# (remainder)]: parser state input value
         ]
 
         assert [binary? input]
