@@ -1,4 +1,4 @@
-; uparse-reword.test.reb
+; %reword.parse.test.reb
 ;
 ; Test of REWORD written with UPARSE instead of parse.
 ; See comments on non-UPARSE REWORD implementation.

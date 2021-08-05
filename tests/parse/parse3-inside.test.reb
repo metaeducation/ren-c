@@ -1,4 +1,4 @@
-; %parse-inside.test.reb
+; %parse3-inside.test.reb
 ;
 ; PARSE/INSIDE is an experimental feature to demonstrate the possibility of
 ; using virtual binding together with PARSE.
@@ -15,8 +15,8 @@
     obj: make object! [data: _]
 
     did all [
-        [1 2 3] = parse/inside [1 2 3] [some rule] obj
-        obj/data = [1 2 3]
+        parse?/inside [1 2 3] [some rule] obj
+        obj.data = [1 2 3]
         data = <unmodified>
     ]
 )
@@ -30,7 +30,7 @@
     ]
 
     did all [
-        "aaa" = parse/inside "aaa" [some ["a" rule]] obj
-        obj/stuff = ["hi" "hi" "hi"]
+        parse?/inside "aaa" [some ["a" rule]] obj
+        obj.stuff = ["hi" "hi" "hi"]
     ]
 )

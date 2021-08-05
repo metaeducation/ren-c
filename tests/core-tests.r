@@ -212,12 +212,41 @@
 
 %network/http.test.reb
 
-%parse/parse.test.reb
+%parse/examples/argtest.parse.test.reb
+%parse/examples/breaker.parse.test.reb
+%parse/examples/reword.parse.test.reb
+%parse/parse3.test.reb
+%parse/parse3-collect.test.reb
+%parse/parse3-inside.test.reb
+%parse/parse-across.test.reb
+%parse/parse-action.test.reb
+%parse/parse-between.test.reb
+%parse/parse-block.test.reb
+%parse/parse-change.test.reb
 %parse/parse-collect.test.reb
-%parse/uparse.test.reb
-%parse/uparse-furthest.test.reb
-%parse/uparse-breaker.test.reb
-%parse/uparse-reword.test.reb
+%parse/parse-datatype.test.reb
+%parse/parse-elide.test.reb
+%parse/parse-further.test.reb
+%parse/parse-furthest.test.reb
+%parse/parse-gather.test.reb
+%parse/parse-get-group.test.reb
+%parse/parse-group.test.reb
+%parse/parse-here.test.reb
+%parse/parse-integer.test.reb
+%parse/parse-into.test.reb
+%parse/parse-meta-xxx.test.reb
+%parse/parse-not.test.reb
+%parse/parse-repeat.test.reb
+%parse/parse-seek.test.reb
+%parse/parse-set-word.test.reb
+%parse/parse-some.test.reb
+%parse/parse-skip.test.reb
+%parse/parse-tally.test.reb
+%parse/parse-text.test.reb
+%parse/parse-the-xxx.test.reb
+%parse/parse-to.test.reb
+%parse/parse-while.test.reb
+%parse/uparse2.test.reb
 
 %redbol/redbol-apply.test.reb
 

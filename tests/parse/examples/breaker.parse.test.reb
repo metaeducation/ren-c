@@ -1,4 +1,4 @@
-; uparse-breaker.test.reb
+; breaker.parse.test.reb
 
 [
     (did breaker: func [text] [
