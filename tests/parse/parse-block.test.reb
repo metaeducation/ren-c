@@ -15,6 +15,12 @@
     (uparse? "" [])
     (uparse? "" [[]])
     (uparse? "" [[[]]])
+
+    (uparse? [] [])
+    (uparse? [] [[[]]])
+    (not uparse? [x] [])
+    (not uparse? [x] [[[]]])
+    (uparse? [x] [[] 'x []])
 ]
 
 
@@ -92,3 +98,9 @@
         did-not-match
     )
 ]
+
+
+[#1672 (  ; Self invoking rule, stack overflow
+    a: [a]
+    error? trap [uparse [] a]
+)]

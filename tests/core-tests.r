@@ -214,6 +214,7 @@
 
 %parse/examples/argtest.parse.test.reb
 %parse/examples/breaker.parse.test.reb
+%parse/examples/countify.parse.test.reb
 %parse/examples/reword.parse.test.reb
 %parse/parse3.test.reb
 %parse/parse3-collect.test.reb
@@ -221,6 +222,8 @@
 %parse/parse-across.test.reb
 %parse/parse-action.test.reb
 %parse/parse-between.test.reb
+%parse/parse-bitset.test.reb
+%parse/parse-blank.test.reb
 %parse/parse-block.test.reb
 %parse/parse-change.test.reb
 %parse/parse-collect.test.reb
@@ -232,10 +235,15 @@
 %parse/parse-get-group.test.reb
 %parse/parse-group.test.reb
 %parse/parse-here.test.reb
+%parse/parse-insert.test.reb
 %parse/parse-integer.test.reb
 %parse/parse-into.test.reb
+%parse/parse-issue.test.reb
+%parse/parse-logic.test.reb
 %parse/parse-meta-xxx.test.reb
 %parse/parse-not.test.reb
+%parse/parse-quoted.test.reb
+%parse/parse-remove.test.reb
 %parse/parse-repeat.test.reb
 %parse/parse-seek.test.reb
 %parse/parse-set-word.test.reb
@@ -244,6 +252,7 @@
 %parse/parse-tally.test.reb
 %parse/parse-text.test.reb
 %parse/parse-the-xxx.test.reb
+%parse/parse-thru.test.reb
 %parse/parse-to.test.reb
 %parse/parse-while.test.reb
 %parse/uparse2.test.reb

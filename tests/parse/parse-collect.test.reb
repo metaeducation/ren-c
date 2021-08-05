@@ -82,3 +82,142 @@
     ])
     (null = uparse "aaa" [collect [keep @[keep "a" keep "a" "a"]]])  ; 4 "a"
 ]
+
+
+; SOME KEEP vs KEEP SOME
+[
+    (did all [
+        uparse? [1 2 3] [x: collect [keep some integer!]]
+        x = [3]
+    ])
+    (did all [
+        uparse? [1 2 3] [x: collect [some keep integer!]]
+        x = [1 2 3]
+    ])
+    (did all [
+        uparse? [1 2 3] [x: collect [keep ^[some integer!]]]
+        x = [3]
+    ])
+    (did all [
+        uparse? [1 2 3] [x: collect [some [keep ^integer!]]]
+        x = [1 2 3]
+    ])
+]
+
+; Collecting non-array series fragments
+[
+    (did all [
+        pos: uparse* "aaabbb" [x: collect [keep [across some "a"]] <here>]
+        "bbb" = pos
+        x = ["aaa"]
+    ])
+    (did all [
+        pos: uparse* "aaabbbccc" [
+            x: collect [keep [across some "a"] some "b" keep [across some "c"]]
+            <here>
+        ]
+        "" = pos
+        x = ["aaa" "ccc"]
+    ])
+]
+
+; "Backtracking" (more tests needed!)
+[
+    (did all [
+        pos: uparse* [1 2 3] [
+            x: collect [
+                keep integer! keep integer! keep text!
+                |
+                keep integer! keep across some integer!
+            ]
+            <here>
+        ]
+        [] = pos
+        x = [1 2 3]
+    ])
+]
+
+; No change to variable on failed match (consistent with Rebol2/R3-Alpha/Red
+; behaviors w.r.t SET and COPY)
+[
+    (did all [
+        x: <before>
+        null = uparse [1 2] [x: collect [keep integer! keep text!]]
+        x = <before>
+    ])
+]
+
+; Nested collect
+[
+    (did all [
+        uparse? [1 2 3 4] [
+            a: collect [
+                keep integer!
+                b: collect [keep across 2 integer!]
+                keep integer!
+            ]
+            end
+        ]
+
+        a = [1 4]
+        b = [2 3]
+    ])
+]
+
+; GROUP! can be used to keep material that did not originate from the
+; input series or a match rule.
+[
+    (did all [
+        pos: uparse* [1 2 3] [
+            x: collect [
+                keep integer!
+                keep (second [A [<pick> <me>] B])
+                keep integer!
+            ]
+            here
+        ]
+        [3] = pos
+        x = [1 <pick> <me> 2]
+    ])
+    (did all [
+        pos: uparse* [1 2 3] [
+            x: collect [
+                keep integer!
+                keep ^(second [A [<pick> <me>] B])
+                keep integer!
+            ]
+            here
+        ]
+        [3] = pos
+        x = [1 [<pick> <me>] 2]
+    ])
+    (did all [
+        uparse? [1 2 3] [x: collect [keep ^([a b c]) to end]]
+        x = [[a b c]]
+    ])
+]
+
+[
+    {KEEP without blocks}
+    https://github.com/metaeducation/ren-c/issues/935
+
+    (did all [
+        uparse? "aaabbb" [x: collect [keep across some "a" keep some "b"]]
+        x = ["aaa" "b"]
+    ])
+
+    (did all [
+        uparse? "aaabbb" [x: collect [keep across to "b"] to end]
+        x = ["aaa"]
+    ])
+
+    (did all [
+        uparse? "aaabbb" [
+            outer: collect [
+                some [inner: collect keep across some "a" | keep some "b"]
+            ]
+        ]
+        outer = ["b"]
+        inner = ["aaa"]
+    ])
+]

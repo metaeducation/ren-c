@@ -10,3 +10,16 @@
     ("a" = match-uparse "a" [[ahead "a"] "a"])
     ("a" = match-uparse "a" [[not not "a"] "a"])
 ]
+
+[#1246
+    (uparse? "1" [not not "1" "1"])
+    (uparse? "1" [not [not "1"] "1"])
+    (not uparse? "" [not 0 "a"])
+    (not uparse? "" [not [0 "a"]])
+]
+
+[#1240
+    (uparse? "" [not "a"])
+    (uparse? "" [not skip])
+    (uparse? "" [not false])
+]

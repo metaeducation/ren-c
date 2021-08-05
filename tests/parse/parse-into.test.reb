@@ -5,6 +5,8 @@
 ; well as pick one out of a block.
 
 
+(uparse? ["aa"] [into text! ["a" "a"]])
+
 ; One key feature of UPARSE is that rule chaining is done in such a way that
 ; it delegates the recognition to the parse engine, meaning that rules do not
 ; have to be put into blocks as often.
@@ -86,3 +88,7 @@
         c = "Here be Cs"
     ]
 )]
+
+; INTO is not legal if a string uparse is already running
+;
+(error? trap [uparse "aa" [into ["a" "a"]]])

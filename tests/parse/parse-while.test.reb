@@ -31,3 +31,21 @@
     ("a" = uparse "a" ["a" while "b"])
     ("a" = uparse "a" ["a" [while "b"]])
 ]
+
+; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
+(
+    i: 1
+    uparse "a" [while [(i: i + 1 j: if i = 2 [[end skip]]) j]]
+    i == 2
+)
+
+[#1268 (
+    i: 0
+    <infinite?> = catch [
+        uparse "a" [while [(i: i + 1) (if i > 100 [throw <infinite?>])]]
+    ]
+)(
+    i: 0
+    uparse "a" [while [(i: i + 1 j: try if i = 2 [[false]]) j]]
+    i == 2
+)]
