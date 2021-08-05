@@ -93,28 +93,62 @@ REB_R Encloser_Dispatcher(REBFRM *f)
 
     // We want to call OUTER with a FRAME! value that will dispatch to INNER
     // when (and if) it runs DO on it.  That frame is the one built for this
-    // call to the encloser.  We "steal" its vars but leave a node stub
-    // in the f->varlist slot.
+    // call to the encloser.  (The encloser can run the frame multiple times
+    // via DO COPY of the frame if they like.)
     //
-    // !!! Could we do better... e.g. if the varlist is unmanaged, and hence
-    // hasn't been handed out to reflect a debug level or anything like that?
-    // (Consider it might have--an ADAPT might have run above this frame and
-    // have pointers to it.)  Paying for a node here is the "safest bet" but
-    // performance should be investigated over the long run.
+    // Since we are unplugging the varlist from the REBFRM* in which it is
+    // running, we at one time would actually `Steal_Context_Vars()` on it...
+    // which would mean all outstanding FRAME! that had been pointing at
+    // the varlist would go stale.  This hampered tricks like:
     //
-    REBCTX *c = Steal_Context_Vars(
-        CTX(f->varlist),
-        ACT_KEYLIST(FRM_PHASE(f))
-    );
-    INIT_LINK_KEYSOURCE(CTX_VARLIST(c), ACT_KEYLIST(VAL_ACTION(inner)));
+    //     f: func [x /augmented [frame!]] [
+    //        reduce [x if augmented [augmented.y]]
+    //     ]
+    //
+    //     a: adapt augment :f [y] [augmented: binding of 'y]
+    //
+    //     >> f 10
+    //     == [10]
+    //
+    //     >> a 10 20
+    //     == [10 20]
+    //
+    // So instead we make f->varlist point to a universal inaccessible array
+    // and keep the varlist itself valid, so extant FRAME!s still work.  This
+    // may be a bad idea, so keeping the old code on hand in case it turns
+    // out to be fundamentally broken for some reason.
+    //
+    //-----------------------------------------------------------begin-old-code
+    // REBCTX *c = Steal_Context_Vars(
+    //     CTX(f->varlist),
+    //     ACT_KEYLIST(FRM_PHASE(f))
+    // );
+    //
+    // INIT_LINK_KEYSOURCE(CTX_VARLIST(c), ACT_KEYLIST(VAL_ACTION(inner)));
+    //
+    // assert(GET_SERIES_FLAG(f->varlist, INACCESSIBLE));  // look dead
+    //
+    // // f->varlist may or may not have wound up being managed.  It was not
+    // // allocated through the usual mechanisms, so if unmanaged it's not in
+    // // the tracking list Init_Any_Context() expects.  Just fiddle the bit.
+    // //
+    // SET_SERIES_FLAG(CTX_VARLIST(c), MANAGED); */
+    //-------------------------------------------------------------end-old-code
 
-    assert(GET_SERIES_FLAG(f->varlist, INACCESSIBLE));  // look dead
+    //-----------------------------------------------------------begin-new-code
+    REBARR *varlist = f->varlist;
+    REBCTX *c = CTX(varlist);
 
-    // f->varlist may or may not have wound up being managed.  It was not
-    // allocated through the usual mechanisms, so if unmanaged it's not in
-    // the tracking list Init_Any_Context() expects.  Just fiddle the bit.
+    // Replace the f->varlist with a dead list.
     //
-    SET_SERIES_FLAG(CTX_VARLIST(c), MANAGED);
+    f->varlist = PG_Inaccessible_Varlist;
+
+    // The varlist is still pointed to by any extant frames.  Its keysource
+    // should not be this frame any longer.
+    //
+    assert(LINK(KeySource, varlist) == f);
+    INIT_LINK_KEYSOURCE(varlist, ACT_KEYLIST(f->original));
+    //-------------------------------------------------------------end-new-code
 
     // We're passing the built context to the `outer` function as a FRAME!,
     // which that function can DO (or not).  But when the DO runs, we don't
@@ -127,8 +161,8 @@ REB_R Encloser_Dispatcher(REBFRM *f)
 
     // We want people to be able to DO the FRAME! being given back.
     //
-    assert(GET_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
-    CLEAR_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
+    assert(GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
+    CLEAR_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED);
 
     // We don't actually know how long the frame we give back is going to
     // live, or who it might be given to.  And it may contain things like
@@ -141,7 +175,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     // Note that since varlists aren't added to the manual series list, the
     // bit must be tweaked vs. using Force_Series_Managed.
     //
-    SET_SERIES_FLAG(f->varlist, MANAGED);
+    SET_SERIES_FLAG(varlist, MANAGED);
 
     // Because the built context is intended to be used with DO, it must be
     // "phaseless".  The property of phaselessness allows detection of when

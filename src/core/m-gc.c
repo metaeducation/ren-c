@@ -1133,6 +1133,9 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     Mark_Root_Series();
 
     if (not shutdown) {
+        Queue_Mark_Node_Deep(PG_Inaccessible_Varlist);
+        Propagate_All_GC_Marks();
+
         Mark_Natives();
         Mark_Symbol_Series();
 

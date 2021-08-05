@@ -127,6 +127,8 @@ PVAR REBVAL *Root_2_Blanks_Block;  // read-only [_ _]
 PVAR REBARR* PG_Empty_Array; // optimization of VAL_ARRAY(Root_Empty_Block)
 PVAR REBARR* PG_2_Blanks_Array;  // surrogate array used by `/` paths
 
+PVAR REBARR* PG_Inaccessible_Varlist;  // singular inaccessible varlist
+
 PVAR REBVAL *Root_Space_Char; // ' ' as a CHAR!
 PVAR REBVAL *Root_Newline_Char; // '\n' as a CHAR!
 

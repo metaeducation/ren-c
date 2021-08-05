@@ -171,3 +171,20 @@
     (f-inside.public = 1020)
     (f-inside.private = 304)
 ]
+
+
+; FRAME! TUNNELING - It is possible to pass a higher-level view of a frame to
+; a lower-level implementation, as a trick to giving access to its variables.
+; This is a speculative technique, but it is being tried.
+[
+    (
+        f: func [x /augmented [frame!]] [
+            reduce [x if augmented [augmented.y]]
+        ]
+        a: adapt augment :f [y] [augmented: binding of 'y]
+        did all [
+            [10] = f 10
+            [10 20] = a 10 20
+        ]
+    )
+]

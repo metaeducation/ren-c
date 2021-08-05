@@ -298,6 +298,13 @@ static void Startup_Empty_Array(void)
     Freeze_Array_Deep(a);
     PG_2_Blanks_Array = a;
   }
+
+    PG_Inaccessible_Varlist = Make_Array_Core(
+        1,
+        FLAG_FLAVOR(VARLIST)
+            | NODE_FLAG_MANAGED
+            | SERIES_FLAG_INACCESSIBLE
+    );
 }
 
 
