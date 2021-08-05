@@ -351,8 +351,8 @@ reorder: enclose :reorder* func* [f] [
 ; UPARSE's design when it hardens.  For now these routines provide some amount
 ; of interface parity with UPARSE.
 ;
-parse: :parse*/fully
-parse?: chain [:parse | :then?]
+parse: :parse*/fully  ; could be more complex definition (UPARSE is!)
+parse?: chain [:parse*/fully | :then?]
 match-parse: enclose :parse func* [f] [
     let input: f.input
     do f then [input]

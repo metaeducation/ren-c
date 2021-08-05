@@ -2029,7 +2029,7 @@ match-uparse: comment [redescribe [  ; redescribe not working at te moment (?)
     ]
 )
 
-uparse?: chain [:uparse* | :then?]
+uparse?: chain [:uparse*/fully | :then?]  ; UPARSE adds more than UPARSE*/FULLY
 
 
 === REBOL2/R3-ALPHA/RED COMPATIBILITY ===
