@@ -1943,11 +1943,24 @@ uparse*: func [
         [map!]
     /case "Do case-sensitive matching"
     /fully "Return NULL if the end of series is not reached"
+    /part "FAKE /PART FEATURE - runs on a copy of the series!"
+        [integer! any-series!]
 
     /verbose "Print some additional debug information"
 
     <local> collecting (null) gathering (null)
 ][
+    ; !!! Red has a /PART feature and so in order to run the tests pertaining
+    ; to that we go ahead and fake it.  Actually implementing /PART would be
+    ; quite a tax on the combinators...so thinking about a system-wide slice
+    ; capability would be more sensible.  The series will not have the same
+    ; identity, so mutating operations will mutate the wrong series...we
+    ; could copy back, but that just shows what a slippery slope this is.
+    ;
+    if part [
+        series: copy/part series part
+    ]
+
     combinators: default [default-combinators]
 
     ; The COMBINATOR definition makes a function which is hooked with code
