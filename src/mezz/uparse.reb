@@ -1289,6 +1289,13 @@ default-combinators: make map! reduce [
     ;
     ; !!! These follow a simple pattern, could generate at a higher level.
 
+    meta! combinator [
+        return: "Meta quoted" [<opt> bad-word! quoted!]
+        parser [action!]
+    ][
+        [# (remainder)]: ^ parser input
+    ]
+
     meta-word! combinator [
         return: "Meta quoted" [<opt> any-value!]
         value [meta-word!]
