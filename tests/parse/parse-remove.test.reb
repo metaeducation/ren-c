@@ -5,8 +5,7 @@
 
 (did all [
     uparse? text: "a ^/ " [
-        while [newline remove [to end] | "a" [remove [to newline]] | skip]
+        while [newline remove [to <end>] | "a" [remove [to newline]] | skip]
     ]
     text = "a^/"
 ])
-

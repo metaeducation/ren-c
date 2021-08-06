@@ -12,7 +12,7 @@
     count-up n 512 [
         if n = 1 [continue]
 
-        if not uparse? (append copy "" make char! n - 1) [c: any-char end] [
+        if not uparse? (append copy "" make char! n - 1) [c: any-char <end>] [
             fail "Parse didn't work"
         ]
         if c != make char! n - 1 [fail "Char didn't match"]

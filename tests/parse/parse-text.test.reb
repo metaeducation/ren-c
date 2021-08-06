@@ -67,13 +67,13 @@
 
     (uparse? bincat [{c😺t}])
 
-    (not uparse?/case bincat [{c😺t} end])
+    (not uparse?/case bincat [{c😺t} <end>])
 ]
 
 (
     test: to-binary {The C😺T Test}
     did all [
-        uparse? test [to {c😺t} x: across to space to end]
+        uparse? test [to {c😺t} x: across to space to <end>]
         x = #{43F09F98BA54}
         "C😺T" = to-text x
     ]

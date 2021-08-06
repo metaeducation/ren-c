@@ -35,7 +35,7 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    uparse "a" [while [(i: i + 1 j: if i = 2 [[end skip]]) j]]
+    uparse "a" [while [(i: i + 1 j: if i = 2 [[<end> skip]]) j]]
     i == 2
 )
 

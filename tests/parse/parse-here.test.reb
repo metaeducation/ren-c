@@ -48,11 +48,11 @@
 ; PATH! cannot be PARSE'd due to restrictions of the implementation
 (
     a-value: first [a/b]
-    uparse as block! a-value [b-value: here]
+    uparse as block! a-value [b-value: <here>]
     a-value = to path! b-value
 )
 (
     a-value: first [()]
-    uparse a-value [b-value: here]
+    uparse a-value [b-value: <here>]
     same? a-value b-value
 )

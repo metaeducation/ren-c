@@ -1664,11 +1664,13 @@ default-combinators: make map! reduce [
 
 === COMPATIBILITY FOR NON-TAG KEYWORD FORMS ===
 
-; For now, bridge to what people are used to; but these aliases will likely
-; not be included by default.
+; !!! This has been deprecated.  But it's currently possible to get this
+; just by saying `end: <end>` and `here: <here>`.
 
-default-combinators.('here): :default-combinators.<here>
-default-combinators.('end): :default-combinators.<end>
+comment [
+    default-combinators.('here): :default-combinators.<here>
+    default-combinators.('end): :default-combinators.<end>
+]
 
 
 non-comma: func [

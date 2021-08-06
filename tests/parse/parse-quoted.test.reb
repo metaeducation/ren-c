@@ -4,7 +4,7 @@
 
 (
     did all [
-        pos: uparse* [... [a b]] [to '[a b], here]
+        pos: uparse* [... [a b]] [to '[a b], <here>]
         pos = [[a b]]
     ]
 )
@@ -13,7 +13,7 @@
 
 ; !!! Review: how do we go INTO a QUOTED! series?
 ;
-;   pos: uparse* [''[1 + 2]] [into quoted! [copy x to end], here]
+;   pos: uparse* [''[1 + 2]] [into quoted! [copy x to <end>], <here>]
 ;   [] == pos
 ;   x == [1 + 2]
 ;

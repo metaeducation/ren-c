@@ -156,7 +156,7 @@
                 b: collect [keep across 2 integer!]
                 keep integer!
             ]
-            end
+            <end>
         ]
 
         a = [1 4]
@@ -174,7 +174,7 @@
                 keep (second [A [<pick> <me>] B])
                 keep integer!
             ]
-            here
+            <here>
         ]
         [3] = pos
         x = [1 <pick> <me> 2]
@@ -186,13 +186,13 @@
                 keep ^(second [A [<pick> <me>] B])
                 keep integer!
             ]
-            here
+            <here>
         ]
         [3] = pos
         x = [1 [<pick> <me>] 2]
     ])
     (did all [
-        uparse? [1 2 3] [x: collect [keep ^([a b c]) to end]]
+        uparse? [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
         x = [[a b c]]
     ])
 ]
@@ -207,7 +207,7 @@
     ])
 
     (did all [
-        uparse? "aaabbb" [x: collect [keep across to "b"] to end]
+        uparse? "aaabbb" [x: collect [keep across to "b"] to <end>]
         x = ["aaa"]
     ])
 

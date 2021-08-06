@@ -483,7 +483,7 @@ ctx-zip: context [
                 ; into local variables for this function.
                 ;
                 central-directory-entry-rule
-                central-file-end: here
+                central-file-end: <here>
 
                 (info [name])
 

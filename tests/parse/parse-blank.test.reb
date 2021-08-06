@@ -5,7 +5,7 @@
 ;
 ;    >> uparse? [x <y> "z"] [_ _ _]
 ;    == #[true]
-; 
+;
 ; This idea runs up against the notion of BLANK! as a rule meaning "opt out"
 ; and act the same as an empty block.
 ;
@@ -23,7 +23,7 @@
 ; and for the moment literal blanks have no behavior.
 
 (uparse? [x] ['x blank])
-(uparse? [x] [blank 'x end])
+(uparse? [x] [blank 'x <end>])
 
 (uparse? [] [blank blank blank])
 
