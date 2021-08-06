@@ -651,7 +651,7 @@ default-combinators: make map! reduce [
         ; supplied parser rule, then we advance past the item.
         ;
         any [
-            not [result subseries]: subparser subseries
+            (null? [result' subseries]: ^ subparser subseries)
             not tail? subseries
         ] then [
             return null
