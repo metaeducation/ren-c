@@ -1457,9 +1457,18 @@ default-combinators: make map! reduce [
         value [word!]
         <local> r c result parser
     ][
-        r: get value else [
+        r: case [
+            ; !!! The CHAR!=ISSUE! => TOKEN! change has not really been fully
+            ; finished, which is bad.  Work around it by making CHAR! a
+            ; synonym for ISSUE!, instead of the "type constraint" META-WORD!
+            ;
+            value = 'char! [issue!]
+            true @[get value]
+        ]
+        else [
             fail "WORD! fetches cannot be NULL in UPARSE (use BLANK!)"
         ]
+
         if blank? :r [  ; no-op; fetching a blank acts just like []
             set remainder input
             return ~void~
