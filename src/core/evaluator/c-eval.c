@@ -1224,7 +1224,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     // It supports `_` in slots whose results you don't want to ask for, `#`
     // in slots you want to ask for (but don't want to name), will evaluate
-    // GROUP!s, and also allows meta-word to `@circle` which result you want
+    // GROUP!s, and also allows THE-WORD! to `@circle` which result you want
     // to be the overall result of the expression (defaults to the normal
     // main return value).
 
@@ -1259,19 +1259,19 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         REBSPC *derived = Derive_Specifier(v_specifier, v);
         for (; tail != check; ++check) {
             //
-            // META-WORD! or META-PATH! are used to mark which result should be
-            // the overall return of the expression.  But a GROUP! can't
-            // resolve to that and make the decision, so handle it up front.
+            // THE-XXX! types are used to mark which result should be the
+            // overall return of the expression.  But a GROUP! can't resolve
+            // to that and make the decision, so handle it up front.
             //
-            if (ANY_META_KIND(VAL_TYPE(check))) {
+            if (ANY_THE_KIND(VAL_TYPE(check))) {
                 if (circled)
                     fail ("Can't circle more than one multi-return result");
                 circled = true;
             }
             if (
-                IS_META_WORD(check)
-                or IS_META_PATH(check)
-                or IS_META_TUPLE(check)
+                IS_THE_WORD(check)
+                or IS_THE_PATH(check)
+                or IS_THE_TUPLE(check)
             ){
                 Derelativize(DS_PUSH(), check, v_specifier);
                 Plainify(DS_TOP);
@@ -1280,7 +1280,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             }
             const RELVAL *item;
             REBSPC *specifier;
-            if (IS_GROUP(check) or IS_META_GROUP(check)) {
+            if (IS_GROUP(check) or IS_THE_GROUP(check)) {
                 if (Do_Any_Array_At_Throws(f_spare, check, derived)) {
                     Move_Cell(f->out, f_spare);
                     DS_DROP_TO(f->dsp_orig);
@@ -1300,12 +1300,12 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             }
             else if (Is_Blackhole(item)) {
                 //
-                // !!! If someone writes `[... ^(#) ...]: ...`, then there is
+                // !!! If someone writes `[... @(#) ...]: ...`, then there is
                 // a problem if it's not the first slot; as the function needs
                 // a variable location to write the result to.  For now, just
                 // fabricate a LET variable.
                 //
-                if (DSP == f->dsp_orig or not IS_META_GROUP(check))
+                if (DSP == f->dsp_orig or not IS_THE_GROUP(check))
                     Init_Blackhole(DS_PUSH());
                 else {
                     REBVAL *let = rebValue("let temp");
@@ -1320,7 +1320,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             else
                 fail ("SET-BLOCK! elements are WORD/PATH/TUPLE/BLANK/ISSUE");
 
-            if (IS_META_GROUP(check))
+            if (IS_THE_GROUP(check))
                 SET_CELL_FLAG(DS_TOP, STACK_NOTE_CIRCLED);
         }
 

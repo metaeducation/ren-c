@@ -1163,7 +1163,7 @@ default-combinators: make map! reduce [
             return input.1
         ][
             any [
-                [item (remainder) ^error]: transcode input
+                [item (remainder) @error]: transcode input
                 value != type of :item
             ] then [
                 return null

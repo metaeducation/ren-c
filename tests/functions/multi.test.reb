@@ -55,13 +55,13 @@
         h = <z-result>
     ])
 
-    ; "Circling" results using SYM-XXX! is a way of making the overall
+    ; "Circling" results using THE-XXX! is a way of making the overall
     ; multi-return result of the expression come from another output.
 
     (
         a: b: c: null
         did all [
-            <y-result> = [a ^b c]: test 1020
+            <y-result> = [a @b c]: test 1020
             a = 304
             b = <y-result>
             c = <z-result>
@@ -69,7 +69,7 @@
     )(
         a: b: c: null
         did all [
-            304 = [^a b c]: test 1020
+            304 = [@a b c]: test 1020
             a = 304
             b = <y-result>
             c = <z-result>
@@ -77,7 +77,7 @@
     )(
         a: b: c: null
         did all [
-            <z-result> = [a b ^(first [c])]: test 1020
+            <z-result> = [a b @(first [c])]: test 1020
             a = 304
             b = <y-result>
             c = <z-result>
@@ -85,7 +85,7 @@
     )(
         a: b: c: null
         did all [
-            <z-result> = [a b ^(#)]: test 1020
+            <z-result> = [a b @(#)]: test 1020
             a = 304
             b = <y-result>
             c = null
