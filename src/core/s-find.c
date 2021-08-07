@@ -155,7 +155,21 @@ REBLEN Find_Binstr_In_Binstr(
     REBSIZ size2;
     REBLEN len2;
     const REBYTE* head2;
-    if (is_2_str) {
+    if (IS_CHAR_CELL(binstr2) and VAL_CHAR(binstr2) == 0) {
+        //
+        // !!! Inelegant handling of `find #{00} #`, which should work, while
+        // `find "" #` should not happen as NUL cannot exist in TEXT!, only
+        // in BINARY!.
+        //
+        assert(CELL_KIND(binstr1) == REB_BINARY);
+        head2 = cast(const REBYTE*, "\0");
+        size2 = 1;
+        if (limit2 < size2)
+            size2 = limit2;
+        len2 = 1;
+        is_2_str = false;
+    }
+    else if (is_2_str) {
         head2 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
             &len2,
             &size2,
@@ -248,8 +262,12 @@ REBLEN Find_Binstr_In_Binstr(
         next2 = Back_Scan_UTF8_Char_Unchecked(&c2_canon, head2);
     ++next2;
 
-    if (caseless)
-        c2_canon = LO_CASE(c2_canon);
+    if (caseless) {
+        if (c2_canon == 0)
+            assert(not is_1_str);
+        else
+            c2_canon = LO_CASE(c2_canon);
+    }
 
     REBUNI c1;  // c1 is the currently tested character for str1
     if (skip1 < 0) {
@@ -500,25 +518,30 @@ REBLEN Find_Value_In_Binstr(
     REBLEN flags,
     REBINT skip
 ){
-    enum Reb_Kind kind = CELL_KIND(pattern);
-    if (REB_BINARY == kind) {
+    enum Reb_Kind binstr_kind = CELL_KIND(binstr);
+    enum Reb_Kind pattern_kind = CELL_KIND(pattern);
+
+    if (REB_BINARY == pattern_kind) {
         //
         // Can't search for BINARY! in an ANY-STRING! (might match on a "half
         // codepoint").  Solution is to alias input as UTF-8 binary.
         //
-        if (CELL_KIND(binstr) != REB_BINARY)
+        if (binstr_kind != REB_BINARY)
             fail (Error_Find_String_Binary_Raw());
         goto find_binstr_in_binstr;
     }
 
     if (
-        ANY_STRING_KIND(kind)
-        or ANY_WORD_KIND(kind)
-        or REB_INTEGER == kind  // `find "ab10cd" 10` -> "10cd"
-        or REB_ISSUE == kind
+        ANY_STRING_KIND(pattern_kind)
+        or ANY_WORD_KIND(pattern_kind)
+        or REB_INTEGER == pattern_kind  // `find "ab10cd" 10` -> "10cd"
+        or REB_ISSUE == pattern_kind
     ){
-        if (IS_CHAR_CELL(pattern) and VAL_CHAR(pattern) == 0)
-            return NOT_FOUND;  // can't find # in strings, only BINARY!
+        if (binstr_kind != REB_BINARY and (
+            IS_CHAR_CELL(pattern) and VAL_CHAR(pattern) == 0
+        )){
+            return NOT_FOUND;  // can't find NUL # in strings, only BINARY!
+        }
 
       find_binstr_in_binstr: ;
 
@@ -560,7 +583,7 @@ REBLEN Find_Value_In_Binstr(
 
         return result;
     }
-    else if (kind == REB_BITSET) {
+    else if (pattern_kind == REB_BITSET) {
         return Find_Bitset_In_Binstr(
             len,
             binstr,
