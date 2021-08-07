@@ -92,3 +92,13 @@
         ]
     )
 ]
+
+[
+    (
+        foo: func [return: [integer!] other: [integer!] arg] [
+            set other 10
+            return 20
+        ]
+        null? until [[# #]: foo break]
+    )
+]

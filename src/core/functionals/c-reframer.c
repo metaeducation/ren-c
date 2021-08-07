@@ -152,6 +152,7 @@ bool Make_Invokable_From_Feed_Throws(REBVAL *out, REBFED *feed)
 
     if (Process_Action_Throws(f)) {
         DROP_GC_GUARD(action);
+        Drop_Frame(f);
         return true;
     }
 
