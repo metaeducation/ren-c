@@ -900,21 +900,21 @@ default-combinators: make map! reduce [
     ][
         case [
             any-array? input [
-                if input.1 = value [
+                if input.1 == value [
                     set remainder next input
                     return input.1
                 ]
                 return null
             ]
             any-string? input [
-                if set remainder find/match input value [
+                if set remainder find/match/case input value [
                     return value
                 ]
                 return null
             ]
             true [
                 assert [binary? input]
-                if set remainder find/match input as binary! value [
+                if set remainder find/match/case input value [
                     return value
                 ]
                 return null
