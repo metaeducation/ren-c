@@ -617,7 +617,7 @@ default-combinators: make map! reduce [
             [<opt> any-value!]
         parser [action!]  ; !!! Easier expression of value-bearing parser?
         subparser [action!]
-        <local> subseries result
+        <local> subseries result'
     ][
         ([subseries (remainder)]: ^ parser input) else [
             ;
@@ -656,7 +656,7 @@ default-combinators: make map! reduce [
         ] then [
             return null
         ]
-        return result
+        return unmeta result'
     ]
 
     === COLLECT AND KEEP ===
