@@ -14,6 +14,15 @@
 ;         x = null
 ;     ]
 
+[
+    (uparse? [] [while 'a])
+    (uparse? [] [while 'b])
+    (uparse? [a] [while 'a])
+    (not uparse? [a] [while 'b])
+    (uparse? [a] [while 'b <any>])
+    (uparse? [a b a b] [while ['b | 'a]])
+]
+
 [(
     x: ~
     did all [
@@ -49,3 +58,38 @@
     uparse "a" [while [(i: i + 1 j: try if i = 2 [[false]]) j]]
     i == 2
 )]
+
+
+[
+    (uparse? "" [while #a])
+    (uparse? "" [while #b])
+    (uparse? "a" [while #a])
+    (not uparse? "a" [while #b])
+    (uparse? "a" [while #b <any>])
+    (uparse? "abab" [while [#b | #a]])
+]
+
+; WHILE tests from %parse-test.red
+[
+    (
+        x: blank
+        true
+    )
+    (uparse? #{020406} [while [x: across <any> :(even? first x)]])
+    (not uparse? #{01} [x: across <any> :(even? first x)])
+    (not uparse? #{0105} [some [x: across <any> :(even? first x)]])
+    (uparse? #{} [while #{0A}])
+    (uparse? #{} [while #{0B}])
+    (uparse? #{0A} [while #{0A}])
+    (not uparse? #{0A} [while #{0B}])
+    (uparse? #{0A} [while #{0B} <any>])
+    (uparse? #{0A0B0A0B} [while [#{0B} | #{0A}]])
+    (error? trap [uparse? #{} [ahead]])
+    (uparse? #{0A} [ahead #{0A} #{0A}])
+    (uparse? #{01} [ahead [#{0A} | #"^A"] <any>])
+]
+
+[
+    (uparse? [a a] [while ['a]])
+    (uparse? [a a] [some ['a] while ['b]])
+]

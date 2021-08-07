@@ -20,3 +20,63 @@
     uparse "" [(i: 0) 3 [["a" |] (i: i + 1)]]
     i == 3
 )]
+
+[https://github.com/red/red/issues/4591
+    (uparse? [] [0 [ignore me]])
+    (uparse? [] [0 "ignore me"])
+    (uparse? [] [0 0 [ignore me]])
+    (uparse? [] [0 0 "ignore me"])
+    (not uparse? [x] [0 0 'x])
+    (not uparse? " " [0 0 space])
+]
+
+[https://github.com/red/red/issues/564
+    (not uparse? "a" [0 <any>])
+    (uparse? "a" [0 <any> #a])
+    (
+        z: ~
+        did all [
+            not uparse? "a" [z: across 0 <any>]
+            z = ""
+        ]
+    )
+]
+
+[https://github.com/red/red/issues/564
+    (not uparse? [a] [0 <any>])
+    (uparse? [a] [0 <any> 'a])
+    (
+        z: ~
+        did all [
+            not uparse? [a] [z: across 0 <any>]
+            z = []
+        ]
+    )
+]
+
+[
+    (not uparse? [a a] [1 ['a]])
+    (uparse? [a a] [2 ['a]])
+    (not uparse? [a a] [3 ['a]])
+
+    ; (not uparse? [a a] [1 1 ['a]])
+    ; (uparse? [a a] [1 2 ['a]])
+    ; (uparse? [a a] [2 2 ['a]])
+    ; (uparse? [a a] [2 3 ['a]])
+    ; (not uparse? [a a] [3 4 ['a]])
+
+    (not uparse? [a a] [1 'a])
+    (uparse? [a a] [2 'a])
+    (not uparse? [a a] [3 'a])
+    (not uparse? [a a] [1 1 'a])
+
+    ; (uparse? [a a] [1 2 'a])
+    ; (uparse? [a a] [2 2 'a])
+    ; (uparse? [a a] [2 3 'a])
+    ; (not uparse? [a a] [3 4 'a])
+]
+
+[
+    (uparse? [a a b b] [2 'a 2 'b])
+    (not uparse? [a a b b] [2 'a 3 'b])
+]

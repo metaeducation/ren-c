@@ -42,3 +42,50 @@
         ]
     )
 ]
+
+[
+    (
+        res: ~
+        did all [
+            uparse? [b a a a c] [<any> res: some 'a 'c]
+            res = 'a
+        ]
+    )
+    (
+        res: ~
+        wa: ['a]
+        did all [
+            uparse? [b a a a c] [<any> res: some wa 'c]
+            res = 'a
+        ]
+    )
+]
+
+[
+    (uparse? [a a] [some ['a]])
+    (not uparse? [a a] [some ['a] 'b])
+    (uparse? [a a b a b b b a] [some [<any>]])
+    (uparse? [a a b a b b b a] [some ['a | 'b]])
+    (not uparse? [a a b a b b b a] [some ['a | 'c]])
+    (uparse? [a a b b] [some 'a some 'b])
+    (not uparse? [a a b b] [some 'a some 'c])
+    (uparse? [b a a a c] [<any> some ['a] 'c])
+]
+
+[
+    (uparse? "aa" [some [#a]])
+    (not uparse? "aa" [some [#a] #b])
+    (uparse? "aababbba" [some [<any>]])
+    (uparse? "aababbba" [some ["a" | "b"]])
+    (not uparse? "aababbba" [some ["a" | #c]])
+
+    (uparse? "aabb" [some #a some "b"])
+    (not uparse? "aabb" [some "a" some #c])
+]
+
+[https://github.com/red/red/issues/3108
+    (uparse? [1] [some further [to <end>]])
+    (uparse? [1] [some further [to [<end>]]])
+]
+
+(uparse? "baaac" [<any> some [#a] #c])

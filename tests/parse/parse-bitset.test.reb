@@ -19,3 +19,53 @@
     ]
     true
 )]
+
+; With strings, BITSET! acts as charset
+; (from %parse-test.red)
+[
+    (
+        bs: charset [not 1 - 3 #"^/" - #"^O"]
+        wbs: [bs]
+        wbs2: reduce wbs
+        true
+    )
+    (not uparse? #{0A0B0C} [some bs])
+    (not uparse? #{010203} [some bs])
+    (uparse? #{070809} [some bs])
+    (not uparse? #{0A0B0C} [bs bs bs])
+    (not uparse? #{010203} [bs bs bs])
+    (uparse? #{070809} [bs bs bs])
+    (
+        digit: charset [0 - 9]
+        did all [
+            uparse? #{0BADCAFE010203} [to digit p: <here> 3 <any>]
+            p = #{010203}
+        ]
+    )
+]
+
+; With BINARY!, bitset acts as byteset
+[
+    (
+        bs: charset [16 - 31 #"^/" - #"^O"]
+        wbs: [bs]
+        wbs2: reduce wbs
+        true
+    )
+    (uparse? #{0A0B0C} [some bs])
+    (not uparse? #{010203} [some bs])
+    (uparse? #{0A0B0C} [some [bs]])
+    (not uparse? #{010203} [some [bs]])
+    (uparse? #{0A0B0C} [some wbs])
+    (not uparse? #{010203} [some wbs])
+    (uparse? #{0A0B0C} [some wbs2])
+    (not uparse? #{010203} [some wbs2])
+    (uparse? #{0A0B0C} [bs bs bs])
+    (not uparse? #{010203} [bs bs bs])
+    (uparse? #{0A0B0C} [[bs] [bs] [bs]])
+    (not uparse? #{010203} [[bs] [bs] [bs]])
+    (uparse? #{0A0B0C} [wbs wbs wbs])
+    (not uparse? #{010203} [wbs wbs wbs])
+    (uparse? #{0A0B0C} [wbs2 wbs2 wbs2])
+    (not uparse? #{010203} [wbs2 wbs2 wbs2])
+]

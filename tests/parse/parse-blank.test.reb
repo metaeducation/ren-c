@@ -35,3 +35,60 @@
 )
 
 (uparse? [] [[[blank blank blank]]])
+
+[
+    (uparse? [] [blank])
+    (uparse? [a] [<any> blank])
+    (uparse? [a] [blank <any> blank])
+    (uparse? [a] ['a blank])
+    (uparse? [a] [blank 'a blank])
+    (
+        wa: ['a]
+        uparse? [a] [wa blank]
+    )
+    (
+        wa: ['a]
+        uparse? [a] [blank wa blank]
+    )
+    (uparse? [a] [['b | blank] 'a])
+    (uparse? [a] [['b | [blank]] 'a])
+    (uparse? [a] [[['b | [blank]]] 'a])
+]
+
+[
+    (uparse? "" [blank])
+    (uparse? "a" [<any> blank])
+    (uparse? "a" [blank <any> blank])
+    (uparse? "a" [#a blank])
+    (uparse? "a" [blank #a blank])
+    (
+        wa: [#a]
+        uparse? "a" [wa blank]
+    )
+    (
+        wa: [#a]
+        uparse? "a" [blank wa blank]
+    )
+    (uparse? "a" [[#b | blank] #a])
+    (uparse? "a" [[#b | [blank]] #a])
+    (uparse? "a" [[[#b | [blank]]] #a])
+]
+
+[
+    (uparse? #{} [blank])
+    (uparse? #{0A} [<any> blank])
+    (uparse? #{0A} [blank <any> blank])
+    (uparse? #{0A} [#{0A} blank])
+    (uparse? #{0A} [blank #{0A} blank])
+    (
+        wa: [#{0A}]
+        uparse? #{0A} [wa blank]
+    )
+    (
+        wa: [#{0A}]
+        uparse? #{0A} [blank wa blank]
+    )
+    (uparse? #{0A} [[#{0B} | blank] #{0A}])
+    (uparse? #{0A} [[#{0B} | [blank]] #{0A}])
+    (uparse? #{0A} [[[#{0B} | [blank]]] #{0A}])
+]

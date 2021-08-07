@@ -63,3 +63,14 @@
         t = <foo>
     ]
 )]
+
+[https://github.com/red/red/issues/4318
+    (
+        x4318: 0
+        did all [
+            error? trap [uparse? [] [x4318: across]]
+            error? trap [uparse? [] [x4318:]]
+            zero? x4318
+        ]
+    )
+]

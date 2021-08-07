@@ -24,6 +24,37 @@
 ]
 
 
+; Returns last value
+[
+    (
+        wa: ['a]
+        true
+    )
+    (
+        res: 0
+        did all [
+            uparse? [a] [res: wa]
+            res = 'a
+        ]
+    )
+    (
+        res: 0
+        did all [
+            uparse? [a a] [res: 2 wa]
+            res = 'a
+        ]
+    )
+]
+
+; | means alternate clause
+[
+    (not uparse? [a b] ['b | 'a])
+    (uparse? [#a] [[#b | #a]])
+    (not uparse? [a b] [['b | 'a]])
+    (uparse? [a b] [['a | 'b] ['b | 'a]])
+]
+
+
 ; a BLOCK! rule combined with SET-WORD! will evaluate to the last value-bearing
 ; result in the rule.  This provides compatibility with the historical idea
 ; of doing Redbol rules like `set var [integer! | text!]`, but in that case
@@ -104,3 +135,21 @@
     a: [a]
     error? trap [uparse [] a]
 )]
+
+
+[
+    (
+        res: ~
+        did all [
+            uparse? [a a b] [<any> res: ['a | 'b] <any>]
+            res = 'a
+        ]
+    )
+    (
+        res: '~before~
+        did all [
+            not uparse? [a] [res: ['c | 'b]]
+            res = '~before~
+        ]
+    )
+]

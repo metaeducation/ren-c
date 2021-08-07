@@ -10,10 +10,13 @@
 > * Copyright 2013 Saphirion AG
 > * Copyright 2013-2017 Ren-C Open Source Contributors
 >
+> Some PARSE tests were copied or derived from [%parse-test.red][3], which was BSD-3 Licensed and "Copyright (C) 2011-2015 Red Foundation."  See notes in %parse/README.md for more details. 
+>
 > This README was originally written by Ladislav Mecir.
 
 [1]: https://github.com/rebolsource/rebol-test
 [2]: http://www.apache.org/licenses/LICENSE-2.0
+[3]: https://github.com/red/red/blob/master/tests/source/units/parse-test.red
 
 
 # Running the Tests

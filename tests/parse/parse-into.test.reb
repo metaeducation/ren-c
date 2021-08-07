@@ -4,6 +4,17 @@
 ; the thing to recurse the parser into...which can generate a new series, as
 ; well as pick one out of a block.
 
+[
+    (uparse? [[]] [into any-series! []])
+    (uparse? [[a]] [into any-series! ['a]])
+    (uparse? [b [a] c] ['b into any-series! ['a] 'c])
+    (uparse? ["a"] [into any-series! [#a]])
+    (uparse? [b "a" c] ['b into any-series! ["a"] 'c])
+    (uparse? [["a"]] [into block! [into any-series! [#a]]])
+    (not uparse? [[a]] [into any-series! ['a 'b]])
+    (not uparse? [[a]] [into any-series! [some 'b]])
+    (uparse? [[a]] [into any-series! ['a 'b] | block!])
+]
 
 (uparse? ["aa"] [into text! ["a" "a"]])
 
@@ -92,3 +103,8 @@
 ; INTO is not legal if a string uparse is already running
 ;
 (error? trap [uparse "aa" [into ["a" "a"]]])
+
+; Manual INTO via a recursion
+[
+    (uparse? [a "test"] ['a s: text! (assert [uparse? s [4 <any>]])])
+]

@@ -9,6 +9,10 @@
 ;
 ("" = uparse "" [""])
 
+(uparse? ["hello"] ["hello"])
+
+(uparse? "a" ["a"])
+(uparse? "ab" ["ab"])
 (uparse? "abc" ["abc"])
 (uparse? "abc" ["abc" <end>])
 
@@ -78,3 +82,71 @@
         "C😺T" = to-text x
     ]
 )
+
+[https://github.com/red/red/issues/678
+    (uparse? "catcatcatcat" [4 "cat"])
+    (uparse? "catcatcat" [3 "cat"])
+    (uparse? "catcat" [2 "cat"])
+    (not uparse? "cat" [4 "cat"])
+    (not uparse? "cat" [3 "cat"])
+    (not uparse? "cat" [2 "cat"])
+    (uparse? "cat" [1 "cat"])
+]
+
+; String casing
+[
+    (uparse? "a" ["A"])
+    (not uparse? "a" [#A])
+    (not uparse?/case "a" ["A"])
+    (not uparse?/case "a" [#A])
+    (uparse?/case "a" ["a"])
+    (uparse?/case "a" [#a])
+    (uparse?/case "A" ["A"])
+    (uparse?/case "A" [#A])
+    (uparse? "TeSt" ["test"])
+    (not uparse?/case "TeSt" ["test"])
+    (uparse?/case "TeSt" ["TeSt"])
+]
+
+; String unicode
+[
+    (uparse? "abcdé" [#a #b #c #d #é])
+    (uparse? "abcdé" ["abcdé"])
+    (not uparse? "abcde" [#a #b #c #d #é])
+    (uparse? "abcdé" [#a #b #c #d #é])
+    (uparse? "abcdé✐" [#a #b #c #d #é #"✐"])
+    (uparse? "abcdé✐" ["abcdé✐"])
+    (not uparse? "abcdé" ["abcdé✐"])
+    (not uparse? "ab✐cdé" ["abcdé✐"])
+    (not uparse? "abcdé✐" ["abcdé"])
+    (uparse? "✐abcdé" ["✐abcdé"])
+    (uparse? "abcdé✐𐀀" [#a #b #c #d #é #"✐" #"𐀀"])
+    (uparse? "ab𐀀cdé✐" ["ab𐀀cdé✐"])
+    (not uparse? "abcdé" ["abc𐀀dé"])
+    (not uparse? "𐀀abcdé" ["a𐀀bcdé"])
+    (not uparse? "abcdé𐀀" ["abcdé"])
+    (uparse? "𐀀abcdé" ["𐀀abcdé"])
+]
+
+[
+    (
+        str: "Lorem ipsum dolor sit amet."
+        true
+    )
+
+    (uparse? str [thru "amet" <any>])
+    (
+        res: ~
+        did all [
+            uparse? str [thru "ipsum" <any> res: across to #" " to <end>]
+            res = "dolor"
+        ]
+    )
+    (
+        res: ~
+        did all [
+            uparse? str [thru #p res: <here> to <end>]
+            9 = index? res
+        ]
+    )
+]
