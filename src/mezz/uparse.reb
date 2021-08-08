@@ -1176,7 +1176,16 @@ default-combinators: make map! reduce [
             return input.1
         ][
             any [
-                [item (remainder) @error]: transcode input
+                ; !!! Not all errors are recoverable in transcode, so some
+                ; actually fail vs. return an error, e.g.:
+                ;
+                ;     uparse? to binary! "#(" [blank!]
+                ;
+                ; So we actually need this TRAP here.  Review.
+                ;
+                trap [
+                    [item (remainder) @error]: transcode input
+                ]
                 value != type of :item
             ] then [
                 return null
