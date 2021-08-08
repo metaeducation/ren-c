@@ -591,7 +591,7 @@ REB_R Init_Thrown_Unwind_Value(
 //      level "Frame, action, or index to exit from"
 //          [frame! action! integer!]
 //      result "Result for enclosing state"
-//          [<opt> <end> any-value!]
+//          [<opt> <end> <meta> any-value!]
 //  ]
 //
 REBNATIVE(unwind)
@@ -606,10 +606,13 @@ REBNATIVE(unwind)
 {
     INCLUDE_PARAMS_OF_UNWIND;
 
-    if (IS_ENDISH_NULLED(ARG(result)))
-        Init_Void(ARG(result));
+    REBVAL *v = ARG(result);
+    Meta_Unquotify(v);
 
-    return Init_Thrown_Unwind_Value(D_OUT, ARG(level), ARG(result), frame_);
+    if (IS_ENDISH_NULLED(v))
+        Init_Void(v);
+
+    return Init_Thrown_Unwind_Value(D_OUT, ARG(level), v, frame_);
 }
 
 
