@@ -1062,6 +1062,19 @@ default-combinators: make map! reduce [
         return [# (remainder)]: parser state input (to binary! unquote value)
     ]
 
+    'the combinator [
+        return: "Literal value" [<opt> any-value!]
+        'value [any-value!]
+        <local> comb
+    ][
+        ; Though generic quoting exists, being able to say [the ''x] instead
+        ; of ['''x] may be clarifying when trying to match ''x (for instance)
+
+        comb: :(state.combinators).(quoted!)
+        [# (remainder)]: comb state input ^value
+    ]
+
+
     === LOGIC! COMBINATOR ===
 
     ; Handling of LOGIC! in Ren-C replaces the idea of FAIL, because a logic
