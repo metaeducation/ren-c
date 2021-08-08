@@ -516,6 +516,74 @@ REBNATIVE(func_p)
 
 
 //
+//  endable?: native [
+//
+//  {Tell whether a parameter is registered as <end> or not}
+//
+//      parameter [word!]
+//  ]
+//
+REBNATIVE(endable_q)
+//
+// !!! The general mechanics by which parameter properties are extracted have
+// not been designed.  This extraction feature was added to support making
+// semi-"variadic" combinators in UPARSE, but better is needed.
+{
+    INCLUDE_PARAMS_OF_ENDABLE_Q;
+
+    REBVAL *v = ARG(parameter);
+
+    if (not Did_Get_Binding_Of(D_SPARE, v))
+        fail (PAR(parameter));
+
+    if (not IS_FRAME(D_SPARE))
+        fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
+
+    REBCTX *ctx = VAL_CONTEXT(D_SPARE);
+    REBACT *act = CTX_FRAME_ACTION(ctx);
+
+    REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
+    bool endable = GET_PARAM_FLAG(param, ENDABLE);
+
+    return Init_Logic(D_OUT, endable);
+}
+
+
+//
+//  skippable?: native [
+//
+//  {Tell whether a parameter is registered as <skip> or not}
+//
+//      parameter [word!]
+//  ]
+//
+REBNATIVE(skippable_q)
+//
+// !!! The general mechanics by which parameter properties are extracted have
+// not been designed.  This extraction feature was added to support making
+// combinators that could <skip> arguments in UPARSE, but better is needed.
+{
+    INCLUDE_PARAMS_OF_SKIPPABLE_Q;
+
+    REBVAL *v = ARG(parameter);
+
+    if (not Did_Get_Binding_Of(D_SPARE, v))
+        fail (PAR(parameter));
+
+    if (not IS_FRAME(D_SPARE))
+        fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
+
+    REBCTX *ctx = VAL_CONTEXT(D_SPARE);
+    REBACT *act = CTX_FRAME_ACTION(ctx);
+
+    REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
+    bool skippable = GET_PARAM_FLAG(param, SKIPPABLE);
+
+    return Init_Logic(D_OUT, skippable);
+}
+
+
+//
 //  Init_Thrown_Unwind_Value: C
 //
 // This routine generates a thrown signal that can be used to indicate a
