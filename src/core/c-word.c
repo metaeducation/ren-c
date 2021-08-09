@@ -606,6 +606,7 @@ void Startup_Symbols(REBARR *words)
         panic (Canon(SYM_OPEN));
 
     PG_Bar_Canon = Canon(SYM_BAR);  // used by PARSE for speedup
+    PG_Bar_Bar_Canon = Canon(SYM__B_B);  // used by PARSE for speedup
 }
 
 

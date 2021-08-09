@@ -148,3 +148,23 @@ inline static REBVAL *Init_Any_Word_Bound_Core(
 //
 inline static const REBSTR *Intern_Unsized_Managed(const char *utf8)
   { return Intern_UTF8_Managed(cb_cast(utf8), strsize(utf8)); }
+
+
+// It's fundamental to PARSE to recognize `|` and skip ahead to it to the end.
+// The debug build has enough checks on things like VAL_WORD_SYMBOL() that
+// it adds up when you already tested someting IS_WORD().  This reaches a
+// bit lower level to try and still have protections but speed up some--and
+// since there's no inlining in the debug build, FETCH_TO_BAR_OR_END=>macro
+//
+// !!! The quick check that was here was undermined by words no longer always
+// storing their symbols in the word; this will likely have to hit a keylist.
+//
+inline static bool IS_BAR(const RELVAL *v) {
+    return KIND3Q_BYTE_UNCHECKED(v) == REB_WORD
+        and VAL_WORD_SYMBOL(v) == PG_Bar_Canon;  // caseless | always canon
+}
+
+inline static bool IS_BAR_BAR(const RELVAL *v) {
+    return KIND3Q_BYTE_UNCHECKED(v) == REB_WORD
+        and VAL_WORD_SYMBOL(v) == PG_Bar_Bar_Canon;  // caseless || always canon
+}
