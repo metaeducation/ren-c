@@ -225,6 +225,7 @@
 %parse/parse-bitset.test.reb
 %parse/parse-blank.test.reb
 %parse/parse-block.test.reb
+%parse/parse-break.test.reb
 %parse/parse-change.test.reb
 %parse/parse-collect.test.reb
 %parse/parse-datatype.test.reb
@@ -249,6 +250,10 @@
 %parse/parse-set-word.test.reb
 %parse/parse-some.test.reb
 %parse/parse-skip.test.reb
+%parse/parse-stop.test.reb
+%parse/parse-tag-any.test.reb
+%parse/parse-tag-end.test.reb
+%parse/parse-tag-here.test.reb
 %parse/parse-tally.test.reb
 %parse/parse-text.test.reb
 %parse/parse-the-xxx.test.reb

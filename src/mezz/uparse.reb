@@ -257,9 +257,12 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> last-result' result' pos
     ][
+        append state.loops binding of 'return
+
         last-result': '~void~  ; `while [false]` => ~void~ isotope
         cycle [
             ([result' pos]: ^ parser input) else [
+                take/last state.loops
                 set remainder input  ; overall WHILE never fails (but REJECT?)
                 return unmeta last-result'
             ]
@@ -277,11 +280,15 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> last-result' result' pos
     ][
+        append state.loops binding of 'return
+
         ([last-result' input]: ^ parser input) else [
+            take/last state.loops
             return null
         ]
         cycle [  ; if first try succeeds, flip to same code as WHILE
             ([result' pos]: ^ parser input) else [
+                take/last state.loops
                 set remainder input
                 return unmeta last-result'
             ]
@@ -300,6 +307,8 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> count pos
     ][
+        append state.loops binding of 'return
+
         count: 0
         cycle [
             ; !!! We discard the result, but should it be available, e.g.
@@ -307,6 +316,7 @@ default-combinators: make map! reduce [
             ; so, then advanced would likely have to be done another way.  :-/
             ;
             ([# pos]: ^ parser input) else [
+                take/last state.loops
                 set remainder input
                 return count
             ]
@@ -315,6 +325,40 @@ default-combinators: make map! reduce [
         ]
         fail ~unreachable~
     ]
+
+    'break combinator [
+        {Break an iterated construct like WHILE or SOME, failing the match}
+        return: "Never returns"
+            []
+        <local> f
+    ][
+        f: take/last state.loops else [
+            fail "No PARSE iteration to BREAK"
+        ]
+
+        set f.remainder input
+        unwind f null
+    ]
+
+    'stop combinator [
+        {Break an iterated construct like WHILE or SOME, succeeding the match}
+        return: "Never returns"
+            []
+        parser [<end> action!]
+        <local> f result'
+    ][
+        f: take/last state.loops else [
+            fail "No PARSE iteration to STOP"
+        ]
+
+        result': '~void~  ; default `[stop]` return value as void isotope
+        if :parser [  ; parser argument is optional
+            ([result' input]: ^ parser input)
+        ]
+        set f.remainder input
+        unwind f unmeta result'
+    ]
+
 
     === MUTATING KEYWORDS ===
 
@@ -1099,8 +1143,10 @@ default-combinators: make map! reduce [
     === INTEGER! COMBINATOR ===
 
     ; !!! There's currently no way for an integer to be used to represent a
-    ; range of matches, e.g. between 1 and 10.  This would need skippable
-    ; parameters.  For now we just go for a plain repeat count.
+    ; range of matches, e.g. between 1 and 10.  That uses skippable parameters.
+    ; See the INTEGER! combinator for Redbol emulation for implementation.
+    ; For now we say plain UPARSE considers it more important that `[2 4 rule]`
+    ; be the same as `[2 [4 rule]]`, but this may (?) be rethought.
 
     integer! combinator [
         return: "Last parser result"
@@ -1109,6 +1155,9 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> result'
     ][
+        ; Note: REPEAT is considered a loop, but INTEGER!'s combinator is not.
+        ; Hence BREAK will not break a literal integer-specified loop
+
         result': '~void~  ; `0 <any>` => ~void~ isotope
         repeat value [
             ([result' input]: ^ parser input) else [
@@ -1126,7 +1175,12 @@ default-combinators: make map! reduce [
         parser [action!]
         <local> times' result'
     ][
-        ([times' input]: ^ times-parser input) else [return null]
+        append state.loops binding of 'return
+
+        ([times' input]: ^ times-parser input) else [
+            take/last state.loops
+            return null
+        ]
 
         if integer! <> type of unmeta times' [
             fail "REPEAT requires first synthesized argument to be an integer"
@@ -1135,9 +1189,11 @@ default-combinators: make map! reduce [
         result': '~void~  ; `repeat 0 <any>` => ~void~ isotope
         repeat unmeta times' [
             ([result' input]: ^ parser input) else [
+                take/last state.loops
                 return null
             ]
         ]
+        take/last state.loops
         set remainder input
         return unmeta result'
     ]
@@ -2022,8 +2078,10 @@ uparse*: func [
 
     /verbose "Print some additional debug information"
 
-    <local> collecting (null) gathering (null)
+    <local> collecting (null) gathering (null) loops
 ][
+    loops: copy []  ; need new loop copy each invocation
+
     ; !!! Red has a /PART feature and so in order to run the tests pertaining
     ; to that we go ahead and fake it.  Actually implementing /PART would be
     ; quite a tax on the combinators...so thinking about a system-wide slice
@@ -2058,7 +2116,10 @@ uparse*: func [
     f.value: rules
     f.remainder: let pos
 
-    let synthesized': ^(devoid do f) else [
+    let synthesized': ^(devoid do f)
+    assert [empty? state.loops]
+
+    if null? :synthesized' [
         return null  ; match failure (as opposed to success, w/null result)
     ]
 
@@ -2149,11 +2210,15 @@ append redbol-combinators reduce [
         parser [action!]
         <local> pos
     ][
+        append state.loops binding of 'return
+
         cycle [
             any [
                 else? ([# pos]: ^ parser input)  ; failed rule => not success
                 same? pos input  ; no progress => stop successfully
             ] then [
+                take/last state.loops
+
                 set remainder input
                 return ~any~
             ]
@@ -2168,10 +2233,13 @@ append redbol-combinators reduce [
         parser [action!]
         <local> pos
     ][
+        append state.loops binding of 'return
+
         any [
             else? ([# pos]: ^ parser input)  ; failed first => stop, not success
             same? pos input  ; no progress first => stop, not success
         ] then [
+            take/last state.loops
             return null
         ]
         input: pos  ; any future failings won't fail the overall rule
@@ -2180,6 +2248,7 @@ append redbol-combinators reduce [
                 else? ([# pos]: ^ parser input)  ; no match => stop, not success
                 same? pos input  ; no progress => stop successfully
             ] then [
+                take/last state.loops
                 set remainder input
                 return ~some~
             ]
@@ -2359,6 +2428,19 @@ append redbol-combinators reduce [
 redbol-combinators.('between): null
 redbol-combinators.('gather): null
 redbol-combinators.('emit): null
+
+; Ren-C rethought BREAK to mean soft failure, e.g. the looping construct of
+; WHILE or SOME or REPEAT will be NULL.  The precise meaning and behavior of
+; historical BREAK and REJECT is not very coherent:
+;
+;     red>> parse "aaa" [opt some ["a" reject] "aaa"]
+;     == false
+;
+;     red>> parse "aaa" [some ["a" reject] | "aaa"]
+;     == true
+;
+redbol-combinators.('break): :default-combinators.('stop)
+redbol-combinators.('reject): :default-combinators.('break)
 
 ; Red has COLLECT and KEEP, with different semantics--no rollback, and the
 ; overall parse result changes to the collect result vs. setting a variable.

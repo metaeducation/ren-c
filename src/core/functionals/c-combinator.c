@@ -71,7 +71,8 @@ enum {
     IDX_UPARSE_PARAM_PART,  // Note: Fake /PART at time of writing!
     IDX_UPARSE_PARAM_VERBOSE,
     IDX_UPARSE_PARAM_COLLECTING,
-    IDX_UPARSE_PARAM_GATHERING
+    IDX_UPARSE_PARAM_GATHERING,
+    IDX_UPARSE_PARAM_LOOPS
 };
 
 
@@ -434,13 +435,33 @@ REBNATIVE(some_combinator)
     REBVAL *remainder = ARG(remainder);
     REBVAL *parser = ARG(parser);
     REBVAL *input = ARG(input);
-    UNUSED(ARG(state));
 
-    if (Call_Parser_Throws(D_OUT, remainder, parser, input))
+    REBVAL *state = ARG(state);
+    REBARR *loops = VAL_ARRAY_ENSURE_MUTABLE(
+        CTX_VAR(VAL_CONTEXT(state), IDX_UPARSE_PARAM_LOOPS)
+    );
+
+    // !!! If we don't put a phase on this, then it will pay attention to the
+    // FRAME_HAS_BEEN_INVOKED flag and prohibit things like STOP from advancing
+    // the input because `f.input` assignment will raise an error.  Review.
+    //
+    RELVAL *loop_last = Alloc_Tail_Array(loops);
+    Init_Frame(loop_last, CTX(frame_->varlist), Canon(SYM_SOME));
+    INIT_VAL_FRAME_PHASE(loop_last, FRM_PHASE(frame_));
+
+    if (Call_Parser_Throws(D_OUT, remainder, parser, input)) {
+        //
+        // !!! Currently there's no support for intercepting throws removing
+        // frames from the loops list in usermode.  Mirror that limitation here
+        // for now.
+        //
         return R_THROWN;
+    }
 
-    if (IS_NULLED(D_OUT))
+    if (IS_NULLED(D_OUT)) {
+        Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
         return nullptr;  // didn't match even once, so not enough.
+    }
 
     while (true) {
         //
@@ -452,8 +473,10 @@ REBNATIVE(some_combinator)
         // iteration's successful output value)
         //
         SET_END(D_SPARE);  // spare can be trash
-        if (Call_Parser_Throws(D_SPARE, remainder, parser, input))
-            return R_THROWN;
+        if (Call_Parser_Throws(D_SPARE, remainder, parser, input)) {
+            Move_Cell(D_OUT, D_SPARE);
+            return R_THROWN;  // see notes above about not removing loop
+        }
 
         if (IS_NULLED(D_SPARE)) {
             //
@@ -464,7 +487,7 @@ REBNATIVE(some_combinator)
             // but didn't work.
             //
             Set_Var_May_Fail(remainder, SPECIFIED, input, SPECIFIED, false);
-
+            Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
             return D_OUT;  // return previous successful parser result
         }
 
