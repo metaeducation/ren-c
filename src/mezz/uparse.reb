@@ -1695,25 +1695,6 @@ comment [
 ]
 
 
-non-comma: func [
-    value [<opt> any-value!]
-][
-    ; The concept behind COMMA! is to provide a delimiting between rules.
-    ; That is handled by the block combinator.  So if you see a thing like
-    ; `[some, "a"]` in PARSIFY, that is just running out of turn.
-    ;
-    ; It may seem like making a dummy "comma combinator" for the comma
-    ; type is a good idea.  But that's an unwanted axis of flexibility
-    ; in this model...and also if we defer the error until the combinator
-    ; is run, it might never be run.
-    ;
-    if comma? :value [
-        fail "COMMA! can only be run between PARSE steps, not inside them"
-    ]
-    return :value
-]
-
-
 comment [combinatorize: func [
 
     {Analyze combinator parameters in rules to produce a specialized "parser"}
@@ -1728,6 +1709,7 @@ comment [combinatorize: func [
     state "Parse State" [frame!]
     /value "Initiating value (if datatype)" [any-value!]
     /path "Invoking Path" [path!]
+    <local> r f
 ][
     ; Combinators take arguments.  If the arguments are quoted, then they are
     ; taken literally from the rules feed.  If they are not quoted, they will
@@ -1749,7 +1731,7 @@ comment [combinatorize: func [
         fail "Refinements not supported currently with combinators"
     ]
 
-    let f: make frame! :combinator
+    f: make frame! :combinator
 
     for-each param parameters of :combinator [
         case [
@@ -1768,10 +1750,37 @@ comment [combinatorize: func [
                 f.state: state
             ]
             quoted? param [  ; literal element captured from rules
-                let r: non-comma rules.1
-                rules: my next
-
-                f.(unquote param): :r
+                param: unquote param
+                r: :rules.1
+                any [
+                    not ^r
+                    find [, | ||] ^r
+                ]
+                then [
+                    if not endable? in f param [
+                        fail "Too few parameters for combinator"
+                    ]
+                    f.(param): null
+                ]
+                else [
+                    ; We also allow skippable parameters, so that legacy
+                    ; combinators can implement things like INTEGER! combinator
+                    ; which takes another optional INTEGER! for end of range.
+                    ;
+                    ; !!! We use KIND OF :R here because TYPE OF can give a
+                    ; quoted type.  This isn't supported by FIND atm.
+                    ;
+                    all [
+                        skippable? in f param
+                        not find (exemplar of action of f).(param) kind of :r
+                    ] then [
+                        f.(param): null
+                    ]
+                    else [
+                        f.(param): :r
+                        rules: next rules
+                    ]
+                ]
             ]
             refinement? param [
                 ; Leave refinements alone, e.g. /only ... a general strategy
@@ -1784,8 +1793,20 @@ comment [combinatorize: func [
                 ; This could be more conservative to stop calling
                 ; functions.  For now, just work around it.
                 ;
-                let [temp 'rules]: parsify state rules
-                f.(param): :temp
+                r: :rules.1
+                any [
+                    not ^r
+                    find [, | ||] ^r
+                ]
+                then [
+                    if not endable? in f param [
+                        fail "Too few parameters for combinator"
+                    ]
+                    f.(param): null
+                ]
+                else [
+                    f.(param): [# rules]: parsify state rules
+                ]
             ]
         ]
     ]
@@ -1818,7 +1839,20 @@ parsify: func [
     rules "Parse rules to (partially) convert to a combinator action"
         [block!]
 ][
-    let r: non-comma rules.1
+    let r: rules.1
+
+    ; The concept behind COMMA! is to provide a delimiting between rules.
+    ; That is handled by the block combinator.  So if you see a thing like
+    ; `[some, "a"]` in PARSIFY, that is just running out of turn.
+    ;
+    ; It may seem like making a dummy "comma combinator" for the comma
+    ; type is a good idea.  But that's an unwanted axis of flexibility
+    ; in this model...and also if we defer the error until the combinator
+    ; is run, it might never be run.
+    ;
+    if comma? :r [
+        fail "COMMA! can only be run between PARSE steps, not inside them"
+    ]
     rules: my next
 
     ; Not sure if it's good, but the original GET-GROUP! concept allowed:

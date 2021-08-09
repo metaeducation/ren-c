@@ -569,7 +569,8 @@ static bool Combinator_Param_Hook(
         //
         Copy_Cell(var, REF(value));
     }
-    else if (VAL_PARAM_CLASS(param) == PARAM_CLASS_HARD) {
+    else switch (VAL_PARAM_CLASS(param)) {
+      case PARAM_CLASS_HARD: {
         //
         // Quoted parameters represent a literal element captured from rules.
         //
@@ -577,29 +578,60 @@ static bool Combinator_Param_Hook(
         //
         const RELVAL *tail;
         const RELVAL *item = VAL_ARRAY_AT(&tail, ARG(rules));
-        if (IS_COMMA(item))
-            fail ("Commas only permitted between rules in UPARSE");
-        if (item == tail)
-            fail ("Quoted combinator parameter asked for at end of rule");
 
-        Derelativize(var, item, VAL_SPECIFIER(ARG(rules)));
-        ++VAL_INDEX_UNBOUNDED(ARG(rules));
-    }
-    else {  // assume the default is another parser to combine with
+        if (
+            item == tail
+            or (IS_COMMA(item) or IS_BAR(item) or IS_BAR_BAR(item))
+        ){
+            if (NOT_PARAM_FLAG(param, ENDABLE))
+                fail ("Too few parameters for combinator");
+            Init_Nulled(var);
+        }
+        else {
+            if (
+                GET_PARAM_FLAG(param, SKIPPABLE)
+                and not TYPE_CHECK(param, VAL_TYPE(item))
+            ){
+                Init_Nulled(var);
+            }
+            else {
+                Derelativize(var, item, VAL_SPECIFIER(ARG(rules)));
+                ++VAL_INDEX_UNBOUNDED(ARG(rules));
+            }
+        }
+        break; }
+
+      case PARAM_CLASS_NORMAL: {
         //
         // Need to make PARSIFY a native!  Work around it for now...
         //
-        // !!! Getting more than one value back from a libRebol API is not
-        // currently supported.  But it should be, somehow.  For the moment
-        // we abuse the ADVANCED variable by setting it prematurely and then
-        // extract it back to the rules.
-        //
-        REBVAL *parser = rebValue(
-            "[#", ARG(advanced), "]: parsify", ARG(state), ARG(rules)
-        );
-        Copy_Cell(var, parser);
-        Get_Var_May_Fail(ARG(rules), ARG(advanced), SPECIFIED, true, false);
-        rebRelease(parser);
+        const RELVAL *tail;
+        const RELVAL *item = VAL_ARRAY_AT(&tail, ARG(rules));
+        if (
+            item == tail
+            or (IS_COMMA(item) or IS_BAR(item) or IS_BAR_BAR(item))
+        ){
+            if (NOT_PARAM_FLAG(param, ENDABLE))
+                fail ("Too few parameters for combinator");
+            Init_Nulled(var);
+        }
+        else {
+            // !!! Getting more than one value back from a libRebol API is not
+            // currently supported.  But it should be, somehow.  For the moment
+            // we abuse the ADVANCED variable by setting it prematurely and then
+            // extract it back to the rules.
+            //
+            REBVAL *parser = rebValue(
+                "[#", ARG(advanced), "]: parsify", ARG(state), ARG(rules)
+            );
+            Copy_Cell(var, parser);
+            Get_Var_May_Fail(ARG(rules), ARG(advanced), SPECIFIED, true, false);
+            rebRelease(parser);
+        }
+        break; }
+
+      default:
+        fail ("COMBINATOR parameters must be normal or quoted at this time");
     }
 
     return true;  // want to see all parameters
