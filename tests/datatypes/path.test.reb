@@ -213,3 +213,7 @@
 ; Not currently true, TO BLOCK! is acting like BLOCKIFY, review
 ; ([_ _] = to block! the /)
 ; ([foo _] = to block! the foo/ )  ; !!! low priority scanner bug on /)
+
+; Need to decay null isotopes in GROUP!s
+;
+([a b c d] = append/(if true [null]) [a b c] [d])
