@@ -2336,6 +2336,46 @@ append redbol-combinators reduce [
         return ~seek~
     ]
 
+    === OLD-STYLE INTEGER! COMBINATOR ===
+
+    ; This uses a skippable quoted integer argument to get a maximum range.
+    ; It's a sketchy idea to say `1 2 rule` is different from `1 [2 rule]` in
+    ; UPARSE, so this is being only done in the compatibility mode for now.
+
+    integer! combinator [
+        return: "Last parser result"
+            [<opt> any-value!]
+        value [integer!]
+        'max [<skip> integer!]
+        parser [action!]
+        <local> result' last-result' temp-remainder
+    ][
+        all [max, max < value] [
+            fail "Can't make MAX less than MIN in range for INTEGER! combinator"
+        ]
+
+        result': '~void~  ; `0 <any>` => ~void~ isotope
+        repeat value [  ; do the required matches first
+            ([result' input]: ^ parser input) else [
+                return null
+            ]
+        ]
+        if max [  ; for "bonus" iterations, failing is okay, save last result
+            last-result': result'
+            repeat (max - value) [
+                ([result' temp-remainder]: ^ parser input) else [
+                    break  ; don't return null if it's in the "overage range"
+                ]
+                last-result': result'
+                input: temp-remainder
+            ]
+            result': last-result'
+        ]
+
+        set remainder input
+        return unmeta result'
+    ]
+
     === OLD-STYLE INSERT AND CHANGE (TBD) ===
 
     ; !!! If you are going to make a parser combinator that can distinguish
