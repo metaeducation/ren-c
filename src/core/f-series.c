@@ -310,7 +310,7 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
 {
     REBLEN squotes = VAL_NUM_QUOTES(sval);
     REBLEN tquotes = VAL_NUM_QUOTES(tval);
-    if (strict and (squotes != tquotes))
+    if (squotes != tquotes)
         return squotes > tquotes ? 1 : -1;
 
     REBCEL(const*) s = VAL_UNESCAPED(sval);

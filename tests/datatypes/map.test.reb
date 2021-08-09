@@ -85,18 +85,16 @@
     (60 = select/case m #"c")
 ]
 
-; Currently, non-strict equality considers 'A and A to be equal, while strict
-; equality consders them unequal.  Generalized quoting extends this to more
-; quote levels...any number of quotes of the same value will be non-strict
-; equal, while strict equality compares both properties.  This may not stick
-; around as it merges case-insensitive comparison with type comparison.
-
+; Historically non-strict equality considered 'A and A to be equal, while strict
+; equality consdered them unequal.  Ren-C has shifted to where quoted types
+; are neither strict or non-strict equal to those at different quoting levels.
 [
     (
         b2: copy the ''[x y]
         b4: copy the ''''[m n o p]
         m: make map! compose [
             a 0 'a 1 ''a 2 '''a 3 ''''a 4
+            A 10 'A 11 ''A 12 '''A 13 ''''A 14
             ((b2)) II ((b4)) IIII
         ]
         true
@@ -114,8 +112,8 @@
     ((trap [select m the ''''a])/id = 'conflicting-key)
     ((trap [m/(the ''''a)])/id = 'conflicting-key)
 
-    ('II = m/[x y])
-    ('IIII = m/[m n o p])
+    ('II = m/(the ''[x y]))
+    ('IIII = m/(the ''''[m n o p]))
 
     ((trap [append noquote b2 'z])/id = 'series-auto-locked)
     ((trap [append noquote b4 'q])/id = 'series-auto-locked)
