@@ -2333,9 +2333,13 @@ redbol-combinators.('emit): null
 redbol-combinators.('collect): null
 redbol-combinators.('keep): null
 
-uparse2: specialize :uparse? [
+uparse2*: specialize :uparse* [
     combinators: redbol-combinators
 ]
+uparse2: specialize :uparse*/fully [
+    combinators: redbol-combinators
+]
+uparse2?: chain [:uparse2 | :then?]
 
 
 ; !!! This operation will likely take over the name USE.  It is put here since
