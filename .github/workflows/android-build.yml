@@ -329,7 +329,6 @@ jobs:
     - name: Install DX Tool for Converting .java Files to .dex Files
       run: |
         sudo apt install dalvik-exchange
-        sudo mv /usr/bin/dalvik-exchange /usr/bin/dx
 
     - name: Install Standalone Eclipse Java Compiler
       run: sudo apt install ecj
