@@ -2116,7 +2116,7 @@ uparse*: func [
     f.value: rules
     f.remainder: let pos
 
-    let synthesized': ^(devoid do f)
+    let synthesized': ^(do f)
     assert [empty? state.loops]
 
     if null? :synthesized' [
@@ -2127,7 +2127,7 @@ uparse*: func [
         return null  ; full parse was requested but tail was not reached
     ]
 
-    return/isotope unmeta get/any 'synthesized'
+    return/isotope unmeta synthesized'
 ]
 
 uparse: comment [redescribe [  ; redescribe not working at te moment (?)
