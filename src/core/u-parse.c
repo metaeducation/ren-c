@@ -593,7 +593,7 @@ static REB_R Parse_One_Rule(
         Trace_Parse_Input(ARG(position));
     }
 
-    if (P_POS == cast(REBIDX, P_INPUT_LEN)) {  // at end of input
+    if (pos == cast(REBIDX, P_INPUT_LEN)) {  // at end of input
         if (IS_BLANK(rule) or IS_LOGIC(rule) or IS_BLOCK(rule)) {
             //
             // Only these types can *potentially* handle an END input.
@@ -603,7 +603,7 @@ static REB_R Parse_One_Rule(
         else if (
             (IS_TEXT(rule) or IS_BINARY(rule))
             and (VAL_LEN_AT(rule) == 0)
-            and (ANY_STRING_KIND(P_TYPE) or P_TYPE == REB_BINARY) 
+            and (ANY_STRING_KIND(P_TYPE) or P_TYPE == REB_BINARY)
         ){
             // !!! The way this old R3-Alpha code was structured is now very
             // archaic (compared to UPARSE).  But while that design stabilizes,
@@ -2554,7 +2554,7 @@ REBNATIVE(subparse)
 
                 if (not IS_GROUP(rule))
                     fail ("Only (...) or ^(...) in old PARSE's CHANGE/INSERT");
-            
+
                 DECLARE_LOCAL (evaluated);
                 REBSPC *derived = Derive_Specifier(
                     P_RULE_SPECIFIER,
