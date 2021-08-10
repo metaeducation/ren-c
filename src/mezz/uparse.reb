@@ -1578,6 +1578,34 @@ default-combinators: make map! reduce [
             fail [value "can't be WORD!, use" :["[" value "]"] "BLOCK! rule"]
         ]
 
+        ; !!! Type constraints like "quoted word" or "quoted block" have not
+        ; been sorted out, unfortunately.  But LIT-WORD! being matched was
+        ; something historically taken for granted.  So LIT-WORD! is the fake
+        ; "pseudotype" of ^lit-word! at the moment.  Embrace it for the moment.
+        ;
+        if :r = lit-word! [
+            if not any-array? input [
+                fail "LIT-WORD! hack only works with array inputs"
+            ]
+            all [quoted? input.1, word? unquote input.1] then [
+                set remainder next input
+                return unquote input.1
+            ] else [
+                return null
+            ]
+        ]
+        if :r = lit-path! [
+            if not any-array? input [
+                fail "LIT-PATH! hack only works with array inputs"
+            ]
+            all [quoted? input.1, path? unquote input.1] then [
+                set remainder next input
+                return unquote input.1
+            ] else [
+                return null
+            ]
+        ]
+
         if not c: select state.combinators kind of :r [
             fail ["Unhandled type in WORD! combinator:" kind of :r]
         ]
