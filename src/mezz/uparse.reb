@@ -163,6 +163,24 @@ if false [combinator: func [
 ]]
 
 
+; It should be possible to find out if something is a combinator in a more
+; rigorous way than this.  But just check the parameters for now.
+;
+combinator?: func [
+    {Crude test to try and determine if an ACTION! is a combinator}
+    return: [logic!]
+    action [action!]
+    <local> keys
+][
+    keys: words of :action  ; test if it's a combinator
+    return did all [
+        find keys quote 'remainder
+        find keys quote 'input
+        find keys quote 'state
+    ]
+]
+
+
 ; !!! We use a MAP! here instead of an OBJECT! because if it were MAKE OBJECT!
 ; then the parse keywords would override the Rebol functions (so you couldn't
 ; use ANY inside the implementation of a combinator, because there's a
@@ -1969,6 +1987,19 @@ parsify: func [
                 ; It's a keyword (the word itself is named in the combinators)
                 ;
                 return [# (advanced)]: combinatorize :c rules state
+            ]
+
+            ; Allow the user to invoke a COMBINATOR if it's in scope, even if
+            ; it's not in the combinator list.
+            ;
+            ; !!! Should COMBINATOR? take ANY-VALUE! and include the action
+            ; test as part of it?
+            ;
+            if action? c: get r [
+                if combinator? :c [
+                    return [# (advanced)]: combinatorize :c rules state
+                ]
+                fail "For non-COMBINATOR actions in parse, use terminal/slash/"
             ]
 
             ; It's not a keyword, so we let the WORD! combinator decide what
