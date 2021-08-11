@@ -171,7 +171,7 @@ make object! compose [
                                 next-position: _  ; !!! for SET-WORD! gather
                                 [value next-position]: transcode position
                             )
-                            :next-position
+                            seek :next-position
                                 |
                             ; dialect failure?
                             some whitespace
