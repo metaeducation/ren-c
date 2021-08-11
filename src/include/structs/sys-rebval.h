@@ -407,7 +407,11 @@ union Reb_Any {  // needed to beat strict aliasing, used in payload
     REBVAL *rebval_pun;
   #endif
 
-    void *trash;  // see remarks in ZERO_UNUSED_CELL_FIELDS regarding this
+    // This should be initialized with ZEROTRASH, which permits optimization in
+    // release builds and more likely to cause an error in debug builds.  See
+    // remarks in ZERO_UNUSED_CELL_FIELDS regarding the rationale.
+    //
+    void *trash;
 };
 
 union Reb_Bytes_Extra {

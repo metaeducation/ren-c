@@ -475,4 +475,13 @@ Special internal defines used by RT, not Host-Kit developers:
 // to squeak out a tiny bit more optimization could turn this off in a
 // release build.  It would save on a few null assignments.
 //
+// (In release builds, the fields are assigned 0 because it's presumably a
+// fast value to assign as an immediate.  In debug builds, they're assigned
+// a trash value because it's more likely to cause trouble if accessed.)
+//
+#if defined(NDEBUG)
+    #define ZEROTRASH nullptr
+#else
+    #define ZEROTRASH cast(void*, cast(intptr_t, 0xDECAFBAD))
+#endif
 #define ZERO_UNUSED_CELL_FIELDS

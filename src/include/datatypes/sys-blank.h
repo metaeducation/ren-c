@@ -20,20 +20,34 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Blank! values are a kind of "reified" null, and you can convert between
+// BLANK! values are a kind of "reified" null, and you can convert between
 // them using TRY and OPT:
 //
-//     >> try ()
+//     >> try null
 //     == _
 //
 //     >> opt _
 //     ; null
 //
-// Like null, they are considered to be false--like the LOGIC! #[false] value.
-// Only these three things are conditionally false in Rebol, and testing for
-// conditional truth and falsehood is frequent.  Hence in addition to its
-// type, BLANK! also carries a header bit that can be checked for conditional
-// falsehood, to save on needing to separately test the type.
+// Like NULL, they are considered to be false (like the LOGIC! #[false], which
+// is the only other conditionally false value).  But unlike NULL they can be
+// put in blocks.  Hence they can serve as a placeholder when one wishes to
+// convey "nothing".
+//
+// Blanks play an important role in a convention known as "blank in, null out".
+// Many functions do not accept NULL as input, but will allow a BLANK! as
+// input but then return NULL.  This helps create chains with error locality:
+//
+//    >> length of select [a 10 b 20] 'c
+//    ** Error: Can't take LENGTH OF NULL
+//
+//    >> length of try select [a 10 b 20] 'c  ; try produces a BLANK!
+//    ; null
+//
+// This is part of a broader idea that blanks act as a purposeful "opt-out"
+// while NULL is more of a "soft failure".  TRY is a tool for converting what
+// would cause an error message into something that can then be further tested
+// for soft failure.
 //
 
 #define BLANK_VALUE \
@@ -42,9 +56,9 @@
 inline static REBVAL *Init_Blank_Core(RELVAL *v) {
     RESET_VAL_HEADER(v, REB_BLANK, CELL_MASK_NONE);
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, v).trash = nullptr;
-    PAYLOAD(Any, v).first.trash = nullptr;
-    PAYLOAD(Any, v).second.trash = nullptr;
+    EXTRA(Any, v).trash = ZEROTRASH;
+    PAYLOAD(Any, v).first.trash = ZEROTRASH;
+    PAYLOAD(Any, v).second.trash = ZEROTRASH;
   #endif
     return cast(REBVAL*, v);
 }

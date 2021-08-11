@@ -25,14 +25,15 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * A good source notation for logic literals was never chosen, so #[true]
-//   and #[false] have been used.
+//   and #[false] have been used.  Rebol2, Red, and R3-Alpha accept this
+//   notation...but render them ambiguously as the words `true` and `false`.
 //
 
 inline static REBVAL *Init_Logic_Core(RELVAL *out, bool flag) {
     RESET_CELL(out, REB_LOGIC, CELL_MASK_NONE);
     PAYLOAD(Logic, out).flag = flag;
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).trash = nullptr;
+    EXTRA(Any, out).trash = ZEROTRASH;
   #endif
     return cast(REBVAL*, out);
 }
@@ -87,7 +88,7 @@ inline static bool IS_TRUTHY(const RELVAL *v) {
         //
         // It seems easier to just tolerate them here vs. asserting it never
         // sees isotopes, and having a separate version of IS_TRUTHY().
-        // 
+        //
         if (GET_CELL_FLAG(v, ISOTOPE) and VAL_BAD_WORD_ID(v) == SYM_NULL)
             return false;
         fail (Error_Bad_Conditional_Raw());

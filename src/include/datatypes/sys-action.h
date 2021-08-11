@@ -115,7 +115,7 @@ inline static REBVAL *Init_Return_Signal_Untracked(RELVAL *out, char ch) {
 
     PAYLOAD(Any, out).first.u = ch;
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).second.trash = nullptr;
+    PAYLOAD(Any, out).second.trash = ZEROTRASH;
   #endif
     return cast(REBVAL*, out);
 }

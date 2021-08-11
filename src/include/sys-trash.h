@@ -57,7 +57,7 @@ inline static REBVAL *Init_Bad_Word_Untracked(
 
     INIT_VAL_NODE1(out, label);
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).second.trash = nullptr;
+    PAYLOAD(Any, out).second.trash = ZEROTRASH;
   #endif
     return cast(REBVAL*, out);
 }
@@ -84,7 +84,7 @@ inline static REBVAL *Init_Bad_Word_Untracked(
         //
         INIT_VAL_NODE1(out, nullptr);  // FIRST_IS_NODE needed to do this
       #ifdef ZERO_UNUSED_CELL_FIELDS
-        PAYLOAD(Any, out).second.trash = nullptr;
+        PAYLOAD(Any, out).second.trash = ZEROTRASH;
       #endif
         return cast(REBVAL*, out);
     }

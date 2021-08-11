@@ -117,7 +117,9 @@ inline static REBVAL *Init_Handle_Cdata(
 ){
     assert(length != 0);  // can't be 0 unless cfunc (see also malloc(0))
     RESET_CELL(out, REB_HANDLE, CELL_MASK_NONE);  // payload first is not node
-    PAYLOAD(Any, out).first.trash = out;  // must initialize field
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, out).first.trash = ZEROTRASH;
+  #endif
     VAL_HANDLE_CDATA_P(out) = cdata;
     VAL_HANDLE_LENGTH_U(out) = length;  // non-zero signals cdata
     return cast(REBVAL*, out);
@@ -128,7 +130,9 @@ inline static REBVAL *Init_Handle_Cfunc(
     CFUNC *cfunc
 ){
     RESET_CELL(out, REB_HANDLE, CELL_MASK_NONE);  // payload first is not node
-    PAYLOAD(Any, out).first.trash = out;  // must initialize field
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, out).first.trash = ZEROTRASH;
+  #endif
     VAL_HANDLE_CFUNC_P(out) = cfunc;
     VAL_HANDLE_LENGTH_U(out) = 0;  // signals cfunc
     return cast(REBVAL*, out);
@@ -182,7 +186,7 @@ inline static REBVAL *Init_Handle_Cdata_Managed_Cfunc(
     Init_Handle_Managed_Common(out, 0, cleaner);
 
     // Leave the non-singular cfunc as trash; clients should not be using
-    
+
     REBARR *a = VAL_HANDLE_SINGULAR(out);
     VAL_HANDLE_CFUNC_P(ARR_SINGLE(a)) = cfunc;
     return cast(REBVAL*, out);

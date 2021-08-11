@@ -34,7 +34,7 @@
 // for these cases.
 //
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11) 
+#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     #define VAL_INT64(v) \
         PAYLOAD(Integer, (v)).i64
 #else
@@ -54,7 +54,7 @@ inline static REBVAL *Init_Integer_Core(RELVAL *out, REBI64 i64) {
     RESET_CELL(out, REB_INTEGER, CELL_MASK_NONE);
     PAYLOAD(Integer, out).i64 = i64;
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, out).trash = nullptr;
+    EXTRA(Any, out).trash = ZEROTRASH;
   #endif
     return cast(REBVAL*, out);
 }
