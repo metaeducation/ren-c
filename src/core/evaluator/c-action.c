@@ -881,8 +881,27 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         if (KEY_SYM(f->key) == SYM_RETURN)
             continue;  // !!! let whatever go for now
 
-        if (not Typecheck_Including_Constraints(f->param, f->arg))
-            fail (Error_Arg_Type(f, f->key, VAL_TYPE(f->arg)));
+        if (not Typecheck_Including_Constraints(f->param, f->arg)) {
+            if (
+                IS_NULLED(f->arg)
+                and GET_PARAM_FLAG(f->param, ENDABLE)
+                and GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
+            ){
+                // !!! We don't really want people to be calling endable
+                // non-<opt> functions with NULL arguments.  But if someone
+                // uses a DO on a FRAME! we can't tell the difference...
+                // the "endish nulled" mechanic is not available.  We could
+                // try making an exception for ~void~ isotopes being allowed
+                // in frames (the exception exists at the moment for meta
+                // parameters) but this would ruin some of the convenience
+                // of END.  Perhaps there should be an ~end~ isotope that will
+                // decay to NULL like ~null~ isotopes do?  This could give
+                // the best of both worlds.  For now, just suppress erroring
+                // if an <end> parameter gets NULL from a frame.
+            }
+            else
+                fail (Error_Arg_Type(f, f->key, VAL_TYPE(f->arg)));
+        }
     }
 
 
