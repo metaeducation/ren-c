@@ -156,3 +156,27 @@
         ]
     )
 ]
+
+[#1251
+    (did all [
+        uparse? e: "a" [remove skip insert ("xxx")]
+        e = "xxx"
+    ])
+    (did all [
+        uparse? e: "a" [[remove skip] insert ("xxx")]
+        e = "xxx"
+    ])
+]
+
+[#1244
+    (did all [
+        not uparse? a: "12" [remove v: across skip]
+        a = "2"
+        v = "1"
+    ])
+    (did all [
+        not uparse? a: "12" [remove [v: across skip]]
+        a = "2"
+        v = "1"
+    ])
+]

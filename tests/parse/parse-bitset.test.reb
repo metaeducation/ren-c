@@ -83,3 +83,14 @@
     (not uparse? "a b" rls)
     (not uparse? "a b" rla)
 ]
+
+[#1298 (
+    cset: charset [#"^(01)" - #"^(FF)"]
+    uparse? "a" ["a" while cset]
+)(
+    cset: charset [# - #"^(FE)"]
+    uparse? "a" ["a" while cset]
+)(
+    cset: charset [# - #"^(FF)"]
+    uparse? "a" ["a" while cset]
+)]

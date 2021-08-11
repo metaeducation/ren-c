@@ -14,3 +14,8 @@
     (uparse? "a" [ahead #a #a])
     (uparse? "1" [ahead [#a | #1] <any>])
 ]
+
+[#1238
+    (null = uparse "ab" [ahead "ab" "ac"])
+    (null = uparse "ac" [ahead "ab" "ac"])
+]

@@ -254,6 +254,11 @@
 (parse? ["aa"] [ahead text! into ["a" "a"]])
 (parse? ["aa"] [and text! into ["a" "a"]])
 
+[#1238
+    (null = parse "ab" [ahead "ab" "ac"])
+    (null = parse "ac" [ahead "ab" "ac"])
+]
+
 ; INTO is not legal if a string parse is already running
 ;
 (error? trap [parse "aa" [into ["a" "a"]]])
@@ -532,3 +537,49 @@
         x = <before>
     ]
 )]
+
+[#1251
+    (did all [
+        parse? e: "a" [remove skip insert ("xxx")]
+        e = "xxx"
+    ])
+    (did all [
+        parse? e: "a" [[remove skip] insert ("xxx")]
+        e = "xxx"
+    ])
+]
+
+[#1245
+    (did all [
+        parse? s: "(1)" [change "(1)" ("()")]
+        s = "()"
+    ])
+]
+
+[#1244
+    (did all [
+        not parse? a: "12" [remove copy v skip]
+        a = "2"
+        v = "1"
+    ])
+    (did all [
+        not parse? a: "12" [remove [copy v skip]]
+        a = "2"
+        v = "1"
+    ])
+]
+
+[#1298 (
+    cset: charset [#"^(01)" - #"^(FF)"]
+    parse? "a" ["a" while cset]
+)(
+    cset: charset [# - #"^(FE)"]
+    parse? "a" ["a" while cset]
+)(
+    cset: charset [# - #"^(FF)"]
+    parse? "a" ["a" while cset]
+)]
+
+[#1282
+    (parse? [1 2 a] [thru word!])
+]

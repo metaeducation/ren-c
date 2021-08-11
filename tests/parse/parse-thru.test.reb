@@ -19,6 +19,18 @@
     (uparse? [a b] [thru ['b]])
 ]
 
+[#1282
+    (uparse? [1 2 a] [thru word!])
+]
+
+[#2129 (
+    rule: [x: across thru some "0"]
+    did all [
+        uparse? "000000" rule
+        x = "000000"
+    ]
+)]
+
 [#295 (
     f: ~
     did all [

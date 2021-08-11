@@ -146,3 +146,10 @@
         bin = #{0A0B0CBEEF0D0E}
     ])
 ]
+
+[#1245
+    (did all [
+        uparse? s: "(1)" [change "(1)" ("()")]
+        s = "()"
+    ])
+]

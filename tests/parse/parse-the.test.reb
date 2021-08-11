@@ -15,3 +15,12 @@
     (uparse? [blank] [the blank])
     (uparse? [some] [the some])
 ]
+
+[#1314 (
+    d: [a b c 1 d]
+    true
+)(
+    'd = uparse d [thru the 1 'd]
+)(
+    1 = uparse d [thru 'c the 1 elide 'd]
+)]
