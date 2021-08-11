@@ -19,6 +19,19 @@
     (uparse? [a b] [thru ['b]])
 ]
 
+[#295 (
+    f: ~
+    did all [
+        uparse? "xyz" [f: across thru to <end>]
+        f = "xyz"
+    ]
+)(
+    f: ~
+    did all [
+        uparse? "xyz" [f: across thru thru <end>]
+        f = "xyz"
+    ]
+)]
 
 [#1959
     (uparse? "abcd" [thru "d"])
