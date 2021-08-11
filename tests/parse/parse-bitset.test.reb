@@ -69,3 +69,17 @@
     (uparse? #{0A0B0C} [wbs2 wbs2 wbs2])
     (not uparse? #{010203} [wbs2 wbs2 wbs2])
 ]
+
+[#753
+    (
+        ws: to-bitset unspaced [tab newline cr sp]
+        abc: charset ["a" "b" "c"]
+        rls: ["a" some ws b: across some abc some ws "c"]
+        rla: ["a" while ws b: across some abc while ws "c"]
+        true
+    )
+    (uparse? "a b c" rls)
+    (uparse? "a b c" rla)
+    (not uparse? "a b" rls)
+    (not uparse? "a b" rla)
+]
