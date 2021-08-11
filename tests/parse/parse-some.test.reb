@@ -16,6 +16,22 @@
     ]
 )
 
+[#296 (
+    n: 0
+    <infinite> = catch [
+        uparse? "abc" [
+            some [to <end> (n: n + 1, if n = 50 [throw <infinite>])]
+        ]
+    ]
+)(
+    n: 0
+    did all [
+        uparse? "abc" [
+            some further [to <end> (n: n + 1)]
+        ]
+        n = 2
+    ]
+)]
 
 ; Unless they are "invisible" (like ELIDE), rules return values.  If the
 ; rule's purpose is not explicitly to generate new series content (like a
