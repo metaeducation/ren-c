@@ -953,7 +953,10 @@ REBTYPE(Array)
         assert(ret <= limit);
 
         if (VAL_WORD_ID(verb) == SYM_FIND) {
-            if (REF(tail) or REF(match))
+            //
+            // Historical FIND/MATCH implied /TAIL, Ren-C and Red don't do that
+            //
+            if (REF(tail))
                 ret += len;
             VAL_INDEX_RAW(array) = ret;
             Copy_Cell(D_OUT, array);

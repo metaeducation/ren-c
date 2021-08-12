@@ -487,8 +487,6 @@ REBTYPE(Binary)
 
         REBVAL *pattern = ARG(pattern);
 
-        // !!! R3-Alpha FIND/MATCH historically implied /TAIL.  Should it?
-        //
         REBFLGS flags = (
             (REF(match) ? AM_FIND_MATCH : 0)
             | (REF(case) ? AM_FIND_CASE : 0)
@@ -512,7 +510,10 @@ REBTYPE(Binary)
             return nullptr;
 
         if (sym == SYM_FIND) {
-            if (REF(tail) or REF(match))
+            //
+            // Historical FIND/MATCH implied /TAIL, Ren-C and Red don't do that
+            //
+            if (REF(tail))
                 ret += size;
             return Init_Any_Series_At(D_OUT, REB_BINARY, VAL_BINARY(v), ret);
         }

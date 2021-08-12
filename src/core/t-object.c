@@ -1074,12 +1074,11 @@ REBTYPE(Context)
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
         UNUSED(ARG(series));  // extracted as `c`
-        UNUSED(ARG(part));
-        UNUSED(ARG(skip));
-        UNUSED(ARG(tail));
-        UNUSED(ARG(match));
         UNUSED(ARG(reverse));
         UNUSED(ARG(last));
+
+        if (REF(part) or REF(skip) or REF(tail) or REF(match))
+            fail (Error_Bad_Refines_Raw());
 
         REBVAL *pattern = ARG(pattern);
         if (not IS_WORD(pattern))

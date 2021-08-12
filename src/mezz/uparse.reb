@@ -970,7 +970,7 @@ default-combinators: make map! reduce [
 
     === TEXT! COMBINATOR ===
 
-    ; For now we just make text act as FIND/MATCH, though this needs to be
+    ; For now we just make text act as FIND/MATCH/TAIL, though this needs to be
     ; sensitive to whether we are operating on blocks or text/binary.
     ;
     ; !!! We presume that it's value-bearing, and gives back the value it
@@ -996,13 +996,13 @@ default-combinators: make map! reduce [
             ; no isolated value to capture.  Should we copy it?
 
             any-string? input [
-                if not input: find/match/(if state.case 'case) input value [
+                input: find/match/(if state.case 'case)/tail input value else [
                     return null
                 ]
             ]
             true [
                 assert [binary? input]
-                if not input: find/match/(if state.case 'case) input value [
+                input: find/match/(if state.case 'case)/tail input value else [
                     return null
                 ]
             ]
@@ -1033,14 +1033,14 @@ default-combinators: make map! reduce [
                 return null
             ]
             any-string? input [
-                if set remainder find/match/case input value [
+                if set remainder find/match/case/tail input value [
                     return value
                 ]
                 return null
             ]
             true [
                 assert [binary? input]
-                if set remainder find/match/case input value [
+                if set remainder find/match/case/tail input value [
                     return value
                 ]
                 return null
@@ -1070,7 +1070,7 @@ default-combinators: make map! reduce [
             ]
             true [  ; Note: BITSET! acts as "byteset" here
                 ; binary or any-string input
-                if set remainder find/match input value [
+                if set remainder find/match/tail input value [
                     return value
                 ]
                 return null

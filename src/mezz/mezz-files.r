@@ -493,17 +493,17 @@ to-relative-file: function [
     if text? file [ ; Local file
         comment [
             ; file-to-local drops trailing / in R2, not in R3
-            if tmp: find/match file file-to-local what-dir [
+            if tmp: find/match/tail file file-to-local what-dir [
                 file: next tmp
             ]
         ]
-        file: maybe find/match file file-to-local what-dir
+        file: maybe find/match/tail file file-to-local what-dir
         if as-rebol [
             file: local-to-file file
             no-copy: true
         ]
     ] else [
-        file: maybe find/match file what-dir
+        file: maybe find/match/tail file what-dir
         if as-local [
             file: file-to-local file
             no-copy: true

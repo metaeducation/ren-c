@@ -1184,6 +1184,10 @@ all: emulate [denuller :all]
 ; used to opt out of the search suggests the opportunity is being lost to have
 ; a way of opting into a match unconditionally.
 ;
+; Also--Red changed FIND/MATCH to not imply /TAIL.  This was something we'd
+; wanted in Ren-C so it was changed as well.  But this means Red and Rebol2
+; will differ on that point.
+;
 find: emulate [
     enclose :find func [f] [
         all [
