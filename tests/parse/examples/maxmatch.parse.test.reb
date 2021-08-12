@@ -132,6 +132,30 @@
             maxmatch-D [some keep "a" some keep "b"] [100 keep "a"]
         ]
     ])
+
+    ; Mix it up with both a collect and a gather in effect...
+    ; (The z and "aaa" triples from shorter match are still in final result)
+    (
+        g: ~
+        did all [
+            ["aa" "aa" "aa" "aaa" "aaa"] = uparse "aaaaaaaa" [collect [
+                g: gather [
+                    maxmatch-D [
+                        3 keep across 2 "a"
+                        emit x: ["a" (10)] emit y: ["a" (20)]
+                    ] [
+                        emit z: (304)
+                        while keep across 3 "a"
+                    ]
+                ]
+            ]]
+            g = make object! [
+                x: 10
+                y: 20
+                z: 304
+            ]
+        ]
+    )
 ]
 
 
@@ -262,4 +286,27 @@
             maxmatch-C [some keep "a" some keep "b"] [100 keep "a"]
         ]
     ])
+
+    ; Mix it up with both a collect and a gather in effect...
+    ; (The z and "aaa" triples from shorter match won't be in the final result)
+    (
+        g: ~
+        did all [
+            ["aa" "aa" "aa"] = uparse "aaaaaaaa" [collect [
+                g: gather [
+                    maxmatch-C [
+                        3 keep across 2 "a"
+                        emit x: ["a" (10)] emit y: ["a" (20)]
+                    ] [
+                        emit z: (304)
+                        while keep across 3 "a"
+                    ]
+                ]
+            ]]
+            g = make object! [
+                x: 10
+                y: 20
+            ]
+        ]
+    )
 ]

@@ -889,52 +889,40 @@ default-combinators: make map! reduce [
     'gather combinator [
         return: "The gathered object"
             [<opt> object!]
+        pending: [blank! block!]
         parser [action!]
-        <local> obj
+        <local> obj subpending
     ][
-        let made-state: did if not state.gathering [
-            state.gathering: make block! 10
-        ]
-
-        let gather-base: tail state.gathering
-        ([# (remainder)]: ^ parser input) else [
-            ;
-            ; Although the block rules roll back, GATHER might be used with
-            ; other combinators that run more than one rule...and one rule
-            ; might succeed, then the next fail:
-            ;
-            ;     uparse "(abc>" [x: gather between emit x: "(" emit y: ")"]
-            ;
-            clear gather-base
-            if made-state [
-                state.gathering: null
-            ]
+        ([# (remainder) subpending]: ^ parser input) else [
             return null
         ]
-        obj: make object! gather-base
-        either made-state [
-            state.gathering: null  ; eliminate entirely
-        ][
-            clear gather-base  ; clear only from the marked position
+
+        ; Currently we assume that all the BLOCK! items in the pending are
+        ; intended for GATHER.
+
+        if blank? subpending [
+            set pending _
+            return make object! []  ; !!! should it error or fail instead?
         ]
-        return obj  ; "core" return protocol
+
+        obj: make object! collect [
+            remove-each item subpending [
+                if block? :item [keep item, true]
+            ]
+        ]
+        set pending subpending
+        return obj
     ]
 
     'emit combinator [
         return: "The emitted value"
             [<opt> any-value!]
+        pending: [blank! block!]
         'target [set-word!]
         parser [action!]
         <local> result'
     ][
-        ; !!! Experiment to allow a top-level accrual, to make EMIT more
-        ; efficient by becoming the result of the PARSE.
-        ;
-        if not state.gathering [
-            state.gathering: make block! 10
-        ]
-
-        ([result' (remainder)]: ^ parser input) else [
+        ([result' (remainder) (pending)]: ^ parser input) else [
             return null
         ]
 
@@ -949,8 +937,7 @@ default-combinators: make map! reduce [
             '~null~ = result'  ; true null if and only if parser failed
             quoted? result'
         ]]
-        append state.gathering ^target
-        append state.gathering ^result'
+        set pending glom get pending ^ :[target result']
         return unmeta result'
     ]
 
@@ -1793,7 +1780,6 @@ default-combinators: make map! reduce [
         let pos: input
 
         let totalpending: _  ; can become GLOM'd into a BLOCK!
-        let gather-baseline: tail try state.gathering  ; see GATHER
 
         let result': '~void~  ; [] => ~void~ isotope
 
@@ -1875,14 +1861,6 @@ default-combinators: make map! reduce [
 
                 free totalpending  ; proactively release memory
                 totalpending: _
-
-                if state.gathering [  ; toss gathered values from this pass
-                    if gather-baseline [  ; we marked how far along we were
-                        clear gather-baseline
-                    ] else [
-                        clear state.gathering  ; no mark, must have been empty
-                    ]
-                ]
 
                 ; If we fail a match, we skip ahead to the next alternate rule
                 ; by looking for an `|`, resetting the input position to where
@@ -2276,7 +2254,7 @@ uparse*: func [
 
     /verbose "Print some additional debug information"
 
-    <local> gathering (null) loops
+    <local> loops
 ][
     loops: copy []  ; need new loop copy each invocation
 
