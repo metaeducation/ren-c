@@ -428,6 +428,27 @@ REBNATIVE(value_q)
 
 
 //
+//  any-inert?: native [
+//
+//  "Test if a value type is inert"
+//
+//      optional [<opt> any-value!]
+//  ]
+//
+REBNATIVE(any_inert_q)
+//
+// This could be done via a typeset bit the way ANY-BLOCK! and other tests are
+// done.  However, the types are organized to make this particular test fast.
+{
+    INCLUDE_PARAMS_OF_ANY_INERT_Q;
+
+    REBVAL *v = ARG(optional);
+
+    return Init_Logic(D_OUT, not IS_NULLED(v) and ANY_INERT(v));
+}
+
+
+//
 //  unbind: native [
 //
 //  "Unbinds words from context."
