@@ -783,18 +783,35 @@ default-combinators: make map! reduce [
             [<opt> block!]
         pending: [blank! block!]
         parser [action!]
-        <local> subpending
+        <local> subpending collected
     ][
         ([# (remainder) subpending]: ^ parser input) else [
             return null
         ]
 
-        ; For starters, let's just try assuming all the pendings are COLLECT,
-        ; so don't filter.  Create entirely new empty list to bubble up and
-        ; return the pending list.  (BLANK! denotes empty list here.)
+        if blank? subpending [
+            set pending _
+            return copy []
+        ]
+
+        ; subpending can be BLANK! or a block full of items that may or may
+        ; not be intended for COLLECT.  Right now the logic is that all QUOTED!
+        ; items are intended for collect, so extract those from the pending
+        ; array.
         ;
-        set pending _
-        return any [subpending, copy []]
+        ; !!! More often than not a COLLECT probably is going to be getting an
+        ; array of all QUOTED! items.  If so, there's probably no great reason
+        ; to do a new allocation...instead the quoteds should be mutated into
+        ; unquoted forms.  Punt on such optimizations for now.
+        ;
+        collected: collect [
+            remove-each item subpending [
+                if quoted? :item [keep item, true]
+            ]
+        ]
+
+        set pending subpending
+        return collected
     ]
 
     'keep combinator [
@@ -802,26 +819,52 @@ default-combinators: make map! reduce [
             [<opt> any-value!]
         pending: [blank! block!]
         parser [action!]
-        <local> result' subpending
+        <local> result result' subpending
     ][
         ([result' (remainder) subpending]: ^ parser input) else [
             return null
         ]
         if bad-word? result' [
-            fail ["Cannot KEEP a non-isotope BAD-WORD!:" ^result']
+            fail ["Cannot KEEP a" result' "isotope"]
         ]
-        assert [any [
-            '~null~ = result'  ; true null if and only if parser failed
-            quoted? result'
-        ]]
+        if result' = the '_ [  ; result' is quoted, so they kept a blank
+            set pending _
+            return ~null~  ; succeed but return null isotope
+        ]
 
-        ; !!! If the pending mechanism is generic, then what we'd be doing here
-        ; would actually be tagging the entry to the pendings as being a KEEP
-        ; so the COLLECT would know it was for it.  Plain GROUP! might mean
-        ; "code to run if we actually reach complete match".  For the moment
-        ; try building pending arrays just for collect itself.
+        result: unquote result'
 
-        set pending (glom subpending unmeta result')
+        ; Since COLLECT is considered the most common `pending` client, we
+        ; reserve QUOTED! items for collected things.  This means we go ahead
+        ; and flatten blocks out into quoted items.
+        ;
+        ; Note that if result (unquoted) was a QUOTED!, that's what they asked
+        ; to collect...which means they wanted it literally.  All collect items
+        ; are appended literally--consider the list to be flattened, so
+        ; COLLECT itself doesn't have to worry about splicing.
+        ;
+        case [
+            quoted? :result [  ; wanted to KEEP the unquoted thing literally
+                set pending (glom subpending result')  ; just one quote level
+            ]
+            block? :result [
+                subpending: default [copy []]  ; !!! optimize empty results?
+                for-each item result [
+                    ;
+                    ; One level of quote is to tell this APPEND we want to add
+                    ; literally (that one will be removed).  The other level is
+                    ; to signal that this pending item targets COLLECT.
+                    ;
+                    append subpending ^ ^item
+                ]
+                set pending subpending
+            ]
+            any-inert? :result [  ; quote doesn't matter
+                set pending (glom subpending ^result')  ; just one quote level
+            ]
+            fail "Can only KEEP values that are QUOTED! or ANY-INERT!"
+        ]
+
         return unmeta result'
     ]
 
@@ -2216,6 +2259,8 @@ uparse*: func [
         [<opt> any-value!]
     furthest: "Furthest input point reached by the parse"
         [any-series!]
+    pending: "Request unprocessed pending items (default errors if any)"
+        [blank! block!]
 
     series "Input series"
         [any-series!]
@@ -2280,6 +2325,14 @@ uparse*: func [
 
     if null? :synthesized' [
         return null  ; match failure (as opposed to success, w/null result)
+    ]
+
+    if pending [
+        set pending subpending
+    ] else [
+        all [subpending, not empty? subpending] then [
+            fail "Residual items accumulated in pending array"
+        ]
     ]
 
     all [fully, not tail? pos] then [
