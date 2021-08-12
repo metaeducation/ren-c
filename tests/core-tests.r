@@ -242,6 +242,7 @@
 %parse/parse-not.test.reb
 %parse/parse-opt.test.reb
 %parse/parse-path.test.reb
+%parse/parse-phase.test.reb
 %parse/parse-quoted.test.reb
 %parse/parse-remove.test.reb
 %parse/parse-repeat.test.reb
@@ -271,6 +272,7 @@
 %parse/examples/nanbnc.parse.test.reb
 %parse/examples/reword.parse.test.reb
 %parse/examples/split.parse.test.reb
+%parse/examples/tracked-word.parse.test.reb
 
 %redbol/redbol-apply.test.reb
 

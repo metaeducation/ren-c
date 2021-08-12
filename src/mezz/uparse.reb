@@ -789,11 +789,6 @@ default-combinators: make map! reduce [
             return null
         ]
 
-        if blank? subpending [
-            set pending _
-            return copy []
-        ]
-
         ; subpending can be BLANK! or a block full of items that may or may
         ; not be intended for COLLECT.  Right now the logic is that all QUOTED!
         ; items are intended for collect, so extract those from the pending
@@ -804,10 +799,14 @@ default-combinators: make map! reduce [
         ; to do a new allocation...instead the quoteds should be mutated into
         ; unquoted forms.  Punt on such optimizations for now.
         ;
-        collected: collect [
-            remove-each item subpending [
-                if quoted? :item [keep item, true]
+        collected: if subpending [
+            collect [
+                remove-each item subpending [
+                    if quoted? :item [keep item, true]
+                ]
             ]
+        ] else [
+            copy []
         ]
 
         set pending subpending
@@ -900,16 +899,16 @@ default-combinators: make map! reduce [
         ; Currently we assume that all the BLOCK! items in the pending are
         ; intended for GATHER.
 
-        if blank? subpending [
-            set pending _
-            return make object! []  ; !!! should it error or fail instead?
+        obj: if subpending [
+            make object! collect [
+                remove-each item subpending [
+                    if block? :item [keep item, true]
+               ]
+            ]
+        ] else [
+            make object! []  ; should it error or fail instead?
         ]
 
-        obj: make object! collect [
-            remove-each item subpending [
-                if block? :item [keep item, true]
-            ]
-        ]
         set pending subpending
         return obj
     ]
@@ -1085,26 +1084,65 @@ default-combinators: make map! reduce [
         ]
     ]
 
-    === GROUP! COMBINATOR ===
+    === GROUP! AND PHASE COMBINATOR ===
 
     ; GROUP! does not advance the input, just runs the group.  It can return
     ; a value, which is used by value-accepting combinators.  Use ELIDE if
     ; this would be disruptive in terms of a value-bearing BLOCK! rule.
+    ;
+    ; There is a new and important feature where a GROUP! can ask to be
+    ; deferred until a PHASE is complete (where the parse as a whole also
+    ; counts as a phase).  This is done using the <delay> tag (may not be
+    ; the best name).
 
     group! combinator [
-        return: "Result of evaluating the group"
+        return: "Result of evaluating the group (invisible if <delay>)"
             [<invisible> <opt> any-value!]
+        pending: [blank! block!]
         value [group!]
     ][
         set remainder input
 
+        if <delay> = first value [
+            if length of value = 1 [
+                fail "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
+            ]
+            set pending :[next value]  ; GROUP! signals delayed groups
+            return  ; invisible
+        ]
+
         ; If a GROUP! evaluates to NULL, we want the overall rule to evaluate
-        ; to NULL-2...because for instance `keep (null)` should not fail the
-        ; KEEP, but should pass null to keep and continue.  In the null case
-        ; thus make a heavy null.
+        ; to ~null~ isotope...because for instance `x: (null)` should set
+        ; x to NULL and not fail the SET-WORD! combinator rule...which is
+        ; what true NULL would signify.  Use HEAVY.
         ;
+        set pending _
         return heavy do value
     ]
+
+    'phase combinator [
+        return: "Result of the parser evaluation"
+            [<invisible> <opt> any-value!]
+        pending: [blank! block!]
+        parser [action!]
+        <local> subpending result'
+    ][
+        ([result' (remainder) subpending]: ^ parser input) else [
+            set pending _
+            return null
+        ]
+        if subpending [
+            ;
+            ; Run GROUP!s in order, removing them as one goes
+            ;
+            remove-each item subpending [
+                if group? :item [do item, true]
+            ]
+        ]
+        set pending subpending
+        return unmeta result'
+    ]
+
 
     get-block! combinator [
         return: "Undefined at this time"
@@ -2257,6 +2295,11 @@ uparse*: func [
     <local> loops
 ][
     loops: copy []  ; need new loop copy each invocation
+
+    ; We put an implicit PHASE bracketing the whole of UPARSE* so that the
+    ; <delay> groups will be executed.
+    ;
+    rules: :['phase rules]
 
     ; !!! Red has a /PART feature and so in order to run the tests pertaining
     ; to that we go ahead and fake it.  Actually implementing /PART would be
