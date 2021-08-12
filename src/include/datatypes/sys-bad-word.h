@@ -144,7 +144,7 @@ inline static bool Is_Isotope(const RELVAL *v, enum Reb_Symbol_Id sym) {
 
 
 // `~none~` is the default RETURN for when you just write something like
-// `func [return: []] [...]`.  It represents the intention of not having a
+// `func [return: <none>] [...]`.  It represents the intention of not having a
 // return value, but reserving the right to not be treated as invisible, so
 // that if one ever did imagine an interesting value for it to return, the
 // callsites wouldn't have assumed it was invisible.

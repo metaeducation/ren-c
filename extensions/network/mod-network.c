@@ -577,7 +577,7 @@ REBNATIVE(get_udp_actor_handle)
 //
 //  {Join (or leave) an IPv4 multicast group}
 //
-//      return: []
+//      return: <none>
 //      port [port!]
 //          {An open UDP port}
 //      group [tuple!]
@@ -630,7 +630,7 @@ REBNATIVE(set_udp_multicast)
 //
 //  {Set the TTL of a UDP port}
 //
-//      return: []
+//      return: <none>
 //      port [port!]
 //          {An open UDP port}
 //      ttl [integer!]

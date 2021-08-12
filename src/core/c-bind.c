@@ -548,7 +548,7 @@ REBNATIVE(add_let_binding) {
 //
 //  {Experimental function for adding an object's worth of binding to a frame}
 //
-//      return: []
+//      return: <none>
 //      frame [frame!]
 //      object [object!]
 //  ]

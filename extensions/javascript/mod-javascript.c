@@ -955,7 +955,7 @@ REBNATIVE(js_eval_p)
 //
 //  {Initialize the JavaScript Extension}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(init_javascript_extension)
@@ -989,7 +989,7 @@ REBNATIVE(init_javascript_extension)
 //
 //  {Internal debug tool for seeing what's going on in JavaScript dispatch}
 //
-//      return: []
+//      return: <none>
 //      enable [logic!]
 //  ]
 //

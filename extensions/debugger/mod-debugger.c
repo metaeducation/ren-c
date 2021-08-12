@@ -109,7 +109,7 @@ bool Do_Breakpoint_Throws(
 //
 //  "Signal breakpoint to the host, but do not participate in evaluation"
 //
-//      return: [<invisible>]
+//      return: <void>
 //          {Returns nothing, not even void ("invisible", like COMMENT)}
 //  ]
 //
@@ -229,7 +229,7 @@ REBNATIVE(resume)
 //
 //  "Perform a step in the debugger"
 //
-//      return: []
+//      return: <none>
 //      amount [<end> word! integer!]
 //          "Number of steps to take (default is 1) or IN, OUT, OVER"
 //  ]

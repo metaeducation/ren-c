@@ -79,7 +79,7 @@ REB_R Generic_Dispatcher(REBFRM *f)
 //
 //  {Creates datatype action (currently for internal use only)}
 //
-//      return: []
+//      return: <none>
 //      :verb [set-word!]
 //      spec [block!]
 //  ]

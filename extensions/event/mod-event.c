@@ -35,7 +35,7 @@
 //
 //  {Make the EVENT! datatype work with GENERIC actions, comparison ops, etc}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(register_event_hooks)
@@ -73,7 +73,7 @@ REBNATIVE(register_event_hooks)
 //
 //  {Remove behaviors for EVENT! added by REGISTER-EVENT-HOOKS}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(unregister_event_hooks)

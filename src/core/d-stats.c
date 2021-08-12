@@ -98,7 +98,7 @@ REBNATIVE(stats)
 //
 //  {Provide access to services in <valgrind/callgrind.h>}
 //
-//      return: []
+//      return: <none>
 //      'instruction "Currently just either ON or OFF"
 //          [word!]
 //  ]

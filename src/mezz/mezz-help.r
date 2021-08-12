@@ -82,7 +82,7 @@ browse: function [
 help: function [
     "Prints information about words and values (if no args, general help)."
 
-    return: []
+    return: <none>
     'topic [<end> any-value!]
         "WORD! whose value to explain, or other HELP target (try HELP HELP)"
     /doc "Open web browser to related documentation."

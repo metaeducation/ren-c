@@ -388,7 +388,7 @@ REBNATIVE(rc4_key)
 //
 //  "Encrypt/decrypt data (modifies) using RC4 algorithm."
 //
-//      return: []
+//      return: <none>
 //      ctx "Stream cipher context"
 //          [handle!]
 //      data "Data to encrypt/decrypt (modified)"
@@ -1263,7 +1263,7 @@ REBNATIVE(ecdh_shared_secret)
 //
 //  {Initialize random number generators and OS-provided crypto services}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(init_crypto)
@@ -1299,7 +1299,7 @@ REBNATIVE(init_crypto)
 //
 //  {Shut down random number generators and OS-provided crypto services}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(shutdown_crypto)

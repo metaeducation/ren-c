@@ -113,7 +113,7 @@ void Dump_Stack(REBFRM *f)
         return;
     }
 
-    const char *label; 
+    const char *label;
     if (not Is_Action_Frame(f))
         label = "<eval>";
     else if (not f->label)
@@ -140,7 +140,7 @@ void Dump_Stack(REBFRM *f)
 //
 //  "Temporary debug dump"
 //
-//      return: [<invisible>]
+//      return: <void>
 //      :value [word!]
 //  ]
 //

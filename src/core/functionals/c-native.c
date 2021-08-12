@@ -132,14 +132,21 @@ REBVAL *Make_Native(
     );
     ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
 
-    // Natives are their own dispatchers; there is no point of interjection
-    // to force their outputs to anything but what they return.  Instead of
-    // `return: <none>` use `return: []` and `return Init_None(D_OUT);`
-    // And instead of `return: <void>` use `return: [<invisible>]` along
-    // with `return D_OUT;`...having made no modifications to D_OUT.
+    // Natives are their own dispatchers; there is no wrapper added for cases
+    // like `return: <void>` or `return: <none>`.  They must return a value
+    // consistent with the response.  Make sure the typesets are right for the
+    // debug build to check it.
     //
-    assert(not (flags & MKF_HAS_OPAQUE_RETURN));
-    assert(not (flags & MKF_IS_ELIDER));
+  #if !defined(NDEBUG)
+    if (flags & MKF_IS_ELIDER) {
+        assert(GET_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), ENDABLE));
+        assert(Is_Typeset_Empty(cast(REBPAR*, ARR_AT(paramlist, 1))));
+    }
+    if (flags & MKF_HAS_OPAQUE_RETURN) {
+        assert(NOT_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), ENDABLE));
+        assert(Is_Typeset_Empty(cast(REBPAR*, ARR_AT(paramlist, 1))));
+    }
+  #endif
 
     REBACT *native = Make_Action(
         paramlist,

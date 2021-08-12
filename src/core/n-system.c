@@ -384,10 +384,10 @@ REBNATIVE(c_debug_break_at)
 //
 //  c-debug-break: native [
 //
-//  "Break at next evaluation point (only use when running under C debugger)"
+//  {Break at next evaluation point (only use when running under C debugger)}
 //
-//      return: [<invisible>]
-//          {Invisibly returns what the expression to the right would have}
+//      return: <void>
+//          "Invisibly returns what the expression to the right would have"
 //  ]
 //
 REBNATIVE(c_debug_break)

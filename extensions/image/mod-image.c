@@ -36,7 +36,7 @@ REBTYP *EG_Image_Type = nullptr;
 //
 //  {Make the IMAGE! datatype work with GENERIC actions, comparison ops, etc}
 //
-//      return: []
+//      return: <none>
 //      generics "List for HELP of which generics are supported (unused)"
 //          [block!]
 //  ]
@@ -70,7 +70,7 @@ REBNATIVE(register_image_hooks)
 //
 //  {Remove behaviors for IMAGE! added by REGISTER-IMAGE-HOOKS}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(unregister_image_hooks)

@@ -960,7 +960,7 @@ void Swap_Series_Content(REBSER* a, REBSER* b)
 //  swap-contents: native [
 //      {Low-level operation for swapping the underlying data for two series.}
 //
-//      return: []
+//      return: <none>
 //      series1 [any-series!]
 //      series2 [any-series!]
 //  ]

@@ -134,7 +134,7 @@ REBNATIVE(diagnose)
 //
 //  {Introduce periodic or deterministic fuzzing of out of memory errors}
 //
-//      return: []
+//      return: <none>
 //      factor "Ticks or percentage of time to cause allocation errors"
 //          [integer! percent!]
 //  ]

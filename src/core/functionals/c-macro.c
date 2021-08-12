@@ -146,7 +146,7 @@ REBNATIVE(macro)
 //
 //  {Inject an array of content into the execution stream}
 //
-//      return: [<invisible>]
+//      return: <void>
 //      splice [block!]
 //  ]
 //

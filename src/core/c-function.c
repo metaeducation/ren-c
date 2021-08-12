@@ -185,18 +185,21 @@ void Push_Paramlist_Triads_May_Fail(
             else if (0 == CT_String(item, Root_None_Tag, strict)) {
                 *flags |= MKF_HAS_OPAQUE_RETURN;  // use Opaque_Dispatcher()
 
-                // Fake as if they said []  !!! use EMPTY_BLOCK?
+                // Fake as if they said []
                 //
-                item = Get_System(SYS_STANDARD, STD_PROC_RETURN_TYPE);
-                goto process_typeset_block;
+                STKVAL(*) param = PARAM_SLOT(DSP);
+                CLEAR_ALL_TYPESET_BITS(param);
+                continue;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
                 *flags |= MKF_IS_ELIDER;
 
                 // Fake as if they said [<invisible>] !!! make more efficient
                 //
-                item = Get_System(SYS_STANDARD, STD_ELIDER_RETURN_TYPE);
-                goto process_typeset_block;
+                STKVAL(*) param = PARAM_SLOT(DSP);
+                CLEAR_ALL_TYPESET_BITS(param);
+                SET_PARAM_FLAG(param, ENDABLE);
+                continue;
             }
             else
                 fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
@@ -205,7 +208,6 @@ void Push_Paramlist_Triads_May_Fail(
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
         if (IS_BLOCK(item)) {
-          process_typeset_block:
             if (IS_BAD_WORD(KEY_SLOT(DSP)))  // too early, `func [[integer!] {!}]`
                 fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
 

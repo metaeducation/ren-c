@@ -80,7 +80,7 @@
 //
 //  None_Dispatcher: C
 //
-// If you write `func [return: [] ...] []` it uses this dispatcher instead
+// If you write `func [return: <none> ...] []` it uses this dispatcher instead
 // of running Eval_Core() on an empty block.  This serves more of a point than
 // it sounds, because you can make fast stub actions that only cost if they
 // are HIJACK'd (e.g. ASSERT is done this way).
@@ -754,7 +754,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
     //
     if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE)) {
         //
-        // allow, so that you can say `return ~none~` in functions whose spec
+        // allow, so that you can say `return ~xxx~` in functions whose spec
         // is written as `return: []`
     }
     else {

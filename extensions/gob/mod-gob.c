@@ -37,7 +37,7 @@ REBTYP *EG_Gob_Type = nullptr;  // (E)xtension (G)lobal
 //
 //  {Make the GOB! datatype work with GENERIC actions, comparison ops, etc}
 //
-//      return: []
+//      return: <none>
 //      generics "List for HELP of which generics are supported (unused)"
 //          [block!]
 //  ]
@@ -71,7 +71,7 @@ REBNATIVE(register_gob_hooks)
 //
 //  {Remove behaviors for GOB! added by REGISTER-GOB-HOOKS}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(unregister_gob_hooks)

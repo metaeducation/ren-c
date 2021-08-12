@@ -191,6 +191,8 @@ inline static void CLEAR_ALL_TYPESET_BITS(RELVAL *v) {
 // ordinary argument hit the end (e.g. the trick used for `>> help` when
 // the arity is 1 usually as `>> help foo`)
 //
+// When used on a `return:` parameter, this means invisibility is legal.
+//
 #define PARAM_FLAG_ENDABLE \
     FLAG_LEFT_BIT(8)
 
@@ -330,7 +332,7 @@ inline static bool Typecheck_Including_Constraints(
             // a return type checking error.  This helps keep BAD-WORD! in the
             // spec for actually returning the "friendly" isotopes as values,
             // which would be things you want to support with ANY-TYPE!.  And
-            // it means `return: []` works with `return ~none~`, which is the
+            // it means `return: []` works with `return ~xxx~`, which is the
             // default for RETURN with no arguments.
             //
             return true;

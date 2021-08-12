@@ -132,7 +132,7 @@ REBTYPE(Library)
 //
 //  {Register the LIBRARY! datatype (so MAKE LIBRARY! [] etc. work)}
 //
-//      return: []
+//      return: <none>
 //      generics [block!]
 //  ]
 //

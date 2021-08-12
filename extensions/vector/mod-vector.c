@@ -37,7 +37,7 @@ REBTYP *EG_Vector_Type;  // (E)xtension (G)lobal
 //
 //  {Make the VECTOR! datatype work with GENERIC actions, comparison ops, etc}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(register_vector_hooks)
@@ -67,7 +67,7 @@ REBNATIVE(register_vector_hooks)
 //
 //  {Remove behaviors for VECTOR! added by REGISTER-VECTOR-HOOKS}
 //
-//      return: []
+//      return: <none>
 //  ]
 //
 REBNATIVE(unregister_vector_hooks)

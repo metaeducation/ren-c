@@ -270,7 +270,7 @@ collect-lets: lib/func [
 
 
 let: lib/func [
-    return: []  ; old-style invisibility
+    return: []  ; [] was old-style invisibility
     :look [any-value! <...>]  ; old-style variadic
 ][
     if word? first look [take look]  ; otherwise leave SET-WORD! to runs
@@ -650,7 +650,7 @@ delimit: lib/func [
             blank? value
         ] then [
             continue
-        ]        
+        ]
         any [
             char? value
             issue? value
