@@ -772,7 +772,7 @@ REBNATIVE(set)
     for (
         ;
         item != item_tail;
-        ++item, (REF(single) or IS_END(v)) ? NOOP : (++v, NOOP)
+        ++item, (REF(single) or v == v_tail) ? NOOP : (++v, NOOP)
      ){
         if (REF(some)) {
             if (v == v_tail)
