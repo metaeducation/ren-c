@@ -593,7 +593,7 @@ static REB_R Parse_One_Rule(
         Trace_Parse_Input(ARG(position));
     }
 
-    if (pos == cast(REBIDX, P_INPUT_LEN)) {  // at end of input
+    if (pos == P_INPUT_LEN) {  // at end of input
         if (IS_BLANK(rule) or IS_LOGIC(rule) or IS_BLOCK(rule)) {
             //
             // Only these types can *potentially* handle an END input.
