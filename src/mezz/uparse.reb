@@ -799,14 +799,10 @@ default-combinators: make map! reduce [
         ; to do a new allocation...instead the quoteds should be mutated into
         ; unquoted forms.  Punt on such optimizations for now.
         ;
-        collected: if subpending [
-            collect [
-                remove-each item subpending [
-                    if quoted? :item [keep item, true]
-                ]
+        collected: collect [
+            remove-each item subpending [
+                if quoted? :item [keep item, true]
             ]
-        ] else [
-            copy []
         ]
 
         set pending subpending
@@ -899,14 +895,12 @@ default-combinators: make map! reduce [
         ; Currently we assume that all the BLOCK! items in the pending are
         ; intended for GATHER.
 
-        obj: if subpending [
-            make object! collect [
-                remove-each item subpending [
-                    if block? :item [keep item, true]
-               ]
+        obj: make object! collect [
+            remove-each item subpending [
+                if block? :item [keep item, true]
+            ] else [
+                ; should it error or fail if subpending was BLANK! ?
             ]
-        ] else [
-            make object! []  ; should it error or fail instead?
         ]
 
         set pending subpending
@@ -1131,14 +1125,13 @@ default-combinators: make map! reduce [
             set pending _
             return null
         ]
-        if subpending [
-            ;
-            ; Run GROUP!s in order, removing them as one goes
-            ;
-            remove-each item subpending [
-                if group? :item [do item, true]
-            ]
+
+        ; Run GROUP!s in order, removing them as one goes
+        ;
+        remove-each item subpending [
+            if group? :item [do item, true]
         ]
+
         set pending subpending
         return unmeta result'
     ]
