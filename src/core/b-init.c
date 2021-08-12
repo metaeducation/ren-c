@@ -891,9 +891,10 @@ void Startup_Core(void)
 
     Startup_Symbols(VAL_ARRAY_KNOWN_MUTABLE(&boot->words));
 
-    // Initialize UNSET_VALUE (must be done after symbols loaded)
+    // Initialize UNSET_VALUE and VOID_VALUE (must be after symbols loaded)
     //
     Init_Unset(Prep_Cell(&PG_Unset_Value));  // symbol not GC'd
+    Init_Void(Prep_Cell(&PG_Void_Value));  // symbol not GC'd
 
     // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(SYM_XXX) now available
 

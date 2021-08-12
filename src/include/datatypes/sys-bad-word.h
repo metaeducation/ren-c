@@ -131,6 +131,7 @@ inline static bool Is_Isotope(const RELVAL *v, enum Reb_Symbol_Id sym) {
 // invisibility, such as `all [do [comment "hi"], 1 + 2]` being 3...despite
 // the fact that a ~void~ isotope is not generally "true or fales".
 
+#define VOID_VALUE          c_cast(const REBVAL*, &PG_Void_Value)
 #define Init_Void(out)      Init_Isotope((out), SYM_VOID)
 #define Is_Void(v)          Is_Isotope((v), SYM_VOID)
 

@@ -88,7 +88,9 @@ PVAR REBVAL PG_Nulled_Cell;
 PVAR REBVAL PG_Blank_Value;
 PVAR REBVAL PG_False_Value;
 PVAR REBVAL PG_True_Value;
+
 PVAR REBVAL PG_Unset_Value;
+PVAR REBVAL PG_Void_Value;
 
 PVAR REBVAL PG_R_Invisible;  // has "pseudotype" REB_R_INVISIBLE
 PVAR REBVAL PG_R_Immediate;  // has "pseudotype" REB_R_IMMEDIATE
