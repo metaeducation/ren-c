@@ -301,10 +301,10 @@ static void Startup_Empty_Array(void)
 
     PG_Inaccessible_Varlist = Make_Array_Core(
         1,
-        FLAG_FLAVOR(VARLIST)
+        SERIES_MASK_VARLIST
             | NODE_FLAG_MANAGED
-            | SERIES_FLAG_INACCESSIBLE
     );
+    SET_SERIES_FLAG(PG_Inaccessible_Varlist, INACCESSIBLE);
 }
 
 

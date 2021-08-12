@@ -702,9 +702,9 @@ iterate-skip: redescribe [
     "Variant of FOR-SKIP that directly modifies a series variable in a word"
 ](
     specialize enclose :for-skip func [f] [
-        if blank? let word: f/word [return null]
-        f/word: quote to word! word  ; do not create new virtual binding
-        let saved: f/series: get word
+        if blank? let word: f.word [return null]
+        f.word: quote to word! word  ; do not create new virtual binding
+        let saved: f.series: get word
 
         ; !!! https://github.com/rebol/rebol-issues/issues/2331
         comment [
