@@ -41,7 +41,7 @@
 ("foo bar" = trim/lines "  foo  ^/ ^/  bar  ^/  ^/  ")
 ("x^/" = trim/auto "^/  ^/x^/")
 ("x^/" = trim/auto "  ^/x^/")
-("x^/y^/ z^/" = trim/auto "  x^/ y^/   z^/")
+("x^/ y^/ z^/" = trim/auto "  x^/ y^/   z^/")
 ("x^/y" = trim/auto "^/^/  x^/  y")
 
 ([a b] = trim [a b])

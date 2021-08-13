@@ -1530,8 +1530,7 @@ REBNATIVE(subparse)
                 if (Eval_Value_Throws(D_OUT, P_RULE, P_RULE_SPECIFIER))
                     goto return_thrown;
 
-                if (mincount != 0)
-                    mincount = Int32s(D_OUT, 0);
+                mincount = Int32s(D_OUT, 0);
                 maxcount = Int32s(D_OUT, 0);
                 SET_END(D_OUT);
 
