@@ -154,9 +154,7 @@ utrim: function [
             ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
             remove [while LF]
 
-            (indent: 0)
-            s: <here>, some rule, e: <here>
-            (indent: (index of e) - (index of s))
+            indent: measure while rule  ; length of spaces and tabs
         ]
     ]
 

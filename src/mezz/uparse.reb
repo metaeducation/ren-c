@@ -425,6 +425,60 @@ default-combinators: make map! reduce [
         unwind f unmeta result'
     ]
 
+    === INDEX and MEASUREMENT COMBINATORS ===
+
+    ; The historical pattern:
+    ;
+    ;     s: <here>, while rule, e: <here>, (len: (index of e) - (index of s))
+    ;
+    ; Can be done more conveniently with the <index> tag combinator:
+    ;
+    ;     s: <index>, while rule, e: <index>, (len: e - s)
+    ;
+    ; But even more conveniently with the MEASURE combinator:
+    ;
+    ;     len: measure while rule
+    ;
+    ; Note this is distinct from TALLY, which is an iterative construct that
+    ; counts the number of times it can match the rule it is given:
+    ;
+    ;     >> uparse "ababab" [tally "ab"]
+    ;     == 3
+    ;
+    ;     >> uparse "ababab" [measure while "ab"]
+    ;     == 6
+
+    <index> combinator [
+        {Get the current series index of the PARSE operation}
+        return: "The INDEX OF the parse position"
+            [integer!]
+    ][
+        set remainder input
+        return index of input
+    ]
+
+    'measure combinator [
+        {Get the length of a matched portion of content}
+        return: "Length in series units"
+            [<opt> integer!]
+        parser [action!]
+        <local> s e
+    ][
+        ([# (remainder)]: parser input) else [return null]
+
+        e: index of get remainder
+        s: index of input
+
+        ; Because parse operations can SEEK, this can potentially create
+        ; issues.  We fail if the index is before, but could also return a
+        ; bad-word! isotope.
+        ;
+        if s > e [
+            fail "Can't MEASURE region where rules did a SEEK before the INPUT"
+        ]
+
+        return e - s
+    ]
 
     === MUTATING KEYWORDS ===
 

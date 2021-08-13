@@ -238,6 +238,7 @@
 %parse/parse-into.test.reb
 %parse/parse-issue.test.reb
 %parse/parse-logic.test.reb
+%parse/parse-measure.test.reb
 %parse/parse-meta-xxx.test.reb
 %parse/parse-not.test.reb
 %parse/parse-opt.test.reb
@@ -254,6 +255,7 @@
 %parse/parse-tag-any.test.reb
 %parse/parse-tag-end.test.reb
 %parse/parse-tag-here.test.reb
+%parse/parse-tag-index.test.reb
 %parse/parse-tally.test.reb
 %parse/parse-text.test.reb
 %parse/parse-the.test.reb
