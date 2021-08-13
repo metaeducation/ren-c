@@ -1599,13 +1599,23 @@ default-combinators: make map! reduce [
         'ignored [block! text! tag! issue!]
     ][
         ; !!! This presents a dilemma, should it be quoting out a rule, or
-        ; quoting out material that's quoted?  Generally speaking parse rules
-        ; require arguments to be parse rules.  Though being flexible has
-        ; come up in terms of being the greater good.  In any case, forming
-        ; a parser rule that's not going to be run is less efficient than just
-        ; quoting material, and `comment thru some "a"` knowing the shape of
-        ; the rule may not be desirable, even though it ignores it.
+        ; quoting out material that's quoted?  This *could* make a parser and
+        ; simply not call it:
         ;
+        ;    >> uparse? "aaa" [comment across some "a" 3 "a"]
+        ;    == #[true]
+        ;
+        ; In any case, forming a parser rule that's not going to be run is
+        ; less efficient than just quoting material, which can be done on
+        ; rules with illegal shape:
+        ;
+        ;    >> uparse? "a" [comment [across some "a" 3] "a"]
+        ;    == #[true]
+        ;
+        ; The more efficient and flexible form is presumed here to be the
+        ; most useful, and the closest parallel to the plain COMMENT action.
+        ;
+        return
     ]
 
     ; Historically you could use SKIP as part of an assignment, e.g.
@@ -2650,16 +2660,6 @@ append redbol-combinators reduce [
         ]
         set remainder next input
         return ~into~
-    ]
-
-    === BREAK TEST ===
-
-    'break combinator [
-        {Stop an iterating rule but succeed}
-        return: "Redbol rules don't return results"
-            [<opt> bad-word!]
-    ][
-        fail "BREAK"
     ]
 
     === OLD-STYLE AND SYNONYM FOR AHEAD ===
