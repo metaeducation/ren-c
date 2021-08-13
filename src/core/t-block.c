@@ -922,8 +922,13 @@ REBTYPE(Array)
             // to have get select-parity between blocks and objects.  Rethink
             // what FIND on objects means, also.
             //
-            if (not ANY_INERT(pattern) and sym == SYM_FIND)
+            if (
+                sym == SYM_FIND and (
+                    not ANY_INERT(pattern) and not IS_WORD(pattern)
+                )
+            ){
                 fail ("Cannot FIND evaluative values w/o QUOTE");
+            }
 
             flags |= AM_FIND_ONLY;
             len = 1;

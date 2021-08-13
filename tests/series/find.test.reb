@@ -25,12 +25,12 @@
 ; This includes some of the tests from Red's %find-test.red (BSD-3 License,
 ; Copyright (C) 2011-2015 Red Foundation).
 [
-    (equal? [x y] find/match [x y] just x)
-    (equal? [y] find/match/tail [x y] just x)
+    (equal? [x y] find/match [x y] 'x)
+    (equal? [y] find/match/tail [x y] 'x)
 
-    ([here and now] = find/match [here and now] [here])
-    (null = find/match [here and now] [her])
-    (null = find/match [her and now] [here])
+    ([here and now] = find/match [here and now] 'here)
+    (null = find/match [here and now] 'her)
+    (null = find/match [her and now] 'here)
     ("here and now" = find/match "here and now" "here")
     ("hereandnow" = find/match "hereandnow" "here")
     (null = find/match "her and now" "here")
@@ -43,7 +43,7 @@
     ("here^(010000) and now" = find/match "here^(010000) and now" "here^(010000)")
     ("^(010000)hereandnow" = find/match "^(010000)hereandnow" "^(010000)here")
     (null = find/match "her^(010000) and now" "here^(010000)")
-    ([he✐re and now] = find/match [he✐re and now] [he✐re])
+    ([he✐re and now] = find/match [he✐re and now] 'he✐re)
 ]
 
 (equal? [x] find-last [x] just x)
