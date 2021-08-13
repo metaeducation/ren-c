@@ -151,11 +151,15 @@ bool Interpreted_Dispatch_Details_1_Throws(
         INIT_VAL_ACTION_BINDING(cell, CTX(f->varlist));
     }
 
-    // The function body contains relativized words, that point to the
-    // paramlist but do not have an instance of an action to line them up
-    // with.  We use the frame (identified by varlist) as the "specifier".
-    //
-    if (Do_Any_Array_At_Throws(spare, body, SPC(f->varlist))) {
+    DECLARE_FEED_AT_CORE (feed, body, SPC(f->varlist));
+
+    SET_END(spare);  // !!! END won't work with throw/return ?
+
+    if (Do_Feed_To_End_Maybe_Stale_Throws(
+        spare,
+        feed,
+        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
+    )) {
         const REBVAL *label = VAL_THROWN_LABEL(spare);
         if (
             IS_ACTION(label)
@@ -175,6 +179,9 @@ bool Interpreted_Dispatch_Details_1_Throws(
         }
         return true;  // we didn't catch the throw
     }
+
+    if (IS_END(spare))
+        Init_Endish_Nulled(spare);
 
     *returned = false;
     return false;  // didn't throw
