@@ -2366,50 +2366,26 @@ uparse*: func [
     return/isotope unmeta synthesized'
 ]
 
-uparse: comment [redescribe [  ; redescribe not working at te moment (?)
+uparse: comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, must match to end (see also UPARSE*)}
 ] ] (
-    enclose augment :uparse*/fully [
-        /no-auto-gather "Don't implicitly GATHER any un-GATHERed EMITs"
-    ] func [f [frame!]] [
-        ; Leveraging the core capabilities of UPARSE*, we capture the product
-        ; of the passed-in rules, while making the ultimate product of the
-        ; compound rule how far the parse managed to get if it succeeds.
-        ;
-        let auto-gather: not f.no-auto-gather
-
-        let synthesized'
-        if auto-gather [
-            f.rules: compose [gather synthesized': ^(f.rules)]
-        ]
-
-        let result': ^(do f) else [
-            return null  ; if f.rules failed to match, or end not reached
-        ]
-
-        ; !!! This is an experimental feature UPARSE adds on top of UPARSE*
-        ; where if there were EMIT-ed things with no gather that we notice,
-        ; they are returned as an object, making it possible to USE them
-        ; more easily (currently USING).  The macro mechanism which would let
-        ; us inject the [using obj, synthesized] in the code stream isn't
-        ; ready, and it inhibits abstraction...but we might still think it's
-        ; worth it for UPARSE and people could use UPARSE* if they had trouble
-        ; with it.
-        ;
-        if auto-gather [
-            for-each key try unmeta result' [
-                return/isotope unmeta result'  ; return object if not empty
-            ]
-            return/isotope unmeta get/any 'synthesized'  ; capture if obj empty
-        ]
-
-        return/isotope unmeta result'  ; don't return void isotope
-    ]
+    :uparse*/fully
 )
 
 match-uparse: comment [redescribe [  ; redescribe not working at te moment (?)
     {Process input in the parse dialect, input if match (see also UPARSE*)}
 ] ] (
+    ; Note: Users could write `uparse data [...rules... || <input>]` and get
+    ; the same effect generally.
+    ;
+    ; !!! It might be tempting to write this as an ADAPT which changes the
+    ; rules to be:
+    ;
+    ;    rules: reduce [rules <input>]
+    ;
+    ; But if someone changed the meaning of <input> with different /COMBINATORS
+    ; that would not work.  This method will work regardless.
+    ;
     enclose :uparse*/fully func [f [frame!]] [
         let input: f.series  ; DO FRAME! invalidates args; cache for returning
 

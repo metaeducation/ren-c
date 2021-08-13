@@ -34,18 +34,14 @@
 )
 
 
-; If you EMIT with no GATHER, it's theorized we'd want to make the UPARSE
-; itself emit variable definitions, much like LET.  It's a somewhat sketchy
-; idea since it doesn't abstract well.  It worked until UPARSE was refactored
-; to be built on top of UPARSE* via ENCLOSE, at whic point the lack of
-; abstractability of ADD-LET-BINDING was noticed...so deeper macro magic
-; would be involved.  For now a leser version is accomplished by just emitting
-; an object that you can USE ("using" for now).  Review.
+; One idea for using GATHER is to mix it with a construct that would import
+; the resulting object variables into scope.  This is done with USING at the
+; moment, but it is theorized this will take over the term USE at some point.
 [(
     i: #i
     t: #t
     if true [
-        using uparse [1 <foo>] [emit i: integer!, emit t: tag!]
+        using uparse [1 <foo>] [gather [emit i: integer!, emit t: tag!]]
         assert [i = 1, t = <foo>]
     ]
     did all [
@@ -56,10 +52,12 @@
     base: #base
     extension: #extension
     if true [
-       let filename: "demo.txt"
-       using uparse filename [
-            emit base: between <here> "."
-            emit extension: across [thru <end>]
+        let filename: "demo.txt"
+        using uparse filename [
+            gather [
+                emit base: between <here> "."
+                emit extension: across [thru <end>]
+            ]
         ] else [
             fail "Not a file with an extension"
         ]
@@ -71,4 +69,3 @@
         extension = #extension
     ]
 )]
-
