@@ -439,6 +439,7 @@ compiler-class: make object! [
         return: [logic!]
         path [<blank> any-string!]
     ][
+        fail ~tbd~
     ]
 ]
 
@@ -745,7 +746,7 @@ ld: make linker-class [
             ]
 
             for-each dep depends [
-                keep accept dep
+                keep try accept dep
             ]
         ]
     ]
@@ -849,7 +850,7 @@ llvm-link: make linker-class [
             ]
 
             for-each dep depends [
-                keep accept dep
+                keep try accept dep
             ]
         ]
     ]
@@ -935,7 +936,7 @@ link: make linker-class [
             ]
 
             for-each dep depends [
-                keep accept dep
+                keep try accept dep
             ]
         ]
     ]
