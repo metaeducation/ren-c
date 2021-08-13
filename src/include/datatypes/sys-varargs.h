@@ -198,7 +198,7 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
             if (key)
                 *key = ACT_KEY(
                     phase,
-                    (- VAL_VARARGS_SIGNED_PARAM_INDEX(v)) - 1
+                    (- VAL_VARARGS_SIGNED_PARAM_INDEX(v))
                 );
             return cast(REBPAR*, ARR_AT(
                 paramlist,
@@ -208,7 +208,7 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
 
         *key = ACT_KEY(
             phase,
-            VAL_VARARGS_SIGNED_PARAM_INDEX(v) - 1
+            VAL_VARARGS_SIGNED_PARAM_INDEX(v)
         );
         return cast(REBPAR*, ARR_AT(
             paramlist,

@@ -793,6 +793,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                     ? -(f->arg - FRM_ARGS_HEAD(f) + 1)
                     : f->arg - FRM_ARGS_HEAD(f) + 1;
 
+            assert(VAL_VARARGS_SIGNED_PARAM_INDEX(f->arg) != 0);
             continue;
         }
 
