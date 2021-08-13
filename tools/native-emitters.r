@@ -94,15 +94,18 @@ emit-include-params-macro: function [
         ; the user provides...so making actions may have to shuffle the
         ; position.  But it may come to be enforced for efficiency).
         ;
-        keep {PARAM(1, return)}
-        keep {USED(ARG(return))}  ; Suppress warning about not using return
-        n: n + 1
+        loop [text? :paramlist/1] [paramlist: next paramlist]
+        if (the return:) <> :paramlist/1 [
+            fail [native-name "does not have a RETURN: specification"]
+        ] else [
+            keep {PARAM(1, return)}
+            keep {USED(ARG(return))}  ; Suppress warning about not using return
+            n: n + 1
+            paramlist: next paramlist
+        ]
 
         for-each item paramlist [
-            any [
-                not match [any-word! refinement! lit-word!] item
-                item = the return:
-            ] then [
+            if not match [any-word! refinement! lit-word!] item [
                 continue
             ]
 
