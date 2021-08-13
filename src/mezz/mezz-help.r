@@ -50,7 +50,7 @@ description-of: function [
     return: [<opt> text!]
     v [<blank> any-value!]
 ][
-    return switch type of get/any 'v [
+    switch type of get/any 'v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
         image! [spaced ["size:" v/size]]
@@ -332,21 +332,23 @@ help: function [
 
     print "USAGE:"
 
-    args: _  ; plain arguments
-    refinements: _  ; refinements and refinement arguments
+    args: _  ; required parameters (and "skippable" parameters, at the moment)
+    refinements: _  ; optional parameters (PARAMETERS OF puts at tail)
 
-    parse parameters of :value [
-        copy args while [word! | meta-word! | get-word! | lit-word!]
-        copy refinements while path!  ; !!! Refinements may become intermixed!
+    uparse parameters of :value [
+        args: across while [word! | meta-word! | get-word! | lit-word!]
+        refinements: across while path!  ; as mentioned, these are at tail
+    ] else [
+        fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]
     ]
 
     ; Output exemplar calling string, e.g. LEFT + RIGHT or FOO A B C
     ; !!! Should refinement args be shown for enfixed case??
     ;
     all [enfixed, not empty? args] then [
-        print [_ _ _ _ args/1 (uppercase mold topic) next args]
+        print [_ _ _ _ args.1 (uppercase mold topic) form next args]
     ] else [
-        print [_ _ _ _ (uppercase mold topic) args refinements]
+        print [_ _ _ _ (uppercase mold topic), form args, form refinements]
     ]
 
     meta: try meta-of :value
@@ -359,14 +361,14 @@ help: function [
 
     print-args: function [list /indent-words] [
         for-each param list [
-            type: ensure [<opt> block!] (
+            types: ensure [<opt> block!] (
                 select try meta/parameter-types to-word noquote param
             )
             note: ensure [<opt> text!] (
                 select try meta/parameter-notes to-word noquote param
             )
 
-            print [_ _ _ _ param (if type [unspaced ["[" type "]"]])]
+            print [_ _ _ _ param (if types [mold types])]
             if note [
                 print [_ _ _ _ _ _ _ _ note]
             ]
