@@ -276,6 +276,7 @@
 %parse/examples/split.parse.test.reb
 %parse/examples/tracked-word.parse.test.reb
 %parse/examples/trim.parse.test.reb
+%parse/examples/urldecode.parse.test.reb
 
 %redbol/redbol-apply.test.reb
 
