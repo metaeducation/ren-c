@@ -1012,6 +1012,7 @@ REBNATIVE(js_trace)
 //
 //  {Internal tracing tool reporting the stack level and how long to limit}
 //
+//      return: [block!]
 //  ]
 //
 REBNATIVE(js_stacklimit)
