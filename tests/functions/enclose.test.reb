@@ -2,22 +2,22 @@
 
 (
     e-multiply: enclose :multiply function [f [frame!]] [
-        diff: abs (f/value1 - f/value2)
-        result: do f
-        return result + diff
+        let diff: abs (f.value1 - f.value2)
+        diff + do f
     ]
 
     73 = e-multiply 7 10
 )
 (
     n-add: enclose :add function [f [frame!]] [
-        if 10 = f/value1 [return blank]
-        f/value1: 5
-        do f
+        if 10 <> f.value1 [
+            f.value1: 5
+            do f
+        ]
     ]
 
     did all [
-        blank? n-add 10 20
+        null? n-add 10 20
         25 = n-add 20 20
     ]
 )
@@ -30,7 +30,6 @@
     ]
     outer: enclose :inner func [f] [
         assert [1020 = do f]
-        return
     ]
     did all [
         304 = (304 outer)
@@ -39,11 +38,11 @@
     ]
 )(
     var: #before
-    inner: func [] [
+    inner: func [return: [<invisible>]] [
         var: 1020
         return
     ]
-    outer: enclose :inner func [f] [
+    outer: enclose :inner func [return: [<opt> any-value!] f] [
         return ^(devoid do f)  ; don't unquote it here
     ]
     did all [
@@ -52,11 +51,11 @@
     ]
 )(
     var: #before
-    inner: func [] [
+    inner: func [return: [<invisible>]] [
         var: 1020
         return
     ]
-    outer: enclose :inner func [f] [
+    outer: enclose :inner func [return: [<opt> <invisible> any-value!] f] [
         return devoid do f  ; now try unquoting
     ]
     did all [

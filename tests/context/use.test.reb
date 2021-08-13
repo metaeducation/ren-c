@@ -39,7 +39,7 @@
 )
 ; RETURN out of USE
 [#539 (
-    f: func [] [
+    f: func [return: [integer!]] [
         use [a] [return 1]
         2
     ]

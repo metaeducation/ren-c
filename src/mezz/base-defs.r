@@ -394,9 +394,9 @@ requote: reframer func* [
 
     f/(p): noquote f/(p)
 
-    if null? result: do f [return null]
-
-    return quote/depth get/any 'result num-quotes
+    do f then result -> [
+        quote/depth get/any 'result num-quotes
+    ]
 ]
 
 
@@ -411,7 +411,7 @@ requote: reframer func* [
     :expression "POINTFREE expression, BLANK!s are unspecialized arg slots"
         [any-value! <variadic>]
 ][
-    pointfree make block! expression  ; !!! Allow Vararg param for efficiency?
+    return pointfree make block! expression  ; !!! vararg param for efficiency?
 ]
 
 
@@ -481,7 +481,7 @@ empty?: func* [
     return: [logic!]
     series [any-series! object! port! bitset! map! blank!]
 ][
-    did any [blank? series, tail? series]
+    return did any [blank? series, tail? series]
 ]
 
 
@@ -624,7 +624,7 @@ print: func* [
         line: mold unquote line
     ]
 
-    (write-stdout try spaced line) then [write-stdout newline]
+    return write-stdout (try spaced line) then [write-stdout newline]
 ]
 
 

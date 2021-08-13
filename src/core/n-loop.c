@@ -80,6 +80,7 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
 //
 //  {Exit the current iteration of a loop and stop iterating further}
 //
+//      return: []  ; !!! notation for divergent function?
 //  ]
 //
 REBNATIVE(break)
@@ -99,6 +100,7 @@ REBNATIVE(break)
 //
 //  "Throws control back to top of loop for next iteration."
 //
+//      return: []  ; !!! notation for divergent function?
 //      value "If provided, act as if loop body finished with this value"
 //          [<end> <opt> any-value!]
 //  ]
@@ -983,6 +985,7 @@ REBNATIVE(for_skip)
 //
 //  {End the current iteration of CYCLE and return a value (nulls allowed)}
 //
+//      return: []  ; !!! Notation for divergent functions?s
 //      value "If no argument is provided, assume ~none~"
 //          [<opt> <end> any-value!]
 //  ]

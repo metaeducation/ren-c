@@ -168,7 +168,7 @@
 
 ; RETURN stops the evaluation
 (
-    f1: func [] [do [return 1 2] 2]
+    f1: func [return: [integer!]] [do [return 1 2] 2]
     1 = f1
 )
 ; THROW stops evaluation
@@ -216,7 +216,7 @@
     error? value
 )
 (
-    f1: func [] [evaluate [return 1 2] 2]
+    f1: func [return: [integer!]] [evaluate [return 1 2] 2]
     1 = f1
 )
 ; recursive behaviour

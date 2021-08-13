@@ -615,7 +615,7 @@ pe-format: context [
         parse rule [while block-rule] else [fail]
 
         set name make object! append def [~unset~]
-        bind rule get name
+        return bind rule get name
     ]
 
     DOS-header: ~
@@ -883,7 +883,7 @@ pe-format: context [
         comment [
             print ["Section headers end at:" index of end-of-section-header]
         ]
-    
+
         sort/compare sections func [a b][a/physical-offset < b/physical-offset]
 
         let first-section-by-phy-offset: any [

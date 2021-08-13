@@ -38,7 +38,7 @@
 ; the TAKE is called, but theorized that's still more useful than erroring.
 [
     (
-        normal: enfixed function [v [integer! <variadic>]] [
+        normal: enfixed function [return: [integer!] v [integer! <variadic>]] [
             sum: 0
             loop [not tail? v] [
                 sum: sum + take v
@@ -55,7 +55,7 @@
     (30 = do [multiply 3 9 normal])  ; seen as ((multiply 3 (9 normal))
 ][
     (
-        defers: enfixed function [v [integer! <variadic>]] [
+        defers: enfixed function [return: [integer!] v [integer! <variadic>]] [
             sum: 0
             loop [not tail? v] [
                 sum: sum + take v
@@ -151,7 +151,7 @@
 (
     vblock: collect [
         log: adapt :keep [value: reduce value]
-        variadic2: func [v [any-value! <variadic>]] [
+        variadic2: func [return: [text!] v [any-value! <variadic>]] [
            log [<1> take v]
            log [<2> take v]
            if not tail? v [fail "THEN SHOULD APPEAR AS IF IT IS VARARGS END"]
@@ -163,7 +163,7 @@
 
     nblock: collect [
         log: adapt :keep [value: reduce value]
-        normal2: func [n1 n2] [
+        normal2: func [return: [text!] n1 n2] [
             log [<1> n1 <2> n2]
             return "returned"
         ]

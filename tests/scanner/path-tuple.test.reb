@@ -107,7 +107,7 @@
                 ]
             ]
         ]
-        return get/any 'value
+        get/any 'value
     ]
 
 
@@ -134,7 +134,10 @@
                 continue
             ]
             if error/arg1 <> iter/1 [
-                fail ["Error argument mismatch on" mold text "->" error/arg1 "and not" iter/1]
+                fail [
+                    "Error argument mismatch on" mold text "->" error/arg1
+                        "and not" iter/1
+                    ]
             ]
             iter: my next
             continue

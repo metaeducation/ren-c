@@ -44,7 +44,10 @@
 ; Making a block from an action will iterate the action until it gives null
 
 (
-    make-one-thru-five: function [<static> count (0)] [
+    make-one-thru-five: function [
+        return: [<opt> integer!]
+        <static> count (0)
+    ][
         if count = 5 [count: 0 return null]
         return count: count + 1
     ]

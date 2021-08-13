@@ -207,7 +207,7 @@ binary-to-c: function [
     ]
     assert [(comma-count + 1) = data-len]
 
-    out
+    return out
 ]
 
 
@@ -235,7 +235,7 @@ for-each-record: function [
 
     table: next table
 
-    loop [not tail? table] [
+    return loop [not tail? table] [
         if (length of headings) > (length of table) [
             fail {Element count isn't even multiple of header count}
         ]
@@ -284,6 +284,7 @@ find-record-unique: function [
 
 
 parse-args: function [
+    return: [block!]
     args
 ][
     ret: make block! 4
@@ -317,9 +318,11 @@ parse-args: function [
             append standalone ^(value)
         ]
     ]
-    if empty? standalone [return ret]
-    append ret [|]
-    append ret ^(standalone)
+    if not empty? standalone [
+        append ret [|]
+        append ret ^(standalone)
+    ]
+    return ret
 ]
 
 uppercase-of: func [
@@ -362,6 +365,7 @@ write-if-changed: function [
 ]
 
 relative-to-path: func [
+    return: [file!]
     target [file!]
     base [file!]
 ][

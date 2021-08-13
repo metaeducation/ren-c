@@ -34,7 +34,7 @@ dump: function [
     ]
 
     val-to-text: function [return: [text!] ^val [<opt> any-value!]] [
-        case [
+        return case [
             null? val ["; null"]
             bad-word? val [unspaced [mold val space space "; isotope"]]
 
@@ -67,7 +67,7 @@ dump: function [
             tuple! [
                 print [to set-tuple! item, val-to-text reduce item]
             ]
-            
+
             path! [
                 print [to set-path! item, val-to-text reduce item]
             ]
@@ -188,7 +188,7 @@ dumps: enfixed function [
             ]
         ]
     ]
-    set name :d
+    return set name :d
 ]
 
 ; Handy specialization for dumping, prefer to DUMP when doing temp output

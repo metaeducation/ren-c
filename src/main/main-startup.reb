@@ -47,7 +47,8 @@ loud-print: redescribe [
 )
 
 make-banner: func [
-    "Build startup banner."
+    {Build startup banner}
+    return: [text!]
     fmt [block!]
 ][
     let str: make text! 200
@@ -470,6 +471,7 @@ main-startup: func [
 
     let param-or-die: func [
         {Take --option argv and then check if param arg is present, else die}
+        return: [text!]
         option [text!] {Command-line option (switch) used}
     ][
         take argv

@@ -23,14 +23,14 @@
 
 ; RETURN stops the evaluation
 (
-    f1: func [] [
+    f1: func [return: [integer!]] [
         either true [return 1 2] [2]
         2
     ]
     1 = f1
 )
 (
-    f1: func [] [
+    f1: func [return: [integer!]] [
         either false [2] [return 1 2]
         2
     ]

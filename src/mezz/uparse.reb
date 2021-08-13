@@ -99,6 +99,7 @@ combinator: func [
     <static> wrapper (
         func [
             {Enclosing function for hooking all combinators}
+            return: [<opt> any-value!]
             f [frame!]
         ][
             ; This hook lets us run code before and after each execution of
@@ -128,16 +129,16 @@ combinator: func [
         ; Get the text description if given
         ((if text? spec.1 [spec.1, elide spec: my next]))
 
-        ; Get the RETURN: definition if there is one
+        ; Enforce a RETURN: definition.
         ;
-        ((if set-word? spec.1 [
+        ((
             assert [spec.1 = 'return:]
             assert [text? spec.2]
             assert [block? spec.3]
 
             reduce [spec.1 spec.2 spec.3]
             elide spec: my skip 3
-        ]))
+        ))
 
         remainder: [<opt> any-series!]  ; all combinators have remainder
 
@@ -181,7 +182,10 @@ combinator: func [
                     ; rigged so that their results append to an aggregator in
                     ; the order they are run (if they succeed).
                     ;
-                    f.(key): enclose (augment :val [/modded]) func [f2] [
+                    f.(key): enclose (augment :val [/modded]) func [
+                        return: [<opt> any-value!]
+                        f2
+                    ][
                         f2.pending: let subpending
                         return/isotope do f2 also [  ; don't change result
                             set pending glom (get pending) subpending
@@ -207,13 +211,11 @@ combinator: func [
         ;
         return: :return/isotope
 
-        ; We want results that "fall out" the bottom of the combinator body to
-        ; also preserve the isotope status.
-        ;
-        ; !!! Should this be the default?  Should isotope-preservation be a
-        ; property of the function spec and not the RETURN?
-        ;
-        return (as group! body)
+        (as group! body)
+
+        ; If the body does not return and falls through here, the function
+        ; will fail as it has a RETURN: that needs to be used to type check
+        ; (and must always be used so all return paths get covered if hooked)
     ]
 
     ; Enclosing with the wrapper permits us to inject behavior before and
@@ -284,7 +286,7 @@ default-combinators: make map! reduce [
             [<opt> any-value!]
         parser [action!]
     ][
-        [# #]: parser input  ; don't care about remainder
+        return [# #]: parser input  ; don't care about remainder
     ]
 
     'further combinator [
@@ -1239,7 +1241,7 @@ default-combinators: make map! reduce [
         ; of ['''x] may be clarifying when trying to match ''x (for instance)
 
         comb: :(state.combinators).(quoted!)
-        [# (remainder) (pending)]: comb state input ^value
+        return [# (remainder) (pending)]: comb state input ^value
     ]
 
 
@@ -1421,7 +1423,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        [# (remainder) (pending)]: comb state input quote get value
+        return [# (remainder) (pending)]: comb state input quote get value
     ]
 
     the-path! combinator [
@@ -1431,7 +1433,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        [# (remainder) (pending)]: comb state input quote get value
+        return [# (remainder) (pending)]: comb state input quote get value
     ]
 
     the-tuple! combinator [
@@ -1441,7 +1443,7 @@ default-combinators: make map! reduce [
         <local> comb
     ][
         comb: :(state.combinators).(quoted!)
-        [# (remainder) (pending)]: comb state input quote get value
+        return [# (remainder) (pending)]: comb state input quote get value
     ]
 
     the-group! combinator [
@@ -1453,14 +1455,17 @@ default-combinators: make map! reduce [
         totalpending: copy []
         value: as group! value
         comb: :(state.combinators).(group!)
-        ([result' input (pending)]: ^ comb state input value) then @[
-            totalpending: glom totalpending (get pending)
-            comb: :(state.combinators).(quoted!)
-            ([# (remainder) (pending)]: comb state input result') also [
-                totalpending: glom totalpending (get pending)
-                set pending totalpending
-            ]
+        ([result' input (pending)]: ^ comb state input value) else [
+            return null
         ]
+        totalpending: glom totalpending (get pending)
+        comb: :(state.combinators).(quoted!)
+        ([result' (remainder) (pending)]: ^ comb state input result') else [
+            return null
+        ]
+        totalpending: glom totalpending (get pending)
+        set pending totalpending
+        return unmeta result'
     ]
 
     the-block! combinator [
@@ -1481,14 +1486,17 @@ default-combinators: make map! reduce [
         totalpending: copy []
         value: as block! value
         comb: :(state.combinators).(block!)
-        ([result' input (pending)]: ^ comb state input value) then @[
-            totalpending: glom totalpending (get pending)
-            comb: :(state.combinators).(quoted!)
-            ([# (remainder) (pending)]: comb state input result') also [
-                totalpending: glom totalpending (get pending)
-                set pending totalpending
-            ]
+        ([result' input (pending)]: ^ comb state input value) else [
+            return null
         ]
+        totalpending: glom totalpending (get pending)
+        comb: :(state.combinators).(quoted!)
+        ([result' (remainder) (pending)]: ^ comb state input result') else [
+            return null
+        ]
+        totalpending: glom totalpending (get pending)
+        set pending totalpending
+        return unmeta result'
     ]
 
 
@@ -1511,7 +1519,7 @@ default-combinators: make map! reduce [
         return: "Meta quoted" [<opt> bad-word! quoted!]
         parser [action!]
     ][
-        [# (remainder)]: ^ parser input
+        return [# (remainder)]: ^ parser input
     ]
 
     meta-word! combinator [
@@ -1522,7 +1530,7 @@ default-combinators: make map! reduce [
     ][
         value: as word! value
         comb: :(state.combinators).(word!)
-        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
+        return [# (remainder) (pending)]: ^ comb state input value  ; leave meta
     ]
 
     meta-tuple! combinator [
@@ -1533,7 +1541,7 @@ default-combinators: make map! reduce [
     ][
         value: as tuple! value
         comb: :(state.combinators).(tuple!)
-        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
+        return [# (remainder) (pending)]: ^ comb state input value  ; leave meta
     ]
 
     meta-path! combinator [
@@ -1544,7 +1552,7 @@ default-combinators: make map! reduce [
     ][
         value: as path! value
         comb: :(state.combinators).(path!)
-        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
+        return [# (remainder) (pending)]: ^ comb state input value  ; leave meta
     ]
 
     meta-group! combinator [
@@ -1555,7 +1563,7 @@ default-combinators: make map! reduce [
     ][
         value: as group! value
         comb: :(state.combinators).(group!)
-        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
+        return [# (remainder) (pending)]: ^ comb state input value  ; leave meta
     ]
 
     meta-block! combinator [
@@ -1566,7 +1574,7 @@ default-combinators: make map! reduce [
     ][
         value: as block! value
         comb: :(state.combinators).(block!)
-        [# (remainder) (pending)]: ^ comb state input value  ; leave as ^meta
+        return [# (remainder) (pending)]: ^ comb state input value  ; leave meta
     ]
 
 
@@ -1790,7 +1798,7 @@ default-combinators: make map! reduce [
         ; arguments here, but this should have better errors if the datatype
         ; combinator takes arguments.
         ;
-        [# (remainder) (pending)]: comb state input :r
+        return [# (remainder) (pending)]: comb state input :r
     ]
 
     === BLOCK! COMBINATOR ===
@@ -2389,7 +2397,7 @@ match-uparse: comment [redescribe [  ; redescribe not working at te moment (?)
     enclose :uparse*/fully func [f [frame!]] [
         let input: f.series  ; DO FRAME! invalidates args; cache for returning
 
-        return do f then [input]
+        do f then [input]
     ]
 )
 
@@ -2704,5 +2712,5 @@ uparse2?: chain [:uparse2 | :then?]
 ; the UPARSE tests involve it.
 ;
 using: func [obj [<blank> object!]] [
-    add-use-object (binding of 'return) obj
+    add-use-object (binding of 'obj) obj
 ]

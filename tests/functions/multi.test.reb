@@ -15,7 +15,7 @@
 ; that can take advantage of the shorthand.
 
 [
-    (test: func [x y: z:] [
+    (test: func [return: x y: z:] [
         if not null? y [
             assert [bad-word? friendly get/any y]
             set y <y-result>

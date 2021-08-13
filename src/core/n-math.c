@@ -231,6 +231,7 @@ REBNATIVE(arctangent)
 //
 //  {Raises E (the base of natural logarithm) to the power specified}
 //
+//      return: [decimal!]
 //      power [any-number!]
 //  ]
 //
@@ -252,6 +253,7 @@ REBNATIVE(exp)
 //
 //  "Returns the base-10 logarithm."
 //
+//      return: [decimal!]
 //      value [any-number!]
 //  ]
 //
@@ -272,6 +274,7 @@ REBNATIVE(log_10)
 //
 //  "Return the base-2 logarithm."
 //
+//      return: [decimal!]
 //      value [any-number!]
 //  ]
 //
@@ -292,6 +295,7 @@ REBNATIVE(log_2)
 //
 //  {Returns the natural (base-E) logarithm of the given value}
 //
+//      return: [decimal!]
 //      value [any-number!]
 //  ]
 //
@@ -312,6 +316,7 @@ REBNATIVE(log_e)
 //
 //  "Returns the square root of a number."
 //
+//      return: [decimal!]
 //      value [any-number!]
 //  ]
 //
@@ -348,6 +353,7 @@ REBNATIVE(square_root)
 //
 //  {Shifts an integer left or right by a number of bits.}
 //
+//      return: [integer!]
 //      value [integer!]
 //      bits [integer!]
 //          "Positive for left shift, negative for right shift"
@@ -836,6 +842,7 @@ REBNATIVE(greater_or_equal_q)
 //
 //  "Returns the greater of the two values."
 //
+//      return: [any-scalar! date! any-series!]
 //      value1 [any-scalar! date! any-series!]
 //      value2 [any-scalar! date! any-series!]
 //  ]
@@ -874,6 +881,7 @@ REBNATIVE(maximum)
 //
 //  "Returns the lesser of the two values."
 //
+//      return: [any-scalar! date! any-series!]
 //      value1 [any-scalar! date! any-series!]
 //      value2 [any-scalar! date! any-series!]
 //  ]
@@ -930,6 +938,7 @@ inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
 //
 //  "Returns TRUE if the number is negative."
 //
+//      return: [logic!]
 //      number [any-number! money! time! pair!]
 //  ]
 //
@@ -951,6 +960,7 @@ REBNATIVE(negative_q)
 //
 //  "Returns TRUE if the value is positive."
 //
+//      return: [logic!]
 //      number [any-number! money! time! pair!]
 //  ]
 //
@@ -972,6 +982,7 @@ REBNATIVE(positive_q)
 //
 //  {Returns TRUE if the value is zero (for its datatype).}
 //
+//      return: [logic!]
 //      value
 //  ]
 //

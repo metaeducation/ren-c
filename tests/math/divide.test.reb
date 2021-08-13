@@ -91,7 +91,7 @@
     code: [1 / 2]
     obj: make object! [
         -slash-1-: enfix func [a b] [
-            return reduce '(b a)
+            reduce '(b a)
         ]
     ]
     0.5 = do code

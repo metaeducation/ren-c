@@ -1007,11 +1007,13 @@ grab: enfixed func [
 ]
 
 grab-int: enfixed enclose :grab func [f [frame!]] [
-    return set f/left (debin [be +] do copy f)
+    set f.left (debin [be +] do copy f)
 ]
 
 
 parse-messages: func [
+    return: [block!]
+
     ctx [object!]
     proto [object!]
 
@@ -1576,7 +1578,7 @@ make-key-block: func [
     return: [binary!]
     ctx [object!]
 ][
-    ctx/key-block: applique :prf [
+    return ctx/key-block: applique :prf [
         ctx: ctx
         secret: ctx/master-secret
         label: "key expansion"
@@ -1594,7 +1596,7 @@ make-master-secret: func [
     ctx [object!]
     pre-master-secret [binary!]
 ][
-    ctx/master-secret: applique :prf [
+    return ctx/master-secret: applique :prf [
         ctx: ctx
         secret: pre-master-secret
         label: "master secret"
@@ -1860,6 +1862,7 @@ sys/make-scheme [
     spec: make system/standard/port-spec-net []
     actor: [
         read: func [
+            return: [port!]
             port [port!]
         ][
             debug ["READ" open? port/state/connection]
@@ -1867,7 +1870,11 @@ sys/make-scheme [
             return port
         ]
 
-        write: func [port [port!] value [<opt> any-value!]] [
+        write: func [
+            return: [port! blank!]
+            port [port!]
+            value [<opt> any-value!]
+        ][
             if find [#encrypted-handshake #application] port/state/mode [
                 do-commands/no-wait port/state compose [
                     #application (value)
@@ -1877,7 +1884,10 @@ sys/make-scheme [
             return blank
         ]
 
-        open: func [port [port!]] [
+        open: func [
+            return: [port!]
+            port [port!]
+        ][
             if port/state [return port]
 
             if not port/spec/host [
@@ -2009,7 +2019,7 @@ sys/make-scheme [
             conn/awake: :tls-awake
             conn/locals: port
             open conn
-            port
+            return port
         ]
 
         reflect: func [port [port!] property [word!]] [
@@ -2026,7 +2036,7 @@ sys/make-scheme [
             ]
         ]
 
-        close: func [port [port!]] [
+        close: func [return: [port!] port [port!]] [
             if not port/state [return port]
 
             close port/state/connection
@@ -2060,7 +2070,7 @@ sys/make-scheme [
             debug "TLS/TCP port closed"
             port/state/connection/awake: blank
             port/state: blank
-            port
+            return port
         ]
 
         copy: func [port [port!]] [

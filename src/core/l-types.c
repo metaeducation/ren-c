@@ -1258,10 +1258,11 @@ const REBYTE *Scan_Any(
 
 //
 //  scan-net-header: native [
-//      {Scan an Internet-style header (HTTP, SMTP).}
+//      {Scan an Internet-style header (HTTP, SMTP)}
 //
-//      header [binary!]
-//          {Fields with duplicate words will be merged into a block.}
+//      return: [block!]
+//      header "Fields with duplicate words will be merged into a block"
+//          [binary!]
 //  ]
 //
 REBNATIVE(scan_net_header)

@@ -17,7 +17,7 @@
 )
 ; Test that arity-1 return stops the loop
 (
-    f1: func [] [cycle [return 1]]
+    f1: func [return: [integer!]] [cycle [return 1]]
     1 = f1
 )
 ; Test that arity-0 return stops the loop

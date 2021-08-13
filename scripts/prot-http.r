@@ -42,7 +42,7 @@ idate-to-date: function [return: [date!] date [text!]] [
         fail ["Invalid idate:" date]
     ]
     if zone = "GMT" [zone: copy "+0"]
-    to date! unspaced [day "-" month "-" year "/" time zone]
+    return to date! unspaced [day "-" month "-" year "/" time zone]
 ]
 
 sync-op: function [port body] [
@@ -86,7 +86,7 @@ sync-op: function [port body] [
 ]
 
 read-sync-awake: function [return: [logic!] event [event!]] [
-    switch event/type [
+    return switch event/type [
         'connect
         'ready [
             do-request event/port
@@ -109,7 +109,7 @@ http-awake: function [return: [logic!] event [event!]] [
     if action? :http-port/awake [state/awake: :http-port/awake]
     awake: :state/awake
 
-    switch event/type [
+    return switch event/type [
         'read [
             awake make event! [type: 'read port: http-port]
             check-response http-port
@@ -129,7 +129,7 @@ http-awake: function [return: [logic!] event [event!]] [
             awake make event! [type: 'connect port: http-port]
         ]
         'close [
-            res: try switch state/mode [
+            res: switch state/mode [
                 'ready [
                     awake make event! [type: 'close port: http-port]
                 ]
@@ -157,7 +157,7 @@ http-awake: function [return: [logic!] event [event!]] [
                 ]
             ]
             close http-port
-            res
+            did res
         ]
     ] else [true]
 ]
@@ -207,7 +207,7 @@ make-http-request: func [
     append result unspaced [CR LF]
     result: to binary! result  ; AS BINARY! would be UTF-8 constrained
     if content [append result content]  ; ...but content can be arbitrary
-    result
+    return result
 ]
 
 do-request: function [
@@ -264,7 +264,10 @@ parse-write-dialect: function [
     ]
 ]
 
-check-response: function [port] [
+check-response: function [
+    return: [logic!]
+    port
+][
     state: port/state
     conn: state/connection
     info: state/info
@@ -312,7 +315,7 @@ check-response: function [port] [
         ]
         remove/part conn/data d2
         state/mode: 'reading-data
-        if '(txt) <> last body-of :net-log [ ; net-log is in active state
+        if 'txt <> last body-of :net-log [ ; net-log is in active state
             print "Dumping Webserver headers and body"
             net-log/S info
             trap [
@@ -489,7 +492,7 @@ check-response: function [port] [
             close port
         ]
     ]
-    res
+    return res
 ]
 crlfbin: #{0D0A}
 crlf2bin: #{0D0A0D0A}
@@ -680,6 +683,7 @@ sys/make-scheme [
 
     actor: [
         read: func [
+            return: [binary!]
             port [port!]
             /lines
             /string

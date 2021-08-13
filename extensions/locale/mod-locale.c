@@ -40,6 +40,7 @@
 //
 //  export locale: native [
 //      "Get locale specific information"
+//      return: [text!]
 //      category [word!]
 //          {Language: English name of the language,
 //          Territory: English name of the country/region,

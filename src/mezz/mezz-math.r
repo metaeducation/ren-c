@@ -26,6 +26,7 @@ atan: :arctangent/radians
 
 modulo: func [
     "Compute a remainder of A divided by B with the sign of B."
+    return: [any-number! money! time!]
     a [any-number! money! time!]
     b [any-number! money! time!] "Must be nonzero."
     /adjusted "Set 'almost zero' and 'almost B' to zero"
@@ -41,14 +42,16 @@ modulo: func [
     if (sign? a) = negate sign? b [a: negate a]
     ; If r is "almost" b (i.e. negligible compared to b), the
     ; result will be 0. Otherwise the result will be r
-    if any [
-        a + r = a, b + r = b ; 'almost zero'
-        all [ ; 'almost b'
+    any [
+        a + r = a, b + r = b  ; 'almost zero'
+        all [  ; 'almost b'
             (a + r) = (a + b)
             positive? (r + r) - b
         ]
-    ] [return 0.0]
-    r
+    ] then [
+        return 0.0
+    ]
+    return r
 ]
 
 mod: enfixed :modulo
@@ -81,7 +84,7 @@ extreme-of: func [
     iterate-skip series skip [
         if (comparator first series first spot) [spot: series]
     ]
-    spot
+    return spot
 ]
 
 minimum-of: redescribe [

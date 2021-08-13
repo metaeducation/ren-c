@@ -21,7 +21,9 @@
 (bad-word? first [~~~])
 ('~ = label of '~~~)
 
-; NULL is the response for when there is no content:
+; Functions are able to return VOID as "invisible".  But in order to avoid
+; creating variant arity situations in code, generic function execution tools
+; like DO or APPLIQUE return void isotopes when invisibles are seen.
 ; https://forum.rebol.info/t/what-should-do-do/1426
 ;
 ('~void~ = ^ do [])
@@ -32,13 +34,13 @@
 ('~void~ = ^ applique :foo [])
 ('~void~ = ^ do :foo)
 
-; ~void~ is the convention for what you get by RETURN with no argument, or
-; if the spec says to <void> any result.
+; invisibility is the convention for what you get by RETURN with no argument,
+; or if the spec says to <void> any result.
 [(
-    foo: func [] [return]
+    foo: func [return: [<opt> <invisible> any-value!]] [return]
     '~void~ = ^ ^ foo
 )(
-    foo: func [] [return ~void~]  ; /VOID only invisible if arg is void
+    foo: func [return: [<opt> any-value!]] [return ~void~]
     '~void~ = ^ foo
 )(
     '~void~ = ^ applique :foo []

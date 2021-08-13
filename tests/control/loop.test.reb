@@ -67,12 +67,22 @@
 ; RETURN should stop the loop
 (
     cycle?: true
-    f1: func [] [loop [cycle?] [cycle?: false return 1] 2]
+    f1: func [return: [integer!]] [
+        loop [cycle?] [
+            cycle?: false return 1
+        ]
+        return 2
+    ]
     1 = f1
 )
 (  ; bug#1519
     cycle?: true
-    f1: func [] [loop [if cycle? [return 1] cycle?] [cycle?: false 2]]
+    f1: func [return: [integer!]] [
+        return loop [if cycle? [return 1], cycle?] [
+            cycle?: false
+            2
+        ]
+    ]
     1 = f1
 )
 

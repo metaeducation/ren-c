@@ -381,6 +381,7 @@ load-value: redescribe [
 do-needs: function [
     {Process the NEEDS block of a program header. Returns unapplied mixins.}
 
+    return: [blank! block!]
     needs "Needs block, header or version"
         [block! object! tuple! blank!]  ; has to handle blank! if in object!
     /no-share "Force module to use its own non-shared global namespace"
@@ -487,6 +488,7 @@ do-needs: function [
 load-module: func [
     {Loads a module and inserts it into the system module list.}
 
+    return: [blank! block!]
     source {Source (file, URL, binary, etc.) or block of sources}
         [word! file! url! text! binary! module! block!]
     /version "Module must be this version or greater"
@@ -831,7 +833,7 @@ load-module: func [
         ]
     ]
 
-    reduce [
+    return reduce [
         name
         match module! mod
         ensure integer! line

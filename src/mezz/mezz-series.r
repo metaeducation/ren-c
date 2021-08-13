@@ -43,7 +43,7 @@ extend: func [
     val [<opt> any-value!]
 ][
     append obj reduce [to-set-word word :val]
-    :val
+    return :val
 ]
 
 
@@ -59,7 +59,7 @@ join-all: function [
         block: (evaluate/result block 'base) else [return null]
         set? 'base  ; skip NULL evaluations
     ]
-    join base block
+    return join base block
 ]
 
 
@@ -118,6 +118,7 @@ array: func [
 replace: function [
     {Replaces a search value with the replace value within the target series}
 
+    return: [any-series!]
     target "Series to replace within (modified)"
         [any-series!]
     pattern "Value to be replaced (converted if necessary)"
@@ -196,7 +197,7 @@ replace: function [
         if not all_REPLACE [break]
     ]
 
-    either tail_REPLACE [target] [save-target]
+    return either tail_REPLACE [target] [save-target]
 ]
 
 
@@ -206,6 +207,7 @@ replace: function [
 reword: function [
     {Make a string or binary based on a template and substitution values}
 
+    return: [any-string! binary!]
     source "Template series with escape sequences"
         [any-string! binary!]
     values "Keyword literals and value expressions"
@@ -410,12 +412,12 @@ extract: function [
 
 
 alter: func [
-    "Append value if not found, else remove it; returns true if added."
+    {Append value if not found, else remove it; returns true if added}
 
+    return: [logic!]
     series [any-series! port! bitset!] {(modified)}
     value
-    /case
-        "Case-sensitive comparison"
+    /case "Case-sensitive comparison"
 ][
     case_ALTER: case
     case: :lib/case
@@ -465,7 +467,7 @@ collect*: func [
     ;
     reeval func* [keep [action!] <with> return] body :keeper
 
-    :out  ; might be null if no non-BLANK! KEEPs yet
+    return :out  ; might be null if no non-BLANK! KEEPs yet
 ]
 
 
@@ -723,6 +725,7 @@ find-all: function [
 
 unpack: enfixed func [
     {Unpack a BLOCK! of values and store each in a variable}
+    return: [<opt> <invisible> any-value!]
     'vars [set-block!]
     block "Reduced by default, but values taken as-is if quoted"
         [block! quoted!]
@@ -750,7 +753,7 @@ unpack: enfixed func [
     ] else [
         ; We do not error on too few values (such as `[a b c]: [1 2]`) but
         ; instead set the remaining variables (e.g. `c` above) to ~unset~.
-        ; There could be a refinement to choose whether to error on this case. 
+        ; There could be a refinement to choose whether to error on this case.
         ;
         for-each var vars [  ; if not enough values for variables, unset
             if not blank? var [

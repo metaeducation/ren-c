@@ -509,6 +509,7 @@ static REB_R Transport_Actor(
 //
 //  {Add entity to act as hub for dispatching asynchronous network requests}
 //
+//      return: <none>
 //  ]
 //
 REBNATIVE(register_network_device)

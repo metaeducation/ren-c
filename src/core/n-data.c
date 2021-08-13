@@ -55,6 +55,7 @@ static bool Check_Char_Range(const REBVAL *val, REBLEN limit)
 //
 //  {Returns TRUE if value or string is in ASCII character range (below 128).}
 //
+//      return: [logic!]
 //      value [any-string! char! integer!]
 //  ]
 //
@@ -71,6 +72,7 @@ REBNATIVE(ascii_q)
 //
 //  {Returns TRUE if value or string is in Latin-1 character range (below 256).}
 //
+//      return: [logic!]
 //      value [any-string! char! integer!]
 //  ]
 //
@@ -87,6 +89,7 @@ REBNATIVE(latin1_q)
 //
 //  "Combine X and Y values into a pair."
 //
+//      return: [pair!]
 //      x [any-number!]
 //      y [any-number!]
 //  ]
@@ -416,6 +419,7 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
 //
 //  "Test if an optional cell contains a value (e.g. `value? null` is FALSE)"
 //
+//      return: [logic!]
 //      optional [<opt> any-value!]
 //  ]
 //
@@ -432,6 +436,7 @@ REBNATIVE(value_q)
 //
 //  "Test if a value type is inert"
 //
+//      return: [logic!]
 //      optional [<opt> any-value!]
 //  ]
 //
@@ -453,6 +458,7 @@ REBNATIVE(any_inert_q)
 //
 //  "Unbinds words from context."
 //
+//      return: [block! any-word!]
 //      word [block! any-word!]
 //          "A word or block (modified) (returned)"
 //      /deep
@@ -485,6 +491,7 @@ REBNATIVE(unbind)
 //
 //  {Collect unique words used in a block (used for context construction)}
 //
+//      return: [block!]
 //      block [block!]
 //      /deep "Include nested blocks"
 //      /set "Only include set-words"
@@ -851,6 +858,7 @@ REBNATIVE(opt)
 //
 //  {Copy context by setting values in the target from those in the source.}
 //
+//      return: [any-context!]
 //      target [any-context!] "(modified)"
 //      source [any-context!]
 //      /only "Only specific words (exports) or new words in target"
@@ -883,6 +891,7 @@ REBNATIVE(resolve)
 //
 //  {TRUE if looks up to a function and gets first argument before the call}
 //
+//      return: [logic!]
 //      action [action!]
 //  ]
 //
@@ -902,6 +911,7 @@ REBNATIVE(enfixed_q)
 //
 //  {For making enfix functions, e.g `+: enfixed :add` (copies)}
 //
+//      return: [action!]
 //      action [action!]
 //  ]
 //
@@ -930,6 +940,7 @@ REBNATIVE(enfixed)
 //
 //  {Discern if a function parameter came from an "active" evaluation.}
 //
+//      return: [logic!]
 //      parameter [word!]
 //  ]
 //
@@ -1582,8 +1593,9 @@ REBNATIVE(as_text)
 //
 //  {Return whether or not the underlying data of one value aliases another}
 //
-//     value1 [any-series!]
-//     value2 [any-series!]
+//      return: [logic!]
+//      value1 [any-series!]
+//      value2 [any-series!]
 //  ]
 //
 REBNATIVE(aliases_q)
@@ -1767,6 +1779,7 @@ REBNATIVE(devoid)
 //
 //  "Returns TRUE if argument is BLANK! or NULL"
 //
+//      return: [logic!]
 //      value [<opt> any-value!]
 //  ]
 //
@@ -1792,6 +1805,7 @@ REBNATIVE(nothing_q)
 //
 //  "Returns FALSE if a argument is BLANK!, NULL, or an ~unset~ isotope"
 //
+//      return: [logic!]
 //      value [<opt> any-value!]
 //  ]
 //

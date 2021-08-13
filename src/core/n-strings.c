@@ -605,6 +605,7 @@ REBNATIVE(enline)
 //
 //  "Converts spaces to tabs (default tab size is 4)."
 //
+//      return: [any-string!]
 //      string "(modified)"
 //          [any-string!]
 //      /size "Specifies the number of spaces per tab"
@@ -680,6 +681,7 @@ REBNATIVE(entab)
 //
 //  "Converts tabs to spaces (default tab size is 4)."
 //
+//      return: [any-string!]
 //      string "(modified)"
 //          [any-string!]
 //      /size "Specifies the number of spaces per tab"
@@ -738,6 +740,7 @@ REBNATIVE(detab)
 //
 //  "Converts string of characters to lowercase."
 //
+//      return: [any-string! char!]
 //      string "(modified if series)"
 //          [any-string! char!]
 //      /part "Limits to a given length or position"
@@ -758,6 +761,7 @@ REBNATIVE(lowercase)
 //
 //  "Converts string of characters to uppercase."
 //
+//      return: [any-string! char!]
 //      string "(modified if series)"
 //          [any-string! char!]
 //      /part "Limits to a given length or position"
@@ -778,6 +782,7 @@ REBNATIVE(uppercase)
 //
 //  {Converts numeric value to a hex issue! datatype (with leading # and 0's).}
 //
+//      return: [issue!]
 //      value [integer! tuple!]
 //      /size "Specify number of hex digits in result"
 //          [integer!]

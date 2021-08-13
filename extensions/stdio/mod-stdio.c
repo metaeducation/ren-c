@@ -50,6 +50,7 @@ REBNATIVE(get_console_actor_handle)
 //
 //  export register-stdio-device: native [
 //
+//      return: <none>
 //  ]
 //
 REBNATIVE(register_stdio_device)

@@ -2,7 +2,7 @@
 
 ; REDO via a direct FRAME! value
 (
-    foo: func [n] [
+    foo: func [return: [tag!] n] [
         frame: binding of 'n
         if n = 0 [
             return <success>
@@ -17,7 +17,7 @@
 ; REDO via extraction of FRAME! from an ANY-WORD!
 ; (has binding to a FRAME! to lookup variable value)
 (
-    foo: func [n] [
+    foo: func [return: [tag!] n] [
         if n = 0 [
            return <success>
         ]
@@ -31,7 +31,7 @@
 ; REDO locals clearing test
 ; (locals should be cleared on each redo)
 (
-    foo: func [n <local> unset-me] [
+    foo: func [return: [tag!] n <local> unset-me] [
         if set? 'unset-me [
             return "local not cleared"
         ]
@@ -49,7 +49,7 @@
 ; REDO type checking test
 ; (args and refinements must pass function's type checking)
 (
-    foo: func [n i [integer!]] [
+    foo: func [return: [tag!] n i [integer!]] [
         if n = 0 [
             return <success>  ; impossible for this case
         ]
@@ -65,7 +65,7 @@
 ; REDO phase test
 ; (shared frame compositions should redo the appropriate "phase")
 (
-    inner: func [n] [
+    inner: func [return: [tag!] n] [
         if n = 0 [
             return <success>
         ]
@@ -77,32 +77,31 @@
         if n = 0 [
             return "outer phase run by redo"
         ]
-        comment {fall through to inner, using same frame}
+        ; fall through to inner, using same frame
     ]
 
     <success> = outer 1
 )
 (
-    inner: func [n /captured-frame [frame!]] [
+    inner: func [return: [text!] n /captured-frame [frame!]] [
         if n = 0 [
            return "inner phase run by redo"
         ]
         n: 0
-        redo captured-frame  comment {should redo OUTER, not INNER}
+        redo captured-frame  ; should redo OUTER, not INNER
     ]
 
-    outer: enclose :inner func [f] [
+    outer: enclose :inner func [return: [tag!] f] [
         if f.n = 0 [
             return <success>
         ]
 
         f.captured-frame: binding of 'f
 
-        comment {
-            Fall through to inner
-            It is running in the same frame's memory, but...
-            CAPURED-FRAME is a FRAME! value that stowed outer's "phase"
-        }
+        ; Fall through to inner
+        ; It is running in the same frame's memory, but...
+        ; CAPURED-FRAME is a FRAME! value that stowed outer's "phase"
+
         do f
     ]
 
@@ -169,7 +168,7 @@
         elide (:dump)  comment {un-elide to get output}
     )
 
-    base: func [n delta /captured-frame [frame!]] [
+    base: func [return: [text!] n delta /captured-frame [frame!]] [
         log [{BASE} n delta]
 
         n: n - delta

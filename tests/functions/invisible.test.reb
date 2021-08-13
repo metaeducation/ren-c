@@ -121,7 +121,6 @@
     (|1|: func [
         {Barrier that's willing to only run one expression after it}
 
-        return: [<opt> any-value!]
         right [<opt> <end> any-value! <variadic>]
         'lookahead [any-value! <variadic>]
         look:
@@ -175,22 +174,22 @@
 [
     (
         left-normal: enfixed right-normal:
-            func [return: [<opt> word!] x [word!]] [:x]
+            func [return: [<opt> word!] x [word!]] [return x]
         left-normal*: enfixed right-normal*:
-            func [return: [<opt> word!] x [word! <end>]] [:x]
+            func [return: [<opt> word!] x [word! <end>]] [return x]
 
         left-defer: enfixed tweak (copy :left-normal) 'defer on
         left-defer*: enfixed tweak (copy :left-normal*) 'defer on
 
         left-soft: enfixed right-soft:
-            func [return: [<opt> word!] 'x [word!]] [:x]
+            func [return: [<opt> word!] 'x [word!]] [return x]
         left-soft*: enfixed right-soft*:
-            func [return: [<opt> word!] 'x [word! <end>]] [:x]
+            func [return: [<opt> word!] 'x [word! <end>]] [return x]
 
         left-hard: enfixed right-hard:
-            func [return: [<opt> word!] :x [word!]] [:x]
+            func [return: [<opt> word!] :x [word!]] [return x]
         left-hard*: enfixed right-hard*:
-            func [return: [<opt> word!] :x [word! <end>]] [:x]
+            func [return: [<opt> word!] :x [word! <end>]] [return x]
 
         true
     )
@@ -235,22 +234,34 @@
 [
     (
         left-normal: enfixed right-normal:
-            func [return: [<opt> word!] x [word! <variadic>]] [take x]
+            func [return: [<opt> word!] x [word! <variadic>]] [
+                return take x
+            ]
         left-normal*: enfixed right-normal*:
-            func [return: [<opt> word!] x [word! <variadic> <end>]] [take x]
+            func [return: [<opt> word!] x [word! <variadic> <end>]] [
+                return take x
+            ]
 
         left-defer: enfixed tweak (copy :left-normal) 'defer on
         left-defer*: enfixed tweak (copy :left-normal*) 'defer on
 
         left-soft: enfixed right-soft:
-            func [return: [<opt> word!] 'x [word! <variadic>]] [take x]
+            func [return: [<opt> word!] 'x [word! <variadic>]] [
+                return take x
+            ]
         left-soft*: enfixed right-soft*:
-            func [return: [<opt> word!] 'x [word! <variadic> <end>]] [take x]
+            func [return: [<opt> word!] 'x [word! <variadic> <end>]] [
+                return take x
+            ]
 
         left-hard: enfixed right-hard:
-            func [return: [<opt> word!] :x [word! <variadic>]] [take x]
+            func [return: [<opt> word!] :x [word! <variadic>]] [
+                return take x
+            ]
         left-hard*: enfixed right-hard*:
-            func [return: [<opt> word!] :x [word! <variadic> <end>]] [take x]
+            func [return: [<opt> word!] :x [word! <variadic> <end>]] [
+                return take x
+            ]
 
         true
     )
@@ -388,7 +399,7 @@
 ; by default if not.
 [
     (
-        no-spec: func [x] [return ()]
+        no-spec: func [x] [()]
         <test> = (<test> no-spec 10)
     )
     (

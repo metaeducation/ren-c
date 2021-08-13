@@ -42,6 +42,7 @@ sys/make-scheme [
     name: 'system
     actor: get-event-actor-handle
     awake: func [
+        return: [blank! logic!]
         sport "System port (State block holds events)"
         ports "Port list (Copy of block passed to WAIT)"
         /only
@@ -90,12 +91,11 @@ sys/make-scheme [
             find waked port then [return true]
         ]
 
-        false  ; keep waiting
+        return false  ; keep waiting
     ]
-    init: func [port] [
+    init: func [return: <none> port] [
         ** print ["Init" title]
         port/data: copy []  ; The port wake list
-        return
     ]
 ]
 

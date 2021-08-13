@@ -194,6 +194,7 @@ ctx-zip: context [
 
     to-path-file: func [
         {Converts url! to file! and removes heading "/"}
+        return: [file!]
         value [file! url!] "AnyValue to convert"
     ][
         if file? value [

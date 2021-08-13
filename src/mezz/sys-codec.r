@@ -24,6 +24,7 @@ REBOL [
 ; !!! There should also be an unregister-codec*
 ;
 register-codec*: func [
+    return: [object!]
     name [word!]
         {Descriptive name of the codec.}
     suffixes [file! block!]
@@ -112,14 +113,14 @@ encode: function [
     ] else [
         cause-error 'access 'no-codec type
     ]
-    data
+    return data
 ]
 
 
 encoding-of: function [
     "Returns the media codec name for given binary data. (identify)"
 
-    return: [word!]
+    return: [<opt> word!]
     data [binary!]
 ][
     for-each [name codec] system/codecs [
@@ -130,7 +131,7 @@ encoding-of: function [
             return name
         ]
     ]
-    blank
+    return null
 ]
 
 

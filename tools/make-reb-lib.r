@@ -212,7 +212,7 @@ for-each api api-objects [do in api [
 
         wrapper-params: default ["void"]
 
-        cscape/with {
+        return cscape/with {
             $<OPT-NORETURN>
             inline static $<Returns> $<Name>$<inline>($<Wrapper-Params>) {
                 $<Opt-Va-Start>
@@ -234,7 +234,7 @@ for-each api api-objects [do in api [
 
         wrapper-params: default ["void"]
 
-        cscape/with {
+        return cscape/with {
             template <typename... Ts>
             $<OPT-NORETURN>
             inline static $<Returns> $<Name>($<Wrapper-Params>) {

@@ -30,7 +30,7 @@
 //
 //  "Stops evaluation and returns to the input prompt."
 //
-//      ; No arguments
+//      return: []  ; !!! notation for divergent functions?
 //  ]
 //
 REBNATIVE(halt)
@@ -46,6 +46,7 @@ REBNATIVE(halt)
 //
 //  {Stop evaluating and return control to command shell or calling script}
 //
+//      return: []  ; !!! Notation for divergent functions?
 //      value "See: http://en.wikipedia.org/wiki/Exit_status"
 //          [<end> <opt> any-value!]
 //  ]
@@ -75,6 +76,7 @@ REBNATIVE(quit)
 //
 //  {Stop the current Rebol interpreter (cannot be caught by CATCH/QUIT)}
 //
+//      return: []  ; !!! Notation for divergent functions?
 //      status "See: http://en.wikipedia.org/wiki/Exit_status"
 //          [<opt> <end> integer!]
 //  ]
@@ -184,6 +186,7 @@ REBNATIVE(recycle)
 //
 //  "Set a usage limit only once (used for SECURE)."
 //
+//      return: <none>
 //      field [word!]
 //          "eval (count) or memory (bytes)"
 //      limit [any-number!]
@@ -208,7 +211,7 @@ REBNATIVE(limit_usage)
     else
         fail (PAR(field));
 
-    return nullptr;
+    return Init_None(D_OUT);
 }
 
 
@@ -217,8 +220,9 @@ REBNATIVE(limit_usage)
 //
 //  "Run an integrity check on a value in debug builds of the interpreter"
 //
-//      value [<opt> any-value!]
-//          {System will terminate abnormally if this value is corrupt.}
+//      return: [<opt> any-value!]
+//      value "System will terminate abnormally if this value is corrupt"
+//          [<opt> any-value!]
 //  ]
 //
 REBNATIVE(check)
@@ -256,7 +260,7 @@ REBNATIVE(check)
         ASSERT_ARRAY(ACT_DETAILS(VAL_ACTION(value)));
     }
 
-    return Init_True(D_OUT);
+    RETURN (value);
 #endif
 }
 

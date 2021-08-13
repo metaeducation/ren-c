@@ -375,15 +375,12 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 //
 //  {Protect a series or a variable from being modified.}
 //
+//      return: [word! path! any-series! bitset! map! object! module!]
 //      value [word! path! any-series! bitset! map! object! module!]
-//      /deep
-//          "Protect all sub-series/objects as well"
-//      /words
-//          "Process list as words (and path words)"
-//      /values
-//          "Process list of values (implied GET)"
-//      /hide
-//          "Hide variables (avoid binding and lookup)"
+//      /deep "Protect all sub-series/objects as well"
+//      /words "Process list as words (and path words)"
+//      /values "Process list of values (implied GET)"
+//      /hide "Hide variables (avoid binding and lookup)"
 //  ]
 //
 REBNATIVE(protect)
@@ -413,15 +410,12 @@ REBNATIVE(protect)
 //
 //  {Unprotect a series or a variable (it can again be modified).}
 //
+//      return: [word! any-series! bitset! map! object! module!]
 //      value [word! any-series! bitset! map! object! module!]
-//      /deep
-//          "Protect all sub-series as well"
-//      /words
-//          "Block is a list of words"
-//      /values
-//          "Process list of values (implied GET)"
-//      /hide
-//          "HACK to make PROTECT and UNPROTECT have the same signature"
+//      /deep "Protect all sub-series as well"
+//      /words "Block is a list of words"
+//      /values "Process list of values (implied GET)"
+//      /hide "HACK to make PROTECT and UNPROTECT have the same signature"
 //  ]
 //
 REBNATIVE(unprotect)
@@ -546,6 +540,7 @@ void Force_Value_Frozen_Core(
 //
 //  {Permanently lock values (if applicable) so they can be immutably shared.}
 //
+//      return: [any-value!]
 //      value "Value to make permanently immutable"
 //          [any-value!]
 //      /deep "Freeze deeply"

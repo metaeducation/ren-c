@@ -4,6 +4,7 @@
 ; See comments on non-UPARSE REWORD implementation.
 
 [(did uparse-reword: function [
+    return: [any-string! binary!]
     source [any-string! binary!]
     values [map! object! block!]
     /case
@@ -156,4 +157,3 @@
     text: "$<10>"
     "bar" = uparse-reword/escape text subs ["$<" ">"]
 )]
-

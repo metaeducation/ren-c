@@ -62,7 +62,7 @@
 )
 ; Test that return stops the loop
 (
-    f1: func [] [cfor i 1 1 1 [return 1 2] 2]
+    f1: func [return: [integer!]] [cfor i 1 1 1 [return 1 2] 2]
     1 = f1
 )
 ; Test that errors do not stop the loop and errors can be returned

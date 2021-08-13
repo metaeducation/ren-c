@@ -12,7 +12,7 @@
 )
 ; RETURN stops the evaluation
 (
-    f1: func [] [compose [(return 1)] 2]
+    f1: func [return: [integer!]] [compose [(return 1)] 2]
     1 = f1
 )
 ; THROW stops the evaluation
@@ -164,4 +164,3 @@
     ([<a> <b>] = compose [<a> (if true [null]) <b>])
     (error? trap [compose [<a> (~unset~)]])
 ]
- 

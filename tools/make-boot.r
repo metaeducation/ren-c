@@ -414,7 +414,7 @@ hookname: enfixed func [
     ;
     prefix: uppercase copy prefix
 
-    unspaced [prefix propercase-of (switch ensure word! t/(column) [
+    return unspaced [prefix propercase-of (switch ensure word! t/(column) [
         '+ [as text! t/name]  ; type has its own unique hook
         '* [t/class]        ; type uses common hook for class
         '? ['unhooked]      ; datatype provided by extension

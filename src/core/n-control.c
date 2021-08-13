@@ -1336,6 +1336,7 @@ REBNATIVE(catch)
 //
 //  "Throws control back to a previous catch."
 //
+//      return: []  ; !!! notation for divergent function?
 //      value "Value returned from catch"
 //          [<opt> any-value!]
 //      /name "Throws to a named catch"

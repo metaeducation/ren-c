@@ -31,6 +31,7 @@
 //
 //  {Returns true if both values are conditionally true (no "short-circuit")}
 //
+//      return: [logic!]
 //      value1 [any-value!]
 //      value2 [any-value!]
 //  ]
@@ -51,6 +52,7 @@ REBNATIVE(and_q)
 //
 //  {Returns true if both values are conditionally false (no "short-circuit")}
 //
+//      return: [logic!]
 //      value1 [any-value!]
 //      value2 [any-value!]
 //  ]
@@ -71,6 +73,7 @@ REBNATIVE(nor_q)
 //
 //  {Returns false if both values are conditionally true (no "short-circuit")}
 //
+//      return: [logic!]
 //      value1 [any-value!]
 //      value2 [any-value!]
 //  ]

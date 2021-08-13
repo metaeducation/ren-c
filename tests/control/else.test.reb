@@ -30,11 +30,11 @@
 )
 
 [https://github.com/metaeducation/ren-c/issues/510 (
-    c: func [i] [
+    c: func [return: [integer!] i] [
         return if i < 15 [30] else [4]
     ]
 
-    d: func [i] [
+    d: func [return: [integer!] i] [
         return (if i < 15 [30] else [4])
     ]
 
@@ -48,8 +48,8 @@
 
 ; Hard quotes need to account for enfix deferral
 (
-    foo: func [y] [return the 1 then (x -> [x + y])]
-    bar: func [y] [return 1 then (x -> [x + y])]
+    foo: func [return: [integer!] y] [return the 1 then (x -> [x + y])]
+    bar: func [return: [integer!] y] [return 1 then (x -> [x + y])]
     did all [
         11 = foo 10
         1 = bar 10
@@ -58,8 +58,8 @@
 
 ; The above should work whether you use a GROUP! or not (-> quote left wins)
 (
-    foo: func [y] [return the 1 then x -> [x + y]]
-    bar: func [y] [return 1 then x -> [x + y]]
+    foo: func [return: [integer!] y] [return the 1 then x -> [x + y]]
+    bar: func [return: [integer!] y] [return 1 then x -> [x + y]]
     did all [
         11 = foo 10
         1 = bar 10

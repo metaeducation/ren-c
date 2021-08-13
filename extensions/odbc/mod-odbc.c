@@ -1639,6 +1639,7 @@ REBNATIVE(copy_odbc)
 //
 //  export update-odbc: native [
 //
+//      return: <none>
 //      connection [object!]
 //      access [logic!]
 //      commit [logic!]
@@ -1686,7 +1687,7 @@ REBNATIVE(update_odbc)
     if (not SQL_SUCCEEDED(rc))
         fail (Error_ODBC_Dbc(hdbc));
 
-    return rebLogic(true);
+    return rebNone();
 }
 
 

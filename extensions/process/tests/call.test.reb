@@ -61,7 +61,7 @@
     ] function [frame [frame!]] [
         out: frame/output
         do frame
-        return out
+        out
     ])
 
     ("Foo" = echoer "Foo" "")

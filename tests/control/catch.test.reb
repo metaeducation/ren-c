@@ -62,7 +62,7 @@
 )
 ; CATCH and RETURN
 (
-    f: func [] [catch [return 1] 2]
+    f: func [return: [integer!]] [catch [return 1] 2]
     1 = f
 )
 ; CATCH and BREAK

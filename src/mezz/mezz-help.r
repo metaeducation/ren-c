@@ -50,7 +50,7 @@ description-of: function [
     return: [<opt> text!]
     v [<blank> any-value!]
 ][
-    switch type of get/any 'v [
+    return switch type of get/any 'v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
         image! [spaced ["size:" v/size]]

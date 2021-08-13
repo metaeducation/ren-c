@@ -65,7 +65,7 @@
 )
 ; Test that return stops the loop
 (
-    f1: func [] [count-up i 1 [return 1 2]]
+    f1: func [return: [integer!]] [count-up i 1 [return 1 2]]
     1 = f1
 )
 ; Test that errors do not stop the loop and errors can be returned

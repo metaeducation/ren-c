@@ -194,7 +194,7 @@
 )
 ; two-function return tests
 (
-    g: func [f [action!]] [f [return 1] 2]
+    g: func [return: [integer!] f [action!]] [f [return 1] 2]
     1 = g :do
 )
 ; BREAK out of a function
@@ -436,7 +436,7 @@
     ][
         count: default [2]
         data: reduce [count x y outer static]
-        return case [
+        case [
             count = 0 [reduce [data]]
             true [
                append/only (f/count count - 1) data

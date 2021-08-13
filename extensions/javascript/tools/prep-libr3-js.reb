@@ -235,7 +235,7 @@ to-js-type: func [
     return: [<opt> text! tag!]
     s [text!] "C type as string"
 ][
-    case [
+    return case [
         ; APIs dealing with `char *` means UTF-8 bytes.  While C must memory
         ; manage such strings (at the moment), the JavaScript wrapping assumes
         ; input parameters should be JS strings that are turned into temp
@@ -879,7 +879,7 @@ e-cwrap/write-emitted
 ;     EXPORTED_FUNCTIONS=@libr3.exports.json
 ;
 
-json-collect: function [body [block!]] [
+json-collect: function [return: [text!] body [block!]] [
     results: collect compose [
         keep: adapt :keep [  ; Emscripten prefixes functions w/underscore
             value: unspaced [{"} {_} value {"}]

@@ -122,6 +122,11 @@ bitwise-and-not: generic [
 intersect: generic [
     {Returns the intersection (AND) of two sets}
 
+    return: [
+        logic! integer! char! tuple!  ; math
+        any-array! any-string! bitset! typeset!  ; sets
+        binary!  ; ???
+    ]
     value1 [
         logic! integer! char! tuple!  ; math
         any-array! any-string! bitset! typeset!  ; sets
@@ -140,6 +145,11 @@ intersect: generic [
 union: generic [
     {Returns the union (OR) of two sets}
 
+    return: [
+        logic! integer! char! tuple!  ; math
+        any-array! any-string! bitset! typeset!  ; sets
+        binary!  ; ???
+    ]
     value1 [
         logic! integer! char! tuple!  ; math
         any-array! any-string! bitset! typeset!  ; sets
@@ -158,6 +168,12 @@ union: generic [
 difference: generic [
     {Returns the special difference (XOR) of two sets}
 
+    return: [
+        logic! integer! char! tuple!
+        any-array! any-string! bitset! typeset!
+        binary!
+        time!  ; !!! Under review, this really doesn't fit
+    ]
     value1 [
         logic! integer! char! tuple!  ; math
         any-array! any-string! bitset! typeset!  ; sets
@@ -178,6 +194,7 @@ difference: generic [
 exclude: generic [
     {Returns the first data set less the second data set.}
 
+    return: [any-array! any-string! binary! bitset! typeset!]
     data "original data"
         [any-array! any-string! binary! bitset! typeset!]
     exclusions "data to exclude from series"
@@ -192,22 +209,26 @@ exclude: generic [
 
 negate: generic [
     {Changes the sign of a number (see COMPLEMENT for inversion of sets)}
+    return: [any-number! pair! money! time!]
     number [any-number! pair! money! time!]
 ]
 
 bitwise-not: generic [
     {Returns the one's complement value.}
+    return: [logic! integer! tuple! binary!]
     value [logic! integer! tuple! binary!]
 ]
 
 complement: generic [
     {Returns the inversion of a set}
+    return: [bitset! typeset!]
     value [bitset! typeset!]
 ]
 
 unique: generic [
     {Returns the data set with duplicates removed}
 
+    return: [any-array! any-string! binary! bitset! typeset!]
     series [any-array! any-string! binary! bitset! typeset!]
     .dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
     /case "Use case-sensitive comparison (except bitsets)"
@@ -217,12 +238,14 @@ unique: generic [
 
 absolute: generic [
     {Returns the absolute value.}
+    return: [any-number! pair! money! time!]
     value [any-number! pair! money! time!]
 ]
 
 round: generic [
     {Rounds a numeric value; halves round up (away from zero) by default}
 
+    return: [any-number! pair! money! time!]
     value "The value to round"
         [any-number! pair! money! time!]
     /to "Return the nearest multiple of the parameter (must be non-zero)"
@@ -246,11 +269,13 @@ random: generic [
 
 odd?: generic [
     {Returns TRUE if the number is odd.}
+    return: [logic!]
     number [any-number! char! date! money! time! pair!]
 ]
 
 even?: generic [
     {Returns TRUE if the number is even.}
+    return: [logic!]
     number [any-number! char! date! money! time! pair!]
 ]
 
@@ -424,6 +449,7 @@ remove: generic [
 clear: generic [
     {Removes elements from current position to tail; returns at new tail}
 
+    return: [any-series! port! map! bitset!]
     series "At position (modified)"
         [any-series! port! map! bitset!]
 ]
@@ -431,6 +457,7 @@ clear: generic [
 swap: generic [
     {Swaps elements between two series or the same series}
 
+    return: [any-series!]
     series1 [any-series!] {At position (modified)}
     series2 [any-series!] {At position (modified)}
 ]
@@ -438,8 +465,9 @@ swap: generic [
 reverse: generic [
     {Reverses the order of elements; returns at same position}
 
+    return: [any-series! any-sequence! pair!]
     series "At position (modified)"
-        [any-series! tuple! pair!]
+        [any-series! any-sequence! pair!]
     /part "Limits to a given length or position"
         [any-number! any-series!]
 ]
@@ -447,6 +475,7 @@ reverse: generic [
 sort: generic [
     {Sorts a series; default sort order is ascending}
 
+    return: [any-series!]
     series "At position (modified)"
         [any-series!]
     /case "Case sensitive sort"
@@ -464,17 +493,20 @@ sort: generic [
 
 create: generic [
     {Send port a create request.}
+    return: [port!]
     port [port! file! url! block!]
 ]
 
 delete: generic [
     {Send port a delete request.}
+    return: [port!]
     port [port! file! url! block!]
 ]
 
 open: generic [
     {Opens a port; makes a new port from a specification if necessary}
 
+    return: [port!]
     spec [port! file! url! block!]
     /new "Create new file - if it exists, reset it (truncate)"
     /read "Open for read access"
@@ -512,6 +544,7 @@ read: generic [
 write: generic [
     {Writes to a file, URL, or port - auto-converts text strings}
 
+    return: [port! block!]  ; !!! http write returns BLOCK!, why?
     destination [port! file! url! block!]
     data "Data to write (non-binary converts to UTF-8)"
         [binary! text! block! object!]  ; !!! should this support CHAR!?
@@ -558,6 +591,7 @@ on-wake-up: generic [
 
 rename: generic [
     {Rename a file.}
+    return: [port! file! url!]
     from [port! file! url! block!]
     to [port! file! url! block!]
 ]

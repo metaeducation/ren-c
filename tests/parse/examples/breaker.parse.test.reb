@@ -1,7 +1,7 @@
 ; breaker.parse.test.reb
 
 [
-    (did breaker: func [text] [
+    (did breaker: func [return: [block!] text [text!]] [
         let capturing
         let inner
         return uparse text [collect [while [

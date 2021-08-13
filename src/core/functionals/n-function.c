@@ -520,6 +520,7 @@ REBNATIVE(func_p)
 //
 //  {Tell whether a parameter is registered as <end> or not}
 //
+//      return: [logic!]
 //      parameter [word!]
 //  ]
 //
@@ -554,6 +555,7 @@ REBNATIVE(endable_q)
 //
 //  {Tell whether a parameter is registered as <skip> or not}
 //
+//      return: [logic!]
 //      parameter [word!]
 //  ]
 //
@@ -656,6 +658,7 @@ REB_R Init_Thrown_Unwind_Value(
 //
 //  {Jump up the stack to return from a specific frame or call.}
 //
+//      return: []  ; !!! notation for divergent functions?
 //      level "Frame, action, or index to exit from"
 //          [frame! action! integer!]
 //      result "Result for enclosing state"
@@ -776,6 +779,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
 //
 //  {RETURN, giving a result to the caller}
 //
+//      return: []  ; !!! notation for "divergent?"
 //      value "If no argument is given, result will be ~void~"
 //          [<end> <opt> <meta> any-value!]
 //      /isotope "Relay isotope status of NULL or void return values"
@@ -794,6 +798,7 @@ REBNATIVE(return)
 //
 //  {RETURN/ISOTOPE native specialization}
 //
+//      return: []  ; !!! notation for divergent functions?
 //      value "If no argument is given, result will be ~void~"
 //          [<end> <opt> <meta> any-value!]
 //  ]

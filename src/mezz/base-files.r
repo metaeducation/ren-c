@@ -51,7 +51,7 @@ exists?: func [
         return info?/only target
     ]
 
-    select try attempt [query target] 'type
+    return select try attempt [query target] 'type
 ]
 
 size-of: size?: function [
@@ -81,7 +81,7 @@ suffix-of: function [
     return: [<opt> file!]
     path [file! url! text!]
 ][
-    all [
+    return all [
         pos: find-last path #"."
         not find pos #"/"
         to file! pos
@@ -93,7 +93,7 @@ dir?: func [
     return: [logic!]
     target [file! url!]
 ][
-    did find "/\" last target
+    return did find "/\" last target
 ]
 
 dirize: func [
@@ -106,7 +106,9 @@ dirize: func [
 ]
 
 make-dir: func [
-    "Creates the specified directory. No error if already exists."
+    {Creates the specified directory, no error if already exists}
+
+    return: [file! url!]
     path [file! url!]
     /deep "Create subdirectories too"
     <local> dirs end created
@@ -150,7 +152,7 @@ make-dir: func [
         ])
         insert created path
     ]
-    path
+    return path
 ]
 
 delete-dir: func [
@@ -177,7 +179,7 @@ script?: func [
     if match [file! url!] source [
         source: read source
     ]
-    find-script source
+    return find-script source
 ]
 
 file-type?: function [
@@ -185,7 +187,7 @@ file-type?: function [
     return: [<opt> word!]
     file [file! url!]
 ][
-    all [
+    return all [
         pos: find system/options/file-types try suffix-of file
         first try find pos word!
     ]
@@ -193,6 +195,7 @@ file-type?: function [
 
 split-path: func [
     "Splits and returns directory path and file as a block."
+    return: [block!]
     target [file! url! text!]
     <local> dir pos
 ][
@@ -208,7 +211,7 @@ split-path: func [
         )
         end
     ]
-    reduce [dir pos]
+    return reduce [dir pos]
 ]
 
 
@@ -227,4 +230,3 @@ intern: function [
 
     :data
 ]
-

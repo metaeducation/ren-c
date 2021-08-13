@@ -35,7 +35,7 @@
 )
 ; RETURN out of make object!
 [#848 (
-    f: func [] [
+    f: func [return: [integer!]] [
         make object! [return 1]
         2
     ]

@@ -57,7 +57,7 @@ maybe: enfixed func* [
     ; https://github.com/rebol/rebol-issues/issues/2275
     ;
     if null? :optional [return get/hard/any compose target]
-    set/hard compose target :optional
+    return set/hard compose target :optional
 ]
 
 
@@ -70,9 +70,10 @@ steal: func* [
         {Used to take the assigned value}
     'look [set-word! set-path! <variadic>]
 ][
-    get first look  ; returned value
-
-    elide take evaluation
+    return (
+        get first look  ; returned value
+        elide take evaluation
+    )
 ]
 
 assert [null = binding of :return]  ; it's archetypal, nowhere to return to
@@ -293,7 +294,7 @@ func: func* [
     ;
     if const? body [new-body: const new-body]
 
-    func* new-spec either defaulters [
+    return func* new-spec either defaulters [
         append defaulters ^ as group! any [new-body body]
     ][
         any [new-body body]
@@ -474,7 +475,7 @@ unset?: func [
     return: [logic!]
     var [word! path!]
 ][
-    '~unset~ = ^ get/any var
+    return '~unset~ = ^ get/any var
 ]
 
 set?: func [
@@ -482,7 +483,7 @@ set?: func [
     return: [logic!]
     var [word! path!]
 ][
-    '~unset~ <> ^ get/any var
+    return '~unset~ <> ^ get/any var
 ]
 
 
@@ -573,7 +574,7 @@ was: enfixed redescribe [
                 arg1: compose [(:left) is (:right)]
             ]
         ]
-        return :left  ; choose left in case binding or case matters somehow
+        :left  ; choose left in case binding or case matters somehow
     ]
 )
 tweak :was 'postpone on
@@ -794,7 +795,7 @@ meth: enfixed func [
     let context: binding of member else [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
-    set member bind (
+    return set member bind (
         func/(if gather '/gather) compose [((spec)) <in> (context)] body
     ) context
 ]
@@ -803,6 +804,7 @@ meth: enfixed func [
 module: func [
     {Creates a new module}
 
+    return: [module!]
     spec "The header block of the module (modified)"
         [block! object!]
     body "The body block of the module (modified)"
@@ -996,6 +998,7 @@ cause-error: func [
 fail: func [
     {Interrupts execution by reporting an error (a TRAP can intercept it).}
 
+    return: []  ; !!! notation for divergent function?
     'blame "Point to variable or parameter to blame"
         [<skip> meta-word! meta-path!]
     reason "ERROR! value, ID, URL, message text, or failure spec"

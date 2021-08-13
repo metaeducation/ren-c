@@ -50,7 +50,7 @@
 ; Test that return stops the loop
 (
     blk: [1]
-    f1: func [] [for-each i blk [return 1 2]]
+    f1: func [return: [integer!]] [for-each i blk [return 1 2]]
     1 = f1
 )
 ; Test that errors do not stop the loop and errors can be returned
@@ -144,7 +144,10 @@
 ; ACTION!s are called repeatedly util NULL is returned
 
 (
-    make-one-thru-five: function [<static> count (0)] [
+    make-one-thru-five: function [
+        return: [<opt> integer!]
+        <static> count (0)
+    ][
         if count = 5 [return null]
         return count: count + 1
     ]
@@ -152,7 +155,10 @@
         i * 10
     ]
 )(
-    make-one-thru-five: function [<static> count (0)] [
+    make-one-thru-five: function [
+        return: [<opt> integer!]
+        <static> count (0)
+    ][
         if count = 5 [return null]
         return count: count + 1
     ]

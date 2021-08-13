@@ -265,7 +265,7 @@ console!: make object! [
         return: "null if canceled, otherwise processed text line input"
             [<opt> text!]
     ][
-        ask text!
+        return ask text!
     ]
 
     dialect-hook: meth [

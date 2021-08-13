@@ -115,6 +115,7 @@ REBNATIVE(do_branch)
 //
 //  {Create a DO variant that executes what it's given for N times}
 //
+//      return: [action!]
 //      n "Number of times to execute before being a no-op"
 //          [integer!]
 //  ]

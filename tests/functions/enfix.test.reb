@@ -229,7 +229,7 @@
             fail "ifoo should not run, it tests <skip> on *next* step"
         ]
         did all [
-            ignored: func [] [
+            ignored: func [return: [issue!]] [
                 ignored: _
                 return #ignored
             ]
@@ -249,7 +249,7 @@
             ]
         ]
         did all [
-            ignored: func [] [
+            ignored: func [return: [issue!]] [
                 ignored: _
                 return #ignored
             ]
@@ -294,7 +294,7 @@
     (
         ibar: func ['i [<skip> integer!]] [ibar: _]
         did all [
-            ignored: func [] [
+            ignored: func [return: [issue!]] [
                 ignored: _
                 return #ignored
             ]
@@ -315,7 +315,7 @@
             }
         ]
         did all [
-            kept: func [] [
+            kept: func [return: [issue!]] [
                 kept: _
                 return #kept
             ]

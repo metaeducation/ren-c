@@ -17,6 +17,7 @@ decode-url: :sys/decode-url
 clean-path: func [
     {Returns new directory path with `.` and `..` processed.}
 
+    return: [file! url! text!]
     path [file! url! text!]
     /only "Do not prepend current directory"
     /dir "Add a trailing / if missing"

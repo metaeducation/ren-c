@@ -141,6 +141,7 @@ REB_R Block_Dispatcher(REBFRM *f)
 //
 //  {Generate a surprise ANY-VALUE!}
 //
+//      return: [<opt> any-value!]
 //  ]
 //
 REBNATIVE(surprise)

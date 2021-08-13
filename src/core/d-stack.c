@@ -198,6 +198,7 @@ bool Is_Context_Running_Or_Pending(REBCTX *frame_ctx)
 //
 //  "Returns TRUE if a FRAME! is on the stack and executing (arguments done)."
 //
+//      return: [logic!]
 //      frame [frame!]
 //  ]
 //
@@ -221,6 +222,7 @@ REBNATIVE(running_q)
 //
 //  "Returns TRUE if a FRAME! is on the stack, but is gathering arguments."
 //
+//      return: [logic!]
 //      frame [frame!]
 //  ]
 //

@@ -106,8 +106,8 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
     line-length [integer!]
     text [text!]
 ] [
-    let line-list: _
-    let line: _
+    let line-list: null
+    let line: null
     let [eol bol]
 
     count-line-rule: [
@@ -125,7 +125,7 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
         end
     ]
 
-    opt line-list
+    return line-list
 ]
 
 text-line-of: func [
@@ -157,7 +157,7 @@ text-line-of: func [
     ]
 
     if zero? line [return null]
-    line
+    return line
 ]
 
 text-location-of: func [

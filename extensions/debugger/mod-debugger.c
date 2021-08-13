@@ -171,6 +171,7 @@ REBNATIVE(pause)
 //
 //  {Resume after a breakpoint, can evaluate code in the breaking context.}
 //
+//      return: []  ; !!! Notation for divergent function?
 //      expression "Evalue the given code as return value from BREAKPOINT"
 //          [<end> block!]
 //  ]

@@ -40,6 +40,7 @@
 //
 //  "Converts a value to a human-readable string."
 //
+//      return: [text!]
 //      value "The value to form (currently errors on BAD-WORD!)"
 //          [any-value!]
 //  ]
@@ -164,6 +165,7 @@ REBNATIVE(write_stdout)
 //
 //  {Sets or clears the new-line marker within a block or group.}
 //
+//      return: [block!]
 //      position "Position to change marker (modified)"
 //          [block! group!]
 //      mark "Set TRUE for newline"
@@ -226,7 +228,9 @@ REBNATIVE(new_line)
 //
 //  {Returns the state of the new-line marker within a block or group.}
 //
-//      position [block! group! varargs!] "Position to check marker"
+//      return: [logic!]
+//      position "Position to check marker"
+//          [block! group! varargs!]
 //  ]
 //
 REBNATIVE(new_line_q)

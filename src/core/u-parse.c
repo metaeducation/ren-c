@@ -2799,6 +2799,7 @@ REBNATIVE(parse_p)
 //
 //  "Accept the current parse rule (Internal Implementation Detail ATM)."
 //
+//      return: []  ; !!! Notation for divergent function?
 //  ]
 //
 REBNATIVE(parse_accept)
@@ -2816,6 +2817,7 @@ REBNATIVE(parse_accept)
 //
 //  "Reject the current parse rule (Internal Implementation Detail ATM)."
 //
+//      return: []  ; !!! Notation for divergent function?
 //  ]
 //
 REBNATIVE(parse_reject)

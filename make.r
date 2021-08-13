@@ -711,7 +711,7 @@ gen-obj: func [
     ; With the flags and settings ready, make a rebmake object and ask it
     ; to build the requested object file.
     ;
-    make rebmake/object-file-class compose [
+    return make rebmake/object-file-class compose [
         source: to-file case [
             dir [join dir s]
             main [s]
@@ -1591,6 +1591,7 @@ for-each ext builtin-extensions [
 
 ; Reorder builtin-extensions by their dependency
 calculate-sequence: function [
+    return: [integer!]
     ext
     <local> req b
 ][
@@ -1612,7 +1613,7 @@ calculate-sequence: function [
             fail ["unrecoginized dependency" req "for" ext/name]
         ]
     ]
-    ext/sequence: seq + 1
+    return ext/sequence: seq + 1
 ]
 
 for-each ext builtin-extensions [calculate-sequence ext]
@@ -1909,7 +1910,7 @@ top: make rebmake/entry-class [
         either tmp: select user-config 'top
         [either block? tmp [tmp] [reduce [tmp]]]
         [[ app dynamic-libs ]]
-    
+
     commands: []
 ]
 

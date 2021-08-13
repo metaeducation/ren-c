@@ -49,7 +49,7 @@ map-files-to-local: func [
     files [file! block!]
 ][
     if not block? files [files: reduce [files]]
-    map-each f files [
+    return map-each f files [
         file-to-local f
     ]
 ]
@@ -59,7 +59,7 @@ ends-with?: func [
     s [any-string!]
     suffix [blank! any-string!]
 ][
-    did any [
+    return did any [
         blank? suffix
         empty? suffix
         suffix = (skip tail-of s negate length of suffix)
@@ -174,7 +174,7 @@ posix: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        either dir? cmd/file [
+        return either dir? cmd/file [
             spaced ["mkdir -p" cmd/file]
         ][
             spaced ["touch" cmd/file]
@@ -185,7 +185,7 @@ posix: make platform-class [
         return: [text!]
         cmd [object!]
     ][
-        spaced ["rm -fr" cmd/file]
+        return spaced ["rm -fr" cmd/file]
     ]
 
     gen-cmd-strip: meth [
@@ -234,7 +234,7 @@ windows: make platform-class [
     ][
         let f: file-to-local cmd/file
         if #"\" = last f [remove back tail-of f]
-        either dir? cmd/file [
+        return either dir? cmd/file [
             spaced ["if not exist" f "mkdir" f]
         ][
             unspaced ["echo . 2>" f]
@@ -247,7 +247,7 @@ windows: make platform-class [
     ][
         let f: file-to-local cmd/file
         if #"\" = last f [remove back tail-of f]
-        either dir? cmd/file [
+        return either dir? cmd/file [
             ;
             ; Note: If you have Git shell tools installed on Windows, then
             ; `rmdir` here might run `C:\Program Files\Git\usr\bin\rmdir.EXE`
@@ -360,7 +360,7 @@ application-class: make project-class [
             linker
             default-linker
         ]
-        ld/command/debug
+        return ld/command/debug
             output
             depends
             searches
@@ -391,7 +391,7 @@ dynamic-library-class: make project-class [
             linker
             default-linker
         ]
-        l/command/dynamic
+        return l/command/dynamic
             output
             depends
             searches
@@ -490,7 +490,7 @@ gcc: make compiler-class [
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         /E "only preprocessing"
     ][
-        collect-text [
+        return collect-text [
             keep any [
                 (file-to-local/pass exec-file)
                 (to text! name)  ; the "gcc" may get overridden as "g++"
@@ -599,7 +599,7 @@ cl: make compiler-class [
         ; Note: PIC is ignored for this Microsoft CL compiler handler
         /E "only preprocessing"
     ][
-        collect-text [
+        return collect-text [
             keep any [(file-to-local/pass exec-file) "cl"]
             keep "/nologo"  ; don't show startup banner (must be lowercase)
             keep either E ["/P"]["/c"]
@@ -717,7 +717,7 @@ ld: make linker-class [
         ][
             target-platform/exe-suffix
         ]
-        collect-text [
+        return collect-text [
             keep any [(file-to-local/pass exec-file) "gcc"]
 
             ; !!! This breaks emcc at the moment; no other DLLs are being
@@ -755,7 +755,7 @@ ld: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        opt switch dep/class [
+        return (opt switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
@@ -791,7 +791,7 @@ ld: make linker-class [
         ] else [
             dump dep
             fail "unrecognized dependency"
-        ]
+        ])
     ]
 
     check: meth [
@@ -826,7 +826,7 @@ llvm-link: make linker-class [
             target-platform/exe-suffix
         ]
 
-        collect-text [
+        return collect-text [
             keep any [(file-to-local/pass exec-file) "llvm-link"]
 
             keep "-o"
@@ -859,7 +859,7 @@ llvm-link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        opt switch dep/class [
+        return (opt switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
@@ -885,7 +885,7 @@ llvm-link: make linker-class [
             ]
             (elide dump dep)
             fail "unrecognized dependency"
-        ]
+        ])
     ]
 ]
 
@@ -909,7 +909,7 @@ link: make linker-class [
         ][
             target-platform/exe-suffix
         ]
-        collect-text [
+        return collect-text [
             keep any [(file-to-local/pass exec-file) "link"]
 
             ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
@@ -945,7 +945,7 @@ link: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        opt switch dep/class [
+        return (opt switch dep/class [
             #object-file [
                 file-to-local to-file dep/output
             ]
@@ -982,7 +982,7 @@ link: make linker-class [
             ]
             (elide dump dep)
             fail "unrecognized dependency"
-        ]
+        ])
     ]
 ]
 
@@ -1060,7 +1060,7 @@ object-file-class: make object! [
             optimization: false
         ]
 
-        cc/command/I/D/F/O/g/(PIC)/(E) output source
+        return cc/command/I/D/F/O/g/(PIC)/(E) output source
             compose [((opt includes)) ((opt I))]
             compose [((opt definitions)) ((opt D))]
             compose [((opt F)) ((opt cflags))]  ; extra cflags override
@@ -1086,7 +1086,7 @@ object-file-class: make object! [
             ] parent/class
         ]
 
-        make entry-class [
+        return make entry-class [
             target: output
             depends: append copy either depends [depends][[]] source
             commands: reduce [command/I/D/F/O/g/(
@@ -1140,7 +1140,7 @@ cmd-strip-class: make object! [
     class: #cmd-strip
     file: ~
     options: _
-    strip: ~
+    strip: _
 ]
 
 generator-class: make object! [
@@ -1156,7 +1156,7 @@ generator-class: make object! [
         return: [text!]
         cmd [object!]
     ][
-        switch cmd/class [
+        return switch cmd/class [
             #cmd-create [
                 applique any [
                     :gen-cmd-create :target-platform/gen-cmd-create
@@ -1364,7 +1364,7 @@ makefile: make generator-class [
             [text!]
         entry [object!]
     ][
-        newlined collect-lines [switch entry/class [
+        return newlined collect-lines [switch entry/class [
 
             ; Makefile variable, defined on a line by itself
             ;

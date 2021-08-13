@@ -58,6 +58,7 @@ REBOL [
 
 shell: func [
     {Run code in the shell dialect}
+    return: [text!]
     code "Dialected shell code"
         [block!]
     /pipe
@@ -134,10 +135,10 @@ shell: func [
             get-group! [splice: true, try do item]
             get-block! [splice: true, as block! item]
         ]
-        let needs-quotes?: func [item] [
+        let needs-quotes?: func [return: [logic!] item] [
             if match [word! issue!] item [return false]  ; never quoted
             if file? item [
-                return find item space  ; !!! should check for other escapes
+                return did find item space  ; !!! should check other escapes
             ]
             if splice = false [return true]
             if splice = true [return false]  ; e.g. even TEXT! has no quotes

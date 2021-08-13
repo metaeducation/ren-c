@@ -37,7 +37,11 @@
 
 [
     (
-        foo: func [public <local> private] [
+        foo: func [
+            return: [frame!]
+            public
+            <local> private
+        ][
             private: 304
             print ["I should see private" mold binding of 'public]
             return binding of 'public  ; frame as seen from inside
@@ -145,7 +149,11 @@
 
 [
     (
-        foo: func [public <local> private] [
+        foo: func [
+            return: [frame!]
+            public
+            <local> private
+        ][
             private: 304
             return binding of 'public  ; return FRAME! with the internal view
         ]

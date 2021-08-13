@@ -496,6 +496,7 @@ int CALLBACK ReqDirCallbackProc(
 //
 //  "Asks user to select a directory and returns it as file path"
 //
+//      return: [file!]
 //      /title "Custom dialog title text"
 //          [text!]
 //      /path "Default directory path"

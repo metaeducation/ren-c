@@ -232,6 +232,7 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
 //
 //  {Make a stylized ACTION! that fulfills the interface of a combinator}
 //
+//      return: [action!]
 //      spec [block!]
 //      body [block!]
 //  ]

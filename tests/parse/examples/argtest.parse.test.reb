@@ -4,7 +4,7 @@
 ; use a PARSE rule instead of an "ITERATE".  Since it was written, keep it.
 
 [
-    (did argtest: func [args [block!]] [
+    (did argtest: func [return: [block!] args [block!]] [
         let port: _
         let root-dir: _
         let access-dir: _

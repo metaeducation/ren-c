@@ -78,6 +78,8 @@
 //
 //  {Run another program by spawning a new process}
 //
+//      return: "If /WAIT, the forked process ID, else exit code"
+//        [integer!]
 //      command "OS-local command line, block with arguments, executable file"
 //          [text! block! file!]
 //      /wait "Wait for command to terminate before returning"
@@ -492,7 +494,7 @@ REBNATIVE(set_env)
 //
 //  {Returns a map of OS environment variables (for current process).}
 //
-//      ; No arguments
+//      return: [map!]
 //  ]
 //
 REBNATIVE(list_env)

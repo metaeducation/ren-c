@@ -516,6 +516,7 @@ REBNATIVE(file_to_local)
 //
 //  {Returns the current directory path}
 //
+//      return: [blank! file! url!]
 //  ]
 //
 REBNATIVE(what_dir)
@@ -555,6 +556,7 @@ REBNATIVE(what_dir)
 //
 //  {Changes the current path (where scripts with relative paths will be run).}
 //
+//      return: [file! url!]
 //      path [file! url!]
 //  ]
 //

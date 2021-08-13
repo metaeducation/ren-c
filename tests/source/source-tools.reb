@@ -121,7 +121,7 @@ rebsource: context [
             {Analyse the source files of REBOL.}
             return: [block!]
         ][
-            collect [
+            return collect [
                 for-each source list/source-files [
                     if find whitelisted source [continue]
 
@@ -135,7 +135,7 @@ rebsource: context [
             return: [<opt> block!]
             file
         ][
-            all [
+            return all [
                 filetype: select extensions extension-of file
                 type: in source filetype
                 (reeval (ensure action! get type) file
@@ -263,7 +263,7 @@ rebsource: context [
                     emit <non-std-func-space> [(file) (non-std-func-space)]
                 ]
 
-                analysis
+                return analysis
             ]
 
             rebol: function [
@@ -275,7 +275,7 @@ rebsource: context [
                 data
             ][
                 analysis: analyse/text file data
-                analysis
+                return analysis
             ]
         ]
 
@@ -394,7 +394,7 @@ rebsource: context [
                 ]
             ]
 
-            analysis
+            return analysis
         ]
     ]
 
@@ -421,17 +421,17 @@ rebsource: context [
             if equal? #"/" last item [
                 contents: read %% (repo-dir)/(item)
                 insert queue map-each x contents [join item x]
-                item: _
+                item: null
             ] else [
                 any [
                     parse second split-path item ["tmp-" to end]
                     not find extensions extension-of item
                 ] then [
-                    item: _
+                    item: null
                 ]
             ]
 
-            opt item  ; blanked items are to be filtered out
+            return item  ; nulled items are to be filtered out
         ]
     ]
 
@@ -467,6 +467,6 @@ rebsource: context [
         return: [file!]
         file [file!]
     ][
-        find-last file "." else [copy %""]
+        return find-last file "." else [copy %""]
     ]
 ]

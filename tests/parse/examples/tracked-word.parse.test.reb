@@ -26,6 +26,7 @@
 
 [(
     tracked-word!: enclose :default-combinators.(word!) func [
+        return: [<opt> any-value!]
         f [frame!]
         <static> indent (0)
     ][
@@ -72,9 +73,9 @@
 
     trackparse: enclose :trackparse* func [f [frame!]] [
         stack: copy []
-        do f also [
+        do f then [
             append stack ""  ; give final newline
-            return (delimit newline stack, elide clear stack)
+            (delimit newline stack, elide clear stack)
         ]
     ]
 

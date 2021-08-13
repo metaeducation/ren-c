@@ -2,7 +2,7 @@
 ; recursive safety
 (
     f: func [return: [action!]] [
-        func [x] [
+        return func [x] [
             either x = 1 [
                 reeval f 2
                 x = 1

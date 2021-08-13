@@ -202,6 +202,7 @@ REBNATIVE(run_library_collator)
 //
 //  {Unregister the LIBRARY! datatype (MAKE LIBRARY! will fail)}
 //
+//      return: <none>
 //  ]
 //
 REBNATIVE(unregister_library_hooks)

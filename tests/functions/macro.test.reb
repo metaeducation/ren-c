@@ -14,7 +14,7 @@
 ; like SPECIALIZE or ADAPT that a formally specified function would.
 
 (
-    m: macro [x] [return [append x ^ first]]
+    m: macro [return: [block!] x] [return [append x ^ first]]
     [1 2 3 d] = m [1 2 3] [d e f]
 )(
     m: enfix macro [discard] [[+ 2]]  ; !!! discard must be present ATM

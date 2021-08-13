@@ -9,7 +9,7 @@
 [
     (
         foo: func [/A [integer!] /B [integer!] /C [integer!]] [
-            return compose [
+            compose [
                 /A (A else '<null>) /B (B else '<null>) /C (C else '<null>)
             ]
         ]
@@ -56,7 +56,7 @@
     [a b c [d e f]] = do f
 )
 (
-    foo: func [] [
+    foo: func [return: [integer!]] [
         ;
         ; !!! Note that RETURN's parameter is done with the ^-convention.  This
         ; is an implementation detail that affects code that subverts the

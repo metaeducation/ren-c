@@ -158,7 +158,7 @@
             ]
         ]
 
-        match :(take args) (take args-normal)
+        return match :(take args) (take args-normal)
     ]
     true)
 

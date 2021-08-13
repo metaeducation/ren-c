@@ -117,6 +117,7 @@ REBNATIVE(get_event_actor_handle)
 //
 //  {Returns event with inner-most graphical object and coordinate.}
 //
+//      return: [event!]
 //      event [event!]
 //  ]
 //
