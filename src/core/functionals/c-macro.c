@@ -137,6 +137,12 @@ REBNATIVE(macro)
 
     INIT_ACT_DISPATCHER(macro, &Macro_Dispatcher);
 
+    if (ACT_HAS_RETURN(macro)) {
+        REBPAR *param = ACT_PARAMS_HEAD(macro);
+        assert(KEY_SYM(ACT_KEYS_HEAD(macro)) == SYM_RETURN);
+        SET_PARAM_FLAG(param, ENDABLE);  // dispatcher is invisible
+    }
+
     return Init_Action(D_OUT, macro, ANONYMOUS, UNBOUND);
 }
 
