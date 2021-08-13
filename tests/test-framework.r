@@ -179,7 +179,7 @@ make object! compose [
                             (dialect-failures: dialect-failures + 1)
                                 |
                             copy last-vector ["(" test-source-rule ")"]
-                            any whitespace
+                            while whitespace
                             [
                                 end (
                                     ; crash found

@@ -621,7 +621,7 @@ REBNATIVE(all)
     Push_Frame(nullptr, f);
 
     Init_Void(D_OUT);  // `all []` is a ~void~ isotope
-    
+
     do {
         // We write to the spare in case evaluation produces a ~void~ isotope
         // and we want to keep the previous value in D_OUT.

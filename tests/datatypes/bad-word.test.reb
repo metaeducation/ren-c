@@ -142,5 +142,5 @@
     ('~null~ = reify ~null~)
 
     (10 = reify 10)
-    ((the '''a) = reify the '''a) 
+    ((the '''a) = reify the '''a)
 ]

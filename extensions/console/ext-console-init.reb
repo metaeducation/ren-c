@@ -152,7 +152,7 @@ console!: make object! [
             ;     == ~something~
             ;
             ; That handling is below, since non-isotope bad-words are passed
-            ; as being a QUOTED! bad-word due to the parameter being `^v`. 
+            ; as being a QUOTED! bad-word due to the parameter being `^v`.
             ;
             print [result mold v space space "; isotope"]
             return
