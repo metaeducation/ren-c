@@ -369,9 +369,6 @@ REBNATIVE(reframer_p)
         if (Is_Specialized(param))
             continue;
 
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
-            continue;
-
         const REBSYM *symbol = KEY_SYMBOL(key);
         REBLEN index = Remove_Binder_Index_Else_0(&binder, symbol);
         assert(index != 0);

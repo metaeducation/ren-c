@@ -8,15 +8,18 @@
 ; the built frame matches what we'd expect by building manually.
 (
     f1: make frame! :append
-    f1/series: [a b c]
-    f1/value: <d>
-    f1/part: null
-    f1/dup: null
-    f1/only: null
-    f1/line: null
+    f1.return: null
+    f1.series: [a b c]
+    f1.value: <d>
+    f1.part: null
+    f1.dup: null
+    f1.only: null
+    f1.line: null
 
     mirror: reframer func [f [frame!]] [f]
-    f1 = mirror append [a b c] <d>
+    f2: mirror append [a b c] <d>
+    f2.return: null
+    f1 = f2
 )
 
 

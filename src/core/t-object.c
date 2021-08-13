@@ -307,15 +307,12 @@ bool Did_Advance_Evars(EVARS *e) {
                 continue;  // public should not see specialized args
             }
 
-            // RETURN: param is a typeset (types of returned variables) but the
-            // return function is filled in when it gets called.  It should
-            // not be shown on the public interface.
-            //
-            if (VAL_PARAM_CLASS(e->param) == PARAM_CLASS_RETURN) {
-                if (e->locals_visible)
-                    return true;
-                continue;
-            }
+            // Note: while RETURN: parameters were considered to be "local"
+            // they are actually part of the public interface of a function.
+            // A special feature makes it so that if you put a WORD! in the
+            // return slot, it will be assigned the result at the end of
+            // the call (like other output arguments).  But during the function
+            // execution it will be a definitional return.
         }
 
         return true;

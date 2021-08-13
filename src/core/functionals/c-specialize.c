@@ -138,11 +138,6 @@ REBCTX *Make_Context_For_Action_Push_Partials(
             continue;
         }
 
-        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
-            Copy_Cell(arg, unspecialized);
-            continue;
-        }
-
         const REBSYM *symbol = KEY_SYMBOL(key);  // added to binding
         if (NOT_PARAM_FLAG(param, REFINEMENT)) {  // nothing to push
 
@@ -299,9 +294,6 @@ bool Specialize_Action_Throws(
         for (; key != tail; ++key, ++param) {
             if (Is_Specialized(param))
                 continue;  // maybe refinement from stack, now specialized out
-
-            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN)
-                continue;
 
             Remove_Binder_Index(&binder, KEY_SYMBOL(key));
         }
