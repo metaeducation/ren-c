@@ -217,11 +217,40 @@ jobs:
       run: |
         cd build
         make
+        echo "R3BUILT=$(pwd)/r3" >> $GITHUB_ENV
+
+
+    # See README: Ren-C Code As Step
+    #
+    # Note: /usr/local/bin is where you put custom executables, but it's not
+    # in the path on MacOS by default:
+    #
+    # https://dani.gg/en/467-add-usr-local-bin-to-system-path-variable-on-mac-os/
+    #
+    - name: Copy Built R3 To Where It Can Be Used As A Shell
+      run: |
+        sudo cp build/r3 /usr/local/bin/r3built
+
+
+  #====# TESTING STEPS #======================================================#
 
 
     - name: Quick Smoke Test (Print A Message And Quit)
       run: |
-        build/r3 --do "print {hi}"
+        "$R3BUILT" --do "print {hi}"
+
+
+    - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
+      shell: /usr/local/bin/r3built --fragment {0}  # README: Ren-C Code As Step
+      run: |
+        print {== Hello From R3 HTTPS Read Test! ==}
+        parse as text! read https://example.com [
+            thru <h1> copy header: to </h1> to end
+        ] else [
+            fail "Couldn't Capture Page Title"
+        ]
+        assert [header = "Example Domain"]
+        print ["Succeeded:" header]
 
 
   #====# UPLOAD STEP #========================================================#
@@ -262,25 +291,6 @@ jobs:
         local=r3
         remote=s3://${AWS_S3_BUCKET_NAME}/travis-builds/${OS_ID}/${NEW_NAME}
         aws s3 cp $local $remote --content-type $MIME_TYPE
-
-
-  #====# TESTING STEPS #======================================================#
-
-
-    - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
-      uses: metaeducation/ren-c-action@release
-      with:
-        commit: ${{ env.GIT_COMMIT_SHORT }}
-        checked: ${{ env.CHECKED }}
-        script: |
-          print {== Hello From R3 HTTPS Read Test! ==}
-          parse as text! read https://example.com [
-              thru <h1> copy header: to </h1> to end
-          ] else [
-              fail "Couldn't Capture Page Title"
-          ]
-          assert [header = "Example Domain"]
-          print ["Succeeded:" header]
 
 
   #====# BOOTSTRAP STEP #=====================================================#
