@@ -258,7 +258,6 @@
 %parse/parse-tag-index.test.reb
 %parse/parse-tally.test.reb
 %parse/parse-text.test.reb
-%parse/parse-the.test.reb
 %parse/parse-the-xxx.test.reb
 %parse/parse-thru.test.reb
 %parse/parse-to.test.reb

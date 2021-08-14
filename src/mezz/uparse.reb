@@ -1525,10 +1525,94 @@ default-combinators: make map! reduce [
         ]
     ]
 
-    === THE-XXX! COMBINATORS ===
+    === NEW THE-XXX! COMBINATORS ===
 
-    ; The THE-XXX! combinators are just for doing literal matches instead of
-    ; by rule, e.g.
+    ; The role of THE-XXX! combinators has been in flux, but are believed to
+    ; provide the most value by being quoting or "as-is" operations.
+    ;
+    ;     >> uparse "a" [collect [keep @[keep some], keep <any>]]
+    ;     == [keep some "a"]
+    ;
+    ;     >> uparse "a" [collect [keep @ 'keep, keep <any>]]
+    ;     == [keep "a"]
+    ;
+    ; The rationale for this decision is laid out here, which mostly comes down
+    ; to the fact that if the only way you can synthesize values out of thin
+    ; air to use is via a GROUP!, that becomes contentious in COMPOSE.
+    ;
+    ; https://forum.rebol.info/t/1643/2
+
+    'the combinator [  ; synonym for @, for people who dislike symbols
+        return: "Ensuing value in the rule stream 'as-is'" [any-value!]
+        'item [any-value!]
+    ][
+        set remainder input
+        return item
+    ]
+
+    the! combinator [
+        return: "Ensuing value in the rule stream 'as-is'" [<opt> any-value!]
+        value [the!]
+        'item [any-value!]
+    ][
+        if bad-word? :item [  ; keep nuance of ~null~ making NULL
+            if '~null~ = :item [
+                return null
+            ]
+            fail [
+                "@ turns ~null~ into NULL and rejects other BAD-WORD!s"
+                "Use THE if that behavior is unhelpful for your situation."
+                "(It's really useful to the C API!)"
+            ]
+        ]
+        set remainder input
+        return item
+    ]
+
+    the-word! combinator [
+        return: "Given WORD! minus the @ sigil" [word!]
+        value [the-word!]
+    ][
+        set remainder input
+        return as word! value
+    ]
+
+    the-path! combinator [
+        return: "Given PATH! minus the @ sigil" [path!]
+        value [the-path!]
+    ][
+        set remainder input
+        return as path! value
+    ]
+
+    the-tuple! combinator [
+        return: "Given TUPLE! minus the @ sigil" [tuple!]
+        value [the-tuple!]
+    ][
+        set remainder input
+        return as tuple! value
+    ]
+
+    the-group! combinator [
+        return: "Given GROUP! minus the @ sigil" [group!]
+        value [the-group!]
+    ][
+        set remainder input
+        return as group! value
+    ]
+
+    the-block! combinator [
+        return: "Given BLOCK! minus the @ sigil" [block!]
+        value [the-block!]
+    ][
+        set remainder input
+        return as block! value
+    ]
+
+    === OLD THE-XXX! COMBINATORS ===
+
+    ; !!! This was an old concept of THE-XXX! combinators for doing literal
+    ; matches instead of by rule, e.g.
     ;
     ;     >> block: [some "a"]
     ;
@@ -1539,9 +1623,13 @@ default-combinators: make map! reduce [
     ; matches on text.  That logic has to be in the QUOTED! combinator, so
     ; this code builds on that instead of repeating it.
     ;
+    ; THE REASON THESE WERE CHANGED is explained in the new combinators.  But
+    ; there may be a return of these someday, e.g. if $(gr o up) and $word
+    ; come along...to shuffle the definitions.  So they're kept.
+    ;
     ; !!! These follow a simple pattern, could generate at a higher level.
 
-    the-word! combinator [
+    '~the-word!~ combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-word!]
@@ -1551,7 +1639,7 @@ default-combinators: make map! reduce [
         return [# (remainder) (pending)]: comb state input quote get value
     ]
 
-    the-path! combinator [
+    '~the-path!~ combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-word!]
@@ -1561,7 +1649,7 @@ default-combinators: make map! reduce [
         return [# (remainder) (pending)]: comb state input quote get value
     ]
 
-    the-tuple! combinator [
+    '~the-tuple!~ combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-tuple!]
@@ -1571,7 +1659,7 @@ default-combinators: make map! reduce [
         return [# (remainder) (pending)]: comb state input quote get value
     ]
 
-    the-group! combinator [
+    '~the-group!~ combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-group!]
@@ -1593,7 +1681,7 @@ default-combinators: make map! reduce [
         return unmeta result'
     ]
 
-    the-block! combinator [
+    '~the-block!~ combinator [
         return: "Literal value" [<opt> any-value!]
         pending: [blank! block!]
         value [the-block!]
@@ -1623,7 +1711,6 @@ default-combinators: make map! reduce [
         set pending totalpending
         return unmeta result'
     ]
-
 
     === META-XXX! COMBINATORS ===
 
