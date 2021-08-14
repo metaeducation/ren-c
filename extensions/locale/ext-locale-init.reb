@@ -460,7 +460,7 @@ if 'Windows <> first system/platform [
         <local> env-lang lang territory
     ][
         env-lang: get-env "LANG" else [return null]  ; e.g. "en_US.UTF-8"
-        territory: ~
+        territory: null
 
         letter: charset [#"a" - #"z" #"A" - #"Z"]
         uparse env-lang [
@@ -480,7 +480,7 @@ if 'Windows <> first system/platform [
                 ]
             ]
             find [territory territory*] ^type [
-                return all [territory, select iso-3166 territory]
+                return select iso-3166 try territory
             ]
         ]
         fail ["Invalid locale type:" type]
