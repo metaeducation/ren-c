@@ -33,15 +33,39 @@ make-port*: function [
     switch type of spec [
         file! [
             name: pick [dir file] dir? spec
-            spec: make object! [ref: spec]
+            spec: make object! [
+                scheme: name
+                ref: spec
+            ]
         ]
         url! [
             spec: decode-url spec
             name: spec.scheme
         ]
         block! [
-            spec: make object! spec
-            name: select spec 'scheme
+            ;
+            ; !!! This BLOCK! may be dialected, for instance httpd.reb creates
+            ; a server with:
+            ;
+            ;     make port! [scheme: 'httpd 8000 [render "Hello"]]
+            ;
+            ; It expects to find that block in `spec.ref`.  But other protocols
+            ; are "well formed objects" that expect MAKE OBJECT!, e.g. TLS:
+            ;
+            ;    make port! [
+            ;        scheme: 'tls
+            ;        host: port/spec/host
+            ;        port-id: port/spec/port-id
+            ;        ref: join-all [tcp:// host ":" port-id]
+            ;    ]
+            ;
+            ; So it's a bit weird, being a block that has to survive a call
+            ; to MAKE OBJECT! but then also being preserved for dialected
+            ; analysis.  All of this needs to be rewritten, but go along with
+            ; the strange historical behavior for now.
+            ;
+            spec: make object! append copy spec :['ref: spec]
+            name: spec.scheme
         ]
         object! [
             name: get in spec 'scheme
@@ -61,7 +85,7 @@ make-port*: function [
     ; Get the scheme definition:
     all [
         word? name
-        scheme: get try in system/schemes name
+        scheme: get try in system.schemes name
     ] else [
         cause-error 'access 'no-scheme name
     ]
