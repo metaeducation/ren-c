@@ -751,6 +751,17 @@ default-combinators: make map! reduce [
         return null
     ]
 
+    'copy combinator [
+        {Disabled combinator, included to help guide to use ACROSS}
+        return: "Divergent"
+            []
+    ][
+        fail [
+            "Transitionally (maybe permanently?) the COPY function in UPARSE"
+            "is done with ACROSS:" https://forum.rebol.info/t/1595
+        ]
+    ]
+
     === INTO KEYWORD ===
 
     ; Rebol2 had a INTO combinator which only took one argument: a rule to use
@@ -1015,6 +1026,18 @@ default-combinators: make map! reduce [
         return unmeta result'
     ]
 
+    'set combinator [
+        {Disabled combinator, included to help guide to use SET-WORD!}
+        return: "Divergent"
+            []
+    ][
+        fail [
+            "The SET keyword in UPARSE is done with SET-WORD!, and if SET does"
+            "come back it would be done differently:"
+            https://forum.rebol.info/t/1139
+        ]
+    ]
+
     === TEXT! COMBINATOR ===
 
     ; For now we just make text act as FIND/MATCH/TAIL, though this needs to be
@@ -1183,6 +1206,17 @@ default-combinators: make map! reduce [
         return unmeta result'
     ]
 
+    === GET-BLOCK! COMBINATOR ===
+
+    ; If the GET-BLOCK! combinator were going to have a meaning, it would likely
+    ; have to be "run this block as a rule, and use the synthesized product
+    ; as a rule"
+    ;
+    ;     >> uparse? "aaabbb" [:[some "a" ([some "b"])]
+    ;     == #[true]
+    ;
+    ; It's hard offhand to think of great uses for that, but that isn't to say
+    ; that they don't exist.
 
     get-block! combinator [
         return: "Undefined at this time"
@@ -1288,7 +1322,6 @@ default-combinators: make map! reduce [
         comb: :(state.combinators).(quoted!)
         return [# (remainder) (pending)]: comb state input ^value
     ]
-
 
     === LOGIC! COMBINATOR ===
 
@@ -1492,7 +1525,6 @@ default-combinators: make map! reduce [
         ]
     ]
 
-
     === THE-XXX! COMBINATORS ===
 
     ; The THE-XXX! combinators are just for doing literal matches instead of
@@ -1669,7 +1701,6 @@ default-combinators: make map! reduce [
         comb: :(state.combinators).(block!)
         return [# (remainder) (pending)]: ^ comb state input value  ; leave meta
     ]
-
 
     === INVISIBLE COMBINATORS ===
 
@@ -2255,7 +2286,11 @@ parsify: func [
                 if combinator? :comb [
                     return [# (advanced)]: combinatorize :comb rules state
                 ]
-                fail "For non-COMBINATOR actions in parse, use terminal/slash/"
+                let name: uppercase to text! r
+                fail [
+                    name "is not a COMBINATOR ACTION!"
+                    "For non-combinator actions in UPARSE, use" :[name "/"]
+                ]
             ]
 
             ; It's not a keyword, so we let the WORD! combinator decide what
