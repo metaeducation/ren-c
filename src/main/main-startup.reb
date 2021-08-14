@@ -324,6 +324,7 @@ main-startup: func [
     ;
     hijack :panic adapt (copy :panic) [
         print "PANIC ACTION! is being triggered from a usermode call"
+        print mold reason
         ;
         ; ...adaptation falls through to our copy of the original PANIC
     ]
