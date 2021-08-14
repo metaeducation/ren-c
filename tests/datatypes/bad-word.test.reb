@@ -78,13 +78,6 @@
     ('~falsey~ = ^ match null null)
 ]
 
-; CYCLE once differentiated a STOP result from BREAK with ~stopped~, but now
-; it uses a null isotope for similar purposes.
-[
-    ('~null~ = ^ cycle [stop])
-    (null = cycle [break])
-]
-
 ; ~quit~ is the label of the BAD-WORD! you get by default from QUIT
 ; Note: DO of BLOCK! does not catch quits, so TEXT! is used here.
 [

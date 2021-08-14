@@ -986,8 +986,8 @@ REBNATIVE(for_skip)
 //  {End the current iteration of CYCLE and return a value (nulls allowed)}
 //
 //      return: []  ; !!! Notation for divergent functions?s
-//      value "If no argument is provided, assume ~none~"
-//          [<opt> <end> any-value!]
+//      value "If no argument is provided, assume ~void~ isotope"
+//          [<opt> <end> <meta> any-value!]
 //  ]
 //
 REBNATIVE(stop)
@@ -1007,7 +1007,10 @@ REBNATIVE(stop)
 {
     INCLUDE_PARAMS_OF_STOP;
 
-    return Init_Thrown_With_Label(D_OUT, ARG(value), NATIVE_VAL(stop));
+    REBVAL *v = ARG(value);
+    Meta_Unquotify(v);
+
+    return Init_Thrown_With_Label(D_OUT, v, NATIVE_VAL(stop));
 }
 
 
