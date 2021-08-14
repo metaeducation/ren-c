@@ -1278,10 +1278,12 @@ REBNATIVE(as)
       case REB_GET_TUPLE:
       case REB_SET_TUPLE:
       case REB_META_TUPLE:
+      case REB_THE_TUPLE:
       case REB_PATH:
       case REB_GET_PATH:
       case REB_SET_PATH:
       case REB_META_PATH:
+      case REB_THE_PATH:
         if (ANY_ARRAY(v)) {
             //
             // Even if we optimize the array, we don't want to give the
@@ -1303,7 +1305,7 @@ REBNATIVE(as)
             fail (Error_Bad_Sequence_Init(D_OUT));
         }
 
-        if (ANY_PATH(v)) {
+        if (ANY_SEQUENCE(v)) {
             Copy_Cell(D_OUT, v);
             mutable_KIND3Q_BYTE(D_OUT)
                 = new_kind;
@@ -1369,7 +1371,8 @@ REBNATIVE(as)
       case REB_WORD:
       case REB_GET_WORD:
       case REB_SET_WORD:
-      case REB_META_WORD: {
+      case REB_META_WORD:
+      case REB_THE_WORD: {
         if (IS_ISSUE(v)) {
             if (CELL_KIND(cast(REBCEL(const*), v)) == REB_TEXT) {
                 //
