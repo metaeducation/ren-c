@@ -451,42 +451,42 @@ if 'Windows <> first system/platform [
     "za" "Zhuang; Chuang"
     "zu" "Zulu" ]
 
-    hijack :locale function [
+    hijack :locale func [
+        return: [<opt> text!]
         type [word!]
         <static>
         iso-639 (iso-639-table)
         iso-3166 (iso-3166-table)
+        <local> env-lang lang territory
     ][
-        env-lang: get-env "LANG" else [return _]
-        territory: _
+        env-lang: get-env "LANG" else [return null]  ; e.g. "en_US.UTF-8"
+        territory: ~
 
         letter: charset [#"a" - #"z" #"A" - #"Z"]
-        parse env-lang [
-            copy lang: [some letter]
-            opt [#"_" copy territory: [some letter]]
+        uparse env-lang [
+            lang: across some letter
+            opt [#"_" territory: across some letter]
             to end
         ] else [
             print ["Malformatted LANG environment variable:" env-lang]
-            return _
+            return null
         ]
 
         case [
             find [language language*] ^type [
-                any [
+                return any [
                     all [find ["C" "POSIX"] lang "English"]
                     select iso-639 lang
                 ]
             ]
             find [territory territory*] ^type [
-                all [territory select iso-3166 territory]
+                return all [territory, select iso-3166 territory]
             ]
-        ] else [
-            fail ["Invalid locale type:" type]
         ]
+        fail ["Invalid locale type:" type]
     ]
 
-    unset 'iso-3166-table
-    unset 'iso-639-table
+    iso-3166-table: iso-639-table: ~captured-by-LOCALE-function~
 ]
 
 ; initialize system/locale

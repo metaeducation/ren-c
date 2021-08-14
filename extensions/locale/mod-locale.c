@@ -40,7 +40,7 @@
 //
 //  export locale: native [
 //      "Get locale specific information"
-//      return: [text!]
+//      return: [<opt> text!]
 //      category [word!]
 //          {Language: English name of the language,
 //          Territory: English name of the country/region,
@@ -50,6 +50,9 @@
 //
 REBNATIVE(locale)
 //
+// This function only needs to make OS calls on Windows.  The POSIX version
+// parses environment variables and uses compiled-in tables.  See the HIJACK
+// in %ext-locale-init.reb for that.
 {
   #ifdef TO_WINDOWS
     LOCALE_INCLUDE_PARAMS_OF_LOCALE;
@@ -86,7 +89,7 @@ REBNATIVE(locale)
 
     return text;
   #else
-    UNUSED(frame_);
+    UNUSED(frame_);  // v-- see notes above on how this is HIJACK'd on POSIX
     fail ("LOCALE not implemented natively for non-Windows");
   #endif
 }
