@@ -61,28 +61,35 @@
         values: make map! values
     ]
 
-    keyword-match: null  ; variable that gets set by rule
-    any-keyword-suffix-rule: collect [
+    ; Build a block of rules like [keyword suffix result], looks like:
+    ;
+    ;    [["keyword" ">" ('keyword)] ["keyword2" ">" ('keyword2)] ...]
+    ;
+    ; This is used with UPARSE's ANY.  Note the prefix is matched before this
+    ; (it doesn't need to be repeated) but the suffix is repeated in each
+    ; rule, because otherwise "keyword" would match "keyword2".  So if the
+    ; suffix was outside this rule block after it, noticing there was no ">"
+    ; after the matched "keyword" would be at a time too late to go back and
+    ; look for the keyword2 option.  :-/
+    ;
+    keyword-suffix-rules: collect [
         for-each [keyword value] values [
             if not match keyword-types keyword [
                 fail ["Invalid keyword type:" keyword]
             ]
 
-            keep compose/deep <*> [
-                (<*> if match [integer! word!] keyword [
+            keep/line ^ compose [
+                (if match [integer! word!] keyword [
                     to-text keyword  ; `parse "a1" ['a '1]` illegal for now
                 ] else [
                     keyword
                 ])
 
-                (<*> suffix)
+                (opt suffix)  ; vaporize if suffix is blank
 
-                (keyword-match: '(<*> keyword))
+                (engroup quote keyword)  ; make rule evaluate to actual keyword
             ]
-
-            keep/line [|]
         ]
-        keep [false]  ; add failure if no match, instead of removing last |
     ]
 
     rule: [
@@ -91,30 +98,27 @@
             to prefix  ; seek to prefix (may be blank!, this could be a no-op)
             b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)
-            [
-                [
-                    any-keyword-suffix-rule (
-                        append/part out a offset? a b  ; output before prefix
+            ||
+            [keyword-match: any (keyword-suffix-rules)] (
+                append/part out a offset? a b  ; output before prefix
 
-                        v: select/(case_REWORD) values keyword-match
-                        append out switch type of :v [
-                            action! [
-                                ; Give v the option of taking an argument, but
-                                ; if it does not, evaluate to arity-0 result.
-                                ;
-                                (result: v :keyword-match)
-                                :result
-                            ]
-                            block! [do :v]
-                        ] else [
-                            :v
-                        ]
-                    )
-                    a: <here>  ; Restart mark of text to copy verbatim to output
+                v: select/(case_REWORD) values keyword-match
+                append out switch type of :v [
+                    action! [
+                        ; Give v the option of taking an argument, but
+                        ; if it does not, evaluate to arity-0 result.
+                        ;
+                        (result: v :keyword-match)
+                        :result
+                    ]
+                    block! [do :v]
+                ] else [
+                    :v
                 ]
-                    |
-                <any>  ; if wasn't at match, keep the WHILE rule scanning ahead
-            ]
+            )
+            a: <here>  ; Restart mark of text to copy verbatim to output
+                |
+            <any>  ; if wasn't at match, keep the WHILE rule scanning ahead
         ]
         to <end>  ; Seek to end, just so rule succeeds
         (append out a)  ; finalize output - transfer any remainder verbatim

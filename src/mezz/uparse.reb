@@ -1925,6 +1925,61 @@ default-combinators: make map! reduce [
         return [# (remainder) (pending)]: comb state input :r
     ]
 
+    === NEW-STYLE ANY COMBINATOR ===
+
+    ; Historically ANY was a synonym for what is today WHILE FURTHER.  This
+    ; was seen as a confusing usage of the word ANY given its typical meaning
+    ; related to picking a single item from a list of alternatives--not a
+    ; looping construct.
+    ;
+    ; The new meaning of ANY provides the ability to treat a BLOCK! received
+    ; as an argument as a block of alternatives.  This can frequently be more
+    ; convenient than trying to build a block of alternatives with `|`, as
+    ; that has conditions on the edges where [| ...] is always a no-op as it
+    ; means the same thing as [[] | ...], and [... |] will always succeed if
+    ; the other alternatives fail because it is the same as [... | []].
+    ;
+    ; Due to not wanting to handle the block argument as a rule dispatched to
+    ; the block combinator, syntax is `any (alternates)` not `any alternates`.
+
+    'any combinator [
+        return: "Last result value"
+            [<opt> <invisible> any-value!]
+        pending: [blank! block!]
+        'group "To catch instances of old ANY, only allow GROUP! for now"
+            [any-value!]  ; lie and take ANY-VALUE! to report better error
+        <local> result' block
+    ][
+        if not group? group [
+            fail [
+                "The ANY combinator in UPARSE is not an iterating construct."
+                "Use WHILE or WHILE FURTHER depending on your needs:"
+                https://forum.rebol.info/t/1572
+            ]
+        ]
+
+        if not block? block: do group [
+            fail [
+                "For now, the ANY combinator takes a GROUP! that synthesizes"
+                "a BLOCK! of alternates.  It will ultimately take other rules"
+                "but is limited to GROUP! to help locate old ANY usages:"
+            ]
+        ]
+
+        loop [not tail? block] [
+            ;
+            ; Turn next alternative into a parser ACTION!, and run it.
+            ; We take the first parser that succeeds.
+            ;
+            let [parser 'block]: parsify state block
+            ([result' (remainder) (pending)]: ^ parser input) then [
+                return unmeta result'
+            ]
+        ]
+
+        return null  ; they all failed, so the ANY failed
+    ]
+
     === BLOCK! COMBINATOR ===
 
     ; Handling of BLOCK! is the central combinator.  The contents are processed
@@ -1947,14 +2002,14 @@ default-combinators: make map! reduce [
             [<opt> <invisible> any-value!]
         pending: [blank! block!]
         value [block!]
-        <local> result subpending
+        <local> rules pos result' totalpending subpending
     ][
-        let rules: value
-        let pos: input
+        rules: value  ; alias for clarity
+        pos: input
 
-        let totalpending: _  ; can become GLOM'd into a BLOCK!
+        totalpending: _  ; can become GLOM'd into a BLOCK!
 
-        let result': '~void~  ; [] => ~void~ isotope
+        result': '~void~  ; [] => ~void~ isotope
 
         loop [not tail? rules] [
             if state.verbose [
