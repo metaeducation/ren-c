@@ -34,11 +34,6 @@
     for-next i [a] [continue, success: false]
     success
 )
-; decimal! test
-([1 2 3] == collect [count-up i 3.0 [keep i]])
-([1 2 3] == collect [count-up i 3.1 [keep i]])
-([1 2 3] == collect [count-up i 3.5 [keep i]])
-([1 2 3] == collect [count-up i 3.9 [keep i]])
 ; text! test
 (
     out: copy ""
@@ -118,3 +113,12 @@
     for-next i [1 2 3] [append out first i]
     out = [1 2 3]
 )
+
+
+; The concept of "opting out" and "opting in" are being tried in COUNT-UP,
+; where # means "count effectively forever"...though it can really only
+; count up to maxint in the current implementation.
+[
+    (null = count-up i _ [fail "should not run"])
+    (<infinite> = catch [count-up i # [if i = 500 [throw <infinite>]]])
+]

@@ -738,11 +738,42 @@ iterate-back: redescribe [
 )
 
 
-count-up: redescribe [
+count-up: func [
     "Loop the body, setting a word from 1 up to the end value given"
-](
-    specialize :cfor [start: 1, bump: 1]
-)
+    return: [<opt> any-value!]
+    'var [word!]
+    limit [<blank> integer! issue!]
+    body [block!]
+    <local> start end result'
+][
+    ; REPEAT in UPARSE wanted to try out some cutting-edge ideas about
+    ; "opting in" to counting loops, e.g. `count-up i _` opts out and doesn't
+    ; loop at all.  But what if `count-up i #` meant loop forever?  This
+    ; clunky layer on top of cfor is a good test of loop abstraction, and
+    ; is good enough to let UPARSE do its experiment without changing any
+    ; native code.
+
+    start: 1
+    end: if issue? limit [
+        if limit <> # [fail]
+        100  ; not forever...don't use max int to help test "pseudoforever"
+    ] else [
+        limit
+    ]
+    return/isotope (
+        cycle [
+            result': (^ cfor :var start end 1 body) else [
+                return null  ; a BREAK was encountered
+            ]
+            if limit <> # [
+                stop unmeta result'  ; the limit was actually reached
+            ]
+            ; otherwise keep going...
+            end: end + 100
+            start: start + 100
+        ]
+    )
+]
 
 count-down: redescribe [
     "Loop the body, setting a word from the end value given down to 1"

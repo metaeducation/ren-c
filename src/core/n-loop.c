@@ -806,7 +806,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 //  {Evaluate a block over a range of values. (See also: REPEAT)}
 //
 //      return: [<opt> any-value!]
-//      'word [word!]
+//      :word [word!]
 //          "Variable to hold current value"
 //      start [any-series! any-number!]
 //          "Starting value"
