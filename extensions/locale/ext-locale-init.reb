@@ -466,7 +466,7 @@ if 'Windows <> first system/platform [
         uparse env-lang [
             lang: across some letter
             opt [#"_" territory: across some letter]
-            to end
+            to <end>
         ] else [
             print ["Malformatted LANG environment variable:" env-lang]
             return null
