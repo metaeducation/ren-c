@@ -111,3 +111,16 @@
     (uparse2? #{0A0A} [some reject | 2 #{0A}])
     (uparse2? #{0A0A} [some [reject] | 2 #{0A}])
 ]
+
+; UPARSE2's INTEGER! combinator breaks the pattern by quoting.
+[
+    (not uparse2? [a a] [1 1 ['a]])
+    (uparse2? [a a] [1 2 ['a]])
+    (uparse2? [a a] [2 2 ['a]])
+    (uparse2? [a a] [2 3 ['a]])
+    (not uparse2? [a a] [3 4 ['a]])
+    (uparse2? [a a] [1 2 'a])
+    (uparse2? [a a] [2 2 'a])
+    (uparse2? [a a] [2 3 'a])
+    (not uparse2? [a a] [3 4 'a])
+]

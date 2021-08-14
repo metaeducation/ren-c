@@ -1322,11 +1322,16 @@ default-combinators: make map! reduce [
 
     === INTEGER! COMBINATOR ===
 
-    ; !!! There's currently no way for an integer to be used to represent a
-    ; range of matches, e.g. between 1 and 10.  That uses skippable parameters.
-    ; See the INTEGER! combinator for Redbol emulation for implementation.
-    ; For now we say plain UPARSE considers it more important that `[2 4 rule]`
-    ; be the same as `[2 [4 rule]]`, but this may (?) be rethought.
+    ; The default combinator for INTEGER! can't be used to represent a range of
+    ; matches, e.g. between 2 and 4, using the sequential integer notation that
+    ; was in historical Redbol PARSE.  For now we say plain UPARSE considers it
+    ; more important that `[2 4 rule]` be the same as `[2 [4 rule]]`.
+    ;
+    ; It is possible to break this regularity with quoted/skippable combinator
+    ; arguments.  And it's necessary to do so for the Redbol emulation.  See
+    ; the INTEGER! combinator used in PARSE2 for this "dirty" technique.
+    ;
+    ; Note that REPEAT allows the use of BLANK! to opt out of an iteration.
 
     integer! combinator [
         return: "Last parser result"
@@ -1353,26 +1358,69 @@ default-combinators: make map! reduce [
             [<opt> any-value!]
         times-parser [action!]
         parser [action!]
-        <local> times' result'
+        <local> times' min max result' i temp-remainder
     ][
+        ([times' input]: ^ times-parser input) else [return null]
+
+        switch type of unmeta times' [
+            blank! [
+                set remainder input
+                return ~void~  ; `[repeat (_) rule]` is a no-op
+            ]
+            issue! [
+                if times' <> the '# [
+                    fail ["REPEAT takes the ISSUE! of # to act like a WHILE"]
+                ]
+                min: 0, max: #
+            ]
+            integer! [
+                max: min: unquote times'
+            ]
+            block! [
+                uparse unquote times' [
+                    '_ '_ <end> (
+                        set remainder input
+                        return ~void~  ; `[repeat ([_ _]) rule]` is a no-op
+                    )
+                    |
+                    min: [integer! | '_ (0)], max: [integer! | '_ | '#]
+                ]
+                max: default [min]  ; max being blank implies `max = min`
+            ]
+        ] else [
+            fail "REPEAT combinator requires INTEGER! or [INTEGER! INTEGER!]"
+        ]
+
+        all [max <> #, max < min] then [
+            fail "Can't make MAX less than MIN in range for REPEAT combinator"
+        ]
+
         append state.loops binding of 'return
 
-        ([times' input]: ^ times-parser input) else [
-            take/last state.loops
-            return null
+        result': '~void~  ; `repeat (0) <any>` => ~void~ isotope
+
+        count-up i max [  ; will count infinitely if max is #
+            ;
+            ; After the minimum number of repeats are fulfilled, the parser
+            ; may not match and return the last successful result.  So
+            ; we don't do the assignment in the `[...]:` multi-return in case
+            ; it would overwrite the last useful result.  Instead, the GROUP!
+            ; potentially returns...only do the assignment if it does not.
+            ;
+            result': (
+                ([# temp-remainder]: ^ parser input) also [
+                    input: temp-remainder  ; only overwrite input on success
+                ] else [
+                    take/last state.loops
+                    if i <= min [  ; `<=` not `<` as this iteration failed!
+                        return null
+                    ]
+                    set remainder input
+                    return unmeta result'
+                ]
+            )
         ]
 
-        if integer! <> type of unmeta times' [
-            fail "REPEAT requires first synthesized argument to be an integer"
-        ]
-
-        result': '~void~  ; `repeat 0 <any>` => ~void~ isotope
-        repeat unmeta times' [
-            ([result' input]: ^ parser input) else [
-                take/last state.loops
-                return null
-            ]
-        ]
         take/last state.loops
         set remainder input
         return unmeta result'
@@ -2624,7 +2672,7 @@ append redbol-combinators reduce [
         parser [action!]
         <local> result' last-result' temp-remainder
     ][
-        all [max, max < value] [
+        all [max, max < value] then [
             fail "Can't make MAX less than MIN in range for INTEGER! combinator"
         ]
 

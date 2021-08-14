@@ -23,11 +23,11 @@
     (uparse? [a a] [2 <any>])
     (not uparse? [a a] [3 <any>])
 
-    ; (not uparse? [a a] [1 1 <any>])
-    ; (uparse? [a a] [1 2 <any>])
-    ; (uparse? [a a] [2 2 <any>])
-    ; (uparse? [a a] [2 3 <any>])
-    ; (not uparse? [a a] [3 4 <any>])
+    (not uparse? [a a] [repeat ([1 1]) <any>])
+    (uparse? [a a] [repeat ([1 2]) <any>])
+    (uparse? [a a] [repeat ([2 2]) <any>])
+    (uparse? [a a] [repeat ([2 3]) <any>])
+    (not uparse? [a a] [repeat ([3 4]) <any>])
 
     (uparse? [a] [<any>])
     (uparse? [a b] [<any> <any>])
@@ -40,16 +40,11 @@
     (uparse? "aa" [2 <any>])
     (not uparse? "aa" [3 <any>])
 
-    ; !!! UPARSE tries to standardize that [3 5 rule] must be the same as
-    ; [3 [5 rule]].  Doing otherwise involves something like "skippable"
-    ; parameters for combinators...which will be needed for Redbol emulation,
-    ; but which are likely not good style for UPARSE.
-    ;
-    ; (not uparse? "aa" [1 1 <any>])
-    ; (uparse? "aa" [1 2 <any>])
-    ; (uparse? "aa" [2 2 <any>])
-    ; (uparse? "aa" [2 3 <any>])
-    ; (not uparse? "aa" [3 4 <any>])
+    (not uparse? "aa" [repeat ([1 1]) <any>])
+    (uparse? "aa" [repeat ([1 2]) <any>])
+    (uparse? "aa" [repeat ([2 2]) <any>])
+    (uparse? "aa" [repeat ([2 3]) <any>])
+    (not uparse? "aa" [repeat ([3 4]) <any>])
 
     (uparse? "a" [<any>])
     (uparse? "ab" [<any> <any>])

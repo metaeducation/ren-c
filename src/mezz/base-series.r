@@ -286,8 +286,8 @@ trim: function [
         ]
     ]
 
-    line-start-rule: compose/deep [
-        remove [((if indent [[opt repeat (indent)]] else ['while])) rule]
+    line-start-rule: compose [
+        remove (if indent '[opt [repeat (indent) rule]] else '[while rule])
     ]
 
     parse series [

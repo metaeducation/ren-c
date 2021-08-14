@@ -1519,8 +1519,19 @@ REBNATIVE(subparse)
                 );
 
               case SYM_REPEAT:
-                if (maxcount != 1)
-                    fail ("Old PARSE REPEAT does not mix with ranges");
+                //
+                // !!! OPT REPEAT (N) RULE can't work because OPT is done by
+                // making the minimum number of match counts zero.  But
+                // unfortunately if that rule isn't in a BLOCK! then the
+                // 0 repeat rule transfers onto the rule... making it act like
+                // `REPEAT (N) OPT RULE` which is not the same.
+                //
+
+                if (mincount != 1 or maxcount != 1)
+                    fail (
+                        "Old PARSE REPEAT does not mix with ranges or OPT"
+                        " so put a block around the REPEAT or use UPARSE!"
+                    );
 
                 FETCH_NEXT_RULE(f);
                 if (not IS_GROUP(P_RULE))
@@ -1530,8 +1541,28 @@ REBNATIVE(subparse)
                 if (Eval_Value_Throws(D_OUT, P_RULE, P_RULE_SPECIFIER))
                     goto return_thrown;
 
-                mincount = Int32s(D_OUT, 0);
-                maxcount = Int32s(D_OUT, 0);
+                if (IS_INTEGER(D_OUT)) {
+                    mincount = Int32s(D_OUT, 0);
+                    maxcount = Int32s(D_OUT, 0);
+                } else {
+                    if (
+                        not IS_BLOCK(D_OUT)
+                        or not (
+                            VAL_LEN_AT(D_OUT) == 2
+                            and IS_INTEGER(VAL_ARRAY_ITEM_AT(D_OUT))
+                            and IS_INTEGER(VAL_ARRAY_ITEM_AT(D_OUT) + 1)
+                        )
+                    ){
+                        fail ("REPEAT takes INTEGER! or length 2 BLOCK! range");
+                    }
+
+                    mincount = Int32s(VAL_ARRAY_ITEM_AT(D_OUT), 0);
+                    maxcount = Int32s(VAL_ARRAY_ITEM_AT(D_OUT) + 1, 0);
+
+                    if (maxcount < mincount)
+                        fail ("REPEAT range can't have lower max than minimum");
+                }
+
                 SET_END(D_OUT);
 
                 FETCH_NEXT_RULE(f);

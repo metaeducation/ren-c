@@ -59,21 +59,10 @@
     (uparse? [a a] [2 ['a]])
     (not uparse? [a a] [3 ['a]])
 
-    ; (not uparse? [a a] [1 1 ['a]])
-    ; (uparse? [a a] [1 2 ['a]])
-    ; (uparse? [a a] [2 2 ['a]])
-    ; (uparse? [a a] [2 3 ['a]])
-    ; (not uparse? [a a] [3 4 ['a]])
-
     (not uparse? [a a] [1 'a])
     (uparse? [a a] [2 'a])
     (not uparse? [a a] [3 'a])
-    (not uparse? [a a] [1 1 'a])
-
-    ; (uparse? [a a] [1 2 'a])
-    ; (uparse? [a a] [2 2 'a])
-    ; (uparse? [a a] [2 3 'a])
-    ; (not uparse? [a a] [3 4 'a])
+    (not uparse? [a a] [1 1 'a])  ; synonym for [1 [1 'a]] in UPARSE
 ]
 
 [

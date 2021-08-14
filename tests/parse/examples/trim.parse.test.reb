@@ -144,11 +144,11 @@ utrim: function [
         return series
     ]
 
-    ; utrim/AUTO measures first line indentation and removes indentation on
+    ; UTRIM/AUTO measures first line indentation and removes indentation on
     ; later lines relative to that.  Only makes sense for ANY-STRING!, though
     ; a concept like "lines" could apply to a BLOCK! of BLOCK!s.
     ;
-    indent: _
+    indent: #  ; by default, remove all indentation (opt in to the REPEAT)
     if auto [
         uparse* series [
             ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
@@ -158,19 +158,19 @@ utrim: function [
         ]
     ]
 
-    line-start-rule: compose/deep [
-        remove [(if indent '[opt repeat (indent)] else 'while) rule]
-    ]
+    line-start-rule: [opt remove repeat (indent) rule]
 
     uparse series [
         line-start-rule
-        while [not <end> [
+        while [
+            not <end>
+                ||
             ahead [while rule [newline | <end>]]
             remove [while rule]
             newline line-start-rule
                 |
             skip
-        ]]
+        ]
     ]
 
     ; While trimming with /TAIL takes out any number of newlines, plain utrim
