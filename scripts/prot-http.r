@@ -315,7 +315,9 @@ check-response: function [
         ]
         remove/part conn/data d2
         state/mode: 'reading-data
-        if 'txt <> last body-of :net-log [ ; net-log is in active state
+
+        ; !!! Net logging needs some enablement/disablement facility
+        comment [
             print "Dumping Webserver headers and body"
             net-log/S info
             trap [
@@ -516,45 +518,46 @@ do-redirect: func [
     ]
 
     new-uri: decode-url new-uri
-    if not find new-uri [port-id] [
-        switch noquote new-uri/scheme [  ; !!! Scheme is quoted
-            'https [append new-uri [port-id: 443]]
-            'http [append new-uri [port-id: 80]]
-            fail ["Unknown scheme:" new-uri/scheme]
+    new-uri.port-id: default [
+        switch new-uri.scheme [
+            'https [443]
+            'http [80]
+            fail ["Unknown scheme:" new-uri.scheme]
         ]
     ]
 
-    new-uri: construct/with/only new-uri port/scheme/spec
-    if not find [http https] new-uri/scheme [  ; !!! scheme is quoted
-        port/error: make-http-error
+    if not find [http https] new-uri.scheme [  ; !!! scheme is quoted
+        port.error: make-http-error
             {Redirect to a protocol different from HTTP or HTTPS not supported}
-        return state/awake make event! [type: 'error port: port]
+        return state.awake/ make event! [type: 'error port: port]
     ]
 
     all [
-        new-uri/host = spec/host
-        new-uri/port-id = spec/port-id
+        new-uri.host = spec.host
+        new-uri.port-id = spec.port-id
     ]
     then [
-        spec/path: new-uri/path
-        ;we need to reset tcp connection here before doing a redirect
-        close port/state/connection
-        open port/state/connection
+        spec.path: new-uri.path
+
+        ; We need to reset tcp connection here before doing a redirect
+        ;
+        close port.state.connection
+        open port.state.connection
         do-request port
         false
     ]
     else [
-        port/error: make error! [
+        port.error: make error! [
             type: 'Access
             id: 'Protocol
             arg1: "Redirect to other host - requires custom handling"
             arg2: headers
             arg3: as url! unspaced [
-                new-uri/scheme "://" new-uri/host new-uri/path
+                new-uri.scheme "://" new-uri.host new-uri.path
             ]
         ]
 
-        state/awake make event! [type: 'error port: port]
+        state.awake/ make event! [type: 'error port: port]
     ]
 ]
 

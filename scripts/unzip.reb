@@ -203,9 +203,9 @@ ctx-zip: context [
         ]
         value: decode-url value
         join %"" [
-            value/host "/"
-            any [value/path ""]
-            any [value/target ""]
+            value.host "/"
+            any [value.path ""]
+            any [value.target ""]
         ]
     ]
 

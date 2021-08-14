@@ -17,6 +17,11 @@ REBOL [
     }
 ]
 
+; !!! UPARSE is not available in SYS because it is higher level.  We hack it
+; up so that when %uparse.reb runs it pokes itself into sys.uparse
+;
+uparse: ~sys-uparse-not-set-yet~
+
 make-port*: function [
     "SYS: Called by system on MAKE of PORT! port from a scheme."
 
@@ -28,32 +33,32 @@ make-port*: function [
     switch type of spec [
         file! [
             name: pick [dir file] dir? spec
-            spec: compose [ref: (spec)]
+            spec: make object! [ref: spec]
         ]
         url! [
-            spec: append decode-url spec compose [ref: (spec)]
-            name: try select spec to set-word! 'scheme
+            spec: decode-url spec
+            name: spec.scheme
         ]
         block! [
-            name: try select spec to set-word! 'scheme
+            spec: make object! spec
+            name: select spec 'scheme
         ]
         object! [
-            name: try get in spec 'scheme
+            name: get in spec 'scheme
         ]
         word! [
             name: spec
-            spec: []
+            spec: _
         ]
         port! [
-            name: port/scheme/name
-            spec: port/spec
+            name: port.scheme.name
+            spec: port.spec
         ]
 
         fail
     ]
 
     ; Get the scheme definition:
-    name: noquote name
     all [
         word? name
         scheme: get try in system/schemes name
@@ -61,11 +66,31 @@ make-port*: function [
         cause-error 'access 'no-scheme name
     ]
 
-    ; Create the port with the correct scheme spec:
-    port: make system/standard/port []
-    port/spec: make any [
-        scheme/spec system/standard/port-spec-head
-    ] spec
+    ; Create the port with the correct scheme spec.
+    ;
+    ; !!! This used to use MAKE OBJECT! so it got a copy, but now that we are
+    ; doing some hacky inheritance manually from object-to-object, there needs
+    ; to be a COPY made.
+    ;
+    port: make system.standard.port []
+    port.spec: copy any [scheme.spec, system.standard.port-spec-head]
+
+    ; !!! Override any of the fields in port.spec with fields in spec.
+    ; This used to be done with plain object derivation, because spec was
+    ; a BLOCK!.  But DECODE-URL now returns an object, and you can't make
+    ; an derived object via an object at this time.  Do it manually.
+    ;
+    ; !!! COLLECT is not available here.  This is all very old stuff and was
+    ; organized terribly.  :-(
+    ;
+    overloads: copy []
+    for-each [key val] spec [
+        if not any [bad-word? ^val, nothing? :val] [
+            append overloads :[to set-word! key get 'val]  ; override
+        ]
+    ]
+    append port.spec overloads
+
     port/spec/scheme: name
     port/scheme: scheme
 
@@ -94,102 +119,80 @@ make-port*: function [
     path-char:   complement make bitset! "#"
     user-char:   complement make bitset! ":@"
     host-char:   complement make bitset! ":/?"
-    s1: s2: _ ; in R3, input datatype is preserved - these are now URL strings
-    out: []
-    emit: func ['w v] [
-        append out reduce [
-            to set-word! w (either :v [to text! :v] [_])
-        ]
-    ]
 
     rules: [
-        ; Scheme://user-host-part
+        ; Required scheme name, but "//" is optional (without it is a "URN")
+        ; https://en.wikipedia.org/wiki/Uniform_Resource_Name
+        ;
+        emit scheme: [as/ (word!) across some scheme-char] ":" opt "//"
+
+        ; optional user [:pass] @
         [
-            ; scheme name: [//]
-            copy s1 some scheme-char ":" opt "//" ( ; "//" is optional ("URN")
-                append out compose [
-                    scheme: '(as word! s1)
-                ]
-            )
-
-            ; optional user [:pass]
-            opt [
-                copy s1 some user-char
-                opt [":" copy s2 to "@" (emit pass s2)]
-                "@" (emit user s1)
-            ]
-
-            ; optional host [:port]
-            opt [
-                copy s1 while host-char
-                opt [
-                    ":" copy s2 digits (
-                        append out compose [
-                            port-id: (to integer! s2)
-                        ]
-                    )
-                ] (
-                    ; Note: This code has historically attempted to convert
-                    ; the host name into a TUPLE!, and if it succeeded it
-                    ; considers this to represent an IP address lookup vs.
-                    ; a DNS lookup.  A basis for believing this will work can
-                    ; come from RFC-1738:
-                    ;
-                    ; "The rightmost domain label will never start with a
-                    ;  digit, though, which syntactically distinguishes all
-                    ;  domain names from the IP addresses."
-                    ;
-                    ; This suggests that as long as a TUPLE! conversion will
-                    ; never allow non-numeric characters it can work, though
-                    ; giving a confusing response to looking up "1" to come
-                    ; back and say "1.0.0 cannot be found", because that is
-                    ; the result of `make tuple! "1"`.
-                    ;
-                    ; !!! This code was also broken in R3-Alpha, because the
-                    ; captured content in PARSE of a URL! was a URL! and not
-                    ; a STRING!, and so the attempt to convert `s1` to TUPLE!
-                    ; would always fail.
-
-                    if not empty? trim s1 [
-                        use [tup] [
-                            ;
-                            ; !!! In R3-Alpha this TO conversion was wrapped
-                            ; in a TRAP as it wasn't expected for non-numeric
-                            ; tuples to work.  But now they do...most of the
-                            ; time (to tuple "localhost" is a WORD! and can't
-                            ; be a TUPLE!)  In the interests of preserving
-                            ; the experiment, use LOAD and test to see if
-                            ; it made a tuple with an integer as last value.
-                            ;
-                            tup: load as text! s1  ; was "textlike" URL!
-                            if all [tuple? tup, integer? last tup] [
-                                s1: tup
-                            ]
-                        ]
-                        emit host s1
-                    ]
-                )
-            ]
+            emit user: across some user-char
+            emit pass: opt [":", across to "@"]
+            "@"
+            |
+            emit user: (null)
+            emit pass: (~no-user~)  ; is this better than NULL?
         ]
 
-        ; optional path
-        opt [copy s1 some path-char (emit path s1)]
+        ; optional host [:port]
+        ;
+        ; Note: Historically this code tried to detect if the host was like
+        ; an IP address, and if so return it as a TUPLE! instead of a TEXT!.
+        ; This is used to cue IP address lookup behavior vs. a DNS lookup.
+        ; A basis for believing you can discern comes from RFC-1738:
+        ;
+        ;    "The rightmost domain label will never start with a
+        ;     digit, though, which syntactically distinguishes all
+        ;     domain names from the IP addresses."
+        [
+            emit host: [
+                ; IP-address style, make a TUPLE!
+                ;
+                to/ (tuple!) across [
+                    while [some digit "."], some digit
+                    not host-char  ; don't match "1.2.3.4a" as IP address
+                ]
+                    |
+                ; Ordinary "foo.bar.com" style, just give it back as TEXT!
+                ;
+                across while host-char
+            ]
+            emit port-id: opt [":", to/ (integer!) across digits]
+            |
+            emit host: (null)
+            emit port-id: (~no-host~)  ; is this better than NULL?
+        ]
 
-        ; optional bookmark
-        opt ["#" copy s1 to end (emit tag s1)]
+        emit path: opt [across some path-char]  ; optional path
 
-        end
+        emit tag: opt ["#", across to <end>]  ; optional bookmark ("tag")
+
+        emit ref: <input>  ; it's always saved the original URL for reference
     ]
 
-    decode-url: func ["Decode a URL according to rules of sys/*parse-url." url] [
-        ; This function is bound in the context of sys/*parse-url
-        out: make block! 8
-        parse url rules
-        out
+    ; !!! Historically DECODE-URL returned a BLOCK!, but an object seems
+    ; better.  Also, it seems useful to have NULL versions of the fields
+    ; even for objects that don't have them to make it easy to check if those
+    ; fields are present.
+    ;
+    ; !!! Red takes a similar approach of returning an object with a fixed
+    ; list of fields but breaks them down differently and uses different names.
+    ; That should be reviewed.
+    ;
+    decode-url: func [  ; this function is bound in sys/*parse-url
+        {Decode a URL according to rules of sys/*parse-url}
+        return: [object!]
+        url [url! text!]
+    ][
+        uparse url [gather rules] else [
+            fail ["Could not decode URL to an object:" url]
+        ]
     ]
 ]
 
-decode-url: :*parse-url/decode-url  ; wrapped in context, expose main function
+decode-url: :*parse-url.decode-url  ; wrapped in context, expose main function
 
 ;-- Native Schemes -----------------------------------------------------------
 

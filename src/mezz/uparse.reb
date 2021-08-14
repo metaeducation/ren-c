@@ -2473,6 +2473,8 @@ uparse: comment [redescribe [  ; redescribe not working at the moment (?)
     :uparse*/fully
 )
 
+sys.uparse: :uparse  ; !!! expose UPARSE to SYS module, hack...
+
 match-uparse: comment [redescribe [  ; redescribe not working at te moment (?)
     {Process input in the parse dialect, input if match (see also UPARSE*)}
 ] ] (

@@ -27,12 +27,9 @@ clean-path: func [
     let target
     case [
         url? path [
-            scheme: make (make object! [
-                scheme: user: pass: host: port-id: path: _
-            ]) decode-url path
-
-            target: either scheme/path [
-                to file! scheme/path
+            scheme: decode-url path
+            target: either scheme.path [
+                to file! scheme.path
             ][
                 copy %/
             ]
@@ -48,12 +45,9 @@ clean-path: func [
 
         file? path [
             if url? let current: what-dir [
-                scheme: make (make object! [
-                    scheme: user: pass: host: port-id: path: _
-                ]) decode-url current
-
+                scheme: decode-url current
                 current: any [
-                    scheme/path
+                    scheme.path
                     copy %/
                 ]
             ]
