@@ -1444,7 +1444,7 @@ default-combinators: make map! reduce [
         <local> item error
     ][
         either any-array? input [
-            if value <> type of input.1 [
+            if value <> kind of input.1 [
                 return null
             ]
             set remainder next input
@@ -1476,7 +1476,7 @@ default-combinators: make map! reduce [
         <local> item error
     ][
         either any-array? input [
-            if not find value try (type of input.1) [
+            if not find value try (kind of input.1) [
                 return null
             ]
             set remainder next input

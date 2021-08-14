@@ -103,3 +103,10 @@
     (not uparse? to binary! "(" [blank!])
     (not uparse? to binary! "[" [blank!])
 ]
+
+; QUOTED! needs to be recognized (KIND OF VALUE and TYPE OF VALUE are currently
+; different, and this had caused a problem)
+[
+    (uparse? ['x] [quoted!])
+    (uparse? [' '() '[]] [3 quoted!])
+]
