@@ -740,6 +740,12 @@ default-combinators: make map! reduce [
         parser [action!]
     ][
         ([# (remainder)]: ^ parser input) then [
+            if any-array? input [
+                return as block! copy/part input get remainder
+            ]
+            if any-string? input [
+                return as text! copy/part input get remainder
+            ]
             return copy/part input get remainder
         ]
         return null
@@ -975,17 +981,10 @@ default-combinators: make map! reduce [
             return null
         ]
 
-        if '~void~ = result' [
-            fail "Cannot emit an invisible result"
-        ]
-
-        ; The value is quoted because of ^ on ^(parser input).  This lets us
-        ; emit null fields.
+        ; The value is quoted (or a BAD-WORD!) because of ^ on ^(parser input).
+        ; This lets us emit null fields and isotopes, since the MAKE OBJECT!
+        ; will do an evaluation.
         ;
-        assert [any [
-            '~null~ = result'  ; true null if and only if parser failed
-            quoted? result'
-        ]]
         set pending glom get pending ^ :[target result']
         return unmeta result'
     ]
@@ -1012,14 +1011,6 @@ default-combinators: make map! reduce [
             return null
         ]
 
-        if '~void~ = result' [
-            fail "Can't assign invisible synthesized rule result, use ^^[...]"
-        ]
-
-        assert [any [
-            '~null~ = result'  ; true null if and only if parser failed
-            quoted? result'
-        ]]
         set value unmeta result'  ; value is the SET-WORD!
         return unmeta result'
     ]
@@ -2754,6 +2745,10 @@ append redbol-combinators reduce [
     ; in carrying that synonym forward in UPARSE.
     ;
     'and :default-combinators.('ahead)
+
+    === END AS WORD INSTEAD OF TAG ===
+
+    'end :default-combinators.(<end>)
 
     === OLD-STYLE FAIL INSTRUCTION ===
 

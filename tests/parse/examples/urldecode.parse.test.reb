@@ -1,7 +1,13 @@
+; %urldecoder.test.reb
+;
+; The actual used version of this code has been rewritten to use UPARSE.  So
+; this test has been kept in its UPARSE2 semantics form, as a test of the
+; Redbol emulation.
+
 [(
 urldecoder: make object! [
     digit:       make bitset! "0123456789"
-    digits:      [repeat ([1 5]) digit]  ; 1 to 5 digits
+    digits:      [1 5 digit]  ; 1 to 5 digits
     alpha-num:   make bitset! [#"a" - #"z" #"A" - #"Z" #"0" - #"9"]
     scheme-char: insert copy alpha-num "+-."
     path-char:   complement make bitset! "#"
@@ -96,7 +102,7 @@ urldecoder: make object! [
 
     decode: func ["Decode a URL according to rules of sys/*parse-url." url] [
         out: make block! 8
-        parse url rules
+        uparse2 url rules
         out
     ]
 ]
