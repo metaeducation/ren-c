@@ -8,12 +8,12 @@
     source [any-string! binary!]
     values [map! object! block!]
     /case
-    /escape [char! any-string! word! binary! block!]
+    /escape [blank! char! any-string! word! binary! block!]
 
     <static>
 
     delimiter-types (
-        make typeset! [char! any-string! word! binary!]
+        make typeset! [blank! char! any-string! word! binary!]
     )
     keyword-types (
         make typeset! [char! any-string! integer! word! binary!]
@@ -24,23 +24,19 @@
 
     out: make (type of source) length of source
 
-    prefix: ~unset~
-    suffix: ~unset~
+    prefix: _
+    suffix: _
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
-        any [
-            escape = ""
-            escape = []
-        ][
-            ; !!! Review: NULL not supported by UPARSE at the moment
-            prefix: ""  ; pure search and replace, no prefix/suffix
+        any [escape = "", escape = []] [
+            ; pure search and replace, no prefix/suffix
         ]
 
         block? escape [
             uparse escape [
                 prefix: delimiter-types
-                suffix: opt delimiter-types
+                suffix: delimiter-types
             ] else [
                 fail ["Invalid /ESCAPE delimiter block" escape]
             ]
@@ -48,11 +44,6 @@
     ] else [
         prefix: ensure delimiter-types escape
     ]
-
-    ; !!! UPARSE doesn't allow fetched blank or fetched NULL at the moment.
-    ; Use an empty string.
-    ;
-    suffix: default [""]  ; default to no suffix
 
     if match [integer! word!] prefix [prefix: to-text prefix]
     if match [integer! word!] suffix [suffix: to-text suffix]
@@ -127,6 +118,10 @@
     uparse*/(case_REWORD) source rule else [fail]  ; should succeed
     return out
 ])
+
+("Multiple Search and Replace" = uparse-reword/escape "Multiple Foo and Bar" [
+    "Foo" "Search" "Bar" "Replace"
+] _)
 
 ("This is that." = uparse-reword "$1 is $2." [1 "This" 2 "that"])
 
