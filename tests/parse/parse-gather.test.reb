@@ -69,3 +69,16 @@
         extension = #extension
     ]
 )]
+
+; SET-GROUP! can be used to synthesize variable names to set, ANY-WORD! legal
+[
+    (
+        word: 'xxx
+        obj: uparse "a" [gather [emit (word): <any>]]
+        obj.xxx = #a
+    )(
+        word: @xxx
+        obj: uparse "a" [gather [emit (word): <any>]]
+        obj.xxx = #a
+    )
+]

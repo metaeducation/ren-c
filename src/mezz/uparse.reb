@@ -984,10 +984,19 @@ default-combinators: make map! reduce [
         return: "The emitted value"
             [<opt> any-value!]
         pending: [blank! block!]
-        'target [set-word!]
+        'target [set-word! set-group!]
         parser [action!]
         <local> result'
     ][
+        if set-group? target [
+            (match any-word! target: do as block! target) else [
+                fail [
+                    "GROUP! from EMIT (...): must produce an ANY-WORD!, not"
+                    ^target
+                ]
+            ]
+        ]
+
         ([result' (remainder) (pending)]: ^ parser input) else [
             return null
         ]
@@ -996,7 +1005,7 @@ default-combinators: make map! reduce [
         ; This lets us emit null fields and isotopes, since the MAKE OBJECT!
         ; will do an evaluation.
         ;
-        set pending glom get pending ^ :[target result']
+        set pending glom get pending ^ :[as set-word! target result']
         return unmeta result'
     ]
 
