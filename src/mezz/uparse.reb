@@ -927,6 +927,9 @@ default-combinators: make map! reduce [
                 ]
                 set pending subpending
             ]
+            any-the-type? :result [
+                set pending (glom subpending ^(plainify result'))  ; drop @
+            ]
             any-inert? :result [  ; quote doesn't matter
                 set pending (glom subpending ^result')  ; just one quote level
             ]
@@ -1539,12 +1542,6 @@ default-combinators: make map! reduce [
     ; The role of THE-XXX! combinators has been in flux, but are believed to
     ; provide the most value by being quoting or "as-is" operations.
     ;
-    ;     >> uparse "a" [collect [keep @[keep some], keep <any>]]
-    ;     == [keep some "a"]
-    ;
-    ;     >> uparse "a" [collect [keep @ 'keep, keep <any>]]
-    ;     == [keep "a"]
-    ;
     ; The rationale for this decision is laid out here, which mostly comes down
     ; to the fact that if the only way you can synthesize values out of thin
     ; air to use is via a GROUP!, that becomes contentious in COMPOSE.
@@ -1579,43 +1576,43 @@ default-combinators: make map! reduce [
     ]
 
     the-word! combinator [
-        return: "Given WORD! minus the @ sigil" [word!]
+        return: "The input THE-WORD!" [the-word!]
         value [the-word!]
     ][
         set remainder input
-        return as word! value
+        return value
     ]
 
     the-path! combinator [
-        return: "Given PATH! minus the @ sigil" [path!]
+        return: "The input THE-PATH!" [the-path!]
         value [the-path!]
     ][
         set remainder input
-        return as path! value
+        return value
     ]
 
     the-tuple! combinator [
-        return: "Given TUPLE! minus the @ sigil" [tuple!]
+        return: "The input THE-TUPLE!" [the-tuple!]
         value [the-tuple!]
     ][
         set remainder input
-        return as tuple! value
+        return value
     ]
 
     the-group! combinator [
-        return: "Given GROUP! minus the @ sigil" [group!]
+        return: "The input THE-GROUP!" [the-group!]
         value [the-group!]
     ][
         set remainder input
-        return as group! value
+        return value
     ]
 
     the-block! combinator [
-        return: "Given BLOCK! minus the @ sigil" [block!]
+        return: "The input THE-BLOCK!" [the-block!]
         value [the-block!]
     ][
         set remainder input
-        return as block! value
+        return value
     ]
 
     === OLD THE-XXX! COMBINATORS ===

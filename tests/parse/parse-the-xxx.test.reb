@@ -7,12 +7,14 @@
 ; in the composition.  @ breaks the Gordian knot in such a situation by just taking
 ; whatever follows it literally.
 
-([keep some #a] = uparse "a" [collect [keep @[keep some], keep <any>]])
+([keep some #a] = uparse "a" [collect [keep @ [keep some], keep <any>]])
 ([keep #a] = uparse "a" [collect [keep @ 'keep, keep <any>]])
+([keep #a] = uparse "a" [collect [keep @keep, keep <any>]])
+
 ([keep #a] = uparse "a" [collect [keep the 'keep, keep <any>]])
 
-([keep #a] = uparse "a" [collect [keep ^ @keep, keep <any>]])
-([tupley.keep #a] = uparse "a" [collect [keep ^ @tupley.keep, keep <any>]])
-([keep/pathy #a] = uparse "a" [collect [keep ^ @keep/pathy, keep <any>]])
+([@keep #a] = uparse "a" [collect [keep ^ @keep, keep <any>]])
+([tupley.keep #a] = uparse "a" [collect [keep @tupley.keep, keep <any>]])
+([keep/pathy #a] = uparse "a" [collect [keep @keep/pathy, keep <any>]])
 
-([(keep some) #a] = uparse "a" [collect [keep ^ @(keep some), keep <any>]])
+([(keep some) #a] = uparse "a" [collect [keep @(keep some), keep <any>]])
