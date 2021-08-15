@@ -415,6 +415,8 @@ REB_R Compose_To_Stack_Core(
                     Getify(DS_TOP);
                 else if (heart == REB_META_GROUP)
                     Metafy(DS_TOP);
+                else if (heart == REB_THE_GROUP)
+                    Theify(DS_TOP);
                 else
                     assert(heart == REB_GROUP);
 

@@ -576,9 +576,7 @@ REBNATIVE(getify)
 //
 //  Metafy: C
 //
-// Turn a value into its SYM-XXX! equivalent, if possible.  This tries to
-// "be smart" so even a TEXT! can be turned into a META-WORD! (just an
-// unbound one).
+// Turn a value into its META-XXX! equivalent, if possible.
 //
 REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
     REBLEN quotes = Dequotify(out);
@@ -609,7 +607,7 @@ REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
 //
 //  metafy: native [
 //
-//  {If possible, convert a value to a SYM-XXX! representation}
+//  {If possible, convert a value to a META-XXX! representation}
 //
 //      return: [<opt> meta-word! meta-path! meta-tuple! meta-group! meta-block!]
 //      value [<blank> any-value!]
@@ -620,6 +618,54 @@ REBNATIVE(metafy)
     INCLUDE_PARAMS_OF_METAFY;
 
     RETURN (Metafy(ARG(value)));
+}
+
+
+//
+//  Theify: C
+//
+// Turn a value into its THE-XXX! equivalent, if possible.
+//
+REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
+    REBLEN quotes = Dequotify(out);
+
+    enum Reb_Kind kind = VAL_TYPE(out);
+    if (ANY_WORD_KIND(kind)) {
+        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_THE_WORD;
+    }
+    else if (ANY_PATH_KIND(kind)) {  // Don't change "heart"!
+        mutable_KIND3Q_BYTE(out) = REB_THE_PATH;
+    }
+    else if (ANY_TUPLE_KIND(kind)) {    // Don't change "heart"
+        mutable_KIND3Q_BYTE(out) = REB_THE_TUPLE;
+    }
+    else if (ANY_BLOCK_KIND(kind)) {
+        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_THE_BLOCK;
+    }
+    else if (ANY_GROUP_KIND(kind)) {
+        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_THE_GROUP;
+    }
+    else
+        fail ("Cannot THEIFY");
+
+    return Quotify(out, quotes);
+}
+
+
+//
+//  theify: native [
+//
+//  {If possible, convert a value to a THE-XXX! representation}
+//
+//      return: [<opt> the-word! the-path! the-tuple! the-group! the-block!]
+//      value [<blank> any-value!]
+//  ]
+//
+REBNATIVE(theify)
+{
+    INCLUDE_PARAMS_OF_THEIFY;
+
+    RETURN (Theify(ARG(value)));
 }
 
 

@@ -255,7 +255,7 @@ inline static bool ANY_BLOCK_KIND(REBYTE k)
 
 inline static bool ANY_GROUP_KIND(REBYTE k)
     { return k == REB_GROUP or k == REB_GET_GROUP
-        or k == REB_SET_GROUP or k == REB_META_GROUP; }
+        or k == REB_SET_GROUP or k == REB_META_GROUP or k == REB_THE_GROUP; }
 
 #define ANY_GROUP(v) \
     ANY_GROUP_KIND(KIND3Q_BYTE(v))

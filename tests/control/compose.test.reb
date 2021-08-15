@@ -164,3 +164,23 @@
     ([<a> <b>] = compose [<a> (if true [null]) <b>])
     (error? trap [compose [<a> (~unset~)]])
 ]
+
+[
+    ([a :a a: @a ^a] = compose [('a) :('a) ('a): @('a) ^('a)])
+
+    ([[a] :[a] [a]: @[a] ^[a]] = compose [
+        ([a]) :([a]) ([a]): @([a]) ^([a])
+    ])
+
+    ([(a) :(a) (a): @(a) ^(a)] = compose [
+        ('(a)) :('(a)) ('(a)): @('(a)) ^('(a))
+    ])
+
+    ([a/b :a/b a/b: @a/b ^a/b] = compose [
+        ('a/b) :('a/b) ('a/b): @('a/b) ^('a/b)
+    ])
+
+    ([a.b :a.b a.b: @a.b ^a.b] = compose [
+        ('a.b) :('a.b) ('a.b): @('a.b) ^('a.b)
+    ])
+]
