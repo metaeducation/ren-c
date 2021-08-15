@@ -914,23 +914,28 @@ REBTYPE(Array)
             flags |= AM_FIND_ONLY;
             len = 1;
         }
-        else if (ANY_ARRAY(pattern)) {
+        else if (IS_BLOCK(pattern)) {
             VAL_ARRAY_LEN_AT(&len, pattern);
         }
-        else {
+        else if (ANY_THE_KIND(VAL_TYPE(pattern))) {
+            Plainify(pattern);
+            len = 1;
+            flags |= AM_FIND_ONLY;
+        }
+        else if (not ANY_INERT(pattern)) {
+            //
             // !!! Need to think about `select block 'key` when you are trying
             // to have get select-parity between blocks and objects.  Rethink
             // what FIND on objects means, also.
             //
-            if (
-                sym == SYM_FIND and (
-                    not ANY_INERT(pattern) and not IS_WORD(pattern)
-                )
-            ){
+            if (not IS_WORD(pattern))
                 fail ("Cannot FIND evaluative values w/o QUOTE");
-            }
 
             flags |= AM_FIND_ONLY;
+            len = 1;
+        }
+        else {
+            assert(not ANY_ARRAY(pattern));
             len = 1;
         }
 
@@ -1012,10 +1017,18 @@ REBTYPE(Array)
         }
         else if (IS_QUOTED(ARG(value)))
             Unquotify(ARG(value), 1);
+        else if (IS_BLOCK(ARG(value)))
+            flags |= AM_SPLICE;
+        else if (ANY_THE_KIND(VAL_TYPE(ARG(value))))
+            Plainify(ARG(value));
         else if (not ANY_INERT(ARG(value)))
             fail ("Cannot APPEND/INSERT/CHANGE evaluative values w/o QUOTE");
-        else if (ANY_ARRAY(ARG(value)))
-            flags |= AM_SPLICE;
+        else {
+            // The only inert array type besides BLOCK! is THE-BLOCK!, and we
+            // handle ANY_THE_KIND() above as dropping the @ and not splicing.
+            //
+            assert(not ANY_ARRAY(ARG(value)));
+        }
 
         if (REF(part))
             flags |= AM_PART;

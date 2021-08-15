@@ -148,3 +148,9 @@
     (#{00} = find #{00} #)
     (#{00} = find/case #{00} #)
 ]
+
+; @ types are now handled as literal by APPEND/FIND unless quoted
+[
+    ([b c] = find [a b c] @b)
+    ([[b c] d] = find [a [b c] d] @[b c])
+]
