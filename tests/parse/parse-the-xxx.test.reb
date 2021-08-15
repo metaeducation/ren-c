@@ -13,6 +13,6 @@
 
 ([keep #a] = uparse "a" [collect [keep ^ @keep, keep <any>]])
 ([tupley.keep #a] = uparse "a" [collect [keep ^ @tupley.keep, keep <any>]])
-([keep.pathy #a] = uparse "a" [collect [keep ^ @keep/pathy, keep <any>]])
+([keep/pathy #a] = uparse "a" [collect [keep ^ @keep/pathy, keep <any>]])
 
 ([(keep some) #a] = uparse "a" [collect [keep ^ @(keep some), keep <any>]])

@@ -222,7 +222,6 @@
 [
     (["a" "a"] = uparse "aaa" [collect [keep keep "a", "aa"]])
     (["a" "a" "a"] = uparse "aaa" [collect [keep [keep "a" keep "a"] "a"]])
-    (["a" "a" "a"] = uparse "aaa" [collect [keep @[keep "a" keep "a"]]])
 
     (["aaa" "aaa"] = uparse "aaa" [
         collect [keep keep "a", "b" | keep keep "aaa"]
@@ -230,7 +229,6 @@
     (["a" "a" "a" "c" "c"] = uparse "aaa" [
         collect [keep [keep "a" keep "a"] [keep "b" | keep ["a" keep ("c")]]]
     ])
-    (null = uparse "aaa" [collect [keep @[keep "a" keep "a" "a"]]])  ; 4 "a"
 ]
 
 
