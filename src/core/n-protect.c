@@ -269,7 +269,7 @@ static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
             Uncolor(var);
         }
     }
-    else if (ANY_PATH(word)) {
+    else if (ANY_SEQUENCE(word)) {
         REBLEN index;
         REBCTX *context = Resolve_Path(word, &index);
         if (index == 0)
@@ -307,7 +307,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
     //if (REF(words))
     //  flags |= PROT_WORDS;
 
-    if (IS_WORD(value) || IS_PATH(value)) {
+    if (ANY_WORD(value) || ANY_SEQUENCE(value)) {
         Protect_Word_Value(value, flags); // will unmark if deep
         RETURN (ARG(value));
     }
@@ -375,8 +375,12 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 //
 //  {Protect a series or a variable from being modified.}
 //
-//      return: [word! path! any-series! bitset! map! object! module!]
-//      value [word! path! any-series! bitset! map! object! module!]
+//      return: [
+//          any-word! any-sequence! any-series! bitset! map! object! module!
+//      ]
+//      value [
+//          any-word! any-sequence! any-series! bitset! map! object! module!
+//      ]
 //      /deep "Protect all sub-series/objects as well"
 //      /words "Process list as words (and path words)"
 //      /values "Process list of values (implied GET)"
