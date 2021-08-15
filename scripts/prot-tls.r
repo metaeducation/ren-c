@@ -757,10 +757,9 @@ client-key-exchange: func [
             ;
             ; Each encrypted message in TLS 1.1 and above carry a plaintext
             ; initialization vector, so the ctx does not use one for the whole
-            ; session.  Unset it to make sure.
+            ; session.  Poison session vectors to make sure they're unused.
             ;
-            unset in ctx 'client-iv
-            unset in ctx 'server-iv
+            ctx.client-iv: ctx.server-iv: ~per-message~
         ]
     ]
 
