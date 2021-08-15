@@ -861,17 +861,17 @@ upgrade: func [
 ]
 
 
-append lib compose [
+export [
     ;
     ; !!! The concept was that users should be able to create new instances of
     ; the console object; this hasn't been really worked through.
     ;
-    console!: (ensure object! console!)
+    console! [object!]
 
     ; We can choose to expose certain functionality only in the console prompt,
     ; vs. needing to be added to global visibility.  Adding to the lib context
     ; means these will be seen by scripts, e.g. `do "why"` will work.
     ;
-    why: (ensure action! :why)
-    upgrade: (ensure action! :upgrade)
+    why [action!]
+    upgrade [action!]
 ]

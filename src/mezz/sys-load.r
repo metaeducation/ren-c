@@ -530,12 +530,33 @@ export*: func [
     return: <void>
     where "Specialized for each module via EXPORT"
         [module!]
-    words [block!] "Block of words (already defined in local context)"
+    items [block!]
+        "Block of WORD! or WORD! [typeset] (already defined in local context)"
+    <local> hdr list val word types
 ][
     let hdr: meta-of where
     let list: ensure block! select hdr 'Exports
-    for-each word words [
-        ensure word! word
+
+    loop [not tail? items] [
+        if not word? items.1 [
+            fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^pos.1]
+        ]
+        word: ensure word! items.1
+        val: get/any word  ; !!! notation for exporting isotopes?
+        items: next items
+
+        (types: match block! items.1) then [
+            if bad-word? ^val [  ; !!! assume type block means no isotopes
+                fail [{EXPORT given} types {for} word {but it is} ^val]
+            ]
+            (find (make typeset! types) kind of :val) else [
+                fail [
+                    {EXPORT expected} word {to be in} ^types
+                    {but it was} (mold kind of :val) else ["null"]
+                ]
+            ]
+            items: next items
+        ]
+        append list ^word
     ]
-    append list words
 ]
