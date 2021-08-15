@@ -121,7 +121,13 @@
     (<x> = quote/depth <x> 0)
 ]
 
-(quoted! = kind of the 'foo)  ; low level "KIND"
+; low level "KIND"
+[
+    (null = kind of null)
+    (quoted! = kind of the ')
+    (quoted! = kind of the 'foo)
+]
+
 ((quote word!) = type of the 'foo)  ; higher-level "TYPE"
 ((type of the ''[a b c]) = quote/depth block! 2)
 
