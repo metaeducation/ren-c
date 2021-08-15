@@ -137,17 +137,17 @@ cipher-suites: compose [
     ;
     ; #{XX XX} [  ; two byte cipher suite identification code
     ;    CIPHER_SUITE_NAME
-    ;    <key-exchange> ^block-cipher [...] #message-authentication [...]
+    ;    <key-exchange> @block-cipher [...] #message-authentication [...]
     ; ]
 
     #{C0 14} [
         TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA
-        <ecdhe-rsa> ^aes [size 32 block 16 iv 16] #sha1 [size 20]
+        <ecdhe-rsa> @aes [size 32 block 16 iv 16] #sha1 [size 20]
     ]
 
     #{C0 13} [
         TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
-        <ecdhe-rsa> ^aes [size 16 block 16 iv 16] #sha1 [size 20]
+        <ecdhe-rsa> @aes [size 16 block 16 iv 16] #sha1 [size 20]
     ]
 
     ; The Discourse server on forum.rebol.info offers these choices too:
@@ -165,32 +165,32 @@ cipher-suites: compose [
     ;
     #{C0 28} [
         TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384
-        <ecdhe-rsa> ^aes [size 32 block 16 iv 16] #sha384 [size 48]
+        <ecdhe-rsa> @aes [size 32 block 16 iv 16] #sha384 [size 48]
     ]
 
     #{00 2F} [
         TLS_RSA_WITH_AES_128_CBC_SHA
-        <rsa> ^aes [size 16 block 16 iv 16] #sha1 [size 20]
+        <rsa> @aes [size 16 block 16 iv 16] #sha1 [size 20]
     ]
     #{00 35} [
         TLS_RSA_WITH_AES_256_CBC_SHA  ; https://example.com will do this one
-        <rsa> ^aes [size 32 block 16 iv 16] #sha1 [size 20]
+        <rsa> @aes [size 32 block 16 iv 16] #sha1 [size 20]
     ]
     #{00 32} [
         TLS_DHE_DSS_WITH_AES_128_CBC_SHA
-        <dhe-dss> ^aes [size 16 block 16 iv 16] #sha1 [size 20]
+        <dhe-dss> @aes [size 16 block 16 iv 16] #sha1 [size 20]
     ]
     #{00 38} [
         TLS_DHE_DSS_WITH_AES_256_CBC_SHA
-        <dhe-dss> ^aes [size 32 block 16 iv 16] #sha1 [size 20]
+        <dhe-dss> @aes [size 32 block 16 iv 16] #sha1 [size 20]
     ]
     #{00 33} [
         TLS_DHE_RSA_WITH_AES_128_CBC_SHA
-        <dhe-rsa> ^aes [size 16 block 16 iv 16] #sha1 [size 20]
+        <dhe-rsa> @aes [size 16 block 16 iv 16] #sha1 [size 20]
     ]
     #{00 39} [
         TLS_DHE_RSA_WITH_AES_256_CBC_SHA
-        <dhe-rsa> ^aes [size 32 block 16 iv 16] #sha1 [size 20]
+        <dhe-rsa> @aes [size 32 block 16 iv 16] #sha1 [size 20]
     ]
 ]
 
@@ -315,7 +315,7 @@ parse-asn: func [
         <bmp-string>
     ])
 
-    class-types ([^universal ^application ^context-specific ^private])
+    class-types ([@universal @application @context-specific @private])
 ][
     let data-start: data  ; may not be at head
     let index: does [1 + offset-of data-start data]  ; effective index
@@ -332,10 +332,10 @@ parse-asn: func [
                 class: pick class-types 1 + shift byte -6
 
                 switch class [
-                    '^universal [
+                    @universal [
                         tag: pick universal-tags 1 + (byte and+ 31)
                     ]
-                    '^context-specific [
+                    @context-specific [
                         tag: <context-specific>
                         val: byte and+ 31
                     ]
@@ -367,7 +367,7 @@ parse-asn: func [
 
             #value [
                 switch class [
-                    '^universal [
+                    @universal [
                         val: copy/part data size
                         keep/line ^ compose/deep/only [
                             (tag) [
@@ -379,7 +379,7 @@ parse-asn: func [
                         ]
                     ]
 
-                    '^context-specific [
+                    @context-specific [
                         keep/line ^ compose/deep [(tag) [(val) (size)]]
                         parse-asn copy/part data size  ; !!! ensures valid?
                     ]
@@ -905,7 +905,7 @@ encrypt-data: func [
     ]
 
     switch ctx/crypt-method [
-        '^aes [
+        @aes [
             ctx/encrypt-stream: default [
                 aes-key ctx/client-crypt-key ctx/client-iv
             ]
@@ -939,7 +939,7 @@ decrypt-data: func [
     data [binary!]
 ][
     switch ctx/crypt-method [
-        '^aes [
+        @aes [
             ctx/decrypt-stream: default [
                 aes-key/decrypt ctx/server-crypt-key ctx/server-iv
             ]
@@ -1025,9 +1025,9 @@ parse-messages: func [
         2 <server-hello>
         11 <certificate>
         12 <server-key-exchange>
-        13 '^certificate-request  ; not yet implemented
+        13 @certificate-request  ; not yet implemented
         14 #server-hello-done
-        15 '^certificate-verify  ; not yet implemented
+        15 @certificate-verify  ; not yet implemented
         16 <client-key-exchange>
         20 <finished>
     ])
@@ -1950,17 +1950,17 @@ sys/make-scheme [
                     either hash-method = 'sha384 ['sha384] ['sha256]
                 ]
 
-                crypt-method: does [first find suite meta-word!]
+                crypt-method: does [first find suite the-word!]
                 crypt-size: does [
-                    select (ensure block! second find suite meta-word!) 'size
+                    select (ensure block! second find suite the-word!) 'size
                 ]
                 block-size: does [
                     try select (
-                        ensure block! second find suite meta-word!
+                        ensure block! second find suite the-word!
                     ) 'block
                 ]
                 iv-size: does [
-                    try select (ensure block! second find suite meta-word!) 'iv
+                    try select (ensure block! second find suite the-word!) 'iv
                 ]
 
                 client-crypt-key: _
@@ -2054,7 +2054,7 @@ sys/make-scheme [
             ;
             if port/state/suite [
                 switch port/state/crypt-method [
-                    '^aes [
+                    @aes [
                         if port/state/encrypt-stream [
                             port/state/encrypt-stream: _  ; will be GC'd
                         ]
