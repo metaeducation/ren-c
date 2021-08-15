@@ -1412,7 +1412,7 @@ default-combinators: make map! reduce [
             integer! [
                 max: min: unquote times'
             ]
-            block! [
+            block! the-block! [
                 uparse unquote times' [
                     '_ '_ <end> (
                         set remainder input
@@ -2039,23 +2039,24 @@ default-combinators: make map! reduce [
         return: "Last result value"
             [<opt> <invisible> any-value!]
         pending: [blank! block!]
-        'group "To catch instances of old ANY, only allow GROUP! for now"
+        'arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
             [any-value!]  ; lie and take ANY-VALUE! to report better error
         <local> result' block
     ][
-        if not group? group [
+        switch type of :arg [
+            group! [
+                if not block? block: do arg [
+                    fail ["The ANY combinator requires a BLOCK! of alternates"]
+                ]
+            ]
+            the-block! [
+                block: as block! :arg
+            ]
+        ] else [
             fail [
                 "The ANY combinator in UPARSE is not an iterating construct."
                 "Use WHILE or WHILE FURTHER depending on your needs:"
                 https://forum.rebol.info/t/1572
-            ]
-        ]
-
-        if not block? block: do group [
-            fail [
-                "For now, the ANY combinator takes a GROUP! that synthesizes"
-                "a BLOCK! of alternates.  It will ultimately take other rules"
-                "but is limited to GROUP! to help locate old ANY usages:"
             ]
         ]
 

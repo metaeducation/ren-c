@@ -123,3 +123,9 @@
     (uparse? "aa" [repeat ([_ #]) "a"])
     (uparse? "" [repeat ([_ #]) "a"])
 ]
+
+; THE-BLOCK! also accepted
+[
+    (not uparse? "a" [repeat @[2 3] "a"])
+    (uparse? "aaaaaaa" [repeat @[_ _] "b", while "a"])
+]
