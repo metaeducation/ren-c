@@ -563,6 +563,12 @@ reeval func* [
     any-series?:
     any-scalar?:
     any-array?:
+    any-branch?:
+    any-the-type?:
+    any-plain-type?:
+    any-get-type?:
+    any-set-type?:
+    any-meta-type?:
     <end>
 
 

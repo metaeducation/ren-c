@@ -16,24 +16,6 @@ REBOL [
     }
 ]
 
-any-value!  ; signal typesets start (SYM_ANY_VALUE_X hardcoded reference)
-any-word!
-any-path!
-any-number!
-any-sequence!
-any-tuple!
-any-scalar!
-any-series!
-any-string!
-any-context!
-any-array!  ; replacement for ANY-BLOCK! that doesn't conflate with BLOCK!
-any-branch!
-
-;-----------------------------------------------------------------------------
-; Signal that every earlier numbered symbol is for a typeset or datatype...
-
-datatypes
-
 ; === NAMED BAD WORDS ===
 ; A new Ren-C feature is that voids are interned like WORD!, so they can be
 ; more communicative.  These are standard symbols passed to Init_Isotope().

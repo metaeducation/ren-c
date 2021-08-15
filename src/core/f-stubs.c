@@ -698,3 +698,20 @@ REBVAL *Plainify(REBVAL *out) {
 
     return Quotify(out, quotes);
 }
+
+
+//
+//  plainify: native [
+//
+//  {Convert a value into its plain representation}
+//
+//      return: [<opt> any-value!]
+//      value [<blank> any-value!]
+//  ]
+//
+REBNATIVE(plainify)
+{
+    INCLUDE_PARAMS_OF_PLAINIFY;
+
+    RETURN (Plainify(ARG(value)));
+}

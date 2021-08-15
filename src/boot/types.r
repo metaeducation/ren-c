@@ -210,19 +210,19 @@ varargs     "evaluator position for variable numbers of arguments"
 ; <ANY-THE> (order matters, see UNTHEIFY_ANY_XXX_KIND())
 
 the-block   "alternative inert form of block"
-            array       *       *       *       [block array series branch]
+            array       *       *       *       [block array series branch the-type]
 
 the-group   "inert form of group"
-            array       *       *       *       [group array series branch]
+            array       *       *       *       [group array series branch the-type]
 
 the-path    "inert form of path"
-            sequence    *       *       *       [path sequence]  ; branch?
+            sequence    *       *       *       [path sequence the-type]  ; branch?
 
 the-tuple   "inert form of tuple"
-            sequence    *       *       *       [tuple sequence scalar]  ; ?
+            sequence    *       *       *       [tuple sequence scalar the-type]  ; ?
 
 the-word    "inert form of word"
-            word        -       *       +       [word]  ; branch?
+            word        -       *       +       [word the-type]  ; branch?
 
 ; </ANY-THE>
 
@@ -230,23 +230,23 @@ the-word    "inert form of word"
 ; <ANY-PLAIN> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 block       "array of values that blocks evaluation unless DO is used"
-            array       *       *       *       [block array series branch]
+            array       *       *       *       [block array series branch plain-type]
 
 ; ============================================================================
 ; BEGIN EVALUATOR ACTIVE TYPES, SEE ANY_EVALUATIVE()
 ; ============================================================================
 
 group       "array that evaluates expressions as an isolated group"
-            array       *       *       *       [group array series branch]
+            array       *       *       *       [group array series branch plain-type]
 
 path        "member or refinement selection with execution bias"
-            sequence    *       *       *       [path sequence]
+            sequence    *       *       *       [path sequence plain-type]
 
 tuple       "member selection with inert bias"
-            sequence    *       *       *       [tuple sequence scalar]
+            sequence    *       *       *       [tuple sequence scalar plain-type]
 
 word        "evaluates a variable or action"
-            word        -       *       +       [word]
+            word        -       *       +       [word plain-type]
 
 ; </ANY-PLAIN>
 
@@ -254,19 +254,19 @@ word        "evaluates a variable or action"
 ; <ANY-SET> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 set-block   "array of values that will element-wise SET if evaluated"
-            array       *       *       *       [block array series]
+            array       *       *       *       [block array series set-type]
 
 set-group   "array that evaluates and runs SET on the resulting word/path"
-            array       *       *       *       [group array series]
+            array       *       *       *       [group array series set-type]
 
 set-path    "definition of a path's value"
-            sequence    *       *       *       [path sequence]
+            sequence    *       *       *       [path sequence set-type]
 
 set-tuple   "definition of a tuple's value"
-            sequence    *       *       *       [tuple sequence]
+            sequence    *       *       *       [tuple sequence set-type]
 
 set-word    "definition of a word's value"
-            word        -       *       +       [word]
+            word        -       *       +       [word set-type]
 
 ; </ANY-SET> (contiguous with ANY-GET below matters)
 
@@ -274,19 +274,19 @@ set-word    "definition of a word's value"
 ; <ANY-GET> (order matters)
 
 get-block   "array of values that is reduced if evaluated"
-            array       *       *       *       [block array series branch]
+            array       *       *       *       [block array series branch get-type]
 
 get-group   "array that evaluates and runs GET on the resulting word/path"
-            array       *       *       *       [group array series]
+            array       *       *       *       [group array series get-type]
 
 get-path    "the value of a path"
-            sequence    *       *       *       [path sequence]
+            sequence    *       *       *       [path sequence get-type]
 
 get-tuple   "the value of a tuple"
-            sequence    *       *       *       [tuple sequence]
+            sequence    *       *       *       [tuple sequence get-type]
 
 get-word    "the value of a word (variable)"
-            word        -       *       +       [word]
+            word        -       *       +       [word get-type]
 
 ; </ANY-GET> (except for ISSUE!)
 
@@ -298,19 +298,19 @@ get-word    "the value of a word (variable)"
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 meta-block  "block that evaluates to produce a quoted block"
-            array       *       *       *       [block array series]
+            array       *       *       *       [block array series meta-type]
 
 meta-group  "group that quotes its product or removes isotope status"
-            array       *       *       *       [group array series]
+            array       *       *       *       [group array series meta-type]
 
 meta-path   "path that quotes its product or removes isotope status"
-            sequence    *       *       *       [path sequence]
+            sequence    *       *       *       [path sequence meta-type]
 
 meta-tuple  "tuple that quotes its product or removes isotope status"
-            sequence    *       *       *       [tuple sequence]
+            sequence    *       *       *       [tuple sequence meta-type]
 
 meta-word   "word that quotes its product or removes isotope status"
-            word        -       *       +       [word]
+            word        -       *       +       [word meta-type]
 
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
@@ -319,7 +319,7 @@ meta-word   "word that quotes its product or removes isotope status"
 ; to pick up on the isotope/invisible distinctions.
 
 meta        "quoting operator which distinguishes NULL and BAD-WORD! isotopes"
-            meta        -       -       +       [unit]
+            meta        -       -       +       [unit meta-type]
 
 
 ; THE! is the lone @ symbol, which acts like THE.  It's particularly nice to
@@ -327,7 +327,7 @@ meta        "quoting operator which distinguishes NULL and BAD-WORD! isotopes"
 ; needing to say `rebDid("action?" rebQ(var))`.
 
 the         "as-is operator which suppresses evaluation on the next value"
-            the         -       -       +       [unit]
+            the         -       -       +       [unit the-type]
 
 
 ; COMMA! has a high number with bindable types it's evaluative, and the

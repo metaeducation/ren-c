@@ -194,12 +194,6 @@ inline static bool ANY_SERIES_KIND(REBYTE k)
 #define ANY_SERIES(v) \
     ANY_SERIES_KIND(KIND3Q_BYTE(v))
 
-
-// !!! The ANY-WORD! classification is an odd one, because it's not just
-// WORD!/GET-WORD!/SET-WORD! but includes ISSUE!.  Ren-C is looking at avenues
-// of attack for this to let strings hold bindings.  To make the ANY_INERT()
-// test fast, issue is grouped with the inert types...not the other words.
-
 #define ANY_WORD_KIND_EVIL_MACRO \
     (k < 64 and did (FLAGIT_KIND(k) & TS_WORD))
 
@@ -247,7 +241,7 @@ inline static enum Reb_Kind TUPLIFY_ANY_PATH_KIND(REBYTE k) {
 
 inline static bool ANY_BLOCK_KIND(REBYTE k)
     { return k == REB_BLOCK or k == REB_GET_BLOCK
-        or k == REB_SET_BLOCK or k == REB_META_BLOCK; }
+        or k == REB_SET_BLOCK or k == REB_META_BLOCK or k == REB_THE_BLOCK; }
 
 #define ANY_BLOCK(v) \
     ANY_BLOCK_KIND(KIND3Q_BYTE(v))
@@ -278,8 +272,8 @@ inline static bool ANY_NUMBER_KIND(REBYTE k)
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//
 //
 // See reasoning in %types.r on why ANY-INERT! optimization is favored over
-// grouping the sets/gets/plains/syms together (to speed up ANY_ARRAY()/etc.)
-// This could be reviewed and formally tested to see what's best.
+// putting blocks/paths/words/tuples/groups together.  It means ANY_ARRAY() is
+// slower but these tests can be faster.
 
 inline static bool ANY_THE_KIND(REBYTE k)
   { return k >= REB_THE_BLOCK and k <= REB_THE_WORD; }

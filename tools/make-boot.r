@@ -154,10 +154,10 @@ syms: copy []
 sym-n: 1  ; skip SYM_0 (null added as #1)
 
 boot-words: copy []
-add-sym: function [
+add-sym: function compose/deep [
     {Add SYM_XXX to enumeration}
     return: [<opt> integer!]
-    word  ; bootstrap issue with older Ren-C, | is a BAR! (no type exists)
+    word [word! (if set? 'bar! [bar!])]  ; bootstrap issue, | accepted for BAR!
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][
@@ -360,7 +360,11 @@ for-each-record t type-table [
     ]
 ]
 
+add-sym 'any-value!  ; starts the typesets, not mentioned in %types.r
+
 for-each [ts types] typeset-sets [
+    add-sym to-word unspaced ["any-" ts "!"]
+
     flagits: collect [
         for-each t types [
             keep cscape/with {FLAGIT_KIND(REB_${T})} 't
@@ -370,6 +374,9 @@ for-each [ts types] typeset-sets [
         #define TS_${TS} ($<Delimit "|" Flagits>)
     }  ; !!! TS_ANY_XXX is wordy, considering TS_XXX denotes a typeset
 ]
+
+add-sym 'datatypes  ; signal where the datatypes stop
+
 
 e-types/emit {
     /* !!! R3-Alpha made frequent use of these predefined typesets.  In Ren-C
