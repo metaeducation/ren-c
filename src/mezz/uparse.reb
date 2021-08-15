@@ -2213,6 +2213,35 @@ default-combinators: make map! reduce [
         set pending totalpending
         return unmeta result'
     ]
+
+    === FAIL COMBINATOR ===
+
+    ; Gracefully handling failure has two places that you might want to
+    ; provide assistance in implicating...one is the parse rules, and the other
+    ; is the parse input.
+    ;
+    ; The FAIL combinator is--perhaps obviously (?)--not for pointing out
+    ; syntax errors in the rules.  Because it's a rule.  So by default it will
+    ; complain about the location where you are in the input.
+    ;
+    ; It lets you take an @[...] block, because a plain [...] block would be
+    ; processed as a rule.  For the moment it quotes it for convenience.
+
+    'fail combinator [
+        return: "Divergent"
+            []
+        'reason [the-block!]
+        <local> e
+    ][
+        e: make error! [
+            Type: 'User
+            id: 'uparse
+            message: to text! reason
+        ]
+        set-location-of-error e binding of 'reason
+        e.near: mold/limit input 80
+        fail e
+    ]
 ]
 
 
