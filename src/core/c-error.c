@@ -1141,7 +1141,10 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
 REBCTX *Error_Bad_Value_Core(const RELVAL *value, REBSPC *specifier)
 {
     if (IS_NULLED(value))
-        fail (Error_Unknown_Error_Raw());
+        return Error_Unknown_Error_Raw();
+
+    if (IS_BAD_WORD(value) and GET_CELL_FLAG(value, ISOTOPE))
+        return Error_Bad_Isotope(value);
 
     DECLARE_LOCAL (specific);
     Derelativize(specific, value, specifier);
@@ -1372,6 +1375,20 @@ REBCTX *Error_On_Port(enum Reb_Symbol_Id id_sym, REBVAL *port, REBINT err_code)
     Init_Integer(err_code_value, err_code);
 
     return Error(SYM_ACCESS, id_sym, val, err_code_value, rebEND);
+}
+
+
+//
+//  Error_Bad_Isotope: C
+//
+REBCTX *Error_Bad_Isotope(const RELVAL *isotope) {
+    assert(IS_BAD_WORD(isotope) and GET_CELL_FLAG(isotope, ISOTOPE));
+
+    DECLARE_LOCAL (plain);
+    Copy_Cell(plain, SPECIFIC(isotope));
+    CLEAR_CELL_FLAG(plain, ISOTOPE);
+
+    return Error_Bad_Isotope_Raw(plain);
 }
 
 

@@ -56,3 +56,18 @@
         ]
     )
 ]
+
+; ~null~ isotopes are considered vaporizations, other isotopes are errors
+[
+    ("Hello World" = spaced ["Hello" ~null~ "World"])
+    ("Hello World" = spaced ["Hello" if false ["Cruel"] "World"])
+    ("Hello World" = spaced compose ["Hello" (if false ["Cruel"]) "World"])
+
+    (
+        e: trap [spaced ["Hello" ~baddie~ "World"]]
+        did all [
+            e.id = 'bad-isotope
+            e.arg1 = '~baddie~
+        ]
+    )
+]

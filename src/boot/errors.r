@@ -78,6 +78,7 @@ Syntax: [
 Script: [
     no-value:           [:arg1 {has no value}]
     bad-word-get:       [:arg1 {is} :arg2 {isotope (see ^^(...) and GET/ANY)}]
+    bad-isotope:        [{Invalid use of} :arg1 {isotope}]
     need-non-null:      [:arg1 {needs a value, can't be null}]
     need-non-end:       [{end was reached while trying to set} :arg1]
     not-bound:          [:arg1 {word is not bound to a context}]

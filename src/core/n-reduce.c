@@ -404,7 +404,7 @@ REB_R Compose_To_Stack_Core(
                 and IS_BAD_WORD(insert)
                 and GET_CELL_FLAG(insert, ISOTOPE)
             ){
-                fail ("Cannot compose BAD-WORD! isotopes into blocks");
+                fail (Error_Bad_Isotope(insert));
             }
 
             if (insert == nullptr and heart == REB_GROUP and quotes == 0) {

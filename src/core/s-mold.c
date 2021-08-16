@@ -449,6 +449,9 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
     }
   #endif
 
+    if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE))
+        fail (Error_Bad_Isotope(v));
+
     REBLEN depth = VAL_NUM_QUOTES(v);
 
     REBLEN i;
@@ -554,8 +557,13 @@ bool Form_Reduce_Throws(
             continue;  // spaced [comment "a" ...]
         }
 
-        if (IS_NULLED(out) or IS_BLANK(out))  // see note above on BLANK!
+        if (
+            IS_NULLED(out)
+            or Is_Nulled_Isotope(out)
+            or IS_BLANK(out)  // see note above on BLANK!
+        ){
             continue;  // opt-out and maybe keep option open to return NULL
+        }
 
         nothing = false;
 

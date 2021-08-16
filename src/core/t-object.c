@@ -845,14 +845,23 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
             // that don't need it because they are inert, but maybe that
             // isn't a good idea...depends on the whole block/object model.
             //
-            if (IS_BAD_WORD(e.var)) {
-                if (NOT_CELL_FLAG(e.var, ISOTOPE))
+            if (IS_BAD_WORD(e.var) and GET_CELL_FLAG(e.var, ISOTOPE)) {
+                //
+                // Mold_Value() rejects isotopes.  Do it manually.  (Service
+                // routine Mold_Bad_Word_Isotope_Ok() might be useful?  Calling
+                // it Mold_Isotope() would be confusing because the isotope
+                // status would be lost).
+                //
+                Append_Ascii(s, "~");
+                Append_Spelling(s, VAL_BAD_WORD_LABEL(e.var));
+                Append_Ascii(s, "~");
+            }
+            else {
+                if (not ANY_INERT(e.var))
                     Append_Ascii(s, "'");
+                else
+                    Mold_Value(mo, e.var);
             }
-            else if (not ANY_INERT(e.var)) {
-                Append_Ascii(s, "'");
-            }
-            Mold_Value(mo, e.var);
         }
     }
 
