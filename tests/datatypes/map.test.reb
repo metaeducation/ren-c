@@ -95,7 +95,7 @@
         m: make map! compose [
             a 0 'a 1 ''a 2 '''a 3 ''''a 4
             A 10 'A 11 ''A 12 '''A 13 ''''A 14
-            ((b2)) II ((b4)) IIII
+            (b2) II (b4) IIII
         ]
         true
     )

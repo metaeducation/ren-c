@@ -233,8 +233,8 @@ reword: function [
 
     out: make (type of source) length of source
 
-    prefix: null
-    suffix: null
+    prefix: _
+    suffix: _
     case [
         null? escape [prefix: "$"]  ; refinement not used, so use default
 
@@ -242,7 +242,6 @@ reword: function [
             escape = ""
             escape = []
         ][
-            prefix: null  ; pure search and replace, no prefix/suffix
         ]
 
         block? escape [
@@ -310,7 +309,7 @@ reword: function [
                     keyword
                 ])
 
-                (<*> suffix)
+                ((<*> suffix))
 
                 (keyword-match: '(<*> keyword))
             ]

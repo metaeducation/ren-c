@@ -162,8 +162,8 @@
         if count = 5 [return null]
         return count: count + 1
     ]
-    [[1 2] [3 4] [5]]  = map-each [a b] :make-one-thru-five [
-        compose [(:a) (:b)]
+    [[1 2] [3 4] [5 ~null~]]  = map-each [a b] :make-one-thru-five [
+        compose [(a) (b)]
     ]
 )
 

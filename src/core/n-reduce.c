@@ -340,7 +340,7 @@ REB_R Compose_To_Stack_Core(
             if (not IS_NULLED(label))
                 Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-            Init_Nulled(out);  // want empty `()` to vanish as a null would
+            SET_END(out);  // want empty `()` to vanish
             if (Do_Feed_To_End_Maybe_Stale_Throws(
                 out,
                 subfeed,
@@ -352,59 +352,133 @@ REB_R Compose_To_Stack_Core(
             }
             CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
 
-            if (Is_Nulled_Isotope(out)) {
-                Init_Nulled(out);  // treat isotopic nulls as vaporizing
-            }
-            else if (IS_BAD_WORD(out) and GET_CELL_FLAG(out, ISOTOPE)) {
-                fail ("Cannot compose BAD-WORD! isotopes into blocks");
-            }
+            if (IS_END(out))
+                continue;
 
             REBVAL *insert;
             if (
                 predicate
                 and not doubled_group
             ){
-                insert = rebValue(rebINLINE(predicate), rebQ(out));
-            } else
-                insert = IS_NULLED(out) ? nullptr : out;
+                insert = rebValue(META_VALUE, rebINLINE(predicate), rebQ(out));
+
+                if (insert == nullptr) {
+                    // leave alone
+                }
+                else if (Is_Nulled_Isotope(insert)) {
+                    insert = nullptr;
+                    rebRelease(insert);
+                }
+                else if (Is_Void(insert)) {
+                    //
+                    // compose [(elide "invisible composes vanish")] => []
+                    //
+                    rebRelease(insert);
+                    continue;
+                }
+                else
+                    Meta_Unquotify(insert);
+            }
+            else {
+                if (Is_Void(out) and doubled_group) {
+                    //
+                    // The idea about ~void~ isotopes (vs. actual invisiblity)
+                    // is that they represent void intent across places where
+                    // it may not be safe to vaporize.  But we have permission
+                    // to vaporize due to the (( )) intent...it's only the
+                    // ( ) slots that need to be conservative.
+                    //
+                    continue;
+                }
+
+                insert = (IS_NULLED(out) or Is_Nulled_Isotope(out))
+                    ? nullptr
+                    : out;
+            }
+
+            // Note: Keep isotopic nulls as isotopic, in case predicate takes
+            // its parameter as ^META.
+
+            if (
+                insert
+                and IS_BAD_WORD(insert)
+                and GET_CELL_FLAG(insert, ISOTOPE)
+            ){
+                fail ("Cannot compose BAD-WORD! isotopes into blocks");
+            }
 
             if (insert == nullptr and heart == REB_GROUP and quotes == 0) {
                 //
-                // compose [(unquoted "nulls *vanish*!" null)] => []
-                // compose [(elide "so do 'empty' composes")] => []
+                // compose [(null)] => [~null~]
+                // compose [((null))] => []
+                //
+                if (not doubled_group)
+                    Init_Bad_Word(DS_PUSH(), SYM_NULL);
             }
-            else if (
-                insert
-                and ANY_ARRAY(insert)
-                and (predicate or doubled_group)
-            ){
-                // We splice arrays if they were produced by a predicate
-                // application, or if (( )) was used.
+            else if (insert and (predicate or doubled_group)) {
+                //
+                // We use splicing semantics if the result was produced by a
+                // predicate application, or if (( )) was used.  Splicing
+                // semantics match the rules for APPEND/etc, with the minor
+                // twist that NULL is accepted as vaporizing.  (The difference
+                // here is that the (( )) has shown that a "one or many"
+                // intent is understood; APPEND lacks that, so it's best to
+                // err on the side of caution regarding NULL.  COMPOSE errs
+                // on that side by splicing ~null~ in the ( ) splices.
 
                 // compose [(([a b])) merges] => [a b merges]
 
                 if (quotes != 0 or heart != REB_GROUP)
                     fail ("Currently can only splice plain unquoted GROUP!s");
 
-                const RELVAL *push_tail;
-                const RELVAL *push = VAL_ARRAY_AT(&push_tail, insert);
-                if (push != push_tail) {
+                if (IS_BLANK(insert)) {
                     //
-                    // Only proxy newline flag from the template on *first*
-                    // value spliced in (it may have its own newline flag)
+                    // BLANK! does nothing in APPEND so do nothing.
                     //
-                    // !!! These rules aren't necessarily obvious.  If you
-                    // say `compose [thing ((block-of-things))]` did you want
-                    // that block to fit on one line?
+                }
+                else if (IS_QUOTED(insert)) {
                     //
-                    Derelativize(DS_PUSH(), push, VAL_SPECIFIER(insert));
-                    if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
-                        SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
-                    else
-                        CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+                    // Quoted items lose a quote level and get pushed.
+                    //
+                    Unquotify(Copy_Cell(DS_PUSH(), insert), 1);
+                }
+                else if (IS_BLOCK(insert)) {
+                    //
+                    // The only splice type is BLOCK!...
 
-                    while (++push, push != push_tail)
+                    const RELVAL *push_tail;
+                    const RELVAL *push = VAL_ARRAY_AT(&push_tail, insert);
+                    if (push != push_tail) {
+                        //
+                        // Only proxy newline flag from the template on *first*
+                        // value spliced in (it may have its own newline flag)
+                        //
+                        // !!! These rules aren't necessarily obvious.  If you
+                        // say `compose [thing ((block-of-things))]` did you
+                        // want that block to fit on one line?
+                        //
                         Derelativize(DS_PUSH(), push, VAL_SPECIFIER(insert));
+                        if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
+                            SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+                        else
+                            CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+
+                        while (++push, push != push_tail)
+                            Derelativize(DS_PUSH(), push, VAL_SPECIFIER(insert));
+                    }
+                }
+                else if (ANY_THE_KIND(VAL_TYPE(insert))) {
+                    //
+                    // the @ types splice as is without the @
+                    //
+                    Plainify(Copy_Cell(DS_PUSH(), insert));
+                }
+                else if (not ANY_INERT(insert)) {
+                    fail ("COMPOSE slots that are (( )) can't be evaluative");
+                }
+                else {
+                    assert(not ANY_ARRAY(insert));
+                    Copy_Cell(DS_PUSH(), insert);
                 }
             }
             else {

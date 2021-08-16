@@ -163,7 +163,7 @@
                 (as word! unspaced ["meth-" n]): meth [] (collect [
                     count-up i n [
                         keep compose [
-                            (as word! unspaced ["var-" i]) (if i <> n ['+])
+                            (as word! unspaced ["var-" i]) ((if i <> n '[+]))
                         ]
                     ]
                 ])

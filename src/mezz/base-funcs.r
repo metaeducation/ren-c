@@ -247,9 +247,8 @@ func: func* [
         while [
             set var: word! (other: _) opt set other: group! (
                 append exclusions ^var
-                append statics compose [
-                    (as set-word! var) ((other))
-                ]
+                append statics ^(as set-word! var)
+                append statics as block! other
             )
         ]
         (var: _)

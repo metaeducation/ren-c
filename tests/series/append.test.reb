@@ -189,3 +189,8 @@
     ([a b c d/e] = append [a b c] @d/e)
     ([a b c @] = append [a b c] ^ '@)
 ]
+
+; Special case... appending a quoted NULL is neither an error or a no-op.
+; As with the attempt to do a single element compose of a NULL, it's ~null~
+;
+([a b c ~null~] = append [a b c] the ')

@@ -76,7 +76,7 @@
                     keyword
                 ])
 
-                (opt suffix)  ; vaporize if suffix is blank
+                ((suffix))  ; vaporize if suffix is blank
 
                 (engroup quote keyword)  ; make rule evaluate to actual keyword
             ]

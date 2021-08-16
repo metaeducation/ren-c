@@ -1,4 +1,41 @@
 ; %compose.test.reb
+;
+; Ren-C's COMPOSE has many more features than historical Rebol.  These features
+; range from having two types of slots: (single) and ((spliced)), to being
+; able to put sigils or quotes on the spliced material.
+
+; Splicing vs. non
+;
+([[a b] * a b] = compose [([a b]) * (([a b]))])
+
+; Preserve one element rule vs. tolerate vaporization.  ~null~ isotopes are
+; treated the same by the compose site as pure NULL.
+;
+([~null~ *] = compose [(null) * ((null))])
+([~null~ *] = compose [(~null~) * ((~null~))])
+
+; Comments vaporize regardless of form.
+
+([*] = compose [(comment "single") * ((comment "spliced"))])
+
+; Only true invisibility will act as invisible in the single case, but in the
+; spliced case the invisible isotopic intent is tolerated vs. an error.
+;
+(error? trap [compose [(~void~) * <ok>]])
+([<bad> *] = compose [<bad> * ((~void~))])
+
+; BLANK!s are as-is in the single form, but vanish in the spliced form, and
+; other rules are just generally the append rules for the type.  Evaluative
+; types can't be spliced.
+;
+([_ *] = compose [(_) * ((_))])
+(['a * a] = compose [(the 'a) * ((the 'a))])
+([1020 * 304] = compose [(1020) * ((304))])
+([@ae * ae] = compose [(@ae) * ((@ae))])
+
+([(group) * <bad>] = compose [(the (group)) * <bad>])
+(error? trap [compose [<ok> * ((the (group)))]])
+
 
 (
     num: 1
@@ -161,7 +198,7 @@
 
 ; BAD-WORD! isotopes are not legal in compose, except for the null isotope.
 [
-    ([<a> <b>] = compose [<a> (if true [null]) <b>])
+    ([<a> ~null~ <b>] = compose [<a> (if true [null]) <b>])
     (error? trap [compose [<a> (~unset~)]])
 ]
 

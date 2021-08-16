@@ -1015,8 +1015,24 @@ REBTYPE(Array)
         if (IS_NULLED(ARG(value))) {
             // handled before mutability check
         }
-        else if (IS_QUOTED(ARG(value)))
+        else if (IS_QUOTED(ARG(value))) {
             Unquotify(ARG(value), 1);
+
+            // There is an exemption made here:
+            //
+            //     >> append [a b c] the '
+            //     == [a b c ~null~]
+            //
+            // The reasons for doing this are beyond the scope of this comment,
+            // but it is intentional--as a better option than being either a
+            // no-op or an error.  See writing on why this is done:
+            //
+            //     >> compose [(null) * ((null))]
+            //     == [~null~ *]
+            //
+            if (IS_NULLED(ARG(value)))
+                Init_Bad_Word(ARG(value), SYM_NULL);
+        }
         else if (IS_BLOCK(ARG(value)))
             flags |= AM_SPLICE;
         else if (ANY_THE_KIND(VAL_TYPE(ARG(value))))
