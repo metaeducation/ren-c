@@ -360,7 +360,7 @@ confirm: function [
         block? with
         length of with > 2
 
-        fail ^with [
+        fail @with [
             "maximum 2 arguments allowed for with [true false]"
             "got:" mold with
         ]

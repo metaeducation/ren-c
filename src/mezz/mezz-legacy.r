@@ -25,7 +25,7 @@ lit: :the
 
 
 while: func [] [
-    fail ^return [
+    fail @return [
         "The previous functionality of WHILE is now done by LOOP."
         "Ultimately, WHILE will be arity-1 to help match the behavior in"
         "PARSE, and better parallel UNTIL."
@@ -71,7 +71,7 @@ find: my onlify/param 'pattern
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 ;
 method: func [/dummy] [
-    fail ^dummy [
+    fail @dummy [
         {The distinction between FUNC vs. FUNCTION, and METH vs. METHOD was}
         {the gathering of SET-WORD! as locals.  This behavior led to many}
         {problems with gathering irrelevant locals in the frame (e.g. any}
@@ -84,14 +84,14 @@ method: func [/dummy] [
 
 
 REBOL: function [] [
-    fail ^return [
+    fail @return [
         "The REBOL [] header of a script must be interpreted by LOAD (and"
         "functions like DO).  It cannot be executed directly."
     ]
 ]
 
 eval: function [] [
-    fail ^return [
+    fail @return [
         "EVAL is now REEVAL (EVAL is slated to be a synonym for EVALUATE):"
         https://forum.rebol.info/t/eval-evaluate-and-reeval-reevaluate/1173
     ]
@@ -117,7 +117,7 @@ input: does [ask text!]
 
 
 repend: func [.dummy] [
-    fail ^dummy [
+    fail @dummy [
         "REPEND is just `adapt :append [value: reduce :value]`, but is not"
         "provided in the box.  Note you can say `append data :[1 + 2 3 + 4]`"
         "and the GET-BLOCK! will reduce, or use `append data reduce stuff`"
@@ -125,7 +125,7 @@ repend: func [.dummy] [
 ]
 
 remold: func [.dummy] [
-    fail ^dummy [
+    fail @dummy [
         "REMOLD is just `adapt :mold [value: reduce :value]`, but is not"
         "provided in the box.  Note you can say `mold :[1 + 2 3 + 4]`"
         "and the GET-BLOCK! will reduce, or use `mold reduce stuff`"
@@ -174,11 +174,11 @@ context: specialize :make [type: object!]
 
 
 uneval: func [] [
-    fail ^return "QUOTE has replaced UNEVAL"
+    fail @return "QUOTE has replaced UNEVAL"
 ]
 
 =>: func [] [
-    fail ^return "=> for lambda has been replaced by ->"
+    fail @return "=> for lambda has been replaced by ->"
 ]
 
 ; To be more visually pleasing, properties like LENGTH can be extracted using
@@ -258,7 +258,7 @@ prin: function [
 
 
 join-of: func [] [
-    fail ^return [
+    fail @return [
         "JOIN has returned to Rebol2 semantics, JOIN-OF is no longer needed"
         https://forum.rebol.info/t/its-time-to-join-together/1030
     ]
@@ -318,7 +318,7 @@ forever: :cycle
 
 
 apply: func [.dummy] [
-    fail ^dummy [
+    fail @dummy [
         {APPLY is being reverted to a reimagination of the positional}
         {APPLY from Rebol2/R3-Alpha, but with a different way of dealing with}
         {refinements.  The Ren-C APPLY experiment has been moved to the name}
@@ -331,7 +331,7 @@ apply: func [.dummy] [
 
 hijack :find adapt copy :find [
     if reverse or (last) [
-        fail ^reverse [
+        fail @reverse [
             {/REVERSE and /LAST on FIND have been deprecated.  Use FIND-LAST}
             {or FIND-REVERSE specializations: https://forum.rebol.info/t/1126}
         ]

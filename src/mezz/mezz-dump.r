@@ -80,7 +80,7 @@ dump: function [
                 enablements/(prefix): item
             ]
 
-            fail ^value [
+            fail @value [
                 "Item not TEXT!, INTEGER!, WORD!, TUPLE!, PATH!, GROUP!:" :item
             ]
         ]
@@ -256,7 +256,7 @@ summarize-obj: function [
                     if not find str pattern [continue]
                 ]
 
-                fail ^pattern
+                fail @pattern
             ]
 
             if desc: description-of try friendly get/any 'val [

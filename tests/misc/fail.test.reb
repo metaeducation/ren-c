@@ -34,7 +34,7 @@
 ; with other error reason parameters
 [
     (
-        foo: func [x] [fail ^x]
+        foo: func [x] [fail @x]
 
         e: trap [foo 10]
         did all [
@@ -45,7 +45,7 @@
             [foo 10] = copy/part e.near 2  ; implicates callsite
         ]
     )(
-        foo: func [x] [fail ^x "error reason"]
+        foo: func [x] [fail @x "error reason"]
 
         e: trap [foo 10]
         did all [

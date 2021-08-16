@@ -974,7 +974,7 @@ break: emulate [
 
 ++: emulate [
     func [] [
-        fail ^return [
+        fail @return [
             {++ and -- are not in the Redbol layer by default, as they were}
             {not terribly popular to begin with...but also because `--` is}
             {a very useful and easy-to-type dumping construct in Ren-C, that}

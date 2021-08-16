@@ -131,7 +131,7 @@
             tail? right,
             '|1| = look: take lookahead  ; hack...recognize selfs
         ] else [
-            fail ^right [
+            fail @right [
                 "|1| expected single expression, found residual of" :look
             ]
         ]

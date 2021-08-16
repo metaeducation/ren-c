@@ -262,7 +262,7 @@ pointfree*: func* [
     ]
 
     if :block/1 [
-        fail ^block ["Unused argument data at end of POINTFREE block"]
+        fail @block ["Unused argument data at end of POINTFREE block"]
     ]
 
     ; We now create an action out of the frame.  NULL parameters are taken as
@@ -434,7 +434,7 @@ spaced-text: chain [:spaced | specialize :else [branch: [copy ""]]]
 newlined: chain [
     adapt specialize :delimit [delimiter: newline] [
         if text? :line [
-            fail ^line "NEWLINED on TEXT! semantics being debated"
+            fail @line "NEWLINED on TEXT! semantics being debated"
         ]
     ]
         |

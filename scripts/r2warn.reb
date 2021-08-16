@@ -47,7 +47,7 @@ repurposed: deprecated: func [block [block!]] [
     append block {Emulation of the old meanings available via %redbol.reb}
 
     return func [] compose/only [
-        fail ^return (delimit LF block)
+        fail @return (delimit LF block)
     ]
 ]
 
@@ -143,7 +143,7 @@ unless: checked [
             not group? right
             block? first look
         ] then [
-            fail ^look [
+            fail @look [
                 "UNLESS has been repurposed in Ren-C as an infix operator"
                 "which defaults to the left hand side, unless the right"
                 "side has a value which overrides it.  You may use IF-NOT"
@@ -172,7 +172,7 @@ switch: checked [
                 'null <> c
                 not datatype? get c
             ] then [
-                fail ^cases [
+                fail @cases [
                     {Temporarily disabled word/path SWITCH clause:} :c LF
 
                     {You may have meant to use a LIT-WORD! / LIT-PATH!} LF
@@ -254,7 +254,7 @@ also: checked [
             block? :branch
             not semiquoted? 'branch
 
-            fail ^branch [
+            fail @branch [
                 {ALSO serves a different purpose in Ren-C, so use ELIDE for}
                 {old-ALSO-like tasks.}
                 {See: https://trello.com/c/Y03HJTY4}
@@ -296,7 +296,7 @@ try: checked [
             block? :optional
             semiquoted? 'optional
 
-            fail ^optional [
+            fail @optional [
                 {TRY/EXCEPT was replaced by TRAP/WITH, matching CATCH/WITH}
                 {and is more coherent.  See: https://trello.com/c/IbnfBaLI}
                 {TRY now converts nulls to blanks, passing through ANY-VALUE!}
