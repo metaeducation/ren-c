@@ -48,17 +48,6 @@ last: redescribe [
 ;
 
 
-repend: redescribe [
-    "APPEND a reduced value to a series."
-](
-    adapt :append [
-        if :value [
-            value: reduce :value
-        ]
-    ]
-)
-
-
 ; This is a userspace implementation of JOIN.  It is implemented on top of
 ; APPEND at the moment while it is being worked out, but since APPEND will
 ; fundamentally not operate on PATH! or TUPLE! it is going to be a bit

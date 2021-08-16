@@ -116,6 +116,23 @@ enfix: :enfixed
 input: does [ask text!]
 
 
+repend: func [.dummy] [
+    fail ^dummy [
+        "REPEND is just `adapt :append [value: reduce :value]`, but is not"
+        "provided in the box.  Note you can say `append data :[1 + 2 3 + 4]`"
+        "and the GET-BLOCK! will reduce, or use `append data reduce stuff`"
+    ]
+]
+
+remold: func [.dummy] [
+    fail ^dummy [
+        "REMOLD is just `adapt :mold [value: reduce :value]`, but is not"
+        "provided in the box.  Note you can say `mold :[1 + 2 3 + 4]`"
+        "and the GET-BLOCK! will reduce, or use `mold reduce stuff`"
+    ]
+]
+
+
 === EXTENSION DATATYPE DEFINITIONS ===
 
 ; Even though Ren-C does not build in things like IMAGE! or GOB! to the core,

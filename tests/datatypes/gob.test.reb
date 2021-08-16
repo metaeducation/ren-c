@@ -86,7 +86,7 @@
 
 [#1797 (
     a: make gob! []
-    repend a [
+    append a reduce [
         make gob! [text: "1"] make gob! [text: "2"] make gob! [text: "3"]
     ]
     b: take/part next a 1

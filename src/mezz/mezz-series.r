@@ -63,14 +63,6 @@ join-all: function [
 ]
 
 
-remold: redescribe [
-    {Reduces and converts a value to a REBOL-readable string.}
-](
-    adapt :mold [
-        value: reduce :value
-    ]
-)
-
 array: func [
     {Makes and initializes a block of a given size}
 
