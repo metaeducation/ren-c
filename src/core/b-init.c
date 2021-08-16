@@ -338,6 +338,9 @@ static void Init_Root_Vars(void)
     Init_False(Prep_Cell(&PG_False_Value));
     Init_True(Prep_Cell(&PG_True_Value));
 
+    RESET_CELL(Prep_Cell(&PG_Meta_Value), REB_META, CELL_MASK_NONE);
+    RESET_CELL(Prep_Cell(&PG_The_Value), REB_THE, CELL_MASK_NONE);
+
     Init_Return_Signal(Prep_Cell(&PG_R_Thrown), C_THROWN);
     Init_Return_Signal(Prep_Cell(&PG_R_Invisible), C_INVISIBLE);
     Init_Return_Signal(Prep_Cell(&PG_R_Immediate), C_IMMEDIATE);

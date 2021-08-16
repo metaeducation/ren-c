@@ -428,6 +428,12 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
       case REB_THE_WORD:
         return CT_Word(s, t, strict);
 
+      case REB_META:
+        return CT_Meta(s, t, strict);
+
+      case REB_THE:
+        return CT_The(s, t, strict);
+
       case REB_ERROR:
       case REB_OBJECT:
       case REB_MODULE:

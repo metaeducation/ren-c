@@ -89,6 +89,9 @@ PVAR REBVAL PG_Blank_Value;
 PVAR REBVAL PG_False_Value;
 PVAR REBVAL PG_True_Value;
 
+PVAR REBVAL PG_The_Value;
+PVAR REBVAL PG_Meta_Value;
+
 PVAR REBVAL PG_Unset_Value;
 PVAR REBVAL PG_Void_Value;
 

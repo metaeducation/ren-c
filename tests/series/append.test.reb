@@ -187,5 +187,5 @@
     ([a b c (d e)] = append [a b c] @(d e))
     ([a b c d.e] = append [a b c] @d.e)
     ([a b c d/e] = append [a b c] @d/e)
-    ([a b c] = append [a b c] ^ '@)
+    ([a b c @] = append [a b c] ^ '@)
 ]
