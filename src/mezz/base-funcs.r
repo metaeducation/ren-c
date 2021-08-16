@@ -687,6 +687,13 @@ attempt: func [
     return null
 ]
 
+
+reduce*: redescribe [
+    "REDUCE a block but vaporize NULL Expressions"
+](
+    specialize :reduce [predicate: :denull]
+)
+
 for-next: redescribe [
     "Evaluates a block for each position until the end, using NEXT to skip"
 ](

@@ -45,17 +45,18 @@
 
 ; === PREDICATES ===
 ;
-; Predicates influence the handling of NULLs, which vaporize by default.
+; Predicates influence the handling of NULLs, which become ~null~ by default
 
-([] = reduce [null])
+([~null~] = reduce [null])
+([] = reduce [denull null])
 
 ; There was a bug pertaining to trying to set the new line flag on the output
 ; in the case of a non-existent null, test that.
 [
     ([] = reduce [
-        null
+        denull null
     ])
-    ([] = reduce .identity [
+    ([~null~] = reduce .identity [
         null
     ])
 ]
@@ -64,7 +65,12 @@
 
 ([3 _ 300] = reduce .try [1 + 2 if false [10 + 20] 100 + 200])
 ([3 ~null~ 300] = reduce .reify [1 + 2 if false [10 + 20] 100 + 200])
-([3 300] = reduce .identity [1 + 2 if false [10 + 20] 100 + 200])
+([3 300] = reduce .denull [1 + 2 if false [10 + 20] 100 + 200])
+
+; REDUCE* is a specialization of REDUCE with denull
+;
+([3 300] = reduce* [1 + 2 if false [10 + 20] 100 + 200])
+
 
 ([#[true] #[false]] = reduce .even? [2 + 2 3 + 4])
 

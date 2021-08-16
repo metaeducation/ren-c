@@ -11,7 +11,7 @@
     [] = rejoin [[]]
 )
 (
-    "" = rejoin ["" null]
+    "~null~" = rejoin ["" null]
 )
 (
     [] = rejoin [null null]

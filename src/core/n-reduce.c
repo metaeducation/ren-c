@@ -87,33 +87,43 @@ REBNATIVE(reduce)
         }
 
         if (not IS_NULLED(ARG(predicate))) {  // post-process result if needed
-            REBVAL *processed = rebValue(rebINLINE(predicate), rebQ(D_OUT));
-            if (processed)
+            REBVAL *processed = rebValue(
+                META_VALUE, rebINLINE(predicate), rebQ(D_OUT)
+            );  // !!! "^" instead of META_VALUE causes crash, investigate
+            if (processed) {
+                if (Is_Void(processed)) {
+                    rebRelease(processed);
+                    continue;
+                }
                 Copy_Cell(D_OUT, processed);
+                Meta_Unquotify(D_OUT);
+                rebRelease(processed);
+            }
             else
                 Init_Nulled(D_OUT);
-            rebRelease(processed);
         }
 
-        // Ren-C breaks with historical precedent in making the default
-        // for REDUCE to not strictly output a number of results equal
-        // to the number of input expressions, as NULL is "non-valued":
+        // Ren-C sticks with historical precedent in making the default
+        // for REDUCE strictly output a number of results equal to the number
+        // of input expressions.  Hence NULL is converted to ~null~::
         //
         //     >> append [<a> <b>] reduce [<c> if false [<d>]]
-        //     == [<a> <b> <c>]  ; two expressions added just one result
+        //     == [<a> <b> <c> ~null~]  ; two expressions adding two results
         //
-        // A predicate like .NON.NULL could error on NULLs, or they could
-        // be converted to blanks/etc.  See rationale for the change:
+        // There are invisibles to subvert this if one really wants to, in
+        // particular DENULL.
         //
-        // https://forum.rebol.info/t/what-should-do-do/1426
+        // https://forum.rebol.info/t/1665
         //
-        if (not IS_NULLED(D_OUT)) {
+        if (IS_NULLED(D_OUT))
+            Init_Bad_Word(DS_PUSH(), SYM_NULL);
+        else {
             Copy_Cell(DS_PUSH(), D_OUT);
             if (IS_BAD_WORD(DS_TOP))
                 CLEAR_CELL_FLAG(DS_TOP, ISOTOPE);  // must be block-safe
-            if (line)
-                SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
         }
+        if (line)
+            SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
     } while (NOT_END(f_value));
 
     Drop_Frame_Unbalanced(f);  // Drop_Frame() asserts on accumulation
