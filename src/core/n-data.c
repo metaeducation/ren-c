@@ -349,7 +349,8 @@ bool Did_Get_Binding_Of(REBVAL *out, const REBVAL *v)
     case REB_WORD:
     case REB_SET_WORD:
     case REB_GET_WORD:
-    case REB_META_WORD: {
+    case REB_META_WORD:
+    case REB_THE_WORD: {
         if (IS_WORD_UNBOUND(v))
             return false;
 
