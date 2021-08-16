@@ -214,7 +214,6 @@
 
 %parse/parse3.test.reb
 %parse/parse3-collect.test.reb
-%parse/parse3-inside.test.reb
 %parse/parse-across.test.reb
 %parse/parse-action.test.reb
 %parse/parse-ahead.test.reb
