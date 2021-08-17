@@ -157,7 +157,7 @@ boot-words: copy []
 add-sym: function compose/deep [
     {Add SYM_XXX to enumeration}
     return: [<opt> integer!]
-    word [word! (if set? 'bar! [bar!])]  ; bootstrap issue, | accepted for BAR!
+    word [word! ((if set? 'bar! [bar!]))]  ; bootstrap needs | accepted for BAR!
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][

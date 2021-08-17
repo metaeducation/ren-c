@@ -385,11 +385,11 @@ gen-obj: func [
                 ; way to turn this complaint off.  So don't use pedantic
                 ; warnings unless you're at c99 or higher, or C++.
                 ;
-                (
+                ((
                     if not find/only [c gnu89] standard [
                         <gnu:--pedantic>
                     ]
-                )
+                ))
 
                 <gnu:-Wextra>
                 <gnu:-Wall> <msc:/Wall>
@@ -422,7 +422,7 @@ gen-obj: func [
                 ; !!! This is only checked by default in *release* C++ builds,
                 ; because the performance and debug-stepping impact of the
                 ; template stubs when they aren't inlined is too troublesome.
-                (
+                ((
                     either all [
                         cplusplus
                         find app-config/definitions "NDEBUG"
@@ -431,7 +431,7 @@ gen-obj: func [
                     ][
                         <gnu:-Wno-cast-qual>
                     ]
-                )
+                ))
 
                 ;   'bytes' bytes padding added after construct 'member_name'
                 ;

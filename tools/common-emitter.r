@@ -118,7 +118,9 @@ cscape: function [
             if with [
                 if lit-word? with [with: noquote with]
 
-                with: compose [((with))]  ; convert to block
+                if not block? with [  ; convert to block if not already
+                    with: reduce [with]
+                ]
                 for-each item with [
                     bind code item
                 ]

@@ -49,15 +49,15 @@ libtcc-lib-dir: try any [
 
 
 cflags: compose [
-    (if libtcc-include-dir [
+    ((if libtcc-include-dir [
         unspaced [{-I} {"} file-to-local libtcc-include-dir {"}]
-    ])
+    ]))
 ]
 
 ldflags: compose [
-    (if libtcc-lib-dir [
+    ((if libtcc-lib-dir [
         unspaced [{-L} {"} file-to-local libtcc-lib-dir {"}]
-    ])
+    ]))
 ]
 
 libraries: compose [  ; Note: dependent libraries first, dependencies after.
@@ -75,7 +75,7 @@ libraries: compose [  ; Note: dependent libraries first, dependencies after.
     ;
     ; https://stackoverflow.com/a/38672664/
     ;
-    (if not find/only [Windows Android] system-config/os-base [%pthread])
+    ((if not find/only [Windows Android] system-config/os-base [%pthread]))
 ]
 
 requires: [

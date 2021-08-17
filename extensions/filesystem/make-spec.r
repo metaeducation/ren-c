@@ -10,7 +10,7 @@ depends: compose [
     %filesystem/p-file.c
     %filesystem/p-dir.c
 
-    (switch system-config/os-base [
+    ((switch system-config/os-base [
         'Windows [
             [%filesystem/file-windows.c]
         ]
@@ -20,15 +20,15 @@ depends: compose [
         ; https://fwheel.net/aio.html
         ;
         [%filesystem/file-posix.c]
-    ])
+    ]))
 
-    (if "1" = get-env "USE_BACKDATED_GLIBC" [
+    ((if "1" = get-env "USE_BACKDATED_GLIBC" [
         [%filesystem/fcntl-patch.c]
-    ])
+    ]))
 ]
 
 ldflags: compose [
-    (if "1" = get-env "USE_BACKDATED_GLIBC" [
+    ((if "1" = get-env "USE_BACKDATED_GLIBC" [
         {-Wl,--wrap=fcntl64 -Wl,--wrap=log -Wl,--wrap=pow}
-    ])
+    ]))
 ]
