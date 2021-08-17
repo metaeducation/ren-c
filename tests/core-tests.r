@@ -307,6 +307,7 @@
 %series/insert.test.reb
 %series/intersect.test.reb
 %series/just.test.reb
+%series/join.test.reb
 %series/last.test.reb
 %series/lengthq.test.reb
 %series/next.test.reb
@@ -314,7 +315,6 @@
 %series/ordinals.test.reb
 %series/pick.test.reb
 %series/poke.test.reb
-%series/rejoin.test.reb
 %series/remove.test.reb
 %series/reverse.test.reb
 %series/replace.test.reb

@@ -989,27 +989,9 @@ REB_R MAKE_Path(
         if (IS_END(out))
             break;
         if (IS_NULLED(out))
-            continue;
+            fail (out);  // !!! BLANK! is legit in paths, should null opt out?
 
-        if (not ANY_PATH(out)) {
-            if (DSP != dsp_orig and IS_BLANK(DS_TOP))
-                DS_DROP(); // make path! ['a/ 'b] => a/b, not a//b
-            Copy_Cell(DS_PUSH(), out);
-        }
-        else { // Splice any generated paths, so there are no paths-in-paths.
-            const RELVAL *tail;
-            const RELVAL *item = VAL_ARRAY_AT(&tail, out);  // safe?
-            if (IS_BLANK(item) and DSP != dsp_orig) {
-                if (IS_BLANK(DS_TOP)) // make path! ['a/b/ `/c`]
-                    fail ("Cannot merge slashes in MAKE PATH!");
-                ++item;
-            }
-            else if (DSP != dsp_orig and IS_BLANK(DS_TOP))
-                DS_DROP(); // make path! ['a/ 'b/c] => a/b/c, not a//b/c
-
-            for (; item != tail; ++item)
-                Derelativize(DS_PUSH(), item, VAL_SPECIFIER(out));
-        }
+        Copy_Cell(DS_PUSH(), out);
     }
 
     REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(out, kind, dsp_orig);

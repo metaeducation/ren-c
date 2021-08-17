@@ -807,13 +807,59 @@ repend: emulate [
     ]
 ]
 
+; REJOIN in R3-Alpha meant "reduce and join" and was arity-1.  It was used
+; in many places, such as producing strings out of blocks of string parts and
+; expressions.  But it also had some really wonky properties:
+;
+; https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/248/
+;
+; Ren-C eliminates it, and pushes on the definition of JOIN as arity-2...where
+; if there was a REJOIN operation, it would be JOIN/REDUCE.  But there is no
+; arity-1 REJOIN parallel in Ren-C at time of writing...you can ask JOIN to
+; have its first argument as a datatype! and it will produce that type, which
+; substitutes for the intent.
+;
+rejoin: emulate [
+    func [
+        {Reduces and joins a block of values}
+
+        return: "Same type as first non-null item produced by evaluation"
+            [issue! any-series! any-sequence!]
+        block "Values to reduce and join together"
+            [block!]
+        <local> base
+    ][
+        cycle [  ; Keep evaluating until a usable BASE is found
+
+            if not block: evaluate/result block 'base [
+                return copy []  ; we exhausted block without finding a base value
+            ]
+
+            any [
+                quoted? block  ; just ran an invisible like COMMENT or ELIDE
+                null? :base  ; consider to have dissolved
+                blank? :base  ; treat same as NULL
+            ] then [
+                continue  ; do another evaluation step
+            ]
+
+            ; !!! Historical Rebol would default to a TEXT! if the first thing
+            ; found wasn't JOIN-able.  This is questionable.
+            ;
+            if not match [issue! any-sequence! any-series!] :base [
+                base: to text! :base
+            ]
+
+            return join base block  ; JOIN with what's left of the block
+        ]
+    ]
+]
+
 join: emulate [
     function [
         value
         rest
     ][
-        ; double-inline of R3-alpha `repend value :rest`
-        ;
         applique :append [
             series: if series? :value [copy value] else [form :value]
             value: if block? :rest [reduce :rest] else [rest]

@@ -312,15 +312,15 @@ os: input
 precision: make decimal! ask "Precision: "
 prin "Empty block: "
 t: time-block [] precision
-print rejoin [autoround 1 / t 3 "Hz"]
+print unspaced [autoround 1 / t 3 "Hz"]
 size: 8190
-prin rejoin ["Eratosthenes Sieve Prime (size: " size "): "]
+prin unspaced ["Eratosthenes Sieve Prime (size: " size "): "]
 t: time-block [flags: sieve size] precision
 count: 0
 foreach flag flags [
 if flag [count: count + 1]
 ]
-print rejoin [
+print unspaced [
 autoround 1 / t 3
 "Hz, result: "
 count
@@ -328,29 +328,29 @@ count
 ]
 prin "Four-Banger test (+,-,*,/): "
 t: time-block [result: fourbang] precision
-print rejoin [
+print unspaced [
 autoround 1 / t 3
 "Hz, result: "
 result
 ]
 icount: 10000
-prin rejoin ["Integral (icount: " icount ") of sin(x) 0<=x<=pi/2: "]
+prin unspaced ["Integral (icount: " icount ") of sin(x) 0<=x<=pi/2: "]
 sinerad: func [x] [sine (x * 180 / pi)]
 t: time-block [result: gqf2 :sinerad 0 (pi / 2) icount] precision
-print rejoin [
+print unspaced [
 autoround 1 / t 3
 "Hz, result: "
 result
 ]
-prin rejoin ["Integral (icount: " icount ") of exp(x) 0<=x<=1: "]
+prin unspaced ["Integral (icount: " icount ") of exp(x) 0<=x<=1: "]
 t: time-block [result: gqf2 :exp 0 1 icount] precision
-print rejoin [
+print unspaced [
 autoround 1 / t 3
 "Hz, result: "
 result
 ]
 mcount: 500
-prin rejoin [
+prin unspaced [
 "Merge Sort ("
 mcount
 " elements): "
@@ -360,7 +360,7 @@ return a <= b
 ]
 b: random enum 1 mcount
 t: time-block [msort copy b :compare] precision
-print rejoin [
+print unspaced [
 autoround 1 / t 3
 "Hz"
 ]

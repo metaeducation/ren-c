@@ -192,7 +192,7 @@ help: function [
         issue! [
             ; HELP #TOPIC will browse r3n for the topic
 
-            browse join-all [https://r3n.github.io/topics/ as text! topic]
+            browse join https://r3n.github.io/topics/ as text! topic
             print newline
             return none
         ]
@@ -272,15 +272,12 @@ help: function [
                 replace/all item a b
             ]
 
-            browse join-all [
-                https://github.com/gchiu/reboldocs/blob/master/
-                item
-                %.MD
+            browse join https://github.com/gchiu/reboldocs/blob/master/ :[
+                item %.MD
             ]
         ] else [
             remove back tail of item  ; it's a DATATYPE!, so remove the !
-            browse join-all [
-                http://www.rebol.com/r3/docs/datatypes/
+            browse join http://www.rebol.com/r3/docs/datatypes/ reduce [
                 item
                 tmp: %.html
             ]

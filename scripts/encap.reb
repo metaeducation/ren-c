@@ -833,7 +833,7 @@ pe-format: context [
         pos [binary!]
         section [object!]
     ][
-        change pos let new-section: join-all [
+        change pos let new-section: join binary! :[
             copy/part (head of insert/dup
                 tail of to binary! copy section/name
                 #{00}

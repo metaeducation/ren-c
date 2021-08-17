@@ -237,12 +237,12 @@ make-changes-file: function [
     ]
 
     write-line: func [return: <none> s] [
-        write changes join-all s
+        write changes unspaced s
         write changes to-text newline
     ]
 
     md-link: func [s link] [
-        join-all [{ [} s {](} link {)}]
+        unspaced [{ [} s {](} link {)}]
     ]
 
     make-summary-text: function [
@@ -261,12 +261,12 @@ make-changes-file: function [
             " *" github-user-name co/author "* | "
 
             ; short commit hash
-            md-link co/commit join-all [url/ren-c co/commit]
+            md-link co/commit join url/ren-c co/commit
 
             ; any related hash (cherry-pick collated)
             if related: select co 'related [
                 map-each n related [
-                    md-link n join-all [url/ren-c n]
+                    md-link n join url/ren-c n
                 ]
             ]
 
@@ -280,7 +280,7 @@ make-changes-file: function [
             ; show CC issues (for now just list them)
             if cc: select co 'cc [
                 map-each n cc [
-                    md-link join-all [{#CC-} n] join-all [url/rebol-issues n]
+                    md-link (join {#CC-} n) (join url/rebol-issues n)
                 ]
             ]
 

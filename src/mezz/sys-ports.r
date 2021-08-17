@@ -56,7 +56,7 @@ make-port*: function [
             ;        scheme: 'tls
             ;        host: port/spec/host
             ;        port-id: port/spec/port-id
-            ;        ref: join-all [tcp:// host ":" port-id]
+            ;        ref: join tcp:// reduce [host ":" port-id]
             ;    ]
             ;
             ; So it's a bit weird, being a block that has to survive a call

@@ -103,6 +103,20 @@ load-value: :load
 load-all: :load/all
 
 
+the: :quote  ; Renamed due to the QUOTED! datatype
+quote: lib/func [x [<opt> any-value!]] [
+    switch type of x [
+        null [the ()]
+        word! [to lit-word! x]
+        path! [to lit-path! x]
+
+        fail/where [
+            "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
+        ] 'x
+    ]
+]
+
+
 ;=== BELOW THIS LINE, TRY NOT TO USE FUNCTIONS IN THE SHIM IMPLEMENTATION ===
 
 
@@ -191,10 +205,24 @@ print: lib/func [value] [
 ; to avoid conflating successful-but-null-bearing-parses with failure.
 ;
 parse?: chain [:lib/parse | :did]
-parse: chain [
-    :lib/parse
-    |
-    func [x [<opt> any-series! bar!]] [if :x [lib/void]]
+parse: func [series rules] [
+    ;
+    ; Make it so that if the rules end in `|| <input>` then the parse will
+    ; return the input.
+    ;
+    if lib/all [
+        (the <input>) = last rules
+        (the ||) =  first back tail rules
+    ][
+        rules: copy rules
+        take back tail rules
+        take back tail rules
+        if not lib/parse series rules [return null]
+        return series
+    ]
+
+    if not lib/parse series rules [return null]
+    return lib/void
 ]
 
 ; Enfixedness was conceived as not a property of an action itself, but of a
@@ -441,25 +469,32 @@ mutable: lib/func [x [any-value!]] [
     :x
 ]
 
-the: :quote  ; Renamed due to the QUOTED! datatype
-quote: lib/func [x [<opt> any-value!]] [
-    switch type of x [
-        null [the ()]
-        word! [to lit-word! x]
-        path! [to lit-path! x]
 
-        fail/where [
-            "QUOTE can only work on WORD!, PATH!, NULL in old Rebols"
-        ] 'x
+; Historical JOIN reduced.  Modern JOIN does not; it is more nuanced, and
+; does consistency checking on joins of tuples and paths.
+;
+join: func [base value <local>] [
+    base: switch base [
+        binary! [copy #{}]
+        text! [copy ""]
+        block! [copy []]
+    ] else [
+        copy :base
     ]
-]
 
-join: :join-of
-join-of: lib/func [] [
-    fail/where [  ; bootstrap EXE does not support @word
-        "JOIN has returned to Rebol2 semantics, JOIN-OF is no longer needed"
-        https://forum.rebol.info/t/its-time-to-join-together/1030
-    ] 'return
+    all [
+        not any [
+            find any-inert! type of :value
+            blank? :value
+            block? :value
+        ]
+    ] then [
+        fail/where ["Cannot join" :value "onto array"] 'value
+    ]
+
+    ; Dumb version; just append the value.
+    ;
+    append base :value
 ]
 
 ; https://forum.rebol.info/t/has-hasnt-worked-rethink-construct/1058

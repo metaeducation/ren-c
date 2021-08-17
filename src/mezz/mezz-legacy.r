@@ -132,6 +132,15 @@ remold: func [.dummy] [
     ]
 ]
 
+rejoin: func [.dummy] [
+    fail @dummy [
+        "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
+        "general cases by the now-non-reducing JOIN, which accepts datatypes"
+        "as a first parameter, e.g. `join binary! :["ABC" 1 + 2 3 + 4]`"
+        https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/
+    ]
+]
+
 
 === EXTENSION DATATYPE DEFINITIONS ===
 
@@ -253,58 +262,6 @@ prin: function [
         block! [spaced value]
     ] else [
         form :value
-    ]
-]
-
-
-join-of: func [] [
-    fail @return [
-        "JOIN has returned to Rebol2 semantics, JOIN-OF is no longer needed"
-        https://forum.rebol.info/t/its-time-to-join-together/1030
-    ]
-]
-
-
-; REJOIN in R3-Alpha meant "reduce and join".  JOIN-ALL is a friendlier
-; name, suggesting the join result is the type of the first reduced element.
-;
-; But JOIN-ALL doesn't act exactly the same as REJOIN--in fact, most cases
-; of REJOIN should be replaced not with JOIN-ALL, but with UNSPACED.  Note
-; that although UNSPACED always returns a TEXT!, the AS operator allows
-; aliasing to other string types (`as tag! unspaced [...]` will not create a
-; copy of the series data the way TO TAG! would).
-;
-rejoin: func [
-    {Reduces and joins a block of values}
-
-    return: "Same type as first non-null item produced by evaluation"
-        [issue! any-series! any-sequence!]
-    block "Values to reduce and join together"
-        [block!]
-    <local> base
-][
-    cycle [  ; Keep evaluating until a usable BASE is found
-
-        if not block: evaluate/result block 'base [
-            return copy []  ; we exhausted block without finding a base value
-        ]
-
-        any [
-            quoted? block  ; just ran an invisible like COMMENT or ELIDE
-            null? :base  ; consider to have dissolved
-            blank? :base  ; treat same as NULL
-        ] then [
-            continue  ; do another evaluation step
-        ]
-
-        ; !!! Historical Rebol would default to a TEXT! if the first thing
-        ; found wasn't JOIN-able.  This is questionable.
-        ;
-        if not match [issue! any-sequence! any-series!] :base [
-            base: to text! :base
-        ]
-
-        return join base block  ; JOIN with what's left of the block
     ]
 ]
 

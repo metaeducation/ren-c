@@ -201,7 +201,8 @@ to-obj-path: func [
 gen-obj: func [
     return: "Rebmake specification object for OBJ"
         [object!]
-    s
+    s "file representation, or list if block"
+        [file! text! word! path! tuple! block!]
     /dir "directory" [any-string!]
     /D "definitions" [block!]
     /I "includes" [block!]
@@ -712,16 +713,38 @@ gen-obj: func [
     ; to build the requested object file.
     ;
     return make rebmake/object-file-class compose [
-        source: to-file case [
-            dir [join dir s]
-            main [s]
+        assert [any [file? s path? s tuple? s word? s]]
+            ; ^-- e.g. TUPLE! like `foo.o`
+
+        ; !!! Note: The TEXT! => FILE! conversions of dir and src-dir are
+        ; important, because if source here comes back as a text something
+        ; filters it out.  rebmake is a hairball that is destined for complete
+        ; rewrite or the recycle bin...so investigating to find why TEXT! isn't
+        ; an error and just gets dropped on the floor to make a bad makefile
+        ; isn't a priority at the instant I'm writing this comment.  Just
+        ; convert the dirs to FILE!.
+        ;
+        source: case [
+            dir [
+                assert [any [file? dir text? dir]]
+                if text? dir [
+                    dir: to file! dir
+                ]
+                join dir (to file! s)
+            ]
+            main [to-file s]
         ] else [
-            join src-dir s
+            assert [any [file? src-dir text? src-dir]]
+            if text? src-dir [
+                src-dir: to file! src-dir
+            ]
+
+            join src-dir (to file! s)
         ]
 
         output: to-obj-path to text! ;\
             either main [
-                join %main/ (last ensure path! s)
+                join %main/ to file! (last ensure path! s)
             ] [s]
         cflags: either empty? flags [_] [flags]
         definitions: try D

@@ -148,7 +148,7 @@ ctx-zip: context [
         ; interpreted based on the OS of origin--can't say Amiga :-(
         ;
         assert [central-dir-entry]  ; currently expects you request it
-        set central-dir-entry join-all [
+        set central-dir-entry join binary! reduce [
             central-file-sig
             #{1E}  ; version of zip spec this encoder speaks (#{1E}=3.0)
             #{03}  ; OS of origin: 0=DOS, 3=Unix, 7=Mac, 1=Amiga...
@@ -174,7 +174,7 @@ ctx-zip: context [
 
         ; local file entry
         ;
-        return join-all [
+        return join binary! reduce [
             local-file-sig
             #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
             #{0000}  ; flags
@@ -202,11 +202,7 @@ ctx-zip: context [
             return value
         ]
         value: decode-url value
-        join %"" [
-            value.host "/"
-            any [value.path ""]
-            any [value.target ""]
-        ]
+        join %"" reduce [value.host "/" value.path value.target]
     ]
 
     zip: func [
@@ -298,7 +294,7 @@ ctx-zip: context [
             offset: me + length of file-entry
         ]
 
-        append where join-all [
+        append where join binary! reduce [
             central-directory
             end-of-central-sig
             #{0000}  ; disk num

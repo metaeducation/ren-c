@@ -290,9 +290,9 @@ console!: make object! [
 
         list-shortcuts: [print [system/console/shortcuts]]
         changes: [
-            browse join https://github.com/metaeducation/ren-c/blob/master/ [
+            browse join https://github.com/metaeducation/ren-c/blob/master/ :[
                 %CHANGES.md "#"
-                system/version/1 system/version/2 system/version/3
+                system.version.1 "." system.version.2 "." system.version.3
             ]
         ]
         topics: [
@@ -844,7 +844,7 @@ why: func [
 
     if error? err [
         err: lowercase unspaced [err/type #"-" err/id]
-        browse join http://www.rebol.com/r3/docs/errors/ [err ".html"]
+        browse join http://www.rebol.com/r3/docs/errors/ reduce [err ".html"]
     ] else [
         print "No information is available."
     ]

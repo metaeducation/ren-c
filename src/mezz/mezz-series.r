@@ -47,22 +47,6 @@ extend: func [
 ]
 
 
-join-all: function [
-    "Reduces and appends a block of values together."
-    return: [<opt> any-path! any-series! quoted!]
-        "Will be the type of the first non-null series produced by evaluation"
-    block [block!]
-        "Values to join together"
-    <local> position base
-][
-    until [
-        block: (evaluate/result block 'base) else [return null]
-        set? 'base  ; skip NULL evaluations
-    ]
-    return join base block
-]
-
-
 array: func [
     {Makes and initializes a block of a given size}
 

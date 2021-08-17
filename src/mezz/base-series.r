@@ -54,19 +54,57 @@ last: redescribe [
 ; inefficient.  However, it's easier to work it out as a userspace routine
 ; to figure out exactly what it should do, and make it a native later.
 ;
+; JOIN does "path & tuple calculus" and makes sure the slashes or dots are
+; correct.  BLANK!s do not have meaning and are discarded, while values cannot
+; be joined against each other without slashes:
+;
+;     >> join path! [a b c]
+;     ** Error: you can't stick a to b without a /, nor b to c without a /
+;
+;     >> join path! [a/ b / c]
+;     == a/b/c
+;
+;     >> join 'a/ [_ _ _ b]
+;     == a/b
+;
+; Note: `join ':a [b c]` => `:a/b/c` or `join [a] '/b/c` => [a]/b/c might seem
+; interesting and could occupy sematnics left open by illegal APPEND arguments.
+; But anything that makes the result type not match the base type is likely
+; to just cause confusion.  Weirdos who want features *like that* can make them
+; but JOIN isn't the right place for it.
+;
 join: function [
     {Concatenates values to the end of a copy of a value}
 
     return:
         [any-series! issue! any-sequence! port!
             map! object! module! bitset!]
-    base
-        [any-series! issue! any-sequence! port!
-            map! object! module! bitset!]
+    base [
+        datatype!
+        any-series! issue!
+        any-sequence!
+        port! map! object! module! bitset!
+    ]
     value [<opt> any-value!]
 ][
+    if blank? :value [
+        return copy base  ; can't be <blank> because that returns NULL
+    ]
+
     type: type of base  ; to set output type back to original if transformed
     case [
+        type = datatype! [
+            type: base
+            case [
+                find any-sequence! type [base: copy []]
+                find any-array! type [base: copy []]
+                find any-string! type [base: copy ""]
+                type = issue! [base: copy ""]
+                type = binary! [base: copy #{}]
+
+                fail ["Invalid datatype for JOIN:" type]
+            ]
+        ]
         find any-sequence! type [base: to block! base]
         issue! = type [base: to text! base]
     ] else [
@@ -75,33 +113,89 @@ join: function [
     ]
 
     result: switch type of :value [
-        block! [append base reduce .identity :value]
-        path! tuple! [
-            ;
-            ; e.g. `join 'a/b/c 'd/e/f`, need to turn the PATH! into a block
-            ; because `as path! [a b c d/e/f]` will fail
-            ;
-            if type = type of value [
-                append base as block! value
-            ] else [
-                append base ^value
+        block! [
+            if find any-sequence! type [  ; want slash or dot "calculus"
+                sep: either find any-path! type ['/] ['.]
+                for-each item value [
+                    if blank? item [
+                        continue  ; blanks skipped, use / or . to get "blanks"
+                    ]
+                    if not find any-sequence! kind of item [
+                        case [
+                            empty? base [append base ^item]
+                            _ = last base [change back tail base ^item]
+                            fail @item ["Elements must be separated with" sep]
+                        ]
+                    ] else [
+                        case [
+                            item = sep [
+                                if empty? base [  ; e.g. `join path! [/]`
+                                    append base ^blank
+                                    append base ^blank
+                                ] else [
+                                    append base ^blank
+                                ]
+                            ]
+                            (last base) and (first item) [
+                                fail @item [
+                                    "Elements must be separated with" sep
+                                ]
+                            ]
+                        ] else [
+                            if _ = first item [
+                                append base next as block! item
+                            ] else [
+                                append base as block! item
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+            else [
+                append base value
             ]
         ]
-        group! [
-            fail @base "Can't JOIN a GROUP! onto a series (use AS BLOCK!)."
-        ]
-        action! [
-            fail @base "Can't JOIN an ACTION! onto a series (use APPEND)."
-        ]
     ] else [
-        append base try ^value
+        if find any-sequence! type [
+            if find any-sequence! kind of value [
+                if not match [path! tuple!] value [
+                    fail "Can only append plain PATH! and TUPLE! to sequences"
+                ]
+                if type = type of value [  ; merging scenario
+                    all [last base, first value] then [
+                        fail "Elements must be separated with / or ."
+                    ]
+                    value: as block! value
+
+                    ; `(join 'a/ '/b)` needs to make a block [a _ b]
+                    ; But if there's a one sided slash there needs to be no
+                    ; blank between, it's a normal path.
+                    ;
+                    all [not last base, not first value] then [
+                        take/last base
+                    ] else [
+                        if not last base [take/last base]
+                        if not first value [value: next value]  ; locked
+                    ]
+                ]
+            ] else [
+                if not quoted? value [
+                    value: quote value  ; !!! allows `join 'a/ 'b`, good idea?
+                ]
+                if last base [
+                    fail "Elements must be separated with / or ."
+                ]
+                take/last base
+            ]
+        ]
+        append base :value
     ]
 
     if type [
-        result: as type result
+        return as type base
     ]
 
-    return result
+    return base
 ]
 
 
