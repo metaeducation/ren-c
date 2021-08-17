@@ -732,7 +732,7 @@ inline static REBSER *Manage_Series(REBSER *s)  // give manual series to GC
 }
 
 #ifdef NDEBUG
-    #define ASSERT_SERIES_MANAGED(s)
+    #define ASSERT_SERIES_MANAGED(s) NOOP
 #else
     inline static void ASSERT_SERIES_MANAGED(const REBSER *s) {
         if (NOT_SERIES_FLAG(s, MANAGED))
