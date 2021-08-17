@@ -1799,7 +1799,7 @@ REBNATIVE(denull)
     // DEVOID?  It seems it should be, or at least error if it's not going to
     // pass through a void intent.
     //
-    if (IS_NULLED(v) or IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_NULL)
+    if (IS_NULLED(v) or (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_NULL))
         return D_OUT;
 
     RETURN (Meta_Unquotify(v));
