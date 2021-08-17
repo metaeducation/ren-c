@@ -57,11 +57,18 @@
     )
 ]
 
-; ~null~ isotopes are considered vaporizations, other isotopes are errors
+; ~null~ and ~void~ isotopes are considered vaporizations
+; other isotopes are errors
 [
     ("Hello World" = spaced ["Hello" ~null~ "World"])
     ("Hello World" = spaced ["Hello" if false ["Cruel"] "World"])
     ("Hello World" = spaced compose ["Hello" (if false ["Cruel"]) "World"])
+
+    ("HelloWorld" = unspaced ["Hello" ~void~ "World"])
+    (
+        f: make frame! :void
+        "HelloWorld" = unspaced ["Hello" do f "World"]
+    )
 
     (
         e: trap [spaced ["Hello" ~baddie~ "World"]]

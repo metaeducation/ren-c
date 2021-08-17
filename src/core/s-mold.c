@@ -557,13 +557,21 @@ bool Form_Reduce_Throws(
             continue;  // spaced [comment "a" ...]
         }
 
+        // These are all the things that we're willing to vaporize.  Since
+        // operations like delimit are not positional, the risk is mitigated
+        // of letting things like nulls and voids vaporize.
+        //
         if (
             IS_NULLED(out)
-            or Is_Nulled_Isotope(out)
+            or Is_Nulled_Isotope(out)  // `unspaced ["a" if true [null]]`
+            or Is_Void(out)  // e.g. result of do make frame! on comment
             or IS_BLANK(out)  // see note above on BLANK!
         ){
             continue;  // opt-out and maybe keep option open to return NULL
         }
+
+        if (IS_BAD_WORD(out))
+            fail (out);  // don't allow *any* BAD-WORD! non-isotopes
 
         nothing = false;
 

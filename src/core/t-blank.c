@@ -46,9 +46,13 @@ void MF_Null(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 void MF_Blank(REB_MOLD *mo, REBCEL(const*) v, bool form)
 {
-    UNUSED(form); // no distinction between MOLD and FORM
     UNUSED(v);
-    Append_Ascii(mo->series, "_");
+
+    // While it was tempting to say that _ could act as "space", that overload
+    // turns out to not be good mojo.
+    //
+    if (not form)
+        Append_Ascii(mo->series, "_");
 }
 
 

@@ -386,24 +386,32 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
     const RELVAL *val = VAL_ARRAY_ITEM_AT(blk);
     for (; limit > 0; val++, limit--) {
         switch (VAL_TYPE(val)) {
-        case REB_INTEGER:
+          case REB_BLANK:
+            break;
+
+          case REB_BAD_WORD:
+            if (VAL_BAD_WORD_ID(val) == SYM_NULL)
+                break;  // since we're just joining, allow ~null~ to work
+            fail (Error_Bad_Value_Core(val, VAL_SPECIFIER(blk)));
+
+          case REB_INTEGER:
             EXPAND_SERIES_TAIL(buf, 1);
             *BIN_AT(buf, tail) = cast(REBYTE, VAL_UINT8(val));  // can fail()
             break;
 
-        case REB_BINARY: {
+          case REB_BINARY: {
             REBSIZ size;
             const REBYTE *data = VAL_BINARY_SIZE_AT(&size, val);
             EXPAND_SERIES_TAIL(buf, size);
             memcpy(BIN_AT(buf, tail), data, size);
             break; }
 
-        case REB_ISSUE:
-        case REB_TEXT:
-        case REB_FILE:
-        case REB_EMAIL:
-        case REB_URL:
-        case REB_TAG: {
+          case REB_ISSUE:
+          case REB_TEXT:
+          case REB_FILE:
+          case REB_EMAIL:
+          case REB_URL:
+          case REB_TAG: {
             REBSIZ utf8_size;
             REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, val);
 
@@ -412,7 +420,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
             SET_SERIES_LEN(buf, tail + utf8_size);
             break; }
 
-        default:
+          default:
             fail (Error_Bad_Value_Core(val, VAL_SPECIFIER(blk)));
         }
 
