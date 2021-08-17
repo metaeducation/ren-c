@@ -334,7 +334,7 @@ bool Specialize_Action_Throws(
                 goto unspecialized_arg;  // ran out...no pre-empt needed
             }
 
-            Typecheck_Refinement(param, arg);
+            Typecheck_Refinement(key, param, arg);
             goto specialized_arg_no_typecheck;
         }
 
@@ -764,7 +764,7 @@ REBACT *Alloc_Action_From_Exemplar(
         }
 
         if (GET_PARAM_FLAG(param, REFINEMENT))
-            Typecheck_Refinement(param, arg);
+            Typecheck_Refinement(key, param, arg);
         else
             Typecheck_Including_Constraints(param, arg);
     }

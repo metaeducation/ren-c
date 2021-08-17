@@ -1126,10 +1126,15 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
     DECLARE_LOCAL (param_name);
     Init_Word(param_name, KEY_SYMBOL(ACT_KEY(FRM_PHASE(f), index)));
 
+    // Don't actually want an isotope in the error field, just put a normal
+    // bad word there...
+    //
     REBVAL *arg = FRM_ARG(f, index);
     assert(IS_BAD_WORD(arg) and GET_CELL_FLAG(arg, ISOTOPE));
+    Copy_Cell(DS_PUSH(), arg);
+    CLEAR_CELL_FLAG(DS_TOP, ISOTOPE);
 
-    return Error_Isotope_Arg_Raw(label, param_name, arg);
+    return Error_Isotope_Arg_Raw(label, param_name, DS_TOP);
 }
 
 

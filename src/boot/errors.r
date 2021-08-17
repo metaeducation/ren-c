@@ -170,6 +170,7 @@ Script: [
     no-refine:          [:arg1 {has no refinement called} :arg2]
     bad-refines:        {incompatible or invalid refinements}
     bad-parameter:      [{incompatible or duplicate parameter:} :arg1]
+    bad-argless-refine: [{Argless Refinement} :arg1 {Must be either # or NULL}]
 
     legacy-refinement:  [
                             {Refinements now act as their own args.  See}

@@ -429,6 +429,7 @@ inline static bool Is_Blackhole(const RELVAL *v);
 // the slot--this happens after that.
 //
 inline static void Typecheck_Refinement(
+    const REBKEY *key,
     const REBPAR *param,
     REBVAL *arg
 ){
@@ -442,8 +443,11 @@ inline static void Typecheck_Refinement(
         Is_Typeset_Empty(param)
         and VAL_PARAM_CLASS(param) != PARAM_CLASS_OUTPUT
     ){
-        if (not Is_Blackhole(arg))
-            fail ("Parameterless Refinements Must be either # or NULL");
+        if (not Is_Blackhole(arg)) {
+            DECLARE_LOCAL (word);
+            Refinify(Init_Word(word, KEY_SYMBOL(key)));
+            fail (Error_Bad_Argless_Refine_Raw(word));
+        }
     }
     else if (not Typecheck_Including_Constraints(param, arg))
         fail (Error_Invalid_Type(VAL_TYPE(arg)));

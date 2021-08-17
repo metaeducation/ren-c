@@ -768,18 +768,17 @@ REBNATIVE(redo)
 //  {Invoke an ACTION! with all required arguments specified}
 //
 //      return: [<opt> any-value!]
-//      applicand "Action to apply"
-//          [action!]
+//      action [action!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
-//      /opt "Treat nulls as unspecialized <<experimental!>>"
+//      /partial "Treat nulls as unspecialized <<experimental!>>"
 //  ]
 //
 REBNATIVE(applique)
 {
     INCLUDE_PARAMS_OF_APPLIQUE;
 
-    REBVAL *applicand = ARG(applicand);
+    REBVAL *action = ARG(action);
 
     // Need to do this up front, because it captures f->dsp.
     //
@@ -800,7 +799,7 @@ REBNATIVE(applique)
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
     REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
-        applicand,
+        action,
         f->dsp_orig, // lowest_ordered_dsp of refinements to weave in
         &binder,
         UNSET_VALUE
@@ -846,7 +845,7 @@ REBNATIVE(applique)
     if (def_threw)
         RETURN (temp);
 
-    if (not REF(opt)) {
+    if (not REF(partial)) {
         //
         // If nulls are taken literally as null arguments, then no arguments
         // are gathered at the callsite, so the "ordering information"
@@ -863,13 +862,237 @@ REBNATIVE(applique)
     f->rootvar = CTX_ROOTVAR(exemplar);
     INIT_LINK_KEYSOURCE(varlist, f);
 
-    INIT_FRM_PHASE(f, VAL_ACTION(applicand));
-    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(applicand));
+    INIT_FRM_PHASE(f, VAL_ACTION(action));
+    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));
 
-    Begin_Prefix_Action(f, VAL_ACTION_LABEL(applicand));
+    Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
     bool action_threw = Process_Action_Throws(f);
     assert(action_threw or IS_END(f->feed->value));  // we started at END_FLAG
+
+    Drop_Frame(f);
+
+    if (action_threw)
+        return R_THROWN;
+
+    return D_OUT;
+}
+
+
+//
+//  apply: native [
+//
+//  {Invoke an ACTION! with all required arguments specified}
+//
+//      return: [<opt> any-value!]
+//      action [action!]
+//      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
+//          [block!]
+//  ]
+//
+REBNATIVE(apply)
+{
+    INCLUDE_PARAMS_OF_APPLY;
+
+    REBVAL *action = ARG(action);
+    REBVAL *args = ARG(args);
+
+    REBDSP lowest_ordered_dsp = DSP;  // could push refinements here
+
+    // Make a FRAME! for the ACTION!, weaving in the ordered refinements
+    // collected on the stack (if any).  Any refinements that are used in
+    // any specialization level will be pushed as well, which makes them
+    // out-prioritize (e.g. higher-ordered) than any used in a PATH! that
+    // were pushed during the Get of the ACTION!.
+    //
+    // !!! Binders cannot be held across evaluations at this time.  Do slow
+    // lookups for refinements, but this is something that needs rethinking.
+    //
+    /*struct Reb_Binder binder;
+    INIT_BINDER(&binder);*/
+    REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
+        action,
+        lowest_ordered_dsp, // lowest_ordered_dsp of refinements to weave in
+        nullptr /* &binder */,
+        Root_Unspecialized_Tag  // is checked for by *identity*, not value!
+    );
+    REBARR *varlist = CTX_VARLIST(exemplar);
+    Manage_Series(varlist); // Putting into a frame
+
+    DS_DROP_TO(lowest_ordered_dsp);  // !!! don't care about partials?
+
+    Init_Frame(D_SPARE, exemplar, ANONYMOUS);  // Note: GC guards the exemplar
+
+  blockscope {
+    DECLARE_FRAME_AT (f, args, EVAL_MASK_DEFAULT);
+    Push_Frame(nullptr, f);
+
+    EVARS e;
+    Init_Evars(&e, D_SPARE);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
+
+    REBCTX *error = nullptr;
+    bool arg_threw = false;
+
+    while (NOT_END(f_value)) {
+        //
+        // We do special handling if we see a /REFINEMENT ... that is taken
+        // to mean we are naming the next argument.
+
+        const REBSYM *name = nullptr;
+        if (IS_PATH(f_value) and IS_REFINEMENT(f_value)) {
+            name = VAL_REFINEMENT_SYMBOL(f_value);
+            Fetch_Next_Forget_Lookback(f);
+
+            // Two refinement labels in a row, not legal...treat it like the
+            // next refinement is reaching a comma or end of block.
+            //
+            if (IS_PATH(f_value) and IS_REFINEMENT(f_value)) {
+                Refinify(Init_Word(DS_PUSH(), name));
+                error = Error_Need_Non_End_Raw(DS_TOP);
+                DS_DROP();
+                goto end_loop;
+            }
+        }
+
+        if (Eval_Step_Throws(D_OUT, f)) {
+            arg_threw = true;
+            goto end_loop;
+        }
+
+        if (IS_END(D_OUT)) {  // no output
+            // We let the frame logic inside the evaluator decide if we've
+            // built a valid frame or not.  But the error we do check for is
+            // if we were trying to fulfill a labeled refinement and didn't
+            // get any value for it.
+            //
+            if (name) {
+                Refinify(Init_Word(DS_PUSH(), name));
+                error = Error_Need_Non_End_Raw(DS_TOP);
+                DS_DROP();
+                goto end_loop;
+            }
+
+            if (not IS_END(f_value))  // more input in feed so it was invisible
+                continue;  // ...was a COMMA! or COMMENT, just keep going
+
+            goto end_loop;
+        }
+
+        REBVAL *var;
+        REBPAR *param;
+        if (name) {
+            /* REBLEN index = Get_Binder_Index_Else_0(&binder, name); */
+
+            REBLEN index = Find_Symbol_In_Context(D_SPARE, name, false);
+            if (index == 0) {
+                Refinify(Init_Word(DS_PUSH(), name));
+                error = Error_Bad_Parameter_Raw(DS_TOP);
+                DS_DROP();
+                goto end_loop;
+            }
+            var = CTX_VAR(exemplar, index);
+            param = ACT_PARAM(VAL_ACTION(action), index);
+            if (not (
+                IS_TAG(var)
+                and VAL_SERIES(var) == VAL_SERIES(Root_Unspecialized_Tag)
+            )) {
+                Refinify(Init_Word(DS_PUSH(), name));
+                error = Error_Bad_Parameter_Raw(DS_TOP);
+                DS_DROP();
+                goto end_loop;
+            }
+
+            // Helpful service: convert LOGIC! to # or null for refinements
+            // that take no argument.
+            //
+            if (
+                IS_LOGIC(D_OUT)
+                and GET_PARAM_FLAG(param, REFINEMENT)
+                and Is_Typeset_Empty(param)
+            ){
+                if (VAL_LOGIC(D_OUT))
+                    Init_Blackhole(D_OUT);
+                else
+                    Init_Nulled(D_OUT);
+            }
+        }
+        else {
+            while (true) {
+                if (not Did_Advance_Evars(&e)) {
+                    error = Error_Apply_Too_Many_Raw();
+                    goto end_loop;
+                }
+                if (
+                    VAL_PARAM_CLASS(e.param) == PARAM_CLASS_RETURN
+                    or VAL_PARAM_CLASS(e.param) == PARAM_CLASS_OUTPUT
+                    or GET_PARAM_FLAG(e.param, REFINEMENT)
+                ){
+                    continue;
+                }
+                if (
+                    IS_TAG(e.var)
+                    and VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag)
+                ){
+                    break;
+                }
+            }
+            var = e.var;
+            param = e.param;
+        }
+
+        Move_Cell(var, D_OUT);
+        if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+            Meta_Quotify(var);
+    }
+
+  end_loop:
+
+    Drop_Frame(f);
+
+    // We need to remove the binder indices, whether we are raising an error
+    // or not.  But we also want any fields not assigned to be set to ~unset~.
+    // (We wanted to avoid the situation where someone purposefully set a
+    // meta-parameter to ~unset~ being interpreted as never setting a field).
+    //
+    Init_Evars(&e, D_SPARE);
+    while (Did_Advance_Evars(&e)) {
+        if (not arg_threw and not error and IS_TAG(e.var))
+            if (VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag))
+                Init_Unset(e.var);
+
+        /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
+    }
+    /* SHUTDOWN_BINDER(&binder); */
+
+    if (error)
+        fail (error);  // only safe to fail *AFTER* we have cleared binder
+
+    if (arg_threw)
+        return R_THROWN;
+  }
+
+    // Need to do this up front, because it captures f->dsp.
+    //
+    DECLARE_END_FRAME (
+        f,
+        EVAL_MASK_DEFAULT
+            | EVAL_FLAG_FULLY_SPECIALIZED
+            | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)  // skips fulfillment
+    );
+
+    Push_Frame(D_OUT, f);
+
+    f->varlist = varlist;
+    f->rootvar = CTX_ROOTVAR(exemplar);
+    INIT_LINK_KEYSOURCE(varlist, f);
+
+    INIT_FRM_PHASE(f, VAL_ACTION(action));
+    INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));
+
+    Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
+
+    bool action_threw = Process_Action_Throws(f);
+    assert(action_threw or IS_END(f->feed->value));
 
     Drop_Frame(f);
 

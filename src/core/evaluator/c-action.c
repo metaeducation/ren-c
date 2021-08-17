@@ -811,7 +811,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 Init_Nulled(f->arg);
             }
             else
-                Typecheck_Refinement(f->param, f->arg);
+                Typecheck_Refinement(f->key, f->param, f->arg);
             continue;
         }
 
@@ -875,7 +875,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
         // !!! Review when # is used here
         if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
-            Typecheck_Refinement(f->param, f->arg);
+            Typecheck_Refinement(f->key, f->param, f->arg);
             continue;
         }
 

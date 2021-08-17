@@ -274,18 +274,6 @@ prin: function [
 forever: :cycle
 
 
-apply: func [.dummy] [
-    fail @dummy [
-        {APPLY is being reverted to a reimagination of the positional}
-        {APPLY from Rebol2/R3-Alpha, but with a different way of dealing with}
-        {refinements.  The Ren-C APPLY experiment has been moved to the name}
-        {APPLIQUE, which runs a block of code that is bound into a frame.}
-        {APPLY will be reverted when all Ren-C style apply are switched to}
-        {use APPLIQUE.}  https://forum.rebol.info/t/1103
-    ]
-]
-
-
 hijack :find adapt copy :find [
     if reverse or (last) [
         fail @reverse [

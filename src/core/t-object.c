@@ -859,8 +859,7 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
             else {
                 if (not ANY_INERT(e.var))
                     Append_Ascii(s, "'");
-                else
-                    Mold_Value(mo, e.var);
+                Mold_Value(mo, e.var);
             }
         }
     }
