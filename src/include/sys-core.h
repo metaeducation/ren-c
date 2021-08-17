@@ -479,11 +479,11 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #include "datatypes/sys-pair.h"
 #include "datatypes/sys-quoted.h"  // pairings for storage, void used as well
 
-#include "datatypes/sys-word.h"  // needs to know about QUOTED! for binding
-
 #include "datatypes/sys-action.h"
 #include "datatypes/sys-typeset.h"  // needed for keys in contexts
 #include "datatypes/sys-context.h"  // needs actions for FRAME! contexts
+
+#include "datatypes/sys-word.h"  // needs to know about QUOTED! for binding
 
 #include "datatypes/sys-bitset.h"
 

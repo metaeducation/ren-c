@@ -1310,6 +1310,21 @@ REBCTX *Error_Arg_Type(
 
 
 //
+//  Error_Bad_Argless_Refine: C
+//
+// Refinements that take no arguments can only be # or NULL as far as DO FRAME!
+// is concerned.  (Some higher level mechanisms like APPLY will editorialize
+// and translate true => # and false => NULL, but the core mechanics don't.)
+//
+REBCTX *Error_Bad_Argless_Refine(const REBKEY *key)
+{
+    DECLARE_LOCAL (word);
+    Refinify(Init_Word(word, KEY_SYMBOL(key)));
+    return Error_Bad_Argless_Refine_Raw(word);
+}
+
+
+//
 //  Error_Bad_Return_Type: C
 //
 REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
