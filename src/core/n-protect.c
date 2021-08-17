@@ -123,18 +123,21 @@ REBNATIVE(mutable_q) {
 
 
 //
-//  Protect_Key: C
+//  Protect_Var: C
 //
-static void Protect_Key(REBCTX *context, REBLEN index, REBFLGS flags)
+// In R3-Alpha, protection status was put on context key cells.  This made for
+// problems when keylists were reused.  Ren-C goes even further to reduce
+// keylists to being just lists of symbols, not full cells.  The key is not
+// the right place for the flag.
+//
+// So the flag is put in a bit on the variable storage cell which is not
+// copied when the cell is copied.  This "active masking" in cell copying is
+// a new-to-Ren-C feature; you have to use Copy_Cell(), Move_Cell() and
+// Derelativize() vs. just blitting the raw bits of a cell around.  (The C++
+// build enforces this by disallowing direct bit assignment via `=`).
+//
+static void Protect_Var(REBVAL *var, REBFLGS flags)
 {
-    REBVAL *var = CTX_VAR(context, index);
-
-    // Due to the fact that not all the bits in a value header are copied when
-    // Copy_Cell is done, it's possible to set the protection status of a
-    // variable on the value vs. the key.  This means the keylist does not
-    // have to be modified, and hence it doesn't have to be made unique
-    // from any objects that were sharing it.
-    //
     if (flags & PROT_WORD) {
         assert(READABLE(var));
         if (flags & PROT_SET)
@@ -255,16 +258,17 @@ void Protect_Context(REBCTX *c, REBFLGS flags)
 static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
 {
     if (ANY_WORD(word) and IS_WORD_BOUND(word)) {
-        Protect_Key(VAL_WORD_CONTEXT(word), VAL_WORD_INDEX(word), flags);
+        //
+        // Ignore existing mutability state so that it may be modified.
+        // Most routines should NOT do this!
+        //
+        REBVAL *var = m_cast(
+            REBVAL*,
+            Lookup_Word_May_Fail(word, SPECIFIED)
+        );
+
+        Protect_Var(var, flags);
         if (flags & PROT_DEEP) {
-            //
-            // Ignore existing mutability state so that it may be modified.
-            // Most routines should NOT do this!
-            //
-            REBVAL *var = m_cast(
-                REBVAL*,
-                Lookup_Word_May_Fail(word, SPECIFIED)
-            );
             Protect_Value(var, flags);
             Uncolor(var);
         }
@@ -276,9 +280,9 @@ static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
             fail ("Couldn't resolve PATH! in Protect_Word_Value");
 
         if (context != NULL) {
-            Protect_Key(context, index, flags);
+            REBVAL *var = CTX_VAR(context, index);
+            Protect_Var(var, flags);
             if (flags & PROT_DEEP) {
-                REBVAL *var = CTX_VAR(context, index);
                 Protect_Value(var, flags);
                 Uncolor(var);
             }
