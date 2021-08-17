@@ -38,7 +38,7 @@
 //              reb.Spell("spaced [",
 //                  {reb.Xxx() API functions are now...}", reb.T(msg),
 //              "]")
-//          ) 
+//          )
 //      </script>
 //      <script>
 //          reb.Startup({...})  /* pass in optional configuration object */
@@ -611,7 +611,7 @@ let load_rebol_scripts = function(defer) {
                     return response.arrayBuffer()
                   }).then(function(buffer) {
                     return reb.Value("as text!", reb.R(reb.Binary(buffer)))
-                  }) 
+                  })
                 })
 
         let code = scripts[i].innerText.trim()  // literally in <script> tag
@@ -627,16 +627,28 @@ let load_rebol_scripts = function(defer) {
                 // The Promise() is necessary here because the odds are that
                 // Rebol code will want to use awaiters like READ of a URL.
                 //
-                // !!! The do is necessary here in case the code is a
-                // Module or otherwise needs special processing.  Otherwise,
-                // `Rebol [Type: Module ...] <your code>` will just evaluate
-                // Rebol to an object and throw it away, and evaluate the spec
-                // block to itself and throw that away.  The mechanics for
-                // recognizing that special pattern are in DO.
+                // Note that if we ran as rebElide(rebInline(text)), then:
                 //
-                return reb.Promise("do", reb.R(text))
+                //     `Rebol [Type: Module ...] <your code>`
+                //
+                // ...would just evaluate Rebol and throw it away, and evaluate
+                // the spec block to itself and throw that away.  `Rebol` is
+                // defined as a function that raises an error for this reason,
+                // but other concepts are on the table:
+                //
+                //     https://forum.rebol.info/t/1430
+                //
+                // So we need to at least DO such strings to get the special
+                // processing.  But if we do that, then any `Exports:` from the
+                // module will not be imported.
+                //
+                // Hence IMPORT is used here.  This is all in flux as the
+                // wild task of a fully userspace module system is being
+                // experimented with.
+                //
+                return reb.Promise("import", reb.R(text))
               }).then(function (result) {  // !!! how might we process result?
-                config.log("Finished <script> code @ tick " + reb.Tick())
+                config.log("Finished <script> IMPORT @ tick " + reb.Tick())
                 config.log("defer = " + scripts[i].defer)
               })
     }
