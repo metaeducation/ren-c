@@ -152,7 +152,7 @@
 
     ([a b c [3 d e]] = append [a b c] ^ compose [(1 + 2) d e])
 
-    ([a b c] = append [a b c] quote null)
+    ([a b c ~null~] = append [a b c] quote null)
 
     (
         e: trap [[a b c] = append [a b c] ^(null)]
