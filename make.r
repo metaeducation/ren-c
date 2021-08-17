@@ -1524,7 +1524,10 @@ process-module: func [
                 match [file! block!] s [
                     gen-obj/dir s make-file [(repo-dir) extensions /]
                 ]
-                (object? s) and [find [#object-library #object-file] s/class] [
+                all [
+                    object? s
+                    find [#object-library #object-file] s/class
+                ][
                     s
                     ; #object-library has already been taken care of above
                     ; if s/class = #object-library [s]
