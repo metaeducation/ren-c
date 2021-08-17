@@ -1,94 +1,126 @@
 ; datatypes/module.r
 
-({REBOL [Title: "Test"]} = find-script {;234^/REBOL [Title: "Test"]})
-
 (module? module [] [])
 (not module? 1)
 (module! = type of module [] [])
 
+; Create a Module, but Don't Import It
 (
-    a-module: module [
-    ] [
-        ; 'var will be in the module
-        var: 1
+    var: <before>
+    m: a-module: module [
+    ][
+        var: <inside>
     ]
-    var: 2
-    1 == a-module/var
+    did all [
+        var = <before>
+        m.var = <inside>
+
+        elide var: <outside>
+        var = <outside>
+        m.var = <inside>
+    ]
 )
 
-; import test
+; Import a Module without an Exported Variable
 (
-    a-module: module [
+    var: <before>
+    m: import mm: module [
+    ][
+        var: <inside>
+    ]
+    did all [
+        m = mm
+        var = <before>
+        m.var = <inside>
+
+        elide var: <outside>
+        var = <outside>
+        m.var = <inside>
+    ]
+)
+
+; Import a Module with an Exported Variable
+(
+    var: <before>
+    m: import mm: module [
         exports: [var]
-    ] [
-        var: 2
+    ][
+        var: <inside>
     ]
-    import a-module
-    2 == var
-)
+    did all [
+        m = mm
+        m.var = <inside>
+        var = <inside>  ; imported
 
-; import test
-(
-    var: 1
-    a-module: module [
-        exports: [var]
-    ] [
-        var: 2
-    ]
-    import a-module
-    1 == var
-)
+        ; Overwriting m.var will not have an effect on our copy of the
+        ; variable.
+        ;
+        elide m.var: <overwritten>
+        m.var = <overwritten>
+        var = <inside>
 
-
-([] = load " ")
-([1] = load "1")
-([[1]] = load "[1]")
-([1 2 3] = load "1 2 3")
-([1 2 3] = load/type "1 2 3" null)
-([1 2 3] = load "rebol [] 1 2 3")
-(
-    d: load/header "rebol [] 1 2 3" 'header
-    all [
-        object? header
-        [1 2 3] = d
+        ; The variables are fully disconnected post-import.
+        ;
+        elide var: <outside>
+        var = <outside>
+        m.var = <overwritten>
     ]
 )
 
-; This was a test from the %sys-load.r which trips up the loading mechanic
-; (at time of writing).  LOAD thinks that the entirety of the script is the
-; "rebol [] 1 2 3", and skips the equality comparison etc. so it gets
-; loaded as [1 2 3], which then evaluates to 3.  The test framework then
-; considers that "not a logic".
-;
-; ([1 2 3] = load "rebol [] 1 2 3")
+; Copy a Module
+(
+    m1: module [] [a: 10 b: 20]
+    m2: copy m1
+    did all [
+        m1.a = m2.a
+        m1.b = m2.b
+        m1 = m2
+    ]
+)
 
-; File variations:
-(equal? read %./ load %./)
+; Import a module to a second module without contaminating the first
 (
-    write %test.txt s: "test of text"
-    s = load %test.txt
+    var: <outside>
+
+    m1: module [Exports: [var]] [var: <1>]
+    m2: module [Exports: [fetch]] compose <m2compose> [
+        var: <2>
+        import (<m2compose> m1)
+        fetch: does [var]
+    ]
+    did all [
+        var = <outside>
+        <1> = m2.fetch
+    ]
 )
+
+; Overwrite a lib definition but make a helper that runs code in lib
 (
-    save %test1.r 1
-    1 = load-value %test1.r
-)
-(
-    save %test2.r [1 2]
-    [1 2] = load %test2.r
-)
-(
-    save/header %test.r [1 2 3] [title: "Test"]
-    [1 2 3] = load %test.r
-)
-(
-    save/header %test-checksum.r [1 2 3] [checksum: true]
-    [1 2 3] = load %test-checksum.r
-)
-(
-    save/header %test-checksum.r [1 2 3] [checksum: true compress: true]
-    [1 2 3] = load %test-checksum.r
-)
-(
-    save/header %test-checksum.r [1 2 3] [checksum: script compress: true]
-    [1 2 3] = load %test-checksum.r
+    do-before: :do
+    import m: module [Exports: [test]] [
+        do: func [source] [throw <override>]
+
+        emulate: func [source [block!] <local> rebound] [
+            this: attach of 'any-variable-in-this-module
+            assert ['do = first source]
+            assert [this = binding of first source]
+
+            ; BINDING OF doesn't account for virtual binding.  If the answer
+            ; is too convoluted to use reasonably, it should probably say
+            ; something like ~virtual~ back.
+            ;
+            rebound: lib.in lib source
+            ; assert [this <> binding of first source]
+            ; assert [lib = binding of first source]
+
+            lib.do rebound
+        ]
+
+        test: does [emulate [do "1 + 2"]]
+    ]
+    did all [
+        3 = test
+        <override> = catch [m.do "1 + 2"]
+        :do = :do-before
+    ]
 )

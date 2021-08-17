@@ -133,7 +133,6 @@
 %convert/as-string.test.reb
 %convert/enbin.test.reb
 %convert/encode.test.reb
-%convert/load.test.reb
 %convert/mold.test.reb
 %convert/to.test.reb
 
@@ -280,6 +279,7 @@
 
 %reflectors/body-of.test.reb
 
+%scanner/load.test.reb
 %scanner/path-tuple.test.reb
 %scanner/source-comment.test.reb
 
