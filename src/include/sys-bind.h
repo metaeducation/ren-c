@@ -648,10 +648,10 @@ inline static option(REBSER*) Get_Word_Container(
             // "emergence" of any variable that is attached to a module.
             //
             if (mode == ATTACH_WRITE and binding != VAL_CONTEXT(Lib_Context)) {
-                REBLEN index = CTX_LEN(CTX(binding));
-                Append_Context(CTX(binding), nullptr, symbol);
-                *index_out = index;
-                return CTX_VARLIST(CTX(binding));
+                *index_out = INDEX_ATTACHED;
+                return Singular_From_Cell(
+                    Append_Context(CTX(binding), nullptr, symbol)
+                );
             }
 
             // non generic inheritance; inherit only from Lib for now
