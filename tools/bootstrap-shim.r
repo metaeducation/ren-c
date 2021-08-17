@@ -88,7 +88,15 @@ repeat: :loop
 loop: :while
 while: lib/func [] [fail/where "Use LOOP not WHILE" 'return]
 
-~: does [null]  ; labeled VOID!, before isotopes
+; We don't have the distinctions between NULL and "unsets" in the bootstrap
+; build.  But make them distinct at the source level.
+
+~: does [lib/null]  ; most similar behavior to bad-word isotope available
+
+null: enfix func [:left [<skip> set-word!]] [
+    if :left [lib/unset left]
+    lib/null
+]
 
 |: lib/func [] [
     fail/where [

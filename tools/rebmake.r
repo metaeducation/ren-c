@@ -150,10 +150,10 @@ pkg-config: func [
 
 platform-class: make object! [
     name: _
-    exe-suffix: _
-    dll-suffix: _
-    archive-suffix: _ ;static library
-    obj-suffix: _
+    exe-suffix: null
+    dll-suffix: null
+    archive-suffix: null  ;static library
+    obj-suffix: null
 
     gen-cmd-create: _
     gen-cmd-delete: _
@@ -713,9 +713,9 @@ ld: make linker-class [
         /debug [logic!]
     ][
         let suffix: either dynamic [
-            target-platform/dll-suffix
+            try :target-platform/dll-suffix
         ][
-            target-platform/exe-suffix
+            try :target-platform/exe-suffix
         ]
         return collect-text [
             keep any [(file-to-local/pass exec-file) "gcc"]
@@ -1280,11 +1280,11 @@ generator-class: make object! [
         project [object!]
     ][
         if not let suffix: find reduce [
-            #application target-platform/exe-suffix
-            #dynamic-library target-platform/dll-suffix
-            #static-library target-platform/archive-suffix
-            #object-library target-platform/archive-suffix
-            #object-file target-platform/obj-suffix
+            #application try :target-platform/exe-suffix
+            #dynamic-library try :target-platform/dll-suffix
+            #static-library try :target-platform/archive-suffix
+            #object-library try :target-platform/archive-suffix
+            #object-file try :target-platform/obj-suffix
         ] project/class [return]
 
         suffix: second suffix
