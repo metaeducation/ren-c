@@ -257,9 +257,15 @@ void* Probe_Core_Debug(
             Append_Ascii(mo->series, "; null");
         }
         else if (IS_BAD_WORD(v)) {
-            Mold_Value(mo, v);
-            if (GET_CELL_FLAG(v, ISOTOPE))
+            if (GET_CELL_FLAG(v, ISOTOPE)) {
+                Append_Codepoint(mo->series, '~');
+                Append_Spelling(mo->series, VAL_BAD_WORD_LABEL(v));
+                Append_Codepoint(mo->series, '~');
                 Append_Ascii(mo->series, "  ; isotope");
+            }
+            else {
+                Mold_Value(mo, v);
+            }
         }
         else
             Mold_Value(mo, v);
