@@ -629,24 +629,6 @@ void Startup_Task(void)
 
 
 
-#if !defined(NDEBUG)
-//
-//  Get_Sys_Function_Debug: C
-//
-// See remarks on Get_Sys_Function.  (Double-check the heuristic for getting
-// SYS context ID numbers in the context without using LOAD.)
-//
-REBVAL *Get_Sys_Function_Debug(REBLEN index, const char *name)
-{
-    REBCTX *sys = VAL_CONTEXT(Sys_Context);
-    const REBKEY *key = CTX_KEY(sys, index);
-    const char *key_utf8 = STR_UTF8(KEY_SYMBOL(key));
-    assert(strcmp(key_utf8, name) == 0);
-    return CTX_VAR(sys, index);
-}
-#endif
-
-
 // By this point, the Lib_Context contains basic definitions for things
 // like true, false, the natives, and the generics.
 //
@@ -677,16 +659,13 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
   //=//// SYS STARTUP //////////////////////////////////////////////////////=//
 
     // The SYS context contains supporting Rebol code for implementing "system"
-    // features.  The code has natives, generics, and the definitions from
-    // Startup_Base() available for its implementation.
+    // features.  It is lower-level than the LIB context, but has natives,
+    // generics, and the definitions from Startup_Base() available.
+    //
+    // See the helper Get_Sys_Function() for more information.
     //
     // (Note: The SYS context should not be confused with "the system object",
     // which is a different thing.)
-    //
-    // The sys context has a #define constant for the index of every definition
-    // inside of it.  That means that you can access it from the C code for the
-    // core.  Any work the core C needs to have done that would be more easily
-    // done by delegating it to Rebol can use a function in sys as a service.
 
     rebElide(
         //
@@ -706,7 +685,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
             "Name: 'System",
             "Exports: [module load load-value decode encode encoding-of]",
         "]",
-        "sys/import*", Lib_Context, Sys_Context
+        "sys.import*", Lib_Context, Sys_Context
     );
 
     // !!! It was a stated goal at one point that it should be possible to
@@ -747,7 +726,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     // well as EXPORT...?  When do you export from the user context?)
     //
     assert(User_Context == nullptr);  // shouldn't have existed up to now
-    rebElide("system/contexts/user: module [Name: 'User] []");
+    rebElide("system.contexts.user: module [Name: 'User] []");
     User_Context = Copy_Cell(Alloc_Value(), Get_System(SYS_CONTEXTS, CTX_USER));
     rebUnmanage(User_Context);
 

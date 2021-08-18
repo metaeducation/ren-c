@@ -125,13 +125,8 @@ inline static void INIT_LINK_KEYSOURCE(REBARR *varlist, REBNOD *keysource) {
 // This routine will try and catch any mismatch in the debug build by checking
 // that the name in the context key matches the generated #define constant
 //
-#if defined(NDEBUG)
-    #define Get_Sys_Function(id) \
-        CTX_VAR(VAL_CONTEXT(Sys_Context), SYS_CTX_##id)
-#else
-    #define Get_Sys_Function(id) \
-        Get_Sys_Function_Debug(SYS_CTX_##id, SYS_CTXKEY_##id)
-#endif
+#define Get_Sys_Function(symid) \
+    MOD_VAR(VAL_CONTEXT(Sys_Context), Canon(symid), true)
 
 
 //=//// PSEUDOTYPES FOR RETURN VALUES /////////////////////////////////////=//

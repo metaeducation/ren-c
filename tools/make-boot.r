@@ -729,37 +729,15 @@ for-each section [boot-base boot-sys boot-mezz] [
     mezz-files: next mezz-files
 ]
 
-(e-sysctx: make-emitter "Sys Context"
-    make-file [(prep-dir) include/tmp-sysctx.h])
-
 ; We heuristically gather top level declarations in the system context, vs.
-; trying to use LOAD and look at actual object keys.  Because this process
-; is potentially error prone, the debug build checks any loads by context
-; index number against the actual context key name of the loaded object.
+; trying to use DO and look at actual OBJECT! keys.  Previously this produced
+; index numbers, but modules are no longer index-based so we make sure there
+; are SYMIDs instead, so the SYM_XXX numbers can quickly produce canons that
+; lead to the function definitions.
 
-sctx: make object! collect [
-    for-each item sys-toplevel [
-        keep ^(as set-word! item)
-        keep "stub proxy for %sys-base.r item"
-    ]
-]
-make-obj-defs e-sysctx sctx "SYS_CTX" 1
-
-num: 1
-e-sysctx/emit newline
-e-sysctx/emit {
-    #if !defined(NDEBUG)
-}
 for-each item sys-toplevel [
-    e-sysctx/emit 'item {
-        #define SYS_CTXKEY_${AS TEXT! ITEM} "$<item>"
-    }
+    add-sym/exists as word! item
 ]
-e-sysctx/emit {
-    #endif  /* !defined(NDEBUG) */
-}
-
-e-sysctx/write-emitted
 
 
 === MAKE BOOT BLOCK! ===

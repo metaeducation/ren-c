@@ -450,7 +450,7 @@ REBNATIVE(do)
         //
         // See code called in system/intrinsic/do*
         //
-        REBVAL *sys_do_helper = Get_Sys_Function(DO_P);
+        REBVAL *sys_do_helper = Get_Sys_Function(SYM_DO_P);
         assert(IS_ACTION(sys_do_helper));
 
         UNUSED(REF(args)); // detected via `value? :arg`

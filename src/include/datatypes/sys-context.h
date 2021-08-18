@@ -299,6 +299,29 @@ inline static REBVAR *CTX_VAR(REBCTX *c, REBLEN n) {  // 1-based, no RELVAL*
     return cast(REBVAR*, cast(REBSER*, c)->content.dynamic.data) + n;
 }
 
+inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
+    const REBSYM *synonym = sym;
+    do {
+        REBSER *patch = MISC(Hitch, sym);
+        while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+            patch = SER(node_MISC(Hitch, patch));
+
+        for (; patch != sym; patch = SER(node_MISC(Hitch, patch))) {
+            if (LINK(PatchContext, patch) == c) {
+                //
+                // Currently it holds the index of which context variable the
+                // actual data is in.  This will become the actual storage.
+                //
+                REBLEN index = VAL_UINT32(ARR_SINGLE(ARR(patch)));
+                return cast(REBVAR*, CTX_VAR(c, index));
+            }
+        }
+        if (strict)
+            return nullptr;
+    } while (synonym != sym);
+    return nullptr;
+}
+
 // CTX_VARS_HEAD() and CTX_KEYS_HEAD() allow CTX_LEN() to be 0, while
 // CTX_VAR() does not.  Also, CTX_KEYS_HEAD() gives back a mutable slot.
 

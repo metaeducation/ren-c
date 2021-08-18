@@ -348,7 +348,6 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 
 #include "tmp-boot.h"
 #include "tmp-sysobj.h"
-#include "tmp-sysctx.h"
 
 
 /***********************************************************************

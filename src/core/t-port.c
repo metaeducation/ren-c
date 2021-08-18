@@ -55,7 +55,7 @@ REB_R MAKE_Port(
 
     const bool fully = true; // error if not all arguments consumed
 
-    REBVAL *make_port_helper = Get_Sys_Function(MAKE_PORT_P);
+    REBVAL *make_port_helper = Get_Sys_Function(SYM_MAKE_PORT_P);
     assert(IS_ACTION(make_port_helper));
 
     assert(not IS_NULLED(arg)); // would need to DEVOID it otherwise
