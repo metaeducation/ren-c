@@ -745,8 +745,6 @@ REBARR *Context_To_Array(const RELVAL *context, REBINT mode)
 
     REBDSP dsp_orig = DSP;
 
-    REBCTX *ctx = VAL_CONTEXT(context);
-
     EVARS e;
     Init_Evars(&e, context);
 
@@ -755,7 +753,8 @@ REBARR *Context_To_Array(const RELVAL *context, REBINT mode)
             Init_Any_Word_Bound(
                 DS_PUSH(),
                 (mode & 2) ? REB_SET_WORD : REB_WORD,
-                ctx,
+                e.ctx,
+                KEY_SYMBOL(e.key),
                 e.index
             );
 

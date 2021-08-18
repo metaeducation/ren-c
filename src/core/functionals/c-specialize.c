@@ -426,6 +426,7 @@ bool Specialize_Action_Throws(
                     Alloc_Tail_Array(partials),
                     REB_WORD,
                     exemplar,
+                    KEY_SYMBOL(CTX_KEY(exemplar, VAL_WORD_INDEX(ordered))),
                     VAL_WORD_INDEX(ordered)
                 );
             }

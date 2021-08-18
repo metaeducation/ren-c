@@ -185,6 +185,8 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
     enum Reb_Kind kind = CELL_KIND(v);
 
     if (kind == REB_ACTION) {
+        TRASH_POINTER_IF_DEBUG(e->ctx);
+
         REBACT *act = VAL_ACTION(v);
         e->key = ACT_KEYS(&e->key_tail, act) - 1;
         e->var = nullptr;
@@ -200,17 +202,19 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
         e->locals_visible = false;
     }
     else {
-        REBCTX *ctx = VAL_CONTEXT(v);
-        e->var = CTX_VARS_HEAD(ctx) - 1;
 
-        assert(SER_USED(CTX_KEYLIST(ctx)) <= CTX_LEN(ctx));
+        e->ctx = VAL_CONTEXT(v);
+
+        e->var = CTX_VARS_HEAD(e->ctx) - 1;
+
+        assert(SER_USED(CTX_KEYLIST(e->ctx)) <= CTX_LEN(e->ctx));
 
         if (kind != REB_FRAME) {
             e->param = nullptr;
-            e->key = CTX_KEYS(&e->key_tail, ctx) - 1;
+            e->key = CTX_KEYS(&e->key_tail, e->ctx) - 1;
         }
         else {
-            e->var = CTX_VARS_HEAD(ctx) - 1;
+            e->var = CTX_VARS_HEAD(e->ctx) - 1;
 
             // The frame can be phaseless, which means it is not running (such
             // as the direct result of a MAKE FRAME! call, which is awaiting a
@@ -225,11 +229,11 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
                 // to make sure archetypal frame views do not DO a frame after
                 // being run where the action could've tainted the arguments.
                 //
-                REBARR *varlist = CTX_VARLIST(ctx);
+                REBARR *varlist = CTX_VARLIST(e->ctx);
                 if (GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
                     fail (Error_Stale_Frame_Raw());
 
-                phase = CTX_FRAME_ACTION(ctx);
+                phase = CTX_FRAME_ACTION(e->ctx);
                 e->locals_visible = false;
             }
             else {

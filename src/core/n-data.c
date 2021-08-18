@@ -256,7 +256,7 @@ REBNATIVE(in)
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
             return nullptr;
-        return Init_Any_Word_Bound(D_OUT, VAL_TYPE(v), ctx, index);
+        return Init_Any_Word_Bound(D_OUT, VAL_TYPE(v), ctx, symbol, index);
     }
 
     assert(ANY_ARRAY(v));
@@ -294,7 +294,13 @@ REBNATIVE(without)
         REBLEN index = Find_Symbol_In_Context(ARG(context), symbol, strict);
         if (index == 0)
             return nullptr;
-        return Init_Any_Word_Bound(D_OUT, VAL_TYPE(v), ctx, index);
+        return Init_Any_Word_Bound(
+            D_OUT,
+            VAL_TYPE(v),
+            ctx,
+            symbol,  // !!! incoming case...consider impact of strict if false?
+            index
+        );
     }
 
     assert(ANY_ARRAY(v));

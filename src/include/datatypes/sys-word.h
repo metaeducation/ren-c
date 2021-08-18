@@ -78,31 +78,47 @@ inline static REBVAL *Init_Any_Word_Bound_Core(
     RELVAL *out,
     enum Reb_Kind type,
     REBARR *binding,  // spelling determined by linked-to thing
-    REBLEN index  // must be 1 if LET patch
+    const REBSYM *symbol,
+    REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
     RESET_VAL_HEADER(out, type, CELL_FLAG_FIRST_IS_NODE);
     mutable_BINDING(out) = binding;
     VAL_WORD_INDEXES_U32(out) = index;
+    INIT_VAL_WORD_SYMBOL(out, symbol);
 
     if (IS_VARLIST(binding)) {
-        INIT_VAL_WORD_SYMBOL(out, *CTX_KEY(CTX(binding), index));
-    } else {
+        assert(symbol == *CTX_KEY(CTX(binding), index));
+    }
+    else {
         assert(GET_SUBCLASS_FLAG(PATCH, binding, LET));
-        assert(index == 1);
-        INIT_VAL_WORD_SYMBOL(out, LINK(PatchSymbol, binding));
+        assert(index == INDEX_PATCHED);
+        assert(symbol == LINK(PatchSymbol, binding));
     }
 
     return cast(REBVAL*, out);
 }
 
-#define Init_Any_Word_Bound(out,type,context,index) \
-    Init_Any_Word_Bound_Core( \
-        TRACK_CELL_IF_DEBUG(out), (type), CTX_VARLIST(context), (index))
+#define Init_Any_Word_Bound(out,type,context,symbol,index) \
+    Init_Any_Word_Bound_Core(TRACK_CELL_IF_DEBUG(out), \
+            (type), CTX_VARLIST(context), (symbol), (index))
 
-#define Init_Any_Word_Patched(out,type,let) \
-    Init_Any_Word_Bound_Core( \
-        TRACK_CELL_IF_DEBUG(out), (type), (let), 1)
+inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
+    RELVAL *out,
+    enum Reb_Kind type,
+    REBARR *patch
+){
+    return Init_Any_Word_Bound_Core(
+        out,
+        type,
+        patch,
+        LINK(PatchSymbol, patch),
+        INDEX_PATCHED
+    );
+}
 
+#define Init_Any_Word_Attached(out,type,module,symbol) \
+    Init_Any_Word_Bound_Core(TRACK_CELL_IF_DEBUG(out), \
+            (type), (symbol), CTX_VARLIST(module), INDEX_ATTACHED)
 
 // Helper calls strsize() so you can more easily use literals at callsite.
 // (Better to call Intern_UTF8_Managed() with the size if you know it.)

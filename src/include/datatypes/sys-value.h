@@ -647,6 +647,8 @@ inline static const REBSYM *VAL_WORD_SYMBOL(REBCEL(const*) cell) {
 
 #define MONDEX_MOD 4095  // modulus for the cached index modulus ("mondex")
 
+#define INDEX_PATCHED 1  // Make it easier to find patch (LET) index settings
+
 // In order to signal that something is bound a module, we use the largest
 // binding index possible.  Being nonzero means that answers that find the
 // position won't confuse it with 0, and so 0 is saved for the unbound state.

@@ -459,10 +459,11 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_MODULE:
               case REB_FRAME: {
                 if (var)
-                    Init_Any_Word_Bound(  // key is typeset, user wants word
+                    Init_Any_Word_Bound(
                         var,
                         REB_WORD,
                         VAL_CONTEXT(les->data),
+                        KEY_SYMBOL(les->evars.key),
                         les->evars.index
                     );
 

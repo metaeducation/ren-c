@@ -509,7 +509,7 @@ inline static option(REBSER*) Get_Word_Container(
     do {
         if (GET_SUBCLASS_FLAG(PATCH, specifier, LET)) {
             if (LINK(PatchSymbol, specifier) == spelling) {
-                *index_out = 1;  // !!! lie, review
+                *index_out = INDEX_PATCHED;
                 return specifier;
             }
             goto skip_miss_patch;

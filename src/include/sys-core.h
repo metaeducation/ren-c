@@ -219,6 +219,7 @@ struct Reb_Enum_Vars {
     bool locals_visible;
     REBVAR *var;
     REBLEN index;  // important for enumerations that are binding
+    REBCTX *ctx;
 };
 
 typedef struct Reb_Enum_Vars EVARS;

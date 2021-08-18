@@ -191,7 +191,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
             goto cleanup_binder;
         }
 
-        Init_Any_Word_Bound(DS_PUSH(), REB_WORD, exemplar, index);
+        Init_Any_Word_Bound(DS_PUSH(), REB_WORD, exemplar, symbol, index);
     }
 
     // Make sure that all parameters that were mandatory got a place in the

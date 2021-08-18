@@ -215,6 +215,9 @@ inline static REBARR *Make_Patch_Core(
         TRACK_CELL_IF_DEBUG(ARR_SINGLE(patch)),
         kind,
         binding,
+        IS_VARLIST(binding)
+            ? *CTX_KEY(CTX(binding), limit)
+            : LINK(PatchSymbol, binding),
         limit
     );
 
