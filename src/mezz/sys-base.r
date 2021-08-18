@@ -42,7 +42,6 @@ module: func [
         [object!]
     /into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
-    /deep "Bind SET-WORD!s deeply (temp for making DO transition easier)"
 ][
     ; Originally, UNBIND/DEEP was run on the body as a first step.  We now use
     ; INTERN or the implicit interning done by TRANSCODE to set the baseline of
@@ -128,15 +127,14 @@ module: func [
     ; may be too little (historical DO would bind all ANY-WORD!s into the
     ; user context).
     ;
-    ; As a transition to DO of all strings/file/url to getting their own
-    ; context, offer a /DEEP switch used by DO to say that SET-WORD! at any
-    ; depth gets bound.
+    ; To get things started in terms of experience with "Sea of Words", we're
+    ; starting out by saying that variables only get "attached" (by the
+    ; interning.  But they will be overwritten by any SET-WORD! assignment,
+    ; e.g. there's nothing equivalent to JavaScript's "strict mode" of catching
+    ; assignments to misspelled variables, etc.  This will be revisited as
+    ; the model matures.
     ;
-    either deep [
-        bind/set body mod
-    ][
-        bind/only/set body mod
-    ]
+    comment [bind/set body mod]
 
     if object? mixin [bind body mixin]
 
@@ -299,11 +297,7 @@ do*: func [
             ; to leak into the module header.  We COPY here, but as with most
             ; things related to binding, a better solution is needed.
             ;
-            ; !!! Using a /DEEP switch to bind all the SET-WORD!s deeply, not
-            ; just top-level ones.  This is to ease work on transitioning to
-            ; isolated DO.  Review once this basic step is taken.
-            ;
-            [# result]: module/deep copy [] code
+            [# result]: module copy [] code
         ]
     ] then :finalizer/quit
 

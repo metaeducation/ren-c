@@ -1330,7 +1330,5 @@ REBNATIVE(intern_p)
     RELVAL *head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));
     Bind_Nonspecifically(head, tail, VAL_CONTEXT(ARG(where)));
 
-    rebElide("bind/set/only", ARG(data), ARG(where));
-
     RETURN (ARG(data));
 }
