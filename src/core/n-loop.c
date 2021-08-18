@@ -743,6 +743,9 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
     if (IS_DATATYPE(les.data))  // must free temp array of instances
         Free_Unmanaged_Series(m_cast(REBARR*, ARR(les.data_ser)));
 
+    if (ANY_CONTEXT(les.data))
+        Shutdown_Evars(&les.evars);
+
     //=//// NOW FINISH UP /////////////////////////////////////////////////=//
 
     if (r == R_THROWN) {  // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)

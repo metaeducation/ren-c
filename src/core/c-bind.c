@@ -753,6 +753,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     e.locals_visible = locals_visible;
     while (Did_Advance_Evars(&e))
         Add_Binder_Index(&binder, KEY_SYMBOL(e.key), e.index);
+    Shutdown_Evars(&e);
   }
 
     REBARR *copy;
@@ -799,6 +800,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
     e.locals_visible = locals_visible;
     while (Did_Advance_Evars(&e))
         Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
+    Shutdown_Evars(&e);
   }
 
     SHUTDOWN_BINDER(&binder);

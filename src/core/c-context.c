@@ -776,6 +776,8 @@ REBARR *Context_To_Array(const RELVAL *context, REBINT mode)
         }
     }
 
+    Shutdown_Evars(&e);
+
     return Pop_Stack_Values_Core(
         dsp_orig,
         did (mode & 2) ? ARRAY_FLAG_NEWLINE_AT_TAIL : 0
@@ -810,9 +812,11 @@ REBLEN Find_Symbol_In_Context(
                 continue;
         }
 
+        Shutdown_Evars(&e);
         return e.index;
     }
 
+    Shutdown_Evars(&e);
     return 0;
 }
 

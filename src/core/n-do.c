@@ -833,6 +833,8 @@ REBNATIVE(applique)
         Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
     }
     SHUTDOWN_BINDER(&binder); // must do before running code that might BIND
+
+    Shutdown_Evars(&e);
   }
 
     // Run the bound code, ignore evaluative result (unless thrown)
@@ -1054,6 +1056,8 @@ REBNATIVE(apply)
     // (We wanted to avoid the situation where someone purposefully set a
     // meta-parameter to ~unset~ being interpreted as never setting a field).
     //
+    Shutdown_Evars(&e);
+
     Init_Evars(&e, D_SPARE);
     while (Did_Advance_Evars(&e)) {
         if (not arg_threw and not error and IS_TAG(e.var))
@@ -1063,6 +1067,7 @@ REBNATIVE(apply)
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }
     /* SHUTDOWN_BINDER(&binder); */
+    Shutdown_Evars(&e);
 
     if (error)
         fail (error);  // only safe to fail *AFTER* we have cleared binder

@@ -322,6 +322,15 @@ bool Did_Advance_Evars(EVARS *e) {
 
 
 //
+//  Shutdown_Evars: C
+//
+void Shutdown_Evars(EVARS *e)
+{
+    UNUSED(e);
+}
+
+
+//
 //  CT_Context: C
 //
 REBINT CT_Context(REBCEL(const*) a, REBCEL(const*) b, bool strict)
@@ -353,29 +362,38 @@ REBINT CT_Context(REBCEL(const*) a, REBCEL(const*) b, bool strict)
     // !!! The order dependence suggests that `make object! [a: 1 b: 2]` will
     // not be equal to `make object! [b: 1 a: 2]`.  See #2341
     //
+    REBINT diff = 0;
     while (true) {
         if (not Did_Advance_Evars(&e1)) {
             if (not Did_Advance_Evars(&e2))
-                return 0;  // if both exhausted, they're equal
-            return -1;  // else the first had fewer fields
+                diff = 0;  // if both exhausted, they're equal
+            else
+                diff = -1;  // else the first had fewer fields
+            goto finished;
         }
         else {
-            if (not Did_Advance_Evars(&e2))
-                return 1;  // the second had fewer fields
+            if (not Did_Advance_Evars(&e2)) {
+                diff = 1;  // the second had fewer fields
+                goto finished;
+            }
         }
 
         const REBSYM *symbol1 = KEY_SYMBOL(e1.key);
         const REBSYM *symbol2 = KEY_SYMBOL(e2.key);
-        REBINT spell_diff = Compare_Spellings(symbol1, symbol2, strict);
-        if (spell_diff != 0)
-            return spell_diff;
-
-        REBINT diff = Cmp_Value(e1.var, e2.var, strict);
+        diff = Compare_Spellings(symbol1, symbol2, strict);
         if (diff != 0)
-            return diff;
+            goto finished;
+
+        diff = Cmp_Value(e1.var, e2.var, strict);
+        if (diff != 0)
+            goto finished;
     }
 
-    return 0;
+  finished:
+    Shutdown_Evars(&e1);
+    Shutdown_Evars(&e2);
+
+    return diff;
 }
 
 
@@ -813,6 +831,7 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
             Append_Codepoint(mo->series, LF);
             had_output = true;
         }
+        Shutdown_Evars(&e);
 
         // Remove the final newline...but only if WE added to the buffer
         //
@@ -866,6 +885,7 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
             }
         }
     }
+    Shutdown_Evars(&e);
 
     mo->indent--;
     New_Indented_Line(mo);

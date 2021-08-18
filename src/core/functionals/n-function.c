@@ -915,6 +915,8 @@ REBNATIVE(inherit_meta)
             else
                 Init_Nulled(e.var);  // don't want to leave ~unset~
         }
+
+        Shutdown_Evars(&e);
     }
 
     RETURN (ARG(derived));
