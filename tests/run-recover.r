@@ -28,10 +28,10 @@ do-core-tests: function [return: <none>] [
     ; calculate interpreter checksum
     case [
         #"/" = first try match file! system/options/boot [
-            check: checksum 'sha1 read-binary system/options/boot
+            check: checksum 'sha1 read system/options/boot
         ]
         text? system/script/args [
-            check: checksum 'sha1 read-binary local-to-file system/script/args
+            check: checksum 'sha1 read local-to-file system/script/args
         ]
     ] else [
         ; use system/build
