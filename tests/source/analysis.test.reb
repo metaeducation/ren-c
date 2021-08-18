@@ -12,8 +12,8 @@
 ;
 
 (
-    do %source-tools.reb
-    source-analysis: rebsource/analyse/files
+    rebsource: import %source-tools.reb
+    source-analysis: rebsource.analyse/files
     save %../source-analysis.log source-analysis
     true
 )
