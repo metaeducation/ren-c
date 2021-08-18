@@ -2545,6 +2545,19 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
         Copy_Cell(DS_PUSH(), temp);
 
+        // !!! Need to cover case where heart byte is a WORD!, at least when
+        // it is something like `/` (refinements like /FOO should have been
+        // bound when the words themselves were pushed).  This attachment may
+        // be redundant in that case.  Review how this ties in with the
+        // word attachment code above.
+        //
+        if (ss->context) {
+            if (ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(DS_TOP)))) {
+                INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
+                INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, INDEX_ATTACHED);
+            }
+        }
+
         // !!! Temporarily raise attention to usage like `.5` or `5.` to guide
         // people that these are contentious with tuples.  There is no way
         // to represent such tuples--while DECIMAL! has an alternative by
