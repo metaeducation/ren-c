@@ -14,10 +14,15 @@ REBOL [
     Needs: 2.100.100
 ]
 
-do %common.r
-do %common-emitter.r
-do %common-parsers.r
-do %native-emitters.r ; for emit-include-params-macro
+do %import-shim.r
+import %common.r
+import %common-emitter.r
+import %common-parsers.r
+import %native-emitters.r  ; for EMIT-INCLUDES-PARAM-MACRO
+import %text-lines.reb
+
+c-lexical: import %c-lexicals.r
+
 file-base: make object! load %file-base.r
 
 tools-dir: system/options/current-path
@@ -355,14 +360,14 @@ parse native-list [
                     assert [block? spec/1]  ; type spec
                     keep ^ spec/1
                     spec: my next
-                    
+
                     keep [
                         remainder: [<opt> any-series!]
 
                         state [frame!]
                         input [any-series!]
                     ]
-    
+
                     keep spec
                 ]
             ]

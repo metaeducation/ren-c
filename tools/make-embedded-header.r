@@ -14,9 +14,11 @@ REBOL [
     Needs: 2.100.100
 ]
 
-do %common.r
-do %common-emitter.r
-do %common-parsers.r
+do %import-shim.r
+import %common.r
+import %bootstrap-shim.r
+import %common-emitter.r
+import %common-parsers.r
 
 print "------ Building embedded header file"
 args: parse-args system/script/args  ; either from command line or DO/ARGS

@@ -1,5 +1,7 @@
 REBOL [
     Title: "Parsing tools"
+    Type: 'Module
+    Name: 'Parsing-Tools
     Rights: {
         Rebol is Copyright 1997-2015 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
@@ -21,7 +23,7 @@ REBOL [
 seek: []  ; Temporary measure, SEEK as no-op in bootstrap
 here: []  ; Temporary measure, HERE as no-op in bootstrap
 
-parsing-at: func [
+export parsing-at: func [
     {Defines a rule which evaluates a block for the next input position, fails otherwise.}
     'word [word!] {Word set to input position (will be local).}
     block [block!]
@@ -41,5 +43,3 @@ parsing-at: func [
         ]
     ]
 ]
-
-export [parsing-at]

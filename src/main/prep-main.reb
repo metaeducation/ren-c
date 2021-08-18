@@ -23,8 +23,9 @@ REBOL [
     }
 ]
 
-do %../../tools/common.r  ; for PARSE-ARGS, STRIPLOAD, BINARY-TO-C...
-do %../../tools/common-emitter.r  ; for splicing Rebol into templated strings
+do %../../tools/import-shim.r
+import %../../tools/common.r  ; for PARSE-ARGS, STRIPLOAD, BINARY-TO-C...
+import %../../tools/common-emitter.r  ; for splicing Rebol in templated strings
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
 output-dir: make-file [(system/options/path) prep /]
@@ -59,9 +60,7 @@ for-each file [
 
     %main-startup.reb
 ][
-    print ["Emulating LOAD of header for:" file]
-
-    header: _  ; !!! Was a SET-WORD!...for locals gathering?
+    header: ~
     contents: stripload/header file 'header
 
     ; !!! This currently imports all these modules into LIB, which is an

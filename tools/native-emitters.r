@@ -14,7 +14,16 @@ REBOL [
     Needs: 2.100.100
 ]
 
-emit-native-proto: func [
+do %import-shim.r
+import %bootstrap-shim.r
+import %common.r
+import %common-emitter.r
+
+import %common-parsers.r
+
+import %text-lines.reb
+
+export emit-native-proto: func [
     "Emit native prototypes to @unsorted-buffer"
     return: <none>
     proto
@@ -70,7 +79,7 @@ emit-native-proto: func [
     ]
 ]
 
-emit-include-params-macro: function [
+export emit-include-params-macro: function [
     "Emit macros for a native's parameters"
 
     return: <none>

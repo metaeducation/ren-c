@@ -46,10 +46,10 @@ REBOL [
     }
 ]
 
-do %../../tools/common.r
+import %../../tools/common.r
 args: parse-args system/script/args  ; either from command line or DO/ARGS
 
-do %../../tools/systems.r
+import %../../tools/systems.r
 system-config: config-system args/OS_ID
 
 ; !!! For the moment, this script only works with the in-source output

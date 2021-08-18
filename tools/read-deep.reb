@@ -3,6 +3,8 @@ REBOL [
     Rights: {
         Copyright 2018 Brett Handley
     }
+    Type: 'Module
+    Name: 'Read-Deep
     License: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
@@ -10,6 +12,10 @@ REBOL [
     Author: "Brett Handley"
     Purpose: "Recursive READ strategies."
 ]
+
+do %import-shim.r
+import %common.r
+import %bootstrap-shim.r
 
 ; read-deep-seq aims to be as simple as possible. I.e. relative paths
 ; can be derived after the fact.  It uses a state to next state approach
@@ -36,7 +42,7 @@ read-deep-seq: func [
 ; read-deep provide convenience over read-deep-seq.
 ;
 
-read-deep: func [
+export read-deep: func [
     {Return files and folders using recursive read strategy.}
 
     root [file! url! block!]

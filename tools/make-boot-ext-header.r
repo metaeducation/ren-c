@@ -37,8 +37,10 @@ REBOL [
     }
 ]
 
-do %common.r
-do %common-emitter.r
+do %import-shim.r
+import %bootstrap-shim.r
+import %common.r
+import %common-emitter.r
 
 r3: system/version > 2.100.0
 

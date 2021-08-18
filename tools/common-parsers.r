@@ -1,6 +1,8 @@
 REBOL [
     System: "Ren-C Core Extraction of the Rebol System"
     Title: "Common Parsers for Tools"
+    Type: 'Module
+    Name: Common-Parsers
     Rights: {
         Rebol is Copyright 1997-2015 REBOL Technologies
         REBOL is a trademark of REBOL Technologies
@@ -20,9 +22,9 @@ REBOL [
     }
 ]
 
-do %c-lexicals.r
-do %text-lines.reb
-do %parsing-tools.reb
+c-lexical: import %c-lexicals.r
+import %text-lines.reb
+import %parsing-tools.reb
 
 decode-key-value-text: function [
     {Decode key value formatted text.}
@@ -108,7 +110,7 @@ collapse-whitespace: [some [change some white-space (space) | skip] end]
 bind collapse-whitespace c-lexical/grammar
 
 
-proto-parser: context [
+export proto-parser: context [
 
     emit-fileheader: _
     emit-proto: _
@@ -284,7 +286,7 @@ proto-parser: context [
     ] c-lexical/grammar
 ]
 
-rewrite-if-directives: function [
+export rewrite-if-directives: function [
     {Bottom up rewrite conditional directives to remove unnecessary sections.}
     position
 ][

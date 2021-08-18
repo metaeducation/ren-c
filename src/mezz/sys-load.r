@@ -527,25 +527,39 @@ import*: function [
 export*: func [
     {Add words to module's `Exports: []` list}
 
-    return: <void>
+    return: [<opt> any-value!]
     where "Specialized for each module via EXPORT"
         [module!]
-    items [block!]
-        "Block of WORD! or WORD! [typeset] (already defined in local context)"
-    <local> hdr list val word types
+    'set-word [<skip> set-word!]
+    args "`export x: ...` for single or `export [...]` for words list"
+        [<opt> any-value! <variadic>]
+    <local>
+        hdr exports val word types items
 ][
-    let hdr: meta-of where
-    let list: ensure block! select hdr 'Exports
+    hdr: meta-of where
+    exports: ensure block! select hdr 'Exports
+
+    if set-word [
+        args: take args
+        append list (set set-word :args)
+        return :args
+    ]
+
+    items: take args
+    if group? :items [items: do items]
+    if not block? :items [
+        fail "EXPORT must be of form `export x: ...` or `export [...]`"
+    ]
 
     loop [not tail? items] [
-        if not word? items.1 [
+        if not word? :items.1 [
             fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^pos.1]
         ]
         word: ensure word! items.1
         val: get/any word  ; !!! notation for exporting isotopes?
         items: next items
 
-        (types: match block! items.1) then [
+        (types: match block! :items.1) then [
             if bad-word? ^val [  ; !!! assume type block means no isotopes
                 fail [{EXPORT given} types {for} word {but it is} ^val]
             ]
@@ -557,6 +571,6 @@ export*: func [
             ]
             items: next items
         ]
-        append list ^word
+        append exports ^word
     ]
 ]

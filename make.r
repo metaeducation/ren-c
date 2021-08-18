@@ -13,18 +13,13 @@ REBOL [
     }
 ]
 
-do %tools/common.r  ; Note: sets up `repo-dir`
-do %tools/systems.r
+do %tools/import-shim.r
+import %tools/bootstrap-shim.r
+import %tools/common.r  ; Note: sets up `repo-dir`
 
-; See notes on %rebmake.r for why it is not a module at this time, due to the
-; need to have it inherit the shim behaviors of IF, CASE, FILE-TO-LOCAL, etc.
-;
-if false [
-    rebmake: import %tools/rebmake.r
-]
-else [
-    do %tools/rebmake.r
-]
+import %tools/systems.r
+
+rebmake: import %tools/rebmake.r
 
 === {ADJUST TO AN OUT-OF-SOURCE BUILD IF RUN FROM REPOSITORY's DIRECTORY} ===
 

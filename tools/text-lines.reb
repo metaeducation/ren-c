@@ -1,6 +1,8 @@
 REBOL [
     Title: "Text Lines"
     Version: 1.0.0
+    Type: 'Module
+    Name: Text-Lines
     Rights: {
         Copyright 2015 Brett Handley
     }

@@ -14,9 +14,11 @@ REBOL [
     Needs: 2.100.100
 ]
 
-do %common.r
-do %common-parsers.r
-do %common-emitter.r
+do %import-shim.r
+import %common.r
+import %bootstrap-shim.r
+import %common-parsers.r
+import %common-emitter.r
 
 print "--- Make Reb-Lib Headers ---"
 

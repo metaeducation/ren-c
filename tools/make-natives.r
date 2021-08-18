@@ -13,7 +13,7 @@ REBOL [
     Description: {
         "Natives" are Rebol functions whose implementations are C code (as
         opposed to blocks of user code, such as that made with FUNC).
-        
+
         Though their bodies are C, native specifications are Rebol blocks.
         For convenience that Rebol code is kept in the same file as the C
         definition--in a C comment block.
@@ -60,9 +60,11 @@ REBOL [
     }
 ]
 
-do %common.r
-do %common-parsers.r
-do %native-emitters.r ;for emit-native-proto
+do %import-shim.r
+import %common.r
+import %bootstrap-shim.r
+import %common-parsers.r
+import %native-emitters.r ;for emit-native-proto
 
 print "------ Generate tmp-natives.r"
 

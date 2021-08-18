@@ -34,7 +34,7 @@ REBOL [
     }
 ]
 
-do %c-lexicals.r
+c-lexical: import %c-lexicals.r
 
 ;
 ; Target paths+filenames for the generated include and source file
@@ -309,7 +309,9 @@ fix-const-char: func [
     source
 ]
 
-do %common.r
+do %import-shim.r
+import %common.r
+import %bootstrap-shim.r
 
 ;
 ; Generate %sys-zlib.h Aggregate Header File

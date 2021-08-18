@@ -1,6 +1,8 @@
 REBOL [
     System: "Ren-C Core Extraction of the Rebol System"
     Title: "Common Routines for Tools"
+    Type: 'Module
+    Name: Prep-Common
     Rights: {
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
@@ -17,18 +19,19 @@ REBOL [
     }
 ]
 
-do %bootstrap-shim.r
+do %import-shim.r
+import %bootstrap-shim.r  ; modern importing system, works
 
 
 ; When you run a Rebol script, the `current-path` is the directory where the
 ; script is.  We assume that the Rebol source enlistment's root directory is
 ; one level above this file (which should be %tools/common.r)
 ;
-repo-dir: clean-path %../
+export repo-dir: clean-path %../
 
-spaced-tab: unspaced [space space space space]
+export spaced-tab: unspaced [space space space space]
 
-to-c-name: function [
+export to-c-name: function [
     {Take a Rebol value and transliterate it as a (likely) valid C identifier}
 
     return: [<opt> text!]
@@ -170,7 +173,7 @@ to-c-name: function [
 
 
 ; http://stackoverflow.com/questions/11488616/
-binary-to-c: function [
+export binary-to-c: function [
     {Converts a binary to a string of C source that represents an initializer
     for a character array.  To be "strict" C standard compatible, we do not
     use a string literal due to length limits (509 characters in C89, and
@@ -211,7 +214,7 @@ binary-to-c: function [
 ]
 
 
-for-each-record: function [
+export for-each-record: function [
     {Iterate a table with a header by creating an object for each row}
 
     return: [<opt> any-value!]
@@ -254,7 +257,7 @@ for-each-record: function [
 ]
 
 
-find-record-unique: function [
+export find-record-unique: function [
     {Get a record in a table as an object, error if duplicate, blank if absent}
 
     return: [<opt> object!]
@@ -283,7 +286,7 @@ find-record-unique: function [
 ]
 
 
-parse-args: function [
+export parse-args: function [
     return: [block!]
     args
 ][
@@ -325,30 +328,30 @@ parse-args: function [
     return ret
 ]
 
-uppercase-of: func [
+export uppercase-of: func [
     {Copying variant of UPPERCASE, also FORMs words}
     string [text! word!]
 ][
     uppercase form string
 ]
 
-lowercase-of: func [
+export lowercase-of: func [
     {Copying variant of LOWERCASE, also FORMs words}
     string [text! word!]
 ][
     lowercase form string
 ]
 
-propercase: func [value] [uppercase/part (copy value) 1]
+export propercase: func [value] [uppercase/part (copy value) 1]
 
-propercase-of: func [
+export propercase-of: func [
     {Make a copy of a string with just the first character uppercase}
     string [text! word!]
 ][
     propercase form string
 ]
 
-write-if-changed: function [
+export write-if-changed: function [
     return: <none>
     dest [file!]
     content [text! block!]
@@ -364,7 +367,7 @@ write-if-changed: function [
     ]
 ]
 
-relative-to-path: func [
+export relative-to-path: func [
     return: [file!]
     target [file!]
     base [file!]
@@ -391,7 +394,7 @@ relative-to-path: func [
 ]
 
 
-stripload: function [
+export stripload: function [
     {Get an equivalent to MOLD/FLAT (plus no comments) without using LOAD}
 
     return: "contents, w/o comments or indentation"

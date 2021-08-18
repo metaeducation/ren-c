@@ -41,6 +41,7 @@ REBOL [
 
 import %../../tools/common.r  ; sets REPO-DIR (among other things)
 
+c-lexical: import %% (repo-dir)/tools/c-lexicals.r
 import %% (repo-dir)/tools/common-parsers.r
 import %% (repo-dir)/tools/text-lines.reb
 import %% (repo-dir)/tools/read-deep.reb
@@ -115,7 +116,7 @@ log-emit: function [
     append/line log (head insert body label)
 ]
 
-analyse: context [
+export analyse: context [
 
     files: function [
         {Analyse the source files of REBOL.}

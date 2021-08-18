@@ -1,5 +1,7 @@
 REBOL [
     Title: "Shim to bring old executables up to date to use for bootstrapping"
+    Type: 'Module
+    Name: Bootstrap-Shim
     Rights: {
         Rebol 3 Language Interpreter and Run-time Environment
         "Ren-C" branch @ https://github.com/metaeducation/ren-c
@@ -32,7 +34,7 @@ REBOL [
         * Version 8994d23 does not allow WORD!-access of NULL, because the null
         state was conflated with the "unset" state at that time.  This is
         not something that can be overridden by a shim.  So the easiest way
-        to do `null? var` in a forward-compatible way is `null? get 'var`, but
+        to do `null? var` in a forward-compatible way is `null? :var`, but
         if the intent is on a variable that would be considered actually
         "unset" in modern versions then use `unset?` (it will be null though)
 
@@ -44,43 +46,6 @@ REBOL [
     }
 ]
 
-; Define HERE and SEEK as no-ops for compatibility in parse
-; https://forum.rebol.info/t/parse-bootstrap-compatibility-strategy/1533
-;
-here: []
-seek: []
-
-for: func [] [
-    fail/where "FOR is being repurposed, use CFOR" 'return
-]
-
-unless: func [] [
-    fail/where "Don't use UNLESS in Bootstrap, definition in flux"
-]
-
-; IMPORT allows you to run on plain scripts.  This adds support for a simple
-; form of the EXPORT tool for compatibility with new modules.
-;
-export: default [func [
-    "Low level export of values (e.g. functions) to lib."
-    words [block!] "Block of words (already defined in local context)"
-][
-    for-each word words [
-        append lib reduce [word get word]
-    ]
-]]
-
-; MAKE-FILE is included in modern Ren-C binaries, but older Ren-C doesn't have
-; it.  The script is in the %scripts/ directory, but it's a module written
-; to new (post-bootstrap executable) baseline.  However, %bootstrap-shim.r
-; definitions are only in the user context...leaving LIB alone so as not to
-; crash the older executable running its own mezzanine.  This does a workaround
-; to just DO the code and skip the header saying it's a module.
-;
-load-make-file-in-user-context: does [
-    data: read/string %../scripts/make-file.r
-    do find/tail data "===FIND/TAIL THIS==="
-]
 
 ; The snapshotted Ren-C existed right before <blank> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.
@@ -93,15 +58,34 @@ load-make-file-in-user-context: does [
 ; obvious reward.)
 ;
 trap [
-    func [i [<blank> integer!]] [...]
+    func [i [<blank> integer!]] [...]  ; modern interpreter or already shimmed
 ] else [
-    ;
+    trap [
+        lib/func [i [<blank> integer!]] [...]
+    ] then [
+        ;
+        ; Old bootstrap executables that are already shimmed should not do
+        ; tweaks for the modern import.  Otherwise, export load-all: would
+        ; overwrite with LOAD instead of LOAD/ALL (for example).  It's just
+        ; generally inefficient to shim multiple times.
+        ;
+        quit
+    ]
+
     ; LOAD changed to have no /ALL, so it always enforces getting a block.
     ; But LOAD-VALUE comes in the box to load a single value.
     ;
-    load-all: :load
+    export load-all: :load
 
-    load-make-file-in-user-context  ; Experimental!  Trying to replace PD_File...
+    export for: func [] [
+        fail/where "FOR is being repurposed, use CFOR" 'return
+    ]
+
+    export unless: func [/dummy] [
+        fail/where "Don't use UNLESS in Bootstrap, definition in flux" 'dummy
+    ]
+
+    export bar!: null  ; signal there is no BAR! type, and | is a WORD!
 
     quit
 ]
@@ -109,6 +93,12 @@ trap [
 
 ;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
 
+
+; Define HERE and SEEK as no-ops for compatibility in parse
+; https://forum.rebol.info/t/parse-bootstrap-compatibility-strategy/1533
+;
+here: []
+seek: []
 
 repeat: :loop
 loop: :while
@@ -802,8 +792,12 @@ zip: enclose :zip lib/function [f] [
 ]
 
 
-; This experimental MAKE-FILE is targeting behavior that should be in the
-; system core eventually.  Despite being very early in its design, it's
-; being built into new Ren-Cs to be tested...but bootstrap doesn't have it.
+; MAKE-FILE is included in modern Ren-C binaries, but older Ren-C doesn't have
+; it.  The script is in the %scripts/ directory, but it's a module written
+; to new (post-bootstrap executable) baseline.
 ;
-load-make-file-in-user-context  ; Experimental!  Trying to replace PD_File...
+; This IMPORT would not be good enough to expose the definitions to those
+; who `import %bootstrap-shim.r` in future versions, you'd have to re-export
+; the imports as part of this module's output.  :-/
+;
+import %../scripts/make-file.r

@@ -1,6 +1,8 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Common Code for Emitting Text Files"
+    Type: 'Module
+    Name: 'Common-Emitter
     Rights: {
         Copyright 2016-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
@@ -32,7 +34,13 @@ REBOL [
     }
 ]
 
-cscape: function [
+do %import-shim.r
+import %bootstrap-shim.r
+import %common.r  ; for REPO-DIR
+
+import %systems.r  ; for BOOT-VERSION
+
+export cscape: function [
     {Escape Rebol expressions in templated C source, returns new string}
 
     return: "${} TO-C-NAME, $<> UNSPACED, $[]/$() DELIMIT closed/open"
@@ -217,9 +225,9 @@ cscape: function [
 ]
 
 
-boot-version: load-value %../src/boot/version.r
+export boot-version: load-value %../src/boot/version.r
 
-make-emitter: function [
+export make-emitter: function [
     {Create a buffered output text file emitter}
 
     return: [object!]

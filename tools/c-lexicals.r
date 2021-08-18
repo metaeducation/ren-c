@@ -3,6 +3,8 @@ REBOL [
     Rights: {
         Copyright 2015 Brett Handley
     }
+    Type: 'Module
+    Name: C-Lexicals
     License: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0
@@ -19,8 +21,6 @@ REBOL [
         own rules or use rule injection to dynamically add emit actions.
     }
 ]
-
-c-lexical: context [
 
     grammar: [
 
@@ -175,6 +175,4 @@ c-lexical: context [
         not-wsp: complement ws-char
     ]
 
-    grammar: context bind grammar charsets
-    ; Grammar defined first in file.
-]
+    export grammar: context bind grammar charsets

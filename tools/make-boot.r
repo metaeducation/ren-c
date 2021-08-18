@@ -22,10 +22,12 @@ REBOL [
 
 print "--- Make Boot : System Embedded Script ---"
 
-do %common.r
-do %common-emitter.r
+do %import-shim.r
+import %bootstrap-shim.r
+import %common.r
+import %common-emitter.r
 
-do %systems.r
+import %systems.r
 
 change-dir %../src/boot/
 
@@ -114,7 +116,7 @@ version: to tuple! reduce [
     version/1 version/2 version/3 config/id/2 config/id/3
  ]
 
-e-version/emit {
+e-version/emit 'version {
     /*
      * VERSION INFORMATION
      *
@@ -206,7 +208,7 @@ rebs: collect [
     ]
 ]
 
-e-types/emit {
+e-types/emit 'rebs {
     /*
      * Current hard limit, higher types used for QUOTED!.  In code which
      * is using the 64 split to implement the literal trick, use REB_64
@@ -329,7 +331,7 @@ value-flagnots: compose [
     ((nontypes))  ; take out all nontypes
 ]
 
-e-types/emit {
+e-types/emit 'value-flagnots {
     /*
      * TYPESET DEFINITIONS (e.g. TS_ARRAY or TS_STRING)
      */
@@ -451,7 +453,7 @@ hook-list: collect [
     ]
 ]
 
-e-hooks/emit {
+e-hooks/emit 'hook-list {
     #include "sys-core.h"
 
     /* See comments in %sys-ordered.h */
@@ -498,7 +500,7 @@ for-each item boot-generics [
 
 at-value: func ['field] [next find/only boot-sysobj to-set-word field]
 
-boot-sysobj: load %sysobj.r
+boot-sysobj: load strip-commas-and-null-apostrophes read/string %sysobj.r
 change at-value version ^(version)
 change at-value commit git-commit
 change at-value build now/utc
@@ -610,7 +612,7 @@ fields: collect [
     ]
 ]
 
-e-errfuncs/emit {
+e-errfuncs/emit 'fields {
     /*
      * STANDARD ERROR STRUCTURE
      */
@@ -777,7 +779,7 @@ nats: collect [
 
 print [length of nats "natives"]
 
-e-bootblock/emit {
+e-bootblock/emit 'nats {
     #include "sys-core.h"
 
     #define NUM_NATIVES $<length of nats>
@@ -816,7 +818,7 @@ data: as binary! boot-molded
 
 compressed: gzip data
 
-e-bootblock/emit {
+e-bootblock/emit 'compressed {
     /*
      * Gzip compression of boot block
      * Originally $<length of data> bytes
@@ -857,7 +859,7 @@ fields: collect [
     ]
 ]
 
-e-boot/emit {
+e-boot/emit 'nids {
     /*
      * Compressed data of the native specifications, uncompressed during boot.
      */
@@ -889,7 +891,7 @@ e-boot/write-emitted
 
 === EMIT SYMBOLS ===
 
-e-symbols/emit {
+e-symbols/emit 'syms {
     /*
      * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
      *

@@ -2,13 +2,8 @@ REBOL [
     File: %rebmake.r
     Title: {Rebol-Based C/C++ Makefile and Project File Generator}
 
-    ; !!! Making %rebmake.r a module means it gets its own copy of lib, which
-    ; creates difficulties for the bootstrap shim technique.  Changing the
-    ; semantics of lib (e.g. how something fundamental like IF or CASE would
-    ; work) could break the mezzanine.  For the time being, just use DO to
-    ; run it in user, as with other pieces of bootstrap.
-    ;
-    ; Type: 'module
+    Type: 'Module
+    Name: 'Rebmake
 
     Rights: {
         Copyright 2017 Atronix Engineering
@@ -37,7 +32,8 @@ REBOL [
     }
 ]
 
-rebmake: make object! [  ; hack to workaround lack of Type: 'module
+do %import-shim.r
+import %bootstrap-shim.r
 
 default-compiler: _
 default-linker: _
@@ -1661,6 +1657,3 @@ Execution: make generator-class [
         ]
     ]
 ]
-
-
-]  ; end of `rebmake: make object!` workaround for lack of `Type: 'module`

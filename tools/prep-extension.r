@@ -15,7 +15,7 @@ REBOL [
     Description: {
         This script is used to preprocess C source files containing code for
         extension DLLs, designed to load new native code into the interpreter.
-        
+
         Such code is very similar to that of the code which is built into
         the EXE itself.  Hence, features like scanning the C comments for
         native specifications is reused.
@@ -31,17 +31,18 @@ REBOL [
     }
 ]
 
-do %common.r
-do %common-emitter.r
-do %systems.r
+do %import-shim.r
+import %common.r
+import %bootstrap-shim.r
+import %common-emitter.r
+import %systems.r
 
 ; The way that the processing code for extracting Rebol information out of
 ; C file comments is written is that the PROTO-PARSER has several callback
 ; functions that can be registered to receive each item it detects.
-;
 
-do %common-parsers.r
-do %native-emitters.r ; for emit-include-params-macro
+import %common-parsers.r
+import %native-emitters.r ; for emit-include-params-macro
 
 
 ; !!! We put the modules .h files and the .inc file for the initialization
@@ -177,7 +178,7 @@ for-each native native-defs [
         null  ; not needed in newer Ren-C (CATCH w/no throw is NULL)
     ] else [
         continue  ; not supported
-    ] 
+    ]
 
     num-natives: num-natives + 1
 
@@ -338,7 +339,7 @@ e/emit {
     static const REBYTE script_compressed[$<length of script-compressed>] = {
         $<Binary-To-C Script-Compressed>
     };
-    
+
     /*
      * Gzip compression of native specs (no \0 terminator in array)
      * Originally $<length of specs-uncompressed> bytes

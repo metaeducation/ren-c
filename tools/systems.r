@@ -1,6 +1,8 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "System build targets"
+    Type: 'Module
+    Name: Target-Systems
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2017 Ren-C Open Source Contributors
@@ -310,7 +312,7 @@ systems: [
 ]
 
 
-system-definitions: make object! [
+export system-definitions: make object! [
     LP64: "__LP64__"              ; 64-bit, and 'void *' is sizeof(long)
     LLP64: "__LLP64__"            ; 64-bit, and 'void *' is sizeof(long long)
 
@@ -370,7 +372,7 @@ system-definitions: make object! [
         "USE_STRERROR_NOT_STRERROR_R"
 ]
 
-compiler-flags: make object! [
+export compiler-flags: make object! [
     M32: <gnu:-m32>                 ;use 32-bit memory model
     ARC: <gnu:-arch i386>           ; x86 32 bit architecture (OSX)
     HID: <gnu:-fvisibility=hidden>  ; all sysms are hidden
@@ -394,7 +396,7 @@ compiler-flags: make object! [
     ]
 ]
 
-linker-flags: make object! [
+export linker-flags: make object! [
     M32: <gnu:-m32>
     ARC: <gnu:-arch i386>
     PIE: <gnu:-pie>
@@ -412,7 +414,7 @@ linker-flags: make object! [
     S4M: [<gnu:-Wl,--stack=4194300> <msc:/stack:4194300>]
 ]
 
-system-libraries: make object! [
+export system-libraries: make object! [
     ;
     ; Math library, needed only when compiling with GCC
     ; (Haiku has it in libroot)
@@ -428,7 +430,7 @@ system-libraries: make object! [
 ]
 
 
-for-each-system: func [
+export for-each-system: func [
     {Use PARSE to enumerate the systems, and set 'var to a record object}
 
     return: <none>
@@ -565,10 +567,10 @@ use [
 ]
 
 
-config-system: func [
+export config-system: func [
     {Return build configuration information}
-    hint [blank! text! tuple!]
-        {Version ID (blank means guess)}
+    hint "Version ID (blank means guess)"
+        [blank! text! tuple!]
 ][
     let version: switch type of hint [
         blank! [  ; Try same version as this r3-make was built with

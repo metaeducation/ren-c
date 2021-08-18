@@ -2,8 +2,8 @@
 ; Included as they are part of the build and source tests.
 
 (; Setup test.
-    do %../../tools/common.r
-    import %% ../../tools/text-lines.reb
+    import %../../tools/common.r
+    import %../../tools/text-lines.reb
     true
 )
 
