@@ -191,9 +191,8 @@ rebmake/set-target-platform system-config/os-base
 
 to-obj-path: func [
     file [any-string!]
-    ext:
 ][
-    ext: find-last file #"."
+    let ext: find-last file #"."
     remove/part ext (length of ext)
     join %objs/ head-of append ext rebmake/target-platform/obj-suffix
 ]
@@ -208,14 +207,12 @@ gen-obj: func [
     /I "includes" [block!]
     /F "cflags" [block!]
     /main "for main object"
-    <local>
-    prefer-O2 rigorous standard cplusplus flags
 ][
-    prefer-O2: false  ; overrides -Os setting to give -O2, e.g. for %c-eval.c
-    standard: user-config/standard  ; may have a per-file override
-    rigorous: user-config/rigorous  ; may have a per-file override
-    cplusplus: false  ; determined for just this file
-    flags: make block! 8
+    let prefer-O2: false  ; overrides -Os to give -O2, e.g. for %c-eval.c
+    let standard: user-config/standard  ; may have a per-file override
+    let rigorous: user-config/rigorous  ; may have a per-file override
+    let cplusplus: false  ; determined for just this file
+    let flags: make block! 8
 
     ; Microsoft shouldn't bother having the C warning that foo() in standard
     ; C doesn't mean the same thing as foo(void), when in their own published
