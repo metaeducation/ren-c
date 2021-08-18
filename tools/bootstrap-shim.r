@@ -58,6 +58,18 @@ unless: func [] [
     fail/where "Don't use UNLESS in Bootstrap, definition in flux"
 ]
 
+; IMPORT allows you to run on plain scripts.  This adds support for a simple
+; form of the EXPORT tool for compatibility with new modules.
+;
+export: default [func [
+    "Low level export of values (e.g. functions) to lib."
+    words [block!] "Block of words (already defined in local context)"
+][
+    for-each word words [
+        append lib reduce [word get word]
+    ]
+]]
+
 ; The snapshotted Ren-C existed right before <blank> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.
 ; See if this causes an error, and if so assume it's the old Ren-C, not a
