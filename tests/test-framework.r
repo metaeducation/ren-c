@@ -129,8 +129,9 @@ do-recover: func [
     flags [block!] {which flags to accept}
     code-checksum [binary! blank!]
     log-file-prefix [file!]
-    <local> interpreter last-vector value position next-position
-    test-sources test-checksum guard
+    <local>
+        interpreter last-vector value position next-position
+        test-sources test-checksum
 ] [
     allowed-flags: flags
 
@@ -162,10 +163,7 @@ do-recover: func [
 
         all [
             parse read log-file [
-                (
-                    last-vector: _
-                    guard: [end skip]
-                )
+                (last-vector: _)
                 while [
                     while whitespace
                     [
@@ -190,7 +188,6 @@ do-recover: func [
                                 ; crash found
                                 crashes: crashes + 1
                                 log [{ "crashed"^/}]
-                                guard: _
                             )
                                 |
                             {"} copy value to {"} skip

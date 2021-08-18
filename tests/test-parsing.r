@@ -27,24 +27,29 @@ success-rule: ~
 position: ~
 success: ~
 
-; TEST-SOURCE-RULE matches the internal text of a test, even if that text
-; is invalid rebol syntax.
+; Note: This doesn't rely on LOAD to break a file full of tests down into
+; individual tests.  LOAD is only used on a per-test basis.  The reason this
+; extra hassle was done is so that if the scanner has a problem on one test,
+; it only shows failure on that test...not the whole file.  Whether this is
+; worth it or not is debatable, but rewriting string escaping in a parse rule
+; here is certainly not worth it.  So when it sees a `{` or a `"` it defers
+; to TRANSCODE to parse that string.
 
 test-source-rule: [
     while [
-        position: here
+        let position: here
 
-        ["{" | {"}] (  ; handle string using TRANSCODE
-            success-rule: trap [
+        ["{" | {"}] :(  ; handle string using TRANSCODE, see note
+            trap [
                 [# position]: transcode position
             ] then [
-                [end skip]
+                [false]  ; result for :() is rule to say stop the parse
             ] else [
-                [seek position]
+                [seek position]  ; result for :() go to transcoded position
             ]
-        ) success-rule
+        )
             |
-        ["{" | {"}] seek position, break
+        ["{" | {"}] seek :position, break
             |
         "[" test-source-rule "]"  ; plain BLOCK! in code for a test
             |
@@ -57,23 +62,23 @@ test-source-rule: [
         ; too far".  It's either a syntax error, or the closing bracket of
         ; a multi-test block.
         ;
-        "]", seek position, break
+        "]", seek :position, break
             |
-        ")", seek position, break
+        ")", seek :position, break
             |
         skip
     ]
 ]
 
-load-testfile: function [
+load-testfile: func [
     {Read the test source, preprocessing if necessary.}
     test-file [file!]
 ][
-    test-source: context [
+    let test-source: context [
         filepath: test-file
         contents: read test-file
     ]
-    test-source
+    return test-source
 ]
 
 collect-tests: function [
@@ -229,7 +234,7 @@ collect-logs: function [
     ]
 
     parse log-contents [
-        (guard: [end skip])
+        (guard: false)  ; trigger failure by default (may be set to true)
         while [
             while whitespace
             [
@@ -270,10 +275,11 @@ collect-logs: function [
                     )
                 ]
                     |
-                "system/version:" to end (guard: _)
+                "system/version:" to end (guard: true)
                     |
                 (fail "collect-logs - log file parsing problem")
-            ] position: guard break ; Break when error detected.
+            ]
+            position: here, guard, break ; Break when error detected.
                 |
             seek position
         ]
