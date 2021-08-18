@@ -865,7 +865,8 @@ REBNATIVE(opt)
 //
 //  {Copy context by setting values in the target from those in the source.}
 //
-//      return: <none>
+//      return: "Same as the target module"
+//          [module!]
 //      target [module!] "(modified)"
 //      source [module!]
 //      exports "Which words to export from the source"
@@ -904,7 +905,7 @@ REBNATIVE(resolve)
         Copy_Cell(target_var, src_var);
     }
 
-    return Init_None(D_OUT);
+    RETURN (ARG(target));
 }
 
 
