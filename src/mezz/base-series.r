@@ -141,6 +141,10 @@ join: function [
                                     "Elements must be separated with" sep
                                 ]
                             ]
+                            (not last base) and (first item) [
+                                take/last base
+                                append base as block! item
+                            ]
                         ] else [
                             if _ = first item [
                                 append base next as block! item
