@@ -621,23 +621,23 @@ to: emulate [
 ]
 
 try: emulate [
-    function [
-        {See TRAP: https://trello.com/c/IbnfBaLI}
+    func [
+        {See TRAP for Ren-C equivalent: https://trello.com/c/IbnfBaLI}
         return: [<opt> any-value!]
         block [block!]
         /except "Note TRAP doesn't take a handler...use THEN instead"
             [block! action!]
+        <local>
+            error result
     ][
-        trap [
-            result: do block
-        ] then err -> [
+        if ([error result]: trap [try do block]) [
             case [
-                blank? :except [err]
-                block? :except [do except]
-                action? :except [try except err]  ; NULL result runs ELSE (!)
+                not :except [error]
+                block? :except [try do except]
+                action? :except [try except error]  ; NULL result runs ELSE (!)
             ]
         ] else [
-            result
+            result  ; Note: may be an ERROR! that was evaluated to, not raised
         ]
     ]
 ]
