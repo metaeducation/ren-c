@@ -70,6 +70,18 @@ export: default [func [
     ]
 ]]
 
+; MAKE-FILE is included in modern Ren-C binaries, but older Ren-C doesn't have
+; it.  The script is in the %scripts/ directory, but it's a module written
+; to new (post-bootstrap executable) baseline.  However, %bootstrap-shim.r
+; definitions are only in the user context...leaving LIB alone so as not to
+; crash the older executable running its own mezzanine.  This does a workaround
+; to just DO the code and skip the header saying it's a module.
+;
+load-make-file-in-user-context: does [
+    data: read/string %../scripts/make-file.r
+    do find/tail data "===FIND/TAIL THIS==="
+]
+
 ; The snapshotted Ren-C existed right before <blank> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.
 ; See if this causes an error, and if so assume it's the old Ren-C, not a
@@ -88,6 +100,8 @@ trap [
     ; But LOAD-VALUE comes in the box to load a single value.
     ;
     load-all: :load
+
+    load-make-file-in-user-context  ; Experimental!  Trying to replace PD_File...
 
     quit
 ]
@@ -792,4 +806,4 @@ zip: enclose :zip lib/function [f] [
 ; system core eventually.  Despite being very early in its design, it's
 ; being built into new Ren-Cs to be tested...but bootstrap doesn't have it.
 ;
-do %../scripts/make-file.r  ; Experimental!  Trying to replace PD_File...
+load-make-file-in-user-context  ; Experimental!  Trying to replace PD_File...
