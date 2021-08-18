@@ -28,6 +28,7 @@ falsey
 errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
 trash  ; only release build uses (debug build uses null as label to assert)
 rootvar  ; used as placeholder in rootvar cells
+attached  ; answer from BINDING OF when variable is attached but not bound
 
 
 ; ...note that the words for types are created programmatically before
@@ -103,6 +104,7 @@ values
 types
 title
 binding
+attach
 file
 line
 action

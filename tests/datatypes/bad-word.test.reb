@@ -67,10 +67,18 @@
 )
 
 
-; ~unset~ is also the type of things that just were never declared
-(
-    '~unset~ = friendly get/any 'asiieiajiaosdfbjakbsjxbjkchasdf
-)
+; Genuine unbound words exist (e.g. product of MAKE WORD!) but there are also
+; words that are attached to a context, but have no definition in that context
+; or anything it inherits from.  These have never had an "emerge" operation
+; (at time of writing, just assigning a SET-WORD! with the binding is enough
+; to do such an emergence, though something like a JavaScript strict mode
+; would demand some kind of prior declaration of intent to use the name).
+;
+(did all [
+    e: trap [get/any 'asiieiajiaosdfbjakbsjxbjkchasdf]
+    e.id = 'unassigned-attach
+    e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
+])
 
 ; MATCH will match a bad-word! as-is, but falsey inputs produce ~falsey~
 [

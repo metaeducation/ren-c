@@ -290,9 +290,39 @@ REBTYPE(Word)
             return Init_Integer(D_OUT, len); }
 
           case SYM_BINDING: {
-            if (Did_Get_Binding_Of(D_OUT, v))
-                return D_OUT;
-            return nullptr; }
+            if (not Did_Get_Binding_Of(D_OUT, v))
+                return nullptr;
+
+            // BINDING OF answers just ~attached~ if it's a module and there
+            // is no variable instance in the module.  Hack that together for
+            // the moment.
+            //
+            if (IS_MODULE(D_OUT)) {
+                REBVAL *var = MOD_VAR(
+                    VAL_CONTEXT(D_OUT),
+                    VAL_WORD_SYMBOL(v),
+                    true
+                );
+                if (not var) {
+                    Init_Bad_Word(D_OUT, SYM_ATTACHED);
+                    return D_OUT;
+                }
+            }
+            return D_OUT; }
+
+          case SYM_ATTACH: {  // hack it up...
+            if (not IS_WORD_BOUND(v))
+                return nullptr;
+
+            if (CTX_TYPE(VAL_WORD_CONTEXT(v)) == REB_MODULE) {
+                if (MOD_VAR(VAL_WORD_CONTEXT(v), VAL_WORD_SYMBOL(v), true))
+                    return Copy_Cell(D_OUT, CTX_ARCHETYPE(VAL_WORD_CONTEXT(v)));
+            }
+
+            if (not Did_Get_Binding_Of(D_OUT, v))
+                assert(!"Did_Get_Binding_Of() should have worked.");
+
+            return D_OUT; }
 
           default:
             break;

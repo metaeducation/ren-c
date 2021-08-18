@@ -727,8 +727,11 @@ static inline const REBVAL *Lookup_Word_May_Fail(
     REBSER *s = try_unwrap(
         Get_Word_Container(&index, any_word, specifier, ATTACH_READ)
     );
-    if (not s)
-        fail (Error_Not_Bound_Raw(SPECIFIC(any_word)));
+    if (not s) {
+        if (VAL_WORD_BINDING(any_word) == UNBOUND)
+            fail (Error_Not_Bound_Raw(SPECIFIC(any_word)));
+        fail (Error_Unassigned_Attach_Raw(SPECIFIC(any_word)));
+    }
     if (IS_PATCH(s))
         return SPECIFIC(ARR_SINGLE(ARR(s)));
     REBCTX *c = CTX(s);

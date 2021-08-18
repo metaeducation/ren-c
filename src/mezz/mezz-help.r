@@ -222,7 +222,15 @@ help: function [
                 return none
             ]
 
-            switch type of value: friendly get/any topic [
+            if '~attached~ = binding of topic [
+                print [
+                    topic "is a"
+                        either word? topic ["WORD!"] ["PATH!"]
+                        "attached to a context but unassigned"
+                ]
+                return none
+            ]
+            else [switch type of value: friendly get/any topic [
                 null [
                     print [topic "is null"]
                 ]
@@ -231,7 +239,7 @@ help: function [
                 ]
             ] then [
                 return none
-            ]
+            ]]
             enfixed: did all [action? :value, enfixed? :value]
         ]
     ] else [
