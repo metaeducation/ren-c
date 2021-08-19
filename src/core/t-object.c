@@ -982,13 +982,24 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
     if (form) {
         //
-        // Mold all words and their values ("key: <molded value>")
+        // Mold all words and their values ("key: <molded value>").
+        // Because FORM-ing is lossy, we don't worry much about showing the
+        // bad word isotopes as the plain bad words, or that blanks are
+        // showing up as NULL.
         //
         bool had_output = false;
         while (Did_Advance_Evars(&e)) {
             Append_Spelling(mo->series, KEY_SYMBOL(e.key));
             Append_Ascii(mo->series, ": ");
-            Mold_Value(mo, e.var);
+
+            if (IS_BAD_WORD(e.var) and GET_CELL_FLAG(e.var, ISOTOPE)) {
+                Append_Codepoint(mo->series, '~');
+                Append_Spelling(mo->series, VAL_BAD_WORD_LABEL(e.var));
+                Append_Codepoint(mo->series, '~');
+            }
+            else if (not IS_NULLED(e.var) and not IS_BLANK(e.var))
+                Mold_Value(mo, e.var);
+
             Append_Codepoint(mo->series, LF);
             had_output = true;
         }
