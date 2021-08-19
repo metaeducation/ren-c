@@ -273,14 +273,14 @@ static void Startup_End_Node(void)
 
 
 //
-//  Startup_Empty_Array: C
+//  Startup_Empty_Arrays: C
 //
 // Generic read-only empty array, which will be put into EMPTY_BLOCK when
 // Alloc_Value() is available.  Note it's too early for ARRAY_HAS_FILE_LINE.
 //
 // Warning: GC must not run before Init_Root_Vars() puts it in an API node!
 //
-static void Startup_Empty_Array(void)
+static void Startup_Empty_Arrays(void)
 {
     PG_Empty_Array = Make_Array_Core(0, NODE_FLAG_MANAGED);
     Freeze_Array_Deep(PG_Empty_Array);
@@ -299,12 +299,26 @@ static void Startup_Empty_Array(void)
     PG_2_Blanks_Array = a;
   }
 
-    PG_Inaccessible_Varlist = Make_Array_Core(
-        1,
-        SERIES_MASK_VARLIST
-            | NODE_FLAG_MANAGED
+    // !!! See comments in Make_Expired_Frame_Ctx_Managed(); it makes a
+    // varlist for a particular action, but it seems this is working without?
+    //
+  blockscope {
+    REBARR *varlist = Alloc_Singular(
+        FLAG_FLAVOR(VARLIST) | NODE_FLAG_MANAGED  // !!! not dynamic
     );
-    SET_SERIES_FLAG(PG_Inaccessible_Varlist, INACCESSIBLE);
+    varlist->leader.bits |= SERIES_MASK_VARLIST;  // !!! adds dynamic
+    CLEAR_SERIES_FLAG(varlist, DYNAMIC);  // !!! removes (review cleaner way)
+    SET_SERIES_FLAG(varlist, INACCESSIBLE);
+
+    assert(PG_Inaccessible_Varlist == nullptr);
+    PG_Inaccessible_Varlist = varlist;
+  }
+}
+
+static void Shutdown_Empty_Arrays(void) {
+    PG_Empty_Array = nullptr;
+    PG_2_Blanks_Array = nullptr;
+    PG_Inaccessible_Varlist = nullptr;
 }
 
 
@@ -834,7 +848,7 @@ void Startup_Core(void)
     Startup_Early_Symbols();  // see notes--need before data stack or scan
 
     Startup_End_Node();
-    Startup_Empty_Array();
+    Startup_Empty_Arrays();
 
     Startup_Collector();
     Startup_Mold(MIN_COMMON / 4);
@@ -1103,6 +1117,8 @@ void Shutdown_Core(void)
     Shutdown_Interning();
 
     Shutdown_GC();
+
+    Shutdown_Empty_Arrays();  // should have been freed.
 
     FREE(REB_OPTS, Reb_Opts);
 
