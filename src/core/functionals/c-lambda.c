@@ -111,7 +111,7 @@ REB_R Lambda_Dispatcher(REBFRM *f)
 //
 //      return: [action!]
 //      :words "Names of arguments (will not be type checked)"
-//          [<end> word! block!]
+//          [<end> word! lit-word! meta-word! block!]
 //      body "Code to execute"
 //          [block!]
 //  ]
@@ -133,18 +133,27 @@ REBNATIVE(lambda)
     // enfix form and not applicable to the prefix form, but it seems fine.)
     //
     REBVAL *wordlist = ARG(words);
-    const RELVAL *word_tail;
-    const RELVAL *word;
-    if (IS_BLOCK(wordlist))
-        word = VAL_ARRAY_AT(&word_tail, wordlist);
-    else if (IS_WORD(wordlist)) {
-        word = ARG(words);
-        word_tail = word + 1;
+    REBSPC *item_specifier;
+    const RELVAL *item_tail;
+    const RELVAL *item;
+    if (IS_BLOCK(wordlist)) {
+        item = VAL_ARRAY_AT(&item_tail, wordlist);
+        item_specifier = VAL_SPECIFIER(wordlist);
+    }
+    else if (
+        IS_WORD(wordlist)
+        or IS_META_WORD(wordlist)
+        or IS_QUOTED(wordlist)
+    ){
+        item = ARG(words);
+        item_specifier = SPECIFIED;
+        item_tail = item + 1;
     }
     else {
+        item_specifier = SPECIFIED;
         assert(IS_NULLED(wordlist));
-        word = nullptr;
-        word_tail = nullptr;
+        item = nullptr;
+        item_tail = nullptr;
     }
 
     // For the moment, this lazily reuses Pop_Paramlist(), just because that
@@ -161,17 +170,28 @@ REBNATIVE(lambda)
     Init_Trash(DS_PUSH());  // unused
     Init_Nulled(DS_PUSH());  // description slot
 
-    for (; word != word_tail; ++word) {
-        if (not IS_WORD(word))
-            fail (rebUnrelativize(word));
+    for (; item != item_tail; ++item) {
+        Derelativize(DS_PUSH(), item, item_specifier);
 
-        Init_Word(DS_PUSH(), VAL_WORD_SYMBOL(word));
+        // First in triad needs to be a WORD!, after pclass extracted...
+        //
+        enum Reb_Param_Class pclass;
+        if (IS_WORD(DS_TOP))
+            pclass = PARAM_CLASS_NORMAL;
+        else if (IS_META_WORD(DS_TOP)) {
+            pclass = PARAM_CLASS_META;
+            Init_Word(DS_TOP, VAL_WORD_SYMBOL(DS_TOP));
+        }
+        else if (IS_QUOTED(DS_TOP)) {
+            Unquotify(DS_TOP, 1);
+            if (not IS_WORD(DS_TOP))
+                fail (rebUnrelativize(item));
+            pclass = PARAM_CLASS_HARD;
+        }
+        else
+            fail (rebUnrelativize(item));
 
-        Init_Param(
-            DS_PUSH(),
-            FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_NORMAL),
-            TS_OPT_VALUE
-        );
+        Init_Param(DS_PUSH(), pclass, TS_OPT_VALUE);
 
         Init_Nulled(DS_PUSH());  // types (not supported)
         Init_Nulled(DS_PUSH());  // notes (not supported)
