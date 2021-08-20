@@ -55,7 +55,7 @@ extensions: map-each e (split args/EXTENSIONS #":") [
 e: (make-emitter "Boot Modules"
         make-file [(output-dir) include/tmp-boot-extensions.inc])
 
-e/emit {
+e/emit 'extensions {
     #include "sys-ext.h"
 
     DECLARE_EXT_COLLATE($[Extensions]);

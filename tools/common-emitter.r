@@ -48,7 +48,7 @@ export cscape: function [
     template "${Expr} case as-is, ${expr} lowercased, ${EXPR} is uppercased"
         [text!]
     /with "Lookup var words in additional context (besides user context)"
-        [any-word! lit-word! any-context! block!]
+        [any-word! any-context! block!]
 ][
     string: trim/auto copy template
 
@@ -124,12 +124,11 @@ export cscape: function [
             code: load-all lowercase expr
 
             if with [
-                if lit-word? with [with: noquote with]
-
                 if not block? with [  ; convert to block if not already
                     with: reduce [with]
                 ]
                 for-each item with [
+                    if path? item [item: first item]
                     bind code item
                 ]
             ]
@@ -293,7 +292,7 @@ export make-emitter: function [
             data: take data
             switch type of data [
                 text! [
-                    append buf-emit cscape/with data opt context
+                    append buf-emit cscape/with data noquote opt context
                 ]
                 char! [
                     append buf-emit data
@@ -332,7 +331,7 @@ export make-emitter: function [
     ]
 
     any [is-c is-js] then [
-        e/emit 'return {
+        e/emit [return boot-version title] {
             /**********************************************************************
             **
             **  REBOL [R3] Language Interpreter and Run-time Environment

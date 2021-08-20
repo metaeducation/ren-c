@@ -98,7 +98,7 @@ emit-proto: func [
     append prototypes proto
 
     e-funcs/emit [proto the-file] {
-        RL_API $<Proto>; /* $<The-File> */
+        RL_API $<Proto>; /* $<the-file> */
     }
 ]
 
@@ -108,8 +108,8 @@ process-conditional: function [
     dir-position
     emitter [object!]
 ][
-    emitter/emit [directive the-file dir-position] {
-        $<Directive> /* $<The-File> #$<text-line-of dir-position> */
+    emitter/emit [the-file dir-position text-line-of directive] {
+        $<Directive> /* $<the-file> #$<text-line-of dir-position> */
     }
 
     ; Minimise conditionals for the reader - unnecessary for compilation.
@@ -403,7 +403,7 @@ for-each line read/lines %a-constants.c [
             e-strings/emit newline
         ]
         parse? line [to {const } copy constd to { =} to end] [
-            e-strings/emit {
+            e-strings/emit 'constd {
                 extern $<Constd>;
             }
         ]

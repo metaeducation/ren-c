@@ -184,7 +184,7 @@ lib-struct-fields: map-each-api [
         (if is-variadic ["va_list *vaptr"])
     ]
     cfunc-params: default ["void"]
-    cscape/with {$<Returns> (*$<Name>)($<Cfunc-Params>)} api
+    cscape/with {$<Returns> (*$<Name>)($<Cfunc-Params>)} compose [c-func-params (api)]
 ]
 
 non-variadics: make block! length of api-objects
@@ -336,7 +336,7 @@ c99-or-c++11-macros: map-each-api [
 e-lib: (make-emitter
     "Rebol External Library Interface" make-file [(output-dir) rebol.h])
 
-e-lib/emit {
+e-lib/emit 'ver {
     #ifndef REBOL_H_1020_0304  /* "include guard" allows multiple #includes */
     #define REBOL_H_1020_0304  /* numbers in case REBOL_H defined elsewhere */
 
@@ -946,7 +946,7 @@ table-init-items: map-each-api [
     unspaced ["RL_" name]
 ]
 
-e-table/emit {
+e-table/emit 'table-init-items {
     RL_LIB Ext_Lib = {
         $(Table-Init-Items),
     };
