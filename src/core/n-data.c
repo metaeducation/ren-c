@@ -867,8 +867,8 @@ REBNATIVE(opt)
 //
 //      return: "Same as the target module"
 //          [module!]
-//      target [module!] "(modified)"
-//      source [module!]
+//      where [<blank> module!] "(modified)"
+//      source [<blank> module!]
 //      exports "Which words to export from the source"
 //          [<blank> block!]
 //  ]
@@ -877,7 +877,7 @@ REBNATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
-    REBCTX *target = VAL_CONTEXT(ARG(target));
+    REBCTX *where = VAL_CONTEXT(ARG(where));
     REBCTX *source = VAL_CONTEXT(ARG(source));
 
     const RELVAL *tail;
@@ -890,22 +890,22 @@ REBNATIVE(resolve)
 
         bool strict = true;
 
-        REBVAL *src_var = MOD_VAR(source, symbol, strict);
-        if (src_var == nullptr)
+        REBVAL *src = MOD_VAR(source, symbol, strict);
+        if (src == nullptr)
             fail (rebUnrelativize(v));  // fail if unset value, also?
 
-        REBVAL *target_var = MOD_VAR(target, symbol, strict);
-        if (target_var != nullptr) {
+        REBVAL *dest = MOD_VAR(where, symbol, strict);
+        if (dest != nullptr) {
             // Fail if found?
         }
         else {
-            target_var = Append_Context(target, nullptr, symbol);
+            dest = Append_Context(where, nullptr, symbol);
         }
 
-        Copy_Cell(target_var, src_var);
+        Copy_Cell(dest, src);
     }
 
-    RETURN (ARG(target));
+    RETURN (ARG(where));
 }
 
 
