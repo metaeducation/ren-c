@@ -112,19 +112,25 @@ bind collapse-whitespace c-lexical/grammar
 
 export proto-parser: context [
 
+    unsorted-buffer: ~
+    file: ~
+
     emit-fileheader: _
     emit-proto: _
     emit-directive: _
-    parse-position: _
-    notes: _
-    lines: _
-    proto-id: _
-    proto-arg-1: _
-    data: _
-    eoh: _ ; End of file header.
+
+    parse-position: ~
+    notes: ~
+    lines: ~
+    proto-id: ~
+    proto-arg-1: ~
+    data: ~
+    eoh: ~ ; End of file header.
+
+    count: ~
 
     process: func [return: <none> text] [
-        parse text [grammar/rule]  ; Review: no END (return result unused?)
+        parse text [grammar/rule]
     ]
 
     grammar: context bind [

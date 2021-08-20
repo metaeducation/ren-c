@@ -75,7 +75,7 @@ e1: (make-emitter "Module C Header File Preface"
 
 verbose: false
 
-proto-count: 0
+proto-parser/count: 0
 module-header: _
 
 source-text: read/string c-src
@@ -90,10 +90,10 @@ proto-parser/emit-fileheader: func [header] [module-header: header]
 ; It will add the information to UNSORTED-BUFFER
 ;
 c-natives: make block! 128
-unsorted-buffer: make text! 20000
+proto-parser/unsorted-buffer: make text! 20000
 proto-parser/emit-proto: :emit-native-proto
 
-the-file: c-src  ; global used for comments in the native emitter
+proto-parser/file: c-src
 
 proto-parser/process source-text
 
@@ -102,7 +102,7 @@ proto-parser/process source-text
 ; At this point the natives will all be in the UNSORTED-BUFFER.
 ;
 
-native-list: load unsorted-buffer
+native-list: load proto-parser/unsorted-buffer
 ;print ["*** specs:" mold native-list]
 
 natdef: make object! [

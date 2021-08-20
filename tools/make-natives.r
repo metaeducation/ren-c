@@ -74,16 +74,14 @@ mkdir/deep make-file [(output-dir) boot /]
 
 verbose: false
 
-unsorted-buffer: make text! 20000
+proto-parser/unsorted-buffer: make block! 400
+proto-parser/count: 0
 
-process: function [
-    file
-    <with> the-file
-][
-    the-file: file
+process: function [file] [
     if verbose [probe [file]]
 
     source-text: read/string file
+    proto-parser/file: file
     proto-parser/emit-proto: :emit-native-proto
     proto-parser/process source-text
 ]
@@ -92,8 +90,6 @@ process: function [
 
 output-buffer: make text! 20000
 
-
-proto-count: 0
 
 gather-natives: func [dir] [
     files: read dir
@@ -113,11 +109,11 @@ gather-natives: func [dir] [
 gather-natives make-file [(src-dir) core /]
 
 
-append output-buffer unsorted-buffer
+append output-buffer proto-parser/unsorted-buffer
 
 write-if-changed make-file [(output-dir) boot/tmp-natives.r] output-buffer
 
-print [proto-count "natives"]
+print [proto-parser/count "natives"]
 print newline
 
 

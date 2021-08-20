@@ -27,7 +27,6 @@ export emit-native-proto: func [
     "Emit native prototypes to @unsorted-buffer"
     return: <none>
     proto
-    <with> proto-count
 ][
     let line: try text-line-of proto-parser/parse-position
 
@@ -48,7 +47,7 @@ export emit-native-proto: func [
                 fail [
                     "Native" (uppercase form to word! name)
                     "needs loadable specification block."
-                    (mold the-file) (line)
+                    (mold proto-parser/file) (line)
                 ]
             )]
             [
@@ -67,15 +66,15 @@ export emit-native-proto: func [
             ; could do tests here to create special buffer categories to
             ; put certain natives first or last, etc. (not currently needed)
             ;
-            unsorted-buffer
+            proto-parser/unsorted-buffer
         ) unspaced [
             newline newline
             {; !!! DO NOT EDIT HERE! This is generated from} _
-                mold the-file _ {line} _ line newline
+                mold proto-parser/file _ {line} _ line newline
             mold/only proto-parser/data
         ]
 
-        proto-count: proto-count + 1
+        proto-parser/count: proto-parser/count + 1
     ]
 ]
 

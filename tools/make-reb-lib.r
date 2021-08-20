@@ -153,11 +153,9 @@ emit-proto: func [return: <none> proto] [
 ]
 
 process: func [file] [
-    data: read the-file: file
-    data: to-text data
-
+    proto-parser/file: file
     proto-parser/emit-proto: :emit-proto
-    proto-parser/process data
+    proto-parser/process as text! read file
 ]
 
 src-dir: %../src/core/

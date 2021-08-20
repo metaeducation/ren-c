@@ -92,13 +92,13 @@ emit-proto: func [
     ]
 
     if find prototypes proto [
-        fail ["Duplicate prototype:" the-file ":" proto]
+        fail ["Duplicate prototype:" proto-parser/file ":" proto]
     ]
 
     append prototypes proto
 
-    e-funcs/emit [proto the-file] {
-        RL_API $<Proto>; /* $<the-file> */
+    e-funcs/emit [proto proto-parser/file] {
+        RL_API $<Proto>; /* $<proto-parser/file> */
     }
 ]
 
@@ -108,8 +108,8 @@ process-conditional: function [
     dir-position
     emitter [object!]
 ][
-    emitter/emit [the-file dir-position text-line-of directive] {
-        $<Directive> /* $<the-file> #$<text-line-of dir-position> */
+    emitter/emit [proto-parser/file dir-position text-line-of directive] {
+        $<Directive> /* $<proto-parser/file> #$<text-line-of dir-position> */
     }
 
     ; Minimise conditionals for the reader - unnecessary for compilation.
@@ -128,15 +128,11 @@ emit-directive: function [return: <none> directive] [
     process-conditional directive proto-parser/parse-position e-funcs
 ]
 
-process: function [
-    file
-    <with> the-file  ; global we set
-][
-    data: read/string the-file: file
-
+process: function [file] [
     proto-parser/emit-proto: :emit-proto
+    proto-parser/file: file
     proto-parser/emit-directive: :emit-directive
-    proto-parser/process data
+    proto-parser/process (as text! read file)
 ]
 
 ;-------------------------------------------------------------------------
@@ -301,7 +297,6 @@ sys-globals-parser: context [
 ]
 
 
-the-file: %sys-globals.h
 sys-globals-parser/process read/string %../include/sys-globals.h
 
 ;-------------------------------------------------------------------------
