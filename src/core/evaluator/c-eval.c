@@ -1294,8 +1294,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 specifier = v_specifier;
             }
             if (IS_BLANK(item)) {
-                if (DSP == f->dsp_orig)
-                    fail ("Cannot opt out of main return with BLANK!");
                 Init_Blank(DS_PUSH());
             }
             else if (Is_Blackhole(item)) {
@@ -1400,18 +1398,30 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (meta)
             Meta_Quotify(f->out);  // Note: turns END to ~void~ isotope
 
-        // Take care of the SET for the main result.
+        // Take care of the SET for the main result.  For the moment, if you
+        // asked to opt out of the main result this will give you a ~blank~
+        // isotope...but there is not currently any way for the calling
+        // routine to know you opted out of the return.
+        //
+        // !!! Could there be a way of a function indicating it was willing
+        // to accept RETURN being not requested, somehow?  It would be unsafe
+        // having it be NULL as `return` would be a no-op, but if it were an
+        // isotope like `~unrequested~` then that could be tested for by
+        // a particular kind of routine...
         //
         // !!! Move the main result set part off the stack and into the spare
         // in case there are GROUP! evaluations in the assignment; though that
         // needs more thinking (e.g. what if they throw?)
         //
         Copy_Cell(f_spare, DS_AT(f->dsp_orig + 1));
-        Set_Var_May_Fail(
-            f_spare, SPECIFIED,
-            f->out, SPECIFIED,
-            false  // "hard"
-        );
+        if (IS_BLANK(f_spare))
+            Init_Isotope(f->out, SYM_BLANK);
+        else
+            Set_Var_May_Fail(
+                f_spare, SPECIFIED,
+                f->out, SPECIFIED,
+                false  // "hard"
+            );
 
         // Now take care of the assignment of the original result; we can tell
         // by which result is circled...
