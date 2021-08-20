@@ -23,8 +23,8 @@ mkdir: ensure action! :make-dir
 cd: func [
     "Change directory (shell shortcut function)."
 
-    return: [file!]
-        {The directory after the change}
+    return: "The directory after the change"
+        [file! url!]
     'path [<end> file! word! path! tuple! text!]
         "Accepts %file, :variables and just words (as dirs)"
 ][
