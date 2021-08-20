@@ -22,157 +22,157 @@ REBOL [
     }
 ]
 
-    grammar: [
+grammar: [
 
-        text: [some c-pp-token]
+    text: [some c-pp-token]
 
-        c-pp-token: [
+    c-pp-token: [
 
-            white-space | preprocessing-token
-        ]
-
-        white-space: [
-            nl
-            | eol
-            | wsp
-            | span-comment
-            | line-comment
-        ]
-
-        ;
-        ; -- A.1.1 Lexical Elements
-        ; Order is significant
-
-        preprocessing-token: [
-
-            pp-number
-            | character-constant
-            | identifier
-            | string-literal
-            | header-name
-            | punctuator
-            | other-pp-token
-        ]
-
-        other-pp-token: not-wsp
-
-        ;
-        ; -- A.1.3 Identifiers
-
-        identifier: [id-nondigit while id-char]
-        id-nondigit: [nondigit | universal-character-name]
-
-        ;
-        ; -- A.1.4 Universal character names
-
-        universal-character-name: [{\U} 2 hex-quad | {\u} hex-quad]
-        hex-quad: [4 hexadecimal-digit]
-
-        ;
-        ; -- A.1.5 Constants
-
-        character-constant: [
-            #"'" some c-char #"'"
-            | {L'} some c-char #"'"
-            | {u'} some c-char #"'"
-            | {U'} some c-char #"'"
-        ]
-
-        escape-sequence: [
-            simple-escape-sequence
-            | octal-escape-sequence
-            | hexadecimal-escape-sequence
-            | universal-character-name
-        ]
-
-        simple-escape-sequence: [
-            {\'} | {\"} | {\?} | {\\}
-            | {\a} | {\b} | {\f} | {\n} | {\r} | {\t} | {\v}
-        ]
-
-        hexadecimal-escape-sequence: [
-            {\x} hexadecimal-digit while hexadecimal-digit
-        ]
-
-        octal-escape-sequence: [#"\" 1 3 octal-digit]
-
-        ;
-        ; -- A.1.6 String literals
-
-        string-literal: [
-            opt encoding-prefix #"^"" while s-char #"^""
-        ]
-        encoding-prefix: [{u8} | #"L" | #"u" | #"U"]
-        s-char: [s-char-cs | escape-sequence]
-
-        ;
-        ; -- A.1.7 Punctuators
-
-        punctuator: [
-            {->} | {++} | {--} | {<<} | {>>} | {<=} | {>=} | {==} | {!=}
-            | {&&} | {||} | {...} | {*=} | {/=} | {%=} | {+=} | {<<=} | {>>=}
-            | {&=} | {^^=} | {|=} | {##} | {<:} | {:>} | {<%} | {%>}
-            | {%:%:} | {%:}
-            | p-char
-        ]
-
-        ;
-        ; -- A.1.8 Header names
-
-        header-name: [#"<" some h-char #">" | #"^"" some q-char #"^""]
-
-        ;
-        ; -- A.1.9 Preprocessing numbers
-
-        pp-number: [
-            [digit | #"." digit]
-            while [
-                digit
-                | id-nondigit
-                | #"."
-                | [#"e" | #"p" | #"E" | #"P"] sign
-            ]
-        ]
-
-        ;
-        ; -- Whitespace
-
-        nl: {\^/} ; Line break in logical line.
-        eol: newline ; End of logical line.
-        wsp: [some ws-char]
-        span-comment: [{/*} thru {*/}]
-        line-comment: [{//} to newline]
-
+        white-space | preprocessing-token
     ]
 
-    charsets: context [
-
-        ; Header name
-        h-char: complement charset {^/<}
-        q-char: complement charset {^/"}
-
-        ; Identifier
-        nondigit: charset [#"_" #"a" - #"z" #"A" - #"Z"]
-        digit: charset {0123456789}
-        octal-digit: charset {01234567}
-        id-char: union nondigit digit
-        hexadecimal-digit: charset [#"0" - #"9" #"a" - #"f" #"A" - #"F"]
-
-        ; pp-number
-        sign: charset {+-}
-
-        ; character-constant
-        c-char: complement charset {'\^/}
-
-        ; string-literal
-        s-char-cs: complement charset {"\^/}
-
-        ; punctuator
-        p-char: charset "[](){}.&*+-~!/%<>^^|?:;=,#"
-
-        ; whitespace
-        ws-char: charset { ^-^M^/^K^L}
-        not-wsp: complement ws-char
+    white-space: [
+        nl
+        | eol
+        | wsp
+        | span-comment
+        | line-comment
     ]
 
-    export grammar: context bind grammar charsets
+    ;
+    ; -- A.1.1 Lexical Elements
+    ; Order is significant
+
+    preprocessing-token: [
+
+        pp-number
+        | character-constant
+        | identifier
+        | string-literal
+        | header-name
+        | punctuator
+        | other-pp-token
+    ]
+
+    other-pp-token: not-wsp
+
+    ;
+    ; -- A.1.3 Identifiers
+
+    identifier: [id-nondigit while id-char]
+    id-nondigit: [nondigit | universal-character-name]
+
+    ;
+    ; -- A.1.4 Universal character names
+
+    universal-character-name: [{\U} 2 hex-quad | {\u} hex-quad]
+    hex-quad: [4 hexadecimal-digit]
+
+    ;
+    ; -- A.1.5 Constants
+
+    character-constant: [
+        #"'" some c-char #"'"
+        | {L'} some c-char #"'"
+        | {u'} some c-char #"'"
+        | {U'} some c-char #"'"
+    ]
+
+    escape-sequence: [
+        simple-escape-sequence
+        | octal-escape-sequence
+        | hexadecimal-escape-sequence
+        | universal-character-name
+    ]
+
+    simple-escape-sequence: [
+        {\'} | {\"} | {\?} | {\\}
+        | {\a} | {\b} | {\f} | {\n} | {\r} | {\t} | {\v}
+    ]
+
+    hexadecimal-escape-sequence: [
+        {\x} hexadecimal-digit while hexadecimal-digit
+    ]
+
+    octal-escape-sequence: [#"\" 1 3 octal-digit]
+
+    ;
+    ; -- A.1.6 String literals
+
+    string-literal: [
+        opt encoding-prefix #"^"" while s-char #"^""
+    ]
+    encoding-prefix: [{u8} | #"L" | #"u" | #"U"]
+    s-char: [s-char-cs | escape-sequence]
+
+    ;
+    ; -- A.1.7 Punctuators
+
+    punctuator: [
+        {->} | {++} | {--} | {<<} | {>>} | {<=} | {>=} | {==} | {!=}
+        | {&&} | {||} | {...} | {*=} | {/=} | {%=} | {+=} | {<<=} | {>>=}
+        | {&=} | {^^=} | {|=} | {##} | {<:} | {:>} | {<%} | {%>}
+        | {%:%:} | {%:}
+        | p-char
+    ]
+
+    ;
+    ; -- A.1.8 Header names
+
+    header-name: [#"<" some h-char #">" | #"^"" some q-char #"^""]
+
+    ;
+    ; -- A.1.9 Preprocessing numbers
+
+    pp-number: [
+        [digit | #"." digit]
+        while [
+            digit
+            | id-nondigit
+            | #"."
+            | [#"e" | #"p" | #"E" | #"P"] sign
+        ]
+    ]
+
+    ;
+    ; -- Whitespace
+
+    nl: {\^/} ; Line break in logical line.
+    eol: newline ; End of logical line.
+    wsp: [some ws-char]
+    span-comment: [{/*} thru {*/}]
+    line-comment: [{//} to newline]
+
+]
+
+charsets: context [
+
+    ; Header name
+    h-char: complement charset {^/<}
+    q-char: complement charset {^/"}
+
+    ; Identifier
+    nondigit: charset [#"_" #"a" - #"z" #"A" - #"Z"]
+    digit: charset {0123456789}
+    octal-digit: charset {01234567}
+    id-char: union nondigit digit
+    hexadecimal-digit: charset [#"0" - #"9" #"a" - #"f" #"A" - #"F"]
+
+    ; pp-number
+    sign: charset {+-}
+
+    ; character-constant
+    c-char: complement charset {'\^/}
+
+    ; string-literal
+    s-char-cs: complement charset {"\^/}
+
+    ; punctuator
+    p-char: charset "[](){}.&*+-~!/%<>^^|?:;=,#"
+
+    ; whitespace
+    ws-char: charset { ^-^M^/^K^L}
+    not-wsp: complement ws-char
+]
+
+export grammar: context bind grammar charsets
