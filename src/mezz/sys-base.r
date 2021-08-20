@@ -24,121 +24,149 @@ REBOL [
 ; If the host wants to know if a script or module is loaded, e.g. to print out
 ; a message.  (Printing directly from this code would be presumptuous.)
 ;
-script-pre-load-hook: _
+; !!! This is not blank but is unset because it is risky to have variables
+; meant to hold functions be NULL or BLANK! as they turn into no-ops.
+;
+script-pre-load-hook: ~
 
 
 module: func [
     {Creates a new module}
 
     return: [module!]
-    product: "The result of running the body"
+    product: "The result of running the body (~quit~ isotope if it ran QUIT)"
         [<opt> any-value!]
 
     spec "The header block of the module (modified)"
-        [block! object!]
-    body "The body block of the module (all bindings will be overwritten)"
-        [block!]
-    /mixin "Bind body to this additional object before running with DO"
+        [blank! block! object!]
+    body "The body of the module (all bindings will be overwritten if block)"
+        [text! binary! block!]
+    /mixin "Bind body to this additional object before executing"
         [object!]
     /into "Add data to existing MODULE! context (vs making a new one)"
         [module!]
+    /file "The filename of the body if it needs transcoding"
+        [file! url!]
+    /line "The line number of the body if it needs transcoding"
+        [integer!]
+    <local>
+        mod  ; note: overwrites MODULO shorthand in this function
 ][
-    ; Originally, UNBIND/DEEP was run on the body as a first step.  We now use
-    ; INTERN or the implicit interning done by TRANSCODE to set the baseline of
-    ; binding to the module (and things it inherits, like LIB).
+    mod: any [
+        into
+        make module! #  ; !!! currently you can only make module from #
+    ]
 
-    ; Convert header block to standard header object:
+    ; Turn spec into an OBJECT! if it was a block.  See system.standard.header
+    ; for a description of the fields and benefits of using a standard object.
     ;
     if block? spec [
         unbind/deep spec
-        spec: try attempt [construct/with/only spec system/standard/header]
+        spec: construct/with/only spec system.standard.header
     ]
 
-    ; Historically, the Name: and Type: fields would tolerate either LIT-WORD!
-    ; or WORD! equally well.  This is because it used R3-Alpha's CONSTRUCT,
-    ; (which was non-evaluative by default, unlike Ren-C's construct) but
-    ; without the /ONLY switch.  In that mode, it decayed LIT-WORD! to WORD!.
-    ; To try and standardize the variance, Ren-C does not accept LIT-WORD!
-    ; in these slots.
-    ;
-    ; !!! Although this is a goal, it creates some friction.  Backing off of
-    ; it temporarily.
-    ;
-    if lit-word? spec/name [
-        spec/name: as word! noquote spec/name
-        ;fail ["Ren-C module Name:" (spec/name) "must be WORD!, not LIT-WORD!"]
-    ]
-    if lit-word? spec/type [
-        spec/type: as word! noquote spec/type
-        ;fail ["Ren-C module Type:" (spec/type) "must be WORD!, not LIT-WORD!"]
+    if spec [  ; Validate the important fields of the header, if there is one
+        ;
+        ; !!! Historically, the `Name:` and `Type:` fields would tolerate
+        ; either a quoted word or plain word.  This seems dodgy.  Review.
+        ;
+        if lit-word? spec.name [
+            spec.name: as word! noquote spec.name
+            ;fail ["Module Name:" (spec.name) "must be WORD!, not LIT-WORD!"]
+        ]
+        if lit-word? spec.type [
+            spec.type: as word! noquote spec.type
+            ;fail ["Module Type:" (spec.type) "must be WORD!, not LIT-WORD!"]
+        ]
+
+        for-each [var types] [  ; v-- review blank tolerance
+            spec.name [<opt> word! blank!]
+            spec.type [word!]  ; default is `Script` from system.standard.header
+            spec.version [<opt> tuple! blank!]
+            spec.options [<opt> block! blank!]
+        ] [
+            ; !!! Running the ENSURE with the composition means better errors,
+            ; e.g. you know the name of the variable with the bad type.  But
+            ; this kind of mechanism should be rethought
+            ;
+            do compose [ensure (types) (var)]
+        ]
+
+        ; Default to having an Exports block in the spec if it's a module.
+        ;
+        ; !!! Should non-Modules be prohibited from having Exports?  Or just
+        ; `Type: Script` be prohibited?  It could be the most flexible answer
+        ; is that IMPORT works on anything that has a list of Exports, which
+        ; would let people design new kinds like `Type: 'SuperModule`, but
+        ; such ideas have not been mapped out.
+        ;
+        all [
+            spec.type = 'Module
+            not in spec 'Exports
+        ] then [
+            append spec compose [Exports: (make block! 10)]
+        ]
+
+        set-meta mod spec
     ]
 
-    ; Validate the important fields of header:
+    ; Interning makes the binding of *all* the words be "attached" in their
+    ; binding to the created module.  This process does not create any new
+    ; storage space for variables.
     ;
-    ; !!! This should be an informative error instead of asserts!
+    ; Using the /WHERE option to TRANSCODE asks it to do the interning binding
+    ; while it scans, so it's in a single pass.  Hence it's good for higher
+    ; level constructs like IMPORT* to only scan the header, but hold off on
+    ; turning the body into a BLOCK! of code.  Instead they should pass in
+    ; the text or binary to scan at this last minute, when the MAKE MODULE! has
+    ; been run and `mod` is available to pass in as the /WHERE.
     ;
-    for-each [var types] [
-        spec object!
-        body block!
-        mixin [<opt> object!]
-        spec/name [word! blank!]
-        spec/type [word! blank!]
-        spec/version [tuple! blank!]
-        spec/options [block! blank!]
-    ][
-        do compose [ensure (types) (var)]  ; names to show if fails
+    ; !!! Future developments should allow a `Baseline: xxx` in the header,
+    ; which specifies modules other than lib to inherit from.
+    ;
+    if block? body [
+        intern* mod body  ; will overwrite any existing bindings in BODY
+    ] else [
+        body: transcode/where/line/file body mod line file
     ]
 
-    into: default [
-        make module! #  ; !!! currently you can only make module from #
-    ]
-    let mod: into
-
-    ; We give each module a dedicated IMPORT command that knows the identity
-    ; of the module, and hence knows where to import to.  (The lower-level
-    ; IMPORT* is still available, to specify a "where" to import.)
+    ; We add importing and exporting as specializations of lower-level IMPORT*
+    ; and EXPORT* functions.  (Those are still available if you ever want to
+    ; specify a "where".)
+    ;
+    ; If you don't want these added, there could be a refinement to MODULE that
+    ; would omit them.  But since MODULE is not that complex to write,
+    ; probably better to have such cases use MAKE MODULE! instead of MODULE.
     ;
     append mod compose [
         import: (specialize :sys/import* [where: mod])
-        export: (specialize :sys/export* [where: mod])
         intern: (specialize :intern* [where: mod])
+
+        ; If you DO a file, it doesn't get an EXPORT operation...only modules.
+        ;
+        export: (if spec.type = 'Module [
+            specialize :sys/export* [where: mod]
+        ] else [
+            specialize :fail [reason: [
+                {Scripts must be invoked via IMPORT to get EXPORT, not DO:}
+                (file else ["<was run as text!/binary!>"])
+            ]]
+        ])
     ]
-
-    if not spec/type [spec/type: 'module]  ; in case not set earlier
-
-    ; Default to having an Exports block in the spec.
-    ;
-    if not block? select spec 'Exports [
-        append spec compose [Exports: (make block! 10)]
-    ]
-
-    set-meta mod spec
-
-    ; The INTERN process makes *all* the words "opportunistically bound" to
-    ; mod, with inheritance of lib.  While words bound in this way can read
-    ; from LIB, they cannot write to lib.  This process does not create any
-    ; new storage space for variables.
-    ;
-    intern* mod body
-
-    ; Historically, modules had a rule of only creating storage space for the
-    ; top-level SET-WORD!s in the body.  You might argue that is too much (and
-    ; top level words need to be marked with a LET-like construct).  Or it
-    ; may be too little (historical DO would bind all ANY-WORD!s into the
-    ; user context).
-    ;
-    ; To get things started in terms of experience with "Sea of Words", we're
-    ; starting out by saying that variables only get "attached" (by the
-    ; interning.  But they will be overwritten by any SET-WORD! assignment,
-    ; e.g. there's nothing equivalent to JavaScript's "strict mode" of catching
-    ; assignments to misspelled variables, etc.  This will be revisited as
-    ; the model matures.
-    ;
-    comment [bind/set body mod]
 
     if object? mixin [bind body mixin]
 
-    set (product: default [#]) do body
+    ; We need to catch the quit here, because if we do not we cannot return
+    ; a module that we created.  The caller expects to get a module back even
+    ; if that module's init code decided to QUIT to end processing prematurely.
+    ; (QUIT is not a failure when running scripts.)
+    ;
+    catch/quit [
+        set (product: default [#]) do body
+    ]
+    then ^arg-to-quit -> [
+        set product unmeta arg-to-quit
+    ]
 
     return mod
 ]
@@ -152,154 +180,47 @@ module: func [
 do*: func [
     {SYS: Called by system for DO on datatypes that require special handling}
 
-    return: [<opt> any-value!]
+    return: "Final evaluative product of code or block"
+        [<opt> any-value!]
+    context: "Isolated context where the evaluation was performed"
+        [module!]
+
     source "Files, urls and modules evaluate as scripts, other strings don't"
         [file! url! text! binary! tag!]
     args "Args passed as system/script/args to a script (normally a string)"
         [<opt> any-value!]
     only "Do not catch quits...propagate them"
         [logic!]
+    <local> result
 ][
-    ; !!! DEMONSTRATION OF CONCEPT... this translates a tag into a URL!, but
-    ; it should be using a more "official" URL instead of on individuals
-    ; websites.  There should also be some kind of local caching facility.
+    ; For the moment, common features of DO and IMPORT are implemented in the
+    ; IMPORT* command.  This includes:
     ;
-    ; force-remote-import is defined in sys-load.r
+    ; * Changing the working directory to match the file path (or URL "path")
+    ;   of a script, and restoring the prior path on completion of failure
     ;
-    let old-force-remote-import: force-remote-import
-
-    if tag? source [
-        set 'force-remote-import true
-        ; Convert value into a URL!
-        source: switch source
-            (load system/locale/library/utilities)
-        else [
-            fail [
-                {Module} source {not in system/locale/library}
-            ]
-        ]
-    ]
-
-    ; Note that DO of file path evaluates in the directory of the target file.
+    ; * Isolating the executed code into a MODULE! so that it doesn't leak
+    ;   into the caller's context.
     ;
-    ; !!! There are some issues with this idea of preserving the path--one of
-    ; which is that WHAT-DIR may return null.
+    ; * Turning <tag> identified script names to DO into a URL by looking it
+    ;   up in the modules library.  So `do <chess>` and `import <json>` use
+    ;   the same logic to figure out where that tag poitns.
     ;
-    let original-path: try what-dir
-    let original-script: _
-
-    let finalizer: func [
-        ^value' [<opt> any-value!]
-        /quit
-        <with> return
-    ][
-        let quit_FINALIZER: quit
-        quit: :lib/quit
-
-        ; Restore system/script and the dir if they were changed
-
-        if original-script [system/script: original-script]
-        if original-path [change-dir original-path]
-
-        if quit_FINALIZER and (only) [
-            quit unmeta value'  ; "rethrow" the QUIT if DO/ONLY
-        ]
-
-        set 'force-remote-import old-force-remote-import
-        return unmeta value'  ; returns from DO*, because of <with> return
-    ]
-
-    ; If a file is being mentioned as a DO location and the "current path"
-    ; is a URL!, then adjust the source to be a URL! based from that path.
+    ; * Setting system.script to reflect the executing script during its run,
+    ;   and then putting it back when control is returned to the caller.
     ;
-    if all [url? original-path, file? source] [
-         source: join original-path source
-    ]
-
-    ; Load the code (do this before CHANGE-DIR so if there's an error in the
-    ; LOAD it will trigger before the failure of changing the working dir)
+    ; * Adding specialized IMPORT, EXPORT, and INTERN definitions that know
+    ;   where the importing and exporting and interning needs to be done,
+    ;   e.g. into the containing context.  (Lower-level mechanics that want
+    ;   to avoid this should use MAKE MODULE! instead for full control.)
     ;
-    ; !!! This said "It is loaded as UNBOUND so that DO-NEEDS runs before
-    ; INTERN."  Now that DO-NEEDS no longer exists, what does it mean?
+    ; But the actual action taken is different: DO returns the evaluative
+    ; product of the script as its primary result, while IMPORT returns the
+    ; module context the script was executed in.  And IMPORT is designed to
+    ; return the same context every time it is called--so modules are loaded
+    ; only once--while DO performs an action that you can run any number
+    ; of times.  So what DO does is effectively flips the order of the
+    ; return results of IMPORT.
     ;
-    let hdr
-    let code
-    [code hdr]: load/type source 'unbound
-
-    ; !!! This used to LOCK the header, but the module processing wants to
-    ; do some manipulation to it.  Review.  In the meantime, in order to
-    ; allow mutation of the OBJECT! we have to actually TAKE the hdr out
-    ; of the returned result to avoid LOCKing it when the code array is locked
-    ; because even with series not at their head, LOCK NEXT CODE will lock it.
-    ;
-    ensure block! code
-    ensure [object! blank!] hdr: default [_]
-    let is-module: 'module = select hdr 'type
-
-    ; When we run code from a file, the "current" directory is changed to the
-    ; directory of that script.  This way, relative path lookups to find
-    ; dependent files will look relative to the script.  This is believed to
-    ; be the best interpretation of shorthands like `read %foo.dat` or
-    ; `do %utilities.r`.
-    ;
-    ; We want this behavior for both FILE! and for URL!, which means
-    ; that the "current" path may become a URL!.  This can be processed
-    ; with change-dir commands, but it will be protocol dependent as
-    ; to whether a directory listing would be possible (HTTP does not
-    ; define a standard for that)
-    ;
-    all [
-        match [file! url!] source
-        let file: find-last/tail source slash
-        elide change-dir copy/part source file
-    ] then [
-        === PRINT SCRIPT INFO IF EXECUTING FROM FILE OR URL ===
-
-        ; !!! What should govern the decision to do this?
-
-        if set? 'script-pre-load-hook [
-            script-pre-load-hook is-module hdr
-        ]
-    ]
-
-    ; Make the new script object
-    original-script: system/script  ; and save old one
-    system/script: make system/standard/script compose [
-        title: try select hdr 'title
-        header: hdr
-        parent: :original-script
-        path: what-dir
-        args: (try :args)
-    ]
-
-    let result
-    catch/quit [
-        either is-module [
-            ;
-            ; !!! DO of code that one is not certain if it is a module or a
-            ; script is a sketchy concept.  It should be reviewed, since
-            ; modules are not supposed to have side-effects.
-            ;
-            module hdr code
-
-            ; !!! It would be nice if you could modularize a script and
-            ; still be able to get a result.  Until you can, make module
-            ; execution return void so that it doesn't give a verbose
-            ; output when you DO it (so you can see whatever the script
-            ; might have PRINT-ed)
-            ;
-            ; https://github.com/rebol/rebol-issues/issues/2373
-            ;
-            result: ~void~  ; console won't show VOID!s named ~void~
-        ][
-            ; !!! A module expects to be able to UNBIND/DEEP the spec it is
-            ; given, because it doesn't want stray bindings on any of the words
-            ; to leak into the module header.  We COPY here, but as with most
-            ; things related to binding, a better solution is needed.
-            ;
-            [# result]: module copy [] code
-        ]
-    ] then :finalizer/quit
-
-    return finalizer get/any 'result
+    [(try context) @result]: import*/args/only blank source args only
 ]

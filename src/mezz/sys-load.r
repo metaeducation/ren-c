@@ -43,7 +43,7 @@ load-header: function [
     return: "header OBJECT! if present, or error WORD!"
         [<opt> object! word!]
     body: "<output>"
-        [binary! block!]
+        [binary! text!]
     line: "<output>"
         [integer!]
     final: "<output>"
@@ -135,7 +135,7 @@ load-header: function [
         return 'bad-header
     ]
 
-    if find hdr/options just content [
+    if find try hdr/options just content [
         append hdr compose [content (data)]  ; as of start of header
     ]
 
@@ -158,7 +158,7 @@ load-header: function [
     if :key = 'rebol [
         ; regular script, binary or script encoded compression supported
         case [
-            find hdr/options just compress [
+            find try hdr/options just compress [
                 rest: any [
                     attempt [
                         ; Raw bits.  whitespace *could* be tolerated; if
@@ -186,19 +186,19 @@ load-header: function [
         data: transcode data  ; decode embedded script
         rest: skip data 2  ; !!! what is this skipping ("hdr/length" ??)
 
-        if find hdr/options just compress [  ; script encoded only
+        if find try hdr/options just compress [  ; script encoded only
             rest: attempt [gunzip first rest] else [
                 return 'bad-compress
             ]
         ]
     ]
 
-    if body [set body ensure [binary! block!] rest]
+    if body [set body ensure [binary! text!] rest]
     if line-out [set line-out ensure integer! line]
-    if final [set final ensure binary! end]
+    if final [set final ensure [binary! text!] end]
 
     ensure object! hdr
-    ensure [block! blank!] hdr/options
+    ensure [<opt> block! blank!] hdr/options
     return hdr
 ]
 
@@ -332,10 +332,9 @@ load-value: redescribe [
 )
 
 
-; This is code that is reused by both IMPORT and LOAD-EXTENSION.
-;
-; We don't want to load the same module more than once.  This is standard
-; in languages like Python and JavaScript:
+; While DO can run a script any number of times with fresh variables on each
+; run, we don't want to IMPORT the same module more than once.  This is
+; standard in languages like Python and JavaScript:
 ;
 ; https://dmitripavlutin.com/javascript-module-import-twice
 ; https://stackoverflow.com/q/19077381/
@@ -344,183 +343,259 @@ load-value: redescribe [
 ; without running it.  Unfortunately we can't tell the key from just the
 ; information given as the "source"...so it might require an HTTP fetch of
 ; a URL! or reading from a file.  But we could notice when the same filename
-; or URL was used.
+; or URL was used.  We should also use hashes to tell when things change.
 ;
-; !!! Previously this had the ability to /DELAY running the module; which
-; could hold it even as a BINARY! and wait until it was needed.  This was not
-; fully realized, and has been culled to try and get more foundational
-; features (e.g. binding) working.
-;
-load-module: func [
-    {Inserts a module into the system module list (creating if necessary)}
-
-    return: [<opt> module!]
-    source {Source (file, URL, binary, etc.) or name of already loaded module}
-        [module! file! url! text! binary! word!]
-    /into "Load into an existing module (e.g. populated with some natives)"
-        [module!]
-    /exports "Add exports on top of those in the EXPORTS: section"
-        [block!]
-][
-    if module? source [  ; Register only, don't create
-        let name: noquote (meta-of source)/name
-
-        ; The module they're passing in may or may not have a name.  If it
-        ; has a name, we want to add it to the module list if it's not
-        ; already there.
-        ;
-        if not name [
-            return source
-        ]
-        let mod: select/skip system/modules name 2 else [
-            append system/modules reduce [name source]
-            return source
-        ]
-        if mod != source [
-            print mold meta-of mod
-            print mold meta-of source
-            fail ["Conflict: more than one module instance named" name]
-        ]
-        return source
-    ]
-
-    let data: null
-    let [hdr code line]
-
-    ; Figure out the name of the module desired, by examining the header
-
-    let file: match [file! url!] source  ; used for file/line info during scan
-
-    let name: match word! source else [
-        data: match [binary! text!] source else [read source]
-
-        [hdr code line]: load-header/file/required data file
-        name: noquote hdr/name
-    ]
-
-    ; See if a module by that name is already loaded, and return it if so
-
-    let mod: select/skip system/modules name 2 then [
-        return mod
-    ]
-
-    if not data [return null]  ; If source was a WORD!, can't fallback on load
-
-    code: transcode/line/file code line file
-
-    ensure object! hdr
-    ensure block! code
-
-    ; !!! The /EXPORTS parameter allows the adding of more exports, it's used
-    ; by the extension mechanism when it sees "export" in the spec on a native.
-    ; That doesn't correspond to an actual execution of an export command.
-    ; This code added it to the header, but it's not clear if the header
-    ; needs to be the canon list of exports.
-
-    if exports [
-        if null? select hdr 'exports [
-            append hdr compose [exports: (exports)]
-        ] else [
-            append exports hdr/exports
-            hdr/exports: exports
-        ]
-    ]
-
-    catch/quit [
-        mod: module/into hdr code into
-    ]
-
-    if name [
-        append system/modules reduce [name, ensure module! mod]
-    ]
-
-    return mod
-]
-
-; If TRUE, IMPORT 'MOD acts as IMPORT <MOD>
-;
-force-remote-import: false
-
-; See also: SYS/MAKE-MODULE*, SYS/LOAD-MODULE
-;
-import*: function [
+import*: func [
     {Imports a module; locate, load, make, and setup its bindings}
 
     return: "Loaded module"
         [<opt> module!]
-    where [module!]
-    source [word! file! url! text! binary! module! tag!]
+    product: "Evaluative product of module body (only if WHERE is BLANK!)"
+        [<opt> any-value!]
+
+    where "Where to put exported definitions from SOURCE"
+        [blank! module!]
+    source [
+        file! url!  ; get from location, run with location as working dir
+        tag!  ; look up tag as a shorthand for a URL
+        binary!  ; UTF-8 source, needs to be checked for invalid byte patterns
+        text!  ; source internally stored as validated UTF-8, *may* scan faster
+        word!  ; not entirely clear on what WORD! does.  :-/
+        module!  ; register the module and import its exports--do not create
+    ]
+    /args "Args passed as system.script.args to a script (normally a string)"
+        [any-value!]
+    /only "Do not catch quits...propagate them"
+        [logic!]
+    /into "e.g. reuse REBCTX* already made for NATIVEs loading from extension"
+        [module!]
+    <static>
+        importing-remotely (false)
 ][
-    old-force-remote-import: force-remote-import
-    ; `import <name>` will look in the module library for the "actual"
-    ; module to load up, and drop through.
+    product: default [#]  ; we do nothing differently if not requested
+
+    return: adapt :return [  ; make sure all return paths actually import vars
+        ;
+        ; Note: `value` below is the argument to RETURN.  It is a ^META
+        ; parameter so should be a quoted module.  We don't disrupt that, else
+        ; falling through to RETURN would get tripped up.
+        ;
+        ; !!! The idea of `import *` is frowned upon as a practice, as it adds
+        ; an unknown number of things to the namespace of the caller.  Most
+        ; languages urge you not to do it, but JavaScript bans it entirely.  We
+        ; should maybe ban it as well (or at least make it inconvenient).  But
+        ; do it for the moment since that is how it has worked in the past.
+        ;
+        let exports: select (try meta-of ensure module! unmeta :value) 'exports
+        if exports [
+            resolve where (unmeta :value) exports
+        ]
+    ]
+
+    === IF MODULE ALREADY CREATED, REGISTER AND RESOLVE IMPORTED VARS ===
+
+    if module? source [
+        assert [not into]  ; ONLY isn't applicable unless scanning new source
+
+        let name: noquote (meta-of source).name else [
+            set product '~nameless~
+            return source  ; no name, so just do the RESOLVE to get variables
+        ]
+        let mod: select/skip system.modules name 2 else [
+            append system.modules :[name source]  ; not in module list, add it
+            set product '~registered~
+            return source
+        ]
+        if mod != source [
+            fail ["Conflict: more than one module instance named" name]
+        ]
+        if product [
+            set product '~cached~
+        ]
+        return source
+    ]
+
+    === TREAT (IMPORT 'FILENAME) AS REQUEST TO LOOK LOCALLY FOR FILENAME.R ===
+
+    ; We don't want remote execution of a module via `import <some-library>`
+    ; to be able to turn around and run code locally.  So during a remote
+    ; import, any WORD!-style imports like `import 'mod2` are turned into
+    ; `import <mod2>`.
     ;
-    ; if a module is loaded with `import <mod1>`
-    ; then every nested `import 'mod2`
-    ; is forced to `import <mod2>`
-    ;
-    if tag? source [set 'force-remote-import true]
-    if all [force-remote-import, word? source] [
+    let old-importing-remotely: importing-remotely
+    if all [importing-remotely, word? source] [
         source: to tag! source
     ]
-    if tag? source [
-        tmp: (select load system/locale/library/modules source) else [
-            cause-error 'access 'cannot-open reduce [
-                module "module not found in system/locale/library/modules"
+
+    if word? source [
+        for-each path system.options.module-paths [
+            let file: join path :[file system.options.default-suffix]
+            if not exists? file [
+                continue
             ]
+            return [# (product)]: import* file
         ]
 
-        source: (first tmp) else [
-            cause-error 'access 'cannot-open reduce [
-                module "error occurred in loading module"
-                    "from system/locale/library/modules"
-            ]
-        ]
+        fail ["Could not find any" file "in SYSTEM.OPTIONS.MODULE-PATHS"]
     ]
 
-    mod: load-module source
+    === IMPORT <TAG> AS SHORTHAND FOR MODULE FROM LIBRARIES INDEX ===
 
-    case [
-        mod [
-            ; success!
-        ]
-
-        word? source [
-            ;
-            ; Module (as word!) is not loaded already, so try to find it.
-            ;
-            file: append to file! module system/options/default-suffix
-
-            for-each path system/options/module-paths [
-                if mod: load-module join path file [  ; Note: %% not defined yet
-                    break
-                ]
-            ]
-        ]
-
-        match [file! url!] source [
-            cause-error 'access 'cannot-open reduce [
-                source "not found or not valid"
-            ]
-        ]
-    ]
-
-    if not mod [
-        cause-error 'access 'cannot-open reduce [source "module not found"]
-    ]
-
-    ; !!! The idea of `import *` is frowned upon as a practice, as it adds
-    ; an unknown number of things to the namespace of the caller.  Most
-    ; languages urge you not to do it, but JavaScript bans it entirely.  We
-    ; should probably ban it as well.  But do it for the moment since that
-    ; is how it has worked in the past.
+    ; This translates a tag into a URL!.  The list is itself loaded from
+    ; the internet, URL is in `system.locale.library.utilities`
     ;
-    if let exports: select (meta-of mod) 'exports [
-        resolve where mod try exports  ; no-op if empty
+    ; !!! As the project matures, this would have to come from a curated
+    ; list, not just links on individuals' websites.  There should also be
+    ; some kind of local caching facility.
+    ;
+    if tag? source [
+        set 'force-remote-import true
+        source: switch source
+            (load system.locale.library.utilities)
+        else [
+            fail [{Module} source {not in system.locale.library}]
+        ]
     ]
 
-    set 'force-remote-import old-force-remote-import
-    return ensure module! mod
+    === IF EXECUTING A FILE!, ADJUST WORKING PATH TO PATH OF SCRIPT ===
+
+    ; When we run code from a file, the "current" directory is changed to the
+    ; directory of that script.  This way, relative path lookups to find
+    ; dependent files will look relative to the script.  This is believed to
+    ; be the best interpretation of shorthands like `read %foo.dat` or
+    ; `do %utilities.r`.
+    ;
+    ; We want this behavior for both FILE! and for URL!, which means
+    ; that the "current" path may become a URL!.  This can be processed
+    ; with change-dir commands, but it will be protocol dependent as
+    ; to whether a directory listing would be possible (HTTP does not
+    ; define a standard for that)
+    ;
+    ; The original path before running the code should be restored before
+    ; this function returns.
+    ;
+    ; !!! There are some issues with this idea of preserving the path--one of
+    ; which is that WHAT-DIR may return null.
+
+    let original-path: what-dir
+    let original-script: '
+
+    ; If a file is being mentioned as a DO location and the "current path"
+    ; is a URL!, then adjust the source to be a URL! based from that path.
+    ;
+    if all [url? original-path, file? source] [
+         source: join original-path source
+    ]
+
+    === LOAD JUST THE HEADER FOR EXAMINATION, TO FIND THE NAME ===
+
+    ; There may be a `Name:` field in the header.  Historically this was used
+    ; to tell if an already loaded version of the module was loaded...but this
+    ; doesn't account for potential variations (maybe loading different hashes
+    ; from different locations, or if the file has changed?)
+    ;
+    ; !!! Noticing changes would be extremely helpful by not forcing you to
+    ; quit and restart to see module changes.  This suggests storing a hash.
+
+    let file: match [file! url!] source  ; used for file/line info during scan
+
+    let data: match [binary! text!] source else [read source]
+
+    let [hdr code line]: load-header/file data file
+    if not hdr [
+        if where [  ; not just a DO
+            fail ["IMPORT requires a header on:" (any [file, "<source>"])]
+        ]
+    ]
+
+    let name: noquote (try hdr).name
+    (select/skip system.modules try name 2) then cached -> [
+        set product ~cached~
+        return cached
+    ]
+
+    ensure [<opt> object!] hdr
+
+    let is-module: hdr and ('module = select hdr 'type)
+
+    === CHANGE WORKING DIRECTORY TO MATCH DIRECTORY OF THE SCRIPT ===
+
+    ; We have to do this prior to executing the script code so it sees the
+    ; change.  But we do it after the scan, in case there was a syntax error.
+
+    if match [file! url!] source [
+        let file: find-last/tail source slash
+        if file [
+            change-dir copy/part source file
+        ]
+    ]
+
+    === MAKE SCRIPT CHARACTERIZATION OBJECT AND CALL PRE-SCRIPT HOOK ===
+
+    ; The header object doesn't track instance information like the args to
+    ; a script, or what file path it was executed from.  And we probably don't
+    ; want to inject that in the header.  So SYSTEM.STANDARD.SCRIPT is the
+    ; base object for gathering these other instantiation-related properties
+    ; so the running script can know about them.
+
+    original-script: system.script
+
+    system.script: make system.standard.script compose [
+        title: try select try hdr 'title
+        header: hdr
+        parent: :original-script
+        path: what-dir
+        args: (try :args)
+    ]
+
+    if (set? 'script-pre-load-hook) and (match [file! url!] source) [
+        ;
+        ; !!! It seems we could/should pass system.script here, and the
+        ; filtering of source as something not to notify about would be the
+        ; decision of the hook.
+        ;
+        ; !!! Should there be a post-script-hook?
+        ;
+        script-pre-load-hook is-module try hdr
+    ]
+
+    === EXECUTE SCRIPT BODY ===
+
+    ; This routine is attempting to merge two distinct codebases: IMPORT
+    ; and DO.  They have common needs for looking up <tag> shorthands to make
+    ; URLs, or to cleanly preserve the directories, etc.  But the actual
+    ; execution is different: modules are imported only once and the body
+    ; result is discarded, while DO can run multiple times and the body result
+    ; is returned as the overall return for the DO.
+    ;
+    ; !!! None of this is perfect...but it's much better than what had come
+    ; from the unfinished R3-Alpha module system, and its decade of atrophy
+    ; that happened after that...
+
+    let quitting: false
+
+    let [mod '(product)]: module/into/file/line try hdr code into file line
+
+    ensure module! mod
+
+    if is-module and (name) [
+        append system.modules :[name mod]
+    ]
+
+    === RESTORE SYSTEM.SCRIPT AND THE DIRECTORY IF THEY WERE CHANGED ===
+
+    if original-script [system.script: original-script]
+    if original-path [change-dir original-path]
+
+    importing-remotely: old-importing-remotely
+
+    === PROPAGATE QUIT IF REQUESTED, OR RETURN MODULE ===
+
+    if quitting and only [
+        quit get/any product  ; "rethrow" the QUIT if DO/ONLY
+    ]
+
+    return mod
 ]
 
 
@@ -552,11 +627,10 @@ export*: func [
     ]
 
     loop [not tail? items] [
-        if not word? :items.1 [
-            fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^pos.1]
+        val: get/any word: match word! items.1 else [
+            fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]
-        word: ensure word! items.1
-        val: get/any word  ; !!! notation for exporting isotopes?
+        ; !!! notation for exporting isotopes?
         items: next items
 
         (types: match block! :items.1) then [

@@ -227,24 +227,43 @@ standard: make object! [
             _
     ]
 
+    ; Having a "standard header object" for modules/scripts means:
+    ;
+    ; (1) C code processing the module can take for granted the order in which
+    ;     the standard fields are, potentially processing it faster.
+    ;
+    ; (2) So long as you don't use any additional fields, the list of keys
+    ;     could be shared between objects.
+    ;
+    ; (3) You can provide default values more easily.
+    ;
+    ; This is the existing resource for knowing what historical keys were:
+    ;
+    ;   http://www.rebol.org/one-click-submission-help.r
+    ;   https://forum.rebol.info/t/1674
+    ;
     ; !!! Historically headers use titlecase keys.  In the current world, that
     ; leads to a difference from if you use lowercase ones.
     ;
     header: make object! [
         Title: {Untitled}
-        Name:
-        Type:
-        Version:
-        Date:
-        File:
-        Author:
-        Needs:
-        Options:
-        Checksum:
-;       Compress:
-;       Exports:
-;       Content:
-            _
+        File: '
+        Name: '
+        Type: 'Script  ; !!! Is this a good default?
+        Version: '
+        Date: '
+        Author: '
+        Options: '
+        Description: '
+
+        ; !!! `Compress:`, `Exports:`, and `Contents:` were commented out.
+        ; Exports perhaps because they only applied to modules, and would be
+        ; misleading on a plain script.  The other perhaps because they were
+        ; not processed by C code so (1) did not apply.  `Needs:` has been
+        ; removed while focusing on the IMPORT dialect design.  `Checksum:`
+        ; was a basically useless feature, as there's no security benefit to
+        ; having the checksum of the body travel in the same file as a fully
+        ; tamperable header.
     ]
 
     scheme: make object! [
