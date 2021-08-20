@@ -964,10 +964,19 @@ e-table/write-emitted
 ;
 ; For now, just DO the file at an assumed path--in a state where it can take
 ; for granted that the list of APIs and the `CSCAPE` emitter is available.
+;
+; !!! With module isolation this becomes difficult, work around it by binding
+; the code into this module.
+
+saved-dir: what-dir
 
 ; The JavaScript extension actually mutates the API table, so run the TCC hook
 ; first...
 ;
-do make-file [(repo-dir) extensions/tcc/tools/prep-libr3-tcc.reb]
+change-dir make-file [(repo-dir) extensions/tcc/tools /]
+do in (binding of 'output-dir) load %prep-libr3-tcc.reb
 
-do make-file [(repo-dir) extensions/javascript/tools/prep-libr3-js.reb]
+change-dir make-file [(repo-dir) extensions/javascript/tools /]
+do in (binding of 'output-dir) load %prep-libr3-js.reb
+
+change-dir saved-dir

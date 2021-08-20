@@ -811,6 +811,16 @@ use [extension-dir entry][
             find read make-file [(extension-dir) (entry)] %make-spec.r
         ] then [
             spec: load make-file [(extension-dir) (entry) make-spec.r]
+
+            ; !!! The specs use `repo-dir` and some other variables.
+            ; Splice those in for starters, but will need deep thought.
+            ;
+            insert spec compose [
+                repo-dir: (repo-dir)
+                system-config: (system-config)
+                user-config: (user-config)
+            ]
+
             parsed: parse-ext-build-spec spec
             append available-extensions parsed
         ]
