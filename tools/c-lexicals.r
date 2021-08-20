@@ -94,7 +94,13 @@ grammar: [
         {\x} hexadecimal-digit while hexadecimal-digit
     ]
 
-    octal-escape-sequence: [#"\" 1 3 octal-digit]
+    ; !!! This had the rule `[1 3 octal-digit]`, but this style of range is
+    ; not supported by UPARSE or PARSE3 (it messes with the model at both
+    ; mechanical and cognitive levels, as `2 3 integer!` and `2 [3 integer!]`
+    ; are not the same.)  It would be `[repeat @[1 3] octal-digit]` but that
+    ; won't work in the bootstrap executable.  Fake it.
+    ;
+    octal-escape-sequence: [#"\" octal-digit opt octal-digit opt octal-digit]
 
     ;
     ; -- A.1.6 String literals

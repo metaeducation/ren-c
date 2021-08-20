@@ -164,7 +164,7 @@ export analyse: context [
 
             malloc-found: copy []
 
-            malloc-check: here, [
+            malloc-check: [
                 and identifier "malloc" (
                     append malloc-found try text-line-of position
                 )
@@ -453,7 +453,7 @@ c-parser-extension: context bind bind [
     grammar/function-body: braced
 
     append grammar/format-func-section [
-        last-func-end:
+        last-func-end: here
         while [nl | eol | wsp]
     ]
 

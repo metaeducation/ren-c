@@ -173,7 +173,7 @@ export proto-parser: context [
         ;
         format-func-section: copy/deep [
             doubleslashed-lines
-            and is-intro
+            ahead is-intro
             function-proto while white-space
             function-body
             (
