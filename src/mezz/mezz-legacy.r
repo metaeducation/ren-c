@@ -98,18 +98,6 @@ eval: function [] [
 ]
 
 
-; The pattern `foo: enfix function [...] [...]` is probably more common than
-; enfixing an existing function, e.g. `foo: enfix :add`.  Hence making a
-; COPY of the ACTION! identity is probably a waste.  It may be better to go
-; with mutability-by-default, so `foo: enfix copy :add` would avoid the
-; mutation.  However, it could also be that the function spec dialect gets
-; a means to specify enfixedness.  See:
-;
-; https://forum.rebol.info/t/moving-enfixedness-back-into-the-action/1156
-;
-enfix: :enfixed
-
-
 ; INPUT is deprecated--but making sure ASK TEXT! works for its purpose first
 ; https://forum.rebol.info/t/1124
 ;

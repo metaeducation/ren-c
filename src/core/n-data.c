@@ -930,7 +930,7 @@ REBNATIVE(enfixed_q)
 
 
 //
-//  enfixed: native [
+//  enfix: native [
 //
 //  {For making enfix functions, e.g `+: enfixed :add` (copies)}
 //
@@ -938,23 +938,21 @@ REBNATIVE(enfixed_q)
 //      action [action!]
 //  ]
 //
-REBNATIVE(enfixed)
-//
-// !!! Because ENFIX was non mutating previously in terms of behavior, the
-// new more traditional native has had its name changed.  For efficiency,
-// a mutating version for ENFIX may be introduced.
+REBNATIVE(enfix)
 {
-    INCLUDE_PARAMS_OF_ENFIXED;
+    INCLUDE_PARAMS_OF_ENFIX;
 
-    if (GET_ACTION_FLAG(VAL_ACTION(ARG(action)), ENFIXED))
+    REBVAL *action = ARG(action);
+
+    if (GET_ACTION_FLAG(VAL_ACTION(action), ENFIXED))
         fail (
             "ACTION! is already enfixed (review callsite, enfix changed"
             " https://forum.rebol.info/t/1156"
         );
 
-    REBVAL *copy = rebValue("copy @", ARG(action));
-    SET_ACTION_FLAG(VAL_ACTION(copy), ENFIXED);
-    return copy;
+    SET_ACTION_FLAG(VAL_ACTION(action), ENFIXED);
+
+    RETURN (action);
 }
 
 
