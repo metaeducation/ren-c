@@ -79,7 +79,7 @@
 //  {Run another program by spawning a new process}
 //
 //      return: "If /WAIT, the forked process ID, else exit code"
-//        [integer!]
+//          [integer!]
 //      command "OS-local command line, block with arguments, executable file"
 //          [text! block! file!]
 //      /wait "Wait for command to terminate before returning"
@@ -206,7 +206,6 @@ REBNATIVE(get_os_browsers)
 //      return: <none>
 //      duration [integer! decimal! time!]
 //          {Length to sleep (integer and decimal are measuring seconds)}
-//
 //  ]
 //
 REBNATIVE(sleep)
@@ -236,8 +235,27 @@ REBNATIVE(sleep)
 
 
 #if defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
-static void kill_process(pid_t pid, int signal);
+static void kill_process(pid_t pid, int signal)
+{
+    if (kill(pid, signal) >= 0)
+        return; // success
+
+    switch (errno) {
+      case EINVAL:
+        rebJumps("fail [{Invalid signal number:}", rebI(signal), "]");
+
+      case EPERM:
+        Fail_Permission_Denied();
+
+      case ESRCH:
+        Fail_No_Process(rebInteger(pid)); // failure releases integer handle
+
+      default:
+        rebFail_OS(errno);
+    }
+}
 #endif
+
 
 //
 //  export terminate: native [
@@ -571,274 +589,3 @@ REBNATIVE(list_env)
 
     return map;
 }
-
-
-#if defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
-
-//
-//  get-pid: native [
-//
-//  "Get ID of the process"
-//
-//      return: [integer!]
-//
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(get_pid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_GET_PID;
-
-    return rebInteger(getpid());
-}
-
-
-
-//
-//  get-uid: native [
-//
-//  "Get real user ID of the process"
-//
-//      return: [integer!]
-//
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(get_uid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_GET_UID;
-
-    return rebInteger(getuid());
-}
-
-
-//
-//  get-euid: native [
-//
-//  "Get effective user ID of the process"
-//
-//      return: [integer!]
-//
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(get_euid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
-
-    return rebInteger(geteuid());
-}
-
-
-//
-//  get-gid: native [
-//
-//  "Get real group ID of the process"
-//
-//      return: [integer!]
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(get_gid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_GET_UID;
-
-    return rebInteger(getgid());
-}
-
-
-//
-//  get-egid: native [
-//
-//  "Get effective group ID of the process"
-//
-//      return: [integer!]
-//
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(get_egid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_GET_EUID;
-
-    return rebInteger(getegid());
-}
-
-
-//
-//  set-uid: native [
-//
-//  {Set real user ID of the process}
-//
-//      return: "Same ID as input"
-//          [integer!]
-//      uid {The effective user ID}
-//          [integer!]
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(set_uid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_SET_UID;
-
-    if (setuid(VAL_INT32(ARG(uid))) >= 0)
-        RETURN (ARG(uid));
-
-    switch (errno) {
-      case EINVAL:
-        fail (PAR(uid));
-
-      case EPERM:
-        Fail_Permission_Denied();
-
-      default:
-        rebFail_OS(errno);
-    }
-}
-
-
-//
-//  set-euid: native [
-//
-//  {Get effective user ID of the process}
-//
-//      return: "Same ID as input"
-//          [<opt>]
-//      euid "The effective user ID"
-//          [integer!]
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(set_euid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_SET_EUID;
-
-    if (seteuid(VAL_INT32(ARG(euid))) >= 0)
-        RETURN (ARG(euid));
-
-    switch (errno) {
-      case EINVAL:
-        fail (PAR(euid));
-
-      case EPERM:
-        Fail_Permission_Denied();
-
-      default:
-        rebFail_OS(errno);
-    }
-}
-
-
-//
-//  set-gid: native [
-//
-//  {Set real group ID of the process}
-//
-//      return: "Same ID as input"
-//          [<opt>]
-//      gid "The effective group ID"
-//          [integer!]
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(set_gid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_SET_GID;
-
-    if (setgid(VAL_INT32(ARG(gid))) >= 0)
-        RETURN (ARG(gid));
-
-    switch (errno) {
-      case EINVAL:
-        fail (PAR(gid));
-
-      case EPERM:
-        Fail_Permission_Denied();
-
-      default:
-        rebFail_OS(errno);
-    }
-}
-
-
-//
-//  set-egid: native [
-//
-//  "Get effective group ID of the process"
-//
-//      return: "Same ID as input"
-//          [integer!]
-//      egid "The effective group ID"
-//          [integer!]
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(set_egid)
-{
-    PROCESS_INCLUDE_PARAMS_OF_SET_EGID;
-
-    if (setegid(VAL_INT32(ARG(egid))) >= 0)
-        RETURN (ARG(egid));
-
-    switch (errno) {
-      case EINVAL:
-        fail (PAR(egid));
-
-      case EPERM:
-        Fail_Permission_Denied();
-
-      default:
-        rebFail_OS(errno);
-    }
-}
-
-
-static void kill_process(pid_t pid, int signal)
-{
-    if (kill(pid, signal) >= 0)
-        return; // success
-
-    switch (errno) {
-      case EINVAL:
-        rebJumps("fail [{Invalid signal number:}", rebI(signal), "]");
-
-      case EPERM:
-        Fail_Permission_Denied();
-
-      case ESRCH:
-        Fail_No_Process(rebInteger(pid)); // failure releases integer handle
-
-      default:
-        rebFail_OS(errno);
-    }
-}
-
-
-//
-//  send-signal: native [
-//
-//  "Send signal to a process"
-//
-//      return: <none>  ; !!! might this return pid or signal (?)
-//      pid [integer!]
-//          {The process ID}
-//      signal [integer!]
-//          {The signal number}
-//  ]
-//  platforms: [linux android posix osx]
-//
-REBNATIVE(send_signal)
-{
-    PROCESS_INCLUDE_PARAMS_OF_SEND_SIGNAL;
-
-    pid_t pid = rebUnboxInteger(ARG(pid));
-    int signal = rebUnboxInteger(ARG(signal));
-
-    // !!! Is called `send-signal` but only seems to call kill (?)
-    //
-    kill_process(pid, signal);
-
-    return Init_None(D_OUT);
-}
-
-#endif // defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
