@@ -51,9 +51,9 @@ probe: func* [
     write-stdout newline
 
     ; We need to wait until the last minute and unquote the original value
-    ; because NULL-2 isotopes decay if assigned to a variable.
+    ; because ~null~ isotopes decay if assigned to a variable.
     ;
-    return/isotope unquote value'
+    return/isotope unmeta value'
 ]
 
 ??: :probe  ; shorthand to use in debug sessions, not intended to be committed
