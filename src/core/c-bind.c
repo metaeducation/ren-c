@@ -475,6 +475,11 @@ REBNATIVE(let)
             }
 
             switch (VAL_TYPE(temp)) {
+              case REB_ISSUE:
+              case REB_BLANK:
+                Derelativize(DS_PUSH(), temp, temp_specifier);
+                break;
+
               case REB_WORD:
               case REB_SET_WORD: {
                 Derelativize(DS_PUSH(), temp, temp_specifier);

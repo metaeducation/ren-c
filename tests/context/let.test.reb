@@ -232,3 +232,12 @@
         x = <before>
     ]
 )
+
+; BLANK! and ISSUE! should be legal in LET.
+[(
+    var: #  ; v-- second result is discarded, but request did partial transcode
+    'abc = let [# (var)]: transcode "abc def"
+)(
+    var: _  ; opting out of second result, hence full transcode
+    [abc def] = let [# (var)]: transcode "abc def"
+)]
