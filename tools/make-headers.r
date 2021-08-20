@@ -327,7 +327,7 @@ parse native-list [
         opt 'enfix
         [
             'native (is-combinator: false)
-            | 'native-combinator (is-combinator: true)
+            | 'native/combinator (is-combinator: true)
         ]
         set spec: block!
         (

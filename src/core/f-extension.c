@@ -116,6 +116,11 @@ REBNATIVE(load_extension)
 // another is by means of having it passed in through a HANDLE! of information
 // that was "collated" together to build the extension into the executable.
 //
+// !!! In the initial design, extensions were distinct from modules, and could
+// in fact load several different modules from the same DLL.  But that confused
+// matters in terms of whether there was any requirement for the user to know
+// what an "extension" was.
+//
 // !!! The DLL form has not been tested and maintained, so it needs to be
 // hammered back into shape and tested.  However, higher priority is to make
 // the extension mechanism work in the WebAssembly build with so-called
@@ -124,26 +129,16 @@ REBNATIVE(load_extension)
 {
     INCLUDE_PARAMS_OF_LOAD_EXTENSION;
 
-    DECLARE_LOCAL (lib);
-    SET_END(lib);
-    PUSH_GC_GUARD(lib);
-
-    DECLARE_LOCAL (path);
-    SET_END(path);
-    PUSH_GC_GUARD(path);
-
     // See IDX_COLLATOR_MAX for collated block contents, which include init
-    // and shutdown functions, as well as native specs and Rebol script
-    // source, plus the REBNAT functions for each native.
+    // and shutdown functions, as well as Rebol script source, plus the REBNAT
+    // functions for each native.
     //
     const REBARR *details;
 
     if (IS_BLOCK(ARG(where))) {  // It's one of the BUILTIN-EXTENSIONS
-        Init_Blank(lib);
-        Init_Blank(path);
         details = VAL_ARRAY(ARG(where)); // already "collated"
     }
-    else { // It's a DLL, must locate and call its RX_Collate() function
+    else {  // It's a DLL, must locate and call its RX_Collate() function
         assert(IS_FILE(ARG(where)));
 
         REBVAL *lib_api = rebValue("make library!", ARG(where));
@@ -160,27 +155,16 @@ REBNATIVE(load_extension)
         details = VAL_ARRAY(details_block);
         rebRelease(details_block);
 
-        Copy_Cell(lib, lib_api);
-        rebRelease(lib_api);
+        rebRelease(lib_api);  // should we hang onto lib to pass along?
     }
 
     assert(ARR_LEN(details) == IDX_COLLATOR_MAX);
     PUSH_GC_GUARD(details);
 
-    // !!! In the initial design, extensions were distinct from modules, and
-    // could in fact load several different modules from the same DLL.  But
-    // that confused matters in terms of whether there was any requirement
-    // for the user to know what an "extension" was.
-    //
-    // It's not necessarily ideal to have this code written entirely as C,
-    // but the way it was broken up into a mix of usermode and native calls
-    // in the original extension model was very twisty and was a barrier
-    // to enhancement.  So trying a monolithic rewrite for starters.
-
     const REBVAL *script_compressed
         = DETAILS_AT(details, IDX_COLLATOR_SCRIPT);
-    const REBVAL *specs_compressed
-        = DETAILS_AT(details, IDX_COLLATOR_SPECS);
+    REBLEN script_num_codepoints
+        = VAL_UINT32(DETAILS_AT(details, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS));
     const REBVAL *dispatchers_handle
         = DETAILS_AT(details, IDX_COLLATOR_DISPATCHERS);
 
@@ -189,141 +173,80 @@ REBNATIVE(load_extension)
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
-    REBCTX *module_ctx = Alloc_Context_Core(
-        REB_MODULE,
-        80,
-        NODE_FLAG_MANAGED // !!! Is GC guard unnecessary due to references?
-    );
+    REBCTX *module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+
+    PG_Next_Native_Dispatcher = dispatchers;
+    PG_Currently_Loading_Module = module_ctx;
+    PG_Native_Index_If_Nonnegative = -1;
+
     DECLARE_LOCAL (module);
     Init_Any_Context(module, REB_MODULE, module_ctx);
-    PUSH_GC_GUARD(module);
+    PUSH_GC_GUARD(module);  // !!! Is GC guard unnecessary due to references?
 
-    size_t specs_size;
-    REBYTE *specs_utf8 = Decompress_Alloc_Core(
-        &specs_size,
-        VAL_HANDLE_POINTER(REBYTE, specs_compressed),
-        VAL_HANDLE_LEN(specs_compressed),
+    size_t script_size;
+    REBYTE *script_utf8 = Decompress_Alloc_Core(
+        &script_size,
+        VAL_HANDLE_POINTER(REBYTE, script_compressed),
+        VAL_HANDLE_LEN(script_compressed),
         -1,  // max
         SYM_GZIP
     );
 
-    // !!! Specs have datatypes in them which are looked up via Get_Var().
-    // This is something that raises questions, but necessitates binding to
-    // lib to get them.
+    // The decompress routine gives back a pointer which is actually inside of
+    // a binary series (e.g. a rebAlloc() product).  Get the series back so
+    // we can pass it to import as a string.
     //
-    // However, the module context inherits from Lib.  So binding specs to the
-    // module gives an opportunity to tweak the definitions if necessary so
-    // that the specs would see more than what was in lib.  Review.
+    REBVAL *script = rebRepossess(script_utf8, script_size);
+
+    // The rebRepossess() function gives us back a BINARY!.  But we happen to
+    // know that the data is actually valid UTF-8.  The scanner does not
+    // currently have mechanics to run any faster on already-valid UTF-8, but
+    // it could.  Periodically shuffle the data between TEXT! and BINARY!, and
+    // binary with the text flag set.
     //
-    REBARR *specs = Scan_UTF8_Managed(
-        ANONYMOUS,  // !!! Name of DLL if available?
-        specs_utf8,
-        specs_size,
-        module_ctx  // !!! LOAD-MODULE redundantly interns
-    );
-    rebFree(specs_utf8);
-    PUSH_GC_GUARD(specs);
-
-    // Some of the things being tacked on here (like the DLL info etc.) should
-    // reside in the META OF portion, vs. being in-band in the module itself.
-    // For the moment, go ahead and bind the code to its own copy of lib.
-
-    REBDSP dsp_orig = DSP; // for accumulating exports
-
-    const RELVAL *tail = ARR_TAIL(specs);
-    RELVAL *item = ARR_HEAD(specs);
-    REBLEN i;
-    for (i = 0; i < num_natives; ++i) {
-        //
-        // Initial extension mechanism had an /export refinement on native.
-        // Change that to be a prefix you can use so it looks more like a
-        // normal module export...also Make_Native() doesn't understand it
-        //
-        bool is_export;
-        if (IS_WORD(item) and VAL_WORD_ID(item) == SYM_EXPORT) {
-            is_export = true;
-            ++item;
-        }
-        else
-            is_export = false;
-
-        RELVAL *name = item;
-        if (not IS_SET_WORD(name))
-            panic (name);
-
-        // We want to create the native from the spec and naming, and make
-        // sure its details know that its a "member" of this module.  That
-        // means API calls while the native is on the stack will bind text
-        // content into the module...so if you override APPEND locally that
-        // will be the APPEND that is used by default.
-        //
-        REBVAL *native = Make_Native(
-            &item, // gets advanced/incremented
-            tail,
-            SPECIFIED,
-            dispatchers[i],
-            module
+    // !!! Adding at least one feature in the scanner that takes advantage of
+    // prevalidated UTF-8 might be a good exploratory task, because until then
+    // this *should* make no difference.
+    //
+    if (SPORADICALLY(2)) {
+        REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(script);
+        mutable_SER_FLAVOR(bin) = FLAVOR_STRING;
+        TERM_STR_LEN_SIZE(
+            cast(REBSTR*, bin),  // legal for tweaking cached data
+            script_num_codepoints,
+            BIN_LEN(bin)
         );
-        UNUSED(native);  // added by Make_Native to module
+        mutable_LINK(Bookmarks, m_cast(REBBIN*, bin)) = nullptr;
 
-        // !!! Unloading is a feature that was entertained in the original
-        // extension model, but support was sketchy.  So unloading is not
-        // currently enabled, but mark the native with an "unloadable" flag
-        // if it's in a DLL...as a reminder to revisit the issue.
-        //
-        if (not IS_BLANK(lib)) {
-            /*SET_ACTION_FLAG(VAL_ACTION(native), UNLOADABLE_NATIVE);*/
-        }
-
-        // !!! The mechanics of exporting is something modules do and have to
-        // get right.  We shouldn't recreate that process here, just gather
-        // the list of the exports and pass it to the module code.
-        //
-        if (is_export) {
-            //
-            // We don't want to necessarily make binding work on stack values.
-            // So get to stack by way of the spare cell.
-            //
-            Init_Word(D_SPARE, VAL_WORD_SYMBOL(name));
-            if (0 == Try_Bind_Word(module, D_SPARE))
-                panic ("Couldn't bind word just added -- problem");
-            Copy_Cell(DS_PUSH(), D_SPARE);
-        }
+        if (SPORADICALLY(2))
+            Init_Text(script, STR(bin));
     }
 
-    REBARR *exports_arr = Pop_Stack_Values(dsp_orig);
-    DECLARE_LOCAL (exports);
-    Init_Block(exports, exports_arr);
-    PUSH_GC_GUARD(exports);
-
-    // Now we have an empty context that has natives in it.  Ultimately what
-    // we want is to run the init code for a module.
+    // !!! sys.load-module/into should work, but path mechanics are clunky.
     //
-    REBVAL *script_bin = rebValue("gunzip", script_compressed);
+    rebElide("sys/load-module/into", script, module);
 
-    // Module loading mechanics are supposed to be mostly done in usermode,
-    // so try and honor that.  This means everything about whether the module
-    // gets isolated and such.  It's not sorted out yet, because extensions
-    // didn't really run through the full module system...but pretend it does
-    // do that here.
-    //
     // !!! We currently are pushing all extensions into the lib context so
     // they are seen by every module.  This is an interim step to keep things
     // running, but a better strategy is needed.
     //
-    rebElide(
-        "sys/import* lib sys/load-module/into/exports",
-            rebR(script_bin), module, exports
-    );
+    rebElide("sys/import* lib", module);
 
-    // !!! Ideally we would be passing the lib, path,
+    // !!! Note: This does not get cleaned up in case of an error, needs to
+    // have TRAP.
+    //
+    if (PG_Next_Native_Dispatcher != dispatchers + num_natives)
+        panic ("NATIVE calls did not line up with stored dispatch count");
+    PG_Next_Native_Dispatcher = nullptr;
 
-    DROP_GC_GUARD(exports);
-    DROP_GC_GUARD(specs);
+    assert(PG_Currently_Loading_Module == module_ctx);
+    PG_Currently_Loading_Module = nullptr;
+    PG_Native_Index_If_Nonnegative = 0;
+
+    rebRelease(script);
+
     DROP_GC_GUARD(module);
     DROP_GC_GUARD(details);
-    DROP_GC_GUARD(path);
-    DROP_GC_GUARD(lib);
 
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions
@@ -445,21 +368,21 @@ REBNATIVE(unload_extension)
 // This has to be considered in the unloading mechanics.
 //
 REBVAL *rebCollateExtension_internal(
-    const REBYTE script_compressed[], REBLEN script_compressed_len,
-    const REBYTE specs_compressed[], REBLEN specs_compressed_len,
-    REBNAT dispatchers[], REBLEN dispatchers_len
+    const REBYTE script_compressed[],
+    REBSIZ script_compressed_size,
+    REBLEN script_num_codepoints,
+    REBNAT dispatchers[],
+    REBLEN dispatchers_len
 ) {
-
     REBARR *a = Make_Array(IDX_COLLATOR_MAX); // details
     Init_Handle_Cdata(
         ARR_AT(a, IDX_COLLATOR_SCRIPT),
         m_cast(REBYTE*, script_compressed), // !!! by contract, don't change!
-        script_compressed_len
+        script_compressed_size
     );
-    Init_Handle_Cdata(
-        ARR_AT(a, IDX_COLLATOR_SPECS),
-        m_cast(REBYTE*, specs_compressed), // !!! by contract, don't change!
-        specs_compressed_len
+    Init_Integer(
+        ARR_AT(a, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS),
+        script_num_codepoints
     );
     Init_Handle_Cdata(
         ARR_AT(a, IDX_COLLATOR_DISPATCHERS),

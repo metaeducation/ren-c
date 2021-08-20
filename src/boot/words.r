@@ -62,7 +62,6 @@ poke
 
 enfix
 native
-native-combinator
 input
 remainder
 state

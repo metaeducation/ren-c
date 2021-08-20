@@ -109,7 +109,53 @@ gather-natives: func [dir] [
 gather-natives make-file [(src-dir) core /]
 
 
-append output-buffer proto-parser/unsorted-buffer
+=== {MOVE "NATIVE: NATIVE" and "ENFIX: NATIVE" TO FRONT OF GATHERED LIST} ===
+
+; The construction `native: native [...]` obviously has to be treated in a
+; special way.  Startup constructs it manually, before skipping it and invoking
+; the evaluator to do the other `xxx: native/yyy [...]` evaluations.
+;
+; Format of the buffer is a flat list of:
+;
+;   [<file> <line> <export> <name> <enfix> [...proto...] <file> <line> <...]
+;
+; The <export> slot is either `export` or `_`, and the <enfix> slot is either
+; `enfix` or `_`.
+;
+; So we FIND the name, then step back 3 and move 6 items.  Do enfix first and
+; native second, that way native will be at the head.
+
+npos: find proto-parser/unsorted-buffer [enfix:] else [
+    fail "Could not find the ENFIX: native in the gathered native list"
+]
+insert proto-parser/unsorted-buffer (take/part skip npos -3 6)
+
+npos: find proto-parser/unsorted-buffer [native:] else [
+    fail "Could not find the NATIVE: native in the gathered native list"
+]
+insert proto-parser/unsorted-buffer (take/part skip npos -3 6)
+
+
+=== {MOLD AS TEXT TO BE EMBEDDED IN THE EXECUTABLE AND SCANNED AT BOOT} ===
+
+; As a hint in case you come across %tmp-natives.r in your editor, this puts
+; comments to warn you not to edit there.  (The comments and newlines are
+; removed by the process that does embedding in the EXE.)
+
+for-each [
+    file line export-word set-word enfix-word proto-block
+] proto-parser/unsorted-buffer [
+    if export-word [
+        fail "EXPORT is implied on %tmp-natives.r"
+    ]
+    append output-buffer spaced [
+        newline newline
+        {; !!! DON'T EDIT HERE, generated from} mold file {line} line
+        newline
+        (mold set-word) (if enfix-word [enfix-word]) (mold/only proto-block)
+    ]
+]
+
 
 write-if-changed make-file [(output-dir) boot/tmp-natives.r] output-buffer
 

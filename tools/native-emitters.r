@@ -39,7 +39,7 @@ export emit-native-proto: func [
             opt 'enfix
             [
                 'native
-                | 'native-combinator
+                | 'native/combinator
             ]
             [
                 set spec: block!
@@ -61,17 +61,35 @@ export emit-native-proto: func [
             end
         ]
     ] then [
-        append (
-            ;
-            ; could do tests here to create special buffer categories to
-            ; put certain natives first or last, etc. (not currently needed)
-            ;
-            proto-parser/unsorted-buffer
-        ) unspaced [
-            newline newline
-            {; !!! DO NOT EDIT HERE! This is generated from} _
-                mold proto-parser/file _ {line} _ line newline
-            mold/only proto-parser/data
+        ; could do tests here to create special buffer categories to
+        ; put certain natives first or last, etc. (not currently needed)
+        ;
+        temp: proto-parser/data
+        export-word: try if 'export = temp/1 [
+            temp: next temp
+            'export
+        ]
+        set-word: ensure set-word! temp/1
+        temp: next temp
+
+        enfix-word: try if 'enfix = temp/1 [
+            temp: next temp
+            'enfix
+        ]
+
+        any [
+            'native = temp/1
+            all [
+                path? temp/1
+                'native = temp/1/1
+            ]
+        ] else [
+            fail ["Malformed native:" mold proto-parser/data]
+        ]
+
+        append proto-parser/unsorted-buffer compose/only [
+            (proto-parser/file) (line) (export-word) (set-word)
+                (enfix-word) (temp)
         ]
 
         proto-parser/count: proto-parser/count + 1

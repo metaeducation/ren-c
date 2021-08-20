@@ -218,7 +218,7 @@ export analyse: context [
                     opt 'enfix
                     [
                         'native
-                        | 'native-combinator
+                        | 'native/combinator
                     ]
                     to end
                 ] also [

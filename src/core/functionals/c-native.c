@@ -61,53 +61,13 @@
 // native index is being loaded, which is non-obvious.  But these issues
 // could be addressed (e.g. by passing the native index number / DLL in).
 //
-REBVAL *Make_Native(
-    RELVAL **item, // the item will be advanced as necessary
-    const RELVAL *tail,
-    REBSPC *specifier,
+REBACT *Make_Native(
+    REBVAL *spec,
+    bool is_combinator,
     REBNAT dispatcher,
-    const REBVAL *module
+    REBCTX *module
 ){
-    assert(specifier == SPECIFIED); // currently a requirement
-    UNUSED(specifier);
-
-    // Get the name the native will be started at with in Lib_Context
-    //
-    if (not IS_SET_WORD(*item))
-        panic (*item);
-
-    REBVAL *name = SPECIFIC(*item);
-    ++*item;
-
-    bool enfix;
-    if (IS_WORD(*item) and VAL_WORD_ID(*item) == SYM_ENFIX) {
-        enfix = true;
-        ++*item;
-    }
-    else
-        enfix = false;
-
-    // See if it's being invoked with NATIVE or NATIVE/BODY
-    //
-    bool is_combinator;
-    if (not IS_WORD(*item))
-        panic (*item);
-    if (VAL_WORD_ID(*item) == SYM_NATIVE) {
-        is_combinator = false;
-    }
-    else if (VAL_WORD_ID(*item) == SYM_NATIVE_COMBINATOR) {
-        is_combinator = true;
-    }
-    else
-        panic (*item);
-    ++*item;
-
-    const REBVAL *spec = SPECIFIC(*item);
-    ++*item;
-    if (spec == tail or not IS_BLOCK(spec))
-        panic (spec);
-
-    // There are implicit parameters to both NATIVE-COMBINATOR and usermode
+    // There are implicit parameters to both NATIVE/COMBINATOR and usermode
     // COMBINATOR.  The native needs the full spec.
     //
     // !!! Note: This will manage the combinator's array.  Changing this would
@@ -150,23 +110,14 @@ REBVAL *Make_Native(
 
     REBACT *native = Make_Action(
         paramlist,
-        dispatcher, // "dispatcher" is unique to this "native"
-        IDX_NATIVE_MAX // details array capacity
+        dispatcher,  // "dispatcher" is unique to this "native"
+        IDX_NATIVE_MAX  // details array capacity
     );
-
     SET_ACTION_FLAG(native, IS_NATIVE);
-    if (enfix)
-        SET_ACTION_FLAG(native, ENFIXED);
 
     REBARR *details = ACT_DETAILS(native);
-
-    Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));  // !!! See IDX_NATIVE_BODY
-
-    // When code in the core calls APIs like `rebValue()`, it consults the
-    // stack and looks to see where the native function that is running
-    // says its "module" is.  Core natives default to Lib_Context.
-    //
-    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), module);
+    Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
+    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), CTX_ARCHETYPE(module));
 
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
     // all share a common hook to help with tracing and doing things like
@@ -178,7 +129,7 @@ REBVAL *Make_Native(
         native = Make_Action(
             ACT_SPECIALTY(native_combinator),
             &Combinator_Dispatcher,
-            2 // IDX_COMBINATOR_MAX  // details array capacity
+            2  // IDX_COMBINATOR_MAX  // details array capacity
         );
 
         Copy_Cell(
@@ -193,12 +144,43 @@ REBVAL *Make_Native(
     assert(ACT_META(native) == nullptr);
     mutable_ACT_META(native) = meta;
 
-    // Append the native to the module under the name given.
-    //
-    REBVAL *var = Append_Context(VAL_CONTEXT(module), name, nullptr);
-    Init_Action(var, native, VAL_WORD_SYMBOL(name), UNBOUND);
+    if (PG_Native_Index_If_Nonnegative >= 0) {
+        Natives[PG_Native_Index_If_Nonnegative] = native;
+        ++PG_Native_Index_If_Nonnegative;
+    }
 
-    return var;
+    return native;
+}
+
+
+//
+//  native: native [
+//
+//  {(Internal Function) Create a native, using compiled C code}
+//
+//      return: [action!]
+//      spec [block!]
+//      /combinator
+//  ]
+//
+REBNATIVE(native)
+{
+    INCLUDE_PARAMS_OF_NATIVE;
+
+    if (not PG_Next_Native_Dispatcher)
+        fail ("NATIVE is for internal use during boot and extension loading");
+
+    REBNAT dispatcher = *PG_Next_Native_Dispatcher;
+    ++PG_Next_Native_Dispatcher;
+
+    REBACT *native = Make_Native(
+        ARG(spec),
+        did REF(combinator),
+        dispatcher,
+        PG_Currently_Loading_Module
+    );
+
+    return Init_Action(D_OUT, native, ANONYMOUS, UNBOUND);
 }
 
 
@@ -235,18 +217,13 @@ static void Shutdown_Action_Meta_Shim(void) {
 //
 //  Startup_Natives: C
 //
-// Create native functions.  In R3-Alpha this would go as far as actually
-// creating a NATIVE native by hand, and then run code that would call that
-// native for each function.  Ren-C depends on having the native table
-// initialized to run the evaluator (for instance to test functions against
-// the UNWIND native's FUNC signature in definitional returns).  So it
-// "fakes it" just by calling a C function for each item...and there is no
-// actual "native native".
-//
-// Returns an array of words bound to natives for SYSTEM/CATALOG/NATIVES
+// Returns an array of words bound to natives for SYSTEM.CATALOG.NATIVES
 //
 REBARR *Startup_Natives(const REBVAL *boot_natives)
 {
+    REBARR *catalog = Make_Array(Num_Natives);
+    REBCTX *lib = VAL_CONTEXT(Lib_Context);
+
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
     Init_Action_Meta_Shim();
@@ -254,56 +231,82 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     const RELVAL *tail;
     RELVAL *item = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, boot_natives);
-    REBSPC *specifier = VAL_SPECIFIER(boot_natives);
+    assert(VAL_SPECIFIER(boot_natives) == SPECIFIED);
 
-    // Although the natives are not being "executed", there are typesets
-    // being built from the specs.  So to process `foo: native [x [integer!]]`
-    // the INTEGER! word must be bound to its datatype.  Deep walk the
-    // natives in order to bind these datatypes.
+    // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
+    // function which carries those arguments, which would be cleaner.  The
+    // C function could be passed as a HANDLE!.
     //
-    Bind_Values_Deep(item, tail, Lib_Context);
+    assert(PG_Next_Native_Dispatcher == nullptr);
+    PG_Next_Native_Dispatcher = Native_C_Funcs;
+    assert(PG_Currently_Loading_Module == nullptr);
+    PG_Currently_Loading_Module = lib;
+    assert(PG_Native_Index_If_Nonnegative == 0);
 
-    REBARR *catalog = Make_Array(Num_Natives);
+    // Due to the recursive nature of `native: native [...]`, we can't actually
+    // create NATIVE itself that way.  So the prep process should have moved
+    // it to be the first native in the list, and we make it manually.
+    //
+    assert(IS_SET_WORD(item) and VAL_WORD_ID(item) == SYM_NATIVE);
+    ++item;
+    assert(IS_WORD(item) and VAL_WORD_ID(item) == SYM_NATIVE);
+    ++item;
+    assert(IS_BLOCK(item));
+    REBVAL *spec = SPECIFIC(item);
+    ++item;
 
-    REBLEN n = 0;
-    REBVAL *generic_word = nullptr; // gives clear error if GENERIC not found
+    REBACT *the_native_action = Make_Native(
+        spec,
+        false,  // not a combinator
+        *PG_Next_Native_Dispatcher,
+        PG_Currently_Loading_Module
+    );
+    ++PG_Next_Native_Dispatcher;
 
-    while (item != tail) {
-        if (n >= Num_Natives)
-            panic (item);
+    Init_Action(
+        Append_Context(lib, nullptr, Canon(SYM_NATIVE)),
+        the_native_action,
+        Canon(SYM_NATIVE),  // label
+        UNBOUND
+    );
 
-        REBVAL *name = SPECIFIC(item);
-        assert(IS_SET_WORD(name));
+    assert(NATIVE_ACT(native) == the_native_action);
 
-        REBVAL *native = Make_Native(
-            &item,
-            tail,
-            specifier,
-            Native_C_Funcs[n],
-            Lib_Context
-        );
+    // The current rule in "Sea of Words" is that all SET-WORD!s that are just
+    // "attached" to a context can materialize variables.  It's not as safe
+    // as something like JavaScript's strict mode...but rather than institute
+    // some new policy we go with the somewhat laissez faire historical rule.
+    //
+    // *HOWEVER* the rule does not apply to Lib_Context.  You will get an
+    // error if you try to assign to something attached to Lib before being
+    // explicitly added.  So we have to go over the SET-WORD!s naming natives
+    // (first one at time of writing is `api-transient: native [...]`) and
+    // BIND/SET them.
+    //
+    Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Context);
 
-        // While the lib context natives can be overwritten, the system
-        // currently depends on having a permanent list of the natives that
-        // does not change, see uses via NATIVE_VAL() and NAT_ACT().
-        //
-        Natives[n] = VAL_ACTION(native);  // Note: Loses enfixedness (!)
+    DECLARE_LOCAL (skipped);
+    Init_Any_Array_At(skipped, REB_BLOCK, VAL_ARRAY(boot_natives), 3);
 
-        REBVAL *catalog_item = Copy_Cell(Alloc_Tail_Array(catalog), name);
-        mutable_KIND3Q_BYTE(catalog_item) = REB_WORD;
-        mutable_HEART_BYTE(catalog_item) = REB_WORD;
+    DECLARE_LOCAL (discarded);
+    if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))
+        panic (Error_No_Catch_For_Throw(discarded));
 
-        if (VAL_WORD_ID(name) == SYM_GENERIC)
-            generic_word = name;
-
-        ++n;
-    }
-
-    if (n != Num_Natives)
+    if (PG_Next_Native_Dispatcher != Native_C_Funcs + Num_Natives)
         panic ("Incorrect number of natives found during processing");
 
-    if (not generic_word)
+    REBVAL *generic = MOD_VAR(lib, Canon(SYM_GENERIC), true);
+    if (not IS_ACTION(generic))
         panic ("GENERIC native not found during boot block processing");
+
+    assert(NATIVE_ACT(generic) == VAL_ACTION(generic));
+
+    assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);
+    assert(PG_Native_Index_If_Nonnegative == cast(REBINT, Num_Natives));
+
+    PG_Next_Native_Dispatcher = nullptr;
+    PG_Currently_Loading_Module = nullptr;
+    PG_Native_Index_If_Nonnegative = 0;
 
     return catalog;
 }

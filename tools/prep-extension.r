@@ -4,7 +4,7 @@ REBOL [
     File: %prep-extension.r  ; EMIT-HEADER uses to indicate emitting script
     Rights: {
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2018 Ren-C Open Source Contributors
+        Copyright 2017-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -30,6 +30,8 @@ REBOL [
         internal API at all, as well as one that does, so that needs review.
     }
 ]
+
+verbose: false
 
 do %import-shim.r
 import %common.r
@@ -66,226 +68,13 @@ u-m-name: uppercase copy m-name
 
 c-src: make-file [../ (as file! ensure text! args/SRC)]
 
+
+=== {CALCULATE NAMES OF BUILD PRODUCTS} ===
+
+; !!! This would be a good place to explain what the output goal of this
+; script is.
+
 print ["building" m-name "from" c-src]
-
-
-e1: (make-emitter "Module C Header File Preface"
-    make-file [(output-dir) tmp-mod- (l-m-name) .h])
-
-
-verbose: false
-
-proto-parser/count: 0
-module-header: _
-
-source-text: read/string c-src
-
-; When the header information in the comments at the top of the file is
-; seen, save it into a variable.
-;
-
-proto-parser/emit-fileheader: func [header] [module-header: header]
-
-; Reuse the emitter that is used on processing natives in the core source.
-; It will add the information to UNSORTED-BUFFER
-;
-c-natives: make block! 128
-proto-parser/unsorted-buffer: make text! 20000
-proto-parser/emit-proto: :emit-native-proto
-
-proto-parser/file: c-src
-
-proto-parser/process source-text
-
-
-;
-; At this point the natives will all be in the UNSORTED-BUFFER.
-;
-
-native-list: load proto-parser/unsorted-buffer
-;print ["*** specs:" mold native-list]
-
-natdef: make object! [
-    export: _
-    spec: _
-    platforms: _
-    name: _
-]
-
-; === PARSE NATIVES INTO NATIVE-DEFINITION OBJECTS, CHECKING FOR VALIDITY ===
-
-native-defs: collect [
-    native-rule: [
-        (
-            n-export: _
-            n-spec: _
-            n-platforms: _
-            n-name: _
-            n-spec: _
-        )
-        ['export (n-export: true) | (n-export: false)]
-        set n-name set-word! copy n-spec [
-            'native block!
-        ]
-        opt [quote platforms: set n-platforms block!]
-        (
-            keep make natdef compose/only [
-                export: (n-export)
-                name: the (to word! n-name)
-                spec: (n-spec)  ; e.g. NATIVE
-                platforms: (try copy n-platforms)
-            ]
-        )
-    ]
-
-    parse native-list [while native-rule end] else [
-        fail [
-            "Malformed native found in extension specs" mold native-list
-        ]
-    ]
-]
-
-; === REBUILD NATIVE LIST JUST FOR WHAT APPLIES TO THIS PLATFORM ===
-
-; !!! This re-creation of the native list is a little silly (e.g. turning
-; export into a LOGIC! and back into the word EXPORT again, and turning
-; the name from a SET-WORD! to a WORD! and back to a SET-WORD! again).  But
-; it was how the initial extension mechanism was written.  Review.
-
-clear native-list
-
-num-natives: 0
-for-each native native-defs [
-    catch [
-        if blank? native/platforms [
-            throw true  ; no PLATFORM: in def means it's on all platforms
-        ]
-        for-each plat native/platforms [
-            case [
-                word? plat [; could be os-base or os-name
-                    if find/only reduce [config/os-name config/os-base] plat [
-                        throw true
-                    ]
-                ]
-                path? plat [; os-base/os-name format
-                    if plat = as path! reduce [config/os-base config/os-name][
-                        throw true
-                    ]
-                ]
-                fail ["Unrecognized platform spec:" mold plat]
-            ]
-        ]
-        null  ; not needed in newer Ren-C (CATCH w/no throw is NULL)
-    ] else [
-        continue  ; not supported
-    ]
-
-    num-natives: num-natives + 1
-
-    if native/export [
-        append native-list [export]
-
-        ; !!! This used to add to an "export-list" in the header of a module
-        ; whose source was entirely generated.  The idea was that there could
-        ; also be some attached user-written Rebol code as a "script", that
-        ; provided any usermode functions and definitions that were to ship
-        ; inside of the extension.
-        ;
-        ; Now the "script" *is* the module definition, edited by the user.
-        ; It would be technically possible to inject header information into
-        ; that definition as part of the build process, to add to its already
-        ; existing "Exports: []" section.
-        ;
-        ; But for the moment, the system uses "internal magic" to get the
-        ; native specs paired up with their corresponding CFUNC pointers thatis
-        ; are embedded in a C-style array inside of a HANDLE!.  Since that
-        ; internal magic does not inject the specs into that user-written
-        ; module, it goes ahead and pays attention to the EXPORT word as
-        ; well, in the style proposed here:
-        ;
-        ; http://www.rebol.net/r3blogs/0300.html
-        ;
-        comment [
-            append export-list ^(to word! native/name)
-            ...
-            compose/only [
-                Module [
-                    Name: ...
-                    Exports: (export-list)
-                ]
-            ]
-        ]
-    ]
-    append native-list reduce [to set-word! native/name]
-    append native-list native/spec
-]
-
-;print ["specs:" mold native-list]
-
-specs-compressed: gzip (specs-uncompressed: to-binary mold/only native-list)
-
-
-names: collect [
-    for-each item native-list [
-        if set-word? item [
-            item: to word! item
-            keep cscape/with {N_${MOD}_${Item}} 'item
-        ]
-    ]
-]
-
-native-forward-decls: collect [
-    for-each item native-list [
-        if set-word? item [
-            item: to word! item
-            keep cscape/with {REBNATIVE(${Item})} 'item
-        ]
-    ]
-]
-
-
-e1/emit {
-    #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
-
-    /*
-    ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
-    */
-}
-e1/emit newline
-
-iterate native-list [
-    if native-list/1 = 'export [native-list: next native-list]
-    if tail? next native-list [break]
-    any [
-        'native = native-list/2
-    ] then [
-        assert [set-word? native-list/1]
-        (emit-include-params-macro/ext e1
-            (to-word native-list/1) (native-list/3)
-            u-m-name)
-        e1/emit newline
-    ]
-]
-
-
-e1/emit {
-    /*
-     * Redefine REBNATIVE macro locally to include extension name.
-     * This avoids name collisions with the core, or with other extensions.
-     */
-    #undef REBNATIVE
-    #define REBNATIVE(n) \
-        REBVAL *N_${MOD}_##n(REBFRM *frame_)
-
-    /*
-     * Forward-declare REBNATIVE() dispatcher prototypes
-     */
-    $[Native-Forward-Decls];
-}
-e1/emit newline
-
-e1/write-emitted
-
 
 script-name: copy c-src
 parse script-name [
@@ -301,9 +90,6 @@ parse script-name [
     ]  ; auto-generating version of initial (and poor) manual naming scheme
 ]
 
-
-; === [{Make Extension Init Code from} script-name] ===
-
 inc-name: second split-path c-src
 is-cpp: false
 parse inc-name [
@@ -318,16 +104,183 @@ parse inc-name [
     ]  ; auto-generating version of initial (and poor) manual naming scheme
 ]
 
+
+=== {USE PROTOTYPE PARSER TO GET NATIVE SPECS FROM COMMENTS IN C CODE} ===
+
+; We reuse the emitter that is used on processing natives in the core source.
+; It will add the information to UNSORTED-BUFFER.  There's also a Rebol-style
+; header embedded in the comments at the top of the C file, though it's not
+; clear what kind of actionable information should be put there.
+
+e1: (make-emitter "Module C Header File Preface"
+    make-file [(output-dir) tmp-mod- (l-m-name) .h])
+
+header-in-c-comments: _
+
+source-text: read/string c-src
+
+proto-parser/emit-fileheader: func [header] [header-in-c-comments: header]
+
+c-natives: make block! 128
+proto-parser/count: 0
+proto-parser/unsorted-buffer: make block! 100
+proto-parser/emit-proto: :emit-native-proto
+
+proto-parser/file: c-src
+
+proto-parser/process source-text
+
+
+=== {EXTRACT NATIVE NAMES AS A LIST OF WORDS} ===
+
+; The block the proto-parser gives back is a flat block of fixed-size records.
+; For easier processing, extract just the list of native names converted to
+; words along with the spec.
+
+num-natives: 0
+native-list: collect [
+    for-each [
+        file line export-word set-word enfix-word proto-block
+    ] proto-parser/unsorted-buffer [
+        keep ^(as word! set-word)
+        keep ^(proto-block/2)
+        num-natives: num-natives + 1
+    ]
+]
+
+
+=== {MAKE TEXT FROM VALIDATED NATIVE SPECS} ===
+
+; The proto-parser does some light validation of the native specification.
+; There could be some extension-specific processing on the native spec block
+; or checking of refinements here.
+
+specs-uncompressed: make text! 10000
+
+for-each [
+    file line export-word set-word enfix-word proto-block
+] proto-parser/unsorted-buffer [
+    append specs-uncompressed spaced compose [
+        ((if export-word ["export"])) (mold set-word)
+            ((if enfix-word ["enfix"])) ((mold/only proto-block))
+            newline newline
+    ]
+]
+
+
+=== {EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES} ===
+
+e1/emit {
+    #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
+
+    /*
+    ** INCLUDE_PARAMS_OF MACROS: DEFINING PARAM(), REF(), ARG()
+    */
+}
+e1/emit newline
+
+for-each [name spec] native-list [
+    emit-include-params-macro/ext e1 name spec u-m-name
+    e1/emit newline
+]
+
+
+=== {FORWARD-DECLARE REBNATIVE DISPATCHER PROTOTYPES} ===
+
+; We need to put all the C functions that implement the extension's native
+; into an array.  But those functions live in the C file for the module.
+; There have to be prototypes in our `.inc` file with the arrays, in order
+; to get at the addresses of those functions.
+
+dispatcher-forward-decls: collect [
+    for-each [name spec] native-list [
+        keep cscape/with {REBNATIVE(${Name})} 'name
+    ]
+]
+e1/emit 'mod {
+    /*
+     * Redefine REBNATIVE macro locally to include extension name.
+     * This avoids name collisions with the core, or with other extensions.
+     */
+    #undef REBNATIVE
+    #define REBNATIVE(n) \
+        REBVAL *N_${MOD}_##n(REBFRM *frame_)
+
+    /*
+     * Forward-declare REBNATIVE() dispatcher prototypes
+     */
+    $[Dispatcher-Forward-Decls];
+}
+e1/emit newline
+
+e1/write-emitted
+
+
+=== {MAKE AGGREGATED SCRIPT FROM HEADER, NATIVE SPECS, AND INIT CODE} ===
+
+; The module is created with an IMPORT* call on one big blob of script.  That
+; script is blended together and looks like:
+;
+;    Rebol [
+;        Title: {This header is whatever was in the %ext-xxx-init.reb}
+;        Type: 'Module
+;        ...
+;    ]
+;
+;    ; These native specs are extracted from the C comments in the extension
+;    ; They must be in the same order as `dispatcher_c_names`, because that's
+;    ; the array that NATIVE steps through on each call to find the C code!
+;    ;
+;    export alpha: native [...]  ; v-- see EXPORT note below
+;    beta: enfix native [...]
+;
+;    ; The rest of the code was the body of %ext-xxx-init.reb
+;    ;
+;    something: <value>
+;    gamma: func [...] [alpha ..., beta ...]
+;
+; At the moment this script is executed, the system has internal state that
+; lets it make each successive call to NATIVE pick the next native out of
+; the creation queue.  That's a bit of voodoo, but the user doesn't see it...
+; and there's really no way to do this that *isn't* voodoo at some level.
+;
+; Note: We could do something like gather the exports on natives up and put
+; them in the header.  But the special variadic recognition of EXPORT is an
+; implemented feature so we use it.  Prior to variadics, this syntax had been
+; proposed for R3-Alpha, implemented by MODULE scanning its body:
+;
+;   http://www.rebol.net/r3blogs/0300.html
+;
+; Note: Because we are always passing valid UTF-8, we can potentially take
+; advantage of that during the scan.  (We don't yet, but could.)  Hence the
+; number of codepoints in the string are passed in, as that's required to
+; have a validated TEXT!...which is how we'd signal validity to the scanner.
+
 e: make-emitter "Ext custom init code" make-file [(output-dir) (inc-name)]
 
-; Review: This does not use STRIPLOAD but encodes the script as C bytes
-; verbatim--comments and whitespace and all.  That may be desirable if there
-; is some way to view or extract the source.  It could also be a build option
-; to use the STRIPLOAD function for further compression.
-;
-script-compressed: gzip (script-uncompressed: read script-name)
+initscript-body: stripload/header script-name 'header  ; header will be TEXT!
 
-e/emit {
+script-uncompressed: unspaced [
+    "Rebol" space "["  ; header has no brackets
+        header newline   ; won't actually be indented (indents were stripped)
+    "]" newline
+    newline
+    specs-uncompressed newline
+    initscript-body
+]
+script-num-codepoints: length of script-uncompressed
+
+write make-file [(output-dir) "script-uncompressed.r"] script-uncompressed
+
+script-compressed: gzip script-uncompressed
+
+dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
+    for-each [name spec] native-list [
+        keep cscape/with {N_${MOD}_${Name}} [mod name]
+    ]
+]
+
+e/emit 'mod {
     #include "sys-core.h" /* !!! Could this just use "rebol.h"? */
 
     #include "tmp-mod-$<mod>.h" /* for REBNATIVE() forward decls */
@@ -341,19 +294,11 @@ e/emit {
     };
 
     /*
-     * Gzip compression of native specs (no \0 terminator in array)
-     * Originally $<length of specs-uncompressed> bytes
-     */
-    static const REBYTE specs_compressed[$<length of specs-compressed>] = {
-        $<Binary-To-C Specs-Compressed>
-    };
-
-    /*
      * Pointers to function dispatchers for natives (in same order as the
      * order of native specs after being loaded).
      */
     static REBNAT native_dispatchers[$<num-natives> + 1] = {
-        $[Names],
+        $[Dispatcher_C_Names],
         nullptr /* just here to ensure > 0 length array (C++ requirement) */
     };
 
@@ -373,9 +318,11 @@ e/emit {
      */
     EXT_API REBVAL *RX_COLLATE_NAME(${Mod})(void) {
         return rebCollateExtension_internal(
-            script_compressed, sizeof(script_compressed),
-            specs_compressed, sizeof(specs_compressed),
-            native_dispatchers, $<num-natives>
+            script_compressed,  /* script compressed data */
+            sizeof(script_compressed),  /* size of script compressed data */
+            $<script-num-codepoints>,  /* codepoints in uncompressed utf8 */
+            native_dispatchers,  /* C function pointers for native bodies */
+            $<num-natives>  /* number of NATIVE invocations in script */
         );
     }
 }

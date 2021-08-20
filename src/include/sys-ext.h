@@ -72,7 +72,6 @@
 // !!! Currently used for just a BLOCK!, but may become ACT_DETAILS()
 //
 #define IDX_COLLATOR_SCRIPT 0
-#define IDX_COLLATOR_SPECS 1
+#define IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS 1
 #define IDX_COLLATOR_DISPATCHERS 2
 #define IDX_COLLATOR_MAX 3
-

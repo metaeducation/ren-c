@@ -171,7 +171,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
 //
 // !!! Optimizing it was at first considered unnecessary because the speed
 // at which combinators were created wasn't that important.  However, at the
-// time of setting up native-combinators there is no COMPOSE function available
+// time of setting up native combinators there is no COMPOSE function available
 // and the rebValue("...") function won't work, so it had to be hacked up as
 // a handcoded routine.  Review.
 //
@@ -340,7 +340,7 @@ bool Call_Parser_Throws(
 
 
 //
-//  opt-combinator: native-combinator [
+//  opt-combinator: native/combinator [
 //
 //  {If supplied parser fails, succeed anyway without advancing the input}
 //
@@ -367,7 +367,7 @@ REBNATIVE(opt_combinator)
 
 
 //
-//  text!-combinator: native-combinator [
+//  text!-combinator: native/combinator [
 //
 //  {Match a TEXT! value as an array item or at current position of bin/string}
 //
@@ -427,7 +427,7 @@ REBNATIVE(text_x_combinator)
 
 
 //
-//  some-combinator: native-combinator [
+//  some-combinator: native/combinator [
 //
 //  {Must run at least one match}
 //
@@ -505,7 +505,7 @@ REBNATIVE(some_combinator)
 
 
 //
-//  further-combinator: native-combinator [
+//  further-combinator: native/combinator [
 //
 //  {Pass through the result only if the input was advanced by the rule}
 //

@@ -540,8 +540,8 @@ export*: func [
     exports: ensure block! select hdr 'Exports
 
     if set-word [
-        args: take args
-        append list (set set-word :args)
+        set set-word args: take args
+        append exports ^(as word! set-word)
         return :args
     ]
 
