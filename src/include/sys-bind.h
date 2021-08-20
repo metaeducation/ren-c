@@ -647,7 +647,11 @@ inline static option(REBSER*) Get_Word_Container(
             // mezzanine is still guarded) but as a first phase, permit the
             // "emergence" of any variable that is attached to a module.
             //
-            if (mode == ATTACH_WRITE and binding != VAL_CONTEXT(Lib_Context)) {
+            if (
+                mode == ATTACH_WRITE
+                and binding != VAL_CONTEXT(Lib_Context)
+                and binding != VAL_CONTEXT(Sys_Context)
+            ){
                 *index_out = INDEX_ATTACHED;
                 return Singular_From_Cell(
                     Append_Context(CTX(binding), nullptr, symbol)
