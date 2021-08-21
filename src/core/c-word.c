@@ -554,18 +554,18 @@ void Startup_Symbols(REBARR *words)
     // and try and use that meaningfully is too risky, so it is simply
     // prohibited to canonize SYM_0, and trash the REBSTR* in the [0] slot.
     //
-    SYMID sym = SYM_0;
     TRASH_POINTER_IF_DEBUG(
-        *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym))
+        *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, SYM_0))
     );
+
+    SYMID sym = cast(REBLEN, SYM_0 + 1);
 
     const RELVAL *tail = ARR_TAIL(words);
     const RELVAL *word = ARR_HEAD(words);
-    for (; word != tail; ++word) {
+    for (; word != tail; ++word, sym = cast(SYMID, cast(REBLEN, sym) + 1)) {
         assert(IS_WORD(word));  // real word, not fake (e.g. `/` as -slash-0-)
         REBSYM *canon = m_cast(REBSYM*, VAL_WORD_SYMBOL(word));
 
-        sym = cast(SYMID, cast(REBLEN, sym) + 1);
         *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym)) = canon;
 
         if (sym == SYM__SLASH_1_)
@@ -595,8 +595,8 @@ void Startup_Symbols(REBARR *words)
 
     *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym)) = NULL; // terminate
 
-    SET_SERIES_USED(PG_Symbol_Canons, 1 + cast(REBLEN, sym));
-    assert(SER_USED(PG_Symbol_Canons) == 1 + ARR_LEN(words));
+    SET_SERIES_USED(PG_Symbol_Canons, cast(REBLEN, sym));
+    assert(SER_USED(PG_Symbol_Canons) == ARR_LEN(words) + 1);  // + 1 is SYM_0
 
     // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
 
@@ -608,6 +608,9 @@ void Startup_Symbols(REBARR *words)
 
     if (0 != strcmp("open", STR_UTF8(Canon(SYM_OPEN))))
         panic (Canon(SYM_OPEN));
+
+    if (0 != strcmp("parse-reject", STR_UTF8(Canon(SYM_PARSE_REJECT))))
+        panic (Canon(SYM_PARSE_REJECT));
 
     PG_Bar_Canon = Canon(SYM_BAR);  // used by PARSE for speedup
     PG_Bar_Bar_Canon = Canon(SYM__B_B);  // used by PARSE for speedup
