@@ -906,6 +906,62 @@ static void Run_Va_May_Fail_Core(
 
 
 //
+//  rebRunMaybeStaleThrows: RL_API
+//
+// Most API routines (rebValue(), rebDid(), etc.) have no way of handling
+// thrown values or invisibles.  They also run more than one step.
+//
+// This function runs one evaluation step, and allows you to say whether the
+// step must consume all input or not.  The output is written into a cell
+// that is provided--which is not something the API should do--especially
+// considering that this can evaluate to an "END" cell.
+//
+bool RL_rebRunMaybeStaleThrows(
+    unsigned char quotes,
+    REBVAL *out,
+    bool fully,
+    const void *p, va_list *vaptr
+){
+    bool threw = Eval_Step_In_Va_Maybe_Stale_Throws(
+        out,
+        FEED_MASK_DEFAULT | FLAG_QUOTING_BYTE(quotes),
+        p,  // first argument (C variadic protocol: at least 1 normal arg)
+        vaptr,  // va_end() handled by Eval_Va_Core on success/fail/throw
+        EVAL_MASK_DEFAULT
+            | (fully ? EVAL_FLAG_NO_RESIDUE : 0)
+    );
+
+    return threw;
+}
+
+
+//
+//  rebRunThrows: RL_API
+//
+// Variant of rebRunMaybeStaleThrows() that will set the output cell to void
+// in case of a completely invisible evaluation.
+//
+bool RL_rebRunThrows(
+    unsigned char quotes,
+    REBVAL *out,
+    bool fully,
+    const void *p, va_list *vaptr
+){
+    SET_END(out);
+
+    if (RL_rebRunMaybeStaleThrows(quotes, out, fully, p, vaptr))
+        return true;
+
+    if (IS_END(out))
+        Init_Void(out);  // assume "API-like" convention doesn't speak "END"
+    else
+        assert(NOT_CELL_FLAG(out, OUT_NOTE_STALE));  // not END, must've changed
+
+    return false;
+}
+
+
+//
 //  rebValue: RL_API
 //
 // Most basic evaluator that returns a REBVAL*, which must be rebRelease()'d.

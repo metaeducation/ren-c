@@ -597,7 +597,11 @@ bool Form_Reduce_Throws(
                     Form_Value(mo, delimiter);
 
                 Move_Cell(f_spare, out);
-                if (RunQ_Throws(out, true, "append copy {}", f_spare, rebEND)) {
+                if (rebRunThrows(
+                    out,
+                    true,
+                    Lib(APPEND), Lib(COPY), EMPTY_TEXT, rebQ(f_spare)
+                )){
                     Drop_Mold(mo);
                     Abort_Frame(f);
                     return true;

@@ -1713,11 +1713,10 @@ REBNATIVE(for)
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).
         //
-        if (RunQ_Throws(
+        if (rebRunThrows(
             D_OUT,
             true,
-            rebU(Lib(FOR_EACH)), ":(", ARG(vars), ")", value, rebU(body),
-            rebEND
+            Lib(FOR_EACH), ":(", ARG(vars), ")", value, body
         )){
             return R_THROWN;
         }

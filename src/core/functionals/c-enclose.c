@@ -192,7 +192,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     INIT_VAL_FRAME_PHASE_OR_LABEL(FRM_SPARE(f), VAL_ACTION_LABEL(inner));
 
     const bool fully = true;
-    if (RunQ_Maybe_Stale_Throws(f->out, fully, rebU(outer), rootcopy, rebEND))
+    if (rebRunMaybeStaleThrows(f->out, fully, outer, rootcopy))
         return R_THROWN;
 
     return f->out;

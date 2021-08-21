@@ -449,14 +449,13 @@ REBNATIVE(do)
       case REB_TAG: {
         UNUSED(REF(args)); // detected via `value? :arg`
 
-        if (RunQ_Throws(
+        if (rebRunThrows(
             D_OUT,
             true,  // fully = true, error if not all arguments consumed
-            rebU(Sys(SYM_DO_P)),
+            Sys(SYM_DO_P),
             source,
             REF(args),
-            REF(only) ? Lib(TRUE) : Lib(FALSE),
-            rebEND
+            REF(only) ? Lib(TRUE) : Lib(FALSE)
         )){
             return R_THROWN;
         }

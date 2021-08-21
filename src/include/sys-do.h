@@ -138,63 +138,6 @@ inline static bool Do_At_Mutable_Throws(
 }
 
 
-// Takes a list of arguments terminated by an end marker and will do something
-// similar to R3-Alpha's "apply/only" with a value.  If that value is a
-// function, it will be called...if it's a SET-WORD! it will be assigned, etc.
-//
-// This is equivalent to putting the value at the head of the input and
-// then calling EVAL/ONLY on it.  If all the inputs are not consumed, an
-// error will be thrown.
-//
-inline static bool RunQ_Throws(
-    REBVAL *out,
-    bool fully,
-    const void *p,  // last param before ... mentioned in va_start()
-    ...
-){
-    va_list va;
-    va_start(va, p);
-
-    bool threw = Eval_Step_In_Va_Maybe_Stale_Throws(
-        SET_END(out),  // start at END to detect error if no eval product
-        FEED_MASK_DEFAULT | FLAG_QUOTING_BYTE(1),
-        p,  // first argument (C variadic protocol: at least 1 normal arg)
-        &va,  // va_end() handled by Eval_Va_Core on success/fail/throw
-        EVAL_MASK_DEFAULT
-            | (fully ? EVAL_FLAG_NO_RESIDUE : 0)
-    );
-
-    if (IS_END(out))
-        fail ("Run_Throws() empty or just COMMENTs/ELIDEs/BAR!s");
-
-    assert(NOT_CELL_FLAG(out, OUT_NOTE_STALE));  // value changed
-
-    return threw;
-}
-
-
-inline static bool RunQ_Maybe_Stale_Throws(
-    REBVAL *out,
-    bool fully,
-    const void *p,  // last param before ... mentioned in va_start()
-    ...
-){
-    va_list va;
-    va_start(va, p);
-
-    bool threw = Eval_Step_In_Va_Maybe_Stale_Throws(
-        out,
-        FEED_MASK_DEFAULT | FLAG_QUOTING_BYTE(1),
-        p,  // first argument (C variadic protocol: at least 1 normal arg)
-        &va,  // va_end() handled by Eval_Va_Core on success/fail/throw
-        EVAL_MASK_DEFAULT
-            | (fully ? EVAL_FLAG_NO_RESIDUE : 0)
-    );
-
-    return threw;
-}
-
-
 // Conditional constructs allow branches that are either BLOCK!s or ACTION!s.
 // If an action, the triggering condition is passed to it as an argument:
 // https://trello.com/c/ay9rnjIe
@@ -262,12 +205,10 @@ inline static bool Do_Branch_Core_Throws(
       case REB_GET_BLOCK: {
         PUSH_GC_GUARD(branch);
 
-        bool threw = RunQ_Throws(
+        bool threw = rebRunThrows(
             out,
             true,
-            rebU(Lib(REDUCE)),
-            "as block!", branch,
-            rebEND
+            Lib(REDUCE), Lib(AS), Lib(BLOCK_X), branch
         );
         DROP_GC_GUARD(branch);
         if (threw)
@@ -277,12 +218,11 @@ inline static bool Do_Branch_Core_Throws(
       case REB_ACTION: {
         PUSH_GC_GUARD(branch);  // may be stored in `cell`, needs protection
 
-        bool threw = RunQ_Throws(
+        bool threw = rebRunThrows(
             out,
             false, // !fully, e.g. arity-0 functions can ignore condition
-            rebU(branch),
-            condition,
-            rebEND
+            branch,
+            rebQ(condition)
         );
         DROP_GC_GUARD(branch);
         if (threw)

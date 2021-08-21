@@ -555,14 +555,13 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
     const bool fully = true; // error if not all arguments consumed
 
     DECLARE_LOCAL (result);
-    if (RunQ_Throws(
+    if (rebRunThrows(
         result,
         fully,
-        rebU(flags->comparator),
+        flags->comparator,
         flags->reverse ? v1 : v2,
-        flags->reverse ? v2 : v1,
-        rebEND
-    )) {
+        flags->reverse ? v2 : v1
+    )){
         fail (Error_No_Catch_For_Throw(result));
     }
 

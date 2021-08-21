@@ -392,14 +392,13 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             // we could use "APPLIQUE".  Since we don't, we have to use a
             // positional call...but a hybridized APPLY would help here.
             //
-            if (RunQ_Throws(
+            if (rebRunThrows(
                 D_OUT,
                 true,  // fully
-                rebU(REF(only) ? awake_only : awake),
+                REF(only) ? awake_only : awake,
                 system_port,
-                ports == nullptr ? Lib(BLANK) : ports,
-                rebEND
-            )) {
+                ports == nullptr ? Lib(BLANK) : ports
+            )){
                 fail (Error_No_Catch_For_Throw(D_OUT));
             }
 
@@ -513,7 +512,7 @@ REBNATIVE(wake_up)
     if (IS_ACTION(awake)) {
         const bool fully = true; // error if not all arguments consumed
 
-        if (RunQ_Throws(D_OUT, fully, rebU(awake), ARG(event), rebEND))
+        if (rebRunThrows(D_OUT, fully, awake, ARG(event)))
             fail (Error_No_Catch_For_Throw(D_OUT));
 
         if (not (IS_LOGIC(D_OUT) and VAL_LOGIC(D_OUT)))

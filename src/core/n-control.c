@@ -253,12 +253,11 @@ inline static bool Single_Test_Throws(
         PUSH_GC_GUARD(arg_specified);
 
         DECLARE_LOCAL (temp);  // test is in `out`
-        bool threw = RunQ_Throws(
+        bool threw = rebRunThrows(
             temp,
             true,  // `fully` (ensure argument consumed)
-            rebU(SPECIFIC(test)),
-            NULLIFY_NULLED(arg_specified),  // nulled cells to nullptr for API
-            rebEND
+            SPECIFIC(test),
+            NULLIFY_NULLED(arg_specified)  // nulled cells to nullptr for API
         );
 
         DROP_GC_GUARD(arg_specified);
@@ -648,12 +647,11 @@ REBNATIVE(all)
         }
         else {
             DECLARE_LOCAL (temp);  // D_SPARE and D_OUT both in use
-            if (RunQ_Throws(
+            if (rebRunThrows(
                 temp,
                 true,
                 rebINLINE(predicate),
-                NULLIFY_NULLED(D_SPARE),
-                rebEND
+                NULLIFY_NULLED(D_SPARE)
             )){
                 return R_THROWN;
             }
@@ -731,12 +729,11 @@ REBNATIVE(any)
             }
         }
         else {
-            if (RunQ_Throws(
+            if (rebRunThrows(
                 D_SPARE,
                 true,
                 rebINLINE(predicate),
-                NULLIFY_NULLED(D_OUT),
-                rebEND
+                NULLIFY_NULLED(D_OUT)
             )){
                 return R_THROWN;
             }
@@ -817,12 +814,11 @@ REBNATIVE(case)
         }
         else {
             DECLARE_LOCAL (temp);
-            if (RunQ_Throws(
+            if (rebRunThrows(
                 temp,
                 true,  // fully = true (e.g. argument must be taken)
                 rebINLINE(predicate),
-                D_OUT,  // argument
-                rebEND
+                rebQ(D_OUT)  // argument
             )){
                 goto threw;
             }
@@ -995,13 +991,12 @@ REBNATIVE(switch)
             // survive across this point.
             //
             DECLARE_LOCAL (temp);
-            if (RunQ_Throws(
+            if (rebRunThrows(
                 temp,
                 true,  // fully = true (e.g. both arguments must be taken)
                 rebINLINE(predicate),
-                left,  // first arg (left hand side if infix)
-                D_OUT,  // second arg (right hand side if infix)
-                rebEND
+                rebQ(left),  // first arg (left hand side if infix)
+                rebQ(D_OUT)  // second arg (right hand side if infix)
             )){
                 goto threw;
             }
@@ -1028,12 +1023,11 @@ REBNATIVE(switch)
 
             if (IS_ACTION(f_value)) {  // must have been COMPOSE'd in cases
                 DECLARE_LOCAL (temp);
-                if (RunQ_Throws(
+                if (rebRunThrows(
                     temp,
                     false,  // fully = false, e.g. arity-0 functions are ok
-                    rebU(SPECIFIC(f_value)),  // actions don't need specifiers
-                    D_OUT,
-                    rebEND
+                    SPECIFIC(f_value),  // actions don't need specifiers
+                    rebQ(D_OUT)
                 )){
                     Move_Cell(D_OUT, temp);
                     goto threw;
