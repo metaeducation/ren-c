@@ -67,7 +67,7 @@ bool Do_Breakpoint_Throws(
     REBVAL *inst = rebValue("debug-console");
 
     if (IS_INTEGER(inst)) {
-        Init_Thrown_With_Label(out, inst, NATIVE_VAL(quit));
+        Init_Thrown_With_Label(out, inst, Native(QUIT));
         rebRelease(inst);
         return true;
     }
@@ -206,7 +206,7 @@ REBNATIVE(resume)
     }
 
     // We throw with /NAME as identity of the RESUME function.  (Note: there
-    // is no NATIVE_VAL() for extensions, yet...extract from current frame.)
+    // is no NATIVE() variant for extensions yet.  Extract from current frame.)
     //
     DECLARE_LOCAL (resume);
     Init_Action(

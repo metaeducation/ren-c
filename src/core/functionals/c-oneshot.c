@@ -127,7 +127,7 @@ REBNATIVE(n_shot)
     REBI64 n = VAL_INT64(ARG(n));
 
     REBACT *n_shot = Make_Action(
-        ACT_SPECIALTY(NATIVE_ACT(do_branch)),
+        ACT_SPECIALTY(Native_Act(DO_BRANCH)),
         n >= 0 ? &Downshot_Dispatcher : &Upshot_Dispatcher,
         IDX_ONESHOT_MAX  // details array capacity
     );

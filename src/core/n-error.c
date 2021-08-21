@@ -67,7 +67,7 @@ REBNATIVE(trap)
     UNUSED(ARG(code)); // gets used by the above call, via the frame_ pointer
     if (not error) {
         if (REF(result))
-            rebElide(NATIVE_VAL(set), rebQ(REF(result)), rebQ(D_OUT));
+            rebElide(Native(SET), rebQ(REF(result)), rebQ(D_OUT));
         return nullptr; // code didn't fail() or throw
     }
 

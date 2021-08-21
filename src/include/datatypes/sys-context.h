@@ -318,6 +318,10 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
     return nullptr;
 }
 
+#define LIB_VAR(name) \
+    MOD_VAR(VAL_CONTEXT(Lib_Context), Canon(SYM_##name), true)
+
+
 // CTX_VARS_HEAD() and CTX_KEYS_HEAD() allow CTX_LEN() to be 0, while
 // CTX_VAR() does not.  Also, CTX_KEYS_HEAD() gives back a mutable slot.
 

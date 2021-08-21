@@ -16,9 +16,7 @@ REBOL [
     }
 ]
 
-; === NAMED BAD WORDS ===
-; A new Ren-C feature is that voids are interned like WORD!, so they can be
-; more communicative.  These are standard symbols passed to Init_Isotope().
+; === NAMED BAD WORDS (SEE %sys-bad-word.h) ===
 ;
 void
 stale  ; for non-/VOID DO, e.g. `(1 + 2 do [comment "hi"])` is ~stale~
@@ -44,24 +42,6 @@ gob!  ; !!! for molding, temporary
 struct!  ; !!! for molding, temporary
 library!  ; !!! for molding, temporary
 
-generic  ; used in boot, see %generics.r
-
-export  ; used in extensions
-
-; The PICK action was killed in favor of a native that uses the same logic
-; as path processing.  Code still remains for processing PICK, and ports or
-; other mechanics may wind up using it...or path dispatch itself may be
-; rewritten to use the PICK* action (but that would require significiant
-; change for setting and getting paths)
-;
-; Similar story for POKE, which uses the same logic as PICK to find the
-; location to write the value.
-;
-pick
-poke
-
-enfix
-native
 input
 remainder
 state
@@ -125,20 +105,8 @@ y
 unsigned
 code        ; error field
 
-; Secure:  (add to system/state/policies object too)
-secure
-protect
-net
-call
-envr
 eval
 memory
-debug
-browse
-extension
-;file -- already provided for FILE OF
-dir
-
 ; Time:
 hour
 minute
@@ -155,20 +123,6 @@ julian
 yearday
 zone
 utc
-
-; Used to recognize Rebol2 use of [catch] and [throw] in function specs
-catch
-throw
-
-; Needed for processing of THROW's /NAME words used by system
-; NOTE: may become something more specific than WORD!
-exit
-quit
-;break  ; covered by parse below
-;return  ; covered by parse below
-continue
-
-subparse  ; recursions of parse use this for REBNATIVE(subparse) in backtrace
 
 ; PARSE - These words must not be reserved above!!  The range of consecutive
 ; index numbers are used by PARSE to detect keywords.
@@ -355,12 +309,6 @@ exit-code
 ; used to indicate the execution point where an error or debug frame is
 **
 
-include
-source
-library-path
-runtime-path
-options
-
 ; envelopes used with INFLATE and DEFLATE
 ;
 zlib
@@ -376,15 +324,6 @@ reflect
 ; type (provided by event)
 kind
 quotes
-
-; !!! The SECURE feature in R3-Alpha was unfinished.  While the policies for
-; security were conveyed with words, those words were mapped into an enum
-; to pack as bit flags.  However, those bit flags have been moved to being
-; internal to the security code...clients speak in terms of the symbols.
-;
-;read  ; covered above
-;write  ; covered above
-exec
 
 ; Actual underlying words for cells in lone `/` paths and lone `.` tuples,
 ; allowing binding and execution of operations like division or identity.

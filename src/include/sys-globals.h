@@ -61,7 +61,6 @@ PVAR REBVAL *User_Context;
 
 PVAR const REBNAT *PG_Next_Native_Dispatcher;
 PVAR REBCTX *PG_Currently_Loading_Module;
-PVAR REBINT PG_Native_Index_If_Nonnegative;
 
 //-- Various char tables:
 PVAR REBYTE *White_Chars;

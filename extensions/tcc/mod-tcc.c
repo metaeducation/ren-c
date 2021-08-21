@@ -262,8 +262,8 @@ REB_R Pending_Native_Dispatcher(REBFRM *f) {
     // the IDX_NATIVE_CONTEXT is set), this will fail.  Hence the COMPILE
     // native's implementation needs to be factored out into a reusable C
     // function that gets called here.  -or- some better way of getting at the
-    // known correct COMPILE Rebol function has to be done (NATIVE_VAL() is
-    // not in extensions yet, and may not be, so no NATIVE_VAL(compile).)
+    // known correct COMPILE Rebol function has to be done (Native() is
+    // not in extensions yet, and may not be, so no TCC_Native(compile).)
     //
     rebElide("compile [", rebQ(action), "]");
     //

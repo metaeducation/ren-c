@@ -167,9 +167,7 @@ REBNATIVE(reduce_each)
         if (not IS_BLOCK(block))
             fail ("Only BLOCK! and QUOTED!-BLOCK! supported by REDUCE-EACH");
 
-        return rebValue(
-            NATIVE_VAL(for_each), ARG(vars), block, ARG(body)
-        );
+        return rebValue(Native(FOR_EACH), ARG(vars), block, ARG(body));
     }
 
     REBCTX *context;

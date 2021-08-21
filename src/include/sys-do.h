@@ -265,7 +265,7 @@ inline static bool Do_Branch_Core_Throws(
         bool threw = RunQ_Throws(
             out,
             true,
-            rebU(NATIVE_VAL(reduce)),
+            rebU(Native(REDUCE)),
             "as block!", branch,
             rebEND
         );

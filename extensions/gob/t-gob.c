@@ -532,7 +532,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
 //  Did_Get_GOB_Var: C
 //
 // Returns true if the field name is a known GOB! property.  `out` may be set
-// to a NULL cell even for known fields, if not applicable to this GOB!'s type. 
+// to a NULL cell even for known fields, if not applicable to this GOB!'s type.
 //
 static bool Did_Get_GOB_Var(
     RELVAL *out,
@@ -593,7 +593,7 @@ static bool Did_Get_GOB_Var(
             assert(IS_TUPLE(GOB_CONTENT(gob)));
             Copy_Cell(out, GOB_CONTENT(gob));
         }
-        else 
+        else
             Init_Nulled(out);
         break;
 
@@ -887,7 +887,7 @@ REB_R PD_Gob(
 
     if (IS_INTEGER(picker))
         return rebValue(
-            NATIVE_VAL(pick),
+            LIB_VAR(PICK),
                 "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
                 "@", SPECIFIC(picker)
         );

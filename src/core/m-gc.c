@@ -657,27 +657,6 @@ static void Mark_Symbol_Series(void)
 
 
 //
-//  Mark_Natives: C
-//
-// For each native C implementation, a REBVAL is created during init to
-// represent it as an ACTION!.  These are kept in a global array and are
-// protected from GC.  It might not technically be necessary to do so for
-// all natives, but at least some have their paramlists referenced by the
-// core code (such as RETURN).
-//
-static void Mark_Natives(void)
-{
-    REBLEN n;
-    for (n = 0; n < Num_Natives; ++n) {
-        if (Natives[n])  // checking allows recycle during Startup_Natives()
-            Queue_Mark_Node_Deep(Natives[n]);
-    }
-
-    Propagate_All_GC_Marks();
-}
-
-
-//
 //  Mark_Guarded_Nodes: C
 //
 // Mark series and values that have been temporarily protected from garbage
@@ -1136,7 +1115,6 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
         Queue_Mark_Node_Deep(PG_Inaccessible_Varlist);
         Propagate_All_GC_Marks();
 
-        Mark_Natives();
         Mark_Symbol_Series();
 
         Mark_Data_Stack();

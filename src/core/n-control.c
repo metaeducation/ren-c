@@ -1239,7 +1239,7 @@ REBNATIVE(catch)
 
     if (not Do_Any_Array_At_Throws(D_OUT, ARG(block), SPECIFIED)) {
         if (REF(result))
-            rebElide(NATIVE_VAL(set), rebQ(REF(result)), rebQ(D_OUT));
+            rebElide(Native(SET), rebQ(REF(result)), rebQ(D_OUT));
 
         return nullptr;  // no throw means just return null
     }

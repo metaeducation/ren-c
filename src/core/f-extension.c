@@ -177,7 +177,6 @@ REBNATIVE(load_extension)
 
     PG_Next_Native_Dispatcher = dispatchers;
     PG_Currently_Loading_Module = module_ctx;
-    PG_Native_Index_If_Nonnegative = -1;
 
     DECLARE_LOCAL (module);
     Init_Any_Context(module, REB_MODULE, module_ctx);
@@ -239,7 +238,6 @@ REBNATIVE(load_extension)
 
     assert(PG_Currently_Loading_Module == module_ctx);
     PG_Currently_Loading_Module = nullptr;
-    PG_Native_Index_If_Nonnegative = 0;
 
     rebRelease(script);
 

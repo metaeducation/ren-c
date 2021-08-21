@@ -773,6 +773,19 @@ nats: collect [
     for-each val boot-natives [
         if set-word? val [
             keep cscape/with {N_${to word! val}} 'val
+
+            ; Natives are added to the symbol table, so they can be found in
+            ; lib via LIB_VAR() to be used in internal code.
+            ;
+            ; Some of the symbols may have already been defined in %words.r
+            ; Those get priority for having the numbers, because sequential
+            ; numbers may matter.  Use the /EXISTS switch to defer to those
+            ; numbers for the native vs. erroring (lib natives are looked up by
+            ; canon, since modules don't store variables sequentially).
+            ;
+            if val <> the null [
+                add-sym/exists as word! val
+            ]
         ]
     ]
 ]
@@ -784,7 +797,6 @@ e-bootblock/emit 'nats {
 
     #define NUM_NATIVES $<length of nats>
     const REBLEN Num_Natives = NUM_NATIVES;
-    REBACT *Natives[NUM_NATIVES];
 
     const REBNAT Native_C_Funcs[NUM_NATIVES] = {
         $(Nats),
@@ -871,15 +883,6 @@ e-boot/emit 'nids {
      */
     EXTERN_C const REBLEN Num_Natives;
     EXTERN_C const REBNAT Native_C_Funcs[];
-
-    /*
-     * A canon ACTION! REBVAL of the native, accessible by native's index #
-     */
-    EXTERN_C REBACT *Natives[];  /* size is Num_Natives */
-
-    enum Native_Indices {
-        $(Nids),
-    };
 
     typedef struct REBOL_Boot_Block {
         $[Fields];

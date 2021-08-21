@@ -106,7 +106,7 @@ REBNATIVE(mold)
 
     if (REF(truncated))
         rebElide(
-            NATIVE_VAL(set),
+            Native(SET),
             rebQ(REF(truncated)),
             rebL(mo->opts & MOLD_FLAG_WAS_TRUNCATED)
         );

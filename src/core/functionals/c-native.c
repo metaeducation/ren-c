@@ -144,11 +144,6 @@ REBACT *Make_Native(
     assert(ACT_META(native) == nullptr);
     mutable_ACT_META(native) = meta;
 
-    if (PG_Native_Index_If_Nonnegative >= 0) {
-        Natives[PG_Native_Index_If_Nonnegative] = native;
-        ++PG_Native_Index_If_Nonnegative;
-    }
-
     return native;
 }
 
@@ -241,7 +236,6 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     PG_Next_Native_Dispatcher = Native_C_Funcs;
     assert(PG_Currently_Loading_Module == nullptr);
     PG_Currently_Loading_Module = lib;
-    assert(PG_Native_Index_If_Nonnegative == 0);
 
     // Due to the recursive nature of `native: native [...]`, we can't actually
     // create NATIVE itself that way.  So the prep process should have moved
@@ -270,7 +264,7 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
         UNBOUND
     );
 
-    assert(NATIVE_ACT(native) == the_native_action);
+    assert(Native_Act(NATIVE) == the_native_action);
 
     // The current rule in "Sea of Words" is that all SET-WORD!s that are just
     // "attached" to a context can materialize variables.  It's not as safe
@@ -292,21 +286,29 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))
         panic (Error_No_Catch_For_Throw(discarded));
 
-    if (PG_Next_Native_Dispatcher != Native_C_Funcs + Num_Natives)
-        panic ("Incorrect number of natives found during processing");
+  #if !defined(NDEBUG)
+    //
+    // Ensure the evaluator called NATIVE as many times as we had natives,
+    // and check that a couple of functions can be successfully looked up
+    // by their symbol ID numbers.
+
+    assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);
 
     REBVAL *generic = MOD_VAR(lib, Canon(SYM_GENERIC), true);
     if (not IS_ACTION(generic))
-        panic ("GENERIC native not found during boot block processing");
+        panic (generic);
+    assert(Native_Act(GENERIC) == VAL_ACTION(generic));
 
-    assert(NATIVE_ACT(generic) == VAL_ACTION(generic));
+    REBVAL *parse_reject = MOD_VAR(lib, Canon(SYM_PARSE_REJECT), true);
+    if (not IS_ACTION(parse_reject))
+        panic (parse_reject);
+    assert(Native_Act(PARSE_REJECT) == VAL_ACTION(parse_reject));
+  #endif
 
     assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);
-    assert(PG_Native_Index_If_Nonnegative == cast(REBINT, Num_Natives));
 
     PG_Next_Native_Dispatcher = nullptr;
     PG_Currently_Loading_Module = nullptr;
-    PG_Native_Index_If_Nonnegative = 0;
 
     return catalog;
 }
@@ -322,9 +324,5 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
 // for startups after the first, unless we manually null them out.
 //
 void Shutdown_Natives(void) {
-    REBLEN n;
-    for (n = 0; n < Num_Natives; ++n)
-        Natives[n] = nullptr;
-
     Shutdown_Action_Meta_Shim();
 }

@@ -150,7 +150,7 @@ REBNATIVE(surprise)
 // constraint on the return value.  That's a pretty weird function spec, and
 // the only thing I could think of was something that just surprises you with
 // a random value.  Neat idea, but writing it isn't the purpose...getting the
-// spec was, so it's punted on for now and used as NATIVE_ACT(surprise) below.
+// spec was, so it's punted on for now and used as Native_Act(surprise) below.
 {
     INCLUDE_PARAMS_OF_SURPRISE;
     return nullptr;  // It just returned null.  Surprised?
@@ -189,7 +189,7 @@ REBNATIVE(does)
 
     if (IS_BLOCK(source)) {
         REBACT *doer = Make_Action(
-            ACT_SPECIALTY(NATIVE_ACT(surprise)),  // same, no args
+            ACT_SPECIALTY(Native_Act(SURPRISE)),  // same, no args
             &Block_Dispatcher,  // **SEE COMMENTS**, not quite like plain DO!
             IDX_DOES_MAX  // details array capacity
         );
@@ -208,7 +208,7 @@ REBNATIVE(does)
     // DO for that value.
 
     REBCTX *exemplar = Make_Context_For_Action(
-        NATIVE_VAL(do),
+        Native(DO),
         DSP,  // lower dsp would be if we wanted to add refinements
         nullptr  // don't set up a binder; just poke specializee in frame
     );

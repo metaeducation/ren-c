@@ -222,7 +222,7 @@ bool Make_Frame_From_Feed_Throws(REBVAL *out, REBFED *feed)
 
     assert(IS_QUOTED(out));
     REBCTX *exemplar = Make_Context_For_Action(
-        NATIVE_VAL(identity),
+        Native(IDENTITY),
         DSP,
         nullptr
     );

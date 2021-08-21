@@ -37,7 +37,7 @@ REBNATIVE(halt)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    return Init_Thrown_With_Label(D_OUT, NULLED_CELL, NATIVE_VAL(halt));
+    return Init_Thrown_With_Label(D_OUT, NULLED_CELL, Native(HALT));
 }
 
 
@@ -67,7 +67,7 @@ REBNATIVE(quit)
         Init_Bad_Word(ARG(value), SYM_QUIT);
     }
 
-    return Init_Thrown_With_Label(D_OUT, ARG(value), NATIVE_VAL(quit));
+    return Init_Thrown_With_Label(D_OUT, ARG(value), Native(QUIT));
 }
 
 

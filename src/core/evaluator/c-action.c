@@ -996,7 +996,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         const REBVAL *label = VAL_THROWN_LABEL(f->out);
         if (IS_ACTION(label)) {
             if (
-                VAL_ACTION(label) == NATIVE_ACT(unwind)
+                VAL_ACTION(label) == Native_Act(UNWIND)
                 and VAL_ACTION_BINDING(label) == CTX(f->varlist)
                     // !!! Note f->varlist may be INACCESSIBLE here
                     // e.g. this happens with RETURN during ENCLOSE
@@ -1015,7 +1015,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 goto dispatch_completed;
             }
             else if (
-                VAL_ACTION(label) == NATIVE_ACT(redo)
+                VAL_ACTION(label) == Native_Act(REDO)
                 and VAL_ACTION_BINDING(label) == CTX(f->varlist)
             ){
                 // This was issued by REDO, and should be a FRAME! with

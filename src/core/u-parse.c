@@ -257,7 +257,7 @@ static bool Subparse_Throws(
     assert(ANY_SERIES_KIND(CELL_KIND(VAL_UNESCAPED(input))));
 
     Push_Frame(out, f);  // checks for C stack overflow
-    Push_Action(f, NATIVE_ACT(subparse), UNBOUND);
+    Push_Action(f, Native_Act(SUBPARSE), UNBOUND);
 
     Begin_Prefix_Action(f, Canon(SYM_SUBPARSE));
 
@@ -328,14 +328,14 @@ static bool Subparse_Throws(
         //
         const REBVAL *label = VAL_THROWN_LABEL(out);
         if (IS_ACTION(label)) {
-            if (VAL_ACTION(label) == NATIVE_ACT(parse_reject)) {
+            if (VAL_ACTION(label) == Native_Act(PARSE_REJECT)) {
                 CATCH_THROWN(out, out);
                 assert(IS_NULLED(out));
                 *interrupted_out = true;
                 return false;
             }
 
-            if (VAL_ACTION(label) == NATIVE_ACT(parse_accept)) {
+            if (VAL_ACTION(label) == Native_Act(PARSE_ACCEPT)) {
                 CATCH_THROWN(out, out);
                 assert(IS_INTEGER(out));
                 *interrupted_out = true;
@@ -1830,11 +1830,7 @@ REBNATIVE(subparse)
                 DECLARE_LOCAL (thrown_arg);
                 Init_Integer(thrown_arg, P_POS);
 
-                Init_Thrown_With_Label(
-                    D_OUT,
-                    thrown_arg,
-                    NATIVE_VAL(parse_accept)
-                );
+                Init_Thrown_With_Label(D_OUT, thrown_arg, Native(PARSE_ACCEPT));
                 goto return_thrown; }
 
               case SYM_REJECT: {
@@ -1844,7 +1840,7 @@ REBNATIVE(subparse)
                 return Init_Thrown_With_Label(
                     D_OUT,
                     NULLED_CELL,
-                    NATIVE_VAL(parse_reject)
+                    Native(PARSE_REJECT)
                 ); }
 
               case SYM_FAIL:  // deprecated... use LOGIC! false instead
@@ -2645,7 +2641,7 @@ REBNATIVE(subparse)
 
   return_thrown:
     if (not IS_NULLED(ARG(collection)))  // throw -> drop COLLECT additions
-        if (VAL_THROWN_LABEL(D_OUT) != NATIVE_VAL(parse_accept))  // ...unless
+        if (VAL_THROWN_LABEL(D_OUT) != Native(PARSE_ACCEPT))  // ...unless
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
     return R_THROWN;

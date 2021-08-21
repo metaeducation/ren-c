@@ -143,12 +143,15 @@ bool Interpreted_Dispatch_Details_1_Throws(
 
         // Hardcoded hack to make COMBINATOR's RETURN use /ISOTOPE by default.
         //
-        if (ACT_DISPATCHER(FRM_PHASE(f)) == &Combinator_Dispatcher)
-            Copy_Cell(cell, NATIVE_VAL(return_isotope));
-        else
-            Copy_Cell(cell, NATIVE_VAL(return));
-
-        INIT_VAL_ACTION_BINDING(cell, CTX(f->varlist));
+        bool is_combinator = ACT_DISPATCHER(phase) == &Combinator_Dispatcher;
+        Init_Action(
+            cell,
+            is_combinator
+                ? Native_Act(DEFINITIONAL_RETURN_ISOTOPE)
+                : Native_Act(DEFINITIONAL_RETURN),
+            Canon(SYM_RETURN),  // relabel (the RETURN in lib is a dummy action)
+            CTX(f->varlist)  // bind this return to know where to return from
+        );
     }
 
     DECLARE_FEED_AT_CORE (feed, body, SPC(f->varlist));
@@ -163,7 +166,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
         const REBVAL *label = VAL_THROWN_LABEL(spare);
         if (
             IS_ACTION(label)
-            and VAL_ACTION(label) == NATIVE_ACT(unwind)
+            and VAL_ACTION(label) == Native_Act(UNWIND)
             and VAL_ACTION_BINDING(label) == CTX(f->varlist)
         ){
             // !!! Historically, UNWIND was caught by the main action
@@ -607,7 +610,7 @@ REB_R Init_Thrown_Unwind_Value(
     const REBVAL *value,
     REBFRM *frame // required if level is INTEGER! or ACTION!
 ) {
-    Copy_Cell(out, NATIVE_VAL(unwind));
+    Copy_Cell(out, Native(UNWIND));
 
     if (IS_FRAME(level)) {
         INIT_VAL_FRAME_BINDING(out, VAL_CONTEXT(level));
@@ -773,7 +776,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
     }
 
   skip_type_check: {
-    Copy_Cell(f->out, NATIVE_VAL(unwind)); // see also Make_Thrown_Unwind_Value
+    Copy_Cell(f->out, Native(UNWIND)); // see also Make_Thrown_Unwind_Value
     INIT_VAL_ACTION_BINDING(f->out, f_binding);
 
     return Init_Thrown_With_Label(f->out, v, f->out);  // preserves UNEVALUATED
@@ -782,7 +785,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
 
 
 //
-//  return: native [
+//  definitional-return: native [
 //
 //  {RETURN, giving a result to the caller}
 //
@@ -792,16 +795,27 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
 //      /isotope "Relay isotope status of NULL or void return values"
 //  ]
 //
-REBNATIVE(return)
+REBNATIVE(definitional_return)
+//
+// Returns in Ren-C are functions that are aware of the function they return
+// to.  So the dispatchers for functions that provide RETURN (e.g. FUNC) will
+// actually use an instance of this native, and poke a binding into it to
+// identify the action.
+//
+// This means the RETURN that is in LIB is actually just a dummy function
+// which you will bind to and run if there is no definitional return in effect.
+//
+// (The cached name of the value for this native is set to RETURN by the
+// dispatchers that use it, which might be a bit confusing.)
 {
-    INCLUDE_PARAMS_OF_RETURN;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
 
     return Return_Core(frame_, ARG(value), did REF(isotope));
 }
 
 
 //
-//  return-isotope: native [
+//  definitional-return-isotope: native [
 //
 //  {RETURN/ISOTOPE native specialization}
 //
@@ -810,13 +824,13 @@ REBNATIVE(return)
 //          [<end> <opt> <meta> any-value!]
 //  ]
 //
-REBNATIVE(return_isotope)
+REBNATIVE(definitional_return_isotope)
 //
 // The COMBINATOR wants to distinguish NULL isotopes from NULL in all cases.
 // Rather than inject the body with `return: :return/isotope` we get a small
 // speedup by just putting this variant of RETURN in the frame slot.
 {
-    INCLUDE_PARAMS_OF_RETURN_ISOTOPE;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN_ISOTOPE;
 
     return Return_Core(frame_, ARG(value), true);
 }
