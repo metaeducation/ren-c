@@ -144,12 +144,18 @@
         <else> = if true @[x: <branch>, null] else [<else>]
         x = <branch>
     ]
-)(
-    var: <something>
-    did all [
-        null = ^ if false @(var: <something-else> [null])
-        var = <something>
-        null = ^ if true @(var: <something-else> [null])
-        var = <something-else>
-    ]
-)]
+)
+
+; !!! This feature is on hold, as it is being considered that /[branch] is the
+; way to denote optionality, while @[...] might be better thought of for
+; other purposes.
+;(
+;    var: <something>
+;    did all [
+;        null = ^ if false @(var: <something-else> [null])
+;        var = <something>
+;        null = ^ if true @(var: <something-else> [null])
+;        var = <something-else>
+;    ]
+;)
+]

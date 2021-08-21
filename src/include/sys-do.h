@@ -216,13 +216,32 @@ inline static bool Do_Branch_Core_Throws(
     DECLARE_LOCAL (cell);
 
     enum Reb_Kind kind = VAL_TYPE(branch);
-    bool as_is = (kind == REB_QUOTED) or ANY_THE_KIND(kind);
 
   redo:
 
+    // If we're not returning the branch result purely "as-is" then we change
+    // NULL to a ~null~ isotope, so an ELSE branch knows not to run:
+    //
+    //     >> if true [null]
+    //     == ~null~  ; isotope
+    //
+    //     >> if true [print "BRANCH", null] else [print "ELSE"]
+    //     BRANCH
+    //     == ~null~  ; isotope
+    //
+    // To get things to pass through unmodified, because you actually *want*
+    // to be able to run both branches...use THE-BLOCK! and its friends.
+    //
+    //     >> if true @[null]
+    //     ; null
+    //
+    //     >> if true @[print "BRANCH", null] else [print "ELSE"]
+    //     BRANCH
+    //     ELSE
+    //
     switch (kind) {
       case REB_BLANK:
-        Init_Nulled(out);  // !!! Is this a good idea?  Gets voidified...
+        Init_Nulled(out);  // !!! Is this a good idea?
         break;
 
       case REB_QUOTED:
@@ -230,9 +249,14 @@ inline static bool Do_Branch_Core_Throws(
         break;
 
       case REB_THE_BLOCK:
+        if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
+            return true;
+        break;
+
       case REB_BLOCK:
         if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
             return true;
+        Isotopify_If_Nulled(out);
         break;
 
       case REB_GET_BLOCK: {
@@ -263,9 +287,9 @@ inline static bool Do_Branch_Core_Throws(
         DROP_GC_GUARD(branch);
         if (threw)
             return true;
+        Isotopify_If_Nulled(out);
         break; }
 
-      case REB_THE_GROUP:
       case REB_GROUP:
         if (Do_Any_Array_At_Throws(cell, branch, SPECIFIED))
             return true;
@@ -275,32 +299,15 @@ inline static bool Do_Branch_Core_Throws(
         kind = VAL_TYPE(branch);
         goto redo;
 
+      case REB_META_BLOCK:
+        if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
+            return true;
+        Meta_Quotify(out);
+        break;
+
       default:
         fail (Error_Bad_Branch_Type_Raw());
     }
-
-    // If we're not returning the branch result purely "as-is" then we change
-    // NULL to a ~null~ isotope, so an ELSE branch knows not to run:
-    //
-    //     >> if true [null]
-    //     == ~null~  ; isotope
-    //
-    //     >> if true [print "BRANCH", null] else [print "ELSE"]
-    //     BRANCH
-    //     == ~null~  ; isotope
-    //
-    // To get things to pass through unmodified, because you actually *want*
-    // to be able to run both branches...use THE-BLOCK! and its friends.
-    //
-    //     >> if true @[null]
-    //     ; null
-    //
-    //     >> if true @[print "BRANCH", null] else [print "ELSE"]
-    //     BRANCH
-    //     ELSE
-    //
-    if (not as_is)
-        Isotopify_If_Nulled(out);
 
     return false;
 }

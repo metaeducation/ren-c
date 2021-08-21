@@ -932,8 +932,6 @@ void Virtual_Bind_Deep_To_New_Context(
     REBCTX **context_out,
     const REBVAL *spec
 ){
-    assert(IS_BLOCK(body_in_out) or IS_META_BLOCK(body_in_out));
-
     REBLEN num_vars = IS_BLOCK(spec) ? VAL_LEN_AT(spec) : 1;
     if (num_vars == 0)
         fail (spec);  // !!! should fail() take unstable?

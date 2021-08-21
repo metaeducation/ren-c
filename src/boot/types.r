@@ -68,7 +68,7 @@ REBOL [
             0           0       0       +       []
 
 blank       "placeholder unit type which acts as conditionally false"
-            blank       +       -       +       [unit branch]
+            blank       +       -       +       [unit]  ; allow as `branch`?
 
 ; <ANY-SCALAR>
 
@@ -212,17 +212,17 @@ varargs     "evaluator position for variable numbers of arguments"
 the-block   "alternative inert form of block"
             array       *       *       *       [block array series branch the-type]
 
-the-group   "inert form of group"
-            array       *       *       *       [group array series branch the-type]
+the-group   "inert form of group"                   ; v-- allow as `branch`?
+            array       *       *       *       [group array series the-type]
 
-the-path    "inert form of path"
-            sequence    *       *       *       [path sequence the-type]  ; branch?
+the-path    "inert form of path"                    ; v-- allow as `branch`?
+            sequence    *       *       *       [path sequence the-type]
 
-the-tuple   "inert form of tuple"
-            sequence    *       *       *       [tuple sequence scalar the-type]  ; ?
+the-tuple   "inert form of tuple"                   ; v-- allow as `branch`?
+            sequence    *       *       *       [tuple sequence scalar the-type]
 
-the-word    "inert form of word"
-            word        -       *       +       [word the-type]  ; branch?
+the-word    "inert form of word"                    ; v-- allow as `branch`?
+            word        -       *       +       [word the-type]
 
 ; </ANY-THE>
 
@@ -298,7 +298,7 @@ get-word    "the value of a word (variable)"
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 meta-block  "block that evaluates to produce a quoted block"
-            array       *       *       *       [block array series meta-type]
+            array       *       *       *       [block array series meta-type branch]
 
 meta-group  "group that quotes its product or removes isotope status"
             array       *       *       *       [group array series meta-type]
