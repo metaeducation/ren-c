@@ -1,5 +1,14 @@
-; datatypes/map.r
-; map! =? hash! in R2/Forward, R2 2.7.7+
+; %dictionary.test.reb
+;
+; MAP is being reclaimed in Ren-C for the CS higher-order-function concept of
+; a mapping operation.  Hence it is a verb, not a noun:
+;
+;     >> map x each [1 2 3] [x * 10]
+;     == [10 20 30]
+;
+; The old MAP! datatype (which was once called HASH! in Rebol2) is slated to be
+; called DICTIONARY!.  It will be renamed at an appropriate moment.
+
 (empty? make map! [])
 (empty? make map! 4)
 ; The length of a map is the number of key/value pairs it holds.

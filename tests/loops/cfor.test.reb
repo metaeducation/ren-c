@@ -1,4 +1,4 @@
-; functions/control/for.r
+; %loops/cfor.r
 
 ; One design aspect of CFOR which was introduced in Ren-C is the idea that
 ; it should not be possible to give a start/end/bump combination that in and

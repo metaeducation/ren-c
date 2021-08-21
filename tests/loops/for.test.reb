@@ -1,29 +1,38 @@
-; functions/control/for-each.r
+; %loops/for.test.reb
+;
+; FOR is a generalization of the idea of something that iterates a loop and
+; then returns the last result.  (For a version that collects the results as
+; a BLOCK!, see MAP.)  It can operate with an arbitrary generator or dialect.
+;
+; FOR-EACH is a legacy specialization that will iterate over a block one at
+; a time.  Unlike MAP-EACH, FOR X EACH [...] is not semantically different
+; from FOR-EACH x [...].  (MAP splices plain blocks, while MAP-EACH does not)
+
 (
     out: copy ""
     str: "abcdef"
-    for-each i str [append out i]
+    for i each str [append out i]
     out = str
 )
 (
     blk: [1 2 3 4]
     sum: 0
-    for-each i blk [sum: sum + i]
+    for i each blk [sum: sum + i]
     sum = 10
 )
 ; cycle return value
 (
     blk: [1 2 3 4]
-    true = for-each i blk [true]
+    true = for i each blk [true]
 )
 (
     blk: [1 2 3 4]
-    false = for-each i blk [false]
+    false = for i each blk [false]
 )
 ; break cycle
 (
     str: "abcdef"
-    for-each i str [
+    for i each str [
         num: i
         if i = #"c" [break]
     ]
@@ -32,32 +41,32 @@
 ; break return value
 (
     blk: [1 2 3 4]
-    null? for-each i blk [break]
+    null? for i each blk [break]
 )
 ; continue cycle
 (
     success: true
-    for-each i [1] [continue, success: false]
+    for i each [1] [continue, success: false]
     success
 )
 ; zero repetition
 (
     success: true
     blk: []
-    for-each i blk [success: false]
+    for i each blk [success: false]
     success
 )
 ; Test that return stops the loop
 (
     blk: [1]
-    f1: func [return: [integer!]] [for-each i blk [return 1 2]]
+    f1: func [return: [integer!]] [for i each blk [return 1 2]]
     1 = f1
 )
 ; Test that errors do not stop the loop and errors can be returned
 (
     num: 0
     blk: [1 2]
-    e: for-each i blk [num: i trap [1 / 0]]
+    e: for i each blk [num: i trap [1 / 0]]
     all [error? e num = 2]
 )
 ; "recursive safety", "locality" and "body constantness" test in one
@@ -66,32 +75,32 @@
 (
     num: 0
     for-each i [1 2 3 4 5] [
-        for-each i [1 2] [num: num + 1]
+        for i each [1 2] [num: num + 1]
     ]
     num = 10
 )
 (
-    error? trap [for-each [:x] [] []]
+    error? trap [for [:x] each [] []]
 )
 
 ; A LIT-WORD! does not create a new variable or binding, but a WORD! does
 (
     x: 10
     sum: 0
-    for-each x [1 2 3] [sum: sum + x]
+    for x each [1 2 3] [sum: sum + x]
     did all [x = 10, sum = 6]
 )
 (
     x: 10
     sum: 0
-    for-each 'x [1 2 3] [sum: sum + x]
+    for 'x each [1 2 3] [sum: sum + x]
     did all [x = 3, sum = 6]
 )
 (
     x: 10
     y: 20
     sum: 0
-    for-each ['x y] [1 2 3 4] [sum: sum + x + y]
+    for ['x y] each [1 2 3 4] [sum: sum + x + y]
     did all [x = 3, y = 20, sum = 10]
 )
 
@@ -107,29 +116,29 @@
     obj2: make object! [x: 30]
     sum: 0
     did all [
-        error? trap [for-each [x x] [1 2 3 4] [sum: sum + x]]
+        error? trap [for [x x] each [1 2 3 4] [sum: sum + x]]
         error? trap [
-            for-each :(compose [  ; see above
+            for :(compose [  ; see above
                 x (bind the 'x obj1)
-            ])[
+            ]) each [
                 1 2 3 4
             ][
                 sum: sum + x
             ]
         ]
         error? trap [
-            for-each :(compose [  ; see above
+            for :(compose [  ; see above
                 (bind the 'x obj2) x
-            ])[
+            ]) each [
                 1 2 3 4
             ][
                 sum: sum + x
             ]
         ]
         not error? trap [
-            for-each :(compose [  ; see above
+            for :(compose [  ; see above
                 (bind the 'x obj1) (bind the 'x obj2)
-            ])[
+            ]) each [
                 1 2 3 4
             ][
                 sum: sum + obj1/x + obj2/x
@@ -141,32 +150,6 @@
     ]
 )]
 
-; ACTION!s are called repeatedly util NULL is returned
-
-(
-    make-one-thru-five: function [
-        return: [<opt> integer!]
-        <static> count (0)
-    ][
-        if count = 5 [return null]
-        return count: count + 1
-    ]
-    [10 20 30 40 50] = map-each i :make-one-thru-five [
-        i * 10
-    ]
-)(
-    make-one-thru-five: function [
-        return: [<opt> integer!]
-        <static> count (0)
-    ][
-        if count = 5 [return null]
-        return count: count + 1
-    ]
-    [[1 2] [3 4] [5 ~null~]]  = map-each [a b] :make-one-thru-five [
-        compose [(a) (b)]
-    ]
-)
-
 
 ; Series being enumerated are locked during the FOR-EACH, and this lock
 ; has to be released on THROWs or FAILs.
@@ -175,7 +158,7 @@
     block: copy [a b c]
     all [
         <thrown> = catch [
-            for-each item block [
+            for item each block [
                 throw <thrown>
             ]
         ]
@@ -185,7 +168,7 @@
     block: copy [a b c]
     all [
         e: trap [
-            for-each item block [
+            for item each block [
                 append block <failure>
             ]
         ]
@@ -197,7 +180,18 @@
 ; paths are immutable, but for-each is legal on them
 
 (
-    [a b c] = collect [for-each x 'a/b/c [keep ^x]]
+    [a b c] = collect [for x each 'a/b/c [keep ^x]]
 )(
-    [_ _] = collect [for-each x '/ [keep ^x]]
+    [_ _] = collect [for x each '/ [keep ^x]]
+)
+
+; FOR-EACH X is an alias of FOR X EACH
+;
+([1 2 3] = collect [for-each x [1 2 3] [keep x]])
+
+; BLANK! is legal for slots you want to opt out of
+(
+    sum: 0
+    for _ each [a b c] [sum: sum + 1]
+    sum = 3
 )

@@ -28,8 +28,7 @@
 typedef enum {
     LOOP_FOR_EACH,
     LOOP_EVERY,
-    LOOP_MAP_EACH,
-    LOOP_MAP_EACH_SPLICED
+    LOOP_MAP_EACH
 } LOOP_MODE;
 
 
@@ -591,27 +590,42 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_MAP_EACH:
-          case LOOP_MAP_EACH_SPLICED:
-            if (IS_NULLED(les->out) or Is_Isotope(les->out, SYM_NULL))
-                Init_Isotope(les->out, SYM_NULL);  // null signals break
-            else if (
-                IS_BAD_WORD(les->out)
-                and GET_CELL_FLAG(les->out, ISOTOPE)
+            //
+            // Here is where we would run a predicate to process the block
+            // result before appending.
+            //
+            /* Predicate(les->out) */
+
+            // We use APPEND semantics on les->out, with the twist that NULL
+            // is allowed to vaporize.  So blocks splice, quotes as-is, etc.
+            //
+            if (
+                IS_NULLED(les->out) or Is_Isotope(les->out, SYM_NULL)
+                or IS_BLANK(les->out)
             ){
-                fail (les->out);
+                Init_Isotope(les->out, SYM_NULL);  // NULL signals break below
             }
-            else if (
-                les->mode == LOOP_MAP_EACH_SPLICED
-                and IS_BLOCK(les->out)
-            ){
+            else if (IS_QUOTED(les->out)) {
+                Unquotify(les->out, 1);
+                if (IS_NULLED(les->out))
+                    Init_Bad_Word(DS_PUSH(), SYM_NULL);  // APPEND semantics
+                else
+                    Copy_Cell(DS_PUSH(), les->out);
+            }
+            else if (ANY_THE_KIND(VAL_TYPE(les->out))) {
+                Plainify(Copy_Cell(DS_PUSH(), les->out));
+            }
+            else if (IS_BLOCK(les->out)) {
                 const RELVAL *tail;
                 const RELVAL *v = VAL_ARRAY_AT(&tail, les->out);
                 for (; v != tail; ++v)
                     Derelativize(DS_PUSH(), v, VAL_SPECIFIER(les->out));
             }
-            else {
+            else if (ANY_INERT(les->out)) {
                 Copy_Cell(DS_PUSH(), les->out);  // non nulls added to result
             }
+            else
+                fail ("Cannot MAP evaluative values w/o QUOTE");
             break;
         }
     } while (more_data and not broke);
@@ -750,14 +764,14 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
     //=//// NOW FINISH UP /////////////////////////////////////////////////=//
 
     if (r == R_THROWN) {  // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
-        if (mode == LOOP_MAP_EACH or mode == LOOP_MAP_EACH_SPLICED)
+        if (mode == LOOP_MAP_EACH)
             DS_DROP_TO(dsp_orig);
         return R_THROWN;
     }
 
     if (r) {
         assert(IS_ERROR(r));
-        if (mode == LOOP_MAP_EACH or mode == LOOP_MAP_EACH_SPLICED)
+        if (mode == LOOP_MAP_EACH)
             DS_DROP_TO(dsp_orig);
         rebJumps ("fail", rebR(r));
     }
@@ -787,7 +801,6 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         return D_OUT;
 
       case LOOP_MAP_EACH:
-      case LOOP_MAP_EACH_SPLICED:
         if (IS_NULLED(D_OUT)) {  // BREAK, so *must* return null
             DS_DROP_TO(dsp_orig);
             return nullptr;
@@ -818,7 +831,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 //          "Ending value"
 //      bump [any-number!]
 //          "Amount to skip each time"
-//      body [<const> block! action!]
+//      body [<const> any-branch!]
 //          "Code to evaluate"
 //  ]
 //
@@ -896,7 +909,7 @@ REBNATIVE(cfor)
 //      skip "Number of positions to skip each time"
 //          [<blank> integer!]
 //      body "Code to evaluate each time"
-//          [<const> block! action!]
+//          [<const> any-branch!]
 //  ]
 //
 REBNATIVE(for_skip)
@@ -1025,7 +1038,7 @@ REBNATIVE(stop)
 //
 //      return: [<opt> any-value!]
 //          {Null if BREAK, or non-null value passed to STOP}
-//      body [<const> block! action!]
+//      body [<const> any-branch!]
 //          "Block or action to evaluate each time"
 //  ]
 //
@@ -1072,10 +1085,10 @@ REBNATIVE(cycle)
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block!]
 //      data "The series to traverse"
-//          [<blank> any-series! any-context! map! any-path!
+//          [<blank> any-series! any-context! map! any-sequence!
 //           action!]  ; experimental
 //      body "Block to evaluate each time"
-//          [<const> block! action!]
+//          [<const> any-branch!]
 //  ]
 //
 REBNATIVE(for_each)
@@ -1095,7 +1108,7 @@ REBNATIVE(for_each)
 //          "Word or block of words to set each time (local)"
 //      data [<blank> any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
-//      body [<const> block! action!]
+//      body [<const> any-branch!]
 //          "Block to evaluate each time"
 //  ]
 //
@@ -1404,7 +1417,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 //          {Number of removed series items, or null if BREAK}
 //      :vars [blank! word! block!]
 //          "Word or block of words to set each time (local)"
-//      data [<blank> any-series!]
+//      data [<blank> any-series! any-sequence! action!]
 //          "The series to traverse (modified)" ; should BLANK! opt-out?
 //      body [<const> block! action!]
 //          "Block to evaluate (return TRUE to remove)"
@@ -1528,22 +1541,73 @@ REBNATIVE(remove_each)
 //
 //  {Evaluate a block for each value(s) in a series and collect as a block.}
 //
-//      return: [<opt> block!]
-//          {Collected block (BREAK/WITH can add a final result to block)}
-//      :vars [blank! word! block!]
-//          "Word or block of words to set each time (local)"
-//      data [<blank> any-series! any-path! action!]
-//          "The series to traverse"
-//      body [<const> block!]
-//          "Block to evaluate each time"
+//      return: "Collected block"
+//          [<opt> block!]
+//      :vars "Word or block of words to set each time (local if not quoted)"
+//          [blank! word! block! quoted!]
+//      data "The series to traverse"
+//          [<blank> any-series! any-sequence! action!]
+//      body "Block to evaluate each time (result will be kept literally)"
+//          [<const> block!]
 //  ]
 //
 REBNATIVE(map_each)
+//
+// !!! MAP-EACH is a legacy construct that lacks the planned flexibility of
+// MAP, as it presumes a 1:1 mapping vs. being able to splice.  The syntax of
+// FOR and MAP are intended to be generic to work with generators or a dialect.
 {
     INCLUDE_PARAMS_OF_MAP_EACH;
+
     UNUSED(PAR(vars));
     UNUSED(PAR(data));
+
+    Metafy(ARG(body));  // want the body to effectively quote the argument
+
+    return Loop_Each(
+        frame_,
+        LOOP_MAP_EACH  // will transition to MAP_EACH_SPLICED as default
+    );
+}
+
+
+//
+//  map: native [
+//
+//  {Evaluate a block for each value(s) in a series and collect as a block}
+//
+//      return: "Collected block"
+//          [<opt> block!]
+//      :vars "Word or block of words to set each time (local if not quoted)"
+//          [blank! word! block! quoted!]
+//      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
+//          [<blank> quoted! action!]
+//      :body "Block to evaluate each time"
+//          [<const> any-branch!]
+//  ]
+//
+REBNATIVE(map)
+{
+    INCLUDE_PARAMS_OF_MAP;
+
+    UNUSED(PAR(vars));
     UNUSED(PAR(body));
+
+    REBVAL *data = ARG(data);
+
+    if (IS_ACTION(data)) {
+        // treat as a generator
+    }
+    else if (
+        not IS_QUOTED(data)
+        or VAL_QUOTED_DEPTH(data) != 1
+        or not (
+            ANY_SERIES(Unquotify(data, 1))
+            or ANY_PATH(data)  // has been unquoted
+        )
+    ){
+        fail ("MAP only supports one-level QUOTED! series/path for the moment");
+    }
 
     return Loop_Each(
         frame_,
@@ -1611,14 +1675,14 @@ REBNATIVE(repeat)
 //
 //  for: native [
 //
-//  {Evaluates a block a number of times or over a series}
+//  {Evaluates a branch a number of times or over a series, return last result}
 //
 //      return: "Last body result, or NULL if BREAK"
 //          [<opt> any-value!]
-//      'word "Word to set each time"
-//          [word!]
+//      :vars "Word or block of words to set each time (local if not quoted)"
+//          [blank! quoted! word! block!]
 //      value "Maximum number or series to traverse"
-//          [<blank> any-number! quoted! block!]
+//          [<blank> any-number! any-sequence! quoted! block!]
 //      'body "!!! actually just BLOCK!, but quoted to catch legacy uses"
 //          [<const> any-value!]
 //  ]
@@ -1643,13 +1707,21 @@ REBNATIVE(for)
     if (IS_QUOTED(value)) {
         Unquotify(value, 1);
 
-        if (not ANY_SERIES(value))
+        if (not (ANY_SERIES(value) or ANY_SEQUENCE(value)))
             fail (PAR(value));
 
         // Delegate to FOR-EACH (note: in the future this will be the other
         // way around, with FOR-EACH delegating to FOR).
         //
-        return rebValue(NATIVE_VAL(for_each), rebQ(ARG(word)), value, body);
+        if (RunQ_Throws(
+            D_OUT,
+            true,
+            rebU(NATIVE_VAL(for_each)), ":(", ARG(vars), ")", value, rebU(body),
+            rebEND
+        )){
+            return R_THROWN;
+        }
+        return D_OUT;
     }
 
     if (IS_DECIMAL(value) or IS_PERCENT(value))
@@ -1659,9 +1731,9 @@ REBNATIVE(for)
     Virtual_Bind_Deep_To_New_Context(
         body,
         &context,
-        ARG(word)
+        ARG(vars)
     );
-    Init_Object(ARG(word), context);  // keep GC safe
+    Init_Object(ARG(vars), context);  // keep GC safe
 
     assert(CTX_LEN(context) == 1);
 

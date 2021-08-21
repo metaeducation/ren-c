@@ -211,6 +211,10 @@ tweak :|| 'barrier on
 ;
 match: :match*/safe
 
+; EACH will ultimately be a generator, but for now it acts as QUOTE so it can
+; be used with `map x each [a b c] [...]` and give you x as a, then b, then c.
+;
+each: :quote
 
 ; !!! While POINTFREE is being experimented with in its design, it is being
 ; designed in usermode.  It would be turned into an optimized native when it

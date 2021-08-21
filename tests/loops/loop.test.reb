@@ -1,4 +1,4 @@
-; %loop-test.reb
+; %loops/loop-test.reb
 ;
 ; LOOP in Ren-C acts as an arity-2 looping operation, like WHILE from Rebol2
 ; and R3-Alpha.

@@ -1,4 +1,5 @@
-; functions/control/for-skip.r
+; %loops/iterate-skip.test.reb
+
 (
     blk: copy out: copy []
     cfor i 1 25 1 [append blk i]

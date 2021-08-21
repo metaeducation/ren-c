@@ -1,4 +1,5 @@
-; functions/control/remove-each.r
+; %loops/remove-each.test.reb
+
 (
     remove-each i s: [1 2] [true]
     empty? s

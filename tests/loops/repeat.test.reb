@@ -1,4 +1,9 @@
-; functions/control/loop.r
+; %loops/repeat.test.reb
+;
+; REPEAT in Ren-C has been standardized across parsing and the main library
+; to mean "do this thing a number or range of times, without passing in a
+; variable tracking which time we are on".
+
 (
     num: 0
     repeat 10 [num: num + 1]
@@ -68,16 +73,6 @@
     f 1
 )
 
-; mutating the loop variable of a REPEAT affects the loop (Red keeps its own
-; internal state, overwritten each body call) https://trello.com/c/V4NKWh5E
-(
-    sum: 0
-    count-up i 10 [
-        sum: me + 1
-        i: 10
-    ]
-    sum = 1
-)
 
 ; test that a continue which interrupts code using the mold buffer does not
 ; leave the gathered material in the mold buffer

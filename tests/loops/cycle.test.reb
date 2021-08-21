@@ -1,4 +1,13 @@
-; functions/control/forever.r
+; %loops/cycle.test.reb
+;
+; Historical Rebol had a FOREVER loop which was typically exited via a BREAK.
+; Ren-C reserves FOREVER for an actual unbreakable loop, and calls it CYCLE.
+;
+; CYCLE is unique because it is allowed to violate the "loop result protocol"
+; and end the loop returning something other than NULL...because it is known
+; that all instances of CYCLE were "stopped".  So there's no ambiguity about
+; whether a result represents a stopping condition or a fully completed loop.
+
 (
     num: 0
     cycle [

@@ -1,5 +1,7 @@
-; functions/control/continue.r
+; %loops/continue.test.reb
+;
 ; see loop functions for basic continuing functionality
+
 [#1515 ; the "result" of continue should not be assignable
     (a: 1 repeat 1 [a: continue] :a =? 1)
 ]

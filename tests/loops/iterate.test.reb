@@ -1,4 +1,5 @@
-; functions/control/for-next.r
+; %loops/iterate.test.reb
+
 (
     str: "abcdef"
     out: copy ""
