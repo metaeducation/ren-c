@@ -36,9 +36,6 @@
 // "nulled cells" and marked by means of their KIND3Q_BYTE().
 //
 
-#define NULLED_CELL \
-    c_cast(const REBVAL*, &PG_Nulled_Cell)
-
 #define IS_NULLED(v) \
     (VAL_TYPE(v) == REB_NULL)
 
@@ -76,4 +73,4 @@ inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell)
   { return VAL_TYPE(cell) == REB_NULL ? nullptr : cell; }
 
 inline static const REBVAL *REIFY_NULL(const REBVAL *cell)
-  { return cell == nullptr ? NULLED_CELL : cell; }
+  { return cell == nullptr ? Lib(NULL) : cell; }

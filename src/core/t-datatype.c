@@ -207,9 +207,7 @@ REBVAL *Datatype_From_Url(const REBVAL *url) {
 //
 static void Startup_Fake_Type_Constraint(SYMID sym)
 {
-    const REBSYM *canon = Canon(sym);
-    REBVAL *char_x = Append_Context(Lib_Context, nullptr, canon);
-    Init_Sym_Word(char_x, canon);
+    Init_Sym_Word(Force_Lib_Var(sym), Canon(sym));
 }
 
 

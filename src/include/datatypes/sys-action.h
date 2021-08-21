@@ -491,44 +491,6 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
     GET_SUBCLASS_FLAG(VARLIST, ACT_PARAMLIST(a), PARAMLIST_HAS_RETURN)
 
 
-//=//// NATIVE ACTION ACCESS //////////////////////////////////////////////=//
-//
-// At one time, an array of native REBACT* was stored, to be referenced
-// internally.  This was separate from the native values that were resident
-// in lib, and were kept because the possibility of overwriting the lib
-// definitions could create problems for internal code that used them.
-//
-// The reality is that the mezzanine and other parts of the system really
-// can't survive destructive modification of lib anyway.  It should be
-// protected by default, and changes (done by experts only) should not disrupt
-// the semantics of dependent mezzanines...or internal functions that use
-// natives by their lib pointers.
-//
-// Another liability is that by just storing the REBACT* and invoking through
-// that, such calls were anonymous...not taking advantage of the cached name
-// which is in the cell of the actual full value in lib.
-//
-// So now this is built on the generic LIB_VAR facility, that uses the symbol
-// of the value in Lib.  Since it's a bit precarious we should probably
-// protect everything in lib by default, but it's hard to accidentally assign
-// things in lib now due to the "Sea of Words" module change.
-
-#define Native_Act(name) \
-    VAL_ACTION(LIB_VAR(name))
-
-#define Native(name) \
-    LIB_VAR(name)
-
-#define Generic(name) \
-    LIB_VAR(name)
-
-#define Generic_Act(name) \
-    VAL_ACTION(LIB_VAR(name))
-
-#define Get_Sys_Function(symid) \
-    MOD_VAR(Sys_Context, Canon(symid), true)
-
-
 // A fully constructed action can reconstitute the ACTION! REBVAL
 // that is its canon form from a single pointer...the REBVAL sitting in
 // the 0 slot of the action's details.  That action has no binding and

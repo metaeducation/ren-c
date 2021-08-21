@@ -125,8 +125,8 @@ inline static RELVAL *Quotify_Core(
         mutable_KIND3Q_BYTE(v) = kind + (REB_64 * depth);
     }
     else {
-        // An efficiency trick here could point to VOID_VALUE, BLANK_VALUE,
-        // NULLED_CELL, etc. in those cases, so long as GC knew.  (But how
+        // An efficiency trick here could point to Lib(VOID), Lib(BLANK),
+        // Lib(NULL), etc. in those cases, so long as GC knew.  (But how
         // efficient do 4-level-deep-quoted nulls need to be, really?)
 
         // This is an uncomfortable situation of moving values without a

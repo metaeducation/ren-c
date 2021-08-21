@@ -244,7 +244,7 @@ void Remove_Any_Series_Len(REBVAL *v, REBLEN index, REBINT len)
         Modify_String_Or_Binary(
             temp,
             SYM_CHANGE,
-            NULLED_CELL,
+            Lib(NULL),
             AM_PART,
             len,
             1  // dups

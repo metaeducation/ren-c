@@ -240,7 +240,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         break;
     }
 
-    return R_UNHANDLED; // not a common operation, uhandled (not NULLED_CELL!)
+    return R_UNHANDLED;  // not a common operation, uhandled...not Lib(NULL)!
 }
 
 

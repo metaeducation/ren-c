@@ -49,6 +49,7 @@ PVAR const REBSYM *PG_Trash_Canon;  // Preallocated ~trash~ bad word
 // canon order.  It provides fast access to lib entries by symbol.
 //
 PVAR REBARR PG_Lib_Patches[LIB_SYMS_MAX];
+
 PVAR const REBSYM *PG_Symbol_Canons[ALL_SYMS_MAX + 1];
 
 PVAR REBSER *PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
@@ -96,11 +97,6 @@ PVAR REB_OPTS *Reb_Opts;
 // These are some canon BLANK, TRUE, and FALSE values (and nulled/end cells).
 
 PVAR REBVAL PG_End_Cell;
-PVAR REBVAL PG_Nulled_Cell;
-
-PVAR REBVAL PG_Blank_Value;
-PVAR REBVAL PG_False_Value;
-PVAR REBVAL PG_True_Value;
 
 PVAR REBVAL PG_The_Value;
 PVAR REBVAL PG_Meta_Value;
@@ -121,7 +117,6 @@ PVAR REBVAL PG_R_Unhandled;  // has "pseudotype" REB_R_THROWN
 // by the same mechanism they use.  This means they can be initialized at
 // the appropriate moment during the boot, one at a time.
 
-PVAR REBVAL *Root_System;
 PVAR REBVAL *Root_Typesets;
 
 PVAR REBVAL *Root_None_Tag; // used with RETURN: <none> to suppress results

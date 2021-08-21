@@ -527,14 +527,14 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
             VAL_STRING(sequence) == PG_Dot_1_Canon
             or VAL_STRING(sequence) == PG_Slash_1_Canon
         );
-        return BLANK_VALUE; }
+        return Lib(BLANK); }
 
       case REB_GET_WORD:  // `/a` or `.a`
       case REB_GET_GROUP:  // `/(a)` or `.(a)`
       case REB_GET_BLOCK: {  // `/[a]` or `.[a]`
         assert(n < 2);
         if (n == 0)
-            return BLANK_VALUE;
+            return Lib(BLANK);
 
         // Because the cell is being viewed as a PATH!, we cannot view it as
         // a WORD! also unless we fiddle the bits at a new location.
@@ -550,7 +550,7 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
       case REB_META_BLOCK: {  // `[a]/` or `[a].`
         assert(n < 2);
         if (n == 1)
-            return BLANK_VALUE;
+            return Lib(BLANK);
 
         // Because the cell is being viewed as a PATH!, we cannot view it as
         // a WORD! also unless we fiddle the bits at a new location.

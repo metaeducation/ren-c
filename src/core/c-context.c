@@ -160,7 +160,7 @@ REBVAR *Append_Context(
         // symbol node for the word's spelling, and can be directly linked
         // to from a word as a singular value (with binding index "1").
 
-        OPT_SYMID id = SYM_0;
+        OPT_SYMID id = cast(OPT_SYMID, SYM_0);
         if (context == Lib_Context)
             id = symbol ?
                 ID_OF_SYMBOL(unwrap(symbol))
@@ -170,7 +170,7 @@ REBVAR *Append_Context(
         if (id != SYM_0 and id <= LIB_SYMS_MAX) {
             //
             // Low symbol IDs are all in PG_Lib_Patches for fast access, and
-            // were created as a block in Startup_Symbols().
+            // were created as a continguous array of memory in Startup_Lib().
             //
             patch = &PG_Lib_Patches[id];
             assert(LINK(PatchContext, patch) == nullptr);  // don't double add

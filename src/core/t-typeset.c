@@ -93,11 +93,7 @@ void Startup_Typesets(void)
     REBINT n;
     for (n = 0; Typesets[n].sym != 0; n++) {
         Init_Typeset(DS_PUSH(), Typesets[n].bits);
-
-        Copy_Cell(
-            Append_Context(Lib_Context, nullptr, Canon(Typesets[n].sym)),
-            DS_TOP
-        );
+        Copy_Cell(Force_Lib_Var(Typesets[n].sym), DS_TOP);
     }
 
     // !!! Why does the system access the typesets through Lib_Context, vs.

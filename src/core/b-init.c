@@ -172,21 +172,19 @@ void Set_Stack_Limit(void *base, uintptr_t bounds) {
 
 
 //
-//  Startup_True_And_False: C
-//
-// !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the literal
-// forms of logical true and false.  Not only does this frequently lead to
-// confusion, but there's not consensus on what a good literal form would be.
-// R3-Alpha used #[true] and #[false] (but often molded them as looking like
-// the words true and false anyway).  $true and $false have been proposed,
-// but would not be backward compatible in files read by bootstrap.
+//  Startup_Lib: C
 //
 // Since no good literal form exists, the %sysobj.r file uses the words.  They
 // have to be defined before the point that it runs (along with the natives).
 //
-static void Startup_True_And_False(void)
+static void Startup_Lib(void)
 {
-    REBCTX *lib = Lib_Context;
+    REBCTX *lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    Lib_Context_Value = Alloc_Value();
+    Init_Any_Context(Lib_Context_Value, REB_MODULE, lib);
+    Lib_Context = VAL_CONTEXT(Lib_Context_Value);
+
+  //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         REBSER *patch = &PG_Lib_Patches[i];
@@ -201,21 +199,31 @@ static void Startup_True_And_False(void)
         Prep_Cell(ARR_SINGLE(ARR(patch)));  // should overwrite
     }
 
-    REBVAL *true_value = Append_Context(lib, nullptr, Canon(SYM_TRUE));
-    Init_True(true_value);
-    assert(IS_TRUTHY(true_value) and VAL_LOGIC(true_value) == true);
+  //=//// INITIALIZE EARLY BOOT USED VALUES ////////////////////////////////=//
 
-    REBVAL *false_value = Append_Context(lib, nullptr, Canon(SYM_FALSE));
-    Init_False(false_value);
-    assert(IS_FALSEY(false_value) and VAL_LOGIC(false_value) == false);
+    // These have various applications, such as BLANK! is used during scanning
+    // to build a path like `/a/b` out of an array with [_ a b] in it.  Since
+    // the scanner is also what would load code like `blank: _`, we need to
+    // seed the values to get the ball rolling.
 
-    REBVAL *blank_value = Append_Context(lib, nullptr, Canon(SYM_BLANK));
-    Init_Blank(blank_value);
-    assert(IS_FALSEY(blank_value) and IS_BLANK(blank_value));
+    Init_Nulled(force_Lib(NULL));
+    assert(IS_FALSEY(Lib(NULL)) and IS_NULLED(Lib(NULL)));
 
-    REBVAL *null_value = Append_Context(lib, nullptr, Canon(SYM_NULL));
-    Init_Nulled(null_value);
-    assert(IS_FALSEY(null_value) and IS_NULLED(null_value));
+    Init_Blank(force_Lib(BLANK));
+    assert(IS_FALSEY(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
+
+    // !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the
+    // literal forms of logical true and false.  Not only does this frequently
+    // lead to confusion, but there's not consensus on what a good literal form
+    // would be. R3-Alpha used #[true] and #[false] (but often molded them as
+    // looking like the words true and false anyway).  $true and $false have
+    // been proposed, but would not be backward compatible in files read
+    // by bootstrap.
+    //
+    Init_True(force_Lib(TRUE));
+    Init_False(force_Lib(FALSE));
+    assert(IS_TRUTHY(Lib(TRUE)) and VAL_LOGIC(Lib(TRUE)) == true);
+    assert(IS_FALSEY(Lib(FALSE)) and VAL_LOGIC(Lib(FALSE)) == false);
 }
 
 
@@ -355,7 +363,8 @@ static void Shutdown_Empty_Arrays(void) {
 //
 static void Init_Root_Vars(void)
 {
-    // Simple isolated VOID, NONE, TRUE, and FALSE values.
+    // Simple isolated values, not available via lib, e.g. not Lib(TRUE) or
+    // Lib(BLANK)...
     //
     // They should only be accessed by macros which retrieve their values
     // as `const`, to avoid the risk of accidentally changing them.  (This
@@ -367,11 +376,6 @@ static void Init_Root_Vars(void)
     // and thus can be stored safely in program globals without mention in
     // the root set.  Should that change, they could be explicitly added
     // to the GC's root set.
-
-    Init_Nulled(Prep_Cell(&PG_Nulled_Cell));
-    Init_Blank(Prep_Cell(&PG_Blank_Value));
-    Init_False(Prep_Cell(&PG_False_Value));
-    Init_True(Prep_Cell(&PG_True_Value));
 
     RESET_CELL(Prep_Cell(&PG_Meta_Value), REB_META, CELL_MASK_NONE);
     RESET_CELL(Prep_Cell(&PG_The_Value), REB_THE, CELL_MASK_NONE);
@@ -462,10 +466,7 @@ static void Init_System_Object(
     // Create a global value for it in the Lib context, so we can say things
     // like `system/contexts` (also protects newly made context from GC).
     //
-    Init_Object(
-        Append_Context(Lib_Context, nullptr, Canon(SYM_SYSTEM)),
-        system
-    );
+    Init_Object(force_Lib(SYSTEM), system);
 
     Bind_Values_Deep(spec_head, spec_tail, Lib_Context_Value);
 
@@ -480,11 +481,6 @@ static void Init_System_Object(
         panic (result);
     if (not IS_BLANK(result))
         panic (result);
-
-    // Make the system object a root value, to protect it from GC.  (Someone
-    // could say `system: blank` in the Lib_Context, otherwise!)
-    //
-    Root_System = Init_Object(Alloc_Value(), system);
 
     // Init_Action_Meta_Shim() made Root_Action_Meta as a bootstrap hack
     // since it needed to make function meta information for natives before
@@ -534,12 +530,6 @@ static void Init_System_Object(
     rootvar->header.bits |= CELL_FLAG_PROTECTED;
   #endif
   }
-}
-
-void Shutdown_System_Object(void)
-{
-    rebRelease(Root_System);
-    Root_System = NULL;
 }
 
 
@@ -697,7 +687,8 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     // features.  It is lower-level than the LIB context, but has natives,
     // generics, and the definitions from Startup_Base() available.
     //
-    // See the helper Get_Sys_Function() for more information.
+    // See the helper Sys() for a quick way of getting at the functions by
+    // their symbol.
     //
     // (Note: The SYS context should not be confused with "the system object",
     // which is a different thing.)
@@ -832,7 +823,7 @@ void Startup_Core(void)
   #if defined(TEST_EARLY_BOOT_PANIC)
     panic ("early panic test"); // should crash
   #elif defined(TEST_EARLY_BOOT_FAIL)
-    fail (Error_No_Value_Raw(BLANK_VALUE)); // same as panic (crash)
+    fail (Error_No_Value_Raw(Lib(BLANK))); // same as panic (crash)
   #endif
 
   #ifdef DEBUG_ENABLE_ALWAYS_MALLOC
@@ -888,10 +879,6 @@ void Startup_Core(void)
 
     Init_Root_Vars();    // Special REBOL values per program
 
-  #if !defined(NDEBUG)
-    Assert_Pointer_Detection_Working();  // uses root series/values to test
-  #endif
-
 //=//// INITIALIZE (SINGULAR) TASK ////////////////////////////////////////=//
 
     Startup_Task();
@@ -900,12 +887,11 @@ void Startup_Core(void)
 
 //=//// CREATE SYSTEM MODULES //////////////////////////////////////////////=//
 
-    REBCTX *lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    Lib_Context_Value = Alloc_Value();
-    Init_Any_Context(Lib_Context_Value, REB_MODULE, lib);
-    Lib_Context = VAL_CONTEXT(Lib_Context_Value);
+    Startup_Lib();  // establishes Lib_Context and Lib_Context_Value
 
-    Startup_True_And_False();
+  #if !defined(NDEBUG)
+    Assert_Pointer_Detection_Working();  // uses root series/values to test
+  #endif
 
     REBCTX *sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     Sys_Context_Value = Alloc_Value();
@@ -1020,7 +1006,7 @@ void Startup_Core(void)
   #if defined(TEST_MID_BOOT_PANIC)
     panic (EMPTY_ARRAY); // panics should be able to give some details by now
   #elif defined(TEST_MID_BOOT_FAIL)
-    fail (Error_No_Value_Raw(BLANK_VALUE)); // DEBUG->assert, RELEASE->panic
+    fail (Error_No_Value_Raw(Lib(BLANK))); // DEBUG->assert, RELEASE->panic
   #endif
 
     // Pre-make the stack overflow error (so it doesn't need to be made
@@ -1107,7 +1093,6 @@ void Shutdown_Core(void)
     Shutdown_Data_Stack();
 
     Shutdown_Stackoverflow();
-    Shutdown_System_Object();
     Shutdown_Typesets();
 
     Shutdown_Natives();

@@ -1202,7 +1202,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
       case REB_GET_BLOCK: {
         Derelativize(f_spare, v, v_specifier);
         mutable_HEART_BYTE(f_spare) = mutable_KIND3Q_BYTE(f_spare) = REB_BLOCK;
-        if (RunQ_Throws(f->out, true, rebU(Native(REDUCE)), f_spare, rebEND))
+        if (RunQ_Throws(f->out, true, rebU(Lib(REDUCE)), f_spare, rebEND))
             goto return_thrown;
         break; }
 

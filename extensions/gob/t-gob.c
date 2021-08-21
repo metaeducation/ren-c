@@ -887,7 +887,7 @@ REB_R PD_Gob(
 
     if (IS_INTEGER(picker))
         return rebValue(
-            LIB_VAR(PICK),
+            Lib(PICK),
                 "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
                 "@", SPECIFIC(picker)
         );

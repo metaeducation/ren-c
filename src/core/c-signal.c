@@ -118,7 +118,7 @@ bool Do_Signals_Throws(REBVAL *out)
         CLR_SIGNAL(SIG_HALT);
         Eval_Sigmask = saved_sigmask;
 
-        Init_Thrown_With_Label(out, NULLED_CELL, Native(HALT));
+        Init_Thrown_With_Label(out, Lib(NULL), Lib(HALT));
         return true; // thrown
     }
 

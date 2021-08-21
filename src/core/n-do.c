@@ -447,21 +447,15 @@ REBNATIVE(do)
       case REB_URL:
       case REB_FILE:
       case REB_TAG: {
-        //
-        // See code called in system/intrinsic/do*
-        //
-        REBVAL *sys_do_helper = Get_Sys_Function(SYM_DO_P);
-        assert(IS_ACTION(sys_do_helper));
-
         UNUSED(REF(args)); // detected via `value? :arg`
 
         if (RunQ_Throws(
             D_OUT,
             true,  // fully = true, error if not all arguments consumed
-            rebU(sys_do_helper),
+            rebU(Sys(SYM_DO_P)),
             source,
             REF(args),
-            REF(only) ? TRUE_VALUE : FALSE_VALUE,
+            REF(only) ? Lib(TRUE) : Lib(FALSE),
             rebEND
         )){
             return R_THROWN;
@@ -751,7 +745,7 @@ REBNATIVE(redo)
     // of the frame.  Use REDO as the throw label that Eval_Core() will
     // identify for that behavior.
     //
-    Copy_Cell(D_OUT, Native(REDO));
+    Copy_Cell(D_OUT, Lib(REDO));
     INIT_VAL_ACTION_BINDING(D_OUT, c);
 
     // The FRAME! contains its ->phase and ->binding, which should be enough

@@ -529,7 +529,7 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
             else {
                 assert(used == 1);
                 if (IS_END(SER_HEAD(RELVAL, s)))
-                    Init_Nulled(SER_HEAD(RELVAL, s));  // !!! Unreadable bad-word?
+                    Init_Trash(SER_HEAD(RELVAL, s));  // !!! Unreadable bad-word?
             }
         }
         else

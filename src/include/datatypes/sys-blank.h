@@ -50,9 +50,6 @@
 // for soft failure.
 //
 
-#define BLANK_VALUE \
-    c_cast(const REBVAL*, &PG_Blank_Value)
-
 inline static REBVAL *Init_Blank_Core(RELVAL *v) {
     RESET_VAL_HEADER(v, REB_BLANK, CELL_MASK_NONE);
   #ifdef ZERO_UNUSED_CELL_FIELDS

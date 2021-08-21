@@ -221,11 +221,7 @@ bool Make_Frame_From_Feed_Throws(REBVAL *out, REBFED *feed)
         return false;
 
     assert(IS_QUOTED(out));
-    REBCTX *exemplar = Make_Context_For_Action(
-        Native(IDENTITY),
-        DSP,
-        nullptr
-    );
+    REBCTX *exemplar = Make_Context_For_Action(Lib(IDENTITY), DSP, nullptr);
 
     Unquotify(Copy_Cell(CTX_VAR(exemplar, 2), out), 1);
 

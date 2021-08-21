@@ -391,7 +391,7 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
         RETURN (Meta_Unquotify(ARG(optional)));
     }
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), NULLED_CELL))
+    if (Do_Branch_With_Throws(D_OUT, ARG(branch), Lib(NULL)))
         return R_THROWN;
 
     return D_OUT;  // note NULL branches will have been converted to NULL-2
@@ -1239,7 +1239,7 @@ REBNATIVE(catch)
 
     if (not Do_Any_Array_At_Throws(D_OUT, ARG(block), SPECIFIED)) {
         if (REF(result))
-            rebElide(Native(SET), rebQ(REF(result)), rebQ(D_OUT));
+            rebElide(Lib(SET), rebQ(REF(result)), rebQ(D_OUT));
 
         return nullptr;  // no throw means just return null
     }

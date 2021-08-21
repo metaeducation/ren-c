@@ -238,13 +238,10 @@ const REBVAL *Type_Of(const RELVAL *value)
 //
 REBVAL *Get_System(REBLEN i1, REBLEN i2)
 {
-    REBVAL *obj;
+    REBVAL *obj = CTX_VAR(VAL_CONTEXT(Lib(SYSTEM)), i1);
+    if (i2 == 0)
+        return obj;
 
-    // Note: At present, one common way to crash here is if you use special
-    // tags in the return spec like <none> or <void> for a native.
-    //
-    obj = CTX_VAR(VAL_CONTEXT(Root_System), i1);
-    if (i2 == 0) return obj;
     assert(IS_OBJECT(obj));
     return CTX_VAR(VAL_CONTEXT(obj), i2);
 }

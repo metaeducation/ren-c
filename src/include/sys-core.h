@@ -424,13 +424,6 @@ inline static void INIT_BINDING_MAY_MANAGE(
 #include "datatypes/sys-value.h"  // these defines don't need series accessors
 
 #include "sys-end.h"  // notably *not* a datatype (and not user exposed)
-#include "sys-nulled.h"  // not a datatype, but it is exposed to the user
-
-#include "datatypes/sys-blank.h"
-#include "datatypes/sys-comma.h"
-
-#include "datatypes/sys-integer.h"
-#include "datatypes/sys-decimal.h"
 
 enum rebol_signals {
     //
@@ -477,6 +470,50 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #include "datatypes/sys-series.h"
 #include "datatypes/sys-array.h"  // REBARR used by UTF-8 string bookmarks
 
+
+//=//// LIB BUILTINS ACCESS MACRO //////////////////////////////////////////=//
+
+#include "sys-symbol.h"
+
+inline static const REBVAR *Try_Lib_Var(SYMID id) {
+    assert(id < LIB_SYMS_MAX);
+
+    // !!! We allow a "removed state", in case modules implement a
+    // feature for dropping variables.
+    //
+    if (LINK(PatchContext, &PG_Lib_Patches[id]) == nullptr)
+        return nullptr;
+
+    return cast(REBVAR*, ARR_SINGLE(&PG_Lib_Patches[id]));
+}
+
+#define Lib(name) \
+    Try_Lib_Var(SYM_##name)
+
+inline static REBVAR *Force_Lib_Var(SYMID id) {
+    REBVAR *var = m_cast(REBVAR*, Try_Lib_Var(id));
+    if (var)
+        return var;
+    return Append_Context(Lib_Context, nullptr, Canon(id));
+}
+
+#define force_Lib(name) \
+    Force_Lib_Var(SYM_##name)
+
+#define Sys(symid) \
+    cast(const REBVAR*, MOD_VAR(Sys_Context, Canon(symid), true))
+
+
+//=//// CONTINUE VALUE TYPES ///////////////////////////////////////////////=//
+
+#include "sys-nulled.h"  // not a datatype, but it is exposed to the user
+
+#include "datatypes/sys-blank.h"
+#include "datatypes/sys-comma.h"
+
+#include "datatypes/sys-integer.h"
+#include "datatypes/sys-decimal.h"
+
 #include "sys-protect.h"
 
 
@@ -487,7 +524,6 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
 #include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
 #include "datatypes/sys-string.h"  // SYMID needed for typesets
 
-#include "sys-symbol.h"
 #include "datatypes/sys-bad-word.h"  // SYMID needed
 
 #include "datatypes/sys-logic.h"  // ~null~ BAD-WORD! is falsey

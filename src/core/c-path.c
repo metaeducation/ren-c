@@ -189,7 +189,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         if (not IS_ACTION(pvs->out))
             fail (Error_Inert_With_Slashed_Raw());
 
-        PVS_PICKER(pvs) = NULLED_CELL;  // no-op
+        PVS_PICKER(pvs) = Lib(NULL);  // no-op
         goto redo;
     }
     else if (ANY_TUPLE(f_value) and not IS_FILE(pvs->out)) {  // ignore file hack

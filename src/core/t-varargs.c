@@ -126,7 +126,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 // check the result, and if an error is delivered it will use the name of
 // the parameter symbol in the fail() message.
 //
-// If op is VARARG_OP_TAIL_Q, then it will return TRUE_VALUE or FALSE_VALUE,
+// If op is VARARG_OP_TAIL_Q, then it will return Lib(TRUE) or Lib(FALSE),
 // and this case cannot return a thrown value.
 //
 // For other ops, it will return END_NODE if at the end of variadic input,

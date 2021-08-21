@@ -132,7 +132,7 @@ REBNATIVE(typechecker)
     REBVAL *type = ARG(type);
 
     REBACT *typechecker = Make_Action(
-        ACT_SPECIALTY(Native_Act(TYPECHECK_INTERNAL_Q)),
+        ACT_SPECIALTY(VAL_ACTION(Lib(TYPECHECK_INTERNAL_Q))),
         IS_DATATYPE(type)
             ? &Datatype_Checker_Dispatcher
             : &Typeset_Checker_Dispatcher,

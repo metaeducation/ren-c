@@ -147,8 +147,8 @@ bool Interpreted_Dispatch_Details_1_Throws(
         Init_Action(
             cell,
             is_combinator
-                ? Native_Act(DEFINITIONAL_RETURN_ISOTOPE)
-                : Native_Act(DEFINITIONAL_RETURN),
+                ? VAL_ACTION(Lib(DEFINITIONAL_RETURN_ISOTOPE))
+                : VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
             Canon(SYM_RETURN),  // relabel (the RETURN in lib is a dummy action)
             CTX(f->varlist)  // bind this return to know where to return from
         );
@@ -166,7 +166,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
         const REBVAL *label = VAL_THROWN_LABEL(spare);
         if (
             IS_ACTION(label)
-            and VAL_ACTION(label) == Native_Act(UNWIND)
+            and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and VAL_ACTION_BINDING(label) == CTX(f->varlist)
         ){
             // !!! Historically, UNWIND was caught by the main action
@@ -610,7 +610,7 @@ REB_R Init_Thrown_Unwind_Value(
     const REBVAL *value,
     REBFRM *frame // required if level is INTEGER! or ACTION!
 ) {
-    Copy_Cell(out, Native(UNWIND));
+    Copy_Cell(out, Lib(UNWIND));
 
     if (IS_FRAME(level)) {
         INIT_VAL_FRAME_BINDING(out, VAL_CONTEXT(level));
@@ -776,7 +776,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
     }
 
   skip_type_check: {
-    Copy_Cell(f->out, Native(UNWIND)); // see also Make_Thrown_Unwind_Value
+    Copy_Cell(f->out, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
     INIT_VAL_ACTION_BINDING(f->out, f_binding);
 
     return Init_Thrown_With_Label(f->out, v, f->out);  // preserves UNEVALUATED

@@ -305,7 +305,9 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
     //
     // Optimization for Lib_Context for datatypes + natives + generics; use
     // tailored order of SYM_XXX constants to beeline for the storage.  The
-    // entries were all allocated during Startup_Symbols().
+    // entries were all allocated during Startup_Lib().
+    //
+    // Note: Call Lib() macro directly if you have a SYM in hand vs. a canon.
     //
     if (c == Lib_Context) {
         OPT_SYMID id = ID_OF_SYMBOL(sym);
@@ -315,12 +317,7 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
             // binding we can't be sure it's a match.  :-/  For this moment
             // hope lib doesn't have two-cased variations of anything.
             //
-            // !!! We allow a "removed state", in case modules implement a
-            // feature for dropping variables.
-            //
-            if (mutable_LINK(PatchContext, &PG_Lib_Patches[id]) == nullptr)
-                return nullptr;
-            return cast(REBVAR*, ARR_SINGLE(&PG_Lib_Patches[id]));
+            return m_cast(REBVAR*, Try_Lib_Var(id));
         }
     }
 
@@ -339,9 +336,6 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
     } while (synonym != sym);
     return nullptr;
 }
-
-#define LIB_VAR(name) \
-    MOD_VAR(Lib_Context, Canon(SYM_##name), true)
 
 
 // CTX_VARS_HEAD() and CTX_KEYS_HEAD() allow CTX_LEN() to be 0, while

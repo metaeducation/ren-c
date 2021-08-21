@@ -363,7 +363,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
         if (GET_SIGNAL(SIG_HALT)) {
             CLR_SIGNAL(SIG_HALT);
 
-            Init_Thrown_With_Label(D_OUT, NULLED_CELL, Native(HALT));
+            Init_Thrown_With_Label(D_OUT, Lib(NULL), Lib(HALT));
             return R_THROWN;
         }
 
@@ -397,7 +397,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
                 true,  // fully
                 rebU(REF(only) ? awake_only : awake),
                 system_port,
-                ports == nullptr ? BLANK_VALUE : ports,
+                ports == nullptr ? Lib(BLANK) : ports,
                 rebEND
             )) {
                 fail (Error_No_Catch_For_Throw(D_OUT));

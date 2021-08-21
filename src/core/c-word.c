@@ -281,7 +281,7 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
         mutable_LINK(Synonym, s) = SYM(s);  // 1-item in circular list
 
         // leave header.bits as 0 for SYM_0 as answer to VAL_WORD_ID()
-        // Startup_Symbols() tags values from %words.r after the fact.
+        // Startup_Lib() tags values from %words.r after the fact.
         //
         // Words that aren't in the bootup %words.r list don't have integer
         // IDs defined that can be used in compiled C switch() cases (e.g.

@@ -676,7 +676,7 @@ void Set_Var_May_Fail(
         return;
 
     if (Is_Nulled_Isotope(setval))
-        setval = NULLED_CELL;
+        setval = Lib(NULL);
 
     enum Reb_Kind kind = CELL_KIND(VAL_UNESCAPED(target));
 
@@ -762,7 +762,7 @@ REBNATIVE(set)
         Set_Var_May_Fail(
             target,
             SPECIFIED,
-            IS_BLANK(value) and REF(some) ? NULLED_CELL : value,
+            IS_BLANK(value) and REF(some) ? Lib(NULL) : value,
             SPECIFIED,
             did REF(hard)
         );
@@ -799,7 +799,7 @@ REBNATIVE(set)
             item,
             VAL_SPECIFIER(target),
             v == v_tail  // R3-Alpha/Red blank after END
-                ? BLANK_VALUE
+                ? Lib(BLANK)
                 : v,
             (IS_BLOCK(value) and not REF(single))
                 ? VAL_SPECIFIER(value)

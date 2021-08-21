@@ -258,12 +258,8 @@ REB_R Pending_Native_Dispatcher(REBFRM *f) {
     // the user native's body will be looking them up (this is defaulting to
     // user context for now).
     //
-    // That means if COMPILE is not exported to the user context (or wherever
-    // the IDX_NATIVE_CONTEXT is set), this will fail.  Hence the COMPILE
-    // native's implementation needs to be factored out into a reusable C
-    // function that gets called here.  -or- some better way of getting at the
-    // known correct COMPILE Rebol function has to be done (Native() is
-    // not in extensions yet, and may not be, so no TCC_Native(compile).)
+    // We could also use something like MOD_VAR() to get SYM_COMPILE out of
+    // the TCC module, so a parallel to Lib(COMPILE) for extension contexts.
     //
     rebElide("compile [", rebQ(action), "]");
     //

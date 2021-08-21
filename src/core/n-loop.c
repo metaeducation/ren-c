@@ -90,7 +90,7 @@ REBNATIVE(break)
 {
     INCLUDE_PARAMS_OF_BREAK;
 
-    return Init_Thrown_With_Label(D_OUT, NULLED_CELL, Native(BREAK));
+    return Init_Thrown_With_Label(D_OUT, Lib(NULL), Lib(BREAK));
 }
 
 
@@ -115,7 +115,7 @@ REBNATIVE(continue)
     return Init_Thrown_With_Label(
         D_OUT,
         ARG(value), // null if missing, e.g. `do [continue]`
-        Native(CONTINUE)
+        Lib(CONTINUE)
     );
 }
 
@@ -1027,7 +1027,7 @@ REBNATIVE(stop)
     REBVAL *v = ARG(value);
     Meta_Unquotify(v);
 
-    return Init_Thrown_With_Label(D_OUT, v, Native(STOP));
+    return Init_Thrown_With_Label(D_OUT, v, Lib(STOP));
 }
 
 
@@ -1716,7 +1716,7 @@ REBNATIVE(for)
         if (RunQ_Throws(
             D_OUT,
             true,
-            rebU(Native(FOR_EACH)), ":(", ARG(vars), ")", value, rebU(body),
+            rebU(Lib(FOR_EACH)), ":(", ARG(vars), ")", value, rebU(body),
             rebEND
         )){
             return R_THROWN;

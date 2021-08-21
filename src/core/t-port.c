@@ -55,11 +55,8 @@ REB_R MAKE_Port(
 
     const bool fully = true; // error if not all arguments consumed
 
-    REBVAL *make_port_helper = Get_Sys_Function(SYM_MAKE_PORT_P);
-    assert(IS_ACTION(make_port_helper));
-
     assert(not IS_NULLED(arg)); // would need to DEVOID it otherwise
-    if (RunQ_Throws(out, fully, rebU(make_port_helper), arg, rebEND))
+    if (RunQ_Throws(out, fully, rebU(Sys(SYM_MAKE_PORT_P)), arg, rebEND))
         fail (Error_No_Catch_For_Throw(out));
 
     // !!! Shouldn't this be testing for !IS_PORT( ) ?

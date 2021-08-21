@@ -263,7 +263,7 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
         UNBOUND
     );
 
-    assert(Native_Act(NATIVE) == the_native_action);
+    assert(VAL_ACTION(Lib(NATIVE)) == the_native_action);
 
     // The current rule in "Sea of Words" is that all SET-WORD!s that are just
     // "attached" to a context can materialize variables.  It's not as safe
@@ -293,15 +293,11 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
 
     assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);
 
-    REBVAL *generic = MOD_VAR(Lib_Context, Canon(SYM_GENERIC), true);
-    if (not IS_ACTION(generic))
-        panic (generic);
-    assert(Native_Act(GENERIC) == VAL_ACTION(generic));
+    if (not IS_ACTION(Lib(GENERIC)))
+        panic (Lib(GENERIC));
 
-    REBVAL *parse_reject = MOD_VAR(Lib_Context, Canon(SYM_PARSE_REJECT), true);
-    if (not IS_ACTION(parse_reject))
-        panic (parse_reject);
-    assert(Native_Act(PARSE_REJECT) == VAL_ACTION(parse_reject));
+    if (not IS_ACTION(Lib(PARSE_REJECT)))
+        panic (Lib(PARSE_REJECT));
   #endif
 
     assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);

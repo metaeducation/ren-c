@@ -50,15 +50,6 @@ inline static bool VAL_LOGIC(REBCEL(const*) v) {
 }
 
 
-//=//// GLOBALLY AVAILABLE TRUE AND FALSE VALUE CELLS //////////////////////=//
-
-#define FALSE_VALUE \
-    c_cast(const REBVAL*, &PG_False_Value)
-
-#define TRUE_VALUE \
-    c_cast(const REBVAL*, &PG_True_Value)
-
-
 //=//// "TRUTHINESS" AND "FALSINESS" ///////////////////////////////////////=//
 //
 // Like most languages, more things are "truthy" than logic #[true] and more

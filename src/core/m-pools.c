@@ -1254,7 +1254,7 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer("asdf") == DETECTED_AS_UTF8);
 
     assert(Detect_Rebol_Pointer(EMPTY_ARRAY) == DETECTED_AS_SERIES);
-    assert(Detect_Rebol_Pointer(BLANK_VALUE) == DETECTED_AS_CELL);
+    assert(Detect_Rebol_Pointer(Lib(BLANK)) == DETECTED_AS_CELL);
 
     // The system does not really intentionally "free" any cells, but they
     // can happen in bad memory locations.  Along with CELL_FLAG_PROTECED and

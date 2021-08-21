@@ -657,11 +657,7 @@ REB_R JavaScript_Dispatcher(REBFRM *f)
             //
             CLR_SIGNAL(SIG_HALT);
 
-            return Init_Thrown_With_Label(
-                f->out,
-                NULLED_CELL,
-                Native(HALT)
-            );
+            return Init_Thrown_With_Label(f->out, Lib(NULL), Lib(HALT));
         }
 
         REBVAL *error = VAL(Pointer_From_Heapaddr(error_addr));
