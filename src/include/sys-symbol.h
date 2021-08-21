@@ -138,8 +138,8 @@ inline static OPT_SYMID ID_OF_SYMBOL(const REBSYM *s)
 
 inline static const REBSYM *Canon(SYMID symid) {
     assert(cast(REBLEN, symid) != 0);
-    assert(cast(REBLEN, symid) < SER_USED(PG_Symbol_Canons));  // null if boot
-    return *SER_AT(const REBSYM*, PG_Symbol_Canons, cast(REBLEN, symid));
+    assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
+    return PG_Symbol_Canons[symid];
 }
 
 inline static bool Are_Synonyms(const REBSYM *s1, const REBSYM *s2) {

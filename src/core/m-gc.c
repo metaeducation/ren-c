@@ -646,11 +646,14 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Symbol_Series(void)
 {
-    REBSTR **canon = SER_HEAD(REBSTR*, PG_Symbol_Canons);
+    const REBSYM **canon = PG_Symbol_Canons;
+    const REBSYM **tail = PG_Symbol_Canons + ALL_SYMS_MAX;
+
     assert(IS_POINTER_TRASH_DEBUG(*canon)); // SYM_0 for all non-builtin words
     ++canon;
-    for (; *canon != nullptr; ++canon)
-        (*canon)->leader.bits |= NODE_FLAG_MARKED;
+
+    for (; canon != tail; ++canon)
+        m_cast(REBSYM*, *canon)->leader.bits |= NODE_FLAG_MARKED;
 
     ASSERT_NO_GC_MARKS_PENDING(); // doesn't ues any queueing
 }

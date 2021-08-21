@@ -188,6 +188,19 @@ static void Startup_True_And_False(void)
 {
     REBCTX *lib = Lib_Context;
 
+    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
+        REBSER *patch = &PG_Lib_Patches[i];
+        patch->leader.bits = NODE_FLAG_NODE
+            | FLAG_FLAVOR(PATCH)  // checked when setting LINK(PatchContext)
+            | PATCH_FLAG_LET
+            | NODE_FLAG_MANAGED
+            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
+            | SERIES_FLAG_INFO_NODE_NEEDS_MARK;
+
+        mutable_LINK(PatchContext, patch) = nullptr;  // signals unused
+        Prep_Cell(ARR_SINGLE(ARR(patch)));  // should overwrite
+    }
+
     REBVAL *true_value = Append_Context(lib, nullptr, Canon(SYM_TRUE));
     Init_True(true_value);
     assert(IS_TRUTHY(true_value) and VAL_LOGIC(true_value) == true);
@@ -195,6 +208,14 @@ static void Startup_True_And_False(void)
     REBVAL *false_value = Append_Context(lib, nullptr, Canon(SYM_FALSE));
     Init_False(false_value);
     assert(IS_FALSEY(false_value) and VAL_LOGIC(false_value) == false);
+
+    REBVAL *blank_value = Append_Context(lib, nullptr, Canon(SYM_BLANK));
+    Init_Blank(blank_value);
+    assert(IS_FALSEY(blank_value) and IS_BLANK(blank_value));
+
+    REBVAL *null_value = Append_Context(lib, nullptr, Canon(SYM_NULL));
+    Init_Nulled(null_value);
+    assert(IS_FALSEY(null_value) and IS_NULLED(null_value));
 }
 
 
@@ -849,7 +870,6 @@ void Startup_Core(void)
     Startup_CRC();             // For word hashing
     Set_Random(0);
     Startup_Interning();
-    Startup_Early_Symbols();  // see notes--need before data stack or scan
 
     Startup_End_Node();
     Startup_Empty_Arrays();
@@ -861,6 +881,8 @@ void Startup_Core(void)
     Startup_Frame_Stack(); // uses Canon() in FRM_FILE() currently
 
     Startup_Api();
+
+    Startup_Symbols();
 
 //=//// CREATE GLOBAL OBJECTS /////////////////////////////////////////////=//
 
@@ -883,6 +905,8 @@ void Startup_Core(void)
     Init_Any_Context(Lib_Context_Value, REB_MODULE, lib);
     Lib_Context = VAL_CONTEXT(Lib_Context_Value);
 
+    Startup_True_And_False();
+
     REBCTX *sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
     Sys_Context_Value = Alloc_Value();
     Init_Any_Context(Sys_Context_Value, REB_MODULE, sys);
@@ -900,8 +924,8 @@ void Startup_Core(void)
     const int max = -1;  // trust size in gzip data
     REBYTE *utf8 = Decompress_Alloc_Core(
         &utf8_size,
-        Native_Specs,
-        Nat_Compressed_Size,
+        Boot_Block_Compressed,
+        Boot_Block_Compressed_Size,
         max,
         SYM_GZIP
     );
@@ -925,8 +949,6 @@ void Startup_Core(void)
 
     BOOT_BLK *boot =
         cast(BOOT_BLK*, ARR_HEAD(VAL_ARRAY_KNOWN_MUTABLE(ARR_HEAD(boot_array))));
-
-    Startup_Symbols(VAL_ARRAY_KNOWN_MUTABLE(&boot->words));
 
     // Initialize UNSET_VALUE and VOID_VALUE (must be after symbols loaded)
     //
@@ -957,8 +979,6 @@ void Startup_Core(void)
     // adds words to lib--not available untilthis point in time.
     //
     Startup_Typesets();
-
-    Startup_True_And_False();
 
 //=//// RUN CODE BEFORE ERROR HANDLING INITIALIZED ////////////////////////=//
 

@@ -116,7 +116,6 @@ enum Reb_Series_Flavor {
     FLAVOR_KEYLIST,  // width = sizeof(REBSYM*)
     FLAVOR_POINTER,  // generic
     FLAVOR_CANONTABLE,  // for canons table
-    FLAVOR_COMMONWORDS,  // for %words.r
     FLAVOR_NODELIST,  // e.g. GC protect list
     FLAVOR_SERIESLIST,  // e.g. manually allocated series list
     FLAVOR_MOLDSTACK,

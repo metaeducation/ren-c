@@ -48,9 +48,9 @@ PVAR const REBSYM *PG_Trash_Canon;  // Preallocated ~trash~ bad word
 // This is a series that holds 8-platform-pointer REBARR nodes, arranged in
 // canon order.  It provides fast access to lib entries by symbol.
 //
-PVAR REBARR PG_Lib_Patches[LIB_SYM_MAX];
+PVAR REBARR PG_Lib_Patches[LIB_SYMS_MAX];
+PVAR const REBSYM *PG_Symbol_Canons[ALL_SYMS_MAX + 1];
 
-PVAR REBSER *PG_Symbol_Canons; // Canon symbol pointers for words in %words.r
 PVAR REBSER *PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
 PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
 #if !defined(NDEBUG)

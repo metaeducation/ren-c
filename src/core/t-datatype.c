@@ -267,12 +267,12 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     REBINT n;
     for (n = 1; word != word_tail; ++word, ++n) {
         enum Reb_Kind kind = cast(enum Reb_Kind, n);
+
+        if (kind == REB_NULL)  // Already added by Startup_Lib()
+            continue;
+
         REBVAL *value = Append_Context(Lib_Context, SPECIFIC(word), nullptr);
 
-        if (kind == REB_NULL) {
-            Init_Nulled(value);
-            continue;
-        }
         if (kind == REB_BYTES) {
             Init_Unset(value);
             continue;

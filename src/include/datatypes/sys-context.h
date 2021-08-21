@@ -309,7 +309,7 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
     //
     if (c == Lib_Context) {
         OPT_SYMID id = ID_OF_SYMBOL(sym);
-        if (id != SYM_0 and id < LIB_SYM_MAX) {
+        if (id != SYM_0 and id < LIB_SYMS_MAX) {
             //
             // !!! We need to consider the strictness here, with case sensitive
             // binding we can't be sure it's a match.  :-/  For this moment

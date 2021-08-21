@@ -156,7 +156,6 @@ syms-cscape: copy []
 
 sym-n: 1  ; skip SYM_0 (null added as #1)
 
-boot-words: copy []
 add-sym: function compose/deep [
     {Add SYM_XXX to enumeration}
     return: [<opt> integer!]
@@ -164,7 +163,7 @@ add-sym: function compose/deep [
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][
-    if pos: find/only boot-words word [
+    if pos: find/only syms-words word [
         if exists [return index of pos]
         fail ["Duplicate word specified" word]
     ]
@@ -175,7 +174,6 @@ add-sym: function compose/deep [
     ]
     sym-n: sym-n + 1
 
-    append boot-words ^(word)
     return null
 ]
 
@@ -517,7 +515,7 @@ for-each item boot-generics [
     ]
 ]
 
-lib-sym-max: sym-n  ; *DON'T* count the symbols in %symbols.r, added below...
+lib-syms-max: sym-n  ; *DON'T* count the symbols in %symbols.r, added below...
 
 
 === SYMBOLS FOR SYMBOLS.R ===
@@ -801,9 +799,12 @@ for-each item sys-toplevel [
 (e-bootblock: make-emitter "Natives and Bootstrap"
     make-file [(prep-dir) core/tmp-boot-block.c])
 
+e-bootblock/emit {
+    #include "sys-core.h"
+}
+
 sections: [
     boot-types
-    boot-words
     boot-generics
     boot-natives
     boot-typespecs
@@ -818,28 +819,37 @@ nats: collect [
     for-each val boot-natives [
         if set-word? val [
             keep cscape/with {N_${to word! val}} 'val
-
-            ; Natives are added to the symbol table, so they can be found in
-            ; lib via LIB_VAR() to be used in internal code.
-            ;
-            ; Some of the symbols may have already been defined in %words.r
-            ; Those get priority for having the numbers, because sequential
-            ; numbers may matter.  Use the /EXISTS switch to defer to those
-            ; numbers for the native vs. erroring (lib natives are looked up by
-            ; canon, since modules don't store variables sequentially).
-            ;
-            if val <> the null [
-                add-sym/exists as word! val
-            ]
         ]
     ]
 ]
 
+symbol-strings: join binary! collect [
+    for-each word syms-words [
+        spelling: to text! word
+        keep head change copy #{00} length of spelling
+        keep spelling
+    ]
+]
+
+compressed: gzip symbol-strings
+
+e-bootblock/emit 'compressed {
+    /*
+     * Gzip compression of symbol strings
+     * Originally $<length of symbol-strings> bytes
+     *
+     * Size is a constant with storage vs. using a #define, so that relinking
+     * is enough to sync up the referencing sites.
+     */
+    const REBLEN Symbol_Strings_Compressed_Size = $<length of compressed>;
+    const REBYTE Symbol_Strings_Compressed[$<length of compressed>] = {
+        $<Binary-To-C Compressed>
+    };
+}
+
 print [length of nats "natives"]
 
 e-bootblock/emit 'nats {
-    #include "sys-core.h"
-
     #define NUM_NATIVES $<length of nats>
     const REBLEN Num_Natives = NUM_NATIVES;
 
@@ -883,8 +893,8 @@ e-bootblock/emit 'compressed {
      * Size is a constant with storage vs. using a #define, so that relinking
      * is enough to sync up the referencing sites.
      */
-    const REBLEN Nat_Compressed_Size = $<length of compressed>;
-    const REBYTE Native_Specs[$<length of compressed>] = {
+    const REBLEN Boot_Block_Compressed_Size = $<length of compressed>;
+    const REBYTE Boot_Block_Compressed[$<length of compressed>] = {
         $<Binary-To-C Compressed>
     };
 }
@@ -918,10 +928,16 @@ fields: collect [
 
 e-boot/emit 'nids {
     /*
+     * Symbols in SYM_XXX order, separated by newline characters, compressed.
+     */
+    EXTERN_C const REBLEN Symbol_Strings_Compressed_Size;
+    EXTERN_C const REBYTE Symbol_Strings_Compressed[];
+
+    /*
      * Compressed data of the native specifications, uncompressed during boot.
      */
-    EXTERN_C const REBLEN Nat_Compressed_Size;
-    EXTERN_C const REBYTE Native_Specs[];
+    EXTERN_C const REBLEN Boot_Block_Compressed_Size;
+    EXTERN_C const REBYTE Boot_Block_Compressed[];
 
     /*
      * Raw C function pointers for natives, take REBFRM* and return REBVAL*.
@@ -971,7 +987,8 @@ e-symbols/emit 'syms-cscape {
         $(Syms-Cscape),
     };
 
-    #define LIB_SYM_MAX $<lib-sym-max>
+    #define LIB_SYMS_MAX $<lib-syms-max>
+    #define ALL_SYMS_MAX $<sym-n>
 }
 
 print [n "words + generics + errors"]

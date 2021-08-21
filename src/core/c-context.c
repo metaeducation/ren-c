@@ -167,7 +167,7 @@ REBVAR *Append_Context(
                 : VAL_WORD_ID(unwrap(any_word));
 
         REBARR *patch;
-        if (id != SYM_0 and id <= LIB_SYM_MAX) {
+        if (id != SYM_0 and id <= LIB_SYMS_MAX) {
             //
             // Low symbol IDs are all in PG_Lib_Patches for fast access, and
             // were created as a block in Startup_Symbols().

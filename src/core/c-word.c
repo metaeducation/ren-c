@@ -481,142 +481,60 @@ void Startup_Interning(void)
 
 
 //
-//  Startup_Early_Symbols: C
-//
-// It's very desirable to have `/`, `/foo`, `/foo/`, `/foo/(bar)` etc. be
-// instances of the same datatype of PATH!.  In this scheme, `/` would act
-// like a "root path" and be achieved with `to path! [_ _]`.
-//
-// But with limited ASCII symbols, there is strong demand for `/` to be able
-// to act like division in evaluative contexts, or to be overrideable for
-// other things in a way not too dissimilar from `+`.
-//
-// The compromise used is to make `/` be a cell whose VAL_TYPE() is REB_PATH,
-// but whose CELL_KIND() is REB_WORD with the special spelling `-1-SLASH-`.
-// Binding mechanics and evaluator behavior are based on this unusual name.
-// But when inspected by the user, it appears to be a PATH! with 2 blanks.
-//
-// This duality is imperfect, as any routine with semantics like COLLECT-WORDS
-// would have to specifically account for it, or just see an empty path.
-// But it is intended to give some ability to configure the behavior easily.
-//
-// The trick which allows the `/` to be a 2-element PATH! and yet act like a
-// WORD! when used in evaluative contexts requires that word's spelling to be
-// available during scanning.  But scanning is what loads the %words.r symbol
-// list!  Break the Catch-22 by manually interning the symbol used.
-//
-// (Same issue applies to the symbol in ~trash~ in release builds, used
-// e.g. by the data stack initialization.  In debug builds NULL is used to
-// detect the errors on reads.)
-//
-void Startup_Early_Symbols(void)
-{
-    const char *slash1 = "-slash-1-";
-    assert(PG_Slash_1_Canon == nullptr);
-    PG_Slash_1_Canon = Intern_UTF8_Managed(cb_cast(slash1), strsize(slash1));
-
-    const char *dot1 = "-dot-1-";
-    assert(PG_Dot_1_Canon == nullptr);
-    PG_Dot_1_Canon = Intern_UTF8_Managed(cb_cast(dot1), strsize(dot1));
-
-    const char *trash = "trash";
-    assert(PG_Trash_Canon == nullptr);
-    PG_Trash_Canon = Intern_UTF8_Managed(cb_cast(trash), strsize(trash));
-}
-
-
-//
 //  Startup_Symbols: C
 //
-// By this point in the boot, the canon words have already been interned for
-// everything in %words.r.
-//
-// This goes through the name series for %words.r words and tags them with
-// SYM_XXX constants.  This allows the small number to be quickly extracted to
-// use with VAL_WORD_ID() in C switch statements.  These are the only words
-// that have fixed symbol numbers--others are only managed and compared
-// through their pointers.
-//
-// It also creates a table for mapping from SYM_XXX => REBSTR series.  This
+// Initializes a table for mapping from SYM_XXX => REBSTR series.  This
 // is used e.g. by Canon(SYM_XXX) to get the string name for a symbol.
 //
-void Startup_Symbols(REBARR *words)
+void Startup_Symbols(void)
 {
-    assert(PG_Symbol_Canons == nullptr);
-    PG_Symbol_Canons = Make_Series(
-        1 + ARR_LEN(words),  // 1 + => extra trash at head for SYM_0
-        FLAG_FLAVOR(COMMONWORDS)
-            | SERIES_FLAG_FIXED_SIZE  // can't ever add more SYM_XXX lookups
+    size_t uncompressed_size;
+    const int max = -1;  // trust size in gzip data
+    REBYTE *bytes = Decompress_Alloc_Core(
+        &uncompressed_size,
+        Symbol_Strings_Compressed,
+        Symbol_Strings_Compressed_Size,
+        max,
+        SYM_GZIP
     );
 
-    // All words that not in %words.r will get back VAL_WORD_ID(w) == SYM_0
-    // Hence, SYM_0 cannot be canonized.  Allowing Canon(SYM_0) to return NULL
-    // and try and use that meaningfully is too risky, so it is simply
-    // prohibited to canonize SYM_0, and trash the REBSTR* in the [0] slot.
+    // All words that do not have a SYM_XXX get back VAL_WORD_ID(w) == SYM_0
+    // Hence Canon(SYM_0) is illegal, to avoid `Canon(X) == Canon(Y)` being
+    // true when X and Y are different symbols with no SYM_XXX id.
     //
-    TRASH_POINTER_IF_DEBUG(
-        *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, SYM_0))
-    );
+    TRASH_POINTER_IF_DEBUG(PG_Symbol_Canons[SYM_0]);
 
-    SYMID sym = cast(REBLEN, SYM_0 + 1);
+    SYMID id = cast(REBLEN, SYM_0 + 1);
 
-    const RELVAL *tail = ARR_TAIL(words);
-    const RELVAL *word = ARR_HEAD(words);
-    for (; word != tail; ++word, sym = cast(SYMID, cast(REBLEN, sym) + 1)) {
-        assert(IS_WORD(word));  // real word, not fake (e.g. `/` as -slash-0-)
-        REBSYM *canon = m_cast(REBSYM*, VAL_WORD_SYMBOL(word));
+    // We assume no symbols will be larger than 256 characters, so instead
+    // of delimiting them in the data we length-prefix them with a byte.
+    //
+    REBYTE *tail = bytes + uncompressed_size;
+    REBYTE *at = bytes;
+    while (at != tail) {
+        assert(at < tail);
 
-        *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym)) = canon;
+        size_t size = *at;  // length prefix byte
+        ++at;
 
-        if (sym == SYM__SLASH_1_)
-            assert(canon == PG_Slash_1_Canon);  // make sure it lined up!
-        else if (sym == SYM__DOT_1_)
-            assert(canon == PG_Dot_1_Canon);
-        else if (sym == SYM_TRASH)
-            assert(canon == PG_Trash_Canon);
+        REBSYM *canon = m_cast(REBSYM*, Intern_UTF8_Managed(at, size));
+        at += size;
 
-        // More code was loaded than just the word list, and it might have
-        // included alternate-case forms of the %words.r words.  Walk any
-        // aliases and make sure they have the header bits too.
+        // Symbol series store symbol number in the header's 2nd uint16_t.
+        // Could probably use less than 16 bits, but 8 is insufficient (there
+        // are more than 256 SYM_XXX values)
+        //
+        assert(SECOND_UINT16(canon->info) == 0);
+        SET_SECOND_UINT16(canon->info, id);
+        assert(Same_Nonzero_Symid(ID_OF_SYMBOL(canon), id));
 
-        REBSYM *name = canon;
-        do {
-            // Symbol series store symbol number in the header's 2nd uint16_t.
-            // Could probably use less than 16 bits, but 8 is insufficient.
-            // (length %words.r > 256)
-            //
-            assert(SECOND_UINT16(name->info) == 0);
-            SET_SECOND_UINT16(name->info, sym);
-            assert(Same_Nonzero_Symid(ID_OF_SYMBOL(name), sym));
-
-            name = LINK(Synonym, name);
-        } while (name != canon); // circularly linked list, stop on a cycle
-
-      //=//// INITIALIZE LIB PATCH /////////////////////////////////////////=//
-
-        // See Append_Context() for Lib_Context low symbol value cases for use.
-
-        if (sym >= LIB_SYM_MAX)
-            continue;
-
-        REBSER *patch = &PG_Lib_Patches[sym];
-        patch->leader.bits = NODE_FLAG_NODE
-            | FLAG_FLAVOR(PATCH)  // checked when setting LINK(PatchContext)
-            | PATCH_FLAG_LET
-            | NODE_FLAG_MANAGED
-            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
-            | SERIES_FLAG_INFO_NODE_NEEDS_MARK;
-
-        mutable_LINK(PatchContext, patch) = nullptr;  // signals unused
-        Prep_Cell(ARR_SINGLE(ARR(patch)));  // should overwrite
+        PG_Symbol_Canons[id] = canon;
+        id = cast(SYMID, cast(REBLEN, id) + 1);
     }
 
-    *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym)) = NULL; // terminate
+    rebFree(bytes);
 
-    SET_SERIES_USED(PG_Symbol_Canons, cast(REBLEN, sym));
-    assert(SER_USED(PG_Symbol_Canons) == ARR_LEN(words) + 1);  // + 1 is SYM_0
-
-    // Do some sanity checks.  !!! Fairly critical, is debug-only appropriate?
+    assert(id == ALL_SYMS_MAX);  // includes the + 1 for REB_0 slot
 
     if (0 != strcmp("blank!", STR_UTF8(Canon(SYM_BLANK_X))))
         panic (Canon(SYM_BLANK_X));
@@ -630,8 +548,10 @@ void Startup_Symbols(REBARR *words)
     if (0 != strcmp("parse-reject", STR_UTF8(Canon(SYM_PARSE_REJECT))))
         panic (Canon(SYM_PARSE_REJECT));
 
-    PG_Bar_Canon = Canon(SYM_BAR);  // used by PARSE for speedup
-    PG_Bar_Bar_Canon = Canon(SYM__B_B);  // used by PARSE for speedup
+    PG_Bar_Canon = Canon(SYM_BAR);
+    PG_Bar_Bar_Canon = Canon(SYM__B_B);
+    PG_Slash_1_Canon = Canon(SYM__SLASH_1_);
+    PG_Dot_1_Canon = Canon(SYM__DOT_1_);
 }
 
 
@@ -640,9 +560,6 @@ void Startup_Symbols(REBARR *words)
 //
 void Shutdown_Symbols(void)
 {
-    Free_Unmanaged_Series(PG_Symbol_Canons);
-    PG_Symbol_Canons = nullptr;
-
     PG_Slash_1_Canon = nullptr;
     PG_Dot_1_Canon = nullptr;
     PG_Trash_Canon = nullptr;
