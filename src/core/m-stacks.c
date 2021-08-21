@@ -223,9 +223,7 @@ REBCTX *Get_Context_From_Stack(void)
         //
         // Note: This can be dangerous if no rebRescue() or TRAP is in effect.
         //
-        return User_Context != nullptr
-            ? VAL_CONTEXT(User_Context)
-            : VAL_CONTEXT(Lib_Context);
+        return User_Context != nullptr ? User_Context : Lib_Context;
     }
 
     // This would happen if you call the API from something like a traced
@@ -233,7 +231,7 @@ REBCTX *Get_Context_From_Stack(void)
     // you want the code to bind into the lib context.
     //
     if (NOT_ACTION_FLAG(phase, IS_NATIVE))
-        return VAL_CONTEXT(Lib_Context);
+        return Lib_Context;
 
     REBARR *details = ACT_DETAILS(phase);
     REBVAL *context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);

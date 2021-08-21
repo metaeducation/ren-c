@@ -45,6 +45,11 @@ PVAR const REBSYM *PG_Slash_1_Canon;  // Preallocated "fake" word for `/`
 PVAR const REBSYM *PG_Dot_1_Canon;  // Preallocated "fake" word for `.`
 PVAR const REBSYM *PG_Trash_Canon;  // Preallocated ~trash~ bad word
 
+// This is a series that holds 8-platform-pointer REBARR nodes, arranged in
+// canon order.  It provides fast access to lib entries by symbol.
+//
+PVAR REBARR PG_Lib_Patches[LIB_SYM_MAX];
+
 PVAR REBSER *PG_Symbol_Canons; // Canon symbol pointers for words in %words.r
 PVAR REBSER *PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
 PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
@@ -55,9 +60,13 @@ PVAR REBSTR PG_Deleted_Symbol;  // pointer used to indicate a deletion
 PVAR const REBSYM *PG_Bar_Canon;  // fast canon value for testing for `|`
 PVAR const REBSYM *PG_Bar_Bar_Canon;  // same, but for testing `||`
 
-PVAR REBVAL *Lib_Context;
-PVAR REBVAL *Sys_Context;
-PVAR REBVAL *User_Context;
+PVAR REBVAL *Lib_Context_Value;
+PVAR REBVAL *Sys_Context_Value;
+PVAR REBVAL *User_Context_Value;
+
+PVAR REBCTX *Lib_Context;
+PVAR REBCTX *Sys_Context;
+PVAR REBCTX *User_Context;
 
 PVAR const REBNAT *PG_Next_Native_Dispatcher;
 PVAR REBCTX *PG_Currently_Loading_Module;

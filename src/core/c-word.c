@@ -591,6 +591,24 @@ void Startup_Symbols(REBARR *words)
 
             name = LINK(Synonym, name);
         } while (name != canon); // circularly linked list, stop on a cycle
+
+      //=//// INITIALIZE LIB PATCH /////////////////////////////////////////=//
+
+        // See Append_Context() for Lib_Context low symbol value cases for use.
+
+        if (sym >= LIB_SYM_MAX)
+            continue;
+
+        REBSER *patch = &PG_Lib_Patches[sym];
+        patch->leader.bits = NODE_FLAG_NODE
+            | FLAG_FLAVOR(PATCH)  // checked when setting LINK(PatchContext)
+            | PATCH_FLAG_LET
+            | NODE_FLAG_MANAGED
+            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
+            | SERIES_FLAG_INFO_NODE_NEEDS_MARK;
+
+        mutable_LINK(PatchContext, patch) = nullptr;  // signals unused
+        Prep_Cell(ARR_SINGLE(ARR(patch)));  // should overwrite
     }
 
     *SER_AT(REBSTR*, PG_Symbol_Canons, cast(REBLEN, sym)) = NULL; // terminate

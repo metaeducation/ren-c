@@ -160,7 +160,23 @@ REBVAR *Append_Context(
         // symbol node for the word's spelling, and can be directly linked
         // to from a word as a singular value (with binding index "1").
 
-        REBARR *patch = Alloc_Singular(
+        OPT_SYMID id = SYM_0;
+        if (context == Lib_Context)
+            id = symbol ?
+                ID_OF_SYMBOL(unwrap(symbol))
+                : VAL_WORD_ID(unwrap(any_word));
+
+        REBARR *patch;
+        if (id != SYM_0 and id <= LIB_SYM_MAX) {
+            //
+            // Low symbol IDs are all in PG_Lib_Patches for fast access, and
+            // were created as a block in Startup_Symbols().
+            //
+            patch = &PG_Lib_Patches[id];
+            assert(LINK(PatchContext, patch) == nullptr);  // don't double add
+            // patch->leader.bits should be already set
+        }
+        else patch = Alloc_Singular(
             NODE_FLAG_MANAGED
             | FLAG_FLAVOR(PATCH)
             //

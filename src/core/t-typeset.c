@@ -88,8 +88,6 @@ REBINT CT_Typeset(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 void Startup_Typesets(void)
 {
-    REBCTX *lib = VAL_CONTEXT(Lib_Context);
-
     REBDSP dsp_orig = DSP;
 
     REBINT n;
@@ -97,7 +95,7 @@ void Startup_Typesets(void)
         Init_Typeset(DS_PUSH(), Typesets[n].bits);
 
         Copy_Cell(
-            Append_Context(lib, nullptr, Canon(Typesets[n].sym)),
+            Append_Context(Lib_Context, nullptr, Canon(Typesets[n].sym)),
             DS_TOP
         );
     }

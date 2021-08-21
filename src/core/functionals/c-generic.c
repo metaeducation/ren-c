@@ -140,7 +140,7 @@ REBNATIVE(generic)
 
     REBARR *details = ACT_DETAILS(generic);
     Init_Word(ARR_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(ARG(verb)));
-    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), Lib_Context);
+    Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
 
     REBVAL *verb_var = Sink_Word_May_Fail(ARG(verb), SPECIFIED);
     Init_Action(verb_var, generic, VAL_WORD_SYMBOL(ARG(verb)), UNBOUND);
@@ -165,7 +165,7 @@ REBARR *Startup_Generics(const REBVAL *boot_generics)
     // context, so there is a variable for each action.  This means that the
     // assignments can execute.
     //
-    Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Context);
+    Bind_Values_Set_Midstream_Shallow(head, tail, Lib_Context_Value);
 
     // The above actually does bind the GENERIC word to the GENERIC native,
     // since the GENERIC word is found in the top-level of the block.  But as
@@ -173,7 +173,7 @@ REBARR *Startup_Generics(const REBVAL *boot_generics)
     // INTEGER! word must be bound to its datatype.  Deep bind the code in
     // order to bind the words for these datatypes.
     //
-    Bind_Values_Deep(head, tail, Lib_Context);
+    Bind_Values_Deep(head, tail, Lib_Context_Value);
 
     DECLARE_LOCAL (result);
     if (Do_Any_Array_At_Throws(result, boot_generics, SPECIFIED))

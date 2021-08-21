@@ -229,7 +229,7 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
     // on the product.
     //
     REBARR *expanded = Pop_Stack_Values(dsp_orig);
-    Bind_Values_Deep(ARR_HEAD(expanded), ARR_TAIL(expanded), Lib_Context);
+    Bind_Values_Deep(ARR_HEAD(expanded), ARR_TAIL(expanded), Lib_Context_Value);
 
     return expanded;
 }

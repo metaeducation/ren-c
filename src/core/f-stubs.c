@@ -213,12 +213,7 @@ REBI64 Int64s(const REBVAL *val, REBINT sign)
 const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 {
     assert(kind > REB_0 and kind < REB_MAX);
-    bool strict = true;
-    REBVAL *type = MOD_VAR(
-        VAL_CONTEXT(Lib_Context),
-        Canon(SYM_FROM_KIND(kind)),
-        strict
-    );
+    REBVAL *type = SPECIFIC(ARR_SINGLE(&PG_Lib_Patches[SYM_FROM_KIND(kind)]));
     assert(IS_DATATYPE(type));
     return type;
 }
@@ -230,14 +225,9 @@ const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 // Returns the datatype value for the given value.
 // The datatypes are all at the head of the context.
 //
-REBVAL *Type_Of(const RELVAL *value)
+const REBVAL *Type_Of(const RELVAL *value)
 {
-    bool strict = true;
-    return MOD_VAR(
-        VAL_CONTEXT(Lib_Context),
-        Canon(SYM_FROM_KIND(VAL_TYPE(value))),
-        strict
-    );
+    return Datatype_From_Kind(VAL_TYPE(value));
 }
 
 

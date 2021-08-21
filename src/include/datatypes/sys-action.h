@@ -118,17 +118,6 @@ inline static void INIT_LINK_KEYSOURCE(REBARR *varlist, REBNOD *keysource) {
 }
 
 
-// The method for generating system indices isn't based on LOAD of an object,
-// because the bootstrap Rebol may not have a compatible scanner.  So it uses
-// simple heuristics.  (See STRIPLOAD in %common.r)
-//
-// This routine will try and catch any mismatch in the debug build by checking
-// that the name in the context key matches the generated #define constant
-//
-#define Get_Sys_Function(symid) \
-    MOD_VAR(VAL_CONTEXT(Sys_Context), Canon(symid), true)
-
-
 //=//// PSEUDOTYPES FOR RETURN VALUES /////////////////////////////////////=//
 //
 // An arbitrary cell pointer may be returned from a native--in which case it
@@ -535,6 +524,9 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
 
 #define Generic_Act(name) \
     VAL_ACTION(LIB_VAR(name))
+
+#define Get_Sys_Function(symid) \
+    MOD_VAR(Sys_Context, Canon(symid), true)
 
 
 // A fully constructed action can reconstitute the ACTION! REBVAL

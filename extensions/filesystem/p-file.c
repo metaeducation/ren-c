@@ -131,20 +131,6 @@ static void Open_File_Port(
 }
 
 
-REBINT Mode_Syms[] = {
-    SYM_OWNER_READ,
-    SYM_OWNER_WRITE,
-    SYM_OWNER_EXECUTE,
-    SYM_GROUP_READ,
-    SYM_GROUP_WRITE,
-    SYM_GROUP_EXECUTE,
-    SYM_WORLD_READ,
-    SYM_WORLD_WRITE,
-    SYM_WORLD_EXECUTE,
-    0
-};
-
-
 //
 //  Read_File_Port: C
 //

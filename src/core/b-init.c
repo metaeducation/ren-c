@@ -186,7 +186,7 @@ void Set_Stack_Limit(void *base, uintptr_t bounds) {
 //
 static void Startup_True_And_False(void)
 {
-    REBCTX *lib = VAL_CONTEXT(Lib_Context);
+    REBCTX *lib = Lib_Context;
 
     REBVAL *true_value = Append_Context(lib, nullptr, Canon(SYM_TRUE));
     Init_True(true_value);
@@ -442,11 +442,11 @@ static void Init_System_Object(
     // like `system/contexts` (also protects newly made context from GC).
     //
     Init_Object(
-        Append_Context(VAL_CONTEXT(Lib_Context), nullptr, Canon(SYM_SYSTEM)),
+        Append_Context(Lib_Context, nullptr, Canon(SYM_SYSTEM)),
         system
     );
 
-    Bind_Values_Deep(spec_head, spec_tail, Lib_Context);
+    Bind_Values_Deep(spec_head, spec_tail, Lib_Context_Value);
 
     // Bind it so CONTEXT native will work (only used at topmost depth)
     //
@@ -539,9 +539,9 @@ void Shutdown_System_Object(void)
 //
 static void Init_Contexts_Object(void)
 {
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context);
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context_Value);
 
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context);
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
 
     // We don't initialize the USER context...yet.  Make it more obvious what
     // is wrong if it's used during boot.
@@ -665,7 +665,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
         // Code is already interned to Lib_Context by TRANSCODE.  Create
         // actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind/only/set", &boot->base, Lib_Context,
+        "bind/only/set", &boot->base, Lib_Context_Value,
         "do", &boot->base  // ENSURE not available yet (but returns blank)
     );
 
@@ -686,20 +686,20 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
         // The scan of the boot block interned everything to Lib_Context, but
         // we want to overwrite that with the Sys_Context here.
         //
-        "intern*", Sys_Context, &boot->sys,
+        "intern*", Sys_Context_Value, &boot->sys,
 
-        "bind/only/set", &boot->sys, Sys_Context,
+        "bind/only/set", &boot->sys, Sys_Context_Value,
         "ensure blank! do", &boot->sys,
 
         // SYS contains the implementation of the module machinery itself, so
         // we don't have MODULE or EXPORT available.  Do the exports manually,
         // and then import the results to lib.
         //
-        "set-meta", Sys_Context, "make object! [",
+        "set-meta", Sys_Context_Value, "make object! [",
             "Name: 'System",
             "Exports: [module load load-value decode encode encoding-of]",
         "]",
-        "sys.import*", Lib_Context, Sys_Context
+        "sys.import*", Lib_Context_Value, Sys_Context_Value
     );
 
     // !!! It was a stated goal at one point that it should be possible to
@@ -723,7 +723,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
 
         // Create actual variables for top-level SET-WORD!s only, and run.
         //
-        "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context,
+        "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context_Value,
         "do", SPECIFIC(&boot->mezz)
     );
 
@@ -741,8 +741,12 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     //
     assert(User_Context == nullptr);  // shouldn't have existed up to now
     rebElide("system.contexts.user: module [Name: 'User] []");
-    User_Context = Copy_Cell(Alloc_Value(), Get_System(SYS_CONTEXTS, CTX_USER));
-    rebUnmanage(User_Context);
+    User_Context_Value = Copy_Cell(
+        Alloc_Value(),
+        Get_System(SYS_CONTEXTS, CTX_USER)
+    );
+    rebUnmanage(User_Context_Value);
+    User_Context = VAL_CONTEXT(User_Context_Value);
 
     return nullptr;
 }
@@ -875,12 +879,14 @@ void Startup_Core(void)
 //=//// CREATE SYSTEM MODULES //////////////////////////////////////////////=//
 
     REBCTX *lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    Lib_Context = Alloc_Value();
-    Init_Any_Context(Lib_Context, REB_MODULE, lib);
+    Lib_Context_Value = Alloc_Value();
+    Init_Any_Context(Lib_Context_Value, REB_MODULE, lib);
+    Lib_Context = VAL_CONTEXT(Lib_Context_Value);
 
     REBCTX *sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    Sys_Context = Alloc_Value();
-    Init_Any_Context(Sys_Context, REB_MODULE, sys);
+    Sys_Context_Value = Alloc_Value();
+    Init_Any_Context(Sys_Context_Value, REB_MODULE, sys);
+    Sys_Context = VAL_CONTEXT(Sys_Context_Value);
 
 //=//// LOAD BOOT BLOCK ///////////////////////////////////////////////////=//
 
@@ -911,7 +917,7 @@ void Startup_Core(void)
         Intern_Unsized_Managed("-tmp-boot-"),
         utf8,
         utf8_size,
-        VAL_CONTEXT(Lib_Context)  // used by Base + Mezzanine, overruled in SYS
+        Lib_Context  // used by Base + Mezzanine, overruled in SYS
     );
     PUSH_GC_GUARD(boot_array); // managed, so must be guarded
 
@@ -1090,11 +1096,16 @@ void Shutdown_Core(void)
 
     Shutdown_Datatypes();
 
-    rebRelease(Lib_Context);
+    rebRelease(Lib_Context_Value);
+    Lib_Context_Value = nullptr;
     Lib_Context = nullptr;
-    rebRelease(Sys_Context);
+
+    rebRelease(Sys_Context_Value);
+    Sys_Context_Value = nullptr;
     Sys_Context = nullptr;
-    rebRelease(User_Context);
+
+    rebRelease(User_Context_Value);
+    User_Context_Value = nullptr;
     User_Context = nullptr;
 
     Shutdown_Frame_Stack();  // all API calls (e.g. rebRelease()) before this

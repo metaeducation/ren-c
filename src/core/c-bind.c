@@ -1237,9 +1237,9 @@ void Init_Interning_Binder(
     // "imported" from there to the context, and adjusted in the binder to the
     // new positive index.
     //
-    if (ctx != VAL_CONTEXT(Lib_Context)) {
+    if (ctx != Lib_Context) {
         const REBKEY *tail;
-        const REBKEY *key = CTX_KEYS(&tail, VAL_CONTEXT(Lib_Context));
+        const REBKEY *key = CTX_KEYS(&tail, Lib_Context);
         REBINT index = 1;
         for (; key != tail; ++key, ++index) {
             const REBSYM *symbol = KEY_SYMBOL(key);
@@ -1275,9 +1275,9 @@ void Shutdown_Interning_Binder(struct Reb_Binder *binder, REBCTX *ctx)
     // The lib context keys may have been imported, so you won't necessarily
     // find them in the list any more.
     //
-    if (ctx != VAL_CONTEXT(Lib_Context)) {
+    if (ctx != Lib_Context) {
         const REBKEY *tail;
-        const REBKEY *key = CTX_KEYS(&tail, VAL_CONTEXT(Lib_Context));
+        const REBKEY *key = CTX_KEYS(&tail, Lib_Context);
         REBINT index = 1;
         for (; key != tail; ++key, ++index) {
             REBINT n = Remove_Binder_Index_Else_0(binder, KEY_SYMBOL(key));

@@ -151,7 +151,8 @@ e-version/write-emitted
 (e-symbols: make-emitter "Symbol ID (SYMID) Enumeration Type and Values"
     make-file [(prep-dir) include/tmp-symid.h])
 
-syms: copy []
+syms-words: copy []
+syms-cscape: copy []
 
 sym-n: 1  ; skip SYM_0 (null added as #1)
 
@@ -168,7 +169,8 @@ add-sym: function compose/deep [
         fail ["Duplicate word specified" word]
     ]
 
-    append syms cscape/with {/* $<Word> */ SYM_${FORM WORD} = $<sym-n>} [
+    append syms-words ^(word)
+    append syms-cscape cscape/with {/* $<Word> */ SYM_${FORM WORD} = $<sym-n>} [
         sym-n word
     ]
     sym-n: sym-n + 1
@@ -465,14 +467,37 @@ e-hooks/emit 'hook-list {
 e-hooks/write-emitted
 
 
-=== SYMBOLS FOR WORDS.R ===
+=== SYMBOLS FOR LIB-WORDS.R ===
 
-; Add SYM_XXX constants for the words in %words.r
+; Add SYM_XXX constants for the words in %lib-words.r - these are words that
+; reserve a spot in the lib context.  They can be accessed quickly, without
+; going through a hash table.
+;
+; Since the relative order of these words is honored, that means they must
+; establish their slots first.  Any natives or generics which have the same
+; name will have to use the slot position established for these words.
 
-wordlist: load %words.r
-replace wordlist [*port-modes*] load %modes.r
-for-each word wordlist [
+for-each word load %lib-words.r [
     add-sym word  ; Note, may actually be a BAR! w/older boot
+]
+
+
+=== ESTABLISH SYM_XXX VALUES FOR EACH NATIVE ===
+
+; It's desirable for the core to be able to get the REBVAL* for a native
+; quickly just by indexing into a table.  An aspect of optimizations related
+; to that is that the SYM_XXX values for the names of the natives index into
+; a fixed block.  We put them after the ordered words in lib.
+
+first-native-sym: sym-n
+
+boot-natives: load make-file [(prep-dir) boot/tmp-natives.r]
+for-each item boot-natives [
+    if set-word? :item [
+        if first-native-sym < ((add-sym/exists to-word item) else [0]) [
+            fail ["Native name collision found:" item]
+        ]
+    ]
 ]
 
 
@@ -487,7 +512,29 @@ boot-generics: load make-file [(prep-dir) boot/tmp-generics.r]
 for-each item boot-generics [
     if set-word? :item [
         if first-generic-sym < ((add-sym/exists to-word item) else [0]) [
-            fail ["Duplicate generic found:" item]
+            fail ["Generic name collision with Native or Generic found:" item]
+        ]
+    ]
+]
+
+lib-sym-max: sym-n  ; *DON'T* count the symbols in %symbols.r, added below...
+
+
+=== SYMBOLS FOR SYMBOLS.R ===
+
+; The %symbols.r file are terms that get SYM_XXX constants and an entry in
+; the table for turning those constants into a symbol pointer.  But they do
+; not have priority on establishing declarations in lib.  Hence a native or
+; generic might come along and use one of these terms...meaning they have to
+; yield to that position.  That's why there's no guarantee of order.
+
+for-each term load %symbols.r [
+    if word? term [
+        add-sym term
+    ] else [
+        assert [issue? term]
+        if not find syms-words to word! term [
+            fail ["Expected symbol for" term "from native/generic/type"]
         ]
     ]
 ]
@@ -767,8 +814,6 @@ sections: [
     :boot-mezz
 ]
 
-boot-natives: load make-file [(prep-dir) boot/tmp-natives.r]
-
 nats: collect [
     for-each val boot-natives [
         if set-word? val [
@@ -894,7 +939,7 @@ e-boot/write-emitted
 
 === EMIT SYMBOLS ===
 
-e-symbols/emit 'syms {
+e-symbols/emit 'syms-cscape {
     /*
      * CONSTANTS FOR BUILT-IN SYMBOLS: e.g. SYM_THRU or SYM_INTEGER_X
      *
@@ -923,8 +968,10 @@ e-symbols/emit 'syms {
      */
     enum Reb_Symbol_Id {
         SYM_0 = 0,
-        $(Syms),
+        $(Syms-Cscape),
     };
+
+    #define LIB_SYM_MAX $<lib-sym-max>
 }
 
 print [n "words + generics + errors"]

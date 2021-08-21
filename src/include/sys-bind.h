@@ -649,8 +649,8 @@ inline static option(REBSER*) Get_Word_Container(
             //
             if (
                 mode == ATTACH_WRITE
-                and binding != VAL_CONTEXT(Lib_Context)
-                and binding != VAL_CONTEXT(Sys_Context)
+                and binding != Lib_Context
+                and binding != Sys_Context
             ){
                 *index_out = INDEX_ATTACHED;
                 return Singular_From_Cell(
@@ -660,7 +660,7 @@ inline static option(REBSER*) Get_Word_Container(
 
             // non generic inheritance; inherit only from Lib for now
             //
-            if (mode != ATTACH_READ or binding == VAL_CONTEXT(Lib_Context))
+            if (mode != ATTACH_READ or binding == Lib_Context)
                 return nullptr;
 
             patch = MISC(Hitch, symbol);
@@ -668,7 +668,7 @@ inline static option(REBSER*) Get_Word_Container(
                 patch = SER(node_MISC(Hitch, patch));
 
             for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
-                if (LINK(PatchContext, patch) != VAL_CONTEXT(Lib_Context))
+                if (LINK(PatchContext, patch) != Lib_Context)
                     continue;
 
                 // We return it, but don't cache it in the cell.  Note that

@@ -246,7 +246,7 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
                     found = patch;
                     break;
                 }
-             /*   if (VAL_CONTEXT(Lib_Context) == LINK(PatchContext, patch))
+             /*   if (Lib_Context == LINK(PatchContext, patch))
                     found = patch;  // will match if not overridden */
             }
             if (found) {

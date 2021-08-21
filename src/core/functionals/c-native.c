@@ -217,7 +217,6 @@ static void Shutdown_Action_Meta_Shim(void) {
 REBARR *Startup_Natives(const REBVAL *boot_natives)
 {
     REBARR *catalog = Make_Array(Num_Natives);
-    REBCTX *lib = VAL_CONTEXT(Lib_Context);
 
     // Must be called before first use of Make_Paramlist_Managed_May_Fail()
     //
@@ -235,7 +234,7 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     assert(PG_Next_Native_Dispatcher == nullptr);
     PG_Next_Native_Dispatcher = Native_C_Funcs;
     assert(PG_Currently_Loading_Module == nullptr);
-    PG_Currently_Loading_Module = lib;
+    PG_Currently_Loading_Module = Lib_Context;
 
     // Due to the recursive nature of `native: native [...]`, we can't actually
     // create NATIVE itself that way.  So the prep process should have moved
@@ -258,7 +257,7 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     ++PG_Next_Native_Dispatcher;
 
     Init_Action(
-        Append_Context(lib, nullptr, Canon(SYM_NATIVE)),
+        Append_Context(Lib_Context, nullptr, Canon(SYM_NATIVE)),
         the_native_action,
         Canon(SYM_NATIVE),  // label
         UNBOUND
@@ -277,7 +276,7 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     // (first one at time of writing is `api-transient: native [...]`) and
     // BIND/SET them.
     //
-    Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Context);
+    Bind_Values_Set_Midstream_Shallow(item, tail, Lib_Context_Value);
 
     DECLARE_LOCAL (skipped);
     Init_Any_Array_At(skipped, REB_BLOCK, VAL_ARRAY(boot_natives), 3);
@@ -294,12 +293,12 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
 
     assert(PG_Next_Native_Dispatcher == Native_C_Funcs + Num_Natives);
 
-    REBVAL *generic = MOD_VAR(lib, Canon(SYM_GENERIC), true);
+    REBVAL *generic = MOD_VAR(Lib_Context, Canon(SYM_GENERIC), true);
     if (not IS_ACTION(generic))
         panic (generic);
     assert(Native_Act(GENERIC) == VAL_ACTION(generic));
 
-    REBVAL *parse_reject = MOD_VAR(lib, Canon(SYM_PARSE_REJECT), true);
+    REBVAL *parse_reject = MOD_VAR(Lib_Context, Canon(SYM_PARSE_REJECT), true);
     if (not IS_ACTION(parse_reject))
         panic (parse_reject);
     assert(Native_Act(PARSE_REJECT) == VAL_ACTION(parse_reject));
