@@ -203,16 +203,10 @@ inline static bool Do_Branch_Core_Throws(
         break;
 
       case REB_GET_BLOCK: {
-        PUSH_GC_GUARD(branch);
-
-        bool threw = rebRunThrows(
-            out,
-            true,
-            Lib(REDUCE), Lib(AS), Lib(BLOCK_X), branch
-        );
-        DROP_GC_GUARD(branch);
-        if (threw)
+        if (Eval_Value_Maybe_Stale_Throws(out, branch, SPECIFIED))
             return true;
+        assert(IS_BLOCK(out));
+        assert(NOT_CELL_FLAG(out, OUT_NOTE_STALE));
         break; }
 
       case REB_ACTION: {
@@ -222,7 +216,7 @@ inline static bool Do_Branch_Core_Throws(
             out,
             false, // !fully, e.g. arity-0 functions can ignore condition
             branch,
-            rebQ(condition)
+            IS_END(condition) ? rebEND : rebQ(condition)
         );
         DROP_GC_GUARD(branch);
         if (threw)
