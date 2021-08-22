@@ -1540,7 +1540,8 @@ mingw-make: make makefile [
 ]
 
 ; Execute the command to generate the target directly
-Execution: make generator-class [
+;
+export execution: make generator-class [
     host: switch system/platform/1 [
         'Windows [windows]
         'Linux [linux]
