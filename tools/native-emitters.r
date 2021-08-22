@@ -39,10 +39,7 @@ export emit-native-proto: func [
             opt 'export
             set name: set-word!
             opt 'enfix
-            [
-                'native
-                | 'native/combinator
-            ]
+            ['native | 'native/combinator]
             [
                 set spec: block!
             | (
@@ -52,15 +49,6 @@ export emit-native-proto: func [
                     (mold proto-parser/file) (line)
                 ]
             )]
-            [
-                end
-            |
-                ; currently extensions add PLATFORMS:, etc.
-                ; Ideally this should be checked here for being valid
-                ;
-                to end
-            ]
-            end
         ]
     ] then [
         ; could do tests here to create special buffer categories to
@@ -81,10 +69,7 @@ export emit-native-proto: func [
 
         any [
             'native = temp/1
-            all [
-                path? temp/1
-                'native = temp/1/1
-            ]
+            all [path? temp/1, 'native = temp/1/1]
         ] else [
             fail ["Malformed native:" mold proto-parser/data]
         ]

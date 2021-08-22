@@ -40,10 +40,7 @@ export to-c-name: function [
     /scope "[#global #local #prefixed] see http://stackoverflow.com/q/228783/"
         [issue!]
 ][
-    all [
-        text? value
-        empty? value
-    ] then [
+    all [text? value, empty? value] then [
         fail/where ["TO-C-NAME received empty input"] 'value
     ]
 

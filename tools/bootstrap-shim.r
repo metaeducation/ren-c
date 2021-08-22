@@ -534,13 +534,11 @@ join: func [base value <local>] [
         copy :base
     ]
 
-    all [
-        not any [
-            find any-inert! type of :value
-            blank? :value
-            block? :value
-        ]
-    ] then [
+    any [
+        find any-inert! type of :value
+        blank? :value
+        block? :value
+    ] else [
         fail/where ["Cannot join" :value "onto array"] 'value
     ]
 

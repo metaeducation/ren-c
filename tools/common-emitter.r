@@ -60,7 +60,7 @@ export cscape: function [
     num-text: to text! num  ; CHANGE won't take GROUP! to evaluate, #1279
 
     list: collect* [
-        parse string [(col: 0) start: here while [  ; <- No COMMA! in bootstrap
+        parse string [(col: 0), start: here, while [
             [
                 (prefix: _ suffix: _) finish: here
 
@@ -158,15 +158,12 @@ export cscape: function [
             sub: default [copy "/* _ */"]  ; replaced in post phase
 
             case [
-                all [
-                    any-upper
-                    not any-lower
-                ] [uppercase sub]
-
-                all [
-                    any-lower
-                    not any-upper
-                ] [lowercase sub]
+                all [any-upper, not any-lower] [
+                    uppercase sub
+                ]
+                all [any-lower, not any-upper] [
+                    lowercase sub
+                ]
             ]
 
             ; If the substitution started at a certain column, make any line
@@ -201,10 +198,7 @@ export cscape: function [
                 ; IF deprecated in Ren-C, but :(...) with logic not available
                 ; in the bootstrap build.
                 ;
-                if (did all [
-                    not nonwhite
-                    removed
-                ])
+                if (did all [not nonwhite, removed])
 
                 seek :start-line remove thru [newline | end]
                 |

@@ -237,7 +237,7 @@ sys-globals-parser: context [
 
     emit-directive: _
     emit-identifier: _
-    parse-position: _
+    parse-position: ~
     id: _
 
     process: func [return: <none> text] [

@@ -73,7 +73,7 @@ disable-user-includes: function [
         parse line: line-iter/1 [
             while space {#}
             while space {include}
-            some space include-rule to end
+            some space, include-rule, to end
         ] then [
             if pos: find try inline (as file! name) [
                 change/part line-iter (read/lines join path-zlib name) 1
@@ -170,7 +170,7 @@ fix-kr: function [
         while [
             fn: across identifier
             while white-space
-            "(" [open-paren: here] to ")" [close-paren: here] ")"
+            "(", open-paren: here, to ")", close-paren: here, ")"
             param-ser: here, param-spec: across [
                 some [
                     some [while white-space, while ["*" while white-space]
@@ -300,7 +300,7 @@ fix-const-char: func [
         while [
             "strm" while white-space "->" while white-space
             "msg" while white-space "=" while white-space
-            "(" while white-space change "char" ("z_const char")
+            "(" while white-space, change "char" ("z_const char")
                 while white-space "*" while white-space ")"
             | skip
         ]

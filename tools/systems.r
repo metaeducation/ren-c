@@ -459,22 +459,15 @@ export for-each-system: func [
         set platform-number integer!
         while [
             set id tuple!
-            [blank! (
-                os: _
-                os-name: _
-                os-base: _
-            )
-                |
-            set os path! (
-                os-name: os/1
-                os-base: os/2
-            )]
+            [
+                blank! (os: os-name: os-base: _)
+                    |
+                set os path! (os-name: os/1, os-base: os/2)
+            ]
             [
                 blank! (build-label: _)
                     |
-                set build-label text! (
-                    build-label: to-word build-label
-                )
+                set build-label text! (build-label: to-word build-label)
             ]
             copy definitions [while issue!] (
                 definitions: map-each x definitions [to-word x]
@@ -542,14 +535,14 @@ use [
         ][
             ; Exclude should mutate (CC#2222), but this works either way
             unknown-flags: exclude (
-                    unknown_flags: copy any [build-flags: get in s word []]
+                    unknown_flags: copy any [build-flags: get in s word, []]
                 )
                 words-of context
             if not empty? unknown-flags [
                 print mold unknown-flags
                 fail ["Unknown" word "used in %systems.r specification"]
             ]
-            used-flags: union used-flags any [build-flags []]
+            used-flags: union used-flags any [build-flags, []]
         ]
     ]
 

@@ -354,10 +354,7 @@ application-class: make project-class [
     ]
 
     command: meth [return: [text!]] [
-        let ld: any [
-            linker
-            default-linker
-        ]
+        let ld: any [linker, default-linker]
         return ld/command/debug
             output
             depends
@@ -385,10 +382,7 @@ dynamic-library-class: make project-class [
         <with>
         default-linker
     ][
-        let l: any [
-            linker
-            default-linker
-        ]
+        let l: any [linker, default-linker]
         return l/command/dynamic
             output
             depends
@@ -553,10 +547,7 @@ gcc: make compiler-class [
 
             output: file-to-local output
 
-            any [
-                E
-                ends-with? output target-platform/obj-suffix
-            ] then [
+            any [E, ends-with? output target-platform/obj-suffix] then [
                 keep output
             ] else [
                 keep [output target-platform/obj-suffix]
@@ -625,7 +616,7 @@ cl: make compiler-class [
             if O [
                 case [
                     O = true [keep "/O2"]
-                    all [O (not zero? O)] [
+                    all [O, not zero? O] [
                         keep ["/O" O]
                     ]
                 ]
@@ -970,7 +961,7 @@ link: make linker-class [
                 ]
             ]
             #application [
-                file-to-local any [dep/implib join dep/basename ".lib"]
+                file-to-local any [dep/implib, join dep/basename ".lib"]
             ]
             #variable [
                 _
@@ -996,7 +987,7 @@ strip-class: make object! [
         /params [block! any-string!]
     ][
         reduce [collect-text [
-            keep any [(file-to-local/pass exec-file) "strip"]
+            keep any [file-to-local/pass exec-file, "strip"]
             params: default [options]
             switch type of params [
                 block! [
@@ -1046,7 +1037,7 @@ object-file-class: make object! [
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         /E "only preprocessing"
     ][
-        let cc: any [compiler default-compiler]
+        let cc: any [compiler, default-compiler]
 
         if optimization = #prefer-O2-optimization [
             any [
@@ -1223,7 +1214,6 @@ generator-class: make object! [
                     ] (val)
                     | skip
                 ]
-                end
             ] else [
                 fail ["failed to do var substitution:" cmd]
             ]
@@ -1245,10 +1235,7 @@ generator-class: make object! [
                 if dep/class = #variable [
                     append vars reduce [
                         dep/name
-                        any [
-                            dep/value
-                            dep/default
-                        ]
+                        any [dep/value, dep/default]
                     ]
                 ]
             ]

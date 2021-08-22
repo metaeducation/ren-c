@@ -55,7 +55,7 @@ encode-lines: func [
     let pos
     parse text [
         while [
-            thru newline pos: here
+            thru newline, pos: here
             [
                 newline (pos: insert pos line-prefix)
               | (pos: insert pos bol)
@@ -86,10 +86,7 @@ for-each-line: func [
         [block!]
 ] [
     loop [not tail? text] [
-        let eol: any [
-            find text newline
-            tail of text
-        ]
+        let eol: any [find text newline, tail of text]
 
         set record compose [
             position (text) length (subtract index of eol index of text)
@@ -114,9 +111,9 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
 
     count-line-rule: [
         (
-            line: 1 + any [line 0]
+            line: 1 + any [line, 0]
             if line-length < subtract index-of eol index of bol [
-                append line-list: any [line-list copy []] line
+                append line-list: any [line-list, copy []] line
             ]
         )
     ]
