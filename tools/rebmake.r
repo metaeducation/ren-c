@@ -145,15 +145,15 @@ pkg-config: func [
 ]
 
 platform-class: make object! [
-    name: _
-    exe-suffix: null
-    dll-suffix: null
-    archive-suffix: null  ;static library
-    obj-suffix: null
+    name: ~
+    exe-suffix: '
+    dll-suffix: '
+    archive-suffix: '  ;static library
+    obj-suffix: '
 
-    gen-cmd-create: _
-    gen-cmd-delete: _
-    gen-cmd-strip: _
+    gen-cmd-create: ~
+    gen-cmd-delete: ~
+    gen-cmd-strip: ~
 ]
 
 unknown-platform: make platform-class [
@@ -294,30 +294,32 @@ set-target-platform: func [
 
 project-class: make object! [
     class: #project
-    name: _
-    id: _
-    type: _ ; dynamic, static, object or application
-    depends: _ ;a dependency could be a library, object file
-    output: _ ;file path
-    basename: _ ;output without extension part
+    name: '
+    id: '
+    type: null  ;  dynamic, static, object or application
+    depends: null  ; a dependency could be a library, object file
+    output: null  ; file path
+    basename: null   ; output without extension part
     generated?: false
-    implib: _ ;for windows, an application/library with exported symbols will generate an implib file
+    implib: null  ; Windows exe/lib with exported symbols generates implib file
 
-    post-build-commands: _ ; commands to run after the "build" command
+    post-build-commands: '  ; commands to run after the "build" command
 
-    compiler: _
+    compiler: '
 
     ; common settings applying to all included obj-files
     ; setting inheritage:
     ; they can only be inherited from project to obj-files
     ; _not_ from project to project.
     ; They will be applied _in addition_ to the obj-file level settings
-    includes: _
-    definitions: _
-    cflags: _
+    ;
+    includes: '
+    definitions: '
+    cflags: '
 
     ; These can be inherited from project to obj-files and will be overwritten
     ; at the obj-file level
+    ;
     optimization: _
     debug: _
 ]
@@ -1286,7 +1288,7 @@ generator-class: make object! [
         suffix: second suffix
 
         case [
-            blank? project/output [
+            null? project/output [
                 switch project/class [
                     #object-file [
                         project/output: copy project/source
