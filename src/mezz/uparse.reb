@@ -1022,29 +1022,38 @@ default-combinators: make map! reduce [
         return unmeta result'
     ]
 
-    === SET-WORD! COMBINATOR ===
+    === SET-WORD! and SET-TUPLE! COMBINATOR ===
 
     ; The concept behind Ren-C's SET-WORD! in PARSE is that parse combinators
     ; don't just update the remainder of the parse input, but they also return
     ; values.  If these appear to the right of a set-word, then the set word
     ; will be assigned on a match.
+    ;
+    ; !!! SET-PATH! is not supported, as paths will be used for functions only.
 
     set-word! combinator [
         return: "The set value"
             [<opt> any-value!]
         value [set-word!]
-        parser [action!]
+        parser "Failed parser will means target SET-WORD! will be unchanged"
+            [action!]
         <local> result'
     ][
-        ([result' (remainder)]: ^ parser input) else [
-            ;
-            ; A failed rule leaves the set target word at whatever value it
-            ; was before the set.
-            ;
-            return null
-        ]
+        ([result' (remainder)]: ^ parser input) else [return null]
+        set value unmeta result'
+        return unmeta result'
+    ]
 
-        set value unmeta result'  ; value is the SET-WORD!
+    set-tuple! combinator [
+        return: "The set value"
+            [<opt> any-value!]
+        value [set-tuple!]
+        parser "Failed parser will means target SET-TUPLE! will be unchanged"
+            [action!]
+        <local> result'
+    ][
+        ([result' (remainder)]: ^ parser input) else [return null]
+        set value unmeta result'
         return unmeta result'
     ]
 
@@ -2572,7 +2581,7 @@ parsify: func [
     ; integers, or that when we do these rules they may have skippable types?
 
     if not comb: select state.combinators kind of :r [
-        fail ["Unhandled type in PARSIFY:" kind of :r]
+        fail ["Unhandled type in PARSIFY:" kind of :r "-" mold :r]
     ]
 
     return [# (advanced)]: combinatorize/value :comb rules state r
