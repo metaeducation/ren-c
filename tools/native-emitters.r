@@ -1,7 +1,9 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate auto headers"
-    File: %natives-emitters.r
+    File: %native-emitters.r
+    Type: module
+    Name: Native-Emitters
     Rights: {
         Copyright 2017 Atronix Engineering
         Copyright 2017 Ren-C Open Source Contributors
