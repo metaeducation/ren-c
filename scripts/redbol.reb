@@ -6,8 +6,8 @@ REBOL [
         Copyright 2012-2019 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
-    Type: 'Module
-    Name: 'Redbol
+    Type: module
+    Name: Redbol
     License: {
         Licensed under the Apache License, Version 2.0
         See: http://www.apache.org/licenses/LICENSE-2.0

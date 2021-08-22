@@ -2,8 +2,8 @@ REBOL [
     File: %rebmake.r
     Title: {Rebol-Based C/C++ Makefile and Project File Generator}
 
-    Type: 'Module
-    Name: 'Rebmake
+    Type: module
+    Name: Rebmake
 
     Rights: {
         Copyright 2017 Atronix Engineering

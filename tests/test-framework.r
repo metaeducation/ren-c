@@ -1,8 +1,8 @@
 Rebol [
     Title: "Test-framework"
     File: %test-framework.r
-    Type: 'Module
-    Name: 'Test-Framework
+    Type: module
+    Name: Test-Framework
     Copyright: [2012 "Saphirion AG"]
     License: {
         Licensed under the Apache License, Version 2.0 (the "License");

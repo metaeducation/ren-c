@@ -245,11 +245,17 @@ standard: make object! [
     ; !!! Historically headers use titlecase keys.  In the current world, that
     ; leads to a difference from if you use lowercase ones.
     ;
+    ; !!! We are using MAKE OBJECT! here which allows NULL variables via
+    ; evaluation.  But ordinarily the headers can't do that because they
+    ; are blocks and not evaluated.  This is developing, but the general
+    ; gist here is that when round-tripping headers to blocks the NULL fields
+    ; are effectively absent for the semantics of *this* object.
+    ;
     header: make object! [
         Title: {Untitled}
         File: '
         Name: '
-        Type: 'Script  ; !!! Is this a good default?
+        Type: 'script  ; !!! Is this a good default?
         Version: '
         Date: '
         Author: '

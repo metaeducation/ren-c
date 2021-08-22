@@ -1,8 +1,8 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Host Script and Resource Embedding Services ('encapping')"
-    Type: 'Module
-    Name: 'Encap
+    Type: module
+    Name: Encap
     Rights: {
         Copyright 2017 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies

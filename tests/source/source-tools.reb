@@ -1,7 +1,7 @@
 REBOL [
     Title: "Rebol 'Lint'-style Checking Tool for source code invariants"
-    Type: 'Module
-    Name: 'Source-Tools
+    Type: module
+    Name: Source-Tools
     Rights: {
         Copyright 2015 Brett Handley
         Copyright 2015-2021 Ren-C Open Source Contributors

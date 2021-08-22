@@ -1,8 +1,8 @@
 REBOL [
     File: %make-file.r
     Title: "MAKE-FILE Experiments"
-    Type: 'Module  ; Note: removed by %bootstrap-shim.r fake "IMPORT"
-    Name: 'Make-File
+    Type: module
+    Name: Make-File
     Exports: [make-file]
     Description: {
         This is a very experimental starter file for defining a dialect that

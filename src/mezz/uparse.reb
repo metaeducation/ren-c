@@ -2,8 +2,8 @@ Rebol [
     Title: {UPARSE: Usermode Implementation of PARSE in Ren-C}
     License: {LGPL 3.0}
 
-    Type: 'Module
-    Name: 'Usermode-PARSE
+    Type: module
+    Name: Usermode-PARSE
 
     Exports: [
         combinator
@@ -2244,7 +2244,7 @@ default-combinators: make map! reduce [
         <local> e
     ][
         e: make error! [
-            Type: 'User
+            type: 'User
             id: 'uparse
             message: to text! reason
         ]

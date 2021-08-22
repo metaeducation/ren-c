@@ -1,6 +1,6 @@
 REBOL [
     Title: "Shim to bring old executables up to date to use for bootstrapping"
-    Type: 'Module
+    Type: module
     Name: Bootstrap-Shim
     Rights: {
         Rebol 3 Language Interpreter and Run-time Environment

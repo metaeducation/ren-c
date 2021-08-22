@@ -239,10 +239,10 @@ int main(int argc, char *argv_ansi[])
     //
     // The string of code is stylized to look like:
     //
-    //     import module [Name: 'Zip ...] [...]
-    //     import module [Name: 'Encap ...] [...]
+    //     import module [Name: Zip ...] [...]
+    //     import module [Name: Encap ...] [...]
     //     ...
-    //     import module [Name: 'Main-Startup ...] [...]
+    //     import module [Name: Main-Startup ...] [...]
     //     :main-startup
     //
     // There are no top-level SET-WORD!s, and it doesn't leak any declarations

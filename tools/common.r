@@ -1,7 +1,7 @@
 REBOL [
     System: "Ren-C Core Extraction of the Rebol System"
     Title: "Common Routines for Tools"
-    Type: 'Module
+    Type: module
     Name: Prep-Common
     Rights: {
         Copyright 2012-2019 Ren-C Open Source Contributors

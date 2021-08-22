@@ -68,28 +68,26 @@ module: func [
     if spec [  ; Validate the important fields of the header, if there is one
         ;
         ; !!! Historically, the `Name:` and `Type:` fields would tolerate
-        ; either a quoted word or plain word.  This seems dodgy.  Review.
+        ; either a quoted word or plain word.  Now only WORD! is tolerated.
         ;
-        if lit-word? spec.name [
-            spec.name: as word! noquote spec.name
-            ;fail ["Module Name:" (spec.name) "must be WORD!, not LIT-WORD!"]
-        ]
-        if lit-word? spec.type [
-            spec.type: as word! noquote spec.type
-            ;fail ["Module Type:" (spec.type) "must be WORD!, not LIT-WORD!"]
-        ]
-
-        for-each [var types] [  ; v-- review blank tolerance
+        ; !!! Regarding BLANK!: the system.standard.header has NULL for missing
+        ; fields.  So the point of their existence is just to standardize the
+        ; order, and save on repeated keylist definitions.  Is tolerating
+        ; BLANK! as a kind of "TBD" for fields you might want but don't want
+        ; to specify yet a useful feature?  This could lead to opting out
+        ; errors more than anything.  But generically prohibiting BLANK!
+        ; doesn't seem like a good idea in case it has meaning for custom
+        ; header fields.  :-/
+        ;
+        for-each [var types] [  ; !!! `in spec` doesn't work here, why not?
             spec.name [<opt> word! blank!]
-            spec.type [word!]  ; default is `Script` from system.standard.header
+            spec.type [word!]  ; default is `script` from system.standard.header
             spec.version [<opt> tuple! blank!]
             spec.options [<opt> block! blank!]
-        ] [
-            ; !!! Running the ENSURE with the composition means better errors,
-            ; e.g. you know the name of the variable with the bad type.  But
-            ; this kind of mechanism should be rethought
-            ;
-            do compose [ensure (types) (var)]
+        ][
+            (match types get var) else [
+                fail ["Module" var "must be in" mold types "- not" ^(get var)]
+            ]
         ]
 
         ; Default to having an Exports block in the spec if it's a module.
@@ -139,13 +137,13 @@ module: func [
     ; probably better to have such cases use MAKE MODULE! instead of MODULE.
     ;
     append mod compose [
-        import: (specialize :sys/import* [where: mod])
+        import: (specialize :sys.import* [where: mod])
         intern: (specialize :intern* [where: mod])
 
         ; If you DO a file, it doesn't get an EXPORT operation...only modules.
         ;
         export: (if spec.type = 'Module [
-            specialize :sys/export* [where: mod]
+            specialize :sys.export* [where: mod]
         ] else [
             specialize :fail [reason: [
                 {Scripts must be invoked via IMPORT to get EXPORT, not DO:}

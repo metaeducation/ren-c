@@ -1,7 +1,7 @@
 REBOL [
     Title: "Parsing tools"
-    Type: 'Module
-    Name: 'Parsing-Tools
+    Type: module
+    Name: Parsing-Tools
     Rights: {
         Rebol is Copyright 1997-2015 REBOL Technologies
         REBOL is a trademark of REBOL Technologies

@@ -1,8 +1,8 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Zip and Unzip Services"
-    Type: 'Module
-    Name: 'Zip
+    Type: module
+    Name: Zip
     Rights: {
         Copyright 2009-2021 Ren-C Open Source Contributors
         Copyright 2009 Vincent Ecuyer

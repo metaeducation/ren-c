@@ -223,7 +223,7 @@ e1/write-emitted
 ;
 ;    Rebol [
 ;        Title: {This header is whatever was in the %ext-xxx-init.reb}
-;        Type: 'Module
+;        Type: module
 ;        ...
 ;    ]
 ;

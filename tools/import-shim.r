@@ -11,8 +11,8 @@ Rebol [
         is not ready at time of writing, so it is faked by having %common.r
         export the export list from %bootstrap-shim.r.  But it is on the radar.
 
-        This shim redefines import for the bootstrap executable to be a synonym
-        for DO, when the `Type: 'Module` annotation is removed.  That just
+        This shim redefines IMPORT for the bootstrap executable to be a synonym
+        for DO, when the `Type: module` annotation is removed.  That just
         puts everything into the user context, which is ugly but made to work
         in order to use the old executable to build.  It also avoids importing
         things more than once, so it achieves a similar semantic to modules.
@@ -140,7 +140,10 @@ import: enfix func [
 
     code: read/string second path+file
     if find code "Type: 'Module" [
-        replace code "Type: 'Module" ""
+        fail "Old tick-style module definition, use `Type: module` instead"
+    ]
+    if find code "Type: module" [
+        replace code "Type: module" ""
     ]
 
     strip-commas-and-null-apostrophes code

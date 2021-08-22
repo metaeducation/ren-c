@@ -1,18 +1,11 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Pre-Build Step for API entry points exported via tcc_add_symbol()"
-    File: %prep-libr3-tcc.reb  ; used by MAKE-EMITTER
-
-    ; !!! This file can't be `Type: 'Module`, it needs MAKE-EMITTER, CSCAPE,
-    ; etc. in the user context and thus isn't isolated.  It is run directly by
-    ; a DO from the C libRebol prep script, so that it will have the
-    ; structures and helpers set up to process API endpoints.  However, the
-    ; ability to do this should be offered as a general build system hook
-    ; to extensions (also needed by the Javascript extension)
+    File: %prep-libr3-tcc.reb
 
     Rights: {
         Copyright 2017 Atronix Engineering
-        Copyright 2017-2019 Ren-C Open Source Contributors
+        Copyright 2017-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -34,6 +27,12 @@ REBOL [
         libRebol mechanics won't change (but maybe an okay assumption to make)
     }
 ]
+
+; Note: There are no `import` statements here because this is run via DO LOAD
+; inside the %make-reb-lib.r script's context.  This is done in order to
+; inherit the `api` object, and the `for-each-api` enumerator.  As a result
+; it also inherits access to CWRAP and other tools.  Review.
+
 
 e: (make-emitter
     "libRebol exports for tcc_add_symbol()"

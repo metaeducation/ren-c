@@ -1,8 +1,8 @@
 Rebol [
     Title: "Test parsing"
     File: %test-parsing.r
-    Type: 'Module
-    Name: 'Test-Parsing
+    Type: module
+    Name: Test-Parsing
     Copyright: [2012 "Saphirion AG"]
     License: {
         Licensed under the Apache License, Version 2.0 (the "License");

@@ -397,7 +397,7 @@ import*: func [
     if module? source [
         assert [not into]  ; ONLY isn't applicable unless scanning new source
 
-        let name: noquote (meta-of source).name else [
+        let name: (meta-of source).name else [
             set product '~nameless~
             return source  ; no name, so just do the RESOLVE to get variables
         ]
@@ -490,7 +490,7 @@ import*: func [
         ]
     ]
 
-    let name: noquote (try hdr).name
+    let name: (try hdr).name
     (select/skip system.modules try name 2) then cached -> [
         set product ~cached~
         return cached

@@ -1,7 +1,7 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "System build targets"
-    Type: 'Module
+    Type: module
     Name: Target-Systems
     Rights: {
         Copyright 2012 REBOL Technologies

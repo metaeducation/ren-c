@@ -3,7 +3,7 @@ REBOL [
     Rights: {
         Copyright 2015 Brett Handley
     }
-    Type: 'Module
+    Type: module
     Name: C-Lexicals
     License: {
         Licensed under the Apache License, Version 2.0

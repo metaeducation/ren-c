@@ -1,7 +1,7 @@
 REBOL [
     System: "Ren-C Core Extraction of the Rebol System"
     Title: "Common Parsers for Tools"
-    Type: 'Module
+    Type: module
     Name: Common-Parsers
     Rights: {
         Rebol is Copyright 1997-2015 REBOL Technologies

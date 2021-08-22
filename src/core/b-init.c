@@ -708,7 +708,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
         // and then import the results to lib.
         //
         "set-meta", Sys_Context_Value, "make object! [",
-            "Name: 'System",
+            "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
             "Exports: [module load load-value decode encode encoding-of]",
         "]",
         "sys.import*", Lib_Context_Value, Sys_Context_Value
@@ -752,7 +752,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     // well as EXPORT...?  When do you export from the user context?)
     //
     assert(User_Context == nullptr);  // shouldn't have existed up to now
-    rebElide("system.contexts.user: module [Name: 'User] []");
+    rebElide("system.contexts.user: module [Name: User] []");
     User_Context_Value = Copy_Cell(
         Alloc_Value(),
         Get_System(SYS_CONTEXTS, CTX_USER)

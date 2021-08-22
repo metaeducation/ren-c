@@ -1,8 +1,8 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Common Code for Emitting Text Files"
-    Type: 'Module
-    Name: 'Common-Emitter
+    Type: module
+    Name: Common-Emitter
     Rights: {
         Copyright 2016-2018 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies

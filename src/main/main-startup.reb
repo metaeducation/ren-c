@@ -2,8 +2,8 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Command line processing and startup code called by %main.c"
     File: %main-startup.r
-    Type: 'Module
-    Name: 'Ren-C-Startup
+    Type: module
+    Name: Ren-C-Startup
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2019 Ren-C Open Source Contributors

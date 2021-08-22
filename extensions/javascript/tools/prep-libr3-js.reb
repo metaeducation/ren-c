@@ -2,13 +2,6 @@ REBOL [
     Title: "Pre-Build Step for JavaScript Files Passed to EMCC"
     File: %prep-libr3-js.reb  ; used by MAKE-EMITTER
 
-    ; !!! This file can't be `Type: 'Module`, it needs MAKE-EMITTER, CSCAPE,
-    ; etc. in the user context and thus isn't isolated.  It is run directly by
-    ; a DO from the C libRebol prep script, so that it will have the
-    ; structures and helpers set up to process API endpoints.  However, the
-    ; ability to do this should be offered as a general build system hook
-    ; to extensions (also needed by the TCC extension)
-
     Version: 0.1.0
     Date: 15-Sep-2020
 
@@ -31,6 +24,12 @@ REBOL [
         an ordinary packed array of C pointers.
     }
 ]
+
+; Note: There are no `import` statements here because this is run via DO LOAD
+; inside the %make-reb-lib.r script's context.  This is done in order to
+; inherit the `api` object, and the `for-each-api` enumerator.  As a result
+; it also inherits access to CWRAP and other tools.  Review.
+
 
 e-cwrap: (make-emitter
     "JavaScript C Wrapper functions" make-file [(output-dir) reb-lib.js]
