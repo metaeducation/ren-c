@@ -147,7 +147,7 @@ func: func* [
                 var: noquote var
                 case [
                     match [get-path! path!] var [
-                        if (length of var != 2) or (_ <> first var) [
+                        if (length of var != 2) or (_ <> var.1) [
                             fail ["Bad path in spec:" ^var]
                         ]
                         append exclusions ^var.2  ; exclude args/refines
@@ -308,6 +308,30 @@ func: func* [
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 ;
 function: :func/gather
+
+
+; Simple "divider-style" thing for remarks.  At a certain verbosity level,
+; it could dump those remarks out...perhaps based on how many == there are.
+; (This is a good reason for retaking ==, as that looks like a divider.)
+;
+===: func [
+    return: <void>
+    'remarks [any-value! <variadic>]
+    /visibility [logic!]
+    <static> showing (false)
+][
+    if not null? visibility [showing: visibility, return]
+
+    if showing [
+        print form collect [
+            keep [===]
+            until [equal? ''=== keep ^(take remarks)]  ; prints tail `===`
+        ]
+    ] else [
+        until [equal? '=== take remarks]
+    ]
+    return  ; return no value (invisible)
+]
 
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version

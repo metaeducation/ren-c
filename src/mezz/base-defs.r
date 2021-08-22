@@ -168,20 +168,6 @@ void: enfixed func* [  ; 0-arg so enfix doesn't matter, but tests issue below
     ; https://github.com/metaeducation/ren-c/issues/581#issuecomment-562875470
 ]
 
-; Simple "divider-style" thing for remarks.  At a certain verbosity level,
-; it could dump those remarks out...perhaps based on how many == there are.
-; (This is a good reason for retaking ==, as that looks like a divider.)
-;
-===: func* [
-    return: <void>
-    'remarks [any-value! <variadic>]
-] [
-    until [
-        equal? '=== take remarks
-    ]
-    return  ; return no value (invisible)
-]
-
 ; COMMA! is the new expression barrier.  But `||` is included as a redefine of
 ; the old `|`, so that the barrier-making properties of a usermode entity can
 ; stay tested.  But outside of testing, use `,` instead.
