@@ -1036,7 +1036,7 @@ help: function [topic [text! blank!]] [
 
 iterate commands [
     if find ["-h" "-help" "--help"] commands/1 [
-        help try :commands/2
+        help try commands/2
         quit
     ]
 ]
@@ -1658,7 +1658,7 @@ vars: reduce [
             ]
             'file = exists? value: join repo-dir unspaced [
                 {r3-make}
-                try :rebmake/target-platform/exe-suffix
+                try rebmake/target-platform/exe-suffix
             ]
         ] else [
             fail "^/^/!! Cannot find a valid REBOL_TOOL !!^/"
@@ -1832,7 +1832,7 @@ app: make rebmake/application-class [
     ][
         reduce [
             make rebmake/cmd-strip-class [
-                file: join output try :rebmake/target-platform/exe-suffix
+                file: join output try rebmake/target-platform/exe-suffix
             ]
         ]
     ]
@@ -1913,7 +1913,7 @@ for-each ext dynamic-extensions [
         ][
             reduce [
                 make rebmake/cmd-strip-class [
-                    file: join output try :rebmake/target-platform/dll-suffix
+                    file: join output try rebmake/target-platform/dll-suffix
                 ]
             ]
         ]
@@ -1961,7 +1961,7 @@ clean: make rebmake/entry-class [
         make rebmake/cmd-delete-class [file: %objs/]
         make rebmake/cmd-delete-class [file: %prep/]
         make rebmake/cmd-delete-class [
-            file: join %r3 try :rebmake/target-platform/exe-suffix
+            file: join %r3 try rebmake/target-platform/exe-suffix
         ]
         make rebmake/cmd-delete-class [file: %libr3.*]
     ]
@@ -1974,11 +1974,11 @@ check: make rebmake/entry-class [
 
     commands: collect [
         keep make rebmake/cmd-strip-class [
-            file: join app/output try :rebmake/target-platform/exe-suffix
+            file: join app/output try rebmake/target-platform/exe-suffix
         ]
         for-each s dynamic-libs [
             keep make rebmake/cmd-strip-class [
-                file: join s/output try :rebmake/target-platform/dll-suffix
+                file: join s/output try rebmake/target-platform/dll-suffix
             ]
         ]
     ]

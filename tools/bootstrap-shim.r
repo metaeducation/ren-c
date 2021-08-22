@@ -87,6 +87,8 @@ trap [
 
     export bar!: null  ; signal there is no BAR! type, and | is a WORD!
 
+    export strip-commas-and-null-apostrophes: func [x] [x]  ; not needed
+
     quit
 ]
 
@@ -109,9 +111,35 @@ while: lib/func [] [fail/where "Use LOOP not WHILE" 'return]
 
 ~: does [lib/null]  ; most similar behavior to bad-word isotope available
 
-null: enfix func [:left [<skip> set-word!]] [
+null: enfix lib/func [:left [<skip> set-word!]] [
     if :left [lib/unset left]
     lib/null
+]
+
+try: lib/func [  ; since null word/path fetches cause errors, work around it
+    :look [<...> any-value!]  ; <...> old variadic notation
+    args [<...> <opt> any-value!]  ; <...> old variadic notation
+][
+    all [
+        match [path! word!] first look
+        not match action! get first look
+    ] then [
+        return lib/try get take look
+    ]
+    return lib/try take* args
+]
+
+null?: lib/func [
+    :look [<...> any-value!]  ; <...> old variadic notation
+    args [<...> <opt> any-value!]  ; <...> old variadic notation
+][
+    all [
+        match [path! word!] first look
+        not match action! get first look
+    ] then [
+        return lib/null? get take look
+    ]
+    return lib/null? take* args
 ]
 
 |: lib/func [] [
@@ -376,7 +404,7 @@ modernize-action: lib/function [
                 keep/only spec/1
 
                 lib/append proxiers compose [
-                    (as set-word! last-refine-word) try (as get-word! proxy)
+                    (as set-word! last-refine-word) lib/try (as get-word! proxy)
                     set (as lit-word! proxy) void
                 ]
                 spec: my next
@@ -427,7 +455,7 @@ modernize-action: lib/function [
                 ; Substitute BLANK! for any <blank> found, and save some code
                 ; to inject for that parameter to return null if it's blank
                 ;
-                if lib/find (try match block! spec/1) <blank> [
+                if lib/find (lib/try match block! spec/1) <blank> [
                     keep/only replace copy spec/1 <blank> 'blank!
                     lib/append blankers compose [
                         if blank? (as get-word! w) [return null]
@@ -436,7 +464,7 @@ modernize-action: lib/function [
                     continue
                 ]
 
-                if lib/find (try match block! spec/1) <variadic> [
+                if lib/find (lib/try match block! spec/1) <variadic> [
                     keep/only replace copy spec/1 <variadic> <...>
                     spec: my next
                     continue
@@ -610,7 +638,7 @@ transcode: lib/function [
     next-arg [word!]
     ; /relax not supported in shim... it could be
 ][
-    next: try :next-arg
+    next: lib/try :next-arg
 
     values: lib/transcode/(either next ['next] [blank])
         either text? source [to binary! source] [source]

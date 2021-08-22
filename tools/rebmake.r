@@ -709,9 +709,9 @@ ld: make linker-class [
         /debug [logic!]
     ][
         let suffix: either dynamic [
-            try :target-platform/dll-suffix
+            try target-platform/dll-suffix
         ][
-            try :target-platform/exe-suffix
+            try target-platform/exe-suffix
         ]
         return collect-text [
             keep any [(file-to-local/pass exec-file) "gcc"]
@@ -1276,11 +1276,11 @@ generator-class: make object! [
         project [object!]
     ][
         if not let suffix: find reduce [
-            #application try :target-platform/exe-suffix
-            #dynamic-library try :target-platform/dll-suffix
-            #static-library try :target-platform/archive-suffix
-            #object-library try :target-platform/archive-suffix
-            #object-file try :target-platform/obj-suffix
+            #application try target-platform/exe-suffix
+            #dynamic-library try target-platform/dll-suffix
+            #static-library try target-platform/archive-suffix
+            #object-library try target-platform/archive-suffix
+            #object-file try target-platform/obj-suffix
         ] project/class [return]
 
         suffix: second suffix
@@ -1304,7 +1304,7 @@ generator-class: make object! [
                 basename: project/output
                 project/output: join basename suffix
             ]
-            ends-with? project/output suffix [
+            ends-with? project/output try suffix [
                 basename: either suffix [
                     copy/part project/output
                         (length of project/output) - (length of suffix)
