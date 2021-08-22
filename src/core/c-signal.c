@@ -50,20 +50,20 @@
 //
 //  Do_Signals_Throws: C
 //
-// !!! R3-Alpha's evaluator loop had a countdown (Eval_Count) which was
+// !!! R3-Alpha's evaluator loop had a countdown (Eval_Countdown) which was
 // decremented on every step.  When this counter reached zero, it would call
 // this routine to process any "signals"...which could be requests for
 // garbage collection, network-related, Ctrl-C being hit, etc.
 //
 // It also would check the Eval_Signals mask to see if it was non-zero on
 // every step.  If it was, then it would always call this routine--regardless
-// of the Eval_Count.
+// of the Eval_Countdown.
 //
 // While a broader review of how signals would work in Ren-C is pending, it
-// seems best to avoid checking two things each step.  So only the Eval_Count
+// seems best to avoid checking two things each step.  So only the Eval_Countdown
 // is checked, and places that set Eval_Signals set it to 1...to have the
 // same effect as if it were being checked.  Then if the Eval_Signals are
-// not cleared by the end of this routine, it resets the Eval_Count to 1
+// not cleared by the end of this routine, it resets the Eval_Countdown to 1
 // rather than giving it the full EVAL_DOSE of counts until next call.
 //
 // Currently the ability of a signal to THROW comes from the processing of
@@ -72,15 +72,35 @@
 //
 bool Do_Signals_Throws(REBVAL *out)
 {
-    // !!! When it was the case that the only way Do_Signals_Throws would run
-    // due to the Eval_Count reaching the end of an Eval_Dose, this way of
-    // doing "CPU quota" would work.  Currently, however, it is inaccurate,
-    // due to the fact that Do_Signals_Throws can be queued to run by setting
-    // the Eval_Count to 1 for a specific signal.  Review.
-    //
-    Eval_Cycles += Eval_Dose - Eval_Count;
+    if (Eval_Countdown >= 0) {  // natural countdown or invocation
+        //
+        // Periodic reconciliation of total evaluation cycles.  Avoids needing
+        // to touch *both* Eval_Countdown and Total_Eval_Cycles on every eval.
+        //
+        Total_Eval_Cycles += Eval_Dose - Eval_Countdown;
+    }
+    else if (Eval_Countdown == -2) {
+        //
+        // SET_SIGNAL() sets the countdown to -1, which then reaches -2 on
+        // a tick of the evaluator.  We *only* add that one tick, because
+        // reconciliation was already performed.
+        //
+        ++Total_Eval_Cycles;
+    }
+    else {
+        // This means SET_SIGNAL() ran, and Do_Signals_Throws() was called
+        // before the evaluator was called.  That can happen with the manual
+        // call in Prin_OS_String at time of writing.  There's no tick that
+        // needs accounting for in this case.
+        //
+        assert(Eval_Countdown == -1);
+    }
 
-    Eval_Count = Eval_Dose;
+  #if !defined(NDEBUG)
+    assert(Total_Eval_Cycles == Total_Eval_Cycles_Doublecheck);
+  #endif
+
+    Eval_Countdown = Eval_Dose;
 
     bool thrown = false;
 

@@ -1400,8 +1400,11 @@ REBNATIVE(subparse)
 
       do_signals:
 
-        assert(Eval_Count >= 0);
-        if (--Eval_Count == 0) {
+      #if !defined(NDEBUG)  // Total_Eval_Cycles is periodically reconciled
+        ++Total_Eval_Cycles_Doublecheck;
+      #endif
+
+        if (--Eval_Countdown <= 0) {
             SET_END(D_SPARE);
 
             if (Do_Signals_Throws(D_SPARE)) {

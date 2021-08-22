@@ -1177,7 +1177,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     PG_Reb_Stats->Recycle_Series
         = Mem_Pools[SER_POOL].free - PG_Reb_Stats->Recycle_Series;
     PG_Reb_Stats->Recycle_Series_Total += PG_Reb_Stats->Recycle_Series;
-    PG_Reb_Stats->Recycle_Prior_Eval = Eval_Cycles;
+    PG_Reb_Stats->Recycle_Prior_Eval = Total_Eval_Cycles;
   #endif
 
     // !!! This reset of the "ballast" is the original code from R3-Alpha:

@@ -247,12 +247,23 @@ TVAR struct Reb_State *TG_Jump_List; // Saved state for TRAP (CPU state, etc.)
     TVAR bool TG_Pushing_Mold; // Push_Mold should not directly recurse
 #endif
 
-//-- Evaluation variables:
-TVAR REBI64 Eval_Cycles;    // Total evaluation counter (upward)
-TVAR REBI64 Eval_Limit;     // Evaluation limit (set by secure)
-TVAR int_fast32_t Eval_Count;     // Evaluation counter (downward)
-TVAR uint_fast32_t Eval_Dose;      // Evaluation counter reset value
-TVAR REBFLGS Eval_Sigmask;   // Masking out signal flags
+// !!! In R3-Alpha, micro-optimizations were stylized so that it would set
+// a counter for how many cycles would pass before it automatically triggered
+// garbage collection.  It would decrement that counter looking for zero, and
+// when zero was reached it would add the number of cycles it had been
+// counting down from to the total.  This avoided needing to do math on
+// multiple counters on every eval step...limiting it to a periodic
+// reconciliation when GCs occurred.  Ren-C keeps this, but the debug build
+// double checks that whatever magic is done reflects the real count.
+//
+#if !defined(NDEBUG)
+    TVAR REBI64 Total_Eval_Cycles_Doublecheck;
+#endif
+TVAR REBI64 Total_Eval_Cycles;      // Total evaluation counter (upward)
+TVAR REBI64 Eval_Limit;             // Evaluation limit (set by secure)
+TVAR int_fast32_t Eval_Countdown;  // Evaluation counter until Do_Signals()
+TVAR int_fast32_t Eval_Dose;        // Evaluation counter reset value
+TVAR REBFLGS Eval_Sigmask;          // Masking out signal flags
 
 TVAR REBFLGS Trace_Flags;    // Trace flag
 TVAR REBINT Trace_Level;    // Trace depth desired

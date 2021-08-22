@@ -455,7 +455,21 @@ enum rebol_signals {
 
 inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
     Eval_Signals |= f;
-    Eval_Count = 1;
+
+    if (Eval_Countdown == -1)  // already set to trigger on next tick...
+        return;  // ...we already reconciled the dose
+
+    assert(Eval_Countdown > 0);  // transition to 0 triggers signals
+
+    // This forces the next step in the evaluator to count down to 0 and
+    // trigger an interrupt.  But we have to reconcile the count first.
+    //
+    Total_Eval_Cycles += Eval_Dose - Eval_Countdown;
+  #if !defined(NDEBUG)
+    assert(Total_Eval_Cycles == Total_Eval_Cycles_Doublecheck);
+  #endif
+
+    Eval_Countdown = -1;
 }
 
 #define GET_SIGNAL(f) \

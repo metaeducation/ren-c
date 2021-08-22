@@ -355,8 +355,11 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
   //=//// START NEW EXPRESSION ////////////////////////////////////////////=//
 
-    assert(Eval_Count >= 0);
-    if (--Eval_Count == 0) {
+    #if !defined(NDEBUG)  // Total_Eval_Cycles is periodically reconciled
+        ++Total_Eval_Cycles_Doublecheck;
+    #endif
+
+    if (--Eval_Countdown <= 0) {
         //
         // Note that Do_Signals_Throws() may do a recycle step of the GC, or
         // it may spawn an entire interactive debugging session via

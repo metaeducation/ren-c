@@ -567,28 +567,23 @@ static void Init_Contexts_Object(void)
 
 
 //
-//  Startup_Task: C
+//  Startup_Signals: C
 //
-// !!! Prior to the release of R3-Alpha, there had apparently been some amount
-// of effort to take single-threaded assumptions and globals, and move to a
-// concept where thread-local storage was used for some previously assumed
-// globals.  This would be a prerequisite for concurrency but not enough: the
-// memory pools would need protection from one thread to share any series with
-// others, due to contention between reading and writing.
+// Creating series calls SET_SIGNAL(), and that is done in %m-pools.c right
+// now.  That needs the Eval_XXX variables to be initialized at present.
 //
-// Ren-C kept the separation, but if threading were to be a priority it would
-// likely be approached a different way.  A nearer short-term feature would be
-// "isolates", where independent interpreters can be loaded in the same
-// process, just not sharing objects with each other.
-//
-void Startup_Task(void)
+void Startup_Signals(void)
 {
     Trace_Level = 0;
     TG_Jump_List = nullptr;
 
-    Eval_Cycles = 0;
+  #if !defined(NDEBUG)
+    Total_Eval_Cycles_Doublecheck = 0;
+  #endif
+
+    Total_Eval_Cycles = 0;
     Eval_Dose = EVAL_DOSE;
-    Eval_Count = Eval_Dose;
+    Eval_Countdown = Eval_Dose;
     Eval_Signals = 0;
     Eval_Sigmask = ALL_BITS;
     Eval_Limit = 0;
@@ -625,10 +620,6 @@ void Startup_Task(void)
     Prep_Cell(&TG_Thrown_Label_Debug);
     SET_END(&TG_Thrown_Label_Debug); // see notes, only used "SPORADICALLY()"
   #endif
-
-    Startup_Raw_Print();
-    Startup_Scanner();
-    Startup_String();
 }
 
 
@@ -847,8 +838,14 @@ void Startup_Core(void)
 
 //=//// INITIALIZE MEMORY AND ALLOCATORS //////////////////////////////////=//
 
-    Startup_Pools(0);
+    Startup_Signals();
+
+    Startup_Pools(0);  // performs allocation, calls SET_SIGNAL()
     Startup_GC();
+
+    Startup_Raw_Print();
+    Startup_Scanner();
+    Startup_String();
 
 //=//// INITIALIZE API ////////////////////////////////////////////////////=//
 
@@ -878,10 +875,6 @@ void Startup_Core(void)
 //=//// CREATE GLOBAL OBJECTS /////////////////////////////////////////////=//
 
     Init_Root_Vars();    // Special REBOL values per program
-
-//=//// INITIALIZE (SINGULAR) TASK ////////////////////////////////////////=//
-
-    Startup_Task();
 
     Init_Action_Spec_Tags(); // Note: uses MOLD_BUF, not available until here
 

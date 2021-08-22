@@ -46,7 +46,7 @@ REBNATIVE(stats)
 {
     INCLUDE_PARAMS_OF_STATS;
 
-    REBI64 num_evals = Eval_Cycles + Eval_Dose - Eval_Count;
+    REBI64 num_evals = Total_Eval_Cycles + Eval_Dose - Eval_Countdown;
 
     if (REF(evals))
         return Init_Integer(D_OUT, num_evals);
