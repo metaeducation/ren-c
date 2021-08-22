@@ -45,7 +45,7 @@ export: func [
     if :set-word [
         args: take args
         append system/contexts/user reduce [set-word (set set-word :args)]
-        return :args
+        return get 'args
     ]
 
     items: take args

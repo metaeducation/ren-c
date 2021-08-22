@@ -457,25 +457,7 @@ import*: func [
         ]
     ]
 
-    === IF EXECUTING A FILE!, ADJUST WORKING PATH TO PATH OF SCRIPT ===
-
-    ; When we run code from a file, the "current" directory is changed to the
-    ; directory of that script.  This way, relative path lookups to find
-    ; dependent files will look relative to the script.  This is believed to
-    ; be the best interpretation of shorthands like `read %foo.dat` or
-    ; `do %utilities.r`.
-    ;
-    ; We want this behavior for both FILE! and for URL!, which means
-    ; that the "current" path may become a URL!.  This can be processed
-    ; with change-dir commands, but it will be protocol dependent as
-    ; to whether a directory listing would be possible (HTTP does not
-    ; define a standard for that)
-    ;
-    ; The original path before running the code should be restored before
-    ; this function returns.
-    ;
-    ; !!! There are some issues with this idea of preserving the path--one of
-    ; which is that WHAT-DIR may return null.
+    === ADJUST RELATIVE PATHS TO ABSOLUTE, EVEN IF RELATIVE TO A URL ===
 
     let original-path: what-dir
     let original-script: '
@@ -519,6 +501,24 @@ import*: func [
     let is-module: hdr and ('module = select hdr 'type)
 
     === CHANGE WORKING DIRECTORY TO MATCH DIRECTORY OF THE SCRIPT ===
+
+    ; When we run code from a file, the "current" directory is changed to the
+    ; directory of that script.  This way, relative path lookups to find
+    ; dependent files will look relative to the script.  This is believed to
+    ; be the best interpretation of shorthands like `read %foo.dat` or
+    ; `do %utilities.r`.
+    ;
+    ; We want this behavior for both FILE! and for URL!, which means
+    ; that the "current" path may become a URL!.  This can be processed
+    ; with change-dir commands, but it will be protocol dependent as
+    ; to whether a directory listing would be possible (HTTP does not
+    ; define a standard for that)
+    ;
+    ; The original path before running the code should be restored before
+    ; this function returns.
+    ;
+    ; !!! There are some issues with this idea of preserving the path--one of
+    ; which is that WHAT-DIR may return null.
 
     ; We have to do this prior to executing the script code so it sees the
     ; change.  But we do it after the scan, in case there was a syntax error.
@@ -617,7 +617,7 @@ export*: func [
     if set-word [
         set set-word args: take args
         append exports ^(as word! set-word)
-        return :args
+        return get/any 'args
     ]
 
     items: take args
