@@ -504,7 +504,7 @@ void Startup_Symbols(void)
     //
     TRASH_POINTER_IF_DEBUG(PG_Symbol_Canons[SYM_0]);
 
-    SYMID id = cast(REBLEN, SYM_0 + 1);
+    SYMID id = cast(SYMID, cast(REBLEN, SYM_0 + 1));  // SYMID for debug watch
 
     // We assume no symbols will be larger than 256 characters, so instead
     // of delimiting them in the data we length-prefix them with a byte.
