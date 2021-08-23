@@ -15,7 +15,6 @@ Rebol [
     Purpose: "Test framework"
 ]
 
-import %line-numberq.r
 import %../tools/parsing-tools.reb
 import %../tools/text-lines.reb
 
