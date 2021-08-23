@@ -249,6 +249,33 @@ process-tests: function [
                 log [value]
                 set 'dialect-failures (dialect-failures + 1)
             )
+                |
+            'collect-tests set body: block! (
+                log ["@collect-tests" space mold body]
+                trap [
+                    let [# collected]: module _ compose/deep [collect [
+                        let keep-test: adapt :keep [
+                            if not block? :value [
+                                fail "KEEP-TEST takes BLOCK! (acts as GROUP!)"
+                            ]
+                            value: quote as group! value
+                        ]
+                        keep: ~unset~
+                        (as group! body)
+                    ]]
+
+                    ; COLLECTED should just be a BLOCK! of groups now.
+                    ;
+                    let flags: []
+                    handler flags collected
+                ]
+                then error -> [
+                    log [space "error:" mold error newline]
+                ]
+                else [
+                    log [space "success." newline]
+                ]
+            )
         ]
         end
     ]

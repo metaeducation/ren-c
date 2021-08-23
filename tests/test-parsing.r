@@ -95,75 +95,79 @@ export collect-tests: function [
     let code: load file
     let flags: copy []
 
-    append into collect [
-        ;
-        ; We're only loading the tests now.  But we keep the path of the test
-        ; file in the stream of collected test blocks...so when we're actually
-        ; running the tests later, the runner can use CHANGE-DIR to set the
-        ; directory to where the test file was.
-        ;
-        keep/line clean-path file
+    ; We're only loading the tests now.  But we keep the path of the test
+    ; file in the stream of collected test blocks...so when we're actually
+    ; running the tests later, the runner can use CHANGE-DIR to set the
+    ; directory to where the test file was.
+    ;
+    append into clean-path file
 
-      for-each item code [
+    append into collect [parse code [
+        while [
+            pos: here
 
-        case [
-            ;
             ; A GROUP! top level in the test file indicates a standalone test.
             ; Put it in a BLOCK! to denote that it should run in an isolated
             ; context, but all by itself.
             ;
-            group? item [
+            set item group! (
                 keep only flags, flags: copy []
                 keep/line only :[item]  ; one isolated group
-            ]
-
+            )
+            |
             ; A BLOCK! groups together several tests that rely on common
             ; definitions.  They are isolated together.  The block is not
             ; checked for syntax--it is used to create a module, then it
             ; runs all groups that start newlines as tests...interleaved
             ; with whatever other code there is.
             ;
-            block? item [
+            set item block! (
                 keep only flags, flags: copy []
                 keep/line only item
-            ]
-
+            )
+            |
             ; ISSUE! and URL! have historically just been ignored, they are a
             ; kind of comment that you don't have to put a semicolon on.  It
             ; may be they have a better dialect use, perhaps even automated
             ; tests could keep track of how often a particular issue or URL
             ; had a bad test and mark it as "active"?
             ;
-            match [url! issue!] item [
-            ]
-
+            [url! | issue!] (~noop~)
+            |
             ; Tags represent flags which can control the behavior of tests.
             ; Each test grouping resets the flags here, but that suggests
             ; the flags should probably go inside blocks (?)  Unclear what
             ; the feature will shape up to be, but there were stray tags,
             ; so just collect them... nothing looks at them right now.
             ;
-            tag? item [
+            set item tag! [
                 append flags item
             ]
-
+            |
             ; The test dialect should probably let you reference a file from
             ; another file, to sub-factor tests.  Right now the top level
             ; %core-tests.r is the only one that accepts subfiles.
             ;
-            file? item [
+            set item file! (
                 let referenced-file: item
 
                 change-dir first split-path file
                 collect-tests/into referenced-file into
                 change-dir current-dir
-            ]
+            )
+            |
+            ; New feature: test generation and collection
+            ;
+            '@collect-tests, set body block! (
+                keep @collect-tests
+                keep only body
+            )
         ] else [
             append into reduce [
                 'dialect
                 spaced [
                     newline
-                    {"failed, line/col:} (:[file of item, line of item]) {"}
+                    {"failed, line/col:} (text-location-of pos) {"}
                     newline
                 ]
             ]
