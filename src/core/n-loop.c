@@ -1682,7 +1682,7 @@ REBNATIVE(repeat)
 //      :vars "Word or block of words to set each time (local if not quoted)"
 //          [blank! quoted! word! block!]
 //      value "Maximum number or series to traverse"
-//          [<blank> any-number! any-sequence! quoted! block!]
+//          [<blank> any-number! any-sequence! quoted! block! action!]
 //      'body "!!! actually just BLOCK!, but quoted to catch legacy uses"
 //          [<const> any-value!]
 //  ]
@@ -1716,7 +1716,7 @@ REBNATIVE(for)
         if (rebRunThrows(
             D_OUT,
             true,
-            Lib(FOR_EACH), ":(", ARG(vars), ")", value, body
+            Lib(FOR_EACH), ARG(vars), rebQ(value), body
         )){
             return R_THROWN;
         }
