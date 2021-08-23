@@ -22,6 +22,10 @@ log-file: ~
 
 log: func [report [block!]] [
     write/append log-file unspaced report
+
+    ; By default we echo the log to the screen also.  This should be an option.
+    ;
+    write-stdout unspaced report
 ]
 
 ; counters
@@ -44,7 +48,6 @@ run-single-test: func [
     code "Code GROUP! from test file, assumed bound into isolated module"
         [group!]
 ][
-    write-stdout mold code
     log [mold code]
 
     let [error result]: trap as block! code
@@ -66,11 +69,9 @@ run-single-test: func [
         ]
     ] then message -> [
         test-failures: me + 1
-        write-stdout unspaced [space {"failed, } message {"} newline]
         log reduce [space {"failed, } message {"} newline]
     ] else [
         successes: me + 1
-        write-stdout unspaced [space {"succeeded."} newline]
         log reduce [space {"succeeded"} newline]
     ]
 ]
@@ -174,7 +175,7 @@ run-test-cluster: func [
         if group-pos <> pos [
             let code: copy/part pos group-pos
             trap [
-                print mold code
+                log [mold code newline]
                 fail "out-of-GROUP disabled: https://forum.rebol.info/t/1680/"
                 do code  ; result of DO is discarded
             ] then error -> [
@@ -182,7 +183,7 @@ run-test-cluster: func [
                 ; If common code for a cluster fails, the error is logged and
                 ; no more tests in the cluster are run.
                 ;
-                log ["Error in cluster code:" mold error]
+                log ["Error in cluster code:" mold error newline]
                 return
             ]
         ]
