@@ -729,6 +729,22 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         Decay_If_Nulled(f->out);
         Copy_Cell(Sink_Word_May_Fail(v, v_specifier), f->out);
+
+        // Running functions flushes the f_next_gotten cache.  But a plain
+        // assignment can cause trouble too, if it doesn't trigger a function
+        // call:
+        //
+        //     >> x: <before> x: 1 x
+        //                         ^-- x value was cached din infix lookahead
+        //
+        // It used to not be a problem, when variables didn't just pop into
+        // existence or have their caching states changed.  But INDEX_ATTACHED
+        // and the various complexities involved with that means we have to
+        // flush here if the symbols match.
+        //
+        if (f_next_gotten and VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(v))
+            f_next_gotten = nullptr;
+
         break; }
 
 
@@ -1397,6 +1413,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             DS_DROP_TO(f->dsp_orig);
             goto return_thrown;
         }
+
+        f_next_gotten = nullptr;  // called arbitrary code, must toss cache
 
         if (meta)
             Meta_Quotify(f->out);  // Note: turns END to ~void~ isotope
