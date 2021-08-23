@@ -123,8 +123,14 @@ process-tests: function [
     ]
 ]
 
-do-recover: func [
+export do-recover: func [
     {Executes tests in the FILE and recovers from crash}
+
+    return: "The log file that was generated"
+        [file!]
+    summary: "Textual summary of the test results"
+        [text!]
+
     file [file!] {test file}
     flags [block!] {which flags to accept}
     code-checksum [binary! blank!]
@@ -241,7 +247,7 @@ do-recover: func [
             process-tests test-sources :process-vector
         ]
     ] then [
-        let summary: spaced [
+        let temp: spaced [
             "system/version:" system/version LF
             "code-checksum:" code-checksum LF
             "test-checksum:" test-checksum LF
@@ -259,12 +265,15 @@ do-recover: func [
             "Skipped:" skipped LF
         ]
 
-        log [summary]
-
-        reduce [log-file summary]
+        log [temp]
+        if summary [set summary temp]
     ] else [
-        reduce [log-file "testing already complete"]
+        if summary [
+            set summary "testing already complete"
+        ]
     ]
+
+    return log-file
 ]
 
 export [do-recover]

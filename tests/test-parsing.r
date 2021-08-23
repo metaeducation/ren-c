@@ -19,8 +19,8 @@ import %line-numberq.r
 import %../tools/parsing-tools.reb
 import %../tools/text-lines.reb
 
-whitespace: charset [#"^A" - #" " "^(7F)^(A0)"]
-digit: charset {0123456789}
+export whitespace: charset [#"^A" - #" " "^(7F)^(A0)"]
+export digit: charset {0123456789}
 
 success-rule: ~
 
@@ -35,7 +35,7 @@ success: ~
 ; here is certainly not worth it.  So when it sees a `{` or a `"` it defers
 ; to TRANSCODE to parse that string.
 
-test-source-rule: [
+export test-source-rule: [
     while [
         let position: here
 
@@ -81,7 +81,7 @@ load-testfile: func [
     return test-source
 ]
 
-collect-tests: function [
+export collect-tests: function [
     return: <none>
     collected-tests [block!]
         {collect the tests here (modified)}
@@ -224,7 +224,7 @@ collect-tests: function [
     ]
 ]
 
-collect-logs: function [
+export collect-logs: function [
     collected-logs [block!]
         {collect the logged results here (modified)}
     log-file [file!]
@@ -286,5 +286,3 @@ collect-logs: function [
         end
     ]
 ]
-
-export [collect-tests collect-logs]
