@@ -10,7 +10,7 @@
 > * Copyright 2013 Saphirion AG
 > * Copyright 2013-2017 Ren-C Open Source Contributors
 >
-> Some PARSE tests were copied or derived from [%parse-test.red][3], which was BSD-3 Licensed and "Copyright (C) 2011-2015 Red Foundation."  See notes in %parse/README.md for more details. 
+> Some PARSE tests were copied or derived from [%parse-test.red][3], which was BSD-3 Licensed and "Copyright (C) 2011-2015 Red Foundation."  See notes in %parse/README.md for more details.
 >
 > This README was originally written by Ladislav Mecir.
 
@@ -142,9 +142,9 @@ The summary (can be found at the end of the log file), e.g.:
     test-checksum: #{E85A1B2945437E38E7654B9904937821C8F2FA92}
     Total: 4598
     Succeeded: 3496
-    Test-failures: 156
+    Failing Tests: 156
     Crashes: 7
-    Dialect-failures: 0
+    Failures In Test Dialect Usage: 0
     Skipped: 939
 
 ...in the former case and
@@ -154,9 +154,9 @@ The summary (can be found at the end of the log file), e.g.:
     test-checksum: #{E85A1B2945437E38E7654B9904937821C8F2FA92}
     Total: 4598
     Succeeded: 4136
-    Test-failures: 142
+    Failing Tests: 142
     Crashes: 15
-    Dialect-failures: 0
+    Failures In Test Dialect Usage: 0
     Skipped: 305
 
 ...in the latter.

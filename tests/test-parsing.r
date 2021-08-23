@@ -3,7 +3,10 @@ Rebol [
     File: %test-parsing.r
     Type: module
     Name: Test-Parsing
-    Copyright: [2012 "Saphirion AG"]
+    Copyright: [
+        2014 "Ladislav Mecir and Saphirion AG"
+        2014/2021 "Ren-C Open Source Contributors"
+    ]
     License: {
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
@@ -11,8 +14,6 @@ Rebol [
 
         http://www.apache.org/licenses/LICENSE-2.0
     }
-    Author: "Ladislav Mecir"
-    Purpose: "Test framework"
 ]
 
 import %../tools/parsing-tools.reb
@@ -81,146 +82,95 @@ load-testfile: func [
 ]
 
 export collect-tests: function [
-    return: <none>
-    collected-tests [block!]
-        {collect the tests here (modified)}
-    test-file [file!]
+    return: [block!]
+    file "Name of file written in the test dialect to gather tests from"
+        [file!]
+    /into [block!]
 ][
+    into: default [copy []]
+
     current-dir: what-dir
-    print ["file:" mold test-file]
+    print ["file:" mold file]
 
-    trap [
-        if file? test-file [
-            test-file: clean-path test-file
-            change-dir first split-path test-file
-        ]
-        test-sources: get in load-testfile test-file 'contents
-        ensure binary! test-sources  ; this is how they are passed ATM
-    ] then err -> [
-        ; probe err
-        append collected-tests reduce [
-            test-file 'dialect {^/"failed, cannot read the file"^/}
-        ]
-        change-dir current-dir
-        return
-    ] else [
-        change-dir current-dir
-        append collected-tests test-file
-    ]
+    let code: load file
+    let flags: copy []
 
-    types: context [
-        wsp: cmt: val: tst: grpb: grpe: flg: fil: isu: str: url: end: _
-    ]
+    append into collect [
+        ;
+        ; We're only loading the tests now.  But we keep the path of the test
+        ; file in the stream of collected test blocks...so when we're actually
+        ; running the tests later, the runner can use CHANGE-DIR to set the
+        ; directory to where the test file was.
+        ;
+        keep/line clean-path file
 
-    flags: copy []
+      for-each item code [
 
-    wsp: [
-        [
-            some whitespace (type: in types 'wsp)
-            |
-            ";" [thru newline | to end] (type: in types 'cmt)
-        ]
-    ]
-
-    any-wsp: [while [wsp emit-token]]
-
-    single-value: parsing-at x [
-        let next-position
-        trap [
-            value: _  ; !!! for collecting with SET-WORD!, evolving
-            next-position: _  ; !!! ...same
-            [value next-position]: transcode x
-        ] else [
-            type: in types 'val
-            next-position
-        ]
-    ]
-
-    single-test: [
-        let vector: across ["(" test-source-rule ")"] (
-            type: in types 'tst
-            append/only collected-tests flags
-            append collected-tests vector
-        )
-    ]
-
-    grouped-tests: [
-        "[" (type: in types 'grpb) emit-token
-        opt [
-            any-wsp single-value
-            :(text? value) (type: in types 'str)
-            emit-token
-        ]
-        while [
-            any-wsp single-value
-            [
-                :(tag? value) (
-                    type: in types 'flag
-                    append flags value
-                )
-                    |
-                :(issue? value) (type: in types 'isu)
-                    |
-                :(url? value) (type: in types 'url)
+        case [
+            ;
+            ; A GROUP! top level in the test file indicates a standalone test.
+            ; Put it in a BLOCK! to denote that it should run in an isolated
+            ; context, but all by itself.
+            ;
+            group? item [
+                keep only flags, flags: copy []
+                keep/line only :[item]  ; one isolated group
             ]
-            emit-token
-        ]
-        while [any-wsp single-test emit-token]
-        any-wsp "]" (type: in types 'grpe) emit-token
-    ]
 
-    token: [
-        position: here
+            ; A BLOCK! groups together several tests that rely on common
+            ; definitions.  They are isolated together.  The block is not
+            ; checked for syntax--it is used to create a module, then it
+            ; runs all groups that start newlines as tests...interleaved
+            ; with whatever other code there is.
+            ;
+            block? item [
+                keep only flags, flags: copy []
+                keep/line only item
+            ]
 
-        (type: value: _)
+            ; ISSUE! and URL! have historically just been ignored, they are a
+            ; kind of comment that you don't have to put a semicolon on.  It
+            ; may be they have a better dialect use, perhaps even automated
+            ; tests could keep track of how often a particular issue or URL
+            ; had a bad test and mark it as "active"?
+            ;
+            match [url! issue!] item [
+            ]
 
-        wsp emit-token
-            |
-        single-test (flags: copy []) emit-token
-            |
-        grouped-tests (flags: copy [])
-            |
-        end (type: in types 'end) emit-token break
-            |
-        single-value
-        [
-            :(tag? get 'value) (
-                type: in types 'flg
-                append flags value
-            )
-            |
-            :(file? get 'value) (
-                type: in types 'fil
-                collect-tests collected-tests value
-                print ["file:" mold test-file]
-                append collected-tests test-file
-            )
-        ]
-    ]
+            ; Tags represent flags which can control the behavior of tests.
+            ; Each test grouping resets the flags here, but that suggests
+            ; the flags should probably go inside blocks (?)  Unclear what
+            ; the feature will shape up to be, but there were stray tags,
+            ; so just collect them... nothing looks at them right now.
+            ;
+            tag? item [
+                append flags item
+            ]
 
-    emit-token: [
-        token-end: here, (
-            comment [
-                prin "emit: " probe compose [
-                    (type) (to text! copy/part position token-end)
+            ; The test dialect should probably let you reference a file from
+            ; another file, to sub-factor tests.  Right now the top level
+            ; %core-tests.r is the only one that accepts subfiles.
+            ;
+            file? item [
+                let referenced-file: item
+
+                change-dir first split-path file
+                collect-tests/into referenced-file into
+                change-dir current-dir
+            ]
+        ] else [
+            append into reduce [
+                'dialect
+                spaced [
+                    newline
+                    {"failed, line/col:} (:[file of item, line of item]) {"}
+                    newline
                 ]
             ]
-        )
-        position: here, (type: value: _)
-    ]
-
-    rule: [while token]
-
-    parse test-sources rule else [
-        append collected-tests reduce [
-            'dialect
-            spaced [
-                newline
-                {"failed, line/col:} (text-location-of position) {"}
-                newline
-            ]
         ]
-    ]
+    ]]
+
+    return into
 ]
 
 export collect-logs: function [
