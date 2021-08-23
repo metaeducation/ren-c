@@ -131,8 +131,8 @@
 )
 [#1764
     (unset 'blk protect/deep 'blk true)
+    (unprotect 'blk true)
 ]
-(unprotect 'blk true)
 
 
 ; TESTS FOR TEMPORARY EVALUATION HOLDS

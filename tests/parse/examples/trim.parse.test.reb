@@ -183,27 +183,21 @@ utrim: function [
 
     return series
 ]
-true)]
+true)
 
-; functions/series/utrim.r
-
-; refinement order
-[#83
+    ; refinement order
+    #83
     (strict-equal?
         utrim/all/with "a" "a"
         utrim/with/all "a" "a"
     )
-]
 
-[#1948
+    #1948
     ("foo^/" = utrim "  foo ^/")
-]
 
-(#{BFD3} = utrim #{0000BFD30000})
-(#{10200304} = utrim/with #{AEAEAE10200304BDBDBD} #{AEBD})
+    (#{BFD3} = utrim #{0000BFD30000})
+    (#{10200304} = utrim/with #{AEAEAE10200304BDBDBD} #{AEBD})
 
-; Incompatible refinement errors.
-[
     (did s: copy {})
 
     (error? trap [utrim/auto/head s])
@@ -219,23 +213,23 @@ true)]
     (error? trap [utrim/lines/with s {*}])
 
     (s = {})
+
+    ("a  ^/  b  " = utrim/head "  a  ^/  b  ")
+    ("  a  ^/  b" = utrim/tail "  a  ^/  b  ")
+    ("foo^/^/bar^/" = utrim "  foo  ^/ ^/  bar  ^/  ^/  ")
+    ("foobar" = utrim/all "  foo  ^/ ^/  bar  ^/  ^/  ")
+    ("foo bar" = utrim/lines "  foo  ^/ ^/  bar  ^/  ^/  ")
+    ("x^/" = utrim/auto "^/  ^/x^/")
+    ("x^/" = utrim/auto "  ^/x^/")
+    ("x^/ y^/ z^/" = utrim/auto "  x^/ y^/   z^/")
+    ("x^/y" = utrim/auto "^/^/  x^/  y")
+
+    ([a b] = utrim [a b])
+    ([a b] = utrim [a b _])
+    ([a b] = utrim [_ a b _])
+    ([a _ b] = utrim [_ a _ b _])
+    ([a b] = utrim/all [_ a _ b _])
+    ([_ _ a _ b] = utrim/tail [_ _ a _ b _ _])
+    ([a _ b _ _] = utrim/head [_ _ a _ b _ _])
+    ([a _ b] = utrim/head/tail [_ _ a _ b _ _])
 ]
-
-("a  ^/  b  " = utrim/head "  a  ^/  b  ")
-("  a  ^/  b" = utrim/tail "  a  ^/  b  ")
-("foo^/^/bar^/" = utrim "  foo  ^/ ^/  bar  ^/  ^/  ")
-("foobar" = utrim/all "  foo  ^/ ^/  bar  ^/  ^/  ")
-("foo bar" = utrim/lines "  foo  ^/ ^/  bar  ^/  ^/  ")
-("x^/" = utrim/auto "^/  ^/x^/")
-("x^/" = utrim/auto "  ^/x^/")
-("x^/ y^/ z^/" = utrim/auto "  x^/ y^/   z^/")
-("x^/y" = utrim/auto "^/^/  x^/  y")
-
-([a b] = utrim [a b])
-([a b] = utrim [a b _])
-([a b] = utrim [_ a b _])
-([a _ b] = utrim [_ a _ b _])
-([a b] = utrim/all [_ a _ b _])
-([_ _ a _ b] = utrim/tail [_ _ a _ b _ _])
-([a _ b _ _] = utrim/head [_ _ a _ b _ _])
-([a _ b] = utrim/head/tail [_ _ a _ b _ _])

@@ -43,7 +43,6 @@
             <local> private
         ][
             private: 304
-            print ["I should see private" mold binding of 'public]
             return binding of 'public  ; frame as seen from inside
         ]
 

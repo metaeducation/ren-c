@@ -48,5 +48,5 @@
     e: trap [x: comment "Hi"]
     e/id = 'need-non-end
 )(
-    bad-word? ^ x: print "Hi"
+    bad-word? ^ x: lib.print "Hi"  ; generally you shouldn't use PRINT
 )]

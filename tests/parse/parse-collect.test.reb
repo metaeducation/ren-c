@@ -345,10 +345,9 @@
     ])
 ]
 
+; KEEP without blocks
+https://github.com/metaeducation/ren-c/issues/935
 [
-    {KEEP without blocks}
-    https://github.com/metaeducation/ren-c/issues/935
-
     (did all [
         uparse? "aaabbb" [x: collect [keep across some "a" keep some "b"]]
         x = ["aaa" "b"]

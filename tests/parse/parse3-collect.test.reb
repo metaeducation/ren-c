@@ -116,10 +116,9 @@
     x = [[a b c]]
 ])
 
+; KEEP without blocks
+https://github.com/metaeducation/ren-c/issues/935
 [
-    {KEEP without blocks}
-    https://github.com/metaeducation/ren-c/issues/935
-
     (did all [
         parse? "aaabbb" [x: collect [keep some "a" keep some "b"]]
         x = ["aaa" "bbb"]

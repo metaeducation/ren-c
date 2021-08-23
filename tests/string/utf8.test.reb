@@ -89,51 +89,40 @@
     ]
 )
 
-
+; AS aliasing of TEXT! as BINARY! constrains binary modifications to UTF-8
+https://github.com/metaeducation/ren-c/issues/817
 [
-    {AS aliasing of TEXT! as BINARY! constrains binary modifications to UTF-8}
-    https://github.com/metaeducation/ren-c/issues/817
+    (t: "օʊʀֆօռǟɢɢօռ"
+    b: as binary! t
+    true)
 
-    (
-        t: "օʊʀֆօռǟɢɢօռ"
-        b: as binary! t
-        true
-    )
+    (insert b "ƈ"
+    t = "ƈօʊʀֆօռǟɢɢօռ")
 
-    (
-        insert b "ƈ"
-        t = "ƈօʊʀֆօռǟɢɢօռ"
-    )(
-        append b #{C9A8}
-        t = "ƈօʊʀֆօռǟɢɢօռɨ"
-    )(
-        e: trap [insert b #{E08080}]
-        e/id = 'bad-utf8-bin-edit
-    )(
-        b: as binary! const "test"
-        e: trap [append b 1]
-        e/id = 'const-value
-    )
+    (append b #{C9A8}
+    t = "ƈօʊʀֆօռǟɢɢօռɨ")
+
+    (e: trap [insert b #{E08080}]
+    e.id = 'bad-utf8-bin-edit)
+
+    (b: as binary! const "test"
+    e: trap [append b 1]
+    e.id = 'const-value)
 ]
 
+; AS aliasing of BINARY! as TEXT! can only be done on mutable binaries
+https://github.com/metaeducation/ren-c/issues/817
 [
-    {AS aliasing of BINARY! as TEXT! can only be done on mutable binaries}
-    https://github.com/metaeducation/ren-c/issues/817
+    (b: #{64C990E1B49A64C9905A64C4B15A}
+    t: as text! b
+    t = "dɐᴚdɐZdıZ"
+    e: trap [append b #{E08080}]
+    e/id = 'bad-utf8-bin-edit)
 
-    (
-        b: #{64C990E1B49A64C9905A64C4B15A}
-        t: as text! b
-        did all [
-            t = "dɐᴚdɐZdıZ"
-            e: trap [append b #{E08080}]
-            e/id = 'bad-utf8-bin-edit
-        ]
-    )
-    (
-        b: #{64C990E1B49A64C9905A64C4B15A}
-        append b #{E08080}
-        e: trap [as text! b]
-        e/id = 'bad-utf8
+    (b: #{64C990E1B49A64C9905A64C4B15A}
+    append b #{E08080}
+    e: trap [as text! b]
+    e/id = 'bad-utf8
     )
     (
         e: trap [as text! const #{64C990E1B49A64C9905A64C4B15A}]

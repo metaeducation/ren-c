@@ -107,9 +107,9 @@ urldecoder: make object! [
     ]
 ]
 true
-)]
+)
 
-[#2380 (
+#2380 (
     url: urldecoder.decode http://example.com/get?q=ščř#kovtička
     did all [
         url.scheme == the 'http  ; Note: DECODE-URL returns BLOCK! with 'http
@@ -117,7 +117,9 @@ true
         url.path == "/get?q=ščř"
         url.tag == "kovtička"
     ]
-)(
+)
+
+(
     url: urldecoder.decode http://švéd:břéťa@example.com:8080/get?q=ščř#kovtička
     did all [
         url.scheme == the 'http
@@ -128,7 +130,9 @@ true
         url.path == "/get?q=ščř"
         url.tag == "kovtička"
     ]
-)(
+)
+
+(
     url: urldecoder.decode http://host?query
     did all [
         url.scheme == the 'http

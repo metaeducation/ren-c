@@ -58,7 +58,10 @@
     (not uparse? #{0A} [not <any>])
     (not uparse? #{0A} [not <any> <any>])
     (uparse? #{0A} [not [#{0B}] #{0A}])
-    (uparse? #{0A} [not wb #{0A}])
+    (
+        wb: [#b]
+        uparse? #{0A} [not wb #{0A}]
+    )
     (not uparse? #{0A0A} [not [#{0A} #{0A}] to <end>])
     (uparse? #{0A0A} [not [some #{0B}] to <end>])
 ]

@@ -69,7 +69,7 @@
     pos = the '[elide "b" + 2 * 3 fail "too far"]
 )
 (
-    pos: evaluate [
+    pos: evaluate/result [
         1 + 2 * 3 elide "a" elide "b" fail "too far"
     ] 'val
     did all [
