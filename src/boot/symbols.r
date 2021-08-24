@@ -39,7 +39,8 @@ stale  ; for non-/VOID DO, e.g. `(1 + 2 do [comment "hi"])` is ~stale~
 falsey
 errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
 rootvar  ; used as placeholder in rootvar cells
-attached  ; answer from BINDING OF when variable is attached but not bound
+attached  ; answer from BINDING OF when variable is attached but unresolved
+inherited  ; answer from BINDING OF when variable is attached and inherited
 
 
 ;=== LEGACY HELPERS ===

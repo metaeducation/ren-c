@@ -222,7 +222,12 @@ help: function [
                 return none
             ]
 
-            switch type of value: friendly get/any topic [
+            if '~attached~ = binding of topic [
+                print [topic "is ~attached~ to a context, but has no variable"]
+                return none
+            ]
+
+            switch type of value: reify get/any topic [
                 null [
                     print [topic "is null"]
                 ]

@@ -293,22 +293,28 @@ REBTYPE(Word)
             if (not Did_Get_Binding_Of(D_OUT, v))
                 return nullptr;
 
+            if (not IS_MODULE(D_OUT))  // ordinary contexts don't have "attach"
+                return D_OUT;
+
+            if (VAL_CONTEXT(D_OUT) == Lib_Context)
+                return D_OUT;  // lib context doesn't inherit
+
             // BINDING OF answers just ~attached~ if it's a module and there
             // is no variable instance in the module.  Hack that together for
             // the moment.
             //
-            if (IS_MODULE(D_OUT)) {
-                REBVAL *var = MOD_VAR(
-                    VAL_CONTEXT(D_OUT),
-                    VAL_WORD_SYMBOL(v),
-                    true
-                );
-                if (not var) {
-                    Init_Bad_Word(D_OUT, SYM_ATTACHED);
-                    return D_OUT;
-                }
-            }
-            return D_OUT; }
+            REBVAL *var = MOD_VAR(
+                VAL_CONTEXT(D_OUT),
+                VAL_WORD_SYMBOL(v),
+                true
+            );
+            if (var)
+                return D_OUT;  // found variable actually in module.
+
+            if (MOD_VAR(Lib_Context, VAL_WORD_SYMBOL(v), true))
+                return Init_Bad_Word(D_OUT, SYM_INHERITED);
+
+            return Init_Bad_Word(D_OUT, SYM_ATTACHED); }
 
           case SYM_ATTACH: {  // hack it up...
             if (not IS_WORD_BOUND(v))
