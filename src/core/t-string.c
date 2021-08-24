@@ -1044,8 +1044,9 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_COPY;
 
         UNUSED(PAR(value));
+        UNUSED(REF(deep));  // /DEEP is historically ignored on ANY-STRING!
 
-        if (REF(deep) or REF(types))
+        if (REF(types))
             fail (Error_Bad_Refines_Raw());
 
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
