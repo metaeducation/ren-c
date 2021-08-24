@@ -419,18 +419,21 @@ default-combinators: make map! reduce [
     'stop combinator [
         {Break an iterated construct like WHILE or SOME, succeeding the match}
         return: "Divergent"
-            []
+            [<opt>]
         parser [<end> action!]
         <local> f result'
     ][
+        result': '~void~  ; default `[stop]` return value as void isotope
+        if :parser [  ; parser argument is optional
+            ([result' input]: ^ parser input) else [
+                return null
+            ]
+        ]
+
         f: take/last state.loops else [
             fail "No PARSE iteration to STOP"
         ]
 
-        result': '~void~  ; default `[stop]` return value as void isotope
-        if :parser [  ; parser argument is optional
-            ([result' input]: ^ parser input)
-        ]
         set f.remainder input
         unwind f unmeta result'
     ]

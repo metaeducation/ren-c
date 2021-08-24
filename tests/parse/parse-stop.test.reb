@@ -21,3 +21,7 @@
     (uparse? "aaa" [some ["a" [stop "a"]] "a"])
     (uparse? "aaa" [some ["a" [["a" stop "a"]]] ""])
 ]
+
+(
+    uparse? "aaa" [some ["a", elide opt stop "b"]]
+)
