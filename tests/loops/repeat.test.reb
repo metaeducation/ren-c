@@ -78,7 +78,7 @@
 ; leave the gathered material in the mold buffer
 ;
 (
-    '~null~ = ^ repeat 2 [unspaced ["abc" continue]]
+    '~void~ = ^ repeat 2 [unspaced ["abc" continue]]
 )
 
 ; Test ACTION! as branch

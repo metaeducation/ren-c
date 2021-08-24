@@ -15,7 +15,7 @@
 (
     sum: 0
     did all [
-        false = every x [1 2 7] [
+        null = every x [1 2 7] [
             sum: me + x
             odd? x
         ]
@@ -38,10 +38,10 @@
 (
     sum: 0
     did all [
-        false = every x [1 2 7] [
+        2 = every x [1 2 7] [
             sum: me + x
-            if even? x [continue]  ; acts as `continue null`, get "falsified"
-            true
+            if x = 7 [continue]  ; acts as `continue ~void~`, keep old result
+            x
         ]
         10 = sum
     ]

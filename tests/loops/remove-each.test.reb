@@ -13,7 +13,7 @@
 (
     block: copy [1 2 3 4]
     remove-each i block [
-        all [i > 1, i < 4]
+        did all [i > 1, i < 4]  ; without DID, ALL's NULL => ~null~ isotope
     ]
     block = [1 4]
 )

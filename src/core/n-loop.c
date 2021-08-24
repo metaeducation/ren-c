@@ -60,13 +60,13 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_continue) {
         //
         // !!! Currently continue with no argument acts the same as asking
-        // for CONTINUE NULL (the form with an argument).  This makes sense
+        // for CONTINUE ~void~ (the form with an argument).  This makes sense
         // in cases like MAP-EACH (one wants a continue to not add any value,
         // as opposed to a void) but may not make sense for all cases.
         //
         *broke = false;
         CATCH_THROWN(val, val);
-        Isotopify_If_Nulled(val);  // reserve NULL-1 for BREAK
+        Isotopify_If_Nulled(val);  // reserve true NULL for BREAK
         return true;
     }
 
@@ -101,7 +101,7 @@ REBNATIVE(break)
 //
 //      return: []  ; !!! notation for divergent function?
 //      value "If provided, act as if loop body finished with this value"
-//          [<end> <opt> any-value!]
+//          [<opt> <meta> any-value!]
 //  ]
 //
 REBNATIVE(continue)
@@ -111,6 +111,8 @@ REBNATIVE(continue)
 // throw, like `throw/name value :continue`.
 {
     INCLUDE_PARAMS_OF_CONTINUE;
+
+    Meta_Unquotify(ARG(value));  // ~void~ isotope if end, e.g. `do [continue]`
 
     return Init_Thrown_With_Label(
         D_OUT,
@@ -397,6 +399,13 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
     bool broke = false;
     bool no_falseys = true;  // not "all_truthy" because body *may* not run
 
+    // CONTINUE or CONTINUE ~void~ will behave as leaving the last result in
+    // the output.  So branch evaluations don't overwrite the output cell
+    // directly.  This means it has to be initialized to avoid a situation
+    // where no branches assign bits.
+    //
+    Init_Void(les->out);
+
     do {
         // Sub-loop: set variables.  This is a loop because blocks with
         // multiple variables are allowed, e.g.
@@ -571,9 +580,17 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             }
         }
 
-        if (Do_Branch_Throws(les->out, les->body)) {
-            if (not Catching_Break_Or_Continue(les->out, &broke))
+        // !!! Throwing e.g. CONTINUE can overwrite the output, but we don't
+        // want that.  This is a good argument for making throws "out of band"
+        // so that processing mechanics that want to take advantage of "stale"
+        // cells don't need to make copies.  Review.
+
+        DECLARE_LOCAL (temp);
+        if (Do_Branch_Throws(temp, les->body)) {
+            if (not Catching_Break_Or_Continue(temp, &broke)) {
+                Move_Cell(les->out, temp);
                 return R_THROWN;  // non-loop-related throw
+            }
 
             if (broke) {
                 Init_Nulled(les->out);
@@ -583,10 +600,14 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
+            Move_Cell(les->out, temp);
             break;
 
           case LOOP_EVERY:
-            no_falseys = no_falseys and IS_TRUTHY(les->out);
+            if (not Is_Void(temp)) {  // ignore...
+                Move_Cell(les->out, temp);
+                no_falseys = no_falseys and IS_TRUTHY(les->out);
+            }
             break;
 
           case LOOP_MAP_EACH:
@@ -594,38 +615,43 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             // Here is where we would run a predicate to process the block
             // result before appending.
             //
-            /* Predicate(les->out) */
+            /* Predicate(temp) */
 
             // We use APPEND semantics on les->out, with the twist that NULL
             // is allowed to vaporize.  So blocks splice, quotes as-is, etc.
             //
             if (
-                IS_NULLED(les->out) or Is_Isotope(les->out, SYM_NULL)
-                or IS_BLANK(les->out)
+                IS_NULLED(temp) or Is_Isotope(temp, SYM_NULL)
+                or IS_BLANK(temp)
+                or Is_Void(temp)
             ){
-                Init_Isotope(les->out, SYM_NULL);  // NULL signals break below
+                // Ignore...
             }
-            else if (IS_QUOTED(les->out)) {
-                Unquotify(les->out, 1);
-                if (IS_NULLED(les->out))
+            else if (IS_QUOTED(temp)) {
+                Unquotify(temp, 1);
+                if (IS_NULLED(temp))
                     Init_Bad_Word(DS_PUSH(), SYM_NULL);  // APPEND semantics
                 else
-                    Copy_Cell(DS_PUSH(), les->out);
+                    Copy_Cell(DS_PUSH(), temp);
             }
-            else if (ANY_THE_KIND(VAL_TYPE(les->out))) {
-                Plainify(Copy_Cell(DS_PUSH(), les->out));
+            else if (ANY_THE_KIND(VAL_TYPE(temp))) {
+                Plainify(Copy_Cell(DS_PUSH(), temp));
             }
-            else if (IS_BLOCK(les->out)) {
+            else if (IS_BLOCK(temp)) {
                 const RELVAL *tail;
-                const RELVAL *v = VAL_ARRAY_AT(&tail, les->out);
+                const RELVAL *v = VAL_ARRAY_AT(&tail, temp);
                 for (; v != tail; ++v)
-                    Derelativize(DS_PUSH(), v, VAL_SPECIFIER(les->out));
+                    Derelativize(DS_PUSH(), v, VAL_SPECIFIER(temp));
             }
-            else if (ANY_INERT(les->out)) {
-                Copy_Cell(DS_PUSH(), les->out);  // non nulls added to result
+            else if (ANY_INERT(temp)) {
+                Copy_Cell(DS_PUSH(), temp);  // non nulls added to result
             }
             else
                 fail ("Cannot MAP evaluative values w/o QUOTE");
+
+            // MAP-EACH only changes les->out if BREAK
+            //
+            assert(Is_Void(les->out));
             break;
         }
     } while (more_data and not broke);
@@ -633,7 +659,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
   finished:;
 
     if (les->mode == LOOP_EVERY and not no_falseys)
-        Init_Logic(les->out, false);
+        Init_Nulled(les->out);
 
     // We use nullptr to signal the result is in out.  If we returned les->out
     // it would be subject to the rebRescue() rules, and the loop could not
@@ -1356,7 +1382,12 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
         }
 
         if (ANY_ARRAY(res->data)) {
-            if (IS_NULLED(res->out) or IS_FALSEY(res->out)) {
+            if (
+                IS_NULLED(res->out)
+                or Is_Nulled_Isotope(res->out)
+                or IS_FALSEY(res->out)
+                or Is_Void(res->out)
+            ){
                 res->start = index;
                 continue;  // keep requested, don't mark for culling
             }
@@ -1371,7 +1402,11 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             } while (res->start != index);
         }
         else {
-            if (not IS_NULLED(res->out) and IS_TRUTHY(res->out)) {
+            if (
+                not Is_Nulled_Isotope(res->out)
+                and not Is_Void(res->out)
+                and IS_TRUTHY(res->out)
+            ){
                 res->start = index;
                 continue;  // remove requested, don't save to buffer
             }
@@ -1786,7 +1821,15 @@ REBNATIVE(until)
         }
 
         if (IS_NULLED(predicate)) {
-            if (IS_TRUTHY(D_OUT))  // fail on voids (neither true nor false)
+            if (Is_Void(D_OUT))
+                continue;  // skip voids from consideration, e.g. continue
+
+            // This is a case where we do not want to decay isotopes, because
+            // someone might write `until [match blank! get-queue-item]` and
+            // matching a blank is intended to stop the loop...they should be
+            // aware of the distortion, and use MATCH? instead.
+            //
+            if (IS_TRUTHY(D_OUT))
                 return D_OUT;  // body evaluated truthily, return value
         }
         else {
