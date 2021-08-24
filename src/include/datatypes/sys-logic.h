@@ -63,25 +63,16 @@ inline static bool VAL_LOGIC(REBCEL(const*) v) {
 inline static bool IS_TRUTHY(const RELVAL *v) {
     if (IS_BAD_WORD(v)) {
         //
-        // Technically speaking, users need not think of whether the ~null~
-        // isotope is "truthy or falsey"...because most functions they would
-        // call (like DID) won't see the isotope since they take normal
-        // parameters...
+        // Note that ~null~, ~blank~, and ~false~ isotopes are by default
+        // prickly, and neither true nor false.  When they are assigned to
+        // variables or returned from functions, they decay to plain NULL,
+        // plain BLANK!, and a plain LOGIC! false.
         //
-        // But internal to the implementation, there is code like:
+        // Outside of the default decay, implementations may wish to allow
+        // isotopes to have behavior if it is safe.  This is similar to when
+        // things decide a void isotope is all right to convert back from a
+        // "reified void intent" to an actual vanishing value.
         //
-        //     >> every x [1 2 3] [if x = 2 [null]]
-        //     == [1 3]
-        //
-        // The body result for x = 2 is a ~null~ isotope.  To say whether that
-        // isotope is "fundamentally truthy" or that functions like this
-        // "make a special exception for null isotopes" is splitting hairs.
-        //
-        // It seems easier to just tolerate them here vs. asserting it never
-        // sees isotopes, and having a separate version of IS_TRUTHY().
-        //
-        if (GET_CELL_FLAG(v, ISOTOPE) and VAL_BAD_WORD_ID(v) == SYM_NULL)
-            return false;
         fail (Error_Bad_Conditional_Raw());
     }
     if (KIND3Q_BYTE(v) > REB_LOGIC)

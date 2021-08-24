@@ -17,11 +17,11 @@
 [
     (test: func [return: x y: z:] [
         if not null? y [
-            assert [bad-word? friendly get/any y]
+            assert ['~unset~ = ^(get/any y)]
             set y <y-result>
         ]
         if not null? z [
-            assert [bad-word? friendly get/any z]
+            assert ['~unset~ = ^(get/any z)]
             set z <z-result>
         ]
 

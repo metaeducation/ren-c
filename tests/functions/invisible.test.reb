@@ -387,7 +387,7 @@
     (<test> = (<test> vanish-if-odd 1))
 
     (vanish-if-even: func [return: [<invisible> integer!] y] [
-       return devoid unmeta friendly ^(vanish-if-odd y + 1)
+       return devoid unmeta reify ^(vanish-if-odd y + 1)
     ] true)
 
     (<test> = (<test> vanish-if-even 2))

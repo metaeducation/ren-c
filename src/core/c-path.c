@@ -230,7 +230,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             Move_Cell(pvs->out, f_spare);
             return true; // thrown
         }
-        Decay_If_Nulled(f_spare);
+        Decay_If_Isotope(f_spare);
         PVS_PICKER(pvs) = f_spare;
     }
     else { // object/word and object/value case:
@@ -598,7 +598,7 @@ bool Eval_Path_Throws_Core(
         if (Do_Any_Array_At_Throws(pvs->out, f_value, derived))
             goto return_thrown;
 
-        Decay_If_Nulled(pvs->out);
+        Decay_If_Isotope(pvs->out);
     }
     else {
         pvs->u.ref.cell = nullptr; // nowhere to R_IMMEDIATE write back to

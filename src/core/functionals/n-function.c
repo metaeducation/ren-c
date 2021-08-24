@@ -212,7 +212,7 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
         return R_THROWN;
     }
     if (not returned)  // assume if it was returned, it was decayed if needed
-        Decay_If_Nulled(spare);
+        Decay_If_Isotope(spare);
 
     if (IS_ENDISH_NULLED(spare))
         return f->out;  // was invisible
@@ -260,7 +260,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
         return R_THROWN;
     }
     if (not returned)  // assume if it was returned, it was decayed if needed
-        Decay_If_Nulled(spare);
+        Decay_If_Isotope(spare);
 
     if (IS_ENDISH_NULLED(spare)) {
         FAIL_IF_NO_INVISIBLE_RETURN(f);
@@ -752,7 +752,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
         // If we aren't paying attention to isotope status, then remove it
         // from the value...so ~null~ decays to null.
         //
-        Decay_If_Nulled(v);
+        Decay_If_Isotope(v);
     }
 
     // Check type NOW instead of waiting and letting Eval_Core()

@@ -197,24 +197,29 @@ inline static REBVAL *Init_Nulled_Isotope(RELVAL *out) {
 inline static bool Is_Nulled_Isotope(const RELVAL *v)
   { return Is_Isotope(v, SYM_NULL); }
 
-inline static RELVAL *Decay_If_Nulled(RELVAL *v) {
+inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
     if (Is_Nulled_Isotope(v))
         Init_Nulled(v);
+    else if (Is_Isotope(v, SYM_BLANK))
+        Init_Blank(v);
+    else if (Is_Isotope(v, SYM_FALSE))
+        Init_False(v);
+    return v;
+}
+
+inline static RELVAL *Isotopify_If_Falsey(RELVAL *v) {
+    if (IS_NULLED(v))
+        Init_Isotope(v, SYM_NULL);
+    else if (IS_BLANK(v))
+        Init_Isotope(v, SYM_BLANK);
+    else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
+        Init_Isotope(v, SYM_FALSE);
     return v;
 }
 
 inline static RELVAL *Isotopify_If_Nulled(RELVAL *v) {
     if (IS_NULLED(v))
         Init_Nulled_Isotope(v);
-    return v;
-}
-
-// When a parameter is "normal" then it is willing to turn the ~null~ isotope
-// into a regular null.  This is leveraged by the API in order to make some
-// common forms of null handling work more smoothly.
-
-inline static REBVAL *Normalize(REBVAL *v) {
-    Decay_If_Nulled(v);
     return v;
 }
 

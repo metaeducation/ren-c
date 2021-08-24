@@ -51,7 +51,7 @@ exists?: func [
         return info?/only target
     ]
 
-    return select try attempt [query target] 'type
+    return select try decay attempt [query target] 'type
 ]
 
 size-of: size?: function [

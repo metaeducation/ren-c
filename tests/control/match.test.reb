@@ -17,7 +17,7 @@
 (null = match :even? 3)
 
 
-('~falsey~ = ^ match blank! _)
+('~blank~ = ^ match blank! _)
 (null = match blank! 10)
 (null = match blank! false)
 
@@ -65,10 +65,10 @@
 ; But can still be tested for then? since they are BAD-WORD!, and can be used
 ; with THEN and ELSE.
 [
-    ('~falsey~ = ^ match null null)
-    ('~falsey~ = ^ match blank! blank)
+    ('~null~ = ^ match null null)
+    ('~blank~ = ^ match blank! blank)
     (true = match logic! true)
-    ('~falsey~ = ^ match logic! false)
+    ('~false~ = ^ match logic! false)
 ]
 
 [
@@ -86,20 +86,16 @@
     (10 = ensure integer! 10)
 ]
 
-; NON is an inverted form of MATCH, that fails when the argument *matches*
-; It is a specialization of MATCH/NOT
+; NON is an inverted form of ENSURE, that FAILs when the argument *matches*
 [
-    (null = non action! :append)
+    (error? trap [non action! :append])
     (10 = non action! 10)
 
-    (null = non integer! 10)
+    (error? trap [non integer! 10])
     (:append = non integer! :append)
 
     (10 = non null 10)
 
-    ; !!! Review the special handling of this case...no good result can be
-    ; returned to signal this failure.  Currently it just errors.
-    ;
     (error? trap [non null null])
     (error? trap [non logic! false])
 ]

@@ -563,7 +563,7 @@ ext-console-impl: func [
         result/id = 'no-catch
         :result/arg2 = :quit  ; throw's /NAME
     ] then [
-        return switch type of friendly get* 'result/arg1 [
+        return switch type of :result/arg1 [
             bad-word! [0]  ; plain QUIT, no /WITH, call that success
 
             logic! [either :result/arg1 [0] [1]]  ; logic true is success

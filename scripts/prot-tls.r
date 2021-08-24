@@ -223,7 +223,12 @@ emit: func [
             ; (`emit ctx [comment "X" ...]`)
             ;
             let result
-            if until .not.quoted? [[code result]: evaluate code] [
+            cycle [
+                if not quoted? [code result]: evaluate code [
+                    stop
+                ]
+            ]
+            if code [
                 append ctx.msg ensure binary! result
             ]
         ]

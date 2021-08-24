@@ -80,7 +80,7 @@ REBNATIVE(test_librebol)
     rebRelease(mtest2);
 
     SET_CELL_FLAG(Init_Integer(DS_PUSH(), 5), NEWLINE_BEFORE);
-    Init_Logic(DS_PUSH(), rebDid("null?", nullptr));
+    Init_Logic(DS_PUSH(), rebDid("null? @", nullptr));
 
     rebRelease(macro);
 

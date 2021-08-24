@@ -1878,7 +1878,7 @@ REBNATIVE(loop)
         // action.  But when you use branching you might get ~null~.  Decay
         // it if so, to keep from having trouble with the IF_FALSEY().
         //
-        Decay_If_Nulled(D_SPARE);
+        Decay_If_Isotope(D_SPARE);
 
         if (IS_FALSEY(D_SPARE))  // will error if void, neither true nor false
             return D_OUT;  // condition was false, so return last body result

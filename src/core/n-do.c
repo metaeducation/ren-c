@@ -240,7 +240,7 @@ REBNATIVE(shove)
 
     if (REF(set)) {
         if (IS_SET_WORD(left)) {
-            Decay_If_Nulled(D_OUT);
+            Decay_If_Isotope(D_OUT);
             Copy_Cell(Sink_Word_May_Fail(left, SPECIFIED), D_OUT);
         }
         else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {
@@ -454,7 +454,7 @@ REBNATIVE(do)
             true,  // fully = true, error if not all arguments consumed
             Sys(SYM_DO_P),
             source,
-            REF(args),
+            rebQ(REF(args)),
             REF(only) ? Lib(TRUE) : Lib(FALSE)
         )){
             return R_THROWN;

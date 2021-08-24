@@ -191,12 +191,6 @@ tweak :|| 'barrier on
 ]
 
 
-; MATCH isn't always used with ELSE and THEN.  So its result can trigger false
-; negatives on matches when CASE clauses and `IF MATCH` when the matched value
-; returned is falsey.  By default, make falsey matches give ~falsey~ isotope.
-;
-match: :match*/safe
-
 ; EACH will ultimately be a generator, but for now it acts as QUOTE so it can
 ; be used with `map x each [a b c] [...]` and give you x as a, then b, then c.
 ;

@@ -16,9 +16,9 @@
 (null? repeat 1 [attempt [break 2] 2])
 ; recursion
 (1 = attempt [attempt [1]])
-(null? attempt [attempt [1 / 0]])
+('~null~ = ^ attempt [attempt [1 / 0]])
 ; infinite recursion
 (
-    blk: [attempt blk]
-    null? attempt blk
+    blk: [attempt blk]  ; first attempt returns null
+    '~null~ = ^ attempt blk
 )

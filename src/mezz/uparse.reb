@@ -121,7 +121,7 @@ combinator: func [
 
             let result': ^(devoid do f)
             if state.verbose [
-                print ["RESULT:" (friendly get/any 'result') else ["; null"]]
+                print ["RESULT':" (mold result' else ["NULL"])]
             ]
             return/isotope unmeta (get/any 'result' also [
                 all [  ; if success, mark state.furthest

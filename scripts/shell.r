@@ -90,12 +90,12 @@ shell: func [
     ; the environment might change by the time it is reached.
     ;
     let shellify-tag: func [value [any-value!]] [
-        non* tag! value else [
-            if system/version/4 = 3 [   ; Windows
-                unspaced ["%" as text! value "%"]
-            ] else [
-                unspaced ["${" as text! value "}"]
-            ]
+        if not tag? value [return value]
+
+        if system/version/4 = 3 [   ; Windows
+            unspaced ["%" as text! value "%"]
+        ] else [
+            unspaced ["${" as text! value "}"]
         ]
     ]
 

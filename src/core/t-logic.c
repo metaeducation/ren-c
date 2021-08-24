@@ -137,7 +137,13 @@ inline static bool Do_Logic_Right_Side_Throws(
     const REBVAL *left
 ){
     if (IS_GROUP(right) or IS_GET_GROUP(right))  { // don't double execute
-        mutable_KIND3Q_BYTE(right) = mutable_HEART_BYTE(right) = REB_BLOCK;
+        //
+        // !!! We don't want to get ~null~ isotopes here.  And in fact, it
+        // may not make sense to be doing this as a branch that can get the
+        // left hand side value.  :-/  That was a feature that was in use
+        // at one time but may no longer make sense.
+        //
+        mutable_KIND3Q_BYTE(right) = mutable_HEART_BYTE(right) = REB_THE_BLOCK;
 
         if (Do_Branch_With_Throws(out, right, left))
             return true;

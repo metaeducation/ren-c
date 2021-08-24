@@ -6,9 +6,9 @@
 (
     v: make bad-word! 'labeled
     did all [
-        bad-word? friendly get/any 'v
-        '~labeled~ = friendly get/any 'v
-        'labeled = label of friendly get/any 'v
+        bad-word? v
+        '~labeled~ = v
+        'labeled = label of v
     ]
 )
 
@@ -61,7 +61,7 @@
 
 ; ~unset~ is the type of locals before they are assigned
 (
-    f: func [<local> loc] [friendly get/any 'loc]
+    f: func [<local> loc] [reify get/any 'loc]
     f = '~unset~
 )(
     f: func [<local> loc] [^loc]
@@ -82,10 +82,10 @@
     e.arg1 = 'asiieiajiaosdfbjakbsjxbjkchasdf
 ])
 
-; MATCH will match a bad-word! as-is, but falsey inputs produce ~falsey~
+; MATCH will match a bad-word! as-is, but falsey inputs produce isotopes
 [
     (''~preserved~ = ^ match bad-word! '~preserved~)
-    ('~falsey~ = ^ match null null)
+    ('~null~ = ^ match null null)
 ]
 
 ; ~quit~ is the label of the BAD-WORD! you get by default from QUIT

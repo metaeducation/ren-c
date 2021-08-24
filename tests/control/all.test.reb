@@ -355,8 +355,8 @@
 (15 = all .odd? [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8])
 (15 = all .not.even? [1 + 2, 3 + 4 5 + 6, 7 + 8,])
 
-('~falsey~ = ^ all .not [false null _])
-('~falsey~ = ^ all .not [false _ null])
+('~blank~ = ^ all .not [false null _])
+('~null~ = ^ all .not [false _ null])
 ("this is why" = all .not [false _ null] then ["this is why"])
 
 

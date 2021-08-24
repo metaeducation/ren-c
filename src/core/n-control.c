@@ -502,11 +502,11 @@ REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
 
 
 //
-//  match*: native [
+//  match: native [
 //
 //  {Check value using tests (match types, TRUE or FALSE, or filter action)}
 //
-//      return: "Input if it matched, otherwise branch result"
+//      return: "Input if it matched, NULL if it did not (isotope if falsey)"
 //          [<opt> any-value!]
 //      :test "Typeset membership, LOGIC! to test for truth, filter function"
 //          [
@@ -520,57 +520,40 @@ REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
 //              integer!  ; matches length of series
 //          ]
 //      value [<opt> any-value!]
-//      /not "Invert the result of the the test (used by NON)"
-//      /safe "Return ~falsey~ isotopes to avoid IF MATCH LOGIC! FALSE bugs"
 //  ]
 //
-REBNATIVE(match_p)
+REBNATIVE(match)
 {
-    INCLUDE_PARAMS_OF_MATCH_P;
+    INCLUDE_PARAMS_OF_MATCH;
 
     REBVAL *v = ARG(value);
 
     if (Match_Core_Throws(D_OUT, ARG(test), SPECIFIED, v, SPECIFIED))
         return R_THROWN;
 
-    if (did REF(_not_) == VAL_LOGIC(D_OUT)) {
-        //
-        // Note: There's no good value we can return to signal failure
-        // in a safe mode here:
-        //
-        //    if not non null (null) [print "user intended this to run"]
-        //    non null (null) else [print "user intended this to run"]
-        //
-        // If we return nullptr, we break the first case.  But if we return
-        // anything else--like a void to cause a tripwire on the first case--
-        // we break the second case.
-        //
-        // So we have to fail here if trying to be safe.  TBD: Improve error.
-        //
-        if (REF(_not_))
-            if (REF(safe) and not IS_BAD_WORD(v) and IS_FALSEY(v))
-                fail ("Maybe-confusing NULL return in failed MATCH*/SAFE/NOT");
+    if (not VAL_LOGIC(D_OUT))
+        return nullptr;  // unique signal for no match
 
-        return nullptr;  // light null isotope if no match
-    }
-
-    if (REF(safe) and not IS_BAD_WORD(v) and IS_FALSEY(v)) {
-        //
-        // In "safe" operation, falsey matched values return BAD-WORD! to show
-        // they did match, but to avoid misleading falseness of the result.
-        //
-        return Init_Isotope(D_OUT, SYM_FALSEY);
-    }
-
-    Move_Cell(D_OUT, v);  // Otherwise, input is the result
-
-    // We turn nulls that matched the rule into heavy nulls.
+    // Falsey matched values return isotopes to show they did match, but to
+    // avoid misleading falseness of the result:
     //
-    //    >> match [<opt> integer!] null then [print "We want this to run!"]
-    //    We want this to run!
+    //     >> value: false
+    //     >> if match [integer! logic!] value [print "Won't run :-("]
+    //     ; null
     //
-    Isotopify_If_Nulled(D_OUT);
-    return D_OUT;
+    // So successful matching of falsey values will give back ~false~, ~blank~,
+    // or ~null~.  This can be consciously turned back into their original
+    // values with DECAY.
+    //
+    //     >> match blank! _
+    //     == ~blank~
+    //
+    //     >> decay match blank! _
+    //     == _
+    //
+    Isotopify_If_Falsey(v);
+
+    return Move_Cell(D_OUT, v);  // Otherwise, input is the result;
 }
 
 
@@ -651,7 +634,7 @@ REBNATIVE(all)
                 temp,
                 true,
                 rebINLINE(predicate),
-                NULLIFY_NULLED(D_SPARE)
+                rebQ(NULLIFY_NULLED(D_SPARE))
             )){
                 return R_THROWN;
             }
@@ -670,15 +653,14 @@ REBNATIVE(all)
 
     Drop_Frame(f);
 
-    if (not IS_BAD_WORD(D_OUT) and IS_FALSEY(D_OUT)) {
-        //
-        // The only way a falsey evaluation should make it to the end is if a
-        // predicate passed it.  Don't want that to trip up `if all` so make
-        // it an isotope...but this way `all .not [null] then [<runs>]`
-        //
+    // The only way a falsey evaluation should make it to the end is if a
+    // predicate passed it.  Don't want that to trip up `if all` so make
+    // it an isotope...but this way `all .not [null] then [<runs>]`
+    //
+    if (not IS_BAD_WORD(D_OUT) and IS_FALSEY(D_OUT))
         assert(not IS_NULLED(predicate));
-        return Init_Isotope(D_OUT, SYM_FALSEY);
-    }
+
+    Isotopify_If_Falsey(D_OUT);
 
     return D_OUT;
 }
@@ -733,7 +715,7 @@ REBNATIVE(any)
                 D_SPARE,
                 true,
                 rebINLINE(predicate),
-                NULLIFY_NULLED(D_OUT)
+                rebQ(NULLIFY_NULLED(D_OUT))
             )){
                 return R_THROWN;
             }
@@ -743,8 +725,8 @@ REBNATIVE(any)
                 // Don't let ANY return something falsey, but using an isotope
                 // makes `any .not [null] then [<run>]` work
                 //
-                if (not IS_BAD_WORD(D_OUT) and IS_FALSEY(D_OUT))
-                    Init_Isotope(D_OUT, SYM_FALSEY);
+                Isotopify_If_Falsey(D_OUT);
+
                 Abort_Frame(f);
                 return D_OUT;  // return input to the test, not result
             }

@@ -321,8 +321,8 @@ REBNATIVE(console)
             "ext-console-impl",  // action! that takes 4 args, run it
                 rebQ(code),  // group! or block! executed prior (or blank!)
                 rebQ(result),  // prior result quoted, or error (or blank!)
-                "did", REF(resumable),
-                REF(skin),
+                "did", rebQ(REF(resumable)),
+                rebQ(REF(skin)),
         "]");
 
         rebRelease(code);

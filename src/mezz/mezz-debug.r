@@ -25,9 +25,7 @@ verify: function [
             continue
         ]
 
-        result: friendly get/any 'result  ; workaround
-
-        any [bad-word? :result, not :result] then [
+        any [bad-word? ^result, not :result] then [
             ;
             ; including commas in the failure report looks messy, skip them
             ;
@@ -39,7 +37,7 @@ verify: function [
                 arg1: compose [
                     ((copy/part conditions pos)) ** (case [
                         null? result ['null]
-                        bad-word? result [quote result]
+                        bad-word? ^result [result]  ; isotope
                         blank? result ['blank]
                         result = false ['false]
                     ])

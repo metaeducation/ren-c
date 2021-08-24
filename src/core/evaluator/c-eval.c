@@ -727,8 +727,10 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
       set_word_with_out:
 
-        Decay_If_Nulled(f->out);
-        Copy_Cell(Sink_Word_May_Fail(v, v_specifier), f->out);
+        // We decay the isotope in the assigned slot, but we don't decay
+        // the result.
+        //
+        Decay_If_Isotope(Copy_Cell(Sink_Word_May_Fail(v, v_specifier), f->out));
 
         // Running functions flushes the f_next_gotten cache.  But a plain
         // assignment can cause trouble too, if it doesn't trigger a function
@@ -782,7 +784,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (IS_ACTION(f->out))  // cache the word's label in the cell
             INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
 
-        Decay_If_Nulled(f->out);  // !!! Should Lookup_Word() handle this?
+        Decay_If_Isotope(f->out);  // !!! Should Lookup_Word() handle this?
 
         if (STATE_BYTE(f) == ST_EVALUATOR_META_WORD)
             Meta_Quotify(f->out);
@@ -1054,7 +1056,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
       set_path_with_out:
 
-        Decay_If_Nulled(f->out);
+        Decay_If_Isotope(f->out);
 
         if (Eval_Path_Throws_Core(
             f_spare,  // output if thrown, used as scratch space otherwise

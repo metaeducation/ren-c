@@ -9,9 +9,9 @@
     ('~void~ = ^ ^(comment "hi"))
     ('~void~ = ^ ^(void))
 
-    ('~void~ = friendly ^())
-    ('~void~ = friendly ^(comment "hi"))
-    ('~void~ = friendly ^(void))
+    ('~void~ = reify ^())
+    ('~void~ = reify ^(comment "hi"))
+    ('~void~ = reify ^(void))
 ]
 
 ((the '10) = ^(10 comment "hi"))

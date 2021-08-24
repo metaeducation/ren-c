@@ -70,4 +70,4 @@
     <isotope> = (~null~ then [<isotope>])
 )
 
-(~null~ then x -> [null = ^x])  ; isotope decays as non-meta argument to lambda
+(~null~ then ^x -> ['~null~ = x])

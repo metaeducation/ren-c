@@ -36,18 +36,17 @@
     'arg-required = e/id
 )
 
-; Both the ~null~ isotope and "true" null answer to being NULL? (the isotope
-; decays in normal parameters, so the NULL? function doesn't know the
-; difference).  A variable assigned with a ~null~ isotope will decay to a
-; regular ~null~ when accessed via a WORD!/GET-WORD!/etc.
-;
 ; The specific role of ~null~ isotopes is to be reactive with THEN and not
 ; ELSE, so that failed branches may be purposefully NULL.
+;
+; HEAVY is probably not the best name for an operator that creates null
+; isotopes out of NULL and passes everything else through.  But it's what it
+; was called.
 [
     (null = ^ null)
-    (null? heavy null)
     ('~null~ = ^ heavy null)
 
+    (x: heavy 10, 10 = x)
     (x: heavy null, null = ^ x)
     (x: heavy null, null = ^ :x)
 

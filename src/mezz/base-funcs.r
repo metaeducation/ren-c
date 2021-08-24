@@ -148,7 +148,7 @@ func: func* [
                 case [
                     match [get-path! path!] var [
                         if (length of var != 2) or (_ <> var.1) [
-                            fail ["Bad path in spec:" ^var]
+                            fail ["Bad path in spec:" ^spec]
                         ]
                         append exclusions ^var.2  ; exclude args/refines
                     ]
@@ -630,32 +630,45 @@ gunzip: redescribe [
 ensure: redescribe [
     {Pass through value if it matches test, otherwise trigger a FAIL}
 ](
-    enclose :match* func [f] [  ; don't plain MATCH safety (voidifies results)
+    ; MATCH returns isotopes for BLANK!, #[false], and if the input is a
+    ; NULL but matches the test via <opt>.  We take advantage of the unique
+    ; meaning of NULL coming back from MATCH to know if the test failed...
+    ; and then use DECAY to turn the isotopes back to their meanings.
+    ;
+    enclose :match func [f] [
         let value: :f.value  ; DO makes frame arguments unavailable
-        do f else [
+        decay (do f else [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
             ;
             ; https://github.com/metaeducation/ren-c/issues/587
             ;
             fail [
                 "ENSURE failed with argument of type"
-                    type of get* 'value else ["NULL"]
+                    type of :value else ["NULL"]
             ]
-        ]
+        ])
     ]
 )
 
-non*: redescribe [
+non: redescribe [
     {Pass through value if it *doesn't* match test (e.g. MATCH/NOT)}
 ](
-    :match*/not
+    enclose :match func [f] [
+        let value: :f.value  ; DO makes frame arguments unavailable
+        do f then [
+            ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
+            ;
+            ; https://github.com/metaeducation/ren-c/issues/587
+            ;
+            fail [
+                "NON failed with argument of type"
+                    type of :value else ["NULL"]
+            ]
+        ]
+        :value
+    ]
 )
 
-non: redescribe [
-    {Safely pass through value if it *doesn't* match test (e.g. MATCH/NOT)}
-](
-    :match/not
-)
 
 ; !!! For a time this was THE, until it took its unevaluating role.  It is
 ; now called ENSURE-VALUE until a better name is thought of.

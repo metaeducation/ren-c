@@ -573,7 +573,7 @@ void Get_Var_May_Fail(
     // !!! Variables should not store null isotopes, but they currently can...
     // look into a systemic answer of how and where to stop this.
     //
-    Decay_If_Nulled(out);
+    Decay_If_Isotope(out);
 }
 
 
@@ -1682,7 +1682,7 @@ REBNATIVE(light) {
 
     Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
-    Decay_If_Nulled(D_OUT);
+    Decay_If_Isotope(D_OUT);
 
     return D_OUT;
 }
@@ -1704,44 +1704,20 @@ REBNATIVE(none) {
 
 
 //
-//  friendly: native [
+//  decay: native [
 //
-//  "Make BAD-WORD!s friendly, passing through all other values"
-//
-//      return: [<opt> any-value!]
-//      optional [<opt> <meta> any-value!]
-//  ]
-//
-REBNATIVE(friendly)
-{
-    INCLUDE_PARAMS_OF_FRIENDLY;
-
-    Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
-
-    if (IS_BAD_WORD(D_OUT))
-        CLEAR_CELL_FLAG(D_OUT, ISOTOPE);
-
-    return D_OUT;
-}
-
-
-//
-//  unfriendly: native [
-//
-//  "Make BAD-WORD!s unfriendly, passing through all other values"
+//  "Turn ~null~, ~blank~ and ~false~ isotopes into their corresponding values"
 //
 //      return: [<opt> any-value!]
 //      optional [<opt> <meta> any-value!]
 //  ]
 //
-REBNATIVE(unfriendly)
+REBNATIVE(decay)
 {
-    INCLUDE_PARAMS_OF_UNFRIENDLY;
+    INCLUDE_PARAMS_OF_DECAY;
 
     Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
-
-    if (IS_BAD_WORD(D_OUT))
-        SET_CELL_FLAG(D_OUT, ISOTOPE);
+    Decay_If_Isotope(D_OUT);
 
     return D_OUT;
 }

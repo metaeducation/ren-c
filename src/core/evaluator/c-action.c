@@ -333,8 +333,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
                 if (pclass == PARAM_CLASS_META)
                     Meta_Quotify(f->arg);
-                else if (pclass == PARAM_CLASS_NORMAL)
-                    Normalize(f->arg);  // !!! avoid assign ~void~ to f->arg?
                 break;
 
               case PARAM_CLASS_HARD:
@@ -527,8 +525,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             }
             else if (pclass == PARAM_CLASS_META)
                 Meta_Quotify(f->arg);
-            else if (pclass == PARAM_CLASS_NORMAL)
-                Normalize(f->arg);
             break; }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//

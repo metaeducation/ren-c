@@ -898,7 +898,7 @@ static void Run_Va_May_Fail_Core(
     // places in the system (e.g. normal arguments).  Here is another place
     // the tolerance is extended to.
     //
-    Decay_If_Nulled(out);
+    Decay_If_Isotope(out);
 }
 
 #define Run_Va_May_Fail(out,quotes,p,vaptr) \

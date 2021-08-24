@@ -234,7 +234,7 @@ summarize-obj: function [
         for-each [word val] obj [
             if not set? 'val [continue]  ; don't consider unset fields
 
-            type: type of friendly get/any 'val
+            type: type of reify get/any 'val
 
             str: if match [object!] type [
                 spaced [word, words of :val]
@@ -259,7 +259,7 @@ summarize-obj: function [
                 fail @pattern
             ]
 
-            if desc: description-of try friendly get/any 'val [
+            if desc: description-of reify get/any 'val [
                 if 48 < length of desc [
                     desc: append copy/part desc 45 "..."
                 ]

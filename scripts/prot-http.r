@@ -232,9 +232,10 @@ do-request: function [
     port/state/mode: 'doing-request
     info/headers: info/response-line: info/response-parsed: port/data:
     info/size: info/date: info/name: blank
-    write port/state/connection
     req: (make-http-request spec/method any [spec/path %/]
         spec/headers spec/content)
+
+    write port/state/connection req
 
     net-log/C as text! req  ; Note: may contain CR (can't use TO TEXT!)
 ]
