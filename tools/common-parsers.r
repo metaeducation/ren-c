@@ -220,7 +220,7 @@ export proto-parser: context [
                 parse? lines [copy data to {=///} to end]
                 data: attempt [load-until-blank trim/auto data]
                 data: attempt [
-                    if set-word? first data/1 [data/1]
+                    if set-word? first data/1 [data/1] else [false]
                 ]
                 position ; Success.
             ]
@@ -250,6 +250,8 @@ export proto-parser: context [
                     ][
                         notes: data/2
                         data/1
+                    ] else [
+                        false
                     ]
                 ]
                 position ; Success.
