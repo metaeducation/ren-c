@@ -479,3 +479,14 @@ https://github.com/metaeducation/ren-c/issues/935
         res = [3 4 [- 9 +] 8]
     )
 ]
+
+
+https://github.com/metaeducation/ren-c/issues/939
+(
+    thing: ~
+    did all [
+        null = uparse "a" [thing: collect [foo: <here>, "a", keep seek (foo)]]
+        foo = "a"
+        thing = ["a"]
+    ]
+)
