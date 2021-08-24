@@ -449,7 +449,7 @@ import*: func [
     ; some kind of local caching facility.
     ;
     if tag? source [
-        set 'force-remote-import true
+        importing-remotely: true
         source: switch source
             (load system.locale.library.utilities)
         else [
