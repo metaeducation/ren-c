@@ -246,6 +246,7 @@
 %parse/parse-quoted.test.reb
 %parse/parse-remove.test.reb
 %parse/parse-repeat.test.reb
+%parse/parse-return.test.reb
 %parse/parse-seek.test.reb
 %parse/parse-set-word.test.reb
 %parse/parse-some.test.reb

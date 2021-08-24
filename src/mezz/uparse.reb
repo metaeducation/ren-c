@@ -404,7 +404,7 @@ default-combinators: make map! reduce [
 
     'break combinator [
         {Break an iterated construct like WHILE or SOME, failing the match}
-        return: "Never returns"
+        return: "Divergent"
             []
         <local> f
     ][
@@ -418,7 +418,7 @@ default-combinators: make map! reduce [
 
     'stop combinator [
         {Break an iterated construct like WHILE or SOME, succeeding the match}
-        return: "Never returns"
+        return: "Divergent"
             []
         parser [<end> action!]
         <local> f result'
@@ -433,6 +433,33 @@ default-combinators: make map! reduce [
         ]
         set f.remainder input
         unwind f unmeta result'
+    ]
+
+   === RETURN KEYWORD ===
+
+    ; RETURN was removed for a time in Ren-C due to concerns about how it
+    ; "contaminated" the return value, and that its use to avoid having to
+    ; name and set a variable could lead to abruptly ending a parse before
+    ; all the matching was complete.  Now UPARSE can return ANY-VALUE! and
+    ; the only reason you'd ever use RETURN would be specifically for the
+    ; abrupt exit...so it's fit for purpose.
+
+    'return combinator [
+        {Return a value explicitly from the parse}
+        return: "Divergent"
+            [<opt>]
+        parser [action!]
+        <local> value'
+    ][
+        ([value' #]: ^ parser input) else [
+            return null
+        ]
+
+        ; !!! STATE is filled in as the frame of the top-level UPARSE call.  If
+        ; we UNWIND then we bypass any of its handling code, so it won't set
+        ; the /PROGRESS etc.  Review.
+        ;
+        unwind state unmeta value'
     ]
 
     === INDEX and MEASUREMENT COMBINATORS ===
