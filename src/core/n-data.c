@@ -1141,7 +1141,7 @@ bool Try_As_String(
 
                 ++num_codepoints;
             }
-            mutable_SER_FLAVOR(bin) = FLAVOR_STRING;
+            mutable_SER_FLAVOR(m_cast(REBBIN*, bin)) = FLAVOR_STRING;
             str = STR(bin);
 
             TERM_STR_LEN_SIZE(
@@ -1495,7 +1495,7 @@ REBNATIVE(as)
                 // Constrain the input in the way it would be if we were doing
                 // the more efficient reuse.
                 //
-                mutable_SER_FLAVOR(bin) = FLAVOR_STRING;
+                mutable_SER_FLAVOR(m_cast(REBBIN*, bin)) = FLAVOR_STRING;
                 Freeze_Series(bin);
             }
 

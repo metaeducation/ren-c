@@ -1811,7 +1811,7 @@ static const REBINS *rebSpliceQuoteAdjuster_internal(
         p = *packed++;
     }
     if (not p or Detect_Rebol_Pointer(p) == DETECTED_AS_CELL) {
-        const REBVAL *first = REIFY_NULL(VAL(p));  // save pointer
+        const REBVAL *first = REIFY_NULL(cast(const REBVAL*, p));  // save
         if (vaptr)
             p = va_arg(*vaptr, const void*);  // advance next pointer (fast!)
         else
