@@ -846,7 +846,7 @@ rejoin: emulate [
                 base: to text! :base
             ]
 
-            return join base block  ; JOIN with what's left of the block
+            return join base reduce block  ; JOIN with what's left of the block
         ]
     ]
 ]
