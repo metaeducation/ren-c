@@ -79,7 +79,7 @@ array: func [
             repeat size [append block ^(array/initial rest :initial)]
         ]
         any-series? :initial [
-            repeat size [append block ^(copy/deep initial/)]
+            repeat size [append block ^(copy/deep initial)]
         ]
         action? :initial [
             repeat size [append block ^(initial/)]  ; Called every time
