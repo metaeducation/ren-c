@@ -155,32 +155,6 @@ static void Prin_OS_String(const REBYTE *utf8, REBSIZ size, REBFLGS opts)
 
 
 //
-//  Print_OS_Line: C
-//
-// Print a new line.
-//
-void Print_OS_Line(void)
-{
-    // !!! Don't put const literal directly into mutable Req_SIO->data
-
-    static REBYTE newline[] = "\n";
-
-    REBREQ *req = OS_Make_Devreq(&Dev_StdIO);
-
-    Req(req)->common.data = newline;
-    Req(req)->length = 1;
-    Req(req)->actual = 0;
-
-    REBVAL *result = OS_DO_DEVICE(req, RDC_WRITE);
-    assert(result != NULL);
-    assert(not IS_ERROR(result));
-    rebRelease(result);
-
-    Free_Req(req);
-}
-
-
-//
 //  export write-stdout: native [
 //
 //  "Write text to standard output, or raw BINARY! (for control codes / CGI)"
