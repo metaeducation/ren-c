@@ -77,16 +77,11 @@ static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
         if (not IS_WORD(val) and not IS_QUOTED_WORD(val))
             return false;
 
-        SYMID type_sym = VAL_WORD_ID(val);
-
-        RELVAL *typelist = Get_System(SYS_VIEW, VIEW_EVENT_TYPES);
-        assert(IS_BLOCK(typelist));
-        UNUSED(typelist);  // We now support a wider range of words...
-
-        if (type_sym == SYM_0)  // !!! ...but for now, only symbols
+        SYMID id = VAL_WORD_ID(val);
+        if (id == SYM_0)  // !!! ...but for now, only symbols
             fail ("EVENT! only takes types that are compile-time symbols");
 
-        SET_VAL_EVENT_TYPE(event, type_sym);
+        SET_VAL_EVENT_TYPE(event, id);
         return true; }
 
       case SYM_PORT:
@@ -140,10 +135,6 @@ static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
             SET_VAL_EVENT_KEYSYM(event, SYM_NONE);
         }
         else if (IS_WORD(val) or IS_QUOTED_WORD(val)) {
-            RELVAL *event_keys = Get_System(SYS_VIEW, VIEW_EVENT_KEYS);
-            assert(IS_BLOCK(event_keys));
-            UNUSED(event_keys);  // we can use any key name, but...
-
             SYMID sym = VAL_WORD_ID(val);  // ...has to be symbol (for now)
             if (sym == SYM_0)
                 fail ("EVENT! only takes keys that are compile-time symbols");
@@ -257,7 +248,7 @@ static REBVAL *Get_Event_Var(
 
       case SYM_PORT: {
         if (VAL_EVENT_MODEL(v) == EVM_GUI)  // "most events are for the GUI"
-            return Copy_Cell(out, Get_System(SYS_VIEW, VIEW_EVENT_PORT));
+            return Init_None(out);  // !!! No applicable port at present
 
         if (VAL_EVENT_MODEL(v) == EVM_PORT)
             return Init_Port(out, CTX(VAL_EVENT_NODE(v)));
@@ -477,4 +468,3 @@ void MF_Event(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
     End_Mold(mo);
 }
-

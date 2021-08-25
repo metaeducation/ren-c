@@ -615,31 +615,8 @@ make-obj-defs e-sysobj ob/ports "PORTS" 4
 make-obj-defs e-sysobj ob/options "OPTIONS" 4
 ;make-obj-defs e-sysobj ob/intrinsic "INTRINSIC" 4
 make-obj-defs e-sysobj ob/locale "LOCALE" 4
-make-obj-defs e-sysobj ob/view "VIEW" 4
 
 e-sysobj/write-emitted
-
-
-=== EVENT TYPES ===
-
-; R3-Alpha made specific C enumerated types out of the event types and keys.
-; Ren-C takes a broader view of "symbol IDs" as fixed numbers that can be
-; expanded as new IDs are agreed upon (a bit like adding an emoji to unicode,
-; I'd suppose) :-)  Hence plain symbol IDs are used for the event-types and
-; event keys.  EVENT! can then see if its symbol ID fits into a uint16_t,
-; and use a more compact representation for that event if so.
-
-evts: collect [
-    for-each field ob/view/event-types [
-        add-sym/exists field  ; may exist (e.g. CLOSE is a GENERIC)
-    ]
-]
-
-evks: collect [
-    for-each field ob/view/event-keys [
-        add-sym/exists field  ; may exist (e.g. DELETE is a key and a GENERIC)
-    ]
-]
 
 
 === ERROR STRUCTURE AND CONSTANTS ===

@@ -193,10 +193,9 @@ standard: make object! [
     ; with this archetype used by the REDESCRIBE Mezzanine.
     ;
     action-meta: make object! [
-        description:
-        parameter-types:
-        parameter-notes:
-            null
+        description: '
+        parameter-types: '
+        parameter-notes: '
     ]
 
     ; !!! This is the template used for all errors, to which extra fields are
@@ -385,94 +384,6 @@ standard: make object! [
     para: _  ; mezz-graphics.h
 ]
 
-view: make object! [
-    screen-gob: _
-    handler: _
-    event-port: _
-
-    ; !!! The event-types list used to be fixed and built into a separate
-    ; enum.  Now it is done with Rebol symbols.  Hence, these get uint16_t
-    ; identifiers.  However, symbol numbers are hypothesized to be expandable
-    ; via a pre-published dictionary of strings, committed to as a registry.
-    ;
-    event-types: [
-        ignore          ; ignore event (0)
-        interrupt       ; user interrupt
-        device          ; misc device request
-        callback        ; callback event
-        custom          ; custom events
-        init
-
-        open
-        close
-        connect
-        accept
-        read
-        write
-        wrote
-        lookup
-
-        ready
-        done
-        time
-
-        show
-        hide
-        offset
-        resize
-        rotate
-        active
-        inactive
-        minimize
-        maximize
-        restore
-
-        move
-        down
-        up
-        alt-down
-        alt-up
-        aux-down
-        aux-up
-        key
-        key-up
-
-        scroll-line
-        scroll-page
-
-        drop-file
-
-        ; !!! Instances of `make event! [type: 'error ...]` were in R3-Alpha's
-        ; prot-http.r, but error was not in this list.
-        ;
-        error
-    ]
-
-    event-keys: [
-        page-up
-        page-down
-        end
-        home
-        left
-        up
-        right
-        down
-        insert
-        delete
-        f1
-        f2
-        f3
-        f4
-        f5
-        f6
-        f7
-        f8
-        f9
-        f10
-        f11
-        f12
-    ]
-]
 
 user: make object! [
    name:           ; User's name

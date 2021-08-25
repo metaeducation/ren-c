@@ -143,16 +143,6 @@ barrier
 defer
 postpone
 
-; Event:
-#type  ; declared in this file as a reflector
-key
-port
-mode
-window
-double
-control
-#shift  ; there's a bit shift native
-
 ; Checksum (CHECKSUM-CORE only, others are looked up by string or libRebol)
 crc32
 adler32
@@ -253,3 +243,87 @@ detect
 ; "unloaded".  This speaks to missing constructor/destructor mechanics.
 ;
 shutdown*
+
+
+; === EVENT TYPES ===
+;
+; !!! The event-types list used to be fixed and built into a separate enum.
+; Now it is done with Rebol symbols.  Hence, these get uint16_t
+; identifiers.  However, symbol numbers are hypothesized to be expandable
+; via a pre-published dictionary of strings, committed to as a registry.
+
+; Event:
+#type  ; declared in this file as a reflector
+key
+port
+mode
+window
+double
+control
+#shift  ; there's a bit shift native
+
+ignore          ; ignore event (0)
+interrupt       ; user interrupt
+device          ; misc device request
+callback        ; callback event
+custom          ; custom events
+init
+
+#open
+#close
+connect
+#accept  ; was R3 parse keyword
+#read
+#write
+wrote
+lookup
+
+ready
+done
+#time
+
+show
+hide
+
+move
+down
+up
+alt-down
+alt-up
+aux-down
+aux-up
+#key
+key-up
+
+scroll-line
+scroll-page
+
+drop-file
+
+error
+
+
+; === EVENT KEYS ===
+
+page-up
+page-down
+#end  ; parse keyword
+home
+left
+#up
+right
+#down
+#insert  ; GENERIC action insert
+#delete  ; GENERIC action delete
+f1
+f2
+f3
+f4
+f5
+f6
+f7
+f8
+f9
+f10
+f11
+f12
