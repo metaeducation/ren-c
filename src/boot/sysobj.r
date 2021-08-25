@@ -104,21 +104,21 @@ set in locale 'library make object! [
 ]
 
 options: make object! [  ; Options supplied to REBOL during startup
-    bin: _          ; Path to directory where Rebol executable binary lives
-    boot: _         ; Path of executable, ie. system/options/bin/r3-exe
-    home: _         ; Path of home directory
-    resources: _    ; users resources directory (for %user.r, skins, modules etc)
+    bin: '          ; Path to directory where Rebol executable binary lives
+    boot: '         ; Path of executable, ie. system/options/bin/r3-exe
+    home: '         ; Path of home directory
+    resources: '    ; users resources directory (for %user.r, skins, modules etc)
     suppress: _     ; block of user --suppress items, eg [%rebol.r %user.r %console-skin.reb]
     loaded: []      ; block with full paths to loaded start-up scripts
-    path: _         ; Where script was started or the startup dir
+    path: '         ; Where script was started or the startup dir
 
-    current-path: _ ; Current URL! or FILE! path to use for relative lookups
+    current-path: ' ; Current URL! or FILE! path to use for relative lookups
 
-    encap: _        ; The encapping data extracted
-    script: _       ; Filename of script to evaluate
-    args: _         ; Command line arguments passed to script
-    debug: _        ; debug flags
-    version: _      ; script version needed
+    encap: '        ; The encapping data extracted
+    script: '       ; Filename of script to evaluate
+    args: '         ; Command line arguments passed to script
+    debug: '        ; debug flags
+    version: '      ; script version needed
 
     dump-size: 68   ; used by dump
 

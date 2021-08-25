@@ -534,7 +534,7 @@ REBNATIVE(file_to_local)
 //
 //  {Returns the current directory path}
 //
-//      return: [blank! file! url!]
+//      return: [<opt> file! url!]
 //  ]
 //
 REBNATIVE(what_dir)
@@ -543,7 +543,7 @@ REBNATIVE(what_dir)
 
     REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (IS_FILE(current_path) || IS_BLANK(current_path)) {
+    if (IS_FILE(current_path) || IS_NULLED(current_path)) {
         //
         // !!! Because of the need to track a notion of "current path" which
         // could be a URL! as well as a FILE!, the state is stored in the
@@ -565,7 +565,7 @@ REBNATIVE(what_dir)
         fail (current_path);
     }
 
-    return rebValue("copy", current_path);  // caller mutates, copy
+    return rebValue(Lib(COPY), Lib(TRY), current_path);  // caller mutates, copy
 }
 
 
