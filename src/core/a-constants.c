@@ -107,7 +107,7 @@ const char * const Token_Names[] = {
     "end-of-script",
     "newline",
     "blank",
-    "void",
+    "bad-word",
     "comma",
     "colon",
     "caret",

@@ -1000,7 +1000,7 @@ void Virtual_Bind_Deep_To_New_Context(
             if (dummy_sym == SYM_DUMMY9)
                 fail ("Current limitation: only up to 9 BLANK! keys");
 
-            symbol = Canon(dummy_sym);
+            symbol = Canon_Symbol(dummy_sym);
             dummy_sym = cast(SYMID, cast(int, dummy_sym) + 1);
 
             REBVAL *var = Append_Context(c, nullptr, symbol);

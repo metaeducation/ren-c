@@ -828,7 +828,7 @@ REBNATIVE(pick)
     //
     if (IS_PORT(location)) {
         DECLARE_LOCAL (word);
-        Init_Word(word, Canon(SYM_PICK));
+        Init_Word(word, Canon(PICK));
         return Do_Port_Action(frame_, location, word);
     }
 
@@ -925,7 +925,7 @@ REBNATIVE(poke)
     //
     if (IS_PORT(location)) {
         DECLARE_LOCAL (word);
-        Init_Word(word, Canon(SYM_POKE));
+        Init_Word(word, Canon(POKE));
         return Do_Port_Action(frame_, location, word);
     }
 

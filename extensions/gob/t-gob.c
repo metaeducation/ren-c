@@ -316,7 +316,7 @@ static REBARR *Gob_Flags_To_Array(REBGOB *gob)
     REBINT i;
     for (i = 0; Gob_Flag_Words[i].sym != SYM_0; ++i) {
         if (GET_GOB_FLAG(gob, Gob_Flag_Words[i].flags))
-            Init_Word(Alloc_Tail_Array(a), Canon(Gob_Flag_Words[i].sym));
+            Init_Word(Alloc_Tail_Array(a), Canon_Symbol(Gob_Flag_Words[i].sym));
     }
 
     return a;
@@ -690,7 +690,7 @@ static REBARR *Gob_To_Array(REBGOB *gob)
 
     REBINT n;
     for (n = 0; words[n] != SYM_0; ++n) {
-        Init_Set_Word(Alloc_Tail_Array(arr), Canon(words[n]));
+        Init_Set_Word(Alloc_Tail_Array(arr), Canon_Symbol(words[n]));
         vals[n] = Init_Blank(Alloc_Tail_Array(arr));
     }
 
@@ -723,7 +723,7 @@ static REBARR *Gob_To_Array(REBGOB *gob)
             fail ("Unknown GOB! type");
         }
 
-        REBVAL *name = Init_Set_Word(Alloc_Tail_Array(arr), Canon(sym));
+        REBVAL *name = Init_Set_Word(Alloc_Tail_Array(arr), Canon_Symbol(sym));
         RELVAL *slot = Alloc_Tail_Array(arr);
         bool known = Did_Get_GOB_Var(slot, gob, name);
         assert(known);  // should have known that sym
@@ -733,7 +733,7 @@ static REBARR *Gob_To_Array(REBGOB *gob)
         // Gobs used none (blank) historically.
         //
         if (IS_NULLED(slot))
-            Init_Bad_Word(slot, SYM_NULL);
+            Init_Bad_Word(slot, Canon(NULL));
     }
 
     return arr;

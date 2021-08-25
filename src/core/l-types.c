@@ -314,7 +314,7 @@ REB_R Reflect_Core(REBFRM *frame_)
         return nullptr; // only TYPE OF works on blank, otherwise it's null
 
     DECLARE_LOCAL (verb);
-    Init_Word(verb, Canon(SYM_REFLECT));
+    Init_Word(verb, Canon(REFLECT));
     Dequotify(ARG(value));
     return Run_Generic_Dispatch(ARG(value), frame_, verb);
 }

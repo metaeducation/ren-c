@@ -122,7 +122,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
             //
             // We must use something legal to put in arrays, so non-isotope.
             //
-            Init_Bad_Word(&feed->fetched, SYM_NULL);
+            Init_Bad_Word(&feed->fetched, Canon(NULL));
         }
         else {
             // !!! "We could make a global QUOTED_NULLED_VALUE with a stable

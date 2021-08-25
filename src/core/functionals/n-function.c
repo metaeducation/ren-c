@@ -149,7 +149,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
             is_combinator
                 ? VAL_ACTION(Lib(DEFINITIONAL_RETURN_ISOTOPE))
                 : VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
-            Canon(SYM_RETURN),  // relabel (the RETURN in lib is a dummy action)
+            Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
             CTX(f->varlist)  // bind this return to know where to return from
         );
     }
@@ -882,7 +882,7 @@ REBNATIVE(inherit_meta)
     for (; syms[which] != SYM_0; ++which) {
         REBVAL *val1 = Select_Symbol_In_Context(
             CTX_ARCHETYPE(m1),
-            Canon(syms[which])
+            Canon_Symbol(syms[which])
         );
         if (not val1 or IS_NULLED(val1) or Is_Unset(val1))
             continue;  // nothing to inherit from
@@ -893,7 +893,7 @@ REBNATIVE(inherit_meta)
 
         REBVAL *val2 = Select_Symbol_In_Context(
             CTX_ARCHETYPE(m2),
-            Canon(syms[which])
+            Canon_Symbol(syms[which])
         );
         if (not val2)
             continue;

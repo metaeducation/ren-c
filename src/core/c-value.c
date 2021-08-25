@@ -59,7 +59,7 @@ REBNOD *Dump_Value_Debug(const RELVAL *v)
     printf("kind_byte=%d\n", cast(int, KIND3Q_BYTE_UNCHECKED(v)));
 
     enum Reb_Kind kind = CELL_KIND(VAL_UNESCAPED(v));
-    const char *type = STR_UTF8(Canon(SYM_FROM_KIND(kind)));
+    const char *type = STR_UTF8(Canon_Symbol(SYM_FROM_KIND(kind)));
     printf("cell_kind=%s\n", type);
     fflush(stdout);
 

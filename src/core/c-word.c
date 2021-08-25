@@ -484,7 +484,7 @@ void Startup_Interning(void)
 //  Startup_Symbols: C
 //
 // Initializes a table for mapping from SYM_XXX => REBSTR series.  This
-// is used e.g. by Canon(SYM_XXX) to get the string name for a symbol.
+// is used by Canon_Symbol(id) and Canon(XXX) to get the symbol from id.
 //
 void Startup_Symbols(void)
 {
@@ -499,7 +499,7 @@ void Startup_Symbols(void)
     );
 
     // All words that do not have a SYM_XXX get back VAL_WORD_ID(w) == SYM_0
-    // Hence Canon(SYM_0) is illegal, to avoid `Canon(X) == Canon(Y)` being
+    // Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being
     // true when X and Y are different symbols with no SYM_XXX id.
     //
     TRASH_POINTER_IF_DEBUG(PG_Symbol_Canons[SYM_0]);
@@ -536,22 +536,22 @@ void Startup_Symbols(void)
 
     assert(id == ALL_SYMS_MAX);  // includes the + 1 for REB_0 slot
 
-    if (0 != strcmp("blank!", STR_UTF8(Canon(SYM_BLANK_X))))
-        panic (Canon(SYM_BLANK_X));
+    if (0 != strcmp("blank!", STR_UTF8(Canon(BLANK_X))))
+        panic (Canon(BLANK_X));
 
-    if (0 != strcmp("true", STR_UTF8(Canon(SYM_TRUE))))
-        panic (Canon(SYM_TRUE));
+    if (0 != strcmp("true", STR_UTF8(Canon(TRUE))))
+        panic (Canon(TRUE));
 
-    if (0 != strcmp("open", STR_UTF8(Canon(SYM_OPEN))))
-        panic (Canon(SYM_OPEN));
+    if (0 != strcmp("open", STR_UTF8(Canon(OPEN))))
+        panic (Canon(OPEN));
 
-    if (0 != strcmp("parse-reject", STR_UTF8(Canon(SYM_PARSE_REJECT))))
-        panic (Canon(SYM_PARSE_REJECT));
+    if (0 != strcmp("parse-reject", STR_UTF8(Canon(PARSE_REJECT))))
+        panic (Canon(PARSE_REJECT));
 
-    PG_Bar_Canon = Canon(SYM_BAR);
-    PG_Bar_Bar_Canon = Canon(SYM__B_B);
-    PG_Slash_1_Canon = Canon(SYM__SLASH_1_);
-    PG_Dot_1_Canon = Canon(SYM__DOT_1_);
+    PG_Bar_Canon = Canon(BAR);
+    PG_Bar_Bar_Canon = Canon(_B_B);
+    PG_Slash_1_Canon = Canon(_SLASH_1_);
+    PG_Dot_1_Canon = Canon(_DOT_1_);
 }
 
 

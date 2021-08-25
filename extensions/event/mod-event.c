@@ -351,7 +351,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
         //
         REBARR *a = Make_Array(2);
         Append_Value(a, awake);
-        Init_Word(Alloc_Tail_Array(a), Canon(SYM_ONLY));
+        Init_Word(Alloc_Tail_Array(a), Canon(ONLY));
 
         REBVAL *p = Try_Init_Path_Arraylike(D_SPARE, a);
         assert(p);  // `awake/only` doesn't contain any non-path-elements
@@ -506,7 +506,7 @@ REBNATIVE(wake_up)
         // doesn't throw or return meaningful data... (?)
         //
         DECLARE_LOCAL (verb);
-        Init_Word(verb, Canon(SYM_ON_WAKE_UP));
+        Init_Word(verb, Canon(ON_WAKE_UP));
         const REBVAL *r = Do_Port_Action(frame_, ARG(port), verb);
         assert(IS_BAD_WORD(r));
         UNUSED(r);

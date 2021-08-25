@@ -1036,7 +1036,7 @@ REBTYPE(Array)
             //     == [~null~ *]
             //
             if (IS_NULLED(ARG(value)))
-                Init_Bad_Word(ARG(value), SYM_NULL);
+                Init_Bad_Word(ARG(value), Canon(NULL));
         }
         else if (IS_BLOCK(ARG(value)))
             flags |= AM_SPLICE;

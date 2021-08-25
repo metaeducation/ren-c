@@ -545,7 +545,7 @@ REB_R Call_Core(REBFRM *frame_) {
                             // looked at the data it has already read and
                             // decided it does not need more...because if it
                             // reads past the protocol that will happen.
-                            // 
+                            //
                             CloseHandle(hInputWrite);
                             hInputWrite = NULL;
 
@@ -751,10 +751,10 @@ REB_R Call_Core(REBFRM *frame_) {
     if (REF(info)) {
         REBCTX *info = Alloc_Context(REB_OBJECT, 2);
 
-        Init_Integer(Append_Context(info, nullptr, Canon(SYM_ID)), pid);
+        Init_Integer(Append_Context(info, nullptr, Canon(ID)), pid);
         if (REF(wait))
             Init_Integer(
-                Append_Context(info, nullptr, Canon(SYM_EXIT_CODE)),
+                Append_Context(info, nullptr, Canon(EXIT_CODE)),
                 exit_code
             );
 

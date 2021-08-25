@@ -406,7 +406,7 @@ REBLEN Stack_Depth(void)
 //
 const REBVAL *Find_Error_For_Sym(enum Reb_Symbol_Id id_sym)
 {
-    const REBSYM *id_canon = Canon(id_sym);
+    const REBSYM *id_canon = Canon_Symbol(id_sym);
 
     REBCTX *categories = VAL_CONTEXT(Get_System(SYS_CATALOG, CAT_ERRORS));
 
@@ -760,8 +760,8 @@ REBCTX *Make_Error_Managed_Core(
     }
     else {
         assert(cat_sym != SYM_0 and id_sym != SYM_0);
-        Init_Word(type, Canon(cat_sym));
-        Init_Word(id, Canon(id_sym));
+        Init_Word(type, Canon_Symbol(cat_sym));
+        Init_Word(id, Canon_Symbol(id_sym));
 
         // Assume that error IDs are unique across categories (this is checked
         // by %make-boot.r).  If they were not, then this linear search could
@@ -1216,7 +1216,7 @@ REBCTX *Error_Invalid_Type(enum Reb_Kind kind)
 {
     if (kind == REB_NULL) {
         DECLARE_LOCAL (null_word);
-        Init_Word(null_word, Canon(SYM_NULL));
+        Init_Word(null_word, Canon(NULL));
         fail (Error_Invalid_Type_Raw(null_word));
     }
     return Error_Invalid_Type_Raw(Datatype_From_Kind(kind));

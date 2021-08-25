@@ -198,7 +198,9 @@ static void Init_Action_Meta_Shim(void) {
     REBCTX *meta = Alloc_Context_Core(REB_OBJECT, 4, NODE_FLAG_MANAGED);
     REBLEN i = 1;
     for (; i != 4; ++i)
-        Init_Nulled(Append_Context(meta, nullptr, Canon(field_syms[i - 1])));
+        Init_Nulled(
+            Append_Context(meta, nullptr, Canon_Symbol(field_syms[i - 1]))
+        );
 
     Root_Action_Meta = Init_Object(Alloc_Value(), meta);
     Force_Value_Frozen_Deep(Root_Action_Meta);
@@ -257,9 +259,9 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     ++PG_Next_Native_Dispatcher;
 
     Init_Action(
-        Append_Context(Lib_Context, nullptr, Canon(SYM_NATIVE)),
+        Append_Context(Lib_Context, nullptr, Canon(NATIVE)),
         the_native_action,
-        Canon(SYM_NATIVE),  // label
+        Canon(NATIVE),  // label
         UNBOUND
     );
 

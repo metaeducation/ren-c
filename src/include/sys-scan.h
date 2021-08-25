@@ -37,7 +37,7 @@ enum Reb_Token {
     TOKEN_END = 0,
     TOKEN_NEWLINE,
     TOKEN_BLANK,
-    TOKEN_VOID,
+    TOKEN_BAD_WORD,
     TOKEN_COMMA,
     TOKEN_COLON,
     TOKEN_CARET,

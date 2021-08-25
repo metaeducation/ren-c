@@ -138,13 +138,13 @@ REB_R MAKE_Word(
       }
     }
     else if (IS_DATATYPE(arg)) {
-        return Init_Any_Word(out, kind, Canon(VAL_TYPE_SYM(arg)));
+        return Init_Any_Word(out, kind, Canon_Symbol(VAL_TYPE_SYM(arg)));
     }
     else if (IS_LOGIC(arg)) {
         return Init_Any_Word(
             out,
             kind,
-            VAL_LOGIC(arg) ? Canon(SYM_TRUE) : Canon(SYM_FALSE)
+            VAL_LOGIC(arg) ? Canon(TRUE) : Canon(FALSE)
         );
     }
 
@@ -312,9 +312,9 @@ REBTYPE(Word)
                 return D_OUT;  // found variable actually in module.
 
             if (MOD_VAR(Lib_Context, VAL_WORD_SYMBOL(v), true))
-                return Init_Bad_Word(D_OUT, SYM_INHERITED);
+                return Init_Bad_Word(D_OUT, Canon(INHERITED));
 
-            return Init_Bad_Word(D_OUT, SYM_ATTACHED); }
+            return Init_Bad_Word(D_OUT, Canon(ATTACHED)); }
 
           case SYM_ATTACH: {  // hack it up...
             if (not IS_WORD_BOUND(v))

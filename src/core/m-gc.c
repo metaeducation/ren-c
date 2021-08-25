@@ -441,7 +441,7 @@ void Reify_Va_To_Array_In_Frame(
 
     if (truncated) {
         DS_PUSH();
-        Init_Word(DS_TOP, Canon(SYM___OPTIMIZED_OUT__));
+        Init_Word(DS_TOP, Canon(__OPTIMIZED_OUT__));
     }
 
     REBLEN index;

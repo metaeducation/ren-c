@@ -1438,7 +1438,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         Copy_Cell(f_spare, DS_AT(f->dsp_orig + 1));
         if (IS_BLANK(f_spare))
-            Init_Isotope(f->out, SYM_BLANK);
+            Init_Isotope(f->out, Canon(BLANK));
         else
             Set_Var_May_Fail(
                 f_spare, SPECIFIED,

@@ -116,7 +116,7 @@ REBNATIVE(reduce)
         // https://forum.rebol.info/t/1665
         //
         if (IS_NULLED(D_OUT))
-            Init_Bad_Word(DS_PUSH(), SYM_NULL);
+            Init_Bad_Word(DS_PUSH(), Canon(NULL));
         else {
             Copy_Cell(DS_PUSH(), D_OUT);
             if (IS_BAD_WORD(DS_TOP))
@@ -411,7 +411,7 @@ REB_R Compose_To_Stack_Core(
                 // compose [((null))] => []
                 //
                 if (not doubled_group)
-                    Init_Bad_Word(DS_PUSH(), SYM_NULL);
+                    Init_Bad_Word(DS_PUSH(), Canon(NULL));
             }
             else if (insert and (predicate or doubled_group)) {
                 //

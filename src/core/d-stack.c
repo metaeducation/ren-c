@@ -53,7 +53,7 @@ void Collapsify_Array(REBARR *array, REBSPC *specifier, REBLEN limit)
                 limit + 1
             );
 
-            Init_Word(ARR_AT(copy, limit), Canon(SYM_ELLIPSIS));
+            Init_Word(ARR_AT(copy, limit), Canon(ELLIPSIS));
 
             Collapsify_Array(
                 copy,
@@ -114,7 +114,7 @@ REBVAL *Init_Near_For_Frame(RELVAL *out, REBFRM *f)
 
     REBINT start = FRM_INDEX(f) - 3;
     if (start > 0)
-        Init_Word(DS_PUSH(), Canon(SYM_ELLIPSIS));
+        Init_Word(DS_PUSH(), Canon(ELLIPSIS));
     else if (start < 0)
         start = 0;
 
@@ -133,12 +133,12 @@ REBVAL *Init_Near_For_Frame(RELVAL *out, REBFRM *f)
             // mean "error source is to the left" or just "frame is at a
             // breakpoint at that position".
             //
-            Init_Word(DS_PUSH(), Canon(SYM__P_P));
+            Init_Word(DS_PUSH(), Canon(_P_P));
         }
     }
 
     if (item != tail)
-        Init_Word(DS_PUSH(), Canon(SYM_ELLIPSIS));
+        Init_Word(DS_PUSH(), Canon(ELLIPSIS));
 
     // !!! This code can be called on an executing frame, such as when an
     // error happens in that frame.  Or it can be called on a pending frame

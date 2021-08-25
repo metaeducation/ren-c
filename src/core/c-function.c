@@ -453,7 +453,7 @@ void Push_Paramlist_Triads_May_Fail(
         // ...although `return:` is explicitly tolerated ATM for compatibility
         // (despite violating the "pure locals are NULL" premise)
         //
-        if (symbol == Canon(SYM_RETURN)) {
+        if (symbol == Canon(RETURN)) {
             if (*definitional_return_dsp != 0) {
                 DECLARE_LOCAL(word);
                 Init_Word(word, symbol);
@@ -497,7 +497,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         if (definitional_return_dsp == 0) { // no explicit RETURN: pure local
             PUSH_SLOTS();
 
-            Init_Word(KEY_SLOT(DSP), Canon(SYM_RETURN));
+            Init_Word(KEY_SLOT(DSP), Canon(RETURN));
             definitional_return_dsp = DSP;
 
             STKVAL(*) param = PARAM_SLOT(DSP);
@@ -563,7 +563,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     const REBSYM *duplicate = nullptr;
 
   blockscope {
-    REBVAL *param = Init_Isotope(ARR_HEAD(paramlist), SYM_ROOTVAR) + 1;
+    REBVAL *param = Init_Isotope(ARR_HEAD(paramlist), Canon(ROOTVAR)) + 1;
     REBKEY *key = SER_HEAD(REBKEY, keylist);
 
     if (definitional_return_dsp != 0) {

@@ -136,11 +136,14 @@ inline static bool Same_Nonzero_Symid(SYMID a, SYMID b) {
 inline static OPT_SYMID ID_OF_SYMBOL(const REBSYM *s)
   { return cast(SYMID, SECOND_UINT16(s->info)); }
 
-inline static const REBSYM *Canon(SYMID symid) {
+inline static const REBSYM *Canon_Symbol(SYMID symid) {
     assert(cast(REBLEN, symid) != 0);
     assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
     return PG_Symbol_Canons[symid];
 }
+
+#define Canon(name) \
+    Canon_Symbol(SYM_##name)
 
 inline static bool Are_Synonyms(const REBSYM *s1, const REBSYM *s2) {
     const REBSTR *temp = s1;

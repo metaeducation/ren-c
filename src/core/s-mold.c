@@ -115,7 +115,7 @@ void Pre_Mold_Core(REB_MOLD *mo, REBCEL(const*) v, bool all)
     // will report an invalid value.  So use HEART_BYTE() so that TYPESET!
     // comes back as the answer.
     //
-    const REBSTR *type_name = Canon(
+    const REBSTR *type_name = Canon_Symbol(
         SYM_FROM_KIND(cast(enum Reb_Kind, CELL_HEART(v)))
     );
     Append_Spelling(mo->series, type_name);

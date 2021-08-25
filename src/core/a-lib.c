@@ -1652,7 +1652,7 @@ REBVAL *RL_rebRescueWith(
         if (Is_Api_Value(result))
             rebRelease(result);
 
-        Init_Isotope(result, SYM_ERRORED);
+        Init_Isotope(result, Canon(ERRORED));
         goto proxy_result;
     }
     else {

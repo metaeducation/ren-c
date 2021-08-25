@@ -939,10 +939,10 @@ REB_R Call_Core(REBFRM *frame_) {
     if (REF(info)) {
         REBCTX *info = Alloc_Context(REB_OBJECT, 2);
 
-        Init_Integer(Append_Context(info, nullptr, Canon(SYM_ID)), forked_pid);
+        Init_Integer(Append_Context(info, nullptr, Canon(ID)), forked_pid);
         if (REF(wait))
             Init_Integer(
-                Append_Context(info, nullptr, Canon(SYM_EXIT_CODE)),
+                Append_Context(info, nullptr, Canon(EXIT_CODE)),
                 exit_code
             );
 

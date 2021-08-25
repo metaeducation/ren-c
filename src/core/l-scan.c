@@ -1212,15 +1212,15 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
                 ++cp;
                 if (*cp != '~') {
                     ss->end = cp;
-                    fail (Error_Syntax(ss, TOKEN_VOID));
+                    fail (Error_Syntax(ss, TOKEN_BAD_WORD));
                 }
                 ++cp;
                 if (*cp == '~' or not IS_LEX_DELIMIT(*cp)) {
                     ss->end = cp;
-                    fail (Error_Syntax(ss, TOKEN_VOID));
+                    fail (Error_Syntax(ss, TOKEN_BAD_WORD));
                 }
                 ss->end = cp;
-                return TOKEN_VOID;
+                return TOKEN_BAD_WORD;
             }
             if (*cp == ':' or IS_LEX_DELIMIT(*cp)) {
                 ss->end = cp;
@@ -1229,11 +1229,11 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             for (; *cp != '~'; ++cp) {
                 if (IS_LEX_DELIMIT(*cp)) {
                     ss->end = cp;
-                    fail (Error_Syntax(ss, TOKEN_VOID));  // `[return ~a]`
+                    fail (Error_Syntax(ss, TOKEN_BAD_WORD));  // `[return ~a]`
                 }
             }
             ss->end = cp + 1;
-            return TOKEN_VOID; }
+            return TOKEN_BAD_WORD; }
 
           case LEX_DELIMIT_COMMA:
             ++cp;
@@ -1903,19 +1903,13 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         Init_Blank(DS_PUSH());
         break;
 
-      case TOKEN_VOID: {
+      case TOKEN_BAD_WORD: {  // a non-isotope bad-word
         assert(len >= 3);
         assert(*bp == '~');
         assert(bp[len - 1] == '~');
         const REBSTR *label = Intern_UTF8_Managed(bp + 1, len - 2);
 
-        // !!! At time of writing it is still being established when it is
-        // best to set isotope bits.  You'd like isotope bits in blocks being
-        // produced, because people might path pick out.  Whether the path
-        // picking has to clear it or there's an invariant that blocks
-        // never hold isotopes needs to be decided.
-        //
-        Init_Bad_Word_Core(DS_PUSH(), label, CELL_MASK_NONE);  // "friendly"
+        Init_Bad_Word(DS_PUSH(), label);
         break; }
 
       case TOKEN_COMMA:
@@ -2380,7 +2374,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 //
                 // BAD-WORD!s are put in blocks, are "friendly" non-isotopes.
                 //
-                Init_Bad_Word(DS_PUSH(), SYM_UNSET);
+                Init_Bad_Word(DS_PUSH(), Canon(UNSET));
                 break;
 
               default: {

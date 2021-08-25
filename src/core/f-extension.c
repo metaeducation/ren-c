@@ -350,7 +350,7 @@ REBNATIVE(unload_extension)
 
    REBVAR *shutdown_action = MOD_VAR(
        VAL_CONTEXT(extension),
-       Canon(SYM_SHUTDOWN_P),
+       Canon(SHUTDOWN_P),
        true
     );
    if (shutdown_action == nullptr)

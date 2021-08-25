@@ -558,10 +558,9 @@ static void Init_Contexts_Object(void)
     // is wrong if it's used during boot.
     //
     const char *label = "startup-mezz-not-finished-yet";
-    Init_Bad_Word_Core(
+    Init_Bad_Word(
         Get_System(SYS_CONTEXTS, CTX_USER),
-        Intern_UTF8_Managed(cb_cast(label), strsize(label)),
-        CELL_MASK_NONE
+        Intern_UTF8_Managed(cb_cast(label), strsize(label))
     );
 }
 
@@ -934,7 +933,7 @@ void Startup_Core(void)
     Init_Unset(Prep_Cell(&PG_Unset_Value));  // symbol not GC'd
     Init_Void(Prep_Cell(&PG_Void_Value));  // symbol not GC'd
 
-    // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(SYM_XXX) now available
+    // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(XXX) now available
 
     PG_Boot_Phase = BOOT_LOADED;
 

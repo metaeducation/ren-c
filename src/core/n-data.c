@@ -621,7 +621,7 @@ REBNATIVE(get)
             did REF(hard)
         );
         if (IS_NULLED(temp))  // blocks can't contain nulls
-            Init_Bad_Word_Core(dest, Canon(SYM_NULL), CELL_MASK_NONE);
+            Init_Bad_Word(dest, Canon(NULL));
         else
             Copy_Cell(dest, temp);
     }
@@ -840,7 +840,7 @@ REBNATIVE(try)
 //
 //  {Convert blanks to nulls, pass through most other values (See Also: TRY)}
 //
-//      return: "null on blank, ~nulled~ if input was NULL, or original value"
+//      return: "null on blank, ~null~ if input was NULL, or original value"
 //          [<opt> any-value!]
 //      optional [<opt> <blank> any-value!]
 //  ]
@@ -854,7 +854,7 @@ REBNATIVE(opt)
     // creating a likely error in those cases.  To get around it, OPT TRY
     //
     if (IS_NULLED(ARG(optional)))
-        return Init_Isotope(D_OUT, SYM_NULL);
+        return Init_Isotope(D_OUT, Canon(NULL));
 
     RETURN (ARG(optional));
 }
@@ -1662,7 +1662,7 @@ REBNATIVE(heavy) {
     Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     if (IS_NULLED(D_OUT))
-        Init_Isotope(D_OUT, SYM_NULL);
+        Init_Isotope(D_OUT, Canon(NULL));
 
     return D_OUT;
 }
@@ -1739,7 +1739,7 @@ REBNATIVE(reify)
     REBVAL *v = ARG(optional);
 
     if (IS_NULLED(v))
-        return Init_Bad_Word_Core(D_OUT, Canon(SYM_NULL), CELL_MASK_NONE);
+        return Init_Bad_Word(D_OUT, Canon(NULL));
 
     if (IS_BAD_WORD(v))  // e.g. the input was an isotope form
         RETURN (v);

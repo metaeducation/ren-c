@@ -61,10 +61,13 @@ REBNATIVE(quit)
 
     if (IS_ENDISH_NULLED(ARG(value))) {
         //
-        // This returns a BAD-WORD! if there is no arg, in sync with RETURN that
-        // has no arg.  But labels it ~quit~.
+        // This returns an bad-word if there is no arg, and labels it ~quit~.
         //
-        Init_Bad_Word(ARG(value), SYM_QUIT);
+        // !!! Should it be an isotope?  Should THROW and CATCH be able to
+        // THROW and CATCH isotopes?  It creates friction when errors have
+        // isotopes in them...
+        //
+        Init_Bad_Word(ARG(value), Canon(QUIT));
     }
 
     return Init_Thrown_With_Label(D_OUT, ARG(value), Lib(QUIT));

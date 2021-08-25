@@ -382,9 +382,9 @@ void MF_Logic(REB_MOLD *mo, REBCEL(const*) v, bool form)
         Append_Ascii(mo->series, "#[");
 
     if (VAL_LOGIC(v))
-        Append_Spelling(mo->series, Canon(SYM_TRUE));
+        Append_Spelling(mo->series, Canon(TRUE));
     else
-        Append_Spelling(mo->series, Canon(SYM_FALSE));
+        Append_Spelling(mo->series, Canon(FALSE));
 
     if (not form)
         Append_Ascii(mo->series, "]");

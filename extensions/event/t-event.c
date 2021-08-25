@@ -244,7 +244,7 @@ static REBVAL *Get_Event_Var(
             return nullptr;
 
         SYMID typesym = VAL_EVENT_TYPE(v);
-        return Init_Word(out, Canon(typesym)); }
+        return Init_Word(out, Canon_Symbol(typesym)); }
 
       case SYM_PORT: {
         if (VAL_EVENT_MODEL(v) == EVM_GUI)  // "most events are for the GUI"
@@ -285,7 +285,7 @@ static REBVAL *Get_Event_Var(
             return nullptr;
 
         if (VAL_EVENT_KEYSYM(v) != SYM_0)
-            return Init_Word(out, Canon(VAL_EVENT_KEYSYM(v)));
+            return Init_Word(out, Canon_Symbol(VAL_EVENT_KEYSYM(v)));
 
         return Init_Char_May_Fail(out, VAL_EVENT_KEYCODE(v)); }
 
@@ -296,13 +296,13 @@ static REBVAL *Get_Event_Var(
             REBARR *arr = Make_Array(3);
 
             if (VAL_EVENT_FLAGS(v) & EVF_DOUBLE)
-                Init_Word(Alloc_Tail_Array(arr), Canon(SYM_DOUBLE));
+                Init_Word(Alloc_Tail_Array(arr), Canon(DOUBLE));
 
             if (VAL_EVENT_FLAGS(v) & EVF_CONTROL)
-                Init_Word(Alloc_Tail_Array(arr), Canon(SYM_CONTROL));
+                Init_Word(Alloc_Tail_Array(arr), Canon(CONTROL));
 
             if (VAL_EVENT_FLAGS(v) & EVF_SHIFT)
-                Init_Word(Alloc_Tail_Array(arr), Canon(SYM_SHIFT));
+                Init_Word(Alloc_Tail_Array(arr), Canon(SHIFT));
 
             return Init_Block(out, arr);
         }
@@ -449,12 +449,12 @@ void MF_Event(REB_MOLD *mo, REBCEL(const*) v, bool form)
     DECLARE_LOCAL (var); // declare outside loop (has init code)
 
     for (field = 0; fields[field] != SYM_0; field++) {
-        if (not Get_Event_Var(var, v, Canon(fields[field])))
+        if (not Get_Event_Var(var, v, Canon_Symbol(fields[field])))
             continue;
 
         New_Indented_Line(mo);
 
-        const REBSTR *canon = Canon(fields[field]);
+        const REBSTR *canon = Canon_Symbol(fields[field]);
         Append_Utf8(mo->series, STR_UTF8(canon), STR_SIZE(canon));
         Append_Ascii(mo->series, ": ");
         if (IS_WORD(var))

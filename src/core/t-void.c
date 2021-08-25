@@ -49,6 +49,9 @@ void MF_Bad_word(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 // Can be created from a label.
 //
+// !!! How to create an isotope form of a BAD-WORD! in usermode, without
+// having to run an evaluation on a bad-word?  `make-isotope`?
+//
 REB_R MAKE_Bad_word(
     REBVAL *out,
     enum Reb_Kind kind,
@@ -58,8 +61,8 @@ REB_R MAKE_Bad_word(
     assert(not parent);
     UNUSED(parent);
 
-    if (IS_WORD(arg))  // !!! Should this be an isotope or not?
-        return Init_Bad_Word_Core(out, VAL_WORD_SYMBOL(arg), CELL_MASK_NONE);
+    if (IS_WORD(arg))
+        return Init_Bad_Word(out, VAL_WORD_SYMBOL(arg));
 
     fail (Error_Bad_Make(kind, arg));
 }

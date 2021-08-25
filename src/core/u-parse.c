@@ -259,7 +259,7 @@ static bool Subparse_Throws(
     Push_Frame(out, f);  // checks for C stack overflow
     Push_Action(f, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
 
-    Begin_Prefix_Action(f, Canon(SYM_SUBPARSE));
+    Begin_Prefix_Action(f, Canon(SUBPARSE));
 
     f->key = nullptr;  // informs infix lookahead
     f->key_tail = nullptr;
@@ -1361,7 +1361,7 @@ REBNATIVE(subparse)
     //=//// (GROUP!) AND :(GET-GROUP!) PROCESSING /////////////////////////=//
 
     if (IS_BLANK(rule)) {  // pre-evaluative source blanks act like SKIP
-        rule = Init_Word(P_SAVE, Canon(SYM_SKIP));
+        rule = Init_Word(P_SAVE, Canon(SKIP));
     }
     else if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
 

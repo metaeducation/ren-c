@@ -253,7 +253,7 @@ uint32_t Hash_Value(const RELVAL *v)
         break;
 
       case REB_DATATYPE: {
-        hash = Hash_String(Canon(SYM_FROM_KIND(VAL_TYPE_KIND(cell))));
+        hash = Hash_String(Canon_Symbol(SYM_FROM_KIND(VAL_TYPE_KIND(cell))));
         break; }
 
       case REB_BITSET:

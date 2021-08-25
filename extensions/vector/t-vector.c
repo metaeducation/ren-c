@@ -706,7 +706,7 @@ void MF_Vector(REB_MOLD *mo, REBCEL(const*) v, bool form)
         //
         if (not sign)
             Append_Ascii(mo->series, "unsigned ");
-        Append_Spelling(mo->series, Canon(SYM_FROM_KIND(kind)));
+        Append_Spelling(mo->series, Canon_Symbol(SYM_FROM_KIND(kind)));
         Append_Codepoint(mo->series, ' ');
         Append_Int(mo->series, bits);
         Append_Codepoint(mo->series, len);

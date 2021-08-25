@@ -630,7 +630,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             else if (IS_QUOTED(temp)) {
                 Unquotify(temp, 1);
                 if (IS_NULLED(temp))
-                    Init_Bad_Word(DS_PUSH(), SYM_NULL);  // APPEND semantics
+                    Init_Bad_Word(DS_PUSH(), Canon(NULL));  // APPEND semantics
                 else
                     Copy_Cell(DS_PUSH(), temp);
             }

@@ -184,8 +184,8 @@ REBARR *Startup_Generics(const REBVAL *boot_generics)
 
     // Sanity check the symbol transformation
     //
-    if (0 != strcmp("open", STR_UTF8(Canon(SYM_OPEN))))
-        panic (Canon(SYM_OPEN));
+    if (0 != strcmp("open", STR_UTF8(Canon(OPEN))))
+        panic (Canon(OPEN));
 
     REBDSP dsp_orig = DSP;
 

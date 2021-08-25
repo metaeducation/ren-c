@@ -454,7 +454,7 @@ REBNATIVE(some_combinator)
     // the input because `f.input` assignment will raise an error.  Review.
     //
     RELVAL *loop_last = Alloc_Tail_Array(loops);
-    Init_Frame(loop_last, CTX(frame_->varlist), Canon(SYM_SOME));
+    Init_Frame(loop_last, CTX(frame_->varlist), Canon(SOME));
     INIT_VAL_FRAME_PHASE(loop_last, FRM_PHASE(frame_));
 
     if (Call_Parser_Throws(D_OUT, remainder, parser, input)) {
