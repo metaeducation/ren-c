@@ -262,9 +262,9 @@ ask: function [
         text! [prompt: question]  ; `ask "Input:"` doesn't filter type
         datatype! [type: question]  ; `ask text!` has no prompt (like INPUT)
         block! [
-            parse question [
-                opt [set prompt: text!]
-                opt [set word: word! (type: ensure datatype! get word)]
+            uparse question [
+                opt prompt: text!
+                opt word: word! (type: ensure datatype! get word)
             ] else [
                 fail "ASK currently only supports [{Prompt:} datatype!]"
             ]
