@@ -1580,9 +1580,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     //=//// BAD-WORD! //////////////////////////////////////////////////////=//
     //
-    // There are isotope forms of BAD-WORD!s that can be put into variables.
-    // One isotope form can be produced by quoting, and it is safe to fetch via
-    // WORD! access:
+    // Two different forms of BAD-WORD!s can be put into variables.  The plain
+    // form can be produced by quoting, and it is safe to fetch via WORD!:
     //
     //     >> foo: '~unset~  ; quoted
     //     >> foo

@@ -116,22 +116,18 @@ console!: make object! [
         return: <none>
         ^v "Value (done with meta parameter to discern isotope status)"
             [<opt> any-value!]
-    ] [
+    ][
         last-result: unmeta v  ; keeps bad word isotope flag (except ~null~'s)
 
-        === ISOTOPE BAD WORDS (passed as plain bad-words due to meta ^v) ===
+        === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
 
         if v = '~none~ [  ; none isotope, don't show
             ;
-            ; We also suppress display of the ~none~ state, which is the
-            ; default return value from RETURN with no arguments.  It is for
-            ; situations that don't have useful values to give back, but do
-            ; not want to commit to invisibility so callsites depend on it.
-            ;
-            ; Even if something never wanted to change its result, not being
-            ; actually invisible has benefits:
-            ;
-            ;     >> 1 + 2 help append
+            ; We suppress display of the ~none~ state.  It is used by commands
+            ; like HELP that want to keep the focus in the console on what
+            ; they are printing out, without an `== xxx` evaluated result
+            ; showing up.  It is also used by functions that need a handy way
+            ; of returning an "uninteresting" result, such as PRINT.
             ;
             return
         ]
@@ -149,14 +145,15 @@ console!: make object! [
             ;     >> first [~something~]
             ;     == ~something~
             ;
-            ; That handling is below, since non-isotope bad-words are passed
-            ; as being a QUOTED! bad-word due to the parameter being `^v`.
+            ; That's the plain form.  Those kinds of bad-words are received
+            ; quoted by this routine like other ordinary values; this case is
+            ; just for the isotopes.
             ;
             print [result mold v space space "; isotope"]
             return
         ]
 
-        === NULL and THE ~NULL~ ISOTOPE ===
+        === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
 
         if v = null [  ; not an isotope, e.g. can trigger ELSE
             ;
@@ -177,35 +174,11 @@ console!: make object! [
             return
         ]
 
-        if v = the ' [
-            ;
-            ; Because ~null~ produces true NULL from evaluation (and not an
-            ; ~null~ isotope), the only way to get ~null~ isotopes is by
-            ; decaying a lone ' ("quoted null").  But due to the properties
-            ; of ~null~ isotopes, if you unquote this you'll be producing
-            ; something that non-literalizing routines would see as NULL.
-            ;
-            ; So handle this case now, before the UNQUOTE.
-            ;
-            print "== ~null~  ; isotope"
-            return
-        ]
+        === "ORDINARY" VALUES (^META v parameter means they get quoted) ===
 
-        === ORDNARY RETURN VALUES (^ parameter convention passes as quoted) ===
-
-        v: unmeta v  ; Now handle everything else
+        v: unquote v  ; Now handle everything else
 
         case [
-            bad-word? :v [
-                ;
-                ; If the ^ processed a value into a ~quoted~ BAD-WORD!, that's
-                ; the "friendly" form.  These can be accessed from variables
-                ; without triggering an error.  We don't label them since
-                ; they are the "normal" ones.
-                ;
-                print [result mold v]
-            ]
-
             free? :v [
                 ;
                 ; Molding a freed value would cause an error...which is
