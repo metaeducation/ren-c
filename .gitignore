@@ -53,6 +53,12 @@ build-*/*
 prebuilt/*
 !prebuilt/README.md
 
+# The tests directory generates .log files with the prefix r_2
+# (Historical reasoning for why the "2" is that so long as it was in alpha,
+# the version of Rebol was not formally bumped to 3, and would be done on
+# release...or so the rumor goes.)
+#
+tests/r_2*.log
 
 #################
 ## Eclipse
