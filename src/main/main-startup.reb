@@ -59,7 +59,10 @@ make-banner: func [
                         | block! (b: spaced b/1)
                         | text! (b: b/1)
                     ]
-                    (s: format ["**    " 11 55 "**"] reduce [a b])
+                    (
+                        b: default ["(none)"]  ; show (none) for NULL
+                        s: format ["**    " 11 55 "**"] reduce [a b]
+                    )
               | '* (s: star)
               | '- (s: spc)
             ]
