@@ -340,41 +340,46 @@ check-response: function [
     res: false
 
     info.response-parsed: default [
-        catch [
-            parse line [
-                "HTTP/1." [#"0" | #"1"] some #" " [
-                    #"1" (throw 'info)
+        ;
+        ; We use a RETURN rule to end the parse abruptly after matching only
+        ; the initial part to derive a value.
+        ;
+        uparse line [return [
+            "HTTP/1." ["0" | "1"] some space [
+                "1" ('info)
+                |
+                "2" [
+                    ["04" | "05"] ('no-content)
                     |
-                    #"2" [["04" | "05"] (throw 'no-content)
-                        | (throw 'ok)
-                    ]
-                    |
-                    #"3" [
-                        (if spec.follow = 'ok [throw 'ok])
-
-                        "02" (throw spec.follow)
-                        |
-                        "03" (throw 'see-other)
-                        |
-                        "04" (throw 'not-modified)
-                        |
-                        "05" (throw 'use-proxy)
-                        | (throw 'redirect)
-                    ]
-                    |
-                    #"4" [
-                        "01" (throw 'unauthorized)
-                        |
-                        "07" (throw 'proxy-auth)
-                        | (throw 'client-error)
-                    ]
-                    |
-                    #"5" (throw 'server-error)
+                    ('ok)
                 ]
-                | (throw 'version-not-supported)
+                |
+                "3" [
+                    :(spec.follow = 'ok) ('ok)
+                    |
+                    "02" (spec.follow)
+                    |
+                    "03" ('see-other)
+                    |
+                    "04" ('not-modified)
+                    |
+                    "05" ('use-proxy)
+                    |
+                    ('redirect)
+                ]
+                |
+                "4" [
+                    "01" ('unauthorized)
+                    |
+                    "07" ('proxy-auth)
+                    |
+                    ('client-error)
+                ]
+                |
+                "5" ('server-error)
             ]
-            end
-        ]
+            | ('version-not-supported)
+        ]]
     ]
 
     if spec.debug = true [
