@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -27,8 +27,6 @@
 //
 
 #include "sys-core.h"
-
-EXTERN_C REBDEV Dev_StdIO;
 
 #include "readline.h"
 
@@ -288,8 +286,6 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
 
-    REBREQ *req = Force_Get_Port_State(port, &Dev_StdIO);
-
     switch (VAL_WORD_ID(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -298,7 +294,7 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         SYMID property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, did (Req(req)->flags & RRF_OPEN));
+            return Init_True(D_OUT);  // stdio port always open
 
           default:
             break;
@@ -319,10 +315,6 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         UNUSED(PAR(string)); // handled in dispatcher
         UNUSED(PAR(lines)); // handled in dispatcher
-
-        // If not open, open it:
-        if (not (Req(req)->flags & RRF_OPEN))
-            OS_DO_DEVICE_SYNC(req, RDC_OPEN);
 
       #if defined(REBOL_SMART_CONSOLE)
         if (Term_IO) {  // e.g. no redirection (Term_IO is null if so)
@@ -381,15 +373,23 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         // critical design features.
         //
         if (rebNot("find", data, "lf")) {
-            Req(req)->common.binary = data;  // appends to tail
-            Req(req)->length = readbuf_size - VAL_LEN_AT(data);
-
+            //
             // Since we're not using the terminal code, we don't have per-char
             // control to eliminate the CR characters.  Raw READ from stdio must
             // be able to go byte level, however.  Those wishing to interpret
             // Windows data as text with lines will thus have to deline it (!)
             //
-            OS_DO_DEVICE_SYNC(req, RDC_READ);
+            size_t size = readbuf_size - VAL_LEN_AT(data);
+            REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(data);
+            REBLEN orig_len = VAL_LEN_AT(data);
+
+            assert(SER_AVAIL(bin) >= size);
+
+            REBYTE *buf = BIN_AT(bin, orig_len);
+
+            size_t actual = Read_IO(buf, size);  // appends to tail
+
+            TERM_BIN_LEN(bin, orig_len + actual);
         }
 
         // Give back a BINARY! which is as large as the portion of the buffer
@@ -398,11 +398,9 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         return rebValue("copy", data, "elide clear", data); }
 
       case SYM_OPEN:
-        Req(req)->flags |= RRF_OPEN;
         RETURN (port);
 
       case SYM_CLOSE:
-        Req(req)->flags &= ~RRF_OPEN;
         RETURN (port);
 
       default:

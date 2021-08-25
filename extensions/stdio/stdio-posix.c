@@ -1,5 +1,5 @@
 //
-//  File: %dev-stdio.c
+//  File: %stdio-posix.c
 //  Summary: "Device: Standard I/O for Posix"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -24,12 +24,6 @@
 // opening a console window if necessary.
 //
 
-// !!! Read_IO writes directly into a BINARY!, whose size it needs to keep up
-// to date (in order to have it properly terminated and please the GC).  At
-// the moment it does this with the internal API, though libRebol should
-// hopefully suffice in the future.  This is part of an ongoing effort to
-// make the device layer work more in the vocabulary of Rebol types.
-//
 #include "sys-core.h"
 
 #include <fcntl.h>
@@ -39,16 +33,6 @@
 
 #include "readline.h"
 
-#if defined(REBOL_SMART_CONSOLE)
-    extern STD_TERM *Term_IO;
-#endif
-
-// Temporary globals: (either move or remove?!)
-static int Std_Inp = STDIN_FILENO;
-static int Std_Out = STDOUT_FILENO;
-
-EXTERN_C REBDEV Dev_StdIO;
-
 
 //
 //  Startup_Stdio: C
@@ -56,15 +40,114 @@ EXTERN_C REBDEV Dev_StdIO;
 void Startup_Stdio(void)
 {
   #if defined(REBOL_SMART_CONSOLE)
-    if (isatty(Std_Inp))  // is termios-capable (not redirected to a file)
+    if (isatty(STDIN_FILENO))  // is termios-capable (not redirected to a file)
         Term_IO = Init_Terminal();
   #endif
-
-    Dev_StdIO.flags |= RDF_OPEN;
 }
 
 
-extern void Shutdown_Stdio();
+//
+//  Write_IO: C
+//
+// This write routine takes a REBVAL* that is either a BINARY! or a TEXT!.
+// Length is in conceptual units (codepoints for TEXT!, bytes for BINARY!)
+//
+void Write_IO(const REBVAL *data, REBLEN len)
+{
+    assert(IS_TEXT(data) or IS_BINARY(data));
+
+    if (STDOUT_FILENO < 0)
+        return;  // !!! This used to do nothing (?)
+
+  #if defined(REBOL_SMART_CONSOLE)
+    if (Term_IO) {
+        if (IS_TEXT(data)) {
+            if (cast(REBLEN, rebUnbox("length of", data)) == len)
+                Term_Insert(Term_IO, data);
+            else {
+                REBVAL *part = rebValue("copy/part", data, rebI(len));
+                Term_Insert(Term_IO, part);
+                rebRelease(part);
+            }
+        }
+        else {
+            // Write out one byte at a time, by translating it into two hex
+            // digits and sending them to WriteConsole().
+            //
+            // !!! It would be nice if this were in a novel style...
+            //
+            bool ok = true;
+
+            const REBYTE *tail = BIN_TAIL(VAL_BINARY(data));
+            const REBYTE *bp = VAL_BINARY_AT(data);
+            for (; bp != tail; ++bp) {
+                char digits[2];
+                digits[0] = Hex_Digits[*bp / 16];
+                digits[1] = Hex_Digits[*bp % 16];
+                long total = write(STDOUT_FILENO, digits, 2);
+                if (total < 0) {
+                    ok = false;
+                    break;  // need to restore text attributes before fail()
+                }
+                assert(total == 2);
+                UNUSED(total);
+            }
+
+            if (not ok)
+                rebFail_OS(errno);
+        }
+    }
+    else
+  #endif
+    {
+        const REBYTE *bp;
+        REBSIZ size;
+        if (IS_BINARY(data)) {
+            bp = VAL_DATA_AT(data);
+            size = len;
+        }
+        else {
+            bp = VAL_UTF8_SIZE_AT(&size, data);
+        }
+
+        long total = write(STDOUT_FILENO, bp, size);
+
+        if (total < 0)
+            rebFail_OS(errno);
+
+        assert(cast(size_t, total) == size);
+    }
+}
+
+
+//
+//  Read_IO: C
+//
+// !!! While transitioning away from the R3-Alpha "abstract OS" model,
+// this hook now receives a BINARY! which it is expected to fill with UTF-8
+// data, with a certain number of bytes.
+//
+// The request buffer must be long enough to hold result.
+//
+size_t Read_IO(REBYTE *buffer, size_t size)
+{
+  #if defined(REBOL_SMART_CONSOLE)
+    assert(not Term_IO);  // should have handled in %p-stdio.h
+  #endif
+
+    // read restarts on signal
+    //
+    long total = read(STDIN_FILENO, buffer, size);
+    if (total < 0)
+        rebFail_OS (errno);
+
+    return total;
+}
+
+
+//
+//  Shutdown_Stdio: C
+//
 void Shutdown_Stdio(void)
 {
   #if defined(REBOL_SMART_CONSOLE)
@@ -74,116 +157,3 @@ void Shutdown_Stdio(void)
     }
   #endif
 }
-
-
-//
-//  Write_IO: C
-//
-// Low level "raw" standard output function.
-//
-// Allowed to restrict the write to a max OS buffer size.
-//
-// Returns the number of chars written.
-//
-DEVICE_CMD Write_IO(REBREQ *io)
-{
-    struct rebol_devreq *req = Req(io);
-
-    if (Std_Out >= 0) {
-      #if defined(REBOL_SMART_CONSOLE)
-        if (Term_IO) {
-            //
-            // We need to sync the cursor position with writes.  This means
-            // being UTF-8 aware, so the buffer we get has to be valid UTF-8
-            // when written to a terminal for stdio.  (Arbitrary bytes of data
-            // can be written when output is directed to cgi, but Term_IO
-            // would be null.)
-            //
-            // !!! Longer term, the currency of exchange wouldn't be byte
-            // buffers, but REBVAL*, in which case the UTF-8 nature of a TEXT!
-            // would be assured, and we wouldn't be wasting this creation
-            // of a new text and validating the UTF-8 *again*.
-            //
-            REBVAL *text = rebSizedText(
-                cs_cast(req->common.data),
-                req->length
-            );
-            Term_Insert(Term_IO, text);
-            rebRelease(text);
-        }
-        else
-      #endif
-        {
-            long total = write(Std_Out, req->common.data, req->length);
-
-            if (total < 0)
-                rebFail_OS(errno);
-
-            assert(cast(size_t, total) == req->length);
-        }
-        req->actual = req->length;
-    }
-
-    return DR_DONE;
-}
-
-
-//
-//  Read_IO: C
-//
-// Low level "raw" standard input function.
-//
-// The request buffer must be long enough to hold result.
-//
-// Result is NOT terminated (the actual field has length.)
-//
-DEVICE_CMD Read_IO(REBREQ *io)
-{
-    struct rebol_devreq *req = Req(io);
-
-    // !!! While transitioning away from the R3-Alpha "abstract OS" model,
-    // this hook now receives a BINARY! in req->text which it is expected to
-    // fill with UTF-8 data, with req->length bytes.
-    //
-    REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(req->common.binary);
-    REBLEN orig_len = VAL_LEN_AT(req->common.binary);
-    assert(SER_AVAIL(bin) >= req->length);
-
-  #if defined(REBOL_SMART_CONSOLE)
-    assert(not Term_IO);  // should have handled in %p-stdio.h
-  #endif
-
-    req->actual = 0;
-
-    // read restarts on signal
-    //
-    long total = read(Std_Inp, BIN_AT(bin, orig_len), req->length);
-    if (total < 0)
-        rebFail_OS (errno);
-    TERM_BIN_LEN(bin, orig_len + total);
-
-    return DR_DONE;
-}
-
-
-/***********************************************************************
-**
-**  Command Dispatch Table (RDC_ enum order)
-**
-***********************************************************************/
-
-static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] =
-{
-    0,
-    0,
-    Read_IO,
-    Write_IO,
-    0,  // connect
-    0,  // query
-    0,  // CREATE previously used for opening echo file
-};
-
-DEFINE_DEV(
-    Dev_StdIO,
-    "Standard IO", 1, Dev_Cmds, RDC_MAX, sizeof(struct rebol_devreq)
-);

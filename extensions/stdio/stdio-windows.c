@@ -1,5 +1,5 @@
 //
-//  File: %dev-stdio.c
+//  File: %stdio-windows.c
 //  Summary: "Device: Standard I/O for Win32"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -38,12 +38,6 @@
 
 #include "readline.h"
 
-#if defined(REBOL_SMART_CONSOLE)
-    extern STD_TERM *Term_IO;
-#endif
-
-EXTERN_C REBDEV Dev_StdIO;
-
 static HANDLE Stdout_Handle = nullptr;
 static HANDLE Stdin_Handle = nullptr;
 
@@ -51,30 +45,14 @@ static HANDLE Stdin_Handle = nullptr;
 // uses UTF-16.  The calling layer expects UTF-8 back, so the Windows API
 // for conversion is used.  The UTF-16 data must be held in a buffer.
 //
+// We only allocate this buffer if we're not redirecting and it is necessary.
+//
 #define WCHAR_BUF_CAPACITY (16 * 1024)
 static WCHAR *Wchar_Buf = nullptr;
 
+
 static bool Redir_Out = false;
 static bool Redir_Inp = false;
-
-//**********************************************************************
-
-
-extern void Shutdown_Stdio(void);
-void Shutdown_Stdio(void)
-{
-    if (Wchar_Buf) {
-        free(Wchar_Buf);
-        Wchar_Buf = nullptr;
-    }
-
-  #if defined(REBOL_SMART_CONSOLE)
-    if (Term_IO) {
-        Quit_Terminal(Term_IO);
-        Term_IO = nullptr;
-    }
-  #endif
-}
 
 
 //
@@ -109,41 +87,39 @@ void Startup_Stdio(void)
     if (not Redir_Inp and not Redir_Out)
         Term_IO = Init_Terminal();
   #endif
-
-    Dev_StdIO.flags |= RDF_OPEN;
 }
 
 
 //
 //  Write_IO: C
 //
-// Low level "raw" standard output function.
+// This write routine takes a REBVAL* that is either a BINARY! or a TEXT!.
+// Length is in conceptual units (codepoints for TEXT!, bytes for BINARY!)
 //
-// Allowed to restrict the write to a max OS buffer size.
-//
-// Returns the number of chars written.
-//
-DEVICE_CMD Write_IO(REBREQ *io)
+void Write_IO(const REBVAL *data, REBLEN len)
 {
-    struct rebol_devreq *req = Req(io);
+    assert(IS_BINARY(data) or IS_TEXT(data));
 
     if (Stdout_Handle == nullptr)
-        return DR_DONE;
+        return;
 
   #if defined(REBOL_SMART_CONSOLE)
     if (Term_IO) {
-        if (req->modes & RFM_TEXT) {
+        if (IS_TEXT(data)) {
             //
-            // !!! This is a wasteful step as the text initially came from
-            // a Rebol TEXT! :-/  But moving this one step at a time, to
-            // where the device layer speaks in terms of Rebol datatypes.
+            // !!! Having to subset the string is wasteful, so Term_Insert()
+            // should take a length -or- series slicing needs to be solved.
             //
-            REBVAL *text = rebSizedText(s_cast(req->common.data), req->length);
-            Term_Insert(Term_IO, text);
-            rebRelease(text);
+            if (cast(REBLEN, rebUnbox("length of", data)) == len)
+                Term_Insert(Term_IO, data);
+            else {
+                REBVAL *part = rebValue("copy/part", data, rebI(len));
+                Term_Insert(Term_IO, part);
+                rebRelease(part);
+            }
         }
         else {
-            // !!! Writing a BINARY! to a redirected console, e.g. a CGI
+            // Writing a BINARY! to a redirected standard out, e.g. a CGI
             // script, makes sense--e.g. it might be some full bandwidth data
             // being downloaded that's neither UTF-8 nor UTF-16.  And it makes
             // some sense on UNIX, as the terminal will just have to figure
@@ -157,14 +133,7 @@ DEVICE_CMD Write_IO(REBREQ *io)
             // need to write UTF-16 data directly to the console, that should
             // be a distinct console-oriented function.
             //
-            // Instead, we can do something like change the color and write
-            // out some information.  Ideally this would be something like
-            // the data in hexadecimal, but since this is a niche leave it
-            // as a placeholder.
-            //
-            // !!! The caller currently breaks up binary data into chunks to
-            // pass in order to handle cancellation, so that should also be
-            // taken into account.
+            // So we change the color and write the data in hexadecimal!
 
             CONSOLE_SCREEN_BUFFER_INFO csbi;
             GetConsoleScreenBufferInfo(Stdout_Handle, &csbi);  // save color
@@ -174,16 +143,31 @@ DEVICE_CMD Write_IO(REBREQ *io)
                 BACKGROUND_GREEN | FOREGROUND_BLUE
             );
 
-            WCHAR message[] = L"Binary Data Sent to Non-Redirected Console";
+            BOOL ok = true;
 
-            DWORD total_wide_chars;
-            BOOL ok = WriteConsoleW(
-                Stdout_Handle,
-                message,
-                wcslen(message),  // wants wide character count
-                &total_wide_chars,
-                0
-            );
+            // Write out one byte at a time, by translating it into two hex
+            // digits and sending them to WriteConsole().
+            //
+            const REBYTE *tail = BIN_TAIL(VAL_BINARY(data));
+            const REBYTE *bp = VAL_BINARY_AT(data);
+            for (; bp != tail; ++bp) {
+                WCHAR digits[2];
+                digits[0] = Hex_Digits[*bp / 16];
+                digits[1] = Hex_Digits[*bp % 16];
+                DWORD total_wide_chars;
+                ok = WriteConsoleW(
+                    Stdout_Handle,
+                    digits,
+                    2,  // wants wide character count
+                    &total_wide_chars,
+                    0
+                );
+                if (not ok)
+                    break;  // need to restore text attributes before fail()
+                assert(total_wide_chars == 2);
+                UNUSED(total_wide_chars);
+            }
+
             SetConsoleTextAttribute(
                 Stdout_Handle,
                 csbi.wAttributes  // restore these attributes
@@ -191,7 +175,6 @@ DEVICE_CMD Write_IO(REBREQ *io)
 
             if (not ok)
                 rebFail_OS (GetLastError());
-            UNUSED(total_wide_chars);
         }
     }
     else
@@ -209,13 +192,6 @@ DEVICE_CMD Write_IO(REBREQ *io)
         assert(Redir_Inp or Redir_Out);  // should have used smarts otherwise
       #endif
 
-        if (req->modes & RFM_TEXT) {
-            //
-            // Writing UTF-8 text.  Currently no actual check is done to make
-            // sure that it's valid UTF-8, even invalid bytes would be written
-            // but this could be changed.
-        }
-
         // !!! Historically, Rebol on Windows automatically "enlined" strings
         // on write to turn LF to CR LF.  This was done in Prin_OS_String().
         // However, the current idea is to be more prescriptive and not
@@ -226,55 +202,45 @@ DEVICE_CMD Write_IO(REBREQ *io)
         // Note that redirection on Windows does not use UTF-16 typically.
         // Even CMD.EXE requires a /U switch to do so.
 
+        const REBYTE *bp;
+        REBSIZ size;
+        if (IS_BINARY(data)) {
+            bp = VAL_DATA_AT(data);
+            size = len;
+        }
+        else {
+            bp = VAL_UTF8_SIZE_AT(&size, data);
+        }
+
         DWORD total_bytes;
         BOOL ok = WriteFile(
             Stdout_Handle,
-            req->common.data,
-            req->length,
+            bp,
+            size,
             &total_bytes,
             0
         );
         if (not ok)
             rebFail_OS (GetLastError());
+
+        assert(total_bytes == size);
         UNUSED(total_bytes);
     }
-
-    req->actual = req->length;  // want byte count written, assume success
-
-    // !!! There was some code in R3-Alpha here which checked req->flags for
-    // "RRF_FLUSH" and would flush, but it was commented out (?)
-
-    return DR_DONE;
 }
 
 
 //
 //  Read_IO: C
 //
-// Low level "raw" standard input function.
-//
 // The request buffer must be long enough to hold result.
+// Result is NOT terminated.
 //
-// Result is NOT terminated (the actual field has length.)
-//
-DEVICE_CMD Read_IO(REBREQ *io)
+size_t Read_IO(REBYTE *buffer, size_t capacity)
 {
-    struct rebol_devreq *req = Req(io);
-    assert(req->length >= 2);  // abort is signaled with (ESC '\0')
+    assert(capacity >= 2);  // abort is signaled with (ESC '\0')
 
-    // !!! While transitioning away from the R3-Alpha "abstract OS" model,
-    // this hook now receives a BINARY! in req->text which it is expected to
-    // fill with UTF-8 data, with req->length bytes.
-    //
-    REBBIN *bin = VAL_BINARY_KNOWN_MUTABLE(req->common.binary);
-    assert(SER_AVAIL(bin) >= req->length);
-
-    REBLEN orig_len = BIN_LEN(bin);
-
-    if (Stdin_Handle == nullptr) {
-        TERM_BIN_LEN(bin, 0);
-        return DR_DONE;
-    }
+    if (Stdin_Handle == nullptr)
+        return 0;  // can't read from a null handle
 
     // !!! While Windows historically uses UCS-2/UTF-16 in its console I/O,
     // the plain ReadFile() style calls are byte-oriented, so you get whatever
@@ -282,13 +248,13 @@ DEVICE_CMD Read_IO(REBREQ *io)
     // some kind of conversion to get better than ASCII on systems without
     // the REBOL_SMART_CONSOLE setting.
 
-    DWORD bytes_to_read = req->length;
+    DWORD bytes_to_read = capacity;
 
   try_smaller_read: ;  // semicolon since next line is declaration
     DWORD total;
     BOOL ok = ReadFile(
         Stdin_Handle,
-        BIN_AT(bin, orig_len),
+        buffer,
         bytes_to_read,
         &total,
         0
@@ -315,29 +281,24 @@ DEVICE_CMD Read_IO(REBREQ *io)
         rebFail_OS (GetLastError());
     }
 
-    TERM_BIN_LEN(bin, total + orig_len);
-    return DR_DONE;
+    return total;
 }
 
 
-/***********************************************************************
-**
-**  Command Dispatch Table (RDC_ enum order)
-**
-***********************************************************************/
-
-static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] =
+//
+//  Shutdown_Stdio: C
+//
+void Shutdown_Stdio(void)
 {
-    0,
-    0,
-    Read_IO,
-    Write_IO,
-    0,  // connect
-    0,  // query
-    0,  // CREATE was once used for opening echo file
-};
+    if (Wchar_Buf) {
+        free(Wchar_Buf);
+        Wchar_Buf = nullptr;
+    }
 
-DEFINE_DEV(
-    Dev_StdIO,
-    "Standard IO", 1, Dev_Cmds, RDC_MAX, sizeof(struct rebol_devreq)
-);
+  #if defined(REBOL_SMART_CONSOLE)
+    if (Term_IO) {
+        Quit_Terminal(Term_IO);
+        Term_IO = nullptr;
+    }
+  #endif
+}
