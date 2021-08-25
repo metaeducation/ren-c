@@ -134,8 +134,6 @@ DEVICE_CMD Read_Signal(REBREQ *signal)
 
 static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] =
 {
-    0,
-    0,
     Open_Signal,
     Close_Signal,
     Read_Signal,

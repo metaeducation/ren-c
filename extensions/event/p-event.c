@@ -250,19 +250,3 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
     return R_UNHANDLED;
 }
-
-
-//
-//  Startup_Event_Scheme: C
-//
-void Startup_Event_Scheme(void)
-{
-}
-
-
-//
-//  Shutdown_Event_Scheme: C
-//
-void Shutdown_Event_Scheme(void)
-{
-}

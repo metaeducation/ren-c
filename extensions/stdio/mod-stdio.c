@@ -27,6 +27,15 @@
 
 #include "tmp-mod-stdio.h"
 
+#include "readline.h"
+
+// See %stdio-posix.c and %stdio-windows.c for the differing implementations of
+// what has to be done on startup and shutdown of stdin, stdout, or smart
+// terminal services.
+//
+extern void Startup_Stdio(void);
+extern void Shutdown_Stdio(void);
+
 EXTERN_C REBDEV Dev_StdIO;
 
 
@@ -48,25 +57,25 @@ REBNATIVE(get_console_actor_handle)
 
 
 //
-//  export register-stdio-device: native [
+//  startup*: native [  ; Note: DO NOT EXPORT!
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(register_stdio_device)
+REBNATIVE(startup_p)
 {
+    STDIO_INCLUDE_PARAMS_OF_STARTUP_P;
+
     OS_Register_Device(&Dev_StdIO);
 
-    REBREQ *req = OS_Make_Devreq(&Dev_StdIO);
+    // This does the platform-specific initialization for stdio.  Included in
+    // that is doing things like figuring out if the input or output have
+    // been redirected to a file--in which case, it has to know not to try
+    // and treat it as a "smart console" with cursoring around ability.
+    //
+    Startup_Stdio();
 
-    // !!! "The device is already open, so this call will just setup the
-    // request fields properly." (?)
-
-    OS_DO_DEVICE_SYNC(req, RDC_OPEN);
-
-    Free_Req(req);
-
-    return Init_None(D_OUT);
+    return rebNone();
 }
 
 
@@ -212,4 +221,27 @@ REBNATIVE(write_stdout)
     }
 
     return Init_None(D_OUT);
+}
+
+
+//
+//  shutdown*: native [  ; Note: DO NOT EXPORT!
+//
+//  {Shut down the stdio and terminal devices, called on extension unload}
+//
+//      return: <none>
+//  ]
+//
+REBNATIVE(shutdown_p)
+{
+    STDIO_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+
+    // This shutdown does platform-specific teardown, freeing buffers that
+    // may only be have been created for Windows, etc.
+    //
+    Shutdown_Stdio();
+
+    OS_Unregister_Device(&Dev_StdIO);
+
+    return rebNone();
 }

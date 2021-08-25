@@ -1046,6 +1046,13 @@ void Startup_Core(void)
     Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
   #endif
 
+    // We don't actually load any extensions during the core startup.  The
+    // builtin extensions can be selectively loaded in whatever order the
+    // API client wants (they may not want to load all extensions that are
+    // built in that were available all the time).
+    //
+    Startup_Extension_Loader();
+
     Recycle(); // necessary?
 }
 
@@ -1067,13 +1074,23 @@ void Startup_Core(void)
 // While some leaks are detected by the debug build during shutdown, even more
 // can be found with a tool like Valgrind or Address Sanitizer.
 //
-void Shutdown_Core(void)
+void Shutdown_Core(bool clean)
 {
   #if !defined(NDEBUG)
     Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
   #endif
 
     assert(TG_Jump_List == nullptr);
+
+    // Shutting down extensions is currently considered semantically mandatory,
+    // as it may flush writes to files (filesystem extension) or do other
+    // work.  If you really want to do a true "unclean shutdown" you can always
+    // call exit().
+    //
+    Shutdown_Extension_Loader();
+
+    if (not clean)
+        return;
 
     // !!! Currently the molding logic uses a test of the Boot_Phase to know
     // if it's safe to check the system object for how many digits to mold.

@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-register-stdio-device
+startup*  ; !!! Not called automatically, yet
 
 sys/make-scheme [
     title: "Console Access"
@@ -46,5 +46,3 @@ tab-complete: func [
     insert buffer "For example"
     return 3
 ]
-
-export [tab-complete]

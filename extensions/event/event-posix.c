@@ -87,20 +87,13 @@ int Reap_Process(int pid, int *status, int flags)
 extern void Done_Device(uintptr_t handle, int error);
 
 //
-//  Init_Events: C
+//  Startup_Events: C
 //
 // Initialize the event device.
 //
-// Create a hidden window to handle special events, such as timers.
-//
-// !!! This was used for asynchronous DNS at one point, but those APIs were
-// deprecated by Microsoft--see the README.md for the DNS Extension.
-//
-DEVICE_CMD Init_Events(REBREQ *dr)
+extern void Startup_Events(void);
+void Startup_Events(void)
 {
-    REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy
-    dev->flags |= RDF_INIT;
-    return DR_DONE;
 }
 
 
@@ -158,8 +151,6 @@ DEVICE_CMD Connect_Events(REBREQ *req)
 ***********************************************************************/
 
 static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
-    Init_Events,            // init device driver resources
-    0,  // RDC_QUIT,        // cleanup device driver resources
     0,  // RDC_OPEN,        // open device unit (port)
     0,  // RDC_CLOSE,       // close device unit
     0,  // RDC_READ,        // read from unit

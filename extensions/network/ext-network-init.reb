@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-register-network-device
+startup*  ; !!! Not called automatically, yet!
 
 sys/make-scheme [
     title: "TCP Networking"

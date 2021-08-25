@@ -30,17 +30,20 @@
 
 #include "reb-event.h"
 
+extern void Startup_Events(void);
+extern void Shutdown_Events(void);
+
 //
-//  register-event-hooks: native [
+//  startup*: native [  ; Note: DO NOT EXPORT!
 //
 //  {Make the EVENT! datatype work with GENERIC actions, comparison ops, etc}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(register_event_hooks)
+REBNATIVE(startup_p)
 {
-    EVENT_INCLUDE_PARAMS_OF_REGISTER_EVENT_HOOKS;
+    EVENT_INCLUDE_PARAMS_OF_STARTUP_P;
 
     OS_Register_Device(&Dev_Event);
 
@@ -62,25 +65,23 @@ REBNATIVE(register_event_hooks)
     Builtin_Type_Hooks[k][IDX_TO_HOOK] = cast(CFUNC*, &TO_Event);
     Builtin_Type_Hooks[k][IDX_MOLD_HOOK] = cast(CFUNC*, &MF_Event);
 
-    Startup_Event_Scheme();
+    Startup_Events();  // initialize other event stuff
 
     return Init_None(D_OUT);
 }
 
 
 //
-//  unregister-event-hooks: native [
+//  shutdown*: native [  ; Note: DO NOT EXPORT!
 //
 //  {Remove behaviors for EVENT! added by REGISTER-EVENT-HOOKS}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(unregister_event_hooks)
+REBNATIVE(shutdown_p)
 {
-    EVENT_INCLUDE_PARAMS_OF_UNREGISTER_EVENT_HOOKS;
-
-    Shutdown_Event_Scheme();
+    EVENT_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     // !!! See notes in register-event-hooks for why we reach below the
     // normal custom type machinery to pack an event into a single cell
@@ -92,6 +93,11 @@ REBNATIVE(unregister_event_hooks)
     Builtin_Type_Hooks[k][IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
     Builtin_Type_Hooks[k][IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);
     Builtin_Type_Hooks[k][IDX_MOLD_HOOK] = cast(CFUNC*, &MF_Unhooked);
+
+    // !!! currently no shutdown code, but there once was for destroying an
+    // invisible handle in windows...
+
+    OS_Unregister_Device(&Dev_Event);
 
     return Init_None(D_OUT);
 }

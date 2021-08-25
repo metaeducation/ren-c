@@ -505,23 +505,6 @@ static REB_R Transport_Actor(
 
 
 //
-//  export register-network-device: native [
-//
-//  {Add entity to act as hub for dispatching asynchronous network requests}
-//
-//      return: <none>
-//  ]
-//
-REBNATIVE(register_network_device)
-{
-    NETWORK_INCLUDE_PARAMS_OF_REGISTER_NETWORK_DEVICE;
-
-    OS_Register_Device(&Dev_Net);
-    return Init_None(D_OUT);
-}
-
-
-//
 //  TCP_Actor: C
 //
 static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
@@ -663,4 +646,46 @@ REBNATIVE(set_udp_ttl)
         rebFail_OS (result);
 
     return rebVoid();
+}
+
+extern void Startup_Networking(void);
+extern void Shutdown_Networking(void);
+
+//
+//  startup*: native [  ; Note: DO NOT EXPORT!
+//
+//  {Initialize Network Extension (e.g. call WSAStartup() on Windows)}
+//
+//      return: <none>
+//  ]
+//
+REBNATIVE(startup_p)
+{
+    NETWORK_INCLUDE_PARAMS_OF_STARTUP_P;
+
+    OS_Register_Device(&Dev_Net);
+
+    Startup_Networking();
+
+    return rebNone();
+}
+
+
+//
+//  shutdown*: native [  ; Note: DO NOT EXPORT!
+//
+//  {Shutdown Network Extension}
+//
+//      return: <none>
+//  ]
+//
+REBNATIVE(shutdown_p)
+{
+    NETWORK_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+
+    OS_Unregister_Device(&Dev_Net);
+
+    Shutdown_Networking();
+
+    return rebNone();
 }

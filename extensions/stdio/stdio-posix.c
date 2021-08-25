@@ -39,17 +39,33 @@
 
 #include "readline.h"
 
+#if defined(REBOL_SMART_CONSOLE)
+    extern STD_TERM *Term_IO;
+#endif
 
 // Temporary globals: (either move or remove?!)
 static int Std_Inp = STDIN_FILENO;
 static int Std_Out = STDOUT_FILENO;
 
-#if defined(REBOL_SMART_CONSOLE)
-    extern STD_TERM *Term_IO;
-#endif
+EXTERN_C REBDEV Dev_StdIO;
 
 
-static void Close_Stdio(void)
+//
+//  Startup_Stdio: C
+//
+void Startup_Stdio(void)
+{
+  #if defined(REBOL_SMART_CONSOLE)
+    if (isatty(Std_Inp))  // is termios-capable (not redirected to a file)
+        Term_IO = Init_Terminal();
+  #endif
+
+    Dev_StdIO.flags |= RDF_OPEN;
+}
+
+
+extern void Shutdown_Stdio();
+void Shutdown_Stdio(void)
 {
   #if defined(REBOL_SMART_CONSOLE)
     if (Term_IO) {
@@ -57,69 +73,6 @@ static void Close_Stdio(void)
         Term_IO = nullptr;
     }
   #endif
-}
-
-
-//
-//  Quit_IO: C
-//
-DEVICE_CMD Quit_IO(REBREQ *dr)
-{
-    REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
-
-    Close_Stdio();
-
-    dev->flags &= ~RDF_OPEN;
-    return DR_DONE;
-}
-
-
-//
-//  Open_IO: C
-//
-DEVICE_CMD Open_IO(REBREQ *io)
-{
-    struct rebol_devreq *req = Req(io);
-    REBDEV *dev = req->device;
-
-    // Avoid opening the console twice (compare dev and req flags):
-    if (dev->flags & RDF_OPEN) {
-        // Device was opened earlier as null, so req must have that flag:
-        if (dev->flags & SF_DEV_NULL)
-            req->modes |= RDM_NULL;
-        req->flags |= RRF_OPEN;
-        return DR_DONE; // Do not do it again
-    }
-
-    if (not (req->modes & RDM_NULL)) {
-
-      #if defined(REBOL_SMART_CONSOLE)
-        if (isatty(Std_Inp))  // is termios-capable (not redirected to a file)
-            Term_IO = Init_Terminal();
-      #endif
-    }
-    else
-        dev->flags |= SF_DEV_NULL;
-
-    req->flags |= RRF_OPEN;
-    dev->flags |= RDF_OPEN;
-
-    return DR_DONE;
-}
-
-
-//
-//  Close_IO: C
-//
-DEVICE_CMD Close_IO(REBREQ *req)
-{
-    REBDEV *dev = Req(req)->device;
-
-    Close_Stdio();
-
-    dev->flags &= ~RRF_OPEN;
-
-    return DR_DONE;
 }
 
 
@@ -230,10 +183,8 @@ DEVICE_CMD Read_IO(REBREQ *io)
 
 static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] =
 {
-    0,  // init
-    Quit_IO,
-    Open_IO,
-    Close_IO,
+    0,
+    0,
     Read_IO,
     Write_IO,
     0,  // connect

@@ -53,9 +53,6 @@
 #define HAS_MISC_ReqPortCtx     FLAVOR_BINARY
 
 enum Reb_Device_Command {
-    RDC_INIT,       // init device driver resources
-    RDC_QUIT,       // cleanup device driver resources
-
     RDC_OPEN,       // open device unit (port)
     RDC_CLOSE,      // close device unit
 
@@ -79,11 +76,7 @@ enum Reb_Device_Command {
 
 // REBOL Device Flags and Options (bitnums):
 enum {
-    // Status flags:
-    RDF_INIT = 1 << 0, // Device is initialized
     RDF_OPEN = 1 << 1, // Global open (for devs that cannot multi-open)
-    // Options:
-    RDO_MUST_INIT = 1 << 2 // Do not allow auto init (manual init required)
 
     // !!! There used to be something here called "RDO_AUTO_POLL" which said
     // "Poll device, even if no requests (e.g. interrupts)".  There were no
@@ -100,12 +93,6 @@ enum {
 //  RRF_PREWAKE,    // C-callback before awake happens (to update port object)
     RRF_PENDING = 1 << 3, // Request is attached to pending list
     RRF_ACTIVE = 1 << 5, // Port is active, even no new events yet
-
-    // !!! This was a "local flag to mark null device" which when not managed
-    // here was confusing.  Given the need to essentially replace the whole
-    // device model, it's clearer to keep it here.
-    //
-    SF_DEV_NULL = 1 << 16
 };
 
 

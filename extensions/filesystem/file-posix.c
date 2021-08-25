@@ -959,8 +959,6 @@ bool Set_Current_Dir_Value(const REBVAL *path)
 ***********************************************************************/
 
 static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
-    0,
-    0,
     Open_File,
     Close_File,
     Read_File,

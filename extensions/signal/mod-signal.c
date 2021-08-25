@@ -272,3 +272,19 @@ REBNATIVE(get_signal_actor_handle)
     Make_Port_Actor_Handle(D_OUT, &Signal_Actor);
     return D_OUT;
 }
+
+
+//
+//  export shutdown*: native [
+//
+//  {Shut down the signal device}
+//
+//      return: <none>
+//  ]
+//
+REBNATIVE(shutdown_p)
+{
+    OS_Unregister_Device(&Dev_Signal);
+
+    return rebNone();
+}

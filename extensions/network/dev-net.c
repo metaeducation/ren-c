@@ -117,15 +117,14 @@ static bool Try_Set_Sock_Options(SOCKET sock)
 
 
 //
-//  Init_Net: C
+//  Startup_Networking: C
 //
 // Intialize networking libraries and related interfaces.
 // This function will be called prior to any socket functions.
 //
-DEVICE_CMD Init_Net(REBREQ *dr)
+extern void Startup_Networking(void);
+void Startup_Networking(void)
 {
-    REBDEV *dev = cast(REBDEV*, dr);
-
   #ifdef TO_WINDOWS
     //
     // Initialize Windows Socket API with given VERSION.
@@ -135,28 +134,20 @@ DEVICE_CMD Init_Net(REBREQ *dr)
     if (WSAStartup(0x0101, &wsaData))
         rebFail_OS (GET_ERROR);
   #endif
-
-    dev->flags |= RDF_INIT;
-    return DR_DONE;
 }
 
 
 //
-//  Quit_Net: C
+//  Shutdown_Networking: C
 //
 // Close and cleanup networking libraries and related interfaces.
 //
-DEVICE_CMD Quit_Net(REBREQ *dr)
+extern void Shutdown_Networking(void);
+void Shutdown_Networking(void)
 {
-    UNUSED(dr);
-
   #ifdef TO_WINDOWS
-    if (Dev_Net.flags & RDF_INIT)
-        WSACleanup();
+    WSACleanup();
   #endif
-
-    Dev_Net.flags &= ~RDF_INIT;
-    return DR_DONE;
 }
 
 
@@ -785,8 +776,6 @@ DEVICE_CMD Accept_Socket(REBREQ *sock)
 ***********************************************************************/
 
 static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
-    Init_Net,
-    Quit_Net,
     Open_Socket,
     Close_Socket,
     Transfer_Socket,        // Read

@@ -154,18 +154,6 @@ REBVAL *OS_Do_Device(REBREQ *req)
     if (dev == NULL)
         rebJumps("fail {Rebol Device Not Found}");
 
-    if (not (dev->flags & RDF_INIT)) {
-        if (dev->flags & RDO_MUST_INIT)
-            rebJumps("fail {Rebol Device Uninitialized}");
-
-        if (
-            !dev->commands[RDC_INIT]
-            || !dev->commands[RDC_INIT](cast(REBREQ*, dev))
-        ){
-            dev->flags |= RDF_INIT;
-        }
-    }
-
     if (dev->commands[Req(req)->command] == NULL)
         rebJumps("fail {Invalid Command for Rebol Device}");
 
@@ -279,43 +267,6 @@ int OS_Poll_Devices(void)
 
 
 //
-//  OS_Quit_Devices: C
-//
-// Terminate all devices in preparation to quit.
-//
-// Allows devices to perform cleanup and resource freeing.
-//
-// Set flags to zero for now. (May later be used to indicate
-// a device query check or a brute force quit.)
-//
-// Returns: 0 for now.
-//
-int OS_Quit_Devices(int flags)
-{
-    UNUSED(flags);
-
-    REBDEV *dev = PG_Device_List;
-    for (; dev != nullptr; dev = dev->next) {
-        if (dev->flags & RDF_INIT) {
-            if (dev->commands[RDC_QUIT] != nullptr)
-                dev->commands[RDC_QUIT](cast(REBREQ*, dev));
-            dev->flags &= ~RDF_INIT;
-        }
-
-        // !!! There was nothing to clear out pending events in R3-Alpha
-        // if the device itself didn't free them.  "OS Events" for instance.
-        // In order to be able to shut down and start up again safely if
-        // we want to, they have to be freed.
-        //
-        while (dev->pending)
-            Detach_Request(&dev->pending, BIN(m_cast(REBNOD*, dev->pending)));
-    }
-
-    return 0;
-}
-
-
-//
 //  OS_Register_Device: C
 //
 // !!! This follows the R3-Alpha model that a device is expected to be a
@@ -327,4 +278,29 @@ int OS_Quit_Devices(int flags)
 void OS_Register_Device(REBDEV *dev) {
     dev->next = PG_Device_List;
     PG_Device_List = dev;
+}
+
+//
+//  OS_Unregister_Device: C
+//
+void OS_Unregister_Device(REBDEV *dev) {
+    //
+    // !!! There was nothing to clear out pending events in R3-Alpha
+    // if the device itself didn't free them.  "OS Events" for instance.
+    // In order to be able to shut down and start up again safely if
+    // we want to, they have to be freed.
+    //
+    while (dev->pending)
+        Detach_Request(&dev->pending, BIN(m_cast(REBNOD*, dev->pending)));
+
+    if (PG_Device_List == dev)
+        PG_Device_List = dev->next;
+    else {
+        REBDEV *temp = PG_Device_List;
+        while (temp->next != dev)
+            temp = temp->next;
+        temp->next = dev->next;
+    }
+
+    TRASH_POINTER_IF_DEBUG(dev->next);
 }

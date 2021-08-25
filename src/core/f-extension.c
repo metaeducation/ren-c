@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2018 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,12 +21,10 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// !!! Extensions in Ren-C are a redesign from extensions in R3-Alpha.  They
-// are a work in progress (and need documentation and cleanup), but have
-// been a proof-of-concept for the core idea to be able to write code that
-// looks similar to Rebol natives, but can be loaded from a DLL making calls
-// back into the executable...or alternately, built directly into the Rebol
-// interpreter itself based on a configuration switch.
+// "Extensions" refers to the idea of a module which has associated native
+// code--in a DLL or .so file.  The extension machinery allows for the loading
+// and unloading of a mixture of natives and usermode functions that can use
+// those added natives.
 //
 // See the %extensions/ directory for some current (evolving) examples.
 //
@@ -44,18 +42,34 @@
 //
 #include "tmp-boot-extensions.inc"
 
+
 //
-//  cleanup_extension_init_handler: C
+//  Startup_Extension_Loader: C
 //
-void cleanup_extension_init_handler(const REBVAL *v)
-  { UNUSED(v); } // cleanup CFUNC* just serves as an ID for the HANDLE!
+void Startup_Extension_Loader(void)
+{
+    assert(PG_Device_List == nullptr);
+
+    assert(rebDid("empty? system.extensions"));
+}
 
 
 //
-//  cleanup_extension_quit_handler: C
+// Shutdown_Extension_Loader: C
 //
-void cleanup_extension_quit_handler(const REBVAL *v)
-  { UNUSED(v); } // cleanup CFUNC* just serves as an ID for the HANDLE!
+void Shutdown_Extension_Loader(void)
+{
+    // The UNLOAD-EXTENSION will remove the extension from the list, so we
+    // enumerate over a copy of the list.  (See remarks on making this more
+    // efficient.)
+    //
+    rebElide("for-each ext copy system.extensions [unload-extension ext]");
+
+    // !!! The R3-Alpha "Device model" is likely going to go away, but for
+    // the sake of cleanliness make sure all "devices" were unregistered.
+    //
+    assert(PG_Device_List == nullptr);
+}
 
 
 //
@@ -244,21 +258,14 @@ REBNATIVE(load_extension)
     DROP_GC_GUARD(module);
     DROP_GC_GUARD(details);
 
+    rebElide("append system.extensions", CTX_ARCHETYPE(module_ctx));
+
     // !!! If modules are to be "unloadable", they would need some kind of
     // finalizer to clean up their resources.  There are shutdown actions
     // defined in a couple of extensions, but no protocol by which the
     // system will automatically call them on shutdown (yet)
 
     return Init_Any_Context(D_OUT, REB_MODULE, module_ctx);
-}
-
-
-//
-// Just an ID for the handler
-//
-static void cleanup_module_handler(const REBVAL *val)
-{
-    UNUSED(val);
 }
 
 
@@ -282,51 +289,53 @@ static const REBVAL *Unloaded_Dispatcher(REBFRM *f)
 //  "Unload an extension"
 //
 //      return: <none>
-//      ext "The extension to be unloaded"
-//          [object!]
-//      /cleanup "The RX_Quit pointer for the builtin extension"
-//          [handle!]
+//      extension "The extension to be unloaded"
+//          [module!]
 //  ]
 //
 REBNATIVE(unload_extension)
+//
+// !!! The initial extension model had support for not just loading extensions
+// from a DLL, but also unloading them.  It raises a lot of questions that are
+// somewhat secondary to any known use cases, and the semantics of the system
+// were not pinned down well enough to support it.
+//
+// But one important feature it achieved was that if an extension initialized
+// something (perhaps e.g. initializing memory) then it could call code to free
+// that memory.  For the moment this is done by calling a method named
+// `shutdown*` if it exists in the module.
 {
-    UNUSED(frame_);
-    UNUSED(&Unloaded_Dispatcher);
-    UNUSED(&cleanup_module_handler);
+    INCLUDE_PARAMS_OF_UNLOAD_EXTENSION;
 
-    fail ("Unloading extensions is currently not supported");
+    REBVAL *extension = ARG(extension);
 
-    // !!! The initial extension model had support for not just loading an
-    // extension from a DLL, but also unloading it.  It raises a lot of
-    // questions that are somewhat secondary to any known use cases, and the
-    // semantics of the system were not pinned down well enough to support it.
+    REBVAL *pos = rebValue(Lib(FIND), "system.extensions", extension);
+
+    // Remove the extension from the loaded extensions list.
     //
-    // But one important feature it did achieve was that if an extension
-    // initialized something (perhaps e.g. initializing memory) then calling
-    // code to free that memory (or release whatever API/resource it was
-    // holding) is necessary.
+    // !!! This is inefficient in the Shutdown_Extensions() case, because we
+    // have to walk a copy of the array.  This likely calls for making the
+    // "unload_extension 'all" walk a copy of the array here in the native or
+    // some other optimization.  Review.
     //
-    // HOWEVER: modules that are written entirely in usermode may want some
-    // shutdown code too (closing files or network connections, or if using
-    // FFI maybe needing to make some FFI close calls.  So a better model of
-    // "extension shutdown" would build on a mechanism that would work for
-    // any MODULE!...registering its interest with an ACTION! that may be one
-    // of its natives, or even just usermode code.
-    //
-    // Hence the mechanics from the initial extension shutdown (which called
-    // CFUNC entry points in the DLL) have been removed.  There's also a lot
-    // of other murky areas--like how to disconnect REBNATIVEs from CFUNC
-    // dispatchers that have been unloaded...a mechanism was implemented here,
-    // but it was elaborate and made it hard to modify and improve the system
-    // while still not having clear semantics.  (If an extension is unloaded
+    if (not pos)
+        fail ("Could not find extension in loaded extensions list");
+    rebElide(Lib(TAKE), rebR(pos));
+
+    // There is a murky issue about how to disconnect REBNATIVE()s from
+    // dispatchers that have been unloaded.  If an extension is unloaded
     // and reloaded again, should old ACTION! values work again?  If so, how
     // would this deal with a recompiled extension which might have changed
-    // the parameters--thus breaking any specializations, etc?)
+    // the parameters--thus breaking any specializations, etc?
     //
-    // Long story short: the extension model is currently in a simpler state
-    // to bring it into alignment with the module system, so that both can
-    // be improved together.  The most important feature to add for both is
-    // some kind of "finalizer".
+    // Idea: Check for a match, and if it is a match wire it up compatibly.
+    // If not warn the user, leave a non-running stub in the place of the
+    // old function...and they can reboot if they need to or unload and
+    // reload the dependent modules.  Note that this would happen more often
+    // than one might think for any locals declared as part of the frame, as
+    // adding a local changes the "interface"--affecting downstream frames.
+    //
+    UNUSED(&Unloaded_Dispatcher);
 
     // Note: The mechanical act of unloading a DLL involved these calls.
     /*
@@ -338,6 +347,18 @@ REBNATIVE(unload_extension)
 
         OS_CLOSE_LIBRARY(VAL_LIBRARY_FD(lib));
     */
+
+   REBVAR *shutdown_action = MOD_VAR(
+       VAL_CONTEXT(extension),
+       Canon(SYM_SHUTDOWN_P),
+       true
+    );
+   if (shutdown_action == nullptr)
+        return Init_None(D_OUT);
+
+   rebElide(shutdown_action);
+
+   return Init_None(D_OUT);
 }
 
 

@@ -50,6 +50,24 @@ REBNATIVE(get_file_actor_handle)
 
 
 //
+//  shutdown*: native [  ; Note: DO NOT EXPORT!
+//
+//  {Shut down the filesystem device}
+//
+//      return: <none>
+//  ]
+//
+REBNATIVE(shutdown_p)
+{
+    FILESYSTEM_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+
+    OS_Unregister_Device(&Dev_File);
+
+    return rebNone();
+}
+
+
+//
 //  get-dir-actor-handle: native [
 //
 //  {Retrieve handle to the native actor for directories}

@@ -110,17 +110,16 @@ LRESULT CALLBACK REBOL_Event_Proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
 
 //
-//  Init_Events: C
+//  Startup_Events: C
 //
 // Initialize the event device.
 //
 // Create a hidden window to handle special events,
 // such as timers and async DNS.
 //
-DEVICE_CMD Init_Events(REBREQ *dr)
+extern void Startup_Events(void);
+void Startup_Events(void)
 {
-    REBDEV *dev = cast(REBDEV*, dr);
-
     // !!! The Windows build of R3-Alpha used a hidden window for message
     // processing.  The only use case was asynchronous DNS, which was a
     // deprecated feature (not being carried forward to IPv6):
@@ -170,9 +169,6 @@ DEVICE_CMD Init_Events(REBREQ *dr)
   #else
     Event_Handle = NULL;
   #endif
-
-    dev->flags |= RDF_INIT;
-    return DR_DONE;
 }
 
 
@@ -232,8 +228,6 @@ DEVICE_CMD Connect_Events(REBREQ *req)
 ***********************************************************************/
 
 static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
-    Init_Events,            // init device driver resources
-    0,  // RDC_QUIT,        // cleanup device driver resources
     0,  // RDC_OPEN,        // open device unit (port)
     0,  // RDC_CLOSE,       // close device unit
     0,  // RDC_READ,        // read from unit

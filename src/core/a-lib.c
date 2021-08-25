@@ -381,26 +381,13 @@ void RL_rebShutdown(bool clean)
 {
     ENTER_API;
 
-    // Devices have to be shut down because if they are not, they might have
-    // data to flush to disk/etc...or if the terminal was set up to not echo
-    // characters in order to perform curses-style line editing then that
-    // will be stuck.
+  #if !defined(NDEBUG)
     //
-    OS_Quit_Devices(0);
-
-  #if defined(NDEBUG)
-    if (not clean)
-        return;  // Only do the work above this line in an unclean shutdown
-  #else
-    // Run a clean shutdown anyway in debug builds--even if the caller didn't
-    // need it--to see if it triggers any alerts.
+    // The debug build does a clean Shutdown, Startup, and then shutdown again
+    // to make sure we can do so in case a system wanted to uninitialize then
+    // reinitialize.
     //
-    UNUSED(clean);
-
-    // Shutdown, Startup, and then shutdown again to make sure we can do so
-    // in case a system wanted to uninitialize then reinitialize.
-    //
-    Shutdown_Core();
+    Shutdown_Core(true);
     Startup_Core();
   #endif
 
@@ -408,7 +395,7 @@ void RL_rebShutdown(bool clean)
     // for Valgrind/etc, but it shouldn't have any user-facing side-effects
     // besides that if you don't run it.
     //
-    Shutdown_Core();
+    Shutdown_Core(clean);
 }
 
 

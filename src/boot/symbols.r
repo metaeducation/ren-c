@@ -246,3 +246,10 @@ exit-code
 zlib
 gzip
 detect
+
+; Extensions use this for shutdown, when they are explicitly unloaded.
+;
+; !!! Plain modules do not have any shutdown mechanism, because they are not
+; "unloaded".  This speaks to missing constructor/destructor mechanics.
+;
+shutdown*

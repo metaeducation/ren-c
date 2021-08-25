@@ -27,9 +27,11 @@ REBOL [
     }
 ]
 
-; !!! Should call UNREGISTER-EVENT-HOOKS at some point (module finalizer?)
+; !!! Currently we have to call the startup* manually, this may change (e.g.
+; if the %prep-extension.r script noticed you had a startup* and put a call
+; in this position)
 ;
-register-event-hooks
+startup*
 
 
 ; WAIT* expects block to be pre-reduced, to ease stackless implementation

@@ -746,8 +746,6 @@ REBVAL *Get_Current_Exec(void)
 ***********************************************************************/
 
 static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
-    0,
-    0,
     Open_File,
     Close_File,
     Read_File,

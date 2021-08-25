@@ -60,103 +60,57 @@ static bool Redir_Inp = false;
 //**********************************************************************
 
 
-static void Close_Stdio(void)
+extern void Shutdown_Stdio(void);
+void Shutdown_Stdio(void)
 {
     if (Wchar_Buf) {
         free(Wchar_Buf);
         Wchar_Buf = nullptr;
     }
-}
-
-
-//
-//  Quit_IO: C
-//
-DEVICE_CMD Quit_IO(REBREQ *dr)
-{
-    REBDEV *dev = (REBDEV*)dr; // just to keep compiler happy above
 
   #if defined(REBOL_SMART_CONSOLE)
-    if (Term_IO)
+    if (Term_IO) {
         Quit_Terminal(Term_IO);
-    Term_IO = nullptr;
+        Term_IO = nullptr;
+    }
+  #endif
+}
+
+
+//
+//  Startup_Stdio: C
+//
+void Startup_Stdio(void)
+{
+    // Get the raw stdio handles:
+    Stdout_Handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    Stdin_Handle = GetStdHandle(STD_INPUT_HANDLE);
+    //StdErr_Handle = GetStdHandle(STD_ERROR_HANDLE);
+
+    Redir_Out = (GetFileType(Stdout_Handle) != FILE_TYPE_CHAR);
+    Redir_Inp = (GetFileType(Stdin_Handle) != FILE_TYPE_CHAR);
+
+    if (not Redir_Inp or not Redir_Out) {
+        //
+        // If either input or output is not redirected, preallocate
+        // a buffer for conversion from/to UTF-8.
+        //
+        Wchar_Buf = cast(WCHAR*,
+            malloc(sizeof(WCHAR) * WCHAR_BUF_CAPACITY)
+        );
+    }
+
+  #if defined(REBOL_SMART_CONSOLE)
+    //
+    // We can't sensibly manage the character position for an editing
+    // buffer if either the input or output are redirected.  This means
+    // no smart terminal functions (including history) are available.
+    //
+    if (not Redir_Inp and not Redir_Out)
+        Term_IO = Init_Terminal();
   #endif
 
-    Close_Stdio();
-    dev->flags &= ~RDF_OPEN;
-    return DR_DONE;
-}
-
-
-//
-//  Open_IO: C
-//
-DEVICE_CMD Open_IO(REBREQ *io)
-{
-    struct rebol_devreq *req = Req(io);
-
-    REBDEV *dev = req->device;
-
-    // Avoid opening the console twice (compare dev and req flags):
-    if (dev->flags & RDF_OPEN) {
-        // Device was opened earlier as null, so req must have that flag:
-        if (dev->flags & SF_DEV_NULL)
-            req->modes |= RDM_NULL;
-        req->flags |= RRF_OPEN;
-        return DR_DONE; // Do not do it again
-    }
-
-    if (not (req->modes & RDM_NULL)) {
-        // Get the raw stdio handles:
-        Stdout_Handle = GetStdHandle(STD_OUTPUT_HANDLE);
-        Stdin_Handle = GetStdHandle(STD_INPUT_HANDLE);
-        //StdErr_Handle = GetStdHandle(STD_ERROR_HANDLE);
-
-        Redir_Out = (GetFileType(Stdout_Handle) != FILE_TYPE_CHAR);
-        Redir_Inp = (GetFileType(Stdin_Handle) != FILE_TYPE_CHAR);
-
-        if (not Redir_Inp or not Redir_Out) {
-            //
-            // If either input or output is not redirected, preallocate
-            // a buffer for conversion from/to UTF-8.
-            //
-            Wchar_Buf = cast(WCHAR*,
-                malloc(sizeof(WCHAR) * WCHAR_BUF_CAPACITY)
-            );
-        }
-
-      #if defined(REBOL_SMART_CONSOLE)
-        //
-        // We can't sensibly manage the character position for an editing
-        // buffer if either the input or output are redirected.  This means
-        // no smart terminal functions (including history) are available.
-        //
-        if (not Redir_Inp and not Redir_Out)
-            Term_IO = Init_Terminal();
-      #endif
-    }
-    else
-        dev->flags |= SF_DEV_NULL;
-
-    req->flags |= RRF_OPEN;
-    dev->flags |= RDF_OPEN;
-
-    return DR_DONE;
-}
-
-
-//
-//  Close_IO: C
-//
-DEVICE_CMD Close_IO(REBREQ *req)
-{
-    REBDEV *dev = Req(req)->device;
-
-    Close_Stdio();
-
-    dev->flags &= ~RRF_OPEN;
-
-    return DR_DONE;
+    Dev_StdIO.flags |= RDF_OPEN;
 }
 
 
@@ -379,10 +333,8 @@ DEVICE_CMD Read_IO(REBREQ *io)
 
 static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] =
 {
-    0,  // init
-    Quit_IO,
-    Open_IO,
-    Close_IO,
+    0,
+    0,
     Read_IO,
     Write_IO,
     0,  // connect
@@ -394,4 +346,3 @@ DEFINE_DEV(
     Dev_StdIO,
     "Standard IO", 1, Dev_Cmds, RDC_MAX, sizeof(struct rebol_devreq)
 );
-
