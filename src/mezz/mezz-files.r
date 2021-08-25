@@ -139,16 +139,6 @@ read-line: function [
         ]
     ]
 
-    ; !!! R3-Alpha's input port was not opened until first INPUT.  You won't
-    ; find a comprehensive document explaining the full ramifications.
-    ;
-    all [
-        port? system/ports/input
-        open? system/ports/input
-    ] else [
-        system/ports/input: open [scheme: 'console]
-    ]
-
     if bad-word? data: read system/ports/input [
         ;
         ; !!! Currently VOID is returned from a port when you read it if
@@ -225,13 +215,6 @@ read-char: function [
 ][
     ; !!! See comments on the bad design in READ-LINE above, this repeats the
     ; code to try and get READ-CHAR to do *something*.
-
-    all [
-        port? system/ports/input
-        open? system/ports/input
-    ] else [
-        system/ports/input: open [scheme: 'console]
-    ]
 
     if bad-word? data: read system/ports/input [
         HALT
