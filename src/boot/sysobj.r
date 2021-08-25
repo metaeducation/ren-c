@@ -206,13 +206,13 @@ standard: make object! [
     ; like FILE and LINE would not conflict with parameters.
     ;
     error: make object! [
-        type: _
-        id: _
-        message: _ ; a BLOCK! template with arg substitution or just a STRING!
-        near: _
-        where: _
-        file: _
-        line: _
+        type: '
+        id: '
+        message: '  ; a BLOCK! template with arg substitution or just a STRING!
+        near: '
+        where: '
+        file: '
+        line: '
 
         ; Arguments will be allocated in the context at creation time if
         ; necessary (errors with no arguments will just have a message)

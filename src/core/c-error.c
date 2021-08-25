@@ -465,7 +465,14 @@ void Set_Location_Of_Error(
         if (Is_Action_Frame_Fulfilling(f))
             continue;
 
-        Get_Frame_Label_Or_Blank(DS_PUSH(), f);
+        Get_Frame_Label_Or_Nulled(DS_PUSH(), f);
+
+        // !!! We can't push a NULL to stack to pop in block.  BLANK! is one
+        // option...it's not as informative as (anonymous) but also takes up
+        // less space, so people might come to appreciate it.  Review.
+        //
+        if (IS_NULLED(DS_TOP))
+            Init_Blank(DS_TOP);
     }
     Init_Block(&vars->where, Pop_Stack_Values(dsp_orig));
 
@@ -479,7 +486,7 @@ void Set_Location_Of_Error(
     // LOAD was being called in the "where".  For the moment don't overwrite
     // any existing near, but a less-random design is needed here.
     //
-    if (IS_NULLED_OR_BLANK(&vars->nearest))
+    if (IS_NULLED(&vars->nearest))
         Init_Near_For_Frame(&vars->nearest, where);
 
     // Try to fill in the file and line information of the error from the
@@ -591,9 +598,9 @@ REB_R MAKE_Error(
         //
         // String argument to MAKE ERROR! makes a custom error from user:
         //
-        //     code: _  ; default is blank
-        //     type: _
-        //     id: _
+        //     code: '  ; default is null
+        //     type: '
+        //     id: '
         //     message: "whatever the string was"
         //
         // Minus the message, this is the default state of root_error.
@@ -601,8 +608,8 @@ REB_R MAKE_Error(
         e = Copy_Context_Shallow_Managed(root_error);
 
         vars = ERR_VARS(e);
-        assert(IS_BLANK(&vars->type));
-        assert(IS_BLANK(&vars->id));
+        assert(IS_NULLED(&vars->type));
+        assert(IS_NULLED(&vars->id));
 
         Init_Text(&vars->message, Copy_String_At(arg));
     }
@@ -644,7 +651,7 @@ REB_R MAKE_Error(
             if (message) {
                 assert(IS_TEXT(message) or IS_BLOCK(message));
 
-                if (not IS_BLANK(&vars->message))
+                if (not IS_NULLED(&vars->message))
                     fail (Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(&vars->message, message);
@@ -680,12 +687,12 @@ REB_R MAKE_Error(
         // good for general purposes.
 
         if (not (
-            (IS_WORD(&vars->id) or IS_BLANK(&vars->id))
-            and (IS_WORD(&vars->type) or IS_BLANK(&vars->type))
+            (IS_WORD(&vars->id) or IS_NULLED(&vars->id))
+            and (IS_WORD(&vars->type) or IS_NULLED(&vars->type))
             and (
                 IS_BLOCK(&vars->message)
                 or IS_TEXT(&vars->message)
-                or IS_BLANK(&vars->message)
+                or IS_NULLED(&vars->message)
             )
         )){
             fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(e)));
@@ -747,8 +754,8 @@ REBCTX *Make_Error_Managed_Core(
     DECLARE_LOCAL (type);
     const REBVAL *message;  // Stack values ("movable") are allowed
     if (cat_sym == SYM_0 and id_sym == SYM_0) {
-        Init_Blank(id);
-        Init_Blank(type);
+        Init_Nulled(id);
+        Init_Nulled(type);
         message = va_arg(*vaptr, const REBVAL*);
     }
     else {
@@ -992,7 +999,7 @@ REBCTX *Error_No_Arg(option(const REBSYM*) label, const REBSYM *symbol)
     if (label)
         Init_Word(label_word, unwrap(label));
     else
-        Init_Blank(label_word);
+        Init_Nulled(label_word);
 
     return Error_No_Arg_Raw(label_word, param_word);
 }
@@ -1086,7 +1093,7 @@ REBCTX *Error_Invalid_Arg(REBFRM *f, const REBPAR *param)
 
     DECLARE_LOCAL (label);
     if (not f->label)
-        Init_Blank(label);
+        Init_Nulled(label);
     else
         Init_Word(label, unwrap(f->label));
 
@@ -1119,7 +1126,7 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
 
     DECLARE_LOCAL (label);
     if (not f->label)
-        Init_Blank(label);
+        Init_Nulled(label);
     else
         Init_Word(label, unwrap(f->label));
 
@@ -1279,7 +1286,7 @@ REBCTX *Error_Arg_Type(
     Init_Word(param_word, KEY_SYMBOL(key));
 
     DECLARE_LOCAL (label);
-    Get_Frame_Label_Or_Blank(label, f);
+    Get_Frame_Label_Or_Nulled(label, f);
 
     if (FRM_PHASE(f) != f->original) {
         //
@@ -1329,7 +1336,7 @@ REBCTX *Error_Bad_Argless_Refine(const REBKEY *key)
 //
 REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
     DECLARE_LOCAL (label);
-    Get_Frame_Label_Or_Blank(label, f);
+    Get_Frame_Label_Or_Nulled(label, f);
 
     if (kind == REB_NULL)
         return Error_Needs_Return_Opt_Raw(label);
@@ -1343,7 +1350,7 @@ REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
 //
 REBCTX *Error_Bad_Invisible(REBFRM *f) {
     DECLARE_LOCAL (label);
-    Get_Frame_Label_Or_Blank(label, f);
+    Get_Frame_Label_Or_Nulled(label, f);
 
     return Error_Bad_Invisible_Raw(label);
 }
@@ -1561,7 +1568,7 @@ void MF_Error(REB_MOLD *mo, REBCEL(const*) v, bool form)
         Append_Codepoint(mo->series, ' ');
     }
     else
-        assert(IS_BLANK(&vars->type));  // no <type>
+        assert(IS_NULLED(&vars->type));  // no <type>
     Append_Ascii(mo->series, RM_ERROR_LABEL);  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
@@ -1575,7 +1582,7 @@ void MF_Error(REB_MOLD *mo, REBCEL(const*) v, bool form)
     // Form: ** Where: function
     REBVAL *where = SPECIFIC(&vars->where);
     if (
-        not IS_BLANK(where)
+        not IS_NULLED(where)
         and not (IS_BLOCK(where) and VAL_LEN_AT(where) == 0)
     ){
         Append_Codepoint(mo->series, '\n');
@@ -1585,7 +1592,7 @@ void MF_Error(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
     // Form: ** Near: location
     REBVAL *nearest = SPECIFIC(&vars->nearest);
-    if (not IS_BLANK(nearest)) {
+    if (not IS_NULLED(nearest)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_NEAR);
 
@@ -1613,7 +1620,7 @@ void MF_Error(REB_MOLD *mo, REBCEL(const*) v, bool form)
     // not a FILE!.
     //
     REBVAL *file = SPECIFIC(&vars->file);
-    if (not IS_BLANK(file)) {
+    if (not IS_NULLED(file)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_FILE);
         if (IS_FILE(file))
@@ -1624,7 +1631,7 @@ void MF_Error(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
     // Form: ** Line: line-number
     REBVAL *line = SPECIFIC(&vars->line);
-    if (not IS_BLANK(line)) {
+    if (not IS_NULLED(line)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_LINE);
         if (IS_INTEGER(line))

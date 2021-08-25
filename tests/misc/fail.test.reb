@@ -19,7 +19,7 @@
 
 ; A simple FAIL with a string message will be a generic error ID
 ;
-(e: trap [fail "hello"], (e/id = _) and (e/message = "hello"))
+(e: trap [fail "hello"], (e/id = null) and (e/message = "hello"))
 
 
 ; Failing instead with a WORD! will make the error have that ID
@@ -49,7 +49,7 @@
 
         e: trap [foo 10]
         did all [
-            e.id = _  ; no longer an invalid arg error
+            e.id = null  ; no longer an invalid arg error
             [foo 10] = copy/part e.near 2  ; still implicates callsite
         ]
     )

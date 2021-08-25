@@ -239,12 +239,12 @@ inline static REBCTX *Context_For_Frame_May_Manage(REBFRM *f) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-inline static void Get_Frame_Label_Or_Blank(RELVAL *out, REBFRM *f) {
+inline static void Get_Frame_Label_Or_Nulled(RELVAL *out, REBFRM *f) {
     assert(Is_Action_Frame(f));
     if (f->label)
         Init_Word(out, unwrap(f->label));  // WORD!, PATH!, or stored invoke
     else
-        Init_Blank(out);  // anonymous invocation
+        Init_Nulled(out);  // anonymous invocation
 }
 
 inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {

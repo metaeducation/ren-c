@@ -56,7 +56,7 @@
 )
 (
     a-value: make error! ""
-    blank? a-value/type
+    null? a-value/type
 )
 (
     a-value: make image! 1x1
