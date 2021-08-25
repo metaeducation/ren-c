@@ -338,14 +338,6 @@ standard: make object! [
         local-id: _
     ]
 
-    port-spec-serial: make port-spec-head [
-        speed: 115200
-        data-size: 8
-        parity: _
-        stop-bits: 1
-        flow-control: _ ;not supported on all systems
-    ]
-
     port-spec-signal: make port-spec-head [
         mask: [all]
     ]
