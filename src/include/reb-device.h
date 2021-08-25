@@ -112,10 +112,6 @@ enum {
 
 #define MAX_FILE_NAME 1022
 
-enum {
-    RDM_NULL = 1 << 0 // !!! "Null device", can this just be a boolean?
-};
-
 
 // Commands:
 typedef int32_t (*DEVICE_CMD_CFUNC)(REBREQ *req);

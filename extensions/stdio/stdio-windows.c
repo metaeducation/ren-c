@@ -127,11 +127,6 @@ DEVICE_CMD Write_IO(REBREQ *io)
 {
     struct rebol_devreq *req = Req(io);
 
-    if (req->modes & RDM_NULL) {
-        req->actual = req->length;
-        return DR_DONE;
-    }
-
     if (Stdout_Handle == nullptr)
         return DR_DONE;
 

@@ -89,11 +89,6 @@ DEVICE_CMD Write_IO(REBREQ *io)
 {
     struct rebol_devreq *req = Req(io);
 
-    if (req->modes & RDM_NULL) {
-        req->actual = req->length;
-        return DR_DONE;
-    }
-
     if (Std_Out >= 0) {
       #if defined(REBOL_SMART_CONSOLE)
         if (Term_IO) {
@@ -153,10 +148,6 @@ DEVICE_CMD Read_IO(REBREQ *io)
     REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(req->common.binary);
     REBLEN orig_len = VAL_LEN_AT(req->common.binary);
     assert(SER_AVAIL(bin) >= req->length);
-
-    // Null redirection (should be handled at PORT! level to not ask for read)
-    //
-    assert(not (req->modes & RDM_NULL));
 
   #if defined(REBOL_SMART_CONSOLE)
     assert(not Term_IO);  // should have handled in %p-stdio.h

@@ -324,9 +324,6 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         if (not (Req(req)->flags & RRF_OPEN))
             OS_DO_DEVICE_SYNC(req, RDC_OPEN);
 
-        if (Req(req)->modes & RDM_NULL)
-            return rebValue("copy #{}");
-
       #if defined(REBOL_SMART_CONSOLE)
         if (Term_IO) {  // e.g. no redirection (Term_IO is null if so)
             REBVAL *result = Read_Line(Term_IO);
