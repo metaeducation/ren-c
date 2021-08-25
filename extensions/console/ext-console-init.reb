@@ -51,14 +51,14 @@ boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose :print func [f] [if not system/options/quiet [do f]]
+    enclose :print func [f] [if not system.options.quiet [do f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose :print func [f] [if system/options/verbose [do f]]
+    enclose :print func [f] [if system.options.verbose [do f]]
 )
 
 
@@ -67,8 +67,12 @@ loud-print: redescribe [
 ; If a console skin has an error while running, the error will be trapped and
 ; the system will revert to using a copy of this base object.
 ;
-console!: make object! [
-    name: _
+; !!! We EXPORT the CONSOLE! object, because the concept was that users should
+; be able to create new instances of the console object.  What they'd do with
+; it hasn't really been worked through yet (nested REPLs?)  Review.
+;
+export console!: make object! [
+    name: '
     repl: true  ; used to identify this as a console! object
     is-loaded: false  ; if true then this is a loaded (external) skin
     was-updated: false  ; if true then console! object found in loaded skin
@@ -93,7 +97,7 @@ console!: make object! [
     ][
         boot-print [
             "Rebol 3 (Ren-C branch)"
-            mold compose [version: (system/version) build: (system/build)]
+            mold compose [version: (system.version) build: (system.build)]
             newline
         ]
 
@@ -214,8 +218,8 @@ console!: make object! [
     print-warning: meth [s] [print [warning reduce s]]
 
     print-error: meth [e [error!]] [
-        if :e/file = 'tmp-boot.r [
-            e/file: e/line: _  ; errors in console showed this, junk
+        if :e.file = 'tmp-boot.r [
+            e.file: e.line: _  ; errors in console showed this, junk
         ]
         print [e]
     ]
@@ -259,7 +263,7 @@ console!: make object! [
         dt: [delta-time]
         dp: [delta-profile]
 
-        list-shortcuts: [print [system/console/shortcuts]]
+        list-shortcuts: [print [system.console.shortcuts]]
         changes: [
             browse join https://github.com/metaeducation/ren-c/blob/master/ :[
                 %CHANGES.md "#"
@@ -291,12 +295,12 @@ start-console: func [
     /skin "Custom skin (e.g. derived from MAKE CONSOLE!) or file"
         [file! object!]
     <static>
-        o (system/options)  ; shorthand since options are often read/written
+        o (system.options)  ; shorthand since options are often read/written
 ][
-    === {MAKE CONSOLE! INSTANCE FOR SKINNING} ===
+    === MAKE CONSOLE! INSTANCE FOR SKINNING ===
 
-    ; Instantiate console! object into system/console.  This is updated via
-    ; %console-skin.reb if in system/options/resources
+    ; Instantiate console! object into system.console.  This is updated via
+    ; %console-skin.reb if in system.options.resources
 
     let skin-file: case [
         file? skin [skin]
@@ -310,9 +314,9 @@ start-console: func [
 
     all [
         skin-file
-        not find o/suppress skin-file
-        o/resources
-        exists? skin-file: join o/resources skin-file
+        not find o.suppress skin-file
+        o.resources
+        exists? skin-file: join o.resources skin-file
     ] then [
         trap [
             let new-skin: do load skin-file
@@ -323,48 +327,48 @@ start-console: func [
                 select new-skin 'repl  ; quacks like REPL, it's a console!
             ] then [
                 proto-skin: new-skin
-                proto-skin/was-updated: true
-                proto-skin/name: default ["updated"]
+                proto-skin.was-updated: true
+                proto-skin.name: default ["updated"]
             ]
 
-            proto-skin/is-loaded: true
-            proto-skin/name: default ["loaded"]
-            append o/loaded skin-file
+            proto-skin.is-loaded: true
+            proto-skin.name: default ["loaded"]
+            append o.loaded skin-file
 
         ] then e -> [
             skin-error: e  ; show error later if `--verbose`
-            proto-skin/name: "error"
+            proto-skin.name: "error"
         ]
     ]
 
-    proto-skin/name: default ["default"]
+    proto-skin.name: default ["default"]
 
-    system/console: proto-skin
+    system.console: proto-skin
 
-    === {HOOK FOR HELP ABOUT LAST ERROR} ===
+    === HOOK FOR HELP ABOUT LAST ERROR ===
 
     ; The WHY command lets the user get help about the last error printed.
     ; To do so, it has to save the last error.  Adjust the error printing
     ; hook to save the last error printed.  Also inform people of the
     ; existence of the WHY function on the first error delivery.
     ;
-    proto-skin/print-error: adapt :proto-skin/print-error [
-        if not system/state/last-error [
-            system/console/print-info "Info: use WHY for error information"
+    proto-skin.print-error: adapt :proto-skin.print-error [
+        if not system.state.last-error [
+            system.console.print-info "Info: use WHY for error information"
         ]
 
-        system/state/last-error: e
+        system.state.last-error: e
     ]
 
-    === {PRINT BANNER} ===
+    === PRINT BANNER ===
 
-    if o/about [
+    if o.about [
         boot-print make-banner boot-banner  ; the fancier banner
     ]
 
-    system/console/print-greeting
+    system.console.print-greeting
 
-    === {VERBOSE CONSOLE SKINNING MESSAGES} ===
+    === VERBOSE CONSOLE SKINNING MESSAGES ===
 
     loud-print [newline {Console skinning:} newline]
     if skin-error [
@@ -376,13 +380,13 @@ start-console: func [
     ] else [
        loud-print [
             space space
-            if proto-skin/is-loaded [
+            if proto-skin.is-loaded [
                 {Loaded skin}
             ] else [
                 {Skin does not exist}
             ]
             "-" skin-file
-            "(CONSOLE" if not proto-skin/was-updated [{not}] "updated)"
+            "(CONSOLE" if not proto-skin.was-updated [{not}] "updated)"
         ]
     ]
 ]
@@ -402,7 +406,7 @@ ext-console-impl: func [
     skin "Console skin to use if the console has to be launched"
         [<opt> object! file!]
 ][
-    === {HOOK RETURN FUNCTION TO GIVE EMITTED INSTRUCTION} ===
+    === HOOK RETURN FUNCTION TO GIVE EMITTED INSTRUCTION ===
 
     ; The C caller can be given a BLOCK! representing an code the console is
     ; executing on its own behalf, as part of its "skin".  Building these
@@ -444,10 +448,10 @@ ext-console-impl: func [
     ][
         switch state [
             <prompt> [
-                emit [system/console/print-gap]
-                emit [system/console/print-prompt]
+                emit [system.console.print-gap]
+                emit [system.console.print-prompt]
                 emit [reduce [
-                    try system/console/input-hook  ; can return be NULL
+                    try system.console.input-hook  ; can return be NULL
                 ]]  ; gather first line (or null), put in BLOCK!
             ]
             <halt> [
@@ -491,7 +495,7 @@ ext-console-impl: func [
         ]
     ]
 
-    === {DO STARTUP HOOK IF THIS IS THE FIRST TIME THE CONSOLE HAS RUN} ===
+    === DO STARTUP HOOK IF THIS IS THE FIRST TIME THE CONSOLE HAS RUN ===
 
     if not prior [
         ;
@@ -503,15 +507,15 @@ ext-console-impl: func [
         ;
         assert [result = '~startup~]
         any [
-            unset? 'system/console
-            not system/console
+            unset? 'system.console
+            not system.console
         ] then [
             emit [start-console/skin '(<*> skin)]
         ]
         return <prompt>
     ]
 
-    === {GATHER DIRECTIVES} ===
+    === GATHER DIRECTIVES ===
 
     ; #directives may be at the head of BLOCK!s the console ran for itself.
     ;
@@ -527,21 +531,21 @@ ext-console-impl: func [
         return <prompt>
     ]
 
-    === {QUIT handling} ===
+    === QUIT handling ===
 
     ; https://en.wikipedia.org/wiki/Exit_status
 
     all [
         error? :result
-        result/id = 'no-catch
-        :result/arg2 = :quit  ; throw's /NAME
+        result.id = 'no-catch
+        :result.arg2 = :quit  ; throw's /NAME
     ] then [
-        return switch type of :result/arg1 [
+        return switch type of :result.arg1 [
             bad-word! [0]  ; plain QUIT, no /WITH, call that success
 
-            logic! [either :result/arg1 [0] [1]]  ; logic true is success
+            logic! [either :result.arg1 [0] [1]]  ; logic true is success
 
-            integer! [result/arg1]  ; Note: may be too big for status range
+            integer! [result.arg1]  ; Note: may be too big for status range
 
             error! [1]  ; currently there's no default error-to-int mapping
         ] else [
@@ -549,14 +553,14 @@ ext-console-impl: func [
         ]
     ]
 
-    === {HALT handling (e.g. Ctrl-C)} ===
+    === HALT handling (e.g. Ctrl-C) ===
 
     ; Note: Escape is handled during input gathering by a dedicated signal.
 
     all [
         error? :result
-        result/id = 'no-catch
-        :result/arg2 = :halt  ; throw's /NAME
+        result.id = 'no-catch
+        :result.arg2 = :halt  ; throw's /NAME
     ] then [
         if find directives #quit-if-halt [
             return 128 + 2 ; standard cancellation exit status for bash
@@ -568,15 +572,15 @@ ext-console-impl: func [
         if find directives #unskin-if-halt [
             print "** UNSAFE HALT ENCOUNTERED IN CONSOLE SKIN"
             print "** REVERTING TO DEFAULT SKIN"
-            system/console: make console! []
+            system.console: make console! []
             print mold prior  ; Might help debug to see what was running
         ]
         emit #unskin-if-halt
-        emit [system/console/print-halted]
+        emit [system.console.print-halted]
         return <prompt>
     ]
 
-    === {RESUME handling} ===
+    === RESUME handling ===
 
     ; !!! This is based on debugger work-in-progress.  A nested console that
     ; has been invoked via a breakpoint the console will sandbox most errors
@@ -587,28 +591,28 @@ ext-console-impl: func [
     all [
         in lib 'resume
         error? :result
-        result/id = 'no-catch
-        :result/arg2 = :lib/resume  ; throw's /NAME
+        result.id = 'no-catch
+        :result.arg2 = :lib.resume  ; throw's /NAME
     ] then [
         assert [match [meta-group! handle!] :result/arg1]
         if not resumable [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
-            e/near: result/near
-            e/where: result/where
-            emit [system/console/print-error (<*> e)]
+            e.near: result.near
+            e.where: result.where
+            emit [system.console.print-error (<*> e)]
             return <prompt>
         ]
-        return :result/arg1
+        return :result.arg1
     ]
 
     if error? :result [  ; all other errors
         ;
-        ; Errors can occur during MAIN-STARTUP, before the SYSTEM/CONSOLE has
+        ; Errors can occur during MAIN-STARTUP, before the system.CONSOLE has
         ; a chance to be initialized (it may *never* be initialized if the
         ; interpreter is being called non-interactively from the shell).
         ;
-        if object? system/console [
-            emit [system/console/print-error (<*> :result)]
+        if object? system.console [
+            emit [system.console.print-error (<*> :result)]
         ] else [
             emit [print [(<*> :result)]]
         ]
@@ -649,14 +653,14 @@ ext-console-impl: func [
                 print mold result
             ] then [
                 print "** REVERTING TO DEFAULT SKIN"
-                system/console: make console! []
+                system.console: make console! []
                 print mold prior  ; Might help debug to see what was running
             ]
         ]
         return <prompt>
     ]
 
-    === {HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF} ===
+    === HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF ===
 
     ensure [<opt> quoted! bad-word! blank!] result
 
@@ -669,16 +673,17 @@ ext-console-impl: func [
 
     if group? prior [
         ;
-        ; Working with COMPOSE here is a bit tricky because we can't compose
-        ; in a NULL.  So we have to do a quoted form and then unquote it in
-        ; the invocation.  This is more pleasing than making PRINT-RESULT
-        ; speak in a quoted protocol for the sake of sensing isotopes.
+        ; RESULT is a "meta" value, and we want to pass an UNMETA'd form to
+        ; `system.console.print` (because it has its own meta on its parameter
+        ; so it can sense isotopes).  But we're composing code to run, so
+        ; a quote has to be thrown into the compose to avoid losing the meta
+        ; status during evaluation.
         ;
-        emit [system/console/print-result unmeta (<*> quote result)]
+        emit [system.console.print-result unmeta '(<*> result)]
         return <prompt>
     ]
 
-    === {HANDLE CONTINUATION THE CONSOLE SENT TO ITSELF} ===
+    === HANDLE CONTINUATION THE CONSOLE SENT TO ITSELF ===
 
     assert [block? prior]
 
@@ -732,12 +737,12 @@ ext-console-impl: func [
         ; it's complete (or until an empty line signals to just report
         ; the error as-is)
         ;
-        if error/id = 'scan-missing [
+        if error.id = 'scan-missing [
             ;
             ; Error message tells you what's missing, not what's open and
             ; needs to be closed.  Invert the symbol.
             ;
-            switch error/arg1 [
+            switch error.arg1 [
                 "}" ["{"]
                 ")" ["("]
                 "]" ["["]
@@ -752,7 +757,7 @@ ext-console-impl: func [
                 write-stdout unspaced [unclosed "\" _ _]
                 emit [reduce [  ; reduce will runs in sandbox
                     ((<*> result))  ; splice previous inert literal lines
-                    system/console/input-hook  ; hook to run in sandbox
+                    system.console.input-hook  ; hook to run in sandbox
                 ]]
 
                 return block!
@@ -762,30 +767,30 @@ ext-console-impl: func [
         ; Could be an unclosed double quote (unclosed tag?) which more input
         ; on a new line cannot legally close ATM
         ;
-        emit [system/console/print-error (<*> error)]
+        emit [system.console.print-error (<*> error)]
         return <prompt>
     ]
 
-    === {HANDLE CODE THAT HAS BEEN SUCCESSFULLY LOADED} ===
+    === HANDLE CODE THAT HAS BEEN SUCCESSFULLY LOADED ===
 
-    if let shortcut: select system/console/shortcuts try first code [
+    if let shortcut: select system.console.shortcuts try first code [
         ;
         ; Shortcuts like `q => [quit]`, `d => [dump]`
         ;
-        if (bound? code/1) and (set? code/1) [
+        if (bound? code.1) and (set? code.1) [
             ;
             ; Help confused user who might not know about the shortcut not
             ; panic by giving them a message.  Reduce noise for the casual
             ; shortcut by only doing so when a bound variable exists.
             ;
-            emit [system/console/print-warning (<*>
+            emit [system.console.print-warning (<*>
                 spaced [
-                    uppercase to text! code/1
+                    uppercase to text! code.1
                         "interpreted by console as:" mold :shortcut
                 ]
             )]
-            emit [system/console/print-warning (<*>
-                spaced ["use" to get-word! code/1 "to get variable."]
+            emit [system.console.print-warning (<*>
+                spaced ["use" to get-word! code.1 "to get variable."]
             )]
         ]
         take code
@@ -797,25 +802,32 @@ ext-console-impl: func [
     emit #unskin-if-halt  ; Ctrl-C during dialect hook is a problem
     emit [
         comment {not all users may want CONST result, review configurability}
-        as group! system/console/dialect-hook (<*> code)
+        as group! system.console.dialect-hook (<*> code)
     ]
     return group!  ; a group RESULT should come back to HOST-CONSOLE
 ]
 
 
-why: func [
+=== WHY and UPGRADE (do these belong here?) ===
+
+; We can choose to expose certain functionality only in the console prompt,
+; vs. needing to be added to global visibility.  Adding to the lib context
+; means these will be seen by scripts, e.g. `do "why"` will work.
+;
+
+export why: func [
     "Explain the last error in more detail."
     return: <none>
     'err [<end> word! path! error!] "Optional error value"
 ][
-    let err: default [system/state/last-error]
+    let err: default [system.state.last-error]
 
     if match [word! path!] err [
         err: get err
     ]
 
     if error? err [
-        err: lowercase unspaced [err/type #"-" err/id]
+        err: lowercase unspaced [err.type "-" err.id]
         browse join http://www.rebol.com/r3/docs/errors/ reduce [err ".html"]
     ] else [
         print "No information is available."
@@ -823,7 +835,7 @@ why: func [
 ]
 
 
-upgrade: func [
+export upgrade: func [
     "Check for newer versions."
     return: <none>
 ][
@@ -831,20 +843,4 @@ upgrade: func [
     ; to define this as a function you could call from code?
     ;
     do <upgrade>
-]
-
-
-export [
-    ;
-    ; !!! The concept was that users should be able to create new instances of
-    ; the console object; this hasn't been really worked through.
-    ;
-    console! [object!]
-
-    ; We can choose to expose certain functionality only in the console prompt,
-    ; vs. needing to be added to global visibility.  Adding to the lib context
-    ; means these will be seen by scripts, e.g. `do "why"` will work.
-    ;
-    why [action!]
-    upgrade [action!]
 ]
