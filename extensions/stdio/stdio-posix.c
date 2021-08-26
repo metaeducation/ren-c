@@ -24,7 +24,14 @@
 // opening a console window if necessary.
 //
 
+
 #include "sys-core.h"
+
+// Note: We are only using the limited facilities of stdin and fgetc().
+// Generally speaking, we avoid usage of other stdio functions in the system.
+// (Outside of printf() in debug builds).
+//
+#include <stdio.h>
 
 #include <fcntl.h>
 #include <errno.h>

@@ -100,8 +100,7 @@
 #include <stddef.h> // for offsetof()
 
 
-//
-// DISABLE STDIO.H IN RELEASE BUILD
+//=//// ALLOW ONLY MINIMAL USE OF STDIO.H IN RELEASE BUILDS ////////////////=//
 //
 // The core build of Rebol published in R3-Alpha sought to not be dependent
 // on <stdio.h>.  Since Rebol has richer tools like WORD!s and BLOCK! for
@@ -111,35 +110,19 @@
 //
 // http://blog.hostilefork.com/where-printf-rubber-meets-road/
 //
-// To formalize this rule, these definitions will help catch uses of <stdio.h>
-// in the release build, and give a hopefully informative error.
+// Attempts to use macro trickery to make inclusions of <stdio.h> in release
+// build were used for some time.  These tricks began to run afoul of recent
+// compilers that are cavalier about making the inclusion of one standard
+// header mean you must want them all...so trying to avoid printf() being
+// *available* was nigh impossible.
 //
-#if defined(NDEBUG) && !defined(DEBUG_STDIO_OK)
+// Current focus on avoiding dependencies on printf() are at the object and
+// linker level, where in general it's more direct to examine bloat.
+//
+#if !defined(NDEBUG) || defined(DEBUG_PRINTF_FAIL_LOCATIONS)
     //
-    // `stdin` is required to be macro https://en.cppreference.com/w/c/io
-    //
-    #if defined(__clang__)
-        //
-        // !!! At least as of XCode 12.0 and Clang 9.0.1, including basic
-        // system headers will force the inclusion of <stdio.h>.  If someone
-        // wants to dig into why that is, they may...but tolerate it for now.
-        // Checking if `printf` and such makes it into the link would require
-        // dumping the library symbols, in general anyway...
-        //
-    #elif defined(stdin) and !defined(REBOL_ALLOW_STDIO_IN_RELEASE_BUILD)
-        #error "<stdio.h> included prior to %sys-core.h in release build"
-    #endif
-
-    #define printf dont_include_stdio_h
-    #define fprintf dont_include_stdio_h
-#else
-    // Desire to not bake in <stdio.h> notwithstanding, in debug builds it
-    // can be convenient (or even essential) to have access to stdio.  This
-    // is especially true when trying to debug the core I/O routines and
-    // unicode/UTF8 conversions that Rebol seeks to replace stdio with.
-    //
-    // Hence debug builds are allowed to use stdio.h conveniently.  The
-    // release build should catch if any of these aren't #if !defined(NDEBUG)
+    // Debug builds may use printf() and such liberally (helps to debug the
+    // Ren-C I/O system itself!)
     //
     #include <stdio.h>
 

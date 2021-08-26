@@ -491,7 +491,7 @@ inline static void Drop_Frame_Core(REBFRM *f) {
     REBNOD *n = f->alloc_value_list;
     while (n != f) {
         REBARR *a = ARR(n);
-      #if defined(DEBUG_STDIO_OK)
+      #if !defined(NDEBUG)
         printf("API handle was allocated but not freed, panic'ing leak\n");
       #endif
         panic (a);

@@ -22,16 +22,6 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-// !!! It is difficult to debug booting the emscripten build without some
-// form of IO available.  printf() will write to the JS console in the JS
-// build, so leverage that in WRITE-STDOUT.
-//
-#ifdef TO_EMSCRIPTEN
-    #if !defined(DEBUG_STDIO_OK)
-        #define DEBUG_STDIO_OK
-    #endif
-#endif
-
 #include "sys-core.h"
 
 
@@ -136,9 +126,9 @@ REBNATIVE(write_stdout)
 
     REBVAL *v = ARG(value);
 
-  #if !defined(DEBUG_STDIO_OK)
+  #if defined(NDEBUG)
     UNUSED(v);
-    fail ("Boot WRITE-STDOUT needs DEBUG_STDIO_OK or loaded I/O module");
+    fail ("Boot WRITE-STDOUT needs to be a debug build or loaded I/O module");
   #else
     if (IS_TEXT(v)) {
         printf("WRITE-STDOUT: %s\n", cast(const char*, STR_HEAD(VAL_STRING(v))));

@@ -755,20 +755,6 @@ e-lib/emit 'ver {
          */
         #define LIBREBOL_NOMACRO(api) api##_inline
     #else
-        /*
-         * If using C++, variadic calls can be type-checked to make sure only
-         * legal arguments are passed.  It also means one can pass literals
-         * and have them coerced (e.g. integer => INTEGER! or bool => LOGIC!).
-         *
-         * Note: In MSVC, `#include <string>` will pull in `<xstring>` that
-         * then sucks in `<iosfwd>` which brings in `<cstdio>`.  This means
-         * that including the release version of %sys-core.h will see an
-         * inclusion of stdio that it doesn't want.  Bypass the assertion
-         * for this case, and hope the C build maintains dependency purity.
-         */
-        #ifdef TO_WINDOWS
-            #define REBOL_ALLOW_STDIO_IN_RELEASE_BUILD  // ^^-- see above
-        #endif
         #include <string>
         #include <type_traits>
 

@@ -44,7 +44,6 @@
 #if defined(REBOL_SMART_CONSOLE)
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
 #include <windows.h>

@@ -245,10 +245,6 @@ Special internal defines used by RT, not Host-Kit developers:
 // on and off as time permits.
 //
 #if !defined(NDEBUG)
-    #ifndef DEBUG_STDIO_OK // !!! TCC currently respecifying this, review
-        #define DEBUG_STDIO_OK
-    #endif
-
     #define DEBUG_HAS_PROBE
     #define DEBUG_FANCY_PANIC
     #define DEBUG_MONITOR_SERIES
@@ -431,9 +427,6 @@ Special internal defines used by RT, not Host-Kit developers:
     #if !defined(DEBUG_CELL_WRITABILITY)
         #error "DEBUG_MEMORY_ALIGN requires DEBUG_CELL_WRITABILITY"
     #endif
-    #if !defined(DEBUG_STDIO_OK)
-        #error "DEBUG_MEMORY_ALIGN requires DEBUG_STDIO_OK"
-    #endif
 #endif
 
 
@@ -449,10 +442,8 @@ Special internal defines used by RT, not Host-Kit developers:
 // switch does a printf of the __FILE__ and __LINE__ of fail() callsites.
 //
 #ifdef DEBUG_PRINTF_FAIL_LOCATIONS
-    #if !defined(DEBUG_STDIO_OK)
-        #error "DEBUG_PRINTF_FAIL_LOCATIONS requires DEBUG_STDIO_OK"
-    #endif
 #endif
+
 
 // It would seem that cells like REB_BLANK which don't use their payloads
 // could just leave them uninitialized...saving time on the assignments.

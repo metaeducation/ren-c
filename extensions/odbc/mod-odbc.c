@@ -155,7 +155,7 @@ REBVAL *Error_ODBC_Core(
     // build to have a bit more information about exactly which ODBC API
     // call is having the problem.
     //
-  #ifdef DEBUG_STDIO_OK
+  #if !defined(NDEBUG)
     printf("!! Couldn't get ODBC Error Message: %s @ %d\n", file, line);
   #else
     UNUSED(file);
@@ -186,7 +186,7 @@ REBVAL *Error_ODBC_Core(
     return rebValue("make error! {Undocumented SQLRESULT in SQLGetDiagRecW}");
 }
 
-#if defined(DEBUG_STDIO_OK)  // report file/line info with mystery errors
+#if !defined(NDEBUG)  // report file/line info with mystery errors
     #define Error_ODBC(handleType,handle) \
         Error_ODBC_Core((handleType), (handle), __FILE__, __LINE__)
 #else

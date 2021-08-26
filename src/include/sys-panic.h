@@ -112,7 +112,7 @@
     #if defined(TO_HAIKU) || defined(TO_EMSCRIPTEN)
         inline static void debug_break() {
             int x = 0;
-          #ifdef DEBUG_STDIO_OK
+          #if !defined(NDEBUG)
             printf("debug_break() called\n");
             fflush(stdout);
           #endif

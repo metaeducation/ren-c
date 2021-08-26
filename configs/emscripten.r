@@ -103,7 +103,6 @@ cflags: compose [
     ((if debug-javascript-extension [[
         {-DDEBUG_JAVASCRIPT_EXTENSION}
 
-        {-DDEBUG_STDIO_OK}
         {-DDEBUG_HAS_PROBE}
         {-DDEBUG_FANCY_PANIC}
         {-DDEBUG_COUNT_TICKS}

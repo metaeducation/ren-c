@@ -114,7 +114,7 @@ static void Check_Basics(void)
     REBYTE d = SECOND_BYTE(flags);
     uint16_t y = SECOND_UINT16(flags);
     if (m != 4 or d != 21 or y != 1975) {
-      #if defined(DEBUG_STDIO_OK)
+      #if !defined(NDEBUG)
         printf("m = %u, d = %u, y = %u\n", m, d, y);
       #endif
         panic ("Bad composed integer assignment for byte-ordering macro.");
