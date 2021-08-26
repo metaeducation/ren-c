@@ -511,12 +511,12 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
         // was reached on a partial read() of a UTF-8 character, we may need
         // to do more reading to get the missing bytes here.
 
-        char encoded[4];
+        char encoded[UNI_ENCODED_MAX];
         int encoded_size = 1 + rebUnboxInteger(
             "trailing-bytes-for-utf8",
                 rebR(rebInteger(cast(unsigned char, *t->cp)))
         );
-        assert(encoded_size <= 4);
+        assert(encoded_size <= UNI_ENCODED_MAX);
 
         // `cp` can jump back to the beginning of the buffer on each read.
         // So build up an encoded UTF-8 character as continuous bytes so

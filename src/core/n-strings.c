@@ -191,7 +191,7 @@ REBNATIVE(enhex)
         //
         // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=43949
         //
-        REBYTE encoded[6];
+        REBYTE encoded[UNI_ENCODED_MAX];
         REBLEN encoded_size;
 
         if (c >= 0x80) {  // all non-ASCII characters *must* be percent encoded
