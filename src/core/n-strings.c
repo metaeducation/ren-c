@@ -60,17 +60,18 @@ REBNATIVE(delimit)
     REBVAL *delimiter = ARG(delimiter);
     REBVAL *line = ARG(line);
 
-    DECLARE_MOLD (mo);
-    Push_Mold(mo);
-
-    // If /HEAD is used, speculatively start the mold out with the delimiter
-    // (will be thrown away if the product turns out to be nothing)
-    //
-    if (REF(head))
-        Form_Value(mo, delimiter);
-
     if (IS_TEXT(line) or IS_ISSUE(line)) {  // can shortcut, no evals needed
         //
+        // Note: It's hard to unify this mold with the mold that uses a frame
+        // due to the asserts on states balancing.  Easiest to repeat a small
+        // bit of code!
+        //
+        DECLARE_MOLD (mo);
+        Push_Mold(mo);
+
+        if (REF(head))
+            Form_Value(mo, delimiter);
+
         // Note: This path used to shortcut with running TO TEXT! if not using
         // /HEAD or /TAIL options, but it's probably break-even to invoke the
         // evaluator.  Review optimizations later.
@@ -89,6 +90,15 @@ REBNATIVE(delimit)
 
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
     Push_Frame(nullptr, f);
+
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
+
+    // If /HEAD is used, speculatively start the mold out with the delimiter
+    // (will be thrown away if the block turns out to make nothing)
+    //
+    if (REF(head))
+        Form_Value(mo, delimiter);
 
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank

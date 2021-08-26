@@ -78,3 +78,18 @@
         ]
     )
 ]
+
+; DELIMIT/HEAD/TAIL
+[
+    ("a,b,c," = delimit/tail "," ["a" "b" "c"])
+    ("a," = delimit/tail "," "a")
+
+    (",a,b,c" = delimit/head "," ["a" "b" "c"])
+    (",a" = delimit/head "," "a")
+
+    (",a,b,c," = delimit/head/tail "," ["a" "b" "c"])
+    (",a," = delimit/head/tail "," "a")
+
+    (null = delimit/head/tail "," [null])
+    (null = delimit/head/tail "," _)
+]
