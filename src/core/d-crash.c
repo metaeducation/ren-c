@@ -276,7 +276,7 @@ REBNATIVE(fail)
     PROBE(ARG(blame));
     PROBE(ARG(where));
 
-    rebElide(Lib(WRITE_STDOUT), Lib(DELIMIT), SPACE_VALUE, ARG(reason));
+    rebElide(Lib(WRITE_STDOUT), Lib(DELIMIT), Lib(SPACE), ARG(reason));
   #endif
 
     panic (ARG(reason));

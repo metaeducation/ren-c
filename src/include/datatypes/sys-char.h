@@ -173,12 +173,6 @@ inline static REBUNI Decode_UTF16_Pair(const REBWCHAR *units)
     return adjusted;
 }
 
-#define SPACE_VALUE \
-    Root_Space_Char
-
-#define NEWLINE_VALUE \
-    Root_Newline_Char
-
 enum {
     BEL = 7,
     BS = 8,

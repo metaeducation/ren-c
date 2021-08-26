@@ -143,9 +143,6 @@ PVAR REBARR* PG_2_Blanks_Array;  // surrogate array used by `/` paths
 
 PVAR REBARR* PG_Inaccessible_Varlist;  // singular inaccessible varlist
 
-PVAR REBVAL *Root_Space_Char; // ' ' as a CHAR!
-PVAR REBVAL *Root_Newline_Char; // '\n' as a CHAR!
-
 PVAR REBVAL *Root_Action_Meta;
 
 PVAR REBVAL *Root_Stackoverflow_Error;  // made in advance, avoids extra calls

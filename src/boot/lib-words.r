@@ -36,7 +36,11 @@ on
 off
 yes
 no
+
 blank
+
+newline
+space
 
 ; The `sys context` and `system object` are different things, which seems a
 ; bit confusing.  Review.

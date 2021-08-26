@@ -224,6 +224,8 @@ static void Startup_Lib(void)
     Init_False(force_Lib(FALSE));
     assert(IS_TRUTHY(Lib(TRUE)) and VAL_LOGIC(Lib(TRUE)) == true);
     assert(IS_FALSEY(Lib(FALSE)) and VAL_LOGIC(Lib(FALSE)) == false);
+
+    // !!! Other constants are just initialized as part of Startup_Base().
 }
 
 
@@ -412,18 +414,10 @@ static void Init_Root_Vars(void)
 
     Root_Empty_Binary = Init_Binary(Alloc_Value(), Make_Binary(0));
     Force_Value_Frozen_Deep(Root_Empty_Binary);
-
-    Root_Space_Char = rebChar(' ');
-    Root_Newline_Char = rebChar('\n');
 }
 
 static void Shutdown_Root_Vars(void)
 {
-    rebRelease(Root_Space_Char);
-    Root_Space_Char = nullptr;
-    rebRelease(Root_Newline_Char);
-    Root_Newline_Char = nullptr;
-
     rebRelease(Root_Empty_Text);
     Root_Empty_Text = nullptr;
     rebRelease(Root_Empty_Block);
