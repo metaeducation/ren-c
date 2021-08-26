@@ -496,7 +496,7 @@ unset: redescribe [
 unset?: func [
     {Determine if a variable looks up to an ~unset~ isotope}
     return: [logic!]
-    var [word! path!]
+    var [word! path! tuple!]
 ][
     return '~unset~ = ^ get/any var
 ]
@@ -504,7 +504,7 @@ unset?: func [
 set?: func [
     {Determine if a variable does not look up to an ~unset~ isotope}
     return: [logic!]
-    var [word! path!]
+    var [word! path! tuple!]
 ][
     return '~unset~ <> ^ get/any var
 ]
