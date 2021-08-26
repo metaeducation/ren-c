@@ -647,7 +647,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
             return e_buffered;  // pass anything we gathered so far first
 
         if (Read_Input_Records_Interrupted(t))
-            return rebValue("~halt~");  // !!! Is BAD-WORD! a good choice?
+            return rebValue("'~halt~");
 
         assert(t->in != t->in_tail);
     }

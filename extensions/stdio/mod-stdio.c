@@ -30,6 +30,23 @@
 #include "readline.h"
 
 
+// See %stdio-posix.c and %stdio-windows.c for the differing implementations of
+// what has to be done on startup and shutdown of stdin, stdout, or smart
+// terminal services.
+//
+extern void Startup_Stdio();
+extern void Shutdown_Stdio();
+
+// This used to be a function you had to build a "device request" to interact
+// with.  But so long as our file I/O is synchronous, there's no reason for
+// that layer.  And if we were going to do asynchronous file I/O it should
+// be done with a solidified layer like libuv, vs. what was in R3-Alpha.
+//
+extern void Write_IO(const REBVAL *data, REBLEN len);
+
+extern bool Read_Stdin_Byte_Interrupted(bool *eof, REBYTE *out);
+
+
 extern REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
 
 
@@ -129,6 +146,218 @@ REBNATIVE(write_stdout)
     }
 
     return Init_None(D_OUT);
+}
+
+
+//
+//  export read-stdin: native [
+//
+//  {Read binary data from standard input}
+//
+//      return: "Null if no more input is available, ~escape~ if aborted"
+//          [<opt> binary! bad-word!]
+//      eof: "Set to true if end of file reached"
+//          [logic!]
+//
+//      size "Maximum size of input to read"
+//          [integer!]
+//  ]
+//
+REBNATIVE(read_stdin)
+//
+// READ-LINE caters to the needs of the console and always returns TEXT!.  So
+// it will error if input is redirected from a file that is not UTF-8.  But
+// but READ-STDIN is for piping arbitrary data.
+//
+// There's a lot of parameterization someone might want here, involving
+// timeouts and such.  Those designs should probably be looking to libuv or
+// Boost.ASIO for design inspiration.
+{
+    STDIO_INCLUDE_PARAMS_OF_READ_STDIN;
+
+  #ifdef REBOL_SMART_CONSOLE
+    if (Term_IO) {
+        fail ("READ-STDIN for smart console not written yet");
+    }
+    else  // we have a smart console but aren't using it (redirected to file?)
+  #endif
+    {
+        // For the moment, just do a terribly inefficient implementation that
+        // just APPENDs to a BINARY!.
+        //
+        bool eof = false;
+
+        REBSIZ max = VAL_UINT32(ARG(size));
+        REBBIN *bin = Make_Binary(max);
+        REBLEN i = 0;
+        while (BIN_LEN(bin) < max) {
+            if (Read_Stdin_Byte_Interrupted(&eof, BIN_AT(bin, i))) {  // Ctrl-C
+                if (rebWasHalting())
+                    rebJumps(Lib(HALT));
+                fail ("Interruption of READ-STDIN for reason other than HALT?");
+            }
+            if (eof)
+                break;
+            ++i;
+        }
+        TERM_BIN_LEN(bin, i);
+
+        if (REF(eof))
+            rebElide(Lib(SET), ARG(eof), rebL(eof));
+
+        return Init_Binary(D_OUT, bin);
+    }
+}
+
+
+//
+//  export read-line: native [
+//
+//  {Read a line from standard input, with smart line editing if available}
+//
+//      return: "Null if no more input is available, ~escape~ if aborted"
+//          [<opt> text! bad-word!]
+//      eof: "Set to true if end of file reached"
+//          [logic!]
+//
+//      /raw "Include the newline, and allow reaching end of file with no line"
+//      /hide "Mask input with a * character (not implemented)"
+//  ]
+//
+REBNATIVE(read_line)
+{
+    STDIO_INCLUDE_PARAMS_OF_READ_LINE;
+
+    if (REF(hide))
+        fail (
+            "READ-LINE/HIDE not yet implemented:"
+            " https://github.com/rebol/rebol-issues/issues/476"
+        );
+
+    // !!! When this primitive was based on system.ports.input, you could get
+    // ~halt~ returned from a READ operation when there had been a Ctrl-C.
+    // The reasoning was that when the lower-level read() call sensed it was
+    // interrupted it was not a safe time to throw across API processing.  This
+    // meant READ-LINE would raise the actual halt signal.  That idea should
+    // be reviewed in light of this new entry point.
+
+    REBVAL *line;
+    bool eof;
+
+  #ifdef REBOL_SMART_CONSOLE
+    if (Term_IO) {
+        line = Read_Line(Term_IO);
+        if (rebDid(rebQ(line), "= '~halt~"))
+            rebJumps(Lib(HALT));
+
+        // !!! A concept for the smart terminal is that if you were running an
+        // interactive console, then you could indicate an end of file for the
+        // currently running command...but that would only be an end of file
+        // until it ended.  Then the input would appear to come back.
+        //
+        eof = false;
+    }
+    else  // we have a smart console but aren't using it (redirected to file?)
+  #endif
+    {
+        // FWIW: There is no standard getline() function in C.  But we'd want
+        // to use our own memory management since we're making a TEXT! anyway.
+        //
+        // !!! This uses the internal API to have access to the mold buffer.
+        // Attempts were made to keep most of the stdio extension using the
+        // "friendly" libRebol API, but this seems like a case where using
+        // the core has an advantage.
+        //
+        // !!! Windows redirected files give bytes as-is, unlike the console
+        // which gives UTF16.  READ-LINE expects UTF-8, while READ-STDIN
+        // would presumably be able to process any bytes.
+        //
+        DECLARE_MOLD (mo);
+        Push_Mold(mo);
+
+        REBYTE encoded[UNI_ENCODED_MAX];
+
+        while (true) {
+            if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
+                if (rebWasHalting()) {
+                    printf("Console halt point (A)\n");
+                    rebJumps(Lib(HALT));
+                }
+                fail ("Interruption of READ-LINE for reason other than HALT?");
+            }
+            if (eof) {
+                if (mo->offset == STR_SIZE(mo->series)) {
+                    //
+                    // If we hit the end of file before accumulating any data,
+                    // then just return nullptr as an end of file signal.
+                    //
+                    Drop_Mold(mo);
+                    if (REF(eof))
+                        rebElide(Lib(SET), ARG(eof), Lib(TRUE));
+                    return nullptr;
+                }
+
+                if (REF(raw))
+                    break;
+                fail ("READ-LINE without /RAW hit end of file with no newline");
+            }
+
+            REBUNI c;
+
+            uint_fast8_t trail = trailingBytesForUTF8[encoded[0]];
+            if (trail == 0)
+                c = encoded[0];
+            else {
+                REBSIZ size = 1;  // we add to size as we count trailing bytes
+                while (trail != 0) {
+                    if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
+                        if (rebWasHalting()) {
+                            printf("Console HALT point (B)\n");
+                            rebJumps(Lib(HALT));
+                        }
+
+                        fail ("Interruption of READ-LINE"
+                              " for reason other than HALT?");
+                    }
+                    if (eof)
+                        fail ("Incomplete UTF-8 sequence from stdin at EOF");
+                    ++size;
+                    --trail;
+                }
+
+                if (nullptr == Back_Scan_UTF8_Char(&c, encoded, &size))
+                    fail ("Invalid UTF-8 Sequence found in READ-LINE");
+            }
+
+            if (c == '\n') {  // found a newline
+                if (REF(raw))
+                    Append_Codepoint(mo->series, c);
+                break;
+            }
+
+            Append_Codepoint(mo->series, c);
+        }
+
+        line = Init_Text(Alloc_Value(), Pop_Molded_String(mo));
+    }
+
+  #if !defined(NDEBUG)
+    //
+    // READ-LINE is textual, and enforces the rules of Ren-C TEXT! by default.
+    // This removes the CR.  It may be that the /RAW mode permits reading CR,
+    // but it also may be that READ-STDIN should be used for BINARY! instead,
+    // as one goal of Ren-C is to stamp CR out of text files as newlines.
+    //
+    rebElide("assert [not find", line, "CR]");
+
+    if (not REF(raw))
+        rebElide("assert [not find", line, "LF]");
+  #endif
+
+    if (REF(eof))
+        rebElide(Lib(SET), ARG(eof), rebL(eof));
+
+    return line;
 }
 
 

@@ -41,6 +41,8 @@
 
 #include <termios.h>
 
+#define UNI_ENCODED_MAX 4
+
 
 //=//// REBOL INCLUDES + HELPERS //////////////////////////////////////////=//
 
@@ -97,6 +99,8 @@ inline static unsigned int Term_End(STD_TERM *t)
 inline static unsigned int Term_Remain(STD_TERM *t)
   { return Term_End(t) - t->pos; }
 
+
+static bool Read_Bytes_Interrupted(STD_TERM *t);
 
 //
 //  Init_Terminal: C
@@ -260,10 +264,20 @@ static bool Read_Bytes_Interrupted(STD_TERM *t)
 {
     assert(*t->cp == '\0');  // Don't read more bytes if buffer not exhausted
 
-    int len = read(0, t->buf, READ_BUF_LEN - 1);  // save space for '\0'
+    int len = read(STDIN_FILENO, t->buf, READ_BUF_LEN - 1);  // -1, room for \0
     if (len < 0) {
-        if (errno == EINTR)
+        if (errno == EINTR) {
+            //
+            // If we don't clear the error, then every successive read() will
+            // get EINTR.  Hope caller does the handling of true return result.
+            //
+            clearerr(stdin);
+
+            t->cp = t->buf;
+            t->buf[0] = '\0';
+
             return true;  // Ctrl-C or similar, see sigaction()/SIGINT
+        }
 
         rebFail_OS (errno);
     }
@@ -493,7 +507,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
             return e_buffered;  // pass anything we gathered so far first
 
         if (Read_Bytes_Interrupted(t))
-            return rebValue("~halt~");  // !!! Is BAD-WORD! a good choice?
+            return rebValue("'~halt~");
 
         assert(*t->cp != '\0');
     }
@@ -532,7 +546,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
                 // (This should not block.)
                 //
                 if (Read_Bytes_Interrupted(t))
-                    return rebValue("~halt~");  // !!! Is BAD-WORD! good choice?
+                    return rebValue("'~halt~");
             }
             assert(*t->cp != '\0');
             encoded[i] = *t->cp;

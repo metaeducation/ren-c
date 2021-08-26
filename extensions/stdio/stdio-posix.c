@@ -47,6 +47,47 @@ void Startup_Stdio(void)
 
 
 //
+//  Read_Stdin_Byte_Interrupted: C
+//
+bool Read_Stdin_Byte_Interrupted(bool *eof, REBYTE *out) {
+    int byte_or_eof = fgetc(stdin);
+    if (byte_or_eof != -1) {
+        assert(byte_or_eof >= 0 and byte_or_eof < 256);
+        *out = byte_or_eof;
+        *eof = false;  // was not end of file
+        return false;  // was not interrupted
+    }
+
+    if (errno == EINTR) {
+        //
+        // When there's an interrupt, we need to clear the error or every read
+        // after this will think there's an interrupt.  Trust the caller will
+        // propagate the flag.
+        //
+        clearerr(stdin);
+
+      #if !defined(NDEBUG)
+        *out = 0xFF;  // bad UTF8 byte
+        *eof = false;  // bad eof status
+      #endif
+        return true;  // was interrupted
+    }
+
+    // -1 can happen on Ctrl-C or on end of file.
+    //
+    if (feof(stdin)) {
+      #if !defined(NDEBUG)
+        *out = 0xFF;  // bad UTF8 byte
+      #endif
+        *eof = true;  // was end of file
+        return false;  // was not interrupted
+    }
+
+    return true;  // was interrupted
+}
+
+
+//
 //  Write_IO: C
 //
 // This write routine takes a REBVAL* that is either a BINARY! or a TEXT!.
@@ -61,7 +102,11 @@ void Write_IO(const REBVAL *data, REBLEN len)
 
   #if defined(REBOL_SMART_CONSOLE)
     if (Term_IO) {
-        if (IS_TEXT(data)) {
+        if (IS_CHAR(data)) {
+            assert(len == 1);
+            Term_Insert(Term_IO, data);
+        }
+        else if (IS_TEXT(data)) {
             if (cast(REBLEN, rebUnbox("length of", data)) == len)
                 Term_Insert(Term_IO, data);
             else {

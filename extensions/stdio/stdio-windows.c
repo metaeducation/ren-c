@@ -41,18 +41,41 @@
 static HANDLE Stdout_Handle = nullptr;
 static HANDLE Stdin_Handle = nullptr;
 
-// While pipes and redirected files in Windows do raw bytes, the console
-// uses UTF-16.  The calling layer expects UTF-8 back, so the Windows API
-// for conversion is used.  The UTF-16 data must be held in a buffer.
+
+enum Piped_Type {
+    Piped_0 = 0,  // uninitialized
+
+    Not_Piped,
+    Piped_To_File,
+    Piped_To_NUL,
+};
+
+// If we don't know if the input is redirected from NUL, we do not know if
+// a read of 0 should act like an end of file or be ignored as if it was just
+// some process that incidentally did a WriteFile() of 0 bytes.
 //
-// We only allocate this buffer if we're not redirecting and it is necessary.
+// !!! Note: This tried a technique described here that did not work:
 //
-#define WCHAR_BUF_CAPACITY (16 * 1024)
-static WCHAR *Wchar_Buf = nullptr;
+// https://stackoverflow.com/a/21070042
+//
+// There is a more promising-seeming "GetFileInformationByHandleEx()" but a
+// superficial attempt at using it did not work.  So until it becomes a
+// priority, we use a heuristic that if something gives an unreasonable number
+// of 0 byte reads in a row it is treated as an EOF.
+//
+enum Piped_Type Detect_Handle_Piping(HANDLE h)
+{
+    if (GetFileType(h) != FILE_TYPE_CHAR)
+        return Piped_To_File;
+
+    // !!! See note, can't detect Piped_To_NUL at present.
+
+    return Not_Piped;
+}
 
 
-static bool Redir_Out = false;
-static bool Redir_Inp = false;
+static enum Piped_Type stdin_piping;
+static enum Piped_Type stdout_piping;
 
 
 //
@@ -60,33 +83,124 @@ static bool Redir_Inp = false;
 //
 void Startup_Stdio(void)
 {
-    // Get the raw stdio handles:
     Stdout_Handle = GetStdHandle(STD_OUTPUT_HANDLE);
     Stdin_Handle = GetStdHandle(STD_INPUT_HANDLE);
     //StdErr_Handle = GetStdHandle(STD_ERROR_HANDLE);
 
-    Redir_Out = (GetFileType(Stdout_Handle) != FILE_TYPE_CHAR);
-    Redir_Inp = (GetFileType(Stdin_Handle) != FILE_TYPE_CHAR);
-
-    if (not Redir_Inp or not Redir_Out) {
-        //
-        // If either input or output is not redirected, preallocate
-        // a buffer for conversion from/to UTF-8.
-        //
-        Wchar_Buf = cast(WCHAR*,
-            malloc(sizeof(WCHAR) * WCHAR_BUF_CAPACITY)
-        );
-    }
+    stdout_piping = Detect_Handle_Piping(Stdout_Handle);
+    stdin_piping = Detect_Handle_Piping(Stdin_Handle);
 
   #if defined(REBOL_SMART_CONSOLE)
     //
-    // We can't sensibly manage the character position for an editing
-    // buffer if either the input or output are redirected.  This means
-    // no smart terminal functions (including history) are available.
+    // We can't sensibly manage the character position for an editing buffer
+    // if either the input or output are redirected.  At the moment, this
+    // means no smart terminal functions (including history) are available.
     //
-    if (not Redir_Inp and not Redir_Out)
+    // Note: Technically the command history could be offered as a list even
+    // without a smart terminal.  You just couldn't cursor through it.  Review.
+    //
+    if (stdin_piping == Not_Piped and stdout_piping == Not_Piped)
         Term_IO = Init_Terminal();
   #endif
+}
+
+
+//
+//  Read_Stdin_Byte_Interrupted: C
+//
+// Returns true if the operation was interrupted by a SIGINT.
+//
+bool Read_Stdin_Byte_Interrupted(bool *eof, REBYTE *out) {
+    //
+    // We don't read bytes from the smart console--it uses UTF16 and should
+    // be read with the terminal layer.  This is just for redirection or use
+    // of a non-smart console.
+    //
+  #ifdef REBOL_SMART_CONSOLE
+    assert(Term_IO == nullptr);
+  #endif
+
+    // !!! See note in Detect_Handle_Piping(), that currently we don't have
+    // a working mechanism to detect null.  Workaround uses num_read_attempts.
+    //
+    if (stdin_piping == Piped_To_NUL) {  // reads nothing forever, no eof
+        *eof = true;  // but treat like it is an end of file
+        *out = 0xFF;  // unused, make it trash (0xFF is bad UTF-8)
+        return false;  // not interrupted
+    }
+
+    DWORD actual;
+    bool ok;
+    int num_zero_reads = 0;
+    do {
+        // The `actual` will come back as 0 if the other end of a pipe called
+        // the WriteFile function with nNumberOfBytesToWrite set to zero.
+        // WinAPI docs say "The behavior of a null write operation depends on
+        // the underlying file system or communications technology."  Another
+        // source says "A null write operation does not write any bytes but
+        // does cause the time stamp to change."
+        //
+        // Empirically it seems a null write needs to be accepted if received
+        // on a pipe...just skipped over:
+        //
+        // https://marc.info/?l=cygwin&m=133547528003210
+        //
+        //   "While a null write appears nonsensical, every single .NET program
+        //   that uses the Console class to write to standard output/error will
+        //   do a null write, as .NET does this to verify the stream is OK.
+        //   Other software could easily decide to write zero bytes to standard
+        //   output as well (e.g. if outputting an empty string)."
+        //
+        // We have to be careful of redirects of NUL to input, which will
+        // always act like it wrote 0 bytes on the pipe.  Handled above.
+        //
+        ok = ReadFile(Stdin_Handle, out, 1, &actual, nullptr);
+
+        if (++num_zero_reads == 128) {  // heuristic to detect NUL in piping
+            *eof = true;  // treat it like an end of file
+            *out = 0xFF;  // unused, make it trash (0xFF is bad UTF-8)
+            return false;  // not interrupted
+        }
+    } while (ok and actual == 0);
+
+    if (ok) {
+        //
+        // The general philosophy on CR LF sequences is that files containing
+        // them are a foreign encoding.  We do not automatically filter any
+        // files for them--and READ-LINE will choke on it.  You have to use
+        // READ-BINARY if you want to handle CR.
+        //
+        // But if you are not redirecting I/O, Windows unfortunately does throw
+        // in CR LF sequences from what you type in the console.  Filter those.
+        //
+        if (*out != CR or stdin_piping == Piped_To_File) {
+            *eof = false;  // not end of file
+            return false;  // not interrupted
+        }
+
+        assert(stdin_piping == Not_Piped);
+
+        // Be robust if the console implementation does 0 byte WriteFile()
+        do {
+            ok = ReadFile(Stdin_Handle, out, 1, &actual, nullptr);
+        } while (ok and actual == 0);
+
+        if (ok and *out == LF) {
+            *eof = false;  // not end of file
+            return false;  // not interrupted
+        }
+
+        if (*out != LF or GetLastError() == ERROR_HANDLE_EOF)
+            fail ("CR found not followed by LF in Windows typed input");
+
+        fail (rebError_OS(GetLastError()));
+    }
+
+    if (GetLastError() == ERROR_HANDLE_EOF) {
+        *eof = true;  // was end of file
+        return false;  // was not interrupted
+    }
+    fail (rebError_OS(GetLastError()));
 }
 
 
@@ -98,14 +212,18 @@ void Startup_Stdio(void)
 //
 void Write_IO(const REBVAL *data, REBLEN len)
 {
-    assert(IS_BINARY(data) or IS_TEXT(data));
+    assert(IS_BINARY(data) or IS_TEXT(data) or IS_ISSUE(data));
 
     if (Stdout_Handle == nullptr)
         return;
 
   #if defined(REBOL_SMART_CONSOLE)
     if (Term_IO) {
-        if (IS_TEXT(data)) {
+        if (IS_CHAR(data)) {
+            assert(len == 1);
+            Term_Insert(Term_IO, data);
+        }
+        else if (IS_TEXT(data)) {
             //
             // !!! Having to subset the string is wasteful, so Term_Insert()
             // should take a length -or- series slicing needs to be solved.
@@ -189,7 +307,8 @@ void Write_IO(const REBVAL *data, REBLEN len)
         // catering to it here.
         //
       #if defined(REBOL_SMART_CONSOLE)
-        assert(Redir_Inp or Redir_Out);  // should have used smarts otherwise
+        assert(stdin_piping != Not_Piped or stdout_piping != Not_Piped);
+                // ^-- should have used smarts otherwise
       #endif
 
         // !!! Historically, Rebol on Windows automatically "enlined" strings
@@ -290,11 +409,6 @@ size_t Read_IO(REBYTE *buffer, size_t capacity)
 //
 void Shutdown_Stdio(void)
 {
-    if (Wchar_Buf) {
-        free(Wchar_Buf);
-        Wchar_Buf = nullptr;
-    }
-
   #if defined(REBOL_SMART_CONSOLE)
     if (Term_IO) {
         Quit_Terminal(Term_IO);

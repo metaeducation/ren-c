@@ -112,20 +112,6 @@ extern void Term_Abandon_Pending_Events(STD_TERM *t);
 
 extern STD_TERM *Term_IO;
 
+extern REBVAL *Read_Line(STD_TERM *t);  // defined in %p-stdio.c for now
+
 #endif  // end smart console branch
-
-
-// See %stdio-posix.c and %stdio-windows.c for the differing implementations of
-// what has to be done on startup and shutdown of stdin, stdout, or smart
-// terminal services.
-//
-extern void Startup_Stdio();
-extern void Shutdown_Stdio();
-
-// These used to be functions you had to build a "device request" to interact
-// with.  But so long as our file I/O is synchronous, there's no reason for
-// that layer.  And if we were going to do asynchronous file I/O it should
-// be done with a solidified layer like libuv, vs. what was in R3-Alpha.
-//
-extern size_t Read_IO(REBYTE *buf, size_t size);
-extern void Write_IO(const REBVAL *data, REBLEN len);

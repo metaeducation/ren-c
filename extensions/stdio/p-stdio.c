@@ -30,6 +30,15 @@
 
 #include "readline.h"
 
+
+// This used to be a function you had to build a "device request" to interact
+// with.  But so long as our file I/O is synchronous, there's no reason for
+// that layer.  And if we were going to do asynchronous file I/O it should
+// be done with a solidified layer like libuv, vs. what was in R3-Alpha.
+//
+extern size_t Read_IO(REBYTE *buf, size_t size);
+
+
 #if defined(REBOL_SMART_CONSOLE)
     extern STD_TERM *Term_IO;
     STD_TERM *Term_IO = nullptr;
@@ -48,7 +57,6 @@ int Line_History_Index;  // Current position in the line history
 
 #if defined(REBOL_SMART_CONSOLE)
 
-extern REBVAL *Read_Line(STD_TERM *t);
 
 //
 //  Read_Line: C
@@ -85,10 +93,11 @@ REBVAL *Read_Line(STD_TERM *t)
                 "fail {nullptr interruption of terminal not done yet}"
             );
         }
-        else if (rebDid("bad-word?", rebQ(e))) {
-            line = rebNone();
-        }
-        else if (rebDid("@", e, "= newline")) {
+
+        if (rebDid("bad-word?", rebQ(e)))  // e.g. ~halt~
+            return e;
+
+        if (rebDid("@", e, "= newline")) {
             //
             // !!! This saves a line in the "history", but it's not clear
             // exactly long term what level this history should cut into
@@ -268,8 +277,8 @@ REBVAL *Read_Line(STD_TERM *t)
     }
 
     // ASK has a display invariant that a newline is visually expected as part
-    // of what the user contributed.  We print one out whether we got a whole
-    // line or not (e.g. ESCAPE or HALT) to keep the visual flow.
+    // of what the user contributed.  The HALT returns before this point, and
+    // the console extension throws in the newline in that case.
     //
     REBVAL *newline = rebChar('\n');
     Term_Insert(t, newline);
