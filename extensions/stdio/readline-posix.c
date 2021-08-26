@@ -61,12 +61,11 @@ enum {
 };
 
 
-#define WRITE_UTF8(s,n) \
-    do { \
-        if (write(STDOUT_FILENO, s, n) == -1) { \
-            /* Error here, or better to "just try to keep going"? */ \
-        } \
-    } while (0)
+inline static void WRITE_UTF8(const unsigned char *utf8, size_t size) {
+    if (write(STDOUT_FILENO, utf8, size) == -1) {
+        /* Error here, or better to "just try to keep going"? */
+    }
+}
 
 #define READ_BUF_LEN 64
 
@@ -259,9 +258,7 @@ static bool Read_Bytes_Interrupted(STD_TERM *t)
 void Write_Char(unsigned char c, int n)
 {
     for (; n > 0; n--)
-        if (write(STDOUT_FILENO, &c, 1) == -1) {
-            // !!! Error here, or better to "just try to keep going"?
-        }
+        WRITE_UTF8(&c, 1);
 }
 
 

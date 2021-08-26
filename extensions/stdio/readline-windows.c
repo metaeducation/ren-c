@@ -136,13 +136,6 @@ static HANDLE Stdin_Handle = nullptr;
 static HANDLE Stdout_Handle = nullptr;
 
 
-#define WRITE_CHAR(s) \
-    do { \
-        if (write(1, s, 1) == -1) { \
-            /* Error here, or better to "just try to keep going"? */ \
-        } \
-    } while (0)
-
 static void WRITE_UTF8(const unsigned char *utf8, size_t size)
 {
     // Convert UTF-8 buffer to Win32 wide-char format for console.

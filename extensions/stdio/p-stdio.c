@@ -271,7 +271,9 @@ REBVAL *Read_Line(STD_TERM *t)
     // of what the user contributed.  We print one out whether we got a whole
     // line or not (e.g. ESCAPE or HALT) to keep the visual flow.
     //
-    rebElide("write-stdout newline");
+    REBVAL *newline = rebChar('\n');
+    Term_Insert(t, newline);
+    rebRelease(newline);
 
     return line;
 }
