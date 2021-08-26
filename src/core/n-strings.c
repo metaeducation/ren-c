@@ -33,31 +33,182 @@
 //  {Joins a block of values into TEXT! with delimiters}
 //
 //      return: "Null if blank input or block's contents are all null"
-//          [<opt> text! issue!]
+//          [<opt> text!]
 //      delimiter [<opt> blank! char! text!]
 //      line "Will be copied if already a text value"
 //          [<blank> text! block! issue!]
+//      /head "Include delimiter at head of result (if non-NULL)"
+//      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]
 //
 REBNATIVE(delimit)
+//
+// Evaluates each item in a block and forms it, with an optional delimiter.
+// If all the items in the block are null, or no items are found, this will
+// return a nulled value.
+//
+// CHAR! suppresses the delimiter logic.  Hence:
+//
+//    >> delimit ":" ["a" space "b" | () "c" newline "d" "e"]
+//    == `"a b^/c^/d:e"
+//
+// Note only the last interstitial is considered a candidate for delimiting.
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
+    REBVAL *out = D_OUT;
+    REBVAL *delimiter = ARG(delimiter);
     REBVAL *line = ARG(line);
-    if (IS_TEXT(line) or IS_ISSUE(line))
-        return rebValue("copy", line);  // !!! Review performance
+
+    DECLARE_MOLD (mo);
+    Push_Mold(mo);
+
+    // If /HEAD is used, speculatively start the mold out with the delimiter
+    // (will be thrown away if the product turns out to be nothing)
+    //
+    if (REF(head))
+        Form_Value(mo, delimiter);
+
+    if (IS_TEXT(line) or IS_ISSUE(line)) {  // can shortcut, no evals needed
+        //
+        // Note: This path used to shortcut with running TO TEXT! if not using
+        // /HEAD or /TAIL options, but it's probably break-even to invoke the
+        // evaluator.  Review optimizations later.
+        //
+        Form_Value(mo, line);
+
+        if (REF(tail))
+            Form_Value(mo, delimiter);
+
+        return Init_Text(out, Pop_Molded_String(mo));
+    }
 
     assert(IS_BLOCK(line));
 
-    if (Form_Reduce_Throws(
-        D_OUT,
-        VAL_ARRAY(line),
-        VAL_INDEX(line),
-        VAL_SPECIFIER(line),
-        ARG(delimiter)
-    )){
-        return R_THROWN;
+    DECLARE_FEED_AT (feed, line);
+
+    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+    Push_Frame(nullptr, f);
+
+    bool pending = false;  // pending delimiter output, *if* more non-nulls
+    bool nothing = true;  // any elements seen so far have been null or blank
+
+    do {
+        // See philosophy on handling blanks differently from nulls, but only
+        // at dialect "source level".
+        // https://forum.rebol.info/t/1348
+        //
+        if (KIND3Q_BYTE_UNCHECKED(f->feed->value) == REB_BLANK) {
+            Literal_Next_In_Frame(out, f);
+            Append_Codepoint(mo->series, ' ');
+            pending = false;
+            nothing = false;
+            continue;
+        }
+
+        if (Eval_Step_Throws(out, f)) {
+            Drop_Mold(mo);
+            Abort_Frame(f);
+            return R_THROWN;
+        }
+
+        if (IS_END(out)) {
+            if (IS_END(f->feed->value)) {  // spaced []
+                assert(nothing);
+                break;
+            }
+            continue;  // spaced [comment "a" ...]
+        }
+
+        // These are all the things that we're willing to vaporize.  Since
+        // operations like delimit are not positional, the risk is mitigated
+        // of letting things like nulls and voids vaporize.
+        //
+        if (
+            IS_NULLED(out)
+            or Is_Nulled_Isotope(out)  // `unspaced ["a" if true [null]]`
+            or Is_Void(out)  // e.g. result of do make frame! on comment
+            or IS_BLANK(out)  // see note above on BLANK!
+        ){
+            continue;  // opt-out and maybe keep option open to return NULL
+        }
+
+        if (IS_BAD_WORD(out))
+            fail (out);  // don't allow *any* BAD-WORD! non-isotopes
+
+        nothing = false;
+
+        if (IS_ISSUE(out)) {  // do not delimit (unified w/char)
+            Form_Value(mo, out);
+            pending = false;
+        }
+        else if (ANY_ARRAY(out)) {
+            if (not IS_BLOCK(out))
+                fail ("Only BLOCK! array types can be used in DELIMIT");
+
+            // BLOCK!s are methods for gathering material to be part of the
+            // delimit.  The behavior is defined as being not reduced and
+            // without spaces between...the main place you find this behavior
+            // is in the APPEND of a block to a string.  So this code delegates
+            // to that.
+            //
+            // !!! Unify with the Modify_String() code so this doesn't need
+            // to call through the API.
+            //
+            if (VAL_LEN_AT(out) != 0) {
+                if (pending)
+                    Form_Value(mo, delimiter);
+
+                Move_Cell(f_spare, out);
+                if (rebRunThrows(
+                    out,
+                    true,
+                    Lib(APPEND), Lib(COPY), EMPTY_TEXT, rebQ(f_spare)
+                )){
+                    Drop_Mold(mo);
+                    Abort_Frame(f);
+                    return R_THROWN;
+                }
+                Form_Value(mo, out);
+
+                pending = true;
+            }
+        }
+        else {
+            if (pending)
+                Form_Value(mo, delimiter);
+
+            if (IS_QUOTED(out)) {
+                Unquotify(out, 1);
+                Mold_Value(mo, out);
+            }
+            else
+                Form_Value(mo, out);
+
+            // Note that empty strings are distinct from blanks/nulls/[] in
+            // terms of still being delimited.  This is important, e.g. in
+            // comma-delimited formats to denote empty fields.
+            //
+            //    >> delimit "," [field1 field2 field3]  ; field2 is ""
+            //    one,,three
+            //
+            // The same principle would apply to a "space-delimited format".
+
+            pending = true;
+        }
+    } while (NOT_END(f->feed->value));
+
+    if (nothing) {
+        Drop_Mold(mo);
+        Init_Nulled(D_OUT);
     }
+    else {
+        if (REF(tail))
+            Form_Value(mo, delimiter);
+        Init_Text(D_OUT, Pop_Molded_String(mo));
+    }
+
+    Drop_Frame(f);
 
     return D_OUT;
 }
