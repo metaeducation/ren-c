@@ -279,10 +279,9 @@ REBNATIVE(read_line)
 
         while (true) {
             if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
-                if (rebWasHalting()) {
-                    printf("Console halt point (A)\n");
+                if (rebWasHalting())
                     rebJumps(Lib(HALT));
-                }
+
                 fail ("Interruption of READ-LINE for reason other than HALT?");
             }
             if (eof) {
@@ -311,10 +310,8 @@ REBNATIVE(read_line)
                 REBSIZ size = 1;  // we add to size as we count trailing bytes
                 while (trail != 0) {
                     if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
-                        if (rebWasHalting()) {
-                            printf("Console HALT point (B)\n");
+                        if (rebWasHalting())
                             rebJumps(Lib(HALT));
-                        }
 
                         fail ("Interruption of READ-LINE"
                               " for reason other than HALT?");
