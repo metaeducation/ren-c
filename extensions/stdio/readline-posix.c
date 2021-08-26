@@ -121,6 +121,22 @@ STD_TERM *Init_Terminal(void)
 
     STD_TERM *t = cast(STD_TERM*, malloc(sizeof(STD_TERM)));
 
+    // !!! Ultimately, we want to be able to recover line history from a
+    // file across sessions.  It makes more sense for the logic doing that
+    // to be doing it in Rebol.  For starters, we just make it fresh.
+    //
+    Line_History = rebValue("[{}]");  // current line is empty string
+    rebUnmanage(Line_History);  // allow Line_History to live indefinitely
+
+    t->buffer = rebValue("{}");
+    rebUnmanage(t->buffer);
+
+    t->buf[0] = '\0';  // start read() byte buffer out at empty
+    t->cp = t->buf;
+    t->pos = 0;
+
+    t->e_pending = nullptr;
+
     t->original_attrs = attrs;  // cache, to restore upon shutdown
 
     // Local modes.
@@ -138,28 +154,37 @@ STD_TERM *Init_Terminal(void)
     //
     attrs.c_oflag |= ONLCR;  // On (O)utput, map (N)ew(L)ine to (CR) LF
 
-    // Special modes.
+    // Note: The first time we request input we do so accepting a minimum of
+    // 0 characters to read.  This is so we can tell if there has been any
+    // buffering/typing by the user prior to switching over into "raw mode".
     //
-    attrs.c_cc[VMIN] = 1;   // min num of bytes for READ to return
+    attrs.c_cc[VMIN] = 0;   // min num of bytes for READ to return
     attrs.c_cc[VTIME] = 0;  // how long to wait for input
 
     tcsetattr(STDIN_FILENO, TCSADRAIN, &attrs);
 
-    // !!! Ultimately, we want to be able to recover line history from a
-    // file across sessions.  It makes more sense for the logic doing that
-    // to be doing it in Rebol.  For starters, we just make it fresh.
+    // If we peek the buffer at the moment of the switch, the user must have
+    // typed them before the switch and the characters have already been echoed.
     //
-    Line_History = rebValue("[{}]");  // current line is empty string
-    rebUnmanage(Line_History);  // allow Line_History to live indefinitely
+    if (not Read_Bytes_Interrupted(t) and *t->cp != '\0') {
+        //
+        // There's no perfect "fix" to dealing with pending characters that
+        // were typed during startup.  Consider if the console wishes to remap
+        // pressing "a" to show "b".  Trying to guess what on the screen you
+        // should erase is non-viable, so the best thing to do is just sync up
+        // to a new line and let the user know what's happening.
+        //
+        // !!! Would be nice if this were printed in some kind of color or
+        // style to show it wasn't normal output.
+        //
+        const char *msg = "[rebuffering]\n";
+        WRITE_UTF8(cast(const unsigned char *, msg), strsize(msg));
+    }
 
-    t->buffer = rebValue("{}");
-    rebUnmanage(t->buffer);
-
-    t->buf[0] = '\0';  // start read() byte buffer out at empty
-    t->cp = t->buf;
-    t->pos = 0;
-
-    t->e_pending = nullptr;
+    // Now flip back into the mode where reading requires at least 1 character.
+    //
+    attrs.c_cc[VMIN] = 1;   // min num of bytes for READ to return
+    tcsetattr(STDIN_FILENO, TCSADRAIN, &attrs);
 
     Term_Initialized = true;
     return t;
