@@ -225,6 +225,7 @@ export console!: make object! [
     ]
 
     print-halted: meth [] [
+        print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
@@ -575,7 +576,15 @@ ext-console-impl: func [
             system.console: make console! []
             print mold prior  ; Might help debug to see what was running
         ]
-        emit #unskin-if-halt
+
+        ; !!! This would add an "unskin if halt" which would stop you from
+        ; halting the print response to the halt message.  But that was still
+        ; in effect during <prompt> which is part of the same "transaaction"
+        ; as PRINT-HALTED.  To the extent this is a good idea, it needs to
+        ; guard -only- the PRINT-HALTED and put the prompt in a new state.
+        ;
+        comment [emit #unskin-if-halt]
+
         emit [system.console.print-halted]
         return <prompt>
     ]
