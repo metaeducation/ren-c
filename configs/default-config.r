@@ -23,7 +23,7 @@ extensions: make map! [
     BMP +
     Clipboard -
     Console +
-    Crypt + 
+    Crypt +
     Debugger +
     DNS +
     Event +
@@ -38,7 +38,6 @@ extensions: make map! [
     ODBC -
     PNG +
     Process +
-    Signal -
     TCC -
     Time +
     UUID +

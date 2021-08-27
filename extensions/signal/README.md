@@ -1,2 +1,0 @@
-## POSIX Signal Extension
-
