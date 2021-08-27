@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,8 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Processes events to pass to REBOL. Note that events are
-// used for more than just windowing.
+// This implements what's needed by WAIT in order to yield to the OS event
+// loop for a certain period of time, with the ability to be interrupted.
 //
 
 #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
@@ -29,10 +29,6 @@
 #undef IS_ERROR
 
 #include "sys-core.h"
-
-extern void Done_Device(uintptr_t handle, int error);
-
-static int Timer_Id = 0;  // The timer we are using
 
 
 //
@@ -62,80 +58,89 @@ int64_t Delta_Time(int64_t base)
 //
 //  Startup_Events: C
 //
-// Initialize the event device.
+// !!! This once created a hidden window to handle special events, such as
+// timers and async DNS.  That is not being done at this time (async DNS
+// was deprecated by Microsoft in favor of using synchronous DNS on one's
+// own threads--it's not supported in IPv6).
 //
-// Create a hidden window to handle special events,
-// such as timers and async DNS.
-//
-extern void Startup_Events(void);
 void Startup_Events(void)
 {
 }
 
 
 //
-//  Query_Events: C
+//  Wait_Milliseconds_Interrupted: C
 //
-// Wait for an event, or a timeout (in milliseconds) specified by
-// req->length. The latter is used by WAIT as the main timing
-// method.
+// This is what is called by WAIT in order to yield to the event loop.  It
+// was once doing so for GUI messages to be processed (so the UI would not
+// freeze up while waiting on network events or on a timer).  At the moment
+// that does not apply, so it's just being a good citizen by yielding the
+// CPU rather than keeping it in a busy wait during WAIT.
 //
-DEVICE_CMD Query_Events(REBREQ *req)
-{
-    // Set timer (we assume this is very fast):
-    Timer_Id = SetTimer(0, Timer_Id, Req(req)->length, 0);
+bool Wait_Milliseconds_Interrupted(
+    unsigned int millisec  // the MAX_WAIT_MS is 64 in WAIT, between polls
+){
+    // Set timer (we assume this is very fast)
+    //
+    // !!! This uses the form that needs processing by sending a WM_TIMER
+    // message.  This is presumably because when there was a GUI, it wanted
+    // to have a way to keep from locking up the interface.
+    //
+    HWND hwnd = 0;
+    TIMERPROC timer_func = nullptr;
+    UINT_PTR timer_id = SetTimer(hwnd, 0, millisec, timer_func);
+    if (timer_id == 0)
+        rebFail_OS (GetLastError());
 
-    // Wait for message or the timer:
+    // Wait for any message, which could be a timer.
+    //
+    // Note: The documentation says that GetMessage returns a "BOOL" but then
+    // says it can return -1 on error.  :-(
     //
     MSG msg;
-    if (GetMessage(&msg, NULL, 0, 0))
-        DispatchMessage(&msg);
-
-    // Quickly check for other events:
-    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
-        // !!! A flag was set here to return DR_PEND, when this was
-        // Poll_Events...which seemingly only affected the GUI.
+    int result = GetMessage(&msg, NULL, 0, 0);
+    if (result == -1) {
+        KillTimer(hwnd, timer_id);
+        rebFail_OS (GetLastError());
+    }
+    if (result == 0) {  // WM_QUIT
         //
-        if (msg.message == WM_TIMER)
-            break;
-        DispatchMessage(&msg);
+        // !!! We don't currently take in a means to throw a quit signal.
+        // Is this necessary?
+        //
+        fail ("QUIT message received in Wait_Milliseconds_Interrupted()");
     }
 
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
 
-    //if (Timer_Id) KillTimer(0, Timer_Id);
-    return DR_DONE;
+    // If the message we got was the timer we set, then that means we waited
+    // for the specified amount of time.
+    //
+    if (msg.message == WM_TIMER) {
+        assert(timer_id == msg.wParam);
+        KillTimer(hwnd, timer_id);
+        return false;  // not interrupted, waited the full time
+    }
+
+    // R3-Alpha did a trick here and did a peek to see if the timer message
+    // happens to be the *next* message.  If it was, then it still counted the
+    // wait as being complete.
+    //
+    // !!! Was this a good idea?
+    //
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        if (msg.message == WM_TIMER) {
+            assert(timer_id == msg.wParam);
+            KillTimer(hwnd, timer_id);
+            return false;
+        }
+    }
+
+    // If anything else came into the message pump, there was something to
+    // do...so assume it means we want to run the polling loop.
+    //
+    KillTimer(hwnd, timer_id);
+    return true;  // interrupted by some GUI event or otherwise
 }
-
-
-//
-//  Connect_Events: C
-//
-// Simply keeps the request pending for polling purposes.
-// Use Abort_Device to remove it.
-//
-DEVICE_CMD Connect_Events(REBREQ *req)
-{
-    UNUSED(req);
-
-    return DR_PEND; // keep pending
-}
-
-
-/***********************************************************************
-**
-**  Command Dispatch Table (RDC_ enum order)
-**
-***********************************************************************/
-
-static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
-    0,  // RDC_OPEN,        // open device unit (port)
-    0,  // RDC_CLOSE,       // close device unit
-    0,  // RDC_READ,        // read from unit
-    0,  // RDC_WRITE,       // write to unit
-    Connect_Events,
-    Query_Events,
-};
-
-EXTERN_C REBDEV Dev_Event;
-DEFINE_DEV(Dev_Event, "OS Events", 1, Dev_Cmds, RDC_MAX, sizeof(struct rebol_devreq));

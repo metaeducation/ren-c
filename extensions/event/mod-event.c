@@ -33,6 +33,9 @@
 extern void Startup_Events(void);
 extern void Shutdown_Events(void);
 
+extern bool Wait_Milliseconds_Interrupted(unsigned int millisec);
+
+
 //
 //  startup*: native [  ; Note: DO NOT EXPORT!
 //
@@ -44,8 +47,6 @@ extern void Shutdown_Events(void);
 REBNATIVE(startup_p)
 {
     EVENT_INCLUDE_PARAMS_OF_STARTUP_P;
-
-    OS_Register_Device(&Dev_Event);
 
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
@@ -97,8 +98,6 @@ REBNATIVE(shutdown_p)
     // !!! currently no shutdown code, but there once was for destroying an
     // invisible handle in windows...
 
-    OS_Unregister_Device(&Dev_Event);
-
     return Init_None(D_OUT);
 }
 
@@ -115,68 +114,6 @@ REBNATIVE(get_event_actor_handle)
 {
     Make_Port_Actor_Handle(D_OUT, &Event_Actor);
     return D_OUT;
-}
-
-
-//
-//  Wait_For_Device_Events_Interruptible: C
-//
-// Check if devices need attention, and if not, then wait.
-// The wait can be interrupted by a GUI event, otherwise
-// the timeout will wake it.
-//
-// Res specifies resolution. (No wait if less than this.)
-//
-// Returns:
-//     -1: Devices have changed state.
-//      0: past given millsecs
-//      1: wait in timer
-//
-// The time it takes for the devices to be scanned is
-// subtracted from the timer value.
-//
-int Wait_For_Device_Events_Interruptible(
-    unsigned int millisec,
-    unsigned int res
-){
-    // printf("Wait_For_Device_Events_Interruptible %d\n", millisec);
-
-    int64_t base = Delta_Time(0); // start timing
-
-    // !!! The request is created here due to a comment that said "setup for
-    // timing" and said it was okay to stack allocate it because "QUERY
-    // below does not store it".  Having eliminated stack-allocated REBREQ,
-    // it's not clear if it makes sense to allocate it here vs. below.
-    //
-    REBREQ *req = OS_Make_Devreq(&Dev_Event);
-
-    // Let any pending device I/O have a chance to run:
-    //
-    if (OS_Poll_Devices()) {
-        Free_Req(req);
-        return -1;
-    }
-
-    // Nothing, so wait for period of time
-
-    unsigned int delta = Delta_Time(base) / 1000 + res;
-    if (delta >= millisec) {
-        Free_Req(req);
-        return 0;
-    }
-
-    millisec -= delta; // account for time lost above
-    Req(req)->length = millisec;
-
-    // printf("Wait: %d ms\n", millisec);
-
-    // Comment said "wait for timer or other event"
-    //
-    OS_DO_DEVICE_SYNC(req, RDC_QUERY);
-
-    Free_Req(req);
-
-    return 1;  // layer above should check delta again
 }
 
 
@@ -260,7 +197,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
     }
 
     REBI64 base = Delta_Time(0);
-    REBLEN wait_time = 1;
+    REBLEN wait_millisec = 1;
     REBLEN res = (timeout >= 1000) ? 0 : 16;  // OS dependent?
 
     // Waiting opens the doors to pressing Ctrl-C, which may get this code
@@ -308,7 +245,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
     bool did_port_action = false;
 
-    while (wait_time != 0) {
+    while (wait_millisec != 0) {
         if (GET_SIGNAL(SIG_HALT)) {
             CLR_SIGNAL(SIG_HALT);
 
@@ -330,9 +267,9 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             //
             // No activity (nothing to do) so increase the wait time
             //
-            wait_time *= 2;
-            if (wait_time > MAX_WAIT_MS)
-                wait_time = MAX_WAIT_MS;
+            wait_millisec *= 2;
+            if (wait_millisec > MAX_WAIT_MS)
+                wait_millisec = MAX_WAIT_MS;
         }
         else {
             // Call the system awake function.
@@ -360,7 +297,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
             // Some activity, so use low wait time.
             //
-            wait_time = 1;
+            wait_millisec = 1;
         }
 
         if (timeout != ALL_BITS) {
@@ -370,17 +307,27 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             REBLEN time = cast(REBLEN, Delta_Time(base) / 1000);
             if (time >= timeout)
                 break;  // done (was dt = 0 before)
-            else if (wait_time > timeout - time)  // use smaller residual time
-                wait_time = timeout - time;
+            else if (wait_millisec > timeout - time)  // use smaller residual time
+                wait_millisec = timeout - time;
         }
 
-        //printf("%d %d %d\n", dt, time, timeout);
+        int64_t base_wait = Delta_Time(0);  // start timing
 
-        Wait_For_Device_Events_Interruptible(wait_time, res);
+        // Let any pending device I/O have a chance to run:
+        //
+        if (OS_Poll_Devices())
+            continue;
+
+        // Nothing, so wait for period of time
+
+        unsigned int delta = Delta_Time(base_wait) / 1000 + res;
+        if (delta >= wait_millisec)
+            continue;
+
+        wait_millisec -= delta; // account for time lost above
+
+        Wait_Milliseconds_Interrupted(wait_millisec);
     }
-
-    //time = (REBLEN)Delta_Time(base);
-    //Print("dt: %d", time);
 
   post_wait_loop:
 

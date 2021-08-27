@@ -211,34 +211,9 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         if (REF(new) or REF(read) or REF(write) or REF(seek) or REF(allow))
             fail (Error_Bad_Refines_Raw());
 
-        REBREQ *req = OS_Make_Devreq(&Dev_Event);
-
-        Req(req)->flags |= RRF_OPEN;
-        REBVAL *result = OS_DO_DEVICE(req, RDC_CONNECT);
-
-        if (result == NULL) {
-            //
-            // comment said "stays queued", hence seems pending happens
-            // the request was taken by the device layer, don't try to free
-        }
-        else {
-            Free_Req(req);  // synchronous completion, we must free
-
-            if (rebDid("error?", result))
-                rebJumps("fail", result);
-
-            assert(false); // !!! can this happen?
-            rebRelease(result); // ignore result
-        }
-
         RETURN (port); }
 
     case SYM_CLOSE: {
-        REBREQ *req = OS_Make_Devreq(&Dev_Event);
-
-        OS_DO_DEVICE_SYNC(req, RDC_CLOSE);
-
-        Free_Req(req);
         RETURN (port); }
 
     case SYM_FIND:

@@ -199,5 +199,4 @@ inline static REBVAL *Init_Gob(RELVAL *out, REBGOB *g) {
 }
 
 
-EXTERN_C REBDEV Dev_Event;
 extern int64_t Delta_Time(int64_t base);

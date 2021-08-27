@@ -1,5 +1,5 @@
 //
-//  File: %dev-event.c
+//  File: %event-posix.c
 //  Summary: "Device: Event handler for Posix"
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,10 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Processes events to pass to REBOL. Note that events are
-// used for more than just windowing.
-//
-//=////////////////////////////////////////////////////////////////////////=//
+// This implements what's needed by WAIT in order to yield to the OS event
+// loop for a certain period of time, with the ability to be interrupted.
 //
 
 #if !defined( __cplusplus) && defined(TO_LINUX)
@@ -66,81 +64,39 @@ int64_t Delta_Time(int64_t base)
 }
 
 
-
-extern void Done_Device(uintptr_t handle, int error);
-
 //
 //  Startup_Events: C
 //
-// Initialize the event device.
+// Currently there is no special startup event code for POSIX.
 //
-extern void Startup_Events(void);
 void Startup_Events(void)
 {
 }
 
 
 //
-//  Query_Events: C
+//  Wait_Milliseconds_Interrupted: C
 //
-// Wait for an event, or a timeout (in milliseconds) specified by
-// req->length. The latter is used by WAIT as the main timing
-// method.
+// !!! This said "Wait for an event, or a timeout (in milliseconds)".  This
+// makes it sound like the select() statement could be interrupted by something
+// other than a timeout, even though it's passing in all 0s for the file
+// descriptors to wait on...is that just Ctrl-C?
 //
-DEVICE_CMD Query_Events(REBREQ *req)
-{
+bool Wait_Milliseconds_Interrupted(
+    unsigned int millisec  // the MAX_WAIT_MS is 64 in WAIT, between polls
+){
     struct timeval tv;
-    int result;
 
     tv.tv_sec = 0;
-    tv.tv_usec = Req(req)->length * 1000;
-    //printf("usec %d\n", tv.tv_usec);
+    tv.tv_usec = millisec * 1000;
 
-    result = select(0, 0, 0, 0, &tv);
+    int result = select(0, 0, 0, 0, &tv);
     if (result < 0) {
-        //
-        // !!! In R3-Alpha this had a TBD that said "set error code" and had a
-        // printf that said "ERROR!!!!".  However this can happen when a
-        // Ctrl-C interrupts a timer on a WAIT.  As a patch this is tolerant
-        // of EINTR, but still returns the error code.  :-/
-        //
-        if (errno == EINTR)
-            return DR_DONE;
+        if (errno == EINTR)  // e.g. Ctrl-C interrupting timer on WAIT
+            return true;
 
-        rebFail_OS (errno);
+        rebFail_OS (errno);  // some other error
     }
 
-    return DR_DONE;
+    return false;
 }
-
-
-//
-//  Connect_Events: C
-//
-// Simply keeps the request pending for polling purposes.
-// Use Abort_Device to remove it.
-//
-DEVICE_CMD Connect_Events(REBREQ *req)
-{
-    UNUSED(req);
-    return DR_PEND; // keep pending
-}
-
-
-/***********************************************************************
-**
-**  Command Dispatch Table (RDC_ enum order)
-**
-***********************************************************************/
-
-static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
-    0,  // RDC_OPEN,        // open device unit (port)
-    0,  // RDC_CLOSE,       // close device unit
-    0,  // RDC_READ,        // read from unit
-    0,  // RDC_WRITE,       // write to unit
-    Connect_Events,
-    Query_Events,
-};
-
-EXTERN_C REBDEV Dev_Event;
-DEFINE_DEV(Dev_Event, "OS Events", 1, Dev_Cmds, RDC_MAX, sizeof(struct rebol_devreq));
