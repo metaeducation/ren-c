@@ -109,12 +109,12 @@ while: lib/func [] [fail/where "Use LOOP not WHILE" 'return]
 ; We don't have the distinctions between NULL and "unsets" in the bootstrap
 ; build.  But make them distinct at the source level.
 
-~: does [lib/null]  ; most similar behavior to bad-word isotope available
-
 null: enfix lib/func [:left [<skip> set-word!]] [
     if :left [lib/unset left]
     lib/null
 ]
+
+~: enfix :null  ; most similar behavior to bad-word isotope available
 
 try: lib/func [  ; since null word/path fetches cause errors, work around it
     :look [<...> any-value!]  ; <...> old variadic notation
