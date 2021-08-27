@@ -97,13 +97,13 @@ static REB_R Transport_Actor(
 
     // If a transfer is in progress, the port_data is a BINARY!.  Its index
     // represents how much of the transfer has finished.  The data starts
-    // as blank (from `make-port*`) and R3-Alpha would blank it after a
+    // as NULL (from `make-port*`) and R3-Alpha would reset it after a
     // transfer was finished.  For writes, R3-Alpha held a copy of the value
     // being written...and text was allowed (even though it might be wide
     // characters, a likely oversight from the addition of unicode).
     //
     REBVAL *port_data = CTX_VAR(ctx, STD_PORT_DATA);
-    assert(IS_BINARY(port_data) or IS_BLANK(port_data));
+    assert(IS_BINARY(port_data) or IS_NULLED(port_data));
 
     // sock->timeout = 4000; // where does this go? !!!
 
@@ -322,7 +322,7 @@ static REB_R Transport_Actor(
         // Setup the read buffer (allocate a buffer if needed)
         //
         REBBIN *buffer;
-        if (IS_BLANK(port_data)) {
+        if (IS_NULLED(port_data)) {
             buffer = Make_Binary(bufsize);
             Init_Binary(port_data, buffer);
         }

@@ -49,7 +49,7 @@ REBREQ *Force_Get_Port_State(const REBVAL *port, void *device)
         req = VAL_BINARY_KNOWN_MUTABLE(state);
     }
     else {
-        assert(IS_BLANK(state));
+        assert(IS_NULLED(state));
         req = OS_Make_Devreq(dev);
         mutable_MISC(ReqPortCtx, req) = ctx;  // see MISC_NODE_NEEDS_MARK
 

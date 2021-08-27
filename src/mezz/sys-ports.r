@@ -25,6 +25,7 @@ uparse: ~sys-uparse-not-set-yet~
 make-port*: function [
     "SYS: Called by system on MAKE of PORT! port from a scheme."
 
+    return: [port!]
     spec [file! url! block! object! word! port!]
         "port specification"
 ][

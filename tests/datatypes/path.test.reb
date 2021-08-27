@@ -84,7 +84,7 @@
 )
 (
     a-value: make port! http://
-    blank? a-value/data
+    null? a-value.data
 )
 (
     a-value: first [a/b:]

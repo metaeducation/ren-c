@@ -55,13 +55,13 @@ REB_R MAKE_Port(
 
     const bool fully = true; // error if not all arguments consumed
 
-    assert(not IS_NULLED(arg)); // would need to DEVOID it otherwise
-    if (rebRunThrows(out, fully, Sys(SYM_MAKE_PORT_P), rebQ(arg), rebEND))
+    assert(not IS_NULLED(arg)); // API would require NULLIFY_NULLED
+
+    if (rebRunThrows(out, fully, Sys(SYM_MAKE_PORT_P), rebQ(arg)))
         fail (Error_No_Catch_For_Throw(out));
 
-    // !!! Shouldn't this be testing for !IS_PORT( ) ?
-    if (IS_BLANK(out))
-        fail (Error_Invalid_Spec_Raw(arg));
+    if (not IS_PORT(out))  // should always create a port
+        fail (out);
 
     return out;
 }
