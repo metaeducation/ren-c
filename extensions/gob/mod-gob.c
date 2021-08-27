@@ -33,20 +33,18 @@
 REBTYP *EG_Gob_Type = nullptr;  // (E)xtension (G)lobal
 
 //
-//  register-gob-hooks: native [
+//  startup*: native [
 //
 //  {Make the GOB! datatype work with GENERIC actions, comparison ops, etc}
 //
 //      return: <none>
-//      generics "List for HELP of which generics are supported (unused)"
-//          [block!]
 //  ]
 //
-REBNATIVE(register_gob_hooks)
+REBNATIVE(startup_p)
 {
-    GOB_INCLUDE_PARAMS_OF_REGISTER_GOB_HOOKS;
+    GOB_INCLUDE_PARAMS_OF_STARTUP_P;
 
-    Extend_Generics_Someday(ARG(generics));  // !!! vaporware, see comments
+    Extend_Generics_Someday(nullptr);  // !!! vaporware, see comments
 
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
@@ -67,16 +65,16 @@ REBNATIVE(register_gob_hooks)
 
 
 //
-//  unregister-gob-hooks: native [
+//  shutdown*: native [
 //
-//  {Remove behaviors for GOB! added by REGISTER-GOB-HOOKS}
+//  {Remove behaviors for GOB! added by STARTUP*}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(unregister_gob_hooks)
+REBNATIVE(shutdown_p)
 {
-    GOB_INCLUDE_PARAMS_OF_UNREGISTER_GOB_HOOKS;
+    GOB_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     Unhook_Datatype(EG_Gob_Type);
 

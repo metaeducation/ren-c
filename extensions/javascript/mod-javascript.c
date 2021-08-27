@@ -937,16 +937,16 @@ REBNATIVE(js_eval_p)
 
 
 //
-//  export init-javascript-extension: native [
+//  startup*: native [
 //
 //  {Initialize the JavaScript Extension}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(init_javascript_extension)
+REBNATIVE(startup_p)
 {
-    JAVASCRIPT_INCLUDE_PARAMS_OF_INIT_JAVASCRIPT_EXTENSION;
+    JAVASCRIPT_INCLUDE_PARAMS_OF_STARTUP_P;
 
   #ifdef DEBUG_JAVASCRIPT_EXTENSION
     //

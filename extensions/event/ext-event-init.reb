@@ -27,13 +27,6 @@ REBOL [
     }
 ]
 
-; !!! Currently we have to call the startup* manually, this may change (e.g.
-; if the %prep-extension.r script noticed you had a startup* and put a call
-; in this position)
-;
-startup*
-
-
 ; WAIT* expects block to be pre-reduced, to ease stackless implementation
 ;
 wait: adapt :wait* [if block? :value [value: reduce value]]

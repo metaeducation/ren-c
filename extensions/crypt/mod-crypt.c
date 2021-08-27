@@ -1259,16 +1259,16 @@ REBNATIVE(ecdh_shared_secret)
 
 
 //
-//  init-crypto: native [
+//  startup*: native [
 //
 //  {Initialize random number generators and OS-provided crypto services}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(init_crypto)
+REBNATIVE(startup_p)
 {
-    CRYPT_INCLUDE_PARAMS_OF_INIT_CRYPTO;
+    CRYPT_INCLUDE_PARAMS_OF_STARTUP_P;
 
   #ifdef TO_WINDOWS
     if (CryptAcquireContextW(
@@ -1290,21 +1290,21 @@ REBNATIVE(init_crypto)
     // !!! Should we fail here, or wait to fail until the system tries to
     // generate random data and cannot?
     //
-    fail ("INIT-CRYPTO couldn't initialize random number generation");
+    fail ("Crypto STARTUP* couldn't initialize random number generation");
 }
 
 
 //
-//  shutdown-crypto: native [
+//  shutdown*: native [
 //
 //  {Shut down random number generators and OS-provided crypto services}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(shutdown_crypto)
+REBNATIVE(shutdown_p)
 {
-    CRYPT_INCLUDE_PARAMS_OF_SHUTDOWN_CRYPTO;
+    CRYPT_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
   #ifdef TO_WINDOWS
     if (gCryptProv != 0) {

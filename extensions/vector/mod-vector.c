@@ -33,16 +33,16 @@
 REBTYP *EG_Vector_Type;  // (E)xtension (G)lobal
 
 //
-//  register-vector-hooks: native [
+//  startup*: native [
 //
 //  {Make the VECTOR! datatype work with GENERIC actions, comparison ops, etc}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(register_vector_hooks)
+REBNATIVE(startup_p)
 {
-    VECTOR_INCLUDE_PARAMS_OF_REGISTER_VECTOR_HOOKS;
+    VECTOR_INCLUDE_PARAMS_OF_STARTUP_P;
 
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
@@ -63,16 +63,16 @@ REBNATIVE(register_vector_hooks)
 
 
 //
-//  unregister-vector-hooks: native [
+//  shutdown*: native [
 //
 //  {Remove behaviors for VECTOR! added by REGISTER-VECTOR-HOOKS}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(unregister_vector_hooks)
+REBNATIVE(shutdown_p)
 {
-    VECTOR_INCLUDE_PARAMS_OF_UNREGISTER_VECTOR_HOOKS;
+    VECTOR_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     Unhook_Datatype(EG_Vector_Type);
 

@@ -12,9 +12,4 @@ REBOL [
     License: {LGPL 3.0}
 ]
 
-init-javascript-extension
-
-
-js-awaiter: :js-native/awaiter
-
-export [js-native js-awaiter]
+export js-awaiter: :js-native/awaiter

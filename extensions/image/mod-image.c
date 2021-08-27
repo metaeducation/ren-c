@@ -32,20 +32,18 @@
 REBTYP *EG_Image_Type = nullptr;
 
 //
-//  register-image-hooks: native [
+//  startup*: native [
 //
 //  {Make the IMAGE! datatype work with GENERIC actions, comparison ops, etc}
 //
 //      return: <none>
-//      generics "List for HELP of which generics are supported (unused)"
-//          [block!]
 //  ]
 //
-REBNATIVE(register_image_hooks)
+REBNATIVE(startup_p)
 {
-    IMAGE_INCLUDE_PARAMS_OF_REGISTER_IMAGE_HOOKS;
+    IMAGE_INCLUDE_PARAMS_OF_STARTUP_P;
 
-    Extend_Generics_Someday(ARG(generics));  // !!! vaporware, see comments
+    Extend_Generics_Someday(nullptr);  // !!! vaporware, see comments
 
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
@@ -66,16 +64,16 @@ REBNATIVE(register_image_hooks)
 
 
 //
-//  unregister-image-hooks: native [
+//  shutdown_p: native [
 //
 //  {Remove behaviors for IMAGE! added by REGISTER-IMAGE-HOOKS}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(unregister_image_hooks)
+REBNATIVE(shutdown_p)
 {
-    IMAGE_INCLUDE_PARAMS_OF_UNREGISTER_IMAGE_HOOKS;
+    IMAGE_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     Unhook_Datatype(EG_Image_Type);
 

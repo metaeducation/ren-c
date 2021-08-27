@@ -33,6 +33,24 @@ extern REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
 
 
 //
+//  startup*: native [  ; Note: DO NOT EXPORT!
+//
+//  {Start up down the filesystem device}
+//
+//      return: <none>
+//  ]
+//
+REBNATIVE(startup_p)
+{
+    FILESYSTEM_INCLUDE_PARAMS_OF_STARTUP_P;
+
+    OS_Register_Device(&Dev_File);
+
+    return rebNone();
+}
+
+
+//
 //  export get-file-actor-handle: native [
 //
 //  {Retrieve handle to the native actor for files}
@@ -42,8 +60,6 @@ extern REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
 //
 REBNATIVE(get_file_actor_handle)
 {
-    OS_Register_Device(&Dev_File);
-
     Make_Port_Actor_Handle(D_OUT, &File_Actor);
     return D_OUT;
 }

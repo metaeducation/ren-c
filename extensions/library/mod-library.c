@@ -128,17 +128,16 @@ REBTYPE(Library)
 
 
 //
-//  register-library-hooks: native [
+//  startup*: native [
 //
 //  {Register the LIBRARY! datatype (so MAKE LIBRARY! [] etc. work)}
 //
 //      return: <none>
-//      generics [block!]
 //  ]
 //
-REBNATIVE(register_library_hooks)
+REBNATIVE(startup_p)
 {
-    LIBRARY_INCLUDE_PARAMS_OF_REGISTER_LIBRARY_HOOKS;
+    LIBRARY_INCLUDE_PARAMS_OF_STARTUP_P;
 
     // !!! See notes on Hook_Datatype for this poor-man's substitute for a
     // coherent design of an extensible object system (as per Lisp's CLOS)
@@ -154,7 +153,7 @@ REBNATIVE(register_library_hooks)
         &MF_Library
     );
 
-    Extend_Generics_Someday(ARG(generics));  // !!! See comments
+    Extend_Generics_Someday(nullptr);  // !!! See comments
 
     return Init_None(D_OUT);
 }
@@ -198,16 +197,16 @@ REBNATIVE(run_library_collator)
 
 
 //
-//  unregister-library-hooks: native [
+//  shutdown_p: native [
 //
 //  {Unregister the LIBRARY! datatype (MAKE LIBRARY! will fail)}
 //
 //      return: <none>
 //  ]
 //
-REBNATIVE(unregister_library_hooks)
+REBNATIVE(shutdown_p)
 {
-    LIBRARY_INCLUDE_PARAMS_OF_UNREGISTER_LIBRARY_HOOKS;
+    LIBRARY_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
     Unhook_Datatype(EG_Library_Type);
     EG_Library_Type = nullptr;

@@ -9,9 +9,3 @@ REBOL [
         See %extensions/vector/README.md
     }
 ]
-
-; !!! Should call UNREGISTER-VECTOR-HOOKS at some point (module finalizer?)
-;
-register-vector-hooks
-
-export []

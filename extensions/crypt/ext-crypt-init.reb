@@ -6,12 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-; !!! This should also call SHUTDOWN-CRYPTO at some point (module finalizer?)
-;
-init-crypto
-
-
-rsa-make-key: func [
+export rsa-make-key: func [
     {Creates a key object for RSA algorithm.}
 ][
     make object! [
@@ -26,8 +21,3 @@ rsa-make-key: func [
         _
     ]
 ]
-
-
-; !!! Kludgey export mechanism; review correct approach for modules
-;
-export [rsa-make-key]

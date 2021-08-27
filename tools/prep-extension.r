@@ -137,11 +137,16 @@ proto-parser/process source-text
 ; For easier processing, extract just the list of native names converted to
 ; words along with the spec.
 
+has-startup*: false
+
 num-natives: 0
 native-list: collect [
     for-each [
         file line export-word set-word enfix-word proto-block
     ] proto-parser/unsorted-buffer [
+        if set-word = the startup*: [
+            has-startup*: true
+        ]
         keep ^(as word! set-word)
         keep ^(proto-block/2)
         num-natives: num-natives + 1
@@ -266,6 +271,13 @@ script-uncompressed: unspaced [
     "]" newline
     newline
     specs-uncompressed newline
+
+    ; We put a call to the STARTUP* native if there was one, so it runs before
+    ; the rest of the body.  (The user could do this themselves, but it makes
+    ; things read better to do it automatically.)
+    ;
+    if has-startup* [unspaced ["startup*" newline]]
+
     initscript-body
 ]
 script-num-codepoints: length of script-uncompressed

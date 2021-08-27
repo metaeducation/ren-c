@@ -449,6 +449,5 @@ REBVAL *rebCollateExtension_internal(
 // with native code would be.)
 //
 void Extend_Generics_Someday(REBVAL *block) {
-    assert(IS_BLOCK(block));
     UNUSED(block);
 }

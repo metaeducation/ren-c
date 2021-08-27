@@ -9,14 +9,3 @@ REBOL [
         See %extensions/image/README.md
     }
 ]
-
-; !!! Should call UNREGISTER-IMAGE-HOOKS at some point (module finalizer?)
-;
-register-image-hooks [
-    complement: generic [
-        value [image!]
-    ]
-]
-
-
-export []
