@@ -27,6 +27,18 @@
 #include "file-req.h"
 
 
+extern REBVAL *Open_File(FILEREQ *file);
+extern REBVAL *Close_File(FILEREQ *file);
+extern REBVAL *Read_File(size_t *actual, FILEREQ *file, REBYTE *data, size_t length);
+extern REBVAL *Write_File(FILEREQ *file, const REBYTE *data, size_t length);
+extern REBVAL *Query_File(FILEREQ *file);
+extern REBVAL *Create_File(FILEREQ *file);
+extern REBVAL *Delete_File(FILEREQ *file);
+extern REBVAL *Rename_File(FILEREQ *file, const REBVAL *to);
+
+REBVAL *Read_Directory(bool *done, FILEREQ *dir, FILEREQ *file);
+
+
 //
 //  Read_Dir_May_Fail: C
 //
@@ -34,15 +46,13 @@
 // Provide option to prepend dir path.
 // Provide option to use wildcards.
 //
-static REBARR *Read_Dir_May_Fail(REBREQ *dir)
+static REBARR *Read_Dir_May_Fail(FILEREQ *dir)
 {
-    REBREQ *file = OS_Make_Devreq(&Dev_File);
+    FILEREQ file;
 
-    TRASH_POINTER_IF_DEBUG(ReqFile(file)->path); // is output (not input)
+    TRASH_POINTER_IF_DEBUG(file.path); // is output (not input)
 
-    struct rebol_devreq *req = Req(dir);
-    req->modes |= RFM_DIR;
-    req->common.data = cast(REBYTE*, file);
+    dir->modes |= RFM_DIR;
 
     REBDSP dsp_orig = DSP;
 
@@ -52,17 +62,15 @@ static REBARR *Read_Dir_May_Fail(REBREQ *dir)
         // the filename part of the error (vs. a generic "cannot find the
         // file specified" message)
         //
-        REBVAL *result = OS_DO_DEVICE(dir, RDC_READ);
-        assert(result != nullptr);  // should be synchronous
-        if (rebDid("error?", result))
-            fail (Error_Cannot_Open_Raw(ReqFile(dir)->path, result));
+        bool done;
+        REBVAL *error = Read_Directory(&done, dir, &file);
+        if (error)
+            fail (Error_Cannot_Open_Raw(dir->path, error));
 
-        rebRelease(result);  // ignore result
-
-        if (req->flags & RRF_DONE)
+        if (done)
             break;
 
-        Copy_Cell(DS_PUSH(), ReqFile(file)->path);
+        Copy_Cell(DS_PUSH(), file.path);
 
         // Assume the file.devreq gets blown away on each loop, so there's
         // nowhere to free the file->path unless we do it here.
@@ -72,10 +80,8 @@ static REBARR *Read_Dir_May_Fail(REBREQ *dir)
         // "devreq" is can protect its own state, e.g. be a Rebol object,
         // so there'd not be any API handles to free here.
         //
-        rebRelease(m_cast(REBVAL*, ReqFile(file)->path));
+        rebRelease(m_cast(REBVAL*, file.path));
     }
-
-    Free_Req(file);
 
     return Pop_Stack_Values(dsp_orig);
 }
@@ -91,17 +97,11 @@ static REBARR *Read_Dir_May_Fail(REBREQ *dir)
 // The code has been changed so that any necessary transformations are done
 // in the "device" code, during the File_To_Local translation.
 //
-static void Init_Dir_Path(
-    REBREQ *dir,
-    const REBVAL *path,
-    SYMID policy
-){
-    UNUSED(policy);
+static void Init_Dir_Path(FILEREQ *dir, const REBVAL *path) {
+    memset(dir, 0, sizeof(FILEREQ));
 
-    struct rebol_devreq *req = Req(dir);
-    req->modes |= RFM_DIR;
-
-    ReqFile(dir)->path = path;
+    dir->modes |= RFM_DIR;
+    dir->path = path;
 }
 
 
@@ -165,13 +165,9 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         UNUSED(PAR(lines)); // handled in dispatcher
 
         if (not IS_BLOCK(state)) {     // !!! ignores /SKIP and /PART, for now
-            REBREQ *dir = OS_Make_Devreq(&Dev_File);
-            mutable_MISC(ReqPortCtx, dir) = ctx;
-
-            Init_Dir_Path(dir, path, SYM_READ);
-            Init_Block(D_OUT, Read_Dir_May_Fail(dir));
-
-            Free_Req(dir);
+            FILEREQ dir;
+            Init_Dir_Path(&dir, path);
+            Init_Block(D_OUT, Read_Dir_May_Fail(&dir));
         }
         else {
             // !!! This copies the strings in the block, shallowly.  What is
@@ -200,25 +196,17 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
       create:;
 
-        REBREQ *dir = OS_Make_Devreq(&Dev_File);
-        mutable_MISC(ReqPortCtx, dir) = ctx;
+        FILEREQ dir;
+        Init_Dir_Path(&dir, path);
 
-        Init_Dir_Path(dir, path, SYM_WRITE); // Sets RFM_DIR too
-
-        REBVAL *result = OS_DO_DEVICE(dir, RDC_CREATE);
-        assert(result != NULL); // should be synchronous
-
-        Free_Req(dir);
-
-        if (rebDid("error?", result)) {
-            rebRelease(result); // !!! throws away details
-            fail (Error_No_Create_Raw(path)); // higher level error
+        REBVAL *error = Create_File(&dir);
+        if (error) {
+            rebRelease(error);  // !!! throws away details
+            fail (Error_No_Create_Raw(path));  // higher level error
         }
 
-        rebRelease(result); // ignore result
-
         if (VAL_WORD_ID(verb) != SYM_CREATE)
-            Init_Blank(state);
+            Init_Nulled(state);
 
         RETURN (port); }
 
@@ -228,48 +216,31 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         if (IS_BLOCK(state))
             fail (Error_Already_Open_Raw(path));
 
-        REBREQ *dir = OS_Make_Devreq(&Dev_File);
-        mutable_MISC(ReqPortCtx, dir) = ctx;
+        FILEREQ dir;
+        Init_Dir_Path(&dir, path);
 
-        Init_Dir_Path(dir, path, SYM_WRITE); // Sets RFM_DIR
+        UNUSED(ARG(from));  // already have as port parameter
 
-        UNUSED(ARG(from)); // implicit
-        Req(dir)->common.data = cast(REBYTE*, ARG(to)); // !!! hack!
-
-        REBVAL *result = OS_DO_DEVICE(dir, RDC_RENAME);
-        assert(result != NULL); // should be synchronous
-
-        Free_Req(dir);
-
-        if (rebDid("error?", result)) {
-            rebRelease(result); // !!! throws away details
-            fail (Error_No_Rename_Raw(path)); // higher level error
+        REBVAL *error = Rename_File(&dir, ARG(to));
+        if (error) {
+            rebRelease(error);  // !!! throws away details
+            fail (Error_No_Rename_Raw(path));  // higher level error
         }
 
-        rebRelease(result); // ignore result
         RETURN (port); }
 
     case SYM_DELETE: {
-        Init_Blank(state);
+        Init_Nulled(state);
 
-        REBREQ *dir = OS_Make_Devreq(&Dev_File);
-        mutable_MISC(ReqPortCtx, dir) = ctx;
+        FILEREQ dir;
+        Init_Dir_Path(&dir, path);
 
-        Init_Dir_Path(dir, path, SYM_WRITE);
-
-        // !!! add *.r deletion
-        // !!! add recursive delete (?)
-        REBVAL *result = OS_DO_DEVICE(dir, RDC_DELETE);
-        assert(result != NULL); // should be synchronous
-
-        Free_Req(dir);
-
-        if (rebDid("error?", result)) {
-            rebRelease(result); // !!! throws away details
-            fail (Error_No_Delete_Raw(path)); // higher level error
+        REBVAL *error = Delete_File(&dir);
+        if (error) {
+            rebRelease(error);  // !!! throws away details
+            fail (Error_No_Delete_Raw(path));  // higher level error
         }
 
-        rebRelease(result); // ignore result
         RETURN (port); }
 
     case SYM_OPEN: {
@@ -287,39 +258,30 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         if (REF(new))
             goto create;
 
-        REBREQ *dir = OS_Make_Devreq(&Dev_File);
-        mutable_MISC(ReqPortCtx, dir) = ctx;
+        FILEREQ dir;
+        Init_Dir_Path(&dir, path);
 
-        Init_Dir_Path(dir, path, SYM_READ);
-        Init_Block(state, Read_Dir_May_Fail(dir));
+        Init_Block(state, Read_Dir_May_Fail(&dir));
 
-        Free_Req(dir);
         RETURN (port); }
 
     case SYM_CLOSE:
-        Init_Blank(state);
+        Init_Nulled(state);
         RETURN (port);
 
     case SYM_QUERY: {
-        Init_Blank(state);
+        Init_Nulled(state);
 
-        REBREQ *dir = OS_Make_Devreq(&Dev_File);
-        mutable_MISC(ReqPortCtx, dir) = ctx;
+        FILEREQ dir;
+        Init_Dir_Path(&dir, path);
 
-        Init_Dir_Path(dir, path, SYM_READ);
-        REBVAL *result = OS_DO_DEVICE(dir, RDC_QUERY);
-        assert(result != NULL); // should be synchronous
-
-        if (rebDid("error?", result)) {
-            Free_Req(dir);
-            rebRelease(result); // !!! R3-Alpha threw out error, returns null
+        REBVAL *error = Query_File(&dir);
+        if (error) {
+            rebRelease(error); // !!! R3-Alpha threw out error, returns null
             return nullptr;
         }
 
-        rebRelease(result); // ignore result
-
-        REBVAL *info = Query_File_Or_Dir(port, dir);
-        Free_Req(dir);
+        REBVAL *info = Query_File_Or_Dir(port, &dir);
         return info; }
 
     default:

@@ -37,29 +37,37 @@ enum act_open_mask {
 };
 
 
+extern REBVAL *Open_File(FILEREQ *file);
+extern REBVAL *Close_File(FILEREQ *file);
+extern REBVAL *Read_File(size_t *actual, FILEREQ *file, REBYTE *data, size_t length);
+extern REBVAL *Write_File(FILEREQ *file, const REBYTE *data, size_t length);
+extern REBVAL *Query_File(FILEREQ *file);
+extern REBVAL *Create_File(FILEREQ *file);
+extern REBVAL *Delete_File(FILEREQ *file);
+extern REBVAL *Rename_File(FILEREQ *file, const REBVAL *to);
+
+
 //
 //  Setup_File: C
 //
 // Convert native action refinements to file modes.
 //
-static void Setup_File(REBREQ *file, REBFLGS flags, REBVAL *path)
+static void Setup_File(FILEREQ *file, REBFLGS flags, REBVAL *path)
 {
-    struct rebol_devreq *req = Req(file);
-
     if (flags & AM_OPEN_WRITE)
-        req->modes |= RFM_WRITE;
+        file->modes |= RFM_WRITE;
     if (flags & AM_OPEN_READ)
-        req->modes |= RFM_READ;
+        file->modes |= RFM_READ;
     if (flags & AM_OPEN_SEEK)
-        req->modes |= RFM_SEEK;
+        file->modes |= RFM_SEEK;
 
     if (flags & AM_OPEN_NEW) {
-        req->modes |= RFM_NEW;
+        file->modes |= RFM_NEW;
         if (not (flags & AM_OPEN_WRITE))
             fail (Error_Bad_File_Mode_Raw(path));
     }
 
-    ReqFile(file)->path = path;
+    file->path = path;
 
     // !!! For the moment, assume `path` has a lifetime that will exceed
     // the operation.  This will be easier to ensure once the REQ state is
@@ -68,32 +76,21 @@ static void Setup_File(REBREQ *file, REBFLGS flags, REBVAL *path)
 
 
 //
-//  Cleanup_File: C
-//
-static void Cleanup_File(REBREQ *file)
-{
-    struct rebol_devreq *req = Req(file);
-    req->flags &= ~RRF_OPEN;
-}
-
-
-//
 //  Query_File_Or_Dir: C
 //
 // Produces a STD_FILE_INFO object.
 //
-REBVAL *Query_File_Or_Dir(const REBVAL *port, REBREQ *file)
+REBVAL *Query_File_Or_Dir(const REBVAL *port, FILEREQ *file)
 {
-    struct rebol_devreq *req = Req(file);
-    assert(IS_FILE(ReqFile(file)->path));
+    assert(IS_FILE(file->path));
 
     REBVAL *timestamp = File_Time_To_Rebol(file);
 
     return rebValue(
         "make ensure object! (", port , ")/scheme/info [",
-            "name:", ReqFile(file)->path,
-            "size:", rebI(ReqFile(file)->size),
-            "type:", (req->modes & RFM_DIR) ? "'dir" : "'file",
+            "name:", file->path,
+            "size:", rebI(file->size),
+            "type:", (file->modes & RFM_DIR) ? "'dir" : "'file",
             "date:", rebR(timestamp),
         "]"
     );
@@ -107,79 +104,67 @@ REBVAL *Query_File_Or_Dir(const REBVAL *port, REBREQ *file)
 //
 static void Open_File_Port(
     REBVAL *port,
-    REBREQ *file,
+    FILEREQ *file,
     REBVAL *path
 ){
     UNUSED(port);
 
-    struct rebol_devreq *req = Req(file);
-    if (req->flags & RRF_OPEN)
+    if (file->modes & RFM_OPEN)
         fail (Error_Already_Open_Raw(path));
 
     // Don't use OS_DO_DEVICE_SYNC() here, because we want to tack the file
     // name onto any error we get back.
 
-    REBVAL *result = OS_DO_DEVICE(file, RDC_OPEN);
-    assert(result != nullptr); // should be synchronous
+    REBVAL *error = Open_File(file);
+    if (error)
+        fail (Error_Cannot_Open_Raw(file->path, error));
 
-    if (rebDid("error?", result))
-        fail (Error_Cannot_Open_Raw(ReqFile(file)->path, result));
-
-    rebRelease(result);  // !!! ignore any other result?
-
-    req->flags |= RRF_OPEN; // open it
+    file->modes |= RFM_OPEN;  // open it
 }
 
 
 //
 //  Read_File_Port: C
 //
-// Read from a file port.
+// Common function that was used by both READ and COPY actions on FILE! port.
 //
 static void Read_File_Port(
     REBVAL *out,
-    REBVAL *port,
-    REBREQ *file,
-    REBVAL *path,
-    REBFLGS flags,
+    FILEREQ *file,
     REBLEN len
-) {
-    assert(IS_FILE(path));
-
-    UNUSED(path);
-    UNUSED(flags);
-    UNUSED(port);
-
-    struct rebol_devreq *req = Req(file);
-
-    REBBIN *bin = Make_Binary(len); // read result buffer
+){
+    // Make buffer for read result
+    //
+    REBBIN *bin = Make_Binary(len);
     TERM_BIN_LEN(bin, len);
     Init_Binary(out, bin);
 
-    // Do the read, check for errors:
-    req->common.data = BIN_HEAD(bin);
-    req->length = len;
+    // Do the read, check for errors
+    //
+    size_t actual;
 
-    OS_DO_DEVICE_SYNC(file, RDC_READ);
+    REBVAL *error = Read_File(&actual, file, BIN_HEAD(bin), len);
+    if (error)
+        fail (error);
 
-    TERM_BIN_LEN(bin, req->actual);
+    TERM_BIN_LEN(bin, actual);
 }
 
 
 //
 //  Write_File_Port: C
 //
+// Factored out from FILE! port for WRITE, but only called once.
+//
 // !!! `len` comes from /PART, it should be in characters if a string and
 // in bytes if a BINARY!.  It seems to disregard it if the data is BLOCK!
 //
 static void Write_File_Port(
-    REBREQ *file,
+    FILEREQ *file,
     REBVAL *data,
     REBLEN limit,
     bool lines
 ){
-    struct rebol_devreq *req = Req(file);
-
     if (IS_BLOCK(data)) {
         // Form the values of the block
         // !! Could be made more efficient if we broke the FORM
@@ -193,6 +178,9 @@ static void Write_File_Port(
         limit = VAL_LEN_HEAD(data);
     }
 
+    const REBYTE *data_ptr;
+    size_t length;
+
     if (IS_TEXT(data)) {
         REBSIZ size;
         REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
@@ -202,19 +190,20 @@ static void Write_File_Port(
             limit
         );
 
-        req->common.data = m_cast(REBYTE*,  // writing only
-            cast(const REBYTE*, utf8)
-        );
-        req->length = size;
-        req->modes |= RFM_TEXT; // do LF => CR LF, e.g. on Windows
+        data_ptr = utf8;
+        length = size;
+
+        file->modes |= RFM_TEXT;  // do LF => CR LF, e.g. on Windows
     }
     else {
-        req->common.data = m_cast(REBYTE*, VAL_BINARY_AT(data));
-        req->length = limit;
-        req->modes &= ~RFM_TEXT; // don't do LF => CR LF, e.g. on Windows
+        data_ptr = m_cast(REBYTE*, VAL_BINARY_AT(data));
+        length = limit;
+        file->modes &= ~RFM_TEXT;  // don't do LF => CR LF, e.g. on Windows
     }
 
-    OS_DO_DEVICE_SYNC(file, RDC_WRITE);
+    REBVAL *error = Write_File(file, data_ptr, length);
+    if (error)
+        fail (error);
 }
 
 
@@ -225,21 +214,22 @@ static void Write_File_Port(
 // can never be greater than 4GB.  If limit isn't negative it
 // constrains the size of the requested read.
 //
-static REBLEN Set_Length(REBREQ *file, REBI64 limit)
+static REBLEN Set_Length(FILEREQ *file, REBI64 limit)
 {
-    // how much is already used
-    REBI64 len = ReqFile(file)->size - ReqFile(file)->index;
+    REBI64 len = file->size - file->index;  // how much is already used
 
-    // Compute and bound bytes remaining:
+    // Compute and bound bytes remaining
+
     if (len < 0)
         return 0;
-    len &= MAX_READ_MASK; // limit the size
+    len &= MAX_READ_MASK;  // limit the size
 
-    // Return requested length:
-    if (limit < 0) return (REBLEN)len;
+    if (limit < 0)  // return requested length
+        return cast(REBLEN, len);
 
-    // Limit size of requested read:
-    if (limit > len) return cast(REBLEN, len);
+    if (limit > len)  // limit size of requested read
+        return cast(REBLEN, len);
+
     return cast(REBLEN, limit);
 }
 
@@ -249,18 +239,16 @@ static REBLEN Set_Length(REBREQ *file, REBI64 limit)
 //
 // Computes the number of bytes that should be skipped.
 //
-static void Set_Seek(REBREQ *file, REBVAL *arg)
+static void Set_Seek(FILEREQ *file, REBVAL *arg)
 {
-    struct rebol_devreq *req = Req(file);
-
     REBI64 i = Int64s(arg, 0);
 
-    if (i > ReqFile(file)->size)
-        i = ReqFile(file)->size;
+    if (i > file->size)
+        i = file->size;
 
-    ReqFile(file)->index = i;
+    file->index = i;
 
-    req->modes |= RFM_RESEEK; // force a seek
+    file->modes |= RFM_RESEEK;  // force a seek
 }
 
 
@@ -285,8 +273,22 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
     else if (!IS_FILE(path))
         fail (Error_Invalid_Spec_Raw(path));
 
-    REBREQ *file = Force_Get_Port_State(port, &Dev_File);
-    struct rebol_devreq *req = Req(file);
+    FILEREQ *file;
+
+    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    if (IS_NULLED(state)) {
+        //
+        // !!! The Make_Devreq() code would zero out the struct, so to keep
+        // things compatible while ripping out the devreq code this must too.
+        //
+        REBBIN *bin = Make_Binary(sizeof(FILEREQ));
+        memset(BIN_HEAD(bin), 0, sizeof(FILEREQ));
+        Init_Binary(state, bin);
+        file = cast(FILEREQ*, VAL_BINARY_AT_ENSURE_MUTABLE(state));
+    }
+    else {
+        file = cast(FILEREQ*, VAL_BINARY_AT_ENSURE_MUTABLE(state));
+    }
 
     // !!! R3-Alpha never implemented quite a number of operations on files,
     // including FLUSH, POKE, etc.
@@ -301,37 +303,37 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         switch (property) {
           case SYM_INDEX:
-            return Init_Integer(D_OUT, ReqFile(file)->index + 1);
+            return Init_Integer(D_OUT, file->index + 1);
 
           case SYM_LENGTH:
             //
             // Comment said "clip at zero"
             ///
-            return Init_Integer(D_OUT, ReqFile(file)->size - ReqFile(file)->index);
+            return Init_Integer(D_OUT, file->size - file->index);
 
           case SYM_HEAD:
-            ReqFile(file)->index = 0;
-            req->modes |= RFM_RESEEK;
+            file->index = 0;
+            file->modes |= RFM_RESEEK;
             RETURN (port);
 
           case SYM_TAIL:
-            ReqFile(file)->index = ReqFile(file)->size;
-            req->modes |= RFM_RESEEK;
+            file->index = file->size;
+            file->modes |= RFM_RESEEK;
             RETURN (port);
 
           case SYM_HEAD_Q:
-            return Init_Logic(D_OUT, ReqFile(file)->index == 0);
+            return Init_Logic(D_OUT, file->index == 0);
 
           case SYM_TAIL_Q:
-            return Init_Logic(D_OUT, ReqFile(file)->index >= ReqFile(file)->size);
+            return Init_Logic(D_OUT, file->index >= file->size);
 
           case SYM_PAST_Q:
-            return Init_Logic(D_OUT, ReqFile(file)->index > ReqFile(file)->size);
+            return Init_Logic(D_OUT, file->index > file->size);
 
-        case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, did (req->flags & RRF_OPEN));
+          case SYM_OPEN_Q:
+            return Init_Logic(D_OUT, did (file->modes & RFM_OPEN));
 
-        default:
+          default:
             break;
         }
 
@@ -344,13 +346,11 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         UNUSED(PAR(string)); // handled in dispatcher
         UNUSED(PAR(lines)); // handled in dispatcher
 
-        REBFLGS flags = 0;
-
         // Handle the READ %file shortcut case, where the FILE! has been
         // converted into a PORT! but has not been opened yet.
 
         bool opened;
-        if (req->flags & RRF_OPEN)
+        if (file->modes & RFM_OPEN)
             opened = false; // was already open
         else {
             REBLEN nargs = AM_OPEN_READ;
@@ -365,18 +365,13 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
             Set_Seek(file, ARG(seek));
 
         REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(part)) : -1);
-        Read_File_Port(D_OUT, port, file, path, flags, len);
+        Read_File_Port(D_OUT, file, len);
 
         if (opened) {
-            REBVAL *result = OS_DO_DEVICE(file, RDC_CLOSE);
-            assert(result != NULL); // should be synchronous
-
-            Cleanup_File(file);
-
-            if (rebDid("error?", result))
-                rebJumps("fail", result);
-
-            rebRelease(result); // ignore result
+            REBVAL *error = Close_File(file);
+            file->modes &= ~RFM_OPEN;
+            if (error)
+                fail (error);
         }
 
         return D_OUT; }
@@ -403,8 +398,8 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         // to a PORT! but it hasn't been opened yet.
 
         bool opened;
-        if (req->flags & RRF_OPEN) {
-            if (not (req->modes & RFM_WRITE))
+        if (file->modes & RFM_OPEN) {
+            if (not (file->modes & RFM_WRITE))
                 fail (Error_Read_Only_Raw(path));
 
             opened = false; // already open
@@ -421,8 +416,8 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         }
 
         if (REF(append)) {
-            ReqFile(file)->index = -1; // append
-            req->modes |= RFM_RESEEK;
+            file->index = -1;  // append
+            file->modes |= RFM_RESEEK;
         }
         if (REF(seek))
             Set_Seek(file, ARG(seek));
@@ -438,15 +433,10 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         Write_File_Port(file, data, len, did REF(lines));
 
         if (opened) {
-            REBVAL *result = OS_DO_DEVICE(file, RDC_CLOSE);
-            assert(result != NULL); // should be synchronous
-
-            Cleanup_File(file);
-
-            if (rebDid("error?", result))
-                rebJumps("fail", result);
-
-            rebRelease(result);
+            REBVAL *error = Close_File(file);
+            file->modes &= ~RFM_OPEN;
+            if (error)
+                fail (error);
         }
 
         RETURN (port); }
@@ -482,28 +472,22 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         if (REF(deep) or REF(types))
             fail (Error_Bad_Refines_Raw());
 
-        if (not (req->flags & RRF_OPEN))
+        if (not (file->modes & RFM_OPEN))
             fail (Error_Not_Open_Raw(path)); // !!! wrong msg
 
         REBLEN len = Set_Length(file, REF(part) ? VAL_INT64(ARG(part)) : -1);
-        REBFLGS flags = 0;
-        Read_File_Port(D_OUT, port, file, path, flags, len);
+        Read_File_Port(D_OUT, file, len);
         return D_OUT; }
 
       case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
         UNUSED(PAR(port));
 
-        if (req->flags & RRF_OPEN) {
-            REBVAL *result = OS_DO_DEVICE(file, RDC_CLOSE);
-            assert(result != NULL); // should be synchronous
-
-            Cleanup_File(file);
-
-            if (rebDid("error?", result))
-                rebJumps("fail", result);
-
-            rebRelease(result); // ignore error
+        if (file->modes & RFM_OPEN) {
+            REBVAL *error = Close_File(file);
+            file->modes &= ~RFM_OPEN;
+            if (error)
+                fail (error);
         }
         RETURN (port); }
 
@@ -511,52 +495,41 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         INCLUDE_PARAMS_OF_DELETE;
         UNUSED(PAR(port));
 
-        if (req->flags & RRF_OPEN)
+        if (file->modes & RFM_OPEN)
             fail (Error_No_Delete_Raw(path));
         Setup_File(file, 0, path);
 
-        REBVAL *result = OS_DO_DEVICE(file, RDC_DELETE);
-        assert(result != NULL); // should be synchronous
+        REBVAL *error = Delete_File(file);
+        if (error)
+            fail (error);
 
-        if (rebDid("error?", result))
-            rebJumps("fail", result);
-
-        rebRelease(result); // ignore result
         RETURN (port); }
 
       case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
 
-        if (req->flags & RRF_OPEN)
+        if (file->modes & RFM_OPEN)
             fail (Error_No_Rename_Raw(path));
 
         Setup_File(file, 0, path);
 
-        req->common.data = cast(REBYTE*, ARG(to)); // !!! hack!
-
-        REBVAL *result = OS_DO_DEVICE(file, RDC_RENAME);
-        assert(result != NULL); // should be synchronous
-        if (rebDid("error?", result))
-            rebJumps("fail", result);
-        rebRelease(result); // ignore result
+        REBVAL *error = Rename_File(file, ARG(to));
+        if (error)
+            fail (error);
 
         RETURN (ARG(from)); }
 
       case SYM_CREATE: {
-        if (not (req->flags & RRF_OPEN)) {
+        if (not (file->modes & RFM_OPEN)) {
             Setup_File(file, AM_OPEN_WRITE | AM_OPEN_NEW, path);
 
-            REBVAL *cr_result = OS_DO_DEVICE(file, RDC_CREATE);
-            assert(cr_result != NULL);
-            if (rebDid("error?", cr_result))
-                rebJumps("fail", cr_result);
-            rebRelease(cr_result);
+            REBVAL *create_error = Create_File(file);
+            if (create_error)
+                fail (create_error);
 
-            REBVAL *cl_result = OS_DO_DEVICE(file, RDC_CLOSE);
-            assert(cl_result != NULL);
-            if (rebDid("error?", cl_result))
-                rebJumps("fail", cl_result);
-            rebRelease(cl_result);
+            REBVAL *close_error = Close_File(file);
+            if (close_error)
+                fail (close_error);
         }
 
         // !!! should it leave file open???
@@ -571,15 +544,11 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         if (REF(mode))
             fail (Error_Bad_Refines_Raw());
 
-        if (not (req->flags & RRF_OPEN)) {
+        if (not (file->modes & RFM_OPEN)) {
             Setup_File(file, 0, path);
-            REBVAL *result = OS_DO_DEVICE(file, RDC_QUERY);
-            assert(result != NULL);
-            if (rebDid("error?", result)) {
-                rebRelease(result); // !!! R3-Alpha returned blank on error
-                return nullptr;
-            }
-            rebRelease(result); // ignore result
+            REBVAL *error = Query_File(file);
+            if (error)
+                fail (error);
         }
 
         // !!! free file path?
@@ -592,17 +561,16 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         UNUSED(PAR(series));
         UNUSED(REF(unbounded));  // !!! Should /UNBOUNDED behave differently?
 
-        ReqFile(file)->index += Get_Num_From_Arg(ARG(offset));
-        req->modes |= RFM_RESEEK;
+        file->index += Get_Num_From_Arg(ARG(offset));
+        file->modes |= RFM_RESEEK;
         RETURN (port); }
 
       case SYM_CLEAR: {
         // !! check for write enabled?
-        req->modes |= RFM_RESEEK;
-        req->modes |= RFM_TRUNCATE;
-        req->length = 0;
+        file->modes |= RFM_RESEEK;
+        file->modes |= RFM_TRUNCATE;
 
-        OS_DO_DEVICE_SYNC(file, RDC_WRITE);
+        Write_File(file, nullptr, 0);
         RETURN (port); }
 
       default:

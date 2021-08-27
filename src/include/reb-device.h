@@ -96,19 +96,6 @@ enum {
 };
 
 
-// RFM - REBOL File Modes
-enum {
-    RFM_READ = 1 << 0,
-    RFM_WRITE = 1 << 1,
-    RFM_APPEND = 1 << 2,
-    RFM_SEEK = 1 << 3,
-    RFM_NEW = 1 << 4,
-    RFM_READONLY = 1 << 5,
-    RFM_TRUNCATE = 1 << 6,
-    RFM_RESEEK = 1 << 7, // file index has moved, reseek
-    RFM_DIR = 1 << 8,
-    RFM_TEXT = 1 << 9 // on appropriate platforms, translate LF to CR LF
-};
 
 #define MAX_FILE_NAME 1022
 

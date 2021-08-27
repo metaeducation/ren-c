@@ -44,8 +44,6 @@ REBNATIVE(startup_p)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_STARTUP_P;
 
-    OS_Register_Device(&Dev_File);
-
     return rebNone();
 }
 
@@ -76,8 +74,6 @@ REBNATIVE(get_file_actor_handle)
 REBNATIVE(shutdown_p)
 {
     FILESYSTEM_INCLUDE_PARAMS_OF_SHUTDOWN_P;
-
-    OS_Unregister_Device(&Dev_File);
 
     return rebNone();
 }
