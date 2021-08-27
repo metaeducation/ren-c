@@ -359,6 +359,138 @@ REBNATIVE(read_line)
 
 
 //
+//  export read-char: native [
+//
+//  {Inputs a single character from the input}
+//
+//      return: "Null if end of file or input was aborted (e.g. via ESCAPE)"
+//          [<opt> char! word!]
+//
+//      /virtual "Return keys like Up, Ctrl-A, or ESCAPE vs. ignoring them"
+//  ]
+//
+REBNATIVE(read_char)
+//
+// Note: There is no EOF signal here as in READ-LINE.  Because READ-LINE in
+// raw mode needed to distinguishing between termination due to newline and
+// termination due to end of file.  Here, it's only a single character.  Hence
+// NULL is sufficient to signal the caller is to treat it as no more input
+// available... that's EOF.
+{
+    STDIO_INCLUDE_PARAMS_OF_READ_CHAR;
+
+  #ifdef REBOL_SMART_CONSOLE
+    if (Term_IO) {
+        //
+        // We don't want to use buffering, because that tries to batch up
+        // several keystrokes into a TEXT! if it can.  We want the first char
+        // typed we can get.
+        //
+      retry: ;
+        const bool buffered = false;
+        REBVAL *e = Try_Get_One_Console_Event(Term_IO, buffered);
+        // (^-- it's an ANY-VALUE!, not a R3-Alpha-style EVENT!)
+
+        if (e == nullptr) {
+            rebJumps(
+                "fail {nullptr interruption of terminal not done yet}"
+            );
+        }
+
+        if (rebDid("bad-word?", rebQ(e))) {
+            if (rebDid(rebQ(e), "= '~halt~"))  // Ctrl-C instead of key
+                rebJumps(Lib(HALT));
+
+            // For the moment there aren't any other signals; if there were,
+            // they may be interesting to the caller.
+            //
+            assert(!"Unknown BAD-WORD! signal in Try_Get_One_Console_Event()");
+            return e;
+        }
+
+        if (rebDid("char? @", e))
+            return e;  // we got the character, note it hasn't been echoed
+
+        if (rebDid("word? @", e)) {  // recognized "virtual key"
+            if (REF(virtual))
+                return e;  // user wanted to know the virtual key
+
+            if (rebDid("'escape = @", e)) {
+                //
+                // In the non-virtual mode, allow escape to return null.
+                //
+                Term_Abandon_Pending_Events(Term_IO);
+                rebRelease(e);
+
+                return nullptr;
+            }
+
+            rebRelease(e);  // ignore all other non-printable keys
+        }
+        else if (rebDid("issue? @", e)) {  // unrecognized key
+            //
+            // Assume they wanted to know what it was if virtual.
+            //
+            if (REF(virtual))
+                return e;
+
+            rebRelease(e);
+        }
+
+        goto retry;
+    }
+    else  // we have a smart console but aren't using it (redirected to file?)
+  #endif
+    {
+        bool eof;
+
+        REBYTE encoded[UNI_ENCODED_MAX];
+
+        if (Read_Stdin_Byte_Interrupted(&eof, &encoded[0])) {  // Ctrl-C
+            if (rebWasHalting())
+                rebJumps(Lib(HALT));
+
+            fail ("Interruption of READ-CHAR for reason other than HALT?");
+        }
+        if (eof) {
+            //
+            // If we hit the end of file before accumulating any data,
+            // then just return nullptr as an end of file signal.
+            //
+            return nullptr;
+        }
+
+        REBUNI c;
+
+        uint_fast8_t trail = trailingBytesForUTF8[encoded[0]];
+        if (trail == 0)
+            c = encoded[0];
+        else {
+            REBSIZ size = 1;  // we add to size as we count trailing bytes
+            while (trail != 0) {
+                if (Read_Stdin_Byte_Interrupted(&eof, &encoded[size])) {
+                    if (rebWasHalting())
+                        rebJumps(Lib(HALT));
+
+                    fail ("Interruption of READ-CHAR"
+                            " for reason other than HALT?");
+                }
+                if (eof)
+                    fail ("Incomplete UTF-8 sequence from stdin at EOF");
+                ++size;
+                --trail;
+            }
+
+            if (nullptr == Back_Scan_UTF8_Char(&c, encoded, &size))
+                fail ("Invalid UTF-8 Sequence found in READ-CHAR");
+        }
+
+        return rebChar(c);
+    }
+}
+
+
+//
 //  shutdown*: native [  ; Note: DO NOT EXPORT!
 //
 //  {Shut down the stdio and terminal devices, called on extension unload}

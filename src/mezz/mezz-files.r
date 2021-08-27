@@ -125,35 +125,6 @@ clean-path: func [
 ]
 
 
-read-char: function [
-    {Inputs a single character from the input}
-
-    return: "Null if the input was aborted (e.g. via ESCAPE)"
-        [<opt> char!]
-][
-    ; !!! See comments on the bad design in READ-LINE above, this repeats the
-    ; code to try and get READ-CHAR to do *something*.
-
-    if bad-word? data: read system/ports/input [
-        HALT
-    ]
-
-    all [
-        1 = length of data
-        escape = as issue! data/1
-    ] then [
-        return null
-    ]
-
-    if pos: next data [
-        system.ports.input.data: default [copy #{}]
-        insert system.ports.input.data (take/part pos tail pos)
-    ]
-
-    return make issue! first data
-]
-
-
 ask: function [
     {Ask the user for input}
 

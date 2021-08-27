@@ -555,7 +555,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
 
         REBVAL *char_bin = rebSizedBinary(encoded, encoded_size);
         if (not buffered) {
-            e = rebValue("to char!", char_bin);
+            e = rebValue("make issue!", char_bin);
         }
         else {
             if (e_buffered)
