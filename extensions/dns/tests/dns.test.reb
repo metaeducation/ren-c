@@ -1,5 +1,4 @@
-; !!! Networking ability should be part of an extension, and the tests should
-; live with that extension.  For the moment DNS tests are in the core.
+; %dns.test.reb
 ;
 ; (This is a minimal test, but better than zero tests, which was the case in
 ; the original R3-Alpha suite.)

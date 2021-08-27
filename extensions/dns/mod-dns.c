@@ -5,7 +5,7 @@
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
-//=////////////////////////////////////////////////////////////////////////=//
+//=/////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
 // Copyright 2012-2017 Ren-C Open Source Contributors
@@ -19,12 +19,22 @@
 //
 // https://www.gnu.org/licenses/lgpl-3.0.html
 //
-//=////////////////////////////////////////////////////////////////////////=//
+//=/////////////////////////////////////////////////////////////////////////=//
 //
-// !!! R3-Alpha used WSAAsyncGetHostByName and WSAAsyncGetHostByName to do
-// non-blocking DNS lookup on Windows.  These functions are deprecated, since
-// they do not have IPv6 equivalents...so applications that want asynchronous
-// lookup are expected to use their own threads and call getnameinfo().
+// Only READ is supported on DNS ports at this time:
+//
+//     >> read dns://rebol.com
+//     == 162.216.18.225
+//
+//     >> read dns://162.216.18.225
+//     == "rebol.com"
+//
+// See %extensions/dns/README.md regarding why asynchronous DNS was removed.
+//
+//=//// NOTES //////////////////////////////////////////////////////////////=//
+//
+// * This extension expects to be loaded alongside the networking extension,
+//   as it does not call WSAStartup() itself to start up sockets on Windows.
 //
 
 
@@ -48,24 +58,11 @@
 
 #include "tmp-mod-dns.h"
 
-EXTERN_C REBDEV Dev_Net;
-
 //
 //  DNS_Actor: C
 //
 static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 {
-    // !!! The DNS shares "lazy initialization" code with the network code.
-    // This is because before you can call any network operations on Windows,
-    // you need to call WSAStartup, but you don't necessarily want to pay
-    // for that cost if your script doesn't do any network operations.
-    // Hence the port state of being open or closed relates to that.
-    //
-    REBREQ *req = Force_Get_Port_State(port, &Dev_Net);
-    struct rebol_devreq *sock = Req(req);
-
-    sock->timeout = 4000;  // where does this go? !!!
-
     REBCTX *ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
@@ -79,7 +76,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         switch (property) {
           case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, did (sock->flags & RRF_OPEN));
+            fail ("DNS 'ports' do not currently support OPEN?, only READ");
 
           default:
             break;
@@ -96,9 +93,6 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         UNUSED(PAR(string)); // handled in dispatcher
         UNUSED(PAR(lines)); // handled in dispatcher
-
-        if (not (sock->flags & RRF_OPEN))
-            OS_DO_DEVICE_SYNC(req, RDC_OPEN);  // e.g. to call WSAStartup()
 
         REBVAL *host = Obj_Value(spec, STD_PORT_SPEC_NET_HOST);
 
@@ -170,12 +164,17 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         if (REF(new) or REF(read) or REF(write) or REF(seek) or REF(allow))
             fail (Error_Bad_Refines_Raw());
 
-        OS_DO_DEVICE_SYNC(req, RDC_OPEN);
-        RETURN (port); }
+        // !!! All the information the DNS needs is at the moment in the
+        // port spec, so there's nothing that has to be done in the OPEN.
+        // Though at one time, this took advantage of "lazy initialization"
+        // of WSAStartup(), piggy-backing on the network layer.
+        //
+        // So for the moment we error if you try to open a DNS port.
+
+        fail ("DNS 'ports' do not currently support OPEN, only READ"); }
 
       case SYM_CLOSE: {
-        OS_DO_DEVICE_SYNC(req, RDC_CLOSE);  // e.g. WSACleanup()
-        RETURN (port); }
+        fail ("DNS 'ports' do not currently support CLOSE, only READ"); }
 
       case SYM_ON_WAKE_UP:
         return Init_None(D_OUT);
