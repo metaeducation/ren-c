@@ -212,10 +212,18 @@ load: function [
         [object!]
 
     source "Source of the information being loaded"
-        [file! url! text! binary!]
+        [file! url! text! binary! tag!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
 ][
+    if tag? source [
+        source: switch source
+            (load system.locale.library.utilities)  ; Note: recursion!
+        else [
+            fail [{LOAD} source {not in system.locale.library}]
+        ]
+    ]
+
     ; Note that code or data can be embedded in other datatypes, including
     ; not just text, but any binary data, including images, etc. The type
     ; argument can be used to control how the raw source is converted.

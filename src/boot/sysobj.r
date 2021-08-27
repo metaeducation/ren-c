@@ -86,7 +86,13 @@ ports: make object! [
 locale: make object! [
     language:   ; Human language locale
     language*: _
-    library: _ ;make object! [modules: utilities: https://raw.githubusercontent.com/r3n/renclib/master/usermodules.reb]
+    library: make object! [
+        ;
+        ; This is a list mapping tags to URLs as [<tag> http://example.com]
+        ; They make it easy to do things like `import <json>` or `do <chess>`
+        ;
+        utilities: https://raw.githubusercontent.com/r3n/renclib/master/userutils.reb
+    ]
     locale:
     locale*: _
     months: [
@@ -96,11 +102,6 @@ locale: make object! [
     days: [
         "Monday" "Tuesday" "Wednesday" "Thursday" "Friday" "Saturday" "Sunday"
     ]
-]
-
-set in locale 'library make object! [
-    modules: https://raw.githubusercontent.com/r3n/renclib/master/usermodules.reb
-    utilities: https://raw.githubusercontent.com/r3n/renclib/master/userutils.reb
 ]
 
 options: make object! [  ; Options supplied to REBOL during startup
