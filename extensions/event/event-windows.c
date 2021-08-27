@@ -30,15 +30,9 @@
 
 #include "sys-core.h"
 
-#ifndef HWND_MESSAGE
-#define HWND_MESSAGE (HWND)-3
-#endif
-
 extern void Done_Device(uintptr_t handle, int error);
 
-// Move or remove globals? !?
-HWND Event_Handle = 0;          // Used for async DNS
-static int Timer_Id = 0;        // The timer we are using
+static int Timer_Id = 0;  // The timer we are using
 
 
 //
@@ -66,50 +60,6 @@ int64_t Delta_Time(int64_t base)
 
 
 //
-//  Reap_Process: C
-//
-// pid:
-//      > 0, a single process
-//      -1, any child process
-// flags:
-//      0: return immediately
-//
-//      Return -1 on error
-//
-int Reap_Process(int pid, int *status, int flags)
-{
-    UNUSED(pid);
-    UNUSED(status);
-    UNUSED(flags);
-
-    // !!! It seems that processes don't need to be "reaped" on Windows (?)
-    return 0;
-}
-
-
-//
-//  REBOL_Event_Proc: C
-//
-// The minimal default event handler.
-//
-LRESULT CALLBACK REBOL_Event_Proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    switch(msg) {
-        case WM_CLOSE:
-            DestroyWindow(hwnd);
-            break;
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            break;
-        default:
-            // Default processing that we do not care about:
-            return DefWindowProc(hwnd, msg, wparam, lparam);
-    }
-    return 0;
-}
-
-
-//
 //  Startup_Events: C
 //
 // Initialize the event device.
@@ -120,55 +70,6 @@ LRESULT CALLBACK REBOL_Event_Proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 extern void Startup_Events(void);
 void Startup_Events(void)
 {
-    // !!! The Windows build of R3-Alpha used a hidden window for message
-    // processing.  The only use case was asynchronous DNS, which was a
-    // deprecated feature (not being carried forward to IPv6):
-    //
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms741522(v=vs.85).aspx
-    //
-    // One aspect of making this window is that it requires the HINSTANCE of
-    // the application.  That was being passed via a global App_Instance
-    // variable:
-    //
-    // EXTERN_C HINSTANCE App_Instance;  // From Main module.
-    //
-    // This complicated linking of libRebol, and since the event strategy is
-    // being rethought this is #ifdef'd out for now.
-    //
-    // Long-term, the better way to tunnel such parameters from the host to
-    // extensions would likely be to put a HANDLE! in the environment, and
-    // then those extensions that require the Windows HINSTANCE could
-    // complain if it wasn't there...vs. creating a linker dependency for
-    // all clients.
-    //
-  #if 0
-    WNDCLASSEX wc;
-
-    memset(&wc, '\0', sizeof(wc));
-
-    // Register event object class:
-    wc.cbSize        = sizeof(wc);
-    wc.lpszClassName = L"REBOL-Events";
-    wc.hInstance     = App_Instance;
-    wc.lpfnWndProc   = REBOL_Event_Proc;
-
-    ATOM atom = RegisterClassEx(&wc);
-    if (atom == 0)
-        rebFail_OS (GetLastError());
-
-    Event_Handle = CreateWindowEx(
-        0,
-        wc.lpszClassName,
-        wc.lpszClassName,
-        0,0,0,0,0,
-        HWND_MESSAGE, // used for message-only windows
-        NULL, App_Instance, NULL
-    );
-    if (Event_Handle == NULL)
-        rebFail_OS (GetLastError());
-  #else
-    Event_Handle = NULL;
-  #endif
 }
 
 

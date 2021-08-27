@@ -119,58 +119,6 @@ REBNATIVE(get_event_actor_handle)
 
 
 //
-//  map-event: native [
-//
-//  {Returns event with inner-most graphical object and coordinate.}
-//
-//      return: [event!]
-//      event [event!]
-//  ]
-//
-REBNATIVE(map_event)
-{
-    EVENT_INCLUDE_PARAMS_OF_MAP_EVENT;
-
-    REBVAL *e = ARG(event);
-
-    if (VAL_EVENT_MODEL(e) != EVM_GUI)
-        fail ("Can't use MAP-EVENT on non-GUI event");
-
-    REBGOB *g = cast(REBGOB*, VAL_EVENT_NODE(e));
-    if (not g)
-        RETURN (e);  // !!! Should this have been an error?
-
-    if (not (VAL_EVENT_FLAGS(e) & EVF_HAS_XY))
-        RETURN (e);  // !!! Should this have been an error?
-
-    REBD32 x = VAL_EVENT_X(e);
-    REBD32 y = VAL_EVENT_Y(e);
-
-    DECLARE_LOCAL (gob);
-    Init_Gob(gob, g);  // !!! Efficiency hack: %reb-event.h has Init_Gob()
-    PUSH_GC_GUARD(gob);
-
-    REBVAL *mapped = rebValue(
-        "map-gob-offset", gob, "make pair! [", rebI(x), rebI(y), "]"
-    );
-
-    // For efficiency, %reb-event.h is able to store direct REBGOB pointers
-    // (This loses any index information or other cell-instance properties)
-    //
-    assert(VAL_EVENT_MODEL(e) == EVM_GUI);  // should still be true
-    SET_VAL_EVENT_NODE(e, VAL_GOB(mapped));
-
-    rebRelease(mapped);
-
-    assert(VAL_EVENT_FLAGS(e) & EVF_HAS_XY);  // should still be true
-    SET_VAL_EVENT_X(e, ROUND_TO_INT(x));
-    SET_VAL_EVENT_Y(e, ROUND_TO_INT(y));
-
-    RETURN (e);
-}
-
-
-//
 //  Wait_For_Device_Events_Interruptible: C
 //
 // Check if devices need attention, and if not, then wait.
@@ -201,11 +149,6 @@ int Wait_For_Device_Events_Interruptible(
     // it's not clear if it makes sense to allocate it here vs. below.
     //
     REBREQ *req = OS_Make_Devreq(&Dev_Event);
-
-    // !!! This was an API addded to the HostKit at some point.  It was only
-    // called here in event processing, so it's moved to the event extension.
-    //
-    Reap_Process(-1, NULL, 0);
 
     // Let any pending device I/O have a chance to run:
     //
