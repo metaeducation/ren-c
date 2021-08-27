@@ -140,7 +140,7 @@ REBNATIVE(write_stdout)
         else
             part = 1024;
 
-        Write_IO(v, remaining);
+        Write_IO(v, part);
 
         VAL_INDEX_RAW(v) += part;
     }
