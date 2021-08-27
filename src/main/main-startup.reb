@@ -29,13 +29,13 @@ REBOL [
 boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
-    enclose :print func [f] [if not system/options/quiet [do f]]
+    enclose :print func [f] [if not system.options.quiet [do f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
-    enclose :print func [f] [if system/options/verbose [do f]]
+    enclose :print func [f] [if system.options.verbose [do f]]
 )
 
 make-banner: func [
@@ -54,10 +54,10 @@ make-banner: func [
                 set a: text! (s: format ["**  " 68 "**"] a)
               | '= set a: [text! | word! | set-word!] [
                         b: here
-                          path! (b: get b/1)
-                        | word! (b: get b/1)
-                        | block! (b: spaced b/1)
-                        | text! (b: b/1)
+                          path! (b: get b.1)
+                        | word! (b: get b.1)
+                        | block! (b: spaced b.1)
+                        | text! (b: b.1)
                     ]
                     (
                         b: default ["(none)"]  ; show (none) for NULL
@@ -84,16 +84,16 @@ boot-banner: [
     = "" "Licensed Under LGPL 3.0, see LICENSE."
     = Website:  "http://github.com/metaeducation/ren-c"
     -
-    = Version:   system/version
-    = Platform:  system/platform
-    = Build:     system/build
-    = Commit:    system/commit
+    = Version:   system.version
+    = Platform:  system.platform
+    = Build:     system.build
+    = Commit:    system.commit
     -
-    = Language:  system/locale/language*
-    = Locale:    system/locale/locale*
-    = Home:      system/options/home
-    = Resources: system/options/resources
-    = Console:   system/console/name
+    = Language:  system.locale.language*
+    = Locale:    system.locale.locale*
+    = Home:      system.options.home
+    = Resources: system.options.resources
+    = Console:   system.console.name
     -
     *
 ]
@@ -139,7 +139,7 @@ usage: func [
     Special options:
 
         --about          Prints full banner of information when console starts
-        --debug flags    For user scripts (system/options/debug)
+        --debug flags    For user scripts (system.options.debug)
         --halt (-h)      Leave console open when script is done
         --import file    Import a module prior to script
         --quiet (-q)     No startup banners or information
@@ -167,7 +167,7 @@ license: func [
     "Prints the REBOL/core license agreement."
     return: <none>
 ][
-    print system/license
+    print system.license
 ]
 
 host-script-pre-load: func [
@@ -192,7 +192,7 @@ host-script-pre-load: func [
 ;
 ; https://forum.rebol.info/t/the-real-story-about-user-and-lib-contexts/764
 ;
-; We could use them via `lib/<whatever>`, but then each callsite would have to
+; We could use them via `lib.<whatever>`, but then each callsite would have to
 ; document the issue.  So we make them SET-WORD!s added to lib up front, so
 ; the lib modification gets picked up.
 ;
@@ -213,7 +213,7 @@ main-startup: func [
     main-startup  ; unset when finished with itself
     about usage license  ; exported to lib, see notes
     <static>
-        o (system/options)  ; shorthand since options are often read/written
+        o (system.options)  ; shorthand since options are often read/written
 ][
     ; We hook the RETURN function so that it actually returns an instruction
     ; that the code can build up from multiple EMIT statements.
@@ -256,10 +256,10 @@ main-startup: func [
                 ; Done actually via #start-console, but we return something
             ]
             <prompt> [
-                emit [system/console/print-gap]
-                emit [system/console/print-prompt]
+                emit [system.console.print-gap]
+                emit [system.console.print-prompt]
                 emit [reduce [
-                    system/console/input-hook
+                    system.console.input-hook
                 ]]  ; gather first line (or BLANK!), put in BLOCK!
             ]
             <halt> [
@@ -310,7 +310,7 @@ main-startup: func [
         ; ...adaptation falls through to our copy of the original PANIC
     ]
 
-    system/product: 'core
+    system.product: 'core
 
     ; !!! If we don't load the extensions early, then we won't get the GET-ENV
     ; function (it's provided by the Process extension).  Though optional,
@@ -333,7 +333,7 @@ main-startup: func [
     ; It's not foolproof, so it might come back null.  The console code can
     ; then decide if it wants to fall back on argv[0]
     ;
-    switch type of system/options/boot: get-current-exec [
+    switch type of system.options.boot: get-current-exec [
         file! []  ; found it
         null []  ; also okay (not foolproof!)
         fail
@@ -353,7 +353,7 @@ main-startup: func [
         print "Startup encountered an error!"
         print ["**" if block? reason [spaced reason] else [reason]]
         if error [
-            print either o/verbose [
+            print either o.verbose [
                 [error]
             ][
                 "!! use --verbose for more detail"
@@ -380,7 +380,7 @@ main-startup: func [
         {Return HOME path (e.g. $HOME on *nix)}
         return: [<opt> file!]
     ][
-        let get-env: attempt [:system/modules/Process/get-env] else [
+        let get-env: attempt [:system.modules.Process.get-env] else [
             loud-print [
                 "Interpreter not built with GET-ENV, can't detect HOME dir" LF
                 "(Build with Process extension enabled to address this)"
@@ -402,9 +402,9 @@ main-startup: func [
         {Return platform specific resources path.}
         return: [<opt> file!]
     ][
-        ; lives under systems/options/home
+        ; lives under systems.options.home
 
-        let path: join o/home switch system/platform/1 [
+        let path: join o.home switch system.platform.1 [
             'Windows [%REBOL/]
         ] else [
             %.rebol/  ; default *nix (covers Linux, MacOS (OS X) and Unix)
@@ -413,19 +413,20 @@ main-startup: func [
         return if exists? path [path]
     ]
 
-    ; Set system/users/home (users HOME directory)
-    ; Set system/options/home (ditto)
-    ; Set system/options/resources (users Rebol resource directory)
+    ; Set system.users.home (users HOME directory)
+    ; Set system.options.home (ditto)
+    ; Set system.options.resources (users Rebol resource directory)
+    ;
     ; NB. Above can be overridden by --home option
-    ; TBD - check perms are correct (SECURITY)
+    ;
     all [
         let home-dir: try get-home-path
-        system/user/home: o/home: home-dir
+        system.user.home: o.home: home-dir
         let resources-dir: try get-resources-path
-        o/resources: resources-dir
+        o.resources: resources-dir
     ]
 
-    sys/script-pre-load-hook: :host-script-pre-load
+    sys.script-pre-load-hook: :host-script-pre-load
 
     let do-string: _  ; will be set if a string is given with --do
 
@@ -435,7 +436,7 @@ main-startup: func [
     ; the intended arguments.  TAKEs each option string as it goes so the
     ; array remainder can act as the args.
 
-    ; The host executable may have initialized system/options/boot, using
+    ; The host executable may have initialized system.options.boot, using
     ; a platform-specific method, since argv[0] is *not* always exe path:
     ;
     ; https://stackoverflow.com/q/1023306/
@@ -444,11 +445,11 @@ main-startup: func [
     ; If it did not initialize it, fall back on argv[0], if available.
     ;
     if not tail? argv [
-        o/boot: default [clean-path local-to-file first argv]
+        o.boot: default [clean-path local-to-file first argv]
         take argv
     ]
-    if o/boot [
-        o/bin: first split-path o/boot
+    if o.boot [
+        o.bin: first split-path o.boot
     ]
 
     let param-or-die: func [
@@ -490,7 +491,7 @@ main-startup: func [
 
     loop [not tail? argv] [
 
-        let is-option: parse?/case argv/1 [
+        let is-option: parse?/case argv.1 [
 
             ["--" end] (
                 ; Double-dash means end of command line arguments, and the
@@ -503,7 +504,7 @@ main-startup: func [
             )
         |
             "--about" end (
-                o/about: true  ; show full banner (ABOUT) on startup
+                o.about: true  ; show full banner (ABOUT) on startup
             )
         |
             "--breakpoint" end (
@@ -511,21 +512,21 @@ main-startup: func [
             )
         |
             ["--cgi" | "-c"] end (
-                o/quiet: true
-                o/cgi: true
+                o.quiet: true
+                o.cgi: true
             )
         |
             "--debug" end (
                 ; was coerced to BLOCK! before, but what did this do?
                 ;
-                o/debug: to logic! param-or-die "DEBUG"
+                o.debug: to logic! param-or-die "DEBUG"
             )
         |
             "--do" end (
                 ;
                 ; A string of code to run, e.g. `r3 --do "print {Hello}"`
                 ;
-                o/quiet: true  ; don't print banner, just run code string
+                o.quiet: true  ; don't print banner, just run code string
                 quit-when-done: default [true]  ; override blank, not false
 
                 is-script-implicit: false  ; must use --script
@@ -544,7 +545,7 @@ main-startup: func [
             )
         |
             "--import" end (
-                lib/import local-to-file param-or-die "IMPORT"
+                lib.import local-to-file param-or-die "IMPORT"
             )
         |
             "--no-encap" end (
@@ -552,18 +553,18 @@ main-startup: func [
             )
         |
             ["--quiet" | "-q"] end (
-                o/quiet: true
+                o.quiet: true
             )
         |
             "--resources" end (
-                o/resources: (to-dir param-or-die "RESOURCES") else [
+                o.resources: (to-dir param-or-die "RESOURCES") else [
                     die "RESOURCES directory not found"
                 ]
             )
         |
             "--suppress" end (
                 let param: param-or-die "SUPPRESS"
-                o/suppress: if param = "*" [
+                o.suppress: if param = "*" [
                     ; suppress all known start-up files
                     [%rebol.reb %user.reb %console-skin.reb]
                 ] else [
@@ -572,7 +573,7 @@ main-startup: func [
             )
         |
             "--script" end (
-                o/script: local-to-file param-or-die "SCRIPT"
+                o.script: local-to-file param-or-die "SCRIPT"
                 quit-when-done: default [true]  ; overrides blank, not false
 
                 is-script-implicit: false  ; not the first post-option arg
@@ -587,7 +588,7 @@ main-startup: func [
                 let code: read local-to-file param-or-die "FRAGMENT"
                 is-script-implicit: false  ; must use --script
 
-                o/quiet: true  ; don't print banner, just run code string
+                o.quiet: true  ; don't print banner, just run code string
                 quit-when-done: default [true]  ; override blank, not false
 
                 ; !!! Here we make a concession to Windows CR LF, only when
@@ -597,7 +598,7 @@ main-startup: func [
                 ; file which does have CR LF on Windows.  This would be
                 ; difficult to work around.
                 ;
-                if system/version/4 = 3 [  ; Windows
+                if system.version.4 = 3 [  ; Windows
                     code: deline code  ; Removes CR or leaves as-is
                 ] else [
                     code: as text! code
@@ -611,11 +612,11 @@ main-startup: func [
             )
         |
             "--verbose" end (
-                o/verbose: true
+                o.verbose: true
             )
         |
             ["-v" | "-V" | "--version"] end (
-                boot-print ["Rebol 3" system/version]  ; version tuple
+                boot-print ["Rebol 3" system.version]  ; version tuple
                 quit-when-done: default [true]
             )
         |
@@ -662,56 +663,57 @@ main-startup: func [
     ; explicitly, the first item after the options is implicitly the script.
     ;
     all [is-script-implicit, not tail? argv] then [
-        o/script: local-to-file take argv
+        o.script: local-to-file take argv
         quit-when-done: default [true]
     ]
 
     ; Whatever is left is the positional arguments, available to the script.
     ;
-    o/args: argv  ; whatever's left is positional args
+    o.args: argv  ; whatever's left is positional args
 
 
-    let boot-embedded: if check-encap [get-encap system/options/boot]
+    let boot-embedded: if check-encap [get-encap system.options.boot]
 
-    if any [boot-embedded, o/script] [o/quiet: true]
+    if any [boot-embedded, o.script] [o.quiet: true]
 
     ; Set option/paths for /path, /boot, /home, and script path
-    o/path: what-dir  ;dirize any [o/path o/home]
+    ;
+    o.path: what-dir  ;dirize any [o.path o.home]
 
     ; !!! this was commented out.  Is it important?
     comment [
-        if slash <> first o/boot [o/boot: clean-path o/boot]
+        if slash <> first o.boot [o.boot: clean-path o.boot]
     ]
 
-    if file? o/script [  ; Get the path
-        let script-path: split-path o/script
+    if file? o.script [  ; Get the path
+        let script-path: split-path o.script
         case [
             slash = first first script-path []      ; absolute
-            %./ = first script-path [script-path/1: o/path]   ; curr dir
+            %./ = first script-path [script-path.1: o.path]   ; curr dir
         ] else [
-            insert first script-path o/path ; relative
+            insert first script-path o.path ; relative
         ]
     ]
 
     ; Convert command line arg strings as needed:
-    let script-args: o/args  ; save for below
+    let script-args: o.args  ; save for below
 
     ;
-    ; start-up scripts, o/loaded tracks which ones are loaded (with full path)
+    ; start-up scripts, o.loaded tracks which ones are loaded (with full path)
     ;
 
     ; Evaluate rebol.reb script:
     ; !!! see https://github.com/rebol/rebol-issues/issues/706
     ;
     all [
-        not find o/suppress %rebol.reb
-        elide (loud-print ["Checking for rebol.reb file in" o/bin])
-        exists? %% (o/bin)/rebol.reb
+        not find o.suppress %rebol.reb
+        elide (loud-print ["Checking for rebol.reb file in" o.bin])
+        exists? %% (o.bin)/rebol.reb
     ] then [
         trap [
-            do %% (o/bin)/rebol.reb
-            append o/loaded %% (o/bin)/rebol.reb
-            loud-print ["Finished evaluating script:" %% (o/bin)/rebol.reb]
+            do %% (o.bin)/rebol.reb
+            append o.loaded %% (o.bin)/rebol.reb
+            loud-print ["Finished evaluating script:" %% (o.bin)/rebol.reb]
         ] then e -> [
             die/error "Error found in rebol.reb script" e
         ]
@@ -721,15 +723,15 @@ main-startup: func [
     ; !!! Should it query permissions to ensure RESOURCES is owner writable?
     ;
     all [
-        o/resources
-        not find o/suppress %user.reb
-        elide (loud-print ["Checking for user.reb file in" o/resources])
-        exists? join o/resources %user.reb
+        o.resources
+        not find o.suppress %user.reb
+        elide (loud-print ["Checking for user.reb file in" o.resources])
+        exists? join o.resources %user.reb
     ] then [
         trap [
-            do join o/resources %user.reb
-            append o/loaded join o/resources %user.reb
-            loud-print ["Finished evaluating:" join o/resources %user.reb]
+            do join o.resources %user.reb
+            append o.loaded join o.resources %user.reb
+            loud-print ["Finished evaluating:" join o.resources %user.reb]
         ] then e -> [
             die/error "Error found in user.reb script" e
         ]
@@ -737,13 +739,13 @@ main-startup: func [
 
     let main
     all [
-        o/encap: boot-embedded  ; null if no encapping
+        o.encap: boot-embedded  ; null if no encapping
 
         ; The encapping is an embedded zip archive.  get-encap did
         ; the unzipping into a block, and this information must be
         ; made available somehow.  It shouldn't be part of the "core"
         ; but just responsibility of the host that supports encap
-        ; based loading.  We put it in o/encap, and see if it contains a
+        ; based loading.  We put it in o.encap, and see if it contains a
         ; %main.reb...if it does, we run it.
 
         main: select boot-embedded %main.reb
@@ -777,9 +779,9 @@ main-startup: func [
     ;
     ;     r3 --do "do %script1.reb" --do "do %script2.reb"
     ;
-    if file? o/script [
+    if file? o.script [
         emit {Use DO/ONLY so QUIT/WITH exits vs. being DO's return value}
-        emit [do/only/args (<*> o/script) (<*> script-args)]
+        emit [do/only/args (<*> o.script) (<*> script-args)]
     ]
 
     main-startup: '~main-startup-done~  ; free function for GC
