@@ -110,6 +110,9 @@ http-awake: function [return: [logic!] event [event!]] [
     awake: :state.awake
 
     return switch event.type [
+        'error [
+            fail port.error
+        ]
         'read [
             awake make event! [type: 'read port: http-port]
             check-response http-port

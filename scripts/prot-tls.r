@@ -1753,6 +1753,10 @@ tls-awake: func [
     ]
 
     switch event.type [
+        'error [
+            fail port.error
+        ]
+
         'lookup [
             open port
             tls-init tls-port.state

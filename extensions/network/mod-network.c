@@ -262,14 +262,17 @@ static REB_R Transport_Actor(
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
-        // Make sure no in-flight READs are being run for this port
+        // Make sure no existing transfer is already READ-ing this port.
+        //
+        // !!! This limitation is an artifact carried over from R3-Alpha; a
+        // better callback-based design should replace this.
         //
       blockscope {
         struct Reb_Sock_Transfer *temp = Net_Transfers;
         for (; temp != nullptr; temp = temp->next) {
             if (temp->direction == TRANSFER_RECEIVE) {
                 if (temp->port_ctx == VAL_CONTEXT(port))
-                    assert(!"duplicate reading");
+                    fail ("READ on PORT! with a READ already in flight");
             }
         }
       }
@@ -342,11 +345,11 @@ static REB_R Transport_Actor(
             //
             assert(VAL_INDEX(port_data) == 0);
 
-            if (SER_AVAIL(buffer) < bufsize)
+            if (SER_AVAIL(buffer) < bufsize) {
                 Extend_Series(buffer, bufsize - SER_AVAIL(buffer));
+                TERM_BIN(buffer);
+            }
         }
-
-        sock->binary = port_data;  // write at tail
 
         // We always queue the transfer.
         //
@@ -358,7 +361,6 @@ static REB_R Transport_Actor(
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
-
 
         UNUSED(PAR(destination));
 

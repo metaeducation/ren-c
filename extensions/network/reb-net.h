@@ -54,8 +54,6 @@ struct devreq_net {
     uint32_t remote_ip;     // remote address
     uint32_t remote_port_number;   // remote port
     void *host_info;        // for DNS usage
-
-    REBVAL *binary;  // !!! outlives the Reb_Transfer for receives
 };
 
 typedef struct devreq_net SOCKREQ;

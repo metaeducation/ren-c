@@ -394,19 +394,6 @@ REBVAL *Connect_Socket_Maybe_Queued(const REBVAL *port)
 // this function.  It will be called repeatedly until this function indicates
 // the transfer is complete or has errored.
 //
-// The function will return:
-//     =0: succeeded
-//     >0: in-progress, still trying
-//     <0: error occurred, no longer trying
-//
-// Before usage:
-//     Open_Socket()
-//     Connect_Socket()
-//     Verify that RSM_CONNECT is true
-//     Setup the sock->common.data and transfer->length
-//
-// Note that the mode flag is cleared by the caller, not here.
-//
 bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
 {
     const REBVAL *port = CTX_ARCHETYPE(transfer->port_ctx);
@@ -451,8 +438,20 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
             cast(struct sockaddr*, &remote_addr), addr_len
         );
 
-        if (result < 0)
-            goto error_unless_wouldblock;  // may release and trash binary
+      /*#if !defined(NDEBUG)
+        if (SPORADICALLY(10))
+            goto fake_send_error;
+      #endif*/
+
+        if (result < 0) {
+            result = GET_ERROR;
+            if (result == NE_WOULDBLOCK)
+                return false;  // don't consider blocking an actual "error"
+
+          /*fake_send_error:*/
+            rebRelease(transfer->binary);
+            goto handle_error;
+        }
 
         transfer->actual += result;
 
@@ -468,8 +467,8 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
                 "]"
             );
 
-
             Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+
             return true;  // finishing
         }
 
@@ -479,9 +478,10 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
         assert(transfer->direction == TRANSFER_RECEIVE);
 
         // The buffer should be big enough to hold the request size (or some
-        // implementation-defined NET_BUF_SIZE if transfer->length is MAX_UINT32).
+        // implementation-defined size) if transfer->length is MAX_UINT32.
         //
-        REBBIN *bin = VAL_BINARY_KNOWN_MUTABLE(sock->binary);
+        REBVAL *port_data = CTX_VAR(transfer->port_ctx, STD_PORT_DATA);
+        REBBIN *bin = VAL_BINARY_KNOWN_MUTABLE(port_data);
         ASSERT_SERIES_TERM_IF_NEEDED(bin);
 
         size_t len;
@@ -492,7 +492,7 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
             assert(SER_AVAIL(bin) >= len);
         }
 
-        assert(VAL_INDEX(sock->binary) == 0);
+        assert(VAL_INDEX(port_data) == 0);
 
         REBLEN old_len = BIN_LEN(bin);
 
@@ -503,13 +503,23 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
             cast(struct sockaddr*, &remote_addr), &addr_len
         );
 
-        if (result < 0)
-            goto error_unless_wouldblock;
+      /*#if !defined(NDEBUG)
+        if (SPORADICALLY(10))
+            goto fake_receive_error;  // fake error after termination
+      #endif*/
+
+        if (result < 0) {
+            result = GET_ERROR;
+            if (result == NE_WOULDBLOCK)
+                return false;  // don't consider blocking an actual "error"
+
+          /*fake_receive_error:*/
+            TERM_BIN_LEN(bin, 0);  // in case it was partly corrupted
+            goto handle_error;
+        }
 
         TERM_BIN_LEN(bin, old_len + result);
         transfer->actual += result;
-
-        ASSERT_SERIES_TERM_IF_NEEDED(bin);
 
         if (sock->transport == TRANSPORT_UDP) {
             sock->remote_ip = remote_addr.sin_addr.s_addr;
@@ -547,7 +557,6 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
                 "]"
             );
 
-
             Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
 
             finished = true;  // don't return yet, if closing... need event
@@ -555,9 +564,10 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
         else
             finished = false;
 
-        if (result == 0) {  // The socket gracefully closed.
-            sock->modes &= ~RSM_CONNECT;  // But, keep RSM_OPEN true
-
+        // 0 in a TCP connection means "The socket gracefully closed".  But
+        // for UDP, apparently reading 0 can mean a send of size 0.
+        //
+        if (result == 0 and sock->transport == TRANSPORT_TCP) {
             rebElide(
                 "insert system/ports/system make event! [",
                     "type: 'close",
@@ -565,10 +575,11 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
                 "]"
             );
 
-
-            REBVAL *error = Close_Socket(port);
-            if (error)
-                fail (error);  // !!! Bad time to be failing, review
+            // !!! This used to call close socket.  But if the socket has
+            // "gracefully closed" that just opens up to raising an error,
+            // and error reporting isn't good here.  Is this better?
+            //
+            sock->modes = 0;  // clear: RSM_OPEN, RSM_CONNECT
 
             return true;
         }
@@ -576,19 +587,16 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
         return finished;  // Not done (and we didn't send a READ EVENT! yet)
     }
 
-  error_unless_wouldblock:
-
-    result = GET_ERROR;
-
-    if (result == NE_WOULDBLOCK)
-        return false;  // don't consider blocking to be an actual "error"
-
+  handle_error: {
     REBVAL *error = rebError_OS(result);
 
     // Don't want to raise errors synchronously because we may be in the
     // event loop, e.g. `trap [write ...]` can't work if the writing
     // winds up happening outside the TRAP.  Try poking an error into
     // the state.
+    //
+    // The default awake handlers will just FAIL on the error, but this
+    // can be overridden.
     //
     rebElide(
         "(", port, ")/error:", rebR(error),
@@ -599,18 +607,11 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
         "]"
     );
 
-    // The default awake handlers will just FAIL on the error, but this
-    // can be overridden.
-
-    if (transfer->direction == TRANSFER_SEND) {
-        rebRelease(sock->binary);
-        TRASH_POINTER_IF_DEBUG(sock->binary);
-    }
-
     // We are killing the request that has the network error (it cannot be
     // continued).  Returning finished will detach it.
     //
     return true;
+  }
 }
 
 

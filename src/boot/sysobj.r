@@ -312,6 +312,18 @@ standard: make object! [
         ; ports.  Since it is a Rebol series value, the GC needs to see it.
         ;
         connections: '
+
+        ; !!! With asynchronous events, TRAP cannot be used, e.g. you can't
+        ; say `trap [write...]` if the error will happen outside of the
+        ; write.  What happens instead is that the error is poked into this
+        ; field of the port, and an 'error EVENT! is raised.  This falls into
+        ; the general problem of R3-Alpha's model which is that it's not tied
+        ; to any particular request...just a field on the port, so you don't
+        ; know *what* errored.  A more sensible approach (like callback
+        ; functions) could pass the error to the callback as every other such
+        ; language would do.
+        ;
+        error: '
     ]
 
     port-spec-head: make object! [
