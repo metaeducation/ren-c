@@ -162,6 +162,9 @@ REBVAL *Open_Socket(const REBVAL *port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
 
+    assert(sock->fd == SOCKET_NONE);
+    assert(sock->socket == SOCKET_NONE);
+
     sock->modes = 0;  // clear all flags
 
     int type;
@@ -182,11 +185,10 @@ REBVAL *Open_Socket(const REBVAL *port)
     if (result == -1)
         return rebError_OS(GET_ERROR);
 
-    sock->socket = result;
-    sock->modes |= RSM_OPEN;
+    sock->fd = result;
 
     // Set socket to non-blocking async mode:
-    if (not Try_Set_Sock_Options(sock->socket))
+    if (not Try_Set_Sock_Options(sock->fd))
         return rebError_OS(GET_ERROR);
 
     if (sock->local_port_number != 0) {
@@ -219,17 +221,20 @@ REBVAL *Close_Socket(const REBVAL *port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
 
-    if (not (sock->modes & RSM_OPEN)) {  // already closed, R3-Alpha allowed it
-        assert(not (sock->modes & RSM_CONNECT));
+    if (sock->fd == SOCKET_NONE) {  // already closed, R3-Alpha allowed it
+        assert(sock->socket == SOCKET_NONE);  // shouldn't be connected
         return nullptr;
     }
 
-    sock->modes = 0;  // clear: RSM_OPEN, RSM_CONNECT
+    REBVAL *error = nullptr;
 
-    if (CLOSE_SOCKET(sock->socket) != 0)
-        return rebError_OS(GET_ERROR);
+    if (CLOSE_SOCKET(sock->fd) != 0)
+        error = rebError_OS(GET_ERROR);
 
-    return nullptr;
+    sock->socket = sock->fd = SOCKET_NONE;
+    sock->modes = 0;
+
+    return error;
 }
 
 
@@ -244,7 +249,6 @@ REBVAL *Close_Socket(const REBVAL *port)
 REBVAL *Lookup_Socket(const REBVAL *port, const REBVAL *hostname)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
-    sock->host_info = nullptr;  // no allocated data
 
     assert(IS_TEXT(hostname));
     const REBYTE *hostname_utf8 = VAL_UTF8_AT(hostname);
@@ -297,12 +301,14 @@ REBVAL *Connect_Socket_Maybe_Queued(const REBVAL *port)
     int result;
     struct sockaddr_in sa;
 
-    if (sock->modes & RSM_CONNECT)
-        return nullptr;  // !!! R3-Alpha tolerated, should we?
+    assert(sock->fd != SOCKET_NONE);  // must be open
+
+    if (sock->socket != SOCKET_NONE)
+        return nullptr;  // !!! R3-Alpha tolerated connected, should we?
 
     if (sock->transport == TRANSPORT_UDP) {
         sock->modes &= ~RSM_ATTEMPT;
-        sock->modes |= RSM_CONNECT;
+        sock->socket = sock->fd;
 
         rebElide(
             "insert system/ports/system make event! [",
@@ -323,7 +329,7 @@ REBVAL *Connect_Socket_Maybe_Queued(const REBVAL *port)
 
     Set_Addr(&sa, sock->remote_ip, sock->remote_port_number);
     result = connect(
-        sock->socket, cast(struct sockaddr *, &sa), sizeof(sa)
+        sock->fd, cast(struct sockaddr *, &sa), sizeof(sa)
     );
 
     if (result != 0)
@@ -369,7 +375,7 @@ REBVAL *Connect_Socket_Maybe_Queued(const REBVAL *port)
     }
 
     sock->modes &= ~RSM_ATTEMPT;
-    sock->modes |= RSM_CONNECT;
+    sock->socket = sock->fd;  // indicates connected
     Get_Local_IP(sock);
 
     rebElide(
@@ -402,11 +408,11 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
     SOCKREQ *sock = cast(SOCKREQ*, VAL_BINARY_AT_ENSURE_MUTABLE(state));
 
     if (
-        not (sock->modes & RSM_CONNECT)
-        and not (sock->transport == TRANSPORT_UDP)
+        sock->socket == SOCKET_NONE  // not connected
+        and sock->transport != TRANSPORT_UDP
     ){
         rebJumps(
-            "fail {RSM_CONNECT must be true in Transfer_Socket() unless UDP}"
+            "fail {Socket must be connected in Transfer_Socket() unless UDP}"
         );
     }
 
@@ -579,8 +585,8 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
             // "gracefully closed" that just opens up to raising an error,
             // and error reporting isn't good here.  Is this better?
             //
-            sock->modes = 0;  // clear: RSM_OPEN, RSM_CONNECT
-
+            sock->socket = sock->fd = SOCKET_NONE;
+            sock->modes = 0;
             return true;
         }
 
@@ -630,6 +636,9 @@ REBVAL *Start_Listening_On_Socket(const REBVAL *port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
 
+    assert(sock->fd != SOCKET_NONE);  // must be open
+    assert(sock->socket == SOCKET_NONE);  // shouldn't be connected
+
     int result;
 
     // Setup socket address range and port:
@@ -641,7 +650,7 @@ REBVAL *Start_Listening_On_Socket(const REBVAL *port)
     //
     int len = 1;
     result = setsockopt(
-        sock->socket, SOL_SOCKET, SO_REUSEADDR,
+        sock->fd, SOL_SOCKET, SO_REUSEADDR,
         cast(char*, &len), sizeof(len)
     );
     if (result != 0)
@@ -649,7 +658,7 @@ REBVAL *Start_Listening_On_Socket(const REBVAL *port)
 
     // Bind the socket to our local address:
     result = bind(
-        sock->socket, cast(struct sockaddr *, &sa), sizeof(sa)
+        sock->fd, cast(struct sockaddr *, &sa), sizeof(sa)
     );
     if (result != 0)
         return rebError_OS(GET_ERROR);
@@ -659,7 +668,7 @@ REBVAL *Start_Listening_On_Socket(const REBVAL *port)
     // For TCP connections, setup listen queue
     //
     if (not (sock->transport == TRANSPORT_UDP)) {
-        result = listen(sock->socket, SOMAXCONN);
+        result = listen(sock->fd, SOMAXCONN);
         if (result != 0)
             return rebError_OS (GET_ERROR);
         sock->modes |= RSM_LISTEN;
@@ -722,9 +731,9 @@ bool Accept_Socket_Finishing(struct Reb_Sock_Listener *listener)
 
     struct sockaddr_in sa;
     socklen_t len = sizeof(sa);
-    int fd = accept(listening_sock->socket, cast(struct sockaddr *, &sa), &len);
+    int new_fd = accept(listening_sock->fd, cast(struct sockaddr*, &sa), &len);
 
-    if (fd == -1) {
+    if (new_fd == -1) {
         int errnum = GET_ERROR;
         if (errnum == NE_WOULDBLOCK)
             return false;
@@ -732,7 +741,7 @@ bool Accept_Socket_Finishing(struct Reb_Sock_Listener *listener)
         rebFail_OS (errnum);
     }
 
-    if (not Try_Set_Sock_Options(fd))
+    if (not Try_Set_Sock_Options(new_fd))
         rebFail_OS (GET_ERROR);
 
     // Create a new port using ACCEPT
@@ -750,11 +759,10 @@ bool Accept_Socket_Finishing(struct Reb_Sock_Listener *listener)
 
     SOCKREQ *sock_new = Sock_Of_Port(CTX_ARCHETYPE(connection));
 
-    sock_new->modes |= (RSM_OPEN | RSM_CONNECT);
-
     // NOTE: REBOL stays in network byte order, no htonl(ip) needed
     //
-    sock_new->socket = fd;
+    sock_new->fd = new_fd;  // treat as open
+    sock_new->socket = new_fd;  // also treat as connected
     sock_new->remote_ip = sa.sin_addr.s_addr;
     sock_new->remote_port_number = ntohs(sa.sin_port);
     Get_Local_IP(sock_new);

@@ -57,7 +57,7 @@ REBDEV *Dev_Net;
 //
 //  Query_Net: C
 //
-static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
+static void Query_Net(REBVAL *out, REBVAL *port, SOCKREQ *sock)
 {
     REBVAL *info = rebValue(
         "copy ensure object! (@", port, ")/scheme/info"
@@ -130,12 +130,14 @@ static REB_R Transport_Actor(
 
         sock = Sock_Of_Port(port);
         sock->transport = transport;
+        sock->fd = SOCKET_NONE;
+        sock->socket = SOCKET_NONE;
 
         // !!! There is no way to customize the timeout.  Where should this
         // setting be configured?
     }
 
-    if (not (sock->modes & RSM_OPEN)) {
+    if (sock->fd == SOCKET_NONE) {
         //
         // Actions for an unopened socket
         //
@@ -177,8 +179,6 @@ static REB_R Transport_Actor(
             REBVAL *error = Open_Socket(port);
             if (error)
                 fail (error);
-
-            sock->modes |= RSM_OPEN;
 
             // Lookup host name (an extra TCP device step)
             //
@@ -250,7 +250,7 @@ static REB_R Transport_Actor(
             //
             return Init_Logic(
                 D_OUT,
-                (sock->modes & (RSM_CONNECT | RSM_BIND)) != 0
+                (sock->modes & RSM_BIND) or (sock->socket != SOCKET_NONE)
             );
 
           default:
@@ -287,12 +287,9 @@ static REB_R Transport_Actor(
 
         // Read data into a buffer, expanding the buffer if needed.
         // If no length is given, program must stop it at some point.
-        if (
-            not (sock->transport == TRANSPORT_UDP)
-            and not (sock->modes & RSM_CONNECT)
-        ){
+        //
+        if (sock->socket == SOCKET_NONE and sock->transport != TRANSPORT_UDP)
             fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
-        }
 
         struct Reb_Sock_Transfer *transfer = TRY_ALLOC(struct Reb_Sock_Transfer);
         transfer->port_ctx = VAL_CONTEXT(port);
@@ -367,12 +364,8 @@ static REB_R Transport_Actor(
         if (REF(seek) or REF(append) or REF(allow) or REF(lines))
             fail (Error_Bad_Refines_Raw());
 
-        if (
-            not (sock->transport == TRANSPORT_UDP)
-            and not (sock->modes & RSM_CONNECT)
-        ){
+        if (sock->socket == SOCKET_NONE and sock->transport != TRANSPORT_UDP)
             fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
-        }
 
         // !!! R3-Alpha did not lay out the invariants of the port model,
         // or what datatypes it would accept at what levels.  TEXT! could be
@@ -484,12 +477,10 @@ static REB_R Transport_Actor(
         return D_OUT; }
 
       case SYM_CLOSE: {
-        if (sock->modes & RSM_OPEN) {
+        if (sock->fd != SOCKET_NONE) {  // allows close of closed socket (?)
             REBVAL *error = Close_Socket(port);
             if (error)
                 fail (error);
-
-            sock->modes &= ~RSM_OPEN;
         }
         RETURN (port); }
 
@@ -607,7 +598,7 @@ REBNATIVE(set_udp_multicast)
     Get_Tuple_Bytes(&mreq.imr_interface.s_addr, ARG(member), 4);
 
     int result = setsockopt(
-        sock->socket,
+        sock->fd,
         IPPROTO_IP,
         REF(drop) ? IP_DROP_MEMBERSHIP : IP_ADD_MEMBERSHIP,
         cast(char*, &mreq),
@@ -646,7 +637,7 @@ REBNATIVE(set_udp_ttl)
 
     int ttl = VAL_INT32(ARG(ttl));
     int result = setsockopt(
-        sock->socket,
+        sock->fd,
         IPPROTO_IP,
         IP_TTL,
         cast(char*, &ttl),
