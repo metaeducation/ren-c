@@ -99,26 +99,8 @@ Third-Party Components
 This aims to list all the third-party components of this distribution but may
 not be complete.  Please amend with any corrections.
 
-**AES**
-- Copyright (c) 2007, Cameron Rich
-- `%src/codecs/aes/aes.h`
-- `%src/codecs/aes/aes.c`
-
-**bigint**
-- Copyright (c) 2007, Cameron Rich
-- `%src/codecs/bigint/bigint_impl.h`
-- `%src/codecs/bigint/bigint_config.h`
-- `%src/codecs/bigint/bigint.h`
-- `%src/codecs/bigint/bigint.c`
-
-**crc32**
-- Derived from code in chapter 19 of the book "C Programmer's Guide to Serial
-  Communications", by Joe Campbell.  Generalized to any CRC width by Philip
-  Zimmermann.
-- `%src/core/s-crc.c`
-
 **debugbreak**
-- Copyright (c) 2011-2015, Scott Tsai
+- Copyright (c) 2011-2021, Scott Tsai
 - `%src/include/debugbreak.h`
 
 **dtoa**
@@ -135,11 +117,9 @@ not be complete.  Please amend with any corrections.
 - `%src/codecs/png/lodepng.h`
 - `%src/codecs/png/lodepng.c`
 
-**MD5**
-- This software contains code derived from the RSA Data Security Inc. MD5
-  Message-Digest Algorithm, including various modifications by Spyglass Inc.,
-  Carnegie Mellon University, and Bell Communications Research, Inc (Bellcore).
-- `%src/core/u-md5.c`
+**mbedTLS**
+- Copyright The Mbed TLS Contributors
+- `%extensions/crypt/mbedtls/*`
 
 **pstdint.h**
 - Copyright (c) 2005-2016 Paul Hsieh
@@ -150,33 +130,14 @@ not be complete.  Please amend with any corrections.
 - Copyright (c) 1992, 1993 The Regents of the University of California.
 - `%src/core/f-qsort.c`
 
-**rc4**
-- Copyright (c) 2007, Cameron Rich
-- `%src/codecs/rc4/rc4.h`
-- `%src/codecs/rc4/rc4.c`
-
-**rsa**
-- Copyright (c) 2007, Cameron Rich
-- `%src/codecs/rsa/rsa.h`
-- `%src/codecs/rsa/rsa.c`
-
-**sha1**
-- Copyright 1995-1998 Eric Young
-- `%src/core/u-sha1.c`
-
-**sha256**
-- Copyright 2006-2012 (?) Brad Conte
-- `%src/codecs/sha256.c`
-- `%src/codecs/sha256.h`
-
 **Unicode**
 - Copyright 2001-2004 Unicode, Inc.
-- `%src/core/s-unicode.c`
+- Portions used in `%src/include/datatypes/sys-char.h`
 - Author: Mark E. Davis, 1994.
 - Rev History: Rick McGowan, fixes & updates May 2001.
   Fixes & updates, Sept 2001.
 
 **ZLIB**
-- Copyright 1995-1998 Jean-loup Gailly and Mark Adler
+- Copyright 1995-2017 Jean-loup Gailly and Mark Adler
 - `%src/core/u-zlib.c`
 - `%src/include/sys-zlib.h`
