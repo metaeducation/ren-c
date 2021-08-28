@@ -181,11 +181,17 @@ ask: function [
 
         line: read-line else [
             ;
-            ; NULL signals a "cancel" was recieved by reading standard input.
-            ; This is distinct from HALT (would not return from READ-STDIN).
-            ; Whether or not ASK should use "soft failure" via null, just keep
-            ; asking, or somehow disable cancellation is open for debate.
+            ; NULL signals "end of file".  At present this only applies to
+            ; redirected input--as there's no limit to how much you can type
+            ; in the terminal.  But it might be useful to have a key sequence
+            ; that will simulate end of file up until the current code finishes
+            ; so you can test code interactively that expects to operate on
+            ; files where the end would be reached.
             ;
+            return null
+        ]
+
+        if '~escape~ = line [  ; escape key pressed.
             return null
         ]
 

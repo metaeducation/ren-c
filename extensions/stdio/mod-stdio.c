@@ -177,7 +177,9 @@ REBNATIVE(read_stdin)
 
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
-        fail ("READ-STDIN for smart console not written yet");
+        if (rebRunThrows(D_OUT, true, "as binary! try read-line"))
+            return R_THROWN;
+        return D_OUT;
     }
     else  // we have a smart console but aren't using it (redirected to file?)
   #endif
@@ -203,7 +205,7 @@ REBNATIVE(read_stdin)
         TERM_BIN_LEN(bin, i);
 
         if (REF(eof))
-            rebElide(Lib(SET), ARG(eof), rebL(eof));
+            rebElide(Lib(SET), rebQ(ARG(eof)), rebL(eof));
 
         return Init_Binary(D_OUT, bin);
     }
@@ -250,6 +252,16 @@ REBNATIVE(read_line)
         if (rebDid(rebQ(line), "= '~halt~"))
             rebJumps(Lib(HALT));
 
+        // ESCAPE is a special condition distinct from end of file.  It is a
+        // request to nullify the current input--which may apply to several
+        // lines of input, e.g. in the REPL.
+        //
+        if (rebDid(rebQ(line), "= '~escape~")) {
+            if (REF(eof))
+                rebElide(Lib(SET), rebQ(ARG(eof)), Lib(FALSE));
+            return line;
+        }
+
         // !!! A concept for the smart terminal is that if you were running an
         // interactive console, then you could indicate an end of file for the
         // currently running command...but that would only be an end of file
@@ -292,7 +304,7 @@ REBNATIVE(read_line)
                     //
                     Drop_Mold(mo);
                     if (REF(eof))
-                        rebElide(Lib(SET), ARG(eof), Lib(TRUE));
+                        rebElide(Lib(SET), rebQ(ARG(eof)), Lib(TRUE));
                     return nullptr;
                 }
 
@@ -339,20 +351,23 @@ REBNATIVE(read_line)
     }
 
   #if !defined(NDEBUG)
-    //
-    // READ-LINE is textual, and enforces the rules of Ren-C TEXT! by default.
-    // This removes the CR.  It may be that the /RAW mode permits reading CR,
-    // but it also may be that READ-STDIN should be used for BINARY! instead,
-    // as one goal of Ren-C is to stamp CR out of text files as newlines.
-    //
-    rebElide("assert [not find", line, "CR]");
+    if (line) {
+        assert(IS_TEXT(line));
 
-    if (not REF(raw))
-        rebElide("assert [not find", line, "LF]");
+        // READ-LINE is textual, and enforces the rules of Ren-C TEXT!.  So
+        // there should be no CR.  It may be that the /RAW mode permits reading
+        // CR, but it also may be that READ-STDIN should be used for BINARY!
+        // instead.  Ren-C wants to stamp CR out of all the files it can.
+        //
+        rebElide("assert [not find", line, "CR]");
+
+        if (not REF(raw))
+            rebElide("assert [not find", line, "LF]");
+    }
   #endif
 
     if (REF(eof))
-        rebElide(Lib(SET), ARG(eof), rebL(eof));
+        rebElide(Lib(SET), rebQ(ARG(eof)), rebL(eof));
 
     return line;
 }

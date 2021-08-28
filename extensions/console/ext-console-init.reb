@@ -238,10 +238,10 @@ export console!: make object! [
     input-hook: meth [
         {Receives line input, parse/transform, send back to CONSOLE eval}
 
-        return: "null if canceled, otherwise processed text line input"
-            [<opt> text!]
+        return: "null if EOF, ~escape~ if canceled, else line of text input"
+            [<opt> text! bad-word!]
     ][
-        return ask text!
+        return read-line
     ]
 
     dialect-hook: meth [
@@ -452,7 +452,7 @@ ext-console-impl: func [
                 emit [system.console.print-gap]
                 emit [system.console.print-prompt]
                 emit [reduce [
-                    try system.console.input-hook  ; can return be NULL
+                    system.console.input-hook  ; can return NULL
                 ]]  ; gather first line (or null), put in BLOCK!
             ]
             <halt> [
@@ -717,9 +717,7 @@ ext-console-impl: func [
 
     assert [not empty? result]  ; should have at least one item
 
-    if blank? last result [
-        ;
-        ; It was aborted.  This comes from ESC (NULL from ASK TEXT!, + TRY)
+    if '~escape~ = last result [  ; Escape key pressed during READ-LINE
         ;
         ; Note: At one time it had to be Ctrl-D on Windows, as ReadConsole()
         ; could not trap escape.  But input was changed to use more granular

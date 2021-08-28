@@ -160,7 +160,7 @@ REBVAL *Read_Line(STD_TERM *t)
 
               case 'E':  // ESCAPE
                 Term_Abandon_Pending_Events(t);
-                line = rebBlank();
+                line = rebValue("'~escape~");
                 break;
 
               case 'U':  // UP
