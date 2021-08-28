@@ -57,70 +57,6 @@
 #define EVENTS_CHUNK 128
 
 //
-//  Append_Event: C
-//
-// Append an event to the end of the current event port queue.
-// Return a pointer to the event value.
-//
-// Note: this function may be called from out of environment,
-// so do NOT extend the event queue here. If it does not have
-// space, return 0. (Should it overwrite or wrap???)
-//
-REBVAL *Append_Event(void)
-{
-    REBVAL *port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-    if (!IS_PORT(port)) return 0; // verify it is a port object
-
-    // Get queue block:
-    REBVAL *state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
-    if (!IS_BLOCK(state)) return 0;
-
-    // Append to tail if room:
-    if (SER_FULL(VAL_SERIES(state))) {
-        if (VAL_LEN_HEAD(state) > EVENTS_LIMIT)
-            panic (state);
-
-        Extend_Series(VAL_SERIES_KNOWN_MUTABLE(state), EVENTS_CHUNK);
-    }
-
-    REBARR *state_array = VAL_ARRAY_KNOWN_MUTABLE(state);
-    SET_SERIES_LEN(state_array, VAL_LEN_HEAD(state) + 1);
-    return Init_Blank(ARR_LAST(state_array));
-}
-
-
-//
-//  Find_Last_Event: C
-//
-// Find the last event in the queue by the model
-// Check its type, if it matches, then return the event or NULL
-//
-// !!! Not currently used.
-//
-const REBVAL *Find_Last_Event(REBINT model, uint32_t type)
-{
-    REBVAL *port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-    if (!IS_PORT(port)) return NULL; // verify it is a port object
-
-    // Get queue block:
-    REBVAL *state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
-    if (!IS_BLOCK(state)) return NULL;
-
-    const RELVAL *value = VAL_ARRAY_TAIL(state) - 1;
-    for (; value >= ARR_HEAD(VAL_ARRAY(state)); --value) {
-        if (VAL_EVENT_MODEL(value) == model) {
-            if (cast(uint32_t, VAL_EVENT_TYPE(value)) == type) {
-                return cast(const REBVAL*, value);
-            } else {
-                return NULL;
-            }
-        }
-    }
-
-    return NULL;
-}
-
-//
 //  Event_Actor: C
 //
 // Internal port handler for events.
@@ -159,9 +95,6 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         break; }
 
-    case SYM_ON_WAKE_UP:
-        return Init_None(D_OUT);
-
     // Normal block actions done on events:
     case SYM_POKE:
         if (not IS_EVENT(D_ARG(3)))
@@ -188,6 +121,7 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         Copy_Cell(D_ARG(1), state);
 
         REB_R r = T_Array(frame_, verb);
+
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
             VAL_WORD_ID(verb) == SYM_INSERT

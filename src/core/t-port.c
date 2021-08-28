@@ -170,9 +170,6 @@ REBTYPE(Port)
             rebRelease(made);
             break; }
 
-        case SYM_ON_WAKE_UP:
-            break;
-
         // Once handled SYM_REFLECT here by delegating to T_Context(), but
         // common reflectors now in Context_Common_Action_Or_End()
 

@@ -182,7 +182,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
       case REB_EVENT: {  // packed cell structure with one GC-able slot
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        REBNOD *n = VAL_NODE1(v);  // REBGOB*, REBREQ*, etc.
+        REBNOD *n = VAL_NODE1(v);  // REBGOB*, REBCTX*, etc.
         assert(n == nullptr or Is_Marked(n));
         break; }
 

@@ -112,9 +112,9 @@ static void Open_File_Port(
     if (file->modes & RFM_OPEN)
         fail (Error_Already_Open_Raw(path));
 
-    // Don't use OS_DO_DEVICE_SYNC() here, because we want to tack the file
-    // name onto any error we get back.
-
+    // Tack the filename onto any error we get back (the caller wants to know
+    // both the name and the error encountered, not just one or the other)
+    //
     REBVAL *error = Open_File(file);
     if (error)
         fail (Error_Cannot_Open_Raw(file->path, error));
@@ -284,6 +284,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         REBBIN *bin = Make_Binary(sizeof(FILEREQ));
         memset(BIN_HEAD(bin), 0, sizeof(FILEREQ));
         Init_Binary(state, bin);
+        TERM_BIN_LEN(bin, sizeof(FILEREQ));
         file = cast(FILEREQ*, VAL_BINARY_AT_ENSURE_MUTABLE(state));
     }
     else {

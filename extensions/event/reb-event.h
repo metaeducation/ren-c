@@ -34,7 +34,7 @@
 //
 // EVENT PAYLOAD CONTAINS 2 POINTER-SIZED THINGS
 //
-//     "eventee": REBREQ* (for device events) or REBSER* (port or object)
+//     "eventee": REBSER* (port or object)
 //     "data": "an x/y position or keycode (raw/decoded)"
 //
 
@@ -71,7 +71,7 @@ enum {
 //
 // Much of the single-cell event's space is used for flags, but it can store
 // one pointer's worth of "eventee" data indicating the object that the event
-// was for--the PORT!, GOB!, "REBREQ" Rebol Request, etc.
+// was for--the PORT!, GOB!, etc.
 //
 // (Note: R3-Alpha also had something called a "callback" which pointed the
 // event to the "system/ports/callback port", but there seemed to be no uses.)
@@ -79,12 +79,9 @@ enum {
 // In order to keep the core GC agnostic about events, if the pointer's slot
 // is to something that needs to participate in GC behavior, it must be a
 // REBNOD* and the cell must be marked with CELL_FLAG_PAYLOAD_FIRST_IS_NODE.
-// Hence in order to properly mark the ports inside a REBREQ, the REBREQ has
-// to be a Rebol Node with the port visible.  This change was made.
 //
 
 enum {
-    EVM_DEVICE,     // I/O request holds the rebreq pointer (which holds port)
     EVM_PORT,       // event holds port pointer
     EVM_OBJECT,     // event holds object context pointer
     EVM_GUI,        // GUI event uses system/view/event/port

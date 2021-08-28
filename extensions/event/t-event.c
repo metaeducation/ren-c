@@ -256,15 +256,8 @@ static REBVAL *Get_Event_Var(
         if (VAL_EVENT_MODEL(v) == EVM_OBJECT)
             return Init_Object(out, CTX(VAL_EVENT_NODE(v)));
 
-        if (VAL_EVENT_MODEL(v) == EVM_CALLBACK)
-            return Copy_Cell(out, Get_System(SYS_PORTS, PORTS_CALLBACK));
-
-        assert(VAL_EVENT_MODEL(v) == EVM_DEVICE);  // holds IO request w/PORT!
-        REBREQ *req = cast(REBREQ*, VAL_EVENT_NODE(v));
-        if (not req or not MISC(ReqPortCtx, req))
-            return nullptr;
-
-        return Init_Port(out, MISC(ReqPortCtx, req)); }
+        assert(VAL_EVENT_MODEL(v) == EVM_CALLBACK);
+        return Copy_Cell(out, Get_System(SYS_PORTS, PORTS_CALLBACK)); }
 
       case SYM_WINDOW:
       case SYM_GOB: {

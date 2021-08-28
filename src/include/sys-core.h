@@ -554,9 +554,6 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "datatypes/sys-map.h"
 #include "datatypes/sys-varargs.h"
 
-#include "reb-device.h"
-
-
 #include "sys-eval.h"  // low-level single-step evaluation API
 #include "sys-do.h"  // higher-level evaluate-until-end API
 

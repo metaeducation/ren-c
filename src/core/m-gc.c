@@ -80,28 +80,6 @@
 #define MISC_Node_CAST
 
 
-// !!! In R3-Alpha, the core included specialized structures which required
-// their own GC participation.  This is because rather than store their
-// properties in conventional Rebol types (like an OBJECT!) they wanted to
-// compress their data into a tighter bit pattern than that would allow.
-//
-// Ren-C has attempted to be increasingly miserly about bytes, and also
-// added the ability for C extensions to hook the GC for a cleanup callback
-// relating to HANDLE! for any non-Rebol types.  Hopefully this will reduce
-// the desire to hook the core garbage collector more deeply.  If a tighter
-// structure is desired, that can be done with a HANDLE! or BINARY!, so long
-// as any Rebol series/arrays/contexts/functions are done with full values.
-//
-// Events, Devices, and Gobs are slated to be migrated to structures that
-// lean less heavily on C structs and raw C pointers, and leverage higher
-// level Rebol services.  So ultimately their implementations would not
-// require including specialized code in the garbage collector.  For the
-// moment, they still need the hook.
-//
-
-static void Mark_Devices_Deep(void);
-
-
 #ifndef NDEBUG
     static bool in_mark = false; // needs to be per-GC thread
 #endif
@@ -1127,8 +1105,6 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
         Mark_Frame_Stack_Deep();
 
         Propagate_All_GC_Marks();
-
-        Mark_Devices_Deep();
     }
 
     // The last thing we do is go through all the "sea contexts" and make sure
@@ -1319,35 +1295,4 @@ void Shutdown_GC(void)
 {
     Free_Unmanaged_Series(GC_Guarded);
     Free_Unmanaged_Series(GC_Mark_Stack);
-}
-
-
-//
-//  Mark_Devices_Deep: C
-//
-// Mark all devices. Search for pending requests.
-//
-// This should be called at the top level, and as it is not
-// 'Queued' it guarantees that the marks have been propagated.
-//
-static void Mark_Devices_Deep(void)
-{
-    REBDEV *dev = PG_Device_List;
-
-    for (; dev != nullptr; dev = dev->next) {
-        if (not dev->pending)
-            continue;
-
-        REBNOD *req = m_cast(REBNOD*, dev->pending);
-
-        // This used to walk the ->next field of the REBREQ explicitly, and
-        // mark the port pointers internal to the REBREQ.  Following the
-        // links and marking the contexts is now done automatically, because
-        // REBREQ is a REBSER node and has those fields in LINK()/MISC() with
-        // SERIES_FLAG_LINK_NODE_NEEDS_MARK/SERIES_FLAG_MISC_NODE_NEEDS_MARK
-        //
-        Queue_Mark_Node_Deep(req);
-    }
-
-    Propagate_All_GC_Marks();
 }

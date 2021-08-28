@@ -176,9 +176,6 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
       case SYM_CLOSE: {
         fail ("DNS 'ports' do not currently support CLOSE, only READ"); }
 
-      case SYM_ON_WAKE_UP:
-        return Init_None(D_OUT);
-
       default:
         break;
     }

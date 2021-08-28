@@ -289,15 +289,27 @@ standard: make object! [
         scheme: '   ; scheme object used for this port
         actor: '    ; port action handler (script driven)
         awake: '    ; port awake function (event driven)
+
+        ; !!! Native ports typically used raw C structs stored in a BINARY!
+        ; as the `state`.  This makes that state opaque to the garbage
+        ; collector, so it is a problem if REBVAL*/REBSER* are stored in it.
+        ;
         state: '    ; internal state values (private)
+
         data: '     ; data buffer (usually binary or block)
         locals: '   ; user-defined storage of local data
 
+        ; !!! In the original device model, ports had a special flag encoded
+        ; into a BINARY! which the awake code used to tell if they were
+        ; "pending", e.g. should be candidates for WAIT.  So if the flag was
+        ; false then a WAIT would be a no-op.  There is now no longer an
+        ; assumption that the state is a BINARY!, so the pending flag is now
+        ; moved out.
+        ;
+        pending: false
+
         ; !!! The `connections` field is a BLOCK! used only by TCP listen
-        ; ports.  Since it is a Rebol series value, the GC needs to be aware
-        ; of it, so it can't be in the port-subtype-specific REBREQ data.
-        ; As REBREQ migrates to being Rebol-valued per-port data, this should
-        ; be a field only in those TCP listening ports...
+        ; ports.  Since it is a Rebol series value, the GC needs to see it.
         ;
         connections: '
     ]

@@ -334,13 +334,16 @@ typedef struct rebol_time_fields {
 
 //=//// R3-ALPHA DEVICE / DEVICE REQUEST //////////////////////////////////=//
 //
-// In order to decouple the interpreter from R3-Alpha's device model (and
-// still keep that code as optional in the build for those who need it),
-// REBREQ has become a series instead of a raw C struct.  That gives it the
-// necessary features to be GC marked--either by holding cells in it as an
-// array, or using LINK()/MISC() with SERIES_INFO_XXX_IS_CUSTOM_NODE.
+// This may become part of the rebXXX API, if someone wants to just register
+// something that wants an opportunity to get polled (?)
 //
-struct Reb_Request;
-#define REBREQ REBBIN
-struct rebol_device;
-#define REBDEV struct rebol_device
+typedef bool (DEVICE_POLL_CFUNC)(void);
+
+struct Reb_Device;
+struct Reb_Device {
+    const char *name;
+    DEVICE_POLL_CFUNC *poll;
+
+    struct Reb_Device *next;  // next in linked list of registered devices
+};
+#define REBDEV struct Reb_Device

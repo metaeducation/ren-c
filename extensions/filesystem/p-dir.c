@@ -58,9 +58,8 @@ static REBARR *Read_Dir_May_Fail(FILEREQ *dir)
 
     while (true) {
         //
-        // This is OS_DO_DEVICE_SYNC(), but inlined because we want to make
-        // the filename part of the error (vs. a generic "cannot find the
-        // file specified" message)
+        // Put together the filename and the error (vs. a generic "cannot find
+        // the file specified" message that doesn't say the name)
         //
         bool done;
         REBVAL *error = Read_Directory(&done, dir, &file);

@@ -39,21 +39,8 @@
 
 #include "reb-net.h"
 
-#if 0
-    #define WATCH1(s,a) printf(s, a)
-    #define WATCH2(s,a,b) printf(s, a, b)
-    #define WATCH4(s,a,b,c,d) printf(s, a, b, c, d)
-#else
-    #define WATCH1(s,a)
-    #define WATCH2(s,a,b)
-    #define WATCH4(s,a,b,c,d)
-#endif
+REBVAL *Start_Listening_On_Socket(const REBVAL *port);
 
-DEVICE_CMD Listen_Socket(REBREQ *sock);
-
-#ifdef TO_WINDOWS
-    extern HWND Event_Handle; // For WSAAsync API
-#endif
 
 // Prevent sendmsg/write raising SIGPIPE the TCP socket is closed:
 // https://stackoverflow.com/q/108183/
@@ -72,22 +59,30 @@ DEVICE_CMD Listen_Socket(REBREQ *sock);
 static void Set_Addr(struct sockaddr_in *sa, long ip, int port)
 {
     // Set the IP address and port number in a socket_addr struct.
+
     memset(sa, 0, sizeof(*sa));
     sa->sin_family = AF_INET;
-    sa->sin_addr.s_addr = ip;  //htonl(ip); NOTE: REBOL stays in network byte order
+
+    // htonl(ip); NOTE: REBOL stays in network byte order
+    //
+    sa->sin_addr.s_addr = ip;
     sa->sin_port = htons((unsigned short)port);
 }
 
-static void Get_Local_IP(REBREQ *sock)
+static void Get_Local_IP(SOCKREQ *sock)
 {
     // Get the local IP address and port number.
     // This code should be fast and never fail.
+
     struct sockaddr_in sa;
     socklen_t len = sizeof(sa);
 
-    getsockname(Req(sock)->requestee.socket, cast(struct sockaddr *, &sa), &len);
-    ReqNet(sock)->local_ip = sa.sin_addr.s_addr; //htonl(ip); NOTE: REBOL stays in network byte order
-    ReqNet(sock)->local_port = ntohs(sa.sin_port);
+    getsockname(sock->socket, cast(struct sockaddr *, &sa), &len);
+
+    // htonl(ip); NOTE: REBOL stays in network byte order
+    //
+    sock->local_ip = sa.sin_addr.s_addr;
+    sock->local_port_number = ntohs(sa.sin_port);
 }
 
 static bool Try_Set_Sock_Options(SOCKET sock)
@@ -151,32 +146,27 @@ void Shutdown_Networking(void)
 }
 
 
-
 //
 //  Open_Socket: C
 //
-// Setup a socket with the specified protocol and bind it to
-// the related transport service.
+// Setup a socket with the specified protocol and bind it to the related
+// transport service.
 //
-// Returns 0 on success.
-// On failure, error code is OS local.
-//
-// Note: This is an intialization procedure and no actual
-// connection is made at this time. The IP address and port
-// number are not needed, only the type of service required.
+// Note: No actual connection is made by calling this routine.  The IP address
+// and port number are not needed, only the type of service required.
 //
 // After usage:
 //     Close_Socket() - to free OS allocations
 //
-DEVICE_CMD Open_Socket(REBREQ *req)
+REBVAL *Open_Socket(const REBVAL *port)
 {
-    struct rebol_devreq *sock = Req(req);
+    SOCKREQ *sock = Sock_Of_Port(port);
 
-    sock->state = 0;  // clear all flags
+    sock->modes = 0;  // clear all flags
 
     int type;
     int protocol;
-    if (sock->modes & RST_UDP) {
+    if (sock->transport == TRANSPORT_UDP) {
         type = SOCK_DGRAM;
         protocol = IPPROTO_UDP;
     }
@@ -190,16 +180,16 @@ DEVICE_CMD Open_Socket(REBREQ *req)
     long result = cast(int, socket(AF_INET, type, protocol));
 
     if (result == -1)
-        rebFail_OS (GET_ERROR);
+        return rebError_OS(GET_ERROR);
 
-    sock->requestee.socket = result;
-    sock->state |= RSM_OPEN;
+    sock->socket = result;
+    sock->modes |= RSM_OPEN;
 
     // Set socket to non-blocking async mode:
-    if (not Try_Set_Sock_Options(sock->requestee.socket))
-        rebFail_OS (GET_ERROR);
+    if (not Try_Set_Sock_Options(sock->socket))
+        return rebError_OS(GET_ERROR);
 
-    if (ReqNet(req)->local_port != 0) {
+    if (sock->local_port_number != 0) {
         //
         // !!! This modification was made to support a UDP application which
         // wanted to listen on a UDP port, as well as make packets appear to
@@ -218,79 +208,72 @@ DEVICE_CMD Open_Socket(REBREQ *req)
         sock->modes |= RST_LISTEN;
     }
 
-    return DR_DONE;
+    return nullptr;
 }
 
 
 //
 //  Close_Socket: C
 //
-// Close a socket.
-//
-// Returns 0 on success.
-// On failure, error code is OS local.
-//
-DEVICE_CMD Close_Socket(REBREQ *sock)
+REBVAL *Close_Socket(const REBVAL *port)
 {
-    struct rebol_devreq *req = Req(sock);
+    SOCKREQ *sock = Sock_Of_Port(port);
 
-    if (req->state & RSM_OPEN) {
-
-        req->state = 0;  // clear: RSM_OPEN, RSM_CONNECT
-
-        // If DNS pending, abort it:
-        if (ReqNet(sock)->host_info) {  // indicates DNS phase active
-            rebFree(ReqNet(sock)->host_info);
-            req->requestee.socket = req->length; // Restore TCP socket (see Lookup)
-        }
-
-        if (CLOSE_SOCKET(req->requestee.socket) != 0)
-            rebFail_OS (GET_ERROR);
+    if (not (sock->modes & RSM_OPEN)) {  // already closed, R3-Alpha allowed it
+        assert(not (sock->modes & RSM_CONNECT));
+        return nullptr;
     }
 
-    return DR_DONE;
+    sock->modes = 0;  // clear: RSM_OPEN, RSM_CONNECT
+
+    if (CLOSE_SOCKET(sock->socket) != 0)
+        return rebError_OS(GET_ERROR);
+
+    return nullptr;
 }
 
 
 //
 //  Lookup_Socket: C
 //
-// Initiate the GetHost request and return immediately.
-// This is very similar to the DNS device.
-// Note the temporary results buffer (must be freed later).
-// Note we use the sock->requestee.handle for the DNS handle. During use,
-// we store the TCP socket in the length field.
+// !!! R3-Alpha would use asynchronous DNS API on Windows, but that API
+// was not supported by IPv6, and developers are encouraged to use normal
+// socket APIs with their own threads.  Because the Reb_Device model is slated
+// for replacement it is not worth investing in aynchronous behavior here.
 //
-DEVICE_CMD Lookup_Socket(REBREQ *sock)
+REBVAL *Lookup_Socket(const REBVAL *port, const REBVAL *hostname)
 {
-    struct rebol_devreq *req = Req(sock);
+    SOCKREQ *sock = Sock_Of_Port(port);
+    sock->host_info = nullptr;  // no allocated data
 
-    ReqNet(sock)->host_info = NULL; // no allocated data
+    assert(IS_TEXT(hostname));
+    const REBYTE *hostname_utf8 = VAL_UTF8_AT(hostname);
 
-    // !!! R3-Alpha would use asynchronous DNS API on Windows, but that API
-    // was not supported by IPv6, and developers are encouraged to use normal
-    // socket APIs with their own threads.
+    HOSTENT *host = gethostbyname(cs_cast(hostname_utf8));
+    if (host == nullptr)
+        return rebError_OS(GET_ERROR);
 
-    HOSTENT *host = gethostbyname(s_cast(req->common.data));
-    if (host == NULL)
-        rebFail_OS (GET_ERROR);
+    // Synchronously fill in the port's remote_ip with the answer to looking
+    // up the hostname.
+    //
+    memcpy(&sock->remote_ip, *host->h_addr_list, 4);
 
-    memcpy(&ReqNet(sock)->remote_ip, *host->h_addr_list, 4); //he->h_length);
-    req->flags &= ~RRF_DONE;
-
+    // Queue a notification to the port actor that the lookup is done.  (This
+    // is a holdover from when lookups were asynchronous.)
+    //
     rebElide(
         "insert system/ports/system make event! [",
             "type: 'lookup",
-            "port:", CTX_ARCHETYPE(MISC(ReqPortCtx, sock)),
+            "port:", port,
         "]"
     );
 
-    return DR_DONE;
+    return nullptr;
 }
 
 
 //
-//  Connect_Socket: C
+//  Connect_Socket_Maybe_Queued: C
 //
 // Connect a socket to a service.
 // Only required for connection-based protocols (e.g. not UDP).
@@ -307,45 +290,44 @@ DEVICE_CMD Lookup_Socket(REBREQ *sock)
 // Before usage:
 //     Open_Socket() -- to allocate the socket
 //
-DEVICE_CMD Connect_Socket(REBREQ *sock)
+REBVAL *Connect_Socket_Maybe_Queued(const REBVAL *port)
 {
+    SOCKREQ *sock = Sock_Of_Port(port);
+
     int result;
     struct sockaddr_in sa;
-    struct rebol_devreq *req = Req(sock);
 
-    if (req->state & RSM_CONNECT)
-        return DR_DONE; // already connected
+    if (sock->modes & RSM_CONNECT)
+        return nullptr;  // !!! R3-Alpha tolerated, should we?
 
-    if (req->modes & RST_UDP) {
-        req->state &= ~RSM_ATTEMPT;
-        req->state |= RSM_CONNECT;
+    if (sock->transport == TRANSPORT_UDP) {
+        sock->modes &= ~RSM_ATTEMPT;
+        sock->modes |= RSM_CONNECT;
 
         rebElide(
             "insert system/ports/system make event! [",
                 "type: 'connect",
-                "port:", CTX_ARCHETYPE(MISC(ReqPortCtx, sock)),
+                "port:", port,
             "]"
         );
 
-        if (req->modes & RST_LISTEN)
-            return Listen_Socket(sock);
+        if (sock->modes & RST_LISTEN)
+            return Start_Listening_On_Socket(port);
 
         Get_Local_IP(sock); // would overwrite local_port for listen
-        return DR_DONE;
+        return nullptr;
     }
 
-    if (req->modes & RST_LISTEN)
-        return Listen_Socket(sock);
+    if (sock->modes & RST_LISTEN)
+        return Start_Listening_On_Socket(port);
 
-    Set_Addr(&sa, ReqNet(sock)->remote_ip, ReqNet(sock)->remote_port);
+    Set_Addr(&sa, sock->remote_ip, sock->remote_port_number);
     result = connect(
-        req->requestee.socket, cast(struct sockaddr *, &sa), sizeof(sa)
+        sock->socket, cast(struct sockaddr *, &sa), sizeof(sa)
     );
 
     if (result != 0)
         result = GET_ERROR;
-
-    WATCH2("connect() error: %d - %s\n", result, strerror(result));
 
     switch (result) {
       case 0:  // no error
@@ -357,49 +339,60 @@ DEVICE_CMD Connect_Socket(REBREQ *sock)
     #endif
       case NE_WOULDBLOCK:
       case NE_INPROGRESS:
-      case NE_ALREADY:
-        // Still trying:
-        req->state |= RSM_ATTEMPT;
-        return DR_PEND;
+      case NE_ALREADY: {
+        sock->modes |= RSM_ATTEMPT;
+
+        // Put it into the queue of sockets that are awaiting connection.
+        // (The current model is that will just keep calling Connect_Socket()
+        // over and over again, but before it does it removes the socket from
+        // the list, so we re-add it each time we can't connect.)
+        //
+        struct Reb_Sock_Connector *connector
+            = TRY_ALLOC(struct Reb_Sock_Connector);
+
+        connector->port_ctx = VAL_CONTEXT(port);
+        connector->next = Net_Connectors;
+        Net_Connectors = connector;
+        Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+
+        return nullptr; }
 
       default:
-        req->state &= ~RSM_ATTEMPT;
+        sock->modes &= ~RSM_ATTEMPT;
 
-        // !!! If there is a connect error, we don't want to leave the request
-        // hanging around such that the Poll_Devices() call will have that
-        // lingering error to fail on future READs.  (Review this in light of
-        // a general policy for asynchronous error delivery).
+        // !!! Review policy on asynchronous error delivery.
+        //
         // https://github.com/metaeducation/ren-c/issues/1048
         //
-        Close_Socket(sock);
-        OS_Abort_Device(sock);
-        rebFail_OS (result);
+        Close_Socket(port);
+        return rebError_OS(result);
     }
 
-    req->state &= ~RSM_ATTEMPT;
-    req->state |= RSM_CONNECT;
+    sock->modes &= ~RSM_ATTEMPT;
+    sock->modes |= RSM_CONNECT;
     Get_Local_IP(sock);
 
     rebElide(
         "insert system/ports/system make event! [",
             "type: 'connect",
-            "port:", CTX_ARCHETYPE(MISC(ReqPortCtx, sock)),
+            "port:", port,
         "]"
     );
 
-    return DR_DONE;
+    return nullptr;
 }
 
 
 //
-//  Transfer_Socket: C
+//  Transfer_Socket_Finishing: C
 //
-// Write or read a socket (for connection-based protocols).
+// Write or read a socket for connection-based protocols.  Which direction
+// is indicated by transfer->direction (TRANSFER_SEND or TRANSFER_RECEIVE).
 //
-// This function is asynchronous. It will return immediately.
-// You can call this function again to check the pending connection.
-//
-// The mode is RSM_RECEIVE or RSM_SEND.
+// A READ or a WRITE action on a TCP port will put a transfer structure in a
+// linked list that causes the network extension's polling hook to call
+// this function.  It will be called repeatedly until this function indicates
+// the transfer is complete or has errored.
 //
 // The function will return:
 //     =0: succeeded
@@ -410,59 +403,63 @@ DEVICE_CMD Connect_Socket(REBREQ *sock)
 //     Open_Socket()
 //     Connect_Socket()
 //     Verify that RSM_CONNECT is true
-//     Setup the sock->common.data and sock->length
+//     Setup the sock->common.data and transfer->length
 //
 // Note that the mode flag is cleared by the caller, not here.
 //
-DEVICE_CMD Transfer_Socket(REBREQ *sock)
+bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
 {
-    struct rebol_devreq *req = Req(sock);
+    const REBVAL *port = CTX_ARCHETYPE(transfer->port_ctx);
 
-    if (not (req->state & RSM_CONNECT) and not (req->modes & RST_UDP))
+    REBVAL *state = CTX_VAR(transfer->port_ctx, STD_PORT_STATE);
+    SOCKREQ *sock = cast(SOCKREQ*, VAL_BINARY_AT_ENSURE_MUTABLE(state));
+
+    if (
+        not (sock->modes & RSM_CONNECT)
+        and not (sock->transport == TRANSPORT_UDP)
+    ){
         rebJumps(
             "fail {RSM_CONNECT must be true in Transfer_Socket() unless UDP}"
         );
+    }
 
     struct sockaddr_in remote_addr;
     socklen_t addr_len = sizeof(remote_addr);
 
-    int mode = (req->command == RDC_READ ? RSM_RECEIVE : RSM_SEND);
-    req->state |= mode;
-
     int result;
 
-    const REBVAL *port = CTX_ARCHETYPE(MISC(ReqPortCtx, sock));
+    // We should not still be getting called in the Net_Transfers list unless
+    // there is more left to transfer.
+    //
+    assert(transfer->actual < transfer->length);
 
-    assert(req->actual < req->length);  // else we should've returned DR_DONE
+    if (transfer->direction == TRANSFER_SEND) {
+        size_t len = transfer->length - transfer->actual;  // total to try
 
-    if (mode == RSM_SEND) {
-        size_t len = req->length - req->actual;  // how much to try to write
+        const REBBIN *bin = VAL_BINARY(transfer->binary);
+        ASSERT_SERIES_TERM_IF_NEEDED(bin);
 
-        REBBIN *bin = VAL_BINARY_KNOWN_MUTABLE(req->common.binary);
+        const char *data = cs_cast(BIN_AT(bin, transfer->actual));
 
         // If host is no longer connected:
-        Set_Addr(
-            &remote_addr,
-            ReqNet(sock)->remote_ip,
-            ReqNet(sock)->remote_port
-        );
+        //
+        Set_Addr(&remote_addr, sock->remote_ip, sock->remote_port_number);
         result = sendto(
-            req->requestee.socket,
-            s_cast(BIN_AT(bin, req->actual)), len,
+            sock->socket,
+            data, len,
             MSG_NOSIGNAL, // Flags
             cast(struct sockaddr*, &remote_addr), addr_len
         );
-        WATCH2("send() len: %d actual: %d\n", cast(int, len), result);
 
         if (result < 0)
             goto error_unless_wouldblock;  // may release and trash binary
 
-        req->actual += result;
+        transfer->actual += result;
 
-        assert(req->actual <= req->length);
-        if (req->actual == req->length) {
-            rebRelease(req->common.binary);
-            TRASH_POINTER_IF_DEBUG(req->common.binary);
+        assert(transfer->actual <= transfer->length);
+        if (transfer->actual == transfer->length) {
+            rebRelease(transfer->binary);
+            TRASH_POINTER_IF_DEBUG(transfer->binary);
 
             rebElide(
                 "insert system/ports/system make event! [",
@@ -471,58 +468,64 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
                 "]"
             );
 
-            return DR_DONE;
+
+            Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+            return true;  // finishing
         }
 
-        req->flags |= RRF_ACTIVE; // notify OS_WAIT of activity
-        return DR_PEND;  // still more to go
+        return false;  // still more to go
     }
     else {
+        assert(transfer->direction == TRANSFER_RECEIVE);
+
         // The buffer should be big enough to hold the request size (or some
-        // implementation-defined NET_BUF_SIZE if req->length is MAX_UINT32).
+        // implementation-defined NET_BUF_SIZE if transfer->length is MAX_UINT32).
         //
-        REBBIN *bin = VAL_BINARY_KNOWN_MUTABLE(req->common.binary);
+        REBBIN *bin = VAL_BINARY_KNOWN_MUTABLE(sock->binary);
+        ASSERT_SERIES_TERM_IF_NEEDED(bin);
+
         size_t len;
-        if (req->length == UINT32_MAX)
+        if (transfer->length == UINT32_MAX)
             len = SER_AVAIL(bin);
         else {
-            len = req->length - req->actual;
+            len = transfer->length - transfer->actual;
             assert(SER_AVAIL(bin) >= len);
         }
 
-        assert(VAL_INDEX(req->common.binary) == 0);
+        assert(VAL_INDEX(sock->binary) == 0);
 
         REBLEN old_len = BIN_LEN(bin);
 
         result = recvfrom(
-            req->requestee.socket,
+            sock->socket,
             s_cast(BIN_AT(bin, old_len)), len,
             0, // Flags
             cast(struct sockaddr*, &remote_addr), &addr_len
         );
-        WATCH2("recv() len: %d result: %d\n", cast(int, len), result);
 
         if (result < 0)
             goto error_unless_wouldblock;
 
         TERM_BIN_LEN(bin, old_len + result);
-        req->actual += result;
+        transfer->actual += result;
 
-        if (req->modes & RST_UDP) {
-            ReqNet(sock)->remote_ip = remote_addr.sin_addr.s_addr;
-            ReqNet(sock)->remote_port = ntohs(remote_addr.sin_port);
+        ASSERT_SERIES_TERM_IF_NEEDED(bin);
+
+        if (sock->transport == TRANSPORT_UDP) {
+            sock->remote_ip = remote_addr.sin_addr.s_addr;
+            sock->remote_port_number = ntohs(remote_addr.sin_port);
         }
 
         bool finished;
         if (
-            req->length == req->actual  // read an exact amount
+            transfer->length == transfer->actual  // read an exact amount
             or (
-                req->length == UINT32_MAX  // want to read as much you can
+                transfer->length == UINT32_MAX  // want to read as much you can
                 and result != 0  // ...and it wasn't a clean socket close
             ) or (
-                req->length != UINT32_MAX  // we wanted to read exactly...
+                transfer->length != UINT32_MAX  // we wanted to read exactly...
                 and result == 0  // ...but the socket closed cleanly
-                and req->actual > 0  // ...and there's some data in the buffer
+                and transfer->actual > 0  // ...and there's some data in the buffer
             )
         ){
             // If we had a /PART setting on the READ, we follow the Rebol
@@ -544,13 +547,16 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
                 "]"
             );
 
-            finished = true;  // we'll return DR_DONE (not yet, if closing...)
+
+            Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+
+            finished = true;  // don't return yet, if closing... need event
         }
         else
             finished = false;
 
         if (result == 0) {  // The socket gracefully closed.
-            req->state &= ~RSM_CONNECT;  // But, keep RRF_OPEN true
+            sock->modes &= ~RSM_CONNECT;  // But, keep RSM_OPEN true
 
             rebElide(
                 "insert system/ports/system make event! [",
@@ -559,13 +565,15 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
                 "]"
             );
 
-            return Close_Socket(sock);
+
+            REBVAL *error = Close_Socket(port);
+            if (error)
+                fail (error);  // !!! Bad time to be failing, review
+
+            return true;
         }
 
-        if (finished)
-            return DR_DONE;  // This request got everything it needed
-
-        return DR_PEND;  // Not done (and we didn't send a READ EVENT! yet)
+        return finished;  // Not done (and we didn't send a READ EVENT! yet)
     }
 
   error_unless_wouldblock:
@@ -573,7 +581,7 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
     result = GET_ERROR;
 
     if (result == NE_WOULDBLOCK)
-        return DR_PEND;  // don't consider blocking to be an actual "error"
+        return false;  // don't consider blocking to be an actual "error"
 
     REBVAL *error = rebError_OS(result);
 
@@ -594,20 +602,20 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
     // The default awake handlers will just FAIL on the error, but this
     // can be overridden.
 
-    if (mode == RSM_SEND) {
-        rebRelease(req->common.binary);
-        TRASH_POINTER_IF_DEBUG(req->common.binary);
+    if (transfer->direction == TRANSFER_SEND) {
+        rebRelease(sock->binary);
+        TRASH_POINTER_IF_DEBUG(sock->binary);
     }
 
     // We are killing the request that has the network error (it cannot be
-    // continued).  Returning DR_DONE will detach it.
-
-    return DR_DONE;
+    // continued).  Returning finished will detach it.
+    //
+    return true;
 }
 
 
 //
-//  Listen_Socket: C
+//  Start_Listening_On_Socket: C
 //
 // Setup a server (listening) socket (TCP or UDP).
 //
@@ -617,53 +625,62 @@ DEVICE_CMD Transfer_Socket(REBREQ *sock)
 //
 // Use this instead of Connect_Socket().
 //
-DEVICE_CMD Listen_Socket(REBREQ *sock)
+REBVAL *Start_Listening_On_Socket(const REBVAL *port)
 {
-    struct rebol_devreq *req = Req(sock);
+    SOCKREQ *sock = Sock_Of_Port(port);
 
     int result;
 
     // Setup socket address range and port:
     //
     struct sockaddr_in sa;
-    Set_Addr(&sa, INADDR_ANY, ReqNet(sock)->local_port);
+    Set_Addr(&sa, INADDR_ANY, sock->local_port_number);
 
     // Allow listen socket reuse:
     //
     int len = 1;
     result = setsockopt(
-        req->requestee.socket, SOL_SOCKET, SO_REUSEADDR,
+        sock->socket, SOL_SOCKET, SO_REUSEADDR,
         cast(char*, &len), sizeof(len)
     );
     if (result != 0)
-        rebFail_OS (GET_ERROR);
+        return rebError_OS(GET_ERROR);
 
     // Bind the socket to our local address:
     result = bind(
-        req->requestee.socket, cast(struct sockaddr *, &sa), sizeof(sa)
+        sock->socket, cast(struct sockaddr *, &sa), sizeof(sa)
     );
     if (result != 0)
-        rebFail_OS (GET_ERROR);
+        return rebError_OS(GET_ERROR);
 
-    req->state |= RSM_BIND;
+    sock->modes |= RSM_BIND;
 
-    // For TCP connections, setup listen queue:
-    if (not (req->modes & RST_UDP)) {
-        result = listen(req->requestee.socket, SOMAXCONN);
+    // For TCP connections, setup listen queue
+    //
+    if (not (sock->transport == TRANSPORT_UDP)) {
+        result = listen(sock->socket, SOMAXCONN);
         if (result != 0)
-            rebFail_OS (GET_ERROR);
-        req->state |= RSM_LISTEN;
+            return rebError_OS (GET_ERROR);
+        sock->modes |= RSM_LISTEN;
     }
 
     Get_Local_IP(sock);
-    req->command = RDC_CREATE; // the command done on wakeup
 
-    return DR_PEND;
+    // Add to list of polled listeners, so that connections can be accepted
+    // during WAIT
+    //
+    struct Reb_Sock_Listener *listener = TRY_ALLOC(struct Reb_Sock_Listener);
+    listener->port_ctx = VAL_CONTEXT(port);
+    listener->next = Net_Listeners;
+    Net_Listeners = listener;
+    Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+
+    return nullptr;
 }
 
 
 //
-//  Accept_Socket: C
+//  Accept_Socket_Finishing: C
 //
 // Accept an inbound connection on a TCP listen socket.
 //
@@ -677,38 +694,39 @@ DEVICE_CMD Listen_Socket(REBREQ *sock)
 //     Set local_port to desired port number.
 //     Listen_Socket();
 //
-DEVICE_CMD Accept_Socket(REBREQ *sock)
+bool Accept_Socket_Finishing(struct Reb_Sock_Listener *listener)
 {
-    struct rebol_devreq *req = Req(sock);
+    const REBVAL *listening_port = CTX_ARCHETYPE(listener->port_ctx);
+    SOCKREQ *listening_sock = Sock_Of_Port(listening_port);
 
     // !!! In order to make packets appear to originate from a specific UDP
     // point, a "two-ended" connection-like socket is created for UDP.  But
     // it cannot accept connections.  Without better knowledge of how to stay
     // pending for UDP purposes but not TCP purposes, just return for now.
     //
-    // This happens because of RDC_CREATE being posted in Listen_Socket; so
+    // This happens because UDP still adds to the list in Listen_Socket; so
     // it's not clear whether to not send that event or squash it here.  It
     // must be accepted, however, to recvfrom() data in the future.
     //
-    if (req->modes & RST_UDP) {
+    if (listening_sock->transport == TRANSPORT_UDP) {
         rebElide("insert system/ports/system make event! [",
             "type: 'accept",
-            "port:", CTX_ARCHETYPE(MISC(ReqPortCtx, sock)),
+            "port:", listening_port,
         "]");
 
-        return DR_PEND;
+        return false;  // keep listening
     }
 
     // Accept a new socket, if there is one:
 
     struct sockaddr_in sa;
     socklen_t len = sizeof(sa);
-    int fd = accept(req->requestee.socket, cast(struct sockaddr *, &sa), &len);
+    int fd = accept(listening_sock->socket, cast(struct sockaddr *, &sa), &len);
 
     if (fd == -1) {
         int errnum = GET_ERROR;
         if (errnum == NE_WOULDBLOCK)
-            return DR_PEND;
+            return false;
 
         rebFail_OS (errnum);
     }
@@ -718,36 +736,32 @@ DEVICE_CMD Accept_Socket(REBREQ *sock)
 
     // Create a new port using ACCEPT
 
-    REBCTX *listener = MISC(ReqPortCtx, sock);
-    REBCTX *connection = Copy_Context_Shallow_Managed(listener);
+    REBCTX *connection = Copy_Context_Shallow_Managed(listener->port_ctx);
     PUSH_GC_GUARD(connection);
 
-    Init_Blank(CTX_VAR(connection, STD_PORT_DATA)); // just to be sure.
-    Init_Blank(CTX_VAR(connection, STD_PORT_STATE)); // just to be sure.
+    Init_Nulled(CTX_VAR(connection, STD_PORT_DATA));  // just to be sure.
 
-    REBREQ *sock_new = Force_Get_Port_State(CTX_ARCHETYPE(connection), &Dev_Net);
+    REBVAL *c_state = CTX_VAR(connection, STD_PORT_STATE);
+    REBBIN *bin = Make_Binary(sizeof(SOCKREQ));
+    Init_Binary(c_state, bin);
+    memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));
+    TERM_BIN_LEN(bin, sizeof(SOCKREQ));
 
-    struct rebol_devreq *req_new = Req(sock_new);
+    SOCKREQ *sock_new = Sock_Of_Port(CTX_ARCHETYPE(connection));
 
-    memset(req_new, '\0', sizeof(struct devreq_net));  // !!! already zeroed?
-    req_new->device = req->device;  // !!! already set?
-    req_new->common.data = nullptr;
-
-    req_new->flags |= RRF_OPEN;
-    req_new->state |= (RSM_OPEN | RSM_CONNECT);
+    sock_new->modes |= (RSM_OPEN | RSM_CONNECT);
 
     // NOTE: REBOL stays in network byte order, no htonl(ip) needed
     //
-    req_new->requestee.socket = fd;
-    ReqNet(sock_new)->remote_ip = sa.sin_addr.s_addr;
-    ReqNet(sock_new)->remote_port = ntohs(sa.sin_port);
+    sock_new->socket = fd;
+    sock_new->remote_ip = sa.sin_addr.s_addr;
+    sock_new->remote_port_number = ntohs(sa.sin_port);
     Get_Local_IP(sock_new);
 
-    mutable_MISC(ReqPortCtx, sock_new) = connection;
-
     rebElide(
-        "append ensure block!", CTX_VAR(listener, STD_PORT_CONNECTIONS),
-        CTX_ARCHETYPE(connection)  // will GC protect during run
+        "append ensure block!",
+            CTX_VAR(VAL_CONTEXT(listening_port), STD_PORT_CONNECTIONS),
+            CTX_ARCHETYPE(connection)  // will GC protect during run
     );
 
     DROP_GC_GUARD(connection);
@@ -758,37 +772,9 @@ DEVICE_CMD Accept_Socket(REBREQ *sock)
     rebElide(
         "insert system/ports/system make event! [",
             "type: 'accept",
-            "port:", CTX_ARCHETYPE(listener),
+            "port:", listening_port,
         "]"
     );
 
-    // Even though we signalled, we keep the listen pending to
-    // accept additional connections.
-    //
-    return DR_PEND;
+    return false;  // keep listening
 }
-
-
-/***********************************************************************
-**
-**  Command Dispatch Table (RDC_ enum order)
-**
-***********************************************************************/
-
-static DEVICE_CMD_CFUNC Dev_Cmds[RDC_MAX] = {
-    Open_Socket,
-    Close_Socket,
-    Transfer_Socket,        // Read
-    Transfer_Socket,        // Write
-    Connect_Socket,
-    0,  // query
-    Accept_Socket,          // Create
-    0,  // delete
-    0,  // rename
-    Lookup_Socket
-};
-
-DEFINE_DEV(
-    Dev_Net,
-    "TCP/IP Network", 1, Dev_Cmds, RDC_MAX, sizeof(struct devreq_net)
-);

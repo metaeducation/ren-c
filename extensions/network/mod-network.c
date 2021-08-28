@@ -32,12 +32,27 @@
 
 #include "tmp-mod-network.h"
 
-#define NET_BUF_SIZE 32*1024
 
-enum Transport_Types {
-    TRANSPORT_TCP,
-    TRANSPORT_UDP
-};
+struct Reb_Sock_Transfer *Net_Transfers;
+struct Reb_Sock_Listener *Net_Listeners;
+struct Reb_Sock_Connector *Net_Connectors;
+
+extern REBVAL *Open_Socket(const REBVAL *port);
+extern REBVAL *Lookup_Socket(const REBVAL *port, const REBVAL *hostname);
+extern REBVAL *Close_Socket(const REBVAL *port);
+
+extern bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer);
+extern bool Accept_Socket_Finishing(struct Reb_Sock_Listener *listener);
+extern REBVAL *Connect_Socket_Maybe_Queued(const REBVAL *port);
+
+
+extern void Startup_Networking(void);
+extern void Shutdown_Networking(void);
+
+REBDEV *Dev_Net;
+
+
+#define NET_BUF_SIZE 32*1024
 
 //
 //  Query_Net: C
@@ -57,7 +72,7 @@ static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
     );
     Init_Integer(
         CTX_VAR(ctx, STD_NET_INFO_LOCAL_PORT),
-        sock->local_port
+        sock->local_port_number
     );
 
     Init_Tuple_Bytes(
@@ -67,7 +82,7 @@ static void Query_Net(REBVAL *out, REBVAL *port, struct devreq_net *sock)
     );
     Init_Integer(
         CTX_VAR(ctx, STD_NET_INFO_REMOTE_PORT),
-        sock->remote_port
+        sock->remote_port_number
     );
 
     Copy_Cell(out, info);
@@ -82,16 +97,8 @@ static REB_R Transport_Actor(
     REBFRM *frame_,
     REBVAL *port,
     const REBVAL *verb,
-    enum Transport_Types proto
+    enum Transport_Type transport
 ){
-    // Initialize the IO request
-    //
-    REBREQ *sock = Force_Get_Port_State(port, &Dev_Net);
-    struct rebol_devreq *req = Req(sock);
-
-    if (proto == TRANSPORT_UDP)
-        req->modes |= RST_UDP;
-
     REBCTX *ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
 
@@ -105,12 +112,30 @@ static REB_R Transport_Actor(
     REBVAL *port_data = CTX_VAR(ctx, STD_PORT_DATA);
     assert(IS_BINARY(port_data) or IS_NULLED(port_data));
 
-    // sock->timeout = 4000; // where does this go? !!!
+    SOCKREQ *sock;
+    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    if (IS_BINARY(state)) {
+        sock = Sock_Of_Port(port);
+        assert(sock->transport == transport);
+    }
+    else {
+        // !!! The Make_Devreq() code would zero out the struct, so to keep
+        // things compatible while ripping out the devreq code this must too.
+        //
+        assert(IS_NULLED(state));
+        REBBIN *bin = Make_Binary(sizeof(SOCKREQ));
+        Init_Binary(state, bin);
+        memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));
+        TERM_BIN_LEN(bin, sizeof(SOCKREQ));
 
-    // !!! Comment said "HOW TO PREVENT OVERWRITE DURING BUSY OPERATION!!!
-    // Should it just ignore it or cause an error?"
+        sock = Sock_Of_Port(port);
+        sock->transport = transport;
 
-    if (not (req->flags & RRF_OPEN)) {
+        // !!! There is no way to customize the timeout.  Where should this
+        // setting be configured?
+    }
+
+    if (not (sock->modes & RSM_OPEN)) {
         //
         // Actions for an unopened socket
         //
@@ -139,55 +164,46 @@ static REB_R Transport_Actor(
             // OPEN needs to know to bind() the socket to a local port before
             // the first sendto() is called, if the user is particular about
             // what the port ID of originating messages is.  So local_port
-            // must be set before the OS_DO_DEVICE() call.
+            // must be set before the OS_Do_Device() call.
             //
             REBVAL *local_id = Obj_Value(spec, STD_PORT_SPEC_NET_LOCAL_ID);
             if (IS_BLANK(local_id))
-                ReqNet(sock)->local_port = 0; // let the system pick
+                sock->local_port_number = 0;  // let the system pick
             else if (IS_INTEGER(local_id))
-                ReqNet(sock)->local_port = VAL_INT32(local_id);
+                sock->local_port_number = VAL_INT32(local_id);
             else
                 fail ("local-id field of PORT! spec must be BLANK!/INTEGER!");
 
-            OS_DO_DEVICE_SYNC(sock, RDC_OPEN);
+            REBVAL *error = Open_Socket(port);
+            if (error)
+                fail (error);
 
-            req->flags |= RRF_OPEN;
+            sock->modes |= RSM_OPEN;
 
-            // Lookup host name (an extra TCP device step):
+            // Lookup host name (an extra TCP device step)
+            //
             if (IS_TEXT(arg)) {
-                //
-                // !!! This is storing a direct pointer into the given string
-                // data in the socket.  A better system is needed which would
-                // either pass the value itself with a temporary hold against
-                // mutation, or take ownership of a copy.
-                //
-                // !!! Should not modify!
-                //
-                req->common.data = m_cast(REBCHR(*), VAL_UTF8_AT(arg));
-
-                ReqNet(sock)->remote_port =
+                sock->remote_port_number =
                     IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
 
                 // Note: sets remote_ip field
                 //
-                REBVAL *l_result = OS_DO_DEVICE(sock, RDC_LOOKUP);
-
-                assert(l_result != nullptr);
-                if (rebDid("error?", l_result))
-                    rebJumps("fail", l_result);
-                rebRelease(l_result); // ignore result
+                REBVAL *lookup_error = Lookup_Socket(port, arg);
+                if (lookup_error)
+                    fail (lookup_error);
 
                 RETURN (port);
             }
-            else if (IS_TUPLE(arg)) { // Host IP specified:
-                ReqNet(sock)->remote_port =
+            else if (IS_TUPLE(arg)) {  // Host IP specified:
+                sock->remote_port_number =
                     IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
-                Get_Tuple_Bytes(&(ReqNet(sock)->remote_ip), arg, 4);
+
+                Get_Tuple_Bytes(&sock->remote_ip, arg, 4);
                 goto open_socket_actions;
             }
-            else if (IS_BLANK(arg)) { // No host, must be a LISTEN socket:
-                req->modes |= RST_LISTEN;
-                ReqNet(sock)->local_port =
+            else if (IS_BLANK(arg)) {  // No host, must be a LISTEN socket:
+                sock->modes |= RST_LISTEN;
+                sock->local_port_number =
                     IS_INTEGER(port_id) ? VAL_INT32(port_id) : 8000;
 
                 // When a client connection gets accepted, a port gets added
@@ -205,9 +221,6 @@ static REB_R Transport_Actor(
 
           case SYM_CLOSE:
             RETURN (port);
-
-          case SYM_ON_WAKE_UP:  // allowed after a close
-            break;
 
           default:
             fail (Error_On_Port(SYM_NOT_OPEN, port, -12));
@@ -237,7 +250,7 @@ static REB_R Transport_Actor(
             //
             return Init_Logic(
                 D_OUT,
-                (req->state & (RSM_CONNECT | RSM_BIND)) != 0
+                (sock->modes & (RSM_CONNECT | RSM_BIND)) != 0
             );
 
           default:
@@ -246,42 +259,20 @@ static REB_R Transport_Actor(
 
         break; }
 
-      case SYM_ON_WAKE_UP: {
-        //
-        // Update the port object after a READ or WRITE operation.
-        // This is normally called by the WAKE-UP function.
-        //
-        if (req->command == RDC_READ) {
-            assert(IS_BINARY(port_data));  // transfer in progress
-            assert(req->common.binary == port_data);
-
-            // !!! R3-Alpha would take req->actual and advance the tail of
-            // the actual input binary here (the req only had byte access,
-            // and could not keep the BINARY! up to date).  Ren-C tries to
-            // operate with the binary in a valid state after every change.
-            //
-            ASSERT_SERIES_TERM_IF_NEEDED(VAL_BINARY(port_data));
-        }
-        else if (req->command == RDC_WRITE) {
-            //
-            // This WAKE-UP apparently does not always mean that the operation
-            // has completed (that was previously assumed...)
-            //
-            if (req->actual == req->length)  // completion trashes
-                assert(IS_POINTER_TRASH_DEBUG(req->common.binary));
-        }
-        else
-            assert(
-                req->command == RDC_LOOKUP
-                or req->command == RDC_CONNECT
-                or req->command == RDC_CREATE
-                or req->command == RDC_CLOSE
-            );
-
-        return Init_None(D_OUT); }
-
       case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
+
+        // Make sure no in-flight READs are being run for this port
+        //
+      blockscope {
+        struct Reb_Sock_Transfer *temp = Net_Transfers;
+        for (; temp != nullptr; temp = temp->next) {
+            if (temp->direction == TRANSFER_RECEIVE) {
+                if (temp->port_ctx == VAL_CONTEXT(port))
+                    assert(!"duplicate reading");
+            }
+        }
+      }
 
         UNUSED(PAR(source));
 
@@ -294,11 +285,16 @@ static REB_R Transport_Actor(
         // Read data into a buffer, expanding the buffer if needed.
         // If no length is given, program must stop it at some point.
         if (
-            not (req->modes & RST_UDP)
-            and not (req->state & RSM_CONNECT)
+            not (sock->transport == TRANSPORT_UDP)
+            and not (sock->modes & RSM_CONNECT)
         ){
             fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
         }
+
+        struct Reb_Sock_Transfer *transfer = TRY_ALLOC(struct Reb_Sock_Transfer);
+        transfer->port_ctx = VAL_CONTEXT(port);
+        transfer->direction = TRANSFER_RECEIVE;
+        transfer->actual = 0;  // actual for THIS read (not for total)
 
         REBSIZ bufsize;
 
@@ -306,7 +302,7 @@ static REB_R Transport_Actor(
             if (not IS_INTEGER(ARG(part)))
                 fail (ARG(part));
 
-            bufsize = req->length = VAL_INT32(ARG(part));
+            bufsize = transfer->length = VAL_INT32(ARG(part));
         }
         else {
             // !!! R3-Alpha didn't have a working READ/PART for networking; it
@@ -315,7 +311,7 @@ static REB_R Transport_Actor(
             // network protocols.  Ren-C has R3-Alpha's behavior if no /PART
             // is specified.
             //
-            req->length = UINT32_MAX;  // signal "read as much as you can"
+            transfer->length = UINT32_MAX;  // signal "read as much as you can"
             bufsize = NET_BUF_SIZE;
         }
 
@@ -325,6 +321,7 @@ static REB_R Transport_Actor(
         if (IS_NULLED(port_data)) {
             buffer = Make_Binary(bufsize);
             Init_Binary(port_data, buffer);
+            TERM_BIN_LEN(buffer, 0);
         }
         else {
             // In R3-Alpha, the client could leave data in the buffer of the
@@ -349,44 +346,31 @@ static REB_R Transport_Actor(
                 Extend_Series(buffer, bufsize - SER_AVAIL(buffer));
         }
 
-        TRASH_POINTER_IF_DEBUG(req->common.data);
-        req->common.binary = port_data; // write at tail
-        req->actual = 0; // actual for THIS read (not for total)
+        sock->binary = port_data;  // write at tail
 
-        REBVAL *result = OS_DO_DEVICE(sock, RDC_READ);
-        if (result == nullptr) {
-            //
-            // Request pending
-        }
-        else {
-            if (rebDid("error?", result))
-                rebJumps("fail", result);
-
-            // a note said "recv CAN happen immediately"
-            //
-            rebRelease(result); // ignore result
-        }
+        // We always queue the transfer.
+        //
+        transfer->next = Net_Transfers;
+        Net_Transfers = transfer;
+        Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
 
         RETURN (port); }
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
 
+
         UNUSED(PAR(destination));
 
         if (REF(seek) or REF(append) or REF(allow) or REF(lines))
             fail (Error_Bad_Refines_Raw());
 
-        // Write the entire argument string to the network.
-        // The lower level write code continues until done.
-
         if (
-            not (req->modes & RST_UDP)
-            and not (req->state & RSM_CONNECT)
+            not (sock->transport == TRANSPORT_UDP)
+            and not (sock->modes & RSM_CONNECT)
         ){
             fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
         }
-
 
         // !!! R3-Alpha did not lay out the invariants of the port model,
         // or what datatypes it would accept at what levels.  TEXT! could be
@@ -397,43 +381,72 @@ static REB_R Transport_Actor(
         //
         REBVAL *data = ARG(data);
 
-        // Setup the write.  We copy the data into the request, so that you
-        // can say things like:
+        // If there is a transfer in flight already, we want to find it and
+        // add more data to it.
         //
-        //     data: {abc}
-        //     write port data
-        //     reverse data
-        //     write port data
-        //
-        // We also want to make sure the /PART is handled correctly, so by
-        // delegating to COPY/PART we get that for free.
-        //
-        TRASH_POINTER_IF_DEBUG(req->common.data);
-        req->common.binary = rebValue(
-            "as binary! copy/part", data, rebQ(REF(part))
-        );
+        struct Reb_Sock_Transfer *transfer = Net_Transfers;
+        for (; transfer != nullptr; transfer = transfer->next) {
+            if (transfer->direction != TRANSFER_SEND)
+                continue;
+            if (transfer->port_ctx != VAL_CONTEXT(port))
+                continue;
 
-        // Because requests can be handled asynchronously, we won't
-        // necessarily free the handle before WRITE ends.  Unmanage it.
-        //
-        rebUnmanage(req->common.binary);
+            break;
+        }
 
-        req->length = VAL_LEN_AT(req->common.binary);
-        req->actual = 0;
+        if (not transfer) {  // there was no in-flight SEND, make new one
+            transfer = TRY_ALLOC(struct Reb_Sock_Transfer);
+            transfer->port_ctx = VAL_CONTEXT(port);
+            transfer->direction = TRANSFER_SEND;
 
-        REBVAL *result = OS_DO_DEVICE(sock, RDC_WRITE);
-
-        if (result == nullptr) {
+            // Copy the data into the request, so that you can say things like:
             //
-            // Write pending !!! old comment said "do we get here?"
+            //     data: {abc}
+            //     write port data
+            //     reverse data
+            //     write port data
+            //
+            // We also want to make sure the /PART is handled correctly, so by
+            // delegating to COPY/PART we get that for free.
+            //
+            // !!! If you FREEZE the data then a copy is not necessary, review
+            // this as an angle on efficiency.
+            //
+            transfer->binary = rebValue(
+                "as binary! copy/part", data, rebQ(REF(part))
+            );
+            transfer->length = VAL_LEN_AT(transfer->binary);
+            transfer->actual = 0;  // actual for THIS read (not for total)
+
+            // Because requests can be handled asynchronously, we won't
+            // necessarily free the handle before WRITE ends.  Unmanage it.
+            //
+            rebUnmanage(transfer->binary);
+
+            // We always queue the transfer.
+            //
+            transfer->next = Net_Transfers;
+            Net_Transfers = transfer;
+            Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
         }
         else {
-            if (rebDid("error?", result))
-                rebJumps("fail", result);
-
-            // Note here said "send CAN happen immediately"
+            // We just append the data to the binary that's already there.
             //
-            rebRelease(result); // ignore result
+            // !!! This could be done better with a block of binary fragments,
+            // where each fragment could have been FREEZE'd by the user so that
+            // the transfer could take ownership of it and avoid copying.  But
+            // as an initial version to break free of the REBREQ this just
+            // does an append.
+            //
+            rebElide(
+                "append/part", transfer->binary, data, rebQ(REF(part))
+            );
+
+            // The length is bumped by the length of the binary.
+            //
+            transfer->length = VAL_LEN_AT(transfer->binary);
+
+            // The ->actual for how much has been transferred is left as is.
         }
 
         RETURN (port); }
@@ -442,13 +455,13 @@ static REB_R Transport_Actor(
         INCLUDE_PARAMS_OF_TAKE;
         UNUSED(PAR(series));
 
-        if (not (req->modes & RST_LISTEN) or (req->modes & RST_UDP))
+        if (not (sock->modes & RST_LISTEN) or sock->transport == TRANSPORT_UDP)
             fail ("TAKE is only available on TCP LISTEN ports");
 
         return rebValue(
-            "take/part/(", REF(deep), ")/(", REF(last), ")",
+            "take/part/(@", REF(deep), ")/(@", REF(last), ")",
                 CTX_VAR(ctx, STD_PORT_CONNECTIONS),
-                REF(part)
+                rebQ(REF(part))
         ); }
 
       case SYM_PICK: {
@@ -465,35 +478,33 @@ static REB_R Transport_Actor(
         // Get specific information - the scheme's info object.
         // Special notation allows just getting part of the info.
         //
-        Query_Net(D_OUT, port, ReqNet(sock));
+        Query_Net(D_OUT, port, sock);
         return D_OUT; }
 
       case SYM_CLOSE: {
-        if (req->flags & RRF_OPEN) {
-            OS_DO_DEVICE_SYNC(sock, RDC_CLOSE);
+        if (sock->modes & RSM_OPEN) {
+            REBVAL *error = Close_Socket(port);
+            if (error)
+                fail (error);
 
-            req->flags &= ~RRF_OPEN;
+            sock->modes &= ~RSM_OPEN;
         }
         RETURN (port); }
 
       case SYM_OPEN: {
-        REBVAL *result = OS_DO_DEVICE(sock, RDC_CONNECT);
-        if (result == nullptr) {
-            //
-            // Asynchronous connect, this happens in TCP_Actor
-        }
-        else {
-            if (rebDid("error?", result))
-                rebJumps("lib/fail", result);
+        //
+        // CONNECT may happen synchronously, or asynchronously...so this may
+        // add to Net_Connectors.
+        //
+        // UDP is connectionless so it will not add to the connectors.
+        //
+        // !!! R3-Alpha would allow you to OPEN an OPEN port.  That would also
+        // be synchronous.  Bad idea?
+        //
+        REBVAL *error = Connect_Socket_Maybe_Queued(port);
+        if (error != nullptr)
+            fail (error);
 
-            // This can happen with UDP, which is connectionless so it
-            // returns DR_DONE.
-            //
-            // !!! Also can happen if it's already open (it checks for the
-            // connected flag).  R3-Alpha could OPEN OPEN a port.  :-/
-            //
-            rebRelease(result); // ignore result
-        }
         RETURN (port); }
 
       default:
@@ -584,10 +595,9 @@ REBNATIVE(set_udp_multicast)
 {
     NETWORK_INCLUDE_PARAMS_OF_SET_UDP_MULTICAST;
 
-    REBREQ *sock = Force_Get_Port_State(ARG(port), &Dev_Net);
+    SOCKREQ *sock = Sock_Of_Port(ARG(port));
 
-    struct rebol_devreq *req = Req(sock);
-    if (not (req->modes & RST_UDP)) // !!! other checks?
+    if (not (sock->transport == TRANSPORT_UDP))  // !!! other checks?
         rebJumps("fail {SET-UDP-MULTICAST used on non-UDP port}");
 
     struct ip_mreq mreq;
@@ -595,7 +605,7 @@ REBNATIVE(set_udp_multicast)
     Get_Tuple_Bytes(&mreq.imr_interface.s_addr, ARG(member), 4);
 
     int result = setsockopt(
-        req->requestee.socket,
+        sock->socket,
         IPPROTO_IP,
         REF(drop) ? IP_DROP_MEMBERSHIP : IP_ADD_MEMBERSHIP,
         cast(char*, &mreq),
@@ -605,7 +615,7 @@ REBNATIVE(set_udp_multicast)
     if (result < 0)
         rebFail_OS (result);
 
-    return rebVoid();
+    return rebNone();
 }
 
 
@@ -627,15 +637,14 @@ REBNATIVE(set_udp_ttl)
 {
     NETWORK_INCLUDE_PARAMS_OF_SET_UDP_TTL;
 
-    REBREQ *sock = Force_Get_Port_State(ARG(port), &Dev_Net);
-    struct rebol_devreq *req = Req(sock);
+    SOCKREQ *sock = Sock_Of_Port(ARG(port));
 
-    if (not (req->modes & RST_UDP)) // !!! other checks?
+    if (not (sock->transport == TRANSPORT_UDP))  // !!! other checks?
         rebJumps("fail {SET-UDP-TTL used on non-UDP port}");
 
     int ttl = VAL_INT32(ARG(ttl));
     int result = setsockopt(
-        req->requestee.socket,
+        sock->socket,
         IPPROTO_IP,
         IP_TTL,
         cast(char*, &ttl),
@@ -645,11 +654,87 @@ REBNATIVE(set_udp_ttl)
     if (result < 0)
         rebFail_OS (result);
 
-    return rebVoid();
+    return rebNone();
 }
 
-extern void Startup_Networking(void);
-extern void Shutdown_Networking(void);
+
+//
+//  Dev_Net_Poll: c
+//
+bool Dev_Net_Poll(void)
+{
+    bool changed = false;
+
+    // Process the singly linked list of in-progress transfers, removing any
+    // transfers that complete.
+    //
+  blockscope {
+    struct Reb_Sock_Transfer *transfer = Net_Transfers;
+    struct Reb_Sock_Transfer **update = &Net_Transfers;
+
+    while (transfer != nullptr) {
+        changed = true;  // !!! Do we want notices on *any* work done?
+
+        if (Transfer_Socket_Finishing(transfer)) {
+            *update = transfer->next;
+            FREE(struct Reb_Sock_Transfer, transfer);
+            transfer = *update;
+        }
+        else {
+            update = &transfer->next;
+            transfer = transfer->next;
+        }
+    }
+  }
+
+    // Process the singly linked list of sockets that are listening for
+    // connections.  The socket should not report that it is "finished"
+    // while it is checking for accept unless there is some kind of error.
+    //
+  blockscope {
+    struct Reb_Sock_Listener *listener = Net_Listeners;
+    struct Reb_Sock_Listener **update = &Net_Listeners;
+    while (listener != nullptr) {
+        changed = true;  // !!! Do we want notices on *any* work done?
+
+        if (Accept_Socket_Finishing(listener)) {
+            *update = listener->next;
+            FREE(struct Reb_Sock_Listener, listener);
+            listener = *update;
+        }
+        else {
+            update = &listener->next;
+            listener = listener->next;
+        }
+    }
+  }
+
+    // Process the singly linked list of sockets that are listening for
+    // connections.  The code seemed to be stylized to just keep calling
+    // connect, I think (?) so do that.
+    //
+  blockscope {
+    struct Reb_Sock_Connector *connector = Net_Connectors;
+    struct Reb_Sock_Connector **update = &Net_Connectors;
+    while (connector != nullptr) {
+        changed = true;  // !!! Do we want notices on *any* work done?
+
+        const REBVAL *port = CTX_ARCHETYPE(connector->port_ctx);
+        Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+
+        *update = connector->next;
+        FREE(struct Reb_Sock_Connector, connector);
+        connector = *update;
+
+        REBVAL *error = Connect_Socket_Maybe_Queued(port);
+        if (error)
+            fail (error);  // !!! Probably bad to fail here
+    }
+  }
+
+    return changed;
+}
+
 
 //
 //  startup*: native [  ; Note: DO NOT EXPORT!
@@ -663,9 +748,30 @@ REBNATIVE(startup_p)
 {
     NETWORK_INCLUDE_PARAMS_OF_STARTUP_P;
 
-    OS_Register_Device(&Dev_Net);
-
+    // !!! This currently does synchronous initialization, e.g. WSAStartup()
+    // on Windows.  This would be better to defer until first network use.
+    //
+    // !!! Note the DNS extension currently relies on this startup being
+    // called instead of doing its own.
+    //
     Startup_Networking();
+
+    // We use linked lists here to manage the in progress transfers and
+    // listeners.  (Making them BLOCK!s of user-exposed REBVAL* creates
+    // inconvenience for unliking them when done, and also means reification
+    // of implementation details).
+    //
+    assert(Net_Transfers == nullptr);
+    assert(Net_Listeners == nullptr);
+    assert(Net_Connectors == nullptr);
+
+    // We register a "device" with the system so that when WAIT is being run
+    // then our supplied polling function will be called.  That function
+    // handles in-progress network transfers as well as accepting new
+    // socket connections while listening on a port.
+    //
+    assert(Dev_Net == nullptr);
+    Dev_Net = OS_Register_Device("TCP/IP Network", &Dev_Net_Poll);
 
     return rebNone();
 }
@@ -683,7 +789,37 @@ REBNATIVE(shutdown_p)
 {
     NETWORK_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-    OS_Unregister_Device(&Dev_Net);
+  blockscope {
+    struct Reb_Sock_Transfer *transfer = Net_Transfers;
+    while (transfer != nullptr) {
+        struct Reb_Sock_Transfer *temp = transfer;
+        transfer = transfer->next;
+        FREE(struct Reb_Sock_Transfer, temp);
+    }
+    Net_Transfers = nullptr;
+  }
+
+  blockscope {
+    struct Reb_Sock_Listener *listener = Net_Listeners;
+    while (listener != nullptr) {
+        struct Reb_Sock_Listener *temp = listener;
+        listener = listener->next;
+        FREE(struct Reb_Sock_Listener, temp);
+    }
+    Net_Listeners = nullptr;
+  }
+
+  blockscope {
+    struct Reb_Sock_Connector *connector = Net_Connectors;
+    while (connector != nullptr) {
+        struct Reb_Sock_Connector *temp = connector;
+        connector = connector->next;
+        FREE(struct Reb_Sock_Connector, temp);
+    }
+    Net_Connectors = nullptr;
+  }
+
+    OS_Unregister_Device(Dev_Net);
 
     Shutdown_Networking();
 

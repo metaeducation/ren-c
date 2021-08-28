@@ -29,55 +29,22 @@
 
 
 //
-//  Force_Get_Port_State: C
+//  Is_Port_Pending: C
 //
-// Use private state area in a port. Create if necessary.
-// The size is that of a binary structure used by
-// the port for storing internal information.
+// Return true if port value is pending a signal (informs WAIT, e.g. if not
+// pending then WAIT on the port is a no-oip).
 //
-REBREQ *Force_Get_Port_State(const REBVAL *port, void *device)
+bool Is_Port_Pending(const RELVAL *port)
 {
-    REBDEV *dev = cast(REBDEV*, device);
-    REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    assert(IS_PORT(port));
 
-    REBREQ *req;
+    if (VAL_LOGIC(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING)))
+        return true;
 
-    if (IS_BINARY(state)) {
-        assert(VAL_INDEX(state) == 0);  // should always be at head
-        assert(VAL_LEN_HEAD(state) == dev->req_size);  // should be right size
-        req = VAL_BINARY_KNOWN_MUTABLE(state);
-    }
-    else {
-        assert(IS_NULLED(state));
-        req = OS_Make_Devreq(dev);
-        mutable_MISC(ReqPortCtx, req) = ctx;  // see MISC_NODE_NEEDS_MARK
+    if (not IS_NULLED(CTX_VAR(VAL_CONTEXT(port), STD_PORT_AWAKE)))
+        return true;
 
-        Init_Binary(state, req);
-    }
-
-    return req;
-}
-
-
-//
-//  Pending_Port: C
-//
-// Return true if port value is pending a signal.
-// Not valid for all ports - requires request struct!!!
-//
-bool Pending_Port(const RELVAL *port)
-{
-    if (IS_PORT(port)) {
-        REBVAL *state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
-
-        if (IS_BINARY(state)) {
-            REBREQ *req = VAL_BINARY_KNOWN_MUTABLE(state);
-            if (not (Req(req)->flags & RRF_PENDING))
-                return false;
-        }
-    }
-    return true;
+    return false;
 }
 
 

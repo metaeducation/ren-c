@@ -153,7 +153,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
         const RELVAL *tail;
         val = VAL_ARRAY_AT(&tail, ports);
         for (; val != tail; ++val) {  // find timeout
-            if (Pending_Port(val))
+            if (IS_PORT(val) and Is_Port_Pending(val))
                 ++num_pending;
 
             if (IS_INTEGER(val) or IS_DECIMAL(val) or IS_TIME(val))
@@ -176,7 +176,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             break;
 
           case REB_PORT: {
-            if (not Pending_Port(val))
+            if (not Is_Port_Pending(val))
                 return nullptr;
 
             REBARR *single = Make_Array(1);
@@ -376,8 +376,11 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
 //
 REBNATIVE(wake_up)
 //
-// Calls port update for native actors.
-// Calls port awake function.
+// !!! The only place WAKE-UP is called is by the system port's AWAKE function
+// (usermode code).  The return result from WAKE-UP makes it decide whether to
+// put a port into the "waked" queue, e.g. being a potential answer back from
+// WAIT as a port that has something new to say, hence it should come out
+// of the blocked state.
 {
     EVENT_INCLUDE_PARAMS_OF_WAKE_UP;
 
@@ -387,19 +390,23 @@ REBNATIVE(wake_up)
 
     REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
     if (Is_Native_Port_Actor(actor)) {
+        /*
+            DECLARE_LOCAL (verb);
+            Init_Word(verb, Canon(ON_WAKE_UP));
+            const REBVAL *r = Do_Port_Action(frame_, ARG(port), verb);
+            assert(IS_BAD_WORD(r));
+            UNUSED(r);
+        */
+
+        // !!! This gave native ports an opportunity to react to WAKE-UP if
+        // they wanted to.  However, the native port is what sent the event
+        // in the first place... so it's not really finding out anything it
+        // didn't already know.  It just knows "oh, so you're sending that
+        // event I raised now, are you?
         //
-        // We don't pass `actor` or `event` in, because we just pass the
-        // current call info.  The port action can re-read the arguments.
-        //
-        // !!! Most of the R3-Alpha event model is around just as "life
-        // support".  Added assertion and convention here that this call
-        // doesn't throw or return meaningful data... (?)
-        //
-        DECLARE_LOCAL (verb);
-        Init_Word(verb, Canon(ON_WAKE_UP));
-        const REBVAL *r = Do_Port_Action(frame_, ARG(port), verb);
-        assert(IS_BAD_WORD(r));
-        UNUSED(r);
+        // The real target of the event is any port layered on *top* of the
+        // port, like an http layer sitting on top of the TCP layer.  They
+        // registered an AWAKE function that gets called.
     }
 
     bool woke_up = true; // start by assuming success

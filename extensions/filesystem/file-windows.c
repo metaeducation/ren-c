@@ -194,10 +194,6 @@ REBVAL *Read_Directory(bool *done, FILEREQ *dir, FILEREQ *file)
         "]"
     );
 
-    // !!! We currently unmanage this, because code using the API may
-    // trigger a GC and there is nothing proxying the RebReq's data.
-    // Long term, this file should have *been* the return result.
-    //
     rebUnmanage(m_cast(REBVAL*, file->path));
 
     file->size = (cast(int64_t, info.nFileSizeHigh) << 32) + info.nFileSizeLow;
