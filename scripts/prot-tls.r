@@ -1792,6 +1792,8 @@ tls-awake: func [
                     ]
                     return false
                 ]
+                ; Note: Even if the state is <finished>, it seems that after
+                ; a 'wrote signal it still wants to READ.
             ]
             read port
             return false
@@ -1843,7 +1845,9 @@ tls-awake: func [
                     port: tls-port
                 ]
             ] else [
-                read port
+                if not complete? [  ; !!! to avoid multiple in-flight read
+                    read port
+                ]
             ]
             return complete?
         ]
