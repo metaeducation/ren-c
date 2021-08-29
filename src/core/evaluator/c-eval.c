@@ -1378,7 +1378,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // !!! This function can currently return a QUOTED! of the next value
         // if it's not an ACTION!; consider that an error for multi-return.
         //
-        if (Make_Frame_From_Feed_Throws(f_spare, f->feed)) {
+        if (Make_Frame_From_Feed_Throws(f_spare, END_CELL, f->feed)) {
             Move_Cell(f->out, f_spare);
             DS_DROP_TO(f->dsp_orig);
             goto return_thrown;

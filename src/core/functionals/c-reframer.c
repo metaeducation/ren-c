@@ -79,8 +79,15 @@ enum {
 // version of what would be evaluated to.  So in the case of NULL, it will be
 // a single quote of nothing.
 //
-bool Make_Invokable_From_Feed_Throws(REBVAL *out, REBFED *feed)
-{
+bool Make_Invokable_From_Feed_Throws(
+    REBVAL *out,
+    const RELVAL *first,  // if not END, override first value (vs. feed->value)
+    REBFED *feed
+){
+    assert(NOT_FEED_FLAG(feed, NEXT_ARG_FROM_OUT));  // not supported?
+
+    const RELVAL *v = IS_END(first) ? feed->value : first;
+
     // !!! The case of `([x]: @)` wants to make something which when it
     // evaluates becomes invisible.  There's no QUOTED! value that can do
     // that, so if the feature is to be supported it needs to be VOID.
@@ -88,7 +95,7 @@ bool Make_Invokable_From_Feed_Throws(REBVAL *out, REBFED *feed)
     // Not all callers necessarily want to tolerate an end condition, so this
     // needs review.
     //
-    if (IS_END(feed->value)) {
+    if (IS_END(v)) {
         rebInto(out, "make frame! :void");
         return false;
     }
@@ -98,15 +105,15 @@ bool Make_Invokable_From_Feed_Throws(REBVAL *out, REBFED *feed)
     // it would be nice to find some kind of mitigation.  Descend into the
     // feed and make sure the tail is reached?
     //
-    if (ANY_GROUP(feed->value))  // `requote (append [a b c] #d, <can't-work>)`
+    if (ANY_GROUP(v))  // `requote (append [a b c] #d, <can't-work>)`
         fail ("Actions made with REFRAMER cannot work with GROUP!s");
 
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT);
     Push_Frame(out, f);
 
     if (Get_If_Word_Or_Path_Throws(
-        f->out,  // e.g. parent's spare
-        feed->value,
+        out,
+        v,
         FEED_SPECIFIER(feed),
         true  // push_refinements = true (DECLARE_FRAME captured original DSP)
     )){
@@ -114,14 +121,17 @@ bool Make_Invokable_From_Feed_Throws(REBVAL *out, REBFED *feed)
         return true;
     }
 
-    if (not IS_ACTION(f->out)) {
-        Quotify(f->out, 1);
-        Fetch_Next_Forget_Lookback(f);  // we've seen it now
+    if (not IS_ACTION(out)) {
+        Quotify(out, 1);
+
+        if (IS_END(first))
+            Fetch_Next_Forget_Lookback(f);  // we've seen it now
         Drop_Frame(f);
         return false;
     }
 
-    Fetch_Next_Forget_Lookback(f);  // now, onto the arguments...
+    if (IS_END(first))
+        Fetch_Next_Forget_Lookback(f);  // now, onto the arguments...
 
     option(const REBSTR*) label = VAL_ACTION_LABEL(f->out);
 
@@ -212,9 +222,9 @@ bool Make_Invokable_From_Feed_Throws(REBVAL *out, REBFED *feed)
 // that has to follow the rules of MAKE FRAME!...e.g. returning a frame.
 // This converts QUOTED!s into frames for the identity function.
 //
-bool Make_Frame_From_Feed_Throws(REBVAL *out, REBFED *feed)
+bool Make_Frame_From_Feed_Throws(REBVAL *out, const RELVAL *first, REBFED *feed)
 {
-    if (Make_Invokable_From_Feed_Throws(out, feed))
+    if (Make_Invokable_From_Feed_Throws(out, first, feed))
         return true;
 
     if (IS_FRAME(out))
@@ -264,7 +274,7 @@ REB_R Reframer_Dispatcher(REBFRM *f)
     // filled values).  And we don't want to overwrite f->out in case of
     // invisibility.  So the frame's spare cell is used.
     //
-    if (Make_Invokable_From_Feed_Throws(f_spare, f->feed))
+    if (Make_Invokable_From_Feed_Throws(f_spare, END_CELL, f->feed))
         return R_THROWN;
 
     REBVAL *arg = FRM_ARG(f, VAL_INT32(param_index));

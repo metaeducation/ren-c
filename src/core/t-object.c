@@ -522,7 +522,7 @@ REB_R MAKE_Frame(
 
         assert(Is_Action_Frame(f_varargs));
 
-        if (Make_Frame_From_Feed_Throws(out, f_varargs->feed))
+        if (Make_Frame_From_Feed_Throws(out, END_CELL, f_varargs->feed))
             return R_THROWN;
 
         return out;
