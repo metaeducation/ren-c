@@ -221,18 +221,35 @@ REBVAL *Close_Socket(const REBVAL *port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
 
-    if (sock->fd == SOCKET_NONE) {  // already closed, R3-Alpha allowed it
-        assert(sock->socket == SOCKET_NONE);  // shouldn't be connected
-        return nullptr;
-    }
-
     REBVAL *error = nullptr;
 
-    if (CLOSE_SOCKET(sock->fd) != 0)
-        error = rebError_OS(GET_ERROR);
+    if (sock->fd == SOCKET_NONE)  // R3-Alpha allowed closing closed sockets
+        assert(sock->socket == SOCKET_NONE);  // shouldn't be connected
+    else {
+        // If it was trying to connect, then drop it from the connection list.
 
-    sock->socket = sock->fd = SOCKET_NONE;
-    sock->modes = 0;
+        struct Reb_Sock_Connector *connector = Net_Connectors;
+        struct Reb_Sock_Connector **update = &Net_Connectors;
+        while (connector != nullptr) {
+            if (connector->port_ctx == VAL_CONTEXT(port)) {
+                assert(sock->modes & RSM_ATTEMPT);
+                assert(sock->socket == SOCKET_NONE);
+                *update = connector->next;
+                FREE(struct Reb_Sock_Connector, connector);
+                connector = *update;
+            }
+            else {
+                update = &connector->next;
+                connector = connector->next;
+            }
+        }
+
+        if (CLOSE_SOCKET(sock->fd) != 0)  // platform independent close() macro
+            error = rebError_OS(GET_ERROR);
+
+        sock->socket = sock->fd = SOCKET_NONE;
+        sock->modes = 0;
+    }
 
     return error;
 }
