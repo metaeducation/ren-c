@@ -331,6 +331,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f->u.reval.value));
                 // ^-- invisibles cache NO_LOOKAHEAD
 
+            SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+
             goto process_action;
         }
 
@@ -522,6 +524,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     );
     Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(v));
 
+    SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+
     goto process_action; }
 
   give_up_backward_quote_priority:
@@ -700,6 +704,10 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 VAL_WORD_SYMBOL(v),  // use word as label
                 GET_ACTION_FLAG(act, ENFIXED)
             );
+
+            if (GET_ACTION_FLAG(act, ENFIXED))
+                SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+
             goto process_action;
         }
 
@@ -1959,6 +1967,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_next));
 
     Fetch_Next_Forget_Lookback(f);  // advances next
+
+    SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
+
     goto process_action; }
 
   return_thrown:

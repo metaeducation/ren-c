@@ -358,6 +358,14 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
     assert(KIND3Q_BYTE_UNCHECKED(feed->value) != REB_0_END);
         // ^-- faster than NOT_END()
 
+    // The NEXT_ARG_FROM_OUT flag is a trick used by frames, which must be
+    // careful about the management of the trick.  It's put on the feed
+    // and not the frame in order to catch cases where it slips by, so this
+    // assert is important.
+    //
+    if (GET_FEED_FLAG(feed, NEXT_ARG_FROM_OUT))
+        assert(!"Fetch_Next_In_Feed() called but NEXT_ARG_FROM_OUT set");
+
     // We are changing ->value, and thus by definition any ->gotten value
     // will be invalid.  It might be "wasteful" to always set this to null,
     // especially if it's going to be overwritten with the real fetch...but

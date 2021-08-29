@@ -429,6 +429,16 @@ inline static void Push_Frame(
     f->prior = TG_Top_Frame;
     TG_Top_Frame = f;
 
+    // If the frame is trying to use the NEXT_ARG_FROM_OUT trick, then it
+    // means the feed needs to keep the same output cell in a subframe to
+    // reuse that feed.
+    if (
+        GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)
+        and f->prior->feed == f->feed
+    ){
+        assert(f->out == f->prior->out);
+    }
+
   #if defined(DEBUG_BALANCE_STATE)
     SNAP_STATE(&f->state); // to make sure stack balances, etc.
     f->state.dsp = f->dsp_orig;
@@ -602,8 +612,20 @@ inline static void Begin_Action_Core(
     f->flags.bits |= f->feed->flags.bits & FEED_FLAG_NO_LOOKAHEAD;
 
     if (enfix) {
-        SET_EVAL_FLAG(f, RUNNING_ENFIX);  // set for duration of function call
-        SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);  // only set for first arg
+        //
+        // While FEED_FLAG_NEXT_ARG_FROM_OUT is set only during the first
+        // argument of an enfix function call, EVAL_FLAG_RUNNING_ENFIX is
+        // set for the whole duration.
+        //
+        // Note: We do not set NEXT_ARG_FROM_OUT here, because that flag is
+        // checked to be clear by Fetch_Next_In_Feed(), which changes the
+        // value in the feed *and* checks to make sure NEXT_ARG_FROM_OUT is
+        // not set.  This winds up being a problem if the caller is using the
+        // current value in feed for something like the label passed in here,
+        // and intends to call Fetch_Next_In_Feed() as the next step.  So
+        // the caller must set it.
+        //
+        SET_EVAL_FLAG(f, RUNNING_ENFIX);
 
         // All the enfix call sites cleared this flag on the feed, so it was
         // moved into the Begin_Enfix_Action() case.  Note this has to be done
