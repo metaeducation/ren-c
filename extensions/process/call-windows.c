@@ -217,7 +217,7 @@ REB_R Call_Core(REBFRM *frame_) {
     // allocations of argc strings through the API, which need to be freed
     // before we return.
     //
-    REBWCHAR *call;
+    REBWCHAR *cmd;
     int argc;
     const REBWCHAR **argv;
 
@@ -225,7 +225,21 @@ REB_R Call_Core(REBFRM *frame_) {
 
       text_command:
 
-        call = rebSpellWide(ARG(command));
+        if (REF(shell)) {
+            //
+            // Do not pass /U for UCS-2, see notes at top of file.
+            //
+            // !!! This seems it would be better to be detected and done in
+            // usermode, perhaps as an AUGMENT on platforms that wish to offer
+            // the facility.
+            //
+            cmd = rebSpellWide(
+                "unspaced [{cmd.exe /C \"}", ARG(command), "{\"}]"
+            );
+        }
+        else {
+            cmd = rebSpellWide(ARG(command));
+        }
 
         argc = 1;
         argv = rebAllocN(const REBWCHAR*, (argc + 1));
@@ -284,8 +298,6 @@ REB_R Call_Core(REBFRM *frame_) {
     HANDLE hInputRead = 0;
     HANDLE hErrorWrite = 0;
     HANDLE hErrorRead = 0;
-
-    WCHAR *cmd = nullptr;
 
     UNUSED(REF(info));
 
@@ -408,31 +420,6 @@ REB_R Call_Core(REBFRM *frame_) {
 
     //=//// COMMAND AND ARGUMENTS SETUP ///////////////////////////////////=//
 
-    if (REF(shell)) {
-        //
-        // Do not pass /U for UCS-2, see notes at top of file.
-        //
-        // !!! This seems it would be better to be detected and done in
-        // usermode, perhaps as an AUGMENT on platforms that wish to offer
-        // the facility.
-        //
-        const WCHAR *sh = L"cmd.exe /C \"";  // Note: begin surround quotes
-
-        REBLEN len = wcslen(sh) + wcslen(call)
-            + 1  // terminal quote mark
-            + 1;  // NUL terminator
-
-        cmd = cast(WCHAR*, malloc(sizeof(WCHAR) * len));
-        cmd[0] = L'\0';
-        wcscat(cmd, sh);
-        wcscat(cmd, call);
-
-        wcscat(cmd, L"\"");  // Note: ends surround quotes
-    }
-    else {  // CreateProcess might write to this memory, duplicate to be safe
-        cmd = _wcsdup(call);  // uses malloc()
-    }
-
     PROCESS_INFORMATION pi;
     result = CreateProcess(
         nullptr,  // executable name
@@ -447,7 +434,7 @@ REB_R Call_Core(REBFRM *frame_) {
         &pi  // process information
     );
 
-    free(cmd);
+    rebFree(cmd);
 
     pid = pi.dwProcessId;
 
@@ -705,9 +692,6 @@ REB_R Call_Core(REBFRM *frame_) {
     int i;
     for (i = 0; i != argc; ++i)
         rebFree(m_cast(REBWCHAR*, argv[i]));
-
-    if (call != NULL)
-        rebFree(call);
 
     rebFree(m_cast(REBWCHAR**, argv));
 

@@ -187,7 +187,7 @@ REBNATIVE(request_file_p)
                 cch = ofn.nMaxFile - 2;
             else
                 cch = cch_path;
-            wcsncpy(ofn.lpstrFile, path, cch);
+            wcsncpy_s(ofn.lpstrFile, MAX_FILE_REQ_BUF, path, cch);
             lpstrFile[cch] = '\0';
             lpstrInitialDir = nullptr;
             rebFree(path);
