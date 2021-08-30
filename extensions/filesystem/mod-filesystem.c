@@ -26,10 +26,15 @@
 
 #include "tmp-mod-filesystem.h"
 
-#include "file-req.h"
-
 extern REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
 extern REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
+
+
+#ifdef TO_WINDOWS
+    #define OS_DIR_SEP '\\'  // file path separator (Thanks Bill.)
+#else
+    #define OS_DIR_SEP '/'  // rest of the world uses it
+#endif
 
 
 //
@@ -209,7 +214,6 @@ extern REBVAL *Get_Current_Dir_Value(void);
 enum {
     REB_FILETOLOCAL_0 = 0, // make it clearer when using no options
     REB_FILETOLOCAL_FULL = 1 << 0, // expand path relative to current dir
-    REB_FILETOLOCAL_WILD = 1 << 1, // add on a `*` for wildcard listing
 
     // !!! A comment in the R3-Alpha %p-dir.c said "Special policy: Win32 does
     // not want tail slash for dir info".
@@ -439,12 +443,6 @@ void Mold_File_To_Local(REB_MOLD *mo, const RELVAL *file, REBFLGS flags) {
         if (n > mo->offset and *BIN_AT(mo->series, n - 1) == OS_DIR_SEP)
             TERM_STR_LEN_SIZE(mo->series, STR_LEN(mo->series) - 1, n - 1);
     }
-
-    // If one is to list a directory's contents, you might want the name to
-    // be `c:\foo\*` instead of just `c:\foo` (Windows needs this)
-    //
-    if (flags & REB_FILETOLOCAL_WILD)
-        Append_Codepoint(mo->series, '*');
 }
 
 
@@ -512,8 +510,6 @@ REBNATIVE(local_to_file)
 //          {For relative paths, prepends current dir for full path}
 //      /no-tail-slash
 //          {For directories, do not add a slash or backslash to the tail}
-//      /wild
-//          {For directories, add a * to the end}
 //  ]
 //
 REBNATIVE(file_to_local)
@@ -535,7 +531,6 @@ REBNATIVE(file_to_local)
             REB_FILETOLOCAL_0
                 | (REF(full) ? REB_FILETOLOCAL_FULL : 0)
                 | (REF(no_tail_slash) ? REB_FILETOLOCAL_NO_TAIL_SLASH : 0)
-                | (REF(wild) ? REB_FILETOLOCAL_WILD : 0)
         )
     );
 }

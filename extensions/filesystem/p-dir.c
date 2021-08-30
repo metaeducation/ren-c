@@ -8,7 +8,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -21,87 +21,39 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// In R3-Alpha, there was an attempt to have a different "port scheme" and
+// "port actor" for directories from files.  So the idea was (presumably) to
+// take narrow operations like `make-dir %foo` and fit them into a unified
+// pattern where that would be done by something like `create %foo/`.
+//
+// That is a good example of where it makes for some confusion, because if you
+// CREATE a directory like that you presumably don't mean to get a PORT!
+// handle back that you have to CLOSE.  But this bubbled over into semantics
+// for `create %regular-file.txt`, where it seems you *would* want a port
+// back so you could put data in the file you just created...but to be
+// consistent with directories it created a 0 byte file and closed it.
+//
+// For Ren-C the file is being translated to use libuv, but beyond that the
+// the semantics of directory operations are in limbo and still need to be
+// figured out by some sufficiently-motivated-individual.
+//
+
+#include "uv.h"  // includes windows.h
+#ifdef TO_WINDOWS
+    #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
+#endif
 
 #include "sys-core.h"
 
 #include "file-req.h"
 
 
-extern REBVAL *Open_File(FILEREQ *file);
-extern REBVAL *Close_File(FILEREQ *file);
-extern REBVAL *Read_File(size_t *actual, FILEREQ *file, REBYTE *data, size_t length);
-extern REBVAL *Write_File(FILEREQ *file, const REBYTE *data, size_t length);
-extern REBVAL *Query_File(FILEREQ *file);
-extern REBVAL *Create_File(FILEREQ *file);
-extern REBVAL *Delete_File(FILEREQ *file);
-extern REBVAL *Rename_File(FILEREQ *file, const REBVAL *to);
+extern REBVAL *Query_File_Or_Directory(const REBVAL *port);
+extern REBVAL *Create_Directory(const REBVAL *port);
+extern REBVAL *Delete_File_Or_Directory(const REBVAL *port);
+extern REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to);
 
-REBVAL *Read_Directory(bool *done, FILEREQ *dir, FILEREQ *file);
-
-
-//
-//  Read_Dir_May_Fail: C
-//
-// Provide option to get file info too.
-// Provide option to prepend dir path.
-// Provide option to use wildcards.
-//
-static REBARR *Read_Dir_May_Fail(FILEREQ *dir)
-{
-    FILEREQ file;
-
-    TRASH_POINTER_IF_DEBUG(file.path); // is output (not input)
-
-    dir->modes |= RFM_DIR;
-
-    REBDSP dsp_orig = DSP;
-
-    while (true) {
-        //
-        // Put together the filename and the error (vs. a generic "cannot find
-        // the file specified" message that doesn't say the name)
-        //
-        bool done;
-        REBVAL *error = Read_Directory(&done, dir, &file);
-        if (error)
-            fail (Error_Cannot_Open_Raw(dir->path, error));
-
-        if (done)
-            break;
-
-        Copy_Cell(DS_PUSH(), file.path);
-
-        // Assume the file.devreq gets blown away on each loop, so there's
-        // nowhere to free the file->path unless we do it here.
-        //
-        // !!! To the extent any of this code is going to stick around, it
-        // should be considered whether whatever the future analogue of a
-        // "devreq" is can protect its own state, e.g. be a Rebol object,
-        // so there'd not be any API handles to free here.
-        //
-        rebRelease(m_cast(REBVAL*, file.path));
-    }
-
-    return Pop_Stack_Values(dsp_orig);
-}
-
-
-//
-//  Init_Dir_Path: C
-//
-// !!! In R3-Alpha, this routine would do manipulations on the FILE! which was
-// representing the directory, for instance by adding "*" onto the end of
-// the directory so that Windows could use it for wildcard reading.  Yet this
-// wasn't even needed in the POSIX code, so it would have to strip it out.
-// The code has been changed so that any necessary transformations are done
-// in the "device" code, during the File_To_Local translation.
-//
-static void Init_Dir_Path(FILEREQ *dir, const REBVAL *path) {
-    memset(dir, 0, sizeof(FILEREQ));
-
-    dir->modes |= RFM_DIR;
-    dir->path = path;
-}
+REBVAL *Try_Read_Directory_Entry(FILEREQ *dir);
 
 
 //
@@ -112,137 +64,174 @@ static void Init_Dir_Path(FILEREQ *dir, const REBVAL *path) {
 REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
-    REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
-    if (not IS_OBJECT(spec))
-        fail (Error_Invalid_Spec_Raw(spec));
 
-    REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
-    if (path == NULL)
-        fail (Error_Invalid_Spec_Raw(spec));
+    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
+    FILEREQ *dir;
+    if (IS_BINARY(state)) {
+        dir = File_Of_Port(port);
+    }
+    else {
+        assert(IS_NULLED(state));
 
-    if (IS_URL(path))
-        path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
-    else if (not IS_FILE(path))
-        fail (Error_Invalid_Spec_Raw(path));
+        REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
+        if (not IS_OBJECT(spec))
+            fail (Error_Invalid_Spec_Raw(spec));
 
-    REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE); // BLOCK! means port open
+        REBVAL *path = Obj_Value(spec, STD_PORT_SPEC_HEAD_REF);
+        if (path == NULL)
+            fail (Error_Invalid_Spec_Raw(spec));
+
+        if (IS_URL(path))
+            path = Obj_Value(spec, STD_PORT_SPEC_HEAD_PATH);
+        else if (not IS_FILE(path))
+            fail (Error_Invalid_Spec_Raw(path));
+
+        // !!! In R3-Alpha, there were manipulations on the name representing
+        // the directory, for instance by adding "*" onto the end so that
+        // Windows could use it for wildcard reading.  Yet this wasn't even
+        // needed in the POSIX code, so it would have to strip it out.
+
+        // !!! We are mirroring the use of the FILEREQ here, in order to make
+        // the directories compatible in the PORT! calls.  This is probably
+        // not useful, and files and directories can avoid using the same
+        // structure...which would mean different Rename_Directory() and
+        // Rename_File() calls, for instance.
+        //
+        REBBIN *bin = Make_Binary(sizeof(FILEREQ));
+        Init_Binary(state, bin);
+        TERM_BIN_LEN(bin, sizeof(FILEREQ));
+
+        dir = File_Of_Port(port);
+        dir->handle = nullptr;
+        dir->id = FILEHANDLE_NONE;
+        dir->is_dir = true;  // would be dispatching to File_Actor if dir
+        dir->size_cache = FILESIZE_UNKNOWN;
+        dir->offset = FILEOFFSET_UNKNOWN;
+
+        // Generally speaking, you don't want to store REBVAL* or REBSER* in
+        // something like this struct-embedded-in-a-BINARY! as it will be
+        // invisible to the GC.  But this pointer is into the port spec, which
+        // we will assume is good for the lifetime of the port.  :-/  (Not a
+        // perfect assumption as there's no protection on it.)
+        //
+        dir->path = path;
+    }
 
     switch (VAL_WORD_ID(verb)) {
 
-    case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
+    //=//// REFLECT ////////////////////////////////////////////////////////=//
 
-        UNUSED(ARG(value)); // implicitly supplied as `port`
+      case SYM_REFLECT: {
+        INCLUDE_PARAMS_OF_REFLECT;
+        UNUSED(ARG(value));  // implicitly supplied as `port`
+
         SYMID property = VAL_WORD_ID(ARG(property));
 
         switch (property) {
-        case SYM_LENGTH: {
-            if (not IS_BLOCK(state))
-                return 0;
-            REBLEN len;
-            VAL_ARRAY_LEN_AT(&len, state);
-            return Init_Integer(D_OUT, len); }
+            //
+            // !!! Previously the directory synchronously read all the entries
+            // on OPEN.  That method is being rethought.
+            //
+          case SYM_LENGTH:
+            return rebValue("length of read", port);
 
-        case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, IS_BLOCK(state));
+            // !!! Directories were never actually really "opened" in R3-Alpha.
+            // It is likely desirable to allow someone to open a directory and
+            // hold it open--to lock it from being deleted, or to be able to
+            // enumerate it one item at a time (e.g. to shortcut enumerating
+            // all of it).
+            //
+          case SYM_OPEN_Q:
+            return Init_Logic(D_OUT, false);
 
-        default:
+          default:
             break;
         }
 
         break; }
 
-    case SYM_READ: {
+    //=//// READ ///////////////////////////////////////////////////////////=//
+
+      case SYM_READ: {
         INCLUDE_PARAMS_OF_READ;
 
         UNUSED(PAR(source));
 
-        if (REF(part) or REF(seek))
+        if (REF(part) or REF(seek) or REF(string) or REF(lines))
             fail (Error_Bad_Refines_Raw());
 
-        UNUSED(PAR(string)); // handled in dispatcher
-        UNUSED(PAR(lines)); // handled in dispatcher
+        REBDSP dsp_orig = DSP;
+        while (true) {
+            REBVAL *result = Try_Read_Directory_Entry(dir);
+            if (result == nullptr)
+                break;
 
-        if (not IS_BLOCK(state)) {     // !!! ignores /SKIP and /PART, for now
-            FILEREQ dir;
-            Init_Dir_Path(&dir, path);
-            Init_Block(D_OUT, Read_Dir_May_Fail(&dir));
-        }
-        else {
-            // !!! This copies the strings in the block, shallowly.  What is
-            // the purpose of doing this?  Why copy at all?
+            // Put together the filename and the error (vs. a generic "cannot
+            // find the file specified" message that doesn't say the name)
+            //
+            if (IS_ERROR(result))
+                fail (Error_Cannot_Open_Raw(dir->path, result));
 
-            REBLEN len;
-            VAL_ARRAY_LEN_AT(&len, state);
-            Init_Block(
-                D_OUT,
-                Copy_Array_Core_Managed(
-                    VAL_ARRAY(state),
-                    0, // at
-                    VAL_SPECIFIER(state),
-                    len, // tail
-                    0, // extra
-                    ARRAY_MASK_HAS_FILE_LINE, // flags
-                    TS_STRING // types
-                )
-            );
+            assert(IS_FILE(result));
+            Copy_Cell(DS_PUSH(), result);
+            rebRelease(result);
         }
+
+        Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
         return D_OUT; }
 
-    case SYM_CREATE: {
+    //=//// CREATE /////////////////////////////////////////////////////////=//
+
+      case SYM_CREATE: {
         if (IS_BLOCK(state))
-            fail (Error_Already_Open_Raw(path));
+            fail (Error_Already_Open_Raw(dir->path));
 
-      create:;
-
-        FILEREQ dir;
-        Init_Dir_Path(&dir, path);
-
-        REBVAL *error = Create_File(&dir);
+        REBVAL *error = Create_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            fail (Error_No_Create_Raw(path));  // higher level error
+            fail (Error_No_Create_Raw(dir->path));  // higher level error
         }
-
-        if (VAL_WORD_ID(verb) != SYM_CREATE)
-            Init_Nulled(state);
 
         RETURN (port); }
 
-    case SYM_RENAME: {
+    //=//// RENAME /////////////////////////////////////////////////////////=//
+
+      case SYM_RENAME: {
         INCLUDE_PARAMS_OF_RENAME;
-
-        if (IS_BLOCK(state))
-            fail (Error_Already_Open_Raw(path));
-
-        FILEREQ dir;
-        Init_Dir_Path(&dir, path);
-
         UNUSED(ARG(from));  // already have as port parameter
 
-        REBVAL *error = Rename_File(&dir, ARG(to));
+        REBVAL *error = Rename_File_Or_Directory(port, ARG(to));
         if (error) {
             rebRelease(error);  // !!! throws away details
-            fail (Error_No_Rename_Raw(path));  // higher level error
+            fail (Error_No_Rename_Raw(dir->path));  // higher level error
         }
+
+        Copy_Cell(dir->path, ARG(to));  // !!! this mutates the spec, bad?
 
         RETURN (port); }
 
-    case SYM_DELETE: {
-        Init_Nulled(state);
+    //=//// DELETE /////////////////////////////////////////////////////////=//
 
-        FILEREQ dir;
-        Init_Dir_Path(&dir, path);
-
-        REBVAL *error = Delete_File(&dir);
+      case SYM_DELETE: {
+        REBVAL *error = Delete_File_Or_Directory(port);
         if (error) {
             rebRelease(error);  // !!! throws away details
-            fail (Error_No_Delete_Raw(path));  // higher level error
+            fail (Error_No_Delete_Raw(dir->path));  // higher level error
         }
-
         RETURN (port); }
 
-    case SYM_OPEN: {
+    //=//// OPEN ///////////////////////////////////////////////////////////=//
+    //
+    // !!! In R3-Alpha, the act of OPEN on a directory would also go to the
+    // filesystem and fill a buffer with the files...as opposed to waiting for
+    // a READ request.  This meant there were two places that the reading
+    // logic was implemented.
+    //
+    // Generally thus OPEN is a no-op unless you say /NEW.  There was no such
+    // thing really as an "open directory" in R3-Alpha, and it only meant you
+    // would be getting potentially stale caches of the entries.
+
+      case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
 
         UNUSED(PAR(spec));
@@ -250,40 +239,40 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         if (REF(read) or REF(write))
             fail (Error_Bad_Refines_Raw());
 
-        // !! If open fails, what if user does a READ w/o checking for error?
-        if (IS_BLOCK(state))
-            fail (Error_Already_Open_Raw(path));
-
-        if (REF(new))
-            goto create;
-
-        FILEREQ dir;
-        Init_Dir_Path(&dir, path);
-
-        Init_Block(state, Read_Dir_May_Fail(&dir));
+        if (REF(new)) {
+            REBVAL *error = Create_Directory(port);
+            if (error) {
+                rebRelease(error);  // !!! throws away details
+                fail (Error_No_Create_Raw(dir->path));  // higher level error
+            }
+        }
 
         RETURN (port); }
 
-    case SYM_CLOSE:
+    //=//// CLOSE //////////////////////////////////////////////////////////=//
+
+      case SYM_CLOSE:
         Init_Nulled(state);
         RETURN (port);
 
-    case SYM_QUERY: {
-        Init_Nulled(state);
+    //=//// QUERY //////////////////////////////////////////////////////////=//
+    //
+    // !!! One of the attributes you get back from QUERY is the answer to the
+    // question "is this a file or a directory".  Yet the concept behind the
+    // directory scheme is to be able to tell which you intend just from
+    // looking at the terminal slash...so the directory scheme should always
+    // give back that something is a directory.
 
-        FILEREQ dir;
-        Init_Dir_Path(&dir, path);
-
-        REBVAL *error = Query_File(&dir);
-        if (error) {
-            rebRelease(error); // !!! R3-Alpha threw out error, returns null
+      case SYM_QUERY: {
+        REBVAL *info = Query_File_Or_Directory(port);
+        if (IS_ERROR(info)) {
+            rebRelease(info);  // !!! R3-Alpha threw out error, returns null
             return nullptr;
         }
 
-        REBVAL *info = Query_File_Or_Dir(port, &dir);
         return info; }
 
-    default:
+      default:
         break;
     }
 

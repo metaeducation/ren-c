@@ -125,6 +125,7 @@
 %convert/to-hex.test.reb
 
 %file/clean-path.test.reb
+%file/file-port.test.reb
 %file/existsq.test.reb
 %file/make-dir.test.reb
 %file/open.test.reb

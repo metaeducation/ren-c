@@ -95,45 +95,6 @@ REB_R TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
 
 //
-//  Retrigger_Append_As_Write: C
-//
-// !!! In R3-Alpha, for the convenience of being able to APPEND to something
-// that may be a FILE!-based PORT! or a BINARY! or STRING! with a unified
-// interface, the APPEND command was re-interpreted as a WRITE/APPEND.  But
-// it was done with presumption that APPEND and WRITE had compatible frames,
-// which generally speaking they do not.
-//
-// This moves the functionality to an actual retriggering which calls whatever
-// WRITE/APPEND would do in a generic fashion with a new frame.  Not all
-// ports do this, as some have their own interpretation of APPEND.  It's
-// hacky, but still not as bad as it was.  Review.
-//
-REB_R Retrigger_Append_As_Write(REBFRM *frame_) {
-    INCLUDE_PARAMS_OF_APPEND;
-
-    // !!! Something like `write/append %foo.txt "data"` knows to convert
-    // %foo.txt to a port before trying the write, but if you say
-    // `append %foo.txt "data"` you get `%foo.txtdata`.  Some actions are like
-    // this, e.g. PICK, where they can't do the automatic conversion.
-    //
-    assert(IS_PORT(ARG(series))); // !!! poorly named
-    UNUSED(ARG(series));
-    if (not (
-        IS_BINARY(ARG(value))
-        or IS_TEXT(ARG(value))
-        or IS_BLOCK(ARG(value)))
-    ){
-        fail (PAR(value));
-    }
-
-    if (REF(part) or REF(dup) or REF(line))
-        fail (Error_Bad_Refines_Raw());
-
-    return rebValue("write/append @", D_ARG(1), "@", D_ARG(2));
-}
-
-
-//
 //  REBTYPE: C
 //
 // !!! The concept of port dispatch from R3-Alpha is that it delegates to a

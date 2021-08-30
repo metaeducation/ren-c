@@ -7,7 +7,7 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2017 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -20,361 +20,231 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// File open, close, read, write, and other actions.
+// These are helper functions used by the directory and file ports, to
+// make filesystem calls to the operating system.  They are styled to speak
+// in terms of Rebol values (e.g. a TEXT! or BINARY! to be written vs. raw
+// C byte buffers), and do the extraction of the raw data themselves.
 //
-// -D_FILE_OFFSET_BITS=64 to support large files
+// Also, by convention they take the PORT! value itself.  This port may or
+// may not be open...e.g. a function like Rename_File() actually expects the
+// port to be closed so it can call the libuv function for doing a rename.
+// This choice is being followed vs. only taking a PORT! in cases where an
+// actual open file handle is required to be stylistically consistent (but
+// maybe it's not the best idea?)
 //
-
-// ftruncate is not a standard C function, but as we are using it then
-// we have to use a special define if we want standards enforcement.
-// By defining it as the first header file we include, we ensure another
-// inclusion of <unistd.h> won't be made without the definition first.
+// Originally, these functions had parallel implementations for POSIX and
+// Windows.  Hence which version of `Open_File()` (or whatever) would depend on
+// some #ifdefs.  The right version would be picked in the build for the OS.
+// However, this code is now standardized to use libuv...which provides an
+// abstraction layer that looks a lot like the POSIX interface, but with the
+// benefit of adding asynchronous (overlapped) IO.
 //
-//     http://stackoverflow.com/a/26806921/211160
-//
-#define _XOPEN_SOURCE 500
-
-// !!! See notes on why this is needed on #define HAS_POSIX_SIGNAL in
-// reb-config.h (similar reasons, and means this file cannot be
-// compiled as --std=c99 but rather --std=gnu99)
-//
-#define _POSIX_C_SOURCE 199309L
-
-#ifndef __cplusplus
-    // See feature_test_macros(7)
-    // This definition is redundant under C++
-    #define _GNU_SOURCE
-#endif
-
-// Typically, including stdio.h is not done in release builds.
-// (That is to avoid linking in functions like printf(), etc.)
-//
-// But this file needs it for remove(), rmdir(), rename()
-// (unlink() in unistd.h works for remove() and rmdir(), but not rename())
-//
-#include <stdio.h>
-
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>  // includes `O_XXX` constant definitions
-#include <dirent.h>
-#include <errno.h>
-#include <assert.h>
+// (At time of writing, this is passing in `nullptr` for the callback in all
+// operations, which means they are running synchronously.  But asynchronous
+// features are there to be taken advantage of when needed.)
 
 #include <time.h>
-#ifndef timeval
-    #include <sys/time.h>  // for older systems
+
+#include "uv.h"  // includes windows.h
+#ifdef TO_WINDOWS
+    #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
 #endif
 
 #include "sys-core.h"
 
 #include "file-req.h"
 
-#ifndef O_BINARY
-    #define O_BINARY 0
-#endif
 
 #ifndef PATH_MAX
     #define PATH_MAX 4096  // generally lacking in Posix
 #endif
 
 
-// The BSD legacy names S_IREAD/S_IWRITE are not defined several places.
-// That includes building on Android, or if you compile as C99.
-
-#ifndef S_IREAD
-    #define S_IREAD S_IRUSR
-#endif
-
-#ifndef S_IWRITE
-    #define S_IWRITE S_IWUSR
-#endif
-
-// NOTE: the code below assumes a file id will never be zero.  In POSIX,
-// 0 represents standard input...which is handled by dev-stdio.c.
-// Though 0 for stdin is a POSIX standard, many C compilers define
-// STDIN_FILENO, STDOUT_FILENO, STDOUT_FILENO.  These may be set to
-// different values in unusual circumstances, such as emscripten builds.
-
-
-/***********************************************************************
-**
-**  Local Functions
-**
-***********************************************************************/
-
-// dirent.d_type is a BSD extension, actually not part of POSIX
-// reformatted from: http://ports.haiku-files.org/wiki/CommonProblems
-// this comes from: http://ports.haiku-files.org/wiki/CommonProblems
 //
-// modifications:
-// * use Rebol allocator instead of a variable-length-array (VLA)
-// * avoidance of warning on strncat: [-Werror=stringop-truncation]
+//  Get_File_Size_Cacheable: C
 //
-static bool Is_Dir(const char *path_utf8, const char *name_utf8)
+// If the file size hasn't been queried (because it wasn't needed) then do
+// an fstat() to get the information.
+//
+REBVAL *Get_File_Size_Cacheable(uint64_t *size, const REBVAL *port)
 {
-    size_t size_path = strsize(path_utf8);
-    size_t size_name = strsize(name_utf8);
-    size_t size_full = size_path + size_name;
+    FILEREQ *file = File_Of_Port(port);
 
-    // Avoid UNC-path "//name" on Cygwin.
-    //
-    if (size_path > 0 and path_utf8[size_path - 1] != '/')
-        size_full += 1;
+    if (file->size_cache != FILESIZE_UNKNOWN) {
+        *size = file->size_cache;
+        return nullptr;  // assume accurate (checked each entry to File_Actor)
+    }
 
-    // !!! No clue why + 13 is needed, and not sure I want to know.
-    // It was in the original FAQ code, not second-guessing ATM.  --@HF
-    //
-    char *full_utf8 = rebAllocN(char, size_full + 1 + 13);
+    uv_fs_t req;
+    int result = uv_fs_fstat(uv_default_loop(), &req, file->id, nullptr);
+    if (result != 0) {
+        *size = FILESIZE_UNKNOWN;
+        return rebError_UV(result);
+    }
 
-    strncpy(full_utf8, path_utf8, size_path + 1);  // include terminator
-
-    // Avoid UNC-path "//name" on Cygwin.
-    //
-    if (size_path > 0 and path_utf8[size_path - 1] != '/')
-        strcat(full_utf8, "/");
-
-    strncat(full_utf8, name_utf8, size_full - 1);
-
-    struct stat st;
-    int stat_result = stat(full_utf8, &st);
-
-    rebFree(full_utf8);
-
-    return (stat_result != 0) ? false : did S_ISDIR(st.st_mode);
-}
-
-
-static bool Seek_File_64(FILEREQ *file)
-{
-    // Performs seek and updates index value. TRUE on success.
-
-    int h = file->id;
-    int64_t result;
-
-    if (file->index == -1)  // append
-        result = lseek(h, 0, SEEK_END);
-    else
-        result = lseek(h, file->index, SEEK_SET);
-
-    if (result < 0)
-        return false;  // errno should still be good for caller to use
-
-    file->index = result;
-
-    return true;
+    *size = req.statbuf.st_size;
+    return nullptr;
 }
 
 
 //
-//  Read_Directory: C
+//  Try_Read_Directory_Entry: C
 //
-// This function will read a file directory, one file entry
-// at a time, then close when no more files are found.
+// This function will read a file directory, one file entry at a time, then
+// close when no more files are found.  The value returned is an API handle
+// of a FILE!, nullptr if there's no more left, or an ERROR!.
 //
-// Procedure:
+// !!! R3-Alpha comment said: "The dir->path can contain wildcards * and ?.
+// The processing of these can be done in the OS (if supported) or by a
+// separate filter operation during the read."  How does libuv handle this?
 //
-// This function is passed directory and file arguments.
-// The dir arg provides information about the directory to read.
-// The file arg is used to return specific file information.
-//
-// To begin, this function is called with a dir->requestee.handle that
-// is set to zero and a dir->path string for the directory.
-//
-// The directory is opened and a handle is stored in the dir
-// structure for use on subsequent calls. If an error occurred,
-// dir->error is set to the error code and -1 is returned.
-// The dir->size field can be set to the number of files in the
-// dir, if it is known. The dir->index field can be used by this
-// function to store information between calls.
-//
-// If the open succeeded, then information about the first file
-// is stored in the file argument and the function returns 0.
-// On an error, the dir->error is set, the dir is closed,
-// dir->requestee.handle is nulled, and -1 is returned.
-//
-// The caller loops until all files have been obtained. This
-// action should be uninterrupted. (The caller should not perform
-// additional OS or IO operations between calls.)
-//
-// When no more files are found, the dir is closed, dir->requestee.handle
-// is nulled, and 1 is returned. No file info is returned.
-// (That is, this function is called one extra time. This helps
-// for OSes that may deallocate file strings on dir close.)
-//
-// Note that the dir->path can contain wildcards * and ?. The
-// processing of these can be done in the OS (if supported) or
-// by a separate filter operation during the read.
-//
-// Store file date info in file->index or other fields?
-// Store permissions? Ownership? Groups? Or, require that
-// to be part of a separate request?
-//
-REBVAL *Read_Directory(bool *done, FILEREQ *dir, FILEREQ *file)
+REBVAL *Try_Read_Directory_Entry(FILEREQ *dir)
 {
-    memset(file, 0, sizeof(FILEREQ));
+    assert(dir->is_dir);
 
-    // Note: /WILD append of * is not necessary on POSIX
+    // If no dir enumeration handle (e.g. this is the first Try_Read_Directory()
+    // call in a batch that expects to keep calling until done) open the dir
     //
-    char *dir_utf8 = rebSpell("file-to-local", dir->path);
+    if (dir->handle == nullptr) {
+        char *dir_utf8 = rebSpell("file-to-local", dir->path);
 
-    // If no dir handle, open the dir:
-    //
-    DIR *h;
-    if ((h = cast(DIR*, dir->handle)) == NULL) {
-        h = opendir(dir_utf8); // !!! does opendir() hold pointer?
+        uv_fs_t req;
+        int result = uv_fs_opendir(uv_default_loop(), &req, dir_utf8, nullptr);
 
-        if (h == NULL) {
-            rebFree(dir_utf8);
-            return rebError_OS(errno);
-        }
+        rebFree(dir_utf8);
 
-        dir->handle = h;
-        *done = false;
+        if (result < 0)
+            return rebError_UV(result);
+
+        dir->handle = cast(uv_dir_t*, req.ptr);
+        uv_fs_req_cleanup(&req);  // Note: does not free the uv_dir_t handle
     }
 
     // Get dir entry (skip over the . and .. dir cases):
     //
-    char *file_utf8;
-    struct dirent *d;
+    uv_dirent_t dirent;
+    uv_fs_t req;
     do {
-        // Read next file entry or error:
-        errno = 0; // set errno to 0 to test if it changes
-        if ((d = readdir(h)) == NULL) {
-            int errno_cache = errno; // in case closedir() changes it
+        // libuv supports reading multiple directories at a time (as well as
+        // asynchronously) but for a first phase of compatibility do 1 sync.
+        //
+        dir->handle->dirents = &dirent;
+        dir->handle->nentries = 1;
 
-            rebFree(dir_utf8);
+        ssize_t num_entries_read = uv_fs_readdir(
+            uv_default_loop(), &req, dir->handle, nullptr
+        );
 
-            closedir(h);
+        if (num_entries_read <= 0) {  // 0 means no more, negative means error
+            int close_result = uv_fs_closedir(
+                uv_default_loop(), &req, dir->handle, nullptr
+            );
+
             dir->handle = 0;
 
-            if (errno_cache != 0)
-                return rebError_OS(errno_cache);
+            if (num_entries_read < 0)
+                return rebError_UV(num_entries_read);  // error code
 
-            *done = true; // no more files
-            return nullptr;
+            if (close_result < 0)
+                return rebError_UV(close_result);
+
+            assert(num_entries_read == 0);
+            return nullptr;  // no more files
         }
-        file_utf8 = d->d_name;
     } while (
-        file_utf8[0] == '.'
-        && (
-            file_utf8[1] == '\0'
-            || (file_utf8[1] == '.' && file_utf8[2] == '\0')
+        dirent.name[0] == '.' and (
+            dirent.name[1] == '\0'
+            or (dirent.name[1] == '.' and dirent.name[2] == '\0')
         )
     );
 
-    file->modes = 0;
+    // !!! R3-Alpha had a limited model and only recognized directory and file.
+    // Libuv can detect symbolic links and block devices and other things.
+    // Review the exposure of all that!
+    //
+    bool is_dir = (dirent.type == UV_DIRENT_DIR);
 
-  #if 0
-    // NOTE: we do not use d_type even if DT_DIR is #define-d.  First of all,
-    // it's not a POSIX requirement and not all operating systems support it.
-    // (Linux/BSD have it defined in their structs, but Haiku doesn't--for
-    // instance).  But secondly, even if your OS supports it...a filesystem
-    // doesn't have to.  (Examples: VirtualBox shared folders, XFS.)
-
-    if (d->d_type == DT_DIR)
-        file->modes |= RFM_DIR;
-  #endif
-
-    // More widely supported mechanism of determining if something is a
-    // directory, although less efficient than DT_DIR (because it requires
-    // making an additional filesystem call)
-
-    if (Is_Dir(dir_utf8, file_utf8))
-        file->modes |= RFM_DIR;
-
-    file->path = rebValue(
+    REBVAL *path = rebValue(
         "applique :local-to-file [",
-            "path:", rebT(file_utf8),
-            "dir: if", rebL(file->modes & RFM_DIR), "'#",
+            "path:", rebT(dirent.name),
+            "dir: if", rebL(is_dir), "'#",
         "]"
     );
 
-    rebUnmanage(m_cast(REBVAL*, file->path));
+    uv_fs_req_cleanup(&req);
 
-    rebFree(dir_utf8);
-    return nullptr;
+    return path;
 }
 
 
 //
 //  Open_File: C
 //
-// Open the specified file with the given modes.
+// Open the specified file with the given flags.  For the list of flags, see:
 //
-// Notes:
-// 1.    The file path is provided in REBOL format, and must be
-//     converted to local format before it is used.
-// 2.    REBOL performs the required access security check before
-//     calling this function.
-// 3.    REBOL clears necessary fields of file structure before
-//     calling (e.g. error and size fields).
+// http://docs.libuv.org/en/v1.x/fs.html#file-open-constants
 //
-REBVAL *Open_File(FILEREQ *file)
+// The file path is provided in POSIX format (standard for Rebol FILE!), and
+// must be converted to local format before being used.
+//
+// !!! Does libuv gloss over the slash/backslash issues?
+//
+REBVAL *Open_File(const REBVAL *port, int flags)
 {
+    FILEREQ *file = File_Of_Port(port);
+
+    if (file->id != FILEHANDLE_NONE)
+        return rebValue("make error! {File is already open}");
+
     // "Posix file names should be compatible with REBOL file paths"
 
-    assert(file->path != NULL);
+    assert(file->id == FILEHANDLE_NONE);
+    assert(file->size_cache == FILESIZE_UNKNOWN);
+    assert(file->offset == FILEOFFSET_UNKNOWN);
 
-    int modes = O_BINARY | ((file->modes & RFM_READ) ? O_RDONLY : O_RDWR);
-
-    if ((file->modes & (RFM_WRITE | RFM_APPEND)) != 0) {
-        modes = O_BINARY | O_RDWR | O_CREAT;
-        if (
-            did (file->modes & RFM_NEW)
-            or (file->modes & (RFM_READ | RFM_APPEND | RFM_SEEK)) == 0
-        ){
-            modes |= O_TRUNC;
+    // "mode must be specified when O_CREAT is in the flags, and is ignored
+    // otherwise."  Although the parameter is named singularly, it is the
+    // result of a bitmask of flags.
+    //
+    // !!! libuv does not seem to provide these despite providing UV_FS_O_XXX
+    // constants.  Would anything bad happen if we left it at 0?
+    //
+    int mode = 0;
+    if (flags & UV_FS_O_CREAT) {
+        if (flags & UV_FS_O_RDONLY)
+            mode = S_IREAD;
+        else {
+          #ifdef TO_WINDOWS
+            mode = S_IREAD | S_IWRITE;
+          #else
+            mode = S_IREAD | S_IWRITE | S_IRGRP | S_IWGRP | S_IROTH;
+          #endif
         }
     }
 
-    // Code here was commented out:
-    //
-    //   modes |= (file->modes & RFM_SEEK) ? O_RANDOM : O_SEQUENTIAL;
+    char *path_utf8 = rebSpell("file-to-local/full", file->path);
 
-    int access = 0;
-    if (file->modes & RFM_READONLY)
-        access = S_IREAD;
-    else
-        access = S_IREAD | S_IWRITE | S_IRGRP | S_IWGRP | S_IROTH;
-
-    // Open the file:
-    // printf("Open: %s %d %d\n", path, modes, access);
-
-    char *path_utf8 = rebSpell(
-        "applique :file-to-local [",
-            "path:", file->path,
-            "wild: if", rebL(file->modes & RFM_DIR), "'#",  // !!! necessary?
-            "full: #",
-        "]"
-    );
-
-    struct stat info;
-    int h = open(path_utf8, modes, access);
+    uv_fs_t req;
+    int h;
+    h = uv_fs_open(uv_default_loop(), &req, path_utf8, flags, mode, nullptr);
 
     rebFree(path_utf8);
 
     if (h < 0)
-        return rebError_OS(errno);
+        return rebError_UV(h);
 
-    // Confirm that a seek-mode file is actually seekable:
-    if (file->modes & RFM_SEEK) {
-        if (lseek(h, 0, SEEK_CUR) < 0) {
-            int errno_cache = errno;
-            close(h);
-            return rebError_OS(errno_cache);
-        }
-    }
-
-    // Fetch file size (if fails, then size is assumed zero):
-    if (fstat(h, &info) == 0) {
-        file->size = info.st_size;
-        file->time.l = cast(long, info.st_mtime);
-    }
-
+    // Note: this code used to do an lseek() to "confirm that a seek-mode file
+    // is actually seekable".  libuv does not offer lseek, apparently because
+    // it is contentious with asynchronous I/O.
+    //
+    // Note2: this code also used to fetch the file size with fstat.  It's not
+    // clear why it would need to proactively do that.
+    //
     file->id = h;
+    file->offset = 0;
+    file->flags = flags;
+    assert(file->size_cache == FILESIZE_UNKNOWN);
+
     return nullptr;
 }
 
@@ -384,12 +254,22 @@ REBVAL *Open_File(FILEREQ *file)
 //
 // Closes a previously opened file.
 //
-REBVAL *Close_File(FILEREQ *file)
+REBVAL *Close_File(const REBVAL *port)
 {
-    if (file->id) {
-        close(file->id);
-        file->id = 0;
-    }
+    FILEREQ *file = File_Of_Port(port);
+
+    assert(file->id != FILEHANDLE_NONE);
+
+    uv_fs_t req;
+    int result = uv_fs_close(uv_default_loop(), &req, file->id, nullptr);
+
+    file->id = FILEHANDLE_NONE;
+    file->offset = FILEOFFSET_UNKNOWN;
+    file->size_cache = FILESIZE_UNKNOWN;
+
+    if (result < 0)
+        return rebError_UV(result);
+
     return nullptr;
 }
 
@@ -397,141 +277,376 @@ REBVAL *Close_File(FILEREQ *file)
 //
 //  Read_File: C
 //
-REBVAL *Read_File(size_t *actual, FILEREQ *file, REBYTE *data, size_t length)
+REBVAL *Read_File(const REBVAL *port, size_t length)
 {
-    assert(not (file->modes & RFM_DIR));  // should call Read_Directory!
+    FILEREQ *file = File_Of_Port(port);
 
-    assert(file->id != 0);
+    assert(not file->is_dir);  // should call Read_Directory!
+    assert(file->id != FILEHANDLE_NONE);
 
-    if ((file->modes & (RFM_SEEK | RFM_RESEEK)) != 0) {
-        file->modes &= ~RFM_RESEEK;
-        if (not Seek_File_64(file))
-            return rebError_OS(errno);
-    }
+    // Make buffer for read result that can be "repossessed" as a BINARY!
+    //
+    char *buffer = rebAllocN(char, length);
 
-    ssize_t bytes = read(file->id, data, length);
-    if (bytes < 0)
-        return rebError_OS(errno);
+    const unsigned int num_bufs = 1;  // can read many buffers but we just do 1
+    uv_buf_t buf;
+    buf.base = buffer;
+    buf.len = length;
 
-    *actual = bytes;
-    file->index += bytes;
+    uv_fs_t req;
+    ssize_t num_bytes_read = uv_fs_read(
+        uv_default_loop(),
+        &req,
+        file->id,
+        &buf,
+        num_bufs,
+        file->offset,
+        nullptr  // no callback, synchronous
+    );
+    if (num_bytes_read < 0)
+        return rebError_UV(num_bytes_read);
 
-    return nullptr;
+    file->offset += num_bytes_read;
+
+    // !!! The read is probably frequently shorter than the buffer size that
+    // was allocated, so the space should be reclaimed...though that should
+    // probably be something the GC does when it notices oversized series
+    // just as a general cleanup task.
+    //
+    return rebRepossess(buffer, num_bytes_read);
 }
 
 
 //
 //  Write_File: C
 //
-// Bug?: update file->size value after write !?
-//
-REBVAL *Write_File(FILEREQ *file, const REBYTE *data, size_t length)
+REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
 {
-    assert(file->id != 0);
+    FILEREQ *file = File_Of_Port(port);
 
-    if (file->modes & RFM_APPEND) {
-        file->modes &= ~RFM_APPEND;
-        lseek(file->id, 0, SEEK_END);
+    assert(file->id != FILEHANDLE_NONE);
+
+    if (limit == 0) {
+        //
+        // !!! While it may seem like writing a length of 0 could be shortcut
+        // here, it is actually the case that 0 byte writes can have meaning
+        // to some receivers of pipes.  Use cases should be studied before
+        // doing a shortcut here.
     }
 
-    if ((file->modes & (RFM_SEEK | RFM_RESEEK | RFM_TRUNCATE)) != 0) {
-        file->modes &= ~RFM_RESEEK;
-        if (not Seek_File_64(file))
-            return rebError_OS(errno);
+    const REBYTE *data;
+    size_t size;
 
-        if (file->modes & RFM_TRUNCATE)
-            if (ftruncate(file->id, file->index) != 0)
-                return rebError_OS(errno);
-    }
+    if (IS_TEXT(value) or IS_ISSUE(value)) {
+        REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(
+            nullptr,
+            &size,
+            value,
+            limit
+        );
 
-    size_t actual = 0;  // count actual bytes written as we go along
-
-    if (length == 0)
-        return nullptr;
-
-    // !!! This repeats code in %file-windows.c for doing CR LF handling.
-    // See the notes there.  This needs to be captured in some kind of
-    // streaming codec built on a byte-level service.
-    //
-    const enum Reb_Strmode strmode = STRMODE_NO_CR;  // we assume this for now
-
-    if (not (file->modes & RFM_TEXT) or strmode == STRMODE_ALL_CODEPOINTS) {
+        // !!! In the quest to purify the universe, we've been checking to
+        // make sure that strings containing CR are not written out if you
+        // are writing "text".  You have to send BINARY! (which can be done
+        // cheaply with an alias, AS TEXT!, uses the same memory)
         //
-        // no LF => CR LF translation or error checking needed
-        //
-        assert(length != 0);  // checked above
-        ssize_t bytes = write(file->id, data, length);
-        if (bytes < 0)
-            return rebError_OS(errno);
+        const REBYTE *tail = utf8 + size;
+        const REBYTE *pos = utf8;
+        for (; pos != tail; ++pos)
+            if (*pos == CR)
+                fail (Error_Illegal_Cr(pos, utf8));
 
-        actual = bytes;
+        data = utf8;
     }
     else {
-        unsigned int start = 0;
-        unsigned int end = 0;
+        if (not IS_BINARY(value))
+            return rebValue("make error! {ISSUE!, TEXT!, BINARY! for WRITE}");
 
-        while (true) {
-            for (; end < length; ++end) {
-                switch (strmode) {
-                  case STRMODE_NO_CR:
-                    if (data[end] == CR)
-                        fail (Error_Illegal_Cr(&data[end], data));
-                    break;
-
-                  case STRMODE_LF_TO_CRLF:
-                    if (data[end] == CR)  // be strict, for sanity
-                        fail (Error_Illegal_Cr(&data[end], data));
-                    if (data[end] == LF)
-                        goto exit_loop;
-                    break;
-
-                  default:
-                    assert(!"Branch supports LF_TO_CRLF or NO_CR strmodes");
-                    break;
-                }
-            }
-
-          exit_loop:;
-            if (start != end) {
-                ssize_t bytes = write(file->id, data, length);
-                if (bytes < 0)
-                    return rebError_OS(errno);
-                actual += bytes;
-            }
-
-            if (data[end] == '\0')
-                break;
-
-            assert(strmode == STRMODE_LF_TO_CRLF);
-            assert(data[end] == LF);
-
-            blockscope {
-                int bytes = write(file->id, data, length);
-                if (bytes < 0)
-                    return rebError_OS(errno);
-                actual += bytes;
-            }
-
-            ++end;
-            start = end;
-        }
+        data = VAL_BINARY_AT(value);
+        size = limit;
     }
 
-    assert(actual == length);
+    assert(file->offset != FILEOFFSET_UNKNOWN);
+
+    const int num_bufs = 1;
+    uv_buf_t buf;
+    buf.base = m_cast(char*, cs_cast(data));  // doesn't mutate
+    buf.len = size;
+
+    uv_fs_t req;
+    ssize_t num_bytes_written = uv_fs_write(
+        uv_default_loop(), &req, file->id, &buf, num_bufs, file->offset, nullptr
+    );
+
+    if (num_bytes_written < 0) {
+        file->size_cache = FILESIZE_UNKNOWN;  // don't know what fail did
+        return rebError_UV(num_bytes_written);
+    }
+
+    assert(num_bytes_written == cast(ssize_t, size));
+
+    file->offset += num_bytes_written;
+
+    // !!! The concept of R3-Alpha was that it would keep the file size up to
+    // date...theoretically.  But it actually didn't do that here.  Adding it,
+    // but also adding a check in File_Actor() to make sure the cache is right.
+    //
+    if (file->size_cache != FILESIZE_UNKNOWN) {
+        if (file->offset + num_bytes_written > file->size_cache) {
+            file->size_cache += (
+                num_bytes_written - (file->size_cache - file->offset)
+            );
+        }
+   }
 
     return nullptr;
 }
 
 
 //
-//  Query_File: C
+//  Truncate_File: C
 //
-// Obtain information about a file. Return TRUE on success.
-//
-// Note: time is in local format and must be converted
-//
-REBVAL *Query_File(FILEREQ *file)
+REBVAL *Truncate_File(const REBVAL *port)
 {
+    FILEREQ *file = File_Of_Port(port);
+    assert(file->id != FILEHANDLE_NONE);
+
+    uv_fs_t req;
+    int result = uv_fs_ftruncate(
+        uv_default_loop(), &req, file->id, file->offset, nullptr
+    );
+    if (result != 0)
+        return rebError_UV(result);
+
+    return nullptr;
+}
+
+
+//
+//  Create_Directory: C
+//
+REBVAL *Create_Directory(const REBVAL *port)
+{
+    FILEREQ *dir = File_Of_Port(port);
+    assert(dir->is_dir);
+
+    // !!! We use /NO-TAIL-SLASH here because there was some historical issue
+    // about leaving the tail slash on calling mkdir() on some implementation.
+    //
+    char *path_utf8 = rebSpell(
+        "file-to-local/full/no-tail-slash", dir->path
+    );
+
+    uv_fs_t req;
+    int result = uv_fs_mkdir(uv_default_loop(), &req, path_utf8, 0777, nullptr);
+
+    rebFree(path_utf8);
+
+    if (result != 0)
+        return rebError_UV(result);
+
+    return nullptr;
+}
+
+
+//
+//  Delete_File_Or_Directory: C
+//
+// Note: Directories must be empty to succeed
+//
+REBVAL *Delete_File_Or_Directory(const REBVAL *port)
+{
+    FILEREQ *file = File_Of_Port(port);
+
+    // !!! There is a /NO-TAIL-SLASH refinement, but the tail slash was left on
+    // for directory removal, because it seemed to be supported.  Review if
+    // there is any reason to remove it.
+    //
+    char *path_utf8 = rebSpell("file-to-local/full", file->path);
+
+    uv_fs_t req;
+    int result;
+    if (file->is_dir)
+        result = uv_fs_rmdir(uv_default_loop(), &req, path_utf8, nullptr);
+    else
+        result = uv_fs_unlink(uv_default_loop(), &req, path_utf8, nullptr);
+
+    rebFree(path_utf8);
+
+    if (result != 0)
+        return rebError_UV(result);
+
+    return nullptr;
+}
+
+
+//
+//  Rename_File_Or_Directory: C
+//
+REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
+{
+    FILEREQ *file = File_Of_Port(port);
+
+    char *from_utf8 = rebSpell(
+        "file-to-local/full/no-tail-slash", file->path
+    );
+    char *to_utf8 = rebSpell("file-to-local/full/no-tail-slash", to);
+
+    uv_fs_t req;
+    int result = uv_fs_rename(
+        uv_default_loop(), &req, from_utf8, to_utf8, nullptr
+    );
+
+    rebFree(to_utf8);
+    rebFree(from_utf8);
+
+    if (result != 0)
+        return rebError_UV(result);
+
+    return nullptr;
+}
+
+
+#ifdef TO_WINDOWS
+    //
+    //  File_Time_To_Rebol: C
+    //
+    // Convert file.time to REBOL date/time format.  Time zone is UTC.
+    //
+    REBVAL *File_Time_To_Rebol(uv_timespec_t uvtime)
+    {
+        SYSTEMTIME stime;
+        TIME_ZONE_INFORMATION tzone;
+
+        if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
+            tzone.Bias += tzone.DaylightBias;
+
+        FILETIME filetime;
+        filetime.dwLowDateTime = uvtime.tv_sec;
+        filetime.dwHighDateTime = uvtime.tv_nsec;
+        FileTimeToSystemTime(cast(FILETIME *, &uvtime), &stime);
+
+        return rebValue("ensure date! (make-date-ymdsnz",
+            rebI(stime.wYear),  // year
+            rebI(stime.wMonth),  // month
+            rebI(stime.wDay),  // day
+            rebI(
+                stime.wHour * 3600 + stime.wMinute * 60 + stime.wSecond
+            ),  // "secs"
+            rebI(1000000 * stime.wMilliseconds), // nano
+            rebI(-tzone.Bias),  // zone
+        ")");
+    }
+#else
+    #ifndef timeval
+        #include <sys/time.h>  // for older systems
+    #endif
+
+    //
+    //  Get_Timezone: C
+    //
+    // Get the time zone in minutes from GMT.
+    // NOT consistently supported in Posix OSes!
+    // We have to use a few different methods.
+    //
+    // !!! "local_tm->tm_gmtoff / 60 would make the most sense,
+    // but is no longer used" (said a comment)
+    //
+    // !!! This code is currently repeated in the time extension, until a better
+    // way of sharing it is accomplished.
+    //
+    static int Get_Timezone(struct tm *utc_tm_unused)
+    {
+        time_t now_secs;
+        time(&now_secs); // UNIX seconds (since "epoch")
+        struct tm local_tm = *localtime(&now_secs);
+
+    #if !defined(HAS_SMART_TIMEZONE)
+        //
+        // !!! The R3-Alpha host code would always give back times in UTC plus
+        // timezone.  Then, functions like NOW would have ways of adjusting for
+        // the timezone (unless you asked to do something like NOW/UTC), but
+        // without taking daylight savings time into account.
+        //
+        // We don't want to return a fake UTC time to the caller for the sake of
+        // keeping the time zone constant.  So this should return e.g. GMT-7
+        // during pacific daylight time, and GMT-8 during pacific standard time.
+        // Get that effect by erasing the is_dst flag out of the local time.
+        //
+        local_tm.tm_isdst = 0;
+    #endif
+
+        // mktime() function inverts localtime()... there is no equivalent for
+        // gmtime().  However, we feed it gmtime() as if it were the localtime.
+        // Then the time zone can be calculated by diffing it from a mktime()
+        // inversion of a suitable local time.
+        //
+        // !!! For some reason, R3-Alpha expected the caller to pass in a utc
+        // tm structure pointer but then didn't use it, choosing to make
+        // another call to gmtime().  Review.
+        //
+        UNUSED(utc_tm_unused);
+        time_t now_secs_gm = mktime(gmtime(&now_secs));
+
+        double diff = difftime(mktime(&local_tm), now_secs_gm);
+        return cast(int, diff / 60);
+    }
+
+    //
+    //  File_Time_To_Rebol: C
+    //
+    // Convert file.time to REBOL date/time format.
+    // Time zone is UTC.
+    //
+    REBVAL *File_Time_To_Rebol(uv_timespec_t uvtime)
+    {
+        time_t stime;
+
+        if (sizeof(time_t) > sizeof(uvtime.tv_sec)) {
+            int64_t t = uvtime.tv_sec;
+            t |= cast(int64_t, uvtime.tv_nsec) << 32;
+            stime = t;
+        }
+        else
+            stime = uvtime.tv_sec;
+
+        // gmtime() is badly named.  It's utc time.  Note we have to be careful
+        // as it returns a system static buffer, so we have to copy the result
+        // via dereference to avoid calls to localtime() inside Get_Timezone
+        // from corrupting the buffer before it gets used.
+        //
+        // !!! Consider usage of the thread-safe variants, though they are not
+        // available on all older systems.
+        //
+        struct tm utc_tm = *gmtime(&stime);
+
+        int zone = Get_Timezone(&utc_tm);
+
+        return rebValue("ensure date! (make-date-ymdsnz",
+            rebI(utc_tm.tm_year + 1900),  // year
+            rebI(utc_tm.tm_mon + 1),  // month
+            rebI(utc_tm.tm_mday),  // day
+            rebI(
+                utc_tm.tm_hour * 3600
+                + utc_tm.tm_min * 60
+                + utc_tm.tm_sec
+            ),  // secs
+            rebI(0),  // nanoseconds (file times don't have this)
+            rebI(zone),  // zone
+        ")");
+    }
+#endif
+
+
+//
+//  Query_File_Or_Directory: C
+//
+// Obtain information about a file.  Produces a STD_FILE_INFO object.
+//
+REBVAL *Query_File_Or_Directory(const REBVAL *port)
+{
+    FILEREQ *file = File_Of_Port(port);
+
     // The original implementation here used /no-trailing-slash for the
     // FILE-TO-LOCAL, which meant that %/ would turn into an empty string.
     // It would appear that for directories, trailing slashes are acceptable
@@ -542,220 +657,64 @@ REBVAL *Query_File(FILEREQ *file)
     //
     char *path_utf8 = rebSpell("file-to-local/full", file->path);
 
-    struct stat info;
-    int stat_result = stat(path_utf8, &info);
+    uv_fs_t req;
+    int result = uv_fs_stat(uv_default_loop(), &req, path_utf8, nullptr);
 
     rebFree(path_utf8);
 
-    if (stat_result != 0)
-        return rebError_OS (errno);
+    if (result != 0)
+        return rebError_UV(result);
 
-    if (S_ISDIR(info.st_mode)) {
-        file->modes |= RFM_DIR;
-        file->size = 0;  // "to be consistent on all systems" ?
-    }
-    else {
-        file->modes &= ~RFM_DIR;
-        file->size = info.st_size;
-    }
-    file->time.l = cast(long, info.st_mtime);
+    bool is_dir = S_ISDIR(req.statbuf.st_mode);
+    if (is_dir != file->is_dir)
+        return rebValue("make error! {Directory/File flag mismatch}");
 
-    return nullptr;
-}
+    // !!! R3-Alpha would do this "to be consistent on all systems".  But it
+    // seems better to just make the size null, unless there is some info
+    // to be gleaned from a directory's size?
+    //
+    //     if (is_dir)
+    //         req.statbuf.st_size = 0;
 
+    // Note: time is in local format and must be converted
+    //
+    REBVAL *timestamp = File_Time_To_Rebol(req.statbuf.st_mtim);
 
-//
-//  Create_File: C
-//
-REBVAL *Create_File(FILEREQ *file)
-{
-    if (not (file->modes & RFM_DIR))
-        return Open_File(file);
-
-    char *path_utf8 = rebSpell(
-        "file-to-local/full/no-tail-slash", file->path
+    return rebValue(
+        "make ensure object! (", port , ").scheme.info [",
+            "name:", file->path,
+            "size:", is_dir ? rebQ(nullptr) : rebI(req.statbuf.st_size),
+            "type:", is_dir ? "'dir" : "'file",
+            "date:", rebR(timestamp),
+        "]"
     );
-
-    int mkdir_result = mkdir(path_utf8, 0777);
-
-    rebFree(path_utf8);
-
-    if (mkdir_result != 0)
-        return rebError_OS(errno);
-
-    return nullptr;
-}
-
-
-//
-//  Delete_File: C
-//
-// Delete a file or directory. Return TRUE if it was done.
-// The file->path provides the directory path and name.
-//
-// Note: Dirs must be empty to succeed
-//
-REBVAL *Delete_File(FILEREQ *file)
-{
-    char *path_utf8 = rebSpell(
-        "file-to-local/full", file->path
-        // leave tail slash on for directory removal
-    );
-
-    int removal_result;
-    if (file->modes & RFM_DIR)
-        removal_result = rmdir(path_utf8);
-    else
-        removal_result = remove(path_utf8);
-
-    rebFree(path_utf8);
-
-    if (removal_result != 0)
-        return rebError_OS (errno);
-
-    return nullptr;
-}
-
-
-//
-//  Rename_File: C
-//
-// Rename a file or directory.
-// Note: cannot rename across file volumes.
-//
-REBVAL *Rename_File(FILEREQ *file, const REBVAL *to)
-{
-    char *from_utf8 = rebSpell(
-        "file-to-local/full/no-tail-slash", file->path
-    );
-    char *to_utf8 = rebSpell("file-to-local/full/no-tail-slash", to);
-
-    int rename_result = rename(from_utf8, to_utf8);
-
-    rebFree(to_utf8);
-    rebFree(from_utf8);
-
-    if (rename_result != 0)
-        return rebError_OS(errno);
-
-    return nullptr;
-}
-
-
-//
-//  Get_Timezone: C
-//
-// Get the time zone in minutes from GMT.
-// NOT consistently supported in Posix OSes!
-// We have to use a few different methods.
-//
-// !!! "local_tm->tm_gmtoff / 60 would make the most sense,
-// but is no longer used" (said a comment)
-//
-// !!! This code is currently repeated in the time extension, until a better
-// way of sharing it is accomplished.
-//
-static int Get_Timezone(struct tm *utc_tm_unused)
-{
-    time_t now_secs;
-    time(&now_secs); // UNIX seconds (since "epoch")
-    struct tm local_tm = *localtime(&now_secs);
-
-  #if !defined(HAS_SMART_TIMEZONE)
-    //
-    // !!! The R3-Alpha host code would always give back times in UTC plus a
-    // timezone.  Then, functions like NOW would have ways of adjusting for
-    // the timezone (unless you asked to do something like NOW/UTC), but
-    // without taking daylight savings time into account.
-    //
-    // We don't want to return a fake UTC time to the caller for the sake of
-    // keeping the time zone constant.  So this should return e.g. GMT-7
-    // during pacific daylight time, and GMT-8 during pacific standard time.
-    // Get that effect by erasing the is_dst flag out of the local time.
-    //
-    local_tm.tm_isdst = 0;
-  #endif
-
-    // mktime() function inverts localtime()... there is no equivalent for
-    // gmtime().  However, we feed it a gmtime() as if it were the localtime.
-    // Then the time zone can be calculated by diffing it from a mktime()
-    // inversion of a suitable local time.
-    //
-    // !!! For some reason, R3-Alpha expected the caller to pass in a utc tm
-    // structure pointer but then didn't use it, choosing to make another call
-    // to gmtime().  Review.
-    //
-    UNUSED(utc_tm_unused);
-    time_t now_secs_gm = mktime(gmtime(&now_secs));
-
-    double diff = difftime(mktime(&local_tm), now_secs_gm);
-    return cast(int, diff / 60);
-}
-
-
-//
-//  File_Time_To_Rebol: C
-//
-// Convert file.time to REBOL date/time format.
-// Time zone is UTC.
-//
-REBVAL *File_Time_To_Rebol(FILEREQ *file)
-{
-    time_t stime;
-
-    if (sizeof(time_t) > sizeof(file->time.l)) {
-        int64_t t = file->time.l;
-        t |= cast(int64_t, file->time.h) << 32;
-        stime = t;
-    }
-    else
-        stime = file->time.l;
-
-    // gmtime() is badly named.  It's utc time.  Note we have to be careful as
-    // it returns a system static buffer, so we have to copy the result
-    // via dereference to avoid calls to localtime() inside Get_Timezone
-    // from corrupting the buffer before it gets used.
-    //
-    // !!! Consider usage of the thread-safe variants, though they are not
-    // available on all older systems.
-    //
-    struct tm utc_tm = *gmtime(&stime);
-
-    int zone = Get_Timezone(&utc_tm);
-
-    return rebValue("ensure date! (make-date-ymdsnz",
-        rebI(utc_tm.tm_year + 1900),  // year
-        rebI(utc_tm.tm_mon + 1),  // month
-        rebI(utc_tm.tm_mday),  // day
-        rebI(
-            utc_tm.tm_hour * 3600
-            + utc_tm.tm_min * 60
-            + utc_tm.tm_sec
-        ),  // secs
-        rebI(0),  // nanoseconds (file times don't have this)
-        rebI(zone),  // zone
-    ")");
 }
 
 
 //
 //  Get_Current_Dir_Value: C
 //
-// Return the current directory path as a FILE!.  The result should be freed
-// with rebRelease()
+// Result is a FILE! API Handle, must be freed with rebRelease()
 //
 REBVAL *Get_Current_Dir_Value(void)
 {
-    char *path = rebAllocN(char, PATH_MAX);
+    char *path_utf8 = rebAllocN(char, PATH_MAX);
 
-    if (getcwd(path, PATH_MAX - 1) == 0) {
-        rebFree(path);
-        return rebBlank();
+    size_t size = PATH_MAX - 1;
+    if (uv_cwd(path_utf8, &size) == UV_ENOBUFS) {
+        path_utf8 = cast(char*, rebRealloc(path_utf8, size));  // includes \0
+        size_t check = size;
+        uv_cwd(path_utf8, &check);
+        assert(check == size);
     }
+    assert(size == strsize(path_utf8));  // does it give correct size?
 
-    REBVAL *result = rebValue("local-to-file/dir", rebT(path));
+    // "On Unix the path no longer ends in a slash"...the /DIR option should
+    // make it end in a slash for the result.
 
-    rebFree(path);
+    REBVAL *result = rebValue("local-to-file/dir", rebT(path_utf8));
+
+    rebFree(path_utf8);
     return result;
 }
 
@@ -763,34 +722,71 @@ REBVAL *Get_Current_Dir_Value(void)
 //
 //  Set_Current_Dir_Value: C
 //
-// Set the current directory to local path. Return FALSE
-// on failure.
+// Set the current directory to local path. Return FALSE on failure.
 //
 bool Set_Current_Dir_Value(const REBVAL *path)
 {
     char *path_utf8 = rebSpell("file-to-local/full", path);
 
-    int chdir_result = chdir(path_utf8);
+    int result = uv_chdir(path_utf8);
 
     rebFree(path_utf8);
 
-    return chdir_result == 0;
+    return result == 0;  // !!! return ERROR! value instead?
 }
 
 
+#if 0
+// !!! Using this libuv-provided function is a nice thought, but it requires
+// calling uv_setup_args() which expects to get argc and argv.  If libuv is
+// an extension, then it would load much later than main() and be optional...
+// so we may not want to couple it that tightly.  But what was there before
+// is kind of a mess...though it was a much smaller dependency than libuv.
+// Review as things evolve.
+
+//
+//  Get_Current_Exec: C
+//
+// Return this running interpreter's executable path as TEXT!.
+// Result is a FILE! API Handle, must be freed with rebRelease()
+//
+// Note: You must call uv_setup_args() before calling this function!
+//
+REBVAL *Get_Current_Exec(void)
+{
+    char *path_utf8 = rebAllocN(char, PATH_MAX);
+
+    size_t size = PATH_MAX - 1;
+    if (uv_exepath(path_utf8, &size) == UV_ENOBUFS) {
+        path_utf8 = cast(char*, rebRealloc(path_utf8, size));  // includes \0
+        size_t check = size;
+        uv_exepath(path_utf8, &check);
+        assert(check == size);
+    }
+    assert(size == strsize(path_utf8));  // does it give correct size?
+
+    REBVAL *result = rebValue(
+        "local-to-file", rebT(path_utf8)  // just return unresolved path
+    );
+    rebFree(path_utf8);
+    return result;
+}
+#endif
+
+
 #ifdef TO_OSX
+
+    // !!! Note: intentionally not using libuv here, in case this is to be
+    // extracted for a lighter build!
+
     // Should include <mach-o/dyld.h> ?
     #ifdef __cplusplus
     extern "C"
     #endif
     int _NSGetExecutablePath(char* buf, uint32_t* bufsize);
 
-
     //
     //  Get_Current_Exec: C
-    //
-    // Return the current executable path as a STRING!.  The result should be
-    // freed with rebRelease()
     //
     REBVAL *Get_Current_Exec(void)
     {
@@ -832,16 +828,45 @@ bool Set_Current_Dir_Value(const REBVAL *path)
         return result;
     }
 
-#else  // not TO_OSX
+#elif defined(TO_WINDOWS)
 
-    #if defined(HAVE_PROC_PATHNAME)
-        #include <sys/sysctl.h>
-    #endif
+    // !!! Note: intentionally not using libuv here, in case this is to be
+    // extracted for a lighter build!
 
     //
     //  Get_Current_Exec: C
     //
-    // Return the current executable path as a FILE!
+    REBVAL *Get_Current_Exec(void)
+    {
+        WCHAR *path = rebAllocN(WCHAR, MAX_PATH);
+
+        DWORD r = GetModuleFileName(NULL, path, MAX_PATH);
+        if (r == 0) {
+            rebFree(path);
+            return nullptr;
+        }
+        path[r] = '\0';  // May not be NULL-terminated if buffer not big enough
+
+        REBVAL *result = rebValue(
+            "local-to-file", rebR(rebTextWide(path))
+        );
+        rebFree(path);
+
+        return result;
+    }
+
+#else  // not TO_OSX and not TO_WINDOWS
+
+    // !!! Note: intentionally not using libuv here, in case this is to be
+    // extracted for a lighter build!
+
+    #if defined(HAVE_PROC_PATHNAME)
+        #include <sys/sysctl.h>
+    #endif
+    #include <unistd.h>  // for readlink()
+
+    //
+    //  Get_Current_Exec: C
     //
     // https://stackoverflow.com/questions/1023306/
     //
@@ -889,5 +914,4 @@ bool Set_Current_Dir_Value(const REBVAL *path)
         return result;
       #endif
     }
-
 #endif
