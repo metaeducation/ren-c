@@ -41,6 +41,9 @@
 // how to make this better.
 //
 
+#ifndef REB_CONFIG_H_1020_0304  // "include guard" allows multiple #includes
+#define REB_CONFIG_H_1020_0304  // #s in case REB_CONFIG_H defined elsewhere
+
 
 /** Primary Configuration **********************************************
 
@@ -476,3 +479,5 @@ Special internal defines used by RT, not Host-Kit developers:
     #define ZEROTRASH cast(void*, cast(intptr_t, 0xDECAFBAD))
 #endif
 #define ZERO_UNUSED_CELL_FIELDS
+
+#endif
