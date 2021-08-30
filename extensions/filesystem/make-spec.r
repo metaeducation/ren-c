@@ -322,16 +322,16 @@ if os = 'QNX [
 
 === TRANSFORM PATHS FOR SOURCES TO FULL PATHS AND DISABLE WARNINGS ===
 
-uv-depends: map-each file uv-sources [
+uv-depends: map-each tuple uv-sources [  ; WORD! in bootstrap
     file: if os = 'Windows [
-        join %filesystem/libuv/src/win/ as file! file
+        join %filesystem/libuv/src/win/ to file! tuple
     ] else [
-        join %filesystem/libuv/src/unix/ as file! file
+        join %filesystem/libuv/src/unix/ to file! tuple
     ]
     compose [(file) #no-c++ ((uv-nowarn))]
 ]
 
-append uv-depends map-each file [
+append uv-depends map-each tuple [  ; WORD! in bootstrap
     fs-poll.c
     idna.c
     inet.c
@@ -343,7 +343,7 @@ append uv-depends map-each file [
     uv-data-getter-setters.c
     version.c
 ][
-    compose [(join %filesystem/libuv/src/ as file! file) #no-c++ ((uv-nowarn))]
+    compose [(join %filesystem/libuv/src/ to file! tuple) #no-c++ ((uv-nowarn))]
 ]
 
 
