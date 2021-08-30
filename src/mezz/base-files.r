@@ -165,7 +165,7 @@ delete-dir: func [
         dir: dirize dir
         attempt [files: load dir]
     ] [
-        for-each file files [delete-dir dir/:file]
+        for-each file files [delete-dir (join dir file)]
     ]
     attempt [delete dir]
 ]
