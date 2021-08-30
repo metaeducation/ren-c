@@ -544,7 +544,7 @@ write: generic [
     return: [port! block!]  ; !!! http write returns BLOCK!, why?
     destination [port! file! url! block!]
     data "Data to write (non-binary converts to UTF-8)"
-        [binary! text! block! object!]  ; !!! should this support CHAR!?
+        [binary! text! block! object! issue!]
     /part "Partial write a given number of units"
         [any-number!]
     /seek "Write at a specific position"

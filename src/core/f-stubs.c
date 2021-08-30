@@ -354,19 +354,28 @@ REBLEN Part_Len_May_Modify_Index(
         return VAL_SEQUENCE_LEN(series);
     }
 
-    assert(ANY_SERIES(series));
+    assert(IS_ISSUE(series) or ANY_SERIES(series));
 
-    if (IS_NULLED(part))  // indicates /PART refinement unused
-        return VAL_LEN_AT(series);  // leave index alone, use plain length
+    if (IS_NULLED(part)) {  // indicates /PART refinement unused
+        if (not IS_ISSUE(series))
+            return VAL_LEN_AT(series);  // leave index alone, use plain length
 
-    REBLEN iseries = VAL_INDEX(series);  // checked for in-bounds
+        REBSIZ size;
+        VAL_UTF8_SIZE_AT(&size, series);
+        return size;
+    }
+
+    // VAL_INDEX() checks to make sure it's for in-bounds
+    //
+    REBLEN iseries = IS_ISSUE(series) ? 0 : VAL_INDEX(series);
 
     REBI64 len;
     if (IS_INTEGER(part) or IS_DECIMAL(part))
         len = Int32(part);  // may be positive or negative
     else {  // must be same series
         if (
-            VAL_TYPE(series) != VAL_TYPE(part)  // !!! allow AS aliases?
+            IS_ISSUE(part)
+            or VAL_TYPE(series) != VAL_TYPE(part)  // !!! allow AS aliases?
             or VAL_SERIES(series) != VAL_SERIES(part)
         ){
             fail (Error_Invalid_Part_Raw(part));
@@ -383,6 +392,9 @@ REBLEN Part_Len_May_Modify_Index(
             len = maxlen;
     }
     else {
+        if (IS_ISSUE(part))
+            fail (Error_Invalid_Part_Raw(part));
+
         len = -len;
         if (len > cast(REBI64, iseries))
             len = iseries;
@@ -399,7 +411,7 @@ REBLEN Part_Len_May_Modify_Index(
     }
 
     assert(len >= 0);
-    assert(VAL_LEN_HEAD(series) >= cast(REBLEN, len));
+    assert(IS_ISSUE(series) or VAL_LEN_HEAD(series) >= cast(REBLEN, len));
     return cast(REBLEN, len);
 }
 

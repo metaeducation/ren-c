@@ -1,4 +1,5 @@
-; functions/series/append.r
+; %append.test.reb
+
 [#75 (
     o: make object! [a: 1]
     p: make o []
@@ -194,3 +195,7 @@
 ; As with the attempt to do a single element compose of a NULL, it's ~null~
 ;
 ([a b c ~null~] = append [a b c] the ')
+
+; Added support for /PART on ISSUE!
+;
+("abcdef" = append/part "abc" #defghi 3)
