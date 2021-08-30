@@ -390,9 +390,6 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         UNUSED(PAR(destination));
 
-        if (REF(allow))
-            fail (Error_Bad_Refines_Raw());
-
         REBVAL *data = ARG(data); // binary, string, or block
 
         // Handle the WRITE %file shortcut case, where the FILE! is converted
@@ -447,15 +444,11 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         UNUSED(PAR(spec));
 
-        if (REF(allow))
-            fail (Error_Bad_Refines_Raw());
 
         REBFLGS flags = (
             (REF(new) ? AM_OPEN_NEW : 0)
             | (REF(read) or not REF(write) ? AM_OPEN_READ : 0)
             | (REF(write) or not REF(read) ? AM_OPEN_WRITE : 0)
-            | (REF(seek) ? AM_OPEN_SEEK : 0)
-            | (REF(allow) ? AM_OPEN_ALLOW : 0)
         );
         Setup_File(file, flags, path);
 
@@ -541,9 +534,6 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         INCLUDE_PARAMS_OF_QUERY;
 
         UNUSED(PAR(target));
-
-        if (REF(mode))
-            fail (Error_Bad_Refines_Raw());
 
         if (not (file->modes & RFM_OPEN)) {
             Setup_File(file, 0, path);

@@ -142,7 +142,7 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         UNUSED(PAR(spec));
 
-        if (REF(new) or REF(read) or REF(write) or REF(seek) or REF(allow))
+        if (REF(new) or REF(read) or REF(write))
             fail (Error_Bad_Refines_Raw());
 
         RETURN (port); }

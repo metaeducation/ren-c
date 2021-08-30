@@ -511,9 +511,6 @@ open: generic [
     /new "Create new file - if it exists, reset it (truncate)"
     /read "Open for read access"
     /write "Open for write access"
-    /seek "Optimize for random access"
-    /allow "Specifies protection attributes"
-        [block!]
 ]
 
 close: generic [
@@ -553,8 +550,6 @@ write: generic [
     /seek "Write at a specific position"
         [any-number!]
     /append "Write data at end of file"
-    /allow "Specifies protection attributes"
-        [block!]
     /lines "Write each value in a block as a separate line"
 ]
 
@@ -563,8 +558,6 @@ query: generic [
 
     return: [<opt> object!]
     target [port! file! url! block!]
-    /mode "Get mode information (blank will return valid modes for port type)"
-        [word! blank!]
 ]
 
 modify: generic [

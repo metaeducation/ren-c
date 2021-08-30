@@ -247,7 +247,7 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         UNUSED(PAR(spec));
 
-        if (REF(read) or REF(write) or REF(seek) or REF(allow))
+        if (REF(read) or REF(write))
             fail (Error_Bad_Refines_Raw());
 
         // !! If open fails, what if user does a READ w/o checking for error?

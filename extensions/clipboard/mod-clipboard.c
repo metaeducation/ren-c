@@ -117,7 +117,7 @@ static REB_R Clipboard_Actor(
         INCLUDE_PARAMS_OF_WRITE;
         UNUSED(ARG(destination));  // implied by `port`
 
-        if (REF(seek) or REF(append) or REF(allow) or REF(lines))
+        if (REF(append) or REF(lines))
             fail (Error_Bad_Refines_Raw());
 
         REBVAL *data = ARG(data);
@@ -178,7 +178,7 @@ static REB_R Clipboard_Actor(
         INCLUDE_PARAMS_OF_OPEN;
         UNUSED(PAR(spec));
 
-        if (REF(new) or REF(read) or REF(write) or REF(seek) or REF(allow))
+        if (REF(new) or REF(read) or REF(write))
             fail (Error_Bad_Refines_Raw());
 
         // !!! Currently just ignore (it didn't do anything)

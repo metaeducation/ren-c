@@ -361,7 +361,7 @@ static REB_R Transport_Actor(
 
         UNUSED(PAR(destination));
 
-        if (REF(seek) or REF(append) or REF(allow) or REF(lines))
+        if (REF(seek) or REF(append) or REF(lines))
             fail (Error_Bad_Refines_Raw());
 
         if (sock->socket == SOCKET_NONE and sock->transport != TRANSPORT_UDP)
