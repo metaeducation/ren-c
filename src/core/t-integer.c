@@ -449,7 +449,7 @@ REBTYPE(Integer)
             return nullptr;
         }
         if (num == 0)
-            break;
+            fail (ARG(value));
         return Init_Integer(D_OUT, Random_Range(num, did REF(secure))); }
 
     default:
