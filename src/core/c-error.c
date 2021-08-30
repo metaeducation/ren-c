@@ -252,7 +252,23 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         // running native.  (We could theoretically do this with ARG(), or
         // have a nuance of behavior with ARG()...or even for the REBKEY*.)
         //
-        if (not Is_Action_Frame(FS_TOP))
+        if (GET_CELL_FLAG(v, ROOT)) {
+            //
+            // If you call the internal fail() function on an API handle, that
+            // should be the handle of an error.  If we allowed it to take
+            // any value, then it would call into question the treatment of
+            // the error as an error and not erroring on "some value"
+            //
+            if (IS_ERROR(v)) {
+                error = VAL_CONTEXT(v);
+            }
+            else {
+                assert(!"fail() given API handle that is not an ERROR!");
+                error = Error_Bad_Value(v);
+            }
+            rebRelease(v);  // would be cleaned up even if we didn't...
+        }
+        else if (not Is_Action_Frame(FS_TOP))
             error = Error_Bad_Value(v);
         else {
             const REBPAR *head = ACT_PARAMS_HEAD(FRM_PHASE(FS_TOP));
