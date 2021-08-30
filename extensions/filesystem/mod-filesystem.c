@@ -22,6 +22,18 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
+// !!! When linking to libuv, the TCC TinyC compiler hits a problem with a
+// missing __dso_handle symbol.  At one point there was a workaround added,
+// and the workaround was to define it as a dummy...which only works if it
+// wasn't actually being used.  Try it and see if it works with the older
+// TCC that lacks this definition:
+//
+// https://www.mail-archive.com/tinycc-devel@nongnu.org/msg08429.html
+//
+#ifdef __TINYC__
+    void * __dso_handle = &__dso_handle;
+#endif
+
 #include "sys-core.h"
 
 #include "tmp-mod-filesystem.h"
