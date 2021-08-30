@@ -830,6 +830,11 @@ REBNATIVE(applique)
     Shutdown_Evars(&e);
   }
 
+    // !!! We have to push the frame here, because it won't be cleaned up if
+    // there are failures in the code otherwise.  Review.
+    //
+    Push_Frame(D_OUT, f);
+
     // Run the bound code, ignore evaluative result (unless thrown)
     //
     PUSH_GC_GUARD(exemplar);
@@ -837,8 +842,10 @@ REBNATIVE(applique)
     bool def_threw = Do_Any_Array_At_Throws(temp, ARG(def), SPECIFIED);
     DROP_GC_GUARD(exemplar);
 
-    if (def_threw)
+    if (def_threw) {
+        Drop_Frame(f);
         RETURN (temp);
+    }
 
     if (not REF(partial)) {
         //
@@ -850,8 +857,6 @@ REBNATIVE(applique)
         f->flags.bits |= EVAL_FLAG_FULLY_SPECIALIZED;
         DS_DROP_TO(lowest_ordered_dsp); // zero refinements on stack, now
     }
-
-    Push_Frame(D_OUT, f);
 
     f->varlist = varlist;
     f->rootvar = CTX_ROOTVAR(exemplar);
@@ -1042,14 +1047,14 @@ REBNATIVE(apply)
 
   end_loop:
 
-    Drop_Frame(f);
-
     // We need to remove the binder indices, whether we are raising an error
     // or not.  But we also want any fields not assigned to be set to ~unset~.
     // (We wanted to avoid the situation where someone purposefully set a
     // meta-parameter to ~unset~ being interpreted as never setting a field).
     //
     Shutdown_Evars(&e);
+
+    Drop_Frame(f);
 
     Init_Evars(&e, D_SPARE);
     while (Did_Advance_Evars(&e)) {
