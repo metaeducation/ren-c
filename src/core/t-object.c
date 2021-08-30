@@ -1083,6 +1083,15 @@ REB_R Context_Common_Action_Maybe_Unhandled(
     REBVAL *v = D_ARG(1);
     REBCTX *c = VAL_CONTEXT(v);
 
+    // !!! The PORT! datatype wants things like LENGTH OF to give answers
+    // based on the content of the port, not the number of fields in the
+    // PORT! object.  This ties into a number of other questions:
+    //
+    // https://forum.rebol.info/t/1689
+    //
+    if (CTX_TYPE(c) == REB_PORT)
+        return R_UNHANDLED;
+
     switch (VAL_WORD_ID(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
