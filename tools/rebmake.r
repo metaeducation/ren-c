@@ -500,7 +500,8 @@ gcc: make compiler-class [
             ]
             if D [
                 for-each flg D [
-                    ;
+                    if word? flg [flg: as text! flg]
+
                     ; !!! For cases like `#include MBEDTLS_CONFIG_FILE` then
                     ; quotes are expected to work in defines...but when you
                     ; pass quotes on the command line it's different than
@@ -600,6 +601,8 @@ cl: make compiler-class [
             ]
             if D [
                 for-each flg D [
+                    if word? flg [flg: as text! flg]
+
                     ; !!! For cases like `#include MBEDTLS_CONFIG_FILE` then
                     ; quotes are expected to work in defines...but when you
                     ; pass quotes on the command line it's different than
