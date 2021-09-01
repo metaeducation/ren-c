@@ -536,6 +536,7 @@ REBLEN Find_Value_In_Binstr(
         or ANY_WORD_KIND(pattern_kind)
         or REB_INTEGER == pattern_kind  // `find "ab10cd" 10` -> "10cd"
         or REB_ISSUE == pattern_kind
+        or REB_URL == pattern_kind
     ){
         if (binstr_kind != REB_BINARY and (
             IS_CHAR_CELL(pattern) and VAL_CHAR(pattern) == 0

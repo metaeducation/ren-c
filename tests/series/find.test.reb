@@ -154,3 +154,7 @@
     ([b c] = find [a b c] @b)
     ([[b c] d] = find [a [b c] d] @[b c])
 ]
+
+; Should be able to find URL! in a TEXT!
+;
+("http://example.com" = find "http://example.com" http://)

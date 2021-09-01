@@ -77,11 +77,11 @@ join: function [
     {Concatenates values to the end of a copy of a value}
 
     return:
-        [any-series! issue! any-sequence! port!
+        [any-series! issue! url! any-sequence! port!
             map! object! module! bitset!]
     base [
         datatype!
-        any-series! issue!
+        any-series! issue! url!
         any-sequence!
         port! map! object! module! bitset!
     ]
@@ -106,7 +106,7 @@ join: function [
             ]
         ]
         find any-sequence! type [base: to block! base]
-        issue! = type [base: to text! base]
+        find :[issue! url!] type [base: to text! base]
     ] else [
         base: copy base
         type: _  ; don't apply any conversion at end

@@ -194,7 +194,7 @@ make-port*: function [
 
         emit tag: opt ["#", across to <end>]  ; optional bookmark ("tag")
 
-        emit ref: <input>  ; it's always saved the original URL for reference
+        emit ref: as/ (url!) <input>  ; alway save original URL for reference
     ]
 
     ; !!! Historically DECODE-URL returned a BLOCK!, but an object seems
@@ -211,7 +211,7 @@ make-port*: function [
         return: [object!]
         url [url! text!]
     ][
-        uparse url [gather rules] else [
+        uparse as text! url [gather rules] else [
             fail ["Could not decode URL to an object:" url]
         ]
     ]

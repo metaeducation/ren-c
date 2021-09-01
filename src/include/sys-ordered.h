@@ -385,8 +385,10 @@ inline static enum Reb_Kind BLOCKIFY_KIND(REBYTE k) {
 
 // If a type can be used with the VAL_UTF8_XXX accessors
 
-inline static bool ANY_UTF8_KIND(REBYTE k)
-    { return ANY_STRING_KIND(k) or ANY_WORD_KIND(k) or k == REB_ISSUE; }
+inline static bool ANY_UTF8_KIND(REBYTE k) {
+    return ANY_STRING_KIND(k) or ANY_WORD_KIND(k)
+        or k == REB_ISSUE or k == REB_URL;
+}
 
 #define ANY_UTF8(v) \
     ANY_UTF8_KIND(KIND3Q_BYTE(v))

@@ -532,9 +532,10 @@ import*: func [
     ; change.  But we do it after the scan, in case there was a syntax error.
 
     if match [file! url!] source [
-        let file: find-last/tail source slash
+        let dir: as text! source
+        let file: find-last/tail dir slash
         if file [
-            change-dir copy/part source file
+            change-dir as (type of source) copy/part dir file
         ]
     ]
 

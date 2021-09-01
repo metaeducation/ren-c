@@ -53,8 +53,16 @@ enum {
 //
 REBINT CT_String(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
-    assert(ANY_STRING_KIND(CELL_KIND(a)) or REB_ISSUE == CELL_KIND(a));
-    assert(ANY_STRING_KIND(CELL_KIND(b)) or REB_ISSUE == CELL_KIND(b));
+    assert(
+        ANY_STRING_KIND(CELL_KIND(a))
+        or REB_ISSUE == CELL_KIND(a)
+        or REB_URL == CELL_KIND(a)
+    );
+    assert(
+        ANY_STRING_KIND(CELL_KIND(b))
+        or REB_ISSUE == CELL_KIND(b)
+        or REB_URL == CELL_KIND(a)
+    );
 
     REBLEN l1;
     REBCHR(const*) cp1 = VAL_UTF8_LEN_SIZE_AT(&l1, nullptr, a);
@@ -746,7 +754,7 @@ void MF_String(REB_MOLD *mo, REBCEL(const*) v, bool form)
     REBSTR *buf = mo->series;
 
     enum Reb_Kind kind = CELL_KIND(v); // may be literal reusing the cell
-    assert(ANY_STRING_KIND(kind));
+    assert(ANY_STRING_KIND(CELL_HEART(v)));
 
     // Special format for MOLD/ALL string series when not at head
     //

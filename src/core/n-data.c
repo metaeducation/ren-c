@@ -1196,12 +1196,14 @@ bool Try_As_String(
         Freeze_Series(str);
         Init_Any_String(out, new_kind, str);
     }
-    else if (ANY_STRING(v)) {
+    else if (ANY_STRING(v) or IS_URL(v)) {
       any_string:
         Copy_Cell(out, v);
-        mutable_KIND3Q_BYTE(out)
-            = mutable_HEART_BYTE(out)
-            = new_kind;
+        mutable_KIND3Q_BYTE(out) = new_kind;
+        if (new_kind == REB_URL)
+            mutable_HEART_BYTE(out) = REB_TEXT;
+        else
+            mutable_HEART_BYTE(out) = new_kind;
         Trust_Const(Quotify(out, quotes));
     }
     else
@@ -1217,13 +1219,17 @@ bool Try_As_String(
 //  {Aliases underlying data of one value to act as another of same class}
 //
 //      return: [
-//          <opt> integer! issue! any-sequence! any-series! any-word!
+//          <opt> integer!
+//          issue! url!
+//          any-sequence! any-series! any-word!
 //          frame! action!
 //      ]
 //      type [datatype!]
 //      value [
 //          <blank>
-//          integer! issue! any-sequence! any-series! any-word! frame! action!
+//          integer!
+//          issue! url!
+//          any-sequence! any-series! any-word! frame! action!
 //      ]
 //  ]
 //

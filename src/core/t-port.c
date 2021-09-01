@@ -28,7 +28,7 @@
 //
 //  CT_Port: C
 //
-REBINT CT_Port(REBCEL(const*) a, REBCEL(const*) b, REBINT strict)
+REBINT CT_Port(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
     UNUSED(strict);
     if (VAL_CONTEXT(a) == VAL_CONTEXT(b))
@@ -149,4 +149,72 @@ REBTYPE(Port)
         return r;
 
     return Do_Port_Action(frame_, port, verb);
+}
+
+
+//
+//  CT_Url: C
+//
+REBINT CT_Url(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+{
+    return CT_String(a, b, strict);
+}
+
+
+//
+//  REBTYPE: C
+//
+// The idea for dispatching a URL! is that it will dispatch to port schemes.
+// So it translates the request to open the port, then retriggers the action
+// on that port, then closes the port.
+//
+REBTYPE(Url)
+{
+    REBVAL *url = D_ARG(1);
+
+    OPT_SYMID id = VAL_WORD_ID(verb);
+    if (GET_CELL_FLAG(url, UNEVALUATED)) {
+        //
+        // There are risks associated when common terms like APPEND can too
+        // carelessly be interpreted as IO.  Because what was intended as a
+        // local operation can wind up corrupting files or using up network
+        // bandwidth in crazy ways:
+        //
+        //   https://forum.rebol.info/t/1697
+        //
+        // Literal usages are interpreted as intentional, so if the URL was
+        // written at the callsite then accept that.
+        //
+    }
+    else switch (id) {
+      case SYM_REFLECT:
+      case SYM_READ:
+      case SYM_WRITE:
+      case SYM_QUERY:
+      case SYM_OPEN:
+      case SYM_CREATE:
+      case SYM_DELETE:
+      case SYM_RENAME:
+        //
+        // !!! A tentative concept is that some words are "greenlit" as being
+        // "IO words", hence not needing any annotation in order to be used
+        // with an evaluative product or variable lookup that is a URL! to
+        // work with implicit PORT!s.
+        //
+        break;
+
+      default:
+        fail ("URL! must be used with IO annotation if intentional");
+    }
+
+    REBVAL *port = rebValue("make port!", url);
+    assert(IS_PORT(port));
+
+    // The frame was built for the verb we want to apply, so tweak it so that
+    // it has the PORT! in the argument slot, and run the action.
+    //
+    Copy_Cell(D_ARG(1), port);
+    rebRelease(port);
+
+    return Do_Port_Action(frame_, D_ARG(1), verb);
 }

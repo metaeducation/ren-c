@@ -145,6 +145,14 @@ event       "user interface event"  ; %extensions/event/README.md
             ?           ?       ?       ?       []
 
 
+; URL! has a HEART-BYTE! that is a string, but is not itself in the ANY-STRING!
+; category.
+;
+url         "uniform resource locator or identifier"
+            url         string   string  string  []
+
+
+
 ; <BINARY>
 ;
 ;     (...we continue along in order with more ANY-SERIES! types...)
@@ -165,9 +173,6 @@ file        "file name or path"
             string      *       *       *       [series string]
 
 email       "email address"
-            string      *       *       *       [series string]
-
-url         "uniform resource locator or identifier"
             string      *       *       *       [series string]
 
 tag         "markup string (HTML or XML)"

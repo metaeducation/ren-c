@@ -463,6 +463,10 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         }
         break; }
 
+      case REB_URL:
+        assert(heart == REB_TEXT);
+        break;
+
       default:
         if (kind < REB_MAX)  // psuedotypes for parameter are actually typeset
            assert(kind == heart);

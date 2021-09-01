@@ -771,13 +771,16 @@ inline static REBVAL *Init_Any_String_At(
     const_if_c REBSTR *str,
     REBLEN index
 ){
-    return Init_Any_Series_At_Core(
+    Init_Any_Series_At_Core(
         out,
         kind,
         Force_Series_Managed_Core(str),
         index,
         UNBOUND
     );
+    if (kind == REB_URL)
+        mutable_HEART_BYTE(out) = REB_TEXT;
+    return SPECIFIC(out);
 }
 
 #ifdef __cplusplus

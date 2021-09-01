@@ -81,6 +81,7 @@ suffix-of: function [
     return: [<opt> file!]
     path [file! url! text!]
 ][
+    path: as text! path
     return all [
         pos: find-last path #"."
         not find pos #"/"

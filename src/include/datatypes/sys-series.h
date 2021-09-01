@@ -1059,7 +1059,7 @@ inline static REBVAL *Init_Any_Series_At_Core(
     REBARR *specifier
 ){
   #if !defined(NDEBUG)
-    assert(ANY_SERIES_KIND(type));
+    assert(ANY_SERIES_KIND(type) or type == REB_URL);
     assert(GET_SERIES_FLAG(s, MANAGED));
 
     // Note: a R3-Alpha Make_Binary() comment said:

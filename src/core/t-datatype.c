@@ -372,7 +372,7 @@ REBTYP *Hook_Datatype(
 ){
     UNUSED(description);
 
-    REBVAL *url_value = rebText(url);
+    REBVAL *url_value = rebValue("as url!", rebT(url));
     REBVAL *datatype = Datatype_From_Url(url_value);
 
     if (not datatype)
