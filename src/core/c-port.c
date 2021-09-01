@@ -49,6 +49,28 @@ bool Is_Port_Pending(const RELVAL *port)
 
 
 //
+//  Set_Port_Pending: C
+//
+// !!! The "pending" model of ports was not clearly laid out.  But making
+// these functions at least makes it possible to intercept when the flags
+// change.  This is all being rethought with the transition to libuv.
+//
+void Set_Port_Pending(const RELVAL *port)
+{
+    Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+}
+
+
+//
+//  Clear_Port_Pending: C
+//
+void Clear_Port_Pending(const RELVAL *port)
+{
+    Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+}
+
+
+//
 //  Do_Port_Action: C
 //
 // Call a PORT actor (action) value. Search PORT actor

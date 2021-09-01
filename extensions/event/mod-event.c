@@ -140,6 +140,8 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
 {
     EVENT_INCLUDE_PARAMS_OF_WAIT_P;
 
+    assert(not REF(only));
+
     REBLEN timeout = 0;  // in milliseconds
     REBVAL *ports = nullptr;
 
@@ -211,10 +213,6 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
     REBCTX *sys = VAL_CONTEXT(system_port);
 
-    REBVAL *waiters = CTX_VAR(sys, STD_PORT_STATE);
-    if (not IS_BLOCK(waiters))
-        fail ("Wait queue block in System Port is not a BLOCK!");
-
     REBVAL *waked = CTX_VAR(sys, STD_PORT_DATA);
     if (not IS_BLOCK(waked))
         fail ("Waked queue block in System Port is not a BLOCK!");
@@ -222,26 +220,6 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
     REBVAL *awake = CTX_VAR(sys, STD_PORT_AWAKE);
     if (not IS_ACTION(awake))
         fail ("System Port AWAKE field is not an ACTION!");
-
-    REBVAL *awake_only = D_SPARE;
-    if (REF(only)) {
-        //
-        // If we're using /ONLY, we need path AWAKE/ONLY to call.  (The
-        // va_list API does not support positional-provided refinements.)
-        //
-        REBARR *a = Make_Array(2);
-        Append_Value(a, awake);
-        Init_Word(Alloc_Tail_Array(a), Canon(ONLY));
-
-        REBVAL *p = Try_Init_Path_Arraylike(D_SPARE, a);
-        assert(p);  // `awake/only` doesn't contain any non-path-elements
-        UNUSED(p);
-    }
-    else {
-      #if !defined(NDEBUG)
-        Init_Trash(D_SPARE);
-      #endif
-    }
 
     bool did_port_action = false;
 
@@ -263,45 +241,31 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             fail ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
         }
 
-        if (VAL_LEN_HEAD(waiters) == 0 and VAL_LEN_HEAD(waked) == 0) {
-            //
-            // No activity (nothing to do) so increase the wait time
-            //
-            wait_millisec *= 2;
-            if (wait_millisec > MAX_WAIT_MS)
-                wait_millisec = MAX_WAIT_MS;
+        // Call the system awake function.
+        //
+        // !!! Note: if we knew for certain the names of the arguments
+        // we could use "APPLIQUE".  Since we don't, we have to use a
+        // positional call...but a hybridized APPLY would help here.
+        //
+        if (rebRunThrows(
+            D_OUT,
+            true,  // fully
+            awake,
+            system_port,
+            ports == nullptr ? Lib(BLANK) : ports
+        )){
+            fail (Error_No_Catch_For_Throw(D_OUT));
         }
-        else {
-            // Call the system awake function.
-            //
-            // !!! Note: if we knew for certain the names of the arguments
-            // we could use "APPLIQUE".  Since we don't, we have to use a
-            // positional call...but a hybridized APPLY would help here.
-            //
-            if (rebRunThrows(
-                D_OUT,
-                true,  // fully
-                REF(only) ? awake_only : awake,
-                system_port,
-                ports == nullptr ? Lib(BLANK) : ports
-            )){
-                fail (Error_No_Catch_For_Throw(D_OUT));
-            }
 
-            // Awake function returns true for end of WAIT
-            //
-            if (IS_LOGIC(D_OUT) and VAL_LOGIC(D_OUT)) {
-                did_port_action = true;
-                RESET(D_OUT);
-                goto post_wait_loop;
-            }
-
-            // Some activity, so use low wait time.
-            //
-            wait_millisec = 1;
-
+        // Awake function returns true for end of WAIT
+        //
+        if (IS_LOGIC(D_OUT) and VAL_LOGIC(D_OUT)) {
+            did_port_action = true;
             RESET(D_OUT);
+            goto post_wait_loop;
         }
+
+        RESET(D_OUT);
 
         if (timeout != ALL_BITS) {
             //
@@ -318,8 +282,19 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
         // Let any pending device I/O have a chance to run:
         //
-        if (OS_Poll_Devices())
+        if (OS_Poll_Devices()) {
+            //
+            // Some activity, so use low wait time.
+            //
+            wait_millisec = 1;
             continue;
+        }
+
+        // No activity (nothing to do) so increase the wait time
+        //
+        wait_millisec *= 2;
+        if (wait_millisec > MAX_WAIT_MS)
+            wait_millisec = MAX_WAIT_MS;
 
         // Nothing, so wait for period of time
 

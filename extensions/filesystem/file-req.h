@@ -114,10 +114,3 @@ inline static FILEREQ *File_Of_Port(const REBVAL *port)
     REBVAL *state = CTX_VAR(VAL_CONTEXT(port), STD_PORT_STATE);
     return cast(FILEREQ*, VAL_BINARY_AT_ENSURE_MUTABLE(state));
 }
-
-// !!! libuv has the advantage of standardizing error names across platforms,
-// but they're all new error numbers.  Do strings for now.
-//
-inline static REBVAL * rebError_UV(int err) {
-     return rebValue("make error!", rebT(uv_strerror(err)));
-}

@@ -63,6 +63,17 @@
 
 
 //
+//  rebError_UV: C
+//
+// !!! libuv has the advantage of standardizing error names across platforms,
+// but they're all new error numbers.  Do strings for now.
+//
+REBVAL *rebError_UV(int err) {
+     return rebValue("make error!", rebT(uv_strerror(err)));
+}
+
+
+//
 //  Get_File_Size_Cacheable: C
 //
 // If the file size hasn't been queried (because it wasn't needed) then do

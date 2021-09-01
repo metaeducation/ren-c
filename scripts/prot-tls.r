@@ -2039,6 +2039,10 @@ sys.make-scheme [
             return port
         ]
 
+        connect: func [port [port!]] [
+            connect port.state.connection
+        ]
+
         reflect: func [port [port!] property [word!]] [
             switch property [
                 'open? [

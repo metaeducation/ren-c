@@ -792,6 +792,7 @@ sys/make-scheme [
             conn.awake: :http-awake
             conn.locals: port
             open conn
+            connect conn
             port
         ]
 
