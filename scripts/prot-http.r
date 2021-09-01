@@ -124,7 +124,7 @@ http-awake: function [return: [logic!] event [event!]] [
             false
         ]
         'lookup [
-            open port
+            connect port
             false
         ]
         'connect [

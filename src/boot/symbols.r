@@ -271,7 +271,7 @@ init
 
 #open
 #close
-connect
+#connect
 #accept  ; was R3 parse keyword
 #read
 #write

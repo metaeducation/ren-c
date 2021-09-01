@@ -513,6 +513,13 @@ open: generic [
     /write "Open for write access"
 ]
 
+connect: generic [
+    {Connects a port (used to be "second open step")}
+
+    return: [port!]
+    spec [port!]
+]
+
 close: generic [
     {Closes a port/library.}
     return: [<opt> any-value!]
