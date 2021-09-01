@@ -279,16 +279,6 @@ REBVAL *Lookup_Socket(const REBVAL *port, const REBVAL *hostname)
     //
     memcpy(&sock->remote_ip, *host->h_addr_list, 4);
 
-    // Queue a notification to the port actor that the lookup is done.  (This
-    // is a holdover from when lookups were asynchronous.)
-    //
-    rebElide(
-        "insert system/ports/system make event! [",
-            "type: 'lookup",
-            "port:", port,
-        "]"
-    );
-
     return nullptr;
 }
 

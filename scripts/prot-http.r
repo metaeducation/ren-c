@@ -123,10 +123,6 @@ http-awake: function [return: [logic!] event [event!]] [
             read port
             false
         ]
-        'lookup [
-            connect port
-            false
-        ]
         'connect [
             state.mode: 'ready
             awake make event! [type: 'connect port: http-port]

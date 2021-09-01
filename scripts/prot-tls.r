@@ -1757,17 +1757,9 @@ tls-awake: func [
             fail port.error
         ]
 
-        'lookup [
-            open port
-            tls-init tls-port.state
-            insert system.ports.system make event! [
-                type: 'lookup
-                port: tls-port
-            ]
-            return false
-        ]
-
         'connect [
+            tls-init tls-port.state
+
             do-commands tls-port.state [<client-hello>]
 
             if tls-port.state.resp.1.type = #handshake [

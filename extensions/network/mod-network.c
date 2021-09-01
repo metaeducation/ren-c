@@ -191,15 +191,12 @@ static REB_R Transport_Actor(
                 REBVAL *lookup_error = Lookup_Socket(port, arg);
                 if (lookup_error)
                     fail (lookup_error);
-
-                RETURN (port);
             }
             else if (IS_TUPLE(arg)) {  // Host IP specified:
                 sock->remote_port_number =
                     IS_INTEGER(port_id) ? VAL_INT32(port_id) : 80;
 
                 Get_Tuple_Bytes(&sock->remote_ip, arg, 4);
-                goto open_socket_actions;
             }
             else if (IS_BLANK(arg)) {  // No host, must be a LISTEN socket:
                 sock->modes |= RST_LISTEN;
@@ -213,11 +210,15 @@ static REB_R Transport_Actor(
                     CTX_VAR(ctx, STD_PORT_CONNECTIONS),
                     Make_Array(2)
                 );
-                goto open_socket_actions;
             }
             else
                 fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));
-            break; }
+
+            REBVAL *connect_error = Connect_Socket_Maybe_Queued(port);
+            if (connect_error != nullptr)
+                fail (connect_error);
+
+            RETURN (port); }
 
           case SYM_CLOSE:
             RETURN (port);
@@ -226,8 +227,6 @@ static REB_R Transport_Actor(
             fail (Error_On_Port(SYM_NOT_OPEN, port, -12));
         }
     }
-
-  open_socket_actions:
 
     switch (VAL_WORD_ID(verb)) { // Ordered by frequency
       case SYM_REFLECT: {
@@ -484,15 +483,12 @@ static REB_R Transport_Actor(
         }
         RETURN (port); }
 
-      case SYM_OPEN: {
+      case SYM_CONNECT: {
         //
         // CONNECT may happen synchronously, or asynchronously...so this may
         // add to Net_Connectors.
         //
         // UDP is connectionless so it will not add to the connectors.
-        //
-        // !!! R3-Alpha would allow you to OPEN an OPEN port.  That would also
-        // be synchronous.  Bad idea?
         //
         REBVAL *error = Connect_Socket_Maybe_Queued(port);
         if (error != nullptr)
