@@ -53,7 +53,7 @@ run-single-test: func [
     let [error result]: trap as block! code
     case [
         error [
-            spaced ["error" any [to text! error.id, "w/no ID"]]
+            spaced ["error" any [to text! try error.id, "w/no ID"]]
         ]
         bad-word? ^result [
             "test returned" (mold ^result) "(isotope)"

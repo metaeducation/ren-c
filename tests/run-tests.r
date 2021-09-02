@@ -38,10 +38,11 @@ flags: pick [
 
 check: checksum 'sha1 to binary! mold system.build
 
-log-file-prefix: copy %r
-for i length of version: system.version [
-    append log-file-prefix "_"
-    append log-file-prefix mold version.(i)
+log-file-prefix: join %r collect [
+    for i length of version: system.version [
+        keep "_"
+        keep version.(i)
+    ]
 ]
 
 
