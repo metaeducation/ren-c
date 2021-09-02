@@ -173,7 +173,13 @@ REBTYPE(Url)
     REBVAL *url = D_ARG(1);
 
     OPT_SYMID id = VAL_WORD_ID(verb);
-    if (GET_CELL_FLAG(url, UNEVALUATED)) {
+    if (id == SYM_COPY) {
+        //
+        // https://forum.rebol.info/t/copy-and-port/1699
+        //
+        RETURN (url);
+    }
+    else if (GET_CELL_FLAG(url, UNEVALUATED)) {
         //
         // There are risks associated when common terms like APPEND can too
         // carelessly be interpreted as IO.  Because what was intended as a
