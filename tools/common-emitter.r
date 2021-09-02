@@ -34,11 +34,14 @@ REBOL [
     }
 ]
 
-do %import-shim.r
-import %bootstrap-shim.r
-import %common.r  ; for REPO-DIR
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
 
-import %systems.r  ; for BOOT-VERSION
+import <bootstrap-shim.r>
+import <common.r>  ; for REPO-DIR
+
+import <systems.r>  ; for BOOT-VERSION
 
 export cscape: function [
     {Escape Rebol expressions in templated C source, returns new string}

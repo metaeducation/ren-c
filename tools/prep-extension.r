@@ -33,18 +33,21 @@ REBOL [
 
 verbose: false
 
-do %import-shim.r
-import %common.r
-import %bootstrap-shim.r
-import %common-emitter.r
-import %systems.r
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
+
+import <common.r>
+import <bootstrap-shim.r>
+import <common-emitter.r>
+import <systems.r>
 
 ; The way that the processing code for extracting Rebol information out of
 ; C file comments is written is that the PROTO-PARSER has several callback
 ; functions that can be registered to receive each item it detects.
 
-import %common-parsers.r
-import %native-emitters.r ; for emit-include-params-macro
+import <common-parsers.r>
+import <native-emitters.r>  ; for EMIT-INCLUDE-PARAMS-MACRO
 
 
 ; !!! We put the modules .h files and the .inc file for the initialization
@@ -52,10 +55,23 @@ import %native-emitters.r ; for emit-include-params-macro
 ; include path for the build of the extension
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
+
+; !!! At time of writing, SRC=extensions/name/mod-name.c is what this script
+; gets on the command line.  This is split out to make a directory to put the
+; prep products in, and then assumed to be in the repo's source directory.
+; Longer term, this should work if you want to point at extensions with web
+; addresses to pull and build them, etc.  It should not give the module name,
+; just point at a directory and follow the specification.
+;
 src: to file! :args/SRC
 set [in-dir file-name] split-path src
-output-dir: make-file [(system/options/path) prep / (in-dir)]
-insert src %../
+
+; Assume we start up in the directory where build products are being made
+;
+output-dir: make-file [(what-dir) prep / (in-dir)]
+
+src: join repo-dir src
+
 mkdir/deep output-dir
 
 
@@ -66,7 +82,7 @@ m-name: mod
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
-c-src: make-file [../ (as file! ensure text! args/SRC)]
+c-src: make-file [(repo-dir) (as file! ensure text! args/SRC)]
 
 
 === {CALCULATE NAMES OF BUILD PRODUCTS} ===

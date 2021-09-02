@@ -22,14 +22,17 @@ REBOL [
 
 print "--- Make Boot : System Embedded Script ---"
 
-do %import-shim.r
-import %bootstrap-shim.r
-import %common.r
-import %common-emitter.r
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
 
-import %systems.r
+import <bootstrap-shim.r>
+import <common.r>
+import <common-emitter.r>
 
-change-dir %../src/boot/
+import <systems.r>
+
+change-dir join repo-dir %src/boot/
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
 config: config-system try get 'args/OS_ID

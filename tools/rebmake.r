@@ -32,8 +32,11 @@ REBOL [
     }
 ]
 
-do %import-shim.r
-import %bootstrap-shim.r
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
+
+import <bootstrap-shim.r>
 
 default-compiler: _
 default-linker: _

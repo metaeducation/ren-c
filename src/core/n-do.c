@@ -329,7 +329,8 @@ bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
 //          binary!  ; treated as UTF-8
 //          url!  ; load code from URL via protocol
 //          file!  ; load code from file on local disk
-//          tag!  ; module name (URL! looked up from table)
+//          tag!  ; load relative to system.script.name
+//          the-word!  ; module name (URL! looked up from table)
 //          error!  ; should use FAIL instead
 //          action!  ; will only run arity 0 actions (avoids DO variadic)
 //          frame!  ; acts like APPLY (voids are optionals, not unspecialized)

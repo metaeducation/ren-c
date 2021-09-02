@@ -13,31 +13,33 @@ REBOL [
     }
 ]
 
-do %tools/import-shim.r
-import %tools/bootstrap-shim.r
-import %tools/common.r  ; Note: sets up `repo-dir`
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %tools/import-shim.r
+]
 
-import %tools/systems.r
+import <tools/bootstrap-shim.r>
+import <tools/common.r>  ; Note: sets up `repo-dir`
+import <tools/systems.r>
 
-rebmake: import %tools/rebmake.r
+rebmake: import <tools/rebmake.r>
+
 
 === {ADJUST TO AN OUT-OF-SOURCE BUILD IF RUN FROM REPOSITORY's DIRECTORY} ===
 
-; When you run a Rebol script, the `current-path` is the directory where the
-; script is.  %make.r lives in `repo-dir`
+; NOTE NEW BEHAVIOR IN REN-C, DIFFERENT FROM HISTORICAL REBOL:
 ;
-assert [what-dir = repo-dir]
+; When you run a Ren-C script from the command line, the `current-path` is the
+; directory where the user was when the script launched.
+;
+; We default to building in a subdirectory called %build/ if they launch from
+; the repository directory itself.  Otherwise we build wherever they are.
 
-; However, we assume the output directory where build products will be put
-; is wherever the path is that the shell was in when %make.r was *invoked*.
-; (unless it's run in the same directory as %make.r--then default to %build/)
-;
-if repo-dir = system/options/path [
+if repo-dir = what-dir [
     launched-from-root: true
     output-dir: make-file [(repo-dir) build /]
     make-dir output-dir
 ] else [
-    output-dir: system/options/path  ; out-of-source build
+    output-dir: what-dir  ; out-of-source build
     launched-from-root: false
 ]
 
@@ -59,16 +61,9 @@ user-config: make object! load make-file [(repo-dir) configs/default-config.r]
 
 === {SPLIT ARGS INTO OPTIONS AND COMMANDS} ===
 
-; The current-directory will be started out as being wherever make.r is, e.g.
-; the repo-dir.  But the user probably wants command line arguments relative
-; to what the directory was when they ran the interpeter.
-;
-; For the duration of command line argument processing, switch the directory
-; to system/options/path, so relative arguments are to that.
-;
-; https://forum.rebol.info/t/1541
-
-change-dir system/options/path
+; Note that we should have launched %make.r with the notion of the current
+; directory (WHAT-DIR) being the same as what the user had on the command line.
+; So relative paths should be interpreted the same.
 
 ; args are:
 ; [OPTION | COMMAND] ...

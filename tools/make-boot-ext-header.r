@@ -37,10 +37,13 @@ REBOL [
     }
 ]
 
-do %import-shim.r
-import %bootstrap-shim.r
-import %common.r
-import %common-emitter.r
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
+
+import <bootstrap-shim.r>
+import <common.r>
+import <common-emitter.r>
 
 r3: system/version > 2.100.0
 

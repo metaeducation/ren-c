@@ -14,20 +14,26 @@ REBOL [
     Needs: 2.100.100
 ]
 
-do %import-shim.r
-import %common.r
-import %bootstrap-shim.r
-import %common-parsers.r
-import %common-emitter.r
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
+
+import <common.r>
+import <bootstrap-shim.r>
+import <common-parsers.r>
+import <common-emitter.r>
 
 print "--- Make Reb-Lib Headers ---"
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-output-dir: make-file [(system/options/path) prep /]
-output-dir: make-file [(output-dir) include /]
+
+; Assume we start up in the directory where we want build products to go
+;
+output-dir: make-file [(what-dir) prep/include /]
+
 mkdir/deep output-dir
 
-ver: load-value %../src/boot/version.r
+ver: load-value join repo-dir %src/boot/version.r
 
 
 === PROCESS %a-lib.h TO PRODUCE DESCRIPTION OBJECTS FOR EACH API ===
@@ -158,7 +164,7 @@ process: func [file] [
     proto-parser/process as text! read file
 ]
 
-src-dir: %../src/core/
+src-dir: join repo-dir %src/core/
 
 process make-file [(src-dir) a-lib.c]
 

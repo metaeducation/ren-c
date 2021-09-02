@@ -203,53 +203,26 @@ load-header: function [
 ]
 
 
-load: function [
+load: func [
     {Loads code or data from a file, URL, text string, or binary.}
 
     return: "BLOCK! if Rebol code, otherwise value(s) appropriate for codec"
-        [any-value!]
+        [<opt> any-value!]
     header: "<output> Request the Rebol header object be returned as well"
         [object!]
 
     source "Source of the information being loaded"
-        [file! url! text! binary! tag!]
+        [<blank> file! url! tag! the-word! text! binary!]
     /type "E.g. rebol, text, markup, jpeg... (by default, auto-detected)"
         [word!]
+
+    <local> file line data hdr
 ][
-    if tag? source [
-        source: switch source
-            (load system.locale.library.utilities)  ; Note: recursion!
-        else [
-            fail [{LOAD} source {not in system.locale.library}]
-        ]
-    ]
+    if match [file! url! tag! the-word!] source [
+        source: clean-path source
 
-    ; Note that code or data can be embedded in other datatypes, including
-    ; not just text, but any binary data, including images, etc. The type
-    ; argument can be used to control how the raw source is converted.
-    ; Pass a /TYPE of blank or 'UNBOUND if you want embedded code or data.
-    ;
-    ; Scripts are normally bound to the user context, but no binding will
-    ; happen for a module or if the /TYPE is 'UNBOUND.  This allows the result
-    ; to be handled properly by DO (keeping it out of user context.)
-    ; Extensions will still be loaded properly if type is unbound.
-    ;
-    ; Note that IMPORT has its own loader, and does not use LOAD directly.
-    ; /TYPE with anything other than 'EXTENSION disables extension loading.
-
-    ; Detect file type, and decode the data
-
-    if match [file! url!] source [
-        file: source
-        line: 1
+        file: ensure [file! url!] source
         type: default [file-type? source else ['rebol]]  ; !!! rebol default?
-
-        if type = 'extension [
-            if not file? source [
-                fail ["Can only load extensions from FILE!, not" source]
-            ]
-            return ensure module! load-extension source  ; DO embedded script
-        ]
 
         data: read source
 
@@ -268,17 +241,17 @@ load: function [
         ]
     ]
     else [
-        file: line: null
+        file: null
         data: source
         type: default ['rebol]
+    ]
 
-        if type = 'extension [
-            fail "Extensions can only be loaded from a FILE! (.DLL, .so)"
-        ]
+    if type = 'extension [
+        fail "Use LOAD-EXTENSION to load extensions (at least for now)"
     ]
 
     if not find [unbound rebol] ^type [
-        if find system/options/file-types ^type [
+        if find system.options.file-types ^type [
             return decode type :data
         ]
 
@@ -287,13 +260,7 @@ load: function [
 
     ensure [text! binary!] data
 
-    if block? data [
-        return data  ; !!! Things break if you don't pass through; review
-    ]
-
-    ; Try to load the header, handle error
-
-    let [hdr 'data line]: load-header/file data file
+    [hdr data line]: load-header/file data file
 
     if word? hdr [cause-error 'syntax hdr source]
 
@@ -314,7 +281,7 @@ load: function [
         'module = select hdr 'type
         find (try get 'hdr/options) [unbound]
     ] then [
-        data: intern* system/contexts/user data
+        data: intern* system.contexts.user data
     ]
 
     if header [
@@ -365,7 +332,8 @@ import*: func [
         [blank! module!]
     source [
         file! url!  ; get from location, run with location as working dir
-        tag!  ; look up tag as a shorthand for a URL
+        tag!  ; load relative to system.script.path
+        the-word!  ; look up as a shorthand in registry
         binary!  ; UTF-8 source, needs to be checked for invalid byte patterns
         text!  ; source internally stored as validated UTF-8, *may* scan faster
         word!  ; not entirely clear on what WORD! does.  :-/
@@ -432,7 +400,7 @@ import*: func [
     ;
     let old-importing-remotely: importing-remotely
     if all [importing-remotely, word? source] [
-        source: to tag! source
+        source: to the-word! source
     ]
 
     if word? source [
@@ -447,34 +415,22 @@ import*: func [
         fail ["Could not find any" file "in SYSTEM.OPTIONS.MODULE-PATHS"]
     ]
 
-    === IMPORT <TAG> AS SHORTHAND FOR MODULE FROM LIBRARIES INDEX ===
+    === GET DIRECTORY PORTION OF SOURCE PATH FOR NEW SYSTEM.SCRIPT.PATH  ===
 
-    ; This translates a tag into a URL!.  The list is itself loaded from
-    ; the internet, URL is in `system.locale.library.utilities`
-    ;
-    ; !!! As the project matures, this would have to come from a curated
-    ; list, not just links on individuals' websites.  There should also be
-    ; some kind of local caching facility.
-    ;
-    if tag? source [
-        importing-remotely: true
-        source: switch source
-            (load system.locale.library.utilities)
-        else [
-            fail [{Module} source {not in system.locale.library}]
-        ]
+    ; A relative path may have contributed some of its own directory portions,
+    ; so extract the net path where we're executing to save in system.script.
+
+    let dir: null
+    match [file! url! the-word! tag!] source then [
+        source: clean-path source
+        dir: as text! source
+        let file: find-last/tail dir slash
+        assert [file]
+        dir: as (type of source) copy/part dir file
     ]
 
-    === ADJUST RELATIVE PATHS TO ABSOLUTE, EVEN IF RELATIVE TO A URL ===
-
-    let original-path: what-dir
-    let original-script: '
-
-    ; If a file is being mentioned as a DO location and the "current path"
-    ; is a URL!, then adjust the source to be a URL! based from that path.
-    ;
-    if all [url? original-path, file? source] [
-         source: join original-path source
+    if url? source [
+        importing-remotely: true
     ]
 
     === LOAD JUST THE HEADER FOR EXAMINATION, TO FIND THE NAME ===
@@ -508,37 +464,6 @@ import*: func [
 
     let is-module: hdr and ('module = select hdr 'type)
 
-    === CHANGE WORKING DIRECTORY TO MATCH DIRECTORY OF THE SCRIPT ===
-
-    ; When we run code from a file, the "current" directory is changed to the
-    ; directory of that script.  This way, relative path lookups to find
-    ; dependent files will look relative to the script.  This is believed to
-    ; be the best interpretation of shorthands like `read %foo.dat` or
-    ; `do %utilities.r`.
-    ;
-    ; We want this behavior for both FILE! and for URL!, which means
-    ; that the "current" path may become a URL!.  This can be processed
-    ; with change-dir commands, but it will be protocol dependent as
-    ; to whether a directory listing would be possible (HTTP does not
-    ; define a standard for that)
-    ;
-    ; The original path before running the code should be restored before
-    ; this function returns.
-    ;
-    ; !!! There are some issues with this idea of preserving the path--one of
-    ; which is that WHAT-DIR may return null.
-
-    ; We have to do this prior to executing the script code so it sees the
-    ; change.  But we do it after the scan, in case there was a syntax error.
-
-    if match [file! url!] source [
-        let dir: as text! source
-        let file: find-last/tail dir slash
-        if file [
-            change-dir as (type of source) copy/part dir file
-        ]
-    ]
-
     === MAKE SCRIPT CHARACTERIZATION OBJECT AND CALL PRE-SCRIPT HOOK ===
 
     ; The header object doesn't track instance information like the args to
@@ -547,14 +472,14 @@ import*: func [
     ; base object for gathering these other instantiation-related properties
     ; so the running script can know about them.
 
-    original-script: system.script
+    let original-script: system.script
 
     system.script: make system.standard.script compose [
         title: try select try hdr 'title
         header: hdr
         parent: :original-script
-        path: what-dir
-        args: (try :args)
+        path: dir
+        args: (try :args)  ; variable named same as field, trips up binding
     ]
 
     if (set? 'script-pre-load-hook) and (match [file! url!] source) [
@@ -566,6 +491,30 @@ import*: func [
         ; !!! Should there be a post-script-hook?
         ;
         script-pre-load-hook is-module try hdr
+    ]
+
+    === CHANGE WORKING DIRECTORY TO MODULE'S DIRECTORY (IF IT'S A MODULE) ===
+
+    ; When code is run with DO or on the command line, it is considered to be
+    ; a "script".  It can be instantiated multiple times and passed arguments.
+    ; These arguments may include relative file paths like %foo.txt, where the
+    ; notion of where they are relative to is in the worldview of the person
+    ; who invoked DO.  The best way of letting the script stay in that view
+    ; is to leave the current working directory where it is.
+    ;
+    ; But when you IMPORT a module, this module is imported once even if it is
+    ; invoked from multiple locations.  Hence one should not rely on side
+    ; effects of an IMPORT, nor be passing it arguments (as no code might run
+    ; at all on the IMPORT).  So the only real sensible notion for a "current
+    ; directory" would be the directory of the module.
+    ;
+    ; (The notation of `import @some-module.r` is provided to request a path
+    ; be looked up relative to `system.script.path`.  But %xxx.r is always
+    ; looked up relative to the current directory.)
+
+    let original-path: what-dir
+    if where and (dir) [  ; IMPORT
+        change-dir dir
     ]
 
     === EXECUTE SCRIPT BODY ===

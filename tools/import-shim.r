@@ -21,6 +21,39 @@ Rebol [
         doesn't let them act as expression barriers but can help readability.
         Additionally it turns lone quotes into the word `null`.
     }
+    Notes: {
+        * DO no longer changes the working directory to system.script.path,
+          so to include this it should say this magic incantation:
+
+            if not find words of import [product] [
+                do load append copy system/script/path %import-shim.r
+            ]
+
+          This helps standardize the following rules between the new and the
+          old bootstrap executable:
+
+            https://github.com/metaeducation/rebol-issues/issues/2374
+
+          A couple of points...  :-(
+
+          LOAD is used so that the DO does not have the legacy behavior of
+          changing to the directory of %import-shim.r, because it's just doing
+          a BLOCK!.  This also keeps it from resetting the directory when the
+          DO is over, so we can CHANGE-DIR in this script to compensate for
+          the changing into the script directory...making it appear that the
+          command line processing never switched the dir in the first place.
+
+          APPEND is used instead of JOIN because the bootstrap executable
+          semantically considers JOIN to be mutating.  The decision on this
+          was that JOIN would be non-mutating but also non-reducing.  But the
+          bootstrap-shim.r can't be imported until after the import-shim.r, so
+          using APPEND is the clearest alternative.)
+
+          There seems to be flakiness on recursive DO in the bootstrap EXE.
+          So having multi-inclusion handled inside this script isn't an option,
+          because READs and other things start panic'ing randomly.  It seems
+          avoiding recursion solves the issue.
+    }
 ]
 
 already-imported: make map! []  ; avoid importing things twice
@@ -31,7 +64,14 @@ trap [
     quit  ; assume modern IMPORT/EXPORT, don't need hacks
 ]
 
-if in lib 'import-shim-loaded [quit]  ; already ran this shim
+if set? 'import-shim-loaded [  ; already ran this shim
+    fail "Recursive loading %import-shim.r is flaky, check 'import-shim-loaded"
+]
+
+; Standardize the directory to be wherever the command line was invoked from,
+; and NOT where the script invoked (e.g. %make.r) is located.
+;
+change-dir system/options/path
 
 export: func [
     "%import-shim.r variant of EXPORT which just puts the definition into LIB"
@@ -120,14 +160,31 @@ do: lib/do: enclose :lib/do func [f <local> old-dir] [
     elide if old-dir [change-dir old-dir]
 ]
 
+first-import: true
+
 import: enfix func [
     "%import-shim.r variant of IMPORT which acts like DO and loads only once"
 
     :set-word [<skip> set-word!]
-    f [file!]
-    <local> code old ret path+file
+    f [tag!]  ; help catch mistakes, all bootstrap uses TAG!
+
+    ; !!! The new import has a PRODUCT: output, but WORDS OF only returns
+    ; words in modern Ren-C...whereas they were decorated in historical Rebol.
+    ; Make the signal the argument to an old-style refinement so the WORDS OF
+    ; will make it look like a plain word for the check.
+    ;
+    /trick product "Signal that the shim has been applied"
+
+    ; NOTE: LET is unavailable (we have not run the bootstrap shim yet)
+    ;
+    <local> ret path+file old-dir old-system-script code new-script-path
 ][
-    f: clean-path f
+    if trick [
+        fail "/PRODUCT not actually available, just makes IMPORT look modern"
+    ]
+
+    f: as file! f
+
     ret: :already-imported/(f)
     if not null? :ret [
         return :ret
@@ -135,10 +192,26 @@ import: enfix func [
 
     path+file: split-path f
 
-    old: what-dir
-    change-dir first path+file
+    assert [#"/" <> first path+file/1]  ; should be relative
+    assert [#"%" <> first path+file/1]  ; accidental `import <%foo.r>`
+
+    new-script-path: append copy system/script/path path+file/1
+
+    new-script-path: clean-path new-script-path
+
+    old-dir: what-dir
+    old-system-script: system/script
+    change-dir new-script-path
+    system/script: make system/standard/script [
+        title: "Script imported by import shim"
+        header: _
+        parent: system/standard/script
+        path: new-script-path
+        args: _
+    ]
 
     code: read/string second path+file
+
     if find code "Type: 'Module" [
         fail "Old tick-style module definition, use `Type: module` instead"
     ]
@@ -163,8 +236,11 @@ import: enfix func [
         ]
     ]
 
-    change-dir old
-
+    change-dir old-dir
+    system/script: old-system-script
+    if system/script/path = %/home/hostilefork/Projects/ren-c/ [
+        protect 'system/script/path
+    ]
     already-imported/(f): ret
     return ret
 ]
@@ -179,4 +255,4 @@ lib/import: sys/import: func [
     fail ["Bootstrap must use %import-shim.r's IMPORT, not call LIB/IMPORT"]
 ]
 
-append lib compose [import-shim-loaded: true]
+import-shim-loaded: true

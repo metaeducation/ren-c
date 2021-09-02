@@ -18,10 +18,51 @@ clean-path: func [
     {Returns new directory path with `.` and `..` processed.}
 
     return: [file! url! text!]
-    path [file! url! text!]
+    path [file! url! text! tag! the-word!]
     /only "Do not prepend current directory"
     /dir "Add a trailing / if missing"
 ][
+    ; TAG! is a shorthand for getting files relative to the path of the
+    ; currently running script.
+    ;
+    ; !!! This has strange interactions if you have a function that gets
+    ; called back after a script has finished, and it still wants to
+    ; fetch resources relative to its original location.  These issues are
+    ; parallel to that of using the current working directory, so one
+    ; should be cautious.
+    ;
+    if tag? path [
+        if #"/" = first path [
+            fail ["TAG! import from SYSTEM.SCRIPT.PATH not relative:" path]
+        ]
+        if #"%" = first path [
+            fail ["Likely mistake, % in TAG!-style import path:" path]
+        ]
+        if not find path "." [  ; !!! for compatibility, treat as index lookup
+            path: to the-word! path
+        ]
+        else [
+            path: join system.script.path (as text! path)
+        ]
+    ]
+
+    ; This translates `@tool` into a URL!.  The list is itself loaded from
+    ; the internet, URL is in `system.locale.library.utilities`.
+    ;
+    ; !!! Note the above compatibility hack that turns <foo> into @foo
+    ;
+    ; !!! As the project matures, this would have to come from a curated
+    ; list, not just links on individuals' websites.  There should also be
+    ; some kind of local caching facility.
+    ;
+    if the-word? path [
+        path: switch as tag! path  ; !!! list actually used tags, should change
+            (load system.locale.library.utilities)
+        else [
+            fail [{Module} path {not in system.locale.library.utilities}]
+        ]
+    ]
+
     let scheme: _
 
     let target

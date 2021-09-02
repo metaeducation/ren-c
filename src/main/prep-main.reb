@@ -23,29 +23,36 @@ REBOL [
     }
 ]
 
-do %../../tools/import-shim.r
-import %../../tools/common.r  ; for PARSE-ARGS, STRIPLOAD, BINARY-TO-C...
-import %../../tools/common-emitter.r  ; for splicing Rebol in templated strings
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %../../tools/import-shim.r
+]
+
+import <../../tools/common.r>  ; for PARSE-ARGS, STRIPLOAD, BINARY-TO-C...
+import <../../tools/common-emitter.r>  ; for splicing Rebol in templated strings
 
 args: parse-args system/script/args  ; either from command line or DO/ARGS
-output-dir: make-file [(system/options/path) prep /]
+
+; Assume we start up in the directory where the build/prep products should be
+;
+output-dir: make-file [(what-dir) prep /]
 mkdir/deep make-file [(output-dir) main /]
 
 
 buf: make text! 200000
 
+change-dir repo-dir
 
 ; In order to get the whole process rolling for the r3.exe, it needs to do
 ; command line processing and read any encapped code out of the executable.
 ; It would likely want to build on ZIP files to do this, so the unzip script
 ; is embedded as well.
 ;
-for-each file [
-    %../../scripts/unzip.reb
-    %../../scripts/encap.reb
+for-each file reduce [
+    %scripts/unzip.reb
+    %scripts/encap.reb
 
-    %../../scripts/make-file.r  ; Work in progress for FILE! conversion
-    %../../scripts/shell.r  ; SHELL dialect (requires CALL, here for editing)
+    %scripts/make-file.r  ; Work in progress for FILE! conversion
+    %scripts/shell.r  ; here vs. in module for easier editing
 
     ; %prot-http.r and %prot-tls.r don't have any native code directly in them,
     ; so they don't need to be "extensions".  They could just be encapped
@@ -55,10 +62,10 @@ for-each file [
     ;
     ; Note that these depend on the crypto extension being initialized to run.
 
-    %../../scripts/prot-tls.r  ; TLS (a.k.a. the "S" in HTTPS)
-    %../../scripts/prot-http.r  ; HTTP Client (HTTPS if used with TLS)
+    %scripts/prot-tls.r  ; TLS (a.k.a. the "S" in HTTPS)
+    %scripts/prot-http.r  ; HTTP Client (HTTPS if used with TLS)
 
-    %main-startup.reb
+    %src/main/main-startup.reb
 ][
     header: ~
     contents: stripload/header file 'header

@@ -19,8 +19,11 @@ REBOL [
     }
 ]
 
-do %import-shim.r
-import %bootstrap-shim.r  ; modern importing system, works
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
+
+import <bootstrap-shim.r>
 
 
 ; When you run a Rebol script, the `current-path` is the directory where the
@@ -360,6 +363,7 @@ export write-if-changed: function [
         not exists? dest
         content != read dest
     ] then [
+        print ["DETECTED CHANGE:" dest]
         write dest content
     ]
 ]

@@ -509,13 +509,13 @@ reeval func* [
     percent?:
     money?:
     pair?:
-    tuple?:
     time?:
     date?:
     word?:
     set-word?:
     get-word?:
     meta-word?:
+    the-word?:
     issue?:
     binary?:
     text?:
@@ -528,14 +528,22 @@ reeval func* [
     set-path?:
     get-path?:
     meta-path?:
+    the-path?:
+    tuple?:
+    set-tuple?:
+    get-tuple?:
+    meta-tuple?:
+    the-tuple?:
     block?:
     set-block?:
     get-block?:
     meta-block?:
+    the-block?:
     group?:
     get-group?:
     set-group?:
     meta-group?:
+    the-group?:
     map?:
     datatype?:
     typeset?:

@@ -14,16 +14,19 @@ REBOL [
     Needs: 2.100.100
 ]
 
-do %import-shim.r
-import %common.r
-import %common-emitter.r
-import %common-parsers.r
-import %native-emitters.r  ; for EMIT-INCLUDES-PARAM-MACRO
-import %text-lines.reb
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
 
-c-lexical: import %c-lexicals.r
+import <common.r>
+import <common-emitter.r>
+import <common-parsers.r>
+import <native-emitters.r>  ; for EMIT-INCLUDES-PARAM-MACRO
+import <text-lines.reb>
 
-file-base: make object! load %file-base.r
+c-lexical: import <c-lexicals.r>
+
+file-base: make object! load join repo-dir %tools/file-base.r
 
 tools-dir: system/options/current-path
 output-dir: make-file [(system/options/path) prep /]
@@ -32,7 +35,7 @@ mkdir/deep make-file [(output-dir) include /]
 mkdir/deep make-file [(output-dir) include /]
 mkdir/deep make-file [(output-dir) core /]
 
-change-dir %../src/core/
+change-dir join repo-dir %src/core/
 
 print "------ Building headers"
 

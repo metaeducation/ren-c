@@ -16,14 +16,17 @@ REBOL [
     Needs: 2.100.100
 ]
 
-do %import-shim.r
-import %bootstrap-shim.r
-import %common.r
-import %common-emitter.r
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
 
-import %common-parsers.r
+import <bootstrap-shim.r>
+import <common.r>
+import <common-emitter.r>
 
-import %text-lines.reb
+import <common-parsers.r>
+
+import <text-lines.reb>
 
 export emit-native-proto: func [
     "Emit native prototypes to @unsorted-buffer"

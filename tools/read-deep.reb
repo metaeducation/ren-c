@@ -13,9 +13,12 @@ REBOL [
     Purpose: "Recursive READ strategies."
 ]
 
-do %import-shim.r
-import %common.r
-import %bootstrap-shim.r
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
+
+import <common.r>
+import <bootstrap-shim.r>
 
 ; read-deep-seq aims to be as simple as possible. I.e. relative paths
 ; can be derived after the fact.  It uses a state to next state approach

@@ -36,7 +36,7 @@ REBOL [
             INCLUDE_PARAMS_OF_NATIVE_NAME;
 
             if (REF(refinement)) {
-                 int i = VAL_INT32(argument);
+                 int i = VAL_INT32(ARG(argument));
                  /* etc, etc. */
             }
             return D_OUT;
@@ -60,15 +60,18 @@ REBOL [
     }
 ]
 
-do %import-shim.r
-import %common.r
-import %bootstrap-shim.r
-import %common-parsers.r
-import %native-emitters.r ;for emit-native-proto
+if not find words of :import [product] [  ; See %import-shim.r
+    do load append copy system/script/path %import-shim.r
+]
+
+import <common.r>
+import <bootstrap-shim.r>
+import <common-parsers.r>
+import <native-emitters.r>  ; for EMIT-NATIVE-PROTO
 
 print "------ Generate tmp-natives.r"
 
-src-dir: %../src/
+src-dir: join repo-dir %src/
 output-dir: make-file [(system/options/path) prep /]
 mkdir/deep make-file [(output-dir) boot /]
 

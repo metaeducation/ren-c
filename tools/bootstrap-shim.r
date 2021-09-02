@@ -826,4 +826,4 @@ zip: enclose :zip lib/function [f] [
 ; who `import %bootstrap-shim.r` in future versions, you'd have to re-export
 ; the imports as part of this module's output.  :-/
 ;
-import %../scripts/make-file.r
+import <../scripts/make-file.r>

@@ -22,9 +22,9 @@ REBOL [
     }
 ]
 
-c-lexical: import %c-lexicals.r
-import %text-lines.reb
-import %parsing-tools.reb
+c-lexical: import <c-lexicals.r>
+import <text-lines.reb>
+import <parsing-tools.reb>
 
 decode-key-value-text: function [
     {Decode key value formatted text.}
