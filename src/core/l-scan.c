@@ -1074,34 +1074,46 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             | LEX_FLAG(LEX_SPECIAL_WORD)  // `=` is WORD!-character, sets this
         ))
     ){
+        bool seen_angles = false;
+
         const REBYTE *temp = cp;
         while (
-            *temp == '<' or *temp == '>'
+            (*temp == '<' and (seen_angles = true))
+            or (*temp == '>' and (seen_angles = true))
             or *temp == '+' or *temp == '-'
             or *temp == '=' or *temp == '|'
         ){
             ++temp;
             if (temp != ss->end)
                 continue;
-            if (*cp == '<' and *temp == '/') {
-                //
-                // The prescan for </foo> thinks that it might be a PATH! like
-                // `</foo` so it stops at the slash.  To solve this, we only
-                // support the `</foo>` and <foo />` cases of slashes in TAG!.
-                // We know this is not the latter, because we did not hit a
-                // space while we were processing.  For the former case, we
-                // look to see if we get to a `>` before we hit a delimiter.
-                //
-                const REBYTE *seek = temp + 1;
-                for (; not IS_LEX_DELIMIT(*seek); ++seek) {
-                    if (*seek == '>') {  // hit close of tag first
-                        ss->end = seek + 1;
-                        return TOKEN_TAG;
-                    }
-                }
-                // Hit a delimiter first, so go ahead with our arrow and let
-                // the scan of a PATH! proceed after that.
-            }
+
+            // There has been a change from where things like `<.>` are no
+            // longer a TUPLE! with < and > in it, to where it's a TAG!; this
+            // philosophy limits WORD!s like << or >> from being put in
+            // PATH!s and TUPLE!s:
+            //
+            // https://forum.rebol.info/t/1702
+            //
+            // The collateral damage is that things like `>/<` are illegal for
+            // the sake of simplicity.  Such rules could be reviewed at a
+            // later date.
+            //
+            // This code was modified to drop out of arrow-word scanning when
+            // > or < were seen and a . or / happened.  Previously it had said:
+            //
+            // "The prescan for </foo> thinks that it might be a PATH! like
+            // `</foo` so it stops at the slash.  To solve this, we only
+            // support the `</foo>` and <foo />` cases of slashes in TAG!.
+            // We know this is not the latter, because we did not hit a
+            // space while we were processing.  For the former case, we
+            // look to see if we get to a `>` before we hit a delimiter."
+            //
+            // I think prescan has to be adjusted, so this `seen_angles`
+            // might become some kind of assert.
+            //
+            if (seen_angles and (*temp == '/' or *temp == '.'))
+                break;
+
             return TOKEN_WORD;
         }
         if (*temp == ':' and temp + 1 == ss->end) {

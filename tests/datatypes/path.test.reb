@@ -217,3 +217,11 @@
 ; Need to decay null isotopes in GROUP!s
 ;
 ([a b c d] = append/(if true [null]) [a b c] [d])
+
+; Made this example in a forum post, tested it working, so why not a test
+(
+    '+../foo.r+ = as path! reduce [
+        as tuple! [+ _ _]
+        as tuple! [foo r+]
+    ]
+)

@@ -56,6 +56,18 @@
 #define HAS_MISC_Hitch          FLAVOR_SYMBOL
 
 
+//=//// SYMBOL_FLAG_ARROW //////////////////////////////////////////////////=//
+//
+// Arrow words are marked when they are interned so it's known not to allow
+// them to be put in PATH!s or TUPLE!s, as dots and slashes are legal in the
+// internals of TAG!.
+//
+// https://forum.rebol.info/t/1702
+//
+#define SYMBOL_FLAG_ARROW \
+    SERIES_FLAG_24
+
+
 #if defined(NDEBUG) || !defined(CPLUSPLUS_11)
     //
     // Trivial definition for C build or release builds: symbols are just a C

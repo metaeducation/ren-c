@@ -35,8 +35,6 @@
         "/a/"  ->  [_ a _]
         "//a//"  ->  [_ _ a _ _]
 
-        "/<tag>/"  ->  [_ <tag> _]
-
         "(a b)/c"  ->  [^(a b) c]
         "(a b) /c"  ->  ^(a b)  [_ c]
 
@@ -60,22 +58,22 @@
         "a.1.(x)/[a b c]/<d>.2"  ->  [(a 1 ^(x)) ^[a b c] (<d> 2)]
 
         "~/projects/"  ->  [~ projects _]
-        "~a~.~b~/~c~"  !!  <scan-invalid>
+        "~a~.~b~/~c~"  !!  ~scan-invalid~
 
-        ; === Comma Tests ===
+        === COMMA TESTS ===
 
         "/a/, b."  -> [_ a _] , (b _)
 
-        ; === Bad Path Element Tests ===
-        ;
+        === BAD PATH ELEMENT TESTS ===
+
         ; TUPLE! can go in PATH! but not vice-versa.  Besides that, only
         ; INTEGER!, WORD!, GROUP!, BLOCK!, TEXT!, TAG!, and BAD-WORD! are
         ; currently allowed in either sequence form.
 
-        "/#a"  !!  <scan-invalid>
-        "blk/#{}"  !!  <scan-invalid>
+        "/#a"  !!  ~scan-invalid~
+        "blk/#{}"  !!  ~scan-invalid~
 
-        ; === R3-Alpha compatibility hacks ===
+        === R3-ALPHA COMPATIBILITY HACKS ===
 
         ; GET-WORD! is not legal in Ren-C as a path element due to ambiguities
         ; about `:a/b` being a GET-WORD! in the head position of a PATH! or
@@ -84,6 +82,29 @@
 
         "a/:b"  ->  [a ^(:b)]
         "a/:b/c"  ->  [a ^(:b) c]
+
+        === TAG AMBIGUITY RESOLUTION ===
+
+        ; When it comes to dots and slashes, TAG!s win; in particular to make
+        ; it possible to use them as alternate representations of filenames
+        ; e.g. `<../foo/bar.txt>`.  This means WORD!s containing < and > are
+        ; not legal in paths or tuples...only tags.
+
+        "<.>"  ->  <.>
+        ">.<"  !!  ~scan-invalid~
+        ".<."  !!  ~scan-invalid~
+        ".>>."  !!  ~scan-invalid~
+        "a.b.<c>"  ->  (a b <c>)
+        "<a>.b.c"  ->  (<a> b c)
+        ".<tag>."  ->  (_ <tag> _)
+
+        "</>"  ->  </>
+        ">/<"  !!  ~scan-invalid~
+        "/</"  !!  ~scan-invalid~
+        "/>>/"  !!  ~scan-invalid~
+        "a/b/<c>"  ->  [a b <c>]
+        "<a>/b/c"  ->  [<a> b c]
+        "/<tag>/"  ->  [_ <tag> _]
     ]
 
 
@@ -113,18 +134,25 @@
 
     iter: tests
     loop [not tail? iter] [
-        text: ensure text! iter/1
+        ;
+        ; Skip `=== XXX ===` comment lines
+        ;
+        if iter.1 = '=== [
+            until [iter: my next, new-line? iter]
+        ]
+
+        text: ensure text! iter.1
         iter: my next
 
         trap [
             items: transcode text
         ] then error -> [
-            if iter/1 <> '!! [
-                fail ["Unexpected failure on" mold text "->" error/id]
+            if iter.1 <> '!! [
+                fail ["Unexpected failure on" mold text "->" error.id]
             ]
             iter: my next
-            if iter/1 <> to tag! error/id [
-                fail ["Error mismatch on" mold text "->" error/id "and not" iter/1]
+            if iter.1 <> make bad-word! error.id [
+                fail ["Error mismatch" mold text "->" error.id "and not" iter.1]
             ]
             iter: my next
             any [
@@ -133,17 +161,17 @@
             ] then [
                 continue
             ]
-            if error/arg1 <> iter/1 [
+            if error.arg1 <> iter.1 [
                 fail [
-                    "Error argument mismatch on" mold text "->" error/arg1
-                        "and not" iter/1
+                    "Error argument mismatch on" mold text "->" error.arg1
+                        "and not" iter.1
                     ]
             ]
             iter: my next
             continue
         ]
 
-        assert [iter/1 = '->]
+        assert [iter.1 = '->]
         iter: my next
 
         compares: copy []
@@ -155,7 +183,7 @@
 
         start: true
         for-each v items [
-            append/only compares iter/1
+            append/only compares iter.1
 
             all [
                 not start
@@ -166,10 +194,10 @@
 
             start: false
 
-            t: transform v  ; turns path/tuples to block/group structure
+            t: transform v  ; turns path & tuples to block & group structure
 
-            if t <> iter/1 [
-                print ["Expected:" mold iter/1]
+            if t <> iter.1 [
+                print ["Expected:" mold iter.1]
                 print ["Produced:" mold t]
                 !!failure!!
             ]
@@ -177,7 +205,7 @@
         ]
 
         if not new-line? iter [
-            append/only compares iter/1
+            append/only compares iter.1
             !!failure!!
         ]
     ]

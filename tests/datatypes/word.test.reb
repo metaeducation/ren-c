@@ -162,7 +162,7 @@
     for-each str [
         {<>} {<+>} {<|>} {<=>} {<->} {<>>} {<<>}
 
-        {<} {+} {|} {=} {-} {>}
+        {<} '{+} '{|} '{=} '{-} {>}  ; tick marks mean valid in path
 
         {>=} {=|<} {<><} {-=>} {<-<=}
 
@@ -170,15 +170,23 @@
 
         {|->} {-<=>-} {-<>-} {>=<}
     ][
+        let legal-in-path: quoted? str
+        str: noquote str
+
         [word pos]: transcode str
         assert [pos = ""]
 
         assert [word = to word! str]
         assert [str = as text! word]
 
-        [path pos]: transcode unspaced ["a/" str "/b"]
-        assert [pos = ""]
-        assert [path = compose 'a/(word)/b]
+        if legal-in-path [
+            [path pos]: transcode unspaced ["a/" str "/b"]
+            assert [pos = ""]
+            assert [path = compose 'a/(word)/b]
+        ] else [
+            let e: trap [compose 'a/(word)/b]
+            assert [e.id = 'bad-sequence-item]
+        ]
 
         [block pos]: transcode unspaced ["[" str "]"]
         assert [pos = ""]

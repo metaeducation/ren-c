@@ -266,6 +266,20 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
         FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE
     ));
 
+    // Cache whether this is an arrow word.
+    //
+    // !!! Note: The scanner should already know this, and also we could
+    // calculate it during the hash.
+    //
+  blockscope {
+    for (REBLEN i = 0; i < size; ++i) {
+        if (utf8[i] == '<' or utf8[i] == '>') {
+            SET_SUBCLASS_FLAG(SYMBOL, s, ARROW);
+            break;
+        }
+    }
+  }
+
     // The incoming string isn't always null terminated, e.g. if you are
     // interning `foo` in `foo: bar + 1` it would be colon-terminated.
     //

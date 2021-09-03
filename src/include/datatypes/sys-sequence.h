@@ -99,7 +99,6 @@ inline static bool Is_Valid_Sequence_Element(
     enum Reb_Kind k = VAL_TYPE(v);
     if (k == REB_BLANK
         or k == REB_INTEGER
-        or k == REB_WORD
         or k == REB_GROUP
         or k == REB_BLOCK
         or k == REB_TEXT
@@ -107,6 +106,9 @@ inline static bool Is_Valid_Sequence_Element(
     ){
         return true;
     }
+
+    if (k == REB_WORD)  // Words containing < or > not valid, others are
+        return NOT_SUBCLASS_FLAG(SYMBOL, VAL_WORD_SYMBOL(v), ARROW);
 
     if (k == REB_TUPLE)  // PATH! can have TUPLE!, not vice-versa
         return ANY_PATH_KIND(sequence_kind);
