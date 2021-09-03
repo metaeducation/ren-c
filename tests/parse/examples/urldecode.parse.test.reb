@@ -102,7 +102,7 @@ urldecoder: make object! [
 
     decode: func ["Decode a URL according to rules of sys/*parse-url." url] [
         out: make block! 8
-        uparse2 url rules
+        uparse2 as text! url rules
         out
     ]
 ]
