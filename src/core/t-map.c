@@ -653,7 +653,7 @@ REBTYPE(Map)
 {
     REBVAL *map = D_ARG(1);
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`
@@ -712,7 +712,7 @@ REBTYPE(Map)
             SPECIFIC(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1))
         );
 
-        if (VAL_WORD_ID(verb) == SYM_FIND)
+        if (ID_OF_SYMBOL(verb) == SYM_FIND)
             return IS_NULLED(D_OUT) ? nullptr : Init_True(D_OUT);
 
         return D_OUT; }

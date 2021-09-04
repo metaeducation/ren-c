@@ -1078,7 +1078,7 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 REB_R Context_Common_Action_Maybe_Unhandled(
     REBFRM *frame_,
-    const REBVAL *verb
+    const REBSYM *verb
 ){
     REBVAL *v = D_ARG(1);
     REBCTX *c = VAL_CONTEXT(v);
@@ -1092,7 +1092,7 @@ REB_R Context_Common_Action_Maybe_Unhandled(
     if (CTX_TYPE(c) == REB_PORT)
         return R_UNHANDLED;
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`
@@ -1144,7 +1144,7 @@ REBTYPE(Context)
     REBVAL *context = D_ARG(1);
     REBCTX *c = VAL_CONTEXT(context);
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`
@@ -1301,7 +1301,7 @@ REBTYPE(Context)
         if (n == 0)
             return nullptr;
 
-        if (VAL_WORD_ID(verb) == SYM_FIND)
+        if (ID_OF_SYMBOL(verb) == SYM_FIND)
             return Init_True(D_OUT); // !!! obscures non-LOGIC! result?
 
         RETURN (CTX_VAR(c, n)); }

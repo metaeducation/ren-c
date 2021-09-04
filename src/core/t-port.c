@@ -102,6 +102,8 @@ REB_R TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REBTYPE(Port)
 {
+    SYMID id = ID_OF_SYMBOL(verb);
+
     // !!! The ability to transform some BLOCK!s into PORT!s for some actions
     // was hardcoded in a fairly ad-hoc way in R3-Alpha, which was based on
     // an integer range of action numbers.  Ren-C turned these numbers into
@@ -111,7 +113,7 @@ REBTYPE(Port)
     // https://github.com/metaeducation/ren-c/issues/311
     //
     if (not IS_PORT(D_ARG(1))) {
-        switch (VAL_WORD_ID(verb)) {
+        switch (id) {
 
         case SYM_READ:
         case SYM_WRITE:
@@ -144,6 +146,9 @@ REBTYPE(Port)
 
     REBVAL *port = D_ARG(1);
 
+    if (id == SYM_POKE_P)
+        return T_Context(frame_, verb);
+
     REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
     if (r != R_UNHANDLED)
         return r;
@@ -172,7 +177,7 @@ REBTYPE(Url)
 {
     REBVAL *url = D_ARG(1);
 
-    OPT_SYMID id = VAL_WORD_ID(verb);
+    SYMID id = ID_OF_SYMBOL(verb);
     if (id == SYM_COPY) {
         //
         // https://forum.rebol.info/t/copy-and-port/1699

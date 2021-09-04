@@ -56,8 +56,7 @@ REB_R Generic_Dispatcher(REBFRM *f)
 {
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
-    REBVAL *verb = DETAILS_AT(details, IDX_GENERIC_VERB);
-    assert(IS_WORD(verb));
+    const REBSYM *verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
 
     // !!! It's technically possible to throw in locals or refinements at
     // any point in the sequence.  So this should really be using something
@@ -86,11 +85,9 @@ REB_R Generic_Dispatcher(REBFRM *f)
 //
 REBNATIVE(generic)
 //
-// The `generic` native is searched for explicitly by %make-natives.r and put
-// in second place for initialization (after the `native` native).
-//
-// It is designed to be an enfix function that quotes its first argument,
-// so when you write FOO: GENERIC [...], the FOO: gets quoted to be the verb.
+// The `generic` native is designed to be an enfix function that quotes its
+// first argument, so when you write `foo: generic [...]`, the FOO: gets quoted
+// to be passed in as the "verb".
 {
     INCLUDE_PARAMS_OF_GENERIC;
 

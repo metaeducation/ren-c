@@ -503,14 +503,14 @@ REBTYPE(Time)
 
     REBI64 secs = VAL_NANO(v);
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID id = ID_OF_SYMBOL(verb);
 
     if (
-        sym == SYM_ADD
-        or sym == SYM_SUBTRACT
-        or sym == SYM_MULTIPLY
-        or sym == SYM_DIVIDE
-        or sym == SYM_REMAINDER
+        id == SYM_ADD
+        or id == SYM_SUBTRACT
+        or id == SYM_MULTIPLY
+        or id == SYM_DIVIDE
+        or id == SYM_REMAINDER
     ){
         REBVAL *arg = D_ARG(2);
         REBINT type = VAL_TYPE(arg);
@@ -518,7 +518,7 @@ REBTYPE(Time)
         if (type == REB_TIME) {     // handle TIME - TIME cases
             REBI64 secs2 = VAL_NANO(arg);
 
-            switch (sym) {
+            switch (id) {
               case SYM_ADD:
                 secs = Add_Max(REB_TIME, secs, secs2, MAX_TIME);
                 return Init_Time_Nanoseconds(D_OUT, secs);
@@ -548,7 +548,7 @@ REBTYPE(Time)
         else if (type == REB_INTEGER) {     // handle TIME - INTEGER cases
             REBI64 num = VAL_INT64(arg);
 
-            switch (VAL_WORD_ID(verb)) {
+            switch (id) {
               case SYM_ADD:
                 secs = Add_Max(REB_TIME, secs, num * SEC_SEC, MAX_TIME);
                 return Init_Time_Nanoseconds(D_OUT, secs);
@@ -583,7 +583,7 @@ REBTYPE(Time)
         else if (type == REB_DECIMAL) {     // handle TIME - DECIMAL cases
             REBDEC dec = VAL_DECIMAL(arg);
 
-            switch (VAL_WORD_ID(verb)) {
+            switch (id) {
               case SYM_ADD:
                 secs = Add_Max(
                     REB_TIME,
@@ -621,7 +621,7 @@ REBTYPE(Time)
                 fail (Error_Math_Args(REB_TIME, verb));
             }
         }
-        else if (type == REB_DATE and sym == SYM_ADD) {
+        else if (type == REB_DATE and id == SYM_ADD) {
             //
             // We're adding a time and a date, code for which exists in the
             // date dispatcher already.  Instead of repeating the code here in
@@ -636,7 +636,7 @@ REBTYPE(Time)
     }
     else {
         // unary actions
-        switch (sym) {
+        switch (id) {
           case SYM_COPY:
             RETURN (v);  // immediate type, just copy bits
 

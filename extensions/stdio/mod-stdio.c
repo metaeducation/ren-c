@@ -47,7 +47,7 @@ extern void Write_IO(const REBVAL *data, REBLEN len);
 extern bool Read_Stdin_Byte_Interrupted(bool *eof, REBYTE *out);
 
 
-extern REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
+extern REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
 
 
 //

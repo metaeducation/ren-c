@@ -101,7 +101,7 @@ REBTYPE(Bad_word)
 {
     REBVAL *voided = D_ARG(1);
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `voided` above.

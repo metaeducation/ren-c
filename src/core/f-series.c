@@ -40,19 +40,19 @@
 //
 REB_R Series_Common_Action_Maybe_Unhandled(
     REBFRM *frame_,
-    const REBVAL *verb
+    const REBSYM *verb
 ){
     REBVAL *v = D_ARG(1);
 
     REBFLGS sop_flags;  // "SOP_XXX" Set Operation Flags
 
-    SYMID sym = VAL_WORD_ID(verb);
-    switch (sym) {
+    SYMID id = ID_OF_SYMBOL(verb);
+    switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(PAR(value));  // covered by `value`
 
-        SYMID property = VAL_WORD_ID(ARG(property));
+        OPT_SYMID property = VAL_WORD_ID(ARG(property));
         assert(property != SYM_0);
 
         switch (property) {
@@ -229,7 +229,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             VAL_TYPE(v),
             Make_Set_Operation_Series(
                 v,
-                (sym == SYM_UNIQUE) ? nullptr : ARG(value2),
+                (id == SYM_UNIQUE) ? nullptr : ARG(value2),
                 sop_flags,
                 did REF(case),
                 REF(skip) ? Int32s(ARG(skip), 1) : 1

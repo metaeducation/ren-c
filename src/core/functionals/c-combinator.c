@@ -562,7 +562,7 @@ static bool Combinator_Param_Hook(
 
     USED(REF(path));  // currently path checking is
 
-    OPT_SYMID symid = KEY_SYM(key);
+    SYMID symid = KEY_SYM(key);
 
     if (symid == SYM_INPUT or symid == SYM_REMAINDER) {
         //

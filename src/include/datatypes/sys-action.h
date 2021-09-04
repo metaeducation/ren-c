@@ -521,32 +521,15 @@ static inline REBVAL *Init_Action_Core(
 inline static REB_R Run_Generic_Dispatch(
     const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
     REBFRM *f,
-    const REBVAL *verb
+    const REBSYM *verb
 ){
-    assert(IS_WORD(verb));
-
     GENERIC_HOOK *hook = IS_QUOTED(first_arg)
         ? &T_Quoted  // a few things like COPY are supported by QUOTED!
         : Generic_Hook_For_Type_Of(first_arg);
 
     REB_R r = hook(f, verb);  // Note that QUOTED! has its own hook & handling
-    if (r == R_UNHANDLED) {
-        //
-        // !!! Improve this error message when used with REB_CUSTOM (right now
-        // will just say "cannot use verb with CUSTOM!", regardless of if it
-        // is an IMAGE! or VECTOR! or GOB!...)
-        //
-        if (VAL_TYPE(first_arg) == REB_CUSTOM)
-            fail (Error_Cannot_Use_Raw(
-                verb,
-                rebText("custom!")
-            ));
-
-        fail (Error_Cannot_Use_Raw(
-            verb,
-            Datatype_From_Kind(VAL_TYPE(first_arg))
-        ));
-    }
+    if (r == R_UNHANDLED)
+        fail (Error_Cannot_Use(verb, first_arg));
 
     return r;
 }

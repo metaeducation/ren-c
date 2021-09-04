@@ -263,7 +263,7 @@ REBTYPE(Word)
     REBVAL *v = D_ARG(1);
     assert(ANY_WORD(v));
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 

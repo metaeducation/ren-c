@@ -925,7 +925,7 @@ REBTYPE(Gob)
     REBLEN tail = GOB_PANE(gob) ? GOB_LEN(gob) : 0;
 
     // unary actions
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -1002,14 +1002,14 @@ REBTYPE(Gob)
         if (!GOB_PANE(gob) || index >= tail)
             fail (Error_Index_Out_Of_Range_Raw());
         if (
-            VAL_WORD_ID(verb) == SYM_CHANGE
+            ID_OF_SYMBOL(verb) == SYM_CHANGE
             && (REF(part) || REF(dup))
         ){
             fail (Error_Not_Done_Raw());
         }
 
         Insert_Gobs(gob, value, index, 1, false);
-        if (VAL_WORD_ID(verb) == SYM_POKE) {
+        if (ID_OF_SYMBOL(verb) == SYM_POKE) {
             Copy_Cell(D_OUT, value);
             return D_OUT;
         }

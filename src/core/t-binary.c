@@ -406,8 +406,8 @@ REBTYPE(Binary)
     REBINT index = cast(REBINT, VAL_INDEX(v));
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
-    SYMID sym = VAL_WORD_ID(verb);
-    switch (sym) {
+    SYMID id = ID_OF_SYMBOL(verb);
+    switch (id) {
       case SYM_UNIQUE:
       case SYM_INTERSECT:
       case SYM_UNION:
@@ -428,7 +428,7 @@ REBTYPE(Binary)
         UNUSED(PAR(series));  // covered by `v`
 
         REBLEN len; // length of target
-        if (VAL_WORD_ID(verb) == SYM_CHANGE)
+        if (id == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(v, ARG(part));
         else
             len = Part_Limit_Append_Insert(ARG(part));
@@ -438,7 +438,7 @@ REBTYPE(Binary)
         //
         if (IS_BLANK(ARG(value))) {  // only blanks bypass
             if (len == 0) {
-                if (sym == SYM_APPEND) // append always returns head
+                if (id == SYM_APPEND) // append always returns head
                     VAL_INDEX_RAW(v) = 0;
                 RETURN (v); // don't fail on read only if it would be a no-op
             }
@@ -468,7 +468,7 @@ REBTYPE(Binary)
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(
             v,
-            cast(enum Reb_Symbol_Id, sym),
+            cast(enum Reb_Symbol_Id, id),
             ARG(value),
             flags,
             len,
@@ -509,7 +509,7 @@ REBTYPE(Binary)
         if (ret >= cast(REBLEN, tail))
             return nullptr;
 
-        if (sym == SYM_FIND) {
+        if (id == SYM_FIND) {
             //
             // Historical FIND/MATCH implied /TAIL, Ren-C and Red don't do that
             //
@@ -635,7 +635,7 @@ REBTYPE(Binary)
 
         REBYTE *dest = BIN_HEAD(series);
 
-        switch (VAL_WORD_ID(verb)) {
+        switch (id) {
           case SYM_BITWISE_AND: {
             REBLEN i;
             for (i = 0; i < smaller; i++)
@@ -719,7 +719,7 @@ REBTYPE(Binary)
         else
             fail (arg); // what about other types?
 
-        if (sym == SYM_SUBTRACT)
+        if (id == SYM_SUBTRACT)
             amount = -amount;
 
         if (amount == 0) // adding or subtracting 0 works, even #{} + 0

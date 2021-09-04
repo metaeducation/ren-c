@@ -259,22 +259,22 @@ REBTYPE(Integer)
 
     REBI64 arg;
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID id = ID_OF_SYMBOL(verb);
 
     // !!! This used to rely on IS_BINARY_ACT, which is no longer available
     // in the symbol based dispatch.  Consider doing another way.
     //
     if (
-        sym == SYM_ADD
-        or sym == SYM_SUBTRACT
-        or sym == SYM_MULTIPLY
-        or sym == SYM_DIVIDE
-        or sym == SYM_POWER
-        or sym == SYM_BITWISE_AND
-        or sym == SYM_BITWISE_OR
-        or sym == SYM_BITWISE_XOR
-        or sym == SYM_BITWISE_AND_NOT
-        or sym == SYM_REMAINDER
+        id == SYM_ADD
+        or id == SYM_SUBTRACT
+        or id == SYM_MULTIPLY
+        or id == SYM_DIVIDE
+        or id == SYM_POWER
+        or id == SYM_BITWISE_AND
+        or id == SYM_BITWISE_OR
+        or id == SYM_BITWISE_XOR
+        or id == SYM_BITWISE_AND_NOT
+        or id == SYM_REMAINDER
     ){
         REBVAL *val2 = D_ARG(2);
 
@@ -285,7 +285,7 @@ REBTYPE(Integer)
         else {
             // Decimal or other numeric second argument:
             REBLEN n = 0; // use to flag special case
-            switch (VAL_WORD_ID(verb)) {
+            switch (id) {
             // Anything added to an integer is same as adding the integer:
             case SYM_ADD:
             case SYM_MULTIPLY: {
@@ -328,7 +328,7 @@ REBTYPE(Integer)
     else
         arg = 0xDECAFBAD; // wasteful, but avoid maybe unassigned warning
 
-    switch (sym) {
+    switch (id) {
 
     case SYM_COPY:
         Copy_Cell(D_OUT, val);

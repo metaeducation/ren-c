@@ -104,7 +104,7 @@ void MF_Library(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 REBTYPE(Library)
 {
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
     case SYM_CLOSE: {
         INCLUDE_PARAMS_OF_CLOSE;
 

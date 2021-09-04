@@ -68,7 +68,7 @@ REBINT CT_Comma(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 REBTYPE(Comma)
 {
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.

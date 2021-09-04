@@ -573,7 +573,7 @@ void Clear_Image(REBVAL *img)
 // reason.  (!)  The code is deprecated, but kept around and building for any
 // sufficiently motivated individual who wanted to review it.
 //
-REB_R Modify_Image(REBFRM *frame_, const REBVAL *verb)
+REB_R Modify_Image(REBFRM *frame_, const REBSYM *verb)
 {
     INCLUDE_PARAMS_OF_CHANGE;  // currently must have same frame as CHANGE
 
@@ -594,7 +594,7 @@ REB_R Modify_Image(REBFRM *frame_, const REBVAL *verb)
     if (w == 0)
         RETURN (value);
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID sym = ID_OF_SYMBOL(verb);
     if (sym == SYM_APPEND) {
         index = tail;
         sym = SYM_INSERT;
@@ -952,8 +952,8 @@ REBTYPE(Image)
     if (index > tail)
         index = tail;
 
-    SYMID sym = VAL_WORD_ID(verb);
-    switch (sym) {
+    SYMID id = ID_OF_SYMBOL(verb);
+    switch (id) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -1016,15 +1016,15 @@ REBTYPE(Image)
         // This logic is somewhat complicated by the fact that INTEGER args use
         // base-1 indexing, but PAIR args use base-0.
         if (IS_PAIR(arg)) {
-            if (sym == SYM_AT)
-                sym = SYM_SKIP;
+            if (id == SYM_AT)
+                id = SYM_SKIP;
             diff = (VAL_PAIR_Y_INT(arg) * VAL_IMAGE_WIDTH(value))
-                + VAL_PAIR_X_INT(arg) + (sym == SYM_SKIP ? 0 : 1);
+                + VAL_PAIR_X_INT(arg) + (id == SYM_SKIP ? 0 : 1);
         } else
             diff = Get_Num_From_Arg(arg);
 
         index += diff;
-        if (sym == SYM_SKIP) {
+        if (id == SYM_SKIP) {
             if (IS_LOGIC(arg))
                 --index;
         }
@@ -1084,7 +1084,7 @@ REBTYPE(Image)
     case SYM_INSERT:
     case SYM_CHANGE: {
         if (IS_NULLED_OR_BLANK(D_ARG(2))) {
-            if (sym == SYM_APPEND) // append returns head position
+            if (id == SYM_APPEND) // append returns head position
                 VAL_IMAGE_POS(value) = 0;
             RETURN (value); // don't fail on read only if it would be a no-op
         }

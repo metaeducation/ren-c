@@ -1265,10 +1265,35 @@ REBCTX *Error_Protected_Key(const REBKEY *key)
 //
 //  Error_Math_Args: C
 //
-REBCTX *Error_Math_Args(enum Reb_Kind type, const REBVAL *verb)
+REBCTX *Error_Math_Args(enum Reb_Kind type, const REBSYM *verb)
 {
-    assert(IS_WORD(verb));
-    return Error_Not_Related_Raw(verb, Datatype_From_Kind(type));
+    DECLARE_LOCAL (verb_cell);
+    Init_Word(verb_cell, verb);
+    return Error_Not_Related_Raw(verb_cell, Datatype_From_Kind(type));
+}
+
+//
+//  Error_Cannot_Use: C
+//
+REBCTX *Error_Cannot_Use(const REBSYM *verb, const REBVAL *first_arg)
+{
+    DECLARE_LOCAL (verb_cell);
+    Init_Word(verb_cell, verb);
+
+    // !!! Improve this error message when used with REB_CUSTOM (right now
+    // will just say "cannot use verb with CUSTOM!", regardless of if it
+    // is an IMAGE! or VECTOR! or GOB!...)
+    //
+    if (VAL_TYPE(first_arg) == REB_CUSTOM)
+        fail (Error_Cannot_Use_Raw(
+            verb_cell,
+            rebText("custom!")
+        ));
+
+    fail (Error_Cannot_Use_Raw(
+        verb_cell,
+        Datatype_From_Kind(VAL_TYPE(first_arg))
+    ));
 }
 
 

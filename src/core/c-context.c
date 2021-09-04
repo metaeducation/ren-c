@@ -160,7 +160,7 @@ REBVAR *Append_Context(
         // symbol node for the word's spelling, and can be directly linked
         // to from a word as a singular value (with binding index "1").
 
-        OPT_SYMID id = cast(OPT_SYMID, SYM_0);
+        SYMID id = SYM_0;
         if (context == Lib_Context)
             id = symbol ?
                 ID_OF_SYMBOL(unwrap(symbol))

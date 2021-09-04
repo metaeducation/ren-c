@@ -395,7 +395,7 @@ REBTYPE(Typeset)
 {
     REBVAL *v = D_ARG(1);
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_FIND: {
         INCLUDE_PARAMS_OF_FIND;
         UNUSED(ARG(series));  // covered by `v`
@@ -432,7 +432,7 @@ REBTYPE(Typeset)
         else if (not IS_TYPESET(arg))
             fail (arg);
 
-        switch (VAL_WORD_ID(verb)) {
+        switch (ID_OF_SYMBOL(verb)) {
           case SYM_UNION:
             VAL_TYPESET_LOW_BITS(v) |= VAL_TYPESET_LOW_BITS(arg);
             VAL_TYPESET_HIGH_BITS(v) |= VAL_TYPESET_HIGH_BITS(arg);

@@ -104,7 +104,7 @@ REBINT CT_Date(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 
     if (strict)
         return tiebreaker;  // don't allow equal unless time zones equal
-    
+
     return 0;
 }
 
@@ -233,7 +233,7 @@ REBINT Days_Between_Dates(const REBVAL *a, const REBVAL *b)
 
     if (Does_Date_Have_Zone(a) != Does_Date_Have_Zone(b))
         fail (Error_Invalid_Compare_Raw(a, b));
-        
+
     if (Does_Date_Have_Zone(a)) {
         Copy_Cell(utc_a, a);
         Copy_Cell(utc_b, b);
@@ -1019,7 +1019,7 @@ REBTYPE(Date)
     REBVAL *v = D_ARG(1);
     assert(IS_DATE(v));
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID id = ID_OF_SYMBOL(verb);
 
     REBYMD date = VAL_DATE(v);
     REBLEN day = VAL_DAY(v) - 1;
@@ -1027,22 +1027,22 @@ REBTYPE(Date)
     REBLEN year = VAL_YEAR(v);
     REBI64 secs = Does_Date_Have_Time(v) ? VAL_NANO(v) : NO_DATE_TIME;
 
-    if (sym == SYM_SUBTRACT or sym == SYM_ADD) {
+    if (id == SYM_SUBTRACT or id == SYM_ADD) {
         REBVAL *arg = D_ARG(2);
         REBINT type = VAL_TYPE(arg);
 
         if (type == REB_DATE) {
-            if (sym == SYM_SUBTRACT)
+            if (id == SYM_SUBTRACT)
                 return Init_Integer(D_OUT, Days_Between_Dates(v, arg));
         }
         else if (type == REB_TIME) {
-            if (sym == SYM_ADD) {
+            if (id == SYM_ADD) {
                 if (secs == NO_DATE_TIME)
                     secs = 0;
                 secs += VAL_NANO(arg);
                 goto fix_time;
             }
-            if (sym == SYM_SUBTRACT) {
+            if (id == SYM_SUBTRACT) {
                 if (secs == NO_DATE_TIME)
                     secs = 0;
                 secs -= VAL_NANO(arg);
@@ -1051,24 +1051,24 @@ REBTYPE(Date)
         }
         else if (type == REB_INTEGER) {
             REBINT num = Int32(arg);
-            if (sym == SYM_ADD) {
+            if (id == SYM_ADD) {
                 day += num;
                 goto fix_date;
             }
-            if (sym == SYM_SUBTRACT) {
+            if (id == SYM_SUBTRACT) {
                 day -= num;
                 goto fix_date;
             }
         }
         else if (type == REB_DECIMAL) {
             REBDEC dec = Dec64(arg);
-            if (sym == SYM_ADD) {
+            if (id == SYM_ADD) {
                 if (secs == NO_DATE_TIME)
                     secs = 0;
                 secs += cast(REBI64, dec * TIME_IN_DAY);
                 goto fix_time;
             }
-            if (sym == SYM_SUBTRACT) {
+            if (id == SYM_SUBTRACT) {
                 if (secs == NO_DATE_TIME)
                     secs = 0;
                 secs -= cast(REBI64, dec * TIME_IN_DAY);
@@ -1077,7 +1077,7 @@ REBTYPE(Date)
         }
     }
     else {
-        switch (sym) {
+        switch (id) {
           case SYM_COPY:
             RETURN (v);  // immediate type, just copy bits
 

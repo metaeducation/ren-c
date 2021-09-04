@@ -38,8 +38,8 @@
 
 #include "tmp-mod-filesystem.h"
 
-extern REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
-extern REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
+extern REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
+extern REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
 
 
 #ifdef TO_WINDOWS

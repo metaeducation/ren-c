@@ -57,7 +57,7 @@ bool Is_Port_Pending(const RELVAL *port)
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
+REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 {
     FAIL_IF_BAD_PORT(port);
 
@@ -83,11 +83,14 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
   blockscope {
     const bool strict = false;
-    REBLEN n = Find_Symbol_In_Context(actor, VAL_WORD_SYMBOL(verb), strict);
+    REBLEN n = Find_Symbol_In_Context(actor, verb, strict);
 
     REBVAL *action = (n == 0) ? nullptr : CTX_VAR(VAL_CONTEXT(actor), n);
-    if (not action or not IS_ACTION(action))
-        fail (Error_No_Port_Action_Raw(verb));
+    if (not action or not IS_ACTION(action)) {
+        DECLARE_LOCAL (verb_cell);
+        Init_Word(verb_cell, verb);
+        fail (Error_No_Port_Action_Raw(verb_cell));
+    }
 
     if (Redo_Action_Maybe_Stale_Throws(frame_->out, frame_, VAL_ACTION(action)))
         return R_THROWN;
@@ -106,7 +109,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
   post_process_output:
 
-    if (VAL_WORD_ID(verb) == SYM_READ) {
+    if (ID_OF_SYMBOL(verb) == SYM_READ) {
         INCLUDE_PARAMS_OF_READ;
 
         UNUSED(PAR(source));

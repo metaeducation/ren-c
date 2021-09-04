@@ -837,8 +837,8 @@ REBTYPE(Array)
 
     REBSPC *specifier = VAL_SPECIFIER(array);
 
-    SYMID sym = VAL_WORD_ID(verb);
-    switch (sym) {
+    SYMID id = ID_OF_SYMBOL(verb);
+    switch (id) {
       case SYM_UNIQUE:
       case SYM_INTERSECT:
       case SYM_UNION:
@@ -967,7 +967,7 @@ REBTYPE(Array)
 
         assert(ret <= limit);
 
-        if (VAL_WORD_ID(verb) == SYM_FIND) {
+        if (id == SYM_FIND) {
             //
             // Historical FIND/MATCH implied /TAIL, Ren-C and Red don't do that
             //
@@ -993,7 +993,7 @@ REBTYPE(Array)
         UNUSED(PAR(series));
 
         REBLEN len; // length of target
-        if (VAL_WORD_ID(verb) == SYM_CHANGE)
+        if (id == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(array, ARG(part));
         else
             len = Part_Limit_Append_Insert(ARG(part));
@@ -1003,9 +1003,9 @@ REBTYPE(Array)
         //
         if (IS_BLANK(ARG(value))) {  // only blanks bypass
             if (len == 0) {
-                if (sym == SYM_APPEND) // append always returns head
+                if (id == SYM_APPEND)  // append always returns head
                     VAL_INDEX_RAW(array) = 0;
-                RETURN (array); // don't fail on read only if would be a no-op
+                RETURN (array);  // don't fail on read only if would be a no-op
             }
             Init_Nulled(ARG(value));  // low-level code treats NULL as nothing
         }
@@ -1059,7 +1059,7 @@ REBTYPE(Array)
         VAL_INDEX_RAW(D_OUT) = Modify_Array(
             arr,
             index,
-            cast(enum Reb_Symbol_Id, sym),
+            cast(enum Reb_Symbol_Id, id),
             ARG(value),
             flags,
             len,

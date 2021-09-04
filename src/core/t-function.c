@@ -170,7 +170,7 @@ REBTYPE(Action)
     REBVAL *action = D_ARG(1);
     REBACT *act = VAL_ACTION(action);
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 

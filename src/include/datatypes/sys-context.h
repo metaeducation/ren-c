@@ -310,7 +310,7 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
     // Note: Call Lib() macro directly if you have a SYM in hand vs. a canon.
     //
     if (c == Lib_Context) {
-        OPT_SYMID id = ID_OF_SYMBOL(sym);
+        SYMID id = ID_OF_SYMBOL(sym);
         if (id != SYM_0 and id < LIB_SYMS_MAX) {
             //
             // !!! We need to consider the strictness here, with case sensitive

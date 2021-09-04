@@ -45,9 +45,9 @@
 static REB_R Clipboard_Actor(
     REBFRM *frame_,
     REBVAL *port,
-    const REBVAL *verb
+    const REBSYM *verb
 ){
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // implied by `port`

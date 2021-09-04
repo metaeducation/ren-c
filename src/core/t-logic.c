@@ -399,7 +399,7 @@ REBTYPE(Logic)
     bool b1 = VAL_LOGIC(D_ARG(1));
     bool b2;
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
 
     case SYM_BITWISE_AND:
         b2 = Math_Arg_For_Logic(D_ARG(2));

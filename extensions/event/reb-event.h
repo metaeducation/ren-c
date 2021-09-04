@@ -156,7 +156,7 @@ extern REB_R PD_Event(REBPVS *pvs, const RELVAL *picker, option(const REBVAL*) s
 
 // !!! The port scheme is also being included in the extension.
 
-extern REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb);
+extern REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
 extern void Startup_Event_Scheme(void);
 extern void Shutdown_Event_Scheme(void);
 

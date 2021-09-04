@@ -575,7 +575,7 @@ REBTYPE(Bitset)
 {
     REBVAL *v = D_ARG(1);
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID sym = ID_OF_SYMBOL(verb);
     switch (sym) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;

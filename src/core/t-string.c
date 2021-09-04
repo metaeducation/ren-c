@@ -811,12 +811,12 @@ REBTYPE(String)
     REBVAL *v = D_ARG(1);
     assert(ANY_STRING(v));
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID id = ID_OF_SYMBOL(verb);
 
     REBLEN index = VAL_INDEX(v);
     REBLEN tail = VAL_LEN_HEAD(v);
 
-    switch (sym) {
+    switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // accounted for by `v`
@@ -874,7 +874,7 @@ REBTYPE(String)
         UNUSED(PAR(series));  // is v
 
         REBLEN len; // length of target
-        if (VAL_WORD_ID(verb) == SYM_CHANGE)
+        if (ID_OF_SYMBOL(verb) == SYM_CHANGE)
             len = Part_Len_May_Modify_Index(v, ARG(part));
         else
             len = Part_Limit_Append_Insert(ARG(part));
@@ -884,7 +884,7 @@ REBTYPE(String)
         //
         if (IS_BLANK(ARG(value))) {  // only blanks bypass
             if (len == 0) {
-                if (sym == SYM_APPEND) // append always returns head
+                if (id == SYM_APPEND) // append always returns head
                     VAL_INDEX_RAW(v) = 0;
                 RETURN (v); // don't fail on read only if it would be a no-op
             }
@@ -914,7 +914,7 @@ REBTYPE(String)
 
         VAL_INDEX_RAW(v) = Modify_String_Or_Binary(  // does read-only check
             v,
-            cast(enum Reb_Symbol_Id, sym),
+            cast(enum Reb_Symbol_Id, id),
             ARG(value),
             flags,
             len,
@@ -959,7 +959,7 @@ REBTYPE(String)
 
         assert(ret <= cast(REBLEN, tail));
 
-        if (sym == SYM_FIND) {
+        if (id == SYM_FIND) {
             //
             // Historical FIND/MATCH implied /TAIL, Ren-C and Red don't do that
             //
@@ -968,7 +968,7 @@ REBTYPE(String)
             return Init_Any_Series_At(D_OUT, VAL_TYPE(v), VAL_SERIES(v), ret);
         }
 
-        assert(sym == SYM_SELECT);
+        assert(id == SYM_SELECT);
 
         ++ret;
         if (ret == tail)

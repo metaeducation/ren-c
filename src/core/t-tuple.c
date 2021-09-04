@@ -192,22 +192,22 @@ REBTYPE(Sequence)
     UNUSED(all_byte_sized_ints);
     REBYTE *vp = buf;
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID id = ID_OF_SYMBOL(verb);
 
     // !!! This used to depend on "IS_BINARY_ACT", a concept that does not
     // exist any longer with symbol-based action dispatch.  Patch with more
     // elegant mechanism.
     //
     if (
-        sym == SYM_ADD
-        or sym == SYM_SUBTRACT
-        or sym == SYM_MULTIPLY
-        or sym == SYM_DIVIDE
-        or sym == SYM_REMAINDER
-        or sym == SYM_BITWISE_AND
-        or sym == SYM_BITWISE_OR
-        or sym == SYM_BITWISE_XOR
-        or sym == SYM_BITWISE_AND_NOT
+        id == SYM_ADD
+        or id == SYM_SUBTRACT
+        or id == SYM_MULTIPLY
+        or id == SYM_DIVIDE
+        or id == SYM_REMAINDER
+        or id == SYM_BITWISE_AND
+        or id == SYM_BITWISE_OR
+        or id == SYM_BITWISE_XOR
+        or id == SYM_BITWISE_AND_NOT
     ){
         assert(vp);
 
@@ -247,7 +247,7 @@ REBTYPE(Sequence)
             if (ap)
                 a = (REBINT) *ap++;
 
-            switch (VAL_WORD_ID(verb)) {
+            switch (id) {
             case SYM_ADD: v += a; break;
 
             case SYM_SUBTRACT: v -= a; break;
@@ -323,13 +323,13 @@ REBTYPE(Sequence)
     }
 
     // !!!! merge with SWITCH below !!!
-    if (sym == SYM_BITWISE_NOT) {
+    if (id == SYM_BITWISE_NOT) {
         REBLEN temp = len;
         for (; temp > 0; --temp, vp++)
             *vp = cast(REBYTE, ~*vp);
         return Init_Tuple_Bytes(D_OUT, buf, len);
     }
-    if (sym == SYM_RANDOM) {
+    if (id == SYM_RANDOM) {
         INCLUDE_PARAMS_OF_RANDOM;
 
         UNUSED(PAR(value));
@@ -346,7 +346,7 @@ REBTYPE(Sequence)
         return Init_Tuple_Bytes(D_OUT, buf, len);
     }
 
-    switch (sym) {
+    switch (id) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));

@@ -111,7 +111,7 @@ REBTYPE(Datatype)
 
     REBVAL *arg = D_ARG(2);
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
 
     case SYM_REFLECT: {
         SYMID sym = VAL_WORD_ID(arg);

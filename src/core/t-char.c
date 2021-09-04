@@ -173,19 +173,19 @@ REB_R TO_Issue(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 }
 
 
-static REBINT Math_Arg_For_Char(REBVAL *arg, const REBVAL *verb)
+static REBINT Math_Arg_For_Char(REBVAL *arg, const REBSYM *verb)
 {
     switch (VAL_TYPE(arg)) {
-    case REB_ISSUE:
+      case REB_ISSUE:
         return VAL_CHAR(arg);
 
-    case REB_INTEGER:
+      case REB_INTEGER:
         return VAL_INT32(arg);
 
-    case REB_DECIMAL:
+      case REB_DECIMAL:
         return cast(REBINT, VAL_DECIMAL(arg));
 
-    default:
+      default:
         fail (Error_Math_Args(REB_ISSUE, verb));
     }
 }
@@ -300,7 +300,7 @@ REBTYPE(Issue)
 {
     REBVAL *issue = D_ARG(1);
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID sym = ID_OF_SYMBOL(verb);
 
     switch (sym) {
       case SYM_REFLECT: {
@@ -478,4 +478,3 @@ REBNATIVE(trailing_bytes_for_utf8)
 
     return Init_Integer(D_OUT, trail);
 }
-

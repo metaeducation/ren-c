@@ -469,18 +469,18 @@ REBTYPE(Decimal)
 
     REBDEC d1 = VAL_DECIMAL(val);
 
-    SYMID sym = VAL_WORD_ID(verb);
+    SYMID id = ID_OF_SYMBOL(verb);
 
     // !!! This used to use IS_BINARY_ACT() which is no longer available with
     // symbol-based dispatch.  Consider doing this another way.
     //
     if (
-        sym == SYM_ADD
-        || sym == SYM_SUBTRACT
-        || sym == SYM_MULTIPLY
-        || sym == SYM_DIVIDE
-        || sym == SYM_REMAINDER
-        || sym == SYM_POWER
+        id == SYM_ADD
+        || id == SYM_SUBTRACT
+        || id == SYM_MULTIPLY
+        || id == SYM_DIVIDE
+        || id == SYM_REMAINDER
+        || id == SYM_POWER
     ){
         arg = D_ARG(2);
         type = VAL_TYPE(arg);
@@ -490,8 +490,8 @@ REBTYPE(Decimal)
             or type == REB_MONEY
             or type == REB_TIME
         ) and (
-            sym == SYM_ADD ||
-            sym == SYM_MULTIPLY
+            id == SYM_ADD ||
+            id == SYM_MULTIPLY
         )){
             Copy_Cell(D_OUT, D_ARG(2));
             Copy_Cell(D_ARG(2), D_ARG(1));
@@ -511,7 +511,7 @@ REBTYPE(Decimal)
             }
             else if (type == REB_PERCENT) {
                 d2 = VAL_DECIMAL(arg);
-                if (sym == SYM_DIVIDE)
+                if (id == SYM_DIVIDE)
                     type = REB_DECIMAL;
                 else if (not IS_PERCENT(val))
                     type = VAL_TYPE(val);
@@ -529,7 +529,7 @@ REBTYPE(Decimal)
                 type = REB_DECIMAL;
             }
 
-            switch (sym) {
+            switch (id) {
 
             case SYM_ADD:
                 d1 += d2;
@@ -547,7 +547,7 @@ REBTYPE(Decimal)
             case SYM_REMAINDER:
                 if (d2 == 0.0)
                     fail (Error_Zero_Divide_Raw());
-                if (sym == SYM_DIVIDE)
+                if (id == SYM_DIVIDE)
                     d1 /= d2;
                 else
                     d1 = fmod(d1, d2);
@@ -579,7 +579,7 @@ REBTYPE(Decimal)
     type = VAL_TYPE(val);
 
     // unary actions
-    switch (sym) {
+    switch (id) {
 
     case SYM_COPY:
         return Copy_Cell(D_OUT, val);

@@ -293,11 +293,11 @@ REBVAL *Read_Line(STD_TERM *t)
 //
 //  Console_Actor: C
 //
-REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
+REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // implied by `port`

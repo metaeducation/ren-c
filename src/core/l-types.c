@@ -313,10 +313,8 @@ REB_R Reflect_Core(REBFRM *frame_)
     if (kind == REB_BLANK)
         return nullptr; // only TYPE OF works on blank, otherwise it's null
 
-    DECLARE_LOCAL (verb);
-    Init_Word(verb, Canon(REFLECT));
     Dequotify(ARG(value));
-    return Run_Generic_Dispatch(ARG(value), frame_, verb);
+    return Run_Generic_Dispatch(ARG(value), frame_, Canon(REFLECT));
 }
 
 

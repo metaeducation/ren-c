@@ -107,7 +107,7 @@ REBINT CT_Blank(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 REBTYPE(Blank)
 {
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.

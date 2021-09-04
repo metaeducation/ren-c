@@ -243,7 +243,7 @@ REBTYPE(Pair)
     REBVAL *x2 = nullptr;
     REBVAL *y2 = nullptr;
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REVERSE:
         return Init_Pair(D_OUT, VAL_PAIR_Y(v), VAL_PAIR_X(v));
 

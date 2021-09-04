@@ -61,7 +61,7 @@
 //
 // Internal port handler for events.
 //
-REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
+REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 {
     // Validate and fetch relevant PORT fields:
     //
@@ -76,7 +76,7 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
     if (!IS_BLOCK(state))
         Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
 
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
@@ -124,9 +124,9 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 
         SET_SIGNAL(SIG_EVENT_PORT);
         if (
-            VAL_WORD_ID(verb) == SYM_INSERT
-            || VAL_WORD_ID(verb) == SYM_APPEND
-            || VAL_WORD_ID(verb) == SYM_REMOVE
+            ID_OF_SYMBOL(verb) == SYM_INSERT
+            || ID_OF_SYMBOL(verb) == SYM_APPEND
+            || ID_OF_SYMBOL(verb) == SYM_REMOVE
         ){
             RETURN (save_port);
         }

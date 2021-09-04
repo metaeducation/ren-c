@@ -159,7 +159,7 @@ REBTYPE(Quoted)
 {
     // Note: SYM_REFLECT is handled directly in the REFLECT native
     //
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_COPY: {  // D_ARG(1) skips RETURN in first arg slot
         REBLEN num_quotes = Dequotify(D_ARG(1));
         REB_R r = Run_Generic_Dispatch(D_ARG(1), frame_, verb);
@@ -466,7 +466,7 @@ REBINT CT_Meta(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 REBTYPE(Meta)
 {
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.
@@ -542,7 +542,7 @@ REBINT CT_The(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 REBTYPE(The)
 {
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // taken care of by `unit` above.

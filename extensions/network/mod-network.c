@@ -96,7 +96,7 @@ static void Query_Net(REBVAL *out, REBVAL *port, SOCKREQ *sock)
 static REB_R Transport_Actor(
     REBFRM *frame_,
     REBVAL *port,
-    const REBVAL *verb,
+    const REBSYM *verb,
     enum Transport_Type transport
 ){
     REBCTX *ctx = VAL_CONTEXT(port);
@@ -141,7 +141,7 @@ static REB_R Transport_Actor(
         //
         // Actions for an unopened socket
         //
-        switch (VAL_WORD_ID(verb)) {
+        switch (ID_OF_SYMBOL(verb)) {
           case SYM_REFLECT: {
             INCLUDE_PARAMS_OF_REFLECT;
 
@@ -228,7 +228,7 @@ static REB_R Transport_Actor(
         }
     }
 
-    switch (VAL_WORD_ID(verb)) { // Ordered by frequency
+    switch (ID_OF_SYMBOL(verb)) { // Ordered by frequency
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 
@@ -507,7 +507,7 @@ static REB_R Transport_Actor(
 //
 //  TCP_Actor: C
 //
-static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
+static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 {
     return Transport_Actor(frame_, port, verb, TRANSPORT_TCP);
 }
@@ -516,7 +516,7 @@ static REB_R TCP_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
 //
 //  UDP_Actor: C
 //
-static REB_R UDP_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
+static REB_R UDP_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 {
     return Transport_Actor(frame_, port, verb, TRANSPORT_UDP);
 }

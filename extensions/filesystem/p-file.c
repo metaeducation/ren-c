@@ -96,7 +96,7 @@ inline static uint64_t File_Size_Cacheable_May_Fail(const REBVAL *port)
 //
 // Internal port handler for files.
 //
-REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
+REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
 
@@ -167,7 +167,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBVAL *verb)
         file->path = path;
     }
 
-    switch (VAL_WORD_ID(verb)) {
+    switch (ID_OF_SYMBOL(verb)) {
 
     //=//// REFLECT ////////////////////////////////////////////////////////=//
 
