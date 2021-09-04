@@ -101,7 +101,9 @@ for-each [name value] options [
             ;
             config-stack: copy []
             loop [:config] [
-                set [path: file:] split-path config
+                path+file: split-path config
+                path: path+file/1
+                file: path+file/2
                 change-dir path
                 append config-stack ^(transcode read file)
 

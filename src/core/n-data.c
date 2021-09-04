@@ -724,91 +724,30 @@ void Set_Var_May_Fail(
 //
 //  set: native [
 //
-//  {Sets a word, path, or block of words and paths to specified value(s).}
+//  {Sets a word or path to specified value (see also: UNPACK)}
 //
 //      return: [<opt> any-value!]
 //          {Will be the values set to, or void if any set values are void}
-//      target [blackhole! any-word! any-sequence! block! quoted!]
-//          {Word or path, or block of words and paths}
+//      target "Word or path (# means ignore assignment, just return value)"
+//          [blackhole! any-word! any-sequence! quoted!]
 //      value [<opt> <meta> any-value!]
-//          "Value or block of values (NULL means unset)"
-//      /hard "Do not evaluate GROUP!s in PATH! (assume pre-COMPOSE'd)"
-//      /single "If target and value are blocks, set each to the same value"
-//      /some "blank values (or values past end of block) are not set."
 //  ]
 //
 REBNATIVE(set)
-//
-// R3-Alpha and Red let you write `set [a b] 10`, since the thing you were
-// setting to was not a block, would assume you meant to set all the values to
-// that.  BUT since you can set things to blocks, this has the problem of
-// `set [a b] [10]` being treated differently, which can bite you if you
-// `set [a b] value` for some generic value.
-//
-// Hence by default without /SINGLE, blocks are supported only as:
-//
-//     >> set [a b] [1 2]
-//     >> print a
-//     1
-//     >> print b
-//     2
 {
     INCLUDE_PARAMS_OF_SET;
 
     REBVAL *target = ARG(target);
     REBVAL *value = Meta_Unquotify(ARG(value));
 
-    if (not IS_BLOCK(target)) {
-        Set_Var_May_Fail(
-            target,
-            SPECIFIED,
-            IS_BLANK(value) and REF(some) ? Lib(NULL) : value,
-            SPECIFIED,
-            did REF(hard)
-        );
+    Set_Var_May_Fail(
+        target,
+        SPECIFIED,
+        value,
+        SPECIFIED
+    );
 
-        RETURN (value);
-    }
-
-    const RELVAL *item_tail;
-    const RELVAL *item = VAL_ARRAY_AT(&item_tail, target);
-
-    const RELVAL *v_tail;
-    const RELVAL *v;
-    if (IS_BLOCK(value) and not REF(single))
-        v = VAL_ARRAY_AT(&v_tail, value);
-    else {
-        Init_True(ARG(single));
-        v = value;
-        v_tail = value + 1;
-    }
-
-    for (
-        ;
-        item != item_tail;
-        ++item, (REF(single) or v == v_tail) ? NOOP : (++v, NOOP)
-     ){
-        if (REF(some)) {
-            if (v == v_tail)
-                break; // won't be setting any further values
-            if (IS_BLANK(v))
-                continue; // /SOME means treat blanks as no-ops
-        }
-
-        Set_Var_May_Fail(
-            item,
-            VAL_SPECIFIER(target),
-            v == v_tail  // R3-Alpha/Red blank after END
-                ? Lib(BLANK)
-                : v,
-            (IS_BLOCK(value) and not REF(single))
-                ? VAL_SPECIFIER(value)
-                : SPECIFIED,
-            did REF(hard)
-        );
-    }
-
-    RETURN (ARG(value));
+    RETURN (value);
 }
 
 

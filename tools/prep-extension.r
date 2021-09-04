@@ -64,7 +64,9 @@ args: parse-args system/script/args  ; either from command line or DO/ARGS
 ; just point at a directory and follow the specification.
 ;
 src: to file! :args/SRC
-set [in-dir file-name] split-path src
+path+file: split-path src
+in-dir: path+file/1
+file-name: path+file/2
 
 ; Assume we start up in the directory where build products are being made
 ;

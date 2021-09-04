@@ -110,7 +110,16 @@ export cscape: function [
 
     substitutions: collect [
         for-each item list [
-            set [pattern: col: mode: expr: prefix: suffix:] item
+            ;
+            ; SET no longer takes BLOCK!, and bootstrap executable doesn't have
+            ; SET-BLOCK! so no UNPACK.
+            ;
+            pattern: item/1
+            col: item/2
+            mode: item/3
+            expr: item/4
+            prefix: item/5
+            suffix: item/6
 
             any-upper: did find/case expr charset [#"A" - #"Z"]
             any-lower: did find/case expr charset [#"a" - #"z"]

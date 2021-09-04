@@ -51,13 +51,12 @@ maybe: enfixed func* [
         ]
     ]
 
-    ; SET and GET require you to pre-compose paths if they have GROUP! in
-    ; them (then use /HARD).  Note also that right evaluates before left here:
+    ; Note that right evaluates before left here:
     ;
     ; https://github.com/rebol/rebol-issues/issues/2275
     ;
-    if null? :optional [return get/hard/any compose target]
-    return set/hard compose target :optional
+    if null? :optional [return get/any target]
+    return set target :optional
 ]
 
 

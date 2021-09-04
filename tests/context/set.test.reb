@@ -26,25 +26,9 @@
 (
     a: 10
     b: 20
-    did all [
-        [x y] = set/single [a b] [x y]
-        a = [x y]
-        b = [x y]
-    ]
-)
-(
-    a: 10
-    b: 20
     c: 30
     set [a b c] [_ 99]
     did all [a = _, b = 99, c = _]
-)
-(
-    a: 10
-    b: 20
-    c: 30
-    set/some [a b c] [_ 99]
-    did all [a = 10, b = 99, c = 30]
 )
 
 ; #1745
