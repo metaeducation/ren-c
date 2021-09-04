@@ -38,6 +38,7 @@ yes
 no
 
 blank
+blackhole
 
 newline
 space
