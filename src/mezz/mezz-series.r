@@ -702,8 +702,8 @@ unpack: enfixed func [
     {Unpack a BLOCK! of values and store each in a variable}
     return: [<opt> <invisible> any-value!]
     'vars [set-block!]
-    block "Reduced by default, but values taken as-is if quoted"
-        [block! quoted!]
+    block "Reduced if normal [block], but values used as-is if @[block]"
+        [block! the-block!]
 ][
     let result': ~unset~
     reduce-each val block [

@@ -47,7 +47,7 @@ REBNATIVE(reduce)
     if (Cache_Predicate_Throws(D_OUT, predicate))
         return R_THROWN;
 
-    // Single element REDUCE does an EVAL, but doesn't allow arguments.
+    // Single element REDUCE is currently limited only to certain types.
     // (R3-Alpha, would just return the input, e.g. `reduce :foo` => :foo)
     // If there are arguments required, Eval_Value_Throws() will error.
     //
@@ -149,8 +149,8 @@ REBNATIVE(reduce)
 //          [<opt> any-value!]
 //      :vars "Variable to receive each reduced value (multiple TBD)"
 //          [word!]
-//      block "Input block of expressions (quoted block acts like FOR-EACH)"
-//          [block! quoted!]
+//      block "Input block of expressions (@[block] acts like FOR-EACH)"
+//          [block! the-block!]
 //      body "Code to run on each step"
 //          [block!]
 //  ]
@@ -162,12 +162,16 @@ REBNATIVE(reduce_each)
     // `reduce-each x ^[1 + 2] [...]` gives x as 1, +, and 2.
     //
     REBVAL *block = ARG(block);
-    if (IS_QUOTED(block)) {
-        Unquotify(block, 1);
-        if (not IS_BLOCK(block))
-            fail ("Only BLOCK! and QUOTED!-BLOCK! supported by REDUCE-EACH");
-
-        return rebValue(Lib(FOR_EACH), ARG(vars), block, ARG(body));
+    if (IS_THE_BLOCK(block)) {
+        Plainify(block);
+        if (rebRunThrows(
+            D_OUT,
+            true,
+            Lib(FOR_EACH), ARG(vars), block, ARG(body)
+        )){
+            return R_THROWN;
+        }
+        return D_OUT;
     }
 
     REBCTX *context;

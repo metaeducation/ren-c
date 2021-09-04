@@ -17,17 +17,17 @@
 (
     a: b: ~bad~
     did all [
-        1 = [a b c]: unpack ^[1 + 2]
+        1 = [a b c]: unpack @[1 + 2]
         a = 1
         b = '+
-        c = 2 
+        c = 2
     ]
 )
 
 ; ... is used to indicate willingness to discard extra values
 (
     did all [
-        1 = [a b ...]: unpack ^[1 2 3 4 5]
+        1 = [a b ...]: unpack @[1 2 3 4 5]
         a = 1
         b = 2
     ]
