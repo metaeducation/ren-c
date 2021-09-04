@@ -153,3 +153,6 @@
         s = "()"
     ])
 ]
+
+; https://github.com/metaeducation/rebol-issues/issues/1279
+(s: ~, did all [uparse? s: [1] [change n: integer! (n * 10)], s = [10]])

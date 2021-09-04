@@ -28,7 +28,7 @@
 // Each ACTION! has an associated C function that runs when it is invoked, and
 // this is called the "dispatcher".  A dispatcher may be general and reused
 // by many different actions.  For example: the same dispatcher code is used
-// mfor most `FUNC [...] [...]` instances--but each one has a different body
+// for most `FUNC [...] [...]` instances--but each one has a different body
 // array and spec, so the behavior is different.  Other times a dispatcher can
 // be for a single function, such as with natives like IF that have C code
 // which is solely used to implement IF.

@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -33,11 +33,12 @@
 // of creation.
 //
 // Both forms are allowed to contain WORD!, INTEGER!, GROUP!, BLOCK!, TEXT!,
-// and TAG! elements.  There are SET-, GET-, and SYM- forms:
+// and TAG! elements.  There are SET-, GET-, META-, and THE- forms:
 //
 //     <abc>/(d e f)/[g h i]:   ; a 3-element SET-PATH!
 //     :foo.1.bar               ; a 3-element GET-TUPLE!
-//     @abc.(def)               ; a 2-element META-TUPLE!
+//     ^abc.(def)               ; a 2-element META-TUPLE!
+//     @<a>/<b>/<c>             ; a 3-element THE-TUPLE!
 //
 // It is also legal to put BLANK! in sequence slots.  They will render
 // invisibly, allowing you to begin or terminate sequences with the delimiter:
@@ -45,13 +46,17 @@
 //     .foo.bar     ; a 3-element TUPLE! with BLANK! in the first slot
 //     1/2/3/:      ; a 4-element PATH! with BLANK! in the last slot
 //     /            ; a 2-element PATH! with BLANK! in the first and last slot
-//     ...          ; a 4-element TUPLE! of blanks
 //
 // PATH!s may contain TUPLE!s, but not vice versa.  This means that mixed
 // usage can be interpreted unambiguously:
 //
 //     a.b.c/d.e.f    ; a 2-element PATH! containing 3-element TUPLEs
 //     a/b/c.d/e/f    ; a 5-element PATH! with 2-element TUPLE! in the middle
+//
+// Neither PATH! nor TUPLE may contain "arrow-words" in any slot (those with
+// `>` or `<` in their spelling), so interpretation of TAG!s is unambiguous:
+//
+//     ..<..>..     ; a 5-element TUPLE! with TAG! <..> in slot 3, rest BLANK!
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -97,7 +102,8 @@ inline static bool Is_Valid_Sequence_Element(
     assert(ANY_SEQUENCE_KIND(sequence_kind));
 
     enum Reb_Kind k = VAL_TYPE(v);
-    if (k == REB_BLANK
+    if (
+        k == REB_BLANK
         or k == REB_INTEGER
         or k == REB_GROUP
         or k == REB_BLOCK

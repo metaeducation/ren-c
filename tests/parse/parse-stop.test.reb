@@ -25,3 +25,8 @@
 (
     uparse? "aaa" [some ["a", elide opt stop "b"]]
 )
+
+; https://github.com/Oldes/Rebol-issues/issues/967
+;
+(x: ~, did all [uparse? "" [while  [(x: 2) stop]], x = 2])
+(x: ~, did all [uparse? "" [some  [(x: 2) stop]], x = 2])
