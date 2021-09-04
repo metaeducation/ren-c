@@ -802,4 +802,4 @@ inline static REBVAL *Constify(REBVAL *v) {
 #define DECLARE_LOCAL(name) \
     REBVAL name##_cell; \
     Prep_Cell(&name##_cell); \
-    REBVAL * const name = &name##_cell;
+    REBVAL * const name = &name##_cell
