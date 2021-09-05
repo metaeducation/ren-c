@@ -993,7 +993,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             f_spare,  // can't overwrite f->out (in case action is invisible)
             v,  // !!! may not be array-based
             v_specifier,
-            nullptr, // `setval`: null means don't treat as SET-PATH!
             EVAL_MASK_DEFAULT | EVAL_FLAG_PUSH_PATH_REFINES
         )){
             Copy_Cell(f->out, f_spare);
@@ -1066,17 +1065,22 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         Decay_If_Isotope(f->out);
 
-        if (Eval_Path_Throws_Core(
-            f_spare,  // output if thrown, used as scratch space otherwise
-            v,  // !!! may not be array-based
-            v_specifier,
-            f->out,
-            EVAL_MASK_DEFAULT  // evaluating GROUP!s ok
+        // POKE is formulated so if you poke to a # then it will assume you
+        // want it to use the first item
+        //
+        if (v != f_spare)  // !!! SET-GROUP! puts in f_spare, jumps to label
+            Derelativize(f_spare, v, v_specifier);
+        Quotify(f_spare, 1);
+
+        DECLARE_LOCAL (discarded);
+        if (rebRunThrows(
+            discarded,
+            true,
+            Lib(POKE), Lib(BLACKHOLE), f_spare, rebQ(f->out)
         )){
-            Copy_Cell(f->out, f_spare);
+            Move_Cell(f->out, discarded);
             goto return_thrown;
         }
-
         break; }
 
 
@@ -1119,7 +1123,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             goto process_get_word;
         }
 
-        if (Get_Path_Throws_Core(f->out, v, v_specifier))
+        if (Eval_Path_Throws_Core(f->out, v, v_specifier, EVAL_MASK_DEFAULT))
             goto return_thrown;
 
         // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
@@ -1409,8 +1413,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 Copy_Cell(var, DS_AT(dsp_output));
                 Set_Var_May_Fail(
                     var, SPECIFIED,
-                    UNSET_VALUE, SPECIFIED,
-                    false  // hard
+                    UNSET_VALUE, SPECIFIED
                 );
             }
             ++dsp_output;
@@ -1450,8 +1453,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         else
             Set_Var_May_Fail(
                 f_spare, SPECIFIED,
-                f->out, SPECIFIED,
-                false  // "hard"
+                f->out, SPECIFIED
             );
 
         // Now take care of the assignment of the original result; we can tell
@@ -1466,8 +1468,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 f->out,
                 f_spare,
                 SPECIFIED,
-                true,  // any
-                false  // hard
+                true  // any
             );
         }
 

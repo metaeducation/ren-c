@@ -1077,64 +1077,11 @@ REBNATIVE(default)
         Copy_Cell(D_OUT, Lookup_Word_May_Fail(target, SPECIFIED));
     else {
         assert(IS_SET_PATH(target) or IS_SET_TUPLE(target));
-
-        // We want to be able to default a path with groups in it, but don't
-        // want to double-evaluate.  In a userspace DEFAULT we would do
-        // COMPOSE on the PATH! and then use GET/HARD and SET/HARD.  To make
-        // a faster native we just do a more optimal version of that.
         //
-        REBLEN len = VAL_SEQUENCE_LEN(target);
-        bool has_groups = false;
-        REBLEN i;
-        for (i = 0; i < len; ++i) {
-            const RELVAL *item = VAL_SEQUENCE_AT(D_SPARE, target, i);
-
-            if (IS_GROUP(item))
-                has_groups = true;
-        }
-        if (has_groups) {
-            REBARR *composed = Make_Array(len);
-            RELVAL *dest = ARR_HEAD(composed);
-            REBSPC *specifier = VAL_SPECIFIER(target);
-            for (i = 0; i < len; ++i, ++dest) {
-                const RELVAL *item = VAL_SEQUENCE_AT(D_SPARE, target, i);
-
-                if (not IS_GROUP(item))
-                    Derelativize(dest, item, VAL_SPECIFIER(target));
-                else {
-                    if (Do_Any_Array_At_Throws(D_OUT, item, specifier))
-                        return R_THROWN;
-                    Copy_Cell(dest, D_OUT);
-                }
-            }
-            SET_SERIES_LEN(composed, len);
-            Freeze_Array_Shallow(composed);
-            Force_Series_Managed(composed);
-
-            // !!! The limiting of path contents messes this up; you cannot
-            // generically store path picking info if it's an arbitrary value
-            // because not all values are allowed in paths.  This will require
-            // rethinking!
-            //
-            if (not Try_Init_Any_Sequence_Arraylike(
-                target,
-                REB_SET_PATH,
-                composed
-            )){
-                fail ("Cannot compose arbitrary path, review implications");
-            }
-        }
-
-        if (Eval_Path_Throws_Core(
-            D_OUT,
-            target,  // !!! May not be array-based
-            VAL_SPECIFIER(target),
-            nullptr,  // not requesting value to set means it's a get
-            EVAL_MASK_DEFAULT
-                | EVAL_FLAG_PATH_HARD_QUOTE // pre-COMPOSE'd, GROUP!s literal
-        )){
-            panic (D_OUT); // shouldn't be possible... no executions!
-        }
+        // !!! This is temporary, it will double evaluate any GROUP!s in
+        // the path...a better solution is being worked on.
+        //
+        Get_Var_May_Fail(D_OUT, target, SPECIFIED, true);
     }
 
     // We only consider those bad words which are in the "unfriendly" state
@@ -1166,17 +1113,11 @@ REBNATIVE(default)
         Copy_Cell(Sink_Word_May_Fail(target, SPECIFIED), D_OUT);
     else {
         assert(IS_SET_PATH(target) or IS_SET_TUPLE(target));
-        DECLARE_LOCAL (dummy);
-        if (Eval_Path_Throws_Core(
-            dummy,
-            target,  // !!! may not be array-based
-            VAL_SPECIFIER(target),
-            D_OUT,
-            EVAL_MASK_DEFAULT
-                | EVAL_FLAG_PATH_HARD_QUOTE  // precomposed, no double eval
-        )){
-            panic (dummy); // shouldn't be possible, no executions!
-        }
+
+        // !!! Again, this is temporary, as it means GROUP!s in any PATH!
+        // would be evaluated twice in the defaulting process.
+        //
+        Set_Var_May_Fail(target, SPECIFIED, D_OUT, SPECIFIED);
     }
     return D_OUT;
 }

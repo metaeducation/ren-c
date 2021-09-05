@@ -837,52 +837,15 @@ REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Gob(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     REBGOB *gob = VAL_GOB(pvs->out);
 
     if (IS_WORD(picker)) {
-        if (not setval) {
-            if (not Did_Get_GOB_Var(pvs->out, gob, picker))
-                return R_UNHANDLED;
+        if (not Did_Get_GOB_Var(pvs->out, gob, picker))
+            return R_UNHANDLED;
 
-            // !!! Comment here said: "Check for SIZE/X: types of cases".
-            // See %c-path.c for an explanation of why this code steps
-            // outside the ordinary path processing to "look ahead" in the
-            // case of wanting to make it possible to use a generated PAIR!
-            // as a way of "writing back" into the values in the GOB! that
-            // were used to generate the PAIR!.  There should be some
-            // overall solution to facilitating this kind of need.
-            //
-            if (PVS_IS_SET_PATH(pvs) and IS_PAIR(pvs->out)) {
-                //
-                // !!! Adding to the reasons that this is dodgy, the picker
-                // can be pointing to a temporary memory cell, and when
-                // Next_Path_Throws runs arbitrary code it could be GC'd too.
-                // Have to copy -and- protect.
-                //
-                DECLARE_LOCAL (orig_picker);
-                Copy_Cell(cast(RELVAL*, orig_picker), picker);
-                PUSH_GC_GUARD(orig_picker);
-
-                if (Next_Path_Throws(pvs)) // sets value in pvs->store
-                    fail (Error_No_Catch_For_Throw(pvs->out)); // Review
-
-                // write it back to gob
-                //
-                if (not Did_Set_GOB_Var(gob, orig_picker, pvs->out))
-                    return R_UNHANDLED;
-
-                DROP_GC_GUARD(orig_picker);
-            }
-            return pvs->out;
-        }
-        else {
-            if (not Did_Set_GOB_Var(gob, picker, unwrap(setval)))
-                return R_UNHANDLED;
-            return R_INVISIBLE;
-        }
+        return pvs->out;
     }
 
     if (IS_INTEGER(picker))
@@ -924,8 +887,152 @@ REBTYPE(Gob)
     REBLEN index = VAL_GOB_INDEX(v);
     REBLEN tail = GOB_PANE(gob) ? GOB_LEN(gob) : 0;
 
-    // unary actions
     switch (ID_OF_SYMBOL(verb)) {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+      case SYM_PICK_POKE_P: {
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        if (steps_left == 1 and poking) {
+            //
+            // The goal is to poke ARG(value) into this particular field, like
+            // `dict.key: 10`.  So this is the end of the line.
+            //
+            Meta_Unquotify(setval);
+
+          update_bits: ;
+            if (IS_INTEGER(picker)) {
+                rebElide(
+                    Lib(POKE),
+                        "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
+                        "@", SPECIFIC(picker)
+                );
+            }
+            else if (IS_WORD(picker)) {
+                if (not Did_Set_GOB_Var(gob, picker, setval))
+                    return R_UNHANDLED;
+            }
+            else
+                fail (rebUnrelativize(picker));
+        }
+        else {
+            if (IS_INTEGER(picker)) {
+                if (rebRunThrows(
+                    D_OUT,
+                    true,
+                    Lib(PICK),
+                        "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
+                        "@", SPECIFIC(picker)
+                )){
+                    return R_THROWN;
+                }
+            }
+            else if (IS_WORD(picker)) {
+                if (not Did_Get_GOB_Var(D_OUT, gob, picker))
+                    return R_UNHANDLED;
+            }
+            else
+                fail (rebUnrelativize(picker));
+
+            if (steps_left == 1) {
+                assert(not poking);
+                return D_OUT;
+            }
+
+            // The GOB! stores compressed bits for things like the SIZE, but
+            // when a variable is requested it synthesizes a PAIR!.  This is
+            // actually wasteful if someone is going to write `gob.size.x`,
+            // because that could have just given back an INTEGER! with no
+            // PAIR! node synthesized.  That is hardly concerning here.
+            //
+            // (It is more concerning in something like the FFI, where you have
+            // `some_struct.million_ints_array.1`.  Because picking the first
+            // element shouldn't require you to synthesize a BLOCK! of a
+            // million INTEGER!--but `some_struct.million_ints_array` might.)
+            //
+            // The real issue for GOB! comes up when you POKE, such as with
+            // `gob.size.x: 10`.  Handing off the "pick-poke" to PAIR! will
+            // have it update the synthesized pair and return nullptr to say
+            // there's no reason to update bits because it handled it.  But
+            // the bits in the GOB! need changing.
+            //
+            // So GOB! has 3 options (presuming "ignore sets" isn't one):
+            //
+            // 1. Don't just consume one of the ARG(steps), but go ahead and
+            //    do two--e.g. take control of what `size.x` means and don't
+            //    synthesize a PAIR! at all.
+            //
+            // 2. Synthesize a PAIR! and allow it to do whatever modifications
+            //    it wishes, but ignore its `nullptr` return status and pack
+            //    the full pair value down to the low-level bits in the GOB!
+            //
+            // 3. Drop this micro-optimization and store a PAIR! cell in the
+            //    GOB! structure.
+            //
+            // *The best option is 3*!  However, the point of keeping the GOB!
+            // code in Ren-C has been to try and imagine how to accommodate
+            // some of these categories of desires for optimization.  For this
+            // particular exercise, we go with option (2).
+            //
+            // We have to save the pair to do this, because we can't count on
+            // PAIR! dispatch not mucking with frame fields like ARG(location).
+            //
+            bool need_pair_writeback = poking and IS_PAIR(D_OUT);
+            if (need_pair_writeback) {
+                assert(IS_WORD(picker));  // pane pick shouldn't make pair
+                Move_Cell(DS_PUSH(), D_OUT);
+            }
+
+            // Reuse the frame built for this PICK-POKE* call for XXX, by
+            // updating the location and advancing the steps index.
+            //
+            // !!! Assumes frame compatibility, review enforcement!
+            //
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN) {
+                if (need_pair_writeback)
+                    DS_DROP();
+                return R_THROWN;
+            }
+
+            if (not poking)
+                return r;
+
+            if (need_pair_writeback) {  // (see explanation above)
+                assert(r == nullptr);  // PAIR! thinks we don't need it...
+                Move_Cell(D_OUT, DS_TOP);
+                DS_DROP();
+                setval = D_OUT;
+                goto update_bits;
+            }
+
+            if (r != nullptr) {  // the update needs our cell's bits to change
+                //
+                // Besides the trick with PAIR!, the gob doesn't know how to
+                // take any other updates and write them back to its encoded
+                // bits.  There shouldn't be any other cases, as strings and
+                // such in the GOB! are pointed to by reference.
+                //
+                fail ("Unknown writeback in GOB!");
+            }
+        }
+
+        return nullptr; }
+
     case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
 

@@ -671,8 +671,7 @@ REB_R TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Context(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     REBCTX *c = VAL_CONTEXT(pvs->out);
 
@@ -715,16 +714,7 @@ REB_R PD_Context(
         INIT_VAL_WORD_PRIMARY_INDEX(m_cast(RELVAL*, picker), n);
     }
 
-    if (setval) {
-        ENSURE_MUTABLE(pvs->out);
-
-        if (GET_CELL_FLAG(var, PROTECTED))
-            fail (Error_Protected_Word_Raw(rebUnrelativize(picker)));
-    }
-
-    pvs->u.ref.cell = var;
-    pvs->u.ref.specifier = SPECIFIED;
-    return R_REFERENCE;
+    return Copy_Cell(pvs->out, var);
 }
 
 
@@ -1137,14 +1127,86 @@ REB_R Context_Common_Action_Maybe_Unhandled(
 //
 REBTYPE(Context)
 {
+  blockscope {
     REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
     if (r != R_UNHANDLED)
         return r;
+  }
 
     REBVAL *context = D_ARG(1);
     REBCTX *c = VAL_CONTEXT(context);
 
     switch (ID_OF_SYMBOL(verb)) {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+      case SYM_PICK_POKE_P: {
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        if (not IS_WORD(picker))
+            fail (rebUnrelativize(picker));
+
+        const REBSYM *symbol = VAL_WORD_SYMBOL(picker);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        if (steps_left == 1 and poking) {  // `obj.field: 10`, handle now
+            Meta_Unquotify(setval);
+
+          update_bits: ;
+            REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
+            if (not var)
+                fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(picker)));
+
+            Copy_Cell(var, setval);
+        }
+        else {
+            const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
+            if (not var)
+                fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(picker)));
+
+          #if !defined(NDEBUG)
+            enum Reb_Kind var_type = VAL_TYPE(var);
+          #endif
+
+            if (steps_left == 1) {  // `obj.field` and not `outer.inner.field`
+                assert(not poking);  // would have been handled above
+                RETURN (var);  // no dispatch on more steps needed
+            }
+
+            ++VAL_INDEX_RAW(ARG(steps));  // take `inner` out of steps
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, var);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            TRASH_POINTER_IF_DEBUG(var);  // arbitrary code may moved memory
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr) {  // the update needs our cell's bits to change
+                assert(r == D_OUT);
+              #if !defined(NDEBUG)
+                assert(VAL_TYPE(D_OUT) == var_type);
+              #endif
+                setval = D_OUT;
+                goto update_bits;
+            }
+        }
+
+        assert(poking);
+        return nullptr; }  // caller's REBCTX* is not stale, no update needed
+
+
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // covered by `v`

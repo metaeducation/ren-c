@@ -320,8 +320,7 @@ REBLEN Find_Map_Entry(
 //
 REB_R PD_Map(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     assert(IS_MAP(pvs->out));
 
@@ -336,23 +335,6 @@ REB_R PD_Map(
     // distinguish multiple casings of the same key.
     //
     const bool cased = false;
-
-    if (setval) {
-        REBMAP *m = VAL_MAP_ENSURE_MUTABLE(pvs->out);
-
-        REBINT n = Find_Map_Entry(
-            m,  // modified (if not located in map)
-            picker,
-            SPECIFIED,
-            unwrap(setval),  // value to set
-            SPECIFIED,
-            cased
-        );
-
-        assert(n != 0);
-        UNUSED(n);
-        return R_INVISIBLE;
-    }
 
     const REBMAP *m = VAL_MAP(pvs->out);
 
@@ -792,6 +774,101 @@ REBTYPE(Map)
         Clear_Series(MAP_HASHLIST(m));
 
         return Init_Map(D_OUT, m); }
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+      case SYM_PICK_POKE_P: {
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        // Fetching and setting with path-based access is case-preserving for
+        // initial insertions.  However, the case-insensitivity means that all
+        // writes after that to the same key will not be overriding the key,
+        // it will just change the data value for the existing key.  SELECT and
+        // the operation tentatively named PUT should be used if a map is to
+        // distinguish multiple casings of the same key.
+        //
+        bool strict = false;
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        if (steps_left == 1 and poking) {
+            //
+            // The goal is to poke ARG(value) into this particular field, like
+            // `dict.key: 10`.  So this is the end of the line.
+            //
+            Meta_Unquotify(setval);
+
+          update_bits: ;
+            REBINT n = Find_Map_Entry(
+                VAL_MAP_ENSURE_MUTABLE(map),  // modified
+                picker,
+                VAL_SPECIFIER(steps),
+                setval,  // value to set (either ARG(value) or f->out)
+                SPECIFIED,
+                strict
+            );
+
+            assert(n != 0);
+            UNUSED(n);
+        }
+        else {
+            REBINT n = Find_Map_Entry(
+                m_cast(REBMAP*, VAL_MAP(map)),  // not modified
+                picker,
+                VAL_SPECIFIER(steps),
+                nullptr,  // no value, so map not changed
+                SPECIFIED,
+                strict
+            );
+
+            if (n == 0)
+                fail ("Can't pick map item");
+
+            const REBVAL *val = SPECIFIC(
+                ARR_AT(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
+            );
+            if (IS_NULLED(val))  // zombie entry, means unused
+                fail ("Can't pick map item");
+
+            if (steps_left == 1) {
+                assert(not poking);  // would be handled above
+                RETURN (val);
+            }
+
+            // Now handling `dict.xxx.yyy` or `dict.xxx.yyy: 10`
+            //
+            // Reuse the frame built for this PICK-POKE* call for XXX, by
+            // updating the location and advancing the steps index.
+            //
+            // !!! Assumes frame compatibility, review enforcement!
+            //
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, val);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr) {  // the update needs our cell's bits to change
+                assert(r == D_OUT);
+                setval = D_OUT;
+                goto update_bits;  // e.g. `dict.date.year: 1975`
+            }
+        }
+
+        assert(poking);
+        return nullptr; }  // no upstream changes needed for REBMAP* reference
 
       default:
         break;

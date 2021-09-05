@@ -425,12 +425,8 @@ REBTYPE(Sequence)
 //
 REB_R PD_Sequence(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
-    if (setval)
-        fail ("PATH!s are immutable (convert to GROUP! or BLOCK! to mutate)");
-
     REBINT n;
 
     if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312

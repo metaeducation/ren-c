@@ -112,11 +112,9 @@ REB_R TO_Quoted(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
 //
 REB_R PD_Quoted(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     UNUSED(picker);
-    UNUSED(setval);
 
     if (KIND3Q_BYTE(pvs->out) == REB_QUOTED)
         Copy_Cell(pvs->out, VAL_QUOTED_PAYLOAD_CELL(pvs->out));

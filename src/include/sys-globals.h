@@ -109,10 +109,8 @@ PVAR REBVAL PG_Void_Value;
 // (REBVAL*)0x00000010...but that is not standard C.
 //
 PVAR REBVAL PG_R_Invisible;
-PVAR REBVAL PG_R_Immediate;
 PVAR REBVAL PG_R_Redo_Unchecked;
 PVAR REBVAL PG_R_Redo_Checked;
-PVAR REBVAL PG_R_Reference;
 PVAR REBVAL PG_R_Thrown;
 PVAR REBVAL PG_R_Unhandled;
 

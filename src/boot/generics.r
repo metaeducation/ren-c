@@ -338,6 +338,21 @@ select: generic [
     /last "Deprecated: https://forum.rebol.info/t/1126"
 ]
 
+
+pick-poke*: generic [
+    {Low-level hook for PICK and POKE, used also by PATH! and SET-PATH!}
+
+    return: "PICK: the retrieved value, POKE: bits parent cell must update"
+        [<opt> any-value!]
+    location "Target value (on some steps, bits are modified if POKE)"
+        [any-value!]
+    steps "A pre-COMPOSE'd list of steps in the PICK or POKE chain"
+        [block!]
+    value "Value to POKE via ^META protocol (true NULL signals a PICK)"
+        [<opt> <meta> any-value!]
+]
+
+
 ; !!! PUT was added by Red as the complement to SELECT, which offers a /CASE
 ; refinement for adding keys to MAP!s case-sensitively.  The name may not
 ; be ideal, but it's something you can't do with path access, so adopting it

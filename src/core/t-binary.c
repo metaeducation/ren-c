@@ -283,8 +283,7 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 //
 REB_R PD_Binary(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     // Note: There was some more careful management of overflow here in the
     // PICK and POKE actions, before unification.  But otherwise the code
@@ -302,50 +301,17 @@ REB_R PD_Binary(
         }
     */
 
-    if (not setval) { // PICK-ing
-        const REBBIN *bin = VAL_BINARY(pvs->out);
-        if (IS_INTEGER(picker)) {
-            REBINT n = Int32(picker) + VAL_INDEX(pvs->out) - 1;
-            if (n < 0 or cast(REBLEN, n) >= BIN_LEN(bin))
-                return nullptr;
+    const REBBIN *bin = VAL_BINARY(pvs->out);
+    if (IS_INTEGER(picker)) {
+        REBINT n = Int32(picker) + VAL_INDEX(pvs->out) - 1;
+        if (n < 0 or cast(REBLEN, n) >= BIN_LEN(bin))
+            return nullptr;
 
-            Init_Integer(pvs->out, *BIN_AT(bin, n));
-            return pvs->out;
-        }
-
-        return R_UNHANDLED;
+        Init_Integer(pvs->out, *BIN_AT(bin, n));
+        return pvs->out;
     }
 
-    // Otherwise, POKE-ing
-
-    REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(pvs->out);
-
-    if (not IS_INTEGER(picker))
-        return R_UNHANDLED;
-
-    REBINT n = Int32(picker) + VAL_INDEX(pvs->out) - 1;
-    if (n < 0 or cast(REBLEN, n) >= BIN_LEN(bin))
-        fail (Error_Out_Of_Range(SPECIFIC(picker)));
-
-    if (IS_CHAR(unwrap(setval))) {
-        Init_Integer(pvs->out, VAL_CHAR(unwrap(setval)));
-    }
-    else if (IS_INTEGER(unwrap(setval))) {
-        Copy_Cell(pvs->out, unwrap(setval));
-    }
-    else {
-        // !!! See notes in the REBTYPE(String) about alternate cases
-        // for the POKE'd value.
-        //
-        return R_UNHANDLED;
-    }
-
-    REBINT i = Int32(pvs->out);
-    if (i > 0xff)
-        fail (Error_Out_Of_Range(unwrap(setval)));
-
-    BIN_HEAD(bin)[n] = cast(REBYTE, i);
-    return R_INVISIBLE;
+    return R_UNHANDLED;
 }
 
 
@@ -407,7 +373,92 @@ REBTYPE(Binary)
     REBINT tail = cast(REBINT, VAL_LEN_HEAD(v));
 
     SYMID id = ID_OF_SYMBOL(verb);
+
     switch (id) {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+      case SYM_PICK_POKE_P: {
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        if (not IS_INTEGER(picker))
+            return R_UNHANDLED;
+
+        REBINT n = Int32(picker) + VAL_INDEX(v) - 1;
+        if (n < 0 or cast(REBLEN, n) >= BIN_LEN(VAL_BINARY(v)))
+            fail (Error_Out_Of_Range(SPECIFIC(picker)));
+
+        if (steps_left == 1 and poking) {  // `bin.1: 10`, handle now
+            Meta_Unquotify(setval);
+
+          update_bits: ;
+            REBINT i;
+            if (IS_CHAR(setval)) {
+                i = VAL_CHAR(setval);
+            }
+            else if (IS_INTEGER(setval)) {
+                i = Int32(setval);
+            }
+            else {
+                // !!! See notes in the REBTYPE(String) about alternate cases
+                // for the POKE'd value.
+                //
+                return R_UNHANDLED;
+            }
+
+            if (i > 0xff)
+                fail (Error_Out_Of_Range(setval));
+
+            REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
+            BIN_HEAD(bin)[n] = cast(REBYTE, i);
+        }
+        else {
+            const REBBIN *bin = VAL_BINARY(v);
+            Init_Integer(D_OUT, *BIN_AT(bin, n));
+
+            if (steps_left == 1) {  // `bin.(n)` and not `bin.(n).sign`
+                assert(not poking);  // would have been handled above
+                return D_OUT;  // no dispatch on more steps needed
+            }
+
+            // !!! Since we know we always extract INTEGER! from a BINARY!,
+            // the idea of doing more dispatch may seem to not make sense.
+            // But integers may wind up having methods.  Keep code here
+            // that follows the pattern, but maybe it can be deleted.
+
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr) {  // the update needs our cell's bits to change
+                assert(r == D_OUT);
+              #if !defined(NDEBUG)
+                assert(IS_INTEGER(D_OUT));
+              #endif
+                setval = D_OUT;
+                goto update_bits;
+            }
+        }
+
+        assert(poking);
+        return nullptr; }  // caller's REBBIN* is not stale, no update needed
+
+
       case SYM_UNIQUE:
       case SYM_INTERSECT:
       case SYM_UNION:

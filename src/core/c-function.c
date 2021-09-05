@@ -1225,7 +1225,6 @@ bool Get_If_Word_Or_Path_Throws(
             out,
             v,  // !!! may not be array based
             specifier,
-            nullptr,  // `setval`: null means don't treat as SET-PATH!
             EVAL_MASK_DEFAULT | (push_refinements
                 ? EVAL_FLAG_PUSH_PATH_REFINES  // pushed in reverse order
                 : 0)

@@ -153,7 +153,7 @@ inline static bool Do_Logic_Right_Side_Throws(
             Get_Word_May_Fail(out, right, SPECIFIED);
         else {
             assert (IS_PATH(right));
-            if (Get_Path_Throws_Core(out, right, SPECIFIED))
+            if (Eval_Path_Throws_Core(out, right, SPECIFIED, EVAL_MASK_DEFAULT))
                 return true;
         }
 

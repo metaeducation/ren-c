@@ -77,3 +77,10 @@
     (date? now/utc)
     (date? now/local)
 ]
+
+; Mutating times should write back to the container, which is where the
+; immediate bits for the values live.
+;
+(block: [x 10:00 y], block.2.hour: 20, block = [x 20:00 y])
+(obj: make object! [t: 10:00], obj.t.hour: 20, obj.t = 20:00)
+(m: make map! [t 10:00], m.t.hour: 20, m.t = 20:00)

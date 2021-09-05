@@ -346,7 +346,15 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
                     );
                 }
                 else if (IS_PATH(value)) {
-                    Get_Path_Core(safe, value, SPECIFIED);
+                    if (Eval_Path_Throws_Core(
+                        safe,
+                        value,
+                        SPECIFIED,
+                        EVAL_MASK_DEFAULT | EVAL_FLAG_NO_PATH_GROUPS
+                    )){
+                        panic (safe); // shouldn't be possible... no executions!
+                    }
+
                     var = safe;
                 }
                 else {

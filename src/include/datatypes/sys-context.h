@@ -155,8 +155,8 @@
 
 inline static const REBVAL *CTX_ARCHETYPE(REBCTX *c) {  // read-only form
     const REBSER *varlist = CTX_VARLIST(c);
-    if (not IS_SER_DYNAMIC(varlist)) {  // a freed stub, variables are gone
-        assert(GET_SERIES_FLAG(varlist, INACCESSIBLE));
+    if (GET_SERIES_FLAG(varlist, INACCESSIBLE)) {  // a freed stub
+        assert(not IS_SER_DYNAMIC(varlist));  // variables are gone
         return cast(const REBVAL*, &varlist->content.fixed);
     }
     assert(NOT_SERIES_FLAG(varlist, INACCESSIBLE));
@@ -670,6 +670,34 @@ inline static bool Is_Native_Port_Actor(const REBVAL *actor) {
     assert(IS_OBJECT(actor));
     return false;
 }
+
+
+inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
+    const REBVAL *context,
+    const REBSYM *symbol,
+    bool writable
+){
+    UNUSED(writable);
+    bool strict = false;
+    REBVAR *var;
+    if (IS_MODULE(context)) {
+        var = MOD_VAR(VAL_CONTEXT(context), symbol, strict);
+    }
+    else {
+        REBLEN n = Find_Symbol_In_Context(context, symbol, strict);
+        if (n == 0)
+            var = nullptr;
+        else
+            var = CTX_VAR(VAL_CONTEXT(context), n);
+    }
+    return var;
+}
+
+#define TRY_VAL_CONTEXT_VAR(context,symbol) \
+    TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), false)
+
+#define TRY_VAL_CONTEXT_MUTABLE_VAR(context,symbol) \
+    m_cast(REBVAR*, TRY_VAL_CONTEXT_VAR_CORE((context), (symbol), true))
 
 
 //

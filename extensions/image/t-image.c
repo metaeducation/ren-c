@@ -935,232 +935,6 @@ void MF_Image(REB_MOLD *mo, REBCEL(const*) v, bool form)
 }
 
 
-//
-//  REBTYPE: C
-//
-REBTYPE(Image)
-{
-    REBVAL  *value = D_ARG(1);
-    REBINT  diff, len, w, h;
-    REBVAL  *val;
-
-    REBINT index = VAL_IMAGE_POS(value);
-    REBINT tail = cast(REBINT, BIN_LEN(VAL_BINARY(VAL_IMAGE_BIN(value))));
-
-    // Clip index if past tail:
-    //
-    if (index > tail)
-        index = tail;
-
-    SYMID id = ID_OF_SYMBOL(verb);
-    switch (id) {
-
-    case SYM_REFLECT: {
-        INCLUDE_PARAMS_OF_REFLECT;
-
-        UNUSED(ARG(value)); // accounted for by value above
-        SYMID property = VAL_WORD_ID(ARG(property));
-        assert(property != SYM_0);
-
-        switch (property) {
-        case SYM_HEAD:
-            VAL_IMAGE_POS(value) = 0;
-            break;
-
-        case SYM_TAIL:
-            VAL_IMAGE_POS(value) = cast(REBLEN, tail);
-            break;
-
-        case SYM_HEAD_Q:
-            return Init_Logic(D_OUT, index == 0);
-
-        case SYM_TAIL_Q:
-            return Init_Logic(D_OUT, index >= tail);
-
-        case SYM_XY:
-            return Init_Pair_Int(
-                D_OUT,
-                index % VAL_IMAGE_WIDTH(value),
-                index / VAL_IMAGE_WIDTH(value)
-            );
-
-        case SYM_INDEX:
-            return Init_Integer(D_OUT, index + 1);
-
-        case SYM_LENGTH:
-            return Init_Integer(D_OUT, tail > index ? tail - index : 0);
-
-        case SYM_BYTES: {
-            //
-            // !!! The BINARY! currently has a position in it.  This notion
-            // of images being at an "index" is sketchy.  Assume that someone
-            // asking for the bytes doesn't care about the index.
-            //
-            const REBBIN *bin = VAL_BINARY(VAL_IMAGE_BIN(value));
-            return Init_Binary(D_OUT, bin); }  // at 0 index
-
-        default:
-            break;
-        }
-
-        break; }
-
-    case SYM_BITWISE_NOT:
-        Make_Complemented_Image(D_OUT, value);
-        return D_OUT;
-
-    case SYM_SKIP:
-    case SYM_AT: {
-        REBVAL *arg = D_ARG(2);
-
-        // This logic is somewhat complicated by the fact that INTEGER args use
-        // base-1 indexing, but PAIR args use base-0.
-        if (IS_PAIR(arg)) {
-            if (id == SYM_AT)
-                id = SYM_SKIP;
-            diff = (VAL_PAIR_Y_INT(arg) * VAL_IMAGE_WIDTH(value))
-                + VAL_PAIR_X_INT(arg) + (id == SYM_SKIP ? 0 : 1);
-        } else
-            diff = Get_Num_From_Arg(arg);
-
-        index += diff;
-        if (id == SYM_SKIP) {
-            if (IS_LOGIC(arg))
-                --index;
-        }
-        else {
-            if (diff > 0)
-                --index; // For at, pick, poke.
-        }
-
-        if (index > tail)
-            index = tail;
-        else if (index < 0)
-            index = 0;
-
-        VAL_IMAGE_POS(value) = cast(REBLEN, index);
-        RETURN (value); }
-
-    case SYM_CLEAR:
-        if (index < tail) {
-            SET_SERIES_LEN(
-                VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(value)),
-                cast(REBLEN, index)
-            );
-            Reset_Height(value);
-        }
-        RETURN (value);
-
-
-    case SYM_REMOVE: {
-        INCLUDE_PARAMS_OF_REMOVE;
-        UNUSED(PAR(series));
-
-        REBSER *series = VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(value));
-
-        if (REF(part)) {
-            val = ARG(part);
-            if (IS_INTEGER(val)) {
-                len = VAL_INT32(val);
-            }
-            else if (IS_IMAGE(val)) {
-                if (!VAL_IMAGE_WIDTH(val))
-                    fail (val);
-                len = VAL_IMAGE_POS(val) - VAL_IMAGE_POS(value);
-            }
-            else
-                fail (Error_Invalid_Type(VAL_TYPE(val)));
-        }
-        else len = 1;
-
-        index = cast(REBINT, VAL_IMAGE_POS(value));
-        if (index < tail && len != 0) {
-            Remove_Series_Units(series, VAL_INDEX(value), len);
-        }
-        Reset_Height(value);
-        RETURN (value); }
-
-    case SYM_APPEND:
-    case SYM_INSERT:
-    case SYM_CHANGE: {
-        if (IS_NULLED_OR_BLANK(D_ARG(2))) {
-            if (id == SYM_APPEND) // append returns head position
-                VAL_IMAGE_POS(value) = 0;
-            RETURN (value); // don't fail on read only if it would be a no-op
-        }
-        ENSURE_MUTABLE(value);
-
-        return Modify_Image(frame_, verb); }
-
-    case SYM_FIND:
-        Find_Image(frame_); // sets DS_OUT
-        return D_OUT;
-
-    case SYM_COPY: {
-        INCLUDE_PARAMS_OF_COPY;
-
-        UNUSED(PAR(value));
-
-        if (REF(deep))
-            fail (Error_Bad_Refines_Raw());
-
-        if (REF(types))
-            fail (Error_Bad_Refines_Raw());
-
-        REBVAL *arg;
-        if (not REF(part)) {
-            arg = value;
-            goto makeCopy;
-        }
-        arg = ARG(part); // can be image, integer, pair.
-        if (IS_IMAGE(arg)) {
-            if (VAL_IMAGE_BIN(arg) != VAL_IMAGE_BIN(value))
-                fail (arg);
-            len = VAL_IMAGE_POS(arg) - VAL_IMAGE_POS(value);
-            arg = value;
-            goto makeCopy2;
-        }
-        if (IS_INTEGER(arg)) {
-            len = VAL_INT32(arg);
-            arg = value;
-            goto makeCopy2;
-        }
-        if (IS_PAIR(arg)) {
-            w = VAL_PAIR_X_INT(arg);
-            h = VAL_PAIR_Y_INT(arg);
-            w = MAX(w, 0);
-            h = MAX(h, 0);
-            diff = MIN(cast(REBIDX, VAL_LEN_HEAD(value)), VAL_IMAGE_POS(value));
-            diff = MAX(0, diff);
-            index = VAL_IMAGE_WIDTH(value); // width
-            if (index) {
-                len = diff / index; // compute y offset
-                diff %= index; // compute x offset
-            } else len = diff = 0; // avoid div zero
-            w = MIN(w, index - diff); // img-width - x-pos
-            h = MIN(h, (int)(VAL_IMAGE_HEIGHT(value) - len)); // img-high - y-pos
-            Init_Image_Black_Opaque(D_OUT, w, h);
-            Copy_Rect_Data(D_OUT, 0, 0, w, h, value, diff, len);
-//          VAL_IMAGE_TRANSP(D_OUT) = VAL_IMAGE_TRANSP(value);
-            return D_OUT;
-        }
-        fail (Error_Invalid_Type(VAL_TYPE(arg)));
-
-makeCopy:
-        // Src image is arg.
-        len = VAL_IMAGE_LEN_AT(arg);
-makeCopy2:
-        Copy_Image_Value(D_OUT, arg, len);
-        return D_OUT; }
-
-    default:
-        break;
-    }
-
-    return R_UNHANDLED;
-}
-
-
 inline static bool Adjust_Image_Pick_Index_Is_Valid(
     REBINT *index, // gets adjusted
     const REBVAL *value, // image
@@ -1361,18 +1135,290 @@ void Poke_Image_Fail_If_Read_Only(
 
 
 //
+//  REBTYPE: C
+//
+REBTYPE(Image)
+{
+    REBVAL *image = D_ARG(1);
+    REBINT  diff, len, w, h;
+    REBVAL  *val;
+
+    REBINT index = VAL_IMAGE_POS(image);
+    REBINT tail = cast(REBINT, BIN_LEN(VAL_BINARY(VAL_IMAGE_BIN(image))));
+
+    // Clip index if past tail:
+    //
+    if (index > tail)
+        index = tail;
+
+    SYMID id = ID_OF_SYMBOL(verb);
+
+    switch (id) {
+      case SYM_PICK_POKE_P: {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        if (steps_left == 1 and poking) {
+            //
+            // The goal is to poke ARG(value) into this particular slot, like
+            // `block.10: 20`.  So this is the end of the line.
+            //
+            Meta_Unquotify(setval);
+
+          /*update_bits: ;*/
+            Poke_Image_Fail_If_Read_Only(image, picker, setval);
+        }
+        else {
+            Pick_Image(D_OUT, image, picker);
+
+            if (steps_left == 1) {
+                assert(not poking);
+                return D_OUT;
+            }
+
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr)  // the update needs our cell's bits to change
+                fail ("Unknown Writeback in IMAGE!");
+        }
+
+        assert(poking);
+        return nullptr; }
+
+
+    case SYM_REFLECT: {
+        INCLUDE_PARAMS_OF_REFLECT;
+
+        UNUSED(ARG(value)); // accounted for by image above
+        SYMID property = VAL_WORD_ID(ARG(property));
+        assert(property != SYM_0);
+
+        switch (property) {
+        case SYM_HEAD:
+            VAL_IMAGE_POS(image) = 0;
+            break;
+
+        case SYM_TAIL:
+            VAL_IMAGE_POS(image) = cast(REBLEN, tail);
+            break;
+
+        case SYM_HEAD_Q:
+            return Init_Logic(D_OUT, index == 0);
+
+        case SYM_TAIL_Q:
+            return Init_Logic(D_OUT, index >= tail);
+
+        case SYM_XY:
+            return Init_Pair_Int(
+                D_OUT,
+                index % VAL_IMAGE_WIDTH(image),
+                index / VAL_IMAGE_WIDTH(image)
+            );
+
+        case SYM_INDEX:
+            return Init_Integer(D_OUT, index + 1);
+
+        case SYM_LENGTH:
+            return Init_Integer(D_OUT, tail > index ? tail - index : 0);
+
+        case SYM_BYTES: {
+            //
+            // !!! The BINARY! currently has a position in it.  This notion
+            // of images being at an "index" is sketchy.  Assume that someone
+            // asking for the bytes doesn't care about the index.
+            //
+            const REBBIN *bin = VAL_BINARY(VAL_IMAGE_BIN(image));
+            return Init_Binary(D_OUT, bin); }  // at 0 index
+
+        default:
+            break;
+        }
+
+        break; }
+
+    case SYM_BITWISE_NOT:
+        Make_Complemented_Image(D_OUT, image);
+        return D_OUT;
+
+    case SYM_SKIP:
+    case SYM_AT: {
+        REBVAL *arg = D_ARG(2);
+
+        // This logic is somewhat complicated by the fact that INTEGER args use
+        // base-1 indexing, but PAIR args use base-0.
+        if (IS_PAIR(arg)) {
+            if (id == SYM_AT)
+                id = SYM_SKIP;
+            diff = (VAL_PAIR_Y_INT(arg) * VAL_IMAGE_WIDTH(image))
+                + VAL_PAIR_X_INT(arg) + (id == SYM_SKIP ? 0 : 1);
+        } else
+            diff = Get_Num_From_Arg(arg);
+
+        index += diff;
+        if (id == SYM_SKIP) {
+            if (IS_LOGIC(arg))
+                --index;
+        }
+        else {
+            if (diff > 0)
+                --index; // For at, pick, poke.
+        }
+
+        if (index > tail)
+            index = tail;
+        else if (index < 0)
+            index = 0;
+
+        VAL_IMAGE_POS(image) = cast(REBLEN, index);
+        RETURN (image); }
+
+    case SYM_CLEAR:
+        if (index < tail) {
+            SET_SERIES_LEN(
+                VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(image)),
+                cast(REBLEN, index)
+            );
+            Reset_Height(image);
+        }
+        RETURN (image);
+
+
+    case SYM_REMOVE: {
+        INCLUDE_PARAMS_OF_REMOVE;
+        UNUSED(PAR(series));
+
+        REBSER *series = VAL_BINARY_ENSURE_MUTABLE(VAL_IMAGE_BIN(image));
+
+        if (REF(part)) {
+            val = ARG(part);
+            if (IS_INTEGER(val)) {
+                len = VAL_INT32(val);
+            }
+            else if (IS_IMAGE(val)) {
+                if (!VAL_IMAGE_WIDTH(val))
+                    fail (val);
+                len = VAL_IMAGE_POS(val) - VAL_IMAGE_POS(image);
+            }
+            else
+                fail (Error_Invalid_Type(VAL_TYPE(val)));
+        }
+        else len = 1;
+
+        index = cast(REBINT, VAL_IMAGE_POS(image));
+        if (index < tail && len != 0) {
+            Remove_Series_Units(series, VAL_INDEX(image), len);
+        }
+        Reset_Height(image);
+        RETURN (image); }
+
+    case SYM_APPEND:
+    case SYM_INSERT:
+    case SYM_CHANGE: {
+        if (IS_NULLED_OR_BLANK(D_ARG(2))) {
+            if (id == SYM_APPEND) // append returns head position
+                VAL_IMAGE_POS(image) = 0;
+            RETURN (image); // don't fail on read only if it would be a no-op
+        }
+        ENSURE_MUTABLE(image);
+
+        return Modify_Image(frame_, verb); }
+
+    case SYM_FIND:
+        Find_Image(frame_); // sets DS_OUT
+        return D_OUT;
+
+    case SYM_COPY: {
+        INCLUDE_PARAMS_OF_COPY;
+
+        UNUSED(PAR(value));
+
+        if (REF(deep))
+            fail (Error_Bad_Refines_Raw());
+
+        if (REF(types))
+            fail (Error_Bad_Refines_Raw());
+
+        REBVAL *arg;
+        if (not REF(part)) {
+            arg = image;
+            goto makeCopy;
+        }
+        arg = ARG(part); // can be image, integer, pair.
+        if (IS_IMAGE(arg)) {
+            if (VAL_IMAGE_BIN(arg) != VAL_IMAGE_BIN(image))
+                fail (arg);
+            len = VAL_IMAGE_POS(arg) - VAL_IMAGE_POS(image);
+            arg = image;
+            goto makeCopy2;
+        }
+        if (IS_INTEGER(arg)) {
+            len = VAL_INT32(arg);
+            arg = image;
+            goto makeCopy2;
+        }
+        if (IS_PAIR(arg)) {
+            w = VAL_PAIR_X_INT(arg);
+            h = VAL_PAIR_Y_INT(arg);
+            w = MAX(w, 0);
+            h = MAX(h, 0);
+            diff = MIN(cast(REBIDX, VAL_LEN_HEAD(image)), VAL_IMAGE_POS(image));
+            diff = MAX(0, diff);
+            index = VAL_IMAGE_WIDTH(image); // width
+            if (index) {
+                len = diff / index; // compute y offset
+                diff %= index; // compute x offset
+            } else len = diff = 0; // avoid div zero
+            w = MIN(w, index - diff); // img-width - x-pos
+            h = MIN(h, (int)(VAL_IMAGE_HEIGHT(image) - len)); // img-high - y-pos
+            Init_Image_Black_Opaque(D_OUT, w, h);
+            Copy_Rect_Data(D_OUT, 0, 0, w, h, image, diff, len);
+//          VAL_IMAGE_TRANSP(D_OUT) = VAL_IMAGE_TRANSP(image);
+            return D_OUT;
+        }
+        fail (Error_Invalid_Type(VAL_TYPE(arg)));
+
+makeCopy:
+        // Src image is arg.
+        len = VAL_IMAGE_LEN_AT(arg);
+makeCopy2:
+        Copy_Image_Value(D_OUT, arg, len);
+        return D_OUT; }
+
+    default:
+        break;
+    }
+
+    return R_UNHANDLED;
+}
+
+
+//
 //  PD_Image: C
 //
 REB_R PD_Image(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
-    if (setval) {
-        Poke_Image_Fail_If_Read_Only(pvs->out, picker, unwrap(setval));
-        return R_INVISIBLE;
-    }
-
     Pick_Image(pvs->out, pvs->out, picker);
     return pvs->out;
 }

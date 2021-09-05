@@ -623,28 +623,19 @@ void Shuffle_Array(REBARR *arr, REBLEN idx, bool secure)
 }
 
 
-//
-//  PD_Array: C
-//
-// Path dispatch for ANY-ARRAY! (covers ANY-BLOCK! and ANY-GROUP!)
-//
-// !!! There is currently some delegation to this routine by ANY-SEQUENCE! if
-// the underlying implementation is a REBARR*.
-//
-REB_R PD_Array(
-    REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+static REBINT Try_Get_Array_Index_From_Picker(
+    const REBVAL *v,
+    const RELVAL *picker
 ){
     REBINT n;
 
     if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
         n = Int32(picker);
         if (n == 0)
-            return nullptr; // Rebol2/Red convention: 0 is not a pick
+            return -1;  // Rebol2/Red convention: 0 is not a pick
         if (n < 0)
             ++n; // Rebol2/Red convention: `pick tail [a b c] -1` is `c`
-        n += VAL_INDEX(pvs->out) - 1;
+        n += VAL_INDEX(v) - 1;
     }
     else if (IS_WORD(picker)) {
         //
@@ -655,8 +646,8 @@ REB_R PD_Array(
 
         const REBSYM *symbol = VAL_WORD_SYMBOL(picker);
         const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, pvs->out);
-        REBLEN index = VAL_INDEX(pvs->out);
+        const RELVAL *item = VAL_ARRAY_AT(&tail, v);
+        REBLEN index = VAL_INDEX(v);
         for (; item != tail; ++item, ++index) {
             if (ANY_WORD(item) and Are_Synonyms(symbol, VAL_WORD_SYMBOL(item))) {
                 n = index + 1;
@@ -672,9 +663,9 @@ REB_R PD_Array(
         // (For safety, it has been suggested arrays > length 2 should fail).
         //
         if (VAL_LOGIC(picker))
-            n = VAL_INDEX(pvs->out);
+            n = VAL_INDEX(v);
         else
-            n = VAL_INDEX(pvs->out) + 1;
+            n = VAL_INDEX(v) + 1;
     }
     else {
         // For other values, act like a SELECT and give the following item.
@@ -682,15 +673,31 @@ REB_R PD_Array(
         // so adding one will be out of bounds.)
 
         n = 1 + Find_In_Array_Simple(
-            VAL_ARRAY(pvs->out),
-            VAL_INDEX(pvs->out),
+            VAL_ARRAY(v),
+            VAL_INDEX(v),
             picker
         );
     }
 
+    return n;
+}
+
+
+//
+//  PD_Array: C
+//
+// Path dispatch for ANY-ARRAY! (covers ANY-BLOCK! and ANY-GROUP!)
+//
+// !!! There is currently some delegation to this routine by ANY-SEQUENCE! if
+// the underlying implementation is a REBARR*.
+//
+REB_R PD_Array(
+    REBPVS *pvs,
+    const RELVAL *picker
+){
+    REBINT n = Try_Get_Array_Index_From_Picker(pvs->out, picker);
+
     if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(pvs->out))) {
-        if (setval)
-            return R_UNHANDLED;
 
         // !!! Right now this allows selecting words out of blocks to be
         // null if not present...which is inconsistent with selecting words
@@ -699,14 +706,15 @@ REB_R PD_Array(
         return nullptr;
     }
 
-    if (setval)
-        ENSURE_MUTABLE(pvs->out);
-
-    // assume it will only write if setval (mutability checked for)
-    //
-    pvs->u.ref.cell = m_cast(RELVAL*, VAL_ARRAY_AT_HEAD(pvs->out, n));
-    pvs->u.ref.specifier = VAL_SPECIFIER(pvs->out);
-    return R_REFERENCE;
+    bool was_const = GET_CELL_FLAG(pvs->out, CONST);
+    Derelativize(
+        pvs->out,
+        VAL_ARRAY_AT_HEAD(pvs->out, n),
+        VAL_SPECIFIER(pvs->out)
+    );
+    if (was_const)  // can't Inherit_Const(), would be overwritten
+        SET_CELL_FLAG(pvs->out, CONST);
+    return pvs->out;
 }
 
 
@@ -838,7 +846,82 @@ REBTYPE(Array)
     REBSPC *specifier = VAL_SPECIFIER(array);
 
     SYMID id = ID_OF_SYMBOL(verb);
+
     switch (id) {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+      case SYM_PICK_POKE_P: {
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        if (steps_left == 1 and poking) {
+            //
+            // The goal is to poke ARG(value) into this particular slot, like
+            // `block.10: 20`.  So this is the end of the line.
+            //
+            Meta_Unquotify(setval);
+
+            // !!! If we are jumping here from getting updated bits, then
+            // if the block isn't immutable or locked from modification, the
+            // memory may have moved!  There's no way to guarantee semantics
+            // of an update if we don't lock the array for the poke duration.
+            //
+          update_bits: ;
+            REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
+            if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
+                fail (rebUnrelativize(picker));
+
+            REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+            RELVAL *at = ARR_AT(mut_arr, n);
+            Copy_Cell(at, setval);
+        }
+        else {
+            REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
+            if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
+                fail (rebUnrelativize(picker));
+
+            const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
+            Derelativize(D_OUT, at, VAL_SPECIFIER(array));
+
+            if (steps_left == 1) {
+                assert(not poking);
+                return D_OUT;
+            }
+
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr) {  // the update needs our cell's bits to change
+                assert(r == D_OUT);
+                assert(VAL_TYPE(at) == VAL_TYPE(D_OUT));
+                setval = D_OUT;
+                goto update_bits;
+            }
+
+            DS_DROP();
+        }
+
+        assert(poking);
+        return nullptr; }  // REBSTR* is still fine, caller need not update
+
+
       case SYM_UNIQUE:
       case SYM_INTERSECT:
       case SYM_UNION:

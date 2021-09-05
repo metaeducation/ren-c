@@ -673,11 +673,7 @@ REBNATIVE(evaluate)
     }
 
     if (IS_TRUTHY(var))
-        Set_Var_May_Fail(
-            var, SPECIFIED,
-            D_SPARE, SPECIFIED,
-            false  // not hard (e.g. GROUP!s don't run, and not literal)
-        );
+        Set_Var_May_Fail(var, SPECIFIED, D_SPARE, SPECIFIED);
 
     return D_OUT;
 }

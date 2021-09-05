@@ -454,7 +454,7 @@ static const RELVAL *Get_Parse_Value(
         // Should PATH!s be evaluating GROUP!s?  This does, but would need
         // to route potential thrown values up to do it properly.
 
-        if (Get_Path_Throws_Core(cell, rule, specifier))
+        if (Eval_Path_Throws_Core(cell, rule, specifier, EVAL_MASK_DEFAULT))
             fail (Error_No_Catch_For_Throw(cell));
 
         if (IS_NULLED(cell))
@@ -1100,8 +1100,17 @@ static void Handle_Mark_Rule(
         k == REB_PATH or k == REB_SET_PATH
         or k == REB_TUPLE or k == REB_SET_TUPLE
     ){
-        if (Set_Path_Throws_Core(D_OUT, rule, specifier, ARG(position)))
+        // !!! Assume we might not be able to corrupt D_SPARE (rule may be
+        // in D_SPARE?)
+        //
+        DECLARE_LOCAL (temp);
+        Quotify(Derelativize(D_OUT, rule, specifier), 1);
+        if (rebRunThrows(
+            temp, true,
+            Lib(POKE), Lib(BLACKHOLE), D_OUT, ARG(position)
+        )){
             fail (Error_No_Catch_For_Throw(D_OUT));
+        }
     }
     else
         fail (Error_Parse_Variable(frame_));
@@ -1123,7 +1132,7 @@ static REB_R Handle_Seek_Rule_Dont_Update_Begin(
         k = KIND3Q_BYTE(rule);
     }
     else if (k == REB_PATH or k == REB_TUPLE) {
-        if (Get_Path_Throws_Core(D_SPARE, rule, specifier))
+        if (Eval_Path_Throws_Core(D_SPARE, rule, specifier, EVAL_MASK_DEFAULT))
             fail (Error_No_Catch_For_Throw(D_SPARE));
         rule = D_SPARE;
         k = KIND3Q_BYTE(rule);
@@ -1948,7 +1957,12 @@ REBNATIVE(subparse)
     }
     else if (ANY_SEQUENCE(rule)) {
         if (IS_PATH(rule) or IS_TUPLE(rule)) {
-            if (Get_Path_Throws_Core(D_SPARE, rule, P_RULE_SPECIFIER)) {
+            if (Eval_Path_Throws_Core(
+                D_SPARE,
+                rule,
+                P_RULE_SPECIFIER,
+                EVAL_MASK_DEFAULT
+            )){
                 Copy_Cell(D_OUT, D_SPARE);
                 goto return_thrown;
             }

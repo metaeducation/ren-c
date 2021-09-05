@@ -185,31 +185,6 @@ inline static char VAL_RETURN_SIGNAL(const RELVAL *v) {
     cast(REBVAL*, &PG_R_Redo_Checked)
 
 
-// Path dispatch used to have a return value PE_SET_IF_END which meant that
-// the dispatcher itself should realize whether it was doing a path get or
-// set, and if it were doing a set then to write the value to set into the
-// target cell.  That means it had to keep track of a pointer to a cell vs.
-// putting the bits of the cell into the output.  This is now done with a
-// special REB_R_REFERENCE type which holds in its payload a RELVAL and a
-// specifier, which is enough to be able to do either a read or a write,
-// depending on the need.
-//
-// !!! See notes in %c-path.c of why the R3-Alpha path dispatch is hairier
-// than that.  It hasn't been addressed much in Ren-C yet, but needs a more
-// generalized design.
-//
-#define C_REFERENCE 'F'
-#define R_REFERENCE \
-    cast(REBVAL*, &PG_R_Reference)
-
-// This is used in path dispatch, signifying that a SET-PATH! assignment
-// resulted in the updating of an immediate expression in pvs->out, meaning
-// it will have to be copied back into whatever reference cell it had been in.
-//
-#define C_IMMEDIATE 'M'
-#define R_IMMEDIATE \
-    cast(REBVAL*, &PG_R_Immediate)
-
 #define C_UNHANDLED 'U'
 #define R_UNHANDLED \
     cast(REBVAL*, &PG_R_Unhandled)

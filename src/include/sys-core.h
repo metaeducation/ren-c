@@ -528,6 +528,8 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "datatypes/sys-pair.h"
 #include "datatypes/sys-quoted.h"  // pairings for storage, void used as well
 
+#include "sys-stack.h"
+
 #include "datatypes/sys-action.h"
 #include "datatypes/sys-typeset.h"  // needed for keys in contexts
 #include "datatypes/sys-context.h"  // needs actions for FRAME! contexts
@@ -535,8 +537,6 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "datatypes/sys-word.h"  // needs to know about QUOTED! for binding
 
 #include "datatypes/sys-bitset.h"
-
-#include "sys-stack.h"
 
 #include "sys-patch.h"
 #include "sys-bind.h" // needs DS_PUSH() and DS_TOP from %sys-stack.h

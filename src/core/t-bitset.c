@@ -523,28 +523,12 @@ bool Check_Bits(const REBBIN *bset, const RELVAL *val, bool uncased)
 //
 REB_R PD_Bitset(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
-    if (not setval) {
-        const REBBIN *bset = VAL_BITSET(pvs->out);
-        if (Check_Bits(bset, picker, false))
-            return Init_True(pvs->out);
-        return nullptr; // !!! Red false on out of range, R3-Alpha NONE! (?)
-    }
-
-    REBBIN *bset = BIN(VAL_SERIES_ENSURE_MUTABLE(pvs->out));
-    if (Set_Bits(
-        bset,
-        picker,
-        BITS_NOT(bset)
-            ? IS_FALSEY(unwrap(setval))
-            : IS_TRUTHY(unwrap(setval))
-    )){
-        return R_INVISIBLE;
-    }
-
-    return R_UNHANDLED;
+    const REBBIN *bset = VAL_BITSET(pvs->out);
+    if (Check_Bits(bset, picker, false))
+        return Init_True(pvs->out);
+    return nullptr; // !!! Red false on out of range, R3-Alpha NONE! (?)
 }
 
 
@@ -577,6 +561,72 @@ REBTYPE(Bitset)
 
     SYMID sym = ID_OF_SYMBOL(verb);
     switch (sym) {
+
+      case SYM_PICK_POKE_P: {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        if (steps_left == 1 and poking) {
+            //
+            // The goal is to poke ARG(value) into this particular slot, like
+            // `block.10: 20`.  So this is the end of the line.
+            //
+            Meta_Unquotify(setval);
+
+          /*update_bits: ;*/
+            REBBIN *bset = BIN(VAL_SERIES_ENSURE_MUTABLE(v));
+            if (not Set_Bits(
+                bset,
+                picker,
+                BITS_NOT(bset) ? IS_FALSEY(setval) : IS_TRUTHY(setval)
+            )){
+                return R_UNHANDLED;
+            }
+        }
+        else {
+            const REBBIN *bset = VAL_BITSET(v);
+            if (Check_Bits(bset, picker, false))
+                Init_True(D_OUT);
+            else
+                Init_Nulled(D_OUT);
+
+            // !!! Red false on out of range, R3-Alpha NONE! (?)
+
+            if (steps_left == 1) {
+                assert(not poking);
+                return D_OUT;
+            }
+
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr)  // the update needs our cell's bits to change
+                fail ("Unknown Writeback in IMAGE!");
+        }
+
+        assert(poking);
+        return nullptr; }
+
+
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value)); // covered by `v`

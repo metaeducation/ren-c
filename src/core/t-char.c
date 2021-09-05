@@ -266,12 +266,8 @@ void MF_Issue(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 REB_R PD_Issue(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
-    if (setval)
-        fail ("ISSUE! is immutable, characters can't assign via SET-PATH!");
-
     if (not IS_INTEGER(picker))
         return R_UNHANDLED;
 

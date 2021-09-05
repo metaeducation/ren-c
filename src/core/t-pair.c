@@ -21,6 +21,9 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
+// See %sys-pair.h for explanation.
+//
+
 
 #include "sys-core.h"
 
@@ -148,8 +151,7 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
 //
 REB_R PD_Pair(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     REBINT n = 0;
 
@@ -169,39 +171,11 @@ REB_R PD_Pair(
     else
         return R_UNHANDLED;
 
-    if (not setval) {
-        if (n == 1)
-            Copy_Cell(pvs->out, VAL_PAIR_X(pvs->out));
-        else
-            Copy_Cell(pvs->out, VAL_PAIR_Y(pvs->out));
-        return pvs->out;
-    }
-
-    // !!! PAIR! is now generic, so it could theoretically store any type.
-    // This was done to avoid creating new numeric representations in the
-    // core (e.g. 32-bit integers or lower precision floats) just so they
-    // could both fit in a cell.  But while it's technically possible, no
-    // rendering formats for other-valued pairs has been proposed.  So only
-    // integers and decimals are accepted for now.
-    //
-    if (not IS_INTEGER(unwrap(setval)) and not IS_DECIMAL(unwrap(setval)))
-        return R_UNHANDLED;
-
     if (n == 1)
-        Copy_Cell(VAL_PAIR_X(pvs->out), unwrap(setval));
+        Copy_Cell(pvs->out, VAL_PAIR_X(pvs->out));
     else
-        Copy_Cell(VAL_PAIR_Y(pvs->out), unwrap(setval));
-
-    // Using R_IMMEDIATE means that although we've updated pvs->out, we'll
-    // leave it to the path dispatch to figure out if that can be written back
-    // to some variable from which this pair actually originated.
-    //
-    // !!! Technically since pairs are pairings of values in Ren-C, there is
-    // a series node which can be used to update their values, but could not
-    // be used to update other things (like header bits) from an originating
-    // variable.
-    //
-    return R_IMMEDIATE;
+        Copy_Cell(pvs->out, VAL_PAIR_Y(pvs->out));
+    return pvs->out;
 }
 
 
@@ -244,6 +218,80 @@ REBTYPE(Pair)
     REBVAL *y2 = nullptr;
 
     switch (ID_OF_SYMBOL(verb)) {
+
+      case SYM_PICK_POKE_P: {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        REBINT n;
+        if (IS_WORD(picker)) {
+            if (VAL_WORD_ID(picker) == SYM_X)
+                n = 1;
+            else if (VAL_WORD_ID(picker) == SYM_Y)
+                n = 2;
+            else
+                return R_UNHANDLED;
+        }
+        else if (IS_INTEGER(picker)) {
+            n = Int32(picker);
+            if (n != 1 and n != 2)
+                return R_UNHANDLED;
+        }
+        else
+            return R_UNHANDLED;
+
+        if (steps_left == 1 and poking) {  // e.g. `pair.x: 10`
+            Meta_Unquotify(setval);
+
+          /*update_bits: ;*/
+            if (not IS_INTEGER(setval) and not IS_DECIMAL(setval))
+                return R_UNHANDLED;
+
+            if (n == 1)
+                Copy_Cell(VAL_PAIR_X(v), unwrap(setval));
+            else
+                Copy_Cell(VAL_PAIR_Y(v), unwrap(setval));
+        }
+        else {
+            if (n == 1)
+                Copy_Cell(D_OUT, VAL_PAIR_X(v));
+            else
+                Copy_Cell(D_OUT, VAL_PAIR_Y(v));
+
+            if (steps_left == 1) {
+                assert(not poking);
+                return D_OUT;
+            }
+
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr)  // the update needs our cell's bits to change
+                fail ("Unknown Writeback in PAIR!");
+        }
+
+        assert(poking);
+        return nullptr; }
+
+
       case SYM_REVERSE:
         return Init_Pair(D_OUT, VAL_PAIR_Y(v), VAL_PAIR_X(v));
 

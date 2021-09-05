@@ -21,15 +21,13 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // A "pairing" fits in a REBSER node, but actually holds two distinct REBVALs.
-//
-// !!! There is consideration of whether series payloads of length 2 might
-// be directly allocated as paireds.  This would require positioning such
-// series in the pool so that they abutted against END markers.  It would be
-// premature optimization to do it right now, but the design leaves it open.
-//
-// PAIR! values are implemented using the pairing in Ren-C, which is to say
-// that they are garbage collected and can hold any two values--not just
-// two numbers.
+
+// !!! PAIR! is now generic, so it could theoretically store any type.  This
+// was done to avoid creating new numeric representations in the core (e.g.
+// 32-bit integers or lower precision floats) just so they could both fit in a
+// cell.  But while it's technically possible, no rendering formats for
+// other-valued pairs has been proposed.  So only integers and decimals are
+// accepted for now in the PAIR! type.
 //
 
 inline static REBVAL *PAIRING_KEY(REBVAL *paired) {

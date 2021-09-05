@@ -601,14 +601,8 @@ void Poke_Vector_Fail_If_Read_Only(
 //
 REB_R PD_Vector(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
-    if (setval) {
-        Poke_Vector_Fail_If_Read_Only(pvs->out, picker, unwrap(setval));
-        return R_INVISIBLE;
-    }
-
     Pick_Vector(pvs->out, pvs->out, picker);
     return pvs->out;
 }
@@ -622,6 +616,59 @@ REBTYPE(Vector)
     REBVAL *v = D_ARG(1);
 
     switch (ID_OF_SYMBOL(verb)) {
+
+      case SYM_PICK_POKE_P: {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        if (steps_left == 1 and poking) {
+            //
+            // The goal is to poke ARG(value) into this particular slot, like
+            // `block.10: 20`.  So this is the end of the line.
+            //
+            Meta_Unquotify(setval);
+
+          /*update_bits: ;*/
+            Poke_Vector_Fail_If_Read_Only(v, picker, setval);
+        }
+        else {
+            Pick_Vector(D_OUT, v, picker);
+
+            if (steps_left == 1) {
+                assert(not poking);
+                return D_OUT;
+            }
+
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr)  // the update needs our cell's bits to change
+                fail ("Unknown Writeback in IMAGE!");
+        }
+
+        assert(poking);
+        return nullptr; }
+
+
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // same as `v`

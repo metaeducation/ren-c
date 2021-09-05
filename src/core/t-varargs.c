@@ -430,11 +430,8 @@ REB_R TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 REB_R PD_Varargs(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
-    UNUSED(setval);
-
     if (not IS_INTEGER(picker))
         fail (rebUnrelativize(picker));
 

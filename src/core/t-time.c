@@ -367,7 +367,7 @@ REB_R TO_Time(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  Pick_Time: C
 //
-void Pick_Time(REBVAL *out, const REBVAL *value, const RELVAL *picker)
+void Pick_Time(REBVAL *out, const RELVAL *value, const RELVAL *picker)
 {
     REBINT i;
     if (IS_WORD(picker)) {
@@ -475,20 +475,8 @@ void Poke_Time_Immediate(
 //
 REB_R PD_Time(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
-    if (setval) {
-        //
-        // Returning R_IMMEDIATE means that we aren't actually changing a
-        // variable directly, and it will be up to the caller to decide if
-        // they can meaningfully determine what variable to copy the update
-        // we're making to.
-        //
-        Poke_Time_Immediate(pvs->out, picker, unwrap(setval));
-        return R_IMMEDIATE;
-    }
-
     Pick_Time(pvs->out, pvs->out, picker);
     return pvs->out;
 }
@@ -504,6 +492,64 @@ REBTYPE(Time)
     REBI64 secs = VAL_NANO(v);
 
     SYMID id = ID_OF_SYMBOL(verb);
+
+    if (id == SYM_PICK_POKE_P) {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        if (steps_left == 1 and poking) {
+            //
+            // The goal is to poke ARG(value) into this particular slot, like
+            // `block.10: 20`.  So this is the end of the line.
+            //
+            Meta_Unquotify(setval);
+
+          /*update_bits: ;*/
+            Copy_Cell(D_OUT, v);
+            Poke_Time_Immediate(D_OUT, picker, setval);
+
+            // This is a case where the bits are stored in the cell, so
+            // whoever owns this cell has to write it back.
+            //
+            return D_OUT;
+        }
+        else {
+            Pick_Time(D_OUT, v, picker);
+
+            if (steps_left == 1) {
+                assert(not poking);
+                return D_OUT;
+            }
+
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr)  // the update needs our cell's bits to change
+                fail ("Unknown Writeback in TIME!");
+        }
+
+        assert(poking);
+        return nullptr;
+    }
 
     if (
         id == SYM_ADD

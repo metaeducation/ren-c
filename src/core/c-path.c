@@ -117,12 +117,9 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
 //
 REB_R PD_Fail(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     UNUSED(picker);
-    UNUSED(setval);
-
     fail (pvs->out);
 }
 
@@ -135,11 +132,9 @@ REB_R PD_Fail(
 //
 REB_R PD_Unhooked(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     UNUSED(picker);
-    UNUSED(setval);
 
     const REBVAL *type = Datatype_From_Kind(VAL_TYPE(pvs->out));
     UNUSED(type); // !!! put in error message?
@@ -241,127 +236,33 @@ bool Next_Path_Throws(REBPVS *pvs)
 
   redo:;
 
-    bool was_custom = (KIND3Q_BYTE(pvs->out) == REB_CUSTOM);  // !!! for hack
     PATH_HOOK *hook = Path_Hook_For_Type_Of(pvs->out);
 
-    if (IS_END(f_value) and PVS_IS_SET_PATH(pvs)) {
+    const REBVAL *r = hook(pvs, PVS_PICKER(pvs));
 
-        const REBVAL *r = hook(pvs, PVS_PICKER(pvs), PVS_OPT_SETVAL(pvs));
-
-        switch (VAL_RETURN_SIGNAL(r)) {
-          case C_UNHANDLED: {
-            assert(r == R_UNHANDLED);
-            DECLARE_LOCAL (specific);
-            Derelativize(specific, PVS_PICKER(pvs), f_specifier);
-            fail (Error_Bad_Path_Poke_Raw(specific));
-          }
-
-          case C_THROWN:
-            panic ("Path dispatch isn't allowed to throw, only GROUP!s");
-
-          case C_INVISIBLE:  // dispatcher assigned target with setval
-            break; // nothing left to do, have to take the dispatcher's word
-
-          case C_REFERENCE: {  // dispatcher wants a set *if* at end of path
-            Copy_Cell(pvs->u.ref.cell, PVS_OPT_SETVAL(pvs));
-            break; }
-
-          case C_IMMEDIATE: {
-            //
-            // Imagine something like:
-            //
-            //      month/year: 1
-            //
-            // First month is written into the out slot as a reference to the
-            // location of the month DATE! variable.  But because we don't
-            // pass references from the previous steps *in* to the path
-            // picking material, it only has the copied value in pvs->out.
-            //
-            // If we had a reference before we called in, we saved it in
-            // pvs->u.ref.  So in the example case of `month/year:`, that
-            // would be the CTX_VAR() where month was found initially, and so
-            // we write the updated bits from pvs->out there.
-
-            if (not pvs->u.ref.cell)
-                fail ("Can't update temporary immediate value via SET-PATH!");
-
-            Copy_Cell(pvs->u.ref.cell, pvs->out);
-            break; }
-
-          case C_REDO_CHECKED:  // sometimes used by REB_QUOTED to retrigger
-            goto redo;
-
-          default:
-            //
-            // Something like a generic D_OUT.  We could in theory take those
-            // to just be variations of R_IMMEDIATE, but it's safer to break
-            // that out as a separate class.
-            //
-            fail ("Path evaluation produced temporary value, can't POKE it");
-        }
-        TRASH_POINTER_IF_DEBUG(pvs->param);
+    if (r == pvs->out) {
+        // Common case... result where we expect it
     }
-    else {
-        pvs->u.ref.cell = nullptr; // clear status of the reference
+    else if (not r) {
+        Init_Nulled(pvs->out);
+    }
+    else if (not IS_RETURN_SIGNAL(r)) {
+        assert(GET_CELL_FLAG(r, ROOT));  // API, from Alloc_Value()
+        Handle_Api_Dispatcher_Result(pvs, r);
+    }
+    else switch (VAL_RETURN_SIGNAL(r)) {
+      case C_UNHANDLED: {
+        if (IS_NULLED(PVS_PICKER(pvs)))
+            fail ("NULL used in path picking but was not handled");
+        DECLARE_LOCAL (specific);
+        Derelativize(specific, PVS_PICKER(pvs), f_specifier);
+        fail (Error_Bad_Path_Pick_Raw(specific)); }
 
-        const REBVAL *r = hook(pvs, PVS_PICKER(pvs), nullptr);  // no "setval"
+      case C_THROWN:
+        panic ("Path dispatch isn't allowed to throw, only GROUP!s");
 
-        if (r == pvs->out) {
-            // Common case... result where we expect it
-        }
-        else if (not r) {
-            Init_Nulled(pvs->out);
-        }
-        else if (not IS_RETURN_SIGNAL(r)) {
-            assert(GET_CELL_FLAG(r, ROOT));  // API, from Alloc_Value()
-            Handle_Api_Dispatcher_Result(pvs, r);
-        }
-        else switch (VAL_RETURN_SIGNAL(r)) {
-          case C_UNHANDLED: {
-            if (IS_NULLED(PVS_PICKER(pvs)))
-                fail ("NULL used in path picking but was not handled");
-            DECLARE_LOCAL (specific);
-            Derelativize(specific, PVS_PICKER(pvs), f_specifier);
-            fail (Error_Bad_Path_Pick_Raw(specific)); }
-
-          case C_THROWN:
-            panic ("Path dispatch isn't allowed to throw, only GROUP!s");
-
-          case C_INVISIBLE:
-            assert(PVS_IS_SET_PATH(pvs));
-            if (not was_custom)
-                panic("SET-PATH! evaluation ran assignment before path end");
-
-            // !!! All REB_CUSTOM types do not do this check at the moment
-            // But the exemption was made for STRUCT! and GOB!, due to the
-            // dispatcher hack to do "sub-value addressing" is to call
-            // Next_Path_Throws inside of them, to be able to do a write
-            // while they still have memory of what the struct and variable
-            // are (which would be lost in this protocol otherwise).
-            //
-            assert(IS_END(f_value));
-            break;
-
-          case C_REFERENCE: {
-            bool was_const = GET_CELL_FLAG(pvs->out, CONST);
-            Derelativize(
-                pvs->out,
-                pvs->u.ref.cell,
-                pvs->u.ref.specifier
-            );
-            if (was_const) // can't Inherit_Const(), flag would be overwritten
-                SET_CELL_FLAG(pvs->out, CONST);
-
-            // Leave the pvs->u.ref as-is in case the next update turns out
-            // to be R_IMMEDIATE, and it is needed.
-            break; }
-
-          case C_REDO_CHECKED: // sometimes used by REB_QUOTED to retrigger
-            goto redo;
-
-          default:
-            panic ("REB_R value not supported for path dispatch");
-        }
+      default:
+        panic ("REB_R value not supported for path dispatch");
     }
 
     // A function being refined does not actually update pvs->out with
@@ -417,7 +318,6 @@ bool Eval_Path_Throws_Core(
     REBVAL *out, // if setval, this is only used to return a thrown value
     const RELVAL *sequence,
     REBSPC *sequence_specifier,
-    option(const REBVAL*) setval, // Note: may be the same as out!
     REBFLGS flags
 ){
     REBLEN index = 0;
@@ -450,39 +350,16 @@ bool Eval_Path_Throws_Core(
 
       case REB_META_WORD:  // get or set `foo/` or `foo.`
       handle_word: {
-        if (setval) {  // nullptr is GET (note IS_NULLED() to set NULLED)
-            //
-            // This is the SET case, which means the `foo.:` and `foo/:`
-            // forms pre-check the action status of the value being assigned.
-            //
-            if (heart == REB_META_WORD) {
-                if (ANY_TUPLE_KIND(VAL_TYPE(sequence))) {
-                    if (IS_ACTION(unwrap(setval)))
-                        fail (Error_Action_With_Dotted_Raw());
-                }
-                else {
-                    if (not IS_ACTION(unwrap(setval)))
-                        fail (Error_Inert_With_Slashed_Raw());
-                }
+        Get_Word_May_Fail(out, sequence, sequence_specifier);
+
+        if (heart == REB_META_WORD) {
+            if (ANY_TUPLE_KIND(VAL_TYPE(sequence))) {
+                if (IS_ACTION(out))
+                    fail (Error_Action_With_Dotted_Raw());
             }
-
-            Copy_Cell(
-                Lookup_Mutable_Word_May_Fail(sequence, sequence_specifier),
-                unwrap(setval)
-            );
-        }
-        else {
-            Get_Word_May_Fail(out, sequence, sequence_specifier);
-
-            if (heart == REB_META_WORD) {
-                if (ANY_TUPLE_KIND(VAL_TYPE(sequence))) {
-                    if (IS_ACTION(out))
-                        fail (Error_Action_With_Dotted_Raw());
-                }
-                else {
-                    if (not IS_ACTION(out))
-                        fail (Error_Inert_With_Slashed_Raw());
-                }
+            else {
+                if (not IS_ACTION(out))
+                    fail (Error_Inert_With_Slashed_Raw());
             }
         }
         return false; }
@@ -522,11 +399,7 @@ bool Eval_Path_Throws_Core(
 
     REBDSP dsp_orig = DSP;
 
-    assert(out != setval and out != FRM_SPARE(pvs));
-
-    // a.k.a. PVS_OPT_SETVAL()
-    pvs->param = cast_PAR(setval ? unwrap(setval) : nullptr);
-    assert(PVS_OPT_SETVAL(pvs) == setval);
+    assert(out != FRM_SPARE(pvs));
 
     pvs->label = nullptr;
 
@@ -553,32 +426,15 @@ bool Eval_Path_Throws_Core(
         if (not IS_WORD(second))
             fail ("Head TUPLE support in PATH! limited to `.a` at moment");
 
-        pvs->u.ref.cell = Lookup_Mutable_Word_May_Fail(
+        Copy_Cell(pvs->out, Lookup_Mutable_Word_May_Fail(
             second,
             VAL_SEQUENCE_SPECIFIER(f_value)
-        );
-        Copy_Cell(pvs->out, SPECIFIC(pvs->u.ref.cell));
+        ));
         if (IS_ACTION(pvs->out))
             pvs->label = VAL_WORD_SYMBOL(second);
     }
     else if (IS_WORD(f_value)) {
-        if (setval) {
-            //
-            // Remember the actual location of this variable, not just its
-            // value, in case we need R_IMMEDIATE writeback (e.g. month/day: 1)
-            //
-            // !!! Writability rules now won't inherit, so this could block
-            // things like `system/blah/blah: 10` if system is inherited from
-            // the lib context.  Hack it up for now...
-
-            pvs->u.ref.cell = m_cast(REBVAL*, Lookup_Word_May_Fail(f_value, specifier));
-            /* pvs->u.ref.cell = Lookup_Mutable_Word_May_Fail(f_value, specifier); */
-            Copy_Cell(pvs->out, SPECIFIC(pvs->u.ref.cell));
-        }
-        else {  // won't be writing back
-            pvs->u.ref.cell = nullptr;
-            Copy_Cell(pvs->out, Lookup_Word_May_Fail(f_value, specifier));
-        }
+        Copy_Cell(pvs->out, Lookup_Word_May_Fail(f_value, specifier));
 
         if (IS_ACTION(pvs->out)) {
             pvs->label = VAL_WORD_SYMBOL(f_value);
@@ -589,8 +445,6 @@ bool Eval_Path_Throws_Core(
         IS_GROUP(f_value)
         and NOT_EVAL_FLAG(pvs, PATH_HARD_QUOTE)  // not precomposed
     ){
-        pvs->u.ref.cell = nullptr; // nowhere to R_IMMEDIATE write back to
-
         if (GET_EVAL_FLAG(pvs, NO_PATH_GROUPS))
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
@@ -600,36 +454,13 @@ bool Eval_Path_Throws_Core(
 
         Decay_If_Isotope(pvs->out);
     }
-    else {
-        pvs->u.ref.cell = nullptr; // nowhere to R_IMMEDIATE write back to
-
+    else
         Derelativize(pvs->out, f_value, specifier);
-    }
 
     const RELVAL *lookback;
     lookback = Lookback_While_Fetching_Next(pvs);
 
-    if (IS_END(f_value)) {
-        //
-        // We want `set /a` and `get /a` to work.  The GET case should work
-        // with just what we loaded in pvs->out being returned (which may be
-        // null, in case it's the caller's responsibility to error).  But
-        // the SET case needs us to write back to the "reference" location.
-        //
-        if (PVS_IS_SET_PATH(pvs)) {
-            if (not pvs->u.ref.cell)
-                fail ("Can't update temporary immediate value via SET-PATH!");
-
-            // !!! When we got the cell, we got it mutable, which is bad...
-            // it means we can't use `GET /A` on immutable objects.  But if
-            // we got the cell immutably we couldn't safely write to it.
-            // Prioritize rethinking this when the feature gets used more.
-            //
-            assert(NOT_CELL_FLAG(pvs->u.ref.cell, PROTECTED));
-            Copy_Cell(pvs->u.ref.cell, PVS_OPT_SETVAL(pvs));
-        }
-    }
-    else {
+    if (NOT_END(f_value)) {
         if (IS_NULLED(pvs->out))
             fail (Error_No_Value_Core(lookback, specifier));
 
@@ -640,11 +471,6 @@ bool Eval_Path_Throws_Core(
     }
 
     TRASH_POINTER_IF_DEBUG(lookback);  // goto crosses it, don't use below
-
-    if (setval) {
-        // If SET then we don't return anything
-        goto return_not_thrown;
-    }
 
     if (dsp_orig != DSP) {
         //
@@ -700,7 +526,6 @@ bool Eval_Path_Throws_Core(
         }
     }
 
-  return_not_thrown:;
     Abort_Frame(pvs);
     assert(not Is_Evaluator_Throwing_Debug());
 
@@ -734,7 +559,14 @@ void Get_Simple_Value_Into(
         // !!! This is an example case where the pointer being passed in
         // may move.  Review.
         //
-        Get_Path_Core(out, val, specifier);
+        if (Eval_Path_Throws_Core(
+            out,
+            val,  // !!! may not be array-based
+            specifier,
+            EVAL_MASK_DEFAULT | EVAL_FLAG_NO_PATH_GROUPS
+        )){
+            panic (out); // shouldn't be possible... no executions!
+        }
     }
     else
         Derelativize(out, val, specifier);
@@ -839,11 +671,9 @@ REBNATIVE(pick)
     pvs->label = nullptr; // applies to e.g. :append/dup returning APPEND
     pvs->param = nullptr;
 
-  redo: ;  // semicolon is intentional, next line is declaration
-
     PATH_HOOK *hook = Path_Hook_For_Type_Of(D_OUT);
 
-    REB_R r = hook(pvs, PVS_PICKER(pvs), nullptr);
+    REB_R r = hook(pvs, PVS_PICKER(pvs));
 
     if (not r or r == pvs->out) {
         // Do nothing, let caller handle
@@ -861,26 +691,6 @@ REBNATIVE(pick)
       case C_UNHANDLED: {
         assert(r == R_UNHANDLED);
         fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(PVS_PICKER(pvs)))); }
-
-      case C_INVISIBLE:
-        assert(false); // only SETs should do this
-        break;
-
-      case C_REFERENCE: {
-        assert(pvs->out == D_OUT);
-        bool was_const = GET_CELL_FLAG(D_OUT, CONST);
-        Derelativize(
-            D_OUT,
-            pvs->u.ref.cell,
-            pvs->u.ref.specifier
-        );
-        if (was_const) // can't Inherit_Const(), flag would be overwritten
-            SET_CELL_FLAG(D_OUT, CONST);
-        r = D_OUT;
-        break; }
-
-      case C_REDO_CHECKED:
-        goto redo;
 
       default:
         panic ("Unsupported return value in Path Dispatcher");
@@ -902,7 +712,7 @@ REBNATIVE(pick)
 //          {(modified)}
 //      picker
 //          {Index offset, symbol, or other value to use as index}
-//      value [<opt> any-value!]
+//      value [<opt> <meta> any-value!]
 //          {The new value}
 //  ]
 //
@@ -910,52 +720,152 @@ REBNATIVE(poke)
 //
 // As with PICK*, POKE is changed in Ren-C from its own action to "whatever
 // path-setting (now path-poking) would do".
+//
+// !!! This could have the same frame as POKE! and thus be more efficient
+// for redispatch.
 {
     INCLUDE_PARAMS_OF_POKE;
 
+    REBVAL *picker = ARG(picker);
     REBVAL *location = ARG(location);
 
-    // PORT!s are kind of a "user defined type" which historically could
-    // react to PICK and POKE, but which could not override path dispatch.
-    // Use a symbol-based call to bounce the frame to the port, which should
-    // be a compatible frame with the historical "action".
+    bool cannot_writeback_let = false;
+
+    // In this conception, `poke m [a b] 3` is `m/a/b: 3`, not `m/('a/b): 3`
+    // So it is the same as `poke m 'a/b 3`
     //
-    if (IS_PORT(location))
-        return Do_Port_Action(frame_, location, Canon(POKE));
+    // !!! GROUP!s in the PATH! are evaluated here.  Should they be?
+    //
+    if (IS_BLOCK(picker)) {
+        // use as-is
+    }
+    else if (ANY_SEQUENCE(picker)) {
+        if (HEART_BYTE(picker) != REB_BLOCK)
+            fail ("Non-BLOCK!-heart pickers not supported yet");
 
-    DECLARE_END_FRAME (pvs, EVAL_MASK_DEFAULT);
+        mutable_KIND3Q_BYTE(picker) = REB_BLOCK;
 
-    Push_Frame(D_OUT, pvs);
-    Copy_Cell(D_OUT, location);
+        // We accept # as the location to signal this is to be a SET-PATH!
+        // or SET-TUPLE! type assignment, as with the evaluator.  That means
+        // it's necessary to kickstart the pathing by evaluating the first
+        // item.  We cannot just turn the path into a BLOCK! and compose it,
+        // because we couldn't tell the difference between ('a)/b and a/b...
+        // and the former should be an error (if the first slot of a path is
+        // a GROUP! then it has to make the thing to pick from, and you can't
+        // pick out of a WORD!...but if it's not a GROUP! it is fetched).
+        //
+        if (Is_Blackhole(location)) {
+            const RELVAL *item = VAL_ARRAY_ITEM_AT(picker);
+            if (IS_GROUP(item)) {
+                if (Eval_Value_Throws(D_SPARE, item, VAL_SPECIFIER(picker))) {
+                    Move_Cell(D_OUT, D_SPARE);
+                    return R_THROWN;
+                }
+                Move_Cell(location, D_SPARE);
+                ++VAL_INDEX_UNBOUNDED(picker);
+            }
+            else if (IS_WORD(item)) {
+                //
+                // We want to make the location we're path poking in the
+                // binding of the word.  Because if we just looked up the
+                // contents of the word at the head and made it the location,
+                // we'd lose the connection with being able to do writeback:
+                //
+                //    x: 29-Feb-2020
+                //    x/year: x/year - 1
+                //
+                // If we turned this into `poke 29-Feb-2020 [year] 2019`,
+                // then there's no way to update X.  We have to turn this
+                // into `poke (binding of 'x) [x year] 2019`.
+                //
+                REBARR *binding = VAL_WORD_BINDING(item);
+                if (not binding)
+                    fail (Error_Not_Bound_Raw(rebUnrelativize(item)));
 
-    PVS_PICKER(pvs) = ARG(picker);
+                // !!! The below isn't working, and points to the need to do
+                // some serious work on LET patches.
+                //
+                bool workaround = true;
+                if (
+                    workaround or (
+                        SER_FLAVOR(binding) == FLAVOR_PATCH
+                        and GET_SUBCLASS_FLAG(PATCH, binding, LET)
+                    )
+                ){
+                    // !!! Technical limitation: LET patches do not have the
+                    // ability to give a context back at this time.  They would
+                    // have to "be their own context", it introduces problems.
+                    // For now just give an error if it actually triggers.
+                    //
+                    cannot_writeback_let = true;
+                    Copy_Cell(
+                        ARG(location),
+                        Lookup_Word_May_Fail(item, VAL_SPECIFIER(picker))
+                    );
+                    ++VAL_INDEX_UNBOUNDED(picker);
+                }
+                else {
+                    Derelativize(D_SPARE, item, VAL_SPECIFIER(picker));
+                    REBCTX *c = VAL_WORD_CONTEXT(D_SPARE);
+                    Init_Any_Context(ARG(location), CTX_TYPE(c), c);
+                }
+            }
+            else
+                fail (rebUnrelativize(item));
+        }
 
-    pvs->label = nullptr;  // e.g. :append/dup returning APPEND
-    pvs->param = cast_PAR(ARG(value));
+        // The rest of the array should be pre-COMPOSE'd, because that is what
+        // the POKE* implementation expects.  This must be optimized.
+        //
+        if (rebRunThrows(
+            D_SPARE, true, Lib(COMPOSE), rebQ(picker)
+        )){
+            return R_THROWN;
+        }
+        Move_Cell(picker, D_SPARE);
+    }
+    else if (ANY_INERT(picker)) {
+        REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
+        Copy_Cell(ARR_SINGLE(a), picker);
+        Init_Block(picker, a);
+    }
+    else
+        fail (picker);
 
-    PATH_HOOK *hook = Path_Hook_For_Type_Of(location);
+    // We use pure NULL as a signal for PICK instead of POKE.  The problem is
+    // that it would have to take up a whole frame slot otherwise, because
+    // we can't make the value a refinement only available when poked because
+    // you can poke null values.  Quirky but probably the best answer.
+    //
+    if (IS_NULLED(ARG(value)))
+        Quotify(ARG(value), 1);
 
-    const REBVAL *r = hook(pvs, PVS_PICKER(pvs), ARG(value));
-    switch (VAL_RETURN_SIGNAL(r)) {
-      case C_UNHANDLED:
-        assert(r == R_UNHANDLED);
-        fail (Error_Bad_Path_Poke_Raw(rebUnrelativize(PVS_PICKER(pvs))));
+    // !!! Here we are assuming frame compatibility of POKE with PICK-POKE*.
+    // This would be more formalized if we were writing this in usermode and
+    // made POKE an ENCLOSE of POKE*.  But to get a fast native, we don't have
+    // enclose...so this is an approximation.  Review ensuring this is "safe".
+    //
+    REB_R r = Run_Generic_Dispatch(ARG(location), frame_, Canon(PICK_POKE_P));
+    if (r == R_THROWN)
+        return R_THROWN;
 
-      case C_INVISIBLE:  // is saying it did the write already
-        break;
+    // Note: if r is not nullptr here, that means there was a modification
+    // which nothing is writing back.  It would be like saying:
+    //
+    //    >> (12-Dec-2012)/year: 1999
+    //    == 1999
+    //
+    // The date was changed, but there was no side effect.  These types of
+    // operations are likely accidents and should raise errors.
+    //
+    if (r != nullptr) {
+        if (cannot_writeback_let)
+            fail ("Current technical limit: Cannot writeback LET immediates");
 
-      case C_REFERENCE:  // wants us to write it
-        Copy_Cell(pvs->u.ref.cell, ARG(value));
-        break;
-
-      default:
-        assert(false);  // shouldn't happen, complain in the debug build
-        fail (rebUnrelativize(PVS_PICKER(pvs)));  // error in release build
+        fail ("Updating immediate value in POKE, results would be discarded");
     }
 
-    Drop_Frame(pvs);
-
-    RETURN (ARG(value)); // return the value we got in
+    RETURN (ARG(value));  // return the value we got in
 }
 
 

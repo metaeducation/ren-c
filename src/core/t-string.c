@@ -390,8 +390,7 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 //
 REB_R PD_String(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
     // Note: There was some more careful management of overflow here in the
     // PICK and POKE actions, before unification.  But otherwise the code
@@ -409,77 +408,34 @@ REB_R PD_String(
         }
     */
 
-    if (not setval) { // PICK-ing
-        const REBSTR *s = VAL_STRING(pvs->out);
-        if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
-            REBINT n = Int32(picker);
-            if (n == 0)
-                return nullptr; // Rebol2/Red convention, 0 is bad pick
-            if (n < 0)
-                ++n; // Rebol2/Red convention, `pick tail "abc" -1` is #"c"
-            n += VAL_INDEX(pvs->out) - 1;
-            if (n < 0 or cast(REBLEN, n) >= STR_LEN(s))
-                return nullptr;
+    const REBSTR *s = VAL_STRING(pvs->out);
+    if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
+        REBINT n = Int32(picker);
+        if (n == 0)
+            return nullptr; // Rebol2/Red convention, 0 is bad pick
+        if (n < 0)
+            ++n; // Rebol2/Red convention, `pick tail "abc" -1` is #"c"
+        n += VAL_INDEX(pvs->out) - 1;
+        if (n < 0 or cast(REBLEN, n) >= STR_LEN(s))
+            return nullptr;
 
-            Init_Char_Unchecked(pvs->out, GET_CHAR_AT(s, n));
-            return pvs->out;
-        }
-
-        if (
-            IS_BLANK(picker)
-            or IS_WORD(picker)
-            or IS_TUPLE(picker)
-            or ANY_STRING(picker)
-        ){
-            fail (
-                "FILE! pathing replaced by %% and MAKE-FILE, see: "
-                "https://forum.rebol.info/t/1398"
-            );
-        }
-
-        return R_UNHANDLED;
+        Init_Char_Unchecked(pvs->out, GET_CHAR_AT(s, n));
+        return pvs->out;
     }
 
-    // Otherwise, POKE-ing
-
-    REBSTR *s = VAL_STRING_ENSURE_MUTABLE(pvs->out);
-
-    if (not IS_INTEGER(picker))
-        return R_UNHANDLED;
-
-    REBINT n = Int32(picker);
-    if (n == 0)
-        fail (Error_Out_Of_Range(SPECIFIC(picker))); // Rebol2/Red convention
-    if (n < 0)
-        ++n;
-    n += VAL_INDEX(pvs->out) - 1;
-    if (n < 0 or cast(REBLEN, n) >= STR_LEN(s))
-        fail (Error_Out_Of_Range(SPECIFIC(picker)));
-
-
-    if (IS_CHAR(unwrap(setval))) {
-        Copy_Cell(pvs->out, unwrap(setval));
-    }
-    else if (IS_INTEGER(unwrap(setval))) {
-        Init_Char_May_Fail(pvs->out, Int32(unwrap(setval)));
-    }
-    else {
-        // !!! This used to allow setting to a string to set to the first
-        // character of that string, but that seems random.  Splicing
-        // strings might be useful, but inconsistent with BLOCK!s which
-        // preserve the value.  NULL might be interesting for removing
-        // things, but changing the length could be confusing.  BINARY!
-        // converted to a CHAR! could also be arguably useful.  Review.
-        //
-        return R_UNHANDLED;
+    if (
+        IS_BLANK(picker)
+        or IS_WORD(picker)
+        or IS_TUPLE(picker)
+        or ANY_STRING(picker)
+    ){
+        fail (
+            "FILE! pathing replaced by %% and MAKE-FILE, see: "
+            "https://forum.rebol.info/t/1398"
+        );
     }
 
-    REBUNI c = VAL_CHAR(pvs->out);
-    if (c == 0)
-        fail (Error_Illegal_Zero_Byte_Raw());
-
-    SET_CHAR_AT(s, n, c);
-    return R_INVISIBLE;
+    return R_UNHANDLED;
 }
 
 
@@ -817,6 +773,89 @@ REBTYPE(String)
     REBLEN tail = VAL_LEN_HEAD(v);
 
     switch (id) {
+
+    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+
+      case SYM_PICK_POKE_P: {
+        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        REBVAL *setval = ARG(value);
+        bool poking = not IS_NULLED(setval);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        if (not IS_INTEGER(picker))
+            return R_UNHANDLED;
+
+        REBINT n = Int32(picker);
+        if (n == 0)
+            fail (Error_Out_Of_Range(SPECIFIC(picker)));
+        if (n < 0)
+            ++n;
+        n += VAL_INDEX(v) - 1;
+        if (n < 0 or cast(REBLEN, n) >= STR_LEN(VAL_STRING(v)))
+            fail (Error_Out_Of_Range(SPECIFIC(picker)));
+
+        if (steps_left == 1 and poking) {
+            //
+            // The goal is to poke ARG(value) into this particular slot, like
+            // `block.10: 20`.  So this is the end of the line.
+            //
+            Meta_Unquotify(setval);
+
+          update_bits: ;
+            REBUNI c;
+            if (IS_CHAR(setval)) {
+                c = VAL_CHAR(setval);
+            }
+            else if (IS_INTEGER(setval)) {
+                c = Int32(setval);
+            }
+            else  // CHANGE is a better route for splicing/removal/etc.
+                return R_UNHANDLED;
+
+            if (c == 0)
+                fail (Error_Illegal_Zero_Byte_Raw());
+
+            REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
+            SET_CHAR_AT(s, n, c);
+        }
+        else {
+            const REBSTR *s = VAL_STRING(v);
+            Init_Char_Unchecked(D_OUT, GET_CHAR_AT(s, n));
+
+            if (steps_left == 1) {
+                assert(not poking);
+                return D_OUT;
+            }
+
+            ++VAL_INDEX_RAW(ARG(steps));
+
+            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
+            if (r == R_THROWN)
+                return R_THROWN;
+
+            if (not poking)
+                return r;
+
+            if (r != nullptr) {  // the update needs our cell's bits to change
+                assert(r == D_OUT);
+                assert(IS_CHAR(D_OUT));
+                setval = D_OUT;
+                goto update_bits;
+            }
+        }
+
+        assert(poking);
+        return nullptr; }  // REBARR* is still fine, caller need not update
+
+
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
         UNUSED(ARG(value));  // accounted for by `v`

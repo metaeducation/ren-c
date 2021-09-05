@@ -68,88 +68,29 @@
 //
 
 
-#define PVS_OPT_SETVAL(pvs) \
-    pvs->param
-
-#define PVS_IS_SET_PATH(pvs) \
-    (PVS_OPT_SETVAL(pvs) != nullptr)
-
 #define PVS_PICKER(pvs) \
-    pvs->u.ref.picker
+    pvs->u.path.picker
 
-inline static bool Get_Path_Throws_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
-    REBSPC *specifier
+
+
+// For efficiency, native PICK-POKE* implementations reuse the frame (this is
+// somewhat comparable to R3-Alpha's "PVS" struct, reused for all the path
+// dispatches...but with the added protections frames have with the GC).
+//
+// For pokes, the poke location of the value that is doing the chaining to
+// another pickpoke needs to be preserved...because the bits in the container
+// may need to be updated for some immediate types, as their storage is
+// actually in the container.
+//
+inline static REB_R Run_Pickpoke_Dispatch(
+    REBFRM *frame_,
+    const REBSYM *verb,
+    const REBVAL *new_location
 ){
-    return Eval_Path_Throws_Core(
-        out,
-        any_path,  // !!! may not be array-based
-        specifier,
-        nullptr, // not requesting value to set means it's a get
-        EVAL_MASK_DEFAULT  // "Throws"() so it shouldn't be inert on groups
-    );
-}
-
-
-inline static void Get_Path_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
-    REBSPC *specifier
-){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
-
-    if (Eval_Path_Throws_Core(
-        out,
-        any_path,  // !!! may not be array-based
-        specifier,
-        nullptr,  // not requesting value to set means it's a get
-        EVAL_MASK_DEFAULT | EVAL_FLAG_NO_PATH_GROUPS
-    )){
-        panic (out); // shouldn't be possible... no executions!
-    }
-}
-
-
-inline static bool Set_Path_Throws_Core(
-    REBVAL *out,
-    const RELVAL *any_path,
-    REBSPC *specifier,
-    const REBVAL *setval
-){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
-
-    return Eval_Path_Throws_Core(
-        out,
-        any_path,  // !!! may not be array-based
-        specifier,
-        setval,
-        EVAL_MASK_DEFAULT  // "Throws"() so groups shouldn't be inert
-    );
-}
-
-
-inline static void Set_Path_Core(  // !!! Appears to be unused.  Unnecessary?
-    const RELVAL *any_path,
-    REBSPC *specifier,
-    const REBVAL *setval
-){
-    assert(ANY_PATH(any_path)); // *could* work on ANY_ARRAY(), actually
-
-    // If there's no throw, there's no result of setting a path (hence it's
-    // not in the interface)
-    //
-    DECLARE_LOCAL (out);
-
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_NO_PATH_GROUPS;
-
-    if (Eval_Path_Throws_Core(
-        out,
-        any_path,  // !!! may not be array-based
-        specifier,
-        setval,
-        flags
-    )){
-        panic (out); // shouldn't be possible, no executions!
-    }
+    Copy_Cell(DS_PUSH(), D_ARG(1));
+    Copy_Cell(D_ARG(1), new_location);
+    REB_R r = Run_Generic_Dispatch(D_ARG(1), frame_, verb);
+    Copy_Cell(D_ARG(1), DS_TOP);
+    DS_DROP();
+    return r;
 }

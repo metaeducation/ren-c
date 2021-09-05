@@ -535,8 +535,7 @@ void Get_Var_May_Fail(
     REBVAL *out,
     const RELVAL *source,  // ANY-WORD! or ANY-PATH! (maybe quoted)
     REBSPC *specifier,
-    bool any,  // transform stable voids into isotopes without erroring
-    bool hard  // should GROUP!s in paths not be evaluated
+    bool any  // transform stable voids into isotopes without erroring
 ){
     enum Reb_Kind kind = CELL_KIND(VAL_UNESCAPED(source));
 
@@ -553,9 +552,7 @@ void Get_Var_May_Fail(
             out,
             source,  // !!! Review
             specifier,
-            nullptr,  // not requesting value to set means it's a get
-            EVAL_MASK_DEFAULT
-                | (hard ? EVAL_FLAG_PATH_HARD_QUOTE : EVAL_FLAG_NO_PATH_GROUPS)
+            EVAL_MASK_DEFAULT | EVAL_FLAG_NO_PATH_GROUPS
         )){
             panic (out); // shouldn't be possible... no executions!
         }
@@ -585,8 +582,7 @@ void Get_Var_May_Fail(
 //      return: [<opt> any-value!]
 //      source "Word or path to get, or block of words or paths"
 //          [<blank> any-word! any-sequence! block!]
-//      /any "Retrieve ANY-VALUE! (e.g. do not error on plain BAD-WORD!)"
-//      /hard "Do not evaluate GROUP!s in PATH! (assume pre-COMPOSE'd)"
+//      /any "Do not error on BAD-WORD! isotopes"
 //  ]
 //
 REBNATIVE(get)
@@ -600,8 +596,7 @@ REBNATIVE(get)
             D_OUT,
             source,
             SPECIFIED,
-            did REF(any),
-            did REF(hard)
+            did REF(any)
         );
         return D_OUT;  // IS_NULLED() is okay
     }
@@ -617,8 +612,7 @@ REBNATIVE(get)
             temp,  // don't want to write directly into movable memory
             item,
             VAL_SPECIFIER(source),
-            did REF(any),
-            did REF(hard)
+            did REF(any)
         );
         if (IS_NULLED(temp))  // blocks can't contain nulls
             Init_Bad_Word(dest, Canon(NULL));
@@ -653,8 +647,7 @@ REBNATIVE(get_p)
         D_OUT,
         ARG(source),
         SPECIFIED,
-        true,  // allow BAD-WORD!, e.g. GET/ANY
-        false  // evaluate GROUP!s, e.g. not GET/HARD
+        true  // allow BAD-WORD! isotopes, e.g. GET/ANY
     );
     return D_OUT;
 }
@@ -669,8 +662,7 @@ void Set_Var_May_Fail(
     const RELVAL *target,
     REBSPC *target_specifier,
     const RELVAL *setval,
-    REBSPC *setval_specifier,
-    bool hard
+    REBSPC *setval_specifier
 ){
     if (Is_Blackhole(target))  // name for a space-bearing ISSUE! ('#')
         return;
@@ -685,9 +677,10 @@ void Set_Var_May_Fail(
         Derelativize(var, setval, setval_specifier);
     }
     else if (ANY_SEQUENCE_KIND(kind)) {
-        DECLARE_LOCAL (specific);
-        Derelativize(specific, setval, setval_specifier);
-        PUSH_GC_GUARD(specific);
+        DECLARE_LOCAL (setval_specific);
+        Derelativize(setval_specific, setval, setval_specifier);
+        PUSH_GC_GUARD(setval_specific);
+        Quotify(setval_specific, 1);
 
         // `set 'foo/bar 1` acts as `foo/bar: 1`
         // SET will raise an error if there are any GROUP!s, unless you use
@@ -697,24 +690,22 @@ void Set_Var_May_Fail(
         // present), the flag tells it to enfix a word in a context, or
         // it will error if that's not what it looks up to.
         //
-        REBFLGS flags = EVAL_MASK_DEFAULT;
-        if (hard)
-            flags |= EVAL_FLAG_PATH_HARD_QUOTE;
-        else
-            flags |= EVAL_FLAG_NO_PATH_GROUPS;
+        DECLARE_LOCAL (target_specific);
+        Derelativize(target_specific, target, target_specifier);
+        PUSH_GC_GUARD(target_specific);
+        Quotify(target_specific, 1);
 
         DECLARE_LOCAL (dummy);
-        if (Eval_Path_Throws_Core(
+        if (rebRunThrows(
             dummy,
-            target,
-            target_specifier,
-            specific,
-            flags
+            true,
+            Lib(POKE), Lib(BLACKHOLE), target_specific, setval_specific
         )){
-            panic (dummy); // shouldn't be possible, no executions!
+            panic (dummy);  // shouldn't be possible, no executions!
         }
 
-        DROP_GC_GUARD(specific);
+        DROP_GC_GUARD(target_specific);
+        DROP_GC_GUARD(setval_specific);
     }
     else
         fail (Error_Bad_Value_Core(target, target_specifier));

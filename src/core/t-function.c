@@ -329,11 +329,8 @@ REBTYPE(Action)
 //
 REB_R PD_Action(
     REBPVS *pvs,
-    const RELVAL *picker,
-    option(const REBVAL*) setval
+    const RELVAL *picker
 ){
-    UNUSED(setval);
-
     assert(IS_ACTION(pvs->out));
 
     if (IS_NULLED_OR_BLANK(picker)) {  // !!! BLANK! used in bootstrap scripts

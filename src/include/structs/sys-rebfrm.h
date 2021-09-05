@@ -571,14 +571,11 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
 
   union {
     //
-    // References are used by path dispatch.
+    // !!! PD_Xxx style path dispatch is being removed.
     //
     struct {
-        RELVAL *cell;
-        REBSPC *specifier;
-
         const RELVAL *picker;
-    } ref;
+    } path;
 
     // Used to slip cell to re-evaluate into Eval_Core()
     //

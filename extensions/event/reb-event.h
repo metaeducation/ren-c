@@ -152,7 +152,7 @@ extern REB_R MAKE_Event(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) p
 extern REB_R TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
 extern void MF_Event(REB_MOLD *mo, REBCEL(const*) v, bool form);
 extern REBTYPE(Event);
-extern REB_R PD_Event(REBPVS *pvs, const RELVAL *picker, option(const REBVAL*) setval);
+extern REB_R PD_Event(REBPVS *pvs, const RELVAL *picker);
 
 // !!! The port scheme is also being included in the extension.
 

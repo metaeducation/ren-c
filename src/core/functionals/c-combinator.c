@@ -361,7 +361,7 @@ REBNATIVE(opt_combinator)
     if (not IS_NULLED(D_OUT))  // parser succeeded...
         return D_OUT;  // so return it's result (note: may be null *isotope*)
 
-    Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input), SPECIFIED, false);
+    Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input), SPECIFIED);
     return Init_Nulled_Isotope(D_OUT);  // success, but convey nothingness
 }
 
@@ -395,7 +395,7 @@ REBNATIVE(text_x_combinator)
             return nullptr;
 
         ++VAL_INDEX_UNBOUNDED(input);
-        Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED, false);
+        Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED);
 
         Derelativize(D_OUT, at, VAL_SPECIFIER(input));
         return D_OUT;  // Note: returns item in array, not rule, when an array!
@@ -417,7 +417,7 @@ REBNATIVE(text_x_combinator)
 
     assert(index == VAL_INDEX(input));  // we asked for AM_FIND_MATCH
     VAL_INDEX_UNBOUNDED(input) += len;
-    Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED, false);
+    Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED);
 
     // If not an array, we have return the rule on match since there's
     // no isolated value to capture.
@@ -475,7 +475,7 @@ REBNATIVE(some_combinator)
         //
         // Make the remainder from previous call the new input
         //
-        Get_Var_May_Fail(input, remainder, SPECIFIED, true, false);
+        Get_Var_May_Fail(input, remainder, SPECIFIED, true);
 
         // Don't overwrite the last output (if it's null we want the previous
         // iteration's successful output value)
@@ -494,7 +494,7 @@ REBNATIVE(some_combinator)
             // So we have to put the remainder back to the input we just tried
             // but didn't work.
             //
-            Set_Var_May_Fail(remainder, SPECIFIED, input, SPECIFIED, false);
+            Set_Var_May_Fail(remainder, SPECIFIED, input, SPECIFIED);
             Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
             return D_OUT;  // return previous successful parser result
         }
@@ -532,7 +532,7 @@ REBNATIVE(further_combinator)
     if (GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE))
         fail ("Rule passed to FURTHER must synthesize a product");
 
-    Get_Var_May_Fail(D_SPARE, remainder, SPECIFIED, true, false);
+    Get_Var_May_Fail(D_SPARE, remainder, SPECIFIED, true);
 
     if (VAL_INDEX(D_SPARE) <= VAL_INDEX(input))
         return nullptr;  // the rule matched but did not advance the input
@@ -656,7 +656,7 @@ static bool Combinator_Param_Hook(
                 "[#", ARG(advanced), "]: parsify", ARG(state), ARG(rules)
             );
             Copy_Cell(var, parser);
-            Get_Var_May_Fail(ARG(rules), ARG(advanced), SPECIFIED, true, false);
+            Get_Var_May_Fail(ARG(rules), ARG(advanced), SPECIFIED, true);
             rebRelease(parser);
         }
         break; }
@@ -731,7 +731,7 @@ REBNATIVE(combinatorize)
     // Set the advanced parameter to how many rules were consumed (the hook
     // steps through ARG(rules), updating its index)
     //
-    Set_Var_May_Fail(ARG(advanced), SPECIFIED, ARG(rules), SPECIFIED, false);
+    Set_Var_May_Fail(ARG(advanced), SPECIFIED, ARG(rules), SPECIFIED);
 
     REBACT *parser = Make_Action_From_Exemplar(s.ctx);
     DROP_GC_GUARD(s.ctx);
