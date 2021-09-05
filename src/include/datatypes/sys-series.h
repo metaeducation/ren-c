@@ -391,7 +391,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
     inline static void MONITOR_SERIES(void *p) {
         printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_Tick));
         fflush(stdout);
-        SET_SERIES_INFO(SER(cast(REBNOD*, p)), MONITOR_DEBUG);
+        PG_Monitor_Node_Debug = SER(cast(REBNOD*, p));
     }
 #endif
 

@@ -51,9 +51,11 @@
 // to the series exist in values visible to the GC.  On the other hand, the
 // series's data pointer may be freed and reallocated to respond to the needs
 // of resizing.  (In the future, it may be reallocated just as an idle task
-// by the GC to reclaim or optimize space.)  Hence pointers into data in a
-// managed series *must not be held onto across evaluations*, without
-// special protection or accomodation.
+// by the GC to reclaim or optimize space.)
+//
+//    *** THIS MEANS POINTERS INTO THE SER_DATA() FOR A MANAGED SERIES
+//    MUST NOT BE HELD ONTO ACROSS EVALUATIONS, WITHOUT SPECIAL PROTECTION
+//    OR ACCOMMODATION.**
 //
 // REBSERs may be either manually memory managed or delegated to the garbage
 // collector.  Free_Unmanaged_Series() may only be called on manual series.
@@ -81,10 +83,19 @@
 //   `->misc` field of the REBSER node.  Hence series are the basic building
 //   blocks of nearly all variable-size structures in the system.
 //
-// * The element size in a REBSER is known as the "width".  It is designed
-//   to support widths of elements up to 255 bytes.
+// * The element size in a REBSER is known as the "width".  R3-Alpha used a
+//   byte for this to get from 0-255.  Ren-C uses that byte for the "flavor"
+//   of the series (a unique name distinguishing series "type" vs. cell "type")
+//   and then maps from flavor to size.
+//
 
 
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// SERIES <<NODE>> FLAGS  (SERIES_FLAG_0 - SERIES_FLAG_7 are NODE_FLAG_XXX)
+//
+//=////////////////////////////////////////////////////////////////////////=//
+//
 // While series are nodes, the token-pasting based GET_SERIES_FLAG() macros
 // and their ilk look for flags of the form SERIES_FLAG_##name.  So alias the
 // node flags as series flags.
@@ -92,6 +103,7 @@
 #define SERIES_FLAG_MANAGED NODE_FLAG_MANAGED
 #define SERIES_FLAG_ROOT NODE_FLAG_ROOT
 #define SERIES_FLAG_MARKED NODE_FLAG_MARKED
+
 
 //=//// SERIES_FLAG_LINK_NODE_NEEDS_MARK //////////////////////////////////=//
 //
@@ -124,8 +136,8 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // Series have two places to store bits...in the "header" and in the "info".
-// The following are the SERIES_FLAG_XXX and ARRAY_FLAG_XXX etc. that are used
-// in the header, while the SERIES_INFO_XXX flags will be found in the info.
+// The following are the SERIES_FLAG_XXX that are used in the header, while
+// the SERIES_INFO_XXX flags will be found in the info.
 //
 // ** Make_Series() takes SERIES_FLAG_XXX as a parameter, so anything that
 // controls series creation should be a _FLAG_ as opposed to an _INFO_! **
@@ -137,7 +149,7 @@
 //
 
 #define SERIES_FLAGS_NONE \
-    0 // helps locate places that want to say "no flags"
+    0  // helps locate places that want to say "no flags"
 
 
 //=//// SERIES_FLAG_INACCESSIBLE //////////////////////////////////////////=//
@@ -166,7 +178,7 @@
 // One important reason for ensuring a series is fixed size is to avoid
 // the possibility of the data pointer being reallocated.  This allows
 // code to ignore the usual rule that it is unsafe to hold a pointer to
-// a value inside the series data.
+// a value inside the series data...it still might have to check INACCESSIBLE.
 //
 // !!! Strictly speaking, SERIES_FLAG_NO_RELOCATE could be different
 // from fixed size... if there would be a reason to reallocate besides
@@ -351,6 +363,8 @@ inline static REBYTE FLAVOR_BYTE(uintptr_t flags)
 // array traversal might step outside the bounds, so it's easiest just to say
 // the location is not a node to avoid writing it.
 //
+// !!! This can be reviewed if getting another bit seems important.
+//
 #define SERIES_INFO_0_IS_FALSE \
     FLAG_LEFT_BIT(0)
 STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
@@ -437,19 +451,10 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
     FLAG_LEFT_BIT(6)
 
 
-#ifdef DEBUG_MONITOR_SERIES
-
-    //=//// SERIES_INFO_MONITOR_DEBUG /////////////////////////////////////=//
-    //
-    // Simple feature for tracking when a series gets freed or otherwise
-    // messed with.  Setting this bit on it asks for a notice.
-    //
-    // !!! Hasn't been used in a while, so feature has atrophied.  Consider
-    // updating it.
-    //
-    #define SERIES_INFO_MONITOR_DEBUG \
-        FLAG_LEFT_BIT(7)
-#endif
+//=//// SERIES_INFO_7 //////////////////////////////////////////////////////=//
+//
+#define SERIES_INFO_7 \
+    FLAG_LEFT_BIT(7)
 
 
 //=//// BITS 8-15 ARE SER_USED() FOR NON-DYNAMIC NON-ARRAYS ///////////////=//
@@ -527,11 +532,9 @@ STATIC_ASSERT(SERIES_INFO_0_IS_FALSE == NODE_FLAG_NODE);
 //
 // `info` is not the start of a "Rebol Node" (REBNODE, e.g. either a REBSER or
 // a REBVAL cell).  But in the singular case it is positioned right where
-// the next cell after the embedded cell *would* be.  Hence the second byte
-// in the info corresponding to VAL_TYPE() is 0, making it conform to the
-// "terminating array" pattern.  To lower the risk of this implicit terminator
-// being accidentally overwritten (which would corrupt link and misc), the
-// bit corresponding to NODE_FLAG_CELL is clear.
+// the next cell after the embedded cell *would* be.  To lower the risk of
+// stepping into that location and thinking it is a cell, it has the bit for
+// NODE_FLAG_CELL as clear.
 //
 // Singulars have widespread applications in the system.  One is that a
 // "single element array living in a series node" makes a very efficient
@@ -611,7 +614,8 @@ union Reb_Series_Content {
 
     // If not(SERIES_FLAG_DYNAMIC), then 0 or 1 length arrays can be held in
     // the series node.  If the single cell holds an END, it's 0 length...
-    // otherwise it's length 1.
+    // otherwise it's length 1.  This means SER_USED() for non-dynamic
+    // arrays is technically available for other purposes.
     //
     union {
         // Due to strict aliasing requirements, this has to be initialized
@@ -713,7 +717,7 @@ union Reb_Series_Misc {
 
 // Some series flags imply the INFO is used not for flags, but for another
 // markable pointer.  This is not legal for any series that needs to encode
-// its SER_WIDE(), so only strings and arrays can pull this trick...when
+// its SER_USED(), so only strings and arrays can pull this trick...when
 // they are used to implement internal structures.
 //
 union Reb_Series_Info {
@@ -773,12 +777,6 @@ union Reb_Series_Info {
     // that may need to be tested together as a group.  Make_Series()
     // calls presume all the info bits are initialized to zero, so any flag
     // that controls the allocation should be a SERIES_FLAG_XXX instead.
-    //
-    // It is purposefully positioned in the structure directly after the
-    // ->content field, because its second byte is '\0' when the series is
-    // an array.  Hence it appears to terminate an array of values if the
-    // content is not dynamic.  Yet NODE_FLAG_CELL is set to false, so it is
-    // not a writable location (an "implicit terminator").
     //
     // !!! Only 32-bits are used on 64-bit platforms.  There could be some
     // interesting added caching feature or otherwise that would use

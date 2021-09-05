@@ -180,6 +180,7 @@ inline static void *Alloc_Node(REBLEN pool_id) {
     fail (Error_No_Memory(pool->wide * pool->num_units));
 }
 
+
 // Free a node, returning it to its pool.  Once it is freed, its header will
 // have NODE_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
@@ -187,11 +188,7 @@ inline static void *Alloc_Node(REBLEN pool_id) {
 inline static void Free_Node(REBLEN pool_id, REBNOD* node)
 {
   #ifdef DEBUG_MONITOR_SERIES
-    if (
-        pool_id == SER_POOL
-        and not Is_Node_Cell(node)
-        and (cast(REBSER*, node)->info.flags.bits & SERIES_INFO_MONITOR_DEBUG)
-    ){
+    if (node == PG_Monitor_Node_Debug) {
         printf(
             "Freeing series %p on tick #%d\n",
             cast(void*, node),

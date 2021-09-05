@@ -220,6 +220,10 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
     TVAR REBLEN TG_Stack_Outstanding;  // how many DS_AT()/DS_TOP refs extant
 #endif
 
+#ifdef DEBUG_MONITOR_SERIES
+    PVAR const REBNOD *PG_Monitor_Node_Debug;
+#endif
+
 // Each time Eval_Core is called a Reb_Frame* is pushed to the "frame stack".
 // Some pushed entries will represent groups or paths being executed, and
 // some will represent functions that are gathering arguments...hence they
