@@ -50,8 +50,9 @@
 // Testing for QUOTED! is special, as it isn't just the REB_QUOTED type, but
 // also multiplexed as values > REB_QUOTED.  See %sys-quoted.h
 //
-// !!! Currently this would register REB_T_UNSAFE as quoted, but it will cause
-// other problems quickly enough that it's not worth asserting here.
+// !!! Currently this would register the "pseudotypes" (quoted variants of
+// REB_0 and REB_QUOTED) as quoted.  But those special cases will cause other
+// problems quickly enough that it's not worth paying to assert here.
 
 #define IS_QUOTED_KIND(k) \
   ((k) >= REB_QUOTED)

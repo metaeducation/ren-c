@@ -455,7 +455,7 @@ void Push_Paramlist_Triads_May_Fail(
         //
         if (symbol == Canon(RETURN)) {
             if (*definitional_return_dsp != 0) {
-                DECLARE_LOCAL(word);
+                DECLARE_LOCAL (word);
                 Init_Word(word, symbol);
                 fail (Error_Dup_Vars_Raw(word));  // most dup checks are later
             }
@@ -587,7 +587,13 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         //
         if (GET_CELL_FLAG(slot, STACK_NOTE_SEALED)) {
             assert(Is_Specialized(cast(REBPAR*, cast(REBVAL*, slot))));
-            SET_CELL_FLAG(param, VAR_MARKED_HIDDEN);  // survives copy over
+
+            // !!! This flag was being set on an uninitialized param, with the
+            // remark "survives copy over".  But the copy puts the flag on
+            // regardless below.  Was this specific to RETURNs?
+            //
+            REFORMAT_CELL_IF_DEBUG(param);
+            SET_CELL_FLAG(param, VAR_MARKED_HIDDEN);
         }
         else {
             if (not Try_Add_Binder_Index(&binder, symbol, 1020))

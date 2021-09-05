@@ -214,8 +214,8 @@ rebs: collect [
 e-types/emit 'rebs {
     /*
      * Current hard limit, higher types used for QUOTED!.  In code which
-     * is using the 64 split to implement the literal trick, use REB_64
-     * instead of just 64 to make places dependent on that trick findable.
+     * is using the 64 split to implement quoting, use REB_64 instead of just
+     * the constant value 64 to make places dependent on that trick findable.
      */
     #define REB_64 64
 
@@ -223,9 +223,9 @@ e-types/emit 'rebs {
      * INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
      *
      * Do not export these values via libRebol, as the numbers can change.
-     * Their ordering is for supporting certain optimizations, such as being
-     * able to quickly check if a type IS_BINDABLE().  When types are added,
-     * or removed, the numbers must shuffle around to preserve invariants.
+     * Their ordering is for supporting tricks--like being able to quickly
+     * check if a type IS_BINDABLE().  So when types are added or removed, the
+     * numbers must shuffle around to preserve invariants.
      *
      * NOTE ABOUT C++11 ENUM TYPING: It is best not to specify an "underlying
      * type" because that prohibits certain optimizations, which the compiler
@@ -239,9 +239,10 @@ e-types/emit 'rebs {
         REB_MAX,  /* one past valid types */
 
         /*
-        * Alias for REB_0 when used for signals besides ENDness.
+        * Aliases for REB_0 to clarify which purpose it is used for.
         */
-        REB_0 = REB_0_END,
+        REB_0_END = REB_0,
+        REB_0_FREE = REB_0,
 
         /*
         * There are no "quoted ends" and there are no "quoted REB_QUOTEDs".
@@ -250,8 +251,8 @@ e-types/emit 'rebs {
 
         REB_T_RETURN_SIGNAL = (REB_0 + REB_64),  /* signals throws, etc. */
 
-      #if defined(DEBUG_REFORMAT_CELLS)
-        REB_T_UNSAFE = (REB_0 + 2 * REB_64),  /* simulate lack of GC safety*/
+      #if defined(DEBUG_POISON_CELLS)
+        REB_T_POISON = (REB_0 + 2 * REB_64),  /* simulate lack of GC safety */
       #endif
 
         REB_PSEUDOTYPE_THREE = (REB_0 + 3 * REB_64),

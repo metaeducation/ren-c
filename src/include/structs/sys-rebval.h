@@ -318,8 +318,7 @@
 //
 
 #define CELL_MASK_PERSIST \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_MANAGED | NODE_FLAG_ROOT \
-        | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED)
+    (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED)
 
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST | CELL_FLAG_NOTE | CELL_FLAG_UNEVALUATED)
@@ -327,8 +326,10 @@
 #define CELL_MASK_ALL \
     ~cast(REBFLGS, 0)
 
-#define CELL_MASK_POISON \
-    (FLAG_KIND3Q_BYTE(REB_T_UNSAFE) | FLAG_HEART_BYTE(REB_T_UNSAFE))
+#if defined(DEBUG_POISON_CELLS)
+    #define CELL_MASK_POISON \
+        (FLAG_KIND3Q_BYTE(REB_T_POISON) | FLAG_HEART_BYTE(REB_T_POISON))
+#endif
 
 
 //=//// CELL's `EXTRA` FIELD DEFINITION ///////////////////////////////////=//
@@ -656,6 +657,8 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // to be combined with any relative words that are seen later.
 //
 
+#define CELL_MASK_PREP 0  // considered WRITABLE()
+
 #ifdef CPLUSPLUS_11
     static_assert(
         std::is_standard_layout<struct Reb_Relative_Value>::value,
@@ -667,7 +670,10 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
       #if !defined(NDEBUG)
         Reb_Value () = default;
         ~Reb_Value () {
-            assert(this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL));
+            assert(
+                (this->header.bits & (NODE_FLAG_NODE | NODE_FLAG_CELL))
+                or this->header.bits == CELL_MASK_PREP
+            );
         }
       #endif
     };

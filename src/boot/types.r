@@ -47,14 +47,24 @@ REBOL [
 [name       description
             class       path    make    mold    typesets]  ; makes TS_XXX
 
-; REB_0_END is an array terminator, and not a "type".  It has the 0 as part
-; of the name to indicate its zero-ness and C falsey-ness is intrinsic to the
-; design--huge parts of the system would not work if it were not zero.  Plus,
-; making it a leading digit means it's an invalid word, catching if anything
-; leaks it to being an actual word (it can't have a symbol, due to SYM_0
-; having other purposes in the system).
+; The special 0 state of the REB_XXX enumeration was once used as a marker to
+; indicate array termination (parallel to how '\0' terminates strings).  But
+; to save on memory usage, the concept of a full cell terminator was dropped.
+; Instead, arrays are enumerated to their tail positions:
+;
+; https://forum.rebol.info/t/1445
+;
+; But REB_0 had another use, as a "less than null" signal.  This was as the
+; the true internal representation of an evaluation that produced nothing.
+; While it might be called REB_0_INVISIBLE or similar, the historical name
+; of REB_0_END is currently still used.
+;
+; It's also the cell type uninitialized cells wind up with.  It's a consequence
+; of C-isms where memory initialization of zeros can be lower cost (globals
+; always initialized to 0, calloc() and memset may be faster with 0.)  The
+; alias REB_0_FREE is given to use when this is the intent for REB_0.
 
-#0-end      "!!! `END!` isn't a datatype, this isn't exposed to the user"
+#0          "!!! `END!` and `FREE!` aren't datatypes, not exposed to the user"
             0           0       0       0       []
 
 ; REB_NULL takes value 1, but it being 1 is less intrinsic.  It is also not

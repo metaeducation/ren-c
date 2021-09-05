@@ -302,8 +302,8 @@ REBINT Compare_Vector(REBCEL(const*) v1, REBCEL(const*) v2)
     REBLEN l2 = VAL_VECTOR_LEN_AT(v2);
     REBLEN len = MIN(l1, l2);
 
-    DECLARE_LOCAL(temp1);
-    DECLARE_LOCAL(temp2);
+    DECLARE_LOCAL (temp1);
+    DECLARE_LOCAL (temp2);
     Init_Integer(temp1, 0);
     Init_Integer(temp2, 0);
 
@@ -332,8 +332,8 @@ void Shuffle_Vector(REBVAL *vect, bool secure)
 {
     REBLEN idx = VAL_VECTOR_INDEX(vect);
 
-    DECLARE_LOCAL(temp1);
-    DECLARE_LOCAL(temp2);
+    DECLARE_LOCAL (temp1);
+    DECLARE_LOCAL (temp2);
 
     REBLEN n;
     for (n = VAL_VECTOR_LEN_AT(vect); n > 1;) {

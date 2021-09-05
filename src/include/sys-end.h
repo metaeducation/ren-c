@@ -54,30 +54,22 @@
 #define END_CELL \
     c_cast(const REBVAL*, &PG_End_Cell)
 
-#if defined(DEBUG_TRACK_EXTEND_CELLS) || defined(DEBUG_CELL_WRITABILITY)
-    inline static REBVAL *SET_END_Debug(RELVAL *v) {
-        ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
+inline static REBVAL *SET_END_Untracked(RELVAL *v) {
+    RESET_VAL_HEADER(v, REB_0_END, CELL_MASK_NONE);
+    return cast(REBVAL*, v);
+}
 
-        mutable_KIND3Q_BYTE(v) = REB_0_END; // release build behavior
+#define SET_END(v) \
+    SET_END_Untracked(TRACK_CELL_IF_DEBUG(v))
 
-        // Detection of END is designed to only be signaled by one byte.
-        // See the definition of `rebEND` for how this is used to make a
-        // small C string signal.
-        //
-        // !!! Review relevance of this now that Endlike_Header() is gone.
-        //
-        mutable_HEART_BYTE(v) = REB_T_UNSAFE;
-        return cast(REBVAL*, v);
-    }
 
-    #define SET_END(v) \
-        SET_END_Debug(TRACK_CELL_IF_DEBUG(v))
-#else
-    inline static REBVAL *SET_END(RELVAL *v) {
-        mutable_KIND3Q_BYTE(v) = REB_0_END; // must be a prepared cell
-        return cast(REBVAL*, v);
-    }
-#endif
+// Optimized Prep + SET_END (optimize after it's finalized)
+//
+inline static REBVAL *Prep_End_Untracked(RELVAL *out)
+  { return SET_END_Untracked(Prep_Cell_Untracked(out)); }
+
+#define Prep_End(out) \
+    Prep_End_Untracked(TRACK_CELL_IF_DEBUG(out))
 
 
 // IMPORTANT: Notice that END markers may not have NODE_FLAG_CELL, and may

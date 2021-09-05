@@ -254,7 +254,7 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_COUNT_TICKS
     #define DEBUG_FRAME_LABELS
     #define DEBUG_UNREADABLE_TRASH
-    #define DEBUG_REFORMAT_CELLS
+    #define DEBUG_POISON_CELLS
     #define DEBUG_BALANCE_STATE
 
     // See debugbreak.h and REBNATIVE(c_debug_break)...useful!

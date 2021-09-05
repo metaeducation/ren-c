@@ -586,6 +586,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
         // cells don't need to make copies.  Review.
 
         DECLARE_LOCAL (temp);
+        assert(IS_END(temp));
         if (Do_Branch_Throws(temp, les->body)) {
             if (not Catching_Break_Or_Continue(temp, &broke)) {
                 Move_Cell(les->out, temp);

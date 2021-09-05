@@ -902,8 +902,6 @@ REBNATIVE(aes_key)
 
     REBINT keybits = p_size * 8;
     if (keybits != 128 and keybits != 192 and keybits != 256) {
-        DECLARE_LOCAL (i);
-        Init_Integer(i, keybits);
         rebJumps(
             "fail [{AES bits must be [128 192 256], not}", rebI(keybits), "]"
         );

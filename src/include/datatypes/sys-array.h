@@ -178,7 +178,7 @@ inline static void Prep_Array(
         // about the bits in the excess capacity.  But poison them in
         // the debug build.
         //
-      #if !defined(NDEBUG)
+      #if defined(DEBUG_POISON_CELLS)
         for (; n < a->content.dynamic.rest; ++n, ++prep) {
             USED(TRACK_CELL_IF_DEBUG(prep));
             prep->header.bits = CELL_MASK_POISON;  // unwritable + unreadable
@@ -209,8 +209,7 @@ inline static REBARR *Make_Array_Core(REBLEN capacity, REBFLGS flags)
       #endif
     }
     else {
-        RELVAL *cell = TRACK_CELL_IF_DEBUG(SER_CELL(s));
-        cell->header.bits = CELL_MASK_PREP_END;
+        Prep_End(SER_CELL(s));  // optimized Prep_Cell() + SET_END()
     }
 
     // Arrays created at runtime default to inheriting the file and line

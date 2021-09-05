@@ -1263,12 +1263,12 @@ void Assert_Pointer_Detection_Working(void)
     // build.  It could also become useful if one wanted a more "serious"
     // form of trashing than REFORMAT_CELL_IF_DEBUG().
     //
-  #ifdef DEBUG_REFORMAT_CELLS
+  #ifdef DEBUG_POISON_CELLS
     DECLARE_LOCAL (freed_cell);
     freed_cell->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
-        | FLAG_KIND3Q_BYTE(REB_T_UNSAFE)
-        | FLAG_HEART_BYTE(REB_T_UNSAFE);
+        | FLAG_KIND3Q_BYTE(REB_T_POISON)
+        | FLAG_HEART_BYTE(REB_T_POISON);
     assert(Detect_Rebol_Pointer(freed_cell) == DETECTED_AS_FREED_CELL);
   #endif
 

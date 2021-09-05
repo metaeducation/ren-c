@@ -737,15 +737,13 @@ inline static void Push_Action(
 
     s->content.dynamic.used = num_args + 1;
 
-  #if !defined(NDEBUG)  // poison cells past usable range
+  #if defined(DEBUG_POISON_CELLS)  // poison cells past usable range
   blockscope {
     RELVAL *tail = ARR_TAIL(f->varlist);
     RELVAL *prep = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
     for (; prep >= tail; --prep) {
         USED(TRACK_CELL_IF_DEBUG(prep));
-        prep->header.bits =
-            FLAG_KIND3Q_BYTE(REB_T_UNSAFE)
-            | FLAG_HEART_BYTE(REB_T_UNSAFE); // unreadable
+        prep->header.bits = CELL_MASK_POISON;
     }
   }
   #endif

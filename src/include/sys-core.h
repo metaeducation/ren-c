@@ -462,7 +462,7 @@ inline static void SET_SIGNAL(REBFLGS f) { // used in %sys-series.h
     cast(void, Eval_Signals &= ~(f))
 
 
-#include "sys-trash.h"
+#include "sys-trash.h"  // doesn't need SYMID (%sys-bad-word.h does)
 
 #include "datatypes/sys-series.h"
 #include "datatypes/sys-array.h"  // REBARR used by UTF-8 string bookmarks

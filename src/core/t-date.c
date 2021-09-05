@@ -695,7 +695,7 @@ void Pick_Or_Poke_Date(
     // actually 3.)  We extract the original values so we have them if we
     // need them (e.g if asked for the UTC or zone) and adjust.
     //
-    DECLARE_LOCAL(adjusted);
+    DECLARE_LOCAL (adjusted);
     Copy_Cell(adjusted, v);
     Fold_Zone_Into_Date(adjusted);
     assert(not Does_Date_Have_Zone(adjusted));

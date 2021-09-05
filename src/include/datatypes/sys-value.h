@@ -108,12 +108,9 @@
 
 //=//// CELL WRITABILITY //////////////////////////////////////////////////=//
 //
-// Asserting writablity helps avoid very bad catastrophies that might ensue
-// if "implicit end markers" could be overwritten.  These are the ENDs that
-// are actually other bitflags doing double duty inside a data structure, and
-// there is no REBVAL storage backing the position.
-//
-// (A fringe benefit is catching writes to other unanticipated locations.)
+// Asserting writablity helps catch writes to unanticipated locations.  Making
+// places that are cell-adjacent not carry NODE_FLAG_CELL, or be marked with
+// NODE_FLAG_FREE, helps make this check useful.
 //
 
 #if defined(DEBUG_CELL_WRITABILITY)
@@ -123,7 +120,8 @@
     // speed up this critical test, then wrap in READABLE() and WRITABLE()
     // functions for higher-level callers that don't mind the cost.
     //
-    // Note this isn't in a `do {...} while (0)` either, also for speed.
+    // Note this isn't in a `do {...} while (0)`.  Slight chance it helps in
+    // some debug builds.  Just a further detail callers should bear in mind.
 
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c) \
         if ( \
@@ -133,20 +131,39 @@
             )) != 0x81 \
         ){ \
             if (not ((c)->header.bits & NODE_FLAG_CELL)) \
-                printf("Non-cell passed to cell read/write routine\n"); \
+                printf("Non-cell passed to cell read routine\n"); \
             else if (not ((c)->header.bits & NODE_FLAG_NODE)) \
-                printf("Non-node passed to cell read/write routine\n"); \
+                printf("Non-node passed to cell read routine\n"); \
             else \
-                printf("Free node passed to cell read/write routine\n"); \
+                printf("Free node passed to cell read routine\n"); \
             panic (c); \
         }
 
+    // Because you can't write to cells that aren't pure 0 (prep'd/calloc'd)
+    // or formatted with cell and node flags, it doesn't make sense to
+    // disallow writing NODE_FLAG_FREE cells.  So the flag is used instead as
+    // a generic "not readable" status.
+    //
+    // Warning: Cells with NODE_FLAG_FREE may seem like UTF-8 strings if they
+    // leak to the user; so this flag should only be used for debug-oriented
+    // unreadable states.
+    //
+
     #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c) \
-        ASSERT_CELL_READABLE_EVIL_MACRO(c); \
-        if ((c)->header.bits & CELL_FLAG_PROTECTED) { \
-            printf("Protected cell passed to writing routine\n"); \
+        if ( \
+            (FIRST_BYTE((c)->header) & ( \
+                NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
+                    | CELL_FLAG_PROTECTED \
+            )) != 0x81 \
+        ){ \
+            if (not ((c)->header.bits & NODE_FLAG_CELL)) \
+                printf("Non-cell passed to cell write routine\n"); \
+            else if (not ((c)->header.bits & NODE_FLAG_NODE)) \
+                printf("Non-node passed to cell write routine\n"); \
+            else \
+                printf("Protected cell passed to writing routine\n"); \
             panic (c); \
-        }
+        } \
 
     inline static REBCEL(const*) READABLE(REBCEL(const*) c) {
         ASSERT_CELL_READABLE_EVIL_MACRO(c);
@@ -157,9 +174,19 @@
         ASSERT_CELL_WRITABLE_EVIL_MACRO(c);
         return c;
     }
+
+    // We try to make the concept of a "prepped" cell allow for that to be
+    // fully zeroed out memory.  But you shouldn't be setting cell flags on
+    // that.  Make a separate category (initable) that includes prep cells.
+    //
+    #define ASSERT_CELL_INITABLE_EVIL_MACRO(c) \
+        if ((c)->header.bits != CELL_MASK_PREP) { \
+            ASSERT_CELL_WRITABLE_EVIL_MACRO(c); \
+        }
 #else
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c)    NOOP
     #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c)    NOOP
+    #define ASSERT_CELL_INITABLE_EVIL_MACRO(c)    NOOP
 
     #define READABLE(c) (c)
     #define WRITABLE(c) (c)
@@ -416,9 +443,10 @@ inline static REBVAL *RESET_VAL_HEADER(
     enum Reb_Kind k,
     uintptr_t extra
 ){
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
+    ASSERT_CELL_INITABLE_EVIL_MACRO(v);  // header may be CELL_MASK_PREP, all 0
     v->header.bits &= CELL_MASK_PERSIST;
-    v->header.bits |= FLAG_KIND3Q_BYTE(k) | FLAG_HEART_BYTE(k) | extra;
+    v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
+        | FLAG_KIND3Q_BYTE(k) | FLAG_HEART_BYTE(k) | extra;
     return cast(REBVAL*, v);
 }
 
@@ -457,22 +485,14 @@ inline static REBVAL *RESET_CUSTOM_CELL(
 #endif
 
 
-#define CELL_MASK_PREP \
-    (NODE_FLAG_NODE | NODE_FLAG_CELL)
-
-#define CELL_MASK_PREP_END \
-    (CELL_MASK_PREP \
-        | FLAG_KIND3Q_BYTE(REB_0) \
-        | FLAG_HEART_BYTE(REB_0))  // a more explicit CELL_MASK_PREP
-
-inline static RELVAL *Prep_Cell_Core(RELVAL *c) {
+inline static RELVAL *Prep_Cell_Untracked(RELVAL *c) {
     ALIGN_CHECK_CELL_EVIL_MACRO(c);
     c->header.bits = CELL_MASK_PREP;
     return c;
 }
 
 #define Prep_Cell(c) \
-    Prep_Cell_Core(TRACK_CELL_IF_DEBUG(c))
+    Prep_Cell_Untracked(TRACK_CELL_IF_DEBUG(c))
 
 
 //=//// REFORMATTING CELLS ////////////////////////////////////////////////=//
@@ -493,13 +513,10 @@ inline static RELVAL *Prep_Cell_Core(RELVAL *c) {
 // release builds, and shouldn't be used conditionally.)
 //
 
-#if defined(DEBUG_REFORMAT_CELLS)
+#if defined(DEBUG_POISON_CELLS)
     inline static REBVAL *Init_Unsafe_Debug(RELVAL *v) {
-        ASSERT_CELL_WRITABLE_EVIL_MACRO(v);
-        v->header.bits &= CELL_MASK_PERSIST;
-        v->header.bits |=
-            FLAG_KIND3Q_BYTE(REB_T_UNSAFE)
-                | FLAG_HEART_BYTE(REB_T_UNSAFE);
+        ASSERT_CELL_INITABLE_EVIL_MACRO(v);  // maybe CELL_MASK_PREP, all 0 bits
+        v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE;
         return cast(REBVAL*, v);
     }
 
@@ -665,10 +682,11 @@ inline static void Copy_Cell_Header(
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
 
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(out);
+    ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_PREP, all 0
 
     out->header.bits &= CELL_MASK_PERSIST;
-    out->header.bits |= v->header.bits & CELL_MASK_COPY;
+    out->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
+        | (v->header.bits & CELL_MASK_COPY);
 
   #ifdef DEBUG_TRACK_EXTEND_CELLS
     out->file = v->file;
@@ -694,13 +712,14 @@ inline static RELVAL *Copy_Cell_Untracked(
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
 
-    ASSERT_CELL_WRITABLE_EVIL_MACRO(out);
+    ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_PREP, all 0
 
     // Q: Will optimizer notice if copy mask is CELL_MASK_ALL, and not bother
     // with masking out CELL_MASK_PERSIST since all bits are overwritten?
     //
     out->header.bits &= CELL_MASK_PERSIST;
-    out->header.bits |= v->header.bits & copy_mask;
+    out->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
+        | (v->header.bits & copy_mask);
 
     // Note: must be copied over *before* INIT_BINDING_MAY_MANAGE is called,
     // so that if it's a REB_QUOTED it can find the literal->cell.
@@ -797,7 +816,9 @@ inline static REBVAL *Constify(REBVAL *v) {
 // DECLARE_LOCAL inside of a loop.  It should be at the outermost scope of
 // the function.
 //
-// Note: It sets NODE_FLAG_FREE, so this is a "trash" cell by default.
+// !!! REBVAL on the C stack cannot be preserved in stackless, and they also
+// cannot have their cell RESET() when a fail() occurs.  This means these are
+// likely to be converted to API allocated cells.
 //
 #define DECLARE_LOCAL(name) \
     REBVAL name##_cell; \
