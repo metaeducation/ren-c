@@ -146,9 +146,6 @@ REBTYPE(Port)
 
     REBVAL *port = D_ARG(1);
 
-    if (id == SYM_POKE_P)
-        return T_Context(frame_, verb);
-
     REB_R r = Context_Common_Action_Maybe_Unhandled(frame_, verb);
     if (r != R_UNHANDLED)
         return r;

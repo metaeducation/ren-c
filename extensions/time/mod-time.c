@@ -35,7 +35,7 @@ extern REBVAL *Get_Current_Datetime_Value(void);
 //
 //  "Returns current date and time with timezone adjustment."
 //
-//      return: [date! time!]
+//      return: [date! time! integer!]
 //      /year "Returns year only"
 //      /month "Returns month only"
 //      /day "Returns day of the month only"

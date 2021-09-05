@@ -305,8 +305,6 @@ REBLEN Week_Day(const REBVAL *date)
     VAL_DATE(year1).year = 0;
     VAL_DATE(year1).month = 1;
     VAL_DATE(year1).day = 1;
-    // make zones match to avoid diffing error
-    PAYLOAD(Time, year1).nanoseconds = NO_DATE_TIME;
 
     return ((Days_Between_Dates(date, year1) + 5) % 7) + 1;
 }
