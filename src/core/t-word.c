@@ -311,6 +311,8 @@ REBTYPE(Word)
             if (var)
                 return D_OUT;  // found variable actually in module.
 
+            RESET(D_OUT);
+
             if (MOD_VAR(Lib_Context, VAL_WORD_SYMBOL(v), true))
                 return Init_Bad_Word(D_OUT, Canon(INHERITED));
 

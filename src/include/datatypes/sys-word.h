@@ -58,7 +58,7 @@ inline static REBVAL *Init_Any_Word_Core(
     enum Reb_Kind kind,
     const REBSYM *sym
 ){
-    RESET_VAL_HEADER(out, kind, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_HEADER(out, kind, CELL_FLAG_FIRST_IS_NODE);
     VAL_WORD_INDEXES_U32(out) = 0;
     mutable_BINDING(out) = nullptr;
     INIT_VAL_WORD_SYMBOL(out, sym);
@@ -81,7 +81,7 @@ inline static REBVAL *Init_Any_Word_Bound_Core(
     const REBSYM *symbol,
     REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
-    RESET_VAL_HEADER(out, type, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_HEADER(out, type, CELL_FLAG_FIRST_IS_NODE);
     mutable_BINDING(out) = binding;
     VAL_WORD_INDEXES_U32(out) = index;
     INIT_VAL_WORD_SYMBOL(out, symbol);

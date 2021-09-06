@@ -410,8 +410,25 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 inline static REBLEN SER_USED(const REBSER *s) {
     if (IS_SER_DYNAMIC(s))
         return s->content.dynamic.used;
-    if (IS_SER_ARRAY(s))
-        return IS_END(&s->content.fixed.cells[0]) ? 0 : 1;
+    if (IS_SER_ARRAY(s)) {
+        //
+        // !!! The distinguished case of an end cell which is not FREE is used
+        // to signal length 0.  If it's free, it's assumed to be just a length
+        // 1 array that the caller hasn't gotten around to filling a value
+        // with.  (This mirrors the usual ability of dynamic arrays to let
+        // you set the length independently of filling the values, up until
+        // when the GC is invoked where it must all be sorted out.)
+        //
+        // So here we look for a cell whose kind byte is zero, whose heart byte
+        // is 0, and that doesn't have NODE_FLAG_FREE set to signal length 0.
+        //
+        if (0 == (SER_CELL(s)->header.bits & (
+            NODE_FLAG_FREE | FLAG_KIND3Q_BYTE(255) | FLAG_HEART_BYTE(255)
+        ))){
+            return 0;
+        }
+        return 1;  // Note: might be a free cell
+    }
     return USED_BYTE(s);
 }
 
@@ -520,16 +537,23 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
     else {
         assert(used < sizeof(s->content));
 
-        // !!! See notes on TERM_SERIES_IF_NEEDED() for how array termination
-        // is slated to be a debug feature only.
-        //
         if (IS_SER_ARRAY(s)) {
+            //
+            // !!! This is a little odd, because we're trying to say whether
+            // it's a 0 or 1 element array based on the contents of a cell.
+            // But if the REB_0 state is used to convey this, it means that
+            // doing a RESET() on the cell will change the length.  The logic
+            // used here is that a readable REB_0 state is used for 0 length
+            // and if an expansion mechanic tries to change the length while
+            // leaving the END in the slot, it's mutated into a freed cell
+            // as a mitigation factor.  Review.
+
             if (used == 0)
-                SET_END(SER_HEAD(RELVAL, s));
+                SET_END(RESET_Untracked(mutable_SER_CELL(s)));
             else {
                 assert(used == 1);
-                if (IS_END(SER_HEAD(RELVAL, s)))
-                    Init_Trash(SER_HEAD(RELVAL, s));  // !!! Unreadable bad-word?
+                if (KIND3Q_BYTE_UNCHECKED(SER_CELL(s)) == REB_0)
+                    SET_CELL_FREE(mutable_SER_CELL(s));
             }
         }
         else
@@ -1082,7 +1106,7 @@ inline static REBVAL *Init_Any_Series_At_Core(
     }
   #endif
 
-    RESET_CELL(out, type, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_HEADER(out, type, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_NODE1(out, s);
     VAL_INDEX_RAW(out) = index;
     INIT_SPECIFIER(out, specifier);  // asserts if unbindable type tries to bind

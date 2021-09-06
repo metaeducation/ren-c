@@ -139,13 +139,13 @@ inline static bool Did_Init_Inert_Optimize_Complete(
     REBFED *feed,
     REBFLGS *flags
 ){
+    assert(Is_Fresh(out));  // "Have to Init() `out` one way or another..."
+
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE_BYTE
     assert(not IS_END(feed->value));  // would be wasting time to call
 
-    if (not ANY_INERT(feed->value)) {
-        SET_END(out);  // Have to Init() `out` one way or another...
+    if (not ANY_INERT(feed->value))
         return false;  // general case evaluation requires a frame
-    }
 
     Literal_Next_In_Feed(out, feed);
 
@@ -255,7 +255,7 @@ inline static bool Eval_Step_Maybe_Stale_Throws(
 }
 
 inline static bool Eval_Step_Throws(REBVAL *out, REBFRM *f) {
-    SET_END(out);
+    assert(Is_Fresh(out));
     bool threw = Eval_Step_Maybe_Stale_Throws(out, f);
     CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
     return threw;
@@ -443,7 +443,6 @@ inline static bool Eval_Value_Throws(
 ){
     assert(out != value);
 
-    SET_END(out);
     if (Eval_Value_Maybe_Stale_Throws(out, value, specifier))
         return true;
 

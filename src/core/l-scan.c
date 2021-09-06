@@ -659,14 +659,14 @@ static void Update_Error_Near_For_Line(
     Append_Utf8(mo->series, cs_cast(bp), len);
 
     ERROR_VARS *vars = ERR_VARS(error);
-    Init_Text(&vars->nearest, Pop_Molded_String(mo));
+    Init_Text(RESET(&vars->nearest), Pop_Molded_String(mo));
 
     if (ss->file)
-        Init_File(&vars->file, ss->file);
+        Init_File(RESET(&vars->file), ss->file);
     else
-        Init_Nulled(&vars->file);
+        Init_Nulled(RESET(&vars->file));
 
-    Init_Integer(&vars->line, ss->line);
+    Init_Integer(RESET(&vars->line), ss->line);
 }
 
 
@@ -2176,7 +2176,9 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             fail (Error_Syntax(ss, token));
 
         if (bp[len - 1] == '%') {
-            RESET_VAL_HEADER(DS_TOP, REB_PERCENT, CELL_MASK_NONE);
+            mutable_KIND3Q_BYTE(DS_TOP)
+                = mutable_HEART_BYTE(DS_TOP)
+                = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
             // a REBCEL(const*) or REBVAL* overload with DEBUG_CHECK_CASTS.
@@ -2334,7 +2336,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             // data stack could go bad on any DS_PUSH() or DS_DROP().
             //
             DECLARE_LOCAL (cell);
-            Init_Trash(cell);
             PUSH_GC_GUARD(cell);
 
             PUSH_GC_GUARD(array);
@@ -2533,7 +2534,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                     = mutable_HEART_BYTE(cleanup)
                     = REB_GET_WORD;
 
-                Copy_Cell(ARR_SINGLE(a), cleanup);
+                Move_Cell(ARR_SINGLE(a), cleanup);
                 Init_Group(cleanup, a);
             }
         }
@@ -2576,14 +2577,14 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         //
         if (IS_TUPLE(DS_TOP) and VAL_SEQUENCE_LEN(DS_TOP) == 2) {
             if (
-                IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
-                and IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
+                IS_INTEGER(VAL_SEQUENCE_AT(RESET(temp), DS_TOP, 0))
+                and IS_BLANK(VAL_SEQUENCE_AT(RESET(temp), DS_TOP, 1))
             ){
                 fail ("Notation of `5.` currently reserved, please use 5.0");
             }
             if (
-                IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
-                and IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
+                IS_BLANK(VAL_SEQUENCE_AT(RESET(temp), DS_TOP, 0))
+                and IS_INTEGER(VAL_SEQUENCE_AT(RESET(temp), DS_TOP, 1))
             ){
                 fail ("Notation of `.5` currently reserved, please use 0.5");
             }
@@ -3040,9 +3041,9 @@ REBNATIVE(transcode)
         bool failed = Scan_To_Stack_Relaxed_Failed(&level);
 
         if (not Is_Blackhole(REF(relax))) {
-            REBVAL *var = Lookup_Mutable_Word_May_Fail(ARG(relax), SPECIFIED);
+            REBVAL *var = Sink_Word_May_Fail(ARG(relax), SPECIFIED);
             if (failed)
-                Copy_Cell(var, DS_TOP);
+                Move_Cell(var, DS_TOP);
             else
                 Init_Nulled(var);
         }
@@ -3057,7 +3058,7 @@ REBNATIVE(transcode)
         if (DSP == dsp_orig)
             Init_Nulled(D_OUT);
         else {
-            Copy_Cell(D_OUT, DS_TOP);
+            Move_Cell(D_OUT, DS_TOP);
             DS_DROP();
         }
         assert(DSP == dsp_orig);

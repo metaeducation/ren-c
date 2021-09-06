@@ -308,7 +308,7 @@ REB_R MAKE_Array(
             if (IS_END(out))
                 break;
 
-            Copy_Cell(DS_PUSH(), out);
+            Move_Cell(DS_PUSH(), out);
         } while (true);
 
         return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
@@ -342,12 +342,14 @@ REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         REBDSP dsp_orig = DSP;
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
-        for (i = 0; i < len; ++i)
+        for (i = 0; i < len; ++i) {
             Derelativize(
                 DS_PUSH(),
-                VAL_SEQUENCE_AT(out, arg, i),
+                VAL_SEQUENCE_AT(out, arg, i),  // use out as scratch space
                 VAL_SEQUENCE_SPECIFIER(arg)
             );
+            RESET(out);  // was uesd as scratch space
+        }
         return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
     }
     else if (ANY_ARRAY(arg)) {
@@ -616,8 +618,8 @@ void Shuffle_Array(REBARR *arr, REBLEN idx, bool secure)
             swap.header = data[k].header;
             swap.payload = data[k].payload;
             swap.extra = data[k].extra;
-            Copy_Cell(&data[k], &data[n + idx]);
-            Copy_Cell(&data[n + idx], &swap);
+            Copy_Cell(RESET(&data[k]), &data[n + idx]);
+            Copy_Cell(RESET(&data[n + idx]), &swap);
         }
     }
 }
@@ -884,7 +886,8 @@ REBTYPE(Array)
 
             REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
             RELVAL *at = ARR_AT(mut_arr, n);
-            Copy_Cell(at, setval);
+            Move_Cell(RESET(at), setval);
+            Init_Bad_Word(setval, Canon(MOVE));
         }
         else {
             REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
@@ -1090,7 +1093,7 @@ REBTYPE(Array)
                     VAL_INDEX_RAW(array) = 0;
                 RETURN (array);  // don't fail on read only if would be a no-op
             }
-            Init_Nulled(ARG(value));  // low-level code treats NULL as nothing
+            Init_Nulled(RESET(ARG(value)));  // low-level NULL acts as nothing
         }
 
         REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
@@ -1119,7 +1122,7 @@ REBTYPE(Array)
             //     == [~null~ *]
             //
             if (IS_NULLED(ARG(value)))
-                Init_Bad_Word(ARG(value), Canon(NULL));
+                Init_Bad_Word(RESET(ARG(value)), Canon(NULL));
         }
         else if (IS_BLOCK(ARG(value)))
             flags |= AM_SPLICE;
@@ -1266,11 +1269,25 @@ REBTYPE(Array)
             temp.header = front->header;
             temp.extra = front->extra;
             temp.payload = front->payload;
+          #ifdef DEBUG_TRACK_EXTEND_CELLS
+            temp.file = front->file;
+            temp.line = front->line;
+            temp.tick = front->tick;
+            temp.touch = front->touch;
+          #endif
 
             // When we move the back cell to the front position, it gets the
             // newline flag based on the flag state that was *after* it.
             //
-            Copy_Cell(front, back);
+            front->header = back->header;
+            front->extra = back->extra;
+            front->payload = back->payload;
+          #ifdef DEBUG_TRACK_EXTEND_CELLS
+            front->file = back->file;
+            front->line = back->line;
+            front->tick = back->tick;
+            front->touch = back->touch;
+          #endif
             if (line_back)
                 SET_CELL_FLAG(front, NEWLINE_BEFORE);
             else
@@ -1280,7 +1297,16 @@ REBTYPE(Array)
             // that was on the back will be the after for the next blit.
             //
             line_back = GET_CELL_FLAG(back, NEWLINE_BEFORE);
-            Copy_Cell(back, &temp);
+            back->header = temp.header;
+            back->extra = temp.extra;
+            back->payload = temp.payload;
+          #ifdef DEBUG_TRACK_EXTEND_CELLS
+            back->file = temp.file;
+            back->line = temp.line;
+            back->tick = temp.tick;
+            back->touch = temp.touch;
+          #endif
+
             if (line_front)
                 SET_CELL_FLAG(back, NEWLINE_BEFORE);
             else
@@ -1355,7 +1381,7 @@ REBTYPE(Array)
                 return nullptr;
 
             Init_Integer(
-                ARG(seed),
+                RESET(ARG(seed)),
                 1 + (Random_Int(did REF(secure))
                     % (VAL_LEN_HEAD(array) - index))
             );

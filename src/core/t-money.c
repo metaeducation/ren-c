@@ -203,35 +203,35 @@ REBTYPE(Money)
 
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_ADD: {
-        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
         return Init_Money(
             D_OUT,
             deci_add(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_SUBTRACT: {
-        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
         return Init_Money(
             D_OUT,
             deci_subtract(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_MULTIPLY: {
-        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
         return Init_Money(
             D_OUT,
             deci_multiply(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_DIVIDE: {
-        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
         return Init_Money(
             D_OUT,
             deci_divide(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_REMAINDER: {
-        REBVAL *arg = Math_Arg_For_Money(D_OUT, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
         return Init_Money(
             D_OUT,
             deci_mod(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
@@ -275,7 +275,7 @@ REBTYPE(Money)
         if (REF(to)) {
             if (IS_DECIMAL(to) or IS_PERCENT(to)) {
                 REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
-                RESET_CELL(D_OUT, VAL_TYPE(to), CELL_MASK_NONE);
+                INIT_VAL_HEADER(RESET(D_OUT), VAL_TYPE(to), CELL_MASK_NONE);
                 VAL_DECIMAL(D_OUT) = dec;
                 return D_OUT;
             }
@@ -284,7 +284,7 @@ REBTYPE(Money)
                 return Init_Integer(D_OUT, i64);
             }
         }
-        RESET_VAL_HEADER(D_OUT, REB_MONEY, CELL_MASK_NONE);
+        mutable_KIND3Q_BYTE(D_OUT) = mutable_HEART_BYTE(D_OUT) = REB_MONEY;
         return D_OUT; }
 
       case SYM_EVEN_Q:

@@ -633,6 +633,9 @@ union Reb_Series_Content {
 };
 
 #define SER_CELL(s) \
+    cast(const RELVAL*, &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
+
+#define mutable_SER_CELL(s) \
     cast(RELVAL*, &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
 
 

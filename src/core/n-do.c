@@ -145,18 +145,18 @@ REBNATIVE(shove)
             return R_THROWN;
         }
 
-        Copy_Cell(shovee, D_OUT);
+        Move_Cell(RESET(shovee), D_OUT);
     }
     else if (IS_GROUP(f_value)) {
         if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
             return R_THROWN;
-        if (IS_END(D_OUT))  // !!! need SHOVE frame for type error
+        if (Is_Void(D_OUT))  // !!! need SHOVE frame for type error
             fail ("GROUP! passed to SHOVE did not evaluate to content");
 
-        Copy_Cell(shovee, D_OUT);  // Note: can't eval directly into arg slot
+        Move_Cell(RESET(shovee), D_OUT);  // can't eval directly into arg slot
     }
     else
-        Copy_Cell(shovee, SPECIFIC(f_value));
+        Copy_Cell(RESET(shovee), SPECIFIC(f_value));
 
     if (not IS_ACTION(shovee) and not ANY_SET_KIND(VAL_TYPE(shovee)))
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
@@ -188,10 +188,6 @@ REBNATIVE(shove)
     // We quoted the argument on the left, but the ACTION! we are feeding
     // into may want it evaluative.  (Enfix handling itself does soft quoting)
     //
-  #if !defined(NDEBUG)
-    Init_Trash(D_OUT); // make sure we reassign it
-  #endif
-
     if (REF(set)) {
         if (IS_SET_WORD(left)) {
             Copy_Cell(D_OUT, Lookup_Word_May_Fail(left, SPECIFIED));
@@ -355,7 +351,7 @@ REBNATIVE(do)
     // in this case (stale vs. invisible) requires making a note and starting
     // from end.
     //
-    SET_END(D_OUT);  // !!! need to defeat enfix invisibles, review
+    RESET(D_OUT);  // !!! need to defeat enfix invisibles, review
 
     // If `source` is not const, tweak it to be explicitly mutable--because
     // otherwise, it would wind up inheriting the FEED_MASK_CONST of our
@@ -708,7 +704,7 @@ REBNATIVE(redo)
         if (not IS_FRAME(D_OUT))
             fail ("Context of restartee in REDO is not a FRAME!");
 
-        Copy_Cell(restartee, D_OUT);
+        Move_Cell(RESET(restartee), D_OUT);
     }
 
     REBCTX *c = VAL_CONTEXT(restartee);
@@ -741,14 +737,14 @@ REBNATIVE(redo)
     // of the frame.  Use REDO as the throw label that Eval_Core() will
     // identify for that behavior.
     //
-    Copy_Cell(D_OUT, Lib(REDO));
-    INIT_VAL_ACTION_BINDING(D_OUT, c);
+    Copy_Cell(D_SPARE, Lib(REDO));
+    INIT_VAL_ACTION_BINDING(D_SPARE, c);
 
     // The FRAME! contains its ->phase and ->binding, which should be enough
     // to restart the phase at the point of parameter checking.  Make that
     // the actual value that Eval_Core() catches.
     //
-    return Init_Thrown_With_Label(D_OUT, restartee, D_OUT);
+    return Init_Thrown_With_Label(D_OUT, restartee, D_SPARE);
 }
 
 
@@ -818,7 +814,7 @@ REBNATIVE(applique)
         // with ~unset~ you have to manually hide the frame key.
         //
         if (Is_Unset(e.var))
-            Init_Nulled(e.var);
+            Init_Nulled(RESET(e.var));
 
         Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
     }
@@ -1037,7 +1033,7 @@ REBNATIVE(apply)
             param = e.param;
         }
 
-        Move_Cell(var, D_OUT);
+        Move_Cell(RESET(var), D_OUT);
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(var);
     }
@@ -1057,7 +1053,7 @@ REBNATIVE(apply)
     while (Did_Advance_Evars(&e)) {
         if (not arg_threw and not error and IS_TAG(e.var))
             if (VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag))
-                Init_Unset(e.var);
+                Init_Unset(RESET(e.var));
 
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }

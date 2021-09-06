@@ -724,7 +724,8 @@ REBTYPE(Bitset)
         if (IS_BITSET(arg)) {
             if (BITS_NOT(VAL_BITSET(arg)))  // !!! see #2365
                 fail ("Bitset negation not handled by set operations");
-            Init_Binary(arg, VAL_BITSET(arg));
+            const REBBIN *bin = VAL_BITSET(arg);
+            Init_Binary(RESET(arg), bin);
         }
         else if (not IS_BINARY(arg))
             fail (Error_Math_Args(VAL_TYPE(arg), verb));
@@ -732,7 +733,8 @@ REBTYPE(Bitset)
         if (BITS_NOT(VAL_BITSET(v)))  // !!! see #2365
             fail ("Bitset negation not handled by set operations");
 
-        Init_Binary(v, VAL_BITSET(v));
+        const REBBIN *bin = VAL_BITSET(v);
+        Init_Binary(RESET(v), bin);
 
         // !!! Until the replacement implementation with Roaring Bitmaps, the
         // bitset is based on a BINARY!.  Reuse the code on the generated

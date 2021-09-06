@@ -36,7 +36,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             VAL_WORD_SYMBOL(arg),
             strict
         )){
-            Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg));
+            Init_Unset(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
         }
         return;
     }
@@ -100,7 +100,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 
     STKVAL(*) new_word = DS_AT(collector.dsp_orig) + first_new_index;
     for (; new_word != DS_TOP + 1; ++new_word)
-        Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word));
+        Init_Unset(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
   }
   }  // end the non-module part
 
@@ -112,8 +112,10 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
         if (IS_MODULE(context)) {
             bool strict = true;
             var = MOD_VAR(c, symbol, strict);
-            if (not var)
+            if (not var) {
                 var = Append_Context(c, nullptr, symbol);
+                Init_Unset(var);
+            }
         }
         else {
             REBLEN i = Get_Binder_Index_Else_0(&collector.binder, symbol);
@@ -612,7 +614,7 @@ REB_R MAKE_Context(
 
         DECLARE_LOCAL (dummy);
         if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED)) {
-            Move_Cell(out, dummy);
+            Move_Cell(RESET(out), dummy);  // GC-guarded context was in out
             return R_THROWN;
         }
 
@@ -714,7 +716,7 @@ REB_R PD_Context(
         INIT_VAL_WORD_PRIMARY_INDEX(m_cast(RELVAL*, picker), n);
     }
 
-    return Copy_Cell(pvs->out, var);
+    return Overwrite_Cell(pvs->out, var);
 }
 
 
@@ -1166,7 +1168,7 @@ REBTYPE(Context)
             if (not var)
                 fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(picker)));
 
-            Copy_Cell(var, setval);
+            Overwrite_Cell(var, setval);
         }
         else {
             const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);

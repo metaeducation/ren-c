@@ -109,12 +109,12 @@ REBNATIVE(now)
         VAL_DATE(D_OUT).zone = NO_DATE_ZONE;
     }
     else if (REF(time)) {
-        RESET_VAL_HEADER(D_OUT, REB_TIME, CELL_MASK_NONE);
+        mutable_KIND3Q_BYTE(D_OUT) = mutable_HEART_BYTE(D_OUT) = REB_TIME;
     }
     else if (REF(zone)) {
         PAYLOAD(Time, D_OUT).nanoseconds
             = VAL_ZONE(D_OUT) * ZONE_MINS * MIN_SEC;
-        RESET_VAL_HEADER(D_OUT, REB_TIME, CELL_MASK_NONE);
+        mutable_KIND3Q_BYTE(D_OUT) = mutable_HEART_BYTE(D_OUT) = REB_TIME;
     }
     else if (REF(weekday))
         n = Week_Day(D_OUT);
@@ -128,7 +128,7 @@ REBNATIVE(now)
         n = VAL_DAY(D_OUT);
 
     if (n > 0)
-        Init_Integer(D_OUT, n);
+        Init_Integer(RESET(D_OUT), n);
 
     return D_OUT;
 }

@@ -304,13 +304,11 @@ REBINT Compare_Vector(REBCEL(const*) v1, REBCEL(const*) v2)
 
     DECLARE_LOCAL (temp1);
     DECLARE_LOCAL (temp2);
-    Init_Integer(temp1, 0);
-    Init_Integer(temp2, 0);
 
     REBLEN n;
     for (n = 0; n < len; n++) {
-        Get_Vector_At(temp1, v1, n + VAL_VECTOR_INDEX(v1));
-        Get_Vector_At(temp2, v2, n + VAL_VECTOR_INDEX(v2));
+        Get_Vector_At(RESET(temp1), v1, n + VAL_VECTOR_INDEX(v1));
+        Get_Vector_At(RESET(temp2), v2, n + VAL_VECTOR_INDEX(v2));
         const bool strict = true;
         REBINT diff = Compare_Modify_Values(temp1, temp2, strict);
         if (diff != 0)
@@ -603,7 +601,9 @@ REB_R PD_Vector(
     REBPVS *pvs,
     const RELVAL *picker
 ){
-    Pick_Vector(pvs->out, pvs->out, picker);
+    DECLARE_LOCAL (temp);
+    Move_Cell(temp, pvs->out);
+    Pick_Vector(pvs->out, temp, picker);
     return pvs->out;
 }
 
@@ -767,7 +767,7 @@ void MF_Vector(REB_MOLD *mo, REBCEL(const*) v, bool form)
     REBLEN c = 0;
     for (; n < VAL_VECTOR_LEN_AT(v); n++) {
 
-        Get_Vector_At(temp, v, n);
+        Get_Vector_At(RESET(temp), v, n);
 
         REBYTE buf[32];
         REBYTE l;

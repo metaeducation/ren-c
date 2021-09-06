@@ -222,28 +222,7 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
 
 //=//// "KIND3Q" HEADER BYTE [REB_XXX + (n * REB_64)] /////////////////////=//
 //
-// The "kind" of fundamental datatype a cell is lives in the second byte for
-// a very deliberate reason.  This means that the signal for an end can be
-// a zero byte, allow a C string that is one character long (plus zero
-// terminator) to function as an end signal...using only two bytes, while
-// still not conflicting with arbitrary UTF-8 strings (including empty ones).
-//
-// An additional trick is that while there are only up to 64 fundamental types
-// in the system (including END), higher values in the byte are used to encode
-// escaping levels.  Up to 3 encoding levels can be in the cell itself, with
-// additional levels achieved with REB_QUOTED and pointing to another cell.
-//
-// The "3Q" in the name is to remind usage sites that the byte may contain
-// "up to 3 levels of quoting", in addition to the "KIND", which can be masked
-// out with `% REB_64`.  (Be sure to use REB_64 for this purpose instead of
-// just `64`, to make it easier to find places that are doing this.)
-//
-
-#define FLAG_KIND3Q_BYTE(kind) \
-    FLAG_SECOND_BYTE(kind)
-
-#define KIND3Q_BYTE_UNCHECKED(v) \
-    SECOND_BYTE((v)->header)
+// See KIND3Q_BYTE_UNCHECKED in %sys-rebval.h for explanation.
 
 #if defined(NDEBUG)
     #define KIND3Q_BYTE KIND3Q_BYTE_UNCHECKED
@@ -457,27 +436,41 @@ inline static const RELVAL* CELL_TO_VAL(REBCEL(const*) cell)
 // bit, so that is left as-is.  See also CELL_MASK_PERSIST.
 //
 
-inline static REBVAL *RESET_VAL_HEADER(
+inline static RELVAL *RESET_Untracked(RELVAL *v) {
+    ASSERT_CELL_INITABLE_EVIL_MACRO(v);  // header may be CELL_MASK_PREP, all 0
+    v->header.bits &= CELL_MASK_PERSIST;
+    return v;
+}
+
+#ifdef CPLUSPLUS_11
+    inline static REBVAL *RESET_Untracked(REBVAL *v) {
+        v->header.bits &= CELL_MASK_PERSIST;
+        return v;
+    }
+#endif
+
+#define RESET(v) \
+    TRACK_CELL_IF_DEBUG(RESET_Untracked(v))
+
+inline static REBVAL *INIT_VAL_HEADER(
     RELVAL *v,
     enum Reb_Kind k,
     uintptr_t extra
 ){
-    ASSERT_CELL_INITABLE_EVIL_MACRO(v);  // header may be CELL_MASK_PREP, all 0
+    if (not Is_Fresh(v))
+        assert(!"Init_XXX() Routines Require REB_0 input");
     v->header.bits &= CELL_MASK_PERSIST;
     v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | FLAG_KIND3Q_BYTE(k) | FLAG_HEART_BYTE(k) | extra;
     return cast(REBVAL*, v);
 }
 
-#define RESET_CELL(out,kind,flags) \
-    RESET_VAL_HEADER(TRACK_CELL_IF_DEBUG(out), (kind), (flags))
-
 inline static REBVAL *RESET_CUSTOM_CELL(
     RELVAL *out,
     REBTYP *type,
     REBFLGS flags
 ){
-    RESET_CELL(out, REB_CUSTOM, flags);
+    INIT_VAL_HEADER(out, REB_CUSTOM, flags);
     EXTRA(Any, out).node = type;
     return cast(REBVAL*, out);
 }
@@ -510,42 +503,12 @@ inline static RELVAL *Prep_Cell_Untracked(RELVAL *c) {
     return c;
 }
 
+// This usage of TRACK_CELL_IF_DEBUG() is special because it happens *after*
+// the prep.  This is because TRACK_CELL_IF_DEBUG() ensures what it is tracking
+// is in the REB_0 state.
+//
 #define Prep_Cell(c) \
-    Prep_Cell_Untracked(TRACK_CELL_IF_DEBUG(c))
-
-
-//=//// REFORMATTING CELLS ////////////////////////////////////////////////=//
-//
-// Sometimes it's desirable in the debug build to mark a cell as being
-// garbage...because it's intended to be overwritten later, and you want to
-// make certain that it is (and that whatever value it was holding previously
-// isn't exposed to code that should just be writing the cell).  But you don't
-// want to pay the cost of that marking in the release build.
-//
-// The garbage collector is not tolerant of cells that have been reformatted.
-// Because if debug-build-only operations like REFORMAT_CELL_IF_DEBUG() could
-// transition a cell from being GC-unsafe to GC-safe, that could lead to
-// a debug build running fine when a release build might not.
-//
-// (For a different version of contaminating cells that is GC safe, see the
-// Init_Trash() function.  But that operation has cost in both the debug and
-// release builds, and shouldn't be used conditionally.)
-//
-
-#if defined(DEBUG_POISON_CELLS)
-    inline static REBVAL *Init_Unsafe_Debug(RELVAL *v) {
-        ASSERT_CELL_INITABLE_EVIL_MACRO(v);  // maybe CELL_MASK_PREP, all 0 bits
-        v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE;
-        return cast(REBVAL*, v);
-    }
-
-    #define REFORMAT_CELL_IF_DEBUG(v) \
-        Init_Unsafe_Debug(TRACK_CELL_IF_DEBUG(v))
-#else
-    inline static REBVAL *REFORMAT_CELL_IF_DEBUG(RELVAL *v) {
-        return cast(REBVAL*, v); // #define of (v) gives compiler warnings
-    } // https://stackoverflow.com/q/29565161/
-#endif
+    TRACK_CELL_IF_DEBUG(Prep_Cell_Untracked(c))
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -803,6 +766,9 @@ inline static RELVAL *Copy_Cell_Untracked(
 
 #define Copy_Cell_Core(out,v,copy_mask) \
     Copy_Cell_Untracked(TRACK_CELL_IF_DEBUG(out), (v), (copy_mask))
+
+#define Overwrite_Cell(out,v) \
+    Copy_Cell(RESET_Untracked(out), (v))
 
 
 // !!! Super primordial experimental `const` feature.  Concept is that various

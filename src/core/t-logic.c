@@ -189,16 +189,20 @@ REBNATIVE(_and_)  // see TO-C-NAME
 
     if (IS_FALSEY(left)) {
         if (IS_GET_GROUP(right)) {  // have to evaluate GET-GROUP! either way
-            if (Do_Any_Array_At_Throws(D_SPARE, right, SPECIFIED))
+            if (Do_Any_Array_At_Throws(D_SPARE, right, SPECIFIED)) {
+                Move_Cell(D_OUT, D_SPARE);
                 return R_THROWN;
+            }
         }
         return Init_False(D_OUT);
     }
 
-    if (Do_Logic_Right_Side_Throws(D_OUT, right, left))
+    if (Do_Logic_Right_Side_Throws(D_SPARE, right, left)) {
+        Move_Cell(D_OUT, D_SPARE);
         return R_THROWN;
+    }
 
-    return Init_Logic(D_OUT, IS_TRUTHY(D_OUT));
+    return Init_Logic(RESET(D_OUT), IS_TRUTHY(D_SPARE));
 }
 
 
@@ -225,16 +229,20 @@ REBNATIVE(_or_)  // see TO-C-NAME
 
     if (IS_TRUTHY(left)) {
         if (IS_GET_GROUP(right)) {  // have to evaluate GET-GROUP! either way
-            if (Do_Any_Array_At_Throws(D_SPARE, right, SPECIFIED))
+            if (Do_Any_Array_At_Throws(D_SPARE, right, SPECIFIED)) {
+                Move_Cell(D_OUT, D_SPARE);
                 return R_THROWN;
+            }
         }
         return Init_True(D_OUT);
     }
 
-    if (Do_Logic_Right_Side_Throws(D_OUT, right, left))
+    if (Do_Logic_Right_Side_Throws(D_SPARE, right, left)) {
+        Move_Cell(D_OUT, D_SPARE);
         return R_THROWN;
+    }
 
-    return Init_Logic(D_OUT, IS_TRUTHY(D_OUT));
+    return Init_Logic(RESET(D_OUT), IS_TRUTHY(D_SPARE));
 }
 
 
@@ -260,13 +268,15 @@ REBNATIVE(_xor_)  // see TO-C-NAME
         if (IS_BLOCK(left) or ANY_META_KIND(VAL_TYPE(left)))
             fail (Error_Unintended_Literal_Raw(left));
 
-    if (Do_Logic_Right_Side_Throws(D_OUT, right, left))
+    if (Do_Logic_Right_Side_Throws(D_SPARE, right, left)) {
+        Move_Cell(D_OUT, D_SPARE);
         return R_THROWN;
+    }
 
     if (IS_FALSEY(left))
-        return Init_Logic(D_OUT, IS_TRUTHY(D_OUT));
+        return Init_Logic(D_OUT, IS_TRUTHY(D_SPARE));
 
-    return Init_Logic(D_OUT, IS_FALSEY(D_OUT));
+    return Init_Logic(D_OUT, IS_FALSEY(D_SPARE));
 }
 
 

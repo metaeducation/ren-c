@@ -86,7 +86,7 @@ inline static REBVAL *Init_Issue_Utf8(
     REBLEN len  // while validating, you should have counted the codepoints
 ){
     if (size + 1 <= sizeof(PAYLOAD(Bytes, out)).at_least_8) {
-        RESET_CELL(out, REB_BYTES, CELL_MASK_NONE);  // no FIRST_IS_NODE
+        INIT_VAL_HEADER(out, REB_BYTES, CELL_MASK_NONE);  // no FIRST_IS_NODE
         memcpy(PAYLOAD(Bytes, out).at_least_8, utf8, size);
         PAYLOAD(Bytes, out).at_least_8[size] = '\0';
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = size;
@@ -107,7 +107,7 @@ inline static REBVAL *Init_Issue_Utf8(
 // this routine can be used.
 //
 inline static REBVAL *Init_Char_Unchecked(RELVAL *out, REBUNI c) {
-    RESET_CELL(out, REB_BYTES, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_BYTES, CELL_MASK_NONE);
 
     if (c == 0) {
         //
@@ -245,7 +245,7 @@ inline static const REBYTE *VAL_BYTES_LIMIT_AT(
 
     const REBSTR *spelling = VAL_WORD_SYMBOL(v);
     *size_out = STR_SIZE(spelling);
-    return STR_HEAD(spelling); 
+    return STR_HEAD(spelling);
 }
 
 #define VAL_BYTES_AT(size_out,v) \
@@ -330,7 +330,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         }
     }
 
-    return utf8; 
+    return utf8;
 }
 
 #define VAL_UTF8_LEN_SIZE_AT(length_out,size_out,v) \

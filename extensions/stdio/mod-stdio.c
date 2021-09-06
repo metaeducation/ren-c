@@ -111,9 +111,10 @@ REBNATIVE(write_stdout)
     // cell...but ISSUE! has no position.  Alias it as a read-only TEXT!.
     //
     if (IS_ISSUE(v)) {
-        REBVAL *temp = rebValue(Lib(AS), Lib(TEXT_X), v);
-        Move_Cell(v, temp);
-        rebRelease(temp);
+        bool threw = rebRunThrows(D_SPARE, true, Lib(AS), Lib(TEXT_X), v);
+        assert(not threw);
+        UNUSED(threw);
+        Move_Cell(RESET(v), D_SPARE);
     }
 
     // !!! The historical division of labor between the "core" and the "host"
@@ -130,9 +131,9 @@ REBNATIVE(write_stdout)
         //
         // Yield to signals processing for cancellation requests.
         //
-        if (Do_Signals_Throws(SET_END(D_SPARE)))
+        if (Do_Signals_Throws(D_SPARE))
             fail (Error_No_Catch_For_Throw(D_SPARE));
-        assert(IS_END(D_SPARE));
+        assert(Is_Fresh(D_SPARE));
 
         REBLEN part;
         if (remaining <= 1024)

@@ -66,7 +66,7 @@ void Bind_Values_Inner_Loop(
                 INIT_VAL_WORD_PRIMARY_INDEX(v, 1);
             }
             else if (type_bit & add_midstream_types) {
-                Append_Context(context, v, nullptr);
+                Init_Unset(Append_Context(context, v, nullptr));
             }
           }
           else {
@@ -402,7 +402,7 @@ REBNATIVE(let)
     if (IS_WORD(f_value)) {
         const REBSYM *symbol = VAL_WORD_SYMBOL(f_value);
         bindings = Make_Let_Patch(symbol, bindings);
-        Init_Word(D_OUT, symbol);
+        Init_Word(RESET(D_OUT), symbol);  // definitely not invisible
         INIT_VAL_WORD_BINDING(D_OUT, bindings);
     }
     else if (IS_SET_WORD(f_value)) {
@@ -501,7 +501,7 @@ REBNATIVE(let)
         //
         if (need_copy) {
             Init_Any_Array(
-                &f->feed->fetched,
+                RESET(&f->feed->fetched),
                 VAL_TYPE(f_value),
                 Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED)
             );
@@ -524,7 +524,7 @@ REBNATIVE(let)
         RETURN_INVISIBLE;
 
     assert(IS_WORD(f_value) or IS_BLOCK(f_value));
-    Derelativize(D_OUT, f_value, f_specifier);
+    Derelativize(RESET(D_OUT), f_value, f_specifier);
     Fetch_Next_In_Feed(f->feed);  // skip over the word
     return D_OUT;  // return the WORD! or BLOCK!
 }
@@ -550,7 +550,9 @@ REBNATIVE(add_let_binding) {
         SET_SERIES_FLAG(f_specifier, MANAGED);
     REBSPC *patch = Make_Let_Patch(VAL_WORD_SYMBOL(ARG(word)), f_specifier);
 
-    Move_Cell(ARR_SINGLE(patch), ARG(value));
+    // !!! Should Make_Let_Patch() return an reset cell?
+    //
+    Move_Cell(RESET(ARR_SINGLE(patch)), ARG(value));
 
     mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
 

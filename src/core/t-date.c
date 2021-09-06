@@ -623,7 +623,7 @@ REB_R MAKE_Date(
     if (secs != NO_DATE_TIME)
         Normalize_Time(&secs, &day);
 
-    RESET_CELL(out, REB_DATE, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_DATE, CELL_MASK_NONE);
     VAL_DATE(out) = Normalize_Date(day, month, year, tz);
     PAYLOAD(Time, out).nanoseconds = secs;
 
@@ -713,7 +713,6 @@ void Pick_Or_Poke_Date(
     if (not opt_poke) {
         assert(opt_out);
         REBVAL *out = unwrap(opt_out);
-        REFORMAT_CELL_IF_DEBUG(out);
 
         switch (sym) {
           case SYM_YEAR:
@@ -990,7 +989,7 @@ REB_R PD_Date(
     const RELVAL *picker
 ){
     DECLARE_LOCAL (temp);
-    Copy_Cell(temp, pvs->out);
+    Move_Cell(temp, pvs->out);
     Pick_Or_Poke_Date(pvs->out, temp, picker, nullptr);
     return pvs->out;
 }
@@ -1216,7 +1215,7 @@ REBTYPE(Date)
     );
 
   set_date:
-    RESET_CELL(D_OUT, REB_DATE, CELL_MASK_NONE);
+    INIT_VAL_HEADER(D_OUT, REB_DATE, CELL_MASK_NONE);
     VAL_DATE(D_OUT) = date;
     PAYLOAD(Time, D_OUT).nanoseconds = secs; // may be NO_DATE_TIME
     if (secs == NO_DATE_TIME)
@@ -1254,7 +1253,7 @@ REBNATIVE(make_date_ymdsnz)
 {
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
-    RESET_CELL(D_OUT, REB_DATE, CELL_MASK_NONE);
+    INIT_VAL_HEADER(D_OUT, REB_DATE, CELL_MASK_NONE);
     VAL_YEAR(D_OUT) = VAL_INT32(ARG(year));
     VAL_MONTH(D_OUT) = VAL_INT32(ARG(month));
     VAL_DAY(D_OUT) = VAL_INT32(ARG(day));
@@ -1299,7 +1298,7 @@ REBNATIVE(make_time_sn)
 {
     INCLUDE_PARAMS_OF_MAKE_TIME_SN;
 
-    RESET_CELL(D_OUT, REB_TIME, CELL_MASK_NONE);
+    INIT_VAL_HEADER(D_OUT, REB_TIME, CELL_MASK_NONE);
 
     REBI64 nano = IS_BLANK(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
     PAYLOAD(Time, D_OUT).nanoseconds

@@ -31,11 +31,11 @@
 // The scanning code in R3-Alpha used NULL to return failure during the scan
 // of a value, possibly leaving the value itself in an incomplete or invalid
 // state.  Rather than write stray incomplete values into these spots, Ren-C
-// puts "unreadable trash"
+// puts it back to a "reset" cell.
 //
 
 #define return_NULL \
-    do { Init_Trash(out); return NULL; } while (1)
+    do { RESET(out); return NULL; } while (1)
 
 
 //
@@ -103,7 +103,7 @@ REBNATIVE(make)
     if (IS_META_WORD(type)) {  // hack for MAKE CHAR! 0
         switch (VAL_WORD_ID(type)) {
           case SYM_CHAR_X:
-            Copy_Cell(type, Datatype_From_Kind(REB_ISSUE));
+            Copy_Cell(RESET(type), Datatype_From_Kind(REB_ISSUE));
             break;
 
           default:
@@ -392,8 +392,8 @@ REBNATIVE(of)
     // fit the type action dispatcher rule... dispatch item in first arg,
     // property in the second.
     //
-    Copy_Cell(ARG(property), ARG(value));
-    Copy_Cell(ARG(value), D_SPARE);
+    Overwrite_Cell(ARG(property), ARG(value));
+    Overwrite_Cell(ARG(value), D_SPARE);
 
     return Reflect_Core(frame_);
 }
@@ -416,9 +416,7 @@ const REBYTE *Scan_Hex(
     const REBYTE *cp,
     REBLEN minlen,
     REBLEN maxlen
-) {
-    REFORMAT_CELL_IF_DEBUG(out);
-
+){
     if (maxlen > MAX_HEX_LEN)
         return_NULL;
 
@@ -647,7 +645,7 @@ const REBYTE *Scan_Decimal(
     if (cast(REBLEN, cp - bp) != len)
         return_NULL;
 
-    RESET_VAL_HEADER(out, REB_DECIMAL, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_DECIMAL, CELL_MASK_NONE);
 
     char *se;
     VAL_DECIMAL(out) = strtod(s_cast(buf), &se);
@@ -742,7 +740,7 @@ const REBYTE *Scan_Integer(
     // Convert, check, and return:
     errno = 0;
 
-    RESET_VAL_HEADER(out, REB_INTEGER, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_INTEGER, CELL_MASK_NONE);
 
     VAL_INT64(out) = CHR_TO_INT(buf);
     if (errno != 0)
@@ -765,8 +763,6 @@ const REBYTE *Scan_Date(
     const REBYTE *cp,
     REBLEN len
 ) {
-    REFORMAT_CELL_IF_DEBUG(out);
-
     const REBYTE *end = cp + len;
 
     // Skip spaces:
@@ -979,9 +975,11 @@ const REBYTE *Scan_Date(
 
   end_date:
 
-    // may be overwriting scanned REB_TIME...
-    RESET_VAL_HEADER(out, REB_DATE, CELL_MASK_NONE);
-    // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't RESET_CELL
+    // Overwriting scanned REB_TIME...
+    //
+    mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_DATE;
+
+    // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't RESET()
 
     VAL_YEAR(out) = year;
     VAL_MONTH(out) = month;
@@ -1005,9 +1003,7 @@ const REBYTE *Scan_File(
     RELVAL *out,
     const REBYTE *cp,
     REBLEN len
-) {
-    REFORMAT_CELL_IF_DEBUG(out);
-
+){
     if (*cp == '%') {
         cp++;
         len--;
@@ -1171,7 +1167,7 @@ const REBYTE *Scan_Pair(
 
     Manage_Pairing(paired);
 
-    RESET_CELL(out, REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_HEADER(out, REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_PAIR(out, paired);
     return xp;
 }
@@ -1397,7 +1393,7 @@ REBNATIVE(scan_net_header)
                 str = WRITE_CHR(str, *cp++);
         }
         TERM_STR_LEN_SIZE(string, len, str - STR_HEAD(string));
-        Init_Text(val, string);
+        Init_Text(RESET(val), string);
     }
 
     return Init_Block(D_OUT, result);

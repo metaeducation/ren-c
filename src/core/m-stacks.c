@@ -295,7 +295,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     REBLEN len_new = len_old + amount;
     REBLEN n;
     for (n = len_old; n < len_new; ++n, ++cell)
-        Init_Trash(cell);
+        Prep_Cell(cell);
 
     // Update the end marker to serve as the indicator for when the next
     // stack push would need to expand.
@@ -311,7 +311,10 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 //  Pop_Stack_Values_Core: C
 //
-// Pops computed values from the stack to make a new ARRAY.
+// Pops computed values from the stack to make a new ARRAY.  Takes advantage
+// of Move_Cell(), leaving the stack cells "fresh" for reuse on next push.
+//
+// !!! How can we pass in callsite file/line for tracking info?
 //
 REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 {
@@ -319,13 +322,25 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
     assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
   #endif
 
-    REBARR *array = Copy_Values_Len_Shallow_Core(
-        DS_AT(dsp_start + 1), // start somewhere in the stack, end at DS_TOP
-        SPECIFIED, // data stack should be fully specified--no relative values
-        DSP - dsp_start, // len
-        flags
-    );
+    REBLEN len = DSP - dsp_start;
+    REBARR *a = Make_Array_Core(len, flags);
 
-    DS_DROP_TO(dsp_start);
-    return array;
+    REBLEN count = 0;
+    REBVAL *src = DS_AT(dsp_start + 1);  // not const, will be RESET()'ing
+    RELVAL *dest = ARR_HEAD(a);
+    for (; count < len; ++count, ++src, ++dest) {
+        if (KIND3Q_BYTE_UNCHECKED(src) == REB_NULL)  // allow unreadable trash
+            assert(IS_VARLIST(a));  // usually not legal
+        if (KIND3Q_BYTE_UNCHECKED(src) == REB_BAD_WORD)
+            assert(NOT_CELL_FLAG(src, ISOTOPE));
+
+        Move_Cell_Untracked(dest, src, CELL_MASK_COPY);
+    }
+
+    SET_SERIES_LEN(a, len);
+
+    DS_Index -= len;
+    DS_Movable_Top -= len;
+
+    return a;
 }

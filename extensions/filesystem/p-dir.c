@@ -98,7 +98,7 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         // Rename_File() calls, for instance.
         //
         REBBIN *bin = Make_Binary(sizeof(FILEREQ));
-        Init_Binary(state, bin);
+        Init_Binary(RESET(state), bin);
         TERM_BIN_LEN(bin, sizeof(FILEREQ));
 
         dir = File_Of_Port(port);

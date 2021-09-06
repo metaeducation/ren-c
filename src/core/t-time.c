@@ -477,7 +477,9 @@ REB_R PD_Time(
     REBPVS *pvs,
     const RELVAL *picker
 ){
-    Pick_Time(pvs->out, pvs->out, picker);
+    DECLARE_LOCAL (temp);
+    Move_Cell(temp, pvs->out);
+    Pick_Time(pvs->out, temp, picker);
     return pvs->out;
 }
 
@@ -487,9 +489,9 @@ REB_R PD_Time(
 //
 REBTYPE(Time)
 {
-    REBVAL *v = D_ARG(1);
+    REBVAL *time = D_ARG(1);
 
-    REBI64 secs = VAL_NANO(v);
+    REBI64 secs = VAL_NANO(time);
 
     SYMID id = ID_OF_SYMBOL(verb);
 
@@ -518,16 +520,15 @@ REBTYPE(Time)
             Meta_Unquotify(setval);
 
           /*update_bits: ;*/
-            Copy_Cell(D_OUT, v);
-            Poke_Time_Immediate(D_OUT, picker, setval);
+            Poke_Time_Immediate(time, picker, setval);
 
             // This is a case where the bits are stored in the cell, so
             // whoever owns this cell has to write it back.
             //
-            return D_OUT;
+            RETURN (time);
         }
         else {
-            Pick_Time(D_OUT, v, picker);
+            Pick_Time(D_OUT, time, picker);
 
             if (steps_left == 1) {
                 assert(not poking);
@@ -673,9 +674,9 @@ REBTYPE(Time)
             // date dispatcher already.  Instead of repeating the code here in
             // the time dispatcher, swap the arguments and call DATE's version.
             //
-            Copy_Cell(D_SPARE, v);
-            Copy_Cell(D_ARG(1), arg);
-            Copy_Cell(D_ARG(2), D_SPARE);
+            Move_Cell(D_SPARE, D_ARG(1));
+            Move_Cell(D_ARG(1), arg);
+            Move_Cell(D_ARG(2), D_SPARE);
             return T_Date(frame_, verb);
         }
         fail (Error_Math_Args(REB_TIME, verb));
@@ -684,7 +685,7 @@ REBTYPE(Time)
         // unary actions
         switch (id) {
           case SYM_COPY:
-            RETURN (v);  // immediate type, just copy bits
+            RETURN (time);  // immediate type, just copy bits
 
           case SYM_ODD_Q:
             return Init_Logic(D_OUT, (SECS_FROM_NANO(secs) & 1) != 0);
@@ -707,7 +708,7 @@ REBTYPE(Time)
             USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
             if (not REF(to)) {
-                Init_True(ARG(to));  // by default make it /TO seconds
+                Init_True(RESET(ARG(to)));  // by default make it /TO seconds
                 secs = Round_Int(secs, frame_, SEC_SEC);
                 return Init_Time_Nanoseconds(D_OUT, secs);
             }
@@ -724,13 +725,11 @@ REBTYPE(Time)
                     Dec64(to) * SEC_SEC
                 );
                 VAL_DECIMAL(to) /= SEC_SEC;
-                RESET_VAL_HEADER(to, REB_DECIMAL, CELL_MASK_NONE);
                 RETURN (to);
             }
             else if (IS_INTEGER(to)) {
                 VAL_INT64(to)
                     = Round_Int(secs, frame_, Int32(to) * SEC_SEC) / SEC_SEC;
-                RESET_VAL_HEADER(to, REB_INTEGER, CELL_MASK_NONE);
                 RETURN (to);
             }
 

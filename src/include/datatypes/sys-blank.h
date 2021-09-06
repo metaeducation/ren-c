@@ -50,15 +50,17 @@
 // for soft failure.
 //
 
-inline static REBVAL *Init_Blank_Core(RELVAL *v) {
-    RESET_VAL_HEADER(v, REB_BLANK, CELL_MASK_NONE);
+inline static REBVAL *Init_Blank_Untracked(RELVAL *out) {
+    INIT_VAL_HEADER(out, REB_BLANK, CELL_MASK_NONE);
+
   #ifdef ZERO_UNUSED_CELL_FIELDS
-    EXTRA(Any, v).trash = ZEROTRASH;
-    PAYLOAD(Any, v).first.trash = ZEROTRASH;
-    PAYLOAD(Any, v).second.trash = ZEROTRASH;
+    EXTRA(Any, out).trash = ZEROTRASH;
+    PAYLOAD(Any, out).first.trash = ZEROTRASH;
+    PAYLOAD(Any, out).second.trash = ZEROTRASH;
   #endif
-    return cast(REBVAL*, v);
+
+    return cast(REBVAL*, out);
 }
 
-#define Init_Blank(v) \
-    Init_Blank_Core(TRACK_CELL_IF_DEBUG(v))
+#define Init_Blank(out) \
+    Init_Blank_Untracked(TRACK_CELL_IF_DEBUG(out))

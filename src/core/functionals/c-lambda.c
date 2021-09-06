@@ -86,19 +86,11 @@ REB_R Lambda_Dispatcher(REBFRM *f)
         REB_WORD
     );
 
-    SET_END(f_spare);  // detect `x -> [elide x]` case.
+    // Note: Invisibility is not allowed, e.g. `x -> [elide x]` or `x -> []`
+    // will return a ~void~ isotope.  Hence prior `f->out` is always wiped out.
 
-    if (Do_Any_Array_At_Throws(f_spare, block, specifier)) {
-        Move_Cell(f->out, f_spare);
+    if (Do_Any_Array_At_Throws(RESET(f->out), block, specifier))
         return R_THROWN;
-    }
-
-    if (NOT_END(f_spare))
-        Move_Cell_Core(
-            f->out,
-            f_spare,
-            CELL_MASK_COPY | CELL_FLAG_UNEVALUATED
-        );
 
     return f->out;
 }
@@ -180,7 +172,7 @@ REBNATIVE(lambda)
             pclass = PARAM_CLASS_NORMAL;
         else if (IS_META_WORD(DS_TOP)) {
             pclass = PARAM_CLASS_META;
-            Init_Word(DS_TOP, VAL_WORD_SYMBOL(DS_TOP));
+            Init_Word(RESET(DS_TOP), VAL_WORD_SYMBOL(DS_TOP));
         }
         else if (IS_QUOTED(DS_TOP)) {
             Unquotify(DS_TOP, 1);

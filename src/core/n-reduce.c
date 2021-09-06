@@ -93,14 +93,15 @@ REBNATIVE(reduce)
             if (processed) {
                 if (Is_Void(processed)) {
                     rebRelease(processed);
+                    RESET(D_OUT);
                     continue;
                 }
-                Copy_Cell(D_OUT, processed);
+                Move_Cell(RESET(D_OUT), processed);
                 Meta_Unquotify(D_OUT);
                 rebRelease(processed);
             }
             else
-                Init_Nulled(D_OUT);
+                Init_Nulled(RESET(D_OUT));
         }
 
         // Ren-C sticks with historical precedent in making the default
@@ -115,10 +116,12 @@ REBNATIVE(reduce)
         //
         // https://forum.rebol.info/t/1665
         //
-        if (IS_NULLED(D_OUT))
+        if (IS_NULLED(D_OUT)) {
             Init_Bad_Word(DS_PUSH(), Canon(NULL));
+            RESET(D_OUT);
+        }
         else {
-            Copy_Cell(DS_PUSH(), D_OUT);
+            Move_Cell(DS_PUSH(), D_OUT);
             if (IS_BAD_WORD(DS_TOP))
                 CLEAR_CELL_FLAG(DS_TOP, ISOTOPE);  // must be block-safe
         }
@@ -180,7 +183,7 @@ REBNATIVE(reduce_each)
         &context,
         ARG(vars)
     );
-    Init_Object(ARG(vars), context);  // keep GC safe
+    Init_Object(RESET(ARG(vars)), context);  // keep GC safe
 
     DECLARE_FEED_AT (feed, ARG(block));
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
@@ -199,14 +202,14 @@ REBNATIVE(reduce_each)
             continue;  // `reduce [comment "hi"]`
         }
 
-        Move_Cell(CTX_VAR(context, 1), D_SPARE);
+        Move_Cell(RESET(CTX_VAR(context, 1)), D_SPARE);
 
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(RESET(D_OUT), ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
                 return R_THROWN;
             if (broke)
-                return Init_Nulled(D_OUT);
+                return nullptr;
 
             // The way a CONTINUE with a value works is to act as if the loop
             // body evaluated to the value.  (CONTINUE) acts as (CONTINUE NULL)
@@ -519,9 +522,7 @@ REB_R Compose_To_Stack_Core(
             if (insert != out)
                 rebRelease(insert);
 
-          #ifdef DEBUG_UNREADABLE_TRASH
-            Init_Trash(out);  // shouldn't leak temp eval to caller
-          #endif
+            RESET(out);  // shouldn't leak temp eval to caller
 
             changed = true;
         }
@@ -657,6 +658,8 @@ REBNATIVE(compose)
 
     if (r == R_THROWN)
         return R_THROWN;
+
+    RESET(D_OUT);  // !!! try making Compose_To_Stack() leave this reset
 
     if (r == R_UNHANDLED) {
         //

@@ -91,6 +91,7 @@ REBNATIVE(generic)
 {
     INCLUDE_PARAMS_OF_GENERIC;
 
+    REBVAL *verb = ARG(verb);
     REBVAL *spec = ARG(spec);
 
     REBCTX *meta;
@@ -136,11 +137,11 @@ REBNATIVE(generic)
     SET_ACTION_FLAG(generic, IS_NATIVE);
 
     REBARR *details = ACT_DETAILS(generic);
-    Init_Word(ARR_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(ARG(verb)));
+    Init_Word(ARR_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(verb));
     Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
 
-    REBVAL *verb_var = Sink_Word_May_Fail(ARG(verb), SPECIFIED);
-    Init_Action(verb_var, generic, VAL_WORD_SYMBOL(ARG(verb)), UNBOUND);
+    REBVAL *verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
+    Init_Action(verb_var, generic, VAL_WORD_SYMBOL(verb), UNBOUND);
 
     return Init_None(D_OUT);
 }

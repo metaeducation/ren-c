@@ -79,7 +79,7 @@ inline static REBVAL *Init_Custom_Datatype(
     RELVAL *out,
     const REBTYP *type
 ){
-    RESET_CELL(
+    INIT_VAL_HEADER(
         out,
         REB_DATATYPE,
         CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE
@@ -162,7 +162,7 @@ inline static CFUNC** HOOKS_FOR_TYPE_OF(REBCEL(const*) v) {
 
 #define Compare_Hook_For_Type_Of(v) \
     cast(COMPARE_HOOK*, HOOKS_FOR_TYPE_OF(v)[IDX_COMPARE_HOOK])
-    
+
 #define Make_Hook_For_Type(type) \
     cast(MAKE_HOOK*, VAL_TYPE_HOOKS(type)[IDX_MAKE_HOOK])
 

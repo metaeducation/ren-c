@@ -144,8 +144,13 @@ bool Interpreted_Dispatch_Details_1_Throws(
         // Hardcoded hack to make COMBINATOR's RETURN use /ISOTOPE by default.
         //
         bool is_combinator = ACT_DISPATCHER(phase) == &Combinator_Dispatcher;
+        assert(  // !!! keeping notes to try and firm this up...
+            IS_NULLED(cell)  // typical
+            or IS_ACTION(cell)
+            or Is_Unset(cell)  // seen with ADAPT
+        );
         Init_Action(
-            cell,
+            RESET(cell),
             is_combinator
                 ? VAL_ACTION(Lib(DEFINITIONAL_RETURN_ISOTOPE))
                 : VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
@@ -218,7 +223,7 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
         return f->out;  // was invisible
 
     return Move_Cell_Core(
-        f->out,
+        RESET(f->out),  // not invisible--overwrite previous result
         spare,
         CELL_MASK_COPY | CELL_FLAG_UNEVALUATED  // keep unevaluated status
     );
@@ -256,7 +261,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
     REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
-        Move_Cell(f->out, spare);
+        Move_Cell(RESET(f->out), spare);
         return R_THROWN;
     }
     if (not returned)  // assume if it was returned, it was decayed if needed
@@ -268,7 +273,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
     }
 
     Move_Cell_Core(
-        f->out,
+        RESET(f->out),  // wasn't invisible, so overwrite now
         spare,
         CELL_MASK_COPY | CELL_FLAG_UNEVALUATED
     );
@@ -610,10 +615,11 @@ REB_R Init_Thrown_Unwind_Value(
     const REBVAL *value,
     REBFRM *frame // required if level is INTEGER! or ACTION!
 ) {
-    Copy_Cell(out, Lib(UNWIND));
+    DECLARE_LOCAL (label);
+    Copy_Cell(label, Lib(UNWIND));
 
     if (IS_FRAME(level)) {
-        INIT_VAL_FRAME_BINDING(out, VAL_CONTEXT(level));
+        INIT_VAL_FRAME_BINDING(label, VAL_CONTEXT(level));
     }
     else if (IS_INTEGER(level)) {
         REBLEN count = VAL_INT32(level);
@@ -633,7 +639,7 @@ REB_R Init_Thrown_Unwind_Value(
 
             --count;
             if (count == 0) {
-                INIT_BINDING_MAY_MANAGE(out, SPC(f->varlist));
+                INIT_BINDING_MAY_MANAGE(label, SPC(f->varlist));
                 break;
             }
         }
@@ -653,13 +659,13 @@ REB_R Init_Thrown_Unwind_Value(
                 continue; // not ready to exit
 
             if (VAL_ACTION(level) == f->original) {
-                INIT_BINDING_MAY_MANAGE(out, SPC(f->varlist));
+                INIT_BINDING_MAY_MANAGE(label, SPC(f->varlist));
                 break;
             }
         }
     }
 
-    return Init_Thrown_With_Label(out, value, out);
+    return Init_Thrown_With_Label(out, value, label);
 }
 
 
@@ -741,7 +747,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
         // then you can turn it into invisibility with DEVOID.
         //
         FAIL_IF_NO_INVISIBLE_RETURN(target_frame);
-        Init_Endish_Nulled(v);  // how return throw protocol does invisible
+        Init_Endish_Nulled(RESET(v));  // how return protocol does invisible
         goto skip_type_check;
     }
 
@@ -776,10 +782,11 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
     }
 
   skip_type_check: {
-    Copy_Cell(f->out, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
-    INIT_VAL_ACTION_BINDING(f->out, f_binding);
+    DECLARE_LOCAL (label);
+    Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
+    INIT_VAL_ACTION_BINDING(label, f_binding);
 
-    return Init_Thrown_With_Label(f->out, v, f->out);  // preserves UNEVALUATED
+    return Init_Thrown_With_Label(f->out, v, label);  // preserves UNEVALUATED
   }
 }
 
@@ -905,7 +912,7 @@ REBNATIVE(inherit_meta)
                 DSP,  // will weave in any refinements pushed (none apply)
                 nullptr  // !!! review, use fast map from names to indices
             );
-            Init_Frame(val2, ctx2, ANONYMOUS);
+            Init_Frame(RESET(val2), ctx2, ANONYMOUS);
         }
         else if (ANY_CONTEXT(val2)) {  // already had context (e.g. augment)
             ctx2 = VAL_CONTEXT(val2);
@@ -925,9 +932,9 @@ REBNATIVE(inherit_meta)
                 KEY_SYMBOL(e.key)
             );
             if (slot)
-                Copy_Cell(e.var, slot);
+                Overwrite_Cell(e.var, slot);
             else
-                Init_Nulled(e.var);  // don't want to leave ~unset~
+                Init_Nulled(RESET(e.var));  // don't want to leave ~unset~
         }
 
         Shutdown_Evars(&e);

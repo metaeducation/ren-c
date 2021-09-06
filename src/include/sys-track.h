@@ -25,6 +25,9 @@
 // looking at the cell in a watchlist.  It is also reported by panic().
 //
 
+#define Is_Fresh(v) \
+    (0 == ((v)->header.bits & (FLAG_KIND3Q_BYTE(255) | FLAG_HEART_BYTE(255))))
+
 #if defined(DEBUG_TRACK_EXTEND_CELLS)  // assume DEBUG_COUNT_TICKS
 
     #define TOUCH_CELL(c) \
@@ -35,12 +38,34 @@
         const char *file,
         int line
     ){
+      #if !defined(NDEBUG)
+        if (not Is_Fresh(v))
+            panic (v);
+      #endif
         v->file = file;
         v->line = line;
         v->tick = TG_Tick;
         v->touch = 0;
         return v;
     }
+
+  #ifdef CPLUSPLUS_11
+    inline static REBVAL *Track_Cell_If_Debug(
+        REBVAL *v,
+        const char *file,
+        int line
+    ){
+      #if !defined(NDEBUG)
+        if (not Is_Fresh(v))
+            panic (v);
+      #endif
+        v->file = file;
+        v->line = line;
+        v->tick = TG_Tick;
+        v->touch = 0;
+        return v;
+    }
+  #endif
 
     // NOTE: There is no guarantee of evaluation order of function arguments
     // in C.  So if there's code like:

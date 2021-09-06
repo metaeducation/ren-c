@@ -112,7 +112,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 REBVAL *Init_Decimal_Bits(RELVAL *out, const REBYTE *bp)
 {
-    RESET_CELL(out, REB_DECIMAL, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_DECIMAL, CELL_MASK_NONE);
 
     REBYTE *dp = cast(REBYTE*, &VAL_DECIMAL(out));
 
@@ -175,8 +175,8 @@ REB_R MAKE_Decimal(
             fail (arg);
 
         Init_Decimal_Bits(out, at); // makes REB_DECIMAL
-        RESET_VAL_HEADER(out, kind, CELL_MASK_NONE); // resets if REB_PERCENT
         d = VAL_DECIMAL(out);
+        RESET(out);
         break; }
 
         // !!! It's not obvious that TEXT shouldn't provide conversions; and
@@ -276,7 +276,7 @@ REB_R MAKE_Decimal(
     if (!FINITE(d))
         fail (Error_Overflow_Raw());
 
-    RESET_CELL(out, kind, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, kind, CELL_MASK_NONE);
     VAL_DECIMAL(out) = d;
     return out;
 
@@ -294,6 +294,7 @@ REB_R MAKE_Decimal(
 //
 REB_R TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 {
+    assert(Is_Fresh(out));
     assert(kind == REB_DECIMAL or kind == REB_PERCENT);
 
     REBDEC d;
@@ -325,6 +326,7 @@ REB_R TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
             goto bad_to;
 
         d = VAL_DECIMAL(out); // may need to divide if percent, fall through
+        RESET(out);
         break; }
 
       case REB_PATH: {  // fractions as 1/2 are an intuitive use for PATH!
@@ -370,7 +372,7 @@ REB_R TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     if (not FINITE(d))
         fail (Error_Overflow_Raw());
 
-    RESET_CELL(out, kind, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, kind, CELL_MASK_NONE);
     VAL_DECIMAL(out) = d;
     return out;
 
@@ -493,9 +495,9 @@ REBTYPE(Decimal)
             id == SYM_ADD ||
             id == SYM_MULTIPLY
         )){
-            Copy_Cell(D_OUT, D_ARG(2));
-            Copy_Cell(D_ARG(2), D_ARG(1));
-            Copy_Cell(D_ARG(1), D_OUT);
+            Move_Cell(D_OUT, D_ARG(2));
+            Move_Cell(D_ARG(2), D_ARG(1));
+            Move_Cell(D_ARG(1), D_OUT);
             return Run_Generic_Dispatch(D_ARG(1), frame_, verb);
         }
 
@@ -627,7 +629,7 @@ REBTYPE(Decimal)
                 type = REB_PERCENT;
         }
         else {
-            Init_True(ARG(to));  // default a rounding amount
+            Init_True(RESET(ARG(to)));  // default a rounding amount
             d1 = Round_Dec(
                 d1, frame_, type == REB_PERCENT ? 0.01L : 1.0L
             );
@@ -665,7 +667,7 @@ setDec:
     if (not FINITE(d1))
         fail (Error_Overflow_Raw());
 
-    RESET_CELL(D_OUT, type, CELL_MASK_NONE);
+    INIT_VAL_HEADER(D_OUT, type, CELL_MASK_NONE);
     VAL_DECIMAL(D_OUT) = d1;
 
     return D_OUT;

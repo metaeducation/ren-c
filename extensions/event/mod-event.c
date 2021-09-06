@@ -292,12 +292,15 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             //
             if (IS_LOGIC(D_OUT) and VAL_LOGIC(D_OUT)) {
                 did_port_action = true;
+                RESET(D_OUT);
                 goto post_wait_loop;
             }
 
             // Some activity, so use low wait time.
             //
             wait_millisec = 1;
+
+            RESET(D_OUT);
         }
 
         if (timeout != ALL_BITS) {
@@ -420,6 +423,8 @@ REBNATIVE(wake_up)
 
         if (not (IS_LOGIC(D_OUT) and VAL_LOGIC(D_OUT)))
             woke_up = false;
+
+        RESET(D_OUT);
     }
 
     return Init_Logic(D_OUT, woke_up);

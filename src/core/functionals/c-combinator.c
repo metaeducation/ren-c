@@ -590,7 +590,7 @@ static bool Combinator_Param_Hook(
     REBVAR *var = CTX_VARS_HEAD(s->ctx) + offset;
 
     if (symid == SYM_STATE) {  // the "state" is currently the UPARSE frame
-        Copy_Cell(var, ARG(state));
+        Copy_Cell(RESET(var), ARG(state));
     }
     else if (symid == SYM_VALUE and REF(value)) {
         //
@@ -598,7 +598,7 @@ static bool Combinator_Param_Hook(
         // combinators, e.g. TEXT!.  Otherwise a combinator can have an
         // argument named value for other purposes.
         //
-        Copy_Cell(var, REF(value));
+        Copy_Cell(RESET(var), REF(value));
     }
     else switch (VAL_PARAM_CLASS(param)) {
       case PARAM_CLASS_HARD: {
@@ -616,17 +616,17 @@ static bool Combinator_Param_Hook(
         ){
             if (NOT_PARAM_FLAG(param, ENDABLE))
                 fail ("Too few parameters for combinator");
-            Init_Endish_Nulled(var);
+            Init_Endish_Nulled(RESET(var));
         }
         else {
             if (
                 GET_PARAM_FLAG(param, SKIPPABLE)
                 and not TYPE_CHECK(param, VAL_TYPE(item))
             ){
-                Init_Nulled(var);
+                Init_Nulled(RESET(var));
             }
             else {
-                Derelativize(var, item, VAL_SPECIFIER(ARG(rules)));
+                Derelativize(RESET(var), item, VAL_SPECIFIER(ARG(rules)));
                 ++VAL_INDEX_UNBOUNDED(ARG(rules));
             }
         }
@@ -644,7 +644,7 @@ static bool Combinator_Param_Hook(
         ){
             if (NOT_PARAM_FLAG(param, ENDABLE))
                 fail ("Too few parameters for combinator");
-            Init_Endish_Nulled(var);
+            Init_Endish_Nulled(RESET(var));
         }
         else {
             // !!! Getting more than one value back from a libRebol API is not
@@ -655,8 +655,8 @@ static bool Combinator_Param_Hook(
             REBVAL *parser = rebValue(
                 "[#", ARG(advanced), "]: parsify", ARG(state), ARG(rules)
             );
-            Copy_Cell(var, parser);
-            Get_Var_May_Fail(ARG(rules), ARG(advanced), SPECIFIED, true);
+            Copy_Cell(RESET(var), parser);
+            Get_Var_May_Fail(RESET(ARG(rules)), ARG(advanced), SPECIFIED, true);
             rebRelease(parser);
         }
         break; }

@@ -233,8 +233,9 @@ inline static bool Single_Test_Throws(
             }
             if (VAL_LOGIC(out) == true)  // test succeeded
                 goto return_out;  // return the LOGIC! true
+            RESET(out);
         }
-        assert(not VAL_LOGIC(out));
+        Init_False(out);
         goto return_out; }
 
       case REB_LOGIC:  // test for "truthy" or "falsey"
@@ -304,7 +305,7 @@ inline static bool Single_Test_Throws(
     }
 
   return_matched:
-    Init_Logic(out, matched);
+    Init_Logic(RESET(out), matched);
 
   return_out:
     DROP_GC_GUARD(fetched_test);
@@ -553,7 +554,9 @@ REBNATIVE(match)
     //
     Isotopify_If_Falsey(v);
 
-    return Move_Cell(D_OUT, v);  // Otherwise, input is the result;
+    Move_Cell(RESET(D_OUT), v);  // Otherwise, input is the result
+    Init_Isotope(v, Canon(MOVE));  // Can't have a moved-from cell in frame
+    return D_OUT;
 }
 
 
@@ -610,7 +613,7 @@ REBNATIVE(all)
         //
         Init_Void(D_SPARE);
         if (Eval_Step_Maybe_Stale_Throws(D_SPARE, f)) {
-            Move_Cell(D_OUT, D_SPARE);
+            Move_Cell(RESET(D_OUT), D_SPARE);
             Abort_Frame(f);
             return R_THROWN;
         }
@@ -619,6 +622,7 @@ REBNATIVE(all)
         if (Is_Void(D_SPARE)) {  // may have been stale or not
             if (IS_END(f->feed->value))  // `all []`
                 break;
+            RESET(D_SPARE);
             continue;  // `all [comment "hi" 1]`, first step is stale
         }
 
@@ -647,7 +651,8 @@ REBNATIVE(all)
 
         // spare passed the test and wasn't invisible, make it the new result
         //
-        Move_Cell(D_OUT, D_SPARE);
+        Move_Cell(RESET(D_OUT), D_SPARE);
+        RESET(D_SPARE);
 
     } while (NOT_END(f->feed->value));
 
@@ -701,6 +706,7 @@ REBNATIVE(any)
         if (Is_Void(D_OUT)) {  // may have been stale or not
             if (IS_END(f->feed->value))
                 break;
+            RESET(D_OUT);
             continue;  // `any [comment "hi" 1]`, first step is stale
         }
 
@@ -730,8 +736,10 @@ REBNATIVE(any)
                 Abort_Frame(f);
                 return D_OUT;  // return input to the test, not result
             }
+            RESET(D_SPARE);
         }
 
+        RESET(D_OUT);
     } while (NOT_END(f->feed->value));
 
     Drop_Frame(f);
@@ -764,13 +772,14 @@ REBNATIVE(case)
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
 
-    Init_Nulled(ARG(last));  // default return result
+    assert(Is_Unset(ARG(last)));
+    Init_Nulled(RESET(ARG(last)));  // default return result
 
     Push_Frame(nullptr, f);
 
     while (true) {
 
-        Init_Nulled(D_OUT);  // forget previous result, new case running
+        Init_Nulled(RESET(D_OUT));  // forget previous result, new case running
 
         // Feed the frame forward one step for predicate argument.
         //
@@ -802,6 +811,7 @@ REBNATIVE(case)
                 rebINLINE(predicate),
                 rebQ(D_OUT)  // argument
             )){
+                Move_Cell(RESET(D_OUT), temp);
                 goto threw;
             }
             matched = IS_TRUTHY(temp);
@@ -815,13 +825,14 @@ REBNATIVE(case)
             // Note: Can't evaluate directly into ARG(branch)...frame cell.
             //
             if (Eval_Value_Throws(D_SPARE, f_value, f_specifier)) {
-                Copy_Cell(D_OUT, D_SPARE);
+                Overwrite_Cell(D_OUT, D_SPARE);
                 goto threw;
             }
-            Copy_Cell(ARG(branch), D_SPARE);
+            Overwrite_Cell(ARG(branch), D_SPARE);
+            RESET(D_SPARE);
         }
         else
-            Derelativize(ARG(branch), f_value, f_specifier);
+            Derelativize(RESET(ARG(branch)), f_value, f_specifier);
 
         Fetch_Next_Forget_Lookback(f);  // branch now in ARG(branch), so skip
 
@@ -835,12 +846,11 @@ REBNATIVE(case)
                 //
                 fail (Error_Bad_Value_Raw(ARG(branch)));
             }
-
             continue;
         }
 
         bool threw = Do_Branch_With_Throws(D_SPARE, ARG(branch), D_OUT);
-        Move_Cell(D_OUT, D_SPARE);
+        Move_Cell(RESET(D_OUT), D_SPARE);
         if (threw)
             goto threw;
 
@@ -849,7 +859,7 @@ REBNATIVE(case)
             return D_OUT;
         }
 
-        Move_Cell(ARG(last), D_OUT);
+        Move_Cell(RESET(ARG(last)), D_OUT);
     }
 
   reached_end:;
@@ -902,7 +912,8 @@ REBNATIVE(switch)
 
     Push_Frame(nullptr, f);
 
-    Init_Nulled(ARG(last));
+    assert(Is_Unset(ARG(last)));
+    Init_Nulled(RESET(ARG(last)));
 
     REBVAL *left = ARG(value);
     if (IS_BLOCK(left) and GET_CELL_FLAG(left, UNEVALUATED))
@@ -914,7 +925,7 @@ REBNATIVE(switch)
 
         if (IS_BLOCK(f_value) or IS_ACTION(f_value)) {
             Fetch_Next_Forget_Lookback(f);
-            Init_Nulled(D_OUT);  // reset fallout output to null
+            Init_Nulled(RESET(D_OUT));  // reset fallout output to null
             continue;
         }
 
@@ -928,7 +939,7 @@ REBNATIVE(switch)
         // !!! Advanced frame tricks *might* make this possible for N-ary
         // functions, the same way `match parse "aaa" [some "a"]` => "aaa"
 
-        if (Eval_Step_Throws(SET_END(D_OUT), f))
+        if (Eval_Step_Throws(RESET(D_OUT), f))
             goto threw;
 
         if (IS_END(D_OUT)) {
@@ -980,6 +991,7 @@ REBNATIVE(switch)
                 rebQ(left),  // first arg (left hand side if infix)
                 rebQ(D_OUT)  // second arg (right hand side if infix)
             )){
+                Move_Cell(RESET(D_OUT), temp);
                 goto threw;
             }
             if (IS_FALSEY(temp))
@@ -996,7 +1008,7 @@ REBNATIVE(switch)
                 //
                 // f_value is RELVAL, can't Do_Branch
                 //
-                if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
+                if (Do_Any_Array_At_Throws(RESET(D_OUT), f_value, f_specifier))
                     goto threw;
                 if (IS_BLOCK(f_value))
                     Isotopify_If_Nulled(D_OUT);
@@ -1011,10 +1023,10 @@ REBNATIVE(switch)
                     SPECIFIC(f_value),  // actions don't need specifiers
                     rebQ(D_OUT)
                 )){
-                    Move_Cell(D_OUT, temp);
+                    Move_Cell(RESET(D_OUT), temp);
                     goto threw;
                 }
-                Move_Cell(D_OUT, temp);
+                Move_Cell(RESET(D_OUT), temp);
                 break;
             }
 
@@ -1026,8 +1038,8 @@ REBNATIVE(switch)
             return D_OUT;
         }
 
-        Copy_Cell(ARG(last), D_OUT);  // save in case no fallout
-        Init_Nulled(D_OUT);  // switch back to using for fallout
+        Copy_Cell(RESET(ARG(last)), D_OUT);  // save in case no fallout
+        Init_Nulled(RESET(D_OUT));  // switch back to using for fallout
         Fetch_Next_Forget_Lookback(f);  // keep matching if /ALL
     }
 
@@ -1106,7 +1118,7 @@ REBNATIVE(default)
         }
     }
 
-    if (Do_Branch_Throws(D_OUT, ARG(branch)))
+    if (Do_Branch_Throws(RESET(D_OUT), ARG(branch)))
         return R_THROWN;
 
     if (IS_SET_WORD(target))
@@ -1209,8 +1221,8 @@ REBNATIVE(catch)
             }
         }
         else {
-            Copy_Cell(temp1, ARG(name));
-            Copy_Cell(temp2, label);
+            Copy_Cell(RESET(temp1), ARG(name));
+            Copy_Cell(RESET(temp2), label);
 
             // Return the THROW/NAME's arg if the names match
             //
@@ -1239,7 +1251,7 @@ REBNATIVE(catch)
             SET_SERIES_LEN(a, 1); // trim out null value (illegal in block)
         else
             SET_SERIES_LEN(a, 2);
-        return Init_Block(D_OUT, a);
+        return Init_Block(RESET(D_OUT), a);
     }
 
     CATCH_THROWN(D_OUT, D_OUT); // thrown value

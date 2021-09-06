@@ -143,7 +143,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
   //=//// CONTINUES (AT TOP SO GOTOS DO NOT CROSS INITIALIZATIONS /////////=//
 
-        Prep_Cell(f->arg);
         goto fulfill_loop_body;  // optimized out
 
       continue_fulfilling:
@@ -160,7 +159,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
       skip_fulfilling_arg_for_now:  // the GC marks args up through f->arg...
 
-        Init_Trash(f->arg);  // ...so cell must have valid bits
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -513,7 +511,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 | EVAL_FLAG_FULFILLING_ARG;
 
             if (Eval_Step_In_Subframe_Throws(f->arg, f, flags)) {
-                Copy_Cell(f->out, f->arg);
+                Move_Cell(RESET(f->out), f->arg);
                 goto abort_action;
             }
 
@@ -628,11 +626,12 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // is something like a GROUP!, GET-WORD!, or GET-PATH!...
                 // it has to be evaluated.
                 //
-                Copy_Cell(f_spare, f->arg);
+                Move_Cell(f_spare, f->arg);
                 if (Eval_Value_Throws(f->arg, f_spare, f_specifier)) {
-                    Copy_Cell(f->out, f->arg);
+                    Move_Cell(f->out, f->arg);
                     goto abort_action;
                 }
+                RESET(f_spare);
             }
             else {
                 if (IS_BAD_WORD(f->arg))  // !!! Source should only be isotope form
@@ -715,7 +714,11 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             goto fulfill_and_any_pickups_done;
         }
 
-        assert(IS_TRASH(f->arg) or IS_NULLED(f->arg));
+        if (not Is_Fresh(f->arg)) {
+            assert(IS_NULLED(f->arg));
+            RESET(f->arg);
+        }
+
         SET_EVAL_FLAG(f, DOING_PICKUPS);
         goto fulfill_arg;
     }
@@ -727,7 +730,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     f->key_tail = nullptr;
 
     if (GET_EVAL_FLAG(f, FULFILL_ONLY)) {  // only fulfillment, no typecheck
-        assert(GET_CELL_FLAG(f->out, OUT_NOTE_STALE));  // didn't touch out
+        assert(Is_Fresh(f->out));  // didn't touch out
         goto skip_output_check;
     }
 
@@ -804,7 +807,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
                 and Is_Unset(f->arg)
             ){
-                Init_Nulled(f->arg);
+                Init_Nulled(RESET(f->arg));
             }
             else
                 Typecheck_Refinement(f->key, f->param, f->arg);
@@ -934,7 +937,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     );
 
     if (GET_EVAL_FLAG(f, TYPECHECK_ONLY)) {  // <blank> uses this
-        Init_Nulled(f->out);  // by convention: BLANK! in, NULL out
+        Init_Nulled(RESET(f->out));  // by convention: BLANK! in, NULL out
         goto skip_output_check;
     }
 
@@ -961,7 +964,36 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
     REBNAT dispatcher = ACT_DISPATCHER(phase);
 
+    assert(not Is_Evaluator_Throwing_Debug());
+
+    // !!! Trying to see if getting cells to a zeroed out point is feasible.
+    // To make it easier for natives, anything without the potential for an
+    // invisible return starts out as reset.
+
+  blockscope {
+    // !!! Can't be inaccessible, right?
+    if (ACT_HAS_RETURN(phase)) {
+        const REBKEY *key = ACT_KEYS_HEAD(phase);
+        const REBPAR *param = ACT_PARAMS_HEAD(phase);
+        assert(KEY_SYM(key) == SYM_RETURN);
+        UNUSED(key);
+        if (NOT_PARAM_FLAG(param, ENDABLE))
+            RESET(f->out);
+    }
+  }
+
+    if (not Is_Fresh(f_spare))
+        assert(!"Action eval did not leave spare at REB_0 prior to dispatch");
+
     const REBVAL *r = (*dispatcher)(f);
+
+    // Note: There's a miniscule amount of benefit to having the dispatchers
+    // required to clear out the spare cell themselves, thus not paying to
+    // free it for those that don't use it here.  But this would inhibit
+    // things like `return Init_Xxx(D_OUT, Property_Of(D_SPARE));`  It's a
+    // very cheap check for REB_0 here to do the free, worth the convenience.
+    //
+    RESET(f_spare);
 
     if (r == f->out) {
         //
@@ -970,7 +1002,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         //
     }
     else if (not r) {  // API and internal code can both return `nullptr`
-        Init_Nulled(f->out);
+        Init_Nulled(RESET(f->out));
         goto dispatch_completed;  // skips invisible check
     }
     else if (not IS_RETURN_SIGNAL(r)) {
@@ -1042,7 +1074,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 f->arg = FRM_ARGS_HEAD(f);
                 for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
                     if (Is_Specialized(f->param)) {
-                        Copy_Cell(f->arg, f->param);
+                        Copy_Cell(RESET(f->arg), f->param);
                     }
                 }
 

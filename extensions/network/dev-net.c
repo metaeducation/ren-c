@@ -366,7 +366,7 @@ REBVAL *Connect_Socket_Maybe_Queued(const REBVAL *port)
         connector->port_ctx = VAL_CONTEXT(port);
         connector->next = Net_Connectors;
         Net_Connectors = connector;
-        Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+        Init_True(RESET(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING)));
 
         return nullptr; }
 
@@ -480,7 +480,7 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
                 "]"
             );
 
-            Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+            Init_False(RESET(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING)));
 
             return true;  // finishing
         }
@@ -570,7 +570,7 @@ bool Transfer_Socket_Finishing(struct Reb_Sock_Transfer *transfer)
                 "]"
             );
 
-            Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
+            Init_False(RESET(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING)));
 
             finished = true;  // don't return yet, if closing... need event
         }

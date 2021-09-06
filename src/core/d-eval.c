@@ -94,7 +94,7 @@ void Dump_Frame_Location(const RELVAL *v, REBFRM *f)
         }
 
         Init_Any_Array_At_Core(
-            dump,
+            RESET(dump),
             REB_BLOCK,
             f_array,
             cast(REBLEN, f_index),
@@ -114,6 +114,12 @@ void Dump_Frame_Location(const RELVAL *v, REBFRM *f)
 //
 static void Eval_Core_Shared_Checks_Debug(REBFRM *f) {
     //
+    // Eval uses f_spare as a temporary scratch space.  If a caller of the
+    // evaluation has anything in that cell, it would be overwritten.  Help
+    // ensure the awareness of this with an assert.
+    //
+    assert(Is_Fresh(f_spare));
+
     // The state isn't actually guaranteed to balance overall until a frame
     // is completely dropped.  This is because a frame may be reused over
     // multiple calls by something like REDUCE or FORM, accumulating items

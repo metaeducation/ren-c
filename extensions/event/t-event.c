@@ -209,16 +209,16 @@ void Set_Event_Vars(
     const RELVAL *tail;
     const RELVAL *item = VAL_ARRAY_AT(&tail, block);
     while (item != tail) {
-        Derelativize(var, item, specifier);
+        Derelativize(RESET(var), item, specifier);
         ++item;
 
         if (not IS_SET_WORD(var))
             fail (var);
 
         if (item == tail)
-            Init_Blank(val);
+            Init_Blank(RESET(val));
         else
-            Get_Simple_Value_Into(val, item, specifier);
+            Get_Simple_Value_Into(RESET(val), item, specifier);
 
         ++item;
 
@@ -360,7 +360,7 @@ REB_R MAKE_Event(
     if (not IS_BLOCK(arg))
         fail (Error_Unexpected_Type(REB_EVENT, VAL_TYPE(arg)));
 
-    RESET_CELL(out, REB_EVENT, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_HEADER(out, REB_EVENT, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_NODE1(out, nullptr);
     SET_VAL_EVENT_TYPE(out, SYM_NONE);  // SYM_0 shouldn't be used
     mutable_VAL_EVENT_FLAGS(out) = EVF_MASK_NONE;
@@ -391,10 +391,13 @@ REB_R PD_Event(
     REBPVS *pvs,
     const RELVAL *picker
 ){
-    if (IS_WORD(picker))
+    if (IS_WORD(picker)) {
+        DECLARE_LOCAL (temp);
+        Move_Cell(temp, pvs->out);
         return Get_Event_Var(
-            pvs->out, pvs->out, VAL_WORD_SYMBOL(picker)
+            pvs->out, temp, VAL_WORD_SYMBOL(picker)
         );
+    }
 
     return R_UNHANDLED;
 }
@@ -493,7 +496,7 @@ void MF_Event(REB_MOLD *mo, REBCEL(const*) v, bool form)
     DECLARE_LOCAL (var); // declare outside loop (has init code)
 
     for (field = 0; fields[field] != SYM_0; field++) {
-        if (not Get_Event_Var(var, v, Canon_Symbol(fields[field])))
+        if (not Get_Event_Var(RESET(var), v, Canon_Symbol(fields[field])))
             continue;
 
         New_Indented_Line(mo);

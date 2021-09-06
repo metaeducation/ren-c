@@ -116,6 +116,31 @@
     NODE_FLAG_GC_TWO
 
 
+//=//// BITS 8-15: KIND AND IN-SITU QUOTING BYTE ("KIND3Q") /////////////////=//
+//
+// The "kind" of fundamental datatype a cell is lives in the second byte for
+// a very deliberate reason.  This means that the signal for an end can be
+// a zero byte, allow a C string that is one character long (plus zero
+// terminator) to function as an end signal...using only two bytes, while
+// still not conflicting with arbitrary UTF-8 strings (including empty ones).
+//
+// An additional trick is that while there are only up to 64 fundamental types
+// in the system (including END), higher values in the byte are used to encode
+// escaping levels.  Up to 3 encoding levels can be in the cell itself, with
+// additional levels achieved with REB_QUOTED and pointing to another cell.
+//
+// The "3Q" in the name is to remind usage sites that the byte may contain
+// "up to 3 levels of quoting", in addition to the "KIND", which can be masked
+// out with `% REB_64`.  (Be sure to use REB_64 for this purpose instead of
+// just `64`, to make it easier to find places that are doing this.)
+
+#define FLAG_KIND3Q_BYTE(kind) \
+    FLAG_SECOND_BYTE(kind)
+
+#define KIND3Q_BYTE_UNCHECKED(v) \
+    SECOND_BYTE((v)->header)
+
+
 //=//// BITS 16-23: CELL LAYOUT BYTE ("HEART") ////////////////////////////=//
 //
 // The heart byte corresponds to the actual bit layout of the cell; it's what
@@ -318,7 +343,8 @@
 //
 
 #define CELL_MASK_PERSIST \
-    (NODE_FLAG_MANAGED | NODE_FLAG_ROOT | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED)
+    (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_MANAGED | NODE_FLAG_ROOT \
+        | NODE_FLAG_MARKED | CELL_FLAG_PROTECTED)
 
 #define CELL_MASK_COPY \
     ~(CELL_MASK_PERSIST | CELL_FLAG_NOTE | CELL_FLAG_UNEVALUATED)

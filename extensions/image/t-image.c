@@ -1419,6 +1419,8 @@ REB_R PD_Image(
     REBPVS *pvs,
     const RELVAL *picker
 ){
-    Pick_Image(pvs->out, pvs->out, picker);
+    DECLARE_LOCAL (temp);
+    Move_Cell(temp, pvs->out);
+    Pick_Image(pvs->out, temp, picker);
     return pvs->out;
 }

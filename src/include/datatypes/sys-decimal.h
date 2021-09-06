@@ -48,13 +48,13 @@
 #endif
 
 inline static REBVAL *Init_Decimal(RELVAL *out, REBDEC dec) {
-    RESET_CELL(out, REB_DECIMAL, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_DECIMAL, CELL_MASK_NONE);
     PAYLOAD(Decimal, out).dec = dec;
     return cast(REBVAL*, out);
 }
 
 inline static REBVAL *Init_Percent(RELVAL *out, REBDEC dec) {
-    RESET_CELL(out, REB_PERCENT, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_PERCENT, CELL_MASK_NONE);
     PAYLOAD(Decimal, out).dec = dec;
     return cast(REBVAL*, out);
 }

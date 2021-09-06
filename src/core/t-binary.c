@@ -307,7 +307,7 @@ REB_R PD_Binary(
         if (n < 0 or cast(REBLEN, n) >= BIN_LEN(bin))
             return nullptr;
 
-        Init_Integer(pvs->out, *BIN_AT(bin, n));
+        Init_Integer(RESET(pvs->out), *BIN_AT(bin, n));
         return pvs->out;
     }
 
@@ -493,7 +493,7 @@ REBTYPE(Binary)
                     VAL_INDEX_RAW(v) = 0;
                 RETURN (v); // don't fail on read only if it would be a no-op
             }
-            Init_Nulled(ARG(value));  // low-level code treats NULL as nothing
+            Init_Nulled(RESET(ARG(value)));  // low-level code treats as nothing
         }
 
         REBFLGS flags = 0;

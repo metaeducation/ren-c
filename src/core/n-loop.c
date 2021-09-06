@@ -146,7 +146,7 @@ static REB_R Loop_Series_Common(
     // if they change `var` during the loop, it affects the iteration.  Hence
     // it must be checked for changing to another series, or non-series.
     //
-    Copy_Cell(var, start);
+    Copy_Cell(RESET(var), start);
     REBIDX *state = &VAL_INDEX_UNBOUNDED(var);
 
     // Run only once if start is equal to end...edge case.
@@ -176,7 +176,7 @@ static REB_R Loop_Series_Common(
             ? cast(REBINT, *state) <= end
             : cast(REBINT, *state) >= end
     ){
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(RESET(out), body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
                 return R_THROWN;
@@ -221,14 +221,14 @@ static REB_R Loop_Integer_Common(
     // if they change `var` during the loop, it affects the iteration.  Hence
     // it must be checked for changing to a non-integer form.
     //
-    RESET_CELL(var, REB_INTEGER, CELL_MASK_NONE);
+    INIT_VAL_HEADER(RESET(var), REB_INTEGER, CELL_MASK_NONE);
     REBI64 *state = &VAL_INT64(var);
     *state = start;
 
     // Run only once if start is equal to end...edge case.
     //
     if (start == end) {
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(RESET(out), body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
                 return R_THROWN;
@@ -247,7 +247,7 @@ static REB_R Loop_Integer_Common(
         return nullptr;  // avoid infinite loops
 
     while (counting_up ? *state <= end : *state >= end) {
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(RESET(out), body)) {
             bool broke;
             if (not Catching_Break_Or_Continue(out, &broke))
                 return R_THROWN;
@@ -306,7 +306,7 @@ static REB_R Loop_Number_Common(
     // As in Loop_Integer_Common(), the state is actually in a cell; so each
     // loop iteration it must be checked to ensure it's still a decimal...
     //
-    RESET_CELL(var, REB_DECIMAL, CELL_MASK_NONE);
+    INIT_VAL_HEADER(var, REB_DECIMAL, CELL_MASK_NONE);
     REBDEC *state = &VAL_DECIMAL(var);
     *state = s;
 
@@ -404,7 +404,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
     // directly.  This means it has to be initialized to avoid a situation
     // where no branches assign bits.
     //
-    Init_Void(les->out);
+    assert(Is_Void(les->out));
 
     do {
         // Sub-loop: set variables.  This is a loop because blocks with
@@ -468,7 +468,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_FRAME: {
                 if (var)
                     Init_Any_Word_Bound(
-                        var,
+                        RESET(var),
                         REB_WORD,
                         VAL_CONTEXT(les->data),
                         KEY_SYMBOL(les->evars.key),
@@ -485,7 +485,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                     //
                     ++pseudo_var;
                     var = Real_Var_From_Pseudo(pseudo_var);
-                    Copy_Cell(var, les->evars.var);
+                    Overwrite_Cell(var, les->evars.var);
                 }
                 else
                     fail ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -513,7 +513,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 } while (IS_NULLED(val));
 
                 if (var)
-                    Copy_Cell(var, key);
+                    Copy_Cell(RESET(var), key);
 
                 if (CTX_LEN(les->pseudo_vars_ctx) == 1) {
                     //
@@ -525,7 +525,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                     //
                     ++pseudo_var;
                     var = Real_Var_From_Pseudo(pseudo_var);
-                    Copy_Cell(var, val);
+                    Copy_Cell(RESET(var), val);
                 }
                 else
                     fail ("Loop enumeration of contexts must be 1 or 2 vars");
@@ -547,7 +547,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
               case REB_URL:
                 if (var)
                     Init_Char_Unchecked(
-                        var,
+                        RESET(var),
                         GET_CHAR_AT(STR(les->data_ser), les->data_idx)
                     );
                 if (++les->data_idx == les->data_len)
@@ -558,7 +558,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 REBVAL *generated = rebValue(les->data);
                 if (generated) {
                     if (var)
-                        Copy_Cell(var, generated);
+                        Copy_Cell(RESET(var), generated);
                     rebRelease(generated);
                 }
                 else {
@@ -571,7 +571,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                         goto finished;
                     }
                     if (var)
-                        Init_Nulled(var);
+                        Init_Nulled(RESET(var));
                 }
                 break; }
 
@@ -586,27 +586,26 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
         // cells don't need to make copies.  Review.
 
         DECLARE_LOCAL (temp);
-        assert(IS_END(temp));
         if (Do_Branch_Throws(temp, les->body)) {
             if (not Catching_Break_Or_Continue(temp, &broke)) {
-                Move_Cell(les->out, temp);
+                Move_Cell(RESET(les->out), temp);
                 return R_THROWN;  // non-loop-related throw
             }
 
             if (broke) {
-                Init_Nulled(les->out);
+                Init_Nulled(RESET(les->out));
                 return nullptr;
             }
         }
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            Move_Cell(les->out, temp);
+            Move_Cell(RESET(les->out), temp);
             break;
 
           case LOOP_EVERY:
             if (not Is_Void(temp)) {  // ignore...
-                Move_Cell(les->out, temp);
+                Move_Cell(RESET(les->out), temp);
                 no_falseys = no_falseys and IS_TRUTHY(les->out);
             }
             break;
@@ -660,7 +659,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
   finished:;
 
     if (les->mode == LOOP_EVERY and not no_falseys)
-        Init_Nulled(les->out);
+        Init_Nulled(RESET(les->out));
 
     // We use nullptr to signal the result is in out.  If we returned les->out
     // it would be subject to the rebRescue() rules, and the loop could not
@@ -693,7 +692,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // is a poor substitute for).
         //
         REBVAL *block = rebValue("as block! @", ARG(data));
-        Copy_Cell(ARG(data), block);
+        Copy_Cell(RESET(ARG(data)), block);
         rebRelease(block);
     }
 
@@ -708,7 +707,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         &les.pseudo_vars_ctx,
         ARG(vars)
     );
-    Init_Object(ARG(vars), les.pseudo_vars_ctx);  // keep GC safe
+    Init_Object(RESET(ARG(vars)), les.pseudo_vars_ctx);  // keep GC safe
 
     // Currently the data stack is only used by MAP-EACH to accumulate results
     // but it's faster to just save it than test the loop mode.
@@ -837,7 +836,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // paralleling some changes to COLLECT, it may be better if the body
         // never runs it returns blank (?)
         //
-        return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
+        return Init_Block(RESET(D_OUT), Pop_Stack_Values(dsp_orig));
     }
 
     DEAD_END;  // all branches handled in enum switch
@@ -872,7 +871,7 @@ REBNATIVE(cfor)
         &context,
         ARG(word)
     );
-    Init_Object(ARG(word), context);  // keep GC safe
+    Init_Object(RESET(ARG(word)), context);  // keep GC safe
 
     REBVAL *var = CTX_VAR(context, 1);  // not movable, see #2274
 
@@ -961,11 +960,11 @@ REBNATIVE(for_skip)
         &context,
         ARG(word)
     );
-    Init_Object(ARG(word), context);  // keep GC safe
+    Init_Object(RESET(ARG(word)), context);  // keep GC safe
 
     REBVAL *pseudo_var = CTX_VAR(context, 1); // not movable, see #2274
     REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
-    Copy_Cell(var, series);
+    Overwrite_Cell(var, series);
 
     // Starting location when past end with negative skip:
     //
@@ -991,7 +990,7 @@ REBNATIVE(for_skip)
             VAL_INDEX_UNBOUNDED(var) = index;
         }
 
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(RESET(D_OUT), ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
                 return R_THROWN;
@@ -1073,8 +1072,8 @@ REBNATIVE(cycle)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
-    do {
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+    while (true) {
+        if (Do_Branch_Throws(RESET(D_OUT), ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke)) {
                 const REBVAL *label = VAL_THROWN_LABEL(D_OUT);
@@ -1095,8 +1094,8 @@ REBNATIVE(cycle)
             if (broke)
                 return nullptr;
         }
-        // No need to isotopfy result, it doesn't escape...
-    } while (true);
+        // No need to isotopify result, it doesn't escape...
+    }
 
     DEAD_END;
 }
@@ -1223,7 +1222,7 @@ static inline REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
                 SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(res->data), len);
                 return count;
             }
-            Copy_Cell(dest, src);  // same array--rare place we can do this
+            Copy_Cell(RESET(dest), src);  // same array, so we can do this
         }
 
         // If we get here, there were no removals, and length is unchanged.
@@ -1333,31 +1332,31 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 //     data: copy "abc"
                 //     remove-each [x y] data [...]
                 //
-                Init_Nulled(var);
+                Init_Nulled(RESET(var));
                 continue;  // the `for` loop setting variables
             }
 
             if (ANY_ARRAY(res->data))
                 Derelativize(
-                    var,
+                    RESET(var),
                     VAL_ARRAY_AT_HEAD(res->data, index),
                     VAL_SPECIFIER(res->data)
                 );
             else if (IS_BINARY(res->data)) {
                 REBBIN *bin = BIN(res->series);
-                Init_Integer(var, cast(REBI64, BIN_HEAD(bin)[index]));
+                Init_Integer(RESET(var), cast(REBI64, BIN_HEAD(bin)[index]));
             }
             else {
                 assert(ANY_STRING(res->data));
                 Init_Char_Unchecked(
-                    var,
+                    RESET(var),
                     GET_CHAR_AT(STR(res->series), index)
                 );
             }
             ++index;
         }
 
-        if (Do_Branch_Throws(res->out, res->body)) {
+        if (Do_Branch_Throws(RESET(res->out), res->body)) {
             if (not Catching_Break_Or_Continue(res->out, &res->broke)) {
                 REBLEN removals = Finalize_Remove_Each(res);
                 UNUSED(removals);
@@ -1374,7 +1373,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 REBLEN removals = Finalize_Remove_Each(res);
                 UNUSED(removals);
 
-                Init_Nulled(res->out);
+                Init_Nulled(RESET(res->out));
                 return nullptr;
             }
             else {
@@ -1438,7 +1437,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
     assert(not res->broke and res->start == len);
 
     REBLEN removals = Finalize_Remove_Each(res);
-    Init_Integer(res->out, removals);
+    Init_Integer(RESET(res->out), removals);
 
     return nullptr;
 }
@@ -1501,7 +1500,7 @@ REBNATIVE(remove_each)
         &res.context,
         ARG(vars)
     );
-    Init_Object(ARG(vars), res.context);  // keep GC safe
+    Init_Object(RESET(ARG(vars)), res.context);  // keep GC safe
     res.body = ARG(body);
 
     res.start = VAL_INDEX(res.data);
@@ -1692,7 +1691,7 @@ REBNATIVE(repeat)
         count = Int64(ARG(count));
 
     for (; count > 0; count--) {
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(RESET(D_OUT), ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
                 return R_THROWN;
@@ -1768,7 +1767,7 @@ REBNATIVE(for)
         &context,
         ARG(vars)
     );
-    Init_Object(ARG(vars), context);  // keep GC safe
+    Init_Object(RESET(ARG(vars)), context);  // keep GC safe
 
     assert(CTX_LEN(context) == 1);
 
@@ -1810,20 +1809,22 @@ REBNATIVE(until)
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
                 return R_THROWN;
             if (broke)
-                return Init_Nulled(D_OUT);
+                return nullptr;
 
             // The way a CONTINUE with a value works is to act as if the loop
             // body evaluated to the value.  Since the condition and body are
             // the same in this case.  CONTINUE TRUE will stop the UNTIL and
             // return TRUE, CONTINUE 10 will stop and return 10, etc.
             //
-            // Plain CONTINUE is interpreted as CONTINUE NULL, and hence will
-            // continue to run the loop.
+            // Plain CONTINUE is interpreted as CONTINUE ~VOID~, and will
+            // continue to run the loop.  CONTINUE NULL will stop it
         }
 
         if (IS_NULLED(predicate)) {
-            if (Is_Void(D_OUT))
+            if (Is_Void(D_OUT)) {
+                RESET(D_OUT);
                 continue;  // skip voids from consideration, e.g. continue
+            }
 
             // This is a case where we do not want to decay isotopes, because
             // someone might write `until [match blank! get-queue-item]` and
@@ -1838,6 +1839,7 @@ REBNATIVE(until)
                 return D_OUT;
         }
 
+        RESET(D_OUT);
     } while (true);
 }
 
@@ -1869,8 +1871,8 @@ REBNATIVE(loop)
     Init_Void(D_OUT);  // result if body never runs
 
     do {
-        if (Do_Branch_With_Throws(D_SPARE, ARG(condition), D_OUT)) {
-            Move_Cell(D_OUT, D_SPARE);
+        if (Do_Branch_With_Throws(RESET(D_SPARE), ARG(condition), D_OUT)) {
+            Move_Cell(RESET(D_OUT), D_SPARE);
             return R_THROWN;  // don't see BREAK/CONTINUE in the *condition*
         }
 
@@ -1884,13 +1886,13 @@ REBNATIVE(loop)
         if (IS_FALSEY(D_SPARE))  // will error if void, neither true nor false
             return D_OUT;  // condition was false, so return last body result
 
-        if (Do_Branch_With_Throws(D_OUT, ARG(body), D_SPARE)) {
+        if (Do_Branch_With_Throws(RESET(D_OUT), ARG(body), D_SPARE)) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
                 return R_THROWN;
 
             if (broke)
-                return Init_Nulled(D_OUT);
+                return nullptr;
         }
 
     } while (true);

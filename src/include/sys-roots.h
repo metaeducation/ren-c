@@ -154,7 +154,7 @@ inline static void Free_Value(REBVAL *v)
     assert(Is_Api_Value(v));
 
     REBARR *a = Singular_From_Cell(v);
-    REFORMAT_CELL_IF_DEBUG(ARR_SINGLE(a));
+    RESET(ARR_SINGLE(a));
 
     if (GET_SERIES_FLAG(a, MANAGED))
         Unlink_Api_Handle_From_Frame(a);
@@ -207,7 +207,7 @@ inline static void Handle_Api_Dispatcher_Result(REBFRM *f, const REBVAL* r) {
     if (IS_NULLED(r))
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
-    Copy_Cell(f->out, r);
+    Overwrite_Cell(f->out, r);
     if (NOT_CELL_FLAG(r, MANAGED))
         rebRelease(r);
 }

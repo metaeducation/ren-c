@@ -934,15 +934,12 @@ bool RL_rebRunThrows(
     bool fully,
     const void *p, va_list *vaptr
 ){
-    SET_END(out);
+    Init_Void(out);  // assume "API-like" convention doesn't speak "END"
 
     if (RL_rebRunMaybeStaleThrows(quotes, out, fully, p, vaptr))
         return true;
 
-    if (IS_END(out))
-        Init_Void(out);  // assume "API-like" convention doesn't speak "END"
-    else
-        assert(NOT_CELL_FLAG(out, OUT_NOTE_STALE));  // not END, must've changed
+    out->header.bits &= ~CELL_FLAG_OUT_NOTE_STALE;
 
     return false;
 }

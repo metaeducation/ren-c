@@ -140,8 +140,6 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
     const RELVAL *vararg,
     enum Reb_Param_Class pclass  // PARAM_CLASS_0 to use vararg's class
 ){
-    REFORMAT_CELL_IF_DEBUG(out);
-
     const REBKEY *key;
     const REBPAR *param = Param_For_Varargs_Maybe_Null(&key, vararg);
     if (pclass == PARAM_CLASS_0)
@@ -203,7 +201,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 IS_END(f_temp->feed->value)
                 or GET_FEED_FLAG(f_temp->feed, BARRIER_HIT)
             ){
-                SET_END(shared);
+                SET_END(RESET(shared));
             }
             else {
                 // The indexor is "prefetched", so though the temp_frame would
@@ -254,7 +252,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         }
 
         if (NOT_END(shared) && VAL_INDEX(shared) >= VAL_LEN_HEAD(shared))
-            SET_END(shared); // signal end to all varargs sharing value
+            SET_END(RESET(shared));  // signal end to all varargs sharing value
     }
     else if (Is_Frame_Style_Varargs_May_Fail(&f, vararg)) {
         //
@@ -308,7 +306,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAM_CLASS_SOFT:
             if (ANY_ESCAPABLE_GET(f_value)) {
                 if (Eval_Value_Throws(
-                    SET_END(out),
+                    out,
                     f_value,
                     f_specifier
                 )){
@@ -395,7 +393,7 @@ REB_R MAKE_Varargs(
         else
             Copy_Cell(ARR_SINGLE(array1), arg);
 
-        RESET_CELL(out, REB_VARARGS, CELL_MASK_VARARGS);
+        INIT_VAL_HEADER(out, REB_VARARGS, CELL_MASK_VARARGS);
         INIT_VAL_VARARGS_PHASE(out, nullptr);
         UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));  // trashes in C++11
         INIT_VAL_VARARGS_BINDING(out, array1);
@@ -439,7 +437,7 @@ REB_R PD_Varargs(
         fail (Error_Varargs_No_Look_Raw());
 
     DECLARE_LOCAL (location);
-    Copy_Cell(location, pvs->out);
+    Move_Cell(location, pvs->out);
 
     if (Do_Vararg_Op_Maybe_End_Throws(
         pvs->out,
@@ -451,7 +449,7 @@ REB_R PD_Varargs(
     }
 
     if (IS_END(pvs->out))
-        Init_Endish_Nulled(pvs->out);
+        Init_Endish_Nulled(RESET(pvs->out));
 
     return pvs->out;
 }

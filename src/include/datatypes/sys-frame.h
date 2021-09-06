@@ -468,7 +468,7 @@ inline static void Abort_Frame(REBFRM *f) {
     while (n != f) {
         REBARR *a = ARR(n);
         n = LINK(ApiNext, a);
-        REFORMAT_CELL_IF_DEBUG(ARR_SINGLE(a));
+        RESET(ARR_SINGLE(a));
         GC_Kill_Series(a);
     }
     TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
@@ -549,7 +549,6 @@ inline static void Prep_Frame_Core(
 
     f->feed = feed;
     Prep_Cell(&f->spare);
-    Init_Trash(&f->spare);
     f->dsp_orig = DS_Index;
     TRASH_POINTER_IF_DEBUG(f->out);
 
@@ -720,7 +719,7 @@ inline static void Push_Action(
     }
 
     f->rootvar = cast(REBVAL*, s->content.dynamic.data);
-    USED(TRACK_CELL_IF_DEBUG(f->rootvar));
+    USED(Prep_Cell(f->rootvar));  // want the tracking info, overwriting header
     f->rootvar->header.bits =
         NODE_FLAG_NODE
             | NODE_FLAG_CELL
@@ -737,12 +736,21 @@ inline static void Push_Action(
 
     s->content.dynamic.used = num_args + 1;
 
+    // !!! Historically the idea was to prep during the walk of the frame,
+    // to avoid doing two walks.  The current thinking is to move toward a
+    // notion of being able to just memset() to 0 or calloc().  The debug
+    // build still wants to initialize the cells with file/line info though.
+    //
+    RELVAL *tail = ARR_TAIL(f->varlist);
+    RELVAL *prep = f->rootvar + 1;
+    for (; prep < tail; ++prep)
+        USED(Prep_Cell(prep));
+
   #if defined(DEBUG_POISON_CELLS)  // poison cells past usable range
   blockscope {
-    RELVAL *tail = ARR_TAIL(f->varlist);
-    RELVAL *prep = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
+    prep = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
     for (; prep >= tail; --prep) {
-        USED(TRACK_CELL_IF_DEBUG(prep));
+        USED(Prep_Cell(prep));  // gets tracking info
         prep->header.bits = CELL_MASK_POISON;
     }
   }
@@ -964,7 +972,7 @@ inline static REBVAL *D_ARG_Core(REBFRM *f, REBLEN n) {  // 1 for first arg
 // then return the D_OUT pointer...this is the fastest form of returning.)
 //
 #define RETURN(v) \
-    return Copy_Cell(D_OUT, (v))
+    return Overwrite_Cell(D_OUT, (v))
 
 #define RETURN_INVISIBLE \
     do { \

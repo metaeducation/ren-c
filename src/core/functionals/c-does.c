@@ -124,7 +124,7 @@ REB_R Block_Dispatcher(REBFRM *f)
         // Update block cell as a relativized copy (we won't do this again).
         //
         REBACT *phase = FRM_PHASE(f);
-        Init_Relative_Block(block, phase, relativized);
+        Init_Relative_Block(RESET(block), phase, relativized);
     }
 
     assert(IS_RELATIVE(block));
@@ -217,7 +217,7 @@ REBNATIVE(does)
     // Put argument into DO's *second* frame slot (first is RETURN)
     //
     assert(KEY_SYM(CTX_KEY(exemplar, 1)) == SYM_RETURN);
-    Copy_Cell(CTX_VAR(exemplar, 2), source);
+    Copy_Cell(RESET(CTX_VAR(exemplar, 2)), source);
 
     const REBSTR *label = ANONYMOUS;  // !!! Better answer?
 

@@ -371,12 +371,9 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     TG_Jump_List->error = error;
 
     // If a throw was being processed up the stack when the error was raised,
-    // then it had the thrown argument set.  Trash it in debug builds.  (The
-    // value will not be kept alive, it is not seen by GC)
+    // then it had the thrown argument set.
     //
-  #if !defined(NDEBUG)
-    SET_END(&TG_Thrown_Arg);
-  #endif
+    RESET(&TG_Thrown_Arg);
 
     LONG_JUMP(TG_Jump_List->cpu_state, 1);
 }
@@ -488,9 +485,9 @@ void Set_Location_Of_Error(
         // less space, so people might come to appreciate it.  Review.
         //
         if (IS_NULLED(DS_TOP))
-            Init_Blank(DS_TOP);
+            Init_Blank(RESET(DS_TOP));
     }
-    Init_Block(&vars->where, Pop_Stack_Values(dsp_orig));
+    Init_Block(RESET(&vars->where), Pop_Stack_Values(dsp_orig));
 
     // Nearby location of the error.  Reify any valist that is running,
     // so that the error has an array to present.
@@ -503,7 +500,7 @@ void Set_Location_Of_Error(
     // any existing near, but a less-random design is needed here.
     //
     if (IS_NULLED(&vars->nearest))
-        Init_Near_For_Frame(&vars->nearest, where);
+        Init_Near_For_Frame(RESET(&vars->nearest), where);
 
     // Try to fill in the file and line information of the error from the
     // stack, looking for arrays with ARRAY_HAS_FILE_LINE.
@@ -529,9 +526,9 @@ void Set_Location_Of_Error(
         REBLIN line = FRM_ARRAY(f)->misc.line;
 
         if (file)
-            Init_File(&vars->file, file);
+            Init_File(RESET(&vars->file), file);
         if (line != 0)
-            Init_Integer(&vars->line, line);
+            Init_Integer(RESET(&vars->line), line);
     }
 }
 
@@ -604,7 +601,7 @@ REB_R MAKE_Error(
 
         DECLARE_LOCAL (evaluated);
         if (Do_Any_Array_At_Throws(evaluated, virtual_arg, SPECIFIED)) {
-            Move_Cell(out, evaluated);
+            Move_Cell(RESET(out), evaluated);
             return R_THROWN;
         }
 
@@ -622,12 +619,13 @@ REB_R MAKE_Error(
         // Minus the message, this is the default state of root_error.
 
         e = Copy_Context_Shallow_Managed(root_error);
+        Init_Error(out, e);
 
         vars = ERR_VARS(e);
         assert(IS_NULLED(&vars->type));
         assert(IS_NULLED(&vars->id));
 
-        Init_Text(&vars->message, Copy_String_At(arg));
+        Init_Text(RESET(&vars->message), Copy_String_At(arg));
     }
     else
         fail (arg);
@@ -670,7 +668,7 @@ REB_R MAKE_Error(
                 if (not IS_NULLED(&vars->message))
                     fail (Error_Invalid_Error_Raw(arg));
 
-                Copy_Cell(&vars->message, message);
+                Copy_Cell(RESET(&vars->message), message);
             }
             else {
                 // At the moment, we don't let the user make a user-ID'd
@@ -715,7 +713,8 @@ REB_R MAKE_Error(
         }
     }
 
-    return Init_Error(out, e);
+    assert(IS_ERROR(out));
+    return out;
 }
 
 
@@ -861,9 +860,9 @@ REBCTX *Make_Error_Managed_Core(
     //
     ERROR_VARS *vars = ERR_VARS(error);
 
-    Copy_Cell(&vars->message, message);
-    Copy_Cell(&vars->id, id);
-    Copy_Cell(&vars->type, type);
+    Overwrite_Cell(&vars->message, message);
+    Overwrite_Cell(&vars->id, id);
+    Overwrite_Cell(&vars->type, type);
 
     return error;
 }
@@ -1508,7 +1507,7 @@ REBCTX *Startup_Errors(const REBVAL *boot_errors)
             SPECIFIED, // source array not in a function body
             nullptr
         );
-        Init_Object(category, error);
+        Init_Object(RESET(category), error);
     }
 
     return catalog;

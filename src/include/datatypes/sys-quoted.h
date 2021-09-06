@@ -146,7 +146,7 @@ inline static RELVAL *Quotify_Core(
 
         Manage_Pairing(unquoted);
 
-        RESET_VAL_HEADER(v, REB_QUOTED, CELL_FLAG_FIRST_IS_NODE);
+        INIT_VAL_HEADER(RESET(v), REB_QUOTED, CELL_FLAG_FIRST_IS_NODE);
         INIT_VAL_NODE1(v, unquoted);
         VAL_WORD_INDEXES_U32(v) = depth << 20;  // see VAL_QUOTED_DEPTH()
 
@@ -416,7 +416,7 @@ inline static bool IS_QUOTED_PATH(const RELVAL *v) {
 
 
 inline static REBVAL *Init_Lit(RELVAL *out) {
-    RESET_CELL(out, REB_META, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_META, CELL_MASK_NONE);
 
     // Although LIT! carries no data, it is not inert.  To make ANY_INERT()
     // fast, it's in the part of the list of bindable evaluative types.
@@ -428,7 +428,7 @@ inline static REBVAL *Init_Lit(RELVAL *out) {
 }
 
 inline static REBVAL *Init_The(RELVAL *out) {
-    RESET_CELL(out, REB_THE, CELL_MASK_NONE);
+    INIT_VAL_HEADER(out, REB_THE, CELL_MASK_NONE);
 
     // Although THE! carries no data, it is not inert.  To make ANY_INERT()
     // fast, it's in the part of the list of bindable evaluative types.

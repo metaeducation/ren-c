@@ -84,11 +84,8 @@ REB_R TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     // system/standard/port is made with CONTEXT and not with MAKE PORT!
     //
     REBCTX *context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
-    RESET_VAL_HEADER(
-        CTX_ROOTVAR(context),
-        REB_PORT,
-        CELL_MASK_CONTEXT
-    );
+    REBVAL *rootvar = CTX_ROOTVAR(context);
+    mutable_KIND3Q_BYTE(rootvar) = mutable_HEART_BYTE(rootvar) = REB_PORT;
 
     return Init_Port(out, context);
 }
@@ -129,7 +126,7 @@ REBTYPE(Port)
             //
             const REBVAL *made = rebValue("make port! @", D_ARG(1));
             assert(IS_PORT(made));
-            Copy_Cell(D_ARG(1), made);
+            Copy_Cell(RESET(D_ARG(1)), made);
             rebRelease(made);
             break; }
 
@@ -224,7 +221,7 @@ REBTYPE(Url)
     // The frame was built for the verb we want to apply, so tweak it so that
     // it has the PORT! in the argument slot, and run the action.
     //
-    Copy_Cell(D_ARG(1), port);
+    Move_Cell(RESET(D_ARG(1)), port);
     rebRelease(port);
 
     return Do_Port_Action(frame_, D_ARG(1), verb);

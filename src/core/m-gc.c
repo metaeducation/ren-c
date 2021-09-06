@@ -290,7 +290,8 @@ static void Queue_Mark_Node_Deep(void *p)
 //
 static void Queue_Mark_Opt_Value_Deep(const RELVAL *v)
 {
-    assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
+    if (KIND3Q_BYTE_UNCHECKED(v) == REB_0_END)
+        assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want
@@ -450,10 +451,10 @@ void Reify_Va_To_Array_In_Frame(
     assert(not FEED_IS_VARIADIC(f->feed));
 
     if (DSP == dsp_orig)
-        Init_Block(FEED_SINGLE(f->feed), EMPTY_ARRAY);  // no new array needed
+        Init_Block(RESET(FEED_SINGLE(f->feed)), EMPTY_ARRAY);  // reuse array
     else {
         REBARR *a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
-        Init_Any_Array_At(FEED_SINGLE(f->feed), REB_BLOCK, a, index);
+        Init_Any_Array_At(RESET(FEED_SINGLE(f->feed)), REB_BLOCK, a, index);
     }
 
     if (truncated)
@@ -539,8 +540,18 @@ static void Mark_Root_Series(void)
                 Queue_Mark_Opt_Value_Deep(PAIRING_KEY(paired));
             }
 
+            // !!! The DS_Array does not currently keep its `used` field up
+            // to date, because this is one more than the DS_Index and would
+            // require math to be useful.  (While the array tends to want to
+            // know the length and the tail pointer to stop at, clients of
+            // the stack want to know the "last".)  Hence it is exempt from
+            // this marking rather than keeping the length up to date.  Review.
+            //
             REBSER *s = SER(cast(void*, unit));
-            if (IS_SER_ARRAY(s)) {
+            if (
+                IS_SER_ARRAY(s)
+                and s != DS_Array  // !!! Review DS_Array exemption!
+            ){
                 if (s->leader.bits & NODE_FLAG_MANAGED)
                     continue; // BLOCK! should mark it
 
@@ -787,27 +798,19 @@ static void Mark_Frame_Stack_Deep(void)
 
         REBVAL *arg;
         for (arg = FRM_ARGS_HEAD(f); key != tail; ++key, ++arg) {
-            if (key == f->key) {
-                //
-                // When key and f->key match, that means that arg is the
-                // output slot for some other frame's f->out.  Let that frame
-                // do the marking (which tolerates END, an illegal state for
-                // prior arg slots we've visited...unless deferred!)
-
-                // If we're not doing "pickups" then the cell slots after
-                // this one have not been initialized, not even to trash.
-                //
-                if (NOT_EVAL_FLAG(f, DOING_PICKUPS))
-                    break;
-
-                // But since we *are* doing pickups, we must have initialized
-                // all the cells to something...even to trash.  Continue and
-                // mark them.
-                //
-                continue;
-            }
-
-            Queue_Mark_Opt_Value_Deep(arg);
+            //
+            // We only tolerate unfulfilled cells during the fulfillment phase.
+            // Once the frame is fulfilled, it may be exposed to usermode code
+            // as a FRAME!...and there can be no END/prep cells.
+            //
+            // (Note that when key == f->key, that means that arg is the
+            // output slot for some other frame's f->out...which is a case
+            // where transient RESET() can also leave END in slots.)
+            //
+            if (Is_Fresh(arg))
+                assert(f->key != tail);
+            else
+                Queue_Mark_Opt_Value_Deep(arg);
         }
 
       propagate_and_continue:;
@@ -952,7 +955,7 @@ static REBLEN Sweep_Series(void)
                 if (v->header.bits & NODE_FLAG_MARKED)
                     v->header.bits &= ~NODE_FLAG_MARKED;
                 else {
-                    Free_Node(PAR_POOL, NOD(v));  // Free_Pairing is for manuals
+                    Free_Node(PAR_POOL, v);  // Free_Pairing is for manuals
                     ++count;
                 }
             }
@@ -1048,9 +1051,9 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // between the time a function has been called and the throw is handled
     // can cause problems with this.
     //
-    assert(IS_END(&TG_Thrown_Arg));
+    assert(Is_Fresh(&TG_Thrown_Arg));
   #if !defined(NDEBUG)
-    assert(IS_END(&TG_Thrown_Label_Debug));
+    assert(Is_Fresh(&TG_Thrown_Label_Debug));
   #endif
 
     // If disabled by RECYCLE/OFF, exit now but set the pending flag.  (If

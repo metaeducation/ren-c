@@ -149,7 +149,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         // opaque to users, so they didn't depend on it or fiddle with it.
         //
         REBBIN *bin = Make_Binary(sizeof(FILEREQ));
-        Init_Binary(state, bin);
+        Init_Binary(RESET(state), bin);
         TERM_BIN_LEN(bin, sizeof(FILEREQ));
 
         file = File_Of_Port(port);
@@ -444,7 +444,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             // it were written out progressively.  Also, could use the "new
             // REPEND" mechanic of GET-BLOCK! and reduce as it went.
             //
-            Init_Text(data, Pop_Molded_String(mo));
+            Init_Text(RESET(data), Pop_Molded_String(mo));
             len = VAL_LEN_HEAD(data);
         }
 

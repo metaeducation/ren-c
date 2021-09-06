@@ -163,7 +163,7 @@ bool Next_Path_Throws(REBPVS *pvs)
 
     bool actions_illegal = false;
 
-    if (IS_BLANK(f_value) and not IS_FILE(pvs->out)) {  // !!! File hack...
+    if (IS_BLANK(f_value)) {
         //
         // !!! Literal BLANK!s in sequences are for internal "doubling up"
         // of delimiters, like `a..b`, or they can be used for prefixes like
@@ -187,7 +187,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         PVS_PICKER(pvs) = Lib(NULL);  // no-op
         goto redo;
     }
-    else if (ANY_TUPLE(f_value) and not IS_FILE(pvs->out)) {  // ignore file hack
+    else if (ANY_TUPLE(f_value)) {
         //
         // !!! Tuples in PATH!s will require some thinking...especially since
         // it's not necessarily going to be useful to reflect the hierarchy
@@ -203,7 +203,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail ("TUPLE! support in PATH! processing limited to `a.` forms");
         }
         Derelativize(
-            f_spare,
+            RESET(f_spare),
             VAL_SEQUENCE_AT(temp, f_value, 0),
             VAL_SEQUENCE_SPECIFIER(f_value)
         );
@@ -211,7 +211,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         actions_illegal = true;
     }
     else if (IS_GET_WORD(f_value)) {  // e.g. object/:field
-        PVS_PICKER(pvs) = Get_Word_May_Fail(f_spare, f_value, f_specifier);
+        PVS_PICKER(pvs) = Get_Word_May_Fail(RESET(f_spare), f_value, f_specifier);
     }
     else if (
         IS_GROUP(f_value)  // object/(expr) case:
@@ -221,7 +221,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         REBSPC *derived = Derive_Specifier(f_specifier, f_value);
-        if (Do_Any_Array_At_Throws(f_spare, f_value, derived)) {
+        if (Do_Any_Array_At_Throws(RESET(f_spare), f_value, derived)) {
             Move_Cell(pvs->out, f_spare);
             return true; // thrown
         }
@@ -244,7 +244,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         // Common case... result where we expect it
     }
     else if (not r) {
-        Init_Nulled(pvs->out);
+        Init_Nulled(RESET(pvs->out));
     }
     else if (not IS_RETURN_SIGNAL(r)) {
         assert(GET_CELL_FLAG(r, ROOT));  // API, from Alloc_Value()
@@ -394,7 +394,6 @@ bool Eval_Path_Throws_Core(
 
     assert(NOT_END(f_value));  // tested 0-length path previously
 
-    SET_END(out);
     Push_Frame(out, pvs);
 
     REBDSP dsp_orig = DSP;
@@ -434,7 +433,7 @@ bool Eval_Path_Throws_Core(
             pvs->label = VAL_WORD_SYMBOL(second);
     }
     else if (IS_WORD(f_value)) {
-        Copy_Cell(pvs->out, Lookup_Word_May_Fail(f_value, specifier));
+        Overwrite_Cell(pvs->out, Lookup_Word_May_Fail(f_value, specifier));
 
         if (IS_ACTION(pvs->out)) {
             pvs->label = VAL_WORD_SYMBOL(f_value);
@@ -487,9 +486,9 @@ bool Eval_Path_Throws_Core(
             assert(IS_WORD(bottom) and not IS_WORD_BOUND(bottom));
             assert(IS_WORD(top) and not IS_WORD_BOUND(top));
 
-            Move_Cell(f_spare, bottom);
-            Move_Cell(bottom, top);
-            Move_Cell(top, f_spare);
+            Move_Cell(RESET(f_spare), bottom);
+            Move_Cell(RESET(bottom), top);
+            Move_Cell(RESET(top), f_spare);
 
             top--;
             bottom++;
@@ -522,7 +521,7 @@ bool Eval_Path_Throws_Core(
                 panic ("REFINE-only specializations should not THROW");
             }
 
-            Copy_Cell(pvs->out, FRM_SPARE(pvs));
+            Overwrite_Cell(pvs->out, FRM_SPARE(pvs));
         }
     }
 
@@ -683,7 +682,7 @@ REBNATIVE(pick)
         // It was parented to the PVS frame, we have to read it out.
         //
         assert(GET_CELL_FLAG(r, ROOT));  // API value
-        Copy_Cell(D_OUT, r);
+        Copy_Cell(RESET(D_OUT), r);
         rebRelease(r);
         r = D_OUT;
     }
@@ -798,7 +797,7 @@ REBNATIVE(poke)
                     // For now just give an error if it actually triggers.
                     //
                     cannot_writeback_let = true;
-                    Copy_Cell(
+                    Overwrite_Cell(
                         ARG(location),
                         Lookup_Word_May_Fail(item, VAL_SPECIFIER(picker))
                     );
@@ -822,11 +821,11 @@ REBNATIVE(poke)
         )){
             return R_THROWN;
         }
-        Move_Cell(picker, D_SPARE);
+        Move_Cell(RESET(picker), D_SPARE);
     }
     else if (ANY_INERT(picker)) {
         REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
-        Copy_Cell(ARR_SINGLE(a), picker);
+        Move_Cell(ARR_SINGLE(a), picker);
         Init_Block(picker, a);
     }
     else
@@ -905,7 +904,7 @@ REB_R MAKE_Path(
         if (IS_NULLED(out))
             fail (out);  // !!! BLANK! is legit in paths, should null opt out?
 
-        Copy_Cell(DS_PUSH(), out);
+        Move_Cell(DS_PUSH(), out);
     }
 
     REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(out, kind, dsp_orig);

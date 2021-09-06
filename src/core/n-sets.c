@@ -239,7 +239,7 @@ REBSER *Make_Set_Operation_Series(
                 if (!h) continue;
 
                 DECLARE_LOCAL (mo_value);
-                RESET_CELL(mo_value, REB_TEXT, CELL_FLAG_FIRST_IS_NODE);
+                INIT_VAL_HEADER(mo_value, REB_TEXT, CELL_FLAG_FIRST_IS_NODE);
                 INIT_VAL_NODE1(mo_value, mo->series);
                 VAL_INDEX_RAW(mo_value) = mo->index;
 
@@ -314,7 +314,7 @@ REBSER *Make_Set_Operation_Series(
                 if (!h) continue;
 
                 DECLARE_LOCAL (buf_value);
-                RESET_CELL(buf_value, REB_BINARY, CELL_FLAG_FIRST_IS_NODE);
+                INIT_VAL_HEADER(buf_value, REB_BINARY, CELL_FLAG_FIRST_IS_NODE);
                 INIT_VAL_NODE1(buf_value, buf);
                 VAL_INDEX_RAW(buf_value) = buf_start_len;
 

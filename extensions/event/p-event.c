@@ -74,7 +74,7 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
     // Get or setup internal state data:
     //
     if (!IS_BLOCK(state))
-        Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
+        Init_Block(RESET(state), Make_Array(EVENTS_CHUNK - 1));
 
     switch (ID_OF_SYMBOL(verb)) {
 
@@ -117,7 +117,7 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         // array type dispatcher.  :-/
         //
         DECLARE_LOCAL (save_port);
-        Copy_Cell(save_port, D_ARG(1));
+        Move_Cell(save_port, D_ARG(1));
         Copy_Cell(D_ARG(1), state);
 
         REB_R r = T_Array(frame_, verb);

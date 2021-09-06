@@ -285,7 +285,7 @@ static void Insert_Gobs(
         SET_CELL_FREE(ARR_TAIL(pane));
   #endif
 
-    Init_Block(ARR_AT(gob, IDX_GOB_PANE), pane); // may alrady have been set
+    Init_Block(RESET(ARR_AT(gob, IDX_GOB_PANE)), pane);  // maybe already set
 }
 
 
@@ -395,7 +395,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Copy_Cell(GOB_CONTENT(gob), val);
+        Overwrite_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_DRAW:
@@ -407,7 +407,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Copy_Cell(GOB_CONTENT(gob), val);
+        Overwrite_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_TEXT:
@@ -421,7 +421,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Copy_Cell(GOB_CONTENT(gob), val);
+        Overwrite_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_EFFECT:
@@ -433,7 +433,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Copy_Cell(GOB_CONTENT(gob), val);
+        Overwrite_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_COLOR:
@@ -452,7 +452,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Copy_Cell(GOB_CONTENT(gob), val);
+        Overwrite_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_PANE:
@@ -494,7 +494,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Copy_Cell(GOB_DATA(gob), val);
+        Overwrite_Cell(GOB_DATA(gob), val);
         break;
 
       case SYM_FLAGS:
@@ -686,12 +686,12 @@ static REBARR *Gob_To_Array(REBGOB *gob)
 {
     REBARR *arr = Make_Array(10);
     SYMID words[] = {SYM_OFFSET, SYM_SIZE, SYM_ALPHA, SYM_0};
-    REBVAL *vals[6];
+    RELVAL *vals[3];
 
     REBINT n;
     for (n = 0; words[n] != SYM_0; ++n) {
         Init_Set_Word(Alloc_Tail_Array(arr), Canon_Symbol(words[n]));
-        vals[n] = Init_Blank(Alloc_Tail_Array(arr));
+        vals[n] = Alloc_Tail_Array(arr);
     }
 
     Init_Pair_Dec(vals[0], GOB_X(gob), GOB_Y(gob));
@@ -842,7 +842,7 @@ REB_R PD_Gob(
     REBGOB *gob = VAL_GOB(pvs->out);
 
     if (IS_WORD(picker)) {
-        if (not Did_Get_GOB_Var(pvs->out, gob, picker))
+        if (not Did_Get_GOB_Var(RESET(pvs->out), gob, picker))
             return R_UNHANDLED;
 
         return pvs->out;

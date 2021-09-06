@@ -170,7 +170,7 @@ REBNATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Append_Context(VAL_CONTEXT(context), v, nullptr);
+            Init_Unset(Append_Context(VAL_CONTEXT(context), v, nullptr));
             RETURN (Quotify(v, num_quotes));
         }
 
@@ -820,13 +820,14 @@ REBNATIVE(resolve)
 
         bool strict = true;
 
-        REBVAL *src = MOD_VAR(source, symbol, strict);
+        const REBVAL *src = MOD_VAR(source, symbol, strict);
         if (src == nullptr)
             fail (rebUnrelativize(v));  // fail if unset value, also?
 
         REBVAL *dest = MOD_VAR(where, symbol, strict);
         if (dest != nullptr) {
             // Fail if found?
+            RESET(dest);
         }
         else {
             dest = Append_Context(where, nullptr, symbol);
@@ -1192,7 +1193,7 @@ REBNATIVE(as)
                     VAL_WORD_SYMBOL(v) == PG_Dot_1_Canon
                     or VAL_WORD_SYMBOL(v) == PG_Slash_1_Canon
                 );
-                Init_Block(v, PG_2_Blanks_Array);
+                Init_Block(RESET(v), PG_2_Blanks_Array);
                 break;
 
               case REB_GET_WORD: {
@@ -1202,7 +1203,7 @@ REBNATIVE(as)
                 mutable_KIND3Q_BYTE(ARR_AT(a, 1)) = REB_WORD;
                 mutable_HEART_BYTE(ARR_AT(a, 1)) = REB_WORD;
                 SET_SERIES_LEN(a, 2);
-                Init_Block(v, a);
+                Init_Block(RESET(v), a);
                 break; }
 
               case REB_META_WORD: {
@@ -1212,7 +1213,7 @@ REBNATIVE(as)
                 mutable_HEART_BYTE(ARR_HEAD(a)) = REB_WORD;
                 Init_Blank(ARR_AT(a, 1));
                 SET_SERIES_LEN(a, 2);
-                Init_Block(v, a);
+                Init_Block(RESET(v), a);
                 break; }
 
               case REB_BLOCK:
@@ -1224,12 +1225,11 @@ REBNATIVE(as)
               default:
                 assert(false);
             }
-            break;
         }
-
-        if (not ANY_ARRAY(v))
+        else if (not ANY_ARRAY(v))
             goto bad_cast;
-        break;
+
+        goto adjust_v_kind;
 
       case REB_TUPLE:
       case REB_GET_TUPLE:
@@ -1283,7 +1283,7 @@ REBNATIVE(as)
                 //
                 // Payload can fit in a single issue cell.
                 //
-                RESET_CELL(D_OUT, REB_BYTES, CELL_MASK_NONE);
+                INIT_VAL_HEADER(D_OUT, REB_BYTES, CELL_MASK_NONE);
                 memcpy(
                     PAYLOAD(Bytes, D_OUT).at_least_8,
                     VAL_STRING_AT(v),
@@ -1440,7 +1440,7 @@ REBNATIVE(as)
 
         if (not ANY_WORD(v))
             goto bad_cast;
-        break; }
+        goto adjust_v_kind; }
 
       case REB_BINARY: {
         if (IS_ISSUE(v)) {
@@ -1490,15 +1490,17 @@ REBNATIVE(as)
         );
       }
 
-      fail (v);
+      fail (v); }
+
+      default:  // all applicable types should be handled above
+        break;
     }
 
-      bad_cast:;
-      default:
-        // all applicable types should be handled above
-        fail (Error_Bad_Cast_Raw(v, ARG(type)));
-    }
+  bad_cast:
+    fail (Error_Bad_Cast_Raw(v, ARG(type)));
 
+  adjust_v_kind:
+    //
     // Fallthrough for cases where changing the type byte and potentially
     // updating the quotes is enough.
     //
@@ -1598,7 +1600,7 @@ REBNATIVE(heavy) {
     Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     if (IS_NULLED(D_OUT))
-        Init_Isotope(D_OUT, Canon(NULL));
+        Init_Nulled_Isotope(RESET(D_OUT));
 
     return D_OUT;
 }

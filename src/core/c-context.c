@@ -138,9 +138,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 //  Append_Context: C
 //
 // Append a word to the context word list. Expands the list if necessary.
-// Returns the value cell for the word.  The new variable is unset by default.
-//
-// !!! Review if it would make more sense to use TRASH.
+// Returns the value cell for the word, which is prepped as REB_0.
 //
 // If word is not nullptr, use the word sym and bind the word value, otherwise
 // use sym.  When using a word, it will be modified to be specifically bound
@@ -233,7 +231,7 @@ REBVAR *Append_Context(
             INIT_VAL_WORD_PRIMARY_INDEX(unwrap(any_word), INDEX_ATTACHED);
         }
 
-        return cast(REBVAR*, Init_Unset(ARR_SINGLE(patch)));
+        return cast(REBVAR*, ARR_SINGLE(patch));
     }
 
     REBSER *keylist = CTX_KEYLIST(context);
@@ -257,7 +255,7 @@ REBVAR *Append_Context(
     //
     EXPAND_SERIES_TAIL(CTX_VARLIST(context), 1);
 
-    REBVAL *value = Init_Unset(ARR_LAST(CTX_VARLIST(context)));
+    RELVAL *value = Prep_Cell(ARR_LAST(CTX_VARLIST(context)));
 
     if (not any_word)
         assert(symbol);
@@ -675,7 +673,8 @@ REBCTX *Make_Context_Detect_Managed(
         REBVAL *src = CTX_VARS(&src_tail, unwrap(parent));
         for (; src != src_tail; ++dest, ++src) {
             REBFLGS flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
-            Copy_Cell(dest, src);
+            assert(IS_NULLED(dest));
+            Overwrite_Cell(dest, src);
             Clonify(dest, flags, TS_CLONE);
         }
     }

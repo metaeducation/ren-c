@@ -50,8 +50,8 @@
     }
 #endif
 
-inline static REBVAL *Init_Integer_Core(RELVAL *out, REBI64 i64) {
-    RESET_CELL(out, REB_INTEGER, CELL_MASK_NONE);
+inline static REBVAL *Init_Integer_Untracked(RELVAL *out, REBI64 i64) {
+    INIT_VAL_HEADER(out, REB_INTEGER, CELL_MASK_NONE);
     PAYLOAD(Integer, out).i64 = i64;
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;
@@ -60,7 +60,7 @@ inline static REBVAL *Init_Integer_Core(RELVAL *out, REBI64 i64) {
 }
 
 #define Init_Integer(out,i64) \
-    Init_Integer_Core(TRACK_CELL_IF_DEBUG(out), (i64))
+    Init_Integer_Untracked(TRACK_CELL_IF_DEBUG(out), (i64))
 
 inline static int32_t VAL_INT32(REBCEL(const*) v) {
     if (VAL_INT64(v) > INT32_MAX or VAL_INT64(v) < INT32_MIN)

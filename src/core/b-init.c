@@ -195,8 +195,8 @@ static void Startup_Lib(void)
             | SERIES_FLAG_LINK_NODE_NEEDS_MARK
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK;
 
-        mutable_LINK(PatchContext, patch) = nullptr;  // signals unused
-        Prep_Cell(ARR_SINGLE(ARR(patch)));  // should overwrite
+        assert(LINK(PatchContext, patch) == nullptr);  // signals unused
+        assert(Is_Fresh(ARR_SINGLE(patch)));  // REB_0
     }
 
   //=//// INITIALIZE EARLY BOOT USED VALUES ////////////////////////////////=//
@@ -330,7 +330,7 @@ static void Shutdown_Action_Spec_Tags(void)
 //
 static void Startup_End_Node(void)
 {
-    SET_END(Prep_Cell(&PG_End_Cell));
+    SET_END(&PG_End_Cell);
     assert(IS_END(END_CELL));  // sanity check
 }
 
@@ -411,14 +411,14 @@ static void Init_Root_Vars(void)
     // the root set.  Should that change, they could be explicitly added
     // to the GC's root set.
 
-    RESET_CELL(Prep_Cell(&PG_Meta_Value), REB_META, CELL_MASK_NONE);
-    RESET_CELL(Prep_Cell(&PG_The_Value), REB_THE, CELL_MASK_NONE);
+    INIT_VAL_HEADER(&PG_Meta_Value, REB_META, CELL_MASK_NONE);
+    INIT_VAL_HEADER(&PG_The_Value, REB_THE, CELL_MASK_NONE);
 
-    Init_Return_Signal(Prep_Cell(&PG_R_Thrown), C_THROWN);
-    Init_Return_Signal(Prep_Cell(&PG_R_Invisible), C_INVISIBLE);
-    Init_Return_Signal(Prep_Cell(&PG_R_Redo_Unchecked), C_REDO_UNCHECKED);
-    Init_Return_Signal(Prep_Cell(&PG_R_Redo_Checked), C_REDO_CHECKED);
-    Init_Return_Signal(Prep_Cell(&PG_R_Unhandled), C_UNHANDLED);
+    Init_Return_Signal(&PG_R_Thrown, C_THROWN);
+    Init_Return_Signal(&PG_R_Invisible, C_INVISIBLE);
+    Init_Return_Signal(&PG_R_Redo_Unchecked, C_REDO_UNCHECKED);
+    Init_Return_Signal(&PG_R_Redo_Checked, C_REDO_CHECKED);
+    Init_Return_Signal(&PG_R_Unhandled, C_UNHANDLED);
 
     Root_Empty_Block = Init_Block(Alloc_Value(), PG_Empty_Array);
     Force_Value_Frozen_Deep(Root_Empty_Block);
@@ -533,15 +533,15 @@ static void Init_System_Object(
 
     // Create system/catalog/* for datatypes, natives, generics, errors
     //
-    Init_Block(Get_System(SYS_CATALOG, CAT_DATATYPES), datatypes_catalog);
-    Init_Block(Get_System(SYS_CATALOG, CAT_NATIVES), natives_catalog);
-    Init_Block(Get_System(SYS_CATALOG, CAT_ACTIONS), generics_catalog);
-    Init_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errors_catalog);
+    Init_Block(RESET(Get_System(SYS_CATALOG, CAT_DATATYPES)), datatypes_catalog);
+    Init_Block(RESET(Get_System(SYS_CATALOG, CAT_NATIVES)), natives_catalog);
+    Init_Block(RESET(Get_System(SYS_CATALOG, CAT_ACTIONS)), generics_catalog);
+    Init_Object(RESET(Get_System(SYS_CATALOG, CAT_ERRORS)), errors_catalog);
 
     // Create system/codecs object
     //
     Init_Object(
-        Get_System(SYS_CODECS, 0),
+        RESET(Get_System(SYS_CODECS, 0)),
         Alloc_Context_Core(REB_OBJECT, 10, NODE_FLAG_MANAGED)
     );
 
@@ -586,16 +586,16 @@ static void Init_System_Object(
 //
 static void Init_Contexts_Object(void)
 {
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context_Value);
+    Overwrite_Cell(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context_Value);
 
-    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
+    Overwrite_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
 
     // We don't initialize the USER context...yet.  Make it more obvious what
     // is wrong if it's used during boot.
     //
     const char *label = "startup-mezz-not-finished-yet";
     Init_Bad_Word(
-        Get_System(SYS_CONTEXTS, CTX_USER),
+        RESET(Get_System(SYS_CONTEXTS, CTX_USER)),
         Intern_UTF8_Managed(cb_cast(label), strsize(label))
     );
 }
@@ -648,12 +648,9 @@ void Startup_Signals(void)
     // The thrown arg is not intended to ever be around long enough to be
     // seen by the GC.
     //
-    Prep_Cell(&TG_Thrown_Arg);
   #if !defined(NDEBUG)
-    SET_END(&TG_Thrown_Arg);
-
-    Prep_Cell(&TG_Thrown_Label_Debug);
-    SET_END(&TG_Thrown_Label_Debug); // see notes, only used "SPORADICALLY()"
+    assert(Is_Fresh(&TG_Thrown_Arg));
+    assert(Is_Fresh(&TG_Thrown_Label_Debug));  // only used "SPORADICALLY()"
   #endif
 }
 
@@ -966,8 +963,8 @@ void Startup_Core(void)
 
     // Initialize UNSET_VALUE and VOID_VALUE (must be after symbols loaded)
     //
-    Init_Unset(Prep_Cell(&PG_Unset_Value));  // symbol not GC'd
-    Init_Void(Prep_Cell(&PG_Void_Value));  // symbol not GC'd
+    Init_Unset(&PG_Unset_Value);  // symbol not GC'd
+    Init_Void(&PG_Void_Value);  // symbol not GC'd
 
     // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(XXX) now available
 

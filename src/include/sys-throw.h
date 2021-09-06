@@ -63,7 +63,7 @@
 
 #if !defined(NDEBUG)
     inline static bool Is_Evaluator_Throwing_Debug(void) {
-        return NOT_END(&TG_Thrown_Arg);
+        return not Is_Fresh(&TG_Thrown_Arg);
     }
 #endif
 
@@ -72,9 +72,9 @@
         (thrown)
 #else
     inline static const REBVAL *VAL_THROWN_LABEL(const REBVAL *thrown) {
-        if (IS_END(&TG_Thrown_Label_Debug))
+        if (Is_Fresh(&TG_Thrown_Label_Debug))
             return thrown;
-        assert(IS_TRASH(thrown));
+        assert(Is_Isotope(thrown, SYM_THROW));
         return &TG_Thrown_Label_Debug;
     }
 #endif
@@ -88,8 +88,6 @@ inline static REB_R Init_Thrown_With_Label(
     if (out != label)
         Copy_Cell(out, label);
   #else
-    assert(IS_END(&TG_Thrown_Arg));
-    assert(IS_END(&TG_Thrown_Label_Debug));
 
     // Help avoid accidental uses of thrown output as misunderstood plain
     // outputs, by forcing thrown label access through VAL_THROWN_LABEL()...
@@ -98,9 +96,10 @@ inline static REB_R Init_Thrown_With_Label(
     //
     if (SPORADICALLY(2)) {
         Copy_Cell(&TG_Thrown_Label_Debug, label);
-        Init_Trash(out);
+        Init_Isotope(out, Canon(THROW));
     }
     else {
+        assert(Is_Fresh(&TG_Thrown_Label_Debug));
         if (out != label)
             Copy_Cell(out, label);
     }
@@ -117,15 +116,13 @@ static inline void CATCH_THROWN(
     RELVAL *arg_out,
     REBVAL *thrown // Note: may be same pointer as arg_out
 ){
-    assert(NOT_END(&TG_Thrown_Arg));
-
     UNUSED(thrown);
-    Copy_Cell(arg_out, &TG_Thrown_Arg);
+    Overwrite_Cell(arg_out, &TG_Thrown_Arg);
     if (GET_CELL_FLAG(&TG_Thrown_Arg, UNEVALUATED))
         SET_CELL_FLAG(arg_out, UNEVALUATED);  // indicates invisible RETURN
+    RESET(&TG_Thrown_Arg);
 
   #if !defined(NDEBUG)
-    SET_END(&TG_Thrown_Arg);
-    SET_END(&TG_Thrown_Label_Debug);
+    RESET(&TG_Thrown_Label_Debug);
   #endif
 }

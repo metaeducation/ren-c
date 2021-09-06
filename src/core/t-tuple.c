@@ -442,7 +442,7 @@ REB_R PD_Sequence(
         return nullptr;
 
     REBSPC *specifier = VAL_SEQUENCE_SPECIFIER(pvs->out);
-    const RELVAL *at = VAL_SEQUENCE_AT(FRM_SPARE(pvs), pvs->out, n);
+    const RELVAL *at = VAL_SEQUENCE_AT(RESET(FRM_SPARE(pvs)), pvs->out, n);
 
     return Derelativize(pvs->out, at, specifier);
 }
@@ -471,7 +471,7 @@ void MF_Sequence(REB_MOLD *mo, REBCEL(const*) v, bool form)
     REBLEN len = VAL_SEQUENCE_LEN(v);
     REBLEN i;
     for (i = 0; i < len; ++i) {
-        const RELVAL *element = VAL_SEQUENCE_AT(temp, v, i);
+        const RELVAL *element = VAL_SEQUENCE_AT(RESET(temp), v, i);
         enum Reb_Kind element_kind = VAL_TYPE(element);
 
         if (first)

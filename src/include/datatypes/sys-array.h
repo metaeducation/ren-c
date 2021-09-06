@@ -209,7 +209,7 @@ inline static REBARR *Make_Array_Core(REBLEN capacity, REBFLGS flags)
       #endif
     }
     else {
-        Prep_End(SER_CELL(s));  // optimized Prep_Cell() + SET_END()
+        Prep_End(mutable_SER_CELL(s));  // optimized Prep_Cell() + SET_END()
     }
 
     // Arrays created at runtime default to inheriting the file and line
@@ -558,7 +558,7 @@ inline static RELVAL *Init_Relative_Block_At(
     REBARR *array,
     REBLEN index
 ){
-    RELVAL *block = RESET_CELL(out, REB_BLOCK, CELL_FLAG_FIRST_IS_NODE);
+    RELVAL *block = INIT_VAL_HEADER(out, REB_BLOCK, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_NODE1(block, array);
     VAL_INDEX_RAW(block) = index;
     INIT_SPECIFIER(block, action);

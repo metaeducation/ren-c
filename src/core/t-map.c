@@ -356,7 +356,7 @@ REB_R PD_Map(
     if (IS_NULLED(val))  // zombie entry, means unused
         return nullptr;
 
-    return Copy_Cell(pvs->out, val); // RETURN (...) uses `frame_`, not `pvs`
+    return Copy_Cell(RESET(pvs->out), val);  // RETURN (...) uses `frame_`
 }
 
 
@@ -695,7 +695,7 @@ REBTYPE(Map)
         );
 
         if (ID_OF_SYMBOL(verb) == SYM_FIND)
-            return IS_NULLED(D_OUT) ? nullptr : Init_True(D_OUT);
+            return IS_NULLED(D_OUT) ? nullptr : Init_True(RESET(D_OUT));
 
         return D_OUT; }
 

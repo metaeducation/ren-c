@@ -67,7 +67,7 @@ REBNATIVE(quit)
         // THROW and CATCH isotopes?  It creates friction when errors have
         // isotopes in them...
         //
-        Init_Bad_Word(ARG(value), Canon(QUIT));
+        Init_Bad_Word(RESET(ARG(value)), Canon(QUIT));
     }
 
     return Init_Thrown_With_Label(D_OUT, ARG(value), Lib(QUIT));

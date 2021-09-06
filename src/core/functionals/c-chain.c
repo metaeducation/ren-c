@@ -117,6 +117,9 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
 //
 REB_R Chainer_Dispatcher(REBFRM *f)
 {
+    if (not Is_Fresh(f->out))
+        RESET(f->out);  // !!! Figure out where this comes from
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 
@@ -124,8 +127,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     const RELVAL *chained_tail = ARR_TAIL(pipeline);
     const RELVAL *chained = ARR_HEAD(pipeline);
 
-    Init_Unset(FRM_SPARE(f));
-    REBFRM *sub = Push_Downshifted_Frame(FRM_SPARE(f), f);
+    REBFRM *sub = Push_Downshifted_Frame(f_spare, f);
 
     INIT_FRM_PHASE(sub, VAL_ACTION(chained));
     INIT_FRM_BINDING(sub, VAL_ACTION_BINDING(chained));
@@ -180,8 +182,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
     Drop_Frame(sub);
 
-    Copy_Cell(f->out, FRM_SPARE(f));
-    return f->out;
+    return Move_Cell(f->out, f_spare);;
 }
 
 

@@ -108,7 +108,7 @@ bool Make_Invokable_From_Feed_Throws(
     if (ANY_GROUP(v))  // `requote (append [a b c] #d, <can't-work>)`
         fail ("Actions made with REFRAMER cannot work with GROUP!s");
 
-    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT);
+    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT);  // FULFILL_ONLY added below
     Push_Frame(out, f);
 
     if (Get_If_Word_Or_Path_Throws(
@@ -140,7 +140,7 @@ bool Make_Invokable_From_Feed_Throws(
     // to put the phase back.
     //
     DECLARE_LOCAL (action);
-    Copy_Cell(action, out);
+    Move_Cell(action, out);
     PUSH_GC_GUARD(action);
 
     // It is desired that any nulls encountered be processed as if they are
@@ -149,8 +149,8 @@ bool Make_Invokable_From_Feed_Throws(
     f->flags.bits |=
         EVAL_FLAG_ERROR_ON_DEFERRED_ENFIX;  // can't deal with ELSE/THEN/etc.
 
-    Push_Action(f, VAL_ACTION(f->out), VAL_ACTION_BINDING(f->out));
-    Begin_Prefix_Action(f, VAL_ACTION_LABEL(f->out));
+    Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
+    Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
     // Use this special mode where we ask the dispatcher not to run, just to
     // gather the args.  Push_Action() checks that it's not set, so we don't
@@ -160,11 +160,13 @@ bool Make_Invokable_From_Feed_Throws(
 
     assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));  // no invocation
 
-    if (Process_Action_Throws(f)) {
+    assert(Is_Fresh(f->out));
+    if (Process_Action_Maybe_Stale_Throws(f)) {
         DROP_GC_GUARD(action);
         Drop_Frame(f);
         return true;
     }
+    assert(Is_Fresh(f->out));  // should only have gathered arguments
 
     // At the moment, Begin_Prefix_Action() marks the frame as having been
     // invoked...but since it didn't get managed it drops the flag in
@@ -278,7 +280,7 @@ REB_R Reframer_Dispatcher(REBFRM *f)
         return R_THROWN;
 
     REBVAL *arg = FRM_ARG(f, VAL_INT32(param_index));
-    Copy_Cell(arg, f_spare);
+    Move_Cell(RESET(arg), f_spare);
 
     INIT_FRM_PHASE(f, VAL_ACTION(shim));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(shim));
@@ -396,7 +398,8 @@ REBNATIVE(reframer_p)
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
     REBVAL *var = CTX_VAR(exemplar, param_index);
-    Copy_Cell(var, CTX_ARCHETYPE(exemplar));
+    assert(Is_Unset(var));
+    Overwrite_Cell(var, CTX_ARCHETYPE(exemplar));
 
     // Make action with enough space to store the implementation phase and
     // which parameter to fill with the *real* frame instance.

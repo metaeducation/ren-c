@@ -210,7 +210,7 @@ inline static STKVAL(*) DS_PUSH(void) {
     if (DS_Movable_Top == DS_Movable_Tail)
         Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
     else
-        REFORMAT_CELL_IF_DEBUG(DS_Movable_Top);
+        assert(IS_END(DS_Movable_Top));
     return DS_Movable_Top;
 }
 
@@ -218,36 +218,27 @@ inline static STKVAL(*) DS_PUSH(void) {
 //
 // POPPING
 //
-// Since it's known that END markers were never pushed, a pop can just leave
-// whatever bits had been previously pushed, dropping only the index.  The
-// only END marker will be the one indicating the tail of the stack.
+// Each POP resets the cell, to reclaim its resources and make it ready to
+// use with an Init_Xxx() routine on the next push.
 //
 
-#ifdef NDEBUG
-    #define DS_DROP() \
-        (--DS_Index, --DS_Movable_Top)
+inline static void DS_DROP(void) {
+  #ifdef DEBUG_EXTANT_STACK_POINTERS
+    assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
+  #endif
+    RESET(DS_TOP);
+    --DS_Index;
+    --DS_Movable_Top;
+}
 
-    #define DS_DROP_TO(dsp) \
-        (DS_Movable_Top -= (DS_Index - (dsp)), DS_Index = (dsp))
-#else
-    inline static void DS_DROP(void) {
-      #ifdef DEBUG_EXTANT_STACK_POINTERS
-        assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
-      #endif
-        Init_Trash(DS_TOP); // mostly trashy but safe for NOT_END()
-        --DS_Index;
-        --DS_Movable_Top;
-    }
-
-    inline static void DS_DROP_TO(REBDSP dsp) {
-      #ifdef DEBUG_EXTANT_STACK_POINTERS
-        assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
-      #endif
-        assert(DSP >= dsp);
-        while (DSP != dsp)
-            DS_DROP();
-    }
-#endif
+inline static void DS_DROP_TO(REBDSP dsp) {
+  #ifdef DEBUG_EXTANT_STACK_POINTERS
+    assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
+  #endif
+    assert(DSP >= dsp);
+    while (DSP != dsp)
+        DS_DROP();
+}
 
 // If Pop_Stack_Values_Core is used ARRAY_HAS_FILE_LINE, it means the system
 // will try to capture the file and line number associated with the current

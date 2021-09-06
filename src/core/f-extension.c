@@ -232,7 +232,7 @@ REBNATIVE(load_extension)
         mutable_LINK(Bookmarks, m_cast(REBBIN*, bin)) = nullptr;
 
         if (SPORADICALLY(2))
-            Init_Text(script, STR(bin));
+            Init_Text(RESET(script), STR(bin));
     }
 
     // !!! We currently are pushing all extensions into the lib context so

@@ -1257,11 +1257,10 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer(Lib(BLANK)) == DETECTED_AS_CELL);
 
     // The system does not really intentionally "free" any cells, but they
-    // can happen in bad memory locations.  Along with CELL_FLAG_PROTECED and
+    // can happen in bad memory locations.  Along with CELL_FLAG_PROTECTED and
     // the potential absence of NODE_FLAG_CELL or NODE_FLAG_NODE, they make
     // four good ways that a random Copy_Cell() might fail in the debug
-    // build.  It could also become useful if one wanted a more "serious"
-    // form of trashing than REFORMAT_CELL_IF_DEBUG().
+    // build.
     //
   #ifdef DEBUG_POISON_CELLS
     DECLARE_LOCAL (freed_cell);

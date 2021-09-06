@@ -654,7 +654,7 @@ inline static option(REBSER*) Get_Word_Container(
             ){
                 *index_out = INDEX_ATTACHED;
                 return Singular_From_Cell(
-                    Append_Context(CTX(binding), nullptr, symbol)
+                    Init_Unset(Append_Context(CTX(binding), nullptr, symbol))
                 );
             }
 
@@ -851,8 +851,7 @@ inline static REBVAL *Sink_Word_May_Fail(
     REBSPC *specifier
 ){
     REBVAL *var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
-    REFORMAT_CELL_IF_DEBUG(var);
-    return var;
+    return RESET(var);
 }
 
 

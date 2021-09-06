@@ -108,22 +108,24 @@ REBNATIVE(delimit)
         // at dialect "source level".
         // https://forum.rebol.info/t/1348
         //
-        if (KIND3Q_BYTE_UNCHECKED(f->feed->value) == REB_BLANK) {
-            Literal_Next_In_Frame(out, f);
+        if (KIND3Q_BYTE_UNCHECKED(f_value) == REB_BLANK) {
+            Literal_Next_In_Frame(RESET(out), f);
             Append_Codepoint(mo->series, ' ');
             pending = false;
             nothing = false;
             continue;
         }
 
-        if (Eval_Step_Throws(out, f)) {
+        if (Eval_Step_Throws(RESET(out), f)) {
             Drop_Mold(mo);
             Abort_Frame(f);
             return R_THROWN;
         }
 
+        assert(Is_Fresh(f_spare));
+
         if (IS_END(out)) {
-            if (IS_END(f->feed->value)) {  // spaced []
+            if (IS_END(f_value)) {  // spaced []
                 assert(nothing);
                 break;
             }
@@ -180,6 +182,7 @@ REBNATIVE(delimit)
                     return R_THROWN;
                 }
                 Form_Value(mo, out);
+                RESET(f_spare);
 
                 pending = true;
             }
@@ -210,16 +213,17 @@ REBNATIVE(delimit)
 
     if (nothing) {
         Drop_Mold(mo);
-        Init_Nulled(D_OUT);
+        Init_Nulled(RESET(out));
     }
     else {
         if (REF(tail))
             Form_Value(mo, delimiter);
-        Init_Text(D_OUT, Pop_Molded_String(mo));
+        Init_Text(RESET(out), Pop_Molded_String(mo));
     }
 
     Drop_Frame(f);
 
+    assert(out == D_OUT);
     return D_OUT;
 }
 

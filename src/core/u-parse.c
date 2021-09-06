@@ -275,31 +275,31 @@ static bool Subparse_Throws(
     REBFRM *frame_ = f;
     INCLUDE_PARAMS_OF_SUBPARSE;
 
-    Init_Nulled(Prep_Cell(ARG(return)));
+    Init_Nulled(ARG(return));
 
-    Derelativize(Prep_Cell(ARG(input)), input, input_specifier);
+    Derelativize(ARG(input), input, input_specifier);
 
     assert((flags & PF_STATE_MASK) == 0);  // no "parse state" flags allowed
-    Init_Integer(Prep_Cell(ARG(flags)), flags);
+    Init_Integer(ARG(flags), flags);
 
     // If there's an array for collecting into, there has to be some way of
     // passing it between frames.
     //
     REBLEN collect_tail;
     if (collection) {
-        Init_Block(Prep_Cell(ARG(collection)), unwrap(collection));
+        Init_Block(ARG(collection), unwrap(collection));
         collect_tail = ARR_LEN(unwrap(collection));  // rollback here on fail
     }
     else {
-        Init_Nulled(Prep_Cell(ARG(collection)));
+        Init_Nulled(ARG(collection));
         collect_tail = 0;
     }
 
     // Locals in frame would be void on entry if called by action dispatch.
     //
-    Init_Unset(Prep_Cell(ARG(num_quotes)));
-    Init_Unset(Prep_Cell(ARG(position)));
-    Init_Unset(Prep_Cell(ARG(save)));
+    Init_Unset(ARG(num_quotes));
+    Init_Unset(ARG(position));
+    Init_Unset(ARG(save));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do
@@ -490,7 +490,7 @@ REB_R Process_Group_For_Parse(
         ? SPECIFIED
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
-    if (Do_Any_Array_At_Throws(cell, group, derived))
+    if (Do_Any_Array_At_Throws(RESET(cell), group, derived))
         return R_THROWN;
 
     // !!! The input is not locked from modification by agents other than the
@@ -1111,6 +1111,7 @@ static void Handle_Mark_Rule(
         )){
             fail (Error_No_Catch_For_Throw(D_OUT));
         }
+        RESET(D_OUT);
     }
     else
         fail (Error_Parse_Variable(frame_));
@@ -1238,7 +1239,8 @@ REBNATIVE(subparse)
     // But we save the number of quotes in a local variable.  This way we can
     // put the quotes back on whenever doing a COPY etc.
     //
-    Init_Integer(ARG(num_quotes), VAL_NUM_QUOTES(ARG(input)));
+    assert(Is_Unset(ARG(num_quotes)));
+    Init_Integer(RESET(ARG(num_quotes)), VAL_NUM_QUOTES(ARG(input)));
     Dequotify(ARG(input));
 
     // Make sure index position is not past END
@@ -1249,7 +1251,8 @@ REBNATIVE(subparse)
         VAL_INDEX_RAW(ARG(input)) = VAL_LEN_HEAD(ARG(input));
     }
 
-    Copy_Cell(ARG(position), ARG(input));
+    assert(Is_Unset(ARG(position)));
+    Overwrite_Cell(ARG(position), ARG(input));
 
     // Every time we hit an alternate rule match (with |), we have to reset
     // any of the collected values.  Remember the tail when we started.
@@ -1370,7 +1373,7 @@ REBNATIVE(subparse)
     //=//// (GROUP!) AND :(GET-GROUP!) PROCESSING /////////////////////////=//
 
     if (IS_BLANK(rule)) {  // pre-evaluative source blanks act like SKIP
-        rule = Init_Word(P_SAVE, Canon(SKIP));
+        rule = Init_Word(RESET(P_SAVE), Canon(SKIP));
     }
     else if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
 
@@ -1395,7 +1398,7 @@ REBNATIVE(subparse)
             goto pre_rule;
         }
         assert(rule == D_SPARE);
-        rule = Move_Cell(P_SAVE, D_SPARE);
+        rule = Move_Cell(RESET(P_SAVE), D_SPARE);
 
         // was a GET-GROUP!, e.g. :(...), fall through so its result will
         // act as a rule in its own right.
@@ -1414,7 +1417,7 @@ REBNATIVE(subparse)
       #endif
 
         if (--Eval_Countdown <= 0) {
-            SET_END(D_SPARE);
+            RESET(D_SPARE);
 
             if (Do_Signals_Throws(D_SPARE)) {
                 Move_Cell(D_OUT, D_SPARE);
@@ -1528,7 +1531,7 @@ REBNATIVE(subparse)
                         fail ("REPEAT range can't have lower max than minimum");
                 }
 
-                SET_END(D_OUT);
+                RESET(D_OUT);
 
                 FETCH_NEXT_RULE(f);
                 goto pre_rule;
@@ -1613,11 +1616,11 @@ REBNATIVE(subparse)
                     goto return_thrown;
 
                 if (IS_NULLED(D_OUT)) {  // match of rule failed
-                    SET_END(D_OUT);  // restore invariant
+                    RESET(D_OUT);  // restore invariant
                     goto next_alternate;  // backtrack collect, seek |
                 }
                 P_POS = VAL_INT32(D_OUT);
-                SET_END(D_OUT);  // restore invariant
+                RESET(D_OUT);  // restore invariant
 
                 Init_Block(
                     Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
@@ -1633,14 +1636,14 @@ REBNATIVE(subparse)
 
                 REBLEN pos_before = P_POS;
 
-                rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
+                rule = Get_Parse_Value(RESET(P_SAVE), P_RULE, P_RULE_SPECIFIER);
 
                 // If you say KEEP ^(whatever) then that acts like /ONLY did
                 //
                 bool only;
                 if (ANY_META_KIND(VAL_TYPE(rule))) {
                     if (rule != P_SAVE) {  // move to mutable location
-                        Derelativize(P_SAVE, rule, P_RULE_SPECIFIER);
+                        Derelativize(RESET(P_SAVE), rule, P_RULE_SPECIFIER);
                         rule = P_SAVE;
                     }
                     Plainify(P_SAVE);  // take the ^ off
@@ -1676,7 +1679,7 @@ REBNATIVE(subparse)
                     else
                         rebElide("append", ARG(collection), rebQ(D_OUT));
 
-                    SET_END(D_OUT);  // since we didn't throw, put it back
+                    RESET(D_OUT);  // since we didn't throw, put it back
 
                     // Don't touch P_POS, we didn't consume anything from
                     // the input series but just fabricated DO material.
@@ -1709,11 +1712,11 @@ REBNATIVE(subparse)
                         goto return_thrown;
 
                     if (IS_NULLED(D_OUT)) {  // match of rule failed
-                        SET_END(D_OUT);  // restore invariant
+                        RESET(D_OUT);  // restore invariant
                         goto next_alternate;  // backtrack collect, seek |
                     }
                     REBLEN pos_after = VAL_INT32(D_OUT);
-                    SET_END(D_OUT);  // restore invariant
+                    RESET(D_OUT);  // restore invariant
 
                     assert(pos_after >= pos_before);  // 0 or more matches
 
@@ -1756,12 +1759,13 @@ REBNATIVE(subparse)
 
                     if (target) {
                         REBLEN n;
-                        for (n = pos_before; n < pos_after; ++n)
+                        for (n = pos_before; n < pos_after; ++n) {
                             Derelativize(
                                 Alloc_Tail_Array(target),
                                 ARR_AT(ARR(P_INPUT), n),
                                 P_INPUT_SPECIFIER
                             );
+                        }
                     }
 
                     P_POS = pos_after;  // continue from end of kept data
@@ -1829,7 +1833,7 @@ REBNATIVE(subparse)
                 if (IS_TRUTHY(condition))
                     goto pre_rule;
 
-                Init_Nulled(ARG(position));  // not found
+                Init_Nulled(RESET(ARG(position)));  // not found
                 goto post_match_processing; }
 
               case SYM_ACCEPT:
@@ -1856,7 +1860,7 @@ REBNATIVE(subparse)
                 ); }
 
               case SYM_FAIL:  // deprecated... use LOGIC! false instead
-                Init_Nulled(ARG(position));  // not found
+                Init_Nulled(RESET(ARG(position)));  // not found
                 FETCH_NEXT_RULE(f);
                 goto post_match_processing;
 
@@ -1949,7 +1953,7 @@ REBNATIVE(subparse)
                 assert(IS_WORD(rule));  // word - some other variable
 
                 if (rule != P_SAVE) {
-                    Get_Parse_Value(P_SAVE, rule, P_RULE_SPECIFIER);
+                    Get_Parse_Value(RESET(P_SAVE), rule, P_RULE_SPECIFIER);
                     rule = P_SAVE;
                 }
             }
@@ -1966,7 +1970,7 @@ REBNATIVE(subparse)
                 Copy_Cell(D_OUT, D_SPARE);
                 goto return_thrown;
             }
-            rule = Copy_Cell(P_SAVE, D_SPARE);
+            rule = Copy_Cell(RESET(P_SAVE), D_SPARE);
         }
         else if (IS_SET_PATH(rule) or IS_SET_TUPLE(rule)) {
             Handle_Mark_Rule(f, rule, P_RULE_SPECIFIER);
@@ -2008,7 +2012,7 @@ REBNATIVE(subparse)
             goto pre_rule;
         }
         FETCH_NEXT_RULE(f);
-        Init_Nulled(ARG(position));  // not found
+        Init_Nulled(RESET(ARG(position)));  // not found
         goto post_match_processing;
 
       case REB_INTEGER:  // Specify repeat count
@@ -2018,7 +2022,7 @@ REBNATIVE(subparse)
         if (IS_END(P_RULE))
             fail (Error_Parse_End());
 
-        rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
+        rule = Get_Parse_Value(RESET(P_SAVE), P_RULE, P_RULE_SPECIFIER);
 
         if (IS_INTEGER(rule))
             fail ("[1 2 rule] now illegal https://forum.rebol.info/t/1578/6");
@@ -2079,7 +2083,7 @@ REBNATIVE(subparse)
 
                 if (!subrule) {  // capture only on iteration #1
                     subrule = Get_Parse_Value(
-                        P_SAVE, P_RULE, P_RULE_SPECIFIER
+                        RESET(P_SAVE), P_RULE, P_RULE_SPECIFIER
                     );
                     FETCH_NEXT_RULE(f);
                 }
@@ -2136,7 +2140,7 @@ REBNATIVE(subparse)
                     assert(r == D_OUT);
                     i = VAL_INT32(D_OUT);
                 }
-                SET_END(D_OUT);  // preserve invariant
+                RESET(D_OUT);  // preserve invariant
                 break; }
 
             // Because there are no LIT-XXX! datatypes, a special rule
@@ -2182,7 +2186,9 @@ REBNATIVE(subparse)
                     fail (Error_Parse_End());
 
                 if (!subrule) {
-                    subrule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
+                    subrule = Get_Parse_Value(
+                        RESET(P_SAVE), P_RULE, P_RULE_SPECIFIER
+                    );
                     FETCH_NEXT_RULE(f);
                 }
 
@@ -2228,7 +2234,7 @@ REBNATIVE(subparse)
                 bool interrupted;
                 if (Subparse_Throws(
                     &interrupted,
-                    SET_END(D_OUT),
+                    D_OUT,
                     into,
                     P_INPUT_SPECIFIER,  // harmless if specified API value
                     subframe,
@@ -2253,7 +2259,7 @@ REBNATIVE(subparse)
                 if (Is_Api_Value(into))
                     rebRelease(SPECIFIC(into));  // !!! rethink to use D_SPARE
 
-                SET_END(D_OUT);  // restore invariant
+                RESET(D_OUT);  // restore invariant
                 break; }
 
               default:
@@ -2271,7 +2277,7 @@ REBNATIVE(subparse)
             bool interrupted;
             if (Subparse_Throws(
                 &interrupted,
-                SET_END(D_SPARE),
+                RESET(D_SPARE),
                 ARG(position),
                 SPECIFIED,
                 subframe,
@@ -2294,7 +2300,7 @@ REBNATIVE(subparse)
             if (interrupted) {  // ACCEPT or REJECT ran
                 assert(i != THROWN_FLAG);
                 if (i == END_FLAG)
-                    Init_Nulled(ARG(position));
+                    Init_Nulled(RESET(ARG(position)));
                 else
                     P_POS = i;
                 break;
@@ -2313,7 +2319,7 @@ REBNATIVE(subparse)
                 assert(r == D_OUT);
                 i = VAL_INT32(D_OUT);
             }
-            SET_END(D_OUT);  // preserve invariant
+            RESET(D_OUT);  // preserve invariant
         }
 
         assert(i != THROWN_FLAG);
@@ -2324,7 +2330,7 @@ REBNATIVE(subparse)
         //
         if (i == END_FLAG) {  // this match failed
             if (count < mincount) {
-                Init_Nulled(ARG(position));  // num matches not enough
+                Init_Nulled(RESET(ARG(position)));  // num matches not enough
             }
             else {
                 // just keep index as is.
@@ -2341,7 +2347,7 @@ REBNATIVE(subparse)
         //
         if (P_POS == cast(REBINT, i) and (P_FLAGS & PF_FURTHER)) {
             if (not (P_FLAGS & PF_LOOPING))
-                Init_Nulled(ARG(position));  // need to fail rule, not loop
+                Init_Nulled(RESET(ARG(position)));  // fail the rule, not loop
             break;
         }
 
@@ -2356,7 +2362,7 @@ REBNATIVE(subparse)
     //
     if (not IS_NULLED(ARG(position)))
         if (P_POS > cast(REBIDX, P_INPUT_LEN))
-            Init_Nulled(ARG(position));  // not found
+            Init_Nulled(RESET(ARG(position)));  // not found
 
 
     //==////////////////////////////////////////////////////////////////==//
@@ -2376,9 +2382,9 @@ REBNATIVE(subparse)
     if (P_FLAGS & PF_STATE_MASK) {
         if (P_FLAGS & PF_NOT) {
             if ((P_FLAGS & PF_NOT2) and not IS_NULLED(ARG(position)))
-                Init_Nulled(ARG(position));  // not found
+                Init_Nulled(RESET(ARG(position)));  // not found
             else {
-                Copy_Cell(ARG(position), ARG(input));
+                Copy_Cell(RESET(ARG(position)), ARG(input));
                 P_POS = begin;
             }
         }
@@ -2527,7 +2533,7 @@ REBNATIVE(subparse)
                     fail (Error_Parse_End());
 
                 // new value...comment said "CHECK FOR QUOTE!!"
-                rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
+                rule = Get_Parse_Value(RESET(P_SAVE), P_RULE, P_RULE_SPECIFIER);
                 FETCH_NEXT_RULE(f);
 
                 // If you say KEEP ^(whatever) then that acts like /ONLY did
@@ -2535,7 +2541,7 @@ REBNATIVE(subparse)
                 bool only;
                 if (ANY_META_KIND(VAL_TYPE(rule))) {
                     if (rule != P_SAVE) {  // move to mutable location
-                        Derelativize(P_SAVE, rule, P_RULE_SPECIFIER);
+                        Derelativize(RESET(P_SAVE), rule, P_RULE_SPECIFIER);
                         rule = P_SAVE;
                     }
                     Plainify(P_SAVE);  // take the ^ off
@@ -2634,7 +2640,7 @@ REBNATIVE(subparse)
         // Jump to the alternate rule and reset input
         //
         FETCH_NEXT_RULE(f);
-        Copy_Cell(ARG(position), ARG(input));  // P_POS may be null
+        Overwrite_Cell(ARG(position), ARG(input));  // P_POS may be null
         begin = P_INPUT_IDX;
     }
 
@@ -2761,7 +2767,7 @@ REBNATIVE(parse_p)
         and IS_WORD(rules_tail - 1)  // last element processed was a WORD!
         and VAL_WORD_ID(rules_tail - 1) == SYM_HERE  // the word was HERE
     ){
-        Copy_Cell(D_OUT, ARG(input));
+        Copy_Cell(RESET(D_OUT), ARG(input));
         REBLEN num_quotes = Dequotify(D_OUT);  // take quotes out
         VAL_INDEX_UNBOUNDED(D_OUT) = index;  // cell guaranteed not REB_QUOTED
         return Quotify(D_OUT, num_quotes);  // put quotes back

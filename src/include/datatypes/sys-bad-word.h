@@ -189,37 +189,35 @@ inline static bool Is_Isotope(
 // it has actually gotten much easier with ^(...) behaviors.)
 //
 
-inline static REBVAL *Init_Nulled_Isotope(RELVAL *out) {
-    Init_Isotope(out, Canon(NULL));
-    return cast(REBVAL*, out);
-}
+#define Init_Nulled_Isotope(out) \
+    Init_Isotope((out), Canon(NULL))
 
 inline static bool Is_Nulled_Isotope(const RELVAL *v)
   { return Is_Isotope(v, SYM_NULL); }
 
 inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
     if (Is_Nulled_Isotope(v))
-        Init_Nulled(v);
+        Init_Nulled(RESET(v));
     else if (Is_Isotope(v, SYM_BLANK))
-        Init_Blank(v);
+        Init_Blank(RESET(v));
     else if (Is_Isotope(v, SYM_FALSE))
-        Init_False(v);
+        Init_False(RESET(v));
     return v;
 }
 
 inline static RELVAL *Isotopify_If_Falsey(RELVAL *v) {
     if (IS_NULLED(v))
-        Init_Isotope(v, Canon(NULL));
+        Init_Isotope(RESET(v), Canon(NULL));
     else if (IS_BLANK(v))
-        Init_Isotope(v, Canon(BLANK));
+        Init_Isotope(RESET(v), Canon(BLANK));
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
-        Init_Isotope(v, Canon(FALSE));
+        Init_Isotope(RESET(v), Canon(FALSE));
     return v;
 }
 
 inline static RELVAL *Isotopify_If_Nulled(RELVAL *v) {
     if (IS_NULLED(v))
-        Init_Nulled_Isotope(v);
+        Init_Nulled_Isotope(RESET(v));
     return v;
 }
 
@@ -228,22 +226,25 @@ inline static RELVAL *Isotopify_If_Nulled(RELVAL *v) {
 
 // Moving a cell invalidates the old location.  This idea is a potential
 // prelude to being able to do some sort of reference counting on series based
-// on the cells that refer to them tracking when they are overwritten.  In
-// the meantime, setting to unreadable trash helps see when a value that isn't
-// thought to be used any more is still being used.
+// on the cells that refer to them tracking when they are overwritten.  One
+// advantage would be being able to leave the reference counting as-is.
 //
-// (It basically would involve setting the old cell to trash, so the functions
-// live here for now.)
+// In the meantime, this just does a Copy + RESET.
 
 inline static REBVAL *Move_Cell_Untracked(
     RELVAL *out,
     REBVAL *v,
     REBFLGS copy_mask
 ){
-    Copy_Cell_Core(out, v, copy_mask);
-  #if defined(NDEBUG)
-    Init_Trash(v);  // no advantage in release build (yet!)
+    Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
+    RESET_Untracked(v);  // not useful to track and just implicate Move_Cell()
+
+  #if defined(DEBUG_TRACK_EXTEND_CELLS)  // `out` has tracking info we can use
+    v->file = out->file;
+    v->line = out->line;
+    v->tick = TG_Tick;
   #endif
+
     return cast(REBVAL*, out);
 }
 

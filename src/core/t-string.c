@@ -419,7 +419,7 @@ REB_R PD_String(
         if (n < 0 or cast(REBLEN, n) >= STR_LEN(s))
             return nullptr;
 
-        Init_Char_Unchecked(pvs->out, GET_CHAR_AT(s, n));
+        Init_Char_Unchecked(RESET(pvs->out), GET_CHAR_AT(s, n));
         return pvs->out;
     }
 
@@ -927,7 +927,7 @@ REBTYPE(String)
                     VAL_INDEX_RAW(v) = 0;
                 RETURN (v); // don't fail on read only if it would be a no-op
             }
-            Init_Nulled(ARG(value));  // low-level code treats NULL as nothing
+            Init_Nulled(RESET(ARG(value)));  // low-level treats NULL as nothing
         }
 
         REBFLGS flags = 0;
