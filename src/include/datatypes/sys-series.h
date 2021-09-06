@@ -514,7 +514,7 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
         //
       #ifdef DEBUG_TERM_ARRAYS
         if (IS_SER_ARRAY(s))
-            Init_Trash(SER_AT(RELVAL, s, used));
+            SET_CELL_FREE(SER_AT(RELVAL, s, used));
       #endif
     }
     else {
@@ -649,7 +649,7 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
     }
     else if (IS_SER_DYNAMIC(s) and IS_SER_ARRAY(s)) {
       #ifdef DEBUG_TERM_ARRAYS
-        Init_Trash(SER_TAIL(RELVAL, s));
+        SET_CELL_FREE(SER_TAIL(RELVAL, s));
       #endif
     }
 }

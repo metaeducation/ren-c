@@ -671,7 +671,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     }
 
   #ifdef DEBUG_TERM_ARRAYS
-    assert(IS_TRASH(f->arg));  // arg can otherwise point to any arg cell
+    assert(IS_CELL_FREE(f->arg));  // arg can otherwise point to any arg cell
   #endif
 
     // There may have been refinements that were skipped because the

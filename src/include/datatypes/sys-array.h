@@ -166,7 +166,7 @@ inline static void Prep_Array(
             Prep_Cell(prep);
 
       #ifdef DEBUG_TERM_ARRAYS  // allocation deliberately oversized by 1
-        Init_Trash(ARR_AT(a, a->content.dynamic.rest - 1));
+        SET_CELL_FREE(ARR_AT(a, a->content.dynamic.rest - 1));
       #endif
     }
     else {
@@ -205,7 +205,7 @@ inline static REBARR *Make_Array_Core(REBLEN capacity, REBFLGS flags)
         Prep_Array(ARR(s), capacity);
 
       #ifdef DEBUG_TERM_ARRAYS
-        Init_Trash(ARR_HEAD(ARR(s)));
+        SET_CELL_FREE(ARR_HEAD(ARR(s)));
       #endif
     }
     else {

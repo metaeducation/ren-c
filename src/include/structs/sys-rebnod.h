@@ -364,7 +364,8 @@ union Reb_Header {
     // this debugging pun if __TINYC__ is defined.
     //
   #if defined(DEBUG_USE_UNION_PUNS) && !defined(__TINYC__)
-    char bytes_pun[4];
+    unsigned char bytes_pun[4];
+    char chars_pun[4];
 
     #ifdef DEBUG_USE_BITFIELD_HEADER_PUNS
         struct Reb_Series_Header_Pun series_pun;

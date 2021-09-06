@@ -183,6 +183,11 @@
         if ((c)->header.bits != CELL_MASK_PREP) { \
             ASSERT_CELL_WRITABLE_EVIL_MACRO(c); \
         }
+
+    inline static RELVAL *INITABLE(RELVAL *c) {
+        ASSERT_CELL_INITABLE_EVIL_MACRO(c);
+        return c;
+    }
 #else
     #define ASSERT_CELL_READABLE_EVIL_MACRO(c)    NOOP
     #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c)    NOOP
@@ -190,6 +195,7 @@
 
     #define READABLE(c) (c)
     #define WRITABLE(c) (c)
+    #define INITABLE(c) (c)
 #endif
 
 
@@ -416,6 +422,19 @@ inline static const RELVAL* CELL_TO_VAL(REBCEL(const*) cell)
 
 #define NOT_CELL_FLAG(v,name) \
     ((READABLE(v)->header.bits & CELL_FLAG_##name) == 0)
+
+// NODE_FLAG_FREE is special; we use it for things like debug build indicating
+// array termination.  It doesn't make an empty/prepped cell non-empty.  We
+// use the WRITABLE() test for reading as well as setting the flag, and just
+// in case the cell is CELL_MASK_PREP we add NODE_FLAG_NODE and NODE_FLAG_CELL.
+
+#define SET_CELL_FREE(v) \
+    (INITABLE(v)->header.bits |= \
+        (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE))
+
+#define IS_CELL_FREE(v) \
+    (INITABLE(m_cast(RELVAL*, cast(const RELVAL*, (v))))->header.bits \
+        & NODE_FLAG_FREE)
 
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//

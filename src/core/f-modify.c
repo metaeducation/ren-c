@@ -207,7 +207,7 @@ REBLEN Modify_Array(
 
   #ifdef DEBUG_TERM_ARRAYS
     if (IS_SER_DYNAMIC(dst_arr))
-        Init_Trash(ARR_TAIL(dst_arr));
+        SET_CELL_FREE(ARR_TAIL(dst_arr));
   #endif
 
     ASSERT_ARRAY(dst_arr);

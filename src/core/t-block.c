@@ -1658,7 +1658,7 @@ void Assert_Array_Core(const REBARR *a)
 
       #ifdef DEBUG_TERM_ARRAYS
         assert(rest > 0 and rest > i);
-        if (NOT_SERIES_FLAG(a, FIXED_SIZE) and not IS_TRASH(item))
+        if (NOT_SERIES_FLAG(a, FIXED_SIZE) and not IS_CELL_FREE(item))
             panic (item);
         ++item;
         rest = rest - 1;
