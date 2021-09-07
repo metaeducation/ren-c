@@ -295,7 +295,8 @@ static void uv__mkostemp_initonce(void) {
    * because it doesn't have mkostemp(O_CLOEXEC) either.
    */
 #ifdef RTLD_DEFAULT
-  uv__mkostemp = (int (*)(char*, int)) dlsym(RTLD_DEFAULT, "mkostemp");
+  void* p = dlsym(RTLD_DEFAULT, "mkostemp");
+  memcpy(&uv__mkostemp, &p, sizeof(uv__mkostemp));
 
   /* We don't care about errors, but we do want to clean them up.
    * If there has been no error, then dlerror() will just return

@@ -40,7 +40,6 @@ extern size_t Read_IO(REBYTE *buf, size_t size);
 
 
 #if defined(REBOL_SMART_CONSOLE)
-    extern STD_TERM *Term_IO;
     STD_TERM *Term_IO = nullptr;
 #endif
 
