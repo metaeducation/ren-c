@@ -230,7 +230,7 @@ REBVAR *Append_Context(
 
         if (any_word) {  // bind word while we're at it
             INIT_VAL_WORD_BINDING(unwrap(any_word), patch);
-            INIT_VAL_WORD_PRIMARY_INDEX(unwrap(any_word), 1);
+            INIT_VAL_WORD_PRIMARY_INDEX(unwrap(any_word), INDEX_ATTACHED);
         }
 
         return cast(REBVAR*, Init_Unset(ARR_SINGLE(patch)));

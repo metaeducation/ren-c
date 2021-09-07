@@ -375,7 +375,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
                     assert(index != 0 and index != INDEX_ATTACHED);
             }
             else if (IS_PATCH(BINDING(v)))
-                assert(index == 1);
+                assert(index == 1 or index == INDEX_ATTACHED);
             else
                 assert(index != 0);
         }
