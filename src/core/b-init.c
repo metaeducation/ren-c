@@ -187,7 +187,7 @@ static void Startup_Lib(void)
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
-        REBSER *patch = &PG_Lib_Patches[i];
+        REBARR *patch = &PG_Lib_Patches[i];
         patch->leader.bits = NODE_FLAG_NODE
             | FLAG_FLAVOR(PATCH)  // checked when setting LINK(PatchContext)
             | PATCH_FLAG_LET
@@ -226,6 +226,38 @@ static void Startup_Lib(void)
     assert(IS_FALSEY(Lib(FALSE)) and VAL_LOGIC(Lib(FALSE)) == false);
 
     // !!! Other constants are just initialized as part of Startup_Base().
+}
+
+
+//
+//  Shutdown_Lib: C
+//
+static void Shutdown_Lib(void)
+{
+    // !!! Since the PG_Lib_Patches are REBSER that live outside the pools,
+    // the Shutdown_GC() will not kill them off.  We want to make sure the
+    // variables are RESET() and that the patches look empty in case the
+    // Startup() gets called again.
+    //
+    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
+        REBARR *patch = &PG_Lib_Patches[i];
+
+        if (LINK(PatchContext, patch) == nullptr)
+            continue;  // was never initialized !!! should it not be in lib?
+
+        RESET(ARR_SINGLE(patch));
+        Decay_Series(patch);
+
+        // !!! Typically nodes aren't zeroed out when they are freed.  Since
+        // this one is a global, it is set to nullptr just to indicate that
+        // the freeing process happened.  Should all nodes be zeroed?
+        //
+        mutable_LINK(PatchContext, patch) = nullptr;
+    }
+
+    rebRelease(Lib_Context_Value);
+    Lib_Context_Value = nullptr;
+    Lib_Context = nullptr;
 }
 
 
@@ -416,6 +448,18 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
+    RESET(&PG_End_Cell);
+    RESET(&PG_Meta_Value);
+    RESET(&PG_The_Value);
+    RESET(&PG_Unset_Value);
+    RESET(&PG_Void_Value);
+
+    RESET(&PG_R_Thrown);
+    RESET(&PG_R_Invisible);
+    RESET(&PG_R_Redo_Unchecked);
+    RESET(&PG_R_Redo_Checked);
+    RESET(&PG_R_Unhandled);
+
     rebRelease(Root_Empty_Text);
     Root_Empty_Text = nullptr;
     rebRelease(Root_Empty_Block);
@@ -1102,9 +1146,7 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Datatypes();
 
-    rebRelease(Lib_Context_Value);
-    Lib_Context_Value = nullptr;
-    Lib_Context = nullptr;
+    Shutdown_Lib();
 
     rebRelease(Sys_Context_Value);
     Sys_Context_Value = nullptr;
