@@ -67,7 +67,7 @@ inline static REBVAL *Init_Any_Word_Core(
 }
 
 #define Init_Any_Word(out,kind,spelling) \
-    Init_Any_Word_Core(TRACK_CELL_IF_DEBUG(out), (kind), (spelling))
+    Init_Any_Word_Core(TRACK(out), (kind), (spelling))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
@@ -102,7 +102,7 @@ inline static REBVAL *Init_Any_Word_Bound_Core(
 }
 
 #define Init_Any_Word_Bound(out,type,context,symbol,index) \
-    Init_Any_Word_Bound_Core(TRACK_CELL_IF_DEBUG(out), \
+    Init_Any_Word_Bound_Core(TRACK(out), \
             (type), CTX_VARLIST(context), (symbol), (index))
 
 inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
@@ -120,7 +120,7 @@ inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
 }
 
 #define Init_Any_Word_Attached(out,type,module,symbol) \
-    Init_Any_Word_Bound_Core(TRACK_CELL_IF_DEBUG(out), \
+    Init_Any_Word_Bound_Core(TRACK(out), \
             (type), (symbol), CTX_VARLIST(module), INDEX_ATTACHED)
 
 // Helper calls strsize() so you can more easily use literals at callsite.

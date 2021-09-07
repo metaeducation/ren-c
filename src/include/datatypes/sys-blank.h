@@ -63,4 +63,4 @@ inline static REBVAL *Init_Blank_Untracked(RELVAL *out) {
 }
 
 #define Init_Blank(out) \
-    Init_Blank_Untracked(TRACK_CELL_IF_DEBUG(out))
+    Init_Blank_Untracked(TRACK(out))

@@ -79,7 +79,7 @@
 // Note: definition of Init_Bad_Word_Untracked() is in %sys-trash.h
 
 #define Init_Bad_Word(out,sym) \
-    Init_Bad_Word_Untracked(TRACK_CELL_IF_DEBUG(out), (sym), CELL_MASK_NONE)
+    Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_MASK_NONE)
 
 inline static const REBSYM* VAL_BAD_WORD_LABEL(
     REBCEL(const*) v
@@ -114,7 +114,7 @@ inline static bool Is_Isotope(
 }
 
 #define Init_Isotope(out,sym) \
-    Init_Bad_Word_Untracked(TRACK_CELL_IF_DEBUG(out), (sym), CELL_FLAG_ISOTOPE)
+    Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_FLAG_ISOTOPE)
 
 
 // ~unset~ is chosen in particular by the system to represent variables that
@@ -249,7 +249,7 @@ inline static REBVAL *Move_Cell_Untracked(
 }
 
 #define Move_Cell(out,v) \
-    Move_Cell_Untracked(TRACK_CELL_IF_DEBUG(out), (v), CELL_MASK_COPY)
+    Move_Cell_Untracked(TRACK(out), (v), CELL_MASK_COPY)
 
 #define Move_Cell_Core(out,v,cell_mask) \
-    Move_Cell_Untracked(TRACK_CELL_IF_DEBUG(out), (v), (cell_mask))
+    Move_Cell_Untracked(TRACK(out), (v), (cell_mask))

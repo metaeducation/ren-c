@@ -141,7 +141,7 @@ inline static REBVAL *Init_Return_Signal_Untracked(RELVAL *out, char ch) {
 }
 
 #define Init_Return_Signal(out,ch) \
-    Init_Return_Signal_Untracked(TRACK_CELL_IF_DEBUG(out), (ch))
+    Init_Return_Signal_Untracked(TRACK(out), (ch))
 
 #define IS_RETURN_SIGNAL(v) \
     (KIND3Q_BYTE(v) == REB_T_RETURN_SIGNAL)
@@ -491,7 +491,7 @@ static inline REBVAL *Init_Action_Core(
 }
 
 #define Init_Action(out,a,label,binding) \
-    Init_Action_Core(TRACK_CELL_IF_DEBUG(out), (a), (label), (binding))
+    Init_Action_Core(TRACK(out), (a), (label), (binding))
 
 inline static REB_R Run_Generic_Dispatch(
     const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?

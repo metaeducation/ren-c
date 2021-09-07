@@ -33,7 +33,7 @@
     #define TOUCH_CELL(c) \
         ((c)->touch = TG_Tick)
 
-    inline static RELVAL *Track_Cell_If_Debug(
+    inline static REBVAL *Track_Cell_Debug(
         RELVAL *v,
         const char *file,
         int line
@@ -50,7 +50,7 @@
     }
 
   #ifdef CPLUSPLUS_11
-    inline static REBVAL *Track_Cell_If_Debug(
+    inline static REBVAL *Track_Cell_Debug(
         REBVAL *v,
         const char *file,
         int line
@@ -70,24 +70,27 @@
     // NOTE: There is no guarantee of evaluation order of function arguments
     // in C.  So if there's code like:
     //
-    //    #define Init_Logic(out,flag) /* [backslash in comment => warning] */
-    //        Init_Logic_Core(TRACK_CELL_IF_DEBUG(out), (flag))
+    //    #define Init_Logic(out,flag)  Init_Logic_Core(TRACK(out), (flag))
     //
     // The tracking information may be put in the cell *before* or *after*
     // the right hand side is evaluated.  So imagine something like:
     //
     //     Init_Logic(D_OUT, not VAL_LOGIC(D_OUT));
     //
-    // So TRACK_CELL_IF_DEBUG() can't do anything that would corrupt the
-    // release-build-bits of `out`, since it might run first.  This is why
-    // the tracking information is fully separate, and doesn't try to exploit
-    // that not all cell types use all bits to hide more information.
+    // So TRACK() can't do anything that would corrupt the release-build-bits
+    // of `out`, since it might run first.  This is why the tracking info is
+    // fully separate, and doesn't try to exploit that not all cell types use
+    // all bits to hide more information.
     //
-    #define TRACK_CELL_IF_DEBUG(v) \
-        Track_Cell_If_Debug((v), __FILE__, __LINE__)
+    // !!! Update: The point is moot now that Init_Xxx() routines require
+    // cells to be cleared out, because a RESET() can't be put in the init
+    // for similar reasons.  Debug tracking is still separate for simplicity.
+    //
+    #define TRACK(v) \
+        Track_Cell_Debug((v), __FILE__, __LINE__)
 
 #else
 
-    #define TRACK_CELL_IF_DEBUG(v) (v)
+    #define TRACK(v) (v)
 
 #endif

@@ -60,7 +60,7 @@ inline static REBVAL *SET_END_Untracked(RELVAL *out) {
 }
 
 #define SET_END(out) \
-    SET_END_Untracked(TRACK_CELL_IF_DEBUG(out))
+    SET_END_Untracked(TRACK(out))
 
 
 // Optimized Prep + SET_END (optimize after it's finalized)
@@ -69,7 +69,7 @@ inline static REBVAL *Prep_End_Untracked(RELVAL *out)
   { return SET_END_Untracked(Prep_Cell_Untracked(out)); }
 
 #define Prep_End(out) \
-    TRACK_CELL_IF_DEBUG(Prep_End_Untracked(out))
+    TRACK(Prep_End_Untracked(out))  // TRACK() expects REB_0, call *after*
 
 
 // IMPORTANT: Notice that END markers may not have NODE_FLAG_CELL, and may

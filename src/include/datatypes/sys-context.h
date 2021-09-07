@@ -198,8 +198,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
 }
 
 #define INIT_VAL_CONTEXT_ROOTVAR(out,kind,varlist) \
-    INIT_VAL_CONTEXT_ROOTVAR_Core( \
-        TRACK_CELL_IF_DEBUG(out), (kind), (varlist))
+    INIT_VAL_CONTEXT_ROOTVAR_Core(TRACK(out), (kind), (varlist))
 
 inline static void INIT_VAL_FRAME_ROOTVAR_Core(
     RELVAL *out,
@@ -222,8 +221,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 }
 
 #define INIT_VAL_FRAME_ROOTVAR(out,varlist,phase,binding) \
-    INIT_VAL_FRAME_ROOTVAR_Core( \
-        TRACK_CELL_IF_DEBUG(out), (varlist), (phase), (binding))
+    INIT_VAL_FRAME_ROOTVAR_Core(TRACK(out), (varlist), (phase), (binding))
 
 
 //=//// CONTEXT KEYLISTS //////////////////////////////////////////////////=//

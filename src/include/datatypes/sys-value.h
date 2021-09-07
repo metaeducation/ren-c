@@ -417,24 +417,6 @@ inline static const RELVAL* CELL_TO_VAL(REBCEL(const*) cell)
 
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//
-//
-// RESET_VAL_HEADER clears out the header of *most* bits, setting it to a
-// new type.  The type takes up the full second byte of the header (see
-// details in %sys-quoted.h for how this byte is used).
-//
-// RESET_CELL is a variant of RESET_VAL_HEADER that overwrites the entire
-// cell payload with tracking information.  It should not be used if the
-// intent is to preserve the payload and extra.
-//
-// (Note: RESET_CELL is used more often than it should right now in Init_XXX()
-// routines.  They should be phrased in terms of macros that pass in the
-// result of TRACK_CELL_IF_DEBUG() or TRACK_CELL_IF_EXTEND_DEBUG() at the
-// init callsite, so it captures the right __FILE__ and __LINE__.  This is
-// an ongoing cleanup effort, to be pursued as those routines are audited.)
-//
-// The value is expected to already be "pre-formatted" with the NODE_FLAG_CELL
-// bit, so that is left as-is.  See also CELL_MASK_PERSIST.
-//
 
 inline static RELVAL *RESET_Untracked(RELVAL *v) {
     ASSERT_CELL_INITABLE_EVIL_MACRO(v);  // header may be CELL_MASK_PREP, all 0
@@ -443,14 +425,12 @@ inline static RELVAL *RESET_Untracked(RELVAL *v) {
 }
 
 #ifdef CPLUSPLUS_11
-    inline static REBVAL *RESET_Untracked(REBVAL *v) {
-        v->header.bits &= CELL_MASK_PERSIST;
-        return v;
-    }
+    inline static REBVAL *RESET_Untracked(REBVAL *v)
+      { return cast(REBVAL*, RESET_Untracked(cast(RELVAL*, v))); }
 #endif
 
 #define RESET(v) \
-    TRACK_CELL_IF_DEBUG(RESET_Untracked(v))
+    TRACK(RESET_Untracked(v))  // TRACK expects REB_0, so call *after* reset
 
 inline static REBVAL *INIT_VAL_HEADER(
     RELVAL *v,
@@ -503,12 +483,8 @@ inline static RELVAL *Prep_Cell_Untracked(RELVAL *c) {
     return c;
 }
 
-// This usage of TRACK_CELL_IF_DEBUG() is special because it happens *after*
-// the prep.  This is because TRACK_CELL_IF_DEBUG() ensures what it is tracking
-// is in the REB_0 state.
-//
 #define Prep_Cell(c) \
-    TRACK_CELL_IF_DEBUG(Prep_Cell_Untracked(c))
+    TRACK(Prep_Cell_Untracked(c))  // TRACK() expects REB_0, so track *after*
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -762,10 +738,10 @@ inline static RELVAL *Copy_Cell_Untracked(
 #endif
 
 #define Copy_Cell(out,v) \
-    Copy_Cell_Untracked(TRACK_CELL_IF_DEBUG(out), (v), CELL_MASK_COPY)
+    Copy_Cell_Untracked(TRACK(out), (v), CELL_MASK_COPY)
 
 #define Copy_Cell_Core(out,v,copy_mask) \
-    Copy_Cell_Untracked(TRACK_CELL_IF_DEBUG(out), (v), (copy_mask))
+    Copy_Cell_Untracked(TRACK(out), (v), (copy_mask))
 
 #define Overwrite_Cell(out,v) \
     Copy_Cell(RESET_Untracked(out), (v))

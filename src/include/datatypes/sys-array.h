@@ -180,7 +180,7 @@ inline static void Prep_Array(
         //
       #if defined(DEBUG_POISON_CELLS)
         for (; n < a->content.dynamic.rest; ++n, ++prep) {
-            USED(TRACK_CELL_IF_DEBUG(prep));
+            USED(TRACK(prep));
             prep->header.bits = CELL_MASK_POISON;  // unwritable + unreadable
         }
       #endif

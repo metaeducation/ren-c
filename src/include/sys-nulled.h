@@ -52,7 +52,7 @@ inline static REBVAL *Init_Nulled_Untracked(RELVAL *out) {
 }
 
 #define Init_Nulled(out) \
-    Init_Nulled_Untracked(TRACK_CELL_IF_DEBUG(out))
+    Init_Nulled_Untracked(TRACK(out))
 
 
 

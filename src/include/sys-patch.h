@@ -226,7 +226,7 @@ inline static REBARR *Make_Patch_Core(
     }
     else {
         Init_Any_Word_Bound_Core(
-            TRACK_CELL_IF_DEBUG(ARR_SINGLE(patch)),
+            TRACK(ARR_SINGLE(patch)),
             kind,
             binding,
             IS_VARLIST(binding)

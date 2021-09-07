@@ -90,7 +90,7 @@ inline static REBVAL *Init_Bad_Word_Untracked(
     }
 
     #define Init_Trash(out) \
-        Init_Trash_Untracked(TRACK_CELL_IF_DEBUG(out))
+        Init_Trash_Untracked(TRACK(out))
 
     inline static bool IS_TRASH(const RELVAL *v) {
         if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
