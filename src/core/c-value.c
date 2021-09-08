@@ -173,69 +173,13 @@ void* Probe_Core_Debug(
     }
     else switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
-        Probe_Print_Helper(p, expr, "C String", file, line);
-        printf("\"%s\"\n", cast(const char*, p));
-        break;
-
-      case DETECTED_AS_SERIES: {
-        REBSER *s = m_cast(REBSER*, cast(const REBSER*, p));
-
-        ASSERT_SERIES(s); // if corrupt, gives better info than a print crash
-
-        // This routine is also a little catalog of the outlying series
-        // types in terms of sizing, just to know what they are.
-
-        if (SER_WIDE(s) == sizeof(REBYTE)) {
-            if (IS_SER_UTF8(s)) {
-                if (IS_SYMBOL(s))
-                    Probe_Print_Helper(p, expr, "WORD! series", file, line);
-                else
-                    Probe_Print_Helper(p, expr, "STRING! series", file, line);
-                Mold_Text_Series_At(mo, STR(s), 0);  // or could be TAG!, etc.
-            }
-            else {
-                REBBIN *bin = BIN(s);
-                Probe_Print_Helper(p, expr, "Byte-Size Series", file, line);
-
-                // !!! Duplication of code in MF_Binary
-                //
-                const bool brk = (BIN_LEN(bin) > 32);
-                Append_Ascii(mo->series, "#{");
-                Form_Base16(mo, BIN_HEAD(bin), BIN_LEN(bin), brk);
-                Append_Ascii(mo->series, "}");
-            }
+        if (*cast(const REBYTE*, p) == '\0')
+            Probe_Print_Helper(p, expr, "REB_0 (or NUL C String)", file, line);
+        else {
+            Probe_Print_Helper(p, expr, "C String", file, line);
+            printf("\"%s\"\n", cast(const char*, p));
         }
-        else if (IS_SER_ARRAY(s)) {
-            if (IS_VARLIST(s)) {
-                Probe_Print_Helper(p, expr, "Context Varlist", file, line);
-                Probe_Molded_Value(CTX_ARCHETYPE(CTX(s)));
-            }
-            else {
-                Probe_Print_Helper(p, expr, "Array", file, line);
-                Mold_Array_At(mo, ARR(s), 0, "[]"); // not necessarily BLOCK!
-            }
-        }
-        else if (IS_KEYLIST(s)) {
-            assert(SER_WIDE(s) == sizeof(REBKEY));  // ^-- or is byte size
-            Probe_Print_Helper(p, expr, "Keylist Series", file, line);
-            const REBKEY *tail = SER_TAIL(REBKEY, s);
-            const REBKEY *key = SER_HEAD(REBKEY, s);
-            Append_Ascii(mo->series, "<< ");
-            for (; key != tail; ++key) {
-                Mold_Text_Series_At(mo, KEY_SYMBOL(key), 0);
-                Append_Codepoint(mo->series, ' ');
-            }
-            Append_Ascii(mo->series, ">>");
-        }
-        else if (s == PG_Symbols_By_Hash) {
-            printf("can't probe PG_Symbols_By_Hash (TBD: add probing)\n");
-        }
-        else if (s == GC_Guarded) {
-            printf("can't probe GC_Guarded (TBD: add probing)\n");
-        }
-        else
-            panic (s);
-        break; }
+        goto cleanup;
 
       case DETECTED_AS_FREED_SERIES:
         Probe_Print_Helper(p, expr, "Freed Series", file, line);
@@ -248,7 +192,7 @@ void* Probe_Core_Debug(
         if (IS_TRASH(v)) {  // IS_NULLED() asserts on trash
             Probe_Print_Helper(p, expr, "Value", file, line);
             Append_Ascii(mo->series, "~trash~");
-            break;
+            goto cleanup;
         }
       #endif
 
@@ -269,16 +213,185 @@ void* Probe_Core_Debug(
         }
         else
             Mold_Value(mo, v);
-        break; }
+        goto cleanup; }
 
       case DETECTED_AS_END:
         Probe_Print_Helper(p, expr, "END", file, line);
-        break;
+        goto cleanup;
 
       case DETECTED_AS_FREED_CELL:
         Probe_Print_Helper(p, expr, "Freed Cell", file, line);
         panic (p);
+
+      case DETECTED_AS_SERIES:
+        break;  // lots of possibilities, break to handle
     }
+
+    // If we didn't jump to cleanup above, it's a series.  New switch().
+
+    REBSER *s = m_cast(REBSER*, cast(const REBSER*, p));
+    assert(not IS_FREE_NODE(s));  // Detect should have caught, above
+
+    ASSERT_SERIES(s); // if corrupt, gives better info than a print crash
+
+    switch (SER_FLAVOR(s)) {
+
+    //=//// ARRAY FLAVORS //////////////////////////////////////////////////=//
+
+      case FLAVOR_ARRAY:
+        Probe_Print_Helper(p, expr, "Generic Array", file, line);
+        Mold_Array_At(mo, ARR(s), 0, "[]"); // not necessarily BLOCK!
+        break;
+
+      case FLAVOR_VARLIST:  // currently same as FLAVOR_PARAMLIST
+        Probe_Print_Helper(p, expr, "Varlist (or Paramlist)", file, line);
+        Probe_Molded_Value(CTX_ARCHETYPE(CTX(s)));
+        break;
+
+      case FLAVOR_DETAILS:
+        Probe_Print_Helper(p, expr, "Action", file, line);
+        MF_Action(mo, ACT_ARCHETYPE(ACT(p)), false);
+        break;
+
+      case FLAVOR_PAIRLIST:
+        Probe_Print_Helper(p, expr, "Pairlist", file, line);
+        break;
+
+      case FLAVOR_PATCH: {
+        if (NOT_SUBCLASS_FLAG(PATCH, s, LET)) {
+            Probe_Print_Helper(p, expr, "non-LET Patch", file, line);
+            break;
+        }
+        REBSER *link = SER(node_LINK(Node, s));
+        if (FLAVOR_VARLIST == SER_FLAVOR(link))
+            Probe_Print_Helper(p, expr, "Module Item Patch", file, line);
+        else
+            Probe_Print_Helper(p, expr, "LET Patch", file, line);
+        break; }
+
+      case FLAVOR_HITCH:
+        Probe_Print_Helper(p, expr, "Hitch", file, line);
+        break;
+
+      case FLAVOR_PARTIALS:
+        Probe_Print_Helper(p, expr, "Partials", file, line);
+        break;
+
+      case FLAVOR_LIBRARY:
+        Probe_Print_Helper(p, expr, "Library", file, line);
+        break;
+
+      case FLAVOR_HANDLE:
+        Probe_Print_Helper(p, expr, "Handle", file, line);
+        break;
+
+      case FLAVOR_GOBLIST:
+        Probe_Print_Helper(p, expr, "Goblist", file, line);
+        break;
+
+      case FLAVOR_DATASTACK:
+        Probe_Print_Helper(p, expr, "Datastack", file, line);
+        break;
+
+      case FLAVOR_FEED:
+        Probe_Print_Helper(p, expr, "Feed", file, line);
+        break;
+
+      case FLAVOR_API:
+        Probe_Print_Helper(p, expr, "API Handle", file, line);
+        break;
+
+      case FLAVOR_INSTRUCTION_ADJUST_QUOTING:
+        Probe_Print_Helper(p, expr, "Quoting Instruction", file, line);
+        break;
+
+      case FLAVOR_INSTRUCTION_SPLICE:
+        Probe_Print_Helper(p, expr, "Splicing Instruction", file, line);
+        break;
+
+    //=//// SERIES WITH ELEMENTS sizeof(void*) /////////////////////////////=//
+
+      case FLAVOR_KEYLIST: {
+        assert(SER_WIDE(s) == sizeof(REBKEY));  // ^-- or is byte size
+        Probe_Print_Helper(p, expr, "Keylist Series", file, line);
+        const REBKEY *tail = SER_TAIL(REBKEY, s);
+        const REBKEY *key = SER_HEAD(REBKEY, s);
+        Append_Ascii(mo->series, "<< ");
+        for (; key != tail; ++key) {
+            Mold_Text_Series_At(mo, KEY_SYMBOL(key), 0);
+            Append_Codepoint(mo->series, ' ');
+        }
+        Append_Ascii(mo->series, ">>");
+        break; }
+
+      case FLAVOR_POINTER:
+        Probe_Print_Helper(p, expr, "Series of void*", file, line);
+        break;
+
+      case FLAVOR_CANONTABLE:
+        Probe_Print_Helper(p, expr, "Canon Table", file, line);
+        break;
+
+      case FLAVOR_NODELIST:  // e.g. GC protect list
+        Probe_Print_Helper(p, expr, "Series of NODE*", file, line);
+        break;
+
+      case FLAVOR_SERIESLIST:  // e.g. manually allocated series list
+        Probe_Print_Helper(p, expr, "Series of REBSER*", file, line);
+        break;
+
+      case FLAVOR_MOLDSTACK:
+        Probe_Print_Helper(p, expr, "Mold Stack", file, line);
+        break;
+
+    //=//// SERIES WITH ELEMENTS sizeof(REBLEN) ////////////////////////////=//
+
+      case FLAVOR_HASHLIST:
+        Probe_Print_Helper(p, expr, "Hashlist", file, line);
+        break;
+
+    //=//// SERIES WITH ELEMENTS sizeof(struct Reb_Bookmark) ///////////////=//
+
+      case FLAVOR_BOOKMARKLIST:
+        Probe_Print_Helper(p, expr, "Bookmarklist", file, line);
+        break;
+
+    //=//// SERIES WITH ELEMENTS WIDTH 1 ///////////////////////////////////=//
+
+      case FLAVOR_BINARY: {
+        REBBIN *bin = BIN(s);
+        Probe_Print_Helper(p, expr, "Byte-Size Series", file, line);
+
+        const bool brk = (BIN_LEN(bin) > 32);  // !!! duplicates MF_Binary code
+        Append_Ascii(mo->series, "#{");
+        Form_Base16(mo, BIN_HEAD(bin), BIN_LEN(bin), brk);
+        Append_Ascii(mo->series, "}");
+        break; }
+
+    //=//// SERIES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 //////////////=//
+
+      case FLAVOR_STRING: {
+        Probe_Print_Helper(p, expr, "Symbol series", file, line);
+        Mold_Text_Series_At(mo, STR(s), 0);  // or could be TAG!, etc.
+        break; }
+
+      case FLAVOR_SYMBOL: {
+        Probe_Print_Helper(p, expr, "String series", file, line);
+        Mold_Text_Series_At(mo, STR(s), 0);  // or could be TAG!, etc.
+        break; }
+
+    #if !defined(NDEBUG)  // PROBE() is sometimes in non-debug executables
+      case FLAVOR_TRASH:
+        Probe_Print_Helper(p, expr, "!!! TRASH Series !!!", file, line);
+        break;
+
+      default:
+        Probe_Print_Helper(p, expr, "!!! Unknown SER_FLAVOR() !!!", file, line);
+        break;
+    #endif
+    }
+
+  cleanup:
 
     if (mo->offset != STR_LEN(mo->series))
         printf("%s\n", cast(const char*, STR_AT(mo->series, mo->index)));
