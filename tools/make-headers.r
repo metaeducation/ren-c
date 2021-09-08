@@ -374,7 +374,7 @@ parse native-list [
             e-params/emit newline
         )
     ]
-    end
+    '~done~
 ] else [
     fail "Error processing native-list"
 ]

@@ -176,8 +176,7 @@ REBARR *Startup_Generics(const REBVAL *boot_generics)
     DECLARE_LOCAL (result);
     if (Do_Any_Array_At_Throws(result, boot_generics, SPECIFIED))
         panic (result);
-
-    if (not IS_BLANK(result))
+    if (not Is_Isotope(result, SYM_DONE))
         panic (result);
 
     // Sanity check the symbol transformation

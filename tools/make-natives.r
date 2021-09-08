@@ -159,6 +159,11 @@ for-each [
     ]
 ]
 
+append output-buffer unspaced [
+    newline
+    "~done~  ; C code expects evaluation to end in ~done~" newline
+    newline
+]
 
 write-if-changed make-file [(output-dir) boot/tmp-natives.r] output-buffer
 
@@ -192,7 +197,7 @@ append output-buffer mold/only load make-file [(src-dir) boot/generics.r]
 
 append output-buffer unspaced [
     newline
-    "_  ; C code expects BLANK! evaluation result, at present" newline
+    "~done~  ; C code expects evaluation to end in ~done~" newline
     newline
 ]
 

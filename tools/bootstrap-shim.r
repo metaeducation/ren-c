@@ -102,6 +102,11 @@ trap [
 here: []
 seek: []
 
+; Done is used as a signal in the boot files that the expected end is reached.
+; This is a BAD-WORD! in modern Ren-C, but a plain word in the bootstrap EXE.
+;
+~done~: does [null]
+
 repeat: :loop
 loop: :while
 while: lib/func [] [fail/where "Use LOOP not WHILE" 'return]
