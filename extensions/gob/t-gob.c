@@ -232,7 +232,7 @@ static void Insert_Gobs(
             }
         }
         else
-            fail (Error_Bad_Value_Core(val, SPECIFIED));
+            fail (Error_Bad_Value(val));
     }
     arg = sarg;
 
@@ -925,7 +925,7 @@ REBTYPE(Gob)
                     return R_UNHANDLED;
             }
             else
-                fail (rebUnrelativize(picker));
+                fail (picker);
         }
         else {
             if (IS_INTEGER(picker)) {
@@ -944,7 +944,7 @@ REBTYPE(Gob)
                     return R_UNHANDLED;
             }
             else
-                fail (rebUnrelativize(picker));
+                fail (picker);
 
             if (steps_left == 1) {
                 assert(not poking);

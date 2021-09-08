@@ -159,7 +159,7 @@ bool Next_Path_Throws(REBPVS *pvs)
     REBFRM * const f = pvs;  // to use the f_xxx macros
 
     if (IS_NULLED(pvs->out))
-        fail (Error_No_Value_Core(f_value, f_specifier));
+        fail (Error_No_Value(f_value));
 
     bool actions_illegal = false;
 
@@ -461,7 +461,7 @@ bool Eval_Path_Throws_Core(
 
     if (NOT_END(f_value)) {
         if (IS_NULLED(pvs->out))
-            fail (Error_No_Value_Core(lookback, specifier));
+            fail (Error_No_Value(lookback));
 
         if (Next_Path_Throws(pvs))
             goto return_thrown;
@@ -689,7 +689,7 @@ REBNATIVE(pick)
     else switch (VAL_RETURN_SIGNAL(r)) {
       case C_UNHANDLED: {
         assert(r == R_UNHANDLED);
-        fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(PVS_PICKER(pvs)))); }
+        fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs))); }
 
       default:
         panic ("Unsupported return value in Path Dispatcher");
@@ -779,7 +779,7 @@ REBNATIVE(poke)
                 //
                 REBARR *binding = VAL_WORD_BINDING(item);
                 if (not binding)
-                    fail (Error_Not_Bound_Raw(rebUnrelativize(item)));
+                    fail (Error_Not_Bound_Raw(item));
 
                 // !!! The below isn't working, and points to the need to do
                 // some serious work on LET patches.
@@ -810,7 +810,7 @@ REBNATIVE(poke)
                 }
             }
             else
-                fail (rebUnrelativize(item));
+                fail (item);
         }
 
         // The rest of the array should be pre-COMPOSE'd, because that is what

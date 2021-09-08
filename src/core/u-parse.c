@@ -366,15 +366,11 @@ inline static REBCTX *Error_Parse_End(void) {
 }
 
 inline static REBCTX *Error_Parse_Command(REBFRM *frame_) {
-    DECLARE_LOCAL (command);
-    Derelativize(command, P_RULE, P_RULE_SPECIFIER);
-    return Error_Parse_Command_Raw(command);
+    return Error_Parse_Command_Raw(P_RULE);
 }
 
 inline static REBCTX *Error_Parse_Variable(REBFRM *frame_) {
-    DECLARE_LOCAL (variable);
-    Derelativize(variable, P_RULE, P_RULE_SPECIFIER);
-    return Error_Parse_Variable_Raw(variable);
+    return Error_Parse_Variable_Raw(P_RULE);
 }
 
 
@@ -458,7 +454,7 @@ static const RELVAL *Get_Parse_Value(
             fail (Error_No_Catch_For_Throw(cell));
 
         if (IS_NULLED(cell))
-            fail (Error_No_Value_Core(rule, specifier));
+            fail (Error_No_Value(rule));
 
         return cell;
     }

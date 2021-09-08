@@ -239,7 +239,7 @@ bool Add_Typeset_Bits_Core(
             }
         }
         else
-            fail (Error_Bad_Value_Core(maybe_word, specifier));
+            fail (Error_Bad_Value(maybe_word));
 
         // !!! Review erroring policy--should probably not just be ignoring
         // things that aren't recognized here (!)

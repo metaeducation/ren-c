@@ -431,7 +431,7 @@ REB_R PD_Varargs(
     const RELVAL *picker
 ){
     if (not IS_INTEGER(picker))
-        fail (rebUnrelativize(picker));
+        fail (picker);
 
     if (VAL_INT32(picker) != 1)
         fail (Error_Varargs_No_Look_Raw());

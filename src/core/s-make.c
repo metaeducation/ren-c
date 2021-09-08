@@ -392,7 +392,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
           case REB_BAD_WORD:
             if (VAL_BAD_WORD_ID(val) == SYM_NULL)
                 break;  // since we're just joining, allow ~null~ to work
-            fail (Error_Bad_Value_Core(val, VAL_SPECIFIER(blk)));
+            fail (Error_Bad_Value(val));
 
           case REB_INTEGER:
             EXPAND_SERIES_TAIL(buf, 1);
@@ -421,7 +421,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
             break; }
 
           default:
-            fail (Error_Bad_Value_Core(val, VAL_SPECIFIER(blk)));
+            fail (Error_Bad_Value(val));
         }
 
         tail = SER_USED(buf);

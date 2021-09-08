@@ -177,11 +177,11 @@ REBNATIVE(lambda)
         else if (IS_QUOTED(DS_TOP)) {
             Unquotify(DS_TOP, 1);
             if (not IS_WORD(DS_TOP))
-                fail (rebUnrelativize(item));
+                fail (item);
             pclass = PARAM_CLASS_HARD;
         }
         else
-            fail (rebUnrelativize(item));
+            fail (item);
 
         Init_Param(DS_PUSH(), pclass, TS_OPT_VALUE);
 

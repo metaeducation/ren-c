@@ -337,7 +337,7 @@ bool Set_Bits(REBBIN *bset, const RELVAL *val, bool set)
                     } while (c++ < n); // post-increment: test before overflow
                 }
                 else
-                    fail (Error_Bad_Value_Core(item, VAL_SPECIFIER(val)));
+                    fail (Error_Bad_Value(item));
             }
             else
                 Set_Bit(bset, c, set);
@@ -362,7 +362,7 @@ bool Set_Bits(REBBIN *bset, const RELVAL *val, bool set)
                         Set_Bit(bset, c, set);
                 }
                 else
-                    fail (Error_Bad_Value_Core(item, VAL_SPECIFIER(val)));
+                    fail (Error_Bad_Value(item));
             }
             else
                 Set_Bit(bset, n, set);
@@ -469,7 +469,7 @@ bool Check_Bits(const REBBIN *bset, const RELVAL *val, bool uncased)
                             return true;
                 }
                 else
-                    fail (Error_Bad_Value_Core(item, VAL_SPECIFIER(val)));
+                    fail (Error_Bad_Value(item));
             }
             else
                 if (Check_Bit(bset, c, uncased))
@@ -492,7 +492,7 @@ bool Check_Bits(const REBBIN *bset, const RELVAL *val, bool uncased)
                             return true;
                 }
                 else
-                    fail (Error_Bad_Value_Core(item, VAL_SPECIFIER(val)));
+                    fail (Error_Bad_Value(item));
             }
             else
                 if (Check_Bit(bset, n, uncased))

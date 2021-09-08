@@ -190,7 +190,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
             return false;
 
         // `do [x:]`, `do [o/x:]`, etc. are illegal
-        fail (Error_Need_Non_End_Core(v, v_specifier));
+        fail (Error_Need_Non_End(v));
     }
 
     // Using a SET-XXX! means you always have at least two elements; it's like
@@ -238,7 +238,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
             return false;
 
         // e.g. `do [x: ()]` or `(x: comment "hi")`.
-        fail (Error_Need_Non_End_Core(v, v_specifier));
+        fail (Error_Need_Non_End(v));
     }
 
     CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // this helper counts as eval
@@ -729,7 +729,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             IS_BAD_WORD(unwrap(gotten))
             and GET_CELL_FLAG(unwrap(gotten), ISOTOPE)
         ){
-            fail (Error_Bad_Word_Get_Core(v, v_specifier, unwrap(gotten)));
+            fail (Error_Bad_Word_Get(v, unwrap(gotten)));
         }
 
         Overwrite_Cell(f->out, unwrap(gotten));  // no CELL_FLAG_UNEVALUATED
@@ -814,7 +814,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             Meta_Quotify(f->out);
         else {
             if (IS_BAD_WORD(f->out) and GET_CELL_FLAG(f->out, ISOTOPE))
-                fail (Error_Bad_Word_Get_Core(v, v_specifier, f->out));
+                fail (Error_Bad_Word_Get(v, f->out));
         }
 
         STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
@@ -1045,7 +1045,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         }
 
         if (IS_BAD_WORD(f_spare) and GET_CELL_FLAG(f_spare, ISOTOPE))
-            fail (Error_Bad_Word_Get_Core(v, v_specifier, f_spare));
+            fail (Error_Bad_Word_Get(v, f_spare));
 
         Move_Cell(RESET(f->out), f_spare);  // won't move CELL_FLAG_UNEVALUATED
         break; }
@@ -1158,7 +1158,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             Meta_Quotify(f->out);
         else {
             if (IS_BAD_WORD(f->out) and GET_CELL_FLAG(f->out, ISOTOPE))
-                fail (Error_Bad_Word_Get_Core(v, v_specifier, f->out));
+                fail (Error_Bad_Word_Get(v, f->out));
         }
 
         STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;

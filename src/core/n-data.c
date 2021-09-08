@@ -558,12 +558,12 @@ void Get_Var_May_Fail(
         }
     }
     else
-        fail (Error_Bad_Value_Core(source, specifier));
+        fail (Error_Bad_Value(source));
 
     if (IS_BAD_WORD(out)) {
         if (GET_CELL_FLAG(out, ISOTOPE)) {
             if (not any)
-                fail (Error_Bad_Word_Get_Core(source, specifier, out));
+                fail (Error_Bad_Word_Get(source, out));
         }
     }
 
@@ -708,7 +708,7 @@ void Set_Var_May_Fail(
         DROP_GC_GUARD(setval_specific);
     }
     else
-        fail (Error_Bad_Value_Core(target, target_specifier));
+        fail (Error_Bad_Value(target));
 }
 
 
@@ -822,7 +822,7 @@ REBNATIVE(resolve)
 
         const REBVAL *src = MOD_VAR(source, symbol, strict);
         if (src == nullptr)
-            fail (rebUnrelativize(v));  // fail if unset value, also?
+            fail (v);  // fail if unset value, also?
 
         REBVAL *dest = MOD_VAR(where, symbol, strict);
         if (dest != nullptr) {

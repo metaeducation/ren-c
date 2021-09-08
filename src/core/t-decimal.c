@@ -237,7 +237,7 @@ REB_R MAKE_Decimal(
         else if (IS_DECIMAL(item) || IS_PERCENT(item))
             d = VAL_DECIMAL(item);
         else
-            fail (Error_Bad_Value_Core(item, VAL_SPECIFIER(arg)));
+            fail (Error_Bad_Value(item));
 
         ++item;
 
@@ -247,7 +247,7 @@ REB_R MAKE_Decimal(
         else if (IS_DECIMAL(item) || IS_PERCENT(item))
             exp = VAL_DECIMAL(item);
         else
-            fail (Error_Bad_Value_Core(item, VAL_SPECIFIER(arg)));
+            fail (Error_Bad_Value(item));
 
         while (exp >= 1) {
             //

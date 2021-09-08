@@ -246,7 +246,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         break; }
 
       case DETECTED_AS_CELL: {
-        const REBVAL *v = cast(const REBVAL*, p);
+        const RELVAL *v = cast(const RELVAL*, p);
 
         // Check to see if the REBVAL* cell is in the paramlist of the current
         // running native.  (We could theoretically do this with ARG(), or
@@ -259,6 +259,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             // any value, then it would call into question the treatment of
             // the error as an error and not erroring on "some value"
             //
+            assert(not IS_RELATIVE(v));
             if (IS_ERROR(v)) {
                 error = VAL_CONTEXT(v);
             }
@@ -266,7 +267,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
                 assert(!"fail() given API handle that is not an ERROR!");
                 error = Error_Bad_Value(v);
             }
-            rebRelease(v);  // would be cleaned up even if we didn't...
+            rebRelease(cast(const REBVAL*, v));  // released even if we didn't
         }
         else if (not Is_Action_Frame(FS_TOP))
             error = Error_Bad_Value(v);
@@ -274,8 +275,10 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             const REBPAR *head = ACT_PARAMS_HEAD(FRM_PHASE(FS_TOP));
             REBLEN num_params = ACT_NUM_PARAMS(FRM_PHASE(FS_TOP));
 
-            if (v >= head and v < head + num_params)
-                error = Error_Invalid_Arg(FS_TOP, cast_PAR(v));
+            if (v >= head and v < head + num_params) {
+                const REBPAR *param = cast_PAR(cast(const REBVAL*, v));
+                error = Error_Invalid_Arg(FS_TOP, param);
+            }
             else
                 error = Error_Bad_Value(v);
         }
@@ -840,10 +843,22 @@ REBCTX *Make_Error_Managed_Core(
                     Init_Void(var);
                 }
                 else if (IS_RELATIVE(cast(const RELVAL*, p))) {
-                    assert(!"Relative argument in Make_Error_Managed()");
-                    Init_Unset(var);
+                    //
+                    // Originally, relative values triggered assertions here.
+                    // But specific values aren't always available to present
+                    // error messages on, and even when they are it might be
+                    // a pain to get the specifier tunneled through.  So we
+                    // just "unrelativize" the values now--and try to use the
+                    // effort that would be spent derelativizing better ways.
+                    //
+                    const RELVAL *relative = cast(const RELVAL*, p);
+                    Unrelativize(var, relative);
                 }
                 else {
+                    // !!! Since some values are being unrelativized, should
+                    // *all* error arguments be unrelativized?  Might that
+                    // even be better for errors, to not "leak" bindings?
+                    //
                     const REBVAL *arg = cast(const REBVAL*, p);
                     Copy_Cell(var, arg);
                 }
@@ -927,35 +942,25 @@ REBCTX *Error_User(const char *utf8) {
 
 
 //
-//  Error_Need_Non_End_Core: C
+//  Error_Need_Non_End: C
 //
-REBCTX *Error_Need_Non_End_Core(
-    const RELVAL *target,
-    REBSPC *specifier
-){
+REBCTX *Error_Need_Non_End(const RELVAL *target) {
     assert(IS_SET_WORD(target) or IS_SET_PATH(target));
-
-    DECLARE_LOCAL (specific);
-    Derelativize(specific, target, specifier);
-    return Error_Need_Non_End_Raw(specific);
+    return Error_Need_Non_End_Raw(target);
 }
 
 
 //
-//  Error_Bad_Word_Get_Core: C
+//  Error_Bad_Word_Get: C
 //
-REBCTX *Error_Bad_Word_Get_Core(
+REBCTX *Error_Bad_Word_Get(
     const RELVAL *target,
-    REBSPC *specifier,
     const RELVAL *bad
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
     assert(ANY_WORD(target) or ANY_SEQUENCE(target) or ANY_BLOCK(target));
     assert(IS_BAD_WORD(bad));
-
-    DECLARE_LOCAL (specific);
-    Derelativize(specific, target, specifier);
 
     // Don't want the error message to have an isotope version as argument, as
     // they're already paying for an error regarding the state.
@@ -964,22 +969,7 @@ REBCTX *Error_Bad_Word_Get_Core(
     Copy_Cell(bad_safe, SPECIFIC(bad));
     CLEAR_CELL_FLAG(bad_safe, ISOTOPE);
 
-    return Error_Bad_Word_Get_Raw(specific, bad_safe);
-}
-
-
-//
-//  Error_Need_Non_Null_Core: C
-//
-REBCTX *Error_Need_Non_Null_Core(const RELVAL *target, REBSPC *specifier) {
-    //
-    // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
-    //
-    assert(ANY_WORD(target) or ANY_PATH(target) or ANY_BLOCK(target));
-
-    DECLARE_LOCAL (specific);
-    Derelativize(specific, target, specifier);
-    return Error_Need_Non_Null_Raw(specific);
+    return Error_Bad_Word_Get_Raw(target, bad_safe);
 }
 
 
@@ -1161,11 +1151,11 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
 
 
 //
-//  Error_Bad_Value_Core: C
+//  Error_Bad_Value: C
 //
 // Will turn into an unknown error if a nulled cell is passed in.
 //
-REBCTX *Error_Bad_Value_Core(const RELVAL *value, REBSPC *specifier)
+REBCTX *Error_Bad_Value(const RELVAL *value)
 {
     if (IS_NULLED(value))
         return Error_Unknown_Error_Raw();
@@ -1173,37 +1163,15 @@ REBCTX *Error_Bad_Value_Core(const RELVAL *value, REBSPC *specifier)
     if (IS_BAD_WORD(value) and GET_CELL_FLAG(value, ISOTOPE))
         return Error_Bad_Isotope(value);
 
-    DECLARE_LOCAL (specific);
-    Derelativize(specific, value, specifier);
-
-    return Error_Bad_Value_Raw(specific);
-}
-
-//
-//  Error_Bad_Value_Core: C
-//
-REBCTX *Error_Bad_Value(const REBVAL *value)
-{
-    return Error_Bad_Value_Core(value, SPECIFIED);
-}
-
-
-//
-//  Error_No_Value_Core: C
-//
-REBCTX *Error_No_Value_Core(const RELVAL *target, REBSPC *specifier) {
-    DECLARE_LOCAL (specified);
-    Derelativize(specified, target, specifier);
-
-    return Error_No_Value_Raw(specified);
+    return Error_Bad_Value_Raw(value);
 }
 
 
 //
 //  Error_No_Value: C
 //
-REBCTX *Error_No_Value(const REBVAL *target) {
-    return Error_No_Value_Core(target, SPECIFIED);
+REBCTX *Error_No_Value(const RELVAL *target) {
+    return Error_No_Value_Raw(target);
 }
 
 
@@ -1243,7 +1211,7 @@ REBCTX *Error_Invalid_Type(enum Reb_Kind kind)
 //
 // value out of range: <value>
 //
-REBCTX *Error_Out_Of_Range(const REBVAL *arg)
+REBCTX *Error_Out_Of_Range(const RELVAL *arg)
 {
     return Error_Out_Of_Range_Raw(arg);
 }
@@ -1274,7 +1242,7 @@ REBCTX *Error_Math_Args(enum Reb_Kind type, const REBSYM *verb)
 //
 //  Error_Cannot_Use: C
 //
-REBCTX *Error_Cannot_Use(const REBSYM *verb, const REBVAL *first_arg)
+REBCTX *Error_Cannot_Use(const REBSYM *verb, const RELVAL *first_arg)
 {
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1399,7 +1367,7 @@ REBCTX *Error_Bad_Invisible(REBFRM *f) {
 //
 //  Error_Bad_Make: C
 //
-REBCTX *Error_Bad_Make(enum Reb_Kind type, const REBVAL *spec)
+REBCTX *Error_Bad_Make(enum Reb_Kind type, const RELVAL *spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
 }
@@ -1408,7 +1376,7 @@ REBCTX *Error_Bad_Make(enum Reb_Kind type, const REBVAL *spec)
 //
 //  Error_Bad_Make_Parent: C
 //
-REBCTX *Error_Bad_Make_Parent(enum Reb_Kind type, const REBVAL *parent)
+REBCTX *Error_Bad_Make_Parent(enum Reb_Kind type, const RELVAL *parent)
 {
     assert(parent != nullptr);
     return Error_Bad_Make_Parent_Raw(Datatype_From_Kind(type), parent);

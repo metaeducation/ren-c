@@ -612,7 +612,7 @@ REB_R MAKE_Date(
 
             tz = cast(REBINT, VAL_NANO(item) / (ZONE_MINS * MIN_SEC));
             if (tz < -MAX_ZONE or tz > MAX_ZONE)
-                fail (Error_Out_Of_Range(SPECIFIC(item)));
+                fail (Error_Out_Of_Range(item));
             ++item;
 
             if (item != tail)
@@ -683,11 +683,11 @@ void Pick_Or_Poke_Date(
         case 11: sym = SYM_MINUTE; break;
         case 12: sym = SYM_SECOND; break;
         default:
-            fail (SPECIFIC(picker));
+            fail (picker);
         }
     }
     else
-        fail (rebUnrelativize(picker));
+        fail (picker);
 
     // When a date has a time zone on it, then this can distort the integer
     // value of the month/day/year that is seen in rendering from what is
@@ -893,7 +893,7 @@ void Pick_Or_Poke_Date(
           case SYM_JULIAN:
           case SYM_WEEKDAY:
           case SYM_UTC:
-            fail (rebUnrelativize(picker));
+            fail (picker);
 
           case SYM_DATE: {
             if (not IS_DATE(poke))
@@ -955,7 +955,7 @@ void Pick_Or_Poke_Date(
             goto check_nanoseconds; }
 
           default:
-            fail (rebUnrelativize(picker));
+            fail (picker);
         }
 
         // R3-Alpha went through a shady process of "normalization" if you

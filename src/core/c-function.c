@@ -203,19 +203,19 @@ void Push_Paramlist_Triads_May_Fail(
                 continue;
             }
             else
-                fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+                fail (Error_Bad_Func_Def_Raw(item));
         }
 
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
         if (IS_BLOCK(item)) {
             if (IS_BAD_WORD(KEY_SLOT(DSP)))  // too early, `func [[integer!] {!}]`
-                fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+                fail (Error_Bad_Func_Def_Raw(item));
 
             STKVAL(*) types = TYPES_SLOT(DSP);
 
             if (IS_BLOCK(types))  // too many, `func [x [integer!] [blank!]]`
-                fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+                fail (Error_Bad_Func_Def_Raw(item));
 
             assert(IS_NULLED(types));
 
@@ -233,7 +233,7 @@ void Push_Paramlist_Triads_May_Fail(
             // the time of calling.
             //
             if (mode != SPEC_MODE_NORMAL)  // <local> <with>
-                fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+                fail (Error_Bad_Func_Def_Raw(item));
 
             STKVAL(*) param = PARAM_SLOT(DSP);
 
@@ -277,7 +277,7 @@ void Push_Paramlist_Triads_May_Fail(
         bool quoted = false;  // single quoting level used as signal in spec
         if (VAL_NUM_QUOTES(item) > 0) {
             if (VAL_NUM_QUOTES(item) > 1)
-                fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+                fail (Error_Bad_Func_Def_Raw(item));
             quoted = true;
         }
 
@@ -291,7 +291,7 @@ void Push_Paramlist_Triads_May_Fail(
         bool refinement = false;  // paths with blanks at head are refinements
         if (ANY_PATH_KIND(kind)) {
             if (not IS_REFINEMENT_CELL(cell))
-                fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+                fail (Error_Bad_Func_Def_Raw(item));
 
             refinement = true;
             refinement_seen = true;
@@ -377,14 +377,14 @@ void Push_Paramlist_Triads_May_Fail(
             }
         }
         else
-            fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+            fail (Error_Bad_Func_Def_Raw(item));
 
         if (not local and pclass == PARAM_CLASS_0)  // didn't match
-            fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+            fail (Error_Bad_Func_Def_Raw(item));
 
         if (mode != SPEC_MODE_NORMAL) {
             if (pclass != PARAM_CLASS_NORMAL and not local)
-                fail (Error_Bad_Func_Def_Raw(rebUnrelativize(item)));
+                fail (Error_Bad_Func_Def_Raw(item));
 
             if (mode == SPEC_MODE_LOCAL)
                 local = true;

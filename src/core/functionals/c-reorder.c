@@ -178,7 +178,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
 
         REBLEN index = Remove_Binder_Index_Else_0(&binder, symbol);
         if (index == 0) {
-            error = Error_Bad_Parameter_Raw(rebUnrelativize(item));
+            error = Error_Bad_Parameter_Raw(item);
             goto cleanup_binder;
         }
 

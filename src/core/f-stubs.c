@@ -40,18 +40,18 @@ REBINT Get_Num_From_Arg(const RELVAL *val)
 
     if (IS_INTEGER(val)) {
         if (VAL_INT64(val) > INT32_MAX or VAL_INT64(val) < INT32_MIN)
-            fail (Error_Out_Of_Range(SPECIFIC(val)));
+            fail (Error_Out_Of_Range(val));
         n = VAL_INT32(val);
     }
     else if (IS_DECIMAL(val) or IS_PERCENT(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
-            fail (Error_Out_Of_Range(SPECIFIC(val)));
+            fail (Error_Out_Of_Range(val));
         n = cast(REBINT, VAL_DECIMAL(val));
     }
     else if (IS_LOGIC(val))
         n = (VAL_LOGIC(val) ? 1 : 2);
     else
-        fail (rebUnrelativize(val));
+        fail (val);
 
     return n;
 }
@@ -92,7 +92,7 @@ REBINT Int32(const RELVAL *val)
     return VAL_INT32(val);
 
 out_of_range:
-    fail (Error_Out_Of_Range(SPECIFIC(val)));
+    fail (Error_Out_Of_Range(val));
 }
 
 
@@ -134,7 +134,7 @@ REBINT Int32s(const RELVAL *val, REBINT sign)
     }
 
 out_of_range:
-    fail (Error_Out_Of_Range(SPECIFIC(val)));
+    fail (Error_Out_Of_Range(val));
 }
 
 

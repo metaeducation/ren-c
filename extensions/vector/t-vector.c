@@ -533,7 +533,7 @@ void Pick_Vector(REBVAL *out, const REBVAL *value, const RELVAL *picker) {
     if (IS_INTEGER(picker) or IS_DECIMAL(picker)) // #2312
         n = Int32(picker);
     else
-        fail (rebUnrelativize(picker));
+        fail (picker);
 
     if (n == 0) {
         Init_Nulled(out);
@@ -576,17 +576,17 @@ void Poke_Vector_Fail_If_Read_Only(
     if (IS_INTEGER(picker) or IS_DECIMAL(picker)) // #2312
         n = Int32(picker);
     else
-        fail (rebUnrelativize(picker));
+        fail (picker);
 
     if (n == 0)
-        fail (Error_Out_Of_Range(SPECIFIC(picker)));  // Rebol2/Red convention
+        fail (Error_Out_Of_Range(picker));  // Rebol2/Red convention
     if (n < 0)
         ++n; // Rebol2/Red convention, poking -1 from tail sets last item
 
     n += VAL_VECTOR_INDEX(value);
 
     if (n <= 0 or cast(REBLEN, n) > VAL_VECTOR_LEN_AT(value))
-        fail (Error_Out_Of_Range(SPECIFIC(picker)));
+        fail (Error_Out_Of_Range(picker));
 
     Set_Vector_At(value, n - 1, poke);
 }

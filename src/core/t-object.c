@@ -76,7 +76,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     const RELVAL *word;
     for (word = item; word != tail; word += 2) {
         if (not IS_WORD(word) and not IS_SET_WORD(word)) {
-            error = Error_Bad_Value_Core(word, VAL_SPECIFIER(arg));
+            error = Error_Bad_Value(word);
             goto collect_end;
         }
 
@@ -1153,7 +1153,7 @@ REBTYPE(Context)
 
         const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
         if (not IS_WORD(picker))
-            fail (rebUnrelativize(picker));
+            fail (picker);
 
         const REBSYM *symbol = VAL_WORD_SYMBOL(picker);
 
@@ -1166,14 +1166,14 @@ REBTYPE(Context)
           update_bits: ;
             REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
             if (not var)
-                fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(picker)));
+                fail (Error_Bad_Path_Pick_Raw(picker));
 
             Overwrite_Cell(var, setval);
         }
         else {
             const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
             if (not var)
-                fail (Error_Bad_Path_Pick_Raw(rebUnrelativize(picker)));
+                fail (Error_Bad_Path_Pick_Raw(picker));
 
           #if !defined(NDEBUG)
             enum Reb_Kind var_type = VAL_TYPE(var);

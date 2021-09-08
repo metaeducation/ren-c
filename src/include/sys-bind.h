@@ -401,9 +401,8 @@ inline static REBVAL* Unrelativize(RELVAL* out, const RELVAL* v) {
     return cast(REBVAL*, out);
 }
 
-// This is a super lazy version of unrelativization, which can be used to
-// hand a relative value to something like fail(), since fail will clean up
-// the stray alloc.
+// This was used to pass arguments to errors when specifiers were not available
+// but then Error() started accepting relative values directly.
 //
 #define rebUnrelativize(v) \
     Unrelativize(Alloc_Value(), (v))
@@ -759,8 +758,8 @@ static inline const REBVAL *Lookup_Word_May_Fail(
     );
     if (not s) {
         if (VAL_WORD_BINDING(any_word) == UNBOUND)
-            fail (Error_Not_Bound_Raw(SPECIFIC(any_word)));
-        fail (Error_Unassigned_Attach_Raw(SPECIFIC(any_word)));
+            fail (Error_Not_Bound_Raw(any_word));
+        fail (Error_Unassigned_Attach_Raw(any_word));
     }
     if (IS_PATCH(s))
         return SPECIFIC(ARR_SINGLE(ARR(s)));
@@ -797,10 +796,7 @@ static inline const REBVAL *Get_Word_May_Fail(
 ){
     const REBVAL *var = Lookup_Word_May_Fail(any_word, specifier);
     if (IS_BAD_WORD(var))
-        fail (Error_Bad_Word_Get_Core(
-            cast(const REBVAL*, any_word), specifier,
-            var
-        ));
+        fail (Error_Bad_Word_Get(any_word, var));
 
     return Copy_Cell(out, var);
 }
@@ -814,7 +810,7 @@ static inline REBVAL *Lookup_Mutable_Word_May_Fail(
         Get_Word_Container(&index, any_word, specifier, ATTACH_WRITE)
     );
     if (not s)
-        fail (Error_Not_Bound_Raw(SPECIFIC(any_word)));
+        fail (Error_Not_Bound_Raw(any_word));
 
     REBVAL *var;
     if (IS_PATCH(s))

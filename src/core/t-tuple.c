@@ -436,7 +436,7 @@ REB_R PD_Sequence(
         n = n - 1;
     }
     else
-        fail (rebUnrelativize(picker));
+        fail (picker);
 
     if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(pvs->out)))
         return nullptr;

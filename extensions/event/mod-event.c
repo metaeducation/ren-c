@@ -192,7 +192,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             break;
 
           default:
-            fail (Error_Bad_Value_Core(val, SPECIFIED));
+            fail (Error_Bad_Value(val));
         }
     }
 

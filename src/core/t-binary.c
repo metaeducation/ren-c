@@ -396,7 +396,7 @@ REBTYPE(Binary)
 
         REBINT n = Int32(picker) + VAL_INDEX(v) - 1;
         if (n < 0 or cast(REBLEN, n) >= BIN_LEN(VAL_BINARY(v)))
-            fail (Error_Out_Of_Range(SPECIFIC(picker)));
+            fail (Error_Out_Of_Range(picker));
 
         if (steps_left == 1 and poking) {  // `bin.1: 10`, handle now
             Meta_Unquotify(setval);
@@ -1159,7 +1159,7 @@ REBNATIVE(debin)
     // leading 0x00 or 0xFF stripped away
     //
     if (n > 8)
-        fail (Error_Out_Of_Range_Raw(ARG(binary)));
+        fail (Error_Out_Of_Range(ARG(binary)));
 
     REBI64 i = 0;
 
@@ -1183,7 +1183,7 @@ REBNATIVE(debin)
         //
         // bits may become signed via shift due to 63-bit limit
         //
-        fail (Error_Out_Of_Range_Raw(ARG(binary)));
+        fail (Error_Out_Of_Range(ARG(binary)));
     }
 
     return Init_Integer(D_OUT, i);

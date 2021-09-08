@@ -300,7 +300,7 @@ REBLEN Milliseconds_From_Value(const RELVAL *v) {
     }
 
     if (msec < 0)
-        fail (Error_Out_Of_Range(SPECIFIC(v)));
+        fail (Error_Out_Of_Range(v));
 
     return cast(REBLEN, msec);
 }

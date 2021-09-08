@@ -323,13 +323,8 @@ REB_R MAKE_Image(
             Init_Image_Black_Opaque(out, w, h);  // inefficient, overwritten
 
             REBLEN bad_index;
-            if (Array_Has_Non_Tuple(&bad_index, item)) {
-                REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(arg), item);
-                fail (Error_Bad_Value_Core(
-                    VAL_ARRAY_AT_HEAD(item, bad_index),
-                    derived
-                ));
-            }
+            if (Array_Has_Non_Tuple(&bad_index, item))
+                fail (Error_Bad_Value(VAL_ARRAY_AT_HEAD(item, bad_index)));
 
             REBYTE *ip = VAL_IMAGE_HEAD(out);  // image pointer
 
@@ -607,9 +602,7 @@ REB_R Modify_Image(REBFRM *frame_, const REBSYM *verb)
 
     // Validate that block arg is all tuple values:
     if (IS_BLOCK(arg) && Array_Has_Non_Tuple(&n, arg))
-        fail (Error_Bad_Value_Core(
-            VAL_ARRAY_AT_HEAD(arg, n), VAL_SPECIFIER(arg)
-        ));
+        fail (Error_Bad_Value(VAL_ARRAY_AT_HEAD(arg, n)));
 
     REBINT dup = 1;
     REBINT dup_x = 0;
@@ -954,7 +947,7 @@ inline static bool Adjust_Image_Pick_Index_Is_Valid(
     else if (IS_LOGIC(picker))
         n = VAL_LOGIC(picker) ? 1 : 2;
     else
-        fail (rebUnrelativize(picker));
+        fail (picker);
 
     *index += n;
     if (n > 0)
@@ -1010,7 +1003,7 @@ void Pick_Image(REBVAL *out, const REBVAL *value, const RELVAL *picker)
             break; }
 
         default:
-            fail (rebUnrelativize(picker));
+            fail (picker);
         }
         return;
     }
@@ -1101,13 +1094,13 @@ void Poke_Image_Fail_If_Read_Only(
             break;
 
         default:
-            fail (rebUnrelativize(picker));
+            fail (picker);
         }
         return;
     }
 
     if (!Adjust_Image_Pick_Index_Is_Valid(&index, value, picker))
-        fail (Error_Out_Of_Range(SPECIFIC(picker)));
+        fail (Error_Out_Of_Range(picker));
 
     if (IS_TUPLE(poke)) { // set whole pixel
         Set_Pixel_Tuple(VAL_IMAGE_AT_HEAD(value, index), poke);

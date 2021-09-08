@@ -705,7 +705,7 @@ for-each [sw-cat list] boot-errors [
                 ; calls are made.
                 ;
                 count-up i arity [
-                    keep unspaced ["const REBVAL *arg" i]
+                    keep unspaced ["const RELVAL *arg" i]
                 ]
             ]
             args: collect [

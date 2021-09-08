@@ -182,7 +182,7 @@ static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
                 break;
 
             default:
-                fail (Error_Bad_Value_Core(item, VAL_SPECIFIER(val)));
+                fail (Error_Bad_Value(item));
             }
         }
         break; }

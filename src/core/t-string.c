@@ -795,12 +795,12 @@ REBTYPE(String)
 
         REBINT n = Int32(picker);
         if (n == 0)
-            fail (Error_Out_Of_Range(SPECIFIC(picker)));
+            fail (Error_Out_Of_Range(picker));
         if (n < 0)
             ++n;
         n += VAL_INDEX(v) - 1;
         if (n < 0 or cast(REBLEN, n) >= STR_LEN(VAL_STRING(v)))
-            fail (Error_Out_Of_Range(SPECIFIC(picker)));
+            fail (Error_Out_Of_Range(picker));
 
         if (steps_left == 1 and poking) {
             //

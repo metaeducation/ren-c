@@ -963,7 +963,7 @@ void Virtual_Bind_Deep_To_New_Context(
                 // (keylist) would be incomplete and tripped on by the GC if
                 // we didn't do some kind of workaround.
                 //
-                fail (Error_Bad_Value_Core(check, specifier));
+                fail (Error_Bad_Value(check));
             }
         }
     }

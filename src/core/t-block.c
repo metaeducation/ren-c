@@ -882,7 +882,7 @@ REBTYPE(Array)
           update_bits: ;
             REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
             if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
-                fail (rebUnrelativize(picker));
+                fail (picker);
 
             REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
             RELVAL *at = ARR_AT(mut_arr, n);
@@ -892,7 +892,7 @@ REBTYPE(Array)
         else {
             REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
             if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
-                fail (rebUnrelativize(picker));
+                fail (picker);
 
             const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
             Derelativize(D_OUT, at, VAL_SPECIFIER(array));

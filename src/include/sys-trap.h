@@ -256,15 +256,15 @@ inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *j) {
         // make sure you don't pass a RELVAL* into fail().  This could also
         // be used by a strict build that wanted to get rid of all the hard
         // coded string fail()s, by triggering a compiler error on them.
-        
+
         template <class T>
         inline static ATTRIBUTE_NO_RETURN void Fail_Core_Cpp(T *p) {
             static_assert(
                 std::is_same<T, REBCTX>::value
                 or std::is_same<T, const char>::value
                 or std::is_base_of<const REBVAL, T>::value
-                or std::is_base_of<REBVAL, T>::value,
-                "fail() works on: REBCTX*, REBVAL*, const char*"
+                or std::is_base_of<RELVAL, T>::value,
+                "fail() works on: REBCTX*, RELVAL*, const char*"
             );
             Fail_Core(p);
         }
