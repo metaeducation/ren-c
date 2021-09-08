@@ -777,20 +777,46 @@ REBNATIVE(poke)
                 // then there's no way to update X.  We have to turn this
                 // into `poke (binding of 'x) [x year] 2019`.
                 //
-                REBARR *binding = VAL_WORD_BINDING(item);
-                if (not binding)
-                    fail (Error_Not_Bound_Raw(item));
+                REBSPC *specifier = VAL_SPECIFIER(picker);
 
-                // !!! The below isn't working, and points to the need to do
-                // some serious work on LET patches.
+                // !!! This is convoluted work that should not have to be
+                // repeated here to tell the difference between a LET patch
+                // and another kind of variable.  Many of the ripples caused
+                // by LET and "Sea of Words" havent been absorbed systemically,
+                // so until that happens routines like this will be junky.
                 //
-                bool workaround = true;
-                if (
-                    workaround or (
-                        SER_FLAVOR(binding) == FLAVOR_PATCH
-                        and GET_SUBCLASS_FLAG(PATCH, binding, LET)
-                    )
-                ){
+                // !!! If we said ATTACH_WRITE here, then we'd get a new
+                // variable for something like `system` on `system.foo: x`,
+                // so system would be ~unset~.
+                //
+                REBLEN index;
+                REBSER *s = try_unwrap(
+                    Get_Word_Container(&index, item, specifier, ATTACH_READ)
+                );
+                if (not s) {
+                    if (VAL_WORD_BINDING(item) == UNBOUND)
+                        fail (Error_Not_Bound_Raw(item));
+                    fail (Error_Unassigned_Attach_Raw(item));
+                }
+                REBCTX *c;
+                if (IS_PATCH(s)) {
+                    if (NOT_SUBCLASS_FLAG(PATCH, s, LET))
+                        panic (s);
+
+                    REBSER *link = SER(node_LINK(Node, s));
+                    if (FLAVOR_VARLIST == SER_FLAVOR(link))
+                        c = CTX(link);  // module style "LET" (not really LET)
+                    else
+                        c = nullptr;  // LET has no context
+                }
+                else {
+                    c = CTX(s);
+                    if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
+                        fail (Error_No_Relative_Core(item));
+                }
+
+                if (not c) {
+                    //
                     // !!! Technical limitation: LET patches do not have the
                     // ability to give a context back at this time.  They would
                     // have to "be their own context", it introduces problems.
@@ -804,9 +830,7 @@ REBNATIVE(poke)
                     ++VAL_INDEX_UNBOUNDED(picker);
                 }
                 else {
-                    Derelativize(D_SPARE, item, VAL_SPECIFIER(picker));
-                    REBCTX *c = VAL_WORD_CONTEXT(D_SPARE);
-                    Init_Any_Context(ARG(location), CTX_TYPE(c), c);
+                    Init_Any_Context(RESET(ARG(location)), CTX_TYPE(c), c);
                 }
             }
             else

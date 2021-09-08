@@ -218,6 +218,12 @@ zip: func [
     /deep "Includes files in subdirectories"
     /verbose "Lists files while compressing"
     /only "Include the root source directory"
+
+    ; !!! There is a technical limitation at time of writing that LET variables
+    ; cannot be written back as immediates (`let date: ..., date/time: ...`).
+    ; This is temporary.
+    ;
+    <local> date
 ][
     let info: if not verbose [:elide] else [:print]
 
@@ -267,7 +273,7 @@ zip: func [
         ; won't find the function that didn't exist at module load time,
         ; so use LIB/NOW to force lookup through LIB.
         ;
-        let date: lib/now  ; !!! Each file has slightly later date?
+        date: lib/now  ; !!! Each file has slightly later date?
 
         let data: if match [binary! text!] :source/2 [  ; next is data
             first (source: next source)
@@ -322,6 +328,12 @@ unzip: function [
         [file! url! binary!]
     /verbose "Lists files while decompressing (default)"
     /quiet "Don't lists files while decompressing"
+
+    ; !!! There is a technical limitation at time of writing that LET variables
+    ; cannot be written back as immediates (`let date: ..., date/time: ...`).
+    ; This is temporary.
+    ;
+    <local> date
 ][
     num-errors: 0
     info: all [quiet, not verbose] then [:elide] else [:print]
