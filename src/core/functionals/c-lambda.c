@@ -172,7 +172,8 @@ REBNATIVE(lambda)
             pclass = PARAM_CLASS_NORMAL;
         else if (IS_META_WORD(DS_TOP)) {
             pclass = PARAM_CLASS_META;
-            Init_Word(RESET(DS_TOP), VAL_WORD_SYMBOL(DS_TOP));
+            const REBSYM *symbol = VAL_WORD_SYMBOL(DS_TOP);
+            Init_Word(RESET(DS_TOP), symbol);
         }
         else if (IS_QUOTED(DS_TOP)) {
             Unquotify(DS_TOP, 1);
