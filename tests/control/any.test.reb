@@ -373,3 +373,12 @@
 ]
 
 (10 = any [(10 elide "hi")])
+
+; When used with @ blocks, ANY will treat the block as already reduced
+[
+    (null = any @[])
+    (1 = any @[1 + 2])
+    (null = any @[#[false] _])
+    (null = any inert reduce [false blank])
+    ('false = any @[false])  ; just the word, and words are truthy
+]

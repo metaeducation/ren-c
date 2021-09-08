@@ -98,9 +98,23 @@ STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
 STATIC_ASSERT(EVAL_FLAG_CACHE_NO_LOOKAHEAD == FEED_FLAG_NO_LOOKAHEAD);
 
 
-//=//// EVAL_FLAG_5 ///////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_NO_EVALUATIONS ///////////////////////////////////////////=//
 //
-#define EVAL_FLAG_5 \
+// It might seem strange to have an evaluator mode in which no evaluations are
+// performed.  However, this simplifies the implementation of operators such
+// as ANY and ALL, which wish to run in an "inert" mode:
+//
+//     >> any [1 + 2]
+//     == 3
+//
+//     >> any @[1 + 2]
+//     == 1
+//
+// Inert operations wind up costing a bit more because they are pushing a frame
+// when it seems "they don't need to"; but pushing a frame also locks the
+// series in question against enumeration.
+//
+#define EVAL_FLAG_NO_EVALUATIONS \
     FLAG_LEFT_BIT(5)
 
 

@@ -364,3 +364,11 @@
 [
     ("A" = all ["A", all [comment "hi", do []]])
 ]
+
+; When used with @ blocks, ALL will treat the block as already reduced
+[
+    ('~void~ = ^ all @[])
+    (2 = all @[1 + 2])
+    (null = all inert reduce [true true #[false]])
+    ('true = all @[false true])  ; just the word, and words are truthy
+]

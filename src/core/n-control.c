@@ -590,8 +590,8 @@ REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
 //          [<opt> any-value!]
 //      'predicate "Test for whether an evaluation passes (default is .DID)"
 //          [<skip> predicate! action!]
-//      block "Block of expressions"
-//          [block!]
+//      block "Block of expressions, @[block] will be treated inertly"
+//          [block! the-block!]
 //  ]
 //
 REBNATIVE(all)
@@ -602,7 +602,11 @@ REBNATIVE(all)
     if (Cache_Predicate_Throws(D_OUT, predicate))
         return R_THROWN;
 
-    DECLARE_FRAME_AT (f, ARG(block), EVAL_MASK_DEFAULT);
+    REBFLGS flags = EVAL_MASK_DEFAULT;
+    if (IS_THE_BLOCK(ARG(block)))
+        flags |= EVAL_FLAG_NO_EVALUATIONS;
+
+    DECLARE_FRAME_AT (f, ARG(block), flags);
     Push_Frame(nullptr, f);
 
     Init_Void(D_OUT);  // `all []` is a ~void~ isotope
@@ -680,8 +684,8 @@ REBNATIVE(all)
 //          [<opt> any-value!]
 //      'predicate "Test for whether an evaluation passes (default is .DID)"
 //          [<skip> predicate! action!]
-//      block "Block of expressions"
-//          [block!]
+//      block "Block of expressions, @[block] will be treated inertly"
+//          [block! the-block!]
 //  ]
 //
 REBNATIVE(any)
@@ -692,7 +696,11 @@ REBNATIVE(any)
     if (Cache_Predicate_Throws(D_OUT, predicate))
         return R_THROWN;
 
-    DECLARE_FRAME_AT (f, ARG(block), EVAL_MASK_DEFAULT);
+    REBFLGS flags = EVAL_MASK_DEFAULT;
+    if (IS_THE_BLOCK(ARG(block)))
+        flags |= EVAL_FLAG_NO_EVALUATIONS;
+
+    DECLARE_FRAME_AT (f, ARG(block), flags);
     Push_Frame(nullptr, f);
 
     do {

@@ -162,21 +162,6 @@ REBNATIVE(reduce_each)
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
-    // `reduce-each x ^[1 + 2] [...]` gives x as 1, +, and 2.
-    //
-    REBVAL *block = ARG(block);
-    if (IS_THE_BLOCK(block)) {
-        Plainify(block);
-        if (rebRunThrows(
-            D_OUT,
-            true,
-            Lib(FOR_EACH), ARG(vars), block, ARG(body)
-        )){
-            return R_THROWN;
-        }
-        return D_OUT;
-    }
-
     REBCTX *context;
     Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
@@ -185,9 +170,11 @@ REBNATIVE(reduce_each)
     );
     Init_Object(RESET(ARG(vars)), context);  // keep GC safe
 
-    DECLARE_FEED_AT (feed, ARG(block));
-    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+    REBFLGS flags = EVAL_MASK_DEFAULT;
+    if (IS_THE_BLOCK(ARG(block)))
+        flags |= EVAL_FLAG_NO_EVALUATIONS;
 
+    DECLARE_FRAME_AT (f, ARG(block), flags);
     Push_Frame(nullptr, f);
 
     do {

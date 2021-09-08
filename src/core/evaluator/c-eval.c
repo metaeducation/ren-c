@@ -258,6 +258,15 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
 //
 bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 {
+    if (GET_EVAL_FLAG(f, NO_EVALUATIONS)) {  // see flag for why this exists
+        if (IS_END(f->feed->value))
+            return false;
+        Derelativize(f->out, f->feed->value, FEED_SPECIFIER(f->feed));
+        SET_CELL_FLAG(f->out, UNEVALUATED);
+        Fetch_Next_Forget_Lookback(f);
+        return false;
+    }
+
   #ifdef DEBUG_ENSURE_FRAME_EVALUATES
     f->was_eval_called = true;  // see definition for why this flag exists
   #endif

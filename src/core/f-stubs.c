@@ -664,7 +664,7 @@ REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
 
 
 //
-//  theify: native [
+//  inert: native [
 //
 //  {If possible, convert a value to a THE-XXX! representation}
 //
@@ -672,9 +672,13 @@ REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(theify)
+REBNATIVE(inert)
+//
+// Operators such as ANY and ALL have a behavior variation for @[xxx] blocks
+// that assume the content is already reduced.  This helps to produce that
+// form of value from a regular value.
 {
-    INCLUDE_PARAMS_OF_THEIFY;
+    INCLUDE_PARAMS_OF_INERT;
 
     RETURN (Theify(ARG(value)));
 }
@@ -712,7 +716,7 @@ REBVAL *Plainify(REBVAL *out) {
 
 
 //
-//  plainify: native [
+//  plain: native [
 //
 //  {Convert a value into its plain representation}
 //
@@ -720,9 +724,9 @@ REBVAL *Plainify(REBVAL *out) {
 //      value [<blank> any-value!]
 //  ]
 //
-REBNATIVE(plainify)
+REBNATIVE(plain)
 {
-    INCLUDE_PARAMS_OF_PLAINIFY;
+    INCLUDE_PARAMS_OF_PLAIN;
 
     RETURN (Plainify(ARG(value)));
 }
