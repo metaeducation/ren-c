@@ -631,6 +631,15 @@ Special internal defines used by RT, not Host-Kit developers:
     #define DEBUG_EXPIRED_LOOKBACK 0
 #endif
 
+// The third-party "dtoa.c" file was sensitive to whether DEBUG was #ifdef'd.
+// In the world where #if is used instead of #ifdef, that means it includes the
+// debug code whether DEBUG is 1 or 0.  The file was tweaked to include a more
+// specific flag for debugging dtoa.c, which we will hopefully never need.
+//
+#if !defined(DEBUG_DTOA)
+    #define DEBUG_DTOA 0
+#endif
+
 // It would seem that cells like REB_BLANK which don't use their payloads
 // could just leave them uninitialized...saving time on the assignments.
 //

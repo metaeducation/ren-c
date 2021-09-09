@@ -24,6 +24,8 @@
 // https://stackoverflow.com/q/3173056/why-does-dtoa-c-contain-so-much-code
 //
 
+#include "reb-config.h"  // Added to get DEBUG_DTOA (or other switches)
+
 #define IEEE_8087  // We define using floating point as on most PCs
 
 
@@ -245,7 +247,7 @@
 typedef unsigned Long ULong;
 #endif
 
-#ifdef DEBUG
+#if DEBUG_DTOA
 #include <assert.h>
 #include "stdio.h"
 #define Bug(x) {fprintf(stderr, "%s\n", x); exit(1);}
@@ -2052,7 +2054,7 @@ cmp(Bigint *a, Bigint *b)
 
     i = a->wds;
     j = b->wds;
-#ifdef DEBUG
+#if DEBUG_DTOA
     if (i > 1 && !a->x[i-1])
         Bug("cmp called with a->x[a->wds-1] == 0");
     if (j > 1 && !b->x[j-1])
@@ -2246,7 +2248,7 @@ d2b(U *d, int *e, int *bits MTd)
             }
         }
     else {
-#ifdef DEBUG
+#if DEBUG_DTOA
         if (!z)
             Bug("Zero passed to d2b");
 #endif
@@ -2890,7 +2892,7 @@ quorem(Bigint *b, Bigint *S)
 #endif
 
     n = S->wds;
-#ifdef DEBUG
+#if DEBUG_DTOA
     /*debug*/ if (b->wds > n)
     /*debug*/   Bug("oversize b in quorem");
 #endif
@@ -2901,7 +2903,7 @@ quorem(Bigint *b, Bigint *S)
     bx = b->x;
     bxe = bx + n;
     q = *bxe / (*sxe + 1);  /* ensure q <= true quotient */
-#ifdef DEBUG
+#if DEBUG_DTOA
 #ifdef NO_STRTOD_BIGCOMP
     /*debug*/ if (q > 9)
 #else
