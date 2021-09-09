@@ -112,6 +112,7 @@ if os = 'Windows [
         <msc:/wd4777>  ; _snwprintf() int/DWORD complaint
         <msc:/wd4702>  ; unreachable code
         <msc:/wd4777>  ; _snwprintf() int/DWORD complaint
+        <msc:/wd4189>  ; `r` local variable initialized but not referenced
     ]
 ]
 else [
