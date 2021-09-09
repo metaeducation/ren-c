@@ -79,6 +79,16 @@ jobs:
 
     # See README: Build Matrix
     #
+    # NOTE: The older MinGW used here is missing imports required by libuv.
+    #
+    # https://github.com/libuv/libuv/issues/3178
+    #
+    # These are fixed in a modern MinGW, however running on an older MinGW
+    # is more interesting to keep on top of these glitches and how many of
+    # them there are.  (If the core can't build even without libuv on an older
+    # MinGW it's more worth knowing about than that the extensions can build
+    # on a newer MinGW.)
+    #
     strategy:
       matrix:
        include:
@@ -87,14 +97,14 @@ jobs:
            config-file: mingw-x64.r
            standard: c++17
            debug: none
-           extensions: ""
+           extensions: "Network - Filesystem - Process - Locale -"  # ^-- Note
            variation: ""
 
          - os-id: 0.3.1  # 32-bit Target (built on this 64-bit platform)
            config-file: mingw-x86.r
            standard: c99
            debug: normal
-           extensions: ""  # TBD: ODBC for 32-bit?
+           extensions: "Network - Filesystem - Process - Locale -"  # ^-- Note
            variation: ""
 
 
@@ -246,7 +256,8 @@ jobs:
 
 
     # We currently don't deploy or test the executables, trusting the MSVC
-    # build which is already on a Windows container to do it.
+    # build which is already on a Windows container to do it.  Also, this
+    # lacks filesystem and network functions due to missing libuv dependencies.
     #
     # It would be possible to create another job specific to the testing, that
     # would run in a Windows container...but really, this is already a bit of
