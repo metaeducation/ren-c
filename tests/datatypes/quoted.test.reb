@@ -13,8 +13,11 @@
     <seta> = get noquote the '''''''a
 )(
     a: b: ~unset~
-    set reduce noquote ['''''a ''b] [<seta> <setb>]
-    [<seta> <setb>] = get reduce [noquote 'a noquote '''''''b]
+    set noquote first ['''''a] <seta>
+    set noquote first [''b] <setb>
+    [<seta> <setb>] = collect [
+        reduce-each x [noquote 'a noquote '''''''b] [keep get x]
+    ]
 )
 
 ; Test basic binding, e.g. to make sure functions detect SET-WORD!
