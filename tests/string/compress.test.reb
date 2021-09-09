@@ -29,3 +29,10 @@
         unzip (unzipped: copy []) %../fixtures/test.docx
     ]
 )
+
+; This file crashed Red on DEFLATE/ZLIB
+[
+    (bin: read %../fixtures/deflate-crashed-in-red.bin, true)
+    (bin = inflate deflate bin)
+    (bin = zinflate zdeflate bin)
+]
