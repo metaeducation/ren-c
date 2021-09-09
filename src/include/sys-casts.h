@@ -79,7 +79,7 @@
 
 #else
 
-  #if !defined(CPLUSPLUS_11)
+  #if (! CPLUSPLUS_11)
     #error "DEBUG_CHECK_CASTS requires C++11 (or later)"
   #endif
 

@@ -53,7 +53,7 @@
 //
 
 
-#if !defined(CPLUSPLUS_11)
+#if (! CPLUSPLUS_11)
     //
     // In plain C builds, there's no such thing as "base classes".  So the
     // only way to make a function that can accept either a REBSER* or a

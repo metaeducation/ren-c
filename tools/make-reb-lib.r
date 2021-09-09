@@ -359,7 +359,7 @@ e-lib/emit 'ver {
     #if !defined(REBOL_NO_CPLUSPLUS)
         #if defined(__cplusplus) && __cplusplus >= 201103L
             /* C++11 or above, if following the standard (VS2017 does not) */
-        #elif defined (CPLUSPLUS_11)
+        #elif CPLUSPLUS_11
             /* Custom C++11 or above flag, to override Visual Studio's lie */
         #else
             #define REBOL_NO_CPLUSPLUS  /* compiler not current enough */
@@ -733,7 +733,7 @@ e-lib/emit 'ver {
             /* C99 or above */
           #elif defined(__cplusplus) && __cplusplus >= 201103L
             /* C++11 or above, if following the standard (VS2017 does not) */
-          #elif defined (CPLUSPLUS_11)
+          #elif CPLUSPLUS_11
             /* Custom C++11 or above flag, to override Visual Studio's lie */
           #else
             #error "REBOL_EXPLICIT_END must be used prior to C99 or C+++11"

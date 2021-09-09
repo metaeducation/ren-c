@@ -62,7 +62,7 @@
 //
 
 #if DEBUG_HAS_PROBE
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         template <
             typename T,
             typename std::enable_if<
@@ -292,7 +292,7 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
     cast(enum Reb_Kind, HEART_BYTE(cell))
 
 
-#if defined(NDEBUG) or !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) or (! CPLUSPLUS_11)
     #define CELL_KIND CELL_KIND_UNCHECKED
     #define CELL_HEART CELL_HEART_UNCHECKED
 #else
@@ -327,7 +327,7 @@ inline static const REBTYP *CELL_CUSTOM_TYPE(REBCEL(const*) v) {
 inline static const RELVAL* CELL_TO_VAL(REBCEL(const*) cell)
   { return cast(const RELVAL*, cell); }
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     inline static const RELVAL* CELL_TO_VAL(const RELVAL* cell) = delete;
 #endif
 
@@ -424,7 +424,7 @@ inline static RELVAL *RESET_Untracked(RELVAL *v) {
     return v;
 }
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     inline static REBVAL *RESET_Untracked(REBVAL *v)
       { return cast(REBVAL*, RESET_Untracked(cast(RELVAL*, v))); }
 #endif
@@ -526,7 +526,7 @@ inline static bool IS_RELATIVE(const RELVAL *v) {
     return IS_DETAILS(binding);  // action
 }
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     bool IS_RELATIVE(const REBVAL *v) = delete;  // error on superfluous check
 #endif
 

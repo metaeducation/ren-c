@@ -137,7 +137,7 @@ struct Reb_Binder {
     REBLEN count;
   #endif
 
-  #if defined(CPLUSPLUS_11)
+  #if CPLUSPLUS_11
     //
     // The C++ debug build can help us make sure that no binder ever fails to
     // get an INIT_BINDER() and SHUTDOWN_BINDER() pair called on it, which
@@ -158,7 +158,7 @@ inline static void INIT_BINDER(struct Reb_Binder *binder) {
   #else
     binder->count = 0;
 
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         binder->initialized = true;
     #endif
   #endif
@@ -169,7 +169,7 @@ inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
   #if !defined(NDEBUG)
     assert(binder->count == 0);
 
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         binder->initialized = false;
     #endif
   #endif
@@ -881,7 +881,7 @@ inline static REBSPC *Derive_Specifier(
     const RELVAL* any_array
 );
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     inline static REBSPC *Derive_Specifier(
         REBSPC *parent,
         const REBVAL* any_array
@@ -964,7 +964,7 @@ inline static REBVAL *Derelativize(
 // a RELVAL*, and then not defining it...will tell you that you do not need
 // to use Derelativize.  Juse Copy_Cell() if your source is a REBVAL!
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     REBVAL *Derelativize(RELVAL *dest, const REBVAL *v, REBSPC *specifier);
 #endif
 

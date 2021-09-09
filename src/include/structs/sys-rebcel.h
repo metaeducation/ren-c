@@ -39,7 +39,7 @@
 // of containing structures...which would limit that definition.  These
 // cells should not be used for any other purposes.
 //
-#if !defined(CPLUSPLUS_11)
+#if (! CPLUSPLUS_11)
     #define REBRAW struct Reb_Value
 #else
     #define REBRAW struct Reb_Cell  // usually only const, see REBCEL(const*)
@@ -58,7 +58,7 @@
 // Note that in the C build, %rebol.h forward-declares `struct Reb_Value` and
 // then #defines REBVAL to that.
 //
-#if !defined(CPLUSPLUS_11)
+#if (! CPLUSPLUS_11)
     #define RELVAL \
         struct Reb_Value // same as REBVAL, no checking in C build
 #else
@@ -111,7 +111,7 @@
 // Note: This needs special handling in %make-headers.r to recognize the
 // format.  See the `typemacro_parentheses` rule.
 //
-#if !defined(CPLUSPLUS_11)
+#if (! CPLUSPLUS_11)
 
     #define REBCEL(const_star) \
         const struct Reb_Value *  // same as RELVAL, no checking in C build

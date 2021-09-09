@@ -734,7 +734,7 @@ union Reb_Series_Info {
 };
 
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     struct Reb_Series : public Reb_Node
 #else
     struct Reb_Series

@@ -83,7 +83,7 @@
 
 #include "reb-c.h"
 
-#if defined(CPLUSPLUS_11) && DEBUG_HAS_PROBE
+#if CPLUSPLUS_11 && DEBUG_HAS_PROBE
     //
     // We allow you to do PROBE(some_integer) as well as PROBE(some_rebval)
     // etc. in C++11 - and the stringification comes from the << operator.

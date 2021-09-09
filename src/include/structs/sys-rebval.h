@@ -602,9 +602,9 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // before changing!
 //
 
-#if defined(CPLUSPLUS_11)
+#if CPLUSPLUS_11
     struct alignas(ALIGN_SIZE) Reb_Cell : public Reb_Node
-#elif defined(C_11)
+#elif C_11
     struct alignas(ALIGN_SIZE) Reb_Value
 #else
     struct Reb_Value  // ...have to just hope the alignment "works out"
@@ -626,7 +626,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
       #endif
     };
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     //
     // A Reb_Relative_Value is a point of view on a cell where VAL_TYPE() can
     // be called and will always give back a value in range < REB_MAX.  All
@@ -634,7 +634,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // byte modulo 64.
     //
     struct Reb_Relative_Value : public Reb_Cell {
-      #ifdef CPLUSPLUS_11
+      #if CPLUSPLUS_11
       public:
         Reb_Relative_Value () = default;
       private:
@@ -685,7 +685,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 
 #define CELL_MASK_PREP 0  // considered WRITABLE()
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     static_assert(
         std::is_standard_layout<struct Reb_Relative_Value>::value,
         "C++ RELVAL must match C layout: http://stackoverflow.com/a/7189821/"
@@ -719,7 +719,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // cell or variable cell.
 //
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     struct REBVAR : public REBVAL {};
     struct REBPAR : public REBVAR {};
 

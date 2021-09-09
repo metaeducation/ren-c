@@ -277,7 +277,7 @@ extern REBTYP *EG_Gob_Type;
 inline static bool IS_GOB(const RELVAL *v)  // Note: QUOTED! does not count
   { return IS_CUSTOM(v) and CELL_CUSTOM_TYPE(v) == EG_Gob_Type; }
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define VAL_GOB(v) \
         cast(REBGOB*, VAL_NODE1(v))  // use w/const REBVAL*
 

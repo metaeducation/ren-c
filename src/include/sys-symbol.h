@@ -68,7 +68,7 @@
     SERIES_FLAG_24
 
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     //
     // Trivial definition for C build or release builds: symbols are just a C
     // enum value and an OPT_SYMID acts just like a SYMID.

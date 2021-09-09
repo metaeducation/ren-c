@@ -34,7 +34,7 @@
 // for these cases.
 //
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define VAL_INT64(v) \
         PAYLOAD(Integer, (v)).i64
 #else

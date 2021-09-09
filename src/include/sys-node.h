@@ -78,7 +78,7 @@
 #define TRY_ALLOC_N_ZEROFILL(t,n) \
     cast(t *, memset(TRY_ALLOC_N(t, (n)), '\0', sizeof(t) * (n)))
 
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     #define FREE(t,p) \
         do { \
             static_assert( \

@@ -49,7 +49,7 @@
         return v;
     }
 
-  #ifdef CPLUSPLUS_11
+  #if CPLUSPLUS_11
     inline static REBVAL *Track_Cell_Debug(
         REBVAL *v,
         const char *file,

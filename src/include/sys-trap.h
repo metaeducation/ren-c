@@ -250,7 +250,7 @@ inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *j) {
             Fail_Core(error)
     #endif
 #else
-    #ifdef CPLUSPLUS_11
+    #if CPLUSPLUS_11
         //
         // We can do a bit more checking in the C++ build, for instance to
         // make sure you don't pass a RELVAL* into fail().  This could also

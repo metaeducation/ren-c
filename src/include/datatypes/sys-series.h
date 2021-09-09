@@ -589,7 +589,7 @@ inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
     SET_SERIES_USED(s, len);
 }
 
-#ifdef CPLUSPLUS_11  // catch cases when calling on REBSTR* directly
+#if CPLUSPLUS_11  // catch cases when calling on REBSTR* directly
     inline static void SET_SERIES_LEN(REBSTR *s, REBLEN len) = delete;
 #endif
 
@@ -995,7 +995,7 @@ inline static const REBSER *VAL_SERIES(REBCEL(const*) v) {
 #define VAL_INDEX_RAW(v) \
     PAYLOAD(Any, (v)).second.i
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define VAL_INDEX_UNBOUNDED(v) \
         VAL_INDEX_RAW(v)
 #else

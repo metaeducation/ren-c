@@ -346,7 +346,7 @@ gen-obj: func [
                 ; code as the switch for most C++ behaviors, and we have to
                 ; define that explicitly.
                 ;
-                <msc:/DCPLUSPLUS_11>
+                <msc:/DCPLUSPLUS_11=1>
             ]
         ]
 

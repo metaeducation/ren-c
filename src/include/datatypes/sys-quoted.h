@@ -184,7 +184,7 @@ inline static RELVAL *Quotify_Core(
     return v;
 }
 
-#if !defined(CPLUSPLUS_11)
+#if (! CPLUSPLUS_11)
     #define Quotify Quotify_Core
 #else
     inline static REBVAL *Quotify(REBVAL *v, REBLEN depth)
@@ -264,7 +264,7 @@ inline static RELVAL *Unquotify_Core(RELVAL *v, REBLEN unquotes) {
     return v;
 }
 
-#if !defined(CPLUSPLUS_11)
+#if (! CPLUSPLUS_11)
     #define Unquotify Unquotify_Core
 #else
     inline static REBVAL *Unquotify(REBVAL *v, REBLEN depth)

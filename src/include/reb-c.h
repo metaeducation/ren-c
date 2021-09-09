@@ -190,10 +190,20 @@
 // definition.  For some reason they didn't bump the version number from 1997
 // (even by MSVC 2017!!!)
 //
-#if defined(__cplusplus) && __cplusplus >= 201103L
-    #define CPLUSPLUS_11
-#elif defined(STDC_VERSION) && STDC_VERSION >= 201112L
-    #define C_11
+#if !defined(CPLUSPLUS_11)
+  #if defined(__cplusplus) && __cplusplus >= 201103L
+    #define CPLUSPLUS_11 1
+  #else
+    #define CPLUSPLUS_11 0
+  #endif
+#endif
+
+#if !defined(C_11)
+  #if defined(STDC_VERSION) && STDC_VERSION >= 201112L
+    #define C_11 1
+  #else
+    #define C_11 0
+  #endif
 #endif
 
 
@@ -208,7 +218,7 @@
 // create compile-time errors for any C construction that isn't being used
 // in the way one might want.
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     #include <type_traits>
 #endif
 
@@ -301,7 +311,7 @@
 // But it's too limited.  Since the code can (and should) be built as C++11
 // to test anyway, just make it a no-op in the C build.
 //
-#ifdef CPLUSPLUS_11
+#if CPLUSPLUS_11
     #define STATIC_ASSERT(cond) \
         static_assert((cond), #cond) // callsite has semicolon, see C trick
 #else
@@ -406,7 +416,7 @@
      * access.  Stray writes to that can cause even time-traveling bugs, with
      * effects *before* that write is made...due to "undefined behavior".
      */
-#elif !defined(CPLUSPLUS_11) || (! DEBUG_CHECK_CASTS)
+#elif (! CPLUSPLUS_11) || (! DEBUG_CHECK_CASTS)
     /* Well-intentioned macros aside, C has no way to enforce that you can't
      * cast away a const without m_cast. C++98 builds can do that, at least:
      */
@@ -511,7 +521,7 @@
     //
     #define nullptr cast(void*, 0)
 
-#elif defined(CPLUSPLUS_11) //...or above
+#elif CPLUSPLUS_11  //...or above
     //
     // http://en.cppreference.com/w/cpp/language/nullptr
     // is defined as `using nullptr_t = decltype(nullptr);` in <cstddef>
@@ -651,7 +661,7 @@
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L // C99 or later
     #define FINITE isfinite
-#elif defined(CPLUSPLUS_11) // C++11 or later
+#elif CPLUSPLUS_11  // C++11 or later
     #define FINITE isfinite
 #elif defined(__MINGW32__) || defined(__MINGW64__)
     #define FINITE isfinite // With --std==c++98 MinGW still has isfinite
@@ -670,7 +680,7 @@
 // on types that depend on that (like REBVAL pointers).
 //
 
-#if !defined(CPLUSPLUS_11) || defined(NDEBUG)
+#if (! CPLUSPLUS_11) || defined(NDEBUG)
     #define NEVERNULL(type) \
         type
 #else
@@ -891,7 +901,7 @@
             );
         }
 
-      #if defined(CPLUSPLUS_11)
+      #if CPLUSPLUS_11
         template<class P>
         inline static void TRASH_POINTER_IF_DEBUG(Never_Null<P> &p) {
             p = reinterpret_cast<P>(static_cast<uintptr_t>(0xDECAFBAD));
@@ -960,7 +970,7 @@
 // helpful when you need to do something like assign to a void* and can't
 // do weird cast dereferencing or you'll violate strict aliasing.
 //
-#if !defined(CPLUSPLUS_11) or (! DEBUG_CHECK_CASTS)
+#if (! CPLUSPLUS_11) or (! DEBUG_CHECK_CASTS)
     #define ensure(T,v) (v)
     #define ensurer(T)
     #define ensured(T,L,left) (left)
@@ -1015,7 +1025,7 @@
 #define USED(x) \
     ((void)(x))
 
-#if defined(NDEBUG) || !defined(CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define UNUSED(x) \
         ((void)(x))
 #else
@@ -1144,9 +1154,8 @@
 // helps emphasize it returns a byte count, it is also made polymorphic to
 // accept unsigned character pointers as well as signed ones.  To do this in
 // C it has to use a cast that foregoes type checking.  But the C++ build
-// checks via templates that only `const char*` and `const unsigned char*`
-// are passed.  (Note that strict aliasing rules permit casting between
-// pointers to char types.)
+// checks that only `const char*` and `const unsigned char*` are passed.
+// (Strict aliasing rules permit casting between pointers to char types.)
 //
 // We also include some convenience functions for switching between char*
 // and unsigned char*, from:
@@ -1155,15 +1164,11 @@
 
 #include <string.h>  // for strlen() etc, but also defines `size_t`
 
-#ifdef CPLUSPLUS11
-    template<
-        typename T,
-        typename std::enable_if<
-            std::is_same<T, char>::value
-            || std::is_same<T, unsigned char>::value
-        >
-    >
-    size_t strsize(const T *bp)
+#if CPLUSPLUS_11
+    inline static size_t strsize(const char *cp)
+        { return strlen(cp); }
+
+    inline static size_t strsize(const unsigned char *bp)
         { return strlen((const char*)bp); }
 #else
     #define strsize(bp) \

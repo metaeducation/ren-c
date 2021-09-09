@@ -51,7 +51,7 @@
 
     #define const_if_unchecked_utf8 const
 #else
-    #if !defined(CPLUSPLUS_11)
+    #if (! CPLUSPLUS_11)
         #error "DEBUG_UTF8_EVERYWHERE requires C++11 or higher"
     #endif
 
