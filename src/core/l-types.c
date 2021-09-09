@@ -1302,7 +1302,7 @@ REBNATIVE(scan_net_header)
         if (*cp != ':')
             break;
 
-        REBVAL *val = NULL; // rigorous checks worry it could be uninitialized
+        RELVAL *val = nullptr;  // suppress maybe uninitialized warning
 
         const REBSYM *name = Intern_UTF8_Managed(start, cp - start);
 
@@ -1318,9 +1318,7 @@ REBNATIVE(scan_net_header)
                 // Does it already use a block?
                 if (IS_BLOCK(item + 1)) {
                     // Block of values already exists:
-                    val = Init_Trash(
-                        Alloc_Tail_Array(VAL_ARRAY_ENSURE_MUTABLE(item + 1))
-                    );
+                    val = Alloc_Tail_Array(VAL_ARRAY_ENSURE_MUTABLE(item + 1));
                 }
                 else {
                     // Create new block for values:
@@ -1330,8 +1328,8 @@ REBNATIVE(scan_net_header)
                         item + 1, // prior value
                         SPECIFIED // no relative values added
                     );
-                    val = Init_Trash(Alloc_Tail_Array(a));
-                    Init_Block(item + 1, a);
+                    val = Alloc_Tail_Array(a);
+                    Init_Block(RESET(item + 1), a);
                 }
                 break;
             }
@@ -1339,7 +1337,7 @@ REBNATIVE(scan_net_header)
 
         if (item == item_tail) {  // didn't break, add space for new word/value
             Init_Set_Word(Alloc_Tail_Array(result), name);
-            val = Init_Trash(Alloc_Tail_Array(result));
+            val = Alloc_Tail_Array(result);
         }
 
         while (IS_LEX_SPACE(*cp)) cp++;
@@ -1393,7 +1391,7 @@ REBNATIVE(scan_net_header)
                 str = WRITE_CHR(str, *cp++);
         }
         TERM_STR_LEN_SIZE(string, len, str - STR_HEAD(string));
-        Init_Text(RESET(val), string);
+        Init_Text(val, string);
     }
 
     return Init_Block(D_OUT, result);
