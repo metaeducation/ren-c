@@ -60,28 +60,28 @@ REBDEV *Dev_Net;
 static void Query_Net(REBVAL *out, REBVAL *port, SOCKREQ *sock)
 {
     REBVAL *info = rebValue(
-        "copy ensure object! (@", port, ")/scheme/info"
+        "copy ensure object! (@", port, ").scheme.info"
     );  // shallow copy
 
     REBCTX *ctx = VAL_CONTEXT(info);
 
     Init_Tuple_Bytes(
-        CTX_VAR(ctx, STD_NET_INFO_LOCAL_IP),
+        RESET(CTX_VAR(ctx, STD_NET_INFO_LOCAL_IP)),
         cast(REBYTE*, &sock->local_ip),
         4
     );
     Init_Integer(
-        CTX_VAR(ctx, STD_NET_INFO_LOCAL_PORT),
+        RESET(CTX_VAR(ctx, STD_NET_INFO_LOCAL_PORT)),
         sock->local_port_number
     );
 
     Init_Tuple_Bytes(
-        CTX_VAR(ctx, STD_NET_INFO_REMOTE_IP),
+        RESET(CTX_VAR(ctx, STD_NET_INFO_REMOTE_IP)),
         cast(REBYTE*, &sock->remote_ip),
         4
     );
     Init_Integer(
-        CTX_VAR(ctx, STD_NET_INFO_REMOTE_PORT),
+        RESET(CTX_VAR(ctx, STD_NET_INFO_REMOTE_PORT)),
         sock->remote_port_number
     );
 
@@ -207,7 +207,7 @@ static REB_R Transport_Actor(
                 // to a BLOCK! of connections.
                 //
                 Init_Block(
-                    CTX_VAR(ctx, STD_PORT_CONNECTIONS),
+                    RESET(CTX_VAR(ctx, STD_PORT_CONNECTIONS)),
                     Make_Array(2)
                 );
             }
