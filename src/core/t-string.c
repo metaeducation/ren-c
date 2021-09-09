@@ -500,19 +500,19 @@ void Mold_Uni_Char(REB_MOLD *mo, REBUNI c, bool parened)
         // !!! Comment here said "do not AND with the above"
         //
         if (parened or c == 0x1E or c == 0xFEFF) {
+            Append_Ascii(buf, "^(");
+
             REBLEN len_old = STR_LEN(buf);
             REBSIZ size_old = STR_SIZE(buf);
-            EXPAND_SERIES_TAIL(buf, 7);  // worst case: ^(1234)
+            EXPAND_SERIES_TAIL(buf, 5);  // worst case: ^(1234), ^( is done
             TERM_STR_LEN_SIZE(buf, len_old, size_old);
-
-            Append_Ascii(buf, "^(");
 
             REBYTE *bp = BIN_TAIL(buf);
             REBYTE *ep = Form_Uni_Hex(bp, c); // !!! Make a mold...
             TERM_STR_LEN_SIZE(
                 buf,
                 len_old + (ep - bp),
-                STR_SIZE(buf) + (ep - bp)
+                size_old + (ep - bp)
             );
             Append_Codepoint(buf, ')');
             return;

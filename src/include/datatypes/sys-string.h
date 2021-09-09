@@ -281,6 +281,7 @@ inline static REBLEN STR_INDEX_AT(const REBSTR *s, REBSIZ offset) {
 
 inline static void SET_STR_LEN_SIZE(REBSTR *s, REBLEN len, REBSIZ used) {
     assert(IS_NONSYMBOL_STRING(s));
+    assert(len <= used);
     assert(used == SER_USED(s));
     s->misc.length = len;
     assert(*BIN_AT(s, used) == '\0');
@@ -289,6 +290,7 @@ inline static void SET_STR_LEN_SIZE(REBSTR *s, REBLEN len, REBSIZ used) {
 
 inline static void TERM_STR_LEN_SIZE(REBSTR *s, REBLEN len, REBSIZ used) {
     assert(IS_NONSYMBOL_STRING(s));
+    assert(len <= used);
     SET_SERIES_USED(s, used);
     s->misc.length = len;
     *BIN_AT(s, used) = '\0';

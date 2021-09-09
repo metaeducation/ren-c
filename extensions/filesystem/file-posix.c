@@ -352,7 +352,7 @@ REBVAL *Write_File(const REBVAL *port, const REBVAL *value, REBLEN limit)
         // are writing "text".  You have to send BINARY! (which can be done
         // cheaply with an alias, AS TEXT!, uses the same memory)
         //
-        const REBYTE *tail = utf8 + size;
+        const REBYTE *tail = cast(const REBYTE*, utf8) + size;
         const REBYTE *pos = utf8;
         for (; pos != tail; ++pos)
             if (*pos == CR)
