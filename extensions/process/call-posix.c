@@ -184,50 +184,106 @@ REB_R Call_Core(REBFRM *frame_) {
     // we do dynamic allocations of argc strings through the API.  These need
     // to be freed before we return.
     //
-    char *cmd;
     int argc;
-    const char **argv;
+    char **argv;
 
-    if (IS_TEXT(ARG(command))) {
-        //
-        // !!! POSIX does not offer the ability to take a single command
-        // line string when invoking a process.  You have to use an argv[]
-        // array.  The only workaround to this is to run through a shell--
-        // but that would give you a new environment.  We only parse the
-        // command line if forced (Windows can call with a single command
-        // line, but has the reverse problem: it has to make the command
-        // line out of argv[] parts if you pass an array).
-        //
-        if (not REF(shell)) {
-            REBVAL *block = rebValue(
-                "parse-command-to-argv*", ARG(command)
-            );
-            Copy_Cell(ARG(command), block);
-            rebRelease(block);
-            goto block_command;
+    REBVAL *command = ARG(command);
+
+    if (REF(shell)) {
+
+      //=//// SHELL-BASED INVOCATION: COMMAND IS ONE BIG STRING ////////////=//
+
+        char *shcmd;  // we'll be calling `$SHELL -c "your \"command\" here"`
+
+        if (IS_TEXT(command)) {
+            shcmd = rebSpell(command);  // already a string, just use it as is
         }
+        else if (IS_BLOCK(command)) {
+            //
+            // There is some nuance in the translation of a BLOCK! into a
+            // string for the bash shell.  For example, if you write:
+            //
+            //     call/shell [r3 --suppress "*"]
+            //
+            // You have used two WORD!s and a TEXT!.  But there are two very
+            // different interpretations, as:
+            //
+            //     sh -c "r3 --suppress *"
+            //     sh -c "r3 --suppress \"*\""
+            //
+            // Without the quotes in the shell command, the * will expand to
+            // all the files in the current directory.  Both intents are valid,
+            // and even if you wanted to force people to make the distinction
+            // by storing things as TEXT! vs. WORD!, not all WORD!s are legal.
+            //
+            // Questions surrounding this overlaps with work on the SHELL
+            // dialect (see %shell.r), so for now this just uses the same
+            // code that the Windows version uses when breaking apart blocks.
+            // If one of the block slots has a TEXT! with spaces in it or
+            // contains quotes, it will be surrounded by quotes and have
+            // quotes in it escaped.  But something like the above would
+            // leave the `*` as-is.  So one would need to write:
+            //
+            //     call/shell [r3 --suppress {"*"}]
+            //
+            shcmd = rebSpell("argv-block-to-command*", command);
+        }
+        else
+            fail (PAR(command));
 
-        cmd = rebSpell(ARG(command));
-
-        argc = 1;
-        argv = rebAllocN(const char*, (argc + 1));
-
-        // !!! Make two copies because it frees cmd and all the argv.  Review.
+        // Getting the environment variable via a usermode call helps paper
+        // over weird getenv() quirks, but also gives a pointer we can free in
+        // the argv block.
         //
-        argv[0] = rebSpell(ARG(command));
-        argv[1] = nullptr;
+        char *sh = rebSpell("any [get-env {SHELL}, {sh}]");
+        //                                       ---^
+        // !!! Convention usually says the $SHELL is set.  But the GitHub CI
+        // environment is a case that does not seem to pass it through to
+        // processes called in steps, e.g.
+        //
+        //     echo "SHELL is $SHELL"  # this shows /bin/bash
+        //     ./r3 --do "print get-env {SHELL}"  # shows nothing
+        //
+        // Other environment variables work all right, so it seems something is
+        // off about $SHELL in particular.
+        //
+        // But it could certainly be unset manually.  On Windows we just guess
+        // at it as `cmd.exe`, so it doesn't seem that much worse to just guess
+        // `sh` as a default.  This is usually symlinked to
+        // bash or something roughly compatible (e.g. dash).
+
+        argc = 3;
+        argv = rebAllocN(char*, 4);
+        argv[0] = sh;
+        argv[1] = rebSpell("{-c}");
+        argv[2] = shcmd;
+        argv[3] = nullptr;
     }
-    else if (IS_BLOCK(ARG(command))) {
-        // `call ["foo" "bar"]` => execute %foo with arg "bar"
+    else {
 
-      block_command:
+      //=//// PLAIN EXECVP() INVOCATION: ARGV[] ARRAY OF ITEMS /////////////=//
 
-        cmd = nullptr;
+        // If not using a shell invocation, POSIX execvp() wants an array of
+        // pointers to individual argv[] string elements.  For convenience, if
+        // the caller passes in TEXT! instead of a block, we break it up.
+        //
+        // Note: Windows can call with a single command line, but has the
+        // reverse problem: if you pass in a BLOCK!, it has to turn that into
+        // a single string.  (That code is reused in the shell case for POSIX
+        // up above.)
+        //
+        if (IS_TEXT(command)) {
+            REBVAL *parsed = rebValue("parse-command-to-argv*", command);
+            Copy_Cell(RESET(command), parsed);
+            rebRelease(parsed);
+        }
+        else if (not IS_BLOCK(command))
+            fail (PAR(command));
 
-        REBVAL *block = ARG(command);
+        const REBVAL *block = ARG(command);
         argc = VAL_LEN_AT(block);
         assert(argc != 0);  // usermode layer checks this
-        argv = rebAllocN(const char*, (argc + 1));
+        argv = rebAllocN(char*, (argc + 1));
 
         int i;
         for (i = 0; i < argc; i ++) {
@@ -238,8 +294,6 @@ REB_R Call_Core(REBFRM *frame_) {
         }
         argv[argc] = nullptr;
     }
-    else
-        fail (PAR(command));
 
     int exit_code = 20;  // should be overwritten if actually returned
 
@@ -435,56 +489,11 @@ REB_R Call_Core(REBFRM *frame_) {
         //
         close(info_pipe[R]);
 
-        // We want to be able to compile with most all warnings as errors, and
-        // we'd like to use -Wcast-qual (in builds where it is possible--it
-        // is not possible in plain C builds).  We must tunnel under the cast.
-        //
-        char * const *argv_hack;
+    //=//// ASK EXECVP() TO RUN, REPLACING THE CURRENT PROCESS /////////////=//
 
-        if (REF(shell)) {
-            const char *sh = getenv("SHELL");
+        execvp(argv[0], argv);
 
-            if (sh == nullptr) {
-                //
-                // !!! Convention usually says the $SHELL is set.  But the
-                // GitHub CI environment is a case that does not seem to pass
-                // it through to processes called in steps, e.g.
-                //
-                //     echo "SHELL is $SHELL"  # this shows /bin/bash
-                //     ./r3 --do "print get-env {SHELL}"  # shows nothing
-                //
-                // Other environment variables work all right, so it seems
-                // something is off about $SHELL in particular.
-                //
-                // But it could certainly be unset manually.  On Windows we
-                // just guess at it as `cmd.exe`, so it doesn't seem that much
-                // worse to just guess `sh`.  This is usually symlinked to
-                // bash or something roughly compatible (e.g. dash).
-                //
-                // Since we're in a fork() here, it would take some figuring
-                // to set up a warning that this is happening.  Probably the
-                // better approach is to do this processing in usermode
-                // before we get to this point.  Review.
-                //
-                sh = "sh";
-            }
-
-            const char ** argv_new = rebAllocN(
-                const char*,
-                (argc + 3) * sizeof(argv[0])
-            );
-            argv_new[0] = sh;
-            argv_new[1] = "-c";
-            memcpy(&argv_new[2], argv, argc * sizeof(argv[0]));
-            argv_new[argc + 2] = nullptr;
-
-            memcpy(&argv_hack, &argv_new, sizeof(argv_hack));
-            execvp(sh, argv_hack);
-        }
-        else {
-            memcpy(&argv_hack, &argv, sizeof(argv_hack));
-            execvp(argv[0], argv_hack);
-        }
+    //=//// FORK()'D BRANCH SHOULD ONLY GET HERE IF THERE'S AN ERROR ///////=//
 
         // Note: execvp() will take over the process and not return, unless
         // there was a problem in the execution.  So you shouldn't be able
@@ -899,12 +908,9 @@ REB_R Call_Core(REBFRM *frame_) {
 
     int i;
     for (i = 0; i != argc; ++i)
-        rebFree(m_cast(char*, argv[i]));
+        rebFree(argv[i]);
 
-    if (cmd != nullptr)
-        rebFree(cmd);
-
-    rebFree(m_cast(char**, argv));
+    rebFree(argv);
 
     if (IS_TEXT(ARG(output))) {
         REBVAL *output_val = rebRepossess(outbuf, outbuf_used);

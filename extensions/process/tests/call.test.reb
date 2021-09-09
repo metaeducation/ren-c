@@ -7,22 +7,32 @@ https://github.com/metaeducation/ren-c/commit/298409f485420ecd03f0be4b465111be4a
 https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb0319635f81f
 
 (
-    call/shell/output [
-        (system.options.boot) --suppress "*" print.reb 100  ; small
-    ] data: {}
+    apply :call/shell [
+        [(system.options.boot) --suppress {"*"} print.reb 100]  ; small
+
+        /input false  ; avoid child process eating pastes of length test
+        /output data: {}
+    ]
+
     100 = length of data
 )
 (
-    call/shell/output [
-        (system.options.boot) --suppress "*" print.reb 9000  ; medium
-    ] data: {}
+    apply :call/shell [
+        (system.options.boot) --suppress {"*"} print.reb 9000  ; medium
+
+        /input false  ; avoid child process eating pastes of length test
+        /output data: {}
+    ]
 
     9000 = length of data
 )
 (
-    call/shell/output [
-        (system.options.boot) --suppress "*" print.reb 80000  ; large
-    ] data: {}
+    apply :call/shell [
+        [(system.options.boot) --suppress {"*"} print.reb 80000]  ; large
+
+        /input false  ; avoid child process eating pastes of length test
+        /output data: {}
+    ]
 
     80'000 = length of data
 )
@@ -54,7 +64,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 [
     (echoer: enclose specialize :call/input/output [
         command: [
-            (system.options.boot) --suppress "*" -q
+            (system.options.boot) --suppress {"*"} -q
             --do "write-stdout read system.ports.input"
         ]
     ] function [frame [frame!]] [
