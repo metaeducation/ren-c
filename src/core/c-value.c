@@ -170,6 +170,7 @@ void* Probe_Core_Debug(
 
     if (not p) {
         Probe_Print_Helper(p, expr, "C nullptr", file, line);
+        goto cleanup;
     }
     else switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
@@ -251,7 +252,7 @@ void* Probe_Core_Debug(
 
       case FLAVOR_DETAILS:
         Probe_Print_Helper(p, expr, "Action", file, line);
-        MF_Action(mo, ACT_ARCHETYPE(ACT(p)), false);
+        MF_Action(mo, ACT_ARCHETYPE(ACT(m_cast(void*, p))), false);
         break;
 
       case FLAVOR_PAIRLIST:
@@ -372,13 +373,13 @@ void* Probe_Core_Debug(
     //=//// SERIES WITH ELEMENTS WIDTH 1 INTERPRETED AS UTF-8 //////////////=//
 
       case FLAVOR_STRING: {
-        Probe_Print_Helper(p, expr, "Symbol series", file, line);
+        Probe_Print_Helper(p, expr, "String series", file, line);
         Mold_Text_Series_At(mo, STR(s), 0);  // or could be TAG!, etc.
         break; }
 
       case FLAVOR_SYMBOL: {
-        Probe_Print_Helper(p, expr, "String series", file, line);
-        Mold_Text_Series_At(mo, STR(s), 0);  // or could be TAG!, etc.
+        Probe_Print_Helper(p, expr, "Symbol series", file, line);
+        Mold_Text_Series_At(mo, STR(s), 0);
         break; }
 
     #if !defined(NDEBUG)  // PROBE() is sometimes in non-debug executables
