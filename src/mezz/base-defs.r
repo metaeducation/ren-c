@@ -293,19 +293,19 @@ pointfree*: func* [
 ;
 
 enclose: enclose* :enclose* func* [f] [  ; uses low-level ENCLOSE* to make
-    let inner: get 'f/inner
-    inherit-meta do f 'inner
+    set let inner :f.inner  ; don't cache name via SET-WORD!
+    inherit-meta do f :inner
 ]
-inherit-meta :enclose 'enclose*  ; needed since we used ENCLOSE*
+inherit-meta :enclose :enclose*  ; needed since we used ENCLOSE*
 
 specialize: enclose :specialize* func* [f] [  ; now we have high-level ENCLOSE
-    let action: get 'f/action
-    inherit-meta do f 'action
+    set let action :f.action  ; don't cache name via SET-WORD!
+    inherit-meta do f :action
 ]
 
 adapt: enclose :adapt* func* [f] [
-    let action: get 'f/action
-    inherit-meta do f 'action
+    set let action :f.action
+    inherit-meta do f :action
 ]
 
 chain: enclose :chain* func* [f] [
@@ -314,7 +314,7 @@ chain: enclose :chain* func* [f] [
     ; expression barrier.  Review this idea, but for now let it work in a
     ; dialect way by replacing with commas.
     ;
-    f/pipeline: map-each x f/pipeline [
+    f.pipeline: map-each x f.pipeline [
         either :x = '| [
             ',
         ][
@@ -322,24 +322,25 @@ chain: enclose :chain* func* [f] [
         ]
     ]
 
-    let pipeline1: pick (f/pipeline: reduce :f/pipeline) 1
-    inherit-meta do f 'pipeline1
+    ; don't cache name via SET-WORD!
+    set let pipeline1 pick (f.pipeline: reduce :f.pipeline) 1
+    inherit-meta do f :pipeline1
 ]
 
 augment: enclose :augment* func* [f] [
-    let action: get 'f/action
-    let spec: :f/spec
-    inherit-meta/augment do f 'action spec
+    set let action :f.action  ; don't cache name via SET-WORD!
+    let spec: :f.spec
+    inherit-meta/augment do f :action spec
 ]
 
 reframer: enclose :reframer* func* [f] [
-    let shim: get 'f/shim
-    inherit-meta do f 'shim
+    set let shim :f.shim  ; don't cache name via SET-WORD!
+    inherit-meta do f :shim
 ]
 
 reorder: enclose :reorder* func* [f] [
-    let action: get 'f/action
-    inherit-meta do f 'action
+    set let action :f.action  ; don't cache name via SET-WORD!
+    inherit-meta do f :action
 ]
 
 ; !!! The native R3-Alpha parse functionality doesn't have parity with UPARSE's
@@ -359,17 +360,17 @@ match-parse: enclose :parse func* [f] [
 ; overwrite it in the enclosure with an action taken out of the block.
 ;
 pointfree: specialize* (enclose :pointfree* func* [f] [
-    let action: f/action: (match action! any [
-        if match [word! path!] :f/block/1 [get compose f/block/1]
-        :f/block/1
+    set let action f.action: (match action! any [  ; don't SET-WORD! cache name
+        if match [word! path!] :f.block.1 [get compose f.block.1]
+        :f.block.1
     ]) else [
         fail "POINTFREE requires ACTION! argument at head of block"
     ]
 
     ; rest of block is invocation by example
-    f/block: skip f/block 1  ; Note: NEXT not defined yet
+    f.block: skip f.block 1  ; Note: NEXT not defined yet
 
-    inherit-meta do f 'action  ; no :action name cache
+    inherit-meta do f :action  ; don't SET-WORD! cache name
 ])[
     action: :panic/value  ; gets overwritten, best to make it something mean
 ]

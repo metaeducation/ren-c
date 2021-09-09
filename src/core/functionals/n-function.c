@@ -851,8 +851,7 @@ REBNATIVE(definitional_return_isotope)
 //      return: "Same as derived (assists in efficient chaining)"
 //          [action!]
 //      derived [action!]
-//      original "Passed as WORD! to use GET to avoid tainting cached label"
-//          [word!]
+//      original [action!]
 //      /augment "Additional spec information to scan"
 //          [block!]
 //  ]
@@ -862,10 +861,7 @@ REBNATIVE(inherit_meta)
     INCLUDE_PARAMS_OF_INHERIT_META;
 
     REBVAL *derived = ARG(derived);
-
-    const REBVAL *original = Lookup_Word_May_Fail(ARG(original), SPECIFIED);
-    if (not IS_ACTION(original))
-        fail (PAR(original));
+    const REBVAL *original = ARG(original);
 
     UNUSED(ARG(augment));  // !!! not yet implemented
 

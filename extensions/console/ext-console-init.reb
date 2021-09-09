@@ -121,7 +121,10 @@ export console!: make object! [
         ^v "Value (done with meta parameter to discern isotope status)"
             [<opt> any-value!]
     ][
-        last-result: unmeta v  ; keeps bad word isotope flag (except ~null~'s)
+        ; We use SET instead of a SET-WORD! here to avoid caching the action
+        ; name as "last-result", so it should keep the name it had before.
+        ;
+        set 'last-result unmeta v
 
         === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
 
@@ -180,7 +183,7 @@ export console!: make object! [
 
         === "ORDINARY" VALUES (^META v parameter means they get quoted) ===
 
-        v: unquote v  ; Now handle everything else
+        set 'v unquote v  ; Avoid SET-WORD!--would cache action names as "v"
 
         case [
             free? :v [

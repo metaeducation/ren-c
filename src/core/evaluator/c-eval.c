@@ -758,6 +758,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
       set_word_with_out:
 
+        if (IS_ACTION(f->out))  // cache the word's label in the cell
+            INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
+
         // We decay the isotope in the assigned slot, but we don't decay
         // the result.
         //
@@ -813,9 +816,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         Overwrite_Cell(f->out, unwrap(gotten));
         assert(NOT_CELL_FLAG(f->out, UNEVALUATED));
-
-        if (IS_ACTION(f->out))  // cache the word's label in the cell
-            INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
 
         Decay_If_Isotope(f->out);  // !!! Should Lookup_Word() handle this?
 
