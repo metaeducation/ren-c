@@ -39,7 +39,7 @@
 // scanning code, minus any need for error handling.
 //
 
-#if !defined(DEBUG_UTF8_EVERYWHERE)
+#if (! DEBUG_UTF8_EVERYWHERE)
     //
     // Plain build uses trivial expansion of REBCHR(*) and REBCHR(const*)
     //
@@ -148,7 +148,7 @@
             { return const_cast<char*>(reinterpret_cast<const char*>(bp)); }
     };
 
-  #if defined(DEBUG_CHECK_CASTS)
+  #if DEBUG_CHECK_CASTS
     //
     // const_cast<> and reinterpret_cast<> don't work with user-defined
     // conversion operators.  But since this codebase uses m_cast, we can

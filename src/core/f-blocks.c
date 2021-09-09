@@ -151,7 +151,7 @@ void Clonify(
     //
     assert(not (deep_types & FLAGIT_KIND(REB_ACTION)));
 
-  #if defined(DEBUG_UNREADABLE_TRASH)
+  #if DEBUG_UNREADABLE_TRASH
     if (IS_TRASH(v))  // running code below would assert
         return;
   #endif

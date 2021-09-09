@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 
-#if defined(DEBUG_FANCY_PANIC)  // !!! Separate setting for Dump routines?
+#if DEBUG_FANCY_PANIC  // !!! Separate setting for Dump routines?
 
 //
 //  Dump_Value_Debug: C
@@ -43,7 +43,7 @@ REBNOD *Dump_Value_Debug(const RELVAL *v)
 
     REBNOD *containing = Try_Find_Containing_Node_Debug(v);
 
-  #if defined(DEBUG_TRACK_EXTEND_CELLS)
+  #if DEBUG_TRACK_EXTEND_CELLS
     printf("REBVAL init");
 
     printf(" @ tick #%d", cast(unsigned int, v->tick));
@@ -114,7 +114,7 @@ ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const RELVAL *v) {
 #endif // !defined(NDEBUG)
 
 
-#ifdef DEBUG_HAS_PROBE
+#if DEBUG_HAS_PROBE
 
 inline static void Probe_Print_Helper(
     const void *p,  // the REBVAL*, REBSER*, or UTF-8 char*
@@ -124,7 +124,7 @@ inline static void Probe_Print_Helper(
     int line  // line where this PROBE() was invoked
 ){
     printf("\n-- (%s)=0x%p : %s", expr, p, label);
-  #ifdef DEBUG_COUNT_TICKS
+  #if DEBUG_COUNT_TICKS
     printf(" : tick %d", cast(int, TG_Tick));
   #endif
     printf(" %s @%d\n", file, line);
@@ -188,7 +188,7 @@ void* Probe_Core_Debug(
       case DETECTED_AS_CELL: {
         const REBVAL *v = cast(const REBVAL*, p);
 
-      #if defined(DEBUG_UNREADABLE_TRASH)
+      #if DEBUG_UNREADABLE_TRASH
         if (IS_TRASH(v)) {  // IS_NULLED() asserts on trash
             Probe_Print_Helper(p, expr, "Value", file, line);
             Append_Ascii(mo->series, "~trash~");
@@ -412,4 +412,4 @@ void* Probe_Core_Debug(
 void Probe(const void *p)
   { Probe_Core_Debug(p, "C debug", "N/A", 0); }
 
-#endif // defined(DEBUG_HAS_PROBE)
+#endif  // DEBUG_HAS_PROBE

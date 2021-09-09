@@ -59,7 +59,8 @@
 // This file should only use the external API.  However, it can be helpful in
 // debug situations to have access to PROBE() and other internal features.
 //
-#if !defined(DEBUG_MAIN_USING_SYS_CORE)
+#define DEBUG_MAIN_USING_SYS_CORE 0
+#if (! DEBUG_MAIN_USING_SYS_CORE)
     #include "rebol.h"  // note: includes pstdint.h and pstdbool.h by default
 #else
     #undef IS_ERROR  // windows.h has its own definition of this macro

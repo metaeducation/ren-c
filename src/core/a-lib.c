@@ -409,7 +409,7 @@ uintptr_t RL_rebTick(void)
 {
     ENTER_API;
 
-  #ifdef DEBUG_COUNT_TICKS
+  #if DEBUG_COUNT_TICKS
     return cast(long, TG_Tick);
   #else
     return 0;
@@ -1614,7 +1614,7 @@ REBVAL *RL_rebRescueWith(
     DECLARE_END_FRAME (dummy, EVAL_MASK_DEFAULT);
     Push_Frame(nullptr, dummy);
 
-  #ifdef DEBUG_ENSURE_FRAME_EVALUATES
+  #if DEBUG_ENSURE_FRAME_EVALUATES
     f->was_eval_called = true;  // "fake" frame, okay to lie
   #endif
 

@@ -85,7 +85,15 @@
 // debugging the JavaScript extension itself.  These are some interim hacks
 // for doing that until better ideas come along.
 
-#ifdef DEBUG_JAVASCRIPT_SILENT_TRACE
+#if !defined(DEBUG_JAVASCRIPT_EXTENSION)
+    #define DEBUG_JAVASCRIPT_EXTENSION 0
+#endif
+
+#if !defined(DEBUG_JAVASCRIPT_SILENT_TRACE)
+    #define DEBUG_JAVASCRIPT_SILENT_TRACE 0
+#endif
+
+#if DEBUG_JAVASCRIPT_SILENT_TRACE
 
     // Trace output can influence the behavior of the system so that race
     // conditions or other things don't manifest.  This is tricky.  If this
@@ -97,7 +105,7 @@
       { return cast(intptr_t, cast(void*, PG_Silent_Trace_Buf)); }
 #endif
 
-#ifdef DEBUG_JAVASCRIPT_EXTENSION
+#if DEBUG_JAVASCRIPT_EXTENSION
     #undef assert  // if it was defined (most emscripten builds are NDEBUG)
     #define assert(expr) \
         do { if (!(expr)) { \
@@ -948,7 +956,7 @@ REBNATIVE(startup_p)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_STARTUP_P;
 
-  #ifdef DEBUG_JAVASCRIPT_EXTENSION
+  #if DEBUG_JAVASCRIPT_EXTENSION
     //
     // See remarks in %load-r3.js about why environment variables are used to
     // control such settings (at least for now) in the early boot process.
@@ -983,7 +991,7 @@ REBNATIVE(js_trace)
 {
     JAVASCRIPT_INCLUDE_PARAMS_OF_JS_TRACE;
 
-  #ifdef DEBUG_JAVASCRIPT_EXTENSION
+  #if DEBUG_JAVASCRIPT_EXTENSION
     PG_Probe_Failures = PG_JS_Trace = VAL_LOGIC(ARG(enable));
   #else
     fail ("JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r");

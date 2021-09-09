@@ -132,7 +132,7 @@ inline static REBCHR(*) SKIP_CHR(
     return m_cast(REBCHR(*), cp);
 }
 
-#if defined(DEBUG_UTF8_EVERYWHERE)
+#if DEBUG_UTF8_EVERYWHERE
     //
     // See the definition of `const_if_c` for the explanation of why this
     // overloading technique is needed to make output constness match input.
@@ -228,7 +228,7 @@ inline static REBLEN STR_LEN(const REBSTR *s) {
         return STR_SIZE(s);
 
     if (IS_NONSYMBOL_STRING(s)) {  // length is cached for non-ANY-WORD!
-      #if defined(DEBUG_UTF8_EVERYWHERE)
+      #if DEBUG_UTF8_EVERYWHERE
         if (s->misc.length > SER_USED(s))  // includes 0xDECAFBAD
             panic(s);
       #endif
@@ -257,7 +257,7 @@ inline static REBLEN STR_INDEX_AT(const REBSTR *s, REBSIZ offset) {
     assert(not Is_Continuation_Byte_If_Utf8(*BIN_AT(s, offset)));
 
     if (IS_NONSYMBOL_STRING(s)) {  // length is cached for non-ANY-WORD!
-      #if defined(DEBUG_UTF8_EVERYWHERE)
+      #if DEBUG_UTF8_EVERYWHERE
         if (s->misc.length > SER_USED(s))  // includes 0xDECAFBAD
             panic(s);
       #endif
@@ -354,7 +354,7 @@ inline static void Free_Bookmarks_Maybe_Null(REBSTR *str) {
 // helps to be able to debug it.  Currently it is selectively debuggable when
 // callgrind is enabled, as part of performance analysis.
 //
-#ifdef DEBUG_TRACE_BOOKMARKS
+#if DEBUG_TRACE_BOOKMARKS
     #define BOOKMARK_TRACE(...)  /* variadic, requires at least C99 */ \
         do { if (PG_Callgrind_On) { \
             printf("/ ");  /* separate sections (spare leading /) */ \
@@ -383,7 +383,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
     if (IS_NONSYMBOL_STRING(s))
         bookmark = LINK(Bookmarks, s);
 
-  #if defined(DEBUG_SPORADICALLY_DROP_BOOKMARKS)
+  #if DEBUG_SPORADICALLY_DROP_BOOKMARKS
     if (bookmark and SPORADICALLY(100)) {
         Free_Bookmarks_Maybe_Null(s);
         bookmark = nullptr;
@@ -392,7 +392,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
 
     REBLEN len = STR_LEN(s);
 
-  #ifdef DEBUG_TRACE_BOOKMARKS
+  #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("len %ld @ %ld ", len, at);
     BOOKMARK_TRACE("%s", bookmark ? "bookmarked" : "no bookmark");
   #endif
@@ -465,19 +465,19 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
   }
 
     if (index > at) {
-      #ifdef DEBUG_TRACE_BOOKMARKS
+      #if DEBUG_TRACE_BOOKMARKS
         BOOKMARK_TRACE("backward scan %ld", index - at);
       #endif
         goto scan_backward;
     }
 
-  #ifdef DEBUG_TRACE_BOOKMARKS
+  #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("forward scan %ld", at - index);
   #endif
     goto scan_forward;
 
   scan_from_head:
-  #ifdef DEBUG_TRACE_BOOKMARKS
+  #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("scan from head");
   #endif
     cp = STR_HEAD(s);
@@ -494,7 +494,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
     goto update_bookmark;
 
   scan_from_tail:
-  #ifdef DEBUG_TRACE_BOOKMARKS
+  #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("scan from tail");
   #endif
     cp = STR_TAIL(s);
@@ -506,20 +506,20 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
         cp = BACK_STR(cp);
 
     if (not bookmark) {
-      #ifdef DEBUG_TRACE_BOOKMARKS
+      #if DEBUG_TRACE_BOOKMARKS
         BOOKMARK_TRACE("not cached\n");
       #endif
         return cp;
     }
 
   update_bookmark:
-  #ifdef DEBUG_TRACE_BOOKMARKS
+  #if DEBUG_TRACE_BOOKMARKS
     BOOKMARK_TRACE("caching %ld\n", index);
   #endif
     BMK_INDEX(bookmark) = index;
     BMK_OFFSET(bookmark) = cp - STR_HEAD(s);
 
-  #if defined(DEBUG_VERIFY_STR_AT)
+  #if DEBUG_VERIFY_STR_AT
     REBCHR(*) check_cp = STR_HEAD(s);
     REBLEN check_index = 0;
     for (; check_index != at; ++check_index)
@@ -686,7 +686,7 @@ inline static void SET_CHAR_AT(REBSTR *s, REBLEN n, REBUNI c) {
     // corrupt the length every time the SER_USED() changes.  Workaround that
     // by saving the length and restoring at the end.
     //
-  #ifdef DEBUG_UTF8_EVERYWHERE
+  #if DEBUG_UTF8_EVERYWHERE
     REBLEN len = STR_LEN(s);
   #endif
 
@@ -739,7 +739,7 @@ inline static void SET_CHAR_AT(REBSTR *s, REBLEN n, REBUNI c) {
             BMK_OFFSET(book) += delta;
     }
 
-  #ifdef DEBUG_UTF8_EVERYWHERE  // see note on `len` at start of function
+  #if DEBUG_UTF8_EVERYWHERE  // see note on `len` at start of function
     s->misc.length = len;
   #endif
 

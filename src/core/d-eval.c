@@ -49,7 +49,7 @@
 #define f_next f->feed->value
 #define f_next_gotten f->feed->gotten
 
-#if defined(DEBUG_COUNT_TICKS) && defined(DEBUG_HAS_PROBE)
+#if DEBUG_COUNT_TICKS && DEBUG_HAS_PROBE
 
 //
 //  Dump_Frame_Location: C
@@ -126,7 +126,7 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f) {
     // on the data stack or mold stack/etc.  See Drop_Frame() for the actual
     // balance check.
 
-  #ifdef DEBUG_EXTANT_STACK_POINTERS
+  #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);
   #endif
 
@@ -239,7 +239,7 @@ void Do_Process_Action_Checks_Debug(REBFRM *f) {
     assert(IS_FRAME(f->rootvar));
     assert(f->arg == f->rootvar + 1);
 
-  #ifdef DEBUG_EXTANT_STACK_POINTERS
+  #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);
   #endif
 
@@ -269,7 +269,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
     //
     // !!! PG_Dispatcher() should do this, so every phase gets checked.
     //
-  #ifdef DEBUG_NATIVE_RETURNS
+  #if DEBUG_NATIVE_RETURNS
     if (ACT_HAS_RETURN(phase)) {
         const REBKEY *key = ACT_KEYS_HEAD(phase);
         const REBPAR *param = ACT_PARAMS_HEAD(phase);

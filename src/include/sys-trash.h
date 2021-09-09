@@ -37,7 +37,7 @@
 
 
 // !!! Originally this function lived in the %sys-bad-word.h file, and was
-// forward declared only in the !defined(DEBUG_UNREADABLE_TRASH) case.  While
+// forward declared only in the #if (! DEBUG_UNREADABLE_TRASH) case.  While
 // this worked most of the time, older MinGW cross compilers seemed to have a
 // problem with that forward inline declaration.  So just define it here.
 // Be sure to re-run the MinGW CI Builds if you rearrange this...
@@ -63,7 +63,7 @@ inline static REBVAL *Init_Bad_Word_Untracked(
 }
 
 
-#if !defined(DEBUG_UNREADABLE_TRASH)  // release behavior, just ~trash~
+#if (! DEBUG_UNREADABLE_TRASH)  // release behavior, just ~trash~
     //
     // Important: This is *not* a CELL_FLAG_ISOTOPE form of ~trash~.  That is
     // because trash can be put anywhere as an implementation detail--including

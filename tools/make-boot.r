@@ -251,7 +251,7 @@ e-types/emit 'rebs {
 
         REB_T_RETURN_SIGNAL = (REB_0 + REB_64),  /* signals throws, etc. */
 
-      #if defined(DEBUG_POISON_CELLS)
+      #if DEBUG_POISON_CELLS
         REB_T_POISON = (REB_0 + 2 * REB_64),  /* simulate lack of GC safety */
       #endif
 

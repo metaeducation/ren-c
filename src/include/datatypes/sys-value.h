@@ -61,7 +61,7 @@
 // case the debug build was using printf() to output contextual information.
 //
 
-#if defined(DEBUG_HAS_PROBE)
+#if DEBUG_HAS_PROBE
     #ifdef CPLUSPLUS_11
         template <
             typename T,
@@ -113,7 +113,7 @@
 // NODE_FLAG_FREE, helps make this check useful.
 //
 
-#if defined(DEBUG_CELL_WRITABILITY)
+#if DEBUG_CELL_WRITABILITY
     //
     // In the debug build, functions aren't inlined, and the overhead actually
     // adds up very quickly.  Run the risk of repeating macro arguments to
@@ -242,7 +242,7 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
             if (KIND3Q_BYTE_UNCHECKED(v) == REB_BAD_WORD) {
                 if (VAL_NODE1(v) == nullptr) {
                     printf("KIND3Q_BYTE() called on unreadable cell\n");
-                  #ifdef DEBUG_TRACK_EXTEND_CELLS
+                  #if DEBUG_TRACK_EXTEND_CELLS
                     printf("Made on tick: %d\n", cast(int, v->tick));
                   #endif
                     panic_at (v, file, line);
@@ -462,7 +462,7 @@ inline static REBVAL *RESET_CUSTOM_CELL(
 // This is another case where the debug build doesn't inline functions.
 // Run the risk of repeating macro args to speed up this critical check.
 //
-#if !defined(DEBUG_CHECK_ALIGN)
+#if (! DEBUG_MEMORY_ALIGN)
     #define ALIGN_CHECK_CELL_EVIL_MACRO(c)    NOOP
 #else
     #define ALIGN_CHECK_CELL_EVIL_MACRO(c) \
@@ -646,7 +646,7 @@ inline static void Copy_Cell_Header(
     out->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // ensure NODE+CELL
         | (v->header.bits & CELL_MASK_COPY);
 
-  #ifdef DEBUG_TRACK_EXTEND_CELLS
+  #if DEBUG_TRACK_EXTEND_CELLS
     out->file = v->file;
     out->line = v->line;
     out->tick = TG_Tick;  // initialization tick

@@ -100,14 +100,14 @@ extensions: make map! [
 
 cflags: compose [
     ((if debug-javascript-extension [[
-        {-DDEBUG_JAVASCRIPT_EXTENSION}
+        {-DDEBUG_JAVASCRIPT_EXTENSION=1}
 
-        {-DDEBUG_HAS_PROBE}
-        {-DDEBUG_FANCY_PANIC}
-        {-DDEBUG_COUNT_TICKS}
-        {-DDEBUG_PRINTF_FAIL_LOCATIONS}
+        {-DDEBUG_HAS_PROBE=1}
+        {-DDEBUG_FANCY_PANIC=1}
+        {-DDEBUG_COUNT_TICKS=1}
+        {-DDEBUG_PRINTF_FAIL_LOCATIONS=1}
 
-        {-DDEBUG_COLLECT_STATS}  ; !!! maybe temporary, has cost but good info
+        {-DDEBUG_COLLECT_STATS=1}  ; !!! maybe temporary, has cost but good info
     ]]))
 
     ((if use-asyncify [[

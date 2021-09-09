@@ -52,7 +52,7 @@
 //   release build gives some info.
 //
 
-#if defined(DEBUG_COUNT_TICKS)
+#if DEBUG_COUNT_TICKS
     //
     // !!! The TG_Tick gets used in inline functions, and as a result it must
     // be defined earlier than when the %sys-globals.h file can be included.
@@ -63,8 +63,8 @@
     extern REBTCK TG_Break_At_Tick;
 #endif
 
-#if defined(DEBUG_COUNT_TICKS)
-    #ifdef DEBUG_FANCY_PANIC
+#if DEBUG_COUNT_TICKS
+    #if DEBUG_FANCY_PANIC
         #define panic(v) \
             Panic_Core((v), TG_Tick, __FILE__, __LINE__)
 
@@ -81,7 +81,7 @@
 
     #endif
 #else
-    #ifdef DEBUG_FANCY_PANIC
+    #if DEBUG_FANCY_PANIC
         #define panic(v) \
             Panic_Core((v), 0, __FILE__, __LINE__)
 
@@ -108,7 +108,7 @@
 // so instead kick into an infinite loop which can be broken and stepped out
 // of in the debugger.
 //
-#if defined(INCLUDE_C_DEBUG_BREAK_NATIVE) or defined(DEBUG_COUNT_TICKS)
+#if INCLUDE_C_DEBUG_BREAK_NATIVE || DEBUG_COUNT_TICKS
     #if TO_HAIKU || TO_EMSCRIPTEN
         inline static void debug_break() {
             int x = 0;
@@ -159,7 +159,7 @@
 #define BREAK_ON_TICK(tick) \
     if (tick == TG_Tick) BREAK_NOW()
 
-#if defined(NDEBUG) || !defined(DEBUG_COUNT_TICKS)
+#if defined(NDEBUG) || (! DEBUG_COUNT_TICKS)
     #define SPORADICALLY(modulus) \
         false
 #else

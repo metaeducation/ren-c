@@ -240,7 +240,7 @@ inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *j) {
 //
 
 #ifdef NDEBUG
-    #ifdef DEBUG_PRINTF_FAIL_LOCATIONS  // see remarks in %reb-config.h
+    #if DEBUG_PRINTF_FAIL_LOCATIONS  // see remarks in %reb-config.h
         #define fail(error) do { \
             printf("fail() @ %s %d tick =", __FILE__, __LINE__); \
             Fail_Core(error); /* prints the actual tick */ \

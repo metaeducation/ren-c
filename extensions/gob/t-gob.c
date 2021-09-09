@@ -280,7 +280,7 @@ static void Insert_Gobs(
         }
     }
 
-  #ifdef DEBUG_TERM_ARRAYS
+  #if DEBUG_TERM_ARRAYS
     if (IS_SER_DYNAMIC(pane))
         SET_CELL_FREE(ARR_TAIL(pane));
   #endif

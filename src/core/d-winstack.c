@@ -46,7 +46,7 @@
 
 #include "reb-config.h"  // needed for TO_WINDOWS, DEBUG_SERIES_ORIGINS
 
-#if TO_WINDOWS && defined(DEBUG_SERIES_ORIGINS)
+#if TO_WINDOWS && DEBUG_SERIES_ORIGINS
 
 #include <windows.h>
 #include <stdio.h>

@@ -82,7 +82,7 @@
 // For instance, VAL_DECIMAL(STKVAL(*)) can't tell which checked overload
 // to use.  In such cases, you have to cast, e.g. VAL_DECIMAL(VAL(stackval)).
 //
-#if !defined(DEBUG_EXTANT_STACK_POINTERS)
+#if (! DEBUG_EXTANT_STACK_POINTERS)
     #define STKVAL(p) REBVAL*
 #else
     struct Reb_Stack_Value_Ptr;
@@ -116,7 +116,7 @@
     #define REBCEL(const_star) \
         const struct Reb_Value *  // same as RELVAL, no checking in C build
 
-#elif !defined(DEBUG_CHECK_CASTS)
+#elif (! DEBUG_CHECK_CASTS)
     //
     // The %sys-internals.h API is used by core extensions, and we may want
     // to build the executable with C++ but an extension with C.  If there

@@ -205,7 +205,7 @@ REBLEN Modify_Array(
         SET_CELL_FLAG(ARR_HEAD(dst_arr), NEWLINE_BEFORE);
     }
 
-  #ifdef DEBUG_TERM_ARRAYS
+  #if DEBUG_TERM_ARRAYS
     if (IS_SER_DYNAMIC(dst_arr))
         SET_CELL_FREE(ARR_TAIL(dst_arr));
   #endif
@@ -723,7 +723,7 @@ REBLEN Modify_String_Or_Binary(
             Free_Bookmarks_Maybe_Null(dst_str);
         }
         else {
-          #if defined(DEBUG_BOOKMARKS_ON_MODIFY)
+          #if DEBUG_BOOKMARKS_ON_MODIFY
             Check_Bookmarks_Debug(dst_str);
           #endif
 

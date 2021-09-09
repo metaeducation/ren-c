@@ -625,7 +625,7 @@ union Reb_Series_Content {
         //
         REBRAW cells[1];
 
-      #if defined(DEBUG_USE_UNION_PUNS)
+      #if DEBUG_USE_UNION_PUNS
         char utf8_pun[sizeof(RELVAL)];  // debug watchlist insight into UTF-8
         REBWCHAR ucs2_pun[sizeof(RELVAL)/sizeof(REBUNI)];  // wchar_t insight
       #endif
@@ -792,7 +792,7 @@ union Reb_Series_Info {
     //
     union Reb_Series_Misc misc;
 
-  #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
     intptr_t *guard;  // intentionally alloc'd and freed for use by panic()
     uintptr_t tick;  // also maintains sizeof(REBSER) % sizeof(REBI64) == 0
   #endif

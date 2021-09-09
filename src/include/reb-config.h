@@ -297,6 +297,17 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// NDEBUG is the variable that is either #defined or not by the C assert.h
+// convention.  The reason NDEBUG was used was because it was a weird name and
+// unlikely to compete with codebases that had their own DEBUG definition.
+//
+#if defined(NDEBUG)
+    #define DEBUG 0
+#else
+    #define DEBUG 1
+#endif
+
+
 // Initially the debug build switches were all (default) or nothing (-DNDEBUG)
 // but needed to be broken down into a finer-grained list.  This way, more
 // constrained systems (like emscripten) can build in just the features it
@@ -305,137 +316,194 @@ Special internal defines used by RT, not Host-Kit developers:
 // !!! Revisit a more organized way to inventory these settings and turn them
 // on and off as time permits.
 //
-#if !defined(NDEBUG)
-    #define DEBUG_HAS_PROBE
-    #define DEBUG_FANCY_PANIC
-    #define DEBUG_MONITOR_SERIES
-    #define DEBUG_COUNT_TICKS
-    #define DEBUG_FRAME_LABELS
-    #define DEBUG_UNREADABLE_TRASH
-    #define DEBUG_POISON_CELLS
-    #define DEBUG_BALANCE_STATE
+#if !defined(DEBUG_HAS_PROBE)
+    #define DEBUG_HAS_PROBE DEBUG
+#endif
 
-    // See debugbreak.h and REBNATIVE(c_debug_break)...useful!
-    //
-    #define INCLUDE_C_DEBUG_BREAK_NATIVE
+#if !defined(DEBUG_FANCY_PANIC)
+    #define DEBUG_FANCY_PANIC DEBUG
+#endif
 
-    // See REBNATIVE(test_librebol)
-    //
-    #define INCLUDE_TEST_LIBREBOL_NATIVE
+#if !defined(DEBUG_MONITOR_SERIES)
+    #define DEBUG_MONITOR_SERIES DEBUG
+#endif
 
-    // !!! This was a concept that may have merit, but doesn't actually work
-    // when something creates a frame for purposes of iteration where it *may*
-    // or may not evaluate.  The FFI struct analysis was an example.  Hence
-    // disabling it for now, but there may be value in it enough to have a
-    // frame flag for explicitly saying you don't necessarily plan to call
-    // the evaluator.
-    //
-    // ---
-    //
-    // Note: We enforce going through the evaluator and not "skipping out" on
-    // the frame generation in case it is hooked and something like a debug
-    // step wanted to see it.  Or also, if you write `cycle []` there has to
-    // be an opportunity for Do_Signals_Throws() to check for cancellation
-    // via Ctrl-C.)
-    //
-    // This ties into a broader question of considering empty blocks to be
-    // places that are debug step or breakpoint opportunities, so we make
-    // sure you use `do { eval } while (NOT_END(...))` instead of potentially
-    // skipping that opportunity with `while (NOT_END(...)) { eval }`:
-    //
-    // https://github.com/rebol/rebol-issues/issues/2229
-    //
-    /* #define DEBUG_ENSURE_FRAME_EVALUATES */
+#if !defined(DEBUG_COUNT_TICKS)
+    #define DEBUG_COUNT_TICKS DEBUG
+#endif
 
-    // !!! Checking the memory alignment is an important invariant but may be
-    // overkill to run on all platforms at all times.  It requires the
-    // DEBUG_CELL_WRITABILITY flag to be enabled, since it's the moment of
-    // writing that is when the check has an opportunity to run.
-    //
-    // !!! People using MLton to compile found that GCC 4.4.3 does not always
-    // align doubles to 64-bit boundaries on Windows, even when -malign-double
-    // is used.  It's a very old compiler, and may be a bug.  Disable align
-    // checking for GCC 4 on Windows, hope it just means slower loads/stores.
-    //
-    // https://stackoverflow.com/a/11110283/211160
-    //
+#if !defined(DEBUG_FRAME_LABELS)
+    #define DEBUG_FRAME_LABELS DEBUG
+#endif
+
+#if !defined(DEBUG_UNREADABLE_TRASH)
+    #define DEBUG_UNREADABLE_TRASH DEBUG
+#endif
+
+#if !defined(DEBUG_POISON_CELLS)
+    #define DEBUG_POISON_CELLS DEBUG
+#endif
+
+#if !defined(DEBUG_BALANCE_STATE)
+    #define DEBUG_BALANCE_STATE DEBUG
+#endif
+
+
+// See debugbreak.h and REBNATIVE(c_debug_break)...useful!
+//
+#if !defined(INCLUDE_C_DEBUG_BREAK_NATIVE)
+    #define INCLUDE_C_DEBUG_BREAK_NATIVE DEBUG
+#endif
+
+// See REBNATIVE(test_librebol)
+//
+#if !defined(INCLUDE_TEST_LIBREBOL_NATIVE)
+    #define INCLUDE_TEST_LIBREBOL_NATIVE DEBUG
+#endif
+
+// !!! This was a concept that may have merit, but doesn't actually work
+// when something creates a frame for purposes of iteration where it *may*
+// or may not evaluate.  The FFI struct analysis was an example.  Hence
+// disabling it for now, but there may be value in it enough to have a
+// frame flag for explicitly saying you don't necessarily plan to call
+// the evaluator.
+//
+// ---
+//
+// Note: We enforce going through the evaluator and not "skipping out" on
+// the frame generation in case it is hooked and something like a debug
+// step wanted to see it.  Or also, if you write `cycle []` there has to
+// be an opportunity for Do_Signals_Throws() to check for cancellation
+// via Ctrl-C.)
+//
+// This ties into a broader question of considering empty blocks to be
+// places that are debug step or breakpoint opportunities, so we make
+// sure you use `do { eval } while (NOT_END(...))` instead of potentially
+// skipping that opportunity with `while (NOT_END(...)) { eval }`:
+//
+// https://github.com/rebol/rebol-issues/issues/2229
+//
+#define DEBUG_ENSURE_FRAME_EVALUATES 0
+
+#if !defined(DEBUG_CELL_WRITABILITY)
+    #define DEBUG_CELL_WRITABILITY DEBUG
+#endif
+
+// !!! Checking the memory alignment is an important invariant but may be
+// overkill to run on all platforms at all times.  It requires the
+// DEBUG_CELL_WRITABILITY flag to be enabled, since it's the moment of
+// writing that is when the check has an opportunity to run.
+//
+// !!! People using MLton to compile found that GCC 4.4.3 does not always
+// align doubles to 64-bit boundaries on Windows, even when -malign-double
+// is used.  It's a very old compiler, and may be a bug.  Disable align
+// checking for GCC 4 on Windows, hope it just means slower loads/stores.
+//
+// https://stackoverflow.com/a/11110283/211160
+//
+#if !defined(DEBUG_MEMORY_ALIGN)
   #ifdef __GNUC__
     #if !defined(TO_WINDOWS) || (__GNUC__ >= 5) // only  least version 5
-       #define DEBUG_MEMORY_ALIGN
+        #define DEBUG_MEMORY_ALIGN DEBUG
+    #else
+        #define DEBUG_MEMORY_ALIGN 0
     #endif
   #else
-    #define DEBUG_MEMORY_ALIGN
+    #define DEBUG_MEMORY_ALIGN DEBUG
   #endif
-    #define DEBUG_CELL_WRITABILITY
+#endif
 
-    // Natives can be decorated with a RETURN: annotation, but this is not
-    // checked in the release build.  It's assumed they will only return the
-    // correct types.  This switch is used to panic() if they're wrong.
-    //
-    #define DEBUG_NATIVE_RETURNS
+// System V ABI for X86 says alignment can be 4 bytes for double.  But
+// you can change this in the compiler settings.  We should either sync
+// with that setting or just skip it, and assume that we do enough
+// checking on the 64-bit builds.
+//
+// https://stackoverflow.com/q/14893802/
+//
+// !!! We are overpaying for the ALIGN_SIZE if it's not needed for double,
+// so perhaps ALIGN_SIZE should be configured in build settings...
+//
+#if !defined(DEBUG_DONT_CHECK_ALIGN)  // !!! Appears unused?
+  #if (! TO_WINDOWS_X86) && (! TO_LINUX_X86)
+    #define DEBUG_DONT_CHECK_ALIGN 1
+  #else
+    #define DEBUG_DONT_CHECK_ALIGN 0
+  #endif
+#endif
 
-    // It can be nice to see aliases of platform pointers as if they were
-    // individual bytes, through union "puns".  Though this behavior is not
-    // well defined, it can be useful a lot of the time.
-    //
-    // https://en.wikipedia.org/wiki/Type_punning
-    //
-    #define DEBUG_USE_UNION_PUNS
-
-    // Bitfields are poorly specified, and so even if it looks like your bits
-    // should pack into a struct exactly, they might not.  Only try this on
-    // Linux, where it has seemed to work out (MinGW64 build on Cygwin made
-    // invalid REBVAL sizes with this on)
-    //
-    #if defined(ENDIAN_LITTLE) && TO_LINUX_X64
-        #define DEBUG_USE_BITFIELD_HEADER_PUNS
+#if DEBUG_MEMORY_ALIGN
+    #if (! DEBUG_CELL_WRITABILITY)
+        #error "DEBUG_MEMORY_ALIGN requires DEBUG_CELL_WRITABILITY"
     #endif
+#endif
 
-    #define DEBUG_ENABLE_ALWAYS_MALLOC
 
-    // System V ABI for X86 says alignment can be 4 bytes for double.  But
-    // you can change this in the compiler settings.  We should either sync
-    // with that setting or just skip it, and assume that we do enough
-    // checking on the 64-bit builds.
-    //
-    // https://stackoverflow.com/q/14893802/
-    //
-    // !!! We are overpaying for the ALIGN_SIZE if it's not needed for double,
-    // so perhaps ALIGN_SIZE should be configured in build settings...
-    //
-    #if (! TO_WINDOWS_X86) && (! TO_LINUX_X86)
-        #define DEBUG_DONT_CHECK_ALIGN
-    #endif
+// Natives can be decorated with a RETURN: annotation, but this is not
+// checked in the release build.  It's assumed they will only return the
+// correct types.  This switch is used to panic() if they're wrong.
+//
+#if !defined(DEBUG_NATIVE_RETURNS)
+    #define DEBUG_NATIVE_RETURNS DEBUG
+#endif
 
-    #ifdef CPLUSPLUS_11
-        //
-        // Each DS_PUSH() on the data stack can potentially move all the
-        // pointers on the stack.  Hence there is a debug setting for managing
-        // these pointers in a special C++ container called STKVAL(*).  This
-        // counts to see how many stack pointers the user has in local
-        // variables, and if that number is not zero then it asserts when a
-        // push or pop is requested, or when the evaluator is invoked.
-        //
-        #define DEBUG_EXTANT_STACK_POINTERS
-    #endif
+// It can be nice to see aliases of platform pointers as if they were
+// individual bytes, through union "puns".  Though this behavior is not
+// well defined, it can be useful a lot of the time.
+//
+// https://en.wikipedia.org/wiki/Type_punning
+//
+#if !defined(DEBUG_USE_UNION_PUNS)
+    #define DEBUG_USE_UNION_PUNS DEBUG
+#endif
 
-    // The PG_Reb_Stats structure is only tracked in the debug build, as this
-    // data gathering is a sort of constant "tax" on the system.  While it
-    // might arguably be interesting to non-debug build users who are trying
-    // to optimize their code, the compromise of having to maintain the
-    // numbers suggests those users should be empowered with a debug build if
-    // they are doing such work (they should probably have one for other
-    // reasons; note this has been true of things like Windows NT where there
-    // were indeed "checked" builds given to those who had such interest.)
-    //
-    #define DEBUG_COLLECT_STATS
+// Bitfields are poorly specified, and so even if it looks like your bits
+// should pack into a struct exactly, they might not.  Only try this on
+// Linux, where it has seemed to work out (MinGW64 build on Cygwin made
+// invalid REBVAL sizes with this on)
+//
+#if defined(ENDIAN_LITTLE) && TO_LINUX_X64
+    #define DEBUG_USE_BITFIELD_HEADER_PUNS 1
 #else
+    #define DEBUG_USE_BITFIELD_HEADER_PUNS 0
+#endif
+
+#if !defined(DEBUG_ENABLE_ALWAYS_MALLOC)
+    //
     // We may want to test the valgrind build even if it's release so that
     // it checks the R3_ALWAYS_MALLOC environment variable
     //
     #if defined(INCLUDE_CALLGRIND_NATIVE)
-        #define DEBUG_ENABLE_ALWAYS_MALLOC
+        #define DEBUG_ENABLE_ALWAYS_MALLOC 1
+    #else
+        #define DEBUG_ENABLE_ALWAYS_MALLOC DEBUG
     #endif
+#endif
+
+#ifdef CPLUSPLUS_11
+    //
+    // Each DS_PUSH() on the data stack can potentially move all the
+    // pointers on the stack.  Hence there is a debug setting for managing
+    // these pointers in a special C++ container called STKVAL(*).  This
+    // counts to see how many stack pointers the user has in local
+    // variables, and if that number is not zero then it asserts when a
+    // push or pop is requested, or when the evaluator is invoked.
+    //
+    #define DEBUG_EXTANT_STACK_POINTERS DEBUG
+#else
+    #define DEBUG_EXTANT_STACK_POINTERS 0
+#endif
+
+// The PG_Reb_Stats structure is only tracked in the debug build, as this
+// data gathering is a sort of constant "tax" on the system.  While it
+// might arguably be interesting to non-debug build users who are trying
+// to optimize their code, the compromise of having to maintain the
+// numbers suggests those users should be empowered with a debug build if
+// they are doing such work (they should probably have one for other
+// reasons; note this has been true of things like Windows NT where there
+// were indeed "checked" builds given to those who had such interest.)
+//
+#if !defined(DEBUG_COLLECT_STATS)
+    #define DEBUG_COLLECT_STATS DEBUG
 #endif
 
 
@@ -444,55 +512,86 @@ Special internal defines used by RT, not Host-Kit developers:
 // checks are too slow to run on most builds, but should be turned on if
 // any problems are seen.
 //
-#ifdef DEBUG_UTF8_EVERYWHERE
-    #define DEBUG_VERIFY_STR_AT  // check cache correctness on every STR_AT
-    #define DEBUG_SPORADICALLY_DROP_BOOKMARKS  // test bookmark absence
-    #define DEBUG_BOOKMARKS_ON_MODIFY  // main routine for preserving marks
+#if !defined(DEBUG_UTF8_EVERYWHERE)
+    #define DEBUG_UTF8_EVERYWHERE 0
 #endif
 
-#ifdef __SANITIZE_ADDRESS__
-    #ifdef __cplusplus  // Note: CPLUSPLUS_11 macro not defined yet
-        //
-        // Cast checks in SER(), NOD(), ARR() are expensive--they ensure that
-        // when you cast a void pointer to a REBSER, that the header actually
-        // is for a REBSER (etc.)  Disable this by default unless you are
-        // using address sanitizer, where you expect things to be slow.
-        //
-        #define DEBUG_CHECK_CASTS
-    #endif
-
-    // Both Valgrind and Address Sanitizer can provide the call stack at
-    // the moment of allocation when a freed pointer is used.  This is
-    // exploited by Touch_Series() to use a bogus allocation to help
-    // mark series origins that can later be used by `panic()`.  However,
-    // the feature is a waste if you're not using such tools.
-    //
-    // If you plan to use Valgrind with this, you'll have to set it
-    // explicitly...only Address Sanitizer can be detected here.
-    //
-    #define DEBUG_SERIES_ORIGINS
-#else
-    // In order to make sure that a good mix of debug settings get tested,
-    // this does array termination checks on non-sanitizer debug builds.
-    // Arrays are not usually marked at their tails (unlike R3-Alpha which
-    // used END! cells to terminate)...but the residual functionality can
-    // help catch overruns when they occur.
-    //
-    #if !defined(NDEBUG)
-        #define DEBUG_TERM_ARRAYS
-        #define DEBUG_CHECK_ENDS
-    #endif
+#if !defined(DEBUG_VERIFY_STR_AT)  // check cache correctness on every STR_AT
+    #define DEBUG_VERIFY_STR_AT DEBUG_UTF8_EVERYWHERE
 #endif
 
-#ifdef DEBUG_MEMORY_ALIGN
-    #if !defined(DEBUG_CELL_WRITABILITY)
-        #error "DEBUG_MEMORY_ALIGN requires DEBUG_CELL_WRITABILITY"
-    #endif
+#if !defined(DEBUG_SPORADICALLY_DROP_BOOKMARKS)
+    #define DEBUG_SPORADICALLY_DROP_BOOKMARKS DEBUG_UTF8_EVERYWHERE
+#endif
+
+#if !defined(DEBUG_BOOKMARKS_ON_MODIFY)  // test bookmark absence
+    #define DEBUG_BOOKMARKS_ON_MODIFY DEBUG_UTF8_EVERYWHERE
+#endif
+
+#if !defined(DEBUG_TRACE_BOOKMARKS)
+    #define DEBUG_TRACE_BOOKMARKS 0
 #endif
 
 
-#ifdef DEBUG_TRACK_EXTEND_CELLS
-    #define UNUSUAL_REBVAL_SIZE // sizeof(REBVAL)*2 may be > sizeof(REBSER)
+// Cast checks in SER(), NOD(), ARR() are expensive--they ensure that when you
+// cast a void pointer to a REBSER, that the header actually is for a REBSER
+// (etc.)  Disable this by default unless you are using address sanitizer,
+// where you expect things to be slow.
+//
+#if !defined(DEBUG_CHECK_CASTS)  // Note: CPLUSPLUS_11 macro not defined yet
+  #if defined(__SANITIZE_ADDRESS__) && defined(__cplusplus)
+    #define DEBUG_CHECK_CASTS DEBUG
+  #else
+    #define DEBUG_CHECK_CASTS 0  // requires C++
+  #endif
+#endif
+
+
+// Both Valgrind and Address Sanitizer can provide the call stack at the moment
+// of allocation when a freed pointer is used.  Touch_Series() exploits this
+// to use a bogus allocation to help mark series origins that can later be used
+// by `panic()`.  But the feature is a waste if you're not using such tools.
+//
+// If you plan to use Valgrind with this, you'll have to set it explicitly...
+// only Address Sanitizer can be detected here.
+//
+#if !defined(DEBUG_SERIES_ORIGINS)
+  #if defined(__SANITIZE_ADDRESS__)
+    #define DEBUG_SERIES_ORIGINS DEBUG
+  #else
+    #define DEBUG_SERIES_ORIGINS 0
+  #endif
+#endif
+
+
+// In order to make sure that a good mix of debug settings get tested, this
+// does array termination checks on non-sanitizer debug builds.  Arrays are not
+// usually marked at their tails (unlike R3-Alpha which used END! cells to
+// terminate)...but the residual functionality helps catch overruns.
+//
+#if !defined(DEBUG_TERM_ARRAYS)
+  #if defined(__SANITIZE_ADDRESS__)
+    #define DEBUG_TERM_ARRAYS 0  // *not* when sanitized
+  #else
+    #define DEBUG_TERM_ARRAYS DEBUG
+  #endif
+#endif
+
+#if !defined(DEBUG_CHECK_ENDS)
+  #if defined(__SANITIZE_ADDRESS__)
+    #define DEBUG_CHECK_ENDS 0  // *not* when sanitized
+  #else
+    #define DEBUG_CHECK_ENDS DEBUG
+  #endif
+#endif
+
+
+#if !defined(DEBUG_TRACK_EXTEND_CELLS)
+    #define DEBUG_TRACK_EXTEND_CELLS 0
+#endif
+
+#if !defined(UNUSUAL_REBVAL_SIZE)  // sizeof(REBVAL)*2 may be > sizeof(REBSER)
+    #define UNUSUAL_REBVAL_SIZE DEBUG_TRACK_EXTEND_CELLS
 #endif
 
 
@@ -502,9 +601,17 @@ Special internal defines used by RT, not Host-Kit developers:
 // (e.g. the JavaScript asyncify version).  A small but helpful debug
 // switch does a printf of the __FILE__ and __LINE__ of fail() callsites.
 //
-#ifdef DEBUG_PRINTF_FAIL_LOCATIONS
+#if !defined(DEBUG_PRINTF_FAIL_LOCATIONS)
+    #define DEBUG_PRINTF_FAIL_LOCATIONS 0
 #endif
 
+#if !defined(DEBUG_VIRTUAL_BINDING)
+    #define DEBUG_VIRTUAL_BINDING 0
+#endif
+
+#if !defined(DEBUG_EXPIRED_LOOKBACK)
+    #define DEBUG_EXPIRED_LOOKBACK 0
+#endif
 
 // It would seem that cells like REB_BLANK which don't use their payloads
 // could just leave them uninitialized...saving time on the assignments.
@@ -531,11 +638,12 @@ Special internal defines used by RT, not Host-Kit developers:
 // fast value to assign as an immediate.  In debug builds, they're assigned
 // a trash value because it's more likely to cause trouble if accessed.)
 //
-#if defined(NDEBUG)
+#if DEBUG
     #define ZEROTRASH nullptr
 #else
     #define ZEROTRASH cast(void*, cast(intptr_t, 0xDECAFBAD))
 #endif
-#define ZERO_UNUSED_CELL_FIELDS
+
+#define ZERO_UNUSED_CELL_FIELDS 1
 
 #endif

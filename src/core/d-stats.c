@@ -52,7 +52,7 @@ REBNATIVE(stats)
         return Init_Integer(D_OUT, num_evals);
 
     if (REF(profile)) {
-      #if defined(DEBUG_COLLECT_STATS)
+      #if DEBUG_COLLECT_STATS
         return rebValue("make object! [",
             "evals:", rebI(num_evals),
             "series-made:", rebI(PG_Reb_Stats->Series_Made),

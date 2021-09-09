@@ -751,7 +751,7 @@ inline static REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
     INIT_VAL_CONTEXT_VARLIST(single, ARR(stub));
     INIT_VAL_FRAME_BINDING(single, VAL_FRAME_BINDING(rootvar));
 
-  #if !defined(DEBUG)
+  #if !defined(NDEBUG)
     INIT_VAL_FRAME_PHASE_OR_LABEL(single, nullptr);  // can't trash
   #endif
 

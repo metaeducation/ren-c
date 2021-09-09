@@ -1222,14 +1222,14 @@ switch user-config/debug [
             ; example of something that significantly affects runtime, and
             ; even things like DEBUG_FRAME_LABELS adds a tiny bit!)
             ;
-            "DEBUG_HAS_PROBE"
-            "DEBUG_FANCY_PANIC"
-            "DEBUG_USE_UNION_PUNS"
-            "INCLUDE_C_DEBUG_BREAK_NATIVE"
+            "DEBUG_HAS_PROBE=1"
+            "DEBUG_FANCY_PANIC=1"
+            "DEBUG_USE_UNION_PUNS=1"
+            "INCLUDE_C_DEBUG_BREAK_NATIVE=1"
 
             ; Adds CALLGRIND, see REBNATIVE(callgrind) for implementation
             ;
-            "INCLUDE_CALLGRIND_NATIVE"
+            "INCLUDE_CALLGRIND_NATIVE=1"
         ]
     ]
 

@@ -47,7 +47,7 @@ REBNATIVE(test_librebol)
     INCLUDE_PARAMS_OF_TEST_LIBREBOL;
     UNUSED(ARG(value));
 
-  #if !defined(INCLUDE_TEST_LIBREBOL_NATIVE)
+  #if (! INCLUDE_TEST_LIBREBOL_NATIVE)
     return Init_Text(  // text! vs. failing to distinguish from test failure
         D_OUT,
         Make_String_UTF8(
@@ -109,7 +109,7 @@ REBNATIVE(diagnose)
   #else
     REBVAL *v = ARG(value);
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     REBTCK tick = frame_->tick;
   #else
     REBTCK tick = 0

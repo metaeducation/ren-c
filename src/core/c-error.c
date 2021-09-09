@@ -220,7 +220,7 @@ void Trapped_Helper(struct Reb_State *s)
 //
 ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
 {
-  #if defined(DEBUG_PRINTF_FAIL_LOCATIONS) && defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_PRINTF_FAIL_LOCATIONS && DEBUG_COUNT_TICKS
     //
     // File and line are printed by the calling macro to capture __FILE__ and
     // __LINE__ without adding parameter overhead to this function for non
@@ -291,7 +291,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     ASSERT_CONTEXT(error);
     assert(CTX_TYPE(error) == REB_ERROR);
 
-  #ifdef DEBUG_EXTANT_STACK_POINTERS
+  #if DEBUG_EXTANT_STACK_POINTERS
     //
     // We trust that the stack levels were checked on each evaluator step as
     // 0, so that when levels are unwound we should be back to 0 again.  The
@@ -317,7 +317,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
             Set_Location_Of_Error(error, FS_TOP);
     }
 
-  #ifdef DEBUG_HAS_PROBE
+  #if DEBUG_HAS_PROBE
     if (PG_Probe_Failures) {  // see R3_PROBE_FAILURES environment variable
         static bool probing = false;
 
@@ -1434,7 +1434,7 @@ REBCTX *Error_Bad_Isotope(const RELVAL *isotope) {
 //
 REBCTX *Startup_Errors(const REBVAL *boot_errors)
 {
-  #ifdef DEBUG_HAS_PROBE
+  #if DEBUG_HAS_PROBE
     const char *env_probe_failures = getenv("R3_PROBE_FAILURES");
     if (env_probe_failures != NULL and atoi(env_probe_failures) != 0) {
         printf(

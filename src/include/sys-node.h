@@ -151,7 +151,7 @@ inline static void *Try_Alloc_Node(REBLEN pool_id)
 
     pool->free--;
 
-  #ifdef DEBUG_MEMORY_ALIGN
+  #if DEBUG_MEMORY_ALIGN
     if (cast(uintptr_t, unit) % sizeof(REBI64) != 0) {
         printf(
             "Pool Unit address %p not aligned to %d bytes\n",
@@ -187,7 +187,7 @@ inline static void *Alloc_Node(REBLEN pool_id) {
 //
 inline static void Free_Node(REBLEN pool_id, REBNOD* node)
 {
-  #ifdef DEBUG_MONITOR_SERIES
+  #if DEBUG_MONITOR_SERIES
     if (node == PG_Monitor_Node_Debug) {
         printf(
             "Freeing series %p on tick #%d\n",

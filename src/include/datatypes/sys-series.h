@@ -346,7 +346,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 // This works with Address Sanitizer or with Valgrind, but the config flag to
 // enable it only comes automatically with address sanitizer.
 //
-#if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
+#if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
     inline static void Touch_Series_Debug(void *p) {
         REBSER *s = SER(cast(REBNOD*, p));  // allow REBARR, REBCTX, REBACT...
 
@@ -354,7 +354,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
         // header.  Hence you can't tell (for instance) if it's an array or
         // not, as that's in the info.
 
-      #if defined(DEBUG_SERIES_ORIGINS)
+      #if DEBUG_SERIES_ORIGINS
         #if TO_WINDOWS
             //
             // The bug that %d-winstack.c was added for related to API handle
@@ -372,7 +372,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
         #endif
       #endif
 
-      #if defined(DEBUG_COUNT_TICKS)
+      #if DEBUG_COUNT_TICKS
         s->tick = TG_Tick;
       #else
         s->tick = 0;
@@ -387,7 +387,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 #endif
 
 
-#if defined(DEBUG_MONITOR_SERIES)
+#if DEBUG_MONITOR_SERIES
     inline static void MONITOR_SERIES(void *p) {
         printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_Tick));
         fflush(stdout);
@@ -529,7 +529,7 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
         // !!! See notes on TERM_SERIES_IF_NEEDED() for how array termination
         // is slated to be a debug feature only.
         //
-      #ifdef DEBUG_TERM_ARRAYS
+      #if DEBUG_TERM_ARRAYS
         if (IS_SER_ARRAY(s))
             SET_CELL_FREE(SER_AT(RELVAL, s, used));
       #endif
@@ -567,7 +567,7 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
     }
   #endif
 
-  #if defined(DEBUG_UTF8_EVERYWHERE)
+  #if DEBUG_UTF8_EVERYWHERE
     //
     // Low-level series mechanics will manipulate the used field, but that's
     // at the byte level.  The higher level string mechanics must be used on
@@ -672,7 +672,7 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
         }
     }
     else if (IS_SER_DYNAMIC(s) and IS_SER_ARRAY(s)) {
-      #ifdef DEBUG_TERM_ARRAYS
+      #if DEBUG_TERM_ARRAYS
         SET_CELL_FREE(SER_TAIL(RELVAL, s));
       #endif
     }
@@ -1156,7 +1156,7 @@ inline static REBSER *Alloc_Series_Node(REBFLGS flags) {
     TOUCH_SERIES_IF_DEBUG(s);  // tag current C stack as series origin in ASAN
   #endif
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     PG_Reb_Stats->Series_Made++;
   #endif
 
@@ -1165,7 +1165,7 @@ inline static REBSER *Alloc_Series_Node(REBFLGS flags) {
 
 
 inline static REBLEN FIND_POOL(size_t size) {
-  #ifdef DEBUG_ENABLE_ALWAYS_MALLOC
+  #if DEBUG_ENABLE_ALWAYS_MALLOC
     if (PG_Always_Malloc)
         return SYSTEM_POOL;
   #endif
@@ -1316,7 +1316,7 @@ inline static REBSER *Make_Series(REBLEN capacity, REBFLGS flags)
             fail (Error_No_Memory(capacity * wide));
         }
 
-      #if defined(DEBUG_COLLECT_STATS)
+      #if DEBUG_COLLECT_STATS
         PG_Reb_Stats->Series_Memory += capacity * wide;
       #endif
     }

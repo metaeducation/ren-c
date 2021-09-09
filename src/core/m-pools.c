@@ -133,7 +133,7 @@ void *Try_Alloc_Mem(size_t size)
     void *p = cast(char*, p_extra) + ALIGN_SIZE;
   #endif
 
-  #ifdef DEBUG_MEMORY_ALIGN
+  #if DEBUG_MEMORY_ALIGN
     assert(cast(uintptr_t, p) % ALIGN_SIZE == 0);
   #endif
 
@@ -221,8 +221,8 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 
     DEF_POOL(sizeof(REBSER), 4096), // Series headers
 
-  #ifdef UNUSUAL_REBVAL_SIZE // sizeof(REBVAL)*2 not sizeof(REBSER)
-    DEF_POOL(sizeof(REBVAL) * 2, 16), // Pairings, PAR_POOL
+  #if UNUSUAL_REBVAL_SIZE  // sizeof(REBVAL)*2 != sizeof(REBSER)
+    DEF_POOL(sizeof(REBVAL) * 2, 16),  // Pairings, PAR_POOL
   #endif
 
     DEF_POOL(ALIGN(sizeof(REBFRM), sizeof(REBI64)), 128),  // Frames
@@ -239,7 +239,7 @@ const REBPOOLSPEC Mem_Pool_Spec[MAX_POOLS] =
 //
 void Startup_Pools(REBINT scale)
 {
-  #ifdef DEBUG_ENABLE_ALWAYS_MALLOC
+  #if DEBUG_ENABLE_ALWAYS_MALLOC
     const char *env_always_malloc = getenv("R3_ALWAYS_MALLOC");
     if (env_always_malloc and atoi(env_always_malloc) != 0)
         PG_Always_Malloc = true;
@@ -276,7 +276,7 @@ void Startup_Pools(REBINT scale)
         // A panic is used instead of an assert, since the debug sizes and
         // release sizes may be different...and both must be checked.
         //
-      #if defined(DEBUG_MEMORY_ALIGN) || 1
+      #if DEBUG_MEMORY_ALIGN
         if (Mem_Pool_Spec[n].wide % sizeof(REBI64) != 0)
             panic ("memory pool width is not 64-bit aligned");
       #endif
@@ -304,7 +304,7 @@ void Startup_Pools(REBINT scale)
     // !!! Revisit where series init/shutdown goes when the code is more
     // organized to have some of the logic not in the pools file
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     PG_Reb_Stats = TRY_ALLOC(REB_STATS);
     memset(PG_Reb_Stats, 0, sizeof(REB_STATS));
   #endif
@@ -396,7 +396,7 @@ void Shutdown_Pools(void)
     // !!! Revisit location (just has to be after all series are freed)
     FREE_N(REBSER*, MAX_EXPAND_LIST, Prior_Expand);
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     FREE(REB_STATS, PG_Reb_Stats);
   #endif
 
@@ -477,7 +477,7 @@ bool Try_Fill_Pool(REBPOL *pool)
 }
 
 
-#if defined(DEBUG_FANCY_PANIC)
+#if DEBUG_FANCY_PANIC
 
 //
 //  Try_Find_Containing_Node_Debug: C
@@ -619,7 +619,7 @@ void Free_Pairing(REBVAL *paired) {
     assert(NOT_CELL_FLAG(paired, MANAGED));
     Free_Node(SER_POOL, paired);
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     //
     // This wasn't actually a REBSER, so can't cast with SER().  But poke the
     // tick where the node was freed into the memory spot so panic finds it.
@@ -905,7 +905,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
         Free_Unbiased_Series_Data(data_old - (wide * bias_old), size_old);
     }
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     PG_Reb_Stats->Series_Expanded++;
   #endif
 
@@ -1062,7 +1062,7 @@ void Remake_Series(REBSER *s, REBLEN units, REBFLGS flags)
     } else
         s->content.dynamic.used = 0;
 
-  #ifdef DEBUG_UTF8_EVERYWHERE
+  #if DEBUG_UTF8_EVERYWHERE
     if (IS_NONSYMBOL_STRING(s)) {
         s->misc.length = 0xDECAFBAD;
         TOUCH_SERIES_IF_DEBUG(s);
@@ -1195,7 +1195,7 @@ void GC_Kill_Series(REBSER *s)
     FREETRASH_POINTER_IF_DEBUG(s->misc.trash);
   #endif
 
-  #if TO_WINDOWS && defined(DEBUG_SERIES_ORIGINS)
+  #if TO_WINDOWS && DEBUG_SERIES_ORIGINS
     Free_Winstack_Debug(s->guard);
   #endif
 
@@ -1204,7 +1204,7 @@ void GC_Kill_Series(REBSER *s)
     if (GC_Ballast > 0)
         CLR_SIGNAL(SIG_RECYCLE);  // Enough space that requested GC can cancel
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     PG_Reb_Stats->Series_Freed++;
   #endif
 }
@@ -1262,7 +1262,7 @@ void Assert_Pointer_Detection_Working(void)
     // four good ways that a random Copy_Cell() might fail in the debug
     // build.
     //
-  #ifdef DEBUG_POISON_CELLS
+  #if DEBUG_POISON_CELLS
     DECLARE_LOCAL (freed_cell);
     freed_cell->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL

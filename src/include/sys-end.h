@@ -75,7 +75,7 @@ inline static REBVAL *Prep_End_Untracked(RELVAL *out)
 // IMPORTANT: Notice that END markers may not have NODE_FLAG_CELL, and may
 // be as short as 2 bytes long.
 //
-#if !defined(DEBUG_CHECK_ENDS)
+#if (! DEBUG_CHECK_ENDS)
     #define IS_END(p) \
         (((const REBYTE*)(p))[1] == REB_0_END)  // Note: needs (p) parens!
 #else

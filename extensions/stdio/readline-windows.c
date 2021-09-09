@@ -57,7 +57,11 @@
 
 //=//// CONFIGURATION /////////////////////////////////////////////////////=//
 
-#if defined(DEBUG_OVERLAY_SYS_CORE)
+#if !defined(DEBUG_OVERLAY_SYS_CORE)
+    #define DEBUG_OVERLAY_SYS_CORE 0
+#endif
+
+#if DEBUG_OVERLAY_SYS_CORE
     #undef IS_ERROR
     #undef min
     #undef max
@@ -358,8 +362,12 @@ void Quit_Terminal(STD_TERM *t)
 //
 // Enable this code when trying to debug a particular console issue, but it
 // is a disruptive assert otherwise.
-//
-#if defined(DEBUG_ENSURE_CONSOLE_POSITION)
+
+#if !defined(DEBUG_ENSURE_CONSOLE_POSITION)
+    #define DEBUG_ENSURE_CONSOLE_POSITION 0
+#endif
+
+#if DEBUG_ENSURE_CONSOLE_POSITION
     void ENSURE_COHERENT_POSITION_DEBUG(STD_TERM *t) {
         CONSOLE_SCREEN_BUFFER_INFO info;
         if (not GetConsoleScreenBufferInfo(Stdout_Handle, &info))

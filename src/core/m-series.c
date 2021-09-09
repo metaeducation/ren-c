@@ -345,7 +345,7 @@ REBYTE *Reset_Buffer(REBSER *buf, REBLEN len)
 void Assert_Series_Term_Core(const REBSER *s)
 {
     if (IS_SER_ARRAY(s)) {
-      #ifdef DEBUG_TERM_ARRAYS
+      #if DEBUG_TERM_ARRAYS
         if (IS_SER_DYNAMIC(s)) {
             const RELVAL *tail = ARR_TAIL(ARR(s));
             if (not (tail->header.bits & NODE_FLAG_CELL))
@@ -388,7 +388,7 @@ void Assert_Series_Core(const REBSER *s)
 #endif
 
 
-#if defined(DEBUG_FANCY_PANIC)
+#if DEBUG_FANCY_PANIC
 
 //
 //  Panic_Series_Debug: C
@@ -411,7 +411,7 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(REBSER *s)
 
     fprintf(stderr, " series");
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     fprintf(stderr, " was likely ");
     if (s->leader.bits & NODE_FLAG_FREE)
         fprintf(stderr, "freed");
@@ -427,7 +427,7 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(REBSER *s)
 
     fflush(stderr);
 
-  #if defined(DEBUG_SERIES_ORIGINS)
+  #if DEBUG_SERIES_ORIGINS
     #if TO_WINDOWS
         printf("\nCALL STACK WHERE ALLOCATED:\n");
         Print_Winstack_Debug(s->guard);

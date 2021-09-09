@@ -1253,10 +1253,8 @@ inline static REBSPC *Derive_Specifier_Core(
     return Merge_Patches_May_Reuse(specifier, old);
 }
 
-#if !defined(NDEBUG)
-    #define DEBUG_VIRTUAL_BINDING
-#endif
-#if !defined(DEBUG_VIRTUAL_BINDING)
+
+#if (! DEBUG_VIRTUAL_BINDING)
     inline static REBSPC *Derive_Specifier(
         REBSPC *specifier,
         const RELVAL* any_array

@@ -1269,7 +1269,7 @@ REBTYPE(Array)
             temp.header = front->header;
             temp.extra = front->extra;
             temp.payload = front->payload;
-          #ifdef DEBUG_TRACK_EXTEND_CELLS
+          #if DEBUG_TRACK_EXTEND_CELLS
             temp.file = front->file;
             temp.line = front->line;
             temp.tick = front->tick;
@@ -1282,7 +1282,7 @@ REBTYPE(Array)
             front->header = back->header;
             front->extra = back->extra;
             front->payload = back->payload;
-          #ifdef DEBUG_TRACK_EXTEND_CELLS
+          #if DEBUG_TRACK_EXTEND_CELLS
             front->file = back->file;
             front->line = back->line;
             front->tick = back->tick;
@@ -1300,7 +1300,7 @@ REBTYPE(Array)
             back->header = temp.header;
             back->extra = temp.extra;
             back->payload = temp.payload;
-          #ifdef DEBUG_TRACK_EXTEND_CELLS
+          #if DEBUG_TRACK_EXTEND_CELLS
             back->file = temp.file;
             back->line = temp.line;
             back->tick = temp.tick;
@@ -1637,7 +1637,7 @@ REBNATIVE(glom)
 
         assert(ARR_LEN(a) == a_len + r_len);  // EXPAND_SERIES_TAIL sets
 
-     #ifdef DEBUG_TERM_ARRAYS  // need trash at tail with this debug setting
+     #if DEBUG_TERM_ARRAYS  // need trash at tail with this debug setting
         TERM_SERIES_IF_NECESSARY(a);
      #endif
 
@@ -1682,7 +1682,7 @@ void Assert_Array_Core(const REBARR *a)
     if (IS_SER_DYNAMIC(a)) {
         REBLEN rest = SER_REST(a);
 
-      #ifdef DEBUG_TERM_ARRAYS
+      #if DEBUG_TERM_ARRAYS
         assert(rest > 0 and rest > i);
         if (NOT_SERIES_FLAG(a, FIXED_SIZE) and not IS_CELL_FREE(item))
             panic (item);

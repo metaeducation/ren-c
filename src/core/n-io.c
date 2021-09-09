@@ -139,7 +139,7 @@ REBNATIVE(write_stdout)
     }
     else {
         assert(IS_BINARY(v));
-      #ifdef DEBUG_HAS_PROBE
+      #if DEBUG_HAS_PROBE
         PROBE(v);
       #else
         fail ("Boot WRITE-STDOUT received BINARY!, needs DEBUG_HAS_PROBE");

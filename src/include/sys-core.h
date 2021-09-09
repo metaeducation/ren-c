@@ -83,7 +83,7 @@
 
 #include "reb-c.h"
 
-#if defined(CPLUSPLUS_11) && defined(DEBUG_HAS_PROBE)
+#if defined(CPLUSPLUS_11) && DEBUG_HAS_PROBE
     //
     // We allow you to do PROBE(some_integer) as well as PROBE(some_rebval)
     // etc. in C++11 - and the stringification comes from the << operator.
@@ -119,7 +119,7 @@
 // Current focus on avoiding dependencies on printf() are at the object and
 // linker level, where in general it's more direct to examine bloat.
 //
-#if !defined(NDEBUG) || defined(DEBUG_PRINTF_FAIL_LOCATIONS)
+#if !defined(NDEBUG) || DEBUG_PRINTF_FAIL_LOCATIONS
     //
     // Debug builds may use printf() and such liberally (helps to debug the
     // Ren-C I/O system itself!)

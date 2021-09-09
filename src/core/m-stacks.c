@@ -98,7 +98,7 @@ void Startup_Frame_Stack(void)
 
     Push_Frame(nullptr, f);
 
-  #ifdef DEBUG_ENSURE_FRAME_EVALUATES
+  #if DEBUG_ENSURE_FRAME_EVALUATES
     f->was_eval_called = true;  // fake frame, lie and say it evaluated
   #endif
 
@@ -152,7 +152,7 @@ void Shutdown_Frame_Stack(void)
             REBFRM *f = cast(REBFRM*, unit);  // ^-- pool size may round up
             if (IS_FREE_NODE(f))
                 continue;
-          #ifdef DEBUG_COUNT_TICKS
+          #if DEBUG_COUNT_TICKS
             printf(
                 "** FRAME LEAKED at tick %lu\n",
                 cast(unsigned long, f->tick)
@@ -175,7 +175,7 @@ void Shutdown_Frame_Stack(void)
             REBFED *feed = cast(REBFED*, unit);
             if (IS_FREE_NODE(feed))
                 continue;
-          #ifdef DEBUG_COUNT_TICKS
+          #if DEBUG_COUNT_TICKS
             printf(
                 "** FEED LEAKED at tick %lu\n",
                 cast(unsigned long, feed->tick)
@@ -318,7 +318,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 {
-  #ifdef DEBUG_EXTANT_STACK_POINTERS
+  #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
   #endif
 

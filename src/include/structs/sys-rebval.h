@@ -352,7 +352,7 @@
 #define CELL_MASK_ALL \
     ~cast(REBFLGS, 0)
 
-#if defined(DEBUG_POISON_CELLS)
+#if DEBUG_POISON_CELLS
     #define CELL_MASK_POISON \
         (FLAG_KIND3Q_BYTE(REB_T_POISON) | FLAG_HEART_BYTE(REB_T_POISON))
 #endif
@@ -429,7 +429,7 @@ union Reb_Any {  // needed to beat strict aliasing, used in payload
     // the only field that should be assigned and read.  These "type puns"
     // are unreliable, and for debug viewing only--in case they help.
     //
-  #if defined(DEBUG_USE_UNION_PUNS)
+  #if DEBUG_USE_UNION_PUNS
     REBSER *rebser_pun;
     REBVAL *rebval_pun;
   #endif
@@ -614,7 +614,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
         union Reb_Value_Extra extra;
         union Reb_Value_Payload payload;
 
-      #if defined(DEBUG_TRACK_EXTEND_CELLS)
+      #if DEBUG_TRACK_EXTEND_CELLS
         //
         // This doubles the cell size, but is a *very* helpful debug option.
         // See %sys-track.h for explanation.

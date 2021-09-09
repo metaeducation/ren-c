@@ -305,7 +305,7 @@ struct Reb_Feed {
     //
     option(const REBVAL*) gotten;
 
-  #if defined(DEBUG_EXPIRED_LOOKBACK)
+  #if DEBUG_EXPIRED_LOOKBACK
     //
     // On each call to Fetch_Next_In_Feed, it's possible to ask it to give
     // a pointer to a cell with equivalent data to what was previously in
@@ -324,7 +324,7 @@ struct Reb_Feed {
     RELVAL *stress;
   #endif
 
-  #ifdef DEBUG_COUNT_TICKS
+  #if DEBUG_COUNT_TICKS
     REBTCK tick;
   #endif
 };

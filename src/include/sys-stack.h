@@ -80,7 +80,7 @@
 // destructor is not called in this case...and the fail mechanism sets the
 // outstanding count to zero.
 //
-#if defined(DEBUG_EXTANT_STACK_POINTERS)
+#if DEBUG_EXTANT_STACK_POINTERS
     struct Reb_Stack_Value_Ptr {
         REBVAL *v;
 
@@ -202,7 +202,7 @@ inline static STKVAL(*) DS_AT(REBDSP d) {
 // Note: DS_Movable_Top is just DS_TOP, but accessing DS_TOP asserts on ENDs
 //
 inline static STKVAL(*) DS_PUSH(void) {
-  #ifdef DEBUG_EXTANT_STACK_POINTERS
+  #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // push may disrupt any extant values
   #endif
     ++DS_Index;
@@ -223,7 +223,7 @@ inline static STKVAL(*) DS_PUSH(void) {
 //
 
 inline static void DS_DROP(void) {
-  #ifdef DEBUG_EXTANT_STACK_POINTERS
+  #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
   #endif
     RESET(DS_TOP);
@@ -232,7 +232,7 @@ inline static void DS_DROP(void) {
 }
 
 inline static void DS_DROP_TO(REBDSP dsp) {
-  #ifdef DEBUG_EXTANT_STACK_POINTERS
+  #if DEBUG_EXTANT_STACK_POINTERS
     assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
   #endif
     assert(DSP >= dsp);

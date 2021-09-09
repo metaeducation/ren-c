@@ -59,7 +59,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 ){
     GC_Disabled = true;  // crashing is a legitimate reason to disable the GC
 
-  #if defined(DEBUG_FANCY_PANIC)
+  #if DEBUG_FANCY_PANIC
     printf("C Source File %s, Line %d, Pointer %p\n", file, line, p);
     printf("At evaluator tick: %lu\n", cast(unsigned long, tick));
 
@@ -118,7 +118,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 
       case DETECTED_AS_SERIES: {
         REBSER *s = m_cast(REBSER*, cast(const REBSER*, p)); // don't mutate
-      #if defined(DEBUG_FANCY_PANIC)
+      #if DEBUG_FANCY_PANIC
         #if 0
             //
             // It can sometimes be useful to probe here if the series is
@@ -144,7 +144,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break; }
 
       case DETECTED_AS_FREED_SERIES:
-      #if defined(DEBUG_FANCY_PANIC)
+      #if DEBUG_FANCY_PANIC
         Panic_Series_Debug(m_cast(REBSER*, cast(const REBSER*, p)));
       #else
         strncat(buf, "freed series", PANIC_BUF_SIZE - strsize(buf));
@@ -154,7 +154,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       case DETECTED_AS_CELL:
       case DETECTED_AS_END: {
         const REBVAL *v = cast(const REBVAL*, p);
-      #if defined(DEBUG_FANCY_PANIC)
+      #if DEBUG_FANCY_PANIC
         if (KIND3Q_BYTE_UNCHECKED(v) == REB_ERROR) {
             printf("...panicking on an ERROR! value...");
             PROBE(v);
@@ -167,7 +167,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break; }
 
       case DETECTED_AS_FREED_CELL:
-      #if defined(DEBUG_FANCY_PANIC)
+      #if DEBUG_FANCY_PANIC
         Panic_Value_Debug(cast(const RELVAL*, p));
       #else
         strncat(buf, "freed cell", PANIC_BUF_SIZE - strsize(buf));
@@ -175,7 +175,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         break;
     }
 
-  #if defined(DEBUG_FANCY_PANIC)
+  #if DEBUG_FANCY_PANIC
     printf("%s\n", Str_Panic_Title);
     printf("%s\n", buf);
     fflush(stdout);
@@ -218,9 +218,10 @@ REBNATIVE(panic)
     // Use frame tick (if available) instead of TG_Tick, so tick count dumped
     // is the exact moment before the PANIC ACTION! was invoked.
     //
-    const REBTCK tick = 0;
-  #ifdef DEBUG_TRACK_TICKS
-    tick = frame_->tick;
+  #if DEBUG_COUNT_TICKS
+    REBTCK tick = frame_->tick;
+  #else
+    REBTCK tick = 0;
   #endif
 
     // panic() on the string value itself will report information about the

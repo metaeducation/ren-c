@@ -28,7 +28,7 @@
 #define Is_Fresh(v) \
     (0 == ((v)->header.bits & (FLAG_KIND3Q_BYTE(255) | FLAG_HEART_BYTE(255))))
 
-#if defined(DEBUG_TRACK_EXTEND_CELLS)  // assume DEBUG_COUNT_TICKS
+#if DEBUG_TRACK_EXTEND_CELLS  // assume DEBUG_COUNT_TICKS
 
     #define TOUCH_CELL(c) \
         ((c)->touch = TG_Tick)

@@ -283,7 +283,7 @@ REB_R Compose_To_Stack_Core(
 
     Push_Frame(nullptr, f);
 
-  #if defined(DEBUG_ENSURE_FRAME_EVALUATES)
+  #if DEBUG_ENSURE_FRAME_EVALUATES
     f->was_eval_called = true;  // lie since we're using frame for enumeration
   #endif
 

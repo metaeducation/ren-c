@@ -61,7 +61,7 @@
 #include "sys-core.h"
 
 
-#if defined(DEBUG_COUNT_TICKS)  // <-- THIS IS VERY USEFUL, SEE %sys-eval.h!
+#if DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, SEE %sys-eval.h!
     //
     // This counter is incremented each time a function dispatcher is run
     // or a parse rule is executed.  See UPDATE_TICK_COUNT().
@@ -124,7 +124,7 @@
                 | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
 
 
-#ifdef DEBUG_EXPIRED_LOOKBACK
+#if DEBUG_EXPIRED_LOOKBACK
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
         (f->feed->stress != nullptr)
 #else
@@ -267,11 +267,11 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         return false;
     }
 
-  #ifdef DEBUG_ENSURE_FRAME_EVALUATES
+  #if DEBUG_ENSURE_FRAME_EVALUATES
     f->was_eval_called = true;  // see definition for why this flag exists
   #endif
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     REBTCK tick = f->tick = TG_Tick;  // snapshot tick for C watchlist viewing
   #endif
 

@@ -58,7 +58,7 @@
 #define kind_current KIND_BYTE_UNCHECKED(v)
 
 
-#ifdef DEBUG_EXPIRED_LOOKBACK
+#if DEBUG_EXPIRED_LOOKBACK
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
         (f->feed->stress != nullptr)
 #else
@@ -669,7 +669,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         goto continue_fulfilling;
     }
 
-  #ifdef DEBUG_TERM_ARRAYS
+  #if DEBUG_TERM_ARRAYS
     assert(IS_CELL_FREE(f->arg));  // arg can otherwise point to any arg cell
   #endif
 

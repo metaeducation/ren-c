@@ -251,7 +251,7 @@ inline static uintptr_t FLAG_SECOND_UINT16(uint16_t u)
 // `#if sizeof(struct Reb_Series_Header_Pun) <= sizeof(uint32_t)`.  Hence
 // the DEBUG_USE_BITFIELD_HEADER_PUNS flag should be set with caution.
 //
-#ifdef DEBUG_USE_BITFIELD_HEADER_PUNS
+#if DEBUG_USE_BITFIELD_HEADER_PUNS
     struct Reb_Series_Header_Pun {
         int _07_cell_always_false:1;
         int _06_root:1;
@@ -363,11 +363,11 @@ union Reb_Header {
     // array in the header.  There's probably a workaround, but for now skip
     // this debugging pun if __TINYC__ is defined.
     //
-  #if defined(DEBUG_USE_UNION_PUNS) && !defined(__TINYC__)
+  #if DEBUG_USE_UNION_PUNS && !defined(__TINYC__)
     unsigned char bytes_pun[4];
     char chars_pun[4];
 
-    #ifdef DEBUG_USE_BITFIELD_HEADER_PUNS
+    #if DEBUG_USE_BITFIELD_HEADER_PUNS
         struct Reb_Series_Header_Pun series_pun;
         struct Reb_Value_Header_Pun value_pun;
         struct Reb_Info_Header_Pun info_pun;

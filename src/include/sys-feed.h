@@ -444,7 +444,7 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
 // moved.  So current can be returned from Fetch_Next_In_Frame_Core().
 
 inline static const RELVAL *Lookback_While_Fetching_Next(REBFRM *f) {
-  #ifdef DEBUG_EXPIRED_LOOKBACK
+  #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
         RESET(feed->stress);
         free(feed->stress);
@@ -479,7 +479,7 @@ inline static const RELVAL *Lookback_While_Fetching_Next(REBFRM *f) {
 
     Fetch_Next_In_Feed(f->feed);
 
-  #ifdef DEBUG_EXPIRED_LOOKBACK
+  #if DEBUG_EXPIRED_LOOKBACK
     if (preserve) {
         f->stress = cast(RELVAL*, malloc(sizeof(RELVAL)));
         memcpy(f->stress, *opt_lookback, sizeof(RELVAL));
@@ -524,7 +524,7 @@ inline static void Literal_Next_In_Feed(REBVAL *out, struct Reb_Feed *feed) {
 
 inline static REBFED* Alloc_Feed(void) {
     REBFED* feed = cast(REBFED*, Alloc_Node(FED_POOL));
-  #ifdef DEBUG_COUNT_TICKS
+  #if DEBUG_COUNT_TICKS
     feed->tick = TG_Tick;
   #endif
 

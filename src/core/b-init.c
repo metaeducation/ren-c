@@ -78,14 +78,15 @@ static void Check_Basics(void)
     // Define UNUSUAL_REBVAL_SIZE to bypass this check.
 
     size_t sizeof_REBVAL = sizeof(REBVAL);  // in variable avoids warning
-  #if defined(UNUSUAL_REBVAL_SIZE)
+
+  #if UNUSUAL_REBVAL_SIZE
     if (sizeof_REBVAL % ALIGN_SIZE != 0)
         panic ("size of REBVAL does not evenly divide by ALIGN_SIZE");
   #else
     if (sizeof_REBVAL != sizeof(void*) * 4)
         panic ("size of REBVAL is not sizeof(void*) * 4");
 
-    #if defined(DEBUG_SERIES_ORIGINS) || defined(DEBUG_COUNT_TICKS)
+    #if DEBUG_SERIES_ORIGINS || DEBUG_COUNT_TICKS
         assert(sizeof(REBSER) == sizeof(REBVAL) * 2 + sizeof(void*) * 2);
     #else
         assert(sizeof(REBSER) == sizeof(REBVAL) * 2);
@@ -811,7 +812,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
 //
 void Startup_Core(void)
 {
-  #if TO_WINDOWS && defined(DEBUG_SERIES_ORIGINS)
+  #if TO_WINDOWS && DEBUG_SERIES_ORIGINS
     Startup_Winstack();  // Do first so shutdown crashes have stack traces
   #endif
 
@@ -825,7 +826,7 @@ void Startup_Core(void)
     // uses signed timer ticks to double as an extra bit of information in
     // REB_BLANK cells to indicate they are "unreadable".
     //
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     TG_Tick = 1;
   #endif
 
@@ -849,11 +850,11 @@ void Startup_Core(void)
     fail (Error_No_Value_Raw(Lib(BLANK))); // same as panic (crash)
   #endif
 
-  #ifdef DEBUG_ENABLE_ALWAYS_MALLOC
+  #if DEBUG_ENABLE_ALWAYS_MALLOC
     PG_Always_Malloc = false;
   #endif
 
-  #ifdef DEBUG_HAS_PROBE
+  #if DEBUG_HAS_PROBE
     PG_Probe_Failures = false;
   #endif
 
@@ -1183,7 +1184,7 @@ void Shutdown_Core(bool clean)
     //
     Shutdown_Pools();
 
-  #if TO_WINDOWS && defined(DEBUG_SERIES_ORIGINS)
+  #if TO_WINDOWS && DEBUG_SERIES_ORIGINS
     Shutdown_Winstack();  // Do last so shutdown crashes have stack traces
   #endif
 }

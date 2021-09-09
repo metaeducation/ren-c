@@ -165,7 +165,7 @@ inline static void Prep_Array(
         for (n = 0; n < a->content.dynamic.rest; ++n, ++prep)
             Prep_Cell(prep);
 
-      #ifdef DEBUG_TERM_ARRAYS  // allocation deliberately oversized by 1
+      #if DEBUG_TERM_ARRAYS  // allocation deliberately oversized by 1
         SET_CELL_FREE(ARR_AT(a, a->content.dynamic.rest - 1));
       #endif
     }
@@ -178,7 +178,7 @@ inline static void Prep_Array(
         // about the bits in the excess capacity.  But poison them in
         // the debug build.
         //
-      #if defined(DEBUG_POISON_CELLS)
+      #if DEBUG_POISON_CELLS
         for (; n < a->content.dynamic.rest; ++n, ++prep) {
             USED(TRACK(prep));
             prep->header.bits = CELL_MASK_POISON;  // unwritable + unreadable
@@ -193,7 +193,7 @@ inline static void Prep_Array(
 //
 inline static REBARR *Make_Array_Core(REBLEN capacity, REBFLGS flags)
 {
-  #ifdef DEBUG_TERM_ARRAYS
+  #if DEBUG_TERM_ARRAYS
     if (capacity > 1 or (flags & SERIES_FLAG_DYNAMIC))  // space for term
         capacity += 1;  // account for cell needed for terminator (END)
   #endif
@@ -204,7 +204,7 @@ inline static REBARR *Make_Array_Core(REBLEN capacity, REBFLGS flags)
     if (IS_SER_DYNAMIC(s)) {
         Prep_Array(ARR(s), capacity);
 
-      #ifdef DEBUG_TERM_ARRAYS
+      #if DEBUG_TERM_ARRAYS
         SET_CELL_FREE(ARR_HEAD(ARR(s)));
       #endif
     }
@@ -233,7 +233,7 @@ inline static REBARR *Make_Array_Core(REBLEN capacity, REBFLGS flags)
         }
     }
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     PG_Reb_Stats->Blocks++;
   #endif
 

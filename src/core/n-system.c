@@ -309,7 +309,7 @@ REBNATIVE(c_debug_tick)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_TICK;
 
-  #if !defined(NDEBUG) && defined(DEBUG_COUNT_TICKS)
+  #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
     return Init_Integer(D_OUT, TG_Tick);
   #else
     return nullptr;
@@ -335,7 +335,7 @@ REBNATIVE(c_debug_break_at)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK_AT;
 
-  #if !defined(NDEBUG) && defined(DEBUG_COUNT_TICKS)
+  #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
     if (REF(compensate)) {
         //
         // Imagine two runs of Rebol console initialization.  In the first,
@@ -401,8 +401,8 @@ REBNATIVE(c_debug_break)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
-  #if defined(INCLUDE_C_DEBUG_BREAK_NATIVE)
-    #if defined(DEBUG_COUNT_TICKS)
+  #if INCLUDE_C_DEBUG_BREAK_NATIVE
+    #if DEBUG_COUNT_TICKS
         //
         // For instance with:
         //

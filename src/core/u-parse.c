@@ -1275,7 +1275,7 @@ REBNATIVE(subparse)
     (void)pos_debug;  // UNUSED() forces corruption in C++11 debug builds
   #endif
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     REBTCK tick = TG_Tick;  // helpful to cache for visibility also
   #endif
 
@@ -1301,7 +1301,7 @@ REBNATIVE(subparse)
     REBINT mincount = 1;  // min pattern count
     REBINT maxcount = 1;  // max pattern count
 
-  #if defined(DEBUG_ENSURE_FRAME_EVALUATES)
+  #if DEBUG_ENSURE_FRAME_EVALUATES
     //
     // For the same reasons that the evaluator always wants to run through and
     // not shortcut, PARSE wants to.  This makes it better for tracing and

@@ -52,7 +52,7 @@
 //
 
 
-#if !defined(DEBUG_CHECK_CASTS)
+#if (! DEBUG_CHECK_CASTS)
 
     // Plain definitions are very permissive...they cast away any constness
     // of the input pointer, and always return a mutable output.  This is

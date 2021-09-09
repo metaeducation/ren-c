@@ -40,7 +40,7 @@
 
 #include "sys-core.h"
 
-#if defined(DEBUG_FANCY_PANIC)  // !!! separate switch, DEBUG_HAS_DUMP?
+#if DEBUG_FANCY_PANIC  // !!! separate switch, DEBUG_HAS_DUMP?
 
 #ifdef _MSC_VER
 #define snprintf _snprintf

@@ -376,7 +376,7 @@ inline static void Push_Frame(
     //
     f->out = out;
 
-  #ifdef DEBUG_EXPIRED_LOOKBACK
+  #if DEBUG_EXPIRED_LOOKBACK
     f->stress = nullptr;
   #endif
 
@@ -414,7 +414,7 @@ inline static void Push_Frame(
     f->original = nullptr;
 
     TRASH_OPTION_IF_DEBUG(f->label);
-  #if defined(DEBUG_FRAME_LABELS)
+  #if DEBUG_FRAME_LABELS
     TRASH_POINTER_IF_DEBUG(f->label_utf8);
   #endif
 
@@ -439,7 +439,7 @@ inline static void Push_Frame(
         assert(f->out == f->prior->out);
     }
 
-  #if defined(DEBUG_BALANCE_STATE)
+  #if DEBUG_BALANCE_STATE
     SNAP_STATE(&f->state); // to make sure stack balances, etc.
     f->state.dsp = f->dsp_orig;
   #endif
@@ -488,11 +488,11 @@ inline static void Abort_Frame(REBFRM *f) {
 
 
 inline static void Drop_Frame_Core(REBFRM *f) {
-  #ifdef DEBUG_ENSURE_FRAME_EVALUATES
+  #if DEBUG_ENSURE_FRAME_EVALUATES
     assert(f->was_eval_called);  // must call evaluator--even on empty array
   #endif
 
-  #if defined(DEBUG_EXPIRED_LOOKBACK)
+  #if DEBUG_EXPIRED_LOOKBACK
     free(f->stress);
   #endif
 
@@ -519,7 +519,7 @@ inline static void Drop_Frame_Unbalanced(REBFRM *f) {
 
 inline static void Drop_Frame(REBFRM *f)
 {
-  #if defined(DEBUG_BALANCE_STATE)
+  #if DEBUG_BALANCE_STATE
     //
     // To avoid slowing down the debug build a lot, Eval_Core() doesn't
     // check this every cycle, just on drop.  But if it's hard to find which
@@ -552,7 +552,7 @@ inline static void Prep_Frame_Core(
     f->dsp_orig = DS_Index;
     TRASH_POINTER_IF_DEBUG(f->out);
 
-  #ifdef DEBUG_ENSURE_FRAME_EVALUATES
+  #if DEBUG_ENSURE_FRAME_EVALUATES
     f->was_eval_called = false;
   #endif
 
@@ -599,7 +599,7 @@ inline static void Begin_Action_Core(
     assert(IS_OPTION_TRASH_DEBUG(f->label));  // ACTION! makes valid
     assert(not label or IS_SYMBOL(unwrap(label)));
     f->label = label;
-  #if defined(DEBUG_FRAME_LABELS) // helpful for looking in the debugger
+  #if DEBUG_FRAME_LABELS  // helpful for looking in the debugger
     f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
   #endif
 
@@ -681,7 +681,7 @@ inline static void Push_Action(
         or Did_Reuse_Varlist_Of_Unknown_Size(f, num_args)  // want `num_args`
     ){
         s = f->varlist;
-      #ifdef DEBUG_TERM_ARRAYS
+      #if DEBUG_TERM_ARRAYS
         if (s->content.dynamic.rest >= num_args + 1 + 1)  // +rootvar, +end
             goto sufficient_allocation;
       #else
@@ -746,7 +746,7 @@ inline static void Push_Action(
     for (; prep < tail; ++prep)
         USED(Prep_Cell(prep));
 
-  #if defined(DEBUG_POISON_CELLS)  // poison cells past usable range
+  #if DEBUG_POISON_CELLS  // poison cells past usable range
   blockscope {
     prep = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
     for (; prep >= tail; --prep) {
@@ -756,7 +756,7 @@ inline static void Push_Action(
   }
   #endif
 
-  #ifdef DEBUG_TERM_ARRAYS  // expects cell is trash (e.g. a cell) not poison
+  #if DEBUG_TERM_ARRAYS  // expects cell is trash (e.g. a cell) not poison
     SET_CELL_FREE(Prep_Cell(ARR_TAIL(f->varlist)));
   #endif
 
@@ -899,7 +899,7 @@ inline static void Drop_Action(REBFRM *f) {
     f->original = nullptr; // signal an action is no longer running
 
     TRASH_OPTION_IF_DEBUG(f->label);
-  #if defined(DEBUG_FRAME_LABELS)
+  #if DEBUG_FRAME_LABELS
     TRASH_POINTER_IF_DEBUG(f->label_utf8);
   #endif
 }

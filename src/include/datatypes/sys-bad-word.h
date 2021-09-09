@@ -239,7 +239,7 @@ inline static REBVAL *Move_Cell_Untracked(
     Copy_Cell_Untracked(out, v, copy_mask);  // Move_Cell() adds track to `out`
     RESET_Untracked(v);  // not useful to track and just implicate Move_Cell()
 
-  #if defined(DEBUG_TRACK_EXTEND_CELLS)  // `out` has tracking info we can use
+  #if DEBUG_TRACK_EXTEND_CELLS  // `out` has tracking info we can use
     v->file = out->file;
     v->line = out->line;
     v->tick = TG_Tick;

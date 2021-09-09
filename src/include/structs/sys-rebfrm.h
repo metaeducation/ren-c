@@ -610,7 +610,7 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     //
     REBNOD *alloc_value_list;
 
-   #if defined(DEBUG_COUNT_TICKS)
+   #if DEBUG_COUNT_TICKS
     //
     // The expression evaluation "tick" where the Reb_Frame is starting its
     // processing.  This is helpful for setting breakpoints on certain ticks
@@ -619,7 +619,7 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     uintptr_t tick; // !!! Should this be in release builds, exposed to users?
   #endif
 
-  #if defined(DEBUG_FRAME_LABELS)
+  #if DEBUG_FRAME_LABELS
     //
     // Knowing the label symbol is not as handy as knowing the actual string
     // of the function this call represents (if any).  It is in UTF8 format,
@@ -640,7 +640,7 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     int line;
   #endif
 
-  #if defined(DEBUG_BALANCE_STATE)
+  #if DEBUG_BALANCE_STATE
     //
     // Debug reuses PUSH_TRAP's snapshotting to check for leaks at each stack
     // level.  It can also be made to use a more aggresive leak check at every
@@ -649,7 +649,7 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     struct Reb_State state;
   #endif
 
-  #if defined(DEBUG_ENSURE_FRAME_EVALUATES)
+  #if DEBUG_ENSURE_FRAME_EVALUATES
     //
     // Originally in R3-Alpha the evaluator would be skipped for empty arrays.
     // This meant that `forever []` would never get a chance to run.  Ren-C

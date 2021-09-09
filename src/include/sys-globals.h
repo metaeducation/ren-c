@@ -25,7 +25,7 @@
 PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 PVAR REBINT PG_Boot_Level;  // User specified startup level
 
-#if defined(DEBUG_COLLECT_STATS)
+#if DEBUG_COLLECT_STATS
     PVAR REB_STATS *PG_Reb_Stats;  // Various statistics about memory, etc.
 #endif
 
@@ -82,7 +82,7 @@ PVAR REBYTE *PG_Pool_Map;   // Memory pool size map (created on boot)
 
 PVAR REB_OPTS *Reb_Opts;
 
-#ifdef DEBUG_HAS_PROBE
+#if DEBUG_HAS_PROBE
     PVAR bool PG_Probe_Failures; // helpful especially for boot errors & panics
 #endif
 
@@ -90,7 +90,7 @@ PVAR REB_OPTS *Reb_Opts;
     PVAR bool PG_Callgrind_On;
 #endif
 
-#ifdef DEBUG_ENABLE_ALWAYS_MALLOC
+#if DEBUG_ENABLE_ALWAYS_MALLOC
     PVAR bool PG_Always_Malloc;   // For memory-related troubleshooting
 #endif
 
@@ -216,11 +216,11 @@ TVAR uintptr_t TG_Stack_Limit;    // Limit address for CPU stack.
     TVAR intptr_t TG_Num_Black_Series;
 #endif
 
-#ifdef DEBUG_EXTANT_STACK_POINTERS
+#if DEBUG_EXTANT_STACK_POINTERS
     TVAR REBLEN TG_Stack_Outstanding;  // how many DS_AT()/DS_TOP refs extant
 #endif
 
-#ifdef DEBUG_MONITOR_SERIES
+#if DEBUG_MONITOR_SERIES
     PVAR const REBNOD *PG_Monitor_Node_Debug;
 #endif
 

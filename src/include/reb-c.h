@@ -85,6 +85,14 @@
 // interest to get 64-bit integers, then patches should be made there.
 //
 
+#if !defined(DEBUG_CHECK_CASTS)
+    #define DEBUG_CHECK_CASTS 0
+#endif
+
+#if !defined(DEBUG_CHECK_OPTIONALS)
+    #define DEBUG_CHECK_OPTIONALS 0
+#endif
+
 
 //=//// EXPECTS <stdbool.h> OR "pstdbool.h" SHIM INCLUDED /////////////////=//
 //
@@ -398,7 +406,7 @@
      * access.  Stray writes to that can cause even time-traveling bugs, with
      * effects *before* that write is made...due to "undefined behavior".
      */
-#elif !defined(CPLUSPLUS_11) || !defined(DEBUG_CHECK_CASTS)
+#elif !defined(CPLUSPLUS_11) || (! DEBUG_CHECK_CASTS)
     /* Well-intentioned macros aside, C has no way to enforce that you can't
      * cast away a const without m_cast. C++98 builds can do that, at least:
      */
@@ -710,7 +718,7 @@
 // Note: This needs special handling in %make-headers.r to recognize the
 // format.  See the `typemacro_parentheses` rule.
 //
-#ifdef DEBUG_CHECK_OPTIONALS
+#if DEBUG_CHECK_OPTIONALS
     //
     // Trying to use `std::optional` is more trouble than it's worth; we'd
     // have to deal with the `nullopt` state which overlaps `nullptr`,
@@ -835,7 +843,7 @@
     #define TRASH_OPTION_IF_DEBUG(o)      NOOP
     #define TRASH_CFUNC_IF_DEBUG(T,p)       NOOP
 #else
-    #if defined(DEBUG_CHECK_OPTIONALS)
+    #if DEBUG_CHECK_OPTIONALS
         #define TRASH_OPTION_IF_DEBUG(o) \
             TRASH_POINTER_IF_DEBUG((o).p)
 
@@ -952,7 +960,7 @@
 // helpful when you need to do something like assign to a void* and can't
 // do weird cast dereferencing or you'll violate strict aliasing.
 //
-#if !defined(CPLUSPLUS_11) or !defined(DEBUG_CHECK_CASTS)
+#if !defined(CPLUSPLUS_11) or (! DEBUG_CHECK_CASTS)
     #define ensure(T,v) (v)
     #define ensurer(T)
     #define ensured(T,L,left) (left)

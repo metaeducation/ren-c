@@ -684,7 +684,7 @@ REBCTX *Make_Context_Detect_Managed(
 
     ASSERT_CONTEXT(context);
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     PG_Reb_Stats->Objects++;
   #endif
 
@@ -955,7 +955,7 @@ void Assert_Context_Core(REBCTX *c)
         if (not IS_SYMBOL(*key))
             panic (*key);
 
-      #ifdef DEBUG_TERM_ARRAYS
+      #if DEBUG_TERM_ARRAYS
         if (IS_CELL_FREE(var)) {
             printf("** Early var end at index: %d\n", cast(int, n));
             panic (c);
@@ -963,7 +963,7 @@ void Assert_Context_Core(REBCTX *c)
       #endif
     }
 
-  #ifdef DEBUG_TERM_ARRAYS
+  #if DEBUG_TERM_ARRAYS
     if (not IS_CELL_FREE(var)) {
         printf("** Missing var end at index: %d\n", cast(int, n));
         panic (var);

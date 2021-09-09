@@ -938,7 +938,7 @@ static REBLEN Sweep_Series(void)
     // that might make the cells a size greater than REBSER size require
     // doing pairings in a different pool.
     //
-  #ifdef UNUSUAL_REBVAL_SIZE
+  #if UNUSUAL_REBVAL_SIZE
     for (seg = Mem_Pools[PAR_POOL].segs; seg != NULL; seg = seg->next) {
         REBVAL *v = cast(REBVAL*, seg + 1);
         REBLEN n = Mem_Pools[PAR_POOL].num_units;
@@ -1070,7 +1070,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
 
     ASSERT_NO_GC_MARKS_PENDING();
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     PG_Reb_Stats->Recycle_Counter++;
     PG_Reb_Stats->Recycle_Series = Mem_Pools[SER_POOL].free;
     PG_Reb_Stats->Mark_Count = 0;
@@ -1151,7 +1151,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     else
         count += Sweep_Series();
 
-  #if defined(DEBUG_COLLECT_STATS)
+  #if DEBUG_COLLECT_STATS
     // Compute new stats:
     PG_Reb_Stats->Recycle_Series
         = Mem_Pools[SER_POOL].free - PG_Reb_Stats->Recycle_Series;
