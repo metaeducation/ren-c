@@ -204,13 +204,6 @@
 %math/tangent.test.reb
 %math/zeroq.test.reb
 
-%misc/assert.test.reb
-%misc/help.test.reb
-%misc/fail.test.reb
-%misc/make-file.test.reb
-%misc/shell.test.reb
-%misc/unpack.test.reb
-
 %network/http.test.reb
 
 %parse/parse3.test.reb
@@ -350,6 +343,14 @@
 %../extensions/vector/tests/vector.test.reb
 %../extensions/process/tests/call.test.reb
 %../extensions/dns/tests/dns.test.reb
+
+
+%misc/assert.test.reb
+%misc/fail.test.reb
+%misc/make-file.test.reb
+%misc/shell.test.reb
+%misc/unpack.test.reb
+%misc/help.test.reb  ; Do this last, as it has a lot of output
 
 
 ; SOURCE ANALYSIS: Check to make sure the Rebol files are "lint"-free, and
