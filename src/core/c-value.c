@@ -229,6 +229,7 @@ void* Probe_Core_Debug(
 
     // If we didn't jump to cleanup above, it's a series.  New switch().
 
+  blockscope {
     REBSER *s = m_cast(REBSER*, cast(const REBSER*, p));
     assert(not IS_FREE_NODE(s));  // Detect should have caught, above
 
@@ -390,6 +391,7 @@ void* Probe_Core_Debug(
         break;
     #endif
     }
+  }
 
   cleanup:
 
