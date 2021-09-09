@@ -109,7 +109,7 @@
 // of in the debugger.
 //
 #if defined(INCLUDE_C_DEBUG_BREAK_NATIVE) or defined(DEBUG_COUNT_TICKS)
-    #if defined(TO_HAIKU) || defined(TO_EMSCRIPTEN)
+    #if TO_HAIKU || TO_EMSCRIPTEN
         inline static void debug_break() {
             int x = 0;
           #if !defined(NDEBUG)

@@ -43,7 +43,7 @@
     #endif
   #endif
 
-  #ifdef TO_AMIGA
+  #if TO_AMIGA
     //
     // Note to anyone porting to Amiga: it has BOOL which could be used
     // for a bool shim

@@ -1333,8 +1333,10 @@ print ["debug:" mold app-config/debug]
 print ["optimization:" mold app-config/optimization]
 
 append app-config/definitions reduce [
-    unspaced ["TO_" uppercase to-text system-config/os-base]
-    unspaced ["TO_" uppercase replace/all to-text system-config/os-name "-" "_"]
+    unspaced ["TO_" uppercase to-text system-config/os-base "=1"]
+    unspaced [
+        "TO_" (uppercase replace/all to-text system-config/os-name "-" "_") "=1"
+    ]
 ]
 
 ; Add user settings (already can be BLANK!, use TRY to emphasize they should

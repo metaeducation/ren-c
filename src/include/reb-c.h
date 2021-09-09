@@ -582,7 +582,7 @@
 //
 // Windows 32-bit compilers seem to also permit 4 bytes.  WebAssembly does
 // not seem to work when doubles are on 4 byte boundaries, however.)
-// 
+//
 // The C standard does not provide a way to know what the largest fundamental
 // type is, even though malloc() must be compatible with it.  So if one is
 // writing one's own allocator to give back memory blocks, it's necessary to
@@ -620,7 +620,7 @@
 // http://stackoverflow.com/questions/3404372/
 //
 //
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     typedef void (__cdecl CFUNC)(void);
 #else
     typedef void (CFUNC)(void);
@@ -647,7 +647,7 @@
     #define FINITE isfinite
 #elif defined(__MINGW32__) || defined(__MINGW64__)
     #define FINITE isfinite // With --std==c++98 MinGW still has isfinite
-#elif defined(TO_WINDOWS)
+#elif TO_WINDOWS
     #define FINITE _finite // The usual answer for Windows
 #else
     #define FINITE finite // The usual answer for POSIX

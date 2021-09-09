@@ -24,7 +24,7 @@
 // The clipboard is currently implemented for Windows only, see #2029
 //
 
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
     #undef IS_ERROR

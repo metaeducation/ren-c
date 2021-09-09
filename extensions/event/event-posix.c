@@ -24,7 +24,7 @@
 // loop for a certain period of time, with the ability to be interrupted.
 //
 
-#if !defined( __cplusplus) && defined(TO_LINUX)
+#if !defined( __cplusplus) && TO_LINUX
     // See feature_test_macros(7)
     // This definition is redundant under C++
     #define _GNU_SOURCE  // Needed for pipe2 on Linux

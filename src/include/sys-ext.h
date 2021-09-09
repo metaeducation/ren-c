@@ -58,7 +58,7 @@
 // !!! This aggregate may become an ACTION! as opposed to an array of handle
 // values, but this is a work in progress.
 //
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     typedef REBVAL *(__cdecl COLLATE_CFUNC)(void);
 #else
     typedef REBVAL *(COLLATE_CFUNC)(void);

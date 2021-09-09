@@ -428,7 +428,7 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(REBSER *s)
     fflush(stderr);
 
   #if defined(DEBUG_SERIES_ORIGINS)
-    #if defined(TO_WINDOWS)
+    #if TO_WINDOWS
         printf("\nCALL STACK WHERE ALLOCATED:\n");
         Print_Winstack_Debug(s->guard);
 

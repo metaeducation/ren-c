@@ -294,7 +294,7 @@ inline static void DS_DROP_TO(REBDSP dsp) {
 // http://stackoverflow.com/questions/5013806/
 //
 
-#if defined(TO_EMSCRIPTEN)
+#if TO_EMSCRIPTEN
     //
     // !!! Catching stack overflows in emscripten stopped working in the
     // BinaryEn build; the stack seems to not grow up or down specifically.

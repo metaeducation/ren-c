@@ -35,7 +35,7 @@ inline static void Fail_No_Process(const REBVAL *arg) {
     );
 }
 
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     ATTRIBUTE_NO_RETURN
     inline static void Fail_Terminate_Failed(DWORD err) {  // GetLastError()
         rebJumps(

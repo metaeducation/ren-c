@@ -811,7 +811,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
 //
 void Startup_Core(void)
 {
-  #if defined(TO_WINDOWS) && defined(DEBUG_SERIES_ORIGINS)
+  #if TO_WINDOWS && defined(DEBUG_SERIES_ORIGINS)
     Startup_Winstack();  // Do first so shutdown crashes have stack traces
   #endif
 
@@ -1183,7 +1183,7 @@ void Shutdown_Core(bool clean)
     //
     Shutdown_Pools();
 
-  #if defined(TO_WINDOWS) && defined(DEBUG_SERIES_ORIGINS)
+  #if TO_WINDOWS && defined(DEBUG_SERIES_ORIGINS)
     Shutdown_Winstack();  // Do last so shutdown crashes have stack traces
   #endif
 }

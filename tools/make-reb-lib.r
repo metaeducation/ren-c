@@ -501,7 +501,7 @@ e-lib/emit 'ver {
      */
     #if defined(LIBREBOL_NO_STDLIB)
         #define REBWCHAR unsigned int  /* Windows-specific API */
-    #elif defined(TO_WINDOWS)
+    #elif TO_WINDOWS
         #define REBWCHAR wchar_t
     #else
         #define REBWCHAR uint16_t

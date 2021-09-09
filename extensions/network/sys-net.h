@@ -27,10 +27,12 @@
 // This is a small file of network compatibility definitions which makes it
 // easier to have more code shared in the Windows and BSD implementations.
 // It's not exhaustive, but allows at least some code in the shared network
-// handling to avoid having `#ifdef TO_WINDOWS` in it.
+// handling to avoid having `#if TO_WINDOWS` in it.
 //
 
-#ifdef TO_WINDOWS
+#include "reb-config.h"
+
+#if TO_WINDOWS
     #include <winsock2.h>
     #include <ws2tcpip.h> // needed for ip_mreq definition for multicast
 
@@ -47,7 +49,7 @@
 
     typedef int socklen_t;
 #else
-    #ifdef TO_AMIGA
+    #if TO_AMIGA
         typedef char __BYTE;
         typedef unsigned char __UBYTE;
         typedef char * __STRPTR;

@@ -1195,7 +1195,7 @@ void GC_Kill_Series(REBSER *s)
     FREETRASH_POINTER_IF_DEBUG(s->misc.trash);
   #endif
 
-  #if defined(TO_WINDOWS) && defined(DEBUG_SERIES_ORIGINS)
+  #if TO_WINDOWS && defined(DEBUG_SERIES_ORIGINS)
     Free_Winstack_Debug(s->guard);
   #endif
 

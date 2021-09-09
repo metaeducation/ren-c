@@ -38,8 +38,10 @@
 // figured out by some sufficiently-motivated-individual.
 //
 
+#include "reb-config.h"
+
 #include "uv.h"  // includes windows.h
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
 #endif
 

@@ -59,8 +59,10 @@
 //     https://discourse.julialang.org/t/why-is-seek-zero-based/55569
 //
 
+#include "reb-config.h"
+
 #include "uv.h"  // includes windows.h
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
 #endif
 

@@ -3,11 +3,11 @@
 // look in the native specs for what platforms the native should be enabled under.
 // For simplicity that feature has been taken out at the moment.
 
-#if defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
+#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX
 static void kill_process(pid_t pid, int signal);
 #endif
 
-#if defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
+#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX
 
 //
 //  get-pid: native [
@@ -241,4 +241,4 @@ REBNATIVE(send_signal)
     return Init_None(D_OUT);
 }
 
-#endif // defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
+#endif  // TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX

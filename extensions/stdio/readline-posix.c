@@ -26,6 +26,8 @@
 // parts only for the common standard.
 //
 
+#include "reb-config.h"
+
 #include <assert.h>
 #include <stdint.h>
 #include "reb-c.h"

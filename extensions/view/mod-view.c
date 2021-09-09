@@ -33,7 +33,9 @@
 // are being used here.
 //
 
-#ifdef TO_WINDOWS
+#include "reb-config.h"
+
+#if TO_WINDOWS
     // `#define WIN32_LEAN_AND_MEAN` seems to omit FNERR_BUFFERTOOSMALL :-/
     #include <windows.h>
 
@@ -46,7 +48,7 @@
         #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
     #endif
 #else
-    #if !defined(__cplusplus) && defined(TO_LINUX)
+    #if !defined(__cplusplus) && TO_LINUX
         //
         // See feature_test_macros(7), this definition is redundant under C++
         //
@@ -118,7 +120,7 @@ REBNATIVE(request_file_p)
 
     REBVAL *error = nullptr;  // error saved to raise after buffers freed
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     OPENFILENAME ofn;
     memset(&ofn, '\0', sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
@@ -459,7 +461,7 @@ REBNATIVE(request_file_p)
 }
 
 
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
 int CALLBACK ReqDirCallbackProc(
     HWND hWnd,
     UINT uMsg,

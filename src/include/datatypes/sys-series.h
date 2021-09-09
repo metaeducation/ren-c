@@ -355,7 +355,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
         // not, as that's in the info.
 
       #if defined(DEBUG_SERIES_ORIGINS)
-        #ifdef TO_WINDOWS
+        #if TO_WINDOWS
             //
             // The bug that %d-winstack.c was added for related to API handle
             // leakage.  So we only instrument the root series for now.  (The

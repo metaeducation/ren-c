@@ -39,7 +39,7 @@
 /* #include %reb-c.h */
 
 
-#if !defined(TO_WINDOWS) && defined(NO_TTY_ATTRIBUTES)
+#if (! TO_WINDOWS) && defined(NO_TTY_ATTRIBUTES)
     // ...Linux with no terminal functions ...
 #else
 

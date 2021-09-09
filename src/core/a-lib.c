@@ -2088,7 +2088,7 @@ void *RL_rebZinflateAlloc(
 // integer arguments).  But for now, stick it in the API just to get the
 // wide availability.
 //
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #undef IS_ERROR // windows has its own meaning for this.
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
@@ -2117,7 +2117,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
 
     REBCTX *error;
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     if (errnum == 0)
         errnum = GetLastError();
 

@@ -22,7 +22,9 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#ifdef TO_WINDOWS
+#include "reb-config.h"
+
+#if TO_WINDOWS
   #ifdef _MSC_VER
     #pragma comment(lib, "rpcrt4.lib")
   #endif
@@ -32,7 +34,7 @@
     #undef IS_ERROR  // winerror.h defines, Rebol has a different meaning
 
     #include <rpc.h>  // for UuidCreate()
-#elif defined(TO_OSX)
+#elif TO_OSX
     #include <CoreFoundation/CFUUID.h>
 #else
     #include <uuid.h>
@@ -55,7 +57,7 @@ REBNATIVE(generate)
 {
     UUID_INCLUDE_PARAMS_OF_GENERATE;
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
 
     UUID uuid;  // uuid.data* is little endian, string form is big endian
     UuidCreate(&uuid);
@@ -79,7 +81,7 @@ REBNATIVE(generate)
 
     Init_Binary(D_OUT, bin);
 
-  #elif defined(TO_OSX)
+  #elif TO_OSX
 
     CFUUIDRef newId = CFUUIDCreate(NULL);
     CFUUIDBytes bytes = CFUUIDGetUUIDBytes(newId);
@@ -107,7 +109,7 @@ REBNATIVE(generate)
 
     Init_Binary(D_OUT, bin);
 
-  #elif defined(TO_LINUX)
+  #elif TO_LINUX
 
     uuid_t uuid;
     uuid_generate(uuid);

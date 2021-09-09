@@ -22,7 +22,9 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#if !defined(__cplusplus) && defined(TO_LINUX)
+#include "reb-config.h"
+
+#if !defined(__cplusplus) && TO_LINUX
     //
     // See feature_test_macros(7), this definition is redundant under C++
     //
@@ -38,7 +40,7 @@
 //
 // https://stackoverflow.com/a/31347357/211160
 //
-#if defined(TO_OSX) || defined(TO_OPENBSD_X64)
+#if TO_OSX || TO_OPENBSD_X64
     extern char **environ;
 #endif
 
@@ -48,7 +50,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#if !defined(WIFCONTINUED) && defined(TO_ANDROID)
+#if !defined(WIFCONTINUED) && TO_ANDROID
 // old version of bionic doesn't define WIFCONTINUED
 // https://android.googlesource.com/platform/bionic/+/c6043f6b27dc8961890fed12ddb5d99622204d6d%5E%21/#F0
     # define WIFCONTINUED(x) (WIFSTOPPED(x) && WSTOPSIG(x) == 0xffff)

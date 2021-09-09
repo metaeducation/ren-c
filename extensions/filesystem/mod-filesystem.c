@@ -42,7 +42,7 @@ extern REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
 extern REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
 
 
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #define OS_DIR_SEP '\\'  // file path separator (Thanks Bill.)
 #else
     #define OS_DIR_SEP '/'  // rest of the world uses it
@@ -264,7 +264,7 @@ void Mold_File_To_Local(REB_MOLD *mo, const RELVAL *file, REBFLGS flags) {
         else
             c = '\0';
 
-      #ifdef TO_WINDOWS
+      #if TO_WINDOWS
         if (c != '\0' and c != '/') { // %/c or %/c/ but not %/ %// %//c
             //
             // peek ahead for a '/'

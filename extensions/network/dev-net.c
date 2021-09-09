@@ -120,7 +120,7 @@ static bool Try_Set_Sock_Options(SOCKET sock)
 extern void Startup_Networking(void);
 void Startup_Networking(void)
 {
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     //
     // Initialize Windows Socket API with given VERSION.
     // It is ok to call twice, as long as WSACleanup twice.
@@ -140,7 +140,7 @@ void Startup_Networking(void)
 extern void Shutdown_Networking(void);
 void Shutdown_Networking(void)
 {
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     WSACleanup();
   #endif
 }
@@ -347,7 +347,7 @@ REBVAL *Connect_Socket_Maybe_Queued(const REBVAL *port)
       case NE_ISCONN:
         break;  // connected, set state
 
-    #ifdef TO_WINDOWS
+    #if TO_WINDOWS
       case NE_INVALID:  // Comment said "Corrects for Microsoft bug"
     #endif
       case NE_WOULDBLOCK:

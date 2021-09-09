@@ -35,7 +35,7 @@
 // defend against SQL injection attacks.  This way, the scheme code does not
 // need to worry about doing SQL-syntax-aware string escaping.
 
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
     #undef IS_ERROR

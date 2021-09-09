@@ -21,7 +21,9 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#ifdef TO_WINDOWS
+#include "reb-config.h"
+
+#if TO_WINDOWS
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
 #endif
@@ -54,7 +56,7 @@ REBNATIVE(locale)
 // parses environment variables and uses compiled-in tables.  See the HIJACK
 // in %ext-locale-init.reb for that.
 {
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     LOCALE_INCLUDE_PARAMS_OF_LOCALE;
 
     REBVAL *cat = ARG(category);

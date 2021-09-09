@@ -43,10 +43,12 @@
 // operations, which means they are running synchronously.  But asynchronous
 // features are there to be taken advantage of when needed.)
 
+#include "reb-config.h"
+
 #include <time.h>
 
 #include "uv.h"  // includes windows.h
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
 #endif
 
@@ -214,7 +216,7 @@ REBVAL *Open_File(const REBVAL *port, int flags)
         if (flags & UV_FS_O_RDONLY)
             mode = S_IREAD;
         else {
-          #ifdef TO_WINDOWS
+          #if TO_WINDOWS
             mode = S_IREAD | S_IWRITE;
           #else
             mode = S_IREAD | S_IWRITE | S_IRGRP | S_IWGRP | S_IROTH;
@@ -507,7 +509,7 @@ REBVAL *Rename_File_Or_Directory(const REBVAL *port, const REBVAL *to)
 }
 
 
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     //
     //  File_Time_To_Rebol: C
     //
@@ -774,7 +776,7 @@ REBVAL *Get_Current_Exec(void)
 #endif
 
 
-#ifdef TO_OSX
+#if TO_OSX
 
     // !!! Note: intentionally not using libuv here, in case this is to be
     // extracted for a lighter build!
@@ -828,7 +830,7 @@ REBVAL *Get_Current_Exec(void)
         return result;
     }
 
-#elif defined(TO_WINDOWS)
+#elif TO_WINDOWS
 
     // !!! Note: intentionally not using libuv here, in case this is to be
     // extracted for a lighter build!

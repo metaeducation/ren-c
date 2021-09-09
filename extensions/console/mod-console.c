@@ -21,7 +21,9 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#ifdef TO_WINDOWS
+#include "reb-config.h"
+
+#if TO_WINDOWS
 
     #undef _WIN32_WINNT  // https://forum.rebol.info/t/326/4
     #define _WIN32_WINNT 0x0501  // Minimum API target: WinXP
@@ -64,7 +66,7 @@
 
 bool halting_enabled = true;
 
-#if defined(TO_EMSCRIPTEN)  //=//// EMSCRIPTEN ///////////////////////////=//
+#if TO_EMSCRIPTEN  //=//// EMSCRIPTEN //////////////////////////////////////=//
 
 // !!! Review how an emscripten console extension should be hooking something
 // like a keyboard shortcut for breaking.  With the pthread model, there may
@@ -75,7 +77,7 @@ void Disable_Halting(void) {}
 void Enable_Halting(void) {}
 
 
-#elif defined(TO_WINDOWS)  //=//// WINDOWS ////////////////////////////////=//
+#elif TO_WINDOWS  //=//// WINDOWS //////////////////////////////////////////=//
 
 // Windows handling is fairly simplistic--this is the callback passed to
 // `SetConsoleCtrlHandler()`.  The most annoying thing about cancellation in

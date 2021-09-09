@@ -37,8 +37,9 @@
 //   as it does not call WSAStartup() itself to start up sockets on Windows.
 //
 
+#include "reb-config.h"
 
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #include <winsock2.h>
     #undef IS_ERROR  // Windows defines this, so does %sys-core.h
 #else

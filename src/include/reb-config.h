@@ -40,6 +40,15 @@
 // work on a system, use that as an opportunity to reflect
 // how to make this better.
 //
+//=//// NOTES //////////////////////////////////////////////////////////////=//
+//
+// * This favors #if with defined values of 0 and 1, instead of #ifdef, because
+//   over the long run it makes typos easier to spot.  It also offers more
+//   control over defaults.  For good arguments supporting this choice, see:
+//
+//     https://www.iar.com/knowledge/learn/programming/advanced-preprocessor-tips-and-tricks/
+//
+
 
 #ifndef REB_CONFIG_H_1020_0304  // "include guard" allows multiple #includes
 #define REB_CONFIG_H_1020_0304  // #s in case REB_CONFIG_H defined elsewhere
@@ -96,16 +105,21 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+//=//// WINDOWS ////////////////////////////////////////////////////////////=//
 
-//* MS Windows ********************************************************
-
-#ifdef TO_WINDOWS_X86
+#if !defined(TO_WINDOWS_X86)
+    #define TO_WINDOWS_X86 0
 #endif
 
-#ifdef TO_WINDOWS_X64
+#if !defined(TO_WINDOWS_X64)
+    #define TO_WINDOWS_X64 0
 #endif
 
-#ifdef TO_WINDOWS
+#if !defined(TO_WINDOWS)
+    #define TO_WINDOWS 0
+#endif
+
+#if TO_WINDOWS
     // ASCII strings to Integer
     #define ATOI                    // supports it
     #define ATOI64                  // supports it
@@ -123,27 +137,35 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-//* Linux ********************************************************
+//=//// LINUX //////////////////////////////////////////////////////////////=//
 
-#ifdef TO_LINUX_X86
+#if !defined(TO_LINUX_X86)
+    #define TO_LINUX_X86 0
 #endif
 
-#ifdef TO_LINUX_X64
+#if !defined(TO_LINUX_X64)
+    #define TO_LINUX_X64 0
 #endif
 
-#ifdef TO_LINUX_PPC
+#if !defined(TO_LINUX_PPC)
+    #define TO_LINUX_PPC 0
 #endif
 
-#ifdef TO_LINUX_ARM
+#if !defined(TO_LINUX_ARM)
+    #define TO_LINUX_ARM 0
 #endif
 
-#ifdef TO_LINUX_AARCH64
+#if !defined(TO_LINUX_AARCH64)
+    #define TO_LINUX_AARCH64 0
 #endif
 
-#ifdef TO_LINUX_MIPS
+#if !defined(TO_LINUX_MIPS)
+    #define TO_LINUX_MIPS 0
 #endif
 
-#ifdef TO_LINUX
+#if !defined(TO_LINUX)
+    #define TO_LINUX 0
+#else
     #define HAS_POSIX_SIGNAL
 
     // !!! The Atronix build introduced a differentiation between
@@ -170,51 +192,78 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-//* Mac OS X ********************************************************
+//=//// APPLE //////////////////////////////////////////////////////////////=//
 
-#ifdef TO_OSX_PPC
+#if !defined(TO_OSX_PPC)
+    #define TO_OSX_PPC 0
 #endif
 
-#ifdef TO_OSX_X86
+#if !defined(TO_OSX_X86)
+    #define TO_OSX_X86 0
 #endif
 
-#ifdef TO_OSX_X64
+#if !defined(TO_OSX_X64)
+    #define TO_OSX_X64 0
+#endif
+
+#if !defined(TO_OSX)
+    #define TO_OSX 0
 #endif
 
 
-//* Android *****************************************************
+//=//// ANDROID ////////////////////////////////////////////////////////////=//
 
-#ifdef TO_ANDROID_ARM
+#if !defined(TO_ANDROID_ARM)
+    #define TO_ANDROID_ARM 0
 #endif
 
-#ifdef TO_ANDROID
+#if !defined(TO_ANDROID)
+    #define TO_ANDROID 0
+#elif TO_ANDROID
     #define PROC_EXEC_PATH "/proc/self/exe"
 #endif
 
 
-//* BSD ********************************************************
+//=//// BSD ////////////////////////////////////////////////////////////////=//
 
-#ifdef TO_FREEBSD_X86
+#if !defined(TO_FREEBSD_X86)
+    #define TO_FREEBSD_X86 0
 #endif
 
-#ifdef TO_FREEBSD_X64
+#if !defined(TO_FREEBSD_X64)
+    #define TO_FREEBSD_X64 0
 #endif
 
-#ifdef TO_FREEBSD
+#if !defined(TO_FREEBSD)
+    #define TO_FREEBSD 0
+#elif TO_FREEBSD
     #define HAVE_PROC_PATHNAME
 #endif
 
-#ifdef TO_NETBSD
+#if !defined(TO_NETBSD)
+    #define TO_NETBSD 0
+#elif TO_NETBSD
     #define PROC_EXEC_PATH "/proc/curproc/exe"
 #endif
 
-#ifdef TO_OPENBSD
+#if !defined(TO_OPENBSD)
+    #define TO_OPENBSD 0
+#endif
+
+#if !defined(TO_OPENBSD_X64)
+    #define TO_OPENBSD_X64 0
+#endif
+
+#if !defined(TO_POSIX)
+    #define TO_POSIX 0
 #endif
 
 
-//* HaikuOS ********************************************************
+//=//// HAIKU OS ///////////////////////////////////////////////////////////=//
 
-#ifdef TO_HAIKU
+#if !defined(TO_HAIKU)
+    #define TO_HAIKU 0
+#elif TO_HAIKU
     #undef API_EXPORT
     #define API_EXPORT
 
@@ -222,7 +271,14 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
-//* Amiga ********************************************************
+//=//// EMSCRIPTEN /////////////////////////////////////////////////////////=//
+
+#if !defined(TO_EMSCRIPTEN)
+    #define TO_EMSCRIPTEN 0
+#endif
+
+
+//=//// AMIGA //////////////////////////////////////////////////////////////=//
 
 // Note: The Amiga target is kept for its historical significance.
 // Rebol required Amiga OS4 to be able to run, and the only
@@ -234,7 +290,9 @@ Special internal defines used by RT, not Host-Kit developers:
 // for an Amiga emulator.  The last known successful build on
 // Amiga hardware is dated 5-Mar-2011
 
-#ifdef TO_AMIGA
+#if !defined(TO_AMIGA)
+    #define TO_AMIGA 0
+#elif TO_AMIGA
     #define NO_DL_LIB
 #endif
 
@@ -329,7 +387,7 @@ Special internal defines used by RT, not Host-Kit developers:
     // Linux, where it has seemed to work out (MinGW64 build on Cygwin made
     // invalid REBVAL sizes with this on)
     //
-    #if defined(ENDIAN_LITTLE) && defined(TO_LINUX_X64)
+    #if defined(ENDIAN_LITTLE) && TO_LINUX_X64
         #define DEBUG_USE_BITFIELD_HEADER_PUNS
     #endif
 
@@ -345,7 +403,7 @@ Special internal defines used by RT, not Host-Kit developers:
     // !!! We are overpaying for the ALIGN_SIZE if it's not needed for double,
     // so perhaps ALIGN_SIZE should be configured in build settings...
     //
-    #if !defined(TO_WINDOWS_X86) && !defined(TO_LINUX_X86)
+    #if (! TO_WINDOWS_X86) && (! TO_LINUX_X86)
         #define DEBUG_DONT_CHECK_ALIGN
     #endif
 

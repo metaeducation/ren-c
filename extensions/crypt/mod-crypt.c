@@ -25,6 +25,8 @@
 // See README.md for notes about this extension.
 //
 
+#include "reb-config.h"
+
 #include "mbedtls/rsa.h"
 
 // mbedTLS has separate functions for each message digest (SHA256, MD5, etc)
@@ -38,7 +40,7 @@
 
 #include "mbedtls/ecdh.h"  // Elliptic curve (Diffie-Hellman)
 
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     #undef _WIN32_WINNT  // https://forum.rebol.info/t/326/4
     #define _WIN32_WINNT 0x0501  // Minimum API target: WinXP
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
@@ -110,7 +112,7 @@
 
 // Initialized by the CRYPT extension entry point, shut down by the exit code
 //
-#ifdef TO_WINDOWS
+#if TO_WINDOWS
     HCRYPTPROV gCryptProv = 0;
 #else
     int rng_fd = -1;
@@ -121,7 +123,7 @@ int get_random(void *p_rng, unsigned char *output, size_t output_len)
     assert(p_rng == nullptr);  // parameter currently not used
     UNUSED(p_rng);
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     if (CryptGenRandom(gCryptProv, output_len, output) != 0)
         return 0;  // success
   #else
@@ -1268,7 +1270,7 @@ REBNATIVE(startup_p)
 {
     CRYPT_INCLUDE_PARAMS_OF_STARTUP_P;
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     if (CryptAcquireContextW(
         &gCryptProv,
         0,
@@ -1304,7 +1306,7 @@ REBNATIVE(shutdown_p)
 {
     CRYPT_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     if (gCryptProv != 0) {
         CryptReleaseContext(gCryptProv, 0);
         gCryptProv = 0;

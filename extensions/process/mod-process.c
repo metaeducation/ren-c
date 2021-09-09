@@ -22,7 +22,9 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#ifdef TO_WINDOWS
+#include "reb-config.h"
+
+#if TO_WINDOWS
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
 
@@ -33,7 +35,7 @@
         #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
     #endif
 #else
-    #if !defined(__cplusplus) && defined(TO_LINUX)
+    #if !defined(__cplusplus) && TO_LINUX
         //
         // See feature_test_macros(7), this definition is redundant under C++
         //
@@ -49,7 +51,7 @@
     //
     // https://stackoverflow.com/a/31347357/211160
     //
-    #if defined(TO_OSX) || defined(TO_OPENBSD_X64)
+    #if TO_OSX || TO_OPENBSD_X64
         extern char **environ;
     #endif
 
@@ -59,7 +61,7 @@
     #include <signal.h>
     #include <sys/stat.h>
     #include <sys/wait.h>
-    #if !defined(WIFCONTINUED) && defined(TO_ANDROID)
+    #if !defined(WIFCONTINUED) && TO_ANDROID
     // old version of bionic doesn't define WIFCONTINUED
     // https://android.googlesource.com/platform/bionic/+/c6043f6b27dc8961890fed12ddb5d99622204d6d%5E%21/#F0
         # define WIFCONTINUED(x) (WIFSTOPPED(x) && WSTOPSIG(x) == 0xffff)
@@ -122,7 +124,7 @@ REBNATIVE(get_os_browsers)
 
     REBVAL *list = rebValue("copy []");
 
-  #if defined(TO_WINDOWS)
+  #if TO_WINDOWS
 
     HKEY key;
     if (
@@ -177,7 +179,7 @@ REBNATIVE(get_os_browsers)
 
     rebFree(buffer);
 
-  #elif defined(TO_LINUX)
+  #elif TO_LINUX
 
     // Caller should try xdg-open first, then try x-www-browser otherwise
     //
@@ -224,7 +226,7 @@ REBNATIVE(sleep)
 
     REBLEN msec = Milliseconds_From_Value(ARG(duration));
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     Sleep(msec);
   #else
     usleep(msec * 1000);
@@ -234,7 +236,7 @@ REBNATIVE(sleep)
 }
 
 
-#if defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
+#if TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX
 static void kill_process(pid_t pid, int signal)
 {
     if (kill(pid, signal) >= 0)
@@ -271,7 +273,7 @@ REBNATIVE(terminate)
 {
     PROCESS_INCLUDE_PARAMS_OF_TERMINATE;
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
 
     if (GetCurrentProcessId() == cast(DWORD, VAL_INT32(ARG(pid))))
         fail ("Use QUIT or EXIT-REBOL to terminate current process, instead");
@@ -307,7 +309,7 @@ REBNATIVE(terminate)
         Fail_Terminate_Failed(err);
     }
 
-  #elif defined(TO_LINUX) || defined(TO_ANDROID) || defined(TO_POSIX) || defined(TO_OSX)
+  #elif TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX
 
     if (getpid() == VAL_INT32(ARG(pid))) {
         // signal is not as reliable for this purpose
@@ -355,7 +357,7 @@ REBNATIVE(get_env)
 
     REBCTX *error = NULL;
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     // Note: The Windows variant of this API is NOT case-sensitive
 
     WCHAR *key = rebSpellWide("@", variable);
@@ -430,7 +432,7 @@ REBNATIVE(set_env)
     REBVAL *variable = ARG(variable);
     REBVAL *value = ARG(value);
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     WCHAR *key_wide = rebSpellWide(variable);
     WCHAR *opt_val_wide = rebSpellWide("ensure [<opt> text!]", value);
 
@@ -521,7 +523,7 @@ REBNATIVE(list_env)
 
     REBVAL *map = rebValue("make map! []");
 
-  #ifdef TO_WINDOWS
+  #if TO_WINDOWS
     //
     // Windows environment strings are sequential null-terminated strings,
     // with a 0-length string signaling end ("keyA=valueA\0keyB=valueB\0\0")
