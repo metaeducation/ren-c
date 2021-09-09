@@ -109,14 +109,19 @@
         }
 
         operator REBVAL* () { return v; }
+        operator REBCEL(const*) () { return v; }
         REBVAL* operator->() { return v; }
 
         bool operator==(const Reb_Stack_Value_Ptr &other)
             { return this->v == other.v; }
         bool operator!=(const Reb_Stack_Value_Ptr &other)
             { return this->v != other.v; }
+        bool operator<(const Reb_Stack_Value_Ptr &other)
+            { return this->v < other.v; }
         bool operator<=(const Reb_Stack_Value_Ptr &other)
             { return this->v <= other.v; }
+       bool operator>(const Reb_Stack_Value_Ptr &other)
+            { return this->v > other.v; }
         bool operator>=(const Reb_Stack_Value_Ptr &other)
             { return this->v >= other.v; }
 

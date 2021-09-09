@@ -98,7 +98,7 @@
 //
 // Most of the time, routines want to see these as being QUOTED!.  But some
 // lower-level routines (like molding or comparison) want to be able to act
-// on them in-place witout making a copy.  To ensure they see the value for
+// on them in-place without making a copy.  To ensure they see the value for
 // the "type that it is" and use CELL_KIND() and not VAL_TYPE(), this alias
 // for RELVAL prevents VAL_TYPE() operations.
 //
@@ -146,7 +146,6 @@
 
         RebcellPtr () { }
         RebcellPtr (const Reb_Cell *p) : p (p) {}
-        RebcellPtr (STKVAL(*) p) : p (p) {}
 
         const Reb_Cell **operator&() { return &p; }
         const Reb_Cell *operator->() { return p; }
