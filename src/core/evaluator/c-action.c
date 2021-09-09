@@ -67,8 +67,34 @@
 #endif
 
 
+// Anything without potential for invisible return starts f->out as reset.
+// If there is potential for invisible return, the cell contents are left
+// as is, but the output is marked "stale" to prevent its usage as input
+// for an enfix function.
+//
+// Note: The incoming cell may be completely 0 bytes (unformatted space) if
+// Process_Action() was called without passing through the Eval() step that
+// transitions cells to have at minimum the NODE and CELL flags.  So setting
+// CELL_FLAG_OUT_NOTE_STALE can't be done with SET_CELL_FLAG()
+//
 inline static void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
-    SET_CELL_FLAG(f->out, OUT_NOTE_STALE);
+    REBACT *phase = FRM_PHASE(f);
+    if (not ACT_HAS_RETURN(phase))
+        f->out->header.bits |= (  // ^-- see note
+            NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_OUT_NOTE_STALE
+        );
+    else {
+        const REBKEY *key = ACT_KEYS_HEAD(phase);
+        const REBPAR *param = ACT_PARAMS_HEAD(phase);
+        assert(KEY_SYM(key) == SYM_RETURN);
+        UNUSED(key);
+        if (NOT_PARAM_FLAG(param, ENDABLE))
+            RESET(f->out);
+        else
+            f->out->header.bits |= (  // ^-- see note
+                NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_OUT_NOTE_STALE
+            );
+    }
 }
 
 
@@ -747,7 +773,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     // So a second loop is required by the system's semantics.
 
   typecheck_then_dispatch:
-    Expire_Out_Cell_Unless_Invisible(f);
 
     f->key = ACT_KEYS(&f->key_tail, FRM_PHASE(f));
     f->arg = FRM_ARGS_HEAD(f);
@@ -966,24 +991,10 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
     assert(not Is_Evaluator_Throwing_Debug());
 
-    // !!! Trying to see if getting cells to a zeroed out point is feasible.
-    // To make it easier for natives, anything without the potential for an
-    // invisible return starts out as reset.
-
-  blockscope {
-    // !!! Can't be inaccessible, right?
-    if (ACT_HAS_RETURN(phase)) {
-        const REBKEY *key = ACT_KEYS_HEAD(phase);
-        const REBPAR *param = ACT_PARAMS_HEAD(phase);
-        assert(KEY_SYM(key) == SYM_RETURN);
-        UNUSED(key);
-        if (NOT_PARAM_FLAG(param, ENDABLE))
-            RESET(f->out);
-    }
-  }
+    Expire_Out_Cell_Unless_Invisible(f);
 
     if (not Is_Fresh(f_spare))
-        assert(!"Action eval did not leave spare at REB_0 prior to dispatch");
+        assert(!"Action internals didn't leave spare REB_0 prior to dispatch");
 
     const REBVAL *r = (*dispatcher)(f);
 
