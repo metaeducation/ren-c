@@ -1076,6 +1076,20 @@ void RL_rebJumps(unsigned char quotes, const void *p, va_list *vaptr)
     DECLARE_LOCAL (dummy);
     Run_Va_May_Fail(dummy, quotes, p, vaptr);  // calls va_end()
 
+    // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
+    // higher optimization levels it can conclude that RL_rebJumps() never
+    // returns.  Then it will give an error on the attempt to put a DEAD_END()
+    // notification in the inline wrapper `rebJumps()`, which is needed to
+    // suppress the warning when RL_rebJumps() is not available.  This Catch-22
+    // of saying the DEAD_END() itself is unreachable code is annoying...but
+    // it's best not to turn off the warning.  Throw in a runtime twist that
+    // it can't guarantee won't happen (but won't) so it doesn't use special
+    // knowledge that RL_rebJumps() does not return.
+    //
+    assert(p != nullptr);
+    if (p == nullptr)
+        return;
+
     fail ("rebJumps() was used to run code, but it didn't FAIL/QUIT/THROW!");
 }
 
