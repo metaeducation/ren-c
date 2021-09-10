@@ -16,3 +16,12 @@ depends: compose [
         [%event/event-posix.c]
     ])
 ]
+
+libraries: try switch system-config/os-base [
+    'Windows [
+        ;
+        ; Needed for SetTimer(), GetMessage(), etc.
+        ;
+        [%user32]
+    ]
+]

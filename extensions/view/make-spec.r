@@ -14,26 +14,21 @@ includes: copy [
 ; For now just enable REQUEST-FILE on Windows if the view module is
 ; included, because it doesn't bring along any extra dependencies.
 ;
-libraries: _
-(comment [
-    switch system-config/os-base [
-        'Windows [
-            ; You would currently have to define USE_WINDOWS_DIRCHOOSER
-            ; to try out the REQUEST-DIR code.
-            ;
-            [%Ole32]
-        ]
-
-        ; Note: It seemed to help to put this at the beginning of the
-        ; compiler and linking command lines:
-        ;
-        ;     g++ `pkg-config --cflags --libs gtk+-3.0` ...
-        ;
-        ; You would currently have to define USE_GTK_FILECHOOSER to get
-        ; the common dialog code in REQUEST-FILE.
-        ;
-        'Linux [
-            [%gtk-3 %gobject-2.0 %glib-2.0]
-        ]
+libraries: try switch system-config/os-base [
+    'Windows [
+        [%Ole32 %comdlg32]
     ]
-])
+
+    ; Note: It seemed to help to put this at the beginning of the
+    ; compiler and linking command lines:
+    ;
+    ;     g++ `pkg-config --cflags --libs gtk+-3.0` ...
+    ;
+    ; You would currently have to define USE_GTK_FILECHOOSER to get
+    ; the common dialog code in REQUEST-FILE.
+    ;
+    'Linux [
+        comment [%gtk-3 %gobject-2.0 %glib-2.0]
+        []
+    ]
+]

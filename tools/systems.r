@@ -89,14 +89,14 @@ systems: [
     Windows: 3
     ;-------------------------------------------------------------------------
     0.3.01 windows-x86/windows "win32-x86"
-        #SGD #LEN #UNI #W32 #NSEC <WLOSS> /CON /S4M %W32 %M
+        #SGD #LEN #UNI #W32 #NSEC <WLOSS> /CON /S4M %M
         ; was: "Microsoft Windows XP/NT/2K/9X iX86"
 
     0.3.02 _ "dec-alpha"
         ; was: "Windows Alpha NT DEC Alpha"
 
     0.3.40 windows-x64/windows "win32-x64"
-        #SGD #LEN #UNI #W32 #LLP64 #NSEC <WLOSS> /CON /S4M %W32 %M
+        #SGD #LEN #UNI #W32 #LLP64 #NSEC <WLOSS> /CON /S4M %M
 
     Linux: 4
     ;-------------------------------------------------------------------------
@@ -422,8 +422,6 @@ export system-libraries: make object! [
 
     DL: "dl" ; dynamic lib
     LOG: "log" ; Link with liblog.so on Android
-
-    W32: ["wsock32" "comdlg32" "user32" "shell32" "advapi32"]
 
     NWK: "network" ; Needed by HaikuOS
 ]
