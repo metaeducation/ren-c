@@ -176,8 +176,8 @@ REBNATIVE(request_file_p)
 
     WCHAR *lpstrInitialDir;
     if (REF(file)) {
-        unsigned int cch_path = rebUnbox("length of", ARG(file));
         WCHAR *path = rebSpellWide("file-to-local/full", ARG(file));
+        unsigned int cch_path = wcslen(path);
 
         // If the last character doesn't indicate a directory, that means
         // we are trying to pre-select a file, which we do by copying the
