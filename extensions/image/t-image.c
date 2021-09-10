@@ -368,8 +368,9 @@ REB_R TO_Image(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 void Reset_Height(REBVAL *value)
 {
+    REBVAL *binary = VAL_IMAGE_BIN(value);
     REBLEN w = VAL_IMAGE_WIDTH(value);
-    VAL_IMAGE_HEIGHT(value) = w ? (VAL_LEN_HEAD(value) / w) : 0;
+    VAL_IMAGE_HEIGHT(value) = w ? (VAL_LEN_HEAD(binary) / w) : 0;
 }
 
 
