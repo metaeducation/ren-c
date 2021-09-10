@@ -1221,3 +1221,333 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
     return true;  // true => thrown
 }
+
+
+//
+//  Push_Action: C
+//
+// Allocate the series of REBVALs inspected by a function when executed (the
+// values behind ARG(name), REF(name), D_ARG(3),  etc.)
+//
+// This only allocates space for the arguments, it does not initialize.
+// Eval_Core initializes as it goes, and updates f->key so the GC knows how
+// far it has gotten so as not to see garbage.  APPLY has different handling
+// when it has to build the frame for the user to write to before running;
+// so Eval_Core only checks the arguments, and does not fulfill them.
+//
+// If the function is a specialization, then the parameter list of that
+// specialization will have *fewer* parameters than the full function would.
+// For this reason we push the arguments for the "underlying" function.
+// Yet if there are specialized values, they must be filled in from the
+// exemplar frame.
+//
+// Rather than "dig" through layers of functions to find the underlying
+// function or the specialization's exemplar frame, those properties are
+// cached during the creation process.
+//
+void Push_Action(
+    REBFRM *f,
+    REBACT *act,
+    REBCTX *binding  // actions may only be bound to contexts ATM
+){
+    assert(NOT_EVAL_FLAG(f, FULFILL_ONLY));
+    assert(NOT_EVAL_FLAG(f, RUNNING_ENFIX));
+
+    STATIC_ASSERT(EVAL_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
+    REBARR *details = ACT_DETAILS(act);
+    if (f->flags.bits & details->leader.bits & DETAILS_FLAG_IS_BARRIER)
+        fail (Error_Expression_Barrier_Raw());
+
+    REBLEN num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
+
+    REBSER *s;
+    if (
+        f->varlist  // !!! May be going to point of assuming nullptr
+        or Did_Reuse_Varlist_Of_Unknown_Size(f, num_args)  // want `num_args`
+    ){
+        s = f->varlist;
+      #if DEBUG_TERM_ARRAYS
+        if (s->content.dynamic.rest >= num_args + 1 + 1)  // +rootvar, +end
+            goto sufficient_allocation;
+      #else
+        if (s->content.dynamic.rest >= num_args + 1)  // +rootvar
+            goto sufficient_allocation;
+      #endif
+
+        // It wasn't big enough for `num_args`, so we free the data.
+        // But at least we can reuse the series node.
+
+        //assert(SER_BIAS(s) == 0);
+        Free_Unbiased_Series_Data(
+            s->content.dynamic.data,
+            SER_TOTAL(s)
+        );
+    }
+    else {
+        s = Alloc_Series_Node(
+            SERIES_MASK_VARLIST
+                | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
+        );
+        SER_INFO(s) = SERIES_INFO_MASK_NONE;
+        INIT_LINK_KEYSOURCE(ARR(s), f);  // maps varlist back to f
+        mutable_MISC(VarlistMeta, s) = nullptr;
+        mutable_BONUS(Patches, s) = nullptr;
+        f->varlist = ARR(s);
+    }
+
+    if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end
+        SET_SERIES_FLAG(s, INACCESSIBLE);
+        GC_Kill_Series(s);  // ^-- needs non-null data unless INACCESSIBLE
+        f->varlist = nullptr;
+        fail (Error_No_Memory(sizeof(REBVAL) * (num_args + 1 + 1)));
+    }
+
+    f->rootvar = cast(REBVAL*, s->content.dynamic.data);
+    USED(Prep_Cell(f->rootvar));  // want the tracking info, overwriting header
+    f->rootvar->header.bits =
+        NODE_FLAG_NODE
+            | NODE_FLAG_CELL
+            | CELL_FLAG_PROTECTED  // payload/binding tweaked, but not by user
+            | CELL_MASK_CONTEXT
+            | FLAG_KIND3Q_BYTE(REB_FRAME)
+            | FLAG_HEART_BYTE(REB_FRAME);
+    INIT_VAL_CONTEXT_VARLIST(f->rootvar, f->varlist);
+
+  sufficient_allocation:
+
+    INIT_VAL_FRAME_PHASE(f->rootvar, act);  // FRM_PHASE()
+    INIT_VAL_FRAME_BINDING(f->rootvar, binding);  // FRM_BINDING()
+
+    s->content.dynamic.used = num_args + 1;
+
+    // !!! Historically the idea was to prep during the walk of the frame,
+    // to avoid doing two walks.  The current thinking is to move toward a
+    // notion of being able to just memset() to 0 or calloc().  The debug
+    // build still wants to initialize the cells with file/line info though.
+    //
+    RELVAL *tail = ARR_TAIL(f->varlist);
+    RELVAL *prep = f->rootvar + 1;
+    for (; prep < tail; ++prep)
+        USED(Prep_Cell(prep));
+
+  #if DEBUG_POISON_CELLS  // poison cells past usable range
+  blockscope {
+    prep = ARR_AT(f->varlist, s->content.dynamic.rest - 1);
+    for (; prep >= tail; --prep) {
+        USED(Prep_Cell(prep));  // gets tracking info
+        prep->header.bits = CELL_MASK_POISON;
+    }
+  }
+  #endif
+
+  #if DEBUG_TERM_ARRAYS  // expects cell is trash (e.g. a cell) not poison
+    SET_CELL_FREE(Prep_Cell(ARR_TAIL(f->varlist)));
+  #endif
+
+    // Each layer of specialization of a function can only add specializations
+    // of arguments which have not been specialized already.  For efficiency,
+    // the act of specialization merges all the underlying layers of
+    // specialization together.  This means only the outermost specialization
+    // is needed to fill the specialized slots contributed by later phases.
+    //
+    // f->param here will either equal f->key (to indicate normal argument
+    // fulfillment) or the head of the "exemplar".
+    //
+    // !!! It is planned that exemplars will be unified with paramlist, making
+    // the context keys something different entirely.
+    //
+    REBARR *partials = try_unwrap(ACT_PARTIALS(act));
+    if (partials) {
+        const RELVAL *word_tail = ARR_TAIL(partials);
+        const REBVAL *word = SPECIFIC(ARR_HEAD(partials));
+        for (; word != word_tail; ++word)
+            Copy_Cell(DS_PUSH(), word);
+    }
+
+    assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
+    assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
+}
+
+
+//
+//  Begin_Action_Core: C
+//
+void Begin_Action_Core(
+    REBFRM *f,
+    option(const REBSYM*) label,
+    bool enfix
+){
+    assert(NOT_EVAL_FLAG(f, RUNNING_ENFIX));
+    assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
+
+    assert(NOT_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
+    SET_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
+
+    assert(not f->original);
+    f->original = FRM_PHASE(f);
+
+    // f->key_tail = v-- set here
+    f->key = ACT_KEYS(&f->key_tail, f->original);
+    f->param = ACT_PARAMS_HEAD(f->original);
+    f->arg = f->rootvar + 1;
+
+    assert(IS_OPTION_TRASH_DEBUG(f->label));  // ACTION! makes valid
+    assert(not label or IS_SYMBOL(unwrap(label)));
+    f->label = label;
+  #if DEBUG_FRAME_LABELS  // helpful for looking in the debugger
+    f->label_utf8 = cast(const char*, Frame_Label_Or_Anonymous_UTF8(f));
+  #endif
+
+    // Cache the feed lookahead state so it can be restored in the event that
+    // the evaluation turns out to be invisible.
+    //
+    STATIC_ASSERT(FEED_FLAG_NO_LOOKAHEAD == EVAL_FLAG_CACHE_NO_LOOKAHEAD);
+    assert(NOT_EVAL_FLAG(f, CACHE_NO_LOOKAHEAD));
+    f->flags.bits |= f->feed->flags.bits & FEED_FLAG_NO_LOOKAHEAD;
+
+    if (enfix) {
+        //
+        // While FEED_FLAG_NEXT_ARG_FROM_OUT is set only during the first
+        // argument of an enfix function call, EVAL_FLAG_RUNNING_ENFIX is
+        // set for the whole duration.
+        //
+        // Note: We do not set NEXT_ARG_FROM_OUT here, because that flag is
+        // checked to be clear by Fetch_Next_In_Feed(), which changes the
+        // value in the feed *and* checks to make sure NEXT_ARG_FROM_OUT is
+        // not set.  This winds up being a problem if the caller is using the
+        // current value in feed for something like the label passed in here,
+        // and intends to call Fetch_Next_In_Feed() as the next step.  So
+        // the caller must set it.
+        //
+        SET_EVAL_FLAG(f, RUNNING_ENFIX);
+
+        // All the enfix call sites cleared this flag on the feed, so it was
+        // moved into the Begin_Enfix_Action() case.  Note this has to be done
+        // *after* the existing flag state has been captured for invisibles.
+        //
+        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+    }
+}
+
+
+//
+//  Drop_Action: C
+//
+void Drop_Action(REBFRM *f) {
+    assert(not f->label or IS_SYMBOL(unwrap(f->label)));
+
+    if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
+        CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
+
+    if (f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE) {
+        //
+        // If the whole evaluation of the action turned out to be invisible,
+        // then refresh the feed's NO_LOOKAHEAD state to whatever it was
+        // before that invisible evaluation ran.
+        //
+        STATIC_ASSERT(FEED_FLAG_NO_LOOKAHEAD == EVAL_FLAG_CACHE_NO_LOOKAHEAD);
+        f->feed->flags.bits &= ~FEED_FLAG_NO_LOOKAHEAD;
+        f->feed->flags.bits |= f->flags.bits & EVAL_FLAG_CACHE_NO_LOOKAHEAD;
+    }
+    CLEAR_EVAL_FLAG(f, CACHE_NO_LOOKAHEAD);
+
+    CLEAR_EVAL_FLAG(f, RUNNING_ENFIX);
+    CLEAR_EVAL_FLAG(f, FULFILL_ONLY);
+
+    assert(
+        GET_SERIES_FLAG(f->varlist, INACCESSIBLE)
+        or LINK(KeySource, f->varlist) == f
+    );
+
+    if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE)) {
+        //
+        // If something like Encloser_Dispatcher() runs, it might steal the
+        // variables from a context to give them to the user, leaving behind
+        // a non-dynamic node.  Pretty much all the bits in the node are
+        // therefore useless.  It served a purpose by being non-null during
+        // the call, however, up to this moment.
+        //
+        if (GET_SERIES_FLAG(f->varlist, MANAGED))
+            f->varlist = nullptr; // references exist, let a new one alloc
+        else {
+            // This node could be reused vs. calling Alloc_Node() on the next
+            // action invocation...but easier for the moment to let it go.
+            //
+            Free_Node(SER_POOL, f->varlist);
+            f->varlist = nullptr;
+        }
+    }
+    else if (GET_SERIES_FLAG(f->varlist, MANAGED)) {
+        //
+        // Varlist wound up getting referenced in a cell that will outlive
+        // this Drop_Action().
+        //
+        // !!! The new concept is to let frames survive indefinitely in this
+        // case.  This is in order to not let JavaScript have the upper hand
+        // in "closure"-like scenarios.  See:
+        //
+        // "What Happens To Function Args/Locals When The Call Ends"
+        // https://forum.rebol.info/t/234
+        //
+        // Previously this said:
+        //
+        // "The pointer needed to stay working up until now, but the args
+        // memory won't be available.  But since we know there are outstanding
+        // references to the varlist, we need to convert it into a "stub"
+        // that's enough to avoid crashes.
+        //
+        // ...but we don't free the memory for the args, we just hide it from
+        // the stub and get it ready for potential reuse by the next action
+        // call.  That's done by making an adjusted copy of the stub, which
+        // steals its dynamic memory (by setting the stub not HAS_DYNAMIC)."
+        //
+      #if 0
+        f->varlist = CTX_VARLIST(
+            Steal_Context_Vars(
+                CTX(f->varlist),
+                f->original  // degrade keysource from f
+            )
+        );
+        assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
+        INIT_LINK_KEYSOURCE(f->varlist, f);
+      #endif
+
+        INIT_LINK_KEYSOURCE(f->varlist, ACT_KEYLIST(f->original));
+        f->varlist = nullptr;
+    }
+    else {
+        // We can reuse the varlist and its data allocation, which may be
+        // big enough for ensuing calls.
+        //
+        // But no series bits we didn't set should be set...and right now,
+        // only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
+        //
+        CLEAR_SERIES_INFO(f->varlist, HOLD);
+        CLEAR_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
+
+        assert(
+            0 == (SER_INFO(f->varlist) & ~(  // <- note bitwise not
+                SERIES_INFO_0_IS_FALSE
+                    | FLAG_USED_BYTE(255)  // mask out non-dynamic-len
+        )));
+    }
+
+  #if !defined(NDEBUG)
+    if (f->varlist) {
+        assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
+        assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
+
+        RELVAL *rootvar = ARR_HEAD(f->varlist);
+        assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == f->varlist);
+        INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't trash ptr
+        TRASH_POINTER_IF_DEBUG(mutable_BINDING(rootvar));
+    }
+  #endif
+
+    f->original = nullptr; // signal an action is no longer running
+
+    TRASH_OPTION_IF_DEBUG(f->label);
+  #if DEBUG_FRAME_LABELS
+    TRASH_POINTER_IF_DEBUG(f->label_utf8);
+  #endif
+}
