@@ -3,7 +3,11 @@ REBOL []
 name: 'Filesystem
 source: %filesystem/mod-filesystem.c
 
-os: system-config/os-base
+; !!! Note: There are nuances between os-base, os-name, and platform-name
+; The most relevant choice here is platform-name, e.g. the `Windows: 3` you
+; would see in %systems.r
+;
+os: system-config/platform-name
 
 definitions: []
 libraries: []
@@ -19,7 +23,7 @@ if os = 'Windows [
         WIN32_LEAN_AND_MEAN
         _WIN32_WINNT=0x0602
     ]
-    append uv-sources[
+    append uv-sources [
         ;
         ; files in %src/windows/
         ;
@@ -193,7 +197,7 @@ if os = 'Android [
     ]
 ]
 
-if find [OSX Android Linux] os [
+if find [Macintosh Android Linux] os [
     append uv-sources [
         proctitle.c
     ]
@@ -212,7 +216,7 @@ if find [DragonFly FreeBSD NetBSD OpenBSD] os [
     ]
 ]
 
-if find [OSX iOS DragonFly FreeBSD NetBSD OpenBSD] os [
+if find [Macintosh iOS DragonFly FreeBSD NetBSD OpenBSD] os [
     append uv-sources [
         bsd-ifaddrs.c
         kqueue.c
@@ -225,13 +229,13 @@ if os = 'FreeBSD [
     ]
 ]
 
-if find [OSX OpenBSD] os [
+if find [Macintosh OpenBSD] os [
     append uv-sources [
         random-getentropy.c
     ]
 ]
 
-if os = 'OSX [
+if os = 'Macintosh [
     append definitions [
         _DARWIN_UNLIMITED_SELECT=1
         _DARWIN_USE_64_BIT_INODE=1
