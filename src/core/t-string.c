@@ -1139,28 +1139,31 @@ REBTYPE(String)
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
 
-        REBYTE *data_at = VAL_STRING_AT_ENSURE_MUTABLE(v);
-
         UNUSED(PAR(series));
+
+        REBSTR *str = VAL_STRING_ENSURE_MUTABLE(v);  // just ensure mutability
+        UNUSED(str);  // we use the VAL_UTF8_AT() accessor, which is const
 
         if (REF(all))
             fail (Error_Bad_Refines_Raw());
-
-        if (not Is_String_Definitely_ASCII(VAL_STRING(v)))
-            fail ("UTF-8 Everywhere: String sorting temporarily unavailable");
-
-        // !!! A different method will be needed for UTF-8... qsort() can't
-        // work with variable sized codepoints.  However, it could work if all
-        // the codepoints were known to be ASCII range in the memory of
-        // interest, maybe common case.
 
         if (REF(compare))
             fail (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
         Copy_Cell(D_OUT, v);  // before index modification
-        REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
-        if (len <= 1)
+        REBLEN limit = Part_Len_May_Modify_Index(v, ARG(part));
+        if (limit <= 1)
             return D_OUT;
+
+        REBLEN len;
+        REBSIZ size;
+        const REBYTE *utf8 = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len, &size, v, limit);
+
+        // Test for if the range is all ASCII can just be if (len == size)...
+        // that means every codepoint is one byte.
+        //
+        if (len != size)
+            fail ("Non-ASCII string sorting temporarily unavailable");
 
         REBLEN skip;
         if (not REF(skip))
@@ -1172,10 +1175,10 @@ REBTYPE(String)
         }
 
         // Use fast quicksort library function:
-        REBLEN size = 1;
+        REBLEN span = 1;
         if (skip > 1) {
             len /= skip;
-            size *= skip;
+            span *= skip;
         }
 
         REBLEN thunk = 0;
@@ -1185,9 +1188,9 @@ REBTYPE(String)
             thunk |= CC_FLAG_REVERSE;
 
         reb_qsort_r(
-            data_at,
+            m_cast(REBYTE*, utf8),  // ok due to VAL_STRING_MUTABLE()
             len,
-            size * sizeof(REBYTE),  // only ASCII for now
+            span * sizeof(REBYTE),
             &thunk,
             Compare_Chr
         );

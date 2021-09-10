@@ -35,3 +35,9 @@
 [#1516 ; SORT/compare ignores the typespec of its function argument
     (error? trap [sort/compare reduce [1 2 _] :>])
 ]
+
+; String sorting is temporarily only available for UTF-8 strings which are all
+; ASCII.  The variable length codepoints would require another mechanism
+; besides the historically-used qsort() otherwise.
+;
+("abc" = sort "cba")
