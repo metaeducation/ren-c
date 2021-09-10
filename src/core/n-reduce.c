@@ -384,7 +384,7 @@ REB_R Compose_To_Stack_Core(
                 }
 
                 insert = (IS_NULLED(out) or Is_Nulled_Isotope(out))
-                    ? nullptr
+                    ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
                     : out;
             }
 
@@ -594,7 +594,11 @@ REB_R Compose_To_Stack_Core(
     }
 
     Drop_Frame_Unbalanced(f);  // Drop_Frame() asserts on stack accumulation
-    return changed ? nullptr : R_UNHANDLED;
+
+    if (changed)
+        return nullptr;
+
+    return R_UNHANDLED;
 }
 
 

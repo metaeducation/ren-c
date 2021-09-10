@@ -364,8 +364,8 @@ bool Did_Advance_Evars(EVARS *e) {
         ;
         e->key != e->key_tail;
         (++e->index, ++e->key,
-            e->param ? ++e->param : nullptr,
-            e->var ? ++e->var : nullptr
+            e->param ? ++e->param : cast(REBPAR*, nullptr),
+            e->var ? ++e->var : cast(REBVAR*, nullptr)
         )
     ){
         if (e->var and GET_CELL_FLAG(e->var, VAR_MARKED_HIDDEN))
@@ -588,7 +588,7 @@ REB_R MAKE_Context(
 
     option(REBCTX*) parent_ctx = parent
         ? VAL_CONTEXT(unwrap(parent))
-        : nullptr;
+        : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
 
     if (IS_BLOCK(arg)) {
         const RELVAL *tail;
@@ -1405,7 +1405,9 @@ REBNATIVE(construct)
     INCLUDE_PARAMS_OF_CONSTRUCT;
 
     REBVAL *spec = ARG(spec);
-    REBCTX *parent = REF(with) ? VAL_CONTEXT(ARG(with)) : nullptr;
+    REBCTX *parent = REF(with)
+        ? VAL_CONTEXT(ARG(with))
+        : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
 
     // This parallels the code originally in CONSTRUCT.  Run it if the /ONLY
     // refinement was passed in.

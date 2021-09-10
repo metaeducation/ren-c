@@ -3022,7 +3022,9 @@ REBNATIVE(transcode)
     REBSIZ size;
     const REBYTE *bp = VAL_BYTES_AT(&size, source);
 
-    REBCTX *context = REF(where) ? VAL_CONTEXT(ARG(where)) : nullptr;
+    REBCTX *context = REF(where)
+        ? VAL_CONTEXT(ARG(where))
+        : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
 
     SCAN_LEVEL level;
     SCAN_STATE ss;

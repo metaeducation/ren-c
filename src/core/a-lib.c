@@ -2319,7 +2319,7 @@ REBNATIVE(api_transient)
 // which can build neither C99 nor C++11.
 //
 #if defined(__cplusplus) and ! (CPLUSPLUS_11 || defined(_MSC_VER))
-    nullptr_t nullptr;
+    const nullptr_t nullptr = {};
 #endif
 
 

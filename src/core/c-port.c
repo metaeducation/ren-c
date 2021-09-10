@@ -85,7 +85,10 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
     const bool strict = false;
     REBLEN n = Find_Symbol_In_Context(actor, verb, strict);
 
-    REBVAL *action = (n == 0) ? nullptr : CTX_VAR(VAL_CONTEXT(actor), n);
+    REBVAL *action = (n == 0)
+        ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
+        : CTX_VAR(VAL_CONTEXT(actor), n);
+
     if (not action or not IS_ACTION(action)) {
         DECLARE_LOCAL (verb_cell);
         Init_Word(verb_cell, verb);

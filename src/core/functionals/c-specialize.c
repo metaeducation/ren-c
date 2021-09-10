@@ -265,7 +265,9 @@ bool Specialize_Action_Throws(
     REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
         lowest_ordered_dsp,
-        def ? &binder : nullptr,
+        def ?
+            &binder
+            : cast(struct Reb_Binder*, nullptr),  // C++98 ambiguous w/o cast
         Root_Unspecialized_Tag  // is checked for by *identity*, not value!
     );
     Manage_Series(CTX_VARLIST(exemplar)); // destined to be managed, guarded

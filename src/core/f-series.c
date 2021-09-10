@@ -229,7 +229,9 @@ REB_R Series_Common_Action_Maybe_Unhandled(
             VAL_TYPE(v),
             Make_Set_Operation_Series(
                 v,
-                (id == SYM_UNIQUE) ? nullptr : ARG(value2),
+                (id == SYM_UNIQUE)
+                    ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
+                    : ARG(value2),
                 sop_flags,
                 did REF(case),
                 REF(skip) ? Int32s(ARG(skip), 1) : 1

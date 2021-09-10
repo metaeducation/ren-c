@@ -124,7 +124,7 @@
 
 #define P_COLLECTION \
     (IS_NULLED(ARG(collection)) \
-        ? nullptr \
+        ? cast(REBARR*, nullptr) \
         : VAL_ARRAY_KNOWN_MUTABLE(ARG(collection)) \
     )
 

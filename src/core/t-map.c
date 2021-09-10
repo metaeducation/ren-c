@@ -694,8 +694,11 @@ REBTYPE(Map)
             SPECIFIC(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1))
         );
 
-        if (ID_OF_SYMBOL(verb) == SYM_FIND)
-            return IS_NULLED(D_OUT) ? nullptr : Init_True(RESET(D_OUT));
+        if (ID_OF_SYMBOL(verb) == SYM_FIND) {
+            if (IS_NULLED(D_OUT))
+                return D_OUT;
+            return Init_True(RESET(D_OUT));
+        }
 
         return D_OUT; }
 
