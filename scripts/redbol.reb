@@ -602,7 +602,12 @@ to: emulate [
         all [
             :value = group!
             find any-word! type
-            value: "paren!"  ; make TO WORD! GROUP! give back "paren!"
+            return as type! 'paren!
+        ]
+        all [
+            type = char!
+            integer? :value
+            return make issue! :value
         ]
         if any-array? :type [
             if match [text! typeset! map! any-context! vector!] :spec [
