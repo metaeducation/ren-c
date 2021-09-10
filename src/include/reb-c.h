@@ -555,6 +555,23 @@
 #endif
 
 
+//=//// NULL ENSURER FOR C++ ///////////////////////////////////////////////=//
+//
+// No-op in C builds, but in C++ build helps to ensure the given variable is
+// null, while still allowing the reference to be used as an lvalue.
+//
+//
+#if CPLUSPLUS_11
+    template<class T>
+    inline static T*& ensureNullptr(T*& p) {
+        assert(p == nullptr);
+        return p;
+    }
+#else
+    #define ensureNullptr(p) p
+#endif
+
+
 //=//// NOOP a.k.a. VOID GENERATOR ////////////////////////////////////////=//
 //
 // VOID would be a more purposeful name, but Windows headers define that

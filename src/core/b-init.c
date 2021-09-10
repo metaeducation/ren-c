@@ -181,9 +181,9 @@ void Set_Stack_Limit(void *base, uintptr_t bounds) {
 static void Startup_Lib(void)
 {
     REBCTX *lib = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    Lib_Context_Value = Alloc_Value();
+    ensureNullptr(Lib_Context_Value) = Alloc_Value();
     Init_Any_Context(Lib_Context_Value, REB_MODULE, lib);
-    Lib_Context = VAL_CONTEXT(Lib_Context_Value);
+    ensureNullptr(Lib_Context) = VAL_CONTEXT(Lib_Context_Value);
 
   //=//// INITIALIZE LIB PATCHES ///////////////////////////////////////////=//
 
@@ -254,10 +254,10 @@ static void Shutdown_Lib(void)
         // the freeing process happened.  Should all nodes be zeroed?
         //
         mutable_LINK(PatchContext, patch) = nullptr;
+        mutable_MISC(Variant, patch) = nullptr;
     }
 
-    rebRelease(Lib_Context_Value);
-    Lib_Context_Value = nullptr;
+    rebReleaseAndNull(&Lib_Context_Value);
     Lib_Context = nullptr;
 }
 
@@ -280,45 +280,45 @@ static REBVAL *Make_Locked_Tag(const char *utf8) { // helper
 //
 static void Init_Action_Spec_Tags(void)
 {
-    Root_None_Tag = Make_Locked_Tag("none");
-    Root_With_Tag = Make_Locked_Tag("with");
-    Root_Variadic_Tag = Make_Locked_Tag("variadic");
-    Root_Opt_Tag = Make_Locked_Tag("opt");
-    Root_End_Tag = Make_Locked_Tag("end");
-    Root_Blank_Tag = Make_Locked_Tag("blank");
-    Root_Local_Tag = Make_Locked_Tag("local");
-    Root_Skip_Tag = Make_Locked_Tag("skip");
-    Root_Const_Tag = Make_Locked_Tag("const");
-    Root_Invisible_Tag = Make_Locked_Tag("invisible");
-    Root_Void_Tag = Make_Locked_Tag("void");
+    ensureNullptr(Root_None_Tag) = Make_Locked_Tag("none");
+    ensureNullptr(Root_With_Tag) = Make_Locked_Tag("with");
+    ensureNullptr(Root_Variadic_Tag) = Make_Locked_Tag("variadic");
+    ensureNullptr(Root_Opt_Tag) = Make_Locked_Tag("opt");
+    ensureNullptr(Root_End_Tag) = Make_Locked_Tag("end");
+    ensureNullptr(Root_Blank_Tag) = Make_Locked_Tag("blank");
+    ensureNullptr(Root_Local_Tag) = Make_Locked_Tag("local");
+    ensureNullptr(Root_Skip_Tag) = Make_Locked_Tag("skip");
+    ensureNullptr(Root_Const_Tag) = Make_Locked_Tag("const");
+    ensureNullptr(Root_Invisible_Tag) = Make_Locked_Tag("invisible");
+    ensureNullptr(Root_Void_Tag) = Make_Locked_Tag("void");
 
     // !!! Needed for bootstrap, as `@arg` won't LOAD in old r3
     //
-    Root_Meta_Tag = Make_Locked_Tag("meta");
+    ensureNullptr(Root_Meta_Tag) = Make_Locked_Tag("meta");
 
     // Used by SPECIALIZE as a unique identity for telling what's been
     // specialized and what hasn't.
     //
-    Root_Unspecialized_Tag = Make_Locked_Tag("unspecialized");
+    ensureNullptr(Root_Unspecialized_Tag) = Make_Locked_Tag("unspecialized");
 }
 
 static void Shutdown_Action_Spec_Tags(void)
 {
-    rebRelease(Root_None_Tag);
-    rebRelease(Root_With_Tag);
-    rebRelease(Root_Variadic_Tag);
-    rebRelease(Root_Opt_Tag);
-    rebRelease(Root_End_Tag);
-    rebRelease(Root_Blank_Tag);
-    rebRelease(Root_Local_Tag);
-    rebRelease(Root_Skip_Tag);
-    rebRelease(Root_Const_Tag);
-    rebRelease(Root_Invisible_Tag);
-    rebRelease(Root_Void_Tag);
+    rebReleaseAndNull(&Root_None_Tag);
+    rebReleaseAndNull(&Root_With_Tag);
+    rebReleaseAndNull(&Root_Variadic_Tag);
+    rebReleaseAndNull(&Root_Opt_Tag);
+    rebReleaseAndNull(&Root_End_Tag);
+    rebReleaseAndNull(&Root_Blank_Tag);
+    rebReleaseAndNull(&Root_Local_Tag);
+    rebReleaseAndNull(&Root_Skip_Tag);
+    rebReleaseAndNull(&Root_Const_Tag);
+    rebReleaseAndNull(&Root_Invisible_Tag);
+    rebReleaseAndNull(&Root_Void_Tag);
 
-    rebRelease(Root_Meta_Tag);  // !!! only needed for bootstrap with old r3
+    rebReleaseAndNull(&Root_Meta_Tag);  // !!! only needed for old r3 bootstrap
 
-    rebRelease(Root_Unspecialized_Tag);
+    rebReleaseAndNull(&Root_Unspecialized_Tag);
 }
 
 
@@ -374,8 +374,7 @@ static void Startup_Empty_Arrays(void)
     CLEAR_SERIES_FLAG(varlist, DYNAMIC);  // !!! removes (review cleaner way)
     SET_SERIES_FLAG(varlist, INACCESSIBLE);
 
-    assert(PG_Inaccessible_Varlist == nullptr);
-    PG_Inaccessible_Varlist = varlist;
+    ensureNullptr(PG_Inaccessible_Varlist) = varlist;
   }
 }
 
@@ -421,12 +420,15 @@ static void Init_Root_Vars(void)
     Init_Return_Signal(&PG_R_Redo_Checked, C_REDO_CHECKED);
     Init_Return_Signal(&PG_R_Unhandled, C_UNHANDLED);
 
-    Root_Empty_Block = Init_Block(Alloc_Value(), PG_Empty_Array);
+    ensureNullptr(Root_Empty_Block) = Init_Block(Alloc_Value(), PG_Empty_Array);
     Force_Value_Frozen_Deep(Root_Empty_Block);
 
     // Note: has to be a BLOCK!, 2-element blank paths use SYM__SLASH_1_
     //
-    Root_2_Blanks_Block = Init_Block(Alloc_Value(), PG_2_Blanks_Array);
+    ensureNullptr(Root_2_Blanks_Block) = Init_Block(
+        Alloc_Value(),
+        PG_2_Blanks_Array
+      );
     Force_Value_Frozen_Deep(Root_2_Blanks_Block);
 
     // Note: rebText() can't run yet, review.
@@ -440,10 +442,11 @@ static void Init_Root_Vars(void)
     assert(STR_LEN(nulled_uni) == 0);
   #endif
 
-    Root_Empty_Text = Init_Text(Alloc_Value(), nulled_uni);
+    ensureNullptr(Root_Empty_Text) = Init_Text(Alloc_Value(), nulled_uni);
     Force_Value_Frozen_Deep(Root_Empty_Text);
 
-    Root_Empty_Binary = Init_Binary(Alloc_Value(), Make_Binary(0));
+    REBBIN *bzero = Make_Binary(0);
+    ensureNullptr(Root_Empty_Binary) = Init_Binary(Alloc_Value(), bzero);
     Force_Value_Frozen_Deep(Root_Empty_Binary);
 }
 
@@ -461,14 +464,10 @@ static void Shutdown_Root_Vars(void)
     RESET(&PG_R_Redo_Checked);
     RESET(&PG_R_Unhandled);
 
-    rebRelease(Root_Empty_Text);
-    Root_Empty_Text = nullptr;
-    rebRelease(Root_Empty_Block);
-    Root_Empty_Block = nullptr;
-    rebRelease(Root_2_Blanks_Block);
-    Root_2_Blanks_Block = nullptr;
-    rebRelease(Root_Empty_Binary);
-    Root_Empty_Binary = nullptr;
+    rebReleaseAndNull(&Root_Empty_Text);
+    rebReleaseAndNull(&Root_Empty_Block);
+    rebReleaseAndNull(&Root_2_Blanks_Block);
+    rebReleaseAndNull(&Root_Empty_Binary);
 }
 
 
@@ -775,9 +774,8 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     // Doing this as a proper module creation gives us IMPORT and INTERN (as
     // well as EXPORT...?  When do you export from the user context?)
     //
-    assert(User_Context == nullptr);  // shouldn't have existed up to now
     rebElide("system.contexts.user: module [Name: User] []");
-    User_Context_Value = Copy_Cell(
+    ensureNullptr(User_Context_Value) = Copy_Cell(
         Alloc_Value(),
         Get_System(SYS_CONTEXTS, CTX_USER)
     );
@@ -920,9 +918,9 @@ void Startup_Core(void)
   #endif
 
     REBCTX *sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    Sys_Context_Value = Alloc_Value();
+    ensureNullptr(Sys_Context_Value) = Alloc_Value();
     Init_Any_Context(Sys_Context_Value, REB_MODULE, sys);
-    Sys_Context = VAL_CONTEXT(Sys_Context_Value);
+    ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Context_Value);
 
 //=//// LOAD BOOT BLOCK ///////////////////////////////////////////////////=//
 
@@ -1146,12 +1144,10 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Lib();
 
-    rebRelease(Sys_Context_Value);
-    Sys_Context_Value = nullptr;
+    rebReleaseAndNull(&Sys_Context_Value);
     Sys_Context = nullptr;
 
-    rebRelease(User_Context_Value);
-    User_Context_Value = nullptr;
+    rebReleaseAndNull(&User_Context_Value);
     User_Context = nullptr;
 
     Shutdown_Frame_Stack();  // all API calls (e.g. rebRelease()) before this

@@ -914,6 +914,11 @@ e-lib/emit 'ver {
     #define rebAllocN(t,n) \
         ((t*)rebMalloc(sizeof(t) * (n)))
 
+    /* Used during boot to zero out global variables */
+    inline static void rebReleaseAndNull(REBVAL** v) {
+        rebRelease(*v);
+        *v = 0;  /* NULL or nullptr may not be defined */
+    }
 
     #endif  /* REBOL_H_1020_0304 */
 }

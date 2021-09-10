@@ -486,7 +486,7 @@ void Startup_Interning(void)
     n = 1; // forces exercise of rehashing logic in debug build
   #endif
 
-    PG_Symbols_By_Hash = Make_Series(
+    ensureNullptr(PG_Symbols_By_Hash) = Make_Series(
         n, FLAG_FLAVOR(CANONTABLE) | SERIES_FLAG_POWER_OF_2
     );
     Clear_Series(PG_Symbols_By_Hash);  // all slots start as nullptr
@@ -611,4 +611,5 @@ void Shutdown_Interning(void)
   #endif
 
     Free_Unmanaged_Series(PG_Symbols_By_Hash);
+    PG_Symbols_By_Hash = nullptr;
 }
