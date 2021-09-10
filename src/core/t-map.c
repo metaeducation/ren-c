@@ -873,9 +873,15 @@ REBTYPE(Map)
         assert(poking);
         return nullptr; }  // no upstream changes needed for REBMAP* reference
 
+      return_unhandled:
       default:
-        break;
+        //
+        // If you put a `break` here (or other variants, like trying to `goto`
+        // the below lines) GCC 2.95 on Haiku will warn "control reaches end
+        // of non-void function" warning.  This contortion works.  :-/
+        //
+        return R_UNHANDLED;
     }
 
-    return R_UNHANDLED;
+    goto return_unhandled;
 }
