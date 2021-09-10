@@ -556,8 +556,8 @@ Special internal defines used by RT, not Host-Kit developers:
 // (etc.)  Disable this by default unless you are using address sanitizer,
 // where you expect things to be slow.
 //
-#if !defined(DEBUG_CHECK_CASTS)  // Note: CPLUSPLUS_11 macro not defined yet
-  #if defined(__SANITIZE_ADDRESS__) && defined(__cplusplus)
+#if !defined(DEBUG_CHECK_CASTS)
+  #if defined(__SANITIZE_ADDRESS__) && CPLUSPLUS_11
     #define DEBUG_CHECK_CASTS DEBUG
   #else
     #define DEBUG_CHECK_CASTS 0  // requires C++

@@ -809,7 +809,7 @@ union Reb_Series_Info {
 //
 // https://stackoverflow.com/q/2159390/
 //
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     struct Reb_Binary : public Reb_Series {};
     typedef struct Reb_Binary REBBIN;
 

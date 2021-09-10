@@ -369,13 +369,16 @@
 //    // C build mutable result even if const input (mutable case in C++)
 //    Member* Get_Member(const_if_c Object* o) {...}
 //
-//    #ifdef __cplusplus
+//    #if CPLUSPLUS_11
 //        // C++ build adds protection to the const input case
 //        const Member* Get_Member(const Object *o) {...}
 //    #endif
 //
+// Along with the general philosophy that there is only the minimum special
+// handling for C++ builds prior to C++11 (e.g. extern "C" stuff), this is
+// only geared to use with C++11.
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     #define const_if_c
 #else
     #define const_if_c const
@@ -521,7 +524,10 @@
     //
     #define nullptr cast(void*, 0)
 
-#elif CPLUSPLUS_11  //...or above
+#elif CPLUSPLUS_11 || defined(_MSC_VER)  // C++11 or above (MSVC has no C++98)
+    //
+    // Note that MSVC 2019 (at least) does not offer an option of building
+    // with C++98.  Hence nullptr_t is defined, no matter what you do.
     //
     // http://en.cppreference.com/w/cpp/language/nullptr
     // is defined as `using nullptr_t = decltype(nullptr);` in <cstddef>
@@ -987,7 +993,7 @@
 // helpful when you need to do something like assign to a void* and can't
 // do weird cast dereferencing or you'll violate strict aliasing.
 //
-#if (! CPLUSPLUS_11) or (! DEBUG_CHECK_CASTS)
+#if (! CPLUSPLUS_11) || (! DEBUG_CHECK_CASTS)
     #define ensure(T,v) (v)
     #define ensurer(T)
     #define ensured(T,L,left) (left)

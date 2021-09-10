@@ -292,7 +292,7 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
     cast(enum Reb_Kind, HEART_BYTE(cell))
 
 
-#if defined(NDEBUG) or (! CPLUSPLUS_11)
+#if defined(NDEBUG) || (! CPLUSPLUS_11)
     #define CELL_KIND CELL_KIND_UNCHECKED
     #define CELL_HEART CELL_HEART_UNCHECKED
 #else
@@ -561,7 +561,7 @@ inline static REBVAL *SPECIFIC(const_if_c RELVAL *v) {
     return m_cast(REBVAL*, cast(const REBVAL*, v));
 }
 
-#if defined(__cplusplus)
+#if CPLUSPLUS_11
     inline static const REBVAL *SPECIFIC(const RELVAL *v) {
         assert(IS_SPECIFIC(v));
         return cast(const REBVAL*, v);
@@ -707,7 +707,7 @@ inline static RELVAL *Copy_Cell_Untracked(
     return out;
 }
 
-#if defined(__cplusplus)  // REBVAL and RELVAL are checked distinctly
+#if CPLUSPLUS_11  // REBVAL and RELVAL are checked distinctly
     inline static REBVAL *Copy_Cell_Untracked(
         RELVAL *out,
         const REBVAL *v,

@@ -32,7 +32,7 @@
 // output at the end of the varlist).
 //
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     struct Reb_Array : public Reb_Series {};
     typedef struct Reb_Array REBARR;
 #else

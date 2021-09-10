@@ -93,7 +93,7 @@ inline static RELVAL *ARR_SINGLE(const_if_c REBARR *a) {
     return cast(RELVAL*, &a->content.fixed);
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static const RELVAL *ARR_AT(const REBARR *a, REBLEN n)
         { return SER_AT(const RELVAL, a, n); }
 
@@ -530,7 +530,7 @@ inline static REBVAL *Init_Any_Array_At_Core(
     );
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static REBVAL *Init_Any_Array_At_Core(
         RELVAL *out,
         enum Reb_Kind kind,

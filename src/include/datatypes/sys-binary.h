@@ -38,7 +38,7 @@
 //   like `as text! as binary! make bitset! [...]`)
 
 
-#ifdef __cplusplus  // !!! Make fancier checks, as with SER() and ARR()
+#if CPLUSPLUS_11  // !!! Make fancier checks, as with SER() and ARR()
     inline static REBBIN *BIN(void *p)
         { return reinterpret_cast<REBBIN*>(p); }
     inline static const REBBIN *BIN(const void *p)
@@ -62,7 +62,7 @@ inline static REBYTE *BIN_TAIL(const_if_c REBBIN *bin)
 inline static REBYTE *BIN_LAST(const_if_c REBBIN *bin)
   { return SER_LAST(REBYTE, bin); }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static const REBYTE *BIN_AT(const REBBIN *bin, REBLEN n)
       { return SER_AT(const REBYTE, bin, n); }
 

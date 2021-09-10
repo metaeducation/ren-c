@@ -433,7 +433,7 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
 // layout of this structure is mirrored in Ren-Cpp.
 //
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     struct Reb_Frame : public Reb_Node
 #else
     struct Reb_Frame

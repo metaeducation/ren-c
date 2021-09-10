@@ -189,7 +189,7 @@ inline static option(const REBSTR*) FRM_LABEL(REBFRM *f) {
     ((f)->dsp_orig + 0) // prevent assignment via this macro
 
 
-#if !defined(__cplusplus)
+#if (! CPLUSPLUS_11)
     #define STATE_BYTE(f) \
         mutable_SECOND_BYTE((f)->flags)
 #else

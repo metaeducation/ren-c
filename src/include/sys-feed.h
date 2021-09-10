@@ -36,7 +36,7 @@
 // to keep it within a certain boundary of complexity.
 
 
-#if !defined(__cplusplus)
+#if (! CPLUSPLUS_11)
     #define QUOTING_BYTE(feed) \
         mutable_SECOND_BYTE((feed)->flags.bits)
 #else

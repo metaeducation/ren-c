@@ -52,7 +52,7 @@
 inline static REBARR *MAP_PAIRLIST(const_if_c REBMAP *map)
   { return x_cast(REBARR*, map); }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static const REBARR *MAP_PAIRLIST(const REBMAP *map)
       { return x_cast(const REBARR*, map); }
 #endif

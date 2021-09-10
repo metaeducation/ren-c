@@ -32,7 +32,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-#if !defined(__cplusplus)
+#if (! CPLUSPLUS_11)
     #define VAL_DATE(v) \
         EXTRA(Date, (v)).ymdz
 #else

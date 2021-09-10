@@ -170,7 +170,7 @@
 // places like action details lists, etc.)
 //
 
-#if !defined(__cplusplus)
+#if (! CPLUSPLUS_11)
     #define SER_INFO(s) \
         (s)->info.flags.bits
 #else
@@ -211,7 +211,7 @@ inline static REBSER *ensure_flavor(
     return m_cast(REBSER*, s);
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static const REBSER *ensure_flavor(
         enum Reb_Series_Flavor flavor,
         const REBSER *s
@@ -252,7 +252,7 @@ inline static REBSER *ensure_flavor(
     Wide_For_Flavor(SER_FLAVOR(s))
 
 
-#if !defined(__cplusplus)
+#if (! CPLUSPLUS_11)
     #define SER_BONUS(s) \
         (s)->content.dynamic.bonus.node
 #else
@@ -477,7 +477,7 @@ inline static REBYTE *SER_DATA_AT(REBYTE w, const_if_c REBSER *s, REBLEN i) {
         );
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static const REBYTE *SER_DATA(const REBSER *s)  // "SER_DATA_HEAD"
       { return SER_DATA(m_cast(REBSER*, s)); }
 
@@ -597,7 +597,7 @@ inline static void SET_SERIES_LEN(REBSER *s, REBLEN len) {
 inline static REBYTE *SER_DATA_TAIL(size_t w, const_if_c REBSER *s)
   { return SER_DATA_AT(w, s, SER_USED(s)); }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static const REBYTE *SER_DATA_TAIL(size_t w, const REBSER *s)
       { return SER_DATA_AT(w, s, SER_USED(s)); }
 #endif
@@ -610,7 +610,7 @@ inline static REBYTE *SER_DATA_LAST(size_t wide, const_if_c REBSER *s) {
     return SER_DATA_AT(wide, s, SER_USED(s) - 1);
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static const REBYTE *SER_DATA_LAST(size_t wide, const REBSER *s) {
         assert(SER_USED(s) != 0);
         return SER_DATA_AT(wide, s, SER_USED(s) - 1);
@@ -770,7 +770,7 @@ inline static REBSER *Force_Series_Managed(const_if_c REBSER *s) {
     return m_cast(REBSER*, s);
 }
 
-#if !defined(__cplusplus)
+#if (! CPLUSPLUS_11)
     #define Force_Series_Managed_Core Force_Series_Managed
 #else
     inline static REBSER *Force_Series_Managed_Core(REBSER *s)

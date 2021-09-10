@@ -214,7 +214,7 @@ inline static REBCHR(*) STR_HEAD(const_if_c REBSTR *s)
 inline static REBCHR(*) STR_TAIL(const_if_c REBSTR *s)
   { return cast(REBCHR(*), SER_TAIL(REBYTE, s)); }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static REBCHR(const*) STR_HEAD(const REBSTR *s)
       { return STR_HEAD(m_cast(REBSTR*, s)); }
 
@@ -532,7 +532,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
     return cp;
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static REBCHR(const*) STR_AT(const REBSTR *s, REBLEN at)
       { return STR_AT(m_cast(REBSTR*, s), at); }
 #endif
@@ -785,7 +785,7 @@ inline static REBVAL *Init_Any_String_At(
     return SPECIFIC(out);
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static REBVAL *Init_Any_String_At(
         RELVAL *out,
         enum Reb_Kind kind,

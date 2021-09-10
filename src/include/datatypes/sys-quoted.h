@@ -324,7 +324,7 @@ inline static RELVAL *Isotopic_Unquotify(RELVAL *v, REBLEN depth) {
     return Isotopic_Unquote(v);
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static REBVAL *Isotopic_Quote(REBVAL *v)
       { return SPECIFIC(Isotopic_Quote(cast(RELVAL*, v))); }
 
@@ -363,7 +363,7 @@ inline static RELVAL *Meta_Unquotify(RELVAL *v) {
     return Isotopic_Unquote(v);
 }
 
-#ifdef __cplusplus
+#if CPLUSPLUS_11
     inline static REBVAL *Meta_Quotify(REBVAL *v)
         { return SPECIFIC(Meta_Quotify(cast(RELVAL*, v))); }
 
