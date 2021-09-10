@@ -306,7 +306,7 @@ func: func* [
 ;
 ; https://forum.rebol.info/t/rethinking-auto-gathered-set-word-locals/1150
 ;
-function: :func/gather
+function: specialize :func [gather: #]
 
 
 ; Simple "divider-style" thing for remarks.  At a certain verbosity level,
@@ -833,7 +833,7 @@ count-down: redescribe [
 lock-of: redescribe [
     "If value is already locked, return it...otherwise CLONE it and LOCK it."
 ](
-    chain [:copy/deep | :freeze]
+    chain [specialize :copy [deep: #] | :freeze]
 )
 
 eval-all: func [

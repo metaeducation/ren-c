@@ -879,6 +879,21 @@ REBNATIVE(inherit_meta)
         mutable_ACT_META(VAL_ACTION(derived)) = m2;
     }
 
+    // By default, inherit description (though ideally, they should have
+    // changed it to explain why it's different).
+    //
+    REBVAL *description2 = Select_Symbol_In_Context(
+        CTX_ARCHETYPE(m2),
+        Canon(DESCRIPTION)
+    );
+    if (IS_NULLED(description2)) {
+        REBVAL *description1 = Select_Symbol_In_Context(
+            CTX_ARCHETYPE(m1),
+            Canon(DESCRIPTION)
+        );
+        Overwrite_Cell(RESET(description2), description1);
+    }
+
     REBLEN which = 0;
     SYMID syms[] = {SYM_PARAMETER_NOTES, SYM_PARAMETER_TYPES, SYM_0};
 

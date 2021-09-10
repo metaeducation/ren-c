@@ -64,7 +64,7 @@ call*: adapt :call-internal* [
 ; ahead and keeps the asynchronous behavior in a lower level and chooses to
 ; /WAIT by default.
 ;
-call: :call*/wait
+call: specialize :call* [wait: #]
 
 parse-command-to-argv*: func [
     {Helper for when POSIX gets a TEXT! and the /SHELL refinement not used}
