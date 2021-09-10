@@ -129,7 +129,7 @@ typedef REB_R (PORT_HOOK)(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
 // for %tmp-internals.h, it has to be a typedef.
 //
 typedef enum {
-    PHF_UNREFINED = 1 << 0,  // a /refinement that takes an arg, made "normal"
+    PHF_UNREFINED = 1 << 0  // a /refinement that takes an arg, made "normal"
 } Reb_Param_Hook_Flags;
 #define PHF_MASK_NONE 0
 typedef bool (PARAM_HOOK)(

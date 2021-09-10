@@ -182,7 +182,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
     Drop_Frame(sub);
 
-    return Move_Cell(f->out, f_spare);;
+    return Move_Cell(f->out, f_spare);
 }
 
 
