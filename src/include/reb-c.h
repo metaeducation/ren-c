@@ -546,10 +546,9 @@
     // to make this definition, even when building as C++98.  To disable such
     // warnings, you would need something like `-Wno-c++0x-compat`
     //
-    const                         /* this is a const object...     */
     class nullptr_t
     {
-    public:
+      public:
        template<class T>          /* convertible to any type       */
        operator T*() const        /* of null non-member            */
           { return 0; }           /* pointer...                    */
@@ -558,10 +557,15 @@
           operator T C::*() const /* member pointer...             */
           { return 0; }
 
-    private:
+      private:
        void operator&() const;    /* Can't take address of nullptr */
+    };
 
-    } nullptr = {};               /* and whose name is nullptr     */
+    /* The original shim declared the object as a const instance, but that
+       seems to cause linker errors.  So instead, you must define the
+       nullptr instance somewhere if using this shim.  :-(  */
+
+    extern const nullptr_t nullptr;
 #endif
 
 
