@@ -260,9 +260,9 @@ REBTYPE(Pair)
                 return R_UNHANDLED;
 
             if (n == 1)
-                Copy_Cell(RESET(VAL_PAIR_X(v)), unwrap(setval));
+                Copy_Cell(RESET(VAL_PAIR_X(v)), setval);
             else
-                Copy_Cell(RESET(VAL_PAIR_Y(v)), unwrap(setval));
+                Copy_Cell(RESET(VAL_PAIR_Y(v)), setval);
         }
         else {
             if (n == 1)

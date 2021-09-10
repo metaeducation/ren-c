@@ -1740,7 +1740,7 @@ void Init_Scan_Level(
     REBLIN line,
     const REBYTE *utf8,
     REBLEN limit,  // !!! limit feature not implemented in R3-Alpha
-    REBCTX *context
+    option(REBCTX*) context
 ){
     out->ss = ss;
 
@@ -2863,7 +2863,7 @@ REBARR *Scan_UTF8_Managed(
     const REBSTR *file,
     const REBYTE *utf8,
     REBSIZ size,
-    REBCTX *context
+    option(REBCTX*) context
 ){
     SCAN_STATE ss;
     SCAN_LEVEL level;

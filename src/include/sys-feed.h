@@ -606,8 +606,8 @@ inline static void Prep_Array_Feed(
     feed->flags.bits = flags;
 
     if (first) {
-        assert(NOT_END(first));
         feed->value = unwrap(first);
+        assert(NOT_END(feed->value));
         Init_Any_Array_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index, specifier
         );

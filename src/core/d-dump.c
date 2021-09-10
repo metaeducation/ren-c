@@ -119,7 +119,7 @@ void Dump_Stack(REBFRM *f)
     else if (not f->label)
         label = "<anonymous>";
     else
-        label = STR_UTF8(f->label);
+        label = STR_UTF8(unwrap(f->label));
 
     printf("LABEL: %s @ FILE: %s @ LINE: %d\n",
         label,

@@ -582,6 +582,21 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// option(TYPE*) is a poor-man's implementation of optionals that lets you
+// mark when a pointer is supposed to be passable as a nullptr.  It has some
+// runtime costs because it will assert if you unwrap() the pointer and it is
+// null when it shouldn't be.  Add it to the sanitized build.
+//
+#if !defined(DEBUG_CHECK_OPTIONALS)
+  #if defined(__SANITIZE_ADDRESS__)
+    #define DEBUG_CHECK_OPTIONALS DEBUG
+  #else
+    #define DEBUG_CHECK_OPTIONALS 0
+  #endif
+#endif
+
+
+
 // In order to make sure that a good mix of debug settings get tested, this
 // does array termination checks on non-sanitizer debug builds.  Arrays are not
 // usually marked at their tails (unlike R3-Alpha which used END! cells to

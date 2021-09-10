@@ -1833,7 +1833,7 @@ static const REBINS *rebSpliceQuoteAdjuster_internal(
         DECLARE_VA_FEED (feed, p, vaptr, feed_flags);
 
         while (NOT_END(feed->value)) {
-            Isotopic_Quote(Copy_Cell(DS_PUSH(), SPECIFIC(unwrap(feed->value))));
+            Isotopic_Quote(Copy_Cell(DS_PUSH(), SPECIFIC(feed->value)));
             Fetch_Next_In_Feed(feed);
         }
 
