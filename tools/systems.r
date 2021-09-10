@@ -63,7 +63,7 @@ systems: [
         ; was: "Amiga V2.0-3.1 68000"
 
     0.1.03 amiga/posix "ppc"
-        #SGD #BEN #LLC #F64 <NPS> <HID> /HID /DYN %M
+        #SGD #BEN #LLC <NPS> <HID> /HID /DYN %M
 
     Macintosh: 2
     ;-------------------------------------------------------------------------
@@ -77,26 +77,26 @@ systems: [
         ; was: "Macintosh, FAT PPC, 68K"
 
     0.2.04 osx-ppc/osx "osx-ppc"
-        #SGD #BEN #LLC #F64 <NCM> /HID /DYN %M
+        #SGD #BEN #LLC <NCM> /HID /DYN %M
         ; originally targeted OS X 10.2
 
     0.2.05 osx-x86/osx "osx-x86"
-        #SGD #LEN #LLC #NSER #F64 <NCM> <NPS> <ARC> /HID /ARC /DYN %M
+        #SGD #LEN #LLC #NSER <NCM> <NPS> <ARC> /HID /ARC /DYN %M
 
     0.2.40 osx-x64/osx _
-        #SGD #LEN #LLC #NSER #F64 <NCM> <NPS> /HID /DYN %M
+        #SGD #LEN #LLC #NSER <NCM> <NPS> /HID /DYN %M
 
     Windows: 3
     ;-------------------------------------------------------------------------
     0.3.01 windows-x86/windows "win32-x86"
-        #SGD #LEN #UNI #F64 #W32 #NSEC <WLOSS> /CON /S4M %W32 %M
+        #SGD #LEN #UNI #W32 #NSEC <WLOSS> /CON /S4M %W32 %M
         ; was: "Microsoft Windows XP/NT/2K/9X iX86"
 
     0.3.02 _ "dec-alpha"
         ; was: "Windows Alpha NT DEC Alpha"
 
     0.3.40 windows-x64/windows "win32-x64"
-        #SGD #LEN #UNI #F64 #W32 #LLP64 #NSEC <WLOSS> /CON /S4M %W32 %M
+        #SGD #LEN #UNI #W32 #LLP64 #NSEC <WLOSS> /CON /S4M %W32 %M
 
     Linux: 4
     ;-------------------------------------------------------------------------
@@ -104,13 +104,13 @@ systems: [
         ; was: "Linux Libc5 iX86 1.2.1.4.1 view-pro041.tar.gz"
 
     0.4.02 linux-x86/linux "libc6-2-3-x86"  ; gliblc-2.3
-        #SGD #LEN #LLC #NSER #F64 <M32> <NSP> <UFS> /M32 %M %DL
+        #SGD #LEN #LLC #NSER <M32> <NSP> <UFS> /M32 %M %DL
 
     0.4.03 linux-x86/linux "libc6-2-5-x86"  ; gliblc-2.5
-        #SGD #LEN #LLC #F64 <M32> <UFS> /M32 %M %DL
+        #SGD #LEN #LLC <M32> <UFS> /M32 %M %DL
 
     0.4.04 linux-x86/linux "libc6-2-11-x86"  ; glibc-2.11
-        #SGD #LEN #LLC #F64 #PIP2 <M32> <HID> /M32 /HID /DYN %M %DL
+        #SGD #LEN #LLC #PIP2 <M32> <HID> /M32 /HID /DYN %M %DL
 
     0.4.05 _ _
         ; was: "Linux 68K"
@@ -128,34 +128,34 @@ systems: [
         ; was: "Linux Cobalt Qube MIPS"
 
     0.4.10 linux-ppc/linux "libc6-ppc"
-        #SGD #BEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
+        #SGD #BEN #LLC #PIP2 <HID> /HID /DYN %M %DL
 
     0.4.11 linux-ppc64/linux "libc6-ppc64"
-        #SGD #BEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #BEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     0.4.20 linux-arm/linux "libc6-arm"
-        #SGD #LEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #PIP2 <HID> /HID /DYN %M %DL
 
     0.4.21 linux-arm/linux _  ; for modern Android builds, see Android section
-        #SGD #LEN #LLC #F64 #PIP2 <HID> <PIE> /HID /DYN %M %DL
+        #SGD #LEN #LLC #PIP2 <HID> <PIE> /HID /DYN %M %DL
 
     0.4.22 linux-aarch64/linux "libc6-aarch64"
-        #SGD #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     0.4.30 linux-mips/linux "libc6-mips"
-        #SGD #LEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #PIP2 <HID> /HID /DYN %M %DL
 
     0.4.31 linux-mips32be/linux "libc6-mips32be"
-        #SGD #BEN #LLC #F64 #PIP2 <HID> /HID /DYN %M %DL
+        #SGD #BEN #LLC #PIP2 <HID> /HID /DYN %M %DL
 
     0.4.40 linux-x64/linux "libc-x64"
-        #SGD #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     0.4.60 linux-axp/linux "dec-alpha"
-        #SGD #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     0.4.61 linux-ia64/linux "libc-ia64"
-        #SGD #LEN #LLC #F64 #PIP2 #LP64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC #PIP2 #LP64 <HID> /HID /DYN %M %DL
 
     BeOS: 5
     ;-------------------------------------------------------------------------
@@ -179,10 +179,10 @@ systems: [
         ; was: "Free BSD iX86"
 
     0.7.02 freebsd-x86/posix "elf-x86"
-        #SGD #LEN #LLC #F64 %M
+        #SGD #LEN #LLC %M
 
     0.7.40 freebsd-x64/posix _
-        #SGD #LEN #LLC #F64 #LP64 %M
+        #SGD #LEN #LLC #LP64 %M
 
     NetBSD: 8
     ;-------------------------------------------------------------------------
@@ -213,13 +213,13 @@ systems: [
         ; was: "OpenBSD 68K"
 
     0.9.04 openbsd-x86/posix "elf-x86"
-        #SGD #LEN #LLC #F64 %M
+        #SGD #LEN #LLC %M
 
     0.9.05 _ "sparc"
         ; was: "OpenBSD Sparc"
 
     0.9.40 openbsd-x64/posix "elf-x64"
-        #SGD #LEN #LLC #F64 #LP64 %M
+        #SGD #LEN #LLC #LP64 %M
 
     Sun: 10
     ;-------------------------------------------------------------------------
@@ -242,18 +242,18 @@ systems: [
     Android: 13
     ;-------------------------------------------------------------------------
     0.13.01 android-arm/android "arm"
-        #SGD #LEN #LLC #F64 <HID> <PIC> /HID /DYN %M %DL %LOG
+        #SGD #LEN #LLC <HID> <PIC> /HID /DYN %M %DL %LOG
 
     0.13.02 android5-arm/android _
-        #SGD #LEN #LLC #F64 <HID> <PIC> /HID /PIE /DYN %M %DL %LOG
+        #SGD #LEN #LLC <HID> <PIC> /HID /PIE /DYN %M %DL %LOG
 
     Syllable: 14
     ;-------------------------------------------------------------------------
     0.14.01 syllable-dtp/posix _
-        #SGD #LEN #LLC #F64 <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC <HID> /HID /DYN %M %DL
 
     0.14.02 syllable-svr/linux _
-        #SGD #LEN #LLC #F64 <M32> <HID> /HID /DYN %M %DL
+        #SGD #LEN #LLC <M32> <HID> /HID /DYN %M %DL
 
     WindowsCE: 15
     ;-------------------------------------------------------------------------
@@ -337,7 +337,6 @@ export system-definitions: make object! [
 
     W32: <msc:WIN32>              ; aes.c requires this
     UNI: "UNICODE"                ; win32 wants it
-    F64: "_FILE_OFFSET_BITS=64"   ; allow larger files
 
     ; MSC deprecates all non-*_s version string functions.  Ren-C has been
     ; constantly tested with ASAN, which should mitigate the issue somewhat.
