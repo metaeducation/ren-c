@@ -437,8 +437,10 @@ inline static REBVAL *INIT_VAL_HEADER(
     enum Reb_Kind k,
     uintptr_t extra
 ){
+  #if !defined(NDEBUG)
     if (not Is_Fresh(v))
-        assert(!"Init_XXX() Routines Require REB_0 input");
+        panic (v);
+  #endif
     v->header.bits &= CELL_MASK_PERSIST;
     v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | FLAG_KIND3Q_BYTE(k) | FLAG_HEART_BYTE(k) | extra;
