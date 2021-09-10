@@ -33,7 +33,7 @@
     #define TOUCH_CELL(c) \
         ((c)->touch = TG_Tick)
 
-    inline static REBVAL *Track_Cell_Debug(
+    inline static RELVAL *Track_Cell_Debug(
         RELVAL *v,
         const char *file,
         int line
@@ -46,7 +46,7 @@
         v->line = line;
         v->tick = TG_Tick;
         v->touch = 0;
-        return v;
+        return cast(REBVAL*, v);
     }
 
   #if CPLUSPLUS_11
