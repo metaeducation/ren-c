@@ -838,7 +838,7 @@ static REBIXO To_Thru_Block_Rule(
                 else {  // D_OUT is pos we matched past, so back up if only TO
                     assert(r == D_OUT);
                     VAL_INDEX_RAW(iter) = VAL_INT32(D_OUT);
-                    SET_END(D_OUT);
+                    SET_END(RESET(D_OUT));
                     if (is_thru)
                         return VAL_INDEX(iter);  // don't back up
                     return VAL_INDEX(iter) - 1;  // back up
