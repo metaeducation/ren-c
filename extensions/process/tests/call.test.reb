@@ -18,7 +18,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
 )
 (
     apply :call/shell [
-        (system.options.boot) --suppress {"*"} print.reb 9000  ; medium
+        [(system.options.boot) --suppress {"*"} print.reb 9000]  ; medium
 
         /input false  ; avoid child process eating pastes of length test
         /output data: {}
