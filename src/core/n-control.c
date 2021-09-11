@@ -644,6 +644,7 @@ REBNATIVE(all)
                 rebINLINE(predicate),
                 rebQ(NULLIFY_NULLED(D_SPARE))
             )){
+                Move_Cell(RESET(D_OUT), temp);
                 return R_THROWN;
             }
 
@@ -731,6 +732,7 @@ REBNATIVE(any)
                 rebINLINE(predicate),
                 rebQ(NULLIFY_NULLED(D_OUT))
             )){
+                Move_Cell(RESET(D_OUT), D_SPARE);
                 return R_THROWN;
             }
 
