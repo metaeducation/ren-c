@@ -416,8 +416,8 @@ unset: func [var [word! path! block!]] [  ; historically blocks are legal
 ]
 
 ; Note: Ren-C once reserved NONE for `if none [x = 1, y = 2] [...]`
-; Currently that is covered by `ALL .NOT [...]`, but a specialization may
-; wind up being defined for it.
+; Currently that is covered by `ALL/PREDICATE [...] :NOT`, but a specializatio
+; may wind up being defined for it.
 ;
 none: emulate [:blank]
 none!: emulate [:blank!]
@@ -748,7 +748,7 @@ compose: emulate [
             ;    rebol2> compose [(either true [] [])]
             ;    == []  ; would be [~void~] in Ren-C
             ;
-            predicate: either only [:enblock-devoid] [:devoid]
+            predicate: either only [:quote] [:splice-adjuster]
         ]
 
         either into [insert into composed] [composed]
@@ -1290,6 +1290,19 @@ not-equal?: emulate [noquoter :not-equal?]
 !=: emulate [enfixed noquoter :!=]
 
 
+; This takes arguments which would be passed to something like APPEND in
+; Redbol and does the transformation to get the same behavior in LIB.APPEND.
+; So if you have a BLANK! (like a Redbol "NONE") that would be appended as-is,
+; while disappear in Redbol.
+;
+splice-adjuster: helper [
+    function [v] [
+        if blank? :v [return quote v]
+        return :v
+    ]
+]
+
+
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 ;
 oldsplicer: helper [
@@ -1311,6 +1324,7 @@ oldsplicer: helper [
             ; It would also spell WORD!s as their Latin1 values.
             ;
             all [
+                not issue? value  ; want e.g. # appended as #{00} to BINARY!
                 match [any-string! binary!] series
                 (type of series) != (type of :value)  ; changing breaks /PART
             ] then [
@@ -1428,8 +1442,8 @@ write: emulate [
         /no-wait "Returns immediately without waiting if no data."
         /with "Specifies alternate line termination."
             [char! string!]
-;        /allow "Specifies the protection attributes when created."
-;            [block!]  ; this is still on WRITE, but not implemented (?)
+        /allow "Specifies the protection attributes when created."
+            [block!]  ; this is still on WRITE, but not implemented (?)
         /mode "Block of above refinements."
             [block!]
         /custom "Allows special refinements."
