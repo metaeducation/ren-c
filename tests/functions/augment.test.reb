@@ -80,7 +80,7 @@
         orig: func ["description" a "a" /b "b"] []
         aug: augment :orig [c "c" /d "d"]
         m: meta-of :aug
-        m.description = null  ; does not currently keep description
+        m.description = "description"
         m.parameter-notes.a = "a"
         m.parameter-notes.b = "b"
         m.parameter-notes.c = "c"
