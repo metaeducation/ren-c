@@ -968,7 +968,7 @@ default-combinators: make map! reduce [
                 set pending subpending
             ]
             any-the-type? :result [
-                set pending (glom subpending ^(plainify result'))  ; drop @
+                set pending (glom subpending ^(plain result'))  ; drop @
             ]
             any-inert? :result [  ; quote doesn't matter
                 set pending (glom subpending ^result')  ; just one quote level
