@@ -48,11 +48,11 @@
 ; not met, will also lead to defaulting.
 (
     x: "not an integer"
-    x: default .integer? [10 + 20]
+    x: >- default/predicate [10 + 20] :integer?
     x = 30
 )(
     x: 304
-    x: default .integer? [10 + 20]
+    x: >- default/predicate [10 + 20] :integer?
     x = 304
 )
 

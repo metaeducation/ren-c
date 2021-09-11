@@ -110,11 +110,11 @@
 )
 
 
-; New feature for specifying predicates with a TUPLE!
+; New feature for specifying predicates
 
-(<a> = case .not [1 = 2 [<a>]])
-(<b> = case .even? [1 [<a>] 2 [<b>]])
-(<b> = case .not [1 = 1 [<a>]] else [<b>])
+(<a> = case/predicate [1 = 2 [<a>]] :not)
+(<b> = case/predicate [1 [<a>] 2 [<b>]] :even?)
+(<b> = case/predicate [1 = 1 [<a>]] :not else [<b>])
 
 ; Errors on bad branches
 (

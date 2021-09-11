@@ -1790,9 +1790,9 @@ REBNATIVE(for)
 //
 //      return: [<opt> any-value!]
 //          {Last body result, or null if a BREAK occurred}
-//      'predicate "Function to apply to body result (default is .DID)"
-//          [<skip> predicate! action!]
 //      body [<const> block! action!]
+//      /predicate "Function to apply to body result (default is DID)"
+//          [action!]
 //  ]
 //
 REBNATIVE(until)
@@ -1800,8 +1800,6 @@ REBNATIVE(until)
     INCLUDE_PARAMS_OF_UNTIL;
 
     REBVAL *predicate = ARG(predicate);
-    if (Cache_Predicate_Throws(D_OUT, predicate))
-        return R_THROWN;
 
     do {
         if (Do_Branch_Throws(D_OUT, ARG(body))) {

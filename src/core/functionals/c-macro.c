@@ -168,6 +168,13 @@ REBNATIVE(inline)
 //
 //  Cache_Predicate_Throws: C
 //
+// !!! NOTE: This method was experimental, and given new APPLY methods the
+// use of APPLY with /PREDICATE is preferred vs. this.  In particular, the
+// `.xxx` form of TUPLE! is being eyed for other purposes.  However, the
+// mechanics are kept here for review.
+//
+// ---
+//
 // Many functions offer predicates, which are functions that parameterize the
 // inner logic of those routines.  They can be passed as ordinary functions,
 // or a handy shorthand of BLANK!-headed TUPLE! can be used to express them

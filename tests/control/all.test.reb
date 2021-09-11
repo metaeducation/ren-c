@@ -350,14 +350,14 @@
 
 ; PREDICATES
 
-(15 = all .odd? [1 + 2 3 + 4 5 + 6 7 + 8])
-(15 = all .not.even? [1 + 2 3 + 4 5 + 6 7 + 8])
-(15 = all .odd? [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8])
-(15 = all .not.even? [1 + 2, 3 + 4 5 + 6, 7 + 8,])
+(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] :odd?)
+(15 = all/predicate [1 + 2 3 + 4 5 + 6 7 + 8] chain [:even? | :not])
+(15 = all/predicate [1 + 2, 3 + 4, comment "Hi" 5 + 6, 7 + 8] :odd?)
+(15 = all/predicate [1 + 2, 3 + 4 5 + 6, 7 + 8,] chain [:even? | :not])
 
-('~blank~ = ^ all .not [false null _])
-('~null~ = ^ all .not [false _ null])
-("this is why" = all .not [false _ null] then ["this is why"])
+('~blank~ = ^ all/predicate [false null _] :not)
+('~null~ = ^ all/predicate [false _ null] :not)
+("this is why" = (all/predicate [false _ null] :not then ["this is why"]))
 
 
 ; INVISIBILITY: Both ANY and ALL treat void isotopes the same as void functions.

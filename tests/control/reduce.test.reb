@@ -56,23 +56,21 @@
     ([] = reduce [
         denull null
     ])
-    ([~null~] = reduce .identity [
-        null
-    ])
+    ([~null~] = reduce/predicate [null] :identity)
 ]
 
-(error? trap [reduce .non.null [null]])
+(error? trap [reduce/predicate [null] chain [:null? | :non]])
 
-([3 _ 300] = reduce .try [1 + 2 if false [10 + 20] 100 + 200])
-([3 ~null~ 300] = reduce .reify [1 + 2 if false [10 + 20] 100 + 200])
-([3 300] = reduce .denull [1 + 2 if false [10 + 20] 100 + 200])
+([3 _ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :try)
+([3 ~null~ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify)
+([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :denull)
 
 ; REDUCE* is a specialization of REDUCE with denull
 ;
 ([3 300] = reduce* [1 + 2 if false [10 + 20] 100 + 200])
 
 
-([#[true] #[false]] = reduce .even? [2 + 2 3 + 4])
+([#[true] #[false]] = reduce/predicate [2 + 2 3 + 4] :even?)
 
 
 ; REDUCE-EACH is a variant which lets you intercept the values, and thus

@@ -588,10 +588,10 @@ REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
 //
 //      return: "Product of last passing evaluation if all truthy, else null"
 //          [<opt> any-value!]
-//      'predicate "Test for whether an evaluation passes (default is .DID)"
-//          [<skip> predicate! action!]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
+//      /predicate "Test for whether an evaluation passes (default is DID)"
+//          [action!]
 //  ]
 //
 REBNATIVE(all)
@@ -599,8 +599,6 @@ REBNATIVE(all)
     INCLUDE_PARAMS_OF_ALL;
 
     REBVAL *predicate = ARG(predicate);
-    if (Cache_Predicate_Throws(D_OUT, predicate))
-        return R_THROWN;
 
     REBFLGS flags = EVAL_MASK_DEFAULT;
     if (IS_THE_BLOCK(ARG(block)))
@@ -664,8 +662,8 @@ REBNATIVE(all)
     Drop_Frame(f);
 
     // The only way a falsey evaluation should make it to the end is if a
-    // predicate passed it.  Don't want that to trip up `if all` so make
-    // it an isotope...but this way `all .not [null] then [<runs>]`
+    // predicate passed it.  Don't want that to trip up `if all` so make it
+    // an isotope...but this way `(all/predicate [null] :not?) then [<runs>]`
     //
     if (not IS_BAD_WORD(D_OUT) and IS_FALSEY(D_OUT))
         assert(not IS_NULLED(predicate));
@@ -683,10 +681,10 @@ REBNATIVE(all)
 //
 //      return: "First passing evaluative result, or null if none pass"
 //          [<opt> any-value!]
-//      'predicate "Test for whether an evaluation passes (default is .DID)"
-//          [<skip> predicate! action!]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
+//      /predicate "Test for whether an evaluation passes (default is DID)"
+//          [action!]
 //  ]
 //
 REBNATIVE(any)
@@ -694,8 +692,6 @@ REBNATIVE(any)
     INCLUDE_PARAMS_OF_ANY;
 
     REBVAL *predicate = ARG(predicate);
-    if (Cache_Predicate_Throws(D_OUT, predicate))
-        return R_THROWN;
 
     REBFLGS flags = EVAL_MASK_DEFAULT;
     if (IS_THE_BLOCK(ARG(block)))
@@ -764,12 +760,12 @@ REBNATIVE(any)
 //
 //      return: "Last matched case evaluation, or null if no cases matched"
 //          [<opt> any-value!]
-//      'predicate "Unary case-processing action (default is /DID)"
-//          [<skip> predicate! action!]
 //      cases "Conditions followed by branches"
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
 //      <local> branch last  ; temp GC-safe holding locations
+//      /predicate "Unary case-processing action (default is DID)"
+//          [action!]
 //  ]
 //
 REBNATIVE(case)
@@ -777,8 +773,6 @@ REBNATIVE(case)
     INCLUDE_PARAMS_OF_CASE;
 
     REBVAL *predicate = ARG(predicate);
-    if (Cache_Predicate_Throws(D_OUT, predicate))
-        return R_THROWN;
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
 
@@ -900,13 +894,13 @@ REBNATIVE(case)
 //
 //      return: "Last case evaluation, or null if no cases matched"
 //          [<opt> any-value!]
-//      'predicate "Binary switch-processing action (default is .EQUAL?)"
-//          [<skip> predicate! action!]
 //      value "Target value"
 //          [<opt> any-value!]
 //      cases "Block of cases (comparison lists followed by block branches)"
 //          [block!]
 //      /all "Evaluate all matches (not just first one)"
+//      /predicate "Binary switch-processing action (default is EQUAL?)"
+//          [action!]
 //      <local> last  ; GC-safe storage loation
 //  ]
 //
@@ -915,8 +909,6 @@ REBNATIVE(switch)
     INCLUDE_PARAMS_OF_SWITCH;
 
     REBVAL *predicate = ARG(predicate);
-    if (Cache_Predicate_Throws(D_OUT, predicate))
-        return R_THROWN;
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
 
@@ -1079,10 +1071,10 @@ REBNATIVE(switch)
 //          [<opt> any-value!]
 //      :target "Word or path which might be set appropriately (or not)"
 //          [set-word! set-path! set-tuple!]  ; to left of DEFAULT
-//      'predicate "Test beyond null/void for defaulting, else .NOT.BLANK?"
-//          [<skip> predicate! action!]  ; to right of DEFAULT
 //      :branch "If target needs default, this is evaluated and stored there"
 //          [any-branch!]
+//      /predicate "Test beyond null/void for defaulting, else NOT BLANK?"
+//          [action!]
 //  ]
 //
 REBNATIVE(default)
@@ -1092,8 +1084,6 @@ REBNATIVE(default)
     REBVAL *target = ARG(target);
 
     REBVAL *predicate = ARG(predicate);
-    if (Cache_Predicate_Throws(D_OUT, predicate))
-        return R_THROWN;
 
     if (IS_SET_WORD(target))
         Copy_Cell(D_OUT, Lookup_Word_May_Fail(target, SPECIFIED));

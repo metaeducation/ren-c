@@ -276,10 +276,10 @@ load: func [
 
     ; Bind code to user context
 
-    all .not [
-        'unbound = type
-        'module = select hdr 'type
-        find (try get 'hdr/options) [unbound]
+    all [
+        'unbound != type
+        'module != select hdr 'type
+        not find (try get 'hdr/options) [unbound]
     ] then [
         data: intern* system.contexts.user data
     ]

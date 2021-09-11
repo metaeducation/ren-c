@@ -43,6 +43,4 @@
 
 ; New feature for specifying comparison functions via a TUPLE!
 
-(<b> = switch .reeval.(reduce pick [:greater? :lesser?] 1) 10 [20 [<a>] 5 [<b>]])
-(<a> = switch .reeval.(reduce pick [:greater? :lesser?] 2) 10 [20 [<a>] 5 [<b>]])
-(<yep> = switch .greater? 10 [20 [<nope>] 5 [<yep>]])
+(<yep> = switch/predicate 10 [20 [<nope>] 5 [<yep>]] :greater?)

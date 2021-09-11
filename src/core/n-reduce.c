@@ -31,10 +31,10 @@
 //
 //      return: "New array or value"
 //          [<opt> any-value!]
-//      'predicate "Applied after evaluation, default is .IDENTITY"
-//          [<skip> predicate! action!]
 //      value "GROUP! and BLOCK! evaluate each item, single values evaluate"
 //          [any-value!]
+//      /predicate "Applied after evaluation, default is IDENTITY"
+//          [action!]
 //  ]
 //
 REBNATIVE(reduce)
@@ -44,8 +44,6 @@ REBNATIVE(reduce)
     REBVAL *v = ARG(value);
 
     REBVAL *predicate = ARG(predicate);
-    if (Cache_Predicate_Throws(D_OUT, predicate))
-        return R_THROWN;
 
     // Single element REDUCE is currently limited only to certain types.
     // (R3-Alpha, would just return the input, e.g. `reduce :foo` => :foo)
@@ -608,14 +606,14 @@ REB_R Compose_To_Stack_Core(
 //  {Evaluates only contents of GROUP!-delimited expressions in an array}
 //
 //      return: [blackhole! any-array! any-sequence! any-word! action!]
-//      'predicate [<skip> action!]  ; !!! PATH! may be meant as value (!)
-//          "Function to run on composed slots (default: ENBLOCK)"
 //      'label "Distinguish compose groups, e.g. [(plain) (<*> composed)]"
 //          [<skip> tag! file!]
 //      value "The template to fill in (no-op if WORD!, ACTION! or SPACE!)"
 //          [blackhole! any-array! any-sequence! any-word! action!]
 //      /deep "Compose deeply into nested arrays"
 //      /only "Do not exempt ((...)) from predicate application"
+//      /predicate "Function to run on composed slots (default: META)"
+//          [action!]
 //  ]
 //
 REBNATIVE(compose)
@@ -624,10 +622,6 @@ REBNATIVE(compose)
 // https://forum.rebol.info/t/stopping-the-into-virus/705
 {
     INCLUDE_PARAMS_OF_COMPOSE;
-
-    REBVAL *predicate = ARG(predicate);
-    if (Cache_Predicate_Throws(D_OUT, predicate))
-        return R_THROWN;
 
     if (Is_Blackhole(ARG(value)))
         RETURN (ARG(value));  // sink locations composed to avoid double eval

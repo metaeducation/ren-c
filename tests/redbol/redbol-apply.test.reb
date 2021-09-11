@@ -17,7 +17,6 @@
             try next block
         ] else [
             ; Skip comments and other invisibles.
-            ; (note: could be result IF when `until .not.quoted? [...]`
             ;
             until [not quoted? [block arg]: evaluate block]
             try block

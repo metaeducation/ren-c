@@ -3,17 +3,17 @@
 ; Generic tests of predicate abilities (errors, etc.)
 
 (
-    e: trap [until .not.even? ["a"]]
+    e: trap [until/predicate ["a"] chain [:even? | :not]]
     did all [
-        e/id = 'expect-arg
-        e/arg1 = 'even?
+        e.id = 'expect-arg
+        e.arg1 = 'even?
     ]
 )
 
 (
-    e: trap [until .even?.not ["a"]]
+    e: trap [until/predicate ["a"] chain [:even? | :not]]
     did all [
-        e/id = 'expect-arg
-        e/arg1 = 'even?
+        e.id = 'expect-arg
+        e.arg1 = 'even?
     ]
 )
