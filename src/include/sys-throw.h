@@ -117,7 +117,7 @@ static inline void CATCH_THROWN(
     REBVAL *thrown // Note: may be same pointer as arg_out
 ){
     UNUSED(thrown);
-    Overwrite_Cell(arg_out, &TG_Thrown_Arg);
+    Copy_Cell(arg_out, &TG_Thrown_Arg);
     if (GET_CELL_FLAG(&TG_Thrown_Arg, UNEVALUATED))
         SET_CELL_FLAG(arg_out, UNEVALUATED);  // indicates invisible RETURN
     RESET(&TG_Thrown_Arg);

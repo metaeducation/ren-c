@@ -89,7 +89,7 @@ REB_R Lambda_Dispatcher(REBFRM *f)
     // Note: Invisibility is not allowed, e.g. `x -> [elide x]` or `x -> []`
     // will return a ~void~ isotope.  Hence prior `f->out` is always wiped out.
 
-    if (Do_Any_Array_At_Throws(RESET(f->out), block, specifier))
+    if (Do_Any_Array_At_Throws(f->out, block, specifier))
         return R_THROWN;
 
     return f->out;
@@ -173,7 +173,7 @@ REBNATIVE(lambda)
         else if (IS_META_WORD(DS_TOP)) {
             pclass = PARAM_CLASS_META;
             const REBSYM *symbol = VAL_WORD_SYMBOL(DS_TOP);
-            Init_Word(RESET(DS_TOP), symbol);
+            Init_Word(DS_TOP, symbol);
         }
         else if (IS_QUOTED(DS_TOP)) {
             Unquotify(DS_TOP, 1);

@@ -225,7 +225,7 @@ inline static REBARR *Make_Patch_Core(
         Init_Any_Context(ARR_SINGLE(patch), REB_MODULE, CTX(binding));
     }
     else {
-        Init_Any_Word_Bound_Core(
+        Init_Any_Word_Bound_Untracked(
             TRACK(ARR_SINGLE(patch)),
             kind,
             binding,

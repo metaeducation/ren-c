@@ -117,9 +117,6 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
 //
 REB_R Chainer_Dispatcher(REBFRM *f)
 {
-    if (not Is_Fresh(f->out))
-        RESET(f->out);  // !!! Figure out where this comes from
-
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 

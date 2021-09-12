@@ -75,7 +75,7 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
     }
 
     feed->value = VAL_ARRAY_ITEM_AT(splice);
-    Copy_Cell(RESET(FEED_SINGLE(feed)), splice);
+    Copy_Cell(FEED_SINGLE(feed), splice);
     ++VAL_INDEX_UNBOUNDED(FEED_SINGLE(feed));
 
     mutable_MISC(Pending, &feed->singular) = nullptr;
@@ -233,7 +233,7 @@ bool Cache_Predicate_Throws(
     if (Eval_Value_Throws(out, predicate, VAL_SPECIFIER(predicate)))
         return true;
 
-    Move_Cell(RESET(predicate), out);
+    Move_Cell(predicate, out);
 
     return false;
 }

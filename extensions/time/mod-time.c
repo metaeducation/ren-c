@@ -128,7 +128,7 @@ REBNATIVE(now)
         n = VAL_DAY(D_OUT);
 
     if (n > 0)
-        Init_Integer(RESET(D_OUT), n);
+        Init_Integer(D_OUT, n);
 
     return D_OUT;
 }

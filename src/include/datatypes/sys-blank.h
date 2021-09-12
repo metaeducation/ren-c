@@ -51,7 +51,7 @@
 //
 
 inline static REBVAL *Init_Blank_Untracked(RELVAL *out) {
-    INIT_VAL_HEADER(out, REB_BLANK, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, REB_BLANK, CELL_MASK_NONE);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;

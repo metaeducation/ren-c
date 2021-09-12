@@ -268,7 +268,9 @@ REBTYPE(Action)
             // for the varlist could be reclaimed in this case and a label
             // used, as the read-only frame is archetypal.
             //
-            INIT_VAL_HEADER(D_OUT, REB_FRAME, CELL_MASK_CONTEXT);
+            Reset_Cell_Header_Untracked(
+                TRACK(D_OUT), REB_FRAME, CELL_MASK_CONTEXT
+            );
             INIT_VAL_CONTEXT_VARLIST(D_OUT, ACT_PARAMLIST(act));
             mutable_BINDING(D_OUT) = VAL_ACTION_BINDING(action);
             INIT_VAL_FRAME_PHASE_OR_LABEL(D_OUT, act);

@@ -90,11 +90,8 @@ inline static REBVAL *Init_Vector(
     Init_Binary(paired, bin);
     assert(BIN_LEN(bin) % (bitsize / 8) == 0);
 
-    REBVAL *siw = INIT_VAL_HEADER(
-        PAIRING_KEY(paired),
-        REB_BYTES,
-        CELL_MASK_NONE
-    );
+    REBVAL *siw = PAIRING_KEY(paired);
+    Reset_Cell_Header_Untracked(TRACK(siw), REB_BYTES, CELL_MASK_NONE);
     assert(bitsize == 8 or bitsize == 16 or bitsize == 32 or bitsize == 64);
     PAYLOAD(Any, siw).first.flag = sign;
     PAYLOAD(Any, siw).second.flag = integral;

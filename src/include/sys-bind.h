@@ -888,7 +888,7 @@ inline static REBSPC *Derive_Specifier(
     ) = delete;
 #endif
 
-inline static REBVAL *Derelativize(
+inline static REBVAL *Derelativize_Untracked(
     RELVAL *out,  // relative dest overwritten w/specific value
     const RELVAL *v,
     REBSPC *specifier
@@ -965,8 +965,13 @@ inline static REBVAL *Derelativize(
 // to use Derelativize.  Juse Copy_Cell() if your source is a REBVAL!
 //
 #if CPLUSPLUS_11
-    REBVAL *Derelativize(RELVAL *dest, const REBVAL *v, REBSPC *specifier);
+    REBVAL *Derelativize_Untracked(
+        RELVAL *dest, const REBVAL *v, REBSPC *specifier
+    );
 #endif
+
+#define Derelativize(dest,v,specifier) \
+    Derelativize_Untracked(TRACK(dest), (v), (specifier))
 
 
 //=////////////////////////////////////////////////////////////////////////=//

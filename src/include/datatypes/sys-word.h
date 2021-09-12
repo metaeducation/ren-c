@@ -58,7 +58,7 @@ inline static REBVAL *Init_Any_Word_Core(
     enum Reb_Kind kind,
     const REBSYM *sym
 ){
-    INIT_VAL_HEADER(out, kind, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, kind, CELL_FLAG_FIRST_IS_NODE);
     VAL_WORD_INDEXES_U32(out) = 0;
     mutable_BINDING(out) = nullptr;
     INIT_VAL_WORD_SYMBOL(out, sym);
@@ -72,16 +72,16 @@ inline static REBVAL *Init_Any_Word_Core(
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
 #define Init_Set_Word(out,str)      Init_Any_Word((out), REB_SET_WORD, (str))
-#define Init_Meta_Word(out,str)      Init_Any_Word((out), REB_META_WORD, (str))
+#define Init_Meta_Word(out,str)     Init_Any_Word((out), REB_META_WORD, (str))
 
-inline static REBVAL *Init_Any_Word_Bound_Core(
+inline static REBVAL *Init_Any_Word_Bound_Untracked(
     RELVAL *out,
     enum Reb_Kind type,
     REBARR *binding,  // spelling determined by linked-to thing
     const REBSYM *symbol,
     REBLEN index  // must be 1 if LET patch (INDEX_ATTACHED)
 ){
-    INIT_VAL_HEADER(out, type, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, type, CELL_FLAG_FIRST_IS_NODE);
     mutable_BINDING(out) = binding;
     VAL_WORD_INDEXES_U32(out) = index;
     INIT_VAL_WORD_SYMBOL(out, symbol);
@@ -102,7 +102,7 @@ inline static REBVAL *Init_Any_Word_Bound_Core(
 }
 
 #define Init_Any_Word_Bound(out,type,context,symbol,index) \
-    Init_Any_Word_Bound_Core(TRACK(out), \
+    Init_Any_Word_Bound_Untracked(TRACK(out), \
             (type), CTX_VARLIST(context), (symbol), (index))
 
 inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
@@ -110,7 +110,7 @@ inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
     enum Reb_Kind type,
     REBARR *patch
 ){
-    return Init_Any_Word_Bound_Core(
+    return Init_Any_Word_Bound_Untracked(
         out,
         type,
         patch,
@@ -120,7 +120,7 @@ inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
 }
 
 #define Init_Any_Word_Attached(out,type,module,symbol) \
-    Init_Any_Word_Bound_Core(TRACK(out), \
+    Init_Any_Word_Bound_Untracked(TRACK(out), \
             (type), (symbol), CTX_VARLIST(module), INDEX_ATTACHED)
 
 // Helper calls strsize() so you can more easily use literals at callsite.

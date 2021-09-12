@@ -197,27 +197,27 @@ inline static bool Is_Nulled_Isotope(const RELVAL *v)
 
 inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
     if (Is_Nulled_Isotope(v))
-        Init_Nulled(RESET(v));
+        Init_Nulled(v);
     else if (Is_Isotope(v, SYM_BLANK))
-        Init_Blank(RESET(v));
+        Init_Blank(v);
     else if (Is_Isotope(v, SYM_FALSE))
-        Init_False(RESET(v));
+        Init_False(v);
     return v;
 }
 
 inline static RELVAL *Isotopify_If_Falsey(RELVAL *v) {
     if (IS_NULLED(v))
-        Init_Isotope(RESET(v), Canon(NULL));
+        Init_Isotope(v, Canon(NULL));
     else if (IS_BLANK(v))
-        Init_Isotope(RESET(v), Canon(BLANK));
+        Init_Isotope(v, Canon(BLANK));
     else if (IS_LOGIC(v) and VAL_LOGIC(v) == false)
-        Init_Isotope(RESET(v), Canon(FALSE));
+        Init_Isotope(v, Canon(FALSE));
     return v;
 }
 
 inline static RELVAL *Isotopify_If_Nulled(RELVAL *v) {
     if (IS_NULLED(v))
-        Init_Nulled_Isotope(RESET(v));
+        Init_Nulled_Isotope(v);
     return v;
 }
 

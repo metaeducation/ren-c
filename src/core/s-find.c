@@ -564,7 +564,7 @@ REBLEN Find_Value_In_Binstr(
 
         DECLARE_LOCAL (temp);  // !!! Note: unmanaged
         if (formed) {
-            INIT_VAL_HEADER(temp, REB_TEXT, CELL_FLAG_FIRST_IS_NODE);
+            Init_Cell_Header_Untracked(temp, REB_TEXT, CELL_FLAG_FIRST_IS_NODE);
             INIT_VAL_NODE1(temp, formed);
             PAYLOAD(Any, temp).second.u = 0;  // index
         }

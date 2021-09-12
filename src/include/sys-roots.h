@@ -207,7 +207,7 @@ inline static void Handle_Api_Dispatcher_Result(REBFRM *f, const REBVAL* r) {
     if (IS_NULLED(r))
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
-    Overwrite_Cell(f->out, r);
+    Copy_Cell(f->out, r);
     if (NOT_CELL_FLAG(r, MANAGED))
         rebRelease(r);
 }

@@ -182,7 +182,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     assert(ANY_SEQUENCE_KIND(kind));
 
     if (IS_BLANK(v))
-        return Init_Any_Sequence_1(RESET(v), kind);
+        return Init_Any_Sequence_1(v, kind);
 
     if (not Is_Valid_Sequence_Element(kind, v))
         return nullptr;  // leave element in v to indicate "the bad element"
@@ -206,7 +206,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     Copy_Cell(Alloc_Tail_Array(a), v);
     Freeze_Array_Shallow(a);
 
-    Init_Block(RESET(v), a);
+    Init_Block(v, a);
     mutable_KIND3Q_BYTE(v) = kind;
 
     return v;
@@ -243,7 +243,7 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
         Init_Block(out, Freeze_Array_Shallow(a));  // !!! TBD: compact BINARY!
     }
     else {
-        INIT_VAL_HEADER(out, REB_BYTES, CELL_MASK_NONE);  // no FIRST_IS_NODE flag
+        Reset_Cell_Header_Untracked(out, REB_BYTES, CELL_MASK_NONE);
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = size;
         REBYTE *dest = PAYLOAD(Bytes, out).at_least_8;
         for (; size > 0; --size, ++data, ++dest)
@@ -263,8 +263,6 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
     const RELVAL *head,  // NOTE: Can't use DS_PUSH() or evaluation
     REBLEN len
 ){
-    assert(Is_Fresh(out));
-
     if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8)
         return nullptr;  // no optimization yet if won't fit in payload bytes
 
@@ -284,7 +282,7 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
         *bp = cast(REBYTE, i64);
     }
 
-    INIT_VAL_HEADER(out, REB_BYTES, CELL_MASK_NONE);  // no FIRST_IS_NODE flag!
+    Reset_Cell_Header_Untracked(out, REB_BYTES, CELL_MASK_NONE);
     EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = len;
 
     mutable_KIND3Q_BYTE(out) = kind;
@@ -635,7 +633,7 @@ inline static bool Did_Get_Sequence_Bytes(
             dp[i] = 0;
             continue;
         }
-        const RELVAL *at = VAL_SEQUENCE_AT(RESET(temp), sequence, i);
+        const RELVAL *at = VAL_SEQUENCE_AT(temp, sequence, i);
         if (not IS_INTEGER(at))
             return false;
         REBI64 i64 = VAL_INT64(at);

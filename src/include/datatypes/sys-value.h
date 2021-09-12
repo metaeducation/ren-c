@@ -432,7 +432,7 @@ inline static RELVAL *RESET_Untracked(RELVAL *v) {
 #define RESET(v) \
     TRACK(RESET_Untracked(v))  // TRACK expects REB_0, so call *after* reset
 
-inline static REBVAL *INIT_VAL_HEADER(
+inline static void Init_Cell_Header_Untracked(
     RELVAL *v,
     enum Reb_Kind k,
     uintptr_t extra
@@ -444,15 +444,19 @@ inline static REBVAL *INIT_VAL_HEADER(
     v->header.bits &= CELL_MASK_PERSIST;
     v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | FLAG_KIND3Q_BYTE(k) | FLAG_HEART_BYTE(k) | extra;
-    return cast(REBVAL*, v);
+
+    // Don't return a value to help convey the cell is likely incomplete
 }
+
+#define Reset_Cell_Header_Untracked(v,k,extra) \
+    Init_Cell_Header_Untracked(RESET_Untracked(v), (k), (extra))
 
 inline static REBVAL *RESET_CUSTOM_CELL(
     RELVAL *out,
     REBTYP *type,
     REBFLGS flags
 ){
-    INIT_VAL_HEADER(out, REB_CUSTOM, flags);
+    Reset_Cell_Header_Untracked(out, REB_CUSTOM, flags);
     EXTRA(Any, out).node = type;
     return cast(REBVAL*, out);
 }
@@ -672,7 +676,7 @@ inline static RELVAL *Copy_Cell_Untracked(
     assert(out != v);  // usually a sign of a mistake; not worth supporting
     assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
 
-    ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_PREP, all 0
+    RESET_Untracked(out);
 
     // Q: Will optimizer notice if copy mask is CELL_MASK_ALL, and not bother
     // with masking out CELL_MASK_PERSIST since all bits are overwritten?
@@ -744,9 +748,6 @@ inline static RELVAL *Copy_Cell_Untracked(
 
 #define Copy_Cell_Core(out,v,copy_mask) \
     Copy_Cell_Untracked(TRACK(out), (v), (copy_mask))
-
-#define Overwrite_Cell(out,v) \
-    Copy_Cell(RESET_Untracked(out), (v))
 
 
 // !!! Super primordial experimental `const` feature.  Concept is that various

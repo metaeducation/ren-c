@@ -659,14 +659,14 @@ static void Update_Error_Near_For_Line(
     Append_Utf8(mo->series, cs_cast(bp), len);
 
     ERROR_VARS *vars = ERR_VARS(error);
-    Init_Text(RESET(&vars->nearest), Pop_Molded_String(mo));
+    Init_Text(&vars->nearest, Pop_Molded_String(mo));
 
     if (ss->file)
-        Init_File(RESET(&vars->file), ss->file);
+        Init_File(&vars->file, ss->file);
     else
-        Init_Nulled(RESET(&vars->file));
+        Init_Nulled(&vars->file);
 
-    Init_Integer(RESET(&vars->line), ss->line);
+    Init_Integer(&vars->line, ss->line);
 }
 
 
@@ -2577,14 +2577,14 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         //
         if (IS_TUPLE(DS_TOP) and VAL_SEQUENCE_LEN(DS_TOP) == 2) {
             if (
-                IS_INTEGER(VAL_SEQUENCE_AT(RESET(temp), DS_TOP, 0))
-                and IS_BLANK(VAL_SEQUENCE_AT(RESET(temp), DS_TOP, 1))
+                IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
+                and IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
             ){
                 fail ("Notation of `5.` currently reserved, please use 5.0");
             }
             if (
-                IS_BLANK(VAL_SEQUENCE_AT(RESET(temp), DS_TOP, 0))
-                and IS_INTEGER(VAL_SEQUENCE_AT(RESET(temp), DS_TOP, 1))
+                IS_BLANK(VAL_SEQUENCE_AT(temp, DS_TOP, 0))
+                and IS_INTEGER(VAL_SEQUENCE_AT(temp, DS_TOP, 1))
             ){
                 fail ("Notation of `.5` currently reserved, please use 0.5");
             }

@@ -172,9 +172,9 @@ REB_R PD_Pair(
         return R_UNHANDLED;
 
     if (n == 1)
-        Copy_Cell(RESET(pvs->out), VAL_PAIR_X(pvs->out));
+        Copy_Cell(pvs->out, VAL_PAIR_X(pvs->out));
     else
-        Copy_Cell(RESET(pvs->out), VAL_PAIR_Y(pvs->out));
+        Copy_Cell(pvs->out, VAL_PAIR_Y(pvs->out));
     return pvs->out;
 }
 
@@ -260,9 +260,9 @@ REBTYPE(Pair)
                 return R_UNHANDLED;
 
             if (n == 1)
-                Copy_Cell(RESET(VAL_PAIR_X(v)), setval);
+                Copy_Cell(VAL_PAIR_X(v), setval);
             else
-                Copy_Cell(RESET(VAL_PAIR_Y(v)), setval);
+                Copy_Cell(VAL_PAIR_Y(v), setval);
         }
         else {
             if (n == 1)

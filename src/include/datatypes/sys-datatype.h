@@ -79,7 +79,7 @@ inline static REBVAL *Init_Custom_Datatype(
     RELVAL *out,
     const REBTYP *type
 ){
-    INIT_VAL_HEADER(
+    Reset_Cell_Header_Untracked(
         out,
         REB_DATATYPE,
         CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE

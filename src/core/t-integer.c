@@ -303,7 +303,7 @@ REBTYPE(Integer)
             case SYM_REMAINDER:
             case SYM_POWER:
                 if (IS_DECIMAL(val2) || IS_PERCENT(val2)) {
-                    Init_Decimal(RESET(val), cast(REBDEC, num));  // convert
+                    Init_Decimal(val, cast(REBDEC, num));  // convert
                     return T_Decimal(frame_, verb);
                 }
                 if (IS_MONEY(val2)) {
@@ -361,8 +361,8 @@ REBTYPE(Integer)
             return Init_Integer(D_OUT, num / arg);
         // Fall thru
     case SYM_POWER:
-        Init_Decimal(RESET(D_ARG(1)), cast(REBDEC, num));
-        Init_Decimal(RESET(D_ARG(2)), cast(REBDEC, arg));
+        Init_Decimal(D_ARG(1), cast(REBDEC, num));
+        Init_Decimal(D_ARG(2), cast(REBDEC, arg));
         return T_Decimal(frame_, verb);
 
     case SYM_REMAINDER:
@@ -426,7 +426,9 @@ REBTYPE(Integer)
             REBDEC dec = Round_Dec(
                 cast(REBDEC, num), frame_, VAL_DECIMAL(to)
             );
-            INIT_VAL_HEADER(D_OUT, VAL_TYPE(to), CELL_MASK_NONE);
+            Reset_Cell_Header_Untracked(
+                TRACK(D_OUT), VAL_TYPE(to), CELL_MASK_NONE
+            );
             VAL_DECIMAL(D_OUT) = dec;
             return D_OUT;
         }

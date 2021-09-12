@@ -280,7 +280,7 @@ REB_R Reframer_Dispatcher(REBFRM *f)
         return R_THROWN;
 
     REBVAL *arg = FRM_ARG(f, VAL_INT32(param_index));
-    Move_Cell(RESET(arg), f_spare);
+    Move_Cell(arg, f_spare);
 
     INIT_FRM_PHASE(f, VAL_ACTION(shim));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(shim));
@@ -399,7 +399,7 @@ REBNATIVE(reframer_p)
     //
     REBVAL *var = CTX_VAR(exemplar, param_index);
     assert(Is_Unset(var));
-    Overwrite_Cell(var, CTX_ARCHETYPE(exemplar));
+    Copy_Cell(var, CTX_ARCHETYPE(exemplar));
 
     // Make action with enough space to store the implementation phase and
     // which parameter to fill with the *real* frame instance.

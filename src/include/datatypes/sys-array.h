@@ -558,10 +558,10 @@ inline static RELVAL *Init_Relative_Block_At(
     REBARR *array,
     REBLEN index
 ){
-    RELVAL *block = INIT_VAL_HEADER(out, REB_BLOCK, CELL_FLAG_FIRST_IS_NODE);
-    INIT_VAL_NODE1(block, array);
-    VAL_INDEX_RAW(block) = index;
-    INIT_SPECIFIER(block, action);
+    Reset_Cell_Header_Untracked(out, REB_BLOCK, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_NODE1(out, array);
+    VAL_INDEX_RAW(out) = index;
+    INIT_SPECIFIER(out, action);
     return out;
 }
 

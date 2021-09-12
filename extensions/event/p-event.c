@@ -74,7 +74,7 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
     // Get or setup internal state data:
     //
     if (!IS_BLOCK(state))
-        Init_Block(RESET(state), Make_Array(EVENTS_CHUNK - 1));
+        Init_Block(state, Make_Array(EVENTS_CHUNK - 1));
 
     switch (ID_OF_SYMBOL(verb)) {
 

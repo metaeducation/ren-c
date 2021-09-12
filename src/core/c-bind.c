@@ -402,7 +402,7 @@ REBNATIVE(let)
     if (IS_WORD(f_value)) {
         const REBSYM *symbol = VAL_WORD_SYMBOL(f_value);
         bindings = Make_Let_Patch(symbol, bindings);
-        Init_Word(RESET(D_OUT), symbol);  // definitely not invisible
+        Init_Word(D_OUT, symbol);  // definitely not invisible
         INIT_VAL_WORD_BINDING(D_OUT, bindings);
     }
     else if (IS_SET_WORD(f_value)) {
@@ -501,7 +501,7 @@ REBNATIVE(let)
         //
         if (need_copy) {
             Init_Any_Array(
-                RESET(&f->feed->fetched),
+                &f->feed->fetched,
                 VAL_TYPE(f_value),
                 Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED)
             );
@@ -524,7 +524,7 @@ REBNATIVE(let)
         RETURN_INVISIBLE;
 
     assert(IS_WORD(f_value) or IS_BLOCK(f_value));
-    Derelativize(RESET(D_OUT), f_value, f_specifier);
+    Derelativize(D_OUT, f_value, f_specifier);
     Fetch_Next_In_Feed(f->feed);  // skip over the word
     return D_OUT;  // return the WORD! or BLOCK!
 }
@@ -552,7 +552,7 @@ REBNATIVE(add_let_binding) {
 
     // !!! Should Make_Let_Patch() return an reset cell?
     //
-    Move_Cell(RESET(ARR_SINGLE(patch)), ARG(value));
+    Move_Cell(ARR_SINGLE(patch), ARG(value));
 
     mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
 

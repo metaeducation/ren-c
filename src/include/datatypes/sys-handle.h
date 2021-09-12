@@ -116,7 +116,11 @@ inline static REBVAL *Init_Handle_Cdata(
     uintptr_t length
 ){
     assert(length != 0);  // can't be 0 unless cfunc (see also malloc(0))
-    INIT_VAL_HEADER(out, REB_HANDLE, CELL_MASK_NONE);  // payload first not node
+    Reset_Cell_Header_Untracked(
+        out,
+        REB_HANDLE,
+        CELL_MASK_NONE  // payload.first not node
+    );
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).first.trash = ZEROTRASH;
   #endif
@@ -129,7 +133,11 @@ inline static REBVAL *Init_Handle_Cfunc(
     RELVAL *out,
     CFUNC *cfunc
 ){
-    INIT_VAL_HEADER(out, REB_HANDLE, CELL_MASK_NONE);  // payload first not node
+    Reset_Cell_Header_Untracked(
+        out,
+        REB_HANDLE,
+        CELL_MASK_NONE  // payload.first not node
+    );
   #ifdef ZERO_UNUSED_CELL_FIELDS
     PAYLOAD(Any, out).first.trash = ZEROTRASH;
   #endif
@@ -147,7 +155,7 @@ inline static void Init_Handle_Managed_Common(
     singular->misc.cleaner = cleaner;
 
     RELVAL *single = ARR_SINGLE(singular);
-    INIT_VAL_HEADER(single, REB_HANDLE, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(single, REB_HANDLE, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_HANDLE_SINGULAR(single, singular);
     VAL_HANDLE_LENGTH_U(single) = length;
     // caller fills in VAL_HANDLE_CDATA_P or VAL_HANDLE_CFUNC_P
@@ -157,7 +165,7 @@ inline static void Init_Handle_Managed_Common(
     // effectively update all instances...since the bits live in the shared
     // series component.
     //
-    INIT_VAL_HEADER(out, REB_HANDLE, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, REB_HANDLE, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_HANDLE_SINGULAR(out, singular);
     VAL_HANDLE_LENGTH_U(out) = 0xDECAFBAD;  // trash to avoid compiler warning
     VAL_HANDLE_CDATA_P(out) = nullptr;  // or complains about not initializing

@@ -260,7 +260,7 @@ REBNATIVE(hijack)
         RELVAL *src = ARR_HEAD(hijacker_details) + 1;
         RELVAL *dest = ARR_HEAD(victim_details) + 1;
         for (; src != src_tail; ++src, ++dest)
-            Copy_Cell_Core(RESET(dest), src, CELL_MASK_ALL);
+            Copy_Cell_Core(dest, src, CELL_MASK_ALL);
         SET_SERIES_LEN(victim_details, details_len);
     }
     else {
@@ -280,7 +280,7 @@ REBNATIVE(hijack)
         assert(IDX_HIJACKER_MAX == 2);
         if (ARR_LEN(victim_details) < 2)
             Alloc_Tail_Array(victim_details);
-        Overwrite_Cell(
+        Copy_Cell(
             ARR_AT(victim_details, IDX_HIJACKER_HIJACKER),
             ARG(hijacker)
         );

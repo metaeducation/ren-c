@@ -411,8 +411,12 @@ static void Init_Root_Vars(void)
     // the root set.  Should that change, they could be explicitly added
     // to the GC's root set.
 
-    INIT_VAL_HEADER(&PG_Meta_Value, REB_META, CELL_MASK_NONE);
-    INIT_VAL_HEADER(&PG_The_Value, REB_THE, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(
+        TRACK(&PG_Meta_Value), REB_META, CELL_MASK_NONE
+    );
+    Reset_Cell_Header_Untracked(
+        TRACK(&PG_The_Value), REB_THE, CELL_MASK_NONE
+    );
 
     Init_Return_Signal(&PG_R_Thrown, C_THROWN);
     Init_Return_Signal(&PG_R_Invisible, C_INVISIBLE);
@@ -533,10 +537,10 @@ static void Init_System_Object(
 
     // Create system/catalog/* for datatypes, natives, generics, errors
     //
-    Init_Block(RESET(Get_System(SYS_CATALOG, CAT_DATATYPES)), datatypes_catalog);
-    Init_Block(RESET(Get_System(SYS_CATALOG, CAT_NATIVES)), natives_catalog);
-    Init_Block(RESET(Get_System(SYS_CATALOG, CAT_ACTIONS)), generics_catalog);
-    Init_Object(RESET(Get_System(SYS_CATALOG, CAT_ERRORS)), errors_catalog);
+    Init_Block(Get_System(SYS_CATALOG, CAT_DATATYPES), datatypes_catalog);
+    Init_Block(Get_System(SYS_CATALOG, CAT_NATIVES), natives_catalog);
+    Init_Block(Get_System(SYS_CATALOG, CAT_ACTIONS), generics_catalog);
+    Init_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errors_catalog);
 
     // Create system/codecs object
     //
@@ -586,9 +590,9 @@ static void Init_System_Object(
 //
 static void Init_Contexts_Object(void)
 {
-    Overwrite_Cell(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context_Value);
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_SYS), Sys_Context_Value);
 
-    Overwrite_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
+    Copy_Cell(Get_System(SYS_CONTEXTS, CTX_LIB), Lib_Context_Value);
 
     // We don't initialize the USER context...yet.  Make it more obvious what
     // is wrong if it's used during boot.

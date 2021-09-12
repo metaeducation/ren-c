@@ -363,7 +363,7 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 
         REBVAL *data = CTX_VAR(ctx, STD_PORT_DATA);
         if (not IS_BINARY(data)) {
-            Init_Binary(RESET(data), Make_Binary(readbuf_size));
+            Init_Binary(data, Make_Binary(readbuf_size));
         }
         else if (SER_REST(VAL_BINARY(data)) < readbuf_size) {
             REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(data);

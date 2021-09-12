@@ -1106,7 +1106,7 @@ inline static REBVAL *Init_Any_Series_At_Core(
     }
   #endif
 
-    INIT_VAL_HEADER(out, type, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(out, type, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_NODE1(out, s);
     VAL_INDEX_RAW(out) = index;
     INIT_SPECIFIER(out, specifier);  // asserts if unbindable type tries to bind

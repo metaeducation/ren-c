@@ -38,10 +38,6 @@
         const char *file,
         int line
     ){
-      #if !defined(NDEBUG)
-        if (not Is_Fresh(v))
-            panic (v);
-      #endif
         v->file = file;
         v->line = line;
         v->tick = TG_Tick;
@@ -55,10 +51,6 @@
         const char *file,
         int line
     ){
-      #if !defined(NDEBUG)
-        if (not Is_Fresh(v))
-            panic (v);
-      #endif
         v->file = file;
         v->line = line;
         v->tick = TG_Tick;
@@ -82,9 +74,10 @@
     // fully separate, and doesn't try to exploit that not all cell types use
     // all bits to hide more information.
     //
-    // !!! Update: The point is moot now that Init_Xxx() routines require
-    // cells to be cleared out, because a RESET() can't be put in the init
-    // for similar reasons.  Debug tracking is still separate for simplicity.
+    // (For similar reasons, the idea of making Init_XXX() functions require
+    // a reset cell so people had to call `Init_XXX(RESET(out), ...)` was
+    // scrapped...it made things more complex, and inevitably some optimization
+    // level for Clang or on Android would trigger problems.)
     //
     #define TRACK(v) \
         Track_Cell_Debug((v), __FILE__, __LINE__)

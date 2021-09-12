@@ -94,7 +94,7 @@ void Dump_Frame_Location(const RELVAL *v, REBFRM *f)
         }
 
         Init_Any_Array_At_Core(
-            RESET(dump),
+            dump,
             REB_BLOCK,
             f_array,
             cast(REBLEN, f_index),
@@ -112,14 +112,8 @@ void Dump_Frame_Location(const RELVAL *v, REBFRM *f)
 // These are checks common to Expression and Exit checks (hence also common
 // to the "end of Start" checks, since that runs on the first expression)
 //
-static void Eval_Core_Shared_Checks_Debug(REBFRM *f) {
-    //
-    // Eval uses f_spare as a temporary scratch space.  If a caller of the
-    // evaluation has anything in that cell, it would be overwritten.  Help
-    // ensure the awareness of this with an assert.
-    //
-    assert(Is_Fresh(f_spare));
-
+static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
+{
     // The state isn't actually guaranteed to balance overall until a frame
     // is completely dropped.  This is because a frame may be reused over
     // multiple calls by something like REDUCE or FORM, accumulating items

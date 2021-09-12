@@ -188,7 +188,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
 ){
     assert(kind != REB_FRAME);  // use INIT_VAL_FRAME_ROOTVAR() instead
     assert(out == ARR_HEAD(varlist));
-    INIT_VAL_HEADER(out, kind, CELL_MASK_CONTEXT);
+    Reset_Cell_Header_Untracked(out, kind, CELL_MASK_CONTEXT);
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
     mutable_BINDING(out) = UNBOUND;  // not a frame
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, nullptr);  // not a frame
@@ -211,7 +211,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
         or out == ARR_HEAD(varlist)
     );
     assert(phase != nullptr);
-    INIT_VAL_HEADER(out, REB_FRAME, CELL_MASK_CONTEXT);
+    Reset_Cell_Header_Untracked(out, REB_FRAME, CELL_MASK_CONTEXT);
     INIT_VAL_CONTEXT_VARLIST(out, varlist);
     mutable_BINDING(out) = binding;
     INIT_VAL_FRAME_PHASE_OR_LABEL(out, phase);

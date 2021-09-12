@@ -537,7 +537,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 | EVAL_FLAG_FULFILLING_ARG;
 
             if (Eval_Step_In_Subframe_Throws(f->arg, f, flags)) {
-                Move_Cell(RESET(f->out), f->arg);
+                Move_Cell(f->out, f->arg);
                 goto abort_action;
             }
 
@@ -657,7 +657,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                     Move_Cell(f->out, f->arg);
                     goto abort_action;
                 }
-                RESET(f_spare);
             }
             else {
                 if (IS_BAD_WORD(f->arg))  // !!! Source should only be isotope form
@@ -832,7 +831,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
                 and Is_Unset(f->arg)
             ){
-                Init_Nulled(RESET(f->arg));
+                Init_Nulled(f->arg);
             }
             else
                 Typecheck_Refinement(f->key, f->param, f->arg);
@@ -962,7 +961,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     );
 
     if (GET_EVAL_FLAG(f, TYPECHECK_ONLY)) {  // <blank> uses this
-        Init_Nulled(RESET(f->out));  // by convention: BLANK! in, NULL out
+        Init_Nulled(f->out);  // by convention: BLANK! in, NULL out
         goto skip_output_check;
     }
 
@@ -993,18 +992,12 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
     Expire_Out_Cell_Unless_Invisible(f);
 
-    if (not Is_Fresh(f_spare))
-        assert(!"Action internals didn't leave spare REB_0 prior to dispatch");
-
-    const REBVAL *r = (*dispatcher)(f);
-
-    // Note: There's a miniscule amount of benefit to having the dispatchers
-    // required to clear out the spare cell themselves, thus not paying to
-    // free it for those that don't use it here.  But this would inhibit
-    // things like `return Init_Xxx(D_OUT, Property_Of(D_SPARE));`  It's a
-    // very cheap check for REB_0 here to do the free, worth the convenience.
+    // Resetting the spare cell here has a slight cost, but keeps from leaking
+    // internal processing to actions.
     //
     RESET(f_spare);
+
+    const REBVAL *r = (*dispatcher)(f);
 
     if (r == f->out) {
         //
@@ -1013,7 +1006,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         //
     }
     else if (not r) {  // API and internal code can both return `nullptr`
-        Init_Nulled(RESET(f->out));
+        Init_Nulled(f->out);
         goto dispatch_completed;  // skips invisible check
     }
     else if (not IS_RETURN_SIGNAL(r)) {
@@ -1085,7 +1078,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 f->arg = FRM_ARGS_HEAD(f);
                 for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
                     if (Is_Specialized(f->param)) {
-                        Copy_Cell(RESET(f->arg), f->param);
+                        Copy_Cell(f->arg, f->param);
                     }
                 }
 

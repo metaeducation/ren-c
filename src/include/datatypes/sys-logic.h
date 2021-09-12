@@ -30,7 +30,7 @@
 //
 
 inline static REBVAL *Init_Logic_Core(RELVAL *out, bool flag) {
-    INIT_VAL_HEADER(out, REB_LOGIC, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, REB_LOGIC, CELL_MASK_NONE);
     PAYLOAD(Logic, out).flag = flag;
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;

@@ -130,7 +130,7 @@ inline static void INIT_LINK_KEYSOURCE(REBARR *varlist, REBNOD *keysource) {
 //
 
 inline static REBVAL *Init_Return_Signal_Untracked(RELVAL *out, char ch) {
-    INIT_VAL_HEADER(out, REB_T_RETURN_SIGNAL, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, REB_T_RETURN_SIGNAL, CELL_MASK_NONE);
     mutable_BINDING(out) = nullptr;
 
     PAYLOAD(Any, out).first.u = ch;
@@ -482,7 +482,7 @@ static inline REBVAL *Init_Action_Core(
   #endif
     Force_Series_Managed(ACT_DETAILS(a));
 
-    INIT_VAL_HEADER(out, REB_ACTION, CELL_MASK_ACTION);
+    Reset_Cell_Header_Untracked(TRACK(out), REB_ACTION, CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(out, ACT_DETAILS(a));
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_ACTION_BINDING(out, binding);

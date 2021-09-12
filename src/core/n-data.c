@@ -1193,7 +1193,7 @@ REBNATIVE(as)
                     VAL_WORD_SYMBOL(v) == PG_Dot_1_Canon
                     or VAL_WORD_SYMBOL(v) == PG_Slash_1_Canon
                 );
-                Init_Block(RESET(v), PG_2_Blanks_Array);
+                Init_Block(v, PG_2_Blanks_Array);
                 break;
 
               case REB_GET_WORD: {
@@ -1203,7 +1203,7 @@ REBNATIVE(as)
                 mutable_KIND3Q_BYTE(ARR_AT(a, 1)) = REB_WORD;
                 mutable_HEART_BYTE(ARR_AT(a, 1)) = REB_WORD;
                 SET_SERIES_LEN(a, 2);
-                Init_Block(RESET(v), a);
+                Init_Block(v, a);
                 break; }
 
               case REB_META_WORD: {
@@ -1213,7 +1213,7 @@ REBNATIVE(as)
                 mutable_HEART_BYTE(ARR_HEAD(a)) = REB_WORD;
                 Init_Blank(ARR_AT(a, 1));
                 SET_SERIES_LEN(a, 2);
-                Init_Block(RESET(v), a);
+                Init_Block(v, a);
                 break; }
 
               case REB_BLOCK:
@@ -1283,7 +1283,11 @@ REBNATIVE(as)
                 //
                 // Payload can fit in a single issue cell.
                 //
-                INIT_VAL_HEADER(D_OUT, REB_BYTES, CELL_MASK_NONE);
+                Reset_Cell_Header_Untracked(
+                    TRACK(D_OUT),
+                    REB_BYTES,
+                    CELL_MASK_NONE
+                );
                 memcpy(
                     PAYLOAD(Bytes, D_OUT).at_least_8,
                     VAL_STRING_AT(v),
@@ -1600,7 +1604,7 @@ REBNATIVE(heavy) {
     Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     if (IS_NULLED(D_OUT))
-        Init_Nulled_Isotope(RESET(D_OUT));
+        Init_Nulled_Isotope(D_OUT);
 
     return D_OUT;
 }

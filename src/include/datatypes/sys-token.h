@@ -86,7 +86,7 @@ inline static REBVAL *Init_Issue_Utf8(
     REBLEN len  // while validating, you should have counted the codepoints
 ){
     if (size + 1 <= sizeof(PAYLOAD(Bytes, out)).at_least_8) {
-        INIT_VAL_HEADER(out, REB_BYTES, CELL_MASK_NONE);  // no FIRST_IS_NODE
+        Reset_Cell_Header_Untracked(out, REB_BYTES, CELL_MASK_NONE);
         memcpy(PAYLOAD(Bytes, out).at_least_8, utf8, size);
         PAYLOAD(Bytes, out).at_least_8[size] = '\0';
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = size;
@@ -106,8 +106,8 @@ inline static REBVAL *Init_Issue_Utf8(
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING!)
 // this routine can be used.
 //
-inline static REBVAL *Init_Char_Unchecked(RELVAL *out, REBUNI c) {
-    INIT_VAL_HEADER(out, REB_BYTES, CELL_MASK_NONE);
+inline static REBVAL *Init_Char_Unchecked_Untracked(RELVAL *out, REBUNI c) {
+    Reset_Cell_Header_Untracked(out, REB_BYTES, CELL_MASK_NONE);
 
     if (c == 0) {
         //
@@ -134,7 +134,10 @@ inline static REBVAL *Init_Char_Unchecked(RELVAL *out, REBUNI c) {
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL *Init_Char_May_Fail(RELVAL *out, REBUNI c) {
+#define Init_Char_Unchecked(out,c) \
+    Init_Char_Unchecked_Untracked(TRACK(out), (c))
+
+inline static REBVAL *Init_Char_May_Fail_Untracked(RELVAL *out, REBUNI c) {
     if (c > MAX_UNI) {
         DECLARE_LOCAL (temp);
         fail (Error_Codepoint_Too_High_Raw(Init_Integer(temp, c)));
@@ -146,6 +149,9 @@ inline static REBVAL *Init_Char_May_Fail(RELVAL *out, REBUNI c) {
 
     return Init_Char_Unchecked(out, c);
 }
+
+#define Init_Char_May_Fail(out,c) \
+    Init_Char_May_Fail_Untracked(TRACK(out), (c))
 
 
 //=//// "BLACKHOLE" (Empty ISSUE!, a.k.a. CODEPOINT 0) ////////////////////=//

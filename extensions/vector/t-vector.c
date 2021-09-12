@@ -307,8 +307,8 @@ REBINT Compare_Vector(REBCEL(const*) v1, REBCEL(const*) v2)
 
     REBLEN n;
     for (n = 0; n < len; n++) {
-        Get_Vector_At(RESET(temp1), v1, n + VAL_VECTOR_INDEX(v1));
-        Get_Vector_At(RESET(temp2), v2, n + VAL_VECTOR_INDEX(v2));
+        Get_Vector_At(temp1, v1, n + VAL_VECTOR_INDEX(v1));
+        Get_Vector_At(temp2, v2, n + VAL_VECTOR_INDEX(v2));
         const bool strict = true;
         REBINT diff = Compare_Modify_Values(temp1, temp2, strict);
         if (diff != 0)
@@ -767,7 +767,7 @@ void MF_Vector(REB_MOLD *mo, REBCEL(const*) v, bool form)
     REBLEN c = 0;
     for (; n < VAL_VECTOR_LEN_AT(v); n++) {
 
-        Get_Vector_At(RESET(temp), v, n);
+        Get_Vector_At(temp, v, n);
 
         REBYTE buf[32];
         REBYTE l;

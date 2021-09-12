@@ -157,7 +157,6 @@ void Push_Paramlist_Triads_May_Fail(
                 IS_NULLED(notes)  // hasn't been written to yet
                 or IS_TEXT(notes)  // !!! we overwrite, but should we append?
             );
-            RESET(notes);
 
             if (IS_BAD_WORD(KEY_SLOT(DSP))) {  // no keys seen, act as description
                 Init_Text(notes, Copy_String_At(item));
@@ -242,7 +241,7 @@ void Push_Paramlist_Triads_May_Fail(
 
             REBSPC* derived = Derive_Specifier(VAL_SPECIFIER(spec), item);
             Init_Block(
-                RESET(types),
+                types,
                 Copy_Array_At_Deep_Managed(
                     VAL_ARRAY(item),
                     VAL_INDEX(item),
@@ -678,7 +677,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         STKVAL(*) description = NOTES_SLOT(dsp_orig + 4);
         assert(IS_TEXT(description));
         Copy_Cell(
-            RESET(CTX_VAR(*meta, STD_ACTION_META_DESCRIPTION)),
+            CTX_VAR(*meta, STD_ACTION_META_DESCRIPTION),
             description
         );
     }
@@ -725,7 +724,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         SET_SERIES_LEN(types_varlist, num_slots);
 
         Init_Object(
-            RESET(CTX_VAR(*meta, STD_ACTION_META_PARAMETER_TYPES)),
+            CTX_VAR(*meta, STD_ACTION_META_PARAMETER_TYPES),
             CTX(types_varlist)
         );
     }
@@ -772,7 +771,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         SET_SERIES_LEN(notes_varlist, num_slots);
 
         Init_Object(
-            RESET(CTX_VAR(*meta, STD_ACTION_META_PARAMETER_NOTES)),
+            CTX_VAR(*meta, STD_ACTION_META_PARAMETER_NOTES),
             CTX(notes_varlist)
         );
     }
@@ -936,7 +935,7 @@ REBACT *Make_Action(
         SERIES_MASK_DETAILS | NODE_FLAG_MANAGED
     );
     RELVAL *archetype = ARR_HEAD(details);
-    INIT_VAL_HEADER(archetype, REB_ACTION, CELL_MASK_ACTION);
+    Reset_Cell_Header_Untracked(TRACK(archetype), REB_ACTION, CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(archetype, details);
     mutable_BINDING(archetype) = UNBOUND;
 
@@ -959,7 +958,7 @@ REBACT *Make_Action(
     //
     REBVAL *rootvar = SER_HEAD(REBVAL, paramlist);
     if (Is_Isotope(rootvar, SYM_ROOTVAR)) {
-        INIT_VAL_FRAME_ROOTVAR(RESET(rootvar), paramlist, act, UNBOUND);
+        INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, act, UNBOUND);
     }
 
     // The exemplar needs to be frozen, it can't change after this point.
@@ -1130,7 +1129,11 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 
             // Note: clears VAL_FLAG_LINE
             //
-            INIT_VAL_HEADER(RESET(slot), REB_GROUP, CELL_FLAG_FIRST_IS_NODE);
+            Reset_Cell_Header_Untracked(
+                TRACK(slot),
+                REB_GROUP,
+                CELL_FLAG_FIRST_IS_NODE
+            );
             INIT_VAL_NODE1(slot, VAL_ARRAY(body));
             VAL_INDEX_RAW(slot) = 0;
             INIT_SPECIFIER(slot, a);  // relative binding
@@ -1141,7 +1144,11 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         // Cannot give user a relative value back, so make the relative
         // body specific to a fabricated expired frame.  See #2221
 
-        INIT_VAL_HEADER(out, REB_BLOCK, CELL_FLAG_FIRST_IS_NODE);
+        Reset_Cell_Header_Untracked(
+            TRACK(out),
+            REB_BLOCK,
+            CELL_FLAG_FIRST_IS_NODE
+        );
         INIT_VAL_NODE1(out, maybe_fake_body);
         VAL_INDEX_RAW(out) = 0;
         INIT_SPECIFIER(out, Make_Expired_Frame_Ctx_Managed(a));

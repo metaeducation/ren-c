@@ -114,7 +114,7 @@ REBNATIVE(write_stdout)
         bool threw = rebRunThrows(D_SPARE, true, Lib(AS), Lib(TEXT_X), v);
         assert(not threw);
         UNUSED(threw);
-        Move_Cell(RESET(v), D_SPARE);
+        Move_Cell(v, D_SPARE);
     }
 
     // !!! The historical division of labor between the "core" and the "host"

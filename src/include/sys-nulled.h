@@ -40,7 +40,7 @@
     (VAL_TYPE(v) == REB_NULL)
 
 inline static REBVAL *Init_Nulled_Untracked(RELVAL *out) {
-    INIT_VAL_HEADER(out, REB_NULL, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, REB_NULL, CELL_MASK_NONE);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;
@@ -61,8 +61,13 @@ inline static REBVAL *Init_Nulled_Untracked(RELVAL *out) {
 // of null it is.  This may or may not be a good idea, but unevaluating it
 // here just to make a note of the concept, and tag it via the callsites.
 //
+inline static REBVAL *Init_Endish_Nulled_Untracked(RELVAL *out) {
+    Reset_Cell_Header_Untracked(out, REB_NULL, CELL_FLAG_UNEVALUATED);
+    return cast(REBVAL*, out);
+}
+
 #define Init_Endish_Nulled(out) \
-    INIT_VAL_HEADER((out), REB_NULL, CELL_FLAG_UNEVALUATED)
+    Init_Endish_Nulled_Untracked(TRACK(out))
 
 inline static bool IS_ENDISH_NULLED(const RELVAL *v)
     { return IS_NULLED(v) and GET_CELL_FLAG(v, UNEVALUATED); }

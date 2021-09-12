@@ -122,13 +122,13 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
             //
             // We must use something legal to put in arrays, so non-isotope.
             //
-            Init_Bad_Word(RESET(&feed->fetched), Canon(NULL));
+            Init_Bad_Word(&feed->fetched, Canon(NULL));
         }
         else {
             // !!! "We could make a global QUOTED_NULLED_VALUE with a stable
             // pointer and not have to use fetched." <- silly optimization
 
-            Init_Nulled(RESET(&feed->fetched));
+            Init_Nulled(&feed->fetched);
             Isotopic_Quotify(&feed->fetched, QUOTING_BYTE(feed));
         }
 
@@ -200,7 +200,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         Manage_Series(reified);
 
         feed->value = ARR_HEAD(reified);
-        Init_Any_Array_At(RESET(FEED_SINGLE(feed)), REB_BLOCK, reified, 1);
+        Init_Any_Array_At(FEED_SINGLE(feed), REB_BLOCK, reified, 1);
         break; }
 
       case DETECTED_AS_SERIES: {  // e.g. rebQ, rebU, or a rebR() handle
@@ -234,7 +234,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
                 panic ("rebU() of more than one value splice not written");
 
             REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
-            Overwrite_Cell(&feed->fetched, single);
+            Copy_Cell(&feed->fetched, single);
             Isotopic_Quotify(
                 &feed->fetched,
                 QUOTING_BYTE(feed) + inst1->misc.quoting_delta
@@ -251,7 +251,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
                 Splice_Block_Into_Feed(feed, single);
             }
             else {
-                Copy_Cell(RESET(&feed->fetched), single);
+                Copy_Cell(&feed->fetched, single);
                 feed->value = &feed->fetched;
             }
             GC_Kill_Series(inst1);
@@ -278,7 +278,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
             // this more convoluted.  Review.
 
             REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
-            Copy_Cell(RESET(&feed->fetched), single);
+            Copy_Cell(&feed->fetched, single);
             Isotopic_Quotify(&feed->fetched, QUOTING_BYTE(feed));
             feed->value = &feed->fetched;
             rebRelease(single);  // *is* the instruction
@@ -337,7 +337,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         // are reified from the beginning, else there's not going to be
         // a way to present errors in context.  Fake an empty array for now.
         //
-        Init_Block(RESET(FEED_SINGLE(feed)), EMPTY_ARRAY);
+        Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);
         break; }
 
       case DETECTED_AS_FREED_SERIES:
@@ -468,7 +468,7 @@ inline static const RELVAL *Lookback_While_Fetching_Next(REBFRM *f) {
     const RELVAL *lookback;
     if (f->feed->value == &f->feed->fetched) {
         Move_Cell_Core(
-            RESET(&f->feed->lookback),
+            &f->feed->lookback,
             SPECIFIC(&f->feed->fetched),
             CELL_MASK_ALL
         );

@@ -66,22 +66,22 @@ static void Query_Net(REBVAL *out, REBVAL *port, SOCKREQ *sock)
     REBCTX *ctx = VAL_CONTEXT(info);
 
     Init_Tuple_Bytes(
-        RESET(CTX_VAR(ctx, STD_NET_INFO_LOCAL_IP)),
+        CTX_VAR(ctx, STD_NET_INFO_LOCAL_IP),
         cast(REBYTE*, &sock->local_ip),
         4
     );
     Init_Integer(
-        RESET(CTX_VAR(ctx, STD_NET_INFO_LOCAL_PORT)),
+        CTX_VAR(ctx, STD_NET_INFO_LOCAL_PORT),
         sock->local_port_number
     );
 
     Init_Tuple_Bytes(
-        RESET(CTX_VAR(ctx, STD_NET_INFO_REMOTE_IP)),
+        CTX_VAR(ctx, STD_NET_INFO_REMOTE_IP),
         cast(REBYTE*, &sock->remote_ip),
         4
     );
     Init_Integer(
-        RESET(CTX_VAR(ctx, STD_NET_INFO_REMOTE_PORT)),
+        CTX_VAR(ctx, STD_NET_INFO_REMOTE_PORT),
         sock->remote_port_number
     );
 
@@ -124,7 +124,7 @@ static REB_R Transport_Actor(
         //
         assert(IS_NULLED(state));
         REBBIN *bin = Make_Binary(sizeof(SOCKREQ));
-        Init_Binary(RESET(state), bin);
+        Init_Binary(state, bin);
         memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));
         TERM_BIN_LEN(bin, sizeof(SOCKREQ));
 
@@ -207,7 +207,7 @@ static REB_R Transport_Actor(
                 // to a BLOCK! of connections.
                 //
                 Init_Block(
-                    RESET(CTX_VAR(ctx, STD_PORT_CONNECTIONS)),
+                    CTX_VAR(ctx, STD_PORT_CONNECTIONS),
                     Make_Array(2)
                 );
             }
@@ -319,7 +319,7 @@ static REB_R Transport_Actor(
         REBBIN *buffer;
         if (IS_NULLED(port_data)) {
             buffer = Make_Binary(bufsize);
-            Init_Binary(RESET(port_data), buffer);
+            Init_Binary(port_data, buffer);
             TERM_BIN_LEN(buffer, 0);
         }
         else {
@@ -351,7 +351,7 @@ static REB_R Transport_Actor(
         //
         transfer->next = Net_Transfers;
         Net_Transfers = transfer;
-        Init_True(RESET(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING)));
+        Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
 
         RETURN (port); }
 
@@ -421,7 +421,7 @@ static REB_R Transport_Actor(
             //
             transfer->next = Net_Transfers;
             Net_Transfers = transfer;
-            Init_True(RESET(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING)));
+            Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
         }
         else {
             // We just append the data to the binary that's already there.
@@ -709,7 +709,7 @@ bool Dev_Net_Poll(void)
         changed = true;  // !!! Do we want notices on *any* work done?
 
         const REBVAL *port = CTX_ARCHETYPE(connector->port_ctx);
-        Init_False(RESET(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING)));
+        Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
 
         *update = connector->next;
         FREE(struct Reb_Sock_Connector, connector);

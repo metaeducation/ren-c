@@ -138,7 +138,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             REBSIZ size;
             const REBYTE *data = VAL_BINARY_SIZE_AT(&size, D_OUT);
             REBSTR *decoded = Make_Sized_String_UTF8(cs_cast(data), size);
-            Init_Text(RESET(D_OUT), decoded);
+            Init_Text(D_OUT, decoded);
         }
 
         if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string

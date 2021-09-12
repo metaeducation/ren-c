@@ -301,7 +301,7 @@ REBNATIVE(encode_png)
 
     REBVAL *image = ARG(image);
     REBVAL *head = rebValue("head", image);  // ^-- see notes above on position
-    Move_Cell(RESET(image), head);
+    Move_Cell(image, head);
     rebRelease(head);
 
     // Historically, Rebol would write (key="Software" value="REBOL") into

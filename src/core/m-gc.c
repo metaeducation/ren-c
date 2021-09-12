@@ -451,10 +451,10 @@ void Reify_Va_To_Array_In_Frame(
     assert(not FEED_IS_VARIADIC(f->feed));
 
     if (DSP == dsp_orig)
-        Init_Block(RESET(FEED_SINGLE(f->feed)), EMPTY_ARRAY);  // reuse array
+        Init_Block(FEED_SINGLE(f->feed), EMPTY_ARRAY);  // reuse array
     else {
         REBARR *a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
-        Init_Any_Array_At(RESET(FEED_SINGLE(f->feed)), REB_BLOCK, a, index);
+        Init_Any_Array_At(FEED_SINGLE(f->feed), REB_BLOCK, a, index);
     }
 
     if (truncated)

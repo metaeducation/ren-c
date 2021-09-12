@@ -47,7 +47,11 @@ inline static REBVAL *Init_Bad_Word_Untracked(
     const REBSTR *label,
     REBFLGS flags
 ){
-    INIT_VAL_HEADER(out, REB_BAD_WORD, CELL_FLAG_FIRST_IS_NODE | flags);
+    Reset_Cell_Header_Untracked(
+        out,
+        REB_BAD_WORD,
+        CELL_FLAG_FIRST_IS_NODE | flags
+    );
 
     // Due to being evaluator active and not wanting to disrupt the order in
     // %types.r, bad words claim to be bindable...but set the binding to null.
@@ -74,7 +78,9 @@ inline static REBVAL *Init_Bad_Word_Untracked(
         Init_Bad_Word_Untracked((v), PG_Trash_Canon, CELL_MASK_NONE)
 #else
     inline static REBVAL *Init_Trash_Untracked(RELVAL *out) {
-        INIT_VAL_HEADER(out, REB_BAD_WORD, CELL_FLAG_FIRST_IS_NODE);
+        Reset_Cell_Header_Untracked(
+            TRACK(out), REB_BAD_WORD, CELL_FLAG_FIRST_IS_NODE
+          );
         mutable_BINDING(out) = nullptr;
 
         // While SYM_UNREADABLE might be nice here, this prevents usage at

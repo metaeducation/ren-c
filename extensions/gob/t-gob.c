@@ -285,7 +285,7 @@ static void Insert_Gobs(
         SET_CELL_FREE(ARR_TAIL(pane));
   #endif
 
-    Init_Block(RESET(ARR_AT(gob, IDX_GOB_PANE)), pane);  // maybe already set
+    Init_Block(ARR_AT(gob, IDX_GOB_PANE), pane);  // maybe already set
 }
 
 
@@ -395,7 +395,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Overwrite_Cell(GOB_CONTENT(gob), val);
+        Copy_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_DRAW:
@@ -407,7 +407,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Overwrite_Cell(GOB_CONTENT(gob), val);
+        Copy_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_TEXT:
@@ -421,7 +421,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Overwrite_Cell(GOB_CONTENT(gob), val);
+        Copy_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_EFFECT:
@@ -433,7 +433,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Overwrite_Cell(GOB_CONTENT(gob), val);
+        Copy_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_COLOR:
@@ -452,7 +452,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Overwrite_Cell(GOB_CONTENT(gob), val);
+        Copy_Cell(GOB_CONTENT(gob), val);
         break;
 
       case SYM_PANE:
@@ -494,7 +494,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
         else
             return false;
 
-        Overwrite_Cell(GOB_DATA(gob), val);
+        Copy_Cell(GOB_DATA(gob), val);
         break;
 
       case SYM_FLAGS:
@@ -842,7 +842,7 @@ REB_R PD_Gob(
     REBGOB *gob = VAL_GOB(pvs->out);
 
     if (IS_WORD(picker)) {
-        if (not Did_Get_GOB_Var(RESET(pvs->out), gob, picker))
+        if (not Did_Get_GOB_Var(pvs->out, gob, picker))
             return R_UNHANDLED;
 
         return pvs->out;

@@ -275,7 +275,11 @@ REBTYPE(Money)
         if (REF(to)) {
             if (IS_DECIMAL(to) or IS_PERCENT(to)) {
                 REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
-                INIT_VAL_HEADER(RESET(D_OUT), VAL_TYPE(to), CELL_MASK_NONE);
+                Reset_Cell_Header_Untracked(
+                    TRACK(D_OUT),
+                    VAL_TYPE(to),
+                    CELL_MASK_NONE
+                );
                 VAL_DECIMAL(D_OUT) = dec;
                 return D_OUT;
             }

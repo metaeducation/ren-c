@@ -651,7 +651,7 @@ inline static REBVAL *D_ARG_Core(REBFRM *f, REBLEN n) {  // 1 for first arg
 // then return the D_OUT pointer...this is the fastest form of returning.)
 //
 #define RETURN(v) \
-    return Overwrite_Cell(D_OUT, (v))
+    return Copy_Cell(D_OUT, (v))
 
 #define RETURN_INVISIBLE \
     do { \

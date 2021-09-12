@@ -490,13 +490,11 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, bool strict)
 
           case REB_INTEGER:
             if (tb == REB_DECIMAL || tb == REB_PERCENT) {
-                REBDEC dec_a = cast(REBDEC, VAL_INT64(a));
-                Init_Decimal(RESET(a), dec_a);
+                Init_Decimal(a, cast(REBDEC, VAL_INT64(a)));
                 goto compare;
             }
             else if (tb == REB_MONEY) {
-                deci amount = int_to_deci(VAL_INT64(a));
-                Init_Money(RESET(a), amount);
+                Init_Money(a, int_to_deci(VAL_INT64(a)));
                 goto compare;
             }
             break;
@@ -504,12 +502,11 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, bool strict)
           case REB_DECIMAL:
           case REB_PERCENT:
             if (tb == REB_INTEGER) {
-                REBDEC dec_b = cast(REBDEC, VAL_INT64(b));
-                Init_Decimal(RESET(b), dec_b);
+                Init_Decimal(b, cast(REBDEC, VAL_INT64(b)));
                 goto compare;
             }
             else if (tb == REB_MONEY) {
-                Init_Money(RESET(a), decimal_to_deci(VAL_DECIMAL(a)));
+                Init_Money(a, decimal_to_deci(VAL_DECIMAL(a)));
                 goto compare;
             }
             else if (tb == REB_DECIMAL || tb == REB_PERCENT) // equivalent types
@@ -518,11 +515,11 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, bool strict)
 
           case REB_MONEY:
             if (tb == REB_INTEGER) {
-                Init_Money(RESET(b), int_to_deci(VAL_INT64(b)));
+                Init_Money(b, int_to_deci(VAL_INT64(b)));
                 goto compare;
             }
             if (tb == REB_DECIMAL || tb == REB_PERCENT) {
-                Init_Money(RESET(b), decimal_to_deci(VAL_DECIMAL(b)));
+                Init_Money(b, decimal_to_deci(VAL_DECIMAL(b)));
                 goto compare;
             }
             break;
@@ -925,7 +922,7 @@ inline static REBVAL *Init_Zeroed_Hack(RELVAL *out, enum Reb_Kind kind) {
         Init_Pair_Int(out, 0, 0);
     }
     else {
-        INIT_VAL_HEADER(out, kind, CELL_MASK_NONE);
+        Reset_Cell_Header_Untracked(TRACK(out), kind, CELL_MASK_NONE);
         memset(&out->extra, 0, sizeof(union Reb_Value_Extra));
         memset(&out->payload, 0, sizeof(union Reb_Value_Payload));
     }

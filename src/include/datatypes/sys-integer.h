@@ -51,7 +51,7 @@
 #endif
 
 inline static REBVAL *Init_Integer_Untracked(RELVAL *out, REBI64 i64) {
-    INIT_VAL_HEADER(out, REB_INTEGER, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, REB_INTEGER, CELL_MASK_NONE);
     PAYLOAD(Integer, out).i64 = i64;
   #ifdef ZERO_UNUSED_CELL_FIELDS
     EXTRA(Any, out).trash = ZEROTRASH;

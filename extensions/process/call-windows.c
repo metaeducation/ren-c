@@ -258,7 +258,7 @@ REB_R Call_Core(REBFRM *frame_) {
         // https://github.com/rebol/rebol-issues/issues/2225
 
         REBVAL *text = rebValue("argv-block-to-command*", ARG(command));
-        Copy_Cell(RESET(ARG(command)), text);
+        Copy_Cell(ARG(command), text);
         rebRelease(text);
         goto text_command;
     }

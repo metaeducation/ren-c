@@ -53,7 +53,7 @@ void Collapsify_Array(REBARR *array, REBSPC *specifier, REBLEN limit)
                 limit + 1
             );
 
-            Init_Word(RESET(ARR_AT(copy, limit)), Canon(ELLIPSIS));
+            Init_Word(ARR_AT(copy, limit), Canon(ELLIPSIS));
 
             Collapsify_Array(
                 copy,
@@ -62,7 +62,7 @@ void Collapsify_Array(REBARR *array, REBSPC *specifier, REBLEN limit)
             );
 
             enum Reb_Kind kind = VAL_TYPE(item);
-            Init_Any_Array_At(RESET(item), kind, copy, 0);  // at 0 now
+            Init_Any_Array_At(item, kind, copy, 0);  // at 0 now
             assert(IS_SPECIFIC(item));
             assert(NOT_CELL_FLAG(item, NEWLINE_BEFORE));  // gets cleared
         }

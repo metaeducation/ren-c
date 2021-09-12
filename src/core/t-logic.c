@@ -202,7 +202,7 @@ REBNATIVE(_and_)  // see TO-C-NAME
         return R_THROWN;
     }
 
-    return Init_Logic(RESET(D_OUT), IS_TRUTHY(D_SPARE));
+    return Init_Logic(D_OUT, IS_TRUTHY(D_SPARE));
 }
 
 
@@ -242,7 +242,7 @@ REBNATIVE(_or_)  // see TO-C-NAME
         return R_THROWN;
     }
 
-    return Init_Logic(RESET(D_OUT), IS_TRUTHY(D_SPARE));
+    return Init_Logic(D_OUT, IS_TRUTHY(D_SPARE));
 }
 
 

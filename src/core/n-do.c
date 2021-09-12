@@ -145,7 +145,7 @@ REBNATIVE(shove)
             return R_THROWN;
         }
 
-        Move_Cell(RESET(shovee), D_OUT);
+        Move_Cell(shovee, D_OUT);
     }
     else if (IS_GROUP(f_value)) {
         if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
@@ -153,10 +153,10 @@ REBNATIVE(shove)
         if (Is_Void(D_OUT))  // !!! need SHOVE frame for type error
             fail ("GROUP! passed to SHOVE did not evaluate to content");
 
-        Move_Cell(RESET(shovee), D_OUT);  // can't eval directly into arg slot
+        Move_Cell(shovee, D_OUT);  // can't eval directly into arg slot
     }
     else
-        Copy_Cell(RESET(shovee), SPECIFIC(f_value));
+        Copy_Cell(shovee, SPECIFIC(f_value));
 
     if (not IS_ACTION(shovee) and not ANY_SET_KIND(VAL_TYPE(shovee)))
         fail ("SHOVE's immediate right must be ACTION! or SET-XXX! type");
@@ -704,7 +704,7 @@ REBNATIVE(redo)
         if (not IS_FRAME(D_OUT))
             fail ("Context of restartee in REDO is not a FRAME!");
 
-        Move_Cell(RESET(restartee), D_OUT);
+        Move_Cell(restartee, D_OUT);
     }
 
     REBCTX *c = VAL_CONTEXT(restartee);
@@ -814,7 +814,7 @@ REBNATIVE(applique)
         // with ~unset~ you have to manually hide the frame key.
         //
         if (Is_Unset(e.var))
-            Init_Nulled(RESET(e.var));
+            Init_Nulled(e.var);
 
         Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
     }
@@ -1033,7 +1033,7 @@ REBNATIVE(apply)
             param = e.param;
         }
 
-        Move_Cell(RESET(var), D_OUT);
+        Move_Cell(var, D_OUT);
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(var);
     }
@@ -1053,7 +1053,7 @@ REBNATIVE(apply)
     while (Did_Advance_Evars(&e)) {
         if (not arg_threw and not error and IS_TAG(e.var))
             if (VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag))
-                Init_Unset(RESET(e.var));
+                Init_Unset(e.var);
 
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }

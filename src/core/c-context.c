@@ -674,7 +674,7 @@ REBCTX *Make_Context_Detect_Managed(
         for (; src != src_tail; ++dest, ++src) {
             REBFLGS flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
             assert(IS_NULLED(dest));
-            Overwrite_Cell(dest, src);
+            Copy_Cell(dest, src);
             Clonify(dest, flags, TS_CLONE);
         }
     }

@@ -111,20 +111,18 @@ REBNATIVE(delimit)
         // https://forum.rebol.info/t/1348
         //
         if (KIND3Q_BYTE_UNCHECKED(f_value) == REB_BLANK) {
-            Literal_Next_In_Frame(RESET(out), f);
+            Literal_Next_In_Frame(out, f);
             Append_Codepoint(mo->series, ' ');
             pending = false;
             nothing = false;
             continue;
         }
 
-        if (Eval_Step_Throws(RESET(out), f)) {
+        if (Eval_Step_Throws(out, f)) {
             Drop_Mold(mo);
             Abort_Frame(f);
             return R_THROWN;
         }
-
-        assert(Is_Fresh(f_spare));
 
         if (IS_END(out)) {
             if (IS_END(f_value)) {  // spaced []
@@ -184,7 +182,6 @@ REBNATIVE(delimit)
                     return R_THROWN;
                 }
                 Form_Value(mo, out);
-                RESET(f_spare);
 
                 pending = true;
             }
@@ -215,12 +212,12 @@ REBNATIVE(delimit)
 
     if (nothing) {
         Drop_Mold(mo);
-        Init_Nulled(RESET(out));
+        Init_Nulled(out);
     }
     else {
         if (REF(tail))
             Form_Value(mo, delimiter);
-        Init_Text(RESET(out), Pop_Molded_String(mo));
+        Init_Text(out, Pop_Molded_String(mo));
     }
 
     Drop_Frame(f);

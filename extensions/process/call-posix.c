@@ -274,7 +274,7 @@ REB_R Call_Core(REBFRM *frame_) {
         //
         if (IS_TEXT(command)) {
             REBVAL *parsed = rebValue("parse-command-to-argv*", command);
-            Copy_Cell(RESET(command), parsed);
+            Copy_Cell(command, parsed);
             rebRelease(parsed);
         }
         else if (not IS_BLOCK(command))

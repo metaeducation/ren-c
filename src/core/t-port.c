@@ -126,7 +126,7 @@ REBTYPE(Port)
             //
             const REBVAL *made = rebValue("make port! @", D_ARG(1));
             assert(IS_PORT(made));
-            Copy_Cell(RESET(D_ARG(1)), made);
+            Copy_Cell(D_ARG(1), made);
             rebRelease(made);
             break; }
 
@@ -221,7 +221,7 @@ REBTYPE(Url)
     // The frame was built for the verb we want to apply, so tweak it so that
     // it has the PORT! in the argument slot, and run the action.
     //
-    Move_Cell(RESET(D_ARG(1)), port);
+    Move_Cell(D_ARG(1), port);
     rebRelease(port);
 
     return Do_Port_Action(frame_, D_ARG(1), verb);

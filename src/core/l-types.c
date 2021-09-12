@@ -103,7 +103,7 @@ REBNATIVE(make)
     if (IS_META_WORD(type)) {  // hack for MAKE CHAR! 0
         switch (VAL_WORD_ID(type)) {
           case SYM_CHAR_X:
-            Copy_Cell(RESET(type), Datatype_From_Kind(REB_ISSUE));
+            Copy_Cell(type, Datatype_From_Kind(REB_ISSUE));
             break;
 
           default:
@@ -392,8 +392,8 @@ REBNATIVE(of)
     // fit the type action dispatcher rule... dispatch item in first arg,
     // property in the second.
     //
-    Overwrite_Cell(ARG(property), ARG(value));
-    Overwrite_Cell(ARG(value), D_SPARE);
+    Copy_Cell(ARG(property), ARG(value));
+    Copy_Cell(ARG(value), D_SPARE);
 
     return Reflect_Core(frame_);
 }
@@ -645,7 +645,7 @@ const REBYTE *Scan_Decimal(
     if (cast(REBLEN, cp - bp) != len)
         return_NULL;
 
-    INIT_VAL_HEADER(out, REB_DECIMAL, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(TRACK(out), REB_DECIMAL, CELL_MASK_NONE);
 
     char *se;
     VAL_DECIMAL(out) = strtod(s_cast(buf), &se);
@@ -740,7 +740,7 @@ const REBYTE *Scan_Integer(
     // Convert, check, and return:
     errno = 0;
 
-    INIT_VAL_HEADER(out, REB_INTEGER, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(TRACK(out), REB_INTEGER, CELL_MASK_NONE);
 
     VAL_INT64(out) = CHR_TO_INT(buf);
     if (errno != 0)
@@ -1167,7 +1167,7 @@ const REBYTE *Scan_Pair(
 
     Manage_Pairing(paired);
 
-    INIT_VAL_HEADER(out, REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
+    Reset_Cell_Header_Untracked(TRACK(out), REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_PAIR(out, paired);
     return xp;
 }
@@ -1329,7 +1329,7 @@ REBNATIVE(scan_net_header)
                         SPECIFIED // no relative values added
                     );
                     val = Alloc_Tail_Array(a);
-                    Init_Block(RESET(item + 1), a);
+                    Init_Block(item + 1, a);
                 }
                 break;
             }

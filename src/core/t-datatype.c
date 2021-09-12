@@ -137,11 +137,11 @@ REBTYPE(Datatype)
 
             for (; key != key_tail; ++key, ++var) {
                 if (item == item_tail)
-                    Init_Blank(RESET(var));
+                    Init_Blank(var);
                 else {
                     // typespec array does not contain relative values
                     //
-                    Derelativize(RESET(var), item, SPECIFIED);
+                    Derelativize(var, item, SPECIFIED);
                     ++item;
                 }
             }
@@ -289,7 +289,9 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
             continue;
         }
 
-        INIT_VAL_HEADER(value, REB_DATATYPE, CELL_FLAG_FIRST_IS_NODE);
+        Init_Cell_Header_Untracked(
+            TRACK(value), REB_DATATYPE, CELL_FLAG_FIRST_IS_NODE
+        );
         VAL_TYPE_KIND_ENUM(value) = kind;
         INIT_VAL_TYPE_SPEC(value,
             VAL_ARRAY(ARR_AT(boot_typespecs, n - 2))

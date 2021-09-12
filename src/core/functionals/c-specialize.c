@@ -358,7 +358,7 @@ bool Specialize_Action_Throws(
         assert(IS_TAG(arg));
         assert(VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag));
         assert(IS_TYPESET(param));
-        Overwrite_Cell(arg, param);
+        Copy_Cell(arg, param);
         continue;
 
       specialized_arg_with_check:
@@ -764,7 +764,7 @@ REBACT *Alloc_Action_From_Exemplar(
         //
         if (Is_Unset(arg)) {
             assert(IS_TYPESET(param));
-            Overwrite_Cell(arg, param);
+            Copy_Cell(arg, param);
             continue;
         }
 

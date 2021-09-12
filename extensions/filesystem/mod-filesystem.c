@@ -573,7 +573,7 @@ REBNATIVE(what_dir)
         // reconsider the duplication.
 
         REBVAL *refresh = Get_Current_Dir_Value();
-        Copy_Cell(RESET(current_path), refresh);
+        Copy_Cell(current_path, refresh);
         rebRelease(refresh);
     }
     else if (not IS_URL(current_path)) {
@@ -620,7 +620,7 @@ REBNATIVE(change_dir)
             fail (PAR(path));
     }
 
-    Copy_Cell(RESET(current_path), arg);
+    Copy_Cell(current_path, arg);
 
     RETURN (arg);
 }

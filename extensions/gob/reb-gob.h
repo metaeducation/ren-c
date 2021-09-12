@@ -153,7 +153,7 @@ inline static REBVAL *Init_XYF(
     REBD32 x,  // 32-bit floating point type, typically just `float`...
     REBD32 y   // there's no standard: https://stackoverflow.com/a/18705626/
 ){
-    INIT_VAL_HEADER(out, REB_BYTES, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(TRACK(out), REB_BYTES, CELL_MASK_NONE);
     VAL_XYF_X(out) = x;
     VAL_XYF_Y(out) = y;
     return cast(REBVAL*, out);

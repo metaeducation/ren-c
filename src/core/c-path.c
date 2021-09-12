@@ -203,7 +203,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail ("TUPLE! support in PATH! processing limited to `a.` forms");
         }
         Derelativize(
-            RESET(f_spare),
+            f_spare,
             VAL_SEQUENCE_AT(temp, f_value, 0),
             VAL_SEQUENCE_SPECIFIER(f_value)
         );
@@ -211,7 +211,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         actions_illegal = true;
     }
     else if (IS_GET_WORD(f_value)) {  // e.g. object/:field
-        PVS_PICKER(pvs) = Get_Word_May_Fail(RESET(f_spare), f_value, f_specifier);
+        PVS_PICKER(pvs) = Get_Word_May_Fail(f_spare, f_value, f_specifier);
     }
     else if (
         IS_GROUP(f_value)  // object/(expr) case:
@@ -221,7 +221,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail ("GROUP! in PATH! used with GET or SET (use REDUCE/EVAL)");
 
         REBSPC *derived = Derive_Specifier(f_specifier, f_value);
-        if (Do_Any_Array_At_Throws(RESET(f_spare), f_value, derived)) {
+        if (Do_Any_Array_At_Throws(f_spare, f_value, derived)) {
             Move_Cell(pvs->out, f_spare);
             return true; // thrown
         }
@@ -244,7 +244,7 @@ bool Next_Path_Throws(REBPVS *pvs)
         // Common case... result where we expect it
     }
     else if (not r) {
-        Init_Nulled(RESET(pvs->out));
+        Init_Nulled(pvs->out);
     }
     else if (not IS_RETURN_SIGNAL(r)) {
         assert(GET_CELL_FLAG(r, ROOT));  // API, from Alloc_Value()
@@ -433,7 +433,7 @@ bool Eval_Path_Throws_Core(
             pvs->label = VAL_WORD_SYMBOL(second);
     }
     else if (IS_WORD(f_value)) {
-        Overwrite_Cell(pvs->out, Lookup_Word_May_Fail(f_value, specifier));
+        Copy_Cell(pvs->out, Lookup_Word_May_Fail(f_value, specifier));
 
         if (IS_ACTION(pvs->out)) {
             pvs->label = VAL_WORD_SYMBOL(f_value);
@@ -486,9 +486,9 @@ bool Eval_Path_Throws_Core(
             assert(IS_WORD(bottom) and not IS_WORD_BOUND(bottom));
             assert(IS_WORD(top) and not IS_WORD_BOUND(top));
 
-            Move_Cell(RESET(f_spare), bottom);
-            Move_Cell(RESET(bottom), top);
-            Move_Cell(RESET(top), f_spare);
+            Move_Cell(f_spare, bottom);
+            Move_Cell(bottom, top);
+            Move_Cell(top, f_spare);
 
             top--;
             bottom++;
@@ -521,7 +521,7 @@ bool Eval_Path_Throws_Core(
                 panic ("REFINE-only specializations should not THROW");
             }
 
-            Overwrite_Cell(pvs->out, FRM_SPARE(pvs));
+            Copy_Cell(pvs->out, FRM_SPARE(pvs));
         }
     }
 
@@ -682,7 +682,7 @@ REBNATIVE(pick)
         // It was parented to the PVS frame, we have to read it out.
         //
         assert(GET_CELL_FLAG(r, ROOT));  // API value
-        Copy_Cell(RESET(D_OUT), r);
+        Copy_Cell(D_OUT, r);
         rebRelease(r);
         r = D_OUT;
     }
@@ -823,14 +823,14 @@ REBNATIVE(poke)
                     // For now just give an error if it actually triggers.
                     //
                     cannot_writeback_let = true;
-                    Overwrite_Cell(
+                    Copy_Cell(
                         ARG(location),
                         Lookup_Word_May_Fail(item, VAL_SPECIFIER(picker))
                     );
                     ++VAL_INDEX_UNBOUNDED(picker);
                 }
                 else {
-                    Init_Any_Context(RESET(ARG(location)), CTX_TYPE(c), c);
+                    Init_Any_Context(ARG(location), CTX_TYPE(c), c);
                 }
             }
             else
@@ -845,7 +845,7 @@ REBNATIVE(poke)
         )){
             return R_THROWN;
         }
-        Move_Cell(RESET(picker), D_SPARE);
+        Move_Cell(picker, D_SPARE);
     }
     else if (ANY_INERT(picker)) {
         REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);

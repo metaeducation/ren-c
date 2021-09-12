@@ -348,7 +348,6 @@ REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
                 VAL_SEQUENCE_AT(out, arg, i),  // use out as scratch space
                 VAL_SEQUENCE_SPECIFIER(arg)
             );
-            RESET(out);  // was uesd as scratch space
         }
         return Init_Any_Array(out, kind, Pop_Stack_Values(dsp_orig));
     }
@@ -618,8 +617,8 @@ void Shuffle_Array(REBARR *arr, REBLEN idx, bool secure)
             swap.header = data[k].header;
             swap.payload = data[k].payload;
             swap.extra = data[k].extra;
-            Copy_Cell(RESET(&data[k]), &data[n + idx]);
-            Copy_Cell(RESET(&data[n + idx]), &swap);
+            Copy_Cell(&data[k], &data[n + idx]);
+            Copy_Cell(&data[n + idx], &swap);
         }
     }
 }
@@ -886,7 +885,7 @@ REBTYPE(Array)
 
             REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
             RELVAL *at = ARR_AT(mut_arr, n);
-            Move_Cell(RESET(at), setval);
+            Move_Cell(at, setval);
             Init_Bad_Word(setval, Canon(MOVE));
         }
         else {
@@ -1093,7 +1092,7 @@ REBTYPE(Array)
                     VAL_INDEX_RAW(array) = 0;
                 RETURN (array);  // don't fail on read only if would be a no-op
             }
-            Init_Nulled(RESET(ARG(value)));  // low-level NULL acts as nothing
+            Init_Nulled(ARG(value));  // low-level NULL acts as nothing
         }
 
         REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
@@ -1122,7 +1121,7 @@ REBTYPE(Array)
             //     == [~null~ *]
             //
             if (IS_NULLED(ARG(value)))
-                Init_Bad_Word(RESET(ARG(value)), Canon(NULL));
+                Init_Bad_Word(ARG(value), Canon(NULL));
         }
         else if (IS_BLOCK(ARG(value)))
             flags |= AM_SPLICE;
@@ -1381,7 +1380,7 @@ REBTYPE(Array)
                 return nullptr;
 
             Init_Integer(
-                RESET(ARG(seed)),
+                ARG(seed),
                 1 + (Random_Int(did REF(secure))
                     % (VAL_LEN_HEAD(array) - index))
             );

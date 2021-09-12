@@ -614,7 +614,7 @@ REB_R MAKE_Context(
 
         DECLARE_LOCAL (dummy);
         if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED)) {
-            Move_Cell(RESET(out), dummy);  // GC-guarded context was in out
+            Move_Cell(out, dummy);  // GC-guarded context was in out
             return R_THROWN;
         }
 
@@ -716,7 +716,7 @@ REB_R PD_Context(
         INIT_VAL_WORD_PRIMARY_INDEX(m_cast(RELVAL*, picker), n);
     }
 
-    return Overwrite_Cell(pvs->out, var);
+    return Copy_Cell(pvs->out, var);
 }
 
 
@@ -1168,7 +1168,7 @@ REBTYPE(Context)
             if (not var)
                 fail (Error_Bad_Path_Pick_Raw(picker));
 
-            Overwrite_Cell(var, setval);
+            Copy_Cell(var, setval);
         }
         else {
             const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);

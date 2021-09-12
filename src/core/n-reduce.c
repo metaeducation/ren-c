@@ -91,15 +91,14 @@ REBNATIVE(reduce)
             if (processed) {
                 if (Is_Void(processed)) {
                     rebRelease(processed);
-                    RESET(D_OUT);
                     continue;
                 }
-                Move_Cell(RESET(D_OUT), processed);
+                Move_Cell(D_OUT, processed);
                 Meta_Unquotify(D_OUT);
                 rebRelease(processed);
             }
             else
-                Init_Nulled(RESET(D_OUT));
+                Init_Nulled(D_OUT);
         }
 
         // Ren-C sticks with historical precedent in making the default
@@ -116,7 +115,6 @@ REBNATIVE(reduce)
         //
         if (IS_NULLED(D_OUT)) {
             Init_Bad_Word(DS_PUSH(), Canon(NULL));
-            RESET(D_OUT);
         }
         else {
             Move_Cell(DS_PUSH(), D_OUT);
@@ -166,7 +164,7 @@ REBNATIVE(reduce_each)
         &context,
         ARG(vars)
     );
-    Init_Object(RESET(ARG(vars)), context);  // keep GC safe
+    Init_Object(ARG(vars), context);  // keep GC safe
 
     REBFLGS flags = EVAL_MASK_DEFAULT;
     if (IS_THE_BLOCK(ARG(block)))
@@ -187,9 +185,9 @@ REBNATIVE(reduce_each)
             continue;  // `reduce [comment "hi"]`
         }
 
-        Move_Cell(RESET(CTX_VAR(context, 1)), D_SPARE);
+        Move_Cell(CTX_VAR(context, 1), D_SPARE);
 
-        if (Do_Branch_Throws(RESET(D_OUT), ARG(body))) {
+        if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
                 return R_THROWN;
@@ -643,8 +641,6 @@ REBNATIVE(compose)
 
     if (r == R_THROWN)
         return R_THROWN;
-
-    RESET(D_OUT);  // !!! try making Compose_To_Stack() leave this reset
 
     if (r == R_UNHANDLED) {
         //

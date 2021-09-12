@@ -76,7 +76,7 @@ inline static void INIT_VAL_VARARGS_BINDING(
 
 
 inline static REBVAL *Init_Varargs_Untyped_Normal(RELVAL *out, REBFRM *f) {
-    INIT_VAL_HEADER(out, REB_VARARGS, CELL_MASK_VARARGS);
+    Reset_Cell_Header_Untracked(out, REB_VARARGS, CELL_MASK_VARARGS);
     mutable_BINDING(out) = f->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck
@@ -98,7 +98,7 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
         Init_Block(ARR_SINGLE(feed), singular);  // index 0
     }
 
-    INIT_VAL_HEADER(out, REB_VARARGS, CELL_MASK_VARARGS);
+    Reset_Cell_Header_Untracked(out, REB_VARARGS, CELL_MASK_VARARGS);
     INIT_VAL_VARARGS_BINDING(out, feed);
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
     INIT_VAL_VARARGS_PHASE(out, nullptr);  // set in typecheck

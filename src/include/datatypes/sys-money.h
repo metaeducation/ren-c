@@ -81,7 +81,7 @@ inline static deci VAL_MONEY_AMOUNT(REBCEL(const*) v) {
 }
 
 inline static REBVAL *Init_Money(RELVAL *out, deci amount) {
-    INIT_VAL_HEADER(out, REB_MONEY, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, REB_MONEY, CELL_MASK_NONE);
 
     EXTRA(Any, out).u = amount.m0;  // "significand, lowest part"
     PAYLOAD(Any, out).first.u = amount.m1;  // "significand, continuation"

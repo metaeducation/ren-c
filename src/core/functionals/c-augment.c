@@ -153,7 +153,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
 
     assert(Is_Isotope(ARR_HEAD(paramlist), SYM_ROOTVAR));
     INIT_VAL_FRAME_ROOTVAR(
-        RESET(ARR_HEAD(paramlist)),
+        ARR_HEAD(paramlist),
         paramlist,
         VAL_ACTION(ARG(action)),
         VAL_ACTION_BINDING(ARG(action))

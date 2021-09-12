@@ -285,7 +285,7 @@ REB_R PD_Issue(
     for (; n != 1; --n)
         cp = NEXT_CHR(&c, cp);
 
-    return Init_Integer(RESET(pvs->out), c);
+    return Init_Integer(pvs->out, c);
 }
 
 

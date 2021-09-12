@@ -181,7 +181,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
 
             REBARR *single = Make_Array(1);
             Append_Value(single, SPECIFIC(val));
-            Init_Block(RESET(ARG(value)), single);
+            Init_Block(ARG(value), single);
             ports = ARG(value);
 
             timeout = ALL_BITS;

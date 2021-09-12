@@ -708,7 +708,7 @@ REBTYPE(Time)
             USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
             if (not REF(to)) {
-                Init_True(RESET(ARG(to)));  // by default make it /TO seconds
+                Init_True(ARG(to));  // by default make it /TO seconds
                 secs = Round_Int(secs, frame_, SEC_SEC);
                 return Init_Time_Nanoseconds(D_OUT, secs);
             }
