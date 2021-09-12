@@ -36,7 +36,7 @@
 //          [<opt> text!]
 //      delimiter [<opt> blank! char! text!]
 //      line "Will be copied if already a text value"
-//          [<blank> text! block! issue!]
+//          [<blank> text! block! the-block! issue!]
 //      /head "Include delimiter at head of result (if non-NULL)"
 //      /tail "Include delimiter at tail of result (if non-NULL)"
 //  ]
@@ -84,11 +84,13 @@ REBNATIVE(delimit)
         return Init_Text(out, Pop_Molded_String(mo));
     }
 
-    assert(IS_BLOCK(line));
+    REBFLGS flags = EVAL_MASK_DEFAULT;
+    if (IS_THE_BLOCK(ARG(line)))
+        flags |= EVAL_FLAG_NO_EVALUATIONS;
+    else
+        assert(IS_BLOCK(line));
 
-    DECLARE_FEED_AT (feed, line);
-
-    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+    DECLARE_FRAME_AT (f, line, flags);
     Push_Frame(nullptr, f);
 
     DECLARE_MOLD (mo);
