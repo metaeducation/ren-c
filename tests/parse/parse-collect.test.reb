@@ -490,3 +490,16 @@ https://github.com/metaeducation/ren-c/issues/939
         thing = ["a"]
     ]
 )
+
+
+(
+    data: [foo: "a" bar: "b" | foo: "c" bar: "d"]
+
+    [[foo: "a" bar: "b"] [foo: "c" bar: "d"]] = uparse data [
+        collect while further [keep ^ collect [
+            [keep [^ 'foo:], keep text!]
+            [keep [^ 'bar:], keep text!]
+            ['| | <end>]
+        ]]
+    ]
+)
