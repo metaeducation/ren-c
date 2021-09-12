@@ -30,9 +30,29 @@
     ]
 )
 
-; This file crashed Red on DEFLATE/ZLIB
-[
-    (bin: read %../fixtures/deflate-crashed-in-red.bin, true)
-    (bin = inflate deflate bin)
-    (bin = zinflate zdeflate bin)
-]
+; A 326-byte tricky file created problems for Red with zlib inflation, and
+; either crashed it or gave inconsistent results.  It could be successfully
+; inflated with Linux tool `zlib-flate -uncompress`, to 338 bytes.
+;
+; https://gitter.im/red/help?at=6139358f99b7d97528fc7152
+;
+; Ren-C got an error, which turns out to be Z_BUF_ERROR (-5).  Research
+; suggests this is the correct response and that both Red and zlib-flate are
+; incorrect in handling the corrupt file.  The tool `pigz` returns:
+;
+;     $ pigz -d < corrupt-zdeflated.bin
+;     pigz: skipping: <stdin>: corrupted -- incomplete deflate data
+;
+; The stream seems to be missing a termination signal.  Reporting it to
+; zlib-flate, it's believed to be a bug to accept the file:
+;
+; https://github.com/qpdf/qpdf/issues/562
+;
+; So now it's a check that there *is* an error.
+(
+    corrupt: read %../fixtures/corrupt-zdeflated.bin
+    assert [326 = length of corrupt]
+
+    e: trap [zinflate corrupt]
+    e.id = 'bad-compression
+)
