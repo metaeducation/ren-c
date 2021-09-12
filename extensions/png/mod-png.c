@@ -274,10 +274,35 @@ REBNATIVE(decode_png)
 // ]
 //
 REBNATIVE(encode_png)
+//
+// !!! Semantics for IMAGE! being a "series" with a "position" were extremely
+// dodgy in Rebol2/R3-Alpha (and remain so in things like Red today).  Saving
+// is no exception, Red seems to throw out the concept altogether there:
+//
+//     red>> i: make image! 2x2
+//     red>> i/1: 1.2.3
+//     red>> i
+//     == make image! [2x2 #{010203FFFFFFFFFFFFFFFFFF}]
+//
+//     red>> i: tail i
+//     == make image! [2x2 #{}]
+//
+//     red>> save %test.png i
+//
+//     red>> load %test.png
+//     == make image! [2x2 #{010203FFFFFFFFFFFFFFFFFF}]
+//
+// R3-Alpha gives a similar answer (unused pixels are 00, RGB reverse order).
+// Rebol2 gives back `make image! [2x2 #{}]`, losing the data.
+//
+// We write the head position here--for lack of a better answer.
 {
     PNG_INCLUDE_PARAMS_OF_ENCODE_PNG;
 
     REBVAL *image = ARG(image);
+    REBVAL *head = rebValue("head", image);  // ^-- see notes above on position
+    Move_Cell(RESET(image), head);
+    rebRelease(head);
 
     // Historically, Rebol would write (key="Software" value="REBOL") into
     // image metadata.  Is that interesting?  If so, the state has fields for

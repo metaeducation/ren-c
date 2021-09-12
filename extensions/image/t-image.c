@@ -1210,11 +1210,11 @@ REBTYPE(Image)
         switch (property) {
         case SYM_HEAD:
             VAL_IMAGE_POS(image) = 0;
-            break;
+            RETURN (image);
 
         case SYM_TAIL:
             VAL_IMAGE_POS(image) = cast(REBLEN, tail);
-            break;
+            RETURN (image);
 
         case SYM_HEAD_Q:
             return Init_Logic(D_OUT, index == 0);

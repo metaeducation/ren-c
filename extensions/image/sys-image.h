@@ -71,7 +71,7 @@ inline static REBYTE *VAL_IMAGE_AT_HEAD(REBCEL(const*) v, REBLEN pos) {
 // a lot of sense.
 
 #define VAL_IMAGE_POS(v) \
-    VAL_INDEX_UNBOUNDED(VAL_IMAGE_BIN(v))
+    PAYLOAD(Any, (v)).second.i
 
 inline static REBYTE *VAL_IMAGE_AT(REBCEL(const*) v) {
     return VAL_IMAGE_AT_HEAD(v, VAL_IMAGE_POS(v));
@@ -113,7 +113,7 @@ inline static REBVAL *Init_Image(
     VAL_IMAGE_WIDTH(out) = width;  // see why this isn't put on bin...
     VAL_IMAGE_HEIGHT(out) = height;  // (...it would corrupt shared series!)
 
-    assert(VAL_IMAGE_POS(out) == 0);  // !!! sketchy concept, is in BINARY!
+    VAL_IMAGE_POS(out) = 0;  // !!! sketchy concept, is in BINARY!
 
     return cast(REBVAL*, out);
 }
