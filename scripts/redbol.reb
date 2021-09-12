@@ -1312,8 +1312,13 @@ oldsplicer: helper [
                 value: as block! value  ; guarantees splicing
             ]
 
-            ; Rebol2 converted integers to their string equivalent when
-            ; appending to BINARY!.  R3-Alpha considers INTEGER! to be byte:
+            ; Red and R3-Alpha would allow you to append an INTEGER! to a
+            ; BINARY! and treat it as a byte.  But Rebol2 would add it as the
+            ; character of the digit.  We go ahead and add as a byte because
+            ; there's no good way to add a byte otherwise.  (CHAR! encodings no
+            ; longer guarantee going to a single byte.)
+            ;
+            ; But if the integer is in a block, we fall back to Rebol2 behavior
             ;
             ;     rebol2> append bin [1234]
             ;     == #{32353731323334}
@@ -1325,6 +1330,7 @@ oldsplicer: helper [
             ;
             all [
                 not issue? value  ; want e.g. # appended as #{00} to BINARY!
+                not integer? value
                 match [any-string! binary!] series
                 (type of series) != (type of :value)  ; changing breaks /PART
             ] then [
