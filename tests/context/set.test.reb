@@ -2,14 +2,14 @@
 [#1763
     (
         a: <before>
-        [_] = [a]: unpack inert reduce .try [null]
+        [_] = [a]: unpack inert reduce/predicate [null] :try
         blank? :a
     )
 ]
 (
     a: <a-before>
     b: <b-before>
-    [2 _] = [a b]: unpack inert reduce .try [2 null]
+    [2 _] = [a b]: unpack inert reduce/predicate [2 null] :try
     a = 2
     blank? :b
 )
