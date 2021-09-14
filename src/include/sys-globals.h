@@ -43,7 +43,6 @@ PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 //
 PVAR const REBSYM *PG_Slash_1_Canon;  // Preallocated "fake" word for `/`
 PVAR const REBSYM *PG_Dot_1_Canon;  // Preallocated "fake" word for `.`
-PVAR const REBSYM *PG_Trash_Canon;  // Preallocated ~trash~ bad word
 
 // This is a series that holds 8-platform-pointer REBARR nodes, arranged in
 // canon order.  It provides fast access to lib entries by symbol.

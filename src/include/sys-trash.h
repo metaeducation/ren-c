@@ -67,40 +67,30 @@ inline static REBVAL *Init_Bad_Word_Untracked(
 }
 
 
-#if (! DEBUG_UNREADABLE_TRASH)  // release behavior, just ~trash~
+
+inline static REBVAL *Init_Trash_Untracked(RELVAL *out) {
+    Reset_Cell_Header_Untracked(
+        TRACK(out), REB_BAD_WORD, CELL_FLAG_FIRST_IS_NODE
+      );
+    mutable_BINDING(out) = nullptr;
+
+    // While SYM_UNREADABLE might be nice here, this prevents usage at
+    // boot time (e.g. data stack initialization)...and it's a good way
+    // to crash sites that might mistake it for a valid bad word.  It's
+    // usually clear from the assert that it's unreadable, anyway.
     //
-    // Important: This is *not* a CELL_FLAG_ISOTOPE form of ~trash~.  That is
-    // because trash can be put anywhere as an implementation detail--including
-    // array slots which cannot legally hold isotopes.  So if by some chance
-    // that trash leaks, we don't want to further corrupt the state.
-    //
-    #define Init_Trash(v) \
-        Init_Bad_Word_Untracked((v), PG_Trash_Canon, CELL_MASK_NONE)
-#else
-    inline static REBVAL *Init_Trash_Untracked(RELVAL *out) {
-        Reset_Cell_Header_Untracked(
-            TRACK(out), REB_BAD_WORD, CELL_FLAG_FIRST_IS_NODE
-          );
-        mutable_BINDING(out) = nullptr;
+    INIT_VAL_NODE1(out, nullptr);  // FIRST_IS_NODE needed to do this
+  #ifdef ZERO_UNUSED_CELL_FIELDS
+    PAYLOAD(Any, out).second.trash = ZEROTRASH;
+  #endif
+    return cast(REBVAL*, out);
+}
 
-        // While SYM_UNREADABLE might be nice here, this prevents usage at
-        // boot time (e.g. data stack initialization)...and it's a good way
-        // to crash sites that might mistake it for a valid bad word.  It's
-        // usually clear from the assert that it's unreadable, anyway.
-        //
-        INIT_VAL_NODE1(out, nullptr);  // FIRST_IS_NODE needed to do this
-      #ifdef ZERO_UNUSED_CELL_FIELDS
-        PAYLOAD(Any, out).second.trash = ZEROTRASH;
-      #endif
-        return cast(REBVAL*, out);
-    }
+#define Init_Trash(out) \
+    Init_Trash_Untracked(TRACK(out))
 
-    #define Init_Trash(out) \
-        Init_Trash_Untracked(TRACK(out))
-
-    inline static bool IS_TRASH(const RELVAL *v) {
-        if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
-            return false;
-        return VAL_NODE1(v) == nullptr;
-    }
-#endif
+inline static bool IS_TRASH(const RELVAL *v) {
+    if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
+        return false;
+    return VAL_NODE1(v) == nullptr;
+}

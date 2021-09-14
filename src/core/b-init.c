@@ -67,7 +67,7 @@ static void Check_Basics(void)
     //=//// CHECK REBVAL SIZE ////////////////////////////////////////////=//
 
     // The system is designed with the intent that REBVAL is 4x(32-bit) on
-    // 32-bit platforms and 4x(64-bit) on 64-bit platforms.  It's a crtical
+    // 32-bit platforms and 4x(64-bit) on 64-bit platforms.  It's a critical
     // performance point.  For the moment we consider it to be essential
     // enough that the system that it refuses to run if not true.
     //
@@ -824,9 +824,8 @@ void Startup_Core(void)
 
 //=//// INITIALIZE TICK COUNT /////////////////////////////////////////////=//
 
-    // The timer tick starts at 1, not 0.  This is because the debug build
-    // uses signed timer ticks to double as an extra bit of information in
-    // REB_BLANK cells to indicate they are "unreadable".
+    // The timer tick starts at 1, not 0.  This has allowed a signed timer
+    // tick to indicate some other characteristic when tick values are stored.
     //
   #if DEBUG_COUNT_TICKS
     TG_Tick = 1;
@@ -840,6 +839,9 @@ void Startup_Core(void)
     // to longjmp the state to an address from another thread--hence every
     // thread switch must also be a site of trapping all errors.  (Or the
     // limit must be saved in thread local storage.)
+    //
+    // (This will be irrelevant after transitioning to the "stackless" approach
+    // where interpreter stack frames are independent of the C stack.)
 
     int dummy;  // variable whose address acts as base of stack for below code
     Set_Stack_Limit(&dummy, DEFAULT_STACK_BOUNDS);
@@ -989,8 +991,8 @@ void Startup_Core(void)
     Manage_Series(datatypes_catalog);
     PUSH_GC_GUARD(datatypes_catalog);
 
-    // !!! REVIEW: Startup_Typesets() uses symbols, data stack, and
-    // adds words to lib--not available untilthis point in time.
+    // !!! REVIEW: Startup_Typesets() uses symbols, data stack, and adds words
+    // to lib--not available until this point in time.
     //
     Startup_Typesets();
 

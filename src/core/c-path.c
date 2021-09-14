@@ -720,7 +720,7 @@ REBNATIVE(poke)
 // As with PICK*, POKE is changed in Ren-C from its own action to "whatever
 // path-setting (now path-poking) would do".
 //
-// !!! This could have the same frame as POKE! and thus be more efficient
+// !!! This could have the same frame as PICK-POKE* and thus be more efficient
 // for redispatch.
 {
     INCLUDE_PARAMS_OF_POKE;

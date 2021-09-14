@@ -576,7 +576,6 @@ void Shutdown_Symbols(void)
 {
     PG_Slash_1_Canon = nullptr;
     PG_Dot_1_Canon = nullptr;
-    PG_Trash_Canon = nullptr;
 }
 
 
