@@ -64,7 +64,7 @@ compile: func [
     ; being available in some builds.  It gets added to lib but is somehow not
     ; available here.  This is a bug to look into.
     ;
-    get-env: :lib/get-env
+    get-env: :lib.get-env
 
     if 0 = length of compilables [
         fail ["COMPILABLES must have at least one element"]
@@ -99,7 +99,7 @@ compile: func [
 
     let b: settings
     loop [not tail? b] [
-        var: (select config try match word! key: b/1) else [
+        var: (select config try match word! key: b.1) else [
             fail [{COMPILE/OPTIONS parameter} key {is not supported}]
         ]
         b: next b
@@ -107,7 +107,7 @@ compile: func [
             fail [{Missing argument to} key {in COMPILE}]
         ]
 
-        let arg: b/1
+        let arg: b.1
         b: next b
 
         if block? var [  ; at present, this always means multiple paths
@@ -132,10 +132,10 @@ compile: func [
                     if not word? arg [
                         fail [key "must be WORD!"]
                     ]
-                    config/output-type: arg
+                    config.output-type: arg
                 ]
                 'output-file 'runtime-path 'librebol-path [
-                    config/(key): switch type of arg [
+                    config.(key): switch type of arg [
                         file! [arg]
                         text! [local-to-file arg]
                         fail [key "must be TEXT! or FILE!"]
@@ -146,15 +146,15 @@ compile: func [
         ]
     ]
 
-    config/output-type: default ['MEMORY]
+    config.output-type: default ['MEMORY]
     all [
-        config/output-type <> 'MEMORY
-        not config/output-file
+        config.output-type <> 'MEMORY
+        not config.output-file
     ] then [
         fail "If OUTPUT-TYPE is not 'MEMORY then OUTPUT-FILE must be set"
     ]
 
-    config/output-file: my file-to-local/full
+    config.output-file: my file-to-local/full
 
     ; !!! The pending concept is that there are embedded files in the TCC
     ; extension, and these files are extracted to the local filesystem in
@@ -164,35 +164,35 @@ compile: func [
     ; For now, if the options don't specify a `runtime-dir` use CONFIG_TCCDIR,
     ; which is a standard setting.
 
-    config/runtime-path: default [try any [
+    config.runtime-path: default [try any [
         local-to-file try get-env "CONFIG_TCCDIR"  ; (backslashes on windows)
 
         ; !!! Guessing is probably a good idea in the long term, but in the
         ; short term it just creates unpredictability.  Avoid for now.
         ;
-        ; match exists? %/usr/lib/x86_64-linux-gnu/tcc/
-        ; match exists? %/usr/local/lib/tcc/
+        ; match exists? %/usr/lib.x86_64-linux-gnu/tcc/
+        ; match exists? %/usr/local/lib.tcc/
     ]]
 
-    if not config/runtime-path [
+    if not config.runtime-path [
         fail [
             {CONFIG_TCCDIR must be set in the environment or `runtime-path`}
             {must be provided in the /SETTINGS}
         ]
     ]
 
-    if not dir? config/runtime-path [
+    if not dir? config.runtime-path [
         print [
-            {Runtime path} config/runtime-path {doesn't end in a slash,}
+            {Runtime path} config.runtime-path {doesn't end in a slash,}
             {which violates the DIR? protocol, but as CONFIG_TCCDIR is often}
             {documented as being used without slashes we're allowing it.}
         ]
-        append config/runtime-path "/"
+        append config.runtime-path "/"
     ]
 
-    if not exists? make-file [(config/runtime-path) include /] [
+    if not exists? make-file [(config.runtime-path) include /] [
         fail [
-            {Runtime path} config/runtime-path {does not have an %include/}
+            {Runtime path} config.runtime-path {does not have an %include/}
             {directory.  It should have files like %stddef.h and %stdarg.h}
             {because TCC has its own definition of macros like va_arg(), that}
             {use internal helpers like __va_start that are *not* in GNU libc}
@@ -210,15 +210,15 @@ compile: func [
     ; wanting to control the paths directly they may want to omit these hacky
     ; stubs entirely (e.g. use the actual Windows SDK files, maybe?)
 
-    if 3 = fourth system/version [  ; e.g. Windows (32-bit or 64-bit)
-        if empty? config/include-path [
-            append config/include-path file-to-local/full make-file [
-                (config/runtime-path) win32/include /
+    if 3 = fourth system.version [  ; e.g. Windows (32-bit or 64-bit)
+        if empty? config.include-path [
+            append config.include-path file-to-local/full make-file [
+                (config.runtime-path) win32/include /
             ]
         ]
-        if empty? config/library-path [
-            append config/library-path file-to-local/full make-file [
-                (config/runtime-path) win32/library /
+        if empty? config.library-path [
+            append config.library-path file-to-local/full make-file [
+                (config.runtime-path) win32/library /
             ]
         ]
 
@@ -227,7 +227,7 @@ compile: func [
         ; that TCC can find %libtcc1.a.  So adding the runtime path as a
         ; normal library directory.
         ;
-        insert config/library-path file-to-local/full config/runtime-path
+        insert config.library-path file-to-local/full config.runtime-path
     ]
 
     ; Note: The few header files in %tcc/include/ must out-prioritize the ones
@@ -237,8 +237,8 @@ compile: func [
     ;
     ; https://stackoverflow.com/questions/53154898/
 
-    insert config/include-path file-to-local/full make-file [
-        (config/runtime-path) include /
+    insert config.include-path file-to-local/full make-file [
+        (config.runtime-path) include /
     ]
 
     ; The other complicating factor is that once emitted code has these
@@ -263,11 +263,11 @@ compile: func [
             ;
             ; Better suggestions on how to do this are of course welcome.  :-/
             ;
-            insert config/library-path [
-                "/usr/lib/gcc/x86_64-linux-gnu/7/32/"
-                "/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib32/"
-                "/lib/../lib32/"
-                "/usr/lib/../lib32/"
+            insert config.library-path [
+                "/usr/lib.gcc/x86_64-linux-gnu/7/32/"
+                "/usr/lib.gcc/x86_64-linux-gnu/7/../../../../lib32/"
+                "/lib.../lib32/"
+                "/usr/lib.../lib32/"
             ]
         ]
 
@@ -293,12 +293,12 @@ compile: func [
         ; the tcc command line tool...for now this works around it enough to
         ; help get the bootstrap demo going.
         ;
-        4 = fourth system/version [  ; Linux
+        4 = fourth system.version [  ; Linux
             lddir: "lib"
-            triplet: try if 40 = fifth system/version [  ; 64-bit
+            triplet: try if 40 = fifth system.version [  ; 64-bit
                 "x86_64-linux-gnu"
             ]
-            insert config/library-path compose [
+            insert config.library-path compose [
                 (unspaced ["/usr/" lddir])
                 (if triplet [unspaced ["/usr/" lddir "/" triplet]])
                 (unspaced ["/" lddir])
@@ -388,26 +388,26 @@ compile: func [
             ; TCC adds -lc (by calling `tcc_add_library_err(s1, "c");`) by
             ; default during link, unless you override it with this switch.
             ;
-            append config/options "-nostdlib"
+            append config.options "-nostdlib"
         ]
 
         ; We want to embed and ship "rebol.h" automatically.  But as a first
         ; step, try overriding with the LIBREBOL_INCLUDE_DIR environment
         ; variable, if it wasn't explicitly passed in the options.
 
-        config/librebol-path: default [try any [
+        config.librebol-path: default [try any [
             get-env "LIBREBOL_INCLUDE_DIR"
 
             ; Guess it is in the runtime directory (%encap-tcc-resources.reb
             ; puts it into the root of the zip file at the moment)
             ;
-            config/runtime-path
+            config.runtime-path
         ]]
 
         ; We are going to test for %rebol.h in the path, so need a FILE!
         ;
-        switch type of config/librebol-path [
-            text! [config/librebol-path: my local-to-file]
+        switch type of config.librebol-path [
+            text! [config.librebol-path: my local-to-file]
             file! []
             blank! [
                 fail [
@@ -417,31 +417,31 @@ compile: func [
                     {(e.g. in %make/prep/include)}
                 ]
             ]
-            fail ["Invalid LIBREBOL_INCLUDE_DIR:" config/librebol-path]
+            fail ["Invalid LIBREBOL_INCLUDE_DIR:" config.librebol-path]
         ]
 
-        if not dir? config/librebol-path [
+        if not dir? config.librebol-path [
             fail [
-                {LIBREBOL_INCLUDE_DIR or LIBREBOL-PATH} config/librebol-path
+                {LIBREBOL_INCLUDE_DIR or LIBREBOL-PATH} config.librebol-path
                 {should end in a slash to follow the DIR? protocol}
             ]
         ]
 
-        if not exists? make-file [(config/librebol-path) rebol.h] [
+        if not exists? make-file [(config.librebol-path) rebol.h] [
             fail [
-                {Looked for %rebol.h in} config/librebol-path {and did not}
+                {Looked for %rebol.h in} config.librebol-path {and did not}
                 {find it.  Check your definition of LIBREBOL_INCLUDE_DIR}
             ]
         ]
 
-        insert config/include-path file-to-local config/librebol-path
+        insert config.include-path file-to-local config.librebol-path
     ]
 
     ; Having paths as Rebol FILE! is useful for doing work, but the TCC calls
     ; want local paths.  Convert.
     ;
-    config/runtime-path: my file-to-local/full
-    config/librebol-path: '~taken-into-account~  ; COMPILE* does not read
+    config.runtime-path: my file-to-local/full
+    config.librebol-path: '~taken-into-account~  ; COMPILE* does not read
 
     let result: applique :compile* [
         compilables: compilables
@@ -465,13 +465,13 @@ c99: func [
 
     return: "Exit status code (try to match gcc/tcc)"
         [integer!]
-    command "POSIX c99 invocation string (systems/options/args if <end>)"
+    command "POSIX c99 invocation string (system.options.args if <end>)"
         [<end> block! text!]
     /inspect
     /runtime "Alternate way of specifying CONFIG_TCCDIR environment variable"
         [text! file!]
 ][
-    command: spaced any [command, system/options/args]
+    command: spaced any [command, system.options.args]
 
     let compilables: copy []
 
@@ -628,7 +628,7 @@ c99: func [
 
 bootstrap: func [
     {Download Rebol sources from GitHub and build using TCC}
-    /options "Use SYSTEM/OPTIONS/ARGS to get additional make.r options"
+    /options "Use system.options.ARGS to get additional make.r options"
 ][
     ; We fetch the .ZIP file of the master branch from GitHub.  Note that this
     ; actually contains a subdirectory called `ren-c-master` which the
@@ -644,17 +644,17 @@ bootstrap: func [
     ; that hasn't been done, use fetching from a web build as a proxy for it.
     ;
     unzip/quiet %./tccencap https://metaeducation.s3.amazonaws.com/travis-builds/0.4.40/r3-06ac629-debug-cpp-tcc-encap.zip
-    lib/set-env "CONFIG_TCCDIR" file-to-local make-file [(what-dir) %tccencap/]
+    lib.set-env "CONFIG_TCCDIR" file-to-local make-file [(what-dir) %tccencap/]
 
     cd ren-c-master
 
     ; make.r will notice we are in the same directory as itself, and so it
     ; will make a %build/ subdirectory to do the building in.
     ;
-    let status: lib/call [
-        (system/options/boot) make.r
+    let status: lib.call [
+        (system.options.boot) make.r
             "config=configs/bootstrap.r"
-            ((if options [system/options/args]))
+            ((if options [system.options.args]))
     ]
     if status != 0 [
         fail ["BOOTSTRAP command failed with exit status:" status]
