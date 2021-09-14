@@ -44,6 +44,13 @@ PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 PVAR const REBSYM *PG_Slash_1_Canon;  // Preallocated "fake" word for `/`
 PVAR const REBSYM *PG_Dot_1_Canon;  // Preallocated "fake" word for `.`
 
+// SYMBOL! is a new concept that would act WORD!-like, but not have variants
+// (no SET-, GET-, META-, THE-).  The specific symbols of ^ and @ would have
+// behavior assigned to them in LIB.
+//
+PVAR const REBSYM *PG_At_Symbol;
+PVAR const REBSYM *PG_Caret_Symbol;
+
 // This is a series that holds 8-platform-pointer REBARR nodes, arranged in
 // canon order.  It provides fast access to lib entries by symbol.
 //

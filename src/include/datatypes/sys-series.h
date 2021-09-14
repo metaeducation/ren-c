@@ -1053,8 +1053,8 @@ inline static void INIT_SPECIFIER(RELVAL *v, const void *p) {
     mutable_BINDING(v) = binding;
 
   #if !defined(NDEBUG)
-    if (not binding or IS_SYMBOL(binding))
-        return;  // e.g. UNBOUND (words use strings to indicate unbounds)
+    if (not binding)
+        return;  // e.g. UNBOUND
 
     assert(Is_Bindable(v));  // works on partially formed values
 

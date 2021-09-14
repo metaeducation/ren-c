@@ -186,7 +186,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     SET_END(f->out);
 
     if (IS_END(f_next)) {
-        if (IS_META(v))  // allow (@), REB_META case makes END into ~void~
+        if (IS_META(v))  // allow (@), case makes END into ~void~
             return false;
 
         // `do [x:]`, `do [o/x:]`, etc. are illegal
@@ -234,7 +234,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     }
 
     if (IS_END(f->out)) {
-        if (IS_META(v))   // allow (@ comment "hi"), REB_META makes ~void~
+        if (IS_META(v))   // allow (@ comment "hi"), makes ~void~
             return false;
 
         // e.g. `do [x: ()]` or `(x: comment "hi")`.
@@ -1514,21 +1514,13 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         break;
 
 
-    //=//// LIT! ///////////////////////////////////////////////////////////=//
+    //=//// SYMBOL! ////////////////////////////////////////////////////////=//
     //
-    // Like QUOTE, with the added feature that it will preserve the isotope
-    // status of BAD-WORD! arguments.  (QUOTE does not take a `^literal`
-    // argument so it cannot detect this distinction.)
-
-      case REB_META:
-        if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
-            goto return_thrown;
-
-        Meta_Quotify(f->out);  // allows END, e.g. (^) -> ~void~ isotope
-        break;
-
-
-    //=//// THE! ///////////////////////////////////////////////////////////=//
+    // These are currently manifesting built-in behavior for ^ and @, but are
+    // being generalized so that they too may be overridden.  Temporarily
+    // handle only these specific cases.
+    //
+    // Note about @:
     //
     // Acts mostly like THE, useful in particular to put in API strings to
     // indicate the coming variadic slot is to be taken as-is:
@@ -1556,20 +1548,30 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // rebQ() instead...and if you're sure it's not a real NULL, then you can
     // use THE.
 
-      case REB_THE:
-        if (IS_END(f_next))
-            fail ("@ hit end of input");
-        Inertly_Derelativize_Inheriting_Const(f->out, f_next, f->feed);
+      case REB_SYMBOL:
+        if (VAL_WORD_SYMBOL(v) == PG_Caret_Symbol) {
+            if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
+                goto return_thrown;
 
-        if (IS_BAD_WORD(f->out)) {
-            assert(NOT_CELL_FLAG(f->out, ISOTOPE));
-            if (VAL_BAD_WORD_ID(f->out) == SYM_NULL)
-                Init_Nulled(f->out);
-            else
-                fail ("@ can only accept the BAD-WORD! of ~NULL~ to make NULL");
+            Meta_Quotify(f->out);  // allows END, e.g. (^) -> ~void~ isotope
         }
+        else {
+            assert(VAL_WORD_SYMBOL(v) == PG_At_Symbol);
 
-        Fetch_Next_Forget_Lookback(f);  // advances next
+            if (IS_END(f_next))
+                fail ("@ hit end of input");
+            Inertly_Derelativize_Inheriting_Const(f->out, f_next, f->feed);
+
+            if (IS_BAD_WORD(f->out)) {
+                assert(NOT_CELL_FLAG(f->out, ISOTOPE));
+                if (VAL_BAD_WORD_ID(f->out) == SYM_NULL)
+                    Init_Nulled(f->out);
+                else
+                    fail ("@ only accepts BAD-WORD! of ~NULL~ to make NULL");
+            }
+
+            Fetch_Next_Forget_Lookback(f);  // advances next
+        }
         break;
 
 

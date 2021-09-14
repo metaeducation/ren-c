@@ -1942,7 +1942,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
       case TOKEN_CARET:
         assert(*bp == '^');
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
-            Init_Lit(DS_PUSH());
+            Init_Meta(DS_PUSH());
             break;
         }
         goto token_prefixable_sigil;

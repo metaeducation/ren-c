@@ -46,17 +46,17 @@
 //
 #define LINK_Synonym_TYPE       const REBSYM*
 #define LINK_Synonym_CAST       SYM
-#define HAS_LINK_Synonym        FLAVOR_SYMBOL
+#define HAS_LINK_Synonym        FLAVOR_INTERN
 
 // Hitches are a circularly linked list that includes transient binding info
 // for the word, as well as declared variables in "sea" contexts.
 //
 #define MISC_Hitch_TYPE         REBSER*
 #define MISC_Hitch_CAST         SER
-#define HAS_MISC_Hitch          FLAVOR_SYMBOL
+#define HAS_MISC_Hitch          FLAVOR_INTERN
 
 
-//=//// SYMBOL_FLAG_ARROW //////////////////////////////////////////////////=//
+//=//// INTERN_FLAG_ARROW //////////////////////////////////////////////////=//
 //
 // Arrow words are marked when they are interned so it's known not to allow
 // them to be put in PATH!s or TUPLE!s, as dots and slashes are legal in the
@@ -64,7 +64,7 @@
 //
 // https://forum.rebol.info/t/1702
 //
-#define SYMBOL_FLAG_ARROW \
+#define INTERN_FLAG_ARROW \
     SERIES_FLAG_24
 
 

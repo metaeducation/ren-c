@@ -112,7 +112,7 @@ uint32_t Hash_UTF8_Caseless(REBCHR(const*) cp, REBLEN len) {
 uint32_t Hash_Value(const RELVAL *v)
 {
     REBCEL(const*) cell = VAL_UNESCAPED(v);  // hash dequoted cell
-    enum Reb_Kind kind = CELL_KIND(cell);
+    enum Reb_Kind kind = CELL_HEART(cell);
 
     uint32_t hash;
 

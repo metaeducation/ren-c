@@ -263,7 +263,7 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
 
     REBBIN *s = BIN(Make_Series(
         size + 1,  // if small, fits in a REBSER node (w/no data allocation)
-        FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE
+        FLAG_FLAVOR(INTERN) | SERIES_FLAG_FIXED_SIZE
     ));
 
     // Cache whether this is an arrow word.
@@ -274,7 +274,7 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
   blockscope {
     for (REBLEN i = 0; i < size; ++i) {
         if (utf8[i] == '<' or utf8[i] == '>') {
-            SET_SUBCLASS_FLAG(SYMBOL, s, ARROW);
+            SET_SUBCLASS_FLAG(INTERN, s, ARROW);
             break;
         }
     }
@@ -562,10 +562,19 @@ void Startup_Symbols(void)
     if (0 != strcmp("parse-reject", STR_UTF8(Canon(PARSE_REJECT))))
         panic (Canon(PARSE_REJECT));
 
-    PG_Bar_Canon = Canon(BAR);
-    PG_Bar_Bar_Canon = Canon(_B_B);
-    PG_Slash_1_Canon = Canon(_SLASH_1_);
-    PG_Dot_1_Canon = Canon(_DOT_1_);
+    ensureNullptr(PG_Bar_Canon) = Canon(BAR);
+    ensureNullptr(PG_Bar_Bar_Canon) = Canon(_B_B);
+    ensureNullptr(PG_Slash_1_Canon) = Canon(_SLASH_1_);
+    ensureNullptr(PG_Dot_1_Canon) = Canon(_DOT_1_);
+
+    ensureNullptr(PG_At_Symbol) = Intern_UTF8_Managed(
+        cast(const REBYTE *, "@"),
+        1
+    );
+    ensureNullptr(PG_Caret_Symbol) = Intern_UTF8_Managed(
+        cast(const REBYTE *, "^"),
+        1
+    );
 }
 
 
@@ -574,8 +583,13 @@ void Startup_Symbols(void)
 //
 void Shutdown_Symbols(void)
 {
+    PG_Bar_Canon = nullptr;
+    PG_Bar_Bar_Canon = nullptr;
     PG_Slash_1_Canon = nullptr;
     PG_Dot_1_Canon = nullptr;
+
+    PG_At_Symbol = nullptr;
+    PG_Caret_Symbol = nullptr;
 }
 
 

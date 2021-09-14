@@ -1,6 +1,6 @@
 ; %the.test.reb
 ;
-; @ (which is of type THE!) is a special operator 
+; @ (which is of type SYMBOL!) is a special operator
 ;
 ; The other THE-XXX! types are pretty simple since they are inert.
 ;
@@ -11,9 +11,9 @@
 (@[bl o ck] = first [@[bl o ck]])
 (@(gr o up) = first [@(gr o up)])
 
-; THE! has special case behavior that ~null~ becomes plain null
+; @ has special case behavior that ~null~ becomes plain null
 [
    ('x = @ x)
    ('(a b c) = @ (a b c))
    (null = @ ~null~)
-] 
+]

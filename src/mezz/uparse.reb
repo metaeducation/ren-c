@@ -1605,9 +1605,9 @@ default-combinators: make map! reduce [
         return item
     ]
 
-    the! combinator [
+    '@ combinator [
         return: "Ensuing value in the rule stream 'as-is'" [<opt> any-value!]
-        value [the!]
+        value [symbol!]
         'item [any-value!]
     ][
         if bad-word? :item [  ; keep nuance of ~null~ making NULL
@@ -1782,7 +1782,7 @@ default-combinators: make map! reduce [
     ; !!! These follow a simple pattern, could all use the same combinator and
     ; just be sensitive to the received type of value.
 
-    meta! combinator [
+    '^ combinator [
         return: "Meta quoted" [<opt> bad-word! quoted!]
         parser [action!]
     ][

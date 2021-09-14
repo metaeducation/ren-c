@@ -952,7 +952,7 @@ void Assert_Context_Core(REBCTX *c)
 
     REBLEN n;
     for (n = 1; n < vars_len; n++, var++, key++) {
-        if (not IS_SYMBOL(*key))
+        if (not IS_INTERN(*key))
             panic (*key);
 
       #if DEBUG_TERM_ARRAYS

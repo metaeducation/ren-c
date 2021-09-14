@@ -377,8 +377,8 @@ void* Probe_Core_Debug(
         Mold_Text_Series_At(mo, STR(s), 0);  // or could be TAG!, etc.
         break; }
 
-      case FLAVOR_SYMBOL: {
-        Probe_Print_Helper(p, expr, "Symbol series", file, line);
+      case FLAVOR_INTERN: {
+        Probe_Print_Helper(p, expr, "Interned (Symbol) series", file, line);
         Mold_Text_Series_At(mo, STR(s), 0);
         break; }
 

@@ -411,12 +411,8 @@ static void Init_Root_Vars(void)
     // the root set.  Should that change, they could be explicitly added
     // to the GC's root set.
 
-    Reset_Cell_Header_Untracked(
-        TRACK(&PG_Meta_Value), REB_META, CELL_MASK_NONE
-    );
-    Reset_Cell_Header_Untracked(
-        TRACK(&PG_The_Value), REB_THE, CELL_MASK_NONE
-    );
+    Init_Meta(&PG_Meta_Value);
+    Init_The(&PG_The_Value);
 
     Init_Return_Signal(&PG_R_Thrown, C_THROWN);
     Init_Return_Signal(&PG_R_Invisible, C_INVISIBLE);

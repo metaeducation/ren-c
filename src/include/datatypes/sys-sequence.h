@@ -114,7 +114,7 @@ inline static bool Is_Valid_Sequence_Element(
     }
 
     if (k == REB_WORD)  // Words containing < or > not valid, others are
-        return NOT_SUBCLASS_FLAG(SYMBOL, VAL_WORD_SYMBOL(v), ARROW);
+        return NOT_SUBCLASS_FLAG(INTERN, VAL_WORD_SYMBOL(v), ARROW);
 
     if (k == REB_TUPLE)  // PATH! can have TUPLE!, not vice-versa
         return ANY_PATH_KIND(sequence_kind);

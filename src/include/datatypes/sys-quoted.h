@@ -413,28 +413,3 @@ inline static bool IS_QUOTED_PATH(const RELVAL *v) {
         and VAL_QUOTED_DEPTH(v) == 1
         and CELL_KIND(VAL_UNESCAPED(v)) == REB_PATH;
 }
-
-
-inline static REBVAL *Init_Lit(RELVAL *out) {
-    Reset_Cell_Header_Untracked(out, REB_META, CELL_MASK_NONE);
-
-    // Although LIT! carries no data, it is not inert.  To make ANY_INERT()
-    // fast, it's in the part of the list of bindable evaluative types.
-    // This means the binding has to be nulled out in the cell to keep the
-    // GC from crashing on it.
-    //
-    mutable_BINDING(out) = nullptr;
-    return cast(REBVAL*, out);
-}
-
-inline static REBVAL *Init_The(RELVAL *out) {
-    Reset_Cell_Header_Untracked(out, REB_THE, CELL_MASK_NONE);
-
-    // Although THE! carries no data, it is not inert.  To make ANY_INERT()
-    // fast, it's in the part of the list of bindable evaluative types.
-    // This means the binding has to be nulled out in the cell to keep the
-    // GC from crashing on it.
-    //
-    mutable_BINDING(out) = nullptr;
-    return cast(REBVAL*, out);
-}

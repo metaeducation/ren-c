@@ -53,7 +53,7 @@ inline static void INIT_VAL_WORD_VIRTUAL_MONDEX(
     VAL_WORD_INDEXES_U32(m_cast(RELVAL*, v)) |= mondex << 20;
 }
 
-inline static REBVAL *Init_Any_Word_Core(
+inline static REBVAL *Init_Any_Word_Untracked(
     RELVAL *out,
     enum Reb_Kind kind,
     const REBSYM *sym
@@ -67,7 +67,7 @@ inline static REBVAL *Init_Any_Word_Core(
 }
 
 #define Init_Any_Word(out,kind,spelling) \
-    Init_Any_Word_Core(TRACK(out), (kind), (spelling))
+    Init_Any_Word_Untracked(TRACK(out), (kind), (spelling))
 
 #define Init_Word(out,str)          Init_Any_Word((out), REB_WORD, (str))
 #define Init_Get_Word(out,str)      Init_Any_Word((out), REB_GET_WORD, (str))
@@ -147,4 +147,29 @@ inline static bool IS_BAR(const RELVAL *v) {
 inline static bool IS_BAR_BAR(const RELVAL *v) {
     return KIND3Q_BYTE_UNCHECKED(v) == REB_WORD
         and VAL_WORD_SYMBOL(v) == PG_Bar_Bar_Canon;  // caseless || always canon
+}
+
+
+inline static REBVAL *Init_Meta(RELVAL *out) {
+    Init_Any_Word_Untracked(out, REB_WORD, PG_Caret_Symbol);
+    mutable_KIND3Q_BYTE(out) = REB_SYMBOL;
+    return cast(REBVAL*, out);
+}
+
+inline static REBVAL *Init_The(RELVAL *out) {
+    Init_Any_Word_Untracked(out, REB_WORD, PG_At_Symbol);
+    mutable_KIND3Q_BYTE(out) = REB_SYMBOL;
+    return cast(REBVAL*, out);
+}
+
+inline static bool IS_META(const RELVAL *v) {
+    if (not IS_SYMBOL(v))
+        return false;
+    return VAL_WORD_SYMBOL(v) == PG_Caret_Symbol;
+}
+
+inline static bool IS_THE(const RELVAL *v) {
+    if (not IS_SYMBOL(v))
+        return false;
+    return VAL_WORD_SYMBOL(v) == PG_At_Symbol;
 }

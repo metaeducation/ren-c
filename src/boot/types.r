@@ -330,19 +330,12 @@ meta-word   "word that quotes its product or removes isotope status"
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 
-; META! is just the lone ^ symbol, which acts like QUOTE, but with the ability
-; to pick up on the isotope/invisible distinctions.
+; SYMBOL! is a category for things that can be bound, but which do not have
+; variations like words do (there's no SET-SYMBOL! and such).  Hence it can
+; be things like @ and ^.
 
-meta        "quoting operator which distinguishes NULL and BAD-WORD! isotopes"
-            meta        -       -       +       [unit meta-type]
-
-
-; THE! is the lone @ symbol, which acts like THE.  It's particularly nice to
-; have for use in the API, for writing `rebDid("action? @", var)` instead of
-; needing to say `rebDid("action?" rebQ(var))`.
-
-the         "as-is operator which suppresses evaluation on the next value"
-            the         -       -       +       [unit the-type]
+symbol       "quoting operator which distinguishes NULL and BAD-WORD! isotopes"
+            symbol        -       -       +       [unit]
 
 
 ; COMMA! has a high number with bindable types it's evaluative, and the
