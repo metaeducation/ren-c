@@ -497,7 +497,7 @@ set: emulate [
         return: [<opt> any-value!]
         target [blank! any-word! any-path! block! any-context!]
         value [<opt> any-value!]
-        /any "Renamed to /OPT, with SET/OPT specialized as SET*"
+        /any "Not needed in Ren-C, SET lets you set to anything"
         /some
     ][
         set_ANY: any

@@ -539,7 +539,7 @@ void Get_Var_May_Fail(
 ){
     enum Reb_Kind kind = CELL_KIND(VAL_UNESCAPED(source));
 
-    if (ANY_WORD_KIND(kind)) {
+    if (ANY_WORD_KIND(kind) or kind == REB_SYMBOL) {
         Copy_Cell(out, Lookup_Word_May_Fail(source, specifier));
     }
     else if (ANY_SEQUENCE_KIND(kind)) {
@@ -581,7 +581,7 @@ void Get_Var_May_Fail(
 //
 //      return: [<opt> any-value!]
 //      source "Word or path to get, or block of words or paths"
-//          [<blank> any-word! any-sequence! block!]
+//          [<blank> any-word! symbol! any-sequence!]
 //      /any "Do not error on BAD-WORD! isotopes"
 //  ]
 //
@@ -591,55 +591,31 @@ REBNATIVE(get)
 
     REBVAL *source = ARG(source);
 
-    if (not IS_BLOCK(source)) {
-        Get_Var_May_Fail(
-            D_OUT,
-            source,
-            SPECIFIED,
-            did REF(any)
-        );
-        return D_OUT;  // IS_NULLED() is okay
-    }
-
-    REBARR *results = Make_Array(VAL_LEN_AT(source));
-    RELVAL *dest = ARR_HEAD(results);
-    const RELVAL *tail;
-    const RELVAL *item = VAL_ARRAY_AT(&tail, source);
-
-    for (; item != tail; ++item, ++dest) {
-        DECLARE_LOCAL (temp);
-        Get_Var_May_Fail(
-            temp,  // don't want to write directly into movable memory
-            item,
-            VAL_SPECIFIER(source),
-            did REF(any)
-        );
-        if (IS_NULLED(temp))  // blocks can't contain nulls
-            Init_Bad_Word(dest, Canon(NULL));
-        else
-            Copy_Cell(dest, temp);
-    }
-
-    SET_SERIES_LEN(results, VAL_LEN_AT(source));
-    return Init_Block(D_OUT, results);
+    Get_Var_May_Fail(
+        D_OUT,
+        source,
+        SPECIFIED,
+        did REF(any)
+    );
+    return D_OUT;  // IS_NULLED() is okay
 }
 
 
 //
 //  get*: native [
 //
-//  {Gets the value of a word or path, allows BAD-WORD!}
+//  {Gets the value of a word or path, allows BAD-WORD! isotopes}
 //
 //      return: [<opt> any-value!]
 //      source "Word or path to get"
-//          [<blank> any-word! any-path!]
+//          [<blank> any-word! symbol! any-path!]
 //  ]
 //
-REBNATIVE(get_p)
+REBNATIVE(get_p)  // a faster variant of GET/ANY as native
 //
-// This is added as a compromise, as `:var` won't efficiently get ANY-VALUE!.
-// At least `get* 'var` doesn't make you pay for path processing, and it's
-// not a specialization so it doesn't incur that overhead.
+// !!! When plain GET could not get NULL values it made more sense to have
+// an optimized shorthand of a form of GET that didn't make you pay for
+// path processing.  Now that it's just isotopes, it's less necessary.
 {
     INCLUDE_PARAMS_OF_GET_P;
 
@@ -672,7 +648,7 @@ void Set_Var_May_Fail(
 
     enum Reb_Kind kind = CELL_KIND(VAL_UNESCAPED(target));
 
-    if (ANY_WORD_KIND(kind)) {
+    if (ANY_WORD_KIND(kind) or kind == REB_SYMBOL) {
         REBVAL *var = Sink_Word_May_Fail(target, target_specifier);
         Derelativize(var, setval, setval_specifier);
     }
@@ -720,7 +696,7 @@ void Set_Var_May_Fail(
 //      return: [<opt> any-value!]
 //          {Will be the values set to, or void if any set values are void}
 //      target "Word or path (# means ignore assignment, just return value)"
-//          [blackhole! any-word! any-sequence! quoted!]
+//          [blackhole! any-word! symbol! any-sequence! quoted!]
 //      value [<opt> <meta> any-value!]
 //  ]
 //

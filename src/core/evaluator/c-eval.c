@@ -1368,7 +1368,12 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                     rebRelease(let);
                 }
             }
-            else if (IS_WORD(item) or IS_PATH(item) or IS_TUPLE(item)) {
+            else if (
+                IS_WORD(item)
+                or IS_SYMBOL(item)
+                or IS_PATH(item)
+                or IS_TUPLE(item)
+            ){
                 Derelativize(DS_PUSH(), item, specifier);
             }
             else

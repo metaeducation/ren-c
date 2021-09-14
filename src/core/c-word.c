@@ -273,7 +273,12 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
     //
   blockscope {
     for (REBLEN i = 0; i < size; ++i) {
-        if (utf8[i] == '<' or utf8[i] == '>') {
+        if (
+            utf8[i] == '<'
+            or utf8[i] == '>'
+            or utf8[i] == '@'
+            or utf8[i] == '^'
+        ){
             SET_SUBCLASS_FLAG(INTERN, s, ARROW);
             break;
         }
