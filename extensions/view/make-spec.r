@@ -15,8 +15,11 @@ includes: copy [
 ; included, because it doesn't bring along any extra dependencies.
 ;
 libraries: try switch system-config/os-base [
+    ;
+    ; Note: MinGW is case-sensitive, e.g. %Ole32 won't work.
+    ;
     'Windows [
-        [%Ole32 %comdlg32]
+        [%ole32 %comdlg32]
     ]
 
     ; Note: It seemed to help to put this at the beginning of the
