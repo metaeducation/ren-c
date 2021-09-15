@@ -396,7 +396,7 @@ import*: func [
     ; We don't want remote execution of a module via `import <some-library>`
     ; to be able to turn around and run code locally.  So during a remote
     ; import, any WORD!-style imports like `import 'mod2` are turned into
-    ; `import <mod2>`.
+    ; `import @mod2`.
     ;
     let old-importing-remotely: importing-remotely
     if all [importing-remotely, word? source] [
@@ -404,15 +404,18 @@ import*: func [
     ]
 
     if word? source [
+        let file
         for-each path system.options.module-paths [
-            let file: join path :[file system.options.default-suffix]
+            file: join path :[source system.options.default-suffix]
             if not exists? file [
                 continue
             ]
-            return [# (product)]: import* file
+            source: file
+            break
         ]
 
-        fail ["Could not find any" file "in SYSTEM.OPTIONS.MODULE-PATHS"]
+        (file? source)
+        or (fail ["Could not find any" file "in SYSTEM.OPTIONS.MODULE-PATHS"])
     ]
 
     === GET DIRECTORY PORTION OF SOURCE PATH FOR NEW SYSTEM.SCRIPT.PATH  ===
