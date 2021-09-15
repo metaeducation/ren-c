@@ -966,28 +966,6 @@ REBVAL *RL_rebValue(unsigned char quotes, const void *p, va_list *vaptr)
 
 
 //
-//  rebInto: RL_API
-//
-// Like rebValue, but puts the value into an existing cell.  Note that if it
-// nulls the cell, the returned value is nullptr and the cell is nulled.
-//
-REBVAL *RL_rebInto(
-    unsigned char quotes,
-    REBVAL *out,
-    const void *p, va_list *vaptr
-){
-    ENTER_API;
-
-    Run_Va_May_Fail(out, quotes, p, vaptr);  // calls va_end()
-
-    if (not IS_NULLED(out))
-        return out;  // caller must rebRelease()
-
-    return nullptr;  // No NULLED cells in API, see notes on NULLIFY_NULLED()
-}
-
-
-//
 //  rebQuote: RL_API
 //
 // Variant of rebValue() that simply quotes its result.  So `rebQuote(...)` is
