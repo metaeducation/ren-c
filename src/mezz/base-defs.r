@@ -512,6 +512,7 @@ reeval func* [
     pair?:
     time?:
     date?:
+    symbol?:
     word?:
     set-word?:
     get-word?:

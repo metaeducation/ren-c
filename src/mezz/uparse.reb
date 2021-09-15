@@ -1607,7 +1607,6 @@ default-combinators: make map! reduce [
 
     '@ combinator [
         return: "Ensuing value in the rule stream 'as-is'" [<opt> any-value!]
-        value [symbol!]
         'item [any-value!]
     ][
         if bad-word? :item [  ; keep nuance of ~null~ making NULL
@@ -1977,7 +1976,7 @@ default-combinators: make map! reduce [
         return devoid do f
     ]
 
-    === WORD! COMBINATOR ===
+    === WORD! AND SYMBOL! COMBINATOR ===
 
     ; The WORD! combinator handles *non-keyword* WORD! dispatches.  It cannot
     ; also handle keywords, because that would mean it would have to be able
@@ -1988,7 +1987,7 @@ default-combinators: make map! reduce [
         return: "Result of running combinator from fetching the WORD!"
             [<opt> <invisible> any-value!]
         pending: [blank! block!]
-        value [word!]
+        value [word! symbol!]
         <local> r comb
     ][
         r: case [
@@ -2294,6 +2293,14 @@ default-combinators: make map! reduce [
 ]
 
 
+=== MAKE SYMBOL! COMBINATOR SAME AS WORD! COMBINATOR ===
+
+; There's no easy way to do this in a MAP!, like `word!: symbol!: ...` would
+; work for OBJECT!.
+
+default-combinators.(symbol!): :default-combinators.(word!)
+
+
 === COMPATIBILITY FOR NON-TAG KEYWORD FORMS ===
 
 ; !!! This has been deprecated.  But it's currently possible to get this
@@ -2495,7 +2502,7 @@ parsify: func [
     ; objects...while Ren-C doesn't want that.
     ;
     case [
-        word? :r [
+        any [word? :r, symbol? :r] [
             if comb: select state.combinators r [
                 ;
                 ; It's a keyword (the word itself is named in the combinators)

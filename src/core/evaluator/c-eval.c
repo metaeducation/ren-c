@@ -685,18 +685,24 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         break; }
 
 
-    //=//// WORD! /////////////////////////////////////////////////////////=//
+    //=//// WORD! and SYMBOL! //////////////////////////////////////////////=//
     //
     // A plain word tries to fetch its value through its binding.  It fails
     // if the word is unbound (or if the binding is to a variable which is
     // set, but to a non-isotope form of bad-word!).  Should the word look up
     // to an action, then that action will be invoked.
     //
+    // SYMBOL! behaves the same way.  The only reason SYMBOL! is in a different
+    // category is to communicate that it does not come in SET-/GET-/META-/THE-
+    // variations...but it can be overriden in the same way.  (It's possible
+    // to SET a symbol or to put it in a SET-BLOCK!, e.g. `[@]: 10`)
+    //
     // NOTE: The usual dispatch of enfix functions is *not* via a REB_WORD in
     // this switch, it's by some code at the `lookahead:` label.  You only see
     // enfix here when there was nothing to the left, so cases like `(+ 1 2)`
     // or in "stale" left hand situations like `10 comment "hi" + 20`.
 
+      case REB_SYMBOL:
       process_word:
       case REB_WORD:
         if (not gotten)
@@ -1516,67 +1522,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         Inertly_Derelativize_Inheriting_Const(f->out, v, f->feed);
         mutable_KIND3Q_BYTE(f->out) = REB_BLOCK + REB_64;  // quoted
         mutable_HEART_BYTE(f->out) = REB_BLOCK;
-        break;
-
-
-    //=//// SYMBOL! ////////////////////////////////////////////////////////=//
-    //
-    // These are currently manifesting built-in behavior for ^ and @, but are
-    // being generalized so that they too may be overridden.  Temporarily
-    // handle only these specific cases.
-    //
-    // Note about @:
-    //
-    // Acts mostly like THE, useful in particular to put in API strings to
-    // indicate the coming variadic slot is to be taken as-is:
-    //
-    //    >> @ x
-    //    == x
-    //
-    // The exception is that @ does not accept BAD-WORD!s, *except* for ~null~,
-    // which it turns into true NULL.
-    //
-    //     >> @ ~null~
-    //     ; null
-    //
-    // This is done as a convenience for the API so people can write:
-    //
-    //     rebElide("append block try @", value_might_be_null);
-    //
-    // ...instead of:
-    //
-    //     rebElide("append block try", rebQ(value_might_be_null));
-    //
-    // Because the API machinery will put a plain `~null~` into the stream as
-    // a surrogate for a NULL instead of asserting/erroring.  If you know that
-    // what you are dealing with might be a BAD-WORD!, then you should use
-    // rebQ() instead...and if you're sure it's not a real NULL, then you can
-    // use THE.
-
-      case REB_SYMBOL:
-        if (VAL_WORD_SYMBOL(v) == PG_Caret_Symbol) {
-            if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
-                goto return_thrown;
-
-            Meta_Quotify(f->out);  // allows END, e.g. (^) -> ~void~ isotope
-        }
-        else {
-            assert(VAL_WORD_SYMBOL(v) == PG_At_Symbol);
-
-            if (IS_END(f_next))
-                fail ("@ hit end of input");
-            Inertly_Derelativize_Inheriting_Const(f->out, f_next, f->feed);
-
-            if (IS_BAD_WORD(f->out)) {
-                assert(NOT_CELL_FLAG(f->out, ISOTOPE));
-                if (VAL_BAD_WORD_ID(f->out) == SYM_NULL)
-                    Init_Nulled(f->out);
-                else
-                    fail ("@ only accepts BAD-WORD! of ~NULL~ to make NULL");
-            }
-
-            Fetch_Next_Forget_Lookback(f);  // advances next
-        }
         break;
 
 

@@ -112,7 +112,7 @@ uint32_t Hash_UTF8_Caseless(REBCHR(const*) cp, REBLEN len) {
 uint32_t Hash_Value(const RELVAL *v)
 {
     REBCEL(const*) cell = VAL_UNESCAPED(v);  // hash dequoted cell
-    enum Reb_Kind kind = CELL_HEART(cell);
+    enum Reb_Kind kind = CELL_KIND(cell);
 
     uint32_t hash;
 
@@ -267,10 +267,13 @@ uint32_t Hash_Value(const RELVAL *v)
 
       hash_any_word:
         //
+      case REB_SYMBOL:
+        //
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:
-      case REB_META_WORD: {
+      case REB_META_WORD:
+      case REB_THE_WORD: {
         //
         // Note that the canon symbol may change for a group of word synonyms
         // if that canon is GC'd--it picks another synonym.  Thus the pointer

@@ -2412,7 +2412,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     // object, it would be more complex...only for efficiency, and nothing
     // like it existed before.
     //
-    if (ss->context and ANY_WORD(DS_TOP)) {
+    if (ss->context and (ANY_WORD(DS_TOP) or IS_SYMBOL(DS_TOP))) {
         INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
         INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, INDEX_ATTACHED);
     }

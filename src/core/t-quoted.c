@@ -186,6 +186,28 @@ REBTYPE(Quoted)
 //  ]
 //
 REBNATIVE(the)
+//
+// THE is currently not letting you use it with BAD-WORD!, except for ~null~,
+// which is transitioned to true NULL.
+//
+//     >> @ ~null~
+//     ; null
+//
+// This is done as a convenience for the API so people can write:
+//
+//     rebElide("append block try @", value_might_be_null);
+//
+// ...instead of:
+//
+//     rebElide("append block try", rebQ(value_might_be_null));
+//
+// Because the API machinery will put a plain `~null~` into the stream as
+// a surrogate for a NULL instead of asserting/erroring.  If you know that
+// what you are dealing with might be a BAD-WORD!, then you should use
+// rebQ() instead...
+//
+// This likely needs to be rethought, as to whether THE and @ should be the
+// same.  It's temporarily the same as behavior is transitioned to the SYMBOL!
 {
     INCLUDE_PARAMS_OF_THE;
 
@@ -197,7 +219,16 @@ REBNATIVE(the)
         return D_OUT;  // Don't set UNEVALUATED flag
     }
 
-    Copy_Cell(D_OUT, v);
+    if (IS_BAD_WORD(v)) {
+        assert(NOT_CELL_FLAG(v, ISOTOPE));
+        if (VAL_BAD_WORD_ID(v) == SYM_NULL)
+            Init_Nulled(D_OUT);
+        else
+            fail ("@ and THE only accept BAD-WORD! of ~NULL~ to make NULL");
+    }
+    else
+        Copy_Cell(D_OUT, v);
+
     SET_CELL_FLAG(D_OUT, UNEVALUATED);
     return D_OUT;
 }
@@ -269,11 +300,11 @@ REBNATIVE(quote)
 //
 //  meta: native [
 //
-//  {Like single quote, but keeps ordinary NULL as-is}
+//  {Turns BAD-WORD! isotopes into plain BAD-WORD!, ignores NULL, quotes rest}
 //
-//      return: "Quoted value (if depth = 0, may not be quoted)"
+//      return: "Will be a ~void~ isotope if input was <end>"
 //          [<opt> any-value!]
-//      optional [<opt> <meta> any-value!]
+//      optional [<opt> <meta> <end> any-value!]
 //  ]
 //
 REBNATIVE(meta)

@@ -129,7 +129,7 @@ REBNATIVE(bind)
 
     REBLEN flags = REF(only) ? BIND_0 : BIND_DEEP;
 
-    REBU64 bind_types = TS_WORD;
+    REBU64 bind_types = TS_WORD | FLAGIT_KIND(REB_SYMBOL);
 
     REBU64 add_midstream_types;
     if (REF(new)) {

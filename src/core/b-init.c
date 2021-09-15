@@ -226,6 +226,15 @@ static void Startup_Lib(void)
     assert(IS_TRUTHY(Lib(TRUE)) and VAL_LOGIC(Lib(TRUE)) == true);
     assert(IS_FALSEY(Lib(FALSE)) and VAL_LOGIC(Lib(FALSE)) == false);
 
+    Append_Context(Lib_Context, nullptr, PG_Caret_Symbol);
+    Append_Context(Lib_Context, nullptr, PG_At_Symbol);
+
+    Init_Any_Word_Bound(&PG_Meta_Value, REB_WORD, Lib_Context, PG_Caret_Symbol, INDEX_ATTACHED);
+    mutable_KIND3Q_BYTE(&PG_Meta_Value) = REB_SYMBOL;
+
+    Init_Any_Word_Bound(&PG_The_Value, REB_WORD, Lib_Context, PG_At_Symbol, INDEX_ATTACHED);
+    mutable_KIND3Q_BYTE(&PG_The_Value) = REB_SYMBOL;
+
     // !!! Other constants are just initialized as part of Startup_Base().
 }
 
@@ -410,9 +419,6 @@ static void Init_Root_Vars(void)
     // and thus can be stored safely in program globals without mention in
     // the root set.  Should that change, they could be explicitly added
     // to the GC's root set.
-
-    Init_Meta(&PG_Meta_Value);
-    Init_The(&PG_The_Value);
 
     Init_Return_Signal(&PG_R_Thrown, C_THROWN);
     Init_Return_Signal(&PG_R_Invisible, C_INVISIBLE);
@@ -1000,6 +1006,14 @@ void Startup_Core(void)
     REBARR *natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
     Manage_Series(natives_catalog);
     PUSH_GC_GUARD(natives_catalog);
+
+    // ^ and @ used to be their own datatypes, but were transitioned to SYMBOL!
+    // and looked up like everything else.  But they are used early on.  In
+    // Startup_Lib() they were created and bound, but the natives weren't
+    // available to assign to them...do it here for now.
+    //
+    Set_Var_May_Fail(&PG_Meta_Value, SPECIFIED, Lib(META), SPECIFIED);
+    Set_Var_May_Fail(&PG_The_Value, SPECIFIED, Lib(THE), SPECIFIED);
 
     // boot->generics is the list in %generics.r
     //
