@@ -255,6 +255,7 @@ inline static bool Eval_Step_Maybe_Stale_Throws(
 }
 
 inline static bool Eval_Step_Throws(REBVAL *out, REBFRM *f) {
+    RESET(out);
     bool threw = Eval_Step_Maybe_Stale_Throws(out, f);
     CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
     return threw;
