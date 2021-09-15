@@ -97,15 +97,15 @@ jobs:
            config-file: mingw-x64.r
            standard: c++17
            debug: none
-           extensions: "Network - Filesystem - Process - Locale -"  # ^-- Note
-           variation: ""
+           extensions: "Network - Filesystem - Process - Locale - DNS -"
+           variation: ""  # ^-- Note
 
          - os-id: 0.3.1  # 32-bit Target (built on this 64-bit platform)
            config-file: mingw-x86.r
            standard: c99
            debug: normal
-           extensions: "Network - Filesystem - Process - Locale -"  # ^-- Note
-           variation: ""
+           extensions: "Network - Filesystem - Process - Locale - DNS -"
+           variation: ""  # ^-- Note
 
 
     # See README: Environment Variables
