@@ -267,7 +267,7 @@ REBNATIVE(quote)
 
 
 //
-//  metaquote: native [
+//  meta: native [
 //
 //  {Like single quote, but keeps ordinary NULL as-is}
 //
@@ -276,11 +276,11 @@ REBNATIVE(quote)
 //      optional [<opt> <meta> any-value!]
 //  ]
 //
-REBNATIVE(metaquote)
+REBNATIVE(meta)
 {
-    INCLUDE_PARAMS_OF_METAQUOTE;
+    INCLUDE_PARAMS_OF_META;
 
-    return Move_Cell(D_OUT, ARG(optional));  // argument is ^meta
+    RETURN (ARG(optional));  // argument was already ^meta
 }
 
 

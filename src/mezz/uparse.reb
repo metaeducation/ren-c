@@ -1774,9 +1774,9 @@ default-combinators: make map! reduce [
     ; important with functions like KEEP...but advanced tunneling of behavior
     ; regarding unsets, nulls, and invisibility requires the feature.
     ;
-    ; Note: These are NOT fixed as `[:block-combinator | :metaquote]`, because
+    ; Note: These are NOT fixed as `[:block-combinator | :meta]`, because
     ; they want to inherit whatever combinator that is currently in use for
-    ; their un-lit'd type (by default).  This means dynamically reacting to
+    ; their un-meta'd type (by default).  This means dynamically reacting to
     ; the set of combinators chosen for the particular parse.
     ;
     ; !!! These follow a simple pattern, could all use the same combinator and
