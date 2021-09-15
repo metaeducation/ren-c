@@ -439,7 +439,7 @@ void Fold_Zone_Into_Date(RELVAL *d)
         int zone = VAL_ZONE(d);
         VAL_DATE(d).zone = NO_DATE_ZONE;
         if (zone != 0)
-            Adjust_Date_Zone_Core(d, - zone);
+            Adjust_Date_Zone_Core(d, zone);
         VAL_DATE(d).zone = NO_DATE_ZONE;
     }
 }

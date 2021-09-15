@@ -18,11 +18,31 @@
 //
 REBVAL *Get_Current_Datetime_Value(void)
 {
+    // GetSystemTime() gets the UTC time.  (GetLocalTime() would get the
+    // local time, but we instead get the time zone to get the whole picture.)
+    //
     SYSTEMTIME stime;
-    TIME_ZONE_INFORMATION tzone;
-
     GetSystemTime(&stime);
 
+    // Note about tzone.Bias:
+    //
+    //   The bias is the difference, in minutes, between Coordinated Universal
+    //   Time (UTC) and local time. All translations between UTC and local time
+    //   are based on the following formula:
+    //
+    //     UTC = local time + bias
+    //
+    // And about tzone.DaylightBias:
+    //
+    //   This value is added to the value of the Bias member to form the bias
+    //   used during daylight saving time. In most time zones, the value of
+    //   this member is –60.
+    //
+    // The concept in historical Rebol incorporates daylight savings directly
+    // into the time zone component of a DATE!.  Hence your time zone appears
+    // to change depending on whether it's daylight savings time or not.
+    //
+    TIME_ZONE_INFORMATION tzone;
     if (TIME_ZONE_ID_DAYLIGHT == GetTimeZoneInformation(&tzone))
         tzone.Bias += tzone.DaylightBias;
 
@@ -37,4 +57,3 @@ REBVAL *Get_Current_Datetime_Value(void)
         rebI(-tzone.Bias),  // zone
     ")");
 }
-

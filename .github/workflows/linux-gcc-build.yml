@@ -250,6 +250,47 @@ jobs:
       run: |
         "$R3BUILT" --do "print {hi}"
 
+    - name: Check Time Matches
+      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
+      run: |
+        ; Because the two times are (by necessity) captured at different
+        ; moments, we don't bother checking that the seconds line up (this is
+        ; more about making sure the coarse time and time zones are consistent
+        ; with the system).  But still, freak cases can happen where you catch
+        ; it on something like a minute turnover.  Address this just by doing
+        ; the process twice, and assume it's diminishingly rare to fail twice.
+        ;
+        repeat 2 [
+          r3time: now
+          print ["R3 Time reported as:" r3time]
+
+          call/shell/output {date --iso-8601=seconds} unixtime: copy {}
+          print ["UNIX Time (date --iso-8601) reported as:" unixtime]
+
+          uparse unixtime [
+              year: between <here> "-" (year: to integer! year)
+              month: between <here> "-" (month: to integer! month)
+              day: between <here> "T" (day: to integer! day)
+              time: across to ["-" | "+"] (time: to time! time)
+              zone: between <here> newline (zone: to time! zone)
+          ]
+
+          all [
+            year = r3time.year
+            month = r3time.month
+            day = r3time.day
+            time.hour = r3time.hour
+            time.minute = r3time.minute
+            ; Don't check seconds, likely different moments of capture
+            zone = r3time.zone
+          ]
+          then [
+            print "Times matched!"
+            quit 0
+          ]
+        ]
+
+        fail "Times Did Not Match"
 
     - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
