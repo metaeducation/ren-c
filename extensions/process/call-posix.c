@@ -235,7 +235,7 @@ REB_R Call_Core(REBFRM *frame_) {
         // over weird getenv() quirks, but also gives a pointer we can free in
         // the argv block.
         //
-        char *sh = rebSpell("any [get-env {SHELL}, {sh}]");
+        char *sh = rebSpell("any [get-env {SHELL}, {/bin/sh}]");
         //                                       ---^
         // !!! Convention usually says the $SHELL is set.  But the GitHub CI
         // environment is a case that does not seem to pass it through to
