@@ -546,7 +546,10 @@ void Force_Value_Frozen_Core(
             SET_SERIES_INFO(s, AUTO_LOCKED);
     } else if (kind == REB_ACTION or kind == REB_DATATYPE) {
         // No freezing needed
-    } else
+    } else if (ANY_SEQUENCE_KIND(kind)) {
+        // No freezing needed
+    }
+    else
         fail (Error_Invalid_Type(kind)); // not yet implemented
 }
 
