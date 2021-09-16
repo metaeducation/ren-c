@@ -401,7 +401,9 @@ void Adjust_Date_Zone_Core(RELVAL *d, int zone)
         return;
 
     REBI64 nano =
-        cast(int64_t, zone) * (cast(int64_t, ZONE_SECS) * SEC_SEC);
+        cast(int64_t, - zone)  // !!! this negation of the zone seems necessary
+        * (cast(int64_t, ZONE_SECS) * SEC_SEC);
+
     nano += VAL_NANO(d);
 
     PAYLOAD(Time, d).nanoseconds = (nano + TIME_IN_DAY) % TIME_IN_DAY;
@@ -439,7 +441,7 @@ void Fold_Zone_Into_Date(RELVAL *d)
         int zone = VAL_ZONE(d);
         VAL_DATE(d).zone = NO_DATE_ZONE;
         if (zone != 0)
-            Adjust_Date_Zone_Core(d, zone);
+            Adjust_Date_Zone_Core(d, - zone);
         VAL_DATE(d).zone = NO_DATE_ZONE;
     }
 }
