@@ -580,8 +580,11 @@ void Get_Var_May_Fail(
 //  {Gets the value of a word or path, or block of words/paths}
 //
 //      return: [<opt> any-value!]
-//      source "Word or path to get, or block of words or paths"
-//          [<blank> any-word! symbol! any-sequence!]
+//      steps: "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
+//          [block! word! symbol!]
+//
+//      source "Word or path to get, or block of PICK steps"
+//          [<blank> any-word! symbol! any-sequence! block!]
 //      /any "Do not error on BAD-WORD! isotopes"
 //  ]
 //
@@ -590,41 +593,182 @@ REBNATIVE(get)
     INCLUDE_PARAMS_OF_GET;
 
     REBVAL *source = ARG(source);
+    REBVAL *steps = ARG(steps);
 
-    Get_Var_May_Fail(
-        D_OUT,
-        source,
-        SPECIFIED,
-        did REF(any)
-    );
-    return D_OUT;  // IS_NULLED() is okay
-}
+    // Simple WORD! or symbol GET.  (Should this also handle /foo, .foo, etc?)
+    //
+    if (ANY_WORD(source) or IS_SYMBOL(source)) {
 
+      get_source:
 
-//
-//  get*: native [
-//
-//  {Gets the value of a word or path, allows BAD-WORD! isotopes}
-//
-//      return: [<opt> any-value!]
-//      source "Word or path to get"
-//          [<blank> any-word! symbol! any-path!]
-//  ]
-//
-REBNATIVE(get_p)  // a faster variant of GET/ANY as native
-//
-// !!! When plain GET could not get NULL values it made more sense to have
-// an optimized shorthand of a form of GET that didn't make you pay for
-// path processing.  Now that it's just isotopes, it's less necessary.
-{
-    INCLUDE_PARAMS_OF_GET_P;
+        Copy_Cell(D_OUT, Lookup_Word_May_Fail(source, SPECIFIED));
 
-    Get_Var_May_Fail(
-        D_OUT,
-        ARG(source),
-        SPECIFIED,
-        true  // allow BAD-WORD! isotopes, e.g. GET/ANY
-    );
+        if (REF(steps)) {
+            if (not IS_SYMBOL(source)) {
+                mutable_KIND3Q_BYTE(source) = REB_WORD;
+                mutable_HEART_BYTE(source) = REB_WORD;
+            }
+            Quotify(source, 1);
+            Quotify(steps, 1);
+            rebElide(Lib(SET), steps, source);
+        }
+        goto check_result;
+    }
+
+    if (IS_BLOCK(source))
+        goto pick_steps;  // assume already a BLOCK! in "pick step" format
+
+  blockscope {
+    assert (ANY_SEQUENCE(source));
+
+    switch (HEART_BYTE(source)) {
+      case REB_BYTES:
+        fail ("Cannot GET a sequence of all INTEGER!");
+
+      case REB_WORD:  // Note: will likely become SYMBOL! instances
+        assert(
+            VAL_STRING(source) == PG_Dot_1_Canon
+            or VAL_STRING(source) == PG_Slash_1_Canon
+        );
+        mutable_KIND3Q_BYTE(source) = REB_WORD;
+        goto get_source;
+
+      case REB_GET_WORD:  // `/a` or `.a`
+        mutable_KIND3Q_BYTE(source) = REB_GET_WORD;
+        goto get_source;
+
+      case REB_META_WORD:  // `a/` or `a.`
+        mutable_KIND3Q_BYTE(source) = REB_META_WORD;
+        //
+        // !!! If this is a PATH!, it should error if it's not an action...
+        // and if it's a TUPLE! it should error if it is an action.  Review.
+        //
+        goto get_source;
+
+      case REB_GET_GROUP:  // `/(a)` or `.(a)`
+      case REB_GET_BLOCK:  // `/[a]` or `.[a]`
+      case REB_META_GROUP:  // `(a)/` or `(a).`
+      case REB_META_BLOCK:  // `[a]/` or `[a].`
+        fail ("Single GROUP! or BLOCK! variants not handled in GET right now");
+
+      case REB_BLOCK:
+        mutable_KIND3Q_BYTE(source) = REB_BLOCK;
+        break;
+
+      default:
+        panic(source);
+    }
+
+    const RELVAL *tail;
+    const RELVAL *head = VAL_ARRAY_AT(&tail, source);
+
+    // Check to see if there are no GROUP!s to evaluate.  If there are not
+    // the path can be used as pick steps.
+    //
+    // !!! This could be optimized if sequences cached if there were any
+    // groups in them.
+    //
+    const RELVAL *item = head;
+    for (; item != tail; ++item) {
+        if (IS_GROUP(item))
+            break;
+    }
+    if (item == tail)
+        goto pick_steps;
+
+    if (not REF(steps))
+        fail ("GET won't evaluate GROUP!s unless /STEPS output requested");
+
+    // If there are GROUP!s, we need a new array.  We know the array will
+    // be the same size as the input.
+    //
+    REBLEN len = VAL_LEN_AT(source);
+    REBARR *a = Make_Array(len);
+    RELVAL *dest = ARR_HEAD(a);
+
+    item = head;
+    for (; item != tail; ++item, ++dest) {
+        if (not IS_GROUP(item)) {
+            //
+            // !!! Technically this block doesn't need to be derelativized.
+            // Only the first value will have a binding, and the block
+            // could have the same relativism as the original sequence.
+            // Review such micro-optimizations after proof-of-concept.
+            //
+            Derelativize(dest, item, VAL_SPECIFIER(source));
+            continue;
+        }
+
+        if (Eval_Value_Throws(D_OUT, item, VAL_SPECIFIER(source))) {
+            Free_Unmanaged_Series(a);
+            return R_THROWN;
+        }
+        Move_Cell(dest, D_OUT);
+
+        // By convention, picker steps quote the first item if it was a
+        // GROUP!.  It has to be somehow different because `('a).b` is
+        // trying to pick B out of the WORD! a...not out of what is
+        // fetched from A.  So if the convention is that the first item
+        // of a "steps" block needs to be "fetched" we quote it.
+        //
+        if (item == head)
+            Quotify(dest, 1);
+    }
+    SET_SERIES_LEN(a, len);
+    Init_Block(source, a);
+  }
+
+  pick_steps: {
+
+    assert(IS_BLOCK(source));
+
+    if (REF(steps)) {
+        Quotify(steps, 1);
+        rebElide(Lib(SET), ARG(steps), source);
+    }
+
+    const RELVAL *first = VAL_ARRAY_ITEM_AT(source);
+    if (IS_QUOTED(first)) {
+        Derelativize(D_SPARE, first, VAL_SPECIFIER(source));
+    }
+    else if (IS_WORD(first)) {
+        Copy_Cell(
+            D_SPARE,
+            Lookup_Word_May_Fail(first, VAL_SPECIFIER(source))
+        );
+        if (IS_BAD_WORD(D_SPARE) and GET_CELL_FLAG(D_SPARE, ISOTOPE))
+            fail (Error_Bad_Word_Get(first, D_SPARE));
+
+        Quotify(D_SPARE, 1);
+    }
+    else
+        fail (source);
+
+    ++VAL_INDEX_RAW(source);
+
+    if (rebRunThrows(D_OUT, true, Lib(PICK_P), D_SPARE, source)) {
+        //
+        // !!! We've already evaluated all the groups, so there should
+        // (probably?) be a rule that PICK* is not able to throw.  Review.
+        //
+        fail (Error_No_Catch_For_Throw(D_OUT));
+    }
+  }
+
+  check_result:
+
+    if (IS_BAD_WORD(D_OUT)) {
+        if (GET_CELL_FLAG(D_OUT, ISOTOPE)) {
+            if (not REF(any))
+                fail (Error_Bad_Word_Get(source, D_OUT));
+        }
+    }
+
+    // !!! Variables should not store null isotopes, but they currently can...
+    // look into a systemic answer of how and where to stop this.
+    //
+    Decay_If_Isotope(D_OUT);
+
     return D_OUT;
 }
 
@@ -675,7 +819,7 @@ void Set_Var_May_Fail(
         if (rebRunThrows(
             dummy,
             true,
-            Lib(POKE), Lib(BLACKHOLE), target_specific, setval_specific
+            Lib(SET), target_specific, setval_specific
         )){
             panic (dummy);  // shouldn't be possible, no executions!
         }
@@ -693,10 +837,13 @@ void Set_Var_May_Fail(
 //
 //  {Sets a word or path to specified value (see also: UNPACK)}
 //
-//      return: [<opt> any-value!]
-//          {Will be the values set to, or void if any set values are void}
+//      return: "Same value as input"
+//          [<opt> any-value!]
+//      steps: "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
+//          [block! word! symbol!]
+//
 //      target "Word or path (# means ignore assignment, just return value)"
-//          [blackhole! any-word! symbol! any-sequence! quoted!]
+//          [blackhole! any-word! symbol! any-sequence! block!]
 //      ^value [<opt> any-value!]
 //  ]
 //
@@ -704,15 +851,191 @@ REBNATIVE(set)
 {
     INCLUDE_PARAMS_OF_SET;
 
+    REBVAL *steps = ARG(steps);
     REBVAL *target = ARG(target);
     REBVAL *value = Meta_Unquotify(ARG(value));
+    //
+    // !!! Variables should not store ~null~/~blank~/~false~ isotopes, but they
+    // currently can...would this be a good place to catch it?  The overall
+    // return result should not be decayed to keep these matching:
+    //
+    //     '~null~ = x: if true [null]
+    //     '~null~ = set 'x if true [null]
+    //
+    // See `Decay_If_Isotope()`
 
-    Set_Var_May_Fail(
-        target,
-        SPECIFIED,
-        value,
-        SPECIFIED
-    );
+    if (Is_Blackhole(target))
+        RETURN (value);
+
+    if (ANY_WORD(target) or IS_SYMBOL(target)) {
+
+      set_target:
+
+        Copy_Cell(Sink_Word_May_Fail(target, SPECIFIED), value);
+
+        if (REF(steps)) {
+            if (not IS_SYMBOL(target)) {
+                mutable_KIND3Q_BYTE(target) = REB_WORD;
+                mutable_HEART_BYTE(target) = REB_WORD;
+            }
+            Quotify(target, 1);
+            Quotify(steps, 1);
+            rebElide(Lib(SET), steps, target);  // note: recursive call
+        }
+        RETURN (value);
+    }
+
+    if (IS_BLOCK(target))
+        goto poke_steps;  // assume already a BLOCK! in "pick step" format
+
+  blockscope {
+    assert (ANY_SEQUENCE(target));
+
+    switch (HEART_BYTE(target)) {
+      case REB_BYTES:
+        fail ("Cannot GET a sequence of all INTEGER!");
+
+      case REB_WORD:  // Note: will likely become SYMBOL! instances
+        assert(
+            VAL_STRING(target) == PG_Dot_1_Canon
+            or VAL_STRING(target) == PG_Slash_1_Canon
+        );
+        mutable_KIND3Q_BYTE(target) = REB_WORD;
+        goto set_target;
+
+      case REB_GET_WORD:  // `/a` or `.a`
+        mutable_KIND3Q_BYTE(target) = REB_GET_WORD;
+        goto set_target;
+
+      case REB_META_WORD:  // `a/` or `a.`
+        mutable_KIND3Q_BYTE(target) = REB_META_WORD;
+        //
+        // !!! If this is a PATH!, it should error if it's not an action...
+        // and if it's a TUPLE! it should error if it is an action.  Review.
+        //
+        goto set_target;
+
+      case REB_GET_GROUP:  // `/(a)` or `.(a)`
+      case REB_GET_BLOCK:  // `/[a]` or `.[a]`
+      case REB_META_GROUP:  // `(a)/` or `(a).`
+      case REB_META_BLOCK:  // `[a]/` or `[a].`
+        fail ("Single GROUP! or BLOCK! variants not handled in SET right now");
+
+      case REB_BLOCK:
+        mutable_KIND3Q_BYTE(target) = REB_BLOCK;
+        break;
+
+      default:
+        panic (target);
+    }
+
+    const RELVAL *tail;
+    const RELVAL *head = VAL_ARRAY_AT(&tail, target);
+
+    // Check to see if there are no GROUP!s to evaluate.  If there are not
+    // the path can be used as pick steps.
+    //
+    // !!! This could be optimized if sequences cached if there were any
+    // groups in them.
+    //
+    const RELVAL *item = head;
+    for (; item != tail; ++item) {
+        if (IS_GROUP(item))
+            break;
+    }
+    if (item == tail)
+        goto poke_steps;
+
+    if (not REF(steps))
+        fail ("SET won't evaluate GROUP!s unless /STEPS output requested");
+
+    // If there are GROUP!s, we need a new array.  We know the array will
+    // be the same size as the input.
+    //
+    REBLEN len = VAL_LEN_AT(target);
+    REBARR *a = Make_Array(len);
+    RELVAL *dest = ARR_HEAD(a);
+
+    item = head;
+    for (; item != tail; ++item, ++dest) {
+        if (not IS_GROUP(item)) {
+            //
+            // !!! Technically this block doesn't need to be derelativized.
+            // Only the first value will have a binding, and the block
+            // could have the same relativism as the original sequence.
+            // Review such micro-optimizations after proof-of-concept.
+            //
+            Derelativize(dest, item, VAL_SPECIFIER(target));
+            continue;
+        }
+
+        if (Eval_Value_Throws(D_OUT, item, VAL_SPECIFIER(target))) {
+            Free_Unmanaged_Series(a);
+            return R_THROWN;
+        }
+        Move_Cell(dest, D_OUT);
+
+        // By convention, picker steps quote the first item if it was a
+        // GROUP!.  It has to be somehow different because `('a).b` is
+        // trying to pick B out of the WORD! a...not out of what is
+        // fetched from A.  So if the convention is that the first item
+        // of a "steps" block needs to be "fetched" we quote it.
+        //
+        if (item == head)
+            Quotify(dest, 1);
+    }
+    SET_SERIES_LEN(a, len);
+    Init_Block(target, a);
+  }
+
+  poke_steps:
+
+    assert(IS_BLOCK(target));
+
+    if (REF(steps)) {
+        Quotify(steps, 1);
+        rebElide(Lib(SET), ARG(steps), target);  // note: recursive call
+    }
+
+    const RELVAL *first = VAL_ARRAY_ITEM_AT(target);
+    if (IS_QUOTED(first)) {
+        Derelativize(D_SPARE, first, VAL_SPECIFIER(target));
+    }
+    else if (IS_WORD(first)) {
+        Copy_Cell(
+            D_SPARE,
+            Lookup_Word_May_Fail(first, VAL_SPECIFIER(target))
+        );
+        if (IS_BAD_WORD(D_SPARE) and GET_CELL_FLAG(D_SPARE, ISOTOPE))
+            fail (Error_Bad_Word_Get(first, D_SPARE));
+
+        Quotify(D_SPARE, 1);
+    }
+    else
+        fail (target);
+
+    ++VAL_INDEX_RAW(target);
+
+    if (rebRunThrows(D_OUT, true, Lib(POKE_P), D_SPARE, target, rebQ(value))) {
+        //
+        // !!! We've already evaluated all the groups, so there should
+        // (probably?) be a rule that PICK* is not able to throw.  Review.
+        //
+        fail (Error_No_Catch_For_Throw(D_OUT));
+    }
+
+    // No writeback needed...simple case.
+    //
+    if (IS_NULLED(D_OUT))
+        RETURN (value);
+
+    // If POKE* did not return NULL then that means the poke wanted to write
+    // back bits.  This only works in the WORD! case.
+    //
+    if (not IS_WORD(first))
+        fail ("Cannot writeback immediate value in SET");
+
+    Copy_Cell(Sink_Word_May_Fail(first, VAL_SPECIFIER(target)), D_OUT);
 
     RETURN (value);
 }
