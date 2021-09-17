@@ -339,16 +339,28 @@ select: generic [
 ]
 
 
-pick-poke*: generic [
-    {Low-level hook for PICK and POKE, used also by PATH! and SET-PATH!}
+pick*: generic [
+    {Low-level hook for PICK, used also by PATH! and GET-PATH!}
 
-    return: "PICK: the retrieved value, POKE: bits parent cell must update"
+    return: "PICK: the retrieved value"
         [<opt> any-value!]
-    location "Target value (on some steps, bits are modified if POKE)"
+    location "Target value"
         [any-value!]
-    steps "A pre-COMPOSE'd list of steps in the PICK or POKE chain"
+    steps "A pre-COMPOSE'd list of steps in the PICK chain"
         [block!]
-    ^value "Value to POKE via ^META protocol (true NULL signals a PICK)"
+]
+
+
+poke*: generic [
+    {Low-level hook for POKE, used also by SET-PATH!}
+
+    return: "Bits referencing cell must update (nullptr if no update needed)"
+        [<opt> any-value!]
+    location "Target value (on some steps, bits are modified)"
+        [any-value!]
+    steps "A pre-COMPOSE'd list of steps in the POKE chain"
+        [block!]
+    ^value "Value to POKE"
         [<opt> any-value!]
 ]
 

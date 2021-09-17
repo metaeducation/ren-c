@@ -758,6 +758,37 @@ void MF_String(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
 
 //
+//  Did_Get_Series_Index_From_Picker: C
+//
+// Will fail if the picker is outright invalid, but return false if it should
+// be NULL on the last step of a PICK.
+//
+bool Did_Get_Series_Index_From_Picker(
+    REBINT *out,
+    const REBVAL *v,
+    const RELVAL *picker
+){
+    if (not IS_INTEGER(picker))
+        fail (picker);
+
+    REBINT n = Int32(picker);
+    if (n == 0)
+        return false;  // Rebol2 and Red pick of 0 is none
+
+    if (n < 0)
+        ++n;
+
+    n += VAL_INDEX(v) - 1;
+
+    if (n < 0 or cast(REBLEN, n) >= VAL_LEN_HEAD(v))
+        return false;  // out of range, null unless POKE or more PICK-ing
+
+    *out = n;
+    return true;
+}
+
+
+//
 //  REBTYPE: C
 //
 // Action handler for ANY-STRING!
@@ -774,10 +805,10 @@ REBTYPE(String)
 
     switch (id) {
 
-    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_POKE_P: {
-        INCLUDE_PARAMS_OF_PICK_POKE_P;
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
         REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
@@ -785,74 +816,78 @@ REBTYPE(String)
         if (steps_left == 0)
             fail (steps);
 
-        REBVAL *setval = ARG(value);
-        bool poking = not IS_NULLED(setval);
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        REBINT n;
+        if (not Did_Get_Series_Index_From_Picker(&n, v, picker)) {
+            if (steps_left == 1)
+                return nullptr;
+            fail (picker);
+        }
+
+        REBUNI c = GET_CHAR_AT(VAL_STRING(v), n);
+
+        if (steps_left == 1)
+            return Init_Char_Unchecked(D_OUT, c);
+
+        ++VAL_INDEX_RAW(ARG(steps));
+        Init_Char_Unchecked(ARG(location), c);
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+
+
+    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
+
+      case SYM_POKE_P: {
+        INCLUDE_PARAMS_OF_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
 
         const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-
-        if (not IS_INTEGER(picker))
-            return R_UNHANDLED;
-
-        REBINT n = Int32(picker);
-        if (n == 0)
-            fail (Error_Out_Of_Range(picker));
-        if (n < 0)
-            ++n;
-        n += VAL_INDEX(v) - 1;
-        if (n < 0 or cast(REBLEN, n) >= STR_LEN(VAL_STRING(v)))
+        REBINT n;
+        if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));
 
-        if (steps_left == 1 and poking) {
-            //
-            // The goal is to poke ARG(value) into this particular slot, like
-            // `block.10: 20`.  So this is the end of the line.
-            //
-            Meta_Unquotify(setval);
+        REBVAL *setval;
 
-          update_bits: ;
-            REBUNI c;
-            if (IS_CHAR(setval)) {
-                c = VAL_CHAR(setval);
-            }
-            else if (IS_INTEGER(setval)) {
-                c = Int32(setval);
-            }
-            else  // CHANGE is a better route for splicing/removal/etc.
-                return R_UNHANDLED;
-
-            if (c == 0)
-                fail (Error_Illegal_Zero_Byte_Raw());
-
-            REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
-            SET_CHAR_AT(s, n, c);
-        }
+        if (steps_left == 1)
+            setval = Meta_Unquotify(ARG(value));
         else {
-            const REBSTR *s = VAL_STRING(v);
-            Init_Char_Unchecked(D_OUT, GET_CHAR_AT(s, n));
+            REBUNI c = GET_CHAR_AT(VAL_STRING(v), n);
 
-            if (steps_left == 1) {
-                assert(not poking);
-                return D_OUT;
-            }
-
+            Init_Char_Unchecked(D_OUT, c);
             ++VAL_INDEX_RAW(ARG(steps));
 
             REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
             if (r == R_THROWN)
                 return R_THROWN;
 
-            if (not poking)
-                return r;
+            if (r == nullptr)  // our cell's bits don't need to change
+                return nullptr;
 
-            if (r != nullptr) {  // the update needs our cell's bits to change
-                assert(r == D_OUT);
-                assert(IS_CHAR(D_OUT));
-                setval = D_OUT;
-                goto update_bits;
-            }
+            assert(r == D_OUT);
+            assert(IS_CHAR(D_OUT));
+            setval = D_OUT;
         }
 
-        assert(poking);
+        REBUNI c;
+        if (IS_CHAR(setval)) {
+            c = VAL_CHAR(setval);
+        }
+        else if (IS_INTEGER(setval)) {
+            c = Int32(setval);
+        }
+        else  // CHANGE is a better route for splicing/removal/etc.
+            return R_UNHANDLED;
+
+        if (c == 0)
+            fail (Error_Illegal_Zero_Byte_Raw());
+
+        REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
+        SET_CHAR_AT(s, n, c);
+
         return nullptr; }  // REBARR* is still fine, caller need not update
 
 

@@ -344,6 +344,39 @@ REBTYPE(Issue)
     REBI64 arg;
 
     switch (sym) {
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        if (not IS_INTEGER(picker))
+            return R_UNHANDLED;
+
+        REBI64 n = VAL_INT64(picker);
+        if (n <= 0)
+            return nullptr;
+
+        REBLEN len;
+        REBCHR(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, issue);
+        if (cast(REBLEN, n) > len)
+            return nullptr;
+
+        REBUNI c;
+        cp = NEXT_CHR(&c, cp);
+        for (; n != 1; --n)
+            cp = NEXT_CHR(&c, cp);
+
+        if (steps_left == 1)
+            return Init_Integer(D_OUT, c);
+
+        ++VAL_INDEX_RAW(ARG(steps));
+        Init_Integer(ARG(location), c);
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+
       case SYM_ADD: {
         arg = Math_Arg_For_Char(D_ARG(2), verb);
         chr += arg;

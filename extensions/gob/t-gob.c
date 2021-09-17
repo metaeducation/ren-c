@@ -876,6 +876,31 @@ void MF_Gob(REB_MOLD *mo, REBCEL(const*) v, bool form)
 }
 
 
+void Pick_From_Gob(
+    REBVAL *out,
+    REBGOB *gob,
+    const RELVAL *picker
+){
+    if (IS_INTEGER(picker)) {
+        if (rebRunThrows(
+            out,
+            true,
+            Lib(PICK),
+                "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
+                "@", SPECIFIC(picker)
+        )){
+            fail (Error_No_Catch_For_Throw(out));
+        }
+    }
+    else if (IS_WORD(picker)) {
+        if (not Did_Get_GOB_Var(out, gob, picker))
+            fail (picker);
+    }
+    else
+        fail (picker);
+}
+
+
 //
 //  REBTYPE: C
 //
@@ -889,10 +914,10 @@ REBTYPE(Gob)
 
     switch (ID_OF_SYMBOL(verb)) {
 
-    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_POKE_P: {
-        INCLUDE_PARAMS_OF_PICK_POKE_P;
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
         REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
@@ -902,54 +927,41 @@ REBTYPE(Gob)
 
         const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
 
-        REBVAL *setval = ARG(value);
-        bool poking = not IS_NULLED(setval);
-
-        if (steps_left == 1 and poking) {
-            //
-            // The goal is to poke ARG(value) into this particular field, like
-            // `dict.key: 10`.  So this is the end of the line.
-            //
-            Meta_Unquotify(setval);
-
-          update_bits: ;
-            if (IS_INTEGER(picker)) {
-                rebElide(
-                    Lib(POKE),
-                        "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
-                        "@", SPECIFIC(picker)
-                );
-            }
-            else if (IS_WORD(picker)) {
-                if (not Did_Set_GOB_Var(gob, picker, setval))
-                    return R_UNHANDLED;
-            }
-            else
-                fail (picker);
+        // !!! We do not optimize here on gob.size.x picking; it generates a
+        // PAIR! for the size, and then selection of X is made from that pair.
+        // (GOB! is retained only for experimental purposes to see how it
+        // would manage these kinds of situations, and it's a case where the
+        // optimization is not worth it...but you could imagine if it were
+        // a giant array of integers instead of a pair that folding the pick
+        // in would be worth consuming more than one step.)
+        //
+        if (steps_left == 1) {
+            Pick_From_Gob(D_OUT, gob, picker);
+            return D_OUT;
         }
-        else {
-            if (IS_INTEGER(picker)) {
-                if (rebRunThrows(
-                    D_OUT,
-                    true,
-                    Lib(PICK),
-                        "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
-                        "@", SPECIFIC(picker)
-                )){
-                    return R_THROWN;
-                }
-            }
-            else if (IS_WORD(picker)) {
-                if (not Did_Get_GOB_Var(D_OUT, gob, picker))
-                    return R_UNHANDLED;
-            }
-            else
-                fail (picker);
+        Pick_From_Gob(ARG(location), gob, picker);
+        ++VAL_INDEX_RAW(ARG(steps));
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
 
-            if (steps_left == 1) {
-                assert(not poking);
-                return D_OUT;
-            }
+    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
+
+      case SYM_POKE_P: {
+        INCLUDE_PARAMS_OF_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        REBVAL *setval;
+
+        if (steps_left == 1)
+            setval = Meta_Unquotify(ARG(value));
+        else {
+            Pick_From_Gob(D_OUT, gob, picker);
 
             // The GOB! stores compressed bits for things like the SIZE, but
             // when a variable is requested it synthesizes a PAIR!.  This is
@@ -989,14 +1001,14 @@ REBTYPE(Gob)
             // We have to save the pair to do this, because we can't count on
             // PAIR! dispatch not mucking with frame fields like ARG(location).
             //
-            bool need_pair_writeback = poking and IS_PAIR(D_OUT);
+            bool need_pair_writeback = IS_PAIR(D_OUT);
             if (need_pair_writeback) {
                 assert(IS_WORD(picker));  // pane pick shouldn't make pair
                 Move_Cell(DS_PUSH(), D_OUT);
             }
 
-            // Reuse the frame built for this PICK-POKE* call for XXX, by
-            // updating the location and advancing the steps index.
+            // Reuse the frame built for this POKE* call by updating the
+            // location and advancing the steps index.
             //
             // !!! Assumes frame compatibility, review enforcement!
             //
@@ -1009,27 +1021,36 @@ REBTYPE(Gob)
                 return R_THROWN;
             }
 
-            if (not poking)
-                return r;
-
             if (need_pair_writeback) {  // (see explanation above)
                 assert(r == nullptr);  // PAIR! thinks we don't need it...
                 Move_Cell(D_OUT, DS_TOP);
                 DS_DROP();
                 setval = D_OUT;
-                goto update_bits;
             }
+            else if (r == nullptr)  // update doesn't need our bits to change
+                return nullptr;
 
-            if (r != nullptr) {  // the update needs our cell's bits to change
-                //
-                // Besides the trick with PAIR!, the gob doesn't know how to
-                // take any other updates and write them back to its encoded
-                // bits.  There shouldn't be any other cases, as strings and
-                // such in the GOB! are pointed to by reference.
-                //
-                fail ("Unknown writeback in GOB!");
-            }
+            // Besides the trick with PAIR!, the gob doesn't know how to
+            // take any other updates and write them back to its encoded
+            // bits.  There shouldn't be any other cases, as strings and
+            // such in the GOB! are pointed to by reference.
+            //
+            fail ("Unknown writeback in GOB!");
         }
+
+        if (IS_INTEGER(picker)) {
+            rebElide(
+                Lib(POKE),
+                    "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
+                    "@", SPECIFIC(picker)
+            );
+        }
+        else if (IS_WORD(picker)) {
+            if (not Did_Set_GOB_Var(gob, picker, setval))
+                return R_UNHANDLED;
+        }
+        else
+            fail (picker);
 
         return nullptr; }
 
@@ -1071,30 +1092,6 @@ REBTYPE(Gob)
 
         break; }
 
-    // !!! Note: PICK and POKE were unified with path dispatch.  The general
-    // goal is to unify these mechanisms.  However, GOB! is tricky in terms
-    // of what it tried to do with a synthesized PAIR!, calling back into
-    // Next_Path_Throws().  A logical overhaul of path dispatch is needed.
-    // This code is left in case there's something to glean from it when
-    // a GOB!-based path dispatch breaks.
-    /*
-    case SYM_PICK:
-        if (!(ANY_NUMBER(arg) || IS_BLANK(arg)))
-            fail (arg);
-
-        if (!GOB_PANE(gob))
-            return nullptr;
-        index += Get_Num_From_Arg(arg) - 1;
-        if (index >= tail)
-            return nullptr;
-        gob = *GOB_AT(gob, index);
-        index = 0;
-        goto set_index;
-
-    case SYM_POKE:
-        index += Get_Num_From_Arg(arg) - 1;
-        arg = D_ARG(3);
-        // fallthrough */
     case SYM_CHANGE: {
         INCLUDE_PARAMS_OF_CHANGE;
         UNUSED(PAR(series));  // covered by `v`

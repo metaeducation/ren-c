@@ -778,10 +778,57 @@ REBTYPE(Map)
 
         return Init_Map(D_OUT, m); }
 
-    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_POKE_P: {
-        INCLUDE_PARAMS_OF_PICK_POKE_P;
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        bool strict = false;
+
+        REBINT n = Find_Map_Entry(
+            m_cast(REBMAP*, VAL_MAP(map)),  // not modified
+            picker,
+            VAL_SPECIFIER(steps),
+            nullptr,  // no value, so map not changed
+            SPECIFIED,
+            strict
+        );
+
+        if (n == 0) {
+            if (steps_left == 1)
+                return nullptr;
+            fail ("Can't pick map item");
+        }
+
+        const REBVAL *val = SPECIFIC(
+            ARR_AT(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
+        );
+        if (IS_NULLED(val)) {  // zombie entry, means unused
+            if (steps_left == 1)
+                return nullptr;
+            fail ("Can't pick map item");
+        }
+
+        if (steps_left == 1)
+            return Copy_Cell(D_OUT, val);
+
+        Copy_Cell(ARG(location), val);
+        ++VAL_INDEX_RAW(ARG(steps));
+
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+
+    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
+
+      case SYM_POKE_P: {
+        INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
         REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
@@ -800,29 +847,10 @@ REBTYPE(Map)
         //
         bool strict = false;
 
-        REBVAL *setval = ARG(value);
-        bool poking = not IS_NULLED(setval);
+        REBVAL *setval;
 
-        if (steps_left == 1 and poking) {
-            //
-            // The goal is to poke ARG(value) into this particular field, like
-            // `dict.key: 10`.  So this is the end of the line.
-            //
-            Meta_Unquotify(setval);
-
-          update_bits: ;
-            REBINT n = Find_Map_Entry(
-                VAL_MAP_ENSURE_MUTABLE(map),  // modified
-                picker,
-                VAL_SPECIFIER(steps),
-                setval,  // value to set (either ARG(value) or f->out)
-                SPECIFIED,
-                strict
-            );
-
-            assert(n != 0);
-            UNUSED(n);
-        }
+        if (steps_left == 1)
+            setval = Meta_Unquotify(ARG(value));
         else {
             REBINT n = Find_Map_Entry(
                 m_cast(REBMAP*, VAL_MAP(map)),  // not modified
@@ -842,11 +870,6 @@ REBTYPE(Map)
             if (IS_NULLED(val))  // zombie entry, means unused
                 fail ("Can't pick map item");
 
-            if (steps_left == 1) {
-                assert(not poking);  // would be handled above
-                RETURN (val);
-            }
-
             // Now handling `dict.xxx.yyy` or `dict.xxx.yyy: 10`
             //
             // Reuse the frame built for this PICK-POKE* call for XXX, by
@@ -860,17 +883,25 @@ REBTYPE(Map)
             if (r == R_THROWN)
                 return R_THROWN;
 
-            if (not poking)
-                return r;
+            if (r == nullptr)  // container bits don't need to change
+                return nullptr;
 
-            if (r != nullptr) {  // the update needs our cell's bits to change
-                assert(r == D_OUT);
-                setval = D_OUT;
-                goto update_bits;  // e.g. `dict.date.year: 1975`
-            }
+            assert(r == D_OUT);
+            setval = D_OUT;
         }
 
-        assert(poking);
+        REBINT n = Find_Map_Entry(
+            VAL_MAP_ENSURE_MUTABLE(map),  // modified
+            picker,
+            VAL_SPECIFIER(steps),
+            setval,  // value to set (either ARG(value) or f->out)
+            SPECIFIED,
+            strict
+        );
+
+        assert(n != 0);
+        UNUSED(n);
+
         return nullptr; }  // no upstream changes needed for REBMAP* reference
 
       return_unhandled:

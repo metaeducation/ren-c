@@ -417,11 +417,11 @@ REBTYPE(Event)
 
     SYMID id = ID_OF_SYMBOL(verb);
 
-    if (id == SYM_PICK_POKE_P) {
+    if (id == SYM_PICK_P) {
 
-    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
         REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
@@ -433,48 +433,55 @@ REBTYPE(Event)
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 
-        REBVAL *setval = ARG(value);
-        bool poking = not IS_NULLED(setval);
-
-        if (steps_left == 1 and poking) {
-            //
-            // The goal is to poke ARG(value) into this particular slot, like
-            // `block.10: 20`.  So this is the end of the line.
-            //
-            Meta_Unquotify(setval);
-
-          /*update_bits: ;*/
-            if (!Set_Event_Var(event, picker, setval))
-                return R_UNHANDLED;
-
-            // This is a case where the bits are stored in the cell, so
-            // whoever owns this cell has to write it back.
-            //
-            RETURN (event);
+        if (steps_left == 1) {
+            Get_Event_Var(D_OUT, event, VAL_WORD_SYMBOL(picker));
+            return D_OUT;
         }
+
+        Get_Event_Var(ARG(location), event, VAL_WORD_SYMBOL(picker));
+        ++VAL_INDEX_RAW(ARG(steps));
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb);
+    }
+    else if (id == SYM_POKE_P) {
+
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
+
+        INCLUDE_PARAMS_OF_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        if (not IS_WORD(picker))
+            return R_UNHANDLED;
+
+        REBVAL *setval;
+
+        if (steps_left == 1)
+            setval = ARG(value);
         else {
             Get_Event_Var(D_OUT, event, VAL_WORD_SYMBOL(picker));
-
-            if (steps_left == 1) {
-                assert(not poking);
-                return D_OUT;
-            }
-
             ++VAL_INDEX_RAW(ARG(steps));
 
             REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
             if (r == R_THROWN)
                 return R_THROWN;
+            if (r == nullptr)  // this EVENT!'s bits don't need to change
+                return nullptr;
 
-            if (not poking)
-                return r;
-
-            if (r != nullptr)  // the update needs our cell's bits to change
-                fail ("Unknown Writeback in EVENT!");
+            fail ("Unknown Writeback in EVENT!");
         }
 
-        assert(poking);
-        return nullptr;
+        if (!Set_Event_Var(event, picker, setval))
+            return R_UNHANDLED;
+
+        // This is a case where the bits are stored in the cell, so
+        // whoever owns this cell has to write it back.
+        //
+        RETURN (event);
     }
 
     return R_UNHANDLED;

@@ -1013,11 +1013,11 @@ REBTYPE(Date)
     REBLEN year = VAL_YEAR(v);
     REBI64 secs = Does_Date_Have_Time(v) ? VAL_NANO(v) : NO_DATE_TIME;
 
-    if (id == SYM_PICK_POKE_P) {
+    if (id == SYM_PICK_P) {
 
-    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-        INCLUDE_PARAMS_OF_PICK_POKE_P;
+        INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
         REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
@@ -1027,33 +1027,39 @@ REBTYPE(Date)
 
         const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
 
-        REBVAL *setval = ARG(value);
-        bool poking = not IS_NULLED(setval);
-
-        if (steps_left == 1 and poking) {
-            //
-            // The goal is to poke ARG(value) into this particular slot, like
-            // `block.10: 20`.  So this is the end of the line.
-            //
-            Meta_Unquotify(setval);
-
-          update_bits: ;
-            Pick_Or_Poke_Date(nullptr, v, picker, setval);
-
-            // This is a case where the bits are stored in the cell, so
-            // whoever owns this cell has to write it back.
-            //
-            RETURN (v);
+        if (steps_left == 1) {
+            Pick_Or_Poke_Date(D_OUT, v, picker, nullptr);
+            return D_OUT;
         }
+
+        Pick_Or_Poke_Date(D_SPARE, v, picker, nullptr);
+        Move_Cell(ARG(location), D_SPARE);
+        ++VAL_INDEX_RAW(ARG(steps));
+
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb);
+    }
+    else if (id == SYM_POKE_P) {
+
+    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
+
+        INCLUDE_PARAMS_OF_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+
+        REBVAL *setval;
+
+        if (steps_left == 1)
+            setval = Meta_Unquotify(ARG(value));
         else {
             Pick_Or_Poke_Date(D_OUT, v, picker, nullptr);
 
-            if (steps_left == 1) {
-                assert(not poking);
-                return D_OUT;
-            }
-
-            bool time_needs_writeback = poking and IS_TIME(D_OUT);
+            bool time_needs_writeback = IS_TIME(D_OUT);
 
             ++VAL_INDEX_RAW(ARG(steps));
 
@@ -1061,22 +1067,23 @@ REBTYPE(Date)
             if (r == R_THROWN)
                 return R_THROWN;
 
-            if (not poking)
-                return r;
+            if (r == nullptr)  // container doesn't need bits to update
+                return nullptr;
 
-            if (r != nullptr) {  // the update needs our cell's bits to change
-                assert(r == D_OUT);
-                if (not time_needs_writeback)
-                    fail ("Unknown Writeback in DATE!");
+            assert(r == D_OUT);
+            if (not time_needs_writeback)
+                fail ("Unknown Writeback in DATE!");
 
-                assert(IS_TIME(D_OUT));
-                setval = D_OUT;
-                goto update_bits;
-            }
+            assert(IS_TIME(D_OUT));
+            setval = D_OUT;
         }
 
-        assert(poking);
-        return nullptr;
+        Pick_Or_Poke_Date(nullptr, v, picker, setval);
+
+        // This is a case where the bits are stored in the cell, so
+        // whoever owns this cell has to write it back.
+        //
+        RETURN (v);
     }
 
     if (id == SYM_SUBTRACT or id == SYM_ADD) {

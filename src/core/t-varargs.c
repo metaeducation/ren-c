@@ -494,6 +494,42 @@ REBTYPE(Varargs)
 
         break; }
 
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        if (not IS_INTEGER(picker))
+            fail (picker);
+
+        if (VAL_INT32(picker) != 1)
+            fail (Error_Varargs_No_Look_Raw());
+
+        if (Do_Vararg_Op_Maybe_End_Throws(
+            D_OUT,
+            VARARG_OP_FIRST,
+            value
+        )){
+            assert(false); // VARARG_OP_FIRST can't throw
+            return R_THROWN;
+        }
+        if (IS_END(D_OUT))
+           Init_Endish_Nulled(D_OUT);
+
+        if (steps_left == 1)
+            return D_OUT;
+
+        Move_Cell(ARG(location), D_OUT);
+        ++VAL_INDEX_RAW(ARG(steps));
+
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+
+
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
 
