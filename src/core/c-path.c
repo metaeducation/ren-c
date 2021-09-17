@@ -651,52 +651,71 @@ REBNATIVE(pick)
     INCLUDE_PARAMS_OF_PICK;
 
     REBVAL *location = ARG(location);
+    REBVAL *picker = ARG(picker);
 
-    // PORT!s are kind of a "user defined type" which historically could
-    // react to PICK and POKE, but which could not override path dispatch.
-    // Use a symbol-based call to bounce the frame to the port, which should
-    // be a compatible frame with the historical "action".
+    if (IS_BLOCK(picker)) {
+        // use as-is
+    }
+    else if (ANY_SEQUENCE(picker)) {
+        if (HEART_BYTE(picker) != REB_BLOCK)
+            fail ("Non-BLOCK!-heart pickers not supported yet");
+
+        mutable_KIND3Q_BYTE(picker) = REB_BLOCK;
+
+        // We accept # as the location to signal this is to be a GET-PATH!
+        // or GET-TUPLE! type assignment, as with the evaluator.  That means
+        // it's necessary to kickstart the pathing by evaluating the first
+        // item.  We cannot just turn the path into a BLOCK! and compose it,
+        // because we couldn't tell the difference between ('a)/b and a/b...
+        // and the former should be an error (if the first slot of a path is
+        // a GROUP! then it has to make the thing to pick from, and you can't
+        // pick out of a WORD!...but if it's not a GROUP! it is fetched).
+        //
+        if (Is_Blackhole(location)) {
+            const RELVAL *item = VAL_ARRAY_ITEM_AT(picker);
+            if (IS_GROUP(item)) {
+                if (Eval_Value_Throws(D_SPARE, item, VAL_SPECIFIER(picker))) {
+                    Move_Cell(D_OUT, D_SPARE);
+                    return R_THROWN;
+                }
+                Move_Cell(location, D_SPARE);
+                ++VAL_INDEX_UNBOUNDED(picker);
+            }
+            else if (IS_WORD(item)) {
+                Copy_Cell(
+                    location,
+                    Lookup_Word_May_Fail(item, VAL_SPECIFIER(picker))
+                );
+                ++VAL_INDEX_UNBOUNDED(picker);
+            }
+            else
+                fail (item);
+        }
+
+        // The rest of the array should be pre-COMPOSE'd, because that is what
+        // the POKE* implementation expects.  This must be optimized.
+        //
+        if (rebRunThrows(
+            D_SPARE, true, Lib(COMPOSE), rebQ(picker)
+        )){
+            return R_THROWN;
+        }
+        Move_Cell(picker, D_SPARE);
+    }
+    else if (ANY_INERT(picker) or IS_WORD(picker)) {
+        REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
+        Move_Cell(ARR_SINGLE(a), picker);
+        Init_Block(picker, a);
+    }
+    else
+        fail (picker);
+
+    // !!! Here we are assuming frame compatibility of PICK with PICK*.
+    // This would be more formalized if we were writing this in usermode and
+    // made PICK an ENCLOSE of PICK*.  But to get a fast native, we don't have
+    // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    if (IS_PORT(location))
-        return Do_Port_Action(frame_, location, Canon(PICK));
-
-    DECLARE_END_FRAME (pvs, EVAL_MASK_DEFAULT);
-
-    Push_Frame(D_OUT, pvs);
-    Copy_Cell(D_OUT, location);
-
-    PVS_PICKER(pvs) = ARG(picker);
-
-    pvs->label = nullptr; // applies to e.g. :append/dup returning APPEND
-    pvs->param = nullptr;
-
-    PATH_HOOK *hook = Path_Hook_For_Type_Of(D_OUT);
-
-    REB_R r = hook(pvs, PVS_PICKER(pvs));
-
-    if (not r or r == pvs->out) {
-        // Do nothing, let caller handle
-    }
-    else if (not IS_RETURN_SIGNAL(r)) {
-        //
-        // It was parented to the PVS frame, we have to read it out.
-        //
-        assert(GET_CELL_FLAG(r, ROOT));  // API value
-        Copy_Cell(D_OUT, r);
-        rebRelease(r);
-        r = D_OUT;
-    }
-    else switch (VAL_RETURN_SIGNAL(r)) {
-      case C_UNHANDLED: {
-        assert(r == R_UNHANDLED);
-        fail (Error_Bad_Path_Pick_Raw(PVS_PICKER(pvs))); }
-
-      default:
-        panic ("Unsupported return value in Path Dispatcher");
-    }
-
-    Drop_Frame(pvs);
-    return r;
+    return Run_Generic_Dispatch(ARG(location), frame_, Canon(PICK_P));
 }
 
 
@@ -717,11 +736,10 @@ REBNATIVE(pick)
 //
 REBNATIVE(poke)
 //
-// As with PICK*, POKE is changed in Ren-C from its own action to "whatever
+// As with PICK, POKE is changed in Ren-C from its own action to "whatever
 // path-setting (now path-poking) would do".
 //
-// !!! This could have the same frame as PICK-POKE* and thus be more efficient
-// for redispatch.
+// !!! Frame compatibility is assumed here with PICK-POKE*, for efficiency.
 {
     INCLUDE_PARAMS_OF_POKE;
 
@@ -855,20 +873,12 @@ REBNATIVE(poke)
     else
         fail (picker);
 
-    // We use pure NULL as a signal for PICK instead of POKE.  The problem is
-    // that it would have to take up a whole frame slot otherwise, because
-    // we can't make the value a refinement only available when poked because
-    // you can poke null values.  Quirky but probably the best answer.
-    //
-    if (IS_NULLED(ARG(value)))
-        Quotify(ARG(value), 1);
-
-    // !!! Here we are assuming frame compatibility of POKE with PICK-POKE*.
+    // !!! Here we are assuming frame compatibility of POKE with POKE*.
     // This would be more formalized if we were writing this in usermode and
     // made POKE an ENCLOSE of POKE*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    REB_R r = Run_Generic_Dispatch(ARG(location), frame_, Canon(PICK_POKE_P));
+    REB_R r = Run_Generic_Dispatch(ARG(location), frame_, Canon(POKE_P));
     if (r == R_THROWN)
         return R_THROWN;
 

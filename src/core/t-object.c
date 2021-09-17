@@ -1141,6 +1141,17 @@ REB_R Context_Common_Action_Maybe_Unhandled(
 }
 
 
+const REBSYM *Symbol_From_Picker(const REBVAL *context, const RELVAL *picker)
+{
+    UNUSED(context);  // Might the picker be context-sensitive?
+
+    if (not IS_WORD(picker))
+        fail (picker);
+
+    return VAL_WORD_SYMBOL(picker);
+}
+
+
 //
 //  REBTYPE: C
 //
@@ -1159,10 +1170,10 @@ REBTYPE(Context)
 
     switch (ID_OF_SYMBOL(verb)) {
 
-    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_POKE_P: {
-        INCLUDE_PARAMS_OF_PICK_POKE_P;
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
         REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
@@ -1171,24 +1182,39 @@ REBTYPE(Context)
             fail (steps);
 
         const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-        if (not IS_WORD(picker))
-            fail (picker);
+        const REBSYM *symbol = Symbol_From_Picker(context, picker);
 
-        const REBSYM *symbol = VAL_WORD_SYMBOL(picker);
+        const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
+        if (not var)
+            fail (Error_Bad_Path_Pick_Raw(picker));
 
-        REBVAL *setval = ARG(value);
-        bool poking = not IS_NULLED(setval);
+        if (steps_left == 1)
+            return Copy_Cell(D_OUT, var);
 
-        if (steps_left == 1 and poking) {  // `obj.field: 10`, handle now
-            Meta_Unquotify(setval);
+        ++VAL_INDEX_RAW(ARG(steps));  // take `inner` out of steps
+        Copy_Cell(ARG(location), var);
 
-          update_bits: ;
-            REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
-            if (not var)
-                fail (Error_Bad_Path_Pick_Raw(picker));
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
 
-            Copy_Cell(var, setval);
-        }
+
+    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
+
+      case SYM_POKE_P: {
+        INCLUDE_PARAMS_OF_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const REBSYM *symbol = Symbol_From_Picker(context, picker);
+
+        REBVAL *setval;
+
+        if (steps_left == 1)  // `obj.field: 10`, handle now
+            setval = Meta_Unquotify(ARG(value));
         else {
             const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
             if (not var)
@@ -1198,11 +1224,6 @@ REBTYPE(Context)
             enum Reb_Kind var_type = VAL_TYPE(var);
           #endif
 
-            if (steps_left == 1) {  // `obj.field` and not `outer.inner.field`
-                assert(not poking);  // would have been handled above
-                RETURN (var);  // no dispatch on more steps needed
-            }
-
             ++VAL_INDEX_RAW(ARG(steps));  // take `inner` out of steps
 
             REB_R r = Run_Pickpoke_Dispatch(frame_, verb, var);
@@ -1211,20 +1232,21 @@ REBTYPE(Context)
 
             TRASH_POINTER_IF_DEBUG(var);  // arbitrary code may moved memory
 
-            if (not poking)
-                return r;
+            if (r == nullptr)  // container bits don't need to change
+                return nullptr;
 
-            if (r != nullptr) {  // the update needs our cell's bits to change
-                assert(r == D_OUT);
-              #if !defined(NDEBUG)
-                assert(VAL_TYPE(D_OUT) == var_type);
-              #endif
-                setval = D_OUT;
-                goto update_bits;
-            }
+            assert(r == D_OUT);
+          #if !defined(NDEBUG)
+            assert(VAL_TYPE(D_OUT) == var_type);
+          #endif
+            setval = D_OUT;
         }
 
-        assert(poking);
+        REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
+        if (not var)
+            fail (Error_Bad_Path_Pick_Raw(picker));
+
+        Copy_Cell(var, setval);
         return nullptr; }  // caller's REBCTX* is not stale, no update needed
 
 

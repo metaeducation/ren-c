@@ -850,10 +850,40 @@ REBTYPE(Array)
 
     switch (id) {
 
-    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-      case SYM_PICK_POKE_P: {
-        INCLUDE_PARAMS_OF_PICK_POKE_P;
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
+        if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array))) {
+            if (steps_left == 1)
+                return nullptr;
+            fail ("Cannot pick with steps left from null");
+        }
+
+        const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
+
+        if (steps_left == 1)
+            return Derelativize(D_OUT, at, VAL_SPECIFIER(array));
+
+        Derelativize(ARG(location), at, VAL_SPECIFIER(array));
+        ++VAL_INDEX_RAW(ARG(steps));
+
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+
+
+    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
+
+      case SYM_POKE_P: {
+        INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
         REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
@@ -863,43 +893,17 @@ REBTYPE(Array)
 
         const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
 
-        REBVAL *setval = ARG(value);
-        bool poking = not IS_NULLED(setval);
+        REBVAL *setval;
 
-        if (steps_left == 1 and poking) {
-            //
-            // The goal is to poke ARG(value) into this particular slot, like
-            // `block.10: 20`.  So this is the end of the line.
-            //
-            Meta_Unquotify(setval);
-
-            // !!! If we are jumping here from getting updated bits, then
-            // if the block isn't immutable or locked from modification, the
-            // memory may have moved!  There's no way to guarantee semantics
-            // of an update if we don't lock the array for the poke duration.
-            //
-          update_bits: ;
-            REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
-            if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
-                fail (picker);
-
-            REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
-            RELVAL *at = ARR_AT(mut_arr, n);
-            Move_Cell(at, setval);
-            Init_Bad_Word(setval, Canon(MOVE));
-        }
+        if (steps_left == 1)  // this is the last step
+            setval = Meta_Unquotify(ARG(value));
         else {
             REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
             if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
-                fail (picker);
+                fail (Error_Out_Of_Range(picker));
 
             const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
             Derelativize(D_OUT, at, VAL_SPECIFIER(array));
-
-            if (steps_left == 1) {
-                assert(not poking);
-                return D_OUT;
-            }
 
             ++VAL_INDEX_RAW(ARG(steps));
 
@@ -907,21 +911,32 @@ REBTYPE(Array)
             if (r == R_THROWN)
                 return R_THROWN;
 
-            if (not poking)
-                return r;
+            if (r == nullptr)  // update doesn't need our bits to change
+                return nullptr;
 
-            if (r != nullptr) {  // the update needs our cell's bits to change
-                assert(r == D_OUT);
-                assert(VAL_TYPE(at) == VAL_TYPE(D_OUT));
-                setval = D_OUT;
-                goto update_bits;
-            }
-
-            DS_DROP();
+            assert(r == D_OUT);
+            assert(VAL_TYPE(at) == VAL_TYPE(D_OUT));
+            setval = D_OUT;
         }
 
-        assert(poking);
-        return nullptr; }  // REBSTR* is still fine, caller need not update
+        if (IS_BAD_WORD(setval) and GET_CELL_FLAG(setval, ISOTOPE))
+            fail (Error_Bad_Isotope(setval));  // can't put in blocks
+
+        // !!! If we are jumping here from getting updated bits, then
+        // if the block isn't immutable or locked from modification, the
+        // memory may have moved!  There's no way to guarantee semantics
+        // of an update if we don't lock the array for the poke duration.
+        //
+        REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
+        if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
+            fail (Error_Out_Of_Range(picker));
+
+        REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
+        RELVAL *at = ARR_AT(mut_arr, n);
+        Move_Cell(at, setval);
+        Init_Bad_Word(setval, Canon(MOVE));  // can't leave ARG slots RESET()
+
+        return nullptr; }  // REBARR* is still fine, caller need not update
 
 
       case SYM_UNIQUE:

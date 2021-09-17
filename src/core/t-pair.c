@@ -192,6 +192,33 @@ void MF_Pair(REB_MOLD *mo, REBCEL(const*) v, bool form)
 }
 
 
+REBINT Index_From_Picker_For_Pair(
+    const REBVAL *pair,
+    const RELVAL *picker
+){
+    UNUSED(pair); // Might the picker be pair-sensitive?
+
+    REBINT n;
+    if (IS_WORD(picker)) {
+        if (VAL_WORD_ID(picker) == SYM_X)
+            n = 1;
+        else if (VAL_WORD_ID(picker) == SYM_Y)
+            n = 2;
+        else
+            fail (picker);
+    }
+    else if (IS_INTEGER(picker)) {
+        n = Int32(picker);
+        if (n != 1 and n != 2)
+            fail (picker);
+    }
+    else
+        fail (picker);
+
+    return n;
+}
+
+
 //
 //  REBTYPE: C
 //
@@ -219,11 +246,10 @@ REBTYPE(Pair)
 
     switch (ID_OF_SYMBOL(verb)) {
 
-      case SYM_PICK_POKE_P: {
+    //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
-    //=//// PICK-POKE* (see %sys-pick.h for explanation) ///////////////////=//
-
-        INCLUDE_PARAMS_OF_PICK_POKE_P;
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
         REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
@@ -231,64 +257,57 @@ REBTYPE(Pair)
         if (steps_left == 0)
             fail (steps);
 
-        REBVAL *setval = ARG(value);
-        bool poking = not IS_NULLED(setval);
+        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        REBINT n = Index_From_Picker_For_Pair(v, picker);
+        const REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
+
+        if (steps_left == 1)
+            return Copy_Cell(D_OUT, which);
+
+        Copy_Cell(ARG(location), which);
+        ++VAL_INDEX_RAW(ARG(steps));
+        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+
+
+    //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
+
+      case SYM_POKE_P: {
+        INCLUDE_PARAMS_OF_POKE_P;
+        UNUSED(ARG(location));
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
 
         const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-        REBINT n;
-        if (IS_WORD(picker)) {
-            if (VAL_WORD_ID(picker) == SYM_X)
-                n = 1;
-            else if (VAL_WORD_ID(picker) == SYM_Y)
-                n = 2;
-            else
-                return R_UNHANDLED;
-        }
-        else if (IS_INTEGER(picker)) {
-            n = Int32(picker);
-            if (n != 1 and n != 2)
-                return R_UNHANDLED;
-        }
-        else
-            return R_UNHANDLED;
+        REBINT n = Index_From_Picker_For_Pair(v, picker);
 
-        if (steps_left == 1 and poking) {  // e.g. `pair.x: 10`
-            Meta_Unquotify(setval);
+        REBVAL *setval;
 
-          /*update_bits: ;*/
-            if (not IS_INTEGER(setval) and not IS_DECIMAL(setval))
-                return R_UNHANDLED;
-
-            if (n == 1)
-                Copy_Cell(VAL_PAIR_X(v), setval);
-            else
-                Copy_Cell(VAL_PAIR_Y(v), setval);
-        }
+        if (steps_left == 1)  // e.g. `pair.x: 10`
+            setval = Meta_Unquotify(ARG(value));
         else {
-            if (n == 1)
-                Copy_Cell(D_OUT, VAL_PAIR_X(v));
-            else
-                Copy_Cell(D_OUT, VAL_PAIR_Y(v));
+            const REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
 
-            if (steps_left == 1) {
-                assert(not poking);
-                return D_OUT;
-            }
-
+            Copy_Cell(D_OUT, which);
             ++VAL_INDEX_RAW(ARG(steps));
 
             REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
             if (r == R_THROWN)
                 return R_THROWN;
+            if (r == nullptr)  // our cell's bits don't need to change
+                return nullptr;
 
-            if (not poking)
-                return r;
-
-            if (r != nullptr)  // the update needs our cell's bits to change
-                fail ("Unknown Writeback in PAIR!");
+            fail ("Unknown Writeback in PAIR!");
         }
 
-        assert(poking);
+        if (not IS_INTEGER(setval) and not IS_DECIMAL(setval))
+            return R_UNHANDLED;
+
+        REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
+
+        Copy_Cell(which, setval);
         return nullptr; }
 
 
