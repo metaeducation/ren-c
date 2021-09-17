@@ -653,69 +653,19 @@ REBNATIVE(pick)
     REBVAL *location = ARG(location);
     REBVAL *picker = ARG(picker);
 
-    if (IS_BLOCK(picker)) {
-        // use as-is
-    }
-    else if (ANY_SEQUENCE(picker)) {
-        if (HEART_BYTE(picker) != REB_BLOCK)
-            fail ("Non-BLOCK!-heart pickers not supported yet");
-
-        mutable_KIND3Q_BYTE(picker) = REB_BLOCK;
-
-        // We accept # as the location to signal this is to be a GET-PATH!
-        // or GET-TUPLE! type assignment, as with the evaluator.  That means
-        // it's necessary to kickstart the pathing by evaluating the first
-        // item.  We cannot just turn the path into a BLOCK! and compose it,
-        // because we couldn't tell the difference between ('a)/b and a/b...
-        // and the former should be an error (if the first slot of a path is
-        // a GROUP! then it has to make the thing to pick from, and you can't
-        // pick out of a WORD!...but if it's not a GROUP! it is fetched).
-        //
-        if (Is_Blackhole(location)) {
-            const RELVAL *item = VAL_ARRAY_ITEM_AT(picker);
-            if (IS_GROUP(item)) {
-                if (Eval_Value_Throws(D_SPARE, item, VAL_SPECIFIER(picker))) {
-                    Move_Cell(D_OUT, D_SPARE);
-                    return R_THROWN;
-                }
-                Move_Cell(location, D_SPARE);
-                ++VAL_INDEX_UNBOUNDED(picker);
-            }
-            else if (IS_WORD(item)) {
-                Copy_Cell(
-                    location,
-                    Lookup_Word_May_Fail(item, VAL_SPECIFIER(picker))
-                );
-                ++VAL_INDEX_UNBOUNDED(picker);
-            }
-            else
-                fail (item);
-        }
-
-        // The rest of the array should be pre-COMPOSE'd, because that is what
-        // the POKE* implementation expects.  This must be optimized.
-        //
-        if (rebRunThrows(
-            D_SPARE, true, Lib(COMPOSE), rebQ(picker)
-        )){
-            return R_THROWN;
-        }
-        Move_Cell(picker, D_SPARE);
-    }
-    else if (ANY_INERT(picker) or IS_WORD(picker)) {
-        REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
-        Move_Cell(ARR_SINGLE(a), picker);
-        Init_Block(picker, a);
-    }
-    else
-        fail (picker);
+    // !!! We pay the cost for a block here, because the interface of PICK
+    // is geared around PATH! and moving in steps.  Review.
+    //
+    REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Move_Cell(ARR_SINGLE(a), picker);
+    Init_Block(picker, a);
 
     // !!! Here we are assuming frame compatibility of PICK with PICK*.
     // This would be more formalized if we were writing this in usermode and
     // made PICK an ENCLOSE of PICK*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    return Run_Generic_Dispatch(ARG(location), frame_, Canon(PICK_P));
+    return Run_Generic_Dispatch(location, frame_, Canon(PICK_P));
 }
 
 
@@ -746,139 +696,16 @@ REBNATIVE(poke)
     REBVAL *picker = ARG(picker);
     REBVAL *location = ARG(location);
 
-    bool cannot_writeback_let = false;
-
-    // In this conception, `poke m [a b] 3` is `m/a/b: 3`, not `m/('a/b): 3`
-    // So it is the same as `poke m 'a/b 3`
-    //
-    // !!! GROUP!s in the PATH! are evaluated here.  Should they be?
-    //
-    if (IS_BLOCK(picker)) {
-        // use as-is
-    }
-    else if (ANY_SEQUENCE(picker)) {
-        if (HEART_BYTE(picker) != REB_BLOCK)
-            fail ("Non-BLOCK!-heart pickers not supported yet");
-
-        mutable_KIND3Q_BYTE(picker) = REB_BLOCK;
-
-        // We accept # as the location to signal this is to be a SET-PATH!
-        // or SET-TUPLE! type assignment, as with the evaluator.  That means
-        // it's necessary to kickstart the pathing by evaluating the first
-        // item.  We cannot just turn the path into a BLOCK! and compose it,
-        // because we couldn't tell the difference between ('a)/b and a/b...
-        // and the former should be an error (if the first slot of a path is
-        // a GROUP! then it has to make the thing to pick from, and you can't
-        // pick out of a WORD!...but if it's not a GROUP! it is fetched).
-        //
-        if (Is_Blackhole(location)) {
-            const RELVAL *item = VAL_ARRAY_ITEM_AT(picker);
-            if (IS_GROUP(item)) {
-                if (Eval_Value_Throws(D_SPARE, item, VAL_SPECIFIER(picker))) {
-                    Move_Cell(D_OUT, D_SPARE);
-                    return R_THROWN;
-                }
-                Move_Cell(location, D_SPARE);
-                ++VAL_INDEX_UNBOUNDED(picker);
-            }
-            else if (IS_WORD(item)) {
-                //
-                // We want to make the location we're path poking in the
-                // binding of the word.  Because if we just looked up the
-                // contents of the word at the head and made it the location,
-                // we'd lose the connection with being able to do writeback:
-                //
-                //    x: 29-Feb-2020
-                //    x/year: x/year - 1
-                //
-                // If we turned this into `poke 29-Feb-2020 [year] 2019`,
-                // then there's no way to update X.  We have to turn this
-                // into `poke (binding of 'x) [x year] 2019`.
-                //
-                REBSPC *specifier = VAL_SPECIFIER(picker);
-
-                // !!! This is convoluted work that should not have to be
-                // repeated here to tell the difference between a LET patch
-                // and another kind of variable.  Many of the ripples caused
-                // by LET and "Sea of Words" havent been absorbed systemically,
-                // so until that happens routines like this will be junky.
-                //
-                // !!! If we said ATTACH_WRITE here, then we'd get a new
-                // variable for something like `system` on `system.foo: x`,
-                // so system would be ~unset~.
-                //
-                REBLEN index;
-                REBSER *s = try_unwrap(
-                    Get_Word_Container(&index, item, specifier, ATTACH_READ)
-                );
-                if (not s) {
-                    if (VAL_WORD_BINDING(item) == UNBOUND)
-                        fail (Error_Not_Bound_Raw(item));
-                    fail (Error_Unassigned_Attach_Raw(item));
-                }
-                REBCTX *c;
-                if (IS_PATCH(s)) {
-                    if (NOT_SUBCLASS_FLAG(PATCH, s, LET))
-                        panic (s);
-
-                    REBSER *link = SER(node_LINK(Node, s));
-                    if (FLAVOR_VARLIST == SER_FLAVOR(link))
-                        c = CTX(link);  // module style "LET" (not really LET)
-                    else
-                        c = nullptr;  // LET has no context
-                }
-                else {
-                    c = CTX(s);
-                    if (GET_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE))
-                        fail (Error_No_Relative_Core(item));
-                }
-
-                if (not c) {
-                    //
-                    // !!! Technical limitation: LET patches do not have the
-                    // ability to give a context back at this time.  They would
-                    // have to "be their own context", it introduces problems.
-                    // For now just give an error if it actually triggers.
-                    //
-                    cannot_writeback_let = true;
-                    Copy_Cell(
-                        ARG(location),
-                        Lookup_Word_May_Fail(item, VAL_SPECIFIER(picker))
-                    );
-                    ++VAL_INDEX_UNBOUNDED(picker);
-                }
-                else {
-                    Init_Any_Context(ARG(location), CTX_TYPE(c), c);
-                }
-            }
-            else
-                fail (item);
-        }
-
-        // The rest of the array should be pre-COMPOSE'd, because that is what
-        // the POKE* implementation expects.  This must be optimized.
-        //
-        if (rebRunThrows(
-            D_SPARE, true, Lib(COMPOSE), rebQ(picker)
-        )){
-            return R_THROWN;
-        }
-        Move_Cell(picker, D_SPARE);
-    }
-    else if (ANY_INERT(picker) or IS_WORD(picker)) {
-        REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
-        Move_Cell(ARR_SINGLE(a), picker);
-        Init_Block(picker, a);
-    }
-    else
-        fail (picker);
+    REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
+    Move_Cell(ARR_SINGLE(a), picker);
+    Init_Block(picker, a);
 
     // !!! Here we are assuming frame compatibility of POKE with POKE*.
     // This would be more formalized if we were writing this in usermode and
     // made POKE an ENCLOSE of POKE*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    REB_R r = Run_Generic_Dispatch(ARG(location), frame_, Canon(POKE_P));
+    REB_R r = Run_Generic_Dispatch(location, frame_, Canon(POKE_P));
     if (r == R_THROWN)
         return R_THROWN;
 
@@ -891,12 +718,11 @@ REBNATIVE(poke)
     // The date was changed, but there was no side effect.  These types of
     // operations are likely accidents and should raise errors.
     //
-    if (r != nullptr) {
-        if (cannot_writeback_let)
-            fail ("Current technical limit: Cannot writeback LET immediates");
-
+    // !!! Consider offering a refinement to allow this, but returns the
+    // updated value, e.g. would return 12-Dec-1999
+    //
+    if (r != nullptr)
         fail ("Updating immediate value in POKE, results would be discarded");
-    }
 
     RETURN (ARG(value));  // return the value we got in
 }

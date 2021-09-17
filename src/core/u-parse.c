@@ -1131,7 +1131,7 @@ static void Handle_Mark_Rule(
         Quotify(Derelativize(D_OUT, rule, specifier), 1);
         if (rebRunThrows(
             temp, true,
-            Lib(POKE), Lib(BLACKHOLE), D_OUT, ARG(position)
+            Lib(SET), D_OUT, ARG(position)
         )){
             fail (Error_No_Catch_For_Throw(D_OUT));
         }

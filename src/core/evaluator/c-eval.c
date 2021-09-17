@@ -1088,8 +1088,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         Decay_If_Isotope(f->out);
 
-        // POKE is formulated so if you poke to a # then it will assume you
-        // want it to use the first item
+        // !!! Begin trying to unify by full reuse of SET implementation, by
+        // actually calling SET on the path or tuple.
         //
         if (v != f_spare)  // !!! SET-GROUP! puts in f_spare, jumps to label
             Derelativize(f_spare, v, v_specifier);
@@ -1099,7 +1099,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (rebRunThrows(
             discarded,
             true,
-            Lib(POKE), Lib(BLACKHOLE), f_spare, rebQ(f->out)
+            Lib(APPLY), rebQ(Lib(SET)), "[", f_spare, rebQ(f->out), "/steps #]"
         )){
             Move_Cell(f->out, discarded);
             goto return_thrown;
