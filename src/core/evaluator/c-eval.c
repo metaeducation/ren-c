@@ -969,7 +969,70 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         break; }
 
 
-    //=//// PATH! and TUPLE! //////////////////////////////////////////////=//
+    //=//// TUPLE! /////////////////////////////////////////////////////////=//
+    //
+    // TUPLE! runs through an extensible mechanism based on PICK* and POKE*.
+    // Hence `a.b.c` is kind of like a shorthand for `pick (pick a 'b) 'c`.
+    //
+    // In actuality, the mechanism is more sophisticated than that...because
+    // some picking does "sub-value" addressing.  For more details, see the
+    // explanation in %sys-pick.h
+    //
+    // For now, we defer to what GET does.
+
+      case REB_TUPLE: {
+        if (HEART_BYTE(v) == REB_WORD)
+            goto process_word;  // special `.` case with hidden word
+
+        const RELVAL *head = VAL_SEQUENCE_AT(f_spare, v, 0);
+        if (ANY_INERT(head)) {
+            Derelativize(f->out, v, v_specifier);
+            break;
+        }
+
+        Derelativize(f->out, v, v_specifier);
+        Quotify(f->out, 1);
+
+        if (rebRunThrows(
+            f_spare,
+            true,
+            Lib(APPLY), rebQ(Lib(GET)), "[", f->out, "/steps #]"
+        )){
+            goto return_thrown;
+        }
+
+        if (IS_ACTION(f_spare)) {  // try this branch before fail on void+null
+            REBACT *act = VAL_ACTION(f_spare);
+
+            // PATH! dispatch is costly and can error in more ways than WORD!:
+            //
+            //     e: trap [do make block! ":a"] e/id = 'not-bound
+            //                                   ^-- not ready @ lookahead
+            //
+            // Plus with GROUP!s in a path, their evaluations can't be undone.
+            //
+            if (GET_ACTION_FLAG(act, ENFIXED))
+                fail ("Use `>-` to shove left enfix operands into PATH!s");
+
+            DECLARE_ACTION_SUBFRAME (subframe, f);
+            Push_Frame(f->out, subframe);
+            Push_Action(
+                subframe,
+                VAL_ACTION(f_spare),
+                VAL_ACTION_BINDING(f_spare)
+            );
+            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_spare));
+            goto process_action;
+        }
+
+        if (IS_BAD_WORD(f_spare) and GET_CELL_FLAG(f_spare, ISOTOPE))
+            fail (Error_Bad_Word_Get(v, f_spare));
+
+        Move_Cell(f->out, f_spare);  // won't move CELL_FLAG_UNEVALUATED
+        break; }
+
+
+    //=//// PATH! //////////////////////////////////////////////////////////=//
     //
     // PATH! and GET-PATH! have similar mechanisms, with the difference being
     // that if a PATH! looks up to an action it will execute it.
@@ -984,8 +1047,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // !!! The dispatch of TUPLE! is a work in progress, with concepts about
     // being less willing to execute functions under some notations.
 
-      case REB_PATH:
-      case REB_TUPLE: {
+      case REB_PATH: {
         if (HEART_BYTE(v) == REB_WORD)
             goto process_word;  // special `/` or `.` case with hidden word
 

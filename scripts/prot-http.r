@@ -746,7 +746,7 @@ sys/make-scheme [
     ]
 ]
 
-sys.make-scheme.with [
+sys/make-scheme/with [
     name: 'https
     title: "Secure HyperText Transport Protocol v1.1"
     spec: make spec [
