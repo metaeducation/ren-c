@@ -368,7 +368,6 @@ REBTYP *Hook_Datatype(
     const char *url,
     const char *description,
     GENERIC_HOOK *generic,
-    PATH_HOOK *path,
     COMPARE_HOOK *compare,
     MAKE_HOOK *make,
     TO_HOOK *to,
@@ -391,7 +390,7 @@ REBTYP *Hook_Datatype(
     // !!! Need to fail if already hooked
 
     hooks[IDX_GENERIC_HOOK] = cast(CFUNC*, generic);
-    hooks[IDX_PATH_HOOK] = cast(CFUNC*, path);
+    hooks[IDX_PATH_HOOK] = cast(CFUNC*, &PD_Fail);
     hooks[IDX_COMPARE_HOOK] = cast(CFUNC*, compare);
     hooks[IDX_MAKE_HOOK] = cast(CFUNC*, make);
     hooks[IDX_TO_HOOK] = cast(CFUNC*, to);

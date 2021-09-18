@@ -593,22 +593,6 @@ void Poke_Vector_Fail_If_Read_Only(
 
 
 //
-//  PD_Vector: C
-//
-// Path dispatch acts like PICK for GET-PATH! and POKE for SET-PATH!
-//
-REB_R PD_Vector(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    DECLARE_LOCAL (temp);
-    Move_Cell(temp, pvs->out);
-    Pick_Vector(pvs->out, temp, picker);
-    return pvs->out;
-}
-
-
-//
 //  REBTYPE: C
 //
 REBTYPE(Vector)

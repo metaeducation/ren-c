@@ -53,7 +53,6 @@ REBNATIVE(startup_p)
         "http://datatypes.rebol.info/gob",
         "graphical object",
         &T_Gob,
-        &PD_Gob,
         &CT_Gob,
         &MAKE_Gob,
         &TO_Gob,

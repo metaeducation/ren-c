@@ -52,7 +52,6 @@ REBNATIVE(startup_p)
         "http://datatypes.rebol.info/image",
         "RGB image with alpha channel",
         &T_Image,
-        &PD_Image,
         &CT_Image,
         &MAKE_Image,
         &TO_Image,

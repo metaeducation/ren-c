@@ -1410,17 +1410,3 @@ makeCopy2:
 
     return R_UNHANDLED;
 }
-
-
-//
-//  PD_Image: C
-//
-REB_R PD_Image(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    DECLARE_LOCAL (temp);
-    Move_Cell(temp, pvs->out);
-    Pick_Image(pvs->out, temp, picker);
-    return pvs->out;
-}
