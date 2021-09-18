@@ -64,7 +64,7 @@
 )
 (
     a-value: first ['a/b]
-    'a == a-value/1
+    'a == (noquote a-value).1
 )
 (
     a-value: make object! [a: 1]

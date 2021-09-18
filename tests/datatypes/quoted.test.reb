@@ -5,11 +5,11 @@
 
 (
     unset 'a
-    set the '''''a <seta>
+    set noquote the '''''a <seta>
     <seta> = get noquote the ''a
 )(
     unset 'a
-    set the 'a <seta>
+    set noquote the 'a <seta>
     <seta> = get noquote the '''''''a
 )(
     a: b: ~unset~
@@ -41,14 +41,14 @@
 
 (
     x: 10
-    set the 'x: 20
+    set 'x: 20
     x = 20
 )(
     x: 10
     y: _
     foo: function [] [
-        set the 'x: 20
-        set the 'y x
+        set unquote the 'x: 20
+        set unquote the 'y x
     ]
     foo
     (x = 10) and (y = 20)
@@ -58,14 +58,14 @@
 
 (
     x: 10
-    set the ''''''x: 20
+    set noquote the ''''''x: 20
     x = 20
 )(
     x: 10
     y: _
     foo: function [] [
-        set the '''''''x: 20
-        set the '''''''y x
+        set noquote the '''''''x: 20
+        set noquote the '''''''y x
     ]
     foo
     (x = 10) and (y = 20)
