@@ -51,7 +51,6 @@ REBNATIVE(startup_p)
         "http://datatypes.rebol.info/vector",
         "compact scalar array",
         &T_Vector,
-        &PD_Vector,
         &CT_Vector,
         &MAKE_Vector,
         &TO_Vector,

@@ -29,8 +29,8 @@
 )
 (
     v: make vector! [integer! 32 3]
-    v/1: 10
-    v/2: 20
-    v/3: 30
+    v.1: 10
+    v.2: 20
+    v.3: 30
     v = make vector! [integer! 32 [10 20 30]]
 )

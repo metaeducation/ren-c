@@ -833,33 +833,6 @@ REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
 
 //
-//  PD_Gob: C
-//
-REB_R PD_Gob(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    REBGOB *gob = VAL_GOB(pvs->out);
-
-    if (IS_WORD(picker)) {
-        if (not Did_Get_GOB_Var(pvs->out, gob, picker))
-            return R_UNHANDLED;
-
-        return pvs->out;
-    }
-
-    if (IS_INTEGER(picker))
-        return rebValue(
-            Lib(PICK),
-                "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
-                "@", SPECIFIC(picker)
-        );
-
-    return R_UNHANDLED;
-}
-
-
-//
 //  MF_Gob: C
 //
 void MF_Gob(REB_MOLD *mo, REBCEL(const*) v, bool form)
@@ -882,15 +855,17 @@ void Pick_From_Gob(
     const RELVAL *picker
 ){
     if (IS_INTEGER(picker)) {
+        DECLARE_LOCAL(temp);
         if (rebRunThrows(
-            out,
+            temp,
             true,
             Lib(PICK),
                 "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
                 "@", SPECIFIC(picker)
         )){
-            fail (Error_No_Catch_For_Throw(out));
+            fail (Error_No_Catch_For_Throw(temp));
         }
+        Move_Cell(out, temp);
     }
     else if (IS_WORD(picker)) {
         if (not Did_Get_GOB_Var(out, gob, picker))

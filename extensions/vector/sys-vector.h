@@ -111,4 +111,3 @@ extern REB_R MAKE_Vector(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) 
 extern REB_R TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
 extern void MF_Vector(REB_MOLD *mo, REBCEL(const*) v, bool form);
 extern REBTYPE(Vector);
-extern REB_R PD_Vector(REBPVS *pvs, const RELVAL *picker);

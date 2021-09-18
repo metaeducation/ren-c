@@ -146,7 +146,6 @@ REBNATIVE(startup_p)
         "http://datatypes.rebol.info/library",
         "external library reference",
         &T_Library,
-        &PD_Fail,
         &CT_Library,
         &MAKE_Library,
         &TO_Library,
