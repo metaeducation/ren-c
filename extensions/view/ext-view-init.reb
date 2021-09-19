@@ -28,7 +28,7 @@ request-file: adapt :request-file* [
 request-dir: chain [
     adapt :request-dir* [
         if path [
-            dir: lib/replace/all file-to-local dir "/" "//"
+            dir: lib.replace/all file-to-local dir "/" "//"
         ]
     ]
         |

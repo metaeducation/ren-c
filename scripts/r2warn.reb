@@ -23,18 +23,18 @@ REBOL [
     }
 ]
 
-export: lib/func [
+export: lib.func [
     {!!! `export` should be a module feature !!!}
     set-word [set-word!]
-] lib/in lib [
+] lib.in lib [
     print ["REGISTERING WARNING EXPORT:" as word! set-word]
 ]
 
-checked: enfixed lib/func [
+checked: enfixed lib.func [
     return: <none>
     :set-word [set-word!]
     code [block!]
-] lib/in lib [
+] lib.in lib [
     set set-word do in lib code
     export set-word
 ]
@@ -166,7 +166,7 @@ unless: checked [
 switch: checked [
     adapt :switch [
         for-each c cases [
-            lib/all [  ; SWITCH's /ALL would override
+            lib.all [  ; SWITCH's /ALL would override
                 match [word! path!] c
                 not find [elide comment default] c
                 'null <> c

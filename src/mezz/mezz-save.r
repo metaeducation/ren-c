@@ -58,7 +58,7 @@ save: function [
 ][
     ; Recover common natives for words used as refinements.
     all_SAVE: all
-    all: :lib/all
+    all: :lib.all
 
     ; Special datatypes use codecs directly (e.g. PNG image file):
     all [

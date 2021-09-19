@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-sys/register-codec* 'png %.png
+sys.register-codec* 'png %.png
     :identify-png?
     :decode-png
     :encode-png

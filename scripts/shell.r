@@ -189,12 +189,12 @@ shell: func [
     if not command [return null]  ; SPACED components all vaporized
 
     if not pipe [
-        lib/call/shell command  ; must use LIB (binding issue)
+        lib.call/shell command  ; must use LIB (binding issue)
         return  ; don't show any result in console
     ]
 
     let output: copy ""
-    lib/call/shell/output command output  ; must use LIB (binding issue)
+    lib.call/shell/output command output  ; must use LIB (binding issue)
     return output
 ]
 

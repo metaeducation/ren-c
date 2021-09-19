@@ -34,9 +34,9 @@ cd: func [
         text! [
             ; !!! LOCAL-TO-FILE lives in the filesystem extension, and does
             ; not get bound due to an ordering problem.  Hence it needs the
-            ; lib/ prefix.  Review.
+            ; lib. prefix.  Review.
             ;
-            change-dir lib/local-to-file path
+            change-dir lib.local-to-file path
         ]
         tuple! word! path! [change-dir to-file path]
     ]

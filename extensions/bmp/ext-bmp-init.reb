@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-sys/register-codec* 'bmp %.bmp
+sys.register-codec* 'bmp %.bmp
     :identify-bmp?
     :decode-bmp
     :encode-bmp

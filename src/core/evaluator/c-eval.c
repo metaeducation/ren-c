@@ -2000,7 +2000,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     // For long-pondered technical reasons, only WORD! is able to dispatch
     // enfix.  If it's necessary to dispatch an enfix function via path, then
-    // a word is used to do it, like `>-` in `x: >- lib/method [...] [...]`.
+    // a word is used to do it, like `>-` in `x: >- lib.method [...] [...]`.
 
     switch (KIND3Q_BYTE_UNCHECKED(f_next)) {
       case REB_0_END:

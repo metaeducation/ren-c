@@ -517,7 +517,7 @@ set?: func [
 ; By default, the evaluation rules proceed according to the enfix mode of
 ; the operation being shoved into:
 ;
-;    >> 10 >- lib/= 5 + 5  ; as if you wrote `10 = 5 + 5`
+;    >> 10 >- lib.= 5 + 5  ; as if you wrote `10 = 5 + 5`
 ;    ** Script Error: + does not allow logic! for its value1 argument
 ;
 ;    >> 10 >- equal? 5 + 5  ; as if you wrote `equal? 10 5 + 5`
@@ -525,12 +525,12 @@ set?: func [
 ;
 ; You can force processing to be enfix using `->-` (an infix-looking "icon"):
 ;
-;    >> 1 ->- lib/add 2 * 3  ; as if you wrote `1 + 2 * 3`
+;    >> 1 ->- lib.add 2 * 3  ; as if you wrote `1 + 2 * 3`
 ;    == 9
 ;
 ; Or force prefix processing using `>--` (multi-arg prefix "icon"):
 ;
-;    >> 10 >-- lib/+ 2 * 3  ; as if you wrote `add 1 2 * 3`
+;    >> 10 >-- lib.+ 2 * 3  ; as if you wrote `add 1 2 * 3`
 ;    == 7
 ;
 >-: enfixed :shove

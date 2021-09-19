@@ -271,9 +271,9 @@ zip: func [
         ; needed to unpack encapping, and may be required before the
         ; Time extension has been loaded.  A simple reference to NOW
         ; won't find the function that didn't exist at module load time,
-        ; so use LIB/NOW to force lookup through LIB.
+        ; so use LIB.NOW to force lookup through LIB.
         ;
-        date: lib/now  ; !!! Each file has slightly later date?
+        date: lib.now  ; !!! Each file has slightly later date?
 
         let data: if match [binary! text!] :source/2 [  ; next is data
             first (source: next source)
@@ -511,7 +511,7 @@ unzip: function [
             ; against the information in the local directory entry.
             (
                 date/time: time
-                date: date - lib/now/zone  ; see notes RE: LIB/NOW above
+                date: date - lib.now/zone  ; see notes RE: LIB/NOW above
             )
 
             ; !!! TBD: Improve handling of flags.

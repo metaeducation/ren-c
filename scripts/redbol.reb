@@ -38,25 +38,25 @@ REBOL [
 ; !!! The general workings of modules is to scan them for top-level set-words,
 ; and then bind the module itself to those words.  This module is redefining
 ; the workings of the system fundamentally.  While doing those definitions
-; it's preferable to not have to say `lib/switch` or otherwise prefix each
+; it's preferable to not have to say `lib.switch` or otherwise prefix each
 ; call in the implementation so it doesn't use its own new definitions.  Until
 ; that becomes some kind of module feature, this folds the binding to lib
 ; into EMULATE, which lets you select whether you want to replace the
 ; functionality or just warn about it.
 ;
-helper: enfixed lib/func [
+helper: enfixed lib.func [
     return: <none>
     :set-word [set-word!]
     code [block!]
-] lib/in lib [
+] lib.in lib [
     set set-word do in lib code
 ]
 
-emulate: enfixed lib/func [
+emulate: enfixed lib.func [
     return: [<opt> any-value!]
     :set-word [set-word!]
     code [block!]
-] lib/in lib [
+] lib.in lib [
     set set-word do in lib code
     elide export reduce [as word! set-word]
     ; ^-- elide so we return what we evaluated to.
@@ -402,7 +402,7 @@ to-rebol-file: emulate [
     ]
 ]
 
-why?: emulate [does [lib/why]]  ; not exported yet, :why not bound
+why?: emulate [does [lib.why]]  ; not exported yet, :why not bound
 
 null: emulate [
     make char! 0  ; NUL in Ren-C https://en.wikipedia.org/wiki/Null_character
@@ -505,7 +505,7 @@ set: emulate [
         /some
     ][
         set_ANY: any
-        any: :lib/any
+        any: :lib.any
 
         all [
             not set_ANY
@@ -530,7 +530,7 @@ get: emulate [
         /any
     ][
         let any_GET: any
-        any: :lib/any
+        any: :lib.any
 
         if block? :source [
             return source  ; this is what it did :-/
@@ -567,7 +567,7 @@ do: emulate [
         /next [word!]
     ][
         var: next
-        next: :lib/next
+        next: :lib.next
 
         if var [  ; DO/NEXT
             if args [fail "Can't use DO/NEXT with ARGS"]
@@ -695,10 +695,10 @@ parse: emulate [
         /all "Ignored refinement in <r3-legacy>"
     ][
         case_PARSE: case
-        case: :lib/case
+        case: :lib.case
 
         comment [all_PARSE: all]  ; Not used
-        all: :lib/all
+        all: :lib.all
 
         return switch type of rules [
             blank! [split input charset reduce [tab space CR LF]]
@@ -788,7 +788,7 @@ collect: emulate [
     ]
 ]
 
-; because reduce has been changed but lib/reduce is not in legacy
+; because reduce has been changed but lib.reduce is not in legacy
 ; mode, this means the repend and join function semantics are
 ; different.  This snapshots their implementation.
 
@@ -933,7 +933,7 @@ redbol-form: form: emulate [
                 value
             ]
             block? value [
-                delimit: either unspaced [:lib/unspaced] [:lib/spaced]
+                delimit: either unspaced [:lib.unspaced] [:lib.spaced]
                 delimit map-each item value [
                     redbol-form :item
                 ]
@@ -1526,9 +1526,9 @@ read: emulate [
 ; interpretation.  This means bad UTF-8 input that isn't Latin1 will be
 ; misinterpreted...but since Rebol2 would accept any bytes, it's no worse.
 ;
-hijack :lib/transcode enclose copy :lib/transcode function [f [frame!]] [
+hijack :lib.transcode enclose copy :lib.transcode function [f [frame!]] [
     trap [
-        result: lib/do copy f  ; COPY so we can DO it again if needed
+        result: lib.do copy f  ; COPY so we can DO it again if needed
     ] then e -> [
         if e/id != 'bad-utf8 [
             fail e
@@ -1540,16 +1540,16 @@ hijack :lib/transcode enclose copy :lib/transcode function [f [frame!]] [
         iterate pos [
             if pos/1 < 128 [continue]  ; ASCII
             if pos/1 < 192 [
-                lib/insert pos #{C2}
+                lib.insert pos #{C2}
                 pos: next pos
                 continue
             ]
-            lib/change pos pos/1 - 64  ; want byte not FORM, use LIB/change!
-            lib/insert pos #{C3}
+            lib.change pos pos/1 - 64  ; want byte not FORM, use LIB/change!
+            lib.insert pos #{C3}
             pos: next pos
         ]
 
-        result: lib/do f  ; this time if it fails, we won't TRAP it
+        result: lib.do f  ; this time if it fails, we won't TRAP it
     ]
     result
 ]

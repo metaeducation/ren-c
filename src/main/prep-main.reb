@@ -74,7 +74,7 @@ for-each file reduce [
     ; unsustainable pattern set by historical Redbols that needs to be
     ; rethought.
     ;
-    append/line buf "sys/import* lib module ["
+    append/line buf "sys.import* lib module ["
     append/line buf header
     append/line buf "]["
     append/line buf contents

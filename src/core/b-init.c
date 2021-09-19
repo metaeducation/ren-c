@@ -748,7 +748,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     // protect the entire system object and still run the interpreter.  That
     // was commented out in R3-Alpha
     //
-    //    comment [if :lib/secure [protect-system-object]]
+    //    comment [if :lib.secure [protect-system-object]]
 
 
   //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//

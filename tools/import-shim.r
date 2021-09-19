@@ -250,7 +250,7 @@ import: enfix func [
     return ret
 ]
 
-lib/import: sys/import: func [
+lib.import: sys.import: func [
     module [word! file! url! text! binary! module! block! tag!]
     /version ver [tuple!]
     /no-share
