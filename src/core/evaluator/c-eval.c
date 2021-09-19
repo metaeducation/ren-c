@@ -1043,9 +1043,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     // PATH!s starting with inert values do not evaluate.  `/foo/bar` has a
     // blank at its head, and it evaluates to itself.
-    //
-    // !!! The dispatch of TUPLE! is a work in progress, with concepts about
-    // being less willing to execute functions under some notations.
 
       case REB_PATH: {
         if (HEART_BYTE(v) == REB_WORD)
@@ -1057,63 +1054,152 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             break;
         }
 
-        // !!! This is a special exemption added so that BLANK!-headed tuples
-        // at the head of a PATH! carry over the inert evaluative behavior.
-        // (The concept of evaluator treatment of PATH!s and TUPLE!s is to
-        // not heed them structurally, but merely to see them as a sequence
-        // of ordered dots and slashes...it will have to be seen how this
-        // ultimately plays out.)
-        //
-        if (IS_TUPLE(head)) {
+        if (IS_GROUP(head)) {
             //
-            // VAL_SEQUENCE_AT() allows the same use of the `store` as the
-            // sequence, which may be the case if it wrote spare above.
+            // Note: Historical Rebol did not allow GROUP! at the head of path.
+            // We can thus restrict head-of-path evaluations to ACTION!.
+            //
+            REBSPC *derived = Derive_Specifier(v_specifier, head);
+            if (Eval_Value_Throws(f_spare, head, derived)) {
+                Move_Cell(f->out, f_spare);
+                goto return_thrown;
+            }
+            if (not IS_ACTION(f_spare))
+                fail ("Head of PATH! did not evaluate to an ACTION!");
+        }
+        else if (IS_TUPLE(head)) {
+            //
+            // Note: Historical Rebol didn't have WORD!-bearing TUPLE!s at all.
+            // We can thus restrict head-of-path evaluations to ACTION!, or
+            // this exemption...where blank-headed tuples can carry over the
+            // inert evaluative behavior.  For instance:
+            //
+            //    >> .a.b/c/d
+            //    == .a.b/c/d
             //
             if (IS_BLANK(VAL_SEQUENCE_AT(f_spare, head, 0))) {
                 Derelativize(f->out, v, v_specifier);
                 break;
             }
+
+            Derelativize(f->out, head, VAL_SEQUENCE_SPECIFIER(v));
+            Quotify(f->out, 1);
+
+            if (rebRunThrows(
+                f_spare,
+                true,
+                Lib(APPLY), rebQ(Lib(GET)), "[", f->out, "/steps #]"
+            )){
+                goto return_thrown;
+            }
+
+            if (not IS_ACTION(f_spare))
+                fail ("TUPLE! must resolve to an action if head of PATH!");
         }
-
-        if (Eval_Path_Throws_Core(
-            f_spare,  // can't overwrite f->out (if invisible action)
-            v,  // !!! may not be array-based
-            v_specifier,
-            EVAL_MASK_DEFAULT | EVAL_FLAG_PUSH_PATH_REFINES
-        )){
-            Move_Cell(f->out, f_spare);
-            goto return_thrown;
-        }
-
-        if (IS_ACTION(f_spare)) {  // try this branch before fail on void+null
-            REBACT *act = VAL_ACTION(f_spare);
-
-            // PATH! dispatch is costly and can error in more ways than WORD!:
-            //
-            //     e: trap [do make block! ":a"] e/id = 'not-bound
-            //                                   ^-- not ready @ lookahead
-            //
-            // Plus with GROUP!s in a path, their evaluations can't be undone.
-            //
-            if (GET_ACTION_FLAG(act, ENFIXED))
-                fail ("Use `>-` to shove left enfix operands into PATH!s");
-
-            DECLARE_ACTION_SUBFRAME (subframe, f);
-            Push_Frame(f->out, subframe);
-            Push_Action(
-                subframe,
-                VAL_ACTION(f_spare),
-                VAL_ACTION_BINDING(f_spare)
+        else if (IS_WORD(head)) {
+            const REBVAL *lookup = Lookup_Word_May_Fail(
+                head,
+                v_specifier
             );
-            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_spare));
-            goto process_action;
+
+            // Under the new thinking, PATH! is only used to invoke actions.
+            //
+            if (IS_ACTION(lookup)) {
+                Copy_Cell(f_spare, lookup);
+                goto action_in_spare;
+            }
+
+            if (IS_BAD_WORD(lookup) and GET_CELL_FLAG(lookup, ISOTOPE))
+                fail (Error_Bad_Word_Get(head, lookup));
+
+            // ...but historical Rebol used PATH! for everything.  For Redbol
+            // compatibility, we must allow that.  However, we don't want to
+            // have pathing as another axis of extensibility.  So what we
+            // do here is to run successive PICKs until we get an ACTION!
+            //
+            if (Eval_Path_Throws_Core(
+                f_spare,  // can't overwrite f->out (if invisible action)
+                v,  // !!! may not be array-based
+                v_specifier,
+                EVAL_MASK_DEFAULT | EVAL_FLAG_PUSH_PATH_REFINES
+            )){
+                Move_Cell(f->out, f_spare);
+                goto return_thrown;
+            }
+
+            if (IS_BAD_WORD(f_spare) and GET_CELL_FLAG(f_spare, ISOTOPE))
+                fail (Error_Bad_Word_Get(v, f_spare));
+
+            if (not IS_ACTION(f_spare)) {
+                Move_Cell(f->out, f_spare);  // won't move CELL_FLAG_UNEVALUATED
+                break;
+            }
+            goto refinements_already_pushed;
+        }
+        else
+            fail (head);  // what else could it have been?
+
+      action_in_spare:
+
+        assert(IS_ACTION(f_spare));
+
+        // We push the remainder of the path in *reverse order* as words to act
+        // as refinements to the function.  The action execution machinery will
+        // decide if they are valid or not.
+        //
+        REBLEN len = VAL_SEQUENCE_LEN(v) - 1;
+        for (; len != 0; --len) {
+            const RELVAL *at = VAL_SEQUENCE_AT(f->out, v, len);
+            if (IS_GROUP(at)) {
+                DECLARE_LOCAL (temp);
+                REBSPC *derived = Derive_Specifier(
+                    v_specifier,
+                    at
+                );
+                if (Eval_Value_Throws(temp, at, derived)) {
+                    Move_Cell(f->out, temp);
+                    goto return_thrown;
+                }
+                Move_Cell(f->out, temp);
+                at = f->out;
+            }
+            if (
+                IS_NULLED(at) or Is_Nulled_Isotope(at)
+                or IS_BLANK(at) or Is_Isotope_With_Id(at, SYM_BLANK)
+            ){
+                // just skip it
+            }
+            else if (IS_WORD(at))
+                Init_Word(DS_PUSH(), VAL_WORD_SYMBOL(at));
+            else if (IS_PATH(at) and IS_REFINEMENT(at))
+                Init_Word(DS_PUSH(), VAL_REFINEMENT_SYMBOL(at));
+            else
+                fail (at);
         }
 
-        if (Is_Isotope(f_spare))
-            fail (Error_Bad_Word_Get(v, f_spare));
+      refinements_already_pushed:
 
-        Move_Cell(f->out, f_spare);  // won't move CELL_FLAG_UNEVALUATED
-        break; }
+        REBACT *act = VAL_ACTION(f_spare);
+
+        // PATH! dispatch is costly and can error in more ways than WORD!:
+        //
+        //     e: trap [do make block! ":a"] e/id = 'not-bound
+        //                                   ^-- not ready @ lookahead
+        //
+        // Plus with GROUP!s in a path, their evaluations can't be undone.
+        //
+        if (GET_ACTION_FLAG(act, ENFIXED))
+            fail ("Use `>-` to shove left enfix operands into PATH!s");
+
+        DECLARE_ACTION_SUBFRAME (subframe, f);
+        Push_Frame(f->out, subframe);
+        Push_Action(
+            subframe,
+            VAL_ACTION(f_spare),
+            VAL_ACTION_BINDING(f_spare)
+        );
+        Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_spare));
+        goto process_action; }
 
 
     //=//// SET-PATH! /////////////////////////////////////////////////////=//
