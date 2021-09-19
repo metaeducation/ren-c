@@ -1186,7 +1186,7 @@ REBTYPE(Context)
 
         const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
         if (not var)
-            fail (Error_Bad_Path_Pick_Raw(picker));
+            fail (Error_Bad_Pick_Raw(picker));
 
         if (steps_left == 1)
             return Copy_Cell(D_OUT, var);
@@ -1218,7 +1218,7 @@ REBTYPE(Context)
         else {
             const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
             if (not var)
-                fail (Error_Bad_Path_Pick_Raw(picker));
+                fail (Error_Bad_Pick_Raw(picker));
 
           #if !defined(NDEBUG)
             enum Reb_Kind var_type = VAL_TYPE(var);
@@ -1244,7 +1244,7 @@ REBTYPE(Context)
 
         REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
         if (not var)
-            fail (Error_Bad_Path_Pick_Raw(picker));
+            fail (Error_Bad_Pick_Raw(picker));
 
         Copy_Cell(var, setval);
         return nullptr; }  // caller's REBCTX* is not stale, no update needed

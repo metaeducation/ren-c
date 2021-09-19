@@ -56,7 +56,7 @@
     (f-outside.public = 1020)  ; public values visible externally
     (
         e: trap [f-outside.private]
-        'bad-path-pick = e.id  ; private not visible in external view
+        'bad-pick = e.id  ; private not visible in external view
     )
 
     (f-inside.public = 1020)  ; public values still visible internally
@@ -89,13 +89,13 @@
     (f-outside-adapt.public = 1020)
     (
         e: trap [f-outside-adapt.private]
-        'bad-path-pick = e.id
+        'bad-pick = e.id
     )
 
     (f-inside-prelude.public = 1020)
     (
         e: trap [f-inside-prelude.private]
-        'bad-path-pick = e.id
+        'bad-pick = e.id
     )
 
     (f-inside-foo.public = 1020)
@@ -142,7 +142,7 @@
     (f-inside-foo.private = 304)  ; not reused!
     (
         e: trap [f-inside-foo.additional]
-        'bad-path-pick = e.id
+        'bad-pick = e.id
     )
 ]
 

@@ -256,7 +256,7 @@ bool Next_Path_Throws(REBPVS *pvs)
             fail ("NULL used in path picking but was not handled");
         DECLARE_LOCAL (specific);
         Derelativize(specific, PVS_PICKER(pvs), f_specifier);
-        fail (Error_Bad_Path_Pick_Raw(specific)); }
+        fail (Error_Bad_Pick_Raw(specific)); }
 
       case C_THROWN:
         panic ("Path dispatch isn't allowed to throw, only GROUP!s");

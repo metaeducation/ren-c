@@ -41,7 +41,7 @@
     a == #{00}
 )
 
-('bad-path-pick = pick trap [pick #{00} 'x] 'id)
+('bad-pick = pick trap [pick #{00} 'x] 'id)
 
 
 [#1791
