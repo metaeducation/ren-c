@@ -55,8 +55,8 @@ make-port*: function [
             ;
             ;    make port! [
             ;        scheme: 'tls
-            ;        host: port/spec/host
-            ;        port-id: port/spec/port-id
+            ;        host: port.spec.host
+            ;        port-id: port.spec.port-id
             ;        ref: join tcp:// reduce [host ":" port-id]
             ;    ]
             ;
@@ -116,13 +116,13 @@ make-port*: function [
     ]
     append port.spec overloads
 
-    port/spec/scheme: name
-    port/scheme: scheme
+    port.spec.scheme: name
+    port.scheme: scheme
 
     ; Defaults:
-    port/actor: try get in scheme 'actor ; avoid evaluation
-    port/spec/ref: default [spec]
-    port/spec/title: default [scheme.title]
+    port.actor: try get in scheme 'actor ; avoid evaluation
+    port.spec.ref: default [spec]
+    port.spec.title: default [scheme.title]
     port: to port! port
 
     ; Call the scheme-specific port init. Note that if the

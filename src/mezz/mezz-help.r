@@ -66,7 +66,7 @@ description-of: function [
         gob! [spaced ["offset:" v/offset "size:" v/size]]
         object! [mold words of v]
         typeset! [mold make block! v]
-        port! [mold reduce [v/spec/title v/spec/ref]]
+        port! [mold reduce [v.spec.title v.spec.ref]]
     ]
 ]
 
