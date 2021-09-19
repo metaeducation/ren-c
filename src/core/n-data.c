@@ -854,15 +854,25 @@ REBNATIVE(set)
     REBVAL *steps = ARG(steps);
     REBVAL *target = ARG(target);
     REBVAL *value = Meta_Unquotify(ARG(value));
-    //
-    // !!! Variables should not store ~null~/~blank~/~false~ isotopes, but they
-    // currently can...would this be a good place to catch it?  The overall
-    // return result should not be decayed to keep these matching:
+
+    // Variables should not store ~null~/~blank~/~false~ isotopes.  Not all
+    // paths are currently caught, but try to catch some here.  Note that the
+    // overall return result should not be decayed to keep these matching:
     //
     //     '~null~ = x: if true [null]
     //     '~null~ = set 'x if true [null]
     //
-    // See `Decay_If_Isotope()`
+    // See also `Decay_If_Isotope()`
+    //
+    const REBVAL *decayed = value;
+    if (IS_BAD_WORD(value) and GET_CELL_FLAG(value, ISOTOPE)) {
+        if (VAL_BAD_WORD_ID(value) == SYM_BLANK)
+            decayed = Lib(BLANK);
+        else if (VAL_BAD_WORD_ID(value) == SYM_NULL)
+            decayed = Lib(NULL);
+        else if (VAL_BAD_WORD_ID(value) == SYM_FALSE)
+            decayed = Lib(FALSE);
+    }
 
     if (Is_Blackhole(target))
         RETURN (value);
@@ -871,7 +881,7 @@ REBNATIVE(set)
 
       set_target:
 
-        Copy_Cell(Sink_Word_May_Fail(target, SPECIFIED), value);
+        Copy_Cell(Sink_Word_May_Fail(target, SPECIFIED), decayed);
 
         if (REF(steps)) {
             if (not IS_SYMBOL(target)) {
@@ -1016,7 +1026,7 @@ REBNATIVE(set)
 
     ++VAL_INDEX_RAW(target);
 
-    if (rebRunThrows(D_OUT, true, Lib(POKE_P), D_SPARE, target, rebQ(value))) {
+    if (rebRunThrows(D_OUT, true, Lib(POKE_P), D_SPARE, target, rebQ(decayed))) {
         //
         // !!! We've already evaluated all the groups, so there should
         // (probably?) be a rule that PICK* is not able to throw.  Review.
