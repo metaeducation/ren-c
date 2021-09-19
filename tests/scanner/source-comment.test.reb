@@ -32,7 +32,7 @@
         issue? issue
         0 = length of issue
         0 = codepoint of issue
-        'illegal-zero-byte = (trap [to text! issue])/id
+        'illegal-zero-byte = (trap [to text! issue]).id
     ]
 )
 
@@ -45,7 +45,7 @@
         "a" = to text! unquote q-word
     ]
 )(
-    'scan-invalid = (trap [load "'a; illegal quoted word"])/id
+    'scan-invalid = (trap [load "'a; illegal quoted word"]).id
 )
 
 ; Semicolons are technically legal in URL (though many things that auto-scan

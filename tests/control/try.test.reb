@@ -41,7 +41,7 @@
 ('~null~ = ^ entrap [null])
 ([3] = entrap [1 + 2])
 ([[b c]] = entrap [skip [a b c] 1])
-('no-arg = (entrap [the])/id)
+('no-arg = (entrap [the]).id)
 
 
 ; Multiple return values

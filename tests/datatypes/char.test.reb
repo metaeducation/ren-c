@@ -31,7 +31,7 @@
 ; Math operations should only work on single characters
 [
     (#a + 1 = #b)
-    ('cannot-use = (trap [#aa + 1])/id)
+    ('cannot-use = (trap [#aa + 1]).id)
 ]
 
 

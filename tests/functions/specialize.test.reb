@@ -140,7 +140,7 @@
             specialize :apo/only []
         ]
     ][
-        is-bad: me and ('bad-parameter = (trap [do code])/id)
+        is-bad: me and ('bad-parameter = (trap [do code]).id)
     ]
 
     is-bad

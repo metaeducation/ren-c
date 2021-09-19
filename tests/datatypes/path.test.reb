@@ -28,7 +28,7 @@
 )
 (
     blk: reduce [charset "a" 3]
-    'bad-sequence-item = (trap [to path! reduce ['blk charset "a"]])/id
+    'bad-sequence-item = (trap [to path! reduce ['blk charset "a"]]).id
 )
 (
     blk: [[] 3]
@@ -172,15 +172,15 @@
 ; PATH! beginning with an inert item will itself be inert
 ;
 [
-    ('bad-sequence-item = (trap [to path! [/ref inement path]])/id)
-    ('bad-sequence-item = (trap [to path! [/refinement 2]])/id)
-    ((/refinement)/2 = 'refinement)
-    (r: /refinement, r/2 = 'refinement)
+    ('bad-sequence-item = (trap [to path! [/ref inement path]]).id)
+    ('bad-sequence-item = (trap [to path! [/refinement 2]]).id)
+    ((/refinement).2 = 'refinement)
+    (r: /refinement, r.2 = 'refinement)
 ][
     ("te"/xt/path = to path! ["te" xt path])
     ("text"/3 = to path! ["text" 3])
-    (("text")/3 = #"x")
-    (t: "text", t/3 = #"x")
+    (("text").3 = #"x")
+    (t: "text", t.3 = #"x")
 ]
 
 ; ISSUE! has internal slashes (like FILE!), and does not load as a path

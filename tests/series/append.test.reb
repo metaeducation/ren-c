@@ -167,8 +167,8 @@
     "abcdefgh" = append/part "abc" ["defg" "hijk"] 5
 )]
 
-('illegal-zero-byte = (trap [append "abc" make char! 0])/id)
-('illegal-zero-byte = (trap [append "abc" #{410041}])/id)
+('illegal-zero-byte = (trap [append "abc" make char! 0]).id)
+('illegal-zero-byte = (trap [append "abc" #{410041}]).id)
 
 
 [#146 (

@@ -91,7 +91,7 @@
 
     (takes-2-logics ('~none~) = '~none~ false)
 
-    ('expect-arg = (trap [takes-2-logics true infix-voider true false])/id)
+    ('expect-arg = (trap [takes-2-logics true infix-voider true false]).id)
 ]
 
 ; Soft Quoted Branching

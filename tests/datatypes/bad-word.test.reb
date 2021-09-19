@@ -17,7 +17,7 @@
 ; So ~ is the only "~-word"
 ;
 (word? first [~])
-('scan-invalid = ((trap [load-value "~~"])/id))
+('scan-invalid = ((trap [load-value "~~"]).id))
 (bad-word? first [~~~])
 ('~ = label of '~~~)
 
@@ -125,7 +125,7 @@
 )
 
 [#68 https://github.com/metaeducation/ren-c/issues/876
-    ('need-non-end = (trap [a: ()])/id)
+    ('need-non-end = (trap [a: ()]).id)
 ]
 
 
