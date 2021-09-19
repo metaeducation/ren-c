@@ -1584,3 +1584,11 @@ load: emulate [
         return result  ; "1 2" loads as `[1 2]`, leave it that way
     ]
 ]
+
+; We do this last, just in case any of the above would accidentally use
+; a Redbol-style path.
+;
+; !!! Could paths somehow be associated with a module-of-origin, such that
+; it would be possible to have a per-module switch on path tolerance?
+;
+system.options.redbol-paths: true

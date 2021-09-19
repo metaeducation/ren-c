@@ -979,6 +979,10 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // explanation in %sys-pick.h
     //
     // For now, we defer to what GET does.
+    //
+    // Tuples looking up to BAD-WORD! isotopes are handled consistently with
+    // WORD! and GET-WORD!, and will error...directing you use GET/ANY if
+    // fetching isotopes is what you actually intended.
 
       case REB_TUPLE: {
         if (HEART_BYTE(v) == REB_WORD)
@@ -1035,12 +1039,19 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     //=//// PATH! //////////////////////////////////////////////////////////=//
     //
-    // PATH! and GET-PATH! have similar mechanisms, with the difference being
-    // that if a PATH! looks up to an action it will execute it.
+    // Ren-C has moved to member-access model of "dots instead of slashes".
+    // So by default, PATH! should only be used for picking refinements on
+    // functions.  TUPLE! should be used for picking members out of structures.
+    // This has benefits because function dispatch is more complex than the
+    // usual PICK process, and being able to say that "slashing" is not
+    // methodized the way "dotting" is gives some hope of optimizing it.
     //
-    // Paths looking up to BAD-WORD! are handled consistently with WORD! and
-    // GET-WORD!, and will error...directing you use GET/ANY if fetching
-    // bad words is what you actually intended.
+    // *BUT* for compatibility with Redbol, there has to be a mode where the
+    // paths are effectively turned into TUPLE!s.  This is implemented and
+    // controlled by the flag SYSTEM.OPTIONS.REDBOL-PATHS - but it is slow
+    // because the method has to actually synthesize a specialized function,
+    // instead of pushing refinements to the stack.  (Going through a method
+    // call would not allow accrual of data stack elements.)
     //
     // PATH!s starting with inert values do not evaluate.  `/foo/bar` has a
     // blank at its head, and it evaluates to itself.
@@ -1114,16 +1125,35 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             if (IS_BAD_WORD(lookup) and GET_CELL_FLAG(lookup, ISOTOPE))
                 fail (Error_Bad_Word_Get(head, lookup));
 
+            if (HEART_BYTE(v) == REB_META_WORD)  // e.g. `a/`
+                fail (Error_Inert_With_Slashed_Raw());
+
+            Derelativize(f->out, v, v_specifier);
+            mutable_KIND3Q_BYTE(f->out) = REB_TUPLE;
+
             // ...but historical Rebol used PATH! for everything.  For Redbol
             // compatibility, we flip over to a TUPLE!.  We must be sure that
             // we are running in a mode where tuple allows the getting of
             // actions (though it's slower because it does specialization)
             //
-            PROBE(v);
-            Derelativize(f->out, v, v_specifier);
-            mutable_KIND3Q_BYTE(f->out) = REB_TUPLE;
-            Quotify(f->out, 1);
+            REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+            if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
+                Derelativize(f_spare, v, v_specifier);
+                rebElide(
+                    "echo [The PATH!", f_spare, "doesn't evaluate to",
+                        "an ACTION! in the first slot.]",
+                    "echo [SYSTEM.OPTIONS.REDBOL-PATHS is FALSE so this",
+                        "is not allowed by default.]",
+                    "echo [For now, we'll enable it automatically...but it",
+                        "will slow down the system!]",
+                    "echo [Please use TUPLE! instead, like", f->out, "]",
 
+                    "system.options.redbol-paths: true",
+                    "wait 3"
+                );
+            }
+
+            Quotify(f->out, 1);
             if (rebRunThrows(
                 f_spare,
                 true,
@@ -1145,7 +1175,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         else
             fail (head);  // what else could it have been?
 
-      action_in_spare:
+      action_in_spare: {
 
         assert(IS_ACTION(f_spare));
 
@@ -1182,6 +1212,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             else
                 fail (at);
         }
+      }
 
       refinements_already_pushed:
 
@@ -1210,7 +1241,52 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     //=//// SET-PATH! /////////////////////////////////////////////////////=//
     //
-    // See notes on SET-WORD!  SET-PATH!s are handled in a similar way.
+    // See notes on PATH! for why Ren-C aligns itself with the general idea of
+    // "dots instead of slashes" for member selection.  For now, those who
+    // try to use SET-PATH! will receive a warning once...then it will set
+    // a switch to where it runs the SET-TUPLE! code instead.
+    //
+    // Future uses of SET-PATH! could do things like verify that the thing
+    // being assigned is an ACTION!:
+    //
+    //     >> foo/: 10
+    //     ** Expected an ACTION! but got an INTEGER!
+    //
+    // Or it might be a way of installing a "getter/setter" function:
+    //
+    //     >> obj.field/: func [/value] [
+    //            either value [print ["Assigning" value]] [print "Getting"]]
+    //        ]
+    //
+    //     >> obj.field: 10
+    //     Assigning 10
+    //
+    // But for the moment, it is just used in Redbol emulation.
+
+      case REB_SET_PATH: {
+        REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+        if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
+            Derelativize(f->out, v, v_specifier);
+            mutable_KIND3Q_BYTE(f->out) = REB_SET_TUPLE;
+
+            Derelativize(f_spare, v, v_specifier);
+            rebElide(
+                "echo [The SET-PATH!", f_spare, "is no longer the preferred",
+                    "way to do member assignments.]",
+                "echo [SYSTEM.OPTIONS.REDBOL-PATHS is FALSE, so SET-PATH!",
+                    "is not allowed by default.]",
+                "echo [For now, we'll enable it automatically...but it",
+                    "will slow down the system!]",
+                "echo [Please use TUPLE! instead, like", f->out, "]",
+
+                "system.options.redbol-paths: true",
+                "wait 3"
+            );
+        }
+        goto set_tuple; }
+
+
+    //=//// SET-TUPLE! /////////////////////////////////////////////////////=//
     //
     // !!! The evaluation ordering is dictated by the fact that there isn't a
     // separate "evaluate path to target location" and "set target' step.
@@ -1221,14 +1297,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     //     >> foo: make object! [[bar][bar: 10]]
     //
-    //     >> foo/(print "left" 'bar): (print "right" 20)
+    //     >> foo.(print "left" 'bar): (print "right" 20)
     //     right
     //     left
     //     == 20
     //
     // BAD-WORD! and NULL assigns are allowed: https://forum.rebol.info/t/895/4
 
-      case REB_SET_PATH:
+      set_tuple:
       case REB_SET_TUPLE: {
         if (HEART_BYTE(v) == REB_WORD) {
             assert(VAL_WORD_ID(v) == SYM__SLASH_1_);

@@ -201,10 +201,10 @@ REBTYPE(Action)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *modern = Get_System(SYS_OPTIONS, OPTIONS_ACTION_ONLY_PATHS);
-        if (not IS_LOGIC(modern) or VAL_LOGIC(modern) == true) {
+        REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+        if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
             fail (
-                "SYSTEM.OPTIONS.ACTION-ONLY-PATHS is true, so you can't"
+                "SYSTEM.OPTIONS.REDBOL-PATHS is false, so you can't"
                 " use paths to do ordinary picking.  Use TUPLE!"
             );
           }

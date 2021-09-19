@@ -139,11 +139,11 @@ options: make object! [  ; Options supplied to REBOL during startup
 
     ; Historical Rebol used PATH! for accessing members as well as refinements
     ; on functions.  Ren-C generalized TUPLE! for member access, and uses
-    ; PATH! only for invoking functions.  If this flag is set to false, then
+    ; PATH! only for invoking functions.  If this flag is set to true, then
     ; it will emulate legacy behavior--though it is measurably slower.  :-(
     ; Ideally keep this to TRUE and use the new conventions.
     ;
-    action-only-paths: true
+    redbol-paths: false
 ]
 
 script: make object! [
