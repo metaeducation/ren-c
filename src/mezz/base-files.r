@@ -30,8 +30,8 @@ info?: function [
         if only [return 'file]
         return make object! [
             name: target
-            size: t/2
-            date: t/3
+            size: t.2
+            date: t.3
             type: 'url
         ]
     ] then [
@@ -61,7 +61,7 @@ size-of: size?: function [
 ][
     all [
         info: attempt [info? target]  ; !!! Why not let the error report?
-        info/size
+        info.size
     ]
 ]
 
@@ -72,7 +72,7 @@ modified?: function [
 ][
     all [
         info: attempt [info? target]  ; !!! Why not let the error report?
-        info/date
+        info.date
     ]
 ]
 
