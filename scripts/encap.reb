@@ -886,10 +886,10 @@ pe-format: context [
             print ["Section headers end at:" index of end-of-section-header]
         ]
 
-        sort/compare sections func [a b][a/physical-offset < b/physical-offset]
+        sort/compare sections func [a b][a.physical-offset < b.physical-offset]
 
         let first-section-by-phy-offset: any [
-            sections/1
+            sections.1
             catch [
                 for-each sec sections [
                     if not zero? sec.physical-offset [
@@ -912,12 +912,12 @@ pe-format: context [
         change skip exe-data COFF-header.number-of-sections-offset
             to-u16-le (COFF-header.number-of-sections + 1)
 
-        let last-section-by-phy-offset: sections/(COFF-header.number-of-sections)
+        let last-section-by-phy-offset: sections.(COFF-header.number-of-sections)
 
         sort/compare sections func [a b][a.virtual-offset < b.virtual-offset]
 
         let last-section-by-virt-offset:
-            sections/(COFF-header.number-of-sections)
+            sections.(COFF-header.number-of-sections)
 
         let last-virt-offset: align-to
             (last-section-by-virt-offset.virtual-offset
@@ -1225,12 +1225,12 @@ generic-format: context [
     ][
         let info: query file
 
-        let test-sig: read/seek/part file (info/size - sig-length) sig-length
+        let test-sig: read/seek/part file (info.size - sig-length) sig-length
 
         if test-sig != signature [return null]
 
         let embed-size: debin [be +] (
-            read/seek/part file (info/size - sig-length - 8) 8
+            read/seek/part file (info.size - sig-length - 8) 8
         )
 
         let embed: read/seek/part file (
@@ -1269,7 +1269,7 @@ encap: func [
     ; head tuple support is still pending...use GROUP!
     ;
     let compressed: copy #{}
-    (:lib.zip)/deep/verbose compressed spec
+    lib.zip/deep/verbose compressed spec
 
     print ["Compressed resource is" length of compressed "bytes long."]
 
@@ -1327,7 +1327,7 @@ get-encap: func [
     ; head tuple support is still pending...use GROUP!
     ;
     let block: copy []
-    (:lib.unzip)/quiet block compressed-data
+    lib.unzip/quiet block compressed-data
     return block
 ]
 
