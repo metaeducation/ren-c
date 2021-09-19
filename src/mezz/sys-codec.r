@@ -54,14 +54,14 @@ register-codec*: func [
     ; Media-types block format: [.abc .def type ...]
     ; !!! Should be a map, with blocks of codecs on collisions
     ;
-    append append system.options.file-types suffixes ^ (bind name system/codecs)
+    append append system.options.file-types suffixes ^ (bind name system.codecs)
 
     return codec
 ]
 
 
 ; Special import case for extensions:
-append system/options/file-types switch fourth system/version [
+append system.options.file-types switch fourth system.version [
     3 [
         [%.rx %.dll extension] ; Windows
     ]
@@ -86,8 +86,8 @@ decode: function [
         {The data to decode}
 ][
     all [
-        cod: select system/codecs type
-        f: :cod/decode
+        cod: select system.codecs type
+        f: :cod.decode
         (data: f data)
     ] else [
         cause-error 'access 'no-codec type
@@ -107,8 +107,8 @@ encode: function [
         [block!]  ; !!! Not currently used
 ][
     all [
-        cod: select system/codecs type
-        f: :cod/encode
+        cod: select system.codecs type
+        f: :cod.encode
         (data: f data)
     ] else [
         cause-error 'access 'no-codec type
@@ -123,9 +123,9 @@ encoding-of: function [
     return: [<opt> word!]
     data [binary!]
 ][
-    for-each [name codec] system/codecs [
+    for-each [name codec] system.codecs [
         if all [
-            f: :codec/identify?
+            f: :codec.identify?
             (f data)
         ][
             return name

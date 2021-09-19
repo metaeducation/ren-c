@@ -47,7 +47,7 @@ REBOL [
 ]
 
 import %../../tools/common.r
-args: parse-args system/script/args  ; either from command line or DO/ARGS
+args: parse-args system.script.args  ; either from command line or DO/ARGS
 
 import %../../tools/systems.r
 system-config: config-system args/OS_ID

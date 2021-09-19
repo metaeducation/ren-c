@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-if 'Windows <> first system/platform [
+if 'Windows <> first system.platform [
     ; Windows has locale implemented as a native
 
     ;DO NOT EDIT this table
@@ -488,8 +488,9 @@ if 'Windows <> first system/platform [
     iso-3166-table: iso-639-table: ~captured-by-LOCALE-function~
 ]
 
-; initialize system/locale
-system/locale/language: locale 'language
-system/locale/language*: locale 'language*
-system/locale/locale: locale 'territory
-system/locale/locale*: locale 'territory*
+=== Initialize SYSTEM.LOCALE ===
+
+system.locale.language: locale 'language
+system.locale.language*: locale 'language*
+system.locale.locale: locale 'territory
+system.locale.locale*: locale 'territory*

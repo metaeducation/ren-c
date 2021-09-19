@@ -337,7 +337,7 @@ what-dir: func [  ; This can be HIJACK'd by a "smarter" version
     {Returns the current directory path}
     return: [<opt> file! url!]
 ][
-    return opt system/options/current-path
+    return opt system.options.current-path
 ]
 
 change-dir: func [  ; This can be HIJACK'd by a "smarter" version
@@ -345,7 +345,7 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
     return: [file! url!]
     path [file! url!]
 ][
-    system/options/current-path: path
+    system.options.current-path: path
 ]
 
 
@@ -369,7 +369,7 @@ redescribe: func [
     ; only manipulate the description.
 
     let on-demand-meta: does [
-        meta: default [set-meta :value copy system/standard/action-meta]
+        meta: default [set-meta :value copy system.standard.action-meta]
 
         if not find meta 'description [
             fail [{archetype META-OF doesn't have DESCRIPTION slot} meta]
@@ -1046,7 +1046,7 @@ read-lines: func [
     /keep "Don't remove delimiter"
     /binary "Return BINARY instead of TEXT"
 ][
-    if blank? src [src: system/ports/input]
+    if blank? src [src: system.ports.input]
     if file? src [src: open src]
 
     let pos
@@ -1074,7 +1074,7 @@ read-lines: func [
             pos: _
             parse buffer (rule)
             if pos [break]
-            ((if same? src system/ports/input
+            ((if same? src system.ports.input
                 '[data: read port]
                 else
                 '[data: read/part port 4096]
@@ -1092,7 +1092,7 @@ read-lines: func [
 ]
 
 input-lines: redescribe [
-    {Makes a generator that yields lines from system/ports/input.}
+    {Makes a generator that yields lines from system.ports.input.}
 ](
     specialize :read-lines [src: _]
 )

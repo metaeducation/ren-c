@@ -569,7 +569,7 @@ sys.make-scheme [
     name: 'http
     title: "HyperText Transport Protocol v1.1"
 
-    spec: make system/standard/port-spec-net [
+    spec: make system.standard.port-spec-net [
         path: %/
         method: 'get
         headers: []

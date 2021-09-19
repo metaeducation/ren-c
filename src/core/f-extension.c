@@ -243,7 +243,7 @@ REBNATIVE(load_extension)
     //
     // !!! sys.import*/into should work, but path mechanics are clunky.
     //
-    rebElide("sys/import*/into lib", script, module);
+    rebElide("sys.import*/into lib", script, module);
 
     // !!! Note: This does not get cleaned up in case of an error, needs to
     // have TRAP.

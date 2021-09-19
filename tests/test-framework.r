@@ -383,7 +383,7 @@ export do-recover: func [
                         )
                     ]
                         |
-                    "system/version:"
+                    "system.version:"
                     to <end>
                     (last-vector: _)
                 ]
@@ -423,7 +423,7 @@ export do-recover: func [
 
     process-tests test-sources :run-test-cluster then [
         let temp: spaced [
-            "system/version:" system/version LF
+            "system.version:" system.version LF
             "code-checksum:" code-checksum LF
             "test-checksum:" test-checksum LF
             "Total:" (

@@ -38,4 +38,4 @@ log-filter: function [
     ]
 ]
 
-log-filter to-file system/script/args
+log-filter to-file system.script.args

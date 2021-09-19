@@ -189,7 +189,7 @@ file-type?: function [
     file [file! url!]
 ][
     return all [
-        pos: find system/options/file-types try suffix-of file
+        pos: find system.options.file-types try suffix-of file
         first try find pos word!
     ]
 ]

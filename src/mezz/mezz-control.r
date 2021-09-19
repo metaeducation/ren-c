@@ -21,7 +21,7 @@ launch: function [
     /wait "Wait for the process to terminate"
 ][
     if file? script [script: file-to-local clean-path script]
-    command: reduce [file-to-local system/options/boot script]
+    command: reduce [file-to-local system.options.boot script]
     append command opt arg
     call*/(wait) command
 ]

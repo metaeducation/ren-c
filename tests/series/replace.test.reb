@@ -96,7 +96,7 @@
 ;("!racadabra" = replace "abracadabra" ["ra" | "ab"] #"!")
 ;("!!cad!!" = replace/all "abracadabra" ["ra" | "ab"] #"!")
 ;("!!cad!!" = replace/all "abracadabra" ["ra" | "ab"] does ["!"])
-;("AbrACAdAbrA" == replace/all "abracadabra" [s: ["a" | "c"]] does [uppercase s/1])
+;("AbrACAdAbrA" == replace/all "abracadabra" [s: ["a" | "c"]] does [uppercase s.1])
 ;("a-babAA-" = replace/case/all "aAbbabAAAa" ["Ab" | "Aa"] "-")
 
 ; REPLACE/CASE/DEEP - /DEEP not (yet?) implemented in Ren-C

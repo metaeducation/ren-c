@@ -121,7 +121,7 @@ help: function [
             To view words and values of a context or object:
 
                 help lib    - the runtime library
-                help system/contexts/user   - your user context
+                help system.contexts.user   - your user context
                 help system - the system object
                 help system/options - special settings
 
@@ -417,7 +417,7 @@ source: function [
     switch type of :arg [
         tag! [
             f: copy "unknown tag"
-            for-each location words of system/locale/library [
+            for-each location words of system.locale.library [
                 if location: select load get location arg [
                     f: form location/1
                     break
@@ -488,7 +488,7 @@ what: function [
     size: 0
 
     ; copy to get around error: "temporary hold for iteration"
-    ctx: (copy try select system/modules try :name) else [lib]
+    ctx: (copy try select system.modules try :name) else [lib]
 
     for-each [word val] ctx [
         ; word val
@@ -548,7 +548,7 @@ require-commit: function [
     return: <none>
     commit [text!]
 ][
-    c: select system/script/header 'commit else [return]
+    c: select system.script.header 'commit else [return]
 
     ; If we happen to have commit information that includes a date, then we
     ; can look at the date of the running Rebol and know that a build that is
@@ -577,7 +577,7 @@ require-commit: function [
             "by using the `do <dl-renc>` tool and look for"
             unspaced [
                 "r3-" copy/part id 7 "*"
-                if find-last form system/version "0.3.4" [%.exe]
+                if find-last form system.version "0.3.4" [%.exe]
             ]
         ]
     ]

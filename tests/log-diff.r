@@ -193,4 +193,4 @@ make-diff: function [
     ]
 ]
 
-make-diff to-file first load system/script/args to-file second load system/script/args %diff.r
+make-diff to-file first load system.script.args to-file second load system.script.args %diff.r

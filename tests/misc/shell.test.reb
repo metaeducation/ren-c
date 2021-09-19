@@ -28,13 +28,13 @@
 ; If the filename contains spaces it will be quoted (this should be extended
 ; to generally handling all escapable characters).
 [
-    (if system/version/4 = 3 [  ; Windows
+    (if system.version.4 = 3 [  ; Windows
         ("ls -alF foo\bar.txt" = shell/inspect [ls -alF %foo/bar.txt])
     ] else [
         ("ls -alF foo/bar.txt" = shell/inspect [ls -alF %foo/bar.txt])
     ])
 
-    (if system/version/4 = 3 [  ; Windows
+    (if system.version.4 = 3 [  ; Windows
         ({ls -alF "foo\b ar.txt"} = shell/inspect [ls -alF %"foo/b ar.txt"])
     ] else [
         ({ls -alF foo/b ar.txt} = shell/inspect [ls -alF %"foo/b ar.txt"])

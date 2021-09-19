@@ -30,7 +30,7 @@ REBOL [
 
 ; !!! R3-Alpha Module loading had the ability to be delayed.  This was so
 ; that special modules like CGI protocols or HTML formatters could be available
-; in the system/modules list...held as just headers and the BINARY! or BLOCK!
+; in the SYSTEM.MODULES list...held as just headers and the BINARY! or BLOCK!
 ; that would be used to initialize them.  The feature obfuscated more
 ; foundational design points, so was temporarily removed...but should be
 ; brought back once the code solidifies.
@@ -126,7 +126,7 @@ load-header: function [
     ]
 
     trap [
-        hdr: construct/with/only :hdr system/standard/header
+        hdr: construct/with/only :hdr system.standard.header
     ] then [
         return 'bad-header
     ]

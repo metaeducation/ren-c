@@ -23,7 +23,7 @@
 //
 // !!! R3's CONSOLE "actor" came with only a READ method and no WRITE.
 // Writing was done through Prin_OS_String() to the Dev_StdIO device without
-// going through a port.  SYSTEM/PORTS/INPUT was thus created from it.
+// going through a port.  system.ports.INPUT was thus created from it.
 //
 
 #include "sys-core.h"

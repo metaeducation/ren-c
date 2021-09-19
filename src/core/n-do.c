@@ -333,7 +333,7 @@ bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
 //          varargs!  ; simulates as if frame! or block! is being executed
 //          quoted!  ; removes quote level
 //      ]
-//      /args "Sets system/script/args if doing a script (usually a TEXT!)"
+//      /args "Sets system.script.args if doing a script (usually a TEXT!)"
 //          [any-value!]
 //      /only "Don't catch QUIT (default behavior for BLOCK!)"
 //  ]

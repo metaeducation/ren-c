@@ -10,7 +10,7 @@ sys.make-scheme [
     title: "File Access"
     name: 'file
     actor: get-file-actor-handle
-    info: system/standard/file-info ; for C enums
+    info: system.standard.file-info ; for C enums
     init: func [return: <none> port <local> path] [
         if url? port/spec/ref [
             parse port/spec/ref [thru #":" 0 2 slash path:]

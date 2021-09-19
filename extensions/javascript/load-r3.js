@@ -315,7 +315,7 @@ let js_args = location.search
 
 // We build a Rebol arguments block programmatically out of anything we do
 // not specifically understand in the %load-r3.js script.  This allows the
-// code to handle it as `system/options/args` without having to worry about
+// code to handle it as `system.options.args` without having to worry about
 // filtering out loader options.  However we must build it as a string here
 // since libRebol isn't loaded yet.
 //
@@ -682,9 +682,9 @@ return assign_git_commit_promiser(os_id)  // sets git_commit
     reb.Startup()  // Sets up memory pools, symbols, base, sys, mezzanine...
 
     // Take the `?foo=bar&baz` style of options passed in the URL that the
-    // loader didn't use and pass them as system/options/args
+    // loader didn't use and pass them as system.options.args
     //
-    reb.Elide("system/options/args:", reb_args)
+    reb.Elide("system.options.args:", reb_args)
 
     // Scripts have to have an idea of what the "current directory is" when
     // they are running.  If a resource is requested as a FILE! (as opposed
@@ -703,7 +703,7 @@ return assign_git_commit_promiser(os_id)  // sets git_commit
     else
         base_url = url.slice(0, url.lastIndexOf('/')) + '/'
 
-    // Note: this sets `system/options/path`, so that functions like DO can
+    // Note: this sets `system.options.path`, so that functions like DO can
     // locate relative FILE!s, e.g. `do %script.reb` knows where to look.
     //
     reb.Elide("change-dir as url!", reb.T(base_url))

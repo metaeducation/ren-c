@@ -35,7 +35,7 @@ to-gob: to-event:
 
 ; Auto-build the functions for the above TO-* words.
 use [word] [
-    for-each type system/catalog/datatypes [
+    for-each type system.catalog.datatypes [
         word: make word! head of remove back tail of unspaced ["to-" type]
 
         ; The list above determines what will be made here, but we must not

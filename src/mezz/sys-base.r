@@ -194,7 +194,7 @@ do*: func [
 
     source "Files, urls and modules evaluate as scripts, other strings don't"
         [file! url! text! binary! tag! the-word!]
-    args "Args passed as system/script/args to a script (normally a string)"
+    args "Args passed as system.script.args to a script (normally a string)"
         [<opt> any-value!]
     only "Do not catch quits...propagate them"
         [logic!]

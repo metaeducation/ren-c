@@ -137,7 +137,7 @@ Files or URLs specify what to include, i.e., they allow a file to contain refere
 
 The summary (can be found at the end of the log file), e.g.:
 
-    system/version: 2.7.8.3.1
+    system.version: 2.7.8.3.1
     interpreter-checksum: #{1DEF65DDE53AB24C122DA6C76646A36D7D910790}
     test-checksum: #{E85A1B2945437E38E7654B9904937821C8F2FA92}
     Total: 4598
@@ -149,7 +149,7 @@ The summary (can be found at the end of the log file), e.g.:
 
 ...in the former case and
 
-    system/version: 2.101.0.4.4
+    system.version: 2.101.0.4.4
     interpreter-checksum: #{F9A855727FE738149B8E769C37A542D4E4C8FF82}
     test-checksum: #{E85A1B2945437E38E7654B9904937821C8F2FA92}
     Total: 4598

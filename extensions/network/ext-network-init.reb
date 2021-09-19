@@ -10,8 +10,8 @@ sys.make-scheme [
     title: "TCP Networking"
     name: 'tcp
     actor: get-tcp-actor-handle
-    spec: system/standard/port-spec-net
-    info: system/standard/net-info  ; !!! comment here said "for C enums"
+    spec: system.standard.port-spec-net
+    info: system.standard.net-info  ; !!! comment here said "for C enums"
 ]
 
 ; NOTE: UDP Networking has not been rewritten for the libuv transition.  It
@@ -21,6 +21,6 @@ sys.make-scheme [
     title: "UDP Networking"
     name: 'udp
     actor: get-udp-actor-handle
-    spec: system/standard/port-spec-net
-    info: system/standard/net-info  ; !!! comment here said "for C enums"
+    spec: system.standard.port-spec-net
+    info: system.standard.net-info  ; !!! comment here said "for C enums"
 ]

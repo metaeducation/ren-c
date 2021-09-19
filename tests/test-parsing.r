@@ -231,7 +231,7 @@ export collect-logs: function [
                     )
                 ]
                     |
-                "system/version:" to <end> (guard: true)
+                "system.version:" to <end> (guard: true)
                     |
                 (fail "collect-logs - log file parsing problem")
             ]

@@ -30,9 +30,9 @@ REBOL [
 ]
 
 
-CONFIG_TCCDIR: switch length of system/options/args [
+CONFIG_TCCDIR: switch length of system.options.args [
     0 []
-    1 [local-to-file first system/options/args]
+    1 [local-to-file first system.options.args]
     fail "call-librebol.r takes an optional CONFIG_TCCDIR as an argument."
 ]
 

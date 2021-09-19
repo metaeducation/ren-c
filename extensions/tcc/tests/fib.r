@@ -55,7 +55,7 @@ compilables: [
     ; embedded in them (it's a tricky case that trips up mbedTLS if
     ; you don't support it correctly).
     ;
-    {#include STDIO_INCLUDE} 
+    {#include STDIO_INCLUDE}
 
     c-fib
 ]
@@ -89,7 +89,7 @@ print ["rebol-fib 30:" r: rebol-fib 30]
 
 assert [c = r]
 
-if not find system/options/args "nobench" [
+if not find system.options.args "nobench" [
     n: 10000
     print ["=== Running benchmark," n "iterations ==="]
     print "(If you're using a debug build, this metric is affected)"

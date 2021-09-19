@@ -507,7 +507,7 @@ static void Init_System_Object(
     );
 
     // Create a global value for it in the Lib context, so we can say things
-    // like `system/contexts` (also protects newly made context from GC).
+    // like `system.contexts` (also protects newly made context from GC).
     //
     Init_Object(force_Lib(SYSTEM), system);
 
@@ -538,14 +538,14 @@ static void Init_System_Object(
         )
     );
 
-    // Create system/catalog/* for datatypes, natives, generics, errors
+    // Create SYSTEM.CATALOG.* for datatypes, natives, generics, errors
     //
     Init_Block(Get_System(SYS_CATALOG, CAT_DATATYPES), datatypes_catalog);
     Init_Block(Get_System(SYS_CATALOG, CAT_NATIVES), natives_catalog);
     Init_Block(Get_System(SYS_CATALOG, CAT_ACTIONS), generics_catalog);
     Init_Object(Get_System(SYS_CATALOG, CAT_ERRORS), errors_catalog);
 
-    // Create system/codecs object
+    // Create SYSTEM.CODECS object
     //
     Init_Object(
         RESET(Get_System(SYS_CODECS, 0)),
@@ -579,7 +579,7 @@ static void Init_System_Object(
 //
 //  Init_Contexts_Object: C
 //
-// This sets up the system/contexts object.
+// This sets up the system.contexts object.
 //
 // !!! One of the critical areas in R3-Alpha that was not hammered out
 // completely was the question of how the binding process gets started, and
@@ -589,7 +589,7 @@ static void Init_System_Object(
 // default area for new code evaluation.  It starts out as a copy of an
 // initial state set up in the lib context.  When native routines or other
 // content gets overwritten in the user context, it can be borrowed back
-// from `system/contexts/lib` (typically aliased as "lib" in the user context).
+// from `system.contexts.lib` (typically aliased as "lib" in the user context).
 //
 static void Init_Contexts_Object(void)
 {

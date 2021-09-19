@@ -255,13 +255,13 @@ REBNATIVE(console)
     CONSOLE_INCLUDE_PARAMS_OF_CONSOLE;
 
     // !!! The initial usermode console implementation was geared toward a
-    // single `system/console` object.  But the debugger raised the issue of
+    // single `system.console` object.  But the debugger raised the issue of
     // nested sessions which might have a different skin.  So save whatever
     // the console object was if it is being overridden.
 
-    REBVAL *old_console = rebValue(":system/console");
+    REBVAL *old_console = rebValue(":system.console");
     if (REF(skin))
-        rebElide("system/console: _");  // !!! needed for now
+        rebElide("system.console: _");  // !!! needed for now
 
     // We only enable halting (e.g. Ctrl-C, or Escape, or whatever) when user
     // code is running...not when the HOST-CONSOLE function itself is, or
@@ -394,7 +394,7 @@ REBNATIVE(console)
     if (was_halting_enabled)
         Enable_Halting();
 
-    rebElide("system/console: @", rebR(old_console));
+    rebElide("system.console: @", rebR(old_console));
 
     return code;  // http://stackoverflow.com/q/1101957/
 }
