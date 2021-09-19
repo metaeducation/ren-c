@@ -53,7 +53,7 @@ url: [
 ;
 
 get-git-log: function [
-    {Return Rebolised block of Ren/C `git log`}
+    {Return Rebolised block of Ren-C `git log`}
 ][
     git-log: make text! 0
     call/shell/output "git log --pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'" git-log
@@ -74,23 +74,23 @@ make-changes-block: function [
         category: select co 'type
 
         ; new release?
-        if attempt [v: co/version] [
+        if attempt [v: co.version] [
             append block make release! [
                 version: v
-                date: co/date
+                date: co.date
                 changes: make category! []
             ]
         ]
 
         ; append change to changes
-        append block/(length of block)/changes/:category co
+        append block.(length of block).changes.(category) co
     ]
 
     for-each c commits [
         if notable? commit: load c [
             comment [  ; !!! This was commented out, why?
                 append commit compose [
-                    date: (load first split commit/date-string space)
+                    date: (load first split commit.date-string space)
                 ]
             ]
             append commit compose [date: (12-12-2012)]
@@ -140,13 +140,13 @@ notable?: function [
         cherry-pick (load-cherry-pick-map)
         related (make block! 0)
 ][
-    if find related c/commit [return false]  ; related commits are not notable
+    if find related c.commit [return false]  ; related commits are not notable
 
     numbers: charset "1234567890"
 
     ; Let's try and categorize type of commit (default is 'Changed)
     category: 'Changed
-    parse text: c/summary [[
+    parse text: c.summary [[
         opt "* "
           ["Add" | "-add"]           (category: 'Added)
         | ["Fix" | "Patch" | "-fix"] (category: 'Fixed)
@@ -173,7 +173,7 @@ notable?: function [
     if not empty? cc [append c compose/only [cc: (cc)]]
 
     ; if find commit in our cherry-pick map then apply logic / meta info
-    if cherry-value: select cherry-pick c/commit [
+    if cherry-value: select cherry-pick c.commit [
         switch cherry-value [
             'yes [return true]  ; This is a notable change so use (as-is)
             'no [return false]  ; NOT notable so skip
@@ -249,7 +249,7 @@ make-changes-file: function [
         {Make summary with github name and links}
         co [object!] {Change object}
     ][
-        text: copy co/summary
+        text: copy co.summary
 
         ; remove any preceding * or - from summary
         if find [{* } {- }] copy/part text 2 [remove/part text 2]
@@ -258,15 +258,15 @@ make-changes-file: function [
             {```} _ text _ {```} _
 
             ; github username or git author name
-            " *" github-user-name co/author "* | "
+            " *" github-user-name co.author "* | "
 
             ; short commit hash
-            md-link co/commit join url/ren-c co/commit
+            md-link co.commit join url.ren-c co.commit
 
             ; any related hash (cherry-pick collated)
             if related: select co 'related [
                 map-each n related [
-                    md-link n join url/ren-c n
+                    md-link n join url.ren-c n
                 ]
             ]
 
@@ -280,7 +280,7 @@ make-changes-file: function [
             ; show CC issues (for now just list them)
             if cc: select co 'cc [
                 map-each n cc [
-                    md-link (join {#CC-} n) (join url/rebol-issues n)
+                    md-link (join {#CC-} n) (join url.rebol-issues n)
                 ]
             ]
 
@@ -314,33 +314,33 @@ make-changes-file: function [
     ; Write out new CHANGES file
     ;
 
-    write changes template/1  ; template top
+    write changes template.1  ; template top
 
     ; summary text for each change
     for-each release changes-block [
         ; ## [version]
-        write-line either release/date [
+        write-line either release.date [
             [
-                {## [} release/version {]}
-                { - } release/date
+                {## [} release.version {]}
+                { - } release.date
             ]
         ][
             [
-                {## [} release/version {]}
+                {## [} release.version {]}
             ]
         ]
 
         ; ### Category (type)
-        for-each type (words of release/changes) [
-            if not empty? release/changes/:type [
+        for-each type (words of release.changes) [
+            if not empty? release.changes.(type) [
                 write-line [{### } type]
 
                 ; - Change
-                for-each co release/changes/:type [write-change-text co]
+                for-each co release.changes.(type) [write-change-text co]
             ]
         ]
     ]
 
-    write changes template/2  ; template bottom
+    write changes template.2  ; template bottom
     close changes
 ]
