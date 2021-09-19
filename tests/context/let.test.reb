@@ -168,7 +168,7 @@
     (
         bar: func [b] [
             let n: 10
-            reeval b/1  ; should not apply LET of N to fetched result
+            reeval b.1  ; should not apply LET of N to fetched result
         ]
 
         foo: func [n] [
@@ -181,7 +181,7 @@
         bar: func [b] [
             do compose [
                 let n: 10
-                reeval (b/1)  ; updated LET of N should apply (LET "sees" (n))
+                reeval (b.1)  ; updated LET of N should apply (LET "sees" (n))
             ]
         ]
 

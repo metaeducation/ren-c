@@ -15,13 +15,13 @@
 
 (
     o: make object! [f: 304]
-    path: 'o/f
-    :(path) = the o/f
+    tuple: 'o.f
+    :(tuple) = the o.f
 )
 
 (
     m: 1020
     o: make object! [f: 304]
-    block: [m o/f]
-    :(block) = [m o/f]
+    block: [m o.f]
+    :(block) = [m o.f]
 )

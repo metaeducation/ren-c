@@ -48,7 +48,7 @@
     g: :f
     o: make object! [a: 2 g: :f]
     p: make o [a: 3]
-    1 == p/g
+    1 == p.g
 )]
 ; object cloning
 [#2045 (
@@ -57,7 +57,7 @@
     c: b
     o: make object! [a: 2 c: b]
     p: make o [a: 3]
-    1 == do p/c
+    1 == do p.c
 )]
 ; appending to objects
 [#1979 (
@@ -74,13 +74,13 @@
     o: make object! []
     c: "c"
     append o compose [b: "b" b: (c)]
-    same? c o/b
+    same? c o.b
 )
 (
     o: make object! [b: "a"]
     c: "c"
     append o compose [b: "b" b: (c)]
-    same? c o/b
+    same? c o.b
 )
 
 ; SELF was a word added automatically by the system, which had some strange
@@ -115,11 +115,11 @@
 (
     o: make object! []
     append o 'self
-    '~unset~ = ^ get/any 'o/self
+    '~unset~ = ^ get/any 'o.self
 )(
     o: make object! []
     append o [self: 1]
-    o/self = 1
+    o.self = 1
 )
 
 
@@ -131,12 +131,12 @@
     o1: make object! [a: 10 b: func [] [f: func [] [a] f]]
     o2: make o1 [a: 20]
 
-    o2/b = 10
+    o2.b = 10
 )(
     o1: make object! [a: 10 b: meth [] [f: func [] [a] f]]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2.b = 20
 )
 
 (
@@ -190,7 +190,7 @@
 [#2050 (
     o: make object! [n: 'o b: reduce [func [] [n]]]
     p: make o [n: 'p]
-    (o/b)/1 = 'o
+    (o.b).1 = 'o
 )]
 
 
@@ -202,8 +202,8 @@
         true
     )
 
-    (did trap [o/i: 1])
-    (did trap [set? 'o/i])
-    (did trap [unset? 'o/i])
+    (did trap [o.i: 1])
+    (did trap [set? 'o.i])
+    (did trap [unset? 'o.i])
     (null = in o 'i)
 ]

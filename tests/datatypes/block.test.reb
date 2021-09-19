@@ -15,11 +15,11 @@
 (
     data: [a 10 b 20]
     did all [
-        10 = data/a
+        10 = data.a
         10 = select data 'a
-        20 = data/b
+        20 = data.b
         20 = select data 'b
-        null = get 'data/c
+        null = get 'data.c
         null? select data 'c
     ]
 )
@@ -75,9 +75,9 @@
 [
     (did block: [ae #{BD}])
 
-    (block/-304 = null)
-    (block/1020 = null)
-    (block/ae = #{BD})
-    (block/AE = #{BD})
-    (block/xy = null)
+    (block.-304 = null)
+    (block.1020 = null)
+    (block.ae = #{BD})
+    (block.AE = #{BD})
+    (block.xy = null)
 ]

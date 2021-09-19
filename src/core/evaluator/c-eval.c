@@ -188,7 +188,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
         if (IS_META(v))  // allow (@), case makes END into ~void~
             return false;
 
-        // `do [x:]`, `do [o/x:]`, etc. are illegal
+        // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(v));
     }
 
@@ -1214,7 +1214,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     // !!! The evaluation ordering is dictated by the fact that there isn't a
     // separate "evaluate path to target location" and "set target' step.
-    // This is because some targets of assignments (e.g. gob/size/x:) do not
+    // This is because some targets of assignments (e.g. gob.size.x:) do not
     // correspond to a cell that can be returned; the path operation "encodes
     // as it goes" and requires the value to set as a parameter.  Yet it is
     // counterintuitive given the "left-to-right" nature of the language:
@@ -2213,7 +2213,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     //     left-the: enfix :the
     //     o: make object! [f: does [1]]
-    //     o/f left-the  ; want error suggesting >- here, need flag for that
+    //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
     CLEAR_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed

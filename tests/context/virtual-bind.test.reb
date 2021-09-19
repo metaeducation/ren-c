@@ -172,14 +172,14 @@
     ]
     [11 1001 999 9 30 -10 3000 -1000 300 -100] = collect [
         for-each y [1] compose/only [
-            keep do (alpha/plus)  ; needs chain y -> alpha
-            keep do (beta/plus)  ; needs chain y -> beta
-            keep do (beta/minus)  ; also needs chain y -> beta
-            keep do (alpha/minus)  ; back to needing chain y -> alpha
-            keep do alpha/plus
-            keep do alpha/minus
-            keep do beta/plus
-            keep do beta/minus
+            keep do (alpha.plus)  ; needs chain y -> alpha
+            keep do (beta.plus)  ; needs chain y -> beta
+            keep do (beta.minus)  ; also needs chain y -> beta
+            keep do (alpha.minus)  ; back to needing chain y -> alpha
+            keep do alpha.plus
+            keep do alpha.minus
+            keep do beta.plus
+            keep do beta.minus
             keep do plus-global
             keep do minus-global
         ]

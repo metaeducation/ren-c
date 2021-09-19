@@ -24,11 +24,11 @@
 ; access symmetry
 (
     b: #{0b}
-    not error? trap [b/1: b/1]
+    not error? trap [b.1: b.1]
 )
 [#42 (
     b: #{0b}
-    b/1 == 11
+    b.1 == 11
 )]
 ; case sensitivity
 [#1459

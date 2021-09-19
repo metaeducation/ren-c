@@ -31,7 +31,7 @@ write %hello-tcc.c trim/auto {
 }
 
 c99-logged: enclose :c99 function [f [frame!]] [
-    ; f/runtime: "..."  ; set this to override CONFIG_TCCDIR
+    ; f.runtime: "..."  ; set this to override CONFIG_TCCDIR
 
     fdebug: copy f
     fdebug/inspect: true

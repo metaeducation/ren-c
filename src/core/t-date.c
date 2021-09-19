@@ -493,7 +493,7 @@ REBVAL *Time_Between_Dates(REBVAL *out, const REBVAL *d1, const REBVAL *d2)
     //
     //     >> t: 3-Jul-2021
     //
-    //     >> t/zone: default [0:00]
+    //     >> t.zone: default [0:00]
     //     == 0:00
     //
     //     >> t

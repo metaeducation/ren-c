@@ -97,7 +97,7 @@ REB_R Block_Dispatcher(REBFRM *f)
         //
         //     o1: make object! [a: 10 b: does [if true [a]]]
         //     o2: make o1 [a: 20]
-        //     o2/b = 20
+        //     o2.b = 20
         //
         // While o2/b's ACTION! has a ->binding to o2, the only way for the
         // [a] block to get the memo is if it is relative to o2/b.  It won't

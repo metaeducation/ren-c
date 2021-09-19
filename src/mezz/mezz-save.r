@@ -101,8 +101,8 @@ save: function [
             not block? select header 'options [
                 append header compose [Options: (copy [compress])]
             ]
-            not find header/options 'compress [
-                append header/options 'compress
+            not find header.options 'compress [
+                append header.options 'compress
             ]
         ]
 

@@ -712,7 +712,7 @@ REBNATIVE(poke)
     // Note: if r is not nullptr here, that means there was a modification
     // which nothing is writing back.  It would be like saying:
     //
-    //    >> (12-Dec-2012)/year: 1999
+    //    >> (12-Dec-2012).year: 1999
     //    == 1999
     //
     // The date was changed, but there was no side effect.  These types of

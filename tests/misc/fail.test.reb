@@ -19,7 +19,7 @@
 
 ; A simple FAIL with a string message will be a generic error ID
 ;
-(e: trap [fail "hello"], (e.id = null) and (e/message = "hello"))
+(e: trap [fail "hello"], (e.id = null) and (e.message = "hello"))
 
 
 ; Failing instead with a WORD! will make the error have that ID

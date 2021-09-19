@@ -22,8 +22,10 @@
     e: count-up i 2 [num: i trap [1 / 0]]
     all [error? e num = 2]
 )
+
 ; "recursive safety", "locality" and "body constantness" test in one
-(count-up i 1 b: [not same? 'i b/3])
+(count-up i 1 b: [not same? 'i b.3])
+
 ; recursivity
 (
     num: 0

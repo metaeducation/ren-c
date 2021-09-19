@@ -116,7 +116,7 @@ shell: func [
 
     let command: spaced collect [for-next pos code [
         loop [new-line? pos] [
-            if pos/1 = '... [
+            if pos.1 = '... [
                 pos: next pos  ; skip, don't output new-line
                 continue
             ]
@@ -124,7 +124,7 @@ shell: func [
             break
         ]
 
-        let item: :pos/1
+        let item: :pos.1
 
         ; The default behaviors for each type may either splice or not.
         ; But when you use a GROUP! or a BLOCK!, it will put things in quotes.

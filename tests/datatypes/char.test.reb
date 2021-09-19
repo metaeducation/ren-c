@@ -234,7 +234,7 @@
         #"😺"  ; 4 utf-8 bytes encoded
     ]
     count-up size 4 [
-        c: codepoints/(size)
+        c: codepoints.(size)
         if size != length of to binary! c [
             fail "test character doesn't match expected size"
         ]
@@ -252,7 +252,7 @@
                 comment [
                     print [{Trying} i {/} len {in} mold s]
                 ]
-                s/(i): c
+                s.(i): c
                 if len != length of s [
                     fail ["Length not" len "for" mold s]
                 ]

@@ -53,17 +53,17 @@ description-of: function [
     switch type of get/any 'v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
-        image! [spaced ["size:" v/size]]
+        image! [spaced ["size:" v.size]]
         datatype! [
             spec: ensure object! spec of v  ; "type specs" need simplifying
-            opt copy spec/title
+            opt copy spec.title
         ]
         action! [
             if meta: meta-of :v [
-                opt copy try get 'meta/description  ; can be BLANK!
+                opt copy try get 'meta.description  ; can be BLANK!
             ]
         ]
-        gob! [spaced ["offset:" v/offset "size:" v/size]]
+        gob! [spaced ["offset:" v.offset "size:" v.size]]
         object! [mold words of v]
         typeset! [mold make block! v]
         port! [mold reduce [v.spec.title v.spec.ref]]
@@ -358,16 +358,16 @@ help: function [
     print newline
 
     print "DESCRIPTION:"
-    print [_ _ _ _ meta/description else ["(undocumented)"]]
+    print [_ _ _ _ meta.description else ["(undocumented)"]]
     print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
 
     print-args: function [list /indent-words] [
         for-each param list [
             types: ensure [<opt> block!] (
-                select try meta/parameter-types to-word noquote param
+                select try meta.parameter-types to-word noquote param
             )
             note: ensure [<opt> text!] (
-                select try meta/parameter-notes to-word noquote param
+                select try meta.parameter-notes to-word noquote param
             )
 
             print [_ _ _ _ param (if types [mold types])]
@@ -381,8 +381,8 @@ help: function [
     ; that isn't intended for use as a definitional return is a return type.
     ; The concepts are still being fleshed out.
     ;
-    return-type: select try meta/parameter-types 'return
-    return-note: select try meta/parameter-notes 'return
+    return-type: select try meta.parameter-types 'return
+    return-note: select try meta.parameter-notes 'return
 
     print newline
     print [

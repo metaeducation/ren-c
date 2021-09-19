@@ -245,8 +245,8 @@
 
 [https://github.com/metaeducation/ren-c/issues/377 (
     o: make object! [a: 1]
-    parse s: "a" [o/a: skip]
-    o/a = s
+    parse s: "a" [o.a: skip]
+    o.a = s
 )]
 
 ; AHEAD and AND are synonyms

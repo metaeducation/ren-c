@@ -13,13 +13,13 @@
 (empty? make map! 4)
 ; The length of a map is the number of key/value pairs it holds.
 (2 == length of make map! [a 1 b 2])  ; 4 in R2, R2/Forward
-(m: make map! [a 1 b 2] 1 == m/a)
-(m: make map! [a 1 b 2] 2 == m/b)
+(m: make map! [a 1 b 2] 1 == m.a)
+(m: make map! [a 1 b 2] 2 == m.b)
 (
     m: make map! [a 1 b 2]
-    null? m/c
+    null? m.c
 )
-(m: make map! [a 1 b 2] m/c: 3 3 == m/c)
+(m: make map! [a 1 b 2] m.c: 3 3 == m.c)
 ; Maps contain key/value pairs and must be created from blocks of even length.
 (error? trap [make map! [1]])
 (empty? clear make map! [a 1 b 2])
@@ -36,7 +36,7 @@
     m: make map! reduce [1 thing]
     m2: copy/deep m
     thing2: select m2 1
-    append thing/2 [c]
+    append thing.2 [c]
     append thing2 [d]
     did all [
         thing = [a [b c]]
@@ -64,16 +64,16 @@
     (50 = select/case m #"C")
     (60 = select/case m #"c")
 
-    ('conflicting-key = (trap [m/AA]).id)
-    ('conflicting-key = (trap [m/aa]).id)
+    ('conflicting-key = (trap [m.AA]).id)
+    ('conflicting-key = (trap [m.aa]).id)
     ('conflicting-key = (trap [select m <BB>]).id)
     ('conflicting-key = (trap [select m <bb>]).id)
-    ('conflicting-key = (trap [m/(#"C")]).id)
-    ('conflicting-key = (trap [m/(#"c")]).id)
+    ('conflicting-key = (trap [m.(#"C")]).id)
+    ('conflicting-key = (trap [m.(#"c")]).id)
 
     ('conflicting-key = (trap [put m 'Aa 70]).id)
-    ('conflicting-key = (trap [m/(<Bb>): 80]).id)
-    ('conflicting-key = (trap [m/(#"C"): 90]).id)
+    ('conflicting-key = (trap [m.(<Bb>): 80]).id)
+    ('conflicting-key = (trap [m.(#"C"): 90]).id)
 
     (
         put/case m 'Aa 100
@@ -116,13 +116,13 @@
     (4 = select/case m the ''''a)
 
     ((trap [select m the a]).id = 'conflicting-key)
-    ((trap [m/(the a)]).id = 'conflicting-key)
+    ((trap [m.(the a)]).id = 'conflicting-key)
 
     ((trap [select m the ''''a]).id = 'conflicting-key)
-    ((trap [m/(the ''''a)]).id = 'conflicting-key)
+    ((trap [m.(the ''''a)]).id = 'conflicting-key)
 
-    ('II = m/(the ''[x y]))
-    ('IIII = m/(the ''''[m n o p]))
+    ('II = m.(the ''[x y]))
+    ('IIII = m.(the ''''[m n o p]))
 
     ((trap [append noquote b2 'z]).id = 'series-auto-locked)
     ((trap [append noquote b4 'q]).id = 'series-auto-locked)
@@ -132,6 +132,6 @@
 ; !!! This should be extended to test instances of each datatype
 [#774 (
     m: make map! []
-    m/(#"A"): 1020
-    1020 = m/(#"A")
+    m.(#"A"): 1020
+    1020 = m.(#"A")
 )]

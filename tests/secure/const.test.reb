@@ -15,18 +15,18 @@
     sum: 0
     repeat 5 code: [
         ()
-        append code/1 sum: sum + 1
+        append code.1 sum: sum + 1
     ]
     did all [
         sum = 5
-        code/1 = '(1 2 3 4 5)
+        code.1 = '(1 2 3 4 5)
     ]
 )(
     sum: 0
     e: trap [
         repeat 5 code: const [
             ()
-            append code/1 sum: sum + 1
+            append code.1 sum: sum + 1
         ]
     ]
     e.id = 'const-value
@@ -34,11 +34,11 @@
     sum: 0
     repeat 5 code: const [
         ()
-        append mutable code/1 sum: sum + 1
+        append mutable code.1 sum: sum + 1
     ]
     did all [
         sum = 5
-        code/1 = '(1 2 3 4 5)
+        code.1 = '(1 2 3 4 5)
     ]
 )
 
@@ -83,8 +83,8 @@
 (
     repeat 1 [data: copy [a [b [c]]]]
     append data <success>
-    e2: trap [append data/2 <fail>]
-    e22: trap [append data/2/2 <fail>]
+    e2: trap [append data.2 <fail>]
+    e22: trap [append data.2.2 <fail>]
     did all [
         data = [a [b [c]] <success>]
         e2.id = 'const-value
@@ -93,15 +93,15 @@
 )(
     repeat 1 [data: copy/deep [a [b [c]]]]
     append data <success>
-    append data/2 <success>
-    append data/2/2 <success>
+    append data.2 <success>
+    append data.2.2 <success>
     data = [a [b [c <success>] <success>] <success>]
 )(
     repeat 1 [sub: copy/deep [b [c]]]
     data: copy compose [a (sub)]
     append data <success>
-    append data/2 <success>
-    append data/2/2 <success>
+    append data.2 <success>
+    append data.2.2 <success>
     data = [a [b [c <success>] <success>] <success>]
 )
 

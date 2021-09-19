@@ -17,8 +17,8 @@
     zip (zipped: copy #{}) list
     unzip (unzipped: copy []) zipped
     did all [
-        unzipped/1 = %abc.txt
-        unzipped/2 = to binary! str
+        unzipped.1 = %abc.txt
+        unzipped.2 = to binary! str
         (next next unzipped) = (next next list)
     ]
 )

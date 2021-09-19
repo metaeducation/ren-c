@@ -20,11 +20,11 @@
 (
     a-word: 1
     data: #{0201}
-    2 = data/:a-word
+    2 = data.(a-word)
 )
 (
     blk: reduce [:abs 2]
-    2 == blk/:abs
+    2 == blk.(:abs)
 )
 (
     blk: reduce [charset "a" 3]
@@ -32,31 +32,31 @@
 )
 (
     blk: [[] 3]
-    3 == blk/#[block! [[] 1]]
+    3 == blk.#[block! [[] 1]]
 )
 (
     blk: [_ 3]
-    3 == do [blk/(_)]
+    3 == do [blk.(_)]
 )
 (
     blk: [blank 3]
-    3 == do [blk/blank]
+    3 == do [blk.blank]
 )
 (
     a-value: 1/Jan/0000
     did all [
-        1 == a-value/1
-        'Jan == a-value/2
-        0 == a-value/3
+        1 == a-value.1
+        'Jan == a-value.2
+        0 == a-value.3
     ]
 )
 (
     a-value: me@here.com
-    #"m" == a-value/1
+    #"m" == a-value.1
 )
 (
     a-value: make error! ""
-    null? a-value/type
+    null? a-value.type
 )
 (
     a-value: make image! 1x1
@@ -68,19 +68,19 @@
 )
 (
     a-value: make object! [a: 1]
-    1 == a-value/a
+    1 == a-value.a
 )
 (
     a-value: 2x3
-    2 = a-value/1
+    2 = a-value.1
 )
 (
     a-value: first [(2)]
-    2 == a-value/1
+    2 == a-value.1
 )
 (
     a-value: 'a/b
-    'a == a-value/1
+    'a == a-value.1
 )
 (
     a-value: make port! http://
@@ -88,54 +88,54 @@
 )
 (
     a-value: first [a/b:]
-    'a == a-value/1
+    'a == a-value.1
 )
 (
     a-value: "12"
-    #"1" == a-value/1
+    #"1" == a-value.1
 )
 (
     a-value: <tag>
-    #"t" == a-value/1
+    #"t" == a-value.1
 )
 (
     a-value: 2:03
-    2 == a-value/1
+    2 == a-value.1
 )
 (
     a-value: 1.2.3
-    1 == a-value/1
+    1 == a-value.1
 )
 
 ; Ren-C changed INTEGER! path picking to act as PICK, only ANY-STRING! and
 ; WORD! actually merge with a slash.
 (
     a-value: file://a
-    #"f" = a-value/1
+    #"f" = a-value.1
 )
 
 ; calling functions through paths: function in object
 (
     obj: make object! [fun: func [] [1]]
-    1 == obj/fun
+    1 == obj.fun
 )
 (
     obj: make object! [fun: func [/ref [integer!]] [ref]]
-    1 == obj/fun/ref 1
+    1 == obj.fun/ref 1
 )
 ; calling functions through paths: function in block, positional
 (
     blk: reduce [func [] [10]  func [] [20]]
-    10 == blk/1
+    10 == blk.1
 )
 ; calling functions through paths: function in block, "named"
 (
     blk: reduce ['foo func [] [10]  'bar func [] [20]]
-    20 == blk/bar
+    20 == blk.bar
 )
 [#26 (
     b: [b 1]
-    1 = b/b
+    1 = b.b
 )]
 
 ; Paths are immutable, but shouldn't raise an error just on MUTABLE
@@ -146,13 +146,13 @@
 
 [#71 (
     a: "abcd"
-    error? trap [a/x]
+    error? trap [a.x]
 )]
 
 [#1820 ; Word USER can't be selected with path syntax
     (
     b: [user 1 _user 2]
-    1 = b/user
+    1 = b.user
     )
 ]
 [#1977
@@ -163,7 +163,7 @@
 (
     a: 1x2
     did all [
-        b: a/(a: [3 4] 1)
+        b: a.(a: [3 4] 1)
         b = 1
         a = [3 4]
     ]
@@ -192,11 +192,11 @@
 (
     bl: [a 1 q/w [e/r 42]]
     all [
-        1 = bl/a
-        [e/r 42] = bl/('q/w)
-        [e/r 42] = reduce to-path [bl ('q/w)]
-        42 = bl/('q/w)/('e/r)
-        42 = reduce to-path [bl ('q/w) ('e/r)]
+        1 = bl.a
+        [e/r 42] = bl.('q/w)
+        [e/r 42] = reduce to-tuple [bl ('q/w)]
+        42 = bl.('q/w).('e/r)
+        42 = reduce to-tuple [bl ('q/w) ('e/r)]
     ]
 )
 

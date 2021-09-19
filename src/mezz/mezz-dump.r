@@ -95,11 +95,11 @@ dump: function [
 
         b: match block! :value [
             loop [not tail? b] [
-                if swp: match [set-word! set-path!] :b/1 [ ; `dump [x: 1 + 2]`
+                if swp: match [set-word! set-path!] :b.1 [ ; `dump [x: 1 + 2]`
                     b: evaluate/result b (the result:)
                     print [swp, result]
                 ] else [
-                    dump-one b/1
+                    dump-one b.1
                     b: next b
                 ]
             ]
@@ -114,8 +114,8 @@ contains-newline: function [return: [logic!] pos [block! group!]] [
         any [
             new-line? pos
             all [
-                match [block! group!] :pos/1
-                contains-newline :pos/1
+                match [block! group!] :pos.1
+                contains-newline :pos.1
             ]
         ] then [return true]
 

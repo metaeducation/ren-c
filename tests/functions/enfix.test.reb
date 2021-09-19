@@ -112,10 +112,10 @@
         ]
     ])
 
-    (error? trap [1 obj/magic 2])
+    (error? trap [1 obj.magic 2])
 
-    (3 = (1 ->- obj/magic 2))
-    (-1 = (1 ->- obj/magic/minus 2))
+    (3 = (1 ->- obj.magic 2))
+    (-1 = (1 ->- obj.magic/minus 2))
 ]
 
 
@@ -128,11 +128,11 @@
         true
     )
 
-    ((trap [o/i left-the]).id = 'literal-left-path)
-    (o/i ->- left-the = 'o/i)
+    ((trap [o.i left-the]).id = 'literal-left-path)
+    (o.i ->- left-the = 'o.i)
 
-    ((trap [o/f left-the]).id = 'literal-left-path)
-    (o/f ->- left-the = 'o/f)
+    ((trap [o.f left-the]).id = 'literal-left-path)
+    (o.f ->- left-the = 'o.f)
 ]
 
 ; Rather than error when SET-WORD! or SET-PATH! are used as the left hand
@@ -147,8 +147,8 @@
 )(
     o: make object! [x: 10]
     count: 0
-    o/(count: count + 1 'x): me + 20
-    (o/x = 30) and (count = 1)  ; shouldn't double-evaluate path group
+    o.(count: count + 1 'x): me + 20
+    (o.x = 30) and (count = 1)  ; shouldn't double-evaluate path group
 )
 
 
@@ -198,9 +198,9 @@
     count: 0
     o: make object! [x: _]
     nuller: function [y] [null]
-    o/(count: count + 1, first [x]): my nuller
+    o.(count: count + 1, first [x]): my nuller
     did all [
-        :o/x = null
+        :o.x = null
         count = 1
     ]
 )

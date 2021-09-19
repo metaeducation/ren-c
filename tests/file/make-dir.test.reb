@@ -5,6 +5,6 @@
 (
     any [
         not error? e: trap [make-dir %/folder-to-save-test-files]
-        e/type = 'access
+        e.type = 'access
     ]
 )

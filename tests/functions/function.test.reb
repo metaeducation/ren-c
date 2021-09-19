@@ -275,7 +275,7 @@
     (the (10 + 20) == hard (10 + 20))
     (
         o: context [f: 10]
-        the :o/f == hard :o/f
+        the :o.f == hard :o.f
     )
 ]
 
@@ -298,10 +298,10 @@
     ([1000, 'a] = test [medium 'a])
     ([1000, 304] = test [medium :(300 + 4)])
     ([1000, (300 + 4)] = test [medium (300 + 4)])
-    ([1000, o/f] = test [medium o/f])
+    ([1000, o.f] = test [medium o.f])
     (
         o: context [f: 304]
-        [1000, 304] = test [medium :o/f]
+        [1000, 304] = test [medium :o.f]
     )
 
     ; Key point on which MEDIUM and SOFT differ, enfix quote handling
@@ -335,10 +335,10 @@
     ([1000, a:] = test [soft a:])
     ([1000, 304] = test [soft :(300 + 4)])
     ([1000, (300 + 4)] = test [soft (300 + 4)])
-    ([1000, o/f] = test [soft o/f])
+    ([1000, o.f] = test [soft o.f])
     (
         o: context [f: 304]
-        [1000, 304] = test [soft :o/f]
+        [1000, 304] = test [soft :o.f]
     )
 
     ; Key point on which MEDIUM and SOFT differ, enfix quote handling
@@ -420,7 +420,7 @@
 [#2044 (
     o: make object! [f: func [x] ['x]]
     p: make o []
-    not same? o/f 1 p/f 1
+    not same? o.f 1 p.f 1
 )]
 
 (

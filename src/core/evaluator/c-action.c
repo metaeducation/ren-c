@@ -1200,7 +1200,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     //
     //     left-the: enfix :the
     //     o: make object! [f: does [1]]
-    //     o/f left-the  ; want error suggesting -> here, need flag for that
+    //     o.f left-the  ; want error suggesting -> here, need flag for that
     //
     CLEAR_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
