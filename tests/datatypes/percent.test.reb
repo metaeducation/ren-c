@@ -6,7 +6,7 @@
 (percent? 1%)
 (percent? -1.0%)
 (percent? 2.2%)
-('bad-make-arg = (trap [make percent! 0])/id)
+('bad-make-arg = (trap [make percent! 0]).id)
 (0% = make percent! "0")
 (0% = to percent! 0)
 (0% = to percent! "0")

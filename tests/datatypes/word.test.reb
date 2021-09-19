@@ -215,7 +215,7 @@
     for-each bad [  ; !!! This could be a much longer list of bad things!
         {<ab>cd} {>ab<cd} {<<ab-cd} {>abcd}
     ][
-        assert ['scan-invalid = (trap [load bad])/id]
+        assert ['scan-invalid = (trap [load bad]).id]
     ]
     true
 )]

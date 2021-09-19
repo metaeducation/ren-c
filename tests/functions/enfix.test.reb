@@ -128,10 +128,10 @@
         true
     )
 
-    ((trap [o/i left-the])/id = 'literal-left-path)
+    ((trap [o/i left-the]).id = 'literal-left-path)
     (o/i ->- left-the = 'o/i)
 
-    ((trap [o/f left-the])/id = 'literal-left-path)
+    ((trap [o/f left-the]).id = 'literal-left-path)
     (o/f ->- left-the = 'o/f)
 ]
 
@@ -173,18 +173,18 @@
 (7 = (add 1 2 ->- lib/* 3))
 (7 = (add 1 2 >- lib/* 3))
 
-((trap [10 ->- lib/= 5 + 5])/id = 'expect-arg)
-((trap [10 >- lib/= 5 + 5])/id = 'expect-arg)
+((trap [10 ->- lib/= 5 + 5]).id = 'expect-arg)
+((trap [10 >- lib/= 5 + 5]).id = 'expect-arg)
 (10 >-- lib/= 5 + 5)
 
-((trap [add 1 + 2 >- multiply 3])/id = 'no-arg)
+((trap [add 1 + 2 >- multiply 3]).id = 'no-arg)
 (
     x: add 1 + 2 3 + 4 >- multiply 5
     x = 38
 )
 (-38 = (negate x: add 1 + 2 3 + 4 >- multiply 5))
 (
-    (trap [divide negate x: add 1 + 2 3 + 4 >- multiply 5])/id = 'no-arg
+    (trap [divide negate x: add 1 + 2 3 + 4 >- multiply 5]).id = 'no-arg
 )
 (-1 = (divide negate x: add 1 + 2 3 + 4  2 >- multiply 5))
 

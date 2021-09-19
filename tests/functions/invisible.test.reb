@@ -194,15 +194,15 @@
         true
     )
 
-    ('no-arg = (trap [right-normal ||])/id)
+    ('no-arg = (trap [right-normal ||]).id)
     (null? do [right-normal* ||])
     (null? do [right-normal*])
 
-    ('no-arg = (trap [|| left-normal])/id)
+    ('no-arg = (trap [|| left-normal]).id)
     (null? do [|| left-normal*])
     (null? do [left-normal*])
 
-    ('no-arg = (trap [|| left-defer])/id)
+    ('no-arg = (trap [|| left-defer]).id)
     (null? do [|| left-defer*])
     (null? do [left-defer*])
 
@@ -214,8 +214,8 @@
     ; quotes when there is nothing to their right means you now get errors.
     ; It's not clear what the best behavior is, so punting for now.
     ;
-    ('literal-left-path = (trap [<bug> 'left-soft = do [|| left-soft]])/id)
-    ('literal-left-path = (trap [<bug> 'left-soft* = do [|| left-soft*]])/id)
+    ('literal-left-path = (trap [<bug> 'left-soft = do [|| left-soft]]).id)
+    ('literal-left-path = (trap [<bug> 'left-soft* = do [|| left-soft*]]).id)
     (null? do [left-soft*])
 
     ('|| = do [right-hard ||])
@@ -224,8 +224,8 @@
 
     ; !!! See notes above.
     ;
-    ('literal-left-path = (trap [<bug> 'left-hard = do [|| left-hard]])/id)
-    ('literal-left-path = (trap [<bug> 'left-hard* = do [|| left-hard*]])/id)
+    ('literal-left-path = (trap [<bug> 'left-hard = do [|| left-hard]]).id)
+    ('literal-left-path = (trap [<bug> 'left-hard* = do [|| left-hard*]]).id)
     (null? do [left-hard*])
 ]
 
@@ -292,8 +292,8 @@
     ; quotes when there is nothing to their right means you now get errors.
     ; It's not clear what the best behavior is, so punting for now.
     ;
-    ('literal-left-path = (trap [<bug> 'left-soft = do [|| left-soft]])/id)
-    ('literal-left-path = (trap [<bug> 'left-soft* = do [|| left-soft*]])/id)
+    ('literal-left-path = (trap [<bug> 'left-soft = do [|| left-soft]]).id)
+    ('literal-left-path = (trap [<bug> 'left-soft* = do [|| left-soft*]]).id)
     (null? do [left-soft*])
 
     ('|| = do [right-hard ||])
@@ -302,8 +302,8 @@
 
     ; !!! See notes above.
     ;
-    ('literal-left-path = (trap [<bug> 'left-hard = do [|| left-hard]])/id)
-    ('literal-left-path = (trap [<bug> 'left-hard* = do [|| left-hard*]])/id)
+    ('literal-left-path = (trap [<bug> 'left-hard = do [|| left-hard]]).id)
+    ('literal-left-path = (trap [<bug> 'left-hard* = do [|| left-hard*]]).id)
     (null? do [left-hard*])
 ]
 
@@ -311,25 +311,25 @@
 (
     x: <unchanged>
     did all [
-        'need-non-end = (trap [<discarded> x: ()])/id
+        'need-non-end = (trap [<discarded> x: ()]).id
         x = <unchanged>
     ]
 )(
     x: <unchanged>
     did all [
-        'need-non-end = (trap [<discarded> x: comment "hi"])/id
+        'need-non-end = (trap [<discarded> x: comment "hi"]).id
         x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
     did all [
-        'need-non-end = (trap [<discarded> obj/x: comment "hi"])/id
+        'need-non-end = (trap [<discarded> obj/x: comment "hi"]).id
         obj/x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
     did all [
-        'need-non-end = (trap [<discarded> obj/x: ()])/id
+        'need-non-end = (trap [<discarded> obj/x: ()]).id
         obj/x = <unchanged>
     ]
 )

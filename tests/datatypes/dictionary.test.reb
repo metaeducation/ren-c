@@ -64,16 +64,16 @@
     (50 = select/case m #"C")
     (60 = select/case m #"c")
 
-    ('conflicting-key = (trap [m/AA])/id)
-    ('conflicting-key = (trap [m/aa])/id)
-    ('conflicting-key = (trap [select m <BB>])/id)
-    ('conflicting-key = (trap [select m <bb>])/id)
-    ('conflicting-key = (trap [m/(#"C")])/id)
-    ('conflicting-key = (trap [m/(#"c")])/id)
+    ('conflicting-key = (trap [m/AA]).id)
+    ('conflicting-key = (trap [m/aa]).id)
+    ('conflicting-key = (trap [select m <BB>]).id)
+    ('conflicting-key = (trap [select m <bb>]).id)
+    ('conflicting-key = (trap [m/(#"C")]).id)
+    ('conflicting-key = (trap [m/(#"c")]).id)
 
-    ('conflicting-key = (trap [put m 'Aa 70])/id)
-    ('conflicting-key = (trap [m/(<Bb>): 80])/id)
-    ('conflicting-key = (trap [m/(#"C"): 90])/id)
+    ('conflicting-key = (trap [put m 'Aa 70]).id)
+    ('conflicting-key = (trap [m/(<Bb>): 80]).id)
+    ('conflicting-key = (trap [m/(#"C"): 90]).id)
 
     (
         put/case m 'Aa 100
@@ -115,17 +115,17 @@
     (3 = select/case m the '''a)
     (4 = select/case m the ''''a)
 
-    ((trap [select m the a])/id = 'conflicting-key)
-    ((trap [m/(the a)])/id = 'conflicting-key)
+    ((trap [select m the a]).id = 'conflicting-key)
+    ((trap [m/(the a)]).id = 'conflicting-key)
 
-    ((trap [select m the ''''a])/id = 'conflicting-key)
-    ((trap [m/(the ''''a)])/id = 'conflicting-key)
+    ((trap [select m the ''''a]).id = 'conflicting-key)
+    ((trap [m/(the ''''a)]).id = 'conflicting-key)
 
     ('II = m/(the ''[x y]))
     ('IIII = m/(the ''''[m n o p]))
 
-    ((trap [append noquote b2 'z])/id = 'series-auto-locked)
-    ((trap [append noquote b4 'q])/id = 'series-auto-locked)
+    ((trap [append noquote b2 'z]).id = 'series-auto-locked)
+    ((trap [append noquote b4 'q]).id = 'series-auto-locked)
 ]
 
 

@@ -13,7 +13,7 @@
 (
     block: [x]
     j: only block
-    'series-frozen = (trap [append j <illegal>])/id
+    'series-frozen = (trap [append j <illegal>]).id
 )
 
 ; If contents were mutable, they still will be if contained

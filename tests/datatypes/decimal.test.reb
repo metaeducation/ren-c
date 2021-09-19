@@ -142,7 +142,7 @@
 ; alternative form
 (1.1 == 1,1)
 (1.1 = make decimal! "1.1")
-('bad-make-arg = (trap [make decimal! 1.1])/id)
+('bad-make-arg = (trap [make decimal! 1.1]).id)
 (1.1 = to decimal! 1.1)
 (1.1 = to decimal! "1.1")
 (error? trap [to decimal! "t"])
@@ -158,8 +158,8 @@
 ; TO DECIMAL! of 2-element INTEGER! PATH! treats as fraction
 [
     (0.5 = to decimal! 1/2)
-    ('bad-cast = (trap [to decimal! 1/2/3])/id)
-    ('zero-divide = (trap [to decimal! 1/0])/id)
+    ('bad-cast = (trap [to decimal! 1/2/3]).id)
+    ('zero-divide = (trap [to decimal! 1/0]).id)
 ]
 
 ; Unsupported experiment: MAKE DECIMAL! of 2-element path run DIVIDE code

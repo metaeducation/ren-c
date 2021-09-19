@@ -12,7 +12,7 @@
 
 ; Error Tests
 (
-    'dup-vars = (trap [augment func [x] [x] [x]])/id
+    'dup-vars = (trap [augment func [x] [x] [x]]).id
 )
 
 
