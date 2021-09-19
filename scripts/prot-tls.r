@@ -801,7 +801,7 @@ encrypted-handshake-msg: func [
     ctx [object!]
     unencrypted [binary!]
 ][
-    let encrypted: encrypt-data.type ctx unencrypted #{16}
+    let encrypted: encrypt-data/type ctx unencrypted #{16}
     emit ctx [
         #{16}                         ; protocol type (22=Handshake)
         ctx.ver-bytes                 ; protocol version
