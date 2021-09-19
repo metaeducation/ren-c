@@ -112,7 +112,7 @@ log-emit: function [
     label [tag!]
     body [block!]
 ][
-    body: new-line/all compose/only body false
+    body: new-line/all compose body false
     append/line log (head insert body label)
 ]
 
@@ -123,10 +123,10 @@ export analyse: context [
         return: [block!]
     ][
         return collect [
-            for-each source list/source-files [
+            for-each source list.source-files [
                 if find whitelisted source [continue]
 
-                keep try analyse/file source
+                keep try analyse.file source
             ]
         ]
     ]
@@ -154,13 +154,13 @@ export analyse: context [
             file [file!]
             data [binary!]
         ][
-            analysis: analyse/text file data
+            analysis: analyse.text file data
             emit: specialize :log-emit [log: analysis]
 
             data: as text! data
 
-            identifier: c-lexical/grammar/identifier
-            c-pp-token: c-lexical/grammar/c-pp-token
+            identifier: c-lexical.grammar.identifier
+            c-pp-token: c-lexical.grammar.c-pp-token
 
             malloc-found: copy []
 
@@ -190,7 +190,7 @@ export analyse: context [
             ]
 
             emit-proto: function [return: <none> proto] [
-                if not block? proto-parser/data [return]
+                if not block? proto-parser.data [return]
 
                 do in c-parser-extension [
                     if last-func-end [
@@ -200,10 +200,10 @@ export analyse: context [
                                 position: <here>
                                 to <end>
                             ]
-                            same? position proto-parser/parse-position
+                            same? position proto-parser.parse-position
                         ] else [
                             line: try (
-                                text-line-of proto-parser/parse-position
+                                text-line-of proto-parser.parse-position
                             )
                             append
                                 non-std-func-space: default [copy []]
@@ -212,7 +212,7 @@ export analyse: context [
                     ]
                 ]
 
-                parse proto-parser/data [
+                parse proto-parser.data [
                     opt 'export
                     set name: set-word! (name: to-word name)
                     opt 'enfix
@@ -228,12 +228,12 @@ export analyse: context [
                     ; as the "to-c-name" of the Rebol set-word
                     ;
                     if (
-                        proto-parser/proto-arg-1
+                        proto-parser.proto-arg-1
                         <> to-c-name/scope name #prefixed
                     )[
-                        line: try text-line-of proto-parser/parse-position
+                        line: try text-line-of proto-parser.parse-position
                         emit <id-mismatch> [
-                            (mold proto-parser/data/1) (file) (line)
+                            (mold proto-parser.data.1) (file) (line)
                         ]
                     ]
                 ] else [
@@ -241,24 +241,24 @@ export analyse: context [
                     ; ... ? (not a native)
                     ;
                     any [
-                        (proto-parser/proto-id =
-                            form to word! proto-parser/data/1)
-                        (proto-parser/proto-id
+                        (proto-parser.proto-id =
+                            form to word! proto-parser.data.1)
+                        (proto-parser.proto-id
                             unspaced [
-                                "RL_" to word! proto-parser/data/1
+                                "RL_" to word! proto-parser.data.1
                             ])
                     ] else [
-                        line: try text-line-of proto-parser/parse-position
+                        line: try text-line-of proto-parser.parse-position
                         emit <id-mismatch> [
-                            (mold proto-parser/data/1) (file) (line)
+                            (mold proto-parser.data.1) (file) (line)
                         ]
                     ]
                 ]
             ]
 
             non-std-func-space: _
-            proto-parser/emit-proto: :emit-proto
-            proto-parser/process data
+            proto-parser.emit-proto: :emit-proto
+            proto-parser.process data
 
             if non-std-func-space [
                 emit <non-std-func-space> [(file) (non-std-func-space)]
@@ -275,7 +275,7 @@ export analyse: context [
             file [file!]
             data
         ][
-            analysis: analyse/text file data
+            analysis: analyse.text file data
             return analysis
         ]
     ]
@@ -321,9 +321,9 @@ export analyse: context [
         count-line: [
             (
                 line-len: subtract index of position index of bol
-                if line-len > standard/std-line-length [
+                if line-len > standard.std-line-length [
                     append over-std-len line
-                    if line-len > standard/max-line-length [
+                    if line-len > standard.max-line-length [
                         append over-max-len line
                     ]
                 ]
@@ -367,13 +367,13 @@ export analyse: context [
 
         if not empty? over-std-len [
             emit <line-exceeds> [
-                (standard/std-line-length) (file) (over-std-len)
+                (standard.std-line-length) (file) (over-std-len)
             ]
         ]
 
         if not empty? over-max-len [
             emit <line-exceeds> [
-                (standard/max-line-length) (file) (over-max-len)
+                (standard.max-line-length) (file) (over-max-len)
             ]
         ]
 
@@ -448,21 +448,21 @@ c-parser-extension: context bind bind [
     braced: [lbrace while [braced | not rbrace skip] rbrace]
 
     function-spacing-rule: (
-        bind/copy standard/function-spacing c-lexical/grammar
+        bind/copy standard.function-spacing c-lexical.grammar
     )
 
-    grammar/function-body: braced
+    grammar.function-body: braced
 
-    append grammar/format-func-section [
+    append grammar.format-func-section [
         last-func-end: <here>
         while [nl | eol | wsp]
     ]
 
-    append grammar/other-segment ^ the (
+    append grammar.other-segment ^ the (
         last-func-end: _
     )
 
-] proto-parser c-lexical/grammar
+] proto-parser c-lexical.grammar
 
 extension-of: function [
     {Return file extension for file.}
