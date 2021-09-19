@@ -70,42 +70,42 @@ to-long: (<- enbin [BE + 4])  ; Big endian 4-byte positive integer
 
 to-msdos-time: func [
     "Converts to a msdos time."
-    value [time!] "AnyValue to convert"
+    time [time!] "AnyValue to convert"
 ][
-    to-ishort (value/hour * 2048)
-        or+ (value/minute * 32)
-        or+ to integer! value/second / 2
+    to-ishort (time.hour * 2048)
+        or+ (time.minute * 32)
+        or+ to integer! time.second / 2
 ]
 
 to-msdos-date: func [
     "Converts to a msdos date."
-    value [date!]
+    date [date!]
 ][
-    to-ishort 512 * (max 0 value/year - 1980)
-        or+ (value/month * 32) or+ value/day
+    to-ishort 512 * (max 0 date.year - 1980)
+        or+ (date.month * 32) or+ date.day
 ]
 
 get-msdos-time: func [
     "Converts from a msdos time."
-    value [binary! port!]
+    binary [binary!]
 ][
-    value: debin [LE + 2] value
+    let i: debin [LE + 2] binary
     to time! reduce [
-        63488 and+ value / 2048
-        2016 and+ value / 32
-        31 and+ value * 2
+        63488 and+ i / 2048
+        2016 and+ i / 32
+        31 and+ i * 2
     ]
 ]
 
 get-msdos-date: func [
     "Converts from a msdos date."
-    value [binary! port!]
+    binary [binary!]
 ][
-    value: debin [LE + 2] value
+    let i: debin [LE + 2] binary
     to date! reduce [
-        65024 and+ value / 512 + 1980
-        480 and+ value / 32
-        31 and+ value
+        65024 and+ i / 512 + 1980
+        480 and+ i / 32
+        31 and+ i
     ]
 ]
 
@@ -156,8 +156,8 @@ zip-entry: func [
         #{0A00}  ; minimum spec version for decoder (#{0A00}=1.0)
         #{0000}  ; flags
         switch method ['store [#{0000}] 'deflate [#{0800}] fail]
-        to-msdos-time date/time
-        to-msdos-date date/date
+        to-msdos-time date.time
+        to-msdos-date date.date
         crc  ; crc-32
         compressed-size
         uncompressed-size
@@ -180,8 +180,8 @@ zip-entry: func [
         #{0A00}  ; version (both Mac OS Zip and Linux Zip put #{0A00})
         #{0000}  ; flags
         switch method ['store [#{0000}] 'deflate [#{0800}] fail]
-        to-msdos-time date/time
-        to-msdos-date date/date
+        to-msdos-time date.time
+        to-msdos-date date.date
         crc  ; crc-32
         compressed-size
         uncompressed-size
@@ -218,12 +218,6 @@ zip: func [
     /deep "Includes files in subdirectories"
     /verbose "Lists files while compressing"
     /only "Include the root source directory"
-
-    ; !!! There is a technical limitation at time of writing that LET variables
-    ; cannot be written back as immediates (`let date: ..., date/time: ...`).
-    ; This is temporary.
-    ;
-    <local> date
 ][
     let info: if not verbose [:elide] else [:print]
 
@@ -247,8 +241,8 @@ zip: func [
 
     source: to block! source
     iterate source [
-        let name: source/1
-        let root+name: if find "\/" name/1 [
+        let name: source.1
+        let root+name: if find "\/" name.1 [
             info ["Warning: absolute path" name]
             name
         ] else [%% (root)/(name)]
@@ -266,16 +260,9 @@ zip: func [
 
         num-entries: num-entries + 1
 
-        ; !!! Zip builds on NOW, however this function comes from an
-        ; extension.  Yet the Unzip which lives in this same module is
-        ; needed to unpack encapping, and may be required before the
-        ; Time extension has been loaded.  A simple reference to NOW
-        ; won't find the function that didn't exist at module load time,
-        ; so use LIB.NOW to force lookup through LIB.
-        ;
-        date: lib.now  ; !!! Each file has slightly later date?
+        let date: now  ; !!! Each file has slightly later date?
 
-        let data: if match [binary! text!] :source/2 [  ; next is data
+        let data: if match [binary! text!] :source.2 [  ; next is data
             first (source: next source)
         ] else [  ; otherwise data comes from reading the location itself
             if dir? name [
@@ -328,12 +315,6 @@ unzip: function [
         [file! url! binary!]
     /verbose "Lists files while decompressing (default)"
     /quiet "Don't lists files while decompressing"
-
-    ; !!! There is a technical limitation at time of writing that LET variables
-    ; cannot be written back as immediates (`let date: ..., date/time: ...`).
-    ; This is temporary.
-    ;
-    <local> date
 ][
     num-errors: 0
     info: all [quiet, not verbose] then [:elide] else [:print]
@@ -445,7 +426,7 @@ unzip: function [
         x: msdos-date-rule, (assert [x = date])
 
         [
-            :(not zero? flags/1 and+ 8)  ; "bit 3" -> has data descriptor
+            :(not zero? flags.1 and+ 8)  ; "bit 3" -> has data descriptor
             ;
             ; "If this bit is set, the fields crc-32, compressed size, and
             ; uncompressed size are set to zero in the local header.  The
@@ -510,13 +491,13 @@ unzip: function [
             ; into a "datetime".  Best to do that after the validation
             ; against the information in the local directory entry.
             (
-                date/time: time
-                date: date - lib.now/zone  ; see notes RE: LIB/NOW above
+                date.time: time
+                date: date - now/zone
             )
 
             ; !!! TBD: Improve handling of flags.
             ;
-            (if not zero? flags/1 and+ 1 [
+            (if not zero? flags.1 and+ 1 [
                 fail "Encryption not supported by unzip.reb (yet)"
             ])
 
