@@ -122,13 +122,13 @@ make-port*: function [
     ; Defaults:
     port/actor: try get in scheme 'actor ; avoid evaluation
     port/spec/ref: default [spec]
-    port/spec/title: default [scheme/title]
+    port/spec/title: default [scheme.title]
     port: to port! port
 
     ; Call the scheme-specific port init. Note that if the
     ; scheme has not yet been initialized, it can be done
     ; at this time.
-    if in scheme 'init [scheme/init port]
+    if in scheme 'init [scheme.init port]
     port
 ]
 
@@ -229,12 +229,12 @@ make-scheme: function [
     if not with [cause-error 'access 'no-scheme with]
 
     scheme: make with def
-    if not scheme/name [cause-error 'access 'no-scheme-name scheme]
+    if not scheme.name [cause-error 'access 'no-scheme-name scheme]
 
     ; If actor is block build a non-contextual actor object:
-    if block? :scheme/actor [
-        actor: make object! (length of scheme/actor) / 4
-        for-each [name func* args body] scheme/actor [
+    if block? :scheme.actor [
+        actor: make object! (length of scheme.actor) / 4
+        for-each [name func* args body] scheme.actor [
             ; !!! Comment here said "Maybe PARSE is better here", though
             ; knowing would depend on understanding precisely what the goal
             ; is in only allowing FUNC vs. alternative function generators.
@@ -248,11 +248,11 @@ make-scheme: function [
                 name (func args body) ; add action! to object! w/name
             ]
         ]
-        scheme/actor: actor
+        scheme.actor: actor
     ]
 
-    match [object! handle!] :scheme/actor else [
-        fail ["Scheme actor" :scheme/name "can't be" type of :scheme/actor]
+    match [object! handle!] :scheme.actor else [
+        fail ["Scheme actor" :scheme.name "can't be" type of :scheme.actor]
     ]
 
     append system.schemes reduce [scheme.name scheme]
