@@ -323,14 +323,14 @@
 )(
     obj: make object! [x: <unchanged>]
     did all [
-        'need-non-end = (trap [<discarded> obj/x: comment "hi"]).id
-        obj/x = <unchanged>
+        'need-non-end = (trap [<discarded> obj.x: comment "hi"]).id
+        obj.x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
     did all [
-        'need-non-end = (trap [<discarded> obj/x: ()]).id
-        obj/x = <unchanged>
+        'need-non-end = (trap [<discarded> obj.x: ()]).id
+        obj.x = <unchanged>
     ]
 )
 

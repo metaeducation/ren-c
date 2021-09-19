@@ -168,8 +168,10 @@
 )]
 ; skip before head test
 ([] = cfor i b: tail of [1] head of b -2 [i])
+
 ; "recursive safety", "locality" and "body constantness" test in one
-(cfor i 1 1 1 b: [not same? 'i b/3])
+(cfor i 1 1 1 b: [not same? 'i b.3])
+
 ; recursivity
 (
     num: 0

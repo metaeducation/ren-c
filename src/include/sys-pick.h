@@ -31,15 +31,15 @@
 // write data into native structures when more than one path step is
 // required.  For instance:
 //
-//     >> gob/size
+//     >> gob.size
 //     == 10x20
 //
-//     >> gob/size/x: 304
-//     >> gob/size
+//     >> gob.size.x: 304
+//     >> gob.size
 //     == 10x304
 //
 // Because GOB! stores its size as packed bits that are not a full PAIR!,
-// the `gob/size` path dispatch can't give back a pointer to a REBVAL* to
+// the `gob.size` path dispatch can't give back a pointer to a REBVAL* to
 // which later writes will update the GOB!.  It can only give back a
 // temporary value built from its internal bits.  So workarounds are needed,
 // as they are for a similar situation in trying to set values inside of
@@ -55,12 +55,12 @@
 // that is being dispatched:
 //
 //     >> code: compose [(make set-path! [12-Dec-2012 day]) 1]
-//     == [12-Dec-2012/day: 1]
+//     == [12-Dec-2012.day: 1]
 //
 //     >> do code
 //
 //     >> probe code
-//     [1-Dec-2012/day: 1]
+//     [1-Dec-2012.day: 1]
 //
 // Ren-C has largely punted on resolving these particular questions in order
 // to look at "more interesting" ones.  However, names and functions have

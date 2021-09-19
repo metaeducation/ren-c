@@ -25,10 +25,10 @@
 )
 [#1817 (
     a: make map! []
-    a/b: make object! [
+    a.b: make object! [
         c: make map! []
     ]
-    integer? a/b/c/d: 1
+    integer? a.b.c.d: 1
 )]
 
 [#1477 (

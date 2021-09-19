@@ -15,9 +15,9 @@
 (
     block-1: reduce ['a _]
     block-2: reduce ['b block-1]
-    block-1/2: block-2
+    block-1.2: block-2
     did all [
-        block-1/1 = block-1/1
-        block-1/2 = block-1/2
+        block-1.1 = block-1.1
+        block-1.2 = block-1.2
     ]
 )

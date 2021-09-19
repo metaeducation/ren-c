@@ -39,7 +39,7 @@
         /default "Default case if no others are found"
             [block!]
     ]) func [f [frame!]] [
-        let def: f/default
+        let def: f.default
         do f else (try def)
     ]
     true)
@@ -59,7 +59,7 @@
     two-a-plus-six-plus-four-c: enclose augment :two-a-plus-six [
         /c [integer!]
     ] func [f [frame!]] [
-        let old-c: f/c
+        let old-c: f.c
         let x: do f
         if old-c [
             x + (4 * old-c)

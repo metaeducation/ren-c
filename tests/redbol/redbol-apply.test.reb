@@ -13,7 +13,7 @@
 
     loop [not tail? block] [
         block: if only [
-            arg: get* 'block/1
+            arg: get* 'block.1
             try next block
         ] else [
             ; Skip comments and other invisibles.
@@ -22,17 +22,17 @@
             try block
         ]
 
-        if refinement? params/1 [
+        if refinement? params.1 [
             comment {
                 Ren-C allows LOGIC! to control parameterless refinements and
                 canonizes to either null or the refinement name itself.  But
                 it does not allow BLANK!.  This makes a BLOCK!-style apply
                 using positions non-viable.  We OPT all nones here.
             }
-            using-args: did set (in frame second params/1) opt get* 'arg
+            using-args: did set (in frame second params.1) opt get* 'arg
         ] else [
             if using-args [
-                set (in frame params/1) get* 'arg
+                set (in frame params.1) get* 'arg
             ]
         ]
 

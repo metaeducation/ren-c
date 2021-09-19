@@ -44,7 +44,7 @@
 [
     (
         b: blockify a: [<x> #y]
-        append b/1 "x"
+        append b.1 "x"
         append b just z
         a = [<xx> #y z]
     )(

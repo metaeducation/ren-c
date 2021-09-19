@@ -393,9 +393,9 @@ redescribe: func [
             meta: _  ; need to get a parameter-notes field in the OBJECT!
             on-demand-meta  ; ...so this loses SPECIALIZEE, etc.
 
-            description: meta/description: fields/description
-            notes: meta/parameter-notes: fields/parameter-notes
-            types: meta/parameter-types: fields/parameter-types
+            description: meta.description: fields.description
+            notes: meta.parameter-notes: fields.parameter-notes
+            types: meta.parameter-types: fields.parameter-types
         ]
     ]
 
@@ -412,7 +412,7 @@ redescribe: func [
                     ; No action needed (no meta to delete old description in)
                 ] else [
                     on-demand-meta
-                    meta/description: if description = {} [
+                    meta.description: if description = {} [
                         _
                     ] else [
                         description
@@ -425,7 +425,7 @@ redescribe: func [
                 word! | get-word! | lit-word! | set-word!
                 | ahead path! into [word! blank!]
             ](
-                if path? param [param: param/1]
+                if path? param [param: param.1]
             )
 
             ; It's legal for the redescribe to name a parameter just to
@@ -437,7 +437,7 @@ redescribe: func [
                 note: spaced note
                 on-demand-meta
                 if param = 'return: [
-                    meta/return-note: all [
+                    meta.return-note: all [
                         note <> {}
                         copy note
                     ]
@@ -474,7 +474,7 @@ redescribe: func [
         notes
         every [param note] notes [null? :note]
     ] then [
-        meta/parameter-notes: null
+        meta.parameter-notes: null
     ]
 
     return :value  ; should have updated the meta

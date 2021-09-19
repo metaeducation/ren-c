@@ -69,8 +69,10 @@
     e: for i each blk [num: i trap [1 / 0]]
     all [error? e num = 2]
 )
+
 ; "recursive safety", "locality" and "body constantness" test in one
-(for-each i [1] b: [not same? 'i b/3])
+(for-each i [1] b: [not same? 'i b.3])
+
 ; recursivity
 (
     num: 0
@@ -141,12 +143,12 @@
             ]) each [
                 1 2 3 4
             ][
-                sum: sum + obj1/x + obj2/x
+                sum: sum + obj1.x + obj2.x
             ]
         ]
         sum = 10
-        obj1/x = 3
-        obj2/x = 4
+        obj1.x = 3
+        obj2.x = 4
     ]
 )]
 

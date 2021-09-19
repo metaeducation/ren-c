@@ -134,9 +134,9 @@
 
 ; are error reports for DO and EVALUATE consistent?
 (
-    val1: trap [do [1 / 0]]
-    val2: trap [evaluate [1 / 0]]
-    val1/near = val2/near
+    e1: trap [do [1 / 0]]
+    e2: trap [evaluate [1 / 0]]
+    e1.near = e2.near
 )
 
 (
@@ -159,8 +159,8 @@
     did all [
         e1.id = 'zero-divide
         e2.id = 'zero-divide
-        [divide 1 0] = copy/part e1/near 3
-        [divide 2 0] = copy/part e2/near 3
+        [divide 1 0] = copy/part e1.near 3
+        [divide 2 0] = copy/part e2.near 3
         e1 <> e2
     ]
 )

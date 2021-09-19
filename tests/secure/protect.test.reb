@@ -142,7 +142,7 @@
 ('series-held = pick trap [do code: [clear code]] 'id)
 (
     obj: make object! [x: 10]
-    'series-held = pick trap [do code: [obj/x: (clear code recycle 20)]] 'id
+    'series-held = pick trap [do code: [obj.x: (clear code recycle 20)]] 'id
 )
 
 

@@ -18,11 +18,11 @@
 ; tunneled out to any ACTION!s or invocations that are produced from them.
 (
     f: make frame! :append
-    f/series: 1  ; not a valid APPEND target
-    f/value: <ae>
+    f.series: 1  ; not a valid APPEND target
+    f.value: <ae>
     e: trap [do f]
     did all [
         e.id = 'expect-arg
-        e/arg1 = 'append
+        e.arg1 = 'append
     ]
 )

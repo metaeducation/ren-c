@@ -93,10 +93,10 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
 
         all [
             1 = length of b
-            integer? :b/1
+            integer? :b.1
         ] then [
             print-info "Interpreting integer input as DEBUG"
-            return compose [debug (b/1)]
+            return compose [debug (b.1)]
         ]
 
         if focus-frame [

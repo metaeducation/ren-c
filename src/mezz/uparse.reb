@@ -1952,14 +1952,14 @@ default-combinators: make map! reduce [
         let f: make frame! :value
         for-each param (parameters of action of f) [
             if not path? param [
-                ensure action! :parsers/1
+                ensure action! :parsers.1
                 if meta-word? param [
                     param: to word! param
-                    f.(param): ([# input (pending)]: ^ parsers/1 input) else [
+                    f.(param): ([# input (pending)]: ^ parsers.1 input) else [
                         return null
                     ]
                 ] else [
-                    f.(param): ([# input (pending)]: parsers/1 input) else [
+                    f.(param): ([# input (pending)]: parsers.1 input) else [
                         return null
                     ]
                 ]
@@ -2990,7 +2990,7 @@ append redbol-combinators reduce [
         if tail? input [
             fail "At END cannot use INTO"
         ]
-        if not any-series? subseries: input/1 [
+        if not any-series? subseries: input.1 [
             fail "Need ANY-SERIES! datatype for use with INTO in UPARSE"
         ]
 

@@ -19,7 +19,7 @@
     reeval (first [x:]) 20
     x = 20
 )
-   
+
 (
     a-value: charset ""
     same? a-value reeval a-value
@@ -80,7 +80,7 @@
     same? :a-value reeval :a-value
 )
 (
-    a-value: 'a/b
+    a-value: 'a.b
     a: make object! [b: 1]
     1 == reeval :a-value
 )

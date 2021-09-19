@@ -27,7 +27,7 @@
 ; break cycle
 (
     str: "abcdef"
-    iterate str [if #"c" = char: str/1 [break]]
+    iterate str [if #"c" = char: str.1 [break]]
     char = #"c"
 )
 ; break return value
@@ -75,5 +75,5 @@
 )
 [#81 (
     blk: [1]
-    1 == iterate blk [blk/1]
+    1 == iterate blk [blk.1]
 )]

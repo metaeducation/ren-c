@@ -1252,7 +1252,7 @@ first: emulate [denuller :first]
 first+: emulate [
     enclose :first func [f] [
         use [loc] [
-            loc: f/location
+            loc: f.location
             do f
             elide take loc
         ]

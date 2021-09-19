@@ -20,16 +20,16 @@
 
 (
     o: make object! [f: <before>]
-    path: 'o/f
+    path: 'o.f
     (path): 304
-    (path = 'o/f) and (o/f = 304)
+    (path = 'o.f) and (o.f = 304)
 )
 
 ; Retriggering multi-returns is questionable
 (
     m: <before>
     o: make object! [f: <before>]
-    block: [m o/f]
+    block: [m o.f]
     error? trap [(block): [1020 304]]
 )
 

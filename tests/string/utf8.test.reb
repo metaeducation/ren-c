@@ -39,7 +39,7 @@
         tcopy: copy t
         pos: find tcopy braille
         change/part pos warning length of braille
-        assert [pos/1 = as issue! warning]
+        assert [pos.1 = as issue! warning]
         (length of tcopy) = (tlen + 1 - length of braille)
     )
 
@@ -48,7 +48,7 @@
         n: 0
         loop [c: take tcopy] [
             n: n + 1
-            assert [c = t/(n)]
+            assert [c = t.(n)]
         ]
         n = tlen
     )
@@ -57,7 +57,7 @@
         tcopy: copy t
         n: length of t
         loop [c: take/last tcopy] [
-            assert [c = t/(n)]
+            assert [c = t.(n)]
             n: n - 1
         ]
         n = 0
@@ -67,7 +67,7 @@
         n: 0
         for-each c t [
             n: n + 1
-            assert [c = t/(n)]
+            assert [c = t.(n)]
         ]
         n = tlen
     )

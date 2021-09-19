@@ -35,7 +35,7 @@
     did all [
         30 = length of tuple  ; too big to fit in cell on 32-bit -or- 64-bit
         (cfor i 1 30 1 [
-            assert [tuple/(i) = 1]
+            assert [tuple.(i) = 1]
         ] true)
     ]
 )
@@ -54,7 +54,7 @@
         tuple: ensure tuple! to tuple! text
         assert [(length of tuple) = (length of structure)]
         cfor i 1 (length of tuple) 1 [
-            assert [tuple/(i) = structure/(i)]
+            assert [tuple.(i) = structure.(i)]
         ]
     ]
     true

@@ -83,7 +83,7 @@
         b: bind (does [if true [a]]) binding of 'b
     ]
     o2: make o1 [a: 20]
-    o2/b = 20
+    o2.b = 20
 )(
     o1: make object! [
         a: 10
@@ -91,7 +91,7 @@
     ]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2.b = 20
 )(
     o1: make object! [
         a: 10
@@ -100,7 +100,7 @@
     ]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2.b = 20
 )(
     o1: make object! [
         a: 10
@@ -108,5 +108,5 @@
     ]
     o2: make o1 [a: 20]
 
-    o2/b = 20
+    o2.b = 20
 )

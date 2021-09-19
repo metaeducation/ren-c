@@ -26,8 +26,8 @@
 // also operate upon the result:
 //
 //     >> add2x3x+1: enclose :add func [f [frame!]] [
-//            f/value1: f/value1 * 2
-//            f/value2: f/value2 * 3
+//            f.value1: f.value1 * 2
+//            f.value2: f.value2 * 3
 //            return 1 + do f
 //         ]
 //
@@ -41,7 +41,7 @@
 //
 //     >> print2x: enclose :print func [f [frame!]] [
 //            do copy f
-//            f/value: append f/value "again!"
+//            f.value: append f.value "again!"
 //            do f
 //        ]
 //
