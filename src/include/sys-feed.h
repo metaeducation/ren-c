@@ -99,7 +99,13 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 
   detect_again:;
 
-    TRASH_POINTER_IF_DEBUG(feed->value);  // should be assigned below
+    // !!! On stack overflow errors, the system (theoretically) will go through
+    // all the frames and make sure variadic feeds are ended.  If we put
+    // trash in this value (e.g. 0xDECAFBAD) that code crashes.  For now, use
+    // END so that if something below causes a stack overflow before the
+    // operation finishes, those crashes don't happen.
+    //
+    feed->value = END_CELL;  // should be assigned below
 
     if (not p) {  // libRebol's null/<opt> (IS_NULLED prohibited in CELL case)
 
