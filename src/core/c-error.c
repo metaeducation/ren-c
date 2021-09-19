@@ -945,7 +945,10 @@ REBCTX *Error_User(const char *utf8) {
 //  Error_Need_Non_End: C
 //
 REBCTX *Error_Need_Non_End(const RELVAL *target) {
-    assert(IS_SET_WORD(target) or IS_SET_PATH(target));
+    assert(
+        IS_SET_WORD(target) or IS_SET_TUPLE(target)
+        or IS_SET_PATH(target)  // only needed in legacy Redbol
+    );
     return Error_Need_Non_End_Raw(target);
 }
 
