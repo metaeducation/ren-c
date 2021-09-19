@@ -639,6 +639,37 @@ print: func* [
     return write-stdout (try spaced line) then [write-stdout newline]
 ]
 
+echo: func* [
+    {Freeform output of text, with @WORD, @TU.P.LE, and @(GR O UP) as escapes}
+
+    return: <void>
+    'args "If a BLOCK!, then just that block's contents--else to end of line"
+        [any-value! <variadic>]
+    <local> line
+][
+    line: if block? first args [take args] else [
+        collect [
+            cycle [
+                case [
+                    tail? args [stop]
+                    new-line? args [stop]
+                ]
+                keep ^ take args
+            ]
+        ]
+    ]
+    write-stdout form map-each item line [
+        switch type of item [
+            the-word! [get item]
+            the-tuple! [get item]
+            the-group! [do as block! item]
+        ] else [
+            item
+        ]
+    ]
+    write-stdout newline
+]
+
 
 internal!: make typeset! [
     handle!
