@@ -29,8 +29,8 @@ zero: 0
 
 ; Special values
 
-sys: system/contexts/sys
-lib: system/contexts/lib
+sys: system.contexts.sys
+lib: system.contexts.lib
 
 ; Char constants
 

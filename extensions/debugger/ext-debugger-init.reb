@@ -28,10 +28,10 @@ REBOL [
 ; (with sandboxing of expressions run on behalf of the skin vs. user
 ; evaluations) is a pretty complex idea.  Going to having more than one
 ; skin in effect raises more questions, since the currently in-effect skin
-; was assumed to be `system/console/skin`.
+; was assumed to be `system.console.skin`.
 ;
 ; So there are many open issues with that.  For right now, what happens is
-; that nested console sessions keep track of `system/console/skin` and put
+; that nested console sessions keep track of `system.console.skin` and put
 ; it back when they are done, so it always represents the current skin.  We
 ; add some customizations on the base console for the debugger, but these
 ; will not interact with shortcuts in the non-debugger skin at this time.
@@ -312,7 +312,7 @@ backtrace: function [
 ; the stack during BACKTRACE...it uses only one frame.)
 ;
 breakpoint: adapt :breakpoint* [
-    system/console/print-info "BREAKPOINT hit"
+    system.console.print-info "BREAKPOINT hit"
 ]
 
 

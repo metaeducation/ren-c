@@ -225,7 +225,7 @@ make-scheme: function [
     /with "Scheme name to use as base"
         [word!]
 ][
-    with: either with [get in system/schemes with][system/standard/scheme]
+    with: either with [get in system.schemes with] [system.standard.scheme]
     if not with [cause-error 'access 'no-scheme with]
 
     scheme: make with def
@@ -255,5 +255,5 @@ make-scheme: function [
         fail ["Scheme actor" :scheme/name "can't be" type of :scheme/actor]
     ]
 
-    append system/schemes reduce [scheme/name scheme]
+    append system.schemes reduce [scheme.name scheme]
 ]

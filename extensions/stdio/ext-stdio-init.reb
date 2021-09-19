@@ -12,7 +12,7 @@ sys.make-scheme [
     actor: get-console-actor-handle
 ]
 
-system/ports/input: open [scheme: 'console]
+system.ports.input: open [scheme: 'console]
 
 
 ; During boot, there shouldn't be any output.  However, it would be annoying

@@ -10,5 +10,5 @@ sys.make-scheme [
     title: "DNS Lookup"
     name: 'dns
     actor: get-dns-actor-handle
-    spec: system/standard/port-spec-net
+    spec: system.standard.port-spec-net
 ]

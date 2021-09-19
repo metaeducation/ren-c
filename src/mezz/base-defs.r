@@ -425,7 +425,7 @@ an: func* [
     {Prepends the correct "a" or "an" to a string, based on leading character}
     value <local> s
 ][
-    head of insert (s: form value) either (find "aeiou" s/1) ["an "] ["a "]
+    head of insert (s: form value) either (find "aeiou" s.1) ["an "] ["a "]
 ]
 
 
@@ -475,7 +475,7 @@ reeval func* [
         tester: typechecker (get bind (as word! type-name) set-word)
         set set-word :tester
 
-        set-meta :tester make system/standard/action-meta [
+        set-meta :tester make system.standard.action-meta [
             description: spaced [{Returns TRUE if the value is} an type-name]
             return-type: [logic!]
         ]

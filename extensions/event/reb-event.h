@@ -74,7 +74,7 @@ enum {
 // was for--the PORT!, GOB!, etc.
 //
 // (Note: R3-Alpha also had something called a "callback" which pointed the
-// event to the "system/ports/callback port", but there seemed to be no uses.)
+// event to the "system.ports.callback port", but there seemed to be no uses.)
 //
 // In order to keep the core GC agnostic about events, if the pointer's slot
 // is to something that needs to participate in GC behavior, it must be a
@@ -85,7 +85,7 @@ enum {
     EVM_PORT,       // event holds port pointer
     EVM_OBJECT,     // event holds object context pointer
     EVM_GUI,        // GUI event uses system/view/event/port
-    EVM_CALLBACK,   // Callback event uses system/ports/callback port
+    EVM_CALLBACK,   // Callback event uses system.ports.callback port
     EVM_MAX
 };
 

@@ -30,8 +30,8 @@
 
 ; MOLD decimal accuracy tests
 [#729 (
-    system/options/decimal-digits: 17
-    system/options/decimal-digits = 17
+    system.options.decimal-digits: 17
+    system.options.decimal-digits = 17
 )]
 
 ; 64-bit IEEE 754 maximum

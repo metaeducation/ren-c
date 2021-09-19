@@ -81,7 +81,7 @@ REB_R TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     // !!! cannot convert TO a PORT! without copying the whole context...
     // which raises the question of why convert an object to a port,
     // vs. making it as a port to begin with (?)  Look into why
-    // system/standard/port is made with CONTEXT and not with MAKE PORT!
+    // system.standard.port is made with CONTEXT and not with MAKE PORT!
     //
     REBCTX *context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
     REBVAL *rootvar = CTX_ROOTVAR(context);

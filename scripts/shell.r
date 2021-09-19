@@ -92,7 +92,7 @@ shell: func [
     let shellify-tag: func [value [any-value!]] [
         if not tag? value [return value]
 
-        if system/version/4 = 3 [   ; Windows
+        if system.version.4 = 3 [   ; Windows
             unspaced ["%" as text! value "%"]
         ] else [
             unspaced ["${" as text! value "}"]

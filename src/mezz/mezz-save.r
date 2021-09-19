@@ -35,10 +35,10 @@ mold64: function [
     "Temporary function to mold binary base 64." ; fix the need for this! -CS
     data
 ][
-    base: system/options/binary-base
-    system/options/binary-base: 64
+    base: system.options.binary-base
+    system.options.binary-base: 64
     data: mold :data
-    system/options/binary-base: :base
+    system.options.binary-base: :base
     data
 ]
 
