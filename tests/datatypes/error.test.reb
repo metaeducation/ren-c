@@ -141,7 +141,7 @@
 
 (
     e: trap [1 / 0]
-    e/id = 'zero-divide
+    e.id = 'zero-divide
 )
 
 ; #60, #1135
@@ -157,8 +157,8 @@
     e2: trap [divide 2 0]
 
     did all [
-        e1/id = 'zero-divide
-        e2/id = 'zero-divide
+        e1.id = 'zero-divide
+        e2.id = 'zero-divide
         [divide 1 0] = copy/part e1/near 3
         [divide 2 0] = copy/part e2/near 3
         e1 <> e2

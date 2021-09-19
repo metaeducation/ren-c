@@ -50,7 +50,7 @@
 (
     foo: '~void~
     e: trap [parse "a" [foo]]
-    e/id = 'bad-word-get
+    e.id = 'bad-word-get
 )(
     foo: quote '~void~
     parse? [~void~] [foo <end>]
@@ -380,7 +380,7 @@
 )(
     catbin: #{F09F90B1}
     e: trap [parse? "🐱" [catbin]]
-    'find-string-binary = e/id
+    'find-string-binary = e.id
 )(
     catchar: #"🐱"
     parse? "🐱" [catchar]
@@ -533,7 +533,7 @@
         parse? ["a" "b" 1] [set x some text! integer!]
     ]
     did all [
-        e/id = 'parse-multiple-set
+        e.id = 'parse-multiple-set
         x = <before>
     ]
 )]

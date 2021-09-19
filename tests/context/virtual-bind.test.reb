@@ -126,7 +126,7 @@
 [
     (
         e: trap [bind use [x] [x: 10, [x + 1]] make object! [x: 20]]
-        e/id = 'const-value
+        e.id = 'const-value
     )
 
     ; It tried to warn you that the X binding wouldn't be updated... but
@@ -143,7 +143,7 @@
     (11 = do bind use [x] [x: 10, '(x + 1)] make object! [x: 20])
     (
         e: trap [bind use [x] [x: 10, the (x + 1)] make object! [x: 20]]
-        e/id = 'const-value
+        e.id = 'const-value
     )
 ]
 

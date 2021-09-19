@@ -214,11 +214,11 @@
 
 (
     e: trap [NUL - 1]
-    e/id = 'type-limit
+    e.id = 'type-limit
 )
 (
     e: trap [NUL + -1]
-    e/id = 'type-limit
+    e.id = 'type-limit
 )
 
 (#"Ā" = add #"^(01)" #"^(ff)")

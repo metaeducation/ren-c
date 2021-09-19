@@ -13,10 +13,10 @@
 ; not be able to load.  Use BINARY! to depict.
 (
     e: trap [transcode #{225E4022}]  ; byte sequence for ^^@ in quotes
-    e/id = 'illegal-zero-byte
+    e.id = 'illegal-zero-byte
 )(
     e: trap [transcode #{225E2830302922}]  ; byte sequence for ^^(00) in quotes
-    e/id = 'illegal-zero-byte
+    e.id = 'illegal-zero-byte
 )
 
 ("^A" = "^(01)")

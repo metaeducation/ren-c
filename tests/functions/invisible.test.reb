@@ -62,7 +62,7 @@
     e: trap [
         evaluate evaluate [1 elide "a" + elide "b" 2 * 3 fail "too far"]
     ]
-    e/id = 'expect-arg
+    e.id = 'expect-arg
 )
 (
     pos: evaluate evaluate [1 elide "a" elide "b" + 2 * 3 fail "too far"]
@@ -405,7 +405,7 @@
     (
         int-spec: func [return: [integer!] x] [return]
         e: trap [int-spec 10]
-        e/id = 'bad-invisible
+        e.id = 'bad-invisible
     )
     (
         invis-spec: func [return: [<invisible> integer!] x] [

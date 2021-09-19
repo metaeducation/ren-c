@@ -128,7 +128,7 @@
     a-value: tail of [1]
     clear head of a-value
     e: trap [equal? a-value a-value]
-    e/id = 'index-out-of-range
+    e.id = 'index-out-of-range
 )
 
 ; Reflexivity for cyclic blocks

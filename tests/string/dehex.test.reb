@@ -10,7 +10,7 @@
 ; of the BINARY! being UTF-8 and seems like it could be a bad idea.
 (
     e: trap [dehex "a%00b"]
-    e/id = 'illegal-zero-byte
+    e.id = 'illegal-zero-byte
 )
 
 ("a b" = dehex "a%20b")

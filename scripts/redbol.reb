@@ -1530,7 +1530,7 @@ hijack :lib.transcode enclose copy :lib.transcode function [f [frame!]] [
     trap [
         result: lib.do copy f  ; COPY so we can DO it again if needed
     ] then e -> [
-        if e/id != 'bad-utf8 [
+        if e.id != 'bad-utf8 [
             fail e
         ]
 

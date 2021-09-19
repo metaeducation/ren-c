@@ -119,7 +119,7 @@
 ; Errors on bad branches
 (
     e: trap [case [true #bad]]
-    e/id = 'bad-branch-type
+    e.id = 'bad-branch-type
 )
 
 (1 = case [(void) true [1]])

@@ -92,7 +92,7 @@
 ; [#2076 (
 ;     o: make object! [x: 10]
 ;     e: trap [append o [self: 1]]
-;     e/id = 'hidden
+;     e.id = 'hidden
 ; )]
 ;
 ; [#187 (

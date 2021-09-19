@@ -59,7 +59,7 @@
     ]
 
     e: trap [foo 100 1020]
-    e/id = 'expect-arg
+    e.id = 'expect-arg
 )
 
 ; REDO phase test

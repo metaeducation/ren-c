@@ -55,7 +55,7 @@
             trap [
                 append b just z  ; block doesn't truly "exist", can't append
             ] then e -> [
-                e/id = 'series-frozen
+                e.id = 'series-frozen
             ]
         ]
     )
@@ -157,7 +157,7 @@
 
     (
         e: trap [[a b c] = append [a b c] ^(null)]
-        e/id = 'arg-required
+        e.id = 'arg-required
     )
 ]
 

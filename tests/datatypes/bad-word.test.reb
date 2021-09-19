@@ -116,7 +116,7 @@
     e: trap [
         parse [~foo~ ~foo~] [some foo]  ; not acceptable  !!! how to overcome?
     ]
-    e/id = 'bad-word-get
+    e.id = 'bad-word-get
 )
 
 (
@@ -135,7 +135,7 @@
 (
     a-value: ~void~
     e: trap [a-value]
-    e/id = 'bad-word-get
+    e.id = 'bad-word-get
 )
 
 

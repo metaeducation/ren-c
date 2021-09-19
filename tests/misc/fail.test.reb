@@ -12,19 +12,19 @@
 ; way of raising errors, it would have to raise an error anyway.
 ; This is convenient for throwaway code.
 [
-    (e: trap [fail], e/id = 'unknown-error)
-    (e: trap [case [false [x] false [y] fail]], e/id = 'unknown-error)
+    (e: trap [fail], e.id = 'unknown-error)
+    (e: trap [case [false [x] false [y] fail]], e.id = 'unknown-error)
 ]
 
 
 ; A simple FAIL with a string message will be a generic error ID
 ;
-(e: trap [fail "hello"], (e/id = null) and (e/message = "hello"))
+(e: trap [fail "hello"], (e.id = null) and (e/message = "hello"))
 
 
 ; Failing instead with a WORD! will make the error have that ID
 ;
-(e: trap [fail 'some-error-id], e/id = 'some-error-id)
+(e: trap [fail 'some-error-id], e.id = 'some-error-id)
 
 
 ; FAIL can be given a QUOTED! of a parameter to blame.  This gives a

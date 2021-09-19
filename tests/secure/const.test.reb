@@ -6,7 +6,7 @@
     data: mutable [a b c]
     data-readonly: const data
     did all [
-        (e: trap [append data-readonly <readonly>] e/id = 'const-value)
+        (e: trap [append data-readonly <readonly>] e.id = 'const-value)
         append data <readwrite>
         data = [a b c <readwrite>]
         data-readonly = [a b c <readwrite>]
@@ -29,7 +29,7 @@
             append code/1 sum: sum + 1
         ]
     ]
-    e/id = 'const-value
+    e.id = 'const-value
 )(
     sum: 0
     repeat 5 code: const [
@@ -47,14 +47,14 @@
 ; as const...it shouldn't be inheriting a "wave of constness" otherwise.
 (
     e: trap [repeat 2 [do [append d: [] <item>]]]
-    e/id = 'const-value
+    e.id = 'const-value
 )(
     block: [append d: [] <item>]
     [<item> <item>] = repeat 2 [do block]
 )(
     block: [append d: [] <item>]
     e: trap [repeat 2 [do const block]]
-    e/id = 'const-value
+    e.id = 'const-value
 )
 
 
@@ -69,7 +69,7 @@
     e: trap [
         do compose/deep [repeat 2 [append (block) <fail>]]
     ]
-    e/id = 'const-value
+    e.id = 'const-value
 )(
     block: mutable []
     do compose/deep [repeat 2 [append (block) <legal>]]
@@ -87,8 +87,8 @@
     e22: trap [append data/2/2 <fail>]
     did all [
         data = [a [b [c]] <success>]
-        e2/id = 'const-value
-        e22/id = 'const-value
+        e2.id = 'const-value
+        e22.id = 'const-value
     ]
 )(
     repeat 1 [data: copy/deep [a [b [c]]]]
@@ -107,7 +107,7 @@
 
 [https://github.com/metaeducation/ren-c/issues/633 (
     e: trap [count-up x 1 [append foo: [] x]]
-    e/id = 'const-value
+    e.id = 'const-value
 )]
 
 
@@ -123,7 +123,7 @@
     (
         p: symbol-to-string '+
         e: trap [insert p "double-" append p "-good"]
-        e/id = 'const-value
+        e.id = 'const-value
     )
 
     (
@@ -150,7 +150,7 @@
 ; COMPOSE should splice with awareness of const/mutability
 (
     e: trap [repeat 2 compose [append ([1 2 3]) <bad>]]
-    e/id = 'const-value
+    e.id = 'const-value
 )(
     block: repeat 2 compose [append (mutable [1 2 3]) <legal>]
     block = [1 2 3 <legal> <legal>]
@@ -161,5 +161,5 @@
 ; breaking of rules that would apply to values in a block-based branch.
 (
     e: trap [repeat 2 [append if true '{y} {z}]]
-    e/id = 'const-value
+    e.id = 'const-value
 )

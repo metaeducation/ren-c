@@ -926,7 +926,7 @@ fail: func [
     ;
     ; That could provide an error ID, the format message, and the values to
     ; plug into the slots to make the message...which could be extracted from
-    ; the error if captured (e.g. error/id and `error/key-name`.  Another
+    ; the error if captured (e.g. error.id and `error.key-name`.  Another
     ; option would be something like:
     ;
     ;     fail/with [{The key} :key-name {is invalid}] [key-name: key]

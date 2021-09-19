@@ -1007,7 +1007,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
             // PATH! dispatch is costly and can error in more ways than WORD!:
             //
-            //     e: trap [do make block! ":a"] e/id = 'not-bound
+            //     e: trap [do make block! ":a"] e.id = 'not-bound
             //                                   ^-- not ready @ lookahead
             //
             // Plus with GROUP!s in a path, their evaluations can't be undone.
@@ -1189,7 +1189,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         // PATH! dispatch is costly and can error in more ways than WORD!:
         //
-        //     e: trap [do make block! ":a"] e/id = 'not-bound
+        //     e: trap [do make block! ":a"] e.id = 'not-bound
         //                                   ^-- not ready @ lookahead
         //
         // Plus with GROUP!s in a path, their evaluations can't be undone.

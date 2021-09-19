@@ -76,12 +76,12 @@
         null = [value pos err]: transcode "^M^/a b c"
         value = null
         pos = "^/a b c"
-        err/id = 'illegal-cr
+        err.id = 'illegal-cr
     ]
 )
 (
     err-trapped: trap [[value pos err]: transcode "[^M^/ a] b c"]
-    err-trapped/id = 'illegal-cr
+    err-trapped.id = 'illegal-cr
 )
 
 (did all [
