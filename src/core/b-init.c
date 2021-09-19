@@ -193,6 +193,12 @@ static void Startup_Lib(void)
             | FLAG_FLAVOR(PATCH)  // checked when setting LINK(PatchContext)
             | PATCH_FLAG_LET
             | NODE_FLAG_MANAGED
+            //
+            // Note: While it may seem that context keeps the lib alive and
+            // not vice-versa (which marking the context in link might suggest)
+            // the reason for this is when patches are cached in variables;
+            // then the variable no longer refers directly to the module.
+            //
             | SERIES_FLAG_LINK_NODE_NEEDS_MARK
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK;
 

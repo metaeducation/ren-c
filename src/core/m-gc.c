@@ -84,6 +84,8 @@
     static bool in_mark = false; // needs to be per-GC thread
 #endif
 
+static REBI64 mark_count = 0;
+
 #define ASSERT_NO_GC_MARKS_PENDING() \
     assert(SER_USED(GC_Mark_Stack) == 0)
 
@@ -118,6 +120,8 @@ inline static void Queue_Mark_Value_Deep(const RELVAL *v)
 //
 static void Queue_Mark_Pairing_Deep(REBVAL *paired)
 {
+    assert(not (paired->header.bits & NODE_FLAG_MARKED));
+
     // !!! Hack doesn't work generically, review
 
   #if !defined(NDEBUG)
@@ -129,6 +133,7 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
     Queue_Mark_Opt_Value_Deep(PAIRING_KEY(paired));
 
     paired->header.bits |= NODE_FLAG_MARKED;
+    ++mark_count;
 
   #if !defined(NDEBUG)
     in_mark = was_in_mark;
@@ -181,6 +186,7 @@ static void Queue_Mark_Node_Deep(void *p)
                 | SERIES_FLAG_MISC_NODE_NEEDS_MARK
         );*/
         s->leader.bits |= NODE_FLAG_MARKED;
+        ++mark_count;  // checked on entry that wasn't already marked
         return;
     }
 
@@ -194,7 +200,8 @@ static void Queue_Mark_Node_Deep(void *p)
     }
   #endif
 
-    s->leader.bits |= NODE_FLAG_MARKED;  // may be already set
+    s->leader.bits |= NODE_FLAG_MARKED;
+    ++mark_count;  // checked on entry that wasn't already marked
 
     if (GET_SERIES_FLAG(s, LINK_NODE_NEEDS_MARK) and node_LINK(Node, s)) {
         //
@@ -219,9 +226,13 @@ static void Queue_Mark_Node_Deep(void *p)
         if (IS_KEYLIST(link)) {
             REBKEY *tail = SER_TAIL(REBKEY, link);
             REBKEY *key = SER_HEAD(REBKEY, link);
-            for (; key != tail; ++key)
-                m_cast(REBSYM*, KEY_SYMBOL(key))->leader.bits
-                    |= NODE_FLAG_MARKED;
+            for (; key != tail; ++key) {
+                REBSYM* sym = m_cast(REBSYM*, KEY_SYMBOL(key));
+                if (not (sym->leader.bits & NODE_FLAG_MARKED)) {
+                    sym->leader.bits |= NODE_FLAG_MARKED;
+                    ++mark_count;
+                }
+            }
         }
     }
 
@@ -355,7 +366,7 @@ static void Propagate_All_GC_Marks(void)
 
         // We should have marked this series at queueing time to keep it from
         // being doubly added before the queue had a chance to be processed
-         //
+        //
         assert(a->leader.bits & NODE_FLAG_MARKED);
 
         RELVAL *v = ARR_HEAD(a);
@@ -518,15 +529,20 @@ static void Mark_Root_Series(void)
 
                 assert(not (a->leader.bits & NODE_FLAG_MARKED));
 
-                if (not (a->leader.bits & NODE_FLAG_MANAGED)) {
-                    // if it's not managed, don't mark it (don't have to?)
-                }
-                else  // Note that Mark_Frame_Stack_Deep() will mark the owner
-                    a->leader.bits |= NODE_FLAG_MARKED;
-
                 // Note: Eval_Core() might target API cells, uses END
                 //
-                Queue_Mark_Opt_End_Cell_Deep(ARR_SINGLE(a));
+                if (not (a->leader.bits & NODE_FLAG_MANAGED)) {
+                    // if it's not managed, don't mark it (don't have to?)
+                    Queue_Mark_Opt_End_Cell_Deep(ARR_SINGLE(a));
+                }
+                else { // Note that Mark_Frame_Stack_Deep() will mark the owner
+                    if (not (a->leader.bits & NODE_FLAG_MARKED)) {
+                        a->leader.bits |= NODE_FLAG_MARKED;
+                        ++mark_count;
+                        Queue_Mark_Opt_End_Cell_Deep(ARR_SINGLE(a));
+                    }
+                }
+
                 continue;
             }
 
@@ -641,8 +657,12 @@ static void Mark_Symbol_Series(void)
     assert(IS_POINTER_TRASH_DEBUG(*canon)); // SYM_0 for all non-builtin words
     ++canon;
 
-    for (; canon != tail; ++canon)
-        m_cast(REBSYM*, *canon)->leader.bits |= NODE_FLAG_MARKED;
+    for (; canon != tail; ++canon) {
+        REBSYM *sym = m_cast(REBSYM*, *canon);
+        assert(not (sym->leader.bits & NODE_FLAG_MARKED));
+        sym->leader.bits |= NODE_FLAG_MARKED;
+        ++mark_count;
+    }
 
     ASSERT_NO_GC_MARKS_PENDING(); // doesn't ues any queueing
 }
@@ -834,7 +854,7 @@ static void Mark_Frame_Stack_Deep(void)
 //
 static REBLEN Sweep_Series(void)
 {
-    REBLEN count = 0;
+    REBLEN sweep_count = 0;
 
     REBSEG *seg = Mem_Pools[SER_POOL].segs;
     for (; seg != nullptr; seg = seg->next) {
@@ -904,7 +924,7 @@ static REBLEN Sweep_Series(void)
                     REBSER *s = cast(REBSER*, unit);
                     GC_Kill_Series(s);
                 }
-                ++count;
+                ++sweep_count;
                 break;
 
               case 11:
@@ -912,6 +932,9 @@ static REBLEN Sweep_Series(void)
                 // Don't GC it, just clear the mark.
                 //
                 *unit &= ~NODE_BYTEMASK_0x10_MARKED;
+              #if !defined(NDEBUG)
+                --mark_count;
+              #endif
                 break;
 
             // v-- Everything below this line has the two leftmost bits set
@@ -952,18 +975,22 @@ static REBLEN Sweep_Series(void)
 
             if (v->header.bits & NODE_FLAG_MANAGED) {
                 assert(not (v->header.bits & NODE_FLAG_ROOT));
-                if (v->header.bits & NODE_FLAG_MARKED)
+                if (v->header.bits & NODE_FLAG_MARKED) {
                     v->header.bits &= ~NODE_FLAG_MARKED;
+                  #if !defined(NDEBUG)
+                    --mark_count;
+                  #endif
+                }
                 else {
                     Free_Node(PAR_POOL, v);  // Free_Pairing is for manuals
-                    ++count;
+                    ++sweep_count;
                 }
             }
         }
     }
   #endif
 
-    return count;
+    return sweep_count;
 }
 
 
@@ -977,7 +1004,7 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
     assert(SER_WIDE(sweeplist) == sizeof(REBNOD*));
     assert(SER_USED(sweeplist) == 0);
 
-    REBLEN count = 0;
+    REBLEN sweep_count = 0;
 
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg != NULL; seg = seg->next) {
@@ -988,12 +1015,16 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
               case 9: {  // 0x8 + 0x1
                 REBSER *s = SER(cast(void*, unit));
                 ASSERT_SERIES_MANAGED(s);
-                if (s->leader.bits & NODE_FLAG_MARKED)
+                if (s->leader.bits & NODE_FLAG_MARKED) {
                     s->leader.bits &= ~NODE_FLAG_MARKED;
+                  #if !defined(NDEBUG)
+                    --mark_count;
+                  #endif
+                }
                 else {
                     EXPAND_SERIES_TAIL(sweeplist, 1);
-                    *SER_AT(REBNOD*, sweeplist, count) = s;
-                    ++count;
+                    *SER_AT(REBNOD*, sweeplist, sweep_count) = s;
+                    ++sweep_count;
                 }
                 break; }
 
@@ -1006,19 +1037,23 @@ REBLEN Fill_Sweeplist(REBSER *sweeplist)
                 //
                 REBVAL *pairing = VAL(cast(void*, unit));
                 assert(pairing->header.bits & NODE_FLAG_MANAGED);
-                if (pairing->header.bits & NODE_FLAG_MARKED)
+                if (pairing->header.bits & NODE_FLAG_MARKED) {
                     pairing->header.bits &= ~NODE_FLAG_MARKED;
+                  #if !defined(NDEBUG)
+                    --mark_count;
+                  #endif
+                }
                 else {
                     EXPAND_SERIES_TAIL(sweeplist, 1);
-                    *SER_AT(REBNOD*, sweeplist, count) = pairing;
-                    ++count;
+                    *SER_AT(REBNOD*, sweeplist, sweep_count) = pairing;
+                    ++sweep_count;
                 }
                 break; }
             }
         }
     }
 
-    return count;
+    return sweep_count;
 }
 
 #endif
@@ -1087,6 +1122,9 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
         GC_Kill_Series(varlist); // no track for Free_Unmanaged_Series()
     }
 
+    if (not shutdown)
+        Mark_Symbol_Series();
+
     // MARKING PHASE: the "root set" from which we determine the liveness
     // (or deadness) of a series.  If we are shutting down, we do not mark
     // several categories of series...but we do need to run the root marking.
@@ -1098,8 +1136,6 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     if (not shutdown) {
         Queue_Mark_Node_Deep(PG_Inaccessible_Varlist);
         Propagate_All_GC_Marks();
-
-        Mark_Symbol_Series();
 
         Mark_Data_Stack();
 
@@ -1113,43 +1149,76 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // The last thing we do is go through all the "sea contexts" and make sure
     // that if anyone referenced the context, then their variables remain live.
     //
-    REBSYM **psym = SER_HEAD(REBSYM*, PG_Symbols_By_Hash);
-    REBSYM **psym_tail = SER_TAIL(REBSYM*, PG_Symbols_By_Hash);
-    for (; psym != psym_tail; ++psym) {
-        if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
-            continue;
-        REBSER *patch = MISC(Hitch, *psym);
-        for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
-            REBCTX *context = LINK(PatchContext, patch);
-            if (GET_SERIES_FLAG(CTX_VARLIST(context), MARKED)) {
-                SET_SERIES_FLAG(patch, MARKED);
+    // This must be done *iteratively* so long as the process transitions any
+    // more modules into the live set.  Our weak method at the moment is just
+    // to check if any more markings occur.
+    //
+    while (true) {
+        REBI64 before_count = mark_count;
 
-                Queue_Mark_Opt_Value_Deep(ARR_SINGLE(ARR(patch)));
+        REBSYM **psym = SER_HEAD(REBSYM*, PG_Symbols_By_Hash);
+        REBSYM **psym_tail = SER_TAIL(REBSYM*, PG_Symbols_By_Hash);
+        for (; psym != psym_tail; ++psym) {
+            if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
+                continue;
+            REBSER *patch = MISC(Hitch, *psym);
+            for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
+                REBCTX *context = LINK(PatchContext, patch);
+                if (GET_SERIES_FLAG(patch, MARKED)) {
+                    assert(GET_SERIES_FLAG(CTX_VARLIST(context), MARKED));
+                    continue;
+                }
+                if (GET_SERIES_FLAG(CTX_VARLIST(context), MARKED)) {
+                    SET_SERIES_FLAG(patch, MARKED);
+                    ++mark_count;
 
-                // We also have to keep the word alive, but not necessarily
-                // keep all the other declarations in other modules alive.
-                //
-                SET_SERIES_FLAG(*psym, MARKED);
+                    Queue_Mark_Opt_Value_Deep(ARR_SINGLE(ARR(patch)));
+
+                    // We also have to keep the word alive, but not necessarily
+                    // keep all the other declarations in other modules alive.
+                    //
+                    if (NOT_SERIES_FLAG(*psym, MARKED)) {
+                        SET_SERIES_FLAG(*psym, MARKED);
+                        ++mark_count;
+                    }
+                }
             }
+            Propagate_All_GC_Marks();
         }
-        Propagate_All_GC_Marks();
+
+        if (before_count == mark_count)
+            break;  // no more added
     }
 
     // SWEEPING PHASE
 
     ASSERT_NO_GC_MARKS_PENDING();
 
-    REBLEN count = 0;
+    REBLEN sweep_count;
 
     if (sweeplist != NULL) {
     #if defined(NDEBUG)
         panic (sweeplist);
     #else
-        count += Fill_Sweeplist(sweeplist);
+        sweep_count = Fill_Sweeplist(sweeplist);
     #endif
     }
     else
-        count += Sweep_Series();
+        sweep_count = Sweep_Series();
+
+    // Unmark the Lib() fixed patches
+    //
+    for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
+        REBARR *patch = &PG_Lib_Patches[i];
+        if (GET_SERIES_FLAG(patch, MARKED)) {
+            CLEAR_SERIES_FLAG(patch, MARKED);
+            --mark_count;
+        }
+    }
+
+   #if !defined(NDEBUG)
+     assert(mark_count == 0);  // should balance out
+   #endif
 
   #if DEBUG_COLLECT_STATS
     // Compute new stats:
@@ -1187,12 +1256,12 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // stack, so calling into the evaluator e.g. for rebPrint() may be bad.
     //
     if (Reb_Opts->watch_recycle) {
-        printf("RECYCLE: %u nodes\n", cast(unsigned int, count));
+        printf("RECYCLE: %u nodes\n", cast(unsigned int, sweep_count));
         fflush(stdout);
     }
   #endif
 
-    return count;
+    return sweep_count;
 }
 
 
