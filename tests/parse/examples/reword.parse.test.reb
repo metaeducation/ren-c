@@ -20,7 +20,7 @@
     )
 ][
     case_REWORD: if case [/case]
-    case: :lib/case
+    case: :lib.case
 
     out: make (type of source) length of source
 

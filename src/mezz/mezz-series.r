@@ -112,11 +112,11 @@ replace: function [
     if blank? :pattern [return target]
 
     all_REPLACE: all
-    all: :lib/all
+    all: :lib.all
     case_REPLACE: case
-    case: :lib/case
+    case: :lib.case
     tail_REPLACE: tail
-    tail: :lib/tail
+    tail: :lib.tail
 
     save-target: target
 
@@ -205,7 +205,7 @@ reword: function [
     )
 ][
     case_REWORD: if case [/case]
-    case: :lib/case
+    case: :lib.case
 
     out: make (type of source) length of source
 
@@ -356,7 +356,7 @@ move: func [
     ]
     part: take/part source part
     insert either to [at head of source offset] [
-        lib/skip source offset
+        lib.skip source offset
     ] part
 ]
 
@@ -395,7 +395,7 @@ alter: func [
     /case "Case-sensitive comparison"
 ][
     case_ALTER: case
-    case: :lib/case
+    case: :lib.case
 
     if bitset? series [
         if find series :value [

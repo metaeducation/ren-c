@@ -12,7 +12,7 @@
 ; used to retrieve them.  Using GET subverts changing the name.
 [
     ('append = label of :append)
-    ('append = label of :lib/append)
+    ('append = label of :lib.append)
 
     (
         new-name: :append

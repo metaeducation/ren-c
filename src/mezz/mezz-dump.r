@@ -25,7 +25,7 @@ dump: function [
 
     <static> enablements (make map! [])
 ][
-    print: adapt :lib/print [
+    print: adapt :lib.print [
         if prefix [
             if select enablements prefix <> #on [return]
             write-stdout prefix
@@ -216,7 +216,7 @@ summarize-obj: function [
         [text! datatype!]
 ][
     pattern: match
-    match: :lib/match
+    match: :lib.match
 
     form-pad: func [
         {Form a value with fixed size (space padding follows)}

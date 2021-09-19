@@ -98,7 +98,7 @@ REBNATIVE(shove)
 // The SHOVE operation is used to push values from the left to act as the
 // first argument of an operation, e.g.:
 //
-//      >> 10 >- lib/(print "Hi!" first [multiply]) 20
+//      >> 10 >- lib.(print "Hi!" first [multiply]) 20
 //      Hi!
 //      200
 //
@@ -124,7 +124,7 @@ REBNATIVE(shove)
     // !!! Pure invisibility should work; see SYNC-INVISIBLES for ideas,
     // something like this should be in the tests and be able to work:
     //
-    //    >> 10 >- comment "ignore me" lib/+ 20
+    //    >> 10 >- comment "ignore me" lib.+ 20
     //    == 30
     //
     // !!! To get the feature working as a first cut, this doesn't try get too

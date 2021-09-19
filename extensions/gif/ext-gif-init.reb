@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-sys/register-codec* 'gif %.gif
+sys.register-codec* 'gif %.gif
     :identify-gif?
     :decode-gif
     _  ; currently no GIF encoder

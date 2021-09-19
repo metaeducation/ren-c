@@ -294,7 +294,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
             if (GET_CELL_FLAG(f->out, OUT_NOTE_STALE)) {
                 //
-                // Something like `lib/help left-lit` is allowed to work,
+                // Something like `lib.help left-lit` is allowed to work,
                 // but if it were just `obj/int-value left-lit` then the
                 // path evaluation won...but LEFT-LIT still gets run.
                 // It appears it has nothing to its left, but since we
@@ -385,8 +385,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // SOFT permits f->out to not carry the UNEVALUATED
                 // flag--enfixed operations which have evaluations on
                 // their left are treated as if they were in a GROUP!.
-                // This is important to `1 + 2 ->- lib/* 3` being 9, while
-                // also allowing `1 + x: ->- lib/default [...]` to work.
+                // This is important to `1 + 2 ->- lib.* 3` being 9, while
+                // also allowing `1 + x: ->- lib.default [...]` to work.
                 //
                 goto escapable;
 

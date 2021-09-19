@@ -166,16 +166,16 @@
 
 (9 = (1 + 2 ->- multiply 3))
 (9 = (1 + 2 >- multiply 3))
-(9 = (1 + 2 >-- lib/* 3))
-(9 = (1 + 2 ->- lib/* 3))
+(9 = (1 + 2 >-- lib.* 3))
+(9 = (1 + 2 ->- lib.* 3))
 
 (7 = (add 1 2 * 3))
-(7 = (add 1 2 ->- lib/* 3))
-(7 = (add 1 2 >- lib/* 3))
+(7 = (add 1 2 ->- lib.* 3))
+(7 = (add 1 2 >- lib.* 3))
 
-((trap [10 ->- lib/= 5 + 5]).id = 'expect-arg)
-((trap [10 >- lib/= 5 + 5]).id = 'expect-arg)
-(10 >-- lib/= 5 + 5)
+((trap [10 ->- lib.= 5 + 5]).id = 'expect-arg)
+((trap [10 >- lib.= 5 + 5]).id = 'expect-arg)
+(10 >-- lib.= 5 + 5)
 
 ((trap [add 1 + 2 >- multiply 3]).id = 'no-arg)
 (
@@ -190,7 +190,7 @@
 
 
 (
-    (x: add 1 add 2 3 |> lib/* 4)
+    (x: add 1 add 2 3 |> lib.* 4)
     x = 24
 )
 
