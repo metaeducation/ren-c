@@ -89,9 +89,9 @@
     port? reeval :a-value
 )
 (
-    a-value: first [a/b:]
+    a-value: first [a.b:]
     all [
-        set-path? :a-value
+        set-tuple? :a-value
         error? trap [reeval :a-value]  ; no value to assign after it...
     ]
 )
