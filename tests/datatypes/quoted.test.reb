@@ -238,13 +238,13 @@
         mold :lit-item
 
         (e1: trap [equal1: equal? get/any 'item get/any 'item]) also [
-            e1/where: e1/near: _
+            e1.where: e1.near: null
         ]
         (e2: trap [equal2: :lit-item = :lit-item]) also [
-            e2/where: e2/near: _
+            e2.where: e2.near: null
         ]
-        if e1 [e1/line: null]  ; ignore line difference (file should be same)
-        if e2 [e2/line: null]
+        if e1 [e1.line: null]  ; ignore line difference (file should be same)
+        if e2 [e2.line: null]
         if :e1 != :e2 [
             print mold type of get/any 'item
             print mold e1

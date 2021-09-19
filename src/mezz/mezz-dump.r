@@ -77,7 +77,7 @@ dump: function [
             ]
 
             issue! [
-                enablements/(prefix): item
+                enablements.(prefix): item
             ]
 
             fail @value [
@@ -133,12 +133,12 @@ dump-to-newline: adapt :dump [
         loop [any [
             not new-line? extra
             tail? extra
-            '| = extra/1
+            '| = extra.1
         ]] [
-            append value ^extra/1
+            append value ^extra.1
             all [
-                match [block! group!] :extra/1
-                contains-newline :extra/1
+                match [block! group!] :extra.1
+                contains-newline :extra.1
                 break
             ]
             take extra

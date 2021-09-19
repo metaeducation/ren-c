@@ -181,8 +181,8 @@
 
 [(
     str: "abc"
-    'illegal-zero-byte = pick trap [str/2: 0] 'id
+    'illegal-zero-byte = pick trap [str.2: 0] 'id
 )(
     str: "abc"
-    'illegal-zero-byte = pick trap [str/2: make char! 0] 'id
+    'illegal-zero-byte = pick trap [str.2: make char! 0] 'id
 )]

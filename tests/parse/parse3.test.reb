@@ -447,9 +447,9 @@
         let counts: make map! []
         let rules: collect [
             for-each t things [
-                counts/(t): 0
+                counts.(t): 0
                 keep ^t
-                keep ^ compose/deep '(counts/(t): me + 1)
+                keep ^ compose/deep '(counts.(t): me + 1)
                 keep/line [|]
             ]
             keep [fail]
