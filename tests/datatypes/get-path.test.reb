@@ -20,13 +20,13 @@
 [(
     e: trap [do compose [(:append/only) 1 <d>]]
     did all [
-        e/id = 'expect-arg
+        e.id = 'expect-arg
         e/arg1 = 'append
     ]
 )(
     e: trap [do compose [(:append) 1 <d>]]
     did all [
-        e/id = 'expect-arg
+        e.id = 'expect-arg
         e/arg1 = 'append
     ]
 )]

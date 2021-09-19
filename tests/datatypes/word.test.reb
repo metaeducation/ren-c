@@ -151,7 +151,7 @@
 (
     a-value: ~void~
     e: trap [a-value]
-    e/id = 'bad-word-get
+    e.id = 'bad-word-get
 )
 (
     a-value: 'a

@@ -5,7 +5,7 @@
 (
     ; context-less get-word
     e: trap [do make block! ":a"]
-    e/id = 'not-bound
+    e.id = 'not-bound
 )
 
 ; R3-Alpha and Red permit GET-WORD! access to subvert unsetness.  But Ren-C

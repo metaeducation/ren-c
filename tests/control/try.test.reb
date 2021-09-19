@@ -1,7 +1,7 @@
 ; functions/control/try.r
 (
     e: trap [1 / 0]
-    e/id = 'zero-divide
+    e.id = 'zero-divide
 )
 (
     success: true

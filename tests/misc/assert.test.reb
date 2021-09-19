@@ -5,12 +5,12 @@
     null? e: trap [assert [1 = 1]]
 )(
     e: trap [assert [1 = 2]]
-    e/id = 'assertion-failure
+    e.id = 'assertion-failure
 )(
     null? e: trap [assert [1 = 1, 2 = 2]]
 )(
     e: trap [assert [1 = 1, 304 = 1020]]
-    e/id = 'assertion-failure
+    e.id = 'assertion-failure
 )(
     10 = all [
         5 + 5
@@ -27,7 +27,7 @@
     '~none~ = ^ (1 = 1 so)
 )(
     e: trap [1 = 2 so]
-    e/id = 'assertion-failure
+    e.id = 'assertion-failure
 )(
     x: even? 4 so 10 * 20
     x = 200
@@ -41,12 +41,12 @@
     20 = (10 + 10 was 20)
 )(
     e: trap [10 + 10 was 30]
-    e/id = 'assertion-failure
+    e.id = 'assertion-failure
 )(
     40 = (10 + 30 was 20 + 20)
 )(
     e: trap [(10 + 20) was 20 + 20]
-    e/id = 'assertion-failure
+    e.id = 'assertion-failure
 )
 
 

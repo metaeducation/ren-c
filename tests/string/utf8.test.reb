@@ -117,16 +117,16 @@ https://github.com/metaeducation/ren-c/issues/817
     t: as text! b
     t = "dɐᴚdɐZdıZ"
     e: trap [append b #{E08080}]
-    e/id = 'bad-utf8-bin-edit)
+    e.id = 'bad-utf8-bin-edit)
 
     (b: #{64C990E1B49A64C9905A64C4B15A}
     append b #{E08080}
     e: trap [as text! b]
-    e/id = 'bad-utf8
+    e.id = 'bad-utf8
     )
     (
         e: trap [as text! const #{64C990E1B49A64C9905A64C4B15A}]
-        e/id = 'alias-constrains
+        e.id = 'alias-constrains
     )
 ]
 

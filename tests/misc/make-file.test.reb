@@ -38,7 +38,7 @@
         extension: "txt/bad"
 
         e: trap [%% a/b.(extension)]
-        e/id = 'embedded-file-slash
+        e.id = 'embedded-file-slash
     )
 ]
 
@@ -61,13 +61,13 @@
         e: trap [
             %% [(if true ['a/b/]) /b/c]
         ]
-        e/id = 'doubled-file-slash
+        e.id = 'doubled-file-slash
     )
-    
+
     (
         e: trap [
             %% [(if true ["a/b/"]) /b/c]
         ]
-        e/id = 'embedded-file-slash
+        e.id = 'embedded-file-slash
     )
 ]

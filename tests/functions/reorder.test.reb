@@ -32,7 +32,7 @@
 (
     e: trap [reorder :append [series]]
     did all [
-        e/id = 'no-arg
+        e.id = 'no-arg
         e/arg1 = 'append
         e/arg2 = 'value
     ]
@@ -48,7 +48,7 @@
 (
     e: trap [reorder :append [series value series]]
     did all [
-        e/id = 'bad-parameter
+        e.id = 'bad-parameter
         e/arg1 = 'series
     ]
 )
@@ -57,7 +57,7 @@
 (
     e: trap [reorder :append [series value fhqwhgads]]
     did all [
-        e/id = 'bad-parameter
+        e.id = 'bad-parameter
         e/arg1 = 'fhqwhgads
     ]
 )

@@ -24,7 +24,7 @@
 ; Commas during argument gathering look like end of input
 (
     e: trap [all [1 +, 2 3 + 4]]
-    e/id = 'no-arg
+    e.id = 'no-arg
 )
 
 ; Commas are invisible and hence do not erase an evaluation value
@@ -35,7 +35,7 @@
 (
     for-each [text] ["a,b" "a,, b" ",,"] [
         e: trap [load text]
-        assert [e/id = 'scan-invalid]
+        assert [e.id = 'scan-invalid]
     ]
     true
 )
@@ -54,7 +54,7 @@
 ("aaabbb" = parse "aaabbb" [some "a", some "b"])
 (
     e: trap ["aaabbb" = parse "aaabbb" [some, "a" some "b"]]
-    e/id = 'expression-barrier
+    e.id = 'expression-barrier
 )
 
 ; Commas are "hard delimiters", so they won't be picked up in URL!

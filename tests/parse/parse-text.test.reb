@@ -55,7 +55,7 @@
 )(
     catbin: #{F09F90B1}
     e: trap [uparse? "🐱" [catbin]]
-    'find-string-binary = e/id
+    'find-string-binary = e.id
 )(
     catchar: #"🐱"
     uparse? "🐱" [catchar]

@@ -22,7 +22,7 @@
     f/value: <ae>
     e: trap [do f]
     did all [
-        e/id = 'expect-arg
+        e.id = 'expect-arg
         e/arg1 = 'append
     ]
 )
