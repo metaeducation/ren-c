@@ -189,8 +189,10 @@ static void Startup_Lib(void)
 
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         REBARR *patch = &PG_Lib_Patches[i];
-        patch->leader.bits = NODE_FLAG_NODE
-            | FLAG_FLAVOR(PATCH)  // checked when setting LINK(PatchContext)
+        Make_Array_Core_Into(
+            patch,
+            1,
+            FLAG_FLAVOR(PATCH)  // checked when setting LINK(PatchContext)
             | PATCH_FLAG_LET
             | NODE_FLAG_MANAGED
             //
@@ -200,9 +202,11 @@ static void Startup_Lib(void)
             // then the variable no longer refers directly to the module.
             //
             | SERIES_FLAG_LINK_NODE_NEEDS_MARK
-            | SERIES_FLAG_INFO_NODE_NEEDS_MARK;
+            | SERIES_FLAG_INFO_NODE_NEEDS_MARK
+        );
 
-        assert(LINK(PatchContext, patch) == nullptr);  // signals unused
+        mutable_LINK(PatchContext, patch) = nullptr;  // signals unused
+        mutable_INODE(NextPatch, patch) = nullptr;
         assert(Is_Fresh(ARR_SINGLE(patch)));  // REB_0
     }
 

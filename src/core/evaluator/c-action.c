@@ -1278,6 +1278,7 @@ void Push_Action(
     }
     else {
         s = Alloc_Series_Node(
+            nullptr,  // not preallocated
             SERIES_MASK_VARLIST
                 | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
         );

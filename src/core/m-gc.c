@@ -651,16 +651,15 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Symbol_Series(void)
 {
-    const REBSYM **canon = PG_Symbol_Canons;
-    const REBSYM **tail = PG_Symbol_Canons + ALL_SYMS_MAX;
+    REBSYM *canon = &PG_Symbol_Canons[0];
+    REBSYM *tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
 
-    assert(IS_POINTER_TRASH_DEBUG(*canon)); // SYM_0 for all non-builtin words
+    assert(canon->leader.bits & NODE_FLAG_FREE);  // SYM_0, we corrupt it
     ++canon;
 
     for (; canon != tail; ++canon) {
-        REBSYM *sym = m_cast(REBSYM*, *canon);
-        assert(not (sym->leader.bits & NODE_FLAG_MARKED));
-        sym->leader.bits |= NODE_FLAG_MARKED;
+        assert(not (canon->leader.bits & NODE_FLAG_MARKED));
+        canon->leader.bits |= NODE_FLAG_MARKED;
         ++mark_count;
     }
 
@@ -1212,6 +1211,20 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
         REBARR *patch = &PG_Lib_Patches[i];
         if (GET_SERIES_FLAG(patch, MARKED)) {
             CLEAR_SERIES_FLAG(patch, MARKED);
+            --mark_count;
+        }
+    }
+
+    // Unmark the Canon() fixed symbols
+    //
+    for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
+        REBSYM *canon = &PG_Symbol_Canons[i];
+
+        if (not shutdown)
+           assert(GET_SERIES_FLAG(canon, MARKED));
+
+        if (GET_SERIES_FLAG(canon, MARKED)) {
+            CLEAR_SERIES_FLAG(canon, MARKED);
             --mark_count;
         }
     }

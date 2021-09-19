@@ -151,7 +151,7 @@ inline static OPT_SYMID ID_OF_SYMBOL(const REBSYM *s)
 inline static const REBSYM *Canon_Symbol(SYMID symid) {
     assert(cast(REBLEN, symid) != 0);
     assert(cast(REBLEN, symid) < ALL_SYMS_MAX);
-    return PG_Symbol_Canons[symid];
+    return &PG_Symbol_Canons[symid];
 }
 
 #define Canon(name) \
@@ -166,3 +166,6 @@ inline static bool Are_Synonyms(const REBSYM *s1, const REBSYM *s2) {
 
     return false;  // stopped when circularly linked list loops back to self
 }
+
+#define Intern_UTF8_Managed(utf8,size) \
+    Intern_UTF8_Managed_Core(nullptr, (utf8), (size))

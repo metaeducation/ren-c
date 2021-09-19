@@ -694,7 +694,7 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
 
 //=//// SERIES MANAGED MEMORY /////////////////////////////////////////////=//
 //
-// If NODE_FLAG_MANAGED is not explicitly passed to Make_Series_Core, a
+// If NODE_FLAG_MANAGED is not explicitly passed to Make_Series(), a
 // series will be manually memory-managed by default.  Hence you don't need
 // to worry about the series being freed out from under you while building it.
 // Manual series are tracked, and automatically freed in the case of a fail().
@@ -1129,12 +1129,17 @@ inline static REBVAL *Init_Any_Series_At_Core(
 // Note: This series will not participate in management tracking!
 // See NODE_FLAG_MANAGED handling in Make_Array_Core() and Make_Series().
 //
-inline static REBSER *Alloc_Series_Node(REBFLGS flags) {
+inline static REBSER *Alloc_Series_Node(REBSER *preallocated, REBFLGS flags) {
     assert(not (flags & NODE_FLAG_CELL));
 
-    REBSER *s = cast(REBSER*, Alloc_Node(SER_POOL));
-    if ((GC_Ballast -= sizeof(REBSER)) <= 0)
-        SET_SIGNAL(SIG_RECYCLE);
+    REBSER *s;
+    if (preallocated)
+        s = preallocated;
+    else {
+        s = cast(REBSER*, Alloc_Node(SER_POOL));
+        if ((GC_Ballast -= sizeof(REBSER)) <= 0)
+            SET_SIGNAL(SIG_RECYCLE);
+    }
 
     // Out of the 8 platform pointers that comprise a series node, only 3
     // actually need to be initialized to get a functional non-dynamic series
@@ -1283,15 +1288,18 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
 // Small series will be allocated from a memory pool.
 // Large series will be allocated from system memory.
 //
-inline static REBSER *Make_Series(REBLEN capacity, REBFLGS flags)
-{
+inline static REBSER *Make_Series_Into(
+    REBSER *preallocated,
+    REBLEN capacity,
+    REBFLGS flags
+){
     size_t wide = Wide_For_Flavor(
         cast(enum Reb_Series_Flavor, FLAVOR_BYTE(flags))
     );
     if (cast(REBU64, capacity) * wide > INT32_MAX)
         fail (Error_No_Memory(cast(REBU64, capacity) * wide));
 
-    REBSER *s = Alloc_Series_Node(flags);
+    REBSER *s = Alloc_Series_Node(preallocated, flags);
 
     if (GET_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK))
         TRASH_POINTER_IF_DEBUG(s->info.node);
@@ -1338,6 +1346,10 @@ inline static REBSER *Make_Series(REBLEN capacity, REBFLGS flags)
 
     return s;
 }
+
+#define Make_Series(capacity,flags) \
+    Make_Series_Into(nullptr, (capacity), (flags))
+
 
 enum act_modify_mask {
     AM_PART = 1 << 0,

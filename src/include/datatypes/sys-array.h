@@ -191,14 +191,17 @@ inline static void Prep_Array(
 // Make a series that is the right size to store REBVALs (and marked for the
 // garbage collector to look into recursively).  ARR_LEN() will be 0.
 //
-inline static REBARR *Make_Array_Core(REBLEN capacity, REBFLGS flags)
-{
+inline static REBARR *Make_Array_Core_Into(
+    REBARR *prealloc,
+    REBLEN capacity,
+    REBFLGS flags
+){
   #if DEBUG_TERM_ARRAYS
     if (capacity > 1 or (flags & SERIES_FLAG_DYNAMIC))  // space for term
         capacity += 1;  // account for cell needed for terminator (END)
   #endif
 
-    REBSER *s = Make_Series(capacity, flags);
+    REBSER *s = Make_Series_Into(prealloc, capacity, flags);
     assert(IS_SER_ARRAY(s));  // flavor should have been an array flavor
 
     if (IS_SER_DYNAMIC(s)) {
@@ -240,6 +243,9 @@ inline static REBARR *Make_Array_Core(REBLEN capacity, REBFLGS flags)
     assert(ARR_LEN(cast(REBARR*, s)) == 0);
     return cast(REBARR*, s);
 }
+
+#define Make_Array_Core(capacity,flags) \
+    Make_Array_Core_Into(nullptr, (capacity), (flags))
 
 #define Make_Array(capacity) \
     Make_Array_Core((capacity), ARRAY_MASK_HAS_FILE_LINE)

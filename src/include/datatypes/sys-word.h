@@ -32,7 +32,7 @@
 
 
 inline static OPT_SYMID VAL_WORD_ID(REBCEL(const*) v) {
-    assert(PG_Symbol_Canons);  // all syms are 0 prior to Init_Symbols()
+    assert(PG_Symbol_Canons[0].leader.bits == NODE_FLAG_FREE);
     return ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
 }
 

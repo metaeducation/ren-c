@@ -195,8 +195,15 @@ static void Expand_Word_Table(void)
 // one "canon" interning to use for fast case-insensitive compares.  If that
 // canon form is GC'd, the agreed upon canon for the group will change.
 //
-const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
-{
+// Created series must be managed, because if they were not there could be no
+// clear contract on the return result--as it wouldn't be possible to know if a
+// shared instance had been managed by someone else or not.
+//
+const REBSYM *Intern_UTF8_Managed_Core(
+    REBSYM *preallocated,  // if not nullptr, put symbol here
+    const REBYTE *utf8,
+    size_t size
+){
     // The hashing technique used is called "linear probing":
     //
     // https://en.wikipedia.org/wiki/Linear_probing
@@ -237,8 +244,10 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
 
       blockscope {
         REBINT cmp = Compare_UTF8(STR_HEAD(symbol), utf8, size);
-        if (cmp == 0)
+        if (cmp == 0) {
+            assert(not preallocated);
             return symbol;  // was a case-sensitive match
+        }
         if (cmp < 0)
             goto next_candidate_slot;  // wasn't an alternate casing
 
@@ -261,9 +270,10 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
 
   new_interning: {
 
-    REBBIN *s = BIN(Make_Series(
-        size + 1,  // if small, fits in a REBSER node (w/no data allocation)
-        FLAG_FLAVOR(INTERN) | SERIES_FLAG_FIXED_SIZE
+    REBBIN *s = BIN(Make_Series_Into(
+        preallocated,  // if not nullptr, will use this memory for the node
+        size + 1,  // if small, fits in a REBSER node (no data allocation)
+        FLAG_FLAVOR(INTERN) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED
     ));
 
     // Cache whether this is an arrow word.
@@ -348,11 +358,7 @@ const REBSYM *Intern_UTF8_Managed(const REBYTE *utf8, size_t size)
         ++PG_Num_Symbol_Slots_In_Use;
     }
 
-    // Created series must be managed, because if they were not there could
-    // be no clear contract on the return result--as it wouldn't be possible
-    // to know if a shared instance had been managed by someone else or not.
-    //
-    return SYM(Manage_Series(s));
+    return SYM(s);
   }
 }
 
@@ -521,7 +527,7 @@ void Startup_Symbols(void)
     // Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being
     // true when X and Y are different symbols with no SYM_XXX id.
     //
-    TRASH_POINTER_IF_DEBUG(PG_Symbol_Canons[SYM_0]);
+    PG_Symbol_Canons[SYM_0].leader.bits = NODE_FLAG_FREE;
 
     SYMID id = cast(SYMID, cast(REBLEN, SYM_0 + 1));  // SYMID for debug watch
 
@@ -536,7 +542,8 @@ void Startup_Symbols(void)
         size_t size = *at;  // length prefix byte
         ++at;
 
-        REBSYM *canon = m_cast(REBSYM*, Intern_UTF8_Managed(at, size));
+        REBSYM *canon = &PG_Symbol_Canons[id];  // pass as preallocated space
+        Intern_UTF8_Managed_Core(canon, at, size);
         at += size;
 
         // Symbol series store symbol number in the header's 2nd uint16_t.
@@ -547,7 +554,6 @@ void Startup_Symbols(void)
         SET_SECOND_UINT16(canon->info, id);
         assert(Same_Nonzero_Symid(ID_OF_SYMBOL(canon), id));
 
-        PG_Symbol_Canons[id] = canon;
         id = cast(SYMID, cast(REBLEN, id) + 1);
     }
 
@@ -595,6 +601,15 @@ void Shutdown_Symbols(void)
 
     PG_At_Symbol = nullptr;
     PG_Caret_Symbol = nullptr;
+
+    // The Shutdown_Interning() code checks for PG_Symbols_By_Hash to be
+    // empty...the necessary removal happens in Decay_Series().  (Note that a
+    // "dirty" shutdown--typically used--avoids all these balancing checks!)
+    //
+    for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
+        REBSYM *canon = &PG_Symbol_Canons[i];
+        Decay_Series(canon);
+    }
 }
 
 

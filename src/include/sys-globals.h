@@ -56,7 +56,7 @@ PVAR const REBSYM *PG_Caret_Symbol;
 //
 PVAR REBARR PG_Lib_Patches[LIB_SYMS_MAX];
 
-PVAR const REBSYM *PG_Symbol_Canons[ALL_SYMS_MAX + 1];
+PVAR REBSYM PG_Symbol_Canons[ALL_SYMS_MAX + 1];
 
 PVAR REBSER *PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
 PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
