@@ -131,15 +131,15 @@ load-header: function [
         return 'bad-header
     ]
 
-    (match [block! blank!] try :hdr/options) else [
+    (match [block! blank!] try :hdr.options) else [
         return 'bad-header
     ]
 
-    if find try hdr/options just content [
+    if find try hdr.options just content [
         append hdr compose [content (data)]  ; as of start of header
     ]
 
-    if 10 = rest/1 [rest: next rest, line: me + 1]  ; skip LF
+    if 10 = rest.1 [rest: next rest, line: me + 1]  ; skip LF
 
     if integer? tmp: select hdr 'length [
         end: skip rest tmp
@@ -158,7 +158,7 @@ load-header: function [
     if :key = 'rebol [
         ; regular script, binary or script encoded compression supported
         case [
-            find try hdr/options just compress [
+            find try hdr.options just compress [
                 rest: any [
                     attempt [
                         ; Raw bits.  whitespace *could* be tolerated; if
@@ -184,9 +184,9 @@ load-header: function [
         ; block-embedded script, only script compression
 
         data: transcode data  ; decode embedded script
-        rest: skip data 2  ; !!! what is this skipping ("hdr/length" ??)
+        rest: skip data 2  ; !!! what is this skipping ("hdr.length" ??)
 
-        if find try hdr/options just compress [  ; script encoded only
+        if find try hdr.options just compress [  ; script encoded only
             rest: attempt [gunzip first rest] else [
                 return 'bad-compress
             ]
@@ -198,7 +198,7 @@ load-header: function [
     if final [set final ensure [binary! text!] end]
 
     ensure object! hdr
-    ensure [<opt> block! blank!] hdr/options
+    ensure [<opt> block! blank!] hdr.options
     return hdr
 ]
 
@@ -279,7 +279,7 @@ load: func [
     all [
         'unbound != type
         'module != select hdr 'type
-        not find (try get 'hdr/options) [unbound]
+        not find (try get 'hdr.options) [unbound]
     ] then [
         data: intern* system.contexts.user data
     ]
