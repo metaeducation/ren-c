@@ -136,15 +136,15 @@ rewrite-spec-and-body: helper [
 
         swap-if-after-local: does [
             if local-tag-pos [
-                assert [local-tag-pos/1 = <local>]
+                assert [local-tag-pos.1 = <local>]
                 local-tag-pos: insert/only local-tag-pos take spec
-                assert [local-tag-pos/1 = <local>]
+                assert [local-tag-pos.1 = <local>]
             ]
         ]
 
         spool-descriptions-and-locals: does [
             loop [match [text! set-word!] first spec] [  ; end-tolerant (null)
-                if not set-word? spec/1 [
+                if not set-word? spec.1 [
                     swap-if-after-local  ; description for hidden refinement..?
                 ]
                 spec: my next
@@ -152,7 +152,7 @@ rewrite-spec-and-body: helper [
         ]
 
         loop [not tail? spec] [
-            refinement: to word! try match path! spec/1
+            refinement: to word! try match path! spec.1
 
             ; Refinements with multiple arguments are no longer allowed, and
             ; there weren't many of those so it's not a big deal.  But there
@@ -195,7 +195,7 @@ rewrite-spec-and-body: helper [
 
             ; may be at tail, if so need the [any-value!] injection
 
-            if types: match block! spec/1 [  ; explicit arg types
+            if types: match block! spec.1 [  ; explicit arg types
                 swap-if-after-local
                 spec: my next
             ]
@@ -356,17 +356,17 @@ apply: emulate [
 
         loop [block] [
             block: if only [
-                arg: block/1
+                arg: block.1
                 try next block
             ] else [
                 try evaluate/result block (the arg:)
             ]
 
-            if refinement? params/1 [
-                using-args: did set (in frame second params/1) :arg
+            if refinement? params.1 [
+                using-args: did set (in frame second params.1) :arg
             ] else [
                 if using-args [
-                    set (in frame params/1) :arg
+                    set (in frame params.1) :arg
                 ]
             ]
 
@@ -581,14 +581,14 @@ do: emulate [
             code: reduce [:source]
             params: parameters of :source
             iterate params [
-                append code switch type of params/1 [
+                append code switch type of params.1 [
                     word! [take normals]
                     lit-word! [take softs]
                     get-word! [take hards]
                     set-word! [[]]  ; empty block appends nothing
                     refinement! [break]
 
-                    fail ["bad param type" params/1]
+                    fail ["bad param type" params.1]
                 ]
             ]
             do code
@@ -773,11 +773,11 @@ collect: emulate [
                 f [frame!]
                 <with> out
             ][
-                f/series: out  ; want new series position capture each time
-                :f/value  ; evalutate input before the DO to be return result
+                f.series: out  ; want new series position capture each time
+                :f.value  ; evalutate input before the DO to be return result
                 elide out: do f  ; update position on each insertion
 
-                ; original f/value will be returned due to ELIDE
+                ; original f.value will be returned due to ELIDE
             ]
         )[
             series: <remove-unused-series-parameter>
@@ -1154,10 +1154,10 @@ switch: emulate [  ; Ren-C evaluates cases: https://trello.com/c/9ChhSWC4/
         /default "Default case if no others are found"
             [block!]
     ]) func [f [frame!]] [
-        f/cases: map-each c f/cases [
+        f.cases: map-each c f.cases [
             either block? :c [c] [quote c]  ; suppress eval on non-blocks
         ]
-        let def: f/default  ; the DO expires frame right now (for safety)
+        let def: f.default  ; the DO expires frame right now (for safety)
         try (do f else (def))  ; try for BLANK! on failed SWITCH, not null
     ]
 ]
@@ -1193,7 +1193,7 @@ foreach: emulate [
                             ]
                             word? item [
                                 keep compose [
-                                    (to-set-word :item) position/1
+                                    (to-set-word :item) position.1
                                     position: next position
                                 ]
                             ]
@@ -1376,7 +1376,7 @@ cloaker: helper [function [  ; specialized as CLOAK and DECLOAK
     if not with [  ; hash key (only up to first 20 bytes?)
         src: make binary! 20
         count-up i 20 [
-            append src key/(1 + modulo (i - 1) klen)
+            append src key.(1 + modulo (i - 1) klen)
         ]
 
         key: checksum 'sha1 src
@@ -1394,8 +1394,8 @@ cloaker: helper [function [  ; specialized as CLOAK and DECLOAK
     if decode [
         i: dlen - 1
         loop [i > 0] [
-            data/(1 + i): data/(1 + i) xor+
-                (data/(1 + i - 1) xor+ key/(1 + modulo i klen))
+            data.(1 + i): data.(1 + i) xor+
+                (data.(1 + i - 1) xor+ key.(1 + modulo i klen))
             i: i - 1
         ]
     ]
@@ -1410,17 +1410,17 @@ cloaker: helper [function [  ; specialized as CLOAK and DECLOAK
     ;
     i: 1
     loop [i < dlen] [
-        n: modulo (n + data/(1 + i)) 256
+        n: modulo (n + data.(1 + i)) 256
         i: i + 1
     ]
 
-    data/1: me xor+ n
+    data.1: me xor+ n
 
     if not decode [
         i: 1
         loop [i < dlen] [
-            data/(1 + i): data/(1 + i) xor+
-                (data/(1 + i - 1) xor+ key/(1 + modulo i klen))
+            data.(1 + i): data.(1 + i) xor+
+                (data.(1 + i - 1) xor+ key.(1 + modulo i klen))
             i: i + 1
         ]
     ]
@@ -1492,14 +1492,14 @@ read: emulate [
             [word!]
     ]) func [f [frame!]] [
         for-each w [direct no-wait with part mode custom as] [
-            if get compose 'f/(w) [
-                fail [unspaced ["write/" w] "not currently in Redbol"]
+            if f.(w) [
+                fail [unspaced ["read/" w] "not currently in Redbol"]
             ]
         ]
 
         ; !!! Rebol2 defaulted READ to be TEXT!.  Is Red preserving this?
         ;
-        return if f/binary [do f] else [as text! do f]
+        return if f.binary [do f] else [as text! do f]
     ]
 ]
 
@@ -1534,17 +1534,17 @@ hijack :lib.transcode enclose copy :lib.transcode function [f [frame!]] [
             fail e
         ]
 
-        f/source: copy f/source
-        assert [binary? f/source]  ; invalid UTF-8 can't be in an ANY-STRING!
-        pos: f/source
+        f.source: copy f.source
+        assert [binary? f.source]  ; invalid UTF-8 can't be in an ANY-STRING!
+        pos: f.source
         iterate pos [
-            if pos/1 < 128 [continue]  ; ASCII
-            if pos/1 < 192 [
+            if pos.1 < 128 [continue]  ; ASCII
+            if pos.1 < 192 [
                 lib.insert pos #{C2}
                 pos: next pos
                 continue
             ]
-            lib.change pos pos/1 - 64  ; want byte not FORM, use LIB/change!
+            lib.change pos pos.1 - 64  ; want byte not FORM, use LIB.change!
             lib.insert pos #{C3}
             pos: next pos
         ]
@@ -1575,7 +1575,7 @@ call: emulate [  ; brings back the /WAIT switch (Ren-C waits by default)
 ;
 load: emulate [
     enclose (augment :load [/all]) func [f <local> try-one-item] [
-        try-one-item: not f/all
+        try-one-item: not f.all
         result: do f  ; now always BLOCK! if LOADing Rebol code
 
         if try-one-item and (block? result) and (length of result = 1) [
