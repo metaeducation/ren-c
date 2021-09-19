@@ -29,17 +29,17 @@ start-response: func [port res <local> code text type body] [
     ; networking stack (mainly cc#2098 & cc#2160; in some constellations also
     ; cc#2103). Once those are fixed, we should directly use R3's internal
     ; chunking instead: `write port body`.
-    port/locals: copy body
+    port.locals: copy body
 ]
 
 send-chunk: func [port] [
     ; Trying to send data >32'000 bytes at once will trigger R3's internal
     ; chunking (which is buggy, see above). So we cannot use chunks >32'000
     ; for our manual chunking.
-    either empty? port/locals [
+    either empty? port.locals [
         _
     ][
-        write port take/part port/locals 32'000
+        write port take/part port.locals 32'000
     ]
 ]
 
@@ -58,8 +58,8 @@ awake-client: function [event] [
     port: event/port
     switch event/type [
         'read [
-            either find port/data to-binary unspaced [CR LF CR LF] [
-                res: handle-request port/locals/config port/data
+            either find port.data to-binary unspaced [CR LF CR LF] [
+                res: handle-request port.locals.config port.data
                 start-response port res
             ] [
                 read port
@@ -80,10 +80,10 @@ awake-server: func [event <local> client] [
 
 serve: func [web-port web-root <local> listen-port] [
     listen-port: open join tcp://: web-port
-    listen-port/locals: make object! compose/deep [
+    listen-port.locals: make object! compose/deep [
         config: [root: (web-root)]
     ]
-    listen-port/awake: :awake-server
+    listen-port.awake: :awake-server
     wait listen-port
 ]
 

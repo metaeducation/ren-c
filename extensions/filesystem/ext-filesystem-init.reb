@@ -12,9 +12,9 @@ sys.make-scheme [
     actor: get-file-actor-handle
     info: system.standard.file-info ; for C enums
     init: func [return: <none> port <local> path] [
-        if url? port/spec/ref [
-            parse port/spec/ref [thru #":" 0 2 slash path:]
-            append port/spec compose [path: (to file! path)]
+        if url? port.spec.ref [
+            parse port.spec.ref [thru #":" 0 2 slash path:]
+            append port.spec compose [path: (to file! path)]
         ]
     ]
 ]

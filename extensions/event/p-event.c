@@ -30,7 +30,7 @@
       If devices changed, modifies request, and sends event.
       If no devices changed, timeout happens.
       On REBOL side, we scan event queue.
-      If we find an event, we call its port/awake function.
+      If we find an event, we call its PORT.AWAKE function.
 
       Different cases exist:
 
