@@ -769,7 +769,7 @@ bool Did_Get_Series_Index_From_Picker(
     const RELVAL *picker
 ){
     if (not IS_INTEGER(picker))
-        fail (picker);
+        fail (Error_Bad_Pick_Raw(picker));
 
     REBINT n = Int32(picker);
     if (n == 0)
