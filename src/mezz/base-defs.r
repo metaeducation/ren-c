@@ -226,33 +226,33 @@ pointfree*: func* [
     for-skip p params 1 [
         case [
             ; !!! Have to use STRICT-EQUAL?, else '_ says type equal to blank
-            blank! == type of :block/1 [block: skip block 1]
+            blank! == type of :block.1 [block: skip block 1]
 
-            match word! p/1 [
+            match word! p.1 [
                 until [not quoted? block: try evaluate/result block 'var]
                 if not block [
                     break  ; ran out of args, assume remaining unspecialized
                 ]
-                frame/(p/1): :var
+                frame.(p.1): :var
             ]
 
             all [
-                match lit-word! p/1
-                match [group! get-word! get-path!] :block/1
+                match lit-word! p.1
+                match [group! get-word! get-path!] :block.1
             ][
-                frame/(p/1): reeval :block/1
+                frame.(p.1): reeval :block.1
                 block: skip block 1  ; NEXT not defined yet
             ]
 
             ; Note: DEFAULT not defined yet
             true [  ; hard literal argument or non-escaped soft literal
-                frame/(p/1): :block/1
+                frame.(p.1): :block.1
                 block: skip block 1  ; NEXT not defined yet
             ]
         ]
     ]
 
-    if :block/1 [
+    if :block.1 [
         fail @block ["Unused argument data at end of POINTFREE block"]
     ]
 
@@ -386,9 +386,9 @@ requote: reframer func* [
         fail ["REQUOTE must have an argument to process"]
     ]
 
-    num-quotes: quotes of f/(p)
+    num-quotes: quotes of f.(p)
 
-    f/(p): noquote f/(p)
+    f.(p): noquote f.(p)
 
     do f then result -> [
         quote/depth get/any 'result num-quotes
@@ -590,8 +590,8 @@ refinement?: func* [value [<opt> any-value!]] [
     did all [
         path? :value
         2 = length of value
-        blank? :value/1
-        word? :value/2
+        blank? :value.1
+        word? :value.2
     ]
 ]
 
