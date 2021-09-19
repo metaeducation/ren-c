@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-sys/make-scheme [
+sys.make-scheme [
     title: "TCP Networking"
     name: 'tcp
     actor: get-tcp-actor-handle
@@ -17,7 +17,7 @@ sys/make-scheme [
 ; NOTE: UDP Networking has not been rewritten for the libuv transition.  It
 ; is kept here as a reminder of that.
 ;
-sys/make-scheme [
+sys.make-scheme [
     title: "UDP Networking"
     name: 'udp
     actor: get-udp-actor-handle

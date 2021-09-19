@@ -15,4 +15,4 @@ libraries: []
 
 options: []
 
-requires: 'Event  ; uses SYS/MAKE-SCHEME with GET-EVENT-ACTOR-HANDLE (?)
+requires: 'Event  ; uses SYS.MAKE-SCHEME with GET-EVENT-ACTOR-HANDLE (?)

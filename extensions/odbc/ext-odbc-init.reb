@@ -41,7 +41,7 @@ statement-prototype: context [
     columns: '
 ]
 
-sys/make-scheme [
+sys.make-scheme [
     name:  'odbc
     title: "ODBC Open Database Connectivity Scheme"
 

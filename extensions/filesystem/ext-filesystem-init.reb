@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-sys/make-scheme [
+sys.make-scheme [
     title: "File Access"
     name: 'file
     actor: get-file-actor-handle
@@ -19,7 +19,7 @@ sys/make-scheme [
     ]
 ]
 
-sys/make-scheme/with [
+sys.make-scheme/with [
     title: "File Directory Access"
     name: 'dir
     actor: get-dir-actor-handle
