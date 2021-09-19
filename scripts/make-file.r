@@ -75,7 +75,7 @@ make-file-block-parts: func [
     last-was-slash: false
 
     return collect [iterate block [
-        item: either group? block/1 [try do block/1] [block/1]
+        item: either group? block.1 [try do block.1] [block.1]
 
         item: predicate item
 
@@ -154,11 +154,11 @@ make-file-tuple-parts: func [
 ][
     tuple: as block! tuple
     return collect [iterate tuple [
-        item: switch type of tuple/1 [
-            group! [do tuple/1]
+        item: switch type of tuple.1 [
+            group! [do tuple.1]
             block! [fail "Blocks in tuples should reduce or something"]
         ] else [
-            tuple/1
+            tuple.1
         ]
 
         item: predicate item
@@ -190,7 +190,7 @@ make-file-path-parts: func [
 ][
     path: as block! path
     return collect [iterate path [
-        item: either group? path/1 [do path/1] [path/1]
+        item: either group? path.1 [do path.1] [path.1]
 
         item: predicate item
 
@@ -200,7 +200,7 @@ make-file-path-parts: func [
             word! [
                 all [
                     not last? path
-                    group? path/1  ; was non-literal, should have been `word/`
+                    group? path.1  ; was non-literal, should have been `word/`
                 ] then [
                     fail [item "WORD! cannot be used as directory"]
                 ]
@@ -271,7 +271,7 @@ make-file: func [
     ; mainstream file generation, or unnecessary.  Folding it in here for now.
     ;
     all [
-        3 = fourth system/version  ; Windows system
+        3 = fourth system.version  ; Windows system
         #":" = second result
         drive: first path
         any [
