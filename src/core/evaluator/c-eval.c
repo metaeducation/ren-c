@@ -998,6 +998,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             true,
             Lib(APPLY), rebQ(Lib(GET)), "[", f->out, "/steps #]"
         )){
+            Move_Cell(f->out, f_spare);
             goto return_thrown;
         }
 
@@ -1090,6 +1091,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 true,
                 Lib(APPLY), rebQ(Lib(GET)), "[", f->out, "/steps #]"
             )){
+                Move_Cell(f->out, f_spare);
                 goto return_thrown;
             }
 
@@ -1113,15 +1115,19 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 fail (Error_Bad_Word_Get(head, lookup));
 
             // ...but historical Rebol used PATH! for everything.  For Redbol
-            // compatibility, we must allow that.  However, we don't want to
-            // have pathing as another axis of extensibility.  So what we
-            // do here is to run successive PICKs until we get an ACTION!
+            // compatibility, we flip over to a TUPLE!.  We must be sure that
+            // we are running in a mode where tuple allows the getting of
+            // actions (though it's slower because it does specialization)
             //
-            if (Eval_Path_Throws_Core(
-                f_spare,  // can't overwrite f->out (if invisible action)
-                v,  // !!! may not be array-based
-                v_specifier,
-                EVAL_MASK_DEFAULT | EVAL_FLAG_PUSH_PATH_REFINES
+            PROBE(v);
+            Derelativize(f->out, v, v_specifier);
+            mutable_KIND3Q_BYTE(f->out) = REB_TUPLE;
+            Quotify(f->out, 1);
+
+            if (rebRunThrows(
+                f_spare,
+                true,
+                Lib(APPLY), rebQ(Lib(GET)), "[", f->out, "/steps #]"
             )){
                 Move_Cell(f->out, f_spare);
                 goto return_thrown;

@@ -195,6 +195,53 @@ REBTYPE(Action)
 
     switch (ID_OF_SYMBOL(verb)) {
 
+  //=//// PICK* (see %sys-pick.h for explanation) //////////////////////////=//
+
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
+
+        REBVAL *modern = Get_System(SYS_OPTIONS, OPTIONS_ACTION_ONLY_PATHS);
+        if (not IS_LOGIC(modern) or VAL_LOGIC(modern) == true) {
+            fail (
+                "SYSTEM.OPTIONS.ACTION-ONLY-PATHS is true, so you can't"
+                " use paths to do ordinary picking.  Use TUPLE!"
+            );
+          }
+
+        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
+        REBLEN steps_left = VAL_LEN_AT(steps);
+        if (steps_left == 0)
+            fail (steps);
+
+        REBDSP dsp_orig = DSP;
+
+        const RELVAL *tail;
+        const RELVAL *at = VAL_ARRAY_AT(&tail, steps);
+
+        // Push backwards (partials are pushed backwards, by convention).
+        //
+        for (; tail-- != at; ) {
+            const REBSYM *symbol;
+
+            if (Is_Nulled_Isotope(tail) or IS_BLANK(tail))
+                continue;
+
+            if (IS_WORD(tail))
+                symbol = VAL_WORD_SYMBOL(tail);
+            else if (IS_PATH(tail) and IS_REFINEMENT(tail))
+                symbol = VAL_REFINEMENT_SYMBOL(tail);
+            else
+                fail (tail);
+
+            Init_Word(DS_PUSH(), symbol);
+        }
+
+        if (Specialize_Action_Throws(D_OUT, action, nullptr, dsp_orig))
+            return R_THROWN;
+
+        return D_OUT; }
+
   //=//// COPY /////////////////////////////////////////////////////////////=//
 
     // Being able to COPY functions was added so that you could create a new
