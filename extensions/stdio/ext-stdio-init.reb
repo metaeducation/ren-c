@@ -6,7 +6,7 @@ REBOL [
     License: {Apache 2.0}
 ]
 
-sys/make-scheme [
+sys.make-scheme [
     title: "Console Access"
     name: 'console
     actor: get-console-actor-handle

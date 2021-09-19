@@ -63,7 +63,7 @@ export odbc-statement-of: func [
     return port
 ]
 
-sys/make-scheme [
+sys.make-scheme [
     name:  'odbc
     title: "ODBC Open Database Connectivity Scheme"
 
