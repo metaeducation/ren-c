@@ -36,15 +36,15 @@ rebmake: import <tools/rebmake.r>
 
 if repo-dir = what-dir [
     launched-from-root: true
-    output-dir: make-file [(repo-dir) build /]
+    output-dir: join repo-dir %build/
     make-dir output-dir
 ] else [
     output-dir: what-dir  ; out-of-source build
     launched-from-root: false
 ]
 
-tools-dir: make-file [(repo-dir) tools /]
-src-dir: make-file [(repo-dir) src /]
+tools-dir: join repo-dir %tools/
+src-dir: join repo-dir %src/
 
 
 === {GLOBALS} ===
@@ -52,11 +52,11 @@ src-dir: make-file [(repo-dir) src /]
 ; The file list for the core .c files comes from %file-base.r, while the
 ; file list for extensions comes from that extension's %make-spec.r
 ;
-file-base: make object! load make-file [(repo-dir) tools/file-base.r]
+file-base: make object! load (join repo-dir %tools/file-base.r)
 
 ; Start out with a default configuration (may be overridden)
 ;
-user-config: make object! load make-file [(repo-dir) configs/default-config.r]
+user-config: make object! load (join repo-dir %configs/default-config.r)
 
 
 === {SPLIT ARGS INTO OPTIONS AND COMMANDS} ===
@@ -801,13 +801,13 @@ parse-ext-build-spec: function [
 
 ; Discover extensions:
 use [extension-dir entry][
-    extension-dir: make-file [(repo-dir) extensions /]
+    extension-dir: join repo-dir %extensions/
     for-each entry read extension-dir [
         all [
             dir? entry
-            find read make-file [(extension-dir) (entry)] %make-spec.r
+            find read (join extension-dir entry) %make-spec.r
         ] then [
-            spec: load make-file [(extension-dir) (entry) make-spec.r]
+            spec: load (join extension-dir entry) make-spec.r]
 
             ; !!! The specs use `repo-dir` and some other variables.
             ; Splice those in for starters, but will need deep thought.
@@ -954,7 +954,7 @@ MORE HELP:^/
 FILES IN %make/configs/ SUBFOLDER:^/
     }
     indent/space form sort map-each x ;\
-        load make-file [(repo-dir) configs /]
+        load (join repo-dir %configs/)
         [to-text x]
     newline ]
 
@@ -1140,7 +1140,7 @@ app-config: make object! [
     debug: off
     optimization: 2
     definitions: copy []
-    includes: reduce [make-file [(src-dir) include /] %prep/include/]
+    includes: reduce [(join src-dir %include/) %prep/include/]
     searches: make block! 8
 ]
 
@@ -1361,7 +1361,7 @@ libr3-core: make rebmake/object-library-class [
     optimization: app-config/optimization
     debug: app-config/debug
     depends: map-each w file-base/core [
-        gen-obj/dir w make-file [(src-dir) core /]
+        gen-obj/dir w (join src-dir %core/)
     ]
     append depends map-each w file-base/generated [
         gen-obj/dir w "prep/core/"
@@ -1379,7 +1379,7 @@ main: make libr3-core [
         either user-config/main [
             gen-obj/main user-config/main
         ][
-            gen-obj/dir file-base/main make-file [(src-dir) main /]
+            gen-obj/dir file-base/main (join src-dir %main/)
         ]
     ]
 ]
@@ -1522,7 +1522,7 @@ process-module: func [
         depends: map-each s (append reduce [mod/source] try mod/depends) [
             case [
                 match [file! block!] s [
-                    gen-obj/dir s make-file [(repo-dir) extensions /]
+                    gen-obj/dir s (join repo-dir %extensions/)
                 ]
                 all [
                     object? s
@@ -1674,7 +1674,7 @@ vars: reduce [
     ]
     make rebmake/var-class [
         name: {T}
-        value: make-file [(src-dir) tools /]
+        value: join src-dir %tools/
     ]
     make rebmake/var-class [
         name: {GIT_COMMIT}
@@ -1686,18 +1686,18 @@ prep: make rebmake/entry-class [
     target: 'prep ; phony target
 
     commands: collect-lines [
-        keep [{$(REBOL)} make-file [(tools-dir) make-natives.r]]
-        keep [{$(REBOL)} make-file [(tools-dir) make-headers.r]]
-        keep [{$(REBOL)} make-file [(tools-dir) make-boot.r]
+        keep [{$(REBOL)} join tools-dir %make-natives.r]
+        keep [{$(REBOL)} join tools-dir %make-headers.r]]
+        keep [{$(REBOL)} join tools-dir %make-boot.r]
             unspaced [{OS_ID=} system-config/id]
             {GIT_COMMIT=$(GIT_COMMIT)}
         ]
-        keep [{$(REBOL)} make-file [(tools-dir) make-reb-lib.r]
+        keep [{$(REBOL)} join tools-dir %make-reb-lib.r]
             unspaced [{OS_ID=} system-config/id]
         ]
 
         for-each ext all-extensions [
-            keep [{$(REBOL)} make-file [(tools-dir) prep-extension.r]
+            keep [{$(REBOL)} join tools-dir %prep-extension.r]
                 unspaced [{MODULE=} ext/name]
                 unspaced [{SRC=extensions/} switch type of ext/source [
                     file! [ext/source]
@@ -1717,8 +1717,8 @@ prep: make rebmake/entry-class [
                 ; functions to make available with `tcc_add_symbol()`)
                 ;
                 hook-script: file-to-local/full (
-                    make-file [
-                        (repo-dir) extensions / (ext/directory) (ext/hook)
+                    join repo-dir reduce [
+                        extensions "/" (ext/directory) (ext/hook)
                     ]
                 )
                 keep [{$(REBOL)} hook-script
@@ -1727,7 +1727,7 @@ prep: make rebmake/entry-class [
             ]
         ]
 
-        keep [{$(REBOL)} make-file [(tools-dir) make-boot-ext-header.r]
+        keep [{$(REBOL)} join tools-dir %make-boot-ext-header.r]
             unspaced [
                 {EXTENSIONS=} delimit ":" map-each ext builtin-extensions [
                     to text! ext/name
@@ -1735,7 +1735,7 @@ prep: make rebmake/entry-class [
             ]
         ]
 
-        keep [{$(REBOL)} make-file [(src-dir) main/prep-main.reb]]
+        keep [{$(REBOL)} join src-dir %main/prep-main.reb]]
     ]
     depends: reduce [
         reb-tool
@@ -1803,7 +1803,7 @@ for-each [category entries] file-base [
                         ; assume taken care of
                     ]
                     path! [
-                        dir: first split-path make-file entry
+                        dir: first split-path to file! entry
                         if not find folders dir [
                             append folders join %objs/ dir
                         ]
@@ -1890,7 +1890,7 @@ for-each ext dynamic-extensions [
     if ext/source [
         append mod-objs gen-obj/dir/I/D/F
             ext/source
-            make-file [(repo-dir) extensions /]
+            (join repo-dir %extensions/)
             opt ext/includes
             append copy ["EXT_DLL"] opt ext/definitions
             opt ext/cflags

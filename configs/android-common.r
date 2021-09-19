@@ -43,7 +43,7 @@ ndk-root: local-to-file try get-env "ANDROID_NDK_ROOT" else [
 ndk-version: make object! [major: minor: patch: _]
 (
     use [major minor patch] [
-        parse as text! read make-file [(ndk-root) source.properties] [
+        parse as text! read (join ndk-root source.properties) [
             thru "Pkg.Revision = "
             copy major: to "." skip (major: to integer! major)
             copy minor: to "." skip (minor: to integer! minor)
@@ -103,9 +103,9 @@ tool-for-host: func [
         ;
         ; !!! Review the 4.9 non-sequitur in this older method.  What's that?
         ;
-        make-file [
-            (ndk-root) toolchains / (abi) "-4.9" / prebuilt /
-                (host) / bin /
+        join ndk-root reduce [
+             %toolchains/ (abi) "-4.9" "/prebuilt/"
+                (host) "/" %bin/
                     (abi) -gcc
         ]
     ] [
@@ -124,8 +124,8 @@ tool-for-host: func [
             abi: 'armv7a-linux-androideabi
         ]
 
-        make-file [
-            (ndk-root) toolchains/llvm/prebuilt / (host) /bin/
+        join ndk-root reduce [
+            %toolchains/llvm/prebuilt/ (host) "/" %bin/
                 (abi) (android-api-level) "-clang"
         ]
 
@@ -211,7 +211,7 @@ sysroot-for-compile: func [
 ] [
     let path: spaced [
         "--sysroot" (file-to-local either ndk-version/major < 18 [
-            make-file [
+             [
                 ;
                 ; Old convention: per-API-Level header files
                 ;
@@ -221,7 +221,7 @@ sysroot-for-compile: func [
             ; New convention: headers unified, with differences controlled by
             ; the preprocessor defines, e.g. `-D__ANDROID_API__=29`
             ;
-            make-file [(ndk-root) sysroot]
+            join ndk-root sysroot
         ])
     ]
 
@@ -263,13 +263,15 @@ sysroot-for-link: func [
             ;
             ; Old convention: linker sysroot lives in %platforms/
             ;
-            make-file [
-                (ndk-root) platforms / android- (android-api-level) /arch-arm
+            join ndk-root reduce [
+                %platforms/ "android-" (android-api-level) "/" "arch-arm"
             ]
         ][
             ; New convention: linker sysroot lives in %toolchains/llvm/
             ;
-            make-file [(ndk-root) toolchains/llvm/prebuilt / (host) / sysroot /]
+            join ndk-root reduce [
+                %toolchains/llvm/prebuilt/ (host) "/" %sysroot/
+            ]
         ])
     ]
 

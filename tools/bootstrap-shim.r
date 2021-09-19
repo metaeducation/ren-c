@@ -823,14 +823,3 @@ zip: enclose :zip lib/function [f] [
 
     return result
 ]
-
-
-; MAKE-FILE is included in modern Ren-C binaries, but older Ren-C doesn't have
-; it.  The script is in the %scripts/ directory, but it's a module written
-; to new (post-bootstrap executable) baseline.
-;
-; This IMPORT would not be good enough to expose the definitions to those
-; who `import %bootstrap-shim.r` in future versions, you'd have to re-export
-; the imports as part of this module's output.  :-/
-;
-import <../scripts/make-file.r>

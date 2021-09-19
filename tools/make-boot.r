@@ -52,11 +52,11 @@ if args/GIT_COMMIT = "unknown" [
 
 === SETUP PATHS AND MAKE DIRECTORIES (IF NEEDED) ===
 
-prep-dir: make-file [(system/options/path) prep /]
+prep-dir: join system/options/path %prep/
 
-mkdir/deep make-file [(prep-dir) include /]
-mkdir/deep make-file [(prep-dir) boot /]
-mkdir/deep make-file [(prep-dir) core /]
+mkdir/deep join prep-dir %include/
+mkdir/deep join prep-dir %boot/
+mkdir/deep join prep-dir %core/
 
 Title: {
     REBOL
@@ -111,8 +111,9 @@ comment [
 
 === MAKE VERSION INFORMATION AVAILABLE TO CORE C CODE ===
 
-(e-version: make-emitter "Version Information"
-    make-file [(prep-dir) include/tmp-version.h])
+e-version: make-emitter "Version Information" (
+    join prep-dir %include/tmp-version.h
+)
 
 version: load-value %version.r
 version: to tuple! reduce [
@@ -151,8 +152,9 @@ e-version/write-emitted
 ; recompiled with changes to the core.  These symbols aren't in libRebol,
 ; however, so it only affects clients of the core API for now.
 
-(e-symbols: make-emitter "Symbol ID (SYMID) Enumeration Type and Values"
-    make-file [(prep-dir) include/tmp-symid.h])
+e-symbols: make-emitter "Symbol ID (SYMID) Enumeration Type and Values" (
+    join prep-dir %include/tmp-symid.h
+)
 
 syms-words: copy []
 syms-cscape: copy []
@@ -185,8 +187,9 @@ add-sym: function compose/deep [
 
 type-table: load %types.r
 
-(e-types: make-emitter "Datatype Definitions"
-    make-file [(prep-dir) include/tmp-kinds.h])
+e-types: make-emitter "Datatype Definitions" (
+    join prep-dir %include/tmp-kinds.h
+)
 
 n: 0
 
@@ -412,8 +415,9 @@ e-types/write-emitted
 
 === BUILT-IN TYPE HOOKS TABLE ===
 
-(e-hooks: make-emitter "Built-in Type Hooks"
-    make-file [(prep-dir) core/tmp-type-hooks.c])
+e-hooks: make-emitter "Built-in Type Hooks" (
+    join prep-dir %core/tmp-type-hooks.c
+)
 
 hookname: enfixed func [
     return: [text!]
@@ -493,7 +497,7 @@ for-each word load %lib-words.r [
 
 first-native-sym: sym-n
 
-boot-natives: load make-file [(prep-dir) boot/tmp-natives.r]
+boot-natives: load (join prep-dir %boot/tmp-natives.r)
 for-each item boot-natives [
     if set-word? :item [
         if first-native-sym < ((add-sym/exists to-word item) else [0]) [
@@ -510,7 +514,7 @@ for-each item boot-natives [
 
 first-generic-sym: sym-n
 
-boot-generics: load make-file [(prep-dir) boot/tmp-generics.r]
+boot-generics: load (join prep-dir %boot/tmp-generics.r)
 for-each item boot-generics [
     if set-word? :item [
         if first-generic-sym < ((add-sym/exists to-word item) else [0]) [
@@ -544,8 +548,9 @@ for-each term load %symbols.r [
 
 === SYSTEM OBJECT SELECTORS ===
 
-(e-sysobj: make-emitter "System Object"
-    make-file [(prep-dir) include/tmp-sysobj.h])
+e-sysobj: make-emitter "System Object" (
+    join prep-dir %include/tmp-sysobj.h
+)
 
 at-value: func ['field] [next find/only boot-sysobj to-set-word field]
 
@@ -625,8 +630,9 @@ e-sysobj/write-emitted
 
 === ERROR STRUCTURE AND CONSTANTS ===
 
-(e-errfuncs: make-emitter "Error structure and functions"
-    make-file [(prep-dir) include/tmp-error-funcs.h])
+e-errfuncs: make-emitter "Error structure and functions" (
+    join prep-dir %include/tmp-error-funcs.h
+)
 
 fields: collect [
     for-each word words-of ob/standard/error [
@@ -777,8 +783,9 @@ for-each item sys-toplevel [
 ; %tmp-boot-block.c is just a C file containing a literal constant of the
 ; compressed representation of %tmp-boot-block.r
 
-(e-bootblock: make-emitter "Natives and Bootstrap"
-    make-file [(prep-dir) core/tmp-boot-block.c])
+e-bootblock: make-emitter "Natives and Bootstrap" (
+    join prep-dir %core/tmp-boot-block.c
+)
 
 e-bootblock/emit {
     #include "sys-core.h"
@@ -861,7 +868,7 @@ for-each sec sections [
 ]
 append/line boot-molded "]"
 
-write-if-changed make-file [(prep-dir) boot/tmp-boot-block.r] boot-molded
+write-if-changed (join prep-dir %boot/tmp-boot-block.r) boot-molded
 data: as binary! boot-molded
 
 compressed: gzip data
@@ -885,8 +892,9 @@ e-bootblock/write-emitted
 
 === BOOT HEADER FILE ===
 
-(e-boot: make-emitter "Bootstrap Structure and Root Module"
-    make-file [(prep-dir) include/tmp-boot.h])
+e-boot: make-emitter "Bootstrap Structure and Root Module" (
+    join prep-dir %include/tmp-boot.h
+)
 
 nat-index: 0
 nids: collect [

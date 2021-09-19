@@ -34,8 +34,8 @@ args: parse-args system/script/args  ; either from command line or DO/ARGS
 
 ; Assume we start up in the directory where the build/prep products should be
 ;
-output-dir: make-file [(what-dir) prep /]
-mkdir/deep make-file [(output-dir) main /]
+output-dir: join what-dir %prep/
+mkdir/deep (join output-dir %main/)
 
 
 buf: make text! 200000
@@ -93,12 +93,12 @@ append/line buf ":main-startup"
 ; It's helpful to have an uncompressed readable copy of the bundled and
 ; stripped init code for inspection.
 ;
-write-if-changed make-file [(output-dir) main /tmp-main-startup.r] buf
+write-if-changed (join output-dir %main/tmp-main-startup.r) buf
 
 
-(e: make-emitter
-    "r3 console executable embedded Rebol code bundle"
-    make-file [(output-dir) main/tmp-main-startup.inc])
+e: make-emitter "r3 console executable embedded Rebol code bundle" (
+    join output-dir %main/tmp-main-startup.inc
+)
 
 compressed: gzip buf
 

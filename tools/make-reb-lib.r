@@ -29,7 +29,7 @@ args: parse-args system/script/args  ; either from command line or DO/ARGS
 
 ; Assume we start up in the directory where we want build products to go
 ;
-output-dir: make-file [(what-dir) prep/include /]
+output-dir: join what-dir %prep/include/
 
 mkdir/deep output-dir
 
@@ -166,7 +166,7 @@ process: func [file] [
 
 src-dir: join repo-dir %src/core/
 
-process make-file [(src-dir) a-lib.c]
+process (join src-dir %a-lib.c)
 
 
 === GENERATE LISTS USED TO BUILD REBOL.H ===
@@ -337,8 +337,9 @@ c99-or-c++11-macros: map-each-api [
 ; to help cue readers to knowing they're reading generated code and don't
 ; edit, since the Rebol codebase at large uses `//`-style comments.
 
-e-lib: (make-emitter
-    "Rebol External Library Interface" make-file [(output-dir) rebol.h])
+e-lib: make-emitter "Rebol External Library Interface" (
+    join output-dir %rebol.h
+)
 
 e-lib/emit 'ver {
     #ifndef REBOL_H_1020_0304  /* "include guard" allows multiple #includes */
@@ -933,9 +934,9 @@ e-lib/write-emitted
 ; pointers to the RL_XXX C functions to be able to hand it to clients.  Only
 ; one instance of this table should be linked into Rebol.
 
-e-table: (make-emitter
-    "REBOL Interface Table Singleton"
-    make-file [(output-dir) tmp-reb-lib-table.inc])
+e-table: make-emitter "REBOL Interface Table Singleton" (
+    join output-dir %tmp-reb-lib-table.inc
+)
 
 table-init-items: map-each-api [
     unspaced ["RL_" name]
@@ -970,10 +971,10 @@ saved-dir: what-dir
 ; The JavaScript extension actually mutates the API table, so run the TCC hook
 ; first...
 ;
-change-dir make-file [(repo-dir) extensions/tcc/tools /]
+change-dir (join repo-dir %extensions/tcc/tools/)
 do in (binding of 'output-dir) load %prep-libr3-tcc.reb
 
-change-dir make-file [(repo-dir) extensions/javascript/tools /]
+change-dir (join repo-dir %extensions/javascript/tools/)
 do in (binding of 'output-dir) load %prep-libr3-js.reb
 
 change-dir saved-dir

@@ -34,9 +34,8 @@ REBOL [
 ; it also inherits access to CWRAP and other tools.  Review.
 
 
-e: (make-emitter
-    "libRebol exports for tcc_add_symbol()"
-        make-file [(output-dir) tmp-librebol-symbols.inc]
+e: make-emitter "libRebol exports for tcc_add_symbol()" (
+    join output-dir %tmp-librebol-symbols.inc
 )
 
 for-each-api [

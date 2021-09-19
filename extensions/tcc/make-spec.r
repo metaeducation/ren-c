@@ -33,7 +33,7 @@ config-tccdir-with-libtcc-h: try all [
         append config-tccdir "/"  ; normalize to the standard DIR? rule
     ])
 
-    exists? make-file [(config-tccdir) libtcc.h]
+    exists? (join config-tccdir %libtcc.h)
     config-tccdir
 ]
 

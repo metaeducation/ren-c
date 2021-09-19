@@ -55,7 +55,7 @@ system-config: config-system args/OS_ID
 ; !!! For the moment, this script only works with the in-source output
 ; directory.  It would have to be passed a directory by the caller otherwise.
 ;
-output-dir: make-file [(repo-dir) build /]
+output-dir: join repo-dir %build/
 
 
 all [
@@ -76,7 +76,7 @@ all [
     ]
 
     tcc-libtcc1-file: (local-to-file try get-env "TCC_LIBTCC1_FILE") else [
-         make-file [(config-tccdir) libtcc1.a]
+         join config-tccdir %libtcc1.a
     ]
     if exists? tcc-libtcc1-file [true] else [
         print ["TCC_LIBTCC1_FILE setting is invalid" tcc-libtcc1-file]
@@ -116,7 +116,7 @@ encap: compose [
     ;
     ; !!! Is it worth it to put %rebol.h in a `rebol` subdirectory?
     ;
-    %rebol.h (read make-file [(output-dir) prep/include/rebol.h])
+    %rebol.h (read join output-dir %prep/include/rebol.h)
 
     ; Only a few special headers needed for TCC, that are selectively
     ; used to override the system standard ones with `-I`:
@@ -144,11 +144,11 @@ encap: compose [
 ]
 
 
-print ["MAKING ZIP FILE:" make-file [(output-dir) tcc-encap.zip]]
+print ["MAKING ZIP FILE:" (join output-dir %tcc-encap.zip)]
 
 ; !!! The /VERBOSE option in the bootstrap build fails because it uses PRINT
 ; on a plain FILE! that's not in a block.  Review.
 ;
-zip/deep make-file [(output-dir) tcc-encap.zip] encap
+zip/deep (join output-dir %tcc-encap.zip) encap
 
 print ["(ULTIMATELY WE WANT TO ENCAP THAT DIRECTLY INTO THE TCC EXTENSION)"]

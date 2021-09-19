@@ -72,8 +72,8 @@ import <native-emitters.r>  ; for EMIT-NATIVE-PROTO
 print "------ Generate tmp-natives.r"
 
 src-dir: join repo-dir %src/
-output-dir: make-file [(system/options/path) prep /]
-mkdir/deep make-file [(output-dir) boot /]
+output-dir: join system/options/path %prep/
+mkdir/deep join output-dir %boot/
 
 verbose: false
 
@@ -109,7 +109,7 @@ gather-natives: func [dir] [
     ]
 ]
 
-gather-natives make-file [(src-dir) core /]
+gather-natives join src-dir %core/
 
 
 === {MOVE "NATIVE: NATIVE" and "ENFIX: NATIVE" TO FRONT OF GATHERED LIST} ===
@@ -165,7 +165,7 @@ append output-buffer unspaced [
     newline
 ]
 
-write-if-changed make-file [(output-dir) boot/tmp-natives.r] output-buffer
+write-if-changed (join output-dir %boot/tmp-natives.r) output-buffer
 
 print [proto-parser/count "natives"]
 print newline
@@ -191,9 +191,9 @@ append output-buffer {REBOL [
 
 }
 
-boot-types: load make-file [(src-dir) boot/types.r]
+boot-types: load (join src-dir %boot/types.r)
 
-append output-buffer mold/only load make-file [(src-dir) boot/generics.r]
+append output-buffer mold/only load (join src-dir %boot/generics.r)
 
 append output-buffer unspaced [
     newline
@@ -201,4 +201,4 @@ append output-buffer unspaced [
     newline
 ]
 
-write-if-changed make-file [(output-dir) boot/tmp-generics.r] output-buffer
+write-if-changed (join output-dir %boot/tmp-generics.r) output-buffer

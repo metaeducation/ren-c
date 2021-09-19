@@ -70,7 +70,7 @@ file-name: path+file/2
 
 ; Assume we start up in the directory where build products are being made
 ;
-output-dir: make-file [(what-dir) prep / (in-dir)]
+output-dir: join what-dir reduce [%prep/ in-dir]
 
 src: join repo-dir src
 
@@ -84,7 +84,7 @@ m-name: mod
 l-m-name: lowercase copy m-name
 u-m-name: uppercase copy m-name
 
-c-src: make-file [(repo-dir) (as file! ensure text! args/SRC)]
+c-src: join repo-dir (as file! ensure text! args/SRC)
 
 
 === {CALCULATE NAMES OF BUILD PRODUCTS} ===
@@ -130,8 +130,9 @@ parse inc-name [
 ; header embedded in the comments at the top of the C file, though it's not
 ; clear what kind of actionable information should be put there.
 
-e1: (make-emitter "Module C Header File Preface"
-    make-file [(output-dir) tmp-mod- (l-m-name) .h])
+e1: make-emitter "Module C Header File Preface" (
+    join output-dir reduce ["tmp-mod-" (l-m-name) ".h"]
+)
 
 header-in-c-comments: _
 
@@ -279,7 +280,7 @@ e1/write-emitted
 ; number of codepoints in the string are passed in, as that's required to
 ; have a validated TEXT!...which is how we'd signal validity to the scanner.
 
-e: make-emitter "Ext custom init code" make-file [(output-dir) (inc-name)]
+e: make-emitter "Ext custom init code" (join output-dir inc-name)
 
 initscript-body: stripload/header script-name 'header  ; header will be TEXT!
 
@@ -300,7 +301,7 @@ script-uncompressed: unspaced [
 ]
 script-num-codepoints: length of script-uncompressed
 
-write make-file [(output-dir) "script-uncompressed.r"] script-uncompressed
+write (join output-dir %script-uncompressed.r) script-uncompressed
 
 script-compressed: gzip script-uncompressed
 

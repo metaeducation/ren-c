@@ -4,8 +4,8 @@ name: 'Crypt
 loadable: no ;tls depends on this, so it has to be builtin
 source: %crypt/mod-crypt.c
 includes: reduce [
-    make-file [(repo-dir) extensions/crypt /]
-    make-file [(repo-dir) extensions/crypt/mbedtls/include /]  ; sub %mbedtls/
+    (join repo-dir %extensions/crypt/)
+    (join repo-dir %extensions/crypt/mbedtls/include/)  ; sub %mbedtls/
     %prep/extensions/crypt/  ; for %tmp-extensions-crypt-init.inc
 ]
 definitions: [

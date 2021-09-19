@@ -356,8 +356,8 @@ append uv-depends map-each tuple [  ; WORD! in bootstrap
 includes: reduce [
     %prep/extensions/filesystem
 
-    make-file [(repo-dir) extensions/filesystem/libuv/src /]  ; e.g. queue.h
-    make-file [(repo-dir) extensions/filesystem/libuv/include /]  ; sub %uv/
+    (join repo-dir %extensions/filesystem/libuv/src/)  ; e.g. queue.h
+    (join repo-dir %extensions/filesystem/libuv/include/)  ; sub %uv/
 ]
 
 
