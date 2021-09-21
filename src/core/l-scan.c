@@ -631,6 +631,14 @@ static void Update_Error_Near_For_Line(
     REBLEN line,
     const REBYTE *line_head
 ){
+    // This sets the "where" for the error (e.g. the stack).  But then it
+    // overrides the NEAR and FILE and LINE.
+    //
+    // !!! The error should actually report both the file and line that is
+    // running as well as the file and line being scanned.  Review.
+    //
+    Set_Location_Of_Error(error, FS_TOP);
+
     // Skip indentation (don't include in the NEAR)
     //
     const REBYTE *cp = line_head;
