@@ -1190,10 +1190,11 @@ void Shutdown_Core(bool clean)
     Shutdown_CRC();
     Shutdown_String();
     Shutdown_Scanner();
-    Shutdown_Char_Cases();
 
     Shutdown_Symbols();
     Shutdown_Interning();
+
+    Shutdown_Char_Cases();  // case needed for hashes in Shutdown_Symbols()
 
     Shutdown_GC();
 
