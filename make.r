@@ -807,7 +807,7 @@ use [extension-dir entry][
             dir? entry
             find read (join extension-dir entry) %make-spec.r
         ] then [
-            spec: load (join extension-dir entry) make-spec.r]
+            spec: load join (join extension-dir entry) %make-spec.r
 
             ; !!! The specs use `repo-dir` and some other variables.
             ; Splice those in for starters, but will need deep thought.
@@ -1687,17 +1687,20 @@ prep: make rebmake/entry-class [
 
     commands: collect-lines [
         keep [{$(REBOL)} join tools-dir %make-natives.r]
-        keep [{$(REBOL)} join tools-dir %make-headers.r]]
-        keep [{$(REBOL)} join tools-dir %make-boot.r]
+        keep [{$(REBOL)} join tools-dir %make-headers.r]
+        keep [
+            {$(REBOL)} join tools-dir %make-boot.r
             unspaced [{OS_ID=} system-config/id]
             {GIT_COMMIT=$(GIT_COMMIT)}
         ]
-        keep [{$(REBOL)} join tools-dir %make-reb-lib.r]
+        keep [
+            {$(REBOL)} join tools-dir %make-reb-lib.r
             unspaced [{OS_ID=} system-config/id]
         ]
 
         for-each ext all-extensions [
-            keep [{$(REBOL)} join tools-dir %prep-extension.r]
+            keep [
+                {$(REBOL)} join tools-dir %prep-extension.r
                 unspaced [{MODULE=} ext/name]
                 unspaced [{SRC=extensions/} switch type of ext/source [
                     file! [ext/source]
@@ -1721,13 +1724,15 @@ prep: make rebmake/entry-class [
                         extensions "/" (ext/directory) (ext/hook)
                     ]
                 )
-                keep [{$(REBOL)} hook-script
+                keep [
+                    {$(REBOL)} hook-script
                     unspaced [{OS_ID=} system-config/id]
                 ]
             ]
         ]
 
-        keep [{$(REBOL)} join tools-dir %make-boot-ext-header.r]
+        keep [
+            {$(REBOL)} join tools-dir %make-boot-ext-header.r
             unspaced [
                 {EXTENSIONS=} delimit ":" map-each ext builtin-extensions [
                     to text! ext/name
@@ -1735,7 +1740,7 @@ prep: make rebmake/entry-class [
             ]
         ]
 
-        keep [{$(REBOL)} join src-dir %main/prep-main.reb]]
+        keep [{$(REBOL)} join src-dir %main/prep-main.reb]
     ]
     depends: reduce [
         reb-tool
