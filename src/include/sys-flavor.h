@@ -96,12 +96,6 @@ enum Reb_Series_Flavor {
     FLAVOR_FEED,
     FLAVOR_API,
 
-    // This is used by rebQ() and rebU() to either add a quoting level of
-    // splices or to remove one.  Today these arrays are always singular and
-    // contain one value, but in the future they might contain more.
-    //
-    FLAVOR_INSTRUCTION_ADJUST_QUOTING,
-
     // This is used by rebINLINE() to place an array of content as raw
     // material to execute.
     //

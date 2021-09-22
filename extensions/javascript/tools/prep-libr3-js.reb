@@ -303,7 +303,7 @@ append api-objects make object! [
     name: "rebPromise"
     returns: "intptr_t"
     paramlist: []
-    proto: "intptr_t rebPromise(unsigned char quotes, void *p, va_list *vaptr)"
+    proto: "intptr_t rebPromise(void *p, va_list *vaptr)"
     is-variadic: true
 ]
 
@@ -440,7 +440,7 @@ for-each-api [
         ])
 
         e-cwrap/emit cscape/with {
-            reb.$<No-Reb-Name>_qlevel = function() {
+            reb.$<No-Reb-Name> = function() {
                 let argc = arguments.length
                 let stack = stackSave()
                 let packed = stackAlloc(4 * (argc + 1))
@@ -470,7 +470,6 @@ for-each-api [
                 HEAP32[(packed>>2) + argc] = reb.END
 
                 a = reb.m._RL_$<Name>(
-                    this.quotes,
                     packed,
                     0  /* null vaptr means `p` is array of `const void*` */
                 )
@@ -479,10 +478,6 @@ for-each-api [
 
                 $<Return-Code>
             }
-
-            reb.$<No-Reb-Name> = reb.$<No-Reb-Name>_qlevel.bind({quotes: 0})
-
-            reb.$<No-Reb-Name>Q = reb.$<No-Reb-Name>_qlevel.bind({quotes: 1})
         } api
     ] else [
         e-cwrap/emit cscape/with {

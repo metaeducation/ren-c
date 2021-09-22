@@ -303,10 +303,6 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "API Handle", file, line);
         break;
 
-      case FLAVOR_INSTRUCTION_ADJUST_QUOTING:
-        Probe_Print_Helper(p, expr, "Quoting Instruction", file, line);
-        break;
-
       case FLAVOR_INSTRUCTION_SPLICE:
         Probe_Print_Helper(p, expr, "Splicing Instruction", file, line);
         break;

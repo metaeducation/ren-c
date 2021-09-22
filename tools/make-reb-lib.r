@@ -126,15 +126,16 @@ emit-proto: func [return: <none> proto] [
     if is-variadic: did find/only paramlist 'vaptr [
         parse paramlist [
             ;
-            ; `quotes` is first to facilitate C99 macros that want two places
-            ; to splice arguments: head and tail, e.g.
+            ; Any generalized "modes" or "flags" should come first, which
+            ; facilitates C99 macros that want two places to splice arguments:
+            ; head and tail, e.g.
             ;
             ;     #define rebFoo(...) RL_rebFoo(0, __VA_ARGS__, rebEND)
             ;     #define rebFooQ(...) RL_rebFoo(1, __VA_ARGS__, rebEND)
             ;
-            ; `quotes` may generalize to more `modes` or `flags` someday.
+            ; This was once done with `quotes`:
             ;
-            "unsigned char" 'quotes
+            ;     "unsigned char" 'quotes
 
             copy paramlist: to "const void *"  ; signal start of variadic
 
@@ -182,7 +183,6 @@ extern-prototypes: map-each-api [
 
 lib-struct-fields: map-each-api [
     cfunc-params: delimit ", " compose [
-        (if is-variadic ["unsigned char quotes"])
         ((map-each [type var] paramlist [spaced [type var]]))
         (if is-variadic ["const void *p"])
         (if is-variadic ["va_list *vaptr"])
@@ -271,7 +271,7 @@ for-each api api-objects [do in api [
         ; quote spliced slots and one normal.
 
         proxied-args: delimit ", " compose [
-            "0" ((map-each [type var] paramlist [to-text var])) "p" "&va"
+            ((map-each [type var] paramlist [to-text var])) "p" "&va"
         ]
         append c89-variadic-inlines make-c-proxy/inline
 
@@ -288,7 +288,6 @@ for-each api api-objects [do in api [
         ; quote spliced slots and one normal.
 
         proxied-args: delimit ", " compose [
-            "0"
             ((map-each [type var] paramlist [to-text var]))
             "packed"
             "nullptr"
@@ -596,21 +595,8 @@ e-lib/emit 'ver {
     #define rebL(flag) \
         rebR(rebLogic(flag))
 
-    #ifdef REBOL_EXPLICIT_END
-        /*
-         * Most invocations of rebQ() are single-arity.  Avoid common pain
-         * in the C89 builds by making the shorthand work (if truly needed
-         * to quote multiple items, rebQUOTING/rebUNQUOTING are available).
-         */
-        #define rebQ(v) \
-            rebQUOTING((v), rebEND)  /* 1-arg + end optimized in rebQ() */
-
-        #define rebU(v) \
-            rebUNQUOTING((v), rebEND)  /* 1-arg + end optimized in rebU() */
-    #else
-        #define rebQ rebQUOTING
-        #define rebU rebUNQUOTING
-    #endif
+    #define rebQ rebQUOTING
+    #define rebU rebUNQUOTING
 
 
     /*
@@ -710,9 +696,8 @@ e-lib/emit 'ver {
          * https://stackoverflow.com/questions/4786649/
          *
          * These macros can transform variadic input in such a way that a
-         * rebEND may be automatically placed on the tail of a call.  If
-         * rebEND is used explicitly, this gives a harmless but slightly i
-         * efficient repetition.
+         * rebEND may be automatically placed on the tail of a call.  If rebEND
+         * is also used explicitly, that's a slightly wasteful repetition.
          */
         #if !defined(REBOL_EXPLICIT_END)
           /*

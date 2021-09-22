@@ -434,8 +434,8 @@ uintptr_t RL_rebTick(void)
 // * Routines with full written out names like `rebInteger()` return API
 //   handles which must be rebRelease()'d.  Shorter versions like rebI() don't
 //   return REBVAL* but are designed for transient use when evaluating, e.g.
-//   `rebValue("print [", rebI(count), "]");` does not need to rebRelease()
-//   the resulting variable because the evaluator frees it after use.
+//   `rebElide("print [", rebI(count), "]");` does not need to rebRelease()
+//   the count variable because the evaluator frees it immediately after use.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
@@ -483,7 +483,6 @@ REBVAL *RL_rebBlank(void)
 //
 // Use DID on the bool, in case it's a "shim bool" (e.g. just some integer
 // type) and hence may have values other than strictly 0 or 1.
-//
 //
 REBVAL *RL_rebLogic(bool logic)
 {
@@ -743,7 +742,7 @@ REBVAL *RL_rebHandle(
 // For the moment, this routine specifically accesses arguments of the most
 // recent ACTION! on the stack.
 //
-const void *RL_rebArgR(unsigned char quotes, const void *p, va_list *vaptr)
+const void *RL_rebArgR(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
@@ -754,7 +753,6 @@ const void *RL_rebArgR(unsigned char quotes, const void *p, va_list *vaptr)
     // taking just a `const char*`, so this falsely is a variadic to get the
     // JavaScript string proxying.
     //
-    UNUSED(quotes);
     const char *name;
     const void *p2;
     if (vaptr) {
@@ -789,11 +787,11 @@ const void *RL_rebArgR(unsigned char quotes, const void *p, va_list *vaptr)
 // Wrapper over the more optimal rebArgR() call, which can be used to get
 // an "safer" API handle to the argument.
 //
-REBVAL *RL_rebArg(unsigned char quotes, const void *p, va_list *vaptr)
+REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    const void* argR = RL_rebArgR(quotes, p, vaptr);
+    const void* argR = RL_rebArgR(p, vaptr);
     if (not argR)
         return nullptr;
 
@@ -825,22 +823,19 @@ REBVAL *RL_rebArg(unsigned char quotes, const void *p, va_list *vaptr)
 //
 // The default evaluators splice Rebol values "as-is" into the feed.  This
 // means that any evaluator active types (like WORD!, ACTION!, GROUP!...)
-// will run.  This can be mitigated with rebQ.
-//
-// (see `#define FLAG_QUOTING_BYTE` for why splice quoting is not the default)
+// will run.  This can be mitigated with rebQ or "@"
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
 static void Run_Va_May_Fail_Core(
     REBVAL *out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
-    unsigned char quotes,  // how many quote levels to add to spliced values
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
     Init_Void(out);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT | FLAG_QUOTING_BYTE(quotes);
+    REBFLGS flags = EVAL_MASK_DEFAULT;
 
     // !!! Some kind of policy is needed to decide how to disable halting in
     // the API.  It uses the longjmp() mechanism as a "no catch for throw",
@@ -888,8 +883,8 @@ static void Run_Va_May_Fail_Core(
     Decay_If_Isotope(out);
 }
 
-#define Run_Va_May_Fail(out,quotes,p,vaptr) \
-    Run_Va_May_Fail_Core((out), false, (quotes), (p), (vaptr))
+#define Run_Va_May_Fail(out,p,vaptr) \
+    Run_Va_May_Fail_Core((out), false, (p), (vaptr))
 
 
 //
@@ -904,14 +899,13 @@ static void Run_Va_May_Fail_Core(
 // considering that this can evaluate to an "END" cell.
 //
 bool RL_rebRunMaybeStaleThrows(
-    unsigned char quotes,
     REBVAL *out,
     bool fully,
     const void *p, va_list *vaptr
 ){
     bool threw = Eval_Step_In_Va_Maybe_Stale_Throws(
         out,
-        FEED_MASK_DEFAULT | FLAG_QUOTING_BYTE(quotes),
+        FEED_MASK_DEFAULT,
         p,  // first argument (C variadic protocol: at least 1 normal arg)
         vaptr,  // va_end() handled by Eval_Va_Core on success/fail/throw
         EVAL_MASK_DEFAULT
@@ -929,14 +923,13 @@ bool RL_rebRunMaybeStaleThrows(
 // in case of a completely invisible evaluation.
 //
 bool RL_rebRunThrows(
-    unsigned char quotes,
     REBVAL *out,
     bool fully,
     const void *p, va_list *vaptr
 ){
     Init_Void(out);  // assume "API-like" convention doesn't speak "END"
 
-    if (RL_rebRunMaybeStaleThrows(quotes, out, fully, p, vaptr))
+    if (RL_rebRunMaybeStaleThrows(out, fully, p, vaptr))
         return true;
 
     out->header.bits &= ~CELL_FLAG_OUT_NOTE_STALE;
@@ -950,12 +943,12 @@ bool RL_rebRunThrows(
 //
 // Most basic evaluator that returns a REBVAL*, which must be rebRelease()'d.
 //
-REBVAL *RL_rebValue(unsigned char quotes, const void *p, va_list *vaptr)
+REBVAL *RL_rebValue(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     REBVAL *result = Alloc_Value();
-    Run_Va_May_Fail(result, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
     if (not IS_NULLED(result))
         return result;  // caller must rebRelease()
@@ -976,12 +969,12 @@ REBVAL *RL_rebValue(unsigned char quotes, const void *p, va_list *vaptr)
 // is important for the console when trapping its generated result, to be
 // able to quote it without the backtrace showing a QUOTE stack frame.)
 //
-REBVAL *RL_rebQuote(unsigned char quotes, const void *p, va_list *vaptr)
+REBVAL *RL_rebQuote(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     REBVAL *result = Alloc_Value();
-    Run_Va_May_Fail(result, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
     return Quotify(result, 1);  // nulled cells legal for API if quoted
 }
@@ -995,14 +988,13 @@ REBVAL *RL_rebQuote(unsigned char quotes, const void *p, va_list *vaptr)
 // points to one routine for now.
 //
 REBVAL *RL_rebValueInterruptible(
-    unsigned char quotes,
     const void *p,
     va_list *vaptr
 ){
     ENTER_API;
 
     REBVAL *result = Alloc_Value();
-    Run_Va_May_Fail_Core(result, true, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail_Core(result, true, p, vaptr);  // calls va_end()
 
     if (not IS_NULLED(result))
         return result;  // caller must rebRelease()
@@ -1017,12 +1009,12 @@ REBVAL *RL_rebValueInterruptible(
 // Variant of rebValue() which assumes you don't need the result.  This saves on
 // allocating an API handle, or the caller needing to manage its lifetime.
 //
-void RL_rebElide(unsigned char quotes, const void *p, va_list *vaptr)
+void RL_rebElide(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     DECLARE_LOCAL (elided);
-    Run_Va_May_Fail(elided, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(elided, p, vaptr);  // calls va_end()
 }
 
 
@@ -1047,12 +1039,12 @@ void RL_rebElide(unsigned char quotes, const void *p, va_list *vaptr)
 //    rebNoReturn(...) -- whose return?
 //    rebStop(...) -- STOP is rather final sounding, the code keeps going
 //
-void RL_rebJumps(unsigned char quotes, const void *p, va_list *vaptr)
+void RL_rebJumps(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     DECLARE_LOCAL (dummy);
-    Run_Va_May_Fail(dummy, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(dummy, p, vaptr);  // calls va_end()
 
     // Note: If we just `fail()` here, then while MSVC compiles %a-lib.c at
     // higher optimization levels it can conclude that RL_rebJumps() never
@@ -1077,12 +1069,12 @@ void RL_rebJumps(unsigned char quotes, const void *p, va_list *vaptr)
 //
 // Simply returns the logical result, with no returned handle to release.
 //
-bool RL_rebDid(unsigned char quotes, const void *p, va_list *vaptr)
+bool RL_rebDid(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     DECLARE_LOCAL (condition);
-    Run_Va_May_Fail(condition, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
 
     return IS_TRUTHY(condition);  // will fail() on BAD-WORD!s
 }
@@ -1094,12 +1086,12 @@ bool RL_rebDid(unsigned char quotes, const void *p, va_list *vaptr)
 // !!! If this were going to be a macro like (not (rebDid(...))) it would have
 // to be a variadic macro.  Just make a separate entry point for now.
 //
-bool RL_rebNot(unsigned char quotes, const void *p, va_list *vaptr)
+bool RL_rebNot(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     DECLARE_LOCAL (condition);
-    Run_Va_May_Fail(condition, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
 
     return IS_FALSEY(condition);
 }
@@ -1116,12 +1108,12 @@ bool RL_rebNot(unsigned char quotes, const void *p, va_list *vaptr)
 // an integer for INTEGER!, LOGIC!, CHAR!...assume it's most common so the
 // short name is worth it.
 //
-intptr_t RL_rebUnbox(unsigned char quotes, const void *p, va_list *vaptr)
+intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
     switch (VAL_TYPE(result)) {
       case REB_INTEGER:
@@ -1143,14 +1135,13 @@ intptr_t RL_rebUnbox(unsigned char quotes, const void *p, va_list *vaptr)
 //  rebUnboxInteger: RL_API
 //
 intptr_t RL_rebUnboxInteger(
-    unsigned char quotes,
     const void *p,
     va_list *vaptr
 ){
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
     if (VAL_TYPE(result) != REB_INTEGER)
         fail ("rebUnboxInteger() called on non-INTEGER!");
@@ -1163,13 +1154,12 @@ intptr_t RL_rebUnboxInteger(
 //  rebUnboxDecimal: RL_API
 //
 double RL_rebUnboxDecimal(
-    unsigned char quotes,
     const void *p, va_list *vaptr
 ){
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
     if (VAL_TYPE(result) == REB_DECIMAL)
         return VAL_DECIMAL(result);
@@ -1185,13 +1175,12 @@ double RL_rebUnboxDecimal(
 //  rebUnboxChar: RL_API
 //
 uint32_t RL_rebUnboxChar(
-    unsigned char quotes,
     const void *p, va_list *vaptr
 ){
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
     if (not IS_CHAR(result))
         fail ("rebUnboxChar() called on non-CHAR");
@@ -1204,14 +1193,13 @@ uint32_t RL_rebUnboxChar(
 //  rebUnboxHandle: RL_API
 //
 void *RL_rebUnboxHandle(
-    unsigned char quotes,
     size_t *size_out,
     const void *p, va_list *vaptr
 ){
     ENTER_API;
 
     DECLARE_LOCAL (result);
-    Run_Va_May_Fail(result, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
     if (VAL_TYPE(result) != REB_HANDLE)
         fail ("rebUnboxHandle() called on non-HANDLE!");
@@ -1256,7 +1244,6 @@ static size_t Spell_Into(
 // The more immediate quantity of concern to return is the number of bytes.
 //
 size_t RL_rebSpellInto(
-    unsigned char quotes,
     char *buf,
     size_t buf_size,  // number of bytes
     const void *p, va_list *vaptr
@@ -1264,7 +1251,7 @@ size_t RL_rebSpellInto(
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
     return Spell_Into(buf, buf_size, v);
 }
@@ -1277,14 +1264,12 @@ size_t RL_rebSpellInto(
 // extracted with LENGTH OF.  If size in bytes of the encoded UTF-8 is needed,
 // use the binary extraction API (works on ANY-STRING! to get UTF-8)
 //
-char *RL_rebSpell(
-    unsigned char quotes,
-    const void *p, va_list *vaptr
-){
+char *RL_rebSpell(const void *p, va_list *vaptr)
+{
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
     if (IS_NULLED(v))
         fail ("rebSpell() does not take NULL (use TRY/BLANK! to opt out)");
@@ -1366,7 +1351,6 @@ static unsigned int Spell_Into_Wide(
 // wchar units...not *necesssarily* a length in codepoints.
 //
 unsigned int RL_rebSpellIntoWide(
-    unsigned char quotes,
     REBWCHAR *buf,
     unsigned int buf_chars,  // chars buf can hold (not including terminator)
     const void *p, va_list *vaptr
@@ -1374,7 +1358,7 @@ unsigned int RL_rebSpellIntoWide(
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
     return Spell_Into_Wide(buf, buf_chars, v);
 }
@@ -1386,14 +1370,12 @@ unsigned int RL_rebSpellIntoWide(
 // Gives the spelling as WCHARs.  The result is UTF-16, so some codepoints
 // won't fit in single WCHARs.
 //
-REBWCHAR *RL_rebSpellWide(
-    unsigned char quotes,
-    const void *p, va_list *vaptr
-){
+REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
+{
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
     if (IS_NULLED(v))
         fail ("rebSpellWide() does not take NULL (use TRY/BLANK! to opt out)");
@@ -1477,7 +1459,6 @@ static size_t Bytes_Into(
 // zero termination of Rebol series, including binaries.  Review.
 //
 size_t RL_rebBytesInto(
-    unsigned char quotes,
     unsigned char *buf,
     size_t buf_size,
     const void *p, va_list *vaptr
@@ -1485,7 +1466,7 @@ size_t RL_rebBytesInto(
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
     return Bytes_Into(buf, buf_size, v);
 }
@@ -1499,14 +1480,13 @@ size_t RL_rebBytesInto(
 // for strings it is like rebSpell() except telling you how many bytes.)
 //
 unsigned char *RL_rebBytes(
-    unsigned char quotes,
     size_t *size_out,  // !!! Enforce non-null, to ensure type safety?
     const void *p, va_list *vaptr
 ){
     ENTER_API;
 
     DECLARE_LOCAL (v);
-    Run_Va_May_Fail(v, quotes, p, vaptr);  // calls va_end()
+    Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
     if (IS_NULLED(v))
         fail ("rebBytes() does not take NULL (use TRY/BLANK! to opt out)");
@@ -1734,138 +1714,92 @@ bool RL_rebWasHalting(void)
 //=////////////////////////////////////////////////////////////////////////=//
 
 
-// The rebQ instruction was designed such that it doesn't mean "quote", it means
-// "quote any value splices in this section".  And if you turned around and
-// said `rebU(rebQ(...))` that should undo your effect.  The two operations
-// share a mostly common implementation.
-//
-// Note that `rebValue("print {One}", rebQ("print {Two}", ...), ...)` should not
-// execute rebQ()'s code right when C runs it.  If it did, then `Two` would
-// print before `One`.  It has to give back something that provides more than
-// one value when the feed visits it.
-//
-// So what these operations produce is an array.  If it quotes a single value
-// then it will just be a singular array (sizeof(REBSER)).  This array is not
-// managed by the GC directly--which means it's cheap to allocate and then
-// free as the feed passes it by.  which is one of the reasons that a GC has to
-// force reification of outstanding variadic feeds)
-//
-// We lie and say the array is NODE_FLAG_MANAGED when we create it so it
-// won't get manuals tracked.  Then clear the managed flag.  If the GC kicks
-// in it will spool the va_list() to the end first and take care of it.  If
-// it does not kick in, then the array will just be freed as it's passed.
-//
-// !!! It may be possible to create variations of this which are done in a
-// way that would allow arbitrary spans, `rebU("[, value1), value2, "]"`.
-// But those variants would have to be more sophisticated than this.
-//
-// !!! Formative discussion: https://forum.rebol.info/t/1050
-//
-static const REBINS *rebSpliceQuoteAdjuster_internal(
-    int delta,  // -1 to remove quote from splices, +1 to add quote to splices
-    const void *p,
-    va_list *vaptr
-){
-    REBDSP dsp_orig = DSP;
-
-    REBARR *a;
-
-    // In the general case, we need the feed, and all the magic it does for
-    // deciphering its arguments (like UTF-8 strings).  But a common case is
-    // just calling rebQ(value) to get a quote on a single value.  Sense
-    // that situation and make it faster.
-    //
-    // !!! In order to avoid putting `null` in arrays here and needing to
-    // make exceptions for that in the instruction arrays, we quote everything
-    // by 1 and then decrement the delta by 1.
-    //
-    const void* const *packed;
-    if (vaptr)
-        packed = nullptr;
-    else {
-        packed = cast(const void* const*, p);
-        p = *packed++;
-    }
-    if (not p or Detect_Rebol_Pointer(p) == DETECTED_AS_CELL) {
-        const REBVAL *first = REIFY_NULL(cast(const REBVAL*, p));  // save
-        if (vaptr)
-            p = va_arg(*vaptr, const void*);  // advance next pointer (fast!)
-        else
-            p = *packed++;
-        if (p and Detect_Rebol_Pointer(p) == DETECTED_AS_END) {
-            a = Alloc_Singular(
-                FLAG_FLAVOR(INSTRUCTION_ADJUST_QUOTING) | NODE_FLAG_MANAGED
-            );
-            CLEAR_SERIES_FLAG(a, MANAGED);  // see notes above on why we lied
-            Isotopic_Quote(Copy_Cell(ARR_SINGLE(a), first));
-        }
-        else {  // no shortcut, push and keep going
-            Isotopic_Quote(Copy_Cell(DS_PUSH(), first));
-            goto no_shortcut;
-        }
-    }
-    else {
-      no_shortcut: ;
-
-        REBFLGS feed_flags = FEED_MASK_DEFAULT;  // just get plain values
-        DECLARE_VA_FEED (feed, p, vaptr, feed_flags);
-
-        while (NOT_END(feed->value)) {
-            Isotopic_Quote(Copy_Cell(DS_PUSH(), SPECIFIC(feed->value)));
-            Fetch_Next_In_Feed(feed);
-        }
-
-        a = Pop_Stack_Values_Core(
-            dsp_orig,
-            NODE_FLAG_MANAGED
-                | FLAG_FLAVOR(INSTRUCTION_ADJUST_QUOTING)
-        );
-        CLEAR_SERIES_FLAG(a, MANAGED);  // see notes above on why we lied
-
-        Free_Feed(feed);
-    }
-
-    // !!! Although you can do `rebU("[", a, b, "]"), you cannot do
-    // `rebU(a, b)` at this time.  That's because the feed does not have a
-    // way of holding a position inside of a nested array.  The only thing
-    // it could do would be to reify the feed into an array--which it can
-    // do, but the feature should be thought through more.
-    //
-    if (ARR_LEN(a) > 1)
-        fail ("rebU() and rebQ() currently can't splice more than one value");
-
-    a->misc.quoting_delta = delta - 1;
-    return cast(REBINS*, a);
-}
-
 //
 //  rebQUOTING: RL_API
 //
-// This is #defined as rebQ, but C89 shortcut is rebQ => rebQ(v, rebEND)
+// This is #defined as rebQ.
 //
-const REBINS *RL_rebQUOTING(
-    unsigned char quotes,
-    const void *p, va_list *vaptr
-){
+// Note: This arity-1 version is pared back from a more complex variadic form:
+// https://forum.rebol.info/t/1050/4
+//
+const REBINS *RL_rebQUOTING(const void *p)
+{
     ENTER_API;
 
-    UNUSED(quotes);
-    return rebSpliceQuoteAdjuster_internal(+1, p, vaptr);
+    if (p == nullptr) {
+        p = Lib(NULL);
+        goto handle_cell;
+    }
+
+    REBARR *a;
+
+    switch (Detect_Rebol_Pointer(p)) {
+      case DETECTED_AS_SERIES: {
+        a = m_cast(REBARR*, cast(const REBARR*, p));
+        if (NOT_SUBCLASS_FLAG(API, a, RELEASE))
+            fail ("Can't quote instructions (besides rebR())");
+        break; }
+
+      handle_cell:
+      case DETECTED_AS_CELL: {
+        const REBVAL *v = Copy_Cell(Alloc_Value(), cast(const REBVAL*, p));
+        a = Singular_From_Cell(v);
+        SET_SUBCLASS_FLAG(API, a, RELEASE);
+        break; }
+
+      default:
+        fail ("Unknown pointer");
+    }
+
+    RELVAL *v = ARR_SINGLE(a);
+    Isotopic_Quote(v);
+    return a;
 }
+
 
 //
 //  rebUNQUOTING: RL_API
 //
-// This is #defined as rebU, but C89 shortcut is rebU => rebU(v, rebEND)
+// This is #defined as rebU.
 //
-const REBINS *RL_rebUNQUOTING(
-    unsigned char quotes,
-    const void *p, va_list *vaptr
-){
+// Note: This arity-1 version is pared back from a more complex variadic form:
+// https://forum.rebol.info/t/1050/4
+//
+const REBINS *RL_rebUNQUOTING(const void *p)
+{
     ENTER_API;
 
-    UNUSED(quotes);
-    return rebSpliceQuoteAdjuster_internal(-1, p, vaptr);
+    if (p == nullptr)
+        fail ("Cannot unquote NULL");
+
+    REBARR *a;
+
+    switch (Detect_Rebol_Pointer(p)) {
+      case DETECTED_AS_SERIES: {
+        a = m_cast(REBARR*, cast(const REBARR*, p));
+        if (NOT_SUBCLASS_FLAG(API, a, RELEASE))
+            fail ("Can't unquote instructions (besides rebR())");
+        break; }
+
+      case DETECTED_AS_CELL: {
+        REBVAL *v = Copy_Cell(Alloc_Value(), cast(const REBVAL*, p));
+        a = Singular_From_Cell(v);
+        SET_SUBCLASS_FLAG(API, a, RELEASE);
+        break; }
+
+      default:
+        fail ("Unknown pointer");
+    }
+
+    RELVAL *v = ARR_SINGLE(a);
+    if (IS_NULLED(v))
+        fail ("Cannot unquote NULL");
+
+    if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE))
+        fail ("Cannot unquote isotopes");
+
+    Isotopic_Unquote(v);
+    return a;
 }
 
 

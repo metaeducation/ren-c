@@ -36,15 +36,6 @@
 // to keep it within a certain boundary of complexity.
 
 
-#if (! CPLUSPLUS_11)
-    #define QUOTING_BYTE(feed) \
-        mutable_SECOND_BYTE((feed)->flags.bits)
-#else
-    inline static REBYTE& QUOTING_BYTE(REBFED *feed)  // type checks feed...
-        { return mutable_SECOND_BYTE(feed->flags.bits); }  // ...but mutable
-#endif
-
-
 #define FEED_SINGULAR(feed)     ARR(&(feed)->singular)
 #define FEED_SINGLE(feed)       mutable_SER_CELL(&(feed)->singular)
 
@@ -112,25 +103,15 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 
     if (not p) {  // libRebol's null/<opt> (IS_NULLED prohibited in CELL case)
 
-        if (QUOTING_BYTE(feed) == 0) {
-
-            // This is the compromise of convenience, where ~null~ is put in
-            // to the feed.  If it's converted into an array we've told a
-            // small lie (~null~ is a BAD-WORD! and a thing, so not the same
-            // as the NULL non-thing).  It will evaluate to a ~null~ isotope
-            // which *usually* acts like NULL, but not with ELSE/THEN directly.
-            //
-            // We must use something legal to put in arrays, so non-isotope.
-            //
-            Init_Bad_Word(&feed->fetched, Canon(NULL));
-        }
-        else {
-            // !!! "We could make a global QUOTED_NULLED_VALUE with a stable
-            // pointer and not have to use fetched." <- silly optimization
-
-            Init_Nulled(&feed->fetched);
-            Isotopic_Quotify(&feed->fetched, QUOTING_BYTE(feed));
-        }
+        // This is the compromise of convenience, where ~null~ is put in
+        // to the feed.  If it's converted into an array we've told a
+        // small lie (~null~ is a BAD-WORD! and a thing, so not the same
+        // as the NULL non-thing).  It will evaluate to a ~null~ isotope
+        // which *usually* acts like NULL, but not with ELSE/THEN directly.
+        //
+        // We must use something legal to put in arrays, so non-isotope.
+        //
+        Init_Bad_Word(&feed->fetched, Canon(NULL));
 
         assert(FEED_SPECIFIER(feed) == SPECIFIED);  // !!! why assert this?
         feed->value = &feed->fetched;
@@ -215,35 +196,6 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         // implementation of fail's cleanup itself.
         //
         switch (SER_FLAVOR(inst1)) {
-          case FLAVOR_INSTRUCTION_ADJUST_QUOTING: {
-            assert(NOT_SERIES_FLAG(inst1, MANAGED));
-
-            // !!! Previously this didn't allow the case of:
-            //
-            //    QUOTING_BYTE(feed) + MISC(inst1).quoting_delta < 0
-            //
-            // Because it said rebU() "couldn't unquote a feed splicing plain
-            // values".  However, there was a mechanical problem because it
-            // was putting plain NULLs into the instruction array...and nulls
-            // aren't valid in most arrays.  Rather than make an exception,
-            // everything was quoted up one and the delta decremented.  See
-            // rebQUOTING for this, which needs more design attention.
-
-            assert(ARR_LEN(inst1) > 0);
-            if (ARR_LEN(inst1) > 1)
-                panic ("rebU() of more than one value splice not written");
-
-            REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
-            Copy_Cell(&feed->fetched, single);
-            Isotopic_Quotify(
-                &feed->fetched,
-                QUOTING_BYTE(feed) + inst1->misc.quoting_delta
-            );
-            feed->value = &feed->fetched;
-
-            GC_Kill_Series(inst1);  // not manuals-tracked
-            break; }
-
           case FLAVOR_INSTRUCTION_SPLICE: {
             REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
             if (IS_BLOCK(single)) {
@@ -279,7 +231,6 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 
             REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
             Copy_Cell(&feed->fetched, single);
-            Isotopic_Quotify(&feed->fetched, QUOTING_BYTE(feed));
             feed->value = &feed->fetched;
             rebRelease(single);  // *is* the instruction
             break; }
@@ -307,17 +258,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         if (IS_NULLED(cell))  // API enforces use of C's nullptr (0) for NULL
             assert(!"NULLED cell API leak, see NULLIFY_NULLED() in C source");
 
-        if (QUOTING_BYTE(feed) == 0) {
-            feed->value = cell;  // cell can be used as-is
-        }
-        else {
-            // We don't want to corrupt the value itself.  We have to move
-            // it into the fetched cell and quote it.
-            //
-            Copy_Cell(&feed->fetched, cell);
-            Isotopic_Quotify(&feed->fetched, QUOTING_BYTE(feed));
-            feed->value = &feed->fetched;  // note END is detected separately
-        }
+        feed->value = cell;  // cell can be used as-is
         break; }
 
       case DETECTED_AS_END: {  // end of variadic input, so that's it for this
@@ -678,7 +619,7 @@ inline static void Prep_Va_Feed(
 
 // The flags is passed in by the macro here by default, because it does a
 // fetch as part of the initialization from the `first`...and if you want
-// FLAG_QUOTING_BYTE() to take effect, it must be passed in up front.
+// the flags to take effect, they must be passed in up front.
 //
 #define DECLARE_VA_FEED(name,p,vaptr,flags) \
     REBFED *name = Alloc_Feed(); \

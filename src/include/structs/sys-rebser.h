@@ -705,10 +705,6 @@ union Reb_Series_Misc {
     //
     bool negated;
 
-    // rebQ() and rebU() use this with ARRAY_FLAG_INSTRUCTION_ADJUST_QUOTING.
-    //
-    int quoting_delta;
-
     // If a REBNOD* is stored in the misc field, it has to use this union
     // member for SERIES_INFO_MISC_NODE_NEEDS_MARK to see it.  To help make
     // the reference sites be unique for each purpose and still be type safe,

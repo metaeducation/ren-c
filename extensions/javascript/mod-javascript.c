@@ -337,7 +337,7 @@ static enum Reb_Native_State PG_Native_State;
 // which ties the returned integer into the resolve and reject branches of an
 // actual JavaScript ES6 Promise.
 //
-EXTERN_C intptr_t RL_rebPromise(REBFLGS flags, void *p, va_list *vaptr)
+EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
 {
     TRACE("rebPromise() called");
 
@@ -368,7 +368,7 @@ EXTERN_C intptr_t RL_rebPromise(REBFLGS flags, void *p, va_list *vaptr)
     // for granted the resolve() function created on return from this helper
     // already exists.
 
-    DECLARE_VA_FEED (feed, p, vaptr, flags);
+    DECLARE_VA_FEED (feed, p, vaptr, FEED_MASK_DEFAULT);
 
     REBDSP dsp_orig = DSP;
     while (NOT_END(feed->value)) {

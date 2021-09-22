@@ -120,46 +120,13 @@ STATIC_ASSERT(FEED_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
     FLAG_LEFT_BIT(6)
 
 
-//=//// BITS 8...15 ARE THE QUOTING LEVEL /////////////////////////////////=//
+//=//// BITS 8...15 ARE CURRENTLY UNUSED ///////////////////////////////////=//
 
-// There was significant deliberation over what the following code should do:
+// These had once been used for a "quoting byte", but that feature was not
+// used enough to justify its complexity:
 //
-//     REBVAL *word = rebValue("'print");
-//     REBVAL *type = rebValue("type of", word);
-//
-// If the WORD! is simply spliced into the code and run, then that will be
-// an error.  It would be as if you had written:
-//
-//     do compose [type of (word)]
-//
-// It may seem to be more desirable to pretend you had fetched word from a
-// variable, as if the code had been Rebol.  The illusion could be given by
-// automatically splicing quotes, but doing this without being asked creates
-// other negative side effects:
-//
-//     REBVAL *x = rebInteger(10);
-//     REBVAL *y = rebInteger(20);
-//     REBVAL *coordinate = rebValue("[", x, y, "]");
-//
-// You don't want to wind up with `['10 '20]` in that block.  So automatic
-// splicing with quotes is fraught with problems.  Hence you should use the
-// rebQ() operator to add quoting levels when needed, or use the `@` operator
-// as part of a string:
-//
-//     REBVAL *type = rebValue("type of", rebQ(word));
-//     REBVAL *type = rebValue("type of @", word);
-//
-// rebQ() and rebU()  are generalized so that one may add and drop quoting from
-// splices on a feed via ranges, countering any additions via rebQ() with a
-// corresponding rebU().  This is kept within reason at up to 255 levels
-// in a byte, and that byte is in the feed flags in the second byte (where
-// it is least likely to be needed to line up with cell bits etc.)  Being in
-// the flags means it can be initialized with them in one assignment if
-// it does not change.
-//
+// https://forum.rebol.info/t/1050/4
 
-#define FLAG_QUOTING_BYTE(quoting) \
-    FLAG_SECOND_BYTE(quoting)
 
 
 //=//// FEED_FLAG_CONST ///////////////////////////////////////////////////=//
