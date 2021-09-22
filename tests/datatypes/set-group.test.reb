@@ -1,12 +1,18 @@
 ; SET-GROUP! tests
 ;
-; This concept is still in flux as to whether it should have meaning, and if
-; so what that meaning should be.  :(foo) does not mean the same as `get foo`
-; hence it's not clear that `(foo):` should mean the same thing as `set foo`.
+; Hesitancy initially surrounded making `(xxx):` a synonym for `set xxx`.  But
+; being able to put the concept of setting along with evaluation into a
+; single token has powerful uses...first seen with DEFAULT, e.g.
 ;
-; One idea is to make `(foo):` the notation for multiple returns so that
-; SET-BLOCK! can be inert.  This would be harder mechanically for COMPOSE
-; and may be less nice looking.  Review.
+;     (...): default [...]
+;
+; And later shown to great effect with EMIT in uparse:
+;
+;     uparse ... [gather [varname: across to ..., emit (varname): ...]]
+;
+; Some weirder ideas, like that SET-GROUP! of an ACTION! will call arity-1
+; actions with the right hand side have been axed.
+
 
 (set-group! = type of first [(a b c):])
 (set-path! = type of first [a/(b c d):])
@@ -25,7 +31,7 @@
     (path = 'o.f) and (o.f = 304)
 )
 
-; Retriggering multi-returns is questionable
+; Retriggering multi-returns is useful, but not yet implemented.
 (
     m: <before>
     o: make object! [f: <before>]
@@ -33,11 +39,11 @@
     error? trap [(block): [1020 304]]
 )
 
-; SET-GROUP! can run arity-1 functions.  Right hand side should be executed
-; before left group gets evaluated.
-(
-    count: 0
-    [1] = collect [
-        (if count != 1 [fail] :keep): (count: count + 1)
-    ]
-)
+; Weird dropped idea: SET-GROUP! running arity-1 functions.  Right hand side
+; should be executed before left group gets evaluated.
+;
+;    count: 0
+;    [1] = collect [
+;        (if count != 1 [fail] :keep): (count: count + 1)
+;    ]
+;

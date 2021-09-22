@@ -362,7 +362,7 @@ REBNATIVE(opt_combinator)
     if (not IS_NULLED(D_OUT))  // parser succeeded...
         return D_OUT;  // so return it's result (note: may be null *isotope*)
 
-    Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input), SPECIFIED);
+    Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input));
     return Init_Nulled_Isotope(D_OUT);  // success, but convey nothingness
 }
 
@@ -396,7 +396,7 @@ REBNATIVE(text_x_combinator)
             return nullptr;
 
         ++VAL_INDEX_UNBOUNDED(input);
-        Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED);
+        Set_Var_May_Fail(ARG(remainder), SPECIFIED, input);
 
         Derelativize(D_OUT, at, VAL_SPECIFIER(input));
         return D_OUT;  // Note: returns item in array, not rule, when an array!
@@ -418,7 +418,7 @@ REBNATIVE(text_x_combinator)
 
     assert(cast(REBLEN, index) == VAL_INDEX(input));  // asked for AM_FIND_MATCH
     VAL_INDEX_UNBOUNDED(input) += len;
-    Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED);
+    Set_Var_May_Fail(ARG(remainder), SPECIFIED, input);
 
     // If not an array, we have return the rule on match since there's
     // no isolated value to capture.
@@ -495,7 +495,7 @@ REBNATIVE(some_combinator)
             // So we have to put the remainder back to the input we just tried
             // but didn't work.
             //
-            Set_Var_May_Fail(remainder, SPECIFIED, input, SPECIFIED);
+            Set_Var_May_Fail(remainder, SPECIFIED, input);
             Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
             return D_OUT;  // return previous successful parser result
         }
@@ -732,7 +732,7 @@ REBNATIVE(combinatorize)
     // Set the advanced parameter to how many rules were consumed (the hook
     // steps through ARG(rules), updating its index)
     //
-    Set_Var_May_Fail(ARG(advanced), SPECIFIED, ARG(rules), SPECIFIED);
+    Set_Var_May_Fail(ARG(advanced), SPECIFIED, ARG(rules));
 
     REBACT *parser = Make_Action_From_Exemplar(s.ctx);
     DROP_GC_GUARD(s.ctx);
