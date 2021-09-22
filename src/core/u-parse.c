@@ -421,15 +421,8 @@ static void Print_Parse_Index(REBFRM *frame_) {
 // Gets the value of a word (when not a command) or path.  Returns all other
 // values as-is.
 //
-// !!! Because path evaluation does not necessarily wind up pointing to a
-// variable that exists in memory, a derived value may be created.  R3-Alpha
-// would push these on the stack without any corresponding drops, leading
-// to leaks and overflows.  This requires you to pass in a cell of storage
-// which will be good for as long as the returned pointer is used.  It may
-// not be used--e.g. with a WORD! fetch.
-//
 static const RELVAL *Get_Parse_Value(
-    REBVAL *cell,
+    REBVAL *cell,  // storage for fetched values; must be GC protected
     const RELVAL *rule,
     REBSPC *specifier
 ){
@@ -438,28 +431,20 @@ static const RELVAL *Get_Parse_Value(
             return rule;
 
         Get_Word_May_Fail(cell, rule, specifier);
-        if (IS_INTEGER(cell))
-            fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
-        return cell;
     }
-
-    if (IS_PATH(rule) or IS_TUPLE(rule)) {
-        //
-        // !!! REVIEW: how should GET-PATH! be handled?
-        //
-        // Should PATH!s be evaluating GROUP!s?  This does, but would need
-        // to route potential thrown values up to do it properly.
-
-        if (Eval_Path_Throws_Core(cell, rule, specifier, EVAL_MASK_DEFAULT))
-            fail (Error_No_Catch_For_Throw(cell));
-
-        if (IS_NULLED(cell))
-            fail (Error_No_Value(rule));
-
-        return cell;
+    else if (IS_TUPLE(rule)) {
+        Get_Var_May_Fail(cell, rule, specifier, false);
     }
+    else
+        return rule;
 
-    return rule;
+    if (IS_NULLED(cell))
+        fail (Error_No_Value(rule));
+
+    if (IS_INTEGER(cell))
+        fail ("Use REPEAT on integers https://forum.rebol.info/t/1578/6");
+
+    return cell;
 }
 
 
@@ -819,8 +804,10 @@ static REBIXO To_Thru_Block_Rule(
                     rule = cell;
                 }
             }
-            else if (IS_PATH(rule) or IS_TUPLE(rule))
+            else if (IS_TUPLE(rule))
                 rule = Get_Parse_Value(cell, rule, P_RULE_SPECIFIER);
+            else if (IS_PATH(rule))
+                fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
 
             // Try to match it:
             if (ANY_ARRAY_OR_SEQUENCE_KIND(P_TYPE)) {
@@ -1124,13 +1111,8 @@ static REB_R Handle_Seek_Rule_Dont_Update_Begin(
     USE_PARAMS_OF_SUBPARSE;
 
     REBYTE k = KIND3Q_BYTE(rule);  // REB_0_END ok
-    if (k == REB_WORD or k == REB_GET_WORD) {
-        rule = Lookup_Word_May_Fail(rule, specifier);
-        k = KIND3Q_BYTE(rule);
-    }
-    else if (k == REB_PATH or k == REB_TUPLE) {
-        if (Eval_Path_Throws_Core(D_SPARE, rule, specifier, EVAL_MASK_DEFAULT))
-            fail (Error_No_Catch_For_Throw(D_SPARE));
+    if (k == REB_WORD or k == REB_GET_WORD or k == REB_TUPLE) {
+        Get_Var_May_Fail(D_SPARE, rule, specifier, false);
         rule = D_SPARE;
         k = KIND3Q_BYTE(rule);
     }
@@ -1579,50 +1561,8 @@ REBNATIVE(subparse)
                 FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
                 goto pre_rule;
 
-              case SYM_COLLECT: {
+              case SYM_COLLECT:
                 fail ("COLLECT should only follow a SET-WORD! in PARSE");
-
-              handle_collect:
-                FETCH_NEXT_RULE(f);
-
-                REBARR *collection = Make_Array_Core(
-                    10,  // !!! how big?
-                    NODE_FLAG_MANAGED
-                );
-                PUSH_GC_GUARD(collection);
-
-                DECLARE_FRAME (subframe, f->feed, EVAL_MASK_DEFAULT);
-
-                bool interrupted;
-                assert(IS_END(D_OUT));  // invariant until finished
-                bool threw = Subparse_Throws(
-                    &interrupted,
-                    D_OUT,
-                    ARG(position),  // affected by P_POS assignment above
-                    SPECIFIED,
-                    subframe,
-                    collection,
-                    (P_FLAGS & PF_FIND_MASK) | PF_ONE_RULE
-                );
-
-                DROP_GC_GUARD(collection);
-                UNUSED(interrupted);  // !!! ignore ACCEPT/REJECT (?)
-
-                if (threw)
-                    goto return_thrown;
-
-                if (IS_NULLED(D_OUT)) {  // match of rule failed
-                    RESET(D_OUT);  // restore invariant
-                    goto next_alternate;  // backtrack collect, seek |
-                }
-                P_POS = VAL_INT32(D_OUT);
-                RESET(D_OUT);  // restore invariant
-
-                Init_Block(
-                    Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
-                    collection
-                );
-                goto pre_rule; }
 
               case SYM_KEEP: {
                 if (not P_COLLECTION)
@@ -1916,28 +1856,7 @@ REBNATIVE(subparse)
                 //
                 // https://github.com/rebol/rebol-issues/issues/2269
 
-            handle_set:
-                FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
-
-                // As an interim measure, permit `pos: here` to act as
-                // setting the position, just as `pos:` did historically.
-                // This will change to be generic SET after this has had some
-                // time to settle.
-                //
-                if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_HERE)
-                    FETCH_NEXT_RULE(f);
-                else if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_ACROSS) {
-                    FETCH_NEXT_RULE(f);
-                    P_FLAGS |= PF_COPY;
-                    goto pre_rule;
-                }
-                else if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_COLLECT)
-                    goto handle_collect;
-                else
-                    fail ("PARSE SET-WORD! usable with HERE, COLLECT, ACROSS");
-
-                Handle_Mark_Rule(f, set_or_copy_word, P_RULE_SPECIFIER);
-                goto pre_rule;
+                goto handle_set;
             }
             else if (IS_GET_WORD(rule)) {
                 //
@@ -1955,39 +1874,83 @@ REBNATIVE(subparse)
             }
         }
     }
-    else if (ANY_SEQUENCE(rule)) {
-        if (IS_PATH(rule) or IS_TUPLE(rule)) {
-            if (Eval_Path_Throws_Core(
-                D_SPARE,
-                rule,
-                P_RULE_SPECIFIER,
-                EVAL_MASK_DEFAULT
-            )){
-                Copy_Cell(D_OUT, D_SPARE);
-                goto return_thrown;
-            }
-            rule = Copy_Cell(P_SAVE, D_SPARE);
-        }
-        else if (IS_SET_PATH(rule) or IS_SET_TUPLE(rule)) {
-            Handle_Mark_Rule(f, rule, P_RULE_SPECIFIER);
-            FETCH_NEXT_RULE(f);
-            goto pre_rule;
-        }
-        else if (IS_GET_PATH(rule) or IS_GET_TUPLE(rule)) {
-            HANDLE_SEEK_RULE_UPDATE_BEGIN(f, rule, P_RULE_SPECIFIER);
-            FETCH_NEXT_RULE(f);
-            goto pre_rule;
-        }
+    else if (IS_TUPLE(rule)) {
+        Get_Var_May_Fail(D_SPARE, rule, P_RULE_SPECIFIER, false);
+        rule = Copy_Cell(P_SAVE, D_SPARE);
     }
-    else if (IS_SET_GROUP(rule)) {
-        //
-        // Don't run the group yet, just hold onto it...will run and set
-        // the contents (or pass found value to function as parameter)
-        // only if a match happens.
-        //
+    else if (IS_SET_TUPLE(rule) or IS_SET_GROUP(rule)) {
+      handle_set:
         FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
+
+        // As an interim measure, permit `pos: here` to act as
+        // setting the position, just as `pos:` did historically.
+        // This will change to be generic SET after this has had some
+        // time to settle.
+        //
+        if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_HERE) {
+            FETCH_NEXT_RULE(f);
+            Handle_Mark_Rule(f, set_or_copy_word, P_RULE_SPECIFIER);
+            goto pre_rule;
+        }
+        else if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_ACROSS) {
+            FETCH_NEXT_RULE(f);
+            P_FLAGS |= PF_COPY;
+            goto pre_rule;
+        }
+        else if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_COLLECT) {
+            FETCH_NEXT_RULE(f);
+
+            REBARR *collection = Make_Array_Core(
+                10,  // !!! how big?
+                NODE_FLAG_MANAGED
+            );
+            PUSH_GC_GUARD(collection);
+
+            DECLARE_FRAME (subframe, f->feed, EVAL_MASK_DEFAULT);
+
+            bool interrupted;
+            assert(IS_END(D_OUT));  // invariant until finished
+            bool threw = Subparse_Throws(
+                &interrupted,
+                D_OUT,
+                ARG(position),  // affected by P_POS assignment above
+                SPECIFIED,
+                subframe,
+                collection,
+                (P_FLAGS & PF_FIND_MASK) | PF_ONE_RULE
+            );
+
+            DROP_GC_GUARD(collection);
+            UNUSED(interrupted);  // !!! ignore ACCEPT/REJECT (?)
+
+            if (threw)
+                goto return_thrown;
+
+            if (IS_NULLED(D_OUT)) {  // match of rule failed
+                RESET(D_OUT);  // restore invariant
+                goto next_alternate;  // backtrack collect, seek |
+            }
+            P_POS = VAL_INT32(D_OUT);
+
+            Init_Block(D_OUT, collection);
+            Set_Var_May_Fail(set_or_copy_word, P_RULE_SPECIFIER, D_OUT);
+            RESET(D_OUT);  // restore invariant
+
+            goto pre_rule;
+        }
+
+        // !!! Here in the legacy PARSE3 codebase, we limit the constructs you
+        // can use SET-WORD! with to reduce confusion in case it was intending
+        // to capture the position.  But other types should work.
+        //
+        if (IS_SET_WORD(set_or_copy_word))
+            fail ("PARSE SET-WORD! usable with HERE, COLLECT, ACROSS");
+
         P_FLAGS |= PF_SET;
         goto pre_rule;
+    }
+    else if (ANY_PATH(rule)) {
+        fail ("Use TUPLE! a.b.c instead of PATH! a/b/c");
     }
 
     if (IS_BAR(rule))

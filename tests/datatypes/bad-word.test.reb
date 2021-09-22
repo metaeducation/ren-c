@@ -113,8 +113,12 @@
 (parse? [~foo~ ~foo~] [some ~foo~])  ; !!! shady, rethink
 (
     foo: '~foo~
+    parse? [~foo~ ~foo~] [some foo]
+)
+(
+    foo: ~foo~
     e: trap [
-        parse [~foo~ ~foo~] [some foo]  ; not acceptable  !!! how to overcome?
+        parse [~foo~ ~foo~] [some foo]
     ]
     e.id = 'bad-word-get
 )
