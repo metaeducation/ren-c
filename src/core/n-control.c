@@ -100,270 +100,6 @@ REBNATIVE(either)
 }
 
 
-inline static bool Single_Test_Throws(
-    REBVAL *out,  // GC-safe output cell
-    const RELVAL *test,
-    REBSPC *test_specifier,
-    const RELVAL *arg,
-    REBSPC *arg_specifier
-){
-    // Note the user could write `rule!: [integer! rule!]`, and then try to
-    // `match rule! <infinite>`...have to worry about stack overflows here.
-    //
-    if (C_STACK_OVERFLOWING(&arg_specifier))
-        Fail_Stack_Overflow();
-
-    // !!! The MATCH dialect concept calls functions and needs GC safe space
-    // to process the test into.  Although the `out` cell is presumed safe,
-    // putting a processed test into out means running into problems with
-    // trying to use the test and the output in the same expression:
-    //
-    //     Get_If_Word_Or_Path_Throws(out, ...);
-    //     test = out;
-    //     ...
-    //     Init_Logic(out, Some_Comparison(test, ...));  // test aliases out
-    //
-    // This aliasing leads to working in some compilations but fail in others.
-    // Make a GC guarded cell to keep this from happening, which requires
-    // some awkward `goto`-ing to make sure it drops (if only it were C++ !)
-    // Optimize when this experimental dialect gets a more serious treatment.
-    //
-    DECLARE_LOCAL (fetched_test);
-    SET_END(fetched_test);
-    PUSH_GC_GUARD(fetched_test);
-
-    enum Reb_Kind test_kind = VAL_TYPE(test);
-
-    // If test is a WORD! or PATH! then GET it.  To help keep things clear,
-    // require GET-WORD! or GET-PATH! for actions to convey they are not being
-    // invoked inline, and disallow them on non-actions to help discern them
-    // (maybe relax that later)
-    //
-    //    maybe [integer! :even?] 4  ; this is ok
-    //    maybe [:integer! even?] 4  ; this is not
-    //
-    if (
-        test_kind == REB_WORD
-        or test_kind == REB_GET_WORD or test_kind == REB_GET_PATH
-    ){
-        const bool push_refinements = false;
-
-        DECLARE_LOCAL (dequoted_test);  // wouldn't need if Get took quoted
-        Dequotify(Derelativize(dequoted_test, test, test_specifier));
-
-        REBDSP lowest_ordered_dsp = DSP;
-        if (Get_If_Word_Or_Path_Throws(  // !!! take any escape level?
-            fetched_test,
-            dequoted_test,
-            SPECIFIED,
-            push_refinements  // !!! Look into pushing e.g. `match :foo?/bar x`
-        )){
-            Copy_Cell(out, fetched_test);
-            goto return_thrown;
-        }
-
-        assert(lowest_ordered_dsp == DSP); // would have made specialization
-        UNUSED(lowest_ordered_dsp);
-
-        if (IS_ACTION(fetched_test)) {
-            if (IS_GET_WORD(dequoted_test) or IS_GET_PATH(dequoted_test)) {
-                // ok
-            } else
-                fail ("ACTION! match rule must be GET-WORD!/GET-PATH!");
-        }
-
-        test = fetched_test;
-        test_kind = VAL_TYPE(test);
-        test_specifier = SPECIFIED;
-    }
-
-  blockscope {
-    bool matched;  // compiler will catch paths that don't initialize this
-
-    switch (test_kind) {
-      case REB_NULL:  // more useful for NON NULL XXX than MATCH NULL XXX
-        matched = (VAL_TYPE(arg) == REB_NULL);
-        goto return_matched;
-
-      case REB_PATH: {  // AND the tests together
-        REBSPC *specifier = Derive_Specifier(test_specifier, test);
-
-        DECLARE_LOCAL (temp);  // path element extraction buffer (if needed)
-        SET_END(temp);
-        PUSH_GC_GUARD(temp);  // !!! doesn't technically need a guard?
-
-        REBLEN len = VAL_SEQUENCE_LEN(test);
-        REBLEN i;
-        for (i = 0; i < len; ++i) {
-            const RELVAL *item = VAL_SEQUENCE_AT(temp, test, i);
-
-            if (Single_Test_Throws(
-                out,
-                item,
-                specifier,
-                arg,
-                arg_specifier
-            )){
-                DROP_GC_GUARD(temp);
-                goto return_thrown;
-            }
-
-            if (not VAL_LOGIC(out))  {  // any ANDing failing skips block
-                DROP_GC_GUARD(temp);
-                goto return_out;
-            }
-        }
-        DROP_GC_GUARD(temp);
-        assert(VAL_LOGIC(out) == true);  // if all tests succeeded in block
-        goto return_out; }  // return the LOGIC! truth, false=no throw
-
-      case REB_BLOCK: {  // OR the tests together
-        const RELVAL *item_tail;
-        const RELVAL *item = VAL_ARRAY_AT(&item_tail, test);
-        REBSPC *specifier = Derive_Specifier(test_specifier, test);
-        for (; item != item_tail; ++item) {
-            if (Single_Test_Throws(
-                out,
-                item,
-                specifier,
-                arg,
-                arg_specifier
-            )){
-                goto return_thrown;
-            }
-            if (VAL_LOGIC(out) == true)  // test succeeded
-                goto return_out;  // return the LOGIC! true
-        }
-        Init_False(out);
-        goto return_out; }
-
-      case REB_LOGIC:  // test for "truthy" or "falsey"
-        //
-        // Note: testing a literal block for truth or falsehood could make
-        // sense if the *test* varies (e.g. true or false from variable).
-        // So IS_TRUTHY() is used here instead of IS_CONDITIONAL_TRUE()
-        //
-        matched = VAL_LOGIC(test) == IS_TRUTHY(arg);
-        goto return_matched;
-
-      case REB_ACTION: {
-        DECLARE_LOCAL (arg_specified);
-        Derelativize(arg_specified, arg, arg_specifier);
-        Dequotify(arg_specified);  // e.g. '':refinement? wants unquoted
-        PUSH_GC_GUARD(arg_specified);
-
-        DECLARE_LOCAL (temp);  // test is in `out`
-        bool threw = rebRunThrows(
-            temp,
-            true,  // `fully` (ensure argument consumed)
-            SPECIFIC(test),
-            NULLIFY_NULLED(arg_specified)  // nulled cells to nullptr for API
-        );
-
-        DROP_GC_GUARD(arg_specified);
-        if (threw) {
-            Copy_Cell(out, temp);
-            goto return_thrown;
-        }
-
-        matched = IS_TRUTHY(temp);  // errors on BAD-WORD!
-        goto return_matched; }
-
-      case REB_DATATYPE:
-        matched = VAL_TYPE_KIND(test) == VAL_TYPE(arg);
-        goto return_matched;
-
-      case REB_TYPESET:
-        matched = TYPE_CHECK(test, VAL_TYPE(arg));
-        break;
-
-     case REB_TAG: {  // just support <opt> for now
-        bool strict = false;
-        matched = VAL_TYPE(arg) == REB_NULL
-                and 0 == CT_String(test, Root_Opt_Tag, strict);
-        goto return_matched; }
-
-      case REB_INTEGER:  // interpret as length
-        matched = ANY_SERIES_KIND(VAL_TYPE(arg))
-                and VAL_LEN_AT(arg) == VAL_UINT32(test);
-        goto return_matched;
-
-      case REB_META_WORD: {
-        matched = Matches_Fake_Type_Constraint(
-            arg,
-            cast(enum Reb_Symbol_Id, VAL_WORD_ID(test))
-        );
-        goto return_matched; }
-
-      case REB_BAD_WORD:
-        //
-        // Is `non '~void~ x` worth supporting?
-        //
-      default:
-        fail (Error_Invalid_Type(test_kind));
-    }
-
-  return_matched:
-    Init_Logic(out, matched);
-
-  return_out:
-    DROP_GC_GUARD(fetched_test);
-    return false;
-  }
-
-  return_thrown:
-    DROP_GC_GUARD(fetched_test);
-    return true;
-}
-
-
-//
-//  Match_Core_Throws: C
-//
-// MATCH is based on the idea of running a group of tests represented by
-// single items.  e.g. `match 2 block` would check to see if the block was
-// length 2, and `match :even? num` would pass back the value if it were even.
-//
-// A block can pull together these single tests.  They are OR'd by default,
-// but if you use PATH! inside them then those are AND'ed.  Hence:
-//
-//     match [block!/2 integer!/[:even?]] value
-//
-// ...that would either match a block of length 2 or an even integer.
-//
-// In the quoted era, the concept is that match ['integer!] x would match '2.
-//
-// !!! Future directions may allow `match :(> 2) value` to auto-specialize a
-// function to reduce it down to single arity so it can be called.
-//
-// !!! The choice of paths for the AND-ing rules is a bit edgy considering
-// how wily paths are, but it makes sense (paths are minimum length 2, and
-// no need for an AND group of length 1)...and allows for you to define a
-// rule and then reuse it by reference from a word and know if it's an AND
-// rule or an OR'd rule.
-//
-bool Match_Core_Throws(
-    REBVAL *out, // GC-safe output cell
-    const RELVAL *test,
-    REBSPC *test_specifier,
-    const RELVAL *arg,
-    REBSPC *arg_specifier
-){
-    if (Single_Test_Throws(
-        out,
-        test,
-        test_specifier,
-        arg,
-        arg_specifier
-    )){
-        return true;
-    }
-
-    assert(IS_LOGIC(out));
-    return false;
-}
-
-
 //
 //  else: enfix native [
 //
@@ -508,38 +244,75 @@ REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
 //
 //      return: "Input if it matched, NULL if it did not (isotope if falsey)"
 //          [<opt> any-value!]
-//      :test "Typeset membership, LOGIC! to test for truth, filter function"
-//          [
-//              word!  ; GET to find actual test
-//              action! get-word! get-path!  ; arity-1 filter function
-//              path!  ; AND'd tests
-//              block!  ; OR'd tests
-//              datatype! typeset!  ; literals accepted
-//              logic!  ; tests TO-LOGIC compatibility
-//              tag!  ; just <opt> for now
-//              integer!  ; matches length of series
-//          ]
+//      test "Typeset or arity-1 filter function"
+//          [<opt> logic! action! block! datatype! typeset!]
 //      value [<opt> any-value!]
 //  ]
 //
 REBNATIVE(match)
+//
+// Note: Ambitious ideas for the "MATCH dialect" are on hold, and this function
+// just does some fairly simple matching:
+//
+//   https://forum.rebol.info/t/time-to-meet-your-match-dialect/1009/5
 {
     INCLUDE_PARAMS_OF_MATCH;
 
     REBVAL *v = ARG(value);
+    REBVAL *test = ARG(test);
 
-    if (Match_Core_Throws(D_OUT, ARG(test), SPECIFIED, v, SPECIFIED))
-        return R_THROWN;
+    switch (VAL_TYPE(test)) {
+      case REB_NULL:
+        if (not IS_NULLED(v))
+            return nullptr;
+        break;
 
-    if (not VAL_LOGIC(D_OUT))
-        return nullptr;  // unique signal for no match
+      case REB_LOGIC:
+        if (IS_TRUTHY(v) != VAL_LOGIC(test))
+            return nullptr;
+        break;
+
+      case REB_DATATYPE:
+        if (VAL_TYPE(v) != VAL_TYPE_KIND(test))
+            return nullptr;
+        break;
+
+      case REB_BLOCK: {
+        REB_R r = MAKE_Typeset(D_SPARE, REB_TYPESET, nullptr, test);
+        if (r == R_THROWN) {
+            Move_Cell(D_OUT, D_SPARE);
+            return R_THROWN;
+        }
+        test = D_SPARE;
+        goto test_is_typeset; }
+
+      case REB_TYPESET:
+      test_is_typeset:
+        if (not TYPE_CHECK(test, VAL_TYPE(v)))
+            return nullptr;
+        break;
+
+      case REB_ACTION:
+        if (rebRunThrows(D_SPARE, true, test, rebQ(v))) {
+            Move_Cell(D_OUT, D_SPARE);
+            return R_THROWN;
+        }
+        if (IS_FALSEY(D_SPARE))
+            return nullptr;
+        break;
+
+      default:
+        fail (PAR(test));  // all test types should be accounted for in switch
+    }
+
+    //=//// IF IT GOT THIS FAR WITHOUT RETURNING, THE TEST MATCHED /////////=//
 
     // Falsey matched values return isotopes to show they did match, but to
     // avoid misleading falseness of the result:
     //
     //     >> value: false
     //     >> if match [integer! logic!] value [print "Won't run :-("]
-    //     ; null
+    //     ; null  <-- this would be a bad result!
     //
     // So successful matching of falsey values will give back ~false~, ~blank~,
     // or ~null~.  This can be consciously turned back into their original

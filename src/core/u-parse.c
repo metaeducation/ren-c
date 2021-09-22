@@ -2139,44 +2139,6 @@ REBNATIVE(subparse)
                 RESET(D_OUT);  // preserve invariant
                 break; }
 
-            // Because there are no LIT-XXX! datatypes, a special rule
-            // must be used if you want to match quoted types.  MATCH is
-            // brought in to do this duty, bringing along with it the
-            // features of the native.
-
-              case SYM_MATCH: {
-                if (not IS_SER_ARRAY(P_INPUT))
-                    fail (Error_Parse_Rule());  // see #2253
-
-                if (IS_END(P_RULE))
-                    fail (Error_Parse_End());
-
-                if (not subrule)  // capture only on iteration #1
-                    FETCH_NEXT_RULE_KEEP_LAST(&subrule, f);
-
-                const RELVAL *input_tail = ARR_TAIL(ARR(P_INPUT));
-                const RELVAL *cmp = ARR_AT(ARR(P_INPUT), P_POS);
-
-                if (cmp == input_tail)
-                    i = END_FLAG;
-                else {
-                    DECLARE_LOCAL (temp);
-                    if (Match_Core_Throws(
-                        temp,
-                        subrule, P_RULE_SPECIFIER,
-                        cmp, P_INPUT_SPECIFIER
-                    )){
-                        Move_Cell(D_OUT, temp);
-                        return R_THROWN;
-                    }
-
-                    if (VAL_LOGIC(temp))
-                        i = P_POS + 1;
-                    else
-                        i = END_FLAG;
-                }
-                break; }
-
               case SYM_INTO: {
                 if (IS_END(P_RULE))
                     fail (Error_Parse_End());

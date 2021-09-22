@@ -22,42 +22,6 @@
 (null = match blank! false)
 
 
-; !!! There was once special accounting for where the quoting level of the
-; test would match the quoting level of the rule:
-;
-;    (the 'foo = match the 'word! the 'foo)
-;    (null = match the 'word! the foo)
-;
-;    quoted-word!: quote word!
-;    (''foo = match ['quoted-word!] the ''foo)
-;    (null = match ['quoted-word!] the '''foo)
-;    ('''foo = match the '['quoted-word!] the '''foo)
-;
-;    even-int: 'integer!/[:even?]
-;    (the '304 = match the '[block!/3 even-int] the '304)
-;
-; This idea was killed off in steps; one step made it so that MATCH itself did
-; not take its argument literally so it would not see quotes.  That made it
-; less useful.  But then, also there were problems with quoteds not matching
-; ANY-TYPE! because their quote levels were different than the quote level on
-; the any type typeset.  It was a half-baked experiment that needs rethinking.
-
-
-; PATH! is AND'ed together, while blocks are OR'd
-;
-; !!! REVIEW: this is likely not the best idea, should probably be TUPLE!
-; with generalized tuple mechanics.  Otherwise it collides with the inline
-; MATCH experiment, e.g. `match parse/case "AAA" [some "A"]`.  But tuples
-; are not generalized yet.
-
-(1020 = match [integer!/[:even?]] 1020)
-(null = match [integer!/[:odd?]] 304)
-([a b] = match [block!/2 integer!/[:even?]] [a b])
-(null = match [block!/3 integer!/[:even?]] null)
-(304 = match [block!/3 integer!/[:even?]] 304)
-(null = match [block!/3 integer!/[:even?]] 303)
-
-
 ; Falsey things are turned to BAD-WORD! in order to avoid cases like:
 ;
 ;     if match logic! flag [...]
@@ -125,41 +89,4 @@
 
     ("aaa" = match+ match-parse "aaa" [some "a"])
     (null = match+ parse "aaa" [some "b"])
-]
-
-
-; Before REFRAMER existed, there was the concept of MAKE FRAME! on VARARGS!
-; This is still a potentially useful operation.
-;
-; Test MAKE FRAME! from a VARARGS! with a test userspace implementation of the
-; MATCH operation...
-[
-    (userspace-match: function [
-        {Check value using tests (match types, TRUE or FALSE, or filter)}
-
-        return: "Input if it matched, otherwise null (void if falsey match)"
-            [<opt> any-value!]
-        'args [<opt> any-value! <variadic>]
-        'args-normal [<opt> any-value! <variadic>]
-        <local> first-arg
-    ][
-        test: first args
-        switch type of :test [
-            word! path! [
-                if action? get test [
-                    f: make frame! args
-                    first-arg: get in f first parameters of action of f
-                    return ((match true do f) then [:first-arg])
-                ]
-            ]
-        ]
-
-        return match :(take args) (take args-normal)
-    ]
-    true)
-
-    (userspace-match integer! 10 then [true])
-    (userspace-match integer! <tag> else [true])
-    (10 = userspace-match even? 10)
-    (null = userspace-match even? 7)
 ]

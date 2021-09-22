@@ -103,7 +103,7 @@ refinement!  ; !!! simulated datatype constraint (a PATH! like `/word`)
 predicate!  ; !!! simulated datatype constraint (a TUPLE! like `.word`)
 blackhole!  ; !!! simulated datatype constraint (the ISSUE! `#`)
 char!  ; !!! simulated datatype constraint (single-element ISSUE!)
-match
+match  ; !!! no longer supported by PARSE3
 do
 into
 only
