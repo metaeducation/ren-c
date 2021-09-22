@@ -813,6 +813,194 @@ void Get_Var_May_Fail(
 
 
 //
+//  Get_Path_Push_Refinements_Throws: C
+//
+// This form of Get_Path() is low-level, and may return a non-ACTION! value
+// if the path is inert (e.g. `/abc` or `.a.b/c/d`).
+//
+// It is also able to return a non-ACTION! value if REDBOL-PATHS compatibility
+// is enabled.
+//
+bool Get_Path_Push_Refinements_Throws(
+    REBVAL *out,
+    REBVAL *safe,
+    const RELVAL *path,
+    REBSPC *path_specifier
+){
+    switch (HEART_BYTE(path)) {
+      case REB_BYTES:
+        Derelativize(out, path, path_specifier);  // inert
+        return false;
+
+      case REB_WORD:  // Note: will become SYMBOL! instances
+        assert(VAL_STRING(path) == PG_Slash_1_Canon);
+        Get_Word_May_Fail(out, path, path_specifier);
+        return false;
+
+      case REB_GET_WORD:  // `/a` - should you be able to GET these?
+        Derelativize(out, path, path_specifier);  // inert
+        return false;
+
+      case REB_META_WORD:  // `a/`
+        //
+        // !!! It should error if it's not an action...
+        //
+        Get_Word_May_Fail(out, path, path_specifier);
+        if (not IS_ACTION(out))
+            fail (Error_Inert_With_Slashed_Raw());
+        return false;
+
+      case REB_GET_GROUP:  // `/(a)` or `.(a)`
+      case REB_GET_BLOCK:  // `/[a]` or `.[a]`
+      case REB_META_GROUP:  // `(a)/` or `(a).`
+      case REB_META_BLOCK:  // `[a]/` or `[a].`
+        fail (path);  // not handled yet
+
+      case REB_BLOCK:
+        break;
+
+      default:
+        panic (path);
+    }
+
+    const RELVAL *tail;
+    const RELVAL *head = VAL_ARRAY_AT(&tail, path);
+    if (ANY_INERT(head)) {
+        Derelativize(out, path, path_specifier);
+        return false;
+    }
+
+    if (IS_GROUP(head)) {
+        //
+        // Note: Historical Rebol did not allow GROUP! at the head of path.
+        // We can thus restrict head-of-path evaluations to ACTION!.
+        //
+        REBSPC *derived = Derive_Specifier(path_specifier, head);
+        if (Eval_Value_Throws(out, head, derived))
+            return true;
+        if (not IS_ACTION(out))
+            fail ("Head of PATH! did not evaluate to an ACTION!");
+    }
+    else if (IS_TUPLE(head)) {
+        //
+        // Note: Historical Rebol didn't have WORD!-bearing TUPLE!s at all.
+        // We can thus restrict head-of-path evaluations to ACTION!, or
+        // this exemption...where blank-headed tuples can carry over the
+        // inert evaluative behavior.  For instance:
+        //
+        //    >> .a.b/c/d
+        //    == .a.b/c/d
+        //
+        if (IS_BLANK(VAL_SEQUENCE_AT(safe, head, 0))) {
+            Derelativize(out, path, path_specifier);
+            return false;
+        }
+
+        REBSPC *derived = Derive_Specifier(path_specifier, head);
+
+        DECLARE_LOCAL (steps);
+        if (Get_Var_Core_Throws(out, steps, head, derived))
+            return true;
+
+        if (not IS_ACTION(out))
+            fail ("TUPLE! must resolve to an action if head of PATH!");
+    }
+    else if (IS_WORD(head)) {
+        const REBVAL *lookup = Lookup_Word_May_Fail(
+            head,
+            path_specifier
+        );
+
+        // Under the new thinking, PATH! is only used to invoke actions.
+        //
+        if (IS_ACTION(lookup)) {
+            Copy_Cell(out, lookup);
+            goto action_in_out;
+        }
+
+        if (Is_Isotope(lookup))
+            fail (Error_Bad_Word_Get(head, lookup));
+
+        Derelativize(safe, path, path_specifier);
+        mutable_KIND3Q_BYTE(safe) = REB_TUPLE;
+
+        // ...but historical Rebol used PATH! for everything.  For Redbol
+        // compatibility, we flip over to a TUPLE!.  We must be sure that
+        // we are running in a mode where tuple allows the getting of
+        // actions (though it's slower because it does specialization)
+        //
+        REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+        if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
+            Derelativize(out, path, path_specifier);
+            rebElide(
+                "echo [The PATH!", out, "doesn't evaluate to",
+                    "an ACTION! in the first slot.]",
+                "echo [SYSTEM.OPTIONS.REDBOL-PATHS is FALSE so this",
+                    "is not allowed by default.]",
+                "echo [For now, we'll enable it automatically...but it",
+                    "will slow down the system!]",
+                "echo [Please use TUPLE! instead, like", safe, "]",
+
+                "system.options.redbol-paths: true",
+                "wait 3"
+            );
+        }
+
+        DECLARE_LOCAL (steps);
+        if (Get_Var_Core_Throws(out, steps, safe, SPECIFIED))
+            return true;
+
+        if (Is_Isotope(out))
+            fail (Error_Bad_Word_Get(path, out));
+
+        return false;  // refinements pushed by Redbol-adjusted Get_Var()
+    }
+    else
+        fail (head);  // what else could it have been?
+
+  action_in_out:
+
+    assert(IS_ACTION(out));
+
+    // We push the remainder of the path in *reverse order* as words to act
+    // as refinements to the function.  The action execution machinery will
+    // decide if they are valid or not.
+    //
+    REBLEN len = VAL_SEQUENCE_LEN(path) - 1;
+    for (; len != 0; --len) {
+        const RELVAL *at = VAL_SEQUENCE_AT(safe, path, len);
+        if (IS_GROUP(at)) {
+            DECLARE_LOCAL (temp);
+            REBSPC *derived = Derive_Specifier(
+                path_specifier,
+                at
+            );
+            if (Eval_Value_Throws(temp, at, derived)) {
+                Move_Cell(out, temp);
+                return true;
+            }
+            Move_Cell(safe, temp);
+            at = safe;
+        }
+        if (
+            IS_NULLED(at) or Is_Nulled_Isotope(at)
+            or IS_BLANK(at) or Is_Isotope_With_Id(at, SYM_BLANK)
+        ){
+            // just skip it
+        }
+        else if (IS_WORD(at))
+            Init_Word(DS_PUSH(), VAL_WORD_SYMBOL(at));
+        else if (IS_PATH(at) and IS_REFINEMENT(at))
+            Init_Word(DS_PUSH(), VAL_REFINEMENT_SYMBOL(at));
+        else
+            fail (at);
+    }
+
+    return false;
+}
+
+
+//
 //  get: native [
 //
 //  {Gets the value of a word or path, or block of words/paths}
