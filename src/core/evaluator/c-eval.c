@@ -1199,7 +1199,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         }
 
         RESET(f->out);
-        if (Eval_Path_Throws_Core(f->out, v, v_specifier, EVAL_MASK_DEFAULT))
+        if (Get_Var_Core_Throws(f->out, f_spare, v, v_specifier))
             goto return_thrown;
 
         // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
