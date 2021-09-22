@@ -696,6 +696,34 @@ bool Get_Var_Core_Throws(
         return false;
     }
 
+    if (ANY_PATH(var)) {  // !!! SET-PATH! too?
+        DECLARE_LOCAL (safe);
+        PUSH_GC_GUARD(safe);
+        DECLARE_LOCAL (result);
+        PUSH_GC_GUARD(result);
+
+        REBDSP dsp_orig = DSP;
+
+        bool threw = Get_Path_Push_Refinements_Throws(
+            result, safe, var, var_specifier  // var may be in `out`
+        );
+        DROP_GC_GUARD(result);
+        DROP_GC_GUARD(safe);
+
+        if (DSP != dsp_orig) {
+            assert(IS_ACTION(result) and not threw);
+            //
+            // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
+            // that needs to be looked into.
+            //
+            return Specialize_Action_Throws(out, result, nullptr, dsp_orig);
+        }
+
+        assert(DSP == dsp_orig);
+        Move_Cell(out, result);
+        return threw;
+    }
+
     if (ANY_SEQUENCE(var)) {
         switch (HEART_BYTE(var)) {
           case REB_BYTES:
