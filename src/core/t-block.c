@@ -871,10 +871,14 @@ REBTYPE(Array)
 
         const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
 
-        if (steps_left == 1)
-            return Derelativize(D_OUT, at, VAL_SPECIFIER(array));
+        if (steps_left == 1) {
+            Derelativize(D_OUT, at, VAL_SPECIFIER(array));
+            Inherit_Const(D_OUT, array);
+            return D_OUT;
+        }
 
         Derelativize(ARG(location), at, VAL_SPECIFIER(array));
+        Inherit_Const(ARG(location), array);
         ++VAL_INDEX_RAW(ARG(steps));
 
         return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
@@ -904,6 +908,7 @@ REBTYPE(Array)
 
             const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
             Derelativize(D_OUT, at, VAL_SPECIFIER(array));
+            Inherit_Const(D_OUT, array);
 
             ++VAL_INDEX_RAW(ARG(steps));
 
