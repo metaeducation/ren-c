@@ -88,14 +88,14 @@
 (
     x: 1020
     did all [
-        <truthy> and (x: 304) = true
+        (<truthy>) and (x: 304) = true
         x = 304
     ]
 )
 (
     x: 1020
     did all [
-        <truthy> and (x: _) = false
+        (<truthy>) and (x: _) = false
         x = _
     ]
 )
@@ -122,14 +122,14 @@
 (
     x: 1020
     did all [
-        _ or (x: 304) = true
+        (_) or (x: 304) = true
         x = 304
     ]
 )
 (
     x: 1020
     did all [
-        _ or (x: true) = true
+        (_) or (x: true) = true
         x = true
     ]
 )
@@ -160,10 +160,10 @@
     (not n and n)
     ;(x = 216)
 
-    (did o/y and o/y)
-    (not o/y and o/n)
-    (not o/n and o/y)
-    (not o/n and o/n)
+    (did o.y and o.y)
+    (not o.y and o.n)
+    (not o.n and o.y)
+    (not o.n and o.n)
     ;(216 * 216 = x)
 
     (did y or y)
@@ -172,9 +172,9 @@
     (not n or n)
     ;(216 * 216 * 216 = x)
 
-    (did o/y or o/y)
-    (did o/y or o/n)
-    (did o/n or o/y)
-    (not o/n or o/n)
+    (did o.y or o.y)
+    (did o.y or o.n)
+    (did o.n or o.y)
+    (not o.n or o.n)
     ;(216 * 216 * 216 * 216 = x)
 ]

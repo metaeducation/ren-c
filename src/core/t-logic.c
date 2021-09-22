@@ -125,41 +125,27 @@ REBNATIVE(_not_)  // see TO-C-NAME
 }
 
 
-// At the moment, it is permitted to use plain words or paths on the right
-// hand side of an OR, XOR, AND.  This was for a time not allowed and you had
-// to use @word or @pa/th.  However that datatype has (temporarily) been
-// removed to make way for the more critical ^word and ^path.  Because of this
-// the idea of going ahead and allowing the plain words was done.
+// The handling of logic has gone through several experiments, some of which
+// made it more like a branching structure (so able to pass the result of the
+// left hand side to the right).  There was also behavior for GET-GROUP!, to
+// run the provided code whether the condition on the left was true or not.
+//
+// This scales the idea back to a very simple concept of a quoted GROUP!,
+// WORD!, or TUPLE!.
 //
 inline static bool Do_Logic_Right_Side_Throws(
     REBVAL *out,
-    REBVAL *right,  // Note: mutates type!
-    const REBVAL *left
+    const REBVAL *right
 ){
-    if (IS_GROUP(right) or IS_GET_GROUP(right))  { // don't double execute
-        //
-        // !!! We don't want to get ~null~ isotopes here.  And in fact, it
-        // may not make sense to be doing this as a branch that can get the
-        // left hand side value.  :-/  That was a feature that was in use
-        // at one time but may no longer make sense.
-        //
-        mutable_KIND3Q_BYTE(right) = mutable_HEART_BYTE(right) = REB_THE_BLOCK;
+    if (IS_GROUP(right))
+        return Do_Any_Array_At_Throws(out, right, SPECIFIED);
 
-        if (Do_Branch_With_Throws(out, right, left))
-            return true;
-    }
-    else {
-        if (IS_WORD(right))
-            Get_Word_May_Fail(out, right, SPECIFIED);
-        else {
-            assert (IS_PATH(right));
-            if (Eval_Path_Throws_Core(out, right, SPECIFIED, EVAL_MASK_DEFAULT))
-                return true;
-        }
+    assert(IS_WORD(right) or IS_TUPLE(right));
 
-        if (IS_ACTION(out))
-            fail ("words/paths can't be ACTION! as right hand of OR, AND, XOR");
-    }
+    Get_Var_May_Fail(out, right, SPECIFIED, false);
+
+    if (IS_ACTION(out))
+        fail ("words/tuples can't be ACTION! as right hand of OR, AND, XOR");
 
     return false;
 }
@@ -172,8 +158,8 @@ inline static bool Do_Logic_Right_Side_Throws(
 //
 //      return: [logic!]
 //      left [<opt> any-value!]
-//      'right "Right is evaluated if left is true, or if GET-GROUP!"
-//          [group! get-group! path! word!]
+//      'right "Right is evaluated if left is true"
+//          [group! tuple! word!]
 //  ]
 //
 REBNATIVE(_and_)  // see TO-C-NAME
@@ -184,20 +170,12 @@ REBNATIVE(_and_)  // see TO-C-NAME
     REBVAL *right = ARG(right);
 
     if (GET_CELL_FLAG(left, UNEVALUATED))
-        if (IS_BLOCK(left) or ANY_META_KIND(VAL_TYPE(left)))
-            fail (Error_Unintended_Literal_Raw(left));
+        fail (Error_Unintended_Literal_Raw(left));
 
-    if (IS_FALSEY(left)) {
-        if (IS_GET_GROUP(right)) {  // have to evaluate GET-GROUP! either way
-            if (Do_Any_Array_At_Throws(D_SPARE, right, SPECIFIED)) {
-                Move_Cell(D_OUT, D_SPARE);
-                return R_THROWN;
-            }
-        }
+    if (IS_FALSEY(left))
         return Init_False(D_OUT);
-    }
 
-    if (Do_Logic_Right_Side_Throws(D_SPARE, right, left)) {
+    if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
         Move_Cell(D_OUT, D_SPARE);
         return R_THROWN;
     }
@@ -212,8 +190,8 @@ REBNATIVE(_and_)  // see TO-C-NAME
 //
 //      return: [logic!]
 //      left [<opt> any-value!]
-//      'right "Right is evaluated if left is false, or if GET-GROUP!"
-//          [group! get-group! path! word!]
+//      'right "Right is evaluated if left is false"
+//          [group! tuple! word!]
 //  ]
 //
 REBNATIVE(_or_)  // see TO-C-NAME
@@ -224,20 +202,12 @@ REBNATIVE(_or_)  // see TO-C-NAME
     REBVAL *right = ARG(right);
 
     if (GET_CELL_FLAG(left, UNEVALUATED))
-        if (IS_BLOCK(left) or ANY_META_KIND(VAL_TYPE(left)))
-            fail (Error_Unintended_Literal_Raw(left));
+        fail (Error_Unintended_Literal_Raw(left));
 
-    if (IS_TRUTHY(left)) {
-        if (IS_GET_GROUP(right)) {  // have to evaluate GET-GROUP! either way
-            if (Do_Any_Array_At_Throws(D_SPARE, right, SPECIFIED)) {
-                Move_Cell(D_OUT, D_SPARE);
-                return R_THROWN;
-            }
-        }
+    if (IS_TRUTHY(left))
         return Init_True(D_OUT);
-    }
 
-    if (Do_Logic_Right_Side_Throws(D_SPARE, right, left)) {
+    if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
         Move_Cell(D_OUT, D_SPARE);
         return R_THROWN;
     }
@@ -253,8 +223,8 @@ REBNATIVE(_or_)  // see TO-C-NAME
 //
 //      return: [logic!]
 //      left [<opt> any-value!]
-//      'right "Always evaluated, but is a GROUP! for consistency with AND/OR"
-//          [group! get-group! path! word!]
+//      'right "Always evaluated"
+//          [group! tuple! word!]
 //  ]
 //
 REBNATIVE(_xor_)  // see TO-C-NAME
@@ -265,10 +235,9 @@ REBNATIVE(_xor_)  // see TO-C-NAME
     REBVAL *right = ARG(right);
 
     if (GET_CELL_FLAG(left, UNEVALUATED))
-        if (IS_BLOCK(left) or ANY_META_KIND(VAL_TYPE(left)))
-            fail (Error_Unintended_Literal_Raw(left));
+        fail (Error_Unintended_Literal_Raw(left));
 
-    if (Do_Logic_Right_Side_Throws(D_SPARE, right, left)) {
+    if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
         Move_Cell(D_OUT, D_SPARE);
         return R_THROWN;
     }
