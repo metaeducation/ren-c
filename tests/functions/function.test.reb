@@ -430,7 +430,7 @@
 
     f: function [
         /count [integer!]
-        <in> o1 o1/o2
+        <in> o1 o1.o2
         <with> outer
         <static> static (10 + n)
     ][
