@@ -74,7 +74,7 @@ static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
         // !!! Rather limiting symbol-to-integer transformation for event
         // type, based on R3-Alpha-era optimization ethos.
 
-        if (not IS_WORD(val) and not IS_QUOTED_WORD(val))
+        if (not IS_WORD(val))
             return false;
 
         SYMID id = VAL_WORD_ID(val);
@@ -198,6 +198,15 @@ static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
 //
 //  Set_Event_Vars: C
 //
+// !!! R3-Alpha's EVENT! was a kind of compressed object.  Hence when you would
+// say `make event! [type: 'something ...]` there wasn't a normal way of
+// binding the TYPE SET-WORD! to a cell.  This routine was a hacky way of
+// walking across the spec block and filling the event fields without running
+// the evaluator, since it wouldn't know what to do with the SET-WORD!s.
+//
+// (As with GOB! this code is all factored out and slated for removal, but kept
+// working to study whether the desires have better answers in new mechanisms.)
+//
 void Set_Event_Vars(
     REBVAL *evt,
     const RELVAL *block,
@@ -221,9 +230,24 @@ void Set_Event_Vars(
             fail (var);
 
         if (item == tail)
-            Init_Blank(val);
+            fail (Error_Need_Non_End_Raw(var));
+
+        if (
+            IS_WORD(item) or IS_GET_WORD(item)
+            or IS_TUPLE(item) or IS_GET_TUPLE(item)
+        ){
+            Get_Var_May_Fail(val, item, specifier, false);
+            if (IS_ACTION(val))
+                fail ("MAKE EVENT! evaluation is limited; can't run ACTION!s");
+        }
+        else if (IS_QUOTED(item)) {
+            Derelativize(val, item, specifier);
+            Unquotify(val, 1);
+        }
+        else if (ANY_INERT(item))
+            Derelativize(val, item, specifier);
         else
-            Get_Simple_Value_Into(val, item, specifier);
+            fail ("MAKE EVENT! evaluation is limited; simple references only");
 
         ++item;
 
