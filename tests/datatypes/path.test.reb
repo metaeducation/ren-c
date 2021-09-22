@@ -160,11 +160,12 @@
 ]
 
 ; path evaluation order
+; Note: This matches Red but is different from R3-Alpha, which gets b as 1
 (
     a: 1x2
     did all [
         b: a.(a: [3 4] 1)
-        b = 1
+        b = 3
         a = [3 4]
     ]
 )
