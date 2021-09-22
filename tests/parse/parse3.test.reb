@@ -48,11 +48,11 @@
 
 ; Plain voids cause an error, quoted voids match literal voids
 (
-    foo: '~void~
+    foo: ~void~
     e: trap [parse "a" [foo]]
     e.id = 'bad-word-get
 )(
-    foo: quote '~void~
+    foo: '~void~
     parse? [~void~] [foo <end>]
 )
 
@@ -64,12 +64,15 @@
 (not parse? [x] [[[]]])
 (parse? [x] [[] 'x []])
 
-; Literal blank vs. fetched blank/null handling.
-; Literal blank means "skip" at source level, but if retrieved from a variable
-; it means the same as null.
+; No longer contentious concept: NULL is not legal as a parse rule.
+;
+; Contentious concept: PARSE3 tried the idea that literal blank would be
+; different from fetched blank.  Literal blank means "skip" at source level,
+; but if retrieved from a variable it means the same as empty block.
+;
 ; https://forum.rebol.info/t/1348
 [
-    (parse? [x] ['x null])
+    (error? trap [parse? [x] ['x null]])
     (parse? [x] [blank 'x <end>])
 
     (parse? [] [blank blank blank])
@@ -85,7 +88,6 @@
 
     (not parse? [] [[[_ _ _]]])
     (parse? [] [[[blank blank blank]]])
-    (parse? [] [[[null null null]]])
 ]
 
 ; SET-WORD! (store current input position)
@@ -245,7 +247,7 @@
 
 [https://github.com/metaeducation/ren-c/issues/377 (
     o: make object! [a: 1]
-    parse s: "a" [o.a: skip]
+    parse s: "a" [o.a: here, skip]
     o.a = s
 )]
 

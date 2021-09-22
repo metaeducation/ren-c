@@ -1687,7 +1687,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 Meta_Quotify(f->out);
             Set_Var_May_Fail(
                 f_spare, SPECIFIED,
-                f->out, SPECIFIED
+                f->out
             );
         }
 
@@ -1714,7 +1714,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                     Meta_Quotify(temp);
                 Set_Var_May_Fail(
                     f_spare, SPECIFIED,
-                    temp, SPECIFIED
+                    temp
                 );
                 if (dsp_circled == dsp)
                     Move_Cell(f->out, temp);

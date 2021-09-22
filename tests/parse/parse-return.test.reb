@@ -12,15 +12,13 @@
     10 = uparse [aaa] [return (10)]
 )
 (
-    let result: uparse "aaabbbccc" [
-        return gather [
-            emit x: collect some ["a", keep (<a>)]
-            emit y: collect some ["b", keep (<b>)]
-        ]
-    ] else [
-        fail "Parse failed"
-    ]
     did all [
+        let result: uparse "aaabbbccc" [
+            return gather [
+                emit x: collect some ["a", keep (<a>)]
+                emit y: collect some ["b", keep (<b>)]
+            ]
+        ]
         result.x = [<a> <a> <a>]
         result.y = [<b> <b> <b>]
     ]

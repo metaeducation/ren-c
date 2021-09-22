@@ -132,7 +132,7 @@ export proto-parser: context [
     count: ~
 
     process: func [return: <none> text] [
-        parse2 text [grammar/rule]
+        parse2 text grammar/rule
     ]
 
     grammar: context bind [
