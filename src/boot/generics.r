@@ -347,7 +347,7 @@ pick*: generic [
     location "Target value"
         [any-value!]
     steps "A pre-COMPOSE'd list of steps in the PICK chain"
-        [block!]
+        [the-block!]
 ]
 
 
@@ -359,7 +359,7 @@ poke*: generic [
     location "Target value (on some steps, bits are modified)"
         [any-value!]
     steps "A pre-COMPOSE'd list of steps in the POKE chain"
-        [block!]
+        [the-block!]
     ^value "Value to POKE"
         [<opt> any-value!]
 ]

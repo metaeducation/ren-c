@@ -752,12 +752,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     // Null and void assigns are allowed: https://forum.rebol.info/t/895/4
 
-      process_set_word:
       case REB_SET_WORD: {
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
             goto return_thrown;
-
-      set_word_with_out:
 
         if (IS_ACTION(f->out))  // cache the word's label in the cell
             INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
@@ -994,14 +991,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             break;
         }
 
-        Derelativize(f->out, v, v_specifier);
-        Quotify(f->out, 1);
-
-        if (rebRunThrows(
-            f_spare,
-            true,
-            Lib(APPLY), rebQ(Lib(GET)), "[", f->out, "/steps #]"
-        )){
+        DECLARE_LOCAL (steps);
+        if (Get_Var_Core_Throws(f_spare, steps, v, v_specifier)) {
             Move_Cell(f->out, f_spare);
             goto return_thrown;
         }
@@ -1283,7 +1274,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 "wait 3"
             );
         }
-        goto set_tuple; }
+        goto set_common; }
 
 
     //=//// SET-TUPLE! /////////////////////////////////////////////////////=//
@@ -1302,36 +1293,16 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //     left
     //     == 20
     //
-    // BAD-WORD! and NULL assigns are allowed: https://forum.rebol.info/t/895/4
+    // Isotope and NULL assigns are allowed: https://forum.rebol.info/t/895/4
 
-      set_tuple:
+      set_common:
+      case REB_SET_GROUP:
       case REB_SET_TUPLE: {
-        if (HEART_BYTE(v) == REB_WORD) {
-            assert(VAL_WORD_ID(v) == SYM__SLASH_1_);
-            goto process_set_word;
-        }
-
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))
             goto return_thrown;
 
-      set_path_with_out:
-
-        Decay_If_Isotope(f->out);
-
-        // !!! Begin trying to unify by full reuse of SET implementation, by
-        // actually calling SET on the path or tuple.
-        //
-        if (v != f_spare)  // !!! SET-GROUP! puts in f_spare, jumps to label
-            Derelativize(f_spare, v, v_specifier);
-        Quotify(f_spare, 1);
-
-        DECLARE_LOCAL (discarded);
-        if (rebRunThrows(
-            discarded,
-            true,
-            Lib(APPLY), rebQ(Lib(SET)), "[", f_spare, rebQ(f->out), "/steps #]"
-        )){
-            Move_Cell(f->out, discarded);
+        if (Set_Var_Core_Throws(f_spare, f_spare, v, v_specifier, f->out)) {
+            Move_Cell(f->out, f_spare);
             goto return_thrown;
         }
         break; }
@@ -1409,71 +1380,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
       case REB_GET_GROUP:
         STATE_BYTE(f) = ST_EVALUATOR_GROUP;
         goto eval_group;
-
-
-    //=//// SET-GROUP! ////////////////////////////////////////////////////=//
-    //
-    // Synonym for SET on the produced thing, unless it's an action...in which
-    // case an arity-1 function is allowed to be called and passed the right.
-
-      case REB_SET_GROUP: {
-        //
-        // Protocol for all the REB_SET_XXX is to evaluate the right before
-        // the left.  Same with SET_GROUP!.  (Consider in particular the case
-        // of PARSE, where it has to hold the SET-GROUP! in suspension while
-        // it looks on the right in order to decide if it will run it at all!)
-        //
-        if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))
-            goto return_thrown;
-
-        f_next_gotten = nullptr;  // arbitrary code changes fetched variables
-
-        if (Do_Any_Array_At_Throws(f_spare, v, v_specifier)) {
-            Move_Cell(f->out, f_spare);
-            goto return_thrown;
-        }
-
-        if (IS_ACTION(f_spare)) {
-            //
-            // Indicate that next argument should be taken from f->out
-            //
-            assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));
-            SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
-
-            // Apply the function, and we can reuse this frame to do it.
-            //
-            // !!! But really it should not be allowed to take more than one
-            // argument.  Hence rather than go through reevaluate, channel
-            // it through a variant of the enfix machinery (the way that
-            // CHAIN does, which similarly reuses the frame but probably
-            // should also be restricted to a single value...though it's
-            // being experimented with letting it take more.)
-            //
-            DECLARE_ACTION_SUBFRAME (subframe, f);
-            Push_Frame(f->out, subframe);
-            Push_Action(
-                subframe,
-                VAL_ACTION(f_spare),
-                VAL_ACTION_BINDING(f_spare)
-            );
-            Begin_Prefix_Action(subframe, nullptr);  // no label
-
-            goto process_action;
-        }
-
-        v = f_spare;
-
-        if (ANY_WORD(f_spare)) {
-            goto set_word_with_out;
-        }
-        else if (ANY_PATH(f_spare)) {
-            goto set_path_with_out;
-        }
-        else if (ANY_BLOCK(f_spare)) {
-            fail ("Retriggering multi-returns not implemented ATM");
-        }
-
-        fail (Error_Bad_Set_Group_Raw()); }
 
 
     //=//// GET-BLOCK! ////////////////////////////////////////////////////=//
@@ -1702,10 +1608,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 continue;
             if (not IS_BLANK(DS_AT(dsp_output))) {
                 Copy_Cell(var, DS_AT(dsp_output));
-                Set_Var_May_Fail(
-                    var, SPECIFIED,
-                    UNSET_VALUE, SPECIFIED
-                );
+                Set_Var_May_Fail(var, SPECIFIED, UNSET_VALUE);
             }
             ++dsp_output;
         }

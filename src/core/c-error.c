@@ -946,7 +946,7 @@ REBCTX *Error_User(const char *utf8) {
 //
 REBCTX *Error_Need_Non_End(const RELVAL *target) {
     assert(
-        IS_SET_WORD(target) or IS_SET_TUPLE(target)
+        IS_SET_WORD(target) or IS_SET_TUPLE(target) or IS_SET_GROUP(target)
         or IS_SET_PATH(target)  // only needed in legacy Redbol
     );
     return Error_Need_Non_End_Raw(target);
@@ -962,7 +962,12 @@ REBCTX *Error_Bad_Word_Get(
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
-    assert(ANY_WORD(target) or ANY_SEQUENCE(target) or ANY_BLOCK(target));
+    assert(
+        ANY_WORD(target)
+        or ANY_SEQUENCE(target)
+        or ANY_BLOCK(target)
+        or ANY_GROUP(target)
+    );
     assert(IS_BAD_WORD(bad));
 
     // Don't want the error message to have an isotope version as argument, as

@@ -670,7 +670,7 @@ REBNATIVE(evaluate)
     }
 
     if (IS_TRUTHY(var))
-        Set_Var_May_Fail(var, SPECIFIED, D_SPARE, SPECIFIED);
+        Set_Var_May_Fail(var, SPECIFIED, D_SPARE);
 
     return D_OUT;
 }

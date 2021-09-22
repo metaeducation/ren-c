@@ -845,7 +845,7 @@ REBNATIVE(switch)
 //      return: "Former value or branch result, can only be null if no target"
 //          [<opt> any-value!]
 //      :target "Word or path which might be set appropriately (or not)"
-//          [set-word! set-path! set-tuple!]  ; to left of DEFAULT
+//          [set-group! set-word! set-tuple!]  ; to left of DEFAULT
 //      :branch "If target needs default, this is evaluated and stored there"
 //          [any-branch!]
 //      /predicate "Test beyond null/void for defaulting, else NOT BLANK?"
@@ -860,16 +860,15 @@ REBNATIVE(default)
 
     REBVAL *predicate = ARG(predicate);
 
-    if (IS_SET_WORD(target))
-        Copy_Cell(D_OUT, Lookup_Word_May_Fail(target, SPECIFIED));
-    else {
-        assert(IS_SET_PATH(target) or IS_SET_TUPLE(target));
-        //
-        // !!! This is temporary, it will double evaluate any GROUP!s in
-        // the path...a better solution is being worked on.
-        //
-        Get_Var_May_Fail(D_OUT, target, SPECIFIED, true);
-    }
+    REBVAL *steps = D_SPARE;
+
+    // The TARGET may be something like a TUPLE! that contains GROUP!s, or a
+    // SET-GROUP!.  When we ask for `steps` back from Get, it will give a
+    // block back that has the evaluations processed out and can be used for
+    // the SET without doing a double evaluation.
+    //
+    if (Get_Var_Core_Throws(D_OUT, steps, target, SPECIFIED))
+        return R_THROWN;
 
     // We only consider those bad words which are in the "unfriendly" state
     // that the system also knows to mean "emptiness" as candidates for
@@ -896,16 +895,11 @@ REBNATIVE(default)
     if (Do_Branch_Throws(D_OUT, ARG(branch)))
         return R_THROWN;
 
-    if (IS_SET_WORD(target))
-        Copy_Cell(Sink_Word_May_Fail(target, SPECIFIED), D_OUT);
-    else {
-        assert(IS_SET_PATH(target) or IS_SET_TUPLE(target));
-
-        // !!! Again, this is temporary, as it means GROUP!s in any PATH!
-        // would be evaluated twice in the defaulting process.
-        //
-        Set_Var_May_Fail(target, SPECIFIED, D_OUT, SPECIFIED);
+    if (Set_Var_Core_Throws(D_SPARE, nullptr, steps, SPECIFIED, D_OUT)) {
+        assert(false);  // shouldn't be able to happen.
+        fail (Error_No_Catch_For_Throw(D_SPARE));
     }
+
     return D_OUT;
 }
 

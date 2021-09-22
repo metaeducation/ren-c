@@ -1022,8 +1022,8 @@ void Startup_Core(void)
     Init_Any_Word_Bound(lib_at, REB_WORD, Lib_Context, PG_At_Symbol, INDEX_ATTACHED);
     mutable_KIND3Q_BYTE(lib_at) = REB_SYMBOL;
 
-    Set_Var_May_Fail(lib_caret, SPECIFIED, Lib(META), SPECIFIED);
-    Set_Var_May_Fail(lib_at, SPECIFIED, Lib(THE), SPECIFIED);
+    Set_Var_May_Fail(lib_caret, SPECIFIED, Lib(META));
+    Set_Var_May_Fail(lib_at, SPECIFIED, Lib(THE));
 
     // boot->generics is the list in %generics.r
     //
