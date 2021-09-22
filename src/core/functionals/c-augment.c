@@ -151,7 +151,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     // with patching the augmentee's action information (phase and binding)
     // into the paramlist...and reusing the Specializer_Dispatcher.
 
-    assert(Is_Isotope(ARR_HEAD(paramlist), SYM_ROOTVAR));
+    assert(Is_Isotope_With_Id(ARR_HEAD(paramlist), SYM_ROOTVAR));
     INIT_VAL_FRAME_ROOTVAR(
         ARR_HEAD(paramlist),
         paramlist,

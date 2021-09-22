@@ -173,11 +173,11 @@ REBARR *Startup_Generics(const REBVAL *boot_generics)
     //
     Bind_Values_Deep(head, tail, Lib_Context_Value);
 
-    DECLARE_LOCAL (result);
-    if (Do_Any_Array_At_Throws(result, boot_generics, SPECIFIED))
-        panic (result);
-    if (not Is_Isotope(result, SYM_DONE))
-        panic (result);
+    DECLARE_LOCAL (discarded);
+    if (Do_Any_Array_At_Throws(discarded, boot_generics, SPECIFIED))
+        panic (discarded);
+    if (not Is_Isotope_With_Id(discarded, SYM_DONE))
+        panic (discarded);
 
     // Sanity check the symbol transformation
     //

@@ -740,12 +740,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             goto process_action;
         }
 
-        if (
-            IS_BAD_WORD(unwrap(gotten))
-            and GET_CELL_FLAG(unwrap(gotten), ISOTOPE)
-        ){
+        if (Is_Isotope(unwrap(gotten)))
             fail (Error_Bad_Word_Get(v, unwrap(gotten)));
-        }
 
         Copy_Cell(f->out, unwrap(gotten));  // no CELL_FLAG_UNEVALUATED
         break;
@@ -1052,7 +1048,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             goto process_action;
         }
 
-        if (IS_BAD_WORD(f_spare) and GET_CELL_FLAG(f_spare, ISOTOPE))
+        if (Is_Isotope(f_spare))
             fail (Error_Bad_Word_Get(v, f_spare));
 
         Move_Cell(f->out, f_spare);  // won't move CELL_FLAG_UNEVALUATED
@@ -1578,11 +1574,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //     >> bar
     //     ** Error
     //
-    // To bypass the error, use GET/ANY.  For average comparisons or putting
-    // into blocks/etc, this will conflate the forms:
-    //
-    //     >> get/any 'bar
-    //     == ~unset~
+    // To bypass the error, use GET/ANY.
 
       case REB_BAD_WORD:
         //

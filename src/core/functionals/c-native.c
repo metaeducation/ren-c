@@ -280,7 +280,7 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     DECLARE_LOCAL (discarded);
     if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))
         panic (Error_No_Catch_For_Throw(discarded));
-    if (not Is_Isotope(discarded, SYM_DONE))
+    if (not Is_Isotope_With_Id(discarded, SYM_DONE))
         panic (discarded);
 
   #if !defined(NDEBUG)

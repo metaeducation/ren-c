@@ -98,20 +98,23 @@ inline static const REBSYM* VAL_BAD_WORD_LABEL(
 // A bad word isotope is produced by the evaluator when an ordinary BAD-WORD!
 // is evaluated.  These cannot live in blocks, and most are "unfriendly" and
 // cannot be passed as normal parameters.
+//
+// Note: Testing for isotopes could be faster if CELL_FLAG_ISOTOPE promised to
+// only be used on BAD-WORD!s...but given how rare cell flags are it's
+// probably better to reserve it to mean something else for other types.
 
-inline static bool Is_Isotope(
+inline static bool Is_Isotope_With_Id(
     const RELVAL *v,
     enum Reb_Symbol_Id id  // want to take ID instead of canon, faster check!
 ){
     assert(id != SYM_0);
-    if (not IS_BAD_WORD(v))
+    if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
         return false;
-    if (NOT_CELL_FLAG(v, ISOTOPE))
-        return false;  // friendly form of BAD-WORD!
-    if (cast(REBLEN, id) == cast(REBLEN, VAL_BAD_WORD_ID(v)))
-        return true;
-    return false;
+    return cast(REBLEN, id) == cast(REBLEN, VAL_BAD_WORD_ID(v));
 }
+
+inline static bool Is_Isotope(const RELVAL *v)
+  { return IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE); }
 
 #define Init_Isotope(out,sym) \
     Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_FLAG_ISOTOPE)
@@ -122,7 +125,7 @@ inline static bool Is_Isotope(
 
 #define UNSET_VALUE         c_cast(const REBVAL*, &PG_Unset_Value)
 #define Init_Unset(out)     Init_Isotope((out), Canon(UNSET))
-#define Is_Unset(v)         Is_Isotope(v, SYM_UNSET)
+#define Is_Unset(v)         Is_Isotope_With_Id(v, SYM_UNSET)
 
 
 // `~void~` is treated specially by the system, to convey "invisible intent".
@@ -133,14 +136,14 @@ inline static bool Is_Isotope(
 
 #define VOID_VALUE          c_cast(const REBVAL*, &PG_Void_Value)
 #define Init_Void(out)      Init_Isotope((out), Canon(VOID))
-#define Is_Void(v)          Is_Isotope((v), SYM_VOID)
+#define Is_Void(v)          Is_Isotope_With_Id((v), SYM_VOID)
 
 
 // See EVAL_FLAG_INPUT_WAS_INVISIBLE for the rationale behind ~stale~, that
 // has a special relationship with ~void~.
 //
 #define Init_Stale(out)     Init_Isotope((out), Canon(STALE))
-#define Is_Stale(v)         Is_Isotope((v), SYM_STALE)
+#define Is_Stale(v)         Is_Isotope_With_Id((v), SYM_STALE)
 
 
 // `~none~` is the default RETURN for when you just write something like
@@ -156,7 +159,7 @@ inline static bool Is_Isotope(
 // invisible and sometimes not.
 //
 #define Init_None(out)      Init_Isotope((out), Canon(NONE))
-#define Is_None(v)          Is_Isotope((v), SYM_NONE)
+#define Is_None(v)          Is_Isotope_With_Id((v), SYM_NONE)
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//
@@ -193,14 +196,14 @@ inline static bool Is_Isotope(
     Init_Isotope((out), Canon(NULL))
 
 inline static bool Is_Nulled_Isotope(const RELVAL *v)
-  { return Is_Isotope(v, SYM_NULL); }
+  { return Is_Isotope_With_Id(v, SYM_NULL); }
 
 inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
     if (Is_Nulled_Isotope(v))
         Init_Nulled(v);
-    else if (Is_Isotope(v, SYM_BLANK))
+    else if (Is_Isotope_With_Id(v, SYM_BLANK))
         Init_Blank(v);
-    else if (Is_Isotope(v, SYM_FALSE))
+    else if (Is_Isotope_With_Id(v, SYM_FALSE))
         Init_False(v);
     return v;
 }

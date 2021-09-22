@@ -74,7 +74,7 @@
     inline static const REBVAL *VAL_THROWN_LABEL(const REBVAL *thrown) {
         if (Is_Fresh(&TG_Thrown_Label_Debug))
             return thrown;
-        assert(Is_Isotope(thrown, SYM_THROW));
+        assert(Is_Isotope_With_Id(thrown, SYM_THROW));
         return &TG_Thrown_Label_Debug;
     }
 #endif

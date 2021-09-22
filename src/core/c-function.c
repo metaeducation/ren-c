@@ -902,7 +902,7 @@ REBACT *Make_Action(
 
     assert(GET_SERIES_FLAG(paramlist, MANAGED));
     assert(
-        Is_Isotope(ARR_HEAD(paramlist), SYM_ROOTVAR)  // must fill in
+        Is_Isotope_With_Id(ARR_HEAD(paramlist), SYM_ROOTVAR)  // must fill in
         or CTX_TYPE(CTX(paramlist)) == REB_FRAME
     );
 
@@ -957,7 +957,7 @@ REBACT *Make_Action(
     // !!! We may have to initialize the exemplar rootvar.
     //
     REBVAL *rootvar = SER_HEAD(REBVAL, paramlist);
-    if (Is_Isotope(rootvar, SYM_ROOTVAR)) {
+    if (Is_Isotope_With_Id(rootvar, SYM_ROOTVAR)) {
         INIT_VAL_FRAME_ROOTVAR(rootvar, paramlist, act, UNBOUND);
     }
 

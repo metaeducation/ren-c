@@ -384,10 +384,8 @@ static void Propagate_All_GC_Marks(void)
                     panic (a);
             }
 
-            if (
-                KIND3Q_BYTE_UNCHECKED(v) == REB_BAD_WORD
-                and GET_CELL_FLAG(v, ISOTOPE)
-            ){
+            if (Is_Isotope(v)) {
+                //
                 // BAD-WORD! isotopes may not exist in blocks, they can only be
                 // in objects/frames.
                 //

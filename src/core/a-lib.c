@@ -1795,7 +1795,7 @@ const REBINS *RL_rebUNQUOTING(const void *p)
     if (IS_NULLED(v))
         fail ("Cannot unquote NULL");
 
-    if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE))
+    if (Is_Isotope(v))
         fail ("Cannot unquote isotopes");
 
     Isotopic_Unquote(v);

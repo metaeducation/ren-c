@@ -621,7 +621,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             // is allowed to vaporize.  So blocks splice, quotes as-is, etc.
             //
             if (
-                IS_NULLED(temp) or Is_Isotope(temp, SYM_NULL)
+                IS_NULLED(temp) or Is_Isotope_With_Id(temp, SYM_NULL)
                 or IS_BLANK(temp)
                 or Is_Void(temp)
             ){
@@ -822,7 +822,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // any other value is the last body result, and is truthy
         // only illegal value here is void (would cause error if body gave it)
         //
-        if (IS_BAD_WORD(D_OUT) and GET_CELL_FLAG(D_OUT, ISOTOPE))
+        if (Is_Isotope(D_OUT))
             assert(Is_Void(D_OUT));
         return D_OUT;
 

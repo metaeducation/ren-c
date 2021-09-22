@@ -449,7 +449,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
     }
   #endif
 
-    if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE))
+    if (Is_Isotope(v))
         fail (Error_Bad_Isotope(v));
 
     REBLEN depth = VAL_NUM_QUOTES(v);

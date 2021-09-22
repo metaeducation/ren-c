@@ -325,7 +325,7 @@ inline static bool Typecheck_Including_Constraints(
     const RELVAL *v
 ){
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
-        if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE)) {
+        if (Is_Isotope(v)) {
             //
             // The strategy is that you can return any "mean" bad-word you
             // like from a function, as it's nearly as problematic as raising

@@ -984,7 +984,7 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
             Append_Spelling(mo->series, KEY_SYMBOL(e.key));
             Append_Ascii(mo->series, ": ");
 
-            if (IS_BAD_WORD(e.var) and GET_CELL_FLAG(e.var, ISOTOPE)) {
+            if (Is_Isotope(e.var)) {
                 Append_Codepoint(mo->series, '~');
                 Append_Spelling(mo->series, VAL_BAD_WORD_LABEL(e.var));
                 Append_Codepoint(mo->series, '~');
@@ -1043,7 +1043,7 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
             // that don't need it because they are inert, but maybe that
             // isn't a good idea...depends on the whole block/object model.
             //
-            if (IS_BAD_WORD(e.var) and GET_CELL_FLAG(e.var, ISOTOPE)) {
+            if (Is_Isotope(e.var)) {
                 //
                 // Mold_Value() rejects isotopes.  Do it manually.  (Service
                 // routine Mold_Bad_Word_Isotope_Ok() might be useful?  Calling

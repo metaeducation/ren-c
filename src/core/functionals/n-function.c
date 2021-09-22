@@ -772,7 +772,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
     // take [<opt> any-value!] as its argument, and then report the error
     // itself...implicating the frame (in a way parallel to this native).
     //
-    if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE)) {
+    if (Is_Isotope(v)) {
         //
         // allow, so that you can say `return ~xxx~` in functions whose spec
         // is written as `return: []`

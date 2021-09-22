@@ -387,13 +387,8 @@ REB_R Compose_To_Stack_Core(
             // Note: Keep isotopic nulls as isotopic, in case predicate takes
             // its parameter as ^META.
 
-            if (
-                insert
-                and IS_BAD_WORD(insert)
-                and GET_CELL_FLAG(insert, ISOTOPE)
-            ){
+            if (insert and Is_Isotope(insert))
                 fail (Error_Bad_Isotope(insert));
-            }
 
             if (insert == nullptr and heart == REB_GROUP and quotes == 0) {
                 //

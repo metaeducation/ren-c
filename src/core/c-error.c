@@ -1145,7 +1145,7 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
     // bad word there...
     //
     REBVAL *arg = FRM_ARG(f, index);
-    assert(IS_BAD_WORD(arg) and GET_CELL_FLAG(arg, ISOTOPE));
+    assert(Is_Isotope(arg));
     Copy_Cell(DS_PUSH(), arg);
     CLEAR_CELL_FLAG(DS_TOP, ISOTOPE);
 
@@ -1163,7 +1163,7 @@ REBCTX *Error_Bad_Value(const RELVAL *value)
     if (IS_NULLED(value))
         return Error_Unknown_Error_Raw();
 
-    if (IS_BAD_WORD(value) and GET_CELL_FLAG(value, ISOTOPE))
+    if (Is_Isotope(value))
         return Error_Bad_Isotope(value);
 
     return Error_Bad_Value_Raw(value);
@@ -1420,7 +1420,7 @@ REBCTX *Error_On_Port(enum Reb_Symbol_Id id_sym, REBVAL *port, REBINT err_code)
 //  Error_Bad_Isotope: C
 //
 REBCTX *Error_Bad_Isotope(const RELVAL *isotope) {
-    assert(IS_BAD_WORD(isotope) and GET_CELL_FLAG(isotope, ISOTOPE));
+    assert(Is_Isotope(isotope));
 
     DECLARE_LOCAL (plain);
     Copy_Cell(plain, SPECIFIC(isotope));

@@ -413,7 +413,7 @@ REBNATIVE(unmeta)
     //
     if (IS_BAD_WORD(v)) {
         if (GET_CELL_FLAG(v, ISOTOPE))
-           fail ("Cannot UNMETA end of input");  // no <end>, shouldn't happen
+            fail ("Cannot UNMETA end of input");  // no <end>, shouldn't happen
         Move_Cell(D_OUT, v);
         SET_CELL_FLAG(D_OUT, ISOTOPE);
         return D_OUT;
