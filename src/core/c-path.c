@@ -538,41 +538,6 @@ bool Eval_Path_Throws_Core(
 
 
 //
-//  Get_Simple_Value_Into: C
-//
-// "Does easy lookup, else just returns the value as is."
-//
-// !!! This is a questionable service, reminiscent of old behaviors of GET,
-// were `get x` would look up a variable but `get 3` would give you 3.
-// At time of writing it seems to appear in only two places.
-//
-void Get_Simple_Value_Into(
-    REBVAL *out,
-    const RELVAL *val,
-    REBSPC *specifier
-){
-    if (IS_WORD(val) or IS_GET_WORD(val))
-        Get_Word_May_Fail(out, val, specifier);
-    else if (IS_PATH(val) or IS_GET_PATH(val)) {
-        //
-        // !!! This is an example case where the pointer being passed in
-        // may move.  Review.
-        //
-        if (Eval_Path_Throws_Core(
-            out,
-            val,  // !!! may not be array-based
-            specifier,
-            EVAL_MASK_DEFAULT | EVAL_FLAG_NO_PATH_GROUPS
-        )){
-            panic (out); // shouldn't be possible... no executions!
-        }
-    }
-    else
-        Derelativize(out, val, specifier);
-}
-
-
-//
 //  Resolve_Path: C
 //
 // Given a path, determine if it is ultimately specifying a selection out
