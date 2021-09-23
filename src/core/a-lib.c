@@ -1830,45 +1830,20 @@ const REBINS *RL_rebRELEASING(REBVAL *v)
 //
 //  rebINLINE: RL_API
 //
-// This will splice an array into the execution feed.  If it is a TUPLE!, then
-// it needs to begin with a BLANK! (a predicate).
-//
-// May return an instruction, and may return just a value.
+// This will splice an array, single value, or no-op into the execution feed.
 //
 const void *RL_rebINLINE(const REBVAL *v)
 {
     ENTER_API;
 
-    if (IS_ACTION(v))
-        return v;  // just let actions through as-is (helpful for predicates)
-
     REBARR *a = Alloc_Singular(
         FLAG_FLAVOR(INSTRUCTION_SPLICE) | NODE_FLAG_MANAGED
     );
     CLEAR_SERIES_FLAG(a, MANAGED);  // lying avoided manuals tracking
+    if (not (IS_BLOCK(v) or IS_QUOTED(v) or IS_BLANK(v)))
+        fail ("rebINLINE() requires argument to be a BLOCK!/QUOTED!/BLANK!");
 
-    if (IS_BLOCK(v)) {  // splice entire block contents
-        Copy_Cell(ARR_SINGLE(a), v);
-    }
-    else if (IS_TUPLE(v)) {
-        DECLARE_LOCAL (store);
-        const RELVAL *first = VAL_SEQUENCE_AT(store, v, 0);
-        if (not IS_BLANK(first))
-            fail ("rebINLINE() requires TUPLE! to start with BLANK!");
-
-        if (VAL_SEQUENCE_LEN(v) == 2) {  // compact form, no array
-            const RELVAL *second = VAL_SEQUENCE_AT(store, v, 1);
-            Derelativize(ARR_SINGLE(a), second, VAL_SEQUENCE_SPECIFIER(v));
-        }
-        else {  // has array, reuse it (but bump it forward to skip blank)
-            assert(CELL_HEART(cast(REBCEL(const*), v)) == REB_BLOCK);
-            Copy_Cell(ARR_SINGLE(a), v);
-            mutable_KIND3Q_BYTE(ARR_SINGLE(a)) = REB_BLOCK;
-            ++VAL_INDEX_UNBOUNDED(ARR_SINGLE(a));  // skip blank
-        }
-    }
-    else
-        fail ("rebINLINE() expects BLOCK!, blank-headed TUPLE!, or ACTION!");
+    Copy_Cell(ARR_SINGLE(a), v);
 
     return cast(REBINS*, a);
 }

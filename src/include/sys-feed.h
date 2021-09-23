@@ -198,12 +198,18 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         switch (SER_FLAVOR(inst1)) {
           case FLAVOR_INSTRUCTION_SPLICE: {
             REBVAL *single = SPECIFIC(ARR_SINGLE(inst1));
+            if (IS_BLANK(single)) {
+                GC_Kill_Series(inst1);
+                goto detect_again;
+            }
+
             if (IS_BLOCK(single)) {
                 feed->value = nullptr;  // will become FEED_PENDING(), ignored
                 Splice_Block_Into_Feed(feed, single);
             }
             else {
-                Copy_Cell(&feed->fetched, single);
+                assert(IS_QUOTED(single));
+                Unquotify(Copy_Cell(&feed->fetched, single), 1);
                 feed->value = &feed->fetched;
             }
             GC_Kill_Series(inst1);

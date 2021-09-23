@@ -627,7 +627,7 @@ let load_rebol_scripts = function(defer) {
                 // The Promise() is necessary here because the odds are that
                 // Rebol code will want to use awaiters like READ of a URL.
                 //
-                // Note that if we ran as rebElide(rebInline(text)), then:
+                // Note that if we ran as rebElide(text), then:
                 //
                 //     `Rebol [Type: Module ...] <your code>`
                 //

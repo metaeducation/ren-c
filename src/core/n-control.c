@@ -410,7 +410,7 @@ REBNATIVE(all)
             if (rebRunThrows(
                 temp,
                 true,
-                rebINLINE(predicate),
+                predicate,
                 rebQ(NULLIFY_NULLED(D_SPARE))
             )){
                 Move_Cell(D_OUT, temp);
@@ -494,7 +494,7 @@ REBNATIVE(any)
             if (rebRunThrows(
                 D_SPARE,
                 true,
-                rebINLINE(predicate),
+                predicate,
                 rebQ(NULLIFY_NULLED(D_OUT))
             )){
                 Move_Cell(D_OUT, D_SPARE);
@@ -579,7 +579,7 @@ REBNATIVE(case)
             if (rebRunThrows(
                 temp,
                 true,  // fully = true (e.g. argument must be taken)
-                rebINLINE(predicate),
+                predicate,
                 rebQ(D_OUT)  // argument
             )){
                 Move_Cell(D_OUT, temp);
@@ -755,7 +755,7 @@ REBNATIVE(switch)
             if (rebRunThrows(
                 temp,
                 true,  // fully = true (e.g. both arguments must be taken)
-                rebINLINE(predicate),
+                predicate,
                 rebQ(left),  // first arg (left hand side if infix)
                 rebQ(D_OUT)  // second arg (right hand side if infix)
             )){
@@ -879,7 +879,7 @@ REBNATIVE(default)
                 return D_OUT;  // count it as "already set"
         }
         else {
-            if (rebDid(rebINLINE(predicate), rebQ(D_OUT)))
+            if (rebDid(predicate, rebQ(D_OUT)))
                 return D_OUT;
         }
     }

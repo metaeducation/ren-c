@@ -20,3 +20,18 @@
     m: enfix macro [discard] [[+ 2]]  ; !!! discard must be present ATM
     1 m = 3
 )
+
+; INLINE is a variant of macro for putting code directly into the feed
+; It accepts BLOCK! (splice contents), QUOTED! (splice single value) or just
+; BLANK! as a no-op.
+[
+    (
+        x: 1 + inline [2 y: negate] 10
+        did all [
+            x = 3
+            y = -10
+        ]
+    )
+    (0 = (1 + inline the 'negate 1))
+    (3 = (1 + inline blank 2))
+]

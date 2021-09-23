@@ -150,90 +150,33 @@ REBNATIVE(macro)
 //
 //  inline: native [
 //
-//  {Inject an array of content into the execution stream}
+//  {Inject an array of content into the execution stream, or single value}
 //
 //      return: <void>
-//      splice [block!]
+//      splice "If quoted single value, if blank no insertion (e.g. invisible)"
+//          [blank! block! quoted!]
 //  ]
 //
 REBNATIVE(inline)
 {
     INCLUDE_PARAMS_OF_INLINE;
 
+    REBVAL *splice = ARG(splice);
+    if (IS_BLANK(splice))
+        RETURN_INVISIBLE;  // do nothing, just return invisibly
+
+    if (IS_QUOTED(splice)) {
+        //
+        // This could probably be done more efficiently, but for now just
+        // turn it into a block.
+        //
+        REBARR *a = Alloc_Singular(SERIES_FLAGS_NONE);
+        Unquotify(Move_Cell(ARR_SINGLE(a), splice), 1);
+        Init_Block(splice, a);
+    }
+
+    assert(IS_BLOCK(splice));
     Splice_Block_Into_Feed(frame_->feed, ARG(splice));
-    return D_OUT;
-}
 
-
-//
-//  Cache_Predicate_Throws: C
-//
-// !!! NOTE: This method was experimental, and given new APPLY methods the
-// use of APPLY with /PREDICATE is preferred vs. this.  In particular, the
-// `.xxx` form of TUPLE! is being eyed for other purposes.  However, the
-// mechanics are kept here for review.
-//
-// ---
-//
-// Many functions offer predicates, which are functions that parameterize the
-// inner logic of those routines.  They can be passed as ordinary functions,
-// or a handy shorthand of BLANK!-headed TUPLE! can be used to express them
-// as a form of macro:
-//
-//     >> any .not.even? [2 4 6 7 10]
-//     == 7
-//
-// It is convenient to be able to leverage this notation to pass dyamically
-// passed functions in a GROUP!:
-//
-//     >> any .(<- match _ 10) [tag! integer! block!]
-//     ; would desire the result `#[integer!]`
-//
-// However, if the function were inlined as a macro would, the function would
-// be generated, but not run.  (like `do [(func [x] [print [x]]) 10]` will not
-// run the function, but generate and discard it).
-//
-// Getting around this with REEVAL would be possible, but ugly:
-//
-//     >> any .reeval.(<- match _ 10) [tag! integer! block!]
-//     == #[integer!]
-//
-// To make this notationally nicer, predicates that have a GROUP! at the head
-// will have the head pre-evaluated.
-//
-bool Cache_Predicate_Throws(
-    REBVAL *out,  // if a throw, it is written here
-    REBVAL *predicate  // updated to be the ACTION! (or WORD!-invoking action)
-){
-    if (IS_NULLED(predicate))  // function uses default (IS_TRUTHY(), .equal?)
-        return false;
-
-    if (IS_ACTION(predicate))  // already an action (e.g. passed via APPLY)
-        return false;
-
-    assert(IS_TUPLE(predicate));
-
-    DECLARE_LOCAL (store);  // !!! can't use out for blit target (API handle)
-
-    const RELVAL *first = VAL_SEQUENCE_AT(store, predicate, 0);
-    if (not IS_BLANK(first))
-        fail ("Predicates must be TUPLE! that starts with BLANK!");
-
-    const RELVAL *second = VAL_SEQUENCE_AT(store, predicate, 1);
-    if (not IS_GROUP(second))
-        return false;
-
-    if (VAL_SEQUENCE_LEN(predicate) != 2)
-        fail ("GROUP! handling for predicates limited to TUPLE! of length 2");
-
-    assert(HEART_BYTE(predicate) == REB_GET_GROUP);
-    mutable_HEART_BYTE(predicate) = REB_GROUP;
-    mutable_KIND3Q_BYTE(predicate) = REB_GROUP;
-
-    if (Eval_Value_Throws(out, predicate, VAL_SPECIFIER(predicate)))
-        return true;
-
-    Move_Cell(predicate, out);
-
-    return false;
+    RETURN_INVISIBLE;
 }

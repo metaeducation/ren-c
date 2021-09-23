@@ -97,7 +97,7 @@ enum Reb_Series_Flavor {
     FLAVOR_API,
 
     // This is used by rebINLINE() to place an array of content as raw
-    // material to execute.
+    // material to execute.  (It leverages similar code as MACRO.)
     //
     FLAVOR_INSTRUCTION_SPLICE,
 
