@@ -27,13 +27,7 @@
 //
 // Also unique about natives is that the native function constructor must be
 // built "by hand", since it is required to get the ball rolling on having
-// functions to call at all.
-//
-// If there *were* a REBNATIVE(native) this would be its spec:
-//
-//  native: native [
-//      spec [block!]
-//  ]
+// functions to call at all.  See %make-natives.r
 //
 
 #include "sys-core.h"

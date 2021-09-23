@@ -260,9 +260,9 @@ REBNATIVE(panic)
 //
 //      return: []  ; !!! Notation for divergent function?
 //      'blame [<skip> meta-word! meta-path!]
-//       reason [<end> <opt> any-value!]  ; permissive to avoid callsite error
-//       /where [frame! any-word!]
-//   ]
+//      reason [<end> <opt> any-value!]  ; permissive to avoid callsite error
+//      /where [frame! any-word!]
+//  ]
 //
 REBNATIVE(fail)
 {

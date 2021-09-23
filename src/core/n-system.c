@@ -303,7 +303,7 @@ int ceil_log2(unsigned long long x) {
 //  {Get the evaluator tick count (currently only available in debug builds)}
 //
 //      return: [<opt> integer!]
-// ]
+//  ]
 //
 REBNATIVE(c_debug_tick)
 {
@@ -329,7 +329,7 @@ REBNATIVE(c_debug_tick)
 //          {TICK parameter represents a count relative to the current tick}
 //      /compensate
 //          {Round tick up, as in https://math.stackexchange.com/q/2521219/}
-// ]
+//  ]
 //
 REBNATIVE(c_debug_break_at)
 {

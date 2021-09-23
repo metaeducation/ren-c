@@ -271,7 +271,7 @@ REBNATIVE(decode_png)
 //
 //      return: [binary!]
 //      image [image!]
-// ]
+//  ]
 //
 REBNATIVE(encode_png)
 //
