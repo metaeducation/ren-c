@@ -24,78 +24,140 @@ import <bootstrap-shim.r>
 import <common.r>
 import <common-emitter.r>
 
-import <common-parsers.r>
-
 import <text-lines.reb>
 
-export emit-native-proto: func [
-    "Emit native prototypes to @unsorted-buffer"
-    return: <none>
-    proto
+
+native-info!: make object! [
+    ;
+    ; Note: The proto is everything, including the SET-WORD! text, native or
+    ; native/combinator, and then the spec block.  (Terminology-wise we say
+    ; "spec" just refers to the block component.)
+    ;
+    proto: ~
+
+    name: ~
+    exported: ~
+    combinator: ~
+
+    file: ~
+    line: "???"
+    ;
+    ; The original parser code was much more complex and was able to track the
+    ; LINE number.  UPARSE intends to be able to provide this as a <line>
+    ; combinator, but until it's a built-in feature having it in this code
+    ; is more complexity than it winds up being worth.
+]
+
+
+; This routine originally gathered native prototypes in their loaded forms.
+; While that's nice, it created an unfortunate "lock-in" that the bootstrap
+; executable would have to have a compatible source format.  The niceness of
+; loading turned out to be less practically useful than the malleability.
+;
+; Hence this instead extracts a tiny bit of information, and returns the spec
+; as a text blob.
+;
+export extract-native-protos: func [
+    return: "Returns block of NATIVE-INFO! objects"
+        [block!]
+    c-source-file [file!]
+    <local> proto name exported
 ][
-    let line: try text-line-of proto-parser/parse-position
+    return collect [
+        parse read/string c-source-file [while [
+            "//" newline
+            "//" space space copy proto [
+                (exported: false)
+                opt ["export" space (exported: true)]
+                ahead not space copy name to ":" skip space
+                opt ["enfix" space]
+                (combinator: false)
+                ["native" opt "/combinator" (combinator: true)] space
+                "[" thru "//  ]"
+            ]
+            (
+                replace/all proto "//  " {}
+                replace/all proto "//" {}
 
-    let [spec name]
-    all [
-        block? proto-parser/data
-        parse? proto-parser/data [
-            opt 'export
-            set name: set-word!
-            opt 'enfix
-            ['native | 'native/combinator]
-            [
-                set spec: block!
-            | (
-                fail [
-                    "Native" (uppercase form to word! name)
-                    "needs loadable specification block."
-                    (mold proto-parser/file) (line)
+                keep make native-info! compose [
+                    proto: (proto)
+                    name: (name)
+                    exported: (exported)
+                    file: (c-source-file)
                 ]
-            )]
-        ]
-    ] then [
-        ; could do tests here to create special buffer categories to
-        ; put certain natives first or last, etc. (not currently needed)
-        ;
-        temp: proto-parser/data
-        export-word: try if 'export = temp/1 [
-            temp: next temp
-            'export
-        ]
-        set-word: ensure set-word! temp/1
-        temp: next temp
-
-        enfix-word: try if 'enfix = temp/1 [
-            temp: next temp
-            'enfix
-        ]
-
-        any [
-            'native = temp/1
-            all [path? temp/1, 'native = temp/1/1]
-        ] else [
-            fail ["Malformed native:" mold proto-parser/data]
-        ]
-
-        append proto-parser/unsorted-buffer compose/only [
-            (proto-parser/file) (line) (export-word) (set-word)
-                (enfix-word) (temp)
-        ]
-
-        proto-parser/count: proto-parser/count + 1
+            )
+                |
+            thru newline
+                |
+            skip  ; in case file doesn't end in newline
+        ]]
     ]
 ]
 
+
+; This routine has to deal with differences between specs the bootstrap EXE
+; can load and what the modern Ren-C can load.  The easiest way to do this is
+; to take in the textual spec, "massage" it in a way that doesn't destroy the
+; information being captured, and then LOAD it.
+;
 export emit-include-params-macro: function [
     "Emit macros for a native's parameters"
 
     return: <none>
     e [object!] "where to emit (see %common-emitters.r)"
-    native-name [word!] "native name (add -combinator if combinator)"
-    paramlist [block!] "paramlist of the native"
+    proto [text!]
     /ext [text!] "extension name"
 ][
     seen-refinement: false
+
+    native-name: ~
+    parse proto [opt ["export" space] copy native-name to ":" to end] else [
+        fail "Could not extract native name in emit-include-params-macro"
+    ]
+    spec: copy find proto "["  ; make copy (we'll corupt it)
+
+    replace/all spec "^^" {}
+    replace/all spec "@" {}
+
+    spec: load-value spec
+
+    if not find proto "native/combinator" [
+        paramlist: spec
+    ]
+    else [
+        ; NATIVE-COMBINATOR instances have implicit parameters just
+        ; like usermode COMBINATORs do.  We want those implicit
+        ; parameters in the ARG() macro list so the native bodies
+        ; see them (again, just as the usermode combinators can use
+        ; `state` and `input` and `remainder` in their body code)
+        ;
+        paramlist: collect [  ; no PARSE COLLECT in bootstrap exe :-(
+            assert [text? spec/1]
+            keep ^ spec/1
+            spec: my next
+
+            assert [spec/1 = the return:]
+            keep ^ spec/1
+            spec: my next
+
+            assert [text? spec/1]  ; description
+            keep ^ spec/1
+            spec: my next
+
+            assert [block? spec/1]  ; type spec
+            keep ^ spec/1
+            spec: my next
+
+            keep [
+                remainder: [<opt> any-series!]
+
+                state [frame!]
+                input [any-series!]
+            ]
+
+            keep spec
+        ]
+    ]
 
     n: 1
     items: try collect* [
@@ -137,5 +199,6 @@ export emit-include-params-macro: function [
             $[Items]; \
             assert(GET_SERIES_INFO(frame_->varlist, HOLD))
     }
+    e/emit newline
     e/emit newline
 ]

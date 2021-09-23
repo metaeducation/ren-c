@@ -497,12 +497,13 @@ for-each word load %lib-words.r [
 
 first-native-sym: sym-n
 
-boot-natives: load (join prep-dir %boot/tmp-natives.r)
-for-each item boot-natives [
-    if set-word? :item [
-        if first-native-sym < ((add-sym/exists to-word item) else [0]) [
-            fail ["Native name collision found:" item]
-        ]
+native-names: copy []
+boot-natives: stripload/gather (join prep-dir %boot/tmp-natives.r) 'native-names
+insert boot-natives "["
+append boot-natives "]"
+for-each name native-names [
+    if first-native-sym < ((add-sym/exists name) else [0]) [
+        fail ["Native name collision found:" name]
     ]
 ]
 
@@ -514,12 +515,13 @@ for-each item boot-natives [
 
 first-generic-sym: sym-n
 
-boot-generics: load (join prep-dir %boot/tmp-generics.r)
-for-each item boot-generics [
-    if set-word? :item [
-        if first-generic-sym < ((add-sym/exists to-word item) else [0]) [
-            fail ["Generic name collision with Native or Generic found:" item]
-        ]
+generic-names: copy []
+boot-generics: stripload/gather (join prep-dir %boot/tmp-generics.r) 'generic-names
+insert boot-generics "["
+append boot-generics "]"
+for-each name generic-names [
+    if first-generic-sym < ((add-sym/exists to-word name) else [0]) [
+        fail ["Generic name collision with Native or Generic found:" name]
     ]
 ]
 
@@ -793,8 +795,8 @@ e-bootblock/emit {
 
 sections: [
     boot-types
-    boot-generics
-    boot-natives
+    :boot-generics
+    :boot-natives
     boot-typespecs
     boot-errors
     boot-sysobj
@@ -804,10 +806,8 @@ sections: [
 ]
 
 nats: collect [
-    for-each val boot-natives [
-        if set-word? val [
-            keep cscape/with {N_${to word! val}} 'val
-        ]
+    for-each val native-names [
+        keep cscape/with {N_${val}} 'val
     ]
 ]
 
@@ -896,17 +896,6 @@ e-boot: make-emitter "Bootstrap Structure and Root Module" (
     join prep-dir %include/tmp-boot.h
 )
 
-nat-index: 0
-nids: collect [
-    for-each val boot-natives [
-        if set-word? val [
-            keep cscape/with
-                {N_${to word! val}_ID = $<nat-index>} [nat-index val]
-            nat-index: nat-index + 1
-        ]
-    ]
-]
-
 fields: collect [
     for-each word sections [
         word: form as word! word
@@ -915,7 +904,7 @@ fields: collect [
     ]
 ]
 
-e-boot/emit 'nids {
+e-boot/emit 'fields {
     /*
      * Symbols in SYM_XXX order, separated by newline characters, compressed.
      */

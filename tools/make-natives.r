@@ -1,6 +1,7 @@
 REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "Generate native specifications"
+    File: %make-natives.r
     Rights: {
         Copyright 2012 REBOL Technologies
         Copyright 2012-2020 Ren-C Open Source Contributors
@@ -66,8 +67,8 @@ if not find words of :import [product] [  ; See %import-shim.r
 
 import <common.r>
 import <bootstrap-shim.r>
-import <common-parsers.r>
-import <native-emitters.r>  ; for EMIT-NATIVE-PROTO
+import <common-emitter.r>
+import <native-emitters.r>
 
 print "------ Generate tmp-natives.r"
 
@@ -77,17 +78,8 @@ mkdir/deep join output-dir %boot/
 
 verbose: false
 
-proto-parser/unsorted-buffer: make block! 400
-proto-parser/count: 0
+all-protos: copy []
 
-process: function [file] [
-    if verbose [probe [file]]
-
-    source-text: read/string file
-    proto-parser/file: file
-    proto-parser/emit-proto: :emit-native-proto
-    proto-parser/process source-text
-]
 
 ;-------------------------------------------------------------------------
 
@@ -103,7 +95,7 @@ gather-natives: func [dir] [
             all [
                 %.c = suffix? file
             ][
-                process file
+                append all-protos extract-native-protos file
             ]
         ]
     ]
@@ -117,46 +109,59 @@ gather-natives join src-dir %core/
 ; The construction `native: native [...]` obviously has to be treated in a
 ; special way.  Startup constructs it manually, before skipping it and invoking
 ; the evaluator to do the other `xxx: native/yyy [...]` evaluations.
-;
-; Format of the buffer is a flat list of:
-;
-;   [<file> <line> <export> <name> <enfix> [...proto...] <file> <line> <...]
-;
-; The <export> slot is either `export` or `_`, and the <enfix> slot is either
-; `enfix` or `_`.
-;
-; So we FIND the name, then step back 3 and move 6 items.  Do enfix first and
-; native second, that way native will be at the head.
 
-npos: find proto-parser/unsorted-buffer [enfix:] else [
-    fail "Could not find the ENFIX: native in the gathered native list"
-]
-insert proto-parser/unsorted-buffer (take/part skip npos -3 6)
+native-proto: _
+enfix-proto: _
 
-npos: find proto-parser/unsorted-buffer [native:] else [
-    fail "Could not find the NATIVE: native in the gathered native list"
+for-next info all-protos [
+    case [
+        info/1/name = "native" [native-proto: take info]
+        info/1/name = "enfix" [enfix-proto: take info]
+    ]
 ]
-insert proto-parser/unsorted-buffer (take/part skip npos -3 6)
+
+if not enfix-proto [
+    fail "Did not find the ENFIX: native function, required by boot"
+]
+insert all-protos enfix-proto  ; will be second after native insertion
+
+if not native-proto [
+    fail "Did not find the NATIVE: native generator, required by boot"
+]
+insert all-protos native-proto  ; so now it's first
 
 
 === {MOLD AS TEXT TO BE EMBEDDED IN THE EXECUTABLE AND SCANNED AT BOOT} ===
+
+append output-buffer {REBOL [
+    System: "REBOL [R3] Language Interpreter and Run-time Environment"
+    Title: "Native specs"
+    Rights: {
+        Copyright 2012 REBOL Technologies
+        REBOL is a trademark of REBOL Technologies
+    }
+    License: {
+        Licensed under the Apache License, Version 2.0.
+        See: http://www.apache.org/licenses/LICENSE-2.0
+    }
+    Note: {This is a generated file.}
+]
+}
 
 ; As a hint in case you come across %tmp-natives.r in your editor, this puts
 ; comments to warn you not to edit there.  (The comments and newlines are
 ; removed by the process that does embedding in the EXE.)
 
-for-each [
-    file line export-word set-word enfix-word proto-block
-] proto-parser/unsorted-buffer [
-    if export-word [
+for-each info all-protos [
+    if info/exported [
         fail "EXPORT is implied on %tmp-natives.r"
     ]
     append output-buffer spaced [
         newline newline
-        {; !!! DON'T EDIT HERE, generated from} mold file {line} line
+        {; !!! DON'T EDIT HERE, generated from} mold info/file {line} info/line
         newline
-        (mold set-word) (if enfix-word [enfix-word]) (mold/only proto-block)
     ]
+    append output-buffer info/proto
 ]
 
 append output-buffer unspaced [
@@ -167,7 +172,7 @@ append output-buffer unspaced [
 
 write-if-changed (join output-dir %boot/tmp-natives.r) output-buffer
 
-print [proto-parser/count "natives"]
+print [(length of all-protos) "natives"]
 print newline
 
 
@@ -191,7 +196,6 @@ append output-buffer {REBOL [
 
 }
 
-boot-types: load (join src-dir %boot/types.r)
 
 append output-buffer mold/only load (join src-dir %boot/generics.r)
 
@@ -202,3 +206,35 @@ append output-buffer unspaced [
 ]
 
 write-if-changed (join output-dir %boot/tmp-generics.r) output-buffer
+
+
+=== {EMIT INCLUDE_PARAMS_OF_XXX AUTOMATIC MACROS} ===
+
+; This used to be done in %make-headers.r, but we handle this here because we
+; still have the individual specs for the natives on hand.  The generics need
+; to be parsed.
+
+mkdir/deep (join output-dir %include/)
+
+e-params: make-emitter "PARAM() and REFINE() Automatic Macros" (
+    join output-dir %include/tmp-paramlists.h
+)
+
+for-each info all-protos [
+    emit-include-params-macro e-params info/proto
+]
+
+parse read/string (join output-dir %boot/tmp-generics.r) [
+    thru "^/]^/"  ; skip REBOL header (closing brace flush with left)
+    some newline  ; skip newlines
+    while [
+    copy proto [
+        thru ":" space "generic ["
+        thru "^/]^/"
+    ]
+    (emit-include-params-macro e-params proto)
+        |
+    skip
+]]
+
+e-params/write-emitted

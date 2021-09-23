@@ -42,12 +42,7 @@ import <bootstrap-shim.r>
 import <common-emitter.r>
 import <systems.r>
 
-; The way that the processing code for extracting Rebol information out of
-; C file comments is written is that the PROTO-PARSER has several callback
-; functions that can be registered to receive each item it detects.
-
-import <common-parsers.r>
-import <native-emitters.r>  ; for EMIT-INCLUDE-PARAMS-MACRO
+import <native-emitters.r>  ; scans C source for native specs, emits macros
 
 
 ; !!! We put the modules .h files and the .inc file for the initialization
@@ -125,51 +120,29 @@ parse inc-name [
 
 === {USE PROTOTYPE PARSER TO GET NATIVE SPECS FROM COMMENTS IN C CODE} ===
 
-; We reuse the emitter that is used on processing natives in the core source.
-; It will add the information to UNSORTED-BUFFER.  There's also a Rebol-style
-; header embedded in the comments at the top of the C file, though it's not
-; clear what kind of actionable information should be put there.
+; EXTRACT-NATIVE-PROTOS scans the core source for natives.  Reuse it.
+;
+; Note: There's also a Rebol-style header embedded in the comments at the top
+; of the C module file, though it's not clear what kind of actionable
+; information should be put there.
 
-e1: make-emitter "Module C Header File Preface" (
-    join output-dir reduce ["tmp-mod-" (l-m-name) ".h"]
-)
-
-header-in-c-comments: _
-
-source-text: read/string c-src
-
-proto-parser/emit-fileheader: func [header] [header-in-c-comments: header]
-
-c-natives: make block! 128
-proto-parser/count: 0
-proto-parser/unsorted-buffer: make block! 100
-proto-parser/emit-proto: :emit-native-proto
-
-proto-parser/file: c-src
-
-proto-parser/process source-text
+all-protos: extract-native-protos c-src
 
 
-=== {EXTRACT NATIVE NAMES AS A LIST OF WORDS} ===
+=== {COUNT NATIVES AND DETERMINE IF THERE IS A NATIVE STARTUP* FUNCTION} ===
 
-; The block the proto-parser gives back is a flat block of fixed-size records.
-; For easier processing, extract just the list of native names converted to
-; words along with the spec.
+; If there is a native startup function, we want to call it while the module
+; is being initialized...after the natives are loaded but before the Rebol
+; code gets a chance to run.  So this prep code has to insert that call.
 
 has-startup*: false
 
 num-natives: 0
-native-list: collect [
-    for-each [
-        file line export-word set-word enfix-word proto-block
-    ] proto-parser/unsorted-buffer [
-        if set-word = the startup*: [
-            has-startup*: true
-        ]
-        keep ^(as word! set-word)
-        keep ^(proto-block/2)
-        num-natives: num-natives + 1
+for-each info all-protos [
+    if info/name = "startup*" [
+        has-startup*: true
     ]
+    num-natives: num-natives + 1
 ]
 
 
@@ -181,18 +154,17 @@ native-list: collect [
 
 specs-uncompressed: make text! 10000
 
-for-each [
-    file line export-word set-word enfix-word proto-block
-] proto-parser/unsorted-buffer [
-    append specs-uncompressed spaced compose [
-        ((if export-word ["export"])) (mold set-word)
-            ((if enfix-word ["enfix"])) ((mold/only proto-block))
-            newline newline
-    ]
+for-each info all-protos [
+    append specs-uncompressed info/proto
+    append specs-uncompressed newline
 ]
 
 
 === {EMIT THE INCLUDE_PARAMS_OF_XXX MACROS FOR THE EXTENSION NATIVES} ===
+
+e1: make-emitter "Module C Header File Preface" (
+    join output-dir reduce ["tmp-mod-" (l-m-name) ".h"]
+)
 
 e1/emit {
     #include "sys-ext.h" /* for things like DECLARE_MODULE_INIT() */
@@ -203,8 +175,8 @@ e1/emit {
 }
 e1/emit newline
 
-for-each [name spec] native-list [
-    emit-include-params-macro/ext e1 name spec u-m-name
+for-each info all-protos [
+    emit-include-params-macro/ext e1 info/proto u-m-name
     e1/emit newline
 ]
 
@@ -217,7 +189,8 @@ for-each [name spec] native-list [
 ; to get at the addresses of those functions.
 
 dispatcher-forward-decls: collect [
-    for-each [name spec] native-list [
+    for-each info all-protos [
+        name: info/name
         keep cscape/with {REBNATIVE(${Name})} 'name
     ]
 ]
@@ -306,7 +279,8 @@ write (join output-dir %script-uncompressed.r) script-uncompressed
 script-compressed: gzip script-uncompressed
 
 dispatcher_c_names: collect [  ; must be in the order that NATIVE is called!
-    for-each [name spec] native-list [
+    for-each info all-protos [
+        name: info/name
         keep cscape/with {N_${MOD}_${Name}} [mod name]
     ]
 ]
