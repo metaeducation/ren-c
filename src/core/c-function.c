@@ -1192,61 +1192,6 @@ REBTYPE(Fail)
 
 
 //
-//  Get_If_Word_Or_Path_Throws: C
-//
-// Originally this routine was used by APPLY and SPECIALIZE type routines
-// to allow them to take WORD!s and PATH!s, since there had been no way to
-// get the label for an ACTION! after it had been fetched:
-//
-//     >> applique 'append [value: 'c]  ; APPLIQUE would see the word APPEND
-//     ** Script error: append is missing its series argument  ; so name here
-//
-// That became unnecessary once the mechanics behind VAL_ACTION_LABEL() were
-// introduced.  So the interfaces were changed to only take ACTION!, so as
-// to be more clear.
-//
-// This function remains as a utility for other purposes.  It is able to push
-// refinements in the process of its fetching, if you want to avoid an
-// intermediate specialization when used in apply-like scenarios.
-//
-bool Get_If_Word_Or_Path_Throws(
-    REBVAL *out,
-    const RELVAL *v,
-    REBSPC *specifier,
-    bool push_refinements
-) {
-    if (IS_WORD(v) or IS_GET_WORD(v)) {
-      get_as_word:
-        Get_Word_May_Fail(out, v, specifier);
-        if (IS_ACTION(out))
-            INIT_VAL_ACTION_LABEL(out, VAL_WORD_SYMBOL(v));
-    }
-    else if (
-        IS_PATH(v) or IS_GET_PATH(v)
-        or IS_TUPLE(v) or IS_GET_TUPLE(v)
-    ){
-        if (ANY_WORD_KIND(HEART_BYTE(v)))  // e.g. `/`
-            goto get_as_word;  // faster than calling Eval_Path_Throws_Core?
-
-        if (Eval_Path_Throws_Core(
-            out,
-            v,  // !!! may not be array based
-            specifier,
-            EVAL_MASK_DEFAULT | (push_refinements
-                ? EVAL_FLAG_PUSH_PATH_REFINES  // pushed in reverse order
-                : 0)
-        )){
-            return true;
-        }
-    }
-    else
-        Derelativize(out, v, specifier);
-
-    return false;
-}
-
-
-//
 //  tweak: native [
 //
 //  {Modify a special property (currently only for ACTION!)}

@@ -646,9 +646,9 @@ static const RELVAL *First_Of_Process_Steps_For_Location(
 
 
 //
-//  Get_Var_Core_Throws: C
+//  Get_Var_Push_Refinements_Throws: C
 //
-bool Get_Var_Core_Throws(
+bool Get_Var_Push_Refinements_Throws(
     REBVAL *out,
     option(REBVAL*) steps_out,  // if NULL, then GROUP!s not legal
     const RELVAL *var,
@@ -702,24 +702,15 @@ bool Get_Var_Core_Throws(
         DECLARE_LOCAL (result);
         PUSH_GC_GUARD(result);
 
-        REBDSP dsp_orig = DSP;
-
         bool threw = Get_Path_Push_Refinements_Throws(
             result, safe, var, var_specifier  // var may be in `out`
         );
         DROP_GC_GUARD(result);
         DROP_GC_GUARD(safe);
 
-        if (DSP != dsp_orig) {
-            assert(IS_ACTION(result) and not threw);
-            //
-            // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
-            // that needs to be looked into.
-            //
-            return Specialize_Action_Throws(out, result, nullptr, dsp_orig);
-        }
+        if (steps_out)
+            Init_None(unwrap(steps_out));  // !!! What to return?
 
-        assert(DSP == dsp_orig);
         Move_Cell(out, result);
         return threw;
     }
@@ -814,6 +805,33 @@ bool Get_Var_Core_Throws(
 
     Decay_If_Isotope(out);  // !!! should not be possible, review
     return false;
+}
+
+
+//
+//  Get_Var_Core_Throws: C
+//
+bool Get_Var_Core_Throws(
+    REBVAL *out,
+    option(REBVAL*) steps_out,  // if NULL, then GROUP!s not legal
+    const RELVAL *var,
+    REBSPC *var_specifier
+){
+    REBDSP dsp_orig = DSP;
+    bool threw = Get_Var_Push_Refinements_Throws(
+        out, steps_out, var, var_specifier
+    );
+    if (DSP != dsp_orig) {
+        assert(IS_ACTION(out) and not threw);
+        //
+        // !!! Note: passing EMPTY_BLOCK here for the def causes problems;
+        // that needs to be looked into.
+        //
+        DECLARE_LOCAL (action);
+        Move_Cell(action, out);
+        return Specialize_Action_Throws(out, action, nullptr, dsp_orig);
+    }
+    return threw;
 }
 
 

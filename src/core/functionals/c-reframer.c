@@ -113,15 +113,20 @@ bool Make_Invokable_From_Feed_Throws(
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT);  // FULFILL_ONLY added below
     Push_Frame(out, f);
 
-    if (Get_If_Word_Or_Path_Throws(
-        out,
-        v,
-        FEED_SPECIFIER(feed),
-        true  // push_refinements = true (DECLARE_FRAME captured original DSP)
-    )){
-        Drop_Frame(f);
-        return true;
+    if (IS_WORD(v) or IS_TUPLE(v) or IS_PATH(v)) {
+        DECLARE_LOCAL (steps);
+        if (Get_Var_Push_Refinements_Throws(
+            out,
+            steps,
+            v,
+            FEED_SPECIFIER(feed)
+        )){
+            Drop_Frame(f);
+            return true;
+        }
     }
+    else
+        Derelativize(out, v, FEED_SPECIFIER(feed));
 
     if (not IS_ACTION(out)) {
         Quotify(out, 1);
