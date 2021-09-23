@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2021 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -24,19 +24,28 @@
 // Control constructs follow these rules:
 //
 // * If they do not run any branches, the construct returns NULL...which is
-//   not an ANY-VALUE! and can't be put in a block or assigned to a variable
-//   (via SET-WORD! or SET-PATH!).  This is systemically the sign of a "soft
-//   failure", and can signal constructs like ELSE, ALSO, TRY, etc.
+//   not an ANY-VALUE! and can't be put in a block.  This is systemically the
+//   sign of a "soft failure", and cues constructs like ELSE, ALSO, TRY, etc.
 //
-// * If a branch *does* run--and that branch evaluation produces a NULL--then
+//   (See %sys-nulled.h for information about the NULL state.)
+//
+// * If a branch *does* run--and its evaluation happens to produce NULL--then
 //   conditionals designed to be used with branching (like IF or CASE) will
-//   return a special "heavy" isotope variant of NULL (aka "NULL-2").  It acts
-//   just like NULL in most cases, but for the purposes of ELSE and THEN it
-//   is considered a signal that a branch ran.
+//   return a special "isotope" form of the BAD-WORD! of ~null~.  It's called
+//   an "isotope" because it will "decay" into a regular NULL when assigned
+//   to a variable.  But so long as it doesn't decay, then constructs like
+//   ELSE and THEN consider it distinct from NULL, and hence a signal that a
+//   branch actually ran.
+//
+//   (See %sys-bad-word.h for more details about isotopes.)
+//
+// * Some branch forms can subvert the conversion of NULL to isotopes.
 //
 // * Zero-arity function values used as branches will be executed, and
 //   single-arity functions used as branches will also be executed--but passed
-//   the value of the triggering condition.  See Do_Branch_Throws().
+//   the value of the triggering condition.
+//
+//   (See Do_Branch_Throws() for supported ANY-BRANCH! types and behaviors.)
 //
 // * There is added checking that a literal block is not used as a condition,
 //   to catch common mistakes like `if [x = 10] [...]`.
@@ -67,7 +76,7 @@ REBNATIVE(if)
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(condition)))
         return R_THROWN;  // ^-- condition is passed to branch if function
 
-    return D_OUT;  // most branch executions mark NULL as "heavy" isotope
+    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
 
 
@@ -90,13 +99,13 @@ REBNATIVE(either)
     INCLUDE_PARAMS_OF_EITHER;
 
     REBVAL *branch = IS_CONDITIONAL_TRUE(ARG(condition))
-        ? ARG(true_branch)  // ^-- truth test fails on voids, literal blocks
+        ? ARG(true_branch)  // ^-- test errors on BAD-WORD!, literal blocks
         : ARG(false_branch);
 
     if (Do_Branch_With_Throws(D_OUT, branch, ARG(condition)))
         return R_THROWN;  // ^-- condition is passed to branch if function
 
-    return D_OUT;  // most branch executions mark NULL as "heavy" isotope
+    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
 
 
@@ -105,7 +114,7 @@ REBNATIVE(either)
 //
 //  {If input is not null, return that value, otherwise evaluate the branch}
 //
-//      return: "Input value if not null, or branch result (possibly null)"
+//      return: "Input value if not null, or branch result"
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is null"
 //          [<opt> <meta> any-value!]
@@ -129,7 +138,7 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), Lib(NULL)))
         return R_THROWN;
 
-    return D_OUT;  // note NULL branches will have been converted to NULL-2
+    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
 
 
@@ -139,7 +148,7 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
 //  {Determine if argument would have triggered an ELSE branch}
 //
 //      return: [logic!]
-//      optional "Argument to test (note that WORD!-fetch would decay NULL-2)"
+//      optional "Argument to test"
 //          [<opt> <meta> any-value!]
 //  ]
 //
@@ -155,7 +164,7 @@ REBNATIVE(else_q)
 //
 //  {If input is null, return null, otherwise evaluate the branch}
 //
-//      return: "null if input is null, or branch result (voided if null)"
+//      return: "null if input is null, or branch result"
 //          [<opt> any-value!]
 //      optional "<deferred argument> Run branch if this is not null"
 //          [<opt> <meta> any-value!]
@@ -181,7 +190,7 @@ REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), optional))
         return R_THROWN;
 
-    return D_OUT;  // note NULL branches will have been converted to NULL-2
+    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
 
 
@@ -191,7 +200,7 @@ REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
 //  {Determine if argument would have triggered a THEN branch}
 //
 //      return: [logic!]
-//      optional "Argument to test (note that WORD!-fetch would decay NULL-2)"
+//      optional "Argument to test"
 //          [<opt> <meta> any-value!]
 //  ]
 //

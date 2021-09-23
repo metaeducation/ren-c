@@ -374,17 +374,14 @@ bool Specialize_Action_Throws(
 
       specialized_arg_no_typecheck:
 
-        // !!! Technically speaking, if you are trying to implement the @param
-        // convention for literalization, SPECIALIZE does it too late here.
-        // The intent of NULL-2 vs. NULL is lost...at least in theory, because
+        // !!! Technically speaking, if you are trying to implement the ^META
+        // parameter convention, SPECIALIZE does it too late here.  The intent
+        // of ~null~ isotope vs. NULL is lost...at least in theory, because
         // variables don't store the null isotope state.  The "core" way to
         // do this is MAKE FRAME! (specialize could be written in usermode
         // with that).  But as a higher-level tool, specialize can make the
-        // tradeoff to make it easy by doing the literalization for you...which
+        // tradeoff to make it easy by doing the meta-quoting for you...which
         // also means it can keep working if the parameter convention changes.
-        //
-        // !!! As part of the special escaping, might it consider a non
-        // isotope `~null-2~` to be a signal it translates to heavy-null?
         //
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(arg);

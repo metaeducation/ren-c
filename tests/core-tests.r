@@ -60,6 +60,7 @@
 %datatypes/set-group.test.reb
 %datatypes/set-path.test.reb
 %datatypes/set-word.test.reb
+%datatypes/meta.test.reb
 %datatypes/meta-block.test.reb
 %datatypes/meta-group.test.reb
 %datatypes/meta-path.test.reb

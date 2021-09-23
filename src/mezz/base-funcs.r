@@ -717,7 +717,7 @@ attempt: func [
     code [block! action!]
 ][
     trap [
-        return/isotope (do code else [null])  ; want NULL-2 if was NULL
+        return/isotope (do code else [null])  ; want ~null~ isotope if was NULL
     ]
     return null
 ]

@@ -37,15 +37,10 @@ probe: func* [
     ; Remember this is early in the boot so many things not defined
     write-stdout switch type of value' [
         null ["; null"]
-        bad-word! [unspaced [value' space space "; isotope"]]
+        bad-word! [unspaced [mold value' space space "; isotope"]]
     ] else [
-        let value: unquote value'
-        switch type of :value [
-            null ["; heavy null"]
-            bad-word! [mold value]  ; friendly
-        ] else [
-            mold :value
-        ]
+        let value: unmeta value'
+        mold :value
     ]
 
     write-stdout newline

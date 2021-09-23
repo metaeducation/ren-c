@@ -1,11 +1,11 @@
-; %lit.test.reb
+; %meta.test.reb
 ;
 ; Operator whose evaluator behavior is like QUOTE, but it distinguishes
-; the internal NULL-2 state from plain NULL (which quote does not)
+; the internal NULL isotope state from plain NULL (which quote does not)
 
 ((the '3) = ^ 1 + 2)
 
-((the ') = ^ if true [null])
+('~null~ = ^ if true [null])
 
 (null = ^ null)
 
@@ -14,7 +14,7 @@
 ; to detect invisibility.
 
 ((the '3) = ^ comment "Hi" 1 + 2)
-(
-    e: trap [^]
-    e.id = 'need-non-end
-)
+
+; !!! Is this the best behavior, or should it say "need-non-end"?
+;
+(null = trap [^])

@@ -220,8 +220,8 @@ static REBVAL *Run_Sandboxed_Group(REBVAL *group) {
     //
     // So don't add superfluous libRebol calls here, except to debug.
     //
-    // We want the "^" because we'd like to discern if this is a NULL or a
-    // NULL-2.  The group means code cannot look backwards and quote the ^.
+    // The "^" helps us discern if the value vaporizes completely or not.
+    // The group means code cannot look backwards and quote the ^.
     //
     return rebValueInterruptible("^", group);  // ownership gets proxied
 }
