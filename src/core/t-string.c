@@ -1075,7 +1075,7 @@ REBTYPE(String)
         // series is now empty, it reclaims the "bias" (unused capacity at
         // the head of the series).  One of many behaviors worth reviewing.
         //
-        if (index == 0 and IS_SER_DYNAMIC(s))
+        if (index == 0 and GET_SERIES_FLAG(s, DYNAMIC))
             Unbias_Series(s, false);
 
         Free_Bookmarks_Maybe_Null(s);  // review!

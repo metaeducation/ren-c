@@ -506,7 +506,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
             }
 
             REBSER *s = SER(cast(void*, unit));
-            if (not IS_SER_DYNAMIC(s)) {
+            if (NOT_SERIES_FLAG(s, DYNAMIC)) {
                 if (
                     p >= cast(void*, &s->content)
                     && p < cast(void*, &s->content + 1)
@@ -730,7 +730,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
 
     REBYTE wide = SER_WIDE(s);
 
-    const bool was_dynamic = IS_SER_DYNAMIC(s);
+    const bool was_dynamic = GET_SERIES_FLAG(s, DYNAMIC);
 
     if (was_dynamic and index == 0 and SER_BIAS(s) >= delta) {
 
@@ -875,7 +875,7 @@ void Expand_Series(REBSER *s, REBLEN index, REBLEN delta)
     if (not Did_Series_Data_Alloc(s, used_old + delta + x))
         fail (Error_No_Memory((used_old + delta + x) * wide));
 
-    assert(IS_SER_DYNAMIC(s));
+    assert(GET_SERIES_FLAG(s, DYNAMIC));
     if (IS_SER_ARRAY(s))
         Prep_Array(ARR(s), 0); // capacity doesn't matter it will prep
 
@@ -1009,7 +1009,7 @@ void Remake_Series(REBSER *s, REBLEN units, REBFLGS flags)
 
     assert(NOT_SERIES_FLAG(s, FIXED_SIZE));
 
-    bool was_dynamic = IS_SER_DYNAMIC(s);
+    bool was_dynamic = GET_SERIES_FLAG(s, DYNAMIC);
 
     REBINT bias_old;
     REBINT size_old;
@@ -1044,7 +1044,7 @@ void Remake_Series(REBSER *s, REBLEN units, REBFLGS flags)
 
         fail (Error_No_Memory((units + 1) * wide));
     }
-    assert(IS_SER_DYNAMIC(s));
+    assert(GET_SERIES_FLAG(s, DYNAMIC));
     if (IS_SER_ARRAY(s))
         Prep_Array(ARR(s), 0); // capacity doesn't matter, it will prep
 
@@ -1130,7 +1130,7 @@ void Decay_Series(REBSER *s)
         if (Prior_Expand[n] == s) Prior_Expand[n] = 0;
     }
 
-    if (IS_SER_DYNAMIC(s)) {
+    if (GET_SERIES_FLAG(s, DYNAMIC)) {
         REBYTE wide = SER_WIDE(s);
         REBLEN bias = SER_BIAS(s);
         REBLEN total = (bias + SER_REST(s)) * wide;
@@ -1309,7 +1309,7 @@ REBLEN Check_Memory_Debug(void)
                 continue; // a pairing
 
             REBSER *s = SER(cast(void*, unit));
-            if (not IS_SER_DYNAMIC(s))
+            if (NOT_SERIES_FLAG(s, DYNAMIC))
                 continue; // data lives in the series node itself
 
             if (SER_REST(s) == 0)
@@ -1426,7 +1426,7 @@ void Dump_Series_In_Pool(REBLEN pool_id)
             if (
                 pool_id == UNLIMITED
                 or (
-                    IS_SER_DYNAMIC(s)
+                    GET_SERIES_FLAG(s, DYNAMIC)
                     and pool_id == FIND_POOL(SER_TOTAL(s))
                 )
             ){

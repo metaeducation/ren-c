@@ -89,7 +89,7 @@ inline static RELVAL *ARR_LAST(const_if_c REBARR *a)
   { return SER_LAST(RELVAL, a); }
 
 inline static RELVAL *ARR_SINGLE(const_if_c REBARR *a) {
-    assert(not IS_SER_DYNAMIC(a));
+    assert(NOT_SERIES_FLAG(a, DYNAMIC));
     return cast(RELVAL*, &a->content.fixed);
 }
 
@@ -107,7 +107,7 @@ inline static RELVAL *ARR_SINGLE(const_if_c REBARR *a) {
         { return SER_LAST(const RELVAL, a); }
 
     inline static const RELVAL *ARR_SINGLE(const REBARR *a) {
-        assert(not IS_SER_DYNAMIC(a));
+        assert(NOT_SERIES_FLAG(a, DYNAMIC));
         return cast(const RELVAL*, &a->content.fixed);
     }
 #endif
@@ -123,7 +123,7 @@ inline static REBARR *Singular_From_Cell(const RELVAL *v) {
             - offsetof(struct Reb_Series, content)
         )
     );
-    assert(not IS_SER_DYNAMIC(singular));
+    assert(NOT_SERIES_FLAG(singular, DYNAMIC));
     return singular;
 }
 
@@ -151,7 +151,7 @@ inline static void Prep_Array(
     REBARR *a,
     REBLEN capacity  // Expand_Series passes 0 on dynamic reallocation
 ){
-    assert(IS_SER_DYNAMIC(a));
+    assert(GET_SERIES_FLAG(a, DYNAMIC));
 
     RELVAL *prep = ARR_HEAD(a);
 
@@ -204,7 +204,7 @@ inline static REBARR *Make_Array_Core_Into(
     REBSER *s = Make_Series_Into(prealloc, capacity, flags);
     assert(IS_SER_ARRAY(s));  // flavor should have been an array flavor
 
-    if (IS_SER_DYNAMIC(s)) {
+    if (GET_SERIES_FLAG(s, DYNAMIC)) {
         Prep_Array(ARR(s), capacity);
 
       #if DEBUG_TERM_ARRAYS

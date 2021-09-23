@@ -261,7 +261,7 @@ static void Queue_Mark_Node_Deep(void *p)
         // Whether the bonus slot needs to be marked is dictated by internal
         // series type, not an extension-usable flag (due to flag scarcity).
         //
-        if (IS_SER_DYNAMIC(a) and not IS_SER_BIASED(a)) {
+        if (GET_SERIES_FLAG(a, DYNAMIC) and not IS_SER_BIASED(a)) {
             REBNOD *bonus = node_BONUS(Node, a);
             if (bonus) {
               #if !defined(NDEBUG)

@@ -281,7 +281,7 @@ static void Insert_Gobs(
     }
 
   #if DEBUG_TERM_ARRAYS
-    if (IS_SER_DYNAMIC(pane))
+    if (GET_SERIES_FLAG(pane, DYNAMIC))
         SET_CELL_FREE(ARR_TAIL(pane));
   #endif
 

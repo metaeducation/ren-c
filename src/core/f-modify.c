@@ -206,7 +206,7 @@ REBLEN Modify_Array(
     }
 
   #if DEBUG_TERM_ARRAYS
-    if (IS_SER_DYNAMIC(dst_arr))
+    if (GET_SERIES_FLAG(dst_arr, DYNAMIC))
         SET_CELL_FREE(ARR_TAIL(dst_arr));
   #endif
 

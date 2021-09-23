@@ -637,7 +637,7 @@ REBTYPE(Binary)
         // series is now empty, it reclaims the "bias" (unused capacity at
         // the head of the series).  One of many behaviors worth reviewing.
         //
-        if (index == 0 and IS_SER_DYNAMIC(bin))
+        if (index == 0 and GET_SERIES_FLAG(bin, DYNAMIC))
             Unbias_Series(bin, false);
 
         TERM_BIN_LEN(bin, cast(REBLEN, index));  // may have string alias

@@ -298,7 +298,7 @@ REBVAL *RL_rebRepossess(void *ptr, size_t size)
     assert(GET_SERIES_FLAG(s, DONT_RELOCATE));
     CLEAR_SERIES_FLAG(s, DONT_RELOCATE);
 
-    if (IS_SER_DYNAMIC(s)) {
+    if (GET_SERIES_FLAG(s, DYNAMIC)) {
         //
         // Dynamic series have the concept of a "bias", which is unused
         // allocated capacity at the head of a series.  Bump the "bias" to

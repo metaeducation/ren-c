@@ -164,6 +164,10 @@ inline static size_t Wide_For_Flavor(enum Reb_Series_Flavor flavor) {
     return sizeof(void*);
 }
 
+#define SER_WIDE(s) \
+    Wide_For_Flavor(SER_FLAVOR(s))
+
+
 
 #define IS_SER_ARRAY(s)         (SER_FLAVOR(s) <= FLAVOR_MAX_ARRAY)
 #define IS_SER_UTF8(s)          (SER_FLAVOR(s) >= FLAVOR_MIN_UTF8)

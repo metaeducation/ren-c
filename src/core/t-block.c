@@ -1678,7 +1678,7 @@ void Assert_Array_Core(const REBARR *a)
         }
     }
 
-    if (IS_SER_DYNAMIC(a)) {
+    if (GET_SERIES_FLAG(a, DYNAMIC)) {
         REBLEN rest = SER_REST(a);
 
       #if DEBUG_TERM_ARRAYS

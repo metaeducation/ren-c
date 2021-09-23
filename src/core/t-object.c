@@ -848,7 +848,7 @@ REBCTX *Copy_Context_Extra_Managed(
         mutable_BONUS(Patches, varlist) = nullptr;
 
         REBCTX *copy = CTX(varlist); // now a well-formed context
-        assert(IS_SER_DYNAMIC(varlist));
+        assert(GET_SERIES_FLAG(varlist, DYNAMIC));
 
         REBSYM **psym = SER_HEAD(REBSYM*, PG_Symbols_By_Hash);
         REBSYM **psym_tail = SER_TAIL(REBSYM*, PG_Symbols_By_Hash);

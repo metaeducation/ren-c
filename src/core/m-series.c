@@ -145,7 +145,7 @@ void Remove_Series_Units(REBSER *s, REBSIZ offset, REBLEN quantity)
     if (quantity == 0)
         return;
 
-    bool is_dynamic = IS_SER_DYNAMIC(s);
+    bool is_dynamic = GET_SERIES_FLAG(s, DYNAMIC);
     REBLEN used_old = SER_USED(s);
 
     REBLEN start = offset * SER_WIDE(s);
@@ -289,7 +289,7 @@ void Unbias_Series(REBSER *s, bool keep)
 //
 void Reset_Array(REBARR *a)
 {
-    if (IS_SER_DYNAMIC(a))
+    if (GET_SERIES_FLAG(a, DYNAMIC))
         Unbias_Series(a, false);
     SET_SERIES_LEN(a, 0);
 }
@@ -305,7 +305,7 @@ void Clear_Series(REBSER *s)
 {
     assert(!Is_Series_Read_Only(s));
 
-    if (IS_SER_DYNAMIC(s)) {
+    if (GET_SERIES_FLAG(s, DYNAMIC)) {
         Unbias_Series(s, false);
         memset(s->content.dynamic.data, 0, SER_REST(s) * SER_WIDE(s));
     }
@@ -346,7 +346,7 @@ void Assert_Series_Term_Core(const REBSER *s)
 {
     if (IS_SER_ARRAY(s)) {
       #if DEBUG_TERM_ARRAYS
-        if (IS_SER_DYNAMIC(s)) {
+        if (GET_SERIES_FLAG(s, DYNAMIC)) {
             const RELVAL *tail = ARR_TAIL(ARR(s));
             if (not (tail->header.bits & NODE_FLAG_CELL))
                 panic (s);

@@ -20,8 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Note: the word "Series" is overloaded in Rebol to refer to two related but
-// distinct concepts:
+// The word "Series" is overloaded in Rebol to refer to two related concepts:
 //
 // 1. The internal system datatype, also known as a REBSER.  It's a low-level
 //    implementation of something similar to a vector or an array in other
@@ -45,15 +44,10 @@
 // other values and not update the others referring to it.  Hence VAL_INDEX()
 // must be checked, or the routine called with it must.
 //
-//=////////////////////////////////////////////////////////////////////////=//
+//=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// Series subclasses REBARR, REBCTX, REBACT, REBMAP are defined which are
-// type-incompatible with REBSER for safety.  (In C++ they would be derived
-// classes, so common operations would not require casting...but it is seen
-// as worthwhile to offer some protection even compiling as C.)  The
-// subclasses are explained where they are defined in separate header files.
-//
-// Notes:
+// * Series subclasses REBARR, REBCTX, REBACT, REBMAP are defined which are
+//   explained where they are defined in separate header files.
 //
 // * It is desirable to have series subclasses be different types, even though
 //   there are some common routines for processing them.  e.g. not every
@@ -69,85 +63,11 @@
 //
 
 
-
-//=//// LINK AND MISC HELPERS /////////////////////////////////////////////=//
+//=//// SERIES "FLAG" BITS /////////////////////////////////////////////////=//
 //
-// The GC has flags LINK_NEEDS_MARKED and MISC_NEEDS_MARKED which allow the
-// varied flavors of series to call out whether they need pointers inside of
-// their node to be further processed for marking.
+// See definitions of SERIES_FLAG_XXX.
 //
-// This generality comes at a cost in clarity for the source, because all of
-// the varied meanings which the link and misc fields might have need to be
-// assigned through the same named structure member.  (If they were given
-// different names in the union, the GC couldn't know which union field it
-// was supposed to read to mark.)
-//
-// The LINK() and MISC() macros try to mitigate this by letting callsites
-// that assign and read the link and misc fields of series nodes be different.
-// e.g. the following assigns and reads the same REBNOD* that everything else
-// using the link field does, but documents it is for "bookmark":
-//
-//      REBBMK *bookmark = LINK(Bookmark, series);
-//      mutable_LINK(Bookmark, series) = bookmark;
-//
-// To do this, you must define two macros:
-//
-//      #define LINK_Bookmark_TYPE REBBMK*
-//      #define LINK_Bookmark_CAST (REBBMK*)SER
-//
-// These definitions let us build macros for doing RValue and LValue access
-// under a unique-looking reference, with type safety, expanding to:
-//
-//      REBBMK *bookmark = (REBBMK*)SER((void*)series->link.any.node);
-//      series->link.any.node = ensure(REBBMK*) bookmark;
-//
-// You get the desired properties of being easy to find cases of a particular
-// interpretation of the field, along with type checking on the assignment,
-// and a cast operation that does potentially heavy debug checks on the
-// extractionheavy-checking cast operation on the extraction.  (See
-// DEBUG_CHECK_CASTS for the C++ versions of SER(), ARR(), CTX()...)
-//
-// Note: C casts are used here to gloss the `const` status of the node.  The
-// caller is responsible for storing reads in the right constness for what
-// they know to be stored in the node.
-//
-
-#define LINK(Field, s) \
-    LINK_##Field##_CAST(m_cast(REBNOD*, \
-        ensure_flavor(HAS_LINK_##Field, (s))->link.any.node))
-
-#define MISC(Field, s) \
-    MISC_##Field##_CAST(m_cast(REBNOD*, \
-        ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node))
-
-#define INODE(Field, s) \
-    INODE_##Field##_CAST(m_cast(REBNOD*, \
-        ensure_flavor(HAS_INODE_##Field, (s))->info.node))
-
-#define mutable_LINK(Field, s) \
-    ensured(LINK_##Field##_TYPE, const REBNOD*, \
-        ensure_flavor(HAS_LINK_##Field, (s))->link.any.node)
-
-#define mutable_MISC(Field, s) \
-    ensured(MISC_##Field##_TYPE, const REBNOD*, \
-        ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node)
-
-#define mutable_INODE(Field, s) \
-    ensured(INODE_##Field##_TYPE, const REBNOD*, \
-        ensure_flavor(HAS_INODE_##Field, (s))->info.node)
-
-#define node_LINK(Field, s) \
-    *m_cast(REBNOD**, &(s)->link.any.node)  // const ok for strict alias
-
-#define node_MISC(Field, s) \
-    *m_cast(REBNOD**, &(s)->misc.any.node)  // const ok for strict alias
-
-#define node_INODE(Field, s) \
-    *m_cast(REBNOD**, &(s)->info.node)  // const ok for strict alias
-
-
-//
-// Series header FLAGs (distinct from INFO bits)
+// Using token pasting macros helps avoid mixups with SERIES_INFO_XXX!
 //
 
 #define SET_SERIES_FLAG(s,name) \
@@ -163,16 +83,175 @@
     (((s)->leader.bits & SERIES_FLAG_##name) == 0)
 
 
+//=//// SERIES SUBCLASS FLAGS //////////////////////////////////////////////=//
 //
-// Series INFO bits (distinct from header FLAGs)
+// In the debug build, ensure_flavor() checks if a series node matches the
+// expected FLAVOR_XXX, and panics if it does not.  This is used by the
+// subclass testing macros as a check that you are testing the flag for the
+// flavor that you expect.
 //
-// Only valid for some forms of series (space is used for other purposes in
-// places like action details lists, etc.)
+
+#if defined(NDEBUG)
+    #define ensure_flavor(flavor,s) (s)  // no-op in release build
+#else
+    inline static REBSER *ensure_flavor(
+        enum Reb_Series_Flavor flavor,
+        const_if_c REBSER *s
+    ){
+        if (SER_FLAVOR(s) != flavor) {
+            enum Reb_Series_Flavor actual = SER_FLAVOR(s);
+            USED(actual);
+            panic (s);
+        }
+        return m_cast(REBSER*, s);
+    }
+
+    #if CPLUSPLUS_11
+        inline static const REBSER *ensure_flavor(
+            enum Reb_Series_Flavor flavor,
+            const REBSER *s
+        ){
+            if (SER_FLAVOR(s) != flavor) {
+                enum Reb_Series_Flavor actual = SER_FLAVOR(s);
+                USED(actual);
+                panic (s);
+            }
+            return s;
+        }
+    #endif
+#endif
+
+#define GET_SUBCLASS_FLAG(subclass,s,name) \
+    ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
+        & subclass##_FLAG_##name) != 0)
+
+#define NOT_SUBCLASS_FLAG(subclass,s,name) \
+    ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
+        & subclass##_FLAG_##name) == 0)
+
+#define SET_SUBCLASS_FLAG(subclass,s,name) \
+    (ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
+        |= subclass##_FLAG_##name)
+
+#define CLEAR_SUBCLASS_FLAG(subclass,s,name) \
+    (ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
+        &= ~subclass##_FLAG_##name)
+
+
+//=//// LINK AND MISC HELPERS /////////////////////////////////////////////=//
+//
+// Every series node has two generic platform-pointer-sized slots, called LINK
+// and MISC, that can store arbitrary information.  How that is interpreted
+// depends on the series subtype (its FLAVOR_XXX byte).
+//
+// Some of these slots hold other node pointers that need to be GC marked.  But
+// rather than a switch() statement based on subtype to decide what to mark
+// or not, the GC is guided by generic flags in the series header called
+// LINK_NEEDS_MARKED and MISC_NEEDS_MARKED.
+//
+// Yet the link and misc actually mean different things for different subtypes.
+// A FLAVOR_STRING node's LINK points to a list that maps byte positions to
+// UTF-8 codepoint boundaries.  But a FLAVOR_INTERN series uses the LINK for a
+// pointer to another symbol's synonym.
+//
+// A C program could typically deal with this using a union, to name the same
+// memory offset in different ways.  Here `link` would be a union {}:
+//
+//      REBBMK *bookmarks = string.link.bookmarks;
+//      string.link.bookmarks = bookmarks;
+//
+//      const REBSYM* synonym = symbol.link.synonym;
+//      symbol.link.synonym = synonym;
+//
+// The GC could then read a generic field like `series.link.node` when doing
+// its marking.  This would be fine in C so long as the types were compatible,
+// it's called "type punning".
+//
+// But that's not legal in C++!
+//
+//  "It's undefined behavior to read from the member of the union that
+//   wasn't most recently written."
+//
+//  https://en.cppreference.com/w/cpp/language/union
+//
+// We use a workaround that brings in some heavy debug build benefits.  The
+// LINK() and MISC() macros force all assignments and reads through a common
+// field.  e.g. the following assigns and reads the same field ("node"), but
+// the instances document it is for "bookmarks" or "synonym":
+//
+//      REBBMK *bookmarks = LINK(Bookmarks, string);  // actually reads `node`
+//      mutable_LINK(Bookmarks, string) = bookmarks;
+//
+//      const REBSYM* synonym = LINK(Synonym, symbol);  // also reads `node`
+//      mutable_LINK(Synonym, symbol) = synonym;
+//
+// The syntax is *almost* as readable, but throws in benefits of offering some
+// helpful debug runtime checks that you're accessing what the series holds.
+// It has yet another advantage because it allows new "members" to be "added"
+// by extension code that wouldn't be able to edit a union in a core header.
+//
+// To use the LINK() and MISC(), you must define three macros, like this:
+//
+//      #define LINK_Bookmarks_TYPE     REBBMK*
+//      #define LINK_Bookmarks_CAST     (REBBMK*)SER
+//      #define HAS_LINK_Bookmarks      FLAVOR_STRING
+//
+// You get the desired properties of being easy to find cases of a particular
+// interpretation of the field, along with type checking on the assignment,
+// and a cast operation that does potentially heavy debug checks on the
+// extraction.
+//
+// (See DEBUG_CHECK_CASTS for the C++ versions of SER(), ARR(), CTX()...)
+//
+// Note: C casts are used here to gloss the `const` status of the node.  The
+// caller is responsible for storing reads in the right constness for what
+// they know to be stored in the node.
+//
+
+#define LINK(Field, s) \
+    LINK_##Field##_CAST(m_cast(REBNOD*, \
+        ensure_flavor(HAS_LINK_##Field, (s))->link.any.node))
+
+#define MISC(Field, s) \
+    MISC_##Field##_CAST(m_cast(REBNOD*, \
+        ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node))
+
+#define mutable_LINK(Field, s) \
+    ensured(LINK_##Field##_TYPE, const REBNOD*, \
+        ensure_flavor(HAS_LINK_##Field, (s))->link.any.node)
+
+#define mutable_MISC(Field, s) \
+    ensured(MISC_##Field##_TYPE, const REBNOD*, \
+        ensure_flavor(HAS_MISC_##Field, (s))->misc.any.node)
+
+#define node_LINK(Field, s) \
+    *m_cast(REBNOD**, &(s)->link.any.node)  // const ok for strict alias
+
+#define node_MISC(Field, s) \
+    *m_cast(REBNOD**, &(s)->misc.any.node)  // const ok for strict alias
+
+
+
+//=//// SERIES "INFO" BITS (or INODE) //////////////////////////////////////=//
+//
+// See definitions of SERIES_INFO_XXX.
+//
+// Using token pasting macros helps avoid mixups with SERIES_FLAG_XXX!
+//
+// Not all series nodes have info bits, as some use the space to store a GC
+// markable node.  This "INODE" is accessed via macros in the same way as the
+// LINK() and MISC() macros (described in the section above):
+//
+//      REBPAT *patch = INODE(NextPatch, patch);  // reads info.node
+//      mutable_INODE(NextPatch, patch) = patch;
 //
 
 #if (! CPLUSPLUS_11)
     #define SER_INFO(s) \
         (s)->info.flags.bits
+
+    // !!! A checking SER_INODE() is overkill, given that the INODE() accessors
+    // check the flavor.  Assume flavor has INFO_NODE_NEEDS_MARK right.
 #else
     inline static const uintptr_t &SER_INFO(const REBSER *s) {
         assert(NOT_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK));
@@ -197,96 +276,25 @@
 #define NOT_SERIES_INFO(s,name) \
     ((SER_INFO(s) & SERIES_INFO_##name) == 0)
 
+#define INODE(Field, s) \
+    INODE_##Field##_CAST(m_cast(REBNOD*, \
+        ensure_flavor(HAS_INODE_##Field, (s))->info.node))
 
-inline static REBSER *ensure_flavor(
-    enum Reb_Series_Flavor flavor,
-    const_if_c REBSER *s
-){
-    if (SER_FLAVOR(s) != flavor) {
-        enum Reb_Series_Flavor actual = SER_FLAVOR(s);
-        USED(actual);
-        panic (s);
-    }
-    assert(SER_FLAVOR(s) == flavor);
-    return m_cast(REBSER*, s);
-}
+#define mutable_INODE(Field, s) \
+    ensured(INODE_##Field##_TYPE, const REBNOD*, \
+        ensure_flavor(HAS_INODE_##Field, (s))->info.node)
 
-#if CPLUSPLUS_11
-    inline static const REBSER *ensure_flavor(
-        enum Reb_Series_Flavor flavor,
-        const REBSER *s
-    ){
-        if (SER_FLAVOR(s) != flavor) {
-            enum Reb_Series_Flavor actual = SER_FLAVOR(s);
-            USED(actual);
-            panic (s);
-        }
-        assert(SER_FLAVOR(s) == flavor);
-        return s;
-    }
-#endif
+#define node_INODE(Field, s) \
+    *m_cast(REBNOD**, &(s)->info.node)  // const ok for strict alias
 
 
-#define GET_SUBCLASS_FLAG(subclass,s,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
-        & subclass##_FLAG_##name) != 0)
-
-#define NOT_SUBCLASS_FLAG(subclass,s,name) \
-    ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
-        & subclass##_FLAG_##name) == 0)
-
-#define SET_SUBCLASS_FLAG(subclass,s,name) \
-    (ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
-        |= subclass##_FLAG_##name)
-
-#define CLEAR_SUBCLASS_FLAG(subclass,s,name) \
-    (ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
-        &= ~subclass##_FLAG_##name)
-
-
-#define IS_SER_DYNAMIC(s) \
-    GET_SERIES_FLAG((s), DYNAMIC)
-
-
-#define SER_WIDE(s) \
-    Wide_For_Flavor(SER_FLAVOR(s))
-
-
-#if (! CPLUSPLUS_11)
-    #define SER_BONUS(s) \
-        (s)->content.dynamic.bonus.node
-#else
-    inline static const struct Reb_Node * const &SER_BONUS(const REBSER *s) {
-        assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
-        return s->content.dynamic.bonus.node;
-    }
-
-    inline static const struct Reb_Node * &SER_BONUS(REBSER *s) {
-        assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
-        return s->content.dynamic.bonus.node;
-    }
-#endif
-
-#define BONUS(Field, s) \
-    BONUS_##Field##_CAST(m_cast(REBNOD*, \
-        SER_BONUS(ensure_flavor(HAS_BONUS_##Field, (s)))))
-
-#define mutable_BONUS(Field, s) \
-    ensured(BONUS_##Field##_TYPE, const REBNOD*, \
-        SER_BONUS(ensure_flavor(HAS_BONUS_##Field, (s))))
-
-#define node_BONUS(Field, s) \
-    *m_cast(REBNOD**, &SER_BONUS(s))  // const ok for strict alias
-
-
+//=//// SERIES CAPACITY AND TOTAL SIZE /////////////////////////////////////=//
 //
-// Bias is empty space in front of head:
+// See documentation of `bias` and `rest` in %sys-rebser.h
 //
 
 inline static bool IS_SER_BIASED(const REBSER *s) {
-    assert(IS_SER_DYNAMIC(s));
-    if (not IS_SER_ARRAY(s))
-        return true;
+    assert(GET_SERIES_FLAG(s, DYNAMIC));
     return not IS_VARLIST(s);
 }
 
@@ -294,17 +302,6 @@ inline static REBLEN SER_BIAS(const REBSER *s) {
     if (not IS_SER_BIASED(s))
         return 0;
     return cast(REBLEN, ((s)->content.dynamic.bonus.bias >> 16) & 0xffff);
-}
-
-inline static REBLEN SER_REST(const REBSER *s) {
-    if (IS_SER_DYNAMIC(s))
-        return s->content.dynamic.rest;
-
-    if (IS_SER_ARRAY(s))
-        return 2; // includes info bits acting as trick "terminator"
-
-    assert(sizeof(s->content) % SER_WIDE(s) == 0);
-    return sizeof(s->content) / SER_WIDE(s);
 }
 
 #define MAX_SERIES_BIAS 0x1000
@@ -325,17 +322,62 @@ inline static void SER_SUB_BIAS(REBSER *s, REBLEN b) {
     s->content.dynamic.bonus.bias -= b << 16;
 }
 
+inline static REBLEN SER_REST(const REBSER *s) {
+    if (GET_SERIES_FLAG(s, DYNAMIC))
+        return s->content.dynamic.rest;
+
+    if (IS_SER_ARRAY(s))
+        return 2; // includes info bits acting as trick "terminator"
+
+    assert(sizeof(s->content) % SER_WIDE(s) == 0);
+    return sizeof(s->content) / SER_WIDE(s);
+}
+
 inline static size_t SER_TOTAL(const REBSER *s) {
     return (SER_REST(s) + SER_BIAS(s)) * SER_WIDE(s);
 }
 
 inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
-    if (not IS_SER_DYNAMIC(s))
+    if (NOT_SERIES_FLAG(s, DYNAMIC))
         return 0;
     return SER_TOTAL(s);
 }
 
 
+//=//// SERIES "BONUS" /////////////////////////////////////////////////////=//
+//
+// If a dynamic series isn't modified in ways that can leave extra capacity at
+// the head, it might want to use the bias slot for something else.  This usage
+// is called the "bonus".
+//
+
+#if (! CPLUSPLUS_11)
+    #define SER_BONUS(s) \
+        (s)->content.dynamic.bonus.node
+#else
+    inline static const struct Reb_Node * const &SER_BONUS(const REBSER *s) {
+        assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
+        return s->content.dynamic.bonus.node;
+    }
+    inline static const struct Reb_Node * &SER_BONUS(REBSER *s) {
+        assert(s->leader.bits & SERIES_FLAG_DYNAMIC);
+        return s->content.dynamic.bonus.node;
+    }
+#endif
+
+#define BONUS(Field, s) \
+    BONUS_##Field##_CAST(m_cast(REBNOD*, \
+        SER_BONUS(ensure_flavor(HAS_BONUS_##Field, (s)))))
+
+#define mutable_BONUS(Field, s) \
+    ensured(BONUS_##Field##_TYPE, const REBNOD*, \
+        SER_BONUS(ensure_flavor(HAS_BONUS_##Field, (s))))
+
+#define node_BONUS(Field, s) \
+    *m_cast(REBNOD**, &SER_BONUS(s))  // const ok for strict alias
+
+
+//=//// SERIES "TOUCH" FOR DEBUGGING ///////////////////////////////////////=//
 //
 // For debugging purposes, it's nice to be able to crash on some kind of guard
 // for tracking the call stack at the point of allocation if we find some
@@ -362,7 +404,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
             // stack tracking is rather slow if applied to all series, but
             // it is possible...just don't do this test.)
             //
-            if (not IS_SER_DYNAMIC(s) and GET_SERIES_FLAG(s, ROOT))
+            if (NOT_SERIES_FLAG(s, DYNAMIC) and GET_SERIES_FLAG(s, ROOT))
                 s->guard = cast(intptr_t*, Make_Winstack_Debug());
             else
                 s->guard = nullptr;
@@ -387,6 +429,14 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 #endif
 
 
+//=//// DEBUG SERIES MONITORING ////////////////////////////////////////////=//
+//
+// This once used a series flag in debug builds to tell whether a series was
+// monitored or not.  But series flags are scarce, so the feature was scaled
+// back to just monitoring a single node.  It could also track a list--but the
+// point is just that stealing a flag isn't viable.
+//
+
 #if DEBUG_MONITOR_SERIES
     inline static void MONITOR_SERIES(void *p) {
         printf("Adding monitor to %p on tick #%d\n", p, cast(int, TG_Tick));
@@ -408,7 +458,7 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
 //
 
 inline static REBLEN SER_USED(const REBSER *s) {
-    if (IS_SER_DYNAMIC(s))
+    if (GET_SERIES_FLAG(s, DYNAMIC))
         return s->content.dynamic.used;
     if (IS_SER_ARRAY(s)) {
         //
@@ -445,7 +495,7 @@ inline static REBYTE *SER_DATA(const_if_c REBSER *s) {
     //
     assert(NOT_SERIES_FLAG(s, INACCESSIBLE));
 
-    return IS_SER_DYNAMIC(s)
+    return GET_SERIES_FLAG(s, DYNAMIC)
         ? cast(REBYTE*, s->content.dynamic.data)
         : cast(REBYTE*, &s->content);
 }
@@ -471,7 +521,7 @@ inline static REBYTE *SER_DATA_AT(REBYTE w, const_if_c REBSER *s, REBLEN i) {
     assert(NOT_SERIES_FLAG(s, INACCESSIBLE));
 
     return ((w) * (i)) + ( // v-- inlining of SER_DATA
-        IS_SER_DYNAMIC(s)
+        GET_SERIES_FLAG(s, DYNAMIC)
             ? cast(REBYTE*, s->content.dynamic.data)
             : cast(REBYTE*, &s->content)
         );
@@ -523,7 +573,7 @@ inline static REBYTE *SER_DATA_AT(REBYTE w, const_if_c REBSER *s, REBLEN i) {
 // efficient if they didn't use any "appending" operators to get built.
 //
 inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
-    if (IS_SER_DYNAMIC(s)) {
+    if (GET_SERIES_FLAG(s, DYNAMIC)) {
         s->content.dynamic.used = used;
 
         // !!! See notes on TERM_SERIES_IF_NEEDED() for how array termination
@@ -671,7 +721,7 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
           #endif
         }
     }
-    else if (IS_SER_DYNAMIC(s) and IS_SER_ARRAY(s)) {
+    else if (GET_SERIES_FLAG(s, DYNAMIC) and IS_SER_ARRAY(s)) {
       #if DEBUG_TERM_ARRAYS
         SET_CELL_FREE(SER_TAIL(RELVAL, s));
       #endif
@@ -1065,7 +1115,7 @@ inline static void INIT_SPECIFIER(RELVAL *v, const void *p) {
             or (
                 ANY_ARRAY(v) and IS_PATCH(binding)  // virtual
             ) or (
-                IS_VARARGS(v) and not IS_SER_DYNAMIC(binding)
+                IS_VARARGS(v) and NOT_SERIES_FLAG(binding, DYNAMIC)
             )  // varargs from MAKE VARARGS! [...], else is a varlist
         );
     }
@@ -1200,7 +1250,7 @@ inline static bool Did_Series_Data_Alloc(REBSER *s, REBLEN capacity) {
     // no shrinking process that will pare it back to fit completely inside
     // the REBSER node.
     //
-    assert(IS_SER_DYNAMIC(s)); // caller sets
+    assert(GET_SERIES_FLAG(s, DYNAMIC)); // caller sets
 
     REBYTE wide = SER_WIDE(s);
     assert(wide != 0);

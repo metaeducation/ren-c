@@ -156,7 +156,7 @@
 inline static const REBVAL *CTX_ARCHETYPE(REBCTX *c) {  // read-only form
     const REBSER *varlist = CTX_VARLIST(c);
     if (GET_SERIES_FLAG(varlist, INACCESSIBLE)) {  // a freed stub
-        assert(not IS_SER_DYNAMIC(varlist));  // variables are gone
+        assert(NOT_SERIES_FLAG(varlist, DYNAMIC));  // variables are gone
         return cast(const REBVAL*, &varlist->content.fixed);
     }
     assert(NOT_SERIES_FLAG(varlist, INACCESSIBLE));
