@@ -348,8 +348,8 @@ pick-poke*: generic [
         [any-value!]
     steps "A pre-COMPOSE'd list of steps in the PICK or POKE chain"
         [block!]
-    value "Value to POKE via ^META protocol (true NULL signals a PICK)"
-        [<opt> <meta> any-value!]
+    ^value "Value to POKE via ^META protocol (true NULL signals a PICK)"
+        [<opt> any-value!]
 ]
 
 

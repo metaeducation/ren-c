@@ -196,14 +196,6 @@ bool Add_Typeset_Bits_Core(
             else if (0 == CT_String(item, Root_Const_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, CONST);
             }
-            else if (0 == CT_String(item, Root_Meta_Tag, strict)) {
-                //
-                // !!! <meta> is not the general way to make literal args
-                // (`@arg` notation is used), but the native specs are loaded
-                // by a boostrap r3 that can't read them.
-                //
-                mutable_VAL_TYPESET_PARAM_CLASS_BYTE(typeset) = PARAM_CLASS_META;
-            }
         }
         else if (IS_DATATYPE(item)) {
             //

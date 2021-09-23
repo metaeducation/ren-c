@@ -100,8 +100,8 @@ REBNATIVE(break)
 //  "Throws control back to top of loop for next iteration."
 //
 //      return: []  ; !!! notation for divergent function?
-//      value "If provided, act as if loop body finished with this value"
-//          [<opt> <meta> any-value!]
+//      ^value "If provided, act as if loop body finished with this value"
+//          [<opt> any-value!]
 //  ]
 //
 REBNATIVE(continue)
@@ -1029,8 +1029,8 @@ REBNATIVE(for_skip)
 //  {End the current iteration of CYCLE and return a value (nulls allowed)}
 //
 //      return: []  ; !!! Notation for divergent functions?s
-//      value "If no argument is provided, assume ~void~ isotope"
-//          [<opt> <end> <meta> any-value!]
+//      ^value "If no argument is provided, assume ~void~ isotope"
+//          [<opt> <end> any-value!]
 //  ]
 //
 REBNATIVE(stop)

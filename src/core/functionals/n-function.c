@@ -679,8 +679,8 @@ REB_R Init_Thrown_Unwind_Value(
 //      return: []  ; !!! notation for divergent functions?
 //      level "Frame, action, or index to exit from"
 //          [frame! action! integer!]
-//      result "Result for enclosing state"
-//          [<opt> <end> <meta> any-value!]
+//      ^result "Result for enclosing state"
+//          [<opt> <end> any-value!]
 //  ]
 //
 REBNATIVE(unwind)
@@ -799,8 +799,8 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
 //  {RETURN, giving a result to the caller}
 //
 //      return: []  ; !!! notation for "divergent?"
-//      value "If no argument is given, result will be ~void~"
-//          [<end> <opt> <meta> any-value!]
+//      ^value "If no argument is given, result will be ~void~"
+//          [<end> <opt> any-value!]
 //      /isotope "Relay isotope status of NULL or void return values"
 //  ]
 //
@@ -829,8 +829,8 @@ REBNATIVE(definitional_return)
 //  {RETURN/ISOTOPE native specialization}
 //
 //      return: []  ; !!! notation for divergent functions?
-//      value "If no argument is given, result will be ~void~"
-//          [<end> <opt> <meta> any-value!]
+//      ^value "If no argument is given, result will be ~void~"
+//          [<end> <opt> any-value!]
 //  ]
 //
 REBNATIVE(definitional_return_isotope)

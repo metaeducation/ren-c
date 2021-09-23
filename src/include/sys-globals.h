@@ -135,7 +135,6 @@ PVAR REBVAL *Root_Skip_Tag; // marks a hard quote as "skippable" if wrong type
 PVAR REBVAL *Root_Const_Tag; // pass a CONST version of the input argument
 PVAR REBVAL *Root_Invisible_Tag;  // return value can be invisible
 PVAR REBVAL *Root_Void_Tag;  // will make any return result act invisibly
-PVAR REBVAL *Root_Meta_Tag;  // !!! needed for bootstrap, vs ^meta parameter
 
 PVAR REBVAL *Root_Unspecialized_Tag;  // unique unspecialized slot identity
 

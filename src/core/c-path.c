@@ -711,7 +711,7 @@ REBNATIVE(pick)
 //          {(modified)}
 //      picker
 //          {Index offset, symbol, or other value to use as index}
-//      value [<opt> <meta> any-value!]
+//      ^value [<opt> any-value!]
 //          {The new value}
 //  ]
 //

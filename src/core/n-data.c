@@ -697,7 +697,7 @@ void Set_Var_May_Fail(
 //          {Will be the values set to, or void if any set values are void}
 //      target "Word or path (# means ignore assignment, just return value)"
 //          [blackhole! any-word! symbol! any-sequence! quoted!]
-//      value [<opt> <meta> any-value!]
+//      ^value [<opt> any-value!]
 //  ]
 //
 REBNATIVE(set)
@@ -1571,7 +1571,7 @@ REBNATIVE(null_q)
 //  {Make the heavy form of NULL (passes through all other values)}
 //
 //      return: [<opt> any-value!]
-//      optional [<opt> <meta> any-value!]
+//      ^optional [<opt> any-value!]
 //  ]
 //
 REBNATIVE(heavy) {
@@ -1592,7 +1592,7 @@ REBNATIVE(heavy) {
 //  {Make the light form of NULL (passes through all other values)}
 //
 //      return: [<opt> any-value!]
-//      optional [<opt> <meta> any-value!]
+//      ^optional [<opt> any-value!]
 //  ]
 //
 REBNATIVE(light) {
@@ -1627,7 +1627,7 @@ REBNATIVE(none) {
 //  "Turn ~null~, ~blank~ and ~false~ isotopes into their corresponding values"
 //
 //      return: [<opt> any-value!]
-//      optional [<opt> <meta> any-value!]
+//      ^optional [<opt> any-value!]
 //  ]
 //
 REBNATIVE(decay)
@@ -1647,7 +1647,7 @@ REBNATIVE(decay)
 //  "Turn NULL and isotopes into plain BAD-WORD!s, pass through other values"
 //
 //      return: [any-value!]
-//      optional [<opt> <meta> any-value!]
+//      ^optional [<opt> any-value!]
 //  ]
 //
 REBNATIVE(reify)
@@ -1674,7 +1674,7 @@ REBNATIVE(reify)
 //  "Make non-isotope ~void~ vanish, passing through all other values"
 //
 //      return: [<opt> <invisible> any-value!]
-//      optional [<opt> <meta> any-value!]
+//      ^optional [<opt> any-value!]
 //  ]
 //
 REBNATIVE(devoid)
@@ -1698,7 +1698,7 @@ REBNATIVE(devoid)
 //  "Make NULL vanish, passing through all other values"
 //
 //      return: [<opt> <invisible> any-value!]
-//      optional [<opt> <meta> any-value!]
+//      ^optional [<opt> any-value!]
 //  ]
 //
 REBNATIVE(denull)

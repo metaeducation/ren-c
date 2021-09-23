@@ -116,8 +116,8 @@ REBNATIVE(either)
 //
 //      return: "Input value if not null, or branch result"
 //          [<opt> any-value!]
-//      optional "<deferred argument> Run branch if this is null"
-//          [<opt> <meta> any-value!]
+//      ^optional "<deferred argument> Run branch if this is null"
+//          [<opt> any-value!]
 //      :branch [any-branch!]
 //  ]
 //
@@ -148,8 +148,8 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
 //  {Determine if argument would have triggered an ELSE branch}
 //
 //      return: [logic!]
-//      optional "Argument to test"
-//          [<opt> <meta> any-value!]
+//      ^optional "Argument to test"
+//          [<opt> any-value!]
 //  ]
 //
 REBNATIVE(else_q)
@@ -166,8 +166,8 @@ REBNATIVE(else_q)
 //
 //      return: "null if input is null, or branch result"
 //          [<opt> any-value!]
-//      optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <meta> any-value!]
+//      ^optional "<deferred argument> Run branch if this is not null"
+//          [<opt> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //  ]
@@ -200,8 +200,8 @@ REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
 //  {Determine if argument would have triggered a THEN branch}
 //
 //      return: [logic!]
-//      optional "Argument to test"
-//          [<opt> <meta> any-value!]
+//      ^optional "Argument to test"
+//          [<opt> any-value!]
 //  ]
 //
 REBNATIVE(then_q)
@@ -218,8 +218,8 @@ REBNATIVE(then_q)
 //
 //      return: "The same value as input, regardless of if branch runs"
 //          [<opt> any-value!]
-//      optional "<deferred argument> Run branch if this is not null"
-//          [<opt> <meta> any-value!]
+//      ^optional "<deferred argument> Run branch if this is not null"
+//          [<opt> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //  ]

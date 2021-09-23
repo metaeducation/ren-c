@@ -304,7 +304,7 @@ REBNATIVE(quote)
 //
 //      return: "Will be a ~void~ isotope if input was <end>"
 //          [<opt> any-value!]
-//      optional [<opt> <meta> <end> any-value!]
+//      ^optional [<opt> <end> any-value!]
 //  ]
 //
 REBNATIVE(meta)
@@ -354,7 +354,7 @@ REBNATIVE(unquote)
 //
 //      return: "Potentially an isotope"
 //          [<opt> any-value!]
-//      value [<opt> <meta> bad-word! quoted!]
+//      ^value [<opt> bad-word! quoted!]
 //  ]
 //
 REBNATIVE(unmeta)

@@ -200,7 +200,7 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
 //  "Terminate abnormally with a message, optionally diagnosing a value cell"
 //
 //      return: []  ; !!! notation for divergent functions?
-//      reason [<opt> <meta> any-value!]
+//      ^reason [<opt> any-value!]
 //          "Cause of the panic"
 //      /value "Interpret reason as a value cell to debug dump, vs. a message"
 //  ]

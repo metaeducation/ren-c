@@ -306,10 +306,6 @@ static void Init_Action_Spec_Tags(void)
     ensureNullptr(Root_Invisible_Tag) = Make_Locked_Tag("invisible");
     ensureNullptr(Root_Void_Tag) = Make_Locked_Tag("void");
 
-    // !!! Needed for bootstrap, as `@arg` won't LOAD in old r3
-    //
-    ensureNullptr(Root_Meta_Tag) = Make_Locked_Tag("meta");
-
     // Used by SPECIALIZE as a unique identity for telling what's been
     // specialized and what hasn't.
     //
@@ -329,8 +325,6 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_Const_Tag);
     rebReleaseAndNull(&Root_Invisible_Tag);
     rebReleaseAndNull(&Root_Void_Tag);
-
-    rebReleaseAndNull(&Root_Meta_Tag);  // !!! only needed for old r3 bootstrap
 
     rebReleaseAndNull(&Root_Unspecialized_Tag);
 }
