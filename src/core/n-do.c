@@ -136,15 +136,12 @@ REBNATIVE(shove)
     REBVAL *shovee = ARG(right); // reuse arg cell for the shoved-into
 
     if (IS_WORD(f_value) or IS_PATH(f_value)) {
-        if (Get_If_Word_Or_Path_Throws(
+        Get_Var_May_Fail(
             D_OUT, // can't eval directly into arg slot
             f_value,
             f_specifier,
-            false // !!! see above; false = don't push refinements
-        )){
-            return R_THROWN;
-        }
-
+            false
+        );
         Move_Cell(shovee, D_OUT);
     }
     else if (IS_GROUP(f_value)) {
