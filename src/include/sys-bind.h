@@ -390,13 +390,10 @@ inline static void INIT_VAL_WORD_BINDING(RELVAL *v, const REBSER *binding) {
 inline static REBVAL* Unrelativize(RELVAL* out, const RELVAL* v) {
     if (not Is_Bindable(v) or IS_SPECIFIC(v))
         Copy_Cell(out, SPECIFIC(v));
-    else {  // must be bound to a function
-        REBACT *binding = ACT(VAL_WORD_BINDING(v));
-        REBCTX *expired = Make_Expired_Frame_Ctx_Managed(binding);
-
+    else {
         Copy_Cell_Header(out, v);
         out->payload = v->payload;
-        mutable_BINDING(out) = expired;
+        mutable_BINDING(out) = &PG_Inaccessible_Series;
     }
     return cast(REBVAL*, out);
 }
@@ -1114,6 +1111,11 @@ inline static REBSPC *Derive_Specifier_Core(
     const RELVAL* any_array  // ...onto the one in this array
 ){
     REBARR *old = ARR(BINDING(any_array));
+
+    // If any specifiers in a chain are inaccessible, the whole thing is.
+    //
+    if (old != UNBOUND and GET_SERIES_FLAG(old, INACCESSIBLE))
+        return &PG_Inaccessible_Series;
 
     if (specifier == SPECIFIED) {  // no override being requested
         assert(old == UNBOUND or IS_VARLIST(old) or IS_PATCH(old));

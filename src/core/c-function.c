@@ -995,46 +995,6 @@ REBACT *Make_Action(
 
 
 //
-//  Make_Expired_Frame_Ctx_Managed: C
-//
-// FUNC/PROC bodies contain relative words and relative arrays.  Arrays from
-// this relativized body may only be put into a specified REBVAL once they
-// have been combined with a frame.
-//
-// Reflection asks for action body data, when no instance is called.  Hence
-// a REBVAL must be produced somehow.  If the body is being copied, then the
-// option exists to convert all the references to unbound...but this isn't
-// representative of the actual connections in the body.
-//
-// There could be an additional "archetype" state for the relative binding
-// machinery.  But making a one-off expired frame is an inexpensive option.
-//
-REBCTX *Make_Expired_Frame_Ctx_Managed(REBACT *a)
-{
-    // Since passing SERIES_MASK_VARLIST includes SERIES_FLAG_DYNAMIC,
-    // don't pass it in to the allocation...it needs to be set, but will be
-    // overridden by SERIES_FLAG_INACCESSIBLE.
-    //
-    REBARR *varlist = Alloc_Singular(
-        FLAG_FLAVOR(VARLIST) | NODE_FLAG_MANAGED  // !!! not dynamic
-    );
-    varlist->leader.bits |= SERIES_MASK_VARLIST;  // !!! adds dynamic
-    CLEAR_SERIES_FLAG(varlist, DYNAMIC);  // !!! removes (review cleaner way)
-    SET_SERIES_FLAG(varlist, INACCESSIBLE);
-    mutable_MISC(VarlistMeta, varlist) = nullptr;
-    // no BONUS (it's INACCESSIBLE, so non-dynamic)
-
-    RELVAL *rootvar = ARR_SINGLE(varlist);
-    INIT_VAL_FRAME_ROOTVAR(rootvar, varlist, a, UNBOUND);  // !!! binding?
-
-    REBCTX *expired = CTX(varlist);
-    INIT_CTX_KEYLIST_SHARED(expired, ACT_KEYLIST(a));
-
-    return expired;
-}
-
-
-//
 //  Get_Maybe_Fake_Action_Body: C
 //
 // !!! While the interface as far as the evaluator is concerned is satisfied
@@ -1143,7 +1103,11 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         );
         INIT_VAL_NODE1(out, maybe_fake_body);
         VAL_INDEX_RAW(out) = 0;
-        INIT_SPECIFIER(out, Make_Expired_Frame_Ctx_Managed(a));
+
+        // Don't use INIT_SPECIFIER(), because it does not expect to get an
+        // inaccessible series.
+        //
+        mutable_BINDING(out) = &PG_Inaccessible_Series;
         return;
     }
 
