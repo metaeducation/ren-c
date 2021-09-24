@@ -141,7 +141,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
 
     // Replace the f->varlist with a dead list.
     //
-    f->varlist = PG_Inaccessible_Varlist;
+    f->varlist = &PG_Inaccessible_Series;
 
     // The varlist is still pointed to by any extant frames.  Its keysource
     // should not be this frame any longer.

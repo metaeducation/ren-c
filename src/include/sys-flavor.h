@@ -136,6 +136,19 @@ enum Reb_Series_Flavor {
     //
     FLAVOR_INTERN,
 
+    // Right now there is only one instance of FLAVOR_THE_GLOBAL_INACCESSIBLE
+    // series.  All nodes that have SERIES_FLAG_INACCESSIBLE will be canonized
+    // to this node.  This allows a decayed series to still convey what flavor
+    // it was before being decayed.  That's useful at least for debugging, but
+    // maybe for other mechanisms that sometimes might want to propagate some
+    // residual information from decayed series to the referencing sites.
+    //
+    // (For instance: Such a mechanism would've been necessary for propagating
+    // symbols back into words, when bound words gave up their symbols...if the
+    // series they were bound to went away.  Not needed now--but an example.)
+    //
+    FLAVOR_THE_GLOBAL_INACCESSIBLE,
+
   #if !defined(NDEBUG)
     FLAVOR_TRASH,
   #endif

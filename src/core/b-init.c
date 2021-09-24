@@ -375,25 +375,34 @@ static void Startup_Empty_Arrays(void)
     PG_2_Blanks_Array = a;
   }
 
-    // !!! See comments in Make_Expired_Frame_Ctx_Managed(); it makes a
-    // varlist for a particular action, but it seems this is working without?
+    // When a series needs to expire its content for some reason (including
+    // the user explicitly saying FREE), then there can still be references to
+    // that series around.  Since we don't want to trigger a GC synchronously
+    // each time this happens, the INACCESSIBLE flag is added to series...and
+    // it is checked for by value extractors (like VAL_CONTEXT()).  But once
+    // the GC gets a chance to run, those stubs can be swept with all the
+    // inaccessible references canonized to this one global node.
     //
-  blockscope {
-    REBARR *varlist = Alloc_Singular(
-        FLAG_FLAVOR(VARLIST) | NODE_FLAG_MANAGED  // !!! not dynamic
+    Make_Series_Into(
+        &PG_Inaccessible_Series,
+        1,
+        FLAG_FLAVOR(THE_GLOBAL_INACCESSIBLE)
+            | NODE_FLAG_MANAGED
+            // Don't confuse the series creation machinery by trying to pass
+            // in SERIES_FLAG_INACCESSIBLE to the creation.  Do it after.
     );
-    varlist->leader.bits |= SERIES_MASK_VARLIST;  // !!! adds dynamic
-    CLEAR_SERIES_FLAG(varlist, DYNAMIC);  // !!! removes (review cleaner way)
-    SET_SERIES_FLAG(varlist, INACCESSIBLE);
-
-    ensureNullptr(PG_Inaccessible_Varlist) = varlist;
-  }
+    SET_SERIES_FLAG(&PG_Inaccessible_Series, INACCESSIBLE);
 }
 
 static void Shutdown_Empty_Arrays(void) {
     PG_Empty_Array = nullptr;
     PG_2_Blanks_Array = nullptr;
-    PG_Inaccessible_Varlist = nullptr;
+
+    // Decay the inaccessible series in case that cleans up any particular
+    // state.  To do so, it has to be temporarily st to accessible.
+    //
+    CLEAR_SERIES_FLAG(&PG_Inaccessible_Series, INACCESSIBLE);
+    Decay_Series(&PG_Inaccessible_Series);
 }
 
 

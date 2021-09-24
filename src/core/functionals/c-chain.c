@@ -70,7 +70,7 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
     INIT_BONUS_KEYSOURCE(sub->varlist, sub);
     sub->rootvar = SPECIFIC(ARR_HEAD(sub->varlist));
 
-    f->varlist = PG_Inaccessible_Varlist;
+    f->varlist = &PG_Inaccessible_Series;
     f->rootvar = nullptr;
 
     sub->key = nullptr;
