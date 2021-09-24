@@ -1710,12 +1710,10 @@ void Init_Va_Scan_Level_Core(
     const REBSTR *file,
     REBLIN line,
     const REBYTE *opt_begin,  // preload the scanner outside the va_list
-    REBFED *feed,
-    REBCTX *context
+    REBFED *feed
 ){
     level->ss = ss;
     ss->feed = feed;
-    ss->context = context;
 
     ss->begin = opt_begin;  // if null, Locate_Token's first fetch from vaptr
     TRASH_POINTER_IF_DEBUG(ss->end);
@@ -1747,8 +1745,7 @@ void Init_Scan_Level(
     const REBSTR *file,
     REBLIN line,
     const REBYTE *utf8,
-    REBINT limit,  // !!! limit feature not implemented in R3-Alpha
-    option(REBCTX*) context
+    REBINT limit  // !!! limit feature not implemented in R3-Alpha
 ){
     out->ss = ss;
 
@@ -1762,7 +1759,6 @@ void Init_Scan_Level(
 
     ss->file = file;
     ss->feed = nullptr;
-    ss->context = context;
     ss->depth = 0;
 
     out->mode = '\0';
@@ -2413,18 +2409,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         panic ("Invalid TOKEN in Scanner.");
     }
 
-    // We are able to bind code as we go into any "module", where the ambient
-    // hashing is available.
-    //
-    // !!! While it wouldn't be impossible to do this with a binder for any
-    // object, it would be more complex...only for efficiency, and nothing
-    // like it existed before.
-    //
-    if (ss->context and (ANY_WORD(DS_TOP) or IS_SYMBOL(DS_TOP))) {
-        INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
-        INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
-    }
-
   lookahead:
 
     // At this point the item at DS_TOP is the last token pushed.  It has
@@ -2563,19 +2547,6 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         assert(ANY_SEQUENCE(temp));  // Should be >= 2 elements, no decaying
 
         Copy_Cell(DS_PUSH(), temp);
-
-        // !!! Need to cover case where heart byte is a WORD!, at least when
-        // it is something like `/` (refinements like /FOO should have been
-        // bound when the words themselves were pushed).  This attachment may
-        // be redundant in that case.  Review how this ties in with the
-        // word attachment code above.
-        //
-        if (ss->context) {
-            if (ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(DS_TOP)))) {
-                INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
-                INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
-            }
-        }
 
         // !!! Temporarily raise attention to usage like `.5` or `5.` to guide
         // people that these are contentious with tuples.  There is no way
@@ -2870,13 +2841,12 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode)
 REBARR *Scan_UTF8_Managed(
     const REBSTR *file,
     const REBYTE *utf8,
-    REBSIZ size,
-    option(REBCTX*) context
+    REBSIZ size
 ){
     SCAN_STATE ss;
     SCAN_LEVEL level;
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, size, context);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, size);
 
     REBDSP dsp_orig = DSP;
     Scan_To_Stack(&level);
@@ -2907,7 +2877,7 @@ REBINT Scan_Header(const REBYTE *utf8, REBLEN len)
     SCAN_STATE ss;
     const REBSTR *file = ANONYMOUS;
     const REBLIN start_line = 1;
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, len, nullptr);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, len);
 
     REBINT result = Scan_Head(&ss);
     if (result == 0)
@@ -2966,8 +2936,6 @@ void Shutdown_Scanner(void)
 //          [file! url!]
 //      /line "Line number for start of scan, word variable will be updated"
 //          [integer! any-word!]
-//      /where "Where you want to bind words to (default unbound)"
-//          [module!]
 //  ]
 //
 REBNATIVE(transcode)
@@ -3030,13 +2998,9 @@ REBNATIVE(transcode)
     REBSIZ size;
     const REBYTE *bp = VAL_BYTES_AT(&size, source);
 
-    REBCTX *context = REF(where)
-        ? VAL_CONTEXT(ARG(where))
-        : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
-
     SCAN_LEVEL level;
     SCAN_STATE ss;
-    Init_Scan_Level(&level, &ss, file, start_line, bp, size, context);
+    Init_Scan_Level(&level, &ss, file, start_line, bp, size);
 
     if (REF(next))
         level.opts |= SCAN_FLAG_NEXT;
@@ -3148,7 +3112,7 @@ const REBYTE *Scan_Any_Word(
     // scanner did not implement scan limits; it always expected the input
     // to end at '\0'.  We crop the word based on the size after the scan.
     //
-    Init_Scan_Level(&level, &ss, file, start_line, utf8, UNLIMITED, nullptr);
+    Init_Scan_Level(&level, &ss, file, start_line, utf8, UNLIMITED);
 
     DECLARE_MOLD (mo);
 

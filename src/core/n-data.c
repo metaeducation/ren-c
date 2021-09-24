@@ -629,9 +629,10 @@ static const RELVAL *First_Of_Process_Steps_For_Location(
         Unquotify(location, 1);
     }
     else if (IS_WORD(first)) {
+        REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(steps), first);
         Copy_Cell(
             location,
-            Lookup_Word_May_Fail(first, VAL_SPECIFIER(steps))
+            Lookup_Word_May_Fail(first, derived)
         );
         if (IS_BAD_WORD(location) and GET_CELL_FLAG(location, ISOTOPE))
             fail (Error_Bad_Word_Get(first, location));
@@ -921,7 +922,7 @@ bool Get_Path_Push_Refinements_Throws(
         // Note: Historical Rebol did not allow GROUP! at the head of path.
         // We can thus restrict head-of-path evaluations to ACTION!.
         //
-        REBSPC *derived = Derive_Specifier(path_specifier, head);
+        REBSPC *derived = Derive_Specifier(path_specifier, path);
         if (Eval_Value_Throws(out, head, derived))
             return true;
         if (not IS_ACTION(out))
@@ -942,7 +943,7 @@ bool Get_Path_Push_Refinements_Throws(
             return false;
         }
 
-        REBSPC *derived = Derive_Specifier(path_specifier, head);
+        REBSPC *derived = Derive_Specifier(path_specifier, path);
 
         DECLARE_LOCAL (steps);
         if (Get_Var_Core_Throws(out, steps, head, derived))
@@ -952,9 +953,10 @@ bool Get_Path_Push_Refinements_Throws(
             fail ("TUPLE! must resolve to an action if head of PATH!");
     }
     else if (IS_WORD(head)) {
+        REBSPC *derived = Derive_Specifier(path_specifier, path);
         const REBVAL *lookup = Lookup_Word_May_Fail(
             head,
-            path_specifier
+            derived
         );
 
         // Under the new thinking, PATH! is only used to invoke actions.
@@ -1019,7 +1021,7 @@ bool Get_Path_Push_Refinements_Throws(
             DECLARE_LOCAL (temp);
             REBSPC *derived = Derive_Specifier(
                 path_specifier,
-                at
+                path
             );
             if (Eval_Value_Throws(temp, at, derived)) {
                 Move_Cell(out, temp);

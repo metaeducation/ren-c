@@ -196,7 +196,7 @@ static void Startup_Lib(void)
         Make_Array_Core_Into(
             patch,
             1,
-            FLAG_FLAVOR(PATCH)  // checked when setting INODE(PatchContext)
+            FLAG_FLAVOR(PATCH)  // checked when setting INODE(ModvarContext)
             | PATCH_FLAG_LET
             | NODE_FLAG_MANAGED
             //
@@ -209,7 +209,7 @@ static void Startup_Lib(void)
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK
         );
 
-        mutable_INODE(PatchContext, patch) = nullptr;  // signals unused
+        mutable_INODE(ModvarContext, patch) = nullptr;  // signals unused
         mutable_LINK(NextPatch, patch) = nullptr;
         mutable_MISC(Variant, patch) = nullptr;
         assert(Is_Fresh(ARR_SINGLE(patch)));  // REB_0
@@ -258,7 +258,7 @@ static void Shutdown_Lib(void)
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         REBARR *patch = &PG_Lib_Patches[i];
 
-        if (INODE(PatchContext, patch) == nullptr)
+        if (INODE(ModvarContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
 
         RESET(ARR_SINGLE(patch));
@@ -268,7 +268,7 @@ static void Shutdown_Lib(void)
         // this one is a global, it is set to nullptr just to indicate that
         // the freeing process happened.  Should all nodes be zeroed?
         //
-        mutable_INODE(PatchContext, patch) = nullptr;
+        mutable_INODE(ModvarContext, patch) = nullptr;
         mutable_MISC(Variant, patch) = nullptr;
     }
 
@@ -492,7 +492,7 @@ static void Shutdown_Root_Vars(void)
 // (See also N_context() which creates the subobjects of the system object.)
 //
 static void Init_System_Object(
-    const REBVAL *boot_sysobj_spec,
+    REBVAL *boot_sysobj_spec,
     REBARR *datatypes_catalog,
     REBARR *natives_catalog,
     REBARR *generics_catalog,
@@ -511,22 +511,18 @@ static void Init_System_Object(
         spec_tail,
         nullptr  // parent
     );
+    mutable_LINK(Patches, system) = Lib_Context;
 
     // Create a global value for it in the Lib context, so we can say things
     // like `system.contexts` (also protects newly made context from GC).
     //
     Init_Object(force_Lib(SYSTEM), system);
-
-    Bind_Values_Deep(spec_head, spec_tail, Lib_Context_Value);
-
-    // Bind it so CONTEXT native will work (only used at topmost depth)
-    //
-    Bind_Values_Shallow(spec_head, spec_tail, CTX_ARCHETYPE(system));
+    SET_CELL_FLAG(m_cast(REBVAR*, Lib(SYSTEM)), PROTECTED);
 
     // Evaluate the block (will eval CONTEXTs within).  Expects void result.
     //
     DECLARE_LOCAL (result);
-    if (Do_Any_Array_At_Throws(result, boot_sysobj_spec, SPECIFIED))
+    if (Do_Any_Array_At_Throws(result, boot_sysobj_spec, SPC(system)))
         panic (result);
     if (not Is_Isotope_With_Id(result, SYM_DONE))
         panic (result);
@@ -707,6 +703,7 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     // that are easier to write in usermode than in C (like inheriting HELP
     // information).
 
+    mutable_BINDING(&boot->base) = Lib_Context;
     rebElide(
         //
         // Code is already interned to Lib_Context by TRANSCODE.  Create
@@ -729,13 +726,8 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     // (Note: The SYS context should not be confused with "the system object",
     // which is a different thing.)
 
+    mutable_BINDING(&boot->sys) = Sys_Context;
     rebElide(
-        //
-        // The scan of the boot block interned everything to Lib_Context, but
-        // we want to overwrite that with the Sys_Context here.
-        //
-        "intern*", Sys_Context_Value, &boot->sys,
-
         "bind/only/set", &boot->sys, Sys_Context_Value,
         "ensure blank! do", &boot->sys,
 
@@ -965,8 +957,7 @@ void Startup_Core(void)
     REBARR *boot_array = Scan_UTF8_Managed(
         Intern_Unsized_Managed("-tmp-boot-"),
         utf8,
-        utf8_size,
-        Lib_Context  // used by Base + Mezzanine, overruled in SYS
+        utf8_size
     );
     PUSH_GC_GUARD(boot_array); // managed, so must be guarded
 
@@ -1010,6 +1001,7 @@ void Startup_Core(void)
     // boot->natives is from the automatically gathered list of natives found
     // by scanning comments in the C sources for `native: ...` declarations.
     //
+    mutable_BINDING(&boot->natives) = Lib_Context;
     REBARR *natives_catalog = Startup_Natives(SPECIFIC(&boot->natives));
     Manage_Series(natives_catalog);
     PUSH_GC_GUARD(natives_catalog);
@@ -1033,6 +1025,7 @@ void Startup_Core(void)
 
     // boot->generics is the list in %generics.r
     //
+    mutable_BINDING(&boot->generics) = Lib_Context;
     REBARR *generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
     Manage_Series(generics_catalog);
     PUSH_GC_GUARD(generics_catalog);

@@ -47,9 +47,13 @@
 
 enum {
     IDX_ADAPTER_PRELUDE = 1,  // Relativized block to run before Adaptee
+    IDX_ADAPTER_SPECIFIER,
     IDX_ADAPTER_ADAPTEE,  // The ACTION! being adapted
     IDX_ADAPTER_MAX
 };
+
+STATIC_ASSERT(IDX_ADAPTER_PRELUDE == IDX_NATIVE_BODY);
+STATIC_ASSERT(IDX_ADAPTER_SPECIFIER == IDX_NATIVE_SPECIFIER);
 
 
 //
@@ -153,6 +157,12 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
         prelude
     );
     Copy_Cell(ARR_AT(details, IDX_ADAPTER_ADAPTEE), adaptee);
+
+    REBVAL *specblk = Init_Block(
+        ARR_AT(details, IDX_ADAPTER_SPECIFIER),
+        EMPTY_ARRAY
+    );
+    mutable_BINDING(specblk) = VAL_SPECIFIER(ARG(prelude));
 
     return Init_Action(D_OUT, adaptation, VAL_ACTION_LABEL(adaptee), UNBOUND);
 }

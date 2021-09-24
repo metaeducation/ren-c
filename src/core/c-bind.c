@@ -30,6 +30,596 @@
 
 
 //
+//  Get_Word_Container: C
+//
+// Find the context a word is bound into.  This must account for the various
+// binding forms: Relative Binding, Derived Binding, and Virtual Binding.
+//
+// The reason this is broken out from the Lookup_Word() routines is because
+// sometimes read-only-ness of the context is heeded, and sometimes it is not.
+// Splitting into a step that returns the context and the index means the
+// main work of finding where to look up doesn't need to be parameterized
+// with that.
+//
+// This function is used by Derelativize(), and so it shouldn't have any
+// failure mode while it's running...even if the context is inaccessible or
+// the word is unbound.  Errors should be raised by callers if applicable.
+//
+option(REBSER*) Get_Word_Container(
+    REBLEN *index_out,
+    const RELVAL* any_word,
+    REBSPC *specifier,
+    enum Reb_Attach_Mode mode
+){
+  #if !defined(NDEBUG)
+    *index_out = 0xDECAFBAD;  // trash index to make sure it gets set
+  #endif
+
+    const REBSYM *symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+
+    // What we're trying now is that once something becomes *concretely* bound
+    // it is no longer a candidate for overriding.  This means that a LET
+    // would be useless as an override once concrete binding is achieved...the
+    // binding would have to be forcibly removed.
+    //
+    REBSER *binding = VAL_WORD_BINDING(any_word);
+    if (binding != UNBOUND)
+        goto not_virtually_bound;
+
+    if (specifier == SPECIFIED)
+        return nullptr;
+
+    for (; specifier != nullptr; specifier = NextPatch(specifier)) {
+        //
+        // Patches have enough bits to rule out certain kinds of binds.  It
+        // may be all right to think about sparing a bit on varlists too so
+        // that if they are used for binding at their time of creation they
+        // can have such control as well.
+        //
+        if (IS_PATCH(specifier)) {
+            if (GET_SUBCLASS_FLAG(PATCH, specifier, SET_WORDS_ONLY))
+                if (REB_SET_WORD != CELL_KIND(VAL_UNESCAPED(any_word)))
+                    continue;
+        }
+
+        // A LET patch is just one variable.  It matches if the symbol matches.
+        //
+        // You might want to virtually bind to a previously existing LET vs.
+        // just capture the stream of the let itself.  (This can happen in
+        // merging scenarios, right?)  So that form is done with a WORD! in
+        // the patch that has the binding.
+        //
+        REBARR *let;
+        if (
+            IS_PATCH(specifier) and ((
+                GET_SUBCLASS_FLAG(PATCH, specifier, LET)
+                and (let = specifier)
+            ) or (
+                IS_WORD(ARR_SINGLE(specifier))
+                and (let = ARR(BINDING(ARR_SINGLE(specifier))))
+            ))
+        ){
+            if (INODE(LetSymbol, let) == symbol) {
+                *index_out = INDEX_PATCHED;
+                return specifier;
+            }
+            continue;
+        }
+
+        // A MODULE can be searched relatively quickly since the word's symbol
+        // points directly to a linked list of variable instances for modules
+        // using that word.
+        //
+        REBCTX *mod;
+        if ((
+            IS_VARLIST(specifier)
+            and CTX_TYPE(CTX(specifier)) == REB_MODULE
+            and (mod = CTX(specifier))
+        ) or (
+            IS_PATCH(specifier)
+            and IS_MODULE(ARR_SINGLE(specifier))
+            and (mod = VAL_CONTEXT(ARR_SINGLE(specifier)))
+        )){
+            REBVAL *var = MOD_VAR(mod, symbol, true);
+            if (var) {
+                *index_out = INDEX_PATCHED;
+                return Singular_From_Cell(var);
+            }
+
+            // If a variable is unbound and we ask to emerge the variable
+            // then we do this only if it's a last resort, e.g. this is the
+            // last bind in the chain.
+            //
+            // !!! This "promiscuous" behavior is a lot like JavaScript without
+            // its "strict mode" turned on, as it has a good chance of letting
+            // you write to variable names that are typos.  Some way of
+            // exposing a strict mode is needed in the module system...but for
+            // now just make Lib and Sys strict.  Everything else is non-strict
+            // just to start with basic compatibility with history.
+            //
+            if (
+                mode == ATTACH_WRITE
+                and not NextPatch(specifier)
+                and mod != Lib_Context
+                and mod != Sys_Context
+            ){
+                var = Append_Context(mod, nullptr, symbol);
+                *index_out = INDEX_PATCHED;
+                return Singular_From_Cell(var);
+            }
+
+            continue;
+        }
+
+        // Seaching OBJECT is slower.  There used to be some attempts at
+        // optimizing this, but now that modules have distributed lookups it
+        // would have to be a large object to be that much of a problem.
+        //
+        // !!! Specialization does a binding of SET-WORD!s using a FRAME!.
+        // For now when a context is used directly as the specifier there are
+        // different rules and enforcements for frame...see next section.
+        //
+        // !!! This maybe should be merged with the module code, with the
+        // exception of the emergence on not finding it...review if the
+        // branch costs gets better or worse when this stabilizes.
+        //
+        const RELVAL *obj;
+        if ((
+            IS_VARLIST(specifier)
+            and CTX_TYPE(CTX(specifier)) == REB_OBJECT
+            and (obj = CTX_ARCHETYPE(CTX(specifier)))
+        ) or (
+            IS_PATCH(specifier)
+            and (
+                IS_OBJECT(ARR_SINGLE(specifier))
+                or IS_FRAME(ARR_SINGLE(specifier))
+            )
+            and (obj = ARR_SINGLE(specifier))
+        )){
+            *index_out = Find_Symbol_In_Context(obj, symbol, true);
+            if (*index_out == 0)
+                continue;
+
+            // !!! FOR-EACH uses the slots in an object to count how
+            // many arguments there are...and if a slot is reusing an
+            // existing variable it holds that variable.  This ties into
+            // general questions of hiding which is the same bit.  Don't
+            // count it as a hit.
+            //
+            // !!! If this is still relevant, Find_Symbol_In_Context() is the
+            // right place for it--not here.
+            //
+            if (GET_CELL_FLAG(
+                CTX_VAR(VAL_CONTEXT(obj), *index_out),
+                BIND_NOTE_REUSE
+            )){
+                continue;
+            }
+
+            return VAL_CONTEXT(obj);
+        }
+
+        // Historically if a frame is in a binding chain, it only applies if
+        // the body had been copied.  We have to honor that because otherwise
+        // we have a problem, in that we do not know what phase to use.
+        //
+        REBCTX *frm;
+        if (
+            IS_VARLIST(specifier)
+            and CTX_TYPE(CTX(specifier)) == REB_FRAME
+            and (frm = CTX(specifier))
+        ){
+            // For the moment, we assume the frames do not apply to any
+            // non-relatively-bound values...which have a binding so don't
+            // run this code.  Review.
+            //
+            UNUSED(frm);
+            continue;
+        }
+
+        assert(!"Unknown specifier category in chain");
+        panic (specifier);
+    }
+
+    // !!! Work was done on trying to chew some cache bits out of the word
+    // cell.  This is made troublesome by the fact that the cell may be shared
+    // among many views via specifiers...but the rules are changing now with
+    // the new ideas.
+
+    return nullptr;
+
+  not_virtually_bound: {
+
+    REBCTX *c;
+
+    if (IS_PATCH(binding)) {
+        //
+        // LET BINDING: Directly bound to a LET variable.  This happens when
+        // a word that is bound to a LET gets copied so it's not virtual.
+        //
+        assert(GET_SUBCLASS_FLAG(PATCH, binding, LET));
+        *index_out = 1;  // !!! lie, review
+        return binding;
+    }
+
+    if (IS_VARLIST(binding)) {
+        //
+        // !!! Work in progress...shortcut that allows finding variables
+        // in Lib_Context, that is to be designed with a "force reified vs not"
+        // concept.  Idea would be (I guess) that a special form of mutable
+        // lookup would say "I want that but be willing to make it."
+        //
+        if (CTX_TYPE(CTX(binding)) == REB_MODULE) {
+            REBSER *patch = MISC(Hitch, symbol);
+            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+                patch = SER(node_MISC(Hitch, patch));
+
+            for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
+                if (INODE(ModvarContext, patch) != binding)
+                    continue;
+
+                // Since this is now resolving to the context, update the
+                // cache inside the word itself.  Don't do this for inherited
+                // variables, since if we hardened the reference to the
+                // inherited variable we'd not see an override if it came
+                // into existence in the actual context.
+                //
+                INIT_VAL_WORD_BINDING(m_cast(RELVAL*, any_word), patch);
+                INIT_VAL_WORD_INDEX(m_cast(RELVAL*, any_word), 1);
+
+                *index_out = 1;
+                return patch;
+            }
+
+            // !!! One original goal with Sea of Words was to enable something
+            // like JavaScript's "strict mode", to prevent writing to variables
+            // that had not been somehow previously declared.  However, that
+            // is a bit too ambitious for a first rollout...as just having the
+            // traditional behavior of "any assignment works" is something
+            // people are used to.  Don't do it for the Lib_Context (so
+            // mezzanine is still guarded) but as a first phase, permit the
+            // "emergence" of any variable that is attached to a module.
+            //
+            if (
+                mode == ATTACH_WRITE
+                and binding != Lib_Context
+                and binding != Sys_Context
+            ){
+                *index_out = INDEX_ATTACHED;
+                return Singular_From_Cell(
+                    Init_Unset(Append_Context(CTX(binding), nullptr, symbol))
+                );
+            }
+
+            // non generic inheritance; inherit only from Lib for now
+            //
+            if (mode != ATTACH_READ or binding == Lib_Context)
+                return nullptr;
+
+            patch = MISC(Hitch, symbol);
+            while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
+                patch = SER(node_MISC(Hitch, patch));
+
+            for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
+                if (INODE(ModvarContext, patch) != Lib_Context)
+                    continue;
+
+                // We return it, but don't cache it in the cell.  Note that
+                // Derelativize() or other operations should not cache either
+                // as it would commit to the inherited version, never seeing
+                // derived overrides.
+                //
+                *index_out = 1;
+                return patch;
+            }
+
+            return nullptr;
+        }
+
+        // SPECIFIC BINDING: The context the word is bound to is explicitly
+        // contained in the `any_word` REBVAL payload.  Extract it, but check
+        // to see if there is an override via "DERIVED BINDING", e.g.:
+        //
+        //    o1: make object [a: 10 f: meth [] [print a]]
+        //    o2: make o1 [a: 20]
+        //
+        // O2 doesn't copy F's body, but its copy of the ACTION! cell in o2/f
+        // gets its ->binding to point at O2 instead of O1.  When o2/f runs,
+        // the frame stores that pointer, and we take it into account when
+        // looking up `a` here, instead of using a's stored binding directly.
+
+        c = CTX(binding); // start with stored binding
+
+        if (specifier == SPECIFIED) {
+            //
+            // Lookup must be determined solely from bits in the value
+            //
+        }
+        else {
+            REBSER *f_binding = SPC_BINDING(specifier); // can't fail()
+            if (f_binding and Is_Overriding_Context(c, CTX(f_binding))) {
+                //
+                // The specifier binding overrides--because what's happening
+                // is that this cell came from a METHOD's body, where the
+                // particular ACTION! value cell triggering it held a binding
+                // of a more derived version of the object to which the
+                // instance in the method body refers.
+                //
+                c = CTX(f_binding);
+            }
+        }
+    }
+    else {
+        assert(IS_DETAILS(binding));
+
+        while (specifier and not (
+            IS_VARLIST(specifier) and CTX_TYPE(CTX(specifier)) == REB_FRAME
+        )){
+            specifier = NextPatch(specifier);
+        }
+
+        // RELATIVE BINDING: The word was made during a deep copy of the block
+        // that was given as a function's body, and stored a reference to that
+        // ACTION! as its binding.  To get a variable for the word, we must
+        // find the right function call on the stack (if any) for the word to
+        // refer to (the FRAME!)
+
+      #if !defined(NDEBUG)
+        if (specifier == SPECIFIED) {
+            printf("Get_Context_Core on relative value without specifier\n");
+            panic (any_word);
+        }
+      #endif
+
+        c = CTX(specifier);
+
+        // We can only check for a match of the underlying function.  If we
+        // checked for an exact match, then the same function body could not
+        // be repurposed for dispatch e.g. in copied, hijacked, or adapted
+        // code, because the identity of the derived function would not match
+        // up with the body it intended to reuse.
+        //
+        assert(Action_Is_Base_Of(ACT(binding), CTX_FRAME_ACTION(c)));
+    }
+
+    *index_out = VAL_WORD_INDEX(any_word);
+    return CTX_VARLIST(c);
+  }
+}
+
+
+// This routine will merge virtual binding patches, returning one where the
+// child is at the beginning of the chain.  This will preserve the child's
+// frame resolving context (if any) that terminates it.
+//
+// If the returned chain manages to reuse an existing case, then the result
+// will have ARRAY_FLAG_PATCH_REUSED set.  This can inform higher levels of
+// whether it's worth searching their patchlist or not...as newly created
+// patches can't appear in their prior create list.
+//
+inline static REBARR *Merge_Patches_May_Reuse(
+    REBARR *parent,
+    REBARR *child
+){
+    assert(IS_PATCH(parent));
+    assert(IS_PATCH(child));
+
+    // Case of already incorporating.  Came up with:
+    //
+    //    1 then x -> [2 also y -> [3]]
+    //
+    // A virtual link for Y is added on top of the virtual link for X that
+    // resides on the [3] block.  But then feed generation for [3] tries to
+    // apply the Y virtual link again.  !!! Review if that's just inefficient.
+    //
+    if (NextPatch(parent) == child) {
+        SET_SUBCLASS_FLAG(PATCH, parent, REUSED);
+        return parent;
+    }
+
+    // If we get to the end of the merge chain and don't find the child, then
+    // we're going to need a patch that incorporates it.
+    //
+    REBARR *next;
+    bool was_next_reused;
+    if (NextPatch(parent) == nullptr or IS_VARLIST(NextPatch(parent))) {
+        next = child;
+        was_next_reused = true;
+    }
+    else {
+        next = Merge_Patches_May_Reuse(NextPatch(parent), child);
+        was_next_reused = GET_SUBCLASS_FLAG(PATCH, next, REUSED);
+    }
+
+    // If we have to make a new patch due to non-reuse, then we cannot make
+    // one out of a LET, since the patch *is* the variable.  It's actually
+    // uncommon for this to happen, but here's an example of how to force it:
+    //
+    //     block1: do [let x: 10, [x + y]]
+    //     block2: do compose/deep [let y: 20, [(block1)]]
+    //     30 = do first block2
+    //
+    // So we have to make a new patch that points to the LET, or promote it
+    // (using node-identity magic) into an object.  We point at the LET.
+    //
+    REBARR *patch = Alloc_Singular(
+        FLAG_FLAVOR(PATCH)
+            | NODE_FLAG_MANAGED
+            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
+    );
+    if (GET_SUBCLASS_FLAG(PATCH, parent, LET)) {
+        Init_Any_Word_Patched(ARR_SINGLE(patch), REB_WORD, parent);
+    }
+    else {
+        Copy_Cell(ARR_SINGLE(patch), ARR_SINGLE(parent));
+    }
+
+    mutable_LINK(NextPatch, patch) = next;
+    mutable_MISC(Variant, patch) = nullptr;  // defunct feature atm.
+    mutable_INODE(VbindUnused, patch) = nullptr;
+
+    UNUSED(was_next_reused);  // !!! revisit
+    return patch;
+}
+
+
+//
+//  Derive_Specifier_Core: C
+//
+// An ANY-ARRAY! cell has a pointer's-worth of spare space in it, which is
+// used to keep track of the information required to further resolve the
+// words and arrays that are inside of it.  Each time code wishes to take a
+// step descending into an array's contents, this "specifier" information
+// must be merged with the specifier that is being applied.
+//
+// Specifier state only accrues in this way while descending through nodes.
+// Jumping to a new value...e.g. fetching a REBVAL* out of a WORD! variable,
+// should restart the process with a new specifier.
+//
+// The returned specifier must not lose the ability to resolve relative
+// values, so it has to remember what frame relative values are for.
+//
+REBSPC *Derive_Specifier_Core(
+    REBSPC *specifier,  // merge this specifier...
+    const RELVAL* any_array  // ...onto the one in this array
+){
+    REBARR *old = ARR(BINDING(any_array));
+
+    // If any specifiers in a chain are inaccessible, the whole thing is.
+    //
+    if (old != UNBOUND and GET_SERIES_FLAG(old, INACCESSIBLE))
+        return &PG_Inaccessible_Series;
+
+    if (specifier == SPECIFIED) {  // no override being requested
+        assert(old == UNBOUND or IS_VARLIST(old) or IS_PATCH(old));
+        return old;  // so give back what was the array was holding
+    }
+
+    if (old == UNBOUND) {  // no binding information in the incoming cell
+        //
+        // Historically this would drop frames and only preserve virtual
+        // binding patches.  But now, the idea is to really preserve the
+        // "scope" as a kind of binding environment.  So always preserve it.
+        //
+        return specifier;  // so just propagate the incoming specifier
+    }
+
+    // v-- NOTE: The following two IFs just `return specifier`.  Separate for
+    // clarity and assertions, but trust the optimizer to fold them together
+    // in the release build.
+
+    if (specifier == old) {  // a no-op, specifier was already applied
+        assert(IS_VARLIST(specifier) or IS_PATCH(specifier));
+        return specifier;
+    }
+
+    if (IS_DETAILS(old)) {
+        //
+        // The stored binding is relative to a function, and so the specifier
+        // we have *must* be able to give us the matching FRAME! instance.
+        //
+        // We have to be content with checking for a match in underlying
+        // functions, vs. checking for an exact match.  Else hijackings or
+        // COPY'd actions, or adapted preludes, could not match up with
+        // actions put in the specifier.  We'd have to make new and
+        // re-relativized copies of the bodies--which is not only wasteful,
+        // but breaks the "black box" quality of function composition.
+        //
+
+      #if !defined(NDEBUG)
+
+        REBSPC *test = specifier;
+        while (not (
+            IS_VARLIST(test) and CTX_TYPE(CTX(test)) == REB_FRAME
+        )){
+            test = NextPatch(test);
+        }
+
+        REBCTX *frame_ctx = try_unwrap(SPC_FRAME_CTX(test));
+        if (
+            frame_ctx == nullptr
+            or (
+                NOT_SERIES_FLAG(CTX_VARLIST(frame_ctx), INACCESSIBLE) and
+                not Action_Is_Base_Of(ACT(old), CTX_FRAME_ACTION(frame_ctx))
+            )
+        ){
+            printf("Function mismatch in specific binding, expected:\n");
+            PROBE(ACT_ARCHETYPE(ACT(old)));
+            printf("Panic on relative value\n");
+            panic (any_array);
+        }
+      #endif
+
+        return specifier;  // input specifier will serve for derelativizations
+    }
+
+    // Either binding or the specifier have virtual components.  Whatever
+    // happens, the specifier we give back has to have the frame resolution
+    // compatible with what's in the value.
+
+    if (IS_VARLIST(old)) {
+        //
+        // If the specifier is only for providing resolutions of variables in
+        // functions, an array specified by a frame isn't going to need that.
+        // This is kind of like dealing with something specified.
+        //
+        if (IS_VARLIST(specifier))  // superfluous additional specification
+            return old;
+
+        // If the array cell is already holding a frame, then it intends to
+        // broadcast that down for resolving relative values underneath it.
+        // We can only pass thru the incoming specifier if it is compatible.
+        // Otherwise we need a new specifier that folds in the binding.
+        //
+        assert(IS_PATCH(specifier));
+
+        // !!! This case of a match could be handled by the swap below, but
+        // break it out separately for now for the sake of asserts.
+        //
+        // !!! We already know it's a patch so calling SPC_FRAME_CTX() does
+        // an extra check of that, review when efficiency is being revisited
+        // (SPC_PATCH_CTX() as separate entry point?)
+        //
+        REBNOD **specifier_frame_ctx_addr = SPC_FRAME_CTX_ADDRESS(specifier);
+        if (*specifier_frame_ctx_addr == old)  // all clear to reuse
+            return specifier;
+
+        if (*specifier_frame_ctx_addr == UNSPECIFIED) {
+            //
+            // If the patch had no specifier, then it doesn't hurt to modify
+            // it directly.  This will only work once for specifier's chain.
+            //
+            *specifier_frame_ctx_addr = old;
+            return specifier;
+        }
+
+        // Patch resolves to a binding, and it's an incompatible one.  If
+        // this happens, we have to copy the whole chain.  Is this possible?
+        // Haven't come up with a situation that forces it yet.
+
+        panic ("Incompatible patch bindings; if you hit this, report it.");
+    }
+
+    // The situation for if the array is already holding a patch is that we
+    // have to integrate our new patch on top of it.
+    //
+    // !!! How do we make sure this doesn't make a circularly linked list?
+
+    assert(IS_PATCH(old));
+
+    if (not IS_PATCH(specifier)) {
+        assert(IS_VARLIST(specifier));
+        return old;  // The binding can be disregarded on this value
+    }
+
+    // The patch might be able to be reused and it might not, so it may carry
+    // the PATCH_REUSED array flag.  Is that interesting information here?
+    //
+    return Merge_Patches_May_Reuse(specifier, old);
+}
+
+
+//
 //  Bind_Values_Inner_Loop: C
 //
 // Bind_Values_Core() sets up the binding table and then calls
@@ -285,7 +875,7 @@ REBARR *Make_Let_Patch(
 
     // Store the symbol so the patch knows it.
     //
-    mutable_INODE(PatchSymbol, patch) = symbol;
+    mutable_INODE(LetSymbol, patch) = symbol;
 
     return patch;
 }
@@ -581,16 +1171,20 @@ REBNATIVE(add_use_object) {
 
     REBFRM *f = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(ARG(frame)));
 
-    REBCTX *ctx = VAL_CONTEXT(ARG(object));
-
     if (f_specifier)
         SET_SERIES_FLAG(f_specifier, MANAGED);
-    REBSPC *patch = Make_Or_Reuse_Patch(  // optimizes out CTX_LEN() == 0
-        ctx,
-        CTX_LEN(ctx),
-        f_specifier,
-        REB_WORD
+
+    REBARR *patch = Alloc_Singular(
+        FLAG_FLAVOR(PATCH)
+            | NODE_FLAG_MANAGED
+            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
     );
+
+    Copy_Cell(ARR_SINGLE(patch), ARG(object));
+
+    mutable_LINK(NextPatch, patch) = f_specifier;
+    mutable_MISC(Variant, patch) = nullptr;  // defunct feature atm.
+    mutable_INODE(VbindUnused, patch) = nullptr;
 
     mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
 
@@ -1130,12 +1724,15 @@ void Virtual_Bind_Deep_To_New_Context(
         // but we want to reuse the binder we had anyway for detecting the
         // duplicates.
         //
-        Virtual_Bind_Deep_To_Existing_Context(
+/*        Virtual_Bind_Deep_To_Existing_Context(
             body_in_out,
             c,
             &binder,
             REB_WORD
-        );
+        ); */
+
+        mutable_LINK(Patches, c) = VAL_SPECIFIER(body_in_out);
+        mutable_BINDING(body_in_out) = c;
     }
 
     // Must remove binder indexes for all words, even if about to fail
@@ -1245,11 +1842,17 @@ REBNATIVE(intern_p)
 {
     INCLUDE_PARAMS_OF_INTERN_P;
 
+    // !!! This behavior is being tried differently; leave it named INTERN*
+    // for the moment...
+    //
+    return rebValue(Lib(MUTABLE), Lib(IN), ARG(where), ARG(data));
+
+/*
     assert(IS_BLOCK(ARG(data)));
 
     const RELVAL *tail;
     RELVAL *head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));
     Bind_Nonspecifically(head, tail, VAL_CONTEXT(ARG(where)));
 
-    RETURN (ARG(data));
+    RETURN (ARG(data)); */
 }

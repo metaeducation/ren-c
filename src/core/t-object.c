@@ -244,11 +244,11 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
             REBSER *found = nullptr;
 
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
-                if (e->ctx == INODE(PatchContext, patch)) {
+                if (e->ctx == INODE(ModvarContext, patch)) {
                     found = patch;
                     break;
                 }
-             /*   if (Lib_Context == INODE(PatchContext, patch))
+             /*   if (Lib_Context == INODE(ModvarContext, patch))
                     found = patch;  // will match if not overridden */
             }
             if (found) {
@@ -600,19 +600,21 @@ REB_R MAKE_Context(
             tail,
             parent_ctx
         );
+        mutable_LINK(Patches, ctx) = VAL_SPECIFIER(arg);
         Init_Any_Context(out, kind, ctx); // GC guards it
 
         DECLARE_LOCAL (virtual_arg);
         Copy_Cell(virtual_arg, arg);
+        mutable_BINDING(virtual_arg) = ctx;
 
-        Virtual_Bind_Deep_To_Existing_Context(
+/*        Virtual_Bind_Deep_To_Existing_Context(
             virtual_arg,
             ctx,
             nullptr,  // !!! no binder made at present
             REB_WORD  // all internal refs are to the object
-        );
+        ); */
 
-        DECLARE_LOCAL (dummy);
+        DECLARE_LOCAL (dummy);  // v-- !!! has problems if you try SPC(ctx)
         if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED)) {
             Move_Cell(out, dummy);  // GC-guarded context was in out
             return R_THROWN;
@@ -861,7 +863,7 @@ REBCTX *Copy_Context_Extra_Managed(
                 patch = SER(node_MISC(Hitch, patch));
 
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
-                if (original == INODE(PatchContext, patch)) {
+                if (original == INODE(ModvarContext, patch)) {
                     REBVAL *var = Append_Context(copy, nullptr, *psym);
                     Copy_Cell(var, SPECIFIC(ARR_SINGLE(ARR(patch))));
                     break;

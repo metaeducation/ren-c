@@ -112,6 +112,7 @@ REBACT *Make_Native(
 
     REBARR *details = ACT_DETAILS(native);
     Init_Blank(ARR_AT(details, IDX_NATIVE_BODY));
+    Init_Blank(ARR_AT(details, IDX_NATIVE_SPECIFIER));
     Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), CTX_ARCHETYPE(module));
 
     // NATIVE-COMBINATORs actually aren't *quite* their own dispatchers, they
@@ -223,7 +224,6 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     assert(VAL_INDEX(boot_natives) == 0); // should be at head, sanity check
     const RELVAL *tail;
     RELVAL *item = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, boot_natives);
-    assert(VAL_SPECIFIER(boot_natives) == SPECIFIED);
 
     // !!! We could avoid this by making NATIVE a specialization of a NATIVE*
     // function which carries those arguments, which would be cleaner.  The
@@ -243,6 +243,10 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
     assert(IS_WORD(item) and VAL_WORD_ID(item) == SYM_NATIVE);
     ++item;
     assert(IS_BLOCK(item));
+
+    // We know we can mutate the code, so go ahead and do so.
+    //
+    mutable_BINDING(item) = Lib_Context;
     REBVAL *spec = SPECIFIC(item);
     ++item;
 
@@ -278,6 +282,7 @@ REBARR *Startup_Natives(const REBVAL *boot_natives)
 
     DECLARE_LOCAL (skipped);
     Init_Any_Array_At(skipped, REB_BLOCK, VAL_ARRAY(boot_natives), 3);
+    mutable_BINDING(skipped) = Lib_Context;
 
     DECLARE_LOCAL (discarded);
     if (Do_Any_Array_At_Throws(discarded, skipped, SPECIFIED))

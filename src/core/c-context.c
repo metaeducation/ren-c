@@ -171,7 +171,7 @@ REBVAR *Append_Context(
             // were created as a continguous array of memory in Startup_Lib().
             //
             patch = &PG_Lib_Patches[id];
-            assert(INODE(PatchContext, patch) == nullptr);  // don't double add
+            assert(INODE(ModvarContext, patch) == nullptr);  // don't double add
             // patch->leader.bits should be already set
         }
         else patch = Alloc_Singular(
@@ -223,7 +223,7 @@ REBVAR *Append_Context(
             updating = SER(node_MISC(Hitch, updating));
 
         node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
-        mutable_INODE(PatchContext, patch) = context;
+        mutable_INODE(ModvarContext, patch) = context;
         node_MISC(Hitch, updating) = patch;
 
         if (any_word) {  // bind word while we're at it

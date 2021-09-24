@@ -83,7 +83,7 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
     else {
         assert(GET_SUBCLASS_FLAG(PATCH, binding, LET));
         assert(index == INDEX_PATCHED);
-        assert(symbol == INODE(PatchSymbol, binding));
+        assert(symbol == INODE(LetSymbol, binding));
     }
 
     return cast(REBVAL*, out);
@@ -102,7 +102,7 @@ inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
         out,
         type,
         patch,
-        INODE(PatchSymbol, patch),
+        INODE(LetSymbol, patch),
         INDEX_PATCHED
     );
 }

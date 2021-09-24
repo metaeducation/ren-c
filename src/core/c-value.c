@@ -259,8 +259,8 @@ void* Probe_Core_Debug(
             Probe_Print_Helper(p, expr, "non-LET Patch", file, line);
             break;
         }
-        REBSER *link = SER(node_LINK(Node, s));
-        if (FLAVOR_VARLIST == SER_FLAVOR(link))
+        REBSER *inode = SER(node_INODE(Node, s));
+        if (FLAVOR_VARLIST == SER_FLAVOR(inode))
             Probe_Print_Helper(p, expr, "Module Item Patch", file, line);
         else
             Probe_Print_Helper(p, expr, "LET Patch", file, line);

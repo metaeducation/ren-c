@@ -123,9 +123,9 @@ module: func [
     ; which specifies modules other than lib to inherit from.
     ;
     if block? body [
-        intern* mod body  ; will overwrite any existing bindings in BODY
+        unbind/deep body  ; will overwrite any existing bindings in BODY
     ] else [
-        body: transcode/where/line/file body mod line file
+        body: transcode/line/file body line file
     ]
 
     ; We add importing and exporting as specializations of lower-level IMPORT*
@@ -160,7 +160,7 @@ module: func [
     ; (QUIT is not a failure when running scripts.)
     ;
     catch/quit [
-        set (product: default [#]) do body
+        set (product: default [#]) do intern* mod body
     ]
     then ^arg-to-quit -> [
         set product unmeta arg-to-quit

@@ -238,7 +238,8 @@ const REBVAL *Type_Of(const RELVAL *value)
 //
 REBVAL *Get_System(REBLEN i1, REBLEN i2)
 {
-    REBVAL *obj = CTX_VAR(VAL_CONTEXT(Lib(SYSTEM)), i1);
+    const REBVAL *sys = Lib(SYSTEM);
+    REBVAL *obj = CTX_VAR(VAL_CONTEXT(sys), i1);
     if (i2 == 0)
         return obj;
 

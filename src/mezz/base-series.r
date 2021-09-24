@@ -22,7 +22,7 @@ reeval function [:terms [tag! set-word! <variadic>]] [
         set w redescribe reduce [
             spaced [{Returns the} to word! w {value of a series}]
         ](
-            specialize :pick [picker: n]
+            c-debug-break specialize :pick [picker: n]
         )
         n: n + 1
     ]

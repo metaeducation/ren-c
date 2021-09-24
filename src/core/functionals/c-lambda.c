@@ -69,27 +69,12 @@ REB_R Lambda_Dispatcher(REBFRM *f)
 
     SET_SERIES_FLAG(f->varlist, MANAGED);  // not manually tracked...
 
-    // We have to use Make_Or_Reuse_Patch() here, because it could be the
-    // case that a higher level wrapper used the frame and virtually bound it.
-    //
-    // !!! Currently, since we are evaluating the block with its own virtual
-    // binding being taken into account, using that block's binding as the
-    // `next` (VAL_SPECIFIER(block)) means it's redundant when creating the
-    // feed, since it tries to apply this specifier on top of that *again*.
-    // The merging notices the redundancy and doesn't create a new specifier
-    // which is good...but this is still inefficient.  This all needs review.
-    //
-    REBSPC *specifier = Make_Or_Reuse_Patch(
-        CTX(f->varlist),
-        CTX_LEN(CTX(f->varlist)),
-        VAL_SPECIFIER(block),
-        REB_WORD
-    );
+    mutable_LINK(Patches, f->varlist) = VAL_SPECIFIER(block);
 
     // Note: Invisibility is not allowed, e.g. `x -> [elide x]` or `x -> []`
     // will return a ~void~ isotope.  Hence prior `f->out` is always wiped out.
 
-    if (Do_Any_Array_At_Throws(f->out, block, specifier))
+    if (Do_Any_Array_At_Throws(f->out, block, SPC(f->varlist)))
         return R_THROWN;
 
     return f->out;

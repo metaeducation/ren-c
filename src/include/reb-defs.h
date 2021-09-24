@@ -137,6 +137,12 @@ struct Reb_Bookmark {
 struct Reb_Binder;
 struct Reb_Collector;
 
+enum Reb_Attach_Mode {
+    ATTACH_READ,
+    ATTACH_WRITE,
+    ATTACH_COPY
+};
+
 
 //=//// FRAMES ////////////////////////////////////////////////////////////=//
 //

@@ -62,25 +62,38 @@
     SERIES_FLAG_25
 
 
+//=//// PATCH_FLAG_SET_WORDS_ONLY //////////////////////////////////////////=//
+//
+// This means that the patch wants to bind set words only.
+//
+#define PATCH_FLAG_SET_WORDS_ONLY \
+    SERIES_FLAG_26
 
-// The LINK() slot in a patch can be:
+
+
+// The INODE() slot in a patch can be:
 //
 // * a REBSYM, if it's a standalone LET variable; there'd be no way to know
 //   its name otherwise.
 //
-// * a REBCTX, if it's an field in a "sea context" like Lib or User.  In this
-//   case, the spelling is found by following the MISC linkages, which are
+// * the owning REBCTX, if it's a variable in a module ("sea of words").
+//   In this case, the spelling is found by following the MISC linkages;
 //   part of the "Hitch" circularly linked list that ends in the symbol
 //
 // * Currently unused if the payload is for a virtual binding patch.
 //
-#define INODE_PatchSymbol_TYPE           const REBSYM*
-#define INODE_PatchSymbol_CAST           SYM
-#define HAS_INODE_PatchSymbol            FLAVOR_PATCH
 
-#define INODE_PatchContext_TYPE          REBCTX*
-#define INODE_PatchContext_CAST          CTX
-#define HAS_INODE_PatchContext           FLAVOR_PATCH
+#define INODE_LetSymbol_TYPE           const REBSYM*
+#define INODE_LetSymbol_CAST           SYM
+#define HAS_INODE_LetSymbol            FLAVOR_PATCH
+
+#define INODE_ModvarContext_TYPE          REBCTX*
+#define INODE_ModvarContext_CAST          CTX
+#define HAS_INODE_ModvarContext           FLAVOR_PATCH
+
+#define INODE_VbindUnused_TYPE          REBCTX*
+#define INODE_VbindUnused_CAST          CTX
+#define HAS_INODE_VbindUnused           FLAVOR_PATCH
 
 
 // Next node is either to another patch, a frame specifier REBCTX, or nullptr.
@@ -88,7 +101,3 @@
 #define LINK_NextPatch_TYPE            REBARR*
 #define LINK_NextPatch_CAST            ARR
 #define HAS_LINK_NextPatch             FLAVOR_PATCH
-
-
-#define NextPatch(patch) \
-    LINK(NextPatch, patch)

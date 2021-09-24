@@ -506,7 +506,7 @@ Special internal defines used by RT, not Host-Kit developers:
     // variables, and if that number is not zero then it asserts when a
     // push or pop is requested, or when the evaluator is invoked.
     //
-    #define DEBUG_EXTANT_STACK_POINTERS DEBUG
+    #define DEBUG_EXTANT_STACK_POINTERS 0  // temporary, causing problems
 #else
     #define DEBUG_EXTANT_STACK_POINTERS 0
 #endif

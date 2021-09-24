@@ -133,6 +133,7 @@ REBNATIVE(generic)
 
     REBARR *details = ACT_DETAILS(generic);
     Init_Word(ARR_AT(details, IDX_NATIVE_BODY), VAL_WORD_SYMBOL(verb));
+    Init_Blank(ARR_AT(details, IDX_NATIVE_SPECIFIER));
     Copy_Cell(ARR_AT(details, IDX_NATIVE_CONTEXT), Lib_Context_Value);
 
     REBVAL *verb_var = Sink_Word_May_Fail(verb, SPECIFIED);

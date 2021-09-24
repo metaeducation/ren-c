@@ -291,6 +291,7 @@ inline static REBPAR *ACT_PARAMS_HEAD(REBACT *a) {
     SPECIFIC(ARR_AT((a), (n)))
 
 #define IDX_DETAILS_1 1  // Common index used for code body location
+#define IDX_DETAILS_2 2  // Common index used for specifier location
 
 // These are indices into the details array agreed upon by actions which have
 // the PARAMLIST_FLAG_IS_NATIVE set.
@@ -305,6 +306,13 @@ enum {
     // might collide with other natives in the future).  The idea needs review.
     //
     IDX_NATIVE_BODY = 1,
+
+    // !!! This is right now a BLOCK! of EMPTY_ARRAY with a VAL_SPECIFIER() in
+    // it...because the native body has to be relative, and the action itself
+    // doesn't have any more room for a node at the moment.  But it's only
+    // one pointer's worth of information, taking up 4 this way.
+    //
+    IDX_NATIVE_SPECIFIER = 2,
 
     IDX_NATIVE_CONTEXT,  // libRebol binds strings here (and lib)
 

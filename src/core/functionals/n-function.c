@@ -137,6 +137,12 @@ bool Interpreted_Dispatch_Details_1_Throws(
     RELVAL *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
+    // !!! Hook the specifier into the varlist, so that whatever contexts
+    // the body originally inherited will be inherited.
+    //
+    REBSPC *specifier = VAL_SPECIFIER(ARR_AT(details, IDX_DETAILS_2));
+    mutable_LINK(Patches, f->varlist) = specifier;
+
     if (ACT_HAS_RETURN(phase)) {
         assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
         REBVAL *cell = FRM_ARG(f, 1);
@@ -475,6 +481,12 @@ REBACT *Make_Interpreted_Action_May_Fail(
         a,
         copy
     );
+
+    REBVAL *spblock = Init_Block(
+        ARR_AT(details, IDX_NATIVE_SPECIFIER),
+        EMPTY_ARRAY
+    );
+    mutable_BINDING(spblock) = VAL_SPECIFIER(body);  // will be patched in
 
     // Capture the mutability flag that was in effect when this action was
     // created.  This allows the following to work:

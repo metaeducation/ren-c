@@ -175,7 +175,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
 // and the rebValue("...") function won't work, so it had to be hacked up as
 // a handcoded routine.  Review.
 //
-REBARR *Expanded_Combinator_Spec(const REBVAL *original)
+REBARR *Expanded_Combinator_Spec(REBVAL *original)
 {
     REBDSP dsp_orig = DSP;
 
@@ -199,6 +199,8 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
     ++item;
 
   blockscope {
+    REBDSP dsp_prescan = DSP;
+
     const REBYTE utf8[] =
         "remainder: [<opt> any-series!]\n"
         "state [frame!]\n"
@@ -213,25 +215,23 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
         ANONYMOUS,
         start_line,
         utf8,
-        strsize(utf8),
-        nullptr
+        strsize(utf8)
     );
 
-    Scan_To_Stack(&level);  // Note: Unbound code, won't find FRAME! etc.
+    Scan_To_Stack(&level);
+
+    // The scanner produces unbound code.  We don't know what the mix of
+    // binding is on the code that was incoming, but bind the scanned bit into
+    // the Lib_Context() so it finds FRAME! and ANY-SERIES!>
+    //
+    while (dsp_prescan++ != DSP)
+        mutable_BINDING(DS_AT(dsp_prescan)) = Lib_Context;
   }
 
-    for (; item != tail; ++item) {
+    for (; item != tail; ++item)
         Derelativize(DS_PUSH(), item, specifier);  // everything else
-    }
 
-    // The scanned material is not bound.  The natives were bound into the
-    // Lib_Context initially.  Hack around the issue by repeating that binding
-    // on the product.
-    //
-    REBARR *expanded = Pop_Stack_Values(dsp_orig);
-    Bind_Values_Deep(ARR_HEAD(expanded), ARR_TAIL(expanded), Lib_Context_Value);
-
-    return expanded;
+    return Pop_Stack_Values(dsp_orig);
 }
 
 

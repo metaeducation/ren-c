@@ -279,7 +279,7 @@ func: func* [
     ; need blank-headed-TUPLE! for pure locals to the generators.  Review the
     ; COLLECT-WORDS interface to efficiently give this result.
     ;
-    for-each loc locals [
+    for-each 'loc locals [
         append new-spec ^ to tuple! loc
     ]
 
