@@ -483,7 +483,7 @@ inline static const REBVAR *Try_Lib_Var(SYMID id) {
     // !!! We allow a "removed state", in case modules implement a
     // feature for dropping variables.
     //
-    if (LINK(PatchContext, &PG_Lib_Patches[id]) == nullptr)
+    if (INODE(PatchContext, &PG_Lib_Patches[id]) == nullptr)
         return nullptr;
 
     return cast(REBVAR*, ARR_SINGLE(&PG_Lib_Patches[id]));

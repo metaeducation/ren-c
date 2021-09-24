@@ -244,11 +244,11 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
             REBSER *found = nullptr;
 
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
-                if (e->ctx == LINK(PatchContext, patch)) {
+                if (e->ctx == INODE(PatchContext, patch)) {
                     found = patch;
                     break;
                 }
-             /*   if (Lib_Context == LINK(PatchContext, patch))
+             /*   if (Lib_Context == INODE(PatchContext, patch))
                     found = patch;  // will match if not overridden */
             }
             if (found) {
@@ -816,7 +816,7 @@ REBCTX *Copy_Context_Extra_Managed(
                 patch = SER(node_MISC(Hitch, patch));
 
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
-                if (original == LINK(PatchContext, patch)) {
+                if (original == INODE(PatchContext, patch)) {
                     REBVAL *var = Append_Context(copy, nullptr, *psym);
                     Copy_Cell(var, SPECIFIC(ARR_SINGLE(ARR(patch))));
                     break;

@@ -272,18 +272,20 @@ REBARR *Make_Let_Patch(
     // it is a patch, a frame context, or nullptr.
     //
     assert(not specifier or GET_SERIES_FLAG(specifier, MANAGED));
-    mutable_INODE(NextPatch, patch) = specifier;
+    mutable_LINK(NextPatch, patch) = specifier;
 
     // A circularly linked list of variations of this patch with different
     // NextPatch() data is maintained, to assist in avoiding creating
     // unnecessary duplicates.  But since this is an absolutely new instance
     // (from a LET) we won't find any existing chains for this.
     //
-    mutable_MISC(Variant, patch) = patch;
+    // !!! This feature is on hold for the moment.
+    //
+    mutable_MISC(Variant, patch) = nullptr;
 
     // Store the symbol so the patch knows it.
     //
-    mutable_LINK(PatchSymbol, patch) = symbol;
+    mutable_INODE(PatchSymbol, patch) = symbol;
 
     return patch;
 }

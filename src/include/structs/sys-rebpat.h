@@ -31,6 +31,11 @@
 // that have distinct next pointers.  This way, they can look through that
 // list before creating an equivalent chain to one that already exists.
 //
+// !!! This optimization was adding complexity and didn't seem to be hitting
+// all that often in practice.  It was removed temporarily in order to free
+// up the field in varlists to point to the specifier that was in effect when
+// it was created.
+//
 #define MISC_Variant_TYPE        REBARR*
 #define MISC_Variant_CAST        ARR
 #define HAS_MISC_Variant         FLAVOR_PATCH
@@ -69,27 +74,21 @@
 //
 // * Currently unused if the payload is for a virtual binding patch.
 //
-#define LINK_PatchSymbol_TYPE           const REBSYM*
-#define LINK_PatchSymbol_CAST           SYM
-#define HAS_LINK_PatchSymbol            FLAVOR_PATCH
+#define INODE_PatchSymbol_TYPE           const REBSYM*
+#define INODE_PatchSymbol_CAST           SYM
+#define HAS_INODE_PatchSymbol            FLAVOR_PATCH
 
-#define LINK_PatchContext_TYPE          REBCTX*
-#define LINK_PatchContext_CAST          CTX
-#define HAS_LINK_PatchContext           FLAVOR_PATCH
+#define INODE_PatchContext_TYPE          REBCTX*
+#define INODE_PatchContext_CAST          CTX
+#define HAS_INODE_PatchContext           FLAVOR_PATCH
 
-
-// For the moment, the NextPatch pointer is stored where the node's INFO would
-// go.  This is a bit unfortunate, since the INFO is slated to be used for
-// GC acceleration.  But with LET variables using the singular array area
-// for an arbitrary value, symbol + variant exhausts the space.  It may be
-// that variant effectiveness needs to be rethought.  Review.
-//
-#define INODE_NextPatch_TYPE            REBARR*
-#define INODE_NextPatch_CAST            ARR
-#define HAS_INODE_NextPatch             FLAVOR_PATCH
 
 // Next node is either to another patch, a frame specifier REBCTX, or nullptr.
 //
+#define LINK_NextPatch_TYPE            REBARR*
+#define LINK_NextPatch_CAST            ARR
+#define HAS_LINK_NextPatch             FLAVOR_PATCH
+
 
 #define NextPatch(patch) \
-    INODE(NextPatch, patch)
+    LINK(NextPatch, patch)

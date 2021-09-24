@@ -326,7 +326,7 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
             patch = SER(node_MISC(Hitch, patch));
 
         for (; patch != sym; patch = SER(node_MISC(Hitch, patch))) {
-            if (LINK(PatchContext, patch) == c)
+            if (INODE(PatchContext, patch) == c)
                 return cast(REBVAR*, ARR_SINGLE(ARR(patch)));
         }
         if (strict)

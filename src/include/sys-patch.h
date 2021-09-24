@@ -105,6 +105,8 @@ inline static REBARR *Make_Patch_Core(
     enum Reb_Kind kind,
     bool reuse
 ){
+    UNUSED(reuse);  // review
+
     assert(kind == REB_WORD or kind == REB_SET_WORD);
     if (IS_VARLIST(binding))
         assert(
@@ -137,48 +139,6 @@ inline static REBARR *Make_Patch_Core(
         assert(BINDING(ARR_SINGLE(next)) != binding);
     }
 
-    // The list of circularly-linked synonym patches is pointed to by the
-    // object bonus (if varlist) or is the circularly linked list of patches
-    // itself via MISC (if a LET).  Remember the links are weak...they do
-    // not keep things GC live.
-    //
-    REBARR *patches;
-    if (IS_VARLIST(binding))
-        patches = LINK(Patches, binding);
-    else
-        patches = MISC(Variant, binding);
-
-    if (patches) {
-        //
-        // There's a list of variants in place.  Search it to see if any of
-        // them are a match for the given limit and next specifier.
-        //
-        // !!! Long term this should not search if not reuse.  For now we
-        // search just to make sure that you're not putting in a duplicate.
-        //
-        REBARR *variant = patches;
-        do {
-            if (
-                NextPatch(variant) == next
-                and BINDING(ARR_SINGLE(variant)) == binding and
-                VAL_WORD_INDEX_U32(ARR_SINGLE(variant)) == limit
-            ){
-                // The reused flag isn't initially set, but becomes set on
-                // the first reuse (and hence every reuse after).  This is
-                // useful for the purposes of merging, to know whether to
-                // bother searching or not.
-                //
-                assert(reuse);
-                USED(reuse);
-                SET_SUBCLASS_FLAG(PATCH, variant, REUSED);
-                return variant;
-            }
-            variant = MISC(Variant, variant);
-        } while (variant != patches);
-
-        // We're going to need to make a patch.
-    }
-
     // A virtual bind patch array is a singular node holding an ANY-WORD!
     // bound to the OBJECT! being virtualized against.  The reason for holding
     // the WORD! instead of the OBJECT! in the array cell are:
@@ -201,9 +161,9 @@ inline static REBARR *Make_Patch_Core(
     //
     REBARR *patch = Alloc_Singular(
         //
-        // LINK is not used yet (likely application: symbol for patches that
+        // INODE is not used yet (likely application: symbol for patches that
         // represent lets).  Consider uses in patches that represent objects.
-        // So no SERIES_FLAG_LINK_NODE_NEEDS_MARK yet.
+        // So no SERIES_FLAG_INFO_NODE_NEEDS_MARK yet.
         //
         // MISC is a node, but it's used for linking patches to variants
         // with different chains underneath them...and shouldn't keep that
@@ -211,7 +171,7 @@ inline static REBARR *Make_Patch_Core(
         //
         FLAG_FLAVOR(PATCH)
             | NODE_FLAG_MANAGED
-            | SERIES_FLAG_INFO_NODE_NEEDS_MARK
+            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
     );
 
     if (IS_VARLIST(binding) and CTX_TYPE(CTX(binding)) == REB_MODULE) {
@@ -231,7 +191,7 @@ inline static REBARR *Make_Patch_Core(
             binding,
             IS_VARLIST(binding)
                 ? *CTX_KEY(CTX(binding), limit)
-                : LINK(PatchSymbol, binding),
+                : INODE(PatchSymbol, binding),
             limit
         );
     }
@@ -241,31 +201,21 @@ inline static REBARR *Make_Patch_Core(
     // the chain.  So we can simply point to the existing specifier...whether
     // it is a patch, a frame context, or nullptr.
     //
-    mutable_INODE(NextPatch, patch) = next;
+    mutable_LINK(NextPatch, patch) = next;
 
     // A circularly linked list of variations of this patch with different
     // NextPatch() dta is maintained, to assist in avoiding creating
     // unnecessary duplicates.  Decay_Series() will remove this patch from the
     // list when it is being GC'd.
     //
-    if (not patches)
-        mutable_MISC(Variant, patch) = patch;
-    else {
-        mutable_MISC(Variant, patch) = MISC(Variant, patches);
-        mutable_MISC(Variant, patches) = patch;
-    }
-
-    // Make the last looked for patch the first one that would be found if
-    // the same search is used again (assume that's a good strategy).  This
-    // is only needed for context patches.
+    // !!! This feature was removed for the moment, see notes on Variant.
     //
-    if (IS_VARLIST(binding))
-        mutable_LINK(Patches, binding) = patch;
+    mutable_MISC(Variant, patch) = nullptr;
 
     // The LINK field is only used in LET patches for the symbol, so no
     // purpose found for the non-LET patches yet.
     //
-    mutable_LINK(PatchSymbol, patch) = nullptr;
+    mutable_INODE(PatchSymbol, patch) = nullptr;
 
     return patch;
 }

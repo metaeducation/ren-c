@@ -1176,7 +1176,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
                 continue;
             REBSER *patch = MISC(Hitch, *psym);
             for (; patch != *psym; patch = SER(node_MISC(Hitch, patch))) {
-                REBCTX *context = LINK(PatchContext, patch);
+                REBCTX *context = INODE(PatchContext, patch);
                 if (GET_SERIES_FLAG(patch, MARKED)) {
                     assert(GET_SERIES_FLAG(CTX_VARLIST(context), MARKED));
                     continue;

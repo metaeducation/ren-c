@@ -1100,12 +1100,20 @@ void Decay_Series(REBSER *s)
         // then it will circle back to the symbol for the variable.  This
         // means it may hit a REBSYM* or may not in this encircling.
         //
+        // !!! This feature only is happening with the variable definitions
+        // for modules at the moment; the other feature is on hold.
+        //
         REBSER *temp = MISC(Variant, s);
-        while (node_MISC(Variant, temp) != s) {
-            temp = SER(node_MISC(Variant, temp));
-            assert(IS_PATCH(temp) or IS_INTERN(temp));
+        if (temp != nullptr) {
+            //
+            // This is a module variable patch.
+            //
+            while (node_MISC(Variant, temp) != s) {
+                temp = SER(node_MISC(Variant, temp));
+                assert(IS_PATCH(temp) or IS_INTERN(temp));
+            }
+            node_MISC(Variant, temp) = node_MISC(Variant, s);
         }
-        node_MISC(Variant, temp) = node_MISC(Variant, s);
         break; }
 
       case FLAVOR_HANDLE: {
