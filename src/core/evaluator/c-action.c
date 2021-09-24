@@ -1424,7 +1424,7 @@ void Drop_Action(REBFRM *f) {
 
     assert(
         GET_SERIES_FLAG(f->varlist, INACCESSIBLE)
-        or LINK(KeySource, f->varlist) == f
+        or BONUS(KeySource, f->varlist) == f
     );
 
     if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE)) {
@@ -1477,10 +1477,10 @@ void Drop_Action(REBFRM *f) {
             )
         );
         assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
-        INIT_LINK_KEYSOURCE(f->varlist, f);
+        INIT_BONUS_KEYSOURCE(f->varlist, f);
       #endif
 
-        INIT_LINK_KEYSOURCE(f->varlist, ACT_KEYLIST(f->original));
+        INIT_BONUS_KEYSOURCE(f->varlist, ACT_KEYLIST(f->original));
         f->varlist = nullptr;
     }
     else {

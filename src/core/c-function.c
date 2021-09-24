@@ -623,9 +623,9 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     Manage_Series(paramlist);
 
     SET_SERIES_USED(keylist, num_slots - 1);  // no terminator
-    INIT_LINK_KEYSOURCE(paramlist, keylist);
+    INIT_BONUS_KEYSOURCE(paramlist, keylist);
     mutable_MISC(VarlistMeta, paramlist) = nullptr;
-    mutable_BONUS(Patches, paramlist) = nullptr;
+    mutable_LINK(Patches, paramlist) = nullptr;
   }
 
     // Must remove binder indexes for all words, even if about to fail
@@ -690,7 +690,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
         mutable_MISC(VarlistMeta, types_varlist) = nullptr;
-        mutable_BONUS(Patches, types_varlist) = nullptr;
+        mutable_LINK(Patches, types_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(types_varlist), keylist);
 
         RELVAL *rootvar = ARR_HEAD(types_varlist);
@@ -737,7 +737,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             SERIES_MASK_VARLIST | NODE_FLAG_MANAGED
         );
         mutable_MISC(VarlistMeta, notes_varlist) = nullptr;
-        mutable_BONUS(Patches, notes_varlist) = nullptr;
+        mutable_LINK(Patches, notes_varlist) = nullptr;
         INIT_CTX_KEYLIST_SHARED(CTX(notes_varlist), keylist);
 
         RELVAL *rootvar = ARR_HEAD(notes_varlist);
@@ -907,7 +907,7 @@ REBACT *Make_Action(
     // a placeholder for more useful consistency checking which might be done.
     //
   blockscope {
-    REBSER *keylist = SER(LINK(KeySource, paramlist));
+    REBSER *keylist = SER(BONUS(KeySource, paramlist));
 
     ASSERT_SERIES_MANAGED(keylist);  // paramlists/keylists, can be shared
     assert(SER_USED(keylist) + 1 == ARR_LEN(paramlist));

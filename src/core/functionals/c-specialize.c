@@ -184,7 +184,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 
     SET_SERIES_LEN(varlist, num_slots);
     mutable_MISC(VarlistMeta, varlist) = nullptr;
-    mutable_BONUS(Patches, varlist) = nullptr;
+    mutable_LINK(Patches, varlist) = nullptr;
 
     return CTX(varlist);
 }

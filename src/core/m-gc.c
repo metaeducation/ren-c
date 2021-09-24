@@ -150,6 +150,12 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
 // a "queue".  But when you use 'queue' as a verb, it has more leeway than as
 // the CS noun, and can just mean "put into a list for later processing".)
 //
+// !!! The reason queueing is used was because things were generating stack
+// overflows for deeply nested structures.  With the generic marking of fields
+// like LINK() and MISC(), the chains are now becoming long enough just through
+// that to generate some deep stacks...even without any cells being marked.
+// It hasn't caused any crashes yet, but is something that bears scrutiny.
+//
 static void Queue_Mark_Node_Deep(void *p)
 {
     REBYTE first = *cast(const REBYTE*, p);
@@ -203,57 +209,39 @@ static void Queue_Mark_Node_Deep(void *p)
     s->leader.bits |= NODE_FLAG_MARKED;
     ++mark_count;  // checked on entry that wasn't already marked
 
-    if (GET_SERIES_FLAG(s, LINK_NODE_NEEDS_MARK) and node_LINK(Node, s)) {
-        //
-        // !!! The keysource for varlists can be set to a REBFRM*, which acts
-        // like a cell because the flag is set to being an "endlike header".
-        // The DEBUG_CHECK_CASTS noticed that this was marking an END when
-        // casting as a SER().  It wasn't entirely obvious what was going on,
-        // but this makes it clearer so that a more elegant fix can be made.
-        //
-        if (Is_Node_Cell(node_LINK(Node, s)))
-            if (IS_VARLIST(s))
-                goto skip_mark_rebfrm_link;
+  //=//// MARK LINK AND MISC IF DESIRED ////////////////////////////////////=//
 
-        REBSER *link = SER(node_LINK(Node, s));
-        Queue_Mark_Node_Deep(link);
+    // All nodes have both link and misc fields available, but they don't
+    // necessarily hold node pointers (and even if they do, they may not be
+    // references that are intended to keep them live).  So the series header
+    // flags control whether the marking is done or not.
 
-        // Keylist series need to be marked.
-        //
-        // !!! Review efficiency, this may need a separate flag for "has
-        // pointers that need marking", such lists are used elsewhere.
-        //
-        if (IS_KEYLIST(link)) {
-            REBKEY *tail = SER_TAIL(REBKEY, link);
-            REBKEY *key = SER_HEAD(REBKEY, link);
-            for (; key != tail; ++key) {
-                REBSYM* sym = m_cast(REBSYM*, KEY_SYMBOL(key));
-                if (not (sym->leader.bits & NODE_FLAG_MARKED)) {
-                    sym->leader.bits |= NODE_FLAG_MARKED;
-                    ++mark_count;
-                }
-            }
-        }
-    }
+    if (GET_SERIES_FLAG(s, LINK_NODE_NEEDS_MARK) and node_LINK(Node, s))
+        Queue_Mark_Node_Deep(node_LINK(Node, s));
 
-  skip_mark_rebfrm_link:
     if (GET_SERIES_FLAG(s, MISC_NODE_NEEDS_MARK) and node_MISC(Node, s))
         Queue_Mark_Node_Deep(node_MISC(Node, s));
 
-  //=//// MARK INODE (if not using slot for `info`) ///////////////////////=//
+  //=//// MARK INODE IF NOT USED FOR INFO //////////////////////////////////=//
 
-    if (GET_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK)) {
-        REBNOD *inode = node_INODE(Node, s);
-        if (inode) {
-          #if !defined(NDEBUG)
-            if (IS_POINTER_TRASH_DEBUG(inode))
-                panic (s);
-          #endif
-            Queue_Mark_Node_Deep(inode);
-        }
+    // In the case of the INFO/INODE slot, the setting of the needing mark
+    // flag is what determines whether the slot is used for info or not.  So
+    // if it's available for non-info uses, it is always a live marked node.
+
+    if (GET_SERIES_FLAG(s, INFO_NODE_NEEDS_MARK) and node_INODE(Node, s))
+        Queue_Mark_Node_Deep(node_INODE(Node, s));
+
+    if (IS_KEYLIST(s)) {
+        //
+        // !!! Keylists may not be the only category that are just a straight
+        // list of node pointers.
+        //
+        REBKEY *tail = SER_TAIL(REBKEY, s);
+        REBKEY *key = SER_HEAD(REBKEY, s);
+        for (; key != tail; ++key)
+            Queue_Mark_Node_Deep(m_cast(REBSYM*, *key));
     }
-
-    if (IS_SER_ARRAY(s)) {
+    else if (IS_SER_ARRAY(s)) {
         REBARR *a = ARR(s);
 
     //=//// MARK BONUS (if not using slot for `bias`) /////////////////////=//
@@ -261,16 +249,23 @@ static void Queue_Mark_Node_Deep(void *p)
         // Whether the bonus slot needs to be marked is dictated by internal
         // series type, not an extension-usable flag (due to flag scarcity).
         //
-        if (GET_SERIES_FLAG(a, DYNAMIC) and not IS_SER_BIASED(a)) {
-            REBNOD *bonus = node_BONUS(Node, a);
-            if (bonus) {
-              #if !defined(NDEBUG)
-                if (IS_POINTER_TRASH_DEBUG(bonus))
-                    panic (a);
-              #endif
-                Queue_Mark_Node_Deep(bonus);
-            }
+        if (IS_VARLIST(a) and node_BONUS(Node, s)) {
+            //
+            // !!! The keysource for varlists can be set to a REBFRM*, which
+            // at the moment pretends to be a cell to distinguish itself.
+            // This makes less sense than pretending to be a series that is
+            // already marked, and has a detectable FLAVOR_XXX.  Review.
+            //
+            if (Is_Node_Cell(node_BONUS(Node, s)))
+                goto skip_mark_rebfrm_bonus;
+
+            REBSER *keylist = SER(node_BONUS(Node, a));
+            assert(IS_KEYLIST(keylist));
+
+            Queue_Mark_Node_Deep(keylist);
         }
+
+        skip_mark_rebfrm_bonus:
 
     //=//// MARK ARRAY ELEMENT CELLS (if array) ///////////////////////////=//
 

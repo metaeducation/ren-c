@@ -124,7 +124,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     //     ACT_KEYLIST(FRM_PHASE(f))
     // );
     //
-    // INIT_LINK_KEYSOURCE(CTX_VARLIST(c), ACT_KEYLIST(VAL_ACTION(inner)));
+    // INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), ACT_KEYLIST(VAL_ACTION(inner)));
     //
     // assert(GET_SERIES_FLAG(f->varlist, INACCESSIBLE));  // look dead
     //
@@ -146,8 +146,8 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     // The varlist is still pointed to by any extant frames.  Its keysource
     // should not be this frame any longer.
     //
-    assert(LINK(KeySource, varlist) == f);
-    INIT_LINK_KEYSOURCE(varlist, ACT_KEYLIST(f->original));
+    assert(BONUS(KeySource, varlist) == f);
+    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(f->original));
     //-------------------------------------------------------------end-new-code
 
     // We're passing the built context to the `outer` function as a FRAME!,

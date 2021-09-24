@@ -92,8 +92,8 @@
 //
 inline static bool Is_Overriding_Context(REBCTX *stored, REBCTX *override)
 {
-    REBNOD *stored_source = LINK(KeySource, CTX_VARLIST(stored));
-    REBNOD *temp = LINK(KeySource, CTX_VARLIST(override));
+    REBNOD *stored_source = BONUS(KeySource, CTX_VARLIST(stored));
+    REBNOD *temp = BONUS(KeySource, CTX_VARLIST(override));
 
     // FRAME! "keylists" are actually paramlists, and the LINK.underlying
     // field is used in paramlists (precluding a LINK.ancestor).  Plus, since
@@ -326,7 +326,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
     if (not binding or GET_SERIES_FLAG(binding, MANAGED))
         return;  // unbound or managed already (frame OR object context)
 
-    REBFRM *f = FRM(LINK(KeySource, binding));  // unmanaged only frame
+    REBFRM *f = FRM(BONUS(KeySource, binding));  // unmanaged only frame
     assert(f->key == f->key_tail);  // cannot manage varlist in mid fulfill!
     UNUSED(f);
 
@@ -419,8 +419,8 @@ inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
         binding = CTX_VARLIST(LINK(PatchContext, binding));
     assert(
         GET_SERIES_FLAG(binding, MANAGED) or
-        FRM(LINK(KeySource, binding))->key
-            == FRM(LINK(KeySource, binding))->key_tail  // not fulfilling
+        FRM(BONUS(KeySource, binding))->key
+            == FRM(BONUS(KeySource, binding))->key_tail  // not fulfilling
     );
     binding->leader.bits |= NODE_FLAG_MANAGED;  // !!! review managing needs
     REBCTX *c = CTX(binding);
