@@ -70,12 +70,7 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
     INIT_LINK_KEYSOURCE(sub->varlist, sub);
     sub->rootvar = SPECIFIC(ARR_HEAD(sub->varlist));
 
-    // !!! This leaks a dummy varlist, could just reuse a global one that
-    // shows as INACCESSIBLE.
-    //
-    f->varlist = Alloc_Singular(
-        FLAG_FLAVOR(VARLIST) | SERIES_FLAG_MANAGED | SERIES_FLAG_INACCESSIBLE
-    );
+    f->varlist = PG_Inaccessible_Varlist;
     f->rootvar = nullptr;
 
     sub->key = nullptr;
@@ -160,6 +155,10 @@ REB_R Chainer_Dispatcher(REBFRM *f)
         if (chained == chained_tail)
             break;
 
+        if (sub->varlist and NOT_SERIES_FLAG(sub->varlist, MANAGED))
+            GC_Kill_Series(sub->varlist);
+
+        sub->varlist = nullptr;
         Push_Action(sub, VAL_ACTION(chained), VAL_ACTION_BINDING(chained));
 
         // We use the same mechanism as enfix operations do...give the

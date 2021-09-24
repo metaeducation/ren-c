@@ -1108,17 +1108,6 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     PG_Reb_Stats->Mark_Count = 0;
   #endif
 
-    // The TG_Reuse list consists of entries which could grow to arbitrary
-    // length, and which aren't being tracked anywhere.  Cull them during GC
-    // in case the stack at one point got very deep and isn't going to use
-    // them again, and the memory needs reclaiming.
-    //
-    while (TG_Reuse) {
-        REBARR *varlist = TG_Reuse;
-        TG_Reuse = LINK(ReuseNext, TG_Reuse);
-        GC_Kill_Series(varlist); // no track for Free_Unmanaged_Series()
-    }
-
     if (not shutdown)
         Mark_Symbol_Series();
 

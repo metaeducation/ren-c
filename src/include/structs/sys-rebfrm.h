@@ -25,16 +25,6 @@
 //
 
 
-// The REBFRM's `varlist` field holds a ready-made varlist for a frame,
-// which may be reused.  However, when a stack frame is dropped it can
-// only be reused by putting it in a place that future pushes can find
-// it.  This is used to link a varlist into the reusable list.
-//
-#define LINK_ReuseNext_TYPE         REBARR*
-#define LINK_ReuseNext_CAST         ARR
-#define HAS_LINK_ReuseNext          FLAVOR_VARLIST
-
-
 // !!! A REBFRM* answers that it is a node, and a cell.  This is questionable
 // and should be reviewed now that many features no longer depend on it.
 

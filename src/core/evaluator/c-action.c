@@ -1253,41 +1253,17 @@ void Push_Action(
 
     REBLEN num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals
 
-    REBSER *s;
-    if (
-        f->varlist  // !!! May be going to point of assuming nullptr
-        or Did_Reuse_Varlist_Of_Unknown_Size(f, num_args)  // want `num_args`
-    ){
-        s = f->varlist;
-      #if DEBUG_TERM_ARRAYS
-        if (s->content.dynamic.rest >= num_args + 1 + 1)  // +rootvar, +end
-            goto sufficient_allocation;
-      #else
-        if (s->content.dynamic.rest >= num_args + 1)  // +rootvar
-            goto sufficient_allocation;
-      #endif
-
-        // It wasn't big enough for `num_args`, so we free the data.
-        // But at least we can reuse the series node.
-
-        //assert(SER_BIAS(s) == 0);
-        Free_Unbiased_Series_Data(
-            s->content.dynamic.data,
-            SER_TOTAL(s)
-        );
-    }
-    else {
-        s = Alloc_Series_Node(
-            nullptr,  // not preallocated
-            SERIES_MASK_VARLIST
-                | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
-        );
-        SER_INFO(s) = SERIES_INFO_MASK_NONE;
-        INIT_LINK_KEYSOURCE(ARR(s), f);  // maps varlist back to f
-        mutable_MISC(VarlistMeta, s) = nullptr;
-        mutable_BONUS(Patches, s) = nullptr;
-        f->varlist = ARR(s);
-    }
+    assert(f->varlist == nullptr);
+    REBSER *s = Alloc_Series_Node(
+        nullptr,  // not preallocated
+        SERIES_MASK_VARLIST
+            | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
+    );
+    SER_INFO(s) = SERIES_INFO_MASK_NONE;
+    INIT_LINK_KEYSOURCE(ARR(s), f);  // maps varlist back to f
+    mutable_MISC(VarlistMeta, s) = nullptr;
+    mutable_BONUS(Patches, s) = nullptr;
+    f->varlist = ARR(s);
 
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end
         SET_SERIES_FLAG(s, INACCESSIBLE);
@@ -1306,8 +1282,6 @@ void Push_Action(
             | FLAG_KIND3Q_BYTE(REB_FRAME)
             | FLAG_HEART_BYTE(REB_FRAME);
     INIT_VAL_CONTEXT_VARLIST(f->rootvar, f->varlist);
-
-  sufficient_allocation:
 
     INIT_VAL_FRAME_PHASE(f->rootvar, act);  // FRM_PHASE()
     INIT_VAL_FRAME_BINDING(f->rootvar, binding);  // FRM_BINDING()

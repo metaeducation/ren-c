@@ -238,13 +238,6 @@ TVAR REBFRM *TG_Bottom_Frame;
 TVAR REBFED *TG_End_Feed;
 
 
-// When Drop_Frame() happens, it may have an allocated varlist REBARR that
-// can be reused by the next Push_Frame().  Reusing this has a significant
-// performance impact, as opposed to paying for freeing the memory when a
-// frame is dropped and then reallocating it when the next one is pushed.
-//
-TVAR REBARR *TG_Reuse;
-
 //-- Evaluation stack:
 TVAR REBARR *DS_Array;
 TVAR REBDSP DS_Index;

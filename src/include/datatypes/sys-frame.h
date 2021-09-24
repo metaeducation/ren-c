@@ -255,62 +255,6 @@ inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
 }
 
 
-//=//// VARLIST CONSERVATION //////////////////////////////////////////////=//
-//
-// If a varlist does not become managed over the course of its usage, it is
-// put into a list of reusable ones.  You can reuse the series node identity
-// (avoiding the call to Alloc_Series_Node()) and also possibly the data
-// (avoiding the call to Did_Series_Data_Alloc() and other initialization).
-//
-// This optimization is not necessarily trivial, because freeing even an
-// unmanaged series has cost...in particular with Decay_Series().  Removing
-// it and changing to just use `GC_Kill_Series()` degrades performance on
-// simple examples like `x: 0 repeat 1000000 [x: x + 1]` by at least 20%.
-// Broader studies might reveal better approaches--but point is, it does at
-// least do *something*.
-
-inline static bool Did_Reuse_Varlist_Of_Unknown_Size(
-    REBFRM *f,
-    REBLEN size_hint  // !!! Currently ignored, smaller sizes can come back
-){
-    // !!! At the moment, the reuse is not very intelligent and just picks the
-    // last one...which could commonly be wastefully big or too small.  But it
-    // is a proof of concept to show an axis for performance work.
-    //
-    UNUSED(size_hint);
-
-    assert(f->varlist == nullptr);
-
-    if (not TG_Reuse)
-        return false;
-
-    f->varlist = TG_Reuse;
-    TG_Reuse = LINK(ReuseNext, TG_Reuse);
-    f->rootvar = cast(REBVAL*, f->varlist->content.dynamic.data);
-    mutable_LINK(KeySource, f->varlist) = f;
-    assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
-    assert(SER_FLAVOR(f->varlist) == FLAVOR_VARLIST);
-    return true;
-}
-
-inline static void Conserve_Varlist(REBARR *varlist)
-{
-  #if !defined(NDEBUG)
-    assert(NOT_SERIES_FLAG(varlist, INACCESSIBLE));
-    assert(NOT_SERIES_FLAG(varlist, MANAGED));
-    assert(NOT_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED));
-
-    RELVAL *rootvar = ARR_HEAD(varlist);
-    assert(CTX_VARLIST(VAL_CONTEXT(rootvar)) == varlist);
-    INIT_VAL_FRAME_PHASE_OR_LABEL(rootvar, nullptr);  // can't trash
-    TRASH_POINTER_IF_DEBUG(mutable_BINDING(rootvar));
-  #endif
-
-    mutable_LINK(ReuseNext, varlist) = TG_Reuse;
-    TG_Reuse = varlist;
-}
-
-
 //=////////////////////////////////////////////////////////////////////////=//
 //
 //  DO's LOWEST-LEVEL EVALUATOR HOOKING
@@ -341,7 +285,7 @@ inline static void Free_Frame_Internal(REBFRM *f) {
         Free_Feed(f->feed);  // didn't inherit from parent, and not END_FRAME
 
     if (f->varlist and NOT_SERIES_FLAG(f->varlist, MANAGED))
-        Conserve_Varlist(f->varlist);
+        GC_Kill_Series(f->varlist);
     TRASH_POINTER_IF_DEBUG(f->varlist);
 
     assert(IS_POINTER_TRASH_DEBUG(f->alloc_value_list));
