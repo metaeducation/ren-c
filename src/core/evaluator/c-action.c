@@ -1260,9 +1260,9 @@ void Push_Action(
             | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
     );
     SER_INFO(s) = SERIES_INFO_MASK_NONE;
-    INIT_LINK_KEYSOURCE(ARR(s), f);  // maps varlist back to f
+    INIT_BONUS_KEYSOURCE(ARR(s), f);  // maps varlist back to f
     mutable_MISC(VarlistMeta, s) = nullptr;
-    mutable_BONUS(Patches, s) = nullptr;
+    mutable_LINK(Patches, s) = nullptr;
     f->varlist = ARR(s);
 
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end

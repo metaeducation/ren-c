@@ -196,7 +196,7 @@ static void Startup_Lib(void)
         Make_Array_Core_Into(
             patch,
             1,
-            FLAG_FLAVOR(PATCH)  // checked when setting LINK(PatchContext)
+            FLAG_FLAVOR(PATCH)  // checked when setting INODE(PatchContext)
             | PATCH_FLAG_LET
             | NODE_FLAG_MANAGED
             //
@@ -209,8 +209,9 @@ static void Startup_Lib(void)
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK
         );
 
-        mutable_LINK(PatchContext, patch) = nullptr;  // signals unused
-        mutable_INODE(NextPatch, patch) = nullptr;
+        mutable_INODE(PatchContext, patch) = nullptr;  // signals unused
+        mutable_LINK(NextPatch, patch) = nullptr;
+        mutable_MISC(Variant, patch) = nullptr;
         assert(Is_Fresh(ARR_SINGLE(patch)));  // REB_0
     }
 
@@ -257,7 +258,7 @@ static void Shutdown_Lib(void)
     for (REBLEN i = 1; i < LIB_SYMS_MAX; ++i) {
         REBARR *patch = &PG_Lib_Patches[i];
 
-        if (LINK(PatchContext, patch) == nullptr)
+        if (INODE(PatchContext, patch) == nullptr)
             continue;  // was never initialized !!! should it not be in lib?
 
         RESET(ARR_SINGLE(patch));
@@ -267,7 +268,7 @@ static void Shutdown_Lib(void)
         // this one is a global, it is set to nullptr just to indicate that
         // the freeing process happened.  Should all nodes be zeroed?
         //
-        mutable_LINK(PatchContext, patch) = nullptr;
+        mutable_INODE(PatchContext, patch) = nullptr;
         mutable_MISC(Variant, patch) = nullptr;
     }
 

@@ -413,7 +413,7 @@ inline static REBCTX *VAL_WORD_CONTEXT(const REBVAL *v) {
     assert(IS_WORD_BOUND(v));
     REBARR *binding = VAL_WORD_BINDING(v);
     if (SER_FLAVOR(binding) == FLAVOR_PATCH)
-        binding = CTX_VARLIST(LINK(PatchContext, binding));
+        binding = CTX_VARLIST(INODE(PatchContext, binding));
     assert(
         GET_SERIES_FLAG(binding, MANAGED) or
         FRM(BONUS(KeySource, binding))->key
@@ -506,7 +506,7 @@ inline static option(REBSER*) Get_Word_Container(
     //
     do {
         if (GET_SUBCLASS_FLAG(PATCH, specifier, LET)) {
-            if (LINK(PatchSymbol, specifier) == symbol) {
+            if (INODE(PatchSymbol, specifier) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return specifier;
             }
@@ -526,7 +526,7 @@ inline static option(REBSER*) Get_Word_Container(
         REBARR *overbind;  // avoid goto-past-initialization warning
         overbind = ARR(BINDING(ARR_SINGLE(specifier)));
         if (not IS_VARLIST(overbind)) {  // a patch-formed LET overload
-            if (LINK(PatchSymbol, overbind) == symbol) {
+            if (INODE(PatchSymbol, overbind) == symbol) {
                 *index_out = 1;
                 return overbind;
             }
@@ -609,7 +609,7 @@ inline static option(REBSER*) Get_Word_Container(
                 patch = SER(node_MISC(Hitch, patch));
 
             for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
-                if (LINK(PatchContext, patch) != binding)
+                if (INODE(PatchContext, patch) != binding)
                     continue;
 
                 // Since this is now resolving to the context, update the
@@ -655,7 +655,7 @@ inline static option(REBSER*) Get_Word_Container(
                 patch = SER(node_MISC(Hitch, patch));
 
             for (; patch != symbol; patch = SER(node_MISC(Hitch, patch))) {
-                if (LINK(PatchContext, patch) != Lib_Context)
+                if (INODE(PatchContext, patch) != Lib_Context)
                     continue;
 
                 // We return it, but don't cache it in the cell.  Note that
@@ -992,7 +992,7 @@ inline static REBNOD** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
     ){
         specifier = NextPatch(specifier);
     }
-    return &node_INODE(NextPatch, specifier);
+    return &node_LINK(NextPatch, specifier);
 }
 
 inline static option(REBCTX*) SPC_FRAME_CTX(REBSPC *specifier)

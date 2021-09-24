@@ -171,7 +171,7 @@ REBVAR *Append_Context(
             // were created as a continguous array of memory in Startup_Lib().
             //
             patch = &PG_Lib_Patches[id];
-            assert(LINK(PatchContext, patch) == nullptr);  // don't double add
+            assert(INODE(PatchContext, patch) == nullptr);  // don't double add
             // patch->leader.bits should be already set
         }
         else patch = Alloc_Singular(
@@ -181,7 +181,7 @@ REBVAR *Append_Context(
             // Note: The GC behavior of these patches is special and does not
             // fit into the usual patterns.  There is a pass in the GC
             // that propagates context survival into the patches from the
-            // global bind table.  Although we say LINK_NODE_NEEDS_MARK to
+            // global bind table.  Although we say INFO_NODE_NEEDS_MARK to
             // keep a context alive, that marking isn't done in that pass...
             // otherwise the variables could never GC.  Instead, it only
             // happens if the patch is cached in a variable...then that
@@ -197,7 +197,7 @@ REBVAR *Append_Context(
             // to something else...e.g. to forward references to a cache back
             // to the context in order to "delete" variables?
             //
-            | SERIES_FLAG_LINK_NODE_NEEDS_MARK  // mark context through cache
+            | SERIES_FLAG_INFO_NODE_NEEDS_MARK  // mark context through cache
 
             // Not technically a "LET" but this is checked by the binding
             // machinery at the moment as the only patch form you can use
@@ -223,7 +223,7 @@ REBVAR *Append_Context(
             updating = SER(node_MISC(Hitch, updating));
 
         node_MISC(Hitch, patch) = node_MISC(Hitch, updating);
-        mutable_LINK(PatchContext, patch) = context;
+        mutable_INODE(PatchContext, patch) = context;
         node_MISC(Hitch, updating) = patch;
 
         if (any_word) {  // bind word while we're at it

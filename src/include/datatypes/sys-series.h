@@ -242,8 +242,8 @@
 // markable node.  This "INODE" is accessed via macros in the same way as the
 // LINK() and MISC() macros (described in the section above):
 //
-//      REBPAT *patch = INODE(NextPatch, patch);  // reads info.node
-//      mutable_INODE(NextPatch, patch) = patch;
+//      REBPAT *patch = MISC(Variant, patch);  // reads info.node
+//      mutable_MISC(Variant, patch) = patch;
 //
 
 #if (! CPLUSPLUS_11)
