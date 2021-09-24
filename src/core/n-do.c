@@ -268,7 +268,7 @@ bool Do_Frame_Ctx_Throws(
     REBARR *varlist = CTX_VARLIST(c);
     f->varlist = varlist;
     f->rootvar = CTX_ROOTVAR(c);
-    INIT_LINK_KEYSOURCE(varlist, f);
+    INIT_BONUS_KEYSOURCE(varlist, f);
 
     assert(FRM_PHASE(f) == CTX_FRAME_ACTION(c));
     INIT_FRM_BINDING(f, binding);
@@ -851,7 +851,7 @@ REBNATIVE(applique)
 
     f->varlist = varlist;
     f->rootvar = CTX_ROOTVAR(exemplar);
-    INIT_LINK_KEYSOURCE(varlist, f);
+    INIT_BONUS_KEYSOURCE(varlist, f);
 
     INIT_FRM_PHASE(f, VAL_ACTION(action));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));
@@ -1078,7 +1078,7 @@ REBNATIVE(apply)
 
     f->varlist = varlist;
     f->rootvar = CTX_ROOTVAR(exemplar);
-    INIT_LINK_KEYSOURCE(varlist, f);
+    INIT_BONUS_KEYSOURCE(varlist, f);
 
     INIT_FRM_PHASE(f, VAL_ACTION(action));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(action));

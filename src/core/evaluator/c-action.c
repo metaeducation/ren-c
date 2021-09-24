@@ -1260,9 +1260,9 @@ void Push_Action(
             | SERIES_FLAG_FIXED_SIZE // FRAME!s don't expand ATM
     );
     SER_INFO(s) = SERIES_INFO_MASK_NONE;
-    INIT_LINK_KEYSOURCE(ARR(s), f);  // maps varlist back to f
+    INIT_BONUS_KEYSOURCE(ARR(s), f);  // maps varlist back to f
     mutable_MISC(VarlistMeta, s) = nullptr;
-    mutable_BONUS(Patches, s) = nullptr;
+    mutable_LINK(Patches, s) = nullptr;
     f->varlist = ARR(s);
 
     if (not Did_Series_Data_Alloc(s, num_args + 1 + 1)) {  // +rootvar, +end
@@ -1424,7 +1424,7 @@ void Drop_Action(REBFRM *f) {
 
     assert(
         GET_SERIES_FLAG(f->varlist, INACCESSIBLE)
-        or LINK(KeySource, f->varlist) == f
+        or BONUS(KeySource, f->varlist) == f
     );
 
     if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE)) {
@@ -1477,10 +1477,10 @@ void Drop_Action(REBFRM *f) {
             )
         );
         assert(NOT_SERIES_FLAG(f->varlist, MANAGED));
-        INIT_LINK_KEYSOURCE(f->varlist, f);
+        INIT_BONUS_KEYSOURCE(f->varlist, f);
       #endif
 
-        INIT_LINK_KEYSOURCE(f->varlist, ACT_KEYLIST(f->original));
+        INIT_BONUS_KEYSOURCE(f->varlist, ACT_KEYLIST(f->original));
         f->varlist = nullptr;
     }
     else {

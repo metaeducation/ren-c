@@ -144,7 +144,7 @@ inline static REBARR *Make_Patch_Core(
     //
     REBARR *patches;
     if (IS_VARLIST(binding))
-        patches = BONUS(Patches, binding);
+        patches = LINK(Patches, binding);
     else
         patches = MISC(Variant, binding);
 
@@ -260,7 +260,7 @@ inline static REBARR *Make_Patch_Core(
     // is only needed for context patches.
     //
     if (IS_VARLIST(binding))
-        mutable_BONUS(Patches, binding) = patch;
+        mutable_LINK(Patches, binding) = patch;
 
     // The LINK field is only used in LET patches for the symbol, so no
     // purpose found for the non-LET patches yet.

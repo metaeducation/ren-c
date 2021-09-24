@@ -70,7 +70,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
         assert(IS_SER_ARRAY(binding));
         if (IS_VARLIST(binding) and CTX_TYPE(CTX(binding)) == REB_FRAME) {
-            REBNOD *keysource = LINK(KeySource, ARR(binding));
+            REBNOD *keysource = BONUS(KeySource, ARR(binding));
             if (not Is_Node_Cell(keysource)) {
                 if (
                     (SER(keysource)->leader.bits & SERIES_MASK_KEYLIST)
@@ -536,7 +536,7 @@ void Assert_Array_Marked_Correctly(const REBARR *a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Context_Deep.
 
-        REBNOD *keysource = LINK(KeySource, a);
+        REBNOD *keysource = BONUS(KeySource, a);
         if (not keysource) {
             assert(VAL_TYPE(archetype) == REB_MODULE);
         }

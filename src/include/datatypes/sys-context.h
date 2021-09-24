@@ -107,7 +107,7 @@
     SERIES_FLAG_24
 
 
-// REBCTX* properties (note: shares LINK_KEYSOURCE() with REBACT*)
+// REBCTX* properties (note: shares BONUS_KEYSOURCE() with REBACT*)
 //
 // Note: MODULE! contexts depend on a property stored in the META field, which
 // is another object's-worth of data *about* the module's contents (e.g. the
@@ -115,9 +115,9 @@
 //
 #define CTX_META(c)     MISC(VarlistMeta, CTX_VARLIST(c))
 
-#define BONUS_Patches_TYPE      REBARR*
-#define BONUS_Patches_CAST      ARR
-#define HAS_BONUS_Patches       FLAVOR_VARLIST
+#define LINK_Patches_TYPE       REBARR*
+#define LINK_Patches_CAST       ARR
+#define HAS_LINK_Patches        FLAVOR_VARLIST
 
 
 // ANY-CONTEXT! value cell schematic
@@ -231,7 +231,7 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 // stack level.  This is sped up by swapping the REBFRM* into the LINK() of
 // the varlist until the frame is finished.  In this state, the paramlist of
 // the FRAME! action is consulted. When the action is finished, this is put
-// back in LINK_KEYSOURCE().
+// back in BONUS_KEYSOURCE().
 //
 // Note: Due to the sharing of keylists, features like whether a value in a
 // context is hidden or protected are accomplished using special bits on the
@@ -241,23 +241,23 @@ inline static void INIT_VAL_FRAME_ROOTVAR_Core(
 
 inline static REBSER *CTX_KEYLIST(REBCTX *c) {
     assert(CTX_TYPE(c) != REB_MODULE);
-    if (Is_Node_Cell(LINK(KeySource, CTX_VARLIST(c)))) {
+    if (Is_Node_Cell(BONUS(KeySource, CTX_VARLIST(c)))) {
         //
         // running frame, source is REBFRM*, so use action's paramlist.
         //
         return ACT_KEYLIST(CTX_FRAME_ACTION(c));
     }
-    return SER(LINK(KeySource, CTX_VARLIST(c)));  // not a REBFRM, use keylist
+    return SER(BONUS(KeySource, CTX_VARLIST(c)));  // not a REBFRM, use keylist
 }
 
 static inline void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBSER *keylist) {
     SET_SUBCLASS_FLAG(KEYLIST, keylist, SHARED);
-    INIT_LINK_KEYSOURCE(CTX_VARLIST(c), keylist);
+    INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
 static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBSER *keylist) {
     assert(NOT_SUBCLASS_FLAG(KEYLIST, keylist, SHARED));
-    INIT_LINK_KEYSOURCE(CTX_VARLIST(c), keylist);
+    INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
 
@@ -369,11 +369,11 @@ inline static REBVAR *CTX_VARS(const REBVAR ** tail, REBCTX *c) {
 
 inline static bool Is_Frame_On_Stack(REBCTX *c) {
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
-    return Is_Node_Cell(LINK(KeySource, CTX_VARLIST(c)));
+    return Is_Node_Cell(BONUS(KeySource, CTX_VARLIST(c)));
 }
 
 inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
-    REBNOD *keysource = LINK(KeySource, CTX_VARLIST(c));
+    REBNOD *keysource = BONUS(KeySource, CTX_VARLIST(c));
     if (not Is_Node_Cell(keysource))
         return nullptr; // e.g. came from MAKE FRAME! or Encloser_Dispatcher
 
@@ -723,14 +723,14 @@ inline static REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
             | SERIES_FLAG_FIXED_SIZE
     );
     SER_INFO(copy) = SERIES_INFO_MASK_NONE;
-    TRASH_POINTER_IF_DEBUG(node_LINK(KeySource, copy)); // needs update
+    TRASH_POINTER_IF_DEBUG(node_BONUS(KeySource, copy)); // needs update
     memcpy(  // https://stackoverflow.com/q/57721104/
         cast(char*, &copy->content),
         cast(char*, &stub->content),
         sizeof(union Reb_Series_Content)
     );
     mutable_MISC(VarlistMeta, copy) = nullptr;  // let stub have the meta
-    mutable_BONUS(Patches, copy) = nullptr;  // don't carry forward patches
+    mutable_LINK(Patches, copy) = nullptr;  // don't carry forward patches
 
     REBVAL *rootvar = cast(REBVAL*, copy->content.dynamic.data);
 
@@ -762,7 +762,7 @@ inline static REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
     // Disassociate the stub from the frame, by degrading the link field
     // to a keylist.  !!! Review why this was needed, vs just nullptr
     //
-    INIT_LINK_KEYSOURCE(ARR(stub), keysource);
+    INIT_BONUS_KEYSOURCE(ARR(stub), keysource);
 
     CLEAR_SERIES_FLAG(stub, DYNAMIC);  // mark stub as no longer dynamic
 

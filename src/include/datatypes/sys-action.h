@@ -87,7 +87,7 @@
 // that the keylist can be changed without needing to update all the
 // REBVALs for that object.
 //
-// It may be a simple REBARR* -or- in the case of the varlist of a running
+// It may be a simple REBSER* -or- in the case of the varlist of a running
 // FRAME! on the stack, it points to a REBFRM*.  If it's a FRAME! that
 // is not running on the stack, it will be the function paramlist of the
 // actual phase that function is for.  Since REBFRM* all start with a
@@ -107,14 +107,14 @@
 // not run afoul of C's rules, by which you cannot assign one member of
 // a union and then read from another.
 //
-#define LINK_KeySource_TYPE         REBNOD*
-#define LINK_KeySource_CAST         // none, just use node (NOD() complains)
-#define HAS_LINK_KeySource          FLAVOR_VARLIST
+#define BONUS_KeySource_TYPE        REBNOD*
+#define BONUS_KeySource_CAST        // none, just use node (NOD() complains)
+#define HAS_BONUS_KeySource         FLAVOR_VARLIST
 
-inline static void INIT_LINK_KEYSOURCE(REBARR *varlist, REBNOD *keysource) {
+inline static void INIT_BONUS_KEYSOURCE(REBARR *varlist, REBNOD *keysource) {
     if (keysource != nullptr and not Is_Node_Cell(keysource))
         assert(IS_KEYLIST(SER(keysource)));
-    mutable_LINK(KeySource, varlist) = keysource;
+    mutable_BONUS(KeySource, varlist) = keysource;
 }
 
 
@@ -262,7 +262,7 @@ inline static option(REBARR*) ACT_PARTIALS(REBACT *a) {
 // and also forward declared.
 //
 #define ACT_KEYLIST(a) \
-    SER(LINK(KeySource, ACT_EXEMPLAR(a)))
+    SER(BONUS(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
     SER_HEAD(const REBKEY, ACT_KEYLIST(a))

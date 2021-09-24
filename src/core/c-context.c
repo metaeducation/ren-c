@@ -48,7 +48,7 @@ REBCTX *Alloc_Context_Core(enum Reb_Kind kind, REBLEN capacity, REBFLGS flags)
             | flags  // e.g. NODE_FLAG_MANAGED
     );
     mutable_MISC(VarlistMeta, varlist) = nullptr;
-    mutable_BONUS(Patches, varlist) = nullptr;
+    mutable_LINK(Patches, varlist) = nullptr;
     INIT_CTX_KEYLIST_UNIQUE(CTX(varlist), keylist);  // starts out unique
 
     RELVAL *rootvar = Alloc_Tail_Array(varlist);
@@ -641,7 +641,7 @@ REBCTX *Make_Context_Detect_Managed(
     );
     SET_SERIES_LEN(varlist, 1 + len);
     mutable_MISC(VarlistMeta, varlist) = nullptr;
-    mutable_BONUS(Patches, varlist) = nullptr;  // start w/no virtual binds
+    mutable_LINK(Patches, varlist) = nullptr;  // start w/no virtual binds
 
     REBCTX *context = CTX(varlist);
 

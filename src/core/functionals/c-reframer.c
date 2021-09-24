@@ -211,7 +211,7 @@ bool Make_Invokable_From_Feed_Throws(
     REBACT *act = VAL_ACTION(action);
     assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));
 
-    INIT_LINK_KEYSOURCE(varlist, ACT_KEYLIST(act));
+    INIT_BONUS_KEYSOURCE(varlist, ACT_KEYLIST(act));
 
     // May not be at end or thrown, e.g. (x: does+ just y x = 'y)
     //

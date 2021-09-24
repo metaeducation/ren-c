@@ -799,8 +799,8 @@ REBCTX *Copy_Context_Extra_Managed(
         else {
             mutable_MISC(VarlistMeta, varlist) = nullptr;
         }
-        INIT_LINK_KEYSOURCE(varlist, nullptr);
-        mutable_BONUS(Patches, varlist) = nullptr;
+        INIT_BONUS_KEYSOURCE(varlist, nullptr);
+        mutable_LINK(Patches, varlist) = nullptr;
 
         REBCTX *copy = CTX(varlist); // now a well-formed context
         assert(GET_SERIES_FLAG(varlist, DYNAMIC));
@@ -883,7 +883,7 @@ REBCTX *Copy_Context_Extra_Managed(
         mutable_MISC(VarlistMeta, varlist) = nullptr;
     }
 
-    mutable_BONUS(Patches, varlist) = nullptr;  // no virtual bind patches yet
+    mutable_LINK(Patches, varlist) = nullptr;  // no virtual bind patches yet
 
     return copy;
 }
