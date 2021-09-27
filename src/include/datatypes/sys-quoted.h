@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2018 Ren-C Open Source Contributors
+// Copyright 2018-2021 Ren-C Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information
@@ -19,22 +19,21 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// In Ren-C, any value can be "quote" escaped, any number of times.  The
-// general case for adding information that it is escaped--as well as the
-// amount it is escaped by--can't fit in a cell.  So a "pairing" array is used
-// (a compact form with only a series tracking node, sizeof(REBVAL)*2).  This
-// is the smallest size of a GC'able entity--the same size as a singular
-// array, but a pairing is used so the GC picks up from a cell pointer that
-// it is a pairing and be placed as a REBVAL* in the cell.
+// In Ren-C, any value can be "quote" escaped.  The depth is the number of
+// apostrophes, e.g. ''''X is a depth of 4.  The operator QUOTE can be used
+// to add a quoting level to a value, UNQUOTE to remove one, and NOQUOTE to
+// remove all quotes.
 //
-// The depth is the number of apostrophes, e.g. ''''X is a depth of 4.  It is
-// stored in the cell payload and not pairing node, so that when you add or
-// remove quote levels to the same value a new node isn't required...the cell
-// just has a different count.
+//     >> quote [a]
+//     == '[a]
 //
-// HOWEVER... there is an efficiency trick, which uses the KIND3Q_BYTE() div 4
-// as the "quote level" of a value.  Then the byte mod 4 becomes the actual
-// type.  So only an actual REB_QUOTED at "apparent quote-level 0" has its own
+//     >> noquote first ['''''a]
+//     == a
+//
+// As an efficiency trick, up to 3 quoting levels can be represented in a
+// cell without a separate allocation.  The KIND3Q_BYTE() div 4 is the "quote
+// level" of a value.  Then the byte mod 4 becomes the actual type.  This
+// means only an actual REB_QUOTED at "apparent quote-level 0" has its own
 // payload...as a last resort if the level exceeded what the type byte can
 // encode.
 //
@@ -44,16 +43,34 @@
 // as they do not need to worry about the aliasing and can just test the byte
 // against the unquoted REB_WORD value they are interested in.
 //
-// Binding is handled specially to mix the binding information into the
-// QUOTED! cell instead of the cells that are being escaped.  This is because
-// when there is a high level of quoting and the escaped cell is shared at
-// a number of different places, those places may have different bindings.
-// To pull this off, the escaped cell stores only *cached* binding information
-// for virtual binding...leaving all primary binding in the quoted cell.
+// At 4 or more quotes, a "pairing" array is used (a compact form with only a
+// series tracking node, sizeof(REBVAL)*2).  This is the smallest size of a
+// GC'able entity--the same size as a singular array, but a pairing is used so
+// the GC picks up from a cell pointer that it is a pairing and be placed as a
+// REBVAL* in the cell.  These payloads can be shared between higher-level
+// quoted instances.
 //
-// Consequently, the quoting level is slipped into the virtual binding index
-// location of the word.
+//=//// NOTES //////////////////////////////////////////////////////////////=//
 //
+// * Quoting levels are limited to about 192.  That might seem strange, since
+//   once you've paid for an allocation there seem to be two free slots in a
+//   REB_QUOTED to use...which could even be used for a 64-bit quoting level
+//   on 32-bit platforms.  *HOWEVER* it turns out there is significant value
+//   in leaving this space free so that when instances share the allocation
+//   they can still bind their cells distinctly...it avoids needing to copy
+//   the allocation at each instance.
+//
+//   (Having to pay for a series node allocation to get less than 8-bits
+//   seems pretty rough; but when you run out of bits, you run out.  64-bit
+//   builds could apply an extra byte in the header for a quoting level.)
+//
+// * There's a possibility for "churn" where something on the brink of needing
+//   an allocation gets repeatedly quoted and unquoted.  Each time it drops
+//   a quote level it forgets its allocation, thus not able to share it if
+//   it gets quoted again.  This suggests it might be better not to immediately
+//   collapse the quotes to the non-allocated form at 0-3 levels, but rather
+//   to wait and let the GC canonize it once any churn is likely to have
+//   settled down.
 
 
 //=//// WORD DEFINITION CODE //////////////////////////////////////////////=//
@@ -65,19 +82,13 @@
 
 inline static void Unbind_Any_Word(RELVAL *v);  // forward define
 
-#define VAL_WORD_PRIMARY_INDEX_UNCHECKED(v) \
-    (VAL_WORD_INDEXES_U32(v) & 0x000FFFFF)
 
-#define VAL_WORD_VIRTUAL_MONDEX_UNCHECKED(v) \
-    ((VAL_WORD_INDEXES_U32(v) & 0xFFF00000) >> 20)
-
-
+#define MAX_QUOTE_DEPTH (255 - REB_QUOTED)
 
 inline static REBLEN VAL_QUOTED_PAYLOAD_DEPTH(const RELVAL *v) {
     assert(IS_QUOTED(v));
-    REBLEN depth = VAL_WORD_VIRTUAL_MONDEX_UNCHECKED(v);
-    assert(depth > 3);  // else quote fits entirely in cell
-    return depth;
+    assert(HEART_BYTE(v) >= REB_QUOTED);
+    return HEART_BYTE(v) - REB_QUOTED;
 }
 
 inline static REBVAL* VAL_QUOTED_PAYLOAD_CELL(const RELVAL *v) {
@@ -108,8 +119,8 @@ inline static RELVAL *Quotify_Core(
         return v;
 
     if (KIND3Q_BYTE_UNCHECKED(v) == REB_QUOTED) {  // reuse payload
-        assert(VAL_QUOTED_PAYLOAD_DEPTH(v) + depth <= MONDEX_MOD);  // limited
-        VAL_WORD_INDEXES_U32(v) += (depth << 20);
+        assert(VAL_QUOTED_PAYLOAD_DEPTH(v) + depth <= MAX_QUOTE_DEPTH);
+        mutable_HEART_BYTE(v) += depth;
         return v;
     }
 
@@ -148,15 +159,14 @@ inline static RELVAL *Quotify_Core(
 
         Reset_Cell_Header_Untracked(v, REB_QUOTED, CELL_FLAG_FIRST_IS_NODE);
         INIT_VAL_NODE1(v, unquoted);
-        VAL_WORD_INDEXES_U32(v) = depth << 20;  // see VAL_QUOTED_DEPTH()
+        mutable_HEART_BYTE(v) = REB_QUOTED + depth;
 
         if (ANY_WORD_KIND(CELL_HEART(cast(REBCEL(const*), unquoted)))) {
             //
             // The shared word is put in an unbound state, since each quoted
             // instance can be bound differently.
             //
-            VAL_WORD_INDEXES_U32(v) |=
-                VAL_WORD_PRIMARY_INDEX_UNCHECKED(unquoted);
+            VAL_WORD_INDEX_U32(v) = VAL_WORD_INDEX_U32(unquoted);
             unquoted->extra = v->extra;  // !!! for easier Unbind, review
             Unbind_Any_Word(unquoted);  // so that binding is a spelling
             // leave `v` binding as it was
@@ -226,10 +236,9 @@ inline static void Collapse_Quoted_Internal(RELVAL *v)
         // information in the escaped form.
         //
         INIT_VAL_WORD_SYMBOL(v, VAL_WORD_SYMBOL(unquoted));
+        mutable_HEART_BYTE(v) = HEART_BYTE(unquoted);
         // Note: leave binding as is...
-        VAL_WORD_INDEXES_U32(v) &= 0x000FFFFF;  // wipe out quote depth
-        VAL_WORD_INDEXES_U32(v) |=
-            (VAL_WORD_INDEXES_U32(unquoted) & 0xFFF00000);
+        VAL_WORD_INDEX_U32(v) = VAL_WORD_INDEX_U32(unquoted);
     }
     else {
         v->payload = unquoted->payload;
@@ -256,7 +265,7 @@ inline static RELVAL *Unquotify_Core(RELVAL *v, REBLEN unquotes) {
     depth -= unquotes;
 
     if (depth > 3) // still can't do in-situ escaping within a single cell
-        VAL_WORD_INDEXES_U32(v) -= (unquotes << 20);
+        mutable_HEART_BYTE(v) -= unquotes;
     else {
         Collapse_Quoted_Internal(v);
         mutable_KIND3Q_BYTE(v) += (REB_64 * depth);

@@ -254,7 +254,7 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
             if (found) {
                 Init_Any_Word(DS_PUSH(), REB_WORD, *psym);
                 mutable_BINDING(DS_TOP) = found;
-                INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, INDEX_ATTACHED);
+                INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
             }
         }
 
@@ -713,7 +713,7 @@ REB_R PD_Context(
         // and it will be discarded.
         //
         INIT_VAL_WORD_BINDING(m_cast(RELVAL*, picker), c);
-        INIT_VAL_WORD_PRIMARY_INDEX(m_cast(RELVAL*, picker), n);
+        INIT_VAL_WORD_INDEX(m_cast(RELVAL*, picker), n);
     }
 
     return Copy_Cell(pvs->out, var);

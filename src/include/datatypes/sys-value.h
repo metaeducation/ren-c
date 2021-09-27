@@ -626,8 +626,6 @@ inline static const REBSYM *VAL_WORD_SYMBOL(REBCEL(const*) cell) {
     return SYM(VAL_NODE1(cell));
 }
 
-#define MONDEX_MOD 4095  // modulus for the cached index modulus ("mondex")
-
 #define INDEX_PATCHED 1  // Make it easier to find patch (LET) index settings
 
 // In order to signal that something is bound a module, we use the largest
@@ -636,7 +634,7 @@ inline static const REBSYM *VAL_WORD_SYMBOL(REBCEL(const*) cell) {
 //
 #define INDEX_ATTACHED ((1 << 20) - 1)
 
-#define VAL_WORD_INDEXES_U32(v)         PAYLOAD(Any, (v)).second.u32
+#define VAL_WORD_INDEX_U32(v)         PAYLOAD(Any, (v)).second.u32
 
 
 inline static void Copy_Cell_Header(

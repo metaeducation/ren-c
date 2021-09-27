@@ -47,7 +47,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 {
     if (KIND3Q_BYTE_UNCHECKED(v) == REB_QUOTED) {
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        assert(HEART_BYTE(v) == REB_QUOTED);
+        assert(HEART_BYTE(v) >= REB_QUOTED);
         assert(Is_Marked(VAL_NODE1(v)));
         assert(VAL_QUOTED_DEPTH(v) >= 3);
         REBCEL(const*) cell = VAL_UNESCAPED(v);
@@ -364,7 +364,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         //
         assert(NOT_SERIES_FLAG(MISC(Hitch, spelling), BLACK));
 
-        REBLEN index = VAL_WORD_PRIMARY_INDEX_UNCHECKED(v);
+        REBLEN index = VAL_WORD_INDEX_U32(v);
         if (IS_WORD_BOUND(v)) {
             if (IS_VARLIST(BINDING(v))) {
                 if (CTX_TYPE(CTX(BINDING(v))) == REB_MODULE)
@@ -378,7 +378,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
                 assert(index != 0);
         }
         else
-            assert(VAL_WORD_PRIMARY_INDEX_UNCHECKED(v) == 0);
+            assert(VAL_WORD_INDEX_U32(v) == 0);
         break; }
 
       case REB_ACTION: {

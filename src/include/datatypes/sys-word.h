@@ -36,21 +36,9 @@ inline static OPT_SYMID VAL_WORD_ID(REBCEL(const*) v) {
     return ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
 }
 
-inline static void INIT_VAL_WORD_PRIMARY_INDEX(RELVAL *v, REBLEN i) {
+inline static void INIT_VAL_WORD_INDEX(RELVAL *v, REBLEN i) {
     assert(ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(v))));
-    assert(i < 1048576);  // 20 bit number for physical indices
-    VAL_WORD_INDEXES_U32(v) &= 0xFFF00000;
-    VAL_WORD_INDEXES_U32(v) |= i;
-}
-
-inline static void INIT_VAL_WORD_VIRTUAL_MONDEX(
-    const RELVAL *v,  // mutation allowed on cached property
-    REBLEN mondex  // index mod 4095 (hence invented name "mondex")
-){
-    assert(ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(v))));
-    assert(mondex <= MONDEX_MOD);  // 12 bit number for virtual indices
-    VAL_WORD_INDEXES_U32(m_cast(RELVAL*, v)) &= 0x000FFFFF;
-    VAL_WORD_INDEXES_U32(m_cast(RELVAL*, v)) |= mondex << 20;
+    VAL_WORD_INDEX_U32(v) = i;
 }
 
 inline static REBVAL *Init_Any_Word_Untracked(
@@ -59,7 +47,7 @@ inline static REBVAL *Init_Any_Word_Untracked(
     const REBSYM *sym
 ){
     Reset_Cell_Header_Untracked(out, kind, CELL_FLAG_FIRST_IS_NODE);
-    VAL_WORD_INDEXES_U32(out) = 0;
+    VAL_WORD_INDEX_U32(out) = 0;
     mutable_BINDING(out) = nullptr;
     INIT_VAL_WORD_SYMBOL(out, sym);
 
@@ -83,7 +71,7 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
 ){
     Reset_Cell_Header_Untracked(out, type, CELL_FLAG_FIRST_IS_NODE);
     mutable_BINDING(out) = binding;
-    VAL_WORD_INDEXES_U32(out) = index;
+    VAL_WORD_INDEX_U32(out) = index;
     INIT_VAL_WORD_SYMBOL(out, symbol);
 
     if (IS_VARLIST(binding)) {

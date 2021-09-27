@@ -247,7 +247,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
                 REBLEN offset = f->arg - FRM_ARGS_HEAD(f);
                 INIT_VAL_WORD_BINDING(ordered, f->varlist);
-                INIT_VAL_WORD_PRIMARY_INDEX(ordered, offset + 1);
+                INIT_VAL_WORD_INDEX(ordered, offset + 1);
 
                 if (Is_Typeset_Empty(f->param)) {
                     //

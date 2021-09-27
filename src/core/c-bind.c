@@ -63,7 +63,7 @@ void Bind_Values_Inner_Loop(
             REBVAL *lookup = MOD_VAR(context, symbol, strict);
             if (lookup) {
                 INIT_VAL_WORD_BINDING(v, Singular_From_Cell(lookup));
-                INIT_VAL_WORD_PRIMARY_INDEX(v, 1);
+                INIT_VAL_WORD_INDEX(v, 1);
             }
             else if (type_bit & add_midstream_types) {
                 Init_Unset(Append_Context(context, v, nullptr));
@@ -84,7 +84,7 @@ void Bind_Values_Inner_Loop(
                 // been relative.
 
                 INIT_VAL_WORD_BINDING(v, context);
-                INIT_VAL_WORD_PRIMARY_INDEX(v, n);
+                INIT_VAL_WORD_INDEX(v, n);
             }
             else if (type_bit & add_midstream_types) {
                 //
@@ -227,7 +227,7 @@ REBLEN Try_Bind_Word(const RELVAL *context, REBVAL *word)
     );
     if (n != 0) {
         INIT_VAL_WORD_BINDING(word, VAL_CONTEXT(context));
-        INIT_VAL_WORD_PRIMARY_INDEX(word, n);  // ^-- may have been relative
+        INIT_VAL_WORD_INDEX(word, n);  // ^-- may have been relative
     }
     return n;
 }
@@ -558,7 +558,7 @@ REBNATIVE(add_let_binding) {
 
     Move_Cell(D_OUT, ARG(word));
     INIT_VAL_WORD_BINDING(D_OUT, patch);
-    INIT_VAL_WORD_PRIMARY_INDEX(D_OUT, 1);
+    INIT_VAL_WORD_INDEX(D_OUT, 1);
 
     return D_OUT;
 }
@@ -724,7 +724,7 @@ static void Clonify_And_Bind_Relative(
             // action bound to can be "incomplete" (LETs still gathering)
             //
             INIT_VAL_WORD_BINDING(v, relative);
-            INIT_VAL_WORD_PRIMARY_INDEX(v, n);
+            INIT_VAL_WORD_INDEX(v, n);
         }
     }
     else if (ANY_ARRAY_KIND(heart)) {
@@ -853,7 +853,7 @@ void Rebind_Values_Deep(
             INIT_VAL_WORD_BINDING(v, to);
 
             if (binder) {
-                INIT_VAL_WORD_PRIMARY_INDEX(
+                INIT_VAL_WORD_INDEX(
                     v,
                     Get_Binder_Index_Else_0(
                         unwrap(binder),
@@ -1224,7 +1224,7 @@ void Bind_Nonspecifically(RELVAL *head, const RELVAL *tail, REBCTX *context)
             // Give context but no index; this is how we attach to modules.
             //
             mutable_BINDING(v) = context;
-            INIT_VAL_WORD_PRIMARY_INDEX(v, INDEX_ATTACHED);  // may be quoted
+            INIT_VAL_WORD_INDEX(v, INDEX_ATTACHED);  // may be quoted
         }
     }
 }

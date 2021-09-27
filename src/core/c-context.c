@@ -228,7 +228,7 @@ REBVAR *Append_Context(
 
         if (any_word) {  // bind word while we're at it
             INIT_VAL_WORD_BINDING(unwrap(any_word), patch);
-            INIT_VAL_WORD_PRIMARY_INDEX(unwrap(any_word), INDEX_ATTACHED);
+            INIT_VAL_WORD_INDEX(unwrap(any_word), INDEX_ATTACHED);
         }
 
         return cast(REBVAR*, ARR_SINGLE(patch));
@@ -267,7 +267,7 @@ REBVAR *Append_Context(
 
         REBLEN len = CTX_LEN(context);  // length we just bumped
         INIT_VAL_WORD_BINDING(unwrap(any_word), context);
-        INIT_VAL_WORD_PRIMARY_INDEX(unwrap(any_word), len);
+        INIT_VAL_WORD_INDEX(unwrap(any_word), len);
     }
 
     return cast(REBVAR*, value);  // location we just added (void cell)

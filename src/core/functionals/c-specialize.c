@@ -169,7 +169,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 
             assert(not IS_WORD_BOUND(ordered));  // we bind only one
             INIT_VAL_WORD_BINDING(ordered, varlist);
-            INIT_VAL_WORD_PRIMARY_INDEX(ordered, index);
+            INIT_VAL_WORD_INDEX(ordered, index);
 
             if (not Is_Typeset_Empty(param))  // needs argument
                 goto continue_unspecialized;

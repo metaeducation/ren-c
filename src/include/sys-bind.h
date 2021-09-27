@@ -350,7 +350,7 @@ inline static bool IS_WORD_UNBOUND(const RELVAL *v) {
 
 inline static REBLEN VAL_WORD_INDEX(const RELVAL *v) {
     assert(IS_WORD_BOUND(v));
-    uint32_t i = VAL_WORD_PRIMARY_INDEX_UNCHECKED(v);
+    uint32_t i = VAL_WORD_INDEX_U32(v);
     assert(i > 0);
     return cast(REBLEN, i);
 }
@@ -408,7 +408,7 @@ inline static REBVAL* Unrelativize(RELVAL* out, const RELVAL* v) {
     Unrelativize(Alloc_Value(), (v))
 
 inline static void Unbind_Any_Word(RELVAL *v) {
-    INIT_VAL_WORD_PRIMARY_INDEX(v, 0);
+    INIT_VAL_WORD_INDEX(v, 0);
     INIT_VAL_WORD_BINDING(v, nullptr);
 }
 
@@ -566,11 +566,6 @@ inline static option(REBSER*) Get_Word_Container(
             if (GET_CELL_FLAG(CTX_VAR(overload, index), BIND_NOTE_REUSE))
                 break;
 
-            // Found a match!  Cache it to speed up next time.  Note that
-            // since specifier chains change frames for relativization,
-            // we have to store the head of the chain.  Review.
-            //
-            INIT_VAL_WORD_VIRTUAL_MONDEX(any_word, index % MONDEX_MOD);
             *index_out = index;
             return CTX_VARLIST(overload);
         }
@@ -580,10 +575,6 @@ inline static option(REBSER*) Get_Word_Container(
     } while (
         specifier and not IS_VARLIST(specifier)
     );
-
-    // Update the cache to say we miss on this particular specifier
-    //
-    INIT_VAL_WORD_VIRTUAL_MONDEX(any_word, MONDEX_MOD);
 
     // The linked list of specifiers bottoms out with either null or the
     // varlist of the frame we want to bind relative values with.  So
@@ -631,7 +622,7 @@ inline static option(REBSER*) Get_Word_Container(
                 // into existence in the actual context.
                 //
                 INIT_VAL_WORD_BINDING(m_cast(RELVAL*, any_word), patch);
-                INIT_VAL_WORD_PRIMARY_INDEX(m_cast(RELVAL*, any_word), 1);
+                INIT_VAL_WORD_INDEX(m_cast(RELVAL*, any_word), 1);
 
                 *index_out = 1;
                 return patch;
@@ -920,18 +911,9 @@ inline static REBVAL *Derelativize_Untracked(
         }
         else {
             INIT_BINDING_MAY_MANAGE(out, s);
-            INIT_VAL_WORD_PRIMARY_INDEX(out, index);
+            INIT_VAL_WORD_INDEX(out, index);
         }
 
-        // When we resolve a word specifically, we clear out the specifier
-        // cache.  The same virtual specifier is unlikely to be used with it
-        // again (as any new series are pulled out of the "wave" of binding).
-        //
-        // We don't want to do this with REB_QUOTED since the cache is shared.
-        //
-        if (KIND3Q_BYTE_UNCHECKED(v) != REB_QUOTED) {
-            INIT_VAL_WORD_VIRTUAL_MONDEX(out, MONDEX_MOD);  // necessary?
-        }
         return cast(REBVAL*, out);
     }
     else if (ANY_ARRAY_KIND(heart)) {

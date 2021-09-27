@@ -161,7 +161,7 @@ inline static REBARR *Make_Patch_Core(
             if (
                 NextPatch(variant) == next
                 and BINDING(ARR_SINGLE(variant)) == binding and
-                VAL_WORD_PRIMARY_INDEX_UNCHECKED(ARR_SINGLE(variant)) == limit
+                VAL_WORD_INDEX_U32(ARR_SINGLE(variant)) == limit
             ){
                 // The reused flag isn't initially set, but becomes set on
                 // the first reuse (and hence every reuse after).  This is

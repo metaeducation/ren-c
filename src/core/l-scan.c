@@ -2422,7 +2422,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     //
     if (ss->context and (ANY_WORD(DS_TOP) or IS_SYMBOL(DS_TOP))) {
         INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
-        INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, INDEX_ATTACHED);
+        INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
     }
 
   lookahead:
@@ -2573,7 +2573,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         if (ss->context) {
             if (ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(DS_TOP)))) {
                 INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
-                INIT_VAL_WORD_PRIMARY_INDEX(DS_TOP, INDEX_ATTACHED);
+                INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
             }
         }
 
