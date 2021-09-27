@@ -589,11 +589,6 @@ inline static REBVAL *Sink_Word_May_Fail(
 // a mechanic between both...TBD.
 //
 
-inline static REBSPC *Derive_Specifier(
-    REBSPC *parent,
-    const RELVAL* any_array
-);
-
 #if CPLUSPLUS_11
     inline static REBSPC *Derive_Specifier(
         REBSPC *parent,
@@ -637,74 +632,6 @@ inline static REBSPC *Derive_Specifier(
 // But as a first step, this function locates all the places in the code that
 // would need such derivation.
 //
-
-// A specifier can be a FRAME! context for fulfilling relative words.  Or it
-// may be a chain of virtual binds where the last link in the chain is to
-// a frame context.
-//
-// It's Derive_Specifier()'s job to make sure that if specifiers get linked on
-// top of each other, the chain always bottoms out on the same FRAME! that
-// the original specifier was pointing to.
-//
-inline static REBNOD** SPC_FRAME_CTX_ADDRESS(REBSPC *specifier)
-{
-    assert(IS_PATCH(specifier));
-    while (
-        NextPatch(specifier) != nullptr
-        and not IS_VARLIST(NextPatch(specifier))
-    ){
-        specifier = NextPatch(specifier);
-    }
-    return &node_LINK(NextPatch, specifier);
-}
-
-inline static option(REBCTX*) SPC_FRAME_CTX(REBSPC *specifier)
-{
-    if (specifier == UNBOUND)  // !!! have caller check?
-        return nullptr;
-    if (IS_VARLIST(specifier))
-        return CTX(specifier);
-    return CTX(*SPC_FRAME_CTX_ADDRESS(specifier));
-}
-
-
-#if (! DEBUG_VIRTUAL_BINDING)
-    inline static REBSPC *Derive_Specifier(
-        REBSPC *specifier,
-        const RELVAL* any_array
-    ){
-        return Derive_Specifier_Core(specifier, any_array);
-    }
-#else
-    inline static REBSPC *Derive_Specifier(
-        REBSPC *specifier,
-        const RELVAL* any_array
-    ){
-        REBSPC *derived = Derive_Specifier_Core(specifier, any_array);
-        REBARR *old = ARR(BINDING(any_array));
-        if (old == UNSPECIFIED or IS_VARLIST(old)) {
-            // no special invariant to check, anything goes for derived
-        }
-        else if (IS_DETAILS(old)) {  // relative
-            REBCTX *derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
-            REBCTX *specifier_ctx = try_unwrap(SPC_FRAME_CTX(specifier));
-            assert(derived_ctx == specifier_ctx);
-        }
-        else {
-            assert(IS_PATCH(old));
-
-            REBCTX *binding_ctx = try_unwrap(SPC_FRAME_CTX(old));
-            if (binding_ctx == UNSPECIFIED) {
-                // anything goes for the frame in the derived specifier
-            }
-            else {
-                REBCTX *derived_ctx = try_unwrap(SPC_FRAME_CTX(derived));
-                assert(derived_ctx == binding_ctx);
-            }
-        }
-        return derived;
-    }
-#endif
 
 
 //

@@ -445,83 +445,8 @@ option(REBSER*) Get_Word_Container(
 }
 
 
-// This routine will merge virtual binding patches, returning one where the
-// child is at the beginning of the chain.  This will preserve the child's
-// frame resolving context (if any) that terminates it.
 //
-// If the returned chain manages to reuse an existing case, then the result
-// will have ARRAY_FLAG_PATCH_REUSED set.  This can inform higher levels of
-// whether it's worth searching their patchlist or not...as newly created
-// patches can't appear in their prior create list.
-//
-inline static REBARR *Merge_Patches_May_Reuse(
-    REBARR *parent,
-    REBARR *child
-){
-    assert(IS_PATCH(parent));
-    assert(IS_PATCH(child));
-
-    // Case of already incorporating.  Came up with:
-    //
-    //    1 then x -> [2 also y -> [3]]
-    //
-    // A virtual link for Y is added on top of the virtual link for X that
-    // resides on the [3] block.  But then feed generation for [3] tries to
-    // apply the Y virtual link again.  !!! Review if that's just inefficient.
-    //
-    if (NextPatch(parent) == child) {
-        SET_SUBCLASS_FLAG(PATCH, parent, REUSED);
-        return parent;
-    }
-
-    // If we get to the end of the merge chain and don't find the child, then
-    // we're going to need a patch that incorporates it.
-    //
-    REBARR *next;
-    bool was_next_reused;
-    if (NextPatch(parent) == nullptr or IS_VARLIST(NextPatch(parent))) {
-        next = child;
-        was_next_reused = true;
-    }
-    else {
-        next = Merge_Patches_May_Reuse(NextPatch(parent), child);
-        was_next_reused = GET_SUBCLASS_FLAG(PATCH, next, REUSED);
-    }
-
-    // If we have to make a new patch due to non-reuse, then we cannot make
-    // one out of a LET, since the patch *is* the variable.  It's actually
-    // uncommon for this to happen, but here's an example of how to force it:
-    //
-    //     block1: do [let x: 10, [x + y]]
-    //     block2: do compose/deep [let y: 20, [(block1)]]
-    //     30 = do first block2
-    //
-    // So we have to make a new patch that points to the LET, or promote it
-    // (using node-identity magic) into an object.  We point at the LET.
-    //
-    REBARR *patch = Alloc_Singular(
-        FLAG_FLAVOR(PATCH)
-            | NODE_FLAG_MANAGED
-            | SERIES_FLAG_LINK_NODE_NEEDS_MARK
-    );
-    if (GET_SUBCLASS_FLAG(PATCH, parent, LET)) {
-        Init_Any_Word_Patched(ARR_SINGLE(patch), REB_WORD, parent);
-    }
-    else {
-        Copy_Cell(ARR_SINGLE(patch), ARR_SINGLE(parent));
-    }
-
-    mutable_LINK(NextPatch, patch) = next;
-    mutable_MISC(Variant, patch) = nullptr;  // defunct feature atm.
-    mutable_INODE(VbindUnused, patch) = nullptr;
-
-    UNUSED(was_next_reused);  // !!! revisit
-    return patch;
-}
-
-
-//
-//  Derive_Specifier_Core: C
+//  Derive_Specifier: C
 //
 // An ANY-ARRAY! cell has a pointer's-worth of spare space in it, which is
 // used to keep track of the information required to further resolve the
@@ -536,7 +461,7 @@ inline static REBARR *Merge_Patches_May_Reuse(
 // The returned specifier must not lose the ability to resolve relative
 // values, so it has to remember what frame relative values are for.
 //
-REBSPC *Derive_Specifier_Core(
+REBSPC *Derive_Specifier(
     REBSPC *specifier,  // merge this specifier...
     const RELVAL* v  // ...onto the one in this array
 ){

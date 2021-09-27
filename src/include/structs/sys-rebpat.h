@@ -41,14 +41,9 @@
 #define HAS_MISC_Variant         FLAVOR_PATCH
 
 
-//=//// PATCH_FLAG_REUSED /////////////////////////////////////////////////=//
+//=//// PATCH_FLAG_24 //////////////////////////////////////////////////////=//
 //
-// It's convenient to be able to know when a patch returned from a make call
-// is reused or not.  But adding that parameter to the interface complicates
-// it, and all not clients care.  There's plenty of bits free on patch array
-// flags, so just use one.
-//
-#define PATCH_FLAG_REUSED \
+#define PATCH_FLAG_24 \
     SERIES_FLAG_24
 
 
