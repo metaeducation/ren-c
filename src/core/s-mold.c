@@ -433,32 +433,60 @@ void Mold_Or_Form_Cell(
 
 
 //
+//  Mold_Or_Form_Value_Maybe_Isotope: C
+//
+// Mold or form any value to string series tail.
+//
+void Mold_Or_Form_Value_Maybe_Isotope(REB_MOLD *mo, const RELVAL *v, bool form)
+{
+    // Mold hooks take a REBCEL* and not a RELVAL*, so they expect any quotes
+    // applied to have already been done.
+
+    REBLEN depth = VAL_NUM_QUOTES(v);
+
+  #if DEBUG_UNREADABLE_TRASH
+    if (IS_TRASH(v)) {  // would assert otherwise
+        assert(depth == 0);
+        Append_Ascii(mo->series, "~trash~  ; unreadable");
+        return;
+    }
+  #endif
+
+    if (Is_Isotope(v)) {
+        assert(depth == 0);
+        Append_Ascii(mo->series, "~");
+        Append_Spelling(mo->series, VAL_BAD_WORD_LABEL(v));
+        Append_Ascii(mo->series, "~  ; isotope");
+        return;
+    }
+
+    REBLEN i;
+    for (i = 0; i < depth; ++i)
+        Append_Ascii(mo->series, "'");
+
+    if (IS_NULLED(v))
+        return;  // trust the quotes are enough of a visual
+
+    Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
+}
+
+
+//
 //  Mold_Or_Form_Value: C
 //
 // Mold or form any value to string series tail.
 //
 void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
 {
-    // Mold hooks take a REBCEL* and not a RELVAL*, so they expect any quotes
-    // applied to have already been done.
-
   #if DEBUG_UNREADABLE_TRASH
-    if (IS_TRASH(v)) {  // would assert otherwise
-        Append_Ascii(mo->series, "~trash~");
-        return;
-    }
+    if (IS_TRASH(v))  // would assert otherwise
+        fail ("Unreadable trash passed to MOLD or FORM");
   #endif
 
     if (Is_Isotope(v))
         fail (Error_Bad_Isotope(v));
 
-    REBLEN depth = VAL_NUM_QUOTES(v);
-
-    REBLEN i;
-    for (i = 0; i < depth; ++i)
-        Append_Ascii(mo->series, "'");
-
-    Mold_Or_Form_Cell(mo, VAL_UNESCAPED(v), form);
+    return Mold_Or_Form_Value_Maybe_Isotope(mo, v, form);
 }
 
 

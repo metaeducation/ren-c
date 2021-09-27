@@ -619,6 +619,8 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+#define DEBUG_TRACK_EXTEND_CELLS 1
+
 #if !defined(DEBUG_TRACK_EXTEND_CELLS)
     #define DEBUG_TRACK_EXTEND_CELLS 0
 #endif

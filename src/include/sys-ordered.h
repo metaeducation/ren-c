@@ -75,11 +75,15 @@
 // ->extra field of the contained cell...so it comes off as "specified" in
 // those cases.
 //
+// As a major departure from R3-Alpha, strings carry binding in the form of
+// so-called "specifiers".  Specifiers are a proxy for scopes, and are a
+// linked list of contexts that follow arrays and strings around.
+//
 // Also note that the HEART_BYTE() is what is being tested--e.g. the type
 // that the cell payload and extra actually are *for*.
 
 #define IS_BINDABLE_KIND(k) \
-    ((k) >= REB_OBJECT)
+    ((k) >= REB_TEXT)
 
 #define Is_Bindable(v) \
     IS_BINDABLE_KIND(HEART_BYTE(v))  // checked elsewhere

@@ -57,6 +57,9 @@ option(REBSER*) Get_Word_Container(
 
     const REBSYM *symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
 
+    if (!strcmp("what-dir", STR_UTF8(symbol)) and TG_Tick > 104783)
+        symbol = symbol;
+
     // What we're trying now is that once something becomes *concretely* bound
     // it is no longer a candidate for overriding.  This means that a LET
     // would be useless as an override once concrete binding is achieved...the
@@ -503,11 +506,14 @@ inline static REBARR *Merge_Patches_May_Reuse(
 //
 REBSPC *Derive_Specifier_Core(
     REBSPC *specifier,  // merge this specifier...
-    const RELVAL* any_array  // ...onto the one in this array
+    const RELVAL* v  // ...onto the one in this array
 ){
-    assert(ANY_ARRAY_KIND(HEART_BYTE(any_array)));
+    assert(ANY_ARRAY_KIND(HEART_BYTE(v)) or ANY_STRING_KIND(HEART_BYTE(v)));
 
-    REBARR *old = ARR(BINDING(any_array));
+    if (IS_TEXT(v) and !strcmp(STR_UTF8(VAL_STRING(v)), "alchemy"))
+        v = v;
+
+    REBARR *old = ARR(BINDING(v));
 
     // If any specifiers in a chain are inaccessible, the whole thing is.
     //
@@ -570,7 +576,7 @@ REBSPC *Derive_Specifier_Core(
             printf("Function mismatch in specific binding, expected:\n");
             PROBE(ACT_ARCHETYPE(ACT(old)));
             printf("Panic on relative value\n");
-            panic (any_array);
+            panic (v);
         }
       #endif
 
@@ -621,7 +627,27 @@ REBSPC *Derive_Specifier_Core(
         // this happens, we have to copy the whole chain.  Is this possible?
         // Haven't come up with a situation that forces it yet.
 
-        panic ("Incompatible patch bindings; if you hit this, report it.");
+        if (CTX_TYPE(CTX(old)) == REB_MODULE)
+            return specifier;  // !!! Hack, try to boot
+
+        // Convert context into a patch.
+        //
+        // !!! Right now this loses information about the chain.  Long term
+        // this needs to be rethought.
+
+        REBARR *patch = Alloc_Singular(
+            FLAG_FLAVOR(PATCH)
+                | NODE_FLAG_MANAGED
+                | SERIES_FLAG_LINK_NODE_NEEDS_MARK
+        );
+
+        Copy_Cell(ARR_SINGLE(patch), CTX_ARCHETYPE(CTX(old)));
+
+        mutable_LINK(NextPatch, patch) = nullptr;  // LOSES INFO!
+        mutable_MISC(Variant, patch) = nullptr;  // defunct feature atm.
+        mutable_INODE(VbindUnused, patch) = nullptr;
+
+        old = patch;
     }
 
     // The situation for if the array is already holding a patch is that we
@@ -633,7 +659,20 @@ REBSPC *Derive_Specifier_Core(
 
     if (not IS_PATCH(specifier)) {
         assert(IS_VARLIST(specifier));
-        return old;  // The binding can be disregarded on this value
+
+        REBARR *patch = Alloc_Singular(
+            FLAG_FLAVOR(PATCH)
+                | NODE_FLAG_MANAGED
+                | SERIES_FLAG_LINK_NODE_NEEDS_MARK
+        );
+
+        Copy_Cell(ARR_SINGLE(patch), CTX_ARCHETYPE(CTX(specifier)));
+
+        mutable_LINK(NextPatch, patch) = nullptr;  // LOSES INFO!
+        mutable_MISC(Variant, patch) = nullptr;  // defunct feature atm.
+        mutable_INODE(VbindUnused, patch) = nullptr;
+
+        specifier = patch;
     }
 
     // The patch might be able to be reused and it might not, so it may carry

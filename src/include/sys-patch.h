@@ -73,7 +73,7 @@
     }
 
     inline static REBSPC *VAL_SPECIFIER(REBCEL(const*) v) {
-        assert(ANY_ARRAY_KIND(CELL_HEART(v)));
+        assert(ANY_ARRAY_KIND(CELL_HEART(v)) or ANY_STRING_KIND(CELL_HEART(v)));
 
         REBARR *a = ARR(BINDING(v));  // REVIEW: Inaccessible?
         if (not a)

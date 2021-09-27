@@ -198,17 +198,7 @@ void* Probe_Core_Debug(
       #endif
 
         Probe_Print_Helper(p, expr, "Value", file, line);
-        if (IS_NULLED(v)) {
-            Append_Ascii(mo->series, "; null");
-        }
-        else if (Is_Isotope(v)) {
-            Append_Codepoint(mo->series, '~');
-            Append_Spelling(mo->series, VAL_BAD_WORD_LABEL(v));
-            Append_Codepoint(mo->series, '~');
-            Append_Ascii(mo->series, "  ; isotope");
-        }
-        else
-            Mold_Value(mo, v);
+        Mold_Or_Form_Value_Maybe_Isotope(mo, v, false);
         goto cleanup; }
 
       case DETECTED_AS_END:
@@ -256,14 +246,19 @@ void* Probe_Core_Debug(
 
       case FLAVOR_PATCH: {
         if (NOT_SUBCLASS_FLAG(PATCH, s, LET)) {
-            Probe_Print_Helper(p, expr, "non-LET Patch", file, line);
+            Probe_Print_Helper(p, expr, "Virtual Bind Patch", file, line);
             break;
         }
         REBSER *inode = SER(node_INODE(Node, s));
         if (FLAVOR_VARLIST == SER_FLAVOR(inode))
             Probe_Print_Helper(p, expr, "Module Item Patch", file, line);
-        else
+        else {
             Probe_Print_Helper(p, expr, "LET Patch", file, line);
+            Append_Ascii(mo->series, "Symbol = ");
+            Append_Spelling(mo->series, INODE(LetSymbol, s));
+            Append_Ascii(mo->series, "\n");
+        }
+        Mold_Or_Form_Value_Maybe_Isotope(mo, ARR_SINGLE(ARR(s)), false);
         break; }
 
       case FLAVOR_HITCH:

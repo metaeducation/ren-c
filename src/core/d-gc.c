@@ -378,7 +378,10 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
                 assert(index != 0);
         }
         else
-            assert(VAL_WORD_INDEX_U32(v) == 0);
+            assert(
+                VAL_WORD_INDEX_U32(v) == 0
+                or VAL_WORD_INDEX_U32(v) == INDEX_ATTACHED
+            );
         break; }
 
       case REB_ACTION: {

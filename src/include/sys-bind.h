@@ -747,7 +747,7 @@ inline static REBVAL *Derelativize_Untracked(
 
         return cast(REBVAL*, out);
     }
-    else if (ANY_ARRAY_KIND(heart)) {
+    else if (ANY_ARRAY_KIND(heart) or ANY_STRING_KIND(heart)) {
         //
         // The job of an array in a derelativize operation is to carry along
         // the specifier.  However, it cannot lose any prior existing info
@@ -759,6 +759,8 @@ inline static REBVAL *Derelativize_Untracked(
         //
         // The mechanism otherwise is shared with specifier derivation.
         // That includes the case of if specifier==SPECIFIED.
+        //
+        // !!! This is being unified with strings.
         //
         INIT_BINDING_MAY_MANAGE(out, Derive_Specifier(specifier, v));
     }

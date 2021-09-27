@@ -890,6 +890,9 @@ REBTYPE(Map)
             setval = D_OUT;
         }
 
+        if (IS_NULLED(picker))
+            fail ("NULL not supported in MAP! yet (would erase?)");
+
         REBINT n = Find_Map_Entry(
             VAL_MAP_ENSURE_MUTABLE(map),  // modified
             picker,

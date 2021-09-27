@@ -345,6 +345,31 @@ REBNATIVE(to_text)
 }
 
 
+//
+//  get-in-string: native [
+//      {Try to implement a utility that works to get in strings}
+//
+//      return: [<opt> any-value!]
+//      word [any-word!]
+//      string [any-string!]
+//      /any
+//  ]
+//
+REBNATIVE(get_in_string)
+{
+    INCLUDE_PARAMS_OF_GET_IN_STRING;
+
+    REBVAL *any_word = ARG(word);
+    REBVAL *any_string = ARG(string);
+
+    mutable_BINDING(any_word) = UNBOUND;  // don't care about incoming binding
+
+    Get_Var_May_Fail(D_OUT, any_word, VAL_SPECIFIER(any_string), did REF(any));
+
+    return D_OUT;
+}
+
+
 enum COMPARE_CHR_FLAGS {
     CC_FLAG_CASE = 1 << 0, // Case sensitive sort
     CC_FLAG_REVERSE = 1 << 1 // Reverse sort order

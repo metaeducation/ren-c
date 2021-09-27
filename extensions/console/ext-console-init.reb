@@ -251,13 +251,13 @@ export console!: make object! [
         {Receives code block, parse/transform, send back to CONSOLE eval}
         b [block!]
     ][
-        ; By default we do nothing.  But see the Debug console skin for
-        ; example of binding the code to the currently "focused" FRAME!, or
+        ; By default we bind into user context.  But see the Debug console skin
+        ; for example of binding the code to the currently "focused" FRAME!, or
         ; this example on the forum of injecting the last value:
         ;
         ; https://forum.rebol.info/t/1071
 
-        b
+        intern* system.contexts.user b
     ]
 
     shortcuts: make object! compose/deep [
@@ -735,8 +735,7 @@ ext-console-impl: func [
         ; Note LOAD now makes BLOCK! even for a single item,
         ; e.g. `load "word"` => `[word]`
         ;
-        code: load delimit newline result
-        bind code system.contexts.user
+        code: transcode delimit newline result
         assert [block? code]
 
     ] then error -> [
@@ -807,7 +806,8 @@ ext-console-impl: func [
         insert code shortcut
     ]
 
-    ; Run the "dialect hook", which can transform the completed code block
+    ; Run the "dialect hook", which can transform the completed code block...
+    ; but at minimum needs to bind it, otherwise it won't run.
     ;
     emit #unskin-if-halt  ; Ctrl-C during dialect hook is a problem
     emit [
