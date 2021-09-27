@@ -250,13 +250,34 @@ option(REBSER*) Get_Word_Container(
                 // code, because the identity of the derived function would not match
                 // up with the body it intended to reuse.
                 //
-                assert(Action_Is_Base_Of(ACT(binding), CTX_FRAME_ACTION(frm)));
-
-                *index_out = VAL_WORD_INDEX(any_word);
-                return CTX_VARLIST(frm);
+                if (Action_Is_Base_Of(ACT(binding), CTX_FRAME_ACTION(frm))) {
+                    *index_out = VAL_WORD_INDEX(any_word);
+                    return CTX_VARLIST(frm);
+                }
+                continue;
             }
         }
 
+        if (
+            IS_PATCH(specifier)
+            and NOT_SUBCLASS_FLAG(PATCH, specifier, LET)
+            and IS_BLOCK(ARR_SINGLE(specifier))
+        ){
+            REBSPC *sub = m_cast(REBSPC*, VAL_ARRAY(ARR_SINGLE(specifier)));
+            option(REBSER*) lookup = Get_Word_Container(
+                index_out,
+                any_word,
+                sub,
+                mode
+            );
+            if (lookup)
+                return lookup;
+
+            continue;
+        }
+
+        if (IS_DETAILS(specifier))
+            assert(!"relative binding used as specifier");
         assert(!"Unknown specifier category in chain");
         panic (specifier);
     }
@@ -515,35 +536,31 @@ REBSPC *Derive_Specifier_Core(
 
     REBARR *old = ARR(BINDING(v));
 
-    // If any specifiers in a chain are inaccessible, the whole thing is.
-    //
-    if (old != UNBOUND and GET_SERIES_FLAG(old, INACCESSIBLE))
+    // !!! Question: Does the "I was a parent" vs "I was a child" distinction
+    // matter when doing a combination?  It may be that cells should hold a
+    // bit saying whether their specifier is an "over specifier" or an
+    // "under specifier".  Until that's figured out, if either of them are
+    // nulled out then return the other one.
+
+    REBSPC *result;
+    if (old == UNBOUND) {
+        if (specifier and GET_SERIES_FLAG(specifier, INACCESSIBLE))
+            return &PG_Inaccessible_Series;
+        result = specifier;
+    }
+    else if (specifier == SPECIFIED) {
+        if (GET_SERIES_FLAG(old, INACCESSIBLE))
+            return &PG_Inaccessible_Series;
+        assert(not IS_DETAILS(old));  // requires specifier
+        result = old;
+    }
+    else if (
+        GET_SERIES_FLAG(specifier, INACCESSIBLE)
+        or GET_SERIES_FLAG(old, INACCESSIBLE)
+    ){
         return &PG_Inaccessible_Series;
-
-    if (specifier == SPECIFIED) {  // no override being requested
-        assert(old == UNBOUND or IS_VARLIST(old) or IS_PATCH(old));
-        return old;  // so give back what was the array was holding
     }
-
-    if (old == UNBOUND) {  // no binding information in the incoming cell
-        //
-        // Historically this would drop frames and only preserve virtual
-        // binding patches.  But now, the idea is to really preserve the
-        // "scope" as a kind of binding environment.  So always preserve it.
-        //
-        return specifier;  // so just propagate the incoming specifier
-    }
-
-    // v-- NOTE: The following two IFs just `return specifier`.  Separate for
-    // clarity and assertions, but trust the optimizer to fold them together
-    // in the release build.
-
-    if (specifier == old) {  // a no-op, specifier was already applied
-        assert(IS_VARLIST(specifier) or IS_PATCH(specifier));
-        return specifier;
-    }
-
-    if (IS_DETAILS(old)) {
+    else if (IS_DETAILS(old)) {
         //
         // The stored binding is relative to a function, and so the specifier
         // we have *must* be able to give us the matching FRAME! instance.
@@ -558,7 +575,7 @@ REBSPC *Derive_Specifier_Core(
 
       #if !defined(NDEBUG)
 
-        REBSPC *test = specifier;
+      /*  REBSPC *test = specifier;
         while (not (
             IS_VARLIST(test) and CTX_TYPE(CTX(test)) == REB_FRAME
         )){
@@ -577,108 +594,42 @@ REBSPC *Derive_Specifier_Core(
             PROBE(ACT_ARCHETYPE(ACT(old)));
             printf("Panic on relative value\n");
             panic (v);
-        }
+        } */
       #endif
 
-        return specifier;  // input specifier will serve for derelativizations
+        result = specifier;  // input specifier will serve for derelativizations
     }
-
-    // Either binding or the specifier have virtual components.  Whatever
-    // happens, the specifier we give back has to have the frame resolution
-    // compatible with what's in the value.
-
-    if (IS_VARLIST(old)) {
+    else if (specifier == old or NextPatch(specifier) == old) {
+        result = specifier;
+    }
+    else {
+        // We want to effectively tack the bindings that v has "underneath"
+        // the bindings provided by the specifier.
         //
-        // If the specifier is only for providing resolutions of variables in
-        // functions, an array specified by a frame isn't going to need that.
-        // This is kind of like dealing with something specified.
-        //
-        if (IS_VARLIST(specifier))  // superfluous additional specification
-            return old;
-
-        // If the array cell is already holding a frame, then it intends to
-        // broadcast that down for resolving relative values underneath it.
-        // We can only pass thru the incoming specifier if it is compatible.
-        // Otherwise we need a new specifier that folds in the binding.
-        //
-        assert(IS_PATCH(specifier));
-
-        // !!! This case of a match could be handled by the swap below, but
-        // break it out separately for now for the sake of asserts.
-        //
-        // !!! We already know it's a patch so calling SPC_FRAME_CTX() does
-        // an extra check of that, review when efficiency is being revisited
-        // (SPC_PATCH_CTX() as separate entry point?)
-        //
-        REBNOD **specifier_frame_ctx_addr = SPC_FRAME_CTX_ADDRESS(specifier);
-        if (*specifier_frame_ctx_addr == old)  // all clear to reuse
-            return specifier;
-
-        if (*specifier_frame_ctx_addr == UNSPECIFIED) {
-            //
-            // If the patch had no specifier, then it doesn't hurt to modify
-            // it directly.  This will only work once for specifier's chain.
-            //
-            *specifier_frame_ctx_addr = old;
-            return specifier;
+        REBARR *patch = Alloc_Singular(
+            FLAG_FLAVOR(PATCH)
+                | NODE_FLAG_MANAGED
+                | SERIES_FLAG_LINK_NODE_NEEDS_MARK
+        );
+        if (IS_VARLIST(specifier)) {
+            Copy_Cell(ARR_SINGLE(patch), CTX_ARCHETYPE(CTX(specifier)));
         }
-
-        // Patch resolves to a binding, and it's an incompatible one.  If
-        // this happens, we have to copy the whole chain.  Is this possible?
-        // Haven't come up with a situation that forces it yet.
-
-        if (CTX_TYPE(CTX(old)) == REB_MODULE)
-            return specifier;  // !!! Hack, try to boot
-
-        // Convert context into a patch.
-        //
-        // !!! Right now this loses information about the chain.  Long term
-        // this needs to be rethought.
-
-        REBARR *patch = Alloc_Singular(
-            FLAG_FLAVOR(PATCH)
-                | NODE_FLAG_MANAGED
-                | SERIES_FLAG_LINK_NODE_NEEDS_MARK
-        );
-
-        Copy_Cell(ARR_SINGLE(patch), CTX_ARCHETYPE(CTX(old)));
-
-        mutable_LINK(NextPatch, patch) = nullptr;  // LOSES INFO!
+        else {
+            assert(IS_PATCH(specifier));
+            Init_Block(ARR_SINGLE(patch), specifier);
+        }
+        mutable_LINK(NextPatch, patch) = old;
         mutable_MISC(Variant, patch) = nullptr;  // defunct feature atm.
         mutable_INODE(VbindUnused, patch) = nullptr;
 
-        old = patch;
+        result = patch;
     }
 
-    // The situation for if the array is already holding a patch is that we
-    // have to integrate our new patch on top of it.
-    //
-    // !!! How do we make sure this doesn't make a circularly linked list?
+    if (old and IS_DETAILS(old))
+        assert(result != SPECIFIED);
 
-    assert(IS_PATCH(old));
-
-    if (not IS_PATCH(specifier)) {
-        assert(IS_VARLIST(specifier));
-
-        REBARR *patch = Alloc_Singular(
-            FLAG_FLAVOR(PATCH)
-                | NODE_FLAG_MANAGED
-                | SERIES_FLAG_LINK_NODE_NEEDS_MARK
-        );
-
-        Copy_Cell(ARR_SINGLE(patch), CTX_ARCHETYPE(CTX(specifier)));
-
-        mutable_LINK(NextPatch, patch) = nullptr;  // LOSES INFO!
-        mutable_MISC(Variant, patch) = nullptr;  // defunct feature atm.
-        mutable_INODE(VbindUnused, patch) = nullptr;
-
-        specifier = patch;
-    }
-
-    // The patch might be able to be reused and it might not, so it may carry
-    // the PATCH_REUSED array flag.  Is that interesting information here?
-    //
-    return Merge_Patches_May_Reuse(specifier, old);
+    assert(result == SPECIFIED or IS_PATCH(result) or IS_VARLIST(result));
+    return result;
 }
 
 

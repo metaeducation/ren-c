@@ -70,6 +70,14 @@
     SERIES_FLAG_26
 
 
+//=//// PATCH_FLAG_FOLLOW //////////////////////////////////////////////////=//
+//
+// Don't just look at the contained patch, but follow the NextPatch() links
+//
+#define PATCH_FLAG_FOLLOW \
+    SERIES_FLAG_27
+
+
 
 // The INODE() slot in a patch can be:
 //
