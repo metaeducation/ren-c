@@ -70,7 +70,9 @@ option(REBSER*) Get_Word_Container(
     REBCTX *emerge = nullptr;
 
     for (; specifier != nullptr; specifier = NextPatch(specifier)) {
-        //
+        REBSPC *follow = nullptr;
+
+      blockscope {
         // Patches have enough bits to rule out certain kinds of binds.  It
         // may be all right to think about sparing a bit on varlists too so
         // that if they are used for binding at their time of creation they
@@ -80,6 +82,15 @@ option(REBSER*) Get_Word_Container(
             if (GET_SUBCLASS_FLAG(PATCH, specifier, SET_WORDS_ONLY))
                 if (REB_SET_WORD != CELL_KIND(VAL_UNESCAPED(any_word)))
                     continue;
+        }
+
+        if (
+            IS_PATCH(specifier)
+            and NOT_SUBCLASS_FLAG(PATCH, specifier, LET)
+            and IS_BLOCK(ARR_SINGLE(specifier))
+        ){
+            follow = m_cast(REBSPC*, VAL_ARRAY(ARR_SINGLE(specifier)));
+            goto maybe_follow;
         }
 
         // A LET patch is just one variable.  It matches if the symbol matches.
@@ -181,20 +192,17 @@ option(REBSER*) Get_Word_Container(
         const RELVAL *obj;
         if ((
             IS_VARLIST(specifier)
-            and CTX_TYPE(CTX(specifier)) == REB_OBJECT
             and (obj = CTX_ARCHETYPE(CTX(specifier)))
         ) or (
             IS_PATCH(specifier)
-            and (
-                IS_OBJECT(ARR_SINGLE(specifier))
-                or IS_FRAME(ARR_SINGLE(specifier))
-            )
+            and ANY_CONTEXT(ARR_SINGLE(specifier))
             and (obj = ARR_SINGLE(specifier))
+            and (follow = NextPatch(SPC(VAL_CONTEXT(obj))), true)
         )){
-          try_lookup_obj:
+      /*    try_lookup_obj: */
             *index_out = Find_Symbol_In_Context(obj, symbol, true);
             if (*index_out == 0)
-                continue;
+                goto maybe_follow;
 
             // !!! FOR-EACH uses the slots in an object to count how
             // many arguments there are...and if a slot is reusing an
@@ -209,7 +217,7 @@ option(REBSER*) Get_Word_Container(
                 CTX_VAR(VAL_CONTEXT(obj), *index_out),
                 BIND_NOTE_REUSE
             )){
-                continue;
+                goto maybe_follow;
             }
 
             return VAL_CONTEXT(obj);
@@ -219,7 +227,7 @@ option(REBSER*) Get_Word_Container(
         // the body had been copied.  We have to honor that because otherwise
         // we have a problem, in that we do not know what phase to use.
         //
-        REBCTX *frm;
+     /*   REBCTX *frm;
         if (
             IS_VARLIST(specifier)
             and CTX_TYPE(CTX(specifier)) == REB_FRAME
@@ -256,30 +264,33 @@ option(REBSER*) Get_Word_Container(
                 }
                 continue;
             }
-        }
-
-        if (
-            IS_PATCH(specifier)
-            and NOT_SUBCLASS_FLAG(PATCH, specifier, LET)
-            and IS_BLOCK(ARR_SINGLE(specifier))
-        ){
-            REBSPC *sub = m_cast(REBSPC*, VAL_ARRAY(ARR_SINGLE(specifier)));
-            option(REBSER*) lookup = Get_Word_Container(
-                index_out,
-                any_word,
-                sub,
-                mode
-            );
-            if (lookup)
-                return lookup;
-
-            continue;
-        }
+        }*/
 
         if (IS_DETAILS(specifier))
             assert(!"relative binding used as specifier");
         assert(!"Unknown specifier category in chain");
         panic (specifier);
+      }
+
+      maybe_follow: {
+        if (not IS_PATCH(specifier))
+            continue;  // follow happens automatically
+
+        if (NOT_SUBCLASS_FLAG(PATCH, specifier, FOLLOW))
+            continue;
+
+        if (not follow)
+            continue;
+
+        option(REBSER*) lookup = Get_Word_Container(
+            index_out,
+            any_word,
+            follow,
+            mode
+        );
+        if (lookup)
+            return lookup;
+      }
     }
 
     if (binding == UNBOUND) {
@@ -529,7 +540,9 @@ REBSPC *Derive_Specifier_Core(
     REBSPC *specifier,  // merge this specifier...
     const RELVAL* v  // ...onto the one in this array
 ){
-    assert(ANY_ARRAY_KIND(HEART_BYTE(v)) or ANY_STRING_KIND(HEART_BYTE(v)));
+    enum Reb_Kind heart = CELL_HEART(VAL_UNESCAPED(v));
+    assert(ANY_ARRAY_KIND(heart) or ANY_STRING_KIND(heart));
+    UNUSED(heart);
 
     if (IS_TEXT(v) and !strcmp(STR_UTF8(VAL_STRING(v)), "alchemy"))
         v = v;
@@ -610,8 +623,15 @@ REBSPC *Derive_Specifier_Core(
             FLAG_FLAVOR(PATCH)
                 | NODE_FLAG_MANAGED
                 | SERIES_FLAG_LINK_NODE_NEEDS_MARK
+                | PATCH_FLAG_FOLLOW
         );
         if (IS_VARLIST(specifier)) {
+            //
+            // Frame specifiers don't start out managed... have to manage
+            //
+            if (NOT_SERIES_FLAG(specifier, MANAGED)) {
+                SET_SERIES_FLAG(specifier, MANAGED);
+            }
             Copy_Cell(ARR_SINGLE(patch), CTX_ARCHETYPE(CTX(specifier)));
         }
         else {

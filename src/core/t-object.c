@@ -312,7 +312,9 @@ void Init_Evars(EVARS *e, REBCEL(const*) v) {
                 // to see the locals (for instance).
                 //
                 REBCTX *exemplar = ACT_EXEMPLAR(phase);
-                e->locals_visible = (CTX_FRAME_ACTION(exemplar) == phase);
+                /*e->locals_visible = (CTX_FRAME_ACTION(exemplar) == phase);*/
+                e->locals_visible = true;  // see if we can run it
+                UNUSED(exemplar);
             }
 
             e->param = ACT_PARAMS_HEAD(phase) - 1;

@@ -135,7 +135,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
     RELVAL *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+    assert(IS_BLOCK(body));
 
     // !!! Hook the specifier into the varlist, so that whatever contexts
     // the body originally inherited will be inherited.
@@ -406,7 +406,6 @@ REBACT *Make_Interpreted_Action_May_Fail(
     // the FUNC generator (with MKF_RETURN) but then named a parameter RETURN
     // which overrides it, so the value won't have PARAMLIST_HAS_RETURN.
 
-    REBARR *copy;
     if (VAL_LEN_AT(body) == 0) {  // optimize empty body case
 
         if (mkf_flags & MKF_IS_ELIDER) {
@@ -425,10 +424,6 @@ REBACT *Make_Interpreted_Action_May_Fail(
         else {
             // Keep the Void_Dispatcher passed in above
         }
-
-        // Reusing EMPTY_ARRAY won't allow adding ARRAY_HAS_FILE_LINE bits
-        //
-        copy = Make_Array_Core(1, NODE_FLAG_MANAGED);
     }
     else {  // body not empty, pick dispatcher based on output disposition
 
@@ -440,34 +435,6 @@ REBACT *Make_Interpreted_Action_May_Fail(
             INIT_ACT_DISPATCHER(a, &Returner_Dispatcher);  // typecheck f->out
         else
             INIT_ACT_DISPATCHER(a, &Unchecked_Dispatcher); // unchecked f->out
-
-        const bool locals_visible = true;  // we created exemplar, see all!
-        copy = Copy_And_Bind_Relative_Deep_Managed(
-            body,  // new copy has locals bound relatively to the new action
-            a,
-            locals_visible,
-            TS_WORD
-        );
-    }
-
-    // Favor the spec first, then the body, for file and line information.
-    //
-    if (GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(spec), HAS_FILE_LINE_UNMASKED)) {
-        mutable_LINK(Filename, copy) = LINK(Filename, VAL_ARRAY(spec));
-        copy->misc.line = VAL_ARRAY(spec)->misc.line;
-        SET_SUBCLASS_FLAG(ARRAY, copy, HAS_FILE_LINE_UNMASKED);
-    }
-    else if (
-        GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(body), HAS_FILE_LINE_UNMASKED)
-    ){
-        mutable_LINK(Filename, copy) = LINK(Filename, VAL_ARRAY(body));
-        copy->misc.line = VAL_ARRAY(body)->misc.line;
-        SET_SUBCLASS_FLAG(ARRAY, copy, HAS_FILE_LINE_UNMASKED);
-    }
-    else {
-        // Ideally all source series should have a file and line numbering
-        // At the moment, if a function is created in the body of another
-        // function it doesn't work...trying to fix that.
     }
 
     // Save the relativized body in the action's details block.  Since it is
@@ -476,10 +443,9 @@ REBACT *Make_Interpreted_Action_May_Fail(
     // executing the interpreted code.
     //
     REBARR *details = ACT_DETAILS(a);
-    RELVAL *rebound = Init_Relative_Block(
+    Copy_Cell(
         ARR_AT(details, IDX_NATIVE_BODY),
-        a,
-        copy
+        body
     );
 
     REBVAL *spblock = Init_Block(
@@ -510,9 +476,6 @@ REBACT *Make_Interpreted_Action_May_Fail(
     // means compatibility would be with the behavior of R3-Alpha CLOSURE,
     // not with R3-Alpha FUNCTION.
     //
-    if (GET_CELL_FLAG(body, CONST))
-        SET_CELL_FLAG(rebound, CONST);  // Inherit_Const() would need REBVAL*
-
     return a;
 }
 

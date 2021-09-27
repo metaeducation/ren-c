@@ -102,7 +102,7 @@ run-test-cluster: func [
     ;
     ; Modules created with module "inherit" from LIB by default.
     ;
-    let isolate: module _ [
+    let isolate: module _ copy/deep [
         print: func [x] [
             fail "Don't use PRINT in tests"
         ]

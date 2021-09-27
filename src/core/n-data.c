@@ -1289,7 +1289,7 @@ bool Set_Var_Core_Throws(
     if (not IS_WORD(first))
         fail ("Cannot writeback immediate value in SET");
 
-    REBSPC *derived = Derive_Specifier(var_specifier, first);
+    REBSPC *derived = Derive_Specifier(var_specifier, var);
     Copy_Cell(Sink_Word_May_Fail(first, derived), writeback);
 
     return false;

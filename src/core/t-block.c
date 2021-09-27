@@ -1217,17 +1217,28 @@ REBTYPE(Array)
         //
         flags |= (array->header.bits & ARRAY_FLAG_CONST_SHALLOW);
 
+        // Before the array was copied, and this lost the array itself's
+        // inherited module, e.g. body array for a FUNC on a static would
+        // become inheritance-less.  Try kicking the can a little further
+        // down by copying SPECIFIED and poking that inheritance back in.
+        //
         REBARR *copy = Copy_Array_Core_Managed(
             arr,
             index, // at
-            specifier,
+            SPECIFIED,  // !!! TRYING NEW IDEA
             tail, // tail
             0, // extra
             flags, // flags
             types // types to copy deeply
         );
 
-        return Init_Any_Array(D_OUT, VAL_TYPE(array), copy); }
+        return Init_Any_Array_At_Core(
+            D_OUT,
+            VAL_TYPE(array),
+            copy,
+            0,
+            specifier
+        ); }
 
     //-- Special actions:
 
