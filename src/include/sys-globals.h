@@ -104,8 +104,8 @@ PVAR REB_OPTS *Reb_Opts;
 
 PVAR REBVAL PG_End_Cell;
 
-PVAR REBVAL PG_The_Value;
-PVAR REBVAL PG_Meta_Value;
+PVAR REBVAL *PG_The_Value;
+PVAR REBVAL *PG_Meta_Value;
 
 PVAR REBVAL PG_Unset_Value;
 PVAR REBVAL PG_Void_Value;

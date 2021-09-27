@@ -236,15 +236,6 @@ static void Startup_Lib(void)
     assert(IS_TRUTHY(Lib(TRUE)) and VAL_LOGIC(Lib(TRUE)) == true);
     assert(IS_FALSEY(Lib(FALSE)) and VAL_LOGIC(Lib(FALSE)) == false);
 
-    Append_Context(Lib_Context, nullptr, PG_Caret_Symbol);
-    Append_Context(Lib_Context, nullptr, PG_At_Symbol);
-
-    Init_Any_Word_Bound(&PG_Meta_Value, REB_WORD, Lib_Context, PG_Caret_Symbol, INDEX_ATTACHED);
-    mutable_KIND3Q_BYTE(&PG_Meta_Value) = REB_SYMBOL;
-
-    Init_Any_Word_Bound(&PG_The_Value, REB_WORD, Lib_Context, PG_At_Symbol, INDEX_ATTACHED);
-    mutable_KIND3Q_BYTE(&PG_The_Value) = REB_SYMBOL;
-
     // !!! Other constants are just initialized as part of Startup_Base().
 }
 
@@ -469,8 +460,8 @@ static void Init_Root_Vars(void)
 static void Shutdown_Root_Vars(void)
 {
     RESET(&PG_End_Cell);
-    RESET(&PG_Meta_Value);
-    RESET(&PG_The_Value);
+    PG_Meta_Value = nullptr;
+    PG_The_Value = nullptr;
     RESET(&PG_Unset_Value);
     RESET(&PG_Void_Value);
 
@@ -1022,8 +1013,17 @@ void Startup_Core(void)
     // Startup_Lib() they were created and bound, but the natives weren't
     // available to assign to them...do it here for now.
     //
-    Set_Var_May_Fail(&PG_Meta_Value, SPECIFIED, Lib(META), SPECIFIED);
-    Set_Var_May_Fail(&PG_The_Value, SPECIFIED, Lib(THE), SPECIFIED);
+    ensureNullptr(PG_Meta_Value) = Append_Context(Lib_Context, nullptr, PG_Caret_Symbol);
+    ensureNullptr(PG_The_Value) = Append_Context(Lib_Context, nullptr, PG_At_Symbol);
+
+    Init_Any_Word_Bound(PG_Meta_Value, REB_WORD, Lib_Context, PG_Caret_Symbol, INDEX_ATTACHED);
+    mutable_KIND3Q_BYTE(PG_Meta_Value) = REB_SYMBOL;
+
+    Init_Any_Word_Bound(PG_The_Value, REB_WORD, Lib_Context, PG_At_Symbol, INDEX_ATTACHED);
+    mutable_KIND3Q_BYTE(PG_The_Value) = REB_SYMBOL;
+
+    Set_Var_May_Fail(PG_Meta_Value, SPECIFIED, Lib(META), SPECIFIED);
+    Set_Var_May_Fail(PG_The_Value, SPECIFIED, Lib(THE), SPECIFIED);
 
     // boot->generics is the list in %generics.r
     //
