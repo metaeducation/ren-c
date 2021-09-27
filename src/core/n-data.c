@@ -579,9 +579,10 @@ static bool Fill_In_Steps_Throws(
         REBARR *a = Make_Array_Core(len, SERIES_FLAG_MANAGED);
         Init_Any_Array(steps, REB_THE_BLOCK, a);  // GC protection
 
+        REBSPC *derived = Derive_Specifier(var_specifier, var);
+
         item = head;
         for (; item != tail; ++item) {
-            REBSPC *derived = Derive_Specifier(var_specifier, var);
             if (not IS_GROUP(item)) {
                 //
                 // !!! Technically this block doesn't need to be derelativized.
@@ -629,10 +630,9 @@ static const RELVAL *First_Of_Process_Steps_For_Location(
         Unquotify(location, 1);
     }
     else if (IS_WORD(first)) {
-        REBSPC *derived = Derive_Specifier(VAL_SPECIFIER(steps), first);
         Copy_Cell(
             location,
-            Lookup_Word_May_Fail(first, derived)
+            Lookup_Word_May_Fail(first, VAL_SPECIFIER(steps))
         );
         if (IS_BAD_WORD(location) and GET_CELL_FLAG(location, ISOTOPE))
             fail (Error_Bad_Word_Get(first, location));
@@ -1420,14 +1420,15 @@ REBNATIVE(resolve)
 {
     INCLUDE_PARAMS_OF_RESOLVE;
 
+    REBVAL *exports = ARG(exports);
     REBCTX *where = VAL_CONTEXT(ARG(where));
     REBCTX *source = VAL_CONTEXT(ARG(source));
 
     const RELVAL *tail;
-    const RELVAL *v = VAL_ARRAY_AT(&tail, ARG(exports));
+    const RELVAL *v = VAL_ARRAY_AT(&tail, exports);
     for (; v != tail; ++v) {
         if (not IS_WORD(v))
-            fail (ARG(exports));
+            fail (exports);
 
         const REBSYM *symbol = VAL_WORD_SYMBOL(v);
 

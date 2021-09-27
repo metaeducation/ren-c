@@ -787,6 +787,11 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
     rebUnmanage(User_Context_Value);
     User_Context = VAL_CONTEXT(User_Context_Value);
 
+    // !!! Right now the MAKE MODULE! mechanic always inherits from lib.  THis
+    // needs to be generalized.
+    //
+    assert(LINK(Patches, User_Context) == CTX_VARLIST(Lib_Context));
+
     return nullptr;
 }
 
@@ -925,6 +930,7 @@ void Startup_Core(void)
   #endif
 
     REBCTX *sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    mutable_LINK(Patches, sys) = Lib_Context;
     ensureNullptr(Sys_Context_Value) = Alloc_Value();
     Init_Any_Context(Sys_Context_Value, REB_MODULE, sys);
     ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Context_Value);

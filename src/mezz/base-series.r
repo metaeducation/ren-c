@@ -16,13 +16,16 @@ REBOL [
     }
 ]
 
-reeval function [:terms [tag! set-word! <variadic>]] [
+reeval func [
+    :terms [tag! set-word! <variadic>]
+    <local> n w
+][
     n: 1
     loop [<end> != w: take terms] [
         set w redescribe reduce [
             spaced [{Returns the} to word! w {value of a series}]
         ](
-            c-debug-break specialize :pick [picker: n]
+            specialize :pick [picker: n]
         )
         n: n + 1
     ]

@@ -147,7 +147,7 @@ dump-to-newline: adapt :dump [
     ]
 ]
 
-dumps: enfixed function [
+dumps: enfixed func [
     {Fast generator for dumping function that uses assigned name for prefix}
 
     return: [action!]
@@ -156,7 +156,9 @@ dumps: enfixed function [
         [issue! text! integer! word! set-word! set-path! group! block!]
     extra "Optional variadic data for SET-WORD!, e.g. `dv: dump var: 1 + 2`"
         [<opt> any-value! <variadic>]
+    <local> d
 ][
+    let prefix
     if issue? value [
         d: specialize :dump-to-newline [prefix: as text! name]
         if value <> #off [d #on]  ; note: d hard quotes its argument

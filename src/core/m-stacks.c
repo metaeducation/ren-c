@@ -237,6 +237,15 @@ REBCTX *Get_Context_From_Stack(void)
     if (NOT_ACTION_FLAG(phase, IS_NATIVE))
         return Lib_Context;
 
+    // The LOAD-EXTENSION command might run other commands like rebElide()
+    // before it's set up to load modules, but if it's loading return this.
+    if (
+        phase == VAL_ACTION(Lib(LOAD_EXTENSION))
+        and PG_Currently_Loading_Module
+    ){
+        return PG_Currently_Loading_Module;
+    }
+
     REBARR *details = ACT_DETAILS(phase);
     REBVAL *context = DETAILS_AT(details, IDX_NATIVE_CONTEXT);
     return VAL_CONTEXT(context);

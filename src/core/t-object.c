@@ -583,6 +583,14 @@ REB_R MAKE_Context(
         assert(not parent);
 
         REBCTX *ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+
+        // !!! For the moment all modules "inherit" from the Lib_Context.
+        // This idea is intended to be replaced by a more nuanced concept of
+        // baseline in inheritance and binding...but this is just to get the
+        // system to some semblance of booting.
+        //
+        mutable_LINK(Patches, ctx) = Lib_Context;
+
         return Init_Any_Context(out, REB_MODULE, ctx);
     }
 

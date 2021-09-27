@@ -254,7 +254,7 @@ int main(int argc, char *argv_ansi[])
     // command line arguments.
     //
     REBVAL *main_startup = rebValue(
-        "ensure action! do transcode/where", rebR(startup_bin), "lib"
+        "ensure action! do intern* lib transcode", rebR(startup_bin)
     );
 
     // This runs the MAIN-STARTUP, which returns *requests* to execute

@@ -63,11 +63,8 @@ option(REBSER*) Get_Word_Container(
     // binding would have to be forcibly removed.
     //
     REBSER *binding = VAL_WORD_BINDING(any_word);
-    if (binding != UNBOUND)
-        goto not_virtually_bound;
 
-    if (specifier == SPECIFIED)
-        return nullptr;
+    REBCTX *emerge = nullptr;
 
     for (; specifier != nullptr; specifier = NextPatch(specifier)) {
         //
@@ -101,7 +98,7 @@ option(REBSER*) Get_Word_Container(
         ){
             if (INODE(LetSymbol, let) == symbol) {
                 *index_out = INDEX_PATCHED;
-                return specifier;
+                return let;
             }
             continue;
         }
@@ -120,8 +117,27 @@ option(REBSER*) Get_Word_Container(
             and IS_MODULE(ARR_SINGLE(specifier))
             and (mod = VAL_CONTEXT(ARR_SINGLE(specifier)))
         )){
+            // Trying to boot.  :-/  Don't let modules win over top of things
+            // that are concretely bound...unless they are in the Lib_Context.
+            // (Yes, these exceptions are terrible and messy, but if it boots
+            // then maybe something can shake out that is less terrible.)
+            //
+            if (binding and not (
+                IS_PATCH(binding) and GET_SUBCLASS_FLAG(PATCH, binding, LET)
+                and INODE(ModvarContext, binding) == Lib_Context
+            )){
+                continue;
+            }
+
             REBVAL *var = MOD_VAR(mod, symbol, true);
             if (var) {
+                if (emerge and (mod == Lib_Context or mod == Sys_Context))
+                    continue;  // let the emerge win
+
+                if (mode == ATTACH_WRITE and GET_CELL_FLAG(var, PROTECTED))
+                    fail (Error_Protected_Word_Raw(any_word));
+
+
                 *index_out = INDEX_PATCHED;
                 return Singular_From_Cell(var);
             }
@@ -137,15 +153,11 @@ option(REBSER*) Get_Word_Container(
             // now just make Lib and Sys strict.  Everything else is non-strict
             // just to start with basic compatibility with history.
             //
-            if (
-                mode == ATTACH_WRITE
-                and not NextPatch(specifier)
-                and mod != Lib_Context
-                and mod != Sys_Context
-            ){
-                var = Append_Context(mod, nullptr, symbol);
-                *index_out = INDEX_PATCHED;
-                return Singular_From_Cell(var);
+            if (mode == ATTACH_WRITE or mode == ATTACH_COPY) {
+                if (mod != Lib_Context and mod != Sys_Context) {
+                    emerge = mod;
+                    binding = nullptr;  // !!! Yes, crazy, but... WHAT-DIR
+                }
             }
 
             continue;
@@ -176,6 +188,7 @@ option(REBSER*) Get_Word_Container(
             )
             and (obj = ARR_SINGLE(specifier))
         )){
+          try_lookup_obj:
             *index_out = Find_Symbol_In_Context(obj, symbol, true);
             if (*index_out == 0)
                 continue;
@@ -209,26 +222,60 @@ option(REBSER*) Get_Word_Container(
             and CTX_TYPE(CTX(specifier)) == REB_FRAME
             and (frm = CTX(specifier))
         ){
-            // For the moment, we assume the frames do not apply to any
-            // non-relatively-bound values...which have a binding so don't
-            // run this code.  Review.
-            //
-            UNUSED(frm);
-            continue;
+            if (binding == UNBOUND or not IS_DETAILS(binding)) {
+                //
+                obj = CTX_ARCHETYPE(frm);
+                goto try_lookup_obj;
+            }
+            else {
+                // RELATIVE BINDING: The word was made during a deep copy of the block
+                // that was given as a function's body, and stored a reference to that
+                // ACTION! as its binding.  To get a variable for the word, we must
+                // find the right function call on the stack (if any) for the word to
+                // refer to (the FRAME!)
+
+            #if !defined(NDEBUG)
+                if (specifier == SPECIFIED) {
+                    printf("Get_Context_Core on relative value without specifier\n");
+                    panic (any_word);
+                }
+            #endif
+
+                // We can only check for a match of the underlying function.  If we
+                // checked for an exact match, then the same function body could not
+                // be repurposed for dispatch e.g. in copied, hijacked, or adapted
+                // code, because the identity of the derived function would not match
+                // up with the body it intended to reuse.
+                //
+                assert(Action_Is_Base_Of(ACT(binding), CTX_FRAME_ACTION(frm)));
+
+                *index_out = VAL_WORD_INDEX(any_word);
+                return CTX_VARLIST(frm);
+            }
         }
 
         assert(!"Unknown specifier category in chain");
         panic (specifier);
     }
 
+    if (binding == UNBOUND) {
+        if (emerge) {
+            if (mode == ATTACH_COPY) {
+                *index_out = INDEX_ATTACHED;
+                return emerge;
+            }
+            assert(mode == ATTACH_WRITE);
+            REBVAR *var = Append_Context(emerge, nullptr, symbol);
+            *index_out = INDEX_PATCHED;
+            return Singular_From_Cell(var);
+        }
+        return nullptr;
+    }
+
     // !!! Work was done on trying to chew some cache bits out of the word
     // cell.  This is made troublesome by the fact that the cell may be shared
     // among many views via specifiers...but the rules are changing now with
     // the new ideas.
-
-    return nullptr;
-
-  not_virtually_bound: {
 
     REBCTX *c;
 
@@ -330,7 +377,10 @@ option(REBSER*) Get_Word_Container(
 
         c = CTX(binding); // start with stored binding
 
-        if (specifier == SPECIFIED) {
+        // !!! This stuff is complex but was worked out in the past for some
+        // cases, it will have to be rethought because it's crashing.
+
+    /*    if (specifier == SPECIFIED) {
             //
             // Lookup must be determined solely from bits in the value
             //
@@ -347,44 +397,16 @@ option(REBSER*) Get_Word_Container(
                 //
                 c = CTX(f_binding);
             }
-        }
+        } */
     }
     else {
         assert(IS_DETAILS(binding));
-
-        while (specifier and not (
-            IS_VARLIST(specifier) and CTX_TYPE(CTX(specifier)) == REB_FRAME
-        )){
-            specifier = NextPatch(specifier);
-        }
-
-        // RELATIVE BINDING: The word was made during a deep copy of the block
-        // that was given as a function's body, and stored a reference to that
-        // ACTION! as its binding.  To get a variable for the word, we must
-        // find the right function call on the stack (if any) for the word to
-        // refer to (the FRAME!)
-
-      #if !defined(NDEBUG)
-        if (specifier == SPECIFIED) {
-            printf("Get_Context_Core on relative value without specifier\n");
-            panic (any_word);
-        }
-      #endif
-
-        c = CTX(specifier);
-
-        // We can only check for a match of the underlying function.  If we
-        // checked for an exact match, then the same function body could not
-        // be repurposed for dispatch e.g. in copied, hijacked, or adapted
-        // code, because the identity of the derived function would not match
-        // up with the body it intended to reuse.
-        //
-        assert(Action_Is_Base_Of(ACT(binding), CTX_FRAME_ACTION(c)));
+        c = nullptr;
+        assert(!"relative binding handled above");
     }
 
     *index_out = VAL_WORD_INDEX(any_word);
     return CTX_VARLIST(c);
-  }
 }
 
 
@@ -483,6 +505,8 @@ REBSPC *Derive_Specifier_Core(
     REBSPC *specifier,  // merge this specifier...
     const RELVAL* any_array  // ...onto the one in this array
 ){
+    assert(ANY_ARRAY_KIND(HEART_BYTE(any_array)));
+
     REBARR *old = ARR(BINDING(any_array));
 
     // If any specifiers in a chain are inaccessible, the whole thing is.
@@ -1842,10 +1866,13 @@ REBNATIVE(intern_p)
 {
     INCLUDE_PARAMS_OF_INTERN_P;
 
+    REBVAL *where = ARG(where);
+    REBVAL *data = ARG(data);
+
     // !!! This behavior is being tried differently; leave it named INTERN*
     // for the moment...
     //
-    return rebValue(Lib(MUTABLE), Lib(IN), ARG(where), ARG(data));
+    return rebValue(Lib(MUTABLE), Lib(IN), where, data);
 
 /*
     assert(IS_BLOCK(ARG(data)));

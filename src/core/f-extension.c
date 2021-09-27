@@ -188,6 +188,7 @@ REBNATIVE(load_extension)
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 
     REBCTX *module_ctx = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
+    mutable_LINK(Patches, module_ctx) = Lib_Context;
 
     PG_Next_Native_Dispatcher = dispatchers;
     PG_Currently_Loading_Module = module_ctx;
@@ -238,8 +239,6 @@ REBNATIVE(load_extension)
     // !!! We currently are pushing all extensions into the lib context so
     // they are seen by every module.  This is an interim step to keep things
     // running, but a better strategy is needed.
-    //
-    // !!! sys.import*/into should work, but path mechanics are clunky.
     //
     rebElide("sys.import*/into lib", script, module);
 

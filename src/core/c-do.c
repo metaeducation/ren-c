@@ -148,16 +148,19 @@ void Detect_Feed_Pointer_Maybe_Fetch(
         RELVAL *tail = ARR_TAIL(reified);
         RELVAL *item = ARR_HEAD(reified);
 
-        // !!! EXTREMELY slow method...this is far from optimal in many ways.
-        // Complete rethink needed, but try to get it working first.  We
+        // !!!  Complete rethink needed, but try to get it working first.  We
         // really need to know which cells were spliced and which were scanned,
         // and the best way to do that is bind as we go.
 
         for (; item != tail; ++item) {  // now virtual bind
-            if (ANY_ARRAY(item) and BINDING(item) == nullptr)
-                mutable_BINDING(item) = context;
+            if (ANY_ARRAY(item)) {
+                if (BINDING(item) == nullptr)
+                    mutable_BINDING(item) = context;
+            }
             else {
-                Bind_Values_Deep(item, item + 1, CTX_ARCHETYPE(context));
+                DECLARE_LOCAL (temp);
+                Derelativize(temp, item, SPC(context));
+                Move_Cell(item, temp);
             }
         }
 

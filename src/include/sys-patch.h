@@ -124,6 +124,12 @@ inline static void Virtual_Bind_Patchify(
 ){
     assert(kind == REB_WORD or kind == REB_SET_WORD);
 
+    // !!! Stack on a module's inheritance...it doesn't get it from the
+    // patched form by default.
+    //
+    if (CTX_TYPE(ctx) == REB_MODULE and LINK(Patches, ctx) != nullptr)
+        Virtual_Bind_Patchify(any_array, CTX(LINK(Patches, ctx)), kind);
+
     REBARR *patch = Alloc_Singular(
         FLAG_FLAVOR(PATCH)
             | NODE_FLAG_MANAGED

@@ -537,7 +537,7 @@ REBNATIVE(func_p)
         ARG(spec),
         ARG(body),
         MKF_RETURN | MKF_KEYWORDS,
-        1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
+        1 + IDX_DETAILS_2  // archetype and one array slot (will be filled)
     );
 
     return Init_Action(D_OUT, func, ANONYMOUS, UNBOUND);
