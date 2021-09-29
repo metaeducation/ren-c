@@ -86,8 +86,8 @@ REBNATIVE(reduce)
 
         if (not IS_NULLED(ARG(predicate))) {  // post-process result if needed
             REBVAL *processed = rebValue(
-                META_VALUE, predicate, rebQ(D_OUT)
-            );  // !!! "^" instead of META_VALUE causes crash, investigate
+                Lib(META), predicate, rebQ(D_OUT)
+            );
             if (processed) {
                 if (Is_Void(processed)) {
                     rebRelease(processed);
@@ -348,7 +348,7 @@ REB_R Compose_To_Stack_Core(
                 predicate
                 and not doubled_group
             ){
-                insert = rebValue(META_VALUE, predicate, rebQ(out));
+                insert = rebValue(Lib(META), predicate, rebQ(out));
 
                 if (insert == nullptr) {
                     // leave alone

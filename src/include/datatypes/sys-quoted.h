@@ -349,8 +349,6 @@ inline static RELVAL *Isotopic_Unquotify(RELVAL *v, REBLEN depth) {
 
 //=//// META QUOTING ///////////////////////////////////////////////////////=//
 
-#define META_VALUE &PG_Meta_Value
-#define THE_VALUE &PG_The_Value
 
 // Meta quoting is almost exactly like isotopic quoting, but it has a twist
 // that NULL does not become a single tick mark (') but rather it stays as

@@ -464,8 +464,6 @@ static void Init_Root_Vars(void)
 static void Shutdown_Root_Vars(void)
 {
     RESET(&PG_End_Cell);
-    PG_Meta_Value = nullptr;
-    PG_The_Value = nullptr;
     RESET(&PG_Unset_Value);
     RESET(&PG_Void_Value);
 
@@ -1017,17 +1015,17 @@ void Startup_Core(void)
     // Startup_Lib() they were created and bound, but the natives weren't
     // available to assign to them...do it here for now.
     //
-    ensureNullptr(PG_Meta_Value) = Append_Context(Lib_Context, nullptr, PG_Caret_Symbol);
-    ensureNullptr(PG_The_Value) = Append_Context(Lib_Context, nullptr, PG_At_Symbol);
+    REBVAL *lib_caret = Append_Context(Lib_Context, nullptr, PG_Caret_Symbol);
+    REBVAL *lib_at = Append_Context(Lib_Context, nullptr, PG_At_Symbol);
 
-    Init_Any_Word_Bound(PG_Meta_Value, REB_WORD, Lib_Context, PG_Caret_Symbol, INDEX_ATTACHED);
-    mutable_KIND3Q_BYTE(PG_Meta_Value) = REB_SYMBOL;
+    Init_Any_Word_Bound(lib_caret, REB_WORD, Lib_Context, PG_Caret_Symbol, INDEX_ATTACHED);
+    mutable_KIND3Q_BYTE(lib_caret) = REB_SYMBOL;
 
-    Init_Any_Word_Bound(PG_The_Value, REB_WORD, Lib_Context, PG_At_Symbol, INDEX_ATTACHED);
-    mutable_KIND3Q_BYTE(PG_The_Value) = REB_SYMBOL;
+    Init_Any_Word_Bound(lib_at, REB_WORD, Lib_Context, PG_At_Symbol, INDEX_ATTACHED);
+    mutable_KIND3Q_BYTE(lib_at) = REB_SYMBOL;
 
-    Set_Var_May_Fail(PG_Meta_Value, SPECIFIED, Lib(META), SPECIFIED);
-    Set_Var_May_Fail(PG_The_Value, SPECIFIED, Lib(THE), SPECIFIED);
+    Set_Var_May_Fail(lib_caret, SPECIFIED, Lib(META), SPECIFIED);
+    Set_Var_May_Fail(lib_at, SPECIFIED, Lib(THE), SPECIFIED);
 
     // boot->generics is the list in %generics.r
     //
