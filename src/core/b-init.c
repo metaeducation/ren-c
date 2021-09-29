@@ -95,8 +95,12 @@ static void Check_Basics(void)
 
     //=//// CHECK REBSER INFO PLACEMENT ///////////////////////////////////=//
 
-    // REBSER places the `info` bits exactly after a REBVAL so they can do
-    // double-duty as terminator for that REBVAL when enumerated as an ARRAY.
+    // REBSER historically placed the `info` bits exactly after a REBVAL so
+    // they could do double-duty as terminator for that REBVAL when enumerated
+    // as an ARRAY.  Arrays now are enumerated according to their stored
+    // length, and only have termination in some debug builds.  However the
+    // phenomenon still has some leverage by ensuring the "not a cell" bit in
+    // the info field is set--which helps catch stray reads or writes.
 
   blockscope {
     size_t offset = offsetof(REBSER, info.flags);  // variable avoids warning
