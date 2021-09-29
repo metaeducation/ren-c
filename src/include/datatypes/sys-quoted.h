@@ -166,7 +166,7 @@ inline static RELVAL *Quotify_Core(
             // The shared word is put in an unbound state, since each quoted
             // instance can be bound differently.
             //
-            VAL_WORD_INDEX_U32(v) = VAL_WORD_INDEX_U32(unquoted);
+            assert(VAL_WORD_INDEX_U32(v) == VAL_WORD_INDEX_U32(unquoted));
             unquoted->extra = v->extra;  // !!! for easier Unbind, review
             Unbind_Any_Word(unquoted);  // so that binding is a spelling
             // leave `v` binding as it was
@@ -238,7 +238,6 @@ inline static void Collapse_Quoted_Internal(RELVAL *v)
         INIT_VAL_WORD_SYMBOL(v, VAL_WORD_SYMBOL(unquoted));
         mutable_HEART_BYTE(v) = HEART_BYTE(unquoted);
         // Note: leave binding as is...
-        VAL_WORD_INDEX_U32(v) = VAL_WORD_INDEX_U32(unquoted);
     }
     else {
         v->payload = unquoted->payload;
