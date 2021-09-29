@@ -55,10 +55,11 @@ if os = 'Windows [
     ]
     append libraries [
         ;
-        ; Already included
+        ; These include bases like GetMessage(), and are already included by
+        ; the Event extension, but needed if you don't build with that.
         ;
-        ;   %user32
-        ;   %advapi32
+        %user32
+        %advapi32
 
         ; GetProcessMemoryInfo()
         ;
