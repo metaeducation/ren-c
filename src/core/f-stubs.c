@@ -314,7 +314,11 @@ void Extra_Init_Any_Context_Checks_Debug(enum Reb_Kind kind, REBCTX *c) {
 //
 void Extra_Init_Action_Checks_Debug(REBACT *a) {
     REBVAL *archetype = ACT_ARCHETYPE(a);
-    assert(VAL_ACTION(archetype) == a);
+
+    // Once it was true that `VAL_ACTION(archetype) == a`.  That's no longer
+    // true, but there might be some checks that apply regarding the two?
+    //
+    UNUSED(archetype);
 
     REBSER *keylist = ACT_KEYLIST(a);
     assert(

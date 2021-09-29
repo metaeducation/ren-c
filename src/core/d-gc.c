@@ -388,11 +388,12 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         assert(Is_Marked(a));
         assert(Is_Marked(VAL_ACTION_SPECIALTY_OR_LABEL(v)));
 
-        // Make sure the [0] slot of the paramlist holds an archetype that is
-        // consistent with the paramlist itself.
+        // We used to check the [0] slot of the details holds an archetype
+        // that is consistent with the details itself.  That is no longer true
+        // (by design), see HIJACK and COPY of actions for why.  But
         //
         REBVAL *archetype = ACT_ARCHETYPE(a);
-        assert(a == VAL_ACTION(archetype));
+        UNUSED(archetype);
         break; }
 
       case REB_QUOTED:
@@ -513,7 +514,7 @@ void Assert_Array_Marked_Correctly(const REBARR *a) {
         // because of the potential for overflowing the C stack with calls
         // to Queue_Mark_Function_Deep.
 
-        REBARR *details = ACT_DETAILS(VAL_ACTION(archetype));
+        REBARR *details = ACT_IDENTITY(VAL_ACTION(archetype));
         assert(Is_Marked(details));
 
         REBARR *list = ACT_SPECIALTY(VAL_ACTION(archetype));

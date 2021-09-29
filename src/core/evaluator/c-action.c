@@ -1247,8 +1247,8 @@ void Push_Action(
     assert(NOT_EVAL_FLAG(f, RUNNING_ENFIX));
 
     STATIC_ASSERT(EVAL_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
-    REBARR *details = ACT_DETAILS(act);
-    if (f->flags.bits & details->leader.bits & DETAILS_FLAG_IS_BARRIER)
+    REBARR *identity = ACT_IDENTITY(act);
+    if (f->flags.bits & identity->leader.bits & DETAILS_FLAG_IS_BARRIER)
         fail (Error_Expression_Barrier_Raw());
 
     REBLEN num_args = ACT_NUM_PARAMS(act);  // includes specialized + locals

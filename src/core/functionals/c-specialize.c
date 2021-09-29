@@ -57,10 +57,6 @@ enum {
 //
 REB_R Specializer_Dispatcher(REBFRM *f)
 {
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    assert(ARR_LEN(details) == IDX_SPECIALIZER_MAX);  // just archetype!
-    UNUSED(details);
-
     REBCTX *exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
 
     INIT_FRM_PHASE(f, CTX_FRAME_ACTION(exemplar));

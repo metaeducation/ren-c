@@ -198,6 +198,24 @@ inline static char VAL_RETURN_SIGNAL(const RELVAL *v) {
 #define INIT_VAL_ACTION_SPECIALTY_OR_LABEL              INIT_VAL_NODE2
 
 
+// An action's details array is stored in the archetype, which is the first
+// element of the action array...which is *usually* the same thing as the
+// action array itself, -but not always-.  Hijackings fiddle with this, and
+// a COPY of an action will get the details array of what it copied...not
+// itself.  So an archetype represents -an- action, but it may be a hijacked
+// action from what it once was (much like a word reference).
+//
+inline static REBARR *ACT_DETAILS(REBACT *a) {
+    return x_cast(REBARR*,
+        x_cast(REBVAL*, x_cast(REBSER*, a)->content.dynamic.data)
+            ->payload.Any.first.node
+    );
+}  // ARR() has debug cost, not defined yet
+
+inline static REBARR *ACT_IDENTITY(REBACT *a)
+  { return x_cast(REBARR*, a); }
+
+
 inline static REBCTX *VAL_ACTION_BINDING(REBCEL(const*) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     return CTX(BINDING(v));
@@ -219,7 +237,7 @@ inline static void INIT_VAL_ACTION_BINDING(
 // archetype is updated to match its container.
 
 #define ACT_ARCHETYPE(a) \
-    SER_AT(REBVAL, ACT_DETAILS(a), 0)
+    SER_AT(REBVAL, ACT_IDENTITY(a), 0)
 
 
 //=//// PARAMLIST, EXEMPLAR, AND PARTIALS /////////////////////////////////=//
@@ -280,10 +298,10 @@ inline static REBPAR *ACT_PARAMS_HEAD(REBACT *a) {
 #define mutable_LINK_DISPATCHER(a)      (a)->link.any.cfunc
 
 #define ACT_DISPATCHER(a) \
-    LINK_DISPATCHER(ACT_DETAILS(a))
+    LINK_DISPATCHER(ACT_IDENTITY(a))
 
 #define INIT_ACT_DISPATCHER(a,cfunc) \
-    mutable_LINK_DISPATCHER(ACT_DETAILS(a)) = cast(CFUNC*, (cfunc))
+    mutable_LINK_DISPATCHER(ACT_IDENTITY(a)) = cast(CFUNC*, (cfunc))
 
 
 #define DETAILS_AT(a,n) \
@@ -334,8 +352,8 @@ inline static void Init_Key(REBKEY *dest, const REBSYM *symbol)
 // where information for HELP is saved, and it's how modules store out-of-band
 // information that doesn't appear in their body.
 
-#define mutable_ACT_META(a)     mutable_MISC(DetailsMeta, ACT_DETAILS(a))
-#define ACT_META(a)             MISC(DetailsMeta, ACT_DETAILS(a))
+#define mutable_ACT_META(a)     mutable_MISC(DetailsMeta, ACT_IDENTITY(a))
+#define ACT_META(a)             MISC(DetailsMeta, ACT_IDENTITY(a))
 
 
 inline static REBACT *VAL_ACTION(REBCEL(const*) v) {
@@ -413,6 +431,9 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
     if (derived == base)
         return true;  // fast common case (review how common)
 
+    if (ACT_DETAILS(derived) == ACT_IDENTITY(base))
+        return true;  // Covers COPY + HIJACK cases (seemingly)
+
     REBSER *keylist_test = ACT_KEYLIST(derived);
     REBSER *keylist_base = ACT_KEYLIST(base);
     while (true) {
@@ -480,10 +501,10 @@ static inline REBVAL *Init_Action_Core(
   #if !defined(NDEBUG)
     Extra_Init_Action_Checks_Debug(a);
   #endif
-    Force_Series_Managed(ACT_DETAILS(a));
+    Force_Series_Managed(ACT_IDENTITY(a));
 
     Reset_Cell_Header_Untracked(TRACK(out), REB_ACTION, CELL_MASK_ACTION);
-    INIT_VAL_ACTION_DETAILS(out, ACT_DETAILS(a));
+    INIT_VAL_ACTION_DETAILS(out, ACT_IDENTITY(a));
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_ACTION_BINDING(out, binding);
 

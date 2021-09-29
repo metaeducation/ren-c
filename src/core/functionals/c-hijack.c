@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2016-2020 Ren-C Open Source Contributors
+// Copyright 2016-2021 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -19,48 +19,63 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// HIJACK is a speculative and somewhat risky mechanism for replacing calls
-// to one function's identity--with another function.  This is most sensible
-// (and most efficient) when the frames of the functions match--e.g. when the
-// "hijacker" is an ADAPT or ENCLOSE of a copy of the "victim".  But there
-// is an attempt to support the case when the functions are independent.
+// HIJACK is a tricky-but-useful mechanism for replacing calls to one function
+// with another function, based on identity.  This is distinct from overwriting
+// a variable, because all references are affected:
 //
-//     >> foo: func [x] [x + 1]
-//     >> another-foo: :foo
+//     >> victim: func [] [print "This gets hijacked."]
 //
-//     >> old-foo: copy :foo
+//     >> reference: :victim  ; both words point to the same function identity
 //
-//     >> foo 10
-//     == 11
+//     >> victim
+//     This gets hijacked.
 //
-//     >> another-foo
-//     == 11
+//     >> reference
+//     This gets hijacked.
 //
-//     >> old-foo 10
-//     == 11
+//     >> hijack :victim (func [] [print "HIJACK!"])
 //
-//     >> hijack :foo func [x] [(old-foo x) + 20]
+//     >> victim
+//     HIJACK!
 //
-//     >> foo 10
-//     == 31  ; HIJACK'd!
+//     >> reference
+//     HIJACK!
 //
-//     >> another-foo 10
-//     == 31  ; variable holds same ACTION! identity as foo, HIJACK effects
+// Though it originated as a somewhat hacky experiment, it was solidified as
+// it became increasingly leaned on for important demos.  HIJACK is now
+// considered to be safe for mezzanine usages (where appropriate).
 //
-//     >> old-foo 10
-//     == 11  ; was a COPY, so different identity--HIJACK does not effect
+//=//// NOTES //////////////////////////////////////////////////////////////=//
 //
-// !!! This feature is not well tested, and is difficult for users to apply
-// correctly.  However, some important demos--like the Web REPL--lean on the
-// feature to get their work done.  It should be revisited and vetted.
+// * Specializations, adaptations, enclosures, or other compositional tools
+//   hold "references" to functions internally.  These references are also
+//   affected by the hijacking, which means it's easy to get infinite loops:
+//
+//       >> hijack :load (adapt :load [print "LOADING!"])
+//
+//       >> load "<for example>"
+//       LOADING!
+//       LOADING!
+//       LOADING!  ; ... infinite loop
+//
+//   The problem there is that the adaptation performs its printout and then
+//   falls through to the original LOAD, which is now the hijacked version
+//   that has the adaptation.  Working around this problem means remembering
+//   to ADAPT a COPY:
+//
+//       >> hijack :load (adapt copy :load [print "LOADING!"])
+//
+//       >> load "<for example>"
+//       LOADING!
+//       == [<for example>]
+//
+// * Hijacking is only efficient when the frames of the functions match--e.g.
+//   when the "hijacker" is an ADAPT or ENCLOSE of a copy of the "victim".  But
+//   if the frames don't line up, there's an attempt to remap the parameters in
+//   the frame based on their name.  This should be avoided if possible.
 //
 
 #include "sys-core.h"
-
-enum {
-    IDX_HIJACKER_HIJACKER = 1,  // Relativized block to run before Adaptee
-    IDX_HIJACKER_MAX
-};
 
 
 //
@@ -172,25 +187,43 @@ bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
 //  Hijacker_Dispatcher: C
 //
 // A hijacker takes over another function's identity, replacing it with its
-// own implementation, injecting directly into the paramlist and body_holder
-// nodes held onto by all the victim's references.
+// own implementation.  It leaves the details array intact (in case it is
+// being used by some other COPY of the action), but slips its own archetype
+// into the [0] slot of that array.
 //
 // Sometimes the hijacking function has the same underlying function
 // as the victim, in which case there's no need to insert a new dispatcher.
-// The hijacker just takes over the identity.  But otherwise it cannot,
-// and a "shim" is needed...since something like an ADAPT or SPECIALIZE
-// or a MAKE FRAME! might depend on the existing paramlist shape.
+// The hijacker just takes over the identity.  But otherwise it cannot, and
+// it's not legitimate to reshape the exemplar of the victim (as something like
+// an ADAPT or SPECIALIZE or a MAKE FRAME! might depend on the existing
+// paramlist shape of the identity.)  Those cases need this "shim" dispatcher.
 //
 REB_R Hijacker_Dispatcher(REBFRM *f)
 {
-    REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
-    REBVAL *hijacker = DETAILS_AT(details, IDX_HIJACKER_HIJACKER);
+    // The FRM_PHASE() here is the identity that the hijacker has taken over;
+    // but the actual hijacker is in the archetype.
 
-    // We need to build a new frame compatible with the hijacker, and
-    // transform the parameters we've gathered to be compatible with it.
+    REBACT *phase = FRM_PHASE(f);
+    REBACT *hijacker = VAL_ACTION(ACT_ARCHETYPE(phase));
+
+    // If the hijacked function was called directly -or- by an adaptation or
+    // specalization etc. which was made *after* the hijack, the frame should
+    // be compatible.  Check by seeing if the keylists are derived.
     //
-    if (Redo_Action_Maybe_Stale_Throws(f->out, f, VAL_ACTION(hijacker)))
+    REBSER *exemplar_keylist = CTX_KEYLIST(ACT_EXEMPLAR(hijacker));
+    REBSER *keylist = CTX_KEYLIST(CTX(f->varlist));
+    while (true) {
+        if (keylist == exemplar_keylist)
+            return ACT_DISPATCHER(hijacker)(f);
+        if (keylist == LINK(Ancestor, keylist))  // terminates with self ref.
+            break;
+        keylist = LINK(Ancestor, keylist);
+    }
+
+    // Otherwise, we assume the frame was built for the function prior to
+    // the hijacking...and has to be remapped.
+    //
+    if (Redo_Action_Maybe_Stale_Throws(f->out, f, hijacker))
         return R_THROWN;
 
     return f->out;  // Note: may have OUT_NOTE_STALE, hence invisible
@@ -220,48 +253,19 @@ REBNATIVE(hijack)
     if (victim == hijacker)
         return nullptr;  // permitting no-op hijack has some practical uses
 
-    REBARR *victim_details = ACT_DETAILS(victim);
-    REBARR *hijacker_details = ACT_DETAILS(hijacker);
-
-    REBVAL *victim_archetype = ACT_ARCHETYPE(victim);
+    REBARR *victim_identity = ACT_IDENTITY(victim);
+    REBARR *hijacker_identity = ACT_IDENTITY(hijacker);
 
     if (Action_Is_Base_Of(victim, hijacker)) {
         //
         // Should the paramlists of the hijacker and victim match, that means
         // any ADAPT or CHAIN or SPECIALIZE of the victim can work equally
         // well if we just use the hijacker's dispatcher directly.  This is a
-        // reasonably common case, and especially common when putting the
-        // originally hijacked function back.
+        // reasonably common case, and especially common when putting a copy
+        // of the originally hijacked function back.
 
-        mutable_LINK_DISPATCHER(victim_details)
-            = cast(CFUNC*, LINK_DISPATCHER(hijacker_details));
-
-        // For the victim to act like the hijacker, it must use the same
-        // exemplar.  Update the specialty regardless of whether the paramlist
-        // matched *exactly* (Note: paramlist determined from the specialty)
-        //
-        INIT_VAL_ACTION_SPECIALTY_OR_LABEL(
-            victim_archetype,
-            ACT_SPECIALTY(hijacker)
-        );
-
-        // !!! It may be worth it to optimize some dispatchers to depend on
-        // ARR_SINGLE(info) being correct.  That would mean hijack reversals
-        // would need to restore the *exact* capacity.  Review.
-
-        REBLEN details_len = ARR_LEN(hijacker_details);
-        if (SER_REST(victim_details) < details_len + 1)
-            EXPAND_SERIES_TAIL(
-                victim_details,
-                details_len + 1 - SER_REST(victim_details)
-            );
-
-        const RELVAL *src_tail = ARR_TAIL(hijacker_details);
-        RELVAL *src = ARR_HEAD(hijacker_details) + 1;
-        RELVAL *dest = ARR_HEAD(victim_details) + 1;
-        for (; src != src_tail; ++src, ++dest)
-            Copy_Cell_Core(dest, src, CELL_MASK_ALL);
-        SET_SERIES_LEN(victim_details, details_len);
+        mutable_LINK_DISPATCHER(victim_identity)
+            = cast(CFUNC*, LINK_DISPATCHER(hijacker_identity));
     }
     else {
         // A mismatch means there could be someone out there pointing at this
@@ -274,18 +278,14 @@ REBNATIVE(hijack)
         // process of building a new frame.  But in general one basically
         // needs to do a new function call.
         //
-        mutable_LINK_DISPATCHER(victim_details)
+        mutable_LINK_DISPATCHER(victim_identity)
             = cast(CFUNC*, &Hijacker_Dispatcher);
-
-        assert(IDX_HIJACKER_MAX == 2);
-        if (ARR_LEN(victim_details) < 2)
-            Alloc_Tail_Array(victim_details);
-        Copy_Cell(
-            ARR_AT(victim_details, IDX_HIJACKER_HIJACKER),
-            ARG(hijacker)
-        );
-        SET_SERIES_LEN(victim_details, 2);
     }
+
+    // The hijacker is no longer allowed to corrupt details arrays.
+    // It may only move the archetype into the [0] slot of the identity.
+
+    Copy_Cell(ACT_ARCHETYPE(victim), ACT_ARCHETYPE(hijacker));
 
     // !!! What should be done about MISC(victim_paramlist).meta?  Leave it
     // alone?  Add a note about the hijacking?  Also: how should binding and

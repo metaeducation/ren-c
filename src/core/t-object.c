@@ -783,7 +783,7 @@ REBNATIVE(set_meta)
     REBVAL *v = ARG(value);
 
     if (IS_ACTION(v))
-        mutable_MISC(DetailsMeta, ACT_DETAILS(VAL_ACTION(v))) = meta_ctx;
+        mutable_MISC(DetailsMeta, ACT_IDENTITY(VAL_ACTION(v))) = meta_ctx;
     else
         mutable_MISC(VarlistMeta, CTX_VARLIST(VAL_CONTEXT(v))) = meta_ctx;
 

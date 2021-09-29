@@ -24,6 +24,29 @@
 
 #include "sys-core.h"
 
+
+//
+//  Copied_Dispatcher: C
+//
+// Update action identity that was pushed.
+//
+REB_R Copied_Dispatcher(REBFRM *f)
+{
+    REBVAL *archetype = ACT_ARCHETYPE(FRM_PHASE(f));
+
+    //REBCTX *exemplar = ACT_EXEMPLAR(FRM_PHASE(f));
+
+    INIT_FRM_PHASE(f, VAL_ACTION(archetype));
+    //INIT_FRM_BINDING(f, CTX_FRAME_BINDING(exemplar));
+
+    // !!! Is it necessary to call REDO or could we just go ahead and call
+    // the dispatcher ourself?
+
+    return R_REDO_UNCHECKED; // redo uses the updated phase and binding
+}
+
+
+
 static bool Same_Action(REBCEL(const*) a, REBCEL(const*) b)
 {
     assert(CELL_KIND(a) == REB_ACTION and CELL_KIND(b) == REB_ACTION);
@@ -171,6 +194,38 @@ REBTYPE(Action)
     REBACT *act = VAL_ACTION(action);
 
     switch (ID_OF_SYMBOL(verb)) {
+
+  //=//// COPY /////////////////////////////////////////////////////////////=//
+
+    // Being able to COPY functions was added so that you could create a new
+    // function identity which behaved the same as an existing function, but
+    // kept working if the original function was HIJACK'ed.  (See %c-hijack.c)
+    // To do this means being able to create an independent identity that can
+    // run the same code without needing to invoke the prior identity to do so.
+    //
+    // (By contrast: specialization also creates a new identity, but then falls
+    // through via a reference to the old identity to run the implementation.
+    // Hence hijacking a function that has been specialized will hijack all of
+    // its specializations.)
+    //
+    // Originally COPY was done just by copying the details array.  But that
+    // puts two copies of the details array in play--which can be technically
+    // dangerous, since the relationship between a function dispatcher and its
+    // details is currently treated as a black box.  (The array could contain a
+    // reference to an arbitrary C pointer, which might get freed in one clone
+    // with an extant reference still lingering in the other.)
+    //
+    // The modified solution tweaks it so that the identity array for an
+    // action is not necessarily where it looks for its ACT_DETAILS(), with
+    // the details instead coming out of the archetype slot [0] of that array.
+    //
+    // !!! There are higher-level interesting mechanics that might be called
+    // COPY that aren't covered at all here.  For instance: Someone might like
+    // to have a generator that counts from 1 to 10 that is at 5, and be able
+    // to COPY it...then have two generators that will count from 5 to 10
+    // independently.  That requires methodization and cooperation with the
+    // specific dispatcher.
+
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
 
@@ -183,42 +238,36 @@ REBTYPE(Action)
             // !!! always "deep", allow it?
         }
 
-        // Copying functions creates another handle which executes the same
-        // code, yet has a distinct identity.  This means it would not be
-        // HIJACK'd if the function that it was copied from was hijacked.
-
-        REBCTX *meta = ACT_META(act);  // !!! Note: not a copy of meta
-
         // If the function had code, then that code will be bound relative
         // to the original paramlist that's getting hijacked.  So when the
         // proxy is called, we want the frame pushed to be relative to
         // whatever underlied the function...even if it was foundational
         // so `underlying = VAL_ACTION(value)`
 
-        REBLEN details_len = ARR_LEN(ACT_DETAILS(act));
         REBACT *proxy = Make_Action(
             ACT_SPECIALTY(act),  // not changing the interface
-            ACT_DISPATCHER(act),
-            details_len  // details array capacity
+            ACT_DISPATCHER(act),  // have to preserve in case original hijacked
+            //
+            // While the copy doesn't need any details array of its own, it
+            // has to be a dynamic allocation in order for ACT_DETAILS() to
+            // assume the array is dynamic and beeline for the array.  We put
+            // a dummy value ~copy~ in the array.  We assume this is better
+            // than making ACT_DETAILS() have to check the dynamic series bit,
+            // just because COPY on actions is so rare.
+            2
         );
 
+        REBARR *details = ACT_DETAILS(proxy);
+        Init_Bad_Word(ARR_AT(details, 1), Canon(COPY));  // dummy ~copy~
+
+        REBCTX *meta = ACT_META(act);
         assert(ACT_META(proxy) == nullptr);
-        mutable_ACT_META(proxy) = meta;
+        mutable_ACT_META(proxy) = meta;  // !!! Note: not a copy of meta
 
         if (GET_ACTION_FLAG(act, IS_NATIVE))
             SET_ACTION_FLAG(proxy, IS_NATIVE);
 
-        // A new body_holder was created inside Make_Action().  Rare case
-        // where we can bit-copy a possibly-relative value.
-        //
-      blockscope {
-        const RELVAL *src_tail = ARR_TAIL(ACT_DETAILS(act));
-        RELVAL *src = ARR_HEAD(ACT_DETAILS(act)) + 1;
-        RELVAL *dest = ARR_HEAD(ACT_DETAILS(proxy)) + 1;
-        for (; src != src_tail; ++src, ++dest)
-            Copy_Cell(dest, src);
-        SET_SERIES_LEN(ACT_DETAILS(proxy), details_len);
-      }
+        Copy_Cell(ACT_ARCHETYPE(proxy), ACT_ARCHETYPE(act));
 
         return Init_Action(
             D_OUT,

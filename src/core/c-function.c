@@ -1062,11 +1062,9 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
     // the top of the returned body?
     //
     while (ACT_DISPATCHER(a) == &Hijacker_Dispatcher) {
-        a = VAL_ACTION(ARR_AT(ACT_DETAILS(a), 1));
+        a = VAL_ACTION(ACT_ARCHETYPE(a));
         // !!! Review what should happen to binding
     }
-
-    REBARR *details = ACT_DETAILS(a);
 
     // !!! Should the binding make a difference in the returned body?  It is
     // exposed programmatically via CONTEXT OF.
@@ -1084,6 +1082,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
 
+        REBARR *details = ACT_DETAILS(a);
         RELVAL *body = ARR_AT(details, IDX_DETAILS_1);
 
         // The PARAMLIST_HAS_RETURN tricks for definitional return make it
@@ -1167,6 +1166,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
     }
 
     if (ACT_DISPATCHER(a) == &Generic_Dispatcher) {
+        REBARR *details = ACT_DETAILS(a);
         REBVAL *verb = DETAILS_AT(details, 1);
         assert(IS_WORD(verb));
         Copy_Cell(out, verb);
@@ -1307,9 +1307,9 @@ REBNATIVE(tweak)
     }
 
     if (VAL_LOGIC(ARG(enable)))
-        ACT_DETAILS(act)->leader.bits |= flag;
+        ACT_IDENTITY(act)->leader.bits |= flag;
     else
-        ACT_DETAILS(act)->leader.bits &= ~flag;
+        ACT_IDENTITY(act)->leader.bits &= ~flag;
 
     RETURN (ARG(action));
 }

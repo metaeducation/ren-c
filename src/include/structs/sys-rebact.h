@@ -159,16 +159,16 @@
 
 
 #define SET_ACTION_FLAG(act,name) \
-    SET_SUBCLASS_FLAG(DETAILS, ACT_DETAILS(act), name)
+    SET_SUBCLASS_FLAG(DETAILS, ACT_IDENTITY(act), name)
 
 #define GET_ACTION_FLAG(act,name) \
-    GET_SUBCLASS_FLAG(DETAILS, ACT_DETAILS(act), name)
+    GET_SUBCLASS_FLAG(DETAILS, ACT_IDENTITY(act), name)
 
 #define CLEAR_ACTION_FLAG(act,name) \
-    CLEAR_SUBCLASS_FLAG(DETAILS, ACT_DETAILS(act), name)
+    CLEAR_SUBCLASS_FLAG(DETAILS, ACT_IDENTITY(act), name)
 
 #define NOT_ACTION_FLAG(act,name) \
-    NOT_SUBCLASS_FLAG(DETAILS, ACT_DETAILS(act), name)
+    NOT_SUBCLASS_FLAG(DETAILS, ACT_IDENTITY(act), name)
 
 
 // Includes SERIES_FLAG_DYNAMIC because an action's paramlist is always
@@ -193,7 +193,3 @@
         | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* details */ \
         | FLAG_FLAVOR(PARTIALS) \
         /* MISC is unused at this time (could be paramlist cache?) */ )
-
-
-inline static REBARR *ACT_DETAILS(REBACT *a)
-  { return x_cast(REBARR*, a); }  // ARR() has debug cost, not defined yet

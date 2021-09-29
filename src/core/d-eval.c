@@ -241,7 +241,7 @@ void Do_Process_Action_Checks_Debug(REBFRM *f) {
 
     //=//// v-- BELOW CHECKS ONLY APPLY WHEN FRM_PHASE() is VALID ////////=//
 
-    assert(IS_DETAILS(ACT_DETAILS(phase)));
+    assert(IS_DETAILS(ACT_IDENTITY(phase)));
 }
 
 
