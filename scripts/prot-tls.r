@@ -1887,7 +1887,18 @@ sys.make-scheme [
                 ]
                 return port
             ]
-            return blank
+
+            ; !!! The "port" code from R3-Alpha (and its extensions) was not
+            ; well formalized, and is slated for complete replacement.  As a
+            ; patch that seems to keep a certain situation working, this will
+            ; ignore WRITE requests when the mode is blank...and print a
+            ; message if some other request comes through it doesn't grok.  :-(
+            ;
+            if blank? port.state.mode [
+                return port
+            ]
+            print ["!!! IGNORING TLS PORT MODE IN WRITE:" port.state.mode]
+            return port
         ]
 
         open: func [
