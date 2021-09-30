@@ -305,8 +305,9 @@ REBNATIVE(make_native)
     );
     REBACT *native = Make_Action(
         paramlist,
-        &Pending_Native_Dispatcher, // will be replaced e.g. by COMPILE
-        IDX_TCC_NATIVE_MAX // details len [source module linkname tcc_state]
+        nullptr,  // no partials
+        &Pending_Native_Dispatcher,  // will be replaced e.g. by COMPILE
+        IDX_TCC_NATIVE_MAX  // details len [source module linkname tcc_state]
     );
 
     assert(ACT_META(native) == nullptr);

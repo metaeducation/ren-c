@@ -106,6 +106,7 @@ REBNATIVE(generic)
 
     REBACT *generic = Make_Action(
         paramlist,
+        nullptr,  // no partials
         &Generic_Dispatcher,  // return type is only checked in debug build
         IDX_NATIVE_MAX  // details array capacity
     );

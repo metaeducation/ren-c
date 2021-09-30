@@ -194,8 +194,8 @@ inline static char VAL_RETURN_SIGNAL(const RELVAL *v) {
     (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
 
 #define INIT_VAL_ACTION_DETAILS                         INIT_VAL_NODE1
-#define VAL_ACTION_SPECIALTY_OR_LABEL(v)                SER(VAL_NODE2(v))
-#define INIT_VAL_ACTION_SPECIALTY_OR_LABEL              INIT_VAL_NODE2
+#define VAL_ACTION_PARTIALS_OR_LABEL(v)                 SER(VAL_NODE2(v))
+#define INIT_VAL_ACTION_PARTIALS_OR_LABEL               INIT_VAL_NODE2
 
 
 // An action's details array is stored in the archetype, which is the first
@@ -246,38 +246,23 @@ inline static void INIT_VAL_ACTION_BINDING(
 // before the place where the exemplar is to be found.
 //
 
-#define ACT_SPECIALTY(a) \
-    ARR(VAL_NODE2(ACT_ARCHETYPE(a)))
+#define INODE_Exemplar_TYPE     REBCTX*
+#define INODE_Exemplar_CAST     CTX
+#define HAS_INODE_Exemplar      FLAVOR_DETAILS
 
-#define LINK_PartialsExemplar_TYPE         REBCTX*
-#define LINK_PartialsExemplar_CAST         CTX
-#define HAS_LINK_PartialsExemplar          FLAVOR_PARTIALS
 
 inline static option(REBARR*) ACT_PARTIALS(REBACT *a) {
-    REBARR *list = ACT_SPECIALTY(a);
-    if (IS_PARTIALS(list))
-        return list;
-    return nullptr;
+    return ARR(VAL_NODE2(ACT_ARCHETYPE(a)));
 }
 
-inline static REBCTX *ACT_EXEMPLAR(REBACT *a) {
-    REBARR *list = ACT_SPECIALTY(a);
-    if (IS_PARTIALS(list))
-        list = CTX_VARLIST(LINK(PartialsExemplar, list));
-    assert(IS_VARLIST(list));
-    return CTX(list);
-}
+#define ACT_EXEMPLAR(a) \
+    INODE(Exemplar, (a))
 
 // Note: This is a more optimized version of CTX_KEYLIST(ACT_EXEMPLAR(a)),
 // and also forward declared.
 //
-inline static REBSER *ACT_KEYLIST(REBACT *a) {
-    REBARR *list = ACT_SPECIALTY(a);
-    if (IS_PARTIALS(list))
-        list = CTX_VARLIST(LINK(PartialsExemplar, list));
-    assert(IS_VARLIST(list));
-    return SER(LINK(KeySource, list));
-}
+#define ACT_KEYLIST(a) \
+    SER(LINK(KeySource, ACT_EXEMPLAR(a)))
 
 #define ACT_KEYS_HEAD(a) \
     SER_HEAD(const REBKEY, ACT_KEYLIST(a))
@@ -288,9 +273,7 @@ inline static REBSER *ACT_KEYLIST(REBACT *a) {
 #define ACT_PARAMLIST(a)            CTX_VARLIST(ACT_EXEMPLAR(a))
 
 inline static REBPAR *ACT_PARAMS_HEAD(REBACT *a) {
-    REBARR *list = ACT_SPECIALTY(a);
-    if (IS_PARTIALS(list))
-        list = CTX_VARLIST(LINK(PartialsExemplar, list));
+    REBARR *list = CTX_VARLIST(ACT_EXEMPLAR(a));
     return cast(REBPAR*, list->content.dynamic.data) + 1;  // skip archetype
 }
 
@@ -381,7 +364,9 @@ inline static REBACT *VAL_ACTION(REBCEL(const*) v) {
 
 inline static option(const REBSYM*) VAL_ACTION_LABEL(REBCEL(const *) v) {
     assert(CELL_HEART(v) == REB_ACTION);
-    REBSER *s = VAL_ACTION_SPECIALTY_OR_LABEL(v);
+    REBSER *s = VAL_ACTION_PARTIALS_OR_LABEL(v);
+    if (not s)
+        return ANONYMOUS;
     if (IS_SER_ARRAY(s))
         return ANONYMOUS;  // archetype (e.g. may live in paramlist[0] itself)
     return SYM(s);
@@ -393,9 +378,9 @@ inline static void INIT_VAL_ACTION_LABEL(
 ){
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // archetype R/O
     if (label)
-        INIT_VAL_ACTION_SPECIALTY_OR_LABEL(v, unwrap(label));
+        INIT_VAL_ACTION_PARTIALS_OR_LABEL(v, unwrap(label));
     else
-        INIT_VAL_ACTION_SPECIALTY_OR_LABEL(v, ACT_SPECIALTY(VAL_ACTION(v)));
+        INIT_VAL_ACTION_PARTIALS_OR_LABEL(v, ANONYMOUS);
 }
 
 

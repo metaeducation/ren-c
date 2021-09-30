@@ -107,10 +107,10 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 
     // If there is a PARTIALS list, then push its refinements.
     //
-    REBARR *specialty = ACT_SPECIALTY(act);
-    if (IS_PARTIALS(specialty)) {
-        const RELVAL *word_tail = ARR_TAIL(specialty);
-        const RELVAL *word = ARR_HEAD(specialty);
+    REBARR *partials = try_unwrap(ACT_PARTIALS(act));
+    if (partials) {
+        const RELVAL *word_tail = ARR_TAIL(partials);
+        const RELVAL *word = ARR_HEAD(partials);
         for (; word != word_tail; ++word)
             Copy_Cell(DS_PUSH(), SPECIFIC(word));
     }
@@ -435,13 +435,13 @@ bool Specialize_Action_Throws(
             partials = nullptr;
         }
         else {
-            mutable_LINK(PartialsExemplar, partials) = exemplar;
             Manage_Series(partials);
         }
     }
 
     REBACT *specialized = Make_Action(
-        partials != nullptr ? partials : CTX_VARLIST(exemplar),
+        CTX_VARLIST(exemplar),
+        partials,
         &Specializer_Dispatcher,
         IDX_SPECIALIZER_MAX  // details array capacity
     );
@@ -770,7 +770,8 @@ REBACT *Alloc_Action_From_Exemplar(
     // This code parallels Specialize_Action_Throws(), see comments there
 
     REBACT *action = Make_Action(
-        CTX_VARLIST(exemplar),  // note: no partials
+        CTX_VARLIST(exemplar),
+        nullptr,  // no partials
         dispatcher,
         details_capacity
     );

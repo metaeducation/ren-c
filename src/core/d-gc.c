@@ -386,11 +386,12 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
         REBACT *a = VAL_ACTION(v);
         assert(Is_Marked(a));
-        assert(Is_Marked(VAL_ACTION_SPECIALTY_OR_LABEL(v)));
+        if (VAL_ACTION_PARTIALS_OR_LABEL(v))
+            assert(Is_Marked(VAL_ACTION_PARTIALS_OR_LABEL(v)));
 
         // We used to check the [0] slot of the details holds an archetype
         // that is consistent with the details itself.  That is no longer true
-        // (by design), see HIJACK and COPY of actions for why.  But
+        // (by design), see HIJACK and COPY of actions for why.
         //
         REBVAL *archetype = ACT_ARCHETYPE(a);
         UNUSED(archetype);
@@ -517,9 +518,7 @@ void Assert_Array_Marked_Correctly(const REBARR *a) {
         REBARR *details = ACT_IDENTITY(VAL_ACTION(archetype));
         assert(Is_Marked(details));
 
-        REBARR *list = ACT_SPECIALTY(VAL_ACTION(archetype));
-        if (IS_PARTIALS(list))
-            list = CTX_VARLIST(LINK(PartialsExemplar, list));
+        REBARR *list = CTX_VARLIST(ACT_EXEMPLAR(VAL_ACTION(archetype)));
         assert(IS_VARLIST(list));
     }
     else if (IS_VARLIST(a)) {

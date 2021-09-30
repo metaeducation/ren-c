@@ -76,9 +76,6 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     REBACT *augmentee = VAL_ACTION(ARG(action));
     option(const REBSTR*) label = VAL_ACTION_LABEL(ARG(action));
 
-    if (ACT_PARTIALS(augmentee))  // !!! TBD
-        fail ("AUGMENT doesn't yet work with reordered/partial functions");
-
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
     // pushes descriptors to the stack in groups for each parameter.
 
@@ -161,6 +158,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
 
     REBACT* augmentated = Make_Action(
         paramlist,
+        ACT_PARTIALS(augmentee),  // partials should still work
         &Augmenter_Dispatcher,
         IDX_AUGMENTER_MAX  // same as specialization, just 1 (for archetype)
     );

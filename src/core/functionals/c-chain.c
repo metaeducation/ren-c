@@ -224,7 +224,8 @@ REBNATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     // sliver that includes the partials?
     //
     REBACT *chain = Make_Action(
-        ACT_SPECIALTY(VAL_ACTION(first)),  // same interface as first action
+        ACT_PARAMLIST(VAL_ACTION(first)),  // same interface as first action
+        ACT_PARTIALS(VAL_ACTION(first)),
         &Chainer_Dispatcher,
         IDX_CHAINER_MAX  // details array capacity
     );

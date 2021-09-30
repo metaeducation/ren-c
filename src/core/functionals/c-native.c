@@ -104,6 +104,7 @@ REBACT *Make_Native(
 
     REBACT *native = Make_Action(
         paramlist,
+        nullptr,  // no partials
         dispatcher,  // "dispatcher" is unique to this "native"
         IDX_NATIVE_MAX  // details array capacity
     );
@@ -121,7 +122,8 @@ REBACT *Make_Native(
     if (is_combinator) {
         REBACT *native_combinator = native;
         native = Make_Action(
-            ACT_SPECIALTY(native_combinator),
+            ACT_PARAMLIST(native_combinator),
+            nullptr,  // no partials
             &Combinator_Dispatcher,
             2  // IDX_COMBINATOR_MAX  // details array capacity
         );

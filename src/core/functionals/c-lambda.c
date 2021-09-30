@@ -200,6 +200,7 @@ REBNATIVE(lambda)
 
     REBACT* lambda = Make_Action(
         paramlist,
+        nullptr,  // no partials
         &Lambda_Dispatcher,
         IDX_LAMBDA_MAX  // same as specialization, just 1 (for archetype)
     );

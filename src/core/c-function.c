@@ -885,20 +885,12 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 // ACT_SPECIALTY() definition for more information on how this is laid out.
 //
 REBACT *Make_Action(
-    REBARR *specialty,  // paramlist, exemplar, partials -> exemplar/paramlist
+    REBARR *paramlist,
+    option(REBARR*) partials,
     REBNAT dispatcher,  // native C function called by Eval_Core
     REBLEN details_capacity  // capacity of ACT_DETAILS (including archetype)
 ){
     assert(details_capacity >= 1);  // must have room for archetype
-
-    REBARR *paramlist;
-    if (IS_PARTIALS(specialty)) {
-        paramlist = CTX_VARLIST(LINK(PartialsExemplar, specialty));
-    }
-    else {
-        assert(IS_VARLIST(specialty));
-        paramlist = specialty;
-    }
 
     assert(GET_SERIES_FLAG(paramlist, MANAGED));
     assert(
@@ -938,6 +930,7 @@ REBACT *Make_Action(
     Reset_Cell_Header_Untracked(TRACK(archetype), REB_ACTION, CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(archetype, details);
     mutable_BINDING(archetype) = UNBOUND;
+    INIT_VAL_ACTION_PARTIALS_OR_LABEL(archetype, partials);
 
   #if !defined(NDEBUG)  // notice attempted mutation of the archetype cell
     SET_CELL_FLAG(archetype, PROTECTED);
@@ -950,7 +943,7 @@ REBACT *Make_Action(
     mutable_LINK_DISPATCHER(details) = cast(CFUNC*, dispatcher);
     mutable_MISC(DetailsMeta, details) = nullptr;  // caller can fill in
 
-    INIT_VAL_ACTION_SPECIALTY_OR_LABEL(archetype, specialty);
+    mutable_INODE(Exemplar, details) = CTX(paramlist);
 
     REBACT *act = ACT(details); // now it's a legitimate REBACT
 

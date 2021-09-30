@@ -734,6 +734,7 @@ REBNATIVE(js_native)
 
     REBACT *native = Make_Action(
         paramlist,
+        nullptr,  // no partials
         &JavaScript_Dispatcher,
         IDX_JS_NATIVE_MAX  // details len [source module handle]
     );

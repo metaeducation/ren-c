@@ -186,10 +186,11 @@
     (NODE_FLAG_NODE \
         | SERIES_FLAG_MISC_NODE_NEEDS_MARK  /* meta */ \
         | FLAG_FLAVOR(DETAILS) \
-        /* LINK is dispatcher, a c function pointer, should not mark */ )
+        /* LINK is dispatcher, a c function pointer, should not mark */ \
+        | SERIES_FLAG_INFO_NODE_NEEDS_MARK  /* exemplar */ )
 
 #define SERIES_MASK_PARTIALS \
     (NODE_FLAG_NODE \
-        | SERIES_FLAG_LINK_NODE_NEEDS_MARK  /* details */ \
         | FLAG_FLAVOR(PARTIALS) \
-        /* MISC is unused at this time (could be paramlist cache?) */ )
+        /* LINK is unused at this time */ \
+        /* MISC is unused at this time (could be paramlist cache?) */)

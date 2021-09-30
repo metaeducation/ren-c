@@ -189,7 +189,8 @@ REBNATIVE(does)
 
     if (IS_BLOCK(source)) {
         REBACT *doer = Make_Action(
-            ACT_SPECIALTY(VAL_ACTION(Lib(SURPRISE))),  // same, no args
+            ACT_PARAMLIST(VAL_ACTION(Lib(SURPRISE))),  // same, no args
+            nullptr,  // no partials
             &Block_Dispatcher,  // **SEE COMMENTS**, not quite like plain DO!
             IDX_DOES_MAX  // details array capacity
         );

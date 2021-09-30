@@ -231,9 +231,9 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         dsp_orig,
         SERIES_FLAG_MANAGED | SERIES_MASK_PARTIALS
     );
-    mutable_LINK(PartialsExemplar, partials) = exemplar;
 
     REBACT *reordered = Make_Action(
+        CTX_VARLIST(exemplar),
         partials,
         &Reorderer_Dispatcher,
         IDX_REORDERER_MAX

@@ -388,6 +388,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
     REBACT *a = Make_Action(
         paramlist,
+        nullptr,  // no partials
         &Empty_Dispatcher,  // will be overwritten if non-[] body
         details_capacity  // we fill in details[0], caller fills any extra
     );

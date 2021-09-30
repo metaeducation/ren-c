@@ -245,7 +245,8 @@ REBTYPE(Action)
         // so `underlying = VAL_ACTION(value)`
 
         REBACT *proxy = Make_Action(
-            ACT_SPECIALTY(act),  // not changing the interface
+            ACT_PARAMLIST(act),  // not changing the interface
+            ACT_PARTIALS(act),  // keeping partial specializations
             ACT_DISPATCHER(act),  // have to preserve in case original hijacked
             //
             // While the copy doesn't need any details array of its own, it

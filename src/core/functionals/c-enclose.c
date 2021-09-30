@@ -223,7 +223,8 @@ REBNATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
     // !!! Return result may differ; similar issue comes up with CHAIN
     //
     REBACT *enclosure = Make_Action(
-        ACT_SPECIALTY(VAL_ACTION(inner)),  // same interface as inner
+        ACT_PARAMLIST(VAL_ACTION(inner)),  // same interface as inner
+        ACT_PARTIALS(VAL_ACTION(inner)),
         &Encloser_Dispatcher,
         IDX_ENCLOSER_MAX  // details array capacity => [inner, outer]
     );

@@ -122,7 +122,8 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     // there a better way to do that with phasing?
 
     REBACT *adaptation = Make_Action(
-        ACT_SPECIALTY(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
+        ACT_PARAMLIST(VAL_ACTION(adaptee)),  // reuse partials/exemplar/etc.
+        ACT_PARTIALS(VAL_ACTION(adaptee)),
         &Adapter_Dispatcher,
         IDX_ADAPTER_MAX  // details array capacity => [prelude, adaptee]
     );

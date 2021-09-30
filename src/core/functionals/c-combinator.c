@@ -266,6 +266,7 @@ REBNATIVE(combinator)
 
     REBACT *combinator = Make_Action(
         paramlist,
+        nullptr,  // no partials
         &Combinator_Dispatcher,
         IDX_COMBINATOR_MAX  // details array capacity
     );
