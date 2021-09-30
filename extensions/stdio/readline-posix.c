@@ -102,7 +102,7 @@ inline static unsigned int Term_Remain(STD_TERM *t)
   { return Term_End(t) - t->pos; }
 
 
-static bool Read_Bytes_Interrupted(STD_TERM *t);
+static bool Read_Bytes_Interruptible(bool *interrupted, STD_TERM *t, int timeout);
 
 //
 //  Init_Terminal: C
@@ -172,8 +172,12 @@ STD_TERM *Init_Terminal(void)
     // If we peek the buffer at the moment of the switch, the user must have
     // typed them before the switch and the characters have already been echoed.
     //
-    if (not Read_Bytes_Interrupted(t) and *t->cp != '\0') {
-        //
+    bool interrupted;
+    int timeout = 0;  // do not specify a timeout
+    if (
+        Read_Bytes_Interruptible(&interrupted, t, timeout)
+        and *t->cp != '\0'
+    ){
         // There's no perfect "fix" to dealing with pending characters that
         // were typed during startup.  Consider if the console wishes to remap
         // pressing "a" to show "b".  Trying to guess what on the screen you
@@ -186,6 +190,7 @@ STD_TERM *Init_Terminal(void)
         const char *msg = "[rebuffering]\n";
         WRITE_UTF8(cast(const unsigned char *, msg), strsize(msg));
     }
+    UNUSED(interrupted);  // !!! should we react to Ctrl-C here?
 
     // Now flip back into the mode where reading requires at least 1 character.
     //
@@ -247,8 +252,9 @@ void Quit_Terminal(STD_TERM *t)
 //
 //  Read_Bytes_Interrupted: C
 //
-// Read the next "chunk" of data into the terminal buffer.  If it gets
-// interrupted then return true, else false.
+// Read the next "chunk" of data into the terminal buffer.  If data is read
+// successfully, return true.  If not return false...and `interrupted` will
+// be set if it was a Ctrl-C, otherwise it was a timeout.
 //
 // Note that The read of bytes might end up getting only part of an encoded
 // UTF-8 character.  But it's known how many bytes are expected from the
@@ -262,24 +268,51 @@ void Quit_Terminal(STD_TERM *t)
 // are not *likely* to be pasted in a batch that could overflow READ_BUF_LEN
 // and be split up.
 //
-static bool Read_Bytes_Interrupted(STD_TERM *t)
-{
+static bool Read_Bytes_Interruptible(
+    bool *interrupted,
+    STD_TERM *t,
+    int timeout
+){
     assert(*t->cp == '\0');  // Don't read more bytes if buffer not exhausted
 
+    *interrupted = false;  // default to saying it wasn't interrupted
+
+    // !!! @giuliolunati specifically requested the ability to do a timeout
+    // on POSIX/Android when doing READ-CHAR.  This feature was hacked in as
+    // there was a description of how to do it:
+    //
+    // https://stackoverflow.com/a/3712187
+    //
+    // Better would be to build on top of libuv and timers, and using its
+    // IO system...so it would work on Windows as well.  Also, this does not
+    // distinguish between interruption and cancellation.
+    //
+    if (timeout != 0) {
+        fd_set selectset;
+        struct timeval timeout_tv = {timeout, 0};
+        FD_ZERO(&selectset);
+        FD_SET(STDIN_FILENO, &selectset);
+        int ret = select(STDIN_FILENO + 1, &selectset, NULL, NULL, &timeout_tv);
+        if (ret == 0) {  // timeout
+            return false;
+        }
+        else if (ret == -1) {
+            if (errno == EINTR)
+                goto handle_interruption;
+            rebFail_OS (errno);
+        }
+        else {
+            // stdin has data, read it
+            // (we know stdin is readable, since we only asked for read events
+            // and stdin is the only fd in our select set.
+        }
+    }
+
+  blockscope {
     int len = read(STDIN_FILENO, t->buf, READ_BUF_LEN - 1);  // -1, room for \0
     if (len < 0) {
-        if (errno == EINTR) {
-            //
-            // If we don't clear the error, then every successive read() will
-            // get EINTR.  Hope caller does the handling of true return result.
-            //
-            clearerr(stdin);
-
-            t->cp = t->buf;
-            t->buf[0] = '\0';
-
-            return true;  // Ctrl-C or similar, see sigaction()/SIGINT
-        }
+        if (errno == EINTR)
+            goto handle_interruption;
 
         rebFail_OS (errno);
     }
@@ -287,7 +320,19 @@ static bool Read_Bytes_Interrupted(STD_TERM *t)
     t->buf[len] = '\0';
     t->cp = t->buf;
 
-    return false;  // not interrupted (note we could return `len` if needed)
+    return true;  // success (note we could return `len` if needed)
+  }
+
+  handle_interruption:  // Ctrl-C etc, see sigaction()/SIGINT
+    //
+    // If we don't clear the error, every successive read() gets
+    // EINTR.  Hope caller handles interruption intelligently.
+    //
+    clearerr(stdin);
+    t->cp = t->buf;
+    t->buf[0] = '\0';
+    *interrupted = true;
+    return false;
 }
 
 
@@ -479,7 +524,7 @@ REBVAL *Unrecognized_Key_Sequence(STD_TERM *t, int delta)
 //
 //  Try_Get_One_Console_Event: C
 //
-REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
+REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout)
 {
     REBVAL *e = nullptr;  // *unbuffered* event to return
     REBVAL *e_buffered = nullptr;  // buffered event
@@ -497,7 +542,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
         or (buffered and rebDid("text?", e_buffered))
     );
 
-    // See notes on why Read_Bytes_Interrupted() can wind up splitting UTF-8
+    // See notes on why Read_Bytes_Interruptible() can wind up splitting UTF-8
     // encodings (which can happen with pastes of text).
     //
     // Also see notes there on why escape sequences are anticipated to come
@@ -508,8 +553,9 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
         if (e_buffered)
             return e_buffered;  // pass anything we gathered so far first
 
-        if (Read_Bytes_Interrupted(t))
-            return rebValue("'~halt~");
+        bool interrupted;
+        if (not Read_Bytes_Interruptible(&interrupted, t, timeout))
+            return interrupted ? rebValue("'~halt~") : rebValue("'~timeout~");
 
         assert(*t->cp != '\0');
     }
@@ -547,8 +593,12 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
                 // where the remaining UTF-8 characters *should* be found.
                 // (This should not block.)
                 //
-                if (Read_Bytes_Interrupted(t))
-                    return rebValue("'~halt~");
+                bool interrupted;
+                if (not Read_Bytes_Interruptible(&interrupted, t, timeout)) {
+                    if (interrupted)
+                        return  rebValue("'~halt~");
+                    return rebValue("'~timeout~");
+                }
             }
             assert(*t->cp != '\0');
             encoded[i] = *t->cp;

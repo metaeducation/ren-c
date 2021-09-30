@@ -631,8 +631,11 @@ void Move_Cursor(STD_TERM *t, int count)
 //
 //  Try_Get_One_Console_Event: C
 //
-REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered)
+REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout)
 {
+    if (timeout != 0)
+        fail ("/TIMEOUT not implemented in Windows Stdio");
+
     REBVAL *e = nullptr;  // *unbuffered* event to return
     REBVAL *e_buffered = nullptr;  // buffered event
 

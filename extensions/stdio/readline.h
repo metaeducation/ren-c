@@ -102,7 +102,11 @@ extern void Quit_Terminal(STD_TERM *t);
 // do another operation (process network requests for a real-time chat, etc.)
 // This is at the concept stage at the moment.
 //
-extern REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered);
+extern REBVAL *Try_Get_One_Console_Event(
+    STD_TERM *t,
+    bool buffered,
+    int timeout
+);
 
 // !!! This is what ESCAPE does; it's probably something that should be
 // done at a more granular level of spooling ahead "peeked" console events

@@ -380,9 +380,11 @@ REBNATIVE(read_line)
 //  {Inputs a single character from the input}
 //
 //      return: "Null if end of file or input was aborted (e.g. via ESCAPE)"
-//          [<opt> char! word!]
+//          [<opt> char! word! bad-word!]
 //
 //      /virtual "Return keys like Up, Ctrl-A, or ESCAPE vs. ignoring them"
+//      /timeout "Seconds to wait before returning ~timeout~ if no input"
+//          [integer!]
 //  ]
 //
 REBNATIVE(read_char)
@@ -395,6 +397,20 @@ REBNATIVE(read_char)
 {
     STDIO_INCLUDE_PARAMS_OF_READ_CHAR;
 
+    int timeout;
+    if (not REF(timeout))
+        timeout = 0;
+    else {
+        // !!! Because 0 sounds like "timeout in 0 msec" it could mean return
+        // instantly if no character is available.  It's used to mean "no
+        // timeout" in the quick and dirty implementation added for POSIX, but
+        // this may change.
+        //
+        timeout = VAL_INT32(ARG(timeout));
+        if (timeout == 0)
+            fail ("Use NULL instead of 0 for no /TIMEOUT in READ-CHAR");
+    }
+
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
         //
@@ -404,7 +420,7 @@ REBNATIVE(read_char)
         //
       retry: ;
         const bool buffered = false;
-        REBVAL *e = Try_Get_One_Console_Event(Term_IO, buffered);
+        REBVAL *e = Try_Get_One_Console_Event(Term_IO, buffered, timeout);
         // (^-- it's an ANY-VALUE!, not a R3-Alpha-style EVENT!)
 
         if (e == nullptr) {
@@ -416,6 +432,9 @@ REBNATIVE(read_char)
         if (rebDid("bad-word?", rebQ(e))) {
             if (rebDid(rebQ(e), "= '~halt~"))  // Ctrl-C instead of key
                 rebJumps(Lib(HALT));
+
+            if (rebDid(rebQ(e), "= '~timeout~"))
+                return e;  // just return the timeout answer
 
             // For the moment there aren't any other signals; if there were,
             // they may be interesting to the caller.

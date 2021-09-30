@@ -84,7 +84,7 @@ REBVAL *Read_Line(STD_TERM *t)
     REBVAL *line = nullptr;
     while (line == nullptr) {
         const bool buffered = true;
-        REBVAL *e = Try_Get_One_Console_Event(t, buffered);
+        REBVAL *e = Try_Get_One_Console_Event(t, buffered, 0);
         // (^-- it's an ANY-VALUE!, not a R3-Alpha-style EVENT!)
 
         if (e == nullptr) {
