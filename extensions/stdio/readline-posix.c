@@ -102,7 +102,11 @@ inline static unsigned int Term_Remain(STD_TERM *t)
   { return Term_End(t) - t->pos; }
 
 
-static bool Read_Bytes_Interruptible(bool *interrupted, STD_TERM *t, int timeout);
+static bool Read_Bytes_Interruptible(
+    bool *interrupted,
+    STD_TERM *t,
+    int timeout_msec
+);
 
 //
 //  Init_Terminal: C
@@ -173,9 +177,9 @@ STD_TERM *Init_Terminal(void)
     // typed them before the switch and the characters have already been echoed.
     //
     bool interrupted;
-    int timeout = 0;  // do not specify a timeout
+    int timeout_msec = 0;  // 0 means do not specify a timeout
     if (
-        Read_Bytes_Interruptible(&interrupted, t, timeout)
+        Read_Bytes_Interruptible(&interrupted, t, timeout_msec)
         and *t->cp != '\0'
     ){
         // There's no perfect "fix" to dealing with pending characters that
@@ -271,7 +275,7 @@ void Quit_Terminal(STD_TERM *t)
 static bool Read_Bytes_Interruptible(
     bool *interrupted,
     STD_TERM *t,
-    int timeout
+    int timeout_msec
 ){
     assert(*t->cp == '\0');  // Don't read more bytes if buffer not exhausted
 
@@ -287,9 +291,12 @@ static bool Read_Bytes_Interruptible(
     // IO system...so it would work on Windows as well.  Also, this does not
     // distinguish between interruption and cancellation.
     //
-    if (timeout != 0) {
+    if (timeout_msec != 0) {
         fd_set selectset;
-        struct timeval timeout_tv = {timeout, 0};
+        struct timeval timeout_tv = {  // need to break up milliseconds
+            timeout_msec / 1000,  // first field is seconds
+            (timeout_msec % 1000) * 1000  // second field is microseconds
+        };
         FD_ZERO(&selectset);
         FD_SET(STDIN_FILENO, &selectset);
         int ret = select(STDIN_FILENO + 1, &selectset, NULL, NULL, &timeout_tv);
@@ -524,7 +531,7 @@ REBVAL *Unrecognized_Key_Sequence(STD_TERM *t, int delta)
 //
 //  Try_Get_One_Console_Event: C
 //
-REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout)
+REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
 {
     REBVAL *e = nullptr;  // *unbuffered* event to return
     REBVAL *e_buffered = nullptr;  // buffered event
@@ -554,7 +561,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout)
             return e_buffered;  // pass anything we gathered so far first
 
         bool interrupted;
-        if (not Read_Bytes_Interruptible(&interrupted, t, timeout))
+        if (not Read_Bytes_Interruptible(&interrupted, t, timeout_msec))
             return interrupted ? rebValue("'~halt~") : rebValue("'~timeout~");
 
         assert(*t->cp != '\0');
@@ -594,7 +601,11 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout)
                 // (This should not block.)
                 //
                 bool interrupted;
-                if (not Read_Bytes_Interruptible(&interrupted, t, timeout)) {
+                if (not Read_Bytes_Interruptible(
+                    &interrupted,
+                    t,
+                    timeout_msec
+                )){
                     if (interrupted)
                         return  rebValue("'~halt~");
                     return rebValue("'~timeout~");

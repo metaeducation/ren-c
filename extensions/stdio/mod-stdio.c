@@ -384,7 +384,7 @@ REBNATIVE(read_line)
 //
 //      /virtual "Return keys like Up, Ctrl-A, or ESCAPE vs. ignoring them"
 //      /timeout "Seconds to wait before returning ~timeout~ if no input"
-//          [integer!]
+//          [integer! decimal!]
 //  ]
 //
 REBNATIVE(read_char)
@@ -397,17 +397,21 @@ REBNATIVE(read_char)
 {
     STDIO_INCLUDE_PARAMS_OF_READ_CHAR;
 
-    int timeout;
+    int timeout_msec;
     if (not REF(timeout))
-        timeout = 0;
+        timeout_msec = 0;
     else {
         // !!! Because 0 sounds like "timeout in 0 msec" it could mean return
         // instantly if no character is available.  It's used to mean "no
         // timeout" in the quick and dirty implementation added for POSIX, but
         // this may change.
         //
-        timeout = VAL_INT32(ARG(timeout));
-        if (timeout == 0)
+        if (IS_DECIMAL(ARG(timeout)))
+            timeout_msec = VAL_DECIMAL(ARG(timeout)) * 1000;
+        else
+            timeout_msec = VAL_INT32(ARG(timeout)) * 1000;
+
+        if (timeout_msec == 0)
             fail ("Use NULL instead of 0 for no /TIMEOUT in READ-CHAR");
     }
 
@@ -420,7 +424,7 @@ REBNATIVE(read_char)
         //
       retry: ;
         const bool buffered = false;
-        REBVAL *e = Try_Get_One_Console_Event(Term_IO, buffered, timeout);
+        REBVAL *e = Try_Get_One_Console_Event(Term_IO, buffered, timeout_msec);
         // (^-- it's an ANY-VALUE!, not a R3-Alpha-style EVENT!)
 
         if (e == nullptr) {
