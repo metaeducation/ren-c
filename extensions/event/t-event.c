@@ -209,6 +209,11 @@ void Set_Event_Vars(
     const RELVAL *tail;
     const RELVAL *item = VAL_ARRAY_AT(&tail, block);
     while (item != tail) {
+        if (IS_COMMA(item)) {
+            ++item;
+            continue;
+        }
+
         Derelativize(var, item, specifier);
         ++item;
 
