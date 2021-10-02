@@ -583,9 +583,16 @@ inline static void Prep_Frame_Core(
 // measure, we just sense whether the phase has a return or not.
 //
 inline static REBVAL *D_ARG_Core(REBFRM *f, REBLEN n) {  // 1 for first arg
-    return ACT_HAS_RETURN(FRM_PHASE(f))
-        ? FRM_ARG(f, n + 1)
-        : FRM_ARG(f, n);
+    REBPAR *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
+    REBVAL *arg = FRM_ARG(f, 1);
+    while (
+        VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN
+        or VAL_PARAM_CLASS(param) == PARAM_CLASS_OUTPUT
+    ){
+        ++param;
+        ++arg;
+    }
+    return arg + n - 1;
 }
 #define D_ARG(n) \
     D_ARG_Core(frame_, (n))

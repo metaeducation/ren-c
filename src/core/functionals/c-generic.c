@@ -59,15 +59,9 @@ REB_R Generic_Dispatcher(REBFRM *f)
     const REBSYM *verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
 
     // !!! It's technically possible to throw in locals or refinements at
-    // any point in the sequence.  So this should really be using something
-    // like a First_Unspecialized_Arg() call.  For now, we just handle the
-    // case of a RETURN: sitting in the first parameter slot.
+    // any point in the sequence.  D_ARG() accounts for this...hackily.
     //
-    REBVAL *first_arg;
-    if (ACT_HAS_RETURN(phase))
-        first_arg = FRM_ARG(f, 2);
-    else
-        first_arg = FRM_ARG(f, 1);
+    REBVAL *first_arg = D_ARG_Core(f, 1);
 
     return Run_Generic_Dispatch(first_arg, f, verb);
 }
