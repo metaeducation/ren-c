@@ -102,21 +102,6 @@ REBNATIVE(shutdown_p)
 }
 
 
-//
-//  get-event-actor-handle: native [
-//
-//  {Retrieve handle to the native actor for events (system, event, callback)}
-//
-//      return: [handle!]
-//  ]
-//
-REBNATIVE(get_event_actor_handle)
-{
-    Make_Port_Actor_Handle(D_OUT, &Event_Actor);
-    return D_OUT;
-}
-
-
 #define MAX_WAIT_MS 64 // Maximum millsec to sleep
 
 
@@ -128,8 +113,6 @@ REBNATIVE(get_event_actor_handle)
 //      return: "NULL if timeout, PORT! that awoke or BLOCK! of ports if /ALL"
 //          [<opt> port! block!]
 //      value [<opt> any-number! time! port! block!]
-//      /all "Returns all in a block"
-//      /only "only check for ports given in the block to this function"
 //  ]
 //
 REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
@@ -139,8 +122,6 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
 // stackless nature comes for free by virtue of REDUCE-ing in usermode.
 {
     EVENT_INCLUDE_PARAMS_OF_WAIT_P;
-
-    assert(not REF(only));
 
     REBLEN timeout = 0;  // in milliseconds
     REBVAL *ports = nullptr;
@@ -155,7 +136,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
         const RELVAL *tail;
         val = VAL_ARRAY_AT(&tail, ports);
         for (; val != tail; ++val) {  // find timeout
-            if (IS_PORT(val) and Is_Port_Pending(val))
+            if (IS_PORT(val))
                 ++num_pending;
 
             if (IS_INTEGER(val) or IS_DECIMAL(val) or IS_TIME(val))
@@ -178,9 +159,6 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             break;
 
           case REB_PORT: {
-            if (not Is_Port_Pending(val))
-                return nullptr;
-
             REBARR *single = Make_Array(1);
             Append_Value(single, SPECIFIC(val));
             Init_Block(ARG(value), single);
@@ -207,22 +185,6 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
     //
     assert(TG_Jump_List != nullptr);
 
-    REBVAL *system_port = Get_System(SYS_PORTS, PORTS_SYSTEM);
-    if (not IS_PORT(system_port))
-        fail ("System Port is not a PORT! object");
-
-    REBCTX *sys = VAL_CONTEXT(system_port);
-
-    REBVAL *waked = CTX_VAR(sys, STD_PORT_DATA);
-    if (not IS_BLOCK(waked))
-        fail ("Waked queue block in System Port is not a BLOCK!");
-
-    REBVAL *awake = CTX_VAR(sys, STD_PORT_AWAKE);
-    if (not IS_ACTION(awake))
-        fail ("System Port AWAKE field is not an ACTION!");
-
-    bool did_port_action = false;
-
     while (wait_millisec != 0) {
         if (GET_SIGNAL(SIG_HALT)) {
             CLR_SIGNAL(SIG_HALT);
@@ -240,32 +202,6 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             //
             fail ("BREAKPOINT from SIG_INTERRUPT not currently implemented");
         }
-
-        // Call the system awake function.
-        //
-        // !!! Note: if we knew for certain the names of the arguments
-        // we could use "APPLIQUE".  Since we don't, we have to use a
-        // positional call...but a hybridized APPLY would help here.
-        //
-        if (rebRunThrows(
-            D_OUT,
-            true,  // fully
-            awake,
-            system_port,
-            ports == nullptr ? Lib(BLANK) : ports
-        )){
-            fail (Error_No_Catch_For_Throw(D_OUT));
-        }
-
-        // Awake function returns true for end of WAIT
-        //
-        if (IS_LOGIC(D_OUT) and VAL_LOGIC(D_OUT)) {
-            did_port_action = true;
-            RESET(D_OUT);
-            goto post_wait_loop;
-        }
-
-        RESET(D_OUT);
 
         if (timeout != ALL_BITS) {
             //
@@ -307,100 +243,5 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
         Wait_Milliseconds_Interrupted(wait_millisec);
     }
 
-  post_wait_loop:
-
-    if (not did_port_action) {  // timeout
-        SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(waked), 0);  // !!! Reset_Array?
-        return nullptr;
-    }
-
-    if (not ports)
-        return nullptr;
-
-    // Determine what port(s) waked us (intersection of waked and ports)
-    //
-    // !!! Review: should intersect be mutating, or at least have a variant
-    // like INTERSECT and INTERSECTED?  The original "Sieve_Ports" in R3-Alpha
-    // had custom code here but this just uses the API.
-
-    REBVAL *sieved = rebValue("intersect", ports, waked);
-    Copy_Cell(D_OUT, sieved);
-    rebRelease(sieved);
-
-    SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(waked), 0);  // !!! Reset_Array?
-
-    if (REF(all))
-        return D_OUT;  // caller wants all the ports that waked us
-
-    const RELVAL *first = VAL_ARRAY_ITEM_AT(D_OUT);
-    if (not IS_PORT(first)) {
-        assert(!"First element of intersection not port, does this happen?");
-        return nullptr;
-    }
-
-    RETURN (SPECIFIC(first));
-}
-
-
-//
-//  export wake-up: native [
-//
-//  "Awake and update a port with event."
-//
-//      return: [logic!]
-//      port [port!]
-//      event [event!]
-//  ]
-//
-REBNATIVE(wake_up)
-//
-// !!! The only place WAKE-UP is called is by the system port's AWAKE function
-// (usermode code).  The return result from WAKE-UP makes it decide whether to
-// put a port into the "waked" queue, e.g. being a potential answer back from
-// WAIT as a port that has something new to say, hence it should come out
-// of the blocked state.
-{
-    EVENT_INCLUDE_PARAMS_OF_WAKE_UP;
-
-    FAIL_IF_BAD_PORT(ARG(port));
-
-    REBCTX *ctx = VAL_CONTEXT(ARG(port));
-
-    REBVAL *actor = CTX_VAR(ctx, STD_PORT_ACTOR);
-    if (Is_Native_Port_Actor(actor)) {
-        /*
-            DECLARE_LOCAL (verb);
-            Init_Word(verb, Canon(ON_WAKE_UP));
-            const REBVAL *r = Do_Port_Action(frame_, ARG(port), verb);
-            assert(IS_BAD_WORD(r));
-            UNUSED(r);
-        */
-
-        // !!! This gave native ports an opportunity to react to WAKE-UP if
-        // they wanted to.  However, the native port is what sent the event
-        // in the first place... so it's not really finding out anything it
-        // didn't already know.  It just knows "oh, so you're sending that
-        // event I raised now, are you?
-        //
-        // The real target of the event is any port layered on *top* of the
-        // port, like an http layer sitting on top of the TCP layer.  They
-        // registered an AWAKE function that gets called.
-    }
-
-    bool woke_up = true; // start by assuming success
-
-    REBVAL *awake = CTX_VAR(ctx, STD_PORT_AWAKE);
-    if (IS_ACTION(awake)) {
-        const bool fully = true; // error if not all arguments consumed
-
-        if (rebRunThrows(D_OUT, fully, awake, ARG(event)))
-            fail (Error_No_Catch_For_Throw(D_OUT));
-
-        if (not (IS_LOGIC(D_OUT) and VAL_LOGIC(D_OUT)))
-            woke_up = false;
-
-        RESET(D_OUT);
-    }
-
-    return Init_Logic(D_OUT, woke_up);
+    return nullptr;
 }

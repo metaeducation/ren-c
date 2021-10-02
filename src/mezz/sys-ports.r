@@ -121,10 +121,6 @@ make-port*: function [
 
     ; Defaults:
     port/actor: try get in scheme 'actor ; avoid evaluation
-    port/awake: try any [
-        get try in port/spec 'awake
-        get 'scheme/awake
-    ]
     port/spec/ref: default [spec]
     port/spec/title: default [scheme/title]
     port: to port! port

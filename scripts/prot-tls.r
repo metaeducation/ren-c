@@ -1613,11 +1613,11 @@ make-master-secret: func [
 
 
 do-commands: func [
-    return: <none>
-    ctx [object!]
+    return: [logic!]
+    tls-port [port!]
     commands [block!]
-    /no-wait
 ][
+    ctx: tls-port.state
     clear ctx.msg
 
     let cmd
@@ -1655,14 +1655,19 @@ do-commands: func [
     ]
     debug ["writing bytes:" length of ctx.msg]
     ctx.resp: copy []
+
     write ctx.connection ctx.msg
 
-    any [
-        no-wait
-        port? wait [ctx.connection 30]
-    ] else [
-        fail "port timeout"
+    switch tls-port.state.mode [
+        <close-notify> [
+            return true
+        ]
+        #application [
+            return false
+        ]
+        ; Note: Even if state is <finished>, it seems to still want to READ.
     ]
+    perform-read tls-port
 ]
 
 
@@ -1734,131 +1739,66 @@ tls-read-data: func [
 ]
 
 
-tls-awake: func [
-    return: [logic!]
-    event [event!]
+perform-read: function [
+    return: <none>
+    port [port!]
 ][
-    debug ["TLS Awake-event:" event.type]
+    debug ["READ" open? port.state.connection]
+    read port.state.connection  ; read some data from the TCP port
+    until [
+        check-response port  ; see if it was enough, if not it asks for more
+    ]
+]
 
-    let port: event.port
-    let tls-port: port.locals
-    let tls-awake: :tls-port.awake
+check-response: function [
+    return: [logic!]
+    tls-port [port!]
+][
+    let port: tls-port.state.connection
 
-    all [
-        tls-port.state.mode = #application
-        not port.data
-    ] then [
-        ; reset the data field when interleaving port r/w states
-        tls-port.data: _
+    debug [
+        "Read" length of port.data
+        "bytes in mode:" tls-port.state.mode
     ]
 
-    switch event.type [
-        'error [
-            fail port.error
-        ]
+    let complete?: tls-read-data tls-port.state port.data
+    let application?: false
 
-        'connect [
-            tls-init tls-port.state
-
-            do-commands tls-port.state [<client-hello>]
-
-            if tls-port.state.resp.1.type = #handshake [
-                do-commands tls-port.state [
-                    <client-key-exchange>
-                    <change-cipher-spec>
-                    <finished>
-                ]
-            ]
-            insert system.ports.system make event! [
-                type: 'connect
-                port: tls-port
-            ]
-            return false
-        ]
-
-        'wrote [
-            switch tls-port.state.mode [
-                <close-notify> [
-                    return true
-                ]
-                #application [
-                    insert system.ports.system make event! [
-                        type: 'wrote
-                        port: tls-port
+    for-each proto tls-port.state.resp [
+        switch proto.type [
+            #application [
+                for-each msg proto.messages [
+                    if msg.type = 'app-data [
+                        tls-port.data: default [
+                            clear tls-port.state.port-data
+                        ]
+                        append tls-port.data msg.content
+                        application?: true
+                        msg.type: _
                     ]
-                    return false
                 ]
-                ; Note: Even if the state is <finished>, it seems that after
-                ; a 'wrote signal it still wants to READ.
             ]
+            #alert [
+                for-each msg proto.messages [
+                    if msg.description = "Close notify" [
+                        do-commands tls-port [<close-notify>]
+                        return true
+                    ]
+                ]
+            ]
+        ]
+    ]
+
+    debug ["data complete?:" complete? "application?:" application?]
+
+    if application? [
+        ; Done regardless?
+    ] else [
+        if not complete? [  ; !!! to avoid multiple in-flight read
             read port
-            return false
-        ]
-
-        'read [
-            debug [
-                "Read" length of port.data
-                "bytes in mode:" tls-port.state.mode
-            ]
-
-            let complete?: tls-read-data tls-port.state port.data
-            let application?: false
-
-            for-each proto tls-port.state.resp [
-                switch proto.type [
-                    #application [
-                        for-each msg proto.messages [
-                            if msg.type = 'app-data [
-                                tls-port.data: default [
-                                    clear tls-port.state.port-data
-                                ]
-                                append tls-port.data msg.content
-                                application?: true
-                                msg.type: _
-                            ]
-                        ]
-                    ]
-                    #alert [
-                        for-each msg proto.messages [
-                            if msg.description = "Close notify" [
-                                do-commands tls-port.state [<close-notify>]
-                                insert system.ports.system make event! [
-                                    type: 'read
-                                    port: tls-port
-                                ]
-                                return true
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-
-            debug ["data complete?:" complete? "application?:" application?]
-
-            if application? [
-                insert system.ports.system make event! [
-                    type: 'read
-                    port: tls-port
-                ]
-            ] else [
-                if not complete? [  ; !!! to avoid multiple in-flight read
-                    read port
-                ]
-            ]
-            return complete?
-        ]
-
-        'close [
-            insert system.ports.system make event! [
-                type: 'close
-                port: tls-port
-            ]
-            return true
         ]
     ]
-
-    close port
-    fail ["Unexpected TLS event:" (event.type)]
+    return complete?
 ]
 
 
@@ -1871,8 +1811,7 @@ sys.make-scheme [
             return: [port!]
             port [port!]
         ][
-            debug ["READ" open? port.state.connection]
-            read port.state.connection
+            perform-read port
             return port
         ]
 
@@ -1882,7 +1821,7 @@ sys.make-scheme [
             value [<opt> any-value!]
         ][
             if find [#encrypted-handshake #application] port.state.mode [
-                do-commands/no-wait port.state compose [
+                do-commands port compose [
                     #application (value)
                 ]
                 return port
@@ -2033,7 +1972,6 @@ sys.make-scheme [
 
             port.data: port.state.port-data
 
-            conn.awake: :tls-awake
             conn.locals: port
             open conn
             return port
@@ -2041,6 +1979,19 @@ sys.make-scheme [
 
         connect: func [port [port!]] [
             connect port.state.connection
+
+            tls-init port.state
+
+            do-commands port [<client-hello>]
+
+            if port.state.resp.1.type = #handshake [
+                do-commands port [
+                    <client-key-exchange>
+                    <change-cipher-spec>
+                    <finished>
+                ]
+            ]
+            return port
         ]
 
         reflect: func [port [port!] property [word!]] [
@@ -2089,7 +2040,6 @@ sys.make-scheme [
             ]
 
             debug "TLS/TCP port closed"
-            port.state.connection.awake: blank
             port.state: blank
             return port
         ]

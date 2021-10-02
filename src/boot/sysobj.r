@@ -280,7 +280,6 @@ standard: make object! [
 ;       kind:       ; network, file, driver
 ;       type:       ; bytes, integers, objects, values, block
         actor:      ; standard action handler for scheme port functions
-        awake:      ; standard awake handler for this scheme's ports
             _
     ]
 
@@ -288,7 +287,6 @@ standard: make object! [
         spec: '     ; published specification of the port
         scheme: '   ; scheme object used for this port
         actor: '    ; port action handler (script driven)
-        awake: '    ; port awake function (event driven)
 
         ; !!! Native ports typically used raw C structs stored in a BINARY!
         ; as the `state`.  This makes that state opaque to the garbage
@@ -298,20 +296,6 @@ standard: make object! [
 
         data: '     ; data buffer (usually binary or block)
         locals: '   ; user-defined storage of local data
-
-        ; !!! In the original device model, ports had a special flag encoded
-        ; into a BINARY! which the awake code used to tell if they were
-        ; "pending", e.g. should be candidates for WAIT.  So if the flag was
-        ; false then a WAIT would be a no-op.  There is now no longer an
-        ; assumption that the state is a BINARY!, so the pending flag is now
-        ; moved out.
-        ;
-        pending: false
-
-        ; !!! The `connections` field is a BLOCK! used only by TCP listen
-        ; ports.  Since it is a Rebol series value, the GC needs to see it.
-        ;
-        connections: '
 
         ; !!! With asynchronous events, TRAP cannot be used, e.g. you can't
         ; say `trap [write...]` if the error will happen outside of the
@@ -343,6 +327,11 @@ standard: make object! [
         ; otherwise the OS will pick an available port and stick with it.)
         ;
         local-id: _
+
+        ; This should be set to a function that takes a PORT! on listening
+        ; sockets...it will be called when a new connection is made.
+        ;
+        accept: '
     ]
 
     port-spec-signal: make port-spec-head [

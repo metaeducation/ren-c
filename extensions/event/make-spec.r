@@ -6,7 +6,6 @@ includes: [%prep/extensions/event]
 
 depends: compose [
     %event/t-event.c
-    %event/p-event.c
 
     (switch system-config/os-base [
         'Windows [

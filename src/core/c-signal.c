@@ -121,13 +121,6 @@ bool Do_Signals_Throws(REBVAL *out)
         Recycle();
     }
 
-#ifdef NOT_USED_INVESTIGATE
-    if (filtered_sigs & SIG_EVENT_PORT) {  // !!! Why not used?
-        CLR_SIGNAL(SIG_EVENT_PORT);
-        Awake_Event_Port();
-    }
-#endif
-
     if (filtered_sigs & SIG_HALT) {
         //
         // Early in the booting process, it's not possible to handle Ctrl-C.

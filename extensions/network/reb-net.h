@@ -28,10 +28,6 @@ enum Transport_Type {
     TRANSPORT_UDP
 };
 
-// Note that 0 is technically a legal result from connect() as a socket ID.
-//
-#define SOCKET_NONE -1
-
 
 // backlog queue – the maximum length of queued connections for uv_listen()
 // (this number is what was used in libuv's echo.c example, SOMAXCONN was used
@@ -41,14 +37,12 @@ enum Transport_Type {
 
 
 enum Reb_Socket_Modes {
-    RSM_ATTEMPT = 1 << 1,   // attempting connection
     RSM_BIND    = 1 << 3,   // socket is bound to port
     RSM_LISTEN  = 1 << 4,   // socket is listening (TCP)
 
     RST_LISTEN  = 1 << 8    // signals the socket should listen when opened? :-/
 };
 
-#define IPA(a,b,c,d) (a<<24 | b<<16 | c<<8 | d)
 
 // This is the state information that is stored in a network PORT!'s `state`
 // field.  It is a BINARY! whose bytes hold this C struct.
@@ -66,8 +60,6 @@ struct Reb_Sock_Port_State {
     //
     uv_tcp_t tcp;
     uv_stream_t* stream;
-
-    int fd;  // file descriptor; -1 indicates closed, other value is open
 
     uint32_t modes;  // RSM_XXX flags
 
@@ -91,7 +83,19 @@ typedef struct {
 
     REBCTX *port_ctx;
     REBVAL *binary;
+    REBVAL *result;
 } Reb_Write_Request;
+
+
+// While many libuv functions let you give a `nullptr` for the callback, for
+// some reason the connect request doesn't allow it.
+//
+typedef struct {
+    uv_connect_t req;  // make first member of struct so we can cast the address
+
+    REBCTX *port_ctx;
+    REBVAL *result;
+} Reb_Connect_Request;
 
 
 typedef struct {
@@ -103,5 +107,7 @@ typedef struct {
     // !!! the binary is assumed to just live in the port's "data", this
     // prevents multiple in-flight reads and is a design flaw, but translating
     // the R3-Alpha code for now just as a first step.
+
+    REBVAL *result;
 
 } Reb_Read_Request;

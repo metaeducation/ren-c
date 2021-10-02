@@ -11,5 +11,4 @@ sys/make-scheme [
     name: 'dns
     actor: get-dns-actor-handle
     spec: system/standard/port-spec-net
-    awake: func [event] [print event/type true]
 ]

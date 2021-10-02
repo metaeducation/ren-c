@@ -2,7 +2,8 @@ REBOL [
     System: "REBOL [R3] Language Interpreter and Run-time Environment"
     Title: "REBOL 3 HTTP protocol scheme"
     Rights: {
-        Copyright 2012 REBOL Technologies
+        Copyright 2012 Gabriele Santilli, Richard Smolak, and REBOL Technologies
+        Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -12,16 +13,27 @@ REBOL [
     Type: module
     Name: HTTP-Protocol
     File: %prot-http.r
-    Version: 0.1.48
-    Purpose: {
-        This program defines the HTTP protocol scheme for REBOL 3.
+    Description: {
+        This file defines a "Port Scheme" for reading and writing data via
+        the HTTP protocol.  The protocol is built on top of a Generic
+        "connection" which can be plain TCP or be layered with the transport
+        layer security scheme (TLS), in which case the HTTP acts as HTTPS.
+
+        The original code circa 2012 in the open source release of R3-Alpha
+        attempted to be asynchronous, and had some rather convoluted logic
+        pertaining to events and and wakeups.  Due to various weaknesses of
+        that model it never enabled any interesting asynchronous scenarios,
+        and was really just an extremely-difficult-to-debug way of writing
+        synchronous reads and writes.  In 2021 it is being simplified:
+
+        https://forum.rebol.info/t/1733
+
+        So the goal is to stylize the protocol code synchronously, with the
+        idea of doing something similar to Go's "goroutines" in order to
+        achieve parallelism.  But for now the limitation is that the reads and
+        writes are synchronous, with the benefit of increasing the clarity
+        of the code.
     }
-    Author: ["Gabriele Santilli" "Richard Smolak"]
-    Date: 26-Nov-2012
-    History: [
-        8-Oct-2015 {Modified by @GrahamChiu to return an error object with
-        the info object when manual redirect required}
-    ]
 ]
 
 digit: charset [#"0" - #"9"]
@@ -43,122 +55,6 @@ idate-to-date: function [return: [date!] date [text!]] [
     ]
     if zone = "GMT" [zone: copy "+0"]
     return to date! unspaced [day "-" month "-" year "/" time zone]
-]
-
-sync-op: function [port body] [
-    if not port.state [
-        open port
-        port.state.close?: yes
-    ]
-
-    state: port.state
-    state.awake: :read-sync-awake
-
-    do body
-
-    if state.mode = 'ready [do-request port]
-
-    ; Wait in a WHILE loop so the timeout cannot occur during 'reading-data
-    ; state.  The timeout should be triggered only when the response from
-    ; the other side exceeds the timeout value.
-    ;
-    loop [not find [ready close] ^state.mode] [
-        if not port? wait [state.connection port.spec.timeout] [
-            fail make-http-error "Timeout"
-        ]
-        if state.mode = 'reading-data [
-            read state.connection
-        ]
-    ]
-
-    ; !!! Note that this dispatches to the "port actor", not the COPY generic
-    ; action.  That has been overridden to copy PORT.DATA.  :-/
-    ;
-    body: copy port
-
-    if state.close? [close port]
-
-    either port.spec.debug [
-        state.connection.locals
-    ][
-        body
-    ]
-]
-
-read-sync-awake: function [return: [logic!] event [event!]] [
-    return switch event.type [
-        'connect
-        'ready [
-            do-request event.port
-            false
-        ]
-        'done [true]
-        'close [true]
-        'error [
-            error: event.port.error
-            event.port.error: _
-            fail error
-        ]
-    ] else [false]
-]
-
-http-awake: function [return: [logic!] event [event!]] [
-    port: event.port
-    http-port: port.locals
-    state: http-port.state
-    if action? :http-port.awake [state.awake: :http-port.awake]
-    awake: :state.awake
-
-    return switch event.type [
-        'error [
-            fail port.error
-        ]
-        'read [
-            awake make event! [type: 'read port: http-port]
-            check-response http-port
-        ]
-        'wrote [
-            awake make event! [type: 'wrote port: http-port]
-            state.mode: 'reading-headers
-            read port
-            false
-        ]
-        'connect [
-            state.mode: 'ready
-            awake make event! [type: 'connect port: http-port]
-        ]
-        'close [
-            res: switch state.mode [
-                'ready [
-                    awake make event! [type: 'close port: http-port]
-                ]
-                'doing-request 'reading-headers [
-                    http-port.error: make-http-error "Server closed connection"
-                    awake make event! [type: 'error port: http-port]
-                ]
-                'reading-data [
-                    either any [
-                        integer? state.info.headers.content-length
-                        state.info.headers.transfer-encoding = "chunked"
-                    ][
-                        http-port.error: make-http-error "Server closed connection"
-                        awake make event! [type: 'error port: http-port]
-                    ] [
-                        ; set mode to CLOSE so the WAIT loop in 'sync-op can
-                        ; be interrupted
-                        ;
-                        state.mode: 'close
-                        any [
-                            awake make event! [type: 'done port: http-port]
-                            awake make event! [type: 'close port: http-port]
-                        ]
-                    ]
-                ]
-            ]
-            close http-port
-            did res
-        ]
-    ] else [true]
 ]
 
 make-http-error: func [
@@ -210,9 +106,10 @@ make-http-request: func [
 ]
 
 do-request: function [
-    {Queue an HTTP request to a port (response must be waited for)}
+    {Synchronously process an HTTP request on a port}
 
-    return: <none>
+    return: "Result of the request (BLOCK! for HEAD requests, BINARY! read...)"
+        [binary! block!]
     port [port!]
 ][
     spec: port.spec
@@ -228,15 +125,33 @@ do-request: function [
         ]
         User-Agent: "REBOL"
     ] spec.headers
-    port.state.mode: 'doing-request
+
+    port.state.mode: <doing-request>
+
     info.headers: info.response-line: info.response-parsed: port.data:
     info.size: info.date: info.name: blank
     req: (make-http-request spec.method any [spec.path %/]
         spec.headers spec.content)
 
     write port.state.connection req
+    port.state.mode: <reading-headers>
+
+    read port.state.connection  ; read some data from the TCP port
+    until [
+        check-response port  ; see if it was enough, if not it asks for more
+        did any [
+            port.state.mode = <ready>
+            port.state.mode = <close>
+        ]
+    ]
 
     net-log/C as text! req  ; Note: may contain CR (can't use TO TEXT!)
+
+    if port.state and (port.spec.method = 'HEAD) [
+        return reduce in port.state.info [name size date]
+    ]
+
+    return copy port.data  ; data may be BLANK!, if so will return null
 ]
 
 ; if a no-redirect keyword is found in the write dialect after 'headers then
@@ -265,20 +180,17 @@ parse-write-dialect: function [
 ]
 
 check-response: function [
-    return: [logic!]
-    port
+    return: <none>
+    port [port!]
 ][
     state: port.state
     conn: state.connection
     info: state.info
     headers: info.headers
     line: info.response-line
-    awake: :state.awake
     spec: port.spec
 
-    ; dump spec
-    all [
-        not headers
+    loop [state.mode = <reading-headers>] [
         any [
             all [
                 d1: find conn.data crlfbin
@@ -290,8 +202,11 @@ check-response: function [
                 d2: find/tail d1 #{0A0A}
                 net-log/C "server malformed line separator of #{0A0A}"
             ]
+        ] else [
+            read conn
+            continue
         ]
-    ] then [
+
         info.response-line: line: to text! copy/part conn.data d1
 
         ; !!! In R3-Alpha, CONSTRUCT/WITH allowed passing in data that could
@@ -314,29 +229,8 @@ check-response: function [
             info.date: try attempt [idate-to-date headers.last-modified]
         ]
         remove/part conn.data d2
-        state.mode: 'reading-data
-
-        ; !!! Net logging needs some enablement/disablement facility
-        comment [
-            print "Dumping Webserver headers and body"
-            net-log/S info
-            trap [
-                body: to text! conn.data
-                dump body
-            ] then [
-                print spaced [
-                    "S:" length of conn.data "binary bytes in buffer ..."
-                ]
-            ]
-        ]
+        state.mode: <reading-data>
     ]
-
-    if not headers [
-        read conn
-        return false
-    ]
-
-    res: false
 
     info.response-parsed: default [
         ;
@@ -345,7 +239,7 @@ check-response: function [
         ;
         uparse line [return [
             "HTTP/1." ["0" | "1"] some space [
-                "1" ('info)
+                "100" ('continue)
                 |
                 "2" [
                     ["04" | "05"] ('no-content)
@@ -386,43 +280,49 @@ check-response: function [
     ]
 
     switch/all info.response-parsed [
+        ;
+        ; "The client will expect to receive a 100-Continue response from the
+        ; server to indicate that the client should send the data to be posted.
+        ; This mechanism allows clients to avoid sending large amounts of data
+        ; over the network when the server, based on the request headers,
+        ; intends to reject the request."
+        ;
+        'continue [
+            info.headers: _
+            info.response-line: _
+            info.response-parsed: _
+            port.data: _
+            state.mode: <reading-headers>
+            read conn
+        ]
+
         'ok [
             if spec.method = 'HEAD [
-                state.mode: 'ready
-                res: any [
-                    awake make event! [type: 'done port: port]
-                    awake make event! [type: 'ready port: port]
-                ]
+                state.mode: <ready>
             ] else [
-                res: check-data port
-                all [not res, state.mode = 'ready] then [
-                    res: any [
-                        awake make event! [type: 'done port: port]
-                        awake make event! [type: 'ready port: port]
-                    ]
-                ]
+                check-data port
             ]
         ]
+
         'redirect
         'see-other [
             if spec.method = 'HEAD [
-                state.mode: 'ready
-                res: awake make event! [type: 'custom port: port code: 0]
+                state.mode: <ready>
             ] else [
-                res: check-data port
+                check-data port
                 if not open? port [
                     ;
                     ; !!! comment said: "some servers(e.g. yahoo.com) don't
                     ; supply content-data in the redirect header so the
-                    ; state.mode can be left in 'reading-data after
+                    ; state.mode can be left in <reading-data> after
                     ; check-data call.  I think it is better to check if port
                     ; has been closed here and set the state so redirect
                     ; sequence can happen."
                     ;
-                    state.mode: 'ready
+                    state.mode: <ready>
                 ]
             ]
-            all [not res, state.mode = 'ready] then [
+            if state.mode = <ready> [
                 all [
                     find [get head] ^spec.method else [all [
                         info.response-parsed = 'see-other
@@ -430,15 +330,14 @@ check-response: function [
                     ]]
                     in headers 'Location
                 ] also [
-                    res: do-redirect port headers.location headers
+                    do-redirect port headers.location headers
                 ] else [
-                    port.error: make error! [
+                    fail make error! [
                         type: 'Access
                         id: 'Protocol
                         arg1: "Redirect requires manual intervention"
                         arg2: info
                     ]
-                    res: awake make event! [type: 'error port: port]
                 ]
             ]
         ]
@@ -447,60 +346,38 @@ check-response: function [
         'server-error
         'proxy-auth [
             if spec.method = 'HEAD [
-                state.mode: 'ready
+                state.mode: <ready>
             ] else [
                 check-data port
             ]
         ]
         'unauthorized [
-            port.error: make-http-error "Authentication not supported yet"
-            res: awake make event! [type: 'error port: port]
+            fail make-http-error "Authentication not supported yet"
         ]
         'client-error
         'server-error [
-            port.error: make-http-error ["Server error: " line]
-            res: awake make event! [type: 'error port: port]
+            fail make-http-error ["Server error: " line]
         ]
         'not-modified [
-            state.mode: 'ready
-            res: any [
-                awake make event! [type: 'done port: port]
-                awake make event! [type: 'ready port: port]
-            ]
+            state.mode: <ready>
         ]
         'use-proxy [
-            state.mode: 'ready
-            port.error: make-http-error "Proxies not supported yet"
-            res: awake make event! [type: 'error port: port]
+            fail make-http-error "Proxies not supported yet"
         ]
         'proxy-auth [
-            port.error: (make-http-error
+            fail (make-http-error
                 "Authentication and proxies not supported yet")
-            res: awake make event! [type: 'error port: port]
         ]
         'no-content [
-            state.mode: 'ready
-            res: any [
-                awake make event! [type: 'done port: port]
-                awake make event! [type: 'ready port: port]
-            ]
-        ]
-        'info [
-            info.headers: _
-            info.response-line: _
-            info.response-parsed: _
-            port.data: _
-            state.mode: 'reading-headers
-            read conn
+            state.mode: <ready>
         ]
         'version-not-supported [
-            port.error: make-http-error "HTTP response version not supported"
-            res: awake make event! [type: 'error port: port]
-            close port
+            fail make-http-error "HTTP response version not supported"
         ]
     ]
-    return res
 ]
+
+
 crlfbin: #{0D0A}
 crlf2bin: #{0D0A0D0A}
 crlf2: as text! crlf2bin
@@ -532,9 +409,8 @@ do-redirect: func [
     ]
 
     if not find [http https] new-uri.scheme [  ; !!! scheme is quoted
-        port.error: make-http-error
+        fail make-http-error
             {Redirect to a protocol different from HTTP or HTTPS not supported}
-        return state.awake/ make event! [type: 'error port: port]
     ]
 
     all [
@@ -552,7 +428,7 @@ do-redirect: func [
         false
     ]
     else [
-        port.error: make error! [
+        fail make error! [
             type: 'Access
             id: 'Protocol
             arg1: "Redirect to other host - requires custom handling"
@@ -561,23 +437,16 @@ do-redirect: func [
                 new-uri.scheme "://" new-uri.host new-uri.path
             ]
         ]
-
-        state.awake/ make event! [type: 'error port: port]
     ]
 ]
 
 check-data: function [
-    return: [logic! event!]
+    return: <none>
     port [port!]
 ][
     state: port.state
     headers: state.info.headers
     conn: state.connection
-
-    res: false
-    awaken-wait-loop: does [
-        not res so res: true  ; prevent timeout when reading big data
-    ]
 
     case [
         headers.transfer-encoding = "chunked" [
@@ -612,12 +481,7 @@ check-data: function [
                     ] then [
                         trailer: scan-net-header as binary! trailer
                         append headers trailer
-                        state.mode: 'ready
-                        res: state.awake make event! [
-                            type: 'custom
-                            port: port
-                            code: 0
-                        ]
+                        state.mode: <ready>
                         clear data
                     ]
                     break
@@ -626,6 +490,7 @@ check-data: function [
                     parse mk1 [
                         repeat (chunk-size) skip, mk2: here, crlfbin, to end
                     ] else [
+                        read conn  ; didn't get the whole chunk read more
                         break
                     ]
 
@@ -634,38 +499,26 @@ check-data: function [
                     empty? data
                 ]
             ]
-
-            if state.mode <> 'ready [
-                awaken-wait-loop
-            ]
         ]
         integer? headers.content-length [
             port.data: conn.data
             if headers.content-length <= length of port.data [
-                state.mode: 'ready
+                state.mode: <ready>
                 conn.data: make binary! 32000
-                res: state.awake make event! [
-                    type: 'custom
-                    port: port
-                    code: 0
-                ]
             ] else [
-                awaken-wait-loop
+                read conn
             ]
         ]
     ] else [
         port.data: conn.data
-        if state.info.response-parsed = 'ok [
-            awaken-wait-loop
-        ] else [
-            ; On other response than OK read all data asynchronously
-            ; (assuming the data are small).
+        if state.info.response-parsed <> 'ok [
+            ;
+            ; "On other response than OK read all data asynchronously"
+            ; (Comment also said "assuming the data are small")
             ;
             read conn
         ]
     ]
-
-    return res
 ]
 
 hex-digits: charset "1234567890abcdefABCDEF"
@@ -697,18 +550,26 @@ sys/make-scheme [
             /string
             <local> data
         ][
-            data: if action? :port.awake [
+            let close?: false
+            if port.state [
                 if not open? port [
                     cause-error 'Access 'not-open port.spec.ref
                 ]
-                if port.state.mode <> 'ready [
+                if port.state.mode <> <ready> [
                     fail make-http-error "Port not ready"
                 ]
-                port.state.awake: :port.awake
-                do-request port
             ] else [
-                sync-op port []
+                open port
+                close?: true
             ]
+
+            data: do-request port
+            assert [find [<ready> <close>] port.state.mode]
+
+            if close? [
+                close port
+            ]
+
             if lines or (string) [
                 ; !!! When READ is called on an http PORT! (directly or
                 ; indirectly) it bounces its parameters to this routine.  To
@@ -724,6 +585,7 @@ sys/make-scheme [
         write: func [
             port [port!]
             value
+            <local> data
         ][
             if not match [block! binary! text!] :value [
                 value: form :value
@@ -736,20 +598,28 @@ sys/make-scheme [
                     value
                 ]
             ]
-            if action? :port.awake [
+            let close?: false
+            if port.state [
                 if not open? port [
                     cause-error 'Access 'not-open port.spec.ref
                 ]
-                if port.state.mode <> 'ready [
+                if port.state.mode <> <ready> [
                     fail make-http-error "Port not ready"
                 ]
-                port.state.awake: :port.awake
-                parse-write-dialect port value
-                do-request port
-                port
             ] else [
-                sync-op port [parse-write-dialect port value]
+                open port
+                close?: true
             ]
+
+            parse-write-dialect port value
+            data: do-request port
+            assert [find [<ready> <close>] port.state.mode]
+
+            if close? [
+                close port
+            ]
+
+            return data
         ]
 
         open: func [
@@ -761,25 +631,9 @@ sys/make-scheme [
                 fail make-http-error "Missing host address"
             ]
             port.state: make object! [
-                ;
-                ; !!! PORT!s in R3-Alpha were made to have a generic concept
-                ; of "state", which is custom to each port.  Making matters
-                ; confusing, the http port's "state" reused the name for an
-                ; enumeration of what mode it was currently in.  To make the
-                ; code easier to follow (for however long it remains relevant,
-                ; which may not be long), Ren-C changed this to "mode".
-                ;
-                mode: 'inited
-
-                ; Note: an `error` field which was specific to HTTP errors has
-                ; been generalized to be located in the `port.error` field for
-                ; every port using error events--hence not in this customized
-                ; state object.
-
-                connection: _
-                close?: no
+                mode: ~inited~  ; original http confusingly called this "state"
+                connection: ~
                 info: make port.scheme.info [type: 'file]
-                awake: ensure [action! blank!] :port.awake
             ]
             port.state.connection: conn: make port! compose [
                 scheme: (
@@ -789,10 +643,11 @@ sys/make-scheme [
                 port-id: port.spec.port-id
                 ref: join tcp:// reduce [host ":" port-id]
             ]
-            conn.awake: :http-awake
             conn.locals: port
             open conn
             connect conn
+            port.state.mode: <ready>
+
             port
         ]
 
@@ -811,29 +666,30 @@ sys/make-scheme [
         close: func [
             port [port!]
         ][
-            if port.state [
-                close port.state.connection
-                port.state.connection.awake: _
-                port.state: _
-            ]
-            port
-        ]
+            let state: port.state
+            if not state [return port]
 
-        copy: func [
-            {Overrides the ANY-OBJECT! COPY (that copies a PORT! itself)}
-            ; !!! This R3-Alpha-ism seems like a questionable idea.  :-/
-            port [port!]
-        ][
-            all [
-                port.spec.method = 'HEAD
-                port.state
+            switch state.mode [
+                <ready> [
+                    ; closing in okay when ready
+                ]
+                <doing-request> <reading-headers> [
+                    fail make-http-error "Server closed connection"
+                ]
+                <reading-data> [
+                    any [
+                        integer? state.info.headers.content-length
+                        state.info.headers.transfer-encoding = "chunked"
+                    ] then [
+                        fail make-http-error "Server closed connection"
+                    ]
+                    state.mode: <close>
+                ]
             ]
-            then [
-                reduce in port.state.info [name size date]
-            ]
-            else [
-                copy port.data  ; may be BLANK!, returns null
-            ]
+
+            close state.connection
+            port.state: _
+            port
         ]
 
         query: func [
@@ -841,12 +697,7 @@ sys/make-scheme [
             <local> error state
         ][
             if state: port.state [
-                either error? error: port.error [
-                    port.error: _
-                    error
-                ][
-                    state.info
-                ]
+                state.info
             ]
         ]
     ]

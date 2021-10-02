@@ -29,48 +29,6 @@
 
 
 //
-//  Is_Port_Pending: C
-//
-// Return true if port value is pending a signal (informs WAIT, e.g. if not
-// pending then WAIT on the port is a no-oip).
-//
-bool Is_Port_Pending(const RELVAL *port)
-{
-    assert(IS_PORT(port));
-
-    if (VAL_LOGIC(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING)))
-        return true;
-
-    if (not IS_NULLED(CTX_VAR(VAL_CONTEXT(port), STD_PORT_AWAKE)))
-        return true;
-
-    return false;
-}
-
-
-//
-//  Set_Port_Pending: C
-//
-// !!! The "pending" model of ports was not clearly laid out.  But making
-// these functions at least makes it possible to intercept when the flags
-// change.  This is all being rethought with the transition to libuv.
-//
-void Set_Port_Pending(const RELVAL *port)
-{
-    Init_True(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
-}
-
-
-//
-//  Clear_Port_Pending: C
-//
-void Clear_Port_Pending(const RELVAL *port)
-{
-    Init_False(CTX_VAR(VAL_CONTEXT(port), STD_PORT_PENDING));
-}
-
-
-//
 //  Do_Port_Action: C
 //
 // Call a PORT actor (action) value. Search PORT actor

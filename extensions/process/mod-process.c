@@ -212,7 +212,7 @@ REBNATIVE(get_os_browsers)
 //
 REBNATIVE(sleep)
 //
-// !!! This is a temporary workaround for the fact that it is not currently
+// !!! This was a temporary workaround for the fact that it is not currently
 // possible to do a WAIT on a time from within an AWAKE handler.  A proper
 // solution would presumably solve that problem, so two different functions
 // would not be needed.

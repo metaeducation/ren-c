@@ -5,7 +5,7 @@
 //  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
 //  Homepage: https://github.com/metaeducation/ren-c/
 //
-//=////////////////////////////////////////////////////////////////////////=//
+//=/////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
 // Copyright 2012-2021 Ren-C Open Source Contributors
@@ -19,14 +19,25 @@
 //
 // https://www.gnu.org/licenses/lgpl-3.0.html
 //
-//=////////////////////////////////////////////////////////////////////////=//
+//=/////////////////////////////////////////////////////////////////////////=//
 //
-// !!! Rebol's historical port model was not well suited to streaming.  It
-// could only process one chunk of data being read or written at a time, and
-// wasn't able to do both reading and writing at once.  It was also very dated
-// in not supporting non-blocking APIs.  It is being incrementally migrated
-// to use libuv, as part of a broader effort to ultimately make a more
-// suitable streaming design.
+// This is a TCP networking interface, evolved from the R3-Alpha PORT! code.
+// It has been rewritten in terms of libuv as a platform abstraction layer.
+// Although libuv has the implementation capability to do non-blocking and
+// parallel network operations, the goal in Ren-C is to push the language
+// toward allowing people to express their code in a synchronous fashion and
+// have the asynchronous behavior accomplished by more "modern" means...taking
+// inspiration from Go's goroutines and async/await:
+//
+//   https://forum.rebol.info/t/1733
+//
+//=//// NOTES //////////////////////////////////////////////////////////////=//
+//
+// * Although some libuv APIs (such as the filesystem) allow you to pass in
+//   nullptr for the callback and get synchronous behavior, the network APIs
+//   don't seem to do that.  Hence the synchronous behavior is achieved here
+//   by having operations like READ or WRITE call the event loop until they
+//   notice they have completed.
 //
 
 #include "uv.h"  // includes windows.h
@@ -93,21 +104,26 @@ static void Get_Local_IP(SOCKREQ *sock)
 REBVAL *Open_Socket(const REBVAL *port)
 {
     SOCKREQ *sock = Sock_Of_Port(port);
-
-    assert(sock->fd == SOCKET_NONE);
+    assert(sock->stream == nullptr);
 
     sock->modes = 0;  // clear all flags
 
     assert(sock->transport == TRANSPORT_TCP);  // different UDP libuv functions
 
-    int result = uv_tcp_init_ex(uv_default_loop(), &sock->tcp, AF_INET);
-    if (result < 0)
-        return rebError_UV(result);
+    int r = uv_tcp_init_ex(uv_default_loop(), &sock->tcp, AF_INET);
+    if (r < 0)
+        return rebError_UV(r);
 
-    sock->fd = 0;  // signal tcp is set
+    sock->stream = cast(uv_stream_t*, &sock->tcp);  // signal tcp is set
 
     return nullptr;
 }
+
+
+ void on_close(uv_handle_t *handle) {
+     bool *finished = cast(bool*, handle->data);
+     *finished = true;
+ }
 
 
 //
@@ -119,13 +135,16 @@ REBVAL *Close_Socket(const REBVAL *port)
 
     REBVAL *error = nullptr;
 
-    if (sock->fd == SOCKET_NONE)  // R3-Alpha allowed closing closed sockets
-        assert(sock->stream == nullptr);  // shouldn't be connected
-    else {
-        uv_close(cast(uv_handle_t*, &sock->tcp), nullptr);
+    if (sock->stream) {  // R3-Alpha allowed closing closed sockets
+        bool finished;
+        sock->tcp.data = &finished;
+        uv_close(cast(uv_handle_t*, &sock->tcp), on_close);
+
+        do {
+            uv_run(uv_default_loop(), UV_RUN_ONCE);
+        } while (not finished);
 
         sock->stream = nullptr;
-        sock->fd = SOCKET_NONE;
         sock->modes = 0;
     }
 
@@ -181,7 +200,7 @@ REBVAL *Lookup_Socket_Synchronously(
     //     HOSTENT *host = gethostbyname(cs_cast(hostname_utf8));
     //
     uv_getaddrinfo_t req;
-    int result = uv_getaddrinfo(
+    int r = uv_getaddrinfo(
         uv_default_loop(),
         &req,
         nullptr,  // callback
@@ -192,8 +211,8 @@ REBVAL *Lookup_Socket_Synchronously(
 
     rebFree(port_number_utf8);
 
-    if (result != 0)
-        return rebError_UV(result);
+    if (r != 0)
+        return rebError_UV(r);
 
     // Synchronously fill in the port's remote_ip with the answer to looking
     // up the hostname.
@@ -220,51 +239,24 @@ REBVAL *Lookup_Socket_Synchronously(
 
 
 // This libuv callback is triggered when a Request_Connect_Socket()
-// connection has been made...or an error is raised.  The port to send notice
-// to about the connection is stored in the request data, and its AWAKE
-// handler is invoked with a connect event.
+// connection has been made...or an error is raised.
 //
-// The callback should only be invoked during a WAIT, when the libuv event
-// loop is being run.
+// The callback will only be invoked when the libuv event loop is being run.
 //
 static void on_connect(uv_connect_t *req, int status) {
-    REBCTX *port_ctx = cast(REBCTX*, req->data);
-    const REBVAL *port = CTX_ARCHETYPE(port_ctx);
+    Reb_Connect_Request *rebreq = cast(Reb_Connect_Request*, req);
+    const REBVAL *port = CTX_ARCHETYPE(rebreq->port_ctx);
     SOCKREQ *sock = Sock_Of_Port(port);
 
-    REBVAL *awake = CTX_VAR(VAL_CONTEXT(port), STD_PORT_AWAKE);
-    if (not IS_ACTION(awake)) {
-        assert(IS_NULLED(awake));
-        awake = nullptr;
-    }
-
-    REBVAL *event = nullptr;
-
     if (status < 0) {
-        //
-        // This gets called in the event loop, so if it wants to report an
-        // error it has to do it somehow or another.  But given that a
-        // coherent erroring strategy hasn't been articulated, raise it here.
-        //
-        // /*event = rebValue("make event! [type: 'error port:", port, "]");*/
-        //
-        fail (rebError_UV(status));
+        rebreq->result = rebError_UV(status);
     }
     else {
         sock->stream = req->handle;
 
         Get_Local_IP(sock);
-
-        event = rebValue("make event! [type: 'connect port:", port, "]");
+        rebreq->result = rebBlank();
     }
-
-    if (awake) {
-        if (rebDid(awake, rebR(event))) {
-            rebElide(Lib(APPEND), "system.ports.system.data", port);
-        }
-    }
-
-    FREE(uv_connect_t, req);
 }
 
 
@@ -288,27 +280,33 @@ REBVAL *Request_Connect_Socket(const REBVAL *port)
 
     struct sockaddr_in sa;
 
-    assert(sock->fd != SOCKET_NONE);  // must be open
-
-    if (sock->stream != nullptr)
-        return nullptr;  // !!! R3-Alpha tolerated connected, should we?
-
     Set_Addr(&sa, sock->remote_ip, sock->remote_port_number);
 
-    // This is an asynchronous request.  Because it is asynchronous, we
-    // need to allocate memory for it.
+    // !!! For some reason the on_connect() callback cannot be passed as
+    // nullptr to get a synchronous connection.
     //
-    uv_connect_t *req = TRY_ALLOC(uv_connect_t);
-    req->data = VAL_CONTEXT(port);  // !!! keepalive as API handle?
-    int result = uv_tcp_connect(
-        req, &sock->tcp, cast(struct sockaddr *, &sa), on_connect
+    Reb_Connect_Request *rebreq = rebAlloc(Reb_Connect_Request);
+    rebreq->port_ctx = VAL_CONTEXT(port);  // !!! keepalive as API handle?
+    rebreq->result = nullptr;
+
+    int r = uv_tcp_connect(
+        &rebreq->req, &sock->tcp, cast(struct sockaddr *, &sa), on_connect
     );
 
-    if (result < 0) {  // the *request* failed (didn't even try to connect)
-        FREE(uv_connect_t, req);
+    if (r < 0) {  // the *request* failed (didn't even try to connect)
         Close_Socket(port);
-        return rebError_UV(result);
+        return rebError_UV(r);
     }
+
+    do {
+        uv_run(uv_default_loop(), UV_RUN_ONCE);
+    } while (rebreq->result == nullptr);
+
+    if (not IS_BLANK(rebreq->result))
+        fail (rebreq->result);
+    rebRelease(rebreq->result);
+
+    rebFree(rebreq);
 
     return nullptr;
 }
@@ -323,24 +321,25 @@ void on_new_connection(uv_stream_t *server, int status) {
     SOCKREQ *listening_sock = Sock_Of_Port(listening_port);
     UNUSED(listening_sock);
 
-    if (status < 0) {
-        fprintf(stderr, "New connection error %s\n", uv_strerror(status));
-        // error!
-        return;
-    }
+    // !!! This connection can happen at any time the libUV event loop runs.
+    // So this error has a chance of being raised during unrelated READ or
+    // WRITE calls.  How should such errors be delivered?
+    //
+    if (status < 0)
+        fail (rebError_UV(status));
 
-    REBCTX *connection = Copy_Context_Shallow_Managed(listener_port_ctx);
-    PUSH_GC_GUARD(connection);
+    REBCTX *client = Copy_Context_Shallow_Managed(listener_port_ctx);
+    PUSH_GC_GUARD(client);
 
-    Init_Nulled(CTX_VAR(connection, STD_PORT_DATA));  // just to be sure
+    Init_Nulled(CTX_VAR(client, STD_PORT_DATA));  // just to be sure
 
-    REBVAL *c_state = CTX_VAR(connection, STD_PORT_STATE);
+    REBVAL *c_state = CTX_VAR(client, STD_PORT_STATE);
     REBBIN *bin = Make_Binary(sizeof(SOCKREQ));
     Init_Binary(c_state, bin);
     memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));
     TERM_BIN_LEN(bin, sizeof(SOCKREQ));
 
-    SOCKREQ *sock_new = Sock_Of_Port(CTX_ARCHETYPE(connection));
+    SOCKREQ *sock_new = Sock_Of_Port(CTX_ARCHETYPE(client));
 
     // Create a new port using ACCEPT
 
@@ -349,7 +348,7 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     int r = uv_accept(server, sock_new->stream);
     if (r < 0)
-        fail (rebError_UV(r));
+        fail (rebError_UV(r));  // !!! See note on FAIL above about errors here
 
     // NOTE: REBOL stays in network byte order, no htonl(ip) needed
     //
@@ -362,23 +361,9 @@ void on_new_connection(uv_stream_t *server, int status) {
 
     Get_Local_IP(sock_new);
 
-    rebElide(
-        "append ensure block!",
-            CTX_VAR(VAL_CONTEXT(listening_port), STD_PORT_CONNECTIONS),
-            CTX_ARCHETYPE(connection)  // will GC protect during run
-    );
+    DROP_GC_GUARD(client);
 
-    DROP_GC_GUARD(connection);
-
-    // We've added the new PORT! for the connection, but the client has to
-    // find out about it and get an `accept` event.  Signal that.
-    //
-    rebElide(
-        "insert system/ports/system make event! [",
-            "type: 'accept",
-            "port:", listening_port,
-        "]"
-    );
+    rebElide("(", listening_port, ").spec.accept", CTX_ARCHETYPE(client));
 }
 
 
@@ -402,7 +387,7 @@ REBVAL *Start_Listening_On_Socket(const REBVAL *port)
     SOCKREQ *sock = Sock_Of_Port(port);
     sock->modes |= RST_LISTEN;
 
-    assert(sock->fd != SOCKET_NONE);  // must be open
+    assert(sock->stream != nullptr);  // must be open
 
     // Setup socket address range and port:
     //
@@ -429,15 +414,6 @@ REBVAL *Start_Listening_On_Socket(const REBVAL *port)
     sock->modes |= RSM_BIND;
 
     Get_Local_IP(sock);
-
-    Set_Port_Pending(port);
-
-    rebElide(
-        "insert system/ports/system make event! [",
-            "type: 'connect",
-            "port:", port,
-        "]"
-    );
 
     return nullptr;
 }
@@ -513,18 +489,14 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 // stream-oriented libuv callback for reading.
 //
 // !!! The model of libuv's streaming is such that you cannot make another
-// uv_read_start() request without calling uv_read_stop().  With the way
-// R3-Alpha ports expected to work getting reads in chunks and then re-issuing
-// READ requests if it wasn't enough, we either have to call stop on each
-// AWAKE callback -or- make the definition of READ quite complex.  For now we
-// stop and start, but the right answer is to expose an interface more attuned
-// to how streaming actually works.
+// uv_read_start() request without calling uv_read_stop().  For now we stop and
+// start, but the right answer is to expose an interface more attuned to how
+// streaming actually works.
 //
 void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
     Reb_Read_Request *rebreq = cast(Reb_Read_Request*, stream->data);
     REBCTX *port_ctx = rebreq->port_ctx;
-    const REBVAL *port = CTX_ARCHETYPE(port_ctx);
 
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
@@ -541,14 +513,6 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     else
         bin = VAL_BINARY_KNOWN_MUTABLE(port_data);
 
-    REBVAL *awake = CTX_VAR(port_ctx, STD_PORT_AWAKE);
-    if (not IS_ACTION(awake)) {
-        assert(IS_NULLED(awake));
-        awake = nullptr;
-    }
-
-    REBVAL *event = nullptr;
-
     if (nread == 0) {  // Zero bytes read
         //
         // Note: "nread might be 0, which does not indicate an error or EOF.
@@ -559,8 +523,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         // port's binary at the moment.  Do nothing?
     }
     else if (nread < 0) {  // Error while reading
-        REBVAL *error = rebError_UV(nread);
-
+        //
         // !!! How to handle corrupted data?  Clear the whole buffer?  Leave
         // it at the termination before the READ?  Clear it for now just to
         // catch errors where partial data would be used as if it were okay,
@@ -571,20 +534,12 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         //
         Init_Nulled(port_data);
 
-        // Don't want to raise errors synchronously because we may be in the
-        // event loop, e.g. `trap [write ...]` can't work if the writing
-        // winds up happening outside the TRAP.  Let awake handler handle it.
-        //
-        rebElide("(", port, ").error:", rebR(error));
-
-        if (awake)
-            event = rebValue("make event! [type: 'error, port:", port, "]");
-
         // Asking to do a `uv_read_stop()` when an error happens asserts:
         // https://github.com/joyent/libuv/issues/1534
 
-        FREE(Reb_Read_Request, rebreq);
         stream->data = nullptr;
+
+        rebreq->result = rebError_UV(nread);
     }
     else if (nread == UV_EOF) {
         //
@@ -649,7 +604,9 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 
           post_read_finished_event:
 
-            // !!! See note at top of function on why we stop each AWAKE call.
+            // !!! See note at top of function on why we stop each READ
+
+            rebreq->result = rebBlank();
 
             // RE: uv_read_stop() "This function will always succeed; hence,
             // checking its return value is unnecessary. A non-zero return
@@ -658,24 +615,12 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
             // indicate failure."
             //
             uv_read_stop(stream);
-            FREE(Reb_Read_Request, rebreq);
             stream->data = nullptr;
-
-            if (awake)
-                event = rebValue("make event! [type: 'read port:", port, "]");
-
-            Clear_Port_Pending(port);
         }
         else {
             // Less than the total was reached while reading a limited amount.
             // Don't stop the stream or send an event, keep accruing data.
         }
-    }
-
-    if (event) {
-        assert(awake);
-        if (rebDid(awake, rebR(event)))
-            rebElide(Lib(APPEND), "system.ports.system.data", port);
     }
 }
 
@@ -685,50 +630,18 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 void on_write_finished(uv_write_t *req, int status)
 {
     Reb_Write_Request *rebreq = cast(Reb_Write_Request*, req);
-    REBCTX *port_ctx = rebreq->port_ctx;
-    const REBVAL *port = CTX_ARCHETYPE(port_ctx);
-
-    REBVAL *awake = CTX_VAR(port_ctx, STD_PORT_AWAKE);
-    if (not IS_ACTION(awake)) {
-        assert(IS_NULLED(awake));
-        awake = nullptr;
-    }
-
-    REBVAL *event = nullptr;
 
     if (status < 0) {
-        REBVAL *error = rebError_UV(status);
-
-        // Don't want to raise errors synchronously because we may be in the
-        // event loop, e.g. `trap [write ...]` can't work if the writing
-        // winds up happening outside the TRAP.  Let awake handler handle it.
-        //
-        rebElide("(", port, ").error:", rebR(error));
-
-        if (awake)
-            event = rebValue("make event! [type: 'error, port:", port, "]");
+        rebreq->result = rebError_UV(status);
     }
     else {
-        //
-        // !!! We could more proactively free memory early for the GC here if
-        // we wanted to, presuming we weren't reusing locked data.
-        //
-        rebRelease(rebreq->binary);
-
-        if (awake)
-            event = rebValue("make event! [type: 'wrote port:", port, "]");
-
-        Clear_Port_Pending(CTX_ARCHETYPE(port_ctx));
+        rebreq->result = rebBlank();
     }
 
-    if (event) {
-        assert(awake);
-        if (rebDid(awake, rebR(event))) {
-            rebElide(Lib(APPEND), "system.ports.system.data", port);
-        }
-    }
-
-    FREE(Reb_Write_Request, rebreq);
+    // !!! We could more proactively free memory early for the GC here if
+    // we wanted to, presuming we weren't reusing locked data.
+    //
+    rebRelease(rebreq->binary);
 }
 
 
@@ -775,14 +688,13 @@ static REB_R Transport_Actor(
 
         sock = Sock_Of_Port(port);
         sock->transport = transport;
-        sock->fd = SOCKET_NONE;
         sock->stream = nullptr;
 
         // !!! There is no way to customize the timeout.  Where should this
         // setting be configured?
     }
 
-    if (sock->fd == SOCKET_NONE) {
+    if (sock->stream == nullptr) {
         //
         // Actions for an unopened socket
         //
@@ -849,14 +761,6 @@ static REB_R Transport_Actor(
                 listen = true;
                 sock->local_port_number =
                     IS_INTEGER(port_id) ? VAL_INT32(port_id) : 8000;
-
-                // When a client connection gets accepted, a port gets added
-                // to a BLOCK! of connections.
-                //
-                Init_Block(
-                    CTX_VAR(ctx, STD_PORT_CONNECTIONS),
-                    Make_Array(2)
-                );
             }
             else
                 fail (Error_On_Port(SYM_INVALID_SPEC, port, -10));
@@ -927,9 +831,10 @@ static REB_R Transport_Actor(
         if (sock->stream == nullptr and sock->transport != TRANSPORT_UDP)
             fail (Error_On_Port(SYM_NOT_CONNECTED, port, -15));
 
-        Reb_Read_Request *rebreq = TRY_ALLOC(Reb_Read_Request);
+        Reb_Read_Request *rebreq = rebAlloc(Reb_Read_Request);
         rebreq->port_ctx = VAL_CONTEXT(port);
         rebreq->actual = 0;
+        rebreq->result = nullptr;
 
         if (REF(part)) {
             if (not IS_INTEGER(ARG(part)))
@@ -951,13 +856,19 @@ static REB_R Transport_Actor(
         //
         sock->tcp.data = rebreq;
 
-        int result = uv_read_start(sock->stream, on_read_alloc, on_read);
-        if (result < 0) {
-            FREE(Reb_Read_Request, rebreq);
-            fail (rebError_UV(result));
-        }
+        int r = uv_read_start(sock->stream, on_read_alloc, on_read);
+        if (r < 0)
+            fail (rebError_UV(r));
 
-        Set_Port_Pending(port);
+        do {
+            uv_run(uv_default_loop(), UV_RUN_ONCE);
+        } while (rebreq->result == nullptr);
+
+        if (not IS_BLANK(rebreq->result))
+            fail (rebreq->result);
+        rebRelease(rebreq->result);
+
+        rebFree(rebreq);
 
         RETURN (port); }
 
@@ -984,8 +895,9 @@ static REB_R Transport_Actor(
         // When we get the callback we'll get the libuv req pointer, which is
         // the same pointer as the rebreq (first struct member).
         //
-        Reb_Write_Request *rebreq = TRY_ALLOC(Reb_Write_Request);
+        Reb_Write_Request *rebreq = rebAlloc(Reb_Write_Request);
         rebreq->port_ctx = VAL_CONTEXT(port);  // API handle for GC safety?
+        rebreq->result = nullptr;
 
         // Make a copy of the BINARY! to put in the request, so that you can
         // say things like:
@@ -1013,33 +925,21 @@ static REB_R Transport_Actor(
         uv_buf_t buf;
         buf.base = s_cast(m_cast(REBYTE*, VAL_BINARY_AT(rebreq->binary)));
         buf.len = VAL_LEN_AT(rebreq->binary);
-        uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
+        int r = uv_write(&rebreq->req, sock->stream, &buf, 1, on_write_finished);
+        if (r < 0)
+            fail (rebError_UV(r));
 
-        Set_Port_Pending(port);
+        do {
+            uv_run(uv_default_loop(), UV_RUN_ONCE);
+        } while (rebreq->result == nullptr);
+
+        if (not IS_BLANK(rebreq->result))
+            fail (rebreq->result);
+        rebRelease(rebreq->result);
+
+        rebFree(rebreq);
 
         RETURN (port); }
-
-      case SYM_TAKE: {
-        INCLUDE_PARAMS_OF_TAKE;
-        UNUSED(PAR(series));
-
-        if (not (sock->modes & RST_LISTEN) or sock->transport == TRANSPORT_UDP)
-            fail ("TAKE is only available on TCP LISTEN ports");
-
-        return rebValue(
-            "take/part/(@", REF(deep), ")/(@", REF(last), ")",
-                CTX_VAR(ctx, STD_PORT_CONNECTIONS),
-                rebQ(REF(part))
-        ); }
-
-      case SYM_PICK: {
-        fail (
-            "Listening network PORT!s no longer support FIRST (or PICK) to"
-            " extract the connection PORT! in an accept event.  It was"
-            " actually TAKE-ing the port, since it couldn't be done again."
-            " Use TAKE for now--PICK may be brought back eventually as a"
-            " read-only way of looking at the accept list."
-        ); }
 
       case SYM_QUERY: {
         //
@@ -1075,7 +975,7 @@ static REB_R Transport_Actor(
         return result; }
 
       case SYM_CLOSE: {
-        if (sock->fd != SOCKET_NONE) {  // allows close of closed socket (?)
+        if (sock->stream) {  // allows close of closed socket (?)
             REBVAL *error = Close_Socket(port);
             if (error)
                 fail (error);
@@ -1147,6 +1047,8 @@ REBNATIVE(get_tcp_actor_handle)
 //  ]
 //
 REBNATIVE(get_udp_actor_handle)
+//
+// !!! Note: has not been ported to libuv.
 {
     NETWORK_INCLUDE_PARAMS_OF_GET_UDP_ACTOR_HANDLE;
 
