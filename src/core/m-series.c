@@ -28,11 +28,11 @@
 
 
 //
-//  Extend_Series: C
+//  Extend_Series_If_Necessary: C
 //
 // Extend a series at its end without affecting its tail index.
 //
-void Extend_Series(REBSER *s, REBLEN delta)
+void Extend_Series_If_Necessary(REBSER *s, REBLEN delta)
 {
     REBLEN used_old = SER_USED(s);
     EXPAND_SERIES_TAIL(s, delta);

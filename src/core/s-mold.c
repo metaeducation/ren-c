@@ -217,7 +217,7 @@ REBINT Find_Pointer_In_Series(REBSER *s, const void *p)
 void Push_Pointer_To_Series(REBSER *s, const void *p)
 {
     if (SER_FULL(s))
-        Extend_Series(s, 8);
+        Extend_Series_If_Necessary(s, 8);
     *SER_AT(const void*, s, SER_USED(s)) = p;
     SET_SERIES_USED(s, SER_USED(s) + 1);
 }

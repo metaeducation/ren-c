@@ -1387,7 +1387,7 @@ inline static REBSER *Make_Series_Into(
     //
     if (not (flags & NODE_FLAG_MANAGED)) {
         if (SER_FULL(GC_Manuals))
-            Extend_Series(GC_Manuals, 8);
+            Extend_Series_If_Necessary(GC_Manuals, 8);
 
         cast(REBSER**, GC_Manuals->content.dynamic.data)[
             GC_Manuals->content.dynamic.used++

@@ -286,7 +286,7 @@ static void Queue_Mark_Node_Deep(void *p)
         // grow, like the data stack?
         //
         if (SER_FULL(GC_Mark_Stack))
-            Extend_Series(GC_Mark_Stack, 8);
+            Extend_Series_If_Necessary(GC_Mark_Stack, 8);
         *SER_AT(REBARR*, GC_Mark_Stack, SER_USED(GC_Mark_Stack)) = a;
         SET_SERIES_USED(GC_Mark_Stack, SER_USED(GC_Mark_Stack) + 1);  // !term
     }
@@ -1329,7 +1329,7 @@ void Push_Guard_Node(const REBNOD *node)
   #endif
 
     if (SER_FULL(GC_Guarded))
-        Extend_Series(GC_Guarded, 8);
+        Extend_Series_If_Necessary(GC_Guarded, 8);
 
     *SER_AT(const REBNOD*, GC_Guarded, SER_USED(GC_Guarded)) = node;
 

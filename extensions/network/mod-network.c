@@ -480,31 +480,30 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
     size_t bufsize;
-    if (rebreq->length == UINT32_MAX)  // read maximum amount possible
-        bufsize = NET_BUF_SIZE;  // use libuv's suggestion
+    if (rebreq->length == UNLIMITED)  // read maximum amount possible
+        bufsize = NET_BUF_SIZE;  // !!! use libuv's (large) suggestion instead?
     else
         bufsize = rebreq->length - rebreq->actual;  // !!! use suggestion here?
 
-    REBBIN *buffer;
+    REBBIN *bin;
     if (IS_NULLED(port_data)) {
-        buffer = Make_Binary(bufsize);
-        Init_Binary(port_data, buffer);
-        TERM_BIN_LEN(buffer, 0);
+        bin = Make_Binary(bufsize);
+        Init_Binary(port_data, bin);
     }
     else {
-        buffer = VAL_BINARY_KNOWN_MUTABLE(port_data);
+        bin = VAL_BINARY_KNOWN_MUTABLE(port_data);
 
         // !!! Port code doesn't skip the index, but what if user does?
         //
         assert(VAL_INDEX(port_data) == 0);
 
-        if (SER_AVAIL(buffer) < bufsize) {
-            Extend_Series(buffer, bufsize - SER_AVAIL(buffer));
-            TERM_BIN(buffer);
-        }
+        // !!! Binaries need +1 space for the terminator, but that is handled
+        // internally to Extend_Series.  Review wasted space in array case.
+        //
+        Extend_Series_If_Necessary(bin, bufsize);
     }
 
-    buf->base = s_cast(BIN_TAIL(buffer) + rebreq->actual);
+    buf->base = s_cast(BIN_TAIL(bin));
     buf->len = bufsize;
 
     // We are handing out a buffer of size buf->len
@@ -529,10 +528,18 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
-    // !!! Note: With new data provided, the binary will no longer be
-    // "terminated" correctly.
-    //
-    REBBIN *bin = VAL_BINARY_KNOWN_MUTABLE(port_data);
+    REBBIN *bin;
+    if (IS_NULLED(port_data)) {
+        //
+        // An error like "connection reset by peer" can occur before a call to
+        // on_read_alloc() is made, so the buffer might be null in that case.
+        // For safety's sake, assume this could also happen for 0 reads.
+        //
+        assert(nread <= 0);  // error or 0 read
+        bin = nullptr;
+    }
+    else
+        bin = VAL_BINARY_KNOWN_MUTABLE(port_data);
 
     REBVAL *awake = CTX_VAR(port_ctx, STD_PORT_AWAKE);
     if (not IS_ACTION(awake)) {
@@ -555,9 +562,14 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         REBVAL *error = rebError_UV(nread);
 
         // !!! How to handle corrupted data?  Clear the whole buffer?  Leave
-        // it at the termination before the READ?  Here give partial result.
+        // it at the termination before the READ?  Clear it for now just to
+        // catch errors where partial data would be used as if it were okay,
+        // but consider a defensive strategy that could use partial results.
+        // Note that on_read_alloc() may not have been called at all, as in
+        // the case of some "connection reset by peer" errors; so port_data
+        // might be a binary or it might be nulled.
         //
-        TERM_BIN_LEN(bin, BIN_LEN(bin) + rebreq->actual);
+        Init_Nulled(port_data);
 
         // Don't want to raise errors synchronously because we may be in the
         // event loop, e.g. `trap [write ...]` can't work if the writing
@@ -579,10 +591,10 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         // Asking to do a `uv_read_stop()` when you've reached EOF asserts:
         // https://github.com/joyent/libuv/issues/1534
 
-        if (rebreq->length == UINT32_MAX) {
+        if (rebreq->length == UNLIMITED) {
             //
-            // UINT32_MAX was the "read as much as you can" signal.  Reaching
-            // the end is an acceptable outcome.
+            // -1 is the "read as much as you can" signal.  Reaching the end is
+            // an acceptable outcome.
             //
             goto post_read_finished_event;
         }
@@ -599,40 +611,52 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
             // Hence it is the caller's responsibility to check how much
             // data they actually got with a READ/PART call.  But this is
             // where you could handle that situation differently.
+
+            // Note: cast of UNLIMITED to unsigned will be a very large value.
             //
-            assert(rebreq->actual < rebreq->length);  // would have stopped
+            assert(rebreq->actual < cast(size_t, rebreq->length));
+
             goto post_read_finished_event;
         }
     }
     else {
-        assert(buf->base == cs_cast(BIN_TAIL(bin) + rebreq->actual));
+        // Note that "each buffer is used only once", e.g. there is a call
+        // to on_read_alloc() for every read.
+        //
+        assert(buf->base == s_cast(BIN_TAIL(bin)));
 
         rebreq->actual += nread;
 
-        if (rebreq->length == UINT32_MAX) {
-            //
-            // Reading an unlimited amount of data, so keep going (?)
-            //
-            // !!! How would this deal with our accruing buffer exceeding the
-            // binary size in the port?
+        // Binaries must be kept with proper termination in case the GC sees
+        // them.  This rule is maintained in case binaries alias UTF-8 strings,
+        // which are stored terminated with 0.
+        //
+        TERM_BIN_LEN(bin, BIN_LEN(bin) + nread);
 
+        if (rebreq->length == UNLIMITED) {
+            //
+            // Reading an unlimited amount of data, so keep going.
+            //
             goto post_read_finished_event;
         }
-        else if (rebreq->actual == rebreq->length) {
+
+        assert(rebreq->length >= 0);
+
+        if (rebreq->actual == cast(size_t, rebreq->length)) {
             //
             // We've read as much as we wanted to, so ask to stop reading.
-            //
-            // "This function will always succeed; hence, checking its return
-            // value is unnecessary. A non-zero return indicates that finishing
-            // releasing resources may be pending on the next input event on
-            // that TTY on Windows, and does not indicate failure."
             //
 
           post_read_finished_event:
 
             // !!! See note at top of function on why we stop each AWAKE call.
+
+            // RE: uv_read_stop() "This function will always succeed; hence,
+            // checking its return value is unnecessary. A non-zero return
+            // indicates that finishing releasing resources may be pending on
+            // the next input event on that TTY on Windows, and does not
+            // indicate failure."
             //
-            TERM_BIN_LEN(bin, BIN_LEN(bin) + rebreq->actual);
             uv_read_stop(stream);
             FREE(Reb_Read_Request, rebreq);
             stream->data = nullptr;
@@ -920,7 +944,7 @@ static REB_R Transport_Actor(
             // network protocols.  Ren-C has R3-Alpha's behavior if no /PART
             // is specified.
             //
-            rebreq->length = UINT32_MAX;  // signal "read as much as you can"
+            rebreq->length = UNLIMITED;  // -1, e.g. "read as much as you can"
         }
 
         // handle_t* passed to the on_read_alloc callback is the TCP handle

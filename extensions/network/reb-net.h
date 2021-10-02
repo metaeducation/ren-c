@@ -97,7 +97,7 @@ typedef struct {
 typedef struct {
     REBCTX *port_ctx;
 
-    size_t length;  // length to transfer
+    ssize_t length;  // length to transfer (or -1 for UNLIMITED)
     size_t actual;  // length actually transferred
 
     // !!! the binary is assumed to just live in the port's "data", this

@@ -113,7 +113,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
     // context, and no INIT_CTX_KEYLIST_SHARED was used by another context
     // to mark the flag indicating it's shared.  Extend it directly.
 
-    Extend_Series(keylist, delta);
+    Extend_Series_If_Necessary(keylist, delta);
 
     return false;
 }
@@ -128,7 +128,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 {
     // varlist is unique to each object--expand without making a copy.
     //
-    Extend_Series(CTX_VARLIST(context), delta);
+    Extend_Series_If_Necessary(CTX_VARLIST(context), delta);
 
     Expand_Context_Keylist_Core(context, delta);
 }

@@ -282,7 +282,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
         Fail_Stack_Overflow(); // !!! Should this be a "data stack" message?
     }
 
-    Extend_Series(DS_Array, amount);
+    Extend_Series_If_Necessary(DS_Array, amount);
 
     // Update the pointer used for fast access to the top of the stack that
     // likely was moved by the above allocation (needed before using DS_TOP)
