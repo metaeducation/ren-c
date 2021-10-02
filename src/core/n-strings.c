@@ -962,13 +962,13 @@ REBNATIVE(to_hex)
     if (REF(size))
         len = cast(REBLEN, VAL_INT64(ARG(size)));
     else
-        len = UNLIMITED;
+        len = cast(REBLEN, UNLIMITED);
 
     DECLARE_MOLD (mo);
     Push_Mold(mo);
 
     if (IS_INTEGER(arg)) {
-        if (len == UNLIMITED || len > MAX_HEX_LEN)
+        if (len == cast(REBLEN, UNLIMITED) || len > MAX_HEX_LEN)
             len = MAX_HEX_LEN;
 
         Form_Hex_Pad(mo, VAL_INT64(arg), len);
@@ -976,7 +976,7 @@ REBNATIVE(to_hex)
     else if (IS_TUPLE(arg)) {
         REBLEN n;
         if (
-            len == UNLIMITED
+            len == cast(REBLEN, UNLIMITED)
             || len > 2 * MAX_TUPLE
             || len > cast(REBLEN, 2 * VAL_SEQUENCE_LEN(arg))
         ){

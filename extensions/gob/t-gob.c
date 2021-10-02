@@ -174,9 +174,9 @@ static void Detach_Gob(REBGOB *gob)
         return;
 
     if (GOB_PANE(par)) {
-        REBLEN i = Find_Gob(par, gob);
+        REBINT i = Find_Gob(par, gob);
         if (i != NOT_FOUND)
-            Remove_Series_Units(GOB_PANE(par), i, 1);
+            Remove_Series_Units(GOB_PANE(par), cast(REBLEN, i), 1);
         else
             assert(!"Detaching GOB from parent that didn't find it"); // !!! ?
     }
@@ -1206,7 +1206,7 @@ REBTYPE(Gob)
     case SYM_FIND:
         if (IS_GOB(D_ARG(2))) {
             index = Find_Gob(gob, VAL_GOB(D_ARG(2)));
-            if (index == NOT_FOUND)
+            if (cast(REBINT, index) == NOT_FOUND)
                 return nullptr;
             goto set_index;
         }

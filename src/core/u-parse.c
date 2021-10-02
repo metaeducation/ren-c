@@ -703,7 +703,7 @@ static REB_R Parse_One_Rule(
             or (rule_cell_kind == REB_INTEGER and VAL_NUM_QUOTES(rule) == 1)
         ){
             REBLEN len;
-            REBLEN index = Find_Value_In_Binstr(
+            REBINT index = Find_Value_In_Binstr(
                 &len,
                 ARG(position),
                 VAL_LEN_HEAD(ARG(position)),
@@ -714,7 +714,7 @@ static REB_R Parse_One_Rule(
             );
             if (index == NOT_FOUND)
                 return R_UNHANDLED;
-            return Init_Integer(D_OUT, index + len);
+            return Init_Integer(D_OUT, cast(REBLEN, index) + len);
         }
         else switch (VAL_TYPE(rule)) {
           case REB_BITSET: {
@@ -945,7 +945,7 @@ static REBIXO To_Thru_Block_Rule(
                 }
                 else if (ANY_STRING(rule)) {
                     REBLEN len = VAL_LEN_AT(rule);
-                    REBLEN i = Find_Value_In_Binstr(
+                    REBINT i = Find_Value_In_Binstr(
                         &len,
                         iter,
                         VAL_LEN_HEAD(iter),
@@ -956,8 +956,8 @@ static REBIXO To_Thru_Block_Rule(
 
                     if (i != NOT_FOUND) {
                         if (is_thru)
-                            return i + len;
-                        return i;
+                            return cast(REBLEN, i) + len;
+                        return cast(REBLEN, i);
                     }
                 }
                 else if (IS_INTEGER(rule)) {
@@ -1030,7 +1030,7 @@ static REBIXO To_Thru_Non_Block_Rule(
             find_flags |= AM_FIND_ONLY;  // !!! Is this implied?
         }
 
-        REBLEN i = Find_In_Array(
+        REBINT i = Find_In_Array(
             ARR(P_INPUT),
             P_POS,
             ARR_LEN(ARR(P_INPUT)),
@@ -1044,15 +1044,15 @@ static REBIXO To_Thru_Non_Block_Rule(
             return END_FLAG;
 
         if (is_thru)
-            return i + 1;
+            return cast(REBLEN, i) + 1;
 
-        return i;
+        return cast(REBLEN, i);
     }
 
     //=//// PARSE INPUT IS A STRING OR BINARY, USE A FIND ROUTINE /////////=//
 
     REBLEN len;  // e.g. if a TAG!, match length includes < and >
-    REBLEN i = Find_Value_In_Binstr(
+    REBINT i = Find_Value_In_Binstr(
         &len,
         ARG(position),
         VAL_LEN_HEAD(ARG(position)),

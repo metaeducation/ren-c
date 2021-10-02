@@ -231,9 +231,9 @@ inline static bool Is_Blackhole(const RELVAL *v) {
 inline static const REBYTE *VAL_BYTES_LIMIT_AT(
     REBSIZ *size_out,
     const RELVAL *v,
-    REBLEN limit
+    REBINT limit
 ){
-    if (limit == UNLIMITED || limit > VAL_LEN_AT(v))
+    if (limit == UNLIMITED or limit > cast(REBINT, VAL_LEN_AT(v)))
         limit = VAL_LEN_AT(v);
 
     if (IS_BINARY(v)) {
@@ -247,7 +247,7 @@ inline static const REBYTE *VAL_BYTES_LIMIT_AT(
     }
 
     assert(ANY_WORD(v));
-    assert(limit == VAL_LEN_AT(v)); // !!! TBD: string unification
+    assert(cast(REBLEN, limit) == VAL_LEN_AT(v));
 
     const REBSTR *spelling = VAL_WORD_SYMBOL(v);
     *size_out = STR_SIZE(spelling);
@@ -266,7 +266,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     option(REBLEN*) length_out,
     option(REBSIZ*) size_out,
     REBCEL(const*) v,
-    REBLEN limit
+    REBINT limit
 ){
   #if !defined(NDEBUG)
     REBSIZ dummy_size;
@@ -278,7 +278,10 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         assert(CELL_KIND(v) == REB_ISSUE);
         REBLEN len;
         REBSIZ size;
-        if (limit >= EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN]) {
+        //
+        // Note that unsigned cast of UNLIMITED as -1 to REBLEN is a large #
+        //
+        if (cast(REBLEN, limit) >= EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN]) {
             len = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN];
             size = EXTRA(Bytes, v).exactly_4[IDX_EXTRA_USED];
         }
@@ -322,9 +325,11 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
             else {
                 // WORD!s don't cache their codepoint length, must calculate
                 //
+                // Note that signed cast to REBLEN of -1 UNLIMITED is a large #
+                //
                 REBCHR(const*) cp = utf8;
                 REBLEN index = 0;
-                for (index = 0; index < limit; ++index, cp = NEXT_STR(cp)) {
+                for (; index < cast(REBLEN, limit); ++index, cp = NEXT_STR(cp)) {
                     if (CHR_CODE(cp) == '\0')
                         break;
                 }

@@ -1747,7 +1747,7 @@ void Init_Scan_Level(
     const REBSTR *file,
     REBLIN line,
     const REBYTE *utf8,
-    REBLEN limit,  // !!! limit feature not implemented in R3-Alpha
+    REBINT limit,  // !!! limit feature not implemented in R3-Alpha
     option(REBCTX*) context
 ){
     out->ss = ss;

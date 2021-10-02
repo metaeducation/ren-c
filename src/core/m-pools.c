@@ -1408,7 +1408,7 @@ void Dump_All_Series_Of_Width(REBSIZ wide)
 //
 // Dump all series in pool @pool_id, UNLIMITED (-1) for all pools
 //
-void Dump_Series_In_Pool(REBLEN pool_id)
+void Dump_Series_In_Pool(REBINT pool_id)
 {
     REBSEG *seg;
     for (seg = Mem_Pools[SER_POOL].segs; seg; seg = seg->next) {
@@ -1427,7 +1427,7 @@ void Dump_Series_In_Pool(REBLEN pool_id)
                 pool_id == UNLIMITED
                 or (
                     GET_SERIES_FLAG(s, DYNAMIC)
-                    and pool_id == FIND_POOL(SER_TOTAL(s))
+                    and cast(REBLEN, pool_id) == FIND_POOL(SER_TOTAL(s))
                 )
             ){
                 Dump_Series(s, "Dump_Series_In_Pool");

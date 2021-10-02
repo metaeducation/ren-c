@@ -376,7 +376,7 @@ REB_R TO_Array(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 // !!! Comment said "Final Parameters: tail - tail position, match - sequence,
 // SELECT - (value that follows)".  It's not clear what this meant.
 //
-REBLEN Find_In_Array(
+REBINT Find_In_Array(
     const REBARR *array,
     REBLEN index_unsigned, // index to start search
     REBLEN end_unsigned, // ending position
@@ -1043,14 +1043,16 @@ REBTYPE(Array)
         else
             skip = 1;
 
-        REBLEN ret = Find_In_Array(
+        REBINT find = Find_In_Array(
             arr, index, limit, pattern, len, flags, skip
         );
 
-        if (ret == NOT_FOUND)
+        if (find == NOT_FOUND)
             return nullptr;
 
+        REBLEN ret = cast(REBLEN, find);
         assert(ret <= limit);
+        UNUSED(find);
 
         if (id == SYM_FIND) {
             //

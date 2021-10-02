@@ -989,14 +989,16 @@ REBTYPE(String)
             skip = 1;
 
         REBLEN len;
-        REBLEN ret = Find_Value_In_Binstr(
+        REBINT find = Find_Value_In_Binstr(
             &len, v, tail, ARG(pattern), flags, skip
         );
 
-        if (ret == NOT_FOUND)
+        if (find == NOT_FOUND)
             return nullptr;
 
+        REBLEN ret = cast(REBLEN, find);
         assert(ret <= cast(REBLEN, tail));
+        UNUSED(find);
 
         if (id == SYM_FIND) {
             //

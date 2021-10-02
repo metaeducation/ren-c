@@ -201,7 +201,7 @@ void New_Indented_Line(REB_MOLD *mo)
 //
 //  Find_Pointer_In_Series: C
 //
-REBLEN Find_Pointer_In_Series(REBSER *s, const void *p)
+REBINT Find_Pointer_In_Series(REBSER *s, const void *p)
 {
     REBLEN index = 0;
     for (; index < SER_USED(s); ++index) {

@@ -609,7 +609,7 @@ inline static REBCHR(const*) VAL_STRING_TAIL(REBCEL(const*) v) {
 inline static REBSIZ VAL_SIZE_LIMIT_AT(
     option(REBLEN*) length_out,  // length in chars to end (including limit)
     REBCEL(const*) v,
-    REBLEN limit  // UNLIMITED (e.g. a very large number) for no limit
+    REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
     assert(ANY_STRING_KIND(CELL_HEART(v)));
 
@@ -617,12 +617,13 @@ inline static REBSIZ VAL_SIZE_LIMIT_AT(
     REBCHR(const*) tail;
 
     REBLEN len_at = VAL_LEN_AT(v);
-    if (limit >= len_at) {
+    if (cast(REBLEN, limit) >= len_at) {  // UNLIMITED casts to large unsigned
         if (length_out)
             *unwrap(length_out) = len_at;
         tail = VAL_STRING_TAIL(v);  // byte count known (fast)
     }
     else {
+        assert(limit >= 0);
         if (length_out)
             *unwrap(length_out) = limit;
         tail = at;

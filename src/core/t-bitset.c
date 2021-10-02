@@ -100,11 +100,11 @@ REB_R MAKE_Bitset(
     if (parent)
         fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    REBLEN len = Find_Max_Bit(arg);
+    REBINT len = Find_Max_Bit(arg);
     if (len == NOT_FOUND)
         fail (arg);
 
-    REBBIN *bin = Make_Bitset(len);
+    REBBIN *bin = Make_Bitset(cast(REBLEN, len));
     Manage_Series(bin);
     Init_Bitset(out, bin);
 
@@ -138,7 +138,7 @@ REB_R TO_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 // Return integer number for the maximum bit number defined by
 // the value. Used to determine how much space to allocate.
 //
-REBLEN Find_Max_Bit(const RELVAL *val)
+REBINT Find_Max_Bit(const RELVAL *val)
 {
     REBLEN maxi = 0;
 
@@ -174,9 +174,9 @@ REBLEN Find_Max_Bit(const RELVAL *val)
         const RELVAL *tail;
         const RELVAL *item = VAL_ARRAY_AT(&tail, val);
         for (; item != tail; ++item) {
-            REBLEN n = Find_Max_Bit(item);
-            if (n != NOT_FOUND and n > maxi)
-                maxi = n;
+            REBINT n = Find_Max_Bit(item);
+            if (n != NOT_FOUND and cast(REBLEN, n) > maxi)
+                maxi = cast(REBLEN, n);
         }
         //maxi++;
         break; }

@@ -136,7 +136,7 @@ REBINT Compare_UTF8(const REBYTE *s1, const REBYTE *s2, REBSIZ l2)
 // byte, and there'd be no way to return that match measured as a codepoint
 // position in the searched string (which is what FIND and PARSE require).
 //
-REBLEN Find_Binstr_In_Binstr(
+REBINT Find_Binstr_In_Binstr(
     REBLEN *len_out,  // length in output units of match
     REBCEL(const*) binstr1,
     REBLEN end1_unsigned,  // end binstr1 *index* (not a limiting *length*)
@@ -427,7 +427,8 @@ REBLEN Find_Binstr_In_Binstr(
 //
 //  Find_Bitset_In_Binstr: C
 //
-// General purpose find a bitset char in a string or binary.
+// General purpose find a bitset char in a string or binary.  Returns NOT_FOUND
+// (-1) on failure.
 //
 // Supports: forward/reverse with skip, cased/uncase, Unicode/byte.
 //
@@ -435,7 +436,7 @@ REBLEN Find_Binstr_In_Binstr(
 //
 // Flags are set according to ALL_FIND_REFS
 //
-REBLEN Find_Bitset_In_Binstr(
+REBINT Find_Bitset_In_Binstr(
     REBLEN *len_out,
     REBCEL(const*) binstr,
     REBLEN end_unsigned,

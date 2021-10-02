@@ -405,7 +405,7 @@ REBNATIVE(text_x_combinator)
     assert(ANY_STRING(input) or IS_BINARY(input));
 
     REBLEN len;
-    REBLEN index = Find_Value_In_Binstr(
+    REBINT index = Find_Value_In_Binstr(
         &len,
         input,
         VAL_LEN_HEAD(input),
@@ -416,7 +416,7 @@ REBNATIVE(text_x_combinator)
     if (index == NOT_FOUND)
         return nullptr;
 
-    assert(index == VAL_INDEX(input));  // we asked for AM_FIND_MATCH
+    assert(cast(REBLEN, index) == VAL_INDEX(input));  // asked for AM_FIND_MATCH
     VAL_INDEX_UNBOUNDED(input) += len;
     Set_Var_May_Fail(ARG(remainder), SPECIFIED, input, SPECIFIED);
 

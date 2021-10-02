@@ -67,15 +67,15 @@ typedef uintptr_t REBLIN; // type used to store line numbers in Rebol files
 typedef uintptr_t REBTCK; // type the debug build uses for evaluator "ticks"
 
 
-// These were used in R3-Alpha.  Could use some better typing in C++ to avoid
-// mistaking untested errors for ordinary integers.
-//
-// !!! Is it better to use the _MAX definitions than this?
+// These were used in R3-Alpha, with the benefit that UNLIMITED will cast to
+// a very large unsigned integer.  With sign checks turned up, it's possible to
+// catch cases that are looking for unsigned integers but don't test for
+// the -1 condition.
 //
 // https://github.com/LambdaSchool/CS-Wiki/wiki/Casting-Signed-to-Unsigned-in-C
 //
-#define NOT_FOUND ((REBLEN)-1)
-#define UNLIMITED ((REBLEN)-1)
+#define NOT_FOUND (-1)
+#define UNLIMITED (-1)
 
 
 // !!! Review this choice from R3-Alpha:
