@@ -458,42 +458,6 @@ collect: redescribe [
     specialize :else [branch: [copy []]]
 ]
 
-collect-lines: redescribe [
-    {Evaluate body, and return block of values collected via KEEP function.
-    KEEPed blocks become spaced TEXT!.}
-] adapt :collect [  ; https://forum.rebol.info/t/945/1
-    body: compose [
-        keep: adapt* specialize* :keep [
-            line: #
-            part: null
-        ][
-            value: try spaced :value
-        ]
-        (as group! body)
-    ]
-]
-
-collect-text: redescribe [
-    {Evaluate body, and return block of values collected via KEEP function.
-    Returns all values as a single spaced TEXT!, individual KEEPed blocks get UNSPACED.}
-] chain [  ; https://forum.rebol.info/t/945/2
-    adapt :collect [
-        body: compose [
-            keep: adapt* specialize* :keep [
-                line: null
-                part: null
-            ][
-                value: try unspaced :value
-            ]
-            (as group! body)
-        ]
-    ]
-        |
-    :spaced
-        |
-    specialize* :else [branch: [copy ""]]
-]
-
 format: function [
     "Format a string according to the format dialect."
     rules {A block in the format dialect. E.g. [10 -10 #"-" 4]}

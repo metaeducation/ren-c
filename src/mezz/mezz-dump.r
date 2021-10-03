@@ -230,7 +230,7 @@ summarize-obj: function [
 
     wild: did find (try match text! :pattern) "*"
 
-    return collect-lines [
+    return collect [
         for-each [word val] obj [
             if not set? 'val [continue]  ; don't consider unset fields
 
@@ -265,7 +265,7 @@ summarize-obj: function [
                 ]
             ]
 
-            keep ["  " (form-pad word 15) (form-pad try type 10) :desc]
+            keep spaced ["  " (form-pad word 15) (form-pad try type 10) :desc]
         ]
     ]
 ]

@@ -918,7 +918,7 @@ write (join output-dir %libr3.exports.json) json-collect [
 ; the final return value of a JS-AWAITER can be returned with it.
 ; </review>
 
-write/lines (join output-dir %asyncify-blacklist.json) collect-lines [
+write/lines (join output-dir %asyncify-blacklist.json) collect [
     keep "["
     for-next names load %../asyncify-blacklist.r [
         keep unspaced [_ _ _ _ {"} names/1 {"} if not last? names [","]]

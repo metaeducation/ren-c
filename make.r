@@ -1685,7 +1685,9 @@ vars: reduce [
 prep: make rebmake/entry-class [
     target: 'prep ; phony target
 
-    commands: collect-lines [
+    commands: collect [
+        keep: adapt :keep [value: spaced :value]
+
         keep [{$(REBOL)} join tools-dir %make-natives.r]
         keep [{$(REBOL)} join tools-dir %make-headers.r]
         keep [

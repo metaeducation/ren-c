@@ -485,7 +485,7 @@ gcc: make compiler-class [
         /PIC "https://en.wikipedia.org/wiki/Position-independent_code"
         /E "only preprocessing"
     ][
-        return collect-text [
+        return spaced collect [
             keep any [
                 (file-to-local/pass exec-file)
                 (to text! name)  ; the "gcc" may get overridden as "g++"
@@ -498,7 +498,7 @@ gcc: make compiler-class [
             ]
             if I [
                 for-each inc (map-files-to-local I) [
-                    keep ["-I" inc]
+                    keep unspaced ["-I" inc]
                 ]
             ]
             if D [
@@ -517,16 +517,24 @@ gcc: make compiler-class [
                         flg: replace/all copy flg {"} {\"}
                     ]
 
-                    keep ["-D" (filter-flag flg id else [continue])]
+                    ; Note: bootstrap executable hangs on:
+                    ;
+                    ;     keep unspaced [
+                    ;         "-D" (filter-flag flg id else [continue])
+                    ;     ]
+                    ;
+                    if flg: filter-flag flg id [
+                        keep unspaced ["-D" flg]
+                    ]
                 ]
             ]
             if O [
                 case [
                     O = true [keep "-O2"]
                     O = false [keep "-O0"]
-                    integer? O [keep ["-O" O]]
+                    integer? O [keep unspaced ["-O" O]]
                     find ["s" "z" "g" 's 'z 'g] O [
-                        keep ["-O" O]
+                        keep unspaced ["-O" O]
                     ]
 
                     fail ["unrecognized optimization level:" O]
@@ -536,7 +544,7 @@ gcc: make compiler-class [
                 case [
                     g = true [keep "-g -g3"]
                     g = false []
-                    integer? g [keep ["-g" g]]
+                    integer? g [keep unspaced ["-g" g]]
 
                     fail ["unrecognized debug option:" g]
                 ]
@@ -592,14 +600,14 @@ cl: make compiler-class [
         ; Note: PIC is ignored for this Microsoft CL compiler handler
         /E "only preprocessing"
     ][
-        return collect-text [
+        return spaced collect [
             keep any [(file-to-local/pass exec-file) "cl"]
             keep "/nologo"  ; don't show startup banner (must be lowercase)
             keep either E ["/P"]["/c"]
 
             if I [
                 for-each inc (map-files-to-local I) [
-                    keep ["/I" inc]
+                    keep unspaced ["/I" inc]
                 ]
             ]
             if D [
@@ -616,14 +624,22 @@ cl: make compiler-class [
                     ;
                     flg: replace/all copy flg {"} {\"}
 
-                    keep ["/D" (filter-flag flg id else [continue])]
+                    ; Note: bootstrap executable hangs on:
+                    ;
+                    ;     keep unspaced [
+                    ;         "/D" (filter-flag flg id else [continue])
+                    ;     ]
+                    ;
+                    if flg: filter-flag flg id [
+                        keep unspaced ["/D" flg]
+                    ]
                 ]
             ]
             if O [
                 case [
                     O = true [keep "/O2"]
                     all [O, not zero? O] [
-                        keep ["/O" O]
+                        keep unspaced ["/O" O]
                     ]
                 ]
             ]
@@ -712,7 +728,7 @@ ld: make linker-class [
         ][
             try target-platform/exe-suffix
         ]
-        return collect-text [
+        return spaced collect [
             keep any [(file-to-local/pass exec-file) "gcc"]
 
             ; !!! This breaks emcc at the moment; no other DLLs are being
@@ -729,11 +745,11 @@ ld: make linker-class [
             either ends-with? output suffix [
                 keep output
             ][
-                keep [output suffix]
+                keep unspaced [output suffix]
             ]
 
             for-each search (map-files-to-local searches) [
-                keep ["-L" search]
+                keep unspaced ["-L" search]
             ]
 
             for-each flg ldflags [
@@ -821,7 +837,7 @@ llvm-link: make linker-class [
             target-platform/exe-suffix
         ]
 
-        return collect-text [
+        return spaced collect [
             keep any [(file-to-local/pass exec-file) "llvm-link"]
 
             keep "-o"
@@ -830,13 +846,13 @@ llvm-link: make linker-class [
             either ends-with? output suffix [
                 keep output
             ][
-                keep [output suffix]
+                keep unspaced [output suffix]
             ]
 
             ; llvm-link doesn't seem to deal with libraries
             comment [
                 for-each search (map-files-to-local searches) [
-                    keep ["-L" search]
+                    keep unspaced ["-L" search]
                 ]
             ]
 
@@ -904,7 +920,7 @@ link: make linker-class [
         ][
             target-platform/exe-suffix
         ]
-        return collect-text [
+        return spaced collect [
             keep any [(file-to-local/pass exec-file) "link"]
 
             ; https://docs.microsoft.com/en-us/cpp/build/reference/debug-generate-debug-info
@@ -914,7 +930,7 @@ link: make linker-class [
             if dynamic [keep "/DLL"]
 
             output: file-to-local output
-            keep [
+            keep unspaced [
                 "/OUT:" either ends-with? output suffix [
                     output
                 ][
@@ -923,7 +939,7 @@ link: make linker-class [
             ]
 
             for-each search (map-files-to-local searches) [
-                keep ["/LIBPATH:" search]
+                keep unspaced ["/LIBPATH:" search]
             ]
 
             for-each flg ldflags [
@@ -992,7 +1008,7 @@ strip-class: make object! [
         target [file!]
         /params [block! any-string!]
     ][
-        reduce [collect-text [
+        reduce [spaced collect [
             keep any [file-to-local/pass exec-file, "strip"]
             params: default [options]
             switch type of params [
@@ -1355,15 +1371,15 @@ makefile: make generator-class [
             [text!]
         entry [object!]
     ][
-        return newlined collect-lines [switch entry/class [
+        return newlined collect [switch entry/class [
 
             ; Makefile variable, defined on a line by itself
             ;
             #variable [
                 keep either entry/value [
-                    [entry/name "=" entry/value]
+                    spaced [entry/name "=" entry/value]
                 ][
-                    [entry/name either nmake? ["="]["?="] entry/default]
+                    spaced [entry/name either nmake? ["="]["?="] entry/default]
                 ]
             ]
 
@@ -1376,21 +1392,21 @@ makefile: make generator-class [
                 ;
                 ; https://stackoverflow.com/q/2145590/
                 ;
-                keep collect-text [
+                keep spaced collect [
                     case [
                         word? entry/target [  ; like `clean` in `make clean`
-                            keep [entry/target ":"]
+                            keep unspaced [entry/target ":"]
                             keep ".PHONY"
                         ]
                         file? entry/target [
-                            keep [file-to-local entry/target ":"]
+                            keep unspaced [file-to-local entry/target ":"]
                         ]
                         fail ["Unknown entry/target type" entry/target]
                     ]
                     for-each w (ensure [block! blank!] entry/depends) [
                         switch pick (try match object! w) 'class [
                             #variable [
-                                keep ["$(" w/name ")"]
+                                keep unspaced ["$(" w/name ")"]
                             ]
                             #entry [
                                 keep to-text w/target
@@ -1414,7 +1430,7 @@ makefile: make generator-class [
                 for-each cmd (ensure [block! blank!] entry/commands) [
                     let c: ((match text! cmd) else [gen-cmd cmd]) else [continue]
                     if empty? c [continue]  ; !!! Review why this happens
-                    keep [tab c]  ; makefiles demand TAB codepoint :-(
+                    keep unspaced [tab c]  ; makefiles demand TAB codepoint :-(
                 ]
             ]
 
