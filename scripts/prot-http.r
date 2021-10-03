@@ -151,7 +151,10 @@ do-request: function [
         return reduce in port.state.info [name size date]
     ]
 
-    return copy port.data  ; data may be BLANK!, if so will return null
+    ; The port data has been accrued for the client and can be given back
+    ; directly, not as a copy.  If the port data is BLANK!, this returns NULL.
+    ;
+    return (opt port.data, elide port.data: _)
 ]
 
 ; if a no-redirect keyword is found in the write dialect after 'headers then
@@ -300,7 +303,7 @@ check-response: function [
             if spec.method = 'HEAD [
                 state.mode: <ready>
             ] else [
-                check-data port
+                read-body port
             ]
         ]
 
@@ -309,13 +312,13 @@ check-response: function [
             if spec.method = 'HEAD [
                 state.mode: <ready>
             ] else [
-                check-data port
+                read-body port
                 if not open? port [
                     ;
                     ; !!! comment said: "some servers(e.g. yahoo.com) don't
                     ; supply content-data in the redirect header so the
                     ; state.mode can be left in <reading-data> after
-                    ; check-data call.  I think it is better to check if port
+                    ; READ-BODY call.  I think it is better to check if port
                     ; has been closed here and set the state so redirect
                     ; sequence can happen."
                     ;
@@ -348,7 +351,7 @@ check-response: function [
             if spec.method = 'HEAD [
                 state.mode: <ready>
             ] else [
-                check-data port
+                read-body port
             ]
         ]
         'unauthorized [
@@ -440,7 +443,8 @@ do-redirect: func [
     ]
 ]
 
-check-data: function [
+read-body: function [
+    {Based on the information in the HTTP headers, read body into PORT.DATA}
     return: <none>
     port [port!]
 ][
@@ -448,22 +452,33 @@ check-data: function [
     headers: state.info.headers
     conn: state.connection
 
+    assert [not port.data]
+
     case [
         headers.transfer-encoding = "chunked" [
-            data: conn.data
-            port.data: default [  ; only clear at request start
-                make binary! length of data
-            ]
-            out: port.data
+            ;
+            ; The conn.data from our connection (e.g. TLS or TCP) is the input.
+            ; The output from this port is the "de-chunked" BINARY!.  This
+            ; made its starting capacity the size of the first chunk for some
+            ; reason (?)
+            ;
+            port.data: make binary! length of conn.data
 
-            loop [parse? data [
-                copy chunk-size: some hex-digits, thru crlfbin
-                mk1: here, to end
-            ]][
-                ; The chunk size is in the byte stream as ASCII chars
-                ; forming a hex string.  DEBASE to get a BINARY! and then
-                ; DEBIN to get an integer.
+            cycle [  ; keep cycling while chunks are being read
                 ;
+                ; The chunk size is in the byte stream as ASCII chars forming a
+                ; hex string, terminated by CR LF.  Yet we don't know if we
+                ; even have enough input data for the chunk *size*, much less
+                ; the chunk.  READ until we have at least a chunk size.
+                ;
+                loop [not parse? conn.data [
+                    copy chunk-size: some hex-digits, thru crlfbin
+                    mk1: here, to end
+                ]][
+                    read conn
+                ]
+
+                ; We DEBASE to get a BINARY! and then DEBIN to get an integer.
                 ; It's not guaranteed that the chunk size is an even number
                 ; of hex digits!  If it's not, insert a 0, since DEBASE 16
                 ; would reject it otherwise.
@@ -473,41 +488,69 @@ check-data: function [
                 ]
                 chunk-size: debin [be +] (debase/base as text! chunk-size 16)
 
+                ; A chunk size of zero signals no more chunks.  Stop cycling.
+                ;
                 if chunk-size = 0 [
-                    parse mk1 [
-                        crlfbin (trailer: "") to end
-                            |
-                        copy trailer to crlf2bin to end
-                    ] then [
-                        trailer: scan-net-header as binary! trailer
-                        append headers trailer
-                        state.mode: <ready>
-                        clear data
-                    ]
-                    break
+                    stop
                 ]
-                else [
-                    parse mk1 [
-                        repeat (chunk-size) skip, mk2: here, crlfbin, to end
-                    ] else [
-                        read conn  ; didn't get the whole chunk read more
-                        break
-                    ]
 
-                    append/part out mk1 ((index of mk2) - (index of mk1))
-                    remove/part data skip mk2 2
-                    empty? data
+                ; Now we have the chunk size but may not have the chunk data.
+                ; Loop until enough data is gathered.
+                ;
+                loop [not parse? mk1 [
+                    repeat (chunk-size) skip, mk2: here, crlfbin, to end
+                ]][
+                    read conn
                 ]
+
+                ; Now we consume the data out of the input connection, and
+                ; remove that data (as well as the chunk size and CR LFs)
+                ; from the input.
+                ;
+                append/part port.data mk1 ((index of mk2) - (index of mk1))
+                remove/part conn.data skip mk2 2
             ]
+
+            ; "The Trailer response header allows the sender to include
+            ; additional fields at the end of chunked messages in order to
+            ; supply metadata that might be dynamically generated while the
+            ; message body is sent."
+            ;
+            ; https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Trailer
+            ;
+            parse mk1 [
+                crlfbin (trailer: "") to end
+                    |
+                copy trailer to crlf2bin to end
+            ] then [
+                trailer: scan-net-header as binary! trailer
+                append headers trailer
+                clear conn.data
+            ]
+
+            state.mode: <ready>
         ]
+
         integer? headers.content-length [
-            port.data: conn.data
-            if headers.content-length <= length of port.data [
-                state.mode: <ready>
-                conn.data: make binary! 32000
-            ] else [
+            ;
+            ; If the header gave a content length, then that should be how
+            ; much we read.
+            ;
+            ; !!! Note: This could be done with READ/PART, but TLS does not
+            ; implement /PART at this time...so it reads in a loop manually.
+            ; Note that TAKE/PART removes *at most* that amount.
+            ;
+            assert [not port.data]
+            port.data: make binary! headers.content-length
+            append port.data take/part conn.data headers.content-length
+
+            loop [headers.content-length > length of port.data] [
                 read conn
+                append port.data take/part conn.data (
+                    headers.content-length - length of port.data
+                )
             ]
+            state.mode: <ready>
         ]
     ] else [
         port.data: conn.data
