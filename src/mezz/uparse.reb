@@ -746,9 +746,6 @@ default-combinators: make map! reduce [
         return: "parse position"
             [any-series!]
     ][
-        if not same? (head input) (head state.series) [
-            fail "<input> behavior with INTO not currently defined"
-        ]
         set remainder input
         return state.series
     ]
