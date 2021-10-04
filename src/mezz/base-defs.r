@@ -418,23 +418,8 @@ back: specialize :skip [offset: -1]
 bound?: chain [specialize :reflect [property: 'binding] | :value?]
 
 unspaced: specialize :delimit [delimiter: null]
-unspaced-text: chain [:unspaced | specialize :else [branch: [copy ""]]]
-
 spaced: specialize :delimit [delimiter: space]
-spaced-text: chain [:spaced | specialize :else [branch: [copy ""]]]
-
-newlined: chain [
-    adapt specialize :delimit [delimiter: newline] [
-        if text? :line [
-            fail @line "NEWLINED on TEXT! semantics being debated"
-        ]
-    ]
-        |
-    func* [t [<opt> text!]] [
-        if null? t [return null]
-        append t newline  ; Terminal newline is POSIX standard, more useful
-    ]
-]
+newlined: specialize :delimit [delimiter: newline, tail: #]
 
 an: func* [
     {Prepends the correct "a" or "an" to a string, based on leading character}
