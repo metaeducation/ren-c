@@ -5,7 +5,7 @@ REBOL [
     Version: 0.7.0
     Rights: {
         Copyright 2012 Richard "Cyphre" Smolak (TLS 1.0)
-        Copyright 2012-2018 Ren-C Open Source Contributors
+        Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -77,34 +77,9 @@ REBOL [
     }
 ]
 
-; !!! There was a /SECURE refinement to RANDOM, which implemented the
-; following after generating the REBI64 into a tmp variable:
-;
-;     REBYTE srcbuf[20], dstbuf[20];
-;
-;     memcpy(srcbuf, &tmp, sizeof(tmp));
-;     memset(srcbuf + sizeof(tmp), *(REBYTE*)&tmp, 20 - sizeof(tmp));
-;
-;     SHA1(srcbuf, 20, dstbuf);
-;     memcpy(&tmp, dstbuf, sizeof(tmp));
-;
-; It's not entirely clear how much more secure that makes it.  In any case,
-; SHA1 was removed from the core.  We could do it in userspace if it were
-; deemed important.
-;
-random-secure: func [range [integer!]] [random range]
 
+=== CURRENTLY SUPPORTED CIPHER SUITES ===
 
-version-to-bytes: [
-    1.0 #{03 01}
-    1.1 #{03 02}
-    1.2 #{03 03}
-]
-bytes-to-version: reverse copy version-to-bytes
-
-
-; CURRENTLY SUPPORTED CIPHER SUITES
-;
 ; https://testssl.sh/openssl-rfc.mapping.html
 ; https://fly.io/articles/how-ciphersuites-work/
 ;
@@ -195,11 +170,35 @@ cipher-suites: compose [
 ]
 
 
-;
-; SUPPORT FUNCTIONS
-;
+=== SUPPORT FUNCTIONS ===
 
 debug: (comment [:print] blank)
+
+; !!! There was a /SECURE refinement to RANDOM, which implemented the
+; following after generating the REBI64 into a tmp variable:
+;
+;     REBYTE srcbuf[20], dstbuf[20];
+;
+;     memcpy(srcbuf, &tmp, sizeof(tmp));
+;     memset(srcbuf + sizeof(tmp), *(REBYTE*)&tmp, 20 - sizeof(tmp));
+;
+;     SHA1(srcbuf, 20, dstbuf);
+;     memcpy(&tmp, dstbuf, sizeof(tmp));
+;
+; It's not entirely clear how much more secure that makes it.  In any case,
+; SHA1 was removed from the core.  We could do it in userspace if it were
+; deemed important.
+;
+random-secure: func [range [integer!]] [random range]
+
+
+version-to-bytes: [
+    1.0 #{03 01}
+    1.1 #{03 02}
+    1.2 #{03 03}
+]
+bytes-to-version: reverse copy version-to-bytes
+
 
 emit: func [
     {Emits binary data, optionally marking positions with SET-WORD!}
@@ -261,9 +260,8 @@ make-tls-error: func [
 ]
 
 
-;
-; ASN.1 FORMAT PARSER CODE
-;
+=== ASN.1 FORMAT PARSER CODE ===
+
 ; ASN.1 is similar in purpose and use to protocol buffers and Apache Thrift,
 ; which are also interface description languages for cross-platform data
 ; serialization. Like those languages, it has a schema (in ASN.1, called a
@@ -464,9 +462,8 @@ update-write-state: make-state-updater 'write [
     <close-notify>          -> []
 ]
 
-;
-; TLS PROTOCOL CODE
-;
+
+=== TLS PROTOCOL CODE ===
 
 client-hello: func [
     return: <none>
@@ -1685,9 +1682,7 @@ do-commands: func [
 ]
 
 
-;
-; TLS SCHEME
-;
+=== TLS SCHEME ===
 
 
 tls-init: func [
