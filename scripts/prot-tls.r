@@ -398,57 +398,71 @@ parse-asn: func [
 ]
 
 
-;
-; PROTOCOL STATE HANDLING
-;
+=== PROTOCOL STATE (MODE) HANDLING ===
 
-update-state: func [
-    return: <none>
-    ctx [object!]
-    new [tag! issue!] "new state, ISSUE! is a (potentially) terminal state"
-    direction [word!] "READ or WRITE"
-    transitions [block!] "maps from state to a BLOCK! of legal next states"
+; The legal state transitions for the TLS protocol are defined by a light
+; dialect that is easily validated and transformed into a MAP!.  ISSUE!
+; represents a state that can be final, and a TAG! represents a state that may
+; move to the competed state.
+
+make-state-updater: func [
+    return: [action!]
+    direction "READ or WRITE"
+        [word!]
+    transdialect "dialected mapping from state to legal next states"
+        [block!]
+    <local> transitions state-rule left right
 ][
-    let old: ensure [blank! issue! tag!] ctx.mode
-    debug [mold old unspaced ["=" direction "=>"] new]
-
-    let legal
-    all [old, not find (legal: select transitions old) new] then [
-        fail ["Invalid write state transition, expected one of:" mold legal]
+    transitions: make map! []  ; transformed dialect that always maps to BLOCK!
+    state-rule: [tag! | issue!]
+    uparse transdialect [
+        while [
+            left: state-rule '-> right: [
+                into block! [while state-rule, <input>]
+                | collect keep state-rule
+            ]
+            (append transitions :[left right])
+        ]
     ]
 
-    ctx.mode: new
-]
+    return func [
+        ctx [object!]
+        new [tag! issue!]
+    ][
+        let old: ensure [blank! issue! tag!] ctx.mode
+        debug [mold old unspaced ["=" direction "=>"] mold new]
 
-update-read-state: specialize :update-state [
-    direction: 'read
-    transitions: [
-        <client-hello> [<server-hello>]
-        <server-hello> [<certificate>]
-        <certificate> [#server-hello-done <server-key-exchange>]
-        <server-key-exchange> [#server-hello-done]
-        <finished> [<change-cipher-spec> #alert]
-        <change-cipher-spec> [#encrypted-handshake]
-        #encrypted-handshake [#application]
-        #application [#application #alert]
-        #alert []
-        <close-notify> [#alert]
-    ]
-]
+        let legal
+        all [old, not find (legal: select transitions old) new] then [
+            fail ["Invalid write state transition, expected one of:" mold legal]
+        ]
 
-update-write-state: specialize :update-state [
-    direction: 'write
-    transitions: [
-        #server-hello-done [<client-key-exchange>]
-        <client-key-exchange> [<change-cipher-spec>]
-        <change-cipher-spec> [<finished>]
-        #encrypted-handshake [#application]
-        #application [#application #alert]
-        #alert [<close-notify>]
-        <close-notify> []
+        ctx.mode: new
     ]
 ]
 
+update-read-state: make-state-updater 'read [
+    <client-hello>          -> <server-hello>
+    <server-hello>          -> <certificate>
+    <certificate>           -> [#server-hello-done <server-key-exchange>]
+    <server-key-exchange>   -> #server-hello-done
+    <finished>              -> [<change-cipher-spec> #alert]
+    <change-cipher-spec>    -> #encrypted-handshake
+    #encrypted-handshake    -> #application
+    #application            -> [#application #alert]
+    #alert                  -> []
+    <close-notify>          -> #alert
+]
+
+update-write-state: make-state-updater 'write [
+    #server-hello-done      -> <client-key-exchange>
+    <client-key-exchange>   -> <change-cipher-spec>
+    <change-cipher-spec>    -> <finished>
+    #encrypted-handshake    -> #application
+    #application            -> [#application #alert]
+    #alert                  -> <close-notify>
+    <close-notify>          -> []
+]
 
 ;
 ; TLS PROTOCOL CODE
