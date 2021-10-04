@@ -372,7 +372,7 @@ parse-asn: func [
                 switch class [
                     @universal [
                         val: copy/part data size
-                        keep/line ^ compose/deep/only [
+                        keep/line ^ compose/deep [
                             (tag) [
                                 (either constructed ["constructed"] ["primitive"])
                                 (index)

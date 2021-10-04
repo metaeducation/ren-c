@@ -1050,7 +1050,7 @@ read-lines: func [
     if file? src [src: open src]
 
     let pos
-    let rule: compose/deep/only either delimiter [
+    let rule: compose/deep either delimiter [
         either keep
         [ [thru (delimiter) pos: here] ]
         [ [to (delimiter) remove (delimiter) pos: here] ]
