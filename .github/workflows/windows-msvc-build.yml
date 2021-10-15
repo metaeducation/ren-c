@@ -186,6 +186,22 @@ jobs:
       run: |
         mv /usr/bin/link.exe /usr/bin/gnu-link
 
+    # GitHub Runners offer 2 CPU cores...a slight bit of parallelism.  If you
+    # pass multiple files to CL.EXE at a time to compile, you can use /MP to
+    # exploit that.  But there is no parallelism in NMAKE itself, and our
+    # makefiles sensibly are expressed in terms of single files.
+    #
+    # Qt offers a drop-in replacement for CMake called JOM which remedies this:
+    #
+    # https://wiki.qt.io/Jom
+    #
+    - name: Get Qt's Parallel-Building NMAKE Replacement called "JOM"
+      run: |
+        # -L follows redirects; this link forwards to latest jom release
+        curl -L https://download.qt.io/official_releases/jom/jom.zip -o jom.zip
+        7z x jom.zip  # e.g. unzip (7-zip is preinstalled on Windows)
+        mv jom.exe /usr/bin/jom.exe
+
 
     # Show a little bit of sanity check information.  MSC is weird because you
     # can't ask for the version specifically, you just call it with no args:
@@ -223,13 +239,13 @@ jobs:
     - name: Create Folders For Build Products (Compiler Won't Create Them)
       run: |
         cd build
-        nmake folders
+        jom folders
 
 
     - name: Prep the Build By Making Various Auto-Generated .h and .c Files
       run: |
         cd build
-        nmake prep
+        jom prep
 
 
     # https://github.com/actions/upload-artifact
@@ -245,7 +261,7 @@ jobs:
     - name: Compile and Link the C Files to into R3BUILT
       run: |
         cd build
-        nmake
+        jom
         echo "R3BUILT=$(pwd)/r3" >> $GITHUB_ENV
 
 

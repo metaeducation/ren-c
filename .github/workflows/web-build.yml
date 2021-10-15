@@ -212,7 +212,7 @@ jobs:
     - name: Compile and Link the C Sources to To Make .wasm and .js Files
       run: |
         cd build
-        make
+        make -j 2  # Linux GitHub Runners have 2 cores, use 2 jobs
 
 
   #====# UPLOAD STEPS #=======================================================#

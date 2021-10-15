@@ -605,6 +605,14 @@ cl: make compiler-class [
             keep "/nologo"  ; don't show startup banner (must be lowercase)
             keep either E ["/P"]["/c"]
 
+            ; NMAKE is not multi-core, only CL.EXE is when you pass it more
+            ; than one file at a time with /MP.  To get around this, you can
+            ; use Qt's JOM which is a drop-in replacement for NMAKE that does
+            ; parallel building.  But it requires /FS "force synchronous pdb"
+            ; so that the multiple CL calls don't try and each lock the pdb.
+            ; 
+            keep "/FS"
+
             if I [
                 for-each inc (map-files-to-local I) [
                     keep unspaced ["/I" inc]

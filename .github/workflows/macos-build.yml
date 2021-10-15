@@ -216,7 +216,7 @@ jobs:
     - name: Compile and Link the C Files
       run: |
         cd build
-        make
+        make -j 3  # Mac GitHub Runners have 3 cores, use 3 jobs
         echo "R3BUILT=$(pwd)/r3" >> $GITHUB_ENV
 
 

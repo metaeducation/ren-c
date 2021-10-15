@@ -13,6 +13,18 @@ There's a bit of ambiguity in how GitHub uses the term "Action".  Our terms:
 * **GitHub Workflow** - A process documented in a .yml file for performing
   tasks on a source repository.  This directory contains several workflows.
 
+* **GitHub Runner** - The virtual machine hosted by Azure that runs workflows.
+
+## About GitHub Runners
+
+At time of writing, GitHub runners offer 2 cores on Windows and Linux hosts,
+and 3 cores on Mac.  Builds should exploit that parallelism where possible.
+
+More information about the runners--including what software is available
+preinstalled--is here:
+
+https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+
 ## IMPORTANT - Minimize GitHub-Specific Syntax
 
 At time of writing, GitHub CI is excellent.  However, our initial service

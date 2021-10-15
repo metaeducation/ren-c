@@ -235,7 +235,7 @@ jobs:
     - name: Compile and Link the C Files to into R3ONE (first build)
       run: |
         cd build
-        make
+        make -j 2  # Linux GitHub Runners have 2 cores, use 2 jobs
         echo "R3ONE=$(pwd)/r3" >> $GITHUB_ENV
 
 

@@ -290,7 +290,7 @@ jobs:
     - name: Cross-Compile and Link the C Files to into an ARM-Based R3
       run: |
         cd build
-        make
+        make -j 2  # Linux GitHub Runners have 2 cores, use 2 jobs
 
     # !!! Unfortunately, the MacOS bootstrap executable seems to be creating
     # corrupt zip files.  The problem is sorted out in newer builds, but we
