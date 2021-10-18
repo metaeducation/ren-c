@@ -297,7 +297,7 @@ gen-obj: func [
                 <msc:/TP>
             ]
         ]
-        'c++98 'c++0x 'c++11 'c++14 'c++17 'c++latest [
+        'c++98 'c++0x 'c++11 'c++14 'c++17 'c++20 'c++latest [
             cfg-cplusplus: cplusplus: true
             compose [
                 ; Compile C files as C++.
