@@ -550,11 +550,11 @@ reeval func* [
     any-scalar?:
     any-array?:
     any-branch?:
-    any-the-type?:
-    any-plain-type?:
-    any-get-type?:
-    any-set-type?:
-    any-meta-type?:
+    any-the-value?:
+    any-plain-value?:
+    any-get-value?:
+    any-set-value?:
+    any-meta-value?:
     <end>
 
 
