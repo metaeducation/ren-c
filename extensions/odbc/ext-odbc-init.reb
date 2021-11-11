@@ -41,6 +41,29 @@ statement-prototype: context [
     columns: '
 ]
 
+export odbc-statement-of: func [
+    {Get a statement port from a connection port}
+    return: [port!]
+    port [port!]
+][
+    ; !!! This used to be FIRST but that mixes up matters with pathing
+    ; and picking in ways that has to be sorted out.  So it's now a
+    ; separate function.
+
+    statement: make statement-prototype []
+
+    database: statement.database: port.locals
+
+    open-statement database statement
+
+    port: lib.open port.spec.ref
+    port.locals: statement
+
+    append database.statements port
+
+    return port
+]
+
 sys/make-scheme [
     name:  'odbc
     title: "ODBC Open Database Connectivity Scheme"
@@ -73,18 +96,7 @@ sys/make-scheme [
             index
                 {Index to pick from (only supports 1, for FIRST)}
         ][
-            statement: make statement-prototype []
-
-            database: statement.database: port.locals
-
-            open-statement database statement
-
-            port: lib.open port.spec.ref
-            port.locals: statement
-
-            append database.statements port
-
-            port
+            ; !!! This is now ODBC-STATEMENT-OF
         ]
 
         update: function [port [port!]] [
