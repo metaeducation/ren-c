@@ -511,7 +511,7 @@ static void Init_System_Object(
         spec_tail,
         nullptr  // parent
     );
-    mutable_LINK(Patches, system) = Lib_Context;
+    mutable_LINK(Patches, system) = CTX_VARLIST(Lib_Context);
 
     // Create a global value for it in the Lib context, so we can say things
     // like `system.contexts` (also protects newly made context from GC).
@@ -930,7 +930,7 @@ void Startup_Core(void)
   #endif
 
     REBCTX *sys = Alloc_Context_Core(REB_MODULE, 1, NODE_FLAG_MANAGED);
-    mutable_LINK(Patches, sys) = Lib_Context;
+    mutable_LINK(Patches, sys) = CTX_VARLIST(Lib_Context);
     ensureNullptr(Sys_Context_Value) = Alloc_Value();
     Init_Any_Context(Sys_Context_Value, REB_MODULE, sys);
     ensureNullptr(Sys_Context) = VAL_CONTEXT(Sys_Context_Value);

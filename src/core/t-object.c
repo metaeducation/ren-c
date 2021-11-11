@@ -591,7 +591,7 @@ REB_R MAKE_Context(
         // baseline in inheritance and binding...but this is just to get the
         // system to some semblance of booting.
         //
-        mutable_LINK(Patches, ctx) = Lib_Context;
+        mutable_LINK(Patches, ctx) = CTX_VARLIST(Lib_Context);
 
         return Init_Any_Context(out, REB_MODULE, ctx);
     }
