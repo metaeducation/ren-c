@@ -847,7 +847,7 @@ REBNATIVE(poke)
         }
         Move_Cell(picker, D_SPARE);
     }
-    else if (ANY_INERT(picker)) {
+    else if (ANY_INERT(picker) or IS_WORD(picker)) {
         REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
         Move_Cell(ARR_SINGLE(a), picker);
         Init_Block(picker, a);
