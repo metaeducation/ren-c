@@ -36,6 +36,8 @@ module: func [
     return: [module!]
     product: "The result of running the body (~quit~ isotope if it ran QUIT)"
         [<opt> any-value!]
+    quitting: "If requested and quitting, when true PRODUCT is QUIT's argument"
+        [logic!]
 
     spec "The header block of the module (modified)"
         [blank! block! object!]
@@ -159,11 +161,18 @@ module: func [
     ; if that module's init code decided to QUIT to end processing prematurely.
     ; (QUIT is not a failure when running scripts.)
     ;
+    product: default [#]
     catch/quit [
-        set (product: default [#]) do body
+        set product do body
+        if quitting [set quitting false]
     ]
     then ^arg-to-quit -> [
-        set product unmeta arg-to-quit
+        if quitting [
+            set quitting true
+            set product unmeta arg-to-quit
+        ] else [
+            set product ~quit~  ; don't give distinction in result
+        ]
     ]
 
     return mod

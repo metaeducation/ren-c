@@ -280,6 +280,60 @@ jobs:
         "$R3BUILT" --do "print {hi}"
 
 
+    # Besides just testing success cases, it's important to make sure failures
+    # actually report bad exit codes, or a lot of the GitHub Actions intended
+    # for testing will be useless.
+    #
+    # Since GitHub Actions spawns the shell as `bash -e` this means any errors
+    # will terminate the step.  Use `set +e` to disable this mode...as trying
+    # to capture the exit code without raising an error is a nuisance.
+
+    - name: FAIL Test (from code on command line)
+      run: |
+        set +e  # so nonzero exit codes won't immediately terminate step
+        "$R3BUILT" --do "fail {Error Message}"
+        if [ $? -eq 1 ]; then
+          echo "FAIL Properly Gave Exit Status 1"
+        else
+          echo "Expected Exit Status 1, But Got $?"
+          exit 1
+        fi
+
+    - name: FAIL Test (from running a script)
+      run: |
+        set +e  # so nonzero exit codes won't immediately terminate step
+        "$R3BUILT" tests/misc/fail-script.r
+        if [ $? -eq 1 ]; then
+          echo "FAIL Properly Gave Exit Status 1"
+        else
+          echo "Expected Exit Status 1, But Got $?"
+          exit 1
+        fi
+
+    - name: QUIT Test (from code on command line)
+      run: |
+        set +e  # so nonzero exit codes won't immediately terminate step
+        "$R3BUILT" --do "quit 3"
+        if [ $? -eq 3 ]; then
+          echo "QUIT Properly Gave Exit Status 3"
+        else
+          echo "Expected Exit Status 3, But Got $?"
+          exit 1
+        fi
+
+    - name: QUIT Test (from running a script)
+      run: |
+        set +e  # so nonzero exit codes won't immediately terminate step
+        "$R3BUILT" tests/misc/quit-script.r
+        if [ $? -eq 3 ]; then
+          echo "QUIT Properly Gave Exit Status 3"
+        else
+          echo "Expected Exit Status 3, But Got $?"
+          exit 1
+        fi
+
+
+
     - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |

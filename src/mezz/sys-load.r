@@ -533,9 +533,7 @@ import*: func [
     ; from the unfinished R3-Alpha module system, and its decade of atrophy
     ; that happened after that...
 
-    let quitting: false
-
-    let [mod '(product)]: module/into/file/line try hdr code into file line
+    let [mod '(product) quitting]: module/into/file/line try hdr code into file line
 
     ensure module! mod
 
