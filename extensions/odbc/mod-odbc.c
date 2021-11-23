@@ -83,6 +83,12 @@
 #endif
 
 
+// Only one SQLHENV is needed for all connections.  It is lazily initialized by
+// the ODBC module when needed.
+//
+SQLHENV henv = SQL_NULL_HANDLE;
+
+
 typedef struct {
     SQLULEN column_size;
     SQLPOINTER buffer;
@@ -224,14 +230,6 @@ static void cleanup_hdbc(const REBVAL *v) {
     SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
 }
 
-static void cleanup_henv(const REBVAL *v) {
-    SQLHENV henv = cast(SQLHENV, VAL_HANDLE_VOID_POINTER(v));
-    if (henv == SQL_NULL_HANDLE)
-        return;  // already cleared out by CLOSE-ODBC
-
-    SQLFreeHandle(SQL_HANDLE_ENV, henv);
-}
-
 
 //
 // !!! SQL introduced "NCHAR" for "Native Characters", which typically are
@@ -304,20 +302,13 @@ REBNATIVE(odbc_set_char_encoding)
 //
 //  export open-connection: native [
 //
-//      return: "Always true if success"
-//          [logic!]
-//      connection "Template object for HENV and HDBC handle fields to set"
+//      return: "Object with HDBC handle field initialized"
 //          [object!]
-//      spec {ODBC connection string, e.g. commonly "Dsn=DatabaseName"}
+//      spec "ODBC connection string, e.g. commonly 'Dsn=DatabaseName'"
 //          [text!]
 //  ]
 //
 REBNATIVE(open_connection)
-//
-// !!! The original R3 extension code used this method of having the client
-// code pass in an object vs. just returning an object, presumably because
-// making new objects from inside the native code and naming the fields was
-// too hard and/or undocumented.  It shouldn't be difficult to change.
 {
     ODBC_INCLUDE_PARAMS_OF_OPEN_CONNECTION;
 
@@ -338,23 +329,27 @@ REBNATIVE(open_connection)
 
     SQLRETURN rc;
 
-    // Allocate the environment handle, and set its version to ODBC3
+    // Lazily allocate the environment handle if not already allocated, and set
+    // its version to ODBC3.  (We could track if we allocated it and free it
+    // if the open fails, but for now just let SHUTDOWN* take care of it.)
     //
-    SQLHENV henv;
-    rc = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
-    if (not SQL_SUCCEEDED(rc))
-        rebJumps ("fail", Error_ODBC_Env(SQL_NULL_HENV));
+    if (henv == SQL_NULL_HANDLE) {
+        rc = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv);
+        if (not SQL_SUCCEEDED(rc))
+            rebJumps ("fail", Error_ODBC_Env(SQL_NULL_HENV));
 
-    rc = SQLSetEnvAttr(
-        henv,
-        SQL_ATTR_ODBC_VERSION,
-        cast(SQLPOINTER, cast(uintptr_t, SQL_OV_ODBC3)),
-        0  // StringLength (ignored for this attribute)
-    );
-    if (not SQL_SUCCEEDED(rc)) {
-        REBVAL *error = Error_ODBC_Env(henv);
-        SQLFreeHandle(SQL_HANDLE_ENV, henv);
-        rebJumps ("fail", error);
+        rc = SQLSetEnvAttr(
+            henv,
+            SQL_ATTR_ODBC_VERSION,
+            cast(SQLPOINTER, cast(uintptr_t, SQL_OV_ODBC3)),
+            0  // StringLength (ignored for this attribute)
+        );
+        if (not SQL_SUCCEEDED(rc)) {
+            REBVAL *error = Error_ODBC_Env(henv);
+            SQLFreeHandle(SQL_HANDLE_ENV, henv);
+            henv = SQL_NULL_HANDLE;
+            rebJumps ("fail", error);
+        }
     }
 
     // Allocate the connection handle, with login timeout of 5 seconds (why?)
@@ -376,7 +371,6 @@ REBNATIVE(open_connection)
     if (not SQL_SUCCEEDED(rc)) {
         REBVAL *error = Error_ODBC_Dbc(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, henv);
         rebJumps ("fail", error);
     }
 
@@ -400,17 +394,17 @@ REBNATIVE(open_connection)
     if (not SQL_SUCCEEDED(rc)) {
         REBVAL *error = Error_ODBC_Dbc(hdbc);
         SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-        SQLFreeHandle(SQL_HANDLE_ENV, henv);
         rebJumps ("fail", error);
     }
 
-    REBVAL *henv_value = rebHandle(henv, sizeof(henv), &cleanup_henv);
     REBVAL *hdbc_value = rebHandle(hdbc, sizeof(hdbc), &cleanup_hdbc);
 
-    rebElide("poke", ARG(connection), "'henv", rebR(henv_value));
-    rebElide("poke", ARG(connection), "'hdbc", rebR(hdbc_value));
-
-    return rebLogic(true);
+    return rebValue(
+        "make database-prototype [",
+            "hdbc:", rebR(hdbc_value),
+            // also has statements: [] as default
+        "]"
+    );
 }
 
 
@@ -1754,33 +1748,77 @@ REBNATIVE(close_connection)
     REBVAL *hdbc_value = rebValue(
         "ensure [<opt> handle!] pick", connection, "'hdbc"
     );
-    if (hdbc_value) {
-        SQLHDBC hdbc = cast(SQLHDBC, VAL_HANDLE_VOID_POINTER(hdbc_value));
-        assert(hdbc);
+    if (not hdbc_value)  // connection was already closed (be tolerant?)
+        return rebLogic(false);
 
-        SQLDisconnect(hdbc);
-        SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-        SET_HANDLE_CDATA(hdbc_value, SQL_NULL_HANDLE);  // avoid GC cleanup
+    SQLHDBC hdbc = cast(SQLHDBC, VAL_HANDLE_VOID_POINTER(hdbc_value));
+    assert(hdbc);
 
-        rebElide("poke", connection, "'hdbc", "blank");
-        rebRelease(hdbc_value);
-    }
+    SQLDisconnect(hdbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+    SET_HANDLE_CDATA(hdbc_value, SQL_NULL_HANDLE);  // avoid GC cleanup
 
-    // Close the environment
-    //
-    REBVAL *henv_value = rebValue(
-        "ensure [<opt> handle!] pick", connection, "'henv"
-    );
-    if (henv_value) {
-        SQLHENV henv = cast(SQLHENV, VAL_HANDLE_VOID_POINTER(henv_value));
-        assert(henv);
+    rebElide("poke", connection, "'hdbc", "null");
+    rebRelease(hdbc_value);
 
-        SQLFreeHandle(SQL_HANDLE_ENV, henv);
-        SET_HANDLE_CDATA(henv_value, SQL_NULL_HANDLE);  // avoid GC cleanup
-
-        rebElide("poke", connection, "'henv", "null");
-        rebRelease(henv_value);
-    }
+    // We could reference count how many connections were open and close the
+    // global `henv` here if that seemed important (vs waiting for SHUTDOWN*).
+    // But that could also slow down opening another connection, so favor
+    // less complexity for now.
 
     return rebLogic(true);
+}
+
+
+//
+//  startup*: native [
+//
+//  {Start up the ODBC Extension}
+//
+//      return: <none>
+//  ]
+//
+REBNATIVE(startup_p)
+//
+// To use ODBC you must initialize a SQL_HANDLE_ENV.  We do this lazily in
+// OPEN-CONNECTION vs. at startup, so you don't pay for it unless you actually
+// use ODBC features in the session.
+{
+    ODBC_INCLUDE_PARAMS_OF_STARTUP_P;
+
+    assert(henv == SQL_NULL_HANDLE);
+
+    return rebNone();
+}
+
+
+//
+//  shutdown*: native [
+//
+//  {Shut down the ODBC Extension}
+//
+//      return: <none>
+//  ]
+//
+REBNATIVE(shutdown_p)
+//
+// We have to "neutralize" all the HANDLE! objects that we have allocated when
+// the extension unloads.  Because if we don't, the final garbage collect pass
+// will try to call the cleanup functions during core shutdown, which is too
+// late--the API itself is shutdown (so functions like rebRelease would panic)
+//
+// There's really not a way in a garbage collected system such as this to shut
+// down in "phases", e.g. where all the "user" objects are GC'd so we can trust
+// we reach the ODBC extension shutdown with 0 extant connections.  Even if
+// that were a coherent idea, you'd still have problems if one extension were
+// holding on to handles from another--what order would they shut down in?
+{
+    ODBC_INCLUDE_PARAMS_OF_SHUTDOWN_P;
+
+    if (henv == SQL_NULL_HANDLE)  // no calls to OPEN-CONNECTION ever
+        return rebNone();
+
+    SQLFreeHandle(SQL_HANDLE_ENV, henv);
+
+    return rebNone();
 }

@@ -18,7 +18,7 @@ REBOL [
 ; C in order to interface with ODBC.  The scheme code is the usermode support
 ; to provide a higher level interface.
 ;
-; open-connection: native [connection [object!] spec [text!]]
+; open-connection: native [spec [text!]]
 ; open-statement: native [connection [object!] statement [object!]]
 ; insert-odbc: native [statement [object!] sql [block!]]
 ; copy-odbc: native [statement [object!] length [integer!]]
@@ -28,7 +28,6 @@ REBOL [
 
 
 database-prototype: context [
-    henv: '  ; SQLHENV handle!
     hdbc: '  ; SQLHDBC handle!
     statements: []  ; statement objects
 ]
@@ -79,9 +78,7 @@ sys/make-scheme [
                 commit: 'auto
             ]
 
-            port.locals: make database-prototype []
-
-            result: open-connection port.locals case [
+            port.locals: open-connection case [
                 text? spec: select port.spec 'target [spec]
                 text? spec: select port.spec 'host [unspaced ["dsn=" spec]]
 
