@@ -89,14 +89,22 @@
 SQLHENV henv = SQL_NULL_HANDLE;
 
 
-typedef struct {
+struct tagCONNECTION {  // indirection so SHUTDOWN* can find and kill open HDBC
+    SQLHDBC hdbc;  // if SQL_NULL_HANDLE, cleanup already done
+
+    struct tagCONNECTION *next;
+};
+typedef struct tagCONNECTION CONNECTION;
+
+struct tagPARAMETER {  // For binding parameters
     SQLULEN column_size;
     SQLPOINTER buffer;
     SQLULEN buffer_size;
     SQLLEN length;
-} PARAMETER;  // For binding parameters
+};
+typedef struct tagPARAMETER PARAMETER;
 
-typedef struct {
+struct tagCOLUMN {  // For describing a single column
     REBVAL *title;  // a TEXT!
     SQLSMALLINT sql_type;
     SQLSMALLINT c_type;
@@ -107,7 +115,29 @@ typedef struct {
     SQLSMALLINT precision;
     SQLSMALLINT nullable;
     bool is_unsigned;
-} COLUMN;  // For describing columns
+};
+typedef struct tagCOLUMN COLUMN;
+
+
+struct tagCOLUMNLIST {  // For describing a list of columns
+    COLUMN *columns;  // if nullptr, cleanup already done
+    SQLLEN num_columns;
+
+    struct tagCOLUMNLIST *next;
+};
+typedef struct tagCOLUMNLIST COLUMNLIST;
+
+
+// Because this C code is bridging to a garbage collected language, we have to
+// be prepared for the case when shutdown occurs with connections, parameters,
+// and columns left open.  We have a hook in the extension SHUTDOWN* call
+// but we need some lists to go through.
+//
+// The only time anything is actually removed from this list is when the
+// HANDLE! holding the reference is GC'd.
+//
+CONNECTION *all_connections = nullptr;
+COLUMNLIST *all_columnlists = nullptr;
 
 
 //=////////////////////////////////////////////////////////////////////////=//
@@ -215,19 +245,30 @@ REBVAL *Error_ODBC_Core(
 // These are the cleanup functions for the handles that will be called if the
 // GC notices no one is using them anymore (as opposed to being explicitly
 // called by a close operation).
-//
-// !!! There may be an ordering issue, that closing the environment before
-// closing a database connection (for example) causes errors...so the handles
-// may actually need to account for that by linking to each other's managed
-// array and cleaning up their dependent handles before freeing themselves.
 
-static void cleanup_hdbc(const REBVAL *v) {
-    SQLHDBC hdbc = cast(SQLHDBC, VAL_HANDLE_VOID_POINTER(v));
-    if (hdbc == SQL_NULL_HANDLE)
-        return;  // already cleared out by CLOSE-ODBC
+static void force_connection_cleanup(CONNECTION *conn) {
+    if (conn->hdbc == SQL_NULL_HANDLE)
+        return;  // already cleared out by CLOSE-CONNECTION or SHUTDOWN*
 
-    SQLDisconnect(hdbc);
-    SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
+    SQLDisconnect(conn->hdbc);
+    SQLFreeHandle(SQL_HANDLE_DBC, conn->hdbc);
+    conn->hdbc = SQL_NULL_HANDLE;
+}
+
+static void free_connection(const REBVAL *v) {
+    CONNECTION *conn = cast(CONNECTION*, VAL_HANDLE_VOID_POINTER(v));
+    force_connection_cleanup(conn);
+
+    if (conn == all_connections)
+        all_connections = conn->next;
+    else {
+        CONNECTION *temp = all_connections;
+        while (temp->next != conn)
+            temp = temp->next;
+        temp->next = temp->next->next;
+    }
+
+    free(conn);  // can't use rebFree(), could be during shutdown (no API!)
 }
 
 
@@ -376,20 +417,20 @@ REBNATIVE(open_connection)
 
     // Connect to the Driver
 
-    SQLWCHAR *connect = rebSpellWide(ARG(spec));
+    SQLWCHAR *connect_string = rebSpellWide(ARG(spec));
 
     SQLSMALLINT out_connect_len;
     rc = SQLDriverConnectW(
         hdbc,  // ConnectionHandle
         nullptr,  // WindowHandle
-        connect,  // InConnectionString
+        connect_string,  // InConnectionString
         SQL_NTS,  // StringLength1 (null terminated string)
         nullptr,  // OutConnectionString (not interested in this)
         0,  // BufferLength (again, not interested)
         &out_connect_len,  // StringLength2Ptr (gets returned anyway)
         SQL_DRIVER_NOPROMPT  // DriverCompletion
     );
-    rebFree(connect);
+    rebFree(connect_string);
 
     if (not SQL_SUCCEEDED(rc)) {
         REBVAL *error = Error_ODBC_Dbc(hdbc);
@@ -397,7 +438,20 @@ REBNATIVE(open_connection)
         rebJumps ("fail", error);
     }
 
-    REBVAL *hdbc_value = rebHandle(hdbc, sizeof(hdbc), &cleanup_hdbc);
+    // Extension SHUTDOWN* might happen with HDBC handles outstanding, so we
+    // need a level of indirection to enumerate them (ODBC does not offer it).
+    //
+    // We can't use rebAlloc() because the GC finalization can happen at
+    // shutdown when rebFree() in the API is unavailable.  :-(
+    //
+    CONNECTION *conn = cast(CONNECTION*, malloc(sizeof(CONNECTION)));
+    if (conn == nullptr)
+        fail ("Could not allocation CONNECTION tracking object");
+    conn->hdbc = hdbc;
+    conn->next = all_connections;
+    all_connections = conn;
+
+    REBVAL *hdbc_value = rebHandle(conn, sizeof(CONNECTION*), &free_connection);
 
     return rebValue(
         "make database-prototype [",
@@ -427,7 +481,8 @@ REBNATIVE(open_statement)
     REBVAL *hdbc_value = rebValue(
         "ensure handle! pick @", connection, "'hdbc"
     );
-    SQLHDBC hdbc = VAL_HANDLE_POINTER(SQLHDBC, hdbc_value);
+    CONNECTION *conn = VAL_HANDLE_POINTER(CONNECTION, hdbc_value);
+    SQLHDBC hdbc = conn->hdbc;
     rebRelease(hdbc_value);
 
     SQLRETURN rc;
@@ -807,19 +862,34 @@ SQLRETURN ODBC_GetCatalog(
 
 #define COLUMN_TITLE_SIZE 255
 
-static void cleanup_columns(const REBVAL *v) {
-    COLUMN *columns = cast(COLUMN*, VAL_HANDLE_VOID_POINTER(v));
-    if (columns == nullptr)
-        return;  // cleanup_columns() may be called explicitly
+static void force_columnlist_cleanup(COLUMNLIST *list) {
+    if (list->columns == nullptr)
+        return;  // already freed e.g. by SHUTDOWN*
 
-    SQLSMALLINT num_columns = VAL_HANDLE_LEN(v);
     SQLSMALLINT col_num;
-    for (col_num = 0; col_num < num_columns; ++col_num) {
-        COLUMN *col = &columns[col_num];
+    for (col_num = 0; col_num < list->num_columns; ++col_num) {
+        COLUMN *col = &list->columns[col_num];
         FREE_N(char, col->buffer_size, cast(char*, col->buffer));
         rebRelease(col->title);
     }
-    free(columns);
+    free(list->columns);
+    list->columns = nullptr;
+}
+
+static void free_columnlist(const REBVAL *v) {
+    COLUMNLIST *list = cast(COLUMNLIST*, VAL_HANDLE_VOID_POINTER(v));
+    force_columnlist_cleanup(list);
+
+    if (list == all_columnlists)
+        all_columnlists = list->next;
+    else {
+        COLUMNLIST *temp = all_columnlists;
+        while (temp->next != list)
+            temp = temp->next;
+        temp->next = temp->next->next;
+    }
+
+    free(list);  // can't use rebFree(), could be during shutdown (no API!)
 }
 
 
@@ -1271,25 +1341,39 @@ REBNATIVE(insert_odbc)
         "ensure [<opt> handle!] pick", statement, "'columns"
     );
     if (old_columns_value) {
-        cleanup_columns(old_columns_value);
-        SET_HANDLE_CDATA(old_columns_value, nullptr);
+        //
+        // Because we have the HANDLE! here we could go ahead and free the
+        // columnlist itself (not just the columns), but that would mean the
+        // GC of the HANDLE! would need to detect nulls.  Just let the GC do
+        // the free.
+        //
+        COLUMNLIST *old_list = VAL_HANDLE_POINTER(COLUMNLIST, old_columns_value);
+        force_columnlist_cleanup(old_list);
         rebRelease(old_columns_value);
     }
 
-    COLUMN *columns = cast(COLUMN*, malloc(sizeof(COLUMN) * num_columns));
-    if (not columns)
-        fail ("Couldn't allocate column buffers!");
+    COLUMNLIST *list = cast(COLUMNLIST*, malloc(sizeof(COLUMNLIST)));
 
-    REBVAL *columns_value = rebHandle(columns, num_columns, &cleanup_columns);
+    list->columns = cast(COLUMN*, malloc(sizeof(COLUMN) * num_columns));
+    list->num_columns = num_columns;
+    if (not list->columns) {
+        rebFree(list);
+        fail ("Couldn't allocate column buffers!");
+    }
+
+    list->next = all_columnlists;
+    all_columnlists = list;
+
+    REBVAL *columns_value = rebHandle(list, 1, &free_columnlist);
 
     rebElide("poke", statement, "'columns", rebR(columns_value));
 
-    ODBC_DescribeResults(hstmt, num_columns, columns);
+    ODBC_DescribeResults(hstmt, num_columns, list->columns);
 
     REBVAL *titles = rebValue("make block!", rebI(num_columns));
     SQLSMALLINT column_index;
     for (column_index = 1; column_index <= num_columns; ++column_index)
-        rebElide("append", titles, columns[column_index - 1].title);
+        rebElide("append", titles, list->columns[column_index - 1].title);
 
     // remember column titles if next call matches, return them as the result
     //
@@ -1485,7 +1569,8 @@ REBNATIVE(copy_odbc)
     REBVAL *columns_value = rebValue(
         "ensure handle! pick", ARG(statement), "'columns"
     );
-    COLUMN *columns = VAL_HANDLE_POINTER(COLUMN, columns_value);
+    COLUMNLIST *list = VAL_HANDLE_POINTER(COLUMNLIST, columns_value);
+    COLUMN *columns = list->columns;
     rebRelease(columns_value);
 
     if (hstmt == SQL_NULL_HANDLE or not columns)
@@ -1704,8 +1789,8 @@ REBNATIVE(close_statement)
         "ensure [<opt> handle!] pick", statement, "'columns"
     );
     if (columns_value) {
-        cleanup_columns(columns_value);
-        SET_HANDLE_CDATA(columns_value, nullptr);  // avoid GC cleanup
+        COLUMNLIST *list = VAL_HANDLE_POINTER(COLUMNLIST, columns_value);
+        force_columnlist_cleanup(list);
         rebElide("poke", statement, "'columns", "null");
 
         rebRelease(columns_value);
@@ -1742,24 +1827,23 @@ REBNATIVE(close_connection)
 
     REBVAL *connection = ARG(connection);
 
-    // Close the database connection before the environment, since the
-    // connection was opened from the environment.
-
     REBVAL *hdbc_value = rebValue(
         "ensure [<opt> handle!] pick", connection, "'hdbc"
     );
     if (not hdbc_value)  // connection was already closed (be tolerant?)
         return rebLogic(false);
 
-    SQLHDBC hdbc = cast(SQLHDBC, VAL_HANDLE_VOID_POINTER(hdbc_value));
-    assert(hdbc);
+    CONNECTION *conn = cast(CONNECTION*, VAL_HANDLE_VOID_POINTER(hdbc_value));
+    rebRelease(hdbc_value);
 
-    SQLDisconnect(hdbc);
-    SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-    SET_HANDLE_CDATA(hdbc_value, SQL_NULL_HANDLE);  // avoid GC cleanup
+    // We clean up the connection but do not free it; that can only be done
+    // if all HANDLE! instances pointing to it are known to be gone.  (We are
+    // eliminating one instance but someone might have copied the connection
+    // object, for example.)
+    //
+    force_connection_cleanup(conn);
 
     rebElide("poke", connection, "'hdbc", "null");
-    rebRelease(hdbc_value);
 
     // We could reference count how many connections were open and close the
     // global `henv` here if that seemed important (vs waiting for SHUTDOWN*).
@@ -1788,6 +1872,9 @@ REBNATIVE(startup_p)
 
     assert(henv == SQL_NULL_HANDLE);
 
+    assert(all_connections == nullptr);
+    assert(all_columnlists == nullptr);
+
     return rebNone();
 }
 
@@ -1815,10 +1902,24 @@ REBNATIVE(shutdown_p)
 {
     ODBC_INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-    if (henv == SQL_NULL_HANDLE)  // no calls to OPEN-CONNECTION ever
-        return rebNone();
+    // There are extant pointers in HANDLE! values to the parameters, columns,
+    // and connections or else they wouldn't be in the list!  So we can't
+    // free the memory for them, we can only do the cleanup and mark them
+    // no longer in use so that when the handles are later processed they
+    // know to only free the associated memory.
 
-    SQLFreeHandle(SQL_HANDLE_ENV, henv);
+    COLUMNLIST *list = all_columnlists;
+    for (; list != nullptr; list = list->next)
+        force_columnlist_cleanup(list);
+
+    CONNECTION *conn = all_connections;
+    for (; conn != nullptr; conn = conn->next)
+        force_connection_cleanup(conn);
+
+    if (henv != SQL_NULL_HANDLE) {
+        SQLFreeHandle(SQL_HANDLE_ENV, henv);
+        henv = SQL_NULL_HANDLE;
+    }
 
     return rebNone();
 }
