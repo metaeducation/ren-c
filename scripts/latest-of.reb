@@ -118,8 +118,68 @@ latest-of: func [
         [text!]
     /verbose "Print file size, commit, hash information"
 ][
-    === DEFAULT OS TO THE SAME AS THE INTERPRETER RUNNING THIS SCRIPT ===
+    === DEFAULT OS TO VERSION RUNNING THIS SCRIPT (OR OS RUNNING BROWSER) ===
 
+    ; If you are running the web build and don't ask for a variant, the most
+    ; sensible thing to do is to try and give you a version matching your
+    ; browser's platform...since giving you a link to the Web Repl is useless.
+    ;
+    ; There's no perfect way to do this.  But if you don't like the answer you
+    ; get, pass in an OS_ID explicitly.  It's just a convenience.
+    ;
+    ; https://stackoverflow.com/a/38241481
+    ; https://stackoverflow.com/q/1741933
+    ;
+    if (not os) and (system.version.4 = 16) [  ; web build
+        let platform: js-eval {
+            var userAgent = window.navigator.userAgent
+            var platform = window.navigator.platform
+
+            if (/Android/.test(userAgent))
+                platform = 'Android'
+            else if (/Linux/.test(platform))
+                platform = 'Linux'
+            else if (userAgent.indexOf("WOW64") != -1)
+                platform = 'Win64'  // may be 32 bit browser on 64 bit platform
+            else if (userAgent.indexOf("Win64") != -1)
+                platform = 'Win64'  // may be 32 bit browser on 64 bit platform
+
+            platform
+        }
+        os: switch platform [
+            ; "Mac68K"
+            ; "MacPPC" - Is this 0.2.1 (pre OS X) or OS X PPC ?
+            "MacIntel" [0.2.40]
+            "Macintosh" [0.2.40]  ; What do current macs say?
+
+            "Win32" [0.3.1]
+            "Win64" [0.3.40]
+            "Windows" [0.3.40]
+            ; "WinCE" - We haven't built this in a long time
+
+            "Linux" [0.4.40]  ; Could we tell 32 vs. 64 bit?  Assume 64.
+
+            ; !!! We need a way to specify that you want the latest binary
+            ; vs. the latest installer, e.g. an .APK file.  Getting the Bionic
+            ; executable file may seem useless to the average user, but it's
+            ; interesting in building things like the .APK itself.
+            ;
+            "Android" [0.13.1]
+
+            ; "iPhone"
+            ; "iPad"
+            ; "iPod"
+
+            fail [
+                "Browser-detected platform" mold os "unavailable in CI builds."
+                "Please pass a supported OS_ID explicitly to LATEST-OF"
+            ]
+        ]
+    ]
+
+    ; Otherwise, we're in a desktop build and can just use the version tuple
+    ; built into the interpreter as a default.
+    ;
     os: default [
         ; If we are defaulting the OS from the current interpreter, default
         ; the debug or release status also.  TEST-LIBREBOL is only available
@@ -137,6 +197,7 @@ latest-of: func [
     if 0 <> first os [  ; so far, all start with 0
         fail ["First digit of OS specification tuple must be 0:" os]
     ]
+
     let extension: if (find/only [0.3.1 0.3.40] os) [".exe"]
 
     ; !!! Though the OS is represented as a tuple, non-Rebol scripts treat
