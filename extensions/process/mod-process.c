@@ -355,25 +355,53 @@ REBNATIVE(get_env)
 
     REBVAL *variable = ARG(variable);
 
-    REBCTX *error = NULL;
+    REBVAL *error = nullptr;
 
   #if TO_WINDOWS
     // Note: The Windows variant of this API is NOT case-sensitive
 
     WCHAR *key = rebSpellWide("@", variable);
 
-    DWORD val_len_plus_one = GetEnvironmentVariable(key, NULL, 0);
-    if (val_len_plus_one == 0) { // some failure...
-        if (GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+    DWORD val_len_plus_one = GetEnvironmentVariable(key, nullptr, 0);
+    if (val_len_plus_one == 0) {  // some failure...
+        DWORD dwerr = GetLastError();
+        if (dwerr == ERROR_ENVVAR_NOT_FOUND)
             Init_Nulled(D_OUT);
         else
-            error = Error_User("Unknown error when requesting variable size");
+            error = rebError_OS(dwerr);  // don't call GetLastError() twice!
     }
     else {
         WCHAR *val = rebAllocN(WCHAR, val_len_plus_one);
-        DWORD result = GetEnvironmentVariable(key, val, val_len_plus_one);
-        if (result == 0)
-            error = Error_User("Unknown error fetching variable to buffer");
+        DWORD val_len = GetEnvironmentVariable(key, val, val_len_plus_one);
+
+        // This is tricky, because although GetEnvironmentVariable() says that
+        // a 0 return means an error, it also says it is the length of the
+        // variable minus the terminator (when the passed in buffer is of a
+        // sufficient size).
+        //
+        // https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getenvironmentvariable
+        //
+        // So if a variable is set-but-empty, then it could return 0 in this
+        // second step.  (Who would design such an API?!  Why wouldn't it just
+        // consistently return length including the terminator regardless of
+        // whether the buffer is big enough or not, so 0 is always an error?!)
+        //
+        // Such variables can't be assigned with SET, since `set var=` will
+        // clear it.  But other mechanisms can...including GitHub Actions when
+        // it sets up `env:` variables.
+        //
+        if (val_len + 1 != val_len_plus_one) {
+            DWORD dwerr = GetLastError();
+            if (dwerr == 0) {  // in case this ever happens, give more info
+                error = rebValue("make error! spaced [",
+                    "{Mystery bug getting environment var} @", ARG(variable),
+                    "{with length reported as}", rebI(val_len_plus_one - 1),
+                    "{but returned length from fetching is}", rebI(val_len),
+                "]");
+            }
+            else
+                error = rebError_OS(dwerr);
+        }
         else {
             REBVAL *temp = rebLengthedTextWide(val, val_len_plus_one - 1);
             Copy_Cell(D_OUT, temp);
@@ -389,12 +417,12 @@ REBNATIVE(get_env)
     char *key = rebSpell("@", variable);
 
     const char* val = getenv(key);
-    if (val == NULL) // key not present in environment
+    if (val == nullptr)  // key not present in environment
         Init_Nulled(D_OUT);
     else {
         size_t size = strsize(val);
 
-        /* assert(size != 0); */ // True?  Should it return BLANK!?
+        /* assert(size != 0); */  // True?  Should it return BLANK!?
 
         Init_Text(D_OUT, Make_Sized_String_UTF8(val, size));
     }
@@ -405,8 +433,8 @@ REBNATIVE(get_env)
     // Error is broken out like this so that the proper freeing can be done
     // without leaking temporary buffers.
     //
-    if (error != NULL)
-        fail (error);
+    if (error != nullptr)
+        rebJumps ("fail", rebR(error));
 
     return D_OUT;
 }
@@ -436,8 +464,10 @@ REBNATIVE(set_env)
     WCHAR *key_wide = rebSpellWide(variable);
     WCHAR *opt_val_wide = rebSpellWide("ensure [<opt> text!]", value);
 
-    if (not SetEnvironmentVariable(key_wide, opt_val_wide)) // null unsets
-        fail ("environment variable couldn't be modified");
+    if (not SetEnvironmentVariable(key_wide, opt_val_wide)) {  // null unsets
+        REBVAL *error = rebError_OS(GetLastError());
+        rebJumps ("fail", rebR(error));
+    }
 
     rebFree(opt_val_wide);
     rebFree(key_wide);
@@ -447,7 +477,7 @@ REBNATIVE(set_env)
     if (IS_NULLED(value)) {
       #ifdef unsetenv
         if (unsetenv(key_utf8) == -1)
-            fail ("unsetenv() couldn't unset environment variable");
+            rebJumps ("fail {unsetenv() couldn't unset environment variable}");
       #else
         // WARNING: SPECIFIC PORTABILITY ISSUE
         //
@@ -460,7 +490,7 @@ REBNATIVE(set_env)
         // going to hope this case doesn't hold onto the string...
         //
         if (putenv(key_utf8) == -1) // !!! Why mutable?
-            fail ("putenv() couldn't unset environment variable");
+            rebJumps ("fail {putenv() couldn't unset environment variable}");
       #endif
     }
     else {
@@ -468,7 +498,7 @@ REBNATIVE(set_env)
         char *val_utf8 = rebSpell(value);
 
         if (setenv(key_utf8, val_utf8, 1) == -1) // the 1 means "overwrite"
-            fail ("setenv() coudln't set environment variable");
+            rebJumps ("fail {setenv() couldn't set environment variable}");
 
         rebFree(val_utf8);
       #else
@@ -496,7 +526,7 @@ REBNATIVE(set_env)
         char *duplicate = strdup(key_equals_val_utf8);
 
         if (putenv(duplicate) == -1)  // leak!  (why mutable?  :-/)
-            fail ("putenv() couldn't set environment variable");
+            rebJumps ("fail {putenv() couldn't set environment variable}");
 
         rebFree(key_equals_val_utf8);
       #endif
