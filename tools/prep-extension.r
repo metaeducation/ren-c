@@ -140,7 +140,23 @@ has-startup*: false
 num-natives: 0
 for-each info all-protos [
     if info/name = "startup*" [
+        if info/exported [
+            ;
+            ; STARTUP* is supposed to be called once and only once, by the
+            ; internal extension code.
+            ;
+            fail "Do not EXPORT the STARTUP* function for an extension!"
+        ]
         has-startup*: true
+    ]
+    if info/name = "shutdown*" [
+        if info/exported [
+            ;
+            ; SHUTDOWN* is supposed to be called once and only once, by the
+            ; internal extension code.
+            ;
+            fail "Do not EXPORT the SHUTDOWN* function for an extension!"
+        ]
     ]
     num-natives: num-natives + 1
 ]
