@@ -333,7 +333,6 @@ jobs:
         fi
 
 
-
     - name: HTTPS Read Test (If This Works, A Lot Of Things Are Working)
       shell: r3built --fragment {0}  # See README: Ren-C Code As Step
       run: |
@@ -380,11 +379,14 @@ jobs:
       run: |
         cd build
         NEW_NAME="r3-${GIT_COMMIT_SHORT}${VARIATION}.exe"
-        OPT_TYPE=""  # e.g. "--content-type application/wasm"
+        MIME_TYPE=""  # e.g. "--content-type application/wasm"
 
         local=r3.exe
-        remote=s3://${AWS_S3_BUCKET_NAME}/travis-builds/${OS_ID}/${NEW_NAME}
-        aws s3 cp $local $remote $OPT_TYPE
+        lastpart=travis-builds/${OS_ID}/${NEW_NAME}
+        remote=s3://${AWS_S3_BUCKET_NAME}/$lastpart
+        aws s3 cp $local $remote $MIME_TYPE
+
+        echo "R3_URL_LASTPART=$lastpart" >> $GITHUB_ENV
 
 
     - name: Greenlight Build
@@ -401,3 +403,21 @@ jobs:
 
         remote=s3://${AWS_S3_BUCKET_NAME}/travis-builds/${OS_ID}/$local
         aws s3 cp $local $remote  # upload
+
+
+    - name: Test That LATEST-OF Script Gives Back The Just-Greenlit Build
+      if: github.ref == 'refs/heads/master'
+      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
+      run: |
+        latest-of: do %scripts/latest-of.reb
+
+        os-id: to tuple! get-env 'OS_ID
+        variation: if "-debug" = get-env 'VARIATION ['debug] else ['release]
+        r3-url-lastpart: get-env 'R3_URL_LASTPART
+
+        url: latest-of/variant os-id variation
+        uparse (as text! url) [thru r3-url-lastpart] then [
+            print ["LATEST-OF Matched:" url]
+        ] else [
+            fail ["!!! LATEST-OF Gave Mismatched URL:" url]
+        ]
