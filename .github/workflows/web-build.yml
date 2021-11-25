@@ -325,11 +325,12 @@ jobs:
       with:
         web: true
         commit: ${{ env.GIT_COMMIT_SHORT }}
-        timeout: 10
+        timeout: 15
         script: |
           x: 10
           watch x
           assert [10 = watch 1]
+          assert [url? latest-of]
           redbol
 
 
