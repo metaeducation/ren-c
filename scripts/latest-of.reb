@@ -200,18 +200,6 @@ latest-of: func [
 
     let extension: if (find/only [0.3.1 0.3.40] os) [".exe"]
 
-    ; !!! Though the OS is represented as a tuple, non-Rebol scripts treat
-    ; them as strings...so `0.3.01` is not canonized to `0.3.1`.  The S3
-    ; directories are currently impacted by that:
-    ;
-    ; https://forum.rebol.info/t/tuple-troubles-version-0-3-01-vs-0-3-1/1755
-    ;
-    ; We want to stamp this out.  But until we do...turn the OS tuple into a
-    ; string representation with a leading 0 in the third slot, if needed.
-    ;
-    let opt-zero: if os.3 < 10 ["0"]
-    os: unspaced [os.1 "." os.2 "." opt-zero os.3]
-
 
     === DEFAULT VARIANT TO DEBUG ===
 

@@ -5,7 +5,7 @@ REBOL [
     Name: Target-Systems
     Rights: {
         Copyright 2012 REBOL Technologies
-        Copyright 2012-2017 Ren-C Open Source Contributors
+        Copyright 2012-2021 Ren-C Open Source Contributors
         REBOL is a trademark of REBOL Technologies
     }
     License: {
@@ -34,16 +34,24 @@ REBOL [
         memo item that is a no-op, so the table is brief as possible.
     }
     Notes: {
-        A binary release archive for Rebol 1.2 and 2.5 is at:
+      * A binary release archive for Rebol 1.2 and 2.5 is at:
 
-        http://rebol.com/release-archive.html
+          http://rebol.com/release-archive.html
 
-        Between versions 1 and 2 there were no conflicting usages of IDs.  But
-        for unknown reasons, R3-Alpha repurposed 0.4.03 and 0.4.04.  These had
+      * Between versions 1 and 2 there were no conflicting usages of IDs.  But
+        for unknown reasons, R3-Alpha repurposed 0.4.3 and 0.4.4.  These had
         been "Linux DEC Alpha" and "Linux PPC" respectively, but became
         "Linux x86 libc6 2.5" and "Linux x86 libc6 2.11".
 
-        R3-Alpha was released on many fewer systems than previous versions.
+      * The original systems.r would write `0.3.01` instead of just `0.3.1` to
+        accentuate the difference.  But canon tuples remove leading zeros, so
+        if some parts of the code (e.g. bash shell scripts) use the `0.3.01`
+        format and handle it as a string (e.g. to make directories), this gets
+        out of sync with it loaded as a TUPLE!.  Ren-C uses no leading zeros.
+
+          https://forum.rebol.info/t/1755
+
+      * R3-Alpha was released on many fewer systems than previous versions.
         It demanded a 64-bit `long long` integer type from the C compiler, and
         additionally some platforms were just too old to be deemed relevant.
         However, there's probably no serious barrier to building the current
@@ -56,31 +64,31 @@ systems: [
 
     Amiga: 1
     ;-------------------------------------------------------------------------
-    0.1.01 _ "m68k20+"
+    0.1.1 _ "m68k20+"
         ; was: "Amiga V2.0-3.1 68020+"
 
-    0.1.02 _ "m68k"
+    0.1.2 _ "m68k"
         ; was: "Amiga V2.0-3.1 68000"
 
-    0.1.03 amiga/posix "ppc"
+    0.1.3 amiga/posix "ppc"
         #SGD #BEN #LLC <NPS> <HID> /HID /DYN %M
 
     Macintosh: 2
     ;-------------------------------------------------------------------------
-    0.2.01 _ "mac-ppc"
+    0.2.1 _ "mac-ppc"
         ; was: "Macintosh* PPC" (not known what "*" meant)
 
-    0.2.02 _ "mac-m68k"
+    0.2.2 _ "mac-m68k"
         ; was: "Macintosh 68K"
 
-    0.2.03 _ "mac-misc"
+    0.2.3 _ "mac-misc"
         ; was: "Macintosh, FAT PPC, 68K"
 
-    0.2.04 osx-ppc/osx "osx-ppc"
+    0.2.4 osx-ppc/osx "osx-ppc"
         #SGD #BEN #LLC <NCM> /HID /DYN %M
         ; originally targeted OS X 10.2
 
-    0.2.05 osx-x86/osx "osx-x86"
+    0.2.5 osx-x86/osx "osx-x86"
         #SGD #LEN #LLC #NSER <NCM> <NPS> <ARC> /HID /ARC /DYN %M
 
     0.2.40 osx-x64/osx _
@@ -88,11 +96,11 @@ systems: [
 
     Windows: 3
     ;-------------------------------------------------------------------------
-    0.3.01 windows-x86/windows "win32-x86"
+    0.3.1 windows-x86/windows "win32-x86"
         #SGD #LEN #UNI #W32 #NSEC <WLOSS> /CON /S4M %M
         ; was: "Microsoft Windows XP/NT/2K/9X iX86"
 
-    0.3.02 _ "dec-alpha"
+    0.3.2 _ "dec-alpha"
         ; was: "Windows Alpha NT DEC Alpha"
 
     0.3.40 windows-x64/windows "win32-x64"
@@ -100,31 +108,31 @@ systems: [
 
     Linux: 4
     ;-------------------------------------------------------------------------
-    0.4.01 _ "libc5-x86"
+    0.4.1 _ "libc5-x86"
         ; was: "Linux Libc5 iX86 1.2.1.4.1 view-pro041.tar.gz"
 
-    0.4.02 linux-x86/linux "libc6-2-3-x86"  ; gliblc-2.3
+    0.4.2 linux-x86/linux "libc6-2-3-x86"  ; gliblc-2.3
         #SGD #LEN #LLC #NSER <M32> <NSP> <UFS> /M32 %M %DL
 
-    0.4.03 linux-x86/linux "libc6-2-5-x86"  ; gliblc-2.5
+    0.4.3 linux-x86/linux "libc6-2-5-x86"  ; gliblc-2.5
         #SGD #LEN #LLC <M32> <UFS> /M32 %M %DL
 
-    0.4.04 linux-x86/linux "libc6-2-11-x86"  ; glibc-2.11
+    0.4.4 linux-x86/linux "libc6-2-11-x86"  ; glibc-2.11
         #SGD #LEN #LLC #PIP2 <M32> <HID> /M32 /HID /DYN %M %DL
 
-    0.4.05 _ _
+    0.4.5 _ _
         ; was: "Linux 68K"
 
-    0.4.06 _ _
+    0.4.6 _ _
         ; was: "Linux Sparc"
 
-    0.4.07 _ _
+    0.4.7 _ _
         ; was: "Linux UltraSparc"
 
-    0.4.08 _ _
+    0.4.8 _ _
         ; was: "Linux Netwinder Strong ARM"
 
-    0.4.09 _ _
+    0.4.9 _ _
         ; was: "Linux Cobalt Qube MIPS"
 
     0.4.10 linux-ppc/linux "libc6-ppc"
@@ -170,15 +178,15 @@ systems: [
 
     BSDi: 6
     ;-------------------------------------------------------------------------
-    0.6.01 _ "x86"
+    0.6.1 _ "x86"
         ; was: "BSDi iX86"
 
     FreeBSD: 7
     ;-------------------------------------------------------------------------
-    0.7.01 _ "x86"
+    0.7.1 _ "x86"
         ; was: "Free BSD iX86"
 
-    0.7.02 freebsd-x86/posix "elf-x86"
+    0.7.2 freebsd-x86/posix "elf-x86"
         #SGD #LEN #LLC %M
 
     0.7.40 freebsd-x64/posix _
@@ -186,36 +194,36 @@ systems: [
 
     NetBSD: 8
     ;-------------------------------------------------------------------------
-    0.8.01 _ "x86"
+    0.8.1 _ "x86"
         ; was: "NetBSD iX86"
 
-    0.8.02 _ "ppc"
+    0.8.2 _ "ppc"
         ; was: "NetBSD PPC"
 
-    0.8.03 _ "m68k"
+    0.8.3 _ "m68k"
         ; was: "NetBSD 68K"
 
-    0.8.04 _ "dec-alpha"
+    0.8.4 _ "dec-alpha"
         ; was: "NetBSD DEC Alpha"
 
-    0.8.05 _ "sparc"
+    0.8.5 _ "sparc"
         ; was: "NetBSD Sparc"
 
     OpenBSD: 9
     ;-------------------------------------------------------------------------
-    0.9.01 _ "x86"
+    0.9.1 _ "x86"
         ; was: "OpenBSD iX86"
 
-    0.9.02 _ "ppc"
+    0.9.2 _ "ppc"
         ; Not mentioned in archive, but stubbed in R3-Alpha's %platforms.r
 
-    0.9.03 _ "m68k"
+    0.9.3 _ "m68k"
         ; was: "OpenBSD 68K"
 
-    0.9.04 openbsd-x86/posix "elf-x86"
+    0.9.4 openbsd-x86/posix "elf-x86"
         #SGD #LEN #LLC %M
 
-    0.9.05 _ "sparc"
+    0.9.5 _ "sparc"
         ; was: "OpenBSD Sparc"
 
     0.9.40 openbsd-x64/posix "elf-x64"
@@ -223,10 +231,10 @@ systems: [
 
     Sun: 10
     ;-------------------------------------------------------------------------
-    0.10.01 _ "sparc"
+    0.10.1 _ "sparc"
         ; was: "Sun Solaris Sparc"
 
-    0.10.02 _ _
+    0.10.2 _ _
         ; was: "Solaris iX86"
 
     SGI: 11
@@ -241,43 +249,43 @@ systems: [
 
     Android: 13
     ;-------------------------------------------------------------------------
-    0.13.01 android-arm/android "arm"
+    0.13.1 android-arm/android "arm"
         #SGD #LEN #LLC <HID> <PIC> /HID /DYN %M %DL %LOG
 
-    0.13.02 android5-arm/android _
+    0.13.2 android5-arm/android _
         #SGD #LEN #LLC <HID> <PIC> /HID /PIE /DYN %M %DL %LOG
 
     Syllable: 14
     ;-------------------------------------------------------------------------
-    0.14.01 syllable-dtp/posix _
+    0.14.1 syllable-dtp/posix _
         #SGD #LEN #LLC <HID> /HID /DYN %M %DL
 
-    0.14.02 syllable-svr/linux _
+    0.14.2 syllable-svr/linux _
         #SGD #LEN #LLC <M32> <HID> /HID /DYN %M %DL
 
     WindowsCE: 15
     ;-------------------------------------------------------------------------
-    0.15.01 _ "sh3"
+    0.15.1 _ "sh3"
         ; was: "Windows CE 2.0 SH3"
 
-    0.15.02 _ "mips"
+    0.15.2 _ "mips"
         ; was: "Windows CE 2.0 MIPS"
 
-    0.15.05 _ "arm"
+    0.15.5 _ "arm"
         ; was: "Windows CE 2.0 Strong ARM, HP820"
 
-    0.15.06 _ "sh4"
+    0.15.6 _ "sh4"
         ; was: "Windows CE 2.0 SH4"
 
     Emscripten: 16
     ;-------------------------------------------------------------------------
-    0.16.01 asyncify/emscripten "asyncify"
+    0.16.1 asyncify/emscripten "asyncify"
         #SG? #LEN
 
-    0.16.02 pthread/emscripten "emscripten"
+    0.16.2 pthread/emscripten "emscripten"
         #SG? #LEN
 
-    0.16.03 node/emscripten "nodejs"
+    0.16.3 node/emscripten "nodejs"
         #SG? #LEN
 
     AIX: 17

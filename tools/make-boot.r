@@ -69,7 +69,7 @@ Title: {
 
 === PROCESS COMMAND LINE ARGUMENTS ===
 
-; !!! Heed /script/args so you could say e.g. `do/args %make-boot.r [0.3.01]`
+; !!! Heed /script/args so you could say e.g. `do/args %make-boot.r [0.3.1]`
 ; Note however that current leaning is that scripts called by the invoked
 ; process will not have access to the "outer" args, hence there will be only
 ; one "args" to be looked at in the long run.  This is an attempt to still

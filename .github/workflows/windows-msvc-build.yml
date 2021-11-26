@@ -79,7 +79,7 @@ jobs:
            extensions: "ODBC +"  # View requires C99, disable it
            variation: "-debug"
 
-         - os-id: 0.3.01  # 32-bit Target (built on this 64-bit platform)
+         - os-id: 0.3.1  # 32-bit Target (built on this 64-bit platform)
            config-file: vs2019-x86.r
            standard: c++17  # c++11 is "default", no option for it
            debug: normal
