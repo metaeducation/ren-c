@@ -524,8 +524,15 @@ REB_R MAKE_Frame(
 
         assert(Is_Action_Frame(f_varargs));
 
-        if (Make_Frame_From_Feed_Throws(out, END_CELL, f_varargs->feed))
+        bool error_on_deferred = true;
+        if (Make_Frame_From_Feed_Throws(
+            out,
+            END_CELL,
+            f_varargs->feed,
+            error_on_deferred
+        )){
             return R_THROWN;
+        }
 
         return out;
     }

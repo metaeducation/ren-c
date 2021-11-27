@@ -1310,8 +1310,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (VAL_LEN_AT(v) == 0)
             fail ("SET-BLOCK! must not be empty for now.");
 
+        REBDSP dsp_circled = 0;  // which pushed address is main return
+
       blockscope {
-        bool circled = false;  // a return is SYM-XXX to be main return
         const RELVAL *tail;
         const RELVAL *check = VAL_ARRAY_AT(&tail, v);
         REBSPC *derived = Derive_Specifier(v_specifier, v);
@@ -1321,24 +1322,59 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             // overall return of the expression.  But a GROUP! can't resolve
             // to that and make the decision, so handle it up front.
             //
-            if (ANY_THE_KIND(VAL_TYPE(check))) {
-                if (circled)
+            if (IS_SYMBOL(check) and VAL_SYMBOL(check) == PG_At_Symbol) {
+                if (dsp_circled != 0) {
+                  too_many_circled:
                     fail ("Can't circle more than one multi-return result");
-                circled = true;
+                }
+                Init_Blank(DS_PUSH());
+                dsp_circled = DSP;
+                continue;
             }
             if (
                 IS_THE_WORD(check)
                 or IS_THE_PATH(check)
                 or IS_THE_TUPLE(check)
             ){
+                if (dsp_circled != 0)
+                    goto too_many_circled;
                 Derelativize(DS_PUSH(), check, v_specifier);
                 Plainify(DS_TOP);
-                SET_CELL_FLAG(DS_TOP, STACK_NOTE_CIRCLED);
+                dsp_circled = DSP;
                 continue;
             }
+
+            // Carets indicate a desire to get a "meta" result.
+            //
+            // !!! The multi-return mechanism doesn't allow an arbitrary number
+            // of meta steps, just one.  Should you be able to say ^(^(x)) or
+            // something like that to add more?  :-/
+            //
+            // !!! Should both @(^) and ^(@) be allowed?
+            //
+            if (IS_SYMBOL(check) and VAL_SYMBOL(check) == PG_Caret_Symbol) {
+                Init_Blackhole(DS_PUSH());
+                SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
+                continue;
+            }
+            if (
+                IS_META_WORD(check)
+                or IS_META_PATH(check)
+                or IS_META_TUPLE(check)
+            ){
+                Derelativize(DS_PUSH(), check, v_specifier);
+                Plainify(DS_TOP);
+                SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
+                continue;
+            }
+
             const RELVAL *item;
             REBSPC *specifier;
-            if (IS_GROUP(check) or IS_THE_GROUP(check)) {
+            if (
+                IS_GROUP(check)
+                or IS_THE_GROUP(check)
+                or IS_META_GROUP(check)
+            ){
                 if (Do_Any_Array_At_Throws(f_spare, check, derived)) {
                     Move_Cell(f->out, f_spare);
                     DS_DROP_TO(f->dsp_orig);
@@ -1372,7 +1408,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             }
             else if (
                 IS_WORD(item)
-                or IS_SYMBOL(item)
                 or IS_PATH(item)
                 or IS_TUPLE(item)
             ){
@@ -1382,28 +1417,19 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 fail ("SET-BLOCK! elements are WORD/PATH/TUPLE/BLANK/ISSUE");
 
             if (IS_THE_GROUP(check))
-                SET_CELL_FLAG(DS_TOP, STACK_NOTE_CIRCLED);
+                dsp_circled = DSP;
+            else if (IS_META_GROUP(check))
+                SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
         }
 
-        // By default, the first return result will be returned.
+        // By default, the ordinary return result will be returned.  Indicate
+        // this with dsp_circled = 0, as if no circling were active.  (We had
+        // to set it to nonzero in the case of `[@ ...]: ...` to give an error
+        // if more than one return were circled.)
         //
-        if (not circled)
-            SET_CELL_FLAG(DS_AT(f->dsp_orig + 1), STACK_NOTE_CIRCLED);
+        if (dsp_circled == f->dsp_orig + 1)
+            dsp_circled = 0;
      }
-
-        bool meta = false;
-
-        // !!! There is not currently support for `[x]: ^(do/vanishable code)`
-        // due to the problems of multi-return and groups...which should be
-        // addressed at least for common cases by tolerating GROUP!s that do
-        // not contain more than one evaluation.  It's easier for the moment
-        // to handle the case of `([x]: ^ devoid do code)` because it stays
-        // in the same feed.
-        //
-        if (IS_META(f_next)) {
-            meta = true;
-            Fetch_Next_Forget_Lookback(f);  // pushed all we needed to know
-        }
 
         // Build a frame for the function call by fulfilling its arguments.
         // The function will be in a state that it can be called, but not
@@ -1412,7 +1438,13 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // !!! This function can currently return a QUOTED! of the next value
         // if it's not an ACTION!; consider that an error for multi-return.
         //
-        if (Make_Frame_From_Feed_Throws(f_spare, END_CELL, f->feed)) {
+        bool error_on_deferred = false;
+        if (Make_Frame_From_Feed_Throws(
+            f_spare,
+            END_CELL,
+            f->feed,
+            error_on_deferred
+        )){
             Move_Cell(f->out, f_spare);
             DS_DROP_TO(f->dsp_orig);
             goto return_thrown;
@@ -1457,10 +1489,48 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             goto return_thrown;
         }
 
-        f_next_gotten = nullptr;  // called arbitrary code, must toss cache
+        // We called arbitrary code, so we have to toss the cache (in case
+        // e.g. ELSE comes next and it got redefined to 3 or something)
+        //
+        f_next_gotten = nullptr;
 
-        if (meta)
-            Meta_Quotify(f->out);  // Note: turns END to ~void~ isotope
+        // Now we have to look ahead in case there is enfix code afterward.
+        // We want parity, for instance:
+        //
+        //    >> x: find "abc" 'b then [10]
+        //    == 10
+        //
+        //    >> x
+        //    == 10
+        //
+        //    >> [y]: find "abc" 'b then [10]
+        //    == 10
+        //
+        //    >> y
+        //    == 10
+        //
+        // But at this point we've only run the FIND part, so we'd just have
+        // "bc" in the output.  We used `error_on_deferred` as false, so the
+        // feed will be in a waiting state for enfix that we can continue by
+        // jumping into the evaluator at the ST_EVALUATOR_LOOKING_AHEAD state.
+        //
+      blockscope {
+        REBFLGS flags = EVAL_MASK_DEFAULT
+            | EVAL_FLAG_FULFILLING_ARG
+            | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
+            | EVAL_FLAG_INERT_OPTIMIZATION;
+
+        DECLARE_FRAME (subframe, f->feed, flags);
+
+        Push_Frame(f->out, subframe);
+        bool threw = Eval_Throws(subframe);
+        Drop_Frame(subframe);
+
+        if (threw) {
+            DS_DROP_TO(f->dsp_orig);
+            goto return_thrown;
+        }
+      }
 
         // Take care of the SET for the main result.  For the moment, if you
         // asked to opt out of the main result this will give you a ~blank~
@@ -1480,29 +1550,60 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         Copy_Cell(f_spare, DS_AT(f->dsp_orig + 1));
         if (IS_BLANK(f_spare))
             Init_Isotope(f->out, Canon(BLANK));
-        else
+        else {
+            if (GET_CELL_FLAG(DS_AT(f->dsp_orig + 1), STACK_NOTE_METARETURN))
+                Meta_Quotify(f->out);
             Set_Var_May_Fail(
                 f_spare, SPECIFIED,
                 f->out, SPECIFIED
             );
+        }
 
-        // Now take care of the assignment of the original result; we can tell
-        // by which result is circled...
+        // Iterate the other return slots.  For any variables besides the
+        // original marked with meta, then meta them.  And if a return element
+        // was "circled" then it becomes the overall return.
         //
-        if (NOT_CELL_FLAG(DS_AT(f->dsp_orig + 1), STACK_NOTE_CIRCLED)) {
-            REBDSP dsp_circled = f->dsp_orig + 2;
-            while (NOT_CELL_FLAG(DS_AT(dsp_circled), STACK_NOTE_CIRCLED))
-                ++dsp_circled;
-            Move_Cell(f_spare, DS_AT(dsp_circled));  // see note on GROUP! eval
-            Get_Var_May_Fail(
-                f->out,
-                f_spare,
-                SPECIFIED,
-                true  // any
-            );
+        REBDSP dsp = DSP;
+        for (; dsp != f->dsp_orig + 1; --dsp) {
+            if (
+                GET_CELL_FLAG(DS_AT(dsp), STACK_NOTE_METARETURN)
+                or dsp_circled == dsp
+            ){
+                DECLARE_LOCAL (temp);
+                PUSH_GC_GUARD(temp);
+                Copy_Cell(f_spare, DS_AT(dsp));  // see note on GROUP! eval
+                Get_Var_May_Fail(
+                    temp,
+                    f_spare,
+                    SPECIFIED,
+                    true  // any
+                );
+                if (GET_CELL_FLAG(DS_AT(dsp), STACK_NOTE_METARETURN))
+                    Meta_Quotify(temp);
+                Set_Var_May_Fail(
+                    f_spare, SPECIFIED,
+                    temp, SPECIFIED
+                );
+                if (dsp_circled == dsp)
+                    Move_Cell(f->out, temp);
+                DROP_GC_GUARD(temp);
+            }
         }
 
         DS_DROP_TO(f->dsp_orig);
+
+        // We've just changed the values of variables, and these variables
+        // might be coming up next.  Consider:
+        //
+        //     304 = [a]: test 1020
+        //     a = 304
+        //
+        // The `a` was fetched and found to not be enfix, and in the process
+        // its value was known.  But then we assigned that a with a new value
+        // in the implementation of SET-BLOCK! here, so, it's incorrect.
+        //
+        f_next_gotten = nullptr;
+
         break; }
 
 
@@ -1787,8 +1888,11 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     if (not f_next_gotten)
         f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
-    else
+    else {
+        if (f_next_gotten != Lookup_Word(f_next, FEED_SPECIFIER(f->feed)))
+            assert(false);
         assert(f_next_gotten == Lookup_Word(f_next, FEED_SPECIFIER(f->feed)));
+    }
 
   //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-ENFIX ///////////=//
 

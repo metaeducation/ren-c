@@ -116,3 +116,44 @@
         rest = " def"
     ]
 )]
+
+; The META-XXX! types can be used to ask for variables to be raised to a meta
+; level, and can be used also as plain ^
+[
+    (
+        a: b: ~
+        did all [
+            (the 'A) = [^a ^b]: transcode "A B"
+            a = the 'A
+            b = the '{ B}
+        ]
+    )(
+        a: b: ~
+        did all [
+            (the 'A) = [^ ^b]: transcode "A B"
+            ^a = '~unset~
+            b = the '{ B}
+        ]
+    )
+]
+
+; Enfix processing when using a multi-return should match the processing when
+; you are using an ordinary return.
+[
+    (
+        value: rest: ~
+        did all [
+            <item!> = [value rest]: transcode "ab cd" then [<item!>]
+            value = <item!>
+            rest = " cd"
+        ]
+    )
+    (
+        value: rest: ~
+        did all [
+            <item!> = ([value rest]: transcode "ab cd") then [<item!>]
+            value = 'ab
+            rest = " cd"
+        ]
+    )
+]

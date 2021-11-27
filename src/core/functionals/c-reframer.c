@@ -82,7 +82,8 @@ enum {
 bool Make_Invokable_From_Feed_Throws(
     REBVAL *out,
     const RELVAL *first,  // if not END, override first value (vs. feed->value)
-    REBFED *feed
+    REBFED *feed,
+    bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
     assert(NOT_FEED_FLAG(feed, NEXT_ARG_FROM_OUT));  // not supported?
 
@@ -146,9 +147,16 @@ bool Make_Invokable_From_Feed_Throws(
 
     // It is desired that any nulls encountered be processed as if they are
     // not specialized...and gather at the callsite if necessary.
+
+    // The idea of creating a frame from an evaluative step which includes
+    // infix as part of the step would ultimately have to make a composite
+    // frame that captured the entire chain of the operation.  That's a heavy
+    // concept, but for now we just try to get multiple returns to work which
+    // are part of the evaluator and hence can do trickier things.
     //
-    f->flags.bits |=
-        EVAL_FLAG_ERROR_ON_DEFERRED_ENFIX;  // can't deal with ELSE/THEN/etc.
+    if (error_on_deferred)
+        f->flags.bits |=
+            EVAL_FLAG_ERROR_ON_DEFERRED_ENFIX;  // can't deal with ELSE/THEN
 
     Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
@@ -225,9 +233,13 @@ bool Make_Invokable_From_Feed_Throws(
 // that has to follow the rules of MAKE FRAME!...e.g. returning a frame.
 // This converts QUOTED!s into frames for the identity function.
 //
-bool Make_Frame_From_Feed_Throws(REBVAL *out, const RELVAL *first, REBFED *feed)
-{
-    if (Make_Invokable_From_Feed_Throws(out, first, feed))
+bool Make_Frame_From_Feed_Throws(
+    REBVAL *out,
+    const RELVAL *first,
+    REBFED *feed,
+    bool error_on_deferred
+){
+    if (Make_Invokable_From_Feed_Throws(out, first, feed, error_on_deferred))
         return true;
 
     if (IS_FRAME(out))
@@ -277,8 +289,15 @@ REB_R Reframer_Dispatcher(REBFRM *f)
     // filled values).  And we don't want to overwrite f->out in case of
     // invisibility.  So the frame's spare cell is used.
     //
-    if (Make_Invokable_From_Feed_Throws(f_spare, END_CELL, f->feed))
+    bool error_on_deferred = true;
+    if (Make_Invokable_From_Feed_Throws(
+        f_spare,
+        END_CELL,
+        f->feed,
+        error_on_deferred
+    )){
         return R_THROWN;
+    }
 
     REBVAL *arg = FRM_ARG(f, VAL_INT32(param_index));
     Move_Cell(arg, f_spare);

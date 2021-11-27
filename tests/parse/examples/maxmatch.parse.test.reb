@@ -24,9 +24,9 @@
         parser2 [action!]
         <local> result1' result2' remainder1 remainder2
     ][
-        ([result1' remainder1]: ^ parser1 input)
-        ([result2' remainder2]: ^ parser2 input)
-        if null? result2'[  ; parser2 didn't succeed
+        [^result1' remainder1]: parser1 input
+        [^result2' remainder2]: parser2 input
+        if null? result2' [  ; parser2 didn't succeed
             if null? result1' [return null]  ; neither succeeded
         ] else [  ; parser2 succeeded
             any [
@@ -174,9 +174,9 @@
         parser2 [action!]
         <local> result1' result2' remainder1 remainder2 pending1 pending2
     ][
-        ([result1' remainder1 pending1]: ^ parser1 input)
-        ([result2' remainder2 pending2]: ^ parser2 input)
-        if null? result2'[  ; parser2 didn't succeed
+        [^result1' remainder1 pending1]: parser1 input
+        [^result2' remainder2 pending2]: parser2 input
+        if null? result2' [  ; parser2 didn't succeed
             if null? result1' [return null]  ; neither succeeded
         ] else [  ; parser2 succeeded
             any [

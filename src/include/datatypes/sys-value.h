@@ -618,6 +618,11 @@ inline static REBVAL *SPECIFIC(const_if_c RELVAL *v) {
 #define UNSPECIFIED nullptr
 
 
+inline static const REBSYM *VAL_SYMBOL(REBCEL(const*) cell) {
+    assert(ANY_WORD_KIND(CELL_HEART(cell)) or CELL_KIND(cell) == REB_SYMBOL);
+    return SYM(VAL_NODE1(cell));
+}
+
 inline static void INIT_VAL_WORD_SYMBOL(RELVAL *v, const REBSYM *symbol)
   { INIT_VAL_NODE1(v, symbol); }
 
