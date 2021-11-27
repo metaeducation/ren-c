@@ -88,6 +88,26 @@ Rebol [
 ]
 
 
+warning: {
+    !!! IMPORTANT WARNING !!!
+
+    Ren-C is an experimental project whose primary focus is on the WebAssembly
+    target.  Desktop and native binaries are still built as part of continuous
+    integration, but these are permutations designed to exercise many different
+    build settings--and are not packaged or optimized to satisfy any particular
+    usage scenario.  They are likely to be too big/slow (due to having debug
+    instrumentation) or incomplete (due to being built under constraints), and
+    every random Internet executable is going to tangle with virus checkers.
+
+    Making these builds available for download is done despite *strong* protest
+    from the project leadership.  Stakeholders should be building the sources
+    themselves and picking the set of extensions and optimizations that make
+    sense for them.  Using these binaries instead is completely unsupported,
+    and any complaints about them (size, speed, included features) will get
+    you pointed to the sources to do your own builds.
+}
+
+
 ; Cloudfront does caching, and as such we don't want to use it to fetch the
 ; ever-changing greenlit hash.  But it's good for getting the binaries.
 ;
@@ -105,8 +125,9 @@ cloudroot: https://dd498l1ilnrxu.cloudfront.net/travis-builds/  ; perma-cached
 build-variants: [debug release]
 
 
+
 latest-of: func [
-    {Get a link to the latest S3 stored build of the interpreter}
+    {INTERNAL USE ONLY!  Link to unstable S3 CI build of the interpreter}
 
     return: [url!]
 
@@ -118,6 +139,10 @@ latest-of: func [
         [text!]
     /verbose "Print file size, commit, hash information"
 ][
+    if not os [
+        print warning
+    ]
+
     === DEFAULT OS TO VERSION RUNNING THIS SCRIPT (OR OS RUNNING BROWSER) ===
 
     ; If you are running the web build and don't ask for a variant, the most
