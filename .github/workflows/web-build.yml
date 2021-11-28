@@ -326,6 +326,7 @@ jobs:
         web: true
         commit: ${{ env.GIT_COMMIT_SHORT }}
         timeout: 15
+        screenshot: repl
         script: |
           x: 10
           watch x
@@ -345,11 +346,12 @@ jobs:
         web: true
         commit: ${{ env.GIT_COMMIT_SHORT }}
         timeout: 15
+        screenshot: chess
         script: |
           animate-game: do @chess
-          assert[
+          assert [
+              comment [https://en.wikipedia.org/wiki/Fool%27s_mate]
               <done> = animate-game [
-                  ; https://en.wikipedia.org/wiki/Fool%27s_mate
                   f2f3 e7e6
                   g2g4 d8h4
               ]
