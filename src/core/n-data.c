@@ -1282,6 +1282,7 @@ REBNATIVE(as)
                 )){
                     goto bad_cast;
                 }
+                Freeze_Series(VAL_SERIES(D_OUT));  // must be frozen
             }
             mutable_KIND3Q_BYTE(D_OUT) = REB_ISSUE;
             return D_OUT;
