@@ -333,6 +333,28 @@ jobs:
           assert [url? latest-of]
           redbol
 
+    # Early on, @gchiu wrote some code to interoperate with a JS chess board.
+    # Since we have that example, test that it works.  We don't know what the
+    # screen looks like, but we can check it loads and runs to completion with
+    # the shortest possible gameplay.
+    #
+    - name: Test Chess GUI Example
+      if: github.ref == 'refs/heads/master'  # see notes on UPLOAD STEPS
+      uses: metaeducation/ren-c-action@release
+      with:
+        web: true
+        commit: ${{ env.GIT_COMMIT_SHORT }}
+        timeout: 15
+        script: |
+          do @chess
+          assert[
+              <done> = animate-game [
+                  ; https://en.wikipedia.org/wiki/Fool%27s_mate
+                  f2f3 e7e6
+                  g2g4 d8h4
+              ]
+          ]
+
 
   #====# GREENLIGHT STEP (MARK THE UPLOADED BUILD AS CURRENT) #===============#
 
