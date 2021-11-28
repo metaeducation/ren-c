@@ -248,16 +248,18 @@ export console!: make object! [
     ]
 
     dialect-hook: meth [
-        {Receives code block, parse/transform, send back to CONSOLE eval}
+        {Receives code block, parse/transform/bind, send back to CONSOLE eval}
         b [block!]
     ][
-        ; By default we do nothing.  But see the Debug console skin for
-        ; example of binding the code to the currently "focused" FRAME!, or
-        ; this example on the forum of injecting the last value:
+        ; By default we bind the code to system.contexts.user
+        ;
+        ; See the Debug console skin for example of binding the code to the
+        ; currently "focused" FRAME!, or this example on the forum of injecting
+        ; the last value:
         ;
         ; https://forum.rebol.info/t/1071
 
-        b
+        bind b system.contexts.user
     ]
 
     shortcuts: make object! compose/deep [
@@ -736,7 +738,6 @@ ext-console-impl: func [
         ; e.g. `load "word"` => `[word]`
         ;
         code: load delimit newline result
-        bind code system.contexts.user
         assert [block? code]
 
     ] then error -> [
