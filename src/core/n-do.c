@@ -439,6 +439,7 @@ REBNATIVE(do)
         CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);
         return D_OUT; }
 
+      case REB_THE_WORD:
       case REB_BINARY:
       case REB_TEXT:
       case REB_URL:

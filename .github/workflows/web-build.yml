@@ -346,7 +346,7 @@ jobs:
         commit: ${{ env.GIT_COMMIT_SHORT }}
         timeout: 15
         script: |
-          do @chess
+          animate-game: do @chess
           assert[
               <done> = animate-game [
                   ; https://en.wikipedia.org/wiki/Fool%27s_mate
