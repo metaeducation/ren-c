@@ -588,3 +588,16 @@
 ; seek funcitonality, uses plain END and not <end>, etc.
 ;
 (parse2? "aaa" [pos: some "a" to end :pos 3 "a"])
+
+; Parsing URL!s and ANY-SEQUENCE! is read-only
+[(
+    did all [
+        parse? http://example.com ["http:" some "/" copy name to "." ".com"]
+        name = "example"
+    ]
+)(
+    did all [
+        parse? 'abc.<def>.<ghi>.jkl [word! copy tags some tag! word!]
+        tags = [<def> <ghi>]
+    ]
+)]

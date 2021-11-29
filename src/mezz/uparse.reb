@@ -747,7 +747,7 @@ default-combinators: make map! reduce [
             [any-series!]
     ][
         set remainder input
-        return state.series
+        return state.input
     ]
 
     <any> combinator [  ; historically called "SKIP"
@@ -2648,8 +2648,8 @@ uparse*: func [
     pending: "Request unprocessed pending items (default errors if any)"
         [blank! block!]
 
-    series "Input series"
-        [any-series!]
+    input "Input data"
+        [<blank> any-series! url! any-sequence!]
     rules "Block of parse rules"
         [block!]
 
@@ -2664,6 +2664,16 @@ uparse*: func [
 
     <local> loops
 ][
+    ; PATH!s, TUPLE!s, and URL!s are read only and don't have indices.  But we
+    ; want to be able to parse them, so make them read-only series aliases:
+    ;
+    ; https://forum.rebol.info/t/1276/16
+    ;
+    lib.case [  ; !!! Careful... CASE is a refinement!
+        any-sequence? input [input: as block! input]
+        url? input [input: as text! input]
+    ]
+
     loops: copy []  ; need new loop copy each invocation
 
     ; We put an implicit PHASE bracketing the whole of UPARSE* so that the
@@ -2679,7 +2689,7 @@ uparse*: func [
     ; could copy back, but that just shows what a slippery slope this is.
     ;
     if part [
-        series: copy/part series part
+        input: copy/part input part
     ]
 
     combinators: default [default-combinators]
@@ -2688,7 +2698,7 @@ uparse*: func [
     ; that will mark the furthest point reached by any match.
     ;
     if furthest [
-        set furthest series
+        set furthest input
     ]
 
     ; Each UPARSE operation can have a different set of combinators in
@@ -2701,7 +2711,7 @@ uparse*: func [
 
     let f: make frame! :combinators.(block!)
     f.state: state
-    f.input: series
+    f.input: input
     f.value: rules
     f.remainder: let pos
 
@@ -2756,7 +2766,7 @@ match-uparse: comment [redescribe [  ; redescribe not working at te moment (?)
     ; that would not work.  This method will work regardless.
     ;
     enclose :uparse*/fully func [f [frame!]] [
-        let input: f.series  ; DO FRAME! invalidates args; cache for returning
+        let input: f.input  ; DO FRAME! invalidates args; cache for returning
 
         do f then [input]
     ]

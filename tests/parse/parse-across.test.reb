@@ -763,3 +763,18 @@
         ]
     )
 ]
+
+; Parsing URL!s and ANY-SEQUENCE! is read-only
+[(
+    did all [
+        uparse? http://example.com [
+            "http:" some "/" name: between <here> ".com"
+        ]
+        name = "example"
+    ]
+)(
+    did all [
+        uparse? 'abc.<def>.<ghi>.jkl [word! tags: across some tag! word!]
+        tags = [<def> <ghi>]
+    ]
+)]

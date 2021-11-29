@@ -2729,7 +2729,7 @@ REBNATIVE(subparse)
 //          [<opt> bad-word! any-series!]
 //
 //      input "Input series to parse"
-//          [<blank> any-series!]
+//          [<blank> any-series! any-sequence! url!]
 //      rules "Rules to parse by"
 //          [<blank> block!]
 //      /case "Uses case-sensitive comparison"
@@ -2745,6 +2745,23 @@ REBNATIVE(parse_p)
 
     REBVAL *input = ARG(input);
     REBVAL *rules = ARG(rules);
+
+    if (ANY_SEQUENCE(input)) {
+        if (rebRunThrows(D_SPARE, true, Lib(AS), Lib(BLOCK_X), rebQ(input))) {
+            Move_Cell(D_OUT, D_SPARE);
+            return R_THROWN;
+        }
+        Move_Cell(input, D_SPARE);
+    }
+    else if (IS_URL(input)) {
+        if (rebRunThrows(D_SPARE, true, Lib(AS), Lib(TEXT_X), input)) {
+            Move_Cell(D_OUT, D_SPARE);
+            return R_THROWN;
+        }
+        Move_Cell(input, D_SPARE);
+    }
+
+    assert(ANY_SERIES(input));
 
     const RELVAL *rules_tail;
     const RELVAL *rules_at = VAL_ARRAY_AT(&rules_tail, rules);

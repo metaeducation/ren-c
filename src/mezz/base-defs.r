@@ -551,6 +551,7 @@ reeval func* [
     any-context?:
     any-number?:
     any-series?:
+    any-sequence?:
     any-scalar?:
     any-array?:
     any-branch?:
