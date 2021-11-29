@@ -17,13 +17,6 @@ REBOL [
 ]
 
 
-; LIT now has new meanings, but is used some places (like <json>) until the
-; "THE" change has propagated completely.
-; https://forum.rebol.info/t/just-vs-lit-literal-literally/1453
-;
-lit: :the
-
-
 while: func [] [
     fail @return [
         "The previous functionality of WHILE is now done by LOOP."
@@ -32,12 +25,6 @@ while: func [] [
     ]
 ]
 
-
-; !!! Compatibility for VOID!, remove as time goes on.  BAD-WORD! has come
-; to stay.
-;
-void!: bad-word!
-void?: :bad-word?
 
 
 ; !!! As a first step of removing the need for APPEND/ONLY (and friends), this
@@ -169,14 +156,6 @@ library?: typechecker library!
 ;
 context: specialize :make [type: object!]
 
-
-uneval: func [] [
-    fail @return "QUOTE has replaced UNEVAL"
-]
-
-=>: func [] [
-    fail @return "=> for lambda has been replaced by ->"
-]
 
 ; To be more visually pleasing, properties like LENGTH can be extracted using
 ; a reflector as simply `length of series`, with no hyphenation.  This is
