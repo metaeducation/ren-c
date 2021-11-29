@@ -245,7 +245,7 @@ jobs:
       run: |
         print {== Hello From R3 HTTPS Read Test! ==}
         parse as text! read https://example.com [
-            thru <h1> copy header: to </h1> to end
+            thru '<h1> copy header: to '</h1> to end
         ] else [
             fail "Couldn't Capture Page Title"
         ]
