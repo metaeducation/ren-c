@@ -377,7 +377,7 @@ inline static bool Typecheck_Including_Constraints(
         }
     }
     else {
-        kind = VAL_TYPE(v);
+        kind = IS_END(v) ? REB_0_END : VAL_TYPE(v);
     }
 
     if (TYPE_CHECK(param, kind))

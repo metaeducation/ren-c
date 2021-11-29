@@ -1349,6 +1349,9 @@ REBCTX *Error_Bad_Return_Type(REBFRM *f, enum Reb_Kind kind) {
     DECLARE_LOCAL (label);
     Get_Frame_Label_Or_Nulled(label, f);
 
+    if (kind == REB_0_END)
+        return Error_Bad_Invisible(f);
+
     if (kind == REB_NULL)
         return Error_Needs_Return_Opt_Raw(label);
 

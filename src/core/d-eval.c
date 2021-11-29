@@ -282,7 +282,10 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
             )  // exemption, e.g. `1 comment "hi" + 2` infix non-stale
         ){
             printf("Native code violated return type contract!\n");
-            panic (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
+            panic (Error_Bad_Return_Type(
+                f,
+                IS_END(f->out) ? REB_0_END : VAL_TYPE(f->out)
+            ));
         }
     }
   #endif
