@@ -318,21 +318,48 @@ jobs:
     # to through Python equipped with the "Marionette" protocol.  (Ren-C can't
     # be used at time of writing, because it lacks websockets...which are
     # needed to remote-control Firefox).
-    #
-    - name: Test ReplPad Against Uploaded Lib By Running In Headless Firefox
+
+    - name: LATEST-OF Smoke Test
       if: github.ref == 'refs/heads/master'  # see notes on UPLOAD STEPS
       uses: metaeducation/ren-c-action@release
       with:
         web: true
         commit: ${{ env.GIT_COMMIT_SHORT }}
         timeout: 15
-        screenshot: repl
+        screenshot: latest-of
+        script: |
+          (url: latest-of)
+          print ["Result was:" mold url]
+          assert [url? url]
+
+
+    - name: Watchlist Smoke Test
+      if: github.ref == 'refs/heads/master'  # see notes on UPLOAD STEPS
+      uses: metaeducation/ren-c-action@release
+      with:
+        web: true
+        commit: ${{ env.GIT_COMMIT_SHORT }}
+        timeout: 15
+        screenshot: watch
         script: |
           x: 10
           watch x
           assert [10 = watch 1]
-          assert [url? latest-of]
+
+
+    - name: Redbol Smoke Test
+      if: github.ref == 'refs/heads/master'  # see notes on UPLOAD STEPS
+      uses: metaeducation/ren-c-action@release
+      with:
+        web: true
+        commit: ${{ env.GIT_COMMIT_SHORT }}
+        timeout: 15
+        screenshot: redbol
+        script: |
           redbol
+          block: [b c]
+          assert [[a b c d] = compose [a (block) d]]
+
 
     # Early on, @gchiu wrote some code to interoperate with a JS chess board.
     # Since we have that example, test that it works.  We don't know what the
