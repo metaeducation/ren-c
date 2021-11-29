@@ -690,7 +690,7 @@ for-each [sw-cat list] boot-errors [
 
         arity: 0
         if block? message [  ; can have N GET-WORD! substitution slots
-            parse message [while [get-word! (arity: arity + 1) | skip] end]
+            parse2 message [while [get-word! (arity: arity + 1) | skip] end]
         ] else [
             ensure text! message  ; textual message, no arguments
         ]
@@ -698,8 +698,13 @@ for-each [sw-cat list] boot-errors [
         ; Camel Case and make legal for C (e.g. "not-found*" => "Not_Found_P")
         ;
         f-name: uppercase/part to-c-name id 1
-        parse f-name [
-            while ["_" w: here (uppercase/part w 1) | skip]
+        parse2 f-name [
+            while [
+                "_" w:  ; <here>
+                (uppercase/part w 1)
+                |
+                skip
+            ]
         ]
 
         if arity = 0 [

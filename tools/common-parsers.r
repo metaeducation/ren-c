@@ -32,14 +32,15 @@ decode-key-value-text: function [
 ][
     data-fields: [
         while [
-            position: here
+            position:  ; <here>
             data-field
             | newline
         ]
     ]
 
     data-field: [
-        data-field-name eof: here [
+        data-field-name eof:  ; <here>
+        [
             #" " to newline while [
                 newline not data-field-name not newline to newline
             ]
@@ -64,7 +65,7 @@ decode-key-value-text: function [
 
     meta: copy []
 
-    parse text data-fields else [
+    parse2 text data-fields else [
         fail [
             {Expected key value format on line} (text-line-of position)
             {and lines must end with newline.}
@@ -94,10 +95,11 @@ load-until-blank: function [
 
     rule: [
         some [not terminator rebol-value]
-        opt wsp opt [newline opt newline] position: here to end
+        opt wsp opt [newline opt newline] position:  ; <here>
+        to end
     ]
 
-    parse text rule then [
+    parse2 text rule then [
         values: load copy/part text position
         reduce [values position]
     ] else [
@@ -130,21 +132,25 @@ export proto-parser: context [
     count: ~
 
     process: func [return: <none> text] [
-        parse text [grammar/rule]
+        parse2 text [grammar/rule]
     ]
 
     grammar: context bind [
 
         rule: [
-            parse-position: here opt fileheader
-            while [parse-position: here segment]
+            parse-position:  ; <here>
+            opt fileheader
+            while [
+                parse-position:  ; <here>
+                segment
+            ]
         ]
 
         fileheader: [
             (data: _)
             doubleslashed-lines
             and is-fileheader
-            eoh: here
+            eoh:  ; <here>
             (
                 emit-fileheader data
             )
@@ -186,7 +192,7 @@ export proto-parser: context [
                 ; EMIT-PROTO doesn't want to see extra whitespace (such as
                 ; when individual parameters are on their own lines).
                 ;
-                parse proto collapse-whitespace
+                parse2 proto collapse-whitespace
                 proto: trim proto
                 assert [find proto "("]
 
@@ -217,7 +223,7 @@ export proto-parser: context [
         is-fileheader: parsing-at position [
             try all [
                 lines: attempt [decode-lines lines {//} { }]
-                parse? lines [copy data to {=///} to end]
+                parse2? lines [copy data to {=///} to end]
                 data: attempt [load-until-blank trim/auto data]
                 data: attempt [
                     if set-word? first data/1 [data/1] else [false]
@@ -299,7 +305,7 @@ export rewrite-if-directives: function [
     position
 ][
     until [
-        parse position [
+        parse2 position [
             (rewritten: false)
             some [
                 [
@@ -307,7 +313,7 @@ export rewrite-if-directives: function [
                     | change ["#elif" thru newline "#endif"] ("#endif")
                     | change ["#else" thru newline "#endif"] ("#endif")
                 ] (rewritten: true)
-                seek :position  ; GET-WORD! for bootstrap (SEEK is no-op)
+                :position  ; seek
 
               | thru newline
             ]

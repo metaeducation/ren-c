@@ -37,7 +37,7 @@ success: ~
 
 export test-source-rule: [
     while [
-        let position: here
+        let position: <here>
 
         ["{" | {"}] :(  ; handle string using TRANSCODE, see note
             trap [
@@ -49,22 +49,25 @@ export test-source-rule: [
             ]
         )
             |
-        ["{" | {"}] seek :position, break
+        ["{" | {"}] :position  ; seek
+        break
             |
         "[" test-source-rule "]"  ; plain BLOCK! in code for a test
             |
         "(" test-source-rule ")"  ; plain GROUP! in code for a test
             |
-        ";" [thru newline | to end]
+        ";" [thru newline | to <end>]
             |
         ;
         ; If we see a closing bracket out of turn, that means we've "gone
         ; too far".  It's either a syntax error, or the closing bracket of
         ; a multi-test block.
         ;
-        "]", seek :position, break
+        "]", :position  ; seek
+        break
             |
-        ")", seek :position, break
+        ")", :position  ; seek
+        break
             |
         skip
     ]
@@ -104,7 +107,7 @@ export collect-tests: function [
 
     append into collect [parse code [
         while [
-            pos: here
+            pos: <here>
 
             ; A GROUP! top level in the test file indicates a standalone test.
             ; Put it in a BLOCK! to denote that it should run in an isolated
@@ -202,7 +205,7 @@ export collect-logs: function [
                 copy last-vector ["(" test-source-rule ")"]
                 while whitespace
                 [
-                    end (
+                    <end> (
                         ; crash found
                         fail "log incomplete!"
                     )
@@ -228,14 +231,14 @@ export collect-logs: function [
                     )
                 ]
                     |
-                "system/version:" to end (guard: true)
+                "system/version:" to <end> (guard: true)
                     |
                 (fail "collect-logs - log file parsing problem")
             ]
-            position: here, guard, break ; Break when error detected.
+            position: <here>, guard, break ; Break when error detected.
                 |
             seek position
         ]
-        end
+        <end>
     ]
 ]

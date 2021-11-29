@@ -83,7 +83,6 @@ while
 repeat
 limit
 seek  ; Ren-C addition
-here  ; Ren-C addition
 ??
 |
 ||

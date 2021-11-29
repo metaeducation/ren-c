@@ -611,7 +611,7 @@ default-combinators: make map! reduce [
                 set remainder input  ; TO means do not include match range
                 return unmeta result'
             ]
-            if tail? input [  ; could be `to end`, so check tail *after*
+            if tail? input [  ; could be `to <end>`, so check tail *after*
                 return null
             ]
             input: next input
@@ -631,7 +631,7 @@ default-combinators: make map! reduce [
                 set remainder pos
                 return unmeta result'
             ]
-            if tail? input [  ; could be `thru end`, check TAIL? *after*
+            if tail? input [  ; could be `thru <end>`, check TAIL? *after*
                 return null
             ]
             input: next input
@@ -2849,7 +2849,7 @@ append redbol-combinators reduce [
     ; https://github.com/giesse/red-topaz-parse
     ;
     ; Ren-C goes along with this change, including that the position is
-    ; captured by `pos: here` instead of simply by `pos:`.  However, the
+    ; captured by `pos: <here>` instead of simply by `pos:`.  However, the
     ; concept of how combinators can produce a result to be captured is
     ; rethought.
 

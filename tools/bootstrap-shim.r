@@ -95,12 +95,7 @@ trap [
 
 ;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
 
-
-; Define HERE and SEEK as no-ops for compatibility in parse
-; https://forum.rebol.info/t/parse-bootstrap-compatibility-strategy/1533
-;
-here: []
-seek: []
+~: :null  ; most similar behavior to bad-word isotope available
 
 ; Done is used as a signal in the boot files that the expected end is reached.
 ; This is a BAD-WORD! in modern Ren-C, but a plain word in the bootstrap EXE.
@@ -121,7 +116,6 @@ null: enfix lib/func [:left [<skip> set-word!]] [
     lib/null
 ]
 
-~: enfix :null  ; most similar behavior to bad-word isotope available
 
 try: lib/func [  ; since null word/path fetches cause errors, work around it
     :look [<...> any-value!]  ; <...> old variadic notation
@@ -263,8 +257,8 @@ print: lib/func [value] [
 ; parse products.  So just testing for matching or not is done with PARSE?,
 ; to avoid conflating successful-but-null-bearing-parses with failure.
 ;
-parse?: chain [:lib/parse | :did]
-parse: func [series rules] [
+parse2?: chain [:lib/parse | :did]
+parse2: func [series rules] [
     ;
     ; Make it so that if the rules end in `|| <input>` then the parse will
     ; return the input.
@@ -282,6 +276,9 @@ parse: func [series rules] [
 
     if not lib/parse series rules [return null]
     return lib/void
+]
+parse: does [
+    fail "Only PARSE2 is available in bootstrap executable, not PARSE"
 ]
 
 ; Enfixedness was conceived as not a property of an action itself, but of a
@@ -621,7 +618,7 @@ lib-read: copy :lib/read
 lib/read: read: enclose :lib-read lib/function [f [frame!]] [
     saved-source: :f/source
     if e: trap [bin: do f] [
-        parse e/message [
+        parse2 e/message [
             [
                 {The system cannot find the } ["file" | "path"] { specified.}
                 | "No such file or directory"  ; Linux
@@ -697,7 +694,7 @@ split: lib/function [
         return lib/collect [  ; Note: offers KEEP/ONLY
             keep []  ; so bootstrap COLLECT won't be NULL if no KEEPs
 
-            parse series [
+            parse2 series [
                 some [
                     copy t: [to dlm | to end]
                     (keep/only t)

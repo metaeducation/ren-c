@@ -1,12 +1,20 @@
 ; %parse-tag-here.test.reb
 ;
 ; As alternatives to using SET-WORD! to set the uparse position and GET-WORD!
-; to get the uparse position, Ren-C has <here> and the SEEK keyword.  HERE
+; to get the uparse position, Ren-C has <here> and the SEEK keyword.  <HERE>
 ; follows Topaz precedent as the new means of capturing positions
-; (e.g. POS: HERE).  But it is useful for other purposes, when a rule is
+; (e.g. POS: <HERE>).  But it is useful for other purposes, when a rule is
 ; needed for capturing the current position.
 ;
 ; https://github.com/giesse/red-topaz-uparse
+;
+; For rationale on why it is a TAG! and not simply the word HERE, see:
+;
+; https://forum.rebol.info/t/tag-s-as-parse-keywords-vs-literal-matches/1558/5
+;
+; There was a phase where it was just HERE, and for temporary compatibility
+; the LIB word HERE is defined as `<here>` to keep that working.  This crutch
+; will eventually be removed.
 
 [(
     did all [

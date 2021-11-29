@@ -49,7 +49,7 @@ idate-to-date: function [return: [date!] date [text!]] [
         space
         copy time: to space
         space
-        copy zone: to end
+        copy zone: to <end>
     ] else [
         fail ["Invalid idate:" date]
     ]
@@ -178,7 +178,7 @@ parse-write-dialect: function [
             set temp: [any-string! | binary!] (spec.content: temp)
             | (spec.content: blank)
         ]
-        end
+        <end>
     ]
 ]
 
@@ -473,7 +473,7 @@ read-body: function [
                 ;
                 loop [not parse? conn.data [
                     copy chunk-size: some hex-digits, thru crlfbin
-                    mk1: here, to end
+                    mk1: <here>, to <end>
                 ]][
                     read conn
                 ]
@@ -498,7 +498,7 @@ read-body: function [
                 ; Loop until enough data is gathered.
                 ;
                 loop [not parse? mk1 [
-                    repeat (chunk-size) skip, mk2: here, crlfbin, to end
+                    repeat (chunk-size) skip, mk2: <here>, crlfbin, to <end>
                 ]][
                     read conn
                 ]
@@ -519,9 +519,9 @@ read-body: function [
             ; https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Trailer
             ;
             parse mk1 [
-                crlfbin (trailer: "") to end
+                crlfbin (trailer: "") to <end>
                     |
-                copy trailer to crlf2bin to end
+                copy trailer to crlf2bin to <end>
             ] then [
                 trailer: scan-net-header as binary! trailer
                 append headers trailer

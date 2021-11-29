@@ -63,9 +63,10 @@ export cscape: function [
     num-text: to text! num  ; CHANGE won't take GROUP! to evaluate, #1279
 
     list: collect* [
-        parse string [(col: 0), start: here, while [
+        parse2 string [(col: 0), start:  ; <here>
+        while [
             [
-                (prefix: _ suffix: _) finish: here
+                (prefix: _ suffix: _) finish:  ; <here>
 
                 "${" change [copy expr: [to "}"]] (num-text) skip (
                     mode: #cname
@@ -98,7 +99,7 @@ export cscape: function [
                 num-text: to text! num
             )
                 |
-            newline (col: 0 prefix: _ suffix: _) start: here
+            newline (col: 0 prefix: _ suffix: _) start:  ; <here>
                 |
             skip (col: col + 1)
         ]]
@@ -200,8 +201,8 @@ export cscape: function [
     ; whitespace is all that ends up on them.  If the user doesn't want the
     ; intelligence, they should use "".
     ;
-    parse string [
-        (nonwhite: removed: false) start-line: here
+    parse2 string [
+        (nonwhite: removed: false) start-line:  ; <here>
         while [
             space
             |
@@ -212,11 +213,12 @@ export cscape: function [
                 ;
                 if (did all [not nonwhite, removed])
 
-                seek :start-line remove thru [newline | end]
+                :start-line  ; seek
+                remove thru [newline | end]
                 |
                 skip
             ]
-            (nonwhite: removed: false) start-line: here
+            (nonwhite: removed: false) start-line:  ; <here>
             |
             remove "/* _ */" (removed: true) opt remove space
             |
@@ -258,12 +260,12 @@ export make-emitter: function [
 
     temporary: did any [
         temporary
-        parse? stem ["tmp-" to end]
+        parse2? stem ["tmp-" to end]
     ]
 
-    is-c: parse? stem [thru [".c" | ".h" | ".inc"] end]
+    is-c: parse2? stem [thru [".c" | ".h" | ".inc"] end]
 
-    is-js: parse? stem [thru ".js" end]
+    is-js: parse2? stem [thru ".js" end]
 
     e: make object! compose [
         ;

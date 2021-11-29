@@ -224,7 +224,7 @@ for-each info all-protos [
     emit-include-params-macro e-params info/proto
 ]
 
-parse read/string (join output-dir %boot/tmp-generics.r) [
+parse2 read/string (join output-dir %boot/tmp-generics.r) [
     thru "^/]^/"  ; skip REBOL header (closing brace flush with left)
     some newline  ; skip newlines
     while [

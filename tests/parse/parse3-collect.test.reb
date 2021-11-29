@@ -29,14 +29,14 @@
 ; Collecting non-array series fragments
 
 (did all [
-    pos: parse* "aaabbb" [x: collect [keep [some "a"]] here]
+    pos: parse* "aaabbb" [x: collect [keep [some "a"]] <here>]
     "bbb" = pos
     x = ["aaa"]
 ])
 (did all [
     pos: parse* "aaabbbccc" [
         x: collect [keep [some "a"] some "b" keep [some "c"]]
-        here
+        <here>
     ]
     "" = pos
     x = ["aaa" "ccc"]
@@ -51,7 +51,7 @@
             |
             keep integer! keep [some integer!]
         ]
-        here
+        <here>
     ]
     [] = pos
     x = [1 2 3]
@@ -75,7 +75,7 @@
             b: collect [keep [2 integer!]]
             keep integer!
         ]
-        end
+        <end>
     ]
 
     a = [1 4]
@@ -85,7 +85,7 @@
 ; META-GROUP! can be used to keep material that did not originate from the
 ; input series or a match rule.
 ;
-; !!! This is extended in UPARSE to the other SYM-XXX! types.
+; !!! This is extended in UPARSE to the other META-XXX! types.
 ;
 (did all [
     pos: parse* [1 2 3] [
@@ -94,7 +94,7 @@
             keep (second [A [<pick> <me>] B])
             keep integer!
         ]
-        here
+        <here>
     ]
     [3] = pos
     x = [1 <pick> <me> 2]
@@ -106,13 +106,13 @@
             keep ^(second [A [<pick> <me>] B])
             keep integer!
         ]
-        here
+        <here>
     ]
     [3] = pos
     x = [1 [<pick> <me>] 2]
 ])
 (did all [
-    parse? [1 2 3] [x: collect [keep ^([a b c]) to end]]
+    parse? [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
     x = [[a b c]]
 ])
 
@@ -125,7 +125,7 @@ https://github.com/metaeducation/ren-c/issues/935
     ])
 
     (did all [
-        parse? "aaabbb" [x: collect [keep to "b"] to end]
+        parse? "aaabbb" [x: collect [keep to "b"] to <end>]
         x = ["aaa"]
     ])
 

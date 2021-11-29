@@ -127,17 +127,17 @@ func: func* [
     ;
     new-spec: clear copy spec
 
-    new-body: null
-    statics: null
-    defaulters: null
-    var: <dummy>  ; enter PARSE with truthy state (gets overwritten)
-    loc: null
-    with-return: null
+    new-body: '
+    statics: '
+    defaulters: '
+    var: #dummy  ; enter PARSE with truthy state (gets overwritten)
+    loc: '
+    with-return: '
 
     parse spec [while [
-        <none> (append new-spec <none>)
+        '<none> (append new-spec <none>)
     |
-        <void> (append new-spec <void>)
+        '<void> (append new-spec <void>)
     |
         :(if var '[  ; so long as we haven't reached any <local> or <with> etc.
             set var: [any-word! | any-path! | quoted!] (
@@ -178,7 +178,7 @@ func: func* [
             append new-spec ^loc
         )
     |
-        other: here
+        other: <here>
         group! (
             if not var [
                 fail [
@@ -196,7 +196,7 @@ func: func* [
         (var: _)  ; everything below this line resets var
         false  ; failing here means rolling over to next rule
     |
-        <local>
+        '<local>
         while [set var: word! set other: opt group! (
             append new-spec ^ to tuple! var
             append exclusions ^var
@@ -209,7 +209,7 @@ func: func* [
         )]
         (var: _)  ; don't consider further GROUP!s or variables
     |
-        <in> (
+        '<in> (
             new-body: default [
                 copy/deep body
             ]
@@ -224,7 +224,7 @@ func: func* [
             )
         ]
     |
-        <with> while [
+        '<with> while [
             set other: [word! | path!] (
                 append exclusions ^other
 
@@ -237,7 +237,7 @@ func: func* [
             text!  ; skip over as commentary
         ]
     |
-        <static> (
+        '<static> (
             statics: default [copy []]
             new-body: default [
                 copy/deep body
@@ -252,9 +252,9 @@ func: func* [
         ]
         (var: _)
     |
-        end accept
+        <end> accept
     |
-        other: here (
+        other: <here> (
             fail [
                 ; <where> spec
                 ; <near> other
@@ -462,7 +462,7 @@ redescribe: func [
                 ]
             )]
         ]
-        end
+        <end>
     ] else [
         fail [{REDESCRIBE specs should be STRING! and ANY-WORD! only:} spec]
     ]
@@ -1052,14 +1052,14 @@ read-lines: func [
     let pos
     let rule: compose/deep either delimiter [
         either keep
-        [ [thru (delimiter) pos: here] ]
-        [ [to (delimiter) remove (delimiter) pos: here] ]
+        [ [thru (delimiter) pos: <here>] ]
+        [ [to (delimiter) remove (delimiter) pos: <here>] ]
     ][
         [
             to crlf while [
                 ["^M" and not "^/"]
                 to crlf
-            ] (if not keep ['remove]) ["^/" | "^M^/"] pos: here
+            ] (if not keep ['remove]) ["^/" | "^M^/"] pos: <here>
         ]
     ]
 

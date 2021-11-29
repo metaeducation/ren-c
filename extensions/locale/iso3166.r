@@ -45,7 +45,7 @@ parse cnt [
 
         "^/"
     ]
-    end
+    <end>
 ]
 
 init-code: to text! read init
@@ -57,7 +57,7 @@ parse init-code [
     change [
          #"[" thru #"]"
     ] iso-3166-table-count
-    to end
+    to <end>
 ] else [
     fail "Failed to update iso-3166-table"
 ]

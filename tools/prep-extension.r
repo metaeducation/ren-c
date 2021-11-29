@@ -90,7 +90,7 @@ c-src: join repo-dir (as file! ensure text! args/SRC)
 print ["building" m-name "from" c-src]
 
 script-name: copy c-src
-parse script-name [
+parse2 script-name [
     some [thru "/"]
     change "mod-" ("ext-")
     to "."
@@ -105,7 +105,7 @@ parse script-name [
 
 inc-name: second split-path c-src
 is-cpp: false
-parse inc-name [
+parse2 inc-name [
     change "mod-" ("tmp-mod-")
     to "."
     change "." ("-init.")

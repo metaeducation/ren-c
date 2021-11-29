@@ -783,7 +783,7 @@ parse-ext-build-spec: function [
 
     if in ext 'options [
         ensure block! ext/options
-        parse ext/options [
+        parse2 ext/options [
             while [
                 word! block! opt text! set config: group!
             ]
@@ -1058,7 +1058,7 @@ set-exec-path: func [
     ]
 ]
 
-parse user-config/toolset [
+parse2 user-config/toolset [
     while [
         'gcc opt set cc-exec [file! | text! | blank!] (
             rebmake/default-compiler: rebmake/gcc
@@ -1086,7 +1086,7 @@ parse user-config/toolset [
             ]
         )
     ]
-    pos: here
+    pos:  ; <here>
 ] else [
     fail ["failed to parse toolset at:" mold pos]
 ]

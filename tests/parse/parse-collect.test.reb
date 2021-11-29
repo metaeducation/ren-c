@@ -421,7 +421,7 @@ https://github.com/metaeducation/ren-c/issues/935
     )
 ]
 
-; Red does a no-op keep for `keep to <end>` if you are on the end.  This is
+; Red does a no-op keep for `keep to end` if you are on the end.  This is
 ; incongruous with what happens if you set a variable that way:
 ;
 ;     red>> parse "" [test: to end]

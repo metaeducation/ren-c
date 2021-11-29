@@ -95,9 +95,9 @@ urldecoder: make object! [
         opt [copy s1 some path-char (emit path s1)]
 
         ; optional bookmark
-        opt ["#" copy s1 to end (emit tag s1)]
+        opt ["#" copy s1 to <end> (emit tag s1)]
 
-        end
+        <end>
     ]
 
     decode: func ["Decode a URL according to rules of sys/*parse-url." url] [

@@ -349,6 +349,10 @@ match-parse: enclose :parse func* [f] [
     let input: f.input
     do f then [input]
 ]
+here: <here>  ; temporary workaround for compatibility, will be removed
+
+parse2: :parse*/redbol/fully
+parse2?: chain [:parse*/redbol/fully | :then?]
 
 ; The lower-level pointfree function separates out the action it takes, but
 ; the higher level one uses a block.  Specialize out the action, and then

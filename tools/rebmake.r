@@ -74,7 +74,7 @@ filter-flag: function [
 ][
     if not tag? flag [return flag]  ; no filtering
 
-    parse to text! flag [
+    parse2 to text! flag [
         copy header: to ":"
         ":" copy option: to end
     ] else [
@@ -131,7 +131,7 @@ pkg-config: func [
     either dlm [
         let ret: make block! 1
         let item
-        parse x [
+        parse2 x [
             some [
                 thru dlm
                 copy item: to [dlm | end] (
@@ -454,7 +454,7 @@ gcc: make compiler-class [
         attempt [
             exec-file: exec: default ["gcc"]
             call/output [(exec) "--version"] version
-            parse version [
+            parse2 version [
                 {gcc (GCC)} space
                 copy major: some digit "."
                 copy minor: some digit "."
@@ -610,7 +610,7 @@ cl: make compiler-class [
             ; use Qt's JOM which is a drop-in replacement for NMAKE that does
             ; parallel building.  But it requires /FS "force synchronous pdb"
             ; so that the multiple CL calls don't try and each lock the pdb.
-            ; 
+            ;
             keep "/FS"
 
             if I [
@@ -1231,7 +1231,7 @@ generator-class: make object! [
         let val
         loop [not stop][
             stop: true
-            parse cmd [
+            parse2 cmd [
                 while [
                     change [
                         [

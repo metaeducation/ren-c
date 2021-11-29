@@ -458,6 +458,14 @@ import*: func [
         return source
     ]
 
+
+    === ADJUST URL FROM HTML PRESENTATION TO RAW IF SUPPORTED ===
+
+    ; If URL is decorated source (syntax highlighting, etc.) get raw form.
+    ;
+    source: maybe adjust-url-for-raw try match url! :source
+
+
     === TREAT (IMPORT 'FILENAME) AS REQUEST TO LOOK LOCALLY FOR FILENAME.R ===
 
     ; We don't want remote execution of a module via `import <some-library>`

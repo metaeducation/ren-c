@@ -296,10 +296,10 @@ reword: function [
     ]
 
     rule: [
-        a: here  ; Begin marking text to copy verbatim to output
+        a: <here>  ; Begin marking text to copy verbatim to output
         while [
             to prefix  ; seek to prefix (may be blank!, this could be a no-op)
-            b: here  ; End marking text to copy verbatim to output
+            b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)
             [
                 [
@@ -320,13 +320,13 @@ reword: function [
                             :v
                         ]
                     )
-                    a: here  ; Restart mark of text to copy verbatim to output
+                    a: <here>  ; Restart mark of text to copy verbatim to output
                 ]
                     |
                 skip  ; if wasn't at match, keep the ANY rule scanning ahead
             ]
         ]
-        to end  ; Seek to end, just so rule succeeds
+        to <end>  ; Seek to end, just so rule succeeds
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
@@ -568,7 +568,7 @@ split: function [
                             keep ^series
                         )
                     ]
-                    copy series to end (keep ^series)
+                    copy series to <end> (keep ^series)
                 ]
             ] else [
                 [while [
@@ -584,18 +584,19 @@ split: function [
             ;
 
             [
-                while [not end [
-                    mk1: here, while [mk2: here, [dlm | end] break | skip] (
-                    keep ^ copy/part mk1 mk2
-                )]]
-                end
+                while [not <end> [
+                    mk1: <here>
+                    while [mk2: <here>, [dlm | <end>] break | skip]
+                    (keep ^ copy/part mk1 mk2)
+                ]]
+                <end>
             ]
         ]
     ] else [
         ensure [bitset! text! char! word! tag!] dlm
         [
-            some [not end [
-                copy mk1: [to dlm | to end]
+            some [not <end> [
+                copy mk1: [to dlm | to <end>]
                 (keep ^mk1)
                 opt thru dlm
             ]]

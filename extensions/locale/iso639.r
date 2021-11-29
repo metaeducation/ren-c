@@ -48,7 +48,7 @@ parse cnt [
 
         ["^/" | "^M"]
     ]
-    end
+    <end>
 ]
 
 init-code: to text! read init
@@ -60,7 +60,7 @@ parse init-code [
     change [
          #"[" thru #"]"
     ] iso-639-table-count
-    to end
+    to <end>
 ] else [
     fail "Failed to update iso-639-table"
 ]

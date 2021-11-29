@@ -64,7 +64,7 @@ export extract-native-protos: func [
     <local> proto name exported
 ][
     return collect [
-        parse read/string c-source-file [while [
+        parse2 read/string c-source-file [while [
             "//" newline
             "//" space space copy proto [
                 (exported: false)
@@ -111,7 +111,7 @@ export emit-include-params-macro: function [
     seen-refinement: false
 
     native-name: ~
-    parse proto [opt ["export" space] copy native-name to ":" to end] else [
+    parse2 proto [opt ["export" space] copy native-name to ":" to end] else [
         fail "Could not extract native name in emit-include-params-macro"
     ]
     spec: copy find proto "["  ; make copy (we'll corupt it)

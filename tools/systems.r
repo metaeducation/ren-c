@@ -457,7 +457,7 @@ export for-each-system: func [
         ldflags: _
     ]
 
-    parse systems in s [ some [
+    parse2 systems in s [ some [
         set platform-name set-word! (
             platform-name: to-word platform-name
         )

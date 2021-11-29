@@ -148,7 +148,7 @@ math: func [
             ['+ (expr-op: 'add) | '- (expr-op: 'subtract)]
             term (expr-val: compose [(expr-op) (expr-val) (term-val)])
         ]
-        end
+        <end>
     ])
 
     term-val (_)

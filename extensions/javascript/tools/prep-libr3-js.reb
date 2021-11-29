@@ -286,7 +286,7 @@ to-js-type: func [
         ; The differences between undefined and null are subtle and easy to
         ; get wrong, but a void-returning function should map to undefined.
         ;
-        parse? s ["void" while space] ["undefined"]
+        parse2? s ["void" while space] ["undefined"]
     ]
 ]
 
@@ -364,7 +364,7 @@ for-each-api [
     ]
 
     no-reb-name: _
-    if not parse? name ["reb" copy no-reb-name to end] [
+    if not parse2? name ["reb" copy no-reb-name to end] [
         fail ["API name must start with `reb`" name]
     ]
 

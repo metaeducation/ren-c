@@ -1638,22 +1638,22 @@ do-commands: func [
             ; redundant `set cmd`, consider how ELIDE might improve it
             ; https://forum.rebol.info/t/1534/5
             [
-                set cmd <client-hello> (
+                set cmd '<client-hello> (
                     client-hello/version ctx [1.0 1.2]  ; min/max versioning
                 )
-                | set cmd <client-key-exchange> (
+                | set cmd '<client-key-exchange> (
                     client-key-exchange ctx
                 )
-                | set cmd <change-cipher-spec> (
+                | set cmd '<change-cipher-spec> (
                     change-cipher-spec ctx
                 )
-                | set cmd <finished> (
+                | set cmd '<finished> (
                     encrypted-handshake-msg ctx finished ctx
                 )
                 | set cmd #application set arg [text! | binary!] (
                     application-data ctx arg
                 )
-                | set cmd <close-notify> (
+                | set cmd '<close-notify> (
                     alert-close-notify ctx
                 )
             ] (
@@ -1662,7 +1662,7 @@ do-commands: func [
                 update-write-state ctx cmd
             )
         ]
-        end
+        <end>
     ]
     debug ["writing bytes:" length of ctx.msg]
     ctx.resp: copy []

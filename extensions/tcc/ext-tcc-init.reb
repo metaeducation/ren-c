@@ -483,13 +483,13 @@ c99: func [
     let outtype: _  ; default will be EXE (also overridden if `-c` or `-E`)
 
     let settings: collect [
-        let option-no-arg-rule: [copy option: to [space | end] (
+        let option-no-arg-rule: [copy option: to [space | <end>] (
             keep compose [options (option)]
         )]
 
         let option
         let option-with-arg-rule: [
-            opt space copy option: to [space | end] (
+            opt space copy option: to [space | <end>] (
                 ;
                 ; If you do something like `option {-DSTDIO_H="stdio.h"}, TCC
                 ; seems to process it like `-DSTDIO_H=stdio.h` which won't
@@ -504,13 +504,13 @@ c99: func [
             )
         ]
 
-        let known-extension-rule: ["." ["c" | "a" | "o"] ahead [space | end]]
+        let known-extension-rule: ["." ["c" | "a" | "o"] ahead [space | <end>]]
 
         let filename
         let temp
         let last-pos
         let rule: [
-            last-pos: here  ; Save for errors
+            last-pos: <here>  ; Save for errors
 
             "-c" (  ; just compile (no link phase)
                 keep compose [output-type (outtype: 'OBJ)]
@@ -529,17 +529,17 @@ c99: func [
             option-no-arg-rule
             |
             "-I"  ; add directory to search for #include files
-            opt space copy temp: to [space | end] (
+            opt space copy temp: to [space | <end>] (
                 keep compose [include-path (temp)]
             )
             |
             "-L"  ; add directory to search for library files
-            opt space copy temp: to [space | end] (
+            opt space copy temp: to [space | <end>] (
                 keep compose [library-path (temp)]
             )
             |
             "-l"  ; add library (-llibrary means search for "liblibrary.a")
-            opt space copy temp: to [space | end] (
+            opt space copy temp: to [space | <end>] (
                 keep compose [library (temp)]
             )
             |
@@ -547,7 +547,7 @@ c99: func [
             option-with-arg-rule
             |
             "-o"  ; output file (else default should be "a.out")
-            opt space copy outfile: to [space | end] (  ; overwrites a.out
+            opt space copy outfile: to [space | <end>] (  ; overwrites a.out
                 keep compose [output-file (outfile)]
             )
             |
@@ -558,13 +558,13 @@ c99: func [
             option-with-arg-rule
             |
             ahead "-W"  ; !!! Not technically POSIX, but we use it
-            to [space | end]  ; ...just skip all warning settings
+            to [space | <end>]  ; ...just skip all warning settings
             |
-            "-w" to [space | end]  ; !!! Disables warnings (also not POSIX)
+            "-w" to [space | <end>]  ; !!! Disables warnings (also not POSIX)
             (keep [options "-w"])
             |
             "-f" ["sanitize" | "visibility"]  ; !!! Also not POSIX, tolerate
-            to [space | end]
+            to [space | <end>]
             |
             "-rdynamic"  ; !!! Again, not POSIX
             |
@@ -580,7 +580,7 @@ c99: func [
             )
         ]
 
-        parse/case command [some [rule [some space | end]]] else [
+        parse/case command [some [rule [some space | <end>]]] else [
             fail [
                 elide trunc: '~void~
                 "Could not parse C99 command line at:"

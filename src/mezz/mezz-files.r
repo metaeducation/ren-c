@@ -106,7 +106,7 @@ clean-path: func [
     let count: 0
     let part
     parse reverse target [
-        while [not end [
+        while [not <end> [
             "../"
             (count: me + 1)
             |
@@ -122,7 +122,7 @@ clean-path: func [
                 ]
             )
             |
-            copy part: [to "/" | to end] (
+            copy part: [to "/" | to <end>] (
                 either count > 0 [
                     count: me - 1
                 ][

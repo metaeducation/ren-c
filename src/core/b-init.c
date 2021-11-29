@@ -310,6 +310,8 @@ static void Init_Action_Spec_Tags(void)
     // specialized and what hasn't.
     //
     ensureNullptr(Root_Unspecialized_Tag) = Make_Locked_Tag("unspecialized");
+
+    ensureNullptr(Root_Here_Tag) = Make_Locked_Tag("here");  // used by PARSE
 }
 
 static void Shutdown_Action_Spec_Tags(void)
@@ -327,6 +329,8 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_Void_Tag);
 
     rebReleaseAndNull(&Root_Unspecialized_Tag);
+
+    rebReleaseAndNull(&Root_Here_Tag);  // used by PARSE
 }
 
 

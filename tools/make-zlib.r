@@ -70,10 +70,10 @@ disable-user-includes: function [
     ]
 
     for-next line-iter lines [
-        parse line: line-iter/1 [
+        parse2 line: line-iter/1 [
             while space {#}
             while space {include}
-            some space, include-rule, to end
+            some space, include-rule, to <end>
         ] then [
             if pos: find try inline (as file! name) [
                 change/part line-iter (read/lines join path-zlib name) 1
@@ -158,7 +158,7 @@ fix-kr: function [
             ; It could get here even after last identifier, so this tmp-start
             ; is not the begining of the name, but the last one is...
             ;
-            tmp-start: here, name: across identifier (
+            tmp-start: <here>, name: across identifier (
                 name-start: tmp-start
             )
             while white-space
@@ -166,12 +166,12 @@ fix-kr: function [
         ]
     ] c-lexical.grammar
 
-    parse source bind copy/deep [
+    parse2 source bind copy/deep [
         while [
             fn: across identifier
             while white-space
-            "(", open-paren: here, to ")", close-paren: here, ")"
-            param-ser: here, param-spec: across [
+            "(", open-paren: <here>, to ")", close-paren: <here>, ")"
+            param-ser: <here>, param-spec: across [
                 some [
                     some [while white-space, while ["*" while white-space]
                         identifier while white-space opt ","
@@ -180,7 +180,7 @@ fix-kr: function [
                 ]
                 while white-space
             ]
-            "{" check-point: here (
+            "{" check-point: <here> (
                 remove/part param-ser length of param-spec
                 insert param-ser newline
                 length-diff: 1 - (length of param-spec)
@@ -191,7 +191,7 @@ fix-kr: function [
                 length-diff: length-diff - param-len
 
                 param-block: make block! 8
-                parse params [
+                parse2 params [
                     while white-space
                     name: across identifier (
                         append param-block reduce [name _]
@@ -204,18 +204,18 @@ fix-kr: function [
                             append param-block reduce [name _]
                         )
                     ]
-                    end | (fail)
+                    <end> | (fail)
                 ]
 
                 ; a param spec could be in the form of:
                 ; 1) "int i;" or
                 ; 2) "int i, *j, **k;"
 
-                parse param-spec [
+                parse2 param-spec [
                     while white-space
                     some [
                         (typed?: true)
-                        single-param-start: here, single-param (
+                        single-param-start: <here>, single-param (
                             spec-type: (
                                 copy/part single-param-start
                                     (index of name-start)
@@ -223,7 +223,7 @@ fix-kr: function [
                             )
                        )
                        while [
-                           while white-space, param-end: here
+                           while white-space, param-end: <here>
                            "," (
                                 ; case 2)
                                 ; spec-type should be "int "
@@ -246,13 +246,13 @@ fix-kr: function [
                                    ]
                                    typed?: false
                            )
-                           single-param-start: here
+                           single-param-start: <here>
                            while white-space
                            while ["*" while white-space]
                            name: across identifier
                         ]
                         while white-space
-                        [param-end: here] ";"
+                        [param-end: <here>] ";"
                         (
                            poke (find/skip param-block name 2) 2
                                either typed? [
@@ -284,10 +284,10 @@ fix-kr: function [
 
                 check-point: skip check-point length-diff
             )
-            seek :check-point
+            :check-point  ; seek
             | skip
         ]
-        end | (fail)
+        <end> | (fail)
     ] c-lexical.grammar
 
     source
@@ -296,7 +296,7 @@ fix-kr: function [
 fix-const-char: func [
     source
 ][
-    parse source bind copy/deep [
+    parse2 source bind copy/deep [
         while [
             "strm" while white-space "->" while white-space
             "msg" while white-space "=" while white-space
@@ -304,7 +304,7 @@ fix-const-char: func [
                 while white-space "*" while white-space ")"
             | skip
         ]
-        end | (fail)
+        <end> | (fail)
     ] c-lexical.grammar
     source
 ]

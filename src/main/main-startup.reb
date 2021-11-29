@@ -53,7 +53,7 @@ make-banner: func [
             [
                 set a: text! (s: format ["**  " 68 "**"] a)
               | '= set a: [text! | word! | set-word!] [
-                        b: here
+                        b: <here>
                           path! (b: get b.1)
                         | word! (b: get b.1)
                         | block! (b: spaced b.1)
@@ -624,7 +624,7 @@ main-startup: func [
                 ; No window; not currently applicable
             )
         |
-            [let cli-option copy cli-option: [["--" | "-" | "+"] to end] (
+            [let cli-option copy cli-option: [["--" | "-" | "+"] to <end>] (
                 die [
                     "Unknown command line option:" cli-option LF
                     {!! For a full list of command-line options use: --help}

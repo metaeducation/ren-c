@@ -201,7 +201,9 @@ enum parse_flags {
 
     PF_ONE_RULE = 1 << 14,  // signal to only run one step of the parse
 
-    PF_MAX = PF_ONE_RULE
+    PF_REDBOL = 1 << 15,  // use Rebol2/Red-style rules
+
+    PF_MAX = PF_REDBOL
 };
 
 STATIC_ASSERT(PF_MAX <= INT32_MAX);  // needs to fit in VAL_INTEGER()
@@ -214,7 +216,7 @@ STATIC_ASSERT((int)AM_FIND_MATCH == (int)PF_FIND_MATCH);
 #define PF_FIND_MASK \
     (PF_FIND_ONLY | PF_FIND_CASE | PF_FIND_MATCH)
 
-#define PF_STATE_MASK (~PF_FIND_MASK & ~PF_ONE_RULE)
+#define PF_STATE_MASK (~PF_FIND_MASK & ~PF_ONE_RULE & ~PF_REDBOL)
 
 
 // In %words.r, the parse words are lined up in order so they can be quickly
@@ -615,6 +617,7 @@ static REB_R Parse_One_Rule(
             subframe,
             P_COLLECTION,
             (P_FLAGS & PF_FIND_MASK)
+                | (P_FLAGS & PF_REDBOL)
         )){
             Move_Cell(D_OUT, subresult);
             return R_THROWN;
@@ -819,6 +822,19 @@ static REBIXO To_Thru_Block_Rule(
                     rule = cell;
                 }
             }
+            else if (IS_TAG(rule) and not (P_FLAGS & PF_REDBOL)) {
+                bool strict = true;
+                if (0 == CT_String(rule, Root_End_Tag, strict)) {
+                    if (VAL_INDEX(iter) >= P_INPUT_LEN)
+                        return P_INPUT_LEN;
+                    goto next_alternate_rule;
+                }
+                else if (0 == CT_String(rule, Root_Here_Tag, strict)) {
+                    // ignore for now
+                }
+                else
+                    fail ("TAG! combinator must be <here> or <end> ATM");
+            }
             else if (IS_PATH(rule) or IS_TUPLE(rule))
                 rule = Get_Parse_Value(cell, rule, P_RULE_SPECIFIER);
 
@@ -1013,6 +1029,18 @@ static REBIXO To_Thru_Non_Block_Rule(
         // `TO/THRU END` JUMPS TO END INPUT SERIES (ANY SERIES TYPE)
         //
         return P_INPUT_LEN;
+    }
+
+    if (kind == REB_TAG and not (P_FLAGS & PF_REDBOL)) {
+        bool strict = true;
+        if (0 == CT_String(rule, Root_End_Tag, strict)) {
+            return P_INPUT_LEN;
+        }
+        else if (0 == CT_String(rule, Root_Here_Tag, strict)) {
+            fail ("TO/THRU <here> isn't supported in PARSE3");
+        }
+        else
+            fail ("TAG! combinator must be <here> or <end> ATM");
     }
 
     if (IS_SER_ARRAY(P_INPUT)) {
@@ -1461,6 +1489,7 @@ REBNATIVE(subparse)
 
             switch (cmd) {
               case SYM_WHILE:
+              run_while_rule:
                 P_FLAGS |= PF_LOOPING;
                 assert(mincount == 1 and maxcount == 1);  // true on entry
                 mincount = 0;
@@ -1470,6 +1499,9 @@ REBNATIVE(subparse)
                 goto pre_rule;
 
               case SYM_SOME:
+                if (P_FLAGS & PF_REDBOL) {
+                    P_FLAGS |= PF_FURTHER;
+                }
                 assert(mincount == 1 and maxcount == 1);  // true on entry
                 P_FLAGS |= PF_LOOPING;
                 maxcount = INT32_MAX;
@@ -1477,9 +1509,13 @@ REBNATIVE(subparse)
                 goto pre_rule;
 
               case SYM_ANY:
+                if (P_FLAGS & PF_REDBOL) {
+                    P_FLAGS |= PF_FURTHER;
+                    goto run_while_rule;
+                }
                 fail (
                     "Please replace PARSE ANY with WHILE or WHILE FURTHER: "
-                    "https://forum.rebol.info/t/1540/12"
+                    "https://forum.rebol.info/t/1540/12 (or use PARSE2)"
                 );
 
               case SYM_REPEAT:
@@ -1603,6 +1639,7 @@ REBNATIVE(subparse)
                     subframe,
                     collection,
                     (P_FLAGS & PF_FIND_MASK) | PF_ONE_RULE
+                        | (P_FLAGS & PF_REDBOL)
                 );
 
                 DROP_GC_GUARD(collection);
@@ -1700,6 +1737,7 @@ REBNATIVE(subparse)
                         subframe,
                         P_COLLECTION,
                         (P_FLAGS & PF_FIND_MASK) | PF_ONE_RULE
+                            | (P_FLAGS & PF_REDBOL)
                     );
 
                     UNUSED(interrupted);  // !!! ignore ACCEPT/REJECT (?)
@@ -1871,18 +1909,6 @@ REBNATIVE(subparse)
               case SYM_RETURN:
                 fail ("RETURN removed from PARSE, see UPARSE return value");
 
-              // !!! HERE looks like a no-op, but if it's to the right of a
-              // SET-WORD! then it will be assigned to that variable by the
-              // set word code.  So this case is hit only when it's not to
-              // the right of a set-word.  That's a no-op until native PARSE
-              // has synthesized rule results.  But for the moment, a special
-              // case is noticed at the top level PARSE* to return the current
-              // position for how far a parse gets.
-              //
-              case SYM_HERE:
-                FETCH_NEXT_RULE(f);  // skip the HERE word
-                goto pre_rule;
-
               case SYM_SEEK: {
                 FETCH_NEXT_RULE(f);  // skip the SEEK word
                 // !!! what about `seek ^(first x)` ?
@@ -1916,25 +1942,56 @@ REBNATIVE(subparse)
                 //
                 // https://github.com/rebol/rebol-issues/issues/2269
 
+                if (P_FLAGS & PF_REDBOL) {
+                    FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
+                    Handle_Mark_Rule(f, set_or_copy_word, P_RULE_SPECIFIER);
+                    goto pre_rule;
+                }
+
             handle_set:
                 FETCH_NEXT_RULE_KEEP_LAST(&set_or_copy_word, f);
 
-                // As an interim measure, permit `pos: here` to act as
+                // As an interim measure, permit `pos: <here>` to act as
                 // setting the position, just as `pos:` did historically.
                 // This will change to be generic SET after this has had some
-                // time to settle.
+                // time to settle.  Allows also `here: <here>` with `pos: here`
                 //
-                if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_HERE)
-                    FETCH_NEXT_RULE(f);
-                else if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_ACROSS) {
+                if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_ACROSS) {
                     FETCH_NEXT_RULE(f);
                     P_FLAGS |= PF_COPY;
                     goto pre_rule;
                 }
-                else if (IS_WORD(P_RULE) and VAL_WORD_ID(P_RULE) == SYM_COLLECT)
+                else if (
+                    IS_WORD(P_RULE)
+                    and VAL_WORD_ID(P_RULE) == SYM_COLLECT
+                ){
                     goto handle_collect;
+                }
+                else if (IS_WORD(P_RULE)) {
+                    DECLARE_LOCAL (temp);
+                    const RELVAL *gotten = Get_Parse_Value(
+                        temp,
+                        P_RULE,
+                        P_RULE_SPECIFIER
+                    );
+                    bool strict = true;
+                    if (
+                        IS_TAG(gotten)
+                        and 0 == CT_String(gotten, Root_Here_Tag, strict)
+                    ){
+                        FETCH_NEXT_RULE(f);
+                    }
+                    // fall through
+                }
+                else if (IS_TAG(P_RULE)) {
+                    bool strict = true;
+                    if (0 == CT_String(P_RULE, Root_Here_Tag, strict))
+                        FETCH_NEXT_RULE(f);
+
+                    // fall through
+                }
                 else
-                    fail ("PARSE SET-WORD! usable with HERE, COLLECT, ACROSS");
+                    fail ("PARSE SET-WORD! use with <HERE>, COLLECT, ACROSS");
 
                 Handle_Mark_Rule(f, set_or_copy_word, P_RULE_SPECIFIER);
                 goto pre_rule;
@@ -1943,7 +2000,12 @@ REBNATIVE(subparse)
                 //
                 // :word - change the index for the series to a new position
                 //
-                fail ("PARSE GET-WORD! must be used with SEEK only for now");
+                if (P_FLAGS & PF_REDBOL) {
+                    Handle_Seek_Rule_Dont_Update_Begin(f, rule, P_RULE_SPECIFIER);
+                    FETCH_NEXT_RULE(f);
+                    goto pre_rule;
+                }
+                fail ("GET-WORD! in PARSE is reserved (unless using PARSE2)");
             }
             else {
                 assert(IS_WORD(rule));  // word - some other variable
@@ -2020,9 +2082,32 @@ REBNATIVE(subparse)
 
         rule = Get_Parse_Value(P_SAVE, P_RULE, P_RULE_SPECIFIER);
 
-        if (IS_INTEGER(rule))
-            fail ("[1 2 rule] now illegal https://forum.rebol.info/t/1578/6");
+        if (IS_INTEGER(rule)) {
+            if (P_FLAGS & PF_REDBOL)
+                maxcount = Int32s(rule, 0);
+            else
+                fail (
+                    "[1 2 rule] now illegal https://forum.rebol.info/t/1578/6"
+                    " (or use PARSE2)"
+                );
+        }
         break;
+
+      case REB_TAG: {  // tag combinator in UPARSE, matches in UPARSE2
+        if (P_FLAGS & PF_REDBOL)
+            break;  // gets treated as literal item
+
+        bool strict = true;
+        if (0 == CT_String(rule, Root_Here_Tag, strict)) {
+            FETCH_NEXT_RULE(f);  // not being assigned w/set-word!, no-op
+            goto pre_rule;
+        }
+        if (0 == CT_String(rule, Root_End_Tag, strict)) {
+            FETCH_NEXT_RULE(f);
+            begin = P_POS;
+            goto handle_end;
+        }
+        fail ("Only TAG! combinators PARSE3 supports are <here> and <end>"); }
 
       default:;
         // Fall through to next section
@@ -2067,10 +2152,7 @@ REBNATIVE(subparse)
                 break;
 
               case SYM_END:
-                i = (P_POS < cast(REBIDX, P_INPUT_LEN))
-                    ? END_FLAG
-                    : P_INPUT_LEN;
-                break;
+                goto handle_end;
 
               case SYM_TO:
               case SYM_THRU: {
@@ -2198,6 +2280,7 @@ REBNATIVE(subparse)
                     subframe,
                     P_COLLECTION,
                     (P_FLAGS & PF_FIND_MASK)  // PF_ONE_RULE?
+                        | (P_FLAGS & PF_REDBOL)
                 )){
                     goto return_thrown;
                 }
@@ -2241,6 +2324,7 @@ REBNATIVE(subparse)
                 subframe,
                 P_COLLECTION,
                 (P_FLAGS & PF_FIND_MASK)  // no PF_ONE_RULE
+                    | (P_FLAGS & PF_REDBOL)
             )){
                 Move_Cell(D_OUT, D_SPARE);
                 return R_THROWN;
@@ -2263,6 +2347,13 @@ REBNATIVE(subparse)
                     P_POS = i;
                 break;
             }
+        }
+        else if (false) {
+          handle_end:
+            count = 0;
+            i = (P_POS < cast(REBIDX, P_INPUT_LEN))
+                ? END_FLAG
+                : P_INPUT_LEN;
         }
         else {
             // Parse according to datatype
@@ -2643,6 +2734,7 @@ REBNATIVE(subparse)
 //          [<blank> block!]
 //      /case "Uses case-sensitive comparison"
 //      /fully "Require parse to reach end, see PARSE specialization"
+//      /redbol "Use Rebol2/Red-style rules vs. UPARSE-style rules"
 //  ]
 //
 REBNATIVE(parse_p)
@@ -2692,7 +2784,7 @@ REBNATIVE(parse_p)
         input, SPECIFIED,
         subframe,
         nullptr,  // start out with no COLLECT in effect, so no P_COLLECTION
-        REF(case) ? AM_FIND_CASE : 0
+        (REF(case) ? AM_FIND_CASE : 0) | (REF(redbol) ? PF_REDBOL : 0)
         //
         // We always want "case-sensitivity" on binary bytes, vs. treating
         // as case-insensitive bytes for ASCII characters.
@@ -2717,13 +2809,14 @@ REBNATIVE(parse_p)
 
     // !!! R3-Alpha parse design had no means to bubble up a "synthesized"
     // rule product.  But that's important in the new design.  Hack in support
-    // for the single case of when the last rule in the block was HERE and
+    // for the single case of when the last rule in the block was <here> and
     // returning the parse position.
     //
+    bool strict = true;
     if (
         rules_at != rules_tail  // position on input wasn't []
-        and IS_WORD(rules_tail - 1)  // last element processed was a WORD!
-        and VAL_WORD_ID(rules_tail - 1) == SYM_HERE  // the word was HERE
+        and IS_TAG(rules_tail - 1)  // last element processed was a TAG!
+        and 0 == CT_String(rules_tail - 1, Root_Here_Tag, strict)  // <here>
     ){
         Copy_Cell(D_OUT, ARG(input));
         REBLEN num_quotes = Dequotify(D_OUT);  // take quotes out

@@ -172,7 +172,7 @@ export analyse: context [
 
             parse/case data [
                 some [
-                    position: here
+                    position: <here>
                     malloc-check
                     | c-pp-token
                 ]
@@ -197,8 +197,8 @@ export analyse: context [
                         all [
                             parse? last-func-end [
                                 function-spacing-rule
-                                position: here
-                                to end
+                                position: <here>
+                                to <end>
                             ]
                             same? position proto-parser/parse-position
                         ] else [
@@ -220,7 +220,7 @@ export analyse: context [
                         'native
                         | 'native/combinator
                     ]
-                    to end
+                    to <end>
                 ] also [
                     ;
                     ; It's a `some-name?: native [...]`, so we expect
@@ -329,7 +329,7 @@ export analyse: context [
                 ]
                 line: 1 + line
             )
-            bol: here
+            bol: <here>
         ]
 
         tabbed: copy []
@@ -340,16 +340,17 @@ export analyse: context [
 
         parse/case data [
 
-            last-pos: here
+            last-pos: <here>
 
             opt [
-                bol: here, skip (line: 1)
-                seek :bol  ; !!! GET-WORD! for bootstrap (SEEK is no-op)
+                bol: <here>
+                skip (line: 1)
+                seek bol
             ]
 
             while [
                 to stop-char
-                position: here
+                position: <here>
                 [
                     eol count-line
                     | #"^-" (append tabbed line)
@@ -359,9 +360,9 @@ export analyse: context [
                     | skip
                 ]
             ]
-            position: here
+            position: <here>
 
-            to end
+            to <end>
         ]
 
         if not empty? over-std-len [
@@ -425,7 +426,7 @@ list: context [
             item: null
         ] else [
             any [
-                parse second split-path item ["tmp-" to end]
+                parse second split-path item ["tmp-" to <end>]
                 not find extensions extension-of item
             ] then [
                 item: null
@@ -453,7 +454,7 @@ c-parser-extension: context bind bind [
     grammar/function-body: braced
 
     append grammar/format-func-section [
-        last-func-end: here
+        last-func-end: <here>
         while [nl | eol | wsp]
     ]
 

@@ -73,7 +73,7 @@ fix-randutils.c: func [
             | skip
         ]
 
-        end
+        <end>
     ]
 
     return text
@@ -135,7 +135,7 @@ fix-gen_uuid.c: function [
             | skip
         ]
 
-        end
+        <end>
     ]
 
     return text

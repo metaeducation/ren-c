@@ -1,14 +1,14 @@
 ; Is PARSE working at all?
 
 (parse? "abc" ["abc"])
-(parse? "abc" ["abc" end])
+(parse? "abc" ["abc" <end>])
 
-; Edge case of matching END with TO or THRU
+; Edge case of matching <END> with TO or THRU
 ;
-(parse? "" [to ["a" | end]])
-(parse? "" [thru ["a" | end]])
-(parse? [] [to ["a" | end]])
-(parse? [] [thru ["a" | end]])
+(parse? "" [to ["a" | <end>]])
+(parse? "" [thru ["a" | <end>]])
+(parse? [] [to ["a" | <end>]])
+(parse? [] [thru ["a" | <end>]])
 
 
 [#206 (
@@ -16,7 +16,7 @@
     count-up n 512 [
         if n = 1 [continue]
 
-        if not parse? (append copy "" make char! n - 1) [set c any-char end] [
+        if not parse? (append copy "" make char! n - 1) [set c any-char <end>] [
             fail "Parse didn't work"
         ]
         if c != make char! n - 1 [fail "Char didn't match"]
@@ -53,7 +53,7 @@
     e/id = 'bad-word-get
 )(
     foo: quote '~void~
-    parse? [~void~] [foo end]
+    parse? [~void~] [foo <end>]
 )
 
 ; Empty block case handling
@@ -70,7 +70,7 @@
 ; https://forum.rebol.info/t/1348
 [
     (parse? [x] ['x null])
-    (parse? [x] [blank 'x end])
+    (parse? [x] [blank 'x <end>])
 
     (parse? [] [blank blank blank])
     (not parse? [] [_ _ _])
@@ -91,31 +91,31 @@
 ; SET-WORD! (store current input position)
 
 (
-    res: parse? ser: [x y] [pos: here, skip, skip]
+    res: parse? ser: [x y] [pos: <here>, skip, skip]
     all [res, pos = ser]
 )
 (
-    res: parse? ser: [x y] [skip, pos: here, skip]
+    res: parse? ser: [x y] [skip, pos: <here>, skip]
     all [res, pos = next ser]
 )
 (
-    res: parse? ser: [x y] [skip, skip, pos: here]
+    res: parse? ser: [x y] [skip, skip, pos: <here>]
     all [res, pos = tail of ser]
 )
 [#2130 (
-    res: parse? ser: [x] [pos: here, set val word!]
+    res: parse? ser: [x] [pos: <here>, set val word!]
     all [res, val = 'x, pos = ser]
 )]
 [#2130 (
-    res: parse? ser: [x] [pos: here, set val: word!]
+    res: parse? ser: [x] [pos: <here>, set val: word!]
     all [res, val = 'x, pos = ser]
 )]
 [#2130 (
-    res: parse? ser: "foo" [pos: here, copy val skip]
+    res: parse? ser: "foo" [pos: <here>, copy val skip]
     all [not res, val = "f", pos = ser]
 )]
 [#2130 (
-    res: parse? ser: "foo" [pos: here, copy val: skip]
+    res: parse? ser: "foo" [pos: <here>, copy val: skip]
     all [not res, val = "f", pos = ser]
 )]
 
@@ -137,7 +137,7 @@
 
 [#682 (
     t: _
-    parse "<tag>text</tag>" [thru <tag> copy t to </tag>]
+    parse "<tag>text</tag>" [thru '<tag> copy t to '</tag>]
     t == "text"
 )]
 
@@ -146,7 +146,7 @@
 (
     i: 0
     parse "a." [
-        while [thru "a" (i: i + 1 j: try if i > 1 [end skip]) j]
+        while [thru "a" (i: i + 1 j: try if i > 1 [<end> skip]) j]
     ]
     i == 1
 )
@@ -159,7 +159,7 @@
 ]
 
 [#1959
-    (parse? "<abcd>" [thru <abcd>])
+    (parse? "<abcd>" [thru '<abcd>])
 ]
 [#1959
     (parse? [a b c d] [thru 'd])
@@ -268,19 +268,19 @@
 ; PATH! cannot be PARSE'd due to restrictions of the implementation
 (
     a-value: first [a/b]
-    parse as block! a-value [b-value: here]
+    parse as block! a-value [b-value: <here>]
     a-value = to path! b-value
 )
 (
     a-value: first [()]
-    parse a-value [b-value: here]
+    parse a-value [b-value: <here>]
     same? a-value b-value
 )
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse "a" [while [(i: i + 1 j: if i = 2 [[end skip]]) j]]
+    parse "a" [while [(i: i + 1 j: if i = 2 [[<end> skip]]) j]]
     i == 2
 )
 
@@ -327,7 +327,7 @@
 
 (
     did all [
-        pos: parse* [... [a b]] [to '[a b], here]
+        pos: parse* [... [a b]] [to '[a b], <here>]
         pos = [[a b]]
     ]
 )
@@ -337,7 +337,7 @@
 ; Quote level is not retained by captured content
 ;
 (did all [
-    pos: parse* [''[1 + 2]] [into [copy x to end], here]
+    pos: parse* [''[1 + 2]] [into [copy x to <end>], <here>]
     [] == pos
     x == [1 + 2]
 ])
@@ -353,8 +353,8 @@
 (
     did all [
         parse? "aabbcc" [
-            some "a", x: here, some "b", y: here
-            seek x, copy z to end
+            some "a", x: <here>, some "b", y: <here>
+            seek x, copy z to <end>
         ]
         x = "bbcc"
         y = "cc"
@@ -362,7 +362,7 @@
     ]
 )(
     pos: 5
-    parse "123456789" [seek pos copy nums to end]
+    parse "123456789" [seek pos copy nums to <end>]
     nums = "56789"
 )
 
@@ -396,13 +396,13 @@
 
     (parse? bincat [{c😺t}])
 
-    (not parse?/case bincat [{c😺t} end])
+    (not parse?/case bincat [{c😺t} <end>])
 ]
 
 (
     test: to-binary {The C😺T Test}
     did all [
-        parse? test [to {c😺t} copy x to space to end]
+        parse? test [to {c😺t} copy x to space to <end>]
         x = #{43F09F98BA54}
         "C😺T" = to-text x
     ]
@@ -411,7 +411,7 @@
 
 (did all [
     parse? text: "a ^/ " [
-        while [newline remove [to end] | "a" [remove [to newline]] | skip]
+        while [newline remove [to <end>] | "a" [remove [to newline]] | skip]
     ]
     text = "a^/"
 ])
@@ -420,7 +420,7 @@
 ; then not count the rule as a match.
 ;
 [
-    (parse? "" [while further [to end]])
+    (parse? "" [while further [to <end>]])
 
     (not parse? "" [further [opt "a" opt "b"] ("at least one")])
     (parse? "a" [further [opt "a" opt "b"] ("at least 1")])
@@ -478,7 +478,7 @@
     https://github.com/rebol/rebol-issues/issues/2393
     (not parse? "aa" [some [#"a"] reject])
     (not parse? "aabb" [some [#"a"] reject some [#"b"]])
-    (not parse? "aabb" [some [#"a" reject] to end])
+    (not parse? "aabb" [some [#"a" reject] to <end>])
 ]
 
 ; Ren-C does not mandate that rules make progress, so matching empty strings
@@ -497,15 +497,15 @@
 ; tick marks from everything like ["ab"] to become just ['ab]
 ;
 (did all [
-    pos: parse* "abbbbbc" ['a some ['b], here]
+    pos: parse* "abbbbbc" ['a some ['b], <here>]
     "c" = pos
 ])
 (did all [
-    pos: parse* "abbbbc" ['ab, some ['bc | 'b], here]
+    pos: parse* "abbbbc" ['ab, some ['bc | 'b], <here>]
     "" = pos
 ])
 (did all [
-    pos: parse* "abc10def" ['abc '10, here]
+    pos: parse* "abc10def" ['abc '10, <here>]
     "def" = pos
 ])
 
@@ -583,3 +583,8 @@
 [#1282
     (parse? [1 2 a] [thru word!])
 ]
+
+; Compatibility PARSE2 allows things like set-word and get-word for mark and
+; seek funcitonality, uses plain END and not <end>, etc.
+;
+(parse2? "aaa" [pos: some "a" to end :pos 3 "a"])

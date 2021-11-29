@@ -203,7 +203,7 @@ export binary-to-c: function [
     ]
 
     ; Sanity check (should be one more byte in source than commas out)
-    parse out [
+    parse2 out [
         (comma-count: 0)
         some [thru "," (comma-count: comma-count + 1)]
         to end
@@ -511,13 +511,13 @@ export stripload: function [
         if not hdr: copy/part (find/tail text "[") (find text "^/]") [
             fail ["Couldn't locate header in STRIPLOAD of" file]
         ]
-        parse hdr rule else [
+        parse2 hdr rule else [
             fail ["STRIPLOAD failed to munge header of" file]
         ]
         set header hdr
     ]
 
-    parse contents rule else [
+    parse2 contents rule else [
         fail ["STRIPLOAD failed to munge contents of" file]
     ]
 

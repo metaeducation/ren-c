@@ -245,14 +245,14 @@ sys-globals-parser: context [
     id: _
 
     process: func [return: <none> text] [
-        parse text grammar/rule  ; Review: no END (return result unused?)
+        parse2 text grammar/rule  ; Review: no END (return result unused?)
     ]
 
     grammar: context bind [
 
         rule: [
             while [
-                parse-position: here
+                parse-position:  ; <here>
                 segment
             ]
         ]
@@ -318,11 +318,11 @@ e-strings/emit {
 }
 for-each line read/lines %a-constants.c [
     case [
-        parse? line ["#define" to end] [
+        parse2? line ["#define" to end] [
             e-strings/emit line
             e-strings/emit newline
         ]
-        parse? line [to {const } copy constd to { =} to end] [
+        parse2? line [to {const } copy constd to { =} to end] [
             e-strings/emit 'constd {
                 extern $<Constd>;
             }

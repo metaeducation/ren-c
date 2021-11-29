@@ -25,12 +25,14 @@ decode-lines: func [
 
     let [pos rest]
     let line-rule: [
-        pos: here pattern rest: here
+        pos:  ; <here>
+        pattern
+        rest:  ; <here>
         (rest: remove/part pos rest)
-        seek :rest  ; GET-WORD! for bootstrap (SEEK is no-op)
+        :rest  ; seek
         thru newline
     ]
-    parse text [while line-rule end] else [
+    parse2 text [while line-rule end] else [
         fail [
             {Expected line} (try text-line-of text pos)
             {to begin with} (mold line-prefix)
@@ -53,13 +55,14 @@ encode-lines: func [
     ; Encode newlines.
     let bol: join line-prefix indent
     let pos
-    parse text [
+    parse2 text [
         while [
-            thru newline, pos: here
+            thru newline, pos:  ; <here>
             [
                 newline (pos: insert pos line-prefix)
               | (pos: insert pos bol)
-            ] seek :pos  ; GET-WORD! for bootstrap (SEEK is no-op)
+            ]
+            :pos  ; seek
         ]
         end
     ]
@@ -118,9 +121,17 @@ lines-exceeding: func [  ; !!! Doesn't appear used, except in tests (?)
         )
     ]
 
-    parse text [
-        while [bol: here to newline eol: here skip count-line-rule]
-        bol: here skip to end eol: here count-line-rule
+    parse2 text [
+        while [
+            bol:  ; <here>
+            to newline
+            eol:  ; <here>
+            skip
+            count-line-rule
+        ]
+        bol:  ; <here>
+        skip, to end, eol:  ; <here>
+        count-line-rule
         end
     ]
 
@@ -141,9 +152,9 @@ text-line-of: func [
 
     let advance-rule: [skip (line: line + 1)]
 
-    parse text [
+    parse2 text [
         while [
-            to newline cursor: here
+            to newline cursor:  ; <here>
 
             ; IF deprecated in Ren-C, but :(...) with logic not available
             ; in the bootstrap build.
@@ -172,11 +183,14 @@ text-location-of: func [
     let line: 0
     let eol
 
-    let advance-rule: [eol: here skip (line: line + 1)]
+    let advance-rule: [
+        eol:  ; <here>
+        skip (line: line + 1)
+    ]
     let cursor
-    parse text [
+    parse2 text [
         while [
-            to newline cursor: here
+            to newline cursor:  ; <here>
 
             ; !!! IF is deprecated in PARSE, but this code is expected to work
             ; in bootstrap.

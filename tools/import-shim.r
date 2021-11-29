@@ -140,7 +140,10 @@ strip-commas-and-null-apostrophes: func [
         end
     ]
 
-    parse source rule else [fail "STRIP-COMMAS did not work"]
+    ; NOTE: This is PARSE2 but bootstrap-shim may not be loaded when this is
+    ; called.  use LIB/PARSE to be safe (it's bootstrap exe's version)
+    ;
+    lib/parse source rule else [fail "STRIP-COMMAS did not work"]
     return source
 ]
 

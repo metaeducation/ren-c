@@ -86,7 +86,7 @@ emit-proto: func [return: <none> proto] [
     ]
 
     paramlist: collect [
-        parse proto [
+        parse2 proto [
             copy returns to "RL_" "RL_" copy name to "(" skip
             ["void)" | some [  ; C void, or at least one parameter expected
                 [copy param to "," skip | copy param to ")" to end] (
@@ -124,7 +124,7 @@ emit-proto: func [return: <none> proto] [
     ]
 
     if is-variadic: did find/only paramlist 'vaptr [
-        parse paramlist [
+        parse2 paramlist [
             ;
             ; Any generalized "modes" or "flags" should come first, which
             ; facilitates C99 macros that want two places to splice arguments:

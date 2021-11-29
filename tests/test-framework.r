@@ -277,7 +277,7 @@ process-tests: function [
                 ]
             )
         ]
-        end
+        <end>
     ]
 ]
 
@@ -339,14 +339,14 @@ export do-recover: func [
             while [
                 while whitespace
                 [
-                    position: here
+                    position: <here>
 
                     ; Test filenames appear in the log, %x.test.reb
                     "%" (
                         next-position: _  ; !!! for SET-WORD! gather
                         [value next-position]: transcode position
                     )
-                    seek :next-position
+                    seek (next-position)
                         |
                     ; dialect failure?
                     some whitespace
@@ -356,7 +356,7 @@ export do-recover: func [
                     copy last-vector ["(" test-source-rule ")"]
                     while whitespace
                     [
-                        end (
+                        <end> (
                             ; crash found
                             crashes: crashes + 1
                             log [{ "crashed"^/}]
@@ -366,16 +366,16 @@ export do-recover: func [
                         ; test result found
                         (
                             parse value [
-                                "succeeded" end
+                                "succeeded" <end>
                                 (successes: me + 1)
                                     |
-                                "failed" opt ["," to end]  ; error msg
+                                "failed" opt ["," to <end>]  ; error msg
                                 (test-failures: me + 1)
                                     |
-                                "crashed" end
+                                "crashed" <end>
                                 (crashes: me + 1)
                                     |
-                                "skipped" end
+                                "skipped" <end>
                                 (skipped: me + 1)
                                     |
                                 (fail "invalid test result")
@@ -384,7 +384,7 @@ export do-recover: func [
                     ]
                         |
                     "system/version:"
-                    to end
+                    to <end>
                     (last-vector: _)
                 ]
                     |
@@ -393,7 +393,7 @@ export do-recover: func [
                     mold/limit as text! position 240
                 ])
             ]
-            end
+            <end>
         ] else [
             fail "do-recover log file parsing problem"
         ]

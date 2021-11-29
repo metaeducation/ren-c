@@ -138,6 +138,8 @@ PVAR REBVAL *Root_Void_Tag;  // will make any return result act invisibly
 
 PVAR REBVAL *Root_Unspecialized_Tag;  // unique unspecialized slot identity
 
+PVAR REBVAL *Root_Here_Tag;  // https://forum.rebol.info/t/1558/5
+
 PVAR REBVAL *Root_Empty_Text; // read-only ""
 PVAR REBVAL *Root_Empty_Binary; // read-only #{}
 PVAR REBVAL *Root_Empty_Block; // read-only []
