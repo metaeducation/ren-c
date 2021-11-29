@@ -307,6 +307,73 @@ load-value: redescribe [
 )
 
 
+; Some URLs that represent executable code have a HTML presentation layer on
+; them.  This is why a GitHub link has a "raw" offering without all that extra
+; stuff on it (line numbers, buttons, etc.)
+;
+; We don't want to hook at the READ level to redirect those UI pages to give
+; back the raw data...because you might want to READ and process the UI
+; decorations!  But if you ask to IMPORT or DO such a page, it's reasonable to
+; assume what you actually wanted was to DO the raw content implied by it.
+;
+; This performs that forwarding for GitLab and GitHub UI links.  The JS
+; interop routines (like JS-DO and CSS-DO) want the same thing, and use
+; this routine as well.
+
+adjust-url-for-raw: func [
+    return: [<opt> url!]
+    url [<blank> url!]
+][
+    let text: to text! url  ; URL! may become immutable, try thinking ahead
+
+    uparse text [
+        "http" opt "s" "://gitlab.com/"
+        thru "/"  ; user name
+        thru "/"  ; repository name
+        opt "-/"  ; mystery thing (see remarks on CORSify-gitlab-port)
+        change "blob/" ("raw/")
+        to <end>
+    ] then [
+        return as url! text  ; The port will CORSIFY at a lower level
+    ]
+
+    ; Adjust a decorated GitHub UI to https://raw.githubusercontent.com
+    let start
+    uparse text [
+        "http" opt "s" "://github.com/"
+        start: <here>
+        thru "/"  ; user name
+        thru "/"  ; repository name
+        change "blob/" ("")  ; GitHub puts the "raw" in the subdomain name
+        to <end>
+    ] then [
+        return as url! unspaced [
+            https://raw.githubusercontent.com/ start
+        ]
+    ]
+
+    ; Adjust a Github Gist URL to https://gist.github.com/.../raw/
+    uparse text [
+        "http" opt "s" "://gist.github.com/"
+        start: <here>
+        thru "/"  ; user name
+        [
+            to "#file="
+            remove to <end>  ; ignore file for now, id does not match filename
+            |
+            to <end>
+        ]
+        insert ("/raw/")
+    ] then [
+        return as url! unspaced [
+            https://gist.githubusercontent.com/ start
+        ]
+    ]
+
+    return null
+]
+
+
 ; While DO can run a script any number of times with fresh variables on each
 ; run, we don't want to IMPORT the same module more than once.  This is
 ; standard in languages like Python and JavaScript:
