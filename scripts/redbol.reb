@@ -391,11 +391,15 @@ apply: emulate [
 ?: emulate [:help]
 
 to-local-file: emulate [
-    trap [get 'file-to-local]  ; not available in web build
+    trap [get 'file-to-local] then [
+        does [fail "TO-LOCAL-FILE not available in web build"]
+    ]
 ]
 
 to-rebol-file: emulate [
-    trap [get 'local-to-file]  ; not available in web build
+    trap [get 'local-to-file] then [
+        does [fail "LOCAL-TO-FILE not available in web build"]
+    ]
 ]
 
 why?: emulate [does [lib/why]]  ; not exported yet, :why not bound
