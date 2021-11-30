@@ -85,10 +85,12 @@ eval: function [] [
 ]
 
 
-; INPUT is deprecated--but making sure ASK TEXT! works for its purpose first
-; https://forum.rebol.info/t/1124
-;
-input: does [ask text!]
+input: does [
+    fail @return [
+        "Use ASK TEXT! or READ-LINE vs INPUT (consider using ASK dialect):"
+        https://forum.rebol.info/t/1124
+    ]
+]
 
 
 repend: func [.dummy] [

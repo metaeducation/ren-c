@@ -32,10 +32,10 @@ REBOL [
         implementation in its backtrace.
 
         !!! While not implemented in C as the R3-Alpha console was, this
-        code relies upon the INPUT function to communicate with the user.
-        INPUT is a black box that reads whole lines from the "console port",
-        which is implemented via termios on POSIX and the Win32 Console API
-        on Windows:
+        code relies upon the READ-LINE function to communicate with the user.
+        READ-LINE is a black box that reads lines from the "console port",
+        which is implemented via termios on POSIX, the Win32 Console API
+        on Windows, and by JavaScript code in the Web build:
 
         https://blog.nelhage.com/2009/12/a-brief-introduction-to-termios/
         https://docs.microsoft.com/en-us/windows/console/console-functions
