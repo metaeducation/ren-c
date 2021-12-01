@@ -663,9 +663,27 @@ main-startup: func [
     ; explicitly, the first item after the options is implicitly the script.
     ;
     all [is-script-implicit, not tail? argv] then [
-        o.script: local-to-file take argv
+        o.script: take argv
         quit-when-done: default [true]
     ]
+
+    if o.script [
+        ; If people say `r3 http://example.com/script.r` we want to interpret
+        ; that as a URL!, not a file.  This raises some questions about how
+        ; you would deal with a path where `http:` was the name of a directory
+        ; which is possible on some filesystems:
+        ;
+        ;    https://forum.rebol.info/t/1764
+        ;
+        alphanum: charset [#"A" - #"Z" #"a" - #"z" #"0" #"9"]
+        o.script: parse o.script [some alphanum ":" to <end>] then [
+            to url! o.script
+        ]
+        else [
+            local-to-file o.script
+        ]
+    ]
+
 
     ; Whatever is left is the positional arguments, available to the script.
     ;
@@ -779,7 +797,10 @@ main-startup: func [
     ;
     ;     r3 --do "do %script1.reb" --do "do %script2.reb"
     ;
-    if file? o.script [
+    any [
+        file? o.script
+        url? o.script
+    ] then [
         emit {Use DO/ONLY so QUIT/WITH exits vs. being DO's return value}
         emit [do/only/args (<*> o.script) (<*> script-args)]
     ]
