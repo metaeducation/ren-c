@@ -446,7 +446,7 @@ REBNATIVE(open_connection)
     //
     CONNECTION *conn = cast(CONNECTION*, malloc(sizeof(CONNECTION)));
     if (conn == nullptr)
-        fail ("Could not allocation CONNECTION tracking object");
+        rebJumps ("fail {Could not allocation CONNECTION tracking object}");
     conn->hdbc = hdbc;
     conn->next = all_connections;
     all_connections = conn;
@@ -718,7 +718,7 @@ SQLRETURN ODBC_BindParameter(
 
           default:
             assert(!"Invalid CHAR_COL_XXX enumeration");
-            fail ("Invalid CHAR_COL_XXX enumeration");
+            rebJumps ("fail {Invalid CHAR_COL_XXX enumeration}");
         }
 
         sql_type = SQL_VARCHAR;
@@ -844,7 +844,8 @@ SQLRETURN ODBC_GetCatalog(
         break;
 
       default:
-        panic ("Invalid GET_CATALOG_XXX value");
+        assert(false);
+        rebJumps ("fail {Invalid GET_CATALOG_XXX value}");
     }
 
   blockscope {
@@ -1133,12 +1134,12 @@ void ODBC_DescribeResults(
             break;
 
           default:  // used to allocate character buffer based on column size
-            fail ("Unknown column SQL_XXX type");
+            rebJumps ("fail {Unknown column SQL_XXX type}");
         }
 
         col->buffer = TRY_ALLOC_N(char, col->buffer_size);
         if (col->buffer == nullptr)
-            fail ("Couldn't allocate column buffer!");
+            rebJumps ("fail {Couldn't allocate column buffer!}");
     }
 }
 
@@ -1210,7 +1211,7 @@ REBNATIVE(insert_odbc)
                 SQL_NTS  // Null-Terminated String
             );
             if (not SQL_SUCCEEDED(rc))
-                fail (Error_ODBC_Stmt(hstmt));
+                rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
             rebFree(sql_string);
 
@@ -1249,7 +1250,7 @@ REBNATIVE(insert_odbc)
                 );
                 rebRelease(value);
                 if (not SQL_SUCCEEDED(rc))
-                    fail (Error_ODBC_Stmt(hstmt));
+                    rebJumps ("fail", Error_ODBC_Stmt(hstmt));
             }
         }
 
@@ -1277,23 +1278,23 @@ REBNATIVE(insert_odbc)
 
           case SQL_NEED_DATA:
             assert(!"SQL_NEED_DATA seen...only happens w/data @ execution");
-            fail (Error_ODBC_Stmt(hstmt));
+            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
           case SQL_STILL_EXECUTING:
             assert(!"SQL_STILL_EXECUTING seen...only w/async calls");
-            fail (Error_ODBC_Stmt(hstmt));
+            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
           case SQL_ERROR:
-            fail (Error_ODBC_Stmt(hstmt));
+            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
           case SQL_INVALID_HANDLE:
             assert(!"SQL_INVALID_HANDLE seen...should never happen");
-            fail (Error_ODBC_Stmt(hstmt));
+            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
         #if ODBCVER >= 0x0380
           case SQL_PARAM_DATA_AVAILABLE:
             assert(!"SQL_PARAM_DATA_AVAILABLE seen...only in ODBC 3.8");
-            fail (Error_ODBC_Stmt(hstmt));
+            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
         #endif
         }
     }
@@ -1306,13 +1307,13 @@ REBNATIVE(insert_odbc)
     SQLSMALLINT num_columns;
     rc = SQLNumResultCols(hstmt, &num_columns);
     if (not SQL_SUCCEEDED(rc))
-        fail (Error_ODBC_Stmt(hstmt));
+        rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
     if (num_columns == 0) {
         SQLLEN num_rows;
         rc = SQLRowCount(hstmt, &num_rows);
         if (not SQL_SUCCEEDED(rc))
-            fail (Error_ODBC_Stmt(hstmt));
+            rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
         return rebInteger(num_rows);
     }
@@ -1358,7 +1359,7 @@ REBNATIVE(insert_odbc)
     list->num_columns = num_columns;
     if (not list->columns) {
         rebFree(list);
-        fail ("Couldn't allocate column buffers!");
+        rebJumps ("fail {Couldn't allocate column buffers!}");
     }
 
     list->next = all_columnlists;
@@ -1401,7 +1402,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
         // remarks on the fail() below.
         //
         if (col->column_size != 1)
-            fail ("BIT(n) fields are only supported for n = 1");
+            rebJumps("fail {BIT(n) fields are only supported for n = 1}");
 
         return rebLogic(*cast(unsigned char*, col->buffer) != 0);
 
@@ -1426,7 +1427,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
 
       case SQL_C_UBIGINT:  // unsigned: 0..2[64] - 1
         if (*cast(REBU64*, col->buffer) > INT64_MAX)
-            fail ("INTEGER! can't hold some unsigned 64-bit values");
+            rebJumps ("fail {INTEGER! can't hold some unsigned 64-bit values}");
 
         return rebInteger(*cast(SQLUBIGINT*, col->buffer));
 
@@ -1543,7 +1544,7 @@ REBVAL *ODBC_Column_To_Rebol_Value(COLUMN *col)
     // Note: This happens with BIT(2) and the MySQL ODBC driver, which
     // reports a sql_type of -2 for some reason.
     //
-    fail ("Unsupported SQL_XXX type returned from query");
+    rebJumps("fail {Unsupported SQL_XXX type returned from query}");
 }
 
 
@@ -1574,14 +1575,14 @@ REBNATIVE(copy_odbc)
     rebRelease(columns_value);
 
     if (hstmt == SQL_NULL_HANDLE or not columns)
-        fail ("Invalid statement object!");
+        rebJumps ("fail {Invalid statement object!}");
 
     SQLRETURN rc;
 
     SQLSMALLINT num_columns;
     rc = SQLNumResultCols(hstmt, &num_columns);
     if (not SQL_SUCCEEDED(rc))
-        fail (Error_ODBC_Stmt(hstmt));
+        rebJumps ("fail", Error_ODBC_Stmt(hstmt));
 
     // compares-0 based row against num_rows, so -1 is chosen to never match
     // and hence mean "as many rows as available"
@@ -1753,7 +1754,7 @@ REBNATIVE(update_odbc)
     );
 
     if (not SQL_SUCCEEDED(rc))
-        fail (Error_ODBC_Dbc(hdbc));
+        rebJumps ("fail", Error_ODBC_Dbc(hdbc));
 
     bool commit = rebDid(ARG(commit));
     rc = SQLSetConnectAttr(
@@ -1766,7 +1767,7 @@ REBNATIVE(update_odbc)
     );
 
     if (not SQL_SUCCEEDED(rc))
-        fail (Error_ODBC_Dbc(hdbc));
+        rebJumps ("fail", Error_ODBC_Dbc(hdbc));
 
     return rebNone();
 }
