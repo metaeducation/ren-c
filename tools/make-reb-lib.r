@@ -634,9 +634,9 @@ e-lib/emit 'ver {
         /*
          * The inline functions below will require this base pointer:
          */
-        extern RL_LIB *RL; /* is passed to the RX_Init() function */
+        extern RL_LIB *RL;  /* is passed to the RX_Collate() function */
 
-        #define LIBREBOL_PREFIX(api_name) RL->##api_name
+        #define LIBREBOL_PREFIX(api_name) RL->api_name
 
     #else  /* ...calling Rebol as DLL, or code built into the EXE itself */
 

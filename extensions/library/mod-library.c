@@ -159,8 +159,10 @@ REBNATIVE(startup_p)
 }
 
 
+extern RL_LIB Ext_Lib;
+
 //
-//  run-library-collator: native [
+//  export run-library-collator: native [
 //
 //  {Execute a function in a DLL or other library that returns a REBVAL*}
 //
@@ -192,7 +194,15 @@ REBNATIVE(run_library_collator)
     if (cfunc == nullptr)
         fail ("Could not find collator function in library");
 
-    return (*cast(COLLATE_CFUNC*, cfunc))();
+    COLLATE_CFUNC *collator = cast(COLLATE_CFUNC*, cfunc);
+
+    // We pass the collation entry point the table of API functions.  This is
+    // how DLLs know the addresses of functions in the EXE that they can call.
+    // If the extension is built in with the executable, it uses a shortcut
+    // and just calls the RL_rebXXX() functions directly...so it does not use
+    // the table we're passing.
+    //
+    return collator(&Ext_Lib);
 }
 
 

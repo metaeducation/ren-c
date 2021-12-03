@@ -20,10 +20,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
-#if defined(EXT_DLL)
+#if defined(REB_EXT)
     //
-    // EXT_DLL being defined indicates an "external extension".  Its entry
-    // point has a predictable name of RX_Init() exported from the DLL.
+    // REB_EXT being defined indicates an "external extension".  Its entry
+    // point has a predictable name of RX_Collate() exported from the DLL.
 
   #if defined(REB_EXE)
     #define EXT_API EXTERN_C API_IMPORT // Hosting Rebol is an EXE
@@ -35,7 +35,7 @@
     //
     #define RX_COLLATE_NAME(ext_name) RX_Collate
 #else
-    // If EXT_DLL is not defined, this is a "built-in extension".  It is
+    // If REB_EXT is not defined, this is a "built-in extension".  It is
     // part of the exe or lib, and its loader function must be distinguished
     // by name from other extensions that are built-in.
     //
@@ -59,15 +59,15 @@
 // values, but this is a work in progress.
 //
 #if TO_WINDOWS
-    typedef REBVAL *(__cdecl COLLATE_CFUNC)(void);
+    typedef REBVAL *(__cdecl COLLATE_CFUNC)(RL_LIB*);
 #else
-    typedef REBVAL *(COLLATE_CFUNC)(void);
+    typedef REBVAL *(COLLATE_CFUNC)(RL_LIB*);
 #endif
 
 //=//// EXTENSION MACROS //////////////////////////////////////////////////=//
 
 #define DECLARE_EXT_COLLATE(ext_name) \
-    EXT_API REBVAL *RX_COLLATE_NAME(ext_name)(void)
+    EXT_API REBVAL *RX_COLLATE_NAME(ext_name)(RL_LIB* api)
 
 // !!! Currently used for just a BLOCK!, but may become ACT_DETAILS()
 //

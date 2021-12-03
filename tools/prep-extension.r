@@ -307,6 +307,16 @@ e/emit 'mod {
     #include "tmp-mod-$<mod>.h" /* for REBNATIVE() forward decls */
 
     /*
+     * See comments on RL_LIB in %make-reb-lib.r, and how it is used to pass
+     * an API table from the executable to the extension (this works cross
+     * platform, while things like "import libraries for an EXE that a DLL
+     * can import" are Windows peculiarities.
+     */
+    #ifdef REB_EXT  /* e.g. a DLL */
+        RL_LIB *RL;  /* is passed to the RX_Collate() function */
+    #endif
+
+    /*
      * Gzip compression of $<Script-Name> (no \0 terminator in array)
      * Originally $<length of script-uncompressed> bytes
      */
@@ -337,7 +347,15 @@ e/emit 'mod {
      * box or interface could provide more flexibility for arbitrary future
      * extension implementations.
      */
-    EXT_API REBVAL *RX_COLLATE_NAME(${Mod})(void) {
+    EXT_API REBVAL *RX_COLLATE_NAME(${Mod})(RL_LIB *api) {
+      #ifdef REB_EXT
+        /* only DLLs need to call rebXXX() APIs through a table */
+        /* built-in extensions can call the RL_rebXXX() forms directly */
+        RL = api;
+      #else
+        UNUSED(api);
+      #endif
+
         return rebCollateExtension_internal(
             script_compressed,  /* script compressed data */
             sizeof(script_compressed),  /* size of script compressed data */

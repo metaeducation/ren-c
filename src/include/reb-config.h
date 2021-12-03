@@ -112,7 +112,7 @@ Special internal defines used by RT, not Host-Kit developers:
     #ifdef REB_API
         // r3lib dll from RT
         #define RL_API API_EXPORT
-    #elif defined(EXT_DLL) || defined(REB_HOST)
+    #elif defined(REB_EXT) || defined(REB_HOST)
         // Building extensions as external libraries (.dll, .so etc.)
         // or r3 host against r3lib dll
         #define RL_API API_IMPORT

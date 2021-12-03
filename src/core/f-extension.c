@@ -72,6 +72,8 @@ void Shutdown_Extension_Loader(void)
 }
 
 
+extern RL_LIB Ext_Lib;
+
 //
 //  builtin-extensions: native [
 //
@@ -104,7 +106,7 @@ REBNATIVE(builtin_extensions)
     REBLEN i;
     for (i = 0; i != NUM_BUILTIN_EXTENSIONS; ++i) {
         COLLATE_CFUNC *collator = Builtin_Extension_Collators[i];
-        REBVAL *details = (*collator)();
+        REBVAL *details = (*collator)(&Ext_Lib);
         assert(IS_BLOCK(details) and VAL_LEN_AT(details) == IDX_COLLATOR_MAX);
         Copy_Cell(Alloc_Tail_Array(list), details);
         rebRelease(details);
