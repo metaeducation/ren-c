@@ -69,21 +69,21 @@ jobs:
            config-file: vs2019-x64.r
            standard: c99
            debug: none
-           extensions: View -  # View requires C99, disable it
+           extensions: "UUID * View -"  # View requires C99, disable it
            variation: ""
 
          - os-id: 0.3.40  # 64-bit Target (built on this 64-bit platform)
            config-file: vs2019-x64.r
            standard: c99
            debug: normal
-           extensions: "ODBC +"  # View requires C99, disable it
+           extensions: "UUID * ODBC +"  # View requires C99, disable it
            variation: "-debug"
 
          - os-id: 0.3.1  # 32-bit Target (built on this 64-bit platform)
            config-file: vs2019-x86.r
            standard: c++17  # c++11 is "default", no option for it
            debug: normal
-           extensions: "ODBC +"
+           extensions: "UUID * ODBC +"
            variation: "-debug"
 
 
@@ -269,7 +269,9 @@ jobs:
     #
     - name: Copy Built R3 To Where It Can Be Used As A Shell
       run: |
-        cp build/r3 "C:/Program Files/Git/usr/bin/r3built.EXE"
+        cd build
+        ls
+        cp r3.exe "C:/Program Files/Git/usr/bin/r3built.EXE"
 
 
   #====# TESTING STEPS #======================================================#
@@ -344,6 +346,17 @@ jobs:
         ]
         assert [header = "Example Domain"]
         print ["Succeeded:" header]
+
+
+    - name: Test UUID Extension Built As DLL
+      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
+      run: |
+        print {== Hello From R3 DLL Test! ==}
+        mod-uuid: load-extension join what-dir %build/r3-uuid.dll
+        print {== UUID Extension Loaded ==}
+        uuid: mod-uuid.generate
+        assert [16 = length of uuid]
+        print ["Succeeded:" uuid]
 
 
   #====# DEPLOY STEPS #=======================================================#

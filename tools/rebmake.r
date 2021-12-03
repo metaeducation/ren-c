@@ -212,12 +212,12 @@ android: make linux [
 emscripten: make posix [
     name: 'Emscripten
     exe-suffix: ".js"
-    dll-suffix: ".js"
+    dll-suffix: ".js"  ; !!! We want libr3.js for "main" lib, but .so for rest
 ]
 
 osx: make posix [
     name: 'OSX
-    dll-suffix: ".dyn"
+    dll-suffix: ".dylib"  ; !!! This was .dyn - but no one uses that
 ]
 
 windows: make platform-class [

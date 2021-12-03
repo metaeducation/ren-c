@@ -365,56 +365,6 @@ REBNATIVE(unload_extension)
 
 
 //
-//  rebCollateExtension_internal: C
-//
-// This routine gathers information which can be called to bring an extension
-// to life.  It does not itself decompress any of the data it is given, or run
-// any startup code.  This allows extensions which are built into an
-// executable to do deferred loading.
-//
-// !!! For starters, this just returns an array of the values...but this is
-// the same array that would be used as the ACT_DETAILS() of an action.  So
-// it could return a generator ACTION!.
-//
-// !!! It may be desirable to separate out the module header and go ahead and
-// get that loaded as part of this process, in order to allow queries of the
-// dependencies and other information.  That might suggest returning a block
-// with an OBJECT! header and an ACTION! to run to do the load?  Or maybe
-// a HANDLE! which can be passed as a module body with a spec?
-//
-// !!! If a DLL gets loaded, it's possible these pointers could be unloaded
-// if the information were not used immediately or it otherwise was not run.
-// This has to be considered in the unloading mechanics.
-//
-REBVAL *rebCollateExtension_internal(
-    const REBYTE script_compressed[],
-    REBSIZ script_compressed_size,
-    REBLEN script_num_codepoints,
-    REBNAT dispatchers[],
-    REBLEN dispatchers_len
-) {
-    REBARR *a = Make_Array(IDX_COLLATOR_MAX); // details
-    Init_Handle_Cdata(
-        ARR_AT(a, IDX_COLLATOR_SCRIPT),
-        m_cast(REBYTE*, script_compressed), // !!! by contract, don't change!
-        script_compressed_size
-    );
-    Init_Integer(
-        ARR_AT(a, IDX_COLLATOR_SCRIPT_NUM_CODEPOINTS),
-        script_num_codepoints
-    );
-    Init_Handle_Cdata(
-        ARR_AT(a, IDX_COLLATOR_DISPATCHERS),
-        dispatchers,
-        dispatchers_len
-    );
-    SET_SERIES_LEN(a, IDX_COLLATOR_MAX);
-
-    return Init_Block(Alloc_Value(), a);
-}
-
-
-//
 //  Extend_Generics_Someday: C
 //
 // !!! R3-Alpha's "generics" (like APPEND or TAKE) dispatched to code based on

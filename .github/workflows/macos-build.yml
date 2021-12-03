@@ -64,7 +64,7 @@ jobs:
            config-file: generic.r
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: none
-           extensions: ""
+           extensions: "UUID *"
            variation: ""
            checked: false
 
@@ -72,7 +72,7 @@ jobs:
            config-file: generic.r
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: normal
-           extensions: "ODBC +"
+           extensions: "UUID * ODBC +"
            variation: "-debug"  # !!! Maybe -debug-odbc ?
            checked: true
 
@@ -251,6 +251,17 @@ jobs:
         ]
         assert [header = "Example Domain"]
         print ["Succeeded:" header]
+
+
+    - name: Test UUID Extension Built As DLL
+      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
+      run: |
+        print {== Hello From R3 DLL Test! ==}
+        mod-uuid: load-extension join what-dir %build/libr3-uuid.dylib
+        print {== UUID Extension Loaded ==}
+        uuid: mod-uuid.generate
+        assert [16 = length of uuid]
+        print ["Succeeded:" uuid]
 
 
   #====# UPLOAD STEP #========================================================#

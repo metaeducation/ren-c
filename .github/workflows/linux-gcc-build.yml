@@ -64,21 +64,21 @@ jobs:
            config-file: generic.r
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: none
-           extensions: ""
+           extensions: "UUID *"
            variation: ""
 
          - os-id: 0.4.40  # 64-bit Target (built on this 64-bit platform)
            config-file: generic.r
            standard: gnu99  # used for sigjmp_buf (signal safety)
            debug: normal
-           extensions: "ODBC +"
+           extensions: "UUID * ODBC +"
            variation: "-debug"  # !!! Maybe -debug-odbc ?
 
          - os-id: 0.4.4  # 32-bit Target (built on this 64-bit platform)
            config-file: generic-c++.r
            standard: c++17  # c++11 is "default", no option for it
            debug: normal
-           extensions: ""  # TBD: ODBC for 32-bit?
+           extensions: "UUID *"  # TBD: ODBC for 32-bit?
            variation: ""
 
 
@@ -358,6 +358,17 @@ jobs:
         ]
         assert [header = "Example Domain"]
         print ["Succeeded:" header]
+
+
+    - name: Test UUID Extension Built As DLL
+      shell: r3built --fragment {0}  # See README: Ren-C Code As Step
+      run: |
+        print {== Hello From R3 DLL Test! ==}
+        mod-uuid: load-extension join what-dir %build/libr3-uuid.so
+        print {== UUID Extension Loaded ==}
+        uuid: mod-uuid.generate
+        assert [16 = length of uuid]
+        print ["Succeeded:" uuid]
 
 
   #====# DEPLOY STEPS #=======================================================#

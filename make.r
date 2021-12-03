@@ -1784,7 +1784,11 @@ for-each ext extensions [
             ldflags: compose [
                 ((opt ext/ldflags))
                 ((app-config/ldflags))
-                <gnu:-Wl,--as-needed>  ; Switch ignores linking unused libs
+
+                ; GCC has this but Clang does not, and currently Clang is
+                ; being called through a gcc alias.  Review.
+                ;
+                ;<gnu:-Wl,--as-needed>  ; Switch ignores linking unused libs
             ]
         ]
 
