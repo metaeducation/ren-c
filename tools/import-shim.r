@@ -198,7 +198,9 @@ import: enfix func [
     assert [#"/" <> first path+file/1]  ; should be relative
     assert [#"%" <> first path+file/1]  ; accidental `import <%foo.r>`
 
-    new-script-path: append copy system/script/path path+file/1
+    new-script-path: append copy any [
+        system/script/path system/options/path
+    ] path+file/1
 
     new-script-path: clean-path new-script-path
 

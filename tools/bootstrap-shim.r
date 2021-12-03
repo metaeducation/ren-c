@@ -174,7 +174,7 @@ quote: lib/func [x [<opt> any-value!]] [
 
 
 any-inert!: make typeset! [
-    any-string! binary! char! any-context! time! date! any-number!
+    any-string! binary! char! any-context! time! date! any-number! object!
 ]
 
 ; The ^ is legal in words, so we're able to make a ^ operator that puts things
@@ -807,7 +807,7 @@ zip: enclose :zip lib/function [f] [
     ;]
 
     lib/match: lib/func [type value [<opt> any-value!] <local> answer] [
-        if bad-word? set* 'answer match type value [
+        if bad-word? set* 'answer old-match type value [
             return true
         ]
         return get 'answer
