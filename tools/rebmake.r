@@ -45,8 +45,9 @@ target-platform: _
 
 map-files-to-local: func [
     return: [block!]
-    files [file! block!]
+    files [blank! file! block!]
 ][
+    if blank? files [return copy []]
     if not block? files [files: reduce [files]]
     return map-each f files [
         file-to-local f
@@ -316,9 +317,9 @@ project-class: make object! [
     ; _not_ from project to project.
     ; They will be applied _in addition_ to the obj-file level settings
     ;
-    includes: '
-    definitions: '
-    cflags: '
+    includes: _
+    definitions: _
+    cflags: _
 
     ; These can be inherited from project to obj-files and will be overwritten
     ; at the obj-file level
@@ -739,13 +740,12 @@ ld: make linker-class [
         return spaced collect [
             keep any [(file-to-local/pass exec-file) "gcc"]
 
-            ; !!! This breaks emcc at the moment; no other DLLs are being
-            ; made, so leave it off.
+            ; !!! This was breaking emcc.  However, it is needed in order to
+            ; get shared libraries on Posix.  That feature is being resurrected
+            ; so turn it back on.
             ; https://github.com/emscripten-core/emscripten/issues/11814
             ;
-            comment [
-                if dynamic [keep "-shared"]
-            ]
+            if dynamic [keep "-shared"]
 
             keep "-o"
 
@@ -774,7 +774,7 @@ ld: make linker-class [
         return: [<opt> text!]
         dep [object!]
     ][
-        return (opt switch dep/class [
+        return opt (switch dep/class [
             #object-file [
                 file-to-local dep/output
             ]
@@ -991,7 +991,7 @@ link: make linker-class [
                 ]
             ]
             #application [
-                file-to-local any [dep/implib, join dep/basename ".lib"]
+                file-to-local any [try dep/implib, join dep/basename ".lib"]
             ]
             #variable [
                 _

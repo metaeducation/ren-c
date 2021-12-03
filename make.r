@@ -746,6 +746,9 @@ extension-class: make object! [
     class: #extension
     name: ~
     loadable: yes ;can be loaded at runtime
+
+    mode: _  ; [<builtin> <dynamic>] or unused
+
     modules: _
     source: _ ; main script
     depends: _ ; additional C files compiled in
@@ -773,7 +776,10 @@ extension-class: make object! [
     ]
 ]
 
-available-extensions: copy []
+
+=== {SCAN TO BUILD LIST OF AVAILABLE EXTENSIONS} ===
+
+extensions: copy []
 
 parse-ext-build-spec: function [
     return: [object!]
@@ -799,7 +805,6 @@ parse-ext-build-spec: function [
     return ext
 ]
 
-; Discover extensions:
 use [extension-dir entry][
     extension-dir: join repo-dir %extensions/
     for-each entry read extension-dir [
@@ -819,12 +824,13 @@ use [extension-dir entry][
             ]
 
             parsed: parse-ext-build-spec spec
-            append available-extensions parsed
+            assert [not parsed/mode]  ; no build mode assigned at first yet
+            append extensions parsed
         ]
     ]
 ]
 
-extension-names: map-each x available-extensions [to-lit-word x/name]
+extension-names: map-each x extensions [to-lit-word x/name]
 
 
 === {TARGETS} ===
@@ -1039,7 +1045,7 @@ iterate commands [
 ]
 
 
-=== {GO!} ===
+=== {DETECT TOOLCHAIN FOR BUILDING} ===
 
 if launched-from-root [
     print ["Launched from root dir, so building in:" output-dir]
@@ -1092,7 +1098,7 @@ parse2 user-config/toolset [
 ]
 
 
-; sanity checking the compiler and linker
+=== {SANITY CHECK COMPILER AND LINKER} ===
 
 rebmake/default-compiler: default [fail "Compiler is not set"]
 rebmake/default-linker: default [fail "Default linker is not set"]
@@ -1132,6 +1138,14 @@ if get 'cc-exec [
 if get 'linker-exec [
     set-exec-path rebmake/default-linker linker-exec
 ]
+
+
+=== {GENERATE OVERALL APPLICATION CONFIGURATION} ===
+
+; This appears to put together a baseline of settings that are passed by
+; default when building all object files.  So if you requested a debug build
+; it would add the compile switch for `-g`, and this would wind up trickling
+; down to all the extensions.
 
 app-config: make object! [
     cflags: make block! 8
@@ -1284,7 +1298,10 @@ append app-config/ldflags switch user-config/static [
 ]
 
 
-;add system settings
+=== {"ADD SYSTEM SETTINGS"} ===
+
+; Not quite sure what counts as system definitions (?)  Review.
+
 add-app-def: adapt specialize :append [series: app-config/definitions] [
     value: replace/all (
         flatten/deep reduce bind value system-definitions
@@ -1389,79 +1406,143 @@ pthread: make rebmake/ext-dynamic-class [
     flags: [static]
 ]
 
-;extensions
-builtin-extensions: copy available-extensions
-dynamic-extensions: make block! 8
-assert [map? user-config/extensions]
-for-each name user-config/extensions [
-    action: user-config/extensions/:name
-    modules: _
-    if block? action [modules: action action: '*]
-    switch action [
-        '+ [; builtin
-            ;pass, default action
-        ]
-        '* '- [
-            item: _
-            iterate builtin-extensions [
-                if builtin-extensions/1/name = name [
-                    item: take builtin-extensions
-                    all [
-                        not item/loadable
-                        action = '*
-                    ] then [
-                        fail [{Extension} name {is not dynamically loadable}]
-                    ]
-                ]
-            ]
-            if not item [
-                fail [{Unrecognized extension name:} name]
-            ]
 
-            if action = '* [;dynamic extension
-                selected-modules: if blank? modules [
-                    ; all modules in the extension
-                    item/modules
-                ] else [
-                    map-each m item/modules [
-                        if find modules m/name [
-                            m
+=== {GATHER LIST OF FOLDERS THAT MUST BE CREATED} ===
+
+; Analyze what directories were used in this build's entry from %file-base.r
+; to add those obj folders.  So if the `%generic/host-xxx.c` is listed,
+; this will make sure `%objs/generic/` is in there.
+;
+; Historical Rebol had a completely flat file structure.  Ren-C introduced
+; hierarchy due to needing to organize more files, and also to allow for a
+; place to put individual README.md for a group of related files and explain
+; why those files are together.
+;
+; The compiler will not create folders for objs on its own, so this has to be
+; done by a separate step by a makefile or using the interpreter's filesystem
+; directory creation command.
+;
+; !!! This is an inelegant "interim" hack which gives subfolders for the obj
+; files that have paths in them in %file-base.r
+
+folders: copy [%objs/ %objs/main/]
+
+add-new-obj-folders: function [
+    return: <none>
+    objs
+    folders
+    <local>
+    lib
+    obj
+][
+    for-each lib objs [
+        switch lib/class [
+            #object-file [
+                lib: reduce [lib]
+            ]
+            #object-library [
+                lib: lib/depends
+            ]
+            (elide dump lib)
+            fail ["unexpected class"]
+        ]
+
+        for-each obj lib [
+            dir: first split-path obj/output
+            if not find folders dir [
+                append folders dir
+            ]
+        ]
+    ]
+]
+
+
+for-each [category entries] file-base [
+    if find/only [generated made] category [
+        continue  ; these categories are taken care of elsewhere
+    ]
+    switch type of entries [
+        word!  ; if bootstrap
+        tuple! [  ; if generic-tuple enabled
+            assert [entries = 'main.c]  ; !!! anomaly, ignore it for now
+        ]
+        block! [
+            for-each entry entries [
+                entry: maybe if block? entry [first entry]
+                switch type of entry [
+                    word!  ; if bootstrap executable
+                    tuple! [  ; if generic-tuple enabled
+                        ; assume taken care of
+                    ]
+                    path! [
+                        dir: first split-path to file! entry
+                        if not find folders dir [
+                            append folders join %objs/ dir
                         ]
                     ]
+                    fail
                 ]
-
-                if empty? selected-modules [
-                    fail [
-                        {No modules are selected,}
-                        {check module names or use '-' to remove}
-                    ]
-                ]
-                item/modules: selected-modules
-                append dynamic-extensions item
             ]
         ]
-
-        fail ["Unrecognized extension action:" mold action]
+        fail
     ]
 ]
 
-for-each [label list] reduce [
-    {Builtin extensions} builtin-extensions
-    {Dynamic extensions} dynamic-extensions
+
+=== {DETERMINE SETTINGS FOR THE EXTENSIONS} ===
+
+; The user can ask for an extension to be `-` (not built at all) or `+` (which
+; is built into the executable) or `*` (built as dll or so dynamically, and
+; can be selectively loaded by the interpreter).
+;
+; This translates to an ext/mode of <builtin>, <dynamic>, or blank.
+
+assert [map? user-config/extensions]
+for-each ext extensions [
+    if mode: try select user-config/extensions ext/name [
+        ;
+        ; Bootstrap executable (at least on mac) had problems setting to null.
+        ; Try workaround.
+        ;
+        append user-config/extensions reduce [ext/name _]
+    ]
+    switch mode [
+        _  ; Currently the default is built in.  Shouldn't be!
+        '+ [
+            ext/mode: <builtin>
+        ]
+        '* [
+            if not ext/loadable [
+                fail [{Extension} name {is not dynamically loadable}]
+            ]
+            ext/mode: <dynamic>
+        ]
+        '- [
+            ext/mode: _
+        ]
+        fail ["Unrecognized extension mode:" mold mode]
+    ]
+]
+for-each [name val] user-config/extensions [
+    if not blank? val [
+        fail [{Unrecognized extension name:} name]
+    ]
+]
+
+for-each [mode label] [
+    <builtin> {BUILTIN EXTENSIONS:}
+    <dynamic> {DYNAMIC EXTENSIONS:}
 ][
     print label
-    for-each ext list [
-        print collect [  ; CHAR! values don't auto-space in Ren-C PRINT
-            keep ["ext:" ext/name #":" space #"["]
-            for-each mod ext/modules [
-                keep to-text mod/name
+    print mold collect [
+        for-each ext extensions [
+            if ext/mode = mode [
+                keep ^(ext/name)
             ]
-            keep #"]"
         ]
     ]
 ]
 
-all-extensions: join builtin-extensions dynamic-extensions
 
 add-project-flags: func [
     return: <none>
@@ -1486,7 +1567,7 @@ add-project-flags: func [
             append project/definitions D
         ] else [
             ensure blank! project/definitions
-            project/definitions: D
+            project/definitions: try D
         ]
     ]
 
@@ -1495,7 +1576,7 @@ add-project-flags: func [
             append project/includes I
         ] else [
             ensure blank! project/includes
-            project/includes: I
+            project/includes: try I
         ]
     ]
     if c [
@@ -1503,24 +1584,83 @@ add-project-flags: func [
             append project/cflags c
         ] else [
             ensure blank! project/cflags
-            project/cflags: c
+            project/cflags: try c
         ]
     ]
     if g [project/debug: g]
     if O [project/optimization: O]
 ]
 
-process-module: func [
-    mod [object!]
-    <local>
-    s
-    ret
+
+=== {REORDER EXTENSIONS BASED ON THEIR "REQUIRES" DEPENDENCIES} ===
+
+; When built in extensions are loading, they can say what other extensions
+; they require.  Here a sequence is calculated to make sure they are loaded
+; in the right order.
+;
+; Calculating this ahead of time is a limited approach, as it doesn't help
+; when a dynamically loaded extension requires some other extension (which
+; may or may not be dynamic.)
+
+calculate-sequence: function [
+    return: [integer!]
+    ext
+    <local> req b
 ][
-    assert [mod/class = #extension]
-    ret: make rebmake/object-library-class [
-        name: mod/name
-        depends: map-each s (append reduce [mod/source] try mod/depends) [
-            case [
+    if integer? ext/sequence [return ext/sequence]
+    if ext/visited [fail ["circular dependency on" ext]]
+    if blank? ext/requires [ext/sequence: 0 return ext/sequence]
+    ext/visited: true
+    seq: 0
+    if word? ext/requires [ext/requires: reduce [ext/requires]]
+    for-each req ext/requires [
+        for-each b extensions [
+            if b/name = req [
+                seq: seq + (
+                    (match integer! b/sequence) else [calculate-sequence b]
+                )
+                break
+            ]
+        ] then [  ; didn't BREAK, so no match found
+            fail ["unrecoginized dependency" req "for" ext/name]
+        ]
+    ]
+    return ext/sequence: seq + 1
+]
+
+for-each ext extensions [calculate-sequence ext]
+sort/compare extensions func [a b] [a/sequence < b/sequence]
+
+
+=== {PRODUCE COMPILER/LINKER PROCESSABLE OBJECTS FROM EXTENSION SPECS} ===
+
+; The #extension object corresponds roughly to the make-spec.r typed in; e.g.
+; it might list `%odbc32` in the `libraries` section as a FILE!.  But the lower
+; levels of the build process don't handle `libraries:`, only `dependencies:`,
+; where it wants that expressed as a #dynamic-extension OBJECT!.  And a
+; dependency on a source .c FILE! similarly needs to be turned to a dependency
+; on an OBJECT! representing the #object-file that it generates.
+;
+; Here we are responsible of that translation from #extension (which
+; the LD, LINK, and LLVM handlers don't understand) into #object-library
+; (which is broken down more fundamentally and they can understand)
+
+builtin-ext-objlibs: copy []  ; #object-library for each built in extension
+dynamic-ext-objlibs: copy []  ; #object-library for each built in extension
+
+dynamic-libs: copy []  ; #dynamic-library for each DLL
+
+for-each ext extensions [
+    assert [ext/class = #extension]  ; basically what we read from %make-spec.r
+
+    if not ext/mode [continue]  ; blank means extension not in use
+
+    assert [find [<builtin> <dynamic>] ext/mode]
+
+    ext-objlib: make rebmake/object-library-class [  ; #object-library
+        name: ext/name
+        depends: map-each s (append reduce [ext/source] try ext/depends) [
+            dep: case [
                 match [file! block!] s [
                     gen-obj/dir s (join repo-dir %extensions/)
                 ]
@@ -1537,8 +1677,8 @@ process-module: func [
             ]
         ]
         libraries: try all [
-            mod/libraries
-            map-each lib mod/libraries [
+            ext/libraries
+            map-each lib ext/libraries [
                 case [
                     file? lib [
                         make rebmake/ext-dynamic-class [
@@ -1550,52 +1690,16 @@ process-module: func [
                     )[
                         lib
                     ]
-                    fail ["unrecognized library" lib "in module" mod]
+                    fail ["unrecognized library" lib "in extension" ext]
                 ]
             ]
         ]
 
-        includes: mod/includes
-        definitions: mod/definitions
-        cflags: mod/cflags
-        searches: mod/searches
+        includes: ext/includes
+        definitions: ext/definitions
+        cflags: ext/cflags
+        searches: ext/searches
     ]
-
-    ret
-]
-
-ext-objs: make block! 8
-for-each ext builtin-extensions [
-    mod-obj: _
-
-    ; extract object-library, because an object-library can't depend on
-    ; another object-library
-    ;
-    all [
-        block? ext/depends
-        not empty? ext/depends
-    ] then [
-        append ext-objs map-each s ext/depends [
-            all [
-                object? s
-                s/class = #object-library
-            ] then [s]
-        ]
-    ]
-
-    append ext-objs mod-obj: process-module ext
-
-    append app-config/libraries try mod-obj/libraries
-    append app-config/searches try ext/searches
-    append app-config/ldflags try ext/ldflags
-
-    ; Modify module properties
-    add-project-flags/I/D/c/O/g mod-obj
-        app-config/includes
-        join ["REB_API"] app-config/definitions
-        app-config/cflags
-        app-config/optimization
-        app-config/debug
 
     ; %prep-extensions.r creates a temporary .c file which contains the
     ; collated information for the module (compressed script and spec bytes,
@@ -1606,44 +1710,108 @@ for-each ext builtin-extensions [
     ext-init-source: as file! unspaced [
         "tmp-mod-" ext-name-lower "-init.c"
     ]
-    append any [all [mod-obj mod-obj/depends] ext-objs] gen-obj/dir/I/D/F
+    append ext-objlib/depends gen-obj/dir/I/D/F
         ext-init-source
         unspaced ["prep/extensions/" ext-name-lower "/"]
         opt ext/includes
         opt ext/definitions
         opt ext/cflags
-]
 
-
-; Reorder builtin-extensions by their dependency
-calculate-sequence: function [
-    return: [integer!]
-    ext
-    <local> req b
-][
-    if integer? ext/sequence [return ext/sequence]
-    if ext/visited [fail ["circular dependency on" ext]]
-    if blank? ext/requires [ext/sequence: 0 return ext/sequence]
-    ext/visited: true
-    seq: 0
-    if word? ext/requires [ext/requires: reduce [ext/requires]]
-    for-each req ext/requires [
-        for-each b builtin-extensions [
-            if b/name = req [
-                seq: seq + (
-                    (match integer! b/sequence) else [calculate-sequence b]
-                )
-                break
-            ]
-        ] then [  ; didn't BREAK, so no match found
-            fail ["unrecoginized dependency" req "for" ext/name]
+    ; Here we graft things like the global debug settings and optimization
+    ; flags onto the extension.  This also lets it find the core include files
+    ; like %sys-core.h or %reb-config.h.  Long term, most-if-not-all extensions
+    ; should be restricted to use the public API and not %sys-core.h
+    ;
+    ; Not only do these settings get used by the mod-xxx.c file, but they are
+    ; propagated to the dependencies (I think?)
+    ;
+    ; We add a #define of either REB_API or REB_EXT based on if it's a DLL
+    ;
+    add-project-flags/I/D/c/O/g ext-objlib
+        app-config/includes
+        compose [
+            ((either ext/mode = <builtin> ["REB_API"] ["REB_EXT"]))
+            ((app-config/definitions))
         ]
+        app-config/cflags
+        app-config/optimization
+        app-config/debug
+
+    if ext/mode = <builtin> [
+        append builtin-ext-objlibs ext-objlib
+
+        ; While you can have varied compiler switches in effect for individual
+        ; C files to make OBJs, you only get one set of linker settings to make
+        ; one executable.  It's a limitation of the <builtin> method.
+        ;
+        ; !!! searches seems to correspond to the -L switch.  Strange name to
+        ; have to remember, and so the make-spec.r have been doing that as an
+        ; ldflag, but this then has to be platform specific.  But generally you
+        ; already need platform-specific code to know where to look.
+        ;
+        append app-config/libraries try ext-objlib/libraries
+        append app-config/ldflags try ext/ldflags
+        append app-config/searches try ext/searches
     ]
-    return ext/sequence: seq + 1
+    else [
+        append dynamic-ext-objlibs ext-objlib
+
+        ; We need to make a new "Project" abstraction to represent the DLL
+
+        ext-proj: make rebmake/dynamic-library-class [
+            name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
+                lowercase to text! ext/name
+            output: to file! name
+            depends: compose [
+                ((ext-objlib))  ; !!! Will this pull in all of extensions deps?
+                ;
+                ; (app) all dynamic extensions depend on r3, but app not ready
+                ; so the dependency is added at a later phase below
+                ;
+                ((opt app-config/libraries))
+                ((opt ext-objlib/libraries))
+            ]
+            post-build-commands: either cfg-symbols [
+                _
+            ][
+                reduce [
+                    make rebmake/cmd-strip-class [
+                        file: join output try rebmake/target-platform/dll-suffix
+                    ]
+                ]
+            ]
+
+            ldflags: compose [
+                ((opt ext/ldflags))
+                ((app-config/ldflags))
+                <gnu:-Wl,--as-needed>  ; Switch ignores linking unused libs
+            ]
+        ]
+
+        ; !!! It's not clear if this is really needed (?)
+        ;
+        add-project-flags/I/D/c/O/g ext-proj
+            app-config/includes
+            join ["REB_EXT"] app-config/definitions
+            app-config/cflags
+            app-config/optimization
+            app-config/debug
+
+        append dynamic-libs ext-proj  ; need to add app as a dependency later
+    ]
+
+    ; For all the obj files needed by this extension, ensure the output dir
+    ; is known to neeed to be created
+    ;
+    add-new-obj-folders (reduce [ext-objlib]) folders
 ]
 
-for-each ext builtin-extensions [calculate-sequence ext]
-sort/compare builtin-extensions func [a b] [a/sequence < b/sequence]
+
+=== {RUN THE MAKE (INVOKE COMPILER WITH CALL -OR- GENERATE MAKEFILE} ===
+
+; Here we run MAKE which will not do the actual compilation if you ask the
+; TARGET to be a makefile.  It only runs the compilation if you are using
+; Rebmake to run the compiler via CALL.
 
 vars: reduce [
     reb-tool: make rebmake/var-class [
@@ -1700,7 +1868,7 @@ prep: make rebmake/entry-class [
             unspaced [{OS_ID=} system-config/id]
         ]
 
-        for-each ext all-extensions [
+        for-each ext extensions [
             keep [
                 {$(REBOL)} join tools-dir %prep-extension.r
                 unspaced [{MODULE=} ext/name]
@@ -1723,7 +1891,7 @@ prep: make rebmake/entry-class [
                 ;
                 hook-script: file-to-local/full (
                     join repo-dir reduce [
-                        extensions "/" (ext/directory) (ext/hook)
+                        "extensions/" (ext/directory) (ext/hook)
                     ]
                 )
                 keep [
@@ -1736,8 +1904,8 @@ prep: make rebmake/entry-class [
         keep [
             {$(REBOL)} join tools-dir %make-boot-ext-header.r
             unspaced [
-                {EXTENSIONS=} delimit ":" map-each ext builtin-extensions [
-                    to text! ext/name
+                {EXTENSIONS=} delimit ":" map-each ext extensions [
+                    if ext/mode = <builtin> [to text! ext/name]
                 ]
             ]
         ]
@@ -1749,86 +1917,12 @@ prep: make rebmake/entry-class [
     ]
 ]
 
-; Analyze what directories were used in this build's entry from %file-base.r
-; to add those obj folders.  So if the `%generic/host-xxx.c` is listed,
-; this will make sure `%objs/generic/` is in there.
-
-add-new-obj-folders: function [
-    return: <none>
-    objs
-    folders
-    <local>
-    lib
-    obj
-][
-    for-each lib objs [
-        switch lib/class [
-            #object-file [
-                lib: reduce [lib]
-            ]
-            #object-library [
-                lib: lib/depends
-            ]
-            (elide dump lib)
-            fail ["unexpected class"]
-        ]
-
-        for-each obj lib [
-            dir: first split-path obj/output
-            if not find folders dir [
-                append folders dir
-            ]
-        ]
-    ]
-]
-
-folders: copy [%objs/ %objs/main/]
-add-new-obj-folders ext-objs folders
-
-; !!! This is an inelegant "interim" hack which gives subfolders for the obj
-; files that have paths in them in %file-base.r
-;
-; The purpose of introducing a directory structure for organization is largely
-; to assist those browsing who want to find a README.md for a group of related
-; files and explain why those files are together.
-;
-for-each [category entries] file-base [
-    if find/only [generated made] category [
-        continue  ; these categories are taken care of elsewhere
-    ]
-    switch type of entries [
-        word!  ; if bootstrap
-        tuple! [  ; if generic-tuple enabled
-            assert [entries = 'main.c]  ; !!! anomaly, ignore it for now
-        ]
-        block! [
-            for-each entry entries [
-                entry: maybe if block? entry [first entry]
-                switch type of entry [
-                    word!  ; if bootstrap executable
-                    tuple! [  ; if generic-tuple enabled
-                        ; assume taken care of
-                    ]
-                    path! [
-                        dir: first split-path to file! entry
-                        if not find folders dir [
-                            append folders join %objs/ dir
-                        ]
-                    ]
-                    fail
-                ]
-            ]
-        ]
-        fail
-    ]
-]
-
 app: make rebmake/application-class [
     name: 'r3-exe
     output: %r3 ;no suffix
     depends: compose [
         (libr3-core)
-        ((ext-objs))
+        ((builtin-ext-objlibs))
         ((app-config/libraries))
         (main)
     ]
@@ -1851,12 +1945,19 @@ app: make rebmake/application-class [
     definitions: app-config/definitions
 ]
 
+; Now that app is created, make it a dependency of all the dynamic libs
+; See `accept` method handling of #application for pulling in import lib
+;
+for-each proj dynamic-libs [
+    append proj/depends app
+]
+
 library: make rebmake/dynamic-library-class [
     name: 'libr3
     output: %libr3 ;no suffix
     depends: compose [
         (libr3-core)
-        ((ext-objs))
+        ((builtin-ext-objlibs))
         ((app-config/libraries))
     ]
     searches: app-config/searches
@@ -1866,74 +1967,6 @@ library: make rebmake/dynamic-library-class [
     debug: app-config/debug
     includes: app-config/includes
     definitions: app-config/definitions
-]
-
-dynamic-libs: make block! 8
-ext-libs: make block! 8
-ext-ldflags: make block! 8
-ext-dynamic-objs: make block! 8
-for-each ext dynamic-extensions [
-    ext-includes: make block! 8
-    mod-objs: make block! 8
-    for-each mod ext/modules [
-        append mod-objs mod-obj: process-module mod
-        append ext-libs try mod-obj/libraries
-        append ext-includes app-config/includes
-
-        append ext-ldflags try mod/ldflags
-        append ext-includes try mod/includes
-
-        ; Modify module properties
-        add-project-flags/I/D/c/O/g mod-obj
-            ext-includes
-            join ["EXT_DLL"] app-config/definitions
-            app-config/cflags
-            app-config/optimization
-            app-config/debug
-    ]
-
-    append ext-dynamic-objs copy mod-objs
-
-    if ext/source [
-        append mod-objs gen-obj/dir/I/D/F
-            ext/source
-            (join repo-dir %extensions/)
-            opt ext/includes
-            append copy ["EXT_DLL"] opt ext/definitions
-            opt ext/cflags
-    ]
-    append dynamic-libs ext-proj: make rebmake/dynamic-library-class [
-        name: join either system-config/os-base = 'windows ["r3-"]["libr3-"]
-            lowercase to text! ext/name
-        output: to file! name
-        depends: compose [
-            ((mod-objs))
-            (app) ;all dynamic extensions depend on r3
-            ((app-config/libraries))
-            ((ext-libs))
-        ]
-
-        post-build-commands: either cfg-symbols [
-            _
-        ][
-            reduce [
-                make rebmake/cmd-strip-class [
-                    file: join output try rebmake/target-platform/dll-suffix
-                ]
-            ]
-        ]
-
-        ldflags: compose [((ext-ldflags)) <gnu:-Wl,--as-needed>]
-    ]
-
-    add-project-flags/I/D/c/O/g ext-proj
-        ext-includes
-        join ["EXT_DLL"] app-config/definitions
-        app-config/cflags
-        app-config/optimization
-        app-config/debug
-
-    add-new-obj-folders mod-objs folders
 ]
 
 top: make rebmake/entry-class [
@@ -1997,13 +2030,13 @@ solution: make rebmake/solution-class [
         top
         t-folders
         prep
-        ext-objs
+        builtin-ext-objlibs
         libr3-core
         main
         app
         library
         dynamic-libs
-        ext-dynamic-objs
+        dynamic-ext-objlibs  ; !!! Necessary?
         check
         clean
     ]
