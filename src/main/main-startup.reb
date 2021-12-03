@@ -573,7 +573,7 @@ main-startup: func [
             )
         |
             "--script" end (
-                o.script: local-to-file param-or-die "SCRIPT"
+                o.script: param-or-die "SCRIPT"
                 quit-when-done: default [true]  ; overrides blank, not false
 
                 is-script-implicit: false  ; not the first post-option arg
