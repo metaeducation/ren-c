@@ -59,7 +59,6 @@
     // This may be worked around by making sure all the types used in that
     // file are present in %reb-defs.h ... review.
     //
-    extern REBTCK TG_Tick;
     extern REBTCK TG_Break_At_Tick;
 #endif
 

@@ -241,10 +241,6 @@ typedef struct Reb_Enum_Vars EVARS;
 #include "tmp-symid.h"  // small integer IDs for words (e.g. SYM_THRU, SYM_ON)
 #include "tmp-internals.h"
 
-#include "sys-panic.h"  // "blue screen of death"-style termination
-#include "sys-casts.h"  // coercion macros like SER(), uses panic() to alert
-
-#include "sys-mold.h"
 
 /***********************************************************************
 **
@@ -274,6 +270,52 @@ typedef struct rebol_opts {
     bool  watch_expand;
     bool  crash_dump;
 } REB_OPTS;
+
+
+/***********************************************************************
+**
+**  Threaded Global Variables
+**
+***********************************************************************/
+
+// !!! In the R3-Alpha open source release, there had apparently been a switch
+// from the use of global variables to the classification of all globals as
+// being either per-thread (TVAR) or for the whole program (PVAR).  This
+// was apparently intended to use the "thread-local-variable" feature of the
+// compiler.  It used the non-standard `__declspec(thread)`, which as of C11
+// and C++11 is standardized as `thread_local`.
+//
+// Despite this basic work for threading, greater issues were not hammered
+// out.  And so this separation really just caused problems when two different
+// threads wanted to work with the same data (at different times).  Such a
+// feature is better implemented as in the V8 JavaScript engine as "isolates"
+
+#ifdef __cplusplus
+    #define PVAR extern "C" RL_API
+    #define TVAR extern "C" RL_API
+#else
+    // When being preprocessed by TCC and combined with the user - native
+    // code, all global variables need to be declared
+    // `extern __attribute__((dllimport))` on Windows, or incorrect code
+    // will be generated for dereferences.  Hence these definitions for
+    // PVAR and TVAR allow for overriding at the compiler command line.
+    //
+    #if !defined(PVAR)
+        #define PVAR extern RL_API
+    #endif
+    #if !defined(TVAR)
+        #define TVAR extern RL_API
+    #endif
+#endif
+
+#include "sys-globals.h"  // includes things like TG_Tick, used by panic()
+
+
+#include "sys-panic.h"  // "blue screen of death"-style termination
+#include "sys-casts.h"  // coercion macros like SER(), uses panic() to alert
+
+#include "sys-mold.h"
+
 
 
 /***********************************************************************
@@ -349,43 +391,6 @@ extern void reb_qsort_r(void *a, size_t n, size_t es, void *thunk, cmp_t *cmp);
 #include "tmp-sysobj.h"
 
 
-/***********************************************************************
-**
-**  Threaded Global Variables
-**
-***********************************************************************/
-
-// !!! In the R3-Alpha open source release, there had apparently been a switch
-// from the use of global variables to the classification of all globals as
-// being either per-thread (TVAR) or for the whole program (PVAR).  This
-// was apparently intended to use the "thread-local-variable" feature of the
-// compiler.  It used the non-standard `__declspec(thread)`, which as of C11
-// and C++11 is standardized as `thread_local`.
-//
-// Despite this basic work for threading, greater issues were not hammered
-// out.  And so this separation really just caused problems when two different
-// threads wanted to work with the same data (at different times).  Such a
-// feature is better implemented as in the V8 JavaScript engine as "isolates"
-
-#ifdef __cplusplus
-    #define PVAR extern "C" RL_API
-    #define TVAR extern "C" RL_API
-#else
-    // When being preprocessed by TCC and combined with the user - native
-    // code, all global variables need to be declared
-    // `extern __attribute__((dllimport))` on Windows, or incorrect code
-    // will be generated for dereferences.  Hence these definitions for
-    // PVAR and TVAR allow for overriding at the compiler command line.
-    //
-    #if !defined(PVAR)
-        #define PVAR extern RL_API
-    #endif
-    #if !defined(TVAR)
-        #define TVAR extern RL_API
-    #endif
-#endif
-
-#include "sys-globals.h"
 
 
 #include "tmp-error-funcs.h" // functions below are called

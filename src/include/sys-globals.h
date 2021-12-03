@@ -21,6 +21,10 @@
 //=////////////////////////////////////////////////////////////////////////=//
 //
 
+#if DEBUG_COUNT_TICKS  // VERY USEFUL! see notes in evaluator
+    PVAR REBTCK TG_Tick;
+#endif
+
 //-- Bootstrap variables:
 PVAR REBINT PG_Boot_Phase;  // To know how far in the boot we are.
 PVAR REBINT PG_Boot_Level;  // User specified startup level

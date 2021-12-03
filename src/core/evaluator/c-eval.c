@@ -63,10 +63,9 @@
 
 #if DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, SEE %sys-eval.h!
     //
-    // This counter is incremented each time a function dispatcher is run
+    // TG_Tick counter is incremented each time a function dispatcher is run
     // or a parse rule is executed.  See UPDATE_TICK_COUNT().
     //
-    REBTCK TG_Tick;
 
     //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
     REBTCK TG_Break_At_Tick =      0;
