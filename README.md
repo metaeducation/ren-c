@@ -26,6 +26,11 @@ that was shown at the Rebol 2019 Conference.
 
 [6]: https://youtu.be/PT3GOe1pj9I?t=407
 
+*(A [more conservative evolution][7] of the R3-Alpha codebase is maintained by
+user @Oldes, and may interest some people who don't want to run on the web.)*
+
+[7]: https://github.com/Oldes/Rebol3
+
 
 ## API
 
@@ -41,31 +46,31 @@ strings and spliced Rebol values:
     // Would print 304--e.g. `1020 + (2 * -358)`, rebElide() returns C void.
 
 The way this can work is described in another talk from Rebol 2019,
-entitled ["Abusing UTF-8 For Fun and Profit"][7]
+entitled ["Abusing UTF-8 For Fun and Profit"][8]
 
-[7]: https://www.youtube.com/watch?v=6nsKTpArTCE
+[8]: https://www.youtube.com/watch?v=6nsKTpArTCE
 
 Beyond the API and Web Build, improvements to the language itself *range in
 the hundreds*.  They are ever-evolving but are tracked periodically on the
-[Trello board][8] and posts on the forum.
+[Trello board][9] and posts on the forum.
 
-[8]: https://trello.com/b/l385BE7a/rebol3-porting-guide-ren-c-branch
+[9]: https://trello.com/b/l385BE7a/rebol3-porting-guide-ren-c-branch
 
 
 ## Community
 
 The best way to get acquainted with all that is going on would be to
-[**Join The Forum!**][9]  Feel free to post in the [Introductions Category][10]
+[**Join The Forum!**][10]  Feel free to post in the [Introductions Category][11]
 and ask anything you would like.
 
-[9]: https://forum.rebol.info/
-[10]: https://forum.rebol.info/c/introductions
+[10]: https://forum.rebol.info/
+[11]: https://forum.rebol.info/c/introductions
 
-It's also possible to contact the developers via [the GitHub Issues][11].
+It's also possible to contact the developers via [the GitHub Issues][12].
 *(Ren-C inherited Rebol's thousands-strong issue database, so there's a
 lifetime's worth of design points to think about!)*
 
-[11]: https://github.com/metaeducation/rebol-issues/issues
+[12]: https://github.com/metaeducation/rebol-issues/issues
 
 
 ## Name
@@ -84,10 +89,10 @@ such as Rebol itself.
 
 The system does not require GNU Make, CMake, or any other make tools.  It only
 needs a copy of a Ren-C executable to build itself.  To do a full build, it
-can just invoke a C compiler using [the CALL facility][12], with the
+can just invoke a C compiler using [the CALL facility][13], with the
 appropriate command lines.
 
-[12]: http://www.rebol.com/docs/shell.html
+[13]: http://www.rebol.com/docs/shell.html
 
 Several platforms are supported, including Linux, Windows, OS X, Android, and
 support for JavaScript via WebAssembly.  Configurations for each platform are
@@ -119,9 +124,9 @@ amount of C code and header files generated from tables and scans of the
 source code.  If you're not familiar with the source and what kinds of changes
 require rebuilding which parts, you should probably do full builds.
 
-As a design goal, compiling Ren-C requires [very little beyond ANSI C89][13].
+As a design goal, compiling Ren-C requires [very little beyond ANSI C89][14].
 Attempts to rein in compiler dependencies have been a large amount of work,
-and it still supports a [number of older platforms][14].  However, if it is
+and it still supports a [number of older platforms][15].  However, if it is
 compiled with a C++ compiler then there is significantly more static analysis
 at build time, to catch errors.
 
@@ -131,34 +136,34 @@ strongly desirable if community member(s) could get involved to help
 streamline and document it!  Since it's now *all* written in Rebol, that
 should be more possible--and maybe even a little "fun" (?))*
 
-[13]: https://forum.rebol.info/t/on-building-ren-c-with-c-compilers/1343
-[14]: https://github.com/metaeducation/ren-c/blob/master/make/tools/systems.r
+[14]: https://forum.rebol.info/t/on-building-ren-c-with-c-compilers/1343
+[15]: https://github.com/metaeducation/ren-c/blob/master/make/tools/systems.r
 
 
 ## License
 
-When Rebol was open-sourced in 2012, it was [licensed as Apache 2.0][15].
-Despite the Ren-C team's belief in [Free Software Foundation's principles][16],
+When Rebol was open-sourced in 2012, it was [licensed as Apache 2.0][16].
+Despite the Ren-C team's belief in [Free Software Foundation's principles][17],
 contributions were made as Apache 2.0 up until 2020, to make it easier for
 code to be taken back to the Rebol GitHub or other branches.
 
-[15]: http://www.rebol.com/cgi-bin/blog.r?view=0519
-[16]: https://www.gnu.org/philosophy/shouldbefree.en.html
+[16]: http://www.rebol.com/cgi-bin/blog.r?view=0519
+[17]: https://www.gnu.org/philosophy/shouldbefree.en.html
 
 Due to limited cases of such any take over an eight-year span, the Ren-C
-license was [changed to the Apache-2-compatible LGPL 3][17].
+license was [changed to the Apache-2-compatible LGPL 3][18].
 
-[17]: https://forum.rebol.info/t/ren-c-license-changed-to-lgpl-3-0/1342
+[18]: https://forum.rebol.info/t/ren-c-license-changed-to-lgpl-3-0/1342
 
 The current way to explore the new features of Ren-C is using the `r3`
 console.  It is *significantly* enhanced from the open-sourced R3-Alpha...with
-much of its behavior coming from [userspace Rebol code][18] (as opposed to
+much of its behavior coming from [userspace Rebol code][19] (as opposed to
 hardcoded C).  In addition to multi-line editing and UTF-8 support, it
-[can be "skinned"][19] and configured in various ways, and non-C programmers
+[can be "skinned"][20] and configured in various ways, and non-C programmers
 can easily help contribute to enhancing it.
 
-[18]: https://github.com/metaeducation/ren-c/blob/master/src/os/host-console.r 
-[19]: https://github.com/r3n/reboldocs/wiki/User-and-Console 
+[19]: https://github.com/metaeducation/ren-c/blob/master/src/os/host-console.r
+[20]: https://github.com/r3n/reboldocs/wiki/User-and-Console
 
 
 
