@@ -73,28 +73,35 @@
 (
     write %test.txt s: "test of text"
     s = load %test.txt
+    elide delete %test.txt
 )
 (
     save %test1.r 1
     1 = load-value %test1.r
+    elide delete %test1.r
 )
 (
     save %test2.r [1 2]
     [1 2] = load %test2.r
+    elide delete %test2.r
 )
 (
     save/header %test.r [1 2 3] [title: "Test"]
     [1 2 3] = load %test.r
+    elide delete %test.r
 )
 (
     save/header %test-checksum.r [1 2 3] [checksum: true]
     [1 2 3] = load %test-checksum.r
+    elide delete %test-checksum.r
 )
 (
     save/header %test-checksum.r [1 2 3] [checksum: true compress: true]
     [1 2 3] = load %test-checksum.r
+    elide delete %test-checksum.r
 )
 (
     save/header %test-checksum.r [1 2 3] [checksum: script compress: true]
     [1 2 3] = load %test-checksum.r
+    elide delete %test-checksum.r
 )

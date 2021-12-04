@@ -12,6 +12,7 @@
         script: %tmp-inner.reb
         save/header script compose [quit (value)] []
         do script
+        elide delete %tmp-inner.reb
     ]
     all map-each value reduce [
         42

@@ -17,6 +17,7 @@
     data: "Simple save test produced by %core-tests.r"
     save file data
     (load-value file) = data
+    elide delete %simple-save-test.r
 )
 
 
