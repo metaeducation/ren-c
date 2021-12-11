@@ -316,51 +316,6 @@ REBLEN Find_Map_Entry(
 
 
 //
-//  PD_Map: C
-//
-REB_R PD_Map(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    assert(IS_MAP(pvs->out));
-
-    if (IS_NULLED(picker))  // best to error on a null picker
-        return R_UNHANDLED;
-
-    // Fetching and setting with path-based access is case-preserving for any
-    // initial insertions.  However, the case-insensitivity means that all
-    // writes after that to the same key will not be overriding the key,
-    // it will just change the data value for the existing key.  SELECT and
-    // the operation tentatively named PUT should be used if a map is to
-    // distinguish multiple casings of the same key.
-    //
-    const bool cased = false;
-
-    const REBMAP *m = VAL_MAP(pvs->out);
-
-    REBINT n = Find_Map_Entry(
-        m_cast(REBMAP*, m),  // not modified
-        picker,
-        SPECIFIED,
-        nullptr,  // no value, so map not changed
-        SPECIFIED,
-        cased
-    );
-
-    if (n == 0)
-        return nullptr;
-
-    const REBVAL *val = SPECIFIC(
-        ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1)
-    );
-    if (IS_NULLED(val))  // zombie entry, means unused
-        return nullptr;
-
-    return Copy_Cell(pvs->out, val);  // RETURN (...) uses `frame_`
-}
-
-
-//
 //  Append_Map: C
 //
 static void Append_Map(
@@ -798,13 +753,13 @@ REBTYPE(Map)
         );
 
         if (n == 0)
-                return nullptr;
+            return nullptr;
 
         const REBVAL *val = SPECIFIC(
             ARR_AT(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
         );
         if (IS_NULLED(val))  // zombie entry, means unused
-                return nullptr;
+            return nullptr;
 
         return Copy_Cell(D_OUT, val); }
 

@@ -335,7 +335,6 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
         CFUNC** hooks = cast(CFUNC**, BIN_HEAD(type));
 
         hooks[IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Unhooked);
-        hooks[IDX_PATH_HOOK] = cast(CFUNC*, &PD_Unhooked);
         hooks[IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Unhooked);
         hooks[IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
         hooks[IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);
@@ -390,7 +389,6 @@ REBTYP *Hook_Datatype(
     // !!! Need to fail if already hooked
 
     hooks[IDX_GENERIC_HOOK] = cast(CFUNC*, generic);
-    hooks[IDX_PATH_HOOK] = cast(CFUNC*, &PD_Fail);
     hooks[IDX_COMPARE_HOOK] = cast(CFUNC*, compare);
     hooks[IDX_MAKE_HOOK] = cast(CFUNC*, make);
     hooks[IDX_TO_HOOK] = cast(CFUNC*, to);
@@ -414,7 +412,6 @@ void Unhook_Datatype(REBTYP *type)
         fail ("Extension type not registered to unhook");
 
     hooks[IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Unhooked);
-    hooks[IDX_PATH_HOOK] = cast(CFUNC*, &PD_Unhooked);
     hooks[IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Unhooked);
     hooks[IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
     hooks[IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);

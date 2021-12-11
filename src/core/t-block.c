@@ -685,41 +685,6 @@ static REBINT Try_Get_Array_Index_From_Picker(
 
 
 //
-//  PD_Array: C
-//
-// Path dispatch for ANY-ARRAY! (covers ANY-BLOCK! and ANY-GROUP!)
-//
-// !!! There is currently some delegation to this routine by ANY-SEQUENCE! if
-// the underlying implementation is a REBARR*.
-//
-REB_R PD_Array(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    REBINT n = Try_Get_Array_Index_From_Picker(pvs->out, picker);
-
-    if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(pvs->out))) {
-
-        // !!! Right now this allows selecting words out of blocks to be
-        // null if not present...which is inconsistent with selecting words
-        // out of objects.  Review.
-        //
-        return nullptr;
-    }
-
-    bool was_const = GET_CELL_FLAG(pvs->out, CONST);
-    Derelativize(
-        pvs->out,
-        VAL_ARRAY_AT_HEAD(pvs->out, n),
-        VAL_SPECIFIER(pvs->out)
-    );
-    if (was_const)  // can't Inherit_Const(), would be overwritten
-        SET_CELL_FLAG(pvs->out, CONST);
-    return pvs->out;
-}
-
-
-//
 //  Pick_Block: C
 //
 // Fills out with void if no pick.
@@ -859,12 +824,12 @@ REBTYPE(Array)
         const RELVAL *picker = ARG(picker);
         REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
         if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
-                return nullptr;
+            return nullptr;
 
         const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
 
-            Derelativize(D_OUT, at, VAL_SPECIFIER(array));
-            Inherit_Const(D_OUT, array);
+        Derelativize(D_OUT, at, VAL_SPECIFIER(array));
+        Inherit_Const(D_OUT, array);
         return D_OUT; }
 
 

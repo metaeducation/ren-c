@@ -60,7 +60,6 @@ REBNATIVE(startup_p)
 
     const enum Reb_Kind k = REB_EVENT;
     Builtin_Type_Hooks[k][IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Event);
-    Builtin_Type_Hooks[k][IDX_PATH_HOOK] = cast(CFUNC*, &PD_Event);
     Builtin_Type_Hooks[k][IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Event);
     Builtin_Type_Hooks[k][IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Event);
     Builtin_Type_Hooks[k][IDX_TO_HOOK] = cast(CFUNC*, &TO_Event);
@@ -89,7 +88,6 @@ REBNATIVE(shutdown_p)
     //
     const enum Reb_Kind k = REB_EVENT;
     Builtin_Type_Hooks[k][IDX_GENERIC_HOOK] = cast(CFUNC*, &T_Unhooked);
-    Builtin_Type_Hooks[k][IDX_PATH_HOOK] = cast(CFUNC*, &PD_Unhooked);
     Builtin_Type_Hooks[k][IDX_COMPARE_HOOK] = cast(CFUNC*, &CT_Unhooked);
     Builtin_Type_Hooks[k][IDX_MAKE_HOOK] = cast(CFUNC*, &MAKE_Unhooked);
     Builtin_Type_Hooks[k][IDX_TO_HOOK] = cast(CFUNC*, &TO_Unhooked);

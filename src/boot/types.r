@@ -18,16 +18,12 @@ REBOL [
         name        - name of datatype (generates words)
         description - short statement of type's purpose (used by HELP)
         class       - how "generic" actions are dispatched (T_type)
-        path        - it supports various path forms
         make        - it can be made with #[datatype] method
         mold        - code implementing both MOLD and FORM (hook gets a flag)
         typesets    - what typesets the type belongs to
 
         What is in the table can be `+` to mean the method exists and has the
         same name as the type (e.g. MF_Blank() if type is BLANK!)
-
-        If it is `*` then the method uses a common dispatcher for the type,
-        so (e.g. PD_Array()) even if the type is BLOCK!)
 
         If it is `?` then the method is loaded dynamically by an extension,
         and unavailable otherwise and uses e.g. T_Unhooked()
@@ -45,7 +41,7 @@ REBOL [
 
 
 [name       description
-            class       path    make    mold    typesets]  ; makes TS_XXX
+            class       make    mold    typesets]  ; makes TS_XXX
 
 ; The special 0 state of the REB_XXX enumeration was once used as a marker to
 ; indicate array termination (parallel to how '\0' terminates strings).  But
@@ -65,7 +61,7 @@ REBOL [
 ; alias REB_0_FREE is given to use when this is the intent for REB_0.
 
 #0          "!!! `END!` and `FREE!` aren't datatypes, not exposed to the user"
-            0           0       0       0       []
+            0           0       0       []
 
 ; REB_NULL takes value 1, but it being 1 is less intrinsic.  It is also not
 ; a "type"...but it is falsey, hence it has to be before LOGIC! in the table.
@@ -75,40 +71,40 @@ REBOL [
 ; type itself is simply called REB_NULL...which is distinct enough.
 
 #null       "!!! `NULL!` isn't a datatype, `null` can't be stored in blocks"
-            0           0       0       +       []
+            0           0       +       []
 
 blank       "placeholder unit type which acts as conditionally false"
-            blank       +       -       +       [unit]  ; allow as `branch`?
+            blank       -       +       [unit]  ; allow as `branch`?
 
 ; <ANY-SCALAR>
 
 logic       "boolean true or false"
-            logic       -       +       +       []
+            logic       +       +       []
 
 ; ============================================================================
 ; BEGIN TYPES THAT ARE ALWAYS "TRUTHY" - IS_TRUTHY()/IS_CONDITIONALLY_TRUE()
 ; ============================================================================
 
 #bytes      "!!! `BYTES!` isn't a datatype, `heart` type  for optimizations"
-            0           0       0       0       []
+            0           0       0       []
 
 decimal     "64bit floating point number (IEEE standard)"
-            decimal     -       *       +       [number scalar]
+            decimal     *       +       [number scalar]
 
 percent     "special form of decimals (used mainly for layout)"
-            decimal     -       *       +       [number scalar]
+            decimal     *       +       [number scalar]
 
 money       "high precision decimals with denomination (opt)"
-            money       -       +       +       [scalar]
+            money       +       +       [scalar]
 
 time        "time of day or duration"
-            time        +       +       +       [scalar]
+            time        +       +       [scalar]
 
 date        "day, month, year, time of day, and timezone"
-            date        +       +       +       []
+            date        +       +       []
 
 integer     "64 bit integer"
-            integer     -       +       +       [number scalar]
+            integer     +       +       [number scalar]
 
 
 ; ============================================================================
@@ -119,24 +115,24 @@ integer     "64 bit integer"
 ; a node in it to mark in some cases.
 
 pair        "two dimensional point or size"
-            pair        +       +       +       [scalar]
+            pair        +       +       [scalar]
 
 ; </ANY_SCALAR>
 
 datatype    "type of datatype"
-            datatype    -       +       +       []
+            datatype    +       +       []
 
 typeset     "set of datatypes"
-            typeset     -       +       +       []
+            typeset     +       +       []
 
 bitset      "set of bit flags"
-            bitset      +       +       +       []
+            bitset      +       +       []
 
 map         "name-value pairs (hash associative)"
-            map         +       +       +       []
+            map         +       +       []
 
 handle      "arbitrary internal object or value"
-            handle      -       -       +       []
+            handle      -       +       []
 
 
 ; This table of fundamental types is intended to be limited (less than
@@ -149,17 +145,17 @@ handle      "arbitrary internal object or value"
 ; and fills in its entry in this table when it is loaded (hence `?`)
 
 custom      "instance of an extension-defined type"
-            -           -       -       -       []
+            -           -       -       []
 
 event       "user interface event"  ; %extensions/event/README.md
-            ?           ?       ?       ?       []
+            ?           ?       ?       []
 
 
 ; URL! has a HEART-BYTE! that is a string, but is not itself in the ANY-STRING!
 ; category.
 ;
 url         "uniform resource locator or identifier"
-            url         string   string  string  []
+            url         string  string  []
 
 
 
@@ -169,7 +165,7 @@ url         "uniform resource locator or identifier"
 ;     (...BINARY! is alone, it's not an ANY-STRING!, just an ANY-SERIES!...)
 
 binary      "series of bytes"
-            binary      *       *       +       [series]  ; not an ANY-STRING!
+            binary      *       +       [series]  ; not an ANY-STRING!
 
 
 ; </BINARY> (adjacent to ANY-STRING matters)
@@ -177,19 +173,19 @@ binary      "series of bytes"
 ; <ANY-STRING> (order does not currently matter)
 
 text        "text string series of characters"
-            string      *       *       *       [series string]
+            string      *       *       [series string]
 
 file        "file name or path"
-            string      *       *       *       [series string]
+            string      *       *       [series string]
 
 email       "email address"
-            string      *       *       *       [series string]
+            string      *       *       [series string]
 
 tag         "markup string (HTML or XML)"
-            string      *       *       *       [series string]
+            string      *       *       [series string]
 
 issue       "immutable codepoint or codepoint sequence"
-            issue       *       *       *       []  ; !!! sequence of INTEGER?
+            issue       *       *       []  ; !!! sequence of INTEGER?
 
 ; </ANY-STRING>
 
@@ -202,42 +198,42 @@ issue       "immutable codepoint or codepoint sequence"
 ; <ANY-CONTEXT>
 
 object      "context of names with values"
-            context     *       *       *       [context]
+            context     *       *       [context]
 
 module      "loadable context of code and data"
-            context     *       *       *       [context]
+            context     *       *       [context]
 
 error       "error context with id, arguments, and stack origin"
-            context     *       +       +       [context]
+            context     +       +       [context]
 
 frame       "arguments and locals of a specific action invocation"
-            context     *       +       *       [context]
+            context     +       *       [context]
 
 port        "external series, an I/O channel"
-            port        context +       context [context]
+            port        +       context [context]
 
 ; </ANY-CONTEXT>
 
 varargs     "evaluator position for variable numbers of arguments"
-            varargs     +       +       +       []
+            varargs     +       +       []
 
 
 ; <ANY-THE> (order matters, see UNTHEIFY_ANY_XXX_KIND())
 
 the-block   "alternative inert form of block"
-            array       *       *       *       [block array series branch the-value]
+            array       *       *       [block array series branch the-value]
 
 the-group   "inert form of group"                   ; v-- allow as `branch`?
-            array       *       *       *       [group array series the-value]
+            array       *       *       [group array series the-value]
 
 the-path    "inert form of path"                    ; v-- allow as `branch`?
-            sequence    *       *       *       [path sequence the-value]
+            sequence    *       *       [path sequence the-value]
 
 the-tuple   "inert form of tuple"                   ; v-- allow as `branch`?
-            sequence    *       *       *       [tuple sequence scalar the-value]
+            sequence    *       *       [tuple sequence scalar the-value]
 
 the-word    "inert form of word"                    ; v-- allow as `branch`?
-            word        -       *       +       [word the-value]
+            word        *       +       [word the-value]
 
 ; </ANY-THE>
 
@@ -245,23 +241,23 @@ the-word    "inert form of word"                    ; v-- allow as `branch`?
 ; <ANY-PLAIN> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 block       "array of values that blocks evaluation unless DO is used"
-            array       *       *       *       [block array series branch plain-value]
+            array       *       *       [block array series branch plain-value]
 
 ; ============================================================================
 ; BEGIN EVALUATOR ACTIVE TYPES, SEE ANY_EVALUATIVE()
 ; ============================================================================
 
 group       "array that evaluates expressions as an isolated group"
-            array       *       *       *       [group array series branch plain-value]
+            array       *       *       [group array series branch plain-value]
 
 path        "member or refinement selection with execution bias"
-            sequence    *       *       *       [path sequence plain-value]
+            sequence    *       *       [path sequence plain-value]
 
 tuple       "member selection with inert bias"
-            sequence    *       *       *       [tuple sequence scalar plain-value]
+            sequence    *       *       [tuple sequence scalar plain-value]
 
 word        "evaluates a variable or action"
-            word        -       *       +       [word plain-value]
+            word        *       +       [word plain-value]
 
 ; </ANY-PLAIN>
 
@@ -269,19 +265,19 @@ word        "evaluates a variable or action"
 ; <ANY-SET> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 set-block   "array of values that will element-wise SET if evaluated"
-            array       *       *       *       [block array series set-value]
+            array       *       *       [block array series set-value]
 
 set-group   "array that evaluates and runs SET on the resulting word/path"
-            array       *       *       *       [group array series set-value]
+            array       *       *       [group array series set-value]
 
 set-path    "definition of a path's value"
-            sequence    *       *       *       [path sequence set-value]
+            sequence    *       *       [path sequence set-value]
 
 set-tuple   "definition of a tuple's value"
-            sequence    *       *       *       [tuple sequence set-value]
+            sequence    *       *       [tuple sequence set-value]
 
 set-word    "definition of a word's value"
-            word        -       *       +       [word set-value]
+            word        *       +       [word set-value]
 
 ; </ANY-SET> (contiguous with ANY-GET below matters)
 
@@ -289,19 +285,19 @@ set-word    "definition of a word's value"
 ; <ANY-GET> (order matters)
 
 get-block   "array of values that is reduced if evaluated"
-            array       *       *       *       [block array series branch get-value]
+            array       *       *       [block array series branch get-value]
 
 get-group   "array that evaluates and runs GET on the resulting word/path"
-            array       *       *       *       [group array series get-value]
+            array       *       *       [group array series get-value]
 
 get-path    "the value of a path"
-            sequence    *       *       *       [path sequence get-value]
+            sequence    *       *       [path sequence get-value]
 
 get-tuple   "the value of a tuple"
-            sequence    *       *       *       [tuple sequence get-value]
+            sequence    *       *       [tuple sequence get-value]
 
 get-word    "the value of a word (variable)"
-            word        -       *       +       [word get-value]
+            word        *       +       [word get-value]
 
 ; </ANY-GET> (except for ISSUE!)
 
@@ -313,19 +309,19 @@ get-word    "the value of a word (variable)"
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 meta-block  "block that evaluates to produce a quoted block"
-            array       *       *       *       [block array series meta-value branch]
+            array       *       *       [block array series meta-value branch]
 
 meta-group  "group that quotes its product or removes isotope status"
-            array       *       *       *       [group array series meta-value]
+            array       *       *       [group array series meta-value]
 
 meta-path   "path that quotes its product or removes isotope status"
-            sequence    *       *       *       [path sequence meta-value]
+            sequence    *       *       [path sequence meta-value]
 
 meta-tuple  "tuple that quotes its product or removes isotope status"
-            sequence    *       *       *       [tuple sequence meta-value]
+            sequence    *       *       [tuple sequence meta-value]
 
 meta-word   "word that quotes its product or removes isotope status"
-            word        -       *       +       [word meta-value]
+            word        *       +       [word meta-value]
 
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
@@ -335,20 +331,20 @@ meta-word   "word that quotes its product or removes isotope status"
 ; be things like @ and ^.
 
 symbol       "quoting operator which distinguishes NULL and BAD-WORD! isotopes"
-            symbol        -       -       +       [unit]
+            symbol       -      +       [unit]
 
 
 ; COMMA! has a high number with bindable types it's evaluative, and the
 ; desire is to make the ANY_INERT() test fast with a single comparison.
 
 comma       "separator between full evaluations (that is otherwise invisible)"
-            comma       -       -       +       [unit]
+            comma       -       +       [unit]
 
 
 ; ACTION! is the "OneFunction" type in Ren-C https://forum.rebol.info/t/596
 
 action      "an invokable Rebol subroutine"
-            action      +       +       +       [branch]
+            action      +       +       [branch]
 
 
 ; BAD-WORD! is not inert, because it needs to become "unfriendly" when it is
@@ -359,7 +355,7 @@ action      "an invokable Rebol subroutine"
 ; should be BAD-BLOCK! ~[]~ and it should fit into a bigger set of types :-/
 
 bad-word    "value which evaluates to a form that triggers errors on access"
-            bad-word     -       +       +       []
+            bad-word     +       +       []
 
 
 ; ============================================================================
@@ -371,7 +367,7 @@ bad-word    "value which evaluates to a form that triggers errors on access"
 ; which use the value + REB_64, + REB_64*2, or + REB_64*3)
 
 quoted     "container for arbitrary levels of quoting"
-            quoted       +       +       -      [branch]
+            quoted       +       -      [branch]
 
 
 ; This is the end of the value cell enumerations (after REB_QUOTED is REB_MAX)

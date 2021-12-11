@@ -610,7 +610,7 @@ REBTYPE(Vector)
 
         const RELVAL *picker = ARG(picker);
 
-            Pick_Vector(D_OUT, v, picker);
+        Pick_Vector(D_OUT, v, picker);
         return D_OUT; }
 
       case SYM_POKE_P: {

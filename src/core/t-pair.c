@@ -147,39 +147,6 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
 
 
 //
-//  PD_Pair: C
-//
-REB_R PD_Pair(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    REBINT n = 0;
-
-    if (IS_WORD(picker)) {
-        if (VAL_WORD_ID(picker) == SYM_X)
-            n = 1;
-        else if (VAL_WORD_ID(picker) == SYM_Y)
-            n = 2;
-        else
-            return R_UNHANDLED;
-    }
-    else if (IS_INTEGER(picker)) {
-        n = Int32(picker);
-        if (n != 1 && n != 2)
-            return R_UNHANDLED;
-    }
-    else
-        return R_UNHANDLED;
-
-    if (n == 1)
-        Copy_Cell(pvs->out, VAL_PAIR_X(pvs->out));
-    else
-        Copy_Cell(pvs->out, VAL_PAIR_Y(pvs->out));
-    return pvs->out;
-}
-
-
-//
 //  MF_Pair: C
 //
 void MF_Pair(REB_MOLD *mo, REBCEL(const*) v, bool form)

@@ -96,46 +96,6 @@ REB_R TO_Quoted(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
 
 
 //
-//  PD_Quoted: C
-//
-// Historically you could ask a LIT-PATH! questions like its length/etc, just
-// like any other path.  So it seems types wrapped in QUOTED! should respond
-// more or less like their non-quoted counterparts...
-//
-//     >> first just '[a b c]
-//     == a
-//
-// !!! It might be interesting if the answer were 'a instead, adding on a
-// level of quotedness that matched the argument...and if arguments had to be
-// quoted in order to go the reverse and had the quote levels taken off.
-// That would need strong evidence of being useful, however.
-//
-REB_R PD_Quoted(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    UNUSED(picker);
-
-    if (KIND3Q_BYTE(pvs->out) == REB_QUOTED)
-        Copy_Cell(pvs->out, VAL_QUOTED_PAYLOAD_CELL(pvs->out));
-    else {
-        assert(KIND3Q_BYTE(pvs->out) >= REB_MAX);
-        mutable_KIND3Q_BYTE(pvs->out) %= REB_64;
-        assert(
-            mutable_HEART_BYTE(pvs->out)
-            == mutable_KIND3Q_BYTE(pvs->out)
-        );
-    }
-
-    // We go through a dispatcher here and use R_REDO_UNCHECKED here because
-    // it avoids having to pay for the check of literal types in the general
-    // case--the cost is factored in the dispatch.
-
-    return R_REDO_UNCHECKED;
-}
-
-
-//
 //  REBTYPE: C
 //
 // It was for a time considered whether generics should be willing to operate
@@ -145,13 +105,16 @@ REB_R PD_Quoted(
 //     >> add (the '''1) 2
 //     == '''3
 //
+//     >> first the '[a b c]
+//     == a
+//
 // While a bit outlandish for ADD, it might seem to make more sense for FIND
 // and SELECT when you have a QUOTED! block or GROUP!.  However, the solution
 // that emerged after trying other options was to make REQUOTE:
 //
 // https://forum.rebol.info/t/1035
 //
-// So the number of things supported by QUOTED is limited to COPY.
+// So the number of things supported by QUOTED is limited to COPY at this time.
 //
 REBTYPE(Quoted)
 {

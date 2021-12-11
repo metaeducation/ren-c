@@ -279,43 +279,6 @@ static int Compare_Byte(void *thunk, const void *v1, const void *v2)
 
 
 //
-//  PD_Binary: C
-//
-REB_R PD_Binary(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    // Note: There was some more careful management of overflow here in the
-    // PICK and POKE actions, before unification.  But otherwise the code
-    // was less thorough.  Consider integrating this bit, though it seems
-    // that a more codebase-wide review should be given to the issue.
-    //
-    /*
-        REBINT len = Get_Num_From_Arg(arg);
-        if (
-            REB_I32_SUB_OF(len, 1, &len)
-            || REB_I32_ADD_OF(index, len, &index)
-            || index < 0 || index >= tail
-        ){
-            fail (Error_Out_Of_Range(arg));
-        }
-    */
-
-    const REBBIN *bin = VAL_BINARY(pvs->out);
-    if (IS_INTEGER(picker)) {
-        REBINT n = Int32(picker) + VAL_INDEX(pvs->out) - 1;
-        if (n < 0 or cast(REBLEN, n) >= BIN_LEN(bin))
-            return nullptr;
-
-        Init_Integer(pvs->out, *BIN_AT(bin, n));
-        return pvs->out;
-    }
-
-    return R_UNHANDLED;
-}
-
-
-//
 //  MF_Binary: C
 //
 void MF_Binary(REB_MOLD *mo, REBCEL(const*) v, bool form)
@@ -385,11 +348,11 @@ REBTYPE(Binary)
         const RELVAL *picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
-                return nullptr;
+            return nullptr;
 
         REBYTE b = *BIN_AT(VAL_BINARY(v), n);
 
-            return Init_Integer(D_OUT, b);
+        return Init_Integer(D_OUT, b);
       }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//

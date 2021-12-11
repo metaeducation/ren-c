@@ -404,7 +404,7 @@ REBTYPE(Sequence)
         const RELVAL *at = VAL_SEQUENCE_AT(D_SPARE, sequence, n);
 
         if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(sequence)))
-                return nullptr;
+            return nullptr;
 
         return Derelativize(D_OUT, at, specifier); }
 
@@ -434,38 +434,6 @@ REBTYPE(Sequence)
     }
 
     return R_UNHANDLED;
-}
-
-
-//
-//  PD_Sequence: C
-//
-// Shared code for picking/setting items out of PATH!s and TUPLE!s.
-// Note that compressed storage choices for these immutable types means they
-// may not be implemented underneath as arrays.
-//
-REB_R PD_Sequence(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    REBINT n;
-
-    if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
-        n = Int32(picker);
-        if (n == 0)
-            return nullptr; // Rebol2/Red convention: 0 is not a pick
-        n = n - 1;
-    }
-    else
-        fail (picker);
-
-    if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(pvs->out)))
-        return nullptr;
-
-    REBSPC *specifier = VAL_SEQUENCE_SPECIFIER(pvs->out);
-    const RELVAL *at = VAL_SEQUENCE_AT(FRM_SPARE(pvs), pvs->out, n);
-
-    return Derelativize(pvs->out, at, specifier);
 }
 
 

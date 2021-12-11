@@ -114,7 +114,6 @@ inline static REBVAL *Init_Custom_Datatype(
 enum Reb_Type_Hook_Index {
     IDX_GENERIC_HOOK,
     IDX_COMPARE_HOOK,
-    IDX_PATH_HOOK,
     IDX_MAKE_HOOK,
     IDX_TO_HOOK,
     IDX_MOLD_HOOK,

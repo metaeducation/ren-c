@@ -984,20 +984,6 @@ void Pick_Or_Poke_Date(
 
 
 //
-//  PD_Date: C
-//
-REB_R PD_Date(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    DECLARE_LOCAL (temp);
-    Move_Cell(temp, pvs->out);
-    Pick_Or_Poke_Date(pvs->out, temp, picker, nullptr);
-    return pvs->out;
-}
-
-
-//
 //  REBTYPE: C
 //
 REBTYPE(Date)
@@ -1022,9 +1008,9 @@ REBTYPE(Date)
 
         const RELVAL *picker = ARG(picker);
 
-            Pick_Or_Poke_Date(D_OUT, v, picker, nullptr);
-            return D_OUT;
-        }
+        Pick_Or_Poke_Date(D_OUT, v, picker, nullptr);
+        return D_OUT;
+    }
     else if (id == SYM_POKE_P) {
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//

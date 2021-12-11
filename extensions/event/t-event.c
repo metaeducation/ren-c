@@ -414,25 +414,6 @@ REB_R TO_Event(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
 
 //
-//  PD_Event: C
-//
-REB_R PD_Event(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    if (IS_WORD(picker)) {
-        DECLARE_LOCAL (temp);
-        Move_Cell(temp, pvs->out);
-        return Get_Event_Var(
-            pvs->out, temp, VAL_WORD_SYMBOL(picker)
-        );
-    }
-
-    return R_UNHANDLED;
-}
-
-
-//
 //  REBTYPE: C
 //
 REBTYPE(Event)
@@ -452,9 +433,9 @@ REBTYPE(Event)
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 
-            Get_Event_Var(D_OUT, event, VAL_WORD_SYMBOL(picker));
-            return D_OUT;
-        }
+        Get_Event_Var(D_OUT, event, VAL_WORD_SYMBOL(picker));
+        return D_OUT;
+    }
     else if (id == SYM_POKE_P) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//

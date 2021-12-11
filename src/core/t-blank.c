@@ -57,29 +57,6 @@ void MF_Blank(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
 
 //
-//  PD_Blank: C
-//
-// It is not possible to "poke" into a blank (and as an attempt at modifying
-// operation, it is not swept under the rug).  But if picking with GET-PATH!
-// or GET, we indicate no result with void.  (Ordinary path selection will
-// treat this as an error.)
-//
-// This could also be taken care of with special code in path dispatch, but
-// by putting it in a handler you only pay for the logic if you actually do
-// encounter a blank.
-//
-REB_R PD_Blank(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    UNUSED(picker);
-    UNUSED(pvs);
-
-    return nullptr;
-}
-
-
-//
 //  CT_Blank: C
 //
 // Must have a comparison function, otherwise SORT would not work on arrays

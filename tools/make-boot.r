@@ -450,7 +450,6 @@ hook-list: collect [
             {  /* $<NAME> = $<n> */
                 cast(CFUNC*, ${"T_" Hookname T 'Class}),  /* generic */
                 cast(CFUNC*, ${"CT_" Hookname T 'Class}),  /* compare */
-                cast(CFUNC*, ${"PD_" Hookname T 'Path}),  /* path */
                 cast(CFUNC*, ${"MAKE_" Hookname T 'Make}),  /* make */
                 cast(CFUNC*, ${"TO_" Hookname T 'Make}),  /* to */
                 cast(CFUNC*, ${"MF_" Hookname T 'Mold}),  /* mold */

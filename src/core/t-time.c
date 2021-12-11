@@ -471,20 +471,6 @@ void Poke_Time_Immediate(
 
 
 //
-//  PD_Time: C
-//
-REB_R PD_Time(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    DECLARE_LOCAL (temp);
-    Move_Cell(temp, pvs->out);
-    Pick_Time(pvs->out, temp, picker);
-    return pvs->out;
-}
-
-
-//
 //  REBTYPE: C
 //
 REBTYPE(Time)
@@ -504,9 +490,9 @@ REBTYPE(Time)
 
         const RELVAL *picker = ARG(picker);
 
-            Pick_Time(D_OUT, time, picker);
-            return D_OUT;
-        }
+        Pick_Time(D_OUT, time, picker);
+        return D_OUT;
+    }
     else if (id == SYM_POKE_P) {
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//

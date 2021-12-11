@@ -905,7 +905,7 @@ REBTYPE(Gob)
         // a giant array of integers instead of a pair that folding the pick
         // in could be worth consuming more than one step.)
         //
-            Pick_From_Gob(D_OUT, gob, picker);
+        Pick_From_Gob(D_OUT, gob, picker);
         return D_OUT; }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -916,44 +916,44 @@ REBTYPE(Gob)
 
         const RELVAL *picker = ARG(picker);
 
-            // The GOB! stores compressed bits for things like the SIZE, but
-            // when a variable is requested it synthesizes a PAIR!.  This is
-            // actually wasteful if someone is going to write `gob.size.x`,
-            // because that could have just given back an INTEGER! with no
-            // PAIR! node synthesized.  That is hardly concerning here.
-            //
-            // (It is more concerning in something like the FFI, where you have
-            // `some_struct.million_ints_array.1`.  Because picking the first
-            // element shouldn't require you to synthesize a BLOCK! of a
-            // million INTEGER!--but `some_struct.million_ints_array` might.)
-            //
-            // The real issue for GOB! comes up when you POKE, such as with
-            // `gob.size.x: 10`.  Handing off the "pick-poke" to PAIR! will
-            // have it update the synthesized pair and return nullptr to say
-            // there's no reason to update bits because it handled it.  But
-            // the bits in the GOB! need changing.
-            //
-            // So GOB! has 3 options (presuming "ignore sets" isn't one):
-            //
-            // 1. Don't just consume one of the ARG(steps), but go ahead and
-            //    do two--e.g. take control of what `size.x` means and don't
-            //    synthesize a PAIR! at all.
-            //
-            // 2. Synthesize a PAIR! and allow it to do whatever modifications
-            //    it wishes, but ignore its `nullptr` return status and pack
-            //    the full pair value down to the low-level bits in the GOB!
-            //
-            // 3. Drop this micro-optimization and store a PAIR! cell in the
-            //    GOB! structure.
-            //
-            // *The best option is 3*!  However, the point of keeping the GOB!
-            // code in Ren-C has been to try and imagine how to accommodate
-            // some of these categories of desires for optimization.  For this
-            // particular exercise, we go with option (2).
-            //
-            // We have to save the pair to do this, because we can't count on
-            // PAIR! dispatch not mucking with frame fields like ARG(location).
-            //
+        // The GOB! stores compressed bits for things like the SIZE, but
+        // when a variable is requested it synthesizes a PAIR!.  This is
+        // actually wasteful if someone is going to write `gob.size.x`,
+        // because that could have just given back an INTEGER! with no
+        // PAIR! node synthesized.  That is hardly concerning here.
+        //
+        // (It is more concerning in something like the FFI, where you have
+        // `some_struct.million_ints_array.1`.  Because picking the first
+        // element shouldn't require you to synthesize a BLOCK! of a
+        // million INTEGER!--but `some_struct.million_ints_array` might.)
+        //
+        // The real issue for GOB! comes up when you POKE, such as with
+        // `gob.size.x: 10`.  Handing off the "pick-poke" to PAIR! will
+        // have it update the synthesized pair and return nullptr to say
+        // there's no reason to update bits because it handled it.  But
+        // the bits in the GOB! need changing.
+        //
+        // So GOB! has 3 options (presuming "ignore sets" isn't one):
+        //
+        // 1. Don't just consume one of the ARG(steps), but go ahead and
+        //    do two--e.g. take control of what `size.x` means and don't
+        //    synthesize a PAIR! at all.
+        //
+        // 2. Synthesize a PAIR! and allow it to do whatever modifications
+        //    it wishes, but ignore its `nullptr` return status and pack
+        //    the full pair value down to the low-level bits in the GOB!
+        //
+        // 3. Drop this micro-optimization and store a PAIR! cell in the
+        //    GOB! structure.
+        //
+        // *The best option is 3*!  However, the point of keeping the GOB!
+        // code in Ren-C has been to try and imagine how to accommodate
+        // some of these categories of desires for optimization.  For this
+        // particular exercise, we go with option (2).
+        //
+        // We have to save the pair to do this, because we can't count on
+        // PAIR! dispatch not mucking with frame fields like ARG(location).
+        //
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 

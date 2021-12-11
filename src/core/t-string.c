@@ -386,60 +386,6 @@ static int Compare_Chr(void *thunk, const void *v1, const void *v2)
 
 
 //
-//  PD_String: C
-//
-REB_R PD_String(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    // Note: There was some more careful management of overflow here in the
-    // PICK and POKE actions, before unification.  But otherwise the code
-    // was less thorough.  Consider integrating this bit, though it seems
-    // that a more codebase-wide review should be given to the issue.
-    //
-    /*
-        REBINT len = Get_Num_From_Arg(arg);
-        if (
-            REB_I32_SUB_OF(len, 1, &len)
-            or REB_I32_ADD_OF(index, len, &index)
-            or index < 0 or index >= tail
-        ){
-            fail (Error_Out_Of_Range(arg));
-        }
-    */
-
-    const REBSTR *s = VAL_STRING(pvs->out);
-    if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
-        REBINT n = Int32(picker);
-        if (n == 0)
-            return nullptr; // Rebol2/Red convention, 0 is bad pick
-        if (n < 0)
-            ++n; // Rebol2/Red convention, `pick tail "abc" -1` is #"c"
-        n += VAL_INDEX(pvs->out) - 1;
-        if (n < 0 or cast(REBLEN, n) >= STR_LEN(s))
-            return nullptr;
-
-        Init_Char_Unchecked(pvs->out, GET_CHAR_AT(s, n));
-        return pvs->out;
-    }
-
-    if (
-        IS_BLANK(picker)
-        or IS_WORD(picker)
-        or IS_TUPLE(picker)
-        or ANY_STRING(picker)
-    ){
-        fail (
-            "FILE! pathing replaced by %% and MAKE-FILE, see: "
-            "https://forum.rebol.info/t/1398"
-        );
-    }
-
-    return R_UNHANDLED;
-}
-
-
-//
 //  Form_Uni_Hex: C
 //
 // Fast var-length hex output for uni-chars.
@@ -814,7 +760,7 @@ REBTYPE(String)
         const RELVAL *picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
-                return nullptr;
+            return nullptr;
 
         REBUNI c = GET_CHAR_AT(VAL_STRING(v), n);
 

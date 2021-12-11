@@ -574,13 +574,6 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     const REBPAR *param;
 
   union {
-    //
-    // !!! PD_Xxx style path dispatch is being removed.
-    //
-    struct {
-        const RELVAL *picker;
-    } path;
-
     // Used to slip cell to re-evaluate into Eval_Core()
     //
     struct {

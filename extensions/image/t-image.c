@@ -1157,7 +1157,7 @@ REBTYPE(Image)
 
         const RELVAL *picker = ARG(picker);
 
-            Pick_Image(D_OUT, image, picker);
+        Pick_Image(D_OUT, image, picker);
         return D_OUT; }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//

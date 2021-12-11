@@ -424,40 +424,6 @@ REB_R TO_Varargs(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
 
 //
-//  PD_Varargs: C
-//
-// Implements the PICK* operation.
-//
-REB_R PD_Varargs(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    if (not IS_INTEGER(picker))
-        fail (picker);
-
-    if (VAL_INT32(picker) != 1)
-        fail (Error_Varargs_No_Look_Raw());
-
-    DECLARE_LOCAL (location);
-    Move_Cell(location, pvs->out);
-
-    if (Do_Vararg_Op_Maybe_End_Throws(
-        pvs->out,
-        VARARG_OP_FIRST,
-        location
-    )){
-        assert(false); // VARARG_OP_FIRST can't throw
-        return R_THROWN;
-    }
-
-    if (IS_END(pvs->out))
-        Init_Endish_Nulled(pvs->out);
-
-    return pvs->out;
-}
-
-
-//
 //  REBTYPE: C
 //
 // Handles the very limited set of operations possible on a VARARGS!

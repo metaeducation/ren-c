@@ -259,37 +259,6 @@ void MF_Issue(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
 
 //
-//  PD_Issue: C
-//
-// It's not clear if allowing picking of codepoints as integers is a good or
-// bad idea for ISSUE!.  But add it in just to try.
-//
-REB_R PD_Issue(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    if (not IS_INTEGER(picker))
-        return R_UNHANDLED;
-
-    REBI64 n = VAL_INT64(picker);
-    if (n <= 0)
-        return nullptr;
-
-    REBLEN len;
-    REBCHR(const*) cp = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, pvs->out);
-    if (cast(REBLEN, n) > len)
-        return nullptr;
-
-    REBUNI c;
-    cp = NEXT_CHR(&c, cp);
-    for (; n != 1; --n)
-        cp = NEXT_CHR(&c, cp);
-
-    return Init_Integer(pvs->out, c);
-}
-
-
-//
 //  REBTYPE: C
 //
 REBTYPE(Issue)

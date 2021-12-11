@@ -676,58 +676,6 @@ REB_R TO_Context(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
 
 //
-//  PD_Context: C
-//
-REB_R PD_Context(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    REBCTX *c = VAL_CONTEXT(pvs->out);
-
-    if (not IS_WORD(picker))
-        return R_UNHANDLED;
-
-    const bool strict = false;
-
-    // See if the binding of the word is already to the context (so there's
-    // no need to go hunting).  'x
-    //
-    REBVAL *var;
-    if (IS_MODULE(pvs->out)) {
-        var = MOD_VAR(c, VAL_WORD_SYMBOL(picker), strict);
-        if (var == nullptr)
-            return R_UNHANDLED;
-    }
-    else if (BINDING(picker) == c) {
-        var = CTX_VAR(c, VAL_WORD_INDEX(picker));
-    }
-    else {
-        REBLEN n = Find_Symbol_In_Context(
-            pvs->out,
-            VAL_WORD_SYMBOL(picker),
-            strict
-        );
-
-        if (n == 0)
-            return R_UNHANDLED;
-
-        var = CTX_VAR(c, n);
-
-        // !!! As an experiment, try caching the binding index in the word.
-        // This "corrupts" it, but if we say paths effectively own their
-        // top-level words that could be all right.  Note this won't help if
-        // the word is an evaluative product, as the bits live in the cell
-        // and it will be discarded.
-        //
-        INIT_VAL_WORD_BINDING(m_cast(RELVAL*, picker), c);
-        INIT_VAL_WORD_INDEX(m_cast(RELVAL*, picker), n);
-    }
-
-    return Copy_Cell(pvs->out, var);
-}
-
-
-//
 //  meta-of: native [
 //
 //  {Get a reference to the "meta" context associated with a value.}
@@ -1198,8 +1146,8 @@ REBTYPE(Context)
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
         REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
-            if (not var)
-                fail (Error_Bad_Pick_Raw(picker));
+        if (not var)
+            fail (Error_Bad_Pick_Raw(picker));
 
         assert(NOT_CELL_FLAG(var, PROTECTED));
         Copy_Cell(var, setval);

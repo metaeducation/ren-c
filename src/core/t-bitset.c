@@ -519,20 +519,6 @@ bool Check_Bits(const REBBIN *bset, const RELVAL *val, bool uncased)
 
 
 //
-//  PD_Bitset: C
-//
-REB_R PD_Bitset(
-    REBPVS *pvs,
-    const RELVAL *picker
-){
-    const REBBIN *bset = VAL_BITSET(pvs->out);
-    if (Check_Bits(bset, picker, false))
-        return Init_True(pvs->out);
-    return nullptr; // !!! Red false on out of range, R3-Alpha NONE! (?)
-}
-
-
-//
 //  Trim_Tail_Zeros: C
 //
 // Remove extra zero bytes from end of byte string.
