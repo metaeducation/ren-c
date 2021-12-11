@@ -1048,6 +1048,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // blank at its head, and it evaluates to itself.
 
       case REB_PATH: {
+        if (HEART_BYTE(v) != REB_WORD) {
+            const RELVAL *temp = VAL_SEQUENCE_AT(f_spare, v, 0);
+            if (ANY_INERT(temp)) {
+                Derelativize(f->out, v, v_specifier);
+                break;
+            }
+        }
+
         if (Get_Path_Push_Refinements_Throws(f_spare, f->out, v, v_specifier)) {
             Move_Cell(f->out, f_spare);
             goto return_thrown;
