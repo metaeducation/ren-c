@@ -675,7 +675,6 @@ inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
     const REBSYM *symbol,
     bool writable
 ){
-    UNUSED(writable);
     bool strict = false;
     REBVAR *var;
     if (IS_MODULE(context)) {
@@ -688,6 +687,8 @@ inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
         else
             var = CTX_VAR(VAL_CONTEXT(context), n);
     }
+    if (var and writable and GET_CELL_FLAG(var, PROTECTED))
+        fail (Error_Protected_Key(&symbol));
     return var;
 }
 
