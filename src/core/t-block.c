@@ -856,32 +856,16 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
         REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
-        if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array))) {
-            if (steps_left == 1)
+        if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
                 return nullptr;
-            fail ("Cannot pick with steps left from null");
-        }
 
         const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
 
-        if (steps_left == 1) {
             Derelativize(D_OUT, at, VAL_SPECIFIER(array));
             Inherit_Const(D_OUT, array);
-            return D_OUT;
-        }
-
-        Derelativize(ARG(location), at, VAL_SPECIFIER(array));
-        Inherit_Const(ARG(location), array);
-        ++VAL_INDEX_RAW(ARG(steps));
-
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+        return D_OUT; }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -890,39 +874,9 @@ REBTYPE(Array)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
+        const RELVAL *picker = ARG(picker);
 
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-
-        REBVAL *setval;
-
-        if (steps_left == 1)  // this is the last step
-            setval = Meta_Unquotify(ARG(value));
-        else {
-            REBINT n = Try_Get_Array_Index_From_Picker(array, picker);
-            if (n < 0 or n >= cast(REBINT, VAL_LEN_HEAD(array)))
-                fail (Error_Out_Of_Range(picker));
-
-            const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
-            Derelativize(D_OUT, at, VAL_SPECIFIER(array));
-            Inherit_Const(D_OUT, array);
-
-            ++VAL_INDEX_RAW(ARG(steps));
-
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
-            if (r == R_THROWN)
-                return R_THROWN;
-
-            if (r == nullptr)  // update doesn't need our bits to change
-                return nullptr;
-
-            assert(r == D_OUT);
-            assert(VAL_TYPE(at) == VAL_TYPE(D_OUT));
-            setval = D_OUT;
-        }
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
         if (IS_BAD_WORD(setval) and GET_CELL_FLAG(setval, ISOTOPE))
             fail (Error_Bad_Isotope(setval));  // can't put in blocks

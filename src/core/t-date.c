@@ -1020,24 +1020,11 @@ REBTYPE(Date)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
+        const RELVAL *picker = ARG(picker);
 
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-
-        if (steps_left == 1) {
             Pick_Or_Poke_Date(D_OUT, v, picker, nullptr);
             return D_OUT;
         }
-
-        Pick_Or_Poke_Date(D_SPARE, v, picker, nullptr);
-        Move_Cell(ARG(location), D_SPARE);
-        ++VAL_INDEX_RAW(ARG(steps));
-
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb);
-    }
     else if (id == SYM_POKE_P) {
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -1045,38 +1032,9 @@ REBTYPE(Date)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
+        const RELVAL *picker = ARG(picker);
 
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-
-        REBVAL *setval;
-
-        if (steps_left == 1)
-            setval = Meta_Unquotify(ARG(value));
-        else {
-            Pick_Or_Poke_Date(D_OUT, v, picker, nullptr);
-
-            bool time_needs_writeback = IS_TIME(D_OUT);
-
-            ++VAL_INDEX_RAW(ARG(steps));
-
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
-            if (r == R_THROWN)
-                return R_THROWN;
-
-            if (r == nullptr)  // container doesn't need bits to update
-                return nullptr;
-
-            assert(r == D_OUT);
-            if (not time_needs_writeback)
-                fail ("Unknown Writeback in DATE!");
-
-            assert(IS_TIME(D_OUT));
-            setval = D_OUT;
-        }
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
         Pick_Or_Poke_Date(nullptr, v, picker, setval);
 

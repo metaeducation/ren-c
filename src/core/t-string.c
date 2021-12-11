@@ -811,27 +811,14 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
         REBINT n;
-        if (not Did_Get_Series_Index_From_Picker(&n, v, picker)) {
-            if (steps_left == 1)
+        if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
                 return nullptr;
-            fail (picker);
-        }
 
         REBUNI c = GET_CHAR_AT(VAL_STRING(v), n);
 
-        if (steps_left == 1)
-            return Init_Char_Unchecked(D_OUT, c);
-
-        ++VAL_INDEX_RAW(ARG(steps));
-        Init_Char_Unchecked(ARG(location), c);
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+        return Init_Char_Unchecked(D_OUT, c); }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -840,37 +827,12 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));
 
-        REBVAL *setval;
-
-        if (steps_left == 1)
-            setval = Meta_Unquotify(ARG(value));
-        else {
-            REBUNI c = GET_CHAR_AT(VAL_STRING(v), n);
-
-            Init_Char_Unchecked(D_OUT, c);
-            ++VAL_INDEX_RAW(ARG(steps));
-
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
-            if (r == R_THROWN)
-                return R_THROWN;
-
-            if (r == nullptr)  // our cell's bits don't need to change
-                return nullptr;
-
-            assert(r == D_OUT);
-            assert(IS_CHAR(D_OUT));
-            setval = D_OUT;
-        }
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
         REBUNI c;
         if (IS_CHAR(setval)) {

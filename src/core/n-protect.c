@@ -274,19 +274,7 @@ static void Protect_Word_Value(REBVAL *word, REBFLGS flags)
         }
     }
     else if (ANY_SEQUENCE(word)) {
-        REBLEN index;
-        REBCTX *context = Resolve_Path(word, &index);
-        if (index == 0)
-            fail ("Couldn't resolve PATH! in Protect_Word_Value");
-
-        if (context != NULL) {
-            REBVAL *var = CTX_VAR(context, index);
-            Protect_Var(var, flags);
-            if (flags & PROT_DEEP) {
-                Protect_Value(var, flags);
-                Uncolor(var);
-            }
-        }
+        fail ("Sequences no longer handled in Protect_Unprotect");
     }
 }
 
@@ -346,16 +334,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
                     );
                 }
                 else if (IS_PATH(value)) {
-                    if (Eval_Path_Throws_Core(
-                        safe,
-                        value,
-                        SPECIFIED,
-                        EVAL_MASK_DEFAULT | EVAL_FLAG_NO_PATH_GROUPS
-                    )){
-                        panic (safe); // shouldn't be possible... no executions!
-                    }
-
-                    var = safe;
+                    fail ("PATH! handling no longer in Protect_Unprotect");
                 }
                 else {
                     Copy_Cell(safe, value);
@@ -388,10 +367,10 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 //  {Protect a series or a variable from being modified.}
 //
 //      return: [
-//          any-word! any-sequence! any-series! bitset! map! object! module!
+//          any-word! any-tuple! any-series! bitset! map! object! module!
 //      ]
 //      value [
-//          any-word! any-sequence! any-series! bitset! map! object! module!
+//          any-word! any-tuple! any-series! bitset! map! object! module!
 //      ]
 //      /deep "Protect all sub-series/objects as well"
 //      /words "Process list as words (and path words)"
@@ -403,9 +382,23 @@ REBNATIVE(protect)
 {
     INCLUDE_PARAMS_OF_PROTECT;
 
+    REBVAL *v = ARG(value);
+    if (IS_TUPLE(v)) {
+        if (Set_Var_Core_Updater_Throws(
+            D_OUT,
+            nullptr,
+            v,
+            SPECIFIED,
+            Lib(TRUE),
+            Lib(PROTECT_P)
+        )){
+            return R_THROWN;
+        }
+        RETURN (v);
+    }
+
     // Avoid unused parameter warnings (core routine handles them via frame)
     //
-    UNUSED(PAR(value));
     UNUSED(PAR(deep));
     UNUSED(PAR(words));
     UNUSED(PAR(values));

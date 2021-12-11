@@ -1176,25 +1176,14 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
         const REBSYM *symbol = Symbol_From_Picker(context, picker);
 
         const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
-        if (steps_left == 1)
-            return Copy_Cell(D_OUT, var);
-
-        ++VAL_INDEX_RAW(ARG(steps));  // take `inner` out of steps
-        Copy_Cell(ARG(location), var);
-
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+        return Copy_Cell(D_OUT, var); }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -1203,50 +1192,43 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
         const REBSYM *symbol = Symbol_From_Picker(context, picker);
 
-        REBVAL *setval;
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
-        if (steps_left == 1)  // `obj.field: 10`, handle now
-            setval = Meta_Unquotify(ARG(value));
-        else {
-            const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
+        REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
             if (not var)
                 fail (Error_Bad_Pick_Raw(picker));
 
-          #if !defined(NDEBUG)
-            enum Reb_Kind var_type = VAL_TYPE(var);
-          #endif
+        assert(NOT_CELL_FLAG(var, PROTECTED));
+        Copy_Cell(var, setval);
+        return nullptr; }  // caller's REBCTX* is not stale, no update needed
 
-            ++VAL_INDEX_RAW(ARG(steps));  // take `inner` out of steps
 
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, var);
-            if (r == R_THROWN)
-                return R_THROWN;
+    //=//// PROTECT* ///////////////////////////////////////////////////////=//
 
-            TRASH_POINTER_IF_DEBUG(var);  // arbitrary code may moved memory
+      case SYM_PROTECT_P: {
+        INCLUDE_PARAMS_OF_PROTECT_P;
+        UNUSED(ARG(location));
 
-            if (r == nullptr)  // container bits don't need to change
-                return nullptr;
+        const RELVAL *picker = ARG(picker);
+        const REBSYM *symbol = Symbol_From_Picker(context, picker);
 
-            assert(r == D_OUT);
-          #if !defined(NDEBUG)
-            assert(VAL_TYPE(D_OUT) == var_type);
-          #endif
-            setval = D_OUT;
-        }
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
-        REBVAL *var = TRY_VAL_CONTEXT_MUTABLE_VAR(context, symbol);
+        REBVAR *var = m_cast(REBVAR*, TRY_VAL_CONTEXT_VAR(context, symbol));
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
-        Copy_Cell(var, setval);
+        if (not IS_LOGIC(setval))
+            fail ("PROTECT* currently takes just logic");
+
+        if (VAL_LOGIC(setval))
+            SET_CELL_FLAG(var, PROTECTED);
+        else
+            CLEAR_CELL_FLAG(var, PROTECTED);
+
         return nullptr; }  // caller's REBCTX* is not stale, no update needed
 
 

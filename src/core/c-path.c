@@ -615,22 +615,14 @@ REBNATIVE(pick)
 {
     INCLUDE_PARAMS_OF_PICK;
 
-    REBVAL *location = ARG(location);
-    REBVAL *picker = ARG(picker);
-
-    // !!! We pay the cost for a block here, because the interface of PICK
-    // is geared around PATH! and moving in steps.  Review.
-    //
-    REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
-    Move_Cell(ARR_SINGLE(a), picker);
-    Init_Block(picker, a);
+    UNUSED(ARG(picker));
 
     // !!! Here we are assuming frame compatibility of PICK with PICK*.
     // This would be more formalized if we were writing this in usermode and
     // made PICK an ENCLOSE of PICK*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    return Run_Generic_Dispatch(location, frame_, Canon(PICK_P));
+    return Run_Generic_Dispatch(ARG(location), frame_, Canon(PICK_P));
 }
 
 
@@ -643,10 +635,11 @@ REBNATIVE(pick)
 //          {Same as value}
 //      location [any-value!]
 //          {(modified)}
-//      picker
+//      picker [any-value!]
 //          {Index offset, symbol, or other value to use as index}
 //      ^value [<opt> any-value!]
 //          {The new value}
+//      /immediate "Allow modification even if it will not mutate location"
 //  ]
 //
 REBNATIVE(poke)
@@ -658,12 +651,8 @@ REBNATIVE(poke)
 {
     INCLUDE_PARAMS_OF_POKE;
 
-    REBVAL *picker = ARG(picker);
+    UNUSED(ARG(picker));
     REBVAL *location = ARG(location);
-
-    REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
-    Move_Cell(ARR_SINGLE(a), picker);
-    Init_Block(picker, a);
 
     // !!! Here we are assuming frame compatibility of POKE with POKE*.
     // This would be more formalized if we were writing this in usermode and
@@ -683,11 +672,8 @@ REBNATIVE(poke)
     // The date was changed, but there was no side effect.  These types of
     // operations are likely accidents and should raise errors.
     //
-    // !!! Consider offering a refinement to allow this, but returns the
-    // updated value, e.g. would return 12-Dec-1999
-    //
-    if (r != nullptr)
-        fail ("Updating immediate value in POKE, results would be discarded");
+    if (r != nullptr and not REF(immediate))
+        fail ("POKE of immediate won't change value, use /IMMEDIATE if okay");
 
     RETURN (ARG(value));  // return the value we got in
 }

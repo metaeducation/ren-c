@@ -448,24 +448,13 @@ REBTYPE(Event)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 
-        if (steps_left == 1) {
             Get_Event_Var(D_OUT, event, VAL_WORD_SYMBOL(picker));
             return D_OUT;
         }
-
-        Get_Event_Var(ARG(location), event, VAL_WORD_SYMBOL(picker));
-        ++VAL_INDEX_RAW(ARG(steps));
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb);
-    }
     else if (id == SYM_POKE_P) {
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -473,32 +462,11 @@ REBTYPE(Event)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = Meta_Unquotify(ARG(picker));
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 
-        REBVAL *setval;
-
-        if (steps_left == 1)
-            setval = ARG(value);
-        else {
-            Get_Event_Var(D_OUT, event, VAL_WORD_SYMBOL(picker));
-            ++VAL_INDEX_RAW(ARG(steps));
-
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
-            if (r == R_THROWN)
-                return R_THROWN;
-            if (r == nullptr)  // this EVENT!'s bits don't need to change
-                return nullptr;
-
-            fail ("Unknown Writeback in EVENT!");
-        }
-
+        REBVAL *setval = ARG(value);
         if (!Set_Event_Var(event, picker, setval))
             return R_UNHANDLED;
 

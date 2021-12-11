@@ -1008,6 +1008,12 @@ void Startup_Core(void)
     Manage_Series(natives_catalog);
     PUSH_GC_GUARD(natives_catalog);
 
+    // boot->generics is the list in %generics.r
+    //
+    REBARR *generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
+    Manage_Series(generics_catalog);
+    PUSH_GC_GUARD(generics_catalog);
+
     // ^ and @ used to be their own datatypes, but were transitioned to SYMBOL!
     // and looked up like everything else.  But they are used early on.  In
     // Startup_Lib() they were created and bound, but the natives weren't
@@ -1024,12 +1030,6 @@ void Startup_Core(void)
 
     Set_Var_May_Fail(lib_caret, SPECIFIED, Lib(META));
     Set_Var_May_Fail(lib_at, SPECIFIED, Lib(THE));
-
-    // boot->generics is the list in %generics.r
-    //
-    REBARR *generics_catalog = Startup_Generics(SPECIFIC(&boot->generics));
-    Manage_Series(generics_catalog);
-    PUSH_GC_GUARD(generics_catalog);
 
     // boot->errors is the error definition list from %errors.r
     //

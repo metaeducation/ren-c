@@ -252,21 +252,11 @@ REBTYPE(Pair)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
         const REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
 
-        if (steps_left == 1)
-            return Copy_Cell(D_OUT, which);
-
-        Copy_Cell(ARG(location), which);
-        ++VAL_INDEX_RAW(ARG(steps));
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+        return Copy_Cell(D_OUT, which); }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -275,32 +265,10 @@ REBTYPE(Pair)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
 
-        REBVAL *setval;
-
-        if (steps_left == 1)  // e.g. `pair.x: 10`
-            setval = Meta_Unquotify(ARG(value));
-        else {
-            const REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
-
-            Copy_Cell(D_OUT, which);
-            ++VAL_INDEX_RAW(ARG(steps));
-
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
-            if (r == R_THROWN)
-                return R_THROWN;
-            if (r == nullptr)  // our cell's bits don't need to change
-                return nullptr;
-
-            fail ("Unknown Writeback in PAIR!");
-        }
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
         if (not IS_INTEGER(setval) and not IS_DECIMAL(setval))
             return R_UNHANDLED;

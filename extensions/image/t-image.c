@@ -1155,21 +1155,10 @@ REBTYPE(Image)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
+        const RELVAL *picker = ARG(picker);
 
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-
-        if (steps_left == 1) {
             Pick_Image(D_OUT, image, picker);
-            return D_OUT;
-        }
-
-        Pick_Image(ARG(location), image, picker);
-        ++VAL_INDEX_RAW(ARG(steps));
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+        return D_OUT; }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -1177,30 +1166,9 @@ REBTYPE(Image)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
+        const RELVAL *picker = ARG(picker);
 
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-
-        REBVAL *setval;
-
-        if (steps_left == 1)
-            setval = Meta_Unquotify(ARG(value));
-        else {
-            Pick_Image(D_OUT, image, picker);
-
-            ++VAL_INDEX_RAW(ARG(steps));
-
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
-            if (r == R_THROWN)
-                return R_THROWN;
-            if (r == nullptr)  // container bits don't need to change
-                return nullptr;
-
-            fail ("Unknown Writeback in IMAGE!");
-        }
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
         Poke_Image_Fail_If_Read_Only(image, picker, setval);
         return nullptr; }

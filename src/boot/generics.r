@@ -346,8 +346,8 @@ pick*: generic [
         [<opt> any-value!]
     location "Target value"
         [any-value!]
-    steps "A pre-COMPOSE'd list of steps in the PICK chain"
-        [the-block!]
+    picker "Field or index to use"
+        [any-value!]
 ]
 
 
@@ -358,10 +358,24 @@ poke*: generic [
         [<opt> any-value!]
     location "Target value (on some steps, bits are modified)"
         [any-value!]
-    steps "A pre-COMPOSE'd list of steps in the POKE chain"
-        [the-block!]
+    picker "The property to update"
+        [any-value!]
     ^value "Value to POKE"
         [<opt> any-value!]
+]
+
+
+protect*: generic [
+    {Low-level hook for PROTECT, used as /UPDATER with SET}
+
+    return: "Bits referencing cell must update (nullptr if no update needed)"
+        [<opt> any-value!]
+    location "Target value (on some steps, bits are modified)"
+        [any-value!]
+    picker "The property to update (e.g. object field)"
+        [any-value!]
+    ^value "Protection signal, currently a LOGIC!"
+        [logic!]
 ]
 
 

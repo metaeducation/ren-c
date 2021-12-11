@@ -784,46 +784,29 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
 
         bool strict = false;
 
         REBINT n = Find_Map_Entry(
             m_cast(REBMAP*, VAL_MAP(map)),  // not modified
             picker,
-            VAL_SPECIFIER(steps),
+            SPECIFIED,
             nullptr,  // no value, so map not changed
             SPECIFIED,
             strict
         );
 
-        if (n == 0) {
-            if (steps_left == 1)
+        if (n == 0)
                 return nullptr;
-            fail ("Can't pick map item");
-        }
 
         const REBVAL *val = SPECIFIC(
             ARR_AT(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
         );
-        if (IS_NULLED(val)) {  // zombie entry, means unused
-            if (steps_left == 1)
+        if (IS_NULLED(val))  // zombie entry, means unused
                 return nullptr;
-            fail ("Can't pick map item");
-        }
 
-        if (steps_left == 1)
-            return Copy_Cell(D_OUT, val);
-
-        Copy_Cell(ARG(location), val);
-        ++VAL_INDEX_RAW(ARG(steps));
-
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+        return Copy_Cell(D_OUT, val); }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -831,12 +814,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
 
         // Fetching and setting with path-based access is case-preserving for
         // initial insertions.  However, the case-insensitivity means that all
@@ -847,53 +825,12 @@ REBTYPE(Map)
         //
         bool strict = false;
 
-        REBVAL *setval;
-
-        if (steps_left == 1)
-            setval = Meta_Unquotify(ARG(value));
-        else {
-            REBINT n = Find_Map_Entry(
-                m_cast(REBMAP*, VAL_MAP(map)),  // not modified
-                picker,
-                VAL_SPECIFIER(steps),
-                nullptr,  // no value, so map not changed
-                SPECIFIED,
-                strict
-            );
-
-            if (n == 0)
-                fail ("Can't pick map item");
-
-            const REBVAL *val = SPECIFIC(
-                ARR_AT(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
-            );
-            if (IS_NULLED(val))  // zombie entry, means unused
-                fail ("Can't pick map item");
-
-            // Now handling `dict.xxx.yyy` or `dict.xxx.yyy: 10`
-            //
-            // Reuse the frame built for this PICK-POKE* call for XXX, by
-            // updating the location and advancing the steps index.
-            //
-            // !!! Assumes frame compatibility, review enforcement!
-            //
-            ++VAL_INDEX_RAW(ARG(steps));
-
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, val);
-            if (r == R_THROWN)
-                return R_THROWN;
-
-            if (r == nullptr)  // container bits don't need to change
-                return nullptr;
-
-            assert(r == D_OUT);
-            setval = D_OUT;
-        }
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
         REBINT n = Find_Map_Entry(
             VAL_MAP_ENSURE_MUTABLE(map),  // modified
             picker,
-            VAL_SPECIFIER(steps),
+            SPECIFIED,
             setval,  // value to set (either ARG(value) or f->out)
             SPECIFIED,
             strict

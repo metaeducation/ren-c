@@ -131,21 +131,14 @@ REBTYPE(Blank)
           INCLUDE_PARAMS_OF_PICK_P;
 
         UNUSED(ARG(location));
-
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
+        UNUSED(ARG(picker));
 
         // !!! The idea of allowing you to pick one step of anything out of
         // a BLANK! and return NULL was thrown in as a potential way of
         // getting an interesting distinction between NULL and BLANK!.  It
         // may not be the best idea.
         //
-        if (steps_left == 1)
-            return nullptr;
-
-        fail ("Cannot PICK more than one step out of a BLANK!"); }
+        return nullptr; }
 
       case SYM_COPY: { // since `copy/deep [1 _ 2]` is legal, allow `copy _`
         INCLUDE_PARAMS_OF_COPY;

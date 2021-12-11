@@ -528,123 +528,6 @@ REBNATIVE(collect_words)
 }
 
 
-// Utility routine used by both GET and SET mechanics.  Its job is that when
-// the operation has decided it's not "simple" and will need to translate
-// into a call to PICK or POKE, to turn the sequence or BLOCK! it has into
-// a THE-BLOCK! of steps.
-//
-static bool Fill_In_Steps_Throws(
-    REBVAL *out,
-    option(REBVAL*) steps_out,
-    REBVAL *steps,
-    const RELVAL *var,
-    REBSPC *var_specifier
-){
-    if (IS_THE_BLOCK(var)) {
-        Derelativize(steps, var, var_specifier);
-    }
-    else {
-        assert(ANY_SEQUENCE(var));
-        assert(HEART_BYTE(var) == REB_BLOCK);
-
-        const RELVAL *tail;
-        const RELVAL *head = VAL_ARRAY_AT(&tail, var);
-
-        // Check to see if there are no GROUP!s to evaluate.  If there are not
-        // the path can be used as pick steps.
-        //
-        // !!! This could be optimized if sequences cached if there were any
-        // groups in them.
-        //
-        const RELVAL *item = head;
-        for (; item != tail; ++item) {
-            if (IS_GROUP(item))
-                break;
-        }
-        if (item == tail) {
-            Derelativize(steps, var, var_specifier);
-            mutable_KIND3Q_BYTE(steps) = REB_THE_BLOCK;
-            mutable_HEART_BYTE(steps) = REB_THE_BLOCK;
-
-            return false;
-        }
-
-        if (not steps_out)
-            fail (Error_Bad_Get_Group_Raw(var));
-
-        // If there are GROUP!s, we need a new array.  We know the array will
-        // be the same size as the input.
-        //
-        REBLEN len = VAL_LEN_AT(var);
-        REBARR *a = Make_Array_Core(len, SERIES_FLAG_MANAGED);
-        Init_Any_Array(steps, REB_THE_BLOCK, a);  // GC protection
-
-        item = head;
-        for (; item != tail; ++item) {
-            REBSPC *derived = Derive_Specifier(var_specifier, var);
-            if (not IS_GROUP(item)) {
-                //
-                // !!! Technically this block doesn't need to be derelativized.
-                // Only the first value will have a binding, and the block
-                // could have the same relativism as the original sequence.
-                // Review such micro-optimizations after proof-of-concept.
-                //
-                Derelativize(Alloc_Tail_Array(a), item, derived);
-                continue;
-            }
-
-            DECLARE_LOCAL (temp);
-            if (Do_Any_Array_At_Throws(temp, item, derived)) {
-                Move_Cell(out, temp);
-                return true;
-            }
-            RELVAL *dest = Alloc_Tail_Array(a);
-            Move_Cell(dest, temp);
-
-            // By convention, picker steps quote the first item if it was a
-            // GROUP!.  It has to be somehow different because `('a).b` is
-            // trying to pick B out of the WORD! a...not out of what is
-            // fetched from A.  So if the convention is that the first item
-            // of a "steps" block needs to be "fetched" we quote it.
-            //
-            if (item == head)
-                Quotify(dest, 1);
-        }
-    }
-    return false;
-}
-
-
-// Utility routine used by both GET and SET mechanics.  Its job is that once
-// a list of steps has been built, to pick off the first step to use as the
-// ARG(location) for the PICK* or the POKE* being called.
-//
-static const RELVAL *First_Of_Process_Steps_For_Location(
-    REBVAL *location,
-    REBVAL *steps
-){
-    const RELVAL *first = VAL_ARRAY_ITEM_AT(steps);
-    if (IS_QUOTED(first)) {
-        Derelativize(location, first, VAL_SPECIFIER(steps));
-        Unquotify(location, 1);
-    }
-    else if (IS_WORD(first)) {
-        Copy_Cell(
-            location,
-            Lookup_Word_May_Fail(first, VAL_SPECIFIER(steps))
-        );
-        if (IS_BAD_WORD(location) and GET_CELL_FLAG(location, ISOTOPE))
-            fail (Error_Bad_Word_Get(first, location));
-    }
-    else
-        fail (steps);
-
-    ++VAL_INDEX_RAW(steps);
-
-    return first;  // may be needed for writeback
-}
-
-
 //
 //  Get_Var_Push_Refinements_Throws: C
 //
@@ -715,6 +598,8 @@ bool Get_Var_Push_Refinements_Throws(
         return threw;
     }
 
+    REBDSP dsp_orig = DSP;
+
     if (ANY_SEQUENCE(var)) {
         switch (HEART_BYTE(var)) {
           case REB_BYTES:
@@ -749,59 +634,88 @@ bool Get_Var_Push_Refinements_Throws(
           default:
             panic (var);
         }
+
+        const RELVAL *tail;
+        const RELVAL *head = VAL_ARRAY_AT(&tail, var);
+        const RELVAL *at;
+        REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
+        for (at = head; at != tail; ++at) {
+            if (IS_GROUP(at)) {
+                if (not steps_out)
+                    fail (Error_Bad_Get_Group_Raw(var));
+
+                if (Do_Any_Array_At_Throws(out, at, at_specifier)) {
+                    DS_DROP_TO(dsp_orig);
+                    return true;
+                }
+                Move_Cell(DS_PUSH(), out);
+
+                // By convention, picker steps quote the first item if it was a
+                // GROUP!.  It has to be somehow different because `('a).b` is
+                // trying to pick B out of the WORD! a...not out of what is
+                // fetched from A.  So if the convention is that the first item
+                // of a "steps" block needs to be "fetched" we quote it.
+                //
+                if (at == head)
+                    Quotify(DS_TOP, 1);
+            }
+            else
+                Derelativize(DS_PUSH(), at, at_specifier);
+        }
     }
-    else if (not IS_THE_BLOCK(var)) {
+    else if (IS_THE_BLOCK(var)) {
+        REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
+        const RELVAL *tail;
+        const RELVAL *head = VAL_ARRAY_AT(&tail, var);
+        const RELVAL *at;
+        for (at = head; at != tail; ++at)
+            Derelativize(DS_PUSH(), at, at_specifier);
+    }
+    else
         fail (var);
+
+    REBDSP dsp_at = dsp_orig + 1;
+
+  blockscope {
+    STKVAL(*) at = DS_AT(dsp_at);
+    if (IS_QUOTED(at)) {
+        Copy_Cell(out, at);
+        Unquotify(out, 1);
+    }
+    else if (IS_WORD(at)) {
+        Copy_Cell(
+            out,
+            Lookup_Word_May_Fail(at, SPECIFIED)
+        );
+        if (IS_BAD_WORD(out) and GET_CELL_FLAG(out, ISOTOPE))
+            fail (Error_Bad_Word_Get(at, out));
+    }
+    else
+        fail (Copy_Cell(out, at));
+  }
+    ++dsp_at;
+
+    DECLARE_LOCAL (temp);
+    PUSH_GC_GUARD(temp);
+
+    while (dsp_at != DSP + 1) {
+        Move_Cell(temp, out);
+        Quotify(temp, 1);
+        const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
+        if (rebRunThrows(out, true, Lib(PICK_P), temp, ins)) {
+            DS_DROP_TO(dsp_orig);
+            DROP_GC_GUARD(temp);
+            fail (Error_No_Catch_For_Throw(out));
+        }
+        ++dsp_at;
     }
 
-    DECLARE_END_FRAME (
-        f,
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_FULLY_SPECIALIZED
-            | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-    );
-    Push_Frame(out, f);
-    Push_Action(f, VAL_ACTION(Lib(PICK_P)), VAL_ACTION_BINDING(Lib(PICK_P)));
-    Begin_Prefix_Action(f, Canon(PICK_P));  // Need for GC protect of ARG(xxx)
-
-    REBFRM *frame_ = f;
-    SET_SERIES_INFO(frame_->varlist, HOLD);
-    INCLUDE_PARAMS_OF_PICK_P;
-
-    //=//// FILL IN RETURN ARGUMENT ////////////////////////////////////////=//
-
-    // You can't leave any arguments as REB_0.  Since this just calls natives,
-    // it seems NULL is acceptable here...revisit when they're non-native.
-
-    Init_Nulled(ARG(return));
-
-    //=//// FILL IN STEPS ARGUMENT /////////////////////////////////////////=//
-
-    REBVAL *steps = ARG(steps);
-
-    if (Fill_In_Steps_Throws(out, steps_out, steps, var, var_specifier))
-        return true;
-
-    //=//// FILL IN LOCATION ARGUMENT //////////////////////////////////////=//
+    DROP_GC_GUARD(temp);
 
     if (steps_out)
-        Copy_Cell(unwrap(steps_out), steps);  // capture before incrementation
-
-    REBVAL *location = ARG(location);
-
-    const RELVAL *first = First_Of_Process_Steps_For_Location(location, steps);
-    UNUSED(first);  // not needed for GET (only SET uses)
-
-    //=//// INVOKE ACTION AND RETURN IF THROWN /////////////////////////////=//
-
-    bool threw = Process_Action_Maybe_Stale_Throws(f);
-
-    if (threw) {
-        Abort_Frame(f);
-        return true;
-    }
-
-    Drop_Frame(FS_TOP);
+        Init_Any_Array(unwrap(steps_out), REB_THE_BLOCK, Pop_Stack_Values(dsp_orig));
+    else
+        DS_DROP_TO(dsp_orig);
 
     Decay_If_Isotope(out);  // !!! should not be possible, review
     return false;
@@ -884,7 +798,7 @@ bool Get_Path_Push_Refinements_Throws(
         return false;
 
       case REB_GET_WORD:  // `/a` - should you be able to GET these?
-        Derelativize(out, path, path_specifier);  // inert
+        Get_Word_May_Fail(out, path, path_specifier);
         return false;
 
       case REB_META_WORD:  // `a/`
@@ -911,6 +825,12 @@ bool Get_Path_Push_Refinements_Throws(
 
     const RELVAL *tail;
     const RELVAL *head = VAL_ARRAY_AT(&tail, path);
+    while (IS_BLANK(head)) {
+        ++head;
+        if (head == tail)
+            fail ("Empty PATH!");
+    }
+
     if (ANY_INERT(head)) {
         Derelativize(out, path, path_specifier);
         return false;
@@ -1087,7 +1007,7 @@ REBNATIVE(get)
 
 
 //
-//  Set_Var_Core_Throws: C
+//  Set_Var_Core_Updater_Throws: C
 //
 // This is centralized code for setting variables.  If it returns `true`, the
 // out cell will contain the thrown value.  If it returns `false`, the out
@@ -1114,20 +1034,22 @@ REBNATIVE(get)
 // It is legal to have `target == out`.  It means the target may be overwritten
 // in the course of the assignment.
 //
-bool Set_Var_Core_Throws(
+bool Set_Var_Core_Updater_Throws(
     REBVAL *out,  // GC-safe cell to write steps to, or put thrown value
     option(REBVAL*) steps_out,  // no GROUP!s if nulled
     const RELVAL *var,  // e.g. v
     REBSPC *var_specifier,  // e.g. v_specifier
-    const REBVAL *setval  // e.g. f->out (in the evaluator, right hand side)
+    const REBVAL *setval,  // e.g. f->out (in the evaluator, right hand side)
+    const REBVAL *updater
 ){
     // Note: `steps_out` can be equal to `out` can be equal to `target`
+
+    DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
 
     if (ANY_GROUP(var)) {  // !!! SET-GROUP! makes sense, but GET-GROUP!?
         if (not steps_out)
             fail (Error_Bad_Get_Group_Raw(var));
 
-        DECLARE_LOCAL (temp);  // target might be same as out (e.g. spare)
         if (Do_Any_Array_At_Throws(temp, var, var_specifier)) {
             Move_Cell(out, temp);
             return true;
@@ -1180,6 +1102,13 @@ bool Set_Var_Core_Throws(
         return false;  // did not throw
     }
 
+    REBDSP dsp_orig = DSP;
+
+    // If we have a sequence, then GROUP!s must be evaluated.  (If we're given
+    // a steps array as input, then a GROUP! is literally meant as a
+    // GROUP! by value).  These evaluations should only be allowed if the
+    // caller has asked us to return steps.
+
     if (ANY_SEQUENCE(var)) {
         switch (HEART_BYTE(var)) {
           case REB_BYTES:
@@ -1214,83 +1143,155 @@ bool Set_Var_Core_Throws(
           default:
             panic (var);
         }
+
+        const RELVAL *tail;
+        const RELVAL *head = VAL_ARRAY_AT(&tail, var);
+        const RELVAL *at;
+        REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
+        for (at = head; at != tail; ++at) {
+            if (IS_GROUP(at)) {
+                if (not steps_out)
+                    fail (Error_Bad_Get_Group_Raw(var));
+
+                if (Do_Any_Array_At_Throws(temp, at, at_specifier)) {
+                    Move_Cell(out, temp);
+                    DS_DROP_TO(dsp_orig);
+                    return true;
+                }
+                Move_Cell(DS_PUSH(), temp);
+
+                // By convention, picker steps quote the first item if it was a
+                // GROUP!.  It has to be somehow different because `('a).b` is
+                // trying to pick B out of the WORD! a...not out of what is
+                // fetched from A.  So if the convention is that the first item
+                // of a "steps" block needs to be "fetched" we quote it.
+                //
+                if (at == head)
+                    Quotify(DS_TOP, 1);
+            }
+            else
+                Derelativize(DS_PUSH(), at, at_specifier);
+        }
     }
-    else if (not IS_THE_BLOCK(var)) {
+    else if (IS_THE_BLOCK(var)) {
+        const RELVAL *tail;
+        const RELVAL *head = VAL_ARRAY_AT(&tail, var);
+        const RELVAL *at;
+        REBSPC *at_specifier = Derive_Specifier(var_specifier, var);
+        for (at = head; at != tail; ++at)
+            Derelativize(DS_PUSH(), at, at_specifier);
+    }
+    else
         fail (var);
-    }
 
     DECLARE_LOCAL (writeback);
-    DECLARE_END_FRAME (
-        f,
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_FULLY_SPECIALIZED
-            | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
-    );
-    Push_Frame(writeback, f);
-    Push_Action(f, VAL_ACTION(Lib(POKE_P)), VAL_ACTION_BINDING(Lib(POKE_P)));
-    Begin_Prefix_Action(f, Canon(POKE_P));  // Need for GC protect of ARG(xxx)
+    PUSH_GC_GUARD(writeback);
+    Init_Void(writeback);  // needs to be GC safe
 
-    REBFRM *frame_ = f;
-    SET_SERIES_INFO(frame_->varlist, HOLD);
-    INCLUDE_PARAMS_OF_POKE_P;
+    PUSH_GC_GUARD(temp);
 
-    //=//// FILL IN RETURN ARGUMENT ////////////////////////////////////////=//
+    REBDSP dsp_top = DSP;
 
-    // You can't leave any arguments as REB_0.  Since this just calls natives,
-    // it seems NULL is acceptable here...revisit when they're non-native.
+  poke_again:
+  blockscope {
+    REBDSP dsp_at = dsp_orig + 1;
 
-    Init_Nulled(ARG(return));
+  blockscope {
+    STKVAL(*) at = DS_AT(dsp_at);
+    if (IS_QUOTED(at)) {
+        Copy_Cell(out, at);
+        Unquotify(out, 1);
+    }
+    else if (IS_WORD(at)) {
+        Copy_Cell(
+            out,
+            Lookup_Word_May_Fail(at, SPECIFIED)
+        );
+        if (IS_BAD_WORD(out) and GET_CELL_FLAG(out, ISOTOPE))
+            fail (Error_Bad_Word_Get(at, out));
+    }
+    else
+        fail (Copy_Cell(out, at));
+  }
 
-    //=//// FILL IN STEPS ARGUMENT /////////////////////////////////////////=//
+    ++dsp_at;
 
-    REBVAL *steps = ARG(steps);
+    // Keep PICK-ing until you come to the last step.
 
-    if (Fill_In_Steps_Throws(out, steps_out, steps, var, var_specifier))
-        return true;
-
-    //=//// FILL IN LOCATION ARGUMENT //////////////////////////////////////=//
-
-    if (steps_out)
-        Copy_Cell(unwrap(steps_out), steps);  // capture before incrementation
-
-    REBVAL *location = ARG(location);
-
-    const RELVAL *first = First_Of_Process_Steps_For_Location(location, steps);
-
-    //=//// FILL IN VALUE ARGUMENT /////////////////////////////////////////=//
-
-    // It's a ^META argument, so we have to meta it here.
-
-    Copy_Cell(ARG(value), decayed);
-    Meta_Quotify(ARG(value));
-
-    //=//// INVOKE ACTION AND RETURN IF THROWN /////////////////////////////=//
-
-    bool threw = Process_Action_Maybe_Stale_Throws(f);
-
-    if (threw) {
-        Move_Cell(out, writeback);
-        Abort_Frame(f);
-        return true;
+    while (dsp_at != dsp_top) {
+        Move_Cell(temp, out);
+        Quotify(temp, 1);
+        const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
+        if (rebRunThrows(out, true, Lib(PICK_P), temp, ins)) {
+            DROP_GC_GUARD(temp);
+            DROP_GC_GUARD(writeback);
+            fail (Error_No_Catch_For_Throw(out));  // don't let PICKs throw
+        }
+        ++dsp_at;
     }
 
-    Drop_Frame(FS_TOP);
+    // Now do a the final step, an update (often a poke)
 
-    //=//// DO WRITEBACK IF NECESSARY //////////////////////////////////////=//
+    Move_Cell(temp, out);
+    Quotify(temp, 1);
+    const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
+    if (rebRunThrows(out, true, updater, temp, ins, rebQ(decayed))) {
+        DROP_GC_GUARD(temp);
+        DROP_GC_GUARD(writeback);
+        fail (Error_No_Catch_For_Throw(out));  // don't let POKEs throw
+    }
 
-    if (IS_NULLED(writeback))  // simplest case, no writeback needed
-        return false;
+    // Subsequent updates become pokes, regardless of initial updater function
 
-    // If POKE* did not return NULL then that means the poke wanted to write
-    // back bits.  This only works in the WORD! case.
-    //
-    if (not IS_WORD(first))
-        fail ("Cannot writeback immediate value in SET");
+    updater = Lib(POKE_P);
 
-    REBSPC *derived = Derive_Specifier(var_specifier, first);
-    Copy_Cell(Sink_Word_May_Fail(first, derived), writeback);
+    if (not IS_NULLED(out)) {
+        Move_Cell(writeback, out);
+        decayed = writeback;  // e.g. decayed setval
+
+        --dsp_top;
+
+        if (dsp_top != dsp_orig + 1)
+            goto poke_again;
+
+        // can't use POKE, need to use SET
+        if (not IS_WORD(DS_AT(dsp_orig + 1)))
+            fail ("Can't POKE back immediate value unless it's to a WORD!");
+
+        Copy_Cell(Sink_Word_May_Fail(DS_AT(dsp_orig + 1), SPECIFIED), decayed);
+    }
+  }
+
+    DROP_GC_GUARD(temp);
+    DROP_GC_GUARD(writeback);
+
+    if (steps_out)
+        Init_Block(unwrap(steps_out), Pop_Stack_Values(dsp_orig));
+    else
+        DS_DROP_TO(dsp_orig);
 
     return false;
+}
+
+
+//
+//  Set_Var_Core_Throws: C
+//
+bool Set_Var_Core_Throws(
+    REBVAL *out,  // GC-safe cell to write steps to, or put thrown value
+    option(REBVAL*) steps_out,  // no GROUP!s if nulled
+    const RELVAL *var,  // e.g. v
+    REBSPC *var_specifier,  // e.g. v_specifier
+    const REBVAL *setval  // e.g. f->out (in the evaluator, right hand side)
+){
+    return Set_Var_Core_Updater_Throws(
+        out,
+        steps_out,
+        var,
+        var_specifier,
+        setval,
+        Lib(POKE_P)
+    );
 }
 
 

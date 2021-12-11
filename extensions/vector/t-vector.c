@@ -608,21 +608,10 @@ REBTYPE(Vector)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
+        const RELVAL *picker = ARG(picker);
 
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-
-        if (steps_left == 1) {
             Pick_Vector(D_OUT, v, picker);
-            return D_OUT;
-        }
-
-        ++VAL_INDEX_RAW(ARG(steps));
-        Pick_Vector(ARG(location), v, picker);
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+        return D_OUT; }
 
       case SYM_POKE_P: {
 
@@ -631,30 +620,9 @@ REBTYPE(Vector)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
+        const RELVAL *picker = ARG(picker);
 
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
-
-        REBVAL *setval;
-
-        if (steps_left == 1)
-            setval = Meta_Unquotify(ARG(value));
-        else {
-            Pick_Vector(D_OUT, v, picker);
-
-            ++VAL_INDEX_RAW(ARG(steps));
-
-            REB_R r = Run_Pickpoke_Dispatch(frame_, verb, D_OUT);
-            if (r == R_THROWN)
-                return R_THROWN;
-            if (r == nullptr)  // no need for vector bits to change
-                return nullptr;
-
-            fail ("Unknown Writeback in IMAGE!");
-        }
+        REBVAL *setval = Meta_Unquotify(ARG(value));
 
         Poke_Vector_Fail_If_Read_Only(v, picker, setval);
         return nullptr; }

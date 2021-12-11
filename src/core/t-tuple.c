@@ -391,12 +391,7 @@ REBTYPE(Sequence)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        REBVAL *steps = ARG(steps);  // STEPS block: 'a/(1 + 2)/b => [a 3 b]
-        REBLEN steps_left = VAL_LEN_AT(steps);
-        if (steps_left == 0)
-            fail (steps);
-
-        const RELVAL *picker = VAL_ARRAY_ITEM_AT(steps);
+        const RELVAL *picker = ARG(picker);
 
         REBINT n;
         if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
@@ -408,19 +403,10 @@ REBTYPE(Sequence)
         REBSPC *specifier = VAL_SEQUENCE_SPECIFIER(sequence);
         const RELVAL *at = VAL_SEQUENCE_AT(D_SPARE, sequence, n);
 
-        if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(sequence))) {
-            if (steps_left == 1)
+        if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(sequence)))
                 return nullptr;
-            fail ("This needs to be an error.");
-        }
 
-        if (steps_left == 1)
-            return Derelativize(D_OUT, at, specifier);
-
-        Derelativize(ARG(location), at, specifier);
-        ++VAL_INDEX_RAW(ARG(steps));
-
-        return Run_Generic_Dispatch(D_ARG(1), frame_, verb); }
+        return Derelativize(D_OUT, at, specifier); }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
