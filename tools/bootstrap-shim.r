@@ -59,6 +59,9 @@ REBOL [
 ;
 trap [
     func [i [<blank> integer!]] [...]  ; modern interpreter or already shimmed
+    if in (pick system 'options) 'redbol-paths [
+        system.options.redbol-paths: true
+    ]
 ] else [
     trap [
         lib/func [i [<blank> integer!]] [...]

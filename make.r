@@ -1100,8 +1100,8 @@ parse2 user-config/toolset [
 
 === {SANITY CHECK COMPILER AND LINKER} ===
 
-rebmake/default-compiler: default [fail "Compiler is not set"]
-rebmake/default-linker: default [fail "Default linker is not set"]
+if not rebmake/default-compiler [fail "Compiler is not set"]
+if not rebmake/default-linker [fail "Default linker is not set"]
 
 switch rebmake/default-compiler/name [
     'gcc [
