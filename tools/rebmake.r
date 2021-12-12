@@ -1079,6 +1079,9 @@ object-file-class: make object! [
             optimization: false
         ]
 
+        PIC: either PIC ['PIC] [_]
+        E: either E ['E] [_]
+
         return cc/command/I/D/F/O/g/(PIC)/(E) output source
             compose [((opt includes)) ((opt I))]
             compose [((opt definitions)) ((opt D))]
