@@ -195,6 +195,44 @@ REBTYPE(Action)
 
     switch (ID_OF_SYMBOL(verb)) {
 
+  //=//// PICK* (see %sys-pick.h for explanation) //////////////////////////=//
+
+    // !!! This is an interim implementation hack for REDBOL-PATHS, which
+    // transforms something like `lib/append/dup` into `lib.append.dup` when
+    // it notices that LIB is not an ACTION!.  This is a *very slow* way of
+    // dealing with refinements because it produces a specialized action
+    // at each stage.
+
+      case SYM_PICK_P: {
+        INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
+
+        REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
+        if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
+            fail (
+                "SYSTEM.OPTIONS.REDBOL-PATHS is false, so you can't"
+                " use paths to do ordinary picking.  Use TUPLE!"
+            );
+          }
+
+        REBVAL *picker = ARG(picker);
+        if (Is_Nulled_Isotope(picker) or IS_BLANK(picker))
+            RETURN (action);
+
+        const REBSYM *symbol;
+        if (IS_WORD(picker))
+            symbol = VAL_WORD_SYMBOL(picker);
+        else if (IS_PATH(picker) and IS_REFINEMENT(picker))
+            symbol = VAL_REFINEMENT_SYMBOL(picker);
+        else
+            fail (picker);
+
+        REBDSP dsp_orig = DSP;
+        Init_Word(DS_PUSH(), symbol);
+        if (Specialize_Action_Throws(D_OUT, action, nullptr, dsp_orig))
+            return R_THROWN;
+
+        return D_OUT; }
 
   //=//// COPY /////////////////////////////////////////////////////////////=//
 
