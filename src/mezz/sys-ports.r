@@ -172,13 +172,13 @@ make-port*: function [
                 ; IP-address style, make a TUPLE!
                 ;
                 to/ (tuple!) across [
-                    while [some digit "."], some digit
+                    opt some [some digit "."], some digit
                     not host-char  ; don't match "1.2.3.4a" as IP address
                 ]
                     |
                 ; Ordinary "foo.bar.com" style, just give it back as TEXT!
                 ;
-                across while host-char
+                across opt some host-char
             ]
             emit port-id: opt [":", to/ (integer!) across digits]
             |

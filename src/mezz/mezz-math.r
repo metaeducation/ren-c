@@ -144,7 +144,7 @@ math: func [
 
     expression  ([
         term (expr-val: term-val)
-        while [
+        opt some [
             ['+ (expr-op: 'add) | '- (expr-op: 'subtract)]
             term (expr-val: compose [(expr-op) (expr-val) (term-val)])
         ]
@@ -157,7 +157,7 @@ math: func [
 
     term ([
         pow (term-val: power-val)
-        while [
+        opt some [
             ['* (term-op: 'multiply) | slash (term-op: 'divide)]
             pow (term-val: compose [(term-op) (term-val) (power-val)])
         ]
@@ -190,7 +190,7 @@ math: func [
         set prim-val any-number!
         | set prim-val [word! | path!] (prim-val: reduce [prim-val])
             ; might be a funtion call, looking for arguments
-            while [
+            opt some [
                 nested-expression (append prim-val take nested-expr-val)
             ]
         | ahead group! into nested-expression (prim-val: take nested-expr-val)

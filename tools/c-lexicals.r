@@ -59,7 +59,7 @@ grammar: [
     ;
     ; -- A.1.3 Identifiers
 
-    identifier: [id-nondigit while id-char]
+    identifier: [id-nondigit opt some id-char]
     id-nondigit: [nondigit | universal-character-name]
 
     ;
@@ -91,7 +91,7 @@ grammar: [
     ]
 
     hexadecimal-escape-sequence: [
-        {\x} hexadecimal-digit while hexadecimal-digit
+        {\x} hexadecimal-digit opt some hexadecimal-digit
     ]
 
     ; !!! This had the rule `[1 3 octal-digit]`, but this style of range is
@@ -106,7 +106,7 @@ grammar: [
     ; -- A.1.6 String literals
 
     string-literal: [
-        opt encoding-prefix #"^"" while s-char #"^""
+        opt encoding-prefix #"^"" opt some s-char #"^""
     ]
     encoding-prefix: [{u8} | #"L" | #"u" | #"U"]
     s-char: [s-char-cs | escape-sequence]
@@ -132,7 +132,7 @@ grammar: [
 
     pp-number: [
         [digit | #"." digit]
-        while [
+        opt some [
             digit
             | id-nondigit
             | #"."

@@ -348,7 +348,7 @@ export analyse: context [
                 seek bol
             ]
 
-            while [
+            opt some [
                 to stop-char
                 position: <here>
                 [
@@ -445,7 +445,7 @@ c-parser-extension: context bind bind [
 
     lbrace: [and punctuator "{"]
     rbrace: [and punctuator "}"]
-    braced: [lbrace while [braced | not rbrace skip] rbrace]
+    braced: [lbrace opt some [braced | not rbrace skip] rbrace]
 
     function-spacing-rule: (
         bind/copy standard.function-spacing c-lexical.grammar
@@ -455,7 +455,7 @@ c-parser-extension: context bind bind [
 
     append grammar.format-func-section [
         last-func-end: <here>
-        while [nl | eol | wsp]
+        opt some [nl | eol | wsp]
     ]
 
     append grammar.other-segment ^ the (

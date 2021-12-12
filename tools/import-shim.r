@@ -110,7 +110,8 @@ strip-commas-and-null-apostrophes: func [
     pushed: copy []  ; <Q>uoted or <B>raced string delimiter stack
 
     rule: [
-        while [  ; https://github.com/rebol/rebol-issues/issues/1401
+        ; Bootstrap WHILE: https://github.com/rebol/rebol-issues/issues/1401
+        while [
             "^^{"  ; (actually `^{`) escaped brace, never count
             |
             "^^}"  ; (actually `^}`) escaped brace, never count

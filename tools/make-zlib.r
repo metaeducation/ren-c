@@ -71,8 +71,8 @@ disable-user-includes: function [
 
     for-next line-iter lines [
         parse2 line: line-iter/1 [
-            while space {#}
-            while space {include}
+            opt some space {#}
+            opt some space {include}
             some space, include-rule, to <end>
         ] then [
             if pos: find try inline (as file! name) [
@@ -152,8 +152,8 @@ fix-kr: function [
     single-param: bind copy/deep [
         identifier  ; (part of)type
         some [
-            while white-space
-            while ["*" while white-space]
+            opt some white-space
+            opt some ["*" opt some white-space]
 
             ; It could get here even after last identifier, so this tmp-start
             ; is not the begining of the name, but the last one is...
@@ -161,24 +161,24 @@ fix-kr: function [
             tmp-start: <here>, name: across identifier (
                 name-start: tmp-start
             )
-            while white-space
-            while ["*" while white-space]
+            opt some white-space
+            opt some ["*" opt some white-space]
         ]
     ] c-lexical.grammar
 
     parse2 source bind copy/deep [
-        while [
+        opt some [
             fn: across identifier
-            while white-space
+            opt some white-space
             "(", open-paren: <here>, to ")", close-paren: <here>, ")"
             param-ser: <here>, param-spec: across [
                 some [
-                    some [while white-space, while ["*" while white-space]
-                        identifier while white-space opt ","
-                        while ["*" while white-space]
+                    some [opt some white-space, opt some ["*" opt some white-space]
+                        identifier opt some white-space opt ","
+                        opt some ["*" opt some white-space]
                     ] ";"
                 ]
-                while white-space
+                opt some white-space
             ]
             "{" check-point: <here> (
                 remove/part param-ser length of param-spec
@@ -192,14 +192,14 @@ fix-kr: function [
 
                 param-block: make block! 8
                 parse2 params [
-                    while white-space
+                    opt some white-space
                     name: across identifier (
                         append param-block reduce [name _]
                     )
-                    while [
-                        while white-space
+                    opt some [
+                        opt some white-space
                         ","
-                        while white-space
+                        opt some white-space
                         name: across identifier (
                             append param-block reduce [name _]
                         )
@@ -212,7 +212,7 @@ fix-kr: function [
                 ; 2) "int i, *j, **k;"
 
                 parse2 param-spec [
-                    while white-space
+                    opt some white-space
                     some [
                         (typed?: true)
                         single-param-start: <here>, single-param (
@@ -222,8 +222,8 @@ fix-kr: function [
                                     - (index of single-param-start)
                             )
                        )
-                       while [
-                           while white-space, param-end: <here>
+                       opt some [
+                           opt some white-space, param-end: <here>
                            "," (
                                 ; case 2)
                                 ; spec-type should be "int "
@@ -247,11 +247,11 @@ fix-kr: function [
                                    typed?: false
                            )
                            single-param-start: <here>
-                           while white-space
-                           while ["*" while white-space]
+                           opt some white-space
+                           opt some ["*" opt some white-space]
                            name: across identifier
                         ]
-                        while white-space
+                        opt some white-space
                         [param-end: <here>] ";"
                         (
                            poke (find/skip param-block name 2) 2
@@ -271,7 +271,7 @@ fix-kr: function [
                                    ]
                                 ]
                             )
-                        while white-space
+                        opt some white-space
                     ]
                 ]
 
@@ -297,11 +297,11 @@ fix-const-char: func [
     source
 ][
     parse2 source bind copy/deep [
-        while [
-            "strm" while white-space "->" while white-space
-            "msg" while white-space "=" while white-space
-            "(" while white-space, change "char" ("z_const char")
-                while white-space "*" while white-space ")"
+        opt some [
+            "strm" opt some white-space "->" opt some white-space
+            "msg" opt some white-space "=" opt some white-space
+            "(" opt some white-space, change "char" ("z_const char")
+                opt some white-space "*" opt some white-space ")"
             | skip
         ]
         <end> | (fail)

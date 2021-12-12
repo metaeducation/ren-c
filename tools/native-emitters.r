@@ -64,7 +64,7 @@ export extract-native-protos: func [
     <local> proto name exported
 ][
     return collect [
-        parse2 read/string c-source-file [while [
+        parse2 read/string c-source-file [opt some [
             "//" newline
             "//" space space copy proto [
                 (exported: false)

@@ -790,7 +790,7 @@ parse-ext-build-spec: function [
     if in ext 'options [
         ensure block! ext/options
         parse2 ext/options [
-            while [
+            opt some [
                 word! block! opt text! set config: group!
             ]
         ] else [
@@ -1065,7 +1065,7 @@ set-exec-path: func [
 ]
 
 parse2 user-config/toolset [
-    while [
+    opt some [
         'gcc opt set cc-exec [file! | text! | blank!] (
             rebmake/default-compiler: rebmake/gcc
         )

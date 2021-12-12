@@ -227,14 +227,15 @@ for-each info all-protos [
 parse2 read/string (join output-dir %boot/tmp-generics.r) [
     thru "^/]^/"  ; skip REBOL header (closing brace flush with left)
     some newline  ; skip newlines
-    while [
-    copy proto [
-        thru ":" space "generic ["
-        thru "^/]^/"
+    opt some [
+        copy proto [
+            thru ":" space "generic ["
+            thru "^/]^/"
+        ]
+        (emit-include-params-macro e-params proto)
+            |
+        skip
     ]
-    (emit-include-params-macro e-params proto)
-        |
-    skip
-]]
+]
 
 e-params/write-emitted

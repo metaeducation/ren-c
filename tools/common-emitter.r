@@ -64,7 +64,7 @@ export cscape: function [
 
     list: collect* [
         parse2 string [(col: 0), start:  ; <here>
-        while [
+        opt some [
             [
                 (prefix: _ suffix: _) finish:  ; <here>
 
@@ -203,7 +203,7 @@ export cscape: function [
     ;
     parse2 string [
         (nonwhite: removed: false) start-line:  ; <here>
-        while [
+        opt some [
             space
             |
             newline

@@ -251,7 +251,7 @@ sys-globals-parser: context [
     grammar: context bind [
 
         rule: [
-            while [
+            opt some [
                 parse-position:  ; <here>
                 segment
             ]
@@ -260,7 +260,7 @@ sys-globals-parser: context [
         segment: [
             (id: _)
             span-comment
-            | line-comment while [newline line-comment] newline
+            | line-comment opt some [newline line-comment] newline
             | opt wsp directive
             | declaration
             | other-segment
@@ -282,7 +282,7 @@ sys-globals-parser: context [
         directive: [
             copy data [
                 ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
-                while [not newline c-pp-token]
+                opt some [not newline c-pp-token]
             ] eol
             (
                 ; Here is where it would call processing of conditional data

@@ -297,7 +297,7 @@ reword: function [
 
     rule: [
         a: <here>  ; Begin marking text to copy verbatim to output
-        while [
+        opt some [
             to prefix  ; seek to prefix (may be blank!, this could be a no-op)
             b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)
@@ -571,7 +571,7 @@ split: function [
                     copy series to <end> (keep ^series)
                 ]
             ] else [
-                [while [
+                [opt some [
                     copy series [skip, repeat (size - 1) opt skip] (
                         keep ^series
                     )
@@ -584,9 +584,9 @@ split: function [
             ;
 
             [
-                while [not <end> [
+                opt some [not <end> [
                     mk1: <here>
-                    while [mk2: <here>, [dlm | <end>] break | skip]
+                    opt some [mk2: <here>, [dlm | <end>] break | skip]
                     (keep ^ copy/part mk1 mk2)
                 ]]
                 <end>

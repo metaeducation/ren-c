@@ -689,7 +689,7 @@ for-each [sw-cat list] boot-errors [
 
         arity: 0
         if block? message [  ; can have N GET-WORD! substitution slots
-            parse2 message [while [get-word! (arity: arity + 1) | skip] end]
+            parse2 message [opt some [get-word! (arity: arity + 1) | skip] end]
         ] else [
             ensure text! message  ; textual message, no arguments
         ]
@@ -698,7 +698,7 @@ for-each [sw-cat list] boot-errors [
         ;
         f-name: uppercase/part to-c-name id 1
         parse2 f-name [
-            while [
+            opt some [
                 "_" w:  ; <here>
                 (uppercase/part w 1)
                 |

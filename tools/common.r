@@ -425,6 +425,7 @@ export stripload: function [
         ;
         if (empty? pushed)  ; string not in effect, okay to proceed
 
+        ; Bootstrap WHILE: https://github.com/rebol/rebol-issues/issues/1401
         while [
             remove [some space]
             |
@@ -433,10 +434,11 @@ export stripload: function [
     ]
 
     rule: [
-        while [  ; https://github.com/rebol/rebol-issues/issues/1401
-            newline [while [comment-or-space-rule remove newline]]
+        ; Bootstrap WHILE: https://github.com/rebol/rebol-issues/issues/1401
+        while [
+            newline [opt some [comment-or-space-rule remove newline]]
             |
-            [ahead [while space ";"]] comment-or-space-rule
+            [ahead [opt some space ";"]] comment-or-space-rule
             |
             "^^{"  ; (actually `^{`) escaped brace, never count
             |
@@ -457,7 +459,6 @@ export stripload: function [
             |
             skip
         ]
-        end
     ]
 
     let file

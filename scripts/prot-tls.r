@@ -414,9 +414,9 @@ make-state-updater: func [
     transitions: make map! []  ; transformed dialect that always maps to BLOCK!
     state-rule: [tag! | issue!]
     uparse transdialect [
-        while [
+        some [
             left: state-rule '-> right: [
-                into block! [while state-rule, <input>]
+                into block! [opt some state-rule, <input>]
                 | collect keep state-rule
             ]
             (append transitions :[left right])

@@ -31,7 +31,7 @@ decode-key-value-text: function [
     text [text!]
 ][
     data-fields: [
-        while [
+        opt some [
             position:  ; <here>
             data-field
             | newline
@@ -41,17 +41,17 @@ decode-key-value-text: function [
     data-field: [
         data-field-name eof:  ; <here>
         [
-            #" " to newline while [
+            #" " to newline opt some [
                 newline not data-field-name not newline to newline
             ]
-            | while [newline opt newline 2 20 #" " to newline]
+            | opt some [newline opt newline 2 20 #" " to newline]
         ] eol: (emit-meta) newline
     ]
 
     data-field-char: charset [#"A" - #"Z" #"a" - #"z"]
     data-field-name: [
         some data-field-char
-        while [#" " some data-field-char] #":"
+        opt some [#" " some data-field-char] #":"
     ]
 
     emit-meta: func [<local> key] [
@@ -140,7 +140,7 @@ export proto-parser: context [
         rule: [
             parse-position:  ; <here>
             opt fileheader
-            while [
+            opt some [
                 parse-position:  ; <here>
                 segment
             ]
@@ -160,7 +160,7 @@ export proto-parser: context [
             (proto-id: proto-arg-1: _)
             format-func-section
             | span-comment
-            | line-comment while [newline line-comment] newline
+            | line-comment opt some [newline line-comment] newline
             | opt wsp directive
             | other-segment
         ]
@@ -168,7 +168,7 @@ export proto-parser: context [
         directive: [
             copy data [
                 ["#ifndef" | "#ifdef" | "#if" | "#else" | "#elif" | "#endif"]
-                while [not newline c-pp-token]
+                opt some [not newline c-pp-token]
             ] eol
             (
                 emit-directive data
@@ -186,7 +186,7 @@ export proto-parser: context [
         format-func-section: copy/deep [
             doubleslashed-lines
             ahead is-intro
-            function-proto while white-space
+            function-proto opt some white-space
             function-body
             (
                 ; EMIT-PROTO doesn't want to see extra whitespace (such as
@@ -286,13 +286,13 @@ export proto-parser: context [
                     ]
                 ]
                 "("
-                while white-space
+                opt some white-space
                 opt [
                     not typemacro-parentheses
                     not ")"
                     copy proto-arg-1 identifier
                 ]
-                while [typemacro-parentheses | not ")" [white-space | skip]]
+                opt some [typemacro-parentheses | not ")" [white-space | skip]]
                 ")"
             ]
         ]

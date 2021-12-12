@@ -1235,7 +1235,7 @@ generator-class: make object! [
         loop [not stop][
             stop: true
             parse2 cmd [
-                while [
+                opt some [
                     change [
                         [
                             "$(" copy name: some [letter | digit | #"_"] ")"

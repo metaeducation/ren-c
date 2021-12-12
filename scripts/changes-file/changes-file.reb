@@ -112,7 +112,7 @@ parse-credits-for-authors: function [  ; used as switch in github-user-name
 
         parse to-text read credits-file [
             thru {Code Contributors}
-            while [
+            opt some [
                 {**} copy author: to {**} {**} newline
                 [{-} | {*}] space {[} copy github-name: to {](https://github.com/} (
                     keep compose/deep [(author) [(github-name)]]
@@ -125,7 +125,6 @@ parse-credits-for-authors: function [  ; used as switch in github-user-name
                 )
                 | skip
             ]
-            end
         ]
     ]
 ]
@@ -159,7 +158,7 @@ notable?: function [
     ; record any bug#NNNN or CC (CureCode) found
     cc: make block! 0
     parse text [
-        while [
+        opt some [
               "bug#" copy cc-num: some numbers (
                 append c [type: 'Fixed]  ; it's a bug fix!
                 append cc to-integer cc-num

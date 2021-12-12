@@ -134,7 +134,7 @@ func: func* [
     loc: '
     with-return: '
 
-    parse spec [while [
+    parse spec [opt some [
         '<none> (append new-spec <none>)
     |
         '<void> (append new-spec <void>)
@@ -197,7 +197,7 @@ func: func* [
         false  ; failing here means rolling over to next rule
     |
         '<local>
-        while [set var: word! set other: opt group! (
+        opt some [set var: word! set other: opt group! (
             append new-spec ^ to tuple! var
             append exclusions ^var
             if other [
@@ -214,7 +214,7 @@ func: func* [
                 copy/deep body
             ]
         )
-        while [
+        opt some [
             set other: [object! | word! | path!] (
                 if not object? other [other: ensure any-context! get other]
                 bind new-body other
@@ -224,7 +224,7 @@ func: func* [
             )
         ]
     |
-        '<with> while [
+        '<with> opt some [
             set other: [word! | path!] (
                 append exclusions ^other
 
@@ -243,7 +243,7 @@ func: func* [
                 copy/deep body
             ]
         )
-        while [
+        opt some [
             set var: word! (other: _) opt set other: group! (
                 append exclusions ^var
                 append statics ^(as set-word! var)
@@ -403,7 +403,7 @@ redescribe: func [
     let note: _
     parse spec [
         opt [
-            copy description while text! (
+            copy description some text! (
                 description: spaced description
                 all [
                     description = {}
@@ -420,7 +420,7 @@ redescribe: func [
                 ]
             )
         ]
-        while [
+        opt some [
             set param: [
                 word! | get-word! | lit-word! | set-word!
                 | ahead path! into [word! blank!]
@@ -1056,7 +1056,7 @@ read-lines: func [
         [ [to (delimiter) remove (delimiter) pos: <here>] ]
     ][
         [
-            to crlf while [
+            to crlf opt some [
                 ["^M" and not "^/"]
                 to crlf
             ] (if not keep ['remove]) ["^/" | "^M^/"] pos: <here>

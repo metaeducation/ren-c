@@ -36,7 +36,7 @@ success: ~
 ; to TRANSCODE to parse that string.
 
 export test-source-rule: [
-    while [
+    opt some [
         let position: <here>
 
         ["{" | {"}] :(  ; handle string using TRANSCODE, see note
@@ -106,7 +106,7 @@ export collect-tests: function [
     append into clean-path file
 
     append into collect [parse code [
-        while [
+        opt some [
             pos: <here>
 
             ; A GROUP! top level in the test file indicates a standalone test.
@@ -191,8 +191,8 @@ export collect-logs: function [
 
     parse log-contents [
         (guard: false)  ; trigger failure by default (may be set to true)
-        while [
-            while whitespace
+        opt some [
+            opt some whitespace
             [
                 position: "%"
                 (next-position: transcode/next (the value:) position)
@@ -203,7 +203,7 @@ export collect-logs: function [
                 {"} thru {"}
                     |
                 copy last-vector ["(" test-source-rule ")"]
-                while whitespace
+                opt some whitespace
                 [
                     <end> (
                         ; crash found

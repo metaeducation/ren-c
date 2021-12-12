@@ -227,7 +227,7 @@ process-tests: function [
     handler [action!]
 ][
     parse test-sources [
-        while [
+        opt some [
             set flags: block! set value: block! (
                 handler flags value  ; flags ignored atm
             )
@@ -336,8 +336,8 @@ export do-recover: func [
     else [
         parse read log-file [
             (last-vector: _)
-            while [
-                while whitespace
+            opt some [
+                opt some whitespace
                 [
                     position: <here>
 
@@ -354,7 +354,7 @@ export do-recover: func [
                     (dialect-failures: dialect-failures + 1)
                         |
                     copy last-vector ["(" test-source-rule ")"]
-                    while whitespace
+                    opt some whitespace
                     [
                         <end> (
                             ; crash found

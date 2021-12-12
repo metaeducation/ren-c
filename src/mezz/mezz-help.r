@@ -338,8 +338,8 @@ help: function [
     refinements: _  ; optional parameters (PARAMETERS OF puts at tail)
 
     uparse parameters of :value [
-        args: across while [word! | meta-word! | get-word! | lit-word!]
-        refinements: across while path!  ; as mentioned, these are at tail
+        args: across opt some [word! | meta-word! | get-word! | lit-word!]
+        refinements: across opt some path!  ; as mentioned, these are at tail
     ] else [
         fail ["Unknown results in PARAMETERS OF:" mold parameters of :value]
     ]

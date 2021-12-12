@@ -17,7 +17,7 @@ REBOL [
         various compilers and libraries.  A longstanding historical numbering
         scheme of `0.X.Y` is currently used.  X is a kind of generic indicator
         of the vendor or OS, and Y is a variant in architecture or linkage.
-        If you examine `system/version` in Rebol, these numbers are the two at
+        If you examine `system.version` in Rebol, these numbers are the two at
         the tail of the tuple.  (The earlier tuple values indicate the Rebol
         interpreter version itself.)
 
@@ -462,7 +462,7 @@ export for-each-system: func [
             platform-name: to-word platform-name
         )
         set platform-number integer!
-        while [
+        opt some [
             set id tuple!
             [
                 blank! (os: os-name: os-base: _)
@@ -474,16 +474,16 @@ export for-each-system: func [
                     |
                 set build-label text! (build-label: to-word build-label)
             ]
-            copy definitions [while issue!] (
+            copy definitions [opt some issue!] (
                 definitions: map-each x definitions [to-word x]
             )
-            copy cflags [while tag!] (
+            copy cflags [opt some tag!] (
                 cflags: map-each x cflags [to-word to-text x]
             )
-            copy ldflags [while refinement!] (
+            copy ldflags [opt some refinement!] (
                 ldflags: map-each x ldflags [to-word x]
             )
-            copy libraries [while file!] (
+            copy libraries [opt some file!] (
                 libraries: map-each x libraries [to-word to-text x]
             )
 
