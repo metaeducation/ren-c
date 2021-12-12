@@ -1484,7 +1484,10 @@ REBNATIVE(subparse)
                 if (P_FLAGS & PF_REDBOL) {
                     P_FLAGS |= PF_FURTHER;
                 }
-                assert(mincount == 1 and maxcount == 1);  // true on entry
+                assert(
+                    (mincount == 1 or mincount == 0)  // could be OPT SOME
+                    and maxcount == 1
+                );  // true on entry
                 P_FLAGS |= PF_LOOPING;
                 maxcount = INT32_MAX;
                 FETCH_NEXT_RULE(f);
