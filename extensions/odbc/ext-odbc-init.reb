@@ -156,29 +156,16 @@ odbc-execute: func [
     parameters: default [copy []]
 
     if block? query [
-        ;
-        ; !!! Previously this code depended on using @xxx which were assumed
-        ; to not evaluate.  It would thus run:
-        ;
-        ;    query: spaced map-each item reduce query [...]
-        ;
-        ; That was in case there were code portions taking @xxx as function
-        ; arguments, which were thus not counted as part of the dialect.
-        ;
-        ; But the system purposes of @xxx were migrated to what is now known
-        ; as ^xxx, which do have evaluative behavior (adds quote level).  It's
-        ; planned that @xxx will return when there are "enough datatype bits"
-        ;
         query: spaced map-each item query [
             switch type of item [
-                meta-word! meta-path! [
+                the-word! the-path! [
                     get item
                 ]
-                meta-group! [
+                the-group! [
                     reduce as group! item
                 ]
             ] then value -> [
-                append parameters :value
+                append/only parameters :value
                 "?"
             ] else [
                 :item
