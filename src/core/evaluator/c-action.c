@@ -1029,9 +1029,11 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         if (IS_ACTION(label)) {
             if (
                 VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-                and VAL_ACTION_BINDING(label) == CTX(f->varlist)
+                and CTX_VARLIST(VAL_ACTION_BINDING(label)) == f->varlist
                     // !!! Note f->varlist may be INACCESSIBLE here
-                    // e.g. this happens with RETURN during ENCLOSE
+                    // e.g. this happens with RETURN during ENCLOSE,
+                    // so don't use CTX(f->varlist) here as that would
+                    // try to validate it as not being inaccessible
             ){
                 // Eval_Core catches unwinds to the current frame, so throws
                 // where the "/name" is the JUMP native with a binding to
