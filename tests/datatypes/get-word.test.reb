@@ -31,7 +31,10 @@
 
 ; Terminal dotted access inhibits action invocation, while slashed access
 ; enforces action invocation.
-[
+;
+; !!! This set of features is currently under review.
+[(
+  comment [
     (did a: <inert>)
 
     (<inert> = a)
@@ -73,11 +76,15 @@
     ('inert-with-slashed = pick trap [ get 'a/: ] 'id)
     ('inert-with-slashed = pick trap [ get '/a/: ] 'id)
     ('inert-with-slashed = pick trap [ get '.a/: ] 'id)
-]
+  ]
+)]
 
 ; Terminal slash does the opposite of terminal dot, by enforcing that the
 ; thing fetched is an action.
-[
+;
+; !!! This set of features is currently under review.
+[(
+  comment [
     (did a: does ["active"])
 
     ("active" = a)
@@ -119,4 +126,5 @@
     (action? get 'a/:)
     (action? get '/a/:)
     (action? get '.a/:)
-]
+  ]
+)]
