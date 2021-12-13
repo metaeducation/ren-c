@@ -315,6 +315,7 @@ REBTYPE(Issue)
     switch (sym) {
       case SYM_PICK_P: {
         INCLUDE_PARAMS_OF_PICK_P;
+        UNUSED(ARG(location));
 
         const RELVAL *picker = ARG(picker);
         if (not IS_INTEGER(picker))
