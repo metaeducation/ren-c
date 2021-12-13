@@ -135,3 +135,10 @@
     [v p]: transcode to binary! "7-Feb-2021/23:00"
     [7-Feb-2021/23:00 #{}] = reduce [v p]
 )
+
+[
+    ('scan-invalid = pick trap [transcode "2022:"] 'id)
+    ('scan-invalid = pick trap [transcode ":2022"] 'id)
+    ('scan-invalid = pick trap [transcode "^^2022"] 'id)  ; escaped
+    ('scan-invalid = pick trap [transcode "@2022"] 'id)
+]

@@ -2664,7 +2664,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             fail (Error_Syntax(ss, token));
 
         enum Reb_Kind kind = VAL_TYPE(DS_TOP);
-        if (IS_ANY_SIGIL_KIND(kind))
+        if (not ANY_PLAIN_KIND(kind))
             fail (Error_Syntax(ss, token));
 
         mutable_KIND3Q_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
@@ -2675,7 +2675,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     }
     else if (prefix_pending != TOKEN_END) {
         enum Reb_Kind kind = VAL_TYPE(DS_TOP);
-        if (IS_ANY_SIGIL_KIND(kind))
+        if (not ANY_PLAIN_KIND(kind))
             fail (Error_Syntax(ss, token));
 
         switch (prefix_pending) {
