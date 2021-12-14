@@ -141,6 +141,71 @@ sys.make-scheme [
 ]
 
 
+sqlform: func [
+    {Helper for producing SQL string from SQL dialect}
+
+    return: "Formed SQL string with ? in parameter spots"
+        [text! issue!]  ; issue will not have spaces around it when rendered
+
+    parameters "Parameter block being gathered"
+        [block!]
+    value "Item to form"
+        [any-value!]
+][
+    switch type of :value [
+        comma! [join #"," space]  ; avoid spacing before the comma
+
+        integer! word! symbol! [as text! value]
+        tuple! [mold value]
+
+        ; !!! We need to express literal SQL somehow.  Things like 'T' might be
+        ; legal SQL but it's a bad pun to have that be a QUOTED! WORD! named
+        ; {T'}.  The only answers we have are to either use full on string
+        ; interpolation and escape Rebol variables into it (not yet available)
+        ; or to make it so a string in SQL is double-stringed, e.g. {"foo"}.
+        ;
+        ; We *could* make it so that this is done via some special operator,
+        ; like ^({'T'}) to say "hey I want this to be spliced in the statement.
+        ; Then "foo" and {foo} could be treated as SQL strings.  Review.
+        ;
+        text! [value]
+
+        group! [  ; recurse so that nested @var get added to parameters
+            spaced collect [
+                keep "("
+                for-next pos value [
+                    if new-line? pos [keep newline]
+                    keep sqlform parameters :pos.1
+                ]
+                if new-line? tail value [keep newline]
+                keep ")"
+            ]
+        ]
+
+        the-word! the-tuple! the-path! [  ; !!! Should THE-PATH be allowed?
+            append/only parameters [^ #]: get value
+            "?"
+        ]
+
+        the-group! [
+            append/only parameters ^ do as block! value
+            "?"
+        ]
+
+        meta-word! meta-tuple! meta-path! [
+            as text! [# #]: get value
+        ]
+
+        meta-group! [
+            as text! do as block! value
+        ]
+    ]
+    else [
+        fail ["Invalid type for ODBC-EXECUTE dialect:" mold/limit :value 60]
+    ]
+]
+
+
 ; https://forum.rebol.info/t/1234
 ;
 odbc-execute: func [
@@ -156,25 +221,21 @@ odbc-execute: func [
     parameters: default [copy []]
 
     if block? query [
-        query: spaced map-each item query [
-            switch type of item [
-                the-word! the-path! [
-                    get item
+        query: spaced collect [
+            let is-first: true
+            for-next pos query [
+                if not is-first [
+                    if new-line? pos [keep newline]
                 ]
-                the-group! [
-                    reduce as group! item
-                ]
-            ] then value -> [
-                append/only parameters :value
-                "?"
-            ] else [
-                :item
+                is-first: false
+                keep sqlform parameters :pos.1
             ]
         ]
     ]
 
     if verbose [
-        print [">> SQL:" mold query]
+        print ["** SQL:" mold query]
+        print ["** PARAMETERS:" mold parameters]
     ]
 
     insert statement compose [(query) ((parameters))]
