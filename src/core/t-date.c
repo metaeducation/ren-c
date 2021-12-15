@@ -119,6 +119,7 @@ void MF_Date(REB_MOLD *mo, REBCEL(const*) v_orig, bool form)
 
     DECLARE_LOCAL (v);
     Copy_Cell(v, SPECIFIC(CELL_TO_VAL(v_orig)));
+    Dequotify(v);  // accessors expect it to not be quoted
 
     if (
         VAL_MONTH(v) == 0
