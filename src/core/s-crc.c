@@ -69,7 +69,7 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const REBYTE *utf8, REBSIZ size)
 
 
 //
-//  Hash_UTF8_Caseless: C
+//  Hash_UTF8_Len_Caseless: C
 //
 // Return a 32-bit case insensitive hash value for known valid UTF-8 data.
 // Length is in characters, not bytes.
@@ -77,7 +77,10 @@ uint32_t Hash_Scan_UTF8_Caseless_May_Fail(const REBYTE *utf8, REBSIZ size)
 // See also: Hash_Scan_UTF8_Caseless_May_Fail(), which takes unverified
 // UTF8 and a byte count instead.
 //
-uint32_t Hash_UTF8_Caseless(REBCHR(const*) cp, REBLEN len) {
+// NOTE: This takes LENGTH, not number of bytes, because it goes codepoint by
+// codepoint for the lowercase operation.
+//
+uint32_t Hash_UTF8_Len_Caseless(REBCHR(const*) cp, REBLEN len) {
     uint32_t crc = 0x00000000;
 
     REBLEN n;
@@ -189,9 +192,9 @@ uint32_t Hash_Value(const RELVAL *v)
       case REB_URL:
       case REB_TAG:
       case REB_ISSUE: {  // ISSUE! heart may be REB_BYTES, VAL_UTF8_X handles
-        REBSIZ size;
-        REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&size, cell);
-        hash = Hash_UTF8_Caseless(utf8, size);
+        REBLEN len;
+        REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, cell);
+        hash = Hash_UTF8_Len_Caseless(utf8, len);
         break; }
 
       case REB_TUPLE:

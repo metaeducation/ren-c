@@ -834,7 +834,7 @@ inline static REBSTR *Make_Sized_String_UTF8(const char *utf8, size_t size) {
 //=//// REBSTR HASHING ////////////////////////////////////////////////////=//
 
 inline static REBINT Hash_String(const REBSTR *str)
-    { return Hash_UTF8_Caseless(STR_HEAD(str), STR_LEN(str)); }
+    { return Hash_UTF8_Len_Caseless(STR_HEAD(str), STR_LEN(str)); }
 
 inline static REBINT First_Hash_Candidate_Slot(
     REBLEN *skip_out,
