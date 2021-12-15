@@ -90,7 +90,6 @@ core: [
     d-stats.c
     d-test.c
     d-trace.c
-    d-winstack.c
 
     ; (F)???
     f-blocks.c
@@ -108,7 +107,7 @@ core: [
     f-device.c
     [
         f-dtoa.c
-        
+
         ; f-dtoa.c comes from a third party and is an old file.  There is an
         ; updated package, but it is not a single-file...rather something with
         ; a complex build process.  If it were to be updated, it would need

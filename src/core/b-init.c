@@ -827,10 +827,6 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
 //
 void Startup_Core(void)
 {
-  #if TO_WINDOWS && DEBUG_SERIES_ORIGINS
-    Startup_Winstack();  // Do first so shutdown crashes have stack traces
-  #endif
-
   #if !defined(NDEBUG)
     Startup_Trash_Debug();
   #endif
@@ -1216,8 +1212,4 @@ void Shutdown_Core(bool clean)
     // calls have been made to balance their Alloc_Mem calls.
     //
     Shutdown_Pools();
-
-  #if TO_WINDOWS && DEBUG_SERIES_ORIGINS
-    Shutdown_Winstack();  // Do last so shutdown crashes have stack traces
-  #endif
 }

@@ -1185,27 +1185,23 @@ switch user-config/debug [
         app-config/debug: on
     ]
     'sanitize [
-        ;
-        ; MSVC has added support for address sanitizer, but at time of writing
-        ; it's limited to 32-bit non-debug builds with non-DLL runtimes:
-        ;
-        ; https://devblogs.microsoft.com/cppblog/addresssanitizer-asan-for-windows-with-msvc/
-        ;
-        ; You have to build 32-bit with /MT (not /MD) and /fsanitize=address,
-        ; then link with /whole-archive:clang_rt.asan-i386.lib.  Testing it
-        ; manually shows that it does work--albeit it seems to exhaust memory
-        ; while running the test suite (at least with the settings out of the
-        ; box).  If someone is so inclined they can modify the generator for
-        ; this, but the linux build probably catches most things, and it seems
-        ; Dr. Memory is likely a better bet for Windows, despite being slower:
-        ;
-        ; https://drmemory.org/
-        ;
         app-config/debug: on
         cfg-symbols: true
         cfg-sanitize: true
+
         append app-config/cflags <gnu:-fsanitize=address>
         append app-config/ldflags <gnu:-fsanitize=address>
+
+        ; MSVC added support for address sanitizer in 2019.  At first it wasn't
+        ; great, but it got improved and got working reasonably in March 2021.
+        ; You need to link the libraries statically (/MT) not dynamically (/MD)
+        ;
+        ; !!! This isn't printing line numbers.  /Zi should be included with -g
+        ; and does not help (adding it repeatedly here made symbols vanish?)
+        ;
+        append app-config/cflags <msc:/fsanitize=address>
+        append app-config/cflags <msc:/MT>
+        append app-config/ldflags <msc:/DEBUG>  ; for better error reporting
     ]
 
     ; Because it has symbols but no debugging, the callgrind option can also

@@ -1203,10 +1203,6 @@ void GC_Kill_Series(REBSER *s)
     FREETRASH_POINTER_IF_DEBUG(s->misc.trash);
   #endif
 
-  #if TO_WINDOWS && DEBUG_SERIES_ORIGINS
-    Free_Winstack_Debug(s->guard);
-  #endif
-
     Free_Node(SER_POOL, s);
 
     if (GC_Ballast > 0)

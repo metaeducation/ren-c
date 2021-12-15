@@ -397,21 +397,8 @@ inline static size_t SER_TOTAL_IF_DYNAMIC(const REBSER *s) {
         // not, as that's in the info.
 
       #if DEBUG_SERIES_ORIGINS
-        #if TO_WINDOWS
-            //
-            // The bug that %d-winstack.c was added for related to API handle
-            // leakage.  So we only instrument the root series for now.  (The
-            // stack tracking is rather slow if applied to all series, but
-            // it is possible...just don't do this test.)
-            //
-            if (NOT_SERIES_FLAG(s, DYNAMIC) and GET_SERIES_FLAG(s, ROOT))
-                s->guard = cast(intptr_t*, Make_Winstack_Debug());
-            else
-                s->guard = nullptr;
-        #else
-            s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
-            free(s->guard);
-        #endif
+        s->guard = cast(intptr_t*, malloc(sizeof(*s->guard)));
+        free(s->guard);
       #endif
 
       #if DEBUG_COUNT_TICKS

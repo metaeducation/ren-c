@@ -428,16 +428,8 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(REBSER *s)
     fflush(stderr);
 
   #if DEBUG_SERIES_ORIGINS
-    #if TO_WINDOWS
-        printf("\nCALL STACK WHERE ALLOCATED:\n");
-        Print_Winstack_Debug(s->guard);
-
-        printf("\nCURRENT CALL STACK:\n");
-        Print_Winstack_Debug(Make_Winstack_Debug());
-    #else
-        if (*s->guard == 1020)  // should make valgrind or asan alert
-            panic ("series guard didn't trigger ASAN/valgrind trap");
-    #endif
+    if (*s->guard == 1020)  // should make valgrind or asan alert
+        panic ("series guard didn't trigger ASAN/valgrind trap");
 
     panic (
         "series guard didn't trigger ASAN/Valgrind trap\n" \
