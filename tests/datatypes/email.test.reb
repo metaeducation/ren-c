@@ -1,5 +1,6 @@
 ; datatypes/email.r
 (email? me@here.com)
+(email? graham.chiu@mdh.health.nz)
 (not email? 1)
 (email! = type of me@here.com)
 ; "minimum"
