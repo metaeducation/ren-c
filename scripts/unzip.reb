@@ -222,7 +222,7 @@ zip: func [
     let info: if not verbose [:elide] else [:print]
 
     if match [file! url!] where [
-        where: open/write where
+        where: open/write/new where  ; !!! /NEW is needed (should it be?)
     ]
 
     let out: func [value] [append where value]
@@ -241,7 +241,12 @@ zip: func [
 
     source: to block! source
     iterate source [
-        let name: source.1
+        let name: match [file! url!] source.1 else [
+            fail [
+                {ZIP dialect expected FILE! or URL!, not} mold type of source.1
+            ]
+        ]
+
         let root+name: if find "\/" name.1 [
             info ["Warning: absolute path" name]
             name
@@ -262,7 +267,7 @@ zip: func [
 
         let date: now  ; !!! Each file has slightly later date?
 
-        let data: if match [binary! text!] :source.2 [  ; next is data
+        let data: if match [binary! text!] source.2 [  ; next is data
             first (source: next source)
         ] else [  ; otherwise data comes from reading the location itself
             if dir? name [
