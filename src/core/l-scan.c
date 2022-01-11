@@ -2552,16 +2552,60 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         // applicable compression...and validates the array.
         //
         DECLARE_LOCAL (temp);
+
+        // !!! The scanner needs an overhaul and rewrite to be less ad hoc.
+        // Right now, dots act as delimiters for tuples which messes with
+        // email addresses that contain dots.  It isn't obvious how to
+        // patch support in for that, but we can notice when a tuple tries
+        // to be made with an email address in it (which is not a legal
+        // tuple) and mutate that into an email address.  Clearly this is
+        // bad, but details of scanning isn't the focus at this time.
+        //
+        if (token == TOKEN_TUPLE) {
+            bool any_email = false;
+            REBDSP dsp = DSP;
+            for (; dsp != dsp_path_head - 1; --dsp) {
+                if (IS_EMAIL(DS_AT(dsp))) {
+                    if (any_email)
+                        goto tuple_error;
+                    any_email = true;
+                }
+            }
+            if (any_email) {
+                //
+                // There's one and only one email address.  Fuse the parts
+                // together, inefficiently with usermode code.  (Recall that
+                // this is an egregious hack in lieu of actually redesigning
+                // the scanner, but still pretty cool we can do it this way.)
+                //
+                DECLARE_LOCAL (items);
+                Init_Any_Array(
+                    items,
+                    REB_THE_BLOCK,  // don't want to evaluate
+                    Pop_Stack_Values(dsp_path_head - 1)
+                );
+                PUSH_GC_GUARD(items);
+                REBVAL *email = rebValue("as email! delimit {.}", items);
+                DROP_GC_GUARD(items);
+                Copy_Cell(temp, email);
+                rebRelease(email);
+                goto push_temp;
+            }
+        }
+
         REBVAL *check = Try_Pop_Sequence_Or_Element_Or_Nulled(
             temp,  // doesn't write directly to stack since popping stack
             token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             dsp_path_head - 1
         );
-        if (not check)
+        if (not check) {
+          tuple_error:
             fail (Error_Syntax(ss, token));
+        }
 
         assert(ANY_SEQUENCE(temp));  // Should be >= 2 elements, no decaying
 
+      push_temp:
         Copy_Cell(DS_PUSH(), temp);
 
         // !!! Need to cover case where heart byte is a WORD!, at least when
