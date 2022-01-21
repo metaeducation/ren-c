@@ -139,12 +139,6 @@ inline static bool Is_Isotope(const RELVAL *v)
 #define Is_Void(v)          Is_Isotope_With_Id((v), SYM_VOID)
 
 
-// See EVAL_FLAG_INPUT_WAS_INVISIBLE for the rationale behind ~stale~, that
-// has a special relationship with ~void~.
-//
-#define Init_Stale(out)     Init_Isotope((out), Canon(STALE))
-#define Is_Stale(v)         Is_Isotope_With_Id((v), SYM_STALE)
-
 
 // `~none~` is the default RETURN for when you just write something like
 // `func [return: <none>] [...]`.  It represents the intention of not having a

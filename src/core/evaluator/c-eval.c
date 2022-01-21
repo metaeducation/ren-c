@@ -211,16 +211,8 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
             //
             STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
 
-            bool was_invisible = GET_EVAL_FLAG(f, INPUT_WAS_INVISIBLE);
-            SET_EVAL_FLAG(f, INPUT_WAS_INVISIBLE);
-
             if (Eval_Maybe_Stale_Throws(f))  // reuse `f`
                 return true;
-
-            if (not was_invisible)  // cleared by Eval when reusing frames
-                CLEAR_EVAL_FLAG(f, INPUT_WAS_INVISIBLE);
-            else
-                SET_EVAL_FLAG(f, INPUT_WAS_INVISIBLE);
 
             // Keep evaluating as long as evaluations vanish, e.g.
             // `x: comment "hi" 2` shouldn't fail.
@@ -279,7 +271,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         EVAL_FLAG_FULFILL_ONLY  // can be requested or <blank> can trigger
         | EVAL_FLAG_RUNNING_ENFIX  // can be requested with REEVALUATE_CELL
         | FLAG_STATE_BYTE(255)  // state is forgettable
-        | EVAL_FLAG_INPUT_WAS_INVISIBLE  // !!! experimental feature lax checks
     );  // should be unchanged on exit
   #endif
 
@@ -551,14 +542,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     goto process_action; }
 
   give_up_backward_quote_priority:
-
-    // See remarks on EVAL_FLAG_INPUT_WAS_INVISIBLE on why we want to prevent
-    // the situation of `x: (1 + 2 do [comment "hi"])` setting x to ~void~,
-    // and preferring to set it to ~stale~ instead.
-    //
-    /*assert(NOT_EVAL_FLAG(f, INPUT_WAS_INVISIBLE));*/  // !!! recurse set-word
-    if (IS_END(f->out) or Is_Void(f->out))
-        SET_EVAL_FLAG(f, INPUT_WAS_INVISIBLE);
 
   //=//// BEGIN MAIN SWITCH STATEMENT /////////////////////////////////////=//
 
@@ -1763,14 +1746,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         break;
     }
 
-    if (  // see EVAL_FLAG_INPUT_WAS_INVISIBLE for why f->out is changed
-        Is_Void(f->out)
-        and NOT_EVAL_FLAG(f, INPUT_WAS_INVISIBLE)
-    ){
-        Init_Stale(f->out);
-        SET_CELL_FLAG(f->out, OUT_NOTE_STALE);
-    }
-
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//
 
     // The UNEVALUATED flag is one of the bits that doesn't get copied by
@@ -2064,8 +2039,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     CLEAR_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
-
-    CLEAR_EVAL_FLAG(f, INPUT_WAS_INVISIBLE);  // good place for this?
 
   #if !defined(NDEBUG)
     Eval_Core_Exit_Checks_Debug(f);  // called unless a fail() longjmps

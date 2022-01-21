@@ -187,19 +187,9 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(17)
 
 
-//=//// EVAL_FLAG_INPUT_WAS_INVISIBLE //////////////////////////////////////=//
+//=//// EVAL_FLAG_18 ///////////////////////////////////////////////////////=//
 //
-// This is for an experimental feature to facilitate tracking whether an
-// operation *could* have been invisible if it wanted to be.  e.g.:
-//
-//     >> x: (1 + 2 y: comment "hi" z: do [comment "hi"])
-//     == ~stale~  ; ...but y and z are ~void~
-//
-// The reasoning behind this is to improve the communicative value of ~void~,
-// to help know if adding DEVOID or another operation is the only thing
-// missing from pure invisibility.
-//
-#define EVAL_FLAG_INPUT_WAS_INVISIBLE \
+#define EVAL_FLAG_18 \
     FLAG_LEFT_BIT(18)
 
 

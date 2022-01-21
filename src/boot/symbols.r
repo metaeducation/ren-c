@@ -36,7 +36,6 @@ unset
 #false
 
 void
-stale  ; for non-/VOID DO, e.g. `(1 + 2 do [comment "hi"])` is ~stale~
 
 errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
 rootvar  ; used as placeholder in rootvar cells
