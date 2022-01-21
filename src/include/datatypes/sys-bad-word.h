@@ -110,11 +110,16 @@ inline static bool Is_Isotope_With_Id(
     assert(id != SYM_0);
     if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
         return false;
+    assert(VAL_BAD_WORD_ID(v) != SYM_VOID);
     return cast(REBLEN, id) == cast(REBLEN, VAL_BAD_WORD_ID(v));
 }
 
-inline static bool Is_Isotope(const RELVAL *v)
-  { return IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE); }
+inline static bool Is_Isotope(const RELVAL *v) {
+    if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
+        return false;
+    assert(VAL_BAD_WORD_ID(v) != SYM_VOID);
+    return true;
+}
 
 #define Init_Isotope(out,sym) \
     Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_FLAG_ISOTOPE)
@@ -128,15 +133,13 @@ inline static bool Is_Isotope(const RELVAL *v)
 #define Is_Unset(v)         Is_Isotope_With_Id(v, SYM_UNSET)
 
 
-// `~void~` is treated specially by the system, to convey "invisible intent".
-// It is what `do []` evaluates to, as well as `do [comment "hi"])`.  Some
-// constructs will actually implicitly assume the invisible intent means
-// invisibility, such as `all [do [comment "hi"], 1 + 2]` being 3...despite
-// the fact that a ~void~ isotope is not generally "true or fales".
+// !!! Temporary old concept of void, reconsider under new design where the
+// ~void~ BAD-WORD! actually evaluates to being purely invisible...not an
+// isotope...
 
 #define VOID_VALUE          c_cast(const REBVAL*, &PG_Void_Value)
-#define Init_Void(out)      Init_Isotope((out), Canon(VOID))
-#define Is_Void(v)          Is_Isotope_With_Id((v), SYM_VOID)
+#define Init_Void(out)      Init_Isotope((out), Canon(OLD_VOID))
+#define Is_Void(v)          Is_Isotope_With_Id((v), SYM_OLD_VOID)
 
 
 

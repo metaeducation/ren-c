@@ -36,6 +36,7 @@ unset
 #false
 
 void
+old-void  ; !!! temporary, delete when time is right
 
 errored  ; when rebRescue() has no handler and evaluates to non-fail ERROR!
 rootvar  ; used as placeholder in rootvar cells
