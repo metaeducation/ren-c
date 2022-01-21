@@ -139,7 +139,6 @@ REBNATIVE(delimit)
         if (
             IS_NULLED(out)
             or Is_Nulled_Isotope(out)  // `unspaced ["a" if true [null]]`
-            or Is_Void(out)  // e.g. result of do make frame! on comment
             or IS_BLANK(out)  // see note above on BLANK!
         ){
             continue;  // opt-out and maybe keep option open to return NULL

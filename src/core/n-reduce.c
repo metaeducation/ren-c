@@ -89,10 +89,6 @@ REBNATIVE(reduce)
                 Lib(META), predicate, rebQ(D_OUT)
             );
             if (processed) {
-                if (Is_Void(processed)) {
-                    rebRelease(processed);
-                    continue;
-                }
                 Move_Cell(D_OUT, processed);
                 Meta_Unquotify(D_OUT);
                 rebRelease(processed);
@@ -357,28 +353,10 @@ REB_R Compose_To_Stack_Core(
                     insert = nullptr;
                     rebRelease(insert);
                 }
-                else if (Is_Void(insert)) {
-                    //
-                    // compose [(elide "invisible composes vanish")] => []
-                    //
-                    rebRelease(insert);
-                    continue;
-                }
                 else
                     Meta_Unquotify(insert);
             }
             else {
-                if (Is_Void(out) and doubled_group) {
-                    //
-                    // The idea about ~void~ isotopes (vs. actual invisiblity)
-                    // is that they represent void intent across places where
-                    // it may not be safe to vaporize.  But we have permission
-                    // to vaporize due to the (( )) intent...it's only the
-                    // ( ) slots that need to be conservative.
-                    //
-                    continue;
-                }
-
                 insert = (IS_NULLED(out) or Is_Nulled_Isotope(out))
                     ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
                     : out;

@@ -604,10 +604,8 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_EVERY:
-            if (not Is_Void(temp)) {  // ignore...
-                Move_Cell(les->out, temp);
-                no_falseys = no_falseys and IS_TRUTHY(les->out);
-            }
+            Move_Cell(les->out, temp);
+            no_falseys = no_falseys and IS_TRUTHY(les->out);
             break;
 
           case LOOP_MAP_EACH:
@@ -623,7 +621,6 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             if (
                 IS_NULLED(temp) or Is_Isotope_With_Id(temp, SYM_NULL)
                 or IS_BLANK(temp)
-                or Is_Void(temp)
             ){
                 // Ignore...
             }
@@ -1386,7 +1383,6 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 IS_NULLED(res->out)
                 or Is_Nulled_Isotope(res->out)
                 or IS_FALSEY(res->out)
-                or Is_Void(res->out)
             ){
                 res->start = index;
                 continue;  // keep requested, don't mark for culling
@@ -1404,7 +1400,6 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
         else {
             if (
                 not Is_Nulled_Isotope(res->out)
-                and not Is_Void(res->out)
                 and IS_TRUTHY(res->out)
             ){
                 res->start = index;
@@ -1819,9 +1814,7 @@ REBNATIVE(until)
         }
 
         if (IS_NULLED(predicate)) {
-            if (Is_Void(D_OUT))
-                continue;  // skip voids from consideration, e.g. continue
-
+            //
             // This is a case where we do not want to decay isotopes, because
             // someone might write `until [match blank! get-queue-item]` and
             // matching a blank is intended to stop the loop...they should be

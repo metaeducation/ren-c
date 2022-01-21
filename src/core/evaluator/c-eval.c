@@ -1675,8 +1675,17 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         assert(NOT_CELL_FLAG(v, ISOTOPE));
 
-        Derelativize(f->out, v, v_specifier);
-        SET_CELL_FLAG(f->out, ISOTOPE);
+        if (VAL_BAD_WORD_ID(v) == SYM_VOID) {
+            //
+            // There are not void isotopes, because these represent a state
+            // of "pure invisibility".  While they don't exist, the meta state
+            // that conveys invisibility (when needed) is a ~VOID~ BAD-WORD!.
+            // Hence, ~VOID~'s evaluation just leaves whatever is in f->out...
+        }
+        else {
+            Derelativize(f->out, v, v_specifier);
+            SET_CELL_FLAG(f->out, ISOTOPE);
+        }
         break;
 
 

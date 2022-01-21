@@ -388,57 +388,55 @@ REBNATIVE(all)
     DECLARE_FRAME_AT (f, ARG(block), flags);
     Push_Frame(nullptr, f);
 
-    Init_Void(D_OUT);  // `all []` is a ~void~ isotope
+    SET_END(D_OUT);  // `all []` will become a ~none~ isotope
 
     do {
-        // We write to the spare in case evaluation produces a ~void~ isotope
-        // and we want to keep the previous value in D_OUT.
-        //
-        Init_Void(D_SPARE);
-        if (Eval_Step_Maybe_Stale_Throws(D_SPARE, f)) {
-            Move_Cell(D_OUT, D_SPARE);
+        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
             Abort_Frame(f);
             return R_THROWN;
         }
-        CLEAR_CELL_FLAG(D_SPARE, OUT_NOTE_STALE);  // don't leak stale flag
 
-        if (Is_Void(D_SPARE)) {  // may have been stale or not
+        // all @[] can leave END in D_OUT without it being marked stale, since
+        // no evaluation happens and staleness is an evaluative concept.  This
+        // may be a flaw in the handling of the evaluator on @[...], review.
+        //
+        if (IS_END(D_OUT) or GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE)) {
+            CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);  // don't leak stale flag
+
             if (IS_END(f->feed->value))  // `all []`
                 break;
             continue;  // `all [comment "hi" 1]`, first step is stale
         }
 
         if (IS_NULLED(predicate)) {  // default predicate effectively .DID
-            if (IS_FALSEY(D_SPARE)) {  // false/blank/null triggers failure
+            if (IS_FALSEY(D_OUT)) {  // false/blank/null triggers failure
                 Abort_Frame(f);
                 return nullptr;
             }
         }
         else {
-            DECLARE_LOCAL (temp);  // D_SPARE and D_OUT both in use
             if (rebRunThrows(
-                temp,
+                D_SPARE,
                 true,
                 predicate,
-                rebQ(NULLIFY_NULLED(D_SPARE))
+                rebQ(NULLIFY_NULLED(D_OUT))
             )){
-                Move_Cell(D_OUT, temp);
+                Move_Cell(D_OUT, D_SPARE);
                 return R_THROWN;
             }
 
-            if (IS_FALSEY(temp)) {
+            if (IS_FALSEY(D_SPARE)) {
                 Abort_Frame(f);
                 return nullptr;
             }
         }
 
-        // spare passed the test and wasn't invisible, make it the new result
-        //
-        Move_Cell(D_OUT, D_SPARE);
-
     } while (NOT_END(f->feed->value));
 
     Drop_Frame(f);
+
+    if (IS_END(D_OUT))
+        return Init_None(D_OUT);
 
     // The only way a falsey evaluation should make it to the end is if a
     // predicate passed it.  Don't want that to trip up `if all` so make it
@@ -480,14 +478,12 @@ REBNATIVE(any)
     Push_Frame(nullptr, f);
 
     do {
-        Init_Void(D_OUT);
-        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
+        if (Eval_Step_Throws(D_OUT, f)) {
             Abort_Frame(f);
             return R_THROWN;
         }
-        CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);  // don't leak stale flag
 
-        if (Is_Void(D_OUT)) {  // may have been stale or not
+        if (IS_END(D_OUT)) {  // must have been stale
             if (IS_END(f->feed->value))
                 break;
             continue;  // `any [comment "hi" 1]`, first step is stale
@@ -872,16 +868,16 @@ REBNATIVE(default)
 
     // We only consider those bad words which are in the "unfriendly" state
     // that the system also knows to mean "emptiness" as candidates for
-    // overriding.  That's ~unset~ and ~void~ at the moment.  Note that
-    // friendly ones do not count:
+    // overriding.  That's ~unset~ at the moment.  Note that friendly ones do
+    // not count:
     //
-    //     >> x: second [~void~ ~unset~]
+    //     >> x: first [~unset~]
     //     == ~unset~
     //
     //     >> x: default [10]
     //     == ~unset~
     //
-    if (not (IS_NULLED(D_OUT) or Is_Unset(D_OUT) or Is_Void(D_OUT))) {
+    if (not (IS_NULLED(D_OUT) or Is_Unset(D_OUT))) {
         if (not REF(predicate)) {  // no custom additional constraint
             if (not IS_BLANK(D_OUT))  // acts as `x: default .not.blank? [...]`
                 return D_OUT;  // count it as "already set"
