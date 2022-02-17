@@ -149,7 +149,7 @@
     same? :a-value a-value
 )
 (
-    a-value: ~void~
+    a-value: ~none~
     e: trap [a-value]
     e.id = 'bad-word-get
 )

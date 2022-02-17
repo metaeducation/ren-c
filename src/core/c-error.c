@@ -840,7 +840,7 @@ REBCTX *Make_Error_Managed_Core(
                 }
                 else if (IS_END(p)) {
                     assert(!"Not enough arguments in Make_Error_Managed()");
-                    Init_Void(var);
+                    Init_None(var);
                 }
                 else if (IS_RELATIVE(cast(const RELVAL*, p))) {
                     //

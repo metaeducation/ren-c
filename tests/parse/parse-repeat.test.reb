@@ -62,10 +62,10 @@
 )
 
 ; A WHILE that never actually has a succeeding rule gives back a match that is
-; a void isotope, as do 0-iteration REPEAT and INTEGER! rules.
+; a ~none~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
-    ("a" = uparse "a" ["a" repeat (0) "b"])
-    ("a" = uparse "a" ["a" [repeat (0) "b"]])
+    ('~none~ = ^ uparse "a" ["a" repeat (0) "b"])
+    ('~none~ = uparse "a" ["a" ^[repeat (0) "b"]])
 ]
 
 ; Conventional ranges

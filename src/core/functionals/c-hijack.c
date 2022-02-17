@@ -173,7 +173,7 @@ bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
     }
 
     bool threw = Do_At_Mutable_Maybe_Stale_Throws(
-        out,  // invisibles allow for out to not be Init_Void()'d
+        out,  // invisibles allow for out to not be Init_None()'d
         first,  // path not in array, will be "virtual" first element
         code_arr,
         0,  // index

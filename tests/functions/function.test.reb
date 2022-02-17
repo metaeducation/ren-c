@@ -186,7 +186,7 @@
 )
 (
     f: does [()]
-    '~void~ = ^ f
+    '~none~ = ^ f
 )
 (
     f: does ['a]

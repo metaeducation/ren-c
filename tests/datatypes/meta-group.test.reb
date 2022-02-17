@@ -2,16 +2,13 @@
 
 (meta-group! = type of '^(a b c))
 
-; ENDs make unfriendly voids when meta quoted, that if you further meta
-; quote it will make friendly ones.
+; The only way to see vanishing stuff is with meta operations, which give you
+; ~void~ BAD-WORD!s...there is no way to otherwise observe the existence of
+; a "void isotope".
 [
-    ('~void~ = ^ ^())
-    ('~void~ = ^ ^(comment "hi"))
-    ('~void~ = ^ ^(void))
-
-    ('~void~ = reify ^())
-    ('~void~ = reify ^(comment "hi"))
-    ('~void~ = reify ^(void))
+    ('~void~ = ^())
+    ('~void~ = ^(comment "hi"))
+    ('~void~ = ^(void))
 ]
 
 ((the '10) = ^(10 comment "hi"))

@@ -82,7 +82,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     }
 
     if (returned) {
-        if (IS_ENDISH_NULLED(discarded))
+        if (IS_END(discarded))
             return f->out;
         return Move_Cell(f->out, discarded);
     }

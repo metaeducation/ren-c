@@ -21,7 +21,8 @@
 ; Only true invisibility will act as invisible in the single case, but in the
 ; spliced case the invisible isotopic intent is tolerated vs. an error.
 ;
-(error? trap [compose [(~void~) * <ok>]])
+(error? trap [compose [(~none~) * <ok>]])
+([* <ok>] = compose [(~void~) * <ok>])
 ([<bad> *] = compose [<bad> * ((~void~))])
 
 ; BLANK!s are as-is in the single form, but vanish in the spliced form, and

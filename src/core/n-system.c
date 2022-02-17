@@ -47,7 +47,7 @@ REBNATIVE(halt)
 //  {Stop evaluating and return control to command shell or calling script}
 //
 //      return: []  ; !!! Notation for divergent functions?
-//      value "See: http://en.wikipedia.org/wiki/Exit_status"
+//      ^value "See: http://en.wikipedia.org/wiki/Exit_status"
 //          [<end> <opt> any-value!]
 //  ]
 //
@@ -59,7 +59,9 @@ REBNATIVE(quit)
 {
     INCLUDE_PARAMS_OF_QUIT;
 
-    if (IS_ENDISH_NULLED(ARG(value))) {
+    REBVAL *v = ARG(value);
+
+    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID) {
         //
         // This returns an bad-word if there is no arg, and labels it ~quit~.
         //
@@ -67,10 +69,12 @@ REBNATIVE(quit)
         // THROW and CATCH isotopes?  It creates friction when errors have
         // isotopes in them...
         //
-        Init_Bad_Word(ARG(value), Canon(QUIT));
+        Init_Bad_Word(v, Canon(QUIT));
     }
+    else
+        Meta_Unquotify(v);
 
-    return Init_Thrown_With_Label(D_OUT, ARG(value), Lib(QUIT));
+    return Init_Thrown_With_Label(D_OUT, v, Lib(QUIT));
 }
 
 

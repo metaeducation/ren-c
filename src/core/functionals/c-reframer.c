@@ -102,10 +102,11 @@ bool Make_Invokable_From_Feed_Throws(
         return false;
     }
 
-    // !!! Unfortunately, this means that `[x y]: ^(devoid do f)` and
-    // similar can't work; they're done as `([x y]: ^ devoid do f)` but
-    // it would be nice to find some kind of mitigation.  Descend into the
-    // feed and make sure the tail is reached?
+    // Unfortunately, this means that `[x y]: ^(do f)` and `[x y]: ^ do f`
+    // can't work.  The problem is that you don't know how many expressions
+    // will be involved in these cases, and the multi-return is a syntax trick
+    // that can only work when interacting with one function, and even plain
+    // groups break that guarantee.  Do meta values with e.g. `[^x y]: do f`.
     //
     if (ANY_GROUP(v))  // `requote (append [a b c] #d, <can't-work>)`
         fail ("Actions made with REFRAMER cannot work with GROUP!s");

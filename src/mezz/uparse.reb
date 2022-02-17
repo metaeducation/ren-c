@@ -109,7 +109,7 @@ combinator: func [
     <static> wrapper (
         func [
             {Enclosing function for hooking all combinators}
-            return: [<opt> any-value!]
+            return: [<opt> <invisible> any-value!]
             f [frame!]
         ][
             ; This hook lets us run code before and after each execution of
@@ -119,11 +119,11 @@ combinator: func [
             let state: f.state
             let remainder: f.remainder
 
-            let result': ^(devoid do f)
+            let result': ^(do f)
             if state.verbose [
                 print ["RESULT':" (mold result' else ["NULL"])]
             ]
-            return/isotope unmeta (get/any 'result' also [
+            return/isotope unmeta/void (get/any 'result' also [
                 all [  ; if success, mark state.furthest
                     state.furthest
                     (index? remainder: get remainder) > (index? get state.furthest)
@@ -216,7 +216,7 @@ combinator: func [
         ; return invisibly get the /void interpretation of returns
         ; automatically?
         ;
-        ; !!! chain [:devoid | :return/isotope] produces ~unset~.  Review
+        ; !!! chain [:none-to-void | :return/isotope] produces ~unset~.  Review
         ; why that is, and if it would be a better answer.
         ;
         return: :return/isotope
@@ -1447,7 +1447,7 @@ default-combinators: make map! reduce [
         switch type of unmeta times' [
             blank! [
                 set remainder input
-                return ~void~  ; `[repeat (_) rule]` is a no-op
+                return ~none~  ; `[repeat (_) rule]` is a no-op
             ]
             issue! [
                 if times' <> the '# [
@@ -1462,7 +1462,7 @@ default-combinators: make map! reduce [
                 uparse unquote times' [
                     '_ '_ <end> (
                         set remainder input
-                        return ~void~  ; `[repeat ([_ _]) rule]` is a no-op
+                        return ~none~  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
                     min: [integer! | '_ (0)], max: [integer! | '_ | '#]
@@ -1970,7 +1970,7 @@ default-combinators: make map! reduce [
         assert [tail? parsers]
         set remainder input
         set pending totalpending
-        return devoid do f
+        return do f
     ]
 
     === WORD! AND SYMBOL! COMBINATOR ===
@@ -2002,7 +2002,7 @@ default-combinators: make map! reduce [
         if blank? :r [  ; no-op; fetching a blank acts just like []
             set remainder input
             set pending _
-            return ~void~
+            return ~none~
         ]
 
         ; !!! It's not clear exactly what set of things should be allowed or

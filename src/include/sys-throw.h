@@ -105,9 +105,14 @@ inline static REB_R Init_Thrown_With_Label(
     }
   #endif
 
-    Copy_Cell(&TG_Thrown_Arg, arg);
-    if (GET_CELL_FLAG(arg, UNEVALUATED))
-        SET_CELL_FLAG(&TG_Thrown_Arg, UNEVALUATED);  // for invisible RETURN
+    // We use the meta protocol when throwing, this way it's possible to
+    // carry isotopes and invisible returns.
+    //
+    if (IS_END(arg))
+        SET_END(&TG_Thrown_Arg);
+    else
+        Copy_Cell(&TG_Thrown_Arg, arg);
+    Meta_Quotify(&TG_Thrown_Arg);
 
     return R_THROWN; // for chaining to dispatcher output
 }
@@ -118,8 +123,8 @@ static inline void CATCH_THROWN(
 ){
     UNUSED(thrown);
     Copy_Cell(arg_out, &TG_Thrown_Arg);
-    if (GET_CELL_FLAG(&TG_Thrown_Arg, UNEVALUATED))
-        SET_CELL_FLAG(arg_out, UNEVALUATED);  // indicates invisible RETURN
+    Meta_Unquotify(arg_out);
+
     RESET(&TG_Thrown_Arg);
 
   #if !defined(NDEBUG)

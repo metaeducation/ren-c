@@ -9,8 +9,9 @@
     1 = do [1 comment "a"]
 )
 (
-    '~void~ = ^ do [comment "a"]
+    '~none~ = ^ do [comment "a"]
 )
+('~void~ = ^ comment "a")
 
 (
     val: <overwritten>
@@ -55,8 +56,9 @@
     1 = do [1 elide "a"]
 )
 (
-    '~void~ = ^ do [elide "a"]
+    '~none~ = ^ do [elide "a"]
 )
+('~void~ = ^ elide "a")
 
 (
     e: trap [
@@ -143,7 +145,7 @@
 ]
 
 (
-    '~void~ = ^ do [|||]
+    '~none~ = ^ do [|||]
 )
 (
     3 = do [1 + 2 ||| 10 + 20, 100 + 200]
@@ -334,8 +336,8 @@
     ]
 )
 
-('~void~ = ^ (if true [] else [<else>]))
-('~void~ = ^ (if true [comment <true-branch>] else [<else>]))
+('~none~ = ^ (if true [] else [<else>]))
+('~none~ = ^ (if true [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <vaporize>])
 (1 = any [1 elide <vaporize>])
@@ -387,7 +389,7 @@
     (<test> = (<test> vanish-if-odd 1))
 
     (vanish-if-even: func [return: [<invisible> integer!] y] [
-       return devoid unmeta reify ^(vanish-if-odd y + 1)
+       return unmeta/void ^(vanish-if-odd y + 1)
     ] true)
 
     (<test> = (<test> vanish-if-even 2))
@@ -399,7 +401,7 @@
 ; by default if not.
 [
     (
-        no-spec: func [x] [()]
+        no-spec: func [x] [return]
         <test> = (<test> no-spec 10)
     )
     (

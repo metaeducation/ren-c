@@ -362,7 +362,7 @@ inline static bool Typecheck_Including_Constraints(
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
         if (IS_BAD_WORD(v)) {
-            assert(Is_Void(v) or NOT_CELL_FLAG(v, ISOTOPE));
+            assert(NOT_CELL_FLAG(v, ISOTOPE));
             return true;  // all META parameters take BAD-WORD! isotopes
         }
         else if (IS_NULLED(v)) {

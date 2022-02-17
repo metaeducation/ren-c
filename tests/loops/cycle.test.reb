@@ -62,7 +62,7 @@
 ; Unlike loops with ordinary termination conditions, CYCLE can return a
 ; value with STOP.  Plain STOP is not conflated with BREAK.
 ;
-('~void~ = ^ cycle [stop])
+('~none~ = ^ cycle [stop])
 (10 = cycle [stop 10])
 ('~null~ = ^ cycle [stop null])  ; allowed
 (null = cycle [break])

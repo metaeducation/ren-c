@@ -74,7 +74,7 @@ inline static bool Do_Any_Array_At_Throws(
 
     // ^-- Voidify out *after* feed initialization (if any_array == out)
     //
-    Init_Void(out);
+    Init_None(out);
 
     bool threw = Do_Feed_To_End_Maybe_Stale_Throws(
         out,
@@ -124,7 +124,7 @@ inline static bool Do_At_Mutable_Throws(
     REBLEN index,
     REBSPC *specifier
 ){
-    Init_Void(out);
+    Init_None(out);
 
     bool threw = Do_At_Mutable_Maybe_Stale_Throws(
         out,

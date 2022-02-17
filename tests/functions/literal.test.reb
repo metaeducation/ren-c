@@ -10,14 +10,14 @@
     (null = detector null)
     ('~null~ = detector if true [null])
 
-    ('~void~ = ^ detector (comment "hi"))
-    ('~void~ = ^ detector)
+    ('~void~ = detector (comment "hi"))
+    ('~void~ = detector)
 
     (did left-detector: enfixed :detector)
 
     ((the '1) = (1 left-detector))
-    ('~void~ = ^ left-detector)
-    ('~void~ = ^(left-detector))
+    ('~void~ = left-detector)
+    ('~void~ = (left-detector))
 ]
 
 (

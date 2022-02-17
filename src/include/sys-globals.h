@@ -109,7 +109,6 @@ PVAR REB_OPTS *Reb_Opts;
 PVAR REBVAL PG_End_Cell;
 
 PVAR REBVAL PG_Unset_Value;
-PVAR REBVAL PG_Void_Value;
 
 // These are special return values that can be checked easily by pointer.  They
 // could be checked even faster if they were fake immediate values, like

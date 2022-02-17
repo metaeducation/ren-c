@@ -304,8 +304,12 @@ inline static RELVAL *Isotopic_Quote(RELVAL *v) {
 
 inline static RELVAL *Isotopic_Unquote(RELVAL *v) {
     assert(not IS_NULLED(v));  // use Meta_Unquotify() instead
-    if (IS_BAD_WORD(v))  // Meta quote flipped isotope off, flip back on.
-        SET_CELL_FLAG(v, ISOTOPE);
+    if (IS_BAD_WORD(v)) {  // Meta quote flipped isotope off, flip back on.
+        if (VAL_BAD_WORD_ID(v) == SYM_VOID)
+            SET_END(v);
+        else
+            SET_CELL_FLAG(v, ISOTOPE);
+    }
     else {
         Unquotify_Core(v, 1);
         if (IS_BAD_WORD(v))  // ...was friendly before meta-quoting it...
@@ -357,7 +361,7 @@ inline static RELVAL *Isotopic_Unquotify(RELVAL *v, REBLEN depth) {
 
 inline static RELVAL *Meta_Quotify(RELVAL *v) {
     if (IS_END(v))
-        return Init_Void(v);  // *unfriendly*
+        return Init_Bad_Word(v, Canon(VOID));
     if (IS_NULLED(v))
         return v;  // as-is
     return Isotopic_Quote(v);

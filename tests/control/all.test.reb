@@ -1,7 +1,7 @@
 ; functions/control/all.r
 
 ; zero values
-('~void~ = ^ all [])
+('~none~ = ^ all [])
 
 ; one value
 (:abs = all [:abs])
@@ -360,14 +360,14 @@
 ("this is why" = (all/predicate [false _ null] :not then ["this is why"]))
 
 
-; INVISIBILITY: Both ANY and ALL treat void isotopes the same as void functions.
+; ANY and ALL return a ~none~ isotope when given
 [
-    ("A" = all ["A", all [comment "hi", do []]])
+    ("A" = all ["A", none-to-void all [comment "hi", none-to-void do []]])
 ]
 
 ; When used with @ blocks, ALL will treat the block as already reduced
 [
-    ('~void~ = ^ all @[])
+    ('~none~ = ^ all @[])
     (2 = all @[1 + 2])
     (null = all inert reduce [true true #[false]])
     ('true = all @[false true])  ; just the word, and words are truthy

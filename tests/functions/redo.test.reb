@@ -100,7 +100,7 @@
 
         ; Fall through to inner
         ; It is running in the same frame's memory, but...
-        ; CAPURED-FRAME is a FRAME! value that stowed outer's "phase"
+        ; CAPTURED-FRAME is a FRAME! value that stowed outer's "phase"
 
         do f
     ]

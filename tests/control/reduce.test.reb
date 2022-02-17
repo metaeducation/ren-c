@@ -11,7 +11,7 @@
 [#1760 ; unwind functions should stop evaluation
     (null? repeat 1 [reduce [break]])
 ]
-('~void~ = ^ repeat 1 [reduce [continue]])
+('~none~ = ^ repeat 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 ([a 1] = catch/name [reduce [throw/name 1 'a]] 'a)
 (1 = reeval func [return: [integer!]] [reduce [return 1 2] 2])
@@ -48,13 +48,13 @@
 ; Predicates influence the handling of NULLs, which become ~null~ by default
 
 ([~null~] = reduce [null])
-([] = reduce [denull null])
+([] = reduce [null-to-void null])
 
 ; There was a bug pertaining to trying to set the new line flag on the output
 ; in the case of a non-existent null, test that.
 [
     ([] = reduce [
-        denull null
+        null-to-void null
     ])
     ([~null~] = reduce/predicate [null] :identity)
 ]
@@ -63,9 +63,9 @@
 
 ([3 _ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :try)
 ([3 ~null~ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify)
-([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :denull)
+([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :null-to-void)
 
-; REDUCE* is a specialization of REDUCE with denull
+; REDUCE* is a specialization of REDUCE with NULL-TO-VOID
 ;
 ([3 300] = reduce* [1 + 2 if false [10 + 20] 100 + 200])
 

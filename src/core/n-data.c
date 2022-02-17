@@ -1187,7 +1187,7 @@ bool Set_Var_Core_Updater_Throws(
 
     DECLARE_LOCAL (writeback);
     PUSH_GC_GUARD(writeback);
-    Init_Void(writeback);  // needs to be GC safe
+    Init_None(writeback);  // needs to be GC safe
 
     PUSH_GC_GUARD(temp);
 
@@ -2307,31 +2307,34 @@ REBNATIVE(reify)
 
 
 //
-//  devoid: native [
+//  none-to-void: native [
 //
-//  "Make non-isotope ~void~ vanish, passing through all other values"
+//  "Make ~none~ isotopes vanish, passing through all other values"
 //
 //      return: [<opt> <invisible> any-value!]
 //      ^optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(devoid)
+REBNATIVE(none_to_void)
 {
-    INCLUDE_PARAMS_OF_DEVOID;
+    INCLUDE_PARAMS_OF_NONE_TO_VOID;
 
-    REBVAL *v = ARG(optional);
+    REBVAL *v = ARG(optional);  // meta
 
-    // not quoted, so wasn't isotope...regular BAD-WORD! for examination
-    //
-    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID)
+    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_NONE)
+        return D_OUT;  // before ^META it was ~none~ isotope, so invisible
+
+    Meta_Unquotify(v);  // undo the meta
+
+    if (IS_END(v))  // !!! Review: ^META parameter <end> should be ~void~?
         return D_OUT;
 
-    RETURN (Meta_Unquotify(v));
+    RETURN (v);
 }
 
 
 //
-//  denull: native [
+//  null-to-void: native [
 //
 //  "Make NULL vanish, passing through all other values"
 //
@@ -2339,17 +2342,17 @@ REBNATIVE(devoid)
 //      ^optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(denull)
+REBNATIVE(null_to_void)
 {
-    INCLUDE_PARAMS_OF_DENULL;
+    INCLUDE_PARAMS_OF_NULL_TO_VOID;
 
     REBVAL *v = ARG(optional);
 
     // Consider incoming NULL isotopes to be NULL as well.
     //
-    // !!! What about ~void~ intents?  Is DENULL implicitly a superset of
-    // DEVOID?  It seems it should be, or at least error if it's not going to
-    // pass through a void intent.
+    // !!! What about ~void~ intents?  Is NULL-TO-VOID implicitly a superset of
+    // NONE-TO-VOID?  It seems it should be, or at least error if it's not
+    // going to pass through a void intent.
     //
     if (IS_NULLED(v) or (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_NULL))
         return D_OUT;

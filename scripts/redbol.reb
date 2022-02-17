@@ -724,8 +724,6 @@ reduce: emulate [
     ]
 ]
 
-enblock-devoid: chain [:devoid | :enblock]
-
 compose: emulate [
     function [
         value "Ren-C composes ANY-ARRAY!: https://trello.com/c/8WMgdtMp"

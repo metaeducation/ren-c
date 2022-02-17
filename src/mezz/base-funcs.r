@@ -726,7 +726,7 @@ attempt: func [
 reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
-    specialize :reduce [predicate: :denull]
+    specialize :reduce [predicate: :null-to-void]
 )
 
 for-next: redescribe [

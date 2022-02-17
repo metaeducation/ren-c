@@ -64,7 +64,7 @@
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
 // * The isotope states of several BAD-WORD!s have specific meaning to the
-//   system...such as ~unset~, ~void~, ~stale~, and ~null~.  Each are described
+//   system...such as ~unset~, ~void~, ~none~, and ~null~.  Each are described
 //   in sections below.
 //
 // * While normal BAD-WORD!s are neither true nor false, this may vary for the
@@ -93,7 +93,7 @@ inline static const REBSYM* VAL_BAD_WORD_LABEL(
     ID_OF_SYMBOL(VAL_BAD_WORD_LABEL(v))
 
 
-//=//// BAD-WORD! ISOTOPES (or just "isotopes") ////////////////////////////=//
+//=//// BAD-WORD! ISOTOPES (just called "isotopes" for short) //////////////=//
 
 // A bad word isotope is produced by the evaluator when an ordinary BAD-WORD!
 // is evaluated.  These cannot live in blocks, and most are "unfriendly" and
@@ -131,16 +131,6 @@ inline static bool Is_Isotope(const RELVAL *v) {
 #define UNSET_VALUE         c_cast(const REBVAL*, &PG_Unset_Value)
 #define Init_Unset(out)     Init_Isotope((out), Canon(UNSET))
 #define Is_Unset(v)         Is_Isotope_With_Id(v, SYM_UNSET)
-
-
-// !!! Temporary old concept of void, reconsider under new design where the
-// ~void~ BAD-WORD! actually evaluates to being purely invisible...not an
-// isotope...
-
-#define VOID_VALUE          c_cast(const REBVAL*, &PG_Void_Value)
-#define Init_Void(out)      Init_Isotope((out), Canon(OLD_VOID))
-#define Is_Void(v)          Is_Isotope_With_Id((v), SYM_OLD_VOID)
-
 
 
 // `~none~` is the default RETURN for when you just write something like

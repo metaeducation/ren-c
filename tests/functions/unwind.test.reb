@@ -8,7 +8,7 @@
     cycle?: true
     f1: does [
         if 1 < 2 [
-            loop [cycle?] [cycle?: false, unwind :if]
+            loop [cycle?] [cycle?: false, unwind :if ~none~]
             <bad>
         ]
         <good>

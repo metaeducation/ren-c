@@ -92,6 +92,9 @@ REBNATIVE(reduce)
                 Move_Cell(D_OUT, processed);
                 Meta_Unquotify(D_OUT);
                 rebRelease(processed);
+
+                if (IS_END(D_OUT))
+                    continue;  // `reduce/predicate [null] :null-to-void`
             }
             else
                 Init_Nulled(D_OUT);
@@ -105,7 +108,7 @@ REBNATIVE(reduce)
         //     == [<a> <b> <c> ~null~]  ; two expressions adding two results
         //
         // There are invisibles to subvert this if one really wants to, in
-        // particular DENULL.
+        // particular NULL-TO-VOID.
         //
         // https://forum.rebol.info/t/1665
         //

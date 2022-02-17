@@ -77,7 +77,7 @@ inline static bool IS_ENDISH_NULLED(const RELVAL *v)
 // be a "nulled cell" must translate any such cells to nullptr.
 //
 inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
-  return VAL_TYPE(cell) == REB_NULL
+  return KIND3Q_BYTE(cell) == REB_NULL
       ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
       : cell;
 }

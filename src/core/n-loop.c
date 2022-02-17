@@ -59,14 +59,17 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_continue) {
         //
-        // !!! Currently continue with no argument acts the same as asking
-        // for CONTINUE ~void~ (the form with an argument).  This makes sense
+        // !!! Continue with no argument acts the same as asking
+        // for CONTINUE ~none~ (the form with an argument).  This makes sense
         // in cases like MAP-EACH (one wants a continue to not add any value,
         // as opposed to a void) but may not make sense for all cases.
         //
         *broke = false;
         CATCH_THROWN(val, val);
-        Isotopify_If_Nulled(val);  // reserve true NULL for BREAK
+        if (IS_END(val))
+            Init_None(val);
+        else
+            Isotopify_If_Nulled(val);  // reserve true NULL for BREAK
         return true;
     }
 
@@ -133,7 +136,7 @@ static REB_R Loop_Series_Common(
     REBINT end,
     REBINT bump
 ){
-    Init_Void(out);  // result if body never runs
+    Init_None(out);  // result if body never runs
 
     // !!! This bounds incoming `end` inside the array.  Should it assert?
     //
@@ -215,7 +218,7 @@ static REB_R Loop_Integer_Common(
     REBI64 end,
     REBI64 bump
 ){
-    Init_Void(out);  // result if body never runs
+    Init_None(out);  // result if body never runs
 
     // A value cell exposed to the user is used to hold the state.  This means
     // if they change `var` during the loop, it affects the iteration.  Hence
@@ -277,7 +280,7 @@ static REB_R Loop_Number_Common(
     REBVAL *end,
     REBVAL *bump
 ){
-    Init_Void(out);  // result if body never runs
+    Init_None(out);  // result if body never runs
 
     REBDEC s;
     if (IS_INTEGER(start))
@@ -327,7 +330,7 @@ static REB_R Loop_Number_Common(
     //
     const bool counting_up = (s < e); // equal checked above
     if ((counting_up and b <= 0) or (not counting_up and b >= 0))
-        return Init_Void(out);  // avoid inf. loop, means never ran
+        return Init_None(out);  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(out, body)) {
@@ -404,7 +407,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
     // directly.  This means it has to be initialized to avoid a situation
     // where no branches assign bits.
     //
-    assert(Is_Void(les->out));
+    assert(Is_None(les->out));
 
     do {
         // Sub-loop: set variables.  This is a loop because blocks with
@@ -600,12 +603,14 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            Move_Cell(les->out, temp);
+            if (NOT_END(temp))
+                Move_Cell(les->out, temp);
             break;
 
           case LOOP_EVERY:
             Move_Cell(les->out, temp);
-            no_falseys = no_falseys and IS_TRUTHY(les->out);
+            if (not Is_None(les->out))
+                no_falseys = no_falseys and IS_TRUTHY(les->out);
             break;
 
           case LOOP_MAP_EACH:
@@ -620,7 +625,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             //
             if (
                 IS_NULLED(temp) or Is_Isotope_With_Id(temp, SYM_NULL)
-                or IS_BLANK(temp)
+                or Is_Isotope_With_Id(temp, SYM_NONE) or IS_BLANK(temp)
             ){
                 // Ignore...
             }
@@ -648,7 +653,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
             // MAP-EACH only changes les->out if BREAK
             //
-            assert(Is_Void(les->out));
+            assert(Is_None(les->out));
             break;
         }
     } while (more_data and not broke);
@@ -679,7 +684,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
 
-    Init_Void(D_OUT);  // if body never runs (MAP-EACH gives [])
+    Init_None(D_OUT);  // if body never runs (MAP-EACH gives [])
 
     if (ANY_SEQUENCE(ARG(data))) {
         //
@@ -754,13 +759,13 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
         if (ANY_CONTEXT(les.data)) {
             if (not Did_Advance_Evars(&les.evars)) {
-                assert(Is_Void(D_OUT));
+                assert(Is_None(D_OUT));
                 r = nullptr;
                 goto cleanup;
             }
         }
         else if (les.data_idx >= les.data_len) {
-            assert(Is_Void(D_OUT));  // result if loop body never runs
+            assert(Is_None(D_OUT));  // result if loop body never runs
             r = nullptr;
             goto cleanup;
         }
@@ -820,7 +825,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // only illegal value here is void (would cause error if body gave it)
         //
         if (Is_Isotope(D_OUT))
-            assert(Is_Void(D_OUT));
+            assert(Is_None(D_OUT));
         return D_OUT;
 
       case LOOP_MAP_EACH:
@@ -941,7 +946,7 @@ REBNATIVE(for_skip)
 
     REBVAL *series = ARG(series);
 
-    Init_Void(D_OUT);  // if body never runs, `loop [null] [...]`
+    Init_None(D_OUT);  // if body never runs, `while [false] [...]`
 
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
@@ -1082,7 +1087,10 @@ REBNATIVE(cycle)
                     // constructs, with a BREAK variant that returns a value.
                     //
                     CATCH_THROWN(D_OUT, D_OUT);
-                    Isotopify_If_Nulled(D_OUT);  // NULL reserved for BREAK
+                    if (IS_END(D_OUT))
+                        Init_None(D_OUT);
+                    else
+                        Isotopify_If_Nulled(D_OUT);  // NULL reserved for BREAK
                     return D_OUT;
                 }
 
@@ -1663,7 +1671,7 @@ REBNATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Init_Void(D_OUT);  // if body never runs, `loop 0 [...]`
+    Init_None(D_OUT);  // if body never runs, `loop 0 [...]`
 
     if (IS_FALSEY(ARG(count))) {
         assert(IS_LOGIC(ARG(count)));  // is false (opposite of infinite loop)
@@ -1770,7 +1778,7 @@ REBNATIVE(for)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return Init_Void(D_OUT);  // if loop condition never runs
+        return Init_None(D_OUT);  // if loop condition never runs
 
     return Loop_Integer_Common(
         D_OUT, var, body, 1, VAL_INT64(value), 1
@@ -1809,8 +1817,11 @@ REBNATIVE(until)
             // the same in this case.  CONTINUE TRUE will stop the UNTIL and
             // return TRUE, CONTINUE 10 will stop and return 10, etc.
             //
-            // Plain CONTINUE is interpreted as CONTINUE ~VOID~, and will
+            // Plain CONTINUE is interpreted as CONTINUE ~NONE~, and will
             // continue to run the loop.  CONTINUE NULL will stop it
+
+            if (Is_None(D_OUT))
+                continue;
         }
 
         if (IS_NULLED(predicate)) {
@@ -1855,7 +1866,7 @@ REBNATIVE(loop)
     if (IS_INTEGER(ARG(condition)))
         fail ("Please use REPEAT instead of LOOP with integers");
 
-    Init_Void(D_OUT);  // result if body never runs
+    Init_None(D_OUT);  // result if body never runs
 
     do {
         if (Do_Branch_With_Throws(D_SPARE, ARG(condition), D_OUT)) {
@@ -1880,6 +1891,9 @@ REBNATIVE(loop)
 
             if (broke)
                 return nullptr;
+
+            if (IS_END(D_OUT))  // plain `continue`
+                Init_None(D_OUT);  // treat as ~none~ isotope
         }
 
     } while (true);

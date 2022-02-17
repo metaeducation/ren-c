@@ -881,7 +881,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         DECLARE_FEED_AT_CORE (subfeed, v, v_specifier);
 
-        // We want this behavior matrix:
+        // !!! This was here to implement a deprecated behavior:
         //
         //    >> 10 (comment "hi")
         //    == 10
@@ -889,10 +889,11 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //    >> 10 ^(comment "hi")
         //    == ~stale~
         //
-        // We thus need to signal staleness in the META-GROUP! case.
+        // It's no longer like this, and should produce ~void~.  Can this be
+        // deleted now?
         //
         if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
-            SET_END(f->out);  // want to avoid UNDO_NOTE_STALE behavior
+            SET_END(f->out);  // !!! "want to avoid UNDO_NOTE_STALE behavior"
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
         }
 
@@ -913,7 +914,11 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         }
 
         if (IS_END(f->out)) {
-            if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
+            bool is_meta = (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP);
+
+            STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
+
+            if (is_meta) {
                 //
                 // The META-GROUP! is a contained evaluation that never acts
                 // invisible, e.g. ^(comment "hi") is ~void~.  That's the
@@ -934,8 +939,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 v = Lookback_While_Fetching_Next(f);
                 goto evaluate;
             }
-
-            STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
 
             goto lookahead;
         }

@@ -60,7 +60,7 @@
 [
     ('~null~ = ^ if true [null])
     ('~null~ = ^ if true [heavy null])
-    ('~void~ = ^ if true [])
+    ('~none~ = ^ if true [])
     ('~custom~ = ^ if true [~custom~])
     (''~custom~ = ^ if true ['~custom~])
 
@@ -69,13 +69,13 @@
     ;
     ; (null = if true ^[null])
     ; ('~null~ = if true ^[heavy null])
-    ; ('~void~ = if true ^[])
+    ; ('~none~ = if true ^[])
     ; ('~custom~ = if true ^[~custom~])
     ; (''~custom~ = if true ^['~custom~])
 
     ; (null = ^ if true @[null])
     ; ('~null~ = ^ if true @[heavy null])
-    ; ('~void~ = ^ if true @[])
+    ; ('~none~ = ^ if true @[])
     ; ('~custom~ = ^ if true @[~custom~])
     ; (''~custom~ = ^ if true @['~custom~])
 ]

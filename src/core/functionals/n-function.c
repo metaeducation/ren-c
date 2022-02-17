@@ -78,28 +78,14 @@
 
 
 //
-//  None_Dispatcher: C
-//
-// If you write `func [return: <none> ...] []` it uses this dispatcher instead
-// of running Eval_Core() on an empty block.  This serves more of a point than
-// it sounds, because you can make fast stub actions that only cost if they
-// are HIJACK'd (e.g. ASSERT is done this way).
-//
-REB_R None_Dispatcher(REBFRM *f)
-{
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    assert(VAL_LEN_AT(ARR_HEAD(details)) == 0);
-    UNUSED(details);
-
-    return Init_None(f->out);
-}
-
-
-//
 //  Empty_Dispatcher: C
 //
 // If you write `func [...] []` it uses this dispatcher instead of running
-// Eval_Core() on an empty block.
+// Eval_Core() on an empty block.  At one time this was synonymous with
+// invisibility, but now it's like `do []` which is a ~none~ isotope.
+//
+// This serves more of a point than it sounds, because you can make fast stub
+// actions that only cost if they are HIJACK'd (e.g. ASSERT is done this way).
 //
 REB_R Empty_Dispatcher(REBFRM *f)
 {
@@ -107,7 +93,7 @@ REB_R Empty_Dispatcher(REBFRM *f)
     assert(VAL_LEN_AT(ARR_AT(details, IDX_DETAILS_1)) == 0);  // empty body
     UNUSED(details);
 
-    return f->out;  // invisible
+    return Init_None(f->out);
 }
 
 
@@ -189,7 +175,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
     }
 
     if (IS_END(spare))
-        Init_Endish_Nulled(spare);
+        Init_None(spare);
 
     *returned = false;
     return false;  // didn't throw
@@ -219,7 +205,7 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
     if (not returned)  // assume if it was returned, it was decayed if needed
         Decay_If_Isotope(spare);
 
-    if (IS_ENDISH_NULLED(spare))
+    if (IS_END(spare))
         return f->out;  // was invisible
 
     return Move_Cell_Core(
@@ -268,7 +254,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
     if (not returned)  // assume if it was returned, it was decayed if needed
         Decay_If_Isotope(spare);
 
-    if (IS_ENDISH_NULLED(spare)) {
+    if (IS_END(spare)) {
         FAIL_IF_NO_INVISIBLE_RETURN(f);
         return f->out;  // was invisible
     }
@@ -698,9 +684,6 @@ REBNATIVE(unwind)
     REBVAL *v = ARG(result);
     Meta_Unquotify(v);
 
-    if (IS_ENDISH_NULLED(v))
-        Init_Void(v);
-
     return Init_Thrown_Unwind_Value(D_OUT, ARG(level), v, frame_);
 }
 
@@ -743,13 +726,9 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (Is_Void(v)) {  // signals RETURN with nothing after it
-        //
-        // `do [return]` is a vanishing return.  If you have a "mean" void
-        // then you can turn it into invisibility with DEVOID.
-        //
+    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID) {  // vanishes
         FAIL_IF_NO_INVISIBLE_RETURN(target_frame);
-        Init_Endish_Nulled(v);  // how return protocol does invisible
+        SET_END(v);  // how return protocol does invisible (throw meta-fies)
         goto skip_type_check;
     }
 

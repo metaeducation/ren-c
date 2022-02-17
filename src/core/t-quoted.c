@@ -316,8 +316,9 @@ REBNATIVE(unquote)
 //  {Variant of UNQUOTE that accepts BAD-WORD! and makes isotopes}
 //
 //      return: "Potentially an isotope"
-//          [<opt> any-value!]
+//          [<opt> <invisible> any-value!]
 //      ^value [<opt> bad-word! quoted!]
+//      /void "Invisibile if input is ~void~ BAD-WORD! (else ~none~ isotope)"
 //  ]
 //
 REBNATIVE(unmeta)
@@ -357,23 +358,6 @@ REBNATIVE(unmeta)
     if (IS_NULLED(v))
         RETURN (v);  // ^(null) => null, so the reverse must be true
 
-    // !!! This needs to be handled more generally, but the idea is that if you
-    // are to write:
-    //
-    //      >> x: ^()
-    //      == ~void~  ; isotope
-    //
-    // Then you have captured the notion of invisibility by virtue of doing so.
-    // Had it been a void isotope inside the GROUP!, the literalization would
-    // have been a *non*-isotope ~void~.
-    //
-    // But since we take a ^meta parameter here, we get that ~void~ isotope
-    // as a non-isotope ~void~.  If we were to try and "unquote" the intent of
-    // invisibility, then UNQUOTE would return invisibily...but that idea is
-    // being saved for DEVOID to keep UNMETA more predictable.
-    //
-    // So we just return a void isotope in this case that DEVOID can handle.
-    //
     if (IS_BAD_WORD(v)) {
         if (GET_CELL_FLAG(v, ISOTOPE))
             fail ("Cannot UNMETA end of input");  // no <end>, shouldn't happen
@@ -384,7 +368,27 @@ REBNATIVE(unmeta)
 
     assert(IS_QUOTED(v));  // already handled NULL and BAD-WORD! possibilities
     Unquotify(v, 1);  // Remove meta level caused by parameter convention
+
     Meta_Unquotify(v);  // now remove the level of meta the user was asking for
+
+    // !!! This needs to be handled more generally, but the idea is that if you
+    // are to write:
+    //
+    //      >> x: ^()
+    //      == ~void~
+    //
+    // Then you have captured the notion of invisibility by virtue of doing so.
+    // But to truly "unmeta" that we get invisibility back.  That's tricky if
+    // you don't want it...although DO and APPLY are leaning that way.  We
+    // could error by default, but instead try defaulting to ~none~ isotope.
+    //
+    if (IS_END(v)) {
+        if (REF(void))
+            return D_OUT;  // invisible
+
+        return Init_None(D_OUT);
+    }
+
     RETURN (v);
 }
 

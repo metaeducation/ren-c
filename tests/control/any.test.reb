@@ -367,11 +367,14 @@
 (10 = any [(10 elide "stale")])
 
 
-; INVISIBILITY: Both ANY and ALL treat void isotopes the same as void functions.
+; INVISIBILITY: ALL returns ~none~ isotope when body is effectively empty
 [
     (
         two: ~
-        3 = any [all [do [comment "hi"], elide two: 2], 1 + two]
+        3 = any [
+            none-to-void all [none-to-void do [comment "hi"], elide two: 2]
+            1 + two
+        ]
     )
 ]
 

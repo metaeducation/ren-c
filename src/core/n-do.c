@@ -147,8 +147,6 @@ REBNATIVE(shove)
     else if (IS_GROUP(f_value)) {
         if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
             return R_THROWN;
-        if (Is_Void(D_OUT))  // !!! need SHOVE frame for type error
-            fail ("GROUP! passed to SHOVE did not evaluate to content");
 
         Move_Cell(shovee, D_OUT);  // can't eval directly into arg slot
     }
@@ -336,19 +334,21 @@ bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
 //  ]
 //
 REBNATIVE(do)
+//
+// !!! It is currently theorized that the following should work:
+//
+//    >> f: make frame! :comment
+//    >> f.discarded: "Ignore me"
+//
+//    >> 1 + 2 do f
+//    == 3
+//
+// This may seem a bit uncomfortable, but is why DO can return <invisible>.
 {
     INCLUDE_PARAMS_OF_DO;
     assert(ACT_HAS_RETURN(FRM_PHASE(frame_)));
 
     REBVAL *source = ARG(source);
-
-    // Due to the mechanics of true invisibility, `1 + 2 do [comment "hi"]`
-    // cannot rely on OUT_NOTE_STALE...because it clears the stale flag.  This
-    // may be a bug or bad mechanic overall, but getting the right information
-    // in this case (stale vs. invisible) requires making a note and starting
-    // from end.
-    //
-    RESET(D_OUT);  // !!! need to defeat enfix invisibles, review
 
     // If `source` is not const, tweak it to be explicitly mutable--because
     // otherwise, it would wind up inheriting the FEED_MASK_CONST of our
@@ -373,15 +373,9 @@ REBNATIVE(do)
       case REB_GROUP:
       case REB_META_GROUP:
       case REB_GET_GROUP: {
-        DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);
-        if (Do_Feed_To_End_Maybe_Stale_Throws(
-            D_OUT,
-            feed,
-            EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-        )){
+        if (Do_Any_Array_At_Throws(D_OUT, source, SPECIFIED))
             return R_THROWN;
-        }
-        goto handle_void; }  // may be stale, which would mean invisible
+        return D_OUT; }
 
       case REB_VARARGS: {
         REBVAL *position;
@@ -417,7 +411,7 @@ REBNATIVE(do)
         // the varargs came from.  It's still on the stack, and we don't want
         // to disrupt its state.  Use a subframe.
 
-        Init_Void(D_OUT);
+        Init_None(D_OUT);
         if (IS_END(f->feed->value))
             return D_OUT;
 
@@ -494,9 +488,13 @@ REBNATIVE(do)
     }
 
   handle_void:
-
-    if (IS_END(D_OUT))  // didn't make new result (non-/VOID forced END)
-        Init_Void(D_OUT);  // may be overridden by Init_Stale()
+    //
+    // !!! This used to have more processing to try and turn actual voidness
+    // into a ~void~ isotope, so it could be distinguished from other intents,
+    // e.g. where ~none~ was considered distinct.  Now that void isotopes are
+    // "hyperunstable" and do not exist at all, we could opt to make the
+    // default behavior return a ~none~ isotope instead...or allow things like
+    // `do :void` to actually vanish.  This needs review.
 
     return D_OUT;
 }
@@ -539,7 +537,7 @@ REBNATIVE(evaluate)
       case REB_GROUP: {
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` should return null
             Init_Nulled(D_OUT);
-            Init_Void(D_SPARE);
+            Init_None(D_SPARE);
         }
         else {
             DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);
@@ -595,7 +593,7 @@ REBNATIVE(evaluate)
                 //
                 // https://forum.rebol.info/t/1173/
                 //
-                Init_Void(D_SPARE);
+                Init_None(D_SPARE);
                 Quotify(D_OUT, 1);  // void-is-invisible signal on array
             }
         }
@@ -751,7 +749,7 @@ REBNATIVE(redo)
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <invisible> any-value!]
 //      action [action!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
@@ -858,7 +856,7 @@ REBNATIVE(applique)
 
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-    bool action_threw = Process_Action_Throws(f);
+    bool action_threw = Process_Action_Maybe_Stale_Throws(f);
     assert(action_threw or IS_END(f->feed->value));  // we started at END_FLAG
 
     Drop_Frame(f);

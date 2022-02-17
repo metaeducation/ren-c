@@ -46,14 +46,14 @@
 ]
 
 
-; Plain voids cause an error, quoted voids match literal voids
+; BAD-WORD! isotopes cause an error, plain BAD-WORD! matches literal BAD-WORDs
 (
-    foo: ~void~
+    foo: ~none~
     e: trap [parse "a" [foo]]
     e.id = 'bad-word-get
 )(
-    foo: '~void~
-    parse? [~void~] [foo <end>]
+    foo: '~none~
+    parse? [~none~] [foo <end>]
 )
 
 ; Empty block case handling
@@ -306,7 +306,7 @@
 ; provide a level of indirection in SET.
 
 (
-    m: null
+    m: ~
     word: 'm
     did all [
         parse? [1020] [(word): integer!]

@@ -443,11 +443,16 @@ uintptr_t RL_rebTick(void)
 //
 //  rebVoid: RL_API
 //
+// !!! There is no clear idea how a rebVoid() function would work; it can't
+// be an ordinary Rebol value.  This needs design and thought, of how there
+// could be a systemic signal of voidness conveyed in a REBVAL API handle
+// when void isotopes do not exist.
+//
 REBVAL *RL_rebVoid(void)
 {
     ENTER_API;
 
-    return Init_Void(Alloc_Value());
+    fail ("rebVoid() implementation concept is TBD, see %a-lib.c");
 }
 
 
@@ -833,7 +838,7 @@ static void Run_Va_May_Fail_Core(
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    Init_Void(out);
+    Init_None(out);
 
     REBFLGS flags = EVAL_MASK_DEFAULT;
 
@@ -927,7 +932,7 @@ bool RL_rebRunThrows(
     bool fully,
     const void *p, va_list *vaptr
 ){
-    Init_Void(out);  // assume "API-like" convention doesn't speak "END"
+    Init_None(out);  // assume "API-like" convention doesn't speak "END"
 
     if (RL_rebRunMaybeStaleThrows(out, fully, p, vaptr))
         return true;

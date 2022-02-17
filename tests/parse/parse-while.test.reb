@@ -32,13 +32,11 @@
 )]
 
 ; A WHILE that never actually has a succeeding rule gives back a match that is
-; a void isotope, as do 0-iteration REPEAT and INTEGER! rules.
-;
-; !!! These isotopes currently mean invisibility (in the evaluator, these cases
-; would wind up becoming ~stale~ isotopes).  Review the difference.
+; a ~none~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
-    ("a" = uparse "a" ["a" while "b"])
-    ("a" = uparse "a" ["a" [while "b"]])
+    ('~none~ = ^ uparse "a" ["a" while "b"])
+    ('~none~ = ^ uparse "a" ["a" [while "b"]])
+    ('~none~ = uparse "a" ["a" ^[while "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.

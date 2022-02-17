@@ -35,16 +35,20 @@
     ]
 )
 
+; !!! Loop protocol for EVERY is to let the last value fall through, but the
+; CONTINUE throws a wrench as it would impede composition of EVERY if we
+; expected it to just carry over the last value if those were two separate
+; EVERY loops.  Review.
 (
     sum: 0
     did all [
-        2 = every x [1 2 7] [
+        '~none~ = ^ every x [1 2 7] [
             sum: me + x
-            if x = 7 [continue]  ; acts as `continue ~void~`, keep old result
+            if x = 7 [continue]  ; acts as `continue ~none~` doesn't keep old
             x
         ]
         10 = sum
     ]
 )
 
-('~void~ = ^ every x [] [fail ~unreachable~])
+('~none~ = ^ every x [] [fail ~unreachable~])

@@ -1025,8 +1025,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
     UNUSED(binding);
 
     if (
-        ACT_DISPATCHER(a) == &None_Dispatcher
-        or ACT_DISPATCHER(a) == &Empty_Dispatcher
+        ACT_DISPATCHER(a) == &Empty_Dispatcher
         or ACT_DISPATCHER(a) == &Unchecked_Dispatcher
         or ACT_DISPATCHER(a) == &Opaque_Dispatcher
         or ACT_DISPATCHER(a) == &Returner_Dispatcher

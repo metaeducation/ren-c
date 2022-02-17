@@ -6,7 +6,7 @@
 ("a" = uparse "aaab" [[some "a" elide "b"]])
 
 (
-    j: null
+    j: ~
     did all [
         null = uparse "b" [[(1000 + 20) elide (j: 304)]]
         j = 304
@@ -14,7 +14,7 @@
 )
 
 (
-    j: null
+    j: ~
     did all [
         1020 = uparse "b" ["b" [(1000 + 20) elide (j: 304)]]
         j = 304

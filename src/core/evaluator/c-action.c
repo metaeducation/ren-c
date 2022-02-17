@@ -328,7 +328,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // left enfix should treat that just like an end.
 
                 if (pclass == PARAM_CLASS_META)
-                    Init_Void(f->arg);
+                    Init_Bad_Word(f->arg, Canon(VOID));
                 else
                     Init_Endish_Nulled(f->arg);
                 goto continue_fulfilling;
@@ -510,7 +510,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
         if (IS_END(f_next)) {
             if (pclass == PARAM_CLASS_META) {
-                Init_Void(f->arg);
+                Init_Bad_Word(f->arg, Canon(VOID));
                 SET_CELL_FLAG(f->arg, UNEVALUATED);
             }
             else
@@ -527,7 +527,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
           case PARAM_CLASS_META: {
             if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
                 if (pclass == PARAM_CLASS_META)
-                    Init_Void(f->arg);
+                    Init_Bad_Word(f->arg, Canon(VOID));
                 else
                     Init_Endish_Nulled(f->arg);
                 goto continue_fulfilling;
@@ -543,7 +543,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
             if (IS_END(f->arg)) {
                 if (pclass == PARAM_CLASS_META)
-                    Init_Void(f->arg);
+                    Init_Bad_Word(f->arg, Canon(VOID));
                 else
                     Init_Endish_Nulled(f->arg);
             }
@@ -681,7 +681,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         //
         // !!! The case of:
         //
-        //     30 = (10 + 20 devoid do [])
+        //     30 = (10 + 20 none-to-void do [])
         //
         // Is breaking this.  Review when there is time, and put the assert
         // back if it makes sense.

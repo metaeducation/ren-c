@@ -23,7 +23,7 @@
     '~null~ = ^ case [true [null]]  ; indicates branch was taken (vs. null)
 )
 (
-    '~void~ = ^ case [true []]
+    '~none~ = ^ case [true []]
 )
 (
     '~null~ = ^ case [
@@ -34,7 +34,7 @@
 [#2246 (
     '~null~ = ^ case [true [null]]
 )(
-    '~void~ = ^ case [true []]
+    '~none~ = ^ case [true []]
 )]
 
 (

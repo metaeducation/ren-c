@@ -21,28 +21,28 @@
 (bad-word? first [~~~])
 ('~ = label of '~~~)
 
-; Functions are able to return VOID as "invisible".  But in order to avoid
+; Functions are able to return VOID as "invisible".  But to avoid wantonly
 ; creating variant arity situations in code, generic function execution tools
-; like DO or APPLIQUE return void isotopes when invisibles are seen.
+; like DO or APPLIQUE return ~none~ isotopes when given empty blocks.
 ; https://forum.rebol.info/t/what-should-do-do/1426
 ;
-('~void~ = ^ do [])
+('~none~ = ^ do [])
 
 [
     (foo: func [] [], true)
 
-    ('~void~ = ^ ^ foo)
-    ('~void~ = ^ applique :foo [])
-    ('~void~ = ^ do :foo)
+    ('~none~ = ^ foo)
+    ('~none~ = ^ applique :foo [])
+    ('~none~ = ^ do :foo)
 ]
 
 ; invisibility is the convention for what you get by RETURN with no argument,
 ; or if the spec says to <void> any result.
 [(
     foo: func [return: [<opt> <invisible> any-value!]] [return]
-    '~void~ = ^ ^ foo
+    '~void~ = ^ foo
 )(
-    foo: func [return: [<opt> any-value!]] [return ~void~]
+    foo: func [return: [<opt> <invisible> any-value!]] [return ~void~]
     '~void~ = ^ foo
 )(
     '~void~ = ^ applique :foo []
@@ -133,11 +133,11 @@
 ]
 
 
-(error? trap [a: ~void~, a])
-(not error? trap [set 'a '~void~])
+(error? trap [a: ~none~, a])
+(not error? trap [set 'a '~none~])
 
 (
-    a-value: ~void~
+    a-value: ~none~
     e: trap [a-value]
     e.id = 'bad-word-get
 )

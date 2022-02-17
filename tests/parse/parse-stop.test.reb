@@ -4,7 +4,7 @@
 ; match a rule and return a result.
 
 [
-    ('~void~ = ^ uparse "a" [while ["a" stop]])
+    ('~none~ = ^ uparse "a" [while ["a" stop]])
     ("a" = uparse "a" [while [stop "a"]])
 ]
 
