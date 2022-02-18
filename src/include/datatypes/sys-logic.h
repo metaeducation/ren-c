@@ -50,31 +50,25 @@ inline static bool VAL_LOGIC(REBCEL(const*) v) {
 }
 
 
-//=//// "TRUTHINESS" AND "FALSINESS" ///////////////////////////////////////=//
+//=//// "TRUTHINESS" AND "FALSEYNESS" //////////////////////////////////////=//
 //
 // Like most languages, more things are "truthy" than logic #[true] and more
 // things are "falsey" than logic #[false].  NULLs and BLANK!s are also falsey,
-// and most values are considered truthy besides BAD-WORD!s, that trigger
-// errors when used in conditions.
+// and most other values are considered truthy.  Any value type is truthy when
+// quoted, and BAD-WORD!s are also truthy; specifically for patterns like this:
 //
-// Despite Rebol's C heritage, the INTEGER! 0 is specifically not "falsey".
+//     for-both: func ['var blk1 blk2 body] [
+//         unmeta all [
+//             meta for-each :var blk1 body  ; isotope results become BAD-WORD!
+//             meta for-each :var blk2 body  ; only NULL is falsey for BREAK
+//         ]
+//     ]
 //
+// Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 
 inline static bool IS_TRUTHY(const RELVAL *v) {
-    if (IS_BAD_WORD(v)) {
-        //
-        // Note that ~null~, ~blank~, and ~false~ isotopes are by default
-        // prickly, and neither true nor false.  When they are assigned to
-        // variables or returned from functions, they decay to plain NULL,
-        // plain BLANK!, and a plain LOGIC! false.
-        //
-        // Outside of the default decay, implementations may wish to allow
-        // isotopes to have behavior if it is safe.  This is similar to when
-        // things decide a void isotope is all right to convert back from a
-        // "reified void intent" to an actual vanishing value.
-        //
-        fail (Error_Bad_Conditional_Raw());
-    }
+    if (IS_BAD_WORD(v))
+        assert(NOT_CELL_FLAG(v, ISOTOPE));  // should never be passed isotopes!
     if (KIND3Q_BYTE(v) > REB_LOGIC)
         return true;  // includes QUOTED! `if first ['_] [-- "this is truthy"]`
     if (IS_LOGIC(v))

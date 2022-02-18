@@ -12,6 +12,41 @@
     ]
 )
 
+; BAD-WORD!s were initially neither true nor false, but this came to be the
+; role of the isotopic forms.  Having BAD-WORD! be truthy along with QUOTED!
+; means that NULL is the only falsey result from a ^META operation, which is
+; useful for writing stylized code like FOR-BOTH below.
+;
+(did first [~void~])
+[(
+    did for-both: func ['var blk1 blk2 body] [
+        unmeta all [
+            meta for-each :var blk1 body
+            meta for-each :var blk2 body
+        ]
+    ]
+)(
+    [1 2 3 4] = collect [
+        assert [
+            '~bad~ = ^ for-both x [1 2] [3 4] [
+                keep x
+                ~bad~  ; makes isotope
+            ]
+        ]
+    ]
+)(
+    [1] = collect [
+        assert [
+            null = for-both x [1 2] [3 4] [
+                if x = 2 [
+                    break
+                ]
+                keep x
+            ]
+        ]
+    ]
+)]
+
 ; Plain ~ is not a void, but a WORD!.  But things like ~~~ are not WORD!,
 ; because that would be ambiguous with a BAD-WORD! with the word-label of ~.
 ; So ~ is the only "~-word"

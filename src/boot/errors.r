@@ -246,7 +246,6 @@ Script: [
     conflicting-key:    [:arg1 {key conflicts; use SELECT or PUT with /CASE}]
 
     block-conditional:  [{Literal block used as conditional} :arg1]
-    bad-conditional:    [{BAD-WORD! values aren't conditionally true or false}]
     non-block-branch:   [{Evaluated non-block/function used as branch} :arg1]
     block-switch:       [{Literal block used as switch value} :arg1]
 
