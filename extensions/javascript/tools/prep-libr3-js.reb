@@ -794,7 +794,8 @@ e-cwrap/emit {
         if (result === null)
             return 0
         if (result === undefined)
-            return reb.Void()
+            return reb.None()  /* could be `reb.Value("~undefined~") isotope */
+
         return result
     }
 
@@ -838,7 +839,7 @@ e-cwrap/emit {
 
         switch (typeof js_value) {
           case 'undefined':
-            return reb.Void()
+            return reb.None()  /* could be `reb.Value("~undefined~") isotope */
 
           case 'number':
             return reb.Integer(js_value)
@@ -847,7 +848,7 @@ e-cwrap/emit {
             return reb.Text(js_value)
 
           default:  /* used by JS-EVAL* with /VALUE; should it error here? */
-            return reb.Void()
+            return reb.None()
         }
     }
 }
