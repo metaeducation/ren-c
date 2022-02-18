@@ -499,25 +499,44 @@ found?: emulate [
 set: emulate [
     function [
         return: [<opt> any-value!]
-        target [blank! any-word! any-path! block! any-context!]
+        target [any-word! any-path! block! object!]
         value [<opt> any-value!]
-        /any "Not needed in Ren-C, SET lets you set to anything"
-        /some
+        /any "Allow UNSET as a value rather than causing an error"
+        /only "Block or object value argument is set as a single value"
+        /some "None values in a block or object value argument, are not set"
     ][
         set_ANY: any
         any: :lib.any
 
-        all [
+        all [  ; !!! is it necessary to impose this historical restriction?
             not set_ANY
             unset? 'value
             fail "Can't SET a value to UNSET! unless SET/ANY is used"
         ]
 
-        applique :set [
-            target: either any-context? target [words of target] [target]
-            value: :value
-            some: some
+        if not block? target [  ; handle simple WORD!/PATH! case
+            return set target :value
         ]
+
+        if object? target [  ; turn OBJECT! case into BLOCK! case
+            target: words of target
+        ]
+
+        if only or (not block? :value) [  ; don't set itemwise, all get same
+            for-each t target [set t :value]
+            return :value
+        ]
+
+        let block: value  ; save so we can return at same position
+        for-each t target [
+            if blank? try :block.1 [  ; may be at end of block, block.1 = null
+                if not some [set t blank]
+            ] else [
+                set t :block.1
+            ]
+            block: next try block
+        ]
+        return value
     ]
 ]
 
@@ -592,10 +611,7 @@ do: emulate [
             ]
             do code
         ] else [
-            applique :do [
-                source: :source
-                args: :args
-            ]
+            do/args :source :args  ; if args is null, refinement is "revoked"
         ]
     ]
 ]
@@ -734,9 +750,9 @@ compose: emulate [
     ][
         if not block? :value [return :value]  ; `compose 1` is `1` in Rebol2
 
-        composed: applique :compose [
-            value: :value
-            deep: deep
+        composed: apply :compose [
+            :value
+            /deep deep
 
             ; The predicate is a function that runs on whatever is generated
             ; in the COMPOSE'd slot.  If you put it in a block, that will
@@ -749,7 +765,7 @@ compose: emulate [
             ;    rebol2> compose [(either true [] [])]
             ;    == []  ; would be [~void~] in Ren-C
             ;
-            predicate: either only [:quote] [:splice-adjuster]
+            /predicate either only [:quote] [:splice-adjuster]
         ]
 
         either into [insert into composed] [composed]
@@ -799,12 +815,12 @@ repend: emulate [
     ][
         ; R3-alpha REPEND with block behavior called out
         ;
-        applique :append/part/dup [
-            series: series
-            value: either block? :value [reduce :value] [:value]
-            part: part
-            only: only
-            dup: dup
+        apply :append/part/dup [
+            series
+            either block? :value [reduce :value] [:value]
+            /part part
+            /only only
+            /dup dup
         ]
     ]
 ]
@@ -861,9 +877,9 @@ join: emulate [
         value
         rest
     ][
-        applique :append [
-            series: if series? :value [copy value] else [form :value]
-            value: if block? :rest [reduce :rest] else [rest]
+        apply :append [
+            if series? :value [copy value] else [form :value]
+            if block? :rest [reduce :rest] else [rest]
         ]
     ]
 ]
@@ -959,9 +975,7 @@ quit: emulate [
         /return "Ren-C is variadic, 0 or 1 arg: https://trello.com/c/3hCNux3z"
             [<opt> any-value!]
     ][
-        applique :quit [
-            value: :return
-        ]
+        apply :quit [/value :return]
     ]
 ]
 
