@@ -505,18 +505,18 @@ REBNATIVE(do)
 //
 //  {Perform a single evaluator step, returning the next source position}
 //
-//      return: "Next position (quoted if result requested and invisible)"
-//          [<opt> quoted! block! group! varargs!]
-//      result: "<output> Value from the step (invisibles quote return pos)"
-//          [<opt> any-value!]
+//      return: "Value from the step"
+//          [<opt> <invisible> any-value!]
+//      next: "<output> Next expression position in block"
+//          [block! group! varargs!]
 //
 //      source [
 //          <blank>  ; useful for `evaluate try ...` scenarios when no match
-//          quoted!  ; accepts quoted source (may carry bit from prior eval)
 //          block!  ; source code in block form
 //          group!  ; same as block (or should it have some other nuance?)
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
+//      /void "Allow invisible steps (vs. just skipping them)"
 //  ]
 //
 REBNATIVE(evaluate)
@@ -524,20 +524,20 @@ REBNATIVE(evaluate)
     INCLUDE_PARAMS_OF_EVALUATE;
 
     REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
-    Dequotify(source);  // May have quotes if indicating invisible eval
 
   #if !defined(NDEBUG)
     SET_CELL_FLAG(ARG(source), PROTECTED);
   #endif
 
-    REBVAL *var = ARG(result);
+    REBVAL *next = ARG(next);
 
+  redo:
     switch (VAL_TYPE(source)) {
       case REB_BLOCK:
       case REB_GROUP: {
-        if (VAL_LEN_AT(source) == 0) {  // `evaluate []` should return null
-            Init_Nulled(D_OUT);
-            Init_None(D_SPARE);
+        if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is ~none~ isotope
+            Init_None(D_OUT);
+            Init_Nulled(source);
         }
         else {
             DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);
@@ -549,14 +549,11 @@ REBNATIVE(evaluate)
                 EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
             );
 
-            SET_END(D_SPARE);
-            Push_Frame(D_SPARE, f);
-            bool threw = Eval_Throws(f);  // only one step of evaluation
+            Push_Frame(D_OUT, f);
+            bool threw = Eval_Maybe_Stale_Throws(f);  // only one step
 
             if (not threw) {
-                Copy_Cell(D_OUT, source);
-
-                VAL_INDEX_UNBOUNDED(D_OUT) = FRM_INDEX(f);  // new index
+                VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
 
                 // There may have been a LET statement in the code.  If there
                 // was, then we have to incorporate the binding it added into
@@ -571,30 +568,22 @@ REBNATIVE(evaluate)
                 // would probably be to make EVALUATE return something with
                 // more limited privileges... more like a FRAME!/VARARGS!.
                 //
-                INIT_BINDING_MAY_MANAGE(D_OUT, f_specifier);
+                INIT_BINDING_MAY_MANAGE(source, f_specifier);
             }
 
             Drop_Frame(f);
 
-            if (threw) {
-                Move_Cell(D_OUT, D_SPARE);
+            if (threw)
                 return R_THROWN;
-            }
 
-            if (IS_END(D_SPARE)) {
-                //
-                // This means the result was invisible:
-                //
-                //   evaluate [comment "hi" 1 + 2]  ; should return '[1 + 2]
-                //
-                // Adding a quote level on the return result helps cue the
-                // caller that the void we choose to return is actually
-                // invisible, if they want to do correct invisible handling.
-                //
-                // https://forum.rebol.info/t/1173/
-                //
-                Init_None(D_SPARE);
-                Quotify(D_OUT, 1);  // void-is-invisible signal on array
+            // If they didn't ask explicitly to know about invisible steps,
+            // then skip over them.
+            //
+            if (IS_END(D_OUT) or GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE)) {
+                if (not REF(void)) {
+                    CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);
+                    goto redo;
+                }
             }
         }
         break; }  // update variable
@@ -612,7 +601,7 @@ REBNATIVE(evaluate)
             //
             REBLEN index;
             if (Eval_Step_In_Any_Array_At_Throws(
-                SET_END(D_SPARE),
+                SET_END(D_OUT),
                 &index,
                 position,
                 SPECIFIED,
@@ -624,13 +613,7 @@ REBNATIVE(evaluate)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
-                Move_Cell(D_OUT, D_SPARE);
                 return R_THROWN;
-            }
-
-            if (IS_END(D_SPARE)) {
-                SET_END(position);  // convention for shared data at end point
-                return nullptr;
             }
 
             VAL_INDEX_UNBOUNDED(position) = index;
@@ -648,24 +631,17 @@ REBNATIVE(evaluate)
                 return nullptr;
 
             REBFLGS flags = EVAL_MASK_DEFAULT;
-            if (Eval_Step_In_Subframe_Throws(D_SPARE, f, flags)) {
-                Move_Cell(D_OUT, D_SPARE);
+            if (Eval_Step_In_Subframe_Throws(D_OUT, f, flags))
                 return R_THROWN;
-            }
-
-            if (IS_END(D_SPARE))  // remainder just comments and invisibles
-                return nullptr;
         }
-
-        Copy_Cell(D_OUT, source);  // VARARGS! will have updated position
         break; }  // update variable
 
       default:
         panic (source);
     }
 
-    if (IS_TRUTHY(var))
-        Set_Var_May_Fail(var, SPECIFIED, D_SPARE);
+    if (IS_TRUTHY(next))
+        Set_Var_May_Fail(next, SPECIFIED, source);
 
     return D_OUT;
 }

@@ -218,16 +218,8 @@ emit: func [
             code: my next
         ]
         else [
-            ; Keep evaluating so long as returned value indicates invisibility
-            ; (`emit ctx [comment "X" ...]`)
-            ;
             let result
-            cycle [
-                if not quoted? [code result]: evaluate code [
-                    stop
-                ]
-            ]
-            if code [
+            if [result @code]: evaluate code [
                 append ctx.msg ensure binary! result
             ]
         ]

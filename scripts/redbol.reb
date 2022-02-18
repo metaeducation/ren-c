@@ -359,7 +359,7 @@ apply: emulate [
                 arg: block.1
                 try next block
             ] else [
-                try evaluate/result block (the arg:)
+                try [arg @]: evaluate block
             ]
 
             if refinement? params.1 [
@@ -571,8 +571,7 @@ do: emulate [
 
         if var [  ; DO/NEXT
             if args [fail "Can't use DO/NEXT with ARGS"]
-            let result
-            source: evaluate/result :source 'result
+            let [result 'source]: evaluate :source
             set var source  ; DO/NEXT put the *position* in the var
             return :result  ; DO/NEXT returned the *evaluative result*
         ]
@@ -834,12 +833,11 @@ rejoin: emulate [
     ][
         cycle [  ; Keep evaluating until a usable BASE is found
 
-            if not block: evaluate/result block 'base [
-                return copy []  ; we exhausted block without finding a base value
+            if not [base @block]: evaluate block [
+                return copy []  ; exhausted block without finding a base value
             ]
 
             any [
-                quoted? block  ; just ran an invisible like COMMENT or ELIDE
                 null? :base  ; consider to have dissolved
                 blank? :base  ; treat same as NULL
             ] then [

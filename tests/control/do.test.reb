@@ -198,21 +198,21 @@
     success
 )
 (
-    [b value]: evaluate [1 2]
+    [value b]: evaluate [1 2]
     did all [
         1 = value
         [2] = b
     ]
 )
 (
-    value: <overwritten>
+    value: ~
     did all [
-        null? ^ [# value]: evaluate []
+        null? ^ [value @]: evaluate []
         '~none~ = ^value
     ]
 )
 (
-    [# value]: evaluate [trap [1 / 0]]
+    [value #]: evaluate [trap [1 / 0]]
     error? value
 )
 (

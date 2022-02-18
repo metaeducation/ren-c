@@ -17,14 +17,9 @@ verify: function [
     return: <void>
     conditions [block!]
         {Conditions to check}
-    <local> result
+    <local> pos result
 ][
-    loop [pos: evaluate/result conditions 'result] [
-        if quoted? pos [  ; invisible that vaporized
-            conditions: pos
-            continue
-        ]
-
+    loop [[result @pos]: evaluate conditions] [
         any [bad-word? ^result, not :result] then [
             ;
             ; including commas in the failure report looks messy, skip them
@@ -36,8 +31,8 @@ verify: function [
                 id: 'assertion-failure
                 arg1: compose [
                     ((copy/part conditions pos)) ** (case [
+                        bad-word? ^result [^result]  ; isotope
                         null? result ['null]
-                        bad-word? ^result [result]  ; isotope
                         blank? result ['blank]
                         result = false ['false]
                     ])

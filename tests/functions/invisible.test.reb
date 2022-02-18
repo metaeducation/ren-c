@@ -14,30 +14,30 @@
 ('~void~ = ^ comment "a")
 
 (
-    val: <overwritten>
-    pos: evaluate/result [
+    pos: ~
+    val: evaluate/next [
         1 + comment "a" comment "b" 2 * 3 fail "too far"
-    ] 'val
+    ] 'pos
     did all [
         val = 9
         pos = [fail "too far"]
     ]
 )
 (
-    val: <overwritten>
-    pos: evaluate/result [
+    pos: ~
+    val: evaluate/next [
         1 comment "a" + comment "b" 2 * 3 fail "too far"
-    ] 'val
+    ] 'pos
     did all [
         val = 9
         pos = [fail "too far"]
     ]
 )
 (
-    val: <overwritten>
-    pos: evaluate/result [
+    pos: ~
+    val: evaluate/next [
         1 comment "a" comment "b" + 2 * 3 fail "too far"
-    ] 'val
+    ] 'pos
     did all [
         val = 9
         pos = [fail "too far"]
@@ -67,13 +67,15 @@
     e.id = 'expect-arg
 )
 (
-    pos: evaluate evaluate [1 elide "a" elide "b" + 2 * 3 fail "too far"]
-    pos = the '[elide "b" + 2 * 3 fail "too far"]
+    code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
+    pos: [_ @]: evaluate/void [_ @]: evaluate/void code
+    pos = [elide "b" + 2 * 3 fail "too far"]
 )
 (
-    pos: evaluate/result [
+    pos: ~
+    val: evaluate/next [
         1 + 2 * 3 elide "a" elide "b" fail "too far"
-    ] 'val
+    ] 'pos
     did all [
         val = 9
         pos = [elide "a" elide "b" fail "too far"]

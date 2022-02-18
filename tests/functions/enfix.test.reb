@@ -58,13 +58,13 @@
     ; Enfixed skipped left arguments mean that a function will not be executed
     ; greedily...it will run in its own step, as if the left was an end.
     (
-        unset 'var
+        var: ~
         block: [<tag> lefty "hi"]
         did all [
-            [lefty "hi"] = block: evaluate/result block 'var
-            <tag> = var
-            [] = evaluate/result block 'var
-            [_ "hi"] = var
+            <tag> = evaluate/next block 'block
+            [lefty "hi"] = block
+            [_ "hi"] = evaluate/next block 'block
+            [] = block
         ]
     )
 
@@ -75,10 +75,10 @@
         unset 'var
         block: [the 1 lefty "hi"]
         did all [
-            [lefty "hi"] = block: evaluate/result block 'var
-            1 = var
-            [] evaluate/result block 'var
-            [_ "hi"] = var
+            1 = evaluate/next block 'block
+            [lefty "hi"] = block
+            [_ "hi"] = evaluate/next block 'block
+            [] = block
         ]
     )
 
@@ -212,13 +212,13 @@
         foo: func [] [
             fail "foo should not run, it's prefix and runs on *next* step"]
         did all [
-            [foo 304] == evaluate/result [1020 foo 304] 'var
+            [foo 304] == [var @]: evaluate [1020 foo 304]
             var == 1020
         ]
     )(
         enfoo: enfixed func [] [<enfoo>]
         did all [
-            [304] == evaluate/result [1020 enfoo 304] 'var
+            [304] == [var @]: evaluate [1020 enfoo 304]
             var == <enfoo>
         ]
         comment "0-arity function, but enfixed so runs in *same* step"
@@ -234,7 +234,7 @@
                 return #ignored
             ]
             did all [
-                [ifoo 304] == evaluate/result [ignored ifoo 304] 'var
+                [ifoo 304] == [var @]: evaluate [ignored ifoo 304]
                 var == #ignored
                 ignored == _
             ]
@@ -254,7 +254,7 @@
                 return #ignored
             ]
             did all [
-                [enifoo 304] == evaluate/result [ignored enifoo 304] 'var
+                [enifoo 304] == [var @]: evaluate [ignored enifoo 304]
                 var == #ignored
                 ignored == _
             ]
@@ -263,7 +263,7 @@
         enifoo: enfixed func ['i [<skip> integer!]] [compose '<enifoo>/(i)]
         did all [
             did all [
-                [304] == evaluate/result [1020 enifoo 304] 'var
+                [304] == [var @]: evaluate [1020 enifoo 304]
                 var == '<enifoo>/1020
             ]
             comment {
@@ -276,7 +276,7 @@
     (
         bar: func [return: <void>] [bar: _]
         did all [
-            [bar 304] == evaluate/result [1020 bar 304] 'var
+            [bar 304] == [var @]: evaluate [1020 bar 304]
             var == 1020
             action? :bar
         ]
@@ -284,7 +284,7 @@
     )(
         enbar: enfixed func [return: <void>] [enbar: _]
         did all [
-            [304] == evaluate/result [1020 enbar 304] 'var
+            [304] == [var @]: evaluate [1020 enbar 304]
             var == 1020
             enbar == _
         ]
@@ -299,7 +299,7 @@
                 return #ignored
             ]
             did all [
-                [ibar 304] == evaluate/result [ignored ibar 304] 'var
+                [ibar 304] == [var @]: evaluate [ignored ibar 304]
                 var == #ignored
                 ignored == _
             ]
@@ -320,7 +320,7 @@
                 return #kept
             ]
             did all [
-                [enibar 304] == evaluate/result [kept enibar 304] 'var
+                [enibar 304] == [var @]: evaluate [kept enibar 304]
                 var == #kept
                 kept == _
             ]
@@ -331,7 +331,7 @@
         ]
         did all [
             did all [
-                [304] == evaluate/result [1020 enibar 304] 'var
+                [304] == [var @]: evaluate [1020 enibar 304]
                 var == 1020
                 enibar == _
             ]
