@@ -1031,7 +1031,7 @@ REBNATIVE(catch)
 //  "Throws control back to a previous catch."
 //
 //      return: []  ; !!! notation for divergent function?
-//      value "Value returned from catch"
+//      ^value "Value returned from catch"
 //          [<opt> any-value!]
 //      /name "Throws to a named catch"
 //          [word! action! object!]
@@ -1046,9 +1046,12 @@ REBNATIVE(throw)
 {
     INCLUDE_PARAMS_OF_THROW;
 
+    REBVAL *v = ARG(value);
+    Meta_Unquotify(v);
+
     return Init_Thrown_With_Label(
         D_OUT,
-        ARG(value),
+        v,
         ARG(name)  // NULLED if unused
     );
 }

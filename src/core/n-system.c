@@ -63,13 +63,11 @@ REBNATIVE(quit)
 
     if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID) {
         //
-        // This returns an bad-word if there is no arg, and labels it ~quit~.
+        // This returns an isotope if there is no arg, and labels it ~quit~
+        // It's a pretty good generic signal of what happened if there's not
+        // some explicit handling.
         //
-        // !!! Should it be an isotope?  Should THROW and CATCH be able to
-        // THROW and CATCH isotopes?  It creates friction when errors have
-        // isotopes in them...
-        //
-        Init_Bad_Word(v, Canon(QUIT));
+        Init_Isotope(v, Canon(QUIT));
     }
     else
         Meta_Unquotify(v);

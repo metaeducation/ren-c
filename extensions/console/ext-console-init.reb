@@ -546,9 +546,13 @@ ext-console-impl: func [
         result.id = 'no-catch
         :result.arg2 = :quit  ; throw's /NAME
     ] then [
+        if '~quit~ = ^result.arg1 [
+            return 0  ; plain QUIT with no argument, treat it as success
+        ]
+        if bad-word? ^result.arg1 [
+            return 1  ; treat all other QUIT with isotopes as generic error
+        ]
         return switch type of :result.arg1 [
-            bad-word! [0]  ; plain QUIT, no /WITH, call that success
-
             logic! [either :result.arg1 [0] [1]]  ; logic true is success
 
             integer! [result.arg1]  ; Note: may be too big for status range

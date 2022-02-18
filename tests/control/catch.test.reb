@@ -99,3 +99,8 @@
         v = 30
     ]
 )
+
+; Isotopes
+(
+    '~ugly~ = ^ catch [throw ~ugly~]
+)

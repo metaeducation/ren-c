@@ -123,12 +123,17 @@
     ('~null~ = ^ match null null)
 ]
 
-; ~quit~ is the label of the BAD-WORD! you get by default from QUIT
+; ~quit~ is the label of the BAD-WORD! isotope you get by default from QUIT.
+; If the result is meant to be used, then QUIT should be passed an argument,
+; but the idea is to help draw attention to when a script was cut short
+; prematurely via a QUIT command.  Isotopes may be passed.
+;
 ; Note: DO of BLOCK! does not catch quits, so TEXT! is used here.
 [
     (1 = do "quit 1")
     ('~quit~ =  ^ do "quit")
-    (''~unmodified~ = ^ do "quit '~unmodified~")
+    ('~isotope~ = ^ do "quit ~isotope~")
+    ('~plain~ = do "quit '~plain~")
 ]
 
 ; Isotopes make it easier to write generic routines that handle BAD-WORD!
