@@ -35,12 +35,12 @@
     10 = reeval func [return: [integer!]] [trap [return 10] 20]
 ))]
 
-; ENTRAP (similar to TRAP, but puts normal result in a block)
+; ENTRAP (similar to TRAP but single result, ^META result if not an error)
 
-([~void~] = entrap [])
-('~null~ = ^ entrap [null])
-([3] = entrap [1 + 2])
-([[b c]] = entrap [skip [a b c] 1])
+('~none~ = entrap [])
+(null = ^ entrap [null])  ; !!! should this be '~null~ = ^ entrap [null] ?
+((the '3) = entrap [1 + 2])
+((the '[b c]) = entrap [skip [a b c] 1])
 ('no-arg = (entrap [the]).id)
 
 

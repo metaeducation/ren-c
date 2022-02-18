@@ -79,50 +79,6 @@ REBNATIVE(trap)
 }
 
 
-static REBVAL *Entrap_Dangerous(REBFRM *frame_) {
-    INCLUDE_PARAMS_OF_ENTRAP;
-
-    if (Do_Branch_Throws(D_OUT, ARG(code))) {
-        Init_Error(D_OUT, Error_No_Catch_For_Throw(D_OUT));
-        return nullptr;
-    }
-
-    assert(not IS_NULLED(D_OUT));  // unique signal for failed conditionals
-    if (Is_Nulled_Isotope(D_OUT))
-        return nullptr; // don't box it up
-
-    REBARR *a = Alloc_Singular(ARRAY_MASK_HAS_FILE_LINE | NODE_FLAG_MANAGED);
-    Move_Cell(ARR_SINGLE(a), D_OUT);
-    Init_Block(D_OUT, a);
-    return nullptr;
-}
-
-
-//
-//  entrap: native [
-//
-//  {DO a block and put result in a 1-item BLOCK!, unless error is raised}
-//
-//      return: "ERROR! if raised, null if null, or result in a BLOCK!"
-//          [<opt> block! error!]
-//      code "Code to execute and monitor"
-//          [block! action!]
-//  ]
-//
-REBNATIVE(entrap)
-{
-    INCLUDE_PARAMS_OF_ENTRAP;
-
-    REB_R error = rebRescue(cast(REBDNG*, &Entrap_Dangerous), frame_);
-    UNUSED(ARG(code)); // gets used by the above call, via the frame_ pointer
-
-    if (error)
-        return error;
-
-    return D_OUT;
-}
-
-
 //
 //  set-location-of-error: native [
 //

@@ -722,6 +722,15 @@ attempt: func [
     return null
 ]
 
+entrap: func [
+    {If evaluation raises an error, return ERROR!...otherwise the ^META result}
+
+    return: [<opt> any-value!]
+    code [block! action!]
+    <local> result
+][
+    any [trap/result code 'result, ^result]
+]
 
 reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"

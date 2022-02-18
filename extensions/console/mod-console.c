@@ -335,7 +335,7 @@ REBNATIVE(console)
             goto recover;
         }
 
-        code = rebValue("first @", trapped);  // entrap []'s the output
+        code = rebValue("unquote @", trapped);  // entrap quotes non-error
         rebRelease(trapped); // don't need the outer block any more
 
       provoked:

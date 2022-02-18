@@ -271,7 +271,7 @@ int main(int argc, char *argv_ansi[])
     if (rebDid("error?", trapped))  // error in MAIN-STARTUP itself
         rebJumps("panic", trapped);  // terminates
 
-    REBVAL *code = rebValue("first", trapped); // entrap's output
+    REBVAL *code = rebValue("unquote @", trapped);  // entrap quotes non-errors
     rebRelease(trapped);  // don't need the outer block any more
 
     // !!! For the moment, the CONSOLE extension does all the work of running
