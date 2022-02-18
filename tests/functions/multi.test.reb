@@ -157,3 +157,10 @@
         ]
     )
 ]
+
+; You can use a @ without a variable to get a return result
+;
+(did all [
+    " cd" = [item @]: transcode "ab cd"
+    item = 'ab
+])

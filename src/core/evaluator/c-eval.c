@@ -1307,7 +1307,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                   too_many_circled:
                     fail ("Can't circle more than one multi-return result");
                 }
-                Init_Blank(DS_PUSH());
+                REBVAL *let = rebValue("let temp");  // have to fabricate var
+                Move_Cell(DS_PUSH(), let);
+                rebRelease(let);
                 dsp_circled = DSP;
                 continue;
             }
