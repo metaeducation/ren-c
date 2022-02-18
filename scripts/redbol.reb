@@ -751,6 +751,13 @@ compose: emulate [
         if not block? :value [return :value]  ; `compose 1` is `1` in Rebol2
 
         composed: apply :compose [
+            ;
+            ; !!! Note: COMPOSE has a LABEL argument that is <skip>-able.
+            ; Skippable arguments are entwined with quoting and detection, and
+            ; as such have more in common with refinements than ordinary
+            ; arguments.  If you want a skippable argument in an APPLY you
+            ; must specify it explicitly by name...APPLY always <skip>s.
+
             :value
             /deep deep
 

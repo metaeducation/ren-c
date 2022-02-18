@@ -826,7 +826,10 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // Refinements have a special rule beyond plain type checking, in that
         // they don't just want an ISSUE! or NULL, they want # or NULL.
         //
-        if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
+        if (
+            GET_PARAM_FLAG(f->param, REFINEMENT)
+            or GET_PARAM_FLAG(f->param, SKIPPABLE)
+        ){
             if (
                 GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
                 and Is_Unset(f->arg)

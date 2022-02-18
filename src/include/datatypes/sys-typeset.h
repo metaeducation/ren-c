@@ -433,7 +433,10 @@ inline static void Typecheck_Refinement(
     const REBPAR *param,
     REBVAL *arg
 ){
-    assert(GET_PARAM_FLAG(param, REFINEMENT));
+    assert(
+        GET_PARAM_FLAG(param, REFINEMENT)
+        or GET_PARAM_FLAG(param, SKIPPABLE)
+    );
 
     if (IS_NULLED(arg)) {
         //

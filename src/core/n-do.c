@@ -991,7 +991,13 @@ REBNATIVE(apply)
                     VAL_PARAM_CLASS(e.param) == PARAM_CLASS_RETURN
                     or VAL_PARAM_CLASS(e.param) == PARAM_CLASS_OUTPUT
                     or GET_PARAM_FLAG(e.param, REFINEMENT)
+                    or GET_PARAM_FLAG(e.param, SKIPPABLE)
                 ){
+                    // We treat <skip> parameters as if they can only be
+                    // requested by name, like a refinement.  This is because
+                    // the evaluative nature of APPLY is not compatible with
+                    // the quoting requirement of skippability.
+                    //
                     continue;
                 }
                 if (
