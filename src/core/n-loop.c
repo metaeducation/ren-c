@@ -104,7 +104,7 @@ REBNATIVE(break)
 //
 //      return: []  ; !!! notation for divergent function?
 //      ^value "If provided, act as if loop body finished with this value"
-//          [<opt> any-value!]
+//          [<end> <opt> any-value!]
 //  ]
 //
 REBNATIVE(continue)

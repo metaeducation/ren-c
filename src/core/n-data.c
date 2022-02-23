@@ -2312,7 +2312,7 @@ REBNATIVE(reify)
 //  "Make ~none~ isotopes vanish, passing through all other values"
 //
 //      return: [<opt> <invisible> any-value!]
-//      ^optional [<opt> any-value!]
+//      ^optional [<end> <opt> any-value!]
 //  ]
 //
 REBNATIVE(none_to_void)
@@ -2339,7 +2339,7 @@ REBNATIVE(none_to_void)
 //  "Make NULL vanish, passing through all other values"
 //
 //      return: [<opt> <invisible> any-value!]
-//      ^optional [<opt> any-value!]
+//      ^optional [<end> <opt> any-value!]
 //  ]
 //
 REBNATIVE(null_to_void)

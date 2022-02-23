@@ -480,7 +480,7 @@ REBTYPE(Varargs)
             return R_THROWN;
         }
         if (IS_END(D_OUT))
-           Init_Endish_Nulled(D_OUT);
+           Init_Nulled(D_OUT);
 
         return D_OUT; }
 
@@ -503,7 +503,7 @@ REBTYPE(Varargs)
                 return R_THROWN;
             }
             if (IS_END(D_OUT))
-                return Init_Endish_Nulled(D_OUT);
+                return Init_Nulled(D_OUT);
             return D_OUT;
         }
 

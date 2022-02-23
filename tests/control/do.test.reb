@@ -11,7 +11,15 @@
     (else? do [null])
     ('~null~ = ^ do [if true [null]])
 
-    ('~void~ = ^ comment "HI" do [comment "HI"])
+    (did all [
+        '~none~ = x: ^ comment "HI" do [comment "HI"]
+        x = '~none~
+    ])
+
+    (did all [
+        '~none~ = (x: ^(comment "HI") ^ do [comment "HI"])
+        x = '~void~
+    ])
 
     ('~none~ = (10 + 20 ^(do [])))
     ('~none~ = (10 + 20 ^(do [comment "hi"])))

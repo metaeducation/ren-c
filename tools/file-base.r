@@ -67,10 +67,15 @@ core: [
     ][
         evaluator/c-action.c  #prefer-O2-optimization
 
-        ; !!! See notes on Finalize_Arg() call in %c-eval.c; investigations
-        ; make the need to disable this seem like a possible optimizer bug.
+        ; !!! There was once code in Finalize_Arg() call in %c-action.c that
+        ; triggered a warning that seemed like a possible optimizer bug.  That
+        ; code is now removed, but there were problems with it before in gcc
+        ; 9.3.0-10 at -O2 optimization level in the C++ build...it pertained
+        ; to:
         ;
-        <gnu:-Wno-array-bounds>
+        ;   const REBSTR *s = VAL_STRING(v);
+        ;
+        ; <gnu:-Wno-array-bounds>
     ]
 
     c-function.c

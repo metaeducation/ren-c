@@ -171,6 +171,15 @@ bool Add_Typeset_Bits_Core(
             }
             else if (0 == CT_String(item, Root_End_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, ENDABLE);
+                enum Reb_Param_Class pclass = VAL_PARAM_CLASS(typeset);
+                if (
+                    pclass == PARAM_CLASS_NORMAL
+                    or pclass == PARAM_CLASS_HARD
+                    or pclass == PARAM_CLASS_MEDIUM
+                    or pclass == PARAM_CLASS_SOFT
+                ){
+                    TYPE_SET(typeset, REB_NULL);
+                }
             }
             else if (0 == CT_String(item, Root_Blank_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, NOOP_IF_BLANK);

@@ -322,6 +322,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                     goto continue_fulfilling;
                 }
 
+                if (NOT_PARAM_FLAG(f->param, ENDABLE))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+
                 // The OUT_NOTE_STALE flag is also used by BAR! to keep
                 // a result in f->out, so that the barrier doesn't destroy
                 // data in cases like `(1 + 2 | comment "hi")` => 3, but
@@ -330,7 +333,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 if (pclass == PARAM_CLASS_META)
                     Init_Bad_Word(f->arg, Canon(VOID));
                 else
-                    Init_Endish_Nulled(f->arg);
+                    Init_Nulled(f->arg);
                 goto continue_fulfilling;
             }
 
@@ -509,12 +512,15 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (IS_END(f_next)) {
+            if (NOT_PARAM_FLAG(f->param, ENDABLE))
+                fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+
             if (pclass == PARAM_CLASS_META) {
                 Init_Bad_Word(f->arg, Canon(VOID));
                 SET_CELL_FLAG(f->arg, UNEVALUATED);
             }
             else
-                Init_Endish_Nulled(f->arg);
+                Init_Nulled(f->arg);
             goto continue_fulfilling;
         }
 
@@ -526,10 +532,13 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
           case PARAM_CLASS_OUTPUT:
           case PARAM_CLASS_META: {
             if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
+                if (NOT_PARAM_FLAG(f->param, ENDABLE))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+
                 if (pclass == PARAM_CLASS_META)
                     Init_Bad_Word(f->arg, Canon(VOID));
                 else
-                    Init_Endish_Nulled(f->arg);
+                    Init_Nulled(f->arg);
                 goto continue_fulfilling;
             }
 
@@ -542,10 +551,13 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             }
 
             if (IS_END(f->arg)) {
+                if (NOT_PARAM_FLAG(f->param, ENDABLE))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+
                 if (pclass == PARAM_CLASS_META)
                     Init_Bad_Word(f->arg, Canon(VOID));
                 else
-                    Init_Endish_Nulled(f->arg);
+                    Init_Nulled(f->arg);
             }
             else if (pclass == PARAM_CLASS_META)
                 Meta_Quotify(f->arg);
@@ -559,7 +571,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             else {
                 if (not Typecheck_Including_Constraints(f->param, f_next)) {
                     assert(GET_PARAM_FLAG(f->param, ENDABLE));
-                    Init_Endish_Nulled(f->arg);  // not EVAL_FLAG_BARRIER_HIT
+                    Init_Nulled(f->arg);  // not EVAL_FLAG_BARRIER_HIT
                     goto continue_fulfilling;
                 }
                 Literal_Next_In_Frame(f->arg, f);
@@ -778,7 +790,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
-        assert(NOT_END(f->arg));  // all END fulfilled as Init_Endish_Nulled()
+        assert(NOT_END(f->arg));  // all END should be ~void~ or NULL by now
 
         // Note that if you have a redo situation as with an ENCLOSE, a
         // specialized out parameter becomes visible in the frame and can be
@@ -841,33 +853,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             continue;
         }
 
-        // !!! In GCC 9.3.0-10 at -O2 optimization level in the C++ build
-        // this seemed to trigger:
-        //
-        //   error: array subscript 2 is outside array bounds
-        //      of 'const char [9]'
-        //
-        // It points to the problem being at VAL_STRING_AT()'s line:
-        //
-        //     const REBSTR *s = VAL_STRING(v);
-        //
-        // Attempts to further isolate it down were made by deleting and
-        // inlining bits of code until one low-level line would trigger it.
-        // This led to seemingly unrelated declaration of an unused byte
-        // variable being able to cause it or not.  It may be a compiler
-        // optimization bug...in any cae, that warning is disabled for
-        // now on this file.  Review.
-
-        if (IS_ENDISH_NULLED(f->arg)) {
-            //
-            // Note: `1 + comment "foo"` => `1 +`, arg is END
-            //
-            if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
-
-            continue;
-        }
-
         REBYTE kind_byte = KIND3Q_BYTE(f->arg);
 
         if (
@@ -908,27 +893,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         if (KEY_SYM(f->key) == SYM_RETURN)
             continue;  // !!! let whatever go for now
 
-        if (not Typecheck_Including_Constraints(f->param, f->arg)) {
-            if (
-                IS_NULLED(f->arg)
-                and GET_PARAM_FLAG(f->param, ENDABLE)
-                and GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
-            ){
-                // !!! We don't really want people to be calling endable
-                // non-<opt> functions with NULL arguments.  But if someone
-                // uses a DO on a FRAME! we can't tell the difference...
-                // the "endish nulled" mechanic is not available.  We could
-                // try making an exception for ~void~ isotopes being allowed
-                // in frames (the exception exists at the moment for meta
-                // parameters) but this would ruin some of the convenience
-                // of END.  Perhaps there should be an ~end~ isotope that will
-                // decay to NULL like ~null~ isotopes do?  This could give
-                // the best of both worlds.  For now, just suppress erroring
-                // if an <end> parameter gets NULL from a frame.
-            }
-            else
-                fail (Error_Arg_Type(f, f->key, VAL_TYPE(f->arg)));
-        }
+        if (not Typecheck_Including_Constraints(f->param, f->arg))
+            fail (Error_Arg_Type(f, f->key, VAL_TYPE(f->arg)));
     }
 
 
