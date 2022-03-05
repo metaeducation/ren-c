@@ -173,11 +173,6 @@ func: func* [
             [false]
         ])
     |
-        set loc: tuple! (  ; locals legal anywhere
-            append exclusions ^ to word! loc
-            append new-spec ^loc
-        )
-    |
         other: <here>
         group! (
             if not var [
@@ -196,9 +191,9 @@ func: func* [
         (var: _)  ; everything below this line resets var
         false  ; failing here means rolling over to next rule
     |
-        '<local>
+        '<local> (append new-spec <local>)
         opt some [set var: word! set other: opt group! (
-            append new-spec ^ to tuple! var
+            append new-spec ^var
             append exclusions ^var
             if other [
                 defaulters: default [copy []]
@@ -215,7 +210,7 @@ func: func* [
             ]
         )
         opt some [
-            set other: [object! | word! | path!] (
+            set other: [object! | word! | tuple!] (
                 if not object? other [other: ensure any-context! get other]
                 bind new-body other
                 for-each [key val] other [
@@ -268,19 +263,24 @@ func: func* [
     ; that should not be considered.  Note that COLLECT is not defined by
     ; this point in the bootstrap.
     ;
-    locals: try if gather [collect-words/deep/set/ignore body exclusions]
+    locals: if gather [collect-words/deep/set/ignore body exclusions]
 
     if statics [
         statics: make object! statics
         bind new-body statics
     ]
 
-    ; !!! The words that come back from COLLECT-WORDS are all WORD!, but we
-    ; need blank-headed-TUPLE! for pure locals to the generators.  Review the
-    ; COLLECT-WORDS interface to efficiently give this result.
+    ; The <local> designation may be redundant with a <local> in the original
+    ; spec.  Historical implementations of things like FUNCT in R3-Alpha had
+    ; to dodge this to keep from providing redundant refinements.  It's legal
+    ; in Ren-C, but really this generator should be making a FRAME! and not
+    ; a spec block.  This is a work in progress.
     ;
-    for-each loc locals [
-        append new-spec ^ to tuple! loc
+    if locals [
+        append new-spec [<local>]
+        for-each loc locals [
+            append new-spec ^loc
+        ]
     ]
 
     append new-spec try with-return  ; if FUNC* suppresses return generation

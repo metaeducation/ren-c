@@ -93,7 +93,7 @@ input: does [
 ]
 
 
-repend: func [.dummy] [
+repend: func [<local> dummy] [
     fail @dummy [
         "REPEND is just `adapt :append [value: reduce :value]`, but is not"
         "provided in the box.  Note you can say `append data :[1 + 2 3 + 4]`"
@@ -101,7 +101,7 @@ repend: func [.dummy] [
     ]
 ]
 
-remold: func [.dummy] [
+remold: func [<local> dummy] [
     fail @dummy [
         "REMOLD is just `adapt :mold [value: reduce :value]`, but is not"
         "provided in the box.  Note you can say `mold :[1 + 2 3 + 4]`"
@@ -109,7 +109,7 @@ remold: func [.dummy] [
     ]
 ]
 
-rejoin: func [.dummy] [
+rejoin: func [<local> dummy] [
     fail @dummy [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
         "general cases by the now-non-reducing JOIN, which accepts datatypes"

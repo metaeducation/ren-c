@@ -230,7 +230,7 @@ unique: generic [
 
     return: [any-array! any-string! binary! bitset! typeset!]
     series [any-array! any-string! binary! bitset! typeset!]
-    .dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
+    <local> dummy  ; unused, makes frame-compatible with INTERSECT/UNIQUE/etc.
     /case "Use case-sensitive comparison (except bitsets)"
     /skip "Treat the series as records of fixed size"
         [integer!]

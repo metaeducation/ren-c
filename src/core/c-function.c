@@ -326,12 +326,10 @@ void Push_Paramlist_Triads_May_Fail(
             // the way" so there can be an interface name, but then a local
             // name...so that something like /ALL can be named out of the
             // way without disrupting use of ALL.  That's not implemented yet,
-            // but it's now another way to name locals.
+            // and a previous usage to name locals is deprecated:
+            // https://forum.rebol.info/t/1793
             //
-            if (IS_PREDICATE1_CELL(cell) and not quoted) {
-                local = true;
-                symbol = VAL_PREDICATE1_SYMBOL(cell);
-            }
+            fail ("TUPLE! behavior in func spec not defined at present");
         }
         else if (ANY_WORD_KIND(kind)) {
             symbol = VAL_WORD_SYMBOL(cell);
