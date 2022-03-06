@@ -193,7 +193,7 @@ combinator: func [
                     ; the order they are run (if they succeed).
                     ;
                     f.(key): enclose (augment :val [/modded]) func [
-                        return: [<opt> any-value!]
+                        return: [<opt> <invisible> any-value!]
                         f2
                     ][
                         f2.pending: let subpending
@@ -309,9 +309,6 @@ default-combinators: make map! reduce [
         ([^result' pos]: parser input) else [
             return null  ; the parse rule did not match
         ]
-        if '~void~ = result' [
-            fail "Rule passed to FURTHER must synthesize a product"
-        ]
         if (index? pos) <= (index? input) [
             return null  ; the rule matched, but did not advance the input
         ]
@@ -338,7 +335,7 @@ default-combinators: make map! reduce [
     ][
         append state.loops binding of 'return
 
-        last-result': '~void~  ; `while [false]` => ~void~ isotope
+        last-result': '~none~  ; `while [false]` => ~none~ isotope
         cycle [
             ([^result' pos]: parser input) else [
                 take/last state.loops
@@ -423,7 +420,7 @@ default-combinators: make map! reduce [
         parser [<end> action!]
         <local> f result'
     ][
-        result': '~void~  ; default `[stop]` return value as void isotope
+        result': '~none~  ; default `[stop]` return value as none isotope
         if :parser [  ; parser argument is optional
             ([^result' input]: parser input) else [
                 return null
@@ -549,15 +546,15 @@ default-combinators: make map! reduce [
             return null
         ]
 
-        if '~void~ = replacement' [
-            fail "Cannot CHANGE to invisible replacement"
+        if bad-word? replacement' [
+            fail "Cannot CHANGE to isotope"
         ]
 
         assert [quoted? replacement']
 
         ; CHANGE returns tail, use as new remainder
         ;
-        set remainder change/part input (unmeta replacement') (get remainder)
+        set remainder change/part input (unquote replacement') (get remainder)
         return ~changed~
     ]
 
@@ -586,14 +583,13 @@ default-combinators: make map! reduce [
             return null
         ]
 
-        if '~void~ = insertion' [
-            fail "Cannot INSERT to invisible insertion"
-            return null
+        if bad-word? insertion' [
+            fail "Cannot INSERT isotope"
         ]
 
         assert [quoted? insertion']
 
-        set remainder insert input (unmeta insertion')
+        set remainder insert input (unquote insertion')
         return ~inserted~
     ]
 
@@ -648,10 +644,10 @@ default-combinators: make map! reduce [
         ([^where (remainder)]: parser input) else [
             return null
         ]
-        if '~void~ = where [
-            fail "Cannot SEEK to invisible parse rule result"
+        if bad-word? where [
+            fail "Cannot SEEK to isotope"
         ]
-        where: my unmeta
+        where: my unquote
         case [
             blank? where [
                 ; Allow opting out
@@ -849,8 +845,8 @@ default-combinators: make map! reduce [
             return null
         ]
 
-        if '~void~ = subseries [
-            fail "Cannot parse INTO an invisible synthesized result"
+        if bad-word? subseries [
+            fail "Cannot parse INTO an isotope synthesized result"
         ]
 
         assert [quoted? subseries]  ; no true null unless failure
@@ -1425,7 +1421,7 @@ default-combinators: make map! reduce [
         ; Note: REPEAT is considered a loop, but INTEGER!'s combinator is not.
         ; Hence BREAK will not break a literal integer-specified loop
 
-        result': '~void~  ; `0 <any>` => ~void~ isotope
+        result': '~none~  ; `0 <any>` => ~none~ isotope
         repeat value [
             ([^result' input]: parser input) else [
                 return null
@@ -1479,7 +1475,7 @@ default-combinators: make map! reduce [
 
         append state.loops binding of 'return
 
-        result': '~void~  ; `repeat (0) <any>` => ~void~ isotope
+        result': '~none~  ; `repeat (0) <any>` => ~none~ isotope
 
         count-up i max [  ; will count infinitely if max is #
             ;
@@ -2148,7 +2144,7 @@ default-combinators: make map! reduce [
 
         totalpending: _  ; can become GLOM'd into a BLOCK!
 
-        result': '~void~  ; [] => ~void~ isotope
+        result': '~none~  ; [] => ~none~ isotope
 
         loop [not tail? rules] [
             if state.verbose [
@@ -2224,7 +2220,7 @@ default-combinators: make map! reduce [
                 ]
                 totalpending: glom totalpending subpending
             ] else [
-                result': '~void~  ; reset, e.g. `[false |]` => ~void~ isotope
+                result': '~none~  ; reset, e.g. `[false |]` => ~none~ isotope
 
                 free totalpending  ; proactively release memory
                 totalpending: _
@@ -2945,7 +2941,7 @@ append redbol-combinators reduce [
             fail "Can't make MAX less than MIN in range for INTEGER! combinator"
         ]
 
-        result': '~void~  ; `0 <any>` => ~void~ isotope
+        result': '~none~  ; `0 <any>` => ~none~ isotope
         repeat value [  ; do the required matches first
             ([^result' input]: parser input) else [
                 return null

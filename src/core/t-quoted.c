@@ -318,7 +318,7 @@ REBNATIVE(unquote)
 //      return: "Potentially an isotope"
 //          [<opt> <invisible> any-value!]
 //      ^value [<opt> bad-word! quoted!]
-//      /void "Invisibile if input is ~void~ BAD-WORD! (else ~none~ isotope)"
+//      /void "Invisible if input is ~void~ BAD-WORD! (else ~none~ isotope)"
 //  ]
 //
 REBNATIVE(unmeta)
