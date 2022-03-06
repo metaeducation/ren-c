@@ -156,6 +156,26 @@
             rest = " cd"
         ]
     )
+
+    (
+        foo: func [return: [integer!] other: [integer!]] [
+            if other [set other 10] return 20
+        ]
+        did all [
+            '~weird~ = [^x y]: foo then [~weird~]
+            x = '~weird~
+            y = 10
+        ]
+    )
+
+    (
+        did all [
+            x: find "abc" 'b then [10]
+            x = 10
+            [y]: find "abc" 'b then [10]
+            y = 10
+        ]
+    )
 ]
 
 ; You can use a @ without a variable to get a return result

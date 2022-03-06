@@ -1495,7 +1495,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
       blockscope {
         REBFLGS flags = EVAL_MASK_DEFAULT
-            | EVAL_FLAG_FULFILLING_ARG
             | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
             | EVAL_FLAG_INERT_OPTIMIZATION;
 
