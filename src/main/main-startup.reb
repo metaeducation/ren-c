@@ -239,7 +239,7 @@ main-startup: func [
                 if not empty? instruction [append/line instruction [,]]
                 append/line instruction compose/deep <*> item
             ]
-            unreachable
+            fail ~unreachable~
         ]
     ]
 
@@ -675,8 +675,11 @@ main-startup: func [
         ;
         ;    https://forum.rebol.info/t/1764
         ;
+        ; Also on Windows, things like `C:` represent drive letters, so the
+        ; heuristic is to check for more than one letter.
+        ;
         alphanum: charset [#"A" - #"Z" #"a" - #"z" #"0" #"9"]
-        o.script: parse o.script [some alphanum ":" to <end>] then [
+        o.script: parse o.script [alphanum some alphanum ":" to <end>] then [
             to url! o.script
         ]
         else [

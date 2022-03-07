@@ -1011,8 +1011,6 @@ fail: func [
     do ensure error! error  ; raise to nearest TRAP up the stack (if any)
 ]
 
-unreachable: specialize :fail [reason: "Unreachable code"]
-
 
 generate: func [ "Make a generator."
     init [block!] "Init code"
