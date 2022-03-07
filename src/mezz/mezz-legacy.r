@@ -113,7 +113,7 @@ rejoin: func [<local> dummy] [
     fail @dummy [
         "REJOIN is replaced in textual sceanarios by UNSPACED, but in more"
         "general cases by the now-non-reducing JOIN, which accepts datatypes"
-        "as a first parameter, e.g. `join binary! :["ABC" 1 + 2 3 + 4]`"
+        "as a first parameter, e.g. `join binary! :[{ABC} 1 + 2 3 + 4]`"
         https://forum.rebol.info/t/rejoin-ugliness-and-the-usefulness-of-tests/
     ]
 ]
