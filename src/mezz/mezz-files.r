@@ -254,10 +254,10 @@ ask: function [
         ; no API for a "light" printing of errors.  Scrub out all the extra
         ; information from the error so it isn't as verbose.
         ;
-        e/file: _
-        e/line: _
-        e/where: _
-        e/near: _
+        e.file: _
+        e.line: _
+        e.where: _
+        e.near: _
         print [e]
 
         ; Keep cycling...
