@@ -66,12 +66,14 @@ delta-time: function [
     {Returns the time it takes to evaluate the block}
     block [block!]
 ][
-    ; Pre-specialize the timer function, and get the calculations lined up in
-    ; a REDUCE.  This minimizes the amount of overhead that winds up in the
-    ; result (e.g. not even setting variables is counted in the timing)
+    ; Pre-specialize the timer function, and the parts that wind up being
+    ; counted in the timing itself are pre-COMPOSEd.  So path evaluation or
+    ; variable fetches are not counted.  We do not use the /TIME refinement
+    ; here but calculate on full dates, because even if this were intended
+    ; for short precise timings it could still span midnight.
     ;
-    timer: :lib.now/precise/time  ; Note: NOW comes from an Extension
-    do reduce [:negate :subtract :timer :elide :do block :timer]
+    timer: :lib.now/precise  ; Note: NOW comes from an Extension
+    do compose [negate difference timer (:elide) (:do) (block) (:timer)]
 ]
 
 delta-profile: func [
