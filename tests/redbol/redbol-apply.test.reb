@@ -54,8 +54,15 @@
     )]
     (1 == redbol-apply :subtract [2 1])
     (1 = (redbol-apply :- [2 1]))
-    (null = redbol-apply func [a] [a] [])
-    (null = redbol-apply/only func [a] [a] [])
+
+    ; !!! These were permitted by Rebol2 APPLY, as missing arguments were
+    ; treated as #[none].  Ren-C's ~none~ concept is an isotope and cannot be
+    ; taken by ordinary function arguments, so this would have to be passing
+    ; BLANK! or NULL instead.  It's not clear why support for too few args
+    ; would be desirable.
+    ;
+    ;    (null = redbol-apply func [a] [a] [])
+    ;    (null = redbol-apply/only func [a] [a] [])
 
     [#2237
         (error? trap [redbol-apply func [a] [a] [1 2]])
@@ -81,8 +88,8 @@
     (use [a] [a: false /a = redbol-apply/only func [/a] [/a] [/a]])
     (group! == redbol-apply/only (specialize :of [property: 'type]) [()])
     ([1] == head of redbol-apply :insert [copy [] [1] blank blank])
-    ([1] == head of redbol-apply :insert [copy [] [1] blank false])
-    ([[1]] == head of redbol-apply :insert [copy [] [1] blank true])
+    ([1] == head of redbol-apply :insert [copy [] [1] blank blank blank false])
+    ([[1]] == head of redbol-apply :insert [copy [] [1] blank blank blank true])
     (action! == redbol-apply (specialize :of [property: 'type]) [:print])
     (get-word! == redbol-apply/only (specialize :of [property: 'type]) [:print])
 
@@ -132,9 +139,9 @@
             return: [<opt> any-value!]
             'x [<opt> any-value!]
         ][
-            return get/any 'x
+            return get 'x
         ][
-            ~none~
+            '~none~
         ]
     )
     (
