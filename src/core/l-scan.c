@@ -2567,7 +2567,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             for (; dsp != dsp_path_head - 1; --dsp) {
                 if (IS_EMAIL(DS_AT(dsp))) {
                     if (any_email)
-                        goto tuple_error;
+                        fail (Error_Syntax(ss, token));
                     any_email = true;
                 }
             }
@@ -2593,15 +2593,15 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             }
         }
 
+      blockscope {  // gotos would cross this initialization without
         REBVAL *check = Try_Pop_Sequence_Or_Element_Or_Nulled(
             temp,  // doesn't write directly to stack since popping stack
             token == TOKEN_TUPLE ? REB_TUPLE : REB_PATH,
             dsp_path_head - 1
         );
-        if (not check) {
-          tuple_error:
+        if (not check)
             fail (Error_Syntax(ss, token));
-        }
+      }
 
         assert(ANY_SEQUENCE(temp));  // Should be >= 2 elements, no decaying
 
