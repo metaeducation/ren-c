@@ -21,12 +21,9 @@
  */
 #ifndef MBEDTLS_ASN1_H
 #define MBEDTLS_ASN1_H
+#include "mbedtls/private_access.h"
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/build_info.h"
 
 #include <stddef.h>
 
@@ -46,15 +43,22 @@
  * ASN1 is a standard to specify data structures.
  * \{
  */
-#define MBEDTLS_ERR_ASN1_OUT_OF_DATA                      -0x0060  /**< Out of data when parsing an ASN1 data structure. */
-#define MBEDTLS_ERR_ASN1_UNEXPECTED_TAG                   -0x0062  /**< ASN1 tag was of an unexpected value. */
-#define MBEDTLS_ERR_ASN1_INVALID_LENGTH                   -0x0064  /**< Error when trying to determine the length or invalid length. */
-#define MBEDTLS_ERR_ASN1_LENGTH_MISMATCH                  -0x0066  /**< Actual length differs from expected length. */
-#define MBEDTLS_ERR_ASN1_INVALID_DATA                     -0x0068  /**< Data is invalid. */
-#define MBEDTLS_ERR_ASN1_ALLOC_FAILED                     -0x006A  /**< Memory allocation failed */
-#define MBEDTLS_ERR_ASN1_BUF_TOO_SMALL                    -0x006C  /**< Buffer too small when writing ASN.1 data structure. */
+/** Out of data when parsing an ASN1 data structure. */
+#define MBEDTLS_ERR_ASN1_OUT_OF_DATA                      -0x0060
+/** ASN1 tag was of an unexpected value. */
+#define MBEDTLS_ERR_ASN1_UNEXPECTED_TAG                   -0x0062
+/** Error when trying to determine the length or invalid length. */
+#define MBEDTLS_ERR_ASN1_INVALID_LENGTH                   -0x0064
+/** Actual length differs from expected length. */
+#define MBEDTLS_ERR_ASN1_LENGTH_MISMATCH                  -0x0066
+/** Data is invalid. */
+#define MBEDTLS_ERR_ASN1_INVALID_DATA                     -0x0068
+/** Memory allocation failed */
+#define MBEDTLS_ERR_ASN1_ALLOC_FAILED                     -0x006A
+/** Buffer too small when writing ASN.1 data structure. */
+#define MBEDTLS_ERR_ASN1_BUF_TOO_SMALL                    -0x006C
 
-/* \} name */
+/** \} name ASN1 Error codes */
 
 /**
  * \name DER constants
@@ -114,8 +118,7 @@
 #define MBEDTLS_ASN1_TAG_PC_MASK             0x20
 #define MBEDTLS_ASN1_TAG_VALUE_MASK          0x1F
 
-/* \} name */
-/* \} addtogroup asn1_module */
+/** \} name DER constants */
 
 /** Returns the size of the binary string, without the trailing \\0 */
 #define MBEDTLS_OID_SIZE(x) (sizeof(x) - 1)
@@ -171,7 +174,15 @@ mbedtls_asn1_bitstring;
 typedef struct mbedtls_asn1_sequence
 {
     mbedtls_asn1_buf buf;                   /**< Buffer containing the given ASN.1 item. */
-    struct mbedtls_asn1_sequence *next;    /**< The next entry in the sequence. */
+
+    /** The next entry in the sequence.
+     *
+     * The details of memory management for sequences are not documented and
+     * may change in future versions. Set this field to \p NULL when
+     * initializing a structure, and do not modify it except via Mbed TLS
+     * library functions.
+     */
+    struct mbedtls_asn1_sequence *next;
 }
 mbedtls_asn1_sequence;
 
@@ -182,8 +193,22 @@ typedef struct mbedtls_asn1_named_data
 {
     mbedtls_asn1_buf oid;                   /**< The object identifier. */
     mbedtls_asn1_buf val;                   /**< The named value. */
-    struct mbedtls_asn1_named_data *next;  /**< The next entry in the sequence. */
-    unsigned char next_merged;      /**< Merge next item into the current one? */
+
+    /** The next entry in the sequence.
+     *
+     * The details of memory management for named data sequences are not
+     * documented and may change in future versions. Set this field to \p NULL
+     * when initializing a structure, and do not modify it except via Mbed TLS
+     * library functions.
+     */
+    struct mbedtls_asn1_named_data *next;
+
+    /** Merge next item into the current one?
+     *
+     * This field exists for the sake of Mbed TLS's X.509 certificate parsing
+     * code and may change in future versions of the library.
+     */
+    unsigned char MBEDTLS_PRIVATE(next_merged);
 }
 mbedtls_asn1_named_data;
 
@@ -599,6 +624,9 @@ void mbedtls_asn1_free_named_data( mbedtls_asn1_named_data *entry );
  *              sets \c *head to \c NULL.
  */
 void mbedtls_asn1_free_named_data_list( mbedtls_asn1_named_data **head );
+
+/** \} name Functions to parse ASN.1 data structures */
+/** \} addtogroup asn1_module */
 
 #ifdef __cplusplus
 }

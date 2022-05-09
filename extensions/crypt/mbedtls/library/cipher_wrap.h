@@ -24,11 +24,7 @@
 #ifndef MBEDTLS_CIPHER_WRAP_H
 #define MBEDTLS_CIPHER_WRAP_H
 
-#if !defined(MBEDTLS_CONFIG_FILE)
-#include "mbedtls/config.h"
-#else
-#include MBEDTLS_CONFIG_FILE
-#endif
+#include "mbedtls/build_info.h"
 
 #include "mbedtls/cipher.h"
 
@@ -134,7 +130,7 @@ typedef enum
 typedef struct
 {
     psa_algorithm_t alg;
-    psa_key_id_t slot;
+    mbedtls_svc_key_id_t slot;
     mbedtls_cipher_psa_key_ownership slot_state;
 } mbedtls_cipher_context_psa;
 #endif /* MBEDTLS_USE_PSA_CRYPTO */

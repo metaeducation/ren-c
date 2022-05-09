@@ -60,8 +60,6 @@
 
 #include "mbedtls/dhm.h"  // Diffie-Hellman (credits Merkel, by their request)
 
-#include "mbedtls/arc4.h"  // RC4 is technically trademarked, so it's "ARC4"
-
 #include "sys-zlib.h"  // needed for the ADLER32 hash
 
 #include "tmp-mod-crypt.h"
@@ -338,97 +336,6 @@ REBNATIVE(checksum)
 //
 
 
-static void cleanup_rc4_ctx(const REBVAL *v)
-{
-    struct mbedtls_arc4_context *ctx
-        = VAL_HANDLE_POINTER(struct mbedtls_arc4_context, v);
-    mbedtls_arc4_free(ctx);
-    FREE(struct mbedtls_arc4_context, ctx);
-}
-
-
-//
-//  export rc4-key: native [
-//
-//  "Encrypt/decrypt data (modifies) using RC4 algorithm."
-//
-//      return: [handle!]
-//      key [binary!]
-//  ]
-//
-REBNATIVE(rc4_key)
-//
-// !!! RC4 was originally included for use with TLS.  However, the insecurity
-// of RC4 led the IETF to prohibit RC4 for TLS use in 2015:
-//
-// https://tools.ietf.org/html/rfc7465
-//
-// So it is not in use at the moment.  It isn't much code, but could probably
-// be moved to its own extension so it could be selected to build in or not,
-// which is how cryptography methods should probably be done.
-{
-    CRYPT_INCLUDE_PARAMS_OF_RC4_KEY;
-
-    struct mbedtls_arc4_context *ctx = TRY_ALLOC(struct mbedtls_arc4_context);
-    mbedtls_arc4_init(ctx);
-
-    REBSIZ key_len;
-    const REBYTE *key = VAL_BINARY_SIZE_AT(&key_len, ARG(key));
-    mbedtls_arc4_setup(ctx, key, key_len);
-
-    return Init_Handle_Cdata_Managed(
-        D_OUT,
-        ctx,
-        sizeof(struct mbedtls_arc4_context),
-        &cleanup_rc4_ctx
-    );
-}
-
-
-//
-//  export rc4-stream: native [
-//
-//  "Encrypt/decrypt data (modifies) using RC4 algorithm."
-//
-//      return: <none>
-//      ctx "Stream cipher context"
-//          [handle!]
-//      data "Data to encrypt/decrypt (modified)"
-//          [binary!]
-//  ]
-//
-REBNATIVE(rc4_stream)
-{
-    CRYPT_INCLUDE_PARAMS_OF_RC4_STREAM;
-
-    REBVAL *data = ARG(data);
-
-    if (VAL_HANDLE_CLEANER(ARG(ctx)) != cleanup_rc4_ctx)
-        rebJumps ("fail [{Not a RC4 Context:}", ARG(ctx), "]");
-
-    struct mbedtls_arc4_context *ctx
-        = VAL_HANDLE_POINTER(struct mbedtls_arc4_context, ARG(ctx));
-
-    REBVAL *error = nullptr;
-
-    REBSIZ length;
-    REBYTE *output = VAL_BINARY_SIZE_AT_ENSURE_MUTABLE(&length, data);
-    const REBYTE *input = output;
-    IF_NOT_0(cleanup, error, mbedtls_arc4_crypt(
-        ctx,
-        length,
-        input,  // input "message"
-        output  // output (same, since it modifies)
-    ));
-
-  cleanup:
-     if (error)
-        rebJumps ("fail", error);
-
-    return rebNone();
-}
-
-
 // For turning a BINARY! into an mbedTLS multiple-precision-integer ("bignum")
 // Returns an mbedTLS error code if there is a problem (use with IF_NOT_0)
 //
@@ -472,26 +379,57 @@ REBNATIVE(rsa)
     REBVAL *n = rebValue("ensure binary! pick", obj, "'n");
     REBVAL *e = rebValue("ensure binary! pick", obj, "'e");
 
-    int hash_id = MBEDTLS_MD_NONE;  // could pass a hash here...
     struct mbedtls_rsa_context ctx;
-    mbedtls_rsa_init(&ctx, MBEDTLS_RSA_PKCS_V15, hash_id);
+    mbedtls_rsa_init(&ctx);
+    // ^-- assume MBEDTLS_MD_NONE, mbedtls_rsa_set_padding() could set a hash
+
+    // Public components (always used)
+    //
+    mbedtls_mpi N;
+    mbedtls_mpi E;
+    mbedtls_mpi_init(&N);
+    mbedtls_mpi_init(&E);
+
+    // Private components (only used if decrypting)
+    //
+    mbedtls_mpi D;
+    mbedtls_mpi P;
+    mbedtls_mpi Q;
+    mbedtls_mpi_init(&D);
+    mbedtls_mpi_init(&P);
+    mbedtls_mpi_init(&Q);
 
     REBVAL *error = nullptr;
     REBVAL *result = nullptr;
 
     REBSIZ binary_len;  // goto would cross initialization
 
-    // Public exponents - required
+    // Translate BINARY! public components to mbedtls BigNums
     //
-    IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.N, n));
-    IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.E, e));
+    IF_NOT_0(cleanup, error, Mpi_From_Binary(&N, n));
+    IF_NOT_0(cleanup, error, Mpi_From_Binary(&E, e));
+
+    // "To setup an RSA public key, precisely N and E must have been imported."
+    //
+    IF_NOT_0(cleanup, error, mbedtls_rsa_import(
+        &ctx,
+        &N,  // N, The RSA modulus
+        nullptr,  // P, The first prime factor of N
+        nullptr,  // Q, The second prime factor of N
+        nullptr,  // D, The private exponent
+        &E   // E, The public exponent
+    ));
 
     binary_len = rebUnboxInteger("length of", n);
-    ctx.len = binary_len;
     rebRelease(n);
     rebRelease(e);
 
-    if (REF(decrypt)) {  // implies private
+    bool encrypt = not REF(decrypt);
+
+    if (encrypt) {  // only N and E are needed
+        IF_NOT_0(cleanup, error, mbedtls_rsa_complete(&ctx));
+    }
+    else {  // implies private
         REBVAL *d = rebValue("ensure binary! pick", obj, "'d");
 
         if (not d)
@@ -499,39 +437,60 @@ REBNATIVE(rsa)
 
         REBVAL *p = rebValue("ensure binary! pick", obj, "'p");
         REBVAL *q = rebValue("ensure binary! pick", obj, "'q");
-        REBVAL *dp = rebValue("ensure binary! pick", obj, "'dp");
-        REBVAL *dq = rebValue("ensure binary! pick", obj, "'dq");
-        REBVAL *qinv = rebValue("ensure binary! pick", obj, "'qinv");
 
         binary_len = rebUnbox("length of", d);
 
-        IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.D, d));
+        IF_NOT_0(cleanup, error, Mpi_From_Binary(&D, d));
 
         if (p)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.P, p));
+            IF_NOT_0(cleanup, error, Mpi_From_Binary(&P, p));
         if (q)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.Q, q));
-        if (dp)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.DP, dp));
-        if (dq)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.DQ, dq));
-        if (qinv)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.QP, qinv));
+            IF_NOT_0(cleanup, error, Mpi_From_Binary(&Q, q));
 
-        IF_NOT_0(cleanup, error, mbedtls_rsa_gen_key(
+        IF_NOT_0(cleanup, error, mbedtls_rsa_import(
             &ctx,
-            &get_random,  // f_rng, random number generating function
-            nullptr,  // tunneled parameter to f_rng (unused atm, so nullptr)
-            binary_len * 8,  // number of bits in key
-            65537  // this is what mbedTLS %gen_key.c uses for exponent (?)
+            nullptr,  // N, The RSA modulus (already imported)
+            p ? &P : nullptr,  // P, The first prime factor of N
+            q ? &Q : nullptr,  // Q, The second prime factor of N
+            &D,  // D, The private exponent
+            nullptr  // E, The public exponent (already imported)
         ));
 
         rebRelease(d);
         rebRelease(p);
         rebRelease(q);
+
+        // !!! Why would decryption need to generate a keypair?  It looks like
+        // some code got confused here.
+
+/*        REBVAL *dp = rebValue("ensure binary! pick", obj, "'dp");
+        REBVAL *dq = rebValue("ensure binary! pick", obj, "'dq");
+        REBVAL *qinv = rebValue("ensure binary! pick", obj, "'qinv");
+
+        mbedtls_mpi DP;
+        mbedtls_mpi DQ;
+        mbedtls_mpi QP;
+
+        if (dp)
+            IF_NOT_0(cleanup, error, Mpi_From_Binary(&DP, dp));
+        if (dq)
+            IF_NOT_0(cleanup, error, Mpi_From_Binary(&DQ, dq));
+        if (qinv)
+            IF_NOT_0(cleanup, error, Mpi_From_Binary(&QP, qinv));
+
         rebRelease(dp);
         rebRelease(dq);
-        rebRelease(qinv);
+        rebRelease(qinv); */
+
+        IF_NOT_0(cleanup, error, mbedtls_rsa_complete(&ctx));
+
+     /*   IF_NOT_0(cleanup, error, mbedtls_rsa_gen_key(
+            &ctx,
+            &get_random,  // f_rng, random number generating function
+            nullptr,  // tunneled parameter to f_rng (unused atm, so nullptr)
+            binary_len * 8,  // number of bits in key
+            65537  // this is what mbedTLS %gen_key.c uses for exponent (?)
+        )); */
     }
 
   blockscope {
@@ -578,7 +537,15 @@ REBNATIVE(rsa)
   }
 
   cleanup:
+    mbedtls_mpi_free(&D);
+    mbedtls_mpi_free(&P);
+    mbedtls_mpi_free(&Q);
+
+    mbedtls_mpi_free(&N);
+    mbedtls_mpi_free(&E);
+
     mbedtls_rsa_free(&ctx);
+
     if (error)
         rebJumps ("fail", error);
 
@@ -610,20 +577,23 @@ REBNATIVE(dh_generate_keypair)
     struct mbedtls_dhm_context ctx;
     mbedtls_dhm_init(&ctx);
 
+    mbedtls_mpi G;
+    mbedtls_mpi P;
+    REBSIZ p_size;  // goto would cross initialization
+    mbedtls_mpi_init(&G);
+    mbedtls_mpi_init(&P);
+
+    mbedtls_mpi X;
+    mbedtls_mpi_init(&X);
+
     REBVAL *result = nullptr;
     REBVAL *error = nullptr;
 
-    REBSIZ p_size;  // goto would cross initialization
-
-    // We avoid calling mbedtls_dhm_set_group() to assign the `G`, `P`, and
-    // `len` fields, to not need intermediate mbedtls_mpi variables.  At time
-    // of writing the code is equivalent--but if this breaks, use that method.
+    // Set the prime modulus and generator.
     //
-    IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.G, g));
-    IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.P, p));
-
-    p_size = mbedtls_mpi_size(&ctx.P);
-    ctx.len = p_size;  // length of private and public keys
+    IF_NOT_0(cleanup, error, Mpi_From_Binary(&G, g));
+    IF_NOT_0(cleanup, error, Mpi_From_Binary(&P, p));
+    p_size = mbedtls_mpi_size(&P);
 
     // !!! OpenSSL includes a DH_check() routine that checks for suitability
     // of the Diffie Hellman parameters.  There doesn't appear to be an
@@ -638,13 +608,15 @@ REBNATIVE(dh_generate_keypair)
     // are not doing it (mbedTLS does not check--and lets you get away with
     // it sometimes, but not others).
     //
-    if (mbedtls_mpi_cmp_mpi(&ctx.G, &ctx.P) >= 0)
-        rebJumps (
-            "fail [",
-                "{Don't use base >= modulus in Diffie-Hellman.}",
-                "{e.g. `2 mod 7` is the same as `9 mod 7` or `16 mod 7`}",
-            "]"
-        );
+    if (mbedtls_mpi_cmp_mpi(&G, &P) >= 0) {
+        error = rebValue("make error! ["
+            "{Don't use base >= modulus in Diffie-Hellman.}",
+            "{e.g. `2 mod 7` is the same as `9 mod 7` or `16 mod 7`}"
+        "]");
+        goto cleanup;
+    }
+
+    IF_NOT_0(cleanup, error, mbedtls_dhm_set_group(&ctx, &P, &G));
 
     // If you remove all the leading #{00} bytes from `p`, then the private
     // and public keys will be guaranteed to be no larger than that (due to
@@ -690,54 +662,64 @@ REBNATIVE(dh_generate_keypair)
     // of using those numbers...and choose something more attack-resistant.
     //
     if (ret == MBEDTLS_ERR_DHM_BAD_INPUT_DATA) {
-        if (mbedtls_mpi_cmp_int(&ctx.P, 0) == 0)
-            rebJumps ("fail {Cannot use 0 as modulus for Diffie-Hellman}");
+        if (mbedtls_mpi_cmp_int(&P, 0) == 0) {
+            error = rebValue(
+                "make error! {Cannot use 0 as modulus for Diffie-Hellman}"
+            );
+            goto cleanup;
+        }
 
         if (REF(insecure))
             goto try_again_even_if_poor_primes;  // for educational use only!
 
-        rebJumps (
-            "fail [",
+        error = rebValue(
+            "make error! [",
                 "{Suspiciously poor base and modulus usage was detected.}",
                 "{It's unwise to use arbitrary primes vs. constructed ones:}",
                 "{https://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf}",
                 "{/INSECURE can override (for educational purposes, only!)}",
             "]"
         );
+        goto cleanup;
     }
     else if (ret == MBEDTLS_ERR_DHM_MAKE_PUBLIC_FAILED) {
-        if (mbedtls_mpi_cmp_int(&ctx.P, 5) < 0)
-            rebJumps (
-                "fail {Modulus cannot be less than 5 for Diffie-Hellman}"
+        if (mbedtls_mpi_cmp_int(&P, 5) < 0) {
+            error = rebValue(
+                "make error! {Modulus cannot be less than 5 for Diffie-Hellman}"
             );
+            goto cleanup;
+        }
 
         // !!! Checking for safe primes is should probably be done by default,
         // but here's some code using a probabilistic test after failure.
         // It can be kept here for future consideration.  Rounds chosen to
         // scale to get 2^-80 chance of error for 4096 bits.
         //
-        const int rounds = ((ctx.len / 32) + 1) * 10;
+        size_t ctx_len = mbedtls_dhm_get_len(&ctx);  // byte len, not bit len
+        const int rounds = (ctx_len + 1) * 10;
         int test = mbedtls_mpi_is_prime_ext(
-            &ctx.P,
+            &P,
             rounds,
             &get_random,
             nullptr
         );
         if (test == MBEDTLS_ERR_MPI_NOT_ACCEPTABLE) {
-            rebJumps (
-                "fail [",
+            error = rebValue(
+                "make error! [",
                     "{Couldn't use base and modulus to generate keys.}",
                     "{Probabilistic test suggests modulus likely not prime?}"
                 "]"
             );
+            goto cleanup;
         }
 
-        rebJumps (
-            "fail [",
+        error = rebValue(
+            "make error! [",
                 "{Couldn't use base and modulus to generate keys,}",
                 "{even though modulus does appear to be prime...}",
             "]"
         );
+        goto cleanup;
     }
     else
         IF_NOT_0(cleanup, error, ret);
@@ -746,11 +728,17 @@ REBNATIVE(dh_generate_keypair)
     // a C structure context (we dispose the context and make new ones if
     // we need them).  So extract it into a binary.
     //
-    IF_NOT_0(cleanup, error, mbedtls_mpi_write_binary(&ctx.X, x, x_size));
+    IF_NOT_0(cleanup, error, mbedtls_dhm_get_value(
+        &ctx,
+        MBEDTLS_DHM_PARAM_X,
+        &X
+    ));
+    IF_NOT_0(cleanup, error, mbedtls_mpi_write_binary(&X, x, x_size));
 
     result = rebValue(
         "make object! [",
             "modulus:", p,
+            "generator:", g,  // !!! Didn't need to save previously!
             "private-key:", rebR(rebRepossess(x, x_size)),
             "public-key:", rebR(rebRepossess(gx, gx_size)),
         "]"
@@ -758,6 +746,11 @@ REBNATIVE(dh_generate_keypair)
   }
 
   cleanup:
+    mbedtls_mpi_free(&X);
+
+    mbedtls_mpi_free(&G);
+    mbedtls_mpi_free(&P);
+
     mbedtls_dhm_free(&ctx);  // should free any assigned bignum fields
 
     if (error)
@@ -793,6 +786,7 @@ REBNATIVE(dh_compute_secret)
     // otherwise gave Error(RE_EXT_CRYPT_INVALID_KEY_FIELD)
     //
     REBVAL *p = rebValue("ensure binary! pick", obj, "'modulus");
+    REBVAL *g = rebValue("ensure binary! pick", obj, "'generator");
     REBVAL *x = rebValue("ensure binary! pick", obj, "'private-key");
 
     REBVAL *gy = ARG(peer_key);
@@ -800,24 +794,60 @@ REBNATIVE(dh_compute_secret)
     REBVAL *result = nullptr;
     REBVAL *error = nullptr;
 
-    REBSIZ p_size;  // goto would cross initialization
-
     struct mbedtls_dhm_context ctx;
     mbedtls_dhm_init(&ctx);
 
-    IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.P, p));
+    /* !!! This code used to initialize ctx.P (from "modulus"), ctx.X (from
+     "private-key", and ctx.GY (from the peer's public key).  There is no
+     clear way to initialize X in diffie hellman contexts, e.g. preload with
+     "our secret value"... so I guess it expects you to feed it P and G */
+
+    mbedtls_mpi G;
+    mbedtls_mpi P;
+    REBSIZ p_size;  // goto would cross initialization
+    mbedtls_mpi_init(&G);
+    mbedtls_mpi_init(&P);
+
+    mbedtls_mpi X;
+    mbedtls_mpi_init(&X);
+
+    // Set the prime modulus and generator.
+    //
+    // !!! Previously, there was no need to set G for this operation, since we
+    // already have GY.  However, there is no longer a way to set P without
+    // setting G via mbedtls_dhm_set_group().
+    //
+    IF_NOT_0(cleanup, error, Mpi_From_Binary(&G, g));
+    IF_NOT_0(cleanup, error, Mpi_From_Binary(&P, p));
+    p_size = mbedtls_mpi_size(&P);
     rebRelease(p);
+    rebRelease(g);
 
-    p_size = mbedtls_mpi_size(&ctx.P);
-    ctx.len = p_size;  // length of private and public keys
+    IF_NOT_0(cleanup, error, mbedtls_dhm_set_group(&ctx, &P, &G));
 
-    IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.X, x));
+    // !!! There is no current approved way to set the X field of a DHM
+    // context.  Do it in an unapproved way.
+    // https://github.com/Mbed-TLS/mbedtls/issues/5818
+    //
+    IF_NOT_0(cleanup, error, Mpi_From_Binary(&X, x));
+    mbedtls_mpi_copy(&ctx.MBEDTLS_PRIVATE(X), &X);  // !!! HACK
     rebRelease(x);
 
-    IF_NOT_0(cleanup, error, Mpi_From_Binary(&ctx.GY, gy));
+    // Note: mbedtls 3 only provides a "raw" import of the public key value of
+    // the peer (G^Y), so we have to redo the logic of Mpi_From_Binary here.
+    //
+  blockscope {
+    size_t gy_size;
+    REBYTE *gy_buf = rebBytes(&gy_size, gy);  // allocates w/rebMalloc()
+
+    int retcode = mbedtls_dhm_read_public(&ctx, gy_buf, gy_size);
+
+    rebFree(gy_buf);  // !!! This could use a non-copying binary reader API
+    IF_NOT_0(cleanup, error, retcode);
+  }
 
   blockscope {
-    REBLEN s_size = ctx.len;  // shared key is same size as modulus/etc.
+    REBLEN s_size = mbedtls_dhm_get_len(&ctx);  // same size as modulus/etc.
     REBYTE *s = rebAllocN(REBYTE, s_size);  // shared key buffer
 
     size_t olen;
@@ -825,7 +855,7 @@ REBNATIVE(dh_compute_secret)
         &ctx,
         s,  // output buffer for the "shared secret" key
         s_size,  // output_size (at least ctx.len, more may avoid compaction)
-        &olen,  // actual number of bytes written to `k`
+        &olen,  // actual number of bytes written to `s`
         &get_random,  // f_rng random number generator
         nullptr  // p_rng parameter tunneled to f_rng (not used ATM)
     );
@@ -842,14 +872,15 @@ REBNATIVE(dh_compute_secret)
     // to participate in decoding insecure keys.)
     //
     if (ret == MBEDTLS_ERR_DHM_BAD_INPUT_DATA) {
-        rebJumps (
-            "fail [",
+        error = rebValue(
+            "make error! [",
                 "{Suspiciously poor base and modulus usage was detected.}",
                 "{It's unwise to use random primes vs. constructed ones.}",
                 "{https://www.cl.cam.ac.uk/~rja14/Papers/psandqs.pdf}",
                 "{If keys originated from Rebol, please report this!}",
             "]"
         );
+        goto cleanup;
     }
     else
         IF_NOT_0(cleanup, error, ret);
@@ -864,6 +895,11 @@ REBNATIVE(dh_compute_secret)
   }
 
   cleanup:
+    mbedtls_mpi_free(&X);
+
+    mbedtls_mpi_free(&P);
+    mbedtls_mpi_free(&G);
+
     mbedtls_dhm_free(&ctx);
 
     if (error)
@@ -1124,10 +1160,17 @@ REBNATIVE(ecc_generate_keypair)
         mbedtls_ecdh_setup(&ctx, info->grp_id)
     );
 
+    // !!! The mbedtls 3.0 transition has not established a way to get at
+    // the private fields via functions.  They cheat via MBEDTLS_PRIVATE.
+    // https://github.com/Mbed-TLS/mbedtls/issues/5016
+    //
+    mbedtls_ecdh_context_mbed *mbed_ecdh =
+        &ctx.MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
+
     IF_NOT_0(cleanup, error, mbedtls_ecdh_gen_public(
-        &ctx.ctx.mbed_ecdh.grp,
-        &ctx.ctx.mbed_ecdh.d,  // private key
-        &ctx.ctx.mbed_ecdh.Q,  // public key (X, Y)
+        &mbed_ecdh->MBEDTLS_PRIVATE(grp),
+        &mbed_ecdh->MBEDTLS_PRIVATE(d),  // private key
+        &mbed_ecdh->MBEDTLS_PRIVATE(Q),  // public key (X, Y)
         &get_random,  // f_rng, random number generator
         nullptr  // p_rng, parameter tunneled to random generator (unused atm)
     ));
@@ -1139,9 +1182,15 @@ REBNATIVE(ecc_generate_keypair)
     uint8_t *p_publicY = rebAllocN(uint8_t, num_bytes);
     uint8_t *p_privateKey = rebAllocN(uint8_t, num_bytes);
 
-    mbedtls_mpi_write_binary(&ctx.ctx.mbed_ecdh.Q.X, p_publicX, num_bytes);
-    mbedtls_mpi_write_binary(&ctx.ctx.mbed_ecdh.Q.Y, p_publicY, num_bytes);
-    mbedtls_mpi_write_binary(&ctx.ctx.mbed_ecdh.d, p_privateKey, num_bytes);
+    mbedtls_mpi_write_binary(
+        &mbed_ecdh->MBEDTLS_PRIVATE(Q).MBEDTLS_PRIVATE(X), p_publicX, num_bytes
+    );
+    mbedtls_mpi_write_binary(
+        &mbed_ecdh->MBEDTLS_PRIVATE(Q).MBEDTLS_PRIVATE(Y), p_publicY, num_bytes
+    );
+    mbedtls_mpi_write_binary(
+        &mbed_ecdh->MBEDTLS_PRIVATE(d), p_privateKey, num_bytes
+    );
 
     result = rebValue(
         "make object! [",
@@ -1209,17 +1258,27 @@ REBNATIVE(ecdh_shared_secret)
         mbedtls_ecdh_setup(&ctx, info->grp_id)
     );
 
+    // !!! The mbedtls 3.0 transition has not established a way to get at
+    // the private fields via functions.  They cheat via MBEDTLS_PRIVATE.
+    // https://github.com/Mbed-TLS/mbedtls/issues/5016
+    //
+    mbedtls_ecdh_context_mbed *mbed_ecdh =
+        &ctx.MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
+
     IF_NOT_0(cleanup, error, mbedtls_mpi_read_binary(
-        &ctx.ctx.mbed_ecdh.Qp.X,
+        &mbed_ecdh->MBEDTLS_PRIVATE(Qp).MBEDTLS_PRIVATE(X),
         public_key,
         num_bytes
     ));
     IF_NOT_0(cleanup, error, mbedtls_mpi_read_binary(
-        &ctx.ctx.mbed_ecdh.Qp.Y,
+        &mbed_ecdh->MBEDTLS_PRIVATE(Qp).MBEDTLS_PRIVATE(Y),
         public_key + num_bytes,
         num_bytes
     ));
-    IF_NOT_0(cleanup, error, mbedtls_mpi_lset( &ctx.ctx.mbed_ecdh.Qp.Z, 1 ));
+    IF_NOT_0(cleanup, error, mbedtls_mpi_lset(
+        &mbed_ecdh->MBEDTLS_PRIVATE(Qp).MBEDTLS_PRIVATE(Z),
+        1
+    ));
 
     rebElide(
         "if", rebI(num_bytes), "!= length of", ARG(private), "[",
@@ -1230,7 +1289,7 @@ REBNATIVE(ecdh_shared_secret)
     );
 
     IF_NOT_0(cleanup, error,
-        Mpi_From_Binary(&ctx.ctx.mbed_ecdh.d, ARG(private)));
+        Mpi_From_Binary(&mbed_ecdh->MBEDTLS_PRIVATE(d), ARG(private)));
 
   blockscope {
     uint8_t *secret = rebAllocN(uint8_t, num_bytes);

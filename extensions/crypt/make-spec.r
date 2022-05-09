@@ -28,6 +28,7 @@ depends: [
     ; So it should be shareable across the various crypto that uses it.
     ;
     [%crypt/mbedtls/library/bignum.c  #no-c++]
+    [%crypt/mbedtls/library/constant_time.c  #no-c++]
 
     ; Generic message digest and cipher abstraction layers (write code to one
     ; C interface, get all the digests and ciphers adapted to it for "free",
@@ -39,9 +40,10 @@ depends: [
 
     ; MESSAGE DIGESTS
     ;
-    ; !!! RC4, MD5, and SHA1 are all considered weak by modern standards.
-    ; But they were in R3-Alpha, and outside of bytes taken up in the EXE
-    ; don't cost extra to support (the generic MD wrapper handles them)
+    ; !!! MD5 and SHA1 are considered weak by modern standards.  But they were
+    ; in R3-Alpha, and outside of bytes taken up in the EXE don't cost extra to
+    ; support (the generic MD wrapper handles them).  RC4 was once also
+    ; included "just because it was there", but mbedTLS 3 dropped it.
     ;
     [%crypt/mbedtls/library/sha256.c  #no-c++]
     [%crypt/mbedtls/library/sha512.c  #no-c++]
@@ -52,7 +54,6 @@ depends: [
     ; BLOCK CIPHERS
     ;
     [%crypt/mbedtls/library/aes.c  #no-c++]
-    [%crypt/mbedtls/library/arc4.c  #no-c++]  ; !!! weak
 
     ; !!! Plain Diffie-Hellman(-Merkel) is considered weaker than the
     ; Elliptic Curve Diffie-Hellman (ECDH).  It was an easier first test case
