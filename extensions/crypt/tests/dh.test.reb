@@ -41,17 +41,17 @@
 
         repeat 1 [
             mine: dh-generate-keypair/insecure modulus base
-            mine/modulus = modulus
-            (length of modulus) = length of mine/public-key
-            (length of modulus) = length of mine/private-key
+            mine.modulus = modulus
+            (length of modulus) = length of mine.public-key
+            (length of modulus) = length of mine.private-key
 
             theirs: dh-generate-keypair/insecure modulus base
-            theirs/modulus = modulus
-            (length of modulus) = length of theirs/public-key
-            (length of modulus) = length of theirs/private-key
+            theirs.modulus = modulus
+            (length of modulus) = length of theirs.public-key
+            (length of modulus) = length of theirs.private-key
 
-            my-shared: dh-compute-secret mine theirs/public-key
-            their-shared: dh-compute-secret theirs mine/public-key
+            my-shared: dh-compute-secret mine theirs.public-key
+            their-shared: dh-compute-secret theirs mine.public-key
 
             if my-shared != their-shared [
                 fail [
