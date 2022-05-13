@@ -823,3 +823,44 @@ zip: enclose :zip lib/function [f] [
 
     return result
 ]
+
+; We've scrapped the form of refinements via GROUP! for function dispatch, and
+; you need to use APPLY now.  This is a poor man's compatibility APPLY
+;
+; https://forum.rebol.info/t/1813
+;
+apply: lib/function [
+    action [action!]
+    args [block!]
+][
+    f: make frame! :action
+    params: words of :action
+
+    ; Get all the normal parameters applied
+    ;
+    result: null
+    lib/while [all [:params/1, not refinement? :params/1]] [
+        args: evaluate/set args 'result
+        f/(to word! :params/1): :result
+        params: next params
+    ]
+
+    ; Now go by the refinements.  If it's a refinement that takes an argument,
+    ; we have to set the refinement to true
+    ;
+    lib/while [refinement? :args/1] [
+        pos: find params args/1 else [fail ["Unknown refinement" args/1]]
+        args: evaluate/set (next args) 'result
+        any [
+            not :pos/2
+            refinement? pos/2
+        ] then [  ; doesn't take an argument, set it to the logical next value
+            f/(to word! :pos/1): :result
+        ] else [  ; takes an arg, so set refinement to true and set NEXT param
+            f/(to word! :pos/1): true
+            f/(to word! :pos/2): :result
+        ]
+    ]
+
+    do f
+]
