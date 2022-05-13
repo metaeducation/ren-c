@@ -621,7 +621,15 @@ c99: func [
         print mold settings
     ]
 
-    compile/files/(if inspect [/inspect])/settings compilables settings
+    ; !!! This doesn't return the C source from COMPILE, should it?
+    ;
+    apply :compile [
+        compilables
+        /files true  ; compilables represents a list of files
+        /inspect inspect  ; return C source as text but don't compile it
+        /settings settings
+    ]
+
     return 0  ; must translate errors into integer codes...
 ]
 

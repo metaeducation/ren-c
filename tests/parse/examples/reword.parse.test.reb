@@ -93,7 +93,7 @@
             [keyword-match: any (keyword-suffix-rules)] (
                 append/part out a offset? a b  ; output before prefix
 
-                v: select/(case_REWORD) values keyword-match
+                v: apply :select [values keyword-match, /case case_REWORD]
                 append out switch type of :v [
                     action! [
                         ; Give v the option of taking an argument, but
@@ -115,7 +115,7 @@
         (append out a)  ; finalize output - transfer any remainder verbatim
     ]
 
-    uparse*/(case_REWORD) source rule else [fail]  ; should succeed
+    apply :uparse* [source rule, /case case_REWORD] else [fail]  ; why fail?
     return out
 ])
 

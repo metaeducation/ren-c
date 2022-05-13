@@ -1079,19 +1079,23 @@ object-file-class: make object! [
             optimization: false
         ]
 
-        PIC: either PIC ['PIC] [_]
-        E: either E ['E] [_]
+        return apply :cc/command [  ; reduced APPLY in bootstrap!
+            output
+            source
 
-        return cc/command/I/D/F/O/g/(PIC)/(E) output source
-            compose [((opt includes)) ((opt I))]
-            compose [((opt definitions)) ((opt D))]
-            compose [((opt F)) ((opt cflags))]  ; extra cflags override
+            /I compose [((opt includes)) ((opt I))]
+            /D compose [((opt definitions)) ((opt D))]
+            /F compose [((opt F)) ((opt cflags))]  ; extra cflags override
 
             ; "current setting overwrites /refinement"
             ; "because the refinements are inherited from the parent" (?)
 
-            opt either O [O][optimization]
-            opt either g [g][debug]
+            /O any [O, optimization]
+            /g any [g, debug]
+
+            /PIC PIC
+            /E E
+        ]
     ]
 
     gen-entries: meth [
@@ -1111,22 +1115,14 @@ object-file-class: make object! [
         return make entry-class [
             target: output
             depends: append copy either depends [depends][[]] source
-            commands: reduce [command/I/D/F/O/g/(
-                any [
-                    PIC
-                    parent/class = #dynamic-library
-                ] then [
-                    'PIC
-                ] else [
-                    _
-                ]
-            )
-                opt parent/includes
-                opt parent/definitions
-                opt parent/cflags
-                opt parent/optimization
-                opt parent/debug
-            ]
+            commands: reduce [apply :command [
+                /I opt parent/includes
+                /D opt parent/definitions
+                /F opt parent/cflags
+                /O opt parent/optimization
+                /g opt parent/debug
+                /PIC did any [PIC, parent/class = #dynamic-library]
+            ]]
         ]
     ]
 ]
@@ -1506,10 +1502,10 @@ makefile: make generator-class [
                         assert [obj/class = #object-file]
                         if not obj/generated? [
                             obj/generated?: true
-                            append buf gen-rule obj/gen-entries/(try all [
-                                project/class = #dynamic-library
-                                'PIC
-                            ]) dep
+                            append buf (gen-rule apply :obj/gen-entries [
+                                dep
+                                /PIC (project/class = #dynamic-library)
+                            ])
                         ]
                     ]
                 ]
@@ -1653,10 +1649,10 @@ export execution: make generator-class [
                     assert [obj/class = #object-file]
                     if not obj/generated? [
                         obj/generated?: true
-                        run-target obj/gen-entries/(try all [
-                            parent/class = #dynamic-library
-                            'PIC
-                        ]) project
+                        run-target apply :obj/gen-entries [
+                            project
+                            /PIC (parent/class = #dynamic-library)
+                        ]
                     ]
                 ]
             ]

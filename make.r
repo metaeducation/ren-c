@@ -895,12 +895,16 @@ targets: [
     ]
     'vs2019
     'visual-studio [
-        x86: try if system-config/os-name = 'Windows-x86 ['x86]
-        rebmake/visual-studio/generate/(x86) output-dir solution
+        apply :rebmake/visual-studio/generate [
+            output-dir solution
+            /x86 (system-config/os-name = 'Windows-x86)
+        ]
     ]
     'vs2015 [
-        x86: try if system-config/os-name = 'Windows-x86 ['x86]
-        rebmake/vs2015/generate/(x86) output-dir solution
+        apply :rebmake/vs2015/generate [
+            output-dir solution
+            /x86 (system-config/os-name = 'Windows-x86)
+        ]
     ]
     'vs2017 [
         fail [

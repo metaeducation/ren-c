@@ -878,7 +878,11 @@ meth: enfixed func [
         fail [member "must be bound to an ANY-CONTEXT! to use METHOD"]
     ]
     return set member bind (
-        func/(if gather '/gather) compose [((spec)) <in> (context)] body
+        apply :func [
+            compose [((spec)) <in> (context)]
+            body
+            /gather gather
+        ]
     ) context
 ]
 

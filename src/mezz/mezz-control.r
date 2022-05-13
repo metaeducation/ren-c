@@ -23,7 +23,7 @@ launch: function [
     if file? script [script: file-to-local clean-path script]
     command: reduce [file-to-local system.options.boot script]
     append command opt arg
-    call*/(wait) command
+    apply :call* [command, /wait wait]
 ]
 
 wrap: func [

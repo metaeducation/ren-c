@@ -555,9 +555,9 @@ get: emulate [
             return source  ; this is what it did :-/
         ]
         let result: either any-context? source [
-            get/(any_GET) words of source
+            apply :get [words of source /any any_GET]
         ][
-            get/(any_GET) source
+            apply :get [source /any any_GET]
         ]
     ]
 ]
@@ -719,7 +719,7 @@ parse: emulate [
             blank! [split input charset reduce [tab space CR LF]]
             text! [split input to-bitset rules]
         ] else [
-            uparse2?/(case_PARSE) input rules
+            apply :uparse2? [input rules /case case_PARSE]
         ]
     ]
 ]

@@ -218,7 +218,7 @@ $: func [
         ]
     ]
 
-    shell/(if inspect [/inspect])/(if pipe [/pipe]) code
+    apply :shell [code, /inspect inspect, /pipe pipe]
 ]
 
 export [shell %% $]

@@ -1120,13 +1120,23 @@ default-combinators: make map! reduce [
             ; no isolated value to capture.  Should we copy it?
 
             any-string? input [
-                input: find/match/(if state.case 'case)/tail input value else [
+                input: apply :find [
+                    input value
+                    /match true
+                    /tail true
+                    /case state.case
+                ] else [
                     return null
                 ]
             ]
             true [
                 assert [binary? input]
-                input: find/match/(if state.case 'case)/tail input value else [
+                input: apply :find [
+                    input value
+                    /match true
+                    /tail true
+                    /case state.case
+                ] else [
                     return null
                 ]
             ]
