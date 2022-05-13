@@ -1585,8 +1585,8 @@ REBNATIVE(ecc_generate_keypair)
     // the private fields via functions.  They cheat via MBEDTLS_PRIVATE.
     // https://github.com/Mbed-TLS/mbedtls/issues/5016
     //
-    mbedtls_ecdh_context_mbed *mbed_ecdh =
-        &ctx.MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
+    mbedtls_ecdh_context_mbed *mbed_ecdh;  // goto crosses initialization
+    mbed_ecdh = &ctx.MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
 
     IF_NOT_0(cleanup, error, mbedtls_ecdh_gen_public(
         &mbed_ecdh->MBEDTLS_PRIVATE(grp),
@@ -1626,6 +1626,7 @@ REBNATIVE(ecc_generate_keypair)
 
   cleanup:
     mbedtls_ecdh_free(&ctx);
+
     if (error)
         rebJumps ("fail", error);
 
@@ -1683,8 +1684,8 @@ REBNATIVE(ecdh_shared_secret)
     // the private fields via functions.  They cheat via MBEDTLS_PRIVATE.
     // https://github.com/Mbed-TLS/mbedtls/issues/5016
     //
-    mbedtls_ecdh_context_mbed *mbed_ecdh =
-        &ctx.MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
+    mbedtls_ecdh_context_mbed *mbed_ecdh;  // goto crosses initialization
+    mbed_ecdh = &ctx.MBEDTLS_PRIVATE(ctx).MBEDTLS_PRIVATE(mbed_ecdh);
 
     IF_NOT_0(cleanup, error, mbedtls_mpi_read_binary(
         &mbed_ecdh->MBEDTLS_PRIVATE(Qp).MBEDTLS_PRIVATE(X),
