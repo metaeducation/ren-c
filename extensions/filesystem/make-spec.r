@@ -182,7 +182,7 @@ if os = 'Android [
         _GNU_SOURCE
     ]
     append uv-sources [
-       android-ifaddrs.c
+       ; Note: android-ifaddrs.c was removed
        linux-core.c
        linux-inotify.c
        linux-syscalls.c
@@ -343,6 +343,7 @@ append uv-depends map-each tuple [  ; WORD! in bootstrap
     inet.c
     random.c
     strscpy.c
+    strtok.c  ; Note: seems only used in unix build (?)
     threadpool.c
     timer.c
     uv-common.c
