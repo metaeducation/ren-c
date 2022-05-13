@@ -56,7 +56,7 @@ jobs:
 
     # https://github.com/actions/virtual-environments#available-environments
     #
-    runs-on: windows-2016
+    runs-on: windows-2019  # oldest non-deprecated version
 
 
     # See README: Build Matrix
