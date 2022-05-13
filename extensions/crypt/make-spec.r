@@ -18,6 +18,7 @@ depends: [
     [%crypt/mbedtls/library/rsa.c  #no-c++]
     [%crypt/mbedtls/library/rsa_alt_helpers.c  #no-c++]
     [%crypt/mbedtls/library/oid.c  #no-c++]
+    [%crypt/tf_snprintf.c  #no-c++]
 
     ; If you're using a platform that mbedTLS has been designed for,
     ; you can take the standard settings of what "malloc" and "free"

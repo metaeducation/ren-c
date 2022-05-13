@@ -40,6 +40,12 @@
 
 #include "mbedtls/ecdh.h"  // Elliptic curve (Diffie-Hellman)
 
+#include "mbedtls/dhm.h"  // Diffie-Hellman (credits Merkel, by their request)
+
+// See file %tf_snprintf.c for why we need mbedtls_platform_set_snprintf()
+//
+#include "mbedtls/platform.h"
+
 #if TO_WINDOWS
     #undef _WIN32_WINNT  // https://forum.rebol.info/t/326/4
     #define _WIN32_WINNT 0x0501  // Minimum API target: WinXP
@@ -57,8 +63,6 @@
 #endif
 
 #include "sys-core.h"
-
-#include "mbedtls/dhm.h"  // Diffie-Hellman (credits Merkel, by their request)
 
 #include "sys-zlib.h"  // needed for the ADLER32 hash
 
@@ -1733,6 +1737,8 @@ REBNATIVE(ecdh_shared_secret)
     return result;
 }
 
+EXTERN_C int tf_snprintf(char *s, size_t n, const char *fmt, ...);
+
 
 //
 //  startup*: native [
@@ -1746,18 +1752,7 @@ REBNATIVE(startup_p)
 {
     CRYPT_INCLUDE_PARAMS_OF_STARTUP_P;
 
-    // !!! We do not want to link to printf() functionality if we can avoid it
-    // (though debug builds do).  Unfortunately, with #define MBEDTLS_PKCS1_V15
-    // you need %oid.c -- and it uses `snprintf` to do some fairly trivial
-    // stuff (mapping from a hash enum value to getting the size of the hash,
-    // via strings!)
-    //
-    // At some point, someone made a trivial snprintf() for mbedtls's limited
-    // application:
-    //
-    // https://github.com/Mbed-TLS/mbedtls/issues/929
-    //
-    // But tf_snprintf appears to have disappeared.  Investigate.
+    mbedtls_platform_set_snprintf(&tf_snprintf);  // see file %tf_snprintf.c
 
   #if TO_WINDOWS
     if (CryptAcquireContextW(
