@@ -65,21 +65,29 @@
 #include "tmp-mod-crypt.h"
 
 
+// !!! We probably do not need to have non-debug builds use up memory by
+// integrating the string table translating all those negative numbers into
+// specific errors.  But a debug build might want to.  For now, one error
+// (good place to set a breakpoint).
+//
+inline static REBVAL *rebMbedtlsError(int mbedtls_ret) {
+    REBVAL *result = rebValue("make error! {mbedTLS error}");  // break here
+    UNUSED(mbedtls_ret);  // corrupts mbedtls_ret in release build
+    return result;
+}
+
+
 // Most routines in mbedTLS return either `void` or an `int` code which is
 // 0 on success and negative numbers on error.  This macro helps generalize
 // the pattern of trying to build a result and having a cleanup (similar
 // ones exist inside mbedTLS itself, e.g. MBEDTLS_MPI_CHK() in %bignum.h)
-//
-// !!! We probably do not need to have non-debug builds use up memory by
-// integrating the string table translating all those negative numbers into
-// specific errors.  But a debug build might want to.  For now, one error.
 //
 #define IF_NOT_0(label,error,call) \
     do { \
         assert(error == nullptr); \
         int mbedtls_ret = (call);  /* don't use (call) more than once! */ \
         if (mbedtls_ret != 0) { \
-            error = rebValue("make error! {mbedTLS error}"); \
+            error = rebMbedtlsError(mbedtls_ret); \
             goto label; \
         } \
     } while (0)
@@ -356,41 +364,142 @@ static int Mpi_From_Binary(mbedtls_mpi* X, const REBVAL *binary)
     return result;
 }
 
+// Opposite direction for making a BINARY! from an MPI.  Naming convention
+// suggests it's an API handle and you're responsible for releasing it.
+//
+static REBVAL *rebBinaryFromMpi(const mbedtls_mpi* X)
+{
+    size_t size = mbedtls_mpi_size(X);
+
+    REBYTE *buf = rebAllocN(REBYTE, size);
+
+    int result = mbedtls_mpi_write_binary(X, buf, size);
+
+    if (result != 0)
+        panic ("Fatal MPI decode error");  // only from bugs error (?)
+
+    return rebRepossess(buf, size);
+}
+
+#define MBEDTLS_RSA_RAW_HACK -1
+
+// RSA encrypts in units, and so if your data is not exactly the input size it
+// must be padded to round to the block size.
+//
+//   * Using predictable data is bad (it creates weaknesses for attack)
+//
+//   * Using random data is bad (it means the person doing the decrypting
+//     would have no way to know if the random part had been modified, in
+//     order to compromise the content of the non-padded portion).
+//
+// Though we allow [raw] encoding it is possible to specify other methods.  It
+// could be done with an object, but try a "mini-dialect" with a BLOCK!
+//
+void Get_Padding_And_Hash_From_Spec(
+    int *padding,
+    mbedtls_md_type_t *hash,
+    const REBVAL *padding_spec
+){
+    *padding = rebUnboxInteger(
+        "let padding-list: [",
+            "raw", rebI(MBEDTLS_RSA_RAW_HACK),
+            "pkcs1-v15", rebI(MBEDTLS_RSA_PKCS_V15),
+            "pkcs1-v21", rebI(MBEDTLS_RSA_PKCS_V21),
+        "]",
+        "select padding-list first", padding_spec, "else [fail [",
+            "{First element of padding spec must be one of} mold padding-list",
+        "]]"
+    );
+
+    if (1 == rebUnboxInteger("length of", padding_spec)) {
+        //
+        // The mbedtls_rsa_set_padding() does not check this, it will only
+        // fail later in the encrypt/decrypt.
+        //
+        if (*padding == MBEDTLS_RSA_PKCS_V21)
+            fail ("pkcs1-v21 padding scheme requires a hash to be specified");
+
+        *hash = MBEDTLS_MD_NONE;
+        return;
+    }
+
+    *hash = cast(mbedtls_md_type_t, rebUnboxInteger(
+        "let hash-list: [",
+            "#md5", rebI(MBEDTLS_MD_MD5),
+            "#sha1", rebI(MBEDTLS_MD_SHA1),
+            "#sha224", rebI(MBEDTLS_MD_SHA224),
+            "#sha256", rebI(MBEDTLS_MD_SHA256),
+            "#sha384", rebI(MBEDTLS_MD_SHA384),
+            "#sha512", rebI(MBEDTLS_MD_SHA512),
+            "#ripemd160", rebI(MBEDTLS_MD_RIPEMD160),
+        "]",
+        "select hash-list second", padding_spec, "else [fail [",
+            "{Second element of padding spec must be one of} mold hash-list",
+        "]]"
+    ));
+
+    if (2 != rebUnboxInteger("length of", padding_spec))
+        fail ("Currently padding spec must be pad method plus optional hash");
+}
+
 
 //
-//  export rsa: native [
+//  export rsa-generate-keypair: native [
 //
-//  "Encrypt/decrypt data using the RSA algorithm."
+//  "Generate a public and private key for encoding at most NUM-BITS of data"
 //
-//      return: [binary!]
-//      data [binary!]
-//      key-object [object!]
-//      /decrypt "Decrypts the data (default is to encrypt)"
+//      return: "RSA public key object"
+//          [object!]
+//      private-key: "RSA private key object (required output)"
+//          [object!]
+//
+//      num-bits "How much data this key can encrypt (less when not [raw])"
+//          [integer!]
+//      /padding "Pad method and hash, [raw] [pkcs1-v15 #sha512] [pkcs1-v21]"
+//          [block!]
+//      /insecure "Allow insecure key sizes--for teaching purposes only"
 //  ]
 //
-REBNATIVE(rsa)
+REBNATIVE(rsa_generate_keypair)
 {
-    CRYPT_INCLUDE_PARAMS_OF_RSA;
+    CRYPT_INCLUDE_PARAMS_OF_RSA_GENERATE_KEYPAIR;
 
-    REBVAL *obj = ARG(key_object);
+    REBVAL *padding_spec;
+    if (not REF(padding))
+        padding_spec = rebValue("[pkcs1-v15]");  // mbedtls_init() uses, no hash
+    else
+        padding_spec = rebValue(REF(padding));  // easier to just free it
 
-    // N and E are required
-    //
-    REBVAL *n = rebValue("ensure binary! pick", obj, "'n");
-    REBVAL *e = rebValue("ensure binary! pick", obj, "'e");
+    int padding;
+    mbedtls_md_type_t hash;
+    Get_Padding_And_Hash_From_Spec(&padding, &hash, padding_spec);  // validate
+
+    intptr_t num_key_bits = rebUnboxInteger(ARG(num_bits));
+
+    if (not REF(insecure) and num_key_bits < 1024)
+        fail ("RSA key must be at least 1024 bits in size unless /INSECURE");
+    if (num_key_bits > MBEDTLS_MPI_MAX_BITS)
+        fail ("RSA key bits exceeds MBEDTLS_MPI_MAX_BITS");
+
+    REBVAL *private_var = ARG(private_key);
+    if (IS_NULLED(private_var))
+        fail ("/PRIVATE-KEY return result is required");
+
+    REBVAL *error = nullptr;
+    REBVAL *public_key = nullptr;
+    REBVAL *private_key = nullptr;
 
     struct mbedtls_rsa_context ctx;
     mbedtls_rsa_init(&ctx);
-    // ^-- assume MBEDTLS_MD_NONE, mbedtls_rsa_set_padding() could set a hash
 
-    // Public components (always used)
+    // Public components
     //
     mbedtls_mpi N;
     mbedtls_mpi E;
     mbedtls_mpi_init(&N);
     mbedtls_mpi_init(&E);
 
-    // Private components (only used if decrypting)
+    // Private components
     //
     mbedtls_mpi D;
     mbedtls_mpi P;
@@ -399,17 +508,155 @@ REBNATIVE(rsa)
     mbedtls_mpi_init(&P);
     mbedtls_mpi_init(&Q);
 
+    // "CRT" components: these relate to a "Chinese Remainder Theorem" measure
+    // for increasing the speed of decryption with RSA.  They are optional, but
+    // considered a best practice when working with larger key sizes.
+    //
+    // https://iacr.org/archive/ches2008/51540128/51540128.pdf
+    //
+    mbedtls_mpi DP;
+    mbedtls_mpi DQ;
+    mbedtls_mpi QP;
+    mbedtls_mpi_init(&DP);
+    mbedtls_mpi_init(&DQ);
+    mbedtls_mpi_init(&QP);
+
+    // We don't use the padding values during generation, but make sure they
+    // validate together (e.g. not using deprecated hash with spec version).
+    //
+    if (padding != MBEDTLS_RSA_RAW_HACK) {
+        IF_NOT_0(cleanup, error, mbedtls_rsa_set_padding(
+            &ctx,
+            padding,
+            hash
+        ));
+    }
+
+    IF_NOT_0(cleanup, error, mbedtls_rsa_gen_key(
+        &ctx,
+        &get_random,  // f_rng, random number generating function
+        nullptr,  // tunneled parameter to f_rng (unused atm, so nullptr)
+        num_key_bits,
+        65537  // this is what mbedTLS %gen_key.c uses for exponent (?)
+    ));
+
+    IF_NOT_0(cleanup, error, mbedtls_rsa_export(&ctx, &N, &P, &Q, &D, &E));
+
+    IF_NOT_0(cleanup, error, mbedtls_rsa_export_crt(&ctx, &DP, &DQ, &QP));
+
+    REBVAL *n = rebBinaryFromMpi(&N);
+    REBVAL *e = rebBinaryFromMpi(&E);
+
+    public_key = rebValue("make object! [",
+        "padding:", padding_spec,
+
+        "n:", n,
+        "e:", e,
+    "]");
+
+    // "The following incomplete parameter sets for private keys are supported"
+    //
+    //    (1) P, Q missing.
+    //    (2) D and potentially N missing.
+    //
+    private_key = rebValue("make object! [",
+        "padding:", padding_spec,
+
+        "n:", n,
+        "e:", e,
+
+        "d:", rebR(rebBinaryFromMpi(&D)),
+        "p:", rebR(rebBinaryFromMpi(&P)),
+        "q:", rebR(rebBinaryFromMpi(&Q)),
+
+        "dp:", rebR(rebBinaryFromMpi(&DP)),
+        "dq:", rebR(rebBinaryFromMpi(&DQ)),
+        "qinv:", rebR(rebBinaryFromMpi(&QP)),  // many call this qinv, not QP
+    "]");
+
+    rebRelease(padding_spec);
+
+    rebRelease(n);
+    rebRelease(e);
+
+  cleanup:
+    mbedtls_mpi_free(&DP);
+    mbedtls_mpi_free(&DQ);
+    mbedtls_mpi_free(&QP);
+
+    mbedtls_mpi_free(&D);
+    mbedtls_mpi_free(&P);
+    mbedtls_mpi_free(&Q);
+
+    mbedtls_mpi_free(&N);
+    mbedtls_mpi_free(&E);
+
+    mbedtls_rsa_free(&ctx);
+
+    if (error)
+        rebJumps ("fail", error);
+
+    rebElide("set @", private_var, rebR(private_key));
+
+    return public_key;
+}
+
+
+//
+//  export rsa-encrypt: native [
+//
+//  "Encrypt a *small* amount of data using the expensive RSA algorithm"
+//
+//      return: "Deterministic if padding is [raw], randomly blinded otherwise"
+//          [binary!]
+//      data "Exactly key size if [raw], else less than key size minus overhead"
+//          [binary!]
+//      public-key [object!]
+//  ]
+//
+REBNATIVE(rsa_encrypt)
+{
+    CRYPT_INCLUDE_PARAMS_OF_RSA_ENCRYPT;
+
+    REBVAL *obj = ARG(public_key);  // type checking ensures OBJECT!
+
+    REBVAL *padding_spec = rebValue("match block! select", obj, "'padding");
+    if (not padding_spec)
+        fail ("RSA key objects must specify at least padding: [raw]");
+
+    int padding;
+    mbedtls_md_type_t hash;
+    Get_Padding_And_Hash_From_Spec(&padding, &hash, padding_spec);  // validate
+    rebRelease(padding_spec);
+
+    // N and E are required
+    //
+    REBVAL *n = rebValue("match binary! select", obj, "'n");
+    REBVAL *e = rebValue("match binary! select", obj, "'e");
+
+    if (not n or not e)
+        fail ("RSA requires N and E components of key object");
+
+    struct mbedtls_rsa_context ctx;
+    mbedtls_rsa_init(&ctx);
+
+    // Public components (always used)
+    //
+    mbedtls_mpi N;
+    mbedtls_mpi E;
+    mbedtls_mpi_init(&N);
+    mbedtls_mpi_init(&E);
+
     REBVAL *error = nullptr;
     REBVAL *result = nullptr;
-
-    REBSIZ binary_len;  // goto would cross initialization
 
     // Translate BINARY! public components to mbedtls BigNums
     //
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&N, n));
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&E, e));
 
-    // "To setup an RSA public key, precisely N and E must have been imported."
+    // "To setup an RSA public key, precisely N and E must have been imported"
+    // This is all you need for encrypting.
     //
     IF_NOT_0(cleanup, error, mbedtls_rsa_import(
         &ctx,
@@ -420,78 +667,7 @@ REBNATIVE(rsa)
         &E   // E, The public exponent
     ));
 
-    binary_len = rebUnboxInteger("length of", n);
-    rebRelease(n);
-    rebRelease(e);
-
-    bool encrypt = not REF(decrypt);
-
-    if (encrypt) {  // only N and E are needed
-        IF_NOT_0(cleanup, error, mbedtls_rsa_complete(&ctx));
-    }
-    else {  // implies private
-        REBVAL *d = rebValue("ensure binary! pick", obj, "'d");
-
-        if (not d)
-            fail ("No d returned BLANK, can we assume error for cleanup?");
-
-        REBVAL *p = rebValue("ensure binary! pick", obj, "'p");
-        REBVAL *q = rebValue("ensure binary! pick", obj, "'q");
-
-        binary_len = rebUnbox("length of", d);
-
-        IF_NOT_0(cleanup, error, Mpi_From_Binary(&D, d));
-
-        if (p)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&P, p));
-        if (q)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&Q, q));
-
-        IF_NOT_0(cleanup, error, mbedtls_rsa_import(
-            &ctx,
-            nullptr,  // N, The RSA modulus (already imported)
-            p ? &P : nullptr,  // P, The first prime factor of N
-            q ? &Q : nullptr,  // Q, The second prime factor of N
-            &D,  // D, The private exponent
-            nullptr  // E, The public exponent (already imported)
-        ));
-
-        rebRelease(d);
-        rebRelease(p);
-        rebRelease(q);
-
-        // !!! Why would decryption need to generate a keypair?  It looks like
-        // some code got confused here.
-
-/*        REBVAL *dp = rebValue("ensure binary! pick", obj, "'dp");
-        REBVAL *dq = rebValue("ensure binary! pick", obj, "'dq");
-        REBVAL *qinv = rebValue("ensure binary! pick", obj, "'qinv");
-
-        mbedtls_mpi DP;
-        mbedtls_mpi DQ;
-        mbedtls_mpi QP;
-
-        if (dp)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&DP, dp));
-        if (dq)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&DQ, dq));
-        if (qinv)
-            IF_NOT_0(cleanup, error, Mpi_From_Binary(&QP, qinv));
-
-        rebRelease(dp);
-        rebRelease(dq);
-        rebRelease(qinv); */
-
-        IF_NOT_0(cleanup, error, mbedtls_rsa_complete(&ctx));
-
-     /*   IF_NOT_0(cleanup, error, mbedtls_rsa_gen_key(
-            &ctx,
-            &get_random,  // f_rng, random number generating function
-            nullptr,  // tunneled parameter to f_rng (unused atm, so nullptr)
-            binary_len * 8,  // number of bits in key
-            65537  // this is what mbedTLS %gen_key.c uses for exponent (?)
-        )); */
-    }
+    IF_NOT_0(cleanup, error, mbedtls_rsa_complete(&ctx));
 
   blockscope {
     //
@@ -499,50 +675,291 @@ REBNATIVE(rsa)
     // likely offer "raw" data access under some constraints (e.g. locking
     // the data from relocation or resize).
     //
-    REBSIZ data_len;
-    REBYTE *dataBuffer = rebBytes(&data_len, ARG(data));
+    REBSIZ plaintext_size;
+    REBYTE *plaintext = rebBytes(&plaintext_size, ARG(data));
 
-    // Buffer suitable for recapturing as a BINARY! for either the encrypted
-    // or decrypted data
+    // Buffer suitable for recapturing as a BINARY!
     //
-    REBYTE *crypted = rebAllocN(REBYTE, binary_len);
+    size_t key_size = mbedtls_rsa_get_len(&ctx);
+    REBYTE *encrypted = rebAllocN(REBYTE, key_size);
 
-    if (REF(decrypt)) {
-        size_t olen;
-        IF_NOT_0(cleanup, error, mbedtls_rsa_pkcs1_decrypt(
+    if (padding == MBEDTLS_RSA_RAW_HACK) {
+        if (plaintext_size != key_size) {
+            error = rebValue(
+                "[raw] isn't padded, requires plaintext size to equal key size"
+            );
+            goto cleanup;
+        }
+
+        IF_NOT_0(cleanup, error, mbedtls_rsa_public(
             &ctx,
-            &get_random,
-            nullptr,
-            &olen,
-            dataBuffer,
-            crypted,
-            binary_len
+            plaintext,
+            encrypted
         ));
-        assert(olen == binary_len);
     }
     else {
+        IF_NOT_0(cleanup, error, mbedtls_rsa_set_padding(
+            &ctx,
+            padding,
+            hash
+        ));
+
         IF_NOT_0(cleanup, error, mbedtls_rsa_pkcs1_encrypt(
             &ctx,
             &get_random,
             nullptr,
-            data_len,
-            dataBuffer,
-            crypted
+            plaintext_size,
+            plaintext,
+            encrypted  // encrypted output will always be equal to key_size
         ));
     }
 
-    rebFree(dataBuffer);
+    rebFree(plaintext);
 
-    result = rebRepossess(crypted, binary_len);
+    result = rebRepossess(encrypted, key_size);
   }
 
   cleanup:
+    mbedtls_mpi_free(&N);
+    mbedtls_mpi_free(&E);
+
+    rebRelease(n);
+    rebRelease(e);
+
+    mbedtls_rsa_free(&ctx);
+
+    if (error)
+        rebJumps ("fail", error);
+
+    return result;
+}
+
+
+//
+//  export rsa-decrypt: native [
+//
+//  "Decrypt a *small* amount of data using the RSA algorithm"
+//
+//      return: "Decrypted data (will never be larger than the key size)"
+//          [binary!]
+//      data "RSA encrypted information (must be equal to key size)"
+//          [binary!]
+//      private-key [object!]
+//  ]
+//
+REBNATIVE(rsa_decrypt)
+{
+    CRYPT_INCLUDE_PARAMS_OF_RSA_DECRYPT;
+
+    REBVAL *obj = ARG(private_key);  // type checking ensures OBJECT!
+
+  //=//// EXTRACT INPUT PARAMETERS /////////////////////////////////////////=//
+
+    REBVAL *padding_spec = rebValue("match block! select", obj, "'padding");
+    if (not padding_spec)
+        fail ("RSA key objects must specify at least padding: [raw]");
+
+    int padding;
+    mbedtls_md_type_t hash;
+    Get_Padding_And_Hash_From_Spec(&padding, &hash, padding_spec);  // validate
+    rebRelease(padding_spec);
+
+    REBVAL *n = rebValue("match binary! select", obj, "'n");
+    REBVAL *e = rebValue("match binary! select", obj, "'e");
+
+    REBVAL *d = rebValue("match binary! select", obj, "'d");
+    REBVAL *p = rebValue("match binary! select", obj, "'p");
+    REBVAL *q = rebValue("match binary! select", obj, "'q");
+
+    // "The following incomplete parameter sets for private keys are supported"
+    //
+    //    (1) P, Q missing.
+    //    (2) D and potentially N missing.
+    //
+    if (n and e and d and p and q) {
+        // all fields present
+    }
+    else if (not p and not q) {
+        if (not n or not e or not d)
+            fail ("N, E, and D are required to decrypt if P and Q are missing");
+    }
+    else if (not d and not n) {
+        if (not e or not p or not q)
+            fail ("E, P, and Q are required to decrypt if D or N are missing");
+    }
+    else
+        fail ("Missing field combination in private key not allowed");
+
+    REBVAL *dp = rebValue("match binary! select", obj, "'dp");
+    REBVAL *dq = rebValue("match binary! select", obj, "'dq");
+    REBVAL *qinv = rebValue("match binary! select", obj, "'qinv");
+
+    bool chinese_remainder_speedup;
+
+    if (not dp and not dq and not qinv) {
+        chinese_remainder_speedup = false;
+    }
+    else if (dp and dq and qinv) {
+        chinese_remainder_speedup = true;
+    }
+    else
+        fail ("All of DP, DQ, and QINV fields must be given, or none");
+
+  //=//// BEGIN MBEDTLS CODE REQUIRING CLEANUP /////////////////////////////=//
+
+    // The memory allocated by these parts will not be automatically freed
+    // in case of an error, so the code below must jump to cleanup on failure
+
+    REBVAL *error = nullptr;
+    REBVAL *result = nullptr;
+
+    struct mbedtls_rsa_context ctx;
+    mbedtls_rsa_init(&ctx);
+
+    // Public components (always needed)
+    //
+    mbedtls_mpi N;
+    mbedtls_mpi E;
+    mbedtls_mpi_init(&N);
+    mbedtls_mpi_init(&E);
+
+    // Private components (only used when decrypting)
+    //
+    mbedtls_mpi D;
+    mbedtls_mpi P;
+    mbedtls_mpi Q;
+    mbedtls_mpi_init(&D);
+    mbedtls_mpi_init(&P);
+    mbedtls_mpi_init(&Q);
+
+    // Chinese Remainder Theorem (CRT) components: optional, speed up decrypt
+    //
+    mbedtls_mpi DP;
+    mbedtls_mpi DQ;
+    mbedtls_mpi QP;
+    mbedtls_mpi_init(&DP);
+    mbedtls_mpi_init(&DQ);
+    mbedtls_mpi_init(&QP);
+
+    // See remarks in RSA-ENCRYPT
+    //
+    IF_NOT_0(cleanup, error, mbedtls_rsa_set_padding(
+        &ctx,
+        MBEDTLS_RSA_PKCS_V15,
+        MBEDTLS_MD_SHA256
+    ));
+
+    // Translate BINARY! public components to mbedtls BigNums
+    //
+    if (n)
+        IF_NOT_0(cleanup, error, Mpi_From_Binary(&N, n));
+    IF_NOT_0(cleanup, error, Mpi_From_Binary(&E, e));
+
+    if (d)
+        IF_NOT_0(cleanup, error, Mpi_From_Binary(&D, d));
+    if (p)
+        IF_NOT_0(cleanup, error, Mpi_From_Binary(&P, p));
+    if (q)
+        IF_NOT_0(cleanup, error, Mpi_From_Binary(&Q, q));
+
+    IF_NOT_0(cleanup, error, mbedtls_rsa_import(
+        &ctx,
+        n ? &N : nullptr,  // N, The RSA modulus
+        p ? &P : nullptr,  // P, The first prime factor of N
+        q ? &Q : nullptr,  // Q, The second prime factor of N
+        d ? &D : nullptr,  // D, The private exponent
+        &E  // E, The public exponent (always required)
+    ));
+
+    if (chinese_remainder_speedup) {
+        IF_NOT_0(cleanup, error, Mpi_From_Binary(&DP, dp));
+        IF_NOT_0(cleanup, error, Mpi_From_Binary(&DQ, dq));
+        IF_NOT_0(cleanup, error, Mpi_From_Binary(&QP, qinv));
+
+        // !!! These can be deduced from the private key components, but that
+        // has some associated cost.  It appears that mbedTLS no longer has an
+        // API for importing these components (though it can export them).
+        // Should we argue for an API for this?  Or just check that the
+        // deduction process in mbedtls_rsa_complete() gives the same values?
+        // Or drop them from our object altogether?
+    }
+
+    IF_NOT_0(cleanup, error, mbedtls_rsa_complete(&ctx));
+
+  blockscope {
+    size_t key_size = mbedtls_rsa_get_len(&ctx);
+
+    // !!! This makes a copy of the data being encrypted.  The API should
+    // likely offer "raw" data access under some constraints (e.g. locking
+    // the data from relocation or resize).
+    //
+    REBSIZ encrypted_size;
+    REBYTE *encrypted = rebBytes(&encrypted_size, ARG(data));
+    assert(encrypted_size == key_size);
+
+    // Buffer suitable for recapturing as a BINARY!
+    //
+    REBYTE *decrypted = rebAllocN(REBYTE, key_size);
+
+    size_t decrypted_size;
+
+    if (padding == MBEDTLS_RSA_RAW_HACK) {
+        IF_NOT_0(cleanup, error, mbedtls_rsa_private(
+            &ctx,
+            &get_random,
+            nullptr,
+            encrypted,
+            decrypted
+        ));
+
+        decrypted_size = key_size;  // always true in raw RSA
+    }
+    else {
+        IF_NOT_0(cleanup, error, mbedtls_rsa_set_padding(
+            &ctx,
+            padding,
+            hash
+        ));
+
+        IF_NOT_0(cleanup, error, mbedtls_rsa_pkcs1_decrypt(
+            &ctx,
+            &get_random,
+            nullptr,
+            &decrypted_size,
+            encrypted,
+            decrypted,
+            key_size  // maximum output size
+        ));
+        assert(decrypted_size < key_size);
+    }
+
+    rebFree(encrypted);
+
+    result = rebRepossess(decrypted, decrypted_size);
+  }
+
+  cleanup:
+    mbedtls_mpi_free(&DP);
+    mbedtls_mpi_free(&DQ);
+    mbedtls_mpi_free(&QP);
+
     mbedtls_mpi_free(&D);
     mbedtls_mpi_free(&P);
     mbedtls_mpi_free(&Q);
 
     mbedtls_mpi_free(&N);
     mbedtls_mpi_free(&E);
+
+    rebRelease(dp);
+    rebRelease(dq);
+    rebRelease(qinv);
+
+    rebRelease(d);
+    rebRelease(p);
+    rebRelease(q);
+
+    rebRelease(n);
+    rebRelease(e);
 
     mbedtls_rsa_free(&ctx);
 
@@ -1328,6 +1745,19 @@ REBNATIVE(ecdh_shared_secret)
 REBNATIVE(startup_p)
 {
     CRYPT_INCLUDE_PARAMS_OF_STARTUP_P;
+
+    // !!! We do not want to link to printf() functionality if we can avoid it
+    // (though debug builds do).  Unfortunately, with #define MBEDTLS_PKCS1_V15
+    // you need %oid.c -- and it uses `snprintf` to do some fairly trivial
+    // stuff (mapping from a hash enum value to getting the size of the hash,
+    // via strings!)
+    //
+    // At some point, someone made a trivial snprintf() for mbedtls's limited
+    // application:
+    //
+    // https://github.com/Mbed-TLS/mbedtls/issues/929
+    //
+    // But tf_snprintf appears to have disappeared.  Investigate.
 
   #if TO_WINDOWS
     if (CryptAcquireContextW(

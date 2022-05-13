@@ -682,11 +682,12 @@ client-key-exchange: func [
 
             ; encrypt pre-master-secret
             let rsa-key: rsa-make-key
+            rsa-key.padding: [raw]  ; we could use pkcs feature in mbedtls
             rsa-key.e: ctx.rsa-e
             rsa-key.n: ctx.rsa-pub
 
             ; supply encrypted pre-master-secret to server
-            key-data: rsa ctx.pre-master-secret rsa-key
+            key-data: rsa-encrypt ctx.pre-master-secret rsa-key
             key-len: to-2bin length of key-data  ; Two bytes for this case
         ]
 

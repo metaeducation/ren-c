@@ -12,8 +12,12 @@ definitions: [
     {MBEDTLS_CONFIG_FILE="mbedtls-rebol-config.h"}
 ]
 depends: [
+    ; The oid.c dependency in RSA is contingent on #define MBEDTLS_PKCS1_V15
+    ; padding implementation.
+    ;
     [%crypt/mbedtls/library/rsa.c  #no-c++]
     [%crypt/mbedtls/library/rsa_alt_helpers.c  #no-c++]
+    [%crypt/mbedtls/library/oid.c  #no-c++]
 
     ; If you're using a platform that mbedTLS has been designed for,
     ; you can take the standard settings of what "malloc" and "free"

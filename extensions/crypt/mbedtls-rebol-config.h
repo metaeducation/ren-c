@@ -1165,8 +1165,7 @@
  *
  * This enables support for PKCS#1 v1.5 operations.
  */
-// #define MBEDTLS_PKCS1_V15  // REBDISABLE - rsa.c requires oid.h, but with
-                              // this it also depends on oid.c and snprintf
+#define MBEDTLS_PKCS1_V15
 
 /**
  * \def MBEDTLS_PKCS1_V21
