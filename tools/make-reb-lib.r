@@ -359,10 +359,12 @@ e-lib/emit 'ver {
     #if !defined(REBOL_NO_CPLUSPLUS)
         #if defined(__cplusplus) && __cplusplus >= 201103L
             /* C++11 or above, if following the standard (VS2017 does not) */
-        #elif CPLUSPLUS_11
+            #define REBOL_NO_CPLUSPLUS 0
+        #elif defined(CPLUSPLUS_11) && CPLUSPLUS_11
             /* Custom C++11 or above flag, to override Visual Studio's lie */
+            #define REBOL_NO_CPLUSPLUS 0
         #else
-            #define REBOL_NO_CPLUSPLUS  /* compiler not current enough */
+            #define REBOL_NO_CPLUSPLUS 1  /* compiler not current enough */
         #endif
     #endif
 
@@ -500,8 +502,8 @@ e-lib/emit 'ver {
      * a unixodbc client use SQLWCHAR.  But use UTF-8 if you possibly can.
      */
     #if defined(LIBREBOL_NO_STDLIB)
-        #define REBWCHAR unsigned int  /* Windows-specific API */
-    #elif TO_WINDOWS
+        #define REBWCHAR unsigned int
+    #elif defined(_WIN32)  /* _WIN32 is all Windows, _WIN64 only if 64-bit */
         #define REBWCHAR wchar_t
     #else
         #define REBWCHAR uint16_t
@@ -673,7 +675,7 @@ e-lib/emit 'ver {
     }  /* end the extern "C" */
     #endif
 
-    #if defined(REBOL_NO_CPLUSPLUS)
+    #if REBOL_NO_CPLUSPLUS
         /*
          * Plain C only has va_list as a method of taking variable arguments.
          */
