@@ -548,6 +548,7 @@ REBNATIVE(rsa_generate_keypair)
 
     IF_NOT_0(cleanup, error, mbedtls_rsa_export_crt(&ctx, &DP, &DQ, &QP));
 
+  blockscope {
     REBVAL *n = rebBinaryFromMpi(&N);
     REBVAL *e = rebBinaryFromMpi(&E);
 
@@ -582,6 +583,7 @@ REBNATIVE(rsa_generate_keypair)
 
     rebRelease(n);
     rebRelease(e);
+  }
 
   cleanup:
     mbedtls_mpi_free(&DP);
@@ -1225,7 +1227,6 @@ REBNATIVE(dh_compute_secret)
 
     mbedtls_mpi G;
     mbedtls_mpi P;
-    REBSIZ p_size;  // goto would cross initialization
     mbedtls_mpi_init(&G);
     mbedtls_mpi_init(&P);
 
@@ -1240,7 +1241,6 @@ REBNATIVE(dh_compute_secret)
     //
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&G, g));
     IF_NOT_0(cleanup, error, Mpi_From_Binary(&P, p));
-    p_size = mbedtls_mpi_size(&P);
     rebRelease(p);
     rebRelease(g);
 
@@ -1268,14 +1268,14 @@ REBNATIVE(dh_compute_secret)
   }
 
   blockscope {
-    REBLEN s_size = mbedtls_dhm_get_len(&ctx);  // same size as modulus/etc.
-    REBYTE *s = rebAllocN(REBYTE, s_size);  // shared key buffer
+    REBLEN k_size = mbedtls_dhm_get_len(&ctx);  // same size as modulus/etc.
+    REBYTE *k_buffer = rebAllocN(REBYTE, k_size);  // shared key buffer
 
     size_t olen;
     int ret = mbedtls_dhm_calc_secret(
         &ctx,
-        s,  // output buffer for the "shared secret" key
-        s_size,  // output_size (at least ctx.len, more may avoid compaction)
+        k_buffer,  // output buffer for the "shared secret" key
+        k_size,  // output_size (at least ctx.len, more may avoid compaction)
         &olen,  // actual number of bytes written to `s`
         &get_random,  // f_rng random number generator
         nullptr  // p_rng parameter tunneled to f_rng (not used ATM)
@@ -1310,9 +1310,9 @@ REBNATIVE(dh_compute_secret)
     // can optimize them out.  So 7 could be #{0007} or #{07}.  We could
     // pad the secret if we wanted to, but there's no obvious reason
     //
-    assert(s_size >= olen);
+    assert(k_size >= olen);
 
-    result = rebRepossess(s, s_size);
+    result = rebRepossess(k_buffer, k_size);
   }
 
   cleanup:
