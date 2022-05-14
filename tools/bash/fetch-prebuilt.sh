@@ -47,16 +47,16 @@ fetch_prebuilt() {
         else
             log "Get the list of available prebuilt binaries from S3"
             local s3url=https://r3bootstraps.s3.amazonaws.com/
-        
+
             local xml=$(download_echo $s3url)
-        
+
             # Use tr instead of sed to replace newlines
             # (because sed is not really powerful on Mac/BSD)
             #
             local list=$(
                 echo "$xml" | tr "<" "\n" | sed -n -e 's/^Key>\(+*\)/\1/p'
             )
-        
+
             for pb in $list
             do
                 # Download only prebuilt binaries for the current OS
@@ -71,7 +71,7 @@ fetch_prebuilt() {
                     download_file "$s3pb" "$prebuilt"
 
                     log "Marking with executable bit..."
-                    chmod +x "$prebuilt" 1>$to_log
+                    chmod +x "$prebuilt" 1>&3  # see log.sh
                 fi
             done
         fi

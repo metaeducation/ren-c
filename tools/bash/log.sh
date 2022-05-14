@@ -17,13 +17,19 @@
 
 exec 3>&1  # open new file descriptor that redirects to stdout
 
-to_log=3  # redirect output here, e.g. `ls 1> $to_log`
+# !!! Initially it was attempted to define a variable here so you could use
+# the output location in other routines that weren't shaped like log().
+#
+#     to_log=3  # wanted to redirect output here, e.g. `ls 1> $to_log`
+#
+# Sadly this cannot work; you can't abstract redirection across file names
+# and file handles...
+#
+# https://stackoverflow.com/a/35556881
+#
+# Instead, trust the domain knowledge for this and put a comment to see %log.sh
+# whenever using `1>&3` to stream output to the log.
 
 log () {
-    # !!! Originally this code said `1>&3`.  It's not possible to put the &
-    # inside the definition of $to_log, or you get "ambiguous redirect".
-    # Dropping the & doesn't appear to have consequences in this case.
-    #
-    echo "-- $1" 1>$to_log  # shouldn't get mixed up with function outputs
+    echo "-- $1" 1>&3  # shouldn't get mixed up with function outputs
 }
-

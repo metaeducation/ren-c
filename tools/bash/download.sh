@@ -47,8 +47,8 @@ download_file() {  # $1 is source, $2 is target
     local dltool=$(which_downloader)
     log "Downloading $1 to $2"
     if [ $dltool = "wget" ] ; then
-        wget -O "$2" -nv -o - "$1" $to_log
+        wget -O "$2" -nv -o - "$1" 1>&3  # see log.sh
     else
-        curl "$1" > "$2"
+        curl "$1" > "$2" 1>&3  # see log.sh
     fi
 }
