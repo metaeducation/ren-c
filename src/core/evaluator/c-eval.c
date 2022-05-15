@@ -564,16 +564,27 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     // Since nulled cells can't be in BLOCK!s, the evaluator shouldn't usually
     // see them.  It is technically possible to see one using REEVAL, such as
-    // with `reeval first []`.  However, the more common way to encounter this
-    // situation would be in the API:
-    //
-    //     REBVAL *v = nullptr;
-    //     bool is_null = rebDid("null?", v);  // oops, should be rebQ(v)
+    // with `reeval first []`.
     //
     // Note: It seems tempting to let NULL evaluate to NULL as a convenience
     // for such cases.  But this breaks the system in subtle ways--like
     // making it impossible to "reify" the instruction stream as a BLOCK!
     // for the debugger.  Mechanically speaking, this is best left an error.
+    //
+    // Note: The API can't allow splicing of null values in the instruction
+    // streams:
+    //
+    //     REBVAL *v = nullptr;
+    //     bool is_null = rebUnboxLogic("null?", v);  // should be rebQ(v)
+    //
+    // But what it does as a compromise is it will make the spliced values
+    // into ~null~ BAD-WORD!s.  This will sometimes work out due to decay
+    // (though not the above case, as NULL? will error when passed isotopes).
+    // Yet a convenience is supplied by making the @ operator turn ~null~
+    // BAD-WORD!s into proper nulls:
+    //
+    //     bool is_null = rebUnboxLogic("null?", rebQ(v));
+    //     bool is_null = rebUnboxLogic("null? @", v);  // equivalent, shorter
 
       case REB_NULL:
         fail (Error_Evaluate_Null_Raw());

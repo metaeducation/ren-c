@@ -250,14 +250,14 @@ REBNATIVE(read_line)
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
         line = Read_Line(Term_IO);
-        if (rebDid(rebQ(line), "= '~halt~"))
+        if (rebUnboxLogic(rebQ(line), "= '~halt~"))
             rebJumps(Lib(HALT));
 
         // ESCAPE is a special condition distinct from end of file.  It is a
         // request to nullify the current input--which may apply to several
         // lines of input, e.g. in the REPL.
         //
-        if (rebDid(rebQ(line), "= '~escape~")) {
+        if (rebUnboxLogic(rebQ(line), "= '~escape~")) {
             if (REF(eof))
                 rebElide(Lib(SET), rebQ(ARG(eof)), Lib(FALSE));
             return line;
@@ -433,11 +433,11 @@ REBNATIVE(read_char)
             );
         }
 
-        if (rebDid("bad-word?", rebQ(e))) {
-            if (rebDid(rebQ(e), "= '~halt~"))  // Ctrl-C instead of key
+        if (rebUnboxLogic("bad-word?", rebQ(e))) {
+            if (rebUnboxLogic(rebQ(e), "= '~halt~"))  // Ctrl-C instead of key
                 rebJumps(Lib(HALT));
 
-            if (rebDid(rebQ(e), "= '~timeout~"))
+            if (rebUnboxLogic(rebQ(e), "= '~timeout~"))
                 return e;  // just return the timeout answer
 
             // For the moment there aren't any other signals; if there were,
@@ -447,14 +447,14 @@ REBNATIVE(read_char)
             return e;
         }
 
-        if (rebDid("char? @", e))
+        if (rebUnboxLogic("char? @", e))
             return e;  // we got the character, note it hasn't been echoed
 
-        if (rebDid("word? @", e)) {  // recognized "virtual key"
+        if (rebUnboxLogic("word? @", e)) {  // recognized "virtual key"
             if (REF(virtual))
                 return e;  // user wanted to know the virtual key
 
-            if (rebDid("'escape = @", e)) {
+            if (rebUnboxLogic("'escape = @", e)) {
                 //
                 // In the non-virtual mode, allow escape to return null.
                 //
@@ -466,7 +466,7 @@ REBNATIVE(read_char)
 
             rebRelease(e);  // ignore all other non-printable keys
         }
-        else if (rebDid("issue? @", e)) {  // unrecognized key
+        else if (rebUnboxLogic("issue? @", e)) {  // unrecognized key
             //
             // Assume they wanted to know what it was if virtual.
             //

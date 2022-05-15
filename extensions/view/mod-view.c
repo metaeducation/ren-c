@@ -443,7 +443,7 @@ REBNATIVE(request_file_p)
     if (error)
         rebJumps ("fail", rebR(error));
 
-    if (rebDid("empty?", results)) {
+    if (rebUnboxLogic("empty?", results)) {
         rebRelease(results);
         return nullptr;
     }

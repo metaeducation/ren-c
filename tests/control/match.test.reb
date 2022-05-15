@@ -22,12 +22,12 @@
 (null = match blank! false)
 
 
-; Falsey things are turned to BAD-WORD! in order to avoid cases like:
+; Falsey things are turned to BAD-WORD! isotopes in order to avoid cases like:
 ;
 ;     if match logic! flag [...]
 ;
-; But can still be tested for then? since they are BAD-WORD!, and can be used
-; with THEN and ELSE.
+; But can still be tested for with DID and DIDN'T since they are isotope
+; tolerant and NULL-reactive, and also can be used with THEN and ELSE.
 [
     ('~null~ = ^ match null null)
     ('~blank~ = ^ match blank! blank)

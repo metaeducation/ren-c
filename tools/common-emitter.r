@@ -211,7 +211,7 @@ export cscape: function [
                 ; IF deprecated in Ren-C, but :(...) with logic not available
                 ; in the bootstrap build.
                 ;
-                if (did all [not nonwhite, removed])
+                if (to-logic all [not nonwhite, removed])
 
                 :start-line  ; seek
                 remove thru [newline | end]
@@ -258,7 +258,7 @@ export make-emitter: function [
 
     stem: second split-path file
 
-    temporary: did any [
+    temporary: to-logic any [
         temporary
         parse2? stem ["tmp-" to end]
     ]

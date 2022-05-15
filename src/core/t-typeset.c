@@ -148,8 +148,8 @@ bool Add_Typeset_Bits_Core(
 
         if (IS_TUPLE(item)) {
             //
-            // !!! This previously called rebDid() with "equal?" to check for
-            // the <...> signal for variadics, which is now an odd tuple.
+            // !!! This previously called rebUnboxLogic() with "equal?" to check
+            // for the <...> signal for variadics, which is now an odd tuple.
             // The problem is that you can't call the evaluator while pushing
             // parameters and typesets to the stack, since the typeset is
             // in a stack variable.  Review.

@@ -93,10 +93,10 @@ REBVAL *Read_Line(STD_TERM *t)
             );
         }
 
-        if (rebDid("bad-word?", rebQ(e)))  // e.g. ~halt~
+        if (rebUnboxLogic("bad-word?", rebQ(e)))  // e.g. ~halt~
             return e;
 
-        if (rebDid("@", e, "= newline")) {
+        if (rebUnboxLogic("@", e, "= newline")) {
             //
             // !!! This saves a line in the "history", but it's not clear
             // exactly long term what level this history should cut into
@@ -125,7 +125,7 @@ REBVAL *Read_Line(STD_TERM *t)
             //
             Term_Insert(t, e);
         }
-        else if (rebDid("word? @", e)) {  // recognized "virtual key"
+        else if (rebUnboxLogic("word? @", e)) {  // recognized "virtual key"
             uint32_t c = rebUnboxChar(
                 "switch @", e, "[",
                     "'escape [#E]",
@@ -256,7 +256,7 @@ REBVAL *Read_Line(STD_TERM *t)
                 );
             }
         }
-        else if (rebDid("issue? @", e)) {  // unrecognized key
+        else if (rebUnboxLogic("issue? @", e)) {  // unrecognized key
             //
             // When an unrecognized key is hit, people may want to know that
             // at least the keypress was received.  Or not.  For now, output
@@ -329,17 +329,17 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
       #if defined(REBOL_SMART_CONSOLE)
         if (Term_IO) {  // e.g. no redirection (Term_IO is null if so)
             REBVAL *result = Read_Line(Term_IO);
-            if (rebDid("'~halt~ =", rebQ(result))) {  // HALT received
+            if (rebUnboxLogic("'~halt~ =", rebQ(result))) {  // HALT received
                 rebRelease(result);
                 return rebNone();
             }
-            if (rebDid("blank?", result)) {  // ESCAPE received
+            if (rebUnboxLogic("blank?", result)) {  // ESCAPE received
                 rebRelease(result);
                 return rebValue(
                     "const to binary!", rebR(rebChar(ESC))
                 );
             }
-            assert(rebDid("text?", result));
+            assert(rebUnboxLogic("text?", result));
             return rebValue("as binary!", rebR(result));
         }
       #endif
@@ -382,7 +382,7 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         // hacks are just to try and facilitate the automated testing of more
         // critical design features.
         //
-        if (rebNot("find", data, "lf")) {
+        if (rebDidnt("find", data, "lf")) {
             //
             // Since we're not using the terminal code, we don't have per-char
             // control to eliminate the CR characters.  Raw READ from stdio must

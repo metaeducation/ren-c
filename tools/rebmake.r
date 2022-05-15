@@ -59,7 +59,7 @@ ends-with?: func [
     s [any-string!]
     suffix [blank! any-string!]
 ][
-    return did any [
+    return to-logic any [
         blank? suffix
         empty? suffix
         suffix = (skip tail-of s negate length of suffix)
@@ -1121,7 +1121,7 @@ object-file-class: make object! [
                 /F opt parent/cflags
                 /O opt parent/optimization
                 /g opt parent/debug
-                /PIC did any [PIC, parent/class = #dynamic-library]
+                /PIC to-logic any [PIC, parent/class = #dynamic-library]
             ]]
         ]
     ]

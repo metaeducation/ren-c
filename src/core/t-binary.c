@@ -898,14 +898,14 @@ REBNATIVE(enbin)
     REBVAL *settings = rebValue("compose", ARG(settings));
     if (VAL_LEN_AT(settings) != 3)
         fail ("ENBIN requires array of length 3 for settings for now");
-    bool little = rebDid(
+    bool little = rebUnboxLogic(
         "switch first", settings, "[",
             "'BE [false] 'LE [true]",
             "fail {First element of ENBIN settings must be BE or LE}",
         "]"
     );
     REBLEN index = VAL_INDEX(settings);
-    bool no_sign = rebDid(
+    bool no_sign = rebUnboxLogic(
         "switch second", settings, "[",
             "'+ [true] '+/- [false]",
             "fail {Second element of ENBIN settings must be + or +/-}",
@@ -1007,14 +1007,14 @@ REBNATIVE(debin)
     REBLEN arity = VAL_LEN_AT(settings);
     if (arity != 2 and arity != 3)
         fail("DEBIN requires array of length 2 or 3 for settings for now");
-    bool little = rebDid(
+    bool little = rebUnboxLogic(
         "switch first", settings, "[",
             "'BE [false] 'LE [true]",
             "fail {First element of DEBIN settings must be BE or LE}",
         "]"
     );
     REBLEN index = VAL_INDEX(settings);
-    bool no_sign = rebDid(
+    bool no_sign = rebUnboxLogic(
         "switch second", settings, "[",
             "'+ [true] '+/- [false]",
             "fail {Second element of DEBIN settings must be + or +/-}",

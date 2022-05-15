@@ -90,18 +90,18 @@ REBNATIVE(nand_q)
 
 
 //
-//  did: native [
+//  to-logic: native [
 //
-//  "Synonym for TO-LOGIC"
+//  "Synonym for TO-LOGIC!"
 //
 //      return: "true if value is NOT a LOGIC! false, BLANK!, or NULL"
 //          [logic!]
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(_did_)  // see TO-C-NAME
+REBNATIVE(to_logic)
 {
-    INCLUDE_PARAMS_OF__DID_;
+    INCLUDE_PARAMS_OF_TO_LOGIC;
 
     return Init_Logic(D_OUT, IS_TRUTHY(ARG(optional)));
 }

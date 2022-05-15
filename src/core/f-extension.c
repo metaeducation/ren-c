@@ -50,7 +50,7 @@ void Startup_Extension_Loader(void)
 {
     assert(PG_Device_List == nullptr);
 
-    assert(rebDid("empty? system.extensions"));
+    assert(rebUnboxLogic("empty? system.extensions"));
 }
 
 

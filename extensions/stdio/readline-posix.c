@@ -546,7 +546,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
     assert(not e and not t->e_pending);
     assert(
         not e_buffered
-        or (buffered and rebDid("text?", e_buffered))
+        or (buffered and rebUnboxLogic("text?", e_buffered))
     );
 
     // See notes on why Read_Bytes_Interruptible() can wind up splitting UTF-8
@@ -907,7 +907,7 @@ static void Term_Insert_Char(STD_TERM *t, uint32_t c)
 // its logic regarding cursor position, newlines, backspacing.
 //
 void Term_Insert(STD_TERM *t, const REBVAL *v) {
-    if (rebDid("char?", v)) {
+    if (rebUnboxLogic("char?", v)) {
         Term_Insert_Char(t, rebUnboxChar(v));
         return;
     }

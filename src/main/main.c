@@ -268,7 +268,7 @@ int main(int argc, char *argv_ansi[])
     );
     rebRelease(main_startup);
 
-    if (rebDid("error?", trapped))  // error in MAIN-STARTUP itself
+    if (rebUnboxLogic("error?", trapped))  // error in MAIN-STARTUP itself
         rebJumps("panic", trapped);  // terminates
 
     REBVAL *code = rebValue("unquote @", trapped);  // entrap quotes non-errors

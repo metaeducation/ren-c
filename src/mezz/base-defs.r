@@ -337,6 +337,13 @@ reorder: enclose :reorder* func* [f] [
     inherit-meta do f :action
 ]
 
+; Temporarily provide THEN? as unchecked DID, until all the logic testing
+; versions of DID are converted to TO-LOGIC.
+;
+then?: func* [return: [logic!] ^optional [<opt> any-value!]] [
+    not null? optional
+]
+
 ; !!! The native R3-Alpha parse functionality doesn't have parity with UPARSE's
 ; ability to synthesize results, but it will once it is re-engineered to match
 ; UPARSE's design when it hardens.  For now these routines provide some amount
@@ -461,7 +468,7 @@ empty?: func* [
     return: [logic!]
     series [any-series! object! port! bitset! map! blank!]
 ][
-    return did any [blank? series, tail? series]
+    return (blank? series) or (tail? series)
 ]
 
 
@@ -586,7 +593,7 @@ to-lit-path: func* [value [any-value!]] [
 ]
 
 refinement?: func* [value [<opt> any-value!]] [
-    did all [
+    to-logic all [
         path? :value
         2 = length of value
         blank? :value.1
@@ -595,10 +602,7 @@ refinement?: func* [value [<opt> any-value!]] [
 ]
 
 char?: func* [value [<opt> any-value!]] [
-    did all [
-        issue? :value
-        1 >= length of value
-    ]
+    (issue? :value) and (1 >= length of value)
 ]
 
 print: func* [

@@ -380,7 +380,7 @@ static bool Did_Set_GOB_Var(REBGOB *gob, const RELVAL *word, const REBVAL *val)
 
       case SYM_IMAGE:
         CLR_GOB_OPAQUE(gob);
-        if (rebDid("image?", val)) {
+        if (rebUnboxLogic("image?", val)) {
             REBVAL *size = rebValue("pick", val, "'size");
             int32_t w = rebUnboxInteger("pick", size, "'x");
             int32_t h = rebUnboxInteger("pick", size, "'y");
@@ -550,7 +550,7 @@ static bool Did_Get_GOB_Var(
 
       case SYM_IMAGE:
         if (GOB_TYPE(gob) == GOBT_IMAGE) {
-            assert(rebDid("image?", GOB_CONTENT(gob)));
+            assert(rebUnboxLogic("image?", GOB_CONTENT(gob)));
             Copy_Cell(out, GOB_CONTENT(gob));
         }
         else

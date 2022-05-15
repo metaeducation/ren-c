@@ -1835,7 +1835,7 @@ REBNATIVE(until)
                 return D_OUT;  // body evaluated truthily, return value
         }
         else {
-            if (rebDid(predicate, rebQ(D_OUT)))
+            if (rebUnboxLogic(predicate, rebQ(D_OUT)))  // rebTruthy() ?
                 return D_OUT;
         }
     } while (true);

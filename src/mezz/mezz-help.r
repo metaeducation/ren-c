@@ -237,7 +237,7 @@ help: function [
             ] then [
                 return none
             ]
-            enfixed: did all [action? :value, enfixed? :value]
+            enfixed: (action? :value) and (enfixed? :value)
         ]
     ] else [
         ; !!! There may be interesting meanings to apply to things like

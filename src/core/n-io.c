@@ -244,8 +244,8 @@ REBNATIVE(new_line_q)
                 // newlines.  Review edge cases, like:
                 //
                 //    REBVAL *new_line_q = rebValue(":new-line?");
-                //    bool case_one = rebDid("new-line?", "[\n]");
-                //    bool case_two = rebDid(new_line_q, "[\n]");
+                //    bool case_one = rebUnboxLogic("new-line?", "[\n]");
+                //    bool case_two = rebUnboxLogic(new_line_q, "[\n]");
                 //
                 return Init_Logic(D_OUT, false);
             }

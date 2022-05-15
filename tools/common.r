@@ -101,14 +101,14 @@ export to-c-name: function [
         "xor" [copy "_xor_"]
         "xor_eq" [copy "_xor_eq_"]
 
-        "did" [copy "_did_"]  ; Ren-C addition, replaces not-not `!!`
+        "did" [copy "_did_"]  ; This is a macro in Ren-C code
     ] else [
         ;
         ; If these symbols occur composite in a longer word, they use a
         ; shorthand; e.g. `foo?` => `foo_q`
 
         for-each [reb c] [
-            #"'"  ""      ; isn't => isnt, don't => dont
+            #"'"  ""      ; isn't => isnt, didn't => didnt
             -   "_"     ; foo-bar => foo_bar
             *   "_p"    ; !!! because it symbolizes a (p)ointer in C??
             .   "_"     ; !!! same as hyphen?
@@ -116,7 +116,6 @@ export to-c-name: function [
             !   "_x"    ; e(x)clamation
             +   "_a"    ; (a)ddition
             |   "_b"    ; (b)ar
-
         ][
             replace/all string (form reb) c
         ]

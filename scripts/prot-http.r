@@ -139,10 +139,7 @@ do-request: function [
     read port.state.connection  ; read some data from the TCP port
     until [
         check-response port  ; see if it was enough, if not it asks for more
-        did any [
-            port.state.mode = <ready>
-            port.state.mode = <close>
-        ]
+        (port.state.mode = <ready>) or (port.state.mode = <close>)
     ]
 
     net-log/C as text! req  ; Note: may contain CR (can't use TO TEXT!)

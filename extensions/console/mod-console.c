@@ -315,7 +315,7 @@ REBNATIVE(console)
         rebRelease(code);
         rebRelease(result);
 
-        if (rebDid("error? @", trapped)) {
+        if (rebUnboxLogic("error? @", trapped)) {
             //
             // If the HOST-CONSOLE function has any of its own implementation
             // that could raise an error (or act as an uncaught throw) it
@@ -340,7 +340,7 @@ REBNATIVE(console)
 
       provoked:
 
-        if (rebDid("integer? @", code))
+        if (rebUnboxLogic("integer? @", code))
             break;  // when HOST-CONSOLE returns INTEGER! it means exit code
 
         if (rebDid("match [meta-group! handle!] @", code)) {
@@ -348,7 +348,7 @@ REBNATIVE(console)
             break;
         }
 
-        bool is_console_instruction = rebDid("block? @", code);
+        bool is_console_instruction = rebUnboxLogic("block? @", code);
         REBVAL *group;
 
         if (is_console_instruction) {

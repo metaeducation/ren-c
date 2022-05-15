@@ -649,7 +649,7 @@ REBVAL *Try_Get_One_Console_Event(STD_TERM *t, bool buffered, int timeout_msec)
     assert(not e and not t->e_pending);
     assert(
         not e_buffered
-        or (buffered and rebDid("text?", e_buffered))
+        or (buffered and rebUnboxLogic("text?", e_buffered))
     );
 
     if (t->in == t->in_tail) {  // no residual events from prior read
@@ -1018,7 +1018,7 @@ static void Term_Insert_Char(STD_TERM *t, uint32_t c)
 void Term_Insert(STD_TERM *t, const REBVAL *v) {
     ENSURE_COHERENT_POSITION_DEBUG(t);
 
-    if (rebDid("char?", v)) {
+    if (rebUnboxLogic("char?", v)) {
         Term_Insert_Char(t, rebUnboxChar(v));
         ENSURE_COHERENT_POSITION_DEBUG(t);
         return;

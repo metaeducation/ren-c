@@ -228,7 +228,7 @@ summarize-obj: function [
         val
     ]
 
-    wild: did find (try match text! :pattern) "*"
+    wild: to-logic find (try match text! :pattern) "*"
 
     return collect [
         for-each [word val] obj [

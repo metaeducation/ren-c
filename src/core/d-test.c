@@ -64,7 +64,7 @@ REBNATIVE(test_librebol)
     intptr_t getter = rebUnboxInteger("api-transient {Hello}");
     Recycle();  // transient should survive a recycle
     REBNOD *getter_node = cast(REBNOD*, cast(void*, getter));
-    Init_Logic(DS_PUSH(), rebDid("{Hello} = @", getter_node));
+    Init_Logic(DS_PUSH(), rebUnboxLogic("{Hello} = @", getter_node));
 
     SET_CELL_FLAG(Init_Integer(DS_PUSH(), 3), NEWLINE_BEFORE);
     REBVAL *macro = rebValue("macro [x] [[append x ^ first]]");
@@ -80,7 +80,7 @@ REBNATIVE(test_librebol)
     rebRelease(mtest2);
 
     SET_CELL_FLAG(Init_Integer(DS_PUSH(), 5), NEWLINE_BEFORE);
-    Init_Logic(DS_PUSH(), rebDid("null? @", nullptr));
+    Init_Logic(DS_PUSH(), rebUnboxLogic("null? @", nullptr));
 
     rebRelease(macro);
 

@@ -2850,7 +2850,7 @@ append redbol-combinators reduce [
 
         cycle [
             any [
-                else? [^ pos]: parser input  ; failed rule => not success
+                didn't [# pos]: parser input  ; failed rule => not success
                 same? pos input  ; no progress => stop successfully
             ] then [
                 take/last state.loops
@@ -2872,7 +2872,7 @@ append redbol-combinators reduce [
         append state.loops binding of 'return
 
         any [
-            else? [^ pos]: parser input  ; failed first => stop, not success
+            didn't [# pos]: parser input  ; failed first => stop, not success
             same? pos input  ; no progress first => stop, not success
         ] then [
             take/last state.loops
@@ -2881,7 +2881,7 @@ append redbol-combinators reduce [
         input: pos  ; any future failings won't fail the overall rule
         cycle [
             any [
-                else? [^ pos]: parser input  ; no match => stop, not success
+                didn't [# pos]: parser input  ; no match => stop, not success
                 same? pos input  ; no progress => stop successfully
             ] then [
                 take/last state.loops
@@ -3053,7 +3053,7 @@ append redbol-combinators reduce [
         ; supplied parser rule, then we advance past the item.
         ;
         any [
-            else? [^ subseries]: subparser subseries
+            didn't [# subseries]: subparser subseries
             not tail? subseries
         ] then [
             return null

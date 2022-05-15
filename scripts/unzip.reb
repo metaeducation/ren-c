@@ -252,7 +252,7 @@ zip: func [
             name
         ] else [%% (root)/(name)]
 
-        let no-modes: did any [url? root+name, dir? root+name]
+        let no-modes: (url? root+name) or (dir? root+name)
 
         all [deep, dir? name] then [
             name: dirize name

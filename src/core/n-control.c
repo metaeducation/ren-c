@@ -143,18 +143,19 @@ REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
 
 
 //
-//  else?: native [
+//  didn't: native [
 //
-//  {Determine if argument would have triggered an ELSE branch}
+//  {Synonym for NULL? that is isotope tolerant (e.g. prefix ELSE)}
 //
 //      return: [logic!]
 //      ^optional "Argument to test"
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(else_q)
+REBNATIVE(didnt)
 {
-    INCLUDE_PARAMS_OF_ELSE_Q;
+    INCLUDE_PARAMS_OF_DIDNT;
+
     return Init_Logic(D_OUT, IS_NULLED(ARG(optional)));
 }
 
@@ -195,19 +196,53 @@ REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
 
 
 //
-//  then?: native [
+//  did: native [
 //
-//  {Determine if argument would have triggered a THEN branch}
+//  {Synonym for NOT NULL? that is isotope tolerant (e.g. prefix THEN)}
 //
 //      return: [logic!]
 //      ^optional "Argument to test"
 //          [<opt> any-value!]
 //  ]
 //
-REBNATIVE(then_q)
+REBNATIVE(_did_)  // see TO-C-NAME
+//
+// DID exists as a complement to isotopes to help solve conflation of falsey
+// values with conditional tests.  One example:
+//
+//     >> match [logic! integer!] false
+//     == ~false~  ; isotope
+//
+//     >> if (match [logic! integer!] false) [print "Want this to run"]
+//     ** Error: We save you by not letting isotopes be conditionally tested
+//
+//     >> did match [logic! integer!] false
+//     == #[true]  ; DID tolerates isotopes, returns #[false] only on true NULL
+//
+//     >> if (did match [logic! integer!] false) [print "Praise isotopes!"]
+//     Praise isotopes!
+//
+// By making routines that intend to return ANY-VALUE! (even falsey ones) on
+// success return the falsey ones as isotopes, incorrect uses can be caught
+// and guided to use DID or DIDN'T (or whatever they actually meant).
 {
-    INCLUDE_PARAMS_OF_THEN_Q;
-    return Init_Logic(D_OUT, not IS_NULLED(ARG(optional)));
+    INCLUDE_PARAMS_OF__DID_;
+
+    REBVAL *v = ARG(optional);
+
+    if (IS_NULLED(v))
+        return Init_False(D_OUT);
+
+    Meta_Unquotify(v);
+
+    if (IS_BLANK(v) or IS_LOGIC(v))
+        fail (
+            "SEMANTIC CHANGE: DID tests against NULL only, temporarily not"
+            " working with blank or logic...use THEN or TO-LOGIC in meantime"
+            " https://forum.rebol.info/t/498/2"
+        );
+
+    return Init_True(D_OUT);
 }
 
 
@@ -324,11 +359,11 @@ REBNATIVE(match)
     //     ; null  <-- this would be a bad result!
     //
     // So successful matching of falsey values will give back ~false~, ~blank~,
-    // or ~null~.  This can be consciously turned back into their original
-    // values with DECAY.
+    // or ~null~ isotopes.  This can be consciously turned back into their
+    // original values with DECAY, which happens automatically in assignments.
     //
     //     >> match blank! _
-    //     == ~blank~
+    //     == ~blank~  ; isotope
     //
     //     >> decay match blank! _
     //     == _
@@ -883,7 +918,7 @@ REBNATIVE(default)
                 return D_OUT;  // count it as "already set"
         }
         else {
-            if (rebDid(predicate, rebQ(D_OUT)))
+            if (rebUnboxLogic(predicate, rebQ(D_OUT)))  // rebTruthy() ?
                 return D_OUT;
         }
     }

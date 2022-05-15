@@ -591,7 +591,7 @@ SQLRETURN ODBC_BindParameter(
         sql_type = SQL_BIT;
         p->buffer_size = sizeof(unsigned char);
         p->buffer = rebAllocN(char, p->buffer_size);
-        *cast(unsigned char*, p->buffer) = rebDid(v);
+        *cast(unsigned char*, p->buffer) = rebUnboxLogic(v);
         break; }
 
       case SQL_C_ULONG: {  // unsigned INTEGER! in 32-bit positive range
@@ -1178,7 +1178,7 @@ REBNATIVE(insert_odbc)
 
     bool use_cache = false;
 
-    bool get_catalog = rebDid(
+    bool get_catalog = rebUnboxLogic(
         "switch type of first", rebQ(ARG(sql)), "[",
             "lit-word! [true]",  // like Rebol2: 'tables, 'columns, 'types
             "text! [false]",
@@ -1195,7 +1195,7 @@ REBNATIVE(insert_odbc)
         // Compare with previously prepared statement, and if not the same,
         // then prepare a new statement.
         //
-        use_cache = rebDid(
+        use_cache = rebUnboxLogic(
             "strict-equal? first", ARG(sql),
                 "ensure [text! blank!] pick", statement, "'string"
         );
@@ -1743,7 +1743,7 @@ REBNATIVE(update_odbc)
 
     SQLRETURN rc;
 
-    bool access = rebDid(ARG(access));
+    bool access = rebUnboxLogic(ARG(access));
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_ATTR_ACCESS_MODE,
@@ -1756,7 +1756,7 @@ REBNATIVE(update_odbc)
     if (not SQL_SUCCEEDED(rc))
         rebJumps ("fail", Error_ODBC_Dbc(hdbc));
 
-    bool commit = rebDid(ARG(commit));
+    bool commit = rebUnboxLogic(ARG(commit));
     rc = SQLSetConnectAttr(
         hdbc,
         SQL_ATTR_AUTOCOMMIT,

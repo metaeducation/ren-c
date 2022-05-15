@@ -120,7 +120,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
                 "match tuple! first transcode", host
             );  // W3C says non-IP hosts can't end with number in tuple
             if (tuple) {
-                if (rebDid("integer? last @", tuple)) {
+                if (rebUnboxLogic("integer? last @", tuple)) {
                     Copy_Cell(host, tuple);
                     rebRelease(tuple);
                     goto reverse_lookup;

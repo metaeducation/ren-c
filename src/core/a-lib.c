@@ -878,7 +878,7 @@ static void Run_Va_May_Fail_Core(
 
     CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
 
-    // We want cases like `rebDid(nullptr)` to work, but the variadic
+    // We want cases like `rebNot(nullptr)` to work, but the variadic
     // evaluator cannot splice NULL into the feed of execution and have it
     // be convertible into an array.  The ~null~ BAD-WORD! in isotope form
     // provides a compromise, and it decays into a regular null several
@@ -1072,7 +1072,9 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 //
 //  rebDid: RL_API
 //
-// Simply returns the logical result, with no returned handle to release.
+// Analogue of DID, which is an isotope-tolerant version of NON NULL?.
+// e.g. "Would the supplied expression run a THEN"
+// See REBNATIVE(_did_) for explanation.
 //
 bool RL_rebDid(const void *p, va_list *vaptr)
 {
@@ -1081,15 +1083,58 @@ bool RL_rebDid(const void *p, va_list *vaptr)
     DECLARE_LOCAL (condition);
     Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
 
-    return IS_TRUTHY(condition);  // will fail() on BAD-WORD!s
+    if (IS_BLANK(condition) or IS_LOGIC(condition))
+        fail (
+            "SEMANTIC CHANGE: DID tests against NULL only, temporarily not"
+            " working with blank or logic...use THEN or TO-LOGIC in meantime"
+            " https://forum.rebol.info/t/498/2"
+        );
+
+    return not IS_NULLED(condition);  // isotopes okay for this test
+}
+
+
+//
+//  rebDidnt: RL_API
+//
+// Analogue of DIDN'T, which is an isotope-tolerant version of NULL?.
+// e.g. "Would the supplied expression run an ELSE"
+//
+bool RL_rebDidnt(const void *p, va_list *vaptr)
+{
+    ENTER_API;
+
+    DECLARE_LOCAL (condition);
+    Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
+
+    return IS_NULLED(condition);  // isotopes are okay with this test
+}
+
+//
+//  rebTruthy: RL_API
+//
+// Simply returns the logical result, with no returned handle to release.
+//
+// !!! The name is bad, but it's hard to think of a good name now that
+// rebDid() is taken for other purposes.  Avoid this and use rebTruthy() if
+// at all possible.
+//
+bool RL_rebTruthy(const void *p, va_list *vaptr)
+{
+    ENTER_API;
+
+    DECLARE_LOCAL (condition);
+    Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
+
+    return IS_TRUTHY(condition);  // will fail() on isotopes
 }
 
 
 //
 //  rebNot: RL_API
 //
-// !!! If this were going to be a macro like (not (rebDid(...))) it would have
-// to be a variadic macro.  Just make a separate entry point for now.
+// !!! If this were going to be a macro like (not (rebTruthy(...))) it
+// would have to be a variadic macro.  Not worth it. use separate entry point.
 //
 bool RL_rebNot(const void *p, va_list *vaptr)
 {
@@ -1098,7 +1143,7 @@ bool RL_rebNot(const void *p, va_list *vaptr)
     DECLARE_LOCAL (condition);
     Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
 
-    return IS_FALSEY(condition);
+    return IS_FALSEY(condition);  // will fail() on isotopes
 }
 
 
@@ -1137,6 +1182,25 @@ intptr_t RL_rebUnbox(const void *p, va_list *vaptr)
 
 
 //
+//  rebUnboxLogic: RL_API
+//
+bool RL_rebUnboxLogic(
+    const void *p,
+    va_list *vaptr
+){
+    ENTER_API;
+
+    DECLARE_LOCAL (result);
+    Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
+
+    if (not IS_LOGIC(result))
+        fail ("rebUnboxLogic() called on non-LOGIC!");
+
+    return VAL_LOGIC(result);
+}
+
+
+//
 //  rebUnboxInteger: RL_API
 //
 intptr_t RL_rebUnboxInteger(
@@ -1148,7 +1212,7 @@ intptr_t RL_rebUnboxInteger(
     DECLARE_LOCAL (result);
     Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
-    if (VAL_TYPE(result) != REB_INTEGER)
+    if (not IS_INTEGER(result))
         fail ("rebUnboxInteger() called on non-INTEGER!");
 
     return VAL_INT64(result);
@@ -1166,10 +1230,10 @@ double RL_rebUnboxDecimal(
     DECLARE_LOCAL (result);
     Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
-    if (VAL_TYPE(result) == REB_DECIMAL)
+    if (IS_DECIMAL(result))
         return VAL_DECIMAL(result);
 
-    if (VAL_TYPE(result) == REB_INTEGER)
+    if (IS_INTEGER(result))
         return cast(double, VAL_INT64(result));
 
     fail ("rebUnboxDecimal() called on non-DECIMAL! or non-INTEGER!");

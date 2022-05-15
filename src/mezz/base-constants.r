@@ -50,7 +50,6 @@ lf: LF:    newline
 
 ; Function synonyms
 
-to-logic: :did
 min: :minimum
 max: :maximum
 abs: :absolute

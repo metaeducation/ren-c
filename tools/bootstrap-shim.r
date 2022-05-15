@@ -119,6 +119,22 @@ null: enfix lib/func [:left [<skip> set-word!]] [
     lib/null
 ]
 
+did: func [return: [logic!] optional [<opt> any-value!]] [
+    any [
+        blank? :optional
+        logic? :optional
+    ] then [
+        fail/where [
+            "DID semantics changing, only tests for NULL, fixup"
+        ] 'optional
+    ]
+    not null? :optional
+]
+
+to-logic: func [return: [logic!] optional [<opt> any-value!]] [
+    if null? :optional [return false]
+    to logic! :optional
+]
 
 try: lib/func [  ; since null word/path fetches cause errors, work around it
     :look [<...> any-value!]  ; <...> old variadic notation

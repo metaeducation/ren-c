@@ -8,7 +8,7 @@
     ('~none~ = ^ (10 + 20 do [void]))
     ('~none~ = ^ (10 + 20 do [comment "hi"]))
     (''30 = ^ (10 + 20 do make frame! :void))
-    (else? do [null])
+    (didn't do [null])
     ('~null~ = ^ do [if true [null]])
 
     (did all [
@@ -24,13 +24,13 @@
     ('~none~ = (10 + 20 ^(do [])))
     ('~none~ = (10 + 20 ^(do [comment "hi"])))
     ('~void~ = (10 + 20 ^(do make frame! :void)))
-    (else? ^(do [null]))
+    (didn't ^(do [null]))
     ('~null~ = ^(do [if true [null]]))
 
     (30 = (10 + 20 none-to-void do []))
     (30 = (10 + 20 none-to-void do [comment "hi"]))
     (30 = (10 + 20 none-to-void do make frame! :void))
-    (else? ^(none-to-void do [null]))
+    (didn't ^(none-to-void do [null]))
     ('~null~ = ^(none-to-void do [heavy null]))
     ('~null~ = ^(none-to-void do [if true [null]]))
 
@@ -38,7 +38,7 @@
     ('~void~ = ^ none-to-void do [])
     ('~void~ = ^ none-to-void do [comment "hi"])
     ('~void~ = ^ none-to-void do make frame! :void)
-    (else? ^ none-to-void do [null])
+    (didn't ^ none-to-void do [null])
     ('~null~ = ^ none-to-void do [heavy null])
     ('~null~ = ^ none-to-void do [if true [null]])
 ]

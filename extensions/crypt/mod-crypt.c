@@ -1397,7 +1397,7 @@ REBNATIVE(aes_key)
 
   blockscope {
     size_t blocksize = mbedtls_cipher_get_block_size(ctx);
-    if (rebDid("binary?", ARG(iv))) {
+    if (rebUnboxLogic("binary?", ARG(iv))) {
         REBSIZ iv_size;
         REBYTE *iv = rebBytes(&iv_size, ARG(iv));
 
@@ -1412,7 +1412,7 @@ REBNATIVE(aes_key)
         rebFree(iv);
     }
     else
-        assert(rebDid("blank?", ARG(iv)));
+        assert(rebUnboxLogic("blank?", ARG(iv)));
   }
 
   cleanup:
@@ -1530,7 +1530,7 @@ static const struct mbedtls_ecp_curve_info *Ecp_Curve_Info_From_Word(
 ){
     const struct mbedtls_ecp_curve_info *info;
 
-    if (rebDid("'curve25519 = @", word))
+    if (rebUnboxLogic("'curve25519 = @", word))
         info = &curve25519_info;
     else {
         char *name = rebSpell("lowercase to text! @", word);
