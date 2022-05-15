@@ -2463,7 +2463,7 @@ parsify: func [
         [frame!]
     rules "Parse rules to (partially) convert to a combinator action"
         [block!]
-    <local> r comb
+    <local> r comb value
 ][
     r: rules.1
 
@@ -2506,23 +2506,58 @@ parsify: func [
     ;
     case [
         any [word? :r, symbol? :r] [
-            if comb: select state.combinators r [
+            ;
+            ; The first thing we do is see if the combinator list we are using
+            ; has an entry for this word/symbol.
+            ;
+            if value: select state.combinators r [
                 ;
-                ; It's a keyword (the word itself is named in the combinators)
+                ; Combinators get "combinated" with the subsequent stream of
+                ; rules to produce a parser instance.  This is the common case.
                 ;
-                return [# (advanced)]: combinatorize :comb rules state
+                if comb: match action! :value [
+                    return [# (advanced)]: combinatorize :comb rules state
+                ]
+
+                ; Ordinary data values are dispatched to the combinator for
+                ; that datatype.  This feature is useful for injecting simple
+                ; definitions into the parser, like mapping ALPHA to the bitset
+                ; for alphabetic characters.  Unlike binding, such definitions
+                ; added to the combinator table are available globally while
+                ; the parser runs.
+                ;
+                ; At the moment there are no "variadic" combinators, so these
+                ; dispatches do not have access to the stream of subsequent
+                ; rules...only the value itself.
+                ;
+                ; !!! Note: We have looked up a WORD! and found it literally in
+                ; the combinator table.  But despite looking up a word, it
+                ; does not get passed to the WORD! combinator in this case.
+                ; The datatype handler is unconditionally called with no hook,
+                ; as if the value had appeared literally in the rule stream.
+                ;
+                comb: select state.combinators type of :value
+                return (
+                    [# (advanced)]: combinatorize/value :comb rules state :value
+                )
             ]
 
-            ; Allow the user to invoke a COMBINATOR if it's in scope, even if
-            ; it's not in the combinator list.
+            ; Failing to find an entry in the combinator table, we fall back on
+            ; checking to see if the word looks up to a variable via binding.
             ;
-            ; !!! Should COMBINATOR? take ANY-VALUE! and include the action
-            ; test as part of it?
+            value: get r else [
+                fail [r "looked up to NULL in UPARSE"]
+            ]
+
+            ; Looking up to a combinator via variable is allowed, and will use
+            ; COMBINATORIZE to permit access to consume parts of the subsequent
+            ; rule stream.
             ;
-            if action? comb: get r [
+            if comb: match action! :value [
                 if combinator? :comb [
                     return [# (advanced)]: combinatorize :comb rules state
                 ]
+
                 let name: uppercase to text! r
                 fail [
                     name "is not a COMBINATOR ACTION!"
@@ -2530,10 +2565,14 @@ parsify: func [
                 ]
             ]
 
-            ; It's not a keyword, so we let the WORD! combinator decide what
-            ; to do with it.  The most basic thing to do is look it up and
-            ; see if it's a block, string, blank, NULL, etc. and give that
-            ; some sort of behavior.  This also offers a hookpoint.
+            ; Any other values that we looked up as a variable will be
+            ; sent to the WORD! combinator for processing.  This permits a
+            ; word that looks up to a value to do something distinct from what
+            ; the value would do literally in the stream.
+            ;
+            ; (For the most part, this should be used to limit what types are
+            ; legal to fetch from words...but there may be cases where distinct
+            ; non-erroring behavior is desired.)
             ;
             comb: select state.combinators word!
             return [# (advanced)]: combinatorize/value :comb rules state r
