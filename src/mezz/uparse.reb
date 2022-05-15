@@ -1387,6 +1387,20 @@ default-combinators: make map! reduce [
         return [# (remainder) (pending)]: comb state input ^value
     ]
 
+    === BLANK! COMBINATOR ===
+
+    ; Follows general philosophy of No-Op with BLANK-IN-NULL-out
+
+    blank! combinator [
+        return: "NULL (in isotope form)"
+            [<opt>]
+        value [blank!]
+    ][
+        set remainder input
+        set pending _
+        return ~null~  ; combinators RETURN/ISOTOPE by default
+    ]
+
     === LOGIC! COMBINATOR ===
 
     ; Handling of LOGIC! in Ren-C replaces the idea of FAIL, because a logic
@@ -2003,12 +2017,6 @@ default-combinators: make map! reduce [
         ]
         else [
             fail "WORD! fetches cannot be NULL in UPARSE (use BLANK!)"
-        ]
-
-        if blank? :r [  ; no-op; fetching a blank acts just like []
-            set remainder input
-            set pending _
-            return ~none~
         ]
 
         ; !!! It's not clear exactly what set of things should be allowed or
@@ -2785,7 +2793,7 @@ uparse*: func [
         return null  ; full parse was requested but tail was not reached
     ]
 
-    return/isotope unmeta synthesized'
+    return/isotope isotopify-if-falsey unmeta synthesized'
 ]
 
 uparse: comment [redescribe [  ; redescribe not working at the moment (?)

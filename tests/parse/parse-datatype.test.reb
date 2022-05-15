@@ -97,7 +97,7 @@
 ]
 
 [https://github.com/red/red/issues/4678
-    (_ = uparse to binary! "_" [blank!])
+    ('~blank~ = meta uparse to binary! "_" [blank!])
 
     (not uparse? to binary! "#(" [blank!])
     (not uparse? to binary! "(" [blank!])

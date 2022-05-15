@@ -2280,6 +2280,25 @@ REBNATIVE(decay)
 
 
 //
+//  isotopify-if-falsey: native [
+//
+//  "Turn NULL, BLANK! and #[fales] into their corresponding isotopes"
+//
+//      return: [<opt> any-value!]
+//      ^optional [<opt> any-value!]
+//  ]
+//
+REBNATIVE(isotopify_if_falsey)
+{
+    INCLUDE_PARAMS_OF_DECAY;
+
+    Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
+    Isotopify_If_Falsey(D_OUT);
+
+    return D_OUT;
+}
+
+//
 //  reify: native [
 //
 //  "Turn NULL and isotopes into plain BAD-WORD!s, pass through other values"
