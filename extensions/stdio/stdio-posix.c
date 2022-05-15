@@ -159,7 +159,10 @@ void Write_IO(const REBVAL *data, REBLEN len)
             size = len;
         }
         else {
-            bp = VAL_UTF8_SIZE_AT(&size, data);
+            REBLEN len_check;
+            bp = VAL_UTF8_LEN_SIZE_AT_LIMIT(&len_check, &size, data, len);
+            assert(len_check == len);
+            UNUSED(len_check);
         }
 
         long total = write(STDOUT_FILENO, bp, size);
