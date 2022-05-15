@@ -443,6 +443,9 @@ REBNATIVE(all)
             continue;  // `all [comment "hi" 1]`, first step is stale
         }
 
+        if (Is_Isotope(D_OUT))  // want `all [match logic! false]` to error
+            fail (Error_Bad_Isotope(D_OUT));
+
         if (IS_NULLED(predicate)) {  // default predicate effectively .DID
             if (IS_FALSEY(D_OUT)) {  // false/blank/null triggers failure
                 Abort_Frame(f);
@@ -523,6 +526,9 @@ REBNATIVE(any)
                 break;
             continue;  // `any [comment "hi" 1]`, first step is stale
         }
+
+        if (Is_Isotope(D_OUT))  // want `any [match logic! false]` to error
+            fail (Error_Bad_Isotope(D_OUT));
 
         if (IS_NULLED(predicate)) {  // default predicate effectively .DID
             if (IS_TRUTHY(D_OUT)) {

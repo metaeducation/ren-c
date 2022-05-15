@@ -372,3 +372,12 @@
     (null = all inert reduce [true true #[false]])
     ('true = all @[false true])  ; just the word, and words are truthy
 ]
+
+; Isotopes should raise errors vs. decay:
+;
+;     if not all [match logic! false] [  ; the match returns ~false~ isotope
+;         print "We want to avoid this printing, motivate use of DID MATCH"
+;     ]
+;
+('bad-isotope = pick trap [all [match logic! false]] 'id)
+(#[true] = all [did match logic! false])
