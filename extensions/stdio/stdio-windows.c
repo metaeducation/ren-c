@@ -190,13 +190,20 @@ bool Read_Stdin_Byte_Interrupted(bool *eof, REBYTE *out) {
             return false;  // not interrupted
         }
 
-        if (*out != LF or GetLastError() == ERROR_HANDLE_EOF)
+        DWORD last_error = GetLastError();
+        if (*out != LF or last_error == ERROR_HANDLE_EOF)
             fail ("CR found not followed by LF in Windows typed input");
 
-        fail (rebError_OS(GetLastError()));
+        fail (rebError_OS(last_error));
     }
 
-    if (GetLastError() == ERROR_HANDLE_EOF) {
+    // If you are piping with something like `echo "hello" | r3 reader.r` then
+    // it is expected you will get the "error" of a broken pipe when the sender
+    // is finished.  It's up to higher-level protocols to decide if the
+    // connection was at a proper time.
+    //
+    DWORD last_error = GetLastError();
+    if (last_error == ERROR_HANDLE_EOF or last_error == ERROR_BROKEN_PIPE) {
         *eof = true;  // was end of file
         return false;  // was not interrupted
     }
