@@ -131,6 +131,10 @@ did: func [return: [logic!] optional [<opt> any-value!]] [
     not null? :optional
 ]
 
+didn't: func [return: [logic!] optional [<opt> any-value!]] [
+    null? :optional
+]
+
 to-logic: func [return: [logic!] optional [<opt> any-value!]] [
     if null? :optional [return false]
     to logic! :optional
@@ -276,7 +280,6 @@ print: lib/func [value] [
 ; parse products.  So just testing for matching or not is done with PARSE?,
 ; to avoid conflating successful-but-null-bearing-parses with failure.
 ;
-parse2?: chain [:lib/parse | :did]
 parse2: func [series rules] [
     ;
     ; Make it so that if the rules end in `|| <input>` then the parse will
