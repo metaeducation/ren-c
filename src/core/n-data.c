@@ -2204,6 +2204,30 @@ REBNATIVE(null_q)
 
 
 //
+//  none?: native [
+//
+//  "Tells you if argument is a ~none~ isotope (not a ~none~ BAD-WORD!)"
+//
+//      return: [logic!]
+//      ^optional [<opt> any-value!]
+//  ]
+//
+REBNATIVE(none_q)
+{
+    INCLUDE_PARAMS_OF_NONE_Q;
+
+    // The incoming parameter is META, so if the original input was a ~none~
+    // isotope it will be a ~none~ BAD-WORD!.  We can avoid Meta_Unquotify()
+    // and just test the meta state for that match.
+    //
+    if (not IS_BAD_WORD(ARG(optional)))
+        return Init_False(D_OUT);
+
+    return Init_Logic(D_OUT, VAL_BAD_WORD_ID(ARG(optional)) == SYM_NONE);
+}
+
+
+//
 //  heavy: native [
 //
 //  {Make the heavy form of NULL (passes through all other values)}
