@@ -1,4 +1,4 @@
-; functions/control/case.r
+; %case.test.reb
 
 (true = case [true [true]])
 (false = case [true [false]])
@@ -123,3 +123,9 @@
 )
 
 (1 = case [(void) true [1]])
+
+; Isotopes in conditions should cause errors
+(
+    e: trap [case [~isotope~ [print "Causes error"]]]
+    e.id = 'bad-isotope
+)

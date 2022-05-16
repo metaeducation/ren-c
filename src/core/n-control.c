@@ -618,6 +618,9 @@ REBNATIVE(case)
 
         bool matched;
         if (IS_NULLED(predicate)) {
+            if (Is_Isotope(D_OUT))
+                fail (Error_Bad_Isotope(D_OUT));
+
             matched = IS_TRUTHY(D_OUT);
         }
         else {

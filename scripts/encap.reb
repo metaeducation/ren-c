@@ -1274,7 +1274,7 @@ encap: func [
     print ["Compressed resource is" length of compressed "bytes long."]
 
     case [
-        parse3 executable [
+        did parse3 executable [
             (elf-format.mode: 'read) elf-format.header-rule to <end>
         ][
             print "ELF format found"
