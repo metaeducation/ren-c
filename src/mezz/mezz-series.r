@@ -631,10 +631,7 @@ split: function [
             bitset! [did find dlm try last series]
             char! [dlm = last series]
             text! tag! word! [
-                did all [
-                    find series ^dlm
-                    empty? find-last/tail series ^dlm
-                ]
+                (find series ^dlm) and (empty? find-last/tail series ^dlm)
             ]
             block! [false]
         ] then fill -> [

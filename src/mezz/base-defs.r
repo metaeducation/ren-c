@@ -574,7 +574,7 @@ reeval func* [
 ; %words.r for bootstrap compatibility as a parse keyword.
 
 lit-word?: func* [value [<opt> any-value!]] [
-    did all [
+    to-logic all [
         quoted? :value
         word! = type of unquote value
     ]
@@ -583,7 +583,7 @@ to-lit-word: func* [value [any-value!]] [
     quote to word! noquote :value
 ]
 lit-path?: func* [value [<opt> any-value!]] [
-    did all [
+    to-logic all [
         quoted? :value
         path! = type of unquote value
     ]
