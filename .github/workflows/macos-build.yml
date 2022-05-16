@@ -244,8 +244,8 @@ jobs:
       shell: /usr/local/bin/r3built --fragment {0}  # README: Ren-C Code As Step
       run: |
         print {== Hello From R3 HTTPS Read Test! ==}
-        parse as text! read https://example.com [
-            thru '<h1> copy header: to '</h1> to end
+        uparse as text! read https://example.com [
+            thru '<h1> header: across to '</h1> to <end>
         ] else [
             fail "Couldn't Capture Page Title"
         ]
