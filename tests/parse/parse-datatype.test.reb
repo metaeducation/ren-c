@@ -112,3 +112,17 @@
     ((the 'x) == uparse ['x] [quoted!])
     ((the '[]) == uparse [' '() '[]] [3 quoted!])
 ]
+
+[https://github.com/red/red/issues/4863
+    ('word == uparse to-binary "word" [word!])
+    ('word == uparse to-binary "   word" [word!])
+    (123 == uparse to-binary "123" [integer!])
+    (didn't uparse to-binary "123.456" [integer!])
+    (123 == uparse to-binary "    123" [integer!])
+    ([hello 123 world] == uparse to-binary "hello 123 world" [
+        collect [keep ^ word!, keep integer!, keep ^ word!]
+    ])
+    ([hello 123 world] == uparse to-binary "hello 123 world" [
+        collect [keep ^ word!, space, keep integer!, space, keep ^ word!]
+    ])
+]
