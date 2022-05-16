@@ -49,6 +49,10 @@ download_file() {  # $1 is source, $2 is target
     if [ $dltool = "wget" ] ; then
         wget -O "$2" -nv -o - "$1" 1>&3  # see log.sh
     else
-        curl "$1" > "$2" 1>&3  # see log.sh
+        # !!! Redirecting this to 1>&3 causes a ton of garbage to spew on
+        # GitHub Actions that does not appear locally.  Someone who knows more
+        # about these things than I can feel free to figure out why.  -HF
+        #
+        curl "$1" > "$2"
     fi
 }
