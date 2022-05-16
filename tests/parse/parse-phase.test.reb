@@ -14,7 +14,7 @@
     earlier: copy []
     later: copy []
     did all [
-        uparse? "abcd" [
+        none? uparse "abcd" [
            "a" (append earlier <A>)
            "b" (<delay> append later <B>)
            "c" (append earlier <C>)
@@ -26,13 +26,13 @@
         later == [<B> <D>]
     ]
 )
-        
+
 ; A failed parse will not run the delayed groups
 (
     earlier: copy []
     later: copy []
     did all [
-        not uparse? "abcd" [
+        didn't uparse "abcd" [
            "a" (append earlier <A>)
            "b" (<delay> append later <B>)
            "c" (append earlier <C>)
@@ -51,7 +51,7 @@
     earlier: copy []
     later: copy []
     did all [
-        not uparse? "abcd" [
+        didn't uparse "abcd" [
            phase [
                "a" (append earlier <A>)
                "b" (<delay> append later <B>)

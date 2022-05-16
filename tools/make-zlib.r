@@ -70,7 +70,7 @@ disable-user-includes: function [
     ]
 
     for-next line-iter lines [
-        parse2 line: line-iter/1 [
+        did parse2 line: line-iter/1 [
             opt some space {#}
             opt some space {include}
             some space, include-rule, to <end>

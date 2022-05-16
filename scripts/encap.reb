@@ -238,7 +238,7 @@ elf-format: context [
         string-section [binary!]
     ][
         let index: 0
-        parse section-headers [
+        parse3 section-headers [
             repeat (e_shnum) [
                 (mode: 'read) section-header-rule
                 (
@@ -266,7 +266,7 @@ elf-format: context [
     ][
         assert [e_phoff < offset]  ; program headers are before any changes
 
-        parse skip executable e_phoff [
+        parse3 skip executable e_phoff [
             repeat (e_phnum) [
                 (mode: 'read) let pos: <here>, program-header-rule
                 (if p_offset >= offset [p_offset: p_offset + delta])
@@ -280,7 +280,7 @@ elf-format: context [
         assert [e_shoff >= offset]  ; section headers are after any changes
 
         let pos
-        parse skip executable e_shoff [
+        parse3 skip executable e_shoff [
             repeat (e_shnum) [
                 (mode: 'read) let pos: <here>, section-header-rule
                 (if sh_offset >= offset [sh_offset: sh_offset + delta])
@@ -323,7 +323,7 @@ elf-format: context [
         ;
         let string-header-offset: e_shoff + (e_shstrndx * e_shentsize)
 
-        parse skip executable string-header-offset [
+        parse3 skip executable string-header-offset [
             (mode: 'read) section-header-rule to <end>
         ] else [
             fail "Error finding string section in ELF binary"
@@ -362,7 +362,7 @@ elf-format: context [
 
             ; Update the size of the embedded section in it's section header
             ;
-            parse skip executable e_shoff + (section-index * e_shentsize) [
+            parse3 skip executable e_shoff + (section-index * e_shentsize) [
                 (sh_size: new-size)
                 (mode: 'write) section-header-rule
                 <end>
@@ -407,7 +407,7 @@ elf-format: context [
 
             ; Update string table size in its corresponding header.
             ;
-            parse skip executable string-header-offset [
+            parse3 skip executable string-header-offset [
                 (mode: 'read) let pos: <here>, section-header-rule
                 (
                     assert [sh_offset = string-section-offset]
@@ -431,7 +431,7 @@ elf-format: context [
             ; miscellaneous program-specific purposes, and hence not touched
             ; by strip...it is also not mapped into memory.
             ;
-            parse new-section-header [
+            parse3 new-section-header [
                 (
                     sh_name: string-section-size  ; w.r.t string-section-offset
                     sh_type: 7  ; SHT_NOTE
@@ -481,7 +481,7 @@ elf-format: context [
             ; (main header write is done after the branch.)
         ]
 
-        parse executable [
+        parse3 executable [
             (mode: 'write) header-rule to <end>
         ] else [
             fail "Error updating the ELF header"
@@ -494,7 +494,7 @@ elf-format: context [
     ][
         let header-data: read/part file 64  ; 64-bit size, 32-bit is smaller
 
-        parse header-data [(mode: 'read) header-rule to <end>] else [
+        parse3 header-data [(mode: 'read) header-rule to <end>] else [
             return null
         ]
 
@@ -504,7 +504,7 @@ elf-format: context [
         ; The string names of the sections are themselves stored in a section,
         ; (at index `e_shstrndx`)
         ;
-        parse skip section-headers-data (e_shstrndx * e_shentsize) [
+        parse3 skip section-headers-data (e_shstrndx * e_shentsize) [
             (mode: 'read) section-header-rule to <end>
         ] else [
             fail "Error finding string section in ELF binary"
@@ -614,7 +614,7 @@ pe-format: context [
             | skip
         ]
 
-        parse rule [opt some block-rule] else [fail]
+        parse3 rule [opt some block-rule] else [fail]
 
         set name make object! append def [~unset~]
         return bind rule get name
@@ -820,7 +820,7 @@ pe-format: context [
         exe-data [binary!]
     ][
         reset
-        parse exe-data exe-rule
+        parse3 exe-data exe-rule
         if err = 'missing-dos-signature [
             return false  ; soft failure (just wasn't an EXE, no "MZ")
         ]
@@ -1274,7 +1274,7 @@ encap: func [
     print ["Compressed resource is" length of compressed "bytes long."]
 
     case [
-        parse? executable [
+        parse3 executable [
             (elf-format.mode: 'read) elf-format.header-rule to <end>
         ][
             print "ELF format found"

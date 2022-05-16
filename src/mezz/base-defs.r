@@ -349,16 +349,15 @@ then?: func* [return: [logic!] ^optional [<opt> any-value!]] [
 ; UPARSE's design when it hardens.  For now these routines provide some amount
 ; of interface parity with UPARSE.
 ;
-parse: :parse*/fully  ; could be more complex definition (UPARSE is!)
-parse?: chain [:parse*/fully | :then?]
-match-parse: enclose :parse func* [f] [
-    let input: f.input
-    do f then [input]
-]
+parse3: :parse*/fully  ; could be more complex definition (UPARSE is!)
 here: <here>  ; temporary workaround for compatibility, will be removed
 
+; Eventually, PARSE will be deprecated to force everyone to use either UPARSE
+; or PARSE3.  When that is ultimately settled, UPARSE will take the PARSE name.
+;
+parse: :parse3
+
 parse2: :parse*/redbol/fully
-parse2?: chain [:parse*/redbol/fully | :then?]
 
 ; The lower-level pointfree function separates out the action it takes, but
 ; the higher level one uses a block.  Specialize out the action, and then

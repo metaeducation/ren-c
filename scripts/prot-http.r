@@ -39,7 +39,7 @@ REBOL [
 digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
 idate-to-date: function [return: [date!] date [text!]] [
-    parse date [
+    parse3 date [
         5 skip
         copy day: 2 digit
         space
@@ -165,7 +165,7 @@ parse-write-dialect: function [
     block [block!]
 ][
     spec: port.spec
-    parse block [
+    parse3 block [
         opt ['headers (spec.debug: true)]
         opt ['no-redirect (spec.follow: 'ok)]
         [set temp: word! (spec.method: temp) | (spec.method: 'post)]
@@ -468,7 +468,7 @@ read-body: function [
                 ; even have enough input data for the chunk *size*, much less
                 ; the chunk.  READ until we have at least a chunk size.
                 ;
-                loop [not parse? conn.data [
+                loop [didn't parse3 conn.data [
                     copy chunk-size: some hex-digits, thru crlfbin
                     mk1: <here>, to <end>
                 ]][
@@ -494,7 +494,7 @@ read-body: function [
                 ; Now we have the chunk size but may not have the chunk data.
                 ; Loop until enough data is gathered.
                 ;
-                loop [not parse? mk1 [
+                loop [didn't parse3 mk1 [
                     repeat (chunk-size) skip, mk2: <here>, crlfbin, to <end>
                 ]][
                     read conn
@@ -515,7 +515,7 @@ read-body: function [
             ;
             ; https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Trailer
             ;
-            parse mk1 [
+            parse3 mk1 [
                 crlfbin (trailer: "") to <end>
                     |
                 copy trailer to crlf2bin to <end>

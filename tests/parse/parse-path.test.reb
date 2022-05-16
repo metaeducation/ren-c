@@ -13,9 +13,9 @@
 ; PATH! combinator is still a work in progress.
 
 [https://github.com/red/red/issues/4101
-    (uparse? [a/b] ['a/b])
-    (error? trap [uparse? [a/b] [a/b]])
-    (error? trap [uparse? [a b c] [change 3 word! d/e]])
-    (error? trap [uparse? [a/b c d] [remove a/b]])
-    (error? trap [uparse? [c d] [insert a/b 2 word!]])
+    ('a/b == uparse [a/b] ['a/b])
+    (error? trap [uparse [a/b] [a/b]])
+    (error? trap [uparse [a b c] [change 3 word! d/e]])
+    (error? trap [uparse [a/b c d] [remove a/b]])
+    (error? trap [uparse [c d] [insert a/b 2 word!]])
 ]

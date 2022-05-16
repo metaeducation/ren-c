@@ -53,7 +53,7 @@ fix-randutils.c: func [
         {"c.h"}
     ]
 
-    parse text [
+    parse3 text [
         add-config.h
         insert {^/#include <errno.h>^/}
 
@@ -96,7 +96,7 @@ fix-gen_uuid.c: function [
         | {"sha1.h"}
     ]
 
-    parse text [
+    parse3 text [
         add-config.h
 
         opt some [

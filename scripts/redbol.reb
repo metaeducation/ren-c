@@ -719,7 +719,7 @@ parse: emulate [
             blank! [split input charset reduce [tab space CR LF]]
             text! [split input to-bitset rules]
         ] else [
-            apply :uparse2? [input rules /case case_PARSE]
+            did apply :uparse2 [input rules /case case_PARSE]
         ]
     ]
 ]

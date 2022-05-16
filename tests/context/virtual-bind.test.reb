@@ -36,7 +36,7 @@
     ]
     did all [
         r: make-rule
-        parse? "a" r  ; this was where the problem was
+        did parse3 "a" r  ; this was where the problem was
     ]
 )
 

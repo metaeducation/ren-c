@@ -7,37 +7,38 @@
 ; empty string should be a no-op on string input, and an empty rule should
 ; always match.
 ;
+
 ("" = uparse "" [""])
 
-(uparse? ["hello"] ["hello"])
+("hello" == uparse ["hello"] ["hello"])
 
-(uparse? "a" ["a"])
-(uparse? "ab" ["ab"])
-(uparse? "abc" ["abc"])
-(uparse? "abc" ["abc" <end>])
+("a" == uparse "a" ["a"])
+("ab" == uparse "ab" ["ab"])
+("abc" == uparse "abc" ["abc"])
+("" == uparse "abc" ["abc" <end>])
 
 ; Ren-C does not mandate that rules make progress, so matching empty strings
 ; works, as it does in Red.
 [
-    (uparse? "ab" [to [""] "ab"])
-    (uparse? "ab" [to ["a"] "ab"])
-    (uparse? "ab" [to ["ab"] "ab"])
-    (uparse? "ab" [thru [""] "ab"])
-    (uparse? "ab" [thru ["a"] "b"])
-    (uparse? "ab" [thru ["ab"] ""])
+    ("ab" == uparse "ab" [to [""] "ab"])
+    ("ab" == uparse "ab" [to ["a"] "ab"])
+    ("ab" == uparse "ab" [to ["ab"] "ab"])
+    ("ab" == uparse "ab" [thru [""] "ab"])
+    ("b" == uparse "ab" [thru ["a"] "b"])
+    ("" == uparse "ab" [thru ["ab"] ""])
 ]
 
 [(
     rule: [x: "a"]
     did all [
-        uparse? "a" rule
+        "a" == uparse "a" rule
         same? x second rule
     ]
 )(
     data: ["a"]
     rule: [x: "a"]
     did all [
-        uparse? data rule
+        "a" == uparse data rule
         same? x first data
     ]
 )]
@@ -48,17 +49,17 @@
 ; are better than nothing...
 (
     catchar: #"🐱"
-    uparse? #{F09F90B1} [catchar]
+    #🐱 == uparse #{F09F90B1} [catchar]
 )(
     cattext: "🐱"
-    uparse? #{F09F90B1} [cattext]
+    "🐱" == uparse #{F09F90B1} [cattext]
 )(
     catbin: #{F09F90B1}
-    e: trap [uparse? "🐱" [catbin]]
+    e: trap [uparse "🐱" [catbin]]
     'find-string-binary = e.id
 )(
     catchar: #"🐱"
-    uparse? "🐱" [catchar]
+    #🐱 == uparse "🐱" [catchar]
 )
 
 [
@@ -67,65 +68,65 @@
         bincat = #{43F09F98BA54}
     )
 
-    (uparse? bincat [{C😺T}])
+    ("C😺T" == uparse bincat [{C😺T}])
 
-    (uparse? bincat [{c😺t}])
+    ("c😺t" == uparse bincat [{c😺t}])
 
-    (not uparse?/case bincat [{c😺t} <end>])
+    (didn't uparse/case bincat [{c😺t} <end>])
 ]
 
 (
     test: to-binary {The C😺T Test}
     did all [
-        uparse? test [to {c😺t} x: across to space to <end>]
+        #{} == uparse test [to {c😺t} x: across to space to <end>]
         x = #{43F09F98BA54}
         "C😺T" = to-text x
     ]
 )
 
 [https://github.com/red/red/issues/678
-    (uparse? "catcatcatcat" [4 "cat"])
-    (uparse? "catcatcat" [3 "cat"])
-    (uparse? "catcat" [2 "cat"])
-    (not uparse? "cat" [4 "cat"])
-    (not uparse? "cat" [3 "cat"])
-    (not uparse? "cat" [2 "cat"])
-    (uparse? "cat" [1 "cat"])
+    ("cat" == uparse "catcatcatcat" [4 "cat"])
+    ("cat" == uparse "catcatcat" [3 "cat"])
+    ("cat" == uparse "catcat" [2 "cat"])
+    (didn't uparse "cat" [4 "cat"])
+    (didn't uparse "cat" [3 "cat"])
+    (didn't uparse "cat" [2 "cat"])
+    ("cat" == uparse "cat" [1 "cat"])
 ]
 
 ; String casing
 [
-    (uparse? "a" ["A"])
-    (not uparse? "a" [#A])
-    (not uparse?/case "a" ["A"])
-    (not uparse?/case "a" [#A])
-    (uparse?/case "a" ["a"])
-    (uparse?/case "a" [#a])
-    (uparse?/case "A" ["A"])
-    (uparse?/case "A" [#A])
-    (uparse? "TeSt" ["test"])
-    (not uparse?/case "TeSt" ["test"])
-    (uparse?/case "TeSt" ["TeSt"])
+    ("A" == uparse "a" ["A"])
+    (didn't uparse "a" [#A])
+    (didn't uparse/case "a" ["A"])
+    (didn't uparse/case "a" [#A])
+    ("a" == uparse/case "a" ["a"])
+    (#a == uparse/case "a" [#a])
+    ("A" == uparse/case "A" ["A"])
+    (#A == uparse/case "A" [#A])
+    ("test" == uparse "TeSt" ["test"])
+    (didn't uparse/case "TeSt" ["test"])
+    ("TeSt" == uparse/case "TeSt" ["TeSt"])
 ]
 
 ; String unicode
 [
-    (uparse? "abcdé" [#a #b #c #d #é])
-    (uparse? "abcdé" ["abcdé"])
-    (not uparse? "abcde" [#a #b #c #d #é])
-    (uparse? "abcdé" [#a #b #c #d #é])
-    (uparse? "abcdé✐" [#a #b #c #d #é #"✐"])
-    (uparse? "abcdé✐" ["abcdé✐"])
-    (not uparse? "abcdé" ["abcdé✐"])
-    (not uparse? "ab✐cdé" ["abcdé✐"])
-    (not uparse? "abcdé✐" ["abcdé"])
-    (uparse? "✐abcdé" ["✐abcdé"])
-    (uparse? "abcdé✐𐀀" [#a #b #c #d #é #"✐" #"𐀀"])
-    (uparse? "ab𐀀cdé✐" ["ab𐀀cdé✐"])
-    (not uparse? "abcdé" ["abc𐀀dé"])
-    (not uparse? "𐀀abcdé" ["a𐀀bcdé"])
-    (not uparse? "abcdé𐀀" ["abcdé"])
-    (uparse? "𐀀abcdé" ["𐀀abcdé"])
+    (#é == uparse "abcdé" [#a #b #c #d #é])
+    ("abcdé" == uparse "abcdé" ["abcdé"])
+    (didn't uparse "abcde" [#a #b #c #d #é])
+    (#é == uparse "abcdé" [#a #b #c #d #é])
+    (#"✐" == uparse "abcdé✐" [#a #b #c #d #é #"✐"])
+    ("abcdé✐" == uparse "abcdé✐" ["abcdé✐"])
+    (didn't uparse "abcdé" ["abcdé✐"])
+    (didn't uparse "ab✐cdé" ["abcdé✐"])
+    (didn't uparse "abcdé✐" ["abcdé"])
+    ("✐abcdé" == uparse "✐abcdé" ["✐abcdé"])
+    (#"𐀀" == uparse "abcdé✐𐀀" [#a #b #c #d #é #"✐" #"𐀀"])
+    ("ab𐀀cdé✐" == uparse "ab𐀀cdé✐" ["ab𐀀cdé✐"])
+    (didn't uparse "abcdé" ["abc𐀀dé"])
+    (didn't uparse "𐀀abcdé" ["a𐀀bcdé"])
+    (didn't uparse "abcdé𐀀" ["abcdé"])
+    ("𐀀abcdé" == uparse "𐀀abcdé" ["𐀀abcdé"])
 ]
 
 [
@@ -134,18 +135,18 @@
         true
     )
 
-    (uparse? str [thru "amet" <any>])
+    (#. == uparse str [thru "amet" <any>])
     (
         res: ~
         did all [
-            uparse? str [thru "ipsum" <any> res: across to #" " to <end>]
+            "" == uparse str [thru "ipsum" <any> res: across to #" " to <end>]
             res = "dolor"
         ]
     )
     (
         res: ~
         did all [
-            uparse? str [thru #p res: <here> to <end>]
+            "" == uparse str [thru #p res: <here> to <end>]
             9 = index? res
         ]
     )

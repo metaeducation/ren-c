@@ -105,7 +105,7 @@ clean-path: func [
 
     let count: 0
     let part
-    parse reverse target [
+    parse3 reverse target [
         opt some [not <end> [
             "../"
             (count: me + 1)

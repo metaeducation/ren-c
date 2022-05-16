@@ -110,7 +110,7 @@ parse-credits-for-authors: function [  ; used as switch in github-user-name
     collect [
         keep [{Carl Sassenrath} [{@carls}]]
 
-        parse to-text read credits-file [
+        parse3 to-text read credits-file [
             thru {Code Contributors}
             opt some [
                 {**} copy author: to {**} {**} newline
@@ -145,7 +145,7 @@ notable?: function [
 
     ; Let's try and categorize type of commit (default is 'Changed)
     category: 'Changed
-    parse text: c.summary [[
+    parse3 text: c.summary [[
         opt "* "
           ["Add" | "-add"]           (category: 'Added)
         | ["Fix" | "Patch" | "-fix"] (category: 'Fixed)
@@ -157,7 +157,7 @@ notable?: function [
 
     ; record any bug#NNNN or CC (CureCode) found
     cc: make block! 0
-    parse text [
+    parse3 text [
         opt some [
               "bug#" copy cc-num: some numbers (
                 append c [type: 'Fixed]  ; it's a bug fix!

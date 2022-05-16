@@ -4,43 +4,43 @@
 ; enough word (opt out).  It returns a ~null~ isotope on success.
 
 [
-    (uparse? [] [opt blank])
-    (uparse? [] [opt 'a])
-    (uparse? [a] [opt 'a])
-    (uparse? [a] [opt 'b 'a])
-    (uparse? [a] [opt ['a]])
+    ('~null~ == meta uparse [] [opt blank])
+    ('~null~ == meta uparse [] [opt 'a])
+    ('a == uparse [a] [opt 'a])
+    ('a == uparse [a] [opt 'b 'a])
+    ('a == uparse [a] [opt ['a]])
     (
         wa: ['a]
-        uparse? [a] [opt wa]
+        'a == uparse [a] [opt wa]
     )
-    (uparse? [a] [opt <any>])
-    (uparse? [a b c] [<any> opt 'b <any>])
+    ('a == uparse [a] [opt <any>])
+    ('c == uparse [a b c] [<any> opt 'b <any>])
 ]
 
 [
-    (uparse? "" [opt blank])
-    (uparse? "" [opt #a])
-    (uparse? "a" [opt #a])
-    (uparse? "a" [opt #b #a])
-    (uparse? "a" [opt [#a]])
+    ('~null~ == meta uparse "" [opt blank])
+    ('~null~ == meta uparse "" [opt #a])
+    (#a == uparse "a" [opt #a])
+    (#a == uparse "a" [opt #b #a])
+    (#a == uparse "a" [opt [#a]])
     (
         wa: [#a]
-        uparse? "a" [opt wa]
+        #a == uparse "a" [opt wa]
     )
-    (uparse? "a" [opt <any>])
-    (uparse? "abc" [<any> opt #b <any>])
+    (#a == uparse "a" [opt <any>])
+    (#c == uparse "abc" [<any> opt #b <any>])
 ]
 
 [
-    (uparse? #{} [opt blank])
-    (uparse? #{} [opt #{0A}])
-    (uparse? #{0A} [opt #{0A}])
-    (uparse? #{0A} [opt #{0B} #{0A}])
-    (uparse? #{0A} [opt [#{0A}]])
+    ('~null~ == meta uparse #{} [opt blank])
+    ('~null~ == meta uparse #{} [opt #{0A}])
+    (#{0A} == uparse #{0A} [opt #{0A}])
+    (#{0A} == uparse #{0A} [opt #{0B} #{0A}])
+    (#{0A} == uparse #{0A} [opt [#{0A}]])
     (
         wa: [#{0A}]
-        uparse? #{0A} [opt wa]
+        #{0A} == uparse #{0A} [opt wa]
     )
-    (uparse? #{0A} [opt <any>])
-    (uparse? #{0A0B0C} [<any> opt #{0B} <any>])
+    (10 == uparse #{0A} [opt <any>])
+    (12 == uparse #{0A0B0C} [<any> opt #{0B} <any>])
 ]

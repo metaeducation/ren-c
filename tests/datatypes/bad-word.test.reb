@@ -149,16 +149,16 @@
 ; there needs to be a mechanism to indicate that it's okay for a rule to
 ; literally match ~unset~ vs. be a typo.
 ;
-(parse? [~foo~ ~foo~] [some '~foo~])  ; acceptable
-(parse? [~foo~ ~foo~] [some ~foo~])  ; !!! shady, rethink
+(did parse3 [~foo~ ~foo~] [some '~foo~])  ; acceptable
+(did parse3 [~foo~ ~foo~] [some ~foo~])  ; !!! shady, rethink
 (
     foo: '~foo~
-    parse? [~foo~ ~foo~] [some foo]
+    did parse3 [~foo~ ~foo~] [some foo]
 )
 (
     foo: ~foo~
     e: trap [
-        parse [~foo~ ~foo~] [some foo]
+        parse3 [~foo~ ~foo~] [some foo]
     ]
     e.id = 'bad-word-get
 )

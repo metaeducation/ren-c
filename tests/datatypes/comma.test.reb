@@ -51,9 +51,9 @@
 ; a bit of a hack...but it's in as a proof of concept pending a better
 ; PARSE reorganization.
 ;
-("aaabbb" = parse "aaabbb" [some "a", some "b"])
+("aaabbb" = parse3 "aaabbb" [some "a", some "b"])
 (
-    e: trap ["aaabbb" = parse "aaabbb" [some, "a" some "b"]]
+    e: trap ["aaabbb" = parse3 "aaabbb" [some, "a" some "b"]]
     e.id = 'expression-barrier
 )
 

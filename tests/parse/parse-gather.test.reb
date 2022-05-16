@@ -5,7 +5,7 @@
 
 (
     did all [
-        uparse? [* * * 1 <foo> * * *] [
+        '* == uparse [* * * 1 <foo> * * *] [
             some '*
             g: gather [
                 emit i: integer! emit t: text! | emit i: integer! emit t: tag!

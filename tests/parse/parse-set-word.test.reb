@@ -7,38 +7,38 @@
 [(
     x: ~
     did all [
-        uparse? [1 "hello"] [x: [tag! | integer!] text!]
+        "hello" == uparse [1 "hello"] [x: [tag! | integer!] text!]
         x = 1  ; not [1]
     ]
 )(
     x: ~
     did all [
-        uparse? [1 "hello"] [x: [tag! integer! | integer! text!]]
+        "hello" == uparse [1 "hello"] [x: [tag! integer! | integer! text!]]
         x = "hello"
     ]
 )(
     x: ~
     did all [
-        uparse? [] [x: [opt integer!]]
+        '~null~ == meta uparse [] [x: [opt integer!]]
         x = null
     ]
 )(
     x: <before>
     did all [
-        not uparse? [] [x: [integer!]]
+        didn't uparse [] [x: [integer!]]
         x = <before>
     ]
 )(
     x: ~
     did all [
-        uparse? [] [x: opt [integer!]]
+        '~null~ == meta uparse [] [x: opt [integer!]]
         x = null
     ]
 )
 
 (
     did all [
-        uparse? [1 2 3] [x: collect [some keep integer!]]
+        [1 2 3] == uparse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ]
 )]
@@ -50,7 +50,7 @@
     t: "t"
     i: "i"
     did all [
-        uparse? [<foo>] [i: integer! | t: tag!]
+        <foo> == uparse [<foo>] [i: integer! | t: tag!]
         i = "i"  ; undisturbed
         t = <foo>
     ]
@@ -58,7 +58,7 @@
     t: "t"
     i: "i"
     did all [
-        uparse? [<foo>] [i: opt integer!, t: tag!]
+        <foo> == uparse [<foo>] [i: opt integer!, t: tag!]
         i = null
         t = <foo>
     ]
@@ -68,8 +68,8 @@
     (
         x4318: 0
         did all [
-            error? trap [uparse? [] [x4318: across]]
-            error? trap [uparse? [] [x4318:]]
+            error? trap [uparse [] [x4318: across]]
+            error? trap [uparse [] [x4318:]]
             zero? x4318
         ]
     )

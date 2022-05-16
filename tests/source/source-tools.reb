@@ -170,7 +170,7 @@ export analyse: context [
                 )
             ]
 
-            parse/case data [
+            parse3/case data [
                 some [
                     position: <here>
                     malloc-check
@@ -195,7 +195,7 @@ export analyse: context [
                 do in c-parser-extension [
                     if last-func-end [
                         all [
-                            parse? last-func-end [
+                            did parse3 last-func-end [
                                 function-spacing-rule
                                 position: <here>
                                 to <end>
@@ -212,7 +212,7 @@ export analyse: context [
                     ]
                 ]
 
-                parse proto-parser.data [
+                parse3 proto-parser.data [
                     opt 'export
                     set name: set-word! (name: to-word name)
                     opt 'enfix
@@ -338,7 +338,7 @@ export analyse: context [
         over-max-len: copy []
         inconsistent-eol: copy []
 
-        parse/case data [
+        parse3/case data [
 
             last-pos: <here>
 
@@ -426,7 +426,7 @@ list: context [
             item: null
         ] else [
             any [
-                parse second split-path item ["tmp-" to <end>]
+                did parse3 second split-path item ["tmp-" to <end>]
                 not find extensions extension-of item
             ] then [
                 item: null

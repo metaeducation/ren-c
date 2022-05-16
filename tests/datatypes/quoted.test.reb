@@ -148,8 +148,13 @@
 
 ((the '''a/b/c/d/e/f) = requote join the '''a/b/c '/d/e/f)
 
-((the '[1]) = (requote match-parse the '[1] [some integer!]))
-
+(
+    match-parse3: enclose :parse3 func* [f] [
+        let input: f.input
+        do f then [input]
+    ]
+    (the '[1]) = (requote match-parse3 the '[1] [some integer!])
+)
 
 ; COPY should be implemented for all types, QUOTED! included.
 ;

@@ -134,7 +134,7 @@ func: func* [
     loc: '
     with-return: '
 
-    parse spec [opt some [
+    parse3 spec [opt some [
         '<none> (append new-spec <none>)
     |
         '<void> (append new-spec <void>)
@@ -401,7 +401,7 @@ redescribe: func [
 
     let param: _
     let note: _
-    parse spec [
+    parse3 spec [
         opt [
             copy description some text! (
                 description: spaced description
@@ -1083,7 +1083,7 @@ read-lines: func [
         let eof: false
         cycle [
             pos: _
-            parse buffer (rule)
+            parse3 buffer (rule)
             if pos [break]
             ((if same? src system.ports.input
                 '[data: read port]

@@ -20,35 +20,35 @@
         wrba: ['b | 'a]
         true
     )
-    (uparse? [a] [wa])
-    (not uparse? [a] [wb])
-    (uparse? [a b] [wa wb])
-    (uparse? [a #b] [wa wcb])
-    (uparse? [a] [wra])
-    (uparse? [a b] [wra 'b])
-    (uparse? [a b] ['a wrb])
-    (uparse? [a b] [wra wrb])
-    (uparse? ["hello"] [wh])
-    (uparse? [#a] [wcb | wca])
-    (not uparse? [a b] [wb | wa])
-    (uparse? [#a] [[wcb | wca]])
-    (not uparse? [a b] [wrba])
-    (uparse? [a b] [wrab wrba])
-    (uparse? [a 123] [wa integer!])
-    (not uparse? [a 123] [wa char!])
-    (uparse? [a 123] [wra [integer!]])
-    (not uparse? [a 123] [wa [char!]])
+    ('a == uparse [a] [wa])
+    (didn't uparse [a] [wb])
+    ('b == uparse [a b] [wa wb])
+    (#b == uparse [a #b] [wa wcb])
+    ('a == uparse [a] [wra])
+    ('b == uparse [a b] [wra 'b])
+    ('b == uparse [a b] ['a wrb])
+    ('b == uparse [a b] [wra wrb])
+    ("hello" == uparse ["hello"] [wh])
+    (#a == uparse [#a] [wcb | wca])
+    (didn't uparse [a b] [wb | wa])
+    (#a == uparse [#a] [[wcb | wca]])
+    (didn't uparse [a b] [wrba])
+    ('b == uparse [a b] [wrab wrba])
+    (123 == uparse [a 123] [wa integer!])
+    (didn't uparse [a 123] [wa char!])
+    (123 == uparse [a 123] [wra [integer!]])
+    (didn't uparse [a 123] [wa [char!]])
     (
         res: ~
         did all [
-            uparse? [a] [wa (res: 1)]
+            1 == uparse [a] [wa (res: 1)]
             res = 1
         ]
     )
     (
         res: '~before~
         did all [
-            not uparse? [a] [wb (res: 1)]
+            didn't uparse [a] [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -56,7 +56,7 @@
         res: ~
         wres: [(res: 1)]
         did all [
-            uparse? [] [wres]
+            1 == uparse [] [wres]
             res = 1
         ]
     )
@@ -64,7 +64,7 @@
         res: ~
         wres: ['a (res: 1)]
         did all [
-            uparse? [a] [wres]
+            1 == uparse [a] [wres]
             res = 1
         ]
     )
@@ -72,7 +72,7 @@
         res: '~before~
         wres: ['b (res: 1)]
         did all [
-            not uparse? [a] [wres]
+            didn't uparse [a] [wres]
             res = '~before~
         ]
     )
@@ -80,7 +80,7 @@
         res: ~
         wres: [char! (res: 2) | integer! (res: 3)]
         did all [
-            uparse? [a 123] [wa (res: 1) wres]
+            3 == uparse [a 123] [wa (res: 1) wres]
             res = 3
         ]
     )
@@ -88,7 +88,7 @@
         res: ~
         wres: [char! (res: 2) | text! (res: 3)]
         did all [
-            not uparse? [a 123] [wa (res: 1) wres]
+            didn't uparse [a 123] [wa (res: 1) wres]
             res = 1
         ]
     )
@@ -108,30 +108,30 @@
         wrba: [#b | #a]
         true
     )
-    (uparse? "a" [wa])
-    (not uparse? "a" [wb])
-    (uparse? "ab" [wa wb])
-    (uparse? "a" [wra])
-    (uparse? "ab" [wra #b])
-    (uparse? "ab" [#a wrb])
-    (uparse? "ab" [wra wrb])
-    (uparse? "hello" [wh])
-    (uparse? "a" [wcb | wca])
-    (not uparse? "ab" [wb | wa])
-    (uparse? "a" [[wcb | wca]])
-    (not uparse? "ab" [wrba])
-    (uparse? "ab" [wrab wrba])
+    (#a == uparse "a" [wa])
+    (didn't uparse "a" [wb])
+    (#b == uparse "ab" [wa wb])
+    (#a == uparse "a" [wra])
+    (#b == uparse "ab" [wra #b])
+    (#b == uparse "ab" [#a wrb])
+    (#b == uparse "ab" [wra wrb])
+    ("hello" == uparse "hello" [wh])
+    (#a == uparse "a" [wcb | wca])
+    (didn't uparse "ab" [wb | wa])
+    (#a == uparse "a" [[wcb | wca]])
+    (didn't uparse "ab" [wrba])
+    (#b == uparse "ab" [wrab wrba])
     (
         res: ~
         did all [
-            uparse? "a" [wa (res: 1)]
+            1 == uparse "a" [wa (res: 1)]
             res = 1
         ]
     )
     (
         res: '~before~
         did all [
-            not uparse? "a" [wb (res: 1)]
+            didn't uparse "a" [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -139,7 +139,7 @@
         res: ~
         wres: [(res: 1)]
         did all [
-            uparse? "" [wres]
+            1 == uparse "" [wres]
             res = 1
         ]
     )
@@ -147,7 +147,7 @@
         res: ~
         wres: [#a (res: 1)]
         did all [
-            uparse? "a" [wres]
+            1 == uparse "a" [wres]
             res = 1
         ]
     )
@@ -155,7 +155,7 @@
         res: '~before~
         wres: [#b (res: 1)]
         did all [
-            not uparse? "a" [wres]
+            didn't uparse "a" [wres]
             res = '~before~
         ]
     )
@@ -175,30 +175,30 @@
         wrba: [#{0B} | #{0A}]
         true
     )
-    (uparse? #{0A} [wa])
-    (not uparse? #{0A} [wb])
-    (uparse? #{0A0B} [wa wb])
-    (uparse? #{0A} [wra])
-    (uparse? #{0A0B} [wra #{0B}])
-    (uparse? #{0A0B} [#{0A} wrb])
-    (uparse? #{0A0B} [wra wrb])
-    (uparse? #{88031100} [wh])
-    (uparse? #{0A} [wcb | wca])
-    (not uparse? #{0A0B} [wb | wa])
-    (uparse? #{0A} [[wcb | wca]])
-    (not uparse? #{0A0B} [wrba])
-    (uparse? #{0A0B} [wrab wrba])
+    (#{0A} == uparse #{0A} [wa])
+    (didn't uparse #{0A} [wb])
+    (#{0B} == uparse #{0A0B} [wa wb])
+    (#{0A} == uparse #{0A} [wra])
+    (#{0B} == uparse #{0A0B} [wra #{0B}])
+    (#{0B} == uparse #{0A0B} [#{0A} wrb])
+    (#{0B} == uparse #{0A0B} [wra wrb])
+    (#{88031100} == uparse #{88031100} [wh])
+    (#{0A} == uparse #{0A} [wcb | wca])
+    (didn't uparse #{0A0B} [wb | wa])
+    (#{0A} == uparse #{0A} [[wcb | wca]])
+    (didn't uparse #{0A0B} [wrba])
+    (#{0B} == uparse #{0A0B} [wrab wrba])
     (
         res: ~
         did all [
-            uparse? #{0A} [wa (res: 1)]
+            1 == uparse #{0A} [wa (res: 1)]
             res = 1
         ]
     )
     (
         res: '~before~
         did all [
-            not uparse? #{0A} [wb (res: 1)]
+            didn't uparse #{0A} [wb (res: 1)]
             res = '~before~
         ]
     )
@@ -206,7 +206,7 @@
         res: ~
         wres: [(res: 1)]
         did all [
-            uparse? #{} [wres]
+            1 == uparse #{} [wres]
             res = 1
         ]
     )
@@ -214,7 +214,7 @@
         res: ~
         wres: [#{0A} (res: 1)]
         did all [
-            uparse? #{0A} [wres]
+            1 == uparse #{0A} [wres]
             res = 1
         ]
     )
@@ -222,7 +222,7 @@
         res: '~before~
         wres: [#{0B} (res: 1)]
         did all [
-            not uparse? #{0A} [wres]
+            didn't uparse #{0A} [wres]
             res = '~before~
         ]
     )

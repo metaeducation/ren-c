@@ -7,9 +7,10 @@ Rebol [
 
     Exports: [
         combinator
-        uparse uparse? default-combinators
-        uparse2 uparse2? redbol-combinators
+        uparse  default-combinators
+        uparse2 redbol-combinators
         using  ; TBD: will become new meaning of USE
+        uparse?  ; !!! deprecated
     ]
 
     Description: {
@@ -60,6 +61,26 @@ Rebol [
           "messier" C code...hopefully preserving enough of the hackability
           while leveraging low-level optimizations where possible.
     }
+]
+
+
+uparse?: func [] [
+    fail @return [
+        "Please change UPARSE? to DID UPARSE and NOT UPARSE? to DIDN'T UPARSE"
+        "(Or consider using THEN and ELSE to react to a parse completion.)"
+        "(Or know your rule well enough it won't return a falsey isotope.)"
+        https://forum.rebol.info/t/498/2
+    ]
+]
+
+parse?: func [] [
+    fail @return [
+        "Please change PARSE? to DID PARSE3 and NOT PARSE? to DIDN'T UPARSE3"
+        "(Or consider using THEN and ELSE to react to a parse completion.)"
+        "(Or know your rule well enough it won't return a falsey isotope.)"
+        "(Also consider using UPARSE for non performance critical code.)"
+        https://forum.rebol.info/t/498/2
+    ]
 ]
 
 
@@ -1276,7 +1297,7 @@ default-combinators: make map! reduce [
     ; have to be "run this block as a rule, and use the synthesized product
     ; as a rule"
     ;
-    ;     >> uparse? "aaabbb" [:[some "a" ([some "b"])]
+    ;     >> did uparse "aaabbb" [:[some "a" ([some "b"])]
     ;     == #[true]
     ;
     ; It's hard offhand to think of great uses for that, but that isn't to say
@@ -1565,7 +1586,7 @@ default-combinators: make map! reduce [
                 ; !!! Not all errors are recoverable in transcode, so some
                 ; actually fail vs. return an error, e.g.:
                 ;
-                ;     uparse? to binary! "#(" [blank!]
+                ;     uparse to binary! "#(" [blank!]
                 ;
                 ; So we actually need this TRAP here.  Review.
                 ;
@@ -1892,15 +1913,15 @@ default-combinators: make map! reduce [
         ; quoting out material that's quoted?  This *could* make a parser and
         ; simply not call it:
         ;
-        ;    >> uparse? "aaa" [comment across some "a" 3 "a"]
-        ;    == #[true]
+        ;    >> uparse "aaa" [3 "a" comment across some "b"]
+        ;    == "a"
         ;
         ; In any case, forming a parser rule that's not going to be run is
         ; less efficient than just quoting material, which can be done on
-        ; rules with illegal shape:
+        ; rules with illegal content:
         ;
-        ;    >> uparse? "a" [comment [across some "a" 3] "a"]
-        ;    == #[true]
+        ;    >> uparse "a" [comment [across some "a" ~illegal~] "a"]
+        ;    == "a"
         ;
         ; The more efficient and flexible form is presumed here to be the
         ; most useful, and the closest parallel to the plain COMMENT action.
@@ -2825,8 +2846,6 @@ match-uparse: comment [redescribe [  ; redescribe not working at te moment (?)
     ]
 )
 
-uparse?: chain [:uparse*/fully | :then?]  ; UPARSE adds more than UPARSE*/FULLY
-
 
 === REBOL2/R3-ALPHA/RED COMPATIBILITY ===
 
@@ -3133,7 +3152,6 @@ uparse2*: specialize :uparse* [
 uparse2: specialize :uparse*/fully [
     combinators: redbol-combinators
 ]
-uparse2?: chain [:uparse2 | :then?]
 
 
 ; !!! This operation will likely take over the name USE.  It is put here since

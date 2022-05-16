@@ -12,7 +12,7 @@ iso-639-table: make map! 1024
 lower: charset [#"a" - #"z"]
 letter: charset [#"a" - #"z" #"A" - #"Z"]
 
-parse cnt [
+parse3 cnt [
     some [
         ;initialization
         (code-2: name: _)
@@ -54,7 +54,7 @@ parse cnt [
 init-code: to text! read init
 space: charset " ^-^M^/"
 iso-639-table-count: find mold iso-639-table #"["
-parse init-code [
+parse3 init-code [
     thru "iso-639-table:"
     to #"["
     change [

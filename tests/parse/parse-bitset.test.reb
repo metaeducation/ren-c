@@ -4,7 +4,7 @@
 
 (
     byteset: make bitset! [0 16 32]
-    uparse? #{001020} [some byteset]
+    32 == uparse #{001020} [some byteset]
 )
 
 [#206 (
@@ -12,7 +12,7 @@
     count-up n 512 [
         if n = 1 [continue]
 
-        if not uparse? (append copy "" make char! n - 1) [c: any-char <end>] [
+        if didn't uparse (append copy "" make char! n - 1) [c: any-char <end>] [
             fail "Parse didn't work"
         ]
         if c != make char! n - 1 [fail "Char didn't match"]
@@ -29,16 +29,16 @@
         wbs2: reduce wbs
         true
     )
-    (not uparse? #{0A0B0C} [some bs])
-    (not uparse? #{010203} [some bs])
-    (uparse? #{070809} [some bs])
-    (not uparse? #{0A0B0C} [bs bs bs])
-    (not uparse? #{010203} [bs bs bs])
-    (uparse? #{070809} [bs bs bs])
+    (didn't uparse #{0A0B0C} [some bs])
+    (didn't uparse #{010203} [some bs])
+    (9 == uparse #{070809} [some bs])
+    (didn't uparse #{0A0B0C} [bs bs bs])
+    (didn't uparse #{010203} [bs bs bs])
+    (9 == uparse #{070809} [bs bs bs])
     (
         digit: charset [0 - 9]
         did all [
-            uparse? #{0BADCAFE010203} [to digit p: <here> 3 <any>]
+            3 == uparse #{0BADCAFE010203} [to digit p: <here> 3 <any>]
             p = #{010203}
         ]
     )
@@ -52,22 +52,22 @@
         wbs2: reduce wbs
         true
     )
-    (uparse? #{0A0B0C} [some bs])
-    (not uparse? #{010203} [some bs])
-    (uparse? #{0A0B0C} [some [bs]])
-    (not uparse? #{010203} [some [bs]])
-    (uparse? #{0A0B0C} [some wbs])
-    (not uparse? #{010203} [some wbs])
-    (uparse? #{0A0B0C} [some wbs2])
-    (not uparse? #{010203} [some wbs2])
-    (uparse? #{0A0B0C} [bs bs bs])
-    (not uparse? #{010203} [bs bs bs])
-    (uparse? #{0A0B0C} [[bs] [bs] [bs]])
-    (not uparse? #{010203} [[bs] [bs] [bs]])
-    (uparse? #{0A0B0C} [wbs wbs wbs])
-    (not uparse? #{010203} [wbs wbs wbs])
-    (uparse? #{0A0B0C} [wbs2 wbs2 wbs2])
-    (not uparse? #{010203} [wbs2 wbs2 wbs2])
+    (12 == uparse #{0A0B0C} [some bs])
+    (didn't uparse #{010203} [some bs])
+    (12 == uparse #{0A0B0C} [some [bs]])
+    (didn't uparse #{010203} [some [bs]])
+    (12 == uparse #{0A0B0C} [some wbs])
+    (didn't uparse #{010203} [some wbs])
+    (12 == uparse #{0A0B0C} [some wbs2])
+    (didn't uparse #{010203} [some wbs2])
+    (12 == uparse #{0A0B0C} [bs bs bs])
+    (didn't uparse #{010203} [bs bs bs])
+    (12 == uparse #{0A0B0C} [[bs] [bs] [bs]])
+    (didn't uparse #{010203} [[bs] [bs] [bs]])
+    (12 == uparse #{0A0B0C} [wbs wbs wbs])
+    (didn't uparse #{010203} [wbs wbs wbs])
+    (12 == uparse #{0A0B0C} [wbs2 wbs2 wbs2])
+    (didn't uparse #{010203} [wbs2 wbs2 wbs2])
 ]
 
 [#753
@@ -78,21 +78,21 @@
         rla: ["a" while ws b: across some abc while ws "c"]
         true
     )
-    (uparse? "a b c" rls)
-    (uparse? "a b c" rla)
-    (not uparse? "a b" rls)
-    (not uparse? "a b" rla)
+    ("c" == uparse "a b c" rls)
+    ("c" == uparse "a b c" rla)
+    (didn't uparse "a b" rls)
+    (didn't uparse "a b" rla)
 ]
 
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
-    uparse? "a" ["a" while cset]
+    none? uparse "a" ["a" while cset]
 )(
     cset: charset [# - #"^(FE)"]
-    uparse? "a" ["a" while cset]
+    none? uparse "a" ["a" while cset]
 )(
     cset: charset [# - #"^(FF)"]
-    uparse? "a" ["a" while cset]
+    none? uparse "a" ["a" while cset]
 )]
 
 [
@@ -102,23 +102,23 @@
         wbs2: reduce wbs
         true
     )
-    (uparse? "abc" [some bs])
-    (not uparse? "123" [some bs])
-    (not uparse? "ABC" [some bs])
-    (uparse? "abc" [some [bs]])
-    (not uparse? "123" [some [bs]])
-    (uparse? "abc" [some wbs])
-    (not uparse? "123" [some wbs])
-    (uparse? "abc" [some wbs2])
-    (not uparse? "123" [some wbs2])
-    (uparse? "abc" [bs bs bs])
-    (not uparse? "123" [bs bs bs])
-    (uparse? "abc" [[bs] [bs] [bs]])
-    (not uparse? "123" [[bs] [bs] [bs]])
-    (uparse? "abc" [wbs wbs wbs])
-    (not uparse? "123" [wbs wbs wbs])
-    (uparse? "abc" [wbs2 wbs2 wbs2])
-    (not uparse? "123" [wbs2 wbs2 wbs2])
+    (#c == uparse "abc" [some bs])
+    (didn't uparse "123" [some bs])
+    (didn't uparse "ABC" [some bs])
+    (#c == uparse "abc" [some [bs]])
+    (didn't uparse "123" [some [bs]])
+    (#c == uparse "abc" [some wbs])
+    (didn't uparse "123" [some wbs])
+    (#c == uparse "abc" [some wbs2])
+    (didn't uparse "123" [some wbs2])
+    (#c == uparse "abc" [bs bs bs])
+    (didn't uparse "123" [bs bs bs])
+    (#c == uparse "abc" [[bs] [bs] [bs]])
+    (didn't uparse "123" [[bs] [bs] [bs]])
+    (#c == uparse "abc" [wbs wbs wbs])
+    (didn't uparse "123" [wbs wbs wbs])
+    (#c == uparse "abc" [wbs2 wbs2 wbs2])
+    (didn't uparse "123" [wbs2 wbs2 wbs2])
 ]
 
 [
@@ -128,18 +128,18 @@
         wbs2: reduce wbs
         true
     )
-    (not uparse? "abc" [some bs])
-    (uparse? "ABC" [some bs])
-    (not uparse? "123" [some bs])
-    (uparse? "789" [some bs])
-    (not uparse? "abc" [bs bs bs])
-    (uparse? "ABC" [bs bs bs])
-    (not uparse? "123" [bs bs bs])
-    (uparse? "789" [bs bs bs])
+    (didn't uparse "abc" [some bs])
+    (#C == uparse "ABC" [some bs])
+    (didn't uparse "123" [some bs])
+    (#9 == uparse "789" [some bs])
+    (didn't uparse "abc" [bs bs bs])
+    (#C == uparse "ABC" [bs bs bs])
+    (didn't uparse "123" [bs bs bs])
+    (#9 == uparse "789" [bs bs bs])
     (
         digit: charset "0123456789"
         did all [
-            uparse? "hello 123" [to digit p: <here> 3 <any>]
+            #3 == uparse "hello 123" [to digit p: <here> 3 <any>]
             p = "123"
         ]
     )

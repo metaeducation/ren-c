@@ -226,7 +226,7 @@ process-tests: function [
     test-sources [block!]
     handler [action!]
 ][
-    parse test-sources [
+    parse3 test-sources [
         opt some [
             set flags: block! set value: block! (
                 handler flags value  ; flags ignored atm
@@ -334,7 +334,7 @@ export do-recover: func [
         test-sources: collect-tests file
     ]
     else [
-        parse read log-file [
+        parse3 read log-file [
             (last-vector: _)
             opt some [
                 opt some whitespace
@@ -365,7 +365,7 @@ export do-recover: func [
                         {"} copy value to {"} skip
                         ; test result found
                         (
-                            parse value [
+                            parse3 value [
                                 "succeeded" <end>
                                 (successes: me + 1)
                                     |

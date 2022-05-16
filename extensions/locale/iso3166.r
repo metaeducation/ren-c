@@ -34,7 +34,7 @@ capitalize: func [
 ]
 
 iso-3166-table: make map! 512
-parse cnt [
+parse3 cnt [
     some [
         copy name to ";"
         ";" copy code-2 to "^/" (
@@ -51,7 +51,7 @@ parse cnt [
 init-code: to text! read init
 space: charset " ^-^M^/"
 iso-3166-table-count: find mold iso-3166-table #"["
-parse init-code [
+parse3 init-code [
     thru "iso-3166-table:"
     to #"["
     change [

@@ -604,7 +604,7 @@ c99: func [
             ]
             'OBJ [
                 if infile != <multi> [
-                    parse copy infile [to [".c" end] change ".c" ".o"] else [
+                    parse3 copy infile [to [".c" end] change ".c" ".o"] else [
                         fail "Input file must end in `.c` for use with -c"
                     ]
                 ]

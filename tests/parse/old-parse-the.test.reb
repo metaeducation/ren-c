@@ -1,4 +1,4 @@
-; %parse-the.test.reb
+; %old-parse-the.test.reb
 ;
 ; Historical PARSE had a QUOTE operation that you could use to match things
 ; literally.  It needed it because not all types had a LIT-XXX! form.
@@ -9,11 +9,11 @@
 ; it might read better, e.g. `parse [x: result'] [set-word! the result']`
 
 [
-    (uparse? [wb] [the wb])
-    (uparse? [123] [the 123])
-    (uparse? [3 3] [2 the 3])
-    (uparse? [blank] [the blank])
-    (uparse? [some] [the some])
+    ('wb == uparse [wb] [the wb])
+    (123 == uparse [123] [the 123])
+    (3 == uparse [3 3] [2 the 3])
+    (_ == uparse [blank] [the blank])
+    ('some == uparse [some] [the some])
 ]
 
 [#1314 (

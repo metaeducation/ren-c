@@ -73,7 +73,7 @@
     )
 
     (
-        assert [parse? t [to braille copy b to newline to <end>]]
+        assert [did parse3 t [to braille copy b to newline to <end>]]
         b = braille
     )
 ]

@@ -4,15 +4,15 @@
 ; UPARSE and Red use--it makes more sense.
 
 [
-    (error? trap [uparse? [] [ahead]])
-    (uparse? [a] [ahead 'a 'a])
-    (uparse? [1] [ahead [block! | integer!] <any>])
+    (error? trap [uparse [] [ahead]])
+    ('a == uparse [a] [ahead 'a 'a])
+    (1 == uparse [1] [ahead [block! | integer!] <any>])
 ]
 
 [
-    (error? trap [uparse? "" [ahead]])
-    (uparse? "a" [ahead #a #a])
-    (uparse? "1" [ahead [#a | #1] <any>])
+    (error? trap [uparse "" [ahead]])
+    (#a == uparse "a" [ahead #a #a])
+    (#1 == uparse "1" [ahead [#a | #1] <any>])
 ]
 
 [#1238

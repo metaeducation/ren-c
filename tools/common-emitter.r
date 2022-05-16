@@ -260,12 +260,12 @@ export make-emitter: function [
 
     temporary: to-logic any [
         temporary
-        parse2? stem ["tmp-" to end]
+        did parse2 stem ["tmp-" to end]
     ]
 
-    is-c: parse2? stem [thru [".c" | ".h" | ".inc"] end]
+    is-c: did parse2 stem [thru [".c" | ".h" | ".inc"] end]
 
-    is-js: parse2? stem [thru ".js" end]
+    is-js: did parse2 stem [thru ".js" end]
 
     e: make object! compose [
         ;

@@ -215,7 +215,7 @@
     x: <before>
     did all [
         #a = catch [
-            parse "a" [let x: skip (throw x)]
+            parse3 "a" [let x: skip (throw x)]
         ]
         x = <before>
     ]
@@ -227,7 +227,7 @@
     x: <before>
     did all [
         10 = catch [
-            parse "a" [let x (x: 10) "a" (throw x)]
+            parse3 "a" [let x (x: 10) "a" (throw x)]
         ]
         x = <before>
     ]

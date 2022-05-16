@@ -44,10 +44,10 @@ send-chunk: func [port] [
 ]
 
 handle-request: function [config req] [
-    parse to-text req ["get " ["/ " | copy uri: to " "]]
+    parse3 to-text req ["get " ["/ " | copy uri: to " "]]
     uri: default ["index.html"]
     print ["URI:" uri]
-    parse uri [some [thru "."] copy ext to end (type: mime-map/:ext)]
+    parse3 uri [some [thru "."] copy ext to end (type: mime-map/:ext)]
     type: default ["application/octet-stream"]
     if not exists? file: config/root/:uri [return error-response 404 uri]
     if error? trap [data: read file] [return error-response 400 uri]

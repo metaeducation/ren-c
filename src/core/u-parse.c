@@ -549,7 +549,7 @@ static REB_R Parse_One_Rule(
             // this patch handles the explicit case of wanting to match
             // something like:
             //
-            //     >> parse? "ab" [thru ["ab"] ""]
+            //     >> did parse3 "ab" [thru ["ab"] ""]
             //     == #[true]
             //
             // Just to show what should happen in the new model (R3-Alpha did
@@ -2804,7 +2804,7 @@ REBNATIVE(parse_p)
     // native code in the future.  But this is just to get people out of the
     // habit of writing `IF PARSE ...`
     //
-    return rebValue("'~use-PARSE?-for-logic~");
+    return rebValue("~use-DID-PARSE-for-logic~");
 }
 
 

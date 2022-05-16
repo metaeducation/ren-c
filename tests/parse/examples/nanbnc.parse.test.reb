@@ -10,10 +10,10 @@
         true
     )
 
-    (uparse? "abc" nanbnc)
-    (uparse? "aabbcc" nanbnc)
-    (uparse? "aaabbbccc" nanbnc)
-    (not uparse? "abbc" nanbnc)
-    (not uparse? "abcc" nanbnc)
-    (not uparse? "aabbc" nanbnc)
+    (#c = uparse "abc" nanbnc)
+    (#c = uparse "aabbcc" nanbnc)
+    (#c = uparse "aaabbbccc" nanbnc)
+    (didn't uparse "abbc" nanbnc)
+    (didn't uparse "abcc" nanbnc)
+    (didn't uparse "aabbc" nanbnc)
 ]

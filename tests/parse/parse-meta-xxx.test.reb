@@ -1,20 +1,21 @@
 ; %parse-meta-xxx.test.reb
 
-; META-BLOCK! runs a rule, but with "literalizing" result semantics.  If it
-; was invisible, it gives ~void~.  This helps write higher level tools
-; that might want to know about invisibility status.
+; META-BLOCK! runs a rule, but META-ifies the result.  Note that block rules
+; cannot produce absolutely nothing, so it's not posisble to get ~void~ from
+; this construct.  (Compare with META-GROUP!, which can produce ~void~.)
+
 [
     (did all  [
-        uparse? "" [synthesized: ^[]]  ; ~none~ isotope result (success)
+        '~none~ == uparse "" [synthesized: ^[]]
         '~none~ = synthesized
     ])
     (did all  [
-        uparse? "" [synthesized: ^[('~none~)]]  ; not-NULL result
-        (the '~none~) = synthesized  ; friendly if user made it friendly
+        '~none~ == uparse "" [synthesized: ^[comment "hi"]]  ; not ~void~
+        '~none~ = synthesized
     ])
     (did all  [
-        uparse? "" [synthesized: ^[(~none~)]]  ; not-NULL result
-        '~none~ = synthesized  ; user didn't quote it, so suggests unfriendly
+        '~none~ == uparse "" [synthesized: ^[(~void~)]]
+        '~none~ = synthesized
     ])
-    ((the '~friendly~) = ^(uparse [~friendly~] [bad-word!]))
+    ('~friendly~ = uparse [~friendly~] [bad-word!])
 ]

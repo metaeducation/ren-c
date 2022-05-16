@@ -12,56 +12,56 @@
 ]
 
 [#1246
-    (uparse? "1" [not not "1" "1"])
-    (uparse? "1" [not [not "1"] "1"])
-    (not uparse? "" [not 0 "a"])
-    (not uparse? "" [not [0 "a"]])
+    ("1" == uparse "1" [not not "1" "1"])
+    ("1" == uparse "1" [not [not "1"] "1"])
+    (didn't uparse "" [not 0 "a"])
+    (didn't uparse "" [not [0 "a"]])
 ]
 
 [#1240
-    (uparse? "" [not "a"])
-    (uparse? "" [not skip])
-    (uparse? "" [not false])
+    ('~not~ == meta uparse "" [not "a"])
+    ('~not~ == meta uparse "" [not skip])
+    ('~not~ == meta uparse "" [not false])
 ]
 
 [
-    (not uparse? [] [not <end>])
-    (uparse? [a] [not 'b 'a])
-    (not uparse? [a] [not <any>])
-    (not uparse? [a] [not <any> <any>])
-    (uparse? [a] [not ['b] 'a])
+    (didn't uparse [] [not <end>])
+    ('a == uparse [a] [not 'b 'a])
+    (didn't uparse [a] [not <any>])
+    (didn't uparse [a] [not <any> <any>])
+    ('a == uparse [a] [not ['b] 'a])
     (
         wb: ['b]
-        uparse? [a] [not wb 'a]
+        'a == uparse [a] [not wb 'a]
     )
-    (not uparse? [a a] [not ['a 'a] to <end>])
-    (uparse? [a a] [not [some 'b] to <end>])
+    (didn't uparse [a a] [not ['a 'a] to <end>])
+    ([] == uparse [a a] [not [some 'b] to <end>])
 ]
 
 [
-    (not uparse? "" [not <end>])
-    (uparse? "a" [not #b #a])
-    (not uparse? "a" [not <any>])
-    (not uparse? "a" [not <any> <any>])
-    (uparse? "a" [not [#b] #a])
+    (didn't uparse "" [not <end>])
+    (#a == uparse "a" [not #b #a])
+    (didn't uparse "a" [not <any>])
+    (didn't uparse "a" [not <any> <any>])
+    (#a == uparse "a" [not [#b] #a])
     (
         wb: [#b]
-        uparse? "a" [not wb #a]
+        #a == uparse "a" [not wb #a]
     )
-    (not uparse? "aa" [not [#a #a] to <end>])
-    (uparse? "aa" [not [some #b] to <end>])
+    (didn't uparse "aa" [not [#a #a] to <end>])
+    ("" == uparse "aa" [not [some #b] to <end>])
 ]
 
 [
-    (not uparse? #{} [not <end>])
-    (uparse? #{0A} [not #{0B} #{0A}])
-    (not uparse? #{0A} [not <any>])
-    (not uparse? #{0A} [not <any> <any>])
-    (uparse? #{0A} [not [#{0B}] #{0A}])
+    (didn't uparse #{} [not <end>])
+    (#{0A} == uparse #{0A} [not #{0B} #{0A}])
+    (didn't uparse #{0A} [not <any>])
+    (didn't uparse #{0A} [not <any> <any>])
+    (#{0A} == uparse #{0A} [not [#{0B}] #{0A}])
     (
         wb: [#b]
-        uparse? #{0A} [not wb #{0A}]
+        #{0A} == uparse #{0A} [not wb #{0A}]
     )
-    (not uparse? #{0A0A} [not [#{0A} #{0A}] to <end>])
-    (uparse? #{0A0A} [not [some #{0B}] to <end>])
+    (didn't uparse #{0A0A} [not [#{0A} #{0A}] to <end>])
+    (#{} == uparse #{0A0A} [not [some #{0B}] to <end>])
 ]

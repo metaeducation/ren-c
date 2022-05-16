@@ -102,21 +102,21 @@
     (
         a: ~
         did all [
-            uparse? [] [a: collect []]
+            [] == uparse [] [a: collect []]
             a = []
         ]
     )
     (
         a: ~
         did all [
-            uparse? "" [a: collect []]
+            [] == uparse "" [a: collect []]
             a = []
         ]
     )
     (
         a: ~
         did all [
-            uparse? #{} [a: collect []]
+            [] == uparse #{} [a: collect []]
             a = []
         ]
     )
@@ -124,21 +124,21 @@
     (
         a: ~
         did all [
-            uparse? [1] [a: collect [keep <any>]]
+            [1] == uparse [1] [a: collect [keep <any>]]
             a = [1]
         ]
     )
     (
         a: ~
         did all [
-            uparse? "1" [a: collect [keep <any>]]
+            [#1] == uparse "1" [a: collect [keep <any>]]
             a = [#1]
         ]
     )
     (
         a: ~
         did all [
-            uparse? #{01} [a: collect [keep <any>]]
+            [1] == uparse #{01} [a: collect [keep <any>]]
             a = [1]
         ]
     )
@@ -166,7 +166,7 @@
 [(
     x: ~
     did all [
-        uparse? [1 2] [x: collect [
+        [1 2] == uparse [1 2] [x: collect [
             keep integer! keep tag! | keep integer! keep integer!
         ]]
         x = [1 2]
@@ -174,19 +174,19 @@
 )(
     x: ~
     did all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
-        uparse? "(abc)" [x: collect between keep "(" keep ")"]
+        ["(" ")"] == uparse "(abc)" [x: collect between keep "(" keep ")"]
         x = ["(" ")"]
     ]
 )(
     x: <before>
     did all [  ; semi-nonsensical use of BETWEEN just because it takes 2 rules
-        not uparse? "(abc}" [x: collect between "(" keep ")"]
+        didn't uparse "(abc}" [x: collect between "(" keep ")"]
         x = <before>
     ]
 )(
     x: ~
     did all [
-        uparse? "aaa" [x: collect [some [
+        [#a <kept> #a <kept> #a <kept>] == uparse "aaa" [x: collect [some [
             keep (try if false [<not kept>])
             keep <any>
             keep (try if true [<kept>])
@@ -235,19 +235,19 @@
 ; SOME KEEP vs KEEP SOME
 [
     (did all [
-        uparse? [1 2 3] [x: collect [keep some integer!]]
+        [3] == uparse [1 2 3] [x: collect [keep some integer!]]
         x = [3]
     ])
     (did all [
-        uparse? [1 2 3] [x: collect [some keep integer!]]
+        [1 2 3] == uparse [1 2 3] [x: collect [some keep integer!]]
         x = [1 2 3]
     ])
     (did all [
-        uparse? [1 2 3] [x: collect [keep ^[some integer!]]]
+        [3] == uparse [1 2 3] [x: collect [keep ^[some integer!]]]
         x = [3]
     ])
     (did all [
-        uparse? [1 2 3] [x: collect [some [keep ^integer!]]]
+        [1 2 3] == uparse [1 2 3] [x: collect [some [keep ^integer!]]]
         x = [1 2 3]
     ])
 ]
@@ -298,7 +298,7 @@
 ; Nested collect
 [
     (did all [
-        uparse? [1 2 3 4] [
+        [] == uparse [1 2 3 4] [
             a: collect [
                 keep integer!
                 b: collect [keep across 2 integer!]
@@ -340,7 +340,7 @@
         x = [1 [<pick> <me>] 2]
     ])
     (did all [
-        uparse? [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
+        [[a b c]] == uparse [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
         x = [[a b c]]
     ])
 ]
@@ -349,17 +349,19 @@
 https://github.com/metaeducation/ren-c/issues/935
 [
     (did all [
-        uparse? "aaabbb" [x: collect [keep across some "a" keep some "b"]]
+        ["aaa" "b"] == uparse "aaabbb" [
+            x: collect [keep across some "a" keep some "b"]
+        ]
         x = ["aaa" "b"]
     ])
 
     (did all [
-        uparse? "aaabbb" [x: collect [keep across to "b"] to <end>]
+        "" == uparse "aaabbb" [x: collect [keep across to "b"] to <end>]
         x = ["aaa"]
     ])
 
     (did all [
-        uparse? "aaabbb" [
+        ["b"] == uparse "aaabbb" [
             outer: collect [
                 some [inner: collect keep across some "a" | keep some "b"]
             ]
@@ -384,7 +386,7 @@ https://github.com/metaeducation/ren-c/issues/935
     (
         list: ~
         did all [
-            uparse? [a 3 4 t "test" 8] [
+            [3 4 8] == uparse [a 3 4 t "test" 8] [
                 list: collect [while [keep integer! | <any>]]
             ]
             list = [3 4 8]

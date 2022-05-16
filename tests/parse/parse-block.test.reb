@@ -12,15 +12,15 @@
 
 ; No-op rule of empty block should always match.
 [
-    (uparse? "" [])
-    (uparse? "" [[]])
-    (uparse? "" [[[]]])
+    (none? uparse "" [])
+    (none? uparse "" [[]])
+    (none? uparse "" [[[]]])
 
-    (uparse? [] [])
-    (uparse? [] [[[]]])
-    (not uparse? [x] [])
-    (not uparse? [x] [[[]]])
-    (uparse? [x] [[] 'x []])
+    (none? uparse [] [])
+    (none? uparse [] [[[]]])
+    (didn't uparse [x] [])
+    (didn't uparse [x] [[[]]])
+    (none? uparse [x] [[] 'x []])
 ]
 
 
@@ -33,14 +33,14 @@
     (
         res: 0
         did all [
-            uparse? [a] [res: wa]
+            'a == uparse [a] [res: wa]
             res = 'a
         ]
     )
     (
         res: 0
         did all [
-            uparse? [a a] [res: 2 wa]
+            'a == uparse [a a] [res: 2 wa]
             res = 'a
         ]
     )
@@ -48,10 +48,10 @@
 
 ; | means alternate clause
 [
-    (not uparse? [a b] ['b | 'a])
-    (uparse? [#a] [[#b | #a]])
-    (not uparse? [a b] [['b | 'a]])
-    (uparse? [a b] [['a | 'b] ['b | 'a]])
+    (didn't uparse [a b] ['b | 'a])
+    (#a == uparse [#a] [[#b | #a]])
+    (didn't uparse [a b] [['b | 'a]])
+    ('b == uparse [a b] [['a | 'b] ['b | 'a]])
 ]
 
 
@@ -73,7 +73,7 @@
     (
         x: ~
         did all [
-            uparse? [1] [x: [integer! opt text!]]
+            '~null~ == meta uparse [1] [x: [integer! opt text!]]
             x = null
         ]
     )
@@ -81,7 +81,7 @@
     (
         x: ~
         did all [
-            uparse? [1] [integer! x: [(null)]]
+            '~null~ == meta uparse [1] [integer! x: [(null)]]
             x = null
         ]
     )
@@ -141,14 +141,14 @@
     (
         res: ~
         did all [
-            uparse? [a a b] [<any> res: ['a | 'b] <any>]
+            'b == uparse [a a b] [<any> res: ['a | 'b] <any>]
             res = 'a
         ]
     )
     (
         res: '~before~
         did all [
-            not uparse? [a] [res: ['c | 'b]]
+            didn't uparse [a] [res: ['c | 'b]]
             res = '~before~
         ]
     )

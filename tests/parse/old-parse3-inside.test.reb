@@ -15,7 +15,7 @@
     obj: make object! [data: _]
 
     did all [
-        parse?/inside [1 2 3] [some rule] obj
+        did parse3/inside [1 2 3] [some rule] obj
         obj.data = [1 2 3]
         data = <unmodified>
     ]
@@ -30,7 +30,7 @@
     ]
 
     did all [
-        parse?/inside "aaa" [some ["a" rule]] obj
+        did parse3/inside "aaa" [some ["a" rule]] obj
         obj.stuff = ["hi" "hi" "hi"]
     ]
 )

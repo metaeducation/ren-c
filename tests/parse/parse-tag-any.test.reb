@@ -13,41 +13,41 @@
 (
     res: ~
     did all [
-        uparse? [a] [res: <any>]
+        'a == uparse [a] [res: <any>]
         res = 'a
     ]
 )
 
 [
-    (not uparse? [a a] [1 <any>])
-    (uparse? [a a] [2 <any>])
-    (not uparse? [a a] [3 <any>])
+    (didn't uparse [a a] [1 <any>])
+    ('a == uparse [a a] [2 <any>])
+    (didn't uparse [a a] [3 <any>])
 
-    (not uparse? [a a] [repeat ([1 1]) <any>])
-    (uparse? [a a] [repeat ([1 2]) <any>])
-    (uparse? [a a] [repeat ([2 2]) <any>])
-    (uparse? [a a] [repeat ([2 3]) <any>])
-    (not uparse? [a a] [repeat ([3 4]) <any>])
+    (didn't uparse [a a] [repeat ([1 1]) <any>])
+    ('a == uparse [a a] [repeat ([1 2]) <any>])
+    ('a == uparse [a a] [repeat ([2 2]) <any>])
+    ('a == uparse [a a] [repeat ([2 3]) <any>])
+    (didn't uparse [a a] [repeat ([3 4]) <any>])
 
-    (uparse? [a] [<any>])
-    (uparse? [a b] [<any> <any>])
-    (uparse? [a b] [<any> [<any>]])
-    (uparse? [a b] [[<any>] [<any>]])
+    ('a == uparse [a] [<any>])
+    ('b == uparse [a b] [<any> <any>])
+    ('b == uparse [a b] [<any> [<any>]])
+    ('b == uparse [a b] [[<any>] [<any>]])
 ]
 
 [
-    (not uparse? "aa" [1 <any>])
-    (uparse? "aa" [2 <any>])
-    (not uparse? "aa" [3 <any>])
+    (didn't uparse "aa" [1 <any>])
+    (#a == uparse "aa" [2 <any>])
+    (didn't uparse "aa" [3 <any>])
 
-    (not uparse? "aa" [repeat ([1 1]) <any>])
-    (uparse? "aa" [repeat ([1 2]) <any>])
-    (uparse? "aa" [repeat ([2 2]) <any>])
-    (uparse? "aa" [repeat ([2 3]) <any>])
-    (not uparse? "aa" [repeat ([3 4]) <any>])
+    (didn't uparse "aa" [repeat ([1 1]) <any>])
+    (#a == uparse "aa" [repeat ([1 2]) <any>])
+    (#a == uparse "aa" [repeat ([2 2]) <any>])
+    (#a == uparse "aa" [repeat ([2 3]) <any>])
+    (didn't uparse "aa" [repeat ([3 4]) <any>])
 
-    (uparse? "a" [<any>])
-    (uparse? "ab" [<any> <any>])
-    (uparse? "ab" [<any> [<any>]])
-    (uparse? "ab" [[<any>] [<any>]])
+    (#a == uparse "a" [<any>])
+    (#b == uparse "ab" [<any> <any>])
+    (#b == uparse "ab" [<any> [<any>]])
+    (#b == uparse "ab" [[<any>] [<any>]])
 ]

@@ -304,7 +304,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         //
         return rebValue(
             "as", Datatype_From_Kind(kind), "catch [",
-                "parse let v: load @", arg, "[",
+                "parse3 let v: load @", arg, "[",
                     "[any-sequence! | any-array!] end (throw first v)",
                     "| (throw v)",  // try to convert whatever other block
                 "]",

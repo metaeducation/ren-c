@@ -223,7 +223,7 @@ export proto-parser: context [
         is-fileheader: parsing-at position [
             try all [
                 lines: attempt [decode-lines lines {//} { }]
-                parse2? lines [copy data to {=///} to end]
+                did parse2 lines [copy data to {=///} to end]
                 data: attempt [load-until-blank trim/auto data]
                 data: attempt [
                     if set-word? first data/1 [data/1] else [false]

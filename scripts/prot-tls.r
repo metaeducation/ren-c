@@ -470,7 +470,7 @@ client-hello: func [
             [version version]
         ]
         block? version [
-            parse version [decimal! decimal!] else [
+            parse3 version [decimal! decimal!] else [
                 fail "BLOCK! /VERSION must be two DECIMAL! (min ver, max ver)"
             ]
             version
@@ -1626,7 +1626,7 @@ do-commands: func [
 
     let cmd
     let arg
-    parse commands [
+    parse3 commands [
         some [
             ; redundant `set cmd`, consider how ELIDE might improve it
             ; https://forum.rebol.info/t/1534/5

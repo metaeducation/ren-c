@@ -5,13 +5,13 @@
 ;
 ; Unlike R3-Alpha, changing the series being parsed is not allowed.
 
-(uparse? "a" [seek (_) "a"])
-(uparse? "aaabbb" ["a" pos: <here> 2 "a" seek (pos) 2 "a" 3 "b"])
-(uparse? "aaabbb" ["a" 2 "a" seek (2) 2 "a" 3 "b"])
+("a" == uparse "a" [seek (_) "a"])
+("b" == uparse "aaabbb" ["a" pos: <here> 2 "a" seek (pos) 2 "a" 3 "b"])
+("b" == uparse "aaabbb" ["a" 2 "a" seek (2) 2 "a" 3 "b"])
 
 (
     did all [
-        uparse? "aabbcc" [
+        "bbcc" == uparse "aabbcc" [
             some "a", x: <here>, some "b", y: <here>
             seek (x), z: across to <end>
         ]
@@ -30,15 +30,15 @@
 ; SEEK INTEGER! (replaces TO/THRU integer!
 ;
 [#1965
-    (uparse? "abcd" [seek (3) "cd"])
-    (uparse? "abcd" [seek (3) skip "d"])
-    (uparse? "abcd" [seek (4) skip])
-    (uparse? "abcd" [seek (5)])
-    (uparse? "abcd" ["ab" seek (1) "abcd"])
-    (uparse? "abcd" ["ab" seek (1) skip "bcd"])
+    ("cd" == uparse "abcd" [seek (3) "cd"])
+    ("d" == uparse "abcd" [seek (3) skip "d"])
+    ("d" == uparse "abcd" [seek (4) skip])
+    ("" == uparse "abcd" [seek (5)])
+    ("abcd" == uparse "abcd" ["ab" seek (1) "abcd"])
+    ("bcd" == uparse "abcd" ["ab" seek (1) skip "bcd"])
 ]
 
 ; !!! What to do about out-of-range skips?  It was tolerated historically but
-; seems to be a poor practice:
+; seems to be a poor practice.  It's an error at the moment.
 ;
-;    (uparse? "abcd" [seek (128)])
+(error? trap [uparse "abcd" [seek (128)]])

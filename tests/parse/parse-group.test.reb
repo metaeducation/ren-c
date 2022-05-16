@@ -9,13 +9,13 @@
 (
     three: 3
     did all [
-        uparse? "" [x: (three)]
+        3 == uparse "" [x: (three)]
         x = 3
     ]
 )
 (
     did all [
-        uparse? "" [x: (1 + 2)]
+        3 == uparse "" [x: (1 + 2)]
         x = 3
     ]
 )

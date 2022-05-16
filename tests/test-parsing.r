@@ -105,7 +105,7 @@ export collect-tests: function [
     ;
     append into clean-path file
 
-    append into collect [parse code [
+    append into collect [parse3 code [
         opt some [
             pos: <here>
 
@@ -189,7 +189,7 @@ export collect-logs: function [
         fail ["Unable to read " mold log-file]
     ]
 
-    parse log-contents [
+    parse3 log-contents [
         (guard: false)  ; trigger failure by default (may be set to true)
         opt some [
             opt some whitespace
@@ -213,7 +213,7 @@ export collect-logs: function [
                     {"} copy value to {"} skip
                     ; test result found
                     (
-                        parse value [
+                        parse3 value [
                             "succeeded" (value: 'succeeded)
                                 |
                             "failed" (value: 'failed)

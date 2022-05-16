@@ -48,7 +48,7 @@ make-banner: func [
     let spc: format ["**" 70 "**"] ""
 
     let [a b s]
-    parse fmt [
+    parse3 fmt [
         some [
             [
                 set a: text! (s: format ["**  " 68 "**"] a)
@@ -491,7 +491,7 @@ main-startup: func [
 
     loop [not tail? argv] [
 
-        let is-option: parse?/case argv.1 [
+        let is-option: did parse3/case argv.1 [
 
             ["--" end] (
                 ; Double-dash means end of command line arguments, and the
@@ -679,7 +679,7 @@ main-startup: func [
         ; heuristic is to check for more than one letter.
         ;
         alphanum: charset [#"A" - #"Z" #"a" - #"z" #"0" #"9"]
-        o.script: parse o.script [alphanum some alphanum ":" to <end>] then [
+        o.script: parse3 o.script [alphanum some alphanum ":" to <end>] then [
             to url! o.script
         ]
         else [

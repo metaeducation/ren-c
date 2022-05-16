@@ -17,7 +17,7 @@
     (
         res: ~
         did all [
-            uparse? [a] [res: word!]
+            'a == uparse [a] [res: word!]
             res = 'a
         ]
     )
@@ -25,7 +25,7 @@
         res: ~
         res2: ~
         did all [
-            uparse? [a] [res: res2: 'a]
+            'a == uparse [a] [res: res2: 'a]
             res = 'a
             res2 = 'a
         ]
@@ -35,35 +35,37 @@
 
 (
     did all [
-        uparse? "***{A String} 1020" [some "*", t: text!, i: integer!]
+        1020 == uparse "***{A String} 1020" [some "*", t: text!, i: integer!]
         t = {A String}
         i = 1020
     ]
 )
 
 [
-    (uparse? [a 123] ['a integer!])
-    (not uparse? [a 123] ['a char!])
-    (uparse? [a 123] [['a] [integer!]])
-    (not uparse? [a 123] ['a [char!]])
-    (uparse? [123] [any-number!])
-    (not uparse? [123] [any-string!])
-    (uparse? [123] [[any-number!]])
-    (not uparse? [123] [[any-string!]])
+    (123 == uparse [a 123] ['a integer!])
+    (didn't uparse [a 123] ['a char!])
+    (123 == uparse [a 123] [['a] [integer!]])
+    (didn't uparse [a 123] ['a [char!]])
+    (123 == uparse [123] [any-number!])
+    (didn't uparse [123] [any-string!])
+    (123 == uparse [123] [[any-number!]])
+    (didn't uparse [123] [[any-string!]])
 ]
 
 [
     (
         res: ~
         did all [
-            uparse? [a 123] ['a (res: 1) [char! (res: 2) | integer! (res: 3)]]
+            3 == uparse [a 123] [
+                'a (res: 1) [char! (res: 2) | integer! (res: 3)]
+            ]
             res = 3
         ]
     )
     (
         res: ~
         did all [
-            not uparse? [a 123] ['a (res: 1) [char! (res: 2) | text! (res: 3)]]
+            didn't uparse [a 123] ['a (res: 1) [char! (res: 2) | text! (res: 3)]]
             res = 1
         ]
     )
@@ -87,10 +89,10 @@
 ;
 [https://github.com/red/red/issues/4682
 
-    (uparse? to binary! {https://example.org"} [
+    (none? uparse to binary! {https://example.org"} [
         x: across url! (assert [{https://example.org"} == as text! to url! x])
     ])
-    (uparse? to binary! {a@b.com"} [
+    ({"} == uparse to binary! {a@b.com"} [
         x: across email! (assert [a@b.com == to email! to text! x])
         {"}
     ])
@@ -99,14 +101,14 @@
 [https://github.com/red/red/issues/4678
     ('~blank~ = meta uparse to binary! "_" [blank!])
 
-    (not uparse? to binary! "#(" [blank!])
-    (not uparse? to binary! "(" [blank!])
-    (not uparse? to binary! "[" [blank!])
+    (didn't uparse to binary! "#(" [blank!])
+    (didn't uparse to binary! "(" [blank!])
+    (didn't uparse to binary! "[" [blank!])
 ]
 
 ; QUOTED! needs to be recognized (KIND OF VALUE and TYPE OF VALUE are currently
 ; different, and this had caused a problem)
 [
-    (uparse? ['x] [quoted!])
-    (uparse? [' '() '[]] [3 quoted!])
+    ((the 'x) == uparse ['x] [quoted!])
+    ((the '[]) == uparse [' '() '[]] [3 quoted!])
 ]

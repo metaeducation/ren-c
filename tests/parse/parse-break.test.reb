@@ -15,11 +15,11 @@
 
 ; You should be able to break at any depth
 [
-    (not uparse? "aaa" [some ["a" break] "aaa"])
-    (not uparse? "aaa" [some ["a" [break]] "aaa"])
-    (not uparse? "aaa" [some ["a" [["a" | break]]] "aaa"])
+    (didn't uparse "aaa" [some ["a" break] "aaa"])
+    (didn't uparse "aaa" [some ["a" [break]] "aaa"])
+    (didn't uparse "aaa" [some ["a" [["a" | break]]] "aaa"])
 
-    (uparse? "aaa" [opt some ["a" break] "aaa"])
-    (uparse? "aaa" [opt some ["a" [break]] "aaa"])
-    (uparse? "aaa" [opt some ["a" [["a" break]]] "aaa"])
+    ("aaa" == uparse "aaa" [opt some ["a" break] "aaa"])
+    ("aaa" == uparse "aaa" [opt some ["a" [break]] "aaa"])
+    ("aaa" == uparse "aaa" [opt some ["a" [["a" break]]] "aaa"])
 ]

@@ -186,7 +186,7 @@ insert tail words to word! :elem
 ) | skip
 ]
 ]]
-parse block rule
+parse3 block rule
 words
 ]
 cfor: func [
@@ -225,7 +225,7 @@ set item any-word! (insert tail locals to word! :item) | skip
 ]] [[
 set item any-word! (insert tail locals to word! :item) | skip
 ]]
-parse spec [any item-rule]
+parse3 spec [any item-rule]
 locals
 ]
 funcs: func [

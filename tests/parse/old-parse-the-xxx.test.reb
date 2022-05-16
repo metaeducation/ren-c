@@ -29,11 +29,11 @@
 
     (
         x: [some rule]
-        uparse? data [some @x]
+        ~unknown~ = uparse data [some @x]
     )(
-        uparse? data [some @([some rule])]
+        ~unknown~ = uparse data [some @([some rule])]
     )(
         obj: make object! [x: [some rule]]
-        uparse? data [some @obj.x]
+        ~unknown~ uparse data [some @obj.x]
     )
 ]

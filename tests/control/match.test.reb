@@ -87,6 +87,5 @@
     ]
     true)
 
-    ("aaa" = match+ match-parse "aaa" [some "a"])
-    (null = match+ parse "aaa" [some "b"])
+    (null = match+ parse3 "aaa" [some "b"])
 ]

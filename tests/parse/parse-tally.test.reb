@@ -15,3 +15,5 @@
     ]
     inner = "stuff"
 ])
+
+(3 == uparse "abbcccabb" [tally ["a" 2 "b" | 3 "c"]])

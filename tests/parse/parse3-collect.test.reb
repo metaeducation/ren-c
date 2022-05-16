@@ -10,19 +10,19 @@
 ; (like a SET or COPY) instead of affecting the return result.
 
 (did all [
-    parse? [1 2 3] [x: collect [keep [some integer!]]]
+    did parse3 [1 2 3] [x: collect [keep [some integer!]]]
     x = [1 2 3]
 ])
 (did all [
-    parse? [1 2 3] [x: collect [some [keep integer!]]]
+    did parse3 [1 2 3] [x: collect [some [keep integer!]]]
     x = [1 2 3]
 ])
 (did all [
-    parse? [1 2 3] [x: collect [keep ^[some integer!]]]
+    did parse3 [1 2 3] [x: collect [keep ^[some integer!]]]
     x = [[1 2 3]]
 ])
 (did all [
-    parse? [1 2 3] [x: collect [some [keep ^integer!]]]
+    did parse3 [1 2 3] [x: collect [some [keep ^integer!]]]
     x = [[1] [2] [3]]
 ])
 
@@ -62,14 +62,14 @@
 
 (did all [
     x: <before>
-    null = parse [1 2] [x: collect [keep integer! keep text!]]
+    null = parse3 [1 2] [x: collect [keep integer! keep text!]]
     x = <before>
 ])
 
 ; Nested collect
 
 (did all [
-    parse? [1 2 3 4] [
+    did parse3 [1 2 3 4] [
         a: collect [
             keep integer!
             b: collect [keep [2 integer!]]
@@ -112,7 +112,7 @@
     x = [1 [<pick> <me>] 2]
 ])
 (did all [
-    parse? [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
+    did parse3 [1 2 3] [x: collect [keep ^([a b c]) to <end>]]
     x = [[a b c]]
 ])
 
@@ -120,17 +120,17 @@
 https://github.com/metaeducation/ren-c/issues/935
 [
     (did all [
-        parse? "aaabbb" [x: collect [keep some "a" keep some "b"]]
+        did parse3 "aaabbb" [x: collect [keep some "a" keep some "b"]]
         x = ["aaa" "bbb"]
     ])
 
     (did all [
-        parse? "aaabbb" [x: collect [keep to "b"] to <end>]
+        did parse3 "aaabbb" [x: collect [keep to "b"] to <end>]
         x = ["aaa"]
     ])
 
     (did all [
-        parse? "aaabbb" [
+        did parse3 "aaabbb" [
             outer: collect [
                 some [inner: collect keep some "a" | keep some "b"]
             ]
@@ -146,7 +146,7 @@ https://github.com/metaeducation/ren-c/issues/935
     x: <x>
     y: <y>
     did all [
-        parse? "aaa" [let x: collect [some [keep "a"]], (y: x)]
+        did parse3 "aaa" [let x: collect [some [keep "a"]], (y: x)]
         x = <x>
         y = ["a" "a" "a"]
     ]
@@ -155,5 +155,5 @@ https://github.com/metaeducation/ren-c/issues/935
 ; Special tweak to make COLLECT work as a synthesized result value, just to
 ; give a hint at what's coming as UPARSE features go mainline.
 (
-    ["a" "a" "a"] = parse "aaa" [collect [some [keep "a"]]]
+    ["a" "a" "a"] = parse3 "aaa" [collect [some [keep "a"]]]
 )
