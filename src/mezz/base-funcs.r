@@ -31,35 +31,6 @@ assert: func* [
     ; there was no idea of a "debug mode"
 ]
 
-
-maybe: enfixed func* [
-    "Set word or path to a default value if that value is a value"
-
-    return: [<opt> any-value!]
-    'target [set-word! set-path!]
-        "The word to which might be set"
-    optional [<opt> any-value!]
-        "Value to assign only if it is not null"
-][
-    if semiquoted? 'optional [
-        ;
-        ; While DEFAULT requires a BLOCK!, MAYBE does not.  Catch mistakes
-        ; such as `x: maybe [...]`
-        ;
-        fail @optional [
-            "Literal" type of :optional "used w/MAYBE, use () if intentional"
-        ]
-    ]
-
-    ; Note that right evaluates before left here:
-    ;
-    ; https://github.com/rebol/rebol-issues/issues/2275
-    ;
-    if null? :optional [return get/any target]
-    return set target :optional
-]
-
-
 steal: func* [
     {Return a variable's value prior to an assignment, then do the assignment}
 

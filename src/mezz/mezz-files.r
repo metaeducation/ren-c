@@ -411,13 +411,17 @@ to-relative-file: function [
                 file: next tmp
             ]
         ]
-        file: maybe find/match/tail file file-to-local what-dir
+        find/match/tail file file-to-local what-dir then pos -> [
+            file: pos  ; !!! https://forum.rebol.info/t/1582/6
+        ]
         if as-rebol [
             file: local-to-file file
             no-copy: true
         ]
     ] else [
-        file: maybe find/match/tail file what-dir
+        find/match/tail file what-dir then pos -> [
+            file: pos  ; !!! https://forum.rebol.info/t/1582/6
+        ]
         if as-local [
             file: file-to-local file
             no-copy: true

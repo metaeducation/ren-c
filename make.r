@@ -1468,7 +1468,7 @@ for-each [category entries] file-base [
         ]
         block! [
             for-each entry entries [
-                entry: maybe if block? entry [first entry]
+                if block? entry [entry: first entry]
                 switch type of entry [
                     word!  ; if bootstrap executable
                     tuple! [  ; if generic-tuple enabled

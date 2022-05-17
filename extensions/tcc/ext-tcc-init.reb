@@ -323,7 +323,7 @@ compile: func [
     let librebol: false
 
     compilables: map-each item compilables [
-        item: maybe if match [word! path!] :item [get item]
+        if match [word! path!] :item [item: get item]
 
         switch type of :item [
             action! [

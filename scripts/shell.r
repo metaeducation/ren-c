@@ -131,11 +131,11 @@ shell: func [
         ; To bypass this behavior, use GET-GROUP! or GET-BLOCK!
 
         let splice: <default>
-        item: maybe switch type of item [
-            group! [splice: false, try do item]
+        switch type of item [
+            group! [splice: false, item: try do item]
 
-            get-group! [splice: true, try do item]
-            get-block! [splice: true, as block! item]
+            get-group! [splice: true, item: try do item]
+            get-block! [splice: true, item: as block! item]
         ]
         let needs-quotes?: func [return: [logic!] item] [
             if match [word! issue!] item [return false]  ; never quoted

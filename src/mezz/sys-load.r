@@ -463,7 +463,9 @@ import*: func [
 
     ; If URL is decorated source (syntax highlighting, etc.) get raw form.
     ;
-    source: maybe adjust-url-for-raw try match url! :source
+    (adjust-url-for-raw try match url! :source) then adjusted -> [
+        source: adjusted  ; !!! https://forum.rebol.info/t/1582/6
+    ]
 
 
     === TREAT (IMPORT 'FILENAME) AS REQUEST TO LOOK LOCALLY FOR FILENAME.R ===
