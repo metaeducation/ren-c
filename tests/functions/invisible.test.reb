@@ -315,25 +315,25 @@
 (
     x: <unchanged>
     did all [
-        'need-non-end = (trap [<discarded> x: ()]).id
+        <unchanged> = (<discarded> x: ())
         x = <unchanged>
     ]
 )(
     x: <unchanged>
     did all [
-        'need-non-end = (trap [<discarded> x: comment "hi"]).id
+        <unchanged> = (<discarded> x: comment "hi")
         x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
     did all [
-        'need-non-end = (trap [<discarded> obj.x: comment "hi"]).id
+        <unchanged> = (<discarded> obj.x: comment "hi")
         obj.x = <unchanged>
     ]
 )(
     obj: make object! [x: <unchanged>]
     did all [
-        'need-non-end = (trap [<discarded> obj.x: ()]).id
+        <unchanged> = (<discarded> obj.x: ())
         obj.x = <unchanged>
     ]
 )

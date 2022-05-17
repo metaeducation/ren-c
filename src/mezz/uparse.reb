@@ -1084,6 +1084,14 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         ([^result' (remainder)]: parser input) else [return null]
+
+        ; Policy for assigning voids is the expression evaluates to the old
+        ; value (whatever that was, including unset).
+        ;
+        ; https://forum.rebol.info/t/1582/5
+        ;
+        if result' = '~void~ [return get/any value]
+
         set value unmeta result'
         return unmeta result'
     ]
@@ -1097,6 +1105,14 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         ([^result' (remainder)]: parser input) else [return null]
+
+        ; Policy for assigning voids is the expression evaluates to the old
+        ; value (whatever that was, including unset).
+        ;
+        ; https://forum.rebol.info/t/1582/5
+        ;
+        if result' = '~void~ [return get/any value]
+
         set value unmeta result'
         return unmeta result'
     ]
@@ -2817,17 +2833,17 @@ uparse*: func [
     return/isotope isotopify-if-falsey unmeta synthesized'
 ]
 
-uparse: comment [redescribe [  ; redescribe not working at the moment (?)
+uparse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, must match to end (see also UPARSE*)}
-] ] (
+] ]
     :uparse*/fully
 )
 
 sys.uparse: :uparse  ; !!! expose UPARSE to SYS module, hack...
 
-match-uparse: comment [redescribe [  ; redescribe not working at te moment (?)
+match-uparse: (comment [redescribe [  ; redescribe not working at the moment (?)
     {Process input in the parse dialect, input if match (see also UPARSE*)}
-] ] (
+] ]
     ; Note: Users could write `uparse data [...rules... || <input>]` and get
     ; the same effect generally.
     ;

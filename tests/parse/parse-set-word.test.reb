@@ -74,3 +74,23 @@
         ]
     )
 ]
+
+; Invisible assignments will leave the variable's existing content alone, which
+; is a new rule being pushed through systemically.
+;
+; https://forum.rebol.info/t/1582/5
+(
+    x: ~, y: 10
+    did all [
+        <result> = uparse "a" [x: y: elide "a" (<result>)]
+        x = 10
+        y = 10
+    ]
+)(
+    obj: make object! [x: ~, y: 10]
+    did all [
+        <result> = uparse "a" [obj.x: obj.y: elide "a" (<result>)]
+        obj.x = 10
+        obj.y = 10
+    ]
+)

@@ -206,30 +206,27 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
             return true;
     }
     else {  // !!! Reusing the frame, would inert optimization be worth it?
-        do {
-            // !!! If reevaluating, this will forget that we are doing so.
-            //
-            STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
+        // !!! If reevaluating, this will forget that we are doing so.
+        //
+        STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
 
-            if (Eval_Maybe_Stale_Throws(f))  // reuse `f`
-                return true;
+        if (Eval_Maybe_Stale_Throws(f))  // reuse `f`
+            return true;
 
-            // Keep evaluating as long as evaluations vanish, e.g.
-            // `x: comment "hi" 2` shouldn't fail.
-            //
-            // !!! Note this behavior is already handled by FULFILLING_ARG
-            // but but we are reusing a frame that may-or-may-not be
-            // fulfilling.  There may be a better way of centralizing this.
-            //
-        } while (IS_END(f->out) and NOT_END(f_next));
-    }
-
-    if (IS_END(f->out)) {
-        if (IS_META(v))   // allow (@ comment "hi"), makes ~void~
-            return false;
-
-        // e.g. `do [x: ()]` or `(x: comment "hi")`.
-        fail (Error_Need_Non_End(v));
+        // We *could* keep evaluating as long as evaluations vanish:
+        //
+        //    >> x: 1020
+        //
+        //    >> x: comment "hi" 2
+        //    == 2
+        //
+        //    >> x
+        //    == 2
+        //
+        // But this is not done.  Instead, we treat an invisible evaluation
+        // step as a no-op that evaluates to the value of the variable.
+        //
+        // https://forum.rebol.info/t/1582/5
     }
 
     CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // this helper counts as eval
@@ -750,6 +747,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
             goto return_thrown;
 
+        if (IS_END(f->out)) {  // invisible, e.g. `x: comment "hi"`
+            gotten = Lookup_Word_May_Fail(v, v_specifier);
+
+            Copy_Cell(f->out, unwrap(gotten));
+            assert(NOT_CELL_FLAG(f->out, UNEVALUATED));
+            break;
+        }
+
         if (IS_ACTION(f->out))  // cache the word's label in the cell
             INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
 
@@ -1156,6 +1161,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
       case REB_SET_TUPLE: {
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))
             goto return_thrown;
+
+        if (IS_END(f->out)) {  // invisible, e.g. `obj.x: comment "hi"`
+            if (Get_Var_Core_Throws(f->out, f_spare, v, v_specifier)) {
+                goto return_thrown;
+            }
+            assert(NOT_CELL_FLAG(f->out, UNEVALUATED));
+            break;
+        }
 
         if (Set_Var_Core_Throws(f_spare, f_spare, v, v_specifier, f->out)) {
             Move_Cell(f->out, f_spare);

@@ -296,10 +296,12 @@ REBARR *Make_Let_Patch(
 //
 //  {Dynamically add a new binding into the stream of evaluation}
 //
-//      return: "Vanishes if argument is a SET form, else gives the new vars"
-//          [<invisible> word! block!]
+//      return: "Expression result if SET form, else gives the new vars"
+//          [<opt> any-value!]
 //      :vars "Variable(s) to create, GROUP!s must evaluate to BLOCK! or WORD!"
 //          [<variadic> word! block! set-word! set-block! group! set-group!]
+//      :expression "Optional Expression to assign"
+//          [<variadic> <end> <opt> any-value!]
 //  ]
 //
 REBNATIVE(let)
@@ -311,6 +313,7 @@ REBNATIVE(let)
     // can access the frame and feed directly).
     //
     UNUSED(ARG(vars));
+    UNUSED(ARG(expression));
     REBFRM *f = frame_;
 
     if (IS_END(f_value))  // e.g. `(let)`
@@ -522,8 +525,15 @@ REBNATIVE(let)
     // If the expression is a SET-WORD!, e.g. `let x: 1 + 2`, then the LET
     // vanishes and leaves behind the `x: 1 + 2` for the ensuing evaluation.
     //
-    if (IS_SET_WORD(f_value) or IS_SET_BLOCK(f_value))
-        RETURN_INVISIBLE;
+    if (IS_SET_WORD(f_value) or IS_SET_BLOCK(f_value)) {
+        REBFLGS flags = EVAL_MASK_DEFAULT
+            | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
+
+        if (Eval_Step_In_Subframe_Throws(f->out, f, flags))
+            return R_THROWN;
+
+        return D_OUT;
+    }
 
     assert(IS_WORD(f_value) or IS_BLOCK(f_value));
     Derelativize(D_OUT, f_value, f_specifier);

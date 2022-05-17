@@ -169,7 +169,8 @@
 )
 
 [#68 https://github.com/metaeducation/ren-c/issues/876
-    ('need-non-end = (trap [a: ()]).id)
+    ('need-non-end = (trap [a:]).id)
+    (a: 1020, 1020 = a: ())
 ]
 
 

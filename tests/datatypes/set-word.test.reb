@@ -40,13 +40,14 @@
 )]
 
 [https://github.com/metaeducation/ren-c/issues/876 (
-    e: trap [1 x: ()]
-    e.id = 'need-non-end
+    x: 1020
+    1020 = (null, x: ())
 )(
-    2 = (x: comment "Hi" 2)
-)(
-    e: trap [x: comment "Hi"]
-    e.id = 'need-non-end
+    x: 1020
+    did all [
+        2 = (x: comment "Hi" 2)
+        x = 1020
+    ]
 )(
     bad-word? ^ x: lib.print "Hi"  ; generally you shouldn't use PRINT
 )]
