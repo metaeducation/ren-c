@@ -76,10 +76,4 @@
     ; ('~none~ = if true ^[])
     ; ('~custom~ = if true ^[~custom~])
     ; (''~custom~ = if true ^['~custom~])
-
-    ; (null = ^ if true @[null])
-    ; ('~null~ = ^ if true @[heavy null])
-    ; ('~none~ = ^ if true @[])
-    ; ('~custom~ = ^ if true @[~custom~])
-    ; (''~custom~ = ^ if true @['~custom~])
 ]

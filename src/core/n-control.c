@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -39,11 +39,11 @@
 //
 //   (See %sys-bad-word.h for more details about isotopes.)
 //
-// * Some branch forms can subvert the conversion of NULL to isotopes.
-//
 // * Zero-arity function values used as branches will be executed, and
 //   single-arity functions used as branches will also be executed--but passed
-//   the value of the triggering condition.
+//   the value of the triggering condition.  Isotopes of NULL, FALSE, and
+//   BLANK are decayed before being passed to the function, unless the argument
+//   is taken as a ^META parameter.
 //
 //   (See Do_Branch_Throws() for supported ANY-BRANCH! types and behaviors.)
 //
@@ -110,99 +110,14 @@ REBNATIVE(either)
 
 
 //
-//  else: enfix native [
-//
-//  {If input is not null, return that value, otherwise evaluate the branch}
-//
-//      return: "Input value if not null, or branch result"
-//          [<opt> any-value!]
-//      ^optional "<deferred argument> Run branch if this is null"
-//          [<opt> any-value!]
-//      :branch [any-branch!]
-//  ]
-//
-REBNATIVE(else)  // see `tweak :else #defer on` in %base-defs.r
-{
-    INCLUDE_PARAMS_OF_ELSE;
-
-    if (not IS_NULLED(ARG(optional))) {
-        //
-        // We have to use a ^meta parameter in order to detect the
-        // difference between NULL (which runs the branch) and a ~null~
-        // isotope (which does not run the branch).  But we don't want to
-        // actually return a quoted parameter.
-        //
-        RETURN (Meta_Unquotify(ARG(optional)));
-    }
-
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), Lib(NULL)))
-        return R_THROWN;
-
-    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
-}
-
-
-//
-//  didn't: native [
-//
-//  {Synonym for NULL? that is isotope tolerant (e.g. prefix ELSE)}
-//
-//      return: [logic!]
-//      ^optional "Argument to test"
-//          [<opt> any-value!]
-//  ]
-//
-REBNATIVE(didnt)
-{
-    INCLUDE_PARAMS_OF_DIDNT;
-
-    return Init_Logic(D_OUT, IS_NULLED(ARG(optional)));
-}
-
-
-//
-//  then: enfix native [
-//
-//  {If input is null, return null, otherwise evaluate the branch}
-//
-//      return: "null if input is null, or branch result"
-//          [<opt> any-value!]
-//      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> any-value!]
-//      :branch "If arity-1 ACTION!, receives value that triggered branch"
-//          [any-branch!]
-//  ]
-//
-REBNATIVE(then)  // see `tweak :then #defer on` in %base-defs.r
-{
-    INCLUDE_PARAMS_OF_THEN;
-
-    REBVAL *optional = ARG(optional);
-
-    if (IS_NULLED(optional))
-        return nullptr;  // left didn't run, so signal THEN didn't run either
-
-    // We received the left hand side as ^meta, so it's quoted in order
-    // to tell the difference between the NULL and ~null~ isotope.  Now that's
-    // tested, unquote it back to normal.
-    //
-    Meta_Unquotify(optional);
-
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), optional))
-        return R_THROWN;
-
-    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
-}
-
-
-//
 //  did: native [
 //
-//  {Synonym for NOT NULL? that is isotope tolerant (e.g. prefix THEN)}
+//  {Synonym for NOT NULL? that is isotope tolerant (IF DID is prefix THEN)}
 //
 //      return: [logic!]
 //      ^optional "Argument to test"
 //          [<opt> any-value!]
+//      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
 REBNATIVE(_did_)  // see TO-C-NAME
@@ -228,21 +143,83 @@ REBNATIVE(_did_)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF__DID_;
 
-    REBVAL *v = ARG(optional);
+    REBVAL *in = ARG(optional);
 
-    if (IS_NULLED(v))
+    if (IS_NULLED(in))
         return Init_False(D_OUT);
 
-    Meta_Unquotify(v);
-
-    if (IS_BLANK(v) or IS_LOGIC(v))
-        fail (
-            "SEMANTIC CHANGE: DID tests against NULL only, temporarily not"
-            " working with blank or logic...use THEN or TO-LOGIC in meantime"
-            " https://forum.rebol.info/t/498/2"
-        );
+    if (REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL)
+        return Init_False(D_OUT);
 
     return Init_True(D_OUT);
+}
+
+
+//
+//  didn't: native [
+//
+//  {Synonym for NULL? that is isotope tolerant (IF DIDN'T is prefix ELSE)}
+//
+//      return: [logic!]
+//      ^optional "Argument to test"
+//          [<opt> any-value!]
+//      /decay "Pre-decay ~null~ isotope input to NULL"
+//  ]
+//
+REBNATIVE(didnt)
+{
+    INCLUDE_PARAMS_OF_DIDNT;
+
+   REBVAL *in = ARG(optional);
+
+    if (IS_NULLED(in))
+        return Init_True(D_OUT);
+
+    if (REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL)
+        return Init_True(D_OUT);
+
+    return Init_False(D_OUT);
+}
+
+
+//
+//  then: enfix native [
+//
+//  {If input is null, return null, otherwise evaluate the branch}
+//
+//      return: "null if input is null, or branch result"
+//          [<opt> any-value!]
+//      ^optional "<deferred argument> Run branch if this is not null"
+//          [<opt> any-value!]
+//      :branch "If arity-1 ACTION!, receives value that triggered branch"
+//          [any-branch!]
+//      /decay "Pre-decay ~null~ isotope input to NULL"
+//  ]
+//
+REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
+{
+    INCLUDE_PARAMS_OF_THEN;
+
+    REBVAL *in = ARG(optional);
+
+    if (IS_NULLED(in))
+        return nullptr;  // left didn't run, so signal THEN didn't run either
+
+    if (REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL)
+        return nullptr;  // left was ~null~ isotope, let that opt out too
+
+    // We received the left hand side as ^meta, so it's quoted in order
+    // to tell the difference between the NULL and ~null~ isotope.  Now
+    // that's tested, unquote it back to normal.
+    //
+    Meta_Unquotify(in);
+
+    // Do_Branch_With() will decay ~null~ isotopes to NULL for non-meta actions
+    //
+    if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
+        return R_THROWN;
+
+    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
 
 
@@ -257,27 +234,89 @@ REBNATIVE(_did_)  // see TO-C-NAME
 //          [<opt> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
+//      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
-REBNATIVE(also)  // see `tweak :also #defer on` in %base-defs.r
+REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
+//
+// Note: This could be a specialization of THEN if it had a /INPUT parameter
+// to tell it to return its input.  But it's a short enough function that it's
+// likely cleaner this way...and speeds up THEN to not have the extra burden.
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    REBVAL *optional = ARG(optional);
+    REBVAL *in = ARG(optional);
 
-    if (IS_NULLED(optional))
+    if (IS_NULLED(in))
         return nullptr;  // telegraph original input, but don't run
+
+    if (REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL)
+        return nullptr;  // left was ~null~ isotope, let that opt out too
 
     // We received the left hand side as ^meta, so it's quoted in order
     // to tell the difference between the NULL and a ~null~ isotope.  Now
     // that's tested we know it's not plain NULL, so put it back to normal.
     //
-    Meta_Unquotify(optional);
+    Meta_Unquotify(in);
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), optional))
+    // Do_Branch_With() will decay ~null~ isotopes to NULL for non-meta actions
+    //
+    if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
         return R_THROWN;
 
-    RETURN (optional);  // ran, but pass thru the original input
+    RETURN (in);  // ran, but pass thru the original input--not branch output
+}
+
+
+//
+//  else: enfix native [
+//
+//  {If input is not null, return that value, otherwise evaluate the branch}
+//
+//      return: "Input value if not null, or branch result"
+//          [<opt> any-value!]
+//      ^optional "<deferred argument> Run branch if this is null"
+//          [<opt> any-value!]
+//      :branch [any-branch!]
+//      /decay "Pre-decay ~null~ isotope input to NULL"
+//  ]
+//
+REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
+{
+    INCLUDE_PARAMS_OF_ELSE;
+
+    REBVAL *in = ARG(optional);
+
+    if (IS_NULLED(in)) {
+        // Common trigger for running an ELSE's branch
+    }
+    else if (
+        REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL
+    ){
+        // Since the input is a ^META parameter, this signals a null isotope.
+        // When /DECAY is specified we trigger running the branch here also.
+        // Do_Branch_With() decays ~null~ isotopes to NULL for non-meta actions
+        //
+        // !!! While it may be misleading to call it /DECAY to trigger and not
+        // decay what's passed to the function, the ostensible only reason an
+        // ELSE would ever have a function taking a parameter would be to know
+        // the distinction.
+        //
+        Init_Isotope(in, Canon(NULL));
+    }
+    else {
+        // We have to use a ^meta parameter in order to detect the difference
+        // between NULL (which runs the branch) and a ~null~ isotope (which
+        // does not run the branch, unless we are decaying).  But we don't want
+        // to actually return a quoted parameter.
+        //
+        RETURN (Meta_Unquotify(ARG(optional)));
+    }
+
+    if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
+        return R_THROWN;
+
+    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
 
 

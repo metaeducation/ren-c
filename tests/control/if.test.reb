@@ -141,7 +141,7 @@
 [(
     x: ~
     did all [
-        <else> = if true @[x: <branch>, null] else [<else>]
+        <else> = if true [x: <branch>, null] *else [<else>]
         x = <branch>
     ]
 )

@@ -21,15 +21,6 @@ Rebol [
 import %test-framework.r
 
 
-=== TEMPORARILY MAKE DID AS USED IN TEST THE ULTIMATE FORM ===
-
-; We want to allow DID ALL and DID ANY which are common in the tests.
-; But right now they're choking on LOGIC! just to help find problems.
-; Use the awkwardly-named THEN for the moment on these.
-
-lib.did: :then?
-
-
 === SET UP FLAGS FOR WHICH TESTS TO RUN ===
 
 flags: pick [

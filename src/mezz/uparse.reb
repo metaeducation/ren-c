@@ -2050,9 +2050,9 @@ default-combinators: make map! reduce [
             ; synonym for ISSUE!, instead of the "type constraint" META-WORD!
             ;
             value = 'char! [issue!]
-            true @[get value]
+            true [get value]
         ]
-        else [
+        *else [
             fail "WORD! fetches cannot be NULL in UPARSE (use BLANK!)"
         ]
 

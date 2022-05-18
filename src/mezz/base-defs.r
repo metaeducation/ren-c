@@ -54,17 +54,6 @@ probe: func* [
 ??: :probe  ; shorthand to use in debug sessions, not intended to be committed
 
 
-; Give special operations their special properties
-;
-; !!! There may be a function spec property for these, but it's not currently
-; known what would be best for them.  They aren't parameter conventions, they
-; apply to the whole action.
-;
-tweak :else 'defer on
-tweak :then 'defer on
-tweak :also 'defer on
-
-
 ; The pattern `foo: enfix function [...] [...]` is probably more common than
 ; enfixing an existing function, e.g. `foo: enfix :add`.  Hence making a
 ; COPY of the ACTION! identity is probably a waste.  It may be better to go
@@ -75,6 +64,30 @@ tweak :also 'defer on
 ; https://forum.rebol.info/t/moving-enfixedness-back-into-the-action/1156
 ;
 enfixed: chain* reduce [:copy, :enfix]
+
+
+; Pre-decaying specializations for DID, DIDN'T, THEN, ELSE, ALSO
+;
+; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
+;
+did*: :did/decay
+didn't*: :didn't/decay
+*then: enfixed :then/decay
+*also: enfixed :also/decay
+*else: enfixed :else/decay
+
+; Give special operations their special properties
+;
+; !!! There may be a function spec property for these, but it's not currently
+; known what would be best for them.  They aren't parameter conventions, they
+; apply to the whole action.
+;
+tweak :then 'defer on
+tweak :also 'defer on
+tweak :else 'defer on
+tweak :*then 'defer on
+tweak :*also 'defer on
+tweak :*else 'defer on
 
 
 ; ARITHMETIC OPERATORS
@@ -335,13 +348,6 @@ reframer: enclose :reframer* func* [f] [
 reorder: enclose :reorder* func* [f] [
     set let action :f.action  ; don't cache name via SET-WORD!
     inherit-meta do f :action
-]
-
-; Temporarily provide THEN? as unchecked DID, until all the logic testing
-; versions of DID are converted to TO-LOGIC.
-;
-then?: func* [return: [logic!] ^optional [<opt> any-value!]] [
-    not null? optional
 ]
 
 ; !!! The native R3-Alpha parse functionality doesn't have parity with UPARSE's

@@ -162,38 +162,14 @@ inline static bool Do_Branch_Core_Throws(
 
   redo:
 
-    // If we're not returning the branch result purely "as-is" then we change
-    // NULL to a ~null~ isotope, so an ELSE branch knows not to run:
-    //
-    //     >> if true [null]
-    //     == ~null~  ; isotope
-    //
-    //     >> if true [print "BRANCH", null] else [print "ELSE"]
-    //     BRANCH
-    //     == ~null~  ; isotope
-    //
-    // To get things to pass through unmodified, because you actually *want*
-    // to be able to run both branches...use THE-BLOCK! and its friends.
-    //
-    //     >> if true @[null]
-    //     ; null
-    //
-    //     >> if true @[print "BRANCH", null] else [print "ELSE"]
-    //     BRANCH
-    //     ELSE
-    //
     switch (kind) {
       case REB_BLANK:
-        Init_Nulled(out);  // !!! Is this a good idea?
+        Init_Isotope(out, Canon(NULL));  // !!! Is this a good idea?
         break;
 
       case REB_QUOTED:
         Unquotify(Copy_Cell(out, branch), 1);
-        break;
-
-      case REB_THE_BLOCK:
-        if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
-            return true;
+        Isotopify_If_Nulled(out);
         break;
 
       case REB_BLOCK:
@@ -212,11 +188,44 @@ inline static bool Do_Branch_Core_Throws(
       case REB_ACTION: {
         PUSH_GC_GUARD(branch);  // may be stored in `cell`, needs protection
 
+        // If branch function argument isn't "meta" then we decay any isotopes.
+        // Do the decay test first to avoid needing to scan parameters unless
+        // it's one of those cases.
+        //
+        // !!! The theory here is that we're not throwing away any safety, as
+        // the isotopification process was usually just for the purposes of
+        // making the branch trigger or not.  With that addressed, it's just
+        // inconvenient to force functions to be meta to get things like NULL.
+        //
+        //     if true [null] then x -> [
+        //         ;
+        //         ; Why would we want to have to make it ^x, when we know any
+        //         ; nulls that triggered the branch would have been isotopic?
+        //     ]
+        //
+        if (condition != nullptr and NOT_END(condition)) {
+            const REBVAL *decayed = Pointer_To_Decayed(condition);
+            if (decayed != condition) {
+                const REBKEY *key;
+                const REBPAR *param = First_Unspecialized_Param(
+                    &key,
+                    VAL_ACTION(branch)
+                );
+                if (
+                    param != nullptr
+                    and VAL_PARAM_CLASS(param) != PARAM_CLASS_META
+                ){
+                    condition = decayed;
+                }
+            }
+        }
         bool threw = rebRunThrows(
             out,
-            false, // !fully, e.g. arity-0 functions can ignore condition
+            false,  // !fully, e.g. arity-0 functions can ignore condition
             branch,
-            IS_END(condition) ? rebEND : rebQ(condition)
+            (condition != nullptr and IS_END(condition))
+                ? rebEND
+                : rebQ(condition)
         );
         DROP_GC_GUARD(branch);
         if (threw)
@@ -236,12 +245,17 @@ inline static bool Do_Branch_Core_Throws(
       case REB_META_BLOCK:
         if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
             return true;
-        Meta_Quotify(out);
+        if (IS_NULLED(out))
+            Init_Isotope(out, Canon(NULL));
+        else
+            Meta_Quotify(out);
         break;
 
       default:
         fail (Error_Bad_Branch_Type_Raw());
     }
+
+    assert(not IS_NULLED(out));  // branches that run can't return pure NULL
 
     return false;
 }

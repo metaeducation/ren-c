@@ -70,4 +70,30 @@
     <isotope> = (~null~ then [<isotope>])
 )
 
-(~null~ then ^x -> ['~null~ = x])
+; Although branches can be triggered by ~null~ isotopes, if functions ask to
+; receive the value it is decayed, so they do not have to be ^META.  But if
+; they *are* meta then the true state is passed through.
+[
+    (~null~ then x -> [x = null])
+    (~null~ then ^x -> [(probe x) = the ~null~])
+    ('~null~ then x -> [(probe x) = the '~null~])
+    ('~null~ then ^x -> [(probe x) = the ''~null~])
+
+    (catch [~null~ also x -> [throw (x = null)]])
+    (catch [~null~ also ^x -> [throw (x = the ~null~)]])
+    (catch ['~null~ also ^x -> [throw (x = the '~null~)]])
+
+    (~null~ *else x -> [null = x])
+    (null *else ^x -> [null = x])
+    (~null~ *else ^x -> ['~null~ = x])
+]
+
+; Variant forms react to ~null~ isotopes as if they were null.  This can be
+; useful in chaining scenarios.
+;
+; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
+[
+    (~null~ *then [fail "shouldn't run"] else [true])
+    (~null~ *also [fail "shouldn't run"] else [true])
+    (~null~ *else [true])
+]

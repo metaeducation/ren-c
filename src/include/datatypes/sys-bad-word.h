@@ -195,6 +195,25 @@ inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
     return v;
 }
 
+inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
+    if (v == nullptr)
+        return v;
+    if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE)) {
+        assert(not IS_NULLED(v));  // API speaks nullptr, not nulled cells
+        return v;
+    }
+    switch (VAL_BAD_WORD_ID(v)) {
+      case SYM_NULL:
+        return nullptr;
+      case SYM_FALSE:
+        return Lib(FALSE);
+      case SYM_BLANK:
+        return Lib(BLANK);
+      default:
+        return v;
+    }
+}
+
 inline static RELVAL *Isotopify_If_Falsey(RELVAL *v) {
     if (IS_NULLED(v))
         Init_Isotope(v, Canon(NULL));

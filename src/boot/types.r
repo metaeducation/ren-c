@@ -309,7 +309,7 @@ get-word    "the value of a word (variable)"
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 meta-block  "block that evaluates to produce a quoted block"
-            array       *       *       [block array series meta-value branch]
+            array       *       *       [block array series meta-value]
 
 meta-group  "group that quotes its product or removes isotope status"
             array       *       *       [group array series meta-value]
