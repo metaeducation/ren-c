@@ -60,3 +60,16 @@
         x = [6]
     ]
 )
+
+; UNTIL should error upon receiving isotopes, because it would be misleading
+; for instance if you wrote `until [match [logic!] false]` and it decayed
+; the ~false~ isotope to a plain #[false], and did not break the loop.  The
+; error helps you realize something is wrong...
+[
+    (
+        e: trap [until [match [logic!] false]]
+        e.id = 'bad-isotope
+    )(
+        true = until [did match logic! false]
+    )
+]

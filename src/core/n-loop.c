@@ -1831,6 +1831,9 @@ REBNATIVE(until)
             // matching a blank is intended to stop the loop...they should be
             // aware of the distortion, and use MATCH? instead.
             //
+            if (Is_Isotope(D_OUT))
+                fail (Error_Bad_Isotope(D_OUT));
+
             if (IS_TRUTHY(D_OUT))
                 return D_OUT;  // body evaluated truthily, return value
         }
