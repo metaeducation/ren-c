@@ -2228,6 +2228,28 @@ REBNATIVE(none_q)
 
 
 //
+//  blackhole?: native [
+//
+//  "Tells you if argument is a blackhole (#) or ~blackhole~ isotope"
+//
+//      return: [logic!]
+//      ^optional [<opt> any-value!]
+//  ]
+//
+REBNATIVE(blackhole_q)
+{
+    INCLUDE_PARAMS_OF_BLACKHOLE_Q;
+
+    REBVAL *v = ARG(optional);
+    Meta_Unquotify(v);
+
+    return Init_Logic(
+        D_OUT,
+        Is_Blackhole(v) or Is_Isotope_With_Id(v, SYM_BLACKHOLE)
+    );
+}
+
+//
 //  heavy: native [
 //
 //  {Make the heavy form of NULL (passes through all other values)}

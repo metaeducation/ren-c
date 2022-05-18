@@ -431,7 +431,7 @@ insert: generic [
         [any-series! port! map! object! bitset! port!
         integer!]  ; !!! INSERT returns INTEGER! in ODBC, review this
     series "At position (modified)"
-        [any-series! port! map! object! bitset! port!]
+        [<blackhole> any-series! port! map! object! bitset! port!]
     value "What to insert (BLANK!s opt out)"
         [any-value!]
     /part "Limits to a given length or position"
@@ -449,7 +449,7 @@ append: generic [
 
     return: [any-series! port! map! object! module! bitset!]
     series "Any position (modified)"
-        [any-series! port! map! object! module! bitset!]
+        [<blackhole> any-series! port! map! object! module! bitset!]
     value "What to append (BLANK!s opt out)"
         [any-value!]
     /part "Limits to a given length or position"
@@ -467,7 +467,7 @@ change: generic [
 
     return: [any-series! port!]
     series "At position (modified)"
-        [any-series! port!]
+        [<blackhole> any-series! port!]
     value "The new value (BLANK!s opt out)"
         [any-value!]
     /part "Limits the amount to change to a given length or position"
@@ -482,7 +482,7 @@ remove: generic [
 
     return: [any-series! map! port! bitset!]
     series "At position (modified)"
-        [any-series! map! port! bitset!]
+        [<blackhole> any-series! map! port! bitset!]
     /part "Removes multiple elements or to a given position"
         [any-number! any-series! pair! char!]
 ]
@@ -492,7 +492,7 @@ clear: generic [
 
     return: [any-series! port! map! bitset!]
     series "At position (modified)"
-        [any-series! port! map! bitset!]
+        [<blackhole> any-series! port! map! bitset!]
 ]
 
 swap: generic [
@@ -508,7 +508,7 @@ reverse: generic [
 
     return: [any-series! any-sequence! pair!]
     series "At position (modified)"
-        [any-series! any-sequence! pair!]
+        [<blackhole> any-series! any-sequence! pair!]
     /part "Limits to a given length or position"
         [any-number! any-series!]
 ]
@@ -517,7 +517,7 @@ sort: generic [
     {Sorts a series; default sort order is ascending}
 
     return: [any-series!]
-    series "At position (modified)"
+    series "<blackhole> At position (modified)"
         [any-series!]
     /case "Case sensitive sort"
     /skip "Treat the series as records of fixed size"

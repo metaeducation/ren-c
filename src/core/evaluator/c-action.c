@@ -860,6 +860,16 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             and GET_PARAM_FLAG(f->param, NOOP_IF_BLANK)
         ){
             SET_EVAL_FLAG(f, TYPECHECK_ONLY);
+            Init_Nulled(f->out);
+            continue;
+        }
+
+        if (
+            GET_PARAM_FLAG(f->param, NOOP_IF_BLACKHOLE)
+            and Is_Blackhole(f->arg)  // v-- e.g. <blackhole> param
+        ){
+            SET_EVAL_FLAG(f, TYPECHECK_ONLY);
+            Init_Isotope(f->out, Canon(BLACKHOLE));
             continue;
         }
 
@@ -929,8 +939,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );
 
-    if (GET_EVAL_FLAG(f, TYPECHECK_ONLY)) {  // <blank> uses this
-        Init_Nulled(f->out);  // by convention: BLANK! in, NULL out
+    if (GET_EVAL_FLAG(f, TYPECHECK_ONLY)) {  // <blank> and <blackhole> use
+        assert(IS_NULLED(f->out) or Is_Isotope_With_Id(f->out, SYM_BLACKHOLE));
         goto skip_output_check;
     }
 

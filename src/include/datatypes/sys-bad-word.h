@@ -185,6 +185,8 @@ inline static bool Is_Isotope(const RELVAL *v) {
 inline static bool Is_Nulled_Isotope(const RELVAL *v)
   { return Is_Isotope_With_Id(v, SYM_NULL); }
 
+inline static REBVAL *Init_Blackhole(RELVAL *out);  // defined in %sys-token.h
+
 inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
     if (Is_Nulled_Isotope(v))
         Init_Nulled(v);
@@ -192,6 +194,8 @@ inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
         Init_Blank(v);
     else if (Is_Isotope_With_Id(v, SYM_FALSE))
         Init_False(v);
+    else if (Is_Isotope_With_Id(v, SYM_BLACKHOLE))
+        Init_Blackhole(v);
     return v;
 }
 
@@ -209,6 +213,8 @@ inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
         return Lib(FALSE);
       case SYM_BLANK:
         return Lib(BLANK);
+      case SYM_BLACKHOLE:
+        return Lib(BLACKHOLE);
       default:
         return v;
     }

@@ -199,3 +199,9 @@
 ; Added support for /PART on ISSUE!
 ;
 ("abcdef" = append/part "abc" #defghi 3)
+
+; Appending to a BLACKHOLE! returns a blackhole isotope.
+[
+    ('~blackhole~ = meta append # "abc")
+    (blackhole? append # "abc")
+]

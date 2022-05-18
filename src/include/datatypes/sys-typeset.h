@@ -230,8 +230,20 @@ inline static void CLEAR_ALL_TYPESET_BITS(RELVAL *v) {
 #define PARAM_FLAG_NOOP_IF_BLANK \
     FLAG_LEFT_BIT(13)
 
-#define PARAM_FLAG_CONST \
+// Similar to <blank>, the <blackhole> annotation causes a function to be a
+// no-op if that parameter is a `#`, and makes the overall function return a
+// `#` back.  Finer-grained control is needed by some functions, e.g. SET
+// which is willing to take a blackhole! as a target, but wants to return
+// the argument being set to:
+//
+//      >> set # 10
+//      == 10  ; had we used <blackhole> this would be #
+//
+#define PARAM_FLAG_NOOP_IF_BLACKHOLE \
     FLAG_LEFT_BIT(14)
+
+#define PARAM_FLAG_CONST \
+    FLAG_LEFT_BIT(15)
 
 #define SET_PARAM_FLAG(v,name) \
     (VAL_PARAM_FLAGS(v) |= PARAM_FLAG_##name)

@@ -184,6 +184,9 @@ bool Add_Typeset_Bits_Core(
             else if (0 == CT_String(item, Root_Blank_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, NOOP_IF_BLANK);
             }
+            else if (0 == CT_String(item, Root_Blackhole_Tag, strict)) {
+                SET_PARAM_FLAG(typeset, NOOP_IF_BLACKHOLE);
+            }
             else if (0 == CT_String(item, Root_Opt_Tag, strict)) {
                 //
                 // !!! Review if this makes sense to allow with MAKE TYPESET!
