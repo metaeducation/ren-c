@@ -150,8 +150,41 @@ REBTYPE(Quoted)
 //
 REBNATIVE(the)
 //
-// THE is currently not letting you use it with BAD-WORD!, except for ~null~,
-// which is transitioned to true NULL.
+// Note: THE is not a perfect synonym for the action assigned to @.  See notes
+// on THE* for why.
+{
+    INCLUDE_PARAMS_OF_THE;
+
+    REBVAL *v = ARG(value);
+
+    if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
+        if (Eval_Value_Throws(D_OUT, v, SPECIFIED))
+            return R_THROWN;
+        return D_OUT;  // Don't set UNEVALUATED flag
+    }
+
+    Copy_Cell(D_OUT, v);
+
+    SET_CELL_FLAG(D_OUT, UNEVALUATED);
+    return D_OUT;
+}
+
+
+//
+//  the*: native [
+//
+//  "Returns value passed in without evaluation, BUT ~null~ becomes pure NULL"
+//
+//      return: "Input value, verbatim--unless /SOFT and soft quoted type"
+//          [<opt> any-value!]
+//      'value "Does not allow BAD-WORD! arguments except for ~null~"
+//          [any-value!]
+//  ]
+//
+REBNATIVE(the_p)
+//
+// THE* is the variant assigned to @.  It does not let you use it with
+// BAD-WORD!, except for ~null~, which is transitioned to true NULL.
 //
 //     >> @ ~null~
 //     ; null
@@ -168,26 +201,17 @@ REBNATIVE(the)
 // a surrogate for a NULL instead of asserting/erroring.  If you know that
 // what you are dealing with might be a BAD-WORD!, then you should use
 // rebQ() instead...
-//
-// This likely needs to be rethought, as to whether THE and @ should be the
-// same.  It's temporarily the same as behavior is transitioned to the SYMBOL!
 {
-    INCLUDE_PARAMS_OF_THE;
+    INCLUDE_PARAMS_OF_THE_P;
 
     REBVAL *v = ARG(value);
-
-    if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
-        if (Eval_Value_Throws(D_OUT, v, SPECIFIED))
-            return R_THROWN;
-        return D_OUT;  // Don't set UNEVALUATED flag
-    }
 
     if (IS_BAD_WORD(v)) {
         assert(NOT_CELL_FLAG(v, ISOTOPE));
         if (VAL_BAD_WORD_ID(v) == SYM_NULL)
             Init_Nulled(D_OUT);
         else
-            fail ("@ and THE only accept BAD-WORD! of ~NULL~ to make NULL");
+            fail ("@ and THE* only accept BAD-WORD! of ~NULL~ to make NULL");
     }
     else
         Copy_Cell(D_OUT, v);

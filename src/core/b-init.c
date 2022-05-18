@@ -1033,7 +1033,7 @@ void Startup_Core(void)
     mutable_KIND3Q_BYTE(lib_at) = REB_SYMBOL;
 
     Set_Var_May_Fail(lib_caret, SPECIFIED, Lib(META));
-    Set_Var_May_Fail(lib_at, SPECIFIED, Lib(THE));
+    Set_Var_May_Fail(lib_at, SPECIFIED, Lib(THE_P));
 
     // boot->errors is the error definition list from %errors.r
     //
