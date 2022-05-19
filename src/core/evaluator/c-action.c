@@ -923,14 +923,11 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     // a 0-arity function to run in the same evaluation step as the left
     // hand side.  This is how expression work (see `|:`)
     //
-    assert(NOT_EVAL_FLAG(f, UNDO_NOTE_STALE));
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
         assert(GET_EVAL_FLAG(f, RUNNING_ENFIX));
         CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
         f->out->header.bits |= CELL_FLAG_OUT_NOTE_STALE;  // won't undo this
     }
-    else if (GET_EVAL_FLAG(f, RUNNING_ENFIX) and NOT_END(f->out))
-        SET_EVAL_FLAG(f, UNDO_NOTE_STALE);
 
     assert(not Is_Action_Frame_Fulfilling(f));
     assert(
@@ -1065,7 +1062,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
                 INIT_FRM_PHASE(f, redo_phase);
                 INIT_FRM_BINDING(f, VAL_FRAME_BINDING(f->out));
-                CLEAR_EVAL_FLAG(f, UNDO_NOTE_STALE);
                 goto typecheck_then_dispatch;
             }
         }
@@ -1081,11 +1077,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     //
 
       case C_REDO_UNCHECKED:
-        CLEAR_EVAL_FLAG(f, UNDO_NOTE_STALE);
         goto dispatch;
 
       case C_REDO_CHECKED:
-        CLEAR_EVAL_FLAG(f, UNDO_NOTE_STALE);
         goto typecheck_then_dispatch;
 
         // !!! There were generic dispatchers that were returning this, and
@@ -1107,15 +1101,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     if (not (f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE))
         CLEAR_CELL_FLAG(f->out, UNEVALUATED);
     else {
-        // We didn't know before we ran the enfix function if it was going
-        // to be invisible, so the output was expired.  Un-expire it if we
-        // are supposed to do so.
-        //
-        STATIC_ASSERT(
-            EVAL_FLAG_UNDO_NOTE_STALE == CELL_FLAG_OUT_NOTE_STALE
-        );
-        f->out->header.bits ^= (f->flags.bits & EVAL_FLAG_UNDO_NOTE_STALE);
-
         // If a "good" output is in `f->out`, the invisible should have
         // had no effect on it.  So jump to the position after output
         // would be checked by a normal function.
@@ -1171,8 +1156,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
   #endif
 
   skip_output_check:
-
-    CLEAR_EVAL_FLAG(f, UNDO_NOTE_STALE);
 
     Drop_Action(f);
 

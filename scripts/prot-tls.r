@@ -219,8 +219,9 @@ emit: func [
         ]
         else [
             let result
-            if [result @code]: evaluate code [
-                append ctx.msg ensure binary! result
+            if [^result @code]: evaluate code [
+                if result = '~void~ [continue]  ; invisible
+                append ctx.msg ensure binary! unmeta result
             ]
         ]
     ]

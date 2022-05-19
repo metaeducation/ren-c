@@ -9,11 +9,15 @@
 
 (null = ^ null)
 
-; The ^ does not subvert normal "right hand side evaluation rules", and
-; as such it skips invisibles, vs. giving back ~void~.  Use the ^(...) in order
-; to detect invisibility.
-
-((the '3) = ^ comment "Hi" 1 + 2)
+; The comment "Hi" does not vanish and result in a meta of 3...only one step
+; is taken in evaluating arguments to functions.  You must put invisibles in
+; a group if you wish their invisibility to be subsumed in the argument.
+;
+(3 = all [
+    '~void~ = ^ comment "Hi" 1 + 2
+])
+((the '3) = ^ (comment "Hi" 1 + 2))
+((the '3) = ^(comment "Hi" 1 + 2))
 
 ; !!! Is this the best behavior, or should it say "need-non-end"?
 ;

@@ -659,19 +659,34 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // Action_Executor causes pain with `null then [x] => [1] else [2]`
         // cases (for instance).
         //
-        // However, the evaluation of an invisible can leave a stale value
-        // which indicates a need to invoke another evaluation.  Consider
-        // `do [comment "hi" 10]`.
+        // Note: However, the evaluation of an invisible can leave a stale
+        // value, e.g. `do [comment "hi" 10]`...there is no prior value in
+        // f->out to serve as a return.  At one time this retriggered, but the
+        // new simplifying rule is that we do not support such non-interstitial
+        // "looping" within one evaluator step.  The invisible result must
+        // be dealt with by DO itself.
         //
-        if (
-            GET_EVAL_FLAG(f, FULFILLING_ARG)
-            and GET_CELL_FLAG(f->out, OUT_NOTE_STALE)
-            and NOT_END(f_next)
-        ){
-            gotten = f_next_gotten;
-            v = Lookback_While_Fetching_Next(f);
-            goto evaluate;
-        }
+        // When the idea was more ambitious, like `1 + comment [2 * 3] 4`,
+        // the retriggering was done like this:
+        //
+        //      if (
+        //          GET_EVAL_FLAG(f, FULFILLING_ARG)
+        //          and GET_CELL_FLAG(f->out, OUT_NOTE_STALE)
+        //          and NOT_END(f_next)
+        //      ){
+        //          gotten = f_next_gotten;
+        //          v = Lookback_While_Fetching_Next(f);
+        //          goto evaluate;
+        //      }
+        //
+        // But experience taught us this led to brittle, confusing, and
+        // unsustainable behavior.  It certainly can't be done by UPARSE, as
+        // it wires together combinators in advance; so the warping of
+        // structure implied by this is impossible.  In the name of simplicity,
+        // only interstitial invisibility is supported (between function calls)
+        // and you must put invisibles in groups to collect them as part of
+        // processing a single argument.
+        //
         break; }
 
 
@@ -909,7 +924,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // deleted now?
         //
         if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
-            SET_END(f->out);  // !!! "want to avoid UNDO_NOTE_STALE behavior"
+            SET_END(f->out);
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
         }
 

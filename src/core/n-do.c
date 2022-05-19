@@ -307,7 +307,7 @@ bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
 //
 //  {Evaluates a block of source code (directly or fetched according to type)}
 //
-//      return: [<opt> <invisible> any-value!]
+//      return: [<opt> any-value!]
 //      source [
 //          <blank>  ; opts out of the DO, returns null
 //          block!  ; source code in block form
@@ -516,7 +516,6 @@ REBNATIVE(do)
 //          group!  ; same as block (or should it have some other nuance?)
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
-//      /void "Allow invisible steps (vs. just skipping them)"
 //  ]
 //
 REBNATIVE(evaluate)
@@ -531,7 +530,6 @@ REBNATIVE(evaluate)
 
     REBVAL *next = ARG(next);
 
-  redo:
     switch (VAL_TYPE(source)) {
       case REB_BLOCK:
       case REB_GROUP: {
@@ -575,16 +573,6 @@ REBNATIVE(evaluate)
 
             if (threw)
                 return R_THROWN;
-
-            // If they didn't ask explicitly to know about invisible steps,
-            // then skip over them.
-            //
-            if (IS_END(D_OUT) or GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE)) {
-                if (not REF(void)) {
-                    CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);
-                    goto redo;
-                }
-            }
         }
         break; }  // update variable
 

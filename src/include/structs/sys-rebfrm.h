@@ -317,15 +317,15 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(27)
 
 
-//=//// EVAL_FLAG_UNDO_NOTE_STALE /////////////////////////////////////////=//
+//=//// EVAL_FLAG_28 ///////////////////////////////////////////////////////=//
 //
 // Note: This bit is the same as CELL_FLAG_NOTE, so it lines up directly
 // with CELL_FLAG_OUT_NOTE_STALE.
 //
-#define EVAL_FLAG_UNDO_NOTE_STALE \
+#define EVAL_FLAG_28 \
     FLAG_LEFT_BIT(28)
 
-STATIC_ASSERT(EVAL_FLAG_UNDO_NOTE_STALE == CELL_FLAG_OUT_NOTE_STALE);
+STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_OUT_NOTE_STALE);
 
 
 //=//// EVAL_FLAG_PUSH_PATH_REFINES + EVAL_FLAG_BLAME_PARENT //////////////=//

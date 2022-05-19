@@ -12,8 +12,8 @@
     ('~null~ = ^ do [if true [null]])
 
     (did all [
-        '~none~ = x: ^ comment "HI" do [comment "HI"]
-        x = '~none~
+        '~void~ = x: ^ comment "HI" comment "HI"
+        x = '~void~
     ])
 
     (did all [

@@ -13,15 +13,21 @@
 )
 ('~void~ = ^ comment "a")
 
+; !!! At one time, comment mechanics allowed comments to be enfix such that
+; they ran as part of the previous evaluation.  This is no longer the case,
+; as invisible mechanics no longer permit interstitials--which helps make
+; the evaluator more sane, without losing the primary advantages of invisibles.
+;
+; https://forum.rebol.info/t/1582
+
 (
     pos: ~
-    val: evaluate/next [
-        1 + comment "a" comment "b" 2 * 3 fail "too far"
-    ] 'pos
-    did all [
-        val = 9
-        pos = [fail "too far"]
+    e: trap [
+        val: evaluate/next [
+            1 + comment "a" comment "b" 2 * 3 fail "too far"
+        ] 'pos
     ]
+    e.id = 'no-arg
 )
 (
     pos: ~
@@ -29,8 +35,8 @@
         1 comment "a" + comment "b" 2 * 3 fail "too far"
     ] 'pos
     did all [
-        val = 9
-        pos = [fail "too far"]
+        val = 1
+        pos = [comment "a" + comment "b" 2 * 3 fail "too far"]
     ]
 )
 (
@@ -39,8 +45,8 @@
         1 comment "a" comment "b" + 2 * 3 fail "too far"
     ] 'pos
     did all [
-        val = 9
-        pos = [fail "too far"]
+        val = 1
+        pos = [comment "a" comment "b" + 2 * 3 fail "too far"]
     ]
 )
 
@@ -68,7 +74,7 @@
 )
 (
     code: [1 elide "a" elide "b" + 2 * 3 fail "too far"]
-    pos: [_ @]: evaluate/void [_ @]: evaluate/void code
+    pos: [_ @]: evaluate [_ @]: evaluate code
     pos = [elide "b" + 2 * 3 fail "too far"]
 )
 (
@@ -84,35 +90,18 @@
 
 
 (
-    unset 'x
+    x: ~
     x: 1 + 2 * 3
     elide (y: :x)
 
     did all [x = 9, y = 9]
 )
 (
-    unset 'x
-    x: 1 + elide (y: 10) 2 * 3
-    did all [
-        x = 9
-        y = 10
+    x: ~
+    e: trap [
+        x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
     ]
-)
-
-(
-    unset 'x
-    unset 'y
-    unset 'z
-
-    x: 10
-    y: 1 comment [+ 2
-    z: 30] + 7
-
-    did all [
-        x = 10
-        y = 8
-        not set? 'z
-    ]
+    e.id = 'no-arg
 )
 
 ; ONCE-BAR was an experiment created to see if it could be done, and was
@@ -358,8 +347,12 @@
 (<before> = (<before> reeval :comment "erase me"))
 (
     x: <before>
-    equal? true reeval :elide x: <after>  ; picks up the `x = <after>`
-    x = <after>
+    did all [
+        10 = (
+            10 reeval :elide x: <after>
+        )
+        x = <after>
+    ]
 )
 
 
