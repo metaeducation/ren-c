@@ -75,9 +75,9 @@
 ; they *are* meta then the true state is passed through.
 [
     (~null~ then x -> [x = null])
-    (~null~ then ^x -> [(probe x) = the ~null~])
-    ('~null~ then x -> [(probe x) = the '~null~])
-    ('~null~ then ^x -> [(probe x) = the ''~null~])
+    (~null~ then ^x -> [x = the ~null~])
+    ('~null~ then x -> [x = the ~null~])
+    ('~null~ then ^x -> [x = the '~null~])
 
     (catch [~null~ also x -> [throw (x = null)]])
     (catch [~null~ also ^x -> [throw (x = the ~null~)]])

@@ -134,10 +134,8 @@
 ;    o: make object! [b: 1020]
 ;    1020 = if true @o/b
 ;
-; However since the operative property of @ is to return pure NULL when used
-; with block and group, that doesn't seem like a terribly useful combo--too
-; much chance for accidents.  Might be good for code golf, however (?) but
-; even better would be to wedge in tailored support for plain WORD! etc.
+; Might be good for code golf?  (Even better would be to wedge in tailored
+; support for plain WORD! etc.)
 [(
     x: ~
     did all [
@@ -146,15 +144,14 @@
     ]
 )
 
-; !!! This feature is on hold, as it is being considered that /[branch] is the
-; way to denote optionality, while @[...] might be better thought of for
-; other purposes.
+; Feature being considered: @(...) groups do not run unconditionally to make
+; branch arguments, but only if the branch is taken.
 ;(
 ;    var: <something>
 ;    did all [
-;        null = ^ if false @(var: <something-else> [null])
+;        null = decay if false @(var: <something-else> [null])
 ;        var = <something>
-;        null = ^ if true @(var: <something-else> [null])
+;        null = decay if true @(var: <something-else> [null])
 ;        var = <something-else>
 ;    ]
 ;)

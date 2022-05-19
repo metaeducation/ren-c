@@ -3,24 +3,34 @@
 ; Note: NULL is not technically a datatype.
 ;
 ; It is a transitional state that can be held by variables, but it cannot
-; appear in BLOCK!s etc.
-;
-; While it might be thought of as "variables can hold NULL", it's better
-; to say that "NULL is a transitional result used in the evaluator that
-; is used by GET to convey a variable is *not set*".  This is a small point
-; of distinction, but it helps understand NULL better.
+; appear in BLOCK!s etc.  It's use is as a kind of "soft failure", and can
+; be tested for and reacted to easily with things like DID, DIDN'T, THEN, ELSE.
 
 (null? null)
 (null? type of null)
 (not null? 1)
 
 ; Early designs for NULL did not let you get or set them from plain WORD!
-; Responsibility for kind of "ornery-ness" this shifted to BAD-WORD!, as NULL
-; took on increasing roles as the "true NONE!" and became the value for
+; Responsibility for kind of "ornery-ness" this shifted to BAD-WORD! isotopes,
+; as NULL took on increasing roles as the "true NONE!" and became the value for
 ; unused refinements.
 ;
-(null? trap [a: null a])
-(not error? trap [set 'a null])
+(
+    a: ~
+    did all [
+        null? a: null
+        null? a
+        null = a
+    ]
+)
+(
+    a: ~
+    did all [
+        null = set 'a null
+        null? a
+        null = a
+    ]
+)
 
 ; NULL has no visual representation, so FORM errors on it
 ; Users are expected to triage the NULL to vaporize, error, or find some

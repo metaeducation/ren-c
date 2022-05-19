@@ -215,9 +215,13 @@ ldflags: compose [
     ;
     {--post-js prep/include/reb-lib.js}
 
-    ; While over the long term it may be the case that C++ builds support the
-    ; exception mechanism, the JavaScript build is going to be based on
-    ; embracing the JS exception model.  So disable C++ exceptions.
+    ; Over the long term it may be the case that C++ desktop builds make use of
+    ; the exception mechanism (especially attractive is "zero-cost-exception"
+    ; methodology, which some people are nonetheless skeptical of).
+    ;
+    ; But the JavaScript build is going to be based on embracing the JS
+    ; exception model.  So disable C++ exceptions.
+    ;
     ; https://forum.rebol.info/t//555
     ;
     {-s DISABLE_EXCEPTION_CATCHING=1}

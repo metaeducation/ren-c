@@ -376,7 +376,7 @@ undirize: function [
 
 
 in-dir: function [
-    "Evaluate a block while in a directory."
+    "Evaluate a block in a directory, and restore current directory when done"
     return: [<opt> any-value!]
     dir [file!]
         "Directory to change to (changed back after)"
