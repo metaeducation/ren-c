@@ -115,7 +115,7 @@ shell: func [
     ]
 
     let command: spaced collect [for-next pos code [
-        loop [new-line? pos] [
+        while [new-line? pos] [
             if pos.1 = '... [
                 pos: next pos  ; skip, don't output new-line
                 continue

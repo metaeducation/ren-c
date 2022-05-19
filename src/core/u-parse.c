@@ -1472,6 +1472,14 @@ REBNATIVE(subparse)
 
             switch (cmd) {
               case SYM_WHILE:
+                if (not (P_FLAGS & PF_REDBOL)) {
+                    fail (
+                        "Please replace PARSE's WHILE with MAYBE SOME -or-"
+                        " OPT SOME--it's being reclaimed as arity-2."
+                        " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
+                    );
+                }
+
               run_while_rule:
                 P_FLAGS |= PF_LOOPING;
                 assert(mincount == 1 and maxcount == 1);  // true on entry
@@ -1500,8 +1508,9 @@ REBNATIVE(subparse)
                     goto run_while_rule;
                 }
                 fail (
-                    "Please replace PARSE ANY with WHILE or WHILE FURTHER: "
-                    "https://forum.rebol.info/t/1540/12 (or use PARSE2)"
+                    "Please replace PARSE's ANY with MAYBE SOME -or- OPT SOME"
+                    " -- it's being reclaimed for a new construct"
+                    " https://forum.rebol.info/t/1540/12 (or use PARSE2)"
                 );
 
               case SYM_REPEAT:

@@ -40,7 +40,7 @@
 (
     s: {aba}
     did all [
-        '~changed~ = ^ uparse s [while [
+        '~changed~ = ^ uparse s [some [
             opt change "b" ("x")
             skip
         ]]

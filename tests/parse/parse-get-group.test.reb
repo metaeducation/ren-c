@@ -19,15 +19,15 @@
 )
 
 [https://github.com/red/red/issues/562
-    (didn't uparse [+] [while ['+ :(no)]])
-    (didn't uparse "+" [while [#+ :(no)]])
+    (didn't uparse [+] [opt some ['+ :(no)]])
+    (didn't uparse "+" [opt some [#+ :(no)]])
 ]
 
 
 [
     (
         x: ~
-        #[true] == uparse [2 4 6] [while [x: integer! :(even? x)]]
+        #[true] == uparse [2 4 6] [some [x: integer! :(even? x)]]
     )
     (
         x: ~
@@ -42,7 +42,9 @@
 [
     (
         x: ~
-        #[true] == uparse "246" [while [x: across <any> :(even? load-value x)]]
+        #[true] == uparse "246" [some [
+            x: across <any> :(even? load-value x)
+        ]]
     )
     (
         x: ~
@@ -57,7 +59,7 @@
 
 [https://github.com/red/red/issues/563
     (
-        f563: func [t [text!]] [uparse t [while r]]
+        f563: func [t [text!]] [uparse t [opt some r]]
 
         r: [#+, :(res: f563 "-", assert [not res], res)]
 
@@ -87,7 +89,7 @@
                     | #"]" :(f x)
                 ]
             ]
-            "" == uparse s [while r <end>]
+            "" == uparse s [opt some r <end>]
         ]
 
         f "420,]]"

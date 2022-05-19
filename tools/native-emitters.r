@@ -172,7 +172,7 @@ export emit-include-params-macro: function [
         ; the user provides...so making actions may have to shuffle the
         ; position.  But it may come to be enforced for efficiency).
         ;
-        loop [text? :paramlist/1] [paramlist: next paramlist]
+        while [text? :paramlist/1] [paramlist: next paramlist]
         if (the return:) <> :paramlist/1 [
             fail [native-name "does not have a RETURN: specification"]
         ] else [

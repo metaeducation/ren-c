@@ -52,11 +52,11 @@
 
 (
     did all [
-        [while while while] == uparse [| | while while while | | |] [
+        [some some some] == uparse [| | some some some | | |] [
             content: between some '| some '|
-            into (content) [x: collect [some keep ^['while]]]
+            into (content) [x: collect [some keep ^['some]]]
         ]
-        x = [while while while]
+        x = [some some some]
     ]
 )
 

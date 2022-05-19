@@ -1,39 +1,32 @@
-; %loops/loop-test.reb
-;
-; LOOP in Ren-C acts as an arity-2 looping operation, like WHILE from Rebol2
-; and R3-Alpha.
-;
-; The reason for the name change is to be consistent with PARSE's use of WHILE
-; as arity-1.  That also naturally makes WHILE and UNTIL pair together as
-; taking a single argument.
+; %loops/while.test.reb
 
 (
     num: 0
-    loop [num < 10] [num: num + 1]
+    while [num < 10] [num: num + 1]
     num = 10
 )
 ; Test body-block return values
 [#37 (
     num: 0
-    1 = loop [num < 1] [num: num + 1]
+    1 = while [num < 1] [num: num + 1]
 )]
-('~none~ = ^ loop [false] [])
+('~none~ = ^ while [false] [])
 ; zero repetition
 (
     success: true
-    loop [false] [success: false]
+    while [false] [success: false]
     success
 )
 ; Test break and continue
 (
     cycle?: true
-    null? loop [cycle?] [break cycle?: false]
+    null? while [cycle?] [break cycle?: false]
 )
 ; Test reactions to break and continue in the condition
 (
     was-stopped: true
-    loop [true] [
-        loop [break] []
+    while [true] [
+        while [break] []
         was-stopped: false
         break
     ]
@@ -42,13 +35,13 @@
 (
     first-time: true
     was-continued: false
-    loop [true] [
+    while [true] [
         if not first-time [
             was-continued: true
             break
         ]
         first-time: false
-        loop [continue] [break]
+        while [continue] [break]
         break
     ]
     was-continued
@@ -56,19 +49,19 @@
 (
     success: true
     cycle?: true
-    loop [cycle?] [cycle?: false, continue, success: false]
+    while [cycle?] [cycle?: false, continue, success: false]
     success
 )
 (
     num: 0
-    loop [true] [num: 1 break num: 2]
+    while [true] [num: 1 break num: 2]
     num = 1
 )
 ; RETURN should stop the loop
 (
     cycle?: true
     f1: func [return: [integer!]] [
-        loop [cycle?] [
+        while [cycle?] [
             cycle?: false return 1
         ]
         return 2
@@ -78,7 +71,7 @@
 (  ; bug#1519
     cycle?: true
     f1: func [return: [integer!]] [
-        return loop [if cycle? [return 1], cycle?] [
+        return while [if cycle? [return 1], cycle?] [
             cycle?: false
             2
         ]
@@ -91,10 +84,10 @@
 (
     n: 1
     sum: 0
-    loop [n < 10] [
+    while [n < 10] [
         n: n + 1
         if n = 0 [
-            loop [continue] [
+            while [continue] [
                 fail "inner LOOP body should not run"
             ]
             fail "code after inner LOOP should not run"
@@ -105,29 +98,33 @@
 )
 
 ; THROW should stop the loop
-(1 = catch [cycle?: true loop [cycle?] [throw 1 cycle?: false]])
+(1 = catch [cycle?: true while [cycle?] [throw 1 cycle?: false]])
 (  ; bug#1519
     cycle?: true
-    1 = catch [loop [if cycle? [throw 1] false] [cycle?: false]]
+    1 = catch [while [if cycle? [throw 1] false] [cycle?: false]]
 )
-([a 1] = catch/name [cycle?: true loop [cycle?] [throw/name 1 'a cycle?: false]] 'a)
+([a 1] = catch/name [
+    cycle?: true while [cycle?] [throw/name 1 'a cycle?: false]
+] 'a)
 (  ; bug#1519
     cycle?: true
-    [a 1] = catch/name [loop [if cycle? [throw/name 1 'a] false] [cycle?: false]] 'a
+    [a 1] = catch/name [
+        while [if cycle? [throw/name 1 'a] false] [cycle?: false]
+    ] 'a
 )
 ; Test that disarmed errors do not stop the loop and errors can be returned
 (
     num: 0
-    e: loop [num < 10] [num: num + 1 trap [1 / 0]]
+    e: while [num < 10] [num: num + 1 trap [1 / 0]]
     all [error? e num = 10]
 )
 ; Recursion check
 (
     num1: 0
     num3: 0
-    loop [num1 < 5] [
+    while [num1 < 5] [
         num2: 0
-        loop [num2 < 2] [
+        while [num2 < 2] [
             num3: num3 + 1
             num2: num2 + 1
         ]

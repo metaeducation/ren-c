@@ -8,7 +8,7 @@
     t: {----------------------------------------------------}
     cfor n 2 50 1 [
         sub: copy/part s n
-        uparse sub [while [
+        uparse sub [some [
             remove skip
             insert ("-")
         ]]

@@ -4,7 +4,7 @@
     (did breaker: func [return: [block!] text [text!]] [
         let capturing
         let inner
-        return uparse text [collect [while [
+        return uparse text [collect opt some [
             not <end>
             (capturing: false)
             keep opt between <here> ["$(" (capturing: true) | <end>]
@@ -12,7 +12,7 @@
                 inner: between <here> ")"
                 keep (^ as word! inner)
             ])
-        ]]]
+        ]]
     ])
 
     (["abc" def "ghi"] = breaker "abc$(def)ghi")

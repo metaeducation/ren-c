@@ -104,7 +104,7 @@ emit-proto: func [return: <none> proto] [
                         ; #"." in variadics (but all va_list* in API defs)
                     ]
                     pos: back tail param
-                    loop [find identifier-chars pos/1] [
+                    while [find identifier-chars pos/1] [
                         pos: back pos
                     ]
                     keep trim/tail copy/part param next pos  ; TEXT! of type

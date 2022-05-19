@@ -1,7 +1,7 @@
 (
     foo: func [x [integer! <variadic>]] [
         sum: 0
-        loop [not tail? x] [
+        while [not tail? x] [
             sum: sum + take x
         ]
     ]
@@ -40,7 +40,7 @@
     (
         normal: enfixed function [return: [integer!] v [integer! <variadic>]] [
             sum: 0
-            loop [not tail? v] [
+            while [not tail? v] [
                 sum: sum + take v
             ]
             return sum + 1
@@ -57,7 +57,7 @@
     (
         defers: enfixed function [return: [integer!] v [integer! <variadic>]] [
             sum: 0
-            loop [not tail? v] [
+            while [not tail? v] [
                 sum: sum + take v
             ]
             return sum + 1
@@ -75,7 +75,7 @@
     (
         soft: enfixed function [:v [any-value! <variadic>]] [
             collect [
-                loop [not tail? v] [
+                while [not tail? v] [
                     keep ^(take v)
                 ]
             ]
@@ -93,7 +93,7 @@
     (
         hard: enfixed function [:v [any-value! <variadic>]] [
             collect [
-                loop [not tail? v] [
+                while [not tail? v] [
                     keep ^(take v)
                 ]
             ]

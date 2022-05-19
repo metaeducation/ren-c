@@ -17,7 +17,7 @@
             keep [false]
         ]
         uparse data (compose/deep [
-            while [((rules))]  ; could be just `while [rules]`, but it's a test
+            opt some [((rules))]  ; could be `opt some [rules]`, but it's a test
         ]) then [
             collect [
                 for-each [key value] counts [

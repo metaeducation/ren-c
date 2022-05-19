@@ -1,8 +1,8 @@
 ; %parse-tag-any.test.reb
 ;
 ; <any> takes the place of SKIP in UPARSE.  The ANY operation has been
-; replaced by WHILE with the optional use of FURTHER, which lets "any"
-; mean its more natural non-iterative sense.
+; replaced by OPT SOME or MAYBE SOME with the optional use of FURTHER, which
+; lets "any" mean its more natural non-iterative sense.
 ;
 ; This addresses the fact that `x: skip` seems fishy...if something is
 ; being "skipped over" then why would it yield a value?

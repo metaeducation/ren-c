@@ -212,7 +212,7 @@ emit: func [
         return
     ]
 
-    loop [code] [
+    while [code] [
         if set-word? code.1 [  ; set the word to the binary at current position
             add-let-binding (binding of 'return) code.1 (tail ctx.msg)
             code: my next
@@ -1127,7 +1127,7 @@ parse-messages: func [
         ]
 
         #handshake [
-            loop [not tail? data] [
+            while [not tail? data] [
                 let msg-type: try select message-types data.1  ; 1 byte
 
                 update-read-state ctx (
@@ -1195,7 +1195,7 @@ parse-messages: func [
                             check-length: 0
 
                             curve-list: _
-                            loop [not tail? bin] [
+                            while [not tail? bin] [
                                 let extension-id: grab 'bin 2
                                 let extension-length: grab-int 'bin 2
                                 check-length: me + 2 + 2 + extension-length
@@ -1230,7 +1230,7 @@ parse-messages: func [
                             length: len
                             certificate-list-length: grab-int 'bin 3
                             certificate-list: make block! 4
-                            loop [not tail? bin] [
+                            while [not tail? bin] [
                                 let certificate-length: grab-int 'bin 3
                                 let certificate: grab 'bin certificate-length
                                 append certificate-list certificate
@@ -1554,14 +1554,14 @@ prf: func [
 
         let p-md5: copy #{}
         let a: seed  ; A(0)
-        loop [output-length > length of p-md5] [
+        while [output-length > length of p-md5] [
             a: checksum/key 'md5 a s-1 ; A(n)
             append p-md5 checksum/key 'md5 (join a seed) 'md5 s-1
         ]
 
         let p-sha1: copy #{}
         let a: seed  ; A(0)
-        loop [output-length > length of p-sha1] [
+        while [output-length > length of p-sha1] [
             a: checksum/key 'sha1 a s-2 ; A(n)
             append p-sha1 checksum/key 'sha1 (join a seed) s-2
         ]
@@ -1575,7 +1575,7 @@ prf: func [
     ;
     let p-shaX: copy #{}  ; P_SHA256, P_SHA384..whichever
     let a: seed  ; A(0)
-    loop [output-length > length of p-shaX] [
+    while [output-length > length of p-shaX] [
         a: checksum/key/method a secret ctx.prf-method
         append p-shaX checksum/key/method (join a seed) secret ctx.prf-method
     ]
@@ -1702,7 +1702,7 @@ tls-read-data: func [
     ; !!! Why is this making a copy (5 = length of copy...) when just trying
     ; to test a size?
     ;
-    loop [5 = length of copy/part data 5] [
+    while [5 = length of copy/part data 5] [
         let len: 5 + debin [be +] copy/part at data 4 2
 
         debug ["reading bytes:" len]

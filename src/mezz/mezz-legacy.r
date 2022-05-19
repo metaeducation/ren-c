@@ -16,16 +16,13 @@ REBOL [
     }
 ]
 
-
-while: func [] [
-    fail @return [
-        "The previous functionality of WHILE is now done by LOOP."
-        "Ultimately, WHILE will be arity-1 to help match the behavior in"
-        "PARSE, and better parallel UNTIL."
-    ]
-]
-
-
+; !!! This is temporary due to a failed experiment of making WHILE arity-1 to
+; line up with PARSE.  LOOP was used as the arity-2 version for a time.  On
+; the bright side, that made PARSE WHILE easier to find and eliminate.  Once
+; that elimination is complete, turn the LOOP back to WHILE and reclaim LOOP
+; for a generic dialect like Lisp's.
+;
+loop: :while
 
 ; !!! As a first step of removing the need for APPEND/ONLY (and friends), this
 ; moves the behavior into mezzanine code for testing.

@@ -484,7 +484,7 @@ reeval func* [
     <local>
         set-word type-name tester meta
 ][
-    loop [<end> != set-word: take set-words] [
+    while [<end> != set-word: take set-words] [
         type-name: copy as text! set-word
         change back tail of type-name "!"  ; change ? at tail to !
         tester: typechecker (get bind (as word! type-name) set-word)

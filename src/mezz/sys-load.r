@@ -662,7 +662,7 @@ export*: func [
         fail "EXPORT must be of form `export x: ...` or `export [...]`"
     ]
 
-    loop [not tail? items] [
+    while [not tail? items] [
         val: get/any word: match word! items.1 else [
             fail ["EXPORT only accepts WORD! or WORD! [typeset], not" ^items.1]
         ]

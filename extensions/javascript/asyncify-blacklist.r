@@ -14,13 +14,13 @@
 ;
 
 
-; While Startup calls the evaluator (that needs to yield in a general
-; sense), it does so before the JavaScript extension has had a chance to
-; load.  And that extension contains the natives that call
-; emscripten_sleep().  On the downside, this means it can't be debugged
-; except with `printf()` during boot.  On the upside, it means that there
-; is no way it can need to yield...thus it can run at full speed in WASM
-; with no asyncify instrumentation.
+; Startup calls the evaluator (that needs to yield in a general sense), but it
+; does so before the JavaScript extension has had a chance to load.  And that
+; extension contains the natives that call emscripten_sleep().
+;
+; On the downside, this means it can't be debugged except with `printf()`
+; during boot.  On the upside, it means that there is no way it can need to
+; yield...so it can run at full speed in WASM with no asyncify instrumentation.
 ;
 ; By a similar token, Shutdown happens after the JS extension is unloaded
 ; and also cannot experience yields.

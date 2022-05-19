@@ -489,7 +489,7 @@ main-startup: func [
     let is-script-implicit: true
     let check-encap: true
 
-    loop [not tail? argv] [
+    while [not tail? argv] [
 
         let is-option: did parse3/case argv.1 [
 

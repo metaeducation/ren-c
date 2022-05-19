@@ -148,7 +148,7 @@
 (
     i: 0
     parse3 "a." [
-        while [thru "a" (i: i + 1 j: try if i > 1 [<end> skip]) j]
+        some [thru "a" (i: i + 1 j: try if i > 1 [<end> skip]) j]
     ]
     i == 1
 )
@@ -186,12 +186,12 @@
 [#1268 (
     i: 0
     <infinite?> = catch [
-        parse3 "a" [while [(i: i + 1) (if i > 100 [throw <infinite?>])]]
+        parse3 "a" [some [(i: i + 1) (if i > 100 [throw <infinite?>])]]
     ]
 )]
 [#1268 (
     i: 0
-    parse3 "a" [while [(i: i + 1 j: try if i = 2 [[fail]]) j]]
+    parse3 "a" [some [(i: i + 1 j: try if i = 2 [[fail]]) j]]
     i == 2
 )]
 
@@ -282,7 +282,7 @@
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
 (
     i: 1
-    parse3 "a" [while [(i: i + 1 j: if i = 2 [[<end> skip]]) j]]
+    parse3 "a" [some [(i: i + 1 j: if i = 2 [[<end> skip]]) j]]
     i == 2
 )
 
@@ -413,7 +413,7 @@
 
 (did all [
     did parse3 text: "a ^/ " [
-        while [newline remove [to <end>] | "a" [remove [to newline]] | skip]
+        some [newline remove [to <end>] | "a" [remove [to newline]] | skip]
     ]
     text = "a^/"
 ])
@@ -422,7 +422,7 @@
 ; then not count the rule as a match.
 ;
 [
-    (did parse3 "" [while further [to <end>]])
+    (did parse3 "" [opt some further [to <end>]])
 
     (didn't parse3 "" [further [opt "a" opt "b"] ("at least one")])
     (did parse3 "a" [further [opt "a" opt "b"] ("at least 1")])
@@ -435,7 +435,7 @@
     t: {----------------------------------------------------}
     cfor n 2 50 1 [
         sub: copy/part s n
-        parse3 sub [while [
+        parse3 sub [some [
             remove skip
             insert ("-")
         ]]
@@ -457,7 +457,7 @@
             keep [fail]
         ]
         parse3 data (compose/deep [
-            while [((rules))]  ; could be just `while [rules]`, but it's a test
+            opt some [((rules))]  ; could be `opt some [rules]`, but it's a test
         ]) then [
             collect [
                 for-each [key value] counts [
@@ -573,13 +573,13 @@
 
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
-    did parse3 "a" ["a" while cset]
+    did parse3 "a" ["a" opt some cset]
 )(
     cset: charset [# - #"^(FE)"]
-    did parse3 "a" ["a" while cset]
+    did parse3 "a" ["a" opt some cset]
 )(
     cset: charset [# - #"^(FF)"]
-    did parse3 "a" ["a" while cset]
+    did parse3 "a" ["a" opt some cset]
 )]
 
 [#1282

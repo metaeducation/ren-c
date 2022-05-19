@@ -354,38 +354,21 @@ default-combinators: make map! reduce [
 
     === LOOPING CONSTRUCT KEYWORDS ===
 
-    ; UPARSE uses WHILE and SOME as its two looping operators, and finesses the
-    ; question of how to enforce advancement of input using a new generalized
-    ; combinator called FURTHER.
+    ; UPARSE uses SOME as its looping operator, with OPT SOME or MAYBE SOME
+    ; taking the place of both ANY and WHILE.  ANY is reserved for more fitting
+    ; semantics for the word, and WHILE is reclaimed as an arity-2 construct.
+    ; The progress requirement that previously made ANY different from WHILE is
+    ; achieved with OPT SOME FURTHER:
     ;
     ; https://forum.rebol.info/t/1540/12
     ;
-    ; What was ANY is now WHILE FURTHER.  Hence ANY is reserved for future use.
-
-    'while combinator [
-        {Any number of matches (including 0)}
-        return: "Result of last successful match, or NULL if no matches"
-            [<opt> any-value!]
-        parser [action!]
-        <local> last-result' result' pos
-    ][
-        append state.loops binding of 'return
-
-        last-result': '~none~  ; `while [false]` => ~none~ isotope
-        cycle [
-            ([^result' pos]: parser input) else [
-                take/last state.loops
-                set remainder input  ; overall WHILE never fails (but REJECT?)
-                return unmeta last-result'
-            ]
-            last-result': result'
-            input: pos
-        ]
-        fail ~unreachable~
-    ]
+    ; Note that TALLY can be used as a substitute for WHILE if the rule product
+    ; isn't of interest.
+    ;
+    ; https://forum.rebol.info/t/1581/2
 
     'some combinator [
-        {Must run at least one match}
+        {Run the parser argument in a loop, requiring at least one match}
         return: "Result of last successful match"
             [<opt> any-value!]
         parser [action!]
@@ -397,7 +380,7 @@ default-combinators: make map! reduce [
             take/last state.loops
             return null
         ]
-        cycle [  ; if first try succeeds, flip to same code as WHILE
+        cycle [  ; if first try succeeds, we'll succeed overall--keep looping
             ([^result' pos]: parser input) else [
                 take/last state.loops
                 set remainder input
@@ -436,7 +419,7 @@ default-combinators: make map! reduce [
     ]
 
     'break combinator [
-        {Break an iterated construct like WHILE or SOME, failing the match}
+        {Break an iterated construct like SOME or REPEAT, failing the match}
         return: "Divergent"
             []
         <local> f
@@ -450,7 +433,7 @@ default-combinators: make map! reduce [
     ]
 
     'stop combinator [
-        {Break an iterated construct like WHILE or SOME, succeeding the match}
+        {Break an iterated construct like SOME or REPEAT, succeeding the match}
         return: "Divergent"
             [<opt>]
         parser [<end> action!]
@@ -502,15 +485,15 @@ default-combinators: make map! reduce [
 
     ; The historical pattern:
     ;
-    ;     s: <here>, while rule, e: <here>, (len: (index of e) - (index of s))
+    ;     s: <here>, some rule, e: <here>, (len: (index of e) - (index of s))
     ;
     ; Can be done more conveniently with the <index> tag combinator:
     ;
-    ;     s: <index>, while rule, e: <index>, (len: e - s)
+    ;     s: <index>, some rule, e: <index>, (len: e - s)
     ;
     ; But even more conveniently with the MEASURE combinator:
     ;
-    ;     len: measure while rule
+    ;     len: measure some rule
     ;
     ; Note this is distinct from TALLY, which is an iterative construct that
     ; counts the number of times it can match the rule it is given:
@@ -518,7 +501,7 @@ default-combinators: make map! reduce [
     ;     >> uparse "ababab" [tally "ab"]
     ;     == 3
     ;
-    ;     >> uparse "ababab" [measure while "ab"]
+    ;     >> uparse "ababab" [measure some "ab"]
     ;     == 6
 
     <index> combinator [
@@ -1395,8 +1378,8 @@ default-combinators: make map! reduce [
         ;     >> uparse "" [' (1020)]
         ;     == 1020
         ;
-        ; Arguably there is a null match at every position.  An ^null might
-        ; also be chosen to match)...while NULL rules do not.
+        ; Arguably there is a null match at every position.  A ^null might
+        ; also be chosen to match)...but NULL rules are errors.
         ;
         if any-array? input [
             if :input.1 = unquote value [
@@ -1523,7 +1506,7 @@ default-combinators: make map! reduce [
             ]
             issue! [
                 if times' <> the '# [
-                    fail ["REPEAT takes the ISSUE! of # to act like a WHILE"]
+                    fail ["REPEAT takes ISSUE! of # to act like MAYBE SOME"]
                 ]
                 min: 0, max: #
             ]
@@ -2131,7 +2114,7 @@ default-combinators: make map! reduce [
 
     === NEW-STYLE ANY COMBINATOR ===
 
-    ; Historically ANY was a synonym for what is today WHILE FURTHER.  This
+    ; Historically ANY was a synonym for what is today MAYBE SOME FURTHER.  It
     ; was seen as a confusing usage of the word ANY given its typical meaning
     ; related to picking a single item from a list of alternatives--not a
     ; looping construct.
@@ -2166,12 +2149,12 @@ default-combinators: make map! reduce [
         ] else [
             fail [
                 "The ANY combinator in UPARSE is not an iterating construct."
-                "Use WHILE or WHILE FURTHER depending on your needs:"
+                "Use MAYBE SOME, OPT SOME FURTHER, etc. depending on purpose:"
                 https://forum.rebol.info/t/1572
             ]
         ]
 
-        loop [not tail? block] [
+        while [not tail? block] [
             ;
             ; Turn next alternative into a parser ACTION!, and run it.
             ; We take the first parser that succeeds.
@@ -2216,7 +2199,7 @@ default-combinators: make map! reduce [
 
         result': '~none~  ; [] => ~none~ isotope
 
-        loop [not tail? rules] [
+        while [not tail? rules] [
             if state.verbose [
                 print ["RULE:" mold/limit rules 60]
                 print ["INPUT:" mold/limit pos 60]
@@ -2247,7 +2230,7 @@ default-combinators: make map! reduce [
                 ;
                 catch [  ; use CATCH to continue outer loop
                     let r
-                    loop [r: rules.1] [
+                    while [r: rules.1] [
                         rules: my next
                         if r = '|| [
                             input: pos  ; don't roll back past current pos
@@ -2302,7 +2285,7 @@ default-combinators: make map! reduce [
                 ;
                 pos: catch [
                     let r
-                    loop [r: rules.1] [
+                    while [r: rules.1] [
                         rules: my next
                         if r = '| [throw input]  ; reset POS
 
@@ -2950,6 +2933,26 @@ append redbol-combinators reduce [
         ]
     ]
 
+    'while combinator [
+        {(REDBOL) Any number of matches (including 0), no progress requirement}
+        return: "Result of last successful match, or NULL if no matches"
+            [<opt> any-value!]
+        parser [action!]
+        <local> last-result' result' pos
+    ][
+        append state.loops binding of 'return
+
+        cycle [
+            ([# pos]: parser input) else [
+                take/last state.loops
+                set remainder input  ; WHILE never fails (but REJECT?)
+                return ~while~
+            ]
+            input: pos
+        ]
+        fail ~unreachable~
+    ]
+
     === OLD STYLE SET AND COPY COMBINATORS ===
 
     ; Historical Rebol's PARSE had SET and COPY keywords which would take
@@ -3158,8 +3161,8 @@ redbol-combinators.('gather): null
 redbol-combinators.('emit): null
 
 ; Ren-C rethought BREAK to mean soft failure, e.g. the looping construct of
-; WHILE or SOME or REPEAT will be NULL.  The precise meaning and behavior of
-; historical BREAK and REJECT is not very coherent:
+; SOME or REPEAT will be NULL.  The precise meaning and behavior of historical
+; BREAK and REJECT is not very coherent:
 ;
 ;     red>> parse "aaa" [opt some ["a" reject] "aaa"]
 ;     == false

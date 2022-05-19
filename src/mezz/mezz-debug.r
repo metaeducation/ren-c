@@ -19,12 +19,12 @@ verify: function [
         {Conditions to check}
     <local> pos result
 ][
-    loop [[result @pos]: evaluate conditions] [
+    while [[result @pos]: evaluate conditions] [
         any [bad-word? ^result, not :result] then [
             ;
             ; including commas in the failure report looks messy, skip them
             ;
-            loop [', = first conditions] [conditions: my next]
+            while [', = first conditions] [conditions: my next]
 
             fail @conditions make error! [
                 type: 'Script

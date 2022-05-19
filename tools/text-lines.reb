@@ -87,7 +87,7 @@ for-each-line: func [
     body "Block to evaluate each time"
         [block!]
 ] [
-    loop [not tail? text] [
+    while [not tail? text] [
         let eol: any [find text newline, tail of text]
 
         set record compose [

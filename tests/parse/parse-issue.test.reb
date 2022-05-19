@@ -218,8 +218,8 @@
     (didn't uparse "aa" [1 #a])
     (#a == uparse "aa" [2 #a])
     (didn't uparse "aa" [3 #a])
-    (#a == uparse "aa" [while [#a]])
-    (none? uparse "aa" [some [#a] while [#b]])
+    (#a == uparse "aa" [some [#a]])
+    (none? uparse "aa" [some [#a] repeat (#) [#b]])
     ("b" == uparse "aabb" [2 #a 2 "b"])
     (didn't uparse "aabb" [2 "a" 3 #b])
 ]

@@ -81,12 +81,12 @@
     ;
     (["aa" "aa" "aa" "aa" "aaa" "aaa"] = uparse "aaaaaaaa" [
         collect [
-            maxmatch-D [while keep across 2 "a"] [while keep across 3 "a"]
+            maxmatch-D [some keep across 2 "a"] [some keep across 3 "a"]
         ]
     ])
     (["aaa" "aaa" "aa" "aa" "aa" "aa"] = uparse "aaaaaaaa" [
         collect [
-            maxmatch-D [while keep across 3 "a"] [while keep across 2 "a"]
+            maxmatch-D [some keep across 3 "a"] [some keep across 2 "a"]
         ]
     ])
 
@@ -96,12 +96,12 @@
     ;
     (["aa" "aa" "aa" "aa" "aaa" "aaa" "aaa"] = uparse "aaaaaaaaa" [
         collect [
-            maxmatch-D while [keep across 2 "a"] while [keep across 3 "a"]
+            maxmatch-D some [keep across 2 "a"] some [keep across 3 "a"]
         ]
     ])
     (["aaa" "aaa" "aaa" "aa" "aa" "aa" "aa"] = uparse "aaaaaaaaa" [
         collect [
-            maxmatch-D [while keep [across 3 "a"]] [while keep [across 2 "a"]]
+            maxmatch-D [some keep [across 3 "a"]] [some keep [across 2 "a"]]
         ]
     ])
 
@@ -110,12 +110,12 @@
     ;
     (["aa" "aa" "aa" "aa"] = uparse "aaaaaaaa" [
         collect [
-            maxmatch-D [while keep across 2 "a"] [some keep "a" some keep "b"]
+            maxmatch-D [some keep across 2 "a"] [some keep "a" some keep "b"]
         ]
     ])
     (["aa" "aa" "aa" "aa"] = uparse "aaaaaaaa" [
         collect [
-            maxmatch-D [some keep "a" some keep "b"] [while keep across 2 "a"]
+            maxmatch-D [some keep "a" some keep "b"] [some keep across 2 "a"]
         ]
     ])
 
@@ -145,7 +145,7 @@
                         emit x: ["a" (10)] emit y: ["a" (20)]
                     ] [
                         emit z: (304)
-                        while keep across 3 "a"
+                        some keep across 3 "a"
                     ]
                 ]
             ]]
@@ -230,32 +230,32 @@
     ; eight "a", so it's possible to get 4 matches of 2 "a" in but only
     ; 2 matches of 3 "a".
     ; (This version of maxmatch only keeps the maxmatch's contributions; the
-    ; lesser match--while successful--has its contributions discarded)
+    ; lesser match--though successful--has its contributions discarded)
     ;
     (["aa" "aa" "aa" "aa"] = uparse "aaaaaaaa" [
         collect [
-            maxmatch-C [while keep across 2 "a"] [while keep across 3 "a"]
+            maxmatch-C [some keep across 2 "a"] [some keep across 3 "a"]
         ]
     ])
     (["aa" "aa" "aa" "aa"] = uparse "aaaaaaaa" [
         collect [
-            maxmatch-C [while keep across 3 "a"] [while keep across 2 "a"]
+            maxmatch-C [some keep across 3 "a"] [some keep across 2 "a"]
         ]
     ])
 
     ; With 9, it's the 3 "a" rule that gets further than the 2 "a" rule
     ; Just for fun show different bracketing options.  :-)
     ; (This version of maxmatch only keeps the maxmatch's contributions; the
-    ; lesser match--while successful--has its contributions discarded)
+    ; lesser match--though successful--has its contributions discarded)
     ;
     (["aaa" "aaa" "aaa"] = uparse "aaaaaaaaa" [
         collect [
-            maxmatch-C while [keep across 2 "a"] while [keep across 3 "a"]
+            maxmatch-C some [keep across 2 "a"] some [keep across 3 "a"]
         ]
     ])
     (["aaa" "aaa" "aaa"] = uparse "aaaaaaaaa" [
         collect [
-            maxmatch-C [while keep [across 3 "a"]] [while keep [across 2 "a"]]
+            maxmatch-C [some keep [across 3 "a"]] [some keep [across 2 "a"]]
         ]
     ])
 
@@ -264,12 +264,12 @@
     ;
     (["aa" "aa" "aa" "aa"] = uparse "aaaaaaaa" [
         collect [
-            maxmatch-C [while keep across 2 "a"] [some keep "a" some keep "b"]
+            maxmatch-C [some keep across 2 "a"] [some keep "a" some keep "b"]
         ]
     ])
     (["aa" "aa" "aa" "aa"] = uparse "aaaaaaaa" [
         collect [
-            maxmatch-C [some keep "a" some keep "b"] [while keep across 2 "a"]
+            maxmatch-C [some keep "a" some keep "b"] [some keep across 2 "a"]
         ]
     ])
 
@@ -299,7 +299,7 @@
                         emit x: ["a" (10)] emit y: ["a" (20)]
                     ] [
                         emit z: (304)
-                        while keep across 3 "a"
+                        some keep across 3 "a"
                     ]
                 ]
             ]]

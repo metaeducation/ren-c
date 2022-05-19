@@ -5,7 +5,7 @@
 
 (did all [
     '~removed~ == meta uparse text: "a ^/ " [
-        while [newline remove [to <end>] | "a" [remove [to newline]] | skip]
+        some [newline remove [to <end>] | "a" [remove [to newline]] | skip]
     ]
     text = "a^/"
 ])
@@ -69,18 +69,18 @@
         ]
     )
     (did all [
-        '~removed~ == meta uparse s: " t e s t " [while [remove ws | <any>]]
+        '~removed~ == meta uparse s: " t e s t " [some [remove ws | <any>]]
         s = "test"
     ])
     (did all [
-        '~removed~ == meta uparse s: " t e s t " [while [remove ws | <any>]]
+        '~removed~ == meta uparse s: " t e s t " [some [remove ws | <any>]]
         s = "test"
     ])
     (
         str: "hello 123 world"
         digit: charset "0123456789"
         did all [
-            #d == uparse str [while [remove [some digit #" "] | <any>]]
+            #d == uparse str [some [remove [some digit #" "] | <any>]]
             str = "hello world"
         ]
     )
@@ -127,19 +127,19 @@
     )
     (did all [
         ws: make bitset! [" ^- ^/^M" #]
-        '~removed~ == meta uparse s: #{00DE00AD00} [while [remove ws | <any>]]
+        '~removed~ == meta uparse s: #{00DE00AD00} [some [remove ws | <any>]]
         s = #{DEAD}
     ])
     (did all [
         ws: make bitset! [" ^- ^/^M" #]
-        '~removed~ == meta uparse s: #{00DE00AD00} [while [remove ws | <any>]]
+        '~removed~ == meta uparse s: #{00DE00AD00} [some [remove ws | <any>]]
         s = #{DEAD}
     ])
     (
         bin: #{DEAD0001020300BEEF}
         digit: charset [1 - 9]
         did all [
-            239 == uparse bin [while [remove [some digit #] | <any>]]
+            239 == uparse bin [some [remove [some digit #] | <any>]]
             bin = #{DEAD00BEEF}
         ]
     )
@@ -149,7 +149,7 @@
 [https://github.com/red/red/issues/748
     (
         txt: "Hello world"
-        #d == uparse txt [while further while [remove "l" | <any>]]
+        #d == uparse txt [opt some further some [remove "l" | <any>]]
         did all [
             txt = "Heo word"
             8 = length? txt

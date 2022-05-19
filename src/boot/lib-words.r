@@ -67,7 +67,7 @@ across
 collect  ; Variant in Red, but Ren-C's acts SET-like, suggested by @rgchris
 keep
 some
-any  ; no longer a parse keyword, use WHILE FURTHER
+any  ; no longer a parse keyword, use OPT SOME FURTHER for precise meaning
 further  ; https://forum.rebol.info/t/1593
 opt
 maybe  ; new
@@ -80,7 +80,7 @@ change
 if  ; deprecated: https://forum.rebol.info/t/968/7
 fail
 reject
-while
+while  ; no longer supported, use OPT SOME or MAYBE SOME for precise meaning
 repeat
 limit
 seek  ; Ren-C addition

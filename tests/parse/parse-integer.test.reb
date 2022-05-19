@@ -9,7 +9,7 @@
 ("a" == uparse "a" [1 "a"])
 ("a" == uparse "aa" [2 "a"])
 
-; A WHILE that never actually has a succeeding rule gives back a match that is
+; Plain loops that never actually runs the body gives back a match that is
 ; a ~none~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
     (none? uparse "a" ["a" 0 "b"])

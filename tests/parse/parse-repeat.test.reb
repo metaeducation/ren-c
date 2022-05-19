@@ -19,7 +19,7 @@
 ;    >> did uparse "aaa" [repeat (num) "b", some "a"]
 ;    == #[true]
 ;
-; And it can also "opt all the way in" and become a synonym for WHILE with #:
+; It can also "opt all the way in" and become a synonym for MAYBE SOME with #:
 ;
 ;    >> num: #
 ;    >> did uparse "aaaaaaaaaa" [repeat (num) "a"]
@@ -61,7 +61,7 @@
     "b" == uparse ["b" 3 "b" "b" "b"] [rule: <any>, repeat integer! rule]
 )
 
-; A WHILE that never actually has a succeeding rule gives back a match that is
+; Plain loops that never actually run their body give back a match that is
 ; a ~none~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
     (none? uparse "a" ["a" repeat (0) "b"])
@@ -78,18 +78,18 @@
 
 ; Opt out completely
 [
-    ("a" == uparse "aaaaaaa" [repeat (_) "b", while "a"])
-    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", while "a"])
-    ("a" == uparse "aa" [repeat (_) "b", while "a"])
-    (none? uparse "" [repeat (_) "b", while "a"])
+    ("a" == uparse "aaaaaaa" [repeat (_) "b", maybe some "a"])
+    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", maybe some "a"])
+    ("a" == uparse "aa" [repeat (_) "b", maybe some "a"])
+    (none? uparse "" [repeat (_) "b", maybe some "a"])
 ]
 
 ; Opt out completely, block form
 [
-    ("a" == uparse "aaaaaaa" [repeat ([_ _]) "b", while "a"])
-    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", while "a"])
-    ("a" == uparse "aa" [repeat ([_ _]) "b", while "a"])
-    (none? uparse "" [repeat ([_ _]) "b", while "a"])
+    ("a" == uparse "aaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
+    ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
+    ("a" == uparse "aa" [repeat ([_ _]) "b", maybe some "a"])
+    (none? uparse "" [repeat ([_ _]) "b", maybe some "a"])
 ]
 
 ; Minimum but no maximum
@@ -108,7 +108,7 @@
     (didn't uparse "" [repeat ([3 _]) "a"])
 ]
 
-; No minimum or maximum (WHILE equivalent), just using #
+; No minimum or maximum (MAYBE SOME equivalent), just using #
 [
     ("a" == uparse "aaaaaaa" [repeat (#) "a"])
     ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
@@ -116,7 +116,7 @@
     (none? uparse "" [repeat (#) "a"])
 ]
 
-; No minimum or maximum (WHILE equivalent), block form
+; No minimum or maximum (MAYBE SOME equivalent), block form
 [
     ("a" == uparse "aaaaaaa" [repeat ([_ #]) "a"])
     ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
@@ -127,5 +127,5 @@
 ; THE-BLOCK! also accepted
 [
     (didn't uparse "a" [repeat @[2 3] "a"])
-    ("a" == uparse "aaaaaaa" [repeat @[_ _] "b", while "a"])
+    ("a" == uparse "aaaaaaa" [repeat @[_ _] "b", maybe some "a"])
 ]

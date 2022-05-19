@@ -40,7 +40,7 @@ urldecoder: make object! [
 
             ; optional host [:port]
             opt [
-                copy s1 while host-char
+                copy s1 opt some host-char
                 opt [
                     ":" copy s2 digits (
                         append out compose [

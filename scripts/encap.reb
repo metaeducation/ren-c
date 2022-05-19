@@ -1201,7 +1201,7 @@ generic-format: context [
             print "Binary contains no pre-existing encap data block"
         ]
 
-        loop [0 != modulo (length of executable) 4096] [
+        while [0 != modulo (length of executable) 4096] [
             append executable #{00}
             true
         ] then padded -> [

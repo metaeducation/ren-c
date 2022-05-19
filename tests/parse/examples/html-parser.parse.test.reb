@@ -20,7 +20,7 @@
     (
         ws: charset " ^-^/^M"
         res: uparse html rule: [
-            collect [while [
+            collect maybe some [
                 ws
                 |
                 "</" thru ">" stop
@@ -29,7 +29,7 @@
                 keep ^(load-value name) opt keep ^rule
                 |
                 str: across to "<" keep (str)
-            ]]
+            ]
         ]
         res = [
             html [head [title ["Test"]] body [div [u ["Hello"] b ["World"]]]]
@@ -39,7 +39,7 @@
     (
         ws: charset " ^-^/^M"
         res: uparse html rule: [
-            collect [while [
+            collect maybe some [
                 ws
                 |
                 "</" thru ">" stop
@@ -47,7 +47,7 @@
                 keep ^ to-word/ [between "<" ">"], opt keep ^rule
                 |
                 keep across to "<"  ; may be end tag or new start tag
-            ]]
+            ]
         ]
         res = [
             html [head [title ["Test"]] body [div [u ["Hello"] b ["World"]]]]

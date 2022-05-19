@@ -106,3 +106,94 @@
 ]
 
 (#c == uparse "baaac" [<any> some [#a] #c])
+
+
+; OPT SOME or MAYBE SOME tests (which used to be WHILE)
+
+(
+    x: ~
+    did all [
+        "a" == uparse "aaa" [x: maybe some "b", opt some "a"]
+        unset? 'x
+    ]
+)
+
+[
+    (none? uparse [] [maybe some 'a])
+    (none? uparse [] [maybe some 'b])
+    ('a == uparse [a] [maybe some 'a])
+    (didn't uparse [a] [maybe some 'b])
+    ('a == uparse [a] [maybe some 'b <any>])
+    ('b == uparse [a b a b] [maybe some ['b | 'a]])
+]
+
+[(
+    x: ~
+    did all [
+        "a" == uparse "aaa" [x: maybe some "a"]
+        x = "a"
+    ]
+)]
+
+; OPT SOME that never actually has a succeeding rule gives back a match that
+; is a ~null~ isotope, which decays to null
+[
+    ('~null~ = ^ uparse "a" ["a" opt some "b"])
+    ('~null~ = ^ uparse "a" ["a" [opt "b"]])
+    ('~void~ = uparse "a" ["a" ^[maybe some "b"]])
+]
+
+; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
+(
+    i: 1
+    uparse "a" [maybe some [(i: i + 1 j: if i = 2 [[<end> skip]]) j]]
+    i == 2
+)
+
+[#1268 (
+    i: 0
+    <infinite?> = catch [
+        uparse "a" [maybe some [(i: i + 1) (if i > 100 [throw <infinite?>])]]
+    ]
+)(
+    i: 0
+    uparse "a" [maybe some [(i: i + 1 j: try if i = 2 [[false]]) j]]
+    i == 2
+)]
+
+
+[
+    (none? uparse "" [maybe some #a])
+    (none? uparse "" [maybe some #b])
+    (#a == uparse "a" [maybe some #a])
+    (didn't uparse "a" [maybe some #b])
+    (#a == uparse "a" [maybe some #b <any>])
+    (#b == uparse "abab" [maybe some [#b | #a]])
+]
+
+; WHILE tests from %parse-test.red, rethought as MAYBE SOME or OPT SOME
+[
+    (
+        x: blank
+        true
+    )
+    (#[true] == uparse #{020406} [
+        maybe some [x: across <any> :(even? first x)]
+    ])
+    (didn't uparse #{01} [x: across <any> :(even? first x)])
+    (didn't uparse #{0105} [some [x: across <any> :(even? first x)]])
+    (none? uparse #{} [maybe some #{0A}])
+    (none? uparse #{} [maybe some #{0B}])
+    (#{0A} == uparse #{0A} [maybe some #{0A}])
+    (didn't uparse #{0A} [maybe some #{0B}])
+    (10 == uparse #{0A} [maybe some #{0B} <any>])
+    (#{0B} == uparse #{0A0B0A0B} [maybe some [#{0B} | #{0A}]])
+    (error? trap [uparse #{} [ahead]])
+    (didn't uparse #{0A} [maybe some #{0A} #{0A}])
+    (1 == uparse #{01} [ahead [#{0A} | #"^A"] <any>])
+]
+
+[
+    ('a == uparse [a a] [maybe some 'a])
+    ('a == uparse [a a] [maybe some 'a, maybe some 'b])
+]

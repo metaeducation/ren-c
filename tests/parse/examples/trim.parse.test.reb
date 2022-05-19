@@ -116,17 +116,17 @@ utrim: function [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        uparse series [while [remove rule | skip | <end> stop]]
+        uparse series [opt some [remove rule | skip | <end> stop]]
         return series
     ]
 
     case/all [
         head_TRIM [
-            uparse series [remove [while rule] to <end>]
+            uparse series [opt remove [some rule] to <end>]
         ]
 
         tail_TRIM [
-            uparse series [while [remove [some rule <end>] | skip]]  ; #2289
+            uparse series [opt some [remove [some rule <end>] | skip]]  ; #2289
         ]
     ] then [
         return series
@@ -138,7 +138,7 @@ utrim: function [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        uparse series [while [change [some rule] (space) skip | skip]]
+        uparse series [opt some [change [some rule] (space) skip | skip]]
         if space = first series [take series]
         if space = last series [take/last series]
         return series
@@ -152,9 +152,9 @@ utrim: function [
     if auto [
         uparse* series [
             ; Don't count empty lines, (e.g. utrim/auto {^/^/^/    asdf})
-            remove [while LF]
+            opt remove [some LF]
 
-            indent: measure while rule  ; length of spaces and tabs
+            indent: measure opt some rule  ; length of spaces and tabs
         ]
     ]
 
@@ -162,11 +162,11 @@ utrim: function [
 
     uparse series [
         line-start-rule
-        while [
+        opt some [
             not <end>
                 ||
-            ahead [while rule [newline | <end>]]
-            remove [while rule]
+            ahead [opt some rule [newline | <end>]]
+            remove [opt some rule]
             newline line-start-rule
                 |
             skip
@@ -177,8 +177,8 @@ utrim: function [
     ; in R3-Alpha and Red leaves at most one newline at the end.
     ;
     uparse series [
-        remove [while newline]
-        while [newline remove [some newline <end>] | skip]
+        maybe remove some newline
+        opt some [newline remove [some newline <end>] | skip]
     ]
 
     return series

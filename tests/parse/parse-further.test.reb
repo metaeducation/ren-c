@@ -11,7 +11,7 @@
 ("at least 1" = uparse "a" [further [opt "a" opt "b"] ("at least 1")])
 ("at least 1" = uparse "ab" [further [opt "a" opt "b"] ("at least 1")])
 
-(none? uparse "" [while further [to <end>]])
+(none? uparse "" [repeat (#) some further [to <end>]])
 
 [https://github.com/red/red/issues/3927
     (didn't uparse "bx" [some further [not "b" | <any>]])
@@ -32,15 +32,9 @@
     (#a == uparse "aa" [opt some further [#c | not #b] 2 <any>])
     (10 == uparse #{0A0A} [opt some further [#"^L" | not #{0B}] 2 <any>])
 
-    ; Another way to say OPT SOME is WHILE
-    ;
-    ('a == uparse [a a] [while further ['c | not 'b] 2 <any>])
-    (#a == uparse "aa" [while further [#c | not #b] 2 <any>])
-    (10 == uparse #{0A0A} [while further [#"^L" | not #{0B}] 2 <any>])
-
     ; Saner way to write it... no need for FURTHER.
     ;
-    ('a == uparse [a a] [while 'c, not 'b, 2 <any>])
-    (#a == uparse "aa" [while #c, not #b, 2 <any>])
-    (10 == uparse #{0A0A} [while #"^L", not #{0B}, 2 <any>])
+    ('a == uparse [a a] [opt some 'c, not 'b, 2 <any>])
+    (#a == uparse "aa" [opt some #c, not #b, 2 <any>])
+    (10 == uparse #{0A0A} [opt some #"^L", not #{0B}, 2 <any>])
 ]

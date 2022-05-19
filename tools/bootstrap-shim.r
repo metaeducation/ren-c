@@ -108,8 +108,8 @@ trap [
 set '~done~ does [null]
 
 repeat: :loop
-loop: :while
-while: lib/func [] [fail/where "Use LOOP not WHILE" 'return]
+
+loop: :while  ; !!! Temporary, will be reclaimed.
 
 ; We don't have the distinctions between NULL and "unsets" in the bootstrap
 ; build.  But make them distinct at the source level.
@@ -397,7 +397,7 @@ modernize-action: lib/function [
     spec: lib/collect [  ; Note: offers KEEP/ONLY
         keep []  ; so bootstrap COLLECT won't be NULL if no KEEPs
 
-        loop [not tail? spec] [
+        while [not tail? spec] [
             if tag? spec/1 [
                 last-refine-word: _
                 keep/only spec/1
@@ -411,7 +411,7 @@ modernize-action: lib/function [
 
                 ; Feed through any TEXT!s following the PATH!
                 ;
-                loop [  ; v-- e.g. this is the condition of a historical WHILE
+                while [
                     if (tail? spec: my next) [break]
                     text? spec/1
                 ][
@@ -459,7 +459,7 @@ modernize-action: lib/function [
 
                 ; Feed through any TEXT!s following the ANY-WORD!
                 ;
-                loop [  ; v-- e.g. this is the condition of a historical WHILE
+                while [
                     if (tail? spec: my next) [break]
                     text? spec/1
                 ][
@@ -531,7 +531,7 @@ method: lib/func [] [
 
 trim: adapt :trim [  ; there's a bug in TRIM/AUTO in 8994d23
     if auto [
-        loop [(not tail? series) and (series/1 = LF)] [
+        while [(not tail? series) and (series/1 = LF)] [
             take series
         ]
     ]
@@ -858,7 +858,7 @@ apply: lib/function [
     ; Get all the normal parameters applied
     ;
     result: null
-    lib/while [all [:params/1, not refinement? :params/1]] [
+    while [all [:params/1, not refinement? :params/1]] [
         args: evaluate/set args 'result
         f/(to word! :params/1): :result
         params: next params
@@ -867,7 +867,7 @@ apply: lib/function [
     ; Now go by the refinements.  If it's a refinement that takes an argument,
     ; we have to set the refinement to true
     ;
-    lib/while [refinement? :args/1] [
+    while [refinement? :args/1] [
         pos: find params args/1 else [fail ["Unknown refinement" args/1]]
         args: evaluate/set (next args) 'result
         any [

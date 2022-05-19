@@ -85,7 +85,7 @@
 
     rule: [
         a: <here>  ; Begin marking text to copy verbatim to output
-        while [
+        opt some [
             to prefix  ; seek to prefix (may be blank!, this could be a no-op)
             b: <here>  ; End marking text to copy verbatim to output
             prefix  ; consume prefix (if no-op, may not be at start of match)
@@ -109,7 +109,7 @@
             )
             a: <here>  ; Restart mark of text to copy verbatim to output
                 |
-            <any>  ; if wasn't at match, keep the WHILE rule scanning ahead
+            <any>  ; if wasn't at match, keep the SOME rule scanning ahead
         ]
         to <end>  ; Seek to end, just so rule succeeds
         (append out a)  ; finalize output - transfer any remainder verbatim

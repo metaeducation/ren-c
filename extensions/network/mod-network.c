@@ -433,12 +433,12 @@ REBVAL *Start_Listening_On_Socket(const REBVAL *port)
 // !!! In R3-Alpha, the client could leave data in the buffer of the port and
 // just accumulate it, as in SYNC-OP from %prot-http.r:
 //
-//     loop [not find [ready close] state/state] [
-//         if not port? wait [state/connection port/spec/timeout] [
+//     while [not find [ready close] state.state] [
+//         if not port? wait [state.connection port.spec.timeout] [
 //             fail make-http-error "Timeout"
 //         ]
-//         if state/state = 'reading-data [
-//             read state/connection
+//         if state.state = 'reading-data [
+//             read state.connection
 //         ]
 //     ]
 //

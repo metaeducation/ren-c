@@ -1846,7 +1846,7 @@ REBNATIVE(until)
 
 
 //
-//  loop: native [
+//  while: native [
 //
 //  {So long as a condition is truthy, evaluate the body}
 //
@@ -1857,14 +1857,14 @@ REBNATIVE(until)
 //      body [<const> block! action!]
 //  ]
 //
-REBNATIVE(loop)
+REBNATIVE(while)
 //
-// Note: It was considered if `loop true [...]` should infinite loop, and then
-// `loop false [...]` never ran.  However, that could lead to accidents of
-// like `loop x > 10 [...]` instead of `loop [x > 10] [...]`.  It is probably
+// Note: It was considered if `while true [...]` should infinite loop, and then
+// `while false [...]` never ran.  However, that could lead to accidents of
+// like `while x > 10 [...]` instead of `while [x > 10] [...]`.  It is probably
 // safer to require a BLOCK! and not accept just a LOGIC!.
 {
-    INCLUDE_PARAMS_OF_LOOP;
+    INCLUDE_PARAMS_OF_WHILE;
 
     if (IS_INTEGER(ARG(condition)))
         fail ("Please use REPEAT instead of LOOP with integers");

@@ -186,7 +186,7 @@ export binary-to-c: function [
     data-len: length of data
 
     out: make text! 6 * (length of data)
-    loop [not empty? try data] [
+    while [not empty? try data] [
         ; grab hexes in groups of 8 bytes
         hexed: enbase/base (copy/part data 8) 16
         data: skip data 8
@@ -237,7 +237,7 @@ export for-each-record: function [
 
     table: next table
 
-    return loop [not tail? table] [
+    return while [not tail? table] [
         if (length of headings) > (length of table) [
             fail {Element count isn't even multiple of header count}
         ]
@@ -377,7 +377,7 @@ export relative-to-path: func [
     target: split clean-path target "/"
     base: split clean-path base "/"
     if "" = last base [take/last base]
-    loop [all [
+    while [all [
         not tail? target
         not tail? base
         base/1 = target/1

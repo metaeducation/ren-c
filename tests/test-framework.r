@@ -150,7 +150,7 @@ run-test-cluster: func [
         ; This test style does not put the GROUP! on its own line.  So if we
         ; encounter a GROUP! in such a state we consider it a test.
         ;
-        loop [not tail? pos] [
+        while [not tail? pos] [
             match [url! issue!] pos.1 else [break]
             pos: next pos
         ]
@@ -210,7 +210,7 @@ run-test-cluster: func [
         ; It's kind of ugly to do that, but many tests did it before the new
         ; test facilities were available.  We'll try and improve things.
         ;
-        loop [group? pos.1] [
+        while [group? pos.1] [
             run-single-test pos.1
             pos: next pos
         ]

@@ -16,7 +16,7 @@
 (
     data: copy ""
     uparse ["abc" <reverse> "DEF" "ghi"] [
-        while [
+        some [
             append/ (data) [
                 '<reverse> reverse/ copy/ text!
                 | text!

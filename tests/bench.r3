@@ -16,7 +16,7 @@ precision [decimal!] "suggested value: 0.05 to 0.30"
 if verbose [print ["Timing a block:" mold block]]
 guess: 0
 count: 1
-loop [
+while [
 start: now/precise
 repeat :count :block
 finish: now/precise
@@ -41,12 +41,12 @@ result
 sieve: func [size /local flags i prime series] [
 flags: make block! :size
 change/dup :flags :true :size
-loop [not tail? :flags] [
+while [not tail? :flags] [
 if first :flags [
 i: index? :flags
 prime: :i + :i + 1
 series: skip :flags (:prime * :i)
-loop [not tail? :series] [
+while [not tail? :series] [
 change :series :false
 series: skip :series :prime
 ]
@@ -112,7 +112,7 @@ sum: 0
 sqrt3: 1 / (square-root 3)
 alpha: a + (halfh * (1 - sqrt3))
 beta: a + (halfh * (1 + sqrt3))
-loop [:n > :m] [
+while [:n > :m] [
 sum: :sum + (func :alpha) + (func :beta)
 alpha: :alpha + :h
 beta: :beta + :h

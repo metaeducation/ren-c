@@ -1228,7 +1228,7 @@ generator-class: make object! [
         let stop: false
         let name
         let val
-        loop [not stop][
+        while [not stop][
             stop: true
             parse2 cmd [
                 opt some [

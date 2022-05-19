@@ -190,7 +190,7 @@ check-response: function [
     line: info.response-line
     spec: port.spec
 
-    loop [state.mode = <reading-headers>] [
+    while [state.mode = <reading-headers>] [
         any [
             all [
                 d1: find conn.data crlfbin
@@ -468,7 +468,7 @@ read-body: function [
                 ; even have enough input data for the chunk *size*, much less
                 ; the chunk.  READ until we have at least a chunk size.
                 ;
-                loop [didn't parse3 conn.data [
+                while [didn't parse3 conn.data [
                     copy chunk-size: some hex-digits, thru crlfbin
                     mk1: <here>, to <end>
                 ]][
@@ -494,7 +494,7 @@ read-body: function [
                 ; Now we have the chunk size but may not have the chunk data.
                 ; Loop until enough data is gathered.
                 ;
-                loop [didn't parse3 mk1 [
+                while [didn't parse3 mk1 [
                     repeat (chunk-size) skip, mk2: <here>, crlfbin, to <end>
                 ]][
                     read conn
@@ -541,7 +541,7 @@ read-body: function [
             port.data: make binary! headers.content-length
             append port.data take/part conn.data headers.content-length
 
-            loop [headers.content-length > length of port.data] [
+            while [headers.content-length > length of port.data] [
                 read conn
                 append port.data take/part conn.data (
                     headers.content-length - length of port.data

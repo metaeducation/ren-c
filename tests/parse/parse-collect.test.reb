@@ -85,13 +85,13 @@
     (
         alpha: charset [#a - #z]
         ["abc" "def"] = uparse "abc|def" [
-            collect [while [keep across some alpha | <any>]]
+            collect [some [keep across some alpha | <any>]]
         ]
     )
     (
         digit: charset [0 - 9]
         [#{010203} #{040506}] = uparse #{01020311040506} [
-            collect [while [keep across some digit | <any>]]
+            collect [some [keep across some digit | <any>]]
         ]
     )
 ]
@@ -380,14 +380,14 @@ https://github.com/metaeducation/ren-c/issues/935
     )
     (
         [3 4 8] = uparse [a 3 4 t "test" 8] [
-            collect [while [keep integer! | <any>]]
+            collect [some [keep integer! | <any>]]
         ]
     )
     (
         list: ~
         did all [
             [3 4 8] == uparse [a 3 4 t "test" 8] [
-                list: collect [while [keep integer! | <any>]]
+                list: collect [some [keep integer! | <any>]]
             ]
             list = [3 4 8]
         ]
@@ -466,10 +466,10 @@ https://github.com/metaeducation/ren-c/issues/935
         foo: func [value] [value]
         res: uparse [a 3 4 t [t 9] "test" 8] [
             collect [
-                while [
+                some [
                     keep integer!
                     | p: <here> block! seek (p) into any-series! [
-                        keep ^ collect [while [
+                        keep ^ collect [opt some [
                             keep integer! keep ^('+)
                             | <any> keep ^(foo '-)
                         ]]
@@ -498,7 +498,7 @@ https://github.com/metaeducation/ren-c/issues/939
     data: [foo: "a" bar: "b" | foo: "c" bar: "d"]
 
     [[foo: "a" bar: "b"] [foo: "c" bar: "d"]] = uparse data [
-        collect while further [keep ^ collect [
+        collect some further [keep ^ collect [
             [keep [^ 'foo:], keep text!]
             [keep [^ 'bar:], keep text!]
             ['| | <end>]

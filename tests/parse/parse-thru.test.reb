@@ -65,7 +65,7 @@
 (
     i: 0
     uparse "a." [
-        while [thru "a" (i: i + 1 j: try if i > 1 [end skip]) j]
+        some [thru "a" (i: i + 1 j: try if i > 1 [end skip]) j]
     ]
     i == 1
 )

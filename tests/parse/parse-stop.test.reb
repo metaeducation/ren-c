@@ -4,8 +4,8 @@
 ; match a rule and return a result.
 
 [
-    (none? uparse "a" [while ["a" stop]])
-    ("a" = uparse "a" [while [stop "a"]])
+    (none? uparse "a" [some ["a" stop]])
+    ("a" = uparse "a" [some [stop "a"]])
 ]
 
 ; You should be able to stop at any depth
@@ -28,5 +28,4 @@
 
 ; https://github.com/Oldes/Rebol-issues/issues/967
 ;
-(x: ~, did all [none? uparse "" [while  [(x: 2) stop]], x = 2])
 (x: ~, did all [none? uparse "" [some  [(x: 2) stop]], x = 2])

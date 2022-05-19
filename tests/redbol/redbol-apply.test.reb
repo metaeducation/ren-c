@@ -11,7 +11,7 @@
         params: parameters of :action
         using-args: true
 
-        loop [not tail? block] [
+        while [not tail? block] [
             block: if only [
                 arg: block.1
                 try next block

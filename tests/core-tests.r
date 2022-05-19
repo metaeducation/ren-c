@@ -166,11 +166,11 @@
 %loops/for-next.test.reb
 %loops/iterate.test.reb
 %loops/iterate-skip.test.reb
-%loops/loop.test.reb
 %loops/map.test.reb
 %loops/remove-each.test.reb
 %loops/repeat.test.reb
 %loops/until.test.reb
+%loops/while.test.reb
 
 %math/absolute.test.reb
 %math/add.test.reb
@@ -257,7 +257,6 @@
 %parse/parse-the-xxx.test.reb
 %parse/parse-thru.test.reb
 %parse/parse-to.test.reb
-%parse/parse-while.test.reb
 %parse/parse-word.test.reb
 %parse/uparse2.test.reb
 %parse/examples/argtest.parse.test.reb

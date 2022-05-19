@@ -133,7 +133,7 @@
 
 
     iter: tests
-    loop [not tail? iter] [
+    while [not tail? iter] [
         ;
         ; Skip `=== XXX ===` comment lines
         ;

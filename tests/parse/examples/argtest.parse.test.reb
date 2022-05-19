@@ -11,7 +11,7 @@
         let verbose: _
         let dir
         let arg
-        uparse args [while [
+        uparse args [opt some [
             "-a", access-dir: [
                 <end> (true)
                 | "true" (true)

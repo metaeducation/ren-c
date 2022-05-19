@@ -74,8 +74,8 @@
     (
         ws: to-bitset unspaced [tab newline cr sp]
         abc: charset ["a" "b" "c"]
-        rls: ["a" some ws b: across some abc some ws "c"]
-        rla: ["a" while ws b: across some abc while ws "c"]
+        rls: ["a", some ws, b: across some abc, some ws, "c"]
+        rla: ["a", opt some ws, b: across some abc, opt some ws, "c"]
         true
     )
     ("c" == uparse "a b c" rls)
@@ -86,13 +86,13 @@
 
 [#1298 (
     cset: charset [#"^(01)" - #"^(FF)"]
-    none? uparse "a" ["a" while cset]
+    "a" = uparse "a" ["a" maybe some cset]
 )(
     cset: charset [# - #"^(FE)"]
-    none? uparse "a" ["a" while cset]
+    '~null~ = ^ uparse "a" ["a" opt some cset]
 )(
     cset: charset [# - #"^(FF)"]
-    none? uparse "a" ["a" while cset]
+    "a" = uparse "a" ["a" maybe some cset]
 )]
 
 [

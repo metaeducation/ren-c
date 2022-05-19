@@ -143,7 +143,7 @@ rewrite-spec-and-body: helper [
         ]
 
         spool-descriptions-and-locals: does [
-            loop [match [text! set-word!] first spec] [  ; end-tolerant (null)
+            while [match [text! set-word!] first spec] [  ; end-tolerant (null)
                 if not set-word? spec.1 [
                     swap-if-after-local  ; description for hidden refinement..?
                 ]
@@ -151,7 +151,7 @@ rewrite-spec-and-body: helper [
             ]
         ]
 
-        loop [not tail? spec] [
+        while [not tail? spec] [
             refinement: to word! try match path! spec.1
 
             ; Refinements with multiple arguments are no longer allowed, and
@@ -354,7 +354,7 @@ apply: emulate [
         params: parameters of :action
         using-args: true
 
-        loop [block] [
+        while [block] [
             block: if only [
                 arg: block.1
                 try next block
@@ -1181,7 +1181,7 @@ switch: emulate [  ; Ren-C evaluates cases: https://trello.com/c/9ChhSWC4/
 
 for: emulate [denuller :cfor]
 
-while: emulate [denuller :loop]
+while: emulate [denuller :while]
 foreach: emulate [
     function [
         {No SET-WORD! capture, see https://trello.com/c/AXkiWE5Z}
@@ -1201,7 +1201,7 @@ foreach: emulate [
         ;
         use :vars [
             position: data
-            loop [not tail? position] compose [
+            while [not tail? position] compose [
                 ((collect [
                     for-each item vars [
                         case [
@@ -1410,7 +1410,7 @@ cloaker: helper [function [  ; specialized as CLOAK and DECLOAK
 
     if decode [
         i: dlen - 1
-        loop [i > 0] [
+        while [i > 0] [
             data.(1 + i): data.(1 + i) xor+
                 (data.(1 + i - 1) xor+ key.(1 + modulo i klen))
             i: i - 1
@@ -1426,7 +1426,7 @@ cloaker: helper [function [  ; specialized as CLOAK and DECLOAK
     ; just doing the math in modulo 256
     ;
     i: 1
-    loop [i < dlen] [
+    while [i < dlen] [
         n: modulo (n + data.(1 + i)) 256
         i: i + 1
     ]
@@ -1435,7 +1435,7 @@ cloaker: helper [function [  ; specialized as CLOAK and DECLOAK
 
     if not decode [
         i: 1
-        loop [i < dlen] [
+        while [i < dlen] [
             data.(1 + i): data.(1 + i) xor+
                 (data.(1 + i - 1) xor+ key.(1 + modulo i klen))
             i: i + 1
