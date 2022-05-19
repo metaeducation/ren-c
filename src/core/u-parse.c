@@ -198,10 +198,11 @@ enum parse_flags {
     PF_CHANGE = 1 << 11,
     PF_LOOPING = 1 << 12,
     PF_FURTHER = 1 << 13,  // must advance parse input to count as a match
+    PF_MAYBE = 1 << 14,  // want invisibility (not NULL) if no matches
 
-    PF_ONE_RULE = 1 << 14,  // signal to only run one step of the parse
+    PF_ONE_RULE = 1 << 15,  // signal to only run one step of the parse
 
-    PF_REDBOL = 1 << 15,  // use Rebol2/Red-style rules
+    PF_REDBOL = 1 << 16,  // use Rebol2/Red-style rules
 
     PF_MAX = PF_REDBOL
 };
@@ -1563,6 +1564,12 @@ REBNATIVE(subparse)
                 FETCH_NEXT_RULE(f);
                 goto pre_rule;
 
+              case SYM_MAYBE:
+                P_FLAGS |= PF_MAYBE;
+                mincount = 0;
+                FETCH_NEXT_RULE(f);
+                goto pre_rule;
+
               case SYM_COPY:
                 P_FLAGS |= PF_COPY;
                 goto set_or_copy_pre_rule;
@@ -2482,9 +2489,13 @@ REBNATIVE(subparse)
                 }
 
                 if (count == 0) {
-                    Init_Nulled(
-                        Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER)
-                    );
+                    if (not (P_FLAGS & PF_MAYBE))  // leave alone
+                        Init_Nulled(
+                            Sink_Word_May_Fail(
+                                set_or_copy_word,
+                                P_RULE_SPECIFIER
+                            )
+                        );
                 }
                 else if (IS_SER_ARRAY(P_INPUT)) {
                     assert(count == 1);  // check for > 1 would have errored

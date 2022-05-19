@@ -603,3 +603,24 @@
         tags = [<def> <ghi>]
     ]
 )]
+
+; MAYBE is like OPT but if used with SET it will not set the variable if there
+; is no match.  The UPARSE implementation is better, but it's mostly just
+; added to PARSE3 in case people don't like replacing their ANY and WHILE
+; with OPT SOME and find MAYBE SOME more palatable.
+[
+    (did all [
+        x: 10
+        did parse3 "" [
+            set x maybe "a"
+        ]
+        x = 10
+    ])
+    (did all [
+        x: 10
+        did parse3 "a" [
+            set x maybe "a"
+        ]
+        x = #a
+    ])
+]

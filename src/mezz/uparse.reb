@@ -284,8 +284,23 @@ default-combinators: make map! reduce [
 
     === BASIC KEYWORDS ===
 
+    'maybe combinator [
+        {If applying parser fails, succeed and return VOID; don't advance input}
+        return: "PARSER's result if it succeeds w/non-NULL, otherwise VOID"
+            [<opt> <invisible> any-value!]
+        parser [action!]
+        <local> result'
+    ][
+        ([^result' (remainder)]: parser input) then [
+            if result' = '~null~ [return void]  ; `maybe if true [null]` vanishes
+            return unmeta/void result'  ; return successful parser result
+        ]
+        set remainder input  ; succeed on parser failure but don't advance input
+        return void  ; void result (vanishes, or leaves SET-WORD!s unchanged)
+    ]
+
     'opt combinator [
-        {If the parser given as a parameter fails, return input undisturbed}
+        {If applying parser fails, succeed and return NULL; don't advance input}
         return: "PARSER's result if it succeeds, otherwise NULL"
             [<opt> any-value!]
         parser [action!]
@@ -294,8 +309,8 @@ default-combinators: make map! reduce [
         ([^result' (remainder)]: parser input) then [
             return unmeta result'  ; return successful parser result
         ]
-        set remainder input  ; on parser failure, make OPT remainder input
-        return heavy null  ; succeed on parser failure, "heavy null" result
+        set remainder input  ; succeed on parser failure but don't advance input
+        return heavy null  ; "heavy null" result (plain NULL signals failure)
     ]
 
     'not combinator [

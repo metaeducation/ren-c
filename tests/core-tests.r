@@ -232,6 +232,7 @@
 %parse/parse-into.test.reb
 %parse/parse-issue.test.reb
 %parse/parse-logic.test.reb
+%parse/parse-maybe.test.reb
 %parse/parse-measure.test.reb
 %parse/parse-meta-xxx.test.reb
 %parse/parse-not.test.reb
