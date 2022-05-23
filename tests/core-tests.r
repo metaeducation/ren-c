@@ -262,6 +262,7 @@
 %parse/examples/argtest.parse.test.reb
 %parse/examples/breaker.parse.test.reb
 %parse/examples/countify.parse.test.reb
+%parse/examples/evaluate.parse.test.reb
 %parse/examples/expression.parse.test.reb
 %parse/examples/html-parser.parse.test.reb
 %parse/examples/maxmatch.parse.test.reb
