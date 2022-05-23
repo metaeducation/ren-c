@@ -670,7 +670,7 @@ unpack: enfixed func [
     block "Reduced if normal [block], but values used as-is if @[block]"
         [block! the-block!]
 ][
-    let result': ~unset~
+    let result': ~
     reduce-each val block [
         if vars.1 = '... [  ; ignore all other values (but must reduce all)
             continue
@@ -692,12 +692,12 @@ unpack: enfixed func [
         ]
     ] else [
         ; We do not error on too few values (such as `[a b c]: [1 2]`) but
-        ; instead set the remaining variables (e.g. `c` above) to ~unset~.
+        ; instead set the remaining variables (e.g. `c` above) to `~`.
         ; There could be a refinement to choose whether to error on this case.
         ;
         for-each var vars [  ; if not enough values for variables, unset
             if not blank? var [
-                unset var
+                set var ~
             ]
         ]
     ]

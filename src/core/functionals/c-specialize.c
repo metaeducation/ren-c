@@ -193,7 +193,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
 //
 //  Make_Context_For_Action: C
 //
-// This creates a FRAME! context with `~unset~` isotopes in the unspecialized
+// This creates a FRAME! context with `~` isotopes in all of the unspecialized
 // slots.  The reason this is chosen instead of NULL is that specialization
 // with NULL is frequent, while frame values may not be isotopes when a
 // function is called.  The only way to take isotopes is to use a ^meta
@@ -214,7 +214,7 @@ REBCTX *Make_Context_For_Action(
         action,
         lowest_ordered_dsp,
         binder,
-        UNSET_VALUE
+        UNSET_ISOTOPE
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
@@ -256,7 +256,7 @@ bool Specialize_Action_Throws(
     //
     // All unspecialized slots (including partials) will be a unique tag
     // identity, specific to SPECIALIZE.  This allows a full spectrum of
-    // specialization values, including to ~unset~ isotopes.
+    // specialization values, including even to `~` isotopes.
     //
     REBCTX *exemplar = Make_Context_For_Action_Push_Partials(
         specializee,
@@ -748,14 +748,14 @@ REBACT *Alloc_Action_From_Exemplar(
         if (Is_Specialized(param))
             continue;
 
-        // We leave non-hidden ~unset~ to be handled by the evaluator as
+        // We leave non-hidden `~` isotopes to be handled by the evaluator as
         // unspecialized (which means putting it back to the parameter
         // description info, e.g. the typeset for now):
         //
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Is_Unset(arg)) {
+        if (Is_Unset_Isotope(arg)) {
             assert(IS_TYPESET(param));
             Copy_Cell(arg, param);
             continue;

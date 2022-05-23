@@ -200,7 +200,7 @@
 ; BAD-WORD! isotopes are not legal in compose, except for the null isotope.
 [
     ([<a> ~null~ <b>] = compose [<a> (if true [null]) <b>])
-    (error? trap [compose [<a> (~unset~)]])
+    (error? trap [compose [<a> (~)]])
 ]
 
 [

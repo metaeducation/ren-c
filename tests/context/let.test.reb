@@ -99,7 +99,7 @@
 ; https://forum.rebol.info/t/1496
 (
     x: <user>
-    output: '~unset~
+    output: '~
     block: evaluate evaluate evaluate [let x: 10 output: x]
     did all [
         block = []

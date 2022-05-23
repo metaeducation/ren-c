@@ -474,7 +474,7 @@ static void Init_Root_Vars(void)
 static void Shutdown_Root_Vars(void)
 {
     RESET(&PG_End_Cell);
-    RESET(&PG_Unset_Value);
+    RESET(&PG_Unset_Isotope);
 
     RESET(&PG_R_Thrown);
     RESET(&PG_R_Invisible);
@@ -976,9 +976,9 @@ void Startup_Core(void)
     BOOT_BLK *boot =
         cast(BOOT_BLK*, ARR_HEAD(VAL_ARRAY_KNOWN_MUTABLE(ARR_HEAD(boot_array))));
 
-    // Initialize UNSET_VALUE (must be after symbols loaded)
+    // Initialize UNSET_ISOTOPE (must be after symbols loaded)
     //
-    Init_Unset(&PG_Unset_Value);  // symbol not GC'd
+    Init_Unset_Isotope(&PG_Unset_Isotope);  // symbol not GC'd
 
     // ID_OF_SYMBOL(), VAL_WORD_ID() and Canon(XXX) now available
 

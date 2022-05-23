@@ -63,10 +63,3 @@ blank: _   ; e.g. sometimes `return blank` reads better than `return _`
 ; feels a bit like "sending things to `/dev/null`".
 ;
 blackhole: #
-
-; Concept of ~ as shorthand for ~unset~ is given here:
-; https://forum.rebol.info/t/three-single-character-intents-x-x-and-x/1620
-;
-; !!! Should ~ be a BAD-WORD! or is this a good idea?  Let's get experience...
-;
-~: does [~unset~]

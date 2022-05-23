@@ -237,7 +237,7 @@ combinator: func [
         ; return invisibly get the /void interpretation of returns
         ; automatically?
         ;
-        ; !!! chain [:none-to-void | :return/isotope] produces ~unset~.  Review
+        ; !!! chain [:none-to-void | :return/isotope] produces `~`.  Review
         ; why that is, and if it would be a better answer.
         ;
         return: :return/isotope

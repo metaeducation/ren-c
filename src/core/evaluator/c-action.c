@@ -194,7 +194,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
   //=//// SPECIALIZED ARGUMENTS ////////////////////////////////////////////=//
 
         // Parameters that are specialized (which includes locals, that are
-        // specialized to ~unset~ isotopes) are hidden from the public
+        // specialized to `~` isotopes) are completely hidden from the public
         // interface.  So they will never come from argument fulfillment.
         // Their value comes from the exemplar frame in the slot where typesets
         // would be if it was unspecialized.
@@ -844,7 +844,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         ){
             if (
                 GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
-                and Is_Unset(f->arg)
+                and Is_Unset_Isotope(f->arg)
             ){
                 Init_Nulled(f->arg);
             }

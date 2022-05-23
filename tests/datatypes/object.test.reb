@@ -115,7 +115,7 @@
 (
     o: make object! []
     append o 'self
-    '~unset~ = ^ get/any 'o.self
+    '~ = ^ get/any 'o.self
 )(
     o: make object! []
     append o [self: 1]

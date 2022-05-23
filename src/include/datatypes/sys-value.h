@@ -239,18 +239,18 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
                 | NODE_FLAG_FREE
             )) == (NODE_FLAG_CELL | NODE_FLAG_NODE)
         ){
-            if (KIND3Q_BYTE_UNCHECKED(v) == REB_BAD_WORD) {
-                if (VAL_NODE1(v) == nullptr) {
-                    printf("KIND3Q_BYTE() called on unreadable cell\n");
-                  #if DEBUG_TRACK_EXTEND_CELLS
-                    printf("Made on tick: %d\n", cast(int, v->tick));
-                  #endif
-                    panic_at (v, file, line);
-                }
-                return REB_BAD_WORD;
-            }
-
             return KIND3Q_BYTE_UNCHECKED(v);  // majority return here
+        }
+
+        if (
+            (v->header.bits & NODE_FLAG_FREE)
+            and KIND3Q_BYTE_UNCHECKED(v) == REB_BAD_WORD
+        ){
+            printf("KIND3Q_BYTE() called on unreadable cell\n");
+          #if DEBUG_TRACK_EXTEND_CELLS
+            printf("Made on tick: %d\n", cast(int, v->tick));
+          #endif
+            panic_at (v, file, line);
         }
 
         // Non-cells are allowed to signal REB_END; see Init_Endlike_Header.

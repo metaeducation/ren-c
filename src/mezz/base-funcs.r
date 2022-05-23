@@ -460,23 +460,23 @@ redescribe [
 unset: redescribe [
     {Clear the value of a word to an unset isotope (in its current context)}
 ](
-    specialize :set [value: ~unset~]  ; tricky case, but supported!
+    specialize :set [value: ~]  ; tricky case, but supported!
 )
 
 unset?: func [
-    {Determine if a variable looks up to an ~unset~ isotope}
+    {Determine if a variable looks up to a `~` isotope}
     return: [logic!]
     var [word! path! tuple!]
 ][
-    return '~unset~ = ^ get/any var
+    return '~ = ^ get/any var
 ]
 
 set?: func [
-    {Determine if a variable does not look up to an ~unset~ isotope}
+    {Determine if a variable does not look up to  `~` isotope}
     return: [logic!]
     var [word! path! tuple!]
 ][
-    return '~unset~ <> ^ get/any var
+    return '~ <> ^ get/any var
 ]
 
 

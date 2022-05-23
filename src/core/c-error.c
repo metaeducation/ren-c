@@ -1124,8 +1124,8 @@ REBCTX *Error_Invalid_Arg(REBFRM *f, const REBPAR *param)
 //
 //  Error_Isotope_Arg: C
 //
-// This directs the user that they can't take something like an ~unset~ isotope
-// as an argument to a function unless the ^META parameter convention is used.
+// This directs the user that they can't take isotopes as an argument to a
+// function unless the ^META parameter convention is used.
 //
 REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
 {

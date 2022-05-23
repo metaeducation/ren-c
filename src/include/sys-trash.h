@@ -44,7 +44,7 @@
 //
 inline static REBVAL *Init_Bad_Word_Untracked(
     RELVAL *out,
-    const REBSTR *label,
+    option(const REBSYM *) label,
     REBFLGS flags
 ){
     Reset_Cell_Header_Untracked(
@@ -67,30 +67,24 @@ inline static REBVAL *Init_Bad_Word_Untracked(
 }
 
 
-
-inline static REBVAL *Init_Trash_Untracked(RELVAL *out) {
-    Reset_Cell_Header_Untracked(
-        TRACK(out), REB_BAD_WORD, CELL_FLAG_FIRST_IS_NODE
-      );
-    mutable_BINDING(out) = nullptr;
-
-    // While SYM_UNREADABLE might be nice here, this prevents usage at
-    // boot time (e.g. data stack initialization)...and it's a good way
-    // to crash sites that might mistake it for a valid bad word.  It's
-    // usually clear from the assert that it's unreadable, anyway.
+#if DEBUG_UNREADABLE_TRASH
     //
-    INIT_VAL_NODE1(out, nullptr);  // FIRST_IS_NODE needed to do this
-  #ifdef ZERO_UNUSED_CELL_FIELDS
-    PAYLOAD(Any, out).second.trash = ZEROTRASH;
-  #endif
-    return cast(REBVAL*, out);
-}
+    // Debug behavior: `~` isotope with the NODE_FLAG_FREE set
+    // Will trip up any access attempts via READABLE(), but can be overwritten
 
-#define Init_Trash(out) \
-    Init_Trash_Untracked(TRACK(out))
+    #define Init_Trash(out) \
+        Init_Bad_Word_Untracked(TRACK(out), nullptr, NODE_FLAG_FREE)
 
-inline static bool IS_TRASH(const RELVAL *v) {
-    if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
-        return false;
-    return VAL_NODE1(v) == nullptr;
-}
+    inline static bool IS_TRASH(const RELVAL *v) {
+        if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
+            return false;
+        return did (v->header.bits & NODE_FLAG_FREE);
+    }
+#else
+    // Release Build Behavior: Looks just like an unset (`~` isotope)
+
+    #define Init_Trash(out) \
+        Init_Bad_Word_Untracked(TRACK(out), nullptr, CELL_MASK_NONE)
+
+    #define IS_TRASH(v) false
+#endif

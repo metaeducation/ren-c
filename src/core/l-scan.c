@@ -188,7 +188,7 @@ const REBYTE Lex_Map[256] =
     /* 7B {   */    LEX_DELIMIT|LEX_DELIMIT_LEFT_BRACE,
     /* 7C |   */    LEX_SPECIAL|LEX_SPECIAL_BAR,
     /* 7D }   */    LEX_DELIMIT|LEX_DELIMIT_RIGHT_BRACE,
-    /* 7E ~   */    LEX_DELIMIT|LEX_DELIMIT_TILDE,
+    /* 7E ~   */    LEX_SPECIAL|LEX_SPECIAL_TILDE,
     /* 7F DEL */    LEX_DEFAULT,
 
     /* Odd Control Chars */
@@ -1226,35 +1226,6 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             TRASH_POINTER_IF_DEBUG(ss->end);
             goto acquisition_loop;
 
-          case LEX_DELIMIT_TILDE: {
-            ++cp;
-            if (*cp == '~') {  // only legal multi-tilde is the `~~~` BAD-WORD!
-                ++cp;
-                if (*cp != '~') {
-                    ss->end = cp;
-                    fail (Error_Syntax(ss, TOKEN_BAD_WORD));
-                }
-                ++cp;
-                if (*cp == '~' or not IS_LEX_DELIMIT(*cp)) {
-                    ss->end = cp;
-                    fail (Error_Syntax(ss, TOKEN_BAD_WORD));
-                }
-                ss->end = cp;
-                return TOKEN_BAD_WORD;
-            }
-            if (*cp == ':' or IS_LEX_DELIMIT(*cp)) {
-                ss->end = cp;
-                return TOKEN_WORD;  // single `~` is a WORD!
-            }
-            for (; *cp != '~'; ++cp) {
-                if (IS_LEX_DELIMIT(*cp)) {
-                    ss->end = cp;
-                    fail (Error_Syntax(ss, TOKEN_BAD_WORD));  // `[return ~a]`
-                }
-            }
-            ss->end = cp + 1;
-            return TOKEN_BAD_WORD; }
-
           case LEX_DELIMIT_COMMA:
             ++cp;
             ss->end = cp;
@@ -1499,6 +1470,31 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
             }
             token = TOKEN_MONEY;
             goto prescan_subsume_up_to_one_dot;
+
+          case LEX_SPECIAL_TILDE: {
+            ++cp;  // look at what comes after ~
+            if (IS_LEX_DELIMIT(*cp)) {  // lone ~ is okay
+                ss->end = cp;
+                return TOKEN_BAD_WORD;
+            }
+            if (*cp == '~') {  // `~~` and `~~~a` etc are not legal
+                while (not IS_LEX_DELIMIT(*cp))
+                    ++cp;
+                ss->end = cp;
+                fail (Error_Syntax(ss, TOKEN_BAD_WORD));
+            }
+            if (*cp == ':') {  // !!! Error here on `~:`, or would it anyway?
+                ss->end = cp;
+                fail (Error_Syntax(ss, TOKEN_BAD_WORD));
+            }
+            for (; *cp != '~'; ++cp) {
+                if (IS_LEX_DELIMIT(*cp)) {
+                    ss->end = cp;
+                    fail (Error_Syntax(ss, TOKEN_BAD_WORD));  // `[return ~a]`
+                }
+            }
+            ss->end = cp + 1;
+            return TOKEN_BAD_WORD; }
 
           default:
             fail (Error_Syntax(ss, TOKEN_WORD));
@@ -1924,12 +1920,14 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         break;
 
       case TOKEN_BAD_WORD: {  // a non-isotope bad-word
-        assert(len >= 3);
         assert(*bp == '~');
-        assert(bp[len - 1] == '~');
-        const REBSTR *label = Intern_UTF8_Managed(bp + 1, len - 2);
-
-        Init_Bad_Word(DS_PUSH(), label);
+        if (len == 1)
+            Init_Bad_Word(DS_PUSH(), nullptr);
+        else {
+            assert(bp[len - 1] == '~');
+            const REBSYM *label = Intern_UTF8_Managed(bp + 1, len - 2);
+            Init_Bad_Word(DS_PUSH(), label);
+        }
         break; }
 
       case TOKEN_COMMA:
@@ -3244,7 +3242,6 @@ const REBYTE *Scan_Issue(RELVAL *out, const REBYTE *cp, REBSIZ size)
             switch (GET_LEX_VALUE(*bp)) {
               case LEX_DELIMIT_SLASH:  // internal slashes are legal
               case LEX_DELIMIT_PERIOD:  // internal dots also legal
-              case LEX_DELIMIT_TILDE:  // tildes allowed
                 break;
 
               default:
@@ -3258,7 +3255,7 @@ const REBYTE *Scan_Issue(RELVAL *out, const REBYTE *cp, REBSIZ size)
                 return nullptr;  // TBD: #^(NN) for light-looking escapes
             break;
 
-          case LEX_CLASS_SPECIAL:  // includes `<` and '>'
+          case LEX_CLASS_SPECIAL:  // includes `<` and '>' and `~`
           case LEX_CLASS_NUMBER:
             break;
         }

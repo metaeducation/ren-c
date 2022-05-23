@@ -37,10 +37,11 @@ void MF_Bad_word(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
     Append_Codepoint(mo->series, '~');
 
-    const REBSTR* label = VAL_BAD_WORD_LABEL(v);
-    Append_Utf8(mo->series, STR_UTF8(label), STR_SIZE(label));
-
-    Append_Codepoint(mo->series, '~');
+    const REBSTR* label = try_unwrap(VAL_BAD_WORD_LABEL(v));
+    if (label) {
+        Append_Utf8(mo->series, STR_UTF8(label), STR_SIZE(label));
+        Append_Codepoint(mo->series, '~');
+    }
 }
 
 
@@ -87,8 +88,16 @@ REB_R TO_Bad_word(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
 //
 REBINT CT_Bad_word(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 {
-    const REBSYM* label_a = VAL_BAD_WORD_LABEL(a);
-    const REBSYM* label_b = VAL_BAD_WORD_LABEL(b);
+    const REBSYM* label_a = try_unwrap(VAL_BAD_WORD_LABEL(a));
+    const REBSYM* label_b = try_unwrap(VAL_BAD_WORD_LABEL(b));
+
+    if (label_a == nullptr) {
+        if (label_b != nullptr)
+            return -1;
+        return 0;
+    }
+    else if (label_b == nullptr)
+        return 1;
 
     return Compare_Spellings(label_a, label_b, strict);
 }
@@ -107,8 +116,12 @@ REBTYPE(Bad_word)
         UNUSED(ARG(value)); // taken care of by `voided` above.
 
         switch (VAL_WORD_ID(ARG(property))) {
-          case SYM_LABEL:
-            return Init_Word(D_OUT, VAL_BAD_WORD_LABEL(voided));
+          case SYM_LABEL: {
+            const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(voided));
+            if (label == nullptr)
+                return nullptr;  // "soft failure" safer than blank!, use TRY
+
+            return Init_Word(D_OUT, label); }
 
           default:
             break;

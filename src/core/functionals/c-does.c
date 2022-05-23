@@ -220,7 +220,7 @@ REBNATIVE(does)
     assert(KEY_SYM(CTX_KEY(exemplar, 1)) == SYM_RETURN);
     Copy_Cell(CTX_VAR(exemplar, 2), source);
 
-    const REBSTR *label = ANONYMOUS;  // !!! Better answer?
+    const REBSYM *label = ANONYMOUS;  // !!! Better answer?
 
     REBACT *doer = Make_Action_From_Exemplar(exemplar);
     return Init_Action(D_OUT, doer, label, UNBOUND);

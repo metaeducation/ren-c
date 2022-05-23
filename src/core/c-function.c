@@ -221,7 +221,7 @@ void Push_Paramlist_Triads_May_Fail(
             // You currently can't say `<local> x [integer!]`, because locals
             // are hidden from the interface, and hidden values (notably
             // specialized-out values) use the `param` slot for the value,
-            // not type information.  So local has `~unset~ in that slot.
+            // not type information.  So local has `~` isotope in that slot.
             //
             // Even if you could give locals a type, it could only be given
             // a meaning if it were used to check assignments during the
@@ -424,7 +424,7 @@ void Push_Paramlist_Triads_May_Fail(
         // But Is_Param_Endable() indicates <end>.
 
         if (local) {
-            Init_Unset(param);
+            Init_Unset_Isotope(param);
         }
         else if (refinement) {
             Init_Param(

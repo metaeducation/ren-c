@@ -760,7 +760,7 @@ REBNATIVE(applique)
         action,
         f->dsp_orig, // lowest_ordered_dsp of refinements to weave in
         &binder,
-        UNSET_VALUE
+        UNSET_ISOTOPE
     );
     REBARR *varlist = CTX_VARLIST(exemplar);
     Manage_Series(varlist); // binding code into it
@@ -782,10 +782,10 @@ REBNATIVE(applique)
 
     while (Did_Advance_Evars(&e)) {
         //
-        // !!! This is another case where if you want to literaly apply
-        // with ~unset~ you have to manually hide the frame key.
+        // !!! Is it necessary to do the `~` to null conversion here, or will
+        // the frame invocation do it automatically?
         //
-        if (Is_Unset(e.var))
+        if (Is_Unset_Isotope(e.var))
             Init_Nulled(e.var);
 
         Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
@@ -1019,9 +1019,9 @@ REBNATIVE(apply)
   end_loop:
 
     // We need to remove the binder indices, whether we are raising an error
-    // or not.  But we also want any fields not assigned to be set to ~unset~.
+    // or not.  But we also want any fields not assigned to be set to `~`.
     // (We wanted to avoid the situation where someone purposefully set a
-    // meta-parameter to ~unset~ being interpreted as never setting a field).
+    // meta-parameter to `~` being interpreted as never setting a field).
     //
     Shutdown_Evars(&e);
 
@@ -1031,7 +1031,7 @@ REBNATIVE(apply)
     while (Did_Advance_Evars(&e)) {
         if (not arg_threw and not error and IS_TAG(e.var))
             if (VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag))
-                Init_Unset(e.var);
+                Init_Unset_Isotope(e.var);
 
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }

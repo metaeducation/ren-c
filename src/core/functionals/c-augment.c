@@ -74,7 +74,7 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     INCLUDE_PARAMS_OF_AUGMENT_P;
 
     REBACT *augmentee = VAL_ACTION(ARG(action));
-    option(const REBSTR*) label = VAL_ACTION_LABEL(ARG(action));
+    option(const REBSYM*) label = VAL_ACTION_LABEL(ARG(action));
 
     // We reuse the process from Make_Paramlist_Managed_May_Fail(), which
     // pushes descriptors to the stack in groups for each parameter.

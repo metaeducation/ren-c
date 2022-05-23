@@ -132,7 +132,7 @@
 
     (f-outside-augment.public = 1020)
     (f-outside-augment.additional = 1020304)
-    ('~unset~ = ^f-outside-augment.private)  ; we didn't assign it
+    ('~ = ^f-outside-augment.private)  ; we didn't assign it
 
     (f-inside-augment.public = 1020)
     (f-inside-augment.additional = 1020304)

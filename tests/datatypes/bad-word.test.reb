@@ -47,14 +47,38 @@
     ]
 )]
 
-; Plain ~ is not a void, but a WORD!.  But things like ~~~ are not WORD!,
-; because that would be ambiguous with a BAD-WORD! with the word-label of ~.
-; So ~ is the only "~-word"
-;
-(word? first [~])
-('scan-invalid = ((trap [load-value "~~"]).id))
-(bad-word? first [~~~])
-('~ = label of '~~~)
+; Plain ~ is a BAD-WORD!, but its spelling is nullptr.  It thus cannot be made
+; into a WORD!.
+[
+    (bad-word? first [~])
+    (null = label of '~)
+    ; !!! Add tests here when WORD!/BAD-WORD! conversions via AS and TO allowed
+]
+
+(
+    valid: ["~abc~" "~a|b~"]
+    for-each str valid [
+        word: uparse str [to-word/ between '~ '~]
+        bad: load-value str
+        assert [bad-word? bad]
+        assert [word = label of bad]
+        isotope: do str
+        assert [bad = ^isotope]
+    ]
+    true
+)
+
+(
+    invalid: ["~~" "~~~" "~a" "~~~a"]
+    for-each str invalid [
+        e: trap [
+            load-value str
+        ]
+        assert [e.id = 'scan-invalid]
+    ]
+    true
+)
+
 
 ; Functions are able to return VOID as "invisible".  But to avoid wantonly
 ; creating variant arity situations in code, generic function execution tools
@@ -94,13 +118,13 @@
     '~none~ = ^ f
 )]
 
-; ~unset~ is the type of locals before they are assigned
+; `~` isotope is the type of locals before they are assigned
 (
     f: func [<local> loc] [reify get/any 'loc]
-    f = '~unset~
+    f = '~
 )(
     f: func [<local> loc] [^loc]
-    f = '~unset~
+    f = '~
 )
 
 
@@ -147,7 +171,7 @@
 ;
 ; !!! Review: PARSE should probably error on rules like `some ~foo~`, and
 ; there needs to be a mechanism to indicate that it's okay for a rule to
-; literally match ~unset~ vs. be a typo.
+; literally match something that's not set vs. be a typo.
 ;
 (did parse3 [~foo~ ~foo~] [some '~foo~])  ; acceptable
 (did parse3 [~foo~ ~foo~] [some ~foo~])  ; !!! shady, rethink

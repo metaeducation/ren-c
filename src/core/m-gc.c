@@ -130,7 +130,8 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
   #endif
 
     Queue_Mark_Opt_Value_Deep(paired);
-    Queue_Mark_Opt_Value_Deep(PAIRING_KEY(paired));
+    if (NOT_END(PAIRING_KEY(paired)))  // tolerate for QUOTED!
+        Queue_Mark_Opt_Value_Deep(PAIRING_KEY(paired));
 
     paired->header.bits |= NODE_FLAG_MARKED;
     ++mark_count;
@@ -313,6 +314,9 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
 static void Queue_Mark_Opt_Value_Deep(const RELVAL *cv)
 {
     RELVAL *v = m_cast(RELVAL*, cv);  // we're the system, we can do this
+
+    if (IS_TRASH(cv))  // always false in release builds (no cost)
+        return;
 
     if (KIND3Q_BYTE_UNCHECKED(v) == REB_0_END)
         assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()

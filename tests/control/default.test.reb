@@ -56,18 +56,18 @@
     x = 304
 )
 
-; Only unfriendly bad-words count, and only ~void~ and ~unset~ are candidates
-; that the system knows to go with the idea of "missing variables".
+; Only `~` is a candidate for an isotope the system knows to go with the idea
+; of "missing variables".
 [(
-    x: ~unset~
+    x: ~
     x: default [1020]
     x = 1020
 )(
-    x: second [~void~ ~unset~]
+    x: second [~void~ ~]  ; plain BAD-WORD!
     x: default [1020]
-    x = '~unset~
+    x = '~
 )(
     x: ~problem-signal~
     x: default [1020]
-    ^x = '~problem-signal~
+    x = 1020
 )]

@@ -98,14 +98,14 @@ trap [
 
 ;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
 
-~: :null  ; most similar behavior to bad-word isotope available
+set '~ :null  ; most similar behavior to bad-word isotope available
 
 ; Done is used as a signal in the boot files that the expected end is reached.
 ; This is a BAD-WORD! in modern Ren-C, but a plain word in the bootstrap EXE.
 ; Must use SET because even though we don't run this in modern Ren-C, the file
 ; gets scanned...and `~done~:` would be invalid.
 ;
-set '~done~ does [null]
+set '~done~ :null
 
 repeat: :loop
 

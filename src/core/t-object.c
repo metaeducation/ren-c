@@ -36,7 +36,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             VAL_WORD_SYMBOL(arg),
             strict
         )){
-            Init_Unset(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
+            Init_Unset_Isotope(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
         }
         return;
     }
@@ -100,7 +100,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 
     STKVAL(*) new_word = DS_AT(collector.dsp_orig) + first_new_index;
     for (; new_word != DS_TOP + 1; ++new_word)
-        Init_Unset(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
+        Init_Unset_Isotope(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
   }
   }  // end the non-module part
 
@@ -114,7 +114,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             var = MOD_VAR(c, symbol, strict);
             if (not var) {
                 var = Append_Context(c, nullptr, symbol);
-                Init_Unset(var);
+                Init_Unset_Isotope(var);
             }
         }
         else {
@@ -144,7 +144,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
         }
 
         if (word + 1 == tail) {
-            Init_Unset(var);
+            Init_Unset_Isotope(var);
             break;  // fix bug#708
         }
         else
@@ -941,8 +941,11 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
 
             if (Is_Isotope(e.var)) {
                 Append_Codepoint(mo->series, '~');
-                Append_Spelling(mo->series, VAL_BAD_WORD_LABEL(e.var));
-                Append_Codepoint(mo->series, '~');
+                const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(e.var));
+                if (label) {
+                    Append_Spelling(mo->series, label);
+                    Append_Codepoint(mo->series, '~');
+                }
             }
             else if (not IS_NULLED(e.var) and not IS_BLANK(e.var))
                 Mold_Value(mo, e.var);
@@ -1006,8 +1009,11 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
                 // status would be lost).
                 //
                 Append_Ascii(s, "~");
-                Append_Spelling(s, VAL_BAD_WORD_LABEL(e.var));
-                Append_Ascii(s, "~");
+                const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(e.var));
+                if (label) {
+                    Append_Spelling(s, label);
+                    Append_Ascii(s, "~");
+                }
             }
             else {
                 if (not ANY_INERT(e.var))

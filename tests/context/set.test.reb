@@ -28,7 +28,7 @@
     b: 20
     c: 30
     [a b c]: unpack [_ 99]
-    did all [a = _, b = 99, ^c = '~unset~]
+    did all [a = _, b = 99, ^c = '~]
 )
 
 ; #1745  !!! UNPACK supports narrower dialecting, review potential meanings

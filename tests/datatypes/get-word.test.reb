@@ -17,7 +17,7 @@
     did all [
        'bad-word-get = e.id
        ':a = e.arg1
-       '~unset~ = e.arg2
+       '~ = e.arg2
     ]
 )
 

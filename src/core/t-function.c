@@ -83,7 +83,7 @@ REBINT CT_Action(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //  MAKE_Action: C
 //
 // Ren-C provides the ability to MAKE ACTION! from a FRAME!.  Any values on
-// the public interface which are ~unset~ will be assumed to be unspecialized.
+// the public interface which are `~` isotopes aree assumed unspecialized.
 //
 // https://forum.rebol.info/t/default-values-and-make-frame/1412
 //
@@ -104,7 +104,7 @@ REB_R MAKE_Action(
     if (parent)
         fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    if (IS_FRAME(arg)) {  // will assume ~unset~ fields are unspecialized
+    if (IS_FRAME(arg)) {  // will assume `~` isotope fields are unspecialized
         //
         // !!! This makes a copy of the incoming context.  AS FRAME! does not,
         // but it expects any specialized frame fields to be hidden, and non

@@ -12,7 +12,7 @@
     set noquote the 'a <seta>
     <seta> = get noquote the '''''''a
 )(
-    a: b: ~unset~
+    a: b: ~
     set noquote first ['''''a] <seta>
     set noquote first [''b] <setb>
     [<seta> <setb>] = collect [

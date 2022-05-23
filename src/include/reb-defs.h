@@ -247,7 +247,7 @@ enum Reb_Param_Class {
     //     a is '3
     //
     //     >> foo get/any 'asdfasfasdf
-    //     a is ~unset~
+    //     a is ~
     //
     PARAM_CLASS_META
 };

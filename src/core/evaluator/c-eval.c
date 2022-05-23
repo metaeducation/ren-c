@@ -1479,7 +1479,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 continue;
             if (not IS_BLANK(DS_AT(dsp_output))) {
                 Copy_Cell(var, DS_AT(dsp_output));
-                Set_Var_May_Fail(var, SPECIFIED, UNSET_VALUE);
+                Set_Var_May_Fail(var, SPECIFIED, UNSET_ISOTOPE);
             }
             ++dsp_output;
         }
@@ -1666,18 +1666,25 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // Two different forms of BAD-WORD!s can be put into variables.  The plain
     // form can be produced by quoting, and it is safe to fetch via WORD!:
     //
-    //     >> foo: '~unset~  ; quoted
+    //     >> foo: '~whatever~
+    //     == ~whatever~
+    //
     //     >> foo
-    //     == ~unset~
+    //     == ~whatever~
     //
-    // The other form comes from literal uses.  If a version originating from
-    // such a form makes it to an assignment, it will cause an error:
+    // The other form arises from evaluation, and are called "isotopes".  If
+    // you try to access these from a variable, you will get an error:
     //
-    //     >> bar: ~unset~  ; not quoted
+    //     >> bar: ~whatever~
+    //     == ~whatever~  ; isotope
+    //
     //     >> bar
-    //     ** Error
+    //     ** Error: bar is a ~whatever~ isotope
     //
     // To bypass the error, use GET/ANY.
+    //
+    // Note that some special isotopes will "decay" when written to variables,
+    // to produce ordinary safe values.
 
       case REB_BAD_WORD:
         //

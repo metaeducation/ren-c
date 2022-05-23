@@ -109,6 +109,7 @@ inline static bool Is_Valid_Sequence_Element(
         or k == REB_BLOCK
         or k == REB_TEXT
         or k == REB_TAG
+        or k == REB_BAD_WORD  // legal, e.g. `~/home/Projects/ren-c/README.md`
     ){
         return true;
     }

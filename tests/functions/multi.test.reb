@@ -17,11 +17,11 @@
 [
     (test: func [return: x y: z:] [
         if not null? y [
-            assert ['~unset~ = ^(get/any y)]
+            assert ['~ = ^(get/any y)]
             set y <y-result>
         ]
         if not null? z [
-            assert ['~unset~ = ^(get/any z)]
+            assert ['~ = ^(get/any z)]
             set z <z-result>
         ]
 
@@ -131,7 +131,7 @@
         a: b: ~
         did all [
             (the 'A) = [^ ^b]: transcode "A B"
-            ^a = '~unset~
+            ^a = '~
             b = the '{ B}
         ]
     )

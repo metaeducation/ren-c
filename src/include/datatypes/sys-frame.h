@@ -179,7 +179,7 @@ inline static void INIT_FRM_BINDING(REBFRM *f, REBCTX *binding)
 #define FRM_BINDING(f) \
     cast(REBCTX*, BINDING((f)->rootvar))
 
-inline static option(const REBSTR*) FRM_LABEL(REBFRM *f) {
+inline static option(const REBSYM*) FRM_LABEL(REBFRM *f) {
     assert(Is_Action_Frame(f));
     return f->label;
 }

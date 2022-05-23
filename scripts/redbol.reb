@@ -241,7 +241,7 @@ rewrite-spec-and-body: helper [
         ; add support for an EXIT that's a synonym for returning void.
         ;
         insert body [
-            exit: specialize :return [value: '~unset~]
+            exit: specialize :return [value: '~]
         ]
         append spec [<local> exit]  ; FUNC needs it (function doesn't...)
     ]
@@ -408,15 +408,15 @@ null: emulate [
     make char! 0  ; NUL in Ren-C https://en.wikipedia.org/wiki/Null_character
 ]
 
-; We use the case of Ren-C's "isotope" variant of the BAD-WORD! ~unset~ as a
+; We use the case of Ren-C's "isotope" variant of the BAD-WORD! ~ as a
 ; parallel of historical Rebol's UNSET!.  It cannot be retrieved via a
 ; GET-WORD! (as in R3-Alpha or Red), but only with a special access function
 ; (like in Rebol2).
 ;
-unset!: bad-word!
-unset?: emulate [func [^x] [x = '~unset~]]  ; checks *value* is unset, not var
+unset!: bad-word!  ; isotope! ?
+unset?: emulate [func [^x] [x = '~]]  ; checks *value* is unset, not var
 unset: func [var [word! path! block!]] [  ; historically blocks are legal
-    set/any var ~unset~
+    set/any var ~
 ]
 
 ; Note: Ren-C once reserved NONE for `if none [x = 1, y = 2] [...]`
@@ -764,13 +764,13 @@ compose: emulate [
             ; The predicate is a function that runs on whatever is generated
             ; in the COMPOSE'd slot.  If you put it in a block, that will
             ; splice but protect its contents from splicing (the default).
-            ; We add the twist that ~unset~ won't compose in Rebol2.
+            ; We add the twist that `~` isotopes subvert errors in Rebol2.
             ;
             ;    rebol2> type? either true [] []
             ;    == unset!
             ;
             ;    rebol2> compose [(either true [] [])]
-            ;    == []  ; would be [~void~] in Ren-C
+            ;    == []
             ;
             /predicate either only [:quote] [:splice-adjuster]
         ]

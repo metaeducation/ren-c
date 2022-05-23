@@ -628,7 +628,7 @@ REBNATIVE(case)
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
 
-    assert(Is_Unset(ARG(last)));
+    assert(Is_Unset_Isotope(ARG(last)));
     Init_Nulled(ARG(last));  // default return result
 
     Push_Frame(nullptr, f);
@@ -768,7 +768,7 @@ REBNATIVE(switch)
 
     Push_Frame(nullptr, f);
 
-    assert(Is_Unset(ARG(last)));
+    assert(Is_Unset_Isotope(ARG(last)));
     Init_Nulled(ARG(last));
 
     REBVAL *left = ARG(value);
@@ -951,16 +951,16 @@ REBNATIVE(default)
 
     // We only consider those bad words which are in the "unfriendly" state
     // that the system also knows to mean "emptiness" as candidates for
-    // overriding.  That's ~unset~ at the moment.  Note that friendly ones do
-    // not count:
+    // overriding.  That's ~ isotopes at the moment.  Note that friendly ones
+    // do not count:
     //
-    //     >> x: first [~unset~]
-    //     == ~unset~
+    //     >> x: first [~]
+    //     == ~
     //
     //     >> x: default [10]
-    //     == ~unset~
+    //     == ~
     //
-    if (not (IS_NULLED(D_OUT) or Is_Unset(D_OUT))) {
+    if (not (IS_NULLED(D_OUT) or Is_Unset_Isotope(D_OUT))) {
         if (not REF(predicate)) {  // no custom additional constraint
             if (not IS_BLANK(D_OUT))  // acts as `x: default .not.blank? [...]`
                 return D_OUT;  // count it as "already set"

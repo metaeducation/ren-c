@@ -379,7 +379,6 @@ REBNATIVE(enhex)
                   case LEX_DELIMIT_RIGHT_BRACKET:
                   case LEX_DELIMIT_SLASH:
                   case LEX_DELIMIT_PERIOD:
-                  case LEX_DELIMIT_TILDE:
                   case LEX_DELIMIT_COMMA:
                     goto leave_as_is;
 
@@ -409,6 +408,7 @@ REBNATIVE(enhex)
                   case LEX_SPECIAL_POUND:
                   case LEX_SPECIAL_DOLLAR:
                   case LEX_SPECIAL_SEMICOLON:
+                  case LEX_SPECIAL_TILDE:
                     goto leave_as_is;
 
                   case LEX_SPECIAL_WORD:

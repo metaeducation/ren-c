@@ -300,9 +300,9 @@ static bool Subparse_Throws(
 
     // Locals in frame would be void on entry if called by action dispatch.
     //
-    Init_Unset(ARG(num_quotes));
-    Init_Unset(ARG(position));
-    Init_Unset(ARG(save));
+    Init_Unset_Isotope(ARG(num_quotes));
+    Init_Unset_Isotope(ARG(position));
+    Init_Unset_Isotope(ARG(save));
 
     // !!! By calling the subparse native here directly from its C function
     // vs. going through the evaluator, we don't get the opportunity to do
@@ -1246,7 +1246,7 @@ REBNATIVE(subparse)
     // But we save the number of quotes in a local variable.  This way we can
     // put the quotes back on whenever doing a COPY etc.
     //
-    assert(Is_Unset(ARG(num_quotes)));
+    assert(Is_Unset_Isotope(ARG(num_quotes)));
     Init_Integer(ARG(num_quotes), VAL_NUM_QUOTES(ARG(input)));
     Dequotify(ARG(input));
 
@@ -1258,7 +1258,7 @@ REBNATIVE(subparse)
         VAL_INDEX_RAW(ARG(input)) = VAL_LEN_HEAD(ARG(input));
     }
 
-    assert(Is_Unset(ARG(position)));
+    assert(Is_Unset_Isotope(ARG(position)));
     Copy_Cell(ARG(position), ARG(input));
 
     // Every time we hit an alternate rule match (with |), we have to reset

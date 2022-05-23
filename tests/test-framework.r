@@ -260,7 +260,7 @@ process-tests: function [
                             ]
                             value: quote as group! value
                         ]
-                        keep: ~unset~
+                        keep: ~
                         (as group! body)
                     ]]
 

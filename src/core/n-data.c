@@ -170,7 +170,7 @@ REBNATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Init_Unset(Append_Context(VAL_CONTEXT(context), v, nullptr));
+            Init_Unset_Isotope(Append_Context(VAL_CONTEXT(context), v, nullptr));
             RETURN (Quotify(v, num_quotes));
         }
 
@@ -2437,10 +2437,10 @@ REBNATIVE(null_to_void)
 //
 REBNATIVE(nothing_q)
 //
-// !!! Note that today's concept of allowing an ~unset~ isotope to be passed
+// !!! Note that today's concept of allowing an `~` isotope to be passed
 // here would require this taking value as a ^META parameter.  This might
 // be a good idea; when writing a function like DEFAULT it should overwrite
-// the variable if it's ~unset~ too...so that might be a concept of "nothing".
+// the variable if it's unset too...so that might be a concept of "nothing".
 // But meta functions should be rare, and it raises the question of how other
 // isotopes should be handled... what if it's a ~void~ isotope?  Should it
 // say it's not nothing, or error?  What about an ~asdf~ isotope?  For now
@@ -2455,7 +2455,7 @@ REBNATIVE(nothing_q)
 //
 //  something?: native [
 //
-//  "Returns FALSE if a argument is BLANK!, NULL, or an ~unset~ isotope"
+//  "Returns FALSE if a argument isn't BLANK! or NULL"
 //
 //      return: [logic!]
 //      value [<opt> any-value!]
@@ -2463,7 +2463,7 @@ REBNATIVE(nothing_q)
 //
 REBNATIVE(something_q)
 //
-// !!! See remarks on `nothing?` regarding ~unset~ and isotopes.
+// !!! See remarks on `nothing?` regarding `~` and isotopes.
 {
     INCLUDE_PARAMS_OF_SOMETHING_Q;
 

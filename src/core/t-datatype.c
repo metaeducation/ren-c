@@ -272,7 +272,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
         REBVAL *value = Append_Context(Lib_Context, SPECIFIC(word), nullptr);
 
         if (kind == REB_BYTES) {
-            Init_Unset(value);
+            Init_Unset_Isotope(value);
             SET_CELL_FLAG(value, PROTECTED);
             continue;
         }
@@ -284,7 +284,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
             // "not bindable" range.  (Is_Bindable() would be a slower test
             // if it had to account for it.)
             //
-            Init_Unset(value);
+            Init_Unset_Isotope(value);
             SET_CELL_FLAG(value, PROTECTED);
             continue;
         }

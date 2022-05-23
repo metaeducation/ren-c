@@ -641,7 +641,7 @@ inline static option(REBSER*) Get_Word_Container(
             ){
                 *index_out = INDEX_ATTACHED;
                 return Singular_From_Cell(
-                    Init_Unset(Append_Context(CTX(binding), nullptr, symbol))
+                    Init_Unset_Isotope(Append_Context(CTX(binding), nullptr, symbol))
                 );
             }
 

@@ -31,7 +31,7 @@ to-path: to-set-path: to-get-path: to-map: to-datatype: to-typeset:
 to-word: to-set-word: to-get-word: to-issue:
 to-function: to-object: to-module: to-error: to-port:
 to-gob: to-event:
-    ~unset~
+    ~
 
 ; Auto-build the functions for the above TO-* words.
 use [word] [

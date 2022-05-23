@@ -616,7 +616,7 @@ pe-format: context [
 
         parse3 rule [opt some block-rule] else [fail]
 
-        set name make object! append def [~unset~]
+        set name make object! append def [~]
         return bind rule get name
     ]
 

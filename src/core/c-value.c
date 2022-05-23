@@ -203,8 +203,11 @@ void* Probe_Core_Debug(
         }
         else if (Is_Isotope(v)) {
             Append_Codepoint(mo->series, '~');
-            Append_Spelling(mo->series, VAL_BAD_WORD_LABEL(v));
-            Append_Codepoint(mo->series, '~');
+            const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(v));
+            if (label) {
+                Append_Spelling(mo->series, label);
+                Append_Codepoint(mo->series, '~');
+            }
             Append_Ascii(mo->series, "  ; isotope");
         }
         else

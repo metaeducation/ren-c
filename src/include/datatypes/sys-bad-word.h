@@ -20,12 +20,8 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// BAD-WORD!s carry symbols like WORD!s do, but are rendered like ~void~ or
-// ~unset~.  They are designed to cover some edge cases in representation, and
-// are ordinarily considered neither true nor false:
-//
-//     >> if (first [~foo~]) [print "This won't work."]
-//     ** Script Error: BAD-WORD! values aren't conditionally true or false
+// BAD-WORD!s carry symbols like WORD!s do, but are rendered like `~void~` or
+// `~`.  They are designed to cover some edge cases in representation.
 //
 // But there's an additional twist on bad words, which is that when they are
 // put into a variable they can be stored in either a normal state or an
@@ -64,11 +60,15 @@
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
 // * The isotope states of several BAD-WORD!s have specific meaning to the
-//   system...such as ~unset~, ~void~, ~none~, and ~null~.  Each are described
+//   system...such as `~`, ~void~, ~none~, and ~null~.  Each are described
 //   in sections below.
 //
-// * While normal BAD-WORD!s are neither true nor false, this may vary for the
-//   isotope forms.  (For instance the ~null~ isotope is falsey!)
+// * Normal BAD-WORD!s are truthy.  There's a reason for this, because it
+//   allows operations in the ^META domain to easily use functions like ALL
+//   and ANY on the meta values, with NULL being the only falsey meta state.
+//
+// * Isotopes forms are neither true nor false...they must be decayed or
+//   handled in some other way, for instance DID/DIDN'T or THEN/ELSE.
 //
 // * See %sys-trash.h for a special case of a cell that will trigger panics
 //   if it is ever read in the debug build, but is just an ordinary BAD-WORD!
@@ -76,12 +76,12 @@
 //
 
 
-// Note: definition of Init_Bad_Word_Untracked() is in %sys-trash.h
+// Note: Init_Bad_Word_Untracked() forward-declared in %sys-trash.h
 
 #define Init_Bad_Word(out,sym) \
     Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_MASK_NONE)
 
-inline static const REBSYM* VAL_BAD_WORD_LABEL(
+inline static option(const REBSYM*) VAL_BAD_WORD_LABEL(
     REBCEL(const*) v
 ){
     assert(CELL_KIND(v) == REB_BAD_WORD);
@@ -89,8 +89,14 @@ inline static const REBSYM* VAL_BAD_WORD_LABEL(
     return cast(const REBSYM*, VAL_NODE1(v));
 }
 
-#define VAL_BAD_WORD_ID(v) \
-    ID_OF_SYMBOL(VAL_BAD_WORD_LABEL(v))
+inline static OPT_SYMID VAL_BAD_WORD_ID(const RELVAL *v) {
+    assert(IS_BAD_WORD(v));
+    assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
+    if (not VAL_NODE1(v))
+        return cast(OPT_SYMID, SYM_0);
+
+    return ID_OF_SYMBOL(cast(const REBSYM*, VAL_NODE1(v)));
+}
 
 
 //=//// BAD-WORD! ISOTOPES (just called "isotopes" for short) //////////////=//
@@ -107,7 +113,6 @@ inline static bool Is_Isotope_With_Id(
     const RELVAL *v,
     enum Reb_Symbol_Id id  // want to take ID instead of canon, faster check!
 ){
-    assert(id != SYM_0);
     if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
         return false;
     assert(VAL_BAD_WORD_ID(v) != SYM_VOID);
@@ -125,12 +130,21 @@ inline static bool Is_Isotope(const RELVAL *v) {
     Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_FLAG_ISOTOPE)
 
 
-// ~unset~ is chosen in particular by the system to represent variables that
-// have not been assigned.
-
-#define UNSET_VALUE         c_cast(const REBVAL*, &PG_Unset_Value)
-#define Init_Unset(out)     Init_Isotope((out), Canon(UNSET))
-#define Is_Unset(v)         Is_Isotope_With_Id(v, SYM_UNSET)
+// The `~` isotope is chosen in particular by the system to represent variables
+// that have not been assigned.  It has many benefits over choosing `~unset~`:
+//
+//  * Reduces noise in FRAME! to see which variables specialized
+//
+//  * Less chance for confusion since UNSET? takes a variable; if it were named
+//    ~unset~ people would likely expect `(unset? ~unset~)` to work.
+//
+//  * Quick way to unset variables, simply `(var: ~)`
+//
+// But inside the system we are more wordy.
+//
+#define UNSET_ISOTOPE               c_cast(const REBVAL*, &PG_Unset_Isotope)
+#define Init_Unset_Isotope(out)     Init_Isotope((out), nullptr)
+#define Is_Unset_Isotope(v)         Is_Isotope_With_Id(v, SYM_0)
 
 
 // `~none~` is the default RETURN for when you just write something like

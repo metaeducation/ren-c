@@ -241,7 +241,11 @@ REBNATIVE(panic)
             p = VAL_CONTEXT(v);
         }
         else if (IS_BAD_WORD(v)) {
-            p = STR_UTF8(VAL_BAD_WORD_LABEL(v));
+            const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(v));
+            if (label)
+                p = STR_UTF8(label);
+            else
+                p = Canon(UNSET);
         }
         else {
             assert(!"Called PANIC without /VALUE on non-TEXT!, non-ERROR!");

@@ -374,7 +374,7 @@ inline static option(const REBSYM*) VAL_ACTION_LABEL(REBCEL(const *) v) {
 
 inline static void INIT_VAL_ACTION_LABEL(
     RELVAL *v,
-    option(const REBSTR*) label
+    option(const REBSYM*) label
 ){
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // archetype R/O
     if (label)
@@ -480,7 +480,7 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
 static inline REBVAL *Init_Action_Core(
     RELVAL *out,
     REBACT *a,
-    option(const REBSTR*) label,  // allowed to be ANONYMOUS
+    option(const REBSYM*) label,  // allowed to be ANONYMOUS
     REBCTX *binding  // allowed to be UNBOUND
 ){
   #if !defined(NDEBUG)
