@@ -796,7 +796,7 @@ void Find_Image(REBFRM *frame_)
 
     REBLEN len = tail - index;
     if (len == 0) {
-        Init_Nulled(D_OUT);
+        Init_Nulled(OUT);
         return;
     }
 
@@ -841,19 +841,19 @@ void Find_Image(REBFRM *frame_)
         fail (Error_Invalid_Type(VAL_TYPE(arg)));
 
     if (not p) {
-        Init_Nulled(D_OUT);
+        Init_Nulled(OUT);
         return;
     }
 
     // Post process the search (failure or apply /match and /tail):
 
-    Copy_Cell(D_OUT, value);
+    Copy_Cell(OUT, value);
     assert((p - VAL_IMAGE_HEAD(value)) % 4 == 0);
 
     REBINT n = cast(REBLEN, (p - VAL_IMAGE_HEAD(value)) / 4);
     if (REF(match)) {
         if (n != cast(REBINT, index)) {
-            Init_Nulled(D_OUT);
+            Init_Nulled(OUT);
             return;
         }
         n++;
@@ -1157,8 +1157,8 @@ REBTYPE(Image)
 
         const RELVAL *picker = ARG(picker);
 
-        Pick_Image(D_OUT, image, picker);
-        return D_OUT; }
+        Pick_Image(OUT, image, picker);
+        return OUT; }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -1191,23 +1191,23 @@ REBTYPE(Image)
             return image;
 
         case SYM_HEAD_Q:
-            return Init_Logic(D_OUT, index == 0);
+            return Init_Logic(OUT, index == 0);
 
         case SYM_TAIL_Q:
-            return Init_Logic(D_OUT, index >= tail);
+            return Init_Logic(OUT, index >= tail);
 
         case SYM_XY:
             return Init_Pair_Int(
-                D_OUT,
+                OUT,
                 index % VAL_IMAGE_WIDTH(image),
                 index / VAL_IMAGE_WIDTH(image)
             );
 
         case SYM_INDEX:
-            return Init_Integer(D_OUT, index + 1);
+            return Init_Integer(OUT, index + 1);
 
         case SYM_LENGTH:
-            return Init_Integer(D_OUT, tail > index ? tail - index : 0);
+            return Init_Integer(OUT, tail > index ? tail - index : 0);
 
         case SYM_BYTES: {
             //
@@ -1216,7 +1216,7 @@ REBTYPE(Image)
             // asking for the bytes doesn't care about the index.
             //
             const REBBIN *bin = VAL_BINARY(VAL_IMAGE_BIN(image));
-            return Init_Binary(D_OUT, bin); }  // at 0 index
+            return Init_Binary(OUT, bin); }  // at 0 index
 
         default:
             break;
@@ -1225,8 +1225,8 @@ REBTYPE(Image)
         break; }
 
     case SYM_BITWISE_NOT:
-        Make_Complemented_Image(D_OUT, image);
-        return D_OUT;
+        Make_Complemented_Image(OUT, image);
+        return OUT;
 
     case SYM_SKIP:
     case SYM_AT: {
@@ -1313,7 +1313,7 @@ REBTYPE(Image)
 
     case SYM_FIND:
         Find_Image(frame_); // sets DS_OUT
-        return D_OUT;
+        return OUT;
 
     case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
@@ -1358,10 +1358,10 @@ REBTYPE(Image)
             } else len = diff = 0; // avoid div zero
             w = MIN(w, index - diff); // img-width - x-pos
             h = MIN(h, (int)(VAL_IMAGE_HEIGHT(image) - len)); // img-high - y-pos
-            Init_Image_Black_Opaque(D_OUT, w, h);
-            Copy_Rect_Data(D_OUT, 0, 0, w, h, image, diff, len);
-//          VAL_IMAGE_TRANSP(D_OUT) = VAL_IMAGE_TRANSP(image);
-            return D_OUT;
+            Init_Image_Black_Opaque(OUT, w, h);
+            Copy_Rect_Data(OUT, 0, 0, w, h, image, diff, len);
+//          VAL_IMAGE_TRANSP(OUT) = VAL_IMAGE_TRANSP(image);
+            return OUT;
         }
         fail (Error_Invalid_Type(VAL_TYPE(arg)));
 
@@ -1369,8 +1369,8 @@ makeCopy:
         // Src image is arg.
         len = VAL_IMAGE_LEN_AT(arg);
 makeCopy2:
-        Copy_Image_Value(D_OUT, arg, len);
-        return D_OUT; }
+        Copy_Image_Value(OUT, arg, len);
+        return OUT; }
 
     default:
         break;

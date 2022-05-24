@@ -62,7 +62,7 @@ REBNATIVE(now)
     assert(Does_Date_Have_Time(timestamp));
     assert(Does_Date_Have_Zone(timestamp));
 
-    Copy_Cell(D_OUT, timestamp);
+    Copy_Cell(OUT, timestamp);
     rebRelease(timestamp);
 
     if (not REF(precise)) {
@@ -72,7 +72,7 @@ REBNATIVE(now)
         // seconds portion (with the nanoseconds set to 0).  This achieves
         // that by extracting the seconds and then multiplying by nanoseconds.
         //
-        PAYLOAD(Time, D_OUT).nanoseconds = SECS_TO_NANO(VAL_SECS(D_OUT));
+        PAYLOAD(Time, OUT).nanoseconds = SECS_TO_NANO(VAL_SECS(OUT));
     }
 
     if (REF(utc)) {
@@ -80,13 +80,13 @@ REBNATIVE(now)
         // Say it has a time zone component, but it's 0:00 (as opposed
         // to saying it has no time zone component at all?)
         //
-        VAL_DATE(D_OUT).zone = 0;
+        VAL_DATE(OUT).zone = 0;
     }
     else if (REF(local)) {
         //
         // Clear out the time zone flag
         //
-        VAL_DATE(D_OUT).zone = NO_DATE_ZONE;
+        VAL_DATE(OUT).zone = NO_DATE_ZONE;
     }
     else {
         if (
@@ -98,37 +98,37 @@ REBNATIVE(now)
             or REF(weekday)
             or REF(yearday)
         ){
-            Fold_Zone_Into_Date(D_OUT);
+            Fold_Zone_Into_Date(OUT);
         }
     }
 
     REBINT n = -1;
 
     if (REF(date)) {
-        PAYLOAD(Time, D_OUT).nanoseconds = NO_DATE_TIME;
-        VAL_DATE(D_OUT).zone = NO_DATE_ZONE;
+        PAYLOAD(Time, OUT).nanoseconds = NO_DATE_TIME;
+        VAL_DATE(OUT).zone = NO_DATE_ZONE;
     }
     else if (REF(time)) {
-        mutable_KIND3Q_BYTE(D_OUT) = mutable_HEART_BYTE(D_OUT) = REB_TIME;
+        mutable_KIND3Q_BYTE(OUT) = mutable_HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(zone)) {
-        PAYLOAD(Time, D_OUT).nanoseconds
-            = VAL_ZONE(D_OUT) * ZONE_MINS * MIN_SEC;
-        mutable_KIND3Q_BYTE(D_OUT) = mutable_HEART_BYTE(D_OUT) = REB_TIME;
+        PAYLOAD(Time, OUT).nanoseconds
+            = VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC;
+        mutable_KIND3Q_BYTE(OUT) = mutable_HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(weekday))
-        n = Week_Day(D_OUT);
+        n = Week_Day(OUT);
     else if (REF(yearday))
-        n = Julian_Date(VAL_DATE(D_OUT));
+        n = Julian_Date(VAL_DATE(OUT));
     else if (REF(year))
-        n = VAL_YEAR(D_OUT);
+        n = VAL_YEAR(OUT);
     else if (REF(month))
-        n = VAL_MONTH(D_OUT);
+        n = VAL_MONTH(OUT);
     else if (REF(day))
-        n = VAL_DAY(D_OUT);
+        n = VAL_DAY(OUT);
 
     if (n > 0)
-        Init_Integer(D_OUT, n);
+        Init_Integer(OUT, n);
 
-    return D_OUT;
+    return OUT;
 }

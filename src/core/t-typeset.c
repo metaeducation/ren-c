@@ -421,7 +421,7 @@ REBTYPE(Typeset)
             fail (pattern);
 
         if (TYPE_CHECK(v, VAL_TYPE_KIND(pattern)))
-            return Init_True(D_OUT);
+            return Init_True(OUT);
 
         return nullptr; }
 

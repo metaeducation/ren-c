@@ -304,7 +304,7 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         SYMID property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_OPEN_Q:
-            return Init_True(D_OUT);  // stdio port always open
+            return Init_True(OUT);  // stdio port always open
 
           default:
             break;

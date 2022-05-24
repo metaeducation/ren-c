@@ -267,7 +267,7 @@ REBNATIVE(load_extension)
     // defined in a couple of extensions, but no protocol by which the
     // system will automatically call them on shutdown (yet)
 
-    return Init_Any_Context(D_OUT, REB_MODULE, module_ctx);
+    return Init_Any_Context(OUT, REB_MODULE, module_ctx);
 }
 
 
@@ -356,11 +356,11 @@ REBNATIVE(unload_extension)
        true
     );
    if (shutdown_action == nullptr)
-        return Init_None(D_OUT);
+        return Init_None(OUT);
 
    rebElide(shutdown_action);
 
-   return Init_None(D_OUT);
+   return Init_None(OUT);
 }
 
 

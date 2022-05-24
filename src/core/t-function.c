@@ -229,10 +229,10 @@ REBTYPE(Action)
 
         REBDSP dsp_orig = DSP;
         Init_Word(DS_PUSH(), symbol);
-        if (Specialize_Action_Throws(D_OUT, action, nullptr, dsp_orig))
-            return_thrown (D_OUT);
+        if (Specialize_Action_Throws(OUT, action, nullptr, dsp_orig))
+            return_thrown (OUT);
 
-        return D_OUT; }
+        return OUT; }
 
   //=//// COPY /////////////////////////////////////////////////////////////=//
 
@@ -310,7 +310,7 @@ REBTYPE(Action)
         Copy_Cell(ACT_ARCHETYPE(proxy), ACT_ARCHETYPE(act));
 
         return Init_Action(
-            D_OUT,
+            OUT,
             proxy,
             VAL_ACTION_LABEL(action),  // keep symbol (if any) from original
             VAL_ACTION_BINDING(action)  // same (e.g. RETURN to same frame)
@@ -324,27 +324,27 @@ REBTYPE(Action)
         SYMID sym = VAL_WORD_ID(property);
         switch (sym) {
           case SYM_BINDING: {
-            if (Did_Get_Binding_Of(D_OUT, action))
-                return D_OUT;
+            if (Did_Get_Binding_Of(OUT, action))
+                return OUT;
             return nullptr; }
 
           case SYM_LABEL: {
             option(const REBSYM*) label = VAL_ACTION_LABEL(action);
             if (not label)
                 return nullptr;
-            return Init_Word(D_OUT, unwrap(label)); }
+            return Init_Word(OUT, unwrap(label)); }
 
           case SYM_WORDS:
           case SYM_PARAMETERS: {
             bool just_words = (sym == SYM_WORDS);
             return Init_Block(
-                D_OUT,
+                OUT,
                 Make_Action_Parameters_Arr(act, just_words)
             ); }
 
           case SYM_BODY:
-            Get_Maybe_Fake_Action_Body(D_OUT, action);
-            return D_OUT;
+            Get_Maybe_Fake_Action_Body(OUT, action);
+            return OUT;
 
           case SYM_EXEMPLAR: {
             //
@@ -358,15 +358,15 @@ REBTYPE(Action)
             // used, as the read-only frame is archetypal.
             //
             Reset_Cell_Header_Untracked(
-                TRACK(D_OUT), REB_FRAME, CELL_MASK_CONTEXT
+                TRACK(OUT), REB_FRAME, CELL_MASK_CONTEXT
             );
-            INIT_VAL_CONTEXT_VARLIST(D_OUT, ACT_PARAMLIST(act));
-            mutable_BINDING(D_OUT) = VAL_ACTION_BINDING(action);
-            INIT_VAL_FRAME_PHASE_OR_LABEL(D_OUT, act);
-            return D_OUT; }
+            INIT_VAL_CONTEXT_VARLIST(OUT, ACT_PARAMLIST(act));
+            mutable_BINDING(OUT) = VAL_ACTION_BINDING(action);
+            INIT_VAL_FRAME_PHASE_OR_LABEL(OUT, act);
+            return OUT; }
 
           case SYM_TYPES:
-            return Copy_Cell(D_OUT, CTX_ARCHETYPE(ACT_EXEMPLAR(act)));
+            return Copy_Cell(OUT, CTX_ARCHETYPE(ACT_EXEMPLAR(act)));
 
           case SYM_FILE:
           case SYM_LINE: {
@@ -386,11 +386,11 @@ REBTYPE(Action)
             // !!! How to tell URL! vs FILE! ?
             //
             if (VAL_WORD_ID(property) == SYM_FILE)
-                Init_File(D_OUT, LINK(Filename, a));
+                Init_File(OUT, LINK(Filename, a));
             else
-                Init_Integer(D_OUT, a->misc.line);
+                Init_Integer(OUT, a->misc.line);
 
-            return D_OUT; }
+            return OUT; }
 
           default:
             fail (Error_Cannot_Reflect(REB_ACTION, property));

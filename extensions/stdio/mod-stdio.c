@@ -60,8 +60,8 @@ extern REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
 //
 REBNATIVE(get_console_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &Console_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &Console_Actor);
+    return OUT;
 }
 
 
@@ -111,10 +111,10 @@ REBNATIVE(write_stdout)
     // cell...but ISSUE! has no position.  Alias it as a read-only TEXT!.
     //
     if (IS_ISSUE(v)) {
-        bool threw = rebRunThrows(D_SPARE, true, Lib(AS), Lib(TEXT_X), v);
+        bool threw = rebRunThrows(SPARE, true, Lib(AS), Lib(TEXT_X), v);
         assert(not threw);
         UNUSED(threw);
-        Move_Cell(v, D_SPARE);
+        Move_Cell(v, SPARE);
     }
 
     // !!! The historical division of labor between the "core" and the "host"
@@ -131,9 +131,9 @@ REBNATIVE(write_stdout)
         //
         // Yield to signals processing for cancellation requests.
         //
-        if (Do_Signals_Throws(D_SPARE))
-            fail (Error_No_Catch_For_Throw(D_SPARE));
-        assert(Is_Fresh(D_SPARE));
+        if (Do_Signals_Throws(SPARE))
+            fail (Error_No_Catch_For_Throw(SPARE));
+        assert(Is_Fresh(SPARE));
 
         REBLEN part;
         if (remaining <= 1024)
@@ -146,7 +146,7 @@ REBNATIVE(write_stdout)
         VAL_INDEX_RAW(v) += part;
     }
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -178,9 +178,9 @@ REBNATIVE(read_stdin)
 
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
-        if (rebRunThrows(SET_END(D_OUT), true, "as binary! try read-line"))
-            return_thrown (D_OUT);
-        return D_OUT;
+        if (rebRunThrows(SET_END(OUT), true, "as binary! try read-line"))
+            return_thrown (OUT);
+        return OUT;
     }
     else  // we have a smart console but aren't using it (redirected to file?)
   #endif
@@ -208,7 +208,7 @@ REBNATIVE(read_stdin)
         if (REF(eof))
             rebElide(Lib(SET), rebQ(ARG(eof)), rebL(eof));
 
-        return Init_Binary(D_OUT, bin);
+        return Init_Binary(OUT, bin);
     }
 }
 

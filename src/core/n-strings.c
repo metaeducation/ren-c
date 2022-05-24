@@ -56,7 +56,7 @@ REBNATIVE(delimit)
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
-    REBVAL *out = D_OUT;
+    REBVAL *out = OUT;
     REBVAL *delimiter = ARG(delimiter);
     REBVAL *line = ARG(line);
 
@@ -121,7 +121,7 @@ REBNATIVE(delimit)
         if (Eval_Step_Maybe_Stale_Throws(SET_END(out), f)) {
             Drop_Mold(mo);
             Abort_Frame(f);
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
 
         // These are all the things that we're willing to vaporize.  Since
@@ -189,7 +189,7 @@ REBNATIVE(delimit)
                 )){
                     Drop_Mold(mo);
                     Abort_Frame(f);
-                    return_thrown (D_OUT);
+                    return_thrown (OUT);
                 }
                 Form_Value(mo, out);
 
@@ -232,8 +232,8 @@ REBNATIVE(delimit)
 
     Drop_Frame(f);
 
-    assert(out == D_OUT);
-    return D_OUT;
+    assert(out == OUT);
+    return OUT;
 }
 
 
@@ -262,10 +262,10 @@ REBNATIVE(debase)
     else
         base = 64;
 
-    if (!Decode_Binary(D_OUT, bp, size, base, 0))
+    if (!Decode_Binary(OUT, bp, size, base, 0))
         fail (Error_Invalid_Data_Raw(ARG(value)));
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -315,7 +315,7 @@ REBNATIVE(enbase)
         fail (PAR(base));
     }
 
-    return Init_Text(D_OUT, Pop_Molded_String(mo));
+    return Init_Text(OUT, Pop_Molded_String(mo));
 }
 
 
@@ -473,8 +473,8 @@ REBNATIVE(enhex)
         }
     }
 
-    Init_Any_String(D_OUT, VAL_TYPE(ARG(string)), Pop_Molded_String(mo));
-    return D_OUT;
+    Init_Any_String(OUT, VAL_TYPE(ARG(string)), Pop_Molded_String(mo));
+    return OUT;
 }
 
 
@@ -603,8 +603,8 @@ REBNATIVE(dehex)
         }
     }
 
-    Init_Any_String(D_OUT, VAL_TYPE(ARG(string)), Pop_Molded_String(mo));
-    return D_OUT;
+    Init_Any_String(OUT, VAL_TYPE(ARG(string)), Pop_Molded_String(mo));
+    return OUT;
 }
 
 
@@ -629,9 +629,9 @@ REBNATIVE(deline)
     REBVAL *input = rebValue("as text!", ARG(input));
 
     if (REF(lines)) {
-        Init_Block(D_OUT, Split_Lines(input));
+        Init_Block(OUT, Split_Lines(input));
         rebRelease(input);
-        return D_OUT;
+        return OUT;
     }
 
     REBSTR *s = VAL_STRING_ENSURE_MUTABLE(input);
@@ -846,7 +846,7 @@ REBNATIVE(entab)
     }
 
     enum Reb_Kind kind = VAL_TYPE(ARG(string));
-    return Init_Any_String(D_OUT, kind, Pop_Molded_String(mo));
+    return Init_Any_String(OUT, kind, Pop_Molded_String(mo));
 }
 
 
@@ -905,7 +905,7 @@ REBNATIVE(detab)
     }
 
     enum Reb_Kind kind = VAL_TYPE(ARG(string));
-    return Init_Any_String(D_OUT, kind, Pop_Molded_String(mo));
+    return Init_Any_String(OUT, kind, Pop_Molded_String(mo));
 }
 
 
@@ -925,8 +925,8 @@ REBNATIVE(lowercase)
 {
     INCLUDE_PARAMS_OF_LOWERCASE;
 
-    Change_Case(D_OUT, ARG(string), ARG(part), false);
-    return D_OUT;
+    Change_Case(OUT, ARG(string), ARG(part), false);
+    return OUT;
 }
 
 
@@ -946,8 +946,8 @@ REBNATIVE(uppercase)
 {
     INCLUDE_PARAMS_OF_UPPERCASE;
 
-    Change_Case(D_OUT, ARG(string), ARG(part), true);
-    return D_OUT;
+    Change_Case(OUT, ARG(string), ARG(part), true);
+    return OUT;
 }
 
 
@@ -1004,11 +1004,11 @@ REBNATIVE(to_hex)
     // UTF-8 Everywhere unification of ANY-WORD! and ANY-STRING! is done.
     //
     assert(len == STR_SIZE(mo->series) - mo->offset);
-    if (NULL == Scan_Issue(D_OUT, BIN_AT(mo->series, mo->offset), len))
+    if (NULL == Scan_Issue(OUT, BIN_AT(mo->series, mo->offset), len))
         fail (PAR(value));
 
     Drop_Mold(mo);
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1041,11 +1041,11 @@ REBNATIVE(find_script)
     if (offset == -1)
         return nullptr;
 
-    Copy_Cell(D_OUT, arg);
+    Copy_Cell(OUT, arg);
 
     if (IS_BINARY(arg)) {  // may not all be valid UTF-8
-        VAL_INDEX_RAW(D_OUT) += offset;
-        return D_OUT;
+        VAL_INDEX_RAW(OUT) += offset;
+        return OUT;
     }
 
     assert(IS_TEXT(arg));  // we know it was all valid UTF-8
@@ -1061,8 +1061,8 @@ REBNATIVE(find_script)
     for (; cp != header_bp; cp = NEXT_STR(cp))
         ++index;
 
-    VAL_INDEX_RAW(D_OUT) = index;
-    return D_OUT;
+    VAL_INDEX_RAW(OUT) = index;
+    return OUT;
 }
 
 
@@ -1102,9 +1102,9 @@ REBNATIVE(invalid_utf8_q)
     for (; utf8 != end; utf8 += trail) {
         trail = trailingBytesForUTF8[*utf8] + 1;
         if (utf8 + trail > end or not isLegalUTF8(utf8, trail)) {
-            Copy_Cell(D_OUT, arg);
-            VAL_INDEX_RAW(D_OUT) = utf8 - BIN_HEAD(VAL_BINARY(arg));
-            return D_OUT;
+            Copy_Cell(OUT, arg);
+            VAL_INDEX_RAW(OUT) = utf8 - BIN_HEAD(VAL_BINARY(arg));
+            return OUT;
         }
     }
 

@@ -50,6 +50,7 @@
 #include "uv.h"  // includes windows.h
 #if TO_WINDOWS
     #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
 #endif
 
 #include "sys-core.h"

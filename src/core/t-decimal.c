@@ -493,9 +493,9 @@ REBTYPE(Decimal)
             id == SYM_ADD ||
             id == SYM_MULTIPLY
         )){
-            Move_Cell(D_OUT, D_ARG(2));
+            Move_Cell(OUT, D_ARG(2));
             Move_Cell(D_ARG(2), D_ARG(1));
-            Move_Cell(D_ARG(1), D_OUT);
+            Move_Cell(D_ARG(1), OUT);
             return Run_Generic_Dispatch_Core(D_ARG(1), frame_, verb);
         }
 
@@ -582,7 +582,7 @@ REBTYPE(Decimal)
     switch (id) {
 
     case SYM_COPY:
-        return Copy_Cell(D_OUT, val);
+        return Copy_Cell(OUT, val);
 
     case SYM_NEGATE:
         d1 = -d1;
@@ -595,14 +595,14 @@ REBTYPE(Decimal)
     case SYM_EVEN_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
-            return Init_True(D_OUT);
-        return Init_False(D_OUT);
+            return Init_True(OUT);
+        return Init_False(OUT);
 
     case SYM_ODD_Q:
         d1 = fabs(fmod(d1, 2.0));
         if (d1 < 0.5 || d1 >= 1.5)
-            return Init_False(D_OUT);
-        return Init_True(D_OUT);
+            return Init_False(OUT);
+        return Init_True(OUT);
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
@@ -612,7 +612,7 @@ REBTYPE(Decimal)
 
         if (REF(to)) {
             if (IS_MONEY(ARG(to)))
-                return Init_Money(D_OUT, Round_Deci(
+                return Init_Money(OUT, Round_Deci(
                     decimal_to_deci(d1), frame_, VAL_MONEY_AMOUNT(ARG(to))
                 ));
 
@@ -621,7 +621,7 @@ REBTYPE(Decimal)
 
             d1 = Round_Dec(d1, frame_, Dec64(ARG(to)));
             if (IS_INTEGER(ARG(to)))
-                return Init_Integer(D_OUT, cast(REBI64, d1));
+                return Init_Integer(OUT, cast(REBI64, d1));
 
             if (IS_PERCENT(ARG(to)))
                 type = REB_PERCENT;
@@ -653,7 +653,7 @@ REBTYPE(Decimal)
         goto setDec; }
 
     case SYM_COMPLEMENT:
-        return Init_Integer(D_OUT, ~cast(REBINT, d1));
+        return Init_Integer(OUT, ~cast(REBINT, d1));
 
     default:
         break;
@@ -665,8 +665,8 @@ setDec:
     if (not FINITE(d1))
         fail (Error_Overflow_Raw());
 
-    Reset_Cell_Header_Untracked(TRACK(D_OUT), type, CELL_MASK_NONE);
-    VAL_DECIMAL(D_OUT) = d1;
+    Reset_Cell_Header_Untracked(TRACK(OUT), type, CELL_MASK_NONE);
+    VAL_DECIMAL(OUT) = d1;
 
-    return D_OUT;
+    return OUT;
 }

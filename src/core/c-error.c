@@ -197,7 +197,7 @@ void Trapped_Helper(struct Reb_State *s)
 // that these failures interrupt code mid-stream, so if a Rebol function is
 // running it will not make it to the point of returning the result value.
 // This distinguishes the "fail" mechanic from the "throw" mechanic, which has
-// to bubble up a thrown value through D_OUT (used to implement BREAK,
+// to bubble up a thrown value through OUT (used to implement BREAK,
 // CONTINUE, RETURN, LEAVE, HALT...)
 //
 // The function will auto-detect if the pointer it is given is an ERROR!'s

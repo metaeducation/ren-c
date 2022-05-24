@@ -59,7 +59,7 @@ REBNATIVE(startup_p)
         &MF_Gob
     );
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -77,7 +77,7 @@ REBNATIVE(shutdown_p)
 
     Unhook_Datatype(EG_Gob_Type);
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -173,5 +173,5 @@ REBNATIVE(map_gob_offset)
     Init_Gob(Alloc_Tail_Array(arr), gob);
     Init_Pair_Dec(Alloc_Tail_Array(arr), xo, yo);
 
-    return Init_Block(D_OUT, arr);
+    return Init_Block(OUT, arr);
 }

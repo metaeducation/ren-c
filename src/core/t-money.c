@@ -203,37 +203,37 @@ REBTYPE(Money)
 
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_ADD: {
-        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
-            D_OUT,
+            OUT,
             deci_add(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_SUBTRACT: {
-        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
-            D_OUT,
+            OUT,
             deci_subtract(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_MULTIPLY: {
-        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
-            D_OUT,
+            OUT,
             deci_multiply(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_DIVIDE: {
-        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
-            D_OUT,
+            OUT,
             deci_divide(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
       case SYM_REMAINDER: {
-        REBVAL *arg = Math_Arg_For_Money(D_SPARE, D_ARG(2), verb);
+        REBVAL *arg = Math_Arg_For_Money(SPARE, D_ARG(2), verb);
         return Init_Money(
-            D_OUT,
+            OUT,
             deci_mod(VAL_MONEY_AMOUNT(v), VAL_MONEY_AMOUNT(arg))
         ); }
 
@@ -268,35 +268,35 @@ REBTYPE(Money)
             Init_Money(temp, int_to_deci(0));
 
         Init_Money(
-            D_OUT,
+            OUT,
             Round_Deci(VAL_MONEY_AMOUNT(v), frame_, VAL_MONEY_AMOUNT(temp))
         );
 
         if (REF(to)) {
             if (IS_DECIMAL(to) or IS_PERCENT(to)) {
-                REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(D_OUT));
+                REBDEC dec = deci_to_decimal(VAL_MONEY_AMOUNT(OUT));
                 Reset_Cell_Header_Untracked(
-                    TRACK(D_OUT),
+                    TRACK(OUT),
                     VAL_TYPE(to),
                     CELL_MASK_NONE
                 );
-                VAL_DECIMAL(D_OUT) = dec;
-                return D_OUT;
+                VAL_DECIMAL(OUT) = dec;
+                return OUT;
             }
             if (IS_INTEGER(to)) {
-                REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(D_OUT));
-                return Init_Integer(D_OUT, i64);
+                REBI64 i64 = deci_to_int(VAL_MONEY_AMOUNT(OUT));
+                return Init_Integer(OUT, i64);
             }
         }
-        mutable_KIND3Q_BYTE(D_OUT) = mutable_HEART_BYTE(D_OUT) = REB_MONEY;
-        return D_OUT; }
+        mutable_KIND3Q_BYTE(OUT) = mutable_HEART_BYTE(OUT) = REB_MONEY;
+        return OUT; }
 
       case SYM_EVEN_Q:
       case SYM_ODD_Q: {
         REBINT result = 1 & cast(REBINT, deci_to_int(VAL_MONEY_AMOUNT(v)));
         if (ID_OF_SYMBOL(verb) == SYM_EVEN_Q)
             result = not result;
-        return Init_Logic(D_OUT, result != 0); }
+        return Init_Logic(OUT, result != 0); }
 
       case SYM_COPY:
         return v;

@@ -47,6 +47,7 @@
     #ifdef IS_ERROR
         #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
     #endif
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
 #else
     #if !defined(__cplusplus) && TO_LINUX
         //

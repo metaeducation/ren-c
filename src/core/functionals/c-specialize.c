@@ -484,15 +484,15 @@ REBNATIVE(specialize_p)  // see extended definition SPECIALIZE in %base-defs.r
     // could push refinements here if we wanted to.
 
     if (Specialize_Action_Throws(
-        D_OUT,
+        OUT,
         specializee,
         ARG(def),
         lowest_ordered_dsp
     )){
-        return_thrown (D_OUT);  // e.g. `specialize :append/dup [value: throw 10]`
+        return_thrown (OUT);  // e.g. `specialize :append/dup [value: throw 10]`
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 

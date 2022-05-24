@@ -64,6 +64,7 @@
 #include "uv.h"  // includes windows.h
 #if TO_WINDOWS
     #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
 #endif
 
 #include "sys-core.h"
@@ -182,14 +183,14 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 
         switch (property) {
           case SYM_OFFSET:
-            return Init_Integer(D_OUT, file->offset);
+            return Init_Integer(OUT, file->offset);
 
           case SYM_LENGTH: {
             //
             // Comment said "clip at zero"
             //
             uint64_t size = File_Size_Cacheable_May_Fail(port);
-            return Init_Integer(D_OUT, size - file->offset); }
+            return Init_Integer(OUT, size - file->offset); }
 
           case SYM_HEAD:
             file->offset = 0;
@@ -200,18 +201,18 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             return port;
 
           case SYM_HEAD_Q:
-            return Init_Logic(D_OUT, file->offset == 0);
+            return Init_Logic(OUT, file->offset == 0);
 
           case SYM_TAIL_Q: {
             uint64_t size = File_Size_Cacheable_May_Fail(port);
-            return Init_Logic(D_OUT, file->offset >= size); }
+            return Init_Logic(OUT, file->offset >= size); }
 
           case SYM_PAST_Q: {
             uint64_t size = File_Size_Cacheable_May_Fail(port);
-            return Init_Logic(D_OUT, file->offset > size); }
+            return Init_Logic(OUT, file->offset > size); }
 
           case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, did (file->id != FILEHANDLE_NONE));
+            return Init_Logic(OUT, did (file->id != FILEHANDLE_NONE));
 
           default:
             break;

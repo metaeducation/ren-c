@@ -223,7 +223,7 @@ REBTYPE(Pair)
         REBINT n = Index_From_Picker_For_Pair(v, picker);
         const REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
 
-        return Copy_Cell(D_OUT, which); }
+        return Copy_Cell(OUT, which); }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -247,7 +247,7 @@ REBTYPE(Pair)
 
 
       case SYM_REVERSE:
-        return Init_Pair(D_OUT, VAL_PAIR_Y(v), VAL_PAIR_X(v));
+        return Init_Pair(OUT, VAL_PAIR_Y(v), VAL_PAIR_X(v));
 
       case SYM_ADD:
       case SYM_SUBTRACT:
@@ -271,7 +271,7 @@ REBTYPE(Pair)
     // already running...and the check for that would be subverted.
 
     REBVAL *frame = Init_Frame(
-        D_OUT,
+        OUT,
         Context_For_Frame_May_Manage(frame_),
         FRM_LABEL(frame_)
     );

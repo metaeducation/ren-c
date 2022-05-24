@@ -352,7 +352,7 @@ REBTYPE(Binary)
 
         REBYTE b = *BIN_AT(VAL_BINARY(v), n);
 
-        return Init_Integer(D_OUT, b);
+        return Init_Integer(OUT, b);
       }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -498,14 +498,14 @@ REBTYPE(Binary)
             //
             if (REF(tail))
                 ret += size;
-            return Init_Any_Series_At(D_OUT, REB_BINARY, VAL_BINARY(v), ret);
+            return Init_Any_Series_At(OUT, REB_BINARY, VAL_BINARY(v), ret);
         }
 
         ret++;
         if (ret >= cast(REBLEN, tail))
             return nullptr;
 
-        return Init_Integer(D_OUT, *BIN_AT(VAL_BINARY(v), ret)); }
+        return Init_Integer(OUT, *BIN_AT(VAL_BINARY(v), ret)); }
 
       case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
@@ -521,7 +521,7 @@ REBTYPE(Binary)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(v, ARG(part));
             if (len == 0)
-                return Init_Any_Series(D_OUT, VAL_TYPE(v), Make_Binary(0));
+                return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         } else
             len = 1;
 
@@ -538,9 +538,9 @@ REBTYPE(Binary)
 
         if (cast(REBINT, VAL_INDEX(v)) >= tail) {
             if (not REF(part))
-                return Init_Blank(D_OUT);
+                return Init_Blank(OUT);
 
-            return Init_Any_Series(D_OUT, VAL_TYPE(v), Make_Binary(0));
+            return Init_Any_Series(OUT, VAL_TYPE(v), Make_Binary(0));
         }
 
         index = VAL_INDEX(v);
@@ -548,16 +548,16 @@ REBTYPE(Binary)
         // if no /PART, just return value, else return string
         //
         if (not REF(part)) {
-            Init_Integer(D_OUT, *VAL_BINARY_AT(v));
+            Init_Integer(OUT, *VAL_BINARY_AT(v));
         }
         else {
             Init_Binary(
-                D_OUT,
+                OUT,
                 Copy_Binary_At_Len(bin, VAL_INDEX(v), len)
             );
         }
         Remove_Any_Series_Len(v, VAL_INDEX(v), len);  // bad UTF-8 alias fails
-        return D_OUT; }
+        return OUT; }
 
       case SYM_CLEAR: {
         REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
@@ -589,7 +589,7 @@ REBTYPE(Binary)
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 
         return Init_Any_Series(
-            D_OUT,
+            OUT,
             REB_BINARY,
             Copy_Binary_At_Len(VAL_SERIES(v), VAL_INDEX(v), len)
         ); }
@@ -652,7 +652,7 @@ REBTYPE(Binary)
             assert(false);  // not reachable
         }
 
-        return Init_Any_Series(D_OUT, REB_BINARY, series); }
+        return Init_Any_Series(OUT, REB_BINARY, series); }
 
       case SYM_BITWISE_NOT: {
         REBSIZ size;
@@ -665,7 +665,7 @@ REBTYPE(Binary)
         for (; size > 0; --size, ++bp, ++dp)
             *dp = ~(*bp);
 
-        return Init_Any_Series(D_OUT, REB_BINARY, bin); }
+        return Init_Any_Series(OUT, REB_BINARY, bin); }
 
     // Arithmetic operations are allowed on BINARY!, because it's too limiting
     // to not allow `#{4B} + 1` => `#{4C}`.  Allowing the operations requires
@@ -797,13 +797,13 @@ REBTYPE(Binary)
 
         REBFLGS thunk = 0;
 
-        Copy_Cell(D_OUT, v);  // copy to output before index adjustment
+        Copy_Cell(OUT, v);  // copy to output before index adjustment
 
         REBLEN len = Part_Len_May_Modify_Index(v, ARG(part));
         REBYTE *data_at = VAL_BINARY_AT_ENSURE_MUTABLE(v);  // ^ index changes
 
         if (len <= 1)
-            return D_OUT;
+            return OUT;
 
         REBLEN skip;
         if (not REF(skip))
@@ -830,7 +830,7 @@ REBTYPE(Binary)
             &thunk,
             Compare_Byte
         );
-        return D_OUT; }
+        return OUT; }
 
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -841,17 +841,17 @@ REBTYPE(Binary)
             REBSIZ size;
             const REBYTE *data = VAL_BINARY_SIZE_AT(&size, v);
             Set_Random(crc32_z(0L, data, size));
-            return Init_None(D_OUT);
+            return Init_None(OUT);
         }
 
         if (REF(only)) {
             if (index >= tail)
-                return Init_Blank(D_OUT);
+                return Init_Blank(OUT);
 
             index += cast(REBLEN, Random_Int(did REF(secure)))
                 % (tail - index);
             const REBBIN *bin = VAL_BINARY(v);
-            return Init_Integer(D_OUT, *BIN_AT(bin, index));  // PICK
+            return Init_Integer(OUT, *BIN_AT(bin, index));  // PICK
         }
 
         REBBIN *bin = VAL_BINARY_ENSURE_MUTABLE(v);
@@ -975,7 +975,7 @@ REBNATIVE(enbin)
         );
 
     TERM_BIN_LEN(bin, num_bytes);
-    return Init_Binary(D_OUT, bin);
+    return Init_Binary(OUT, bin);
 }
 
 
@@ -1053,7 +1053,7 @@ REBNATIVE(debin)
     REBINT n = num_bytes;
 
     if (n == 0)
-        return Init_Integer(D_OUT, 0);  // !!! Only if we let num_bytes = 0
+        return Init_Integer(OUT, 0);  // !!! Only if we let num_bytes = 0
 
     // default signedness interpretation to high-bit of first byte, but
     // override if the function was called with `no_sign`
@@ -1082,9 +1082,9 @@ REBNATIVE(debin)
     if (n == 0) {
         if (negative) {
             assert(not no_sign);
-            return Init_Integer(D_OUT, -1);
+            return Init_Integer(OUT, -1);
         }
-        return Init_Integer(D_OUT, 0);
+        return Init_Integer(OUT, 0);
     }
 
     // Not using BigNums (yet) so max representation is 8 bytes after
@@ -1118,5 +1118,5 @@ REBNATIVE(debin)
         fail (Error_Out_Of_Range(ARG(binary)));
     }
 
-    return Init_Integer(D_OUT, i);
+    return Init_Integer(OUT, i);
 }

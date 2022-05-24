@@ -37,7 +37,7 @@ REBNATIVE(halt)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    return Init_Thrown_With_Label(D_OUT, Lib(NULL), Lib(HALT));
+    return Init_Thrown_With_Label(OUT, Lib(NULL), Lib(HALT));
 }
 
 
@@ -78,7 +78,7 @@ REBNATIVE(quit)
         Init_Bad_Word(v, Canon(QUIT));
     }
 
-    return Init_Thrown_With_Label_Meta(D_OUT, v, Lib(QUIT));
+    return Init_Thrown_With_Label_Meta(OUT, v, Lib(QUIT));
 }
 
 
@@ -188,7 +188,7 @@ REBNATIVE(recycle)
       #endif
     }
 
-    return Init_Integer(D_OUT, count);
+    return Init_Integer(OUT, count);
 }
 
 
@@ -222,7 +222,7 @@ REBNATIVE(limit_usage)
     else
         fail (PAR(field));
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -318,7 +318,7 @@ REBNATIVE(c_debug_tick)
     INCLUDE_PARAMS_OF_C_DEBUG_TICK;
 
   #if !defined(NDEBUG) && DEBUG_COUNT_TICKS
-    return Init_Integer(D_OUT, TG_Tick);
+    return Init_Integer(OUT, TG_Tick);
   #else
     return nullptr;
   #endif
@@ -422,14 +422,14 @@ REBNATIVE(c_debug_break)
         // happened and has been passed as an argument.
         //
         TG_Break_At_Tick = frame_->tick + 1;
-        return_invisible (D_OUT);
+        return_invisible (OUT);
      #else
         // No tick counting or tick-break checking, but still want some
         // debug break functionality (e.g. callgrind build).  Break here--
         // you'll have to step up out into the evaluator stack.
         //
         debug_break();
-        return_invisible (D_OUT);
+        return_invisible (OUT);
       #endif
   #endif
 }

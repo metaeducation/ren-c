@@ -53,7 +53,7 @@ REBNATIVE(identify_jpeg_q)
 
     // Handle JPEG error throw:
     if (setjmp(jpeg_state)) {
-        return Init_False(D_OUT);
+        return Init_False(OUT);
     }
 
     // !!! jpeg_info is not const-correct; we trust it not to modify data
@@ -63,7 +63,7 @@ REBNATIVE(identify_jpeg_q)
 
     int w, h;
     jpeg_info(s_cast(data), size, &w, &h); // may longjmp above
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 

@@ -75,8 +75,8 @@ REBNATIVE(startup_p)
 //
 REBNATIVE(get_file_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &File_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &File_Actor);
+    return OUT;
 }
 
 
@@ -106,8 +106,8 @@ REBNATIVE(shutdown_p)
 //
 REBNATIVE(get_dir_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &Dir_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &Dir_Actor);
+    return OUT;
 }
 
 
@@ -497,11 +497,11 @@ REBNATIVE(local_to_file)
         if (not REF(pass))
             fail ("LOCAL-TO-FILE only passes through FILE! if /PASS used");
 
-        return Init_File(D_OUT, Copy_String_At(path));  // many callers modify
+        return Init_File(OUT, Copy_String_At(path));  // many callers modify
     }
 
     return Init_File(
-        D_OUT,
+        OUT,
         To_REBOL_Path(path, REF(dir) ? PATH_OPT_SRC_IS_DIR : 0)
     );
 }
@@ -533,11 +533,11 @@ REBNATIVE(file_to_local)
         if (not REF(pass))
             fail ("FILE-TO-LOCAL only passes through STRING! if /PASS used");
 
-        return Init_Text(D_OUT, Copy_String_At(path));  // callers modify
+        return Init_Text(OUT, Copy_String_At(path));  // callers modify
     }
 
     return Init_Text(
-        D_OUT,
+        OUT,
         To_Local_Path(
             path,
             REB_FILETOLOCAL_0

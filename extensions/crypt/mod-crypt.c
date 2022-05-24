@@ -54,6 +54,7 @@
     #include <wincrypt.h>
 
     #undef IS_ERROR  // %windows.h defines this, but so does %sys-core.h
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
 
     #undef min
     #undef max
@@ -202,7 +203,7 @@ REBNATIVE(checksum)
 //    REBINT sum = VAL_INT32(ARG(hash));
 //    if (sum <= 1)
 //        sum = 1;
-//    Init_Integer(D_OUT, Hash_Bytes(data, len) % sum);
+//    Init_Integer(OUT, Hash_Bytes(data, len) % sum);
 //
 // As nothing used it, it's not clear what this was for.  Currently removed.
 {
@@ -249,8 +250,8 @@ REBNATIVE(checksum)
         fail ("CRC24 is currently disabled, speak up if you actually use it");
         /*
         rebFree(method_name);
-        Init_Integer(D_SPARE, Compute_CRC24(data, size));
-        return rebValue("enbin [le + 3]", D_SPARE); */
+        Init_Integer(SPARE, Compute_CRC24(data, size));
+        return rebValue("enbin [le + 3]", SPARE); */
     }
     if (0 == strcmp(method_name, "CRC32")) {
         //
@@ -262,8 +263,8 @@ REBNATIVE(checksum)
         // 32-bit signed INTEGER!.
         //
         rebFree(method_name);
-        Init_Integer(D_SPARE, crc32_z(0L, data, size));
-        return rebValue("enbin [le + 4]", D_SPARE);
+        Init_Integer(SPARE, crc32_z(0L, data, size));
+        return rebValue("enbin [le + 4]", SPARE);
     }
     else if (0 == strcmp(method_name, "ADLER32")) {
         //
@@ -273,8 +274,8 @@ REBNATIVE(checksum)
         // result of the adler calculation to a signed integer.
         //
         rebFree(method_name);
-        Init_Integer(D_SPARE, z_adler32(1L, data, size));  // Note the 1L (!)
-        return rebValue("enbin [le + 4]", D_SPARE);
+        Init_Integer(SPARE, z_adler32(1L, data, size));  // Note the 1L (!)
+        return rebValue("enbin [le + 4]", SPARE);
     }
     else if (0 == strcmp(method_name, "TCP")) {
         //
@@ -283,8 +284,8 @@ REBNATIVE(checksum)
         // It does not seem to be used?
         //
         rebFree(method_name);
-        Init_Integer(D_SPARE, Compute_IPC(data, size));
-        return rebValue("enbin [le + 2]", D_SPARE);
+        Init_Integer(SPARE, Compute_IPC(data, size));
+        return rebValue("enbin [le + 2]", SPARE);
     }
 
     rebJumps (
@@ -1422,7 +1423,7 @@ REBNATIVE(aes_key)
     }
 
     return Init_Handle_Cdata_Managed(
-        D_OUT,
+        OUT,
         ctx,
         sizeof(struct mbedtls_cipher_context_t),
         &cleanup_aes_ctx
@@ -1803,5 +1804,5 @@ REBNATIVE(shutdown_p)
     }
   #endif
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }

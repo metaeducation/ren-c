@@ -121,7 +121,7 @@ REBTYPE(Bad_word)
             if (label == nullptr)
                 return nullptr;  // "soft failure" safer than blank!, use TRY
 
-            return Init_Word(D_OUT, label); }
+            return Init_Word(OUT, label); }
 
           default:
             break;

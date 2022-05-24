@@ -76,11 +76,11 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
     }
 
     if (Redo_Action_Maybe_Stale_Throws(frame_->out, frame_, VAL_ACTION(action)))
-        return_thrown (D_OUT);
+        return_thrown (OUT);
 
-    Clear_Stale_Flag(D_OUT);
+    Clear_Stale_Flag(OUT);
 
-    r = D_OUT; // result should be in frame_->out
+    r = OUT; // result should be in frame_->out
   }
 
     // !!! READ's /LINES and /STRING refinements are something that should
@@ -102,32 +102,32 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         if (not r)
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
-        if (r != D_OUT) {
+        if (r != OUT) {
             assert(not IS_RETURN_SIGNAL(r));  // R_THROWN etc. unsupported
 
-            Copy_Cell(D_OUT, r);
+            Copy_Cell(OUT, r);
             if (Is_Api_Value(r))
                 Release_Api_Value_If_Unmanaged(r);
         }
 
-        if ((REF(string) or REF(lines)) and not IS_TEXT(D_OUT)) {
-            if (not IS_BINARY(D_OUT))
+        if ((REF(string) or REF(lines)) and not IS_TEXT(OUT)) {
+            if (not IS_BINARY(OUT))
                 fail ("/STRING or /LINES used on a non-BINARY!/STRING! read");
 
             REBSIZ size;
-            const REBYTE *data = VAL_BINARY_SIZE_AT(&size, D_OUT);
+            const REBYTE *data = VAL_BINARY_SIZE_AT(&size, OUT);
             REBSTR *decoded = Make_Sized_String_UTF8(cs_cast(data), size);
-            Init_Text(D_OUT, decoded);
+            Init_Text(OUT, decoded);
         }
 
         if (REF(lines)) { // caller wants a BLOCK! of STRING!s, not one string
-            assert(IS_TEXT(D_OUT));
+            assert(IS_TEXT(OUT));
 
             DECLARE_LOCAL (temp);
-            Move_Cell(temp, D_OUT);
-            Init_Block(D_OUT, Split_Lines(temp));
+            Move_Cell(temp, OUT);
+            Init_Block(OUT, Split_Lines(temp));
         }
-        return D_OUT;
+        return OUT;
     }
 
     return r;

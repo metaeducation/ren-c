@@ -43,7 +43,7 @@ REBNATIVE(form)
     if (IS_BAD_WORD(v))
         fail (ARG(value));
 
-    return Init_Text(D_OUT, Copy_Form_Value(v, 0));
+    return Init_Text(OUT, Copy_Form_Value(v, 0));
 }
 
 
@@ -101,7 +101,7 @@ REBNATIVE(mold)
             rebL(mo->opts & MOLD_FLAG_WAS_TRUNCATED)
         );
 
-    return Init_Text(D_OUT, popped);
+    return Init_Text(OUT, popped);
 }
 
 
@@ -145,7 +145,7 @@ REBNATIVE(write_stdout)
         fail ("Boot WRITE-STDOUT received BINARY!, needs DEBUG_HAS_PROBE");
       #endif
     }
-    return Init_None(D_OUT);
+    return Init_None(OUT);
   #endif
 }
 
@@ -247,7 +247,7 @@ REBNATIVE(new_line_q)
                 //    bool case_one = rebUnboxLogic("new-line?", "[\n]");
                 //    bool case_two = rebUnboxLogic(new_line_q, "[\n]");
                 //
-                return Init_Logic(D_OUT, false);
+                return Init_Logic(OUT, false);
             }
 
             arr = f_array;
@@ -268,9 +268,9 @@ REBNATIVE(new_line_q)
     }
 
     if (item != tail)
-        return Init_Logic(D_OUT, GET_CELL_FLAG(item, NEWLINE_BEFORE));
+        return Init_Logic(OUT, GET_CELL_FLAG(item, NEWLINE_BEFORE));
 
-    return Init_Logic(D_OUT, GET_SUBCLASS_FLAG(ARRAY, arr, NEWLINE_AT_TAIL));
+    return Init_Logic(OUT, GET_SUBCLASS_FLAG(ARRAY, arr, NEWLINE_AT_TAIL));
 }
 
 

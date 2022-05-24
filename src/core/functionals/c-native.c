@@ -176,7 +176,7 @@ REBNATIVE(native)
         PG_Currently_Loading_Module
     );
 
-    return Init_Action(D_OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
 }
 
 

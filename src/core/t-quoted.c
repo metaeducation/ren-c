@@ -132,7 +132,7 @@ REBTYPE(Quoted)
         assert(not threw);  // can't throw
         UNUSED(threw);
 
-        return Quotify(D_OUT, num_quotes); }
+        return Quotify(OUT, num_quotes); }
 
       default:
         break;
@@ -163,15 +163,15 @@ REBNATIVE(the)
     REBVAL *v = ARG(value);
 
     if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
-        if (Eval_Value_Throws(D_OUT, v, SPECIFIED))
-            return_thrown (D_OUT);
-        return D_OUT;  // Don't set UNEVALUATED flag
+        if (Eval_Value_Throws(OUT, v, SPECIFIED))
+            return_thrown (OUT);
+        return OUT;  // Don't set UNEVALUATED flag
     }
 
-    Copy_Cell(D_OUT, v);
+    Copy_Cell(OUT, v);
 
-    SET_CELL_FLAG(D_OUT, UNEVALUATED);
-    return D_OUT;
+    SET_CELL_FLAG(OUT, UNEVALUATED);
+    return OUT;
 }
 
 
@@ -214,15 +214,15 @@ REBNATIVE(the_p)
     if (IS_BAD_WORD(v)) {
         assert(NOT_CELL_FLAG(v, ISOTOPE));
         if (VAL_BAD_WORD_ID(v) == SYM_NULL)
-            Init_Nulled(D_OUT);
+            Init_Nulled(OUT);
         else
             fail ("@ and THE* only accept BAD-WORD! of ~NULL~ to make NULL");
     }
     else
-        Copy_Cell(D_OUT, v);
+        Copy_Cell(OUT, v);
 
-    SET_CELL_FLAG(D_OUT, UNEVALUATED);
-    return D_OUT;
+    SET_CELL_FLAG(OUT, UNEVALUATED);
+    return OUT;
 }
 
 
@@ -249,14 +249,14 @@ REBNATIVE(just)
     REBVAL *v = ARG(value);
 
     if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
-        if (Eval_Value_Throws(D_OUT, v, SPECIFIED))
-            return_thrown (D_OUT);
-        return Quotify(D_OUT, 1);  // Don't set UNEVALUATED flag
+        if (Eval_Value_Throws(OUT, v, SPECIFIED))
+            return_thrown (OUT);
+        return Quotify(OUT, 1);  // Don't set UNEVALUATED flag
     }
 
-    Copy_Cell(D_OUT, v);
-    SET_CELL_FLAG(D_OUT, UNEVALUATED);  // !!! should this bit be set?
-    return Quotify(D_OUT, 1);
+    Copy_Cell(OUT, v);
+    SET_CELL_FLAG(OUT, UNEVALUATED);  // !!! should this bit be set?
+    return Quotify(OUT, 1);
 }
 
 
@@ -284,8 +284,8 @@ REBNATIVE(quote)
     if (depth < 0)
         fail (PAR(depth));
 
-    Copy_Cell(D_OUT, ARG(optional));
-    return Isotopic_Quotify(D_OUT, depth);
+    Copy_Cell(OUT, ARG(optional));
+    return Isotopic_Quotify(OUT, depth);
 }
 
 
@@ -306,10 +306,10 @@ REBNATIVE(meta)
     REBVAL *v = ARG(optional);
 
     if (Is_Meta_Of_Pure_Invisible(v))
-        return_invisible (D_OUT);  // see META* for non-vanishing
+        return_invisible (OUT);  // see META* for non-vanishing
 
     if (Is_Meta_Of_Void_Isotope(v))
-        return_void (D_OUT);  // see META* for non-passthru of ~void~ isotope
+        return_void (OUT);  // see META* for non-passthru of ~void~ isotope
 
     return v;  // argument was already ^META, no need to Meta_Quotify()
 }
@@ -359,8 +359,8 @@ REBNATIVE(unquote)
     if (cast(REBLEN, depth) > VAL_NUM_QUOTES(v))
         fail ("Value not quoted enough for unquote depth requested");
 
-    Unquotify(Copy_Cell(D_OUT, v), depth);
-    return D_OUT;
+    Unquotify(Copy_Cell(OUT, v), depth);
+    return OUT;
 }
 
 
@@ -412,10 +412,10 @@ REBNATIVE(unmeta)
         return nullptr;  // ^(null) => null, so the reverse must be true
 
     if (Is_Meta_Of_Pure_Invisible(v))
-        return_void (D_OUT);  // ^-- see explanation
+        return_void (OUT);  // ^-- see explanation
 
     if (Is_Meta_Of_Void_Isotope(v))
-        return_void (D_OUT);  // ^-- see explanation
+        return_void (OUT);  // ^-- see explanation
 
     if (IS_BAD_WORD(v))
         fail (Error_Bad_Isotope(v));  // no other isotopes valid for the trick
@@ -427,14 +427,14 @@ REBNATIVE(unmeta)
         fail ("END not processed by UNMETA at this time");
 
     if (Is_Meta_Of_Pure_Invisible(v))
-        return_void (D_OUT);  // invisible "intent"?
+        return_void (OUT);  // invisible "intent"?
 
     if (Is_Meta_Of_Void_Isotope(v))
-        return_void (D_OUT);
+        return_void (OUT);
 
     // Now remove the level of meta the user was asking for.
     //
-    return Meta_Unquotify(Move_Cell(D_OUT, v));
+    return Meta_Unquotify(Move_Cell(OUT, v));
 }
 
 
@@ -456,7 +456,7 @@ REBNATIVE(maybe)
     REBVAL *v = ARG(optional);
 
     if (Is_Meta_Of_Pure_Invisible(v) or Is_Meta_Of_Void_Isotope(v))
-        return_invisible (D_OUT);
+        return_invisible (OUT);
 
     // There was an operation called DENULL for making nulls vanish.  Such a
     // shorthand might be desirable, but it's probably more obvious to say
@@ -471,11 +471,11 @@ REBNATIVE(maybe)
             IS_NULLED(v)
             or (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_0)  // "nothing"
         ){
-            return_invisible (D_OUT);
+            return_invisible (OUT);
         }
     }
 
-    return Meta_Unquotify(Move_Cell(D_OUT, v));
+    return Meta_Unquotify(Move_Cell(OUT, v));
 }
 
 
@@ -501,19 +501,19 @@ REBNATIVE(maybe_a)
     INCLUDE_PARAMS_OF_MAYBE_A;
 
     if (Eval_Step_In_Subframe_Maybe_Stale_Throws(
-        D_OUT,
+        OUT,
         frame_,
         EVAL_MASK_DEFAULT
     )){
-        return_thrown (D_OUT);
+        return_thrown (OUT);
     }
 
-    if (Is_Voided(D_OUT)) {
-        Clear_Void_Flag(D_OUT);
-        return_invisible (D_OUT);
+    if (Is_Voided(OUT)) {
+        Clear_Void_Flag(OUT);
+        return_invisible (OUT);
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -530,7 +530,7 @@ REBNATIVE(quoted_q)
 {
     INCLUDE_PARAMS_OF_QUOTED_Q;
 
-    return Init_Logic(D_OUT, VAL_TYPE(ARG(optional)) == REB_QUOTED);
+    return Init_Logic(OUT, VAL_TYPE(ARG(optional)) == REB_QUOTED);
 }
 
 

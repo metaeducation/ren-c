@@ -881,7 +881,7 @@ REBNATIVE(js_native)
         &cleanup_js_object
     );
 
-    return Init_Action(D_OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
 }
 
 
@@ -931,7 +931,7 @@ REBNATIVE(js_eval_p)
                 utf8
             );
 
-        return Init_None(D_OUT);
+        return Init_None(OUT);
     }
 
     // Currently, reb.Box() only translates to INTEGER!, TEXT!, BAD-WORD!, NULL
@@ -985,7 +985,7 @@ REBNATIVE(startup_p)
 
     PG_Native_State = NATIVE_STATE_NONE;
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -1008,7 +1008,7 @@ REBNATIVE(js_trace)
     fail ("JS-TRACE only if DEBUG_JAVASCRIPT_EXTENSION set in %emscripten.r");
   #endif
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -1028,7 +1028,7 @@ REBNATIVE(js_stacklimit)
 
     Init_Integer(DS_PUSH(), cast(uintptr_t, &dsp_orig));  // local pointer
     Init_Integer(DS_PUSH(), TG_Stack_Limit);
-    return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
+    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
 }
 
 

@@ -168,6 +168,6 @@ REBNATIVE(dump)
             PROBE(var);
     }
 
-    return_invisible (D_OUT);
+    return_invisible (OUT);
 #endif
 }

@@ -443,7 +443,7 @@ REBNATIVE(checksum_core)
     }
     TERM_BIN_LEN(bin, 4);
 
-    return Init_Binary(D_OUT, bin);
+    return Init_Binary(OUT, bin);
 }
 
 

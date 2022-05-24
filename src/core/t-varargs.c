@@ -130,7 +130,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 // and this case cannot return a thrown value.
 //
 // For other ops, it will return END_NODE if at the end of variadic input,
-// or D_OUT if there is a value.
+// or OUT if there is a value.
 //
 // If an evaluation is involved, then a thrown value is possibly returned.
 //
@@ -448,15 +448,15 @@ REBTYPE(Varargs)
         switch (property) {
         case SYM_TAIL_Q: {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                D_OUT,
+                OUT,
                 VARARG_OP_TAIL_Q,
                 value
             )){
                 assert(false);
-                return_thrown (D_OUT);
+                return_thrown (OUT);
             }
-            assert(IS_LOGIC(D_OUT));
-            return D_OUT; }
+            assert(IS_LOGIC(OUT));
+            return OUT; }
 
         default:
             break;
@@ -476,17 +476,17 @@ REBTYPE(Varargs)
             fail (Error_Varargs_No_Look_Raw());
 
         if (Do_Vararg_Op_Maybe_End_Throws(
-            D_OUT,
+            OUT,
             VARARG_OP_FIRST,
             value
         )){
             assert(false); // VARARG_OP_FIRST can't throw
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
-        if (IS_END(D_OUT))
-           Init_Nulled(D_OUT);
+        if (IS_END(OUT))
+           Init_Nulled(OUT);
 
-        return D_OUT; }
+        return OUT; }
 
 
     case SYM_TAKE: {
@@ -500,15 +500,15 @@ REBTYPE(Varargs)
 
         if (not REF(part)) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                D_OUT,
+                OUT,
                 VARARG_OP_TAKE,
                 value
             )){
-                return_thrown (D_OUT);
+                return_thrown (OUT);
             }
-            if (IS_END(D_OUT))
-                return Init_Nulled(D_OUT);
-            return D_OUT;
+            if (IS_END(OUT))
+                return Init_Nulled(OUT);
+            return OUT;
         }
 
         REBDSP dsp_orig = DSP;
@@ -522,20 +522,20 @@ REBTYPE(Varargs)
 
         while (limit-- > 0) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                D_OUT,
+                OUT,
                 VARARG_OP_TAKE,
                 value
             )){
-                return_thrown (D_OUT);
+                return_thrown (OUT);
             }
-            if (IS_END(D_OUT))
+            if (IS_END(OUT))
                 break;
-            Move_Cell(DS_PUSH(), D_OUT);
+            Move_Cell(DS_PUSH(), OUT);
         }
 
         // !!! What if caller wanted a REB_GROUP, REB_PATH, or an /INTO?
         //
-        return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig)); }
+        return Init_Block(OUT, Pop_Stack_Values(dsp_orig)); }
 
     default:
         break;
@@ -680,8 +680,8 @@ REBNATIVE(variadic_q)
     const REBVAL *param = ACT_PARAMS_HEAD(action);
     for (; key != key_tail; ++param, ++key) {
         if (GET_PARAM_FLAG(param, VARIADIC))
-            return Init_True(D_OUT);
+            return Init_True(OUT);
     }
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }

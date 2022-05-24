@@ -155,6 +155,18 @@ Special internal defines used by RT, not Host-Kit developers:
 #endif
 
 
+// Windows headers define the macros IN and OUT as part of an interface
+// definition language.  Inside of Ren-C the OUT macro is used as a shorthand
+// for accessing `FRM_OUT(frame_)` in a native.  You can #undef the Windows
+// macros after you #include <windows.h>, but having the definitions under
+// a switch gives more flexibility to define your own macros and leave the
+// Windows ones alone.
+//
+#if !defined(REBOL_FRAME_SHORTHAND_MACROS)
+    #define REBOL_FRAME_SHORTHAND_MACROS 1
+#endif
+
+
 //=//// LINUX //////////////////////////////////////////////////////////////=//
 
 #if !defined(TO_LINUX_X86)

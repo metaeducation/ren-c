@@ -65,7 +65,7 @@ REBNATIVE(const_q) {
     // besides just if the value is *const*, specifically?  Knowing the flag
     // is helpful for debugging at least.
 
-    return Init_Logic(D_OUT, GET_CELL_FLAG(ARG(value), CONST));
+    return Init_Logic(OUT, GET_CELL_FLAG(ARG(value), CONST));
 }
 
 
@@ -118,7 +118,7 @@ REBNATIVE(mutable_q) {
     // besides just if the value is *const*, specifically?  Knowing the flag
     // is helpful for debugging at least.
 
-    return Init_Logic(D_OUT, NOT_CELL_FLAG(ARG(value), CONST));
+    return Init_Logic(OUT, NOT_CELL_FLAG(ARG(value), CONST));
 }
 
 
@@ -385,14 +385,14 @@ REBNATIVE(protect)
     REBVAL *v = ARG(value);
     if (IS_TUPLE(v)) {
         if (Set_Var_Core_Updater_Throws(
-            D_OUT,
+            OUT,
             nullptr,
             v,
             SPECIFIED,
             Lib(TRUE),
             Lib(PROTECT_P)
         )){
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
         return v;
     }
@@ -484,7 +484,7 @@ REBNATIVE(locked_q)
 {
     INCLUDE_PARAMS_OF_LOCKED_Q;
 
-    return Init_Logic(D_OUT, Is_Value_Frozen_Deep(ARG(value)));
+    return Init_Logic(OUT, Is_Value_Frozen_Deep(ARG(value)));
 }
 
 

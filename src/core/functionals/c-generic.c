@@ -138,7 +138,7 @@ REBNATIVE(generic)
     REBVAL *verb_var = Sink_Word_May_Fail(verb, SPECIFIED);
     Init_Action(verb_var, generic, VAL_WORD_SYMBOL(verb), UNBOUND);
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 

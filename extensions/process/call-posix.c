@@ -954,14 +954,14 @@ REB_R Call_Core(REBFRM *frame_) {
                 exit_code
             );
 
-        return Init_Object(D_OUT, info);
+        return Init_Object(OUT, info);
     }
 
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
     if (REF(wait))
-        return Init_Integer(D_OUT, exit_code);
+        return Init_Integer(OUT, exit_code);
 
-    return Init_Integer(D_OUT, forked_pid);
+    return Init_Integer(OUT, forked_pid);
 }

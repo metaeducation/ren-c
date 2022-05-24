@@ -242,5 +242,5 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     REBARR *details = ACT_DETAILS(reordered);
     Copy_Cell(DETAILS_AT(details, IDX_REORDERER_REORDEREE), ARG(action));
 
-    return Init_Action(D_OUT, reordered, label, UNBOUND);
+    return Init_Action(OUT, reordered, label, UNBOUND);
 }

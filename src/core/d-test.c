@@ -49,7 +49,7 @@ REBNATIVE(test_librebol)
 
   #if (! INCLUDE_TEST_LIBREBOL_NATIVE)
     return Init_Text(  // text! vs. failing to distinguish from test failure
-        D_OUT,
+        OUT,
         Make_String_UTF8(
             "TEST-LIBREBOL only if #define INCLUDE_TEST_LIBREBOL_NATIVE"
         )
@@ -65,7 +65,7 @@ REBNATIVE(test_librebol)
   blockscope {
     SET_CELL_FLAG(Init_Integer(DS_PUSH(), 1), NEWLINE_BEFORE);
     int i = rebUnboxInteger("1 +", rebI(2));
-  
+
     Init_Logic(DS_PUSH(), i == 3);  // ^-- see NOTICE
   }
 
@@ -103,7 +103,7 @@ REBNATIVE(test_librebol)
     Init_Logic(DS_PUSH(), is_null);
   }
 
-    return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
+    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
   #endif
 }
 
@@ -143,7 +143,7 @@ REBNATIVE(diagnose)
 
     Dump_Value_Debug(v);
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
   #endif
 }
 
@@ -178,6 +178,6 @@ REBNATIVE(fuzz)
         assert(IS_PERCENT(ARG(factor)));
         PG_Fuzz_Factor = 10000 * VAL_DECIMAL(ARG(factor));
     }
-    return Init_None(D_OUT);
+    return Init_None(OUT);
   #endif
 }

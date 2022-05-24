@@ -67,7 +67,7 @@ REBNATIVE(startup_p)
 
     Startup_Events();  // initialize other event stuff
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -96,7 +96,7 @@ REBNATIVE(shutdown_p)
     // !!! currently no shutdown code, but there once was for destroying an
     // invisible handle in windows...
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -187,8 +187,8 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
         if (GET_SIGNAL(SIG_HALT)) {
             CLR_SIGNAL(SIG_HALT);
 
-            Init_Thrown_With_Label(D_OUT, Lib(NULL), Lib(HALT));
-            return_thrown (D_OUT);
+            Init_Thrown_With_Label(OUT, Lib(NULL), Lib(HALT));
+            return_thrown (OUT);
         }
 
         if (GET_SIGNAL(SIG_INTERRUPT)) {

@@ -600,19 +600,19 @@ REBTYPE(Map)
         REBVAL *property = ARG(property);
         switch (VAL_WORD_ID(property)) {
           case SYM_LENGTH:
-            return Init_Integer(D_OUT, Length_Map(m));
+            return Init_Integer(OUT, Length_Map(m));
 
           case SYM_VALUES:
-            return Init_Block(D_OUT, Map_To_Array(m, 1));
+            return Init_Block(OUT, Map_To_Array(m, 1));
 
           case SYM_WORDS:
-            return Init_Block(D_OUT, Map_To_Array(m, -1));
+            return Init_Block(OUT, Map_To_Array(m, -1));
 
           case SYM_BODY:
-            return Init_Block(D_OUT, Map_To_Array(m, 0));
+            return Init_Block(OUT, Map_To_Array(m, 0));
 
           case SYM_TAIL_Q:
-            return Init_Logic(D_OUT, Length_Map(m) == 0);
+            return Init_Logic(OUT, Length_Map(m) == 0);
 
           default:
             break;
@@ -645,17 +645,17 @@ REBTYPE(Map)
             return nullptr;
 
         Copy_Cell(
-            D_OUT,
+            OUT,
             SPECIFIC(ARR_AT(MAP_PAIRLIST(m), ((n - 1) * 2) + 1))
         );
 
         if (ID_OF_SYMBOL(verb) == SYM_FIND) {
-            if (IS_NULLED(D_OUT))
-                return D_OUT;
-            return Init_True(D_OUT);
+            if (IS_NULLED(OUT))
+                return OUT;
+            return Init_True(OUT);
         }
 
-        return D_OUT; }
+        return OUT; }
 
       case SYM_PUT: {
         INCLUDE_PARAMS_OF_PUT;
@@ -696,7 +696,7 @@ REBTYPE(Map)
 
         Append_Map(m, at, tail, VAL_SPECIFIER(value), len);
 
-        return Init_Map(D_OUT, m); }
+        return Init_Map(OUT, m); }
 
       case SYM_COPY: {
         INCLUDE_PARAMS_OF_COPY;
@@ -719,7 +719,7 @@ REBTYPE(Map)
             }
         }
 
-        return Init_Map(D_OUT, Copy_Map(VAL_MAP(map), types)); }
+        return Init_Map(OUT, Copy_Map(VAL_MAP(map), types)); }
 
       case SYM_CLEAR: {
         REBMAP *m = VAL_MAP_ENSURE_MUTABLE(map);
@@ -731,7 +731,7 @@ REBTYPE(Map)
         //
         Clear_Series(MAP_HASHLIST(m));
 
-        return Init_Map(D_OUT, m); }
+        return Init_Map(OUT, m); }
 
     //=//// PICK* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -761,7 +761,7 @@ REBTYPE(Map)
         if (IS_NULLED(val))  // zombie entry, means unused
             return nullptr;
 
-        return Copy_Cell(D_OUT, val); }
+        return Copy_Cell(OUT, val); }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 

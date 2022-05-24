@@ -557,7 +557,7 @@ REBTYPE(Bitset)
         const RELVAL *picker = ARG(picker);
         bool bit = Check_Bits(VAL_BITSET(v), picker, false);
 
-        return bit ? Init_True(D_OUT) : Init_Nulled(D_OUT); }
+        return bit ? Init_True(OUT) : Init_Nulled(OUT); }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -591,7 +591,7 @@ REBTYPE(Bitset)
 
           case SYM_TAIL_Q:
             // Necessary to make EMPTY? work:
-            return Init_Logic(D_OUT, BIN_LEN(VAL_BITSET(v)) == 0);
+            return Init_Logic(OUT, BIN_LEN(VAL_BITSET(v)) == 0);
 
           default:
             break;
@@ -613,12 +613,12 @@ REBTYPE(Bitset)
 
         if (not Check_Bits(VAL_BITSET(v), ARG(pattern), did REF(case)))
             return nullptr;
-        return Init_True(D_OUT); }
+        return Init_True(OUT); }
 
       case SYM_COMPLEMENT: {
         REBBIN *copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));
         INIT_BITS_NOT(copy, not BITS_NOT(VAL_BITSET(v)));
-        return Init_Bitset(D_OUT, copy); }
+        return Init_Bitset(OUT, copy); }
 
       case SYM_APPEND:  // Accepts: #"a" "abc" [1 - 10] [#"a" - #"z"] etc.
       case SYM_INSERT: {
@@ -661,7 +661,7 @@ REBTYPE(Bitset)
 
         REBBIN *copy = BIN(Copy_Series_Core(VAL_BITSET(v), NODE_FLAG_MANAGED));
         INIT_BITS_NOT(copy, BITS_NOT(VAL_BITSET(v)));
-        return Init_Bitset(D_OUT, copy); }
+        return Init_Bitset(OUT, copy); }
 
       case SYM_CLEAR: {
         REBBIN *bin = VAL_BITSET_ENSURE_MUTABLE(v);
@@ -722,7 +722,7 @@ REBTYPE(Bitset)
 
         INIT_BITS_NOT(bits, false);
         Trim_Tail_Zeros(bits);
-        return Init_Bitset(D_OUT, bits); }
+        return Init_Bitset(OUT, bits); }
 
       default:
         break;

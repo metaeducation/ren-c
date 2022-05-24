@@ -40,7 +40,7 @@ REBOL [
                  int i = VAL_INT32(ARG(argument));
                  /* etc, etc. */
             }
-            return D_OUT;
+            return OUT;
         }
 
         (Note that the C name of the native may need to be different from the

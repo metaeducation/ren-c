@@ -141,5 +141,5 @@ REBNATIVE(typechecker)
     );
     Copy_Cell(ARR_AT(ACT_DETAILS(typechecker), IDX_TYPECHECKER_TYPE), type);
 
-    return Init_Action(D_OUT, typechecker, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, typechecker, ANONYMOUS, UNBOUND);
 }

@@ -610,8 +610,8 @@ REBTYPE(Vector)
 
         const RELVAL *picker = ARG(picker);
 
-        Pick_Vector(D_OUT, v, picker);
-        return D_OUT; }
+        Pick_Vector(OUT, v, picker);
+        return OUT; }
 
       case SYM_POKE_P: {
 
@@ -635,7 +635,7 @@ REBTYPE(Vector)
         SYMID property = VAL_WORD_ID(ARG(property));
         switch (property) {
           case SYM_LENGTH:
-            return Init_Integer(D_OUT, VAL_VECTOR_LEN_AT(v));
+            return Init_Integer(OUT, VAL_VECTOR_LEN_AT(v));
 
           default:
             break;
@@ -656,7 +656,7 @@ REBTYPE(Vector)
         ));
 
         return Init_Vector(
-            D_OUT,
+            OUT,
             bin,
             VAL_VECTOR_SIGN(v),
             VAL_VECTOR_INTEGRAL(v),

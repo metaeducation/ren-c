@@ -156,5 +156,5 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     );
     Copy_Cell(ARR_AT(details, IDX_ADAPTER_ADAPTEE), adaptee);
 
-    return Init_Action(D_OUT, adaptation, VAL_ACTION_LABEL(adaptee), UNBOUND);
+    return Init_Action(OUT, adaptation, VAL_ACTION_LABEL(adaptee), UNBOUND);
 }

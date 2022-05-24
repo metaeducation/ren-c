@@ -145,7 +145,7 @@ REBNATIVE(macro)
         SET_PARAM_FLAG(param, VANISHABLE);  // dispatcher is invisible
     }
 
-    return Init_Action(D_OUT, macro, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, macro, ANONYMOUS, UNBOUND);
 }
 
 
@@ -165,7 +165,7 @@ REBNATIVE(inline)
 
     REBVAL *splice = ARG(splice);
     if (IS_BLANK(splice))
-        return_invisible (D_OUT);  // do nothing, just return invisibly
+        return_invisible (OUT);  // do nothing, just return invisibly
 
     if (IS_QUOTED(splice)) {
         //
@@ -180,5 +180,5 @@ REBNATIVE(inline)
     assert(IS_BLOCK(splice));
     Splice_Block_Into_Feed(frame_->feed, ARG(splice));
 
-    return_invisible (D_OUT);
+    return_invisible (OUT);
 }

@@ -57,8 +57,6 @@
 #include "sys-core.h"
 
 #define Value REBVAL
-#define OUT D_OUT
-#define SPARE D_SPARE
 
 
 //
@@ -269,7 +267,7 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
     Meta_Unquotify(in);
 
-    if (Do_Branch_With_Throws(D_SPARE, ARG(branch), in)) {
+    if (Do_Branch_With_Throws(SPARE, ARG(branch), in)) {
         Move_Cell(OUT, SPARE);
         return_thrown (OUT);
     }
@@ -387,12 +385,12 @@ REBNATIVE(match)
         break;
 
       case REB_BLOCK: {
-        REB_R r = MAKE_Typeset(D_SPARE, REB_TYPESET, nullptr, test);
+        REB_R r = MAKE_Typeset(SPARE, REB_TYPESET, nullptr, test);
         if (r == R_THROWN) {
-            Move_Cell(D_OUT, D_SPARE);
-            return_thrown (D_OUT);
+            Move_Cell(OUT, SPARE);
+            return_thrown (OUT);
         }
-        test = D_SPARE;
+        test = SPARE;
         goto test_is_typeset; }
 
       case REB_TYPESET:
@@ -402,11 +400,11 @@ REBNATIVE(match)
         break;
 
       case REB_ACTION:
-        if (rebRunThrows(D_SPARE, true, test, rebQ(v))) {
-            Move_Cell(D_OUT, D_SPARE);
-            return_thrown (D_OUT);
+        if (rebRunThrows(SPARE, true, test, rebQ(v))) {
+            Move_Cell(OUT, SPARE);
+            return_thrown (OUT);
         }
-        if (IS_FALSEY(D_SPARE))
+        if (IS_FALSEY(SPARE))
             return nullptr;
         break;
 
@@ -435,9 +433,9 @@ REBNATIVE(match)
     //
     Isotopify_If_Falsey(v);
 
-    Move_Cell(D_OUT, v);  // Otherwise, input is the result
+    Move_Cell(OUT, v);  // Otherwise, input is the result
 
-    return_branched (D_OUT);  // asserts no pure NULL or isotope ~void~
+    return_branched (OUT);  // asserts no pure NULL or isotope ~void~
 }
 
 
@@ -602,7 +600,7 @@ REBNATIVE(any)
     Push_Frame(nullptr, f);
 
     while (NOT_END(f_value)) {
-        if (Eval_Step_Maybe_Stale_Throws(SET_END(D_OUT), f)) {
+        if (Eval_Step_Maybe_Stale_Throws(SET_END(OUT), f)) {
             Abort_Frame(f);
             return_thrown (OUT);
         }
@@ -772,9 +770,9 @@ REBNATIVE(case)
         }
 
         // Once we run a branch, translucency is no longer an option, so go
-        // ahead and write D_OUT.
+        // ahead and write OUT.
 
-        if (Do_Branch_With_Throws(OUT, ARG(branch), D_SPARE))
+        if (Do_Branch_With_Throws(OUT, ARG(branch), SPARE))
             goto threw;
 
         if (not REF(all)) {
@@ -785,7 +783,7 @@ REBNATIVE(case)
 
   reached_end:
 
-    assert(REF(all) or Is_Stale(D_OUT));
+    assert(REF(all) or Is_Stale(OUT));
 
     Drop_Frame(f);
 
@@ -871,12 +869,12 @@ REBNATIVE(switch)
         // !!! Advanced frame tricks *might* make this possible for N-ary
         // functions, the same way `match parse "aaa" [some "a"]` => "aaa"
 
-        if (Eval_Step_Maybe_Stale_Throws(D_SPARE, f)) {
-            Move_Cell(D_OUT, D_SPARE);
+        if (Eval_Step_Maybe_Stale_Throws(SPARE, f)) {
+            Move_Cell(OUT, SPARE);
             goto threw;
         }
 
-        if (Is_Voided(D_SPARE)) {
+        if (Is_Voided(SPARE)) {
             //
             //    switch 10 [if false [20] [print "What should this do?"]]
             //
@@ -887,10 +885,10 @@ REBNATIVE(switch)
             fail (Error_Bad_Void());
         }
 
-        if (Is_Invisible(D_SPARE))  // pure voids (ELIDE, COMMENT)
+        if (Is_Invisible(SPARE))  // pure voids (ELIDE, COMMENT)
             continue;
 
-        Clear_Stale_Flag(D_SPARE);
+        Clear_Stale_Flag(SPARE);
 
         if (IS_END(f_value))
             goto reached_end;  // nothing left, so drop frame and return
@@ -911,7 +909,7 @@ REBNATIVE(switch)
             // see the un-mutated condition value.
             //
             const bool strict = false;
-            if (0 != Compare_Modify_Values(left, D_SPARE, strict))
+            if (0 != Compare_Modify_Values(left, SPARE, strict))
                 goto clear_fallout_and_continue;
         }
         else {
@@ -923,7 +921,7 @@ REBNATIVE(switch)
             // for better stack traces and error messages.
             //
             // !!! We'd like to run this faster, so we aim to be able to
-            // reuse this frame...hence D_SPARE should not be expected to
+            // reuse this frame...hence SPARE should not be expected to
             // survive across this point.
             //
             DECLARE_LOCAL (temp);
@@ -932,9 +930,9 @@ REBNATIVE(switch)
                 true,  // fully = true (e.g. both arguments must be taken)
                 predicate,
                 rebQ(left),  // first arg (left hand side if infix)
-                rebQ(D_SPARE)  // second arg (right hand side if infix)
+                rebQ(SPARE)  // second arg (right hand side if infix)
             )){
-                Move_Cell(D_OUT, temp);
+                Move_Cell(OUT, temp);
                 goto threw;
             }
             if (IS_FALSEY(temp))
@@ -951,11 +949,11 @@ REBNATIVE(switch)
                 //
                 // f_value is RELVAL, can't Do_Branch
                 //
-                SET_END(D_OUT);
-                if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
+                SET_END(OUT);
+                if (Do_Any_Array_At_Throws(OUT, f_value, f_specifier))
                     goto threw;
                 if (IS_BLOCK(f_value)) {
-                    Isotopify_If_Nulled(D_OUT);
+                    Isotopify_If_Nulled(OUT);
                 }
                 break;
             }
@@ -966,12 +964,12 @@ REBNATIVE(switch)
                     temp,
                     false,  // fully = false, e.g. arity-0 functions are ok
                     SPECIFIC(f_value),  // actions don't need specifiers
-                    rebQ(D_OUT)
+                    rebQ(OUT)
                 )){
-                    Move_Cell(D_OUT, temp);
+                    Move_Cell(OUT, temp);
                     goto threw;
                 }
-                Move_Cell(D_OUT, temp);
+                Move_Cell(OUT, temp);
                 break;
             }
 
@@ -980,41 +978,41 @@ REBNATIVE(switch)
 
         if (not REF(all)) {
             Drop_Frame(f);
-            return_branched (D_OUT);  // asserts no pure NULL or isotope ~void~
+            return_branched (OUT);  // asserts no pure NULL or isotope ~void~
         }
 
         Fetch_Next_Forget_Lookback(f);  // keep matching if /ALL
 
       clear_fallout_and_continue:
 
-        SET_END(D_SPARE);
+        SET_END(SPARE);
     }
 
   reached_end:
 
-    assert(REF(all) or Is_Stale(D_OUT));
+    assert(REF(all) or Is_Stale(OUT));
 
     Drop_Frame(f);
 
     // See remarks in CASE about why fallout result is prioritized, and why
     // it cannot be a pure NULL.
     //
-    if (NOT_END(D_SPARE)) {
-        Isotopify_If_Nulled(D_SPARE);  // gives RELVAL*, can't direct RETURN()
-        return D_SPARE;
+    if (NOT_END(SPARE)) {
+        Isotopify_If_Nulled(SPARE);  // gives RELVAL*, can't direct RETURN()
+        return SPARE;
     }
 
     // if no fallout, use last /ALL clause, or ~void~ isotope if END
     //
-    if (Is_Stale(D_OUT))
-        return_void (D_OUT);
+    if (Is_Stale(OUT))
+        return_void (OUT);
 
-    return_branched (D_OUT);  // asserts no pure NULL or isotope ~void~
+    return_branched (OUT);  // asserts no pure NULL or isotope ~void~
 
   threw:
 
     Drop_Frame(f);
-    return_thrown (D_OUT);
+    return_thrown (OUT);
 }
 
 
@@ -1041,15 +1039,15 @@ REBNATIVE(default)
 
     REBVAL *predicate = ARG(predicate);
 
-    REBVAL *steps = D_SPARE;
+    REBVAL *steps = SPARE;
 
     // The TARGET may be something like a TUPLE! that contains GROUP!s, or a
     // SET-GROUP!.  When we ask for `steps` back from Get, it will give a
     // block back that has the evaluations processed out and can be used for
     // the SET without doing a double evaluation.
     //
-    if (Get_Var_Core_Throws(D_OUT, steps, target, SPECIFIED))
-        return_thrown (D_OUT);
+    if (Get_Var_Core_Throws(OUT, steps, target, SPECIFIED))
+        return_thrown (OUT);
 
     // We only consider those bad words which are in the "unfriendly" state
     // that the system also knows to mean "emptiness" as candidates for
@@ -1062,26 +1060,26 @@ REBNATIVE(default)
     //     >> x: default [10]
     //     == ~
     //
-    if (not (IS_NULLED(D_OUT) or Is_None(D_OUT))) {
+    if (not (IS_NULLED(OUT) or Is_None(OUT))) {
         if (not REF(predicate)) {  // no custom additional constraint
-            if (not IS_BLANK(D_OUT))  // acts as `x: default .not.blank? [...]`
-                return D_OUT;  // count it as "already set"
+            if (not IS_BLANK(OUT))  // acts as `x: default .not.blank? [...]`
+                return OUT;  // count it as "already set"
         }
         else {
-            if (rebUnboxLogic(predicate, rebQ(D_OUT)))  // rebTruthy() ?
-                return D_OUT;
+            if (rebUnboxLogic(predicate, rebQ(OUT)))  // rebTruthy() ?
+                return OUT;
         }
     }
 
-    if (Do_Branch_Throws(D_OUT, ARG(branch)))
-        return_thrown (D_OUT);
+    if (Do_Branch_Throws(OUT, ARG(branch)))
+        return_thrown (OUT);
 
-    if (Set_Var_Core_Throws(D_SPARE, nullptr, steps, SPECIFIED, D_OUT)) {
+    if (Set_Var_Core_Throws(SPARE, nullptr, steps, SPECIFIED, OUT)) {
         assert(false);  // shouldn't be able to happen.
-        fail (Error_No_Catch_For_Throw(D_SPARE));
+        fail (Error_No_Catch_For_Throw(SPARE));
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1116,14 +1114,14 @@ REBNATIVE(catch)
     if (REF(any) and REF(name))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Do_Any_Array_At_Throws(RESET(D_OUT), ARG(block), SPECIFIED)) {
+    if (not Do_Any_Array_At_Throws(RESET(OUT), ARG(block), SPECIFIED)) {
         if (REF(result))
-            rebElide(Lib(SET), rebQ(REF(result)), rebQ(D_OUT));
+            rebElide(Lib(SET), rebQ(REF(result)), rebQ(OUT));
 
         return nullptr;  // no throw means just return null
     }
 
-    const REBVAL *label = VAL_THROWN_LABEL(D_OUT);
+    const REBVAL *label = VAL_THROWN_LABEL(OUT);
 
     if (REF(any) and not (
         IS_ACTION(label)
@@ -1188,7 +1186,7 @@ REBNATIVE(catch)
             goto was_caught;
     }
 
-    return_thrown (D_OUT); // throw name is in D_OUT, value is held task local
+    return_thrown (OUT); // throw name is in OUT, value is held task local
 
   was_caught:
 
@@ -1196,27 +1194,27 @@ REBNATIVE(catch)
         REBARR *a = Make_Array(2);
 
         Copy_Cell(ARR_AT(a, 0), label); // throw name
-        CATCH_THROWN_META(ARR_AT(a, 1), D_OUT); // thrown value--may be null!
+        CATCH_THROWN_META(ARR_AT(a, 1), OUT); // thrown value--may be null!
         Meta_Unquotify(ARR_AT(a, 1));
         if (IS_NULLED(ARR_AT(a, 1)))
             SET_SERIES_LEN(a, 1); // trim out null value (illegal in block)
         else
             SET_SERIES_LEN(a, 2);
-        return Init_Block(D_OUT, a);
+        return Init_Block(OUT, a);
     }
 
-    CATCH_THROWN_META(D_OUT, D_OUT); // thrown value
+    CATCH_THROWN_META(OUT, OUT); // thrown value
 
     if (
-        Is_Meta_Of_Pure_Invisible(D_OUT)
-        or Is_Meta_Of_Void_Isotope(D_OUT)
+        Is_Meta_Of_Pure_Invisible(OUT)
+        or Is_Meta_Of_Void_Isotope(OUT)
     ){
-        return Init_None(D_OUT);  // void isotope would trigger ELSE
+        return Init_None(OUT);  // void isotope would trigger ELSE
     }
 
-    Meta_Unquotify(D_OUT);
-    Isotopify_If_Nulled(D_OUT);  // a caught NULL triggers THEN, not ELSE
-    return_branched (D_OUT);
+    Meta_Unquotify(OUT);
+    Isotopify_If_Nulled(OUT);  // a caught NULL triggers THEN, not ELSE
+    return_branched (OUT);
 }
 
 
@@ -1245,7 +1243,7 @@ REBNATIVE(throw)
     Meta_Unquotify(v);
 
     return Init_Thrown_With_Label(
-        D_OUT,
+        OUT,
         v,
         ARG(name)  // NULLED if unused
     );

@@ -311,7 +311,7 @@ REBNATIVE(hijack)
     // Making such a copy in this routine would be wasteful if it wasn't used.
     //
     return Init_Action(
-        D_OUT,
+        OUT,
         victim,
         VAL_ACTION_LABEL(ARG(victim)),
         VAL_ACTION_BINDING(ARG(hijacker))

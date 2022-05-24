@@ -212,5 +212,5 @@ REBNATIVE(lambda)
     REBARR *details = ACT_DETAILS(lambda);
     Copy_Cell(ARR_AT(details, IDX_LAMBDA_BLOCK), body);
 
-    return Init_Action(D_OUT, lambda, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
 }

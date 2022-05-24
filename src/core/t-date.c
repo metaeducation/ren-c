@@ -1009,8 +1009,8 @@ REBTYPE(Date)
 
         const RELVAL *picker = ARG(picker);
 
-        Pick_Or_Poke_Date(D_OUT, v, picker, nullptr);
-        return D_OUT;
+        Pick_Or_Poke_Date(OUT, v, picker, nullptr);
+        return OUT;
     }
     else if (id == SYM_POKE_P) {
 
@@ -1037,7 +1037,7 @@ REBTYPE(Date)
 
         if (type == REB_DATE) {
             if (id == SYM_SUBTRACT)
-                return Init_Integer(D_OUT, Days_Between_Dates(v, arg));
+                return Init_Integer(OUT, Days_Between_Dates(v, arg));
         }
         else if (type == REB_TIME) {
             if (id == SYM_ADD) {
@@ -1086,10 +1086,10 @@ REBTYPE(Date)
             return v;  // immediate type, just copy bits
 
           case SYM_EVEN_Q:
-            return Init_Logic(D_OUT, ((~day) & 1) == 0);
+            return Init_Logic(OUT, ((~day) & 1) == 0);
 
           case SYM_ODD_Q:
-            return Init_Logic(D_OUT, (day & 1) == 0);
+            return Init_Logic(OUT, (day & 1) == 0);
 
           case SYM_RANDOM: {
             INCLUDE_PARAMS_OF_RANDOM;
@@ -1148,7 +1148,7 @@ REBTYPE(Date)
             if (not IS_DATE(val2))
                 fail (Error_Unexpected_Type(VAL_TYPE(val1), VAL_TYPE(val2)));
 
-            return Time_Between_Dates(D_OUT, val1, val2); }
+            return Time_Between_Dates(OUT, val1, val2); }
 
           default:
             break;
@@ -1169,12 +1169,12 @@ REBTYPE(Date)
     );
 
   set_date:
-    Reset_Cell_Header_Untracked(TRACK(D_OUT), REB_DATE, CELL_MASK_NONE);
-    VAL_DATE(D_OUT) = date;
-    PAYLOAD(Time, D_OUT).nanoseconds = secs; // may be NO_DATE_TIME
+    Reset_Cell_Header_Untracked(TRACK(OUT), REB_DATE, CELL_MASK_NONE);
+    VAL_DATE(OUT) = date;
+    PAYLOAD(Time, OUT).nanoseconds = secs; // may be NO_DATE_TIME
     if (secs == NO_DATE_TIME)
-        VAL_DATE(D_OUT).zone = NO_DATE_ZONE;
-    return D_OUT;
+        VAL_DATE(OUT).zone = NO_DATE_ZONE;
+    return OUT;
 }
 
 
@@ -1207,22 +1207,22 @@ REBNATIVE(make_date_ymdsnz)
 {
     INCLUDE_PARAMS_OF_MAKE_DATE_YMDSNZ;
 
-    Reset_Cell_Header_Untracked(D_OUT, REB_DATE, CELL_MASK_NONE);
-    VAL_YEAR(D_OUT) = VAL_INT32(ARG(year));
-    VAL_MONTH(D_OUT) = VAL_INT32(ARG(month));
-    VAL_DAY(D_OUT) = VAL_INT32(ARG(day));
+    Reset_Cell_Header_Untracked(OUT, REB_DATE, CELL_MASK_NONE);
+    VAL_YEAR(OUT) = VAL_INT32(ARG(year));
+    VAL_MONTH(OUT) = VAL_INT32(ARG(month));
+    VAL_DAY(OUT) = VAL_INT32(ARG(day));
 
     if (IS_BLANK(ARG(zone)))
-        VAL_DATE(D_OUT).zone = NO_DATE_ZONE;
+        VAL_DATE(OUT).zone = NO_DATE_ZONE;
     else
-        VAL_DATE(D_OUT).zone = VAL_INT32(ARG(zone)) / ZONE_MINS;
+        VAL_DATE(OUT).zone = VAL_INT32(ARG(zone)) / ZONE_MINS;
 
     REBI64 nano = IS_BLANK(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
-    PAYLOAD(Time, D_OUT).nanoseconds
+    PAYLOAD(Time, OUT).nanoseconds
         = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano;
 
-    assert(Does_Date_Have_Time(D_OUT));
-    return D_OUT;
+    assert(Does_Date_Have_Time(OUT));
+    return OUT;
 }
 
 
@@ -1252,11 +1252,11 @@ REBNATIVE(make_time_sn)
 {
     INCLUDE_PARAMS_OF_MAKE_TIME_SN;
 
-    Reset_Cell_Header_Untracked(TRACK(D_OUT), REB_TIME, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(TRACK(OUT), REB_TIME, CELL_MASK_NONE);
 
     REBI64 nano = IS_BLANK(ARG(nano)) ? 0 : VAL_INT64(ARG(nano));
-    PAYLOAD(Time, D_OUT).nanoseconds
+    PAYLOAD(Time, OUT).nanoseconds
         = SECS_TO_NANO(VAL_INT64(ARG(seconds))) + nano;
 
-    return D_OUT;
+    return OUT;
 }

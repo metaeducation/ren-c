@@ -276,17 +276,17 @@ REBTYPE(Issue)
           case SYM_CODEPOINT:
             if (not IS_CHAR(issue))
                 break;  // must be a single codepoint to use this reflector
-            return Init_Integer(D_OUT, VAL_CHAR(issue));
+            return Init_Integer(OUT, VAL_CHAR(issue));
 
           case SYM_SIZE: {
             REBSIZ size;
             VAL_UTF8_SIZE_AT(&size, issue);
-            return Init_Integer(D_OUT, size); }
+            return Init_Integer(OUT, size); }
 
           case SYM_LENGTH: {
             REBLEN len;
             VAL_UTF8_LEN_SIZE_AT(&len, nullptr, issue);
-            return Init_Integer(D_OUT, len); }
+            return Init_Integer(OUT, len); }
 
           default:
             break;
@@ -294,7 +294,7 @@ REBTYPE(Issue)
         return R_UNHANDLED; }
 
       case SYM_COPY:  // since copy result is also immutable, Move() suffices
-        return Copy_Cell(D_OUT, issue);
+        return Copy_Cell(OUT, issue);
 
       default:
         break;
@@ -335,7 +335,7 @@ REBTYPE(Issue)
         for (; n != 1; --n)
             cp = NEXT_CHR(&c, cp);
 
-        return Init_Integer(D_OUT, c); }
+        return Init_Integer(OUT, c); }
 
       case SYM_ADD: {
         arg = Math_Arg_For_Char(D_ARG(2), verb);
@@ -353,8 +353,8 @@ REBTYPE(Issue)
         // the above would give -1.
         //
         if (IS_CHAR(D_ARG(2))) {
-            Init_Integer(D_OUT, chr - arg);
-            return D_OUT;
+            Init_Integer(OUT, chr - arg);
+            return OUT;
         }
 
         chr -= arg;
@@ -404,10 +404,10 @@ REBTYPE(Issue)
         break;
 
       case SYM_EVEN_Q:
-        return Init_Logic(D_OUT, did (cast(REBUNI, ~chr) & 1));
+        return Init_Logic(OUT, did (cast(REBUNI, ~chr) & 1));
 
       case SYM_ODD_Q:
-        return Init_Logic(D_OUT, did (chr & 1));
+        return Init_Logic(OUT, did (chr & 1));
 
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -434,7 +434,7 @@ REBTYPE(Issue)
     if (chr < 0)
         fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_ISSUE)));
 
-    return Init_Char_May_Fail(D_OUT, cast(REBUNI, chr));
+    return Init_Char_May_Fail(OUT, cast(REBUNI, chr));
 }
 
 
@@ -465,5 +465,5 @@ REBNATIVE(trailing_bytes_for_utf8)
         fail ("Use /EXTENDED with TRAILNG-BYTES-FOR-UTF-8 for 4 or 5 bytes");
     }
 
-    return Init_Integer(D_OUT, trail);
+    return Init_Integer(OUT, trail);
 }

@@ -49,7 +49,7 @@ REBNATIVE(only)  // https://forum.rebol.info/t/1182/11
     INCLUDE_PARAMS_OF_ONLY;
 
     if (IS_NULLED(ARG(value)))
-        return Init_Block(D_OUT, EMPTY_ARRAY);  // global immutable array
+        return Init_Block(OUT, EMPTY_ARRAY);  // global immutable array
 
     // This uses a "singular" array which is the size of a node (8 platform
     // pointers).  The cell is put in the portion of the node where tracking
@@ -65,7 +65,7 @@ REBNATIVE(only)  // https://forum.rebol.info/t/1182/11
     REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
     Copy_Cell(ARR_SINGLE(a), ARG(value));
     Freeze_Array_Shallow(a);  // immutable (to permit future optimized case)
-    return Init_Block(D_OUT, a);
+    return Init_Block(OUT, a);
 }
 
 
@@ -828,9 +828,9 @@ REBTYPE(Array)
 
         const RELVAL *at = ARR_AT(VAL_ARRAY(array), n);
 
-        Derelativize(D_OUT, at, VAL_SPECIFIER(array));
-        Inherit_Const(D_OUT, array);
-        return D_OUT; }
+        Derelativize(OUT, at, VAL_SPECIFIER(array));
+        Inherit_Const(OUT, array);
+        return OUT; }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -888,7 +888,7 @@ REBTYPE(Array)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(array, ARG(part));
             if (len == 0)
-                return Init_Block(D_OUT, Make_Array(0)); // new empty block
+                return Init_Block(OUT, Make_Array(0)); // new empty block
         }
         else
             len = 1;
@@ -902,18 +902,18 @@ REBTYPE(Array)
             if (not REF(part))
                 return nullptr;
 
-            return Init_Block(D_OUT, Make_Array(0)); // new empty block
+            return Init_Block(OUT, Make_Array(0)); // new empty block
         }
 
         if (REF(part))
             Init_Block(
-                D_OUT, Copy_Array_At_Max_Shallow(arr, index, specifier, len)
+                OUT, Copy_Array_At_Max_Shallow(arr, index, specifier, len)
             );
         else
-            Derelativize(D_OUT, &ARR_HEAD(arr)[index], specifier);
+            Derelativize(OUT, &ARR_HEAD(arr)[index], specifier);
 
         Remove_Series_Units(arr, index, len);
-        return D_OUT; }
+        return OUT; }
 
     //-- Search:
 
@@ -1000,16 +1000,16 @@ REBTYPE(Array)
             if (REF(tail))
                 ret += len;
             VAL_INDEX_RAW(array) = ret;
-            Copy_Cell(D_OUT, array);
+            Copy_Cell(OUT, array);
         }
         else {
             ret += len;
             if (ret >= limit)
                 return nullptr;
 
-            Derelativize(D_OUT, ARR_AT(arr, ret), specifier);
+            Derelativize(OUT, ARR_AT(arr, ret), specifier);
         }
-        return Inherit_Const(D_OUT, array); }
+        return Inherit_Const(OUT, array); }
 
     //-- Modification:
       case SYM_APPEND:
@@ -1041,7 +1041,7 @@ REBTYPE(Array)
 
         REBFLGS flags = 0;
 
-        Copy_Cell(D_OUT, array);
+        Copy_Cell(OUT, array);
 
         REBVAL *v = ARG(value);
 
@@ -1084,7 +1084,7 @@ REBTYPE(Array)
         if (REF(line))
             flags |= AM_LINE;
 
-        VAL_INDEX_RAW(D_OUT) = Modify_Array(
+        VAL_INDEX_RAW(OUT) = Modify_Array(
             arr,
             index,
             cast(enum Reb_Symbol_Id, id),
@@ -1093,7 +1093,7 @@ REBTYPE(Array)
             len,
             REF(dup) ? Int32(ARG(dup)) : 1
         );
-        return D_OUT; }
+        return OUT; }
 
       case SYM_CLEAR: {
         REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
@@ -1151,7 +1151,7 @@ REBTYPE(Array)
             types // types to copy deeply
         );
 
-        return Init_Any_Array(D_OUT, VAL_TYPE(array), copy); }
+        return Init_Any_Array(OUT, VAL_TYPE(array), copy); }
 
     //-- Special actions:
 
@@ -1282,11 +1282,11 @@ REBTYPE(Array)
             flags.offset = 0;
         }
 
-        Copy_Cell(D_OUT, array);  // save array before messing with index
+        Copy_Cell(OUT, array);  // save array before messing with index
 
         REBLEN len = Part_Len_May_Modify_Index(array, ARG(part));
         if (len <= 1)
-            return D_OUT;
+            return OUT;
         REBLEN index = VAL_INDEX(array);  // ^-- may have been modified
 
         // Skip factor:
@@ -1307,7 +1307,7 @@ REBTYPE(Array)
             flags.comparator != nullptr ? &Compare_Val_Custom : &Compare_Val
         );
 
-        return D_OUT; }
+        return OUT; }
 
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -1328,13 +1328,13 @@ REBTYPE(Array)
                     % (VAL_LEN_HEAD(array) - index))
             );
 
-            RELVAL *slot = Pick_Block(D_OUT, array, ARG(seed));
-            if (IS_NULLED(D_OUT)) {
+            RELVAL *slot = Pick_Block(OUT, array, ARG(seed));
+            if (IS_NULLED(OUT)) {
                 assert(slot);
                 UNUSED(slot);
                 return nullptr;
             }
-            return Inherit_Const(D_OUT, array);
+            return Inherit_Const(OUT, array);
         }
 
         REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
@@ -1386,7 +1386,7 @@ REBNATIVE(blockify)
         Copy_Cell(ARR_HEAD(a), v);
         SET_SERIES_LEN(a, 1);
     }
-    return Init_Block(D_OUT, Freeze_Array_Shallow(a));
+    return Init_Block(OUT, Freeze_Array_Shallow(a));
 }
 
 
@@ -1419,7 +1419,7 @@ REBNATIVE(groupify)
         Copy_Cell(ARR_HEAD(a), v);
         SET_SERIES_LEN(a, 1);
     }
-    return Init_Group(D_OUT, Freeze_Array_Shallow(a));
+    return Init_Group(OUT, Freeze_Array_Shallow(a));
 }
 
 
@@ -1450,7 +1450,7 @@ REBNATIVE(enblock)
         Copy_Cell(ARR_HEAD(a), v);
         SET_SERIES_LEN(a, 1);
     }
-    return Init_Block(D_OUT, Freeze_Array_Shallow(a));
+    return Init_Block(OUT, Freeze_Array_Shallow(a));
 }
 
 
@@ -1481,7 +1481,7 @@ REBNATIVE(engroup)
         Copy_Cell(ARR_HEAD(a), v);
         SET_SERIES_LEN(a, 1);
     }
-    return Init_Group(D_OUT, Freeze_Array_Shallow(a));
+    return Init_Group(OUT, Freeze_Array_Shallow(a));
 }
 
 
@@ -1540,7 +1540,7 @@ REBNATIVE(glom)
         REBARR *a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
         Copy_Cell(ARR_HEAD(a), result);  // we know it was inert or quoted
         SET_SERIES_LEN(a, 1);
-        return Init_Block(D_OUT, a);
+        return Init_Block(OUT, a);
     }
 
     assert(IS_BLOCK(accumulator));

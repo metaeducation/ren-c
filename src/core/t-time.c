@@ -490,8 +490,8 @@ REBTYPE(Time)
 
         const RELVAL *picker = ARG(picker);
 
-        Pick_Time(D_OUT, time, picker);
-        return D_OUT;
+        Pick_Time(OUT, time, picker);
+        return OUT;
     }
     else if (id == SYM_POKE_P) {
 
@@ -524,17 +524,17 @@ REBTYPE(Time)
             switch (id) {
               case SYM_ADD:
                 secs = Add_Max(REB_TIME, secs, secs2, MAX_TIME);
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_SUBTRACT:
                 secs = Add_Max(REB_TIME, secs, -secs2, MAX_TIME);
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
                 if (secs2 == 0)
                     fail (Error_Zero_Divide_Raw());
                 return Init_Decimal(
-                    D_OUT,
+                    OUT,
                     cast(REBDEC, secs) / cast(REBDEC, secs2)
                 );
 
@@ -542,7 +542,7 @@ REBTYPE(Time)
                 if (secs2 == 0)
                     fail (Error_Zero_Divide_Raw());
                 secs %= secs2;
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               default:
                 fail (Error_Math_Args(REB_TIME, verb));
@@ -554,30 +554,30 @@ REBTYPE(Time)
             switch (id) {
               case SYM_ADD:
                 secs = Add_Max(REB_TIME, secs, num * SEC_SEC, MAX_TIME);
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_SUBTRACT:
                 secs = Add_Max(REB_TIME, secs, num * -SEC_SEC, MAX_TIME);
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_MULTIPLY:
                 secs *= num;
                 if (secs < -MAX_TIME || secs > MAX_TIME)
                     fail (Error_Type_Limit_Raw(Datatype_From_Kind(REB_TIME)));
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
                 if (num == 0)
                     fail (Error_Zero_Divide_Raw());
                 secs /= num;
-                Init_Integer(D_OUT, secs);
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                Init_Integer(OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_REMAINDER:
                 if (num == 0)
                     fail (Error_Zero_Divide_Raw());
                 secs %= num;
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               default:
                 fail (Error_Math_Args(REB_TIME, verb));
@@ -594,7 +594,7 @@ REBTYPE(Time)
                     cast(int64_t, dec * SEC_SEC),
                     MAX_TIME
                 );
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_SUBTRACT:
                 secs = Add_Max(
@@ -603,17 +603,17 @@ REBTYPE(Time)
                     cast(int64_t, dec * -SEC_SEC),
                     MAX_TIME
                 );
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_MULTIPLY:
                 secs = cast(int64_t, secs * dec);
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               case SYM_DIVIDE:
                 if (dec == 0.0)
                     fail (Error_Zero_Divide_Raw());
                 secs = cast(int64_t, secs / dec);
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
 
               /*  // !!! Was commented out, why?
              case SYM_REMAINDER:
@@ -630,9 +630,9 @@ REBTYPE(Time)
             // date dispatcher already.  Instead of repeating the code here in
             // the time dispatcher, swap the arguments and call DATE's version.
             //
-            Move_Cell(D_SPARE, D_ARG(1));
+            Move_Cell(SPARE, D_ARG(1));
             Move_Cell(D_ARG(1), arg);
-            Move_Cell(D_ARG(2), D_SPARE);
+            Move_Cell(D_ARG(2), SPARE);
             return T_Date(frame_, verb);
         }
         fail (Error_Math_Args(REB_TIME, verb));
@@ -644,18 +644,18 @@ REBTYPE(Time)
             return time;  // immediate type, just copy bits
 
           case SYM_ODD_Q:
-            return Init_Logic(D_OUT, (SECS_FROM_NANO(secs) & 1) != 0);
+            return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) != 0);
 
           case SYM_EVEN_Q:
-            return Init_Logic(D_OUT, (SECS_FROM_NANO(secs) & 1) == 0);
+            return Init_Logic(OUT, (SECS_FROM_NANO(secs) & 1) == 0);
 
           case SYM_NEGATE:
             secs = -secs;
-            return Init_Time_Nanoseconds(D_OUT, secs);
+            return Init_Time_Nanoseconds(OUT, secs);
 
           case SYM_ABSOLUTE:
             if (secs < 0) secs = -secs;
-            return Init_Time_Nanoseconds(D_OUT, secs);
+            return Init_Time_Nanoseconds(OUT, secs);
 
           case SYM_ROUND: {
             INCLUDE_PARAMS_OF_ROUND;
@@ -666,13 +666,13 @@ REBTYPE(Time)
             if (not REF(to)) {
                 Init_True(ARG(to));  // by default make it /TO seconds
                 secs = Round_Int(secs, frame_, SEC_SEC);
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
             }
 
             REBVAL *to = ARG(to);
             if (IS_TIME(to)) {
                 secs = Round_Int(secs, frame_, VAL_NANO(to));
-                return Init_Time_Nanoseconds(D_OUT, secs);
+                return Init_Time_Nanoseconds(OUT, secs);
             }
             else if (IS_DECIMAL(to)) {
                 VAL_DECIMAL(to) = Round_Dec(
@@ -704,7 +704,7 @@ REBTYPE(Time)
                 return nullptr;
             }
             secs = Random_Range(secs / SEC_SEC, did REF(secure)) * SEC_SEC;
-            return Init_Time_Nanoseconds(D_OUT, secs); }
+            return Init_Time_Nanoseconds(OUT, secs); }
 
           default:
             break;

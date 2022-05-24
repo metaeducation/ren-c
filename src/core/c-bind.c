@@ -336,16 +336,16 @@ REBNATIVE(let)
     //
     REBSPC *f_value_specifier;  // f_value may become specified by this
     if (IS_GROUP(f_value) or IS_SET_GROUP(f_value)) {
-        if (Do_Any_Array_At_Throws(D_SPARE, f_value, f_specifier)) {
-            Move_Cell(D_OUT, D_SPARE);
-            return_thrown (D_OUT);
+        if (Do_Any_Array_At_Throws(SPARE, f_value, f_specifier)) {
+            Move_Cell(OUT, SPARE);
+            return_thrown (OUT);
         }
 
-        switch (VAL_TYPE(D_SPARE)) {
+        switch (VAL_TYPE(SPARE)) {
           case REB_WORD:
           case REB_BLOCK:
             if (IS_SET_GROUP(f_value))
-                Setify(D_SPARE);  // convert `(word):` to be SET-WORD!
+                Setify(SPARE);  // convert `(word):` to be SET-WORD!
             break;
 
           case REB_SET_WORD:
@@ -364,7 +364,7 @@ REBNATIVE(let)
         // fetched slot originally--we may be overwriting the GROUP! that was
         // just evaluated.  But we don't need it anymore.)
         //
-        Move_Cell(&f->feed->fetched, D_SPARE);
+        Move_Cell(&f->feed->fetched, SPARE);
         f_value = &f->feed->fetched;
         f_value_specifier = SPECIFIED;
     }
@@ -407,8 +407,8 @@ REBNATIVE(let)
     if (IS_WORD(f_value)) {
         const REBSYM *symbol = VAL_WORD_SYMBOL(f_value);
         bindings = Make_Let_Patch(symbol, bindings);
-        Init_Word(D_OUT, symbol);  // definitely not invisible
-        INIT_VAL_WORD_BINDING(D_OUT, bindings);
+        Init_Word(OUT, symbol);  // definitely not invisible
+        INIT_VAL_WORD_BINDING(OUT, bindings);
     }
     else if (IS_SET_WORD(f_value)) {
         const REBSYM *symbol = VAL_WORD_SYMBOL(f_value);
@@ -469,11 +469,11 @@ REBNATIVE(let)
             // for the LET.
             //
             if (IS_GROUP(temp)) {
-                if (Do_Any_Array_At_Throws(D_SPARE, temp, item_specifier)) {
-                    Move_Cell(D_OUT, D_SPARE);
-                    return_thrown (D_OUT);
+                if (Do_Any_Array_At_Throws(SPARE, temp, item_specifier)) {
+                    Move_Cell(OUT, SPARE);
+                    return_thrown (OUT);
                 }
-                temp = D_SPARE;
+                temp = SPARE;
                 temp_specifier = SPECIFIED;
 
                 need_copy = true;
@@ -493,7 +493,7 @@ REBNATIVE(let)
                 break; }
 
               default:
-                fail (Derelativize(D_OUT, temp, temp_specifier));
+                fail (Derelativize(OUT, temp, temp_specifier));
             }
         }
 
@@ -531,15 +531,15 @@ REBNATIVE(let)
 
         SET_END(f->out);  // !!! Assert on Is_Fresh() otherwise, review
         if (Eval_Step_In_Subframe_Maybe_Stale_Throws(f->out, f, flags))
-            return_thrown (D_OUT);
+            return_thrown (OUT);
 
-        return D_OUT;
+        return OUT;
     }
 
     assert(IS_WORD(f_value) or IS_BLOCK(f_value));
-    Derelativize(D_OUT, f_value, f_specifier);
+    Derelativize(OUT, f_value, f_specifier);
     Fetch_Next_In_Feed(f->feed);  // skip over the word
-    return D_OUT;  // return the WORD! or BLOCK!
+    return OUT;  // return the WORD! or BLOCK!
 }
 
 
@@ -569,11 +569,11 @@ REBNATIVE(add_let_binding) {
 
     mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
 
-    Move_Cell(D_OUT, ARG(word));
-    INIT_VAL_WORD_BINDING(D_OUT, patch);
-    INIT_VAL_WORD_INDEX(D_OUT, 1);
+    Move_Cell(OUT, ARG(word));
+    INIT_VAL_WORD_BINDING(OUT, patch);
+    INIT_VAL_WORD_INDEX(OUT, 1);
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -605,7 +605,7 @@ REBNATIVE(add_use_object) {
 
     mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 

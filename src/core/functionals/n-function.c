@@ -263,7 +263,7 @@ REB_R None_Dispatcher(REBFRM *f)
 //
 REB_R Returner_Dispatcher(REBFRM *f)
 {
-    REBFRM *frame_ = f;  // so we can use D_OUT
+    REBFRM *frame_ = f;  // so we can use OUT
 
     REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
@@ -546,7 +546,7 @@ REBNATIVE(func_p)
         1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
     );
 
-    return Init_Action(D_OUT, func, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, func, ANONYMOUS, UNBOUND);
 }
 
 
@@ -569,19 +569,19 @@ REBNATIVE(endable_q)
 
     REBVAL *v = ARG(parameter);
 
-    if (not Did_Get_Binding_Of(D_SPARE, v))
+    if (not Did_Get_Binding_Of(SPARE, v))
         fail (PAR(parameter));
 
-    if (not IS_FRAME(D_SPARE))
+    if (not IS_FRAME(SPARE))
         fail ("ENDABLE? requires a WORD! bound into a FRAME! at present");
 
-    REBCTX *ctx = VAL_CONTEXT(D_SPARE);
+    REBCTX *ctx = VAL_CONTEXT(SPARE);
     REBACT *act = CTX_FRAME_ACTION(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool endable = GET_PARAM_FLAG(param, ENDABLE);
 
-    return Init_Logic(D_OUT, endable);
+    return Init_Logic(OUT, endable);
 }
 
 
@@ -604,19 +604,19 @@ REBNATIVE(skippable_q)
 
     REBVAL *v = ARG(parameter);
 
-    if (not Did_Get_Binding_Of(D_SPARE, v))
+    if (not Did_Get_Binding_Of(SPARE, v))
         fail (PAR(parameter));
 
-    if (not IS_FRAME(D_SPARE))
+    if (not IS_FRAME(SPARE))
         fail ("SKIPPABLE? requires a WORD! bound into a FRAME! at present");
 
-    REBCTX *ctx = VAL_CONTEXT(D_SPARE);
+    REBCTX *ctx = VAL_CONTEXT(SPARE);
     REBACT *act = CTX_FRAME_ACTION(ctx);
 
     REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(v));
     bool skippable = GET_PARAM_FLAG(param, SKIPPABLE);
 
-    return Init_Logic(D_OUT, skippable);
+    return Init_Logic(OUT, skippable);
 }
 
 
@@ -716,7 +716,7 @@ REBNATIVE(unwind)
     REBVAL *v = ARG(result);
     Meta_Unquotify(v);
 
-    return Init_Thrown_Unwind_Value(D_OUT, ARG(level), v, frame_);
+    return Init_Thrown_Unwind_Value(OUT, ARG(level), v, frame_);
 }
 
 

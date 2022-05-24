@@ -330,7 +330,7 @@ REBNATIVE(to_text)
         REBSIZ size;
         const REBYTE *at = VAL_BINARY_SIZE_AT(&size, ARG(value));
         return Init_Any_String(
-            D_OUT,
+            OUT,
             REB_TEXT,
             Append_UTF8_May_Fail(
                 nullptr,
@@ -764,7 +764,7 @@ REBTYPE(String)
 
         REBUNI c = GET_CHAR_AT(VAL_STRING(v), n);
 
-        return Init_Char_Unchecked(D_OUT, c); }
+        return Init_Char_Unchecked(OUT, c); }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -806,7 +806,7 @@ REBTYPE(String)
         if (VAL_WORD_ID(ARG(property)) == SYM_SIZE) {
             REBSIZ size;
             VAL_UTF8_SIZE_AT(&size, v);
-            return Init_Integer(D_OUT, size);
+            return Init_Integer(OUT, size);
         }
         return Series_Common_Action_Maybe_Unhandled(frame_, verb); }
 
@@ -949,7 +949,7 @@ REBTYPE(String)
             //
             if (REF(tail))
                 ret += len;
-            return Init_Any_Series_At(D_OUT, VAL_TYPE(v), VAL_SERIES(v), ret);
+            return Init_Any_Series_At(OUT, VAL_TYPE(v), VAL_SERIES(v), ret);
         }
 
         assert(id == SYM_SELECT);
@@ -959,7 +959,7 @@ REBTYPE(String)
             return nullptr;
 
         return Init_Char_Unchecked(
-            D_OUT,
+            OUT,
             CHR_CODE(STR_AT(VAL_STRING(v), ret))
         ); }
 
@@ -977,7 +977,7 @@ REBTYPE(String)
         if (REF(part)) {
             len = Part_Len_May_Modify_Index(v, ARG(part));
             if (len == 0)
-                return Init_Any_String(D_OUT, VAL_TYPE(v), Make_String(0));
+                return Init_Any_String(OUT, VAL_TYPE(v), Make_String(0));
         } else
             len = 1;
 
@@ -995,7 +995,7 @@ REBTYPE(String)
         if (VAL_INDEX(v) >= tail) {
             if (not REF(part))
                 return nullptr;
-            return Init_Any_String(D_OUT, VAL_TYPE(v), Make_String(0));
+            return Init_Any_String(OUT, VAL_TYPE(v), Make_String(0));
         }
 
         index = VAL_INDEX(v);
@@ -1003,12 +1003,12 @@ REBTYPE(String)
         // if no /PART, just return value, else return string
         //
         if (REF(part))
-            Init_Any_String(D_OUT, VAL_TYPE(v), Copy_String_At_Limit(v, len));
+            Init_Any_String(OUT, VAL_TYPE(v), Copy_String_At_Limit(v, len));
         else
-            Init_Char_Unchecked(D_OUT, CHR_CODE(VAL_STRING_AT(v)));
+            Init_Char_Unchecked(OUT, CHR_CODE(VAL_STRING_AT(v)));
 
         Remove_Any_Series_Len(v, VAL_INDEX(v), len);
-        return D_OUT; }
+        return OUT; }
 
       case SYM_CLEAR: {
         REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
@@ -1044,7 +1044,7 @@ REBTYPE(String)
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
 
         return Init_Any_String(
-            D_OUT,
+            OUT,
             VAL_TYPE(v),
             Copy_String_At_Limit(v, len)
         ); }
@@ -1075,11 +1075,11 @@ REBTYPE(String)
 
         REBSTR *str = VAL_STRING_ENSURE_MUTABLE(v);
 
-        Copy_Cell(D_OUT, v);  // save before index adjustment
+        Copy_Cell(OUT, v);  // save before index adjustment
         REBINT len = Part_Len_May_Modify_Index(v, ARG(part));
         if (len > 0)
             reverse_string(str, VAL_INDEX(v), len);
-        return D_OUT; }
+        return OUT; }
 
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
@@ -1095,10 +1095,10 @@ REBTYPE(String)
         if (REF(compare))
             fail (Error_Bad_Refines_Raw());  // !!! not in R3-Alpha
 
-        Copy_Cell(D_OUT, v);  // before index modification
+        Copy_Cell(OUT, v);  // before index modification
         REBLEN limit = Part_Len_May_Modify_Index(v, ARG(part));
         if (limit <= 1)
-            return D_OUT;
+            return OUT;
 
         REBLEN len;
         REBSIZ size;
@@ -1139,7 +1139,7 @@ REBTYPE(String)
             &thunk,
             Compare_Chr
         );
-        return D_OUT; }
+        return OUT; }
 
       case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -1152,7 +1152,7 @@ REBTYPE(String)
             REBSIZ utf8_size;
             REBCHR(const*) utf8 = VAL_UTF8_SIZE_AT(&utf8_size, v);
             Set_Random(crc32_z(0L, utf8, utf8_size));
-            return Init_None(D_OUT);
+            return Init_None(OUT);
         }
 
         if (REF(only)) {
@@ -1162,7 +1162,7 @@ REBTYPE(String)
                 % (tail - index);
 
             return Init_Char_Unchecked(
-                D_OUT,
+                OUT,
                 GET_CHAR_AT(VAL_STRING(v), index)
             );
         }

@@ -38,8 +38,8 @@ static const REBVAL *Trap_Dangerous(REBFRM *frame_) {
     INCLUDE_PARAMS_OF_TRAP;
     UNUSED(ARG(result));
 
-    if (Do_Branch_Throws(D_OUT, ARG(code)))
-        return Lib(BLANK);  // signal thrown without corrupting D_OUT
+    if (Do_Branch_Throws(OUT, ARG(code)))
+        return Lib(BLANK);  // signal thrown without corrupting OUT
 
     return nullptr;
 }
@@ -67,12 +67,12 @@ REBNATIVE(trap)
     UNUSED(ARG(code)); // gets used by the above call, via the frame_ pointer
     if (not error) {
         if (REF(result))
-            rebElide(Lib(SET), rebQ(REF(result)), rebQ(D_OUT));
+            rebElide(Lib(SET), rebQ(REF(result)), rebQ(OUT));
         return nullptr; // code didn't fail() or throw
     }
 
     if (IS_BLANK(error)) // signal used to indicate a throw
-        return_thrown (D_OUT);
+        return_thrown (OUT);
 
     assert(IS_ERROR(error));
     return error;

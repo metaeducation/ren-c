@@ -57,36 +57,36 @@ REB_R Series_Common_Action_Maybe_Unhandled(
 
         switch (property) {
           case SYM_INDEX:
-            return Init_Integer(D_OUT, VAL_INDEX_RAW(v) + 1);
+            return Init_Integer(OUT, VAL_INDEX_RAW(v) + 1);
 
           case SYM_LENGTH: {
             REBI64 len_head = VAL_LEN_HEAD(v);
             if (VAL_INDEX_RAW(v) < 0 or VAL_INDEX_RAW(v) > len_head)
-                return Init_None(D_OUT);  // !!! better than error?
-            return Init_Integer(D_OUT, len_head - VAL_INDEX_RAW(v)); }
+                return Init_None(OUT);  // !!! better than error?
+            return Init_Integer(OUT, len_head - VAL_INDEX_RAW(v)); }
 
           case SYM_HEAD:
-            Copy_Cell(D_OUT, v);
-            VAL_INDEX_RAW(D_OUT) = 0;
-            return Trust_Const(D_OUT);
+            Copy_Cell(OUT, v);
+            VAL_INDEX_RAW(OUT) = 0;
+            return Trust_Const(OUT);
 
           case SYM_TAIL:
-            Copy_Cell(D_OUT, v);
-            VAL_INDEX_RAW(D_OUT) = VAL_LEN_HEAD(v);
-            return Trust_Const(D_OUT);
+            Copy_Cell(OUT, v);
+            VAL_INDEX_RAW(OUT) = VAL_LEN_HEAD(v);
+            return Trust_Const(OUT);
 
           case SYM_HEAD_Q:
-            return Init_Logic(D_OUT, VAL_INDEX_RAW(v) == 0);
+            return Init_Logic(OUT, VAL_INDEX_RAW(v) == 0);
 
           case SYM_TAIL_Q:
             return Init_Logic(
-                D_OUT,
+                OUT,
                 VAL_INDEX_RAW(v) == cast(REBIDX, VAL_LEN_HEAD(v))
             );
 
           case SYM_PAST_Q:
             return Init_Logic(
-                D_OUT,
+                OUT,
                 VAL_INDEX_RAW(v) > cast(REBIDX, VAL_LEN_HEAD(v))
             );
 
@@ -96,7 +96,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
                 return nullptr;
             if (NOT_SUBCLASS_FLAG(ARRAY, s, HAS_FILE_LINE_UNMASKED))
                 return nullptr;
-            return Init_File(D_OUT, LINK(Filename, s)); }
+            return Init_File(OUT, LINK(Filename, s)); }
 
           case SYM_LINE: {
             const REBSER *s = VAL_SERIES(v);
@@ -104,7 +104,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
                 return nullptr;
             if (NOT_SUBCLASS_FLAG(ARRAY, s, HAS_FILE_LINE_UNMASKED))
                 return nullptr;
-            return Init_Integer(D_OUT, s->misc.line); }
+            return Init_Integer(OUT, s->misc.line); }
 
           default:
             break;
@@ -225,7 +225,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         UNUSED(ARG(value1));  // covered by `value`
 
         return Init_Any_Series(
-            D_OUT,
+            OUT,
             VAL_TYPE(v),
             Make_Set_Operation_Series(
                 v,

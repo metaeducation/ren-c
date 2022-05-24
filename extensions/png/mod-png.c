@@ -176,7 +176,7 @@ REBNATIVE(identify_png_q)
     lodepng_state_cleanup(&state);
 
     if (error != 0)
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
     // !!! Should codec identifiers return any optional information they just
     // happen to get?  Instead of passing NULL for the addresses of the width
@@ -184,7 +184,7 @@ REBNATIVE(identify_png_q)
     // to return it.  Then any non-FALSE result could be "identified" while
     // still being potentially more informative about what was found out.
     //
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 

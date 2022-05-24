@@ -87,7 +87,7 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 
         switch (property) {
         case SYM_LENGTH:
-            return Init_Integer(D_OUT, VAL_LEN_HEAD(state));
+            return Init_Integer(OUT, VAL_LEN_HEAD(state));
 
         default:
             break;

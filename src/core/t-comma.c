@@ -102,7 +102,7 @@ REBTYPE(Comma)
         UNUSED(REF(deep));
         UNUSED(REF(types));
 
-        return Init_Comma(D_OUT); }
+        return Init_Comma(OUT); }
 
       default: break;
     }

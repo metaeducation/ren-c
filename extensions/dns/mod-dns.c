@@ -42,6 +42,8 @@
 #if TO_WINDOWS
     #include <winsock2.h>
     #undef IS_ERROR  // Windows defines this, so does %sys-core.h
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
+
 #else
     #include <errno.h>
     #include <fcntl.h>
@@ -111,7 +113,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             Get_Tuple_Bytes(buf, host, 4);
             HOSTENT *he = gethostbyaddr(buf, 4, AF_INET);
             if (he != nullptr)
-                return Init_Text(D_OUT, Make_String_UTF8(he->h_name));
+                return Init_Text(OUT, Make_String_UTF8(he->h_name));
 
             // ...else fall through to error handling...
         }
@@ -135,7 +137,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 
             rebFree(name);
             if (he != nullptr)
-                return Init_Tuple_Bytes(D_OUT, cast(REBYTE*, *he->h_addr_list), 4);
+                return Init_Tuple_Bytes(OUT, cast(REBYTE*, *he->h_addr_list), 4);
 
             // ...else fall through to error handling...
         }
@@ -145,7 +147,7 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         switch (h_errno) {
           case HOST_NOT_FOUND:  // The specified host is unknown
           case NO_ADDRESS:  // (or NO_DATA) name is valid but has no IP
-            return Init_Nulled(D_OUT);  // "expected" failures, signal w/null
+            return Init_Nulled(OUT);  // "expected" failures, signal w/null
 
           case NO_RECOVERY:
             rebJumps("fail {A nonrecoverable name server error occurred}");
@@ -195,6 +197,6 @@ static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 //
 REBNATIVE(get_dns_actor_handle)
 {
-    Make_Port_Actor_Handle(D_OUT, &DNS_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &DNS_Actor);
+    return OUT;
 }

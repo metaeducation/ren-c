@@ -27,6 +27,8 @@
 #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
 #include <windows.h>
 #undef IS_ERROR
+#undef OUT  // %minwindef.h defines this, we have a better use for it
+
 
 // !!! Read_IO writes directly into a BINARY!, whose size it needs to keep up
 // to date (in order to have it properly terminated and please the GC).  At

@@ -584,26 +584,26 @@ inline bool Is_Stale(const REBVAL *out) {
 
 #define return_invisible(v) \
     do { \
-        assert((v) == D_OUT); \
-        assert(Is_Stale(D_OUT)); \
+        assert((v) == OUT); \
+        assert(Is_Stale(OUT)); \
         return R_INVISIBLE; \
     } while (false)
 
 
 #define return_thrown(v) \
     do { \
-        assert((v) == D_OUT); \
-        assert(not Is_Stale(D_OUT)); \
+        assert((v) == OUT); \
+        assert(not Is_Stale(OUT)); \
         return R_THROWN; \
     } while (false)
 
 
 #define return_branched(v) \
     do { \
-        assert((v) == D_OUT); \
-        assert(not Is_Voided(D_OUT)); \
-        assert(not IS_NULLED(D_OUT)); \
-        return D_OUT; \
+        assert((v) == OUT); \
+        assert(not Is_Voided(OUT)); \
+        assert(not IS_NULLED(OUT)); \
+        return OUT; \
     } while (false)
 
 
@@ -658,9 +658,9 @@ inline REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
 
 #define return_void(v) \
     do { \
-        assert((v) == D_OUT); \
-        Mark_Eval_Out_Voided(D_OUT); \
-        return D_OUT; \
+        assert((v) == OUT); \
+        Mark_Eval_Out_Voided(OUT); \
+        return OUT; \
     } while (false)
 
 

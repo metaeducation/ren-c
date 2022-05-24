@@ -141,12 +141,12 @@ REBNATIVE(make)
     }
 
 
-    REB_R r = hook(D_OUT, kind, parent, arg);  // might throw, fail...
+    REB_R r = hook(OUT, kind, parent, arg);  // might throw, fail...
     if (r == R_THROWN)
         return r;
     if (r == nullptr or VAL_TYPE(r) != kind)
         fail ("MAKE dispatcher did not return correct type");
-    return r; // may be D_OUT or an API handle
+    return r; // may be OUT or an API handle
 }
 
 
@@ -221,16 +221,16 @@ REBNATIVE(to)
 
     TO_HOOK* hook = To_Hook_For_Type(type);
 
-    REB_R r = hook(D_OUT, new_kind, v); // may fail();
+    REB_R r = hook(OUT, new_kind, v); // may fail();
     if (r == R_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
-        fail (Error_No_Catch_For_Throw(D_OUT));
+        fail (Error_No_Catch_For_Throw(OUT));
     }
     if (r == nullptr or VAL_TYPE(r) != new_kind) {
         assert(!"TO conversion did not return intended type");
         fail (Error_Invalid_Type(VAL_TYPE(r)));
     }
-    return r; // must be either D_OUT or an API handle
+    return r; // must be either OUT or an API handle
 }
 
 
@@ -279,25 +279,25 @@ REB_R Reflect_Core(REBFRM *frame_)
       case SYM_KIND: // simpler answer, low-level datatype (e.g. QUOTED!)
         if (IS_NULLED(v))
             return nullptr;
-        return Init_Builtin_Datatype(D_OUT, VAL_TYPE(v));
+        return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
 
       case SYM_TYPE: // higher order-answer, may build structured result
         if (kind == REB_NULL)  // not a real "datatype"
-            Init_Nulled(D_OUT);  // `null = type of null`
+            Init_Nulled(OUT);  // `null = type of null`
         else if (kind == REB_CUSTOM)
-            Init_Custom_Datatype(D_OUT, CELL_CUSTOM_TYPE(cell));
+            Init_Custom_Datatype(OUT, CELL_CUSTOM_TYPE(cell));
         else
-            Init_Builtin_Datatype(D_OUT, kind);
+            Init_Builtin_Datatype(OUT, kind);
 
         // `type of just '''[a b c]` is `'''#[block!]`.  Until datatypes get
         // a firm literal notation, you can say `quote quote block!`
         //
         // If the escaping count of the value is zero, this returns it as is.
         //
-        return Quotify(D_OUT, VAL_NUM_QUOTES(v));
+        return Quotify(OUT, VAL_NUM_QUOTES(v));
 
       case SYM_QUOTES:
-        return Init_Integer(D_OUT, VAL_NUM_QUOTES(v));
+        return Init_Integer(OUT, VAL_NUM_QUOTES(v));
 
       default:
         // !!! Are there any other universal reflectors?
@@ -376,15 +376,15 @@ REBNATIVE(of)
     REBVAL *prop = ARG(property);
 
     if (ANY_ESCAPABLE_GET(prop)) {  // !!! See note above
-        if (Eval_Value_Throws(D_SPARE, prop, SPECIFIED))
-            return_thrown (D_OUT);
-        if (not IS_WORD(D_SPARE)) {
-            Move_Cell(prop, D_SPARE);
+        if (Eval_Value_Throws(SPARE, prop, SPECIFIED))
+            return_thrown (OUT);
+        if (not IS_WORD(SPARE)) {
+            Move_Cell(prop, SPARE);
             fail (Error_Invalid_Arg(frame_, PAR(property)));
         }
     }
     else
-        Copy_Cell(D_SPARE, prop);
+        Copy_Cell(SPARE, prop);
 
     // !!! Ugly hack to make OF frame-compatible with REFLECT.  If there was
     // a separate dispatcher for REFLECT it could be called with proper
@@ -393,7 +393,7 @@ REBNATIVE(of)
     // property in the second.
     //
     Copy_Cell(ARG(property), ARG(value));
-    Copy_Cell(ARG(value), D_SPARE);
+    Copy_Cell(ARG(value), SPARE);
 
     return Reflect_Core(frame_);
 }
@@ -1394,5 +1394,5 @@ REBNATIVE(scan_net_header)
         Init_Text(val, string);
     }
 
-    return Init_Block(D_OUT, result);
+    return Init_Block(OUT, result);
 }

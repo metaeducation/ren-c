@@ -1065,19 +1065,19 @@ REB_R Context_Common_Action_Maybe_Unhandled(
         REBVAL *property = ARG(property);
         switch (VAL_WORD_ID(property)) {
           case SYM_LENGTH: // !!! Should this be legal?
-            return Init_Integer(D_OUT, CTX_LEN(c));
+            return Init_Integer(OUT, CTX_LEN(c));
 
           case SYM_TAIL_Q: // !!! Should this be legal?
-            return Init_Logic(D_OUT, CTX_LEN(c) == 0);
+            return Init_Logic(OUT, CTX_LEN(c) == 0);
 
           case SYM_WORDS:
-            return Init_Block(D_OUT, Context_To_Array(v, 1));
+            return Init_Block(OUT, Context_To_Array(v, 1));
 
           case SYM_VALUES:
-            return Init_Block(D_OUT, Context_To_Array(v, 2));
+            return Init_Block(OUT, Context_To_Array(v, 2));
 
           case SYM_BODY:
-            return Init_Block(D_OUT, Context_To_Array(v, 3));
+            return Init_Block(OUT, Context_To_Array(v, 3));
 
         // Noticeably not handled by average objects: SYM_OPEN_Q (`open?`)
 
@@ -1137,7 +1137,7 @@ REBTYPE(Context)
         if (not var)
             fail (Error_Bad_Pick_Raw(picker));
 
-        return Copy_Cell(D_OUT, var); }
+        return Copy_Cell(OUT, var); }
 
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
@@ -1203,7 +1203,7 @@ REBTYPE(Context)
             //
             option(const REBSYM*) label = VAL_FRAME_LABEL(context);
             if (label)
-                return Init_Word(D_OUT, unwrap(label));
+                return Init_Word(OUT, unwrap(label));
 
             // If the frame is executing, we can look at the label in the
             // REBFRM*, which will tell us what the overall execution label
@@ -1220,7 +1220,7 @@ REBTYPE(Context)
             // referenced somewhere.
             //
             return Init_Action(
-                D_OUT,
+                OUT,
                 VAL_FRAME_PHASE(context),  // just a REBACT*, no binding
                 VAL_FRAME_LABEL(context),
                 VAL_FRAME_BINDING(context)  // e.g. where RETURN returns to
@@ -1234,21 +1234,21 @@ REBTYPE(Context)
             const REBSTR *file = FRM_FILE(f);
             if (not file)
                 return nullptr;
-            return Init_File(D_OUT, file); }
+            return Init_File(OUT, file); }
 
           case SYM_LINE: {
             REBLIN line = FRM_LINE(f);
             if (line == 0)
                 return nullptr;
-            return Init_Integer(D_OUT, line); }
+            return Init_Integer(OUT, line); }
 
           case SYM_LABEL: {
             if (not f->label)
                 return nullptr;
-            return Init_Word(D_OUT, unwrap(f->label)); }
+            return Init_Word(OUT, unwrap(f->label)); }
 
           case SYM_NEAR:
-            return Init_Near_For_Frame(D_OUT, f);
+            return Init_Near_For_Frame(OUT, f);
 
           case SYM_PARENT: {
             //
@@ -1308,14 +1308,14 @@ REBTYPE(Context)
         //
         if (IS_FRAME(context)) {
             return Init_Frame(
-                D_OUT,
+                OUT,
                 Copy_Context_Extra_Managed(c, 0, types),
                 VAL_FRAME_LABEL(context)
             );
         }
 
         return Init_Any_Context(
-            D_OUT,
+            OUT,
             VAL_TYPE(context),
             Copy_Context_Extra_Managed(c, 0, types)
         ); }
@@ -1343,7 +1343,7 @@ REBTYPE(Context)
             return nullptr;
 
         if (ID_OF_SYMBOL(verb) == SYM_FIND)
-            return Init_True(D_OUT); // !!! obscures non-LOGIC! result?
+            return Init_True(OUT); // !!! obscures non-LOGIC! result?
 
         return CTX_VAR(c, n); }
 
@@ -1394,7 +1394,7 @@ REBNATIVE(construct)
     RELVAL *at = VAL_ARRAY_AT_MUTABLE_HACK(&tail, spec);
     if (REF(only)) {
         Init_Object(
-            D_OUT,
+            OUT,
             Construct_Context_Managed(
                 REB_OBJECT,
                 at,  // warning: modifies binding!
@@ -1403,7 +1403,7 @@ REBNATIVE(construct)
                 parent
             )
         );
-        return D_OUT;
+        return OUT;
     }
   }
 
@@ -1419,7 +1419,7 @@ REBNATIVE(construct)
         tail,
         parent
     );
-    Init_Object(D_OUT, ctx);  // GC protects context
+    Init_Object(OUT, ctx);  // GC protects context
 
     // !!! This binds the actual body data, not a copy of it.  See
     // Virtual_Bind_Deep_To_New_Context() for future directions.
@@ -1428,9 +1428,9 @@ REBNATIVE(construct)
 
     DECLARE_LOCAL (dummy);
     if (Do_Any_Array_At_Throws(dummy, spec, SPECIFIED)) {
-        Move_Cell(D_OUT, dummy);
-        return_thrown (D_OUT);  // evaluation result ignored unless thrown
+        Move_Cell(OUT, dummy);
+        return_thrown (OUT);  // evaluation result ignored unless thrown
     }
 
-    return D_OUT;
+    return OUT;
 }

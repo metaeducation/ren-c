@@ -41,9 +41,9 @@ REBNATIVE(and_q)
     INCLUDE_PARAMS_OF_AND_Q;
 
     if (IS_TRUTHY(ARG(value1)) && IS_TRUTHY(ARG(value2)))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -62,9 +62,9 @@ REBNATIVE(nor_q)
     INCLUDE_PARAMS_OF_NOR_Q;
 
     if (IS_FALSEY(ARG(value1)) && IS_FALSEY(ARG(value2)))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -83,7 +83,7 @@ REBNATIVE(nand_q)
     INCLUDE_PARAMS_OF_NAND_Q;
 
     return Init_Logic(
-        D_OUT,
+        OUT,
         IS_TRUTHY(ARG(value1)) and IS_TRUTHY(ARG(value2))
     );
 }
@@ -103,7 +103,7 @@ REBNATIVE(to_logic)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
-    return Init_Logic(D_OUT, IS_TRUTHY(ARG(optional)));
+    return Init_Logic(OUT, IS_TRUTHY(ARG(optional)));
 }
 
 
@@ -121,7 +121,7 @@ REBNATIVE(_not_)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF__NOT_;
 
-    return Init_Logic(D_OUT, IS_FALSEY(ARG(optional)));
+    return Init_Logic(OUT, IS_FALSEY(ARG(optional)));
 }
 
 
@@ -173,14 +173,14 @@ REBNATIVE(_and_)  // see TO-C-NAME
         fail (Error_Unintended_Literal_Raw(left));
 
     if (IS_FALSEY(left))
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
-    if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
-        Move_Cell(D_OUT, D_SPARE);
-        return_thrown (D_OUT);
+    if (Do_Logic_Right_Side_Throws(SPARE, right)) {
+        Move_Cell(OUT, SPARE);
+        return_thrown (OUT);
     }
 
-    return Init_Logic(D_OUT, IS_TRUTHY(D_SPARE));
+    return Init_Logic(OUT, IS_TRUTHY(SPARE));
 }
 
 
@@ -206,14 +206,14 @@ REBNATIVE(_or_)  // see TO-C-NAME
         fail (Error_Unintended_Literal_Raw(left));
 
     if (IS_TRUTHY(left))
-        return Init_True(D_OUT);
+        return Init_True(OUT);
 
-    if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
-        Move_Cell(D_OUT, D_SPARE);
-        return_thrown (D_OUT);
+    if (Do_Logic_Right_Side_Throws(SPARE, right)) {
+        Move_Cell(OUT, SPARE);
+        return_thrown (OUT);
     }
 
-    return Init_Logic(D_OUT, IS_TRUTHY(D_SPARE));
+    return Init_Logic(OUT, IS_TRUTHY(SPARE));
 }
 
 
@@ -238,15 +238,15 @@ REBNATIVE(_xor_)  // see TO-C-NAME
     if (GET_CELL_FLAG(left, UNEVALUATED))
         fail (Error_Unintended_Literal_Raw(left));
 
-    if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
-        Move_Cell(D_OUT, D_SPARE);
-        return_thrown (D_OUT);
+    if (Do_Logic_Right_Side_Throws(SPARE, right)) {
+        Move_Cell(OUT, SPARE);
+        return_thrown (OUT);
     }
 
     if (IS_FALSEY(left))
-        return Init_Logic(D_OUT, IS_TRUTHY(D_SPARE));
+        return Init_Logic(OUT, IS_TRUTHY(SPARE));
 
-    return Init_Logic(D_OUT, IS_FALSEY(D_SPARE));
+    return Init_Logic(OUT, IS_FALSEY(SPARE));
 }
 
 
@@ -383,22 +383,22 @@ REBTYPE(Logic)
 
     case SYM_BITWISE_AND:
         b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(D_OUT, b1 and b2);
+        return Init_Logic(OUT, b1 and b2);
 
     case SYM_BITWISE_OR:
         b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(D_OUT, b1 or b2);
+        return Init_Logic(OUT, b1 or b2);
 
     case SYM_BITWISE_XOR:
         b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(D_OUT, b1 != b2);
+        return Init_Logic(OUT, b1 != b2);
 
     case SYM_BITWISE_AND_NOT:
         b2 = Math_Arg_For_Logic(D_ARG(2));
-        return Init_Logic(D_OUT, b1 and not b2);
+        return Init_Logic(OUT, b1 and not b2);
 
     case SYM_BITWISE_NOT:
-        return Init_Logic(D_OUT, not b1);
+        return Init_Logic(OUT, not b1);
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -425,8 +425,8 @@ REBTYPE(Logic)
         }
 
         if (Random_Int(did REF(secure)) & 1)
-            return Init_True(D_OUT);
-        return Init_False(D_OUT); }
+            return Init_True(OUT);
+        return Init_False(OUT); }
 
     default:
         break;

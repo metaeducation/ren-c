@@ -60,23 +60,23 @@ REBNATIVE(reeval)
 
     REBFLGS flags = EVAL_MASK_DEFAULT;
     if (Reevaluate_In_Subframe_Maybe_Stale_Throws(
-        D_OUT,  // reeval :comment "this should leave old input"
+        OUT,  // reeval :comment "this should leave old input"
         frame_,
         ARG(value),
         flags,
         enfix
     )){
-        return_thrown (D_OUT);
+        return_thrown (OUT);
     }
 
-    if (Is_Voided(D_OUT))
-        return_void (D_OUT);
+    if (Is_Voided(OUT))
+        return_void (OUT);
 
-    if (Is_Invisible(D_OUT))
-        return_invisible (D_OUT);
+    if (Is_Invisible(OUT))
+        return_invisible (OUT);
 
-    Clear_Stale_Flag(D_OUT);
-    return D_OUT;  // don't clear stale flag...act invisibly
+    Clear_Stale_Flag(OUT);
+    return OUT;  // don't clear stale flag...act invisibly
 }
 
 
@@ -145,18 +145,18 @@ REBNATIVE(shove)
 
     if (IS_WORD(f_value) or IS_PATH(f_value) or IS_TUPLE(f_value)) {
         Get_Var_May_Fail(
-            D_OUT, // can't eval directly into arg slot
+            OUT, // can't eval directly into arg slot
             f_value,
             f_specifier,
             false
         );
-        Move_Cell(shovee, D_OUT);
+        Move_Cell(shovee, OUT);
     }
     else if (IS_GROUP(f_value)) {
-        if (Do_Any_Array_At_Throws(RESET(D_OUT), f_value, f_specifier))
-            return_thrown (D_OUT);
+        if (Do_Any_Array_At_Throws(RESET(OUT), f_value, f_specifier))
+            return_thrown (OUT);
 
-        Move_Cell(shovee, D_OUT);  // can't eval directly into arg slot
+        Move_Cell(shovee, OUT);  // can't eval directly into arg slot
     }
     else
         Copy_Cell(shovee, SPECIFIC(f_value));
@@ -193,13 +193,13 @@ REBNATIVE(shove)
     //
     if (REF(set)) {
         if (IS_SET_WORD(left)) {
-            Copy_Cell(D_OUT, Lookup_Word_May_Fail(left, SPECIFIED));
+            Copy_Cell(OUT, Lookup_Word_May_Fail(left, SPECIFIED));
         }
         else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {
             f->feed->gotten = nullptr;  // calling arbitrary code, may disrupt
             composed_set_path = rebValue("compose @", left);
             REBVAL *temp = rebValue("get @", composed_set_path);
-            Copy_Cell(D_OUT, temp);
+            Copy_Cell(OUT, temp);
             rebRelease(temp);
         }
         else
@@ -212,46 +212,46 @@ REBNATIVE(shove)
             and GET_ACTION_FLAG(VAL_ACTION(shovee), QUOTES_FIRST)
         )
     ){
-        if (Eval_Value_Throws(D_OUT, left, SPECIFIED))
-            return_thrown (D_OUT);
+        if (Eval_Value_Throws(OUT, left, SPECIFIED))
+            return_thrown (OUT);
     }
     else {
-        Copy_Cell(D_OUT, left);
+        Copy_Cell(OUT, left);
         if (GET_CELL_FLAG(left, UNEVALUATED))
-            SET_CELL_FLAG(D_OUT, UNEVALUATED);
+            SET_CELL_FLAG(OUT, UNEVALUATED);
     }
 
     REBFLGS flags = EVAL_MASK_DEFAULT;
     SET_FEED_FLAG(frame_->feed, NEXT_ARG_FROM_OUT);
 
     if (Reevaluate_In_Subframe_Maybe_Stale_Throws(
-        D_OUT,
+        OUT,
         frame_,
         shovee,
         flags,
         enfix
     )){
         rebRelease(composed_set_path);  // ok if nullptr
-        return_thrown (D_OUT);
+        return_thrown (OUT);
     }
 
-    assert(not Is_Stale(D_OUT));  // !!! can this happen?
+    assert(not Is_Stale(OUT));  // !!! can this happen?
 
     if (REF(set)) {
         if (IS_SET_WORD(left)) {
-            Decay_If_Isotope(D_OUT);
-            Copy_Cell(Sink_Word_May_Fail(left, SPECIFIED), D_OUT);
+            Decay_If_Isotope(OUT);
+            Copy_Cell(Sink_Word_May_Fail(left, SPECIFIED), OUT);
         }
         else if (IS_SET_PATH(left) or IS_SET_TUPLE(left)) {
             f->feed->gotten = nullptr;  // calling arbitrary code, may disrupt
-            rebElide("set @", composed_set_path, "@", NULLIFY_NULLED(D_OUT));
+            rebElide("set @", composed_set_path, "@", NULLIFY_NULLED(OUT));
             rebRelease(composed_set_path);
         }
         else
             assert(false); // SET-WORD!/SET-PATH! was checked above
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -370,8 +370,8 @@ REBNATIVE(do)
       // code here simpler.
       //
       case REB_BLOCK : {
-        if (Do_Any_Array_At_Throws(SET_END(D_OUT), source, SPECIFIED))
-            return_thrown (D_OUT);
+        if (Do_Any_Array_At_Throws(SET_END(OUT), source, SPECIFIED))
+            return_thrown (OUT);
         break; }
 
       case REB_VARARGS : {
@@ -385,7 +385,7 @@ REBNATIVE(do)
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            if (Do_Any_Array_At_Throws(SET_END(D_OUT), position, SPECIFIED)) {
+            if (Do_Any_Array_At_Throws(SET_END(OUT), position, SPECIFIED)) {
                 //
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!
@@ -393,11 +393,11 @@ REBNATIVE(do)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
-                return_thrown (D_OUT);
+                return_thrown (OUT);
             }
 
             SET_END(position); // convention for shared data at end point
-            return D_OUT;
+            return OUT;
         }
 
         REBFRM *f;
@@ -409,25 +409,25 @@ REBNATIVE(do)
         // to disrupt its state.  Use a subframe.
 
         if (IS_END(f->feed->value)) {
-            Init_None(D_OUT);
-            return D_OUT;
+            Init_None(OUT);
+            return OUT;
         }
 
         REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_OVERLAP_OUTPUT;
         DECLARE_FRAME (subframe, f->feed, flags);
 
         bool threw;
-        Push_Frame(SET_END(D_OUT), subframe);
+        Push_Frame(SET_END(OUT), subframe);
         do {
-            threw = Eval_Step_Maybe_Stale_Throws(D_OUT, subframe);
+            threw = Eval_Step_Maybe_Stale_Throws(OUT, subframe);
         } while (not threw and NOT_END(f->feed->value));
         Drop_Frame(subframe);
 
         if (threw)
-            return_thrown (D_OUT);
+            return_thrown (OUT);
 
-        Clear_Stale_Flag(D_OUT);
-        Reify_Eval_Out_Plain(D_OUT);
+        Clear_Stale_Flag(OUT);
+        Reify_Eval_Out_Plain(OUT);
         break; }
 
       case REB_THE_WORD : goto do_string;
@@ -441,16 +441,16 @@ REBNATIVE(do)
         UNUSED(REF(args)); // detected via `value? :arg`
 
         if (rebRunThrows(
-            SET_END(D_OUT),
+            SET_END(OUT),
             true,  // fully = true, error if not all arguments consumed
             Sys(SYM_DO_P),
             source,
             rebQ(REF(args)),
             REF(only) ? Lib(TRUE) : Lib(FALSE)
         )){
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
-        return D_OUT;
+        return OUT;
       }
 
       case REB_ERROR :
@@ -472,26 +472,26 @@ REBNATIVE(do)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());
 
-        if (Eval_Value_Throws(SET_END(D_OUT), source, SPECIFIED))
-            return_thrown (D_OUT);
+        if (Eval_Value_Throws(SET_END(OUT), source, SPECIFIED))
+            return_thrown (OUT);
         break;
 
       case REB_FRAME :
-        if (Do_Frame_Maybe_Stale_Throws(SET_END(D_OUT), source))
-            return_thrown (D_OUT); // prohibits recovery from exits
-        Clear_Stale_Flag(D_OUT);
-        Reify_Eval_Out_Plain(D_OUT);
+        if (Do_Frame_Maybe_Stale_Throws(SET_END(OUT), source))
+            return_thrown (OUT); // prohibits recovery from exits
+        Clear_Stale_Flag(OUT);
+        Reify_Eval_Out_Plain(OUT);
         break;
 
       case REB_QUOTED :
-        Copy_Cell(D_OUT, ARG(source));
-        return Unquotify(D_OUT, 1);
+        Copy_Cell(OUT, ARG(source));
+        return Unquotify(OUT, 1);
 
       default :
         fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -541,7 +541,7 @@ REBNATIVE(evaluate)
 
     if (ANY_ARRAY(source)) {
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
-            // leave D_OUT as is
+            // leave OUT as is
             Init_Nulled(source);
         }
         else {
@@ -556,14 +556,14 @@ REBNATIVE(evaluate)
                     EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
                 );
 
-                Push_Frame(D_SPARE, f);
+                Push_Frame(SPARE, f);
 
                 threw = Eval_Maybe_Stale_Throws(f);
 
                 // !!! Since we're passing in a clear cell, we don't really
                 // care about the stale (it's stale if the cell is still END).
                 //
-                Clear_Stale_Flag(D_SPARE);
+                Clear_Stale_Flag(SPARE);
 
                 if (not threw) {
                     VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
@@ -591,7 +591,7 @@ REBNATIVE(evaluate)
             }
             else {  // assume next position not requested means run-to-end
                 threw = Do_Feed_To_End_Maybe_Stale_Throws(
-                    D_SPARE,
+                    SPARE,
                     feed,
                     EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
                 );
@@ -601,8 +601,8 @@ REBNATIVE(evaluate)
             }
 
             if (threw) {
-                Move_Cell(D_OUT, D_SPARE);
-                return_thrown (D_OUT);
+                Move_Cell(OUT, SPARE);
+                return_thrown (OUT);
             }
         }
         // update variable
@@ -619,9 +619,9 @@ REBNATIVE(evaluate)
         if (REF(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
-        if (Do_Frame_Maybe_Stale_Throws(D_SPARE, source)) {
-            Move_Cell(D_OUT, D_SPARE);
-            return_thrown (D_OUT); // prohibits recovery from exits
+        if (Do_Frame_Maybe_Stale_Throws(SPARE, source)) {
+            Move_Cell(OUT, SPARE);
+            return_thrown (OUT); // prohibits recovery from exits
         }
         break;
 
@@ -640,7 +640,7 @@ REBNATIVE(evaluate)
             //
             REBLEN index;
             if (Eval_Step_In_Any_Array_At_Throws(
-                D_SPARE,
+                SPARE,
                 &index,
                 position,
                 SPECIFIED,
@@ -652,8 +652,8 @@ REBNATIVE(evaluate)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
-                Move_Cell(D_OUT, D_SPARE);
-                return_thrown (D_OUT);
+                Move_Cell(OUT, SPARE);
+                return_thrown (OUT);
             }
 
             VAL_INDEX_UNBOUNDED(position) = index;
@@ -671,10 +671,10 @@ REBNATIVE(evaluate)
                 return nullptr;
 
             REBFLGS flags = EVAL_MASK_DEFAULT;
-            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(D_SPARE, f, flags))
-                return_thrown (D_OUT);
+            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(SPARE, f, flags))
+                return_thrown (OUT);
 
-            Clear_Stale_Flag(D_SPARE);
+            Clear_Stale_Flag(SPARE);
         }
         break; }
 
@@ -705,17 +705,17 @@ REBNATIVE(evaluate)
     // Not all functions that return ~void~ isotopes have this property of
     // claiming to be "purely invisible in intent".
     //
-    if (Is_Voided(D_SPARE))
-        return_void (D_OUT);
+    if (Is_Voided(SPARE))
+        return_void (OUT);
 
-    if (Is_Invisible(D_SPARE)) {  // eval [comment "hi"], eval []
+    if (Is_Invisible(SPARE)) {  // eval [comment "hi"], eval []
         if (GET_EVAL_FLAG(frame_, META_OUT))
-            return_invisible (D_OUT);  // aren't invisible unless ^META
+            return_invisible (OUT);  // aren't invisible unless ^META
         else
-            return_void (D_OUT);
+            return_void (OUT);
     }
 
-    return D_SPARE;
+    return SPARE;
 }
 
 
@@ -742,13 +742,13 @@ REBNATIVE(redo)
 
     REBVAL *restartee = ARG(restartee);
     if (not IS_FRAME(restartee)) {
-        if (not Did_Get_Binding_Of(D_OUT, restartee))
+        if (not Did_Get_Binding_Of(OUT, restartee))
             fail ("No context found from restartee in REDO");
 
-        if (not IS_FRAME(D_OUT))
+        if (not IS_FRAME(OUT))
             fail ("Context of restartee in REDO is not a FRAME!");
 
-        Move_Cell(restartee, D_OUT);
+        Move_Cell(restartee, OUT);
     }
 
     REBCTX *c = VAL_CONTEXT(restartee);
@@ -781,14 +781,14 @@ REBNATIVE(redo)
     // of the frame.  Use REDO as the throw label that Eval_Core() will
     // identify for that behavior.
     //
-    Copy_Cell(D_SPARE, Lib(REDO));
-    INIT_VAL_ACTION_BINDING(D_SPARE, c);
+    Copy_Cell(SPARE, Lib(REDO));
+    INIT_VAL_ACTION_BINDING(SPARE, c);
 
     // The FRAME! contains its ->phase and ->binding, which should be enough
     // to restart the phase at the point of parameter checking.  Make that
     // the actual value that Eval_Core() catches.
     //
-    return Init_Thrown_With_Label(D_OUT, restartee, D_SPARE);
+    return Init_Thrown_With_Label(OUT, restartee, SPARE);
 }
 
 
@@ -847,10 +847,10 @@ REBNATIVE(applique)
     // Reset all the binder indices to zero, balancing out what was added.
     //
   blockscope {
-    Init_Frame(D_SPARE, exemplar, ANONYMOUS);
+    Init_Frame(SPARE, exemplar, ANONYMOUS);
 
     EVARS e;
-    Init_Evars(&e, D_SPARE);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
+    Init_Evars(&e, SPARE);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
 
     while (Did_Advance_Evars(&e)) {
         //
@@ -870,7 +870,7 @@ REBNATIVE(applique)
     // !!! We have to push the frame here, because it won't be cleaned up if
     // there are failures in the code otherwise.  Review.
     //
-    Push_Frame(D_OUT, f);
+    Push_Frame(OUT, f);
 
     // Run the bound code, ignore evaluative result (unless thrown)
     //
@@ -910,15 +910,15 @@ REBNATIVE(applique)
     Drop_Frame(f);
 
     if (action_threw)
-        return_thrown (D_OUT);
+        return_thrown (OUT);
 
-    if (Is_Voided(D_OUT))
-        return_void (D_OUT);
+    if (Is_Voided(OUT))
+        return_void (OUT);
 
-    if (Is_Invisible(D_OUT))
-        return_void (D_OUT);
+    if (Is_Invisible(OUT))
+        return_void (OUT);
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1000,14 +1000,14 @@ REBNATIVE(apply)
             }
         }
 
-        SET_END(D_SPARE);
-        if (Eval_Step_Maybe_Stale_Throws(D_SPARE, f)) {
-            Move_Cell(D_OUT, D_SPARE);
+        SET_END(SPARE);
+        if (Eval_Step_Maybe_Stale_Throws(SPARE, f)) {
+            Move_Cell(OUT, SPARE);
             arg_threw = true;
             goto end_loop;
         }
 
-        if (Is_Invisible(D_SPARE)) {  // no output
+        if (Is_Invisible(SPARE)) {  // no output
             //
             // We let the frame logic inside the evaluator decide if we've
             // built a valid frame or not.  But the error we do check for is
@@ -1055,14 +1055,14 @@ REBNATIVE(apply)
             // that take no argument.
             //
             if (
-                IS_LOGIC(D_SPARE)
+                IS_LOGIC(SPARE)
                 and GET_PARAM_FLAG(param, REFINEMENT)
                 and Is_Typeset_Empty(param)
             ){
-                if (VAL_LOGIC(D_SPARE))
-                    Init_Blackhole(D_SPARE);
+                if (VAL_LOGIC(SPARE))
+                    Init_Blackhole(SPARE);
                 else
-                    Init_Nulled(D_SPARE);
+                    Init_Nulled(SPARE);
             }
         }
         else {
@@ -1095,7 +1095,7 @@ REBNATIVE(apply)
             param = e.param;
         }
 
-        Move_Cell(var, D_SPARE);
+        Move_Cell(var, SPARE);
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(var);
     }
@@ -1126,7 +1126,7 @@ REBNATIVE(apply)
         fail (error);  // only safe to fail *AFTER* we have cleared binder
 
     if (arg_threw)
-        return_thrown (D_OUT);
+        return_thrown (OUT);
   }
 
     // Need to do this up front, because it captures f->dsp.
@@ -1138,7 +1138,7 @@ REBNATIVE(apply)
             | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)  // skips fulfillment
     );
 
-    Push_Frame(D_OUT, f);
+    Push_Frame(OUT, f);
 
     f->varlist = varlist;
     f->rootvar = CTX_ROOTVAR(exemplar);
@@ -1155,10 +1155,10 @@ REBNATIVE(apply)
     Drop_Frame(f);
 
     if (action_threw)
-        return_thrown (D_OUT);
+        return_thrown (OUT);
 
-    if (Is_Stale(D_OUT))
-        return_void (D_OUT);
+    if (Is_Stale(OUT))
+        return_void (OUT);
 
-    return D_OUT;
+    return OUT;
 }

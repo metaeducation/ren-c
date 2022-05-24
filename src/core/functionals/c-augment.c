@@ -172,5 +172,5 @@ REBNATIVE(augment_p)  // see extended definition AUGMENT in %base-defs.r
     //
     mutable_LINK(Ancestor, ACT_KEYLIST(augmentated)) = ACT_KEYLIST(augmentee);
 
-    return Init_Action(D_OUT, augmentated, label, UNBOUND);
+    return Init_Action(OUT, augmentated, label, UNBOUND);
 }

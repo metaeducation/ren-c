@@ -199,7 +199,7 @@ REBNATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
 {
     INCLUDE_PARAMS_OF_CHAIN_P;
 
-    REBVAL *out = D_OUT;  // plan ahead for factoring into Chain_Action(out..
+    REBVAL *out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
     const RELVAL *tail;

@@ -241,5 +241,5 @@ REBNATIVE(enclose_p)  // see extended definition ENCLOSE in %base-defs.r
     Copy_Cell(ARR_AT(details, IDX_ENCLOSER_INNER), inner);
     Copy_Cell(ARR_AT(details, IDX_ENCLOSER_OUTER), outer);
 
-    return Init_Action(D_OUT, enclosure, VAL_ACTION_LABEL(inner), UNBOUND);
+    return Init_Action(OUT, enclosure, VAL_ACTION_LABEL(inner), UNBOUND);
 }

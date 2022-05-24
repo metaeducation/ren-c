@@ -2298,7 +2298,7 @@ REBNATIVE(api_transient)
     // :-/  Well, which is it?  R3-Alpha integers were signed 64-bit, Ren-C is
     // targeting arbitrary precision...use signed as status quo for now.
     //
-    return Init_Integer(D_OUT, cast(intptr_t, a));  // ...or, `uintptr_t` ??
+    return Init_Integer(OUT, cast(intptr_t, a));  // ...or, `uintptr_t` ??
 }
 
 

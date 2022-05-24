@@ -118,11 +118,11 @@ REBNATIVE(breakpoint_p)
 // !!! Need definition to test for N_DEBUGGER_breakpoint function
 {
     if (Do_Breakpoint_Throws(
-        D_SPARE,
+        SPARE,
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
         Lib(BLANK)  // default result if RESUME does not override
     )){
-        return_thrown (D_OUT);
+        return_thrown (OUT);
     }
 
     // !!! Should use a more specific protocol (e.g. pass in END).  But also,
@@ -130,10 +130,10 @@ REBNATIVE(breakpoint_p)
     // return *either* a value or no-value...if breakpoint were variadic, it
     // could splice in a value in place of what comes after it.
     //
-    if (not IS_BAD_WORD(D_SPARE))
+    if (not IS_BAD_WORD(SPARE))
         fail ("BREAKPOINT is invisible, can't RESUME/WITH code (use PAUSE)");
 
-    return_invisible (D_OUT);
+    return_invisible (OUT);
 }
 
 
@@ -155,14 +155,14 @@ REBNATIVE(pause)
     DEBUGGER_INCLUDE_PARAMS_OF_PAUSE;
 
     if (Do_Breakpoint_Throws(
-        D_OUT,
+        OUT,
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
         ARG(code)  // default result if RESUME does not override
     )){
-        return_thrown (D_OUT);
+        return_thrown (OUT);
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -220,7 +220,7 @@ REBNATIVE(resume)
     // this stack level--and it failed or threw--we'd stay stuck in the
     // breakpoint's sandbox.  We throw it as-is and it gets evaluated later.
     //
-    return Init_Thrown_With_Label(D_OUT, expr, resume);
+    return Init_Thrown_With_Label(OUT, expr, resume);
 }
 
 

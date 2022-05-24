@@ -49,6 +49,9 @@
 #ifdef IS_ERROR
     #undef IS_ERROR  // %winerror.h defines, Rebol has a different meaning
 #endif
+#ifdef OUT
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
+#endif
 
 #include "sys-core.h"
 
@@ -742,14 +745,14 @@ REB_R Call_Core(REBFRM *frame_) {
                 exit_code
             );
 
-        return Init_Object(D_OUT, info);
+        return Init_Object(OUT, info);
     }
 
     // We may have waited even if they didn't ask us to explicitly, but
     // we only return a process ID if /WAIT was not explicitly used
     //
     if (REF(wait))
-        return Init_Integer(D_OUT, exit_code);
+        return Init_Integer(OUT, exit_code);
 
-    return Init_Integer(D_OUT, pid);
+    return Init_Integer(OUT, pid);
 }

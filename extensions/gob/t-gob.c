@@ -905,8 +905,8 @@ REBTYPE(Gob)
         // a giant array of integers instead of a pair that folding the pick
         // in could be worth consuming more than one step.)
         //
-        Pick_From_Gob(D_OUT, gob, picker);
-        return D_OUT; }
+        Pick_From_Gob(OUT, gob, picker);
+        return OUT; }
 
     //=//// POKE* (see %sys-pick.h for explanation) ////////////////////////=//
 
@@ -990,20 +990,20 @@ REBTYPE(Gob)
             goto set_index;
 
         case SYM_HEAD_Q:
-            return Init_Logic(D_OUT, index == 0);
+            return Init_Logic(OUT, index == 0);
 
         case SYM_TAIL_Q:
-            return Init_Logic(D_OUT, index >= tail);
+            return Init_Logic(OUT, index >= tail);
 
         case SYM_PAST_Q:
-            return Init_Logic(D_OUT, index > tail);
+            return Init_Logic(OUT, index > tail);
 
         case SYM_INDEX:
-            return Init_Integer(D_OUT, index + 1);
+            return Init_Integer(OUT, index + 1);
 
         case SYM_LENGTH:
             index = (tail > index) ? tail - index : 0;
-            return Init_Integer(D_OUT, index);
+            return Init_Integer(OUT, index);
 
         default:
             break;
@@ -1033,8 +1033,8 @@ REBTYPE(Gob)
 
         Insert_Gobs(gob, value, index, 1, false);
         if (ID_OF_SYMBOL(verb) == SYM_POKE) {
-            Copy_Cell(D_OUT, value);
-            return D_OUT;
+            Copy_Cell(OUT, value);
+            return OUT;
         }
         index++;
         goto set_index; }
@@ -1141,8 +1141,8 @@ REBTYPE(Gob)
 
   set_index:
 
-    RESET_CUSTOM_CELL(D_OUT, EG_Gob_Type, CELL_FLAG_FIRST_IS_NODE);
-    INIT_VAL_NODE1(D_OUT, gob);
-    VAL_GOB_INDEX(D_OUT) = index;
-    return D_OUT;
+    RESET_CUSTOM_CELL(OUT, EG_Gob_Type, CELL_FLAG_FIRST_IS_NODE);
+    INIT_VAL_NODE1(OUT, gob);
+    VAL_GOB_INDEX(OUT) = index;
+    return OUT;
 }

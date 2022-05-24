@@ -43,6 +43,7 @@
 #include "uv.h"  // includes windows.h
 #ifdef TO_WINDOWS
     #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
 #endif
 
 #include "sys-core.h"
@@ -708,7 +709,7 @@ static REB_R Transport_Actor(
 
             switch (property) {
               case SYM_OPEN_Q:
-                return Init_False(D_OUT);
+                return Init_False(OUT);
 
               default:
                 break;
@@ -798,7 +799,7 @@ static REB_R Transport_Actor(
         switch (property) {
           case SYM_LENGTH: {
             return Init_Integer(
-                D_OUT,
+                OUT,
                 IS_BINARY(port_data) ? VAL_LEN_HEAD(port_data) : 0
             ); }
 
@@ -807,7 +808,7 @@ static REB_R Transport_Actor(
             // Connect for clients, bind for servers:
             //
             return Init_Logic(
-                D_OUT,
+                OUT,
                 (sock->modes & RSM_BIND) or (sock->stream != nullptr)
             );
 
@@ -1033,8 +1034,8 @@ REBNATIVE(get_tcp_actor_handle)
 {
     NETWORK_INCLUDE_PARAMS_OF_GET_TCP_ACTOR_HANDLE;
 
-    Make_Port_Actor_Handle(D_OUT, &TCP_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &TCP_Actor);
+    return OUT;
 }
 
 
@@ -1052,8 +1053,8 @@ REBNATIVE(get_udp_actor_handle)
 {
     NETWORK_INCLUDE_PARAMS_OF_GET_UDP_ACTOR_HANDLE;
 
-    Make_Port_Actor_Handle(D_OUT, &UDP_Actor);
-    return D_OUT;
+    Make_Port_Actor_Handle(OUT, &UDP_Actor);
+    return OUT;
 }
 
 

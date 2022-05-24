@@ -443,5 +443,5 @@ REBNATIVE(reframer_p)
     Copy_Cell(ARR_AT(details, IDX_REFRAMER_SHIM), ARG(shim));
     Init_Integer(ARR_AT(details, IDX_REFRAMER_PARAM_INDEX), param_index);
 
-    return Init_Action(D_OUT, reframer, label, UNBOUND);
+    return Init_Action(OUT, reframer, label, UNBOUND);
 }

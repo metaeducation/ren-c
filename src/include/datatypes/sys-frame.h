@@ -573,9 +573,16 @@ inline static void Prep_Frame_Core(
 // Quick access functions from natives (or compatible functions that name a
 // Reb_Frame pointer `frame_`) to get some of the common public fields.
 //
-#define D_FRAME     frame_
-#define D_OUT       FRM_OUT(frame_)         // GC-safe slot for output value
-#define D_SPARE     FRM_SPARE(frame_)       // scratch GC-safe cell
+// There is an option to not define them due to conflicts with OUT as defined
+// by the Windows.h headers.  This makes it easier for people who don't want
+// to #undef the Windows versions and would rather pick their own shorthands,
+// (if any).
+//
+#if REBOL_FRAME_SHORTHAND_MACROS
+    #define FRAME   frame_
+    #define OUT     FRM_OUT(frame_)         // GC-safe slot for output value
+    #define SPARE   FRM_SPARE(frame_)       // scratch GC-safe cell
+#endif
 
 
 // !!! Numbered arguments got more complicated with the idea of moving the

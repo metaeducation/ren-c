@@ -34,6 +34,7 @@
     #ifdef IS_ERROR
         #undef IS_ERROR //winerror.h defines, Rebol has a different meaning
     #endif
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
 #else
     #if !defined(__cplusplus) && TO_LINUX
         //
@@ -232,7 +233,7 @@ REBNATIVE(sleep)
     usleep(msec * 1000);
   #endif
 
-    return Init_None(D_OUT);
+    return Init_None(OUT);
 }
 
 
@@ -366,7 +367,7 @@ REBNATIVE(get_env)
     if (val_len_plus_one == 0) {  // some failure...
         DWORD dwerr = GetLastError();
         if (dwerr == ERROR_ENVVAR_NOT_FOUND)
-            Init_Nulled(D_OUT);
+            Init_Nulled(OUT);
         else
             error = rebError_OS(dwerr);  // don't call GetLastError() twice!
     }
@@ -404,7 +405,7 @@ REBNATIVE(get_env)
         }
         else {
             REBVAL *temp = rebLengthedTextWide(val, val_len_plus_one - 1);
-            Copy_Cell(D_OUT, temp);
+            Copy_Cell(OUT, temp);
             rebRelease(temp);
         }
         rebFree(val);
@@ -418,13 +419,13 @@ REBNATIVE(get_env)
 
     const char* val = getenv(key);
     if (val == nullptr)  // key not present in environment
-        Init_Nulled(D_OUT);
+        Init_Nulled(OUT);
     else {
         size_t size = strsize(val);
 
         /* assert(size != 0); */  // True?  Should it return BLANK!?
 
-        Init_Text(D_OUT, Make_Sized_String_UTF8(val, size));
+        Init_Text(OUT, Make_Sized_String_UTF8(val, size));
     }
 
     rebFree(key);
@@ -436,7 +437,7 @@ REBNATIVE(get_env)
     if (error != nullptr)
         rebJumps ("fail", rebR(error));
 
-    return D_OUT;
+    return OUT;
 }
 
 

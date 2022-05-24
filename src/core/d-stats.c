@@ -49,7 +49,7 @@ REBNATIVE(stats)
     REBI64 num_evals = Total_Eval_Cycles + Eval_Dose - Eval_Countdown;
 
     if (REF(evals))
-        return Init_Integer(D_OUT, num_evals);
+        return Init_Integer(OUT, num_evals);
 
     if (REF(profile)) {
       #if DEBUG_COLLECT_STATS
@@ -79,7 +79,7 @@ REBNATIVE(stats)
     if (REF(show))
         Dump_Pools();
 
-    return Init_Integer(D_OUT, Inspect_Series(did REF(show)));
+    return Init_Integer(OUT, Inspect_Series(did REF(show)));
   #else
     UNUSED(REF(show));
     UNUSED(ARG(pool));
@@ -140,7 +140,7 @@ REBNATIVE(callgrind)
       default:
         fail ("Currently CALLGRIND only supports ON and OFF");
     }
-    return Init_None(D_OUT);
+    return Init_None(OUT);
   #else
     UNUSED(ARG(instruction));
     fail ("This executable wasn't compiled with INCLUDE_CALLGRIND_NATIVE");

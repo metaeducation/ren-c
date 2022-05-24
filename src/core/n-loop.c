@@ -31,10 +31,6 @@ typedef enum {
     LOOP_MAP_EACH
 } LOOP_MODE;
 
-#define Value REBVAL
-#define OUT D_OUT
-#define SPARE D_SPARE
-
 
 //
 //  Catching_Break_Or_Continue_Maybe_Void: C
@@ -112,7 +108,7 @@ REBNATIVE(break)
 {
     INCLUDE_PARAMS_OF_BREAK;
 
-    return Init_Thrown_With_Label(D_OUT, Lib(NULL), Lib(BREAK));
+    return Init_Thrown_With_Label(OUT, Lib(NULL), Lib(BREAK));
 }
 
 
@@ -139,7 +135,7 @@ REBNATIVE(continue)
     if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END)
         Init_Meta_Of_Pure_Void(v);  // Treat CONTINUE same as CONTINUE VOID
 
-    return Init_Thrown_With_Label_Meta(D_OUT, v, Lib(CONTINUE));
+    return Init_Thrown_With_Label_Meta(OUT, v, Lib(CONTINUE));
 }
 
 
@@ -788,7 +784,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
 
-    SET_END(D_OUT);
+    SET_END(OUT);
 
     if (ANY_SEQUENCE(ARG(data))) {
         //
@@ -804,7 +800,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
     struct Loop_Each_State les;
     les.mode = mode;
-    les.out = D_OUT;
+    les.out = OUT;
     les.data = ARG(data);
     les.body = ARG(body);
 
@@ -863,13 +859,13 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
         if (ANY_CONTEXT(les.data)) {
             if (not Did_Advance_Evars(&les.evars)) {
-                assert(Is_Stale(D_OUT));  // body never ran
+                assert(Is_Stale(OUT));  // body never ran
                 r = nullptr;
                 goto cleanup;
             }
         }
         else if (les.data_idx >= les.data_len) {
-            assert(Is_Fresh(D_OUT));  // body never ran
+            assert(Is_Fresh(OUT));  // body never ran
             r = nullptr;
             goto cleanup;
         }
@@ -908,7 +904,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         rebJumps ("fail", rebR(m_cast(REBVAL*, r)));
     }
 
-    // Otherwise, nullptr signals result in les.out (a.k.a. D_OUT)
+    // Otherwise, nullptr signals result in les.out (a.k.a. OUT)
 
     switch (mode) {
       case LOOP_FOR_EACH:
@@ -919,9 +915,9 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // ~none~ isotope means body made ~none~ isotope or ~void~ isotope
         // any other value is the plain last body result
         //
-        if (Is_Invisible(D_OUT))
-            return_void (D_OUT);
-        return D_OUT;
+        if (Is_Invisible(OUT))
+            return_void (OUT);
+        return OUT;
 
       case LOOP_EVERY:
         //
@@ -930,13 +926,13 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // pure null means loop ran, and at least one body result was "falsey"
         // any other value is the last body result, and is truthy
         //
-        if (Is_Invisible(D_OUT))
-            return_void (D_OUT);
-        return D_OUT;
+        if (Is_Invisible(OUT))
+            return_void (OUT);
+        return OUT;
 
       case LOOP_MAP_EACH:
-        if (not Is_Fresh(D_OUT)) {  // only modifies on break
-            assert(IS_NULLED(D_OUT));  // BREAK, so *must* return null
+        if (not Is_Fresh(OUT)) {  // only modifies on break
+            assert(IS_NULLED(OUT));  // BREAK, so *must* return null
             DS_DROP_TO(dsp_orig);
             return nullptr;
         }
@@ -945,7 +941,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // there's no way to detect from the outside if the body never ran.
         // Review if variants would be useful.
         //
-        return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
+        return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
     }
 
     DEAD_END;  // all branches handled in enum switch
@@ -990,7 +986,7 @@ REBNATIVE(cfor)
         and IS_INTEGER(ARG(bump))
     ){
         return Loop_Integer_Common(
-            D_OUT,
+            OUT,
             var,
             ARG(body),
             VAL_INT64(ARG(start)),
@@ -1004,7 +1000,7 @@ REBNATIVE(cfor)
     if (ANY_SERIES(ARG(start))) {
         if (ANY_SERIES(ARG(end))) {
             return Loop_Series_Common(
-                D_OUT,
+                OUT,
                 var,
                 ARG(body),
                 ARG(start),
@@ -1014,7 +1010,7 @@ REBNATIVE(cfor)
         }
         else {
             return Loop_Series_Common(
-                D_OUT,
+                OUT,
                 var,
                 ARG(body),
                 ARG(start),
@@ -1025,7 +1021,7 @@ REBNATIVE(cfor)
     }
 
     return Loop_Number_Common(
-        D_OUT, var, ARG(body), ARG(start), ARG(end), ARG(bump)
+        OUT, var, ARG(body), ARG(start), ARG(end), ARG(bump)
     );
 }
 
@@ -1058,7 +1054,7 @@ REBNATIVE(for_skip)
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
         //
-        return_void (D_OUT);
+        return_void (OUT);
     }
 
     REBCTX *context;
@@ -1082,7 +1078,7 @@ REBNATIVE(for_skip)
         VAL_INDEX_UNBOUNDED(var) = VAL_LEN_HEAD(var) + skip;
     }
 
-    SET_END(D_OUT);
+    SET_END(OUT);
 
     while (true) {
         REBINT len = VAL_LEN_HEAD(var);  // VAL_LEN_HEAD() always >= 0
@@ -1099,13 +1095,13 @@ REBNATIVE(for_skip)
             VAL_INDEX_UNBOUNDED(var) = index;
         }
 
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(D_OUT, &broke))
-                return_thrown (D_OUT);
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+                return_thrown (OUT);
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(D_OUT);
+            Reify_Stale_Plain_Branch(OUT);
         }
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
@@ -1129,10 +1125,10 @@ REBNATIVE(for_skip)
         VAL_INDEX_UNBOUNDED(var) += skip;
     }
 
-    if (Is_Invisible(D_OUT))
-        return_void (D_OUT);
+    if (Is_Invisible(OUT))
+        return_void (OUT);
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1168,7 +1164,7 @@ REBNATIVE(stop)
     if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END)
         Init_Blank(v);  // Treat STOP the same as STOP VOID
 
-    return Init_Thrown_With_Label_Meta(D_OUT, ARG(value), Lib(STOP));
+    return Init_Thrown_With_Label_Meta(OUT, ARG(value), Lib(STOP));
 }
 
 
@@ -1188,10 +1184,10 @@ REBNATIVE(cycle)
     INCLUDE_PARAMS_OF_CYCLE;
 
     while (true) {
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(D_OUT, &broke)) {
-                const REBVAL *label = VAL_THROWN_LABEL(D_OUT);
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke)) {
+                const REBVAL *label = VAL_THROWN_LABEL(OUT);
                 if (
                     IS_ACTION(label)
                     and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
@@ -1199,7 +1195,7 @@ REBNATIVE(cycle)
                     // See notes on STOP for why CYCLE is unique among loop
                     // constructs, with a BREAK variant that returns a value.
                     //
-                    CATCH_THROWN_META(D_OUT, D_OUT);
+                    CATCH_THROWN_META(OUT, OUT);
 
                     // !!! Technically, we know CYCLE's body will always run,
                     // so we could make an exception to having it return
@@ -1207,15 +1203,15 @@ REBNATIVE(cycle)
                     // good reason to do that, so going with the usual branch
                     // rules unless there's a good demonstrated case otherwise.
 
-                    if (Is_Meta_Of_Pure_Invisible(D_OUT))
-                        return Init_None(D_OUT);
+                    if (Is_Meta_Of_Pure_Invisible(OUT))
+                        return Init_None(OUT);
 
-                    if (Is_Meta_Of_Void_Isotope(D_OUT))
-                        return Init_None(D_OUT);
+                    if (Is_Meta_Of_Void_Isotope(OUT))
+                        return Init_None(OUT);
 
-                    Meta_Unquotify(D_OUT);
-                    Isotopify_If_Nulled(D_OUT);  // NULL reserved for BREAK
-                    return D_OUT;
+                    Meta_Unquotify(OUT);
+                    Isotopify_If_Nulled(OUT);  // NULL reserved for BREAK
+                    return OUT;
                 }
 
                 return R_THROWN;
@@ -1223,7 +1219,7 @@ REBNATIVE(cycle)
             if (broke)
                 return nullptr;
 
-            Reify_Stale_Plain_Branch(D_OUT);
+            Reify_Stale_Plain_Branch(OUT);
         }
         // No need to isotopify result, it doesn't escape...
     }
@@ -1636,7 +1632,7 @@ REBNATIVE(remove_each)
         // !!! Should REMOVE-EACH follow the "loop conventions" where if the
         // body never gets a chance to run, the return value is bad-word?
         //
-        return Init_Integer(D_OUT, 0);
+        return Init_Integer(OUT, 0);
     }
 
     // Create a context for the loop variables, and bind the body to it.
@@ -1687,14 +1683,14 @@ REBNATIVE(remove_each)
         Push_Mold(res.mo);
     }
 
-    res.out = D_OUT;
+    res.out = OUT;
 
     res.broke = false;  // will be set to true if there is a BREAK
 
     REB_R r = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
 
     if (r == R_THROWN)
-        return_thrown (D_OUT);
+        return_thrown (OUT);
 
     if (r) {  // Remove_Each_Core() couldn't finalize in this case due to fail
         assert(IS_ERROR(r));
@@ -1712,11 +1708,11 @@ REBNATIVE(remove_each)
     }
 
     if (res.broke)
-        assert(IS_NULLED(D_OUT));  // BREAK in loop
+        assert(IS_NULLED(OUT));  // BREAK in loop
     else
-        assert(IS_INTEGER(D_OUT));  // no break--plain removal count
+        assert(IS_INTEGER(OUT));  // no break--plain removal count
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -1819,7 +1815,7 @@ REBNATIVE(repeat)
 
     if (IS_FALSEY(ARG(count))) {
         assert(IS_LOGIC(ARG(count)));  // is false (opposite of infinite loop)
-        return_void (D_OUT);
+        return_void (OUT);
     }
 
     REBI64 count;
@@ -1837,27 +1833,27 @@ REBNATIVE(repeat)
     else
         count = Int64(ARG(count));
 
-    SET_END(D_OUT);
+    SET_END(OUT);
 
     for (; count > 0; count--) {
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(D_OUT, &broke))
-                return_thrown (D_OUT);
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+                return_thrown (OUT);
             if (broke)
                 return nullptr;
 
-            Reify_Stale_Plain_Branch(D_OUT);
+            Reify_Stale_Plain_Branch(OUT);
         }
     }
 
     if (IS_LOGIC(ARG(count)))
         goto restart;  // "infinite" loop exhausted MAX_I64 steps (rare case)
 
-    if (Is_Invisible(D_OUT))
-        return_void (D_OUT);
+    if (Is_Invisible(OUT))
+        return_void (OUT);
 
-    return_branched (D_OUT);  // asserts no pure NULL or isotope ~void~
+    return_branched (OUT);  // asserts no pure NULL or isotope ~void~
 }
 
 
@@ -1883,9 +1879,9 @@ REBNATIVE(for)
     REBVAL *body = ARG(body);
 
     if (IS_GROUP(body)) {
-        if (Eval_Value_Throws(D_SPARE, body, SPECIFIED))
-            return_thrown (D_OUT);
-        Move_Cell(body, D_SPARE);
+        if (Eval_Value_Throws(SPARE, body, SPECIFIED))
+            return_thrown (OUT);
+        Move_Cell(body, SPARE);
     }
 
     if (not IS_BLOCK(body))
@@ -1903,13 +1899,13 @@ REBNATIVE(for)
         // way around, with FOR-EACH delegating to FOR).
         //
         if (rebRunThrows(
-            SET_END(D_OUT),
+            SET_END(OUT),
             true,
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         )){
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
-        return D_OUT;
+        return OUT;
     }
 
     if (IS_DECIMAL(value) or IS_PERCENT(value))
@@ -1929,10 +1925,10 @@ REBNATIVE(for)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return_void (D_OUT);
+        return_void (OUT);
 
     return Loop_Integer_Common(
-        D_OUT, var, body, 1, VAL_INT64(value), 1
+        OUT, var, body, 1, VAL_INT64(value), 1
     );
 }
 

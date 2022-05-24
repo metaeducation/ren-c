@@ -23,10 +23,6 @@
 
 #include "sys-core.h"
 
-#define Value REBVAL
-#define OUT D_OUT
-#define SPARE D_SPARE
-
 
 //
 //  reduce: native [
@@ -90,7 +86,7 @@ REBNATIVE(reduce)
 
             if (Is_Voided(OUT))
                 Init_Meta_Of_Void_Isotope(OUT);
-            else if (Is_Invisible(D_OUT))
+            else if (Is_Invisible(OUT))
                 Copy_Cell(OUT, Lib(VOID));
 
             REBVAL *processed = rebMeta(predicate, rebQ(OUT));
@@ -174,12 +170,12 @@ REBNATIVE(reduce_each)
     Push_Frame(nullptr, f);
 
     while (NOT_END(f_value)) {
-        if (Eval_Step_Maybe_Stale_Throws(SET_END(D_SPARE), f)) {
+        if (Eval_Step_Maybe_Stale_Throws(SET_END(SPARE), f)) {
             Abort_Frame(f);
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
 
-        if (Is_Voided(D_SPARE) or Is_Invisible(D_SPARE))
+        if (Is_Voided(SPARE) or Is_Invisible(SPARE))
             continue;
 
         Clear_Stale_Flag(f->out);
@@ -188,12 +184,12 @@ REBNATIVE(reduce_each)
         // as multiple vars.  Eval_Step_Throws() discards information that we
         // would get from Eval_Step_Maybe_Stale_Throws().  Review.
 
-        Move_Cell(CTX_VAR(context, 1), D_SPARE);
+        Move_Cell(CTX_VAR(context, 1), SPARE);
 
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(D_OUT, &broke))
-                return_thrown (D_OUT);
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+                return_thrown (OUT);
             if (broke)
                 return nullptr;
 
@@ -201,13 +197,13 @@ REBNATIVE(reduce_each)
             // body evaluated to the value.  (CONTINUE) acts as (CONTINUE NULL)
             // We don't have any special handling, just process stale normally.
             //
-            Reify_Stale_Plain_Branch(D_OUT);
+            Reify_Stale_Plain_Branch(OUT);
         }
     } while (NOT_END(f_value));
 
     Drop_Frame(f);
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -617,7 +613,7 @@ REBNATIVE(compose)
     REBDSP dsp_orig = DSP;
 
     REB_R r = Compose_To_Stack_Core(
-        D_OUT,
+        OUT,
         ARG(value),
         VAL_SPECIFIER(ARG(value)),
         ARG(label),
@@ -627,7 +623,7 @@ REBNATIVE(compose)
     );
 
     if (r == R_THROWN)
-        return_thrown (D_OUT);
+        return_thrown (OUT);
 
     if (r == R_UNHANDLED) {
         //
@@ -640,20 +636,20 @@ REBNATIVE(compose)
 
     if (ANY_SEQUENCE(ARG(value))) {
         if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
-            D_OUT,
+            OUT,
             VAL_TYPE(ARG(value)),
             dsp_orig
         )){
-            if (Is_Valid_Sequence_Element(VAL_TYPE(ARG(value)), D_OUT)) {
+            if (Is_Valid_Sequence_Element(VAL_TYPE(ARG(value)), OUT)) {
                 //
                 // `compose '(null)/1:` would leave behind 1:
                 //
-                fail (Error_Cant_Decorate_Type_Raw(D_OUT));
+                fail (Error_Cant_Decorate_Type_Raw(OUT));
             }
 
-            fail (Error_Bad_Sequence_Init(D_OUT));
+            fail (Error_Bad_Sequence_Init(OUT));
         }
-        return D_OUT;  // note: may not be an ANY-PATH!  See Try_Pop_Path...
+        return OUT;  // note: may not be an ANY-PATH!  See Try_Pop_Path...
     }
 
     // The stack values contain N NEWLINE_BEFORE flags, and we need N + 1
@@ -665,7 +661,7 @@ REBNATIVE(compose)
 
     REBARR *popped = Pop_Stack_Values_Core(dsp_orig, flags);
 
-    return Init_Any_Array(D_OUT, VAL_TYPE(ARG(value)), popped);
+    return Init_Any_Array(OUT, VAL_TYPE(ARG(value)), popped);
 }
 
 
@@ -729,5 +725,5 @@ REBNATIVE(flatten)
         REF(deep) ? FLATTEN_DEEP : FLATTEN_ONCE
     );
 
-    return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
+    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
 }

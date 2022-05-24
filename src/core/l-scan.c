@@ -3108,9 +3108,9 @@ REBNATIVE(transcode)
 
     if (REF(next)) {
         if (DSP == dsp_orig)
-            Init_Nulled(D_OUT);
+            Init_Nulled(OUT);
         else {
-            Move_Cell(D_OUT, DS_TOP);
+            Move_Cell(OUT, DS_TOP);
             DS_DROP();
         }
         assert(DSP == dsp_orig);
@@ -3125,7 +3125,7 @@ REBNATIVE(transcode)
         mutable_LINK(Filename, a) = ss.file;
         a->leader.bits |= ARRAY_MASK_HAS_FILE_LINE;
 
-        Init_Block(D_OUT, a);
+        Init_Block(OUT, a);
     }
 
     if (ANY_WORD(ARG(line)))  // they wanted the line number updated
@@ -3164,7 +3164,7 @@ REBNATIVE(transcode)
         }
     }
 
-    return D_OUT;
+    return OUT;
 }
 
 

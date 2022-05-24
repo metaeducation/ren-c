@@ -287,36 +287,36 @@ REBTYPE(Word)
                     ++len;
                }
             }
-            return Init_Integer(D_OUT, len); }
+            return Init_Integer(OUT, len); }
 
           case SYM_BINDING: {
-            if (not Did_Get_Binding_Of(D_OUT, v))
+            if (not Did_Get_Binding_Of(OUT, v))
                 return nullptr;
 
-            if (not IS_MODULE(D_OUT))  // ordinary contexts don't have "attach"
-                return D_OUT;
+            if (not IS_MODULE(OUT))  // ordinary contexts don't have "attach"
+                return OUT;
 
-            if (VAL_CONTEXT(D_OUT) == Lib_Context)
-                return D_OUT;  // lib context doesn't inherit
+            if (VAL_CONTEXT(OUT) == Lib_Context)
+                return OUT;  // lib context doesn't inherit
 
             // BINDING OF answers just ~attached~ if it's a module and there
             // is no variable instance in the module.  Hack that together for
             // the moment.
             //
             REBVAL *var = MOD_VAR(
-                VAL_CONTEXT(D_OUT),
+                VAL_CONTEXT(OUT),
                 VAL_WORD_SYMBOL(v),
                 true
             );
             if (var)
-                return D_OUT;  // found variable actually in module.
+                return OUT;  // found variable actually in module.
 
-            SET_END(D_OUT);
+            SET_END(OUT);
 
             if (MOD_VAR(Lib_Context, VAL_WORD_SYMBOL(v), true))
-                return Init_Bad_Word(D_OUT, Canon(INHERITED));
+                return Init_Bad_Word(OUT, Canon(INHERITED));
 
-            return Init_Bad_Word(D_OUT, Canon(ATTACHED)); }
+            return Init_Bad_Word(OUT, Canon(ATTACHED)); }
 
           case SYM_ATTACH: {  // hack it up...
             if (not IS_WORD_BOUND(v))
@@ -324,13 +324,13 @@ REBTYPE(Word)
 
             if (CTX_TYPE(VAL_WORD_CONTEXT(v)) == REB_MODULE) {
                 if (MOD_VAR(VAL_WORD_CONTEXT(v), VAL_WORD_SYMBOL(v), true))
-                    return Copy_Cell(D_OUT, CTX_ARCHETYPE(VAL_WORD_CONTEXT(v)));
+                    return Copy_Cell(OUT, CTX_ARCHETYPE(VAL_WORD_CONTEXT(v)));
             }
 
-            if (not Did_Get_Binding_Of(D_OUT, v))
+            if (not Did_Get_Binding_Of(OUT, v))
                 assert(!"Did_Get_Binding_Of() should have worked.");
 
-            return D_OUT; }
+            return OUT; }
 
           default:
             break;

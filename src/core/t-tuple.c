@@ -319,7 +319,7 @@ REBTYPE(Sequence)
                 v = 0;
             *vp = cast(REBYTE, v);
         }
-        return Init_Tuple_Bytes(D_OUT, buf, len);
+        return Init_Tuple_Bytes(OUT, buf, len);
     }
 
     // !!!! merge with SWITCH below !!!
@@ -327,7 +327,7 @@ REBTYPE(Sequence)
         REBLEN temp = len;
         for (; temp > 0; --temp, vp++)
             *vp = cast(REBYTE, ~*vp);
-        return Init_Tuple_Bytes(D_OUT, buf, len);
+        return Init_Tuple_Bytes(OUT, buf, len);
     }
     if (id == SYM_RANDOM) {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -343,7 +343,7 @@ REBTYPE(Sequence)
             if (*vp)
                 *vp = cast(REBYTE, Random_Int(did REF(secure)) % (1 + *vp));
         }
-        return Init_Tuple_Bytes(D_OUT, buf, len);
+        return Init_Tuple_Bytes(OUT, buf, len);
     }
 
     switch (id) {
@@ -353,7 +353,7 @@ REBTYPE(Sequence)
 
         switch (VAL_WORD_ID(ARG(property))) {
           case SYM_LENGTH:
-            return Init_Integer(D_OUT, VAL_SEQUENCE_LEN(sequence));
+            return Init_Integer(OUT, VAL_SEQUENCE_LEN(sequence));
 
           case SYM_INDEX:  // Note: not legal, paths always at head, no index
           default:
@@ -382,12 +382,12 @@ REBTYPE(Sequence)
         REB_R r = T_Array(frame_, verb);
         assert(KIND3Q_BYTE(r) == REB_BLOCK);
 
-        if (r != D_OUT)
-            Copy_Cell(D_OUT, r);
+        if (r != OUT)
+            Copy_Cell(OUT, r);
 
-        Freeze_Array_Shallow(VAL_ARRAY_KNOWN_MUTABLE(D_OUT));
-        mutable_KIND3Q_BYTE(D_OUT) = kind;
-        return D_OUT; }
+        Freeze_Array_Shallow(VAL_ARRAY_KNOWN_MUTABLE(OUT));
+        mutable_KIND3Q_BYTE(OUT) = kind;
+        return OUT; }
 
       case SYM_PICK_P: {
         INCLUDE_PARAMS_OF_PICK_P;
@@ -403,12 +403,12 @@ REBTYPE(Sequence)
             fail (picker);
 
         REBSPC *specifier = VAL_SEQUENCE_SPECIFIER(sequence);
-        const RELVAL *at = VAL_SEQUENCE_AT(D_SPARE, sequence, n);
+        const RELVAL *at = VAL_SEQUENCE_AT(SPARE, sequence, n);
 
         if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(sequence)))
             return nullptr;
 
-        return Derelativize(D_OUT, at, specifier); }
+        return Derelativize(OUT, at, specifier); }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
@@ -429,7 +429,7 @@ REBTYPE(Sequence)
                 vp[i] = a;
             }
         }
-        return Init_Tuple_Bytes(D_OUT, buf, len); }
+        return Init_Tuple_Bytes(OUT, buf, len); }
 
       default:
         break;

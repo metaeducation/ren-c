@@ -163,7 +163,7 @@ REBNATIVE(identify_text_q)
 
     UNUSED(ARG(data)); // see notes on decode-text
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -275,7 +275,7 @@ REBNATIVE(identify_utf16le_q)
     //
     UNUSED(ARG(data));
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -296,15 +296,15 @@ REBNATIVE(decode_utf16le)
     const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     const bool little_endian = true;
-    Init_Text(D_OUT, Decode_UTF16(data, size, little_endian, false));
+    Init_Text(OUT, Decode_UTF16(data, size, little_endian, false));
 
     // Drop byte-order marker, if present
     //
-    rebElide("if #\"^(FEFF)\" = first", D_OUT, "[",
-        "take", D_OUT,
+    rebElide("if #\"^(FEFF)\" = first", OUT, "[",
+        "take", OUT,
     "]");
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -325,12 +325,12 @@ REBNATIVE(encode_utf16le)
     REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(text));
 
     const bool little_endian = true;
-    Init_Binary(D_OUT, Encode_Utf16(utf8, len, little_endian));
+    Init_Binary(OUT, Encode_Utf16(utf8, len, little_endian));
 
     // !!! Should probably by default add a byte order mark, but given this
     // is weird "userspace" encoding it should be an option to the codec.
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -355,7 +355,7 @@ REBNATIVE(identify_utf16be_q)
     //
     UNUSED(ARG(data));
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -376,15 +376,15 @@ REBNATIVE(decode_utf16be)
     const REBYTE *data = VAL_BINARY_SIZE_AT(&size, ARG(data));
 
     const bool little_endian = false;
-    Init_Text(D_OUT, Decode_UTF16(data, size, little_endian, false));
+    Init_Text(OUT, Decode_UTF16(data, size, little_endian, false));
 
     // Drop byte-order marker, if present
     //
     rebElide(
-        "if #\"^(FEFF)\" = first", D_OUT, "[take", D_OUT, "]"
+        "if #\"^(FEFF)\" = first", OUT, "[take", OUT, "]"
     );
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -405,10 +405,10 @@ REBNATIVE(encode_utf16be)
     REBCHR(const*) utf8 = VAL_UTF8_LEN_SIZE_AT(&len, nullptr, ARG(text));
 
     const bool little_endian = false;
-    Init_Binary(D_OUT, Encode_Utf16(utf8, len, little_endian));
+    Init_Binary(OUT, Encode_Utf16(utf8, len, little_endian));
 
     // !!! Should probably by default add a byte order mark, but given this
     // is weird "userspace" encoding it should be an option to the codec.
 
-    return D_OUT;
+    return OUT;
 }

@@ -358,7 +358,7 @@ REBNATIVE(make_native)
     Init_Blank(ARR_AT(details, IDX_TCC_NATIVE_STATE)); // no TCC_State, yet...
 
     SET_ACTION_FLAG(native, IS_NATIVE);
-    return Init_Action(D_OUT, native, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, native, ANONYMOUS, UNBOUND);
 }
 
 
@@ -555,7 +555,7 @@ REBNATIVE(compile_p)
         if (REF(inspect)) {
             DROP_GC_GUARD(handle);
             DS_DROP_TO(dsp_orig); // don't modify the collected user natives
-            return Init_Text(D_OUT, Pop_Molded_String(mo));
+            return Init_Text(OUT, Pop_Molded_String(mo));
         }
 
         if (

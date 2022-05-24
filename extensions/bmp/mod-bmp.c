@@ -303,7 +303,7 @@ REBNATIVE(identify_bmp_q)
     // Assume signature matching is good enough (will get a fail() on
     // decode if it's a false positive).
     //
-    return Init_Logic(D_OUT, Has_Valid_BITMAPFILEHEADER(data, size));
+    return Init_Logic(OUT, Has_Valid_BITMAPFILEHEADER(data, size));
 }
 
 

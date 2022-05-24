@@ -43,6 +43,7 @@
 #include "uv.h"  // includes windows.h
 #if TO_WINDOWS
     #undef IS_ERROR  // windows.h defines, contentious with IS_ERROR in Ren-C
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
 #endif
 
 #include "sys-core.h"
@@ -144,7 +145,7 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             // all of it).
             //
           case SYM_OPEN_Q:
-            return Init_Logic(D_OUT, false);
+            return Init_Logic(OUT, false);
 
           default:
             break;
@@ -179,8 +180,8 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             rebRelease(result);
         }
 
-        Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
-        return D_OUT; }
+        Init_Block(OUT, Pop_Stack_Values(dsp_orig));
+        return OUT; }
 
     //=//// CREATE /////////////////////////////////////////////////////////=//
 

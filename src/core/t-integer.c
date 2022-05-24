@@ -290,9 +290,9 @@ REBTYPE(Integer)
             case SYM_ADD:
             case SYM_MULTIPLY: {
                 // Swap parameter order:
-                Move_Cell(D_OUT, val2);  // Use as temp workspace
+                Move_Cell(OUT, val2);  // Use as temp workspace
                 Move_Cell(val2, val);
-                Move_Cell(val, D_OUT);
+                Move_Cell(val, OUT);
                 return Run_Generic_Dispatch_Core(val, frame_, verb); }
 
             // Only type valid to subtract from, divide into, is decimal/money:
@@ -331,26 +331,26 @@ REBTYPE(Integer)
     switch (id) {
 
     case SYM_COPY:
-        Copy_Cell(D_OUT, val);
-        return D_OUT;
+        Copy_Cell(OUT, val);
+        return OUT;
 
     case SYM_ADD: {
         REBI64 anum;
         if (REB_I64_ADD_OF(num, arg, &anum))
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, anum); }
+        return Init_Integer(OUT, anum); }
 
     case SYM_SUBTRACT: {
         REBI64 anum;
         if (REB_I64_SUB_OF(num, arg, &anum))
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, anum); }
+        return Init_Integer(OUT, anum); }
 
     case SYM_MULTIPLY: {
         REBI64 p;
         if (REB_I64_MUL_OF(num, arg, &p))
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, p); }
+        return Init_Integer(OUT, p); }
 
     case SYM_DIVIDE:
         if (arg == 0)
@@ -358,7 +358,7 @@ REBTYPE(Integer)
         if (num == INT64_MIN && arg == -1)
             fail (Error_Overflow_Raw());
         if (num % arg == 0)
-            return Init_Integer(D_OUT, num / arg);
+            return Init_Integer(OUT, num / arg);
         // Fall thru
     case SYM_POWER:
         Init_Decimal(D_ARG(1), cast(REBDEC, num));
@@ -368,40 +368,40 @@ REBTYPE(Integer)
     case SYM_REMAINDER:
         if (arg == 0)
             fail (Error_Zero_Divide_Raw());
-        return Init_Integer(D_OUT, (arg != -1) ? (num % arg) : 0);
+        return Init_Integer(OUT, (arg != -1) ? (num % arg) : 0);
 
     case SYM_BITWISE_AND:
-        return Init_Integer(D_OUT, num & arg);
+        return Init_Integer(OUT, num & arg);
 
     case SYM_BITWISE_OR:
-        return Init_Integer(D_OUT, num | arg);
+        return Init_Integer(OUT, num | arg);
 
     case SYM_BITWISE_XOR:
-        return Init_Integer(D_OUT, num ^ arg);
+        return Init_Integer(OUT, num ^ arg);
 
     case SYM_BITWISE_AND_NOT:
-        return Init_Integer(D_OUT, num & ~arg);
+        return Init_Integer(OUT, num & ~arg);
 
     case SYM_NEGATE:
         if (num == INT64_MIN)
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, -num);
+        return Init_Integer(OUT, -num);
 
     case SYM_BITWISE_NOT:
-        return Init_Integer(D_OUT, ~num);
+        return Init_Integer(OUT, ~num);
 
     case SYM_ABSOLUTE:
         if (num == INT64_MIN)
             fail (Error_Overflow_Raw());
-        return Init_Integer(D_OUT, num < 0 ? -num : num);
+        return Init_Integer(OUT, num < 0 ? -num : num);
 
     case SYM_EVEN_Q:
         num = ~num;
         // falls through
     case SYM_ODD_Q:
         if (num & 1)
-            return Init_True(D_OUT);
-        return Init_False(D_OUT);
+            return Init_True(OUT);
+        return Init_False(OUT);
 
     case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
@@ -410,13 +410,13 @@ REBTYPE(Integer)
         USED(ARG(floor)); USED(ARG(ceiling)); USED(ARG(half_ceiling));
 
         if (not REF(to))
-            return Init_Integer(D_OUT, Round_Int(num, frame_, 0L));
+            return Init_Integer(OUT, Round_Int(num, frame_, 0L));
 
         REBVAL *to = ARG(to);
 
         if (IS_MONEY(to))
             return Init_Money(
-                D_OUT,
+                OUT,
                 Round_Deci(
                     int_to_deci(num), frame_, VAL_MONEY_AMOUNT(to)
                 )
@@ -427,16 +427,16 @@ REBTYPE(Integer)
                 cast(REBDEC, num), frame_, VAL_DECIMAL(to)
             );
             Reset_Cell_Header_Untracked(
-                TRACK(D_OUT), VAL_TYPE(to), CELL_MASK_NONE
+                TRACK(OUT), VAL_TYPE(to), CELL_MASK_NONE
             );
-            VAL_DECIMAL(D_OUT) = dec;
-            return D_OUT;
+            VAL_DECIMAL(OUT) = dec;
+            return OUT;
         }
 
         if (IS_TIME(ARG(to)))
             fail (PAR(to));
 
-        return Init_Integer(D_OUT, Round_Int(num, frame_, VAL_INT64(to))); }
+        return Init_Integer(OUT, Round_Int(num, frame_, VAL_INT64(to))); }
 
     case SYM_RANDOM: {
         INCLUDE_PARAMS_OF_RANDOM;
@@ -452,7 +452,7 @@ REBTYPE(Integer)
         }
         if (num == 0)
             fail (ARG(value));
-        return Init_Integer(D_OUT, Random_Range(num, did REF(secure))); }
+        return Init_Integer(OUT, Random_Range(num, did REF(secure))); }
 
     default:
         break;

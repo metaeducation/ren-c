@@ -290,7 +290,7 @@ REBNATIVE(combinator)
         relativized
     );
 
-    return Init_Action(D_OUT, combinator, ANONYMOUS, UNBOUND);
+    return Init_Action(OUT, combinator, ANONYMOUS, UNBOUND);
 }
 
 
@@ -356,14 +356,14 @@ REBNATIVE(opt_combinator)
 
     UNUSED(ARG(state));
 
-    if (Call_Parser_Throws(D_OUT, ARG(remainder), ARG(parser), ARG(input)))
-        return_thrown (D_OUT);
+    if (Call_Parser_Throws(OUT, ARG(remainder), ARG(parser), ARG(input)))
+        return_thrown (OUT);
 
-    if (not IS_NULLED(D_OUT))  // parser succeeded...
-        return D_OUT;  // so return its result (note: may be null *isotope*)
+    if (not IS_NULLED(OUT))  // parser succeeded...
+        return OUT;  // so return its result (note: may be null *isotope*)
 
     Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input));
-    return Init_Null_Isotope(D_OUT);  // success, but convey nothingness
+    return Init_Null_Isotope(OUT);  // success, but convey nothingness
 }
 
 
@@ -398,8 +398,8 @@ REBNATIVE(text_x_combinator)
         ++VAL_INDEX_UNBOUNDED(input);
         Set_Var_May_Fail(ARG(remainder), SPECIFIED, input);
 
-        Derelativize(D_OUT, at, VAL_SPECIFIER(input));
-        return D_OUT;  // Note: returns item in array, not rule, when an array!
+        Derelativize(OUT, at, VAL_SPECIFIER(input));
+        return OUT;  // Note: returns item in array, not rule, when an array!
     }
 
     assert(ANY_STRING(input) or IS_BINARY(input));
@@ -458,16 +458,16 @@ REBNATIVE(some_combinator)
     Init_Frame(loop_last, CTX(frame_->varlist), Canon(SOME));
     INIT_VAL_FRAME_PHASE(loop_last, FRM_PHASE(frame_));
 
-    if (Call_Parser_Throws(D_OUT, remainder, parser, input)) {
+    if (Call_Parser_Throws(OUT, remainder, parser, input)) {
         //
         // !!! Currently there's no support for intercepting throws removing
         // frames from the loops list in usermode.  Mirror that limitation here
         // for now.
         //
-        return_thrown (D_OUT);
+        return_thrown (OUT);
     }
 
-    if (IS_NULLED(D_OUT)) {
+    if (IS_NULLED(OUT)) {
         Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
         return nullptr;  // didn't match even once, so not enough.
     }
@@ -481,13 +481,13 @@ REBNATIVE(some_combinator)
         // Don't overwrite the last output (if it's null we want the previous
         // iteration's successful output value)
         //
-        SET_END(D_SPARE);  // spare can be trash
-        if (Call_Parser_Throws(D_SPARE, remainder, parser, input)) {
-            Move_Cell(D_OUT, D_SPARE);
-            return_thrown (D_OUT);  // see notes above about not removing loop
+        SET_END(SPARE);  // spare can be trash
+        if (Call_Parser_Throws(SPARE, remainder, parser, input)) {
+            Move_Cell(OUT, SPARE);
+            return_thrown (OUT);  // see notes above about not removing loop
         }
 
-        if (IS_NULLED(D_SPARE)) {
+        if (IS_NULLED(SPARE)) {
             //
             // There's no guarantee that a parser that fails leaves the
             // remainder as-is (in fact multi-returns have historically unset
@@ -497,10 +497,10 @@ REBNATIVE(some_combinator)
             //
             Set_Var_May_Fail(remainder, SPECIFIED, input);
             Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
-            return D_OUT;  // return previous successful parser result
+            return OUT;  // return previous successful parser result
         }
 
-        Move_Cell(D_OUT, D_SPARE);  // update last successful result
+        Move_Cell(OUT, SPARE);  // update last successful result
     }
 }
 
@@ -524,21 +524,21 @@ REBNATIVE(further_combinator)
     REBVAL *parser = ARG(parser);
     UNUSED(ARG(state));
 
-    if (Call_Parser_Throws(D_OUT, remainder, parser, input))
-        return_thrown (D_OUT);
+    if (Call_Parser_Throws(OUT, remainder, parser, input))
+        return_thrown (OUT);
 
-    if (IS_NULLED(D_OUT))
+    if (IS_NULLED(OUT))
         return nullptr;  // the parse rule did not match
 
-    if (Is_Stale(D_OUT))
+    if (Is_Stale(OUT))
         fail ("Rule passed to FURTHER must synthesize a product");
 
-    Get_Var_May_Fail(D_SPARE, remainder, SPECIFIED, true);
+    Get_Var_May_Fail(SPARE, remainder, SPECIFIED, true);
 
-    if (VAL_INDEX(D_SPARE) <= VAL_INDEX(input))
+    if (VAL_INDEX(SPARE) <= VAL_INDEX(input))
         return nullptr;  // the rule matched but did not advance the input
 
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -738,7 +738,7 @@ REBNATIVE(combinatorize)
     DROP_GC_GUARD(s.ctx);
 
     return Init_Action(  // note: MAKE ACTION! copies the context, this won't
-        D_OUT,
+        OUT,
         parser,
         VAL_ACTION_LABEL(ARG(c)),
         VAL_ACTION_BINDING(ARG(c))

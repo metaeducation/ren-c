@@ -116,7 +116,7 @@ REBNATIVE(cosine)
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
-    return Init_Decimal(D_OUT, dval);
+    return Init_Decimal(OUT, dval);
 }
 
 
@@ -139,7 +139,7 @@ REBNATIVE(sine)
     if (fabs(dval) < DBL_EPSILON)
         dval = 0.0;
 
-    return Init_Decimal(D_OUT, dval);
+    return Init_Decimal(OUT, dval);
 }
 
 
@@ -162,7 +162,7 @@ REBNATIVE(tangent)
     if (Eq_Decimal(fabs(dval), PI / 2.0))
         fail (Error_Overflow_Raw());
 
-    return Init_Decimal(D_OUT, tan(dval));
+    return Init_Decimal(OUT, tan(dval));
 }
 
 
@@ -181,8 +181,8 @@ REBNATIVE(arccosine)
 {
     INCLUDE_PARAMS_OF_ARCCOSINE;
 
-    Arc_Trans(D_OUT, ARG(cosine), did REF(radians), COSINE);
-    return D_OUT;
+    Arc_Trans(OUT, ARG(cosine), did REF(radians), COSINE);
+    return OUT;
 }
 
 
@@ -201,8 +201,8 @@ REBNATIVE(arcsine)
 {
     INCLUDE_PARAMS_OF_ARCSINE;
 
-    Arc_Trans(D_OUT, ARG(sine), did REF(radians), SINE);
-    return D_OUT;
+    Arc_Trans(OUT, ARG(sine), did REF(radians), SINE);
+    return OUT;
 }
 
 
@@ -221,8 +221,8 @@ REBNATIVE(arctangent)
 {
     INCLUDE_PARAMS_OF_ARCTANGENT;
 
-    Arc_Trans(D_OUT, ARG(tangent), did REF(radians), TANGENT);
-    return D_OUT;
+    Arc_Trans(OUT, ARG(tangent), did REF(radians), TANGENT);
+    return OUT;
 }
 
 
@@ -244,7 +244,7 @@ REBNATIVE(exp)
 
     // !!! Check_Overflow(dval);
 
-    return Init_Decimal(D_OUT, dval);
+    return Init_Decimal(OUT, dval);
 }
 
 
@@ -265,7 +265,7 @@ REBNATIVE(log_10)
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
-    return Init_Decimal(D_OUT, log10(dval));
+    return Init_Decimal(OUT, log10(dval));
 }
 
 
@@ -286,7 +286,7 @@ REBNATIVE(log_2)
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
-    return Init_Decimal(D_OUT, log(dval) / LOG2);
+    return Init_Decimal(OUT, log(dval) / LOG2);
 }
 
 
@@ -307,7 +307,7 @@ REBNATIVE(log_e)
     if (dval <= 0)
         fail (Error_Positive_Raw());
 
-    return Init_Decimal(D_OUT, log(dval));
+    return Init_Decimal(OUT, log(dval));
 }
 
 
@@ -328,7 +328,7 @@ REBNATIVE(square_root)
     if (dval < 0)
         fail (Error_Positive_Raw());
 
-    return Init_Decimal(D_OUT, sqrt(dval));
+    return Init_Decimal(OUT, sqrt(dval));
 }
 
 
@@ -588,7 +588,7 @@ REBNATIVE(equal_q)
 
     bool strict = false;
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(D_OUT, diff == 0);
+    return Init_Logic(OUT, diff == 0);
 }
 
 
@@ -608,7 +608,7 @@ REBNATIVE(not_equal_q)
 
     bool strict = false;
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(D_OUT, diff != 0);
+    return Init_Logic(OUT, diff != 0);
 }
 
 
@@ -627,11 +627,11 @@ REBNATIVE(strict_equal_q)
     INCLUDE_PARAMS_OF_STRICT_EQUAL_Q;
 
     if (VAL_TYPE(ARG(value1)) != VAL_TYPE(ARG(value2)))
-        return Init_False(D_OUT);  // don't allow coercion
+        return Init_False(OUT);  // don't allow coercion
 
     bool strict = true;
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(D_OUT, diff == 0);
+    return Init_Logic(OUT, diff == 0);
 }
 
 
@@ -650,11 +650,11 @@ REBNATIVE(strict_not_equal_q)
     INCLUDE_PARAMS_OF_STRICT_NOT_EQUAL_Q;
 
     if (VAL_TYPE(ARG(value1)) != VAL_TYPE(ARG(value2)))
-        return Init_True(D_OUT);  // don't allow coercion
+        return Init_True(OUT);  // don't allow coercion
 
     bool strict = true;
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(D_OUT, diff != 0);
+    return Init_Logic(OUT, diff != 0);
 }
 
 
@@ -682,27 +682,27 @@ REBNATIVE(same_q)
     REBVAL *v2 = ARG(value2);
 
     if (VAL_TYPE(v1) != VAL_TYPE(v2))
-        return Init_False(D_OUT);  // can't be "same" value if not same type
+        return Init_False(OUT);  // can't be "same" value if not same type
 
     if (IS_BITSET(v1))  // same if binaries are same
-        return Init_Logic(D_OUT, VAL_BITSET(v1) == VAL_BITSET(v2));
+        return Init_Logic(OUT, VAL_BITSET(v1) == VAL_BITSET(v2));
 
     if (ANY_SERIES(v1))  // pointers -and- indices must match
         return Init_Logic(
-            D_OUT,
+            OUT,
             VAL_SERIES(v1) == VAL_SERIES(v2)
                 and VAL_INDEX_RAW(v1) == VAL_INDEX_RAW(v2)  // permissive
         );
 
     if (ANY_CONTEXT(v1))  // same if varlists match
-        return Init_Logic(D_OUT, VAL_CONTEXT(v1) == VAL_CONTEXT(v2));
+        return Init_Logic(OUT, VAL_CONTEXT(v1) == VAL_CONTEXT(v2));
 
     if (IS_MAP(v1))  // same if map pointer matches
-        return Init_Logic(D_OUT, VAL_MAP(v1) == VAL_MAP(v2));
+        return Init_Logic(OUT, VAL_MAP(v1) == VAL_MAP(v2));
 
     if (ANY_WORD(v1))  // !!! "same" was spelling -and- binding in R3-Alpha
         return Init_Logic(
-            D_OUT,
+            OUT,
             VAL_WORD_SYMBOL(v1) == VAL_WORD_SYMBOL(v2)
                 and VAL_WORD_BINDING(v1) == VAL_WORD_BINDING(v2)
         );
@@ -713,7 +713,7 @@ REBNATIVE(same_q)
         // the same bits, but SAME? did.  :-/
         //
         return Init_Logic(
-            D_OUT,
+            OUT,
             0 == memcmp(&VAL_DECIMAL(v1), &VAL_DECIMAL(v2), sizeof(REBDEC))
         );
     }
@@ -730,7 +730,7 @@ REBNATIVE(same_q)
         // == false
         //
         return Init_Logic(
-            D_OUT,
+            OUT,
             deci_is_same(VAL_MONEY_AMOUNT(v1), VAL_MONEY_AMOUNT(v2))
         );
     }
@@ -742,7 +742,7 @@ REBNATIVE(same_q)
     // for comparison user defined types would have.
     //
     bool strict = true;
-    return Init_Logic(D_OUT, Compare_Modify_Values(v1, v2, strict) == 0);
+    return Init_Logic(OUT, Compare_Modify_Values(v1, v2, strict) == 0);
 }
 
 
@@ -773,7 +773,7 @@ REBNATIVE(lesser_q)
     //
     bool strict = true;
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(D_OUT, diff == -1);
+    return Init_Logic(OUT, diff == -1);
 }
 
 
@@ -792,7 +792,7 @@ REBNATIVE(equal_or_lesser_q)
 
     bool strict = true;  // see notes in LESSER?
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(D_OUT, diff == -1 or diff == 0);
+    return Init_Logic(OUT, diff == -1 or diff == 0);
 }
 
 
@@ -811,7 +811,7 @@ REBNATIVE(greater_q)
 
     bool strict = true;  // see notes in LESSER?
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(D_OUT, diff == 1);
+    return Init_Logic(OUT, diff == 1);
 }
 
 
@@ -830,7 +830,7 @@ REBNATIVE(greater_or_equal_q)
 
     bool strict = true;  // see notes in LESSER?
     REBINT diff = Compare_Modify_Values(ARG(value1), ARG(value2), strict);
-    return Init_Logic(D_OUT, diff == 1 or diff == 0);
+    return Init_Logic(OUT, diff == 1 or diff == 0);
 }
 
 
@@ -852,7 +852,7 @@ REBNATIVE(maximum)
     const REBVAL *value2 = ARG(value2);
 
     if (IS_PAIR(value1) || IS_PAIR(value2)) {
-        Min_Max_Pair(D_OUT, value1, value2, true);
+        Min_Max_Pair(OUT, value1, value2, true);
     }
     else {
         DECLARE_LOCAL (coerced1);
@@ -863,13 +863,13 @@ REBNATIVE(maximum)
         bool strict = false;
         REBINT diff = Compare_Modify_Values(coerced1, coerced2, strict);
         if (diff == 1)
-            Copy_Cell(D_OUT, value1);
+            Copy_Cell(OUT, value1);
         else {
             assert(diff == 0 or diff == -1);
-            Copy_Cell(D_OUT, value2);
+            Copy_Cell(OUT, value2);
         }
     }
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -891,7 +891,7 @@ REBNATIVE(minimum)
     const REBVAL *value2 = ARG(value2);
 
     if (IS_PAIR(ARG(value1)) || IS_PAIR(ARG(value2))) {
-        Min_Max_Pair(D_OUT, ARG(value1), ARG(value2), false);
+        Min_Max_Pair(OUT, ARG(value1), ARG(value2), false);
     }
     else {
         DECLARE_LOCAL (coerced1);
@@ -902,13 +902,13 @@ REBNATIVE(minimum)
         bool strict = false;
         REBINT diff = Compare_Modify_Values(coerced1, coerced2, strict);
         if (diff == -1)
-            Copy_Cell(D_OUT, value1);
+            Copy_Cell(OUT, value1);
         else {
             assert(diff == 0 or diff == 1);
-            Copy_Cell(D_OUT, value2);
+            Copy_Cell(OUT, value2);
         }
     }
-    return D_OUT;
+    return OUT;
 }
 
 
@@ -948,7 +948,7 @@ REBNATIVE(negative_q)
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"
     REBINT diff = Compare_Modify_Values(ARG(number), zero, strict);
-    return Init_Logic(D_OUT, diff == -1);
+    return Init_Logic(OUT, diff == -1);
 }
 
 
@@ -970,7 +970,7 @@ REBNATIVE(positive_q)
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"
     REBINT diff = Compare_Modify_Values(ARG(number), zero, strict);
-    return Init_Logic(D_OUT, diff == 1);
+    return Init_Logic(OUT, diff == 1);
 }
 
 
@@ -991,20 +991,20 @@ REBNATIVE(zero_q)
     enum Reb_Kind type = VAL_TYPE(v);
 
     if (type == REB_ISSUE)  // special case, `#` represents the '\0' codepoint
-        return Init_Logic(D_OUT, IS_CHAR(v) and VAL_CHAR(v) == 0);
+        return Init_Logic(OUT, IS_CHAR(v) and VAL_CHAR(v) == 0);
 
     if (not ANY_SCALAR_KIND(type))
-        return Init_False(D_OUT);
+        return Init_False(OUT);
 
     if (type == REB_TUPLE) {
         REBLEN len = VAL_SEQUENCE_LEN(v);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            const RELVAL *item = VAL_SEQUENCE_AT(D_SPARE, v, i);
+            const RELVAL *item = VAL_SEQUENCE_AT(SPARE, v, i);
             if (not IS_INTEGER(item) or VAL_INT64(item) != 0)
-                return Init_False(D_OUT);
+                return Init_False(OUT);
         }
-        return Init_True(D_OUT);
+        return Init_True(OUT);
     }
 
     DECLARE_LOCAL (zero);
@@ -1012,5 +1012,5 @@ REBNATIVE(zero_q)
 
     bool strict = true;  // don't report "close to zero" as "equal to zero"
     REBINT diff = Compare_Modify_Values(ARG(value), zero, strict);
-    return Init_Logic(D_OUT, diff == 0);
+    return Init_Logic(OUT, diff == 0);
 }

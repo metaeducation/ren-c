@@ -433,8 +433,8 @@ REBTYPE(Event)
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 
-        Get_Event_Var(D_OUT, event, VAL_WORD_SYMBOL(picker));
-        return D_OUT;
+        Get_Event_Var(OUT, event, VAL_WORD_SYMBOL(picker));
+        return OUT;
     }
     else if (id == SYM_POKE_P) {
 

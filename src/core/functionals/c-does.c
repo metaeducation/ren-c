@@ -209,7 +209,7 @@ REBNATIVE(does)
         Force_Value_Frozen_Deep(source);
         Copy_Cell(body, source);
 
-        return Init_Action(D_OUT, doer, ANONYMOUS, UNBOUND);
+        return Init_Action(OUT, doer, ANONYMOUS, UNBOUND);
     }
 
     // On all other types, we just make it act like a specialized call to
@@ -230,5 +230,5 @@ REBNATIVE(does)
     const REBSYM *label = ANONYMOUS;  // !!! Better answer?
 
     REBACT *doer = Make_Action_From_Exemplar(exemplar);
-    return Init_Action(D_OUT, doer, label, UNBOUND);
+    return Init_Action(OUT, doer, label, UNBOUND);
 }

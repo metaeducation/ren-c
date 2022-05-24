@@ -127,7 +127,7 @@ REBTYPE(Blank)
         UNUSED(REF(deep));
         UNUSED(REF(types));
 
-        return Init_Blank(D_OUT); }
+        return Init_Blank(OUT); }
 
       default: break;
     }

@@ -31,9 +31,10 @@
 
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
-    #undef IS_ERROR  // winerror.h defines, Rebol has a different meaning
-
     #include <rpc.h>  // for UuidCreate()
+
+    #undef IS_ERROR  // winerror.h defines, Rebol has a different meaning
+    #undef OUT  // %minwindef.h defines this, we have a better use for it
 #elif TO_OSX
     #include <CoreFoundation/CFUUID.h>
 #else
