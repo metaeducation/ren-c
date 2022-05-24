@@ -688,7 +688,7 @@ attempt: func [
     code [block! action!]
 ][
     trap [
-        return/isotope (do code else [null])  ; want ~null~ isotope if was NULL
+        return/no-decay (do code else [null])  ; want ~null~ isotope if was NULL
     ]
     return null
 ]
@@ -782,7 +782,7 @@ count-up: func [
     ] else [
         limit
     ]
-    return/isotope (
+    return/no-decay (
         cycle [
             result': (^ cfor :var start end 1 body) else [
                 return null  ; a BREAK was encountered

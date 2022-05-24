@@ -144,7 +144,7 @@ combinator: func [
             if state.verbose [
                 print ["RESULT':" (mold result' else ["NULL"])]
             ]
-            return/isotope unmeta/void (get/any 'result' also [
+            return/no-decay unmeta/void (get/any 'result' also [
                 all [  ; if success, mark state.furthest
                     state.furthest
                     (index? remainder: get remainder) > (index? get state.furthest)
@@ -218,7 +218,7 @@ combinator: func [
                         f2
                     ][
                         f2.pending: let subpending
-                        return/isotope do f2 also [  ; don't change result
+                        return/no-decay do f2 also [  ; don't change result
                             set pending glom (get pending) subpending
                         ]
                     ]
@@ -237,10 +237,10 @@ combinator: func [
         ; return invisibly get the /void interpretation of returns
         ; automatically?
         ;
-        ; !!! chain [:none-to-void | :return/isotope] produces `~`.  Review
+        ; !!! chain [:none-to-void | :return/no-decay] produces `~`.  Review
         ; why that is, and if it would be a better answer.
         ;
-        return: :return/isotope
+        return: :return/no-decay
 
         (as group! body)
 
@@ -1482,7 +1482,7 @@ default-combinators: make map! reduce [
     ][
         set remainder input
         set pending _
-        return ~null~  ; combinators RETURN/ISOTOPE by default
+        return ~null~  ; combinators RETURN/NO-DECAY by default
     ]
 
     === LOGIC! COMBINATOR ===
@@ -2848,7 +2848,7 @@ uparse*: func [
         return null  ; full parse was requested but tail was not reached
     ]
 
-    return/isotope isotopify-if-falsey unmeta synthesized'
+    return/no-decay isotopify-if-falsey unmeta synthesized'
 ]
 
 uparse: (comment [redescribe [  ; redescribe not working at the moment (?)

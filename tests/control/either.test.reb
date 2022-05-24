@@ -79,7 +79,7 @@
     (
         takes-2-logics: func [x [logic!] y [logic!]] [x]
         infix-voider: enfixed func [return: [bad-word!] x y] [
-            return/isotope '~none~
+            return/no-decay '~none~
         ]
         true
     )

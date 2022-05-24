@@ -138,7 +138,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
         Init_Action(
             cell,
             is_combinator
-                ? VAL_ACTION(Lib(DEFINITIONAL_RETURN_ISOTOPE))
+                ? VAL_ACTION(Lib(DEFINITIONAL_RETURN_NO_DECAY))
                 : VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
             Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
             CTX(f->varlist)  // bind this return to know where to return from
@@ -688,7 +688,7 @@ REBNATIVE(unwind)
 }
 
 
-static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
+static REB_R Return_Core(REBFRM *f, REBVAL *v, bool decay) {
     //
     // Each ACTION! cell for RETURN has a piece of information in it that can
     // can be unique (the binding).  When invoked, that binding is held in the
@@ -734,7 +734,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
 
     Meta_Unquotify(v);  // we will read the ISOTOPE flags (don't want it quoted)
 
-    if (not isotope) {
+    if (decay) {
         //
         // If we aren't paying attention to isotope status, then remove it
         // from the value...so ~null~ decays to null.
@@ -780,7 +780,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool isotope) {
 //      return: []  ; !!! notation for "divergent?"
 //      ^value "If no argument is given, result will be ~void~"
 //          [<end> <opt> any-value!]
-//      /isotope "Relay isotope status of NULL or void return values"
+//      /no-decay "Do not decay isotope return values"
 //  ]
 //
 REBNATIVE(definitional_return)
@@ -798,29 +798,30 @@ REBNATIVE(definitional_return)
 {
     INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
 
-    return Return_Core(frame_, ARG(value), did REF(isotope));
+    return Return_Core(frame_, ARG(value), not REF(no_decay));
 }
 
 
 //
-//  definitional-return-isotope: native [
+//  definitional-return-no-decay: native [
 //
-//  {RETURN/ISOTOPE native specialization}
+//  {RETURN/NO-DECAY native specialization}
 //
 //      return: []  ; !!! notation for divergent functions?
 //      ^value "If no argument is given, result will be ~void~"
 //          [<end> <opt> any-value!]
 //  ]
 //
-REBNATIVE(definitional_return_isotope)
+REBNATIVE(definitional_return_no_decay)
 //
-// The COMBINATOR wants to distinguish NULL isotopes from NULL in all cases.
-// Rather than inject the body with `return: :return/isotope` we get a small
-// speedup by just putting this variant of RETURN in the frame slot.
+// The COMBINATOR wants to distinguish isotopes in all cases.  Rather than
+// inject the body with `return: :return/no-decay` we get a small speedup by
+// just putting this variant of RETURN in the frame slot.
 {
-    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN_ISOTOPE;
+    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN_NO_DECAY;
 
-    return Return_Core(frame_, ARG(value), true);
+    bool decay = false;
+    return Return_Core(frame_, ARG(value), decay);
 }
 
 
