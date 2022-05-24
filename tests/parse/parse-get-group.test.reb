@@ -10,13 +10,23 @@
 
 ("b" == uparse "aaabbb" [:([some "a"]) :([some "b"])])
 ("b" == uparse "aaabbb" [:([some "a"]) :(if false [some "c"]) :([some "b"])])
-("a" == uparse "aaa" [:('some) "a"])
-(didn't uparse "aaa" [:(1 + 1) "a"])
-("a" == uparse "aaa" [:(1 + 2) "a"])
-(
-    count: 0
-    "a" == uparse ["a" "aa" "aaa"] [some [into text! [:(count: count + 1) "a"]]]
-)
+
+; !!! Partial rule splicing doesn't work with GET-GROUP! being a combinator
+; under the constraints of the current design...this would mean it would be
+; effectively a "variadic combinator", or would be sending some signal up
+; to the BLOCK! combinator about what it wanted to splice.  Punt on it for now,
+; as being able to redefine the behavior of GET-GROUP! via a combinator is
+; much more compelling.
+;
+[(comment [
+    ("a" == uparse "aaa" [:('some) "a"])
+    (didn't uparse "aaa" [:(1 + 1) "a"])
+    ("a" == uparse "aaa" [:(1 + 2) "a"])
+    (
+        count: 0
+        "a" == uparse ["a" "aa" "aaa"] [some [into text! [:(count: count + 1) "a"]]]
+    )
+]) true]
 
 [https://github.com/red/red/issues/562
     (didn't uparse [+] [opt some ['+ :(no)]])
