@@ -520,25 +520,12 @@ what: function [
 ]
 
 
-pending: does [
-    comment "temp function"
-    print "Pending implementation."
-]
-
-
 bugs: func [return: <none>] [
     "View bug database."
 ][
     browse https://github.com/metaeducation/ren-c/issues
 ]
 
-
-chat: func [
-    "Open REBOL/ren-c developers chat forum"
-    return: <none>
-][
-    browse http://chat.stackoverflow.com/rooms/291/rebol
-]
 
 ; temporary solution to ensuring scripts run on a minimum build
 ;
