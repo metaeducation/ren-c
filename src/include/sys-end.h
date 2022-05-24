@@ -55,7 +55,7 @@
     c_cast(const REBVAL*, &PG_End_Cell)
 
 inline static REBVAL *SET_END_Untracked(RELVAL *out) {
-    Reset_Cell_Header_Untracked(TRACK(out), REB_0_END, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, REB_0_END, CELL_MASK_NONE);
     return cast(REBVAL*, out);
 }
 

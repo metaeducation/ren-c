@@ -488,7 +488,7 @@ static inline REBVAL *Init_Action_Core(
   #endif
     Force_Series_Managed(ACT_IDENTITY(a));
 
-    Reset_Cell_Header_Untracked(TRACK(out), REB_ACTION, CELL_MASK_ACTION);
+    Reset_Cell_Header_Untracked(out, REB_ACTION, CELL_MASK_ACTION);
     INIT_VAL_ACTION_DETAILS(out, ACT_IDENTITY(a));
     INIT_VAL_ACTION_LABEL(out, label);
     INIT_VAL_ACTION_BINDING(out, binding);
