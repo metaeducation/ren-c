@@ -27,6 +27,8 @@ REBOL [
 
 c-break-debug: :c-debug-break  ; easy to mix up
 
+eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
+
 probe: func* [
     {Debug print a molded value and returns that same value.}
 

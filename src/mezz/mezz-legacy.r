@@ -74,13 +74,6 @@ REBOL: function [] [
     ]
 ]
 
-eval: function [] [
-    fail @return [
-        "EVAL is now REEVAL (EVAL is slated to be a synonym for EVALUATE):"
-        https://forum.rebol.info/t/eval-evaluate-and-reeval-reevaluate/1173
-    ]
-]
-
 
 input: does [
     fail @return [
