@@ -666,10 +666,12 @@ find-all: function [
 unpack: enfixed func [
     {Unpack a BLOCK! of values and store each in a variable}
     return: [<opt> <invisible> any-value!]
-    'vars [set-block!]
+    'vars [set-block! set-group!]
     block "Reduced if normal [block], but values used as-is if @[block]"
         [block! the-block!]
 ][
+    if set-group? vars [vars: eval vars]
+
     let result': ~
     reduce-each val block [
         if vars.1 = '... [  ; ignore all other values (but must reduce all)
