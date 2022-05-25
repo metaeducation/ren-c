@@ -171,6 +171,8 @@
 %loops/repeat.test.reb
 %loops/until.test.reb
 %loops/while.test.reb
+%loops/examples/for-both.loops.test.reb
+%loops/examples/for-parallel.loops.test.reb
 
 %math/absolute.test.reb
 %math/add.test.reb
