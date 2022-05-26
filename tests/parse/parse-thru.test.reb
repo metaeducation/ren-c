@@ -53,7 +53,7 @@
 
 [#1457
     (#a == uparse "a" compose [thru (charset "a")])
-    (didn't uparse "a" compose [thru (charset "a") skip])
+    (didn't uparse "a" compose [thru (charset "a") <any>])
 ]
 
 [#2141 (
@@ -65,7 +65,7 @@
 (
     i: 0
     uparse "a." [
-        some [thru "a" (i: i + 1 j: try if i > 1 [end skip]) j]
+        some [thru "a" (i: i + 1 j: try if i > 1 [<end> <any>]) j]
     ]
     i == 1
 )

@@ -31,14 +31,14 @@
 ;
 [#1965
     ("cd" == uparse "abcd" [seek (3) "cd"])
-    ("d" == uparse "abcd" [seek (3) skip "d"])
-    ("d" == uparse "abcd" [seek (4) skip])
+    ("d" == uparse "abcd" [seek (3) <any> "d"])
+    ("d" == uparse "abcd" [seek (4) <any>])
     ("" == uparse "abcd" [seek (5)])
     ("abcd" == uparse "abcd" ["ab" seek (1) "abcd"])
-    ("bcd" == uparse "abcd" ["ab" seek (1) skip "bcd"])
+    ("bcd" == uparse "abcd" ["ab" seek (1) <any> "bcd"])
 ]
 
-; !!! What to do about out-of-range skips?  It was tolerated historically but
+; !!! What to do about out-of-range seeks?  It was tolerated historically but
 ; seems to be a poor practice.  It's an error at the moment.
 ;
 (error? trap [uparse "abcd" [seek (128)]])

@@ -20,7 +20,7 @@
 
 [#1240
     ('~not~ == meta uparse "" [not "a"])
-    ('~not~ == meta uparse "" [not skip])
+    ('~not~ == meta uparse "" [not <any>])
     ('~not~ == meta uparse "" [not false])
 ]
 

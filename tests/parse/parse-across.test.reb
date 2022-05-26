@@ -455,21 +455,21 @@
     (
         v: ~
         did all [
-            didn't uparse/part input [v: across 3 <any>] skip input 4
+            didn't uparse/part input [v: across 3 <any>] <any> input 4
             v = "hel"
         ]
     )
     (
         v: ~
         did all [
-            #l == uparse/part input [v: across 3 <any> <any>] skip input 4
+            #l == uparse/part input [v: across 3 <any> <any>] <any> input 4
             v = "hel"
         ]
     )
     (
         v: ~
         did all [
-            "ell" == uparse/part next input [v: across 3 <any>] skip input 4
+            "ell" == uparse/part next input [v: across 3 <any>] <any> input 4
             v = "ell"
         ]
     )
@@ -713,7 +713,7 @@
     (
         v: ~
         did all [
-            239 == uparse/part input [v: across 3 <any> <any>] skip input 4
+            239 == uparse/part input [v: across 3 <any> <any>] <any> input 4
             v = #{DEADBE}
         ]
     )

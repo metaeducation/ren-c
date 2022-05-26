@@ -2008,13 +2008,10 @@ default-combinators: make map! reduce [
     ; <any> instead if you want to say `parse [10] [x: <any>]` and get x as 10.
     ;
     'skip combinator [
-        {Skip one series element if available}
-        return: "Should be invisible (handling TBD)"
-            [<opt> <invisible>]
+        {Historical SKIP is deprecated, give an error}
+        return: "N/A" []
     ][
-        if tail? input [return null]
-        set remainder next input
-        return
+        fail [https://forum.rebol.info/t/1557]
     ]
 
     === ACTION! COMBINATOR ===

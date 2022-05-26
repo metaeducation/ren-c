@@ -9,7 +9,7 @@
     cfor n 2 50 1 [
         sub: copy/part s n
         uparse sub [some [
-            remove skip
+            remove <any>
             insert ("-")
         ]]
         if sub != copy/part t n [fail "Incorrect Replacement"]

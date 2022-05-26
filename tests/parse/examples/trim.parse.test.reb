@@ -116,7 +116,7 @@ utrim: function [
     ; /ALL just removes all whitespace entirely.  No subtlety needed.
     ;
     if all_TRIM [
-        uparse series [opt some [remove rule | skip | <end> stop]]
+        uparse series [opt some [remove rule | <any> | <end> stop]]
         return series
     ]
 
@@ -126,7 +126,7 @@ utrim: function [
         ]
 
         tail_TRIM [
-            uparse series [opt some [remove [some rule <end>] | skip]]  ; #2289
+            uparse series [opt some [remove [some rule <end>] | <any>]]  ; #2289
         ]
     ] then [
         return series
@@ -138,7 +138,7 @@ utrim: function [
     ; with leading and trailing whitespace removed.
     ;
     if lines [
-        uparse series [opt some [change [some rule] (space) skip | skip]]
+        uparse series [opt some [change [some rule] (space) <any> | <any>]]
         if space = first series [take series]
         if space = last series [take/last series]
         return series
@@ -169,7 +169,7 @@ utrim: function [
             remove [opt some rule]
             newline line-start-rule
                 |
-            skip
+            <any>
         ]
     ]
 
@@ -178,7 +178,7 @@ utrim: function [
     ;
     uparse series [
         maybe remove some newline
-        opt some [newline remove [some newline <end>] | skip]
+        opt some [newline remove [some newline <end>] | <any>]
     ]
 
     return series

@@ -60,12 +60,12 @@
 )]
 
 [#1959
-    ("d" == uparse "abcd" [to "d" skip])
-    ('d == uparse [a b c d] [to 'd skip])
+    ("d" == uparse "abcd" [to "d" elide <any>])
+    ('d == uparse [a b c d] [to 'd <any>])
 ]
 
 [#1457
-    (#a == uparse "ba" compose [to (charset "a") skip])
+    (#a == uparse "ba" compose [to (charset "a") <any>])
     (didn't uparse "ba" compose [to (charset "a") "ba"])
 ]
 

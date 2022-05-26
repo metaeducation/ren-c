@@ -33,15 +33,15 @@
 )]
 
 (did all [
-    [x y] = res: uparse ser: [x y] [pos: <here>, skip, skip]
+    [x y] = res: uparse ser: [x y] [pos: <here>, elide [<any>, <any>]]
     pos = ser
 ])
 (did all [
-    [y] == res: uparse ser: [x y] [skip, pos: <here>, skip]
+    [y] == res: uparse ser: [x y] [<any>, pos: <here>, elide <any>]
     pos = next ser
 ])
 (did all [
-    [] == res: uparse ser: [x y] [skip, skip, pos: <here>]
+    [] == res: uparse ser: [x y] [<any>, <any>, pos: <here>]
     pos = tail of ser
 ])
 [#2130 (

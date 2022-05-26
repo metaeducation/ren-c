@@ -1,14 +1,11 @@
 ; %parse-tag-any.test.reb
 ;
-; <any> takes the place of SKIP in UPARSE.  The ANY operation has been
+; <any> takes the place of R3-Alpha SKIP in UPARSE.  The ANY operation has been
 ; replaced by OPT SOME or MAYBE SOME with the optional use of FURTHER, which
 ; lets "any" mean its more natural non-iterative sense.
 ;
 ; This addresses the fact that `x: skip` seems fishy...if something is
 ; being "skipped over" then why would it yield a value?
-;
-; Pursuant to that, SKIP still exists tentatively as a non-value-bearing
-; way of going to the next value--a synonym for `elide <any>`.
 
 (
     res: ~

@@ -5,7 +5,7 @@
 
 (did all [
     '~removed~ == meta uparse text: "a ^/ " [
-        some [newline remove [to <end>] | "a" [remove [to newline]] | skip]
+        some [newline remove [to <end>] | "a" [remove [to newline]] | <any>]
     ]
     text = "a^/"
 ])
@@ -159,23 +159,23 @@
 
 [#1251
     (did all [
-        '~inserted~ == meta uparse e: "a" [remove skip insert ("xxx")]
+        '~inserted~ == meta uparse e: "a" [remove <any> insert ("xxx")]
         e = "xxx"
     ])
     (did all [
-        '~inserted~ == meta uparse e: "a" [[remove skip] insert ("xxx")]
+        '~inserted~ == meta uparse e: "a" [[remove <any>] insert ("xxx")]
         e = "xxx"
     ])
 ]
 
 [#1244
     (did all [
-        didn't uparse a: "12" [remove v: across skip]
+        didn't uparse a: "12" [remove v: across <any>]
         a = "2"
         v = "1"
     ])
     (did all [
-        didn't uparse a: "12" [remove [v: across skip]]
+        didn't uparse a: "12" [remove [v: across <any>]]
         a = "2"
         v = "1"
     ])
