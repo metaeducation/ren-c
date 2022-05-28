@@ -410,7 +410,7 @@ main-startup: func [
             %.rebol/  ; default *nix (covers Linux, MacOS (OS X) and Unix)
         ]
 
-        return if exists? path [path]
+        return if exists? path [path] else [null]
     ]
 
     ; Set system.users.home (users HOME directory)
@@ -693,7 +693,9 @@ main-startup: func [
     o.args: argv  ; whatever's left is positional args
 
 
-    let boot-embedded: if check-encap [get-encap system.options.boot]
+    let boot-embedded: if check-encap [
+        get-encap system.options.boot
+    ] else [null]
 
     if any [boot-embedded, o.script] [o.quiet: true]
 

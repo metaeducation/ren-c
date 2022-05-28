@@ -448,7 +448,7 @@ compile: func [
         config: config
         files: files
         inspect: inspect
-        librebol: if librebol [#]
+        librebol: if librebol [#] else [null]
     ]
 
     if inspect [

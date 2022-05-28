@@ -234,7 +234,9 @@ func: func* [
     ; that should not be considered.  Note that COLLECT is not defined by
     ; this point in the bootstrap.
     ;
-    locals: if gather [collect-words/deep/set/ignore body exclusions]
+    locals: if gather [
+        collect-words/deep/set/ignore body exclusions
+    ] else [null]
 
     if statics [
         statics: make object! statics
@@ -428,7 +430,7 @@ redescribe: func [
                             fail [param {doesn't match word type of} actual]
                         ]
 
-                        notes/(as word! param): if note <> {} [note]
+                        notes/(as word! param): if note = {} [null] else [note]
                     ]
                 ]
             )]

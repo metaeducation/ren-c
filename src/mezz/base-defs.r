@@ -403,7 +403,7 @@ requote: reframer func* [
 
     do f then result -> [
         quote/depth get/any 'result num-quotes
-    ]
+    ] else [null]
 ]
 
 
@@ -613,7 +613,7 @@ char?: func* [value [<opt> any-value!]] [
 print: func* [
     {Textually output spaced line (evaluating elements if a block)}
 
-    return: "NULL if blank input or effectively empty block, else ~none~"
+    return: "NULL if blank input or effectively empty block, else none"
         [<opt> bad-word!]
     line "Line of text or block, blank or [] has NO output, newline allowed"
         [<blank> char! text! block! quoted!]
@@ -629,7 +629,9 @@ print: func* [
         line: mold unquote line
     ]
 
-    return write-stdout (try spaced line) then [write-stdout newline]
+    return write-stdout (try spaced line) then [
+        write-stdout newline
+    ] else [none]
 ]
 
 echo: func* [

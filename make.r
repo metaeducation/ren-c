@@ -1333,7 +1333,9 @@ add-app-lib: adapt specialize :append [series: app-config/libraries] [
 ]
 
 add-app-ldflags: adapt specialize :append [series: app-config/ldflags] [
-    value: if block? value [flatten/deep reduce bind value linker-flags]
+    value: if block? value [
+        flatten/deep reduce bind value linker-flags
+    ] else [null]
 ]
 
 add-app-def copy system-config/definitions
