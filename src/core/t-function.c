@@ -216,7 +216,7 @@ REBTYPE(Action)
           }
 
         REBVAL *picker = ARG(picker);
-        if (Is_Nulled_Isotope(picker) or IS_BLANK(picker))
+        if (Is_Null_Isotope(picker) or IS_BLANK(picker))
             return action;
 
         const REBSYM *symbol;

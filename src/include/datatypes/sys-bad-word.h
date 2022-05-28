@@ -60,8 +60,7 @@
 //=//// NOTES //////////////////////////////////////////////////////////////=//
 //
 // * The isotope states of several BAD-WORD!s have specific meaning to the
-//   system...such as `~`, ~void~, ~none~, and ~null~.  Each are described
-//   in sections below.
+//   system...such as `~`, ~void~, and ~null~.  Each are described in below.
 //
 // * Normal BAD-WORD!s are truthy.  There's a reason for this, because it
 //   allows operations in the ^META domain to easily use functions like ALL
@@ -142,12 +141,7 @@ inline static bool Is_Isotope(const RELVAL *v) {
 //
 // But inside the system we are more wordy.
 //
-#define UNSET_ISOTOPE               c_cast(const REBVAL*, &PG_Unset_Isotope)
-#define Init_Unset_Isotope(out)     Init_Isotope((out), nullptr)
-#define Is_Unset_Isotope(v)         Is_Isotope_With_Id(v, SYM_0)
-
-
-// `~none~` is the default RETURN for when you just write something like
+// `~none~` is also the default RETURN for when you just write something like
 // `func [return: <none>] [...]`.  It represents the intention of not having a
 // return value, but reserving the right to not be treated as invisible, so
 // that if one ever did imagine an interesting value for it to return, the
@@ -159,8 +153,12 @@ inline static bool Is_Isotope(const RELVAL *v) {
 // and you couldn't write `print [...] else [...]` if it would be sometimes
 // invisible and sometimes not.
 //
-#define Init_None(out)      Init_Isotope((out), Canon(NONE))
-#define Is_None(v)          Is_Isotope_With_Id((v), SYM_NONE)
+// Naming is "Init_None()" instead of "Init_None_Isotope()" for brevity, as
+// there's not much reason to refer to anything but the isotopic form.
+//
+#define NONE_ISOTOPE                c_cast(const REBVAL*, &PG_None_Isotope)
+#define Init_None(out)              Init_Isotope((out), nullptr)
+#define Is_None(v)                  Is_Isotope_With_Id(v, SYM_0)
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//
@@ -193,16 +191,16 @@ inline static bool Is_Isotope(const RELVAL *v) {
 // it has actually gotten much easier with ^(...) behaviors.)
 //
 
-#define Init_Nulled_Isotope(out) \
+#define Init_Null_Isotope(out) \
     Init_Isotope((out), Canon(NULL))
 
-inline static bool Is_Nulled_Isotope(const RELVAL *v)
+inline static bool Is_Null_Isotope(const RELVAL *v)
   { return Is_Isotope_With_Id(v, SYM_NULL); }
 
 inline static REBVAL *Init_Blackhole(RELVAL *out);  // defined in %sys-token.h
 
 inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
-    if (Is_Nulled_Isotope(v))
+    if (Is_Null_Isotope(v))
         Init_Nulled(v);
     else if (Is_Isotope_With_Id(v, SYM_BLANK))
         Init_Blank(v);
@@ -246,7 +244,7 @@ inline static RELVAL *Isotopify_If_Falsey(RELVAL *v) {
 
 inline static RELVAL *Isotopify_If_Nulled(RELVAL *v) {
     if (IS_NULLED(v))
-        Init_Nulled_Isotope(v);
+        Init_Null_Isotope(v);
     return v;
 }
 

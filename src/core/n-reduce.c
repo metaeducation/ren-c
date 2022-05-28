@@ -352,7 +352,7 @@ REB_R Compose_To_Stack_Core(
                 if (insert == nullptr) {
                     // leave alone
                 }
-                else if (Is_Nulled_Isotope(insert)) {
+                else if (Is_Null_Isotope(insert)) {
                     insert = nullptr;
                     rebRelease(insert);
                 }
@@ -360,7 +360,7 @@ REB_R Compose_To_Stack_Core(
                     Meta_Unquotify(insert);
             }
             else {
-                insert = (IS_NULLED(out) or Is_Nulled_Isotope(out))
+                insert = (IS_NULLED(out) or Is_Null_Isotope(out))
                     ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
                     : out;
             }

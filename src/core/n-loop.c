@@ -1389,7 +1389,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
         if (ANY_ARRAY(res->data)) {
             if (
                 IS_NULLED(res->out)
-                or Is_Nulled_Isotope(res->out)
+                or Is_Null_Isotope(res->out)
                 or IS_FALSEY(res->out)
             ){
                 res->start = index;
@@ -1407,7 +1407,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
         }
         else {
             if (
-                not Is_Nulled_Isotope(res->out)
+                not Is_Null_Isotope(res->out)
                 and IS_TRUTHY(res->out)
             ){
                 res->start = index;

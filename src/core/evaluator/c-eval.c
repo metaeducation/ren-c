@@ -1494,7 +1494,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 continue;
             if (not IS_BLANK(DS_AT(dsp_output))) {
                 Copy_Cell(var, DS_AT(dsp_output));
-                Set_Var_May_Fail(var, SPECIFIED, UNSET_ISOTOPE);
+                Set_Var_May_Fail(var, SPECIFIED, NONE_ISOTOPE);
             }
             ++dsp_output;
         }

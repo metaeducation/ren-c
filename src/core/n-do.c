@@ -748,7 +748,7 @@ REBNATIVE(applique)
         action,
         f->dsp_orig, // lowest_ordered_dsp of refinements to weave in
         &binder,
-        UNSET_ISOTOPE
+        NONE_ISOTOPE
     );
     REBARR *varlist = CTX_VARLIST(exemplar);
     Manage_Series(varlist); // binding code into it
@@ -773,7 +773,7 @@ REBNATIVE(applique)
         // !!! Is it necessary to do the `~` to null conversion here, or will
         // the frame invocation do it automatically?
         //
-        if (Is_Unset_Isotope(e.var))
+        if (Is_None(e.var))
             Init_Nulled(e.var);
 
         Remove_Binder_Index(&binder, KEY_SYMBOL(e.key));
@@ -1019,7 +1019,7 @@ REBNATIVE(apply)
     while (Did_Advance_Evars(&e)) {
         if (not arg_threw and not error and IS_TAG(e.var))
             if (VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag))
-                Init_Unset_Isotope(e.var);
+                Init_None(e.var);
 
         /* Remove_Binder_Index(&binder, KEY_SYMBOL(e.key)); */
     }

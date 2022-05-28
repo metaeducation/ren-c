@@ -66,7 +66,7 @@ void Bind_Values_Inner_Loop(
                 INIT_VAL_WORD_INDEX(v, 1);
             }
             else if (type_bit & add_midstream_types) {
-                Init_Unset_Isotope(Append_Context(context, v, nullptr));
+                Init_None(Append_Context(context, v, nullptr));
             }
           }
           else {
@@ -264,7 +264,7 @@ REBARR *Make_Let_Patch(
             | SERIES_FLAG_INFO_NODE_NEEDS_MARK
     );
 
-    Init_Unset_Isotope(ARR_SINGLE(patch));  // start variable off as unset
+    Init_None(ARR_SINGLE(patch));  // start variable off as unset
 
     // The way it is designed, the list of patches terminates in either a
     // nullptr or a context pointer that represents the specifying frame for
@@ -1033,7 +1033,7 @@ void Virtual_Bind_Deep_To_New_Context(
             // with something.  But this code is shared with USE, so the user
             // can get their hands on the variable.  Can't be trash.
             //
-            Init_Unset_Isotope(var);
+            Init_None(var);
 
             assert(rebinding); // shouldn't get here unless we're rebinding
 

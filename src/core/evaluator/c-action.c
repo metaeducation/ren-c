@@ -844,7 +844,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         ){
             if (
                 GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
-                and Is_Unset_Isotope(f->arg)
+                and Is_None(f->arg)
             ){
                 Init_Nulled(f->arg);
             }

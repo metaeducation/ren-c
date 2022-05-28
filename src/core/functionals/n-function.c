@@ -133,7 +133,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
         assert(  // !!! keeping notes to try and firm this up...
             IS_NULLED(cell)  // typical
             or IS_ACTION(cell)
-            or Is_Unset_Isotope(cell)  // seen with ADAPT
+            or Is_None(cell)  // seen with ADAPT
         );
         Init_Action(
             cell,
@@ -892,7 +892,7 @@ REBNATIVE(inherit_meta)
             CTX_ARCHETYPE(m1),
             Canon_Symbol(syms[which])
         );
-        if (not val1 or IS_NULLED(val1) or Is_Unset_Isotope(val1))
+        if (not val1 or IS_NULLED(val1) or Is_None(val1))
             continue;  // nothing to inherit from
         if (not ANY_CONTEXT(val1))
             fail ("Expected context in original meta information");
@@ -907,7 +907,7 @@ REBNATIVE(inherit_meta)
             continue;
 
         REBCTX *ctx2;
-        if (IS_NULLED(val2) or Is_Unset_Isotope(val2)) {
+        if (IS_NULLED(val2) or Is_None(val2)) {
             ctx2 = Make_Context_For_Action(
                 derived,  // the action
                 DSP,  // will weave in any refinements pushed (none apply)
@@ -925,7 +925,7 @@ REBNATIVE(inherit_meta)
         Init_Evars(&e, val2);
 
         while (Did_Advance_Evars(&e)) {
-            if (not IS_NULLED(e.var) and not Is_Unset_Isotope(e.var))
+            if (not IS_NULLED(e.var) and not Is_None(e.var))
                 continue;  // already set to something
 
             REBVAL *slot = Select_Symbol_In_Context(

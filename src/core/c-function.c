@@ -424,7 +424,7 @@ void Push_Paramlist_Triads_May_Fail(
         // But Is_Param_Endable() indicates <end>.
 
         if (local) {
-            Init_Unset_Isotope(param);
+            Init_None(param);
         }
         else if (refinement) {
             Init_Param(

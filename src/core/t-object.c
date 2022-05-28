@@ -36,7 +36,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             VAL_WORD_SYMBOL(arg),
             strict
         )){
-            Init_Unset_Isotope(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
+            Init_None(Append_Context(c, nullptr, VAL_WORD_SYMBOL(arg)));
         }
         return;
     }
@@ -100,7 +100,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 
     STKVAL(*) new_word = DS_AT(collector.dsp_orig) + first_new_index;
     for (; new_word != DS_TOP + 1; ++new_word)
-        Init_Unset_Isotope(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
+        Init_None(Append_Context(c, nullptr, VAL_WORD_SYMBOL(new_word)));
   }
   }  // end the non-module part
 
@@ -114,7 +114,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
             var = MOD_VAR(c, symbol, strict);
             if (not var) {
                 var = Append_Context(c, nullptr, symbol);
-                Init_Unset_Isotope(var);
+                Init_None(var);
             }
         }
         else {
@@ -144,7 +144,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
         }
 
         if (word + 1 == tail) {
-            Init_Unset_Isotope(var);
+            Init_None(var);
             break;  // fix bug#708
         }
         else

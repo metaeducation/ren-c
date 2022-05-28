@@ -170,7 +170,7 @@ REBNATIVE(bind)
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
-            Init_Unset_Isotope(Append_Context(VAL_CONTEXT(context), v, nullptr));
+            Init_None(Append_Context(VAL_CONTEXT(context), v, nullptr));
             return Quotify(v, num_quotes);
         }
 
@@ -950,7 +950,7 @@ bool Get_Path_Push_Refinements_Throws(
             at = safe;
         }
         if (
-            IS_NULLED(at) or Is_Nulled_Isotope(at)
+            IS_NULLED(at) or Is_Null_Isotope(at)
             or IS_BLANK(at) or Is_Isotope_With_Id(at, SYM_BLANK)
         ){
             // just skip it
@@ -2264,7 +2264,7 @@ REBNATIVE(heavy) {
     Move_Cell(D_OUT, Meta_Unquotify(ARG(optional)));
 
     if (IS_NULLED(D_OUT))
-        Init_Nulled_Isotope(D_OUT);
+        Init_Null_Isotope(D_OUT);
 
     return D_OUT;
 }

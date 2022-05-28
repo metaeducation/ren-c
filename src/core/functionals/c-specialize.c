@@ -214,7 +214,7 @@ REBCTX *Make_Context_For_Action(
         action,
         lowest_ordered_dsp,
         binder,
-        UNSET_ISOTOPE
+        NONE_ISOTOPE
     );
 
     Manage_Series(CTX_VARLIST(exemplar));  // !!! was needed before, review
@@ -755,7 +755,7 @@ REBACT *Alloc_Action_From_Exemplar(
         // https://forum.rebol.info/t/default-values-and-make-frame/1412
         // https://forum.rebol.info/t/1413
         //
-        if (Is_Unset_Isotope(arg)) {
+        if (Is_None(arg)) {
             assert(IS_TYPESET(param));
             Copy_Cell(arg, param);
             continue;

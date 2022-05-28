@@ -363,7 +363,7 @@ REBNATIVE(opt_combinator)
         return D_OUT;  // so return its result (note: may be null *isotope*)
 
     Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input));
-    return Init_Nulled_Isotope(D_OUT);  // success, but convey nothingness
+    return Init_Null_Isotope(D_OUT);  // success, but convey nothingness
 }
 
 

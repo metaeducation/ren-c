@@ -628,7 +628,7 @@ REBNATIVE(case)
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
 
-    assert(Is_Unset_Isotope(ARG(last)));
+    assert(Is_None(ARG(last)));
     Init_Nulled(ARG(last));  // default return result
 
     Push_Frame(nullptr, f);
@@ -768,7 +768,7 @@ REBNATIVE(switch)
 
     Push_Frame(nullptr, f);
 
-    assert(Is_Unset_Isotope(ARG(last)));
+    assert(Is_None(ARG(last)));
     Init_Nulled(ARG(last));
 
     REBVAL *left = ARG(value);
@@ -960,7 +960,7 @@ REBNATIVE(default)
     //     >> x: default [10]
     //     == ~
     //
-    if (not (IS_NULLED(D_OUT) or Is_Unset_Isotope(D_OUT))) {
+    if (not (IS_NULLED(D_OUT) or Is_None(D_OUT))) {
         if (not REF(predicate)) {  // no custom additional constraint
             if (not IS_BLANK(D_OUT))  // acts as `x: default .not.blank? [...]`
                 return D_OUT;  // count it as "already set"

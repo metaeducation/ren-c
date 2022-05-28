@@ -344,7 +344,7 @@ REBNATIVE(reframer_p)
         ARG(shim),
         dsp_orig,
         &binder,
-        UNSET_ISOTOPE
+        NONE_ISOTOPE
     );
 
     option(REBCTX*) error = nullptr;  // can't fail() with binder in effect
@@ -426,7 +426,7 @@ REBNATIVE(reframer_p)
     // takes a void and giving it ~pending~; would make bugs more obvious.
     //
     REBVAL *var = CTX_VAR(exemplar, param_index);
-    assert(Is_Unset_Isotope(var));
+    assert(Is_None(var));
     Copy_Cell(var, CTX_ARCHETYPE(exemplar));
 
     // Make action with enough space to store the implementation phase and

@@ -128,9 +128,9 @@ export console!: make object! [
 
         === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
 
-        if v = '~none~ [  ; none isotope, don't show
+        if v = '~ [  ; none isotope, don't show
             ;
-            ; We suppress display of the ~none~ state.  It is used by commands
+            ; We suppress display of the none state.  It is used by commands
             ; like HELP that want to keep the focus in the console on what
             ; they are printing out, without an `== xxx` evaluated result
             ; showing up.  It is also used by functions that need a handy way
