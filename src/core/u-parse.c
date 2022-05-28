@@ -198,7 +198,7 @@ enum parse_flags {
     PF_CHANGE = 1 << 11,
     PF_LOOPING = 1 << 12,
     PF_FURTHER = 1 << 13,  // must advance parse input to count as a match
-    PF_MAYBE = 1 << 14,  // want invisibility (not NULL) if no matches
+    PF_OPT = 1 << 14,  // want NULL (not no-op) if no matches
 
     PF_ONE_RULE = 1 << 15,  // signal to only run one step of the parse
 
@@ -1569,6 +1569,7 @@ REBNATIVE(subparse)
                 goto pre_rule;
 
               case SYM_OPT:
+                P_FLAGS |= PF_OPT;
                 mincount = 0;
                 FETCH_NEXT_RULE(f);
                 goto pre_rule;
@@ -2498,7 +2499,18 @@ REBNATIVE(subparse)
                 }
 
                 if (count == 0) {
-                    if (not (P_FLAGS & PF_MAYBE))  // leave alone
+                    //
+                    // !!! Right now, a rule like `set x group!` will leave x
+                    // alone if you don't match.  (This is the same as
+                    // `maybe set x group!`).  Instead of being a synonym, the
+                    // behavior of unsetting x has been considered, and to
+                    // require saying `maybe set x group!` to get the no-op.
+                    // But `opt x: group!` will set x to null on no match.
+                    //
+                    // Note: It should be `x: opt group!` but R3-Alpha parse
+                    // is hard to get composability on such things.
+                    //
+                    if (P_FLAGS & PF_OPT)  // don't just leave alone
                         Init_Nulled(
                             Sink_Word_May_Fail(
                                 set_or_copy_word,

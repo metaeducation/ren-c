@@ -209,11 +209,11 @@ func: func* [
                 copy/deep body
             ]
         )
-        opt some [
-            set var: word! (other: _) opt set other: group! (
+        maybe some [
+            set var: word! (other: _) maybe set other: group! (
                 append exclusions ^var
                 append statics ^(as set-word! var)
-                append statics as block! other
+                append statics ^(other else [the ~])
             )
         ]
         (var: _)
