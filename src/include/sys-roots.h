@@ -186,28 +186,12 @@ inline static REBVAL *rebSpecific(const RELVAL *v, REBSPC *specifier)
 // so that is something to think about.  At the moment, only f->out can
 // hold thrown returns, and these API handles are elsewhere.
 //
-inline static void Handle_Api_Dispatcher_Result(REBFRM *f, const REBVAL* r) {
-    //
-    // NOTE: Evaluations are performed directly into API handles as the output
-    // slot of the evaluation.  Clearly you don't want to release the cell
-    // you're evaluating into, so checks against the frame's output cell
-    // should be done before calling this routine!
-    //
-    assert(r != f->out);
-
-  #if !defined(NDEBUG)
-    if (NOT_CELL_FLAG(r, ROOT)) {
-        printf("dispatcher returned non-API value not in D_OUT\n");
-        printf("during ACTION!: %s\n", f->label_utf8);
-        printf("`return D_OUT;` or use `RETURN (non_api_cell);`\n");
-        panic(r);
-    }
-  #endif
+inline static void Release_Api_Value_If_Unmanaged(const REBVAL* r) {
+    assert(GET_CELL_FLAG(r, ROOT));
 
     if (IS_NULLED(r))
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
-    Copy_Cell(f->out, r);
     if (NOT_CELL_FLAG(r, MANAGED))
         rebRelease(r);
 }

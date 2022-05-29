@@ -801,7 +801,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         assert(IS_ERROR(r));
         if (mode == LOOP_MAP_EACH)
             DS_DROP_TO(dsp_orig);
-        rebJumps ("fail", rebR(r));
+        rebJumps ("fail", rebR(m_cast(REBVAL*, r)));
     }
 
     // Otherwise, nullptr signals result in les.out (a.k.a. D_OUT)
@@ -1562,7 +1562,7 @@ REBNATIVE(remove_each)
         REBLEN removals = Finalize_Remove_Each(&res);
         UNUSED(removals);
 
-        rebJumps("fail", rebR(r));
+        rebJumps("fail", rebR(m_cast(REBVAL*, r)));
     }
 
     if (res.broke)

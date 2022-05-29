@@ -380,12 +380,14 @@ REBTYPE(Sequence)
         mutable_KIND3Q_BYTE(sequence) = REB_BLOCK;
 
         REB_R r = T_Array(frame_, verb);
-
         assert(KIND3Q_BYTE(r) == REB_BLOCK);
-        Freeze_Array_Shallow(VAL_ARRAY_KNOWN_MUTABLE(r));
-        mutable_KIND3Q_BYTE(r) = kind;
 
-        return r; }
+        if (r != D_OUT)
+            Copy_Cell(D_OUT, r);
+
+        Freeze_Array_Shallow(VAL_ARRAY_KNOWN_MUTABLE(D_OUT));
+        mutable_KIND3Q_BYTE(D_OUT) = kind;
+        return D_OUT; }
 
       case SYM_PICK_P: {
         INCLUDE_PARAMS_OF_PICK_P;

@@ -986,8 +986,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         goto dispatch_completed;  // skips invisible check
     }
     else if (not IS_RETURN_SIGNAL(r)) {
-        assert(GET_CELL_FLAG(r, ROOT));  // API, from Alloc_Value()
-        Handle_Api_Dispatcher_Result(f, r);
+        Copy_Cell(f->out, r);
+        if (Is_Api_Value(r))
+            Release_Api_Value_If_Unmanaged(r);
         goto dispatch_completed;  // skips invisible check
     }
     else switch (VAL_RETURN_SIGNAL(r)) {  // it's a "pseudotype" instruction

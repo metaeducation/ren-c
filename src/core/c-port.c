@@ -103,12 +103,11 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             return nullptr;  // !!! `read dns://` returns nullptr on failure
 
         if (r != D_OUT) {
-            if (Is_Api_Value(r)) {
-                Handle_Api_Dispatcher_Result(frame_, r);
-                r = D_OUT;
-            }
-            else
-                assert(!"Bad REB_R in READ workaround for /STRING /LINES");
+            assert(not IS_RETURN_SIGNAL(r));  // R_THROWN etc. unsupported
+
+            Copy_Cell(D_OUT, r);
+            if (Is_Api_Value(r))
+                Release_Api_Value_If_Unmanaged(r);
         }
 
         if ((REF(string) or REF(lines)) and not IS_TEXT(D_OUT)) {
@@ -128,6 +127,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             Move_Cell(temp, D_OUT);
             Init_Block(D_OUT, Split_Lines(temp));
         }
+        return D_OUT;
     }
 
     return r;

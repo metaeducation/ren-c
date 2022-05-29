@@ -28,7 +28,7 @@
 // The REB_R type is a REBVAL* but with the idea that it is legal to hold
 // types like REB_R_THROWN, etc.  This helps document interface contract.
 //
-typedef REBVAL *REB_R;
+typedef const REBVAL *REB_R;
 
 
 // PER-TYPE COMPARE HOOKS, to support GREATER?, EQUAL?, LESSER?...

@@ -122,12 +122,20 @@ REBTYPE(Quoted)
     //
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_COPY: {  // D_ARG(1) skips RETURN in first arg slot
-        REBLEN num_quotes = Dequotify(D_ARG(1));
-        REB_R r = Run_Generic_Dispatch(D_ARG(1), frame_, verb);
-        assert(r != R_THROWN);  // can't throw
+        INCLUDE_PARAMS_OF_COPY;
+        UNUSED(REF(part));
+        UNUSED(REF(deep));
+        UNUSED(REF(types));
+
+        REBLEN num_quotes = Dequotify(ARG(value));
+        REB_R r = Run_Generic_Dispatch(ARG(value), frame_, verb);
+        assert(not IS_RETURN_SIGNAL(r));  // can't throw
+        assert(not Is_Api_Value(r));
         if (r == nullptr)
-            r = Init_Nulled(FRM_OUT(frame_));
-        return Quotify(r, num_quotes); }
+            r = Init_Nulled(D_OUT);
+        else
+            Copy_Cell(D_OUT, r);
+        return Quotify(D_OUT, num_quotes); }
 
       default:
         break;
