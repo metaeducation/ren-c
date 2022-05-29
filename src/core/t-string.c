@@ -833,7 +833,7 @@ REBTYPE(String)
         else
             limit = 1;
         if (index >= tail or limit == 0)
-            RETURN (v);
+            return v;
 
         REBLEN len;
         REBSIZ size = VAL_SIZE_LIMIT_AT(&len, v, limit);
@@ -845,7 +845,7 @@ REBTYPE(String)
         Free_Bookmarks_Maybe_Null(s);
         TERM_STR_LEN_SIZE(s, tail - len, size_old - size);
 
-        RETURN (v); }
+        return v; }
 
     //-- Modification:
       case SYM_APPEND:
@@ -868,7 +868,7 @@ REBTYPE(String)
             if (len == 0) {
                 if (id == SYM_APPEND) // append always returns head
                     VAL_INDEX_RAW(v) = 0;
-                RETURN (v); // don't fail on read only if it would be a no-op
+                return v; // don't fail on read only if it would be a no-op
             }
             Init_Nulled(ARG(value));  // low-level treats NULL as nothing
         }
@@ -902,7 +902,7 @@ REBTYPE(String)
             len,
             REF(dup) ? Int32(ARG(dup)) : 1
         );
-        RETURN (v); }
+        return v; }
 
     //-- Search:
       case SYM_SELECT:
@@ -1014,7 +1014,7 @@ REBTYPE(String)
         REBSTR *s = VAL_STRING_ENSURE_MUTABLE(v);
 
         if (index >= tail)
-            RETURN (v);  // clearing after available data has no effect
+            return v;  // clearing after available data has no effect
 
         // !!! R3-Alpha would take this opportunity to make it so that if the
         // series is now empty, it reclaims the "bias" (unused capacity at
@@ -1028,7 +1028,7 @@ REBTYPE(String)
         Free_Bookmarks_Maybe_Null(s);
 
         TERM_STR_LEN_SIZE(s, cast(REBLEN, index), offset);
-        RETURN (v); }
+        return v; }
 
     //-- Creation:
 
@@ -1067,7 +1067,7 @@ REBTYPE(String)
             SET_CHAR_AT(v_str, VAL_INDEX(v), arg_c);
             SET_CHAR_AT(arg_str, VAL_INDEX(arg), v_c);
         }
-        RETURN (v); }
+        return v; }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
@@ -1182,7 +1182,7 @@ REBTYPE(String)
             SET_CHAR_AT(str, k, GET_CHAR_AT(str, n + index));
             SET_CHAR_AT(str, n + index, swap);
         }
-        RETURN (v); }
+        return v; }
 
       default:
         // Let the port system try the action, e.g. OPEN %foo.txt

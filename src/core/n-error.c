@@ -72,7 +72,7 @@ REBNATIVE(trap)
     }
 
     if (IS_BLANK(error)) // signal used to indicate a throw
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     assert(IS_ERROR(error));
     return error;

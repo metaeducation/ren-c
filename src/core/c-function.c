@@ -1210,5 +1210,5 @@ REBNATIVE(tweak)
     else
         ACT_IDENTITY(act)->leader.bits &= ~flag;
 
-    RETURN (ARG(action));
+    return ARG(action);
 }

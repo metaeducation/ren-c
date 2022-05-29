@@ -794,7 +794,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
     if (r == R_THROWN) {  // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
         if (mode == LOOP_MAP_EACH)
             DS_DROP_TO(dsp_orig);
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     if (r) {
@@ -995,7 +995,7 @@ REBNATIVE(for_skip)
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
-                return R_THROWN;
+                return_thrown (D_OUT);
             if (broke)
                 return nullptr;
         }
@@ -1094,7 +1094,7 @@ REBNATIVE(cycle)
                     return D_OUT;
                 }
 
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
             if (broke)
                 return nullptr;
@@ -1548,7 +1548,7 @@ REBNATIVE(remove_each)
     REB_R r = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
 
     if (r == R_THROWN)
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     if (r) {  // Remove_Each_Core() couldn't finalize in this case due to fail
         assert(IS_ERROR(r));
@@ -1697,7 +1697,7 @@ REBNATIVE(repeat)
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
-                return R_THROWN;
+                return_thrown (D_OUT);
             if (broke)
                 return nullptr;
         }
@@ -1733,7 +1733,7 @@ REBNATIVE(for)
 
     if (IS_GROUP(body)) {
         if (Eval_Value_Throws(D_OUT, body, SPECIFIED))
-            return R_THROWN;
+            return_thrown (D_OUT);
         Move_Cell(body, D_OUT);
     }
 
@@ -1756,7 +1756,7 @@ REBNATIVE(for)
             true,
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         )){
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         return D_OUT;
     }
@@ -1808,7 +1808,7 @@ REBNATIVE(until)
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
-                return R_THROWN;
+                return_thrown (D_OUT);
             if (broke)
                 return nullptr;
 
@@ -1874,7 +1874,7 @@ REBNATIVE(while)
     do {
         if (Do_Branch_With_Throws(D_SPARE, ARG(condition), D_OUT)) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;  // don't see BREAK/CONTINUE in the *condition*
+            return_thrown (D_OUT);  // don't see BREAK/CONTINUE in the *condition*
         }
 
         // !!! We use Do_Branch_Throws() here because we want to run actions as
@@ -1890,7 +1890,7 @@ REBNATIVE(while)
         if (Do_Branch_With_Throws(D_OUT, ARG(body), D_SPARE)) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
-                return R_THROWN;
+                return_thrown (D_OUT);
 
             if (broke)
                 return nullptr;

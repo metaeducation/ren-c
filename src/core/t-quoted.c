@@ -167,7 +167,7 @@ REBNATIVE(the)
 
     if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
         if (Eval_Value_Throws(D_OUT, v, SPECIFIED))
-            return R_THROWN;
+            return_thrown (D_OUT);
         return D_OUT;  // Don't set UNEVALUATED flag
     }
 
@@ -253,7 +253,7 @@ REBNATIVE(just)
 
     if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
         if (Eval_Value_Throws(D_OUT, v, SPECIFIED))
-            return R_THROWN;
+            return_thrown (D_OUT);
         return Quotify(D_OUT, 1);  // Don't set UNEVALUATED flag
     }
 
@@ -282,7 +282,7 @@ REBNATIVE(quote)
     REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
 
     if (depth == 0)
-        RETURN (ARG(optional));
+        return ARG(optional);
 
     if (depth < 0)
         fail (PAR(depth));
@@ -306,7 +306,7 @@ REBNATIVE(meta)
 {
     INCLUDE_PARAMS_OF_META;
 
-    RETURN (ARG(optional));  // argument was already ^meta
+    return ARG(optional);  // argument was already ^meta
 }
 
 
@@ -388,7 +388,7 @@ REBNATIVE(unmeta)
     REBVAL *v = ARG(value);
 
     if (IS_NULLED(v))
-        RETURN (v);  // ^(null) => null, so the reverse must be true
+        return v;  // ^(null) => null, so the reverse must be true
 
     if (IS_BAD_WORD(v)) {
         if (GET_CELL_FLAG(v, ISOTOPE))
@@ -421,7 +421,7 @@ REBNATIVE(unmeta)
         return Init_None(D_OUT);
     }
 
-    RETURN (v);
+    return v;
 }
 
 
@@ -457,7 +457,7 @@ REBNATIVE(noquote)
 
     REBVAL *v = ARG(optional);
     Unquotify(v, VAL_NUM_QUOTES(v));
-    RETURN (v);
+    return v;
 }
 
 
@@ -521,7 +521,7 @@ REBTYPE(Symbol)
         UNUSED(REF(deep));
         UNUSED(REF(types));
 
-        RETURN (ARG(value)); }
+        return ARG(value); }
 
       default: break;
     }

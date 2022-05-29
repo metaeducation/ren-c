@@ -277,6 +277,8 @@ bool Make_Frame_From_Feed_Throws(
 //
 REB_R Reframer_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_REFRAMER_MAX);
 
@@ -302,7 +304,7 @@ REB_R Reframer_Dispatcher(REBFRM *f)
         f->feed,
         error_on_deferred
     )){
-        return R_THROWN;
+        return_thrown (f->out);
     }
 
     REBVAL *arg = FRM_ARG(f, VAL_INT32(param_index));

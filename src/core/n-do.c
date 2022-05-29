@@ -66,7 +66,7 @@ REBNATIVE(reeval)
         flags,
         enfix
     )){
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
     return D_OUT;  // don't clear stale flag...act invisibly
 }
@@ -115,7 +115,7 @@ REBNATIVE(shove)
     REBVAL *left = ARG(left);
 
     if (IS_END(f_value))  // ...shouldn't happen for WORD!/PATH! unless APPLY
-        RETURN (ARG(left));  // ...because evaluator wants `help <-` to work
+        return ARG(left);  // ...because evaluator wants `help <-` to work
 
     // It's best for SHOVE to do type checking here, as opposed to setting
     // some kind of EVAL_FLAG_SHOVING and passing that into the evaluator, then
@@ -146,7 +146,7 @@ REBNATIVE(shove)
     }
     else if (IS_GROUP(f_value)) {
         if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
-            return R_THROWN;
+            return_thrown (D_OUT);
 
         Move_Cell(shovee, D_OUT);  // can't eval directly into arg slot
     }
@@ -205,7 +205,7 @@ REBNATIVE(shove)
         )
     ){
         if (Eval_Value_Throws(D_OUT, left, SPECIFIED))
-            return R_THROWN;
+            return_thrown (D_OUT);
     }
     else {
         Copy_Cell(D_OUT, left);
@@ -224,7 +224,7 @@ REBNATIVE(shove)
         enfix
     )){
         rebRelease(composed_set_path);  // ok if nullptr
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     assert(NOT_CELL_FLAG(D_OUT, OUT_NOTE_STALE));  // !!! can this happen?
@@ -374,7 +374,7 @@ REBNATIVE(do)
       case REB_META_GROUP:
       case REB_GET_GROUP: {
         if (Do_Any_Array_At_Throws(D_OUT, source, SPECIFIED))
-            return R_THROWN;
+            return_thrown (D_OUT);
         return D_OUT; }
 
       case REB_VARARGS: {
@@ -396,7 +396,7 @@ REBNATIVE(do)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
 
             SET_END(position); // convention for shared data at end point
@@ -425,7 +425,7 @@ REBNATIVE(do)
         Drop_Frame(subframe);
 
         if (threw)
-            return R_THROWN;
+            return_thrown (D_OUT);
 
         CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);
         return D_OUT; }
@@ -446,7 +446,7 @@ REBNATIVE(do)
             rebQ(REF(args)),
             REF(only) ? Lib(TRUE) : Lib(FALSE)
         )){
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         return D_OUT; }
 
@@ -470,12 +470,12 @@ REBNATIVE(do)
             fail (Error_Do_Arity_Non_Zero_Raw());
 
         if (Eval_Value_Maybe_Stale_Throws(D_OUT, source, SPECIFIED))
-            return R_THROWN;
+            return_thrown (D_OUT);
         break; }
 
       case REB_FRAME: {
         if (Do_Frame_Maybe_Stale_Throws(D_OUT, source))
-            return R_THROWN; // prohibits recovery from exits
+            return_thrown (D_OUT); // prohibits recovery from exits
 
         goto handle_void; }
 
@@ -572,7 +572,7 @@ REBNATIVE(evaluate)
             Drop_Frame(f);
 
             if (threw)
-                return R_THROWN;
+                return_thrown (D_OUT);
         }
         break; }  // update variable
 
@@ -601,7 +601,7 @@ REBNATIVE(evaluate)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
 
             VAL_INDEX_UNBOUNDED(position) = index;
@@ -620,7 +620,7 @@ REBNATIVE(evaluate)
 
             REBFLGS flags = EVAL_MASK_DEFAULT;
             if (Eval_Step_In_Subframe_Throws(D_OUT, f, flags))
-                return R_THROWN;
+                return_thrown (D_OUT);
         }
         break; }  // update variable
 
@@ -797,7 +797,7 @@ REBNATIVE(applique)
 
     if (def_threw) {
         Drop_Frame(f);
-        RETURN (temp);
+        return Move_Cell(D_OUT, temp);
     }
 
     if (not REF(partial)) {
@@ -826,7 +826,7 @@ REBNATIVE(applique)
     Drop_Frame(f);
 
     if (action_threw)
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     return D_OUT;
 }
@@ -1030,7 +1030,7 @@ REBNATIVE(apply)
         fail (error);  // only safe to fail *AFTER* we have cleared binder
 
     if (arg_threw)
-        return R_THROWN;
+        return_thrown (D_OUT);
   }
 
     // Need to do this up front, because it captures f->dsp.
@@ -1059,7 +1059,7 @@ REBNATIVE(apply)
     Drop_Frame(f);
 
     if (action_threw)
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     return D_OUT;
 }

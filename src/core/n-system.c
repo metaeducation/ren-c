@@ -265,7 +265,7 @@ REBNATIVE(check)
         ASSERT_ARRAY(ACT_DETAILS(VAL_ACTION(value)));
     }
 
-    RETURN (value);
+    return value;
 #endif
 }
 
@@ -403,7 +403,9 @@ REBNATIVE(c_debug_break)
 {
     INCLUDE_PARAMS_OF_C_DEBUG_BREAK;
 
-  #if INCLUDE_C_DEBUG_BREAK_NATIVE
+  #if !INCLUDE_C_DEBUG_BREAK_NATIVE
+    fail (Error_Debug_Only_Raw());
+  #else
     #if DEBUG_COUNT_TICKS
         //
         // For instance with:
@@ -414,16 +416,14 @@ REBNATIVE(c_debug_break)
         // happened and has been passed as an argument.
         //
         TG_Break_At_Tick = frame_->tick + 1;
-        RETURN_INVISIBLE;
+        return_invisible (D_OUT);
      #else
         // No tick counting or tick-break checking, but still want some
         // debug break functionality (e.g. callgrind build).  Break here--
         // you'll have to step up out into the evaluator stack.
         //
         debug_break();
-        RETURN_INVISIBLE;
+        return_invisible (D_OUT);
       #endif
-  #else
-    fail (Error_Debug_Only_Raw());
   #endif
 }

@@ -165,13 +165,13 @@ REBNATIVE(bind)
         // Bind a single word
 
         if (Try_Bind_Word(context, v))
-            RETURN (Quotify(v, num_quotes));
+            return Quotify(v, num_quotes);
 
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
             Init_Unset_Isotope(Append_Context(VAL_CONTEXT(context), v, nullptr));
-            RETURN (Quotify(v, num_quotes));
+            return Quotify(v, num_quotes);
         }
 
         fail (Error_Not_In_Context_Raw(v));
@@ -261,7 +261,7 @@ REBNATIVE(in)
 
     assert(ANY_ARRAY(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
-    RETURN (v);
+    return v;
 }
 
 
@@ -305,7 +305,7 @@ REBNATIVE(without)
 
     assert(ANY_ARRAY(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
-    RETURN (v);
+    return v;
 }
 
 //
@@ -332,7 +332,7 @@ REBNATIVE(use)
     );
 
     if (Do_Any_Array_At_Throws(D_OUT, ARG(body), SPECIFIED))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     return D_OUT;
 }
@@ -489,7 +489,7 @@ REBNATIVE(unbind)
         Unbind_Values_Core(at, tail, context, did REF(deep));
     }
 
-    RETURN (word);
+    return word;
 }
 
 
@@ -992,7 +992,7 @@ REBNATIVE(get)
 
     if (Get_Var_Core_Throws(D_OUT, steps_out, source, SPECIFIED)) {
         assert(steps_out);  // !!! should plain PICK* be allowed to throw?
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     if (not REF(any))
@@ -1342,7 +1342,7 @@ REBNATIVE(set)
 
     if (Set_Var_Core_Throws(D_OUT, steps_out, target, SPECIFIED, value)) {
         assert(steps_out);  // !!! should plain POKE* be allowed to throw?
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     if (steps_out and not Is_Blackhole(steps))
@@ -1351,7 +1351,7 @@ REBNATIVE(set)
     // Note that while the written value would decay if an isotope, the overall
     // return result is the same as was passed in.
     //
-    RETURN (value);
+    return value;
 }
 
 
@@ -1374,7 +1374,7 @@ REBNATIVE(try)
     if (IS_NULLED(optional))
         return Init_Blank(D_OUT);
 
-    RETURN (optional);
+    return optional;
 }
 
 
@@ -1399,7 +1399,7 @@ REBNATIVE(opt)
     if (IS_NULLED(ARG(optional)))
         return Init_Isotope(D_OUT, Canon(NULL));
 
-    RETURN (ARG(optional));
+    return ARG(optional);
 }
 
 
@@ -1449,7 +1449,7 @@ REBNATIVE(resolve)
         Copy_Cell(dest, src);
     }
 
-    RETURN (ARG(where));
+    return ARG(where);
 }
 
 
@@ -1496,7 +1496,7 @@ REBNATIVE(enfix)
 
     SET_ACTION_FLAG(VAL_ACTION(action), ENFIXED);
 
-    RETURN (action);
+    return action;
 }
 
 
@@ -1541,7 +1541,7 @@ REBNATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    RETURN (ARG(value));
+    return ARG(value);
 }
 
 
@@ -1786,7 +1786,7 @@ REBNATIVE(as)
     REBVAL *t = ARG(type);
     enum Reb_Kind new_kind = VAL_TYPE_KIND(t);
     if (new_kind == VAL_TYPE(v))
-        RETURN (v);
+        return v;
 
     switch (new_kind) {
       case REB_INTEGER: {
@@ -2152,7 +2152,7 @@ REBNATIVE(as_text)
 
     enum Reb_Kind new_kind = REB_TEXT;
     if (new_kind == VAL_TYPE(v) and not REF(strict))
-        RETURN (Quotify(v, quotes));  // just may change quotes
+        return Quotify(v, quotes);  // just may change quotes
 
     if (not Try_As_String(
         D_OUT,
@@ -2363,10 +2363,10 @@ REBNATIVE(reify)
         return Init_Bad_Word(D_OUT, Canon(NULL));
 
     if (IS_BAD_WORD(v))  // e.g. the input was an isotope form
-        RETURN (v);
+        return v;
 
     assert(IS_QUOTED(v));
-    RETURN (Unquotify(v, 1));
+    return Unquotify(v, 1);
 }
 
 
@@ -2394,7 +2394,7 @@ REBNATIVE(none_to_void)
     if (IS_END(v))  // !!! Review: ^META parameter <end> should be ~void~?
         return D_OUT;
 
-    RETURN (v);
+    return v;
 }
 
 
@@ -2422,7 +2422,7 @@ REBNATIVE(null_to_void)
     if (IS_NULLED(v) or (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_NULL))
         return D_OUT;
 
-    RETURN (Meta_Unquotify(v));
+    return Meta_Unquotify(v);
 }
 
 

@@ -179,7 +179,7 @@ REBNATIVE(poke)
     //
     REB_R r = Run_Generic_Dispatch(location, frame_, Canon(POKE_P));
     if (r == R_THROWN)
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     // Note: if r is not nullptr here, that means there was a modification
     // which nothing is writing back.  It would be like saying:
@@ -193,7 +193,7 @@ REBNATIVE(poke)
     if (r != nullptr and not REF(immediate))
         fail ("POKE of immediate won't change value, use /IMMEDIATE if okay");
 
-    RETURN (ARG(value));  // return the value we got in
+    return ARG(value);  // return the value we got in
 }
 
 

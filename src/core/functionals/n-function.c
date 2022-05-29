@@ -196,11 +196,13 @@ bool Interpreted_Dispatch_Details_1_Throws(
 //
 REB_R Unchecked_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;
+
     REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
         Move_Cell(f->out, spare);
-        return R_THROWN;
+        return_thrown (f->out);
     }
     if (not returned)  // assume if it was returned, it was decayed if needed
         Decay_If_Isotope(spare);
@@ -223,12 +225,14 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 //
 REB_R Opaque_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;
+
     RESET(f->out);  // never invisible
     REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
         Move_Cell(f->out, spare);
-        return R_THROWN;
+        return_thrown (f->out);
     }
     UNUSED(returned);  // no additional work to bypass
     return Init_None(f->out);
@@ -245,11 +249,13 @@ REB_R Opaque_Dispatcher(REBFRM *f)
 //
 REB_R Returner_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;
+
     REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
         Move_Cell(f->out, spare);
-        return R_THROWN;
+        return_thrown (f->out);
     }
     if (not returned)  // assume if it was returned, it was decayed if needed
         Decay_If_Isotope(spare);
@@ -279,13 +285,15 @@ REB_R Returner_Dispatcher(REBFRM *f)
 //
 REB_R Elider_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     assert(f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE);
 
     REBVAL *discarded = FRM_SPARE(f);  // spare usable during dispatch
 
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, discarded, f))
-        return R_THROWN;
+        return_thrown (f->out);
     UNUSED(returned);  // no additional work to bypass
 
     assert(f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE);
@@ -786,7 +794,7 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool decay) {
 REBNATIVE(definitional_return)
 //
 // Returns in Ren-C are functions that are aware of the function they return
-// to.  So the dispatchers for functions that provide RETURN (e.g. FUNC) will
+// to.  So the dispatchers for functions that provide return e.g. FUNC will
 // actually use an instance of this native, and poke a binding into it to
 // identify the action.
 //
@@ -849,7 +857,7 @@ REBNATIVE(inherit_meta)
 
     REBCTX *m1 = ACT_META(VAL_ACTION(original));
     if (not m1)  // nothing to copy
-        RETURN (ARG(derived));
+        return ARG(derived);
 
     // Often the derived function won't have its own meta information yet.  But
     // if it was created via an AUGMENT, it will have some...only the notes
@@ -933,5 +941,5 @@ REBNATIVE(inherit_meta)
         Shutdown_Evars(&e);
     }
 
-    RETURN (ARG(derived));
+    return ARG(derived);
 }

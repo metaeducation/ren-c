@@ -177,7 +177,7 @@ REBNATIVE(_and_)  // see TO-C-NAME
 
     if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
         Move_Cell(D_OUT, D_SPARE);
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     return Init_Logic(D_OUT, IS_TRUTHY(D_SPARE));
@@ -210,7 +210,7 @@ REBNATIVE(_or_)  // see TO-C-NAME
 
     if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
         Move_Cell(D_OUT, D_SPARE);
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     return Init_Logic(D_OUT, IS_TRUTHY(D_SPARE));
@@ -240,7 +240,7 @@ REBNATIVE(_xor_)  // see TO-C-NAME
 
     if (Do_Logic_Right_Side_Throws(D_SPARE, right)) {
         Move_Cell(D_OUT, D_SPARE);
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     if (IS_FALSEY(left))
@@ -272,9 +272,9 @@ REBNATIVE(unless)
     INCLUDE_PARAMS_OF_UNLESS;
 
     if (IS_TRUTHY(ARG(right)))
-        RETURN (ARG(right));
+        return ARG(right);
 
-    RETURN (ARG(left)); // preserve the exact truthy or falsey value
+    return ARG(left); // preserve the exact truthy or falsey value
 }
 
 

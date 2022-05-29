@@ -74,7 +74,7 @@ REBNATIVE(if)
         return nullptr;  // ^-- truth test fails on voids, literal blocks
 
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(condition)))
-        return R_THROWN;  // ^-- condition is passed to branch if function
+        return_thrown (D_OUT);  // ^-- condition is passed to branch if function
 
     return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
@@ -103,7 +103,7 @@ REBNATIVE(either)
         : ARG(false_branch);
 
     if (Do_Branch_With_Throws(D_OUT, branch, ARG(condition)))
-        return R_THROWN;  // ^-- condition is passed to branch if function
+        return_thrown (D_OUT);  // ^-- condition is passed to branch if function
 
     return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
@@ -217,7 +217,7 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     // Do_Branch_With() will decay ~null~ isotopes to NULL for non-meta actions
     //
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
@@ -262,9 +262,9 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     // Do_Branch_With() will decay ~null~ isotopes to NULL for non-meta actions
     //
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
-    RETURN (in);  // ran, but pass thru the original input--not branch output
+    return in;  // ran, but pass thru the original input--not branch output
 }
 
 
@@ -310,11 +310,11 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         // does not run the branch, unless we are decaying).  But we don't want
         // to actually return a quoted parameter.
         //
-        RETURN (Meta_Unquotify(ARG(optional)));
+        return Meta_Unquotify(ARG(optional));
     }
 
     if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
 }
@@ -364,7 +364,7 @@ REBNATIVE(match)
         REB_R r = MAKE_Typeset(D_SPARE, REB_TYPESET, nullptr, test);
         if (r == R_THROWN) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         test = D_SPARE;
         goto test_is_typeset; }
@@ -378,7 +378,7 @@ REBNATIVE(match)
       case REB_ACTION:
         if (rebRunThrows(D_SPARE, true, test, rebQ(v))) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         if (IS_FALSEY(D_SPARE))
             return nullptr;
@@ -432,7 +432,7 @@ REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
     if (IS_NULLED(ARG(value)))
         fail ("MUST requires argument to not be NULL");
 
-    RETURN (ARG(value));
+    return ARG(value);
 }
 
 
@@ -467,7 +467,7 @@ REBNATIVE(all)
     do {
         if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
             Abort_Frame(f);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
 
         // all @[] can leave END in D_OUT without it being marked stale, since
@@ -499,7 +499,7 @@ REBNATIVE(all)
                 rebQ(NULLIFY_NULLED(D_OUT))
             )){
                 Move_Cell(D_OUT, D_SPARE);
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
 
             if (IS_FALSEY(D_SPARE)) {
@@ -557,7 +557,7 @@ REBNATIVE(any)
     do {
         if (Eval_Step_Throws(D_OUT, f)) {
             Abort_Frame(f);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
 
         if (IS_END(D_OUT)) {  // must have been stale
@@ -583,7 +583,7 @@ REBNATIVE(any)
                 rebQ(NULLIFY_NULLED(D_OUT))
             )){
                 Move_Cell(D_OUT, D_SPARE);
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
 
             if (IS_TRUTHY(D_SPARE)) {
@@ -732,12 +732,12 @@ REBNATIVE(case)
         return D_OUT;
 
     assert(REF(all) or IS_NULLED(ARG(last)));
-    RETURN (ARG(last));  // else last branch "falls out", may be null
+    return ARG(last);  // else last branch "falls out", may be null
 
   threw:;
 
     Abort_Frame(f);
-    return R_THROWN;
+    return_thrown (D_OUT);
 }
 
 
@@ -805,7 +805,7 @@ REBNATIVE(switch)
             Drop_Frame(f);  // nothing left, so drop frame and return
 
             assert(REF(all) or IS_NULLED(ARG(last)));
-            RETURN (ARG(last));
+            return ARG(last);
         }
 
         if (IS_NULLED(predicate)) {
@@ -907,12 +907,12 @@ REBNATIVE(switch)
         return D_OUT;
 
     assert(REF(all) or IS_NULLED(ARG(last)));
-    RETURN (ARG(last));  // else last branch "falls out", may be null
+    return ARG(last);  // else last branch "falls out", may be null
 
   threw:;
 
     Drop_Frame(f);
-    return R_THROWN;
+    return_thrown (D_OUT);
 }
 
 
@@ -947,7 +947,7 @@ REBNATIVE(default)
     // the SET without doing a double evaluation.
     //
     if (Get_Var_Core_Throws(D_OUT, steps, target, SPECIFIED))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     // We only consider those bad words which are in the "unfriendly" state
     // that the system also knows to mean "emptiness" as candidates for
@@ -972,7 +972,7 @@ REBNATIVE(default)
     }
 
     if (Do_Branch_Throws(D_OUT, ARG(branch)))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     if (Set_Var_Core_Throws(D_SPARE, nullptr, steps, SPECIFIED, D_OUT)) {
         assert(false);  // shouldn't be able to happen.
@@ -1086,7 +1086,7 @@ REBNATIVE(catch)
             goto was_caught;
     }
 
-    return R_THROWN; // throw name is in D_OUT, value is held task local
+    return_thrown (D_OUT); // throw name is in D_OUT, value is held task local
 
   was_caught:
 

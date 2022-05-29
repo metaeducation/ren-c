@@ -51,6 +51,8 @@ enum {
 
 REB_R Downshot_Dispatcher(REBFRM *f)  // runs until count is reached
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
@@ -61,7 +63,7 @@ REB_R Downshot_Dispatcher(REBFRM *f)  // runs until count is reached
 
     REBVAL *code = FRM_ARG(f, 2);  // skip the RETURN
     if (Do_Branch_Throws(f->out, code))
-        return R_THROWN;
+        return_thrown (f->out);
 
     return f->out;
 }
@@ -69,6 +71,8 @@ REB_R Downshot_Dispatcher(REBFRM *f)  // runs until count is reached
 
 REB_R Upshot_Dispatcher(REBFRM *f)  // won't run until count is reached
 {
+    REBFRM *frame_ = f;
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
@@ -80,7 +84,7 @@ REB_R Upshot_Dispatcher(REBFRM *f)  // won't run until count is reached
 
     REBVAL *code = FRM_ARG(f, 2);  // skip the RETURN
     if (Do_Branch_Throws(f->out, code))
-        return R_THROWN;
+        return_thrown (f->out);
 
     return f->out;
 }

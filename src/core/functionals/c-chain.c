@@ -112,6 +112,8 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
 //
 REB_R Chainer_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 
@@ -144,7 +146,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
         if (Process_Action_Maybe_Stale_Throws(sub)) {
             Abort_Frame(sub);
             Move_Cell(f->out, sub->out);  // move from spare
-            return R_THROWN;
+            return_thrown (f->out);
         }
 
         // We reuse the subframe's REBFRM structure, but have to drop the
@@ -178,7 +180,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
     Drop_Frame(sub);
 
-    return Move_Cell(f->out, f_spare);
+    return f_spare;
 }
 
 

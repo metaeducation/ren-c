@@ -95,11 +95,13 @@ void Splice_Block_Into_Feed(REBFED *feed, const REBVAL *splice) {
 //
 REB_R Macro_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBVAL *spare = FRM_SPARE(f);  // write to spare, return will be invisible
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
         Move_Cell(f->out, spare);
-        return R_THROWN;
+        return_thrown (f->out);
     }
     UNUSED(returned);  // no additional work to bypass
 
@@ -163,7 +165,7 @@ REBNATIVE(inline)
 
     REBVAL *splice = ARG(splice);
     if (IS_BLANK(splice))
-        RETURN_INVISIBLE;  // do nothing, just return invisibly
+        return_invisible (D_OUT);  // do nothing, just return invisibly
 
     if (IS_QUOTED(splice)) {
         //
@@ -178,5 +180,5 @@ REBNATIVE(inline)
     assert(IS_BLOCK(splice));
     Splice_Block_Into_Feed(frame_->feed, ARG(splice));
 
-    RETURN_INVISIBLE;
+    return_invisible (D_OUT);
 }

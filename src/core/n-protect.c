@@ -45,7 +45,7 @@ REBNATIVE(const) {
     CLEAR_CELL_FLAG(v, EXPLICITLY_MUTABLE);
     SET_CELL_FLAG(v, CONST);
 
-    RETURN (v);
+    return v;
 }
 
 
@@ -98,7 +98,7 @@ REBNATIVE(mutable)
     CLEAR_CELL_FLAG(v, CONST);
     SET_CELL_FLAG(v, EXPLICITLY_MUTABLE);
 
-    RETURN (v);
+    return v;
 }
 
 
@@ -301,7 +301,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 
     if (ANY_WORD(value) || ANY_SEQUENCE(value)) {
         Protect_Word_Value(value, flags); // will unmark if deep
-        RETURN (ARG(value));
+        return ARG(value);
     }
 
     if (IS_BLOCK(value)) {
@@ -313,7 +313,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
                 Derelativize(word, item, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
-            RETURN (ARG(value));
+            return ARG(value);
         }
         if (REF(values)) {
             REBVAL *var;
@@ -345,7 +345,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
                 if (flags & PROT_DEEP)
                     Uncolor(var);
             }
-            RETURN (ARG(value));
+            return ARG(value);
         }
     }
 
@@ -357,7 +357,7 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
     if (flags & PROT_DEEP)
         Uncolor(value);
 
-    RETURN (ARG(value));
+    return ARG(value);
 }
 
 
@@ -392,9 +392,9 @@ REBNATIVE(protect)
             Lib(TRUE),
             Lib(PROTECT_P)
         )){
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
-        RETURN (v);
+        return v;
     }
 
     // Avoid unused parameter warnings (core routine handles them via frame)
@@ -573,5 +573,5 @@ REBNATIVE(freeze)
     REBSER *locker = nullptr;
     Force_Value_Frozen_Core(ARG(value), did REF(deep), locker);
 
-    RETURN (ARG(value));
+    return ARG(value);
 }

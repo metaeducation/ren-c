@@ -188,7 +188,7 @@ REBNATIVE(wait_p)  // See wrapping function WAIT in usermode code
             CLR_SIGNAL(SIG_HALT);
 
             Init_Thrown_With_Label(D_OUT, Lib(NULL), Lib(HALT));
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
 
         if (GET_SIGNAL(SIG_INTERRUPT)) {

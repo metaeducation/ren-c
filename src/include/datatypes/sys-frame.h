@@ -597,17 +597,18 @@ inline static REBVAL *D_ARG_Core(REBFRM *f, REBLEN n) {  // 1 for first arg
 #define D_ARG(n) \
     D_ARG_Core(frame_, (n))
 
-// Convenience routine for returning a value which is *not* located in D_OUT.
-// (If at all possible, it's better to build values directly into D_OUT and
-// then return the D_OUT pointer...this is the fastest form of returning.)
-//
-#define RETURN(v) \
-    return Copy_Cell(D_OUT, (v))
-
-#define RETURN_INVISIBLE \
+#define return_invisible(v) \
     do { \
+        assert(v == D_OUT); \
         assert(D_OUT->header.bits & CELL_FLAG_OUT_NOTE_STALE); \
         return D_OUT; \
+    } while (0)
+
+#define return_thrown(v) \
+    do { \
+        assert(v == D_OUT); \
+        assert(not (D_OUT->header.bits & CELL_FLAG_OUT_NOTE_STALE)); \
+        return R_THROWN; \
     } while (0)
 
 // Shared code for type checking the return result.  It's used by the

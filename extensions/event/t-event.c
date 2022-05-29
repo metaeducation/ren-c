@@ -454,7 +454,7 @@ REBTYPE(Event)
         // This is a case where the bits are stored in the cell, so
         // whoever owns this cell has to write it back.
         //
-        RETURN (event);
+        return event;
     }
 
     return R_UNHANDLED;

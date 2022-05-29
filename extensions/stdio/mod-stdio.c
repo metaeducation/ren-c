@@ -179,7 +179,7 @@ REBNATIVE(read_stdin)
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
         if (rebRunThrows(D_OUT, true, "as binary! try read-line"))
-            return R_THROWN;
+            return_thrown (D_OUT);
         return D_OUT;
     }
     else  // we have a smart console but aren't using it (redirected to file?)

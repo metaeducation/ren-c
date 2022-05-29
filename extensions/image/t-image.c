@@ -588,7 +588,7 @@ REB_R Modify_Image(REBFRM *frame_, const REBSYM *verb)
 
     REBINT w = VAL_IMAGE_WIDTH(value);
     if (w == 0)
-        RETURN (value);
+        return value;
 
     SYMID sym = ID_OF_SYMBOL(verb);
     if (sym == SYM_APPEND) {
@@ -614,7 +614,7 @@ REB_R Modify_Image(REBFRM *frame_, const REBSYM *verb)
             dup = VAL_INT32(ARG(dup));
             dup = MAX(dup, 0);
             if (dup == 0)
-                RETURN (value);
+                return value;
         }
         else if (IS_PAIR(ARG(dup))) {  // rectangular dup
             dup_x = VAL_PAIR_X_INT(ARG(dup));
@@ -627,7 +627,7 @@ REB_R Modify_Image(REBFRM *frame_, const REBSYM *verb)
             else
                 dup = dup_y * w;
             if (dup_x == 0 or dup_y == 0)
-                RETURN (value);
+                return value;
         }
         else
             fail (Error_Invalid_Type(VAL_TYPE(ARG(dup))));
@@ -677,7 +677,7 @@ REB_R Modify_Image(REBFRM *frame_, const REBSYM *verb)
                 else
                     part = part_y * w;
                 if (part_x == 0 || part_y == 0)
-                    RETURN (value);
+                    return value;
             }
             else
                 fail (Error_Invalid_Type(VAL_TYPE(ARG(part))));
@@ -768,7 +768,7 @@ REB_R Modify_Image(REBFRM *frame_, const REBSYM *verb)
 
     if (sym == SYM_APPEND)
         VAL_IMAGE_POS(value) = 0;
-    RETURN (value);
+    return value;
 }
 
 
@@ -1184,11 +1184,11 @@ REBTYPE(Image)
         switch (property) {
         case SYM_HEAD:
             VAL_IMAGE_POS(image) = 0;
-            RETURN (image);
+            return image;
 
         case SYM_TAIL:
             VAL_IMAGE_POS(image) = cast(REBLEN, tail);
-            RETURN (image);
+            return image;
 
         case SYM_HEAD_Q:
             return Init_Logic(D_OUT, index == 0);
@@ -1258,7 +1258,7 @@ REBTYPE(Image)
             index = 0;
 
         VAL_IMAGE_POS(image) = cast(REBLEN, index);
-        RETURN (image); }
+        return image; }
 
     case SYM_CLEAR:
         if (index < tail) {
@@ -1268,7 +1268,7 @@ REBTYPE(Image)
             );
             Reset_Height(image);
         }
-        RETURN (image);
+        return image;
 
 
     case SYM_REMOVE: {
@@ -1297,7 +1297,7 @@ REBTYPE(Image)
             Remove_Series_Units(series, VAL_INDEX(image), len);
         }
         Reset_Height(image);
-        RETURN (image); }
+        return image; }
 
     case SYM_APPEND:
     case SYM_INSERT:
@@ -1305,7 +1305,7 @@ REBTYPE(Image)
         if (IS_NULLED_OR_BLANK(D_ARG(2))) {
             if (id == SYM_APPEND) // append returns head position
                 VAL_IMAGE_POS(image) = 0;
-            RETURN (image); // don't fail on read only if it would be a no-op
+            return image; // don't fail on read only if it would be a no-op
         }
         ENSURE_MUTABLE(image);
 

@@ -449,7 +449,7 @@ REBTYPE(Varargs)
                 value
             )){
                 assert(false);
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
             assert(IS_LOGIC(D_OUT));
             return D_OUT; }
@@ -477,7 +477,7 @@ REBTYPE(Varargs)
             value
         )){
             assert(false); // VARARG_OP_FIRST can't throw
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         if (IS_END(D_OUT))
            Init_Nulled(D_OUT);
@@ -500,7 +500,7 @@ REBTYPE(Varargs)
                 VARARG_OP_TAKE,
                 value
             )){
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
             if (IS_END(D_OUT))
                 return Init_Nulled(D_OUT);
@@ -522,7 +522,7 @@ REBTYPE(Varargs)
                 VARARG_OP_TAKE,
                 value
             )){
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
             if (IS_END(D_OUT))
                 break;

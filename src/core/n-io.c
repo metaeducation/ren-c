@@ -209,7 +209,7 @@ REBNATIVE(new_line)
             break;
     }
 
-    RETURN (pos);
+    return pos;
 }
 
 

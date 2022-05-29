@@ -426,7 +426,7 @@ REBTYPE(Typeset)
         return nullptr; }
 
       case SYM_UNIQUE:
-        RETURN (v);  // typesets unique by definition
+        return v;  // typesets unique by definition
 
       case SYM_INTERSECT:
       case SYM_UNION:
@@ -464,15 +464,15 @@ REBTYPE(Typeset)
             assert(false);
         }
 
-        RETURN (v); }
+        return v; }
 
       case SYM_COMPLEMENT: {
         VAL_TYPESET_LOW_BITS(v) = ~VAL_TYPESET_LOW_BITS(v);
         VAL_TYPESET_HIGH_BITS(v) = ~VAL_TYPESET_HIGH_BITS(v);
-        RETURN (v); }
+        return v; }
 
       case SYM_COPY:
-        RETURN (v);
+        return v;
 
       default:
         break;

@@ -341,7 +341,7 @@ enum Boot_Levels {
 
 // Modes allowed by Make_Function:
 enum {
-    MKF_RETURN      = 1 << 0,   // give a RETURN (but local RETURN: overrides)
+    MKF_RETURN      = 1 << 0,   // give a return but local RETURN: overrides
     MKF_KEYWORDS    = 1 << 1,   // respond to tags like <opt>, <with>, <local>
     MKF_2           = 1 << 2,
 

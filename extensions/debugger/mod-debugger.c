@@ -122,7 +122,7 @@ REBNATIVE(breakpoint_p)
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
         Lib(BLANK)  // default result if RESUME does not override
     )){
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     // !!! Should use a more specific protocol (e.g. pass in END).  But also,
@@ -133,7 +133,7 @@ REBNATIVE(breakpoint_p)
     if (not IS_BAD_WORD(D_SPARE))
         fail ("BREAKPOINT is invisible, can't RESUME/WITH code (use PAUSE)");
 
-    RETURN_INVISIBLE;
+    return_invisible (D_OUT);
 }
 
 
@@ -159,7 +159,7 @@ REBNATIVE(pause)
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
         ARG(code)  // default result if RESUME does not override
     )){
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     return D_OUT;

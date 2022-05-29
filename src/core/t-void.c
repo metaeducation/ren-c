@@ -138,7 +138,7 @@ REBTYPE(Bad_word)
         UNUSED(REF(deep));
         UNUSED(REF(types));
 
-        RETURN (voided); }
+        return voided; }
 
       default: break;
     }

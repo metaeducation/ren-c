@@ -217,7 +217,7 @@ REBTYPE(Action)
 
         REBVAL *picker = ARG(picker);
         if (Is_Nulled_Isotope(picker) or IS_BLANK(picker))
-            RETURN (action);
+            return action;
 
         const REBSYM *symbol;
         if (IS_WORD(picker))
@@ -230,7 +230,7 @@ REBTYPE(Action)
         REBDSP dsp_orig = DSP;
         Init_Word(DS_PUSH(), symbol);
         if (Specialize_Action_Throws(D_OUT, action, nullptr, dsp_orig))
-            return R_THROWN;
+            return_thrown (D_OUT);
 
         return D_OUT; }
 

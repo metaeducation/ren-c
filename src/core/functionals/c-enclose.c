@@ -83,6 +83,8 @@ enum {
 //
 REB_R Encloser_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ENCLOSER_MAX);
 
@@ -193,7 +195,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
 
     const bool fully = true;
     if (rebRunMaybeStaleThrows(f->out, fully, outer, rootcopy))
-        return R_THROWN;
+        return_thrown (f->out);
 
     return f->out;
 }

@@ -377,7 +377,7 @@ REBNATIVE(of)
 
     if (ANY_ESCAPABLE_GET(prop)) {  // !!! See note above
         if (Eval_Value_Throws(D_SPARE, prop, SPECIFIED))
-            return R_THROWN;
+            return_thrown (D_OUT);
         if (not IS_WORD(D_SPARE)) {
             Move_Cell(prop, D_SPARE);
             fail (Error_Invalid_Arg(frame_, PAR(property)));

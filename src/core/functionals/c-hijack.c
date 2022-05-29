@@ -200,6 +200,8 @@ bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
 //
 REB_R Hijacker_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     // The FRM_PHASE() here is the identity that the hijacker has taken over;
     // but the actual hijacker is in the archetype.
 
@@ -224,7 +226,7 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
     // the hijacking...and has to be remapped.
     //
     if (Redo_Action_Maybe_Stale_Throws(f->out, f, hijacker))
-        return R_THROWN;
+        return_thrown (f->out);
 
     return f->out;  // Note: may have OUT_NOTE_STALE, hence invisible
 }

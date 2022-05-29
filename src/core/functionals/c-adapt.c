@@ -60,6 +60,8 @@ enum {
 //
 REB_R Adapter_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
 
@@ -78,7 +80,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, discarded, f)) {
         Move_Cell(f->out, discarded);
-        return R_THROWN;
+        return_thrown (f->out);
     }
 
     if (returned) {

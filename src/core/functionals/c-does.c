@@ -72,6 +72,8 @@ enum {
 //
 REB_R Block_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_DOES_MAX);
 
@@ -84,7 +86,7 @@ REB_R Block_Dispatcher(REBFRM *f)
     if (IS_SPECIFIC(block)) {
         if (FRM_BINDING(f) == UNBOUND) {
             if (Do_Any_Array_At_Throws(f->out, SPECIFIC(block), SPECIFIED))
-                return R_THROWN;
+                return_thrown (f->out);
             return f->out;
         }
 
@@ -130,7 +132,7 @@ REB_R Block_Dispatcher(REBFRM *f)
     assert(IS_RELATIVE(block));
 
     if (Do_Any_Array_At_Throws(f->out, block, SPC(f->varlist)))
-        return R_THROWN;
+        return_thrown (f->out);
 
     return f->out;
 }

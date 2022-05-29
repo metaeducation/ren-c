@@ -475,7 +475,7 @@ REB_R Process_Group_For_Parse(
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
     if (Do_Any_Array_At_Throws(cell, group, derived))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     // !!! The input is not locked from modification by agents other than the
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
@@ -519,7 +519,7 @@ static REB_R Parse_One_Rule(
         rule = Process_Group_For_Parse(frame_, D_SPARE, rule);
         if (rule == R_THROWN) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         if (rule == R_INVISIBLE) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
@@ -606,7 +606,7 @@ static REB_R Parse_One_Rule(
                 | (P_FLAGS & PF_REDBOL)
         )){
             Move_Cell(D_OUT, subresult);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
 
         UNUSED(interrupted);  // !!! ignore "interrupted" (ACCEPT or REJECT?)
@@ -1398,7 +1398,7 @@ REBNATIVE(subparse)
         rule = Process_Group_For_Parse(f, D_SPARE, rule);
         if (rule == R_THROWN) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         if (rule == R_INVISIBLE) {  // was a (...), or null-bearing :(...)
             FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
@@ -1428,7 +1428,7 @@ REBNATIVE(subparse)
 
             if (Do_Signals_Throws(D_SPARE)) {
                 Move_Cell(D_OUT, D_SPARE);
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
 
             assert(IS_END(D_SPARE));
@@ -2301,7 +2301,7 @@ REBNATIVE(subparse)
                     | (P_FLAGS & PF_REDBOL)
             )){
                 Move_Cell(D_OUT, D_SPARE);
-                return R_THROWN;
+                return_thrown (D_OUT);
             }
 
             // Non-breaking out of loop instances of match or not.
@@ -2334,7 +2334,7 @@ REBNATIVE(subparse)
 
             REB_R r = Parse_One_Rule(f, P_POS, rule);
             if (r == R_THROWN)
-                return R_THROWN;
+                return_thrown (D_OUT);
 
             if (r == R_UNHANDLED)
                 i = END_FLAG;
@@ -2483,7 +2483,7 @@ REBNATIVE(subparse)
                         P_RULE_SPECIFIER
                     )){
                         Move_Cell(D_OUT, D_SPARE);
-                        return R_THROWN;
+                        return_thrown (D_OUT);
                     }
 
                     // !!! What SET-GROUP! can do in PARSE is more
@@ -2694,7 +2694,7 @@ REBNATIVE(subparse)
         if (VAL_THROWN_LABEL(D_OUT) != Lib(PARSE_ACCEPT))  // ...unless
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
-    return R_THROWN;
+    return_thrown (D_OUT);
 }
 
 
@@ -2727,14 +2727,14 @@ REBNATIVE(parse_p)
     if (ANY_SEQUENCE(input)) {
         if (rebRunThrows(D_SPARE, true, Lib(AS), Lib(BLOCK_X), rebQ(input))) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         Move_Cell(input, D_SPARE);
     }
     else if (IS_URL(input)) {
         if (rebRunThrows(D_SPARE, true, Lib(AS), Lib(TEXT_X), input)) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
         Move_Cell(input, D_SPARE);
     }
@@ -2788,7 +2788,7 @@ REBNATIVE(parse_p)
         // stack) should be handled here.  However, RETURN was eliminated,
         // in favor of enforcing a more clear return value protocol for PARSE
 
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     if (IS_NULLED(D_OUT))

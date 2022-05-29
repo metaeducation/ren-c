@@ -121,7 +121,7 @@ REBNATIVE(delimit)
         if (Eval_Step_Throws(out, f)) {
             Drop_Mold(mo);
             Abort_Frame(f);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
 
         if (IS_END(out)) {
@@ -178,7 +178,7 @@ REBNATIVE(delimit)
                 )){
                     Drop_Mold(mo);
                     Abort_Frame(f);
-                    return R_THROWN;
+                    return_thrown (D_OUT);
                 }
                 Form_Value(mo, out);
 
@@ -723,7 +723,7 @@ REBNATIVE(enline)
     }
 
     if (delta == 0)
-        RETURN (ARG(string)); // nothing to do
+        return ARG(string); // nothing to do
 
     REBLEN old_len = s->misc.length;
     EXPAND_SERIES_TAIL(s, delta);  // corrupts str->misc.length
@@ -759,7 +759,7 @@ REBNATIVE(enline)
         --size;
     }
 
-    RETURN (ARG(string));
+    return ARG(string);
 }
 
 

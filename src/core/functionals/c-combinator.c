@@ -357,10 +357,10 @@ REBNATIVE(opt_combinator)
     UNUSED(ARG(state));
 
     if (Call_Parser_Throws(D_OUT, ARG(remainder), ARG(parser), ARG(input)))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     if (not IS_NULLED(D_OUT))  // parser succeeded...
-        return D_OUT;  // so return it's result (note: may be null *isotope*)
+        return D_OUT;  // so return its result (note: may be null *isotope*)
 
     Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input));
     return Init_Nulled_Isotope(D_OUT);  // success, but convey nothingness
@@ -423,7 +423,7 @@ REBNATIVE(text_x_combinator)
     // If not an array, we have return the rule on match since there's
     // no isolated value to capture.
 
-    RETURN (v);
+    return v;
 }
 
 
@@ -464,7 +464,7 @@ REBNATIVE(some_combinator)
         // frames from the loops list in usermode.  Mirror that limitation here
         // for now.
         //
-        return R_THROWN;
+        return_thrown (D_OUT);
     }
 
     if (IS_NULLED(D_OUT)) {
@@ -484,7 +484,7 @@ REBNATIVE(some_combinator)
         SET_END(D_SPARE);  // spare can be trash
         if (Call_Parser_Throws(D_SPARE, remainder, parser, input)) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;  // see notes above about not removing loop
+            return_thrown (D_OUT);  // see notes above about not removing loop
         }
 
         if (IS_NULLED(D_SPARE)) {
@@ -525,7 +525,7 @@ REBNATIVE(further_combinator)
     UNUSED(ARG(state));
 
     if (Call_Parser_Throws(D_OUT, remainder, parser, input))
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     if (IS_NULLED(D_OUT))
         return nullptr;  // the parse rule did not match

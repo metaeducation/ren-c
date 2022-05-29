@@ -338,7 +338,7 @@ REBNATIVE(let)
     if (IS_GROUP(f_value) or IS_SET_GROUP(f_value)) {
         if (Do_Any_Array_At_Throws(D_SPARE, f_value, f_specifier)) {
             Move_Cell(D_OUT, D_SPARE);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
 
         switch (VAL_TYPE(D_SPARE)) {
@@ -471,7 +471,7 @@ REBNATIVE(let)
             if (IS_GROUP(temp)) {
                 if (Do_Any_Array_At_Throws(D_SPARE, temp, item_specifier)) {
                     Move_Cell(D_OUT, D_SPARE);
-                    return R_THROWN;
+                    return_thrown (D_OUT);
                 }
                 temp = D_SPARE;
                 temp_specifier = SPECIFIED;
@@ -530,7 +530,7 @@ REBNATIVE(let)
             | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
         if (Eval_Step_In_Subframe_Throws(f->out, f, flags))
-            return R_THROWN;
+            return_thrown (D_OUT);
 
         return D_OUT;
     }
@@ -1261,5 +1261,5 @@ REBNATIVE(intern_p)
     RELVAL *head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));
     Bind_Nonspecifically(head, tail, VAL_CONTEXT(ARG(where)));
 
-    RETURN (ARG(data));
+    return ARG(data);
 }

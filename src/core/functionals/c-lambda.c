@@ -60,6 +60,8 @@ enum {
 //
 REB_R Lambda_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
     assert(ARR_LEN(details) == IDX_LAMBDA_MAX);
@@ -90,7 +92,7 @@ REB_R Lambda_Dispatcher(REBFRM *f)
     // will return a ~void~ isotope.  Hence prior `f->out` is always wiped out.
 
     if (Do_Any_Array_At_Throws(f->out, block, specifier))
-        return R_THROWN;
+        return_thrown (f->out);
 
     return f->out;
 }

@@ -55,7 +55,7 @@ REBNATIVE(reduce)
     //
     if (not IS_BLOCK(v) and not IS_GROUP(v)) {
         if (Eval_Value_Throws(D_OUT, v, SPECIFIED))
-            return R_THROWN;
+            return_thrown (D_OUT);
 
         return D_OUT;  // let caller worry about whether to error on nulls
     }
@@ -75,7 +75,7 @@ REBNATIVE(reduce)
         if (Eval_Step_Throws(D_OUT, f)) {
             DS_DROP_TO(dsp_orig);
             Abort_Frame(f);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
 
         if (IS_END(D_OUT)) {
@@ -175,7 +175,7 @@ REBNATIVE(reduce_each)
     do {
         if (Eval_Step_Throws(D_SPARE, f)) {
             Abort_Frame(f);
-            return R_THROWN;
+            return_thrown (D_OUT);
         }
 
         if (IS_END(D_SPARE)) {
@@ -189,7 +189,7 @@ REBNATIVE(reduce_each)
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
             if (not Catching_Break_Or_Continue(D_OUT, &broke))
-                return R_THROWN;
+                return_thrown (D_OUT);
             if (broke)
                 return nullptr;
 
@@ -598,10 +598,10 @@ REBNATIVE(compose)
     INCLUDE_PARAMS_OF_COMPOSE;
 
     if (Is_Blackhole(ARG(value)))
-        RETURN (ARG(value));  // sink locations composed to avoid double eval
+        return ARG(value);  // sink locations composed to avoid double eval
 
     if (ANY_WORD(ARG(value)) or IS_ACTION(ARG(value)))
-        RETURN (ARG(value));  // makes it easier to `set/hard compose target`
+        return ARG(value);  // makes it easier to `set/hard compose target`
 
     REBDSP dsp_orig = DSP;
 
@@ -616,7 +616,7 @@ REBNATIVE(compose)
     );
 
     if (r == R_THROWN)
-        return R_THROWN;
+        return_thrown (D_OUT);
 
     if (r == R_UNHANDLED) {
         //

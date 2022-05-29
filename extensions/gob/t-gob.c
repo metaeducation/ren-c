@@ -1049,7 +1049,7 @@ REBTYPE(Gob)
         RELVAL *value = ARG(value);
 
         if (IS_NULLED_OR_BLANK(value))
-            RETURN (v);  // don't fail on read only if it would be a no-op
+            return v;  // don't fail on read only if it would be a no-op
 
         if (REF(line))
             fail (Error_Bad_Refines_Raw());
@@ -1071,13 +1071,13 @@ REBTYPE(Gob)
 
         Insert_Gobs(gob, value, index, len, false);
 
-        RETURN (v); }
+        return v; }
 
     case SYM_CLEAR:
         if (tail > index)
             Remove_Gobs(gob, index, tail - index);
 
-        RETURN (v);
+        return v;
 
     case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
@@ -1089,7 +1089,7 @@ REBTYPE(Gob)
         if (index < tail && len != 0)
             Remove_Gobs(gob, index, len);
 
-        RETURN (v); }
+        return v; }
 
     case SYM_TAKE: {
         INCLUDE_PARAMS_OF_TAKE;
