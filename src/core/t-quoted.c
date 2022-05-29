@@ -128,13 +128,10 @@ REBTYPE(Quoted)
         UNUSED(REF(types));
 
         REBLEN num_quotes = Dequotify(ARG(value));
-        REB_R r = Run_Generic_Dispatch(ARG(value), frame_, verb);
-        assert(not IS_RETURN_SIGNAL(r));  // can't throw
-        assert(not Is_Api_Value(r));
-        if (r == nullptr)
-            r = Init_Nulled(D_OUT);
-        else
-            Copy_Cell(D_OUT, r);
+        bool threw = Run_Generic_Dispatch_Throws(ARG(value), frame_, verb);
+        assert(not threw);  // can't throw
+        UNUSED(threw);
+
         return Quotify(D_OUT, num_quotes); }
 
       default:

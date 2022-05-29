@@ -63,7 +63,7 @@ REB_R Generic_Dispatcher(REBFRM *f)
     //
     REBVAL *first_arg = D_ARG_Core(f, 1);
 
-    return Run_Generic_Dispatch(first_arg, f, verb);
+    return Run_Generic_Dispatch_Core(first_arg, f, verb);
 }
 
 

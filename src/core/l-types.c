@@ -314,7 +314,7 @@ REB_R Reflect_Core(REBFRM *frame_)
         return nullptr; // only TYPE OF works on blank, otherwise it's null
 
     Dequotify(ARG(value));
-    return Run_Generic_Dispatch(ARG(value), frame_, Canon(REFLECT));
+    return Run_Generic_Dispatch_Core(ARG(value), frame_, Canon(REFLECT));
 }
 
 

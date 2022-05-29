@@ -265,3 +265,52 @@ inline static bool Do_Branch_Core_Throws(
 
 #define Do_Branch_Throws(out,branch) \
     Do_Branch_Core_Throws((out), (branch), END_CELL)
+
+
+inline static REB_R Run_Generic_Dispatch_Core(
+    const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
+    REBFRM *f,
+    const REBSYM *verb
+){
+    GENERIC_HOOK *hook = IS_QUOTED(first_arg)
+        ? &T_Quoted  // a few things like COPY are supported by QUOTED!
+        : Generic_Hook_For_Type_Of(first_arg);
+
+    REB_R r = hook(f, verb);  // Note that QUOTED! has its own hook & handling
+    if (r == R_UNHANDLED)  // convenience for error handling
+        fail (Error_Cannot_Use(verb, first_arg));
+
+    return r;
+}
+
+
+// Some routines invoke Run_Generic_Dispatch(), go ahead and reduce the
+// cases they have to look at by moving any ordinary outputs into f->out, and
+// make throwing the only exceptional case they have to handle.
+//
+inline static bool Run_Generic_Dispatch_Throws(
+    const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
+    REBFRM *f,
+    const REBSYM *verb
+){
+    REB_R r = Run_Generic_Dispatch_Core(first_arg, f, verb);
+
+    if (r == f->out) {
+         // common case
+    }
+    else if (r == nullptr) {
+        Init_Nulled(f->out);
+    }
+    else if (IS_RETURN_SIGNAL(r)) {
+        if (r == R_THROWN)
+            return true;
+        assert(!"Unhandled return signal from Run_Generic_Dispatch_Core");
+    }
+    else {
+        assert(not Is_Eval_Product_Stale(r));
+        Copy_Cell(f->out, r);
+        if (Is_Api_Value(r))
+            Release_Api_Value_If_Unmanaged(r);
+    }
+    return false;
+}

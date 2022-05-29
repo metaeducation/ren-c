@@ -293,7 +293,7 @@ REBTYPE(Integer)
                 Move_Cell(D_OUT, val2);  // Use as temp workspace
                 Move_Cell(val2, val);
                 Move_Cell(val, D_OUT);
-                return Run_Generic_Dispatch(val, frame_, verb); }
+                return Run_Generic_Dispatch_Core(val, frame_, verb); }
 
             // Only type valid to subtract from, divide into, is decimal/money:
             case SYM_SUBTRACT:

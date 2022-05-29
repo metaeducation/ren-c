@@ -496,7 +496,7 @@ REBTYPE(Decimal)
             Move_Cell(D_OUT, D_ARG(2));
             Move_Cell(D_ARG(2), D_ARG(1));
             Move_Cell(D_ARG(1), D_OUT);
-            return Run_Generic_Dispatch(D_ARG(1), frame_, verb);
+            return Run_Generic_Dispatch_Core(D_ARG(1), frame_, verb);
         }
 
         // If the type of the second arg is something we can handle:

@@ -140,7 +140,7 @@ REBNATIVE(pick)
     // made PICK an ENCLOSE of PICK*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    return Run_Generic_Dispatch(ARG(location), frame_, Canon(PICK_P));
+    return Run_Generic_Dispatch_Core(ARG(location), frame_, Canon(PICK_P));
 }
 
 
@@ -177,9 +177,10 @@ REBNATIVE(poke)
     // made POKE an ENCLOSE of POKE*.  But to get a fast native, we don't have
     // enclose...so this is an approximation.  Review ensuring this is "safe".
     //
-    REB_R r = Run_Generic_Dispatch(location, frame_, Canon(POKE_P));
+    REB_R r = Run_Generic_Dispatch_Core(location, frame_, Canon(POKE_P));
     if (r == R_THROWN)
         return_thrown (D_OUT);
+    assert(r == nullptr or not IS_RETURN_SIGNAL(r));  // other signals invalid
 
     // Note: if r is not nullptr here, that means there was a modification
     // which nothing is writing back.  It would be like saying:
