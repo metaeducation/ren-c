@@ -413,7 +413,9 @@ REBVAL *Run_Array_Dangerous(void *opaque) {
 
     REBVAL *v = Alloc_Value();
 
-    if (Do_At_Mutable_Maybe_Stale_Throws(v, x->code, 0, SPECIFIED)) {
+    REBVAL *first = nullptr;  // optional element to inject before array
+
+    if (Do_At_Mutable_Maybe_Stale_Throws(v, first, x->code, 0, SPECIFIED)) {
         TRACE("Run_Array_Dangerous() is converting a throw to a failure");
         fail (Error_No_Catch_For_Throw(v));
     }
@@ -738,7 +740,6 @@ REBNATIVE(js_native)
     //
     if (
         (flags & MKF_HAS_NONE_RETURN)
-        or (flags & MKF_HAS_QUIET_RETURN)
         or (flags & MKF_IS_ELIDER)
     ){
         fail ("<none> and <void> not supported, use [] / ())");
