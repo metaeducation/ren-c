@@ -332,14 +332,15 @@ static bool Subparse_Throws(
         const REBVAL *label = VAL_THROWN_LABEL(out);
         if (IS_ACTION(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_REJECT))) {
-                CATCH_THROWN(out, out);
+                CATCH_THROWN_META(out, out);
                 assert(IS_NULLED(out));
                 *interrupted_out = true;
                 return false;
             }
 
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
-                CATCH_THROWN(out, out);
+                CATCH_THROWN_META(out, out);
+                Unquotify(out, 1);
                 assert(IS_INTEGER(out));
                 *interrupted_out = true;
                 return false;
@@ -474,8 +475,8 @@ REB_R Process_Group_For_Parse(
         ? SPECIFIED
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
-    if (Do_Any_Array_At_Throws(cell, group, derived))
-        return_thrown (D_OUT);
+    if (Do_Any_Array_At_Throws(SET_END(cell), group, derived))
+        return R_THROWN;
 
     // !!! The input is not locked from modification by agents other than the
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
@@ -519,7 +520,7 @@ static REB_R Parse_One_Rule(
         rule = Process_Group_For_Parse(frame_, D_SPARE, rule);
         if (rule == R_THROWN) {
             Move_Cell(D_OUT, D_SPARE);
-            return_thrown (D_OUT);
+            return R_THROWN;
         }
         if (rule == R_INVISIBLE) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
@@ -606,7 +607,7 @@ static REB_R Parse_One_Rule(
                 | (P_FLAGS & PF_REDBOL)
         )){
             Move_Cell(D_OUT, subresult);
-            return_thrown (D_OUT);
+            return R_THROWN;
         }
 
         UNUSED(interrupted);  // !!! ignore "interrupted" (ACCEPT or REJECT?)
@@ -837,12 +838,12 @@ static REBIXO To_Thru_Block_Rule(
 
                 if (r == R_UNHANDLED) {
                     // fall through, keep looking
-                    RESET(D_OUT);
+                    SET_END(D_OUT);
                 }
                 else {  // D_OUT is pos we matched past, so back up if only TO
                     assert(r == D_OUT);
                     VAL_INDEX_RAW(iter) = VAL_INT32(D_OUT);
-                    RESET(D_OUT);
+                    SET_END(D_OUT);
                     if (is_thru)
                         return VAL_INDEX(iter);  // don't back up
                     return VAL_INDEX(iter) - 1;  // back up
@@ -1123,7 +1124,7 @@ static void Handle_Mark_Rule(
         )){
             fail (Error_No_Catch_For_Throw(D_OUT));
         }
-        RESET(D_OUT);
+        SET_END(D_OUT);
     }
     else
         fail (Error_Parse_Variable(frame_));
@@ -1398,7 +1399,7 @@ REBNATIVE(subparse)
         rule = Process_Group_For_Parse(f, D_SPARE, rule);
         if (rule == R_THROWN) {
             Move_Cell(D_OUT, D_SPARE);
-            return_thrown (D_OUT);
+            return R_THROWN;
         }
         if (rule == R_INVISIBLE) {  // was a (...), or null-bearing :(...)
             FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
@@ -1424,11 +1425,11 @@ REBNATIVE(subparse)
       #endif
 
         if (--Eval_Countdown <= 0) {
-            RESET(D_SPARE);
+            SET_END(D_SPARE);
 
             if (Do_Signals_Throws(D_SPARE)) {
                 Move_Cell(D_OUT, D_SPARE);
-                return_thrown (D_OUT);
+                return R_THROWN;
             }
 
             assert(IS_END(D_SPARE));
@@ -1558,7 +1559,7 @@ REBNATIVE(subparse)
                         fail ("REPEAT range can't have lower max than minimum");
                 }
 
-                RESET(D_OUT);
+                SET_END(D_OUT);
 
                 FETCH_NEXT_RULE(f);
                 goto pre_rule;
@@ -1575,7 +1576,6 @@ REBNATIVE(subparse)
                 goto pre_rule;
 
               case SYM_MAYBE:
-                P_FLAGS |= PF_MAYBE;
                 mincount = 0;
                 FETCH_NEXT_RULE(f);
                 goto pre_rule;
@@ -1671,7 +1671,7 @@ REBNATIVE(subparse)
                     else
                         rebElide("append", ARG(collection), rebQ(D_OUT));
 
-                    RESET(D_OUT);  // since we didn't throw, put it back
+                    SET_END(D_OUT);  // since we didn't throw, put it back
 
                     // Don't touch P_POS, we didn't consume anything from
                     // the input series but just fabricated DO material.
@@ -1705,11 +1705,11 @@ REBNATIVE(subparse)
                         goto return_thrown;
 
                     if (IS_NULLED(D_OUT)) {  // match of rule failed
-                        RESET(D_OUT);  // restore invariant
+                        SET_END(D_OUT);  // restore invariant
                         goto next_alternate;  // backtrack collect, seek |
                     }
                     REBLEN pos_after = VAL_INT32(D_OUT);
-                    RESET(D_OUT);  // restore invariant
+                    SET_END(D_OUT);  // restore invariant
 
                     assert(pos_after >= pos_before);  // 0 or more matches
 
@@ -1982,11 +1982,11 @@ REBNATIVE(subparse)
                 goto return_thrown;
 
             if (IS_NULLED(D_OUT)) {  // match of rule failed
-                RESET(D_OUT);  // restore invariant
+                SET_END(D_OUT);  // restore invariant
                 goto next_alternate;  // backtrack collect, seek |
             }
             P_POS = VAL_INT32(D_OUT);
-            RESET(D_OUT);  // restore invariant
+            SET_END(D_OUT);  // restore invariant
 
             Init_Block(
                 Sink_Word_May_Fail(set_or_copy_word, P_RULE_SPECIFIER),
@@ -2193,7 +2193,7 @@ REBNATIVE(subparse)
                     assert(r == D_OUT);
                     i = VAL_INT32(D_OUT);
                 }
-                RESET(D_OUT);  // preserve invariant
+                SET_END(D_OUT);  // preserve invariant
                 break; }
 
               case SYM_INTO: {
@@ -2275,7 +2275,7 @@ REBNATIVE(subparse)
                 if (Is_Api_Value(into))
                     rebRelease(SPECIFIC(into));  // !!! rethink to use D_SPARE
 
-                RESET(D_OUT);  // restore invariant
+                SET_END(D_OUT);  // restore invariant
                 break; }
 
               default:
@@ -2293,7 +2293,7 @@ REBNATIVE(subparse)
             bool interrupted;
             if (Subparse_Throws(
                 &interrupted,
-                RESET(D_SPARE),
+                SET_END(D_SPARE),
                 ARG(position),
                 SPECIFIED,
                 subframe,
@@ -2302,7 +2302,7 @@ REBNATIVE(subparse)
                     | (P_FLAGS & PF_REDBOL)
             )){
                 Move_Cell(D_OUT, D_SPARE);
-                return_thrown (D_OUT);
+                return R_THROWN;
             }
 
             // Non-breaking out of loop instances of match or not.
@@ -2335,7 +2335,7 @@ REBNATIVE(subparse)
 
             REB_R r = Parse_One_Rule(f, P_POS, rule);
             if (r == R_THROWN)
-                return_thrown (D_OUT);
+                return R_THROWN;
 
             if (r == R_UNHANDLED)
                 i = END_FLAG;
@@ -2343,7 +2343,7 @@ REBNATIVE(subparse)
                 assert(r == D_OUT);
                 i = VAL_INT32(D_OUT);
             }
-            RESET(D_OUT);  // preserve invariant
+            SET_END(D_OUT);  // preserve invariant
         }
 
         assert(i != THROWN_FLAG);
@@ -2484,7 +2484,7 @@ REBNATIVE(subparse)
                         P_RULE_SPECIFIER
                     )){
                         Move_Cell(D_OUT, D_SPARE);
-                        return_thrown (D_OUT);
+                        return R_THROWN;
                     }
 
                     // !!! What SET-GROUP! can do in PARSE is more
@@ -2706,7 +2706,7 @@ REBNATIVE(subparse)
         if (VAL_THROWN_LABEL(D_OUT) != Lib(PARSE_ACCEPT))  // ...unless
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
-    return_thrown (D_OUT);
+    return R_THROWN;
 }
 
 

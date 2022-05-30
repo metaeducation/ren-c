@@ -43,9 +43,7 @@
 // * The usermode EVALUATE action is able to avoid overwriting the previous
 //   value if the final evaluation step has nothing in it.  That's based on
 //   the ability exposed here through the "Maybe_Stale" variations of the
-//   Eval_XXX() routines.  Care should be taken not to allow OUT_NOTE_STALE
-//   to leak and clear it on the cell (it is NODE_FLAG_MARKED and could be
-//   misinterpreted--very easily so as VAR_MARKED_HIDDEN!)
+//   Eval_XXX() routines.
 //
 // * The usermode REEVAL function chooses to make `reeval comment "hi"` ~void~
 //   rather than to raise an error.  However, the non-"Maybe_Stale" versions
@@ -114,21 +112,6 @@ enum {
 };
 
 
-// Simple helper for Eval_Maybe_Stale_Throws() that clears OUT_NOTE_STALE
-// (an alias for NODE_FLAG_MARKED that is used for generic purposes and may be
-// misinterpreted if it leaked.)
-//
-// (Note that it is wasteful to clear the stale flag if running in a loop,
-// so the Do_XXX() versions don't use this.)
-//
-inline static bool Eval_Throws(REBFRM *f) {
-    if (Eval_Maybe_Stale_Throws(f))
-        return true;
-    CLEAR_CELL_FLAG(f->out, OUT_NOTE_STALE);
-    return false;
-}
-
-
 // Even though ANY_INERT() is a quick test, you can't skip the cost of frame
 // processing--due to enfix.  But a feed only looks ahead one unit at a time,
 // so advancing the frame past an inert item to find an enfix function means
@@ -139,8 +122,6 @@ inline static bool Did_Init_Inert_Optimize_Complete(
     REBFED *feed,
     REBFLGS *flags
 ){
-    assert(Is_Fresh(out));  // "Have to Init() `out` one way or another..."
-
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE_BYTE
     assert(not IS_END(feed->value));  // would be wasting time to call
 
@@ -247,6 +228,9 @@ inline static bool Eval_Step_Maybe_Stale_Throws(
     REBVAL *out,
     REBFRM *f
 ){
+    if (NOT_EVAL_FLAG(f, OVERLAP_OUTPUT))
+        assert(Is_Fresh(out));
+
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
 
     f->out = out;
@@ -254,25 +238,20 @@ inline static bool Eval_Step_Maybe_Stale_Throws(
     return Eval_Maybe_Stale_Throws(f);  // should already be pushed
 }
 
-inline static bool Eval_Step_Throws(REBVAL *out, REBFRM *f) {
-    RESET(out);
-    bool threw = Eval_Step_Maybe_Stale_Throws(out, f);
-    CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
-    return threw;
-}
-
 
 // It should not be necessary to use a subframe unless there is meaningful
 // state which would be overwritten in the parent frame.  For the moment,
 // that only happens if a function call is in effect -or- if a SET-WORD! or
-// SET-PATH! are running with an expiring `current` in effect.  Else it is
-// more efficient to call Eval_Step_In_Frame_Throws(), or the also lighter
+// SET-PATH! are running with an expiring `current` in effect.
 //
-inline static bool Eval_Step_In_Subframe_Throws(
+inline static bool Eval_Step_In_Subframe_Maybe_Stale_Throws(
     REBVAL *out,
     REBFRM *f,
     REBFLGS flags
 ){
+    if (not (flags & EVAL_FLAG_OVERLAP_OUTPUT))
+        assert(Is_Fresh(out));
+
     if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a frame
 
@@ -283,7 +262,7 @@ inline static bool Eval_Step_In_Subframe_Throws(
     DECLARE_FRAME (subframe, f->feed, flags);
 
     Push_Frame(out, subframe);
-    bool threw = Eval_Throws(subframe);
+    bool threw = Eval_Maybe_Stale_Throws(subframe);
     Drop_Frame(subframe);
 
     return threw;
@@ -320,7 +299,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     REBSPC *specifier,
     REBFLGS flags
 ){
-    SET_END(out);
+    assert(Is_Fresh(out));
 
     DECLARE_FEED_AT_CORE (feed, any_array, specifier);
 
@@ -332,7 +311,9 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
 
     Push_Frame(out, f);
-    bool threw = Eval_Throws(f);
+    bool threw = Eval_Maybe_Stale_Throws(f);
+
+    Clear_Stale_Flag(f->out);
 
     if (threw)
         *index_out = TRASHED_INDEX;
@@ -430,24 +411,18 @@ inline static bool Eval_Value_Maybe_Stale_Throws(
 }
 
 
-// Evaluate one cell (e.g. a BLOCK! here would just evaluate to itself!)
-//
-// The callsites for Eval_Value_Throws() generally expect an evaluative
-// result (at least null).  They might be able to give a better error, but
-// they pretty much all need to give an error.
+// Evaluate *one cell* (e.g. a BLOCK! here would just evaluate to itself!)
 //
 inline static bool Eval_Value_Throws(
     REBVAL *out,
     const RELVAL *value,  // note this is not `unstable`, direct pointer used
     REBSPC *specifier
 ){
-    assert(out != value);
-
     if (Eval_Value_Maybe_Stale_Throws(out, value, specifier))
         return true;
 
-    if (IS_END(out))
-        fail ("Single step EVAL produced no result (invisible or empty)");
+    Clear_Stale_Flag(out);
+    Reify_Eval_Out_Plain(out);
 
     return false;
 }

@@ -41,7 +41,7 @@
 
 [https://github.com/metaeducation/ren-c/issues/876 (
     x: 1020
-    1020 = (null, x: ())
+    1020 = (null, x: (void))
 )(
     x: 1020
     did all [

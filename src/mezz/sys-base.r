@@ -163,6 +163,13 @@ module: func [
     ;
     product: default [#]
     catch/quit [
+        ;
+        ; If the body didn't get turned into a block (and is still a BINARY!
+        ; or similar) then DO'ing it will cause a confusing infinite recursion.
+        ; Good to notice the problem before that.
+        ;
+        assert [block? body]
+
         set product do body
         if quitting [set quitting false]
     ]

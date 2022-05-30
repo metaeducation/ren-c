@@ -105,7 +105,7 @@ REBNATIVE(delimit)
     bool pending = false;  // pending delimiter output, *if* more non-nulls
     bool nothing = true;  // any elements seen so far have been null or blank
 
-    do {
+    while (NOT_END(f_value)) {
         // See philosophy on handling blanks differently from nulls, but only
         // at dialect "source level".
         // https://forum.rebol.info/t/1348
@@ -118,34 +118,45 @@ REBNATIVE(delimit)
             continue;
         }
 
-        if (Eval_Step_Throws(out, f)) {
+        if (Eval_Step_Maybe_Stale_Throws(SET_END(out), f)) {
             Drop_Mold(mo);
             Abort_Frame(f);
             return_thrown (D_OUT);
         }
 
-        if (IS_END(out)) {
-            if (IS_END(f_value)) {  // spaced []
-                assert(nothing);
-                break;
-            }
-            continue;  // spaced [comment "a" ...]
-        }
-
         // These are all the things that we're willing to vaporize.  Since
         // operations like delimit are not positional, the risk is mitigated
         // of letting things like nulls and voids vaporize.
-        //
-        if (
-            IS_NULLED(out)
-            or Is_Null_Isotope(out)  // `unspaced ["a" if true [null]]`
-            or IS_BLANK(out)  // see note above on BLANK!
-        ){
-            continue;  // opt-out and maybe keep option open to return NULL
-        }
 
-        if (IS_BAD_WORD(out))
-            fail (out);  // don't allow *any* BAD-WORD! non-isotopes
+        if (Is_Voided(out))
+            continue;  // spaced [if false [<a>] ...]
+
+        if (Is_Invisible(out))
+            continue;  // spaced [comment "a" ...]
+
+        Clear_Stale_Flag(out);
+
+        Decay_If_Isotope(out);  // spaced [match [logic!] false ...]
+
+        if (IS_BLANK(out))  // see note above on BLANK!
+            continue;  // opt-out and maybe keep option open to return NULL
+
+        if (IS_NULLED(out)) {
+            //
+            // When NULL would vaporize it led to some confusing situations.
+            // Erroring is probably worse than just showing something.
+            //
+            //    >> spaced [null "a" if true [null]]
+            //    == "~null~ a ~null~"
+            //
+            Init_Bad_Word(out, Canon(NULL));
+        }
+        else if (Is_Isotope(out)) {
+            //
+            // Is it better to error on isotopes or to reify them to BAD-WORD!
+            //
+            fail (Error_Bad_Isotope(out));
+        }
 
         nothing = false;
 

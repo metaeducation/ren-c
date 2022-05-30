@@ -32,7 +32,7 @@
 [#1965
     ("cd" == uparse "abcd" [seek (3) "cd"])
     ("d" == uparse "abcd" [seek (3) <any> "d"])
-    ("d" == uparse "abcd" [seek (4) <any>])
+    (#d == uparse "abcd" [seek (4) <any>])
     ("" == uparse "abcd" [seek (5)])
     ("abcd" == uparse "abcd" ["ab" seek (1) "abcd"])
     ("bcd" == uparse "abcd" ["ab" seek (1) <any> "bcd"])

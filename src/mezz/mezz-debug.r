@@ -19,19 +19,25 @@ verify: function [
         {Conditions to check}
     <local> pos result
 ][
-    while [[result @pos]: evaluate conditions] [
-        any [bad-word? ^result, not :result] then [
-            ;
-            ; including commas in the failure report looks messy, skip them
-            ;
-            while [', = first conditions] [conditions: my next]
+    while [', = first conditions] [conditions: my next]
 
+    while [[^result @pos]: evaluate conditions] [
+        ;
+        ; including commas in the failure report looks messy, skip them
+        ;
+        while [', = first conditions] [conditions: my next]
+
+        any [
+            find [_ ~void~] ^result  ; was pure invisible or void isotope
+            non bad-word! result then [to-logic unmeta result]
+        ] else [
             fail @conditions make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [
                     ((copy/part conditions pos)) ** (case [
-                        bad-word? ^result [^result]  ; isotope
+                        bad-word? result [result]  ; isotope
+                        (elide result: my unmeta)
                         null? result ['null]
                         blank? result ['blank]
                         result = false ['false]

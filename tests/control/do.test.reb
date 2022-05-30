@@ -1,58 +1,78 @@
 ; functions/control/do.r
 
 ; By default, DO will not be invisible.  You get an "ornery" return result
-; of ~none~ isotope to help remind you that you are not seeing the whole
+; of ~void~ isotope to help remind you that you are not seeing the whole
 ; picture.  Returning NULL might seem "friendlier" but it is misleading.
 [
-    ('~none~ = ^ (10 + 20 do []))
-    ('~none~ = ^ (10 + 20 do [void]))
-    ('~none~ = ^ (10 + 20 do [comment "hi"]))
-    (''30 = ^ (10 + 20 do make frame! :void))
+    ('~void~ = ^(do []))
+    ('~void~ = ^ (eval []))
+    (blank? ^ (maybe eval []))
+
+    (none? do [])
+    (invisible? (maybe eval []))
+    (invisible? maybe eval [])
+    (3 = (1 + 2 maybe eval []))
+    (3 = (1 + 2 maybe unmeta ^ maybe eval []))
+
+    ('~void~ = ^ (10 + 20 eval []))
+    ('~void~ = ^ (10 + 20 eval [void]))
+    ('~void~ = ^ (10 + 20 eval [comment "hi"]))
+    ('~void~ = ^ (10 + 20 eval make frame! :void))
+
     (didn't do [null])
     ('~null~ = ^ do [if true [null]])
+    ('~void~ = ^ do [if false [<a>]])
+    ('~void~ = ^ do [10 + 20 if false [<a>]])
 
     (did all [
-        '~void~ = x: ^ comment "HI" comment "HI"
-        x = '~void~
+        x: <overwritten>
+        _ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
+        x = _
     ])
 
     (did all [
-        '~none~ = (x: ^(comment "HI") ^ do [comment "HI"])
-        x = '~void~
+        x: <overwritten>
+        '~void~ = (x: ^(comment "HI") ^ do [comment "HI"])
+        blank? x
     ])
 
-    ('~none~ = (10 + 20 ^(do [])))
-    ('~none~ = (10 + 20 ^(do [comment "hi"])))
-    ('~void~ = (10 + 20 ^(do make frame! :void)))
-    (didn't ^(do [null]))
-    ('~null~ = ^(do [if true [null]]))
+    ('~void~ = (10 + 20 ^(eval [])))
+    ('~void~ = (10 + 20 ^(eval [comment "hi"])))
+    ('~void~ = (10 + 20 ^(eval make frame! :void)))
+    (didn't ^(eval [null]))
+    ('~null~ = ^(eval [if true [null]]))
 
-    (30 = (10 + 20 none-to-void do []))
-    (30 = (10 + 20 none-to-void do [comment "hi"]))
-    (30 = (10 + 20 none-to-void do make frame! :void))
-    (didn't ^(none-to-void do [null]))
-    ('~null~ = ^(none-to-void do [heavy null]))
-    ('~null~ = ^(none-to-void do [if true [null]]))
+    (30 = (10 + 20 maybe eval []))
+    (30 = (10 + 20 maybe eval [comment "hi"]))
+    (30 = (10 + 20 maybe eval make frame! :void))
+    (didn't ^(maybe eval [null]))
+    ('~null~ = ^(maybe eval [heavy null]))
+    ('~null~ = ^(maybe eval [if true [null]]))
 
     ; Try standalone ^ operator so long as we're at it.
-    ('~void~ = ^ none-to-void do [])
-    ('~void~ = ^ none-to-void do [comment "hi"])
-    ('~void~ = ^ none-to-void do make frame! :void)
-    (didn't ^ none-to-void do [null])
-    ('~null~ = ^ none-to-void do [heavy null])
-    ('~null~ = ^ none-to-void do [if true [null]])
+    ('~void~ = ^ eval [])
+    ('~void~ = ^ eval [comment "hi"])
+    ('~void~ = ^ eval make frame! :void)
+    ('~void~ = ^ do :void)
+
+    (didn't ^ maybe eval [null])
+    ('~null~ = ^ maybe eval [heavy null])
+    ('~null~ = ^ maybe eval [if true [null]])
 ]
 
 
 [
-    ('~none~ = ^ (1 + 2 do [comment "HI"]))
-    ('~none~ = ^ do [comment "HI"])
+    ('~void~ = ^ (1 + 2 eval [comment "HI"]))
+    ('~void~ = ^ eval [comment "HI"])
+
+    (3 = (1 + 2 maybe eval [comment "HI"]))
+    ('~void~ = ^ eval [comment "HI"])
 
     (
-        x: (1 + 2 y: do [comment "HI"])
+        x: (1 + 2 y: eval [comment "HI"])
         did all [
-            '~none~ = ^x
-            '~none~ = ^y
+            unset? 'x
+            unset? 'y
         ]
     )
 ]
@@ -159,7 +179,7 @@
 )
 (0:00 == do [0:00])
 (0.0.0 == do [0.0.0])
-('~none~ = ^ do [()])
+('~void~ = ^ do [()])
 ('a == do ['a])
 (error? trap [do trap [1 / 0] 1])
 (
@@ -170,7 +190,7 @@
     a-value: "1"
     1 == do :a-value
 )
-('~none~ = ^ do "")
+('~void~ = ^ do "")
 (1 = do "1")
 (3 = do "1 2 3")
 
@@ -199,10 +219,11 @@
         2
     ]
 )
+
 ; evaluate block tests
 (
     success: false
-    evaluate [success: true success: false]
+    evaluate/next [success: true success: false] #
     success
 )
 (
@@ -213,10 +234,10 @@
     ]
 )
 (
-    value: ~
+    value: <overwritten>
     did all [
-        null? ^ [value @]: evaluate []
-        '~none~ = ^value
+        null? [value @]: evaluate []  ; @ requests position after step (null)
+        unset? 'value
     ]
 )
 (
@@ -246,6 +267,20 @@
 (
     blk: [b: evaluate blk]
     error? trap blk
+)
+
+; Vanishing steps vanish (!)
+(
+    result: null
+    block: [1 + 2 comment "WhOAHhhHAH!"]
+
+    3 = while [[result @block]: evaluate block] [get/any 'result]
+)
+(
+    result: null
+    block: [1 + 2 comment "WhOAHhhHAH!"]
+
+    3 = while [[result block]: evaluate block, block] [get/any 'result]
 )
 
 ; evaluating quoted argument

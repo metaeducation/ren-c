@@ -53,7 +53,7 @@ REBOL [
     {Quoting MAKE FILE! Operator}
     'value [word! path! tuple! block! group!]
 ][
-    if group? value [value: do value]
+    if group? value [value: eval value]
     make-file value
 ]
 

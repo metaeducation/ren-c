@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2020 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -27,16 +27,15 @@
 // * _Maybe_Stale_ => The evaluation targets an output cell which must be
 //   preloaded or set to END.  If there is no result (e.g. due to being just
 //   comments) then whatever was in that cell will still be there -but- will
-//   carry OUT_NOTE_STALE.  This is just an alias for NODE_FLAG_MARKED, and
-//   it must be cleared off before passing pointers to the cell to a routine
-//   which may interpret that flag differently.
+//   carry a stale marking.  This also means that END is a possible product
+//   of the evaluation.  Higher-level helpers blend in Reify_Eval_Out_Plain() or
+//   Reify_Eval_Out_Meta() to avoid having to deal with these low-level issues,
+//   but core code wanting to be efficient can get all the insight of a ^META
+//   detection without going through quoting/etc.
 //
 // * _Throws => The return result is a boolean which all callers *must* heed.
 //   There is no "thrown value" data type or cell flag, so the only indication
 //   that a throw happened comes from this flag.  See %sys-throw.h
-//
-// Eval_Throws() is a small stub which takes care of the first concern,
-// though some low-level clients actually want the stale flag.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
@@ -116,11 +115,15 @@
 // correspond to what they are...and may be better for cohering the "executor"
 // pattern by making it possible to use a constant executor per frame.
 //
+// !!! Evil Macro, repeats parent!
+//
 #define DECLARE_ACTION_SUBFRAME(f,parent) \
     DECLARE_FRAME (f, (parent)->feed, \
         EVAL_MASK_DEFAULT | /*EVAL_FLAG_KEEP_STALE_BIT |*/ ((parent)->flags.bits \
             & (EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_RUNNING_ENFIX \
-                | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
+                | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH))) \
+    if (GET_EVAL_FLAG((parent), META_OUT)) \
+        SET_EVAL_FLAG(f, META_OUT)
 
 
 #if DEBUG_EXPIRED_LOOKBACK
@@ -130,11 +133,6 @@
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
         (v == &f->feed->lookback)
 #endif
-
-
-inline static void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
-    SET_CELL_FLAG(f->out, OUT_NOTE_STALE);
-}
 
 
 // SET-WORD!, SET-PATH!, SET-GROUP!, and SET-BLOCK! all want to do roughly
@@ -176,7 +174,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     // assignment:
     //
     //    >> (1 + 2 x: comment "x should not be three")
-    //    ** This should be an error!
+    //    == <the prior value of X, cool feature!, awesome used with MAYBE!>
     //
     // So all rightward evaluations set the output to end.  Note that any
     // enfix quoting operators that would quote backwards to see the `x:` would
@@ -202,7 +200,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
             | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
     if (CURRENT_CHANGES_IF_FETCH_NEXT) {  // must use new frame
-        if (Eval_Step_In_Subframe_Throws(f->out, f, flags))
+        if (Eval_Step_In_Subframe_Maybe_Stale_Throws(f->out, f, flags))
             return true;
     }
     else {  // !!! Reusing the frame, would inert optimization be worth it?
@@ -281,7 +279,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
         if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
-            f->out->header.bits |= CELL_FLAG_OUT_NOTE_STALE;
+            Mark_Eval_Out_Stale(f->out);
             return false;
         }
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);  // not an argument, clear flag
@@ -334,7 +332,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         }
 
         if (NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))
-            SET_CELL_FLAG(f->out, OUT_NOTE_STALE);
+            Mark_Eval_Out_Stale(f->out);
 
         v = f->u.reval.value;
         gotten = nullptr;
@@ -373,15 +371,15 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // f->out might be merely "prepped" in which case the header is all 0 bits.
     // This is considered INITABLE() but not WRITABLE(), so the SET_CELL_FLAG()
     // routines will reject it.  While we are already doing a flag masking
-    // operation to add OUT_NOTE_STALE, make sure the cell carries the NODE and
+    // operation to add CELL_FLAG_STALE, ensure the cell carries the NODE and
     // CELL flags (we already checked that it was INITABLE()).  This promotes
     // 0 prep cells to a readable END state for checking after the eval.
     //
-    // Note that adding OUT_NOTE_STALE means the out cell won't act as the
+    // Note that adding CELL_FLAG_STALE means the out cell won't act as the
     // input to an enfix operation.
     //
     f->out->header.bits |= (
-        NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_OUT_NOTE_STALE
+        NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STALE
     );
 
     UPDATE_EXPRESSION_START(f);  // !!! See FRM_INDEX() for caveats
@@ -619,7 +617,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // the output slot, but not being run in an enfix mode".
         //
         if (NOT_FEED_FLAG(subframe->feed, NEXT_ARG_FROM_OUT))
-            Expire_Out_Cell_Unless_Invisible(subframe);
+            Mark_Eval_Out_Stale(subframe->out);
 
         goto process_action; }
 
@@ -671,7 +669,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         //      if (
         //          GET_EVAL_FLAG(f, FULFILLING_ARG)
-        //          and GET_CELL_FLAG(f->out, OUT_NOTE_STALE)
+        //          and Is_Stale(f->out)
         //          and NOT_END(f_next)
         //      ){
         //          gotten = f_next_gotten;
@@ -762,21 +760,60 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
             goto return_thrown;
 
-        if (IS_END(f->out)) {  // invisible, e.g. `x: comment "hi"`
+        if (Is_Voided(f->out)) {
+            //
+            // Could have been none or void isotope...we leave it in its
+            // quantum state for others to collapse.  But unset the variable
+            // in either case.
+            //
+            Init_None(Sink_Word_May_Fail(v, v_specifier));
+        }
+        else if (Is_Invisible(f->out)) {
+            //
+            // When you assign an invisible to an output, it has no effect, and
+            // returns the old value of the variable:
+            //
+            //     >> x: 10
+            //
+            //     >> x: comment "hi"
+            //     == 10
+            //
+            //     >> x
+            //     == 10
+            //
+            // This isn't frivolous; it is foundationally useful; for instance
+            // MAYBE will convert light ~null~ isotopes to pure invisible:
+            //
+            //     >> x: <a>
+            //
+            //     >> x: maybe case [1 = 2 [<b>] 3 = 4 [<c>]]
+            //     == <a>
+            //
+            //     >> x
+            //     == <a>
+            //
+            // It becomes a truly generic feature for being able to opt-out
+            // of assignments, just as pure invisibles can opt out of adding
+            // a value to the chain of evaluation.
+            //
             gotten = Lookup_Word_May_Fail(v, v_specifier);
 
             Copy_Cell(f->out, unwrap(gotten));
             assert(NOT_CELL_FLAG(f->out, UNEVALUATED));
-            break;
         }
+        else {
+            Clear_Stale_Flag(f->out);
 
-        if (IS_ACTION(f->out))  // cache the word's label in the cell
-            INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
+            if (IS_ACTION(f->out))  // cache the word's label in the cell
+                INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
 
-        // We decay the isotope in the assigned slot, but we don't decay
-        // the result.
-        //
-        Decay_If_Isotope(Copy_Cell(Sink_Word_May_Fail(v, v_specifier), f->out));
+            // Decay the isotope in variable, but don't decay overall result!
+            //
+            Copy_Cell(
+                Sink_Word_May_Fail(v, v_specifier),
+                Pointer_To_Decayed(f->out)
+            );
+        }
 
         // Running functions flushes the f_next_gotten cache.  But a plain
         // assignment can cause trouble too, if it doesn't trigger a function
@@ -827,7 +864,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         Copy_Cell(f->out, unwrap(gotten));
         assert(NOT_CELL_FLAG(f->out, UNEVALUATED));
 
-        Decay_If_Isotope(f->out);  // !!! Should Lookup_Word() handle this?
+        // !!! All isotopic decay should have already happened.
+        // Lookup_Word() should be asserting this!
 
         if (STATE_BYTE(f) == ST_EVALUATOR_META_WORD)
             Meta_Quotify(f->out);
@@ -905,79 +943,105 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // with a non-stale void.
         //
         assert(
-            IS_END(f->out)
-            or GET_CELL_FLAG(f->out, OUT_NOTE_STALE)
+            Is_Stale(f->out)
+            or Is_Voided(f->out)
+            or Is_Invisible(f->out)
             or IS_BAD_WORD(f->out)
         );
 
         DECLARE_FEED_AT_CORE (subfeed, v, v_specifier);
 
-        // !!! This was here to implement a deprecated behavior:
-        //
-        //    >> 10 (comment "hi")
-        //    == 10
-        //
-        //    >> 10 ^(comment "hi")
-        //    == ~stale~
-        //
-        // It's no longer like this, and should produce ~void~.  Can this be
-        // deleted now?
-        //
         if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
-            SET_END(f->out);
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
+            SET_END(f->out);  // guaranteed to make a value, not transparent
+        }
+        else {
+            // We want to allow *non* ^META groups to be transparent if it's
+            // invisible, so instead of using Do_Any_Array_At() we call the
+            // lower-level variant and leave what's in f->out there.
         }
 
-        // "Maybe_Stale" variant leaves f->out as-is if no result generated
-        // However, it sets OUT_NOTE_STALE in that case (note we may be
-        // leaving an END in f->out by doing this.)
+      blockscope {
         //
-        // !!! Review why the stale bit was left here.  It must be cleared
-        // if the group evaluation finished, otherwise `any [(10 elide "hi")]`
-        // would result in NULL instead of 10.
-        //
-        if (Do_Feed_To_End_Maybe_Stale_Throws(
-            f->out,
+        // We don't use Do_Feed_To_End_Maybe_Stale_Throws() here because we
+        // have a rare usage scenario where we are overlapping output and
+        // running multiple evaluations, where we know how to interpret the
+        // stale flag correctly.  (Most scenarios can't)
+
+        DECLARE_FRAME (
+            subframe,
             subfeed,
             EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-        )){
+        );
+
+        bool threw;
+        Push_Frame(f->out, subframe);
+        do {
+            threw = Eval_Maybe_Stale_Throws(subframe);
+        } while (not threw and NOT_END(subfeed->value));
+        Drop_Frame(subframe);
+        if (threw)
             goto return_thrown;
+      }
+
+        if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
+            //
+            // !!! The current concept is that the ^ operators do not conflate
+            // pure invisibility with translucency.
+            //
+            //     >> ^(if false [<a>])
+            //     == ~void~  ; isotope
+            //
+            //     >> ^(comment "hi")
+            //     == _
+            //
+            bool is_invisible_ok = true;
+            Clear_Stale_Flag(f->out);
+            Reify_Eval_Out_Meta(f->out, is_invisible_ok);
         }
+        else {
+            // We evaluated a group into the output, but if it was something
+            // like (1) the output will hold a non-evaluative 1.  We need to
+            // make it clear that this group overhead itself counts as eval.
+            //
+            // !!! What about `1 ()` ?  It's stale, so does it matter any more
+            // if it's evaluative or not?  If we ran the 1 -and- ran the group
+            // then we're in an evaluative context anyway.  Just clear always.
+            //
+            CLEAR_CELL_FLAG(f->out, UNEVALUATED);
 
-        if (IS_END(f->out)) {
-            bool is_meta = (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP);
-
-            STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
-
-            if (is_meta) {
-                //
-                // The META-GROUP! is a contained evaluation that never acts
-                // invisible, e.g. ^(comment "hi") is ~void~.  That's the
-                // value...so there's no need to keep feeding for one.
-                //
-                Meta_Quotify(f->out);
-            }
-            else {
-                // Plain group is different.  We want `3 = (1 + 2 ()) 4` to not
-                // treat the 1 + 2 as "stale", thus skipping it and trying to
-                // compare `3 = 4`.  But `3 = () 1 + 2` should consider the
-                // empty group stale.
-                //
-                if (IS_END(f_next))
-                    goto finished;  // nothing after to try evaluating
-
-                gotten = f_next_gotten;
-                v = Lookback_While_Fetching_Next(f);
-                goto evaluate;
-            }
-
-            goto lookahead;
+            // What was in the group might have been stale from inside the
+            // group, e.g.:
+            //
+            //     (1 + 2 comment "left stale" also [print "nothing on left"])
+            //
+            // But from outside the group, it's not stale...it's valid input.
+            //
+            //     (1 + 2 comment "we clear stale") also [print "3 comes in"]
+            //
+            // !!! How do we catch the case of vaporizing left hand sides?
+            //
+            //     1 + 2 (comment "stale") + 3
+            //
+            // Is there a cheaper way to prohibit this that doesn't require
+            // writing into the spare cell and seeing if it was stale, and
+            // then copying it over?  Is it worth it to prohibit, when this
+            // feature was previously considered desirable?
+            //
+            // We actually don't want to clear the stale flag on end, otherwise
+            // it's too easy to make an unintentional "variable assignment
+            // skipper"...this is why the resolve is conservative:
+            //
+            //    >> eval []
+            //    == ~void~  ; isotope (safer than something that no-op assigns)
+            //
+            //    >> ()
+            //    == ~void~  ; isotope (we want parity between these two)
+            //
+            //    >> (maybe if false [<a>])
+            //    ; void  (okay, this seems intentional)
+            //
         }
-
-        CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // `(1)` considered evaluative
-
-        if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP)
-            Meta_Quotify(f->out);
 
         STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
@@ -1177,17 +1241,45 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))
             goto return_thrown;
 
-        if (IS_END(f->out)) {  // invisible, e.g. `obj.x: comment "hi"`
+        if (Is_Voided(f->out)) {  // ^-- also see REB_SET_WORD
+            if (Set_Var_Core_Throws(
+                f_spare,
+                f_spare,
+                v,
+                v_specifier,
+                NONE_ISOTOPE  // was ~void~ isotope or none, can only set none
+            )){
+                Move_Cell(f->out, f_spare);
+                goto return_thrown;
+            }
+        }
+        else if (Is_Stale(f->out)) {
+            //
+            // When you assign an invisible to an output, it has no effect, and
+            // returns the old value of the variable.  See REB_SET_WORD for
+            // a writeup of the rationale.
+
             if (Get_Var_Core_Throws(f->out, f_spare, v, v_specifier)) {
                 goto return_thrown;
             }
             assert(NOT_CELL_FLAG(f->out, UNEVALUATED));
-            break;
         }
+        else {
+            /*  // !!! Should we figure out how to cache a label in the cell?
+            if (IS_ACTION(f->out))
+                INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
+            */
 
-        if (Set_Var_Core_Throws(f_spare, f_spare, v, v_specifier, f->out)) {
-            Move_Cell(f->out, f_spare);
-            goto return_thrown;
+            if (Set_Var_Core_Throws(
+                f_spare,
+                f_spare,
+                v,
+                v_specifier,
+                Pointer_To_Decayed(f->out)
+            )){
+                Move_Cell(f->out, f_spare);
+                goto return_thrown;
+            }
         }
         break; }
 
@@ -1231,7 +1323,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             goto process_get_word;
         }
 
-        RESET(f->out);
+        SET_END(f->out);  // !!! Not needed, should there be debug only TRASH()
         if (Get_Var_Core_Throws(f->out, f_spare, v, v_specifier))
             goto return_thrown;
 
@@ -1315,7 +1407,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //     >> (10 [x]: comment "we don't want this to be 10")
         //     ** This should be an error.
         //
-        RESET(f->out);
+        SET_END(f->out);
 
         // We pre-process the SET-BLOCK! first, because we are going to
         // advance the feed in order to build a frame for the following code.
@@ -1396,7 +1488,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 or IS_THE_GROUP(check)
                 or IS_META_GROUP(check)
             ){
-                if (Do_Any_Array_At_Throws(f_spare, check, derived)) {
+                if (Do_Any_Array_At_Throws(SET_END(f_spare), check, derived)) {
                     Move_Cell(f->out, f_spare);
                     DS_DROP_TO(f->dsp_orig);
                     goto return_thrown;
@@ -1502,6 +1594,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         // Now run the frame...
         //
+        SET_END(f->out);  // clear prior output to detect ~end~/~void~
         if (Do_Frame_Maybe_Stale_Throws(f->out, f_spare)) {
             DS_DROP_TO(f->dsp_orig);
             goto return_thrown;
@@ -1539,8 +1632,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         DECLARE_FRAME (subframe, f->feed, flags);
 
-        Push_Frame(f->out, subframe);
-        bool threw = Eval_Throws(subframe);
+        Push_Frame(f->out, subframe);  // offer potential enfix previous f->out
+        bool threw = Eval_Maybe_Stale_Throws(subframe);
         Drop_Frame(subframe);
 
         if (threw) {
@@ -1568,12 +1661,51 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (IS_BLANK(f_spare))
             Init_Isotope(f->out, Canon(BLANK));
         else {
-            if (GET_CELL_FLAG(DS_AT(f->dsp_orig + 1), STACK_NOTE_METARETURN))
-                Meta_Quotify(f->out);
-            Set_Var_May_Fail(
-                f_spare, SPECIFIED,
-                f->out
-            );
+            if (GET_CELL_FLAG(DS_AT(f->dsp_orig + 1), STACK_NOTE_METARETURN)) {
+                bool is_invisible_ok = true;
+                Reify_Eval_Out_Meta(f->out, is_invisible_ok);
+
+                Set_Var_May_Fail(
+                    f_spare, SPECIFIED,
+                    f->out
+                );
+            }
+            else if (Is_Voided(f->out)) {
+                Set_Var_May_Fail(
+                    f_spare, SPECIFIED,
+                    NONE_ISOTOPE  // still want to return the ~void~ isotope
+                );
+            }
+            else if (Is_Invisible(f->out)) {
+                //
+                // We can't assign an invisible state to a variable, so we
+                // evaluate to the prior value of it...e.g. the assignment is
+                // a no-op.  Note this can only happen with the primary output
+                // as you can't set the other multi-return variables to END.
+                //
+                // !!! If there's a TUPLE! with groups in it, then the push
+                // process should capture the steps as a block and pass the
+                // steps in here.
+                //
+                // !!! Edge cases not currently handled with # and _:
+                //
+                //     >> [#]: comment "What should this do?
+                //     == ???
+                //
+                //     >> [_]: comment "And what about this?"
+                //     == ???
+                //
+                if (Get_Var_Core_Throws(f->out, nullptr, f_spare, SPECIFIED)) {
+                    goto return_thrown;
+                }
+            }
+            else {  // ordinary assignment
+                Clear_Stale_Flag(f->out);
+                Set_Var_May_Fail(
+                    f_spare, SPECIFIED,
+                    Pointer_To_Decayed(f->out)  // still want to return isotope
+                );
+            }
         }
 
         // Iterate the other return slots.  For any variables besides the
@@ -1710,12 +1842,33 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         if (VAL_BAD_WORD_ID(v) == SYM_VOID) {
             //
-            // There are not void isotopes, because these represent a state
-            // of "pure invisibility".  While they don't exist, the meta state
-            // that conveys invisibility (when needed) is a ~VOID~ BAD-WORD!.
-            // Hence, ~VOID~'s evaluation just leaves whatever is in f->out...
+            // Doesn't "vanish" but produces a signal of void intent.  If the
+            // user wants actual invisibility, a function must be used (the
+            // VOID function is included for this purpose)
+            //
+            Mark_Eval_Out_Voided(f->out);
+        }
+        else if (VAL_BAD_WORD_ID(v) == SYM_END) {
+            //
+            // We skip through the rest of the feed when hitting ~end~, and
+            // also do not overwrite the result:
+            //
+            //    3 = do [1 + 2 ~end~ a * <b> c]
+            //
+            while (NOT_END(f_next))
+                Fetch_Next_Forget_Lookback(f);
+
+            // !!! This needs more thought, because as written it means that
+            // `x: ~end~` and `x: void` act the same.  Evaluation steps need
+            // to be taken to determine endness... not testing f->feed->value
+            // for END at the beginning of each step.  It's a big rework that
+            // will have to be done at some point to implement this feature.
         }
         else {
+            // All other isotopes can be said to actually "exist", but some
+            // of them decay automatically in variable assignment...such as
+            // ~null~, ~none~, ~false~, ~blank~, and ~blackhole~ isotopes.
+            //
             Derelativize(f->out, v, v_specifier);
             SET_CELL_FLAG(f->out, ISOTOPE);
         }

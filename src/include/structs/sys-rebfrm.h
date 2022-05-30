@@ -32,7 +32,7 @@
 STATIC_ASSERT(EVAL_FLAG_0_IS_TRUE == NODE_FLAG_NODE);
 
 #define EVAL_FLAG_1_IS_FALSE FLAG_LEFT_BIT(1) // is NOT free
-STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_FREE);
+STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 
 
 //=//// EVAL_FLAG_ALLOCATED_FEED //////////////////////////////////////////=//
@@ -265,9 +265,28 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(23)
 
 
-//=//// EVAL_FLAG_24 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_META_OUT /////////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_24 \
+// The knowledge of whether a meta operation is in effect tells the action
+// dispatcher whether to suppress the "invisible intent" of non-purely
+// invisible functions (such as EVALUATE).
+//
+//    >> eval []
+//    == ~void~  ; isotope
+//
+//    >> ^ eval []
+//    == _
+//
+// This is not the behavior of all functions that return void isotopes.  The
+// "translucent" functions have different behavior:
+//
+//    >> if false [<a>]
+//    == ~void~  ; isotope
+//
+//    >> ^ if false [<a>]
+//    == ~void~
+//
+#define EVAL_FLAG_META_OUT \
     FLAG_LEFT_BIT(24)
 
 
@@ -319,13 +338,13 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
 
 //=//// EVAL_FLAG_28 ///////////////////////////////////////////////////////=//
 //
-// Note: This bit is the same as CELL_FLAG_NOTE, so it lines up directly
-// with CELL_FLAG_OUT_NOTE_STALE.
+// Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
+// could be exploited for some optimization.
 //
 #define EVAL_FLAG_28 \
     FLAG_LEFT_BIT(28)
 
-STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_OUT_NOTE_STALE);
+STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
 
 
 //=//// EVAL_FLAG_PUSH_PATH_REFINES + EVAL_FLAG_BLAME_PARENT //////////////=//
@@ -369,9 +388,13 @@ STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_OUT_NOTE_STALE);
     FLAG_LEFT_BIT(30)
 
 
-//=//// EVAL_FLAG_31 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_OVERLAP_OUTPUT ///////////////////////////////////////////=//
 //
-#define EVAL_FLAG_31 \
+// This is a flag that is passed to the evaluation to indicate that it should
+// not assert if it finds a value in the ouput cell already.  It is only
+// paid attention to in the debug build.
+//
+#define EVAL_FLAG_OVERLAP_OUTPUT \
     FLAG_LEFT_BIT(31)
 
 
@@ -425,7 +448,7 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     // that comes in useful (e.g. there's an apparent END after cell)
     //
     // Note: In order to use the memory pools, this must be in first position,
-    // and it must not have the NODE_FLAG_FREE bit set when in use.
+    // and it must not have the NODE_FLAG_STALE bit set when in use.
     //
     union Reb_Header flags;
 

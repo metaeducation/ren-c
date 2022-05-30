@@ -146,6 +146,40 @@ inline static void Probe_Molded_Value(const REBVAL *v)
     Drop_Mold(mo);
 }
 
+void Probe_Cell_Print_Helper(
+  REB_MOLD *mo,
+  const void *p,
+  const char *expr,
+  const char *file,
+  int line
+){
+      const REBVAL *v = cast(const REBVAL*, p);
+
+  #if DEBUG_UNREADABLE_TRASH
+    if (IS_TRASH(v)) {  // IS_NULLED() asserts on trash
+        Probe_Print_Helper(p, expr, "Value", file, line);
+        Append_Ascii(mo->series, "~trash~");
+        return;
+    }
+  #endif
+
+    Probe_Print_Helper(p, expr, "Value", file, line);
+    if (IS_NULLED(v)) {
+        Append_Ascii(mo->series, "; null");
+    }
+    else if (Is_Isotope(v)) {
+        Append_Codepoint(mo->series, '~');
+        const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(v));
+        if (label) {
+            Append_Spelling(mo->series, label);
+            Append_Codepoint(mo->series, '~');
+        }
+        Append_Ascii(mo->series, "  ; isotope");
+    }
+    else
+        Mold_Value(mo, v);
+}
+
 
 //
 //  Probe_Core_Debug: C
@@ -174,6 +208,23 @@ void* Probe_Core_Debug(
     }
     else switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_UTF8:
+        if (
+            (*cast(const REBYTE*, p) & NODE_BYTEMASK_0x80_NODE)
+            and (*cast(const REBYTE*, p) & NODE_BYTEMASK_0x01_CELL)
+        ){
+            // !!! Stale cells are now more common in debugging than strings
+            // starting with high unicode codepoints.  They can't be seen by
+            // API clients, but this is for debugging in the system, and that
+            // need has priority.
+            //
+            // We could do a little more heuristics, by seeing if the amount
+            // of data the size of a cell header either terminates with a
+            // 0 byte as valid UTF-8 or not.
+            //
+            printf("UTF-8 String or Stale Cell (assuming stale cell...)\n");
+            goto stale_cell;
+        }
+
         if (*cast(const REBYTE*, p) == '\0')
             Probe_Print_Helper(p, expr, "REB_0 (or NUL C String)", file, line);
         else {
@@ -186,41 +237,30 @@ void* Probe_Core_Debug(
         Probe_Print_Helper(p, expr, "Freed Series", file, line);
         panic (p);
 
-      case DETECTED_AS_CELL: {
-        const REBVAL *v = cast(const REBVAL*, p);
-
-      #if DEBUG_UNREADABLE_TRASH
-        if (IS_TRASH(v)) {  // IS_NULLED() asserts on trash
-            Probe_Print_Helper(p, expr, "Value", file, line);
-            Append_Ascii(mo->series, "~trash~");
-            goto cleanup;
-        }
-      #endif
-
-        Probe_Print_Helper(p, expr, "Value", file, line);
-        if (IS_NULLED(v)) {
-            Append_Ascii(mo->series, "; null");
-        }
-        else if (Is_Isotope(v)) {
-            Append_Codepoint(mo->series, '~');
-            const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(v));
-            if (label) {
-                Append_Spelling(mo->series, label);
-                Append_Codepoint(mo->series, '~');
-            }
-            Append_Ascii(mo->series, "  ; isotope");
-        }
-        else
-            Mold_Value(mo, v);
-        goto cleanup; }
+      case DETECTED_AS_CELL:
+        Probe_Cell_Print_Helper(mo, p, expr, file, line);
+        goto cleanup;
 
       case DETECTED_AS_END:
         Probe_Print_Helper(p, expr, "END", file, line);
         goto cleanup;
 
-      case DETECTED_AS_FREED_CELL:
-        Probe_Print_Helper(p, expr, "Freed Cell", file, line);
-        panic (p);
+      case DETECTED_AS_FREED_CELL: {
+      stale_cell:
+        printf("Wacky UTF-8 String or Stale Cell (assuming stale cell...)\n");
+        REBVAL *v = cast(REBVAL*, m_cast(void*, p));
+        v->header.bits &= ~CELL_FLAG_STALE;
+        if (IS_END(v)) {
+            Append_Ascii(mo->series, "; void");
+        }
+        else {
+            Probe_Cell_Print_Helper(mo, p, expr, file, line);
+        }
+        v->header.bits |= CELL_FLAG_STALE;
+        goto cleanup; }
+
+        /* Probe_Print_Helper(p, expr, "Freed Cell", file, line);
+        panic (p); } */
 
       case DETECTED_AS_SERIES:
         break;  // lots of possibilities, break to handle

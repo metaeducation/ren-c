@@ -858,7 +858,7 @@ REBTYPE(Array)
         REBARR *mut_arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         RELVAL *at = ARR_AT(mut_arr, n);
         Move_Cell(at, setval);
-        Init_Bad_Word(setval, Canon(MOVE));  // can't leave ARG slots RESET()
+        Init_None(setval);  // can't leave ARG slots RESET()
 
         return nullptr; }  // REBARR* is still fine, caller need not update
 
@@ -1043,11 +1043,13 @@ REBTYPE(Array)
 
         Copy_Cell(D_OUT, array);
 
-        if (IS_NULLED(ARG(value))) {
+        REBVAL *v = ARG(value);
+
+        if (IS_NULLED(v)) {
             // handled before mutability check
         }
-        else if (IS_QUOTED(ARG(value))) {
-            Unquotify(ARG(value), 1);
+        else if (IS_QUOTED(v)) {
+            Unquotify(v, 1);
 
             // There is an exemption made here:
             //
@@ -1061,20 +1063,20 @@ REBTYPE(Array)
             //     >> compose [(null) * ((null))]
             //     == [~null~ *]
             //
-            if (IS_NULLED(ARG(value)))
-                Init_Bad_Word(ARG(value), Canon(NULL));
+            if (IS_NULLED(v))
+                Init_Bad_Word(v, Canon(NULL));
         }
-        else if (IS_BLOCK(ARG(value)))
+        else if (IS_BLOCK(v))
             flags |= AM_SPLICE;
-        else if (ANY_THE_KIND(VAL_TYPE(ARG(value))))
-            Plainify(ARG(value));
-        else if (not ANY_INERT(ARG(value)))
+        else if (ANY_THE_KIND(VAL_TYPE(v)))
+            Plainify(v);
+        else if (not ANY_INERT(v))
             fail ("Cannot APPEND/INSERT/CHANGE evaluative values w/o QUOTE");
         else {
             // The only inert array type besides BLOCK! is THE-BLOCK!, and we
             // handle ANY_THE_KIND() above as dropping the @ and not splicing.
             //
-            assert(not ANY_ARRAY(ARG(value)));
+            assert(not ANY_ARRAY(v));
         }
 
         if (REF(part))
@@ -1086,7 +1088,7 @@ REBTYPE(Array)
             arr,
             index,
             cast(enum Reb_Symbol_Id, id),
-            ARG(value),
+            v,
             flags,
             len,
             REF(dup) ? Int32(ARG(dup)) : 1

@@ -5,7 +5,7 @@
 ; well as pick one out of a block.
 
 [
-    (none? uparse [[]] [into any-series! []])
+    ('~void~ = ^ uparse [[]] [into any-series! []])
     ('a == uparse [[a]] [into any-series! ['a]])
     ('c == uparse [b [a] c] ['b into any-series! ['a] 'c])
     (#a == uparse ["a"] [into any-series! [#a]])
@@ -106,7 +106,7 @@
 
 ; Manual INTO via a recursion
 [
-    (none? uparse [a "test"] [
+    ("test" = uparse [a "test"] [
         'a s: text! (assert [#t == uparse s [4 <any>]])
     ])
 ]

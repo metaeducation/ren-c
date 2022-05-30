@@ -157,7 +157,10 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
     if (IS_END(f_next))
         return;
 
-    if (NOT_END(f->out) and Is_Evaluator_Throwing_Debug())
+    if (Is_Voided(f->out))
+        return;
+
+    if (not Is_Stale(f->out) and Is_Evaluator_Throwing_Debug())
         return;
 
     //=//// v-- BELOW CHECKS ONLY APPLY IN EXITS CASE WITH MORE CODE //////=//
@@ -268,16 +271,42 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
         const REBKEY *key = ACT_KEYS_HEAD(phase);
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);
-        if (GET_CELL_FLAG(f->out, OUT_NOTE_STALE)) {
-            if (NOT_PARAM_FLAG(param, ENDABLE)) {
+
+        if (Is_Voided(f->out)) {
+            //
+            // The output cell could contain anything, but the intent is that
+            // this will resolve (at some point) to either a ~void~ isotope
+            // or a none (~) isotope.  We can't trust the stale flag until
+            // that resolution has happened...but either way, it represents
+            // something that we allow to bypass type checking (all isotopes
+            // are legal returns at this time for all functions).
+        }
+        else if (Is_Stale(f->out)) {
+            //
+            // If a function is invisible, it left whatever was in the output
+            // from before it ran.  So there's no correspondence to the return
+            // types it declares it could return itself (if the output was
+            // not flagged with the stale bit).
+            //
+            // Doesn't make sense to type check some arbitrary other function's
+            // return result we are passing through!
+
+            if (
+                NOT_EVAL_FLAG(f, META_OUT)  // allow under meta conditions
+                and NOT_PARAM_FLAG(param, VANISHABLE)  // e.g. can be invisible
+            ){
+                Clear_Stale_Flag(f->out);  // let VAL_TYPE() work
                 printf("Native code violated return type contract!\n");
-                panic (Error_Bad_Invisible(f));
+                panic (Error_Bad_Return_Type(
+                    f,
+                    IS_END(f->out) ? REB_0_END : VAL_TYPE(f->out)
+                ));
             }
         }
         else if (
             not Typecheck_Including_Constraints(param, f->out)
             and not (
-                GET_PARAM_FLAG(param, ENDABLE)
+                GET_PARAM_FLAG(param, VANISHABLE)
                 and GET_EVAL_FLAG(f, RUNNING_ENFIX)
             )  // exemption, e.g. `1 comment "hi" + 2` infix non-stale
         ){
@@ -304,14 +333,6 @@ void Eval_Core_Exit_Checks_Debug(REBFRM *f) {
             assert(f_index == ARR_LEN(f_array) + 1);
         }
     }
-
-    // We'd like `do [1 + comment "foo"]` to act identically to `do [1 +]`
-    // Eval_Core() thus distinguishes an END for a fully "invisible"
-    // evaluation, as opposed to void.  This distinction is internal and not
-    // exposed to the user, at the moment.
-    //
-    if (NOT_END(f->out))
-        assert(Is_Evaluator_Throwing_Debug() or VAL_TYPE(f->out) < REB_MAX);
 }
 
 #endif

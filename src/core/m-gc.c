@@ -97,6 +97,31 @@ inline static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v) {
         Queue_Mark_Opt_Value_Deep(v);
 }
 
+inline static void Queue_Mark_Maybe_Stale_Cell_Deep(RELVAL *v) {
+    if (Is_Fresh(v))
+        return;
+
+    // !!! CELL_FLAG_STALE generally makes cells write-only (unreadable).  So
+    // most cell functions--including the GC--will choke when it is set.  But
+    // in frame outputs we use this to an advantage when holding a value that
+    // can "fall out" of an evaluation despite being stale.
+    //
+    // Fiddling the bits during GC is lame, but it would undermine the purpose
+    // to try and make an _Unchecked() version of the GC that tolerated this.
+    // It's only for debug builds, so don't fret over doing this the easy way.
+    //
+  #if !defined(NDEBUG)
+    uintptr_t saved_bits = v->header.bits;
+    v->header.bits &= (~ CELL_FLAG_STALE);
+  #endif
+
+    Queue_Mark_Opt_Value_Deep(v);
+
+  #if !defined(NDEBUG)
+    v->header.bits = saved_bits;
+  #endif
+}
+
 inline static void Queue_Mark_Value_Deep(const RELVAL *v)
 {
     assert(KIND3Q_BYTE_UNCHECKED(v) != REB_NULL);  // faster than IS_NULLED()
@@ -339,10 +364,13 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *cv)
                 Queue_Mark_Node_Deep(&v->extra.Binding);
     }
 
-    if (GET_CELL_FLAG(v, FIRST_IS_NODE) and VAL_NODE1(v))
+    // We don't use GET_CELL_FLAG() here because we assume caller checked
+    // using READABLE() if they knew the cell didn't have CELL_FLAG_STALE set.
+
+    if ((v->header.bits & CELL_FLAG_FIRST_IS_NODE) and VAL_NODE1(v))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, v).first.node);
 
-    if (GET_CELL_FLAG(v, SECOND_IS_NODE) and VAL_NODE2(v))
+    if ((v->header.bits & CELL_FLAG_SECOND_IS_NODE) and VAL_NODE2(v))
         Queue_Mark_Node_Deep(&PAYLOAD(Any, v).second.node);
 
   #if !defined(NDEBUG)
@@ -554,7 +582,14 @@ static void Mark_Root_Series(void)
                     if (not (a->leader.bits & NODE_FLAG_MARKED)) {
                         a->leader.bits |= NODE_FLAG_MARKED;
                         ++mark_count;
-                        Queue_Mark_Opt_End_Cell_Deep(ARR_SINGLE(a));
+
+                        // Like frame cells or locals, API cells can be
+                        // evaluation targets.  They should only be stale if
+                        // they are targeted by some frame's f->out.
+                        //
+                        // !!! Should we verify this?
+                        //
+                        Queue_Mark_Maybe_Stale_Cell_Deep(ARR_SINGLE(a));
                     }
                 }
 
@@ -669,7 +704,7 @@ static void Mark_Symbol_Series(void)
     REBSYM *canon = &PG_Symbol_Canons[0];
     REBSYM *tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
 
-    assert(canon->leader.bits & NODE_FLAG_FREE);  // SYM_0, we corrupt it
+    assert(canon->leader.bits & SERIES_FLAG_FREE);  // SYM_0, we corrupt it
     ++canon;
 
     for (; canon != tail; ++canon) {
@@ -767,15 +802,20 @@ static void Mark_Frame_Stack_Deep(void)
         // f->out can be nullptr at the moment, when a frame is created that
         // can ask for a different output each evaluation.
         //
+        // We use the CELL_FLAG_STALE bit to mark outputs stale, to avoid
+        // accidental usage of them by enfix or other operations.  So we need
+        // to use an unchecked version of the mark.  Throw in the checks that
+        // should work...
+        //
         if (f->out)
-            Queue_Mark_Opt_End_Cell_Deep(f->out);
+            Queue_Mark_Maybe_Stale_Cell_Deep(f->out);
 
         // Frame temporary cell should always contain initialized bits, as
         // DECLARE_FRAME sets it up and no one is supposed to trash it.
         //
-        Queue_Mark_Opt_End_Cell_Deep(&f->feed->fetched);
-        Queue_Mark_Opt_End_Cell_Deep(&f->feed->lookback);
-        Queue_Mark_Opt_End_Cell_Deep(&f->spare);
+        Queue_Mark_Maybe_Stale_Cell_Deep(&f->feed->fetched);
+        Queue_Mark_Maybe_Stale_Cell_Deep(&f->feed->lookback);
+        Queue_Mark_Maybe_Stale_Cell_Deep(&f->spare);
 
         if (not Is_Action_Frame(f)) {
             //
@@ -858,8 +898,12 @@ static void Mark_Frame_Stack_Deep(void)
             //
             if (Is_Fresh(arg))
                 assert(f->key != tail);
-            else
-                Queue_Mark_Opt_Value_Deep(arg);
+            else {
+                if (key == f->key)
+                    Queue_Mark_Maybe_Stale_Cell_Deep(arg);
+                else
+                    Queue_Mark_Opt_End_Cell_Deep(arg);
+            }
         }
 
       propagate_and_continue:;
@@ -995,7 +1039,7 @@ static REBLEN Sweep_Series(void)
         REBVAL *v = cast(REBVAL*, seg + 1);
         REBLEN n = Mem_Pools[PAR_POOL].num_units;
         for (; n > 0; --n, v += 2) {
-            if (v->header.bits & NODE_FLAG_FREE) {
+            if (v->header.bits & SERIES_FLAG_FREE) {
                 assert(FIRST_BYTE(v->header) == FREED_SERIES_BYTE);
                 continue;
             }

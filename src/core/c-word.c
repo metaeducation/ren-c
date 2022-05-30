@@ -527,7 +527,7 @@ void Startup_Symbols(void)
     // Hence Canon(0) is illegal, to avoid `Canon(X) == Canon(Y)` being
     // true when X and Y are different symbols with no SYM_XXX id.
     //
-    PG_Symbol_Canons[SYM_0].leader.bits = NODE_FLAG_FREE;
+    PG_Symbol_Canons[SYM_0].leader.bits = SERIES_FLAG_FREE;
 
     SYMID id = cast(SYMID, cast(REBLEN, SYM_0 + 1));  // SYMID for debug watch
 

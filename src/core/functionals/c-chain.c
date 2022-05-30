@@ -121,6 +121,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     const RELVAL *chained_tail = ARR_TAIL(pipeline);
     const RELVAL *chained = ARR_HEAD(pipeline);
 
+    SET_END(f_spare);
     REBFRM *sub = Push_Downshifted_Frame(f_spare, f);
 
     INIT_FRM_PHASE(sub, VAL_ACTION(chained));

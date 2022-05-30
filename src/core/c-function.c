@@ -183,11 +183,17 @@ void Push_Paramlist_Triads_May_Fail(
                 continue;
             }
             else if (0 == CT_String(item, Root_None_Tag, strict)) {
-                *flags |= MKF_HAS_OPAQUE_RETURN;  // use Opaque_Dispatcher()
+                *flags |= MKF_HAS_NONE_RETURN;  // use None_Dispatcher()
+
+                // Setting to ENDABLE allows RETURN with no argument, but it
+                // uses None_Dispatcher() so the produced invisible is
+                // collapsed to ~none~
+                //
+                STKVAL(*) param = PARAM_SLOT(DSP);
+                SET_PARAM_FLAG(param, ENDABLE);
 
                 // Fake as if they said []
                 //
-                STKVAL(*) param = PARAM_SLOT(DSP);
                 CLEAR_ALL_TYPESET_BITS(param);
                 continue;
             }
@@ -198,6 +204,7 @@ void Push_Paramlist_Triads_May_Fail(
                 //
                 STKVAL(*) param = PARAM_SLOT(DSP);
                 CLEAR_ALL_TYPESET_BITS(param);
+                SET_PARAM_FLAG(param, VANISHABLE);
                 SET_PARAM_FLAG(param, ENDABLE);
                 continue;
             }
@@ -503,10 +510,23 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             // By default, you can return anything.  This goes with the bias
             // that checks happen on the reading side of things, not writing.
             //
+            // *This includes invisibility*.  Returning pure invisibility is
+            // a bit rare when your function has a body and you don't use
+            // RETURN, because the entire body has to vanish.  If it does, we
+            // want to allow it:
+            //
+            //    >> wrapper: func [x] [comment x]
+            //
+            //    >> 1 + 2 wrapper "This is desirable"
+            //    == 3
+            //
+            // The potential damage this can do is mitigated by not making
+            // RETURN with no argument vanish the same way RETURN VOID can.
+            //
             Init_Param(
                 param,
                 FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_RETURN)
-                    | PARAM_FLAG_ENDABLE,  // return/void ok
+                    | PARAM_FLAG_VANISHABLE,  // allows invisibility
                 TS_OPT_VALUE
             );
 
@@ -1025,7 +1045,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
     if (
         ACT_DISPATCHER(a) == &Empty_Dispatcher
         or ACT_DISPATCHER(a) == &Unchecked_Dispatcher
-        or ACT_DISPATCHER(a) == &Opaque_Dispatcher
+        or ACT_DISPATCHER(a) == &None_Dispatcher
         or ACT_DISPATCHER(a) == &Returner_Dispatcher
         or ACT_DISPATCHER(a) == &Block_Dispatcher
     ){
@@ -1042,7 +1062,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 
         REBVAL *example;
         REBLEN real_body_index;
-        if (ACT_DISPATCHER(a) == &Opaque_Dispatcher) {
+        if (ACT_DISPATCHER(a) == &None_Dispatcher) {
             example = Get_System(SYS_STANDARD, STD_PROC_BODY);
             real_body_index = 4;
         }

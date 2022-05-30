@@ -23,11 +23,14 @@
 //
 // Control constructs follow these rules:
 //
-// * If they do not run any branches, the construct returns NULL...which is
-//   not an ANY-VALUE! and can't be put in a block.  This is systemically the
-//   sign of a "soft failure", and cues constructs like ELSE, ALSO, TRY, etc.
+// * If they do not run any branches, the construct will "return void".  This
+//   will signal functions like ELSE and DIDN'T, much like the NULL state
+//   conveying soft failure does.
 //
-//   (See %sys-nulled.h for information about the NULL state.)
+//   (Note: return_void() doesn't actually overwrite the contents of the
+//    output cell.  This makes it possible for functions like ALL to skip
+//    over void results and let the previous evaluation "drop out".
+//    See %sys-void.h for more information about this mechanic.)
 //
 // * If a branch *does* run--and its evaluation happens to produce NULL--then
 //   conditionals designed to be used with branching (like IF or CASE) will
@@ -53,6 +56,10 @@
 
 #include "sys-core.h"
 
+#define Value REBVAL
+#define OUT D_OUT
+#define SPARE D_SPARE
+
 
 //
 //  if: native [
@@ -70,13 +77,16 @@ REBNATIVE(if)
 {
     INCLUDE_PARAMS_OF_IF;
 
-    if (IS_CONDITIONAL_FALSE(ARG(condition)))
-        return nullptr;  // ^-- truth test fails on voids, literal blocks
+    Value *condition = ARG(condition);
+    Value *branch = ARG(branch);
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), ARG(condition)))
-        return_thrown (D_OUT);  // ^-- condition is passed to branch if function
+    if (Is_Conditional_False(condition))
+        return_void (OUT);  // ^-- test errors on literal block
 
-    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
+    if (Do_Branch_With_Throws(OUT, branch, condition))
+        return_thrown (OUT);  // ^-- condition is passed to function branches
+
+    return_branched (OUT);  // asserts not null or ~void~
 }
 
 
@@ -98,14 +108,16 @@ REBNATIVE(either)
 {
     INCLUDE_PARAMS_OF_EITHER;
 
-    REBVAL *branch = IS_CONDITIONAL_TRUE(ARG(condition))
-        ? ARG(true_branch)  // ^-- test errors on BAD-WORD!, literal blocks
+    Value *condition = ARG(condition);
+
+    Value *branch = Is_Conditional_True(condition)
+        ? ARG(true_branch)  // ^-- test errors on literal block
         : ARG(false_branch);
 
-    if (Do_Branch_With_Throws(D_OUT, branch, ARG(condition)))
-        return_thrown (D_OUT);  // ^-- condition is passed to branch if function
+    if (Do_Branch_With_Throws(OUT, branch, condition))
+        return_thrown (OUT);  // ^-- condition is passed to function branches
 
-    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
+    return_branched (OUT);  // asserts not null or ~void~
 }
 
 
@@ -143,15 +155,15 @@ REBNATIVE(_did_)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF__DID_;
 
-    REBVAL *in = ARG(optional);
+    Value *in = ARG(optional);
 
-    if (IS_NULLED(in))
-        return Init_False(D_OUT);
+    if (IS_NULLED(in) or Is_Meta_Of_Void_Isotope(in))
+        return Init_False(OUT);
 
-    if (REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL)
-        return Init_False(D_OUT);
+    if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
+        return Init_False(OUT);
 
-    return Init_True(D_OUT);
+    return Init_True(OUT);
 }
 
 
@@ -170,15 +182,15 @@ REBNATIVE(didnt)
 {
     INCLUDE_PARAMS_OF_DIDNT;
 
-   REBVAL *in = ARG(optional);
+    Value *in = ARG(optional);
 
-    if (IS_NULLED(in))
-        return Init_True(D_OUT);
+    if (IS_NULLED(in) or Is_Meta_Of_Void_Isotope(in))
+        return Init_True(OUT);
 
-    if (REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL)
-        return Init_True(D_OUT);
+    if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
+        return Init_True(OUT);
 
-    return Init_False(D_OUT);
+    return Init_False(OUT);
 }
 
 
@@ -200,26 +212,26 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_THEN;
 
-    REBVAL *in = ARG(optional);
+    Value *in = ARG(optional);
 
-    if (IS_NULLED(in))
-        return nullptr;  // left didn't run, so signal THEN didn't run either
-
-    if (REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL)
-        return nullptr;  // left was ~null~ isotope, let that opt out too
+    if (
+        IS_NULLED(in)  // soft failure signal
+        or Is_Meta_Of_Pure_Invisible(in)  // ^META signal for pure void
+        or Is_Meta_Of_Void_Isotope(in)
+        or (REF(decay) and Is_Meta_Of_Null_Isotope(in))  // null isotope
+    ){
+        return_void (OUT);
+    }
 
     // We received the left hand side as ^meta, so it's quoted in order
-    // to tell the difference between the NULL and ~null~ isotope.  Now
-    // that's tested, unquote it back to normal.
-    //
+    // to be isotope-tolerant.  Now that's tested, unquote it back to normal.
+
     Meta_Unquotify(in);
 
-    // Do_Branch_With() will decay ~null~ isotopes to NULL for non-meta actions
-    //
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
-        return_thrown (D_OUT);
+    if (Do_Branch_With_Throws(OUT, ARG(branch), in))
+        return_thrown (OUT);
 
-    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
+    return_branched (OUT);  // asserts not null or ~void~
 }
 
 
@@ -238,33 +250,32 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //  ]
 //
 REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
-//
-// Note: This could be a specialization of THEN if it had a /INPUT parameter
-// to tell it to return its input.  But it's a short enough function that it's
-// likely cleaner this way...and speeds up THEN to not have the extra burden.
 {
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
-    REBVAL *in = ARG(optional);
+    Value *in = ARG(optional);
 
     if (IS_NULLED(in))
-        return nullptr;  // telegraph original input, but don't run
+        return nullptr;  // telegraph pure null
 
-    if (REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL)
-        return nullptr;  // left was ~null~ isotope, let that opt out too
+    if (Is_Meta_Of_Pure_Invisible(in))
+        return_invisible (OUT);  // telegraph invisibilty
 
-    // We received the left hand side as ^meta, so it's quoted in order
-    // to tell the difference between the NULL and a ~null~ isotope.  Now
-    // that's tested we know it's not plain NULL, so put it back to normal.
-    //
+    if (Is_Meta_Of_Void_Isotope(in))
+        return_void (OUT);  // telegraph invisible intent
+
+    if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
+        return Init_Isotope(OUT, Canon(NULL));  // telegraph null isotope
+
     Meta_Unquotify(in);
 
-    // Do_Branch_With() will decay ~null~ isotopes to NULL for non-meta actions
-    //
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
-        return_thrown (D_OUT);
+    if (Do_Branch_With_Throws(D_SPARE, ARG(branch), in)) {
+        Move_Cell(OUT, SPARE);
+        return_thrown (OUT);
+    }
 
-    return in;  // ran, but pass thru the original input--not branch output
+    Move_Cell(OUT, in);
+    return_branched (OUT);  // also wouldn't run if `in` was null or ~void~
 }
 
 
@@ -285,14 +296,29 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 {
     INCLUDE_PARAMS_OF_ELSE;
 
-    REBVAL *in = ARG(optional);
+    Value *in = ARG(optional);
 
     if (IS_NULLED(in)) {
-        // Common trigger for running an ELSE's branch
+        //
+        // Triggers for running an ELSE are NULL and ~none~ isotope.
+        //
+        // Note ELSE is not reactive to "nothing" isotopes (~) by design:
+        //
+        //    >> if true [print "branch ran", if false [<a>]]
+        //    == ~  ; isotope
+        //
+        //    >> if true [print "branch ran, if false [<a>]] else [<b>]
+        //    == ~  ; isotope
+        //
     }
-    else if (
-        REF(decay) and IS_BAD_WORD(in) and VAL_BAD_WORD_ID(in) == SYM_NULL
-    ){
+    else if (Is_Meta_Of_Pure_Invisible(in)) {
+        Copy_Cell(in, Lib(VOID));  // !!! function only way to make pure void
+    }
+    else if (Is_Meta_Of_Void_Isotope(in)) {
+        Init_Bad_Word(in, Canon(VOID));
+    }
+    else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {
+        //
         // Since the input is a ^META parameter, this signals a null isotope.
         // When /DECAY is specified we trigger running the branch here also.
         // Do_Branch_With() decays ~null~ isotopes to NULL for non-meta actions
@@ -302,7 +328,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         // ELSE would ever have a function taking a parameter would be to know
         // the distinction.
         //
-        Init_Isotope(in, Canon(NULL));
+        Init_Null_Isotope(in);
     }
     else {
         // We have to use a ^meta parameter in order to detect the difference
@@ -310,13 +336,13 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         // does not run the branch, unless we are decaying).  But we don't want
         // to actually return a quoted parameter.
         //
-        return Meta_Unquotify(ARG(optional));
+        return Meta_Unquotify(in);
     }
 
-    if (Do_Branch_With_Throws(D_OUT, ARG(branch), in))
-        return_thrown (D_OUT);
+    if (Do_Branch_With_Throws(OUT, ARG(branch), in))
+        return_thrown (OUT);
 
-    return D_OUT;  // most branch executions convert NULL to a ~null~ isotope
+    return_branched (OUT);  // asserts not null or ~void~
 }
 
 
@@ -410,8 +436,8 @@ REBNATIVE(match)
     Isotopify_If_Falsey(v);
 
     Move_Cell(D_OUT, v);  // Otherwise, input is the result
-    Init_Isotope(v, Canon(MOVE));  // Can't have a moved-from cell in frame
-    return D_OUT;
+
+    return_branched (D_OUT);  // asserts no pure NULL or isotope ~void~
 }
 
 
@@ -450,81 +476,98 @@ REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
 //  ]
 //
 REBNATIVE(all)
+//
+// 1. ALL takes advantage of the tricky mechanics of "void" in the system, so
+//    that void evaluations can be vanished without requiring saving a copy of
+//    the previous output to drop out.  For instance:
+//
+//        >> check1: true, check2: false
+//
+//        >> all [if check1 [<kept>], if check2 [<dropped>]]
+//        == <kept>
+//
+//    When the second IF begins running, the <kept> value is in the OUT cell.
+//    Condition fails, so it uses `return_void` to set CELL_FLAG_NOTE_VOIDED on
+//    the OUT cell--but without overwriting it.  The void step is skipped,
+//    and then Clear_Void_Flag() is called at the end of the loop to clear
+//    CELL_FLAG_VOIDED and un-hide the <kept> result.
+//
+// 2. Historicall there has been controversy over what should be done about
+//    (all []) and (any []).  Languages that have variadic short-circuiting
+//    AND + OR operations typically empty AND-ing is truthy while empty OR-ing
+//    is falsey.
+//
+//    There are some reasonable intuitive arguments for that--*if* those are
+//    your only two choices.  Because Ren-C has the option of isotopes, it's
+//    better to signal to the caller that nothing happened.  For an example
+//    of how useful it is, see the loop wrapper FOR-BOTH.  Other behaviors
+//    can be forced with (all [... null]) or (any [true ...])
+//
+// 3. The only way a falsey evaluation should make it to the end is if a
+//    predicate let it pass.  Don't want that to trip up `if all` so make it
+//    an isotope...but this way `(all/predicate [null] :not?) then [<runs>]`
 {
     INCLUDE_PARAMS_OF_ALL;
 
     REBVAL *predicate = ARG(predicate);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT;
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_OVERLAP_OUTPUT;  // see [1]
+
     if (IS_THE_BLOCK(ARG(block)))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
 
     DECLARE_FRAME_AT (f, ARG(block), flags);
     Push_Frame(nullptr, f);
 
-    SET_END(D_OUT);  // `all []` will become a ~none~ isotope
-
-    do {
-        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f)) {
+    while (NOT_END(f_value)) {
+        if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {  // overlap output, see [1]
             Abort_Frame(f);
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
 
-        // all @[] can leave END in D_OUT without it being marked stale, since
-        // no evaluation happens and staleness is an evaluative concept.  This
-        // may be a flaw in the handling of the evaluator on @[...], review.
-        //
-        if (IS_END(D_OUT) or GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE)) {
-            CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);  // don't leak stale flag
+        if (Is_Stale(OUT))  // skip if output left as-is, e.g. (comment "hi")
+            continue;
 
-            if (IS_END(f->feed->value))  // `all []`
-                break;
-            continue;  // `all [comment "hi" 1]`, first step is stale
-        }
+        if (Is_Voided(OUT))  // skip void products like (if false [<a>])
+            continue;
 
-        if (Is_Isotope(D_OUT))  // want `all [match logic! false]` to error
-            fail (Error_Bad_Isotope(D_OUT));
+        if (Is_Isotope(OUT))
+            fail (Error_Bad_Isotope(OUT));
 
         if (IS_NULLED(predicate)) {  // default predicate effectively .DID
-            if (IS_FALSEY(D_OUT)) {  // false/blank/null triggers failure
+            if (IS_FALSEY(OUT)) {  // false/blank/null triggers failure
                 Abort_Frame(f);
                 return nullptr;
             }
         }
         else {
             if (rebRunThrows(
-                D_SPARE,
+                SET_END(SPARE),
                 true,
                 predicate,
-                rebQ(NULLIFY_NULLED(D_OUT))
+                rebQ(NULLIFY_NULLED(OUT))
             )){
-                Move_Cell(D_OUT, D_SPARE);
-                return_thrown (D_OUT);
+                Move_Cell(OUT, SPARE);
+                return_thrown (OUT);
             }
 
-            if (IS_FALSEY(D_SPARE)) {
+            if (IS_FALSEY(SPARE)) {
                 Abort_Frame(f);
                 return nullptr;
             }
         }
-
-    } while (NOT_END(f->feed->value));
+    }
 
     Drop_Frame(f);
 
-    if (IS_END(D_OUT))
-        return Init_None(D_OUT);
+    Clear_Void_Flag(OUT);  // un-hide values "underneath" void, again see [1]
+    Clear_Stale_Flag(OUT);
 
-    // The only way a falsey evaluation should make it to the end is if a
-    // predicate passed it.  Don't want that to trip up `if all` so make it
-    // an isotope...but this way `(all/predicate [null] :not?) then [<runs>]`
-    //
-    if (not IS_BAD_WORD(D_OUT) and IS_FALSEY(D_OUT))
-        assert(not IS_NULLED(predicate));
+    if (Is_Invisible(OUT))  // `all []`, `all [comment "a"]`
+        return_void (OUT);
 
-    Isotopify_If_Falsey(D_OUT);
-
-    return D_OUT;
+    Isotopify_If_Falsey(OUT);  // predicates can approve falsey values, see [3]
+    return_branched (OUT);
 }
 
 
@@ -542,65 +585,76 @@ REBNATIVE(all)
 //  ]
 //
 REBNATIVE(any)
+//
+// Note: See ALL for more comments (ANY is very similar, though it does not
+// need to use EVAL_FLAG_OVERLAP_OUTPUT since it returns its first match.)
 {
     INCLUDE_PARAMS_OF_ANY;
 
     REBVAL *predicate = ARG(predicate);
+    REBVAL *block = ARG(block);
 
     REBFLGS flags = EVAL_MASK_DEFAULT;
-    if (IS_THE_BLOCK(ARG(block)))
+    if (IS_THE_BLOCK(block))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
 
-    DECLARE_FRAME_AT (f, ARG(block), flags);
+    DECLARE_FRAME_AT (f, block, flags);
     Push_Frame(nullptr, f);
 
-    do {
-        if (Eval_Step_Throws(D_OUT, f)) {
+    while (NOT_END(f_value)) {
+        if (Eval_Step_Maybe_Stale_Throws(SET_END(D_OUT), f)) {
             Abort_Frame(f);
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
 
-        if (IS_END(D_OUT)) {  // must have been stale
-            if (IS_END(f->feed->value))
-                break;
-            continue;  // `any [comment "hi" 1]`, first step is stale
-        }
+        if (Is_Stale(OUT))  // skip if output left as-is, e.g. (comment "hi")
+            continue;
 
-        if (Is_Isotope(D_OUT))  // want `any [match logic! false]` to error
-            fail (Error_Bad_Isotope(D_OUT));
+        if (Is_Voided(OUT))  // skip void products like (if false [<a>])
+            continue;
+
+        if (Is_Isotope(OUT))
+            fail (Error_Bad_Isotope(OUT));
 
         if (IS_NULLED(predicate)) {  // default predicate effectively .DID
-            if (IS_TRUTHY(D_OUT)) {
+            if (IS_TRUTHY(OUT)) {
                 Abort_Frame(f);
-                return D_OUT;  // successful ANY returns the value
+                return OUT;  // successful ANY returns the value
             }
         }
         else {
             if (rebRunThrows(
-                D_SPARE,
+                SET_END(SPARE),
                 true,
                 predicate,
-                rebQ(NULLIFY_NULLED(D_OUT))
+                rebQ(NULLIFY_NULLED(OUT))
             )){
-                Move_Cell(D_OUT, D_SPARE);
-                return_thrown (D_OUT);
+                Move_Cell(OUT, SPARE);
+                return_thrown (OUT);
             }
 
-            if (IS_TRUTHY(D_SPARE)) {
+            if (IS_TRUTHY(SPARE)) {
                 //
                 // Don't let ANY return something falsey, but using an isotope
                 // makes `any .not [null] then [<run>]` work
                 //
-                Isotopify_If_Falsey(D_OUT);
+                Isotopify_If_Falsey(OUT);
 
                 Abort_Frame(f);
-                return D_OUT;  // return input to the test, not result
+                return OUT;  // return input to the test, not result
             }
         }
 
-    } while (NOT_END(f->feed->value));
+    }
 
     Drop_Frame(f);
+
+    Clear_Stale_Flag(OUT);
+    Clear_Void_Flag(OUT);
+
+    if (Is_Invisible(OUT))
+        return_void (OUT);  // `any []` is ~void~ isotope
+
     return nullptr;
 }
 
@@ -615,7 +669,7 @@ REBNATIVE(any)
 //      cases "Conditions followed by branches"
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
-//      <local> branch last  ; temp GC-safe holding locations
+//      <local> branch  ; temp GC-safe holding location (can't eval into)
 //      /predicate "Unary case-processing action (default is DID)"
 //          [action!]
 //  ]
@@ -628,14 +682,12 @@ REBNATIVE(case)
 
     DECLARE_FRAME_AT (f, ARG(cases), EVAL_MASK_DEFAULT);
 
-    assert(Is_None(ARG(last)));
-    Init_Nulled(ARG(last));  // default return result
-
     Push_Frame(nullptr, f);
 
-    while (true) {
+    // We potentially want to return the previous result to act "translucent"
+    // if no cases run.  So condition evaluation must be done into the spare.
 
-        Init_Nulled(D_OUT);  // forget previous result, new case running
+    for (; NOT_END(f_value); RESET(SPARE)) {
 
         // Feed the frame forward one step for predicate argument.
         //
@@ -644,33 +696,44 @@ REBNATIVE(case)
         // true/false answer *and* know what the right hand argument was, for
         // full case coverage and for DEFAULT to work.
 
-        if (Eval_Step_Maybe_Stale_Throws(D_OUT, f))
+        if (Eval_Step_Maybe_Stale_Throws(SPARE, f)) {
+            Move_Cell(OUT, SPARE);
             goto threw;
-
-        if (IS_END(f_value)) {
-            CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);
-            goto reached_end;
         }
 
-        if (GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE))
-            continue;  // a COMMENT, but not at end.
+        if (Is_Voided(SPARE)) {
+            //
+            //    case [if false [<a>] [print "What should this do?"]]
+            //
+            // While ANY and ALL will freely ignore ~void~ isotopes, they do
+            // not have a pairing structure that would get out of whack.  It
+            // seems best to be conservative on this for CASE, and error.
+            //
+            fail (Error_Bad_Void());
+        }
+
+        if (Is_Invisible(SPARE))  // skip if nothing, e.g. (comment "hi")
+            continue;
+
+        if (IS_END(f_value))
+            goto reached_end;  // we tolerate "fallout" from a condition
 
         bool matched;
         if (IS_NULLED(predicate)) {
-            if (Is_Isotope(D_OUT))
-                fail (Error_Bad_Isotope(D_OUT));
+            if (Is_Isotope(SPARE))
+                fail (Error_Bad_Isotope(SPARE));
 
-            matched = IS_TRUTHY(D_OUT);
+            matched = IS_TRUTHY(SPARE);
         }
         else {
             DECLARE_LOCAL (temp);
             if (rebRunThrows(
-                temp,
+                temp,  // target of rebRun() is kept GC-safe by evaluator
                 true,  // fully = true (e.g. argument must be taken)
                 predicate,
-                rebQ(D_OUT)  // argument
+                rebQ(SPARE)  // argument
             )){
-                Move_Cell(D_OUT, temp);
+                Move_Cell(OUT, temp);
                 goto threw;
             }
             matched = IS_TRUTHY(temp);
@@ -683,11 +746,12 @@ REBNATIVE(case)
             //
             // Note: Can't evaluate directly into ARG(branch)...frame cell.
             //
-            if (Eval_Value_Throws(D_SPARE, f_value, f_specifier)) {
-                Move_Cell(D_OUT, D_SPARE);
+            DECLARE_LOCAL (temp);  // target of Eval_Value() kept save by eval
+            if (Eval_Value_Throws(temp, f_value, f_specifier)) {
+                Move_Cell(OUT, temp);
                 goto threw;
             }
-            Move_Cell(ARG(branch), D_SPARE);
+            Move_Cell(ARG(branch), temp);
         }
         else
             Derelativize(ARG(branch), f_value, f_specifier);
@@ -707,37 +771,56 @@ REBNATIVE(case)
             continue;
         }
 
-        bool threw = Do_Branch_With_Throws(D_SPARE, ARG(branch), D_OUT);
-        Move_Cell(D_OUT, D_SPARE);
-        if (threw)
+        // Once we run a branch, translucency is no longer an option, so go
+        // ahead and write D_OUT.
+
+        if (Do_Branch_With_Throws(OUT, ARG(branch), D_SPARE))
             goto threw;
 
         if (not REF(all)) {
             Drop_Frame(f);
-            return D_OUT;
+            return_branched (OUT);
         }
-
-        Move_Cell(ARG(last), D_OUT);
     }
 
-  reached_end:;
+  reached_end:
+
+    assert(REF(all) or Is_Stale(D_OUT));
 
     Drop_Frame(f);
 
     // Last evaluation will "fall out" if there is no branch:
     //
-    //     case .not [1 < 2 [...] 3 < 4 [...] 10 + 20] = 30
+    //     >> case [false [<a>] false [<b>]]
+    //     == ~void~  ; isotope
     //
-    if (not IS_NULLED(D_OUT)) // prioritize fallout result
-        return D_OUT;
+    //     >> case [false [<a>] false [<b>] 10 + 20]
+    //     == 30
+    //
+    // It's a little bit like a quick-and-dirty ELSE (or /DEFAULT), however
+    // when you use CASE/ALL it's what is returned even if there's a match:
+    //
+    //     >> case/all [1 < 2 [<a>] 3 < 4 [<b>]]
+    //     == <b>
+    //
+    //     >> case/all [1 < 2 [<a>] 3 < 4 [<b>] 10 + 20]
+    //     == 30  ; so not the same as an ELSE, it's just "fallout"
+    //
+    if (NOT_END(SPARE)) {  // prioritize fallout result
+        Isotopify_If_Nulled(SPARE);
+        Move_Cell(OUT, SPARE);
+        return_branched (OUT);  // asserts no ~void~ or pure null
+    }
 
-    assert(REF(all) or IS_NULLED(ARG(last)));
-    return ARG(last);  // else last branch "falls out", may be null
+    if (Is_Stale(OUT))  // none of the clauses of an /ALL ran a branch
+        return_void (OUT);
 
-  threw:;
+    return_branched (OUT);  // asserts no ~void~ or pure null
+
+  threw:
 
     Abort_Frame(f);
-    return_thrown (D_OUT);
+    return_thrown (OUT);
 }
 
 
@@ -755,7 +838,6 @@ REBNATIVE(case)
 //      /all "Evaluate all matches (not just first one)"
 //      /predicate "Binary switch-processing action (default is EQUAL?)"
 //          [action!]
-//      <local> last  ; GC-safe storage loation
 //  ]
 //
 REBNATIVE(switch)
@@ -768,20 +850,14 @@ REBNATIVE(switch)
 
     Push_Frame(nullptr, f);
 
-    assert(Is_None(ARG(last)));
-    Init_Nulled(ARG(last));
-
     REBVAL *left = ARG(value);
     if (IS_BLOCK(left) and GET_CELL_FLAG(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
-
-    Init_Nulled(D_OUT);  // fallout result if no branches run
 
     while (NOT_END(f_value)) {
 
         if (IS_BLOCK(f_value) or IS_ACTION(f_value)) {
             Fetch_Next_Forget_Lookback(f);
-            Init_Nulled(D_OUT);  // reset fallout output to null
             continue;
         }
 
@@ -795,18 +871,29 @@ REBNATIVE(switch)
         // !!! Advanced frame tricks *might* make this possible for N-ary
         // functions, the same way `match parse "aaa" [some "a"]` => "aaa"
 
-        if (Eval_Step_Throws(D_OUT, f))
+        if (Eval_Step_Maybe_Stale_Throws(D_SPARE, f)) {
+            Move_Cell(D_OUT, D_SPARE);
             goto threw;
-
-        if (IS_END(D_OUT)) {
-            if (NOT_END(f_value))  // was just COMMENT/etc. so more to go
-                continue;
-
-            Drop_Frame(f);  // nothing left, so drop frame and return
-
-            assert(REF(all) or IS_NULLED(ARG(last)));
-            return ARG(last);
         }
+
+        if (Is_Voided(D_SPARE)) {
+            //
+            //    switch 10 [if false [20] [print "What should this do?"]]
+            //
+            // While ANY and ALL will freely ignore ~void~ isotopes, they do
+            // not have a pairing structure that would get out of whack.  It
+            // seems best to be conservative on this and error.
+            //
+            fail (Error_Bad_Void());
+        }
+
+        if (Is_Invisible(D_SPARE))  // pure voids (ELIDE, COMMENT)
+            continue;
+
+        Clear_Stale_Flag(D_SPARE);
+
+        if (IS_END(f_value))
+            goto reached_end;  // nothing left, so drop frame and return
 
         if (IS_NULLED(predicate)) {
             //
@@ -824,8 +911,8 @@ REBNATIVE(switch)
             // see the un-mutated condition value.
             //
             const bool strict = false;
-            if (0 != Compare_Modify_Values(left, D_OUT, strict))
-                continue;
+            if (0 != Compare_Modify_Values(left, D_SPARE, strict))
+                goto clear_fallout_and_continue;
         }
         else {
             // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]
@@ -845,13 +932,13 @@ REBNATIVE(switch)
                 true,  // fully = true (e.g. both arguments must be taken)
                 predicate,
                 rebQ(left),  // first arg (left hand side if infix)
-                rebQ(D_OUT)  // second arg (right hand side if infix)
+                rebQ(D_SPARE)  // second arg (right hand side if infix)
             )){
                 Move_Cell(D_OUT, temp);
                 goto threw;
             }
             if (IS_FALSEY(temp))
-                continue;
+                goto clear_fallout_and_continue;
         }
 
         // Skip ahead to try and find BLOCK!/ACTION! branch to take the match
@@ -864,10 +951,12 @@ REBNATIVE(switch)
                 //
                 // f_value is RELVAL, can't Do_Branch
                 //
+                SET_END(D_OUT);
                 if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
                     goto threw;
-                if (IS_BLOCK(f_value))
+                if (IS_BLOCK(f_value)) {
                     Isotopify_If_Nulled(D_OUT);
+                }
                 break;
             }
 
@@ -891,25 +980,38 @@ REBNATIVE(switch)
 
         if (not REF(all)) {
             Drop_Frame(f);
-            return D_OUT;
+            return_branched (D_OUT);  // asserts no pure NULL or isotope ~void~
         }
 
-        Copy_Cell(ARG(last), D_OUT);  // save in case no fallout
-        Init_Nulled(D_OUT);  // switch back to using for fallout
         Fetch_Next_Forget_Lookback(f);  // keep matching if /ALL
+
+      clear_fallout_and_continue:
+
+        SET_END(D_SPARE);
     }
 
   reached_end:
 
+    assert(REF(all) or Is_Stale(D_OUT));
+
     Drop_Frame(f);
 
-    if (not IS_NULLED(D_OUT)) // prioritize fallout result
-        return D_OUT;
+    // See remarks in CASE about why fallout result is prioritized, and why
+    // it cannot be a pure NULL.
+    //
+    if (NOT_END(D_SPARE)) {
+        Isotopify_If_Nulled(D_SPARE);  // gives RELVAL*, can't direct RETURN()
+        return D_SPARE;
+    }
 
-    assert(REF(all) or IS_NULLED(ARG(last)));
-    return ARG(last);  // else last branch "falls out", may be null
+    // if no fallout, use last /ALL clause, or ~void~ isotope if END
+    //
+    if (Is_Stale(D_OUT))
+        return_void (D_OUT);
 
-  threw:;
+    return_branched (D_OUT);  // asserts no pure NULL or isotope ~void~
+
+  threw:
 
     Drop_Frame(f);
     return_thrown (D_OUT);
@@ -1014,7 +1116,7 @@ REBNATIVE(catch)
     if (REF(any) and REF(name))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Do_Any_Array_At_Throws(D_OUT, ARG(block), SPECIFIED)) {
+    if (not Do_Any_Array_At_Throws(RESET(D_OUT), ARG(block), SPECIFIED)) {
         if (REF(result))
             rebElide(Lib(SET), rebQ(REF(result)), rebQ(D_OUT));
 
@@ -1094,7 +1196,8 @@ REBNATIVE(catch)
         REBARR *a = Make_Array(2);
 
         Copy_Cell(ARR_AT(a, 0), label); // throw name
-        CATCH_THROWN(ARR_AT(a, 1), D_OUT); // thrown value--may be null!
+        CATCH_THROWN_META(ARR_AT(a, 1), D_OUT); // thrown value--may be null!
+        Meta_Unquotify(ARR_AT(a, 1));
         if (IS_NULLED(ARR_AT(a, 1)))
             SET_SERIES_LEN(a, 1); // trim out null value (illegal in block)
         else
@@ -1102,9 +1205,18 @@ REBNATIVE(catch)
         return Init_Block(D_OUT, a);
     }
 
-    CATCH_THROWN(D_OUT, D_OUT); // thrown value
+    CATCH_THROWN_META(D_OUT, D_OUT); // thrown value
+
+    if (
+        Is_Meta_Of_Pure_Invisible(D_OUT)
+        or Is_Meta_Of_Void_Isotope(D_OUT)
+    ){
+        return Init_None(D_OUT);  // void isotope would trigger ELSE
+    }
+
+    Meta_Unquotify(D_OUT);
     Isotopify_If_Nulled(D_OUT);  // a caught NULL triggers THEN, not ELSE
-    return D_OUT;
+    return_branched (D_OUT);
 }
 
 

@@ -15,37 +15,9 @@
 ; BAD-WORD!s were initially neither true nor false, but this came to be the
 ; role of the isotopic forms.  Having BAD-WORD! be truthy along with QUOTED!
 ; means that NULL is the only falsey result from a ^META operation, which is
-; useful for writing stylized code like FOR-BOTH below.
+; useful for writing stylized code (see %for-both.test.reb)
 ;
 (did first [~void~])
-[(
-    did for-both: func ['var blk1 blk2 body] [
-        unmeta all [
-            meta for-each :var blk1 body
-            meta for-each :var blk2 body
-        ]
-    ]
-)(
-    [1 2 3 4] = collect [
-        assert [
-            '~bad~ = ^ for-both x [1 2] [3 4] [
-                keep x
-                ~bad~  ; makes isotope
-            ]
-        ]
-    ]
-)(
-    [1] = collect [
-        assert [
-            null = for-both x [1 2] [3 4] [
-                if x = 2 [
-                    break
-                ]
-                keep x
-            ]
-        ]
-    ]
-)]
 
 ; Plain ~ is a BAD-WORD!, but its spelling is nullptr.  It thus cannot be made
 ; into a WORD!.
@@ -82,40 +54,91 @@
 
 ; Functions are able to return VOID as "invisible".  But to avoid wantonly
 ; creating variant arity situations in code, generic function execution tools
-; like DO or APPLIQUE return ~none~ isotopes when given empty blocks.
+; like DO or APPLIQUE return ~none~ isotopes when given empty blocks...unless
+; they are in a ^META context.
 ; https://forum.rebol.info/t/what-should-do-do/1426
 ;
-('~none~ = ^ do [])
+(none? do [])
+(
+    x: <overwritten>
+    '~ = ^ x: do []
+    '~ = ^x  ; DO doesn't mess around with void isotopes--use EVAL instead
+)
+(
+    x: 10
+    did all [
+        '~void~ = ^ x: eval []
+        unset? 'x
+    ]
+)
+(
+    x: 10
+    did all [
+        10 x: maybe eval []
+        10 = x
+    ]
+)
 
 [
     (foo: func [] [], true)
 
-    ('~none~ = ^ foo)
-    ('~none~ = ^ applique :foo [])
-    ('~none~ = ^ do :foo)
+    (invisible? foo)
+
+    ('~void~ = ^ applique :foo [])
+    (invisible? maybe applique :foo [])
+
+    (_ = ^ eval :foo)
+    (invisible? maybe eval :foo)
+
+    ('~ = ^ do :foo)
+    (not invisible? maybe do :foo)
 ]
 
-; invisibility is the convention for what you get by RETURN with no argument,
-; or if the spec says to <void> any result.
-[(
-    foo: func [return: [<opt> <invisible> any-value!]] [return]
-    '~void~ = ^ foo
-)(
-    foo: func [return: [<opt> <invisible> any-value!]] [return ~void~]
-    '~void~ = ^ foo
-)(
-    '~void~ = ^ applique :foo []
-)(
-    '~void~ = ^ do :foo
-)]
+; Explicit return of VOID gives you pure invisibility.
+[
+    (did foo: func [return: [<opt> <invisible> any-value!]] [return void])
+
+    (void? foo)
+    (invisible? foo)
+    ('~void~ <> ^ foo)
+    (_ = ^ foo)
+
+    (3 = (1 + 2 foo))
+]
+
+; Not providing an argument acts the same
+[
+    (did foo: func [return: [<opt> <invisible> any-value!]] [return])
+
+    (void? foo)
+    (invisible? foo)
+    ('~void~ <> ^ foo)
+    (_ = ^ foo)
+
+    (3 = (1 + 2 foo))
+]
+
+; The ~void~ isotope is distinctly not invisible, but considered VOID? intent
+[
+    (did foo: func [return: [<opt> <invisible> any-value!]] [return ~void~])
+
+    (void? foo)
+    (not invisible? foo)
+    ('~void~ = ^ foo)
+    (_ <> ^ foo)
+
+    ('~void~ = ^ applique :foo [])
+    (none? do :foo)
+]
+
 
 [(
     foo: func [return: <none>] []
-    '~none~ = ^ foo
+    '~ = ^ foo
 )(
     data: [a b c]
     f: func [return: <none>] [append data [1 2 3]]
-    '~none~ = ^ f
+    '~ = ^ f
 )]
 
 ; `~` isotope is the type of locals before they are assigned
@@ -194,7 +217,13 @@
 
 [#68 https://github.com/metaeducation/ren-c/issues/876
     ('need-non-end = (trap [a:]).id)
-    (a: 1020, 1020 = a: ())
+    (
+        a: 1020
+        did all [
+            1020 = a: ()
+            a = 1020
+        ]
+    )
 ]
 
 

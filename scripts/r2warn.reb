@@ -219,7 +219,7 @@ false?: deprecated [
     {Historical FALSE? is ambiguous.  Use NOT or `= FALSE`}
 ]
 
-none?: none!: none: deprecated [
+void?: none!: none: deprecated [
     {NONE is reserved in Ren-C for future use}
     {(It will act like NONE-OF, e.g. NONE [a b] => ALL [not a not b])}
     {_ is now a "BLANK! literal", with BLANK? test and BLANK the word.}

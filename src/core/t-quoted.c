@@ -294,16 +294,41 @@ REBNATIVE(quote)
 //
 //  {Turns BAD-WORD! isotopes into plain BAD-WORD!, ignores NULL, quotes rest}
 //
-//      return: "Will be a ~void~ isotope if input was <end>"
-//          [<opt> any-value!]
-//      ^optional [<opt> <end> any-value!]
+//      return: "Will be invisible if input is purely invisible (see META*)"
+//          [<invisible> <opt> any-value!]
+//      ^optional [<invisible> <opt> any-value!]
 //  ]
 //
 REBNATIVE(meta)
 {
     INCLUDE_PARAMS_OF_META;
 
-    return ARG(optional);  // argument was already ^meta
+    REBVAL *v = ARG(optional);
+
+    if (Is_Meta_Of_Pure_Invisible(v))
+        return_invisible (D_OUT);  // see META* for non-vanishing
+
+    if (Is_Meta_Of_Void_Isotope(v))
+        return_void (D_OUT);  // see META* for non-passthru of ~void~ isotope
+
+    return v;  // argument was already ^META, no need to Meta_Quotify()
+}
+
+
+//
+//  meta*: native [
+//
+//  {Behavior of ^^ symbol, gives BLANK! on pure invisible vs. passing through}
+//
+//      return: [<opt> any-value!]
+//      ^optional [<opt> <invisible> any-value!]
+//  ]
+//
+REBNATIVE(meta_p)
+{
+    INCLUDE_PARAMS_OF_META_P;
+
+    return ARG(optional);  // argument was ^META, so no need to Meta_Quotify()
 }
 
 
@@ -342,83 +367,153 @@ REBNATIVE(unquote)
 //
 //  unmeta: native [
 //
-//  {Variant of UNQUOTE that accepts BAD-WORD! and makes isotopes}
+//  {Variant of UNQUOTE that also accepts BAD-WORD! to make isotopes}
 //
-//      return: "Potentially an isotope"
-//          [<opt> <invisible> any-value!]
-//      ^value [<opt> bad-word! quoted!]
-//      /void "Invisible if input is ~void~ BAD-WORD! (else ~none~ isotope)"
+//      return: [<opt> any-value!]
+//      ^value "Taken as ^META for passthru tolerance of pure and isotope void"
+//          [<opt> blank! quoted! bad-word!]
 //  ]
 //
 REBNATIVE(unmeta)
 //
-// Note: Taking ^meta parameters allows `unquote ~meanie~` e.g. on what
-// would usually be an error-inducing stable bad word.  This was introduced as
-// a way around a situation like this:
+// Note: It is weird to accept isotopes as input to an UNMETA operation, as it
+// is not possible to produce them with a META operation.  But the asymmetric
+// choice to accept meta states representing pure void (_) and ~void~ isotopes
+// is a pragmatic one.  (This errors on other isotopes.)
 //
-//     result: ^(some expression)  ; NULL -> NULL, ~null~ isotope => ~null~
-//     do compose [
-//         detect-isotope unmeta (
-//              match bad-word! result else [
-//                  quote result  ; NULL -> ' and ' -> ''
-//              ]
-//          )
-//     ]
+// Consider what FOR-BOTH would need to do in order to please UNMETA here:
 //
-// DETECT-ISOTOPE wants to avoid forcing its caller to use a quoted argument
-// calling convention.  Yet it still wants to know if its argument is a ~null~
-// isotope vs/ NULL, or a BAD-WORD! vs. an isotope BAD-WORD!.  That's what
-// ^meta arguments are for...but it runs up against a wall when forced to
-// run from code hardened into a BLOCK!.
+//      for-both: func ['var blk1 blk2 body] [
+//          unmeta all [
+//              '~void~  ; <-- this is the nuisance we want to avoid
+//              meta for-each (var) blk1 body
+//              meta for-each (var) blk2 body
+//          ]
+//      ]
 //
-// This could go another route with an added operation, something along the
-// lines of `unmeta make-friendly ~meanie~`.  But given that the output from
-// an unmeta on a plain BAD-WORD! will be mean regardless of the input makes
-// it superfluous...the UNMETA doesn't have any side effects to worry about,
-// and if the output is just going to be mean again it's not somehow harmful
-// to understanding.
+// The loop has converted values into the ^META domain so that they can be used
+// with the ALL.  The components can opt out if neither loop runs a body,
+// which effectively would render it to act like `all []`.  In this case we
+// are seeking to generate a ~void~ isotope result...but the ALL will itself
+// yield a non-META ~void~ isotope in the all-opt-out scenario.  A "pure"
+// version of UNMETA would not take a ^META argument and error in this case.
 //
-// (It's also not clear offering a MAKE-FRIENDLY operation is a good idea.)
+// Having to work around it by slipping a quoted ~void~ BAD-WORD! into the mix
+// is busywork, when UNMETA can simply return the ~void~ isotope the empty ALL
+// gave it instead of erroring for the sake of "purity".  (There is a similar
+// compromise in META, which is what allows it to take the MAYBE result of pure
+// invisibility and pass it through vs. returning BLANK! like `^` does.)
 {
     INCLUDE_PARAMS_OF_UNMETA;
 
     REBVAL *v = ARG(value);
 
     if (IS_NULLED(v))
-        return v;  // ^(null) => null, so the reverse must be true
+        return nullptr;  // ^(null) => null, so the reverse must be true
 
-    if (IS_BAD_WORD(v)) {
-        if (GET_CELL_FLAG(v, ISOTOPE))
-            fail ("Cannot UNMETA end of input");  // no <end>, shouldn't happen
-        Move_Cell(D_OUT, v);
-        SET_CELL_FLAG(D_OUT, ISOTOPE);
-        return D_OUT;
+    if (Is_Meta_Of_Pure_Invisible(v))
+        return_void (D_OUT);  // ^-- see explanation
+
+    if (Is_Meta_Of_Void_Isotope(v))
+        return_void (D_OUT);  // ^-- see explanation
+
+    if (IS_BAD_WORD(v))
+        fail (Error_Bad_Isotope(v));  // no other isotopes valid for the trick
+
+    assert(IS_QUOTED(v));  // handling the invisibility detour is done now...
+    Unquotify(v, 1);  // drop quote level caused by ^META parameter convention
+
+    if (Is_Meta_End(v))
+        fail ("END not processed by UNMETA at this time");
+
+    if (Is_Meta_Of_Pure_Invisible(v))
+        return_void (D_OUT);  // invisible "intent"?
+
+    if (Is_Meta_Of_Void_Isotope(v))
+        return_void (D_OUT);
+
+    // Now remove the level of meta the user was asking for.
+    //
+    return Meta_Unquotify(Move_Cell(D_OUT, v));
+}
+
+
+//
+//  maybe: native [
+//
+//  {If argument is a ~none~ isotope, make it vanish}
+//
+//      return: "Value (if it's anything other than the states being checked)"
+//          [<opt> <invisible> any-value!]
+//      ^optional [<opt> any-value!]
+//      /value "Require output be an ANY-VALUE!, vanish all NULLs and voids"
+//  ]
+//
+REBNATIVE(maybe)
+{
+    INCLUDE_PARAMS_OF_MAYBE;
+
+    REBVAL *v = ARG(optional);
+
+    if (Is_Meta_Of_Pure_Invisible(v) or Is_Meta_Of_Void_Isotope(v))
+        return_invisible (D_OUT);
+
+    // There was an operation called DENULL for making nulls vanish.  Such a
+    // shorthand might be desirable, but it's probably more obvious to say
+    // that you are running a MAYBE process that is insistent that there
+    // be an ANY-VALUE! as a product.  It's more discoverable, and fits into
+    // a concept users will be expected to have learned.  If anyone uses it
+    // frequently they can say `denull: :maybe/value` and be responsible for
+    // knowing what that means.
+    //
+    if (REF(value)) {
+        if (
+            IS_NULLED(v)
+            or (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_0)  // "nothing"
+        ){
+            return_invisible (D_OUT);
+        }
     }
 
-    assert(IS_QUOTED(v));  // already handled NULL and BAD-WORD! possibilities
-    Unquotify(v, 1);  // Remove meta level caused by parameter convention
+    return Meta_Unquotify(Move_Cell(D_OUT, v));
+}
 
-    Meta_Unquotify(v);  // now remove the level of meta the user was asking for
 
-    // !!! This needs to be handled more generally, but the idea is that if you
-    // are to write:
-    //
-    //      >> x: ^()
-    //      == ~void~
-    //
-    // Then you have captured the notion of invisibility by virtue of doing so.
-    // But to truly "unmeta" that we get invisibility back.  That's tricky if
-    // you don't want it...although DO and APPLY are leaning that way.  We
-    // could error by default, but instead try defaulting to ~none~ isotope.
-    //
-    if (IS_END(v)) {
-        if (REF(void))
-            return D_OUT;  // invisible
+//
+//  maybe+: native [
+//
+//  {Special Test: Potential future of a MAYBE Intrinsic}
+//
+//      return: "Value (if it's anything other than void)"
+//          [<opt> <invisible> any-value!]
+//  ]
+//
+REBNATIVE(maybe_a)
+//
+// !!! One aspect of the implementation of translucency is that functions like
+// IF do not actually overwrite the output cell when they don't run their
+// branch (nor WHILE if they don't run their body, etc.)
+//
+// Something interesting about that is that we could implement MAYBE as
+// writing its argument directly onto its output, and looking for if it was
+// stale or not.  This implements that experiment.
+{
+    INCLUDE_PARAMS_OF_MAYBE_A;
 
-        return Init_None(D_OUT);
+    if (Eval_Step_In_Subframe_Maybe_Stale_Throws(
+        D_OUT,
+        frame_,
+        EVAL_MASK_DEFAULT
+    )){
+        return_thrown (D_OUT);
     }
 
-    return v;
+    if (Is_Voided(D_OUT)) {
+        Clear_Void_Flag(D_OUT);
+        return_invisible (D_OUT);
+    }
+
+    return D_OUT;
 }
 
 

@@ -34,11 +34,12 @@ probe: func* [
 
     return: "Same as the input value"
         [<opt> any-value!]
-    ^value' [<opt> any-value!]
+    ^value' [<opt> <invisible> any-value!]
 ][
     ; Remember this is early in the boot so many things not defined
     write-stdout switch type of value' [
         null ["; null"]
+        blank! ["; void"]
         bad-word! [unspaced [mold value' space space "; isotope"]]
     ] else [
         let value: unmeta value'
@@ -47,10 +48,10 @@ probe: func* [
 
     write-stdout newline
 
-    ; We need to wait until the last minute and unquote the original value
-    ; because ~null~ isotopes decay if assigned to a variable.
+    ; Need to wait until the last minute and unquote the original value because
+    ; some isotopes (~null~, ~void~, ~false~) decay if assigned to a variable.
     ;
-    return/no-decay unmeta value'
+    return unmeta value'
 ]
 
 ??: :probe  ; shorthand to use in debug sessions, not intended to be committed
@@ -169,13 +170,6 @@ elide: func* [
 ][
 ]
 
-void: enfixed func* [  ; 0-arg so enfix doesn't matter, but tests issue below
-    {Arity-0 COMMENT (use to replace an arity-0 function with side effects)}
-    return: <void> {Evaluator will skip result}
-][
-    ; https://github.com/metaeducation/ren-c/issues/581#issuecomment-562875470
-]
-
 ; COMMA! is the new expression barrier.  But `||` is included as a redefine of
 ; the old `|`, so that the barrier-making properties of a usermode entity can
 ; stay tested.  But outside of testing, use `,` instead.
@@ -245,7 +239,7 @@ pointfree*: func* [
                 if not (block: try [var @]: evaluate block) [
                     break  ; ran out of args, assume remaining unspecialized
                 ]
-                frame.(p.1): :var
+                frame.(p.1): get/any 'var
             ]
 
             all [
@@ -401,9 +395,9 @@ requote: reframer func* [
 
     f.(p): noquote f.(p)
 
-    do f then result -> [
+    decay (do f then result -> [
         quote/depth get/any 'result num-quotes
-    ] else [null]
+    ] else [null])
 ]
 
 

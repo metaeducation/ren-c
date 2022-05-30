@@ -108,16 +108,16 @@ REBINT CT_Bad_word(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 REBTYPE(Bad_word)
 {
-    REBVAL *voided = D_ARG(1);
+    REBVAL *bad_word = D_ARG(1);
 
     switch (ID_OF_SYMBOL(verb)) {
       case SYM_REFLECT: {
         INCLUDE_PARAMS_OF_REFLECT;
-        UNUSED(ARG(value)); // taken care of by `voided` above.
+        UNUSED(ARG(value)); // taken care of by `bad_word` above.
 
         switch (VAL_WORD_ID(ARG(property))) {
           case SYM_LABEL: {
-            const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(voided));
+            const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(bad_word));
             if (label == nullptr)
                 return nullptr;  // "soft failure" safer than blank!, use TRY
 
@@ -138,7 +138,7 @@ REBTYPE(Bad_word)
         UNUSED(REF(deep));
         UNUSED(REF(types));
 
-        return voided; }
+        return bad_word; }
 
       default: break;
     }

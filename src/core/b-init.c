@@ -613,7 +613,7 @@ static void Init_Contexts_Object(void)
     //
     const char *label = "startup-mezz-not-finished-yet";
     Init_Bad_Word(
-        RESET(Get_System(SYS_CONTEXTS, CTX_USER)),
+        Get_System(SYS_CONTEXTS, CTX_USER),
         Intern_UTF8_Managed(cb_cast(label), strsize(label))
     );
 }
@@ -1034,7 +1034,7 @@ void Startup_Core(void)
     Init_Any_Word_Bound(lib_at, REB_WORD, Lib_Context, PG_At_Symbol, INDEX_ATTACHED);
     mutable_KIND3Q_BYTE(lib_at) = REB_SYMBOL;
 
-    Set_Var_May_Fail(lib_caret, SPECIFIED, Lib(META));
+    Set_Var_May_Fail(lib_caret, SPECIFIED, Lib(META_P));
     Set_Var_May_Fail(lib_at, SPECIFIED, Lib(THE_P));
 
     // boot->errors is the error definition list from %errors.r

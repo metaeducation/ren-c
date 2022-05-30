@@ -413,7 +413,7 @@ ATTRIBUTE_NO_RETURN void Panic_Series_Debug(REBSER *s)
 
   #if DEBUG_COUNT_TICKS
     fprintf(stderr, " was likely ");
-    if (s->leader.bits & NODE_FLAG_FREE)
+    if (s->leader.bits & SERIES_FLAG_FREE)
         fprintf(stderr, "freed");
     else
         fprintf(stderr, "created");

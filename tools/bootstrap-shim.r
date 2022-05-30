@@ -111,6 +111,14 @@ repeat: :loop
 
 loop: :while  ; !!! Temporary, will be reclaimed.
 
+; Modern DO is more limited in giving back "void intent" so it doesn't go
+; well in situations like `map-each code blocks-of-code [do code]`...because
+; situations that would have returned NULL and opted out don't opt out.
+; You are supposed to use EVAL for that.
+;
+reeval: :eval
+eval: :do
+
 ; We don't have the distinctions between NULL and "unsets" in the bootstrap
 ; build.  But make them distinct at the source level.
 
@@ -685,14 +693,6 @@ transcode: lib/function [
     ]
 
     return values
-]
-
-reeval: :eval
-eval: lib/func [] [
-    fail/where [
-        "EVAL is now REEVAL:"
-        https://forum.rebol.info/t/eval-evaluate-and-reeval-reevaluate/1173
-    ] 'return
 ]
 
 split: lib/function [

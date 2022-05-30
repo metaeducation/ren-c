@@ -80,6 +80,12 @@
 #define Init_Bad_Word(out,sym) \
     Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_MASK_NONE)
 
+inline static option(const REBSYM*) VAL_BAD_WORD_LABEL_UNCHECKED(
+    REBCEL(const*) v
+){
+    return cast(const REBSYM*, VAL_NODE1(v));
+}
+
 inline static option(const REBSYM*) VAL_BAD_WORD_LABEL(
     REBCEL(const*) v
 ){
@@ -114,19 +120,27 @@ inline static bool Is_Isotope_With_Id(
 ){
     if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
         return false;
-    assert(VAL_BAD_WORD_ID(v) != SYM_VOID);
     return cast(REBLEN, id) == cast(REBLEN, VAL_BAD_WORD_ID(v));
 }
 
 inline static bool Is_Isotope(const RELVAL *v) {
     if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
         return false;
-    assert(VAL_BAD_WORD_ID(v) != SYM_VOID);
     return true;
 }
 
-#define Init_Isotope(out,sym) \
-    Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_FLAG_ISOTOPE)
+static inline REBVAL *Init_Isotope_Untracked(
+    RELVAL *out,
+    option(const REBSYM*) label
+){
+    assert(label != Canon(VOID));  // "~void~ isotopes" are never reified
+    assert(label != Canon(END));  // ~end~ BAD-WORD! is a ^META-signal only
+
+    return Init_Bad_Word_Untracked(out, label, CELL_FLAG_ISOTOPE);
+}
+
+#define Init_Isotope(out,label) \
+    Init_Isotope_Untracked(TRACK(out), (label))
 
 
 // The `~` isotope is chosen in particular by the system to represent variables
@@ -139,9 +153,10 @@ inline static bool Is_Isotope(const RELVAL *v) {
 //
 //  * Quick way to unset variables, simply `(var: ~)`
 //
-// But inside the system we are more wordy.
+// But since we have to talk about what it is, we call it "none".  Unlike
+// ~void~ or ~end~ isotopes, it is reified and can appear in variables.
 //
-// `~none~` is also the default RETURN for when you just write something like
+// It is also the default RETURN for when you just write something like
 // `func [return: <none>] [...]`.  It represents the intention of not having a
 // return value, but reserving the right to not be treated as invisible, so
 // that if one ever did imagine an interesting value for it to return, the
@@ -153,12 +168,56 @@ inline static bool Is_Isotope(const RELVAL *v) {
 // and you couldn't write `print [...] else [...]` if it would be sometimes
 // invisible and sometimes not.
 //
-// Naming is "Init_None()" instead of "Init_None_Isotope()" for brevity, as
-// there's not much reason to refer to anything but the isotopic form.
-//
 #define NONE_ISOTOPE                c_cast(const REBVAL*, &PG_None_Isotope)
+
 #define Init_None(out)              Init_Isotope((out), nullptr)
-#define Is_None(v)                  Is_Isotope_With_Id(v, SYM_0)
+#define Is_None(v)                  Is_Isotope_With_Id((v), SYM_0)
+#define Init_Meta_Of_None(out)      Init_Bad_Word((out), nullptr)
+
+inline static bool Is_Meta_Of_None(const RELVAL *v)
+  { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_0; }
+
+
+//=//// "VOID ISOTOPE" (does not exist as reified state) ///////////////////=//
+//
+// Void states are actually just CELL_FLAG_OUT_NOTE_VOIDED on top of
+// an empty cell, to indicate something that has "invisible intent" but did
+// not actually vanish.  We call them "~void~ isotopes" because you can make
+// this state with a BAD-WORD!, you just can't store it:
+//
+//     >> x: ~void~
+//     == ~void~  ; isotope (decays to none)
+//
+//     >> get/any 'x
+//     == ~  ; isotope (none, e.g. x is unset)
+//
+// There is thus no such thing as "Init_Void_Isotope()"; all instances that
+// encounter the void ephemeral state must either pass on the hot potato of
+// that state to another evaluative chain, reify it as something else, or
+// raise an error.
+//
+
+#define Init_Meta_Of_Void_Isotope(out)   Init_Bad_Word((out), Canon(VOID))
+
+inline static bool Is_Meta_Of_Void_Isotope(const RELVAL *v)
+  { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID; }
+
+inline static bool Is_Void_Isotope_Maybe_Stale(const RELVAL *v) {
+    if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
+        return false;
+    if (not (v->header.bits & CELL_FLAG_ISOTOPE))
+        return false;
+    return VAL_NODE1(v) == Canon(VOID);
+}
+
+
+//=//// PURE INVISIBILITY META STATE ///////////////////////////////////////=//
+//
+// Pure invisibility is using the state of BLANK! to differentiate it from
+// a ~void~.  Generally speaking most routines shouldn't make a distinction.
+
+#define Init_Meta_Of_Pure_Void(out)       Init_Blank(out)
+#define Is_Meta_Of_Pure_Invisible(v)      IS_BLANK(v)
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//
@@ -191,45 +250,94 @@ inline static bool Is_Isotope(const RELVAL *v) {
 // it has actually gotten much easier with ^(...) behaviors.)
 //
 
-#define Init_Null_Isotope(out) \
-    Init_Isotope((out), Canon(NULL))
+#define Init_Null_Isotope(out)              Init_Isotope((out), Canon(NULL))
+#define Is_Null_Isotope(v)                  Is_Isotope_With_Id(v, SYM_NULL)
+#define Init_Meta_Of_Nulled_Isotope(out)    Init_Bad_Word((out), Canon(NULL))
 
-inline static bool Is_Null_Isotope(const RELVAL *v)
-  { return Is_Isotope_With_Id(v, SYM_NULL); }
+inline static bool Is_Meta_Of_Null_Isotope(const RELVAL *v)
+  { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_NULL; }
+
+
+//=//// END OF INPUT META STATE (~END~ BAD-WORD!) //////////////////////////=//
+//
+// Reaching an end of input is something some functions want to be able to
+// handle.  The ~end~ meta state is reserved for this purpose.  However, no
+// reified ~end~ isotope exists, and they cannot be UNMETA'd.
+
+#define Init_Meta_End(out) Init_Bad_Word((out), Canon(END))
+inline static bool Is_Meta_End(const RELVAL *v)
+  { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END; }
+
+
+//=//// ISOTOPIC DECAY /////////////////////////////////////////////////////=//
 
 inline static REBVAL *Init_Blackhole(RELVAL *out);  // defined in %sys-token.h
 
 inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
-    if (Is_Null_Isotope(v))
-        Init_Nulled(v);
-    else if (Is_Isotope_With_Id(v, SYM_BLANK))
-        Init_Blank(v);
-    else if (Is_Isotope_With_Id(v, SYM_FALSE))
-        Init_False(v);
-    else if (Is_Isotope_With_Id(v, SYM_BLACKHOLE))
-        Init_Blackhole(v);
-    return v;
+    if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
+        return v;
+
+    switch (VAL_BAD_WORD_ID(v)) {
+      case SYM_NULL :
+        return Init_Nulled(v);
+      case SYM_BLANK :
+        return Init_Blank(v);
+      case SYM_FALSE :
+        return Init_False(v);
+      case SYM_BLACKHOLE :
+        return Init_Blackhole(v);
+
+      case SYM_VOID :
+        assert(!"Attempt to decay ~VOID~ isotope, which should not exist!");
+        return Init_None(v);
+
+      case SYM_END :
+        assert(!"Attempt to decay ~END~ isotope, not possible!");
+        return Init_None(v);
+
+      default:
+        return v;
+    }
 }
 
 inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
-    if (v == nullptr)
+    if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
         return v;
+
+    switch (VAL_BAD_WORD_ID(v)) {
+      case SYM_NULL :
+        return Lib(NULL);
+      case SYM_FALSE :
+        return Lib(FALSE);
+      case SYM_BLANK :
+        return Lib(BLANK);
+      case SYM_BLACKHOLE :
+        return Lib(BLACKHOLE);
+
+      case SYM_VOID :
+        assert(!"Attempt to decay ~VOID~ isotope, which should not exist!");
+        return NONE_ISOTOPE;
+
+      case SYM_END :
+        assert(!"Attempt to decay ~END~ isotope, not possible!");
+        return NONE_ISOTOPE;
+
+      default:
+        return v;
+    }
+}
+
+inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
+    if (v == nullptr)
+        return v;  // API tolerance
     if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE)) {
         assert(not IS_NULLED(v));  // API speaks nullptr, not nulled cells
         return v;
     }
-    switch (VAL_BAD_WORD_ID(v)) {
-      case SYM_NULL:
-        return nullptr;
-      case SYM_FALSE:
-        return Lib(FALSE);
-      case SYM_BLANK:
-        return Lib(BLANK);
-      case SYM_BLACKHOLE:
-        return Lib(BLACKHOLE);
-      default:
-        return v;
-    }
+    if (VAL_BAD_WORD_ID(v) == SYM_NULL)
+      return nullptr;
+
+    return Pointer_To_Decayed(v);
 }
 
 inline static RELVAL *Isotopify_If_Falsey(RELVAL *v) {

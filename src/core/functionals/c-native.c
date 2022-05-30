@@ -93,11 +93,16 @@ REBACT *Make_Native(
     //
   #if !defined(NDEBUG)
     if (flags & MKF_IS_ELIDER) {
+        assert(GET_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), VANISHABLE));
         assert(GET_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), ENDABLE));
         assert(Is_Typeset_Empty(cast(REBPAR*, ARR_AT(paramlist, 1))));
     }
-    if (flags & MKF_HAS_OPAQUE_RETURN) {
-        assert(NOT_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), ENDABLE));
+    if (flags & MKF_HAS_NONE_RETURN) {
+        //
+        // ENDABLE guides the willingness of the RETURN to take no argument,
+        // but the None_Dispatcher() will turn whatever it gets into ~ isotope.
+        //
+        assert(GET_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), ENDABLE));
         assert(Is_Typeset_Empty(cast(REBPAR*, ARR_AT(paramlist, 1))));
     }
   #endif

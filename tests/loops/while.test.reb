@@ -10,7 +10,7 @@
     num: 0
     1 = while [num < 1] [num: num + 1]
 )]
-('~none~ = ^ while [false] [])
+('~void~ = ^ while [false] [])
 ; zero repetition
 (
     success: true
@@ -131,4 +131,16 @@
         num1: num1 + 1
     ]
     10 = num3
+)
+
+(
+    flag: true
+    <complete> = catch [
+        while [true] [
+            ~void~
+            if flag [flag: false, continue]
+            if false [fail]
+            throw <complete>
+        ]
+    ]
 )

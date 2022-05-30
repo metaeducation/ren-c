@@ -220,10 +220,9 @@ static REBVAL *Run_Sandboxed_Group(REBVAL *group) {
     //
     // So don't add superfluous libRebol calls here, except to debug.
     //
-    // The "^" helps us discern if the value vaporizes completely or not.
-    // The group means code cannot look backwards and quote the ^.
+    // Meta helps us discern if the value vaporizes completely or not.
     //
-    return rebValueInterruptible("^", group);  // ownership gets proxied
+    return rebMetaInterruptible(group);  // ownership gets proxied
 }
 
 

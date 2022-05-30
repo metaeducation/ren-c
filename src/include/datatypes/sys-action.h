@@ -512,11 +512,215 @@ enum {
     ST_ACTION_DISPATCHING
 };
 
+// This indicates that an evaluation step didn't add any new output, but it
+// does not overwrite the contents of the out cell.  This allows the evaluator
+// to leave a value in the output slot even if there is trailing invisible
+// evaluation to be done, such as in `all [1 + 2 elide print "Hi"]`.  Something
+// like ALL wants to hold onto the 3 without needing to cache it in some
+// other location between steps.
+//
+// Stale out cells lie and use the CELL_FLAG_STALE in order to generate asserts
+// if they are observed in the stale state, without going through the proper
+// functions to reveal the content.  This helps accidental usage ,such as being
+// the left side input for enfix: `(1 comment "hi" + 2)` is not legal.
+//
+// Note: The garbage collector knows explicitly that it's okay for frame output
+// slots to have the CELL_FLAG_STALE bit set; it's not usually legal.
+//
+inline void Mark_Eval_Out_Stale(REBVAL *out) {
+    out->header.bits |= CELL_FLAG_STALE;
+}
+
+inline void Clear_Void_Flag(REBVAL *out) {
+    out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
+}
+
+// Must handle the Translucent and Invisible cases before clearing stale.
+//
+inline void Clear_Stale_Flag(REBVAL *out) {
+    out->header.bits &= (~ CELL_FLAG_STALE);
+  /*  assert(NOT_END(out)); */  // Would this be good?
+    assert(not Is_Isotope_With_Id(out, SYM_END));
+}
+
+inline bool Is_Void_Core(bool *none, const REBVAL *out) {
+    if (not (out->header.bits & CELL_FLAG_OUT_NOTE_VOIDED))
+        return false;
+
+    if (KIND3Q_BYTE_UNCHECKED(out) == REB_0) {
+        *none = false;
+        return true;
+    }
+
+    *none = true;
+    return false;
+}
+
+inline bool Is_Voided(const REBVAL *out) {
+    return did (out->header.bits & CELL_FLAG_OUT_NOTE_VOIDED);
+}
+
+inline bool Is_Invisible(const REBVAL *out) {
+    ASSERT_CELL_INITABLE_EVIL_MACRO(out);
+
+    if (out->header.bits & CELL_FLAG_OUT_NOTE_VOIDED)
+        assert(!"Must test Is_Voided() before Is_Invisible()");
+
+    return KIND3Q_BYTE_UNCHECKED(out) == REB_0_END;
+}
+
+
+// !!! We want a freshly prep'd cell to count as stale, e.g. if a construct does
+// a RESET() and then decides never to call Eval() into the cell at all.  But
+// we also want fresh cells to be all 0 for fast memset().  (Fresh cells get
+// their unreadability from not having NODE_FLAG_NODE set, not from having
+// CELL_FLAG_STALE set).  Review design of this.
+//
+inline bool Is_Stale(const REBVAL *out) {
+    ASSERT_CELL_INITABLE_EVIL_MACRO(out);
+
+    return did (out->header.bits & CELL_FLAG_STALE);
+}
+
+#define return_invisible(v) \
+    do { \
+        assert((v) == D_OUT); \
+        assert(Is_Stale(D_OUT)); \
+        return R_INVISIBLE; \
+    } while (false)
+
+
+#define return_thrown(v) \
+    do { \
+        assert((v) == D_OUT); \
+        assert(not Is_Stale(D_OUT)); \
+        return R_THROWN; \
+    } while (false)
+
+
+#define return_branched(v) \
+    do { \
+        assert((v) == D_OUT); \
+        assert(not Is_Voided(D_OUT)); \
+        assert(not IS_NULLED(D_OUT)); \
+        return D_OUT; \
+    } while (false)
+
+
+inline REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
+    ASSERT_CELL_INITABLE_EVIL_MACRO(out);
+    assert(
+        Is_Voided(out)
+        or Is_Stale(out)
+        or Is_Invisible(out)
+    );
+
+    // The goal of translucency is to only produce void isotopes at the end
+    // of an evaluation where all things are either invisible or translucent.
+    //
+    //     >> (if false [<a>] comment "hi" if false [<b>])
+    //     == ~void~  ; isotope
+    //
+    //     >> (1 + 2 if false [<a>] comment "hi")
+    //     == ~  ; isotope
+    //
+    // The mechanics behind this seek to not actually overwrite the output
+    // cell with a ~void~ isotope in the translucent steps.  Hence routines
+    // like ALL can test for "void isotope intent" while doing overlapping
+    // outputs into the same cell:
+    //
+    //     >> all [if true [<a>] if false [<b>]]
+    //     == <a>
+    //
+    // The second IF didn't overwrite <a>, it just set the "translucent" bit.
+    //
+    // But it's a little tricky because a translucent state is not "stale".
+    // So special handling is needed to get enfix to work right:
+    //
+    //     >> 1 + 2 if false [<a>] else [<b>]
+    //
+    // When the IF runs it leaves the 3 in the output cell, marked with
+    // the translucent bit.  But it clears the stale bit so that it reports
+    // a new result is available.  Yet the ELSE wants to get a ~void~ isotope
+    // as its input--not the 3!
+    //
+    // So enfix as well as many operations need to check the translucent bit
+    // first, before assuming a non-stale value is usable.  The way this is
+    // kept from having too many accidents is that the functions enforce that
+    // you can't test for an eval product being invisible until you've
+    // checked for translucency first.  And since invisible cells must be
+    // checked before using any other value, it prevents misinterpration.
+    //
+    out->header.bits &= (~ CELL_FLAG_STALE);
+    out->header.bits |= CELL_FLAG_OUT_NOTE_VOIDED;
+    return out;
+}
+
+#define return_void(v) \
+    do { \
+        assert((v) == D_OUT); \
+        Mark_Eval_Out_Voided(D_OUT); \
+        return D_OUT; \
+    } while (false)
+
+
+// Plain reification cannot discern "~void~ isotopes" or pure invisibility
+// from none isotopes.
+//
+//     >> eval [comment "conflation is unavoidable"]
+//     == ~  ; isotope
+//
+//     >> eval [~]
+//     == ~  ; isotope
+//
+// The only way to discern these scenarios is to use the ^META domain.
+//
+// You can get that insight using Reify_Eval_Out_Meta...but some internal routines
+// don't want to pay for the quoting done by Reify_Eval_Out_Meta() just to find
+// that out.  They also may want to avoid reification in order to reuse the
+// same cell for output across evaluations which may be pure void and vanish...
+// so they can preserve the previous result.
+//
+inline static REBVAL *Reify_Eval_Out_Plain(REBVAL *out) {
+    assert(not Is_Stale(out));
+
+    if (Is_Voided(out))
+        return Init_None(out);
+
+   if (Is_Invisible(out))
+        return Init_None(out);
+
+    Clear_Stale_Flag(out);
+    return out;
+}
+
+#define Reify_Stale_Plain_Branch(out) \
+    Isotopify_If_Nulled(Reify_Eval_Out_Plain(out))
+
+
+inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out, bool is_invisible_ok) {
+    assert(not Is_Stale(out));
+
+    if (Is_Voided(out))
+        return Init_Meta_Of_Void_Isotope(out);
+
+    if (Is_Invisible(out)) {
+        if (is_invisible_ok)
+            return Init_Meta_Of_Pure_Void(out);
+        return Init_Meta_Of_Void_Isotope(out);
+    }
+
+    Clear_Stale_Flag(out);
+    return Meta_Quotify(out);
+}
+
 
 inline static bool Process_Action_Throws(REBFRM *f) {
-    Init_None(f->out);
-    SET_CELL_FLAG(f->out, OUT_NOTE_STALE);
+    SET_END(f->out);
+
     bool threw = Process_Action_Maybe_Stale_Throws(f);
-    CLEAR_CELL_FLAG(f->out, OUT_NOTE_STALE);
+
+    Reify_Eval_Out_Plain(f->out);
+
     return threw;
 }

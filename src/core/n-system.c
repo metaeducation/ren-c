@@ -61,18 +61,24 @@ REBNATIVE(quit)
 
     REBVAL *v = ARG(value);
 
-    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID) {
-        //
+    if (
+        Is_Meta_Of_Pure_Invisible(v)  // (quit void)
+        or Is_Meta_Of_Void_Isotope(v)  // (quit if false [<unused>])
+        or Is_Meta_End(v)  // (quit)
+    ){
         // This returns an isotope if there is no arg, and labels it ~quit~
         // It's a pretty good generic signal of what happened if there's not
         // some explicit handling.
         //
-        Init_Isotope(v, Canon(QUIT));
+        // !!! Should the decision of what happens here be done by the receiver
+        // of the throw?  We have to turn the END to a BLANK!, but other than
+        // that we might not editorialize...as it means we can't distinguish
+        // `quit ~quit~` at the catch site.
+        //
+        Init_Bad_Word(v, Canon(QUIT));
     }
-    else
-        Meta_Unquotify(v);
 
-    return Init_Thrown_With_Label(D_OUT, v, Lib(QUIT));
+    return Init_Thrown_With_Label_Meta(D_OUT, v, Lib(QUIT));
 }
 
 

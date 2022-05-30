@@ -110,7 +110,7 @@
 //
 // Asserting writablity helps catch writes to unanticipated locations.  Making
 // places that are cell-adjacent not carry NODE_FLAG_CELL, or be marked with
-// NODE_FLAG_FREE, helps make this check useful.
+// CELL_FLAG_STALE, helps make this check useful.
 //
 
 #if DEBUG_CELL_WRITABILITY
@@ -135,19 +135,21 @@
             else if (not ((c)->header.bits & NODE_FLAG_NODE)) \
                 printf("Non-node passed to cell read routine\n"); \
             else \
-                printf("Free node passed to cell read routine\n"); \
+                printf( \
+                    "ASSERT_CELL_READABLE() on CELL_FLAG_STALE cell\n" \
+                    "Maybe valid but just has access to it limited\n" \
+                    "see Mark_Eval_Out_Stale()\n" \
+                ); \
             panic (c); \
         }
 
     // Because you can't write to cells that aren't pure 0 (prep'd/calloc'd)
     // or formatted with cell and node flags, it doesn't make sense to
-    // disallow writing NODE_FLAG_FREE cells.  So the flag is used instead as
+    // disallow writing CELL_FLAG_STALE cells.  So the flag is used instead as
     // a generic "not readable" status.
     //
-    // Warning: Cells with NODE_FLAG_FREE may seem like UTF-8 strings if they
-    // leak to the user; so this flag should only be used for debug-oriented
-    // unreadable states.
-    //
+    // Warning: Cells with CELL_FLAG_STALE may seem like UTF-8 strings if they
+    // leak to the user; so this flag should only be used for internal states.
 
     #define ASSERT_CELL_WRITABLE_EVIL_MACRO(c) \
         if ( \
@@ -236,14 +238,14 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
             (v->header.bits & (
                 NODE_FLAG_NODE
                 | NODE_FLAG_CELL
-                | NODE_FLAG_FREE
+                | CELL_FLAG_STALE
             )) == (NODE_FLAG_CELL | NODE_FLAG_NODE)
         ){
             return KIND3Q_BYTE_UNCHECKED(v);  // majority return here
         }
 
         if (
-            (v->header.bits & NODE_FLAG_FREE)
+            (v->header.bits & CELL_FLAG_STALE)
             and KIND3Q_BYTE_UNCHECKED(v) == REB_BAD_WORD
         ){
             printf("KIND3Q_BYTE() called on unreadable cell\n");
@@ -266,8 +268,12 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
             printf("KIND3Q_BYTE() called on non-cell\n");
             panic_at (v, file, line);
         }
-        if (v->header.bits & NODE_FLAG_FREE) {
-            printf("KIND3Q_BYTE() called on invalid cell--marked FREE\n");
+        if (v->header.bits & CELL_FLAG_STALE) {
+            printf(
+                "KIND3Q_BYTE() called on cell with CELL_FLAG_STALE\n"
+                "It may be valid but just having access to it limited\n"
+                "see Mark_Eval_Out_Stale()\n"
+            );
             panic_at (v, file, line);
         }
         return KIND3Q_BYTE_UNCHECKED(v);
@@ -402,18 +408,18 @@ inline static const RELVAL* CELL_TO_VAL(REBCEL(const*) cell)
 #define NOT_CELL_FLAG(v,name) \
     ((READABLE(v)->header.bits & CELL_FLAG_##name) == 0)
 
-// NODE_FLAG_FREE is special; we use it for things like debug build indicating
+// CELL_FLAG_STALE is special; we use it for things like debug build indicating
 // array termination.  It doesn't make an empty/prepped cell non-empty.  We
 // use the WRITABLE() test for reading as well as setting the flag, and just
 // in case the cell is CELL_MASK_PREP we add NODE_FLAG_NODE and NODE_FLAG_CELL.
 
 #define SET_CELL_FREE(v) \
     (INITABLE(v)->header.bits |= \
-        (NODE_FLAG_NODE | NODE_FLAG_CELL | NODE_FLAG_FREE))
+        (NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STALE))
 
 #define IS_CELL_FREE(v) \
     (INITABLE(m_cast(RELVAL*, cast(const RELVAL*, (v))))->header.bits \
-        & NODE_FLAG_FREE)
+        & CELL_FLAG_STALE)
 
 
 //=//// CELL HEADERS AND PREPARATION //////////////////////////////////////=//

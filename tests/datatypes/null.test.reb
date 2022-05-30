@@ -70,13 +70,13 @@
 [
     ('~null~ = ^ if true [null])
     ('~null~ = ^ if true [heavy null])
-    ('~none~ = ^ if true [])
+    ('~ = ^ if true [])
     ('~custom~ = ^ if true [~custom~])
     (''~custom~ = ^ if true ['~custom~])
 
-    (none? ~none~)  ; tests for isotopes
-    (not none? first [~none~])  ; plain BAD-WORD!s do not count
-    (not none? 'none)  ; ...nor do words, strings, etc
+    ('~void~ = ^ ~void~)  ; tests for isotopes
+    (not '~void~ = ^ first [~void~])  ; plain BAD-WORD!s do not count
+    (not '~void~ = ^ 'void)  ; ...nor do words, strings, etc
 
     ; Because ^[] forms replaced @[] forms, there are some stale references
     ; that need to be cleaned up before this behavior is enabled.

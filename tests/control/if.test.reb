@@ -11,8 +11,8 @@
 )
 (1 = if true [1])
 
-(null? if false [])
-('~none~ = ^ if true [])
+('~void~ = ^ if false [])
+('~ = ^ if true [])
 
 (error? if true [trap [1 / 0]])
 ; RETURN stops the evaluation
@@ -58,10 +58,10 @@
 (if first ['a/b] [true])
 (if first ['a] [true])
 (if true [true])
-(null? if false [true])
+('~void~ = ^ if false [true])
 (if $1 [true])
 (if (specialize :of [property: 'type]) [true])
-(null? if blank [true])
+('~void~ = ^ if blank [true])
 (if make object! [] [true])
 (if get '+ [true])
 (if 0x0 [true])
@@ -80,7 +80,7 @@
 
 ; recursive behaviour
 
-('~null~ = ^ if true [if false [1]])
+(none? if true [if false [1]])
 (1 = if true [if true [1]])
 
 ; infinite recursion
@@ -101,7 +101,7 @@
 )
 (1 = if not false [1])
 
-(null? if not true [1])
+('~void~ = ^ if not true [1])
 ('~null~ = ^ if not false [null])
 
 (error? if not false [trap [1 / 0]])

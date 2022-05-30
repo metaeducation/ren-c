@@ -81,19 +81,29 @@
 //  Empty_Dispatcher: C
 //
 // If you write `func [...] []` it uses this dispatcher instead of running
-// Eval_Core() on an empty block.  At one time this was synonymous with
-// invisibility, but now it's like `do []` which is a ~none~ isotope.
+// Eval_Core() on an empty block.  It is synonymous with `do []`
 //
 // This serves more of a point than it sounds, because you can make fast stub
 // actions that only cost if they are HIJACK'd (e.g. ASSERT is done this way).
 //
+// !!! At present, the resulting function is purely invisible--hence it acts
+// the same as Commenter_Dispatcher(). This is something that can be up for
+// debate, but "voidness" has evolved to where it's difficult to leak
+// emptiness out of a function on accident...so the purity of being able to
+// wrap an invisible function makes some sense here.  It's kept as a separate
+// entry point for the moment.
+//
 REB_R Empty_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for return_xxx macros
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(VAL_LEN_AT(ARR_AT(details, IDX_DETAILS_1)) == 0);  // empty body
     UNUSED(details);
 
-    return Init_None(f->out);
+    assert(Is_Stale(f->out));
+
+    return_invisible (f->out);
 }
 
 
@@ -127,33 +137,17 @@ bool Interpreted_Dispatch_Details_1_Throws(
         assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
         REBVAL *cell = FRM_ARG(f, 1);
 
-        // Hardcoded hack to make COMBINATOR's RETURN use /ISOTOPE by default.
-        //
-        bool is_combinator = ACT_DISPATCHER(phase) == &Combinator_Dispatcher;
-        assert(  // !!! keeping notes to try and firm this up...
-            IS_NULLED(cell)  // typical
-            or IS_ACTION(cell)
-            or Is_None(cell)  // seen with ADAPT
-        );
         Init_Action(
             cell,
-            is_combinator
-                ? VAL_ACTION(Lib(DEFINITIONAL_RETURN_NO_DECAY))
-                : VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
+            VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
             Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
             CTX(f->varlist)  // bind this return to know where to return from
         );
     }
 
-    DECLARE_FEED_AT_CORE (feed, body, SPC(f->varlist));
-
     SET_END(spare);  // !!! END won't work with throw/return ?
 
-    if (Do_Feed_To_End_Maybe_Stale_Throws(
-        spare,
-        feed,
-        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-    )) {
+    if (Do_Any_Array_At_Maybe_Stale_Throws(spare, body, SPC(f->varlist))) {
         const REBVAL *label = VAL_THROWN_LABEL(spare);
         if (
             IS_ACTION(label)
@@ -167,15 +161,21 @@ bool Interpreted_Dispatch_Details_1_Throws(
             // concerns to handle the usermode RETURN here...but generic
             // UNWIND is a nice feature too.  Revisit later.
             //
-            CATCH_THROWN(spare, spare);  // preserves CELL_FLAG_UNEVALUATED
+            CATCH_THROWN_META(spare, spare);  // preserves CELL_FLAG_UNEVALUATED
+            if (Is_Meta_Of_Pure_Invisible(spare))
+                SET_END(spare);  // Don't generically UNMETA pure invisibility
+            else if (Is_Meta_Of_Void_Isotope(spare)) {
+                SET_END(spare);
+                Mark_Eval_Out_Voided(spare);
+            }
+            else
+                Meta_Unquotify(spare);
+
             *returned = true;
             return false;  // we caught the THROW
         }
         return true;  // we didn't catch the throw
     }
-
-    if (IS_END(spare))
-        Init_None(spare);
 
     *returned = false;
     return false;  // didn't throw
@@ -196,7 +196,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
 //
 REB_R Unchecked_Dispatcher(REBFRM *f)
 {
-    REBFRM *frame_ = f;
+    REBFRM *frame_ = f;  // for RETURN macros
 
     REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
@@ -204,11 +204,26 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
         Move_Cell(f->out, spare);
         return_thrown (f->out);
     }
-    if (not returned)  // assume if it was returned, it was decayed if needed
-        Decay_If_Isotope(spare);
 
-    if (IS_END(spare))
-        return f->out;  // was invisible
+    if (Is_Voided(spare))
+        return_void (f->out);
+
+    if (Is_Invisible(spare)) {
+        if (GET_EVAL_FLAG(f, META_OUT))
+            return_invisible (f->out);
+
+        REBACT *phase = FRM_PHASE(f);
+        if (ACT_HAS_RETURN(phase)) {
+            const REBKEY *key = ACT_KEYS_HEAD(phase);
+            const REBPAR *param = ACT_PARAMS_HEAD(phase);
+            assert(KEY_SYM(key) == SYM_RETURN);
+            if (GET_PARAM_FLAG(param, VANISHABLE))
+                return_invisible (f->out);
+        }
+        return_void (f->out);
+    }
+
+    Clear_Stale_Flag(spare);
 
     return Move_Cell_Core(
         f->out,  // not invisible--overwrite previous result
@@ -219,15 +234,14 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 
 
 //
-//  Opaque_Dispatcher: C
+//  None_Dispatcher: C
 //
-// Runs block, then overwrites result w/none (e.g. RETURN: <none>)
+// Runs block, then overwrites result w/a ~none~ isotope (e.g. RETURN: <none>)
 //
-REB_R Opaque_Dispatcher(REBFRM *f)
+REB_R None_Dispatcher(REBFRM *f)
 {
-    REBFRM *frame_ = f;
+    REBFRM *frame_ = f;  // for RETURN macros
 
-    RESET(f->out);  // never invisible
     REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
@@ -249,7 +263,7 @@ REB_R Opaque_Dispatcher(REBFRM *f)
 //
 REB_R Returner_Dispatcher(REBFRM *f)
 {
-    REBFRM *frame_ = f;
+    REBFRM *frame_ = f;  // so we can use D_OUT
 
     REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
@@ -257,13 +271,26 @@ REB_R Returner_Dispatcher(REBFRM *f)
         Move_Cell(f->out, spare);
         return_thrown (f->out);
     }
-    if (not returned)  // assume if it was returned, it was decayed if needed
-        Decay_If_Isotope(spare);
 
-    if (IS_END(spare)) {
-        FAIL_IF_NO_INVISIBLE_RETURN(f);
-        return f->out;  // was invisible
+    if (Is_Voided(spare))
+        return_void (f->out);
+
+    if (Is_Invisible(spare)) {
+        if (GET_EVAL_FLAG(f, META_OUT))
+            return_invisible (f->out);
+
+        REBACT *phase = FRM_PHASE(f);
+        if (ACT_HAS_RETURN(phase)) {
+            const REBKEY *key = ACT_KEYS_HEAD(phase);
+            const REBPAR *param = ACT_PARAMS_HEAD(phase);
+            assert(KEY_SYM(key) == SYM_RETURN);
+            if (GET_PARAM_FLAG(param, VANISHABLE))
+                return_invisible (f->out);
+        }
+        return_void (f->out);
     }
+
+    Clear_Stale_Flag(spare);
 
     Move_Cell_Core(
         f->out,  // wasn't invisible, so overwrite now
@@ -285,9 +312,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
 //
 REB_R Elider_Dispatcher(REBFRM *f)
 {
-    REBFRM *frame_ = f;  // for RETURN macros
-
-    assert(f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE);
+    REBFRM *frame_ = f;  // for return_xxx macros
 
     REBVAL *discarded = FRM_SPARE(f);  // spare usable during dispatch
 
@@ -296,9 +321,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
         return_thrown (f->out);
     UNUSED(returned);  // no additional work to bypass
 
-    assert(f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE);
-
-    return f->out;
+    return_invisible (f->out);
 }
 
 
@@ -310,13 +333,14 @@ REB_R Elider_Dispatcher(REBFRM *f)
 //
 REB_R Commenter_Dispatcher(REBFRM *f)
 {
+    REBFRM *frame_ = f;  // for RETURN macros
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     RELVAL *body = ARR_AT(details, IDX_DETAILS_1);
     assert(VAL_LEN_AT(body) == 0);
     UNUSED(body);
 
-    assert(f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE);
-    return f->out;
+    return_invisible (f->out);
 }
 
 
@@ -400,8 +424,8 @@ REBACT *Make_Interpreted_Action_May_Fail(
         if (mkf_flags & MKF_IS_ELIDER) {
             INIT_ACT_DISPATCHER(a, &Commenter_Dispatcher);
         }
-        else if (mkf_flags & MKF_HAS_OPAQUE_RETURN) {
-            INIT_ACT_DISPATCHER(a, &Opaque_Dispatcher);  // !!! ^-- see note
+        else if (mkf_flags & MKF_HAS_NONE_RETURN) {
+            INIT_ACT_DISPATCHER(a, &None_Dispatcher);  // !!! ^-- see note
         }
         else if (ACT_HAS_RETURN(a)) {
             const REBPAR *param = ACT_PARAMS_HEAD(a);
@@ -422,8 +446,8 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
         if (mkf_flags & MKF_IS_ELIDER)
             INIT_ACT_DISPATCHER(a, &Elider_Dispatcher);  // no f->out mutation
-        else if (mkf_flags & MKF_HAS_OPAQUE_RETURN) // !!! see note
-            INIT_ACT_DISPATCHER(a, &Opaque_Dispatcher);  // forces f->out void
+        else if (mkf_flags & MKF_HAS_NONE_RETURN) // !!! see note
+            INIT_ACT_DISPATCHER(a, &None_Dispatcher);  // forces f->out to ~
         else if (ACT_HAS_RETURN(a))
             INIT_ACT_DISPATCHER(a, &Returner_Dispatcher);  // typecheck f->out
         else
@@ -696,8 +720,34 @@ REBNATIVE(unwind)
 }
 
 
-static REB_R Return_Core(REBFRM *f, REBVAL *v, bool decay) {
-    //
+//
+//  definitional-return: native [
+//
+//  {RETURN, giving a result to the caller}
+//
+//      return: []  ; !!! notation for "divergent?"
+//      ^value "If no argument is given, result will act like RETURN VOID"
+//          [<end> <opt> <invisible> any-value!]
+//  ]
+//
+REBNATIVE(definitional_return)
+//
+// Returns in Ren-C are functions that are aware of the function they return
+// to.  So the dispatchers for functions that provide return e.g. FUNC will
+// actually use an instance of this native, and poke a binding into it to
+// identify the action.
+//
+// This means the RETURN that is in LIB is actually just a dummy function
+// which you will bind to and run if there is no definitional return in effect.
+//
+// (The cached name of the value for this native is set to RETURN by the
+// dispatchers that use it, which might be a bit confusing.)
+{
+    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
+
+    REBVAL *v = ARG(value);
+    REBFRM *f = frame_;  // frame of this RETURN call (implicit REBNATIVE arg)
+
     // Each ACTION! cell for RETURN has a piece of information in it that can
     // can be unique (the binding).  When invoked, that binding is held in the
     // REBFRM*.  This generic RETURN dispatcher interprets that binding as the
@@ -734,21 +784,33 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool decay) {
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID) {  // vanishes
-        FAIL_IF_NO_INVISIBLE_RETURN(target_frame);
-        SET_END(v);  // how return protocol does invisible (throw meta-fies)
+    if (Is_Meta_Of_Pure_Invisible(v)) {  // `return comment "hi"`, `return void`
+        //
+        // We trust that if the function does not have <invisible> marked on
+        // it by contract, the call won't vanish but returns a ~void~ isotope.
+        // But a ^META operation will reveal the invisible intent.
+        //
+        // See Reify_Eval_Out_Plain() and Reify_Eval_Out_Meta() for details.
+        //
         goto skip_type_check;
     }
 
-    Meta_Unquotify(v);  // we will read the ISOTOPE flags (don't want it quoted)
-
-    if (decay) {
-        //
-        // If we aren't paying attention to isotope status, then remove it
-        // from the value...so ~null~ decays to null.
-        //
-        Decay_If_Isotope(v);
+    if (Is_Meta_End(v)) {  // plain `return` with no arguments
+        Init_Meta_Of_Pure_Void(v);  // act the same as `return void`
+        goto skip_type_check;  // currently isotopes always allowed
     }
+
+    if (Is_Meta_Of_Void_Isotope(v)) {
+        //
+        // To make sure core clients know what they are doing, Meta_Unquotify()
+        // won't make ~void~ isotopes.  But we want to be able to return them.
+        //
+        goto skip_type_check;
+    }
+
+    // Safe to unquotify long enough to do type checking, then quote back
+
+    Meta_Unquotify(v);
 
     // Check type NOW instead of waiting and letting Eval_Core()
     // check it.  Reasoning is that the error can indicate the callsite,
@@ -770,66 +832,15 @@ static REB_R Return_Core(REBFRM *f, REBVAL *v, bool decay) {
             fail (Error_Bad_Return_Type(target_frame, VAL_TYPE(v)));
     }
 
+    Meta_Quotify(v);
+
   skip_type_check: {
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
     INIT_VAL_ACTION_BINDING(label, f_binding);
 
-    return Init_Thrown_With_Label(f->out, v, label);  // preserves UNEVALUATED
+    return Init_Thrown_With_Label_Meta(f->out, v, label);  // save UNEVALUATED?
   }
-}
-
-
-//
-//  definitional-return: native [
-//
-//  {RETURN, giving a result to the caller}
-//
-//      return: []  ; !!! notation for "divergent?"
-//      ^value "If no argument is given, result will be ~void~"
-//          [<end> <opt> any-value!]
-//      /no-decay "Do not decay isotope return values"
-//  ]
-//
-REBNATIVE(definitional_return)
-//
-// Returns in Ren-C are functions that are aware of the function they return
-// to.  So the dispatchers for functions that provide return e.g. FUNC will
-// actually use an instance of this native, and poke a binding into it to
-// identify the action.
-//
-// This means the RETURN that is in LIB is actually just a dummy function
-// which you will bind to and run if there is no definitional return in effect.
-//
-// (The cached name of the value for this native is set to RETURN by the
-// dispatchers that use it, which might be a bit confusing.)
-{
-    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN;
-
-    return Return_Core(frame_, ARG(value), not REF(no_decay));
-}
-
-
-//
-//  definitional-return-no-decay: native [
-//
-//  {RETURN/NO-DECAY native specialization}
-//
-//      return: []  ; !!! notation for divergent functions?
-//      ^value "If no argument is given, result will be ~void~"
-//          [<end> <opt> any-value!]
-//  ]
-//
-REBNATIVE(definitional_return_no_decay)
-//
-// The COMBINATOR wants to distinguish isotopes in all cases.  Rather than
-// inject the body with `return: :return/no-decay` we get a small speedup by
-// just putting this variant of RETURN in the frame slot.
-{
-    INCLUDE_PARAMS_OF_DEFINITIONAL_RETURN_NO_DECAY;
-
-    bool decay = false;
-    return Return_Core(frame_, ARG(value), decay);
 }
 
 

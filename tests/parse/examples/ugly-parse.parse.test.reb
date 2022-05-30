@@ -20,7 +20,7 @@
         return: "Don't return anything" [<invisible>]
         'group [group!]
     ][
-        do group
+        eval group
         set remainder input
         return
     ]

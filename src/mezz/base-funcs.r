@@ -155,7 +155,7 @@ func: func* [
             ]
             defaulters: default [copy []]
             append defaulters compose [
-                (var): default '(do other.1)
+                (var): default '(eval other.1)
             ]
         )
     |
@@ -169,7 +169,7 @@ func: func* [
             if other [
                 defaulters: default [copy []]
                 append defaulters compose [  ; always sets
-                    (var): '(do other)
+                    (var): '(eval other)
                 ]
             ]
         )]
@@ -304,7 +304,6 @@ function: specialize :func [gather: #]
     ]
     return  ; return no value (invisible)
 ]
-
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
     {Returns the current directory path}
@@ -683,15 +682,19 @@ find-last: redescribe [
 )
 
 attempt: func [
-    {Tries to evaluate a block and returns result or NULL on error.}
+    {Tries to evaluate a block and returns result or NULL on error}
 
     return: "NULL on error"
         [<opt> any-value!]
     code [block! action!]
 ][
     trap [
-        return/no-decay (do code else [null])  ; want ~null~ isotope if was NULL
+        return heavy do code  ; want ~null~ isotope if was NULL
     ]
+    ; !!! This just throws away the error, which is an extremely dodgy form of
+    ; error handling...as it could cover up syntax errors or any other kind
+    ; of problem with the code.  Preserved for historical reasons only.
+    ;
     return null
 ]
 
@@ -708,7 +711,7 @@ entrap: func [
 reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
-    specialize :reduce [predicate: :null-to-void]
+    specialize :reduce [predicate: :maybe/value]
 )
 
 for-next: redescribe [
@@ -784,19 +787,17 @@ count-up: func [
     ] else [
         limit
     ]
-    return/no-decay (
-        cycle [
-            result': (^ cfor :var start end 1 body) else [
-                return null  ; a BREAK was encountered
-            ]
-            if limit <> # [
-                stop unmeta result'  ; the limit was actually reached
-            ]
-            ; otherwise keep going...
-            end: end + 100
-            start: start + 100
+    return cycle [
+        result': (^ cfor :var start end 1 body) else [
+            return null  ; a BREAK was encountered
         ]
-    )
+        if limit <> # [
+            stop unmeta result'  ; the limit was actually reached
+        ]
+        ; otherwise keep going...
+        end: end + 100
+        start: start + 100
+    ]
 ]
 
 count-down: redescribe [

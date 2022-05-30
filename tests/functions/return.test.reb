@@ -56,7 +56,7 @@
 )
 (
     f1: func [return: <none>] [return]
-    '~none~ = ^ f1
+    '~ = ^ f1
 )
 [#1515 ; the "result" of an arity-0 return should not be assignable
     (a: 1 reeval func [return: <none>] [a: return] :a =? 1)

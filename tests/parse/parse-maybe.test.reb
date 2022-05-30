@@ -60,6 +60,6 @@
         y: x: maybe (~none~)  ; Isotopic ~none~ not conflated w/invisible
         some "b"
     ]
-    none? get/any 'x
-    none? get/any 'y
+    '~void~ = ^ get/any 'x
+    '~void~ = ^ get/any 'y
 ])

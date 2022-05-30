@@ -12,15 +12,15 @@
 
 ; No-op rule of empty block should always match.
 [
-    (none? uparse "" [])
-    (none? uparse "" [[]])
-    (none? uparse "" [[[]]])
+    ('~void~ = ^ uparse "" [])
+    ('~void~ = ^ uparse "" [[]])
+    ('~void~ = ^ uparse "" [[[]]])
 
-    (none? uparse [] [])
-    (none? uparse [] [[[]]])
-    (didn't uparse [x] [])
-    (didn't uparse [x] [[[]]])
-    (none? uparse [x] [[] 'x []])
+    ('~void~ = ^ uparse [] [])
+    ('~void~ = ^ uparse [] [[[]]])
+    (null = uparse [x] [])
+    (null = uparse [x] [[[]]])
+    ('x = uparse [x] [[] 'x []])
 ]
 
 

@@ -42,7 +42,7 @@
     did all [
         '~changed~ = ^ uparse s [some [
             opt change "b" ("x")
-            <any>
+            elide <any>
         ]]
         s = {axa}
     ]

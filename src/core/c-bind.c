@@ -529,7 +529,8 @@ REBNATIVE(let)
         REBFLGS flags = EVAL_MASK_DEFAULT
             | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
-        if (Eval_Step_In_Subframe_Throws(f->out, f, flags))
+        SET_END(f->out);  // !!! Assert on Is_Fresh() otherwise, review
+        if (Eval_Step_In_Subframe_Maybe_Stale_Throws(f->out, f, flags))
             return_thrown (D_OUT);
 
         return D_OUT;

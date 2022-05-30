@@ -17,7 +17,7 @@
     ]
 
     did all [
-        null? n-add 10 20
+        '~void~ = ^ n-add 10 20
         25 = n-add 20 20
     ]
 )
@@ -30,21 +30,21 @@
     ]
     outer: enclose :inner func [f] [
         assert [1020 = do f]
-        return
+        return void
     ]
     did all [
-        304 = (304 outer)
-        '~void~ = ^(outer)
+        304 = (304 maybe/value outer)
+        _ = ^ (outer)
         var = 1020
     ]
 )(
     var: #before
     inner: func [return: [<invisible>]] [
         var: 1020
-        return
+        return void
     ]
     outer: enclose :inner func [return: [<opt> any-value!] f] [
-        return ^(do f)  ; don't unquote it here
+        return ^(eval f)  ; don't unquote it here
     ]
     did all [
         '~void~ = outer
@@ -54,7 +54,7 @@
     var: #before
     inner: func [return: [<invisible>]] [
         var: 1020
-        return
+        return void
     ]
     outer: enclose :inner func [return: [<opt> <invisible> any-value!] f] [
         return do f  ; now try unquoting

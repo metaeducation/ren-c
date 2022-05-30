@@ -652,7 +652,7 @@ void Free_Unbiased_Series_Data(char *unbiased, REBLEN total)
         // The series data does not honor "node protocol" when it is in use
         // The pools are not swept the way the REBSER pool is, so only the
         // free nodes have significance to their headers.  Use a cast and not
-        // NOD() because that assumes not (NODE_FLAG_FREE)
+        // NOD() because that assumes not (SERIES_FLAG_FREE)
         //
         REBPLU *unit = cast(REBPLU*, unbiased);
 
@@ -1269,7 +1269,7 @@ void Assert_Pointer_Detection_Working(void)
   #if DEBUG_POISON_CELLS
     DECLARE_LOCAL (freed_cell);
     freed_cell->header.bits =
-        NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+        NODE_FLAG_NODE | CELL_FLAG_STALE | NODE_FLAG_CELL
         | FLAG_KIND3Q_BYTE(REB_T_POISON)
         | FLAG_HEART_BYTE(REB_T_POISON);
     assert(Detect_Rebol_Pointer(freed_cell) == DETECTED_AS_FREED_CELL);

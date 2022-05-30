@@ -92,6 +92,8 @@
 //   of the bit are in place--like processing an array a routine itself made.
 //
 
+#define CELL_FLAG_STALE NODE_FLAG_STALE
+
 #define CELL_FLAG_MANAGED NODE_FLAG_MANAGED
 #define CELL_FLAG_ROOT NODE_FLAG_ROOT
 
@@ -197,7 +199,7 @@
     FLAG_LEFT_BIT(25)
 
 
-//=//// CELL_FLAG_26 //////////////////////////////////////////////////////=//
+//=//// CELL_FLAG_26 ///////////////////////////////////////////////////////=//
 //
 #define CELL_FLAG_26 \
     FLAG_LEFT_BIT(26)
@@ -234,15 +236,6 @@
 // applied... but it will be overwritten if you put another value in that
 // particular location.
 //
-// * OUT_NOTE_STALE -- This application of CELL_FLAG_NOTE helps show
-//   when an evaluation step didn't add any new output, but it does not
-//   overwrite the contents of the out cell.  This allows the evaluator to
-//   leave a value in the output slot even if there is trailing invisible
-//   evaluation to be done, such as in `[1 + 2 elide (print "Hi")]`, where
-//   something like ALL would want to hold onto the 3 without needing to
-//   cache it in some other location.  Stale out cells cannot be used as
-//   left side input for enfix.
-//
 // * STACK_NOTE_SEALED -- When building exemplar frames on the stack, you want
 //   to observe when a value should be marked as VAR_MARKED_HIDDEN.  But you
 //   aren't allowed to write "sticky" cell format bits on stack elements.  So
@@ -258,7 +251,7 @@
 #define CELL_FLAG_NOTE \
     FLAG_LEFT_BIT(28)
 
-#define CELL_FLAG_OUT_NOTE_STALE CELL_FLAG_NOTE
+#define CELL_FLAG_OUT_NOTE_VOIDED CELL_FLAG_NOTE
 #define CELL_FLAG_NOTE_REMOVE CELL_FLAG_NOTE
 #define CELL_FLAG_BIND_NOTE_REUSE CELL_FLAG_NOTE
 #define CELL_FLAG_STACK_NOTE_SEALED CELL_FLAG_NOTE
@@ -331,7 +324,7 @@
 // are owned by the cell, plus additional bits that would be reset in the
 // cell if overwritten but not copied.
 //
-// Note that this will clear NODE_FLAG_FREE, so it should be checked by the
+// Note that this will clear CELL_FLAG_STALE, so it should be checked by the
 // debug build before resetting.
 //
 // Notice that NODE_FLAG_MARKED is "sticky"; the mark persists with the cell.

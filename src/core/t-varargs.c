@@ -189,13 +189,16 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             DECLARE_FRAME_AT (f_temp, shared, flags);
             Push_Frame(nullptr, f_temp);
 
-            // Note: Eval_Step_In_Subframe_Throws() is not needed here because
+            // Note: Eval_Step_In_Subframe() is not needed here because
             // this is a single use frame, whose state can be overwritten.
             //
-            if (Eval_Step_Throws(out, f_temp)) {
+            if (Eval_Step_Maybe_Stale_Throws(out, f_temp)) {
                 Abort_Frame(f_temp);
                 return true;
             }
+
+            Clear_Stale_Flag(out);
+            Reify_Eval_Out_Plain(out);
 
             if (
                 IS_END(f_temp->feed->value)
@@ -287,14 +290,15 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             goto type_check_and_return;
         }
 
-        // Note that evaluative cases here need Eval_Step_In_Subframe_Throws(),
+        // Note that evaluative cases here need Eval_Step_In_Subframe(),
         // because a function is running and the frame state can't be
         // overwritten by an arbitrary evaluation.
         //
         switch (pclass) {
         case PARAM_CLASS_NORMAL: {
             REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_FULFILLING_ARG;
-            if (Eval_Step_In_Subframe_Throws(out, f, flags))
+            SET_END(out);
+            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(out, f, flags))
                 return true;
             break; }
 

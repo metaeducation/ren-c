@@ -977,7 +977,7 @@ const REBYTE *Scan_Date(
 
     // Overwriting scanned REB_TIME...
     //
-    mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_DATE;
+    Reset_Cell_Header_Untracked(TRACK(out), REB_DATE, CELL_MASK_NONE);
 
     // payload.time.nanoseconds is set, may be NO_DATE_TIME, don't RESET()
 

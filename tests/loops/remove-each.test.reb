@@ -128,7 +128,7 @@
 (
     binary: copy #{01020304}
     remove-each i binary [
-        any [i = 2, i = 3]
+        did any [i = 2, i = 3]
     ]
     binary = #{0104}
 )
@@ -161,7 +161,7 @@
 
     binary: copy #{0102030405}
     remove-each [a b] binary [
-        if a = 5 [
+        did if a = 5 [
             b-was-null: null? :b
         ]
     ]

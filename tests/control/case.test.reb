@@ -14,27 +14,22 @@
 )
 
 (
-    null? case [false []]  ; null indicates no branch was taken
+    '~void~ = ^ case [false []]  ; void isotope
 )
 (
-    null? case []  ; empty case block is legal (e.g. as COMPOSE product)
-)
-(
-    '~null~ = ^ case [true [null]]  ; indicates branch was taken (vs. null)
-)
-(
-    '~none~ = ^ case [true []]
+    '~void~ = ^ case []  ; empty case block is legal (e.g. as COMPOSE product)
 )
 (
     '~null~ = ^ case [
-        true [null]
+        true [null]  ; turned to isotope so ELSE won't run
         false [1 + 2]
     ]
 )
+
 [#2246 (
-    '~null~ = ^ case [true [null]]
+    '~null~ = ^ case [true [null]]  ; indicates branch was taken (vs. null)
 )(
-    '~none~ = ^ case [true []]
+    '~ = ^ case [true []]
 )]
 
 (
@@ -47,7 +42,7 @@
     3 = case [true (reduce ['add 1 2])]
 )
 (
-    null? case [false (reduce ['add 1 2])]
+    '~void~ = ^ case [false (reduce ['add 1 2])]
 )
 
 (
@@ -58,17 +53,35 @@
     ]
 )
 
-; Invisibles should be legal to mix with CASE.
+; Invisibles should be legal to mix with CASE.  Being in group or not should
+; not affect the behavior.
 
-(
+[(
     flag: false
     result: case [
         1 < 2 [1020]
         elide (flag: true)
-        true [fail "shouldn't get here"]
+        fail "shouldn't get here"
     ]
     (not flag) and (result = 1020)
-)
+)(
+    flag: false
+    result: case [
+        1 < 2 [1020]
+        elide flag: true
+        fail "shouldn't get here"
+    ]
+    (not flag) and (result = 1020)
+)(
+    flag: false
+    result: case [
+        1 < 2 [1020]
+        (elide flag: true)
+        fail "shouldn't get here"
+    ]
+    (not flag) and (result = 1020)
+)]
+
 
 
 

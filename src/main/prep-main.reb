@@ -56,7 +56,7 @@ for-each file reduce [
 
     ; %prot-http.r and %prot-tls.r don't have any native code directly in them,
     ; so they don't need to be "extensions".  They could just be encapped
-    ; (unlike the encap and compression code itself.)  But they represnt
+    ; (unlike the encap and compression code itself.)  But they represent
     ; another level of "bootstrap" for those who want to run scripts off the
     ; web, so they make sense to build into the executable.
     ;

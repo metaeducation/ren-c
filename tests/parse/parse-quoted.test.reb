@@ -19,7 +19,7 @@
 ;
 
 [
-    (none? uparse [] [])
+    ('~void~ = ^ uparse [] [])
     ('a == uparse [a] ['a])
     (didn't uparse [a] ['b])
     ('b == uparse [a b] ['a 'b])

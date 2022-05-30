@@ -19,7 +19,7 @@
         make typeset! [char! any-string! integer! word! binary!]
     )
 ][
-    case_REWORD: if case [/case]
+    case_REWORD: if case [#] else [null]
     case: :lib.case
 
     out: make (type of source) length of source
@@ -102,7 +102,7 @@
                         (result: v :keyword-match)
                         :result
                     ]
-                    block! [do :v]
+                    block! [eval :v]
                 ] else [
                     :v
                 ]

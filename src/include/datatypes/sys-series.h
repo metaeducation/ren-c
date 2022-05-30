@@ -457,10 +457,10 @@ inline static REBLEN SER_USED(const REBSER *s) {
         // when the GC is invoked where it must all be sorted out.)
         //
         // So here we look for a cell whose kind byte is zero, whose heart byte
-        // is 0, and that doesn't have NODE_FLAG_FREE set to signal length 0.
+        // is 0, and that doesn't have SERIES_FLAG_FREE set to signal length 0.
         //
         if (0 == (SER_CELL(s)->header.bits & (
-            NODE_FLAG_FREE | FLAG_KIND3Q_BYTE(255) | FLAG_HEART_BYTE(255)
+            SERIES_FLAG_FREE | FLAG_KIND3Q_BYTE(255) | FLAG_HEART_BYTE(255)
         ))){
             return 0;
         }

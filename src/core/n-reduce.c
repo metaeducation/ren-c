@@ -23,6 +23,10 @@
 
 #include "sys-core.h"
 
+#define Value REBVAL
+#define OUT D_OUT
+#define SPARE D_SPARE
+
 
 //
 //  reduce: native [
@@ -42,7 +46,6 @@ REBNATIVE(reduce)
     INCLUDE_PARAMS_OF_REDUCE;
 
     REBVAL *v = ARG(value);
-
     REBVAL *predicate = ARG(predicate);
 
     // Single element REDUCE is currently limited only to certain types.
@@ -53,11 +56,11 @@ REBNATIVE(reduce)
     //
     // !!! How should predicates interact with this case?
     //
-    if (not IS_BLOCK(v) and not IS_GROUP(v)) {
-        if (Eval_Value_Throws(D_OUT, v, SPECIFIED))
-            return_thrown (D_OUT);
+    if (not ANY_ARRAY(v)) {
+        if (Eval_Value_Throws(OUT, v, SPECIFIED))
+            return_thrown (OUT);
 
-        return D_OUT;  // let caller worry about whether to error on nulls
+        return OUT;  // let caller worry about whether to error on nulls
     }
 
     REBDSP dsp_orig = DSP;
@@ -67,62 +70,60 @@ REBNATIVE(reduce)
 
     Push_Frame(nullptr, f);
 
-    do {
-        bool line = IS_END(f_value)
-            ? false
-            : GET_CELL_FLAG(f_value, NEWLINE_BEFORE);
+    while (NOT_END(f_value)) {
+        bool line = GET_CELL_FLAG(f_value, NEWLINE_BEFORE);
 
-        if (Eval_Step_Throws(D_OUT, f)) {
+        if (Eval_Step_Maybe_Stale_Throws(SET_END(OUT), f)) {
             DS_DROP_TO(dsp_orig);
             Abort_Frame(f);
-            return_thrown (D_OUT);
+            return_thrown (OUT);
         }
 
-        if (IS_END(D_OUT)) {
-            if (IS_END(f_value))
-                break;  // `reduce []`
-            continue;  // `reduce [comment "hi"]`
-        }
+        if (IS_NULLED(ARG(predicate))) {  // default processing
+            if (Is_Voided(OUT))
+                continue;  // reduce [<a> if false [<b>]] => [<a>]
 
-        if (not IS_NULLED(ARG(predicate))) {  // post-process result if needed
-            REBVAL *processed = rebValue(
-                Lib(META), predicate, rebQ(D_OUT)
-            );
-            if (processed) {
-                Move_Cell(D_OUT, processed);
-                Meta_Unquotify(D_OUT);
+            if (Is_Invisible(OUT))
+                continue;  // reduce [<a> comment "hi"] => [<a>]
+        }
+        else {  // usermode post-processing of result if requested
+
+            if (Is_Voided(OUT))
+                Init_Meta_Of_Void_Isotope(OUT);
+            else if (Is_Invisible(D_OUT))
+                Copy_Cell(OUT, Lib(VOID));
+
+            REBVAL *processed = rebMeta(predicate, rebQ(OUT));
+
+            if (not processed) {
+                Init_Nulled(OUT);
+            }
+            else {
+                Move_Cell(OUT, processed);
                 rebRelease(processed);
 
-                if (IS_END(D_OUT))
-                    continue;  // `reduce/predicate [null] :null-to-void`
+                if (
+                    Is_Meta_Of_Pure_Invisible(OUT)
+                    or Is_Meta_Of_Void_Isotope(OUT)
+                ){
+                    continue;  // `reduce/predicate [null] :maybe/value`
+                }
+
+                Meta_Unquotify(OUT);
             }
-            else
-                Init_Nulled(D_OUT);
         }
 
-        // Ren-C sticks with historical precedent in making the default
-        // for REDUCE strictly output a number of results equal to the number
-        // of input expressions.  Hence NULL is converted to ~null~::
-        //
-        //     >> append [<a> <b>] reduce [<c> if false [<d>]]
-        //     == [<a> <b> <c> ~null~]  ; two expressions adding two results
-        //
-        // There are invisibles to subvert this if one really wants to, in
-        // particular NULL-TO-VOID.
-        //
-        // https://forum.rebol.info/t/1665
-        //
-        if (IS_NULLED(D_OUT)) {
-            Init_Bad_Word(DS_PUSH(), Canon(NULL));
+        if (IS_NULLED(OUT)) {
+            Init_Meta_Of_Nulled_Isotope(DS_PUSH());
         }
         else {
-            Move_Cell(DS_PUSH(), D_OUT);
+            Move_Cell(DS_PUSH(), OUT);
             if (IS_BAD_WORD(DS_TOP))
                 CLEAR_CELL_FLAG(DS_TOP, ISOTOPE);  // must be block-safe
         }
         if (line)
             SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
-    } while (NOT_END(f_value));
+    }
 
     Drop_Frame_Unbalanced(f);  // Drop_Frame() asserts on accumulation
 
@@ -131,7 +132,7 @@ REBNATIVE(reduce)
         pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     return Init_Any_Array(
-        D_OUT,
+        OUT,
         VAL_TYPE(v),
         Pop_Stack_Values_Core(dsp_orig, pop_flags)
     );
@@ -172,29 +173,35 @@ REBNATIVE(reduce_each)
     DECLARE_FRAME_AT (f, ARG(block), flags);
     Push_Frame(nullptr, f);
 
-    do {
-        if (Eval_Step_Throws(D_SPARE, f)) {
+    while (NOT_END(f_value)) {
+        if (Eval_Step_Maybe_Stale_Throws(SET_END(D_SPARE), f)) {
             Abort_Frame(f);
             return_thrown (D_OUT);
         }
 
-        if (IS_END(D_SPARE)) {
-            if (IS_END(f_value))
-                break;  // `reduce []`
-            continue;  // `reduce [comment "hi"]`
-        }
+        if (Is_Voided(D_SPARE) or Is_Invisible(D_SPARE))
+            continue;
+
+        Clear_Stale_Flag(f->out);
+
+        // !!! This needs to handle the case where the vars are ^META, as well
+        // as multiple vars.  Eval_Step_Throws() discards information that we
+        // would get from Eval_Step_Maybe_Stale_Throws().  Review.
 
         Move_Cell(CTX_VAR(context, 1), D_SPARE);
 
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(D_OUT, &broke))
                 return_thrown (D_OUT);
             if (broke)
                 return nullptr;
 
             // The way a CONTINUE with a value works is to act as if the loop
             // body evaluated to the value.  (CONTINUE) acts as (CONTINUE NULL)
+            // We don't have any special handling, just process stale normally.
+            //
+            Reify_Stale_Plain_Branch(D_OUT);
         }
     } while (NOT_END(f_value));
 
@@ -327,7 +334,7 @@ REB_R Compose_To_Stack_Core(
             if (not IS_NULLED(label))
                 Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-            SET_END(out);  // want empty `()` to vanish
+            SET_END(out);  // want empty `()` or `(comment "hi")` to vanish
             if (Do_Feed_To_End_Maybe_Stale_Throws(
                 out,
                 subfeed,
@@ -337,17 +344,21 @@ REB_R Compose_To_Stack_Core(
                 Abort_Frame(f);
                 return R_THROWN;
             }
-            CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
 
-            if (IS_END(out))
+            if (Is_Voided(out) or Is_Invisible(out)) {
+                if (quotes > 0)  // compose [() '''()] => [''']
+                    Quotify(Init_Nulled(DS_PUSH()), quotes);
                 continue;
+            }
+
+            Clear_Stale_Flag(out);
 
             REBVAL *insert;
             if (
                 predicate
                 and not doubled_group
             ){
-                insert = rebValue(Lib(META), predicate, rebQ(out));
+                insert = rebMeta(predicate, rebQ(out));
 
                 if (insert == nullptr) {
                     // leave alone
@@ -365,8 +376,8 @@ REB_R Compose_To_Stack_Core(
                     : out;
             }
 
-            // Note: Keep isotopic nulls as isotopic, in case predicate takes
-            // its parameter as ^META.
+            if (insert and IS_NULLED(insert))
+                continue;
 
             if (insert and Is_Isotope(insert))
                 fail (Error_Bad_Isotope(insert));
@@ -481,7 +492,7 @@ REB_R Compose_To_Stack_Core(
             if (insert != out)
                 rebRelease(insert);
 
-            RESET(out);  // shouldn't leak temp eval to caller
+            SET_END(out);  // shouldn't leak temp eval to caller
 
             changed = true;
         }

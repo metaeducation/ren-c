@@ -5,18 +5,18 @@
 ; out in terms of how to make [2 4 rule] range between 2 and 4 occurrences,
 ; as that breaks the combinator pattern at this time.
 
-(none? uparse "" [0 <any>])
+('~void~ = ^ uparse "" [0 <any>])
 ("a" == uparse "a" [1 "a"])
 ("a" == uparse "aa" [2 "a"])
 
 ; Plain loops that never actually runs the body gives back a match that is
-; a ~none~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
+; a ~void~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
-    (none? uparse "a" ["a" 0 "b"])
-    ('~none~ == uparse "a" ["a" ^[0 "b"]])
+    ('~void~ = ^ uparse "a" ["a" 0 "b"])
+    (# == uparse "a" ["a" ^[0 "b"]])
 
-    ("a" = uparse "a" ["a" none-to-void/ 0 "b"])
-    ("a" = uparse "a" ["a" none-to-void/ [0 "b"]])
+    ("a" = uparse "a" ["a" maybe/ 0 "b"])
+    ("a" = uparse "a" ["a" maybe/ [0 "b"]])
 ]
 
 [#1280 (
@@ -25,10 +25,10 @@
 )]
 
 [https://github.com/red/red/issues/4591
-    (none? uparse [] [0 [ignore me]])
-    (none? uparse [] [0 "ignore me"])
-    (none? uparse [] [0 0 [ignore me]])
-    (none? uparse [] [0 0 "ignore me"])
+    ('~void~ = ^ uparse [] [0 [ignore me]])
+    ('~void~ = ^ uparse [] [0 "ignore me"])
+    ('~void~ = ^ uparse [] [0 0 [ignore me]])
+    ('~void~ = ^ uparse [] [0 0 "ignore me"])
     (didn't uparse [x] [0 0 'x])
     (didn't uparse " " [0 0 space])
 ]

@@ -55,13 +55,13 @@ api-objects: make block! 50
 
 map-each-api: func [code [block!]] [
     map-each api api-objects compose/only [
-        do in api (code)  ; want API variable visible to `code` while running
+        eval in api (code)  ; want API variable visible to `code` while running
     ]
 ]
 
 for-each-api: func [code [block!]] [
     for-each api api-objects compose/only [
-        do in api (code)  ; want API variable visible to `code` while running
+        eval in api (code)  ; want API variable visible to `code` while running
     ]
 ]
 

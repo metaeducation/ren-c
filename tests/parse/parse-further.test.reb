@@ -11,7 +11,7 @@
 ("at least 1" = uparse "a" [further [opt "a" opt "b"] ("at least 1")])
 ("at least 1" = uparse "ab" [further [opt "a" opt "b"] ("at least 1")])
 
-(none? uparse "" [repeat (#) some further [to <end>]])
+('~void~ = ^ uparse "" [repeat (#) some further [to <end>]])
 
 [https://github.com/red/red/issues/3927
     (didn't uparse "bx" [some further [not "b" | <any>]])

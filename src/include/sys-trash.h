@@ -69,16 +69,16 @@ inline static REBVAL *Init_Bad_Word_Untracked(
 
 #if DEBUG_UNREADABLE_TRASH
     //
-    // Debug behavior: `~` isotope with the NODE_FLAG_FREE set
+    // Debug behavior: `~` isotope with the CELL_FLAG_STALE set
     // Will trip up any access attempts via READABLE(), but can be overwritten
 
     #define Init_Trash(out) \
-        Init_Bad_Word_Untracked(TRACK(out), nullptr, NODE_FLAG_FREE)
+        Init_Bad_Word_Untracked(TRACK(out), nullptr, CELL_FLAG_STALE)
 
     inline static bool IS_TRASH(const RELVAL *v) {
         if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
             return false;
-        return did (v->header.bits & NODE_FLAG_FREE);
+        return did (v->header.bits & CELL_FLAG_STALE);
     }
 #else
     // Release Build Behavior: Looks just like an unset (`~` isotope)

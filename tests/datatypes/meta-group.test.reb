@@ -3,12 +3,21 @@
 (meta-group! = type of '^(a b c))
 
 ; The only way to see vanishing stuff is with meta operations, which give you
-; ~void~ BAD-WORD!s...there is no way to otherwise observe the existence of
-; a "void isotope".
+; BLANK! at the meta level in the case of full erasure.
 [
-    ('~void~ = ^())
-    ('~void~ = ^(comment "hi"))
-    ('~void~ = ^(void))
+    (blank? ^())
+    (blank? ^(comment "hi"))
+    (blank? ^(void))
+
+    (blank? ^(maybe comment "hi"))
+    (blank? ^(maybe void))
+
+    (blank? ^ ())
+    (blank? ^ (comment "hi"))
+    (blank? ^ (void))
+
+    (blank? ^ (maybe comment "hi"))
+    (blank? ^ (maybe void))
 ]
 
 ((the '10) = ^(10 comment "hi"))

@@ -14,7 +14,7 @@
     earlier: copy []
     later: copy []
     did all [
-        none? uparse "abcd" [
+        "d" = uparse "abcd" [
            "a" (append earlier <A>)
            "b" (<delay> append later <B>)
            "c" (append earlier <C>)

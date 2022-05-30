@@ -411,17 +411,22 @@ REBVAL *Run_Array_Dangerous(void *opaque) {
 
     x->failed = true;  // assume it failed if the end was not reached
 
-    REBVAL *result = Alloc_Value();
-    if (Do_At_Mutable_Throws(result, x->code, 0, SPECIFIED)) {
+    REBVAL *v = Alloc_Value();
+
+    if (Do_At_Mutable_Maybe_Stale_Throws(v, x->code, 0, SPECIFIED)) {
         TRACE("Run_Array_Dangerous() is converting a throw to a failure");
-        fail (Error_No_Catch_For_Throw(result));
+        fail (Error_No_Catch_For_Throw(v));
     }
+
+    Clear_Stale_Flag(v);
+    Reify_Eval_Out_Plain(v);
 
     x->failed = false;  // Since end was reached, it did not fail...
 
-    if (IS_NULLED(result))  // don't leak API cell with nulled in it
+    if (IS_NULLED(v))  // don't leak API cell with nulled in it
         return nullptr;
-    return result;
+
+    return v;
 }
 
 
@@ -729,8 +734,13 @@ REBNATIVE(js_native)
     // they will produce undefined (e.g. void) by default anyway.  So it's
     // less of an issue.  Punt on it for now.
     //
-    if ((flags & MKF_HAS_OPAQUE_RETURN) or (flags & MKF_IS_ELIDER))
+    if (
+        (flags & MKF_HAS_NONE_RETURN)
+        or (flags & MKF_HAS_QUIET_RETURN)
+        or (flags & MKF_IS_ELIDER)
+    ){
         fail ("<none> and <void> not supported, use [] / ())");
+    }
 
     REBACT *native = Make_Action(
         paramlist,

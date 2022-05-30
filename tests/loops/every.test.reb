@@ -38,17 +38,26 @@
 ; !!! Loop protocol for EVERY is to let the last value fall through, but the
 ; CONTINUE throws a wrench as it would impede composition of EVERY if we
 ; expected it to just carry over the last value if those were two separate
-; EVERY loops.  Review.
+; EVERY loops.
 (
     sum: 0
     did all [
-        '~none~ = ^ every x [1 2 7] [
+        '~ = ^ every x [1 2 7] [
             sum: me + x
-            if x = 7 [continue]  ; acts as `continue ~none~` doesn't keep old
+            if x = 7 [continue]  ; Doesn't force NULL return, drops the 2
             x
         ]
         10 = sum
     ]
 )
 
-('~none~ = ^ every x [] [fail ~unreachable~])
+('~void~ = ^ every x [] [fail ~unreachable~])
+
+
+('~ = ^ every x [1 2 3 4] [maybe if odd? x [x]])
+(
+    e: trap [every x [1 2 3 4] [if odd? x [x]]]
+    e.id = 'bad-isotope
+)
+
+('~ = ^ every x [1 2 3 4] [comment "heavy"])

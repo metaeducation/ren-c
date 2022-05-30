@@ -31,16 +31,20 @@ typedef enum {
     LOOP_MAP_EACH
 } LOOP_MODE;
 
+#define Value REBVAL
+#define OUT D_OUT
+#define SPARE D_SPARE
+
 
 //
-//  Catching_Break_Or_Continue: C
+//  Catching_Break_Or_Continue_Maybe_Void: C
 //
 // Determines if a thrown value is either a break or continue.  If so, `val`
 // is mutated to become the throw's argument.  Sets `broke` flag if BREAK.
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
+bool Catching_Break_Or_Continue_Maybe_Void(REBVAL *val, bool *broke)
 {
     const REBVAL *label = VAL_THROWN_LABEL(val);
 
@@ -52,7 +56,7 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
         *broke = true;
-        CATCH_THROWN(val, val);
+        CATCH_THROWN_META(val, val);
         assert(IS_NULLED(val)); // BREAK must always return NULL
         return true;
     }
@@ -60,16 +64,31 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_continue) {
         //
         // !!! Continue with no argument acts the same as asking
-        // for CONTINUE ~none~ (the form with an argument).  This makes sense
+        // for CONTINUE void (the form with an argument).  This makes sense
         // in cases like MAP-EACH (one wants a continue to not add any value,
-        // as opposed to a void) but may not make sense for all cases.
+        // as opposed to some ~void~ BAD-WORD!)  Other loops may vary.
         //
         *broke = false;
-        CATCH_THROWN(val, val);
-        if (IS_END(val))
-            Init_None(val);
-        else
+        CATCH_THROWN_META(val, val);
+        if (Is_Meta_Of_Pure_Invisible(val)) {
+            //
+            // could have come from CONTINUE or e.g. CONTINUE VOID (synonyms)
+            //
+            SET_END(val);
+        }
+        else if (Is_Meta_Of_Void_Isotope(val)) {
+            //
+            // For instance, `continue if false [<a>]`.  The rules here may
+            // be different...a MAP-EACH might want to tolerate it, but a
+            // REMOVE-EACH might not.
+            //
+            Mark_Eval_Out_Stale(val);
+            Mark_Eval_Out_Voided(val);
+        }
+        else {
+            Meta_Unquotify(val);
             Isotopify_If_Nulled(val);  // reserve true NULL for BREAK
+        }
         return true;
     }
 
@@ -115,13 +134,12 @@ REBNATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    Meta_Unquotify(ARG(value));  // ~void~ isotope if end, e.g. `do [continue]`
+    REBVAL *v = ARG(value);
 
-    return Init_Thrown_With_Label(
-        D_OUT,
-        ARG(value), // null if missing, e.g. `do [continue]`
-        Lib(CONTINUE)
-    );
+    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END)
+        Init_Meta_Of_Pure_Void(v);  // Treat CONTINUE same as CONTINUE VOID
+
+    return Init_Thrown_With_Label_Meta(D_OUT, v, Lib(CONTINUE));
 }
 
 
@@ -136,8 +154,6 @@ static REB_R Loop_Series_Common(
     REBINT end,
     REBINT bump
 ){
-    Init_None(out);  // result if body never runs
-
     // !!! This bounds incoming `end` inside the array.  Should it assert?
     //
     if (end >= cast(REBINT, VAL_LEN_HEAD(start)))
@@ -158,12 +174,13 @@ static REB_R Loop_Series_Common(
     if (s == end) {
         if (Do_Branch_Throws(out, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
                 return R_THROWN;
             if (broke)
-                return nullptr;
+                return nullptr;  // BREAK -> NULL
+            Reify_Stale_Plain_Branch(out);
         }
-        return out;  // BREAK -> NULL
+        return out;  // guaranteed not stale
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -172,7 +189,7 @@ static REB_R Loop_Series_Common(
     //
     const bool counting_up = (s < end); // equal checked above
     if ((counting_up and bump <= 0) or (not counting_up and bump >= 0))
-        return out; // avoid infinite loops
+        return Mark_Eval_Out_Voided(out);  // avoid infinite loops
 
     while (
         counting_up
@@ -181,10 +198,11 @@ static REB_R Loop_Series_Common(
     ){
         if (Do_Branch_Throws(out, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
+            Reify_Stale_Plain_Branch(out);
         }
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
@@ -202,6 +220,9 @@ static REB_R Loop_Series_Common(
 
         *state += bump;
     }
+
+    if (Is_Stale(out))
+        return Mark_Eval_Out_Voided(out);
 
     return out;
 }
@@ -233,10 +254,11 @@ static REB_R Loop_Integer_Common(
     if (start == end) {
         if (Do_Branch_Throws(out, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
+            Reify_Stale_Plain_Branch(out);
         }
         return out;  // BREAK -> NULL
     }
@@ -252,10 +274,11 @@ static REB_R Loop_Integer_Common(
     while (counting_up ? *state <= end : *state >= end) {
         if (Do_Branch_Throws(out, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
+            Reify_Stale_Plain_Branch(out);
         }
 
         if (not IS_INTEGER(var))
@@ -280,8 +303,6 @@ static REB_R Loop_Number_Common(
     REBVAL *end,
     REBVAL *bump
 ){
-    Init_None(out);  // result if body never runs
-
     REBDEC s;
     if (IS_INTEGER(start))
         s = cast(REBDEC, VAL_INT64(start));
@@ -318,10 +339,11 @@ static REB_R Loop_Number_Common(
     if (s == e) {
         if (Do_Branch_Throws(out, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
+            Reify_Stale_Plain_Branch(out);
         }
         return out;  // BREAK -> NULL
     }
@@ -335,10 +357,11 @@ static REB_R Loop_Number_Common(
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(out, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
+            Reify_Stale_Plain_Branch(out);
         }
 
         if (not IS_DECIMAL(var))
@@ -346,6 +369,9 @@ static REB_R Loop_Number_Common(
 
         *state += b;
     }
+
+    if (Is_Stale(out))
+        return Mark_Eval_Out_Voided(out);
 
     return out;
 }
@@ -398,16 +424,17 @@ struct Loop_Each_State {
 //
 static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
+    assert(IS_BLOCK(les->body) or IS_META_BLOCK(les->body));
+
     bool more_data = true;
     bool broke = false;
-    bool no_falseys = true;  // not "all_truthy" because body *may* not run
 
     // CONTINUE or CONTINUE ~void~ will behave as leaving the last result in
     // the output.  So branch evaluations don't overwrite the output cell
     // directly.  This means it has to be initialized to avoid a situation
     // where no branches assign bits.
     //
-    assert(Is_None(les->out));
+    assert(Is_Fresh(les->out));
 
     do {
         // Sub-loop: set variables.  This is a loop because blocks with
@@ -589,8 +616,9 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
         // cells don't need to make copies.  Review.
 
         DECLARE_LOCAL (temp);
-        if (Do_Branch_Throws(temp, les->body)) {
-            if (not Catching_Break_Or_Continue(temp, &broke)) {
+        assert(Is_Fresh(temp));
+        if (Do_Any_Array_At_Maybe_Stale_Throws(temp, les->body, SPECIFIED)) {
+            if (not Catching_Break_Or_Continue_Maybe_Void(temp, &broke)) {
                 Move_Cell(les->out, temp);
                 return R_THROWN;  // non-loop-related throw
             }
@@ -603,33 +631,112 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            if (NOT_END(temp))
+            if (Is_Voided(temp) or Is_Invisible(temp)) {
+                //
+                //    for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
+                //
+                // It may seem tempting to drop out the last result:
+                //
+                //     for-each x [1 2 3] [if x = 3 [continue] x]  => 2
+                //
+                // But this is too difficult to deal with in loop compositions.
+                // We want to tell from the outside if a loop ran or not...
+                // that's more important than this esoteric feature.  And if
+                // you write something like FOR-BOTH with two FOR-EACH loops,
+                // the fact that the second loop would have to use some signal
+                // if all branches are erased would make it too difficult to
+                // drop out the prior result.
+                //
+                Init_None(les->out);
+            }
+            else {
+                Clear_Stale_Flag(temp);
                 Move_Cell(les->out, temp);
+                Isotopify_If_Nulled(les->out);
+                if (IS_META_BLOCK(les->body))
+                    Meta_Quotify(les->out);
+            }
             break;
 
           case LOOP_EVERY:
-            Move_Cell(les->out, temp);
-            if (not Is_None(les->out))
-                no_falseys = no_falseys and IS_TRUTHY(les->out);
+            if (Is_Voided(temp) or Is_Invisible(temp)) {
+                //
+                // In light of other tolerances in the system for voids, EVERY
+                // treats a void as "no vote", whether MAYBE is used or not.
+                //
+                // every x [1 2 3 4] [if odd? x [x]]  =>  [1 3]
+                //
+                // every x [1 2 3 4] [maybe if odd? x [x]]  => none (~) isotope
+                //
+                // every x [1 2 3 4] [comment "heavy"]  => none (~) isotope
+                //
+                // But it returns a none isotope (~) on the skipped bodies,
+                // as loop composition breaks down if we try to keep old values.
+                //
+                Init_None(les->out);
+            }
+            else {
+                // We don't decay isotopes here, for the reason we don't decay
+                // them in ALL/ANY etc:
+                //
+                //    every x [#[false] #[true]] [match logic! x]
+                //
+                // The ~false~ isotope here catches the misunderstanding by
+                // giving an error.  Conditional testing makes us care!
+                //
+                Clear_Stale_Flag(temp);
+                if (Is_Isotope(temp))
+                    fail (Error_Bad_Isotope(temp));
+
+                if (IS_FALSEY(temp)) {
+                    Init_Nulled(les->out);
+                }
+                else if (
+                    Is_Invisible(les->out)
+                    or not IS_NULLED(les->out)  // null means we saw false
+                ){
+                    Move_Cell(les->out, temp);
+                    if (IS_META_BLOCK(les->body))
+                        Meta_Quotify(les->out);
+                }
+            }
             break;
 
-          case LOOP_MAP_EACH:
+          case LOOP_MAP_EACH:  // don't worry about stale les->out (unused)
             //
             // Here is where we would run a predicate to process the block
             // result before appending.
             //
             /* Predicate(temp) */
 
-            // We use APPEND semantics on les->out, with the twist that NULL
-            // is allowed to vaporize.  So blocks splice, quotes as-is, etc.
-            //
-            if (
-                IS_NULLED(temp) or Is_Isotope_With_Id(temp, SYM_NULL)
-                or Is_Isotope_With_Id(temp, SYM_NONE) or IS_BLANK(temp)
-            ){
-                // Ignore...
+            if (Is_Voided(temp) or Is_Invisible(temp)) {
+                //
+                // MAP rules are different because we aren't conditionally
+                // testing, so void scenarios should be okay to skip.
+                //
+                // map x each [1 2 3] [if even? x [x * 10]] => [20]
+                //
+                // map x each [1 2] [maybe if odd? x [x]] => [1]
+                //
+                continue;
             }
-            else if (IS_QUOTED(temp)) {
+
+            Decay_If_Isotope(temp);
+            if (IS_META_BLOCK(les->body))
+                Meta_Quotify(temp);
+
+            if (IS_NULLED(temp))
+                Init_Isotope(temp, Canon(NULL));
+            if (Is_Isotope(temp))
+                fail (Error_Bad_Isotope(temp));
+
+            // !!! We use APPEND semantics on les->out; whatever APPEND does,
+            // we should do here.  Unify logic.
+
+            if (IS_BLANK(temp))
+                continue;
+
+            if (IS_QUOTED(temp)) {
                 Unquotify(temp, 1);
                 if (IS_NULLED(temp))
                     Init_Bad_Word(DS_PUSH(), Canon(NULL));  // APPEND semantics
@@ -653,15 +760,12 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
             // MAP-EACH only changes les->out if BREAK
             //
-            assert(Is_None(les->out));
+            assert(Is_Fresh(les->out));
             break;
         }
     } while (more_data and not broke);
 
   finished:;
-
-    if (les->mode == LOOP_EVERY and not no_falseys)
-        Init_Nulled(les->out);
 
     // We use nullptr to signal the result is in out.  If we returned les->out
     // it would be subject to the rebRescue() rules, and the loop could not
@@ -684,7 +788,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
 
-    Init_None(D_OUT);  // if body never runs (MAP-EACH gives [])
+    SET_END(D_OUT);
 
     if (ANY_SEQUENCE(ARG(data))) {
         //
@@ -759,13 +863,13 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
         if (ANY_CONTEXT(les.data)) {
             if (not Did_Advance_Evars(&les.evars)) {
-                assert(Is_None(D_OUT));
+                assert(Is_Stale(D_OUT));  // body never ran
                 r = nullptr;
                 goto cleanup;
             }
         }
         else if (les.data_idx >= les.data_len) {
-            assert(Is_None(D_OUT));  // result if loop body never runs
+            assert(Is_Fresh(D_OUT));  // body never ran
             r = nullptr;
             goto cleanup;
         }
@@ -794,7 +898,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
     if (r == R_THROWN) {  // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
         if (mode == LOOP_MAP_EACH)
             DS_DROP_TO(dsp_orig);
-        return_thrown (D_OUT);
+        return R_THROWN;
     }
 
     if (r) {
@@ -809,34 +913,37 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
     switch (mode) {
       case LOOP_FOR_EACH:
         //
-        // nulled output means there was a BREAK
-        // blank output means loop body never ran
-        // void means the last body evaluation returned null or blank
+        // pure NULL output means there was a BREAK
+        // stale means body never ran: `10 = (10 maybe for-each x [] [<skip>])`
+        // ~null~ isotope means body made NULL or ~null~ isotope
+        // ~none~ isotope means body made ~none~ isotope or ~void~ isotope
         // any other value is the plain last body result
         //
+        if (Is_Invisible(D_OUT))
+            return_void (D_OUT);
         return D_OUT;
 
       case LOOP_EVERY:
         //
-        // nulled output means there was a BREAK
-        // blank means body never ran (`_ = every x [] [<unused>]`)
-        // #[false] means loop ran, and at least one body result was "falsey"
+        // pure NULL output means there was a BREAK
+        // stale means body never ran: `10 = (10 maybe every x [] [<skip>])`
+        // pure null means loop ran, and at least one body result was "falsey"
         // any other value is the last body result, and is truthy
-        // only illegal value here is void (would cause error if body gave it)
         //
-        if (Is_Isotope(D_OUT))
-            assert(Is_None(D_OUT));
+        if (Is_Invisible(D_OUT))
+            return_void (D_OUT);
         return D_OUT;
 
       case LOOP_MAP_EACH:
-        if (IS_NULLED(D_OUT)) {  // BREAK, so *must* return null
+        if (not Is_Fresh(D_OUT)) {  // only modifies on break
+            assert(IS_NULLED(D_OUT));  // BREAK, so *must* return null
             DS_DROP_TO(dsp_orig);
             return nullptr;
         }
 
-        // !!! MAP-EACH always returns a block except in cases of BREAK, but
-        // paralleling some changes to COLLECT, it may be better if the body
-        // never runs it returns blank (?)
+        // !!! MAP-EACH always returns a block except in cases of BREAK, e.g.
+        // there's no way to detect from the outside if the body never ran.
+        // Review if variants would be useful.
         //
         return Init_Block(D_OUT, Pop_Stack_Values(dsp_orig));
     }
@@ -946,14 +1053,12 @@ REBNATIVE(for_skip)
 
     REBVAL *series = ARG(series);
 
-    Init_None(D_OUT);  // if body never runs, `while [false] [...]`
-
     REBINT skip = Int32(ARG(skip));
     if (skip == 0) {
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
         //
-        return D_OUT;  // blank is loop protocol if body never ran
+        return_void (D_OUT);
     }
 
     REBCTX *context;
@@ -977,6 +1082,8 @@ REBNATIVE(for_skip)
         VAL_INDEX_UNBOUNDED(var) = VAL_LEN_HEAD(var) + skip;
     }
 
+    SET_END(D_OUT);
+
     while (true) {
         REBINT len = VAL_LEN_HEAD(var);  // VAL_LEN_HEAD() always >= 0
         REBINT index = VAL_INDEX_RAW(var);  // may have been set to < 0 below
@@ -994,10 +1101,11 @@ REBNATIVE(for_skip)
 
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(D_OUT, &broke))
                 return_thrown (D_OUT);
             if (broke)
                 return nullptr;
+            Reify_Stale_Plain_Branch(D_OUT);
         }
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
@@ -1020,6 +1128,9 @@ REBNATIVE(for_skip)
         //
         VAL_INDEX_UNBOUNDED(var) += skip;
     }
+
+    if (Is_Invisible(D_OUT))
+        return_void (D_OUT);
 
     return D_OUT;
 }
@@ -1053,9 +1164,11 @@ REBNATIVE(stop)
     INCLUDE_PARAMS_OF_STOP;
 
     REBVAL *v = ARG(value);
-    Meta_Unquotify(v);
 
-    return Init_Thrown_With_Label(D_OUT, v, Lib(STOP));
+    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END)
+        Init_Blank(v);  // Treat STOP the same as STOP VOID
+
+    return Init_Thrown_With_Label_Meta(D_OUT, ARG(value), Lib(STOP));
 }
 
 
@@ -1077,7 +1190,7 @@ REBNATIVE(cycle)
     while (true) {
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke)) {
+            if (not Catching_Break_Or_Continue_Maybe_Void(D_OUT, &broke)) {
                 const REBVAL *label = VAL_THROWN_LABEL(D_OUT);
                 if (
                     IS_ACTION(label)
@@ -1086,18 +1199,31 @@ REBNATIVE(cycle)
                     // See notes on STOP for why CYCLE is unique among loop
                     // constructs, with a BREAK variant that returns a value.
                     //
-                    CATCH_THROWN(D_OUT, D_OUT);
-                    if (IS_END(D_OUT))
-                        Init_None(D_OUT);
-                    else
-                        Isotopify_If_Nulled(D_OUT);  // NULL reserved for BREAK
+                    CATCH_THROWN_META(D_OUT, D_OUT);
+
+                    // !!! Technically, we know CYCLE's body will always run,
+                    // so we could make an exception to having it return
+                    // voids from STOP (or pure NULL).  There's probably no
+                    // good reason to do that, so going with the usual branch
+                    // rules unless there's a good demonstrated case otherwise.
+
+                    if (Is_Meta_Of_Pure_Invisible(D_OUT))
+                        return Init_None(D_OUT);
+
+                    if (Is_Meta_Of_Void_Isotope(D_OUT))
+                        return Init_None(D_OUT);
+
+                    Meta_Unquotify(D_OUT);
+                    Isotopify_If_Nulled(D_OUT);  // NULL reserved for BREAK
                     return D_OUT;
                 }
 
-                return_thrown (D_OUT);
+                return R_THROWN;
             }
             if (broke)
                 return nullptr;
+
+            Reify_Stale_Plain_Branch(D_OUT);
         }
         // No need to isotopify result, it doesn't escape...
     }
@@ -1119,7 +1245,7 @@ REBNATIVE(cycle)
 //          [<blank> any-series! any-context! map! any-sequence!
 //           action!]  ; experimental
 //      body "Block to evaluate each time"
-//          [<const> any-branch!]
+//          [<const> block! meta-block!]
 //  ]
 //
 REBNATIVE(for_each)
@@ -1139,7 +1265,7 @@ REBNATIVE(for_each)
 //          "Word or block of words to set each time (local)"
 //      data [<blank> any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
-//      body [<const> any-branch!]
+//      body [<const> block! meta-block!]
 //          "Block to evaluate each time"
 //  ]
 //
@@ -1343,7 +1469,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 
             if (ANY_ARRAY(res->data))
                 Derelativize(
-                    RESET(var),
+                    var,
                     VAL_ARRAY_AT_HEAD(res->data, index),
                     VAL_SPECIFIER(res->data)
                 );
@@ -1361,8 +1487,11 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             ++index;
         }
 
-        if (Do_Branch_Throws(res->out, res->body)) {
-            if (not Catching_Break_Or_Continue(res->out, &res->broke)) {
+        if (Do_Any_Array_At_Throws(SET_END(res->out), res->body, SPECIFIED)) {
+            if (not Catching_Break_Or_Continue_Maybe_Void(
+                res->out,
+                &res->broke
+            )){
                 REBLEN removals = Finalize_Remove_Each(res);
                 UNUSED(removals);
 
@@ -1381,17 +1510,34 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 Init_Nulled(res->out);
                 return nullptr;
             }
-            else {
-                // CONTINUE - res->out may not be void if /WITH refinement used
+            else {  // CONTINUE - res->out may not be void, but new value
+                Reify_Stale_Plain_Branch(res->out);
             }
         }
 
+        if (Is_Invisible(res->out)) {
+            res->start = index;
+            Init_None(res->out);  // ~void~ reserved for "loop never ran"
+            continue;  // keep requested, don't mark for culling
+        }
+
+        Reify_Eval_Out_Plain(res->out);
+
+        // We do not want to decay isotopes, e.g. if someone tried to say:
+        //
+        //    remove-each x [...] [n: null, ..., match [<opt> integer!] n]
+        //
+        // The ~null~ isotope protects from having a condition you thought
+        // should be truthy come back NULL and be falsey.
+        //
+        // !!! To be more safe it could be limited to logic!, but at bare
+        // minimum it needs to fail on isotopes.
+        //
+        if (Is_Isotope(res->out))
+            fail (Error_Bad_Isotope(res->out));
+
         if (ANY_ARRAY(res->data)) {
-            if (
-                IS_NULLED(res->out)
-                or Is_Null_Isotope(res->out)
-                or IS_FALSEY(res->out)
-            ){
+            if (IS_FALSEY(res->out)) {
                 res->start = index;
                 continue;  // keep requested, don't mark for culling
             }
@@ -1457,7 +1603,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 //          "Word or block of words to set each time (local)"
 //      data [<blank> any-series! any-sequence! action!]
 //          "The series to traverse (modified)" ; should BLANK! opt-out?
-//      body [<const> block! action!]
+//      body [<const> block!]
 //          "Block to evaluate (return TRUE to remove)"
 //  ]
 //
@@ -1621,7 +1767,7 @@ REBNATIVE(map_each)
 //      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
 //          [<blank> quoted! action!]
 //      :body "Block to evaluate each time"
-//          [<const> any-branch!]
+//          [<const> block! meta-block!]
 //  ]
 //
 REBNATIVE(map)
@@ -1671,11 +1817,9 @@ REBNATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    Init_None(D_OUT);  // if body never runs, `loop 0 [...]`
-
     if (IS_FALSEY(ARG(count))) {
         assert(IS_LOGIC(ARG(count)));  // is false (opposite of infinite loop)
-        return D_OUT;
+        return_void (D_OUT);
     }
 
     REBI64 count;
@@ -1693,20 +1837,27 @@ REBNATIVE(repeat)
     else
         count = Int64(ARG(count));
 
+    SET_END(D_OUT);
+
     for (; count > 0; count--) {
         if (Do_Branch_Throws(D_OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(D_OUT, &broke))
                 return_thrown (D_OUT);
             if (broke)
                 return nullptr;
+
+            Reify_Stale_Plain_Branch(D_OUT);
         }
     }
 
     if (IS_LOGIC(ARG(count)))
         goto restart;  // "infinite" loop exhausted MAX_I64 steps (rare case)
 
-    return D_OUT;
+    if (Is_Invisible(D_OUT))
+        return_void (D_OUT);
+
+    return_branched (D_OUT);  // asserts no pure NULL or isotope ~void~
 }
 
 
@@ -1732,9 +1883,9 @@ REBNATIVE(for)
     REBVAL *body = ARG(body);
 
     if (IS_GROUP(body)) {
-        if (Eval_Value_Throws(D_OUT, body, SPECIFIED))
+        if (Eval_Value_Throws(D_SPARE, body, SPECIFIED))
             return_thrown (D_OUT);
-        Move_Cell(body, D_OUT);
+        Move_Cell(body, D_SPARE);
     }
 
     if (not IS_BLOCK(body))
@@ -1752,7 +1903,7 @@ REBNATIVE(for)
         // way around, with FOR-EACH delegating to FOR).
         //
         if (rebRunThrows(
-            D_OUT,
+            SET_END(D_OUT),
             true,
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         )){
@@ -1778,7 +1929,7 @@ REBNATIVE(for)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return Init_None(D_OUT);  // if loop condition never runs
+        return_void (D_OUT);
 
     return Loop_Integer_Common(
         D_OUT, var, body, 1, VAL_INT64(value), 1
@@ -1793,53 +1944,63 @@ REBNATIVE(for)
 //
 //      return: [<opt> any-value!]
 //          {Last body result, or null if a BREAK occurred}
-//      body [<const> block! action!]
+//      body [<const> block!]
 //      /predicate "Function to apply to body result (default is DID)"
 //          [action!]
 //  ]
 //
 REBNATIVE(until)
+//
+// 1. When CONTINUE has an argument, it acts as if the loop body evaluated to
+//    that argument.  UNTIL's condition and body are the same.  That means that
+//    CONTINUE TRUE will stop the UNTIL and return TRUE, CONTINUE 10 will stop
+//    the loop and return 10, etc.
+//
+// 2. Purusant to [1], we want CONTINUE (or CONTINUE VOID) to keep the loop
+//    running.  For parity between what continue does with an argument and
+//    what the loop does if the body evaluates to that argument, it suggests
+//    tolerating a void body result as intent to continue the loop also.
+//
+// 3. While some cases may want to decay isotopes for convenience, this is
+//    not such a case.  Imagine:
+//
+//        until [match blank! get-queue-item]
+//
+//    The likely intent is that BLANK! is supposed to stop the loop, and return
+//    a BLANK! value.  Erroring on the ~blank~ isotope draw attention to the
+//    problem, so they know to use DID MATCH or CATCH/THROW the blank.
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
+    REBVAL *body = ARG(body);
     REBVAL *predicate = ARG(predicate);
 
     do {
-        if (Do_Branch_Throws(D_OUT, ARG(body))) {
+        SET_END(OUT);
+
+        if (Do_Any_Array_At_Maybe_Stale_Throws(OUT, body, SPECIFIED)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke))
-                return_thrown (D_OUT);
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+                return_thrown (OUT);
             if (broke)
                 return nullptr;
 
-            // The way a CONTINUE with a value works is to act as if the loop
-            // body evaluated to the value.  Since the condition and body are
-            // the same in this case.  CONTINUE TRUE will stop the UNTIL and
-            // return TRUE, CONTINUE 10 will stop and return 10, etc.
-            //
-            // Plain CONTINUE is interpreted as CONTINUE ~NONE~, and will
-            // continue to run the loop.  CONTINUE NULL will stop it
-
-            if (Is_None(D_OUT))
-                continue;
+            // continue acts like body evaluated to its argument, see [1]
         }
+
+        if (Is_Voided(OUT) or Is_Invisible(OUT))
+            continue;  // skip void or invisible results, see [2]
 
         if (IS_NULLED(predicate)) {
-            //
-            // This is a case where we do not want to decay isotopes, because
-            // someone might write `until [match blank! get-queue-item]` and
-            // matching a blank is intended to stop the loop...they should be
-            // aware of the distortion, and use MATCH? instead.
-            //
-            if (Is_Isotope(D_OUT))
-                fail (Error_Bad_Isotope(D_OUT));
+            if (Is_Isotope(OUT))
+                fail (Error_Bad_Isotope(OUT));  // all isotopes fail, see [3]
 
-            if (IS_TRUTHY(D_OUT))
-                return D_OUT;  // body evaluated truthily, return value
+            if (IS_TRUTHY(OUT))
+                return OUT;  // truthy body result--return value
         }
         else {
-            if (rebUnboxLogic(predicate, rebQ(D_OUT)))  // rebTruthy() ?
-                return D_OUT;
+            if (rebUnboxLogic(predicate, rebQ(OUT)))  // rebTruthy() ?
+                return OUT;
         }
     } while (true);
 }
@@ -1850,54 +2011,77 @@ REBNATIVE(until)
 //
 //  {So long as a condition is truthy, evaluate the body}
 //
-//      return: [<opt> any-value!]
-//          "Last body result, or null if BREAK"
-//      condition "!!! if INTEGER! condition, tells you to use REPEAT"
-//          [<const> block! action! integer!]
+//      return: "Last body result, or null if BREAK"
+//          [<opt> any-value!]
+//      condition [<const> block!]
 //      body [<const> block! action!]
 //  ]
 //
 REBNATIVE(while)
 //
-// Note: It was considered if `while true [...]` should infinite loop, and then
-// `while false [...]` never ran.  However, that could lead to accidents of
-// like `while x > 10 [...]` instead of `while [x > 10] [...]`.  It is probably
-// safer to require a BLOCK! and not accept just a LOGIC!.
+// 1. It was considered if `while true [...]` should infinite loop, and then
+//    `while false [...]` never ran.  However, that could lead to accidents of
+//    like `while x > 10 [...]` instead of `while [x > 10] [...]`.  It is
+//    probably safer to require a BLOCK! vs. falling back on such behaviors.
+//
+//    (It's now easy for people to make their own weird polymorphic loops.)
+//
+// 2. We have to pick a meaning when someone writes:
+//
+//        while [print "condition" continue] [print "body"]
+//
+//    R3-Alpha would alternate printing out "condition"/"body", which isn't
+//    useful.  Here the decision is to assume a BREAK or CONTINUE in the
+//    condition targets an enclosing loop--not this WHILE loop.
+//
+// 3. A weird idea being tried here is that if your condition vanishes, it
+//    doesn't run the body, and it doesn't end the loop.  It acts as a continue
+//    and re-runs the condition again.  This offers a feature that resembles
+//    what someone might want for the semantics of [2], so it's being tried.
+//
+// 4. If someone writes:
+//
+//        flag: true, while [flag] [flag: false, continue null]
+//
+//    We don't want that to evaluate to NULL--because NULL is reserved for
+//    signaling BREAK.  So the result of a body with a CONTINUE in it will be
+//    turned from null to a ~null~ isotope.  Similarly, void results are
+//    reserved for when the body never runs--so they're  turned into none (~)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    if (IS_INTEGER(ARG(condition)))
-        fail ("Please use REPEAT instead of LOOP with integers");
+    REBVAL *condition = ARG(condition);  // condition is BLOCK! only, see [1]
+    REBVAL *body = ARG(body);
 
-    Init_None(D_OUT);  // result if body never runs
+    while (true) {
+        SET_END(SPARE);
 
-    do {
-        if (Do_Branch_With_Throws(D_SPARE, ARG(condition), D_OUT)) {
-            Move_Cell(D_OUT, D_SPARE);
-            return_thrown (D_OUT);  // don't see BREAK/CONTINUE in the *condition*
+        if (Do_Any_Array_At_Maybe_Stale_Throws(SPARE, condition, SPECIFIED)) {
+            Move_Cell(OUT, SPARE);
+            return_thrown (OUT);  // break/continue in condition only, see [2]
         }
 
-        // !!! We use Do_Branch_Throws() here because we want to run actions as
-        // well as blocks, feeding back the body result each time if it's an
-        // action.  But when you use branching you might get ~null~.  Decay
-        // it if so, to keep from having trouble with the IF_FALSEY().
-        //
-        Decay_If_Isotope(D_SPARE);
+        if (Is_Voided(SPARE) or Is_Invisible(SPARE))
+            continue;  // restart loop when condition vanishes, see [3]
 
-        if (IS_FALSEY(D_SPARE))  // will error if void, neither true nor false
-            return D_OUT;  // condition was false, so return last body result
+        if (IS_FALSEY(SPARE)) {  // falsey condition => return last body result
+            if (Is_Stale(OUT))
+                return_void (OUT);  // body never ran, so no result to return!
 
-        if (Do_Branch_With_Throws(D_OUT, ARG(body), D_SPARE)) {
+            return_branched (OUT);
+        }
+
+        if (Do_Branch_With_Throws(OUT, body, SPARE)) {  // body result => OUT
             bool broke;
-            if (not Catching_Break_Or_Continue(D_OUT, &broke))
-                return_thrown (D_OUT);
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+                return_thrown (OUT);
 
             if (broke)
                 return nullptr;
 
-            if (IS_END(D_OUT))  // plain `continue`
-                Init_None(D_OUT);  // treat as ~none~ isotope
+            Reify_Stale_Plain_Branch(OUT);  // no null/void continues, see [4]
         }
+    }
 
-    } while (true);
+    // ~unreachable~
 }

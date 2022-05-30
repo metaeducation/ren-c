@@ -67,37 +67,6 @@
 #endif
 
 
-// Anything without potential for invisible return starts f->out as reset.
-// If there is potential for invisible return, the cell contents are left
-// as is, but the output is marked "stale" to prevent its usage as input
-// for an enfix function.
-//
-// Note: The incoming cell may be completely 0 bytes (unformatted space) if
-// Process_Action() was called without passing through the Eval() step that
-// transitions cells to have at minimum the NODE and CELL flags.  So setting
-// CELL_FLAG_OUT_NOTE_STALE can't be done with SET_CELL_FLAG()
-//
-inline static void Expire_Out_Cell_Unless_Invisible(REBFRM *f) {
-    REBACT *phase = FRM_PHASE(f);
-    if (not ACT_HAS_RETURN(phase))
-        f->out->header.bits |= (  // ^-- see note
-            NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_OUT_NOTE_STALE
-        );
-    else {
-        const REBKEY *key = ACT_KEYS_HEAD(phase);
-        const REBPAR *param = ACT_PARAMS_HEAD(phase);
-        assert(KEY_SYM(key) == SYM_RETURN);
-        UNUSED(key);
-        if (NOT_PARAM_FLAG(param, ENDABLE))
-            RESET(f->out);
-        else
-            f->out->header.bits |= (  // ^-- see note
-                NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_OUT_NOTE_STALE
-            );
-    }
-}
-
-
 // When arguments are hard quoted or soft-quoted, they don't call into the
 // evaluator to do it.  But they need to use the logic of the evaluator for
 // noticing when to defer enfix:
@@ -292,7 +261,19 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
             CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
 
-            if (GET_CELL_FLAG(f->out, OUT_NOTE_STALE)) {
+            if (Is_Voided(f->out)) {
+                if (pclass == PARAM_CLASS_META) {
+                    if (GET_PARAM_FLAG(f->param, VANISHABLE))
+                        Init_Meta_Of_Pure_Void(f->arg);
+                    else
+                        Init_Meta_Of_Void_Isotope(f->arg);
+                }
+                else
+                    Init_None(f->arg);
+                goto continue_fulfilling;
+            }
+
+            if (Is_Stale(f->out)) {
                 //
                 // Something like `lib.help left-lit` is allowed to work,
                 // but if it were just `obj/int-value left-lit` then the
@@ -325,15 +306,10 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 if (NOT_PARAM_FLAG(f->param, ENDABLE))
                     fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
 
-                // The OUT_NOTE_STALE flag is also used by BAR! to keep
-                // a result in f->out, so that the barrier doesn't destroy
-                // data in cases like `(1 + 2 | comment "hi")` => 3, but
-                // left enfix should treat that just like an end.
-
                 if (pclass == PARAM_CLASS_META)
-                    Init_Bad_Word(f->arg, Canon(VOID));
+                    Init_Meta_End(f->arg);  // no other way to make ~end~
                 else
-                    Init_Nulled(f->arg);
+                    Init_Nulled(f->arg);  // conflation is unavoidable
                 goto continue_fulfilling;
             }
 
@@ -353,14 +329,22 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             else switch (pclass) {
               case PARAM_CLASS_NORMAL:
               case PARAM_CLASS_OUTPUT:
-              case PARAM_CLASS_META:
+                if (IS_END(f->out))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+                else {
+                    Copy_Cell(f->arg, f->out);
+                    if (GET_CELL_FLAG(f->out, UNEVALUATED))
+                        SET_CELL_FLAG(f->arg, UNEVALUATED);
+                }
+                break;
+
+              case PARAM_CLASS_META: {
+                bool is_invisible_ok = GET_PARAM_FLAG(f->param, VANISHABLE);
+                Reify_Eval_Out_Meta(f->out, is_invisible_ok);
                 Copy_Cell(f->arg, f->out);
                 if (GET_CELL_FLAG(f->out, UNEVALUATED))
                     SET_CELL_FLAG(f->arg, UNEVALUATED);
-
-                if (pclass == PARAM_CLASS_META)
-                    Meta_Quotify(f->arg);
-                break;
+                break; }
 
               case PARAM_CLASS_HARD:
                 if (NOT_CELL_FLAG(f->out, UNEVALUATED)) {
@@ -445,7 +429,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             // function going to behave invisibly.  If it does, then we have
             // to *un-expire* the enfix invisible flag (!)
             //
-            Expire_Out_Cell_Unless_Invisible(f);
+            Mark_Eval_Out_Stale(f->out);
 
             goto continue_fulfilling;
         }
@@ -515,12 +499,10 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             if (NOT_PARAM_FLAG(f->param, ENDABLE))
                 fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
 
-            if (pclass == PARAM_CLASS_META) {
-                Init_Bad_Word(f->arg, Canon(VOID));
-                SET_CELL_FLAG(f->arg, UNEVALUATED);
-            }
+            if (pclass == PARAM_CLASS_META)
+                Init_Meta_End(f->arg);
             else
-                Init_Nulled(f->arg);
+                Init_Nulled(f->arg);  // no way to avoid conflation
             goto continue_fulfilling;
         }
 
@@ -531,12 +513,12 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
           case PARAM_CLASS_NORMAL:
           case PARAM_CLASS_OUTPUT:
           case PARAM_CLASS_META: {
-            if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
+            if (GET_FEED_FLAG(f->feed, BARRIER_HIT) or IS_END(f_next)) {
                 if (NOT_PARAM_FLAG(f->param, ENDABLE))
                     fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
 
                 if (pclass == PARAM_CLASS_META)
-                    Init_Bad_Word(f->arg, Canon(VOID));
+                    Init_Meta_End(f->arg);
                 else
                     Init_Nulled(f->arg);
                 goto continue_fulfilling;
@@ -544,23 +526,22 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
             REBFLGS flags = EVAL_MASK_DEFAULT
                 | EVAL_FLAG_FULFILLING_ARG;
+            if (pclass == PARAM_CLASS_META)
+                flags |= EVAL_FLAG_META_OUT;
 
-            if (Eval_Step_In_Subframe_Throws(f->arg, f, flags)) {
+            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(f->arg, f, flags)) {
                 Move_Cell(f->out, f->arg);
                 goto abort_action;
             }
 
-            if (IS_END(f->arg)) {
-                if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+            Clear_Stale_Flag(f->arg);  // only cared about void/invisible
 
-                if (pclass == PARAM_CLASS_META)
-                    Init_Bad_Word(f->arg, Canon(VOID));
-                else
-                    Init_Nulled(f->arg);
+            if (pclass == PARAM_CLASS_META) {
+                bool is_invisible_ok = GET_PARAM_FLAG(f->param, VANISHABLE);
+                Reify_Eval_Out_Meta(f->arg, is_invisible_ok);
             }
-            else if (pclass == PARAM_CLASS_META)
-                Meta_Quotify(f->arg);
+            else
+                Reify_Eval_Out_Plain(f->arg);
             break; }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
@@ -650,13 +631,16 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 DECLARE_FRAME (subframe, f->feed, flags);
 
                 Push_Frame(f->arg, subframe);
-                bool threw = Eval_Throws(subframe);
+                bool threw = Eval_Maybe_Stale_Throws(subframe);
                 Drop_Frame(subframe);
 
                 if (threw) {
                     Copy_Cell(f->out, f->arg);
                     goto abort_action;
                 }
+
+                Clear_Stale_Flag(f->arg);
+                Reify_Eval_Out_Plain(f->arg);
             }
             else if (ANY_ESCAPABLE_GET(f->arg)) {
                 //
@@ -693,7 +677,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         //
         // !!! The case of:
         //
-        //     30 = (10 + 20 none-to-void do [])
+        //     30 = (10 + 20 maybe do [])
         //
         // Is breaking this.  Review when there is time, and put the assert
         // back if it makes sense.
@@ -877,9 +861,13 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             if (
                 kind_byte != REB_BAD_WORD
                 and kind_byte != REB_NULL
+                and kind_byte != REB_BLANK
+                and kind_byte != REB_ISSUE  // blackhole
                 and not IS_QUOTED_KIND(kind_byte)
             ){
-                fail ("^META arguments must be quoted!, bad-word!, or null");
+                fail (
+                    "^META arguments must be one quoted!, bad-word!, or null"
+                );
             }
         }
         else if (kind_byte == REB_BAD_WORD and GET_CELL_FLAG(f->arg, ISOTOPE))
@@ -926,7 +914,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
         assert(GET_EVAL_FLAG(f, RUNNING_ENFIX));
         CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
-        f->out->header.bits |= CELL_FLAG_OUT_NOTE_STALE;  // won't undo this
+        Mark_Eval_Out_Stale(f->out);
     }
 
     assert(not Is_Action_Frame_Fulfilling(f));
@@ -966,30 +954,54 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
     assert(not Is_Evaluator_Throwing_Debug());
 
-    Expire_Out_Cell_Unless_Invisible(f);
-
     // Resetting the spare cell here has a slight cost, but keeps from leaking
-    // internal processing to actions.
+    // internal processing to actions.  It means that any attempts to read
+    // the spare cell will give an assert, but it also means the cell is fresh
+    // and ready to use (e.g. as a target of an Eval_Maybe_Stale() operation).
     //
-    RESET(f_spare);
+    SET_END(f_spare);
+
+    // !!! It's not clear why historically this was not being done.  We want
+    // to be able to tell when a function did or did not write its output.  But
+    // the code didn't seem to do it, it did some expiration based on the idea
+    // that not all functions could be invisible.
+    //
+    Mark_Eval_Out_Stale(f->out);
 
     const REBVAL *r = (*dispatcher)(f);
 
-    if (r == f->out) {
+    if (r == f->out) {  // common case, made fastest
         //
-        // common case; we'll want to clear the UNEVALUATED flag if it's
-        // not an invisible return result (other cases Copy_Cell())
+        // The stale bit is set on the output before we run the dispatcher.
+        // We check to make sure it's not set at the end--so that dispatch
+        // didn't forget to write something into the output cell on some
+        // code path.  (To intentionally not write anything and "vaporize",
+        // use `return_invisible` and not plain `return`.)
         //
+        assert(not Is_Stale(f->out));
+
+        // A void state is actually the intent of returning a non-stale value
+        // that will resolve either to a none or a "void isotope".  But since
+        // void isotopes have no reified form, they leave the value in the
+        // output slot alone--including if it was END.  Any other scenario of
+        // returning END should use `return_invisible` to give the result.
+        //
+        if (not Is_Voided(f->out)) {
+            if (IS_END(f->out))
+                printf("OOOAHAH");
+            assert(NOT_END(f->out));
+        }
+
+        CLEAR_CELL_FLAG(f->out, UNEVALUATED);
     }
     else if (not r) {  // API and internal code can both return `nullptr`
         Init_Nulled(f->out);
-        goto dispatch_completed;  // skips invisible check
     }
     else if (not IS_RETURN_SIGNAL(r)) {
+        assert(not Is_Stale(r));
         Copy_Cell(f->out, r);
         if (Is_Api_Value(r))
             Release_Api_Value_If_Unmanaged(r);
-        goto dispatch_completed;  // skips invisible check
     }
     else switch (VAL_RETURN_SIGNAL(r)) {  // it's a "pseudotype" instruction
         //
@@ -1022,7 +1034,14 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // the user for other features, while this only takes one
                 // function away.
                 //
-                CATCH_THROWN(f->out, f->out);
+                CATCH_THROWN_META(f->out, f->out);
+                if (Is_Meta_Of_Pure_Invisible(f->out))
+                    SET_END(f->out);
+                else if (Is_Meta_Of_Void_Isotope(f->out))
+                    Mark_Eval_Out_Voided(f->out);
+                else
+                    Meta_Unquotify(f->out);
+
                 goto dispatch_completed;
             }
             else if (
@@ -1032,7 +1051,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // This was issued by REDO, and should be a FRAME! with
                 // the phase and binding we are to resume with.
                 //
-                CATCH_THROWN(f->out, f->out);
+                CATCH_THROWN_META(f->out, f->out);
+                Unquotify(f->out, 1);
                 assert(IS_FRAME(f->out));
 
                 // We are reusing the frame and may be jumping to an
@@ -1071,11 +1091,16 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         //
         goto abort_action; }
 
-    //
+      case C_INVISIBLE : {
+        //
+        // The invisible output is always in f->out.
+        //
+        assert(Is_Stale(f->out));
+        break; }
+
     // REDO instructions represent the idea that it is desired to run the
     // f->phase again.  The dispatcher may have changed the value of what
     // f->phase is, for instance.
-    //
 
       case C_REDO_UNCHECKED:
         goto dispatch;
@@ -1096,51 +1121,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         assert(!"Invalid pseudotype returned from action dispatcher");
     }
   }
-
-  //=//// CHECK FOR INVISIBILITY (STALE OUTPUT) ///////////////////////////=//
-
-    if (not (f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE))
-        CLEAR_CELL_FLAG(f->out, UNEVALUATED);
-    else {
-        // If a "good" output is in `f->out`, the invisible should have
-        // had no effect on it.  So jump to the position after output
-        // would be checked by a normal function.
-        //
-        if (NOT_CELL_FLAG(f->out, OUT_NOTE_STALE) or IS_END(f_next)) {
-            //
-            // Note: could be an END that is not "stale", example:
-            //
-            //     is-barrier?: func [x [<end> integer!]] [null? x]
-            //     is-barrier? (<| 10)
-            //
-            goto dispatch_completed;
-        }
-
-        // If the evaluation is being called by something like EVALUATE,
-        // they may want to see the next value literally.  Refer to this
-        // explanation:
-        //
-        // https://forum.rebol.info/t/1173/4
-        //
-        // But argument evaluation isn't customizable at that level, and
-        // wants all the invisibles processed.  So only do one-at-a-time
-        // invisibles if we're not fulfilling arguments.
-        //
-        if (GET_EVAL_FLAG(f, FULFILLING_ARG))
-            goto dispatch_completed;
-
-        // Note that we do not do START_NEW_EXPRESSION() here when an
-        // invisible is being processed as part of an argument.  They
-        // all get lumped into one step.
-        //
-        // !!! How does this interact with the idea of a debugger that could
-        // single step across invisibles (?)  Is that only a "step in", as
-        // one would have to do when dealing with a function argument?
-        //
-        assert(NOT_EVAL_FLAG(f, FULFILL_ONLY));
-        Drop_Action(f);
-        return false;
-    }
 
   dispatch_completed:
 
@@ -1372,8 +1352,10 @@ void Drop_Action(REBFRM *f) {
     if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
 
-    if (f->out->header.bits & CELL_FLAG_OUT_NOTE_STALE) {
-        //
+    if (
+        not Is_Voided(f->out)  // stale bit can't be trusted
+        and Is_Stale(f->out)
+    ){
         // If the whole evaluation of the action turned out to be invisible,
         // then refresh the feed's NO_LOOKAHEAD state to whatever it was
         // before that invisible evaluation ran.

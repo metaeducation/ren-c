@@ -387,7 +387,7 @@ union Reb_Header {
 #define NODE_BYTEMASK_0x80_NODE 0x80
 
 
-//=//// NODE_FLAG_FREE (second-leftmost bit) //////////////////////////////=//
+//=//// NODE_FLAG_STALE (second-leftmost bit) //////////////////////////////=//
 //
 // The second-leftmost bit will be 0 for all Reb_Header in the system that
 // are "valid".  This completes the plan of making sure all REBVAL and REBSER
@@ -400,7 +400,7 @@ union Reb_Header {
 // even these cases may be safely distinguished from strings.  See the
 // NODE_FLAG_CELL for why it is chosen to be that 8th bit.
 //
-#define NODE_FLAG_FREE \
+#define NODE_FLAG_STALE \
     FLAG_LEFT_BIT(1)
 #define NODE_BYTEMASK_0x40_FREE 0x40
 
@@ -501,9 +501,8 @@ union Reb_Header {
 
 
 // There are two special invalid bytes in UTF8 which have a leading "110"
-// bit pattern, which are freed nodes.  These two patterns are for freed bytes
-// and "freed cells"...though NODE_FLAG_FREE is not generally used on purpose
-// (mostly happens if reading uninitialized memory)
+// bit pattern, which are freed nodes.  These two patterns are for freed series
+// and "stale cells" (see Is_Stale())
 //
 #define FREED_SERIES_BYTE 192
-#define FREED_CELL_BYTE 193
+#define STALE_CELL_BYTE 193

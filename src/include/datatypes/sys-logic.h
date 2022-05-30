@@ -86,7 +86,7 @@ inline static bool IS_TRUTHY(const RELVAL *v) {
 // evaluations safe would be limiting, e.g. `foo: any [false-thing []]`...
 // So ANY and ALL use IS_TRUTHY() directly
 //
-inline static bool IS_CONDITIONAL_TRUE(const REBVAL *v) {
+inline static bool Is_Conditional_True(const REBVAL *v) {
     if (IS_FALSEY(v))
         return false;
     if (KIND3Q_BYTE(v) == REB_BLOCK)
@@ -95,5 +95,5 @@ inline static bool IS_CONDITIONAL_TRUE(const REBVAL *v) {
     return true;
 }
 
-#define IS_CONDITIONAL_FALSE(v) \
-    (not IS_CONDITIONAL_TRUE(v))
+#define Is_Conditional_False(v) \
+    (not Is_Conditional_True(v))

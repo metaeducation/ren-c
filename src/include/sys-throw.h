@@ -79,9 +79,8 @@
     }
 #endif
 
-inline static REB_R Init_Thrown_With_Label(
+inline static REB_R Init_Thrown_Core(  // assumes `arg` in TG_Thrown_Arg
     REBVAL *out,
-    const REBVAL *arg,
     const REBVAL *label // Note: is allowed to be same as `out`
 ){
   #if defined(NDEBUG)
@@ -105,25 +104,41 @@ inline static REB_R Init_Thrown_With_Label(
     }
   #endif
 
-    // We use the meta protocol when throwing, this way it's possible to
-    // carry isotopes and invisible returns.
-    //
-    if (IS_END(arg))
-        SET_END(&TG_Thrown_Arg);
-    else
-        Copy_Cell(&TG_Thrown_Arg, arg);
-    Meta_Quotify(&TG_Thrown_Arg);
-
     return R_THROWN; // for chaining to dispatcher output
 }
 
-static inline void CATCH_THROWN(
+inline static REB_R Init_Thrown_With_Label(
+    REBVAL *out,
+    const REBVAL *arg,
+    const REBVAL *label // Note: is allowed to be same as `out`
+){
+    Copy_Cell(&TG_Thrown_Arg, arg);
+    Meta_Quotify(&TG_Thrown_Arg);
+    return Init_Thrown_Core(out, label);
+}
+
+inline static REB_R Init_Thrown_With_Label_Meta(
+    REBVAL *out,
+    const REBVAL *arg,
+    const REBVAL *label // Note: is allowed to be same as `out`
+){
+    assert(not (IS_BAD_WORD(arg) and VAL_BAD_WORD_ID(arg) == SYM_END));
+    assert(
+        IS_NULLED(arg)
+        or IS_BAD_WORD(arg)
+        or IS_QUOTED(arg)
+        or Is_Meta_Of_Pure_Invisible(arg)
+    );
+    Copy_Cell(&TG_Thrown_Arg, arg);
+    return Init_Thrown_Core(out, label);
+}
+
+static inline void CATCH_THROWN_META(
     RELVAL *arg_out,
     REBVAL *thrown // Note: may be same pointer as arg_out
 ){
     UNUSED(thrown);
     Copy_Cell(arg_out, &TG_Thrown_Arg);
-    Meta_Unquotify(arg_out);
 
     RESET(&TG_Thrown_Arg);
 

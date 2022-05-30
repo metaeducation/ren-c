@@ -1,7 +1,35 @@
 ; functions/control/all.r
 
-; zero values
-('~none~ = ^ all [])
+; Most languages consider variadic AND operations in the spirit of ALL to
+; be truthy if there are no items.  While it may have a minor advantage in
+; some cases, many more benefits arise from being able to let it count as
+; a kind of "non-vote", as a ~void~ isotope.
+[
+    ('~void~ = ^ all [])
+    (
+        e: trap [if all [] [<safety>]]
+        e.id = 'isotope-arg
+    )
+    (
+        x: <overwritten>
+        did all [
+            '~void~ = ^ x: all []
+            (unset? 'x)
+        ]
+    )
+    ('~void~ = ^ if did all [] [<did>])
+    ('~void~ = ^ all [] then [<then>])
+    (<else> = all [] else [<else>])
+
+    (3 = (1 + 2 maybe all []))
+    (null = (1 + 2 maybe all [1 < 2, 3 > 4]))
+]
+
+; light isotopes can be MAYBE'd to opt-out of voting.
+(
+    check1: true, check2: false
+    all [maybe if check1 [1 = 1], maybe if check2 [2 = 1]]
+)
 
 ; one value
 (:abs = all [:abs])
@@ -360,14 +388,15 @@
 ("this is why" = (all/predicate [false _ null] :not then ["this is why"]))
 
 
-; ANY and ALL return a ~none~ isotope when given
+; ALL returns an ~void~ isotope when contents completely erase
 [
-    ("A" = all ["A", none-to-void all [comment "hi", none-to-void do []]])
+    ("A" = all ["A", maybe all [comment "hi", maybe eval []]])
 ]
 
 ; When used with @ blocks, ALL will treat the block as already reduced
 [
-    ('~none~ = ^ all @[])
+    ('~void~ = ^ all @[])
+
     (2 = all @[1 + 2])
     (null = all inert reduce [true true #[false]])
     ('true = all @[false true])  ; just the word, and words are truthy

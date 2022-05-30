@@ -100,6 +100,7 @@
 // and their ilk look for flags of the form SERIES_FLAG_##name.  So alias the
 // node flags as series flags.
 
+#define SERIES_FLAG_FREE NODE_FLAG_STALE
 #define SERIES_FLAG_MANAGED NODE_FLAG_MANAGED
 #define SERIES_FLAG_ROOT NODE_FLAG_ROOT
 #define SERIES_FLAG_MARKED NODE_FLAG_MARKED

@@ -2,16 +2,21 @@
 ;
 ; https://trello.com/c/dWQnsspG
 
-(
-    1 = do [comment "a" 1]
-)
-(
-    1 = do [1 comment "a"]
-)
-(
-    '~none~ = ^ do [comment "a"]
-)
-('~void~ = ^ comment "a")
+(1 = do [comment "a" 1])
+(1 = do [1 comment "a"])
+(blank? ^ comment "a")
+(blank? ^ (comment "a"))
+
+; META the word propagates invisibility vs. give back BLANK! like ^ does
+;
+(blank? ^ (meta comment "a"))
+((the '_) = ^(^ comment "a"))
+
+; In non-meta contexts, DO will give back a ~void~ isotope.  But in meta
+; contexts it will reveal the transparent intent by returning a blackhole!
+;
+('~void~ = ^ do [comment "a"])
+((the '~void~) = ^ meta eval [comment "a"])
 
 ; !!! At one time, comment mechanics allowed comments to be enfix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -62,9 +67,11 @@
     1 = do [1 elide "a"]
 )
 (
-    '~none~ = ^ do [elide "a"]
+    '~void~ = ^ do [elide "a"]
 )
-('~void~ = ^ elide "a")
+(invisible? elide "a")
+(blank? ^ elide "a")
+
 
 (
     e: trap [
@@ -136,7 +143,7 @@
 ]
 
 (
-    '~none~ = ^ do [|||]
+    '~void~ = ^ do [|||]
 )
 (
     3 = do [1 + 2 ||| 10 + 20, 100 + 200]
@@ -327,8 +334,8 @@
     ]
 )
 
-('~none~ = ^ (if true [] else [<else>]))
-('~none~ = ^ (if true [comment <true-branch>] else [<else>]))
+(none? (if true [] else [<else>]))
+('~ = ^(if true [comment <true-branch>] else [<else>]))
 
 (1 = all [1 elide <vaporize>])
 (1 = any [1 elide <vaporize>])
@@ -377,14 +384,14 @@
 [
     (vanish-if-odd: func [return: [<invisible> integer!] x] [
         if even? x [return x]
-        return
+        return void
     ] true)
 
     (2 = (<test> vanish-if-odd 2))
     (<test> = (<test> vanish-if-odd 1))
 
     (vanish-if-even: func [return: [<invisible> integer!] y] [
-       return unmeta/void ^(vanish-if-odd y + 1)
+       return maybe unmeta ^(vanish-if-odd y + 1)  ; could use UNMETA/VOID
     ] true)
 
     (<test> = (<test> vanish-if-even 2))
@@ -396,13 +403,33 @@
 ; by default if not.
 [
     (
+        no-spec: func [x] [return void]
+        <test> = (<test> no-spec 10)
+    )
+    (
         no-spec: func [x] [return]
         <test> = (<test> no-spec 10)
     )
     (
         int-spec: func [return: [integer!] x] [return]
-        e: trap [int-spec 10]
-        e.id = 'bad-invisible
+        did all [
+            '~void~ = ^ x: int-spec 10  ; not invisible without ^META
+            unset? 'x  ; voids decay to nothing
+        ]
+    )
+    (
+        int-spec: func [return: [integer!] x] [return]
+        did all [
+            '~void~ = x: ^ int-spec 10  ; not invisible without ^META
+            '~void~ = x  ; nothingness counts as unset
+        ]
+    )
+
+    (
+        invis-spec: func [return: [<invisible> integer!] x] [
+            return void
+        ]
+        <test> = (<test> invis-spec 10)
     )
     (
         invis-spec: func [return: [<invisible> integer!] x] [
@@ -411,3 +438,23 @@
         <test> = (<test> invis-spec 10)
     )
 ]
+
+nihil: func* [
+    {Arity-0 COMMENT}
+
+    return: <void> {Evaluator will skip result}
+][
+    ; Note: This was once enfix to test the following issue, but it is better
+    ; to not contaminate the base code with something introducing weird
+    ; evaluator ordering for no reason.  It should be tested elsewhere.
+    ;
+    ; https://github.com/metaeducation/ren-c/issues/581#issuecomment-562875470
+]
+
+('~void~ = ^ void)
+('~void~ = ^ void/light)
+
+(
+    e: trap [1 + 2 (comment "stale") + 3]
+    e.id = 'no-arg
+)

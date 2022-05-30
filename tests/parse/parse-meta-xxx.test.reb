@@ -1,21 +1,19 @@
 ; %parse-meta-xxx.test.reb
 
-; META-BLOCK! runs a rule, but META-ifies the result.  Note that block rules
-; cannot produce absolutely nothing, so it's not posisble to get ~void~ from
-; this construct.  (Compare with META-GROUP!, which can produce ~void~.)
+; META-BLOCK! runs a rule, but META-ifies the result.
 
 [
     (did all  [
-        '~none~ == uparse "" [synthesized: ^[]]
-        '~none~ = synthesized
+        '~blank~ == ^ uparse "" [synthesized: ^[]]
+        _ = synthesized
     ])
     (did all  [
-        '~none~ == uparse "" [synthesized: ^[comment "hi"]]  ; not ~void~
-        '~none~ = synthesized
+        '~blank~ == ^ uparse "" [synthesized: ^[comment "hi"]]
+        _ = synthesized
     ])
     (did all  [
-        '~none~ == uparse "" [synthesized: ^[(~void~)]]
-        '~none~ = synthesized
+        '~void~ == uparse "" [synthesized: ^[(~void~)]]
+        '~void~ = synthesized
     ])
     ('~friendly~ = uparse [~friendly~] [bad-word!])
 ]

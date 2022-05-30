@@ -126,16 +126,126 @@ export console!: make object! [
         ;
         set 'last-result unmeta v
 
+        === DISPLAY VOID AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
+
+        if (blank? v)  [  ; "pure" void
+            ;
+            ; When ^META operations give ~void~, it represents an expression
+            ; that evaluated to nothing at all.
+            ;
+            ;     >> ^()
+            ;     == ~void~
+            ;
+            ;     >> ^(elide print "Vanishing!")
+            ;     Vanishing!
+            ;     == ~void~
+            ;
+            ; But this doesn't necessarily mean the expression would've been
+            ; naturally invisible.  Some operations are *translucent*, which
+            ; means they give back "nothing" when used as non meta, but give
+            ; ~void~ when asked for by ^META.
+            ;
+            ;      evaluate []  =>  `~` isotope
+            ;    ^ evaluate []  =>  ~void~
+            ;
+            ; This is a safety feature which allows for the communication of
+            ; "invisible intent" by routines that don't want to vanish when
+            ; commonly invoked.  But it puts us in a bind to present that
+            ; distinction in the console, because when the user doesn't ask
+            ; for an evaluation to be ^META we still are.
+            ;
+            ; We want to give insight to the user when this happens, but they
+            ; didn't use a ^META operation so it's deceptive to say it `==`
+            ; any particular value at all.  Convey that with a comment.
+            ;
+            ;     >> elide print "Vanishing!"
+            ;     Vanishing!
+            ;     ; void
+            ;
+            print "; void"
+            return
+        ]
+
+        === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
+
+        if v = null [
+            ;
+            ; Key to NULL's purpose is that it lacks any value representation,
+            ; and only exists as an evaluation product you can store in a
+            ; variable.  So there's nothing we can print like `== null` (which
+            ; would look like the WORD! null), and no special syntax exists for
+            ; them...that's by design.
+            ;
+            ; It might seem that giving *no* output would be the most natural
+            ; case for such a situation.  But it provides more grounding to
+            ; show *something*, so we are tricky here in the text medium and
+            ; display a line in comment form, without the ==.  It has settled
+            ; into being a good compromise for the situation...helping to
+            ; ground users in what is going on.
+            ;
+            print "; null"
+            return
+        ]
+
         === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
 
-        if v = '~ [  ; none isotope, don't show
+        if v = '~ [  ; "none" isotope, don't show
             ;
-            ; We suppress display of the none state.  It is used by commands
-            ; like HELP that want to keep the focus in the console on what
-            ; they are printing out, without an `== xxx` evaluated result
-            ; showing up.  It is also used by functions that need a handy way
-            ; of returning an "uninteresting" result, such as PRINT.
+            ; The "none" state represents the contents of an unset variable.
+            ; It is also used by commands like HELP that want to keep the focus
+            ; on what they are printing out, without an `== xxx` evaluated
+            ; result showing up.  It is also used by functions that need a
+            ; handy way of returning an "uninteresting" result, such as PRINT.
             ;
+            ; Note: It was considered to use a different state for this, with
+            ; a name like `~quiet~`...to get this behavior:
+            ;
+            ;      >> print "returns ~quiet~ isotope, no output"
+            ;
+            ;      >> get/any 'some-unset-var
+            ;      == ~  ; isotope
+            ;
+            ; But something feels more intrinsically coherent about not showing
+            ; an isotope which has no associated string.  It reduces the total
+            ; number of parts, and helps `~` earn its name of "none".
+            ;
+            ;     >> x: if false [<a>]
+            ;     == ~void~  ; isotope (decays to none)
+            ;
+            ;     >> x: decay if false [<a>]
+            ;
+            ; This gives the slightly weird dichotomy that "none" and "void"
+            ; are distinct states, but we don't print the "value-bearing" one:
+            ;
+            ;      >> maybe if false [<a>]
+            ;      ; void
+            ;
+            ; But doing it the other way around would force functions like
+            ; HELP to be invisible, and that's not desirable.
+            ;
+            return
+        ]
+
+        if let d: select [
+            ~null~ "null"
+            ~void~ "none"
+            ~false~ "false"
+            ~blank~ "blank"
+            ~blackhole~ "#"
+        ] ^v [
+            ; An unstable isotope will decay to an ordinary value.  We make
+            ; a note that they are unstable to help ground users when they see
+            ; behaviors that might appear confusing:
+            ;
+            ;     >> x: if false [<a>]
+            ;     == ~void~  ; isotope (decays to none)
+            ;
+            ;     >> get/any 'x
+            ;     ; this gives ~ isotope (a.k.a. none, not shown by console)
+            ;
+            print unspaced [
+                result _ mold v _ _ {;} _ {isotope} _ "(" {decays to} _ d ")"
+            ]
             return
         ]
 
@@ -156,28 +266,7 @@ export console!: make object! [
             ; quoted by this routine like other ordinary values; this case is
             ; just for the isotopes.
             ;
-            print [result mold v space space "; isotope"]
-            return
-        ]
-
-        === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
-
-        if v = null [  ; not an isotope, e.g. can trigger ELSE
-            ;
-            ; Key to NULL's purpose is that it lacks any value representation,
-            ; and only exists as an evaluation product you can store in a
-            ; variable.  So there's nothing we can print like `== null` (which
-            ; would look like the WORD! null), and no special syntax exists for
-            ; them...that's by design.
-            ;
-            ; It might seem that giving *no* output would be the most natural
-            ; case for such a situation.  But it provides more grounding to
-            ; show *something*, so we are tricky here in the text medium and
-            ; display a line in comment form, without the ==.  It has settled
-            ; into being a good compromise for the situation...helping to
-            ; ground users in what is going on.
-            ;
-            print "; null"
+            print unspaced [result _ mold v _ _ {;} _ "isotope"]
             return
         ]
 
@@ -405,7 +494,7 @@ ext-console-impl: func [
         [block! group! integer! meta-group! handle!]  ; RETURN is hooked below!
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [blank! block! group!]
-    result "Quoted result from evaluating PRIOR, or non-quoted error"
+    result "^META result from evaluating PRIOR, or non-quoted error"
         [<opt> blank! quoted! bad-word! error!]
     resumable "Is the RESUME function allowed to exit this console"
         [logic!]
@@ -612,7 +701,7 @@ ext-console-impl: func [
         result.id = 'no-catch
         :result.arg2 = :lib.resume  ; throw's /NAME
     ] then [
-        assert [match [meta-group! handle!] :result/arg1]
+        assert [match [meta-group! handle!] :result.arg1]
         if not resumable [
             e: make error! "Can't RESUME top-level CONSOLE (use QUIT to exit)"
             e.near: result.near
@@ -680,24 +769,45 @@ ext-console-impl: func [
 
     === HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF ===
 
-    ensure [<opt> quoted! bad-word! blank!] result
+    ensure [<opt> blank! quoted! bad-word!] result
 
-    ; Console C loop translated ~void~ isotope of meta result, e.g. absolutely
-    ; nothing from hitting enter or evaluating `comment "hi"` into BLANK!
-    ;
     if blank? result [
-        return <prompt>
+        ;
+        ; !!! You can get nothing from an empty string, and having that print
+        ; out "; void" is somewhat pedantic if you're just hitting enter to
+        ; see if the console is frozen or taking input.
+        ;
+        ;    >>
+        ;    ; void
+        ;
+        ; But we do want this:
+        ;
+        ;     >> comment "hi"
+        ;     ; void
+        ;
+        ; Review making the console check specifically for empty strings and
+        ; not even submitting them.
     ]
 
     if group? prior [
         ;
-        ; RESULT is a "meta" value, and we want to pass an UNMETA'd form to
-        ; `system.console.print` (because it has its own meta on its parameter
-        ; so it can sense isotopes).  But we're composing code to run, so
-        ; a quote has to be thrown into the compose to avoid losing the meta
-        ; status during evaluation.
+        ; RESULT has been ^META'd...but it could be pure NULL.  We can't
+        ; compose pure NULL into a block, so we compose it with a quote...
+        ; it decays to just a single apostrophe (') which will evaluate to
+        ; pure NULL so PRINT-RESULT's argument can preserve the distinction.
         ;
-        emit [system.console.print-result unmeta '(<*> result)]
+        ; We also build a raw frame to call SYSTEM.CONSOLE.PRINT-RESULT.  We
+        ; could use a convention where we pass it already meta'd results in
+        ; order to avoid losing the distinction between pure void and a void
+        ; isotope...but it's nice to have its interface contract be non-meta
+        ; (in case people want to call it directly.)  So here a low-level frame
+        ; is built to avoid lossiness.
+        ;
+        emit [
+            let f: make frame! :system.console.print-result
+            f.v: '(<*> result)  ; avoid conflating pure void and void isotope
+            do f
+        ]
         return <prompt>
     ]
 

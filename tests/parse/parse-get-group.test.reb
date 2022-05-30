@@ -26,7 +26,7 @@
         count: 0
         "a" == uparse ["a" "aa" "aaa"] [some [into text! [:(count: count + 1) "a"]]]
     )
-]) true]
+] true)]
 
 [https://github.com/red/red/issues/562
     (didn't uparse [+] [opt some ['+ :(no)]])
@@ -69,7 +69,7 @@
 
 [https://github.com/red/red/issues/563
     (
-        f563: func [t [text!]] [uparse t [opt some r]]
+        f563: func [t [text!]] [did uparse t [opt some r]]
 
         r: [#+, :(res: f563 "-", assert [not res], res)]
 
@@ -104,4 +104,11 @@
 
         f "420,]]"
     )
+]
+
+; Pure invisible and non-invisibles
+[
+    ('z = uparse [x z] ['x :(if false 'y) 'z])
+
+    ('z = uparse [x z] ['x :(assert [true]) 'z])
 ]

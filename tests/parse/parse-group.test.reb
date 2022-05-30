@@ -19,3 +19,5 @@
         x = 3
     ]
 )
+
+('z = uparse [x z] ['x (assert [true]) 'z])

@@ -190,7 +190,7 @@
         ]
         a: adapt augment :f [y] [augmented: binding of 'y]
         did all [
-            [10 ~null~] = f 10
+            [10] = f 10
             [10 20] = a 10 20
         ]
     )

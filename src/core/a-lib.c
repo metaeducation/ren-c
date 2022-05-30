@@ -441,22 +441,6 @@ uintptr_t RL_rebTick(void)
 
 
 //
-//  rebVoid: RL_API
-//
-// !!! There is no clear idea how a rebVoid() function would work; it can't
-// be an ordinary Rebol value.  This needs design and thought, of how there
-// could be a systemic signal of voidness conveyed in a REBVAL API handle
-// when void isotopes do not exist.
-//
-REBVAL *RL_rebVoid(void)
-{
-    ENTER_API;
-
-    fail ("rebVoid() implementation concept is TBD, see %a-lib.c");
-}
-
-
-//
 //  rebNone: RL_API
 //
 REBVAL *RL_rebNone(void)
@@ -832,14 +816,12 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-static void Run_Va_May_Fail_Core(
+static void Run_Va_Translucent_May_Fail(
     REBVAL *out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    Init_None(out);
-
     REBFLGS flags = EVAL_MASK_DEFAULT;
 
     // !!! Some kind of policy is needed to decide how to disable halting in
@@ -863,6 +845,8 @@ static void Run_Va_May_Fail_Core(
         EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
     );
 
+    Clear_Stale_Flag(out);
+
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
     Eval_Sigmask = saved_sigmask;
 
@@ -875,21 +859,36 @@ static void Run_Va_May_Fail_Core(
         //
         fail (Error_No_Catch_For_Throw(out));
     }
+}
 
-    CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
+inline static void Run_Va_May_Fail(
+    REBVAL *out,
+    const void *p,  // first pointer (may be END, nullptr means NULLED)
+    va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
+){
+    SET_END(out);
 
-    // We want cases like `rebNot(nullptr)` to work, but the variadic
+    Run_Va_Translucent_May_Fail(out, false, p, vaptr);
+
+    // It's convenient to be able to write:
+    //
+    //     REBVAL *v = rebValue("if tester", whatever, "[<a>]");
+    //
+    // Conceptually we say that IF returns a "~void~ isotope", but there
+    // is no representation for them that we store via SET-WORD!/etc.  So they
+    // decay to NULL.  We want this convenience here (assigning `v` is like
+    // assigning a SET-WORD! in regular code.
+    //
+    // Also: we want cases like `rebNot(nullptr)` to work, but the variadic
     // evaluator cannot splice NULL into the feed of execution and have it
     // be convertible into an array.  The ~null~ BAD-WORD! in isotope form
     // provides a compromise, and it decays into a regular null several
     // places in the system (e.g. normal arguments).  Here is another place
     // the tolerance is extended to.
-    //
+
+    Reify_Eval_Out_Plain(out);
     Decay_If_Isotope(out);
 }
-
-#define Run_Va_May_Fail(out,p,vaptr) \
-    Run_Va_May_Fail_Core((out), false, (p), (vaptr))
 
 
 //
@@ -932,12 +931,12 @@ bool RL_rebRunThrows(
     bool fully,
     const void *p, va_list *vaptr
 ){
-    Init_None(out);  // assume "API-like" convention doesn't speak "END"
+    assert(Is_Fresh(out));  // caller should wipe out input
 
     if (RL_rebRunMaybeStaleThrows(out, fully, p, vaptr))
         return true;
 
-    out->header.bits &= ~CELL_FLAG_OUT_NOTE_STALE;
+    Reify_Eval_Out_Plain(out);
 
     return false;
 }
@@ -964,6 +963,34 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
 
 
 //
+//  rebMeta: RL_API
+//
+// Builds in a ^META operation to rebValue; shorthand that's more efficient.
+//
+//     rebMeta(...) => rebValue("meta", ...")
+//
+REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
+{
+    ENTER_API;
+
+    REBVAL *result = Alloc_Value();
+    SET_END(result);  // !!! Redundant?
+
+    Run_Va_Translucent_May_Fail(result, false, p, vaptr);  // calls va_end()
+
+    bool is_invisible_ok = false;
+    Reify_Eval_Out_Meta(result, is_invisible_ok);
+
+    if (IS_NULLED(result)) {
+        rebRelease(result);
+        return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
+    }
+
+    return result;  // caller must rebRelease()
+}
+
+
+//
 //  rebQuote: RL_API
 //
 // Variant of rebValue() that simply quotes its result.  So `rebQuote(...)` is
@@ -986,25 +1013,31 @@ REBVAL *RL_rebQuote(const void *p, va_list *vaptr)
 
 
 //
-//  rebValueInterruptible: RL_API
+//  rebMetaInterruptible: RL_API
 //
 // !!! The core interruptible routine used is this one inside of console code.
 // More will be needed, but this is made to quarantine the unfinished design
 // points to one routine for now.
 //
-REBVAL *RL_rebValueInterruptible(
+REBVAL *RL_rebMetaInterruptible(
     const void *p,
     va_list *vaptr
 ){
     ENTER_API;
 
-    REBVAL *result = Alloc_Value();
-    Run_Va_May_Fail_Core(result, true, p, vaptr);  // calls va_end()
+    REBVAL *v = Alloc_Value();
+    Run_Va_Translucent_May_Fail(v, true, p, vaptr);  // calls va_end()
 
-    if (not IS_NULLED(result))
-        return result;  // caller must rebRelease()
+    // !!! Hack for the console, say the interruptible form can return an
+    // invisibility indicator.  Should be a separate entry point.
+    //
+    bool is_invisible_ok = true;
+    Reify_Eval_Out_Meta(v, is_invisible_ok);
 
-    rebRelease(result);
+    if (not IS_NULLED(v))
+        return v;  // caller must rebRelease()
+
+    rebRelease(v);
     return nullptr;  // No NULLED cells in API, see notes on NULLIFY_NULLED()
 }
 

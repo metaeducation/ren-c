@@ -41,7 +41,7 @@
         if (not (first & NODE_BYTEMASK_0x40_FREE))
             return false;  // byte access defeats strict alias
 
-        assert(first == FREED_SERIES_BYTE or first == FREED_CELL_BYTE);
+        assert(first == FREED_SERIES_BYTE or first == STALE_CELL_BYTE);
         return true;
     }
 #endif
@@ -110,7 +110,7 @@
 
 
 // Allocate a node from a pool.  Returned node will not be zero-filled, but
-// the header will have NODE_FLAG_FREE set when it is returned (client is
+// the header will have SERIES_FLAG_FREE set when it is returned (client is
 // responsible for changing that if they plan to enumerate the pool and
 // distinguish free nodes from non-free ones.)
 //
@@ -182,7 +182,7 @@ inline static void *Alloc_Node(REBLEN pool_id) {
 
 
 // Free a node, returning it to its pool.  Once it is freed, its header will
-// have NODE_FLAG_FREE...which will identify the node as not in use to anyone
+// have SERIES_FLAG_FREE...which will identify the node as not in use to anyone
 // who enumerates the nodes in the pool (such as the garbage collector).
 //
 inline static void Free_Node(REBLEN pool_id, REBNOD* node)
@@ -321,7 +321,7 @@ inline static enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p)
       case 12:  // 0b1100
         if (bp[0] == FREED_SERIES_BYTE)
             return DETECTED_AS_FREED_SERIES;
-        if (bp[0] == FREED_CELL_BYTE)
+        if (bp[0] == STALE_CELL_BYTE)
             return DETECTED_AS_FREED_CELL;
         return DETECTED_AS_UTF8;
 

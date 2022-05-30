@@ -186,7 +186,7 @@
 )
 (
     f: does [()]
-    '~none~ = ^ f
+    '~void~ = ^ f
 )
 (
     f: does ['a]
@@ -476,5 +476,5 @@
         use [x] [return]
         42
     ]
-    '~none~ = ^ f
+    '~ = ^ f
 )]

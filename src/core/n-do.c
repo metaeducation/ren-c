@@ -68,6 +68,14 @@ REBNATIVE(reeval)
     )){
         return_thrown (D_OUT);
     }
+
+    if (Is_Voided(D_OUT))
+        return_void (D_OUT);
+
+    if (Is_Invisible(D_OUT))
+        return_invisible (D_OUT);
+
+    Clear_Stale_Flag(D_OUT);
     return D_OUT;  // don't clear stale flag...act invisibly
 }
 
@@ -145,7 +153,7 @@ REBNATIVE(shove)
         Move_Cell(shovee, D_OUT);
     }
     else if (IS_GROUP(f_value)) {
-        if (Do_Any_Array_At_Throws(D_OUT, f_value, f_specifier))
+        if (Do_Any_Array_At_Throws(RESET(D_OUT), f_value, f_specifier))
             return_thrown (D_OUT);
 
         Move_Cell(shovee, D_OUT);  // can't eval directly into arg slot
@@ -227,7 +235,7 @@ REBNATIVE(shove)
         return_thrown (D_OUT);
     }
 
-    assert(NOT_CELL_FLAG(D_OUT, OUT_NOTE_STALE));  // !!! can this happen?
+    assert(not Is_Stale(D_OUT));  // !!! can this happen?
 
     if (REF(set)) {
         if (IS_SET_WORD(left)) {
@@ -305,17 +313,12 @@ bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
 //
 //  do: native [
 //
-//  {Evaluates a block of source code (directly or fetched according to type)}
+//  {Evaluates source code (see also EVAL for stepwise or invisible evaluation)}
 //
 //      return: [<opt> any-value!]
-//      source [
+//      source "Block of code, or indirect specification to find/make it" [
 //          <blank>  ; opts out of the DO, returns null
-//          block!  ; source code in block form
-//          get-block!  ; same
-//          meta-block!  ; same
-//          group!  ; same
-//          get-group!  ; same
-//          meta-group!  ; same
+//          block!  ; source code in block form (see EVALUATE for other kinds)
 //          text!  ; source code in text form
 //          binary!  ; treated as UTF-8
 //          url!  ; load code from URL via protocol
@@ -334,22 +337,14 @@ bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
 //  ]
 //
 REBNATIVE(do)
-//
-// !!! It is currently theorized that the following should work:
-//
-//    >> f: make frame! :comment
-//    >> f.discarded: "Ignore me"
-//
-//    >> 1 + 2 do f
-//    == 3
-//
-// This may seem a bit uncomfortable, but is why DO can return <invisible>.
 {
     INCLUDE_PARAMS_OF_DO;
     assert(ACT_HAS_RETURN(FRM_PHASE(frame_)));
 
     REBVAL *source = ARG(source);
 
+    // Note: See also, EVALUATE
+    //
     // If `source` is not const, tweak it to be explicitly mutable--because
     // otherwise, it would wind up inheriting the FEED_MASK_CONST of our
     // currently executing frame.  That's no good for `repeat 2 [do block]`,
@@ -363,21 +358,23 @@ REBNATIVE(do)
         SET_CELL_FLAG(source, EXPLICITLY_MUTABLE);
 
   #if !defined(NDEBUG)
-    SET_CELL_FLAG(ARG(source), PROTECTED);  // maybe only GC reference, keep!
+    SET_CELL_FLAG(source, PROTECTED);  // maybe only GC reference, keep!
   #endif
 
     switch (VAL_TYPE(source)) {
-      case REB_BLOCK:
-      case REB_META_BLOCK:
-      case REB_GET_BLOCK:
-      case REB_GROUP:
-      case REB_META_GROUP:
-      case REB_GET_GROUP: {
-        if (Do_Any_Array_At_Throws(D_OUT, source, SPECIFIED))
+      //
+      // DO only takes BLOCK! as input.  The reason is that it might be
+      // considered deceptive if DO of a block like ^[1 + 2] didn't return
+      // a QUOTED! 3.  It also doesn't provide accommodation for invisible
+      // products; a DO of a script that's empty is void.  This makes the
+      // code here simpler.
+      //
+      case REB_BLOCK : {
+        if (Do_Any_Array_At_Throws(SET_END(D_OUT), source, SPECIFIED))
             return_thrown (D_OUT);
-        return D_OUT; }
+        break; }
 
-      case REB_VARARGS: {
+      case REB_VARARGS : {
         REBVAL *position;
         if (Is_Block_Style_Varargs(&position, source)) {
             //
@@ -388,7 +385,7 @@ REBNATIVE(do)
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            if (Do_Any_Array_At_Throws(D_OUT, position, SPECIFIED)) {
+            if (Do_Any_Array_At_Throws(SET_END(D_OUT), position, SPECIFIED)) {
                 //
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!
@@ -411,14 +408,16 @@ REBNATIVE(do)
         // the varargs came from.  It's still on the stack, and we don't want
         // to disrupt its state.  Use a subframe.
 
-        Init_None(D_OUT);
-        if (IS_END(f->feed->value))
+        if (IS_END(f->feed->value)) {
+            Init_None(D_OUT);
             return D_OUT;
+        }
 
-        DECLARE_FRAME (subframe, f->feed, EVAL_MASK_DEFAULT);
+        REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_OVERLAP_OUTPUT;
+        DECLARE_FRAME (subframe, f->feed, flags);
 
         bool threw;
-        Push_Frame(D_OUT, subframe);
+        Push_Frame(SET_END(D_OUT), subframe);
         do {
             threw = Eval_Step_Maybe_Stale_Throws(D_OUT, subframe);
         } while (not threw and NOT_END(f->feed->value));
@@ -427,19 +426,22 @@ REBNATIVE(do)
         if (threw)
             return_thrown (D_OUT);
 
-        CLEAR_CELL_FLAG(D_OUT, OUT_NOTE_STALE);
-        return D_OUT; }
+        Clear_Stale_Flag(D_OUT);
+        Reify_Eval_Out_Plain(D_OUT);
+        break; }
 
-      case REB_THE_WORD:
-      case REB_BINARY:
-      case REB_TEXT:
-      case REB_URL:
-      case REB_FILE:
-      case REB_TAG: {
+      case REB_THE_WORD : goto do_string;
+      case REB_BINARY : goto do_string;
+      case REB_TEXT : goto do_string;
+      case REB_URL : goto do_string;
+      case REB_FILE : goto do_string;
+      case REB_TAG : goto do_string;
+
+      do_string : {
         UNUSED(REF(args)); // detected via `value? :arg`
 
         if (rebRunThrows(
-            D_OUT,
+            SET_END(D_OUT),
             true,  // fully = true, error if not all arguments consumed
             Sys(SYM_DO_P),
             source,
@@ -448,9 +450,10 @@ REBNATIVE(do)
         )){
             return_thrown (D_OUT);
         }
-        return D_OUT; }
+        return D_OUT;
+      }
 
-      case REB_ERROR:
+      case REB_ERROR :
         //
         // FAIL is the preferred operation for triggering errors, as it has
         // a natural behavior for blocks passed to construct readable messages
@@ -461,7 +464,7 @@ REBNATIVE(do)
         //
         fail (VAL_CONTEXT(source));
 
-      case REB_ACTION: {
+      case REB_ACTION :
         //
         // Ren-C will only run arity 0 functions from DO, otherwise REEVAL
         // must be used.  Look for the first non-local parameter to tell.
@@ -469,32 +472,24 @@ REBNATIVE(do)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());
 
-        if (Eval_Value_Maybe_Stale_Throws(D_OUT, source, SPECIFIED))
+        if (Eval_Value_Throws(SET_END(D_OUT), source, SPECIFIED))
             return_thrown (D_OUT);
-        break; }
+        break;
 
-      case REB_FRAME: {
-        if (Do_Frame_Maybe_Stale_Throws(D_OUT, source))
+      case REB_FRAME :
+        if (Do_Frame_Maybe_Stale_Throws(SET_END(D_OUT), source))
             return_thrown (D_OUT); // prohibits recovery from exits
+        Clear_Stale_Flag(D_OUT);
+        Reify_Eval_Out_Plain(D_OUT);
+        break;
 
-        goto handle_void; }
-
-      case REB_QUOTED:
+      case REB_QUOTED :
         Copy_Cell(D_OUT, ARG(source));
         return Unquotify(D_OUT, 1);
 
-      default:
+      default :
         fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
     }
-
-  handle_void:
-    //
-    // !!! This used to have more processing to try and turn actual voidness
-    // into a ~void~ isotope, so it could be distinguished from other intents,
-    // e.g. where ~none~ was considered distinct.  Now that void isotopes are
-    // "hyperunstable" and do not exist at all, we could opt to make the
-    // default behavior return a ~none~ isotope instead...or allow things like
-    // `do :void` to actually vanish.  This needs review.
 
     return D_OUT;
 }
@@ -508,12 +503,12 @@ REBNATIVE(do)
 //      return: "Value from the step"
 //          [<opt> <invisible> any-value!]
 //      next: "<output> Next expression position in block"
-//          [block! group! varargs!]
+//          [any-array! varargs!]
 //
 //      source [
 //          <blank>  ; useful for `evaluate try ...` scenarios when no match
-//          block!  ; source code in block form
-//          group!  ; same as block (or should it have some other nuance?)
+//          any-array!  ; source code in block form
+//          frame!
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
 //  ]
@@ -524,59 +519,115 @@ REBNATIVE(evaluate)
 
     REBVAL *source = ARG(source);  // may be only GC reference, don't lose it!
 
+    // Note: See also, DO
+    //
+    // If `source` is not const, tweak it to be explicitly mutable--because
+    // otherwise, it would wind up inheriting the FEED_MASK_CONST of our
+    // currently executing frame.  That's no good for `repeat 2 [do block]`,
+    // because we want whatever constness is on block...
+    //
+    // (Note we *can't* tweak values that are RELVAL in source.  So we either
+    // bias to having to do this or Do_XXX() versions explode into passing
+    // mutability parameters all over the place.  This is better.)
+    //
+    if (NOT_CELL_FLAG(source, CONST))
+        SET_CELL_FLAG(source, EXPLICITLY_MUTABLE);
+
   #if !defined(NDEBUG)
     SET_CELL_FLAG(ARG(source), PROTECTED);
   #endif
 
     REBVAL *next = ARG(next);
 
-    switch (VAL_TYPE(source)) {
-      case REB_BLOCK:
-      case REB_GROUP: {
-        if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is ~none~ isotope
-            Init_None(D_OUT);
+    if (ANY_ARRAY(source)) {
+        if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
+            // leave D_OUT as is
             Init_Nulled(source);
         }
         else {
             DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);
             assert(NOT_END(feed->value));  // checked for VAL_LEN_AT() == 0
 
-            DECLARE_FRAME (
-                f,
-                feed,
-                EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-            );
+            bool threw;
+            if (REF(next)) {  // only one step, want the output position
+                DECLARE_FRAME (
+                    f,
+                    feed,
+                    EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
+                );
 
-            Push_Frame(D_OUT, f);
-            bool threw = Eval_Maybe_Stale_Throws(f);  // only one step
+                Push_Frame(D_SPARE, f);
 
-            if (not threw) {
-                VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
+                threw = Eval_Maybe_Stale_Throws(f);
 
-                // There may have been a LET statement in the code.  If there
-                // was, then we have to incorporate the binding it added into
-                // the reported state *somehow*.  Right now we add it to the
-                // block we give back...though this gives rise to questionable
-                // properties, such as if the user goes backward in the block
-                // and were to evaluate it again:
+                // !!! Since we're passing in a clear cell, we don't really
+                // care about the stale (it's stale if the cell is still END).
                 //
-                // https://forum.rebol.info/t/1496
-                //
-                // Right now we can politely ask "don't do that", but better
-                // would probably be to make EVALUATE return something with
-                // more limited privileges... more like a FRAME!/VARARGS!.
-                //
-                INIT_BINDING_MAY_MANAGE(source, f_specifier);
+                Clear_Stale_Flag(D_SPARE);
+
+                if (not threw) {
+                    VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
+
+                    // <ay have been a LET statement in the code.  If there
+                    // was, we have to incorporate the binding it added into
+                    // the reported state *somehow*.  Right now we add it to the
+                    // block we give back...this gives rise to questionable
+                    // properties, such as if the user goes backward in the
+                    // block and were to evaluate it again:
+                    //
+                    // https://forum.rebol.info/t/1496
+                    //
+                    // Right now we can politely ask "don't do that", but better
+                    // would probably be to make EVALUATE return something with
+                    // more limited privileges... more like a FRAME!/VARARGS!.
+                    //
+                    INIT_BINDING_MAY_MANAGE(source, f_specifier);
+                }
+
+                if (REF(next))
+                    rebElide(Lib(SET), rebQ(next), source);
+
+                Drop_Frame(f);
+            }
+            else {  // assume next position not requested means run-to-end
+                threw = Do_Feed_To_End_Maybe_Stale_Throws(
+                    D_SPARE,
+                    feed,
+                    EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
+                );
+
+                if (REF(next))
+                    rebElide(Lib(SET), rebQ(next), rebQ(Lib(NULL)));
             }
 
-            Drop_Frame(f);
-
-            if (threw)
+            if (threw) {
+                Move_Cell(D_OUT, D_SPARE);
                 return_thrown (D_OUT);
+            }
         }
-        break; }  // update variable
+        // update variable
+    }
+    else switch (VAL_TYPE(source)) {
 
-      case REB_VARARGS: {
+      case REB_FRAME :
+        //
+        // !!! It is likely that the return result for the NEXT: will actually
+        // be a FRAME! when the input to EVALUATE is a BLOCK!, so that the
+        // LET bindings can be preserved.  Binding is still a mess when it
+        // comes to questions like backtracking in blocks, so review.
+        //
+        if (REF(next))
+            fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
+
+        if (Do_Frame_Maybe_Stale_Throws(D_SPARE, source)) {
+            Move_Cell(D_OUT, D_SPARE);
+            return_thrown (D_OUT); // prohibits recovery from exits
+        }
+        break;
+
+      case REB_VARARGS : {
+        assert(IS_VARARGS(source));
+
         REBVAL *position;
         if (Is_Block_Style_Varargs(&position, source)) {
             //
@@ -589,7 +640,7 @@ REBNATIVE(evaluate)
             //
             REBLEN index;
             if (Eval_Step_In_Any_Array_At_Throws(
-                SET_END(D_OUT),
+                D_SPARE,
                 &index,
                 position,
                 SPECIFIED,
@@ -601,6 +652,7 @@ REBNATIVE(evaluate)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
+                Move_Cell(D_OUT, D_SPARE);
                 return_thrown (D_OUT);
             }
 
@@ -619,19 +671,51 @@ REBNATIVE(evaluate)
                 return nullptr;
 
             REBFLGS flags = EVAL_MASK_DEFAULT;
-            if (Eval_Step_In_Subframe_Throws(D_OUT, f, flags))
+            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(D_SPARE, f, flags))
                 return_thrown (D_OUT);
+
+            Clear_Stale_Flag(D_SPARE);
         }
-        break; }  // update variable
+        break; }
 
       default:
-        panic (source);
+        fail (PAR(source));
     }
 
     if (IS_TRUTHY(next))
         Set_Var_May_Fail(next, SPECIFIED, source);
 
-    return D_OUT;
+    // EVAL is not itself an invisible function.  So when it returns invisibly
+    // that will become a ~void~ isotope in the common case:
+    //
+    //     >> eval [comment "hi"]
+    //     == ~void~  ; isotope
+    //
+    // However, that flattening to a `~void~` isotope is done by the evaluator
+    // only for plain contexts.  A ^META context offers the insight that the
+    // routine was *actually* wishing to tunnel pure invisible intent, which
+    // is indicated by a BLANK! as a meta-value:
+    //
+    //     >> ^ eval [comment "hi"]
+    //     == _
+    //
+    // That will be picked up by functions like RETURN, which will notice the
+    // true spirit was invisibility...and proxy it.
+    //
+    // Not all functions that return ~void~ isotopes have this property of
+    // claiming to be "purely invisible in intent".
+    //
+    if (Is_Voided(D_SPARE))
+        return_void (D_OUT);
+
+    if (Is_Invisible(D_SPARE)) {  // eval [comment "hi"], eval []
+        if (GET_EVAL_FLAG(frame_, META_OUT))
+            return_invisible (D_OUT);  // aren't invisible unless ^META
+        else
+            return_void (D_OUT);
+    }
+
+    return D_SPARE;
 }
 
 
@@ -713,7 +797,7 @@ REBNATIVE(redo)
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
-//      return: [<opt> <invisible> any-value!]
+//      return: [<opt> any-value!]
 //      action [action!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
@@ -797,7 +881,7 @@ REBNATIVE(applique)
 
     if (def_threw) {
         Drop_Frame(f);
-        return Move_Cell(D_OUT, temp);
+        return Copy_Cell(f->out, temp);
     }
 
     if (not REF(partial)) {
@@ -828,6 +912,12 @@ REBNATIVE(applique)
     if (action_threw)
         return_thrown (D_OUT);
 
+    if (Is_Voided(D_OUT))
+        return_void (D_OUT);
+
+    if (Is_Invisible(D_OUT))
+        return_void (D_OUT);
+
     return D_OUT;
 }
 
@@ -841,6 +931,7 @@ REBNATIVE(applique)
 //      action [action!]
 //      args "Arguments and Refinements, e.g. [arg1 arg2 /ref refine1]"
 //          [block!]
+//      <local> frame
 //  ]
 //
 REBNATIVE(apply)
@@ -849,6 +940,8 @@ REBNATIVE(apply)
 
     REBVAL *action = ARG(action);
     REBVAL *args = ARG(args);
+
+    REBVAL *frame = ARG(frame);
 
     REBDSP lowest_ordered_dsp = DSP;  // could push refinements here
 
@@ -874,14 +967,14 @@ REBNATIVE(apply)
 
     DS_DROP_TO(lowest_ordered_dsp);  // !!! don't care about partials?
 
-    Init_Frame(D_SPARE, exemplar, ANONYMOUS);  // Note: GC guards the exemplar
+    Init_Frame(frame, exemplar, ANONYMOUS);  // Note: GC guards the exemplar
 
   blockscope {
     DECLARE_FRAME_AT (f, args, EVAL_MASK_DEFAULT);
     Push_Frame(nullptr, f);
 
     EVARS e;
-    Init_Evars(&e, D_SPARE);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
+    Init_Evars(&e, frame);  // CTX_ARCHETYPE(exemplar) is phased, sees locals
 
     REBCTX *error = nullptr;
     bool arg_threw = false;
@@ -907,12 +1000,15 @@ REBNATIVE(apply)
             }
         }
 
-        if (Eval_Step_Throws(D_OUT, f)) {
+        SET_END(D_SPARE);
+        if (Eval_Step_Maybe_Stale_Throws(D_SPARE, f)) {
+            Move_Cell(D_OUT, D_SPARE);
             arg_threw = true;
             goto end_loop;
         }
 
-        if (IS_END(D_OUT)) {  // no output
+        if (Is_Invisible(D_SPARE)) {  // no output
+            //
             // We let the frame logic inside the evaluator decide if we've
             // built a valid frame or not.  But the error we do check for is
             // if we were trying to fulfill a labeled refinement and didn't
@@ -936,7 +1032,7 @@ REBNATIVE(apply)
         if (name) {
             /* REBLEN index = Get_Binder_Index_Else_0(&binder, name); */
 
-            REBLEN index = Find_Symbol_In_Context(D_SPARE, name, false);
+            REBLEN index = Find_Symbol_In_Context(frame, name, false);
             if (index == 0) {
                 Refinify(Init_Word(DS_PUSH(), name));
                 error = Error_Bad_Parameter_Raw(DS_TOP);
@@ -959,14 +1055,14 @@ REBNATIVE(apply)
             // that take no argument.
             //
             if (
-                IS_LOGIC(D_OUT)
+                IS_LOGIC(D_SPARE)
                 and GET_PARAM_FLAG(param, REFINEMENT)
                 and Is_Typeset_Empty(param)
             ){
-                if (VAL_LOGIC(D_OUT))
-                    Init_Blackhole(D_OUT);
+                if (VAL_LOGIC(D_SPARE))
+                    Init_Blackhole(D_SPARE);
                 else
-                    Init_Nulled(D_OUT);
+                    Init_Nulled(D_SPARE);
             }
         }
         else {
@@ -999,7 +1095,7 @@ REBNATIVE(apply)
             param = e.param;
         }
 
-        Move_Cell(var, D_OUT);
+        Move_Cell(var, D_SPARE);
         if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
             Meta_Quotify(var);
     }
@@ -1015,7 +1111,7 @@ REBNATIVE(apply)
 
     Drop_Frame(f);
 
-    Init_Evars(&e, D_SPARE);
+    Init_Evars(&e, frame);
     while (Did_Advance_Evars(&e)) {
         if (not arg_threw and not error and IS_TAG(e.var))
             if (VAL_SERIES(e.var) == VAL_SERIES(Root_Unspecialized_Tag))
@@ -1053,13 +1149,16 @@ REBNATIVE(apply)
 
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-    bool action_threw = Process_Action_Throws(f);
+    bool action_threw = Process_Action_Maybe_Stale_Throws(f);
     assert(action_threw or IS_END(f->feed->value));
 
     Drop_Frame(f);
 
     if (action_threw)
         return_thrown (D_OUT);
+
+    if (Is_Stale(D_OUT))
+        return_void (D_OUT);
 
     return D_OUT;
 }

@@ -40,6 +40,19 @@
 //
 // See %sys-eval.h for the lower level routines if this isn't enough control.
 //
+//=//// NOTES //////////////////////////////////////////////////////////////=//
+//
+// * Unlike single stepping, the stale flag from Do_XXX_Maybe_Stale() isn't
+//   generally all that useful.  That's because heeding the stale flag after
+//   multiple steps usually doesn't make any real sense.  If someone writes:
+//
+//        (1 + 2 if true [x] else [y] comment "hello")
+//
+//   ...what kind of actionability is there on the fact that the last step
+//   vanished, if that's the only think you know?  For this reason, you'll
+//   get an assert if you preload a frame with any values unless you use
+//   the EVAL_FLAG_OVERLAP_OUTPUT option on the frame.
+//
 
 
 // This helper routine is able to take an arbitrary input cell to start with
@@ -52,6 +65,15 @@ inline static bool Do_Feed_To_End_Maybe_Stale_Throws(
     REBFED *feed,  // feed mechanics always call va_end() if va_list
     REBFLGS flags
 ){
+    // You can feed in something other than END here (and GROUP! handling in
+    // the evaluator does do that).  But if you give it something stale then
+    // that suggests you might be thinking you can infer some information
+    // about the staleness after the run.  See comments at top of file for
+    // why that's not the case--this assert helps avoid misunderstandings.
+    //
+    if (not (flags & EVAL_FLAG_OVERLAP_OUTPUT))
+        assert(Is_Fresh(out));
+
     DECLARE_FRAME (f, feed, flags);
 
     bool threw;
@@ -64,24 +86,33 @@ inline static bool Do_Feed_To_End_Maybe_Stale_Throws(
     return threw;
 }
 
-
-inline static bool Do_Any_Array_At_Throws(
+inline static bool Do_Any_Array_At_Maybe_Stale_Throws(
     REBVAL *out,
-    const RELVAL *any_array,  // same as `out` is allowed
+    const RELVAL *any_array,
     REBSPC *specifier
 ){
     DECLARE_FEED_AT_CORE (feed, any_array, specifier);
-
-    // ^-- Voidify out *after* feed initialization (if any_array == out)
-    //
-    Init_None(out);
 
     bool threw = Do_Feed_To_End_Maybe_Stale_Throws(
         out,
         feed,
         EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
     );
-    CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
+
+    return threw;
+}
+
+inline static bool Do_Any_Array_At_Throws(
+    REBVAL *out,
+    const RELVAL *any_array,  // same as `out` is allowed
+    REBSPC *specifier
+){
+    assert(Is_Fresh(out));  // better if caller's RESET() does the TRACK() cell
+
+    bool threw = Do_Any_Array_At_Maybe_Stale_Throws(out, any_array, specifier);
+
+    Clear_Stale_Flag(out);
+    Reify_Eval_Out_Plain(out);
     return threw;
 }
 
@@ -115,26 +146,8 @@ inline static bool Do_At_Mutable_Maybe_Stale_Throws(
         out,
         feed,
         EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
+            | EVAL_FLAG_OVERLAP_OUTPUT  // !!! Used for HIJACK, but always?
     );
-}
-
-inline static bool Do_At_Mutable_Throws(
-    REBVAL *out,
-    REBARR *array,
-    REBLEN index,
-    REBSPC *specifier
-){
-    Init_None(out);
-
-    bool threw = Do_At_Mutable_Maybe_Stale_Throws(
-        out,
-        nullptr,
-        array,
-        index,
-        specifier
-    );
-    CLEAR_CELL_FLAG(out, OUT_NOTE_STALE);
-    return threw;
 }
 
 
@@ -164,7 +177,7 @@ inline static bool Do_Branch_Core_Throws(
 
     switch (kind) {
       case REB_BLANK:
-        Init_Isotope(out, Canon(NULL));  // !!! Is this a good idea?
+        Init_Null_Isotope(out);  // !!! Is this a good idea?
         break;
 
       case REB_QUOTED:
@@ -173,7 +186,7 @@ inline static bool Do_Branch_Core_Throws(
         break;
 
       case REB_BLOCK:
-        if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
+        if (Do_Any_Array_At_Throws(SET_END(out), branch, SPECIFIED))
             return true;
         Isotopify_If_Nulled(out);
         break;
@@ -182,7 +195,7 @@ inline static bool Do_Branch_Core_Throws(
         if (Eval_Value_Maybe_Stale_Throws(out, branch, SPECIFIED))
             return true;
         assert(IS_BLOCK(out));
-        assert(NOT_CELL_FLAG(out, OUT_NOTE_STALE));
+        assert(not Is_Stale(out));
         break; }
 
       case REB_ACTION: {
@@ -204,7 +217,7 @@ inline static bool Do_Branch_Core_Throws(
         //     ]
         //
         if (condition != nullptr and NOT_END(condition)) {
-            const REBVAL *decayed = Pointer_To_Decayed(condition);
+            const REBVAL *decayed = rebPointerToDecayed(condition);
             if (decayed != condition) {
                 const REBKEY *key;
                 const REBPAR *param = First_Unspecialized_Param(
@@ -220,7 +233,7 @@ inline static bool Do_Branch_Core_Throws(
             }
         }
         bool threw = rebRunThrows(
-            out,
+            SET_END(out),
             false,  // !fully, e.g. arity-0 functions can ignore condition
             branch,
             (condition != nullptr and IS_END(condition))
@@ -246,16 +259,24 @@ inline static bool Do_Branch_Core_Throws(
         if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
             return true;
         if (IS_NULLED(out))
-            Init_Isotope(out, Canon(NULL));
+            Init_Bad_Word(out, Canon(NULL));  // branch taken, so not pure NULL
         else
-            Meta_Quotify(out);
+            Meta_Quotify(out);  // result can't be null or void isotope
         break;
 
       default:
         fail (Error_Bad_Branch_Type_Raw());
     }
 
-    assert(not IS_NULLED(out));  // branches that run can't return pure NULL
+    // Branches that run can't return pure NULL, nor can they return "light"
+    // ~void~ isotopes.  Those would trigger ELSE which is mutually exclusive
+    // with having RUN? a branch.
+    //
+    // We don't have to worry about "~void~ isotopes" here, because they are
+    // never reified and only a signal from Do_Any_Array_Maybe_Stale() and the
+    // other core functions.  Any void state has been turned to none by now.
+    //
+    assert(not IS_NULLED(out));
 
     return false;
 }
@@ -307,7 +328,7 @@ inline static bool Run_Generic_Dispatch_Throws(
         assert(!"Unhandled return signal from Run_Generic_Dispatch_Core");
     }
     else {
-        assert(not Is_Eval_Product_Stale(r));
+        assert(not Is_Stale(r));
         Copy_Cell(f->out, r);
         if (Is_Api_Value(r))
             Release_Api_Value_If_Unmanaged(r);

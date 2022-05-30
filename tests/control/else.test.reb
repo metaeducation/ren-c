@@ -94,6 +94,6 @@
 ; https://forum.rebol.info/t/why-then-and-else-are-mutually-exclusive/1080/9
 [
     (~null~ *then [fail "shouldn't run"] else [true])
-    (~null~ *also [fail "shouldn't run"] else [true])
+    (~null~ *also [fail "shouldn't run"] *else [true])
     (~null~ *else [true])
 ]

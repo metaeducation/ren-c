@@ -21,7 +21,7 @@
     ]
 )
 
-(none? uparse "a" ["a" (comment "GROUP! content can vaporize too!")])
+("a" = uparse "a" ["a" (comment "GROUP! content can vaporize too!")])
 
 ; ELIDE doesn't elide failure...just the result on success.
 ;

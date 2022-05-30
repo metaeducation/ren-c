@@ -54,12 +54,11 @@
 [
     ([1 <haha!> 2 <haha!> 3 <haha!>] = map x each [1 2 3] [reduce [x <haha!>]])
     ([1 <haha!> 2 <haha!> 3 <haha!>] = map x each [1 2 3] [:[x <haha!>]])
-    ([1 <haha!> 2 <haha!> 3 <haha!>] = map x each [1 2 3] :[x <haha!>])
 
     ([[1 <haha!>] [2 <haha!>]] = map x each [1 2] [only :[x <haha!>]])
     ([[1 <haha!>] [2 <haha!>] [3 <haha!>]] = map x each [1 2 3] ^[:[x <haha!>]])
 
-    ; NULL opts out, as a twits on APPEND's rule disallowing it.
+    ; void opts out, as a twist on APPEND's rule disallowing it.
     ;
     ([1 <haha!> 3 <haha!>] = map x each [1 2 3] [if x <> 2 :[x <haha!>]])
 ]

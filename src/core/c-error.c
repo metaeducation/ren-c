@@ -1192,7 +1192,12 @@ REBCTX *Error_No_Catch_For_Throw(REBVAL *thrown)
     Copy_Cell(label, VAL_THROWN_LABEL(thrown));
 
     DECLARE_LOCAL (arg);
-    CATCH_THROWN(arg, thrown);
+    CATCH_THROWN_META(arg, thrown);
+
+    if (Is_Meta_Of_Pure_Invisible(arg) or Is_Meta_Of_Void_Isotope(arg))
+        Init_None(arg);
+    else
+        Meta_Unquotify(arg);
 
     return Error_No_Catch_Raw(arg, label);
 }
@@ -1435,6 +1440,17 @@ REBCTX *Error_Bad_Isotope(const RELVAL *isotope) {
     CLEAR_CELL_FLAG(plain, ISOTOPE);
 
     return Error_Bad_Isotope_Raw(plain);
+}
+
+
+//
+//  Error_Bad_Void: C
+//
+REBCTX *Error_Bad_Void(void) {
+    DECLARE_LOCAL (void_word);
+    Init_Bad_Word(void_word, Canon(VOID));
+
+    return Error_Bad_Isotope_Raw(void_word);
 }
 
 

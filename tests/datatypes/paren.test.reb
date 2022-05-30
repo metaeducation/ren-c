@@ -21,11 +21,12 @@
         either num1 = 1 [num2] [num2: num1 * num2 num1: num1 - 1]
     )
     insert/only tail of last fact fact
-    24 = do fact
+    24 = eval fact
 )
 ; infinite recursion
 [#1665 (
     fact: to group! []
     insert/only fact fact
-    error? trap [do fact]
+    e: trap [eval fact]
+    e.id = 'stack-overflow
 )]

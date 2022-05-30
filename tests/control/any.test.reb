@@ -1,7 +1,29 @@
 ; %any.test.reb
 
-; zero values
-(null = any [])
+; Most languages consider variadic OR operations in the spirit of ANY to
+; be truthy if there are no items.  We use the ~false~ isotope.  This gives the
+; feature of safety, while still offering a DIDN'T/ELSE triggering.  But most
+; importantly and uniquely, it counts as an invisible so that MAYBE can cause
+; it to vanish completely.
+[
+    ('~void~ = ^ any [])
+    (
+        e: trap [if any [] [<safety>]]
+        e.id = 'isotope-arg
+    )
+    (
+        x: <overwritten>
+        did all [
+            '~void~ = ^ x: any []  ; overall expression remains ~void~
+            unset? 'x  ; but ~void~ isotopes decay to none on assignment
+        ]
+    )
+    (<didn't> = if didn't any [] [<didn't>])
+    (<else> = any [] else [<else>])
+    (3 = (1 + 2 maybe any []))
+    (null = (1 + 2 maybe any [1 > 2, 3 > 4]))
+]
+
 
 ; one value
 (:abs = any [:abs])
@@ -367,12 +389,11 @@
 (10 = any [(10 elide "stale")])
 
 
-; INVISIBILITY: ALL returns ~none~ isotope when body is effectively empty
 [
     (
         two: ~
         3 = any [
-            none-to-void all [none-to-void do [comment "hi"], elide two: 2]
+            maybe all [maybe eval [comment "hi"], elide two: 2]
             1 + two
         ]
     )
@@ -382,7 +403,7 @@
 
 ; When used with @ blocks, ANY will treat the block as already reduced
 [
-    (null = any @[])
+    ('~void~ = ^ any @[])
     (1 = any @[1 + 2])
     (null = any @[#[false] _])
     (null = any inert reduce [false blank])

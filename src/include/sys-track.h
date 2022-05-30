@@ -25,6 +25,18 @@
 // looking at the cell in a watchlist.  It is also reported by panic().
 //
 
+// With cells that are known not to be API cells (e.g. no CELL_MASK_PERSIST set)
+// then they can be cleared with a memset() to 0, and represent writable
+// locations.  But RESET() should only be used when it is known that the cell
+// bits are completely uninitialized.  Otherwise, use SET_END() and it will
+// keep the CELL_MASK_PERSIST.
+//
+// Is_Fresh(v) checks for either state, by only looking at the kind/heart bytes
+// and allows the cell to not carry NODE_FLAG_NODE or NODE_FLAG_CELL.
+//
+// !!! This might be safer if NODE_FLAG_CELL was in the reverse sense, so at
+// least then we could check it's not a REBSER.
+//
 #define Is_Fresh(v) \
     (0 == ((v)->header.bits & (FLAG_KIND3Q_BYTE(255) | FLAG_HEART_BYTE(255))))
 

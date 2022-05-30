@@ -530,7 +530,7 @@ REBNATIVE(further_combinator)
     if (IS_NULLED(D_OUT))
         return nullptr;  // the parse rule did not match
 
-    if (GET_CELL_FLAG(D_OUT, OUT_NOTE_STALE))
+    if (Is_Stale(D_OUT))
         fail ("Rule passed to FURTHER must synthesize a product");
 
     Get_Var_May_Fail(D_SPARE, remainder, SPECIFIED, true);

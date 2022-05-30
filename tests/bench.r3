@@ -34,7 +34,7 @@ result <= 0 (abs result - guess) / result + (tick-time / time * 4) > precision
 ]
 ] [
 guess: result
-if error? try [count: count * 2] [return none]
+if error? try [count: count * 2] [return]
 ]
 result
 ]

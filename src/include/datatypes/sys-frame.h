@@ -303,7 +303,7 @@ inline static void Push_Frame(
     // All calls through to Eval_Core() are assumed to happen at the same C
     // stack level for a pushed frame (though this is not currently enforced).
     // Hence it's sufficient to check for C stack overflow only once, e.g.
-    // not on each Eval_Step_Throws() for `reduce [a | b | ... | z]`.
+    // not on each Eval_Step() for `reduce [a | b | ... | z]`.
     //
     // !!! This method is being replaced by "stackless", as there is no
     // reliable platform independent method for detecting stack overflows.
@@ -577,6 +577,7 @@ inline static void Prep_Frame_Core(
 #define D_OUT       FRM_OUT(frame_)         // GC-safe slot for output value
 #define D_SPARE     FRM_SPARE(frame_)       // scratch GC-safe cell
 
+
 // !!! Numbered arguments got more complicated with the idea of moving the
 // definitional returns into the first slot (if applicable).  This makes it
 // more important to use the named ARG() and REF() macros.  As a stopgap
@@ -597,19 +598,6 @@ inline static REBVAL *D_ARG_Core(REBFRM *f, REBLEN n) {  // 1 for first arg
 #define D_ARG(n) \
     D_ARG_Core(frame_, (n))
 
-#define return_invisible(v) \
-    do { \
-        assert(v == D_OUT); \
-        assert(D_OUT->header.bits & CELL_FLAG_OUT_NOTE_STALE); \
-        return D_OUT; \
-    } while (0)
-
-#define return_thrown(v) \
-    do { \
-        assert(v == D_OUT); \
-        assert(not (D_OUT->header.bits & CELL_FLAG_OUT_NOTE_STALE)); \
-        return R_THROWN; \
-    } while (0)
 
 // Shared code for type checking the return result.  It's used by the
 // Returner_Dispatcher(), but custom dispatchers use it to (e.g. JS-NATIVE)
@@ -631,9 +619,9 @@ inline static void FAIL_IF_NO_INVISIBLE_RETURN(REBFRM *f) {
     const REBPAR *param = ACT_PARAMS_HEAD(phase);
     assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
-    if (ACT_DISPATCHER(phase) == &Opaque_Dispatcher)
+    if (ACT_DISPATCHER(phase) == &None_Dispatcher)
         return;  // allow plain RETURN in <none> functions
 
-    if (NOT_PARAM_FLAG(param, ENDABLE))
+    if (NOT_PARAM_FLAG(param, VANISHABLE))
         fail (Error_Bad_Invisible(f));
 }

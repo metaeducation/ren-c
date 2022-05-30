@@ -45,3 +45,5 @@
     for-next i [1 2 3] [append out first i]
     out = [1 2 3]
 )
+
+(none? for-each x [1 2 3] [maybe if x != 3 [x]])

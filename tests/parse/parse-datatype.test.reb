@@ -89,9 +89,13 @@
 ;
 [https://github.com/red/red/issues/4682
 
-    (none? uparse to binary! {https://example.org"} [
-        x: across url! (assert [{https://example.org"} == as text! to url! x])
-    ])
+    (
+        bin: #{68747470733A2F2F6578616D706C652E6F726722}
+        bin = uparse to binary! {https://example.org"} [
+            x: across url!
+            (assert [{https://example.org"} == as text! to url! x])
+        ]
+    )
     ({"} == uparse to binary! {a@b.com"} [
         x: across email! (assert [a@b.com == to email! to text! x])
         {"}

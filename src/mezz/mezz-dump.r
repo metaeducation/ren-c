@@ -184,7 +184,7 @@ dumps: enfixed function [
             case [
                 on [d' #on]
                 off [d' #off]
-                default [d' (value)]
+                /else [d' (value)]
             ]
         ]
     ]

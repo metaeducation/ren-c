@@ -140,11 +140,11 @@ combinator: func [
             let state: f.state
             let remainder: f.remainder
 
-            let result': ^(do f)
+            let result': ^ eval f  ; want to detect "pure void" (/MAYBE)
             if state.verbose [
                 print ["RESULT':" (mold result' else ["NULL"])]
             ]
-            return/no-decay unmeta/void (get/any 'result' also [
+            return unmeta (result' also [
                 all [  ; if success, mark state.furthest
                     state.furthest
                     (index? remainder: get remainder) > (index? get state.furthest)
@@ -218,29 +218,13 @@ combinator: func [
                         f2
                     ][
                         f2.pending: let subpending
-                        return/no-decay do f2 also [  ; don't change result
+                        return unmeta ((^ eval f2) also [
                             set pending glom (get pending) subpending
-                        ]
+                        ])
                     ]
                 ]
             ]
         ]))
-
-        ; Functions typically need to control whether they are "piping"
-        ; another function.  So there are delicate controls for passing
-        ; through invisibility and isotope status.  But parser combinators
-        ; are "combinators" by virtue of the name; they're often piping
-        ; results.  Assume the best return convention is to assume ~void~
-        ; means invisible on purpose.
-        ;
-        ; !!! Should functions whose spec marks them as being *able* to
-        ; return invisibly get the /void interpretation of returns
-        ; automatically?
-        ;
-        ; !!! chain [:none-to-void | :return/no-decay] produces `~`.  Review
-        ; why that is, and if it would be a better answer.
-        ;
-        return: :return/no-decay
 
         (as group! body)
 
@@ -292,8 +276,8 @@ default-combinators: make map! reduce [
         <local> result'
     ][
         ([^result' (remainder)]: parser input) then [
-            if result' = '~null~ [return void]  ; `maybe if true [null]` vanishes
-            return unmeta/void result'  ; return successful parser result
+            if result' = _ [return void]  ; `maybe if true [null]` vanishes
+            return unmeta result'  ; return successful parser result
         ]
         set remainder input  ; succeed on parser failure but don't advance input
         return void  ; void result (vanishes, or leaves SET-WORD!s unchanged)
@@ -848,7 +832,7 @@ default-combinators: make map! reduce [
     'into combinator [
         {Perform a recursion into another datatype with a rule}
         return: "Result of the subparser"
-            [<opt> any-value!]
+            [<opt> <invisible> any-value!]
         parser [action!]  ; !!! Easier expression of value-bearing parser?
         subparser [action!]
         <local> subseries result'
@@ -1083,12 +1067,12 @@ default-combinators: make map! reduce [
     ][
         ([^result' (remainder)]: parser input) else [return null]
 
-        ; Policy for assigning voids is the expression evaluates to the old
+        ; Policy for assigning pure void is the expression evaluates to the old
         ; value (whatever that was, including unset).
         ;
         ; https://forum.rebol.info/t/1582/5
         ;
-        if result' = '~void~ [return get/any value]
+        if blank? result' [return get/any value]
 
         set value unmeta result'
         return unmeta result'
@@ -1104,12 +1088,12 @@ default-combinators: make map! reduce [
     ][
         ([^result' (remainder)]: parser input) else [return null]
 
-        ; Policy for assigning voids is the expression evaluates to the old
+        ; Policy for assigning pure void is the expression evaluates to the old
         ; value (whatever that was, including unset).
         ;
         ; https://forum.rebol.info/t/1582/5
         ;
-        if result' = '~void~ [return get/any value]
+        if blank? result' [return get/any value]
 
         set value unmeta result'
         return unmeta result'
@@ -1271,7 +1255,7 @@ default-combinators: make map! reduce [
                 fail "Use ('<delay>) to evaluate to the tag <delay> in GROUP!"
             ]
             set pending :[next value]  ; GROUP! signals delayed groups
-            return  ; invisible
+            return void
         ]
 
         ; If a GROUP! evaluates to NULL, we want the overall rule to evaluate
@@ -1280,7 +1264,7 @@ default-combinators: make map! reduce [
         ; what true NULL would signify.  Use HEAVY.
         ;
         set pending _
-        return heavy do value
+        return heavy eval value
     ]
 
     'phase combinator [
@@ -1298,7 +1282,7 @@ default-combinators: make map! reduce [
         ; Run GROUP!s in order, removing them as one goes
         ;
         remove-each item subpending [
-            if group? :item [do item, true]
+            if group? :item [eval item, true]
         ]
 
         set pending subpending
@@ -1328,13 +1312,30 @@ default-combinators: make map! reduce [
         value [any-array!]  ; allow any array to use this "REPARSE-COMBINATOR"
         <local> r comb
     ][
-        r: do value else [
-            set pending _  ; we always succeed, must set pending if we do
-            return '~null~  ; uparse "" [:(if false ['<a>])] => ~null~ isotope?
-        ]
-
         ; !!! The rules of what are allowed or not when triggering through
         ; WORD!s likely apply here.  Should it all be repeated?
+
+        r: (^ eval value) else [
+            fail "GET-GROUP! evaluated to NULL"  ; no NULL rules, mistake?
+        ]
+
+        if bad-word? r [
+            if r = '~null~ [
+                fail "GET-GROUP! evaluated to ~NULL~ isotope"  ; also mistake?
+            ]
+
+            any [
+                blank? r        ; like [:(comment "void")]
+                r = the ~void~  ; like [:(if false [...])]
+            ] then [
+                set pending _
+                return void
+            ]
+
+            fail ["Bad isotope from GET-GROUP!" r]  ; fail all other isotopes
+        ]
+
+        r: unquote r
 
         if integer? :r [
             fail [value "can't be INTEGER!, use REPEAT" :["(" value ")"]]
@@ -1529,7 +1530,7 @@ default-combinators: make map! reduce [
         ; Note: REPEAT is considered a loop, but INTEGER!'s combinator is not.
         ; Hence BREAK will not break a literal integer-specified loop
 
-        result': '~none~  ; `0 <any>` => ~none~ isotope
+        result': the ~void~  ; `0 <any>` => void intent
         repeat value [
             ([^result' input]: parser input) else [
                 return null
@@ -1583,7 +1584,7 @@ default-combinators: make map! reduce [
 
         append state.loops binding of 'return
 
-        result': '~none~  ; `repeat (0) <any>` => ~none~ isotope
+        result': the ~void~  ; `repeat (0) <any>` => void intent
 
         count-up i max [  ; will count infinitely if max is #
             ;
@@ -1934,7 +1935,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-block! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted!]
+        return: "Meta quoted" [<opt> bad-word! quoted! issue! blank!]
         pending: [blank! block!]
         value [meta-block!]
         <local> comb
@@ -1963,7 +1964,7 @@ default-combinators: make map! reduce [
         ([^ (remainder)]: parser input) else [
             return null
         ]
-        return
+        return void
     ]
 
     'comment combinator [
@@ -1989,24 +1990,9 @@ default-combinators: make map! reduce [
         ; The more efficient and flexible form is presumed here to be the
         ; most useful, and the closest parallel to the plain COMMENT action.
         ;
-        return
+        return void
     ]
 
-    ; Historically you could use SKIP as part of an assignment, e.g.
-    ; `parse [10] [set x skip]` would give you x as 10.  But "skipping" does
-    ; not seem value-bearing.
-    ;
-    ;    >> uparse [<a> 10] [tag! skip]
-    ;    == 10  ; confusing, I thought you "skipped" it?
-    ;
-    ;    >> uparse [<a> 10] [tag! skip]
-    ;    == <a>  ; maybe this is okay?
-    ;
-    ; It's still a bit jarring to have SKIP mean something that is used as
-    ; a series skipping operation (with a skip count) have completely different
-    ; semantic.  But, this is at least a bit better, and points people to use
-    ; <any> instead if you want to say `parse [10] [x: <any>]` and get x as 10.
-    ;
     'skip combinator [
         {Historical SKIP is deprecated, give an error}
         return: "N/A" []
@@ -2071,7 +2057,7 @@ default-combinators: make map! reduce [
         assert [tail? parsers]
         set remainder input
         set pending totalpending
-        return do f
+        return eval f
     ]
 
     === WORD!, SYMBOL!, and TUPLE COMBINATOR ===
@@ -2187,7 +2173,7 @@ default-combinators: make map! reduce [
     ][
         switch type of :arg [
             group! [
-                if not block? block: do arg [
+                if not block? block: eval arg [
                     fail ["The ANY combinator requires a BLOCK! of alternates"]
                 ]
             ]
@@ -2245,7 +2231,7 @@ default-combinators: make map! reduce [
 
         totalpending: _  ; can become GLOM'd into a BLOCK!
 
-        result': '~none~  ; [] => ~none~ isotope
+        result': _  ; default meta result is pure invisible
 
         while [not tail? rules] [
             if state.verbose [
@@ -2315,13 +2301,16 @@ default-combinators: make map! reduce [
             f.remainder: 'pos
             f.pending: 'subpending
 
-            ^(do f) then temp -> [
-                if '~void~ != temp  [  ; overwrite if was visible
-                    result': temp
+            ; Note: This can't be `eval f then ^temp -> [...]` because the
+            ; maybe expression can vanish.
+            ;
+            (^ eval f) then temp -> [
+                if temp <> _  [
+                    result': temp  ; overwrite if was visible
                 ]
                 totalpending: glom totalpending subpending
             ] else [
-                result': '~none~  ; reset, e.g. `[false |]` => ~none~ isotope
+                result': _  ; reset, e.g. `[false |]`
 
                 free totalpending  ; proactively release memory
                 totalpending: _
@@ -2826,11 +2815,21 @@ uparse*: func [
     ;
     f.pending: let subpending
 
-    let synthesized': ^(do f)
+    let synthesized': (^ eval f)
     assert [empty? state.loops]
 
-    if null? :synthesized' [
+    if null? synthesized' [
         return null  ; match failure (as opposed to success, w/null result)
+    ]
+
+    if (synthesized' = _) or (synthesized' = the ~void~) [
+        ;
+        ; We can't return "invisible intent" and still convey that the parse
+        ; succeeded.  So a UPARSE that succeeds is a bit like a branch that
+        ; runs.  You lose the pure invisible information, it collapses to none.
+        ; So pure invisibility has to stay inside the UPARSE ruleverse.
+        ;
+        return ~  ; Need something nothing-like but that won't trigger an ELSE
     ]
 
     if pending [
@@ -2845,7 +2844,7 @@ uparse*: func [
         return null  ; full parse was requested but tail was not reached
     ]
 
-    return/no-decay isotopify-if-falsey unmeta synthesized'
+    return isotopify-if-falsey unmeta synthesized'
 ]
 
 uparse: (comment [redescribe [  ; redescribe not working at the moment (?)
@@ -2873,7 +2872,7 @@ match-uparse: (comment [redescribe [  ; redescribe not working at the moment (?)
     enclose :uparse*/fully func [f [frame!]] [
         let input: f.input  ; DO FRAME! invalidates args; cache for returning
 
-        do f then [input]
+        (^ eval f) then [input]
     ]
 )
 
@@ -3068,7 +3067,7 @@ append redbol-combinators reduce [
             fail "Can't make MAX less than MIN in range for INTEGER! combinator"
         ]
 
-        result': '~none~  ; `0 <any>` => ~none~ isotope
+        result': the ~void~  ; `0 <any>` => void intent
         repeat value [  ; do the required matches first
             ([^result' input]: parser input) else [
                 return null

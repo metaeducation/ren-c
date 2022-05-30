@@ -305,10 +305,10 @@ inline static RELVAL *Isotopic_Quote(RELVAL *v) {
 inline static RELVAL *Isotopic_Unquote(RELVAL *v) {
     assert(not IS_NULLED(v));  // use Meta_Unquotify() instead
     if (IS_BAD_WORD(v)) {  // Meta quote flipped isotope off, flip back on.
-        if (VAL_BAD_WORD_ID(v) == SYM_VOID)
-            SET_END(v);
-        else
-            SET_CELL_FLAG(v, ISOTOPE);
+        assert(NOT_CELL_FLAG(v, ISOTOPE));
+        assert(VAL_BAD_WORD_ID(v) != SYM_VOID);  // enforce special handling
+        assert(VAL_BAD_WORD_ID(v) != SYM_END);  // END isotopes shouldn't exist
+        SET_CELL_FLAG(v, ISOTOPE);
     }
     else {
         Unquotify_Core(v, 1);
@@ -353,6 +353,7 @@ inline static RELVAL *Isotopic_Unquotify(RELVAL *v, REBLEN depth) {
 
 //=//// META QUOTING ///////////////////////////////////////////////////////=//
 
+inline static bool Is_Blackhole(const RELVAL *v);  // forward decl
 
 // Meta quoting is almost exactly like isotopic quoting, but it has a twist
 // that NULL does not become a single tick mark (') but rather it stays as
@@ -361,7 +362,7 @@ inline static RELVAL *Isotopic_Unquotify(RELVAL *v, REBLEN depth) {
 
 inline static RELVAL *Meta_Quotify(RELVAL *v) {
     if (IS_END(v))
-        return Init_Bad_Word(v, Canon(VOID));
+        return Init_Blank(v);
     if (IS_NULLED(v))
         return v;  // as-is
     return Isotopic_Quote(v);

@@ -64,9 +64,9 @@
         true
     )
 
-    (1324 = do add1020 304)
-    (2020 = do add1324 696)
-    (2021 = do add2020 1)
+    (1324 = eval add1020 304)
+    (2020 = eval add1324 696)
+    (2021 = eval add2020 1)
 ]
 
 [
@@ -77,7 +77,7 @@
 
     ; Basic robustness
     ;
-    (30 = do group)
+    (30 = eval group)
     (30 = do compose [(group)])
     (30 = do compose [(group)])
     (30 = do compose/deep [do [(group)]])
@@ -140,7 +140,7 @@
     ;
     ; https://forum.rebol.info/t/1062/4
     ;
-    (11 = do bind use [x] [x: 10, '(x + 1)] make object! [x: 20])
+    (11 = eval bind use [x] [x: 10, '(x + 1)] make object! [x: 20])
     (
         e: trap [bind use [x] [x: 10, the (x + 1)] make object! [x: 20]]
         e.id = 'const-value

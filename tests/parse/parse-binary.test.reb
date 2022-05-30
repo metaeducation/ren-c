@@ -5,7 +5,8 @@
 
 ; General BINARY! matching
 [
-    (none? uparse #{} [])
+    ('~ = ^ uparse #{} [])  ; can't be ~void~ isotope, would run ELSE!
+
     (#{0A} == uparse #{0A} [#{0A}])
     (#"^/" == uparse #{0A} [#"^/"])
     (didn't uparse #{0A} [#{0B}])

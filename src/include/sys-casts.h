@@ -146,7 +146,7 @@
             return nullptr;
 
         if ((reinterpret_cast<const REBSER*>(p)->leader.bits & (
-            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | SERIES_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
         )){
@@ -176,7 +176,7 @@
             return nullptr;
 
         if ((reinterpret_cast<const REBSER*>(p)->leader.bits & (
-            NODE_FLAG_NODE | NODE_FLAG_FREE | NODE_FLAG_CELL
+            NODE_FLAG_NODE | SERIES_FLAG_FREE | NODE_FLAG_CELL
         )) != (
             NODE_FLAG_NODE
         )){
@@ -208,7 +208,7 @@
 
         if (((reinterpret_cast<const REBSER*>(p)->leader.bits & (
             SERIES_MASK_VARLIST
-                | NODE_FLAG_FREE
+                | SERIES_FLAG_FREE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         ))
@@ -237,7 +237,7 @@
 
         if ((reinterpret_cast<const REBSER*>(p)->leader.bits & (
             SERIES_MASK_DETAILS
-                | NODE_FLAG_FREE
+                | SERIES_FLAG_FREE
                 | NODE_FLAG_CELL
                 | FLAG_FLAVOR_BYTE(255)
         )) !=

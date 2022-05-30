@@ -11,7 +11,7 @@
 [#1760 ; unwind functions should stop evaluation
     (null? repeat 1 [reduce [break]])
 ]
-('~none~ = ^ repeat 1 [reduce [continue]])
+('~ = ^ repeat 1 [reduce [continue]])
 (1 = catch [reduce [throw 1]])
 ([a 1] = catch/name [reduce [throw/name 1 'a]] 'a)
 (1 = reeval func [return: [integer!]] [reduce [return 1 2] 2])
@@ -48,26 +48,36 @@
 ; Predicates influence the handling of NULLs, which become ~null~ by default
 
 ([~null~] = reduce [null])
-([] = reduce [null-to-void null])
+([] = reduce [maybe/value null])
+
+([~null~] = reduce [~null~])
+([~null~] = reduce [maybe/value ~null~])
+
+
+([] = reduce [~void~])
 
 ; There was a bug pertaining to trying to set the new line flag on the output
 ; in the case of a non-existent null, test that.
 [
     ([] = reduce [
-        null-to-void null
+        maybe/value null
     ])
     ([~null~] = reduce/predicate [null] :identity)
 ]
 
 (error? trap [reduce/predicate [null] chain [:null? | :non]])
 
-([3 _ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :try)
-([3 ~null~ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify)
-([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :null-to-void)
+([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :maybe)
+([3 ~void~ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify)
+([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :maybe/value)
 
-; REDUCE* is a specialization of REDUCE with NULL-TO-VOID
+([3 _ 300] = reduce/predicate [1 + 2 null 100 + 200] :try)
+([3 ~null~ 300] = reduce/predicate [1 + 2 null 100 + 200] :reify)
+([3 300] = reduce/predicate [1 + 2 nul 100 + 200] :maybe/value)
+
+; REDUCE* is a specialization of REDUCE with MAYBE/VALUE
 ;
-([3 300] = reduce* [1 + 2 if false [10 + 20] 100 + 200])
+([3 300] = reduce* [1 + 2 null 100 + 200])
 
 
 ([#[true] #[false]] = reduce/predicate [2 + 2 3 + 4] :even?)

@@ -245,6 +245,10 @@ inline static void CLEAR_ALL_TYPESET_BITS(RELVAL *v) {
 #define PARAM_FLAG_CONST \
     FLAG_LEFT_BIT(15)
 
+#define PARAM_FLAG_VANISHABLE \
+    FLAG_LEFT_BIT(16)
+
+
 #define SET_PARAM_FLAG(v,name) \
     (VAL_PARAM_FLAGS(v) |= PARAM_FLAG_##name)
 
@@ -322,7 +326,6 @@ inline static REBVAL *Refinify(REBVAL *v);  // forward declaration
 inline static bool IS_REFINEMENT(const RELVAL *v);  // forward decl
 inline static bool IS_PREDICATE(const RELVAL *v);  // forward decl
 
-
 // This is an interim workaround for the need to be able check constrained
 // data types (e.g. PATH!-with-BLANK!-at-head being REFINEMENT!).  See
 // Startup_Fake_Type_Constraint() for an explanation.
@@ -375,10 +378,13 @@ inline static bool Typecheck_Including_Constraints(
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
         if (IS_BAD_WORD(v)) {
             assert(NOT_CELL_FLAG(v, ISOTOPE));
-            return true;  // all META parameters take BAD-WORD! isotopes
+            return true;  // all META parameters take BAD-WORD!
         }
         else if (IS_NULLED(v)) {
             kind = REB_NULL;  // meaningful to check <opt> for ^META
+        }
+        else if (Is_Meta_Of_Pure_Invisible(v)) {
+            return true;  // this represents pure void (not "~void~ intent")
         }
         else {
             assert(IS_QUOTED(v));  // must be quoted otherwise
@@ -423,10 +429,6 @@ inline static bool Is_Typeset_Empty(REBCEL(const*) param) {
     bits |= cast(REBU64, VAL_TYPESET_HIGH_BITS(param)) << 32;
     return (bits & TS_OPT_VALUE) == 0;  // e.g. `[/refine]`
 }
-
-// Forward definition needed...
-//
-inline static bool Is_Blackhole(const RELVAL *v);
 
 
 // During the process of specialization, a NULL refinement means that it has
