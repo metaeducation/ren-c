@@ -206,10 +206,10 @@ inline static char VAL_RETURN_SIGNAL(const RELVAL *v) {
 // action from what it once was (much like a word reference).
 //
 inline static REBARR *ACT_DETAILS(REBACT *a) {
-    return x_cast(REBARR*,
-        x_cast(REBVAL*, x_cast(REBSER*, a)->content.dynamic.data)
+    return m_cast(REBARR*, x_cast(const REBARR*,
+        x_cast(REBVAL*, x_cast(const REBSER*, a)->content.dynamic.data)
             ->payload.Any.first.node
-    );
+    ));
 }  // ARR() has debug cost, not defined yet
 
 inline static REBARR *ACT_IDENTITY(REBACT *a)
