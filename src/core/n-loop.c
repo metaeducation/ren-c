@@ -1240,7 +1240,7 @@ REBNATIVE(cycle)
 //      return: "Last body result, or null if BREAK"
 //          [<opt> any-value!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word! block!]
+//          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
 //          [<blank> any-series! any-context! map! any-sequence!
 //           action!]  ; experimental
@@ -1261,8 +1261,8 @@ REBNATIVE(for_each)
 //
 //      return: [<opt> any-value!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
-//      :vars [word! block!]
-//          "Word or block of words to set each time (local)"
+//      :vars "Word or block of words to set each time, no new var if quoted"
+//          [blank! word! lit-word! block! group!]
 //      data [<blank> any-series! any-context! map! datatype! action!]
 //          "The series to traverse"
 //      body [<const> block! meta-block!]
@@ -1599,8 +1599,8 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 //
 //      return: [<opt> integer!]
 //          {Number of removed series items, or null if BREAK}
-//      :vars [blank! word! block!]
-//          "Word or block of words to set each time (local)"
+//      :vars "Word or block of words to set each time, no new var if quoted"
+//          [blank! word! lit-word! block! group!]
 //      data [<blank> any-series! any-sequence! action!]
 //          "The series to traverse (modified)" ; should BLANK! opt-out?
 //      body [<const> block!]
@@ -1727,8 +1727,8 @@ REBNATIVE(remove_each)
 //
 //      return: "Collected block"
 //          [<opt> block!]
-//      :vars "Word or block of words to set each time (local if not quoted)"
-//          [blank! word! block! quoted!]
+//      :vars "Word or block of words to set each time, no new var if quoted"
+//          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
 //          [<blank> any-series! any-sequence! action!]
 //      body "Block to evaluate each time (result will be kept literally)"
@@ -1762,8 +1762,8 @@ REBNATIVE(map_each)
 //
 //      return: "Collected block"
 //          [<opt> block!]
-//      :vars "Word or block of words to set each time (local if not quoted)"
-//          [blank! word! block! quoted!]
+//      :vars "Word or block of words to set each time, no new var if quoted"
+//          [blank! word! lit-word! block! group!]
 //      data "The series to traverse (only QUOTED! BLOCK! at the moment...)"
 //          [<blank> quoted! action!]
 //      :body "Block to evaluate each time"
@@ -1868,8 +1868,8 @@ REBNATIVE(repeat)
 //
 //      return: "Last body result, or NULL if BREAK"
 //          [<opt> any-value!]
-//      :vars "Word or block of words to set each time (local if not quoted)"
-//          [blank! quoted! word! block!]
+//      :vars "Word or block of words to set each time, no new var if quoted"
+//          [blank! word! lit-word! block! group!]
 //      value "Maximum number or series to traverse"
 //          [<blank> any-number! any-sequence! quoted! block! action!]
 //      'body "!!! actually just BLOCK!, but quoted to catch legacy uses"

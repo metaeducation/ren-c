@@ -945,8 +945,19 @@ void Rebind_Values_Deep(
 void Virtual_Bind_Deep_To_New_Context(
     REBVAL *body_in_out, // input *and* output parameter
     REBCTX **context_out,
-    const REBVAL *spec
+    REBVAL *spec
 ){
+    // !!! This just hacks in GROUP! behavior, because the :param convention
+    // does not support groups and gives GROUP! by value.  In the stackless
+    // build the preprocessing would most easily be done in usermode.
+    //
+    if (IS_GROUP(spec)) {
+        DECLARE_LOCAL (temp);
+        if (Do_Any_Array_At_Throws(temp, spec, SPECIFIED))
+            fail (Error_No_Catch_For_Throw(temp));
+        Move_Cell(spec, temp);
+    }
+
     REBLEN num_vars = IS_BLOCK(spec) ? VAL_LEN_AT(spec) : 1;
     if (num_vars == 0)
         fail (spec);  // !!! should fail() take unstable?
@@ -1050,8 +1061,7 @@ void Virtual_Bind_Deep_To_New_Context(
                     duplicate = symbol;
             }
         }
-        else {
-            assert(IS_QUOTED_WORD(item)); // checked previously
+        else if (IS_QUOTED_WORD(item)) {
 
             // A LIT-WORD! indicates that we wish to use the original binding.
             // So `for-each 'x [1 2 3] [...]` will actually set that x
@@ -1102,6 +1112,8 @@ void Virtual_Bind_Deep_To_New_Context(
                 }
             }
         }
+        else
+            fail (item);
 
         ++item;
         ++index;
