@@ -33,6 +33,12 @@
     #include <unistd.h>  // STDERR_FILENO
 #endif
 
+// Recursive panic() can generate a very large spew of output until the stack
+// overflows.  Stop reentrant panics (though it would be good to find the
+// cases that do this and make them give more useful output.)
+//
+static bool panicking = false;
+
 
 //
 //  Panic_Core: C
@@ -70,6 +76,18 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
     UNUSED(file);
     UNUSED(line);
   #endif
+
+    if (panicking) {
+      #if DEBUG_FANCY_PANIC
+        printf("!!! RECURSIVE PANIC, EXITING BEFORE IT GOES NUTS !!!\n");
+        fflush(stdout);
+        fflush(stderr);
+      #endif
+
+        exit (1);
+    }
+
+    panicking = true;
 
     // Delivering a panic should not rely on printf()/etc. in release build.
 
