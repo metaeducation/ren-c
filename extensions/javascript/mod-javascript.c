@@ -563,8 +563,10 @@ EXTERN_C void RL_rebSignalRejectNative_internal(intptr_t frame_id) {
 //
 // An AWAITER can only be called inside a rebPromise().
 //
-REB_R JavaScript_Dispatcher(REBFRM *f)
+REB_R JavaScript_Dispatcher(REBFRM *frame_)
 {
+    REBFRM *f = frame_;
+
     heapaddr_t native_id = Native_Id_For_Action(FRM_PHASE(f));
     heapaddr_t frame_id = Frame_Id_For_Frame_May_Outlive_Call(f);
 
@@ -663,7 +665,7 @@ REB_R JavaScript_Dispatcher(REBFRM *f)
             //
             CLR_SIGNAL(SIG_HALT);
 
-            return Init_Thrown_With_Label(f->out, Lib(NULL), Lib(HALT));
+            return_thrown (Init_Thrown_With_Label(OUT, Lib(NULL), Lib(HALT)));
         }
 
         REBVAL *error = VAL(Pointer_From_Heapaddr(error_addr));
@@ -684,17 +686,17 @@ REB_R JavaScript_Dispatcher(REBFRM *f)
     REBVAL *native_result = VAL(Pointer_From_Heapaddr(result_addr));
 
     if (native_result == nullptr)
-        Init_Nulled(f->out);
+        Init_Nulled(OUT);
     else {
         assert(not IS_NULLED(native_result));  // API uses nullptr only
-        Copy_Cell(f->out, native_result);
+        Copy_Cell(OUT, native_result);
         rebRelease(native_result);
     }
 
     PG_Native_State = NATIVE_STATE_NONE;
 
     FAIL_IF_BAD_RETURN_TYPE(f);
-    return f->out;
+    return OUT;
 }
 
 

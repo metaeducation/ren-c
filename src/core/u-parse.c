@@ -2737,17 +2737,15 @@ REBNATIVE(parse_p)
     REBVAL *rules = ARG(rules);
 
     if (ANY_SEQUENCE(input)) {
-        if (rebRunThrows(SPARE, true, Lib(AS), Lib(BLOCK_X), rebQ(input))) {
-            Move_Cell(OUT, SPARE);
-            return_thrown (OUT);
-        }
+        if (rebRunThrows(SPARE, true, Lib(AS), Lib(BLOCK_X), rebQ(input)))
+            return_thrown (SPARE);
+
         Move_Cell(input, SPARE);
     }
     else if (IS_URL(input)) {
-        if (rebRunThrows(SPARE, true, Lib(AS), Lib(TEXT_X), input)) {
-            Move_Cell(OUT, SPARE);
-            return_thrown (OUT);
-        }
+        if (rebRunThrows(SPARE, true, Lib(AS), Lib(TEXT_X), input))
+            return_thrown (SPARE);
+
         Move_Cell(input, SPARE);
     }
 

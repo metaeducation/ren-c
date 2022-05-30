@@ -1427,10 +1427,8 @@ REBNATIVE(construct)
     Bind_Values_Deep(at, tail, CTX_ARCHETYPE(ctx));
 
     DECLARE_LOCAL (dummy);
-    if (Do_Any_Array_At_Throws(dummy, spec, SPECIFIED)) {
-        Move_Cell(OUT, dummy);
-        return_thrown (OUT);  // evaluation result ignored unless thrown
-    }
+    if (Do_Any_Array_At_Throws(dummy, spec, SPECIFIED))
+        return_thrown (dummy);  // evaluation result ignored unless thrown
 
     return OUT;
 }

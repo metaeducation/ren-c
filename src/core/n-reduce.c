@@ -172,7 +172,7 @@ REBNATIVE(reduce_each)
     while (NOT_END(f_value)) {
         if (Eval_Step_Maybe_Stale_Throws(SET_END(SPARE), f)) {
             Abort_Frame(f);
-            return_thrown (OUT);
+            return_thrown (SPARE);
         }
 
         if (Is_Voided(SPARE) or Is_Invisible(SPARE))

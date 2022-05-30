@@ -267,10 +267,8 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
     Meta_Unquotify(in);
 
-    if (Do_Branch_With_Throws(SPARE, ARG(branch), in)) {
-        Move_Cell(OUT, SPARE);
-        return_thrown (OUT);
-    }
+    if (Do_Branch_With_Throws(SPARE, ARG(branch), in))
+        return_thrown (SPARE);
 
     Move_Cell(OUT, in);
     return_branched (OUT);  // also wouldn't run if `in` was null or ~void~
@@ -386,10 +384,8 @@ REBNATIVE(match)
 
       case REB_BLOCK: {
         REB_R r = MAKE_Typeset(SPARE, REB_TYPESET, nullptr, test);
-        if (r == R_THROWN) {
-            Move_Cell(OUT, SPARE);
-            return_thrown (OUT);
-        }
+        if (r == R_THROWN)
+            return_thrown (SPARE);
         test = SPARE;
         goto test_is_typeset; }
 
@@ -400,10 +396,8 @@ REBNATIVE(match)
         break;
 
       case REB_ACTION:
-        if (rebRunThrows(SPARE, true, test, rebQ(v))) {
-            Move_Cell(OUT, SPARE);
-            return_thrown (OUT);
-        }
+        if (rebRunThrows(SPARE, true, test, rebQ(v)))
+            return_thrown (SPARE);
         if (IS_FALSEY(SPARE))
             return nullptr;
         break;
@@ -545,8 +539,7 @@ REBNATIVE(all)
                 predicate,
                 rebQ(NULLIFY_NULLED(OUT))
             )){
-                Move_Cell(OUT, SPARE);
-                return_thrown (OUT);
+                return_thrown (SPARE);
             }
 
             if (IS_FALSEY(SPARE)) {
@@ -627,8 +620,7 @@ REBNATIVE(any)
                 predicate,
                 rebQ(NULLIFY_NULLED(OUT))
             )){
-                Move_Cell(OUT, SPARE);
-                return_thrown (OUT);
+                return_thrown (SPARE);
             }
 
             if (IS_TRUTHY(SPARE)) {

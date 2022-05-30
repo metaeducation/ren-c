@@ -225,16 +225,16 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
     // Otherwise, we assume the frame was built for the function prior to
     // the hijacking...and has to be remapped.
     //
-    if (Redo_Action_Maybe_Stale_Throws(f->out, f, hijacker))
-        return_thrown (f->out);
+    if (Redo_Action_Maybe_Stale_Throws(OUT, f, hijacker))
+        return_thrown (OUT);
 
-    if (Is_Voided(f->out))
-        return_void (f->out);
+    if (Is_Voided(OUT))
+        return_void (OUT);
 
-    if (Is_Stale(f->out))
-        return_invisible (f->out);
+    if (Is_Stale(OUT))
+        return_invisible (OUT);
 
-    return f->out;  // Note: may have OUT_NOTE_STALE, hence invisible
+    return OUT;
 }
 
 

@@ -1880,7 +1880,7 @@ REBNATIVE(for)
 
     if (IS_GROUP(body)) {
         if (Eval_Value_Throws(SPARE, body, SPECIFIED))
-            return_thrown (OUT);
+            return_thrown (SPARE);
         Move_Cell(body, SPARE);
     }
 
@@ -2052,10 +2052,8 @@ REBNATIVE(while)
     while (true) {
         SET_END(SPARE);
 
-        if (Do_Any_Array_At_Maybe_Stale_Throws(SPARE, condition, SPECIFIED)) {
-            Move_Cell(OUT, SPARE);
-            return_thrown (OUT);  // break/continue in condition only, see [2]
-        }
+        if (Do_Any_Array_At_Maybe_Stale_Throws(SPARE, condition, SPECIFIED))
+            return_thrown (SPARE);  // break/continue in body only, see [2]
 
         if (Is_Voided(SPARE) or Is_Invisible(SPARE))
             continue;  // restart loop when condition vanishes, see [3]

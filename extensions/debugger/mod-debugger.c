@@ -122,7 +122,7 @@ REBNATIVE(breakpoint_p)
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
         Lib(BLANK)  // default result if RESUME does not override
     )){
-        return_thrown (OUT);
+        return_thrown (SPARE);
     }
 
     // !!! Should use a more specific protocol (e.g. pass in END).  But also,

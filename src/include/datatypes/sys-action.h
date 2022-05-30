@@ -590,9 +590,15 @@ inline bool Is_Stale(const REBVAL *out) {
     } while (false)
 
 
+inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
+    if (v == out)
+        return out;
+    return Move_Cell(out, v);
+}
+
 #define return_thrown(v) \
     do { \
-        assert((v) == OUT); \
+        Maybe_Move_Cell(OUT, (v)); \
         assert(not Is_Stale(OUT)); \
         return R_THROWN; \
     } while (false)

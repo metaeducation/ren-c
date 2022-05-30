@@ -75,7 +75,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         fail (Error_No_Port_Action_Raw(verb_cell));
     }
 
-    if (Redo_Action_Maybe_Stale_Throws(frame_->out, frame_, VAL_ACTION(action)))
+    if (Redo_Action_Maybe_Stale_Throws(OUT, frame_, VAL_ACTION(action)))
         return_thrown (OUT);
 
     Clear_Stale_Flag(OUT);

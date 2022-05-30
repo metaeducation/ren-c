@@ -175,10 +175,8 @@ REBNATIVE(_and_)  // see TO-C-NAME
     if (IS_FALSEY(left))
         return Init_False(OUT);
 
-    if (Do_Logic_Right_Side_Throws(SPARE, right)) {
-        Move_Cell(OUT, SPARE);
-        return_thrown (OUT);
-    }
+    if (Do_Logic_Right_Side_Throws(SPARE, right))
+        return_thrown (SPARE);
 
     return Init_Logic(OUT, IS_TRUTHY(SPARE));
 }
@@ -208,10 +206,8 @@ REBNATIVE(_or_)  // see TO-C-NAME
     if (IS_TRUTHY(left))
         return Init_True(OUT);
 
-    if (Do_Logic_Right_Side_Throws(SPARE, right)) {
-        Move_Cell(OUT, SPARE);
-        return_thrown (OUT);
-    }
+    if (Do_Logic_Right_Side_Throws(SPARE, right))
+        return_thrown (SPARE);
 
     return Init_Logic(OUT, IS_TRUTHY(SPARE));
 }
@@ -238,10 +234,8 @@ REBNATIVE(_xor_)  // see TO-C-NAME
     if (GET_CELL_FLAG(left, UNEVALUATED))
         fail (Error_Unintended_Literal_Raw(left));
 
-    if (Do_Logic_Right_Side_Throws(SPARE, right)) {
-        Move_Cell(OUT, SPARE);
-        return_thrown (OUT);
-    }
+    if (Do_Logic_Right_Side_Throws(SPARE, right))
+        return_thrown (SPARE);
 
     if (IS_FALSEY(left))
         return Init_Logic(OUT, IS_TRUTHY(SPARE));

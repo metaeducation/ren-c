@@ -600,10 +600,8 @@ REBNATIVE(evaluate)
                     rebElide(Lib(SET), rebQ(next), rebQ(Lib(NULL)));
             }
 
-            if (threw) {
-                Move_Cell(OUT, SPARE);
-                return_thrown (OUT);
-            }
+            if (threw)
+                return_thrown (SPARE);
         }
         // update variable
     }
@@ -619,10 +617,8 @@ REBNATIVE(evaluate)
         if (REF(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
-        if (Do_Frame_Maybe_Stale_Throws(SPARE, source)) {
-            Move_Cell(OUT, SPARE);
-            return_thrown (OUT); // prohibits recovery from exits
-        }
+        if (Do_Frame_Maybe_Stale_Throws(SPARE, source))
+            return_thrown (SPARE);  // prohibits recovery from exits
         break;
 
       case REB_VARARGS : {
@@ -652,8 +648,7 @@ REBNATIVE(evaluate)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
-                Move_Cell(OUT, SPARE);
-                return_thrown (OUT);
+                return_thrown (SPARE);
             }
 
             VAL_INDEX_UNBOUNDED(position) = index;
@@ -672,7 +667,7 @@ REBNATIVE(evaluate)
 
             REBFLGS flags = EVAL_MASK_DEFAULT;
             if (Eval_Step_In_Subframe_Maybe_Stale_Throws(SPARE, f, flags))
-                return_thrown (OUT);
+                return_thrown (SPARE);
 
             Clear_Stale_Flag(SPARE);
         }

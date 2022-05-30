@@ -580,6 +580,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
         // to on_read_alloc() for every read.
         //
         assert(buf->base == s_cast(BIN_TAIL(bin)));
+        UNUSED(buf);
 
         rebreq->actual += nread;
 

@@ -97,20 +97,18 @@ REB_R Macro_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for RETURN macros
 
-    REBVAL *spare = FRM_SPARE(f);  // write to spare, return will be invisible
     bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
-        Move_Cell(f->out, spare);
-        return_thrown (f->out);
-    }
+    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
+        return_thrown (SPARE);
+
     UNUSED(returned);  // no additional work to bypass
 
-    if (not IS_BLOCK(spare))
+    if (not IS_BLOCK(SPARE))
         fail ("MACRO must return BLOCK! for the moment");
 
-    Splice_Block_Into_Feed(f->feed, spare);
+    Splice_Block_Into_Feed(f->feed, SPARE);
 
-    return_invisible (f->out);
+    return_invisible (OUT);
 }
 
 

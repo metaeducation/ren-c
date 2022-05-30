@@ -62,10 +62,10 @@ REB_R Downshot_Dispatcher(REBFRM *f)  // runs until count is reached
     --VAL_INT64(n);
 
     REBVAL *code = FRM_ARG(f, 2);  // skip the RETURN
-    if (Do_Branch_Throws(f->out, code))
-        return_thrown (f->out);
+    if (Do_Branch_Throws(OUT, code))
+        return_thrown (OUT);
 
-    return f->out;
+    return OUT;
 }
 
 
@@ -83,10 +83,10 @@ REB_R Upshot_Dispatcher(REBFRM *f)  // won't run until count is reached
     }
 
     REBVAL *code = FRM_ARG(f, 2);  // skip the RETURN
-    if (Do_Branch_Throws(f->out, code))
-        return_thrown (f->out);
+    if (Do_Branch_Throws(OUT, code))
+        return_thrown (OUT);
 
-    return f->out;
+    return OUT;
 }
 
 

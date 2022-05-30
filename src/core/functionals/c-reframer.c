@@ -299,16 +299,16 @@ REB_R Reframer_Dispatcher(REBFRM *f)
     //
     bool error_on_deferred = true;
     if (Make_Invokable_From_Feed_Throws(
-        f_spare,
+        SPARE,
         END_CELL,
         f->feed,
         error_on_deferred
     )){
-        return_thrown (f->out);
+        return_thrown (SPARE);
     }
 
     REBVAL *arg = FRM_ARG(f, VAL_INT32(param_index));
-    Move_Cell(arg, f_spare);
+    Move_Cell(arg, SPARE);
 
     INIT_FRM_PHASE(f, VAL_ACTION(shim));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(shim));

@@ -482,10 +482,8 @@ REBNATIVE(some_combinator)
         // iteration's successful output value)
         //
         SET_END(SPARE);  // spare can be trash
-        if (Call_Parser_Throws(SPARE, remainder, parser, input)) {
-            Move_Cell(OUT, SPARE);
-            return_thrown (OUT);  // see notes above about not removing loop
-        }
+        if (Call_Parser_Throws(SPARE, remainder, parser, input))
+            return_thrown (SPARE);  // see notes above about not removing loop
 
         if (IS_NULLED(SPARE)) {
             //

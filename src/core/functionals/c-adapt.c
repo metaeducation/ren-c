@@ -73,20 +73,18 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     // slot to a returner function that knows what frame to return from.
     // So simply DO-ing the array wouldn't have that effect.
 
-    REBVAL *discarded = FRM_SPARE(f);
-
     assert(IDX_ADAPTER_PRELUDE == IDX_DETAILS_1);  // same as interpreted body
 
     bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, discarded, f)) {
-        Move_Cell(f->out, discarded);
-        return_thrown (f->out);
-    }
+    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
+        return_thrown (SPARE);
 
     if (returned) {
-        if (IS_END(discarded))
-            return f->out;
-        return Move_Cell(f->out, discarded);
+        if (Is_Voided(SPARE))
+            return_void (OUT);
+        if (Is_Invisible(SPARE))
+            return_invisible (OUT);
+        return Move_Cell(OUT, SPARE);
     }
 
     // The second thing to do is update the phase and binding to run the

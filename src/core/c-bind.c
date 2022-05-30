@@ -336,10 +336,8 @@ REBNATIVE(let)
     //
     REBSPC *f_value_specifier;  // f_value may become specified by this
     if (IS_GROUP(f_value) or IS_SET_GROUP(f_value)) {
-        if (Do_Any_Array_At_Throws(SPARE, f_value, f_specifier)) {
-            Move_Cell(OUT, SPARE);
-            return_thrown (OUT);
-        }
+        if (Do_Any_Array_At_Throws(SPARE, f_value, f_specifier))
+            return_thrown (SPARE);
 
         switch (VAL_TYPE(SPARE)) {
           case REB_WORD:
@@ -469,10 +467,9 @@ REBNATIVE(let)
             // for the LET.
             //
             if (IS_GROUP(temp)) {
-                if (Do_Any_Array_At_Throws(SPARE, temp, item_specifier)) {
-                    Move_Cell(OUT, SPARE);
-                    return_thrown (OUT);
-                }
+                if (Do_Any_Array_At_Throws(SPARE, temp, item_specifier))
+                    return_thrown (SPARE);
+
                 temp = SPARE;
                 temp_specifier = SPECIFIED;
 
@@ -529,8 +526,8 @@ REBNATIVE(let)
         REBFLGS flags = EVAL_MASK_DEFAULT
             | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
-        SET_END(f->out);  // !!! Assert on Is_Fresh() otherwise, review
-        if (Eval_Step_In_Subframe_Maybe_Stale_Throws(f->out, f, flags))
+        SET_END(OUT);  // !!! Assert on Is_Fresh() otherwise, review
+        if (Eval_Step_In_Subframe_Maybe_Stale_Throws(OUT, f, flags))
             return_thrown (OUT);
 
         return OUT;

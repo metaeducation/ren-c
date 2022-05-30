@@ -190,20 +190,20 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     // be needed regardless.  Be attentive should this ever be switched to
     // try and use CTX_ARCHETYPE() directly to GC issues.
     //
-    REBVAL *rootcopy = Copy_Cell(FRM_SPARE(f), rootvar);
-    INIT_VAL_FRAME_PHASE_OR_LABEL(FRM_SPARE(f), VAL_ACTION_LABEL(inner));
+    REBVAL *rootcopy = Copy_Cell(SPARE, rootvar);
+    INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_ACTION_LABEL(inner));
 
     const bool fully = true;
-    if (rebRunMaybeStaleThrows(f->out, fully, outer, rootcopy))
-        return_thrown (f->out);
+    if (rebRunMaybeStaleThrows(OUT, fully, outer, rootcopy))
+        return_thrown (OUT);
 
-    if (Is_Voided(f->out))
-        return_void (f->out);
+    if (Is_Voided(OUT))
+        return_void (OUT);
 
-    if (Is_Invisible(f->out))
-        return_invisible (f->out);
+    if (Is_Invisible(OUT))
+        return_invisible (OUT);
 
-    return f->out;
+    return OUT;
 }
 
 

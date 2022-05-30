@@ -96,14 +96,13 @@
 REB_R Empty_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for return_xxx macros
+    USED(frame_);
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(VAL_LEN_AT(ARR_AT(details, IDX_DETAILS_1)) == 0);  // empty body
     UNUSED(details);
 
-    assert(Is_Stale(f->out));
-
-    return_invisible (f->out);
+    return_invisible (OUT);
 }
 
 
@@ -198,36 +197,36 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for RETURN macros
 
-    REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
+    // write to spare in case invisible RETURN
+    //
     bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
-        Move_Cell(f->out, spare);
-        return_thrown (f->out);
-    }
+    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
+        return_thrown (SPARE);
 
-    if (Is_Voided(spare))
-        return_void (f->out);
+    if (Is_Voided(SPARE))
+        return_void (OUT);
 
-    if (Is_Invisible(spare)) {
+    if (Is_Invisible(SPARE)) {
         if (GET_EVAL_FLAG(f, META_OUT))
-            return_invisible (f->out);
+            return_invisible (OUT);
 
         REBACT *phase = FRM_PHASE(f);
         if (ACT_HAS_RETURN(phase)) {
             const REBKEY *key = ACT_KEYS_HEAD(phase);
             const REBPAR *param = ACT_PARAMS_HEAD(phase);
             assert(KEY_SYM(key) == SYM_RETURN);
+            UNUSED(key);
             if (GET_PARAM_FLAG(param, VANISHABLE))
-                return_invisible (f->out);
+                return_invisible (OUT);
         }
-        return_void (f->out);
+        return_void (OUT);
     }
 
-    Clear_Stale_Flag(spare);
+    Clear_Stale_Flag(SPARE);
 
     return Move_Cell_Core(
-        f->out,  // not invisible--overwrite previous result
-        spare,
+        OUT,  // not invisible--overwrite previous result
+        SPARE,
         CELL_MASK_COPY | CELL_FLAG_UNEVALUATED  // keep unevaluated status
     );
 }
@@ -242,14 +241,12 @@ REB_R None_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for RETURN macros
 
-    REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
     bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
-        Move_Cell(f->out, spare);
-        return_thrown (f->out);
-    }
+    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
+        return_thrown (SPARE);
+
     UNUSED(returned);  // no additional work to bypass
-    return Init_None(f->out);
+    return Init_None(OUT);
 }
 
 
@@ -265,42 +262,42 @@ REB_R Returner_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // so we can use OUT
 
-    REBVAL *spare = FRM_SPARE(f);  // write to spare in case invisible RETURN
+    // write to spare in case invisible RETURN
+    //
     bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, spare, f)) {
-        Move_Cell(f->out, spare);
-        return_thrown (f->out);
-    }
+    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
+        return_thrown (SPARE);
 
-    if (Is_Voided(spare))
-        return_void (f->out);
+    if (Is_Voided(SPARE))
+        return_void (OUT);
 
-    if (Is_Invisible(spare)) {
+    if (Is_Invisible(SPARE)) {
         if (GET_EVAL_FLAG(f, META_OUT))
-            return_invisible (f->out);
+            return_invisible (OUT);
 
         REBACT *phase = FRM_PHASE(f);
         if (ACT_HAS_RETURN(phase)) {
             const REBKEY *key = ACT_KEYS_HEAD(phase);
             const REBPAR *param = ACT_PARAMS_HEAD(phase);
             assert(KEY_SYM(key) == SYM_RETURN);
+            UNUSED(key);
             if (GET_PARAM_FLAG(param, VANISHABLE))
-                return_invisible (f->out);
+                return_invisible (OUT);
         }
-        return_void (f->out);
+        return_void (OUT);
     }
 
-    Clear_Stale_Flag(spare);
+    Clear_Stale_Flag(SPARE);
 
     Move_Cell_Core(
-        f->out,  // wasn't invisible, so overwrite now
-        spare,
+        OUT,  // wasn't invisible, so overwrite now
+        SPARE,
         CELL_MASK_COPY | CELL_FLAG_UNEVALUATED
     );
 
     FAIL_IF_BAD_RETURN_TYPE(f);
 
-    return f->out;
+    return OUT;
 }
 
 
@@ -314,14 +311,15 @@ REB_R Elider_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for return_xxx macros
 
-    REBVAL *discarded = FRM_SPARE(f);  // spare usable during dispatch
-
+    // write to spare to leave OUT cell as-is, achieving invisibility
+    //
     bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, discarded, f))
-        return_thrown (f->out);
+    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
+        return_thrown (SPARE);
+
     UNUSED(returned);  // no additional work to bypass
 
-    return_invisible (f->out);
+    return_invisible (OUT);
 }
 
 
@@ -334,13 +332,14 @@ REB_R Elider_Dispatcher(REBFRM *f)
 REB_R Commenter_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for RETURN macros
+    USED(frame_);
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     RELVAL *body = ARR_AT(details, IDX_DETAILS_1);
     assert(VAL_LEN_AT(body) == 0);
     UNUSED(body);
 
-    return_invisible (f->out);
+    return_invisible (OUT);
 }
 
 

@@ -121,8 +121,8 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     const RELVAL *chained_tail = ARR_TAIL(pipeline);
     const RELVAL *chained = ARR_HEAD(pipeline);
 
-    SET_END(f_spare);
-    REBFRM *sub = Push_Downshifted_Frame(f_spare, f);
+    SET_END(SPARE);
+    REBFRM *sub = Push_Downshifted_Frame(SPARE, f);
 
     INIT_FRM_PHASE(sub, VAL_ACTION(chained));
     INIT_FRM_BINDING(sub, VAL_ACTION_BINDING(chained));
@@ -146,8 +146,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     while (true) {
         if (Process_Action_Maybe_Stale_Throws(sub)) {
             Abort_Frame(sub);
-            Move_Cell(f->out, sub->out);  // move from spare
-            return_thrown (f->out);
+            return_thrown (sub->out);
         }
 
         // We reuse the subframe's REBFRM structure, but have to drop the
@@ -181,7 +180,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
     Drop_Frame(sub);
 
-    return f_spare;
+    return SPARE;
 }
 
 

@@ -70,8 +70,10 @@ REBNATIVE(typecheck_internal_q)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a datatype.
 //
-REB_R Datatype_Checker_Dispatcher(REBFRM *f)
+REB_R Datatype_Checker_Dispatcher(REBFRM *frame_)
 {
+    REBFRM *f = frame_;
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
@@ -79,11 +81,11 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 
     if (VAL_TYPE_KIND_OR_CUSTOM(datatype) == REB_CUSTOM) {
         if (VAL_TYPE(FRM_ARG(f, 2)) != REB_CUSTOM)
-            return Init_False(f->out);
+            return Init_False(OUT);
 
         REBTYP *typ = VAL_TYPE_CUSTOM(datatype);
         return Init_Logic(
-            f->out,
+            OUT,
             CELL_CUSTOM_TYPE(FRM_ARG(f, 2)) == typ
         );
     }
@@ -91,7 +93,7 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *f)
     assert(KEY_SYM(ACT_KEY(FRM_PHASE(f), 1)) == SYM_RETURN);  // skip arg 1
 
     return Init_Logic(  // otherwise won't be equal to any custom type
-        f->out,
+        OUT,
         VAL_TYPE(FRM_ARG(f, 2)) == VAL_TYPE_KIND_OR_CUSTOM(datatype)
     );
 }
@@ -102,8 +104,10 @@ REB_R Datatype_Checker_Dispatcher(REBFRM *f)
 //
 // Dispatcher used by TYPECHECKER generator for when argument is a typeset.
 //
-REB_R Typeset_Checker_Dispatcher(REBFRM *f)
+REB_R Typeset_Checker_Dispatcher(REBFRM *frame_)
 {
+    REBFRM *f = frame_;
+
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_TYPECHECKER_MAX);
 
@@ -112,7 +116,7 @@ REB_R Typeset_Checker_Dispatcher(REBFRM *f)
 
     assert(KEY_SYM(ACT_KEY(FRM_PHASE(f), 1)) == SYM_RETURN);  // skip arg 1
 
-    return Init_Logic(f->out, TYPE_CHECK(typeset, VAL_TYPE(FRM_ARG(f, 2))));
+    return Init_Logic(OUT, TYPE_CHECK(typeset, VAL_TYPE(FRM_ARG(f, 2))));
 }
 
 

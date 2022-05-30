@@ -86,13 +86,13 @@ REB_R Block_Dispatcher(REBFRM *f)
     if (IS_SPECIFIC(block)) {
         if (FRM_BINDING(f) == UNBOUND) {
             if (Do_Any_Array_At_Throws(
-                SET_END(f->out),
+                SET_END(OUT),
                 SPECIFIC(block),
                 SPECIFIED
             )){
-                return_thrown (f->out);
+                return_thrown (OUT);
             }
-            return f->out;
+            return OUT;
         }
 
         // Until "virtual binding" is implemented, we would lose f->binding's
@@ -136,10 +136,10 @@ REB_R Block_Dispatcher(REBFRM *f)
 
     assert(IS_RELATIVE(block));
 
-    if (Do_Any_Array_At_Throws(SET_END(f->out), block, SPC(f->varlist)))
-        return_thrown (f->out);
+    if (Do_Any_Array_At_Throws(SET_END(OUT), block, SPC(f->varlist)))
+        return_thrown (OUT);
 
-    return f->out;
+    return OUT;
 }
 
 

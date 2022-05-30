@@ -56,7 +56,6 @@ REBNATIVE(delimit)
 {
     INCLUDE_PARAMS_OF_DELIMIT;
 
-    REBVAL *out = OUT;
     REBVAL *delimiter = ARG(delimiter);
     REBVAL *line = ARG(line);
 
@@ -81,7 +80,7 @@ REBNATIVE(delimit)
         if (REF(tail))
             Form_Value(mo, delimiter);
 
-        return Init_Text(out, Pop_Molded_String(mo));
+        return Init_Text(OUT, Pop_Molded_String(mo));
     }
 
     REBFLGS flags = EVAL_MASK_DEFAULT;
@@ -111,14 +110,14 @@ REBNATIVE(delimit)
         // https://forum.rebol.info/t/1348
         //
         if (KIND3Q_BYTE_UNCHECKED(f_value) == REB_BLANK) {
-            Literal_Next_In_Frame(out, f);
+            Literal_Next_In_Frame(OUT, f);
             Append_Codepoint(mo->series, ' ');
             pending = false;
             nothing = false;
             continue;
         }
 
-        if (Eval_Step_Maybe_Stale_Throws(SET_END(out), f)) {
+        if (Eval_Step_Maybe_Stale_Throws(SET_END(OUT), f)) {
             Drop_Mold(mo);
             Abort_Frame(f);
             return_thrown (OUT);
@@ -128,20 +127,20 @@ REBNATIVE(delimit)
         // operations like delimit are not positional, the risk is mitigated
         // of letting things like nulls and voids vaporize.
 
-        if (Is_Voided(out))
+        if (Is_Voided(OUT))
             continue;  // spaced [if false [<a>] ...]
 
-        if (Is_Invisible(out))
+        if (Is_Invisible(OUT))
             continue;  // spaced [comment "a" ...]
 
-        Clear_Stale_Flag(out);
+        Clear_Stale_Flag(OUT);
 
-        Decay_If_Isotope(out);  // spaced [match [logic!] false ...]
+        Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
 
-        if (IS_BLANK(out))  // see note above on BLANK!
+        if (IS_BLANK(OUT))  // see note above on BLANK!
             continue;  // opt-out and maybe keep option open to return NULL
 
-        if (IS_NULLED(out)) {
+        if (IS_NULLED(OUT)) {
             //
             // When NULL would vaporize it led to some confusing situations.
             // Erroring is probably worse than just showing something.
@@ -149,23 +148,23 @@ REBNATIVE(delimit)
             //    >> spaced [null "a" if true [null]]
             //    == "~null~ a ~null~"
             //
-            Init_Bad_Word(out, Canon(NULL));
+            Init_Bad_Word(OUT, Canon(NULL));
         }
-        else if (Is_Isotope(out)) {
+        else if (Is_Isotope(OUT)) {
             //
             // Is it better to error on isotopes or to reify them to BAD-WORD!
             //
-            fail (Error_Bad_Isotope(out));
+            fail (Error_Bad_Isotope(OUT));
         }
 
         nothing = false;
 
-        if (IS_ISSUE(out)) {  // do not delimit (unified w/char)
-            Form_Value(mo, out);
+        if (IS_ISSUE(OUT)) {  // do not delimit (unified w/char)
+            Form_Value(mo, OUT);
             pending = false;
         }
-        else if (ANY_ARRAY(out)) {
-            if (not IS_BLOCK(out))
+        else if (ANY_ARRAY(OUT)) {
+            if (not IS_BLOCK(OUT))
                 fail ("Only BLOCK! array types can be used in DELIMIT");
 
             // BLOCK!s are methods for gathering material to be part of the
@@ -177,21 +176,21 @@ REBNATIVE(delimit)
             // !!! Unify with the Modify_String() code so this doesn't need
             // to call through the API.
             //
-            if (VAL_LEN_AT(out) != 0) {
+            if (VAL_LEN_AT(OUT) != 0) {
                 if (pending)
                     Form_Value(mo, delimiter);
 
-                Move_Cell(f_spare, out);
+                Move_Cell(SPARE, OUT);
                 if (rebRunThrows(
-                    out,
+                    OUT,
                     true,
-                    Lib(APPEND), Lib(COPY), EMPTY_TEXT, rebQ(f_spare)
+                    Lib(APPEND), Lib(COPY), EMPTY_TEXT, rebQ(SPARE)
                 )){
                     Drop_Mold(mo);
                     Abort_Frame(f);
                     return_thrown (OUT);
                 }
-                Form_Value(mo, out);
+                Form_Value(mo, OUT);
 
                 pending = true;
             }
@@ -200,12 +199,12 @@ REBNATIVE(delimit)
             if (pending)
                 Form_Value(mo, delimiter);
 
-            if (IS_QUOTED(out)) {
-                Unquotify(out, 1);
-                Mold_Value(mo, out);
+            if (IS_QUOTED(OUT)) {
+                Unquotify(OUT, 1);
+                Mold_Value(mo, OUT);
             }
             else
-                Form_Value(mo, out);
+                Form_Value(mo, OUT);
 
             // Note that empty strings are distinct from blanks/nulls/[] in
             // terms of still being delimited.  This is important, e.g. in
@@ -218,21 +217,20 @@ REBNATIVE(delimit)
 
             pending = true;
         }
-    } while (NOT_END(f->feed->value));
+    } while (NOT_END(f_value));
 
     if (nothing) {
         Drop_Mold(mo);
-        Init_Nulled(out);
+        Init_Nulled(OUT);
     }
     else {
         if (REF(tail))
             Form_Value(mo, delimiter);
-        Init_Text(out, Pop_Molded_String(mo));
+        Init_Text(OUT, Pop_Molded_String(mo));
     }
 
     Drop_Frame(f);
 
-    assert(out == OUT);
     return OUT;
 }
 
