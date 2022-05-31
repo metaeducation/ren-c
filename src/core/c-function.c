@@ -243,6 +243,11 @@ void Push_Paramlist_Triads_May_Fail(
 
             STKVAL(*) param = PARAM_SLOT(DSP);
 
+            // By default parameters can be passed void, but if a block spec
+            // is found then it has to say `<void>` to allow it.
+            //
+            CLEAR_PARAM_FLAG(param, VANISHABLE);
+
             if (Is_Specialized(cast(REBPAR*, cast(REBVAL*, param))))
                 continue;
 
@@ -441,12 +446,18 @@ void Push_Paramlist_Triads_May_Fail(
                 TS_NOTHING
             );
         }
-        else
+        else {
             Init_Param(
                 param,
                 FLAG_PARAM_CLASS_BYTE(pclass),
                 TS_OPT_VALUE  // By default <opt> ANY-VALUE! is legal
             );
+
+            // We say they are vanishable by default, but clear this flag if
+            // a typeset block is found afterward.
+            //
+            SET_PARAM_FLAG(param, VANISHABLE);
+        }
 
         // All these would cancel a definitional return (leave has same idea):
         //

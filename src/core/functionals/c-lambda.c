@@ -186,7 +186,7 @@ REBNATIVE(lambda)
         else
             fail (item);
 
-        Init_Param(DS_PUSH(), pclass, TS_OPT_VALUE);
+        Init_Param(DS_PUSH(), pclass | PARAM_FLAG_VANISHABLE, TS_OPT_VALUE);
 
         Init_Nulled(DS_PUSH());  // types (not supported)
         Init_Nulled(DS_PUSH());  // notes (not supported)

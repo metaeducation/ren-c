@@ -9,9 +9,20 @@
 ;
 (3 = (1 then x -> [2 also y -> [3]]))
 
-; Meta parameters are allowed
+; Meta parameters are allowed, and accept voids by default`
 [
     ('~baddie~ = if true [~baddie~] then ^x -> [x])
+
+    (
+        tester: ^x -> [if x = '~void~ [<void>] else [<nonvoid>]]
+        <void> = tester comment "this should work"
+    )
+
+    ; this is true of funcs with no type specs on arguments as well
+    (
+        tester: func [^x] [if x = '~void~ [<void>] else [<nonvoid>]]
+        <void> = tester comment "this should work"
+    )
 ]
 
 ; Quoted parameters are allowed
