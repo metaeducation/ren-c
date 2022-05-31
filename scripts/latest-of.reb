@@ -273,7 +273,7 @@ latest-of: func [
     ; has its commit shorthash in the URL...so there aren't caching problems
     ; with files being overwritten (at least not typically).
 
-    let filename: to file! unspaced ["r3-" commit suffix extension]
+    let filename: to file! unspaced ["r3-" commit (try suffix) (try extension)]
     let url: to url! unspaced [
         cloudroot os "/" filename  ; cached cloudfront is okay for the binary
     ]
