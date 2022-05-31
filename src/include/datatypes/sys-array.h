@@ -575,18 +575,6 @@ inline static RELVAL *Init_Relative_Block_At(
     Init_Relative_Block_At((out), (action), (array), 0)
 
 
-// Checks if ANY-GROUP! is like ((...)) or (...), used by COMPOSE & PARSE
-//
-inline static bool Is_Any_Doubled_Group(REBCEL(const*) group) {
-    assert(ANY_GROUP_KIND(CELL_HEART(group)));
-    const RELVAL *tail;
-    const RELVAL *inner = VAL_ARRAY_AT(&tail, group);
-    if (inner + 1 != tail)  // should be exactly one item
-        return false;
-    return IS_GROUP(inner);  // if true, it's a ((...)) GROUP!
-}
-
-
 #ifdef NDEBUG
     #define ASSERT_ARRAY(s)     NOOP
     #define ASSERT_SERIES(s)    NOOP

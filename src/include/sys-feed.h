@@ -639,7 +639,7 @@ inline static void Prep_Va_Feed(
 
 inline static void Prep_Any_Array_Feed(
     REBFED *feed,
-    const RELVAL *any_array,  // array is extracted and HOLD put on
+    REBCEL(const*) any_array,  // array is extracted and HOLD put on
     REBSPC *specifier,
     REBFLGS parent_flags  // only reads FEED_FLAG_CONST out of this
 ){

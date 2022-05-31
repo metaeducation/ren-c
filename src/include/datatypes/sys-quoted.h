@@ -424,3 +424,14 @@ inline static bool IS_QUOTED_PATH(const RELVAL *v) {
         and VAL_QUOTED_DEPTH(v) == 1
         and CELL_KIND(VAL_UNESCAPED(v)) == REB_PATH;
 }
+
+// Checks if ANY-GROUP! is like ((...)) or (...), used by COMPOSE & PARSE
+//
+inline static bool Is_Any_Doubled_Group(REBCEL(const*) group) {
+    assert(ANY_GROUP_KIND(CELL_HEART(group)));
+    const RELVAL *tail;
+    const RELVAL *inner = VAL_ARRAY_AT(&tail, group);
+    if (inner + 1 != tail)  // should be exactly one item
+        return false;
+    return IS_GROUP(inner);  // if true, it's a ((...)) GROUP!
+}

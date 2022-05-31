@@ -11,19 +11,26 @@
 ; Preserve one element rule vs. tolerate vaporization.  ~null~ isotopes are
 ; treated the same by the compose site as pure NULL.
 ;
-([~null~ *] = compose [(null) * ((null))])
-([~null~ *] = compose [(~null~) * ((~null~))])
+([~null~ *] = compose [(reify null) * ((maybe null))])
+([~null~ *] = compose [(reify ~null~) * ((maybe ~null~))])
 
-; Comments vaporize regardless of form.
+; Voids vaporize regardless of form.
 
 ([*] = compose [(comment "single") * ((comment "spliced"))])
-
-; Only true invisibility will act as invisible in the single case, but in the
-; spliced case the invisible isotopic intent is tolerated vs. an error.
-;
-(error? trap [compose [(~none~) * <ok>]])
 ([* <ok>] = compose [(~void~) * <ok>])
-([<bad> *] = compose [<bad> * ((~void~))])
+([<ok> *] = compose [<ok> * ((~void~))])
+
+; Isotopes raise errors if they are non-decaying.  For the moment, NULL gives
+; a bad ~null~ isotope error as well (should likely be a different error)
+(
+    e: trap [compose [(~none~) * <ok>]]
+    e.id = 'bad-isotope
+)
+(
+    e: trap [compose [(null) * <ok>]]
+    e.id = 'bad-isotope
+)
+([#[false]] = compose [(~false~)])
 
 ; BLANK!s are as-is in the single form, but vanish in the spliced form, and
 ; other rules are just generally the append rules for the type.  Evaluative
@@ -197,9 +204,12 @@
 ; ([-30 70] = compose /negate [(10 + 20) ((30 + 40))])
 
 
-; BAD-WORD! isotopes are not legal in compose, except for the null isotope.
+; isotopes are not legal in compose, but you can reify them
 [
-    ([<a> ~null~ <b>] = compose [<a> (if true [null]) <b>])
+    ([<a> ~null~ <b>] = apply :compose [
+        [<a> (if true [null]) <b>]
+        /predicate chain [:reify :quote]
+    ])
     (error? trap [compose [<a> (~)]])
 ]
 
@@ -221,4 +231,9 @@
     ([a.b :a.b a.b: @a.b ^a.b] = compose [
         ('a.b) :('a.b) ('a.b): @('a.b) ^('a.b)
     ])
+]
+
+; More tests of crazy quoting depths needed, as it's tricky.
+[
+    (['''''''] = compose ['''''''(if false [<a>])])
 ]

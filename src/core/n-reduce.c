@@ -207,7 +207,9 @@ REBNATIVE(reduce_each)
 }
 
 
-bool Match_For_Compose(const RELVAL *group, const REBVAL *label) {
+bool Match_For_Compose(REBCEL(const*) group, const REBVAL *label) {
+    assert(ANY_GROUP_KIND(CELL_KIND(group)));
+
     if (IS_NULLED(label))
         return true;
 
@@ -299,7 +301,7 @@ REB_R Compose_To_Stack_Core(
         bool doubled_group = false;  // override predicate with ((...))
 
         REBSPC *match_specifier = nullptr;
-        const RELVAL *match = nullptr;
+        REBCEL(const*) match = nullptr;
 
         if (not ANY_GROUP_KIND(heart)) {
             //
@@ -315,8 +317,8 @@ REB_R Compose_To_Stack_Core(
             }
         }
         else {  // plain compose, if match
-            if (Match_For_Compose(f_value, label)) {
-                match = f_value;
+            if (Match_For_Compose(cell, label)) {
+                match = cell;
                 match_specifier = specifier;
             }
         }
@@ -341,57 +343,59 @@ REB_R Compose_To_Stack_Core(
                 return R_THROWN;
             }
 
-            if (Is_Voided(out) or Is_Invisible(out)) {
-                if (quotes > 0)  // compose [() '''()] => [''']
-                    Quotify(Init_Nulled(DS_PUSH()), quotes);
-                continue;
-            }
-
             Clear_Stale_Flag(out);
 
-            REBVAL *insert;
-            if (
-                predicate
-                and not doubled_group
-            ){
-                insert = rebMeta(predicate, rebQ(out));
-
-                if (insert == nullptr) {
-                    // leave alone
-                }
-                else if (Is_Null_Isotope(insert)) {
-                    insert = nullptr;
-                    rebRelease(insert);
-                }
+            if (predicate and not doubled_group) {
+                REBVAL *processed;
+                if (IS_VOID(out))
+                    processed = rebMeta(predicate, Init_Meta_Of_Void(out));
+                else if (IS_NULLED(out))
+                    processed = rebMeta(predicate, Init_Meta_Of_Null_Isotope(out));
+                else if (Is_Isotope(out))
+                    processed = rebMeta(predicate, Meta_Quotify(out));
                 else
-                    Meta_Unquotify(insert);
+                    processed = rebMeta(predicate, rebQ(out));
+
+                if (processed == nullptr)
+                    Init_Nulled(out);
+                else if (Is_Meta_Of_Void(processed)) {
+                    SET_END(out);
+                    rebRelease(processed);
+                }
+                else {
+                    Meta_Unquotify(Move_Cell(out, processed));
+                    rebRelease(processed);
+                }
             }
-            else {
-                insert = (IS_NULLED(out) or Is_Null_Isotope(out))
-                    ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
-                    : out;
-            }
 
-            if (insert and IS_NULLED(insert))
-                continue;
-
-            if (insert and Is_Isotope(insert))
-                fail (Error_Bad_Isotope(insert));
-
-            if (insert == nullptr and heart == REB_GROUP and quotes == 0) {
+            if (IS_VOID(out)) {
                 //
-                // compose [(null)] => [~null~]
-                // compose [((null))] => []
+                // compose [(void)] => []
                 //
-                if (not doubled_group)
-                    Init_Bad_Word(DS_PUSH(), Canon(NULL));
+                if (heart == REB_GROUP and quotes == 0)
+                    continue;
+
+                Init_Nulled(out);
             }
-            else if (insert and (predicate or doubled_group)) {
+            else
+                Decay_If_Isotope(out);
+
+            if (IS_NULLED(out) and (heart != REB_GROUP or quotes == 0)) {
+                //
+                // With voids, NULL is no longer tolerated in COMPOSE.  You
+                // have to use MAYBE.  Set as isotope to trigger error below.
+                //
+                Init_Null_Isotope(out);
+            }
+
+            if (Is_Isotope(out))
+                fail (Error_Bad_Isotope(out));
+
+            if (predicate or doubled_group) {
                 //
                 // We use splicing semantics if the result was produced by a
                 // predicate application, or if (( )) was used.  Splicing
-                // semantics match the rules for APPEND/etc, with the minor
-                // twist that NULL is accepted as vaporizing.  (The difference
+                // semantics match the rules for APPEND/etc.  (The difference
                 // here is that the (( )) has shown that a "one or many"
                 // intent is understood; APPEND lacks that, so it's best to
                 // err on the side of caution regarding NULL.  COMPOSE errs
@@ -402,23 +406,23 @@ REB_R Compose_To_Stack_Core(
                 if (quotes != 0 or heart != REB_GROUP)
                     fail ("Currently can only splice plain unquoted GROUP!s");
 
-                if (IS_BLANK(insert)) {
+                if (IS_BLANK(out)) {
                     //
                     // BLANK! does nothing in APPEND so do nothing.
                     //
                 }
-                else if (IS_QUOTED(insert)) {
+                else if (IS_QUOTED(out)) {
                     //
                     // Quoted items lose a quote level and get pushed.
                     //
-                    Unquotify(Copy_Cell(DS_PUSH(), insert), 1);
+                    Unquotify(Copy_Cell(DS_PUSH(), out), 1);
                 }
-                else if (IS_BLOCK(insert)) {
+                else if (IS_BLOCK(out)) {
                     //
                     // The only splice type is BLOCK!...
 
                     const RELVAL *push_tail;
-                    const RELVAL *push = VAL_ARRAY_AT(&push_tail, insert);
+                    const RELVAL *push = VAL_ARRAY_AT(&push_tail, out);
                     if (push != push_tail) {
                         //
                         // Only proxy newline flag from the template on *first*
@@ -428,7 +432,7 @@ REB_R Compose_To_Stack_Core(
                         // say `compose [thing ((block-of-things))]` did you
                         // want that block to fit on one line?
                         //
-                        Derelativize(DS_PUSH(), push, VAL_SPECIFIER(insert));
+                        Derelativize(DS_PUSH(), push, VAL_SPECIFIER(out));
                         if (GET_CELL_FLAG(f_value, NEWLINE_BEFORE))
                             SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
                         else
@@ -438,31 +442,30 @@ REB_R Compose_To_Stack_Core(
                             Derelativize(DS_PUSH(), push, VAL_SPECIFIER(insert));
                     }
                 }
-                else if (ANY_THE_KIND(VAL_TYPE(insert))) {
+                else if (ANY_THE_KIND(VAL_TYPE(out))) {
                     //
                     // the @ types splice as is without the @
                     //
-                    Plainify(Copy_Cell(DS_PUSH(), insert));
+                    Plainify(Copy_Cell(DS_PUSH(), out));
                 }
-                else if (not ANY_INERT(insert)) {
+                else if (not ANY_INERT(out)) {
                     fail ("COMPOSE slots that are (( )) can't be evaluative");
                 }
                 else {
-                    assert(not ANY_ARRAY(insert));
-                    Copy_Cell(DS_PUSH(), insert);
+                    assert(not ANY_ARRAY(out));
+                    Copy_Cell(DS_PUSH(), out);
                 }
             }
             else {
-                // !!! What about BAD-WORD!s?  REDUCE and other routines have
-                // become more lenient, and let you worry about it later.
-
                 // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
                 // compose [([a b c]) unmerged] => [[a b c] unmerged]
 
-                if (insert == nullptr)
+                if (IS_NULLED(out)) {
+                    assert(quotes != 0);  // handled above
                     Init_Nulled(DS_PUSH());
+                }
                 else
-                    Copy_Cell(DS_PUSH(), insert);  // can't stack eval direct
+                    Copy_Cell(DS_PUSH(), out);  // can't stack eval direct
 
                 if (heart == REB_SET_GROUP)
                     Setify(DS_TOP);
@@ -484,9 +487,6 @@ REB_R Compose_To_Stack_Core(
                 else
                     CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
             }
-
-            if (insert != out)
-                rebRelease(insert);
 
             SET_END(out);  // shouldn't leak temp eval to caller
 
