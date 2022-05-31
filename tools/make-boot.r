@@ -164,7 +164,7 @@ sym-n: 1  ; skip SYM_0 (null added as #1)
 add-sym: function compose/deep [
     {Add SYM_XXX to enumeration}
     return: [<opt> integer!]
-    word [word! ((if set? 'bar! [bar!]))]  ; bootstrap needs | accepted for BAR!
+    word [word! bar!]  ; bootstrap needs | accepted for BAR!, new alias WORD!
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][

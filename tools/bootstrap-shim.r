@@ -88,7 +88,7 @@ trap [
         fail/where "Don't use UNLESS in Bootstrap, definition in flux" 'dummy
     ]
 
-    export bar!: null  ; signal there is no BAR! type, and | is a WORD!
+    export bar!: word!  ; signal there is no BAR! type, and | is a WORD!
 
     export strip-commas-and-null-apostrophes: func [x] [x]  ; not needed
 
@@ -186,6 +186,7 @@ null?: lib/func [
 load-value: :load
 load-all: :load/all
 
+maybe: :opt  ; for use in compose, it's works for mapping to new semantics
 
 the: :quote  ; Renamed due to the QUOTED! datatype
 quote: lib/func [x [<opt> any-value!]] [
