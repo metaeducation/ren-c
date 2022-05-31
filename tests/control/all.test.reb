@@ -13,7 +13,7 @@
     (
         x: <overwritten>
         did all [
-            '~void~ = ^ x: all []
+            none? x: all []
             (unset? 'x)
         ]
     )
@@ -21,14 +21,14 @@
     ('~void~ = ^ all [] then [<then>])
     (<else> = all [] else [<else>])
 
-    (3 = (1 + 2 maybe all []))
-    (null = (1 + 2 maybe all [1 < 2, 3 > 4]))
+    (3 = (1 + 2 all []))
+    (null = (1 + 2 all [1 < 2, 3 > 4]))
 ]
 
-; light isotopes can be MAYBE'd to opt-out of voting.
+; voids opt-out of voting.
 (
     check1: true, check2: false
-    all [maybe if check1 [1 = 1], maybe if check2 [2 = 1]]
+    all [if check1 [1 = 1], if check2 [2 = 1]]
 )
 
 ; one value

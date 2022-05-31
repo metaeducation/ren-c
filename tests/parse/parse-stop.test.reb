@@ -4,7 +4,7 @@
 ; match a rule and return a result.
 
 [
-    ('~void~ = ^ uparse "a" [some ["a" stop]])
+    (none? uparse "a" [some ["a" stop]])
     ("a" = uparse "a" [some [stop "a"]])
 ]
 
@@ -28,4 +28,4 @@
 
 ; https://github.com/Oldes/Rebol-issues/issues/967
 ;
-(x: ~, did all ['~void~ = ^ uparse "" [some  [(x: 2) stop]], x = 2])
+(x: ~, did all [none? uparse "" [some  [(x: 2) stop]], x = 2])

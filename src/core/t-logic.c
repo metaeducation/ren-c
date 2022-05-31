@@ -253,8 +253,8 @@ REBNATIVE(_xor_)  // see TO-C-NAME
 //          [<opt> any-value!]
 //      left "Expression which will always be evaluated"
 //          [<opt> any-value!]
-//      right "Expression that's also always evaluated (can't short circuit)"
-//          [<opt> any-value!]  ; not a literal GROUP! as with XOR
+//      ^right "Expression that's also always evaluated (can't short circuit)"
+//          [<opt> <void> any-value!]  ; not a literal GROUP! as with XOR
 //  ]
 //
 REBNATIVE(unless)
@@ -265,10 +265,18 @@ REBNATIVE(unless)
 {
     INCLUDE_PARAMS_OF_UNLESS;
 
-    if (IS_TRUTHY(ARG(right)))
-        return ARG(right);
+    REBVAL *left = ARG(left);
+    REBVAL *right = ARG(right);
 
-    return ARG(left); // preserve the exact truthy or falsey value
+    if (Is_Meta_Of_Void(right))  // if right disappears (no branching), left
+        return left;
+
+    Meta_Unquotify(right);
+
+    if (IS_TRUTHY(right))
+        return right;
+
+    return left; // preserve the exact truthy or falsey value
 }
 
 

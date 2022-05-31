@@ -119,8 +119,8 @@
 )
 
 [
-    ('~void~ = ^uparse [] [maybe some 'a])
-    ('~void~ = ^ uparse [] [maybe some 'b])
+    (none? uparse [] [maybe some 'a])
+    ('~ = ^(uparse [] [maybe some 'b]))
     ('a == uparse [a] [maybe some 'a])
     (didn't uparse [a] [maybe some 'b])
     ('a == uparse [a] [maybe some 'b <any>])
@@ -140,7 +140,7 @@
 [
     ('~null~ = ^ uparse "a" ["a" opt some "b"])
     ('~null~ = ^ uparse "a" ["a" [opt "b"]])
-    ('~void~ = ^ uparse "a" ["a" ^[maybe some "b"]])
+    ('~void~ = uparse "a" ["a" ^[maybe some "b"]])
 ]
 
 ; This test works in Rebol2 even if it starts `i: 0`, presumably a bug.
@@ -169,8 +169,8 @@
 
 
 [
-    ('~void~ = ^ uparse "" [maybe some #a])
-    ('~void~ = ^ uparse "" [maybe some #b])
+    (none? uparse "" [maybe some #a])
+    (none? uparse "" [maybe some #b])
     (#a == uparse "a" [maybe some #a])
     (didn't uparse "a" [maybe some #b])
     (#a == uparse "a" [maybe some #b <any>])
@@ -188,8 +188,8 @@
     ])
     (didn't uparse #{01} [x: across <any> :(even? first x)])
     (didn't uparse #{0105} [some [x: across <any> :(even? first x)]])
-    ('~void~ = ^ uparse #{} [maybe some #{0A}])
-    ('~void~ = ^ uparse #{} [maybe some #{0B}])
+    (none? uparse #{} [maybe some #{0A}])
+    ('~ = ^ uparse #{} [maybe some #{0B}])
     (#{0A} == uparse #{0A} [maybe some #{0A}])
     (didn't uparse #{0A} [maybe some #{0B}])
     (10 == uparse #{0A} [maybe some #{0B} <any>])

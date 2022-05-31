@@ -219,7 +219,7 @@
     (#a == uparse "aa" [2 #a])
     (didn't uparse "aa" [3 #a])
     (#a == uparse "aa" [some [#a]])
-    ('~void~ = ^ uparse "aa" [some [#a] repeat (#) [#b]])
+    (#a = uparse "aa" [some [#a] repeat (#) [#b]])
     ("b" == uparse "aabb" [2 #a 2 "b"])
     (didn't uparse "aabb" [2 "a" 3 #b])
 ]

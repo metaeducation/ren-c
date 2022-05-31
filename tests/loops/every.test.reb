@@ -56,8 +56,7 @@
 
 ('~ = ^ every x [1 2 3 4] [maybe if odd? x [x]])
 (
-    e: trap [every x [1 2 3 4] [if odd? x [x]]]
-    e.id = 'bad-isotope
+    none? every x [1 2 3 4] [if odd? x [x]]
 )
 
 ('~ = ^ every x [1 2 3 4] [comment "heavy"])

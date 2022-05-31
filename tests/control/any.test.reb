@@ -14,14 +14,14 @@
     (
         x: <overwritten>
         did all [
-            '~void~ = ^ x: any []  ; overall expression remains ~void~
-            unset? 'x  ; but ~void~ isotopes decay to none on assignment
+            none? x: any []  ; void assignment propagates none
+            unset? 'x  ; void assignments unset variables
         ]
     )
     (<didn't> = if didn't any [] [<didn't>])
     (<else> = any [] else [<else>])
-    (3 = (1 + 2 maybe any []))
-    (null = (1 + 2 maybe any [1 > 2, 3 > 4]))
+    (3 = (1 + 2 any []))
+    (null = (1 + 2 any [1 > 2, 3 > 4]))
 ]
 
 

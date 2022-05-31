@@ -4,13 +4,13 @@
 ; NULL, ~null~ isotope, and END states.
 
 [
-    (did detector: func [^x [<opt> <end> any-value!]] [get/any 'x])
+    (did detector: func [^x [<opt> <end> <void> any-value!]] [x])
 
     ((the '10) = detector 10)
     (null = detector null)
     ('~null~ = detector if true [null])
 
-    (_ = detector (comment "hi"))
+    ('~void~ = detector (comment "hi"))
     ('~end~ = detector)
 
     (did left-detector: enfixed :detector)

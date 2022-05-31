@@ -158,7 +158,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
 //             reduce [spec.1 spec.2 spec.3]
 //             elide spec: my skip 3
 //         ] else [
-//             [return: [<opt> <invisible> any-value!]]",
+//             [return: [<opt> <void> any-value!]]",
 //         ]))
 //
 //         remainder: [<opt> any-series!]

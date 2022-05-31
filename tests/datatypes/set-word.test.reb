@@ -41,12 +41,15 @@
 
 [https://github.com/metaeducation/ren-c/issues/876 (
     x: 1020
-    1020 = (null, x: (void))
+    did all [
+        none? (null, x: (void))
+        none? get/any 'x
+    ]
 )(
     x: 1020
     did all [
         2 = (x: comment "Hi" 2)
-        x = 1020
+        unset? 'x
     ]
 )(
     bad-word? ^ x: lib.print "Hi"  ; generally you shouldn't use PRINT

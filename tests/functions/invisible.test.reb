@@ -4,19 +4,16 @@
 
 (1 = do [comment "a" 1])
 (1 = do [1 comment "a"])
-(blank? ^ comment "a")
-(blank? ^ (comment "a"))
+(void? comment "a")
+(void? (comment "a"))
 
-; META the word propagates invisibility vs. give back BLANK! like ^ does
+; META the word propagates invisibility vs. give back '~void~ like ^ does
 ;
-(blank? ^ (meta comment "a"))
-((the '_) = ^(^ comment "a"))
+(void? (meta comment "a"))
+((the '~void~) = ^(^ comment "a"))
 
-; In non-meta contexts, DO will give back a ~void~ isotope.  But in meta
-; contexts it will reveal the transparent intent by returning a blackhole!
-;
-('~void~ = ^ do [comment "a"])
-((the '~void~) = ^ meta eval [comment "a"])
+(void? meta eval [comment "a"])
+((the '~void~) = ^(^ eval [comment "a"]))
 
 ; !!! At one time, comment mechanics allowed comments to be enfix such that
 ; they ran as part of the previous evaluation.  This is no longer the case,
@@ -32,7 +29,7 @@
             1 + comment "a" comment "b" 2 * 3 fail "too far"
         ] 'pos
     ]
-    e.id = 'no-arg
+    e.id = 'isotope-arg
 )
 (
     pos: ~
@@ -67,10 +64,13 @@
     1 = do [1 elide "a"]
 )
 (
-    '~void~ = ^ do [elide "a"]
+    '~ = ^ do [elide "a"]
 )
-(invisible? elide "a")
-(blank? ^ elide "a")
+(
+    '~void~ = ^ eval [elide "a"]
+)
+(void? elide "a")
+('~void~ = ^ elide "a")
 
 
 (
@@ -108,7 +108,7 @@
     e: trap [
         x: 1 + elide (y: 10) 2 * 3  ; non-interstitial, no longer legal
     ]
-    e.id = 'no-arg
+    e.id = 'isotope-arg
 )
 
 ; ONCE-BAR was an experiment created to see if it could be done, and was
@@ -143,7 +143,10 @@
 ]
 
 (
-    '~void~ = ^ do [|||]
+    none? do [|||]
+)
+(
+    void? eval [|||]
 )
 (
     3 = do [1 + 2 ||| 10 + 20, 100 + 200]
@@ -307,30 +310,30 @@
     (null? do [left-hard*])
 ]
 
-; GROUP!s with no content act as invisible
+; void assignments decay to none on assignment, propagate the none
 (
-    x: <unchanged>
+    x: <overwritten>
     did all [
-        <unchanged> = (<discarded> x: ())
-        x = <unchanged>
+        none? (<discarded> x: ())
+        unset? 'x
     ]
 )(
-    x: <unchanged>
+    x: <overwritten>
     did all [
-        <unchanged> = (<discarded> x: comment "hi")
-        x = <unchanged>
+        none? (<discarded> x: comment "hi")
+        unset? 'x
     ]
 )(
-    obj: make object! [x: <unchanged>]
+    obj: make object! [x: <overwritten>]
     did all [
-        <unchanged> = (<discarded> obj.x: comment "hi")
-        obj.x = <unchanged>
+        none? (<discarded> obj.x: comment "hi")
+        unset? 'obj.x
     ]
 )(
-    obj: make object! [x: <unchanged>]
+    obj: make object! [x: <overwritten>]
     did all [
-        <unchanged> = (<discarded> obj.x: ())
-        obj.x = <unchanged>
+        none? (<discarded> obj.x: ())
+        unset? 'obj.x
     ]
 )
 
@@ -371,18 +374,27 @@
 (null? spaced [()])
 
 
-; GROUP!s are able to "vaporize" if they are empty or invisible
+; GROUP!s "vaporize" if they are empty or invisible, but can't be used as
+; inputs to enfix.
+;
 ; https://forum.rebol.info/t/permissive-group-invisibility/1153
 ;
-(() 1 + () 2 = () 3)
-((comment "one") 1 + (comment "two") 2 = (comment "three") 3)
-
+(
+    e: trap [() 1 + () 2 = () 3]
+    e.id = 'isotope-arg
+)
+(
+    e: trap [
+        (comment "one") 1 + (comment "two") 2 = (comment "three") 3
+    ]
+    e.id = 'isotope-arg
+)
 
 ; "Opportunistic Invisibility" means that functions can treat invisibility as
 ; a return type, decided on after they've already started running.  This means
 ; using the ^(...) form of RETURN, which can also be used for chaining.
 [
-    (vanish-if-odd: func [return: [<invisible> integer!] x] [
+    (vanish-if-odd: func [return: [<void> integer!] x] [
         if even? x [return x]
         return void
     ] true)
@@ -390,7 +402,7 @@
     (2 = (<test> vanish-if-odd 2))
     (<test> = (<test> vanish-if-odd 1))
 
-    (vanish-if-even: func [return: [<invisible> integer!] y] [
+    (vanish-if-even: func [return: [<void> integer!] y] [
        return maybe unmeta ^(vanish-if-odd y + 1)  ; could use UNMETA/VOID
     ] true)
 
@@ -400,7 +412,8 @@
 
 
 ; Invisibility is a checked return type, if you use a type spec...but allowed
-; by default if not.
+; by default if not.  If you use a type spec and try to return invisibly
+; you will get a none.
 [
     (
         no-spec: func [x] [return void]
@@ -411,28 +424,22 @@
         <test> = (<test> no-spec 10)
     )
     (
-        int-spec: func [return: [integer!] x] [return]
-        did all [
-            '~void~ = ^ x: int-spec 10  ; not invisible without ^META
-            unset? 'x  ; voids decay to nothing
-        ]
+        int-spec: func [return: [integer!] x] [return void]
+        none? int-spec 10
     )
     (
         int-spec: func [return: [integer!] x] [return]
-        did all [
-            '~void~ = x: ^ int-spec 10  ; not invisible without ^META
-            '~void~ = x  ; nothingness counts as unset
-        ]
+        none? int-spec 10
     )
 
     (
-        invis-spec: func [return: [<invisible> integer!] x] [
+        invis-spec: func [return: [<void> integer!] x] [
             return void
         ]
         <test> = (<test> invis-spec 10)
     )
     (
-        invis-spec: func [return: [<invisible> integer!] x] [
+        invis-spec: func [return: [<void> integer!] x] [
             return
         ]
         <test> = (<test> invis-spec 10)

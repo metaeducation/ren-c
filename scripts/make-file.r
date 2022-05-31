@@ -75,7 +75,7 @@ make-file-block-parts: func [
     last-was-slash: false
 
     return collect [iterate block [
-        item: either group? block.1 [try do block.1] [block.1]
+        item: either group? block.1 [try eval block.1] [block.1]
 
         item: predicate item
 
@@ -155,7 +155,7 @@ make-file-tuple-parts: func [
     tuple: as block! tuple
     return collect [iterate tuple [
         item: switch type of tuple.1 [
-            group! [do tuple.1]
+            group! [eval tuple.1]
             block! [fail "Blocks in tuples should reduce or something"]
         ] else [
             tuple.1
@@ -190,7 +190,7 @@ make-file-path-parts: func [
 ][
     path: as block! path
     return collect [iterate path [
-        item: either group? path.1 [do path.1] [path.1]
+        item: either group? path.1 [eval path.1] [path.1]
 
         item: predicate item
 

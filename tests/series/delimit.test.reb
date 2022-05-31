@@ -8,14 +8,14 @@
 ("1^/^/2" = delimit #"^/" ["1^/" "2"])
 
 ; Empty text is distinct from BLANK/null
-(" A" = delimit ":" [_ "A" null])
+(" A" = delimit ":" [_ "A" maybe null])
 (":A:" = delimit ":" ["" "A" ""])
 
 ; literal blanks act as spaces, fetched ones act as nulls
 [
     ("a  c" = spaced ["a" _ comment <b> _ "c"])
     ("a c" = spaced ["a" blank comment <b> blank "c"])
-    ("a c" = spaced ["a" null comment <b> null "c"])
+    ("a c" = spaced ["a" maybe null comment <b> try null "c"])
 ]
 
 ; ISSUE! is to be merged with CHAR! and does not space
@@ -57,17 +57,16 @@
     )
 ]
 
-; ~null~ and ~void~ isotopes are considered vaporizations
-; other isotopes are errors
+; ~void~ isotopes are considered vaporizations, other isotopes are errors
 [
-    ("Hello World" = spaced ["Hello" ~null~ "World"])
+    ("Hello World" = spaced ["Hello" ~void~ "World"])
     ("Hello World" = spaced ["Hello" if false ["Cruel"] "World"])
     ("Hello World" = spaced compose ["Hello" (if false ["Cruel"]) "World"])
 
     ("HelloWorld" = unspaced ["Hello" ~void~ "World"])
     (
         f: make frame! :void
-        "HelloWorld" = unspaced ["Hello" do f "World"]
+        "HelloWorld" = unspaced ["Hello" eval f "World"]
     )
 
     (
@@ -90,6 +89,6 @@
     (",a,b,c," = delimit/head/tail "," ["a" "b" "c"])
     (",a," = delimit/head/tail "," "a")
 
-    (null = delimit/head/tail "," [null])
+    (null = delimit/head/tail "," [void])
     (null = delimit/head/tail "," _)
 ]

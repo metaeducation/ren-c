@@ -64,8 +64,8 @@
 ; Plain loops that never actually run their body give back a match that is
 ; a ~void~ isotope, as do 0-iteration REPEAT and INTEGER! rules.
 [
-    ('~void~ = ^ uparse "a" ["a" repeat (0) "b"])
-    (# = uparse "a" ["a" ^[repeat (0) "b"]])
+    ("a" = uparse "a" ["a" repeat (0) "b"])
+    ('~void~ = uparse "a" ["a" ^[repeat (0) "b"]])
 ]
 
 ; Conventional ranges
@@ -81,7 +81,7 @@
     ("a" == uparse "aaaaaaa" [repeat (_) "b", maybe some "a"])
     ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat (_) "b", maybe some "a"])
     ("a" == uparse "aa" [repeat (_) "b", maybe some "a"])
-    ('~void~ = ^ uparse "" [repeat (_) "b", maybe some "a"])
+    (none? uparse "" [repeat (_) "b", maybe some "a"])
 ]
 
 ; Opt out completely, block form
@@ -89,7 +89,7 @@
     ("a" == uparse "aaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
     ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ _]) "b", maybe some "a"])
     ("a" == uparse "aa" [repeat ([_ _]) "b", maybe some "a"])
-    ('~void~ = ^ uparse "" [repeat ([_ _]) "b", maybe some "a"])
+    (none? uparse "" [repeat ([_ _]) "b", maybe some "a"])
 ]
 
 ; Minimum but no maximum
@@ -113,7 +113,7 @@
     ("a" == uparse "aaaaaaa" [repeat (#) "a"])
     ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat (#) "a"])
     ("a" == uparse "aa" [repeat (#) "a"])
-    ('~void~ = ^ uparse "" [repeat (#) "a"])
+    (none? uparse "" [repeat (#) "a"])
 ]
 
 ; No minimum or maximum (MAYBE SOME equivalent), block form
@@ -121,7 +121,7 @@
     ("a" == uparse "aaaaaaa" [repeat ([_ #]) "a"])
     ("a" == uparse "aaaaaaaaaaaaaaaaaaa" [repeat ([_ #]) "a"])
     ("a" == uparse "aa" [repeat ([_ #]) "a"])
-    ('~void~ = ^ uparse "" [repeat ([_ #]) "a"])
+    (none? uparse "" [repeat ([_ #]) "a"])
 ]
 
 ; THE-BLOCK! also accepted

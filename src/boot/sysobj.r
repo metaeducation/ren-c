@@ -175,7 +175,7 @@ standard: make object! [
 
     proc-return-type: []  ; was once [bad-word!], now just []
 
-    elider-return-type: [<invisible>]
+    elider-return-type: [<void>]
 
     proc-body: [
         return: make action! [

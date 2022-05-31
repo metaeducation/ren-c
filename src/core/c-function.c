@@ -200,7 +200,7 @@ void Push_Paramlist_Triads_May_Fail(
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
                 *flags |= MKF_IS_ELIDER;
 
-                // Fake as if they said [<invisible>] !!! make more efficient
+                // Fake as if they said [<void>] !!! make more efficient
                 //
                 STKVAL(*) param = PARAM_SLOT(DSP);
                 CLEAR_ALL_TYPESET_BITS(param);
@@ -510,18 +510,17 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             // By default, you can return anything.  This goes with the bias
             // that checks happen on the reading side of things, not writing.
             //
-            // *This includes invisibility*.  Returning pure invisibility is
-            // a bit rare when your function has a body and you don't use
-            // RETURN, because the entire body has to vanish.  If it does, we
-            // want to allow it:
+            // This includes void.  Returning void is a bit rare when your
+            // function has a body and you don't use RETURN, because the entire
+            // body has to be void.  If it does, we want to allow it:
             //
             //    >> wrapper: func [x] [comment x]
             //
             //    >> 1 + 2 wrapper "This is desirable"
             //    == 3
             //
-            // The potential damage this can do is mitigated by not making
-            // RETURN with no argument vanish the same way RETURN VOID can.
+            // If you have a RETURN spec, however, you must explicitly say
+            // you can return void.
             //
             Init_Param(
                 param,

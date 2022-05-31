@@ -37,7 +37,7 @@
     ([[a 1] [b 2] [c ~null~]] = collect [
         assert [
             <exhausted> = for-parallel [x y] [a b c] [1 2] [
-                keep/only :[x y]
+                keep/only :[x reify y]
                 if y [y * 10] else [<exhausted>]
             ]
         ]
@@ -46,7 +46,7 @@
     ([[a 1] [b 2] [~null~ 3]] = collect [
         assert [
             30 = for-parallel [x y] [a b] [1 2 3] [
-                keep/only :[x y]
+                keep/only :[reify x y]
                 y * 10
             ]
         ]

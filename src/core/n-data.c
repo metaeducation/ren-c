@@ -1308,45 +1308,40 @@ void Set_Var_May_Fail(
 //  {Sets a word or path to specified value (see also: UNPACK)}
 //
 //      return: "Same value as input"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      steps: "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
 //          [the-block! the-word! symbol! blackhole!]
 //
 //      target "Word or path (# means ignore assignment, just return value)"
 //          [blackhole! any-word! symbol! any-sequence! any-group! any-block!]
-//      ^value [<opt> any-value!]
+//      ^value [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(set)
+//
+// 1. While the written value would decay if an isotope, the overall return
+//    result is the same as was passed in:
+//
+//        >> set 'x match logic! false
+//        == ~false~  ; isotope
+//
+//    The exception is ~void~ isotopes, which have no reified form, and are
+//    returned as none (~) isotopes.
 {
     INCLUDE_PARAMS_OF_SET;
 
     REBVAL *steps = ARG(steps);
     REBVAL *target = ARG(target);
-    REBVAL *value = ARG(value);
+    REBVAL *v = ARG(value);
 
     REBVAL *steps_out = REF(steps) ? SPARE : nullptr;
 
-    // Setting things to invisible values means we want to return the prior
-    // value of the variable.  We can only do this if there is a non-blackhole
-    // target; if it's a blackhole we have to return a ~blackhole~ isotope.
-    //
-    if (Is_Meta_Of_Pure_Invisible(value)) {  // pure invisibility
-        if (Is_Blackhole(target))
-            return Init_Isotope(OUT, Canon(BLACKHOLE));
-
-        if (Get_Var_Core_Throws(OUT, steps_out, target, SPECIFIED))
-            return_thrown (OUT);
-
-        return OUT;
-    }
-
-    if (Is_Meta_Of_Void_Isotope(value))
-        Init_None(value);  // Can't store the void
+    if (Is_Meta_Of_Void(v))
+        Init_None(v);  // can't store the void--no reified form, see [1]
     else
-        Meta_Unquotify(value);
+        Meta_Unquotify(v);
 
-    if (Set_Var_Core_Throws(OUT, steps_out, target, SPECIFIED, value)) {
+    if (Set_Var_Core_Throws(OUT, steps_out, target, SPECIFIED, v)) {
         assert(steps_out);  // !!! should plain POKE* be allowed to throw?
         return_thrown (OUT);
     }
@@ -1354,10 +1349,7 @@ REBNATIVE(set)
     if (steps_out and not Is_Blackhole(steps))
         Set_Var_May_Fail(steps, SPECIFIED, SPARE);
 
-    // Note that while the written value would decay if an isotope, the overall
-    // return result is the same as was passed in.
-    //
-    return value;
+    return v;  // result does not decay unless void, see [1]
 }
 
 
@@ -1368,7 +1360,7 @@ REBNATIVE(set)
 //
 //      return: "blank if input would trigger ELSE, original value otherwise"
 //          [any-value!]
-//      ^optional [<opt> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(try)
@@ -1380,10 +1372,8 @@ REBNATIVE(try)
     if (IS_NULLED(v))
         return Init_Blank(OUT);
 
-    if (Is_Meta_Of_Void_Isotope(v))
+    if (Is_Meta_Of_Void(v))
         return Init_Blank(OUT);
-
-    assert(not Is_Meta_Of_Pure_Invisible(v));  // input is not <invisible>
 
     Meta_Unquotify(v);
     Decay_If_Isotope(v);  // Decay "normal" isotopes, including ~null~ isotopes
@@ -1405,7 +1395,7 @@ REBNATIVE(try)
 //
 //      return: "null on blank, ~null~ if input was NULL, or original value"
 //          [<opt> any-value!]
-//      ^optional [<opt> <blank> any-value!]
+//      ^optional [<opt> <blank> <void> any-value!]
 //  ]
 //
 REBNATIVE(opt)
@@ -1414,8 +1404,11 @@ REBNATIVE(opt)
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Meta_Of_Void_Isotope(v))
+    if (Is_Meta_Of_Void(v))
         return nullptr;  // so you can say `x: opt if condition [...]`
+
+    if (Is_Meta_Of_None(v))
+        return nullptr;  // handy for `opt switch x [1 [if false [<a>]]` cases
 
     Meta_Unquotify(v);
     Decay_If_Isotope(v);
@@ -1567,15 +1560,20 @@ REBNATIVE(semiquoted_q)
 //
 //  {Returns input value (https://en.wikipedia.org/wiki/Identity_function)}
 //
-//      return: [<opt> any-value!]
-//      value [<end> <opt> any-value!]
+//      return: [<opt> <void> any-value!]
+//      ^value [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
 {
     INCLUDE_PARAMS_OF_IDENTITY;
 
-    return ARG(value);
+    REBVAL *v = ARG(value);
+
+    if (Is_Meta_Of_Void(v))
+        return_void (OUT);
+
+    return Meta_Unquotify(v);
 }
 
 
@@ -2243,7 +2241,7 @@ REBNATIVE(null_q)
 //  "Tells you if argument is a ~ isotope (not a ~ BAD-WORD!)"
 //
 //      return: [logic!]
-//      ^optional [<opt> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(none_q)
@@ -2259,56 +2257,31 @@ REBNATIVE(none_q)
 //
 //  "0-arity comment (use ~void~ to make translucent isotopes)"
 //
-//      return: [<invisible>]
+//      return: [<void>]
 //  ]
 //
 REBNATIVE(void)
 {
     INCLUDE_PARAMS_OF_VOID;
 
-    return_invisible (OUT);
+    return_void (OUT);
 }
 
 
 //
 //  void?: native [
 //
-//  "Tells you if argument is pure void or a ~void~ isotope"
+//  "Tells you if argument is void"
 //
 //      return: [logic!]
-//      ^optional [<opt> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(void_q)
-//
-// Note: This conflates the two forms of void; one must use direct comparison
-// of taking the meta value against BLANK! or ~void~ for discernment.
 {
     INCLUDE_PARAMS_OF_VOID_Q;
 
-    REBVAL *v = ARG(optional);
-
-    if (Is_Meta_Of_Pure_Invisible(v) or Is_Meta_Of_Void_Isotope(v))
-        return Init_True(OUT);
-
-    return Init_False(OUT);
-}
-
-
-//
-//  invisible?: native [
-//
-//  "Tells you if argument is pure void"
-//
-//      return: [logic!]
-//      ^optional [<opt> <invisible> any-value!]
-//  ]
-//
-REBNATIVE(invisible_q)
-{
-    INCLUDE_PARAMS_OF_VOID_Q;
-
-    return Init_Logic(OUT, Is_Meta_Of_Pure_Invisible(ARG(optional)));
+    return Init_Logic(OUT, Is_Meta_Of_Void(ARG(optional)));
 }
 
 
@@ -2339,8 +2312,8 @@ REBNATIVE(blackhole_q)
 //
 //  {Make the heavy form of NULL (passes through all other values)}
 //
-//      return: [<invisible> <opt> any-value!]
-//      ^optional [<opt> any-value!]
+//      return: [<void> <opt> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(heavy) {
@@ -2348,10 +2321,7 @@ REBNATIVE(heavy) {
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Meta_Of_Pure_Invisible(v))
-        return_invisible (OUT);
-
-    if (Is_Meta_Of_Void_Isotope(v))
+    if (Is_Meta_Of_Void(v))
         return_void (OUT);
 
     Move_Cell(OUT, Meta_Unquotify(v));
@@ -2432,10 +2402,7 @@ REBNATIVE(isotopify_if_falsey)
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Meta_Of_Pure_Invisible(v))
-        return_invisible (OUT);
-
-    if (Is_Meta_Of_Void_Isotope(v))
+    if (Is_Meta_Of_Void(v))
         return_void (OUT);
 
     Meta_Unquotify(v);
@@ -2450,7 +2417,7 @@ REBNATIVE(isotopify_if_falsey)
 //  "Turn NULL and isotopes into plain BAD-WORD!s, pass through other values"
 //
 //      return: [any-value!]
-//      ^optional [<opt> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(reify)
@@ -2461,9 +2428,6 @@ REBNATIVE(reify)
 
     if (IS_NULLED(v))
         return Init_Bad_Word(OUT, Canon(NULL));
-
-    if (Is_Meta_Of_Pure_Invisible(v))
-        return Init_Meta_Of_Void_Isotope(OUT);
 
     if (IS_BAD_WORD(v))  // e.g. the input was an isotope form
         return v;

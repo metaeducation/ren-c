@@ -157,9 +157,6 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
     if (IS_END(f_next))
         return;
 
-    if (Is_Voided(f->out))
-        return;
-
     if (not Is_Stale(f->out) and Is_Evaluator_Throwing_Debug())
         return;
 
@@ -272,18 +269,9 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);
 
-        if (Is_Voided(f->out)) {
+        if (Is_Stale(f->out)) {
             //
-            // The output cell could contain anything, but the intent is that
-            // this will resolve (at some point) to either a ~void~ isotope
-            // or a none (~) isotope.  We can't trust the stale flag until
-            // that resolution has happened...but either way, it represents
-            // something that we allow to bypass type checking (all isotopes
-            // are legal returns at this time for all functions).
-        }
-        else if (Is_Stale(f->out)) {
-            //
-            // If a function is invisible, it left whatever was in the output
+            // If a function is void, it left whatever was in the output
             // from before it ran.  So there's no correspondence to the return
             // types it declares it could return itself (if the output was
             // not flagged with the stale bit).
@@ -296,7 +284,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
                 and NOT_PARAM_FLAG(param, VANISHABLE)  // e.g. can be invisible
             ){
                 Clear_Stale_Flag(f->out);  // let VAL_TYPE() work
-                printf("Native code violated return type contract!\n");
+                assert(!"Native code violated return type contract!\n");
                 panic (Error_Bad_Return_Type(
                     f,
                     IS_END(f->out) ? REB_0_END : VAL_TYPE(f->out)
@@ -310,7 +298,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
                 and GET_EVAL_FLAG(f, RUNNING_ENFIX)
             )  // exemption, e.g. `1 comment "hi" + 2` infix non-stale
         ){
-            printf("Native code violated return type contract!\n");
+            assert(!"Native code violated return type contract!\n");
             panic (Error_Bad_Return_Type(
                 f,
                 IS_END(f->out) ? REB_0_END : VAL_TYPE(f->out)

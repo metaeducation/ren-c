@@ -16,17 +16,17 @@
 
 (did all [
     "b" == uparse "bbb" [
-        (x: 10, y: ~)
-        y: x: maybe some "a"  ; no match, so void, no change to x
+        (x: 10, y: 20)
+        y: x: maybe some "a"  ; !!! maybe retention concept TBD
         some "b"
     ]
-    y = 10
-    x = 10
+    unset? 'y
+    unset? 'x
 ])
 
 (did all [
     "b" == uparse "aaabbb" [
-        (x: 10, y: ~)
+        (x: 10, y: 20)
         y: x: maybe some "a"  ; matched, so non-void...changes x
         some "b"
     ]
@@ -36,30 +36,30 @@
 
 (did all [
     "b" == uparse "aaabbb" [
-        (x: 10, y: ~)
-        y: x: maybe elide some "a"  ; invisibles stay invisible, no change to x
+        (x: 10, y: 20)
+        y: x: maybe elide some "a"  ; !!! TBD: invisibles stay invisible
         some "b"
     ]
-    x = 10
-    y = 10
+    unset? 'x
+    unset? 'y
 ])
 
 (did all [
     "b" == uparse "bbb" [
-        (x: 10, y: ~)
-        y: x: maybe (~null~)  ; Align with `maybe if true [null]` vanishing
+        (x: 10, y: 20)
+        y: x: maybe (~null~)  ; !!! TBD: align with `maybe if true [null]`
         some "b"
     ]
-    x = 10
-    y = 10
+    unset? 'x
+    unset? 'y
 ])
 
 (did all [
     "b" == uparse "bbb" [
-        (x: 10, y: ~)
-        y: x: maybe (~none~)  ; Isotopic ~none~ not conflated w/invisible
+        (x: 10, y: 20)
+        y: x: maybe (~)  ; Isotopic ~none~ not conflated w/invisible
         some "b"
     ]
-    '~void~ = ^ get/any 'x
-    '~void~ = ^ get/any 'y
+    '~ = ^ get/any 'x
+    '~ = ^ get/any 'y
 ])

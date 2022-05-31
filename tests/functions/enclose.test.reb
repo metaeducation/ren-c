@@ -33,13 +33,13 @@
         return void
     ]
     did all [
-        304 = (304 maybe/value outer)
-        _ = ^ (outer)
+        304 = (304 maybe outer)
+        void? outer
         var = 1020
     ]
 )(
     var: #before
-    inner: func [return: [<invisible>]] [
+    inner: func [return: [<void>]] [
         var: 1020
         return void
     ]
@@ -52,12 +52,12 @@
     ]
 )(
     var: #before
-    inner: func [return: [<invisible>]] [
+    inner: func [return: [<void>]] [
         var: 1020
         return void
     ]
-    outer: enclose :inner func [return: [<opt> <invisible> any-value!] f] [
-        return do f  ; now try unquoting
+    outer: enclose :inner func [return: [<opt> <void> any-value!] f] [
+        return eval f  ; now try unquoting
     ]
     did all [
         '~void~ = ^(outer)

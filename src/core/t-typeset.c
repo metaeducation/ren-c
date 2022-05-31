@@ -194,7 +194,7 @@ bool Add_Typeset_Bits_Core(
                 //
                 TYPE_SET(typeset, REB_NULL);
             }
-            else if (0 == CT_String(item, Root_Invisible_Tag, strict)) {
+            else if (0 == CT_String(item, Root_Void_Tag, strict)) {
                 SET_PARAM_FLAG(typeset, VANISHABLE);  // !!! REB_BYTES hack
             }
             else if (0 == CT_String(item, Root_Skip_Tag, strict)) {

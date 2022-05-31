@@ -106,7 +106,7 @@
     )
 ]
 
-; Pure invisible and non-invisibles
+; Void handling, just vanishes
 [
     ('z = uparse [x z] ['x :(if false 'y) 'z])
 

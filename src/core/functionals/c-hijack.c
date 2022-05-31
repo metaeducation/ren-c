@@ -228,11 +228,8 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
     if (Redo_Action_Maybe_Stale_Throws(OUT, f, hijacker))
         return_thrown (OUT);
 
-    if (Is_Voided(OUT))
-        return_void (OUT);
-
     if (Is_Stale(OUT))
-        return_invisible (OUT);
+        return_void (OUT);
 
     return OUT;
 }

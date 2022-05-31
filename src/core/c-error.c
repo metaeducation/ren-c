@@ -1194,7 +1194,7 @@ REBCTX *Error_No_Catch_For_Throw(REBVAL *thrown)
     DECLARE_LOCAL (arg);
     CATCH_THROWN_META(arg, thrown);
 
-    if (Is_Meta_Of_Pure_Invisible(arg) or Is_Meta_Of_Void_Isotope(arg))
+    if (Is_Meta_Of_Void(arg))
         Init_None(arg);
     else
         Meta_Unquotify(arg);

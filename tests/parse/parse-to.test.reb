@@ -52,7 +52,7 @@
 [(
     "" = uparse "abc" [to <end>]
 )(
-    '~void~ = ^ (uparse "abc" [elide to <end>])  ; ornery none
+    none? uparse "abc" [elide to <end>]  ; ornery none
 )(
     "b" = uparse "aaabbb" [thru "b" elide to <end>]
 )(

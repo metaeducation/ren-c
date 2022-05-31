@@ -977,9 +977,7 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
     SET_END(result);  // !!! Redundant?
 
     Run_Va_Translucent_May_Fail(result, false, p, vaptr);  // calls va_end()
-
-    bool is_invisible_ok = false;
-    Reify_Eval_Out_Meta(result, is_invisible_ok);
+    Reify_Eval_Out_Meta(result);
 
     if (IS_NULLED(result)) {
         rebRelease(result);
@@ -1028,11 +1026,7 @@ REBVAL *RL_rebMetaInterruptible(
     REBVAL *v = Alloc_Value();
     Run_Va_Translucent_May_Fail(v, true, p, vaptr);  // calls va_end()
 
-    // !!! Hack for the console, say the interruptible form can return an
-    // invisibility indicator.  Should be a separate entry point.
-    //
-    bool is_invisible_ok = true;
-    Reify_Eval_Out_Meta(v, is_invisible_ok);
+    Reify_Eval_Out_Meta(v);
 
     if (not IS_NULLED(v))
         return v;  // caller must rebRelease()

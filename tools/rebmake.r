@@ -1083,9 +1083,9 @@ object-file-class: make object! [
             output
             source
 
-            /I compose [((opt includes)) ((opt I))]
-            /D compose [((opt definitions)) ((opt D))]
-            /F compose [((opt F)) ((opt cflags))]  ; extra cflags override
+            /I compose [((maybe includes)) ((maybe I))]
+            /D compose [((maybe definitions)) ((maybe D))]
+            /F compose [((maybe F)) ((maybe cflags))]  ; extra cflags override
 
             ; "current setting overwrites /refinement"
             ; "because the refinements are inherited from the parent" (?)

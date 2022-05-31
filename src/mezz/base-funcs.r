@@ -622,7 +622,16 @@ ensure: redescribe [
 )
 
 non: redescribe [
-    {Pass through value if it *doesn't* match test (e.g. MATCH/NOT)}
+    {Pass through value if it *doesn't* match test, else null (e.g. MATCH/NOT)}
+](
+    enclose :match func [f] [
+        let value: :f.value  ; DO makes frame arguments unavailable
+        decay do f then [null] else [:value]
+    ]
+)
+
+prohibit: redescribe [
+    {Pass through value if it *doesn't* match test, else fail (e.g. ENSURE/NOT)}
 ](
     enclose :match func [f] [
         let value: :f.value  ; DO makes frame arguments unavailable
@@ -711,7 +720,7 @@ entrap: func [
 reduce*: redescribe [
     "REDUCE a block but vaporize NULL Expressions"
 ](
-    specialize :reduce [predicate: :maybe/value]
+    specialize :reduce [predicate: :maybe]
 )
 
 for-next: redescribe [

@@ -76,20 +76,27 @@ REBNATIVE(reduce)
         }
 
         if (IS_NULLED(ARG(predicate))) {  // default processing
-            if (Is_Voided(OUT))
+            if (Is_Stale(OUT))
                 continue;  // reduce [<a> if false [<b>]] => [<a>]
-
-            if (Is_Invisible(OUT))
-                continue;  // reduce [<a> comment "hi"] => [<a>]
+                           // reduce [<a> comment "hi"] => [<a>]
         }
-        else {  // usermode post-processing of result if requested
-
-            if (Is_Voided(OUT))
-                Init_Meta_Of_Void_Isotope(OUT);
-            else if (Is_Invisible(OUT))
-                Copy_Cell(OUT, Lib(VOID));
-
-            REBVAL *processed = rebMeta(predicate, rebQ(OUT));
+        else {
+            // usermode post-processing of result if requested
+            //
+            // !!! Experiment with pattern for passing predicate parameters.
+            // If this works, it should be generalized and reused.
+            //
+            REBVAL *processed;
+            if (Is_Stale(OUT))
+                processed = rebMeta(predicate, Init_Meta_Of_Void(OUT));
+            else if (Is_Isotope(OUT))
+                processed = rebMeta(predicate, Meta_Quotify(OUT));
+            else if (IS_NULLED(OUT))
+                processed = rebMeta(
+                    predicate, PG_At_Word, Init_Meta_Of_Null_Isotope(OUT)
+                );
+            else
+                processed = rebMeta(predicate, rebQ(OUT));
 
             if (not processed) {
                 Init_Nulled(OUT);
@@ -98,25 +105,21 @@ REBNATIVE(reduce)
                 Move_Cell(OUT, processed);
                 rebRelease(processed);
 
-                if (
-                    Is_Meta_Of_Pure_Invisible(OUT)
-                    or Is_Meta_Of_Void_Isotope(OUT)
-                ){
-                    continue;  // `reduce/predicate [null] :maybe/value`
-                }
+                if (Is_Meta_Of_Void(OUT))
+                    continue;  // `reduce/predicate [null] :maybe`
 
                 Meta_Unquotify(OUT);
             }
         }
 
-        if (IS_NULLED(OUT)) {
-            Init_Meta_Of_Nulled_Isotope(DS_PUSH());
-        }
-        else {
-            Move_Cell(DS_PUSH(), OUT);
-            if (IS_BAD_WORD(DS_TOP))
-                CLEAR_CELL_FLAG(DS_TOP, ISOTOPE);  // must be block-safe
-        }
+        if (IS_NULLED(OUT))  // not tolerated: use MAYBE or REIFY, etc.
+            Init_Null_Isotope(OUT);  // trigger error below
+
+        if (Is_Isotope(OUT))
+            fail (Error_Bad_Isotope(OUT));
+
+        Move_Cell(DS_PUSH(), OUT);
+
         if (line)
             SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
     }
@@ -175,10 +178,8 @@ REBNATIVE(reduce_each)
             return_thrown (SPARE);
         }
 
-        if (Is_Voided(SPARE) or Is_Invisible(SPARE))
+        if (Is_Stale(SPARE))
             continue;
-
-        Clear_Stale_Flag(f->out);
 
         // !!! This needs to handle the case where the vars are ^META, as well
         // as multiple vars.  Eval_Step_Throws() discards information that we
@@ -308,8 +309,9 @@ REB_R Compose_To_Stack_Core(
             // Don't compose at this level, but may need to walk deeply to
             // find compositions inside it if /DEEP and it's an array
         }
-        else if (not only and Is_Any_Doubled_Group(f_value)) {
-            const RELVAL *inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
+        else if (not only and Is_Any_Doubled_Group(cell)) {
+            const RELVAL *inner = VAL_ARRAY_ITEM_AT(cell);  // 1 item
+            assert(IS_GROUP(inner));
             if (Match_For_Compose(inner, label)) {
                 doubled_group = true;
                 match = inner;
@@ -439,7 +441,7 @@ REB_R Compose_To_Stack_Core(
                             CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
 
                         while (++push, push != push_tail)
-                            Derelativize(DS_PUSH(), push, VAL_SPECIFIER(insert));
+                            Derelativize(DS_PUSH(), push, VAL_SPECIFIER(out));
                     }
                 }
                 else if (ANY_THE_KIND(VAL_TYPE(out))) {

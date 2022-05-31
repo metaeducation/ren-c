@@ -127,13 +127,9 @@ REBNATIVE(delimit)
         // operations like delimit are not positional, the risk is mitigated
         // of letting things like nulls and voids vaporize.
 
-        if (Is_Voided(OUT))
-            continue;  // spaced [if false [<a>] ...]
-
-        if (Is_Invisible(OUT))
+        if (Is_Stale(OUT))
             continue;  // spaced [comment "a" ...]
-
-        Clear_Stale_Flag(OUT);
+                       // spaced [if false [<a>] ...]
 
         Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
 
@@ -143,16 +139,17 @@ REBNATIVE(delimit)
         if (IS_NULLED(OUT)) {
             //
             // When NULL would vaporize it led to some confusing situations.
-            // Erroring is probably worse than just showing something.
+            // We error, but you can REIFY nulls as ~null~ if you want
             //
-            //    >> spaced [null "a" if true [null]]
-            //    == "~null~ a ~null~"
+            //    >> spaced [reify null "a" if true [null]]
+            //    == "~null~ a"
             //
-            Init_Bad_Word(OUT, Canon(NULL));
+            Init_Null_Isotope(OUT);  // gives error on isotope
         }
-        else if (Is_Isotope(OUT)) {
+
+        if (Is_Isotope(OUT)) {
             //
-            // Is it better to error on isotopes or to reify them to BAD-WORD!
+            // It is better to error on isotopes or to reify them to BAD-WORD!
             //
             fail (Error_Bad_Isotope(OUT));
         }

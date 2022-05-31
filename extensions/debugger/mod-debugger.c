@@ -110,7 +110,6 @@ bool Do_Breakpoint_Throws(
 //  "Signal breakpoint to the host, but do not participate in evaluation"
 //
 //      return: <void>
-//          {Returns nothing, not even void ("invisible", like COMMENT)}
 //  ]
 //
 REBNATIVE(breakpoint_p)
@@ -133,7 +132,7 @@ REBNATIVE(breakpoint_p)
     if (not IS_BAD_WORD(SPARE))
         fail ("BREAKPOINT is invisible, can't RESUME/WITH code (use PAUSE)");
 
-    return_invisible (OUT);
+    return_void (OUT);
 }
 
 

@@ -45,8 +45,8 @@
         if count = 5 [return null]
         return count: count + 1
     ]
-    [[1 2] [3 4] [5 ~null~]]  = map [a b] :make-one-thru-five [
-        only compose [(a) (b)]
+    [[1 2] [3 4] [5]]  = map [a b] :make-one-thru-five [
+        only compose [(a) (maybe b)]
     ]
 )
 

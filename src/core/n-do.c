@@ -39,7 +39,7 @@
 //
 //  {Process an evaluated argument *inline* as the evaluator loop would}
 //
-//      return: [<opt> <invisible> any-value!]
+//      return: [<opt> <void> any-value!]
 //      value [any-value!]
 //          {BLOCK! passes-thru, ACTION! runs, SET-WORD! assigns...}
 //      expressions [<opt> any-value! <variadic>]
@@ -69,11 +69,8 @@ REBNATIVE(reeval)
         return_thrown (OUT);
     }
 
-    if (Is_Voided(OUT))
+    if (Is_Stale(OUT))
         return_void (OUT);
-
-    if (Is_Invisible(OUT))
-        return_invisible (OUT);
 
     Clear_Stale_Flag(OUT);
     return OUT;  // don't clear stale flag...act invisibly
@@ -128,12 +125,6 @@ REBNATIVE(shove)
     // It's best for SHOVE to do type checking here, as opposed to setting
     // some kind of EVAL_FLAG_SHOVING and passing that into the evaluator, then
     // expecting it to notice if you shoved into an INTEGER! or something.
-    //
-    // !!! Pure invisibility should work; see SYNC-INVISIBLES for ideas,
-    // something like this should be in the tests and be able to work:
-    //
-    //    >> 10 >- comment "ignore me" lib.+ 20
-    //    == 30
     //
     // !!! To get the feature working as a first cut, this doesn't try get too
     // fancy with apply-like mechanics and slipstream refinements on the
@@ -501,13 +492,14 @@ REBNATIVE(do)
 //  {Perform a single evaluator step, returning the next source position}
 //
 //      return: "Value from the step"
-//          [<opt> <invisible> any-value!]
+//          [<opt> <void> any-value!]
 //      next: "<output> Next expression position in block"
 //          [any-array! varargs!]
 //
 //      source [
 //          <blank>  ; useful for `evaluate try ...` scenarios when no match
 //          any-array!  ; source code in block form
+//          action!
 //          frame!
 //          varargs!  ; simulates as if frame! or block! is being executed
 //      ]
@@ -557,8 +549,11 @@ REBNATIVE(evaluate)
                 );
 
                 Push_Frame(SPARE, f);
-
                 threw = Eval_Maybe_Stale_Throws(f);
+                if (threw) {
+                    Drop_Frame(f);
+                    return_thrown (SPARE);
+                }
 
                 // !!! Since we're passing in a clear cell, we don't really
                 // care about the stale (it's stale if the cell is still END).
@@ -584,24 +579,25 @@ REBNATIVE(evaluate)
                     INIT_BINDING_MAY_MANAGE(source, f_specifier);
                 }
 
+                Drop_Frame(f);
+
                 if (REF(next))
                     rebElide(Lib(SET), rebQ(next), source);
-
-                Drop_Frame(f);
             }
             else {  // assume next position not requested means run-to-end
-                threw = Do_Feed_To_End_Maybe_Stale_Throws(
+                if (Do_Feed_To_End_Maybe_Stale_Throws(
                     SPARE,
                     feed,
                     EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-                );
+                )){
+                    return_thrown (SPARE);
+                }
+
+                Clear_Stale_Flag(SPARE);
 
                 if (REF(next))
                     rebElide(Lib(SET), rebQ(next), rebQ(Lib(NULL)));
             }
-
-            if (threw)
-                return_thrown (SPARE);
         }
         // update variable
     }
@@ -619,7 +615,22 @@ REBNATIVE(evaluate)
 
         if (Do_Frame_Maybe_Stale_Throws(SPARE, source))
             return_thrown (SPARE);  // prohibits recovery from exits
+        Clear_Stale_Flag(SPARE);
         break;
+
+      case REB_ACTION: {
+        //
+        // Ren-C will only run arity 0 functions from DO, otherwise REEVAL
+        // must be used.  Look for the first non-local parameter to tell.
+        //
+        if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
+            fail (Error_Do_Arity_Non_Zero_Raw());
+
+        if (Eval_Value_Maybe_Stale_Throws(SPARE, source, SPECIFIED))
+            return_thrown (SPARE);
+
+        Clear_Stale_Flag(SPARE);
+        break; }
 
       case REB_VARARGS : {
         assert(IS_VARARGS(source));
@@ -680,35 +691,8 @@ REBNATIVE(evaluate)
     if (IS_TRUTHY(next))
         Set_Var_May_Fail(next, SPECIFIED, source);
 
-    // EVAL is not itself an invisible function.  So when it returns invisibly
-    // that will become a ~void~ isotope in the common case:
-    //
-    //     >> eval [comment "hi"]
-    //     == ~void~  ; isotope
-    //
-    // However, that flattening to a `~void~` isotope is done by the evaluator
-    // only for plain contexts.  A ^META context offers the insight that the
-    // routine was *actually* wishing to tunnel pure invisible intent, which
-    // is indicated by a BLANK! as a meta-value:
-    //
-    //     >> ^ eval [comment "hi"]
-    //     == _
-    //
-    // That will be picked up by functions like RETURN, which will notice the
-    // true spirit was invisibility...and proxy it.
-    //
-    // Not all functions that return ~void~ isotopes have this property of
-    // claiming to be "purely invisible in intent".
-    //
-    if (Is_Voided(SPARE))
+    if (IS_VOID(SPARE))
         return_void (OUT);
-
-    if (Is_Invisible(SPARE)) {  // eval [comment "hi"], eval []
-        if (GET_EVAL_FLAG(frame_, META_OUT))
-            return_invisible (OUT);  // aren't invisible unless ^META
-        else
-            return_void (OUT);
-    }
 
     return SPARE;
 }
@@ -907,10 +891,14 @@ REBNATIVE(applique)
     if (action_threw)
         return_thrown (OUT);
 
-    if (Is_Voided(OUT))
-        return_void (OUT);
-
-    if (Is_Invisible(OUT))
+    // The input may have been stale coming in, or the application of the frame
+    // may have been stale.  We don't make any decisions either way when it
+    // comes to the evaluation stream.  If a SET-WORD! or ^META operation
+    // needs to know, it does its evaluation into an empty cell and then
+    // checks for emptiness.  So be agnostic here about where the stale bit
+    // actually came from.
+    //
+    if (Is_Stale(OUT))
         return_void (OUT);
 
     return OUT;
@@ -995,14 +983,13 @@ REBNATIVE(apply)
             }
         }
 
-        SET_END(SPARE);
-        if (Eval_Step_Maybe_Stale_Throws(SPARE, f)) {
+        if (Eval_Step_Maybe_Stale_Throws(RESET(SPARE), f)) {
             Move_Cell(OUT, SPARE);
             arg_threw = true;
             goto end_loop;
         }
 
-        if (Is_Invisible(SPARE)) {  // no output
+        if (Is_Stale(SPARE)) {  // no output
             //
             // We let the frame logic inside the evaluator decide if we've
             // built a valid frame or not.  But the error we do check for is

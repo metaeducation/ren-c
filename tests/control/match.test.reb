@@ -52,16 +52,31 @@
 
 ; NON is an inverted form of ENSURE, that FAILs when the argument *matches*
 [
-    (error? trap [non action! :append])
+    (null = non action! :append)
     (10 = non action! 10)
 
-    (error? trap [non integer! 10])
+    (null = non integer! 10)
     (:append = non integer! :append)
 
     (10 = non null 10)
 
-    (error? trap [non null null])
-    (error? trap [non logic! false])
+    (null = non null null)
+    (null = non logic! false)
+]
+
+; PROHIBIT is an inverted version of ENSURE, where it must not match
+; probably needs a better name, even ENSURE-NOT is likely clearer
+[
+    (error? trap [prohibit action! :append])
+    (10 = prohibit action! 10)
+
+    (error? trap [prohibit integer! 10])
+    (:append = prohibit integer! :append)
+
+    (10 = prohibit null 10)
+
+    (error? trap [prohibit null null])
+    (error? trap [prohibit logic! false])
 ]
 
 

@@ -17,7 +17,7 @@
     ugly-parse: specialize :uparse [combinators: ugly-combinators]
 
     ugly-combinators.discard: combinator [
-        return: "Don't return anything" [<invisible>]
+        return: "Don't return anything" [<void>]
         'group [group!]
     ][
         eval group

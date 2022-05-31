@@ -79,18 +79,20 @@
 ; is a new rule being pushed through systemically.
 ;
 ; https://forum.rebol.info/t/1582/5
+;
+; !!! Concept being reviewed, may be a function purely of enfix MAYBE
 (
     x: ~, y: 10
     did all [
         <result> = uparse "a" [x: y: elide "a" (<result>)]
-        x = 10
-        y = 10
+        unset? 'x
+        unset? 'y
     ]
 )(
     obj: make object! [x: ~, y: 10]
     did all [
         <result> = uparse "a" [obj.x: obj.y: elide "a" (<result>)]
-        obj.x = 10
-        obj.y = 10
+        unset? 'obj.x
+        unset? 'obj.y
     ]
 )

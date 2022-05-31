@@ -80,10 +80,8 @@ REB_R Adapter_Dispatcher(REBFRM *f)
         return_thrown (SPARE);
 
     if (returned) {
-        if (Is_Voided(SPARE))
+        if (IS_VOID(SPARE))
             return_void (OUT);
-        if (Is_Invisible(SPARE))
-            return_invisible (OUT);
         return Move_Cell(OUT, SPARE);
     }
 

@@ -305,7 +305,6 @@ static void Init_Action_Spec_Tags(void)
     ensureNullptr(Root_Local_Tag) = Make_Locked_Tag("local");
     ensureNullptr(Root_Skip_Tag) = Make_Locked_Tag("skip");
     ensureNullptr(Root_Const_Tag) = Make_Locked_Tag("const");
-    ensureNullptr(Root_Invisible_Tag) = Make_Locked_Tag("invisible");
     ensureNullptr(Root_Void_Tag) = Make_Locked_Tag("void");
 
     // Used by SPECIALIZE as a unique identity for telling what's been
@@ -328,7 +327,6 @@ static void Shutdown_Action_Spec_Tags(void)
     rebReleaseAndNull(&Root_Local_Tag);
     rebReleaseAndNull(&Root_Skip_Tag);
     rebReleaseAndNull(&Root_Const_Tag);
-    rebReleaseAndNull(&Root_Invisible_Tag);
     rebReleaseAndNull(&Root_Void_Tag);
 
     rebReleaseAndNull(&Root_Unspecialized_Tag);

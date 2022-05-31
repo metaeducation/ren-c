@@ -197,27 +197,10 @@ inline static bool Is_Meta_Of_None(const RELVAL *v)
 // raise an error.
 //
 
-#define Init_Meta_Of_Void_Isotope(out)   Init_Bad_Word((out), Canon(VOID))
+#define Init_Meta_Of_Void(out)   Init_Bad_Word((out), Canon(VOID))
 
-inline static bool Is_Meta_Of_Void_Isotope(const RELVAL *v)
+inline static bool Is_Meta_Of_Void(const RELVAL *v)
   { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID; }
-
-inline static bool Is_Void_Isotope_Maybe_Stale(const RELVAL *v) {
-    if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
-        return false;
-    if (not (v->header.bits & CELL_FLAG_ISOTOPE))
-        return false;
-    return VAL_NODE1(v) == Canon(VOID);
-}
-
-
-//=//// PURE INVISIBILITY META STATE ///////////////////////////////////////=//
-//
-// Pure invisibility is using the state of BLANK! to differentiate it from
-// a ~void~.  Generally speaking most routines shouldn't make a distinction.
-
-#define Init_Meta_Of_Pure_Void(out)       Init_Blank(out)
-#define Is_Meta_Of_Pure_Invisible(v)      IS_BLANK(v)
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//
@@ -252,7 +235,7 @@ inline static bool Is_Void_Isotope_Maybe_Stale(const RELVAL *v) {
 
 #define Init_Null_Isotope(out)              Init_Isotope((out), Canon(NULL))
 #define Is_Null_Isotope(v)                  Is_Isotope_With_Id(v, SYM_NULL)
-#define Init_Meta_Of_Nulled_Isotope(out)    Init_Bad_Word((out), Canon(NULL))
+#define Init_Meta_Of_Null_Isotope(out)      Init_Bad_Word((out), Canon(NULL))
 
 inline static bool Is_Meta_Of_Null_Isotope(const RELVAL *v)
   { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_NULL; }

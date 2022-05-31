@@ -65,7 +65,7 @@
 //  {When TO LOGIC! CONDITION is true, execute branch}
 //
 //      return: "null if branch not run, otherwise branch result"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      condition [<opt> any-value!]
 //      :branch "If arity-1 ACTION!, receives the evaluated condition"
 //          [any-branch!]
@@ -126,7 +126,7 @@ REBNATIVE(either)
 //
 //      return: [logic!]
 //      ^optional "Argument to test"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
@@ -155,7 +155,7 @@ REBNATIVE(_did_)  // see TO-C-NAME
 
     Value *in = ARG(optional);
 
-    if (IS_NULLED(in) or Is_Meta_Of_Void_Isotope(in))
+    if (IS_NULLED(in) or Is_Meta_Of_Void(in))
         return Init_False(OUT);
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -172,7 +172,7 @@ REBNATIVE(_did_)  // see TO-C-NAME
 //
 //      return: [logic!]
 //      ^optional "Argument to test"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
@@ -182,7 +182,7 @@ REBNATIVE(didnt)
 
     Value *in = ARG(optional);
 
-    if (IS_NULLED(in) or Is_Meta_Of_Void_Isotope(in))
+    if (IS_NULLED(in) or Is_Meta_Of_Void(in))
         return Init_True(OUT);
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -198,9 +198,9 @@ REBNATIVE(didnt)
 //  {If input is null, return null, otherwise evaluate the branch}
 //
 //      return: "null if input is null, or branch result"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
@@ -214,8 +214,7 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 
     if (
         IS_NULLED(in)  // soft failure signal
-        or Is_Meta_Of_Pure_Invisible(in)  // ^META signal for pure void
-        or Is_Meta_Of_Void_Isotope(in)
+        or Is_Meta_Of_Void(in)
         or (REF(decay) and Is_Meta_Of_Null_Isotope(in))  // null isotope
     ){
         return_void (OUT);
@@ -239,9 +238,9 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 //  {For non-null input, evaluate and discard branch (like a pass-thru THEN)}
 //
 //      return: "The same value as input, regardless of if branch runs"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is not null"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      :branch "If arity-1 ACTION!, receives value that triggered branch"
 //          [any-branch!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
@@ -256,10 +255,7 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     if (IS_NULLED(in))
         return nullptr;  // telegraph pure null
 
-    if (Is_Meta_Of_Pure_Invisible(in))
-        return_invisible (OUT);  // telegraph invisibilty
-
-    if (Is_Meta_Of_Void_Isotope(in))
+    if (Is_Meta_Of_Void(in))
         return_void (OUT);  // telegraph invisible intent
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -281,9 +277,9 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //  {If input is not null, return that value, otherwise evaluate the branch}
 //
 //      return: "Input value if not null, or branch result"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      ^optional "<deferred argument> Run branch if this is null"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      :branch [any-branch!]
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
@@ -296,7 +292,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
 
     if (IS_NULLED(in)) {
         //
-        // Triggers for running an ELSE are NULL and ~none~ isotope.
+        // Triggers for running an ELSE are null and void
         //
         // Note ELSE is not reactive to "nothing" isotopes (~) by design:
         //
@@ -307,10 +303,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         //    == ~  ; isotope
         //
     }
-    else if (Is_Meta_Of_Pure_Invisible(in)) {
-        Copy_Cell(in, Lib(VOID));  // !!! function only way to make pure void
-    }
-    else if (Is_Meta_Of_Void_Isotope(in)) {
+    else if (Is_Meta_Of_Void(in)) {
         Init_Bad_Word(in, Canon(VOID));
     }
     else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {
@@ -460,7 +453,7 @@ REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
 //  {Short-circuiting variant of AND, using a block of expressions as input}
 //
 //      return: "Product of last passing evaluation if all truthy, else null"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
@@ -495,7 +488,17 @@ REBNATIVE(all)
 //    of how useful it is, see the loop wrapper FOR-BOTH.  Other behaviors
 //    can be forced with (all [... null]) or (any [true ...])
 //
-// 3. The only way a falsey evaluation should make it to the end is if a
+// 3. When the ALL starts, the OUT cell is stale and may contain any value
+//    produced by a previous evaluation.  But we use EVAL_FLAG_OVERLAP_OUTPUT
+//    and may be skipping stale evaluations from inside the ALL:
+//
+//        >> <foo> all [<bar> comment "<bar> will be stale, due to comment"]
+//        == <bar>  ; e.g. we don't want <foo>
+//
+//    So the stale flag alone is not enough information to know if the output
+//    cell should be marked non-stale.  So we use `any_matches`.
+//
+// 4. The only way a falsey evaluation should make it to the end is if a
 //    predicate let it pass.  Don't want that to trip up `if all` so make it
 //    an isotope...but this way `(all/predicate [null] :not?) then [<runs>]`
 {
@@ -511,16 +514,15 @@ REBNATIVE(all)
     DECLARE_FRAME_AT (f, ARG(block), flags);
     Push_Frame(nullptr, f);
 
+    bool any_matches = false;
+
     while (NOT_END(f_value)) {
         if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {  // overlap output, see [1]
             Abort_Frame(f);
             return_thrown (OUT);
         }
 
-        if (Is_Stale(OUT))  // skip if output left as-is, e.g. (comment "hi")
-            continue;
-
-        if (Is_Voided(OUT))  // skip void products like (if false [<a>])
+        if (Is_Stale(OUT))  // void steps, e.g. (comment "hi") (if false [<a>])
             continue;
 
         if (Is_Isotope(OUT))
@@ -547,17 +549,18 @@ REBNATIVE(all)
                 return nullptr;
             }
         }
+
+        any_matches = true;
     }
 
     Drop_Frame(f);
 
-    Clear_Void_Flag(OUT);  // un-hide values "underneath" void, again see [1]
-    Clear_Stale_Flag(OUT);
-
-    if (Is_Invisible(OUT))  // `all []`, `all [comment "a"]`
+    if (not any_matches)  // e.g. `all []`, can't use Is_Stale(OUT), see [3]
         return_void (OUT);
 
-    Isotopify_If_Falsey(OUT);  // predicates can approve falsey values, see [3]
+    Clear_Stale_Flag(OUT);  // un-hide values "underneath" void, again see [1]
+
+    Isotopify_If_Falsey(OUT);  // predicates can approve falsey values, see [4]
     return_branched (OUT);
 }
 
@@ -568,7 +571,7 @@ REBNATIVE(all)
 //  {Short-circuiting version of OR, using a block of expressions as input}
 //
 //      return: "First passing evaluative result, or null if none pass"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      block "Block of expressions, @[block] will be treated inertly"
 //          [block! the-block!]
 //      /predicate "Test for whether an evaluation passes (default is DID)"
@@ -598,10 +601,7 @@ REBNATIVE(any)
             return_thrown (OUT);
         }
 
-        if (Is_Stale(OUT))  // skip if output left as-is, e.g. (comment "hi")
-            continue;
-
-        if (Is_Voided(OUT))  // skip void products like (if false [<a>])
+        if (Is_Stale(OUT))  // void steps, e.g. (comment "hi") (if false [<a>])
             continue;
 
         if (Is_Isotope(OUT))
@@ -639,10 +639,7 @@ REBNATIVE(any)
 
     Drop_Frame(f);
 
-    Clear_Stale_Flag(OUT);
-    Clear_Void_Flag(OUT);
-
-    if (Is_Invisible(OUT))
+    if (Is_Stale(OUT))  // original staleness, or all the ANY steps were void
         return_void (OUT);  // `any []` is ~void~ isotope
 
     return nullptr;
@@ -655,7 +652,7 @@ REBNATIVE(any)
 //  {Evaluates each condition, and when true, evaluates what follows it}
 //
 //      return: "Last matched case evaluation, or null if no cases matched"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      cases "Conditions followed by branches"
 //          [block!]
 //      /all "Do not stop after finding first logically true case"
@@ -665,6 +662,39 @@ REBNATIVE(any)
 //  ]
 //
 REBNATIVE(case)
+//
+// 1. Expressions that are between branches are allowed to vaporize.  This is
+//    powerful, but people should be conscious of what can produce voids and
+//    not try to use them as conditions:
+//
+//        >> condition: false
+//        >> case [if condition [<a>] [print "Whoops?"] [<hmm>]]
+//        Whoops?
+//        == <hmm>
+//
+//   Those who dislike this can use variations of CASE that require `=>`.
+//
+// 2. Maintain symmetry with IF on non-taken branches:
+//
+//        >> if false <some-tag>
+//        ** Script Error: if does not allow tag! for its branch...
+//
+// 3. Last evaluation will "fall out" if there is no branch:
+//
+//        >> case [false [<a>] false [<b>]]
+//        == ~void~  ; isotope
+//
+//        >> case [false [<a>] false [<b>] 10 + 20]
+//        == 30
+//
+//    It's a little bit like a quick-and-dirty ELSE (or /DEFAULT), however
+//    when you use CASE/ALL it's what is returned even if there's a match:
+//
+//        >> case/all [1 < 2 [<a>] 3 < 4 [<b>]]
+//        == <b>
+//
+//        >> case/all [1 < 2 [<a>] 3 < 4 [<b>] 10 + 20]
+//        == 30  ; so not the same as an ELSE, it's just "fallout"
 {
     INCLUDE_PARAMS_OF_CASE;
 
@@ -691,18 +721,7 @@ REBNATIVE(case)
             goto threw;
         }
 
-        if (Is_Voided(SPARE)) {
-            //
-            //    case [if false [<a>] [print "What should this do?"]]
-            //
-            // While ANY and ALL will freely ignore ~void~ isotopes, they do
-            // not have a pairing structure that would get out of whack.  It
-            // seems best to be conservative on this for CASE, and error.
-            //
-            fail (Error_Bad_Void());
-        }
-
-        if (Is_Invisible(SPARE))  // skip if nothing, e.g. (comment "hi")
+        if (Is_Stale(SPARE))  // skip void expressions, see [1]
             continue;
 
         if (IS_END(f_value))
@@ -749,15 +768,9 @@ REBNATIVE(case)
         Fetch_Next_Forget_Lookback(f);  // branch now in ARG(branch), so skip
 
         if (not matched) {
-            if (not (FLAGIT_KIND(VAL_TYPE(ARG(branch))) & TS_BRANCH)) {
-                //
-                // Maintain symmetry with IF on non-taken branches:
-                //
-                // >> if false <some-tag>
-                // ** Script Error: if does not allow tag! for its branch...
-                //
-                fail (Error_Bad_Value_Raw(ARG(branch)));
-            }
+            if (not (FLAGIT_KIND(VAL_TYPE(ARG(branch))) & TS_BRANCH))
+                fail (Error_Bad_Value_Raw(ARG(branch)));  // like IF, see [2]
+
             continue;
         }
 
@@ -779,24 +792,7 @@ REBNATIVE(case)
 
     Drop_Frame(f);
 
-    // Last evaluation will "fall out" if there is no branch:
-    //
-    //     >> case [false [<a>] false [<b>]]
-    //     == ~void~  ; isotope
-    //
-    //     >> case [false [<a>] false [<b>] 10 + 20]
-    //     == 30
-    //
-    // It's a little bit like a quick-and-dirty ELSE (or /DEFAULT), however
-    // when you use CASE/ALL it's what is returned even if there's a match:
-    //
-    //     >> case/all [1 < 2 [<a>] 3 < 4 [<b>]]
-    //     == <b>
-    //
-    //     >> case/all [1 < 2 [<a>] 3 < 4 [<b>] 10 + 20]
-    //     == 30  ; so not the same as an ELSE, it's just "fallout"
-    //
-    if (NOT_END(SPARE)) {  // prioritize fallout result
+    if (NOT_END(SPARE)) {  // prioritize fallout result, see [3]
         Isotopify_If_Nulled(SPARE);
         Move_Cell(OUT, SPARE);
         return_branched (OUT);  // asserts no ~void~ or pure null
@@ -820,7 +816,7 @@ REBNATIVE(case)
 //  {Selects a choice and evaluates the block that follows it.}
 //
 //      return: "Last case evaluation, or null if no cases matched"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      value "Target value"
 //          [<opt> any-value!]
 //      cases "Block of cases (comparison lists followed by block branches)"
@@ -866,21 +862,8 @@ REBNATIVE(switch)
             goto threw;
         }
 
-        if (Is_Voided(SPARE)) {
-            //
-            //    switch 10 [if false [20] [print "What should this do?"]]
-            //
-            // While ANY and ALL will freely ignore ~void~ isotopes, they do
-            // not have a pairing structure that would get out of whack.  It
-            // seems best to be conservative on this and error.
-            //
-            fail (Error_Bad_Void());
-        }
-
-        if (Is_Invisible(SPARE))  // pure voids (ELIDE, COMMENT)
-            continue;
-
-        Clear_Stale_Flag(SPARE);
+        if (Is_Stale(SPARE))  // skip comments or failed conditionals
+            continue;  // see note [2] in comments for CASE
 
         if (IS_END(f_value))
             goto reached_end;  // nothing left, so drop frame and return
@@ -1197,12 +1180,8 @@ REBNATIVE(catch)
 
     CATCH_THROWN_META(OUT, OUT); // thrown value
 
-    if (
-        Is_Meta_Of_Pure_Invisible(OUT)
-        or Is_Meta_Of_Void_Isotope(OUT)
-    ){
-        return Init_None(OUT);  // void isotope would trigger ELSE
-    }
+    if (Is_Meta_Of_Void(OUT))
+        return Init_None(OUT);  // void would trigger ELSE
 
     Meta_Unquotify(OUT);
     Isotopify_If_Nulled(OUT);  // a caught NULL triggers THEN, not ELSE

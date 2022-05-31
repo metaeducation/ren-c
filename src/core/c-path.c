@@ -229,10 +229,8 @@ REB_R MAKE_Path(
             return R_THROWN;
         }
 
-        if (Is_Voided(out) or Is_Invisible(out))
+        if (Is_Stale(out))
             continue;
-
-        Clear_Stale_Flag(out);
 
         if (IS_NULLED(out))
             fail (out);  // !!! BLANK! is legit in paths, should null opt out?

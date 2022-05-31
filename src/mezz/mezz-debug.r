@@ -28,7 +28,7 @@ verify: function [
         while [', = first conditions] [conditions: my next]
 
         any [
-            find [_ ~void~] ^result  ; was pure invisible or void isotope
+            '~void~ = result  ; vanished
             non bad-word! result then [to-logic unmeta result]
         ] else [
             fail @conditions make error! [

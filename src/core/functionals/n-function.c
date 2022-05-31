@@ -52,7 +52,7 @@
 //   possible using CLOSURE which made a costly deep copy of the function's
 //   body on every invocation.  Ren-C's method does not require a copy.)
 //
-// * Invisible functions (return: <invisible>) that vanish completely,
+// * Invisible functions (return: <void>) that vanish completely,
 //   leaving whatever result was in the evaluation previous to the function
 //   call as-is.
 //
@@ -102,7 +102,7 @@ REB_R Empty_Dispatcher(REBFRM *f)
     assert(VAL_LEN_AT(ARR_AT(details, IDX_DETAILS_1)) == 0);  // empty body
     UNUSED(details);
 
-    return_invisible (OUT);
+    return_void (OUT);
 }
 
 
@@ -126,6 +126,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
     // that gets calculated into spare).
     //
     assert(spare == FRM_SPARE(f));
+    assert(Is_Fresh(spare));  // so Clear_Stale_Flag() won't lose information
 
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
@@ -161,12 +162,8 @@ bool Interpreted_Dispatch_Details_1_Throws(
             // UNWIND is a nice feature too.  Revisit later.
             //
             CATCH_THROWN_META(spare, spare);  // preserves CELL_FLAG_UNEVALUATED
-            if (Is_Meta_Of_Pure_Invisible(spare))
-                SET_END(spare);  // Don't generically UNMETA pure invisibility
-            else if (Is_Meta_Of_Void_Isotope(spare)) {
+            if (Is_Meta_Of_Void(spare))
                 SET_END(spare);
-                Mark_Eval_Out_Voided(spare);
-            }
             else
                 Meta_Unquotify(spare);
 
@@ -175,6 +172,8 @@ bool Interpreted_Dispatch_Details_1_Throws(
         }
         return true;  // we didn't catch the throw
     }
+
+    Clear_Stale_Flag(spare);  // voidness knowledge comes from IS_VOID(spare)
 
     *returned = false;
     return false;  // didn't throw
@@ -203,29 +202,11 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
         return_thrown (SPARE);
 
-    if (Is_Voided(SPARE))
-        return_void (OUT);
-
-    if (Is_Invisible(SPARE)) {
-        if (GET_EVAL_FLAG(f, META_OUT))
-            return_invisible (OUT);
-
-        REBACT *phase = FRM_PHASE(f);
-        if (ACT_HAS_RETURN(phase)) {
-            const REBKEY *key = ACT_KEYS_HEAD(phase);
-            const REBPAR *param = ACT_PARAMS_HEAD(phase);
-            assert(KEY_SYM(key) == SYM_RETURN);
-            UNUSED(key);
-            if (GET_PARAM_FLAG(param, VANISHABLE))
-                return_invisible (OUT);
-        }
-        return_void (OUT);
-    }
-
-    Clear_Stale_Flag(SPARE);
+    if (IS_VOID(SPARE))
+        return_void (OUT);  // does not actually overwrite OUT
 
     return Move_Cell_Core(
-        OUT,  // not invisible--overwrite previous result
+        OUT,
         SPARE,
         CELL_MASK_COPY | CELL_FLAG_UNEVALUATED  // keep unevaluated status
     );
@@ -268,13 +249,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
         return_thrown (SPARE);
 
-    if (Is_Voided(SPARE))
-        return_void (OUT);
-
-    if (Is_Invisible(SPARE)) {
-        if (GET_EVAL_FLAG(f, META_OUT))
-            return_invisible (OUT);
-
+    if (IS_VOID(SPARE)) {
         REBACT *phase = FRM_PHASE(f);
         if (ACT_HAS_RETURN(phase)) {
             const REBKEY *key = ACT_KEYS_HEAD(phase);
@@ -282,15 +257,13 @@ REB_R Returner_Dispatcher(REBFRM *f)
             assert(KEY_SYM(key) == SYM_RETURN);
             UNUSED(key);
             if (GET_PARAM_FLAG(param, VANISHABLE))
-                return_invisible (OUT);
+                return_void (OUT);  // does not actually overwrite OUT
         }
-        return_void (OUT);
+        return Init_None(OUT);
     }
 
-    Clear_Stale_Flag(SPARE);
-
     Move_Cell_Core(
-        OUT,  // wasn't invisible, so overwrite now
+        OUT,
         SPARE,
         CELL_MASK_COPY | CELL_FLAG_UNEVALUATED
     );
@@ -319,7 +292,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
 
     UNUSED(returned);  // no additional work to bypass
 
-    return_invisible (OUT);
+    return_void (OUT);
 }
 
 
@@ -329,7 +302,7 @@ REB_R Elider_Dispatcher(REBFRM *f)
 // This is a specialized version of Elider_Dispatcher() for when the body of
 // a function is empty.  This helps COMMENT and functions like it run faster.
 //
-REB_R Commenter_Dispatcher(REBFRM *f)
+REB_R Commenter_Dispatcher(REBFRM *f)  // !!! unify with Empty_Dispatcher?
 {
     REBFRM *frame_ = f;  // for RETURN macros
     USED(frame_);
@@ -339,7 +312,7 @@ REB_R Commenter_Dispatcher(REBFRM *f)
     assert(VAL_LEN_AT(body) == 0);
     UNUSED(body);
 
-    return_invisible (OUT);
+    return_void (OUT);
 }
 
 
@@ -726,7 +699,7 @@ REBNATIVE(unwind)
 //
 //      return: []  ; !!! notation for "divergent?"
 //      ^value "If no argument is given, result will act like RETURN VOID"
-//          [<end> <opt> <invisible> any-value!]
+//          [<end> <opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(definitional_return)
@@ -783,28 +756,17 @@ REBNATIVE(definitional_return)
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (Is_Meta_Of_Pure_Invisible(v)) {  // `return comment "hi"`, `return void`
+    if (Is_Meta_Of_Void(v)) {  // `return comment "hi"`, `return void`
         //
-        // We trust that if the function does not have <invisible> marked on
-        // it by contract, the call won't vanish but returns a ~void~ isotope.
-        // But a ^META operation will reveal the invisible intent.
-        //
-        // See Reify_Eval_Out_Plain() and Reify_Eval_Out_Meta() for details.
+        // To make sure core clients know what they are doing, Meta_Unquotify()
+        // won't make voids.  But we want to be able to return them.
         //
         goto skip_type_check;
     }
 
     if (Is_Meta_End(v)) {  // plain `return` with no arguments
-        Init_Meta_Of_Pure_Void(v);  // act the same as `return void`
+        Init_Meta_Of_Void(v);  // act the same as `return void`
         goto skip_type_check;  // currently isotopes always allowed
-    }
-
-    if (Is_Meta_Of_Void_Isotope(v)) {
-        //
-        // To make sure core clients know what they are doing, Meta_Unquotify()
-        // won't make ~void~ isotopes.  But we want to be able to return them.
-        //
-        goto skip_type_check;
     }
 
     // Safe to unquotify long enough to do type checking, then quote back

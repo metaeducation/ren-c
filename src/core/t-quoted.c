@@ -295,8 +295,8 @@ REBNATIVE(quote)
 //  {Turns BAD-WORD! isotopes into plain BAD-WORD!, ignores NULL, quotes rest}
 //
 //      return: "Will be invisible if input is purely invisible (see META*)"
-//          [<invisible> <opt> any-value!]
-//      ^optional [<invisible> <opt> any-value!]
+//          [<void> <opt> any-value!]
+//      ^optional [<void> <opt> any-value!]
 //  ]
 //
 REBNATIVE(meta)
@@ -305,10 +305,7 @@ REBNATIVE(meta)
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Meta_Of_Pure_Invisible(v))
-        return_invisible (OUT);  // see META* for non-vanishing
-
-    if (Is_Meta_Of_Void_Isotope(v))
+    if (Is_Meta_Of_Void(v))
         return_void (OUT);  // see META* for non-passthru of ~void~ isotope
 
     return v;  // argument was already ^META, no need to Meta_Quotify()
@@ -318,10 +315,10 @@ REBNATIVE(meta)
 //
 //  meta*: native [
 //
-//  {Behavior of ^^ symbol, gives BLANK! on pure invisible vs. passing through}
+//  {Behavior of ^^ symbol, gives ~void~ BAD-WORD! vs. passing through voids}
 //
 //      return: [<opt> any-value!]
-//      ^optional [<opt> <invisible> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(meta_p)
@@ -369,17 +366,17 @@ REBNATIVE(unquote)
 //
 //  {Variant of UNQUOTE that also accepts BAD-WORD! to make isotopes}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //      ^value "Taken as ^META for passthru tolerance of pure and isotope void"
-//          [<opt> blank! quoted! bad-word!]
+//          [<opt> <void> quoted! bad-word!]
 //  ]
 //
 REBNATIVE(unmeta)
 //
 // Note: It is weird to accept isotopes as input to an UNMETA operation, as it
 // is not possible to produce them with a META operation.  But the asymmetric
-// choice to accept meta states representing pure void (_) and ~void~ isotopes
-// is a pragmatic one.  (This errors on other isotopes.)
+// choice to accept meta states representing ~void~ isotopes is pragmatic.
+// (This errors on other isotopes.)
 //
 // Consider what FOR-BOTH would need to do in order to please UNMETA here:
 //
@@ -411,10 +408,7 @@ REBNATIVE(unmeta)
     if (IS_NULLED(v))
         return nullptr;  // ^(null) => null, so the reverse must be true
 
-    if (Is_Meta_Of_Pure_Invisible(v))
-        return_void (OUT);  // ^-- see explanation
-
-    if (Is_Meta_Of_Void_Isotope(v))
+    if (Is_Meta_Of_Void(v))
         return_void (OUT);  // ^-- see explanation
 
     if (IS_BAD_WORD(v))
@@ -426,10 +420,7 @@ REBNATIVE(unmeta)
     if (Is_Meta_End(v))
         fail ("END not processed by UNMETA at this time");
 
-    if (Is_Meta_Of_Pure_Invisible(v))
-        return_void (OUT);  // invisible "intent"?
-
-    if (Is_Meta_Of_Void_Isotope(v))
+    if (Is_Meta_Of_Void(v))
         return_void (OUT);
 
     // Now remove the level of meta the user was asking for.
@@ -441,12 +432,11 @@ REBNATIVE(unmeta)
 //
 //  maybe: native [
 //
-//  {If argument is a ~none~ isotope, make it vanish}
+//  {If argument is null or none, make it void (also pass through voids)}
 //
 //      return: "Value (if it's anything other than the states being checked)"
-//          [<opt> <invisible> any-value!]
-//      ^optional [<opt> any-value!]
-//      /value "Require output be an ANY-VALUE!, vanish all NULLs and voids"
+//          [<opt> <void> any-value!]
+//      ^optional [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(maybe)
@@ -455,27 +445,18 @@ REBNATIVE(maybe)
 
     REBVAL *v = ARG(optional);
 
-    if (Is_Meta_Of_Pure_Invisible(v) or Is_Meta_Of_Void_Isotope(v))
-        return_invisible (OUT);
-
-    // There was an operation called DENULL for making nulls vanish.  Such a
-    // shorthand might be desirable, but it's probably more obvious to say
-    // that you are running a MAYBE process that is insistent that there
-    // be an ANY-VALUE! as a product.  It's more discoverable, and fits into
-    // a concept users will be expected to have learned.  If anyone uses it
-    // frequently they can say `denull: :maybe/value` and be responsible for
-    // knowing what that means.
-    //
-    if (REF(value)) {
-        if (
-            IS_NULLED(v)
-            or (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_0)  // "nothing"
-        ){
-            return_invisible (OUT);
-        }
+    if (
+        IS_NULLED(v) or Is_Meta_Of_Null_Isotope(v)
+        or Is_Meta_Of_Void(v)
+        or Is_Meta_Of_None(v)
+    ){
+        return_void (OUT);
     }
 
-    return Meta_Unquotify(Move_Cell(OUT, v));
+    Move_Cell(OUT, v);
+    Meta_Unquotify(OUT);
+    Decay_If_Isotope(OUT);
+    return OUT;
 }
 
 
@@ -485,7 +466,7 @@ REBNATIVE(maybe)
 //  {Special Test: Potential future of a MAYBE Intrinsic}
 //
 //      return: "Value (if it's anything other than void)"
-//          [<opt> <invisible> any-value!]
+//          [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(maybe_a)
@@ -508,10 +489,8 @@ REBNATIVE(maybe_a)
         return_thrown (OUT);
     }
 
-    if (Is_Voided(OUT)) {
-        Clear_Void_Flag(OUT);
-        return_invisible (OUT);
-    }
+    if (IS_VOID(OUT))
+        return_void (OUT);
 
     return OUT;
 }

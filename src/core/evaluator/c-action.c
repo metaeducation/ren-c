@@ -261,15 +261,15 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
             CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
 
-            if (Is_Voided(f->out)) {
+            if (Was_Eval_Step_Void(f->out)) {
                 if (pclass == PARAM_CLASS_META) {
                     if (GET_PARAM_FLAG(f->param, VANISHABLE))
-                        Init_Meta_Of_Pure_Void(f->arg);
+                        Init_Meta_Of_Void(f->arg);
                     else
-                        Init_Meta_Of_Void_Isotope(f->arg);
+                        fail (Error_Bad_Void());
                 }
                 else
-                    Init_None(f->arg);
+                    fail (Error_Bad_Void());
                 goto continue_fulfilling;
             }
 
@@ -339,8 +339,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 break;
 
               case PARAM_CLASS_META: {
-                bool is_invisible_ok = GET_PARAM_FLAG(f->param, VANISHABLE);
-                Reify_Eval_Out_Meta(f->out, is_invisible_ok);
+                Reify_Eval_Out_Meta(f->out);
                 Copy_Cell(f->arg, f->out);
                 if (GET_CELL_FLAG(f->out, UNEVALUATED))
                     SET_CELL_FLAG(f->arg, UNEVALUATED);
@@ -537,11 +536,29 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             Clear_Stale_Flag(f->arg);  // only cared about void/invisible
 
             if (pclass == PARAM_CLASS_META) {
-                bool is_invisible_ok = GET_PARAM_FLAG(f->param, VANISHABLE);
-                Reify_Eval_Out_Meta(f->arg, is_invisible_ok);
+                if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
+                    if (NOT_PARAM_FLAG(f->param, ENDABLE))
+                        fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+                    Init_Meta_End(f->arg);
+                }
+                else if (
+                    IS_VOID(f->arg)
+                    and NOT_PARAM_FLAG(f->param, VANISHABLE)
+                ){
+                    fail (Error_Bad_Void());
+                }
+                else
+                    Reify_Eval_Out_Meta(f->arg);
             }
-            else
-                Reify_Eval_Out_Plain(f->arg);
+            else {
+                if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
+                    if (NOT_PARAM_FLAG(f->param, ENDABLE))
+                        fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+                    Init_Nulled(f->arg);
+                }
+                else
+                    Reify_Eval_Out_Plain(f->arg);
+            }
             break; }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
@@ -866,7 +883,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 and not IS_QUOTED_KIND(kind_byte)
             ){
                 fail (
-                    "^META arguments must be one quoted!, bad-word!, or null"
+                    "^META arguments must be one of [<null> bad-word! quoted!]"
                 );
             }
         }
@@ -976,21 +993,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // We check to make sure it's not set at the end--so that dispatch
         // didn't forget to write something into the output cell on some
         // code path.  (To intentionally not write anything and "vaporize",
-        // use `return_invisible` and not plain `return`.)
+        // use `return_void` and not plain `return`.)
         //
         assert(not Is_Stale(f->out));
-
-        // A void state is actually the intent of returning a non-stale value
-        // that will resolve either to a none or a "void isotope".  But since
-        // void isotopes have no reified form, they leave the value in the
-        // output slot alone--including if it was END.  Any other scenario of
-        // returning END should use `return_invisible` to give the result.
-        //
-        if (not Is_Voided(f->out)) {
-            if (IS_END(f->out))
-                printf("OOOAHAH");
-            assert(NOT_END(f->out));
-        }
 
         CLEAR_CELL_FLAG(f->out, UNEVALUATED);
     }
@@ -1035,9 +1040,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // function away.
                 //
                 CATCH_THROWN_META(f->out, f->out);
-                if (Is_Meta_Of_Pure_Invisible(f->out))
-                    SET_END(f->out);
-                else if (Is_Meta_Of_Void_Isotope(f->out))
+                if (Is_Meta_Of_Void(f->out))
                     Mark_Eval_Out_Voided(f->out);
                 else
                     Meta_Unquotify(f->out);
@@ -1352,10 +1355,8 @@ void Drop_Action(REBFRM *f) {
     if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
 
-    if (
-        not Is_Voided(f->out)  // stale bit can't be trusted
-        and Is_Stale(f->out)
-    ){
+    if (Is_Stale(f->out) and KIND3Q_BYTE_UNCHECKED(f->out) != REB_0) {
+        //
         // If the whole evaluation of the action turned out to be invisible,
         // then refresh the feed's NO_LOOKAHEAD state to whatever it was
         // before that invisible evaluation ran.

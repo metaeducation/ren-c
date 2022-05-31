@@ -130,7 +130,7 @@ combinator: func [
     <static> wrapper (
         func [
             {Enclosing function for hooking all combinators}
-            return: [<opt> <invisible> any-value!]
+            return: [<opt> <void> any-value!]
             f [frame!]
         ][
             ; This hook lets us run code before and after each execution of
@@ -214,7 +214,7 @@ combinator: func [
                     ; the order they are run (if they succeed).
                     ;
                     f.(key): enclose (augment :val [/modded]) func [
-                        return: [<opt> <invisible> any-value!]
+                        return: [<opt> <void> any-value!]
                         f2
                     ][
                         f2.pending: let subpending
@@ -271,12 +271,17 @@ default-combinators: make map! reduce [
     'maybe combinator [
         {If applying parser fails, succeed and return VOID; don't advance input}
         return: "PARSER's result if it succeeds w/non-NULL, otherwise VOID"
-            [<opt> <invisible> any-value!]
+            [<opt> <void> any-value!]
         parser [action!]
         <local> result'
     ][
         ([^result' (remainder)]: parser input) then [
-            if result' = _ [return void]  ; `maybe if true [null]` vanishes
+            any [
+                result' = '~null~  ; `maybe if true [null]` vanishes
+                result' = '~       ; `maybe if true [if false [<a>]]` vanishes
+            ] then [
+                return void
+            ]
             return unmeta result'  ; return successful parser result
         ]
         set remainder input  ; succeed on parser failure but don't advance input
@@ -423,7 +428,7 @@ default-combinators: make map! reduce [
         parser [<end> action!]
         <local> f result'
     ][
-        result': '~none~  ; default `[stop]` return value as none isotope
+        result': '~  ; default `[stop]` return value as none isotope
         if :parser [  ; parser argument is optional
             ([^result' input]: parser input) else [
                 return null
@@ -832,7 +837,7 @@ default-combinators: make map! reduce [
     'into combinator [
         {Perform a recursion into another datatype with a rule}
         return: "Result of the subparser"
-            [<opt> <invisible> any-value!]
+            [<opt> <void> any-value!]
         parser [action!]  ; !!! Easier expression of value-bearing parser?
         subparser [action!]
         <local> subseries result'
@@ -1067,15 +1072,7 @@ default-combinators: make map! reduce [
     ][
         ([^result' (remainder)]: parser input) else [return null]
 
-        ; Policy for assigning pure void is the expression evaluates to the old
-        ; value (whatever that was, including unset).
-        ;
-        ; https://forum.rebol.info/t/1582/5
-        ;
-        if blank? result' [return get/any value]
-
-        set value unmeta result'
-        return unmeta result'
+        return set value unmeta result'
     ]
 
     set-tuple! combinator [
@@ -1088,15 +1085,7 @@ default-combinators: make map! reduce [
     ][
         ([^result' (remainder)]: parser input) else [return null]
 
-        ; Policy for assigning pure void is the expression evaluates to the old
-        ; value (whatever that was, including unset).
-        ;
-        ; https://forum.rebol.info/t/1582/5
-        ;
-        if blank? result' [return get/any value]
-
-        set value unmeta result'
-        return unmeta result'
+        return set value unmeta result'
     ]
 
     'set combinator [
@@ -1244,7 +1233,7 @@ default-combinators: make map! reduce [
 
     group! combinator [
         return: "Result of evaluating the group (invisible if <delay>)"
-            [<invisible> <opt> any-value!]
+            [<void> <opt> any-value!]
         pending: [blank! block!]
         value [any-array!]  ; allow any array to use this "DO combinator"
     ][
@@ -1269,7 +1258,7 @@ default-combinators: make map! reduce [
 
     'phase combinator [
         return: "Result of the parser evaluation"
-            [<invisible> <opt> any-value!]
+            [<void> <opt> any-value!]
         pending: [blank! block!]
         parser [action!]
         <local> subpending result'
@@ -1306,7 +1295,7 @@ default-combinators: make map! reduce [
 
     get-group! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [<opt> <invisible> any-value!]
+            [<opt> <void> any-value!]
         pending: [blank! block!]   ; we retrigger combinator; it may KEEP, etc.
 
         value [any-array!]  ; allow any array to use this "REPARSE-COMBINATOR"
@@ -1522,7 +1511,7 @@ default-combinators: make map! reduce [
 
     integer! combinator [
         return: "Last parser result"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         value [integer!]
         parser [action!]
         <local> result'
@@ -1542,7 +1531,7 @@ default-combinators: make map! reduce [
 
     'repeat combinator [
         return: "Last parser result"
-            [<opt> any-value!]
+            [<opt> <void> any-value!]
         times-parser [action!]
         parser [action!]
         <local> times' min max result' i temp-remainder
@@ -1552,7 +1541,7 @@ default-combinators: make map! reduce [
         switch type of unmeta times' [
             blank! [
                 set remainder input
-                return ~none~  ; `[repeat (_) rule]` is a no-op
+                return void  ; `[repeat (_) rule]` is a no-op
             ]
             issue! [
                 if times' <> the '# [
@@ -1567,7 +1556,7 @@ default-combinators: make map! reduce [
                 uparse unquote times' [
                     '_ '_ <end> (
                         set remainder input
-                        return ~none~  ; `[repeat ([_ _]) rule]` is a no-op
+                        return void  ; `[repeat ([_ _]) rule]` is a no-op
                     )
                     |
                     min: [integer! | '_ (0)], max: [integer! | '_ | '#]
@@ -1957,8 +1946,8 @@ default-combinators: make map! reduce [
 
     'elide combinator [
         {Transform a result-bearing combinator into one that has no result}
-        return: "Should be invisible (handling TBD)"
-            [<invisible> <opt>]
+        return: "Invisible"
+            [<void> <opt>]
         parser [action!]
     ][
         ([^ (remainder)]: parser input) else [
@@ -1969,8 +1958,8 @@ default-combinators: make map! reduce [
 
     'comment combinator [
         {Comment out an arbitrary amount of PARSE material}
-        return: "Should be invisible (handling TBD)"
-            [<invisible>]
+        return: "Invisible)"
+            [<void>]
         'ignored [block! text! tag! issue!]
     ][
         ; !!! This presents a dilemma, should it be quoting out a rule, or
@@ -2015,7 +2004,7 @@ default-combinators: make map! reduce [
     action! combinator [
         {Run an ordinary ACTION! with parse rule products as its arguments}
         return: "The return value of the action"
-            [<opt> <invisible> any-value!]
+            [<opt> <void> any-value!]
         pending: [blank! block!]
         value [action!]
         ; AUGMENT is used to add param1, param2, param3, etc.
@@ -2071,7 +2060,7 @@ default-combinators: make map! reduce [
 
     word! combinator [
         return: "Result of running combinator from fetching the WORD!"
-            [<opt> <invisible> any-value!]
+            [<opt> <void> any-value!]
         pending: [blank! block!]
         value [word! symbol! tuple!]
         <local> r comb
@@ -2165,7 +2154,7 @@ default-combinators: make map! reduce [
 
     'any combinator [
         return: "Last result value"
-            [<opt> <invisible> any-value!]
+            [<opt> <void> any-value!]
         pending: [blank! block!]
         'arg "To catch instances of old ANY, only GROUP! and THE-BLOCK!"
             [any-value!]  ; lie and take ANY-VALUE! to report better error
@@ -2221,7 +2210,7 @@ default-combinators: make map! reduce [
 
     block! combinator [
         return: "Last result value"
-            [<opt> <invisible> any-value!]
+            [<opt> <void> any-value!]
         pending: [blank! block!]
         value [block!]
         <local> rules pos result' totalpending subpending
@@ -2231,7 +2220,7 @@ default-combinators: make map! reduce [
 
         totalpending: _  ; can become GLOM'd into a BLOCK!
 
-        result': _  ; default meta result is pure invisible
+        result': '~void~  ; default result is void
 
         while [not tail? rules] [
             if state.verbose [
@@ -2305,12 +2294,12 @@ default-combinators: make map! reduce [
             ; maybe expression can vanish.
             ;
             (^ eval f) then temp -> [
-                if temp <> _  [
+                if temp <> '~void~  [
                     result': temp  ; overwrite if was visible
                 ]
                 totalpending: glom totalpending subpending
             ] else [
-                result': _  ; reset, e.g. `[false |]`
+                result': '~void~  ; reset, e.g. `[false |]`
 
                 free totalpending  ; proactively release memory
                 totalpending: _
@@ -2822,16 +2811,6 @@ uparse*: func [
         return null  ; match failure (as opposed to success, w/null result)
     ]
 
-    if (synthesized' = _) or (synthesized' = the ~void~) [
-        ;
-        ; We can't return "invisible intent" and still convey that the parse
-        ; succeeded.  So a UPARSE that succeeds is a bit like a branch that
-        ; runs.  You lose the pure invisible information, it collapses to none.
-        ; So pure invisibility has to stay inside the UPARSE ruleverse.
-        ;
-        return ~  ; Need something nothing-like but that won't trigger an ELSE
-    ]
-
     if pending [
         set pending subpending
     ] else [
@@ -2842,6 +2821,16 @@ uparse*: func [
 
     all [fully, not tail? pos] then [
         return null  ; full parse was requested but tail was not reached
+    ]
+
+    if synthesized' = the ~void~ [
+        ;
+        ; We can't return "invisible intent" and still convey that the parse
+        ; succeeded.  So a UPARSE that succeeds is a bit like a branch that
+        ; runs.  You lose the void, and it collapses to none.  So invisibility
+        ; has to stay inside the UPARSE ruleverse.
+        ;
+        return ~  ; Need something nothing-like but that won't trigger an ELSE
     ]
 
     return isotopify-if-falsey unmeta synthesized'

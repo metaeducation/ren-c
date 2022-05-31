@@ -430,12 +430,11 @@ collect*: func [
             f [frame!]
             <with> out
         ][
-            if not blank? :f.value [  ; BLANK! is not collected
+            opt if not blank? :f.value [  ; BLANK! is not collected
                 f.series: out: default [make block! 16]  ; no null return now
                 :f.value  ; ELIDE leaves as result
                 elide do f  ; would invalidate f.value (hence ELIDE)
             ]
-            ; ^-- failed IF returns NULL (blank in, null out)
         ]
     )[
         series: <replaced>
@@ -665,7 +664,7 @@ find-all: function [
 
 unpack: enfixed func [
     {Unpack a BLOCK! of values and store each in a variable}
-    return: [<opt> <invisible> any-value!]
+    return: [<opt> <void> any-value!]
     'vars [set-block! set-group!]
     block "Reduced if normal [block], but values used as-is if @[block]"
         [block! the-block!]

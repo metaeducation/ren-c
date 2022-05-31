@@ -66,18 +66,13 @@ bool Catching_Break_Or_Continue_Maybe_Void(REBVAL *val, bool *broke)
         //
         *broke = false;
         CATCH_THROWN_META(val, val);
-        if (Is_Meta_Of_Pure_Invisible(val)) {
-            //
-            // could have come from CONTINUE or e.g. CONTINUE VOID (synonyms)
-            //
-            SET_END(val);
-        }
-        else if (Is_Meta_Of_Void_Isotope(val)) {
+        if (Is_Meta_Of_Void(val)) {
             //
             // For instance, `continue if false [<a>]`.  The rules here may
             // be different...a MAP-EACH might want to tolerate it, but a
             // REMOVE-EACH might not.
             //
+            RESET(val);
             Mark_Eval_Out_Stale(val);
             Mark_Eval_Out_Voided(val);
         }
@@ -133,7 +128,7 @@ REBNATIVE(continue)
     REBVAL *v = ARG(value);
 
     if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END)
-        Init_Meta_Of_Pure_Void(v);  // Treat CONTINUE same as CONTINUE VOID
+        Init_Meta_Of_Void(v);  // Treat CONTINUE same as CONTINUE VOID
 
     return Init_Thrown_With_Label_Meta(OUT, v, Lib(CONTINUE));
 }
@@ -423,12 +418,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
     bool more_data = true;
     bool broke = false;
 
-    // CONTINUE or CONTINUE ~void~ will behave as leaving the last result in
-    // the output.  So branch evaluations don't overwrite the output cell
-    // directly.  This means it has to be initialized to avoid a situation
-    // where no branches assign bits.
-    //
-    assert(Is_Fresh(les->out));
+    assert(Is_Stale(les->out));  // return_void requires stale to work
 
     do {
         // Sub-loop: set variables.  This is a loop because blocks with
@@ -610,7 +600,6 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
         // cells don't need to make copies.  Review.
 
         DECLARE_LOCAL (temp);
-        assert(Is_Fresh(temp));
         if (Do_Any_Array_At_Maybe_Stale_Throws(temp, les->body, SPECIFIED)) {
             if (not Catching_Break_Or_Continue_Maybe_Void(temp, &broke)) {
                 Move_Cell(les->out, temp);
@@ -625,7 +614,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            if (Is_Voided(temp) or Is_Invisible(temp)) {
+            if (Is_Stale(temp)) {
                 //
                 //    for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
                 //
@@ -644,7 +633,6 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 Init_None(les->out);
             }
             else {
-                Clear_Stale_Flag(temp);
                 Move_Cell(les->out, temp);
                 Isotopify_If_Nulled(les->out);
                 if (IS_META_BLOCK(les->body))
@@ -653,7 +641,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_EVERY:
-            if (Is_Voided(temp) or Is_Invisible(temp)) {
+            if (Is_Stale(temp)) {
                 //
                 // In light of other tolerances in the system for voids, EVERY
                 // treats a void as "no vote", whether MAYBE is used or not.
@@ -678,7 +666,6 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 // The ~false~ isotope here catches the misunderstanding by
                 // giving an error.  Conditional testing makes us care!
                 //
-                Clear_Stale_Flag(temp);
                 if (Is_Isotope(temp))
                     fail (Error_Bad_Isotope(temp));
 
@@ -686,7 +673,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                     Init_Nulled(les->out);
                 }
                 else if (
-                    Is_Invisible(les->out)
+                    Is_Stale(les->out)
                     or not IS_NULLED(les->out)  // null means we saw false
                 ){
                     Move_Cell(les->out, temp);
@@ -703,7 +690,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             //
             /* Predicate(temp) */
 
-            if (Is_Voided(temp) or Is_Invisible(temp)) {
+            if (Is_Stale(temp)) {
                 //
                 // MAP rules are different because we aren't conditionally
                 // testing, so void scenarios should be okay to skip.
@@ -754,7 +741,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
             // MAP-EACH only changes les->out if BREAK
             //
-            assert(Is_Fresh(les->out));
+            assert(Is_Stale(les->out));
             break;
         }
     } while (more_data and not broke);
@@ -781,8 +768,6 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
-
-    SET_END(OUT);
 
     if (ANY_SEQUENCE(ARG(data))) {
         //
@@ -863,7 +848,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
             }
         }
         else if (les.data_idx >= les.data_len) {
-            assert(Is_Fresh(OUT));  // body never ran
+            assert(Is_Stale(OUT));  // body never ran
             r = nullptr;
             goto cleanup;
         }
@@ -913,7 +898,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // ~none~ isotope means body made ~none~ isotope or ~void~ isotope
         // any other value is the plain last body result
         //
-        if (Is_Invisible(OUT))
+        if (Is_Stale(OUT))
             return_void (OUT);
         return OUT;
 
@@ -924,12 +909,12 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         // pure null means loop ran, and at least one body result was "falsey"
         // any other value is the last body result, and is truthy
         //
-        if (Is_Invisible(OUT))
+        if (Is_Stale(OUT))
             return_void (OUT);
         return OUT;
 
       case LOOP_MAP_EACH:
-        if (not Is_Fresh(OUT)) {  // only modifies on break
+        if (not Is_Stale(OUT)) {  // only modifies on break
             assert(IS_NULLED(OUT));  // BREAK, so *must* return null
             DS_DROP_TO(dsp_orig);
             return nullptr;
@@ -951,7 +936,7 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 //
 //  {Evaluate a block over a range of values. (See also: REPEAT)}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //      :word [word!]
 //          "Variable to hold current value"
 //      start [any-series! any-number!]
@@ -1030,7 +1015,7 @@ REBNATIVE(cfor)
 //  "Evaluates a block for periodic values in a series"
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      'word "Variable set to each position in the series at skip distance"
 //          [word! lit-word! blank!]
 //      series "The series to iterate over"
@@ -1075,8 +1060,6 @@ REBNATIVE(for_skip)
     ){
         VAL_INDEX_UNBOUNDED(var) = VAL_LEN_HEAD(var) + skip;
     }
-
-    SET_END(OUT);
 
     while (true) {
         REBINT len = VAL_LEN_HEAD(var);  // VAL_LEN_HEAD() always >= 0
@@ -1123,7 +1106,7 @@ REBNATIVE(for_skip)
         VAL_INDEX_UNBOUNDED(var) += skip;
     }
 
-    if (Is_Invisible(OUT))
+    if (Is_Stale(OUT))
         return_void (OUT);
 
     return OUT;
@@ -1160,7 +1143,7 @@ REBNATIVE(stop)
     REBVAL *v = ARG(value);
 
     if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END)
-        Init_Blank(v);  // Treat STOP the same as STOP VOID
+        Init_Meta_Of_Void(v);  // Treat STOP the same as STOP VOID
 
     return Init_Thrown_With_Label_Meta(OUT, ARG(value), Lib(STOP));
 }
@@ -1201,10 +1184,7 @@ REBNATIVE(cycle)
                     // good reason to do that, so going with the usual branch
                     // rules unless there's a good demonstrated case otherwise.
 
-                    if (Is_Meta_Of_Pure_Invisible(OUT))
-                        return Init_None(OUT);
-
-                    if (Is_Meta_Of_Void_Isotope(OUT))
+                    if (Is_Meta_Of_Void(OUT))
                         return Init_None(OUT);
 
                     Meta_Unquotify(OUT);
@@ -1232,7 +1212,7 @@ REBNATIVE(cycle)
 //  {Evaluates a block for each value(s) in a series.}
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      data "The series to traverse"
@@ -1253,7 +1233,7 @@ REBNATIVE(for_each)
 //
 //  {Iterate and return false if any previous body evaluations were false}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //          {null on BREAK, blank on empty, false or the last truthy value}
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
@@ -1481,7 +1461,11 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             ++index;
         }
 
-        if (Do_Any_Array_At_Throws(SET_END(res->out), res->body, SPECIFIED)) {
+        if (Do_Any_Array_At_Maybe_Stale_Throws(
+            RESET(res->out),
+            res->body,
+            SPECIFIED
+        )){
             if (not Catching_Break_Or_Continue_Maybe_Void(
                 res->out,
                 &res->broke
@@ -1504,14 +1488,11 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 Init_Nulled(res->out);
                 return nullptr;
             }
-            else {  // CONTINUE - res->out may not be void, but new value
-                Reify_Stale_Plain_Branch(res->out);
-            }
         }
 
-        if (Is_Invisible(res->out)) {
+        if (Is_Stale(res->out)) {
             res->start = index;
-            Init_None(res->out);  // ~void~ reserved for "loop never ran"
+            Init_None(res->out);  // void reserved for "loop never ran"
             continue;  // keep requested, don't mark for culling
         }
 
@@ -1800,7 +1781,7 @@ REBNATIVE(map)
 //  {Evaluates a block a specified number of times}
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      count "Repetitions (true loops infinitely, false doesn't run)"
 //          [<blank> any-number! logic!]
 //      body "Block to evaluate or action to run"
@@ -1831,8 +1812,6 @@ REBNATIVE(repeat)
     else
         count = Int64(ARG(count));
 
-    SET_END(OUT);
-
     for (; count > 0; count--) {
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
@@ -1848,7 +1827,7 @@ REBNATIVE(repeat)
     if (IS_LOGIC(ARG(count)))
         goto restart;  // "infinite" loop exhausted MAX_I64 steps (rare case)
 
-    if (Is_Invisible(OUT))
+    if (Is_Stale(OUT))
         return_void (OUT);
 
     return_branched (OUT);  // asserts no pure NULL or isotope ~void~
@@ -1972,7 +1951,7 @@ REBNATIVE(until)
     do {
         SET_END(OUT);
 
-        if (Do_Any_Array_At_Maybe_Stale_Throws(OUT, body, SPECIFIED)) {
+        if (Do_Any_Array_At_Maybe_Stale_Throws(RESET(OUT), body, SPECIFIED)) {
             bool broke;
             if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
                 return_thrown (OUT);
@@ -1982,8 +1961,8 @@ REBNATIVE(until)
             // continue acts like body evaluated to its argument, see [1]
         }
 
-        if (Is_Voided(OUT) or Is_Invisible(OUT))
-            continue;  // skip void or invisible results, see [2]
+        if (Is_Stale(OUT))
+            continue;  // skip void results, see [2]
 
         if (IS_NULLED(predicate)) {
             if (Is_Isotope(OUT))
@@ -2006,7 +1985,7 @@ REBNATIVE(until)
 //  {So long as a condition is truthy, evaluate the body}
 //
 //      return: "Last body result, or null if BREAK"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      condition [<const> block!]
 //      body [<const> block! action!]
 //  ]
@@ -2053,7 +2032,7 @@ REBNATIVE(while)
         if (Do_Any_Array_At_Maybe_Stale_Throws(SPARE, condition, SPECIFIED))
             return_thrown (SPARE);  // break/continue in body only, see [2]
 
-        if (Is_Voided(SPARE) or Is_Invisible(SPARE))
+        if (Is_Stale(SPARE))
             continue;  // restart loop when condition vanishes, see [3]
 
         if (IS_FALSEY(SPARE)) {  // falsey condition => return last body result

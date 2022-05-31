@@ -4,36 +4,36 @@
 ; of ~void~ isotope to help remind you that you are not seeing the whole
 ; picture.  Returning NULL might seem "friendlier" but it is misleading.
 [
-    ('~void~ = ^(do []))
+    ('~ = ^(do []))
     ('~void~ = ^ (eval []))
-    (blank? ^ (maybe eval []))
+    ('~void~ = ^ (maybe eval []))
 
     (none? do [])
-    (invisible? (maybe eval []))
-    (invisible? maybe eval [])
-    (3 = (1 + 2 maybe eval []))
-    (3 = (1 + 2 maybe unmeta ^ maybe eval []))
+    (void? (eval []))
+    (void? maybe eval [])
+    (3 = (1 + 2 eval []))
+    (3 = (1 + 2 unmeta ^ eval []))
 
-    ('~void~ = ^ (10 + 20 eval []))
-    ('~void~ = ^ (10 + 20 eval [void]))
-    ('~void~ = ^ (10 + 20 eval [comment "hi"]))
-    ('~void~ = ^ (10 + 20 eval make frame! :void))
+    (''30 = ^ (10 + 20 eval []))
+    (''30 = ^ (10 + 20 eval [void]))
+    (''30 = ^ (10 + 20 eval [comment "hi"]))
+    (''30 = ^ (10 + 20 eval make frame! :void))
 
     (didn't do [null])
     ('~null~ = ^ do [if true [null]])
-    ('~void~ = ^ do [if false [<a>]])
-    ('~void~ = ^ do [10 + 20 if false [<a>]])
+    ('~ = ^ do [if false [<a>]])
+    (''30 = ^ do [10 + 20 if false [<a>]])
 
     (did all [
         x: <overwritten>
-        _ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
-        x = _
+        '~void~ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
+        x = '~void~
     ])
 
     (did all [
         x: <overwritten>
-        '~void~ = (x: ^(comment "HI") ^ do [comment "HI"])
-        blank? x
+        '~ = (x: ^(comment "HI") ^ do [comment "HI"])
+        '~void~ = x
     ])
 
     ('~void~ = (10 + 20 ^(eval [])))
@@ -42,31 +42,39 @@
     (didn't ^(eval [null]))
     ('~null~ = ^(eval [if true [null]]))
 
-    (30 = (10 + 20 maybe eval []))
-    (30 = (10 + 20 maybe eval [comment "hi"]))
-    (30 = (10 + 20 maybe eval make frame! :void))
-    (didn't ^(maybe eval [null]))
-    ('~null~ = ^(maybe eval [heavy null]))
-    ('~null~ = ^(maybe eval [if true [null]]))
+    (30 = (10 + 20 eval []))
+    (30 = (10 + 20 eval [comment "hi"]))
+    (30 = (10 + 20 eval make frame! :void))
+    (didn't ^(eval [null]))
+    ('~null~ = ^ eval [heavy null])
+    ('~null~ = ^ eval [if true [null]])
 
     ; Try standalone ^ operator so long as we're at it.
     ('~void~ = ^ eval [])
     ('~void~ = ^ eval [comment "hi"])
     ('~void~ = ^ eval make frame! :void)
-    ('~void~ = ^ do :void)
+    ('~ = ^ do :void)
 
-    (didn't ^ maybe eval [null])
-    ('~null~ = ^ maybe eval [heavy null])
-    ('~null~ = ^ maybe eval [if true [null]])
+    (didn't ^ eval [null])
+    (didn't ^(eval [null]))
+    (didn't ^ (eval [null]))
+    (didn't meta eval [null])
+
+    ('~null~ = ^ eval [heavy null])
+    ('~null~ = ^(eval [heavy null]))
+    ('~null~ = ^ (eval [heavy null]))
+    ('~null~ = meta eval [heavy null])
+
+    ('~null~ = ^ eval [if true [null]])
 ]
 
 
 [
-    ('~void~ = ^ (1 + 2 eval [comment "HI"]))
+    (''3 = ^ (1 + 2 eval [comment "HI"]))
     ('~void~ = ^ eval [comment "HI"])
 
-    (3 = (1 + 2 maybe eval [comment "HI"]))
-    ('~void~ = ^ eval [comment "HI"])
+    (3 = (1 + 2 eval [comment "HI"]))
+    (void? eval [comment "HI"])
 
     (
         x: (1 + 2 y: eval [comment "HI"])
@@ -179,7 +187,7 @@
 )
 (0:00 == do [0:00])
 (0.0.0 == do [0.0.0])
-('~void~ = ^ do [()])
+('~ = ^ do [()])
 ('a == do ['a])
 (error? trap [do trap [1 / 0] 1])
 (
@@ -190,7 +198,7 @@
     a-value: "1"
     1 == do :a-value
 )
-('~void~ = ^ do "")
+(none? do "")
 (1 = do "1")
 (3 = do "1 2 3")
 
@@ -267,20 +275,6 @@
 (
     blk: [b: evaluate blk]
     error? trap blk
-)
-
-; Vanishing steps vanish (!)
-(
-    result: null
-    block: [1 + 2 comment "WhOAHhhHAH!"]
-
-    3 = while [[result @block]: evaluate block] [get/any 'result]
-)
-(
-    result: null
-    block: [1 + 2 comment "WhOAHhhHAH!"]
-
-    3 = while [[result block]: evaluate block, block] [get/any 'result]
 )
 
 ; evaluating quoted argument

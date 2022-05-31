@@ -26,10 +26,14 @@
                 ; thing, it does not allow BLANK!.  This makes a BLOCK!-style
                 ; apply using positions non-viable.  We OPT all "nones" here.
                 ;
-                using-args: to-logic set (in frame second params.1) if get 'arg [#]
+                using-args: to-logic set (in frame second params.1) all [get 'arg, #]
             ] else [
                 if using-args [  ; v-- should IN allow QUOTED?
-                    set (in frame noquote params.1) get 'arg
+                    set (in frame noquote params.1) if meta-word? params.1 [
+                        ^ get/any 'arg
+                    ] else [
+                        get 'arg
+                    ]
                 ]
             ]
 

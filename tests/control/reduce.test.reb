@@ -47,11 +47,17 @@
 ;
 ; Predicates influence the handling of NULLs, which become ~null~ by default
 
-([~null~] = reduce [null])
-([] = reduce [maybe/value null])
+(
+    e: trap [reduce [null]]
+    e.id = 'bad-isotope
+)
+([] = reduce [maybe null])
 
-([~null~] = reduce [~null~])
-([~null~] = reduce [maybe/value ~null~])
+(
+    e: trap [reduce [~null~]]
+    e.id = 'bad-isotope
+)
+([] = reduce [maybe ~null~])
 
 
 ([] = reduce [~void~])
@@ -60,22 +66,31 @@
 ; in the case of a non-existent null, test that.
 [
     ([] = reduce [
-        maybe/value null
+        maybe null
     ])
-    ([~null~] = reduce/predicate [null] :identity)
+    (['ZOMG <!!!> 1020 #wow] = apply :reduce [
+        ['ZOMG null 1000 + 20 #wow]
+        /predicate func [x] [
+            non [<opt>] x else [<!!!>]
+        ]
+    ])
 ]
 
 (error? trap [reduce/predicate [null] chain [:null? | :non]])
 
-([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :maybe)
+([3 _ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :try)
 ([3 ~void~ 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :reify)
-([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :maybe/value)
+([3 300] = reduce/predicate [1 + 2 if false [10 + 20] 100 + 200] :maybe)
+
+([3 _ 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :try)
+([3 ~null~ 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :reify)
+([3 300] = reduce/predicate [1 + 2 if true [null] 100 + 200] :maybe)
 
 ([3 _ 300] = reduce/predicate [1 + 2 null 100 + 200] :try)
 ([3 ~null~ 300] = reduce/predicate [1 + 2 null 100 + 200] :reify)
-([3 300] = reduce/predicate [1 + 2 nul 100 + 200] :maybe/value)
+([3 300] = reduce/predicate [1 + 2 null 100 + 200] :maybe)
 
-; REDUCE* is a specialization of REDUCE with MAYBE/VALUE
+; REDUCE* is a specialization of REDUCE with MAYBE
 ;
 ([3 300] = reduce* [1 + 2 null 100 + 200])
 

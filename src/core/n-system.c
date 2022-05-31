@@ -62,8 +62,7 @@ REBNATIVE(quit)
     REBVAL *v = ARG(value);
 
     if (
-        Is_Meta_Of_Pure_Invisible(v)  // (quit void)
-        or Is_Meta_Of_Void_Isotope(v)  // (quit if false [<unused>])
+        Is_Meta_Of_Void(v)  // (quit if false [<unused>])
         or Is_Meta_End(v)  // (quit)
     ){
         // This returns an isotope if there is no arg, and labels it ~quit~
@@ -422,14 +421,14 @@ REBNATIVE(c_debug_break)
         // happened and has been passed as an argument.
         //
         TG_Break_At_Tick = frame_->tick + 1;
-        return_invisible (OUT);
+        return_void (OUT);
      #else
         // No tick counting or tick-break checking, but still want some
         // debug break functionality (e.g. callgrind build).  Break here--
         // you'll have to step up out into the evaluator stack.
         //
         debug_break();
-        return_invisible (OUT);
+        return_void (OUT);
       #endif
   #endif
 }

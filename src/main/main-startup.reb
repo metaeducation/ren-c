@@ -179,9 +179,9 @@ host-script-pre-load: func [
 ][
     ; Print out the script info
     boot-print [
-        (if is-module ["Module:"] else ["Script:"]) select hdr 'title
-            "Version:" select hdr 'version
-            "Date:" select hdr 'date
+        (if is-module ["Module:"] else ["Script:"]) reify select hdr 'title
+            "Version:" reify select hdr 'version
+            "Date:" reify select hdr 'date
     ]
 ]
 

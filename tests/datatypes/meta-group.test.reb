@@ -2,22 +2,21 @@
 
 (meta-group! = type of '^(a b c))
 
-; The only way to see vanishing stuff is with meta operations, which give you
-; BLANK! at the meta level in the case of full erasure.
+; The only way to see vanishing stuff is with meta operations.
 [
-    (blank? ^())
-    (blank? ^(comment "hi"))
-    (blank? ^(void))
+    ('~void~ = ^())
+    ('~void~ = ^(comment "hi"))
+    ('~void~ = ^(void))
 
-    (blank? ^(maybe comment "hi"))
-    (blank? ^(maybe void))
+    ('~void~ = ^(maybe comment "hi"))
+    ('~void~ = ^(maybe void))
 
-    (blank? ^ ())
-    (blank? ^ (comment "hi"))
-    (blank? ^ (void))
+    ('~void~ = ^ ())
+    ('~void~ = ^ (comment "hi"))
+    ('~void~ = ^ (void))
 
-    (blank? ^ (maybe comment "hi"))
-    (blank? ^ (maybe void))
+    ('~void~ = ^ (maybe comment "hi"))
+    ('~void~ = ^ (maybe void))
 ]
 
 ((the '10) = ^(10 comment "hi"))

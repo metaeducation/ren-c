@@ -5,7 +5,7 @@
 ; well as pick one out of a block.
 
 [
-    ('~void~ = ^ uparse [[]] [into any-series! []])
+    (none? uparse [[]] [into any-series! []])
     ('a == uparse [[a]] [into any-series! ['a]])
     ('c == uparse [b [a] c] ['b into any-series! ['a] 'c])
     (#a == uparse ["a"] [into any-series! [#a]])

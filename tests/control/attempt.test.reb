@@ -3,7 +3,7 @@
     (null? attempt [1 / 0])
 ]
 (1 = attempt [1])
-('~void~ = ^ attempt [])
+(none? attempt [])
 
 ; RETURN stops attempt evaluation
 (

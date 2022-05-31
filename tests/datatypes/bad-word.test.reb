@@ -67,65 +67,58 @@
 (
     x: 10
     did all [
-        '~void~ = ^ x: eval []
+        '~ = ^ x: eval []
         unset? 'x
     ]
 )
 (
     x: 10
     did all [
-        10 x: maybe eval []
-        10 = x
+        10 maybe x: eval []
+        unset? 'x
     ]
 )
 
 [
     (foo: func [] [], true)
 
-    (invisible? foo)
+    (void? foo)
 
     ('~void~ = ^ applique :foo [])
-    (invisible? maybe applique :foo [])
+    (void? applique :foo [])
 
-    (_ = ^ eval :foo)
-    (invisible? maybe eval :foo)
+    ('~void~ = ^ eval :foo)
+    (void? eval :foo)
 
     ('~ = ^ do :foo)
-    (not invisible? maybe do :foo)
 ]
 
-; Explicit return of VOID gives you pure invisibility.
+; Explicit return of VOID is also invisible
 [
-    (did foo: func [return: [<opt> <invisible> any-value!]] [return void])
+    (did foo: func [return: [<opt> <void> any-value!]] [return void])
 
     (void? foo)
-    (invisible? foo)
-    ('~void~ <> ^ foo)
-    (_ = ^ foo)
+    ('~void~ = ^ foo)
 
     (3 = (1 + 2 foo))
 ]
 
 ; Not providing an argument acts the same
 [
-    (did foo: func [return: [<opt> <invisible> any-value!]] [return])
+    (did foo: func [return: [<opt> <void> any-value!]] [return])
 
     (void? foo)
-    (invisible? foo)
-    ('~void~ <> ^ foo)
-    (_ = ^ foo)
+    ('~void~ = ^ foo)
 
     (3 = (1 + 2 foo))
 ]
 
-; The ~void~ isotope is distinctly not invisible, but considered VOID? intent
+; The ~void~ isotope can be used as a synonym for VOID
 [
-    (did foo: func [return: [<opt> <invisible> any-value!]] [return ~void~])
+    (did foo: func [return: [<opt> <void> any-value!]] [return ~void~])
 
     (void? foo)
-    (not invisible? foo)
     ('~void~ = ^ foo)
-    (_ <> ^ foo)
 
     ('~void~ = ^ applique :foo [])
     (none? do :foo)
@@ -220,8 +213,8 @@
     (
         a: 1020
         did all [
-            1020 = a: ()
-            a = 1020
+            none? a: ()
+            unset? 'a
         ]
     )
 ]

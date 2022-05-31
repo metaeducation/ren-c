@@ -259,7 +259,7 @@ summarize-obj: function [
                 fail @pattern
             ]
 
-            if desc: description-of reify get/any 'val [
+            if desc: try description-of reify get/any 'val [
                 if 48 < length of desc [
                     desc: append copy/part desc 45 "..."
                 ]

@@ -512,7 +512,7 @@ client-hello: func [
     repeat 28 [append ctx.client-random (random-secure 256) - 1]
 
     let cs-data: join binary! map-each item cipher-suites [
-        maybe/value match binary! item
+        maybe match binary! item
     ]
 
     emit ctx [

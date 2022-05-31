@@ -57,10 +57,10 @@
     ; ^-- While the above leverages many clever design nuances, there are two
     ; "tricks" which this example specifically inspired that it uses.
     ;
-    ; <<< TRICK #1: META PASSES THROUGH PURE INVISIBILITY >>>
+    ; <<< TRICK #1: META PASSES THROUGH VOIDS >>>
     ;
     ; Note that this uses META and not `^` (a.k.a. META*)  The reason is that
-    ; it wants to pass through pure invisibility:
+    ; it wants to pass through voids:
     ;
     ;     >> 1 + 2 ^ comment "hi"
     ;     == ~void~  ; <-- the true result, e.g. what the ^META arg would be

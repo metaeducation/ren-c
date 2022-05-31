@@ -197,11 +197,8 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     if (rebRunMaybeStaleThrows(OUT, fully, outer, rootcopy))
         return_thrown (OUT);
 
-    if (Is_Voided(OUT))
+    if (Is_Stale(OUT))
         return_void (OUT);
-
-    if (Is_Invisible(OUT))
-        return_invisible (OUT);
 
     return OUT;
 }

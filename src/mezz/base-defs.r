@@ -33,8 +33,8 @@ probe: func* [
     {Debug print a molded value and returns that same value.}
 
     return: "Same as the input value"
-        [<opt> any-value!]
-    ^value' [<opt> <invisible> any-value!]
+        [<opt> <void> any-value!]
+    ^value' [<opt> <void> any-value!]
 ][
     ; Remember this is early in the boot so many things not defined
     write-stdout switch type of value' [
@@ -166,7 +166,7 @@ elide: func* [
     return: "The evaluator will skip over the result (not seen)"
         <void>
     ^discarded "Evaluated value to be ignored"
-        [<opt> any-value!]
+        [<opt> <void> any-value!]
 ][
 ]
 

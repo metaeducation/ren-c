@@ -126,46 +126,6 @@ export console!: make object! [
         ;
         set 'last-result unmeta v
 
-        === DISPLAY VOID AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
-
-        if (blank? v)  [  ; "pure" void
-            ;
-            ; When ^META operations give ~void~, it represents an expression
-            ; that evaluated to nothing at all.
-            ;
-            ;     >> ^()
-            ;     == ~void~
-            ;
-            ;     >> ^(elide print "Vanishing!")
-            ;     Vanishing!
-            ;     == ~void~
-            ;
-            ; But this doesn't necessarily mean the expression would've been
-            ; naturally invisible.  Some operations are *translucent*, which
-            ; means they give back "nothing" when used as non meta, but give
-            ; ~void~ when asked for by ^META.
-            ;
-            ;      evaluate []  =>  `~` isotope
-            ;    ^ evaluate []  =>  ~void~
-            ;
-            ; This is a safety feature which allows for the communication of
-            ; "invisible intent" by routines that don't want to vanish when
-            ; commonly invoked.  But it puts us in a bind to present that
-            ; distinction in the console, because when the user doesn't ask
-            ; for an evaluation to be ^META we still are.
-            ;
-            ; We want to give insight to the user when this happens, but they
-            ; didn't use a ^META operation so it's deceptive to say it `==`
-            ; any particular value at all.  Convey that with a comment.
-            ;
-            ;     >> elide print "Vanishing!"
-            ;     Vanishing!
-            ;     ; void
-            ;
-            print "; void"
-            return
-        ]
-
         === DISPLAY NULL AS IF IT WERE A COMMENT, AS IT HAS NO VALUE ===
 
         if v = null [
@@ -194,8 +154,8 @@ export console!: make object! [
             ; The "none" state represents the contents of an unset variable.
             ; It is also used by commands like HELP that want to keep the focus
             ; on what they are printing out, without an `== xxx` evaluated
-            ; result showing up.  It is also used by functions that need a
-            ; handy way of returning an "uninteresting" result, such as PRINT.
+            ; result showing up.  Functions that need a handy way of returning
+            ; an "uninteresting" result, such as PRINT, use it too.
             ;
             ; Note: It was considered to use a different state for this, with
             ; a name like `~quiet~`...to get this behavior:
