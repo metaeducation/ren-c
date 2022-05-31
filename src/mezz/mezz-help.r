@@ -31,13 +31,15 @@ spec-of: function [
 
         any [return-type, return-note] then [
             keep compose [
-                return: (return-type) (return-note)
+                return: (maybe return-type) (maybe return-note)
             ]
         ]
 
         for-each param parameters of :action [
             keep compose [
-                (param) (select try types param) (select try notes param)
+                (param)
+                    (maybe select try types param)
+                    (maybe select try notes param)
             ]
         ]
     ]
