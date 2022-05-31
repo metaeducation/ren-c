@@ -143,7 +143,7 @@ REBNATIVE(continue)
 //  Loop_Series_Common: C
 //
 static REB_R Loop_Series_Common(
-    REBVAL *out,
+    REBFRM *frame_,
     REBVAL *var, // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBVAL *start,
@@ -168,15 +168,15 @@ static REB_R Loop_Series_Common(
     //
     REBINT s = VAL_INDEX(start);
     if (s == end) {
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;  // BREAK -> NULL
-            Reify_Stale_Plain_Branch(out);
+            Reify_Stale_Plain_Branch(OUT);
         }
-        return out;  // guaranteed not stale
+        return OUT;  // guaranteed not stale
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -185,20 +185,20 @@ static REB_R Loop_Series_Common(
     //
     const bool counting_up = (s < end); // equal checked above
     if ((counting_up and bump <= 0) or (not counting_up and bump >= 0))
-        return Mark_Eval_Out_Voided(out);  // avoid infinite loops
+        return_void (OUT);  // avoid infinite loops
 
     while (
         counting_up
             ? cast(REBINT, *state) <= end
             : cast(REBINT, *state) >= end
     ){
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(out);
+            Reify_Stale_Plain_Branch(OUT);
         }
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
@@ -217,10 +217,10 @@ static REB_R Loop_Series_Common(
         *state += bump;
     }
 
-    if (Is_Stale(out))
-        return Mark_Eval_Out_Voided(out);
+    if (Is_Stale(OUT))
+        return_void (OUT);
 
-    return out;
+    return_branched (OUT);
 }
 
 
@@ -228,15 +228,13 @@ static REB_R Loop_Series_Common(
 //  Loop_Integer_Common: C
 //
 static REB_R Loop_Integer_Common(
-    REBVAL *out,
+    REBFRM *frame_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBI64 start,
     REBI64 end,
     REBI64 bump
 ){
-    Init_None(out);  // result if body never runs
-
     // A value cell exposed to the user is used to hold the state.  This means
     // if they change `var` during the loop, it affects the iteration.  Hence
     // it must be checked for changing to a non-integer form.
@@ -248,15 +246,15 @@ static REB_R Loop_Integer_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (start == end) {
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(out);
+            Reify_Stale_Plain_Branch(OUT);
         }
-        return out;  // BREAK -> NULL
+        return_branched (OUT);  // BREAK -> NULL
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -268,13 +266,13 @@ static REB_R Loop_Integer_Common(
         return nullptr;  // avoid infinite loops
 
     while (counting_up ? *state <= end : *state >= end) {
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(out);
+            Reify_Stale_Plain_Branch(OUT);
         }
 
         if (not IS_INTEGER(var))
@@ -284,7 +282,7 @@ static REB_R Loop_Integer_Common(
             fail (Error_Overflow_Raw());
     }
 
-    return out;
+    return_branched (OUT);
 }
 
 
@@ -292,7 +290,7 @@ static REB_R Loop_Integer_Common(
 //  Loop_Number_Common: C
 //
 static REB_R Loop_Number_Common(
-    REBVAL *out,
+    REBFRM *frame_,
     REBVAL *var,  // Must not be movable from context expansion, see #2274
     const REBVAL *body,
     REBVAL *start,
@@ -333,31 +331,31 @@ static REB_R Loop_Number_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (s == e) {
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(out);
+            Reify_Stale_Plain_Branch(OUT);
         }
-        return out;  // BREAK -> NULL
+        return_branched (OUT);  // BREAK -> NULL
     }
 
     // As per #1993, see notes in Loop_Integer_Common()
     //
     const bool counting_up = (s < e); // equal checked above
     if ((counting_up and b <= 0) or (not counting_up and b >= 0))
-        return Init_None(out);  // avoid inf. loop, means never ran
+        return_void (OUT);  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
-        if (Do_Branch_Throws(out, body)) {
+        if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(out, &broke))
+            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(out);
+            Reify_Stale_Plain_Branch(OUT);
         }
 
         if (not IS_DECIMAL(var))
@@ -366,10 +364,10 @@ static REB_R Loop_Number_Common(
         *state += b;
     }
 
-    if (Is_Stale(out))
-        return Mark_Eval_Out_Voided(out);
+    if (Is_Stale(OUT))
+        return_void (OUT);
 
-    return out;
+    return_branched (OUT);
 }
 
 
@@ -986,7 +984,7 @@ REBNATIVE(cfor)
         and IS_INTEGER(ARG(bump))
     ){
         return Loop_Integer_Common(
-            OUT,
+            frame_,
             var,
             ARG(body),
             VAL_INT64(ARG(start)),
@@ -1000,7 +998,7 @@ REBNATIVE(cfor)
     if (ANY_SERIES(ARG(start))) {
         if (ANY_SERIES(ARG(end))) {
             return Loop_Series_Common(
-                OUT,
+                frame_,
                 var,
                 ARG(body),
                 ARG(start),
@@ -1010,7 +1008,7 @@ REBNATIVE(cfor)
         }
         else {
             return Loop_Series_Common(
-                OUT,
+                frame_,
                 var,
                 ARG(body),
                 ARG(start),
@@ -1021,7 +1019,7 @@ REBNATIVE(cfor)
     }
 
     return Loop_Number_Common(
-        OUT, var, ARG(body), ARG(start), ARG(end), ARG(bump)
+        frame_, var, ARG(body), ARG(start), ARG(end), ARG(bump)
     );
 }
 
@@ -1928,7 +1926,7 @@ REBNATIVE(for)
         return_void (OUT);
 
     return Loop_Integer_Common(
-        OUT, var, body, 1, VAL_INT64(value), 1
+        frame_, var, body, 1, VAL_INT64(value), 1
     );
 }
 
