@@ -601,6 +601,8 @@ void Shutdown_Symbols(void)
 
     PG_At_Symbol = nullptr;
     PG_Caret_Symbol = nullptr;
+    PG_At_Word = nullptr;
+    PG_Caret_Word = nullptr;
 
     // The Shutdown_Interning() code checks for PG_Symbols_By_Hash to be
     // empty...the necessary removal happens in Decay_Series().  (Note that a

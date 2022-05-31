@@ -1025,17 +1025,37 @@ void Startup_Core(void)
     // Startup_Lib() they were created and bound, but the natives weren't
     // available to assign to them...do it here for now.
     //
-    REBVAL *lib_caret = Append_Context(Lib_Context, nullptr, PG_Caret_Symbol);
-    REBVAL *lib_at = Append_Context(Lib_Context, nullptr, PG_At_Symbol);
+    ensureNullptr(PG_Caret_Word) = Append_Context(
+        Lib_Context,
+        nullptr,
+        PG_Caret_Symbol
+    );
+    ensureNullptr(PG_At_Word) = Append_Context(
+        Lib_Context,
+        nullptr,
+        PG_At_Symbol
+    );
 
-    Init_Any_Word_Bound(lib_caret, REB_WORD, Lib_Context, PG_Caret_Symbol, INDEX_ATTACHED);
-    mutable_KIND3Q_BYTE(lib_caret) = REB_SYMBOL;
+    Init_Any_Word_Bound(
+        PG_Caret_Word,
+        REB_WORD,
+        Lib_Context,
+        PG_Caret_Symbol,
+        INDEX_ATTACHED
+    );
+    mutable_KIND3Q_BYTE(PG_Caret_Word) = REB_SYMBOL;
 
-    Init_Any_Word_Bound(lib_at, REB_WORD, Lib_Context, PG_At_Symbol, INDEX_ATTACHED);
-    mutable_KIND3Q_BYTE(lib_at) = REB_SYMBOL;
+    Init_Any_Word_Bound(
+        PG_At_Word,
+        REB_WORD,
+        Lib_Context,
+        PG_At_Symbol,
+        INDEX_ATTACHED
+    );
+    mutable_KIND3Q_BYTE(PG_At_Word) = REB_SYMBOL;
 
-    Set_Var_May_Fail(lib_caret, SPECIFIED, Lib(META_P));
-    Set_Var_May_Fail(lib_at, SPECIFIED, Lib(THE_P));
+    Set_Var_May_Fail(PG_Caret_Word, SPECIFIED, Lib(META_P));
+    Set_Var_May_Fail(PG_At_Word, SPECIFIED, Lib(THE_P));
 
     // boot->errors is the error definition list from %errors.r
     //

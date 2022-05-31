@@ -54,6 +54,8 @@ PVAR const REBSYM *PG_Dot_1_Canon;  // Preallocated "fake" word for `.`
 //
 PVAR const REBSYM *PG_At_Symbol;
 PVAR const REBSYM *PG_Caret_Symbol;
+PVAR REBVAL *PG_At_Word;
+PVAR REBVAL *PG_Caret_Word;
 
 // This is a series that holds 8-platform-pointer REBARR nodes, arranged in
 // canon order.  It provides fast access to lib entries by symbol.
