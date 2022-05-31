@@ -1279,7 +1279,7 @@ struct Remove_Each_State {
 
 // See notes on Remove_Each_State
 //
-static inline REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
+inline static REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 {
     assert(GET_SERIES_INFO(res->series, HOLD));
     CLEAR_SERIES_INFO(res->series, HOLD);

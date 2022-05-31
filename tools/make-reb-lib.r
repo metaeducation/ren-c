@@ -443,7 +443,7 @@ e-lib/emit 'ver {
         #if __has_builtin(__builtin_unreachable) || GCC_VERSION_AT_LEAST(4, 5)
             #define DEAD_END __builtin_unreachable()
         #elif defined(_MSC_VER)
-            __declspec(noreturn) static inline void msvc_unreachable(void) {
+            __declspec(noreturn) inline static void msvc_unreachable(void) {
                 while (1) { }
             }
             #define DEAD_END msvc_unreachable()

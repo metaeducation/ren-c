@@ -64,7 +64,7 @@
 #include "reb-process.h"
 
 
-static inline bool Open_Pipe_Fails(int pipefd[2]) {
+inline static bool Open_Pipe_Fails(int pipefd[2]) {
   #ifdef USE_PIPE2_NOT_PIPE
     //
     // NOTE: pipe() is POSIX, but pipe2() is Linux-specific.  With pipe() it
@@ -98,7 +98,7 @@ static inline bool Open_Pipe_Fails(int pipefd[2]) {
     return false;
 }
 
-static inline bool Set_Nonblocking_Fails(int fd) {
+inline static bool Set_Nonblocking_Fails(int fd) {
     int oldflags = fcntl(fd, F_GETFL);
     if (oldflags < 0)
         return true;

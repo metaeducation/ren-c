@@ -250,12 +250,12 @@ inline static REBSER *CTX_KEYLIST(REBCTX *c) {
     return SER(BONUS(KeySource, CTX_VARLIST(c)));  // not a REBFRM, use keylist
 }
 
-static inline void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBSER *keylist) {
+inline static void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBSER *keylist) {
     SET_SUBCLASS_FLAG(KEYLIST, keylist, SHARED);
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
-static inline void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBSER *keylist) {
+inline static void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBSER *keylist) {
     assert(NOT_SUBCLASS_FLAG(KEYLIST, keylist, SHARED));
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
@@ -529,7 +529,7 @@ inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(REBCEL(const*) context)
 // that is its canon form from a single pointer...the REBVAL sitting in
 // the 0 slot of the context's varlist.
 //
-static inline REBVAL *Init_Any_Context(
+inline static REBVAL *Init_Any_Context(
     RELVAL *out,
     enum Reb_Kind kind,
     REBCTX *c

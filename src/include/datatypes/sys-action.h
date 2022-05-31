@@ -477,7 +477,7 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
 // the 0 slot of the action's details.  That action has no binding and
 // no label.
 //
-static inline REBVAL *Init_Action_Core(
+inline static REBVAL *Init_Action_Core(
     RELVAL *out,
     REBACT *a,
     option(const REBSYM*) label,  // allowed to be ANONYMOUS
@@ -527,18 +527,18 @@ enum {
 // Note: The garbage collector knows explicitly that it's okay for frame output
 // slots to have the CELL_FLAG_STALE bit set; it's not usually legal.
 //
-inline void Mark_Eval_Out_Stale(REBVAL *out) {
+inline static void Mark_Eval_Out_Stale(REBVAL *out) {
     out->header.bits |= CELL_FLAG_STALE;
     out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
-inline void Clear_Void_Flag(REBVAL *out) {
+inline static void Clear_Void_Flag(REBVAL *out) {
     out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
 // Must handle the Translucent and Invisible cases before clearing stale.
 //
-inline void Clear_Stale_Flag(REBVAL *out) {
+inline static void Clear_Stale_Flag(REBVAL *out) {
     out->header.bits &= (~ CELL_FLAG_STALE);
     out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
 
@@ -546,12 +546,12 @@ inline void Clear_Stale_Flag(REBVAL *out) {
     assert(not Is_Isotope_With_Id(out, SYM_VOID));
 }
 
-inline bool IS_VOID(const REBVAL *out) {
+inline static bool IS_VOID(const REBVAL *out) {
     assert(not (out->header.bits & CELL_FLAG_STALE));
     return KIND3Q_BYTE_UNCHECKED(out) == REB_0;
 }
 
-inline bool Was_Eval_Step_Void(const REBVAL *out) {
+inline static bool Was_Eval_Step_Void(const REBVAL *out) {
     return did (out->header.bits & CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
@@ -562,7 +562,7 @@ inline bool Was_Eval_Step_Void(const REBVAL *out) {
 // their unreadability from not having NODE_FLAG_NODE set, not from having
 // CELL_FLAG_STALE set).  Review design of this.
 //
-inline bool Is_Stale(const REBVAL *out) {
+inline static bool Is_Stale(const REBVAL *out) {
     ASSERT_CELL_INITABLE_EVIL_MACRO(out);
 
     return did (out->header.bits & CELL_FLAG_STALE);
@@ -592,7 +592,7 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     } while (false)
 
 
-inline REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
+inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
     ASSERT_CELL_INITABLE_EVIL_MACRO(out);
     assert(Is_Stale(out));
 

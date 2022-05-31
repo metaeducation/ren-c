@@ -39,10 +39,10 @@
 
 #include "sys-core.h"
 
-static inline bool Is_Dot_Or_Slash(char c)
+inline static bool Is_Dot_Or_Slash(char c)
   { return c == '/' or c == '.'; }
 
-static inline bool Interstitial_Match(char c, char mode) {
+inline static bool Interstitial_Match(char c, char mode) {
     assert(mode == '/' or mode == '.');
     return c == mode;
 }

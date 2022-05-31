@@ -846,15 +846,15 @@ inline static REBSER *Force_Series_Managed(const_if_c REBSER *s) {
 // are and asserts it's 0 by the time each evaluation ends, to ensure balance.
 //
 
-static inline bool Is_Series_Black(const REBSER *s) {
+inline static bool Is_Series_Black(const REBSER *s) {
     return GET_SERIES_FLAG(s, BLACK);
 }
 
-static inline bool Is_Series_White(const REBSER *s) {
+inline static bool Is_Series_White(const REBSER *s) {
     return NOT_SERIES_FLAG(s, BLACK);
 }
 
-static inline void Flip_Series_To_Black(const REBSER *s) {
+inline static void Flip_Series_To_Black(const REBSER *s) {
     assert(NOT_SERIES_FLAG(s, BLACK));
     SET_SERIES_FLAG(m_cast(REBSER*, s), BLACK);
   #if !defined(NDEBUG)
@@ -862,7 +862,7 @@ static inline void Flip_Series_To_Black(const REBSER *s) {
   #endif
 }
 
-static inline void Flip_Series_To_White(const REBSER *s) {
+inline static void Flip_Series_To_White(const REBSER *s) {
     assert(GET_SERIES_FLAG(s, BLACK));
     CLEAR_SERIES_FLAG(m_cast(REBSER*, s), BLACK);
   #if !defined(NDEBUG)

@@ -132,7 +132,7 @@ inline static REB_R Init_Thrown_With_Label_Meta(
     return Init_Thrown_Core(out, label);
 }
 
-static inline void CATCH_THROWN_META(
+inline static void CATCH_THROWN_META(
     RELVAL *arg_out,
     REBVAL *thrown // Note: may be same pointer as arg_out
 ){

@@ -129,7 +129,7 @@ inline static bool Is_Isotope(const RELVAL *v) {
     return true;
 }
 
-static inline REBVAL *Init_Isotope_Untracked(
+inline static REBVAL *Init_Isotope_Untracked(
     RELVAL *out,
     option(const REBSYM*) label
 ){

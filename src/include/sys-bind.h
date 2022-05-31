@@ -736,7 +736,7 @@ inline static option(REBSER*) Get_Word_Container(
 }
 
 
-static inline const REBVAL *Lookup_Word_May_Fail(
+inline static const REBVAL *Lookup_Word_May_Fail(
     const RELVAL *any_word,
     REBSPC *specifier
 ){
@@ -758,7 +758,7 @@ static inline const REBVAL *Lookup_Word_May_Fail(
     return CTX_VAR(c, index);
 }
 
-static inline option(const REBVAL*) Lookup_Word(
+inline static option(const REBVAL*) Lookup_Word(
     const RELVAL *any_word,
     REBSPC *specifier
 ){
@@ -777,7 +777,7 @@ static inline option(const REBVAL*) Lookup_Word(
     return CTX_VAR(c, index);
 }
 
-static inline const REBVAL *Get_Word_May_Fail(
+inline static const REBVAL *Get_Word_May_Fail(
     RELVAL *out,
     const RELVAL* any_word,
     REBSPC *specifier
@@ -789,7 +789,7 @@ static inline const REBVAL *Get_Word_May_Fail(
     return Copy_Cell(out, var);
 }
 
-static inline REBVAL *Lookup_Mutable_Word_May_Fail(
+inline static REBVAL *Lookup_Mutable_Word_May_Fail(
     const RELVAL* any_word,
     REBSPC *specifier
 ){

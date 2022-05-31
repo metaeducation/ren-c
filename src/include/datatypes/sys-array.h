@@ -582,7 +582,7 @@ inline static RELVAL *Init_Relative_Block_At(
     #define ASSERT_ARRAY(s) \
         Assert_Array_Core(s)
 
-    static inline void ASSERT_SERIES(const REBSER *s) {
+    inline static void ASSERT_SERIES(const REBSER *s) {
         if (IS_SER_ARRAY(s))
             Assert_Array_Core(ARR(s));
         else

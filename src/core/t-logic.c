@@ -343,7 +343,7 @@ REB_R TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 }
 
 
-static inline bool Math_Arg_For_Logic(REBVAL *arg)
+inline static bool Math_Arg_For_Logic(REBVAL *arg)
 {
     if (IS_LOGIC(arg))
         return VAL_LOGIC(arg);
