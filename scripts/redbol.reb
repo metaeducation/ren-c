@@ -425,7 +425,7 @@ unset: func [var [word! path! block!]] [  ; historically blocks are legal
 ;
 none: emulate [:blank]
 none!: emulate [:blank!]
-void?: emulate [:blank?]
+none?: emulate [:blank?]
 
 any-function!: emulate [:action!]
 any-function?: emulate [:action?]
