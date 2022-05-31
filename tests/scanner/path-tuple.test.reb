@@ -58,7 +58,7 @@
         "a.1.(x)/[a b c]/<d>.2"  ->  [(a 1 ^(x)) ^[a b c] (<d> 2)]
 
         "~/projects/"  ->  [~ projects _]
-        "~a~.~b~/~c~"  !!  ~scan-invalid~
+        "~a~.~b~/~c~"  ->  [(~a~ ~b~) ~c~]
 
         === COMMA TESTS ===
 
