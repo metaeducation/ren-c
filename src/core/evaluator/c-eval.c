@@ -1351,14 +1351,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
       blockscope {
         const RELVAL *tail;
         const RELVAL *check = VAL_ARRAY_AT(&tail, v);
-        REBSPC *derived = Derive_Specifier(v_specifier, v);
+        REBSPC *check_specifier = Derive_Specifier(v_specifier, v);
         for (; tail != check; ++check) {
             //
             // THE-XXX! types are used to mark which result should be the
             // overall return of the expression.  But a GROUP! can't resolve
             // to that and make the decision, so handle it up front.
             //
-            if (IS_SYMBOL(check) and VAL_SYMBOL(check) == PG_At_Symbol) {
+            if (IS_THE(check)) {
                 if (dsp_circled != 0) {
                   too_many_circled:
                     fail ("Can't circle more than one multi-return result");
@@ -1376,7 +1376,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             ){
                 if (dsp_circled != 0)
                     goto too_many_circled;
-                Derelativize(DS_PUSH(), check, v_specifier);
+                Derelativize(DS_PUSH(), check, check_specifier);
                 Plainify(DS_TOP);
                 dsp_circled = DSP;
                 continue;
@@ -1407,23 +1407,24 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             }
 
             const RELVAL *item;
-            REBSPC *specifier;
+            REBSPC *item_specifier;
             if (
                 IS_GROUP(check)
                 or IS_THE_GROUP(check)
                 or IS_META_GROUP(check)
             ){
-                if (Do_Any_Array_At_Throws(SET_END(f_spare), check, derived)) {
+                SET_END(f_spare);
+                if (Do_Any_Array_At_Throws(f_spare, check, check_specifier)) {
                     Move_Cell(f->out, f_spare);
                     DS_DROP_TO(f->dsp_orig);
                     goto return_thrown;
                 }
                 item = f_spare;
-                specifier = SPECIFIED;
+                item_specifier = SPECIFIED;
             }
             else {
                 item = check;
-                specifier = v_specifier;
+                item_specifier = check_specifier;
             }
             if (IS_BLANK(item)) {
                 Init_Blank(DS_PUSH());
@@ -1449,7 +1450,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 or IS_PATH(item)
                 or IS_TUPLE(item)
             ){
-                Derelativize(DS_PUSH(), item, specifier);
+                Derelativize(DS_PUSH(), item, item_specifier);
             }
             else
                 fail ("SET-BLOCK! elements are WORD/PATH/TUPLE/BLANK/ISSUE");
@@ -1952,7 +1953,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // words.)  Operations based on VAL_TYPE() or CELL_TYPE() will see it
         // as PATH!, but CELL_KIND() will interpret the cell bits as a word.
         //
-        if (VAL_WORD_SYMBOL(f_next) != PG_Slash_1_Canon)
+        if (VAL_WORD_SYMBOL(f_next) != Canon(SLASH_1))
             goto finished;  // optimized refinement (see IS_REFINEMENT())
         break; }
 
