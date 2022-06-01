@@ -298,187 +298,196 @@ REBARR *Make_Let_Patch(
 //
 //      return: "Expression result if SET form, else gives the new vars"
 //          [<opt> any-value!]
-//      :vars "Variable(s) to create, GROUP!s must evaluate to BLOCK! or WORD!"
-//          [<variadic> word! block! set-word! set-block! group! set-group!]
+//      'vars "Variable(s) to create, GROUP!s must evaluate to BLOCK! or WORD!"
+//          [word! block! set-word! set-block! group! set-group!]
 //      :expression "Optional Expression to assign"
 //          [<variadic> <end> <opt> any-value!]
 //  ]
 //
 REBNATIVE(let)
+//
+// 1. Though LET shows as a variadic function on its interface, it does not
+//    need to use the variadic argument...since it is a native (and hence
+//    can access the frame and feed directly).
+//
+// 2. For convenience, the group can evaluate to a SET-BLOCK,  e.g.
+//
+//        block: just [x y]:
+//        (block): <whatever>  ; no real reason to prohibit this
+//
+//    But there are conflicting demands where we want `(thing):` equivalent
+//    to `[(thing)]:`, while at the same time we don't want to wind up with
+//    "mixed decorations" where `('^thing):` would become both SET! and SYM!.
+//
+// 3. Question: Should it be allowed to write `let 'x: <whatever>` and have it
+//    act as if you had written `x: <whatever>`, e.g. no LET behavior at all?
+//    This may seem useless, but it could be useful in generated code to
+//    "escape out of" a LET in some boilerplate.  And it would be consistent
+//    with the behavior of `let ['x]: <whatever>`
+//
+// 4. Right now what is permitted is conservative, due to things like the
+//    potential confusion when someone writes:
+//
+//        get-word: first [:b]
+//        let [a (get-word) c]: transcode "<whatever>"
+//
+//    They could reasonably think that this would behave as if they had
+//    written in source `let [a :b c]: transcode <whatever>`.  If that meant
+//    to look up the word B to find out were to actually write, we wouldn't
+//    want to create a LET binding for B...but for what B looked up to.
+//
+//    Bias it so that if you want something to just "pass through the LET"
+//    that you use a quote mark on it, and the LET will ignore it.
+//
+// 5. In the "LET dialect", quoted words are a way to pass through things with
+//    their existing binding, but allowing them to participate in the same
+//    multi-return operation:
+//
+//        let [value error]
+//        [value position error]: transcode data  ; awkward
+//
+//        let [value 'position error]: transcode data  ; better
+//
+//    This is applied generically, that no quoted items are processed by the
+//    LET...it merely removes the quoting level and generates a new block as
+//    output which doesn't have the quote.
+//
+// 6. The multi-return dialect is planned to be able to use things like
+//    refinement names to reinforce the name of what is being returned.
+//
+//        words: [foo position]
+//        let [value /position (second words) 'error]: transcode "abc"
+//
+//    This doesn't have any meaning to LET and must be skipped...yet retained
+//    in the product.  Other things (like INTEGER!) might be useful also to
+//    consumers of the bound block product, so they are skipped.
+//
+// 7. The evaluation may have expanded the bindings, as in:
+//
+//        let y: let x: 1 + 2 print [x y]
+//
+//    The LET Y: is running the LET X step, but if it doesn't incorporate that
+//    it will be setting the feed's bindings to just include Y.  We have to
+//    merge them, with the outer one taking priority:
+//
+//        >> x: 10, let x: 1000 + let x: x + 10, print [x]
+//        1020
+//
+// 8. When it was looking at enfix, the evaluator caches the fetched value of
+//    the word for the next execution.  But we are pulling the rug out from
+//    under that if the immediately following item is the same as what we
+//    have... or a path starting with it, etc.
+//
+//        (x: 10 let x: 20 x)  (x: 10 let x: make object! [y: 20] x.y)
+//
+//    We could try to be clever and maintain that cache in the cases that call
+//    for it.  But with evaluator hooks we don't know what kinds of overrides
+//    it may have (maybe the binding for items not at the head of a path is
+//    relevant?)  Simplest thing to do is drop the cache.
 {
     INCLUDE_PARAMS_OF_LET;
 
-    // Though LET shows as a variadic function on its interface, it does not
-    // need to use the variadic argument...since it is a native (and hence
-    // can access the frame and feed directly).
-    //
-    UNUSED(ARG(vars));
-    UNUSED(ARG(expression));
-    REBFRM *f = frame_;
+    REBVAL *vars = ARG(vars);
 
-    if (IS_END(f_value))  // e.g. `(let)`
-        fail ("LET needs argument");
+    UNUSED(ARG(expression));
+    REBFRM *f = frame_;  // fake variadic, see [1]
+
+    //=//// HANDLE LET (GROUP): VARIANTS ///////////////////////////////////=//
 
     // A first level of indirection is permitted since LET allows the syntax
-    // `let (word_or_block): <whatever>`.  Handle those groups in such a way
+    // [let (word_or_block): <whatever>].  Handle those groups in such a way
     // that it updates `f_value` itself to reflect the group product.
-    //
-    // For convenience, double-set is allowed.  e.g.
-    //
-    //     block: just [x y]:
-    //     (block): <whatever>  ; no real reason to prohibit this
-    //
-    // But be conservative in what the product of these GROUP!s can be, since
-    // there are conflicting demands where we want `(thing):` to be equivalent
-    // to `[(thing)]:`, while at the same time we don't want to wind up with
-    // "mixed decorations" where `('^thing):` would become both SET!-like and
-    // SYM!-like.
-    //
-    REBSPC *f_value_specifier;  // f_value may become specified by this
-    if (IS_GROUP(f_value) or IS_SET_GROUP(f_value)) {
-        if (Do_Any_Array_At_Throws(SPARE, f_value, f_specifier))
+
+    if (
+        IS_GROUP(vars) or IS_SET_GROUP(vars)
+    ){
+        if (Do_Any_Array_At_Throws(SPARE, vars, SPECIFIED))
             return_thrown (SPARE);
 
-        switch (VAL_TYPE(SPARE)) {
+        switch (VAL_TYPE(SPARE)) {  // need to type check eval product
           case REB_WORD:
           case REB_BLOCK:
-            if (IS_SET_GROUP(f_value))
+            if (IS_SET_GROUP(vars))
                 Setify(SPARE);  // convert `(word):` to be SET-WORD!
             break;
 
           case REB_SET_WORD:
           case REB_SET_BLOCK:
-            if (IS_SET_GROUP(f_value)) {
-                // Allow `(set-word):` to ignore the "redundant colon"
+            if (IS_SET_GROUP(vars)) {
+                // Allow `(set-word):` to ignore "redundant colon", see [2]
             }
             break;
 
+          case REB_QUOTED:  // should (let 'x: <whatever>) be legal? see [3]
+            fail ("QUOTED! escapes not supported at top level of LET");
+
           default:
-            fail ("LET GROUP! limited to WORD! and BLOCK!");
+            fail ("LET GROUP! limited to WORD! and BLOCK!");  // see [4]
         }
 
-        // Move the evaluative product into the feed's "fetched" slot and
-        // re-point f_value at it.  (Note that f_value may have been in the
-        // fetched slot originally--we may be overwriting the GROUP! that was
-        // just evaluated.  But we don't need it anymore.)
-        //
-        Move_Cell(&f->feed->fetched, SPARE);
-        f_value = &f->feed->fetched;
-        f_value_specifier = SPECIFIED;
-    }
-    else {
-        f_value_specifier = f_specifier;  // not group, so handle as-is
+        vars = SPARE;
     }
 
-    // !!! Should it be allowed to write `let 'x: <whatever>` and have it
-    // act as if you had written `x: <whatever>`, e.g. no LET behavior at
-    // all?  This may seem useless, but it could be useful in generated
-    // code to "escape out of" a LET in some boilerplate.  And it would be
-    // consistent with the behavior of `let ['x]: <whatever>`
-    //
-    if (IS_QUOTED(f_value))
-        fail ("QUOTED! escapes not currently supported at top level of LET");
+    //=//// GENERATE NEW BLOCK IF QUOTED! OR GROUP! ELEMENTS ///////////////=//
 
-    // We are going to be adding new "patches" as linked list elements onto
-    // the binding that the frame is using.  Since there are a lot of
-    // "specifiers" involved with the elements in the let dialect, give this
-    // a weird-but-relevant name of "bindings".
-    //
-    REBSPC *bindings = f_specifier;
+    // Writes rebound copy of `vars` to SPARE if it's a SET-WORD!/SET-BLOCK!
+    // so it can be used in a reevaluation.  For WORD!/BLOCK! forms of LET it
+    // just writes the rebound copy into the OUT cell.
+
+    REBSPC *bindings = f_specifier;  // specifier chain we may be adding to
     if (bindings and NOT_SERIES_FLAG(bindings, MANAGED))
         SET_SERIES_FLAG(bindings, MANAGED);  // natives don't always manage
 
-    // !!! Right now what is permitted is conservative, due to things like the
-    // potential confusion when someone writes:
-    //
-    //     word: just :b
-    //     let [a (word) c]: transcode "<whatever>"
-    //
-    // They could reasonably think that this would behave as if they had
-    // written in source `let [a :b c]: transcode <whatever>`.  If that meant
-    // to look up the word B to find out were to actually write, we wouldn't
-    // want to create a LET binding for B...but for what B looked up to.
-    //
-    // Bias it so that if you want something to just "pass through the LET"
-    // that you use a quote mark on it, and the LET will ignore it.
-    //
-    if (IS_WORD(f_value)) {
-        const REBSYM *symbol = VAL_WORD_SYMBOL(f_value);
-        bindings = Make_Let_Patch(symbol, bindings);
-        Init_Word(OUT, symbol);  // definitely not invisible
-        INIT_VAL_WORD_BINDING(OUT, bindings);
-    }
-    else if (IS_SET_WORD(f_value)) {
-        const REBSYM *symbol = VAL_WORD_SYMBOL(f_value);
-        bindings = Make_Let_Patch(symbol, bindings);
-    }
-    else if (IS_BLOCK(f_value) or IS_SET_BLOCK(f_value)) {
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, f_value);
-        REBSPC *item_specifier = Derive_Specifier(f_value_specifier, f_value);
+    bool need_eval_step;
 
-        // Making a LET binding patch for each item we are enumerating has
-        // another opportunity for escaping.  Items inside a BLOCK! can be
-        // evaluated to get the word to set.  Used with multi-return:
-        //
-        //     words: [foo position]
-        //     let [value /position (second words) 'error]: transcode "abc"
-        //
-        // Several things to notice:
-        //
-        // * The evaluation of `(second words)` must be done by the LET in
-        //   order to see the word it is creating a binding for.  That should
-        //   not run twice, so the LET must splice the evaluated block into
-        //   the input feed so TRANSCODE will see the product.  That means
-        //   making a new block.
-        //
-        // * The multi-return dialect is planned to be able to use things like
-        //   refinement names to reinforce the name of what is being returned.
-        //   This doesn't have any meaning to LET and must be skipped...yet
-        //   retained in the product.
-        //
-        // * It's planned that quoted words be handled as a way to pass through
-        //   things with their existing binding, skipping the LET but still
-        //   being in the block.  Since LET ascribes meaning to this in a
-        //   dialect sense, `'error` should probably become `error` in the
-        //   output.  This limits the potential meanings for quoted words in
-        //   the multi-return dialect since it is assumed to work with LET.  But
-        //   simply dequoting the item permits quoted things to have meaning.
-        //
+    if (IS_WORD(vars) or IS_SET_WORD(vars)) {
+        const REBSYM *symbol = VAL_WORD_SYMBOL(vars);
+        bindings = Make_Let_Patch(symbol, bindings);
+
+        need_eval_step = IS_SET_WORD(vars);
+        REBVAL *where = need_eval_step ? SPARE : OUT;
+
+        Init_Any_Word(where, VAL_TYPE(vars), symbol);
+        INIT_VAL_WORD_BINDING(where, bindings);
+        INIT_VAL_WORD_INDEX(where, INDEX_ATTACHED);
+
+        TRASH_POINTER_IF_DEBUG(vars);  // if in spare, we may have overwritten
+    }
+    else {
+        assert(IS_BLOCK(vars) or IS_SET_BLOCK(vars));
+
+        const RELVAL *tail;
+        const RELVAL *item = VAL_ARRAY_AT(&tail, vars);
+        REBSPC *item_specifier = VAL_SPECIFIER(vars);
+
         REBDSP dsp_orig = DSP;
 
-        bool need_copy = false;
+        bool altered = false;
 
         for (; item != tail; ++item) {
             const RELVAL *temp = item;
             REBSPC *temp_specifier = item_specifier;
 
-            // Unquote and ignore anything that is quoted.  This is to assume
-            // it's for the multiple return dialect--not LET.
-            //
             if (IS_QUOTED(temp)) {
                 Derelativize(DS_PUSH(), temp, temp_specifier);
-                Unquotify(DS_TOP, 1);
-                need_copy = true;
+                Unquotify(DS_TOP, 1);  // drop quote in output block, see [5]
+                altered = true;
                 continue;  // do not make binding
             }
 
-            // If there's a non-quoted GROUP! we evaluate it, as intended
-            // for the LET.
-            //
-            if (IS_GROUP(temp)) {
-                if (Do_Any_Array_At_Throws(SPARE, temp, item_specifier))
-                    return_thrown (SPARE);
+            if (IS_GROUP(temp)) {  // evaluate non-QUOTED! groups in LET block
+                if (Do_Any_Array_At_Throws(OUT, temp, item_specifier))
+                    return_thrown (OUT);
 
-                temp = SPARE;
+                temp = OUT;
                 temp_specifier = SPECIFIED;
 
-                need_copy = true;
+                altered = true;
             }
 
             switch (VAL_TYPE(temp)) {
-              case REB_ISSUE:
-              case REB_BLANK:
+              case REB_ISSUE:  // is multi-return opt-in for dialect, passthru
+              case REB_BLANK:  // is multi-return opt-out for dialect, passthru
                 Derelativize(DS_PUSH(), temp, temp_specifier);
                 break;
 
@@ -490,53 +499,78 @@ REBNATIVE(let)
                 break; }
 
               default:
-                fail (Derelativize(OUT, temp, temp_specifier));
+                fail (rebUnrelativize(temp));  // default to passthru, see [6]
             }
         }
 
-        // !!! There probably needs to be a protocol where cells that are in
-        // the feed as a fully specified cell are assumed to not need to be
-        // specified again.  Otherwise, we run into the problem that doing
-        // something like `let [x 'x]: <whatever>` would produce a block like
-        // `[x x]` and then add a specifier to it that specifies both.  This
-        // would mean not only GROUP!s would imply making a new block.
-        //
-        if (need_copy) {
+        need_eval_step = IS_SET_BLOCK(vars);
+        REBVAL *where = need_eval_step ? SPARE : OUT;
+
+        if (altered) {  // elements altered, can't reuse input block rebound
             Init_Any_Array(
-                &f->feed->fetched,
-                VAL_TYPE(f_value),
+                where,  // may be SPARE, and vars may point to it
+                VAL_TYPE(vars),
                 Pop_Stack_Values_Core(dsp_orig, NODE_FLAG_MANAGED)
             );
-            f_value = &f->feed->fetched;
         }
-        else
+        else {
             DS_DROP_TO(dsp_orig);
+
+            if (vars != where)
+                Copy_Cell(where, vars);  // Move_Cell() of ARG() not allowed
+        }
+        INIT_BINDING_MAY_MANAGE(where, bindings);
+
+        TRASH_POINTER_IF_DEBUG(vars);  // if in spare, we may have overwritten
     }
+
+    //=//// ONE EVAL STEP WITH OLD BINDINGS IF SET-WORD! or SET-BLOCK! /////=//
+
+    // We want the left hand side to use the *new* LET bindings, but the right
+    // hand side should use the *old* bindings.  For instance:
+    //
+    //     let assert: specialize :assert [handler: [print "should work!"]]
+    //
+    // Leverage same mechanism as REEVAL to preload the next execution step
+    // with the rebound SET-WORD! or SET-BLOCK!
+
+    if (need_eval_step) {
+        assert(IS_SET_WORD(SPARE) or IS_SET_BLOCK(SPARE));
+
+        REBFLGS flags = EVAL_MASK_DEFAULT
+            | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);
+
+        bool enfix = false;  // !!! Detect this?
+
+        if (Reevaluate_In_Subframe_Maybe_Stale_Throws(
+            RESET(OUT),  // !!! this eval won't be invisible, right?
+            frame_,
+            SPARE,
+            flags,
+            enfix
+        )){
+            return_thrown (OUT);
+        }
+
+        if (f_specifier and IS_PATCH(f_specifier))  // add bindings, see [7]
+            bindings = Merge_Patches_May_Reuse(f_specifier, bindings);
+
+        f->feed->gotten = nullptr;  // invalidate next word's cache, see [8]
+    }
+    else {
+        assert(IS_WORD(OUT) or IS_BLOCK(OUT));  // should have written output
+    }
+
+    //=//// NOW UPDATE FEED SO FUTURE STEPS WILL USE NEW BINDINGS //////////=//
 
     // Going forward we want the feed's binding to include the LETs.  Note
     // that this can create the problem of applying the binding twice; this
     // needs systemic review.
-    //
+
     mutable_BINDING(FEED_SINGLE(f->feed)) = bindings;
 
-    // If the expression is a SET-WORD!, e.g. `let x: 1 + 2`, then the LET
-    // vanishes and leaves behind the `x: 1 + 2` for the ensuing evaluation.
-    //
-    if (IS_SET_WORD(f_value) or IS_SET_BLOCK(f_value)) {
-        REBFLGS flags = EVAL_MASK_DEFAULT
-            | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
-
-        SET_END(OUT);  // !!! Assert on Is_Fresh() otherwise, review
-        if (Eval_Step_In_Subframe_Maybe_Stale_Throws(OUT, f, flags))
-            return_thrown (OUT);
-
-        return OUT;
-    }
-
-    assert(IS_WORD(f_value) or IS_BLOCK(f_value));
-    Derelativize(OUT, f_value, f_specifier);
-    Fetch_Next_In_Feed(f->feed);  // skip over the word
-    return OUT;  // return the WORD! or BLOCK!
+    assert(not Is_Stale(OUT));
+    return OUT;
 }
 
 

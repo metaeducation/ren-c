@@ -241,3 +241,48 @@
     var: _  ; opting out of second result, hence full transcode
     [abc def] = let [# (var)]: transcode "abc def"
 )]
+
+; This is all very shaky and speculative, and missing any semblance of
+; formalism for how it's working...but, the SET-WORD! and SET-BLOCK! variations
+; of LET actually do one step of evaluation where the left has the new
+; bindings and the right doesn't yet for that step.  This permits things like:
+;
+;     let assert: specialize :assert [handler: [print "should work"]]
+;
+; Doing it this way introduces some odd edge cases.
+[
+    (
+        x: 20
+        old-x: 'x
+        let x: x + 1000
+        did all [
+            20 = get old-x
+            x = 1020
+        ]
+    )
+
+    (
+        x: 10
+        let x: 1000 + let x: x + 10
+        x = 1020
+    )
+
+    (
+        let y: let x: 1 + 2
+        did all [
+            x = 3
+            y = 3
+        ]
+    )
+]
+
+; There was a bug seen if a failure happened in mid-multi-return, with
+; torture recycling on.
+(
+    recycle/torture
+    e: let [x]: trap [1 / 0]
+    recycle/on  ; semantics are to restore to basic ballast setting
+    e.id = 'zero-divide
+)
+
+; TBD: At some point, test cases like `let [x 'x]: <whatever>`
