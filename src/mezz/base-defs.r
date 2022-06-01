@@ -642,6 +642,7 @@ echo: func* [
                 case [
                     tail? args [stop]
                     new-line? args [stop]
+                    comma? first args [stop]
                 ]
                 keep ^ take args
             ]
