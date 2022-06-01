@@ -28,7 +28,11 @@
 )
 (
     e: trap [compose [(null) * <ok>]]
-    e.id = 'bad-isotope
+    e.id = 'need-non-null
+)
+(
+    e: trap [compose [(~null~) * <ok>]]
+    e.id = 'need-non-null
 )
 ([#[false]] = compose [(~false~)])
 

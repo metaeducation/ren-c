@@ -131,6 +131,8 @@ Script: [
 
     evaluate-null:      {null cannot be evaluated (see UNEVAL)}
 
+    need-non-null:      {non-NULL value required (see MAYBE, TRY, REIFY)}
+
     enfix-path-group:   [:arg1 {GROUP! can't be in a lookback quoted PATH!}]
     evaluative-quote:   {Can't quote non-literal from an evaluative source}
 

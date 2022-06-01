@@ -144,7 +144,7 @@ REBNATIVE(delimit)
             //    >> spaced [reify null "a" if true [null]]
             //    == "~null~ a"
             //
-            Init_Null_Isotope(OUT);  // gives error on isotope
+            fail (Error_Need_Non_Null_Raw());
         }
 
         if (Is_Isotope(OUT)) {

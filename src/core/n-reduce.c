@@ -112,8 +112,10 @@ REBNATIVE(reduce)
             }
         }
 
-        if (IS_NULLED(OUT))  // not tolerated: use MAYBE or REIFY, etc.
-            Init_Null_Isotope(OUT);  // trigger error below
+        Decay_If_Isotope(OUT);
+
+        if (IS_NULLED(OUT))
+            fail (Error_Need_Non_Null_Raw());  // trigger error below
 
         if (Is_Isotope(OUT))
             fail (Error_Bad_Isotope(OUT));
@@ -382,12 +384,14 @@ REB_R Compose_To_Stack_Core(
             else
                 Decay_If_Isotope(out);
 
-            if (IS_NULLED(out) and (heart != REB_GROUP or quotes == 0)) {
-                //
+            if (
+                IS_NULLED(out)
+                and (heart != REB_GROUP or quotes == 0)  // [''(null)] => ['']
+            ){
                 // With voids, NULL is no longer tolerated in COMPOSE.  You
                 // have to use MAYBE.  Set as isotope to trigger error below.
                 //
-                Init_Null_Isotope(out);
+                fail (Error_Need_Non_Null_Raw());
             }
 
             if (Is_Isotope(out))

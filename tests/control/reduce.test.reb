@@ -49,13 +49,13 @@
 
 (
     e: trap [reduce [null]]
-    e.id = 'bad-isotope
+    e.id = 'need-non-null
 )
 ([] = reduce [maybe null])
 
 (
     e: trap [reduce [~null~]]
-    e.id = 'bad-isotope
+    e.id = 'need-non-null
 )
 ([] = reduce [maybe ~null~])
 

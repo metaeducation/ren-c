@@ -46,3 +46,29 @@
 
     data = ["Aloha!" <middle> "Aloha!"]
 )
+
+; Test of using REFRAMER to make it possible to omit clauses when they have
+; NULL in them causing an error in REDUCE/COMPOSE type situations
+[(
+    curtail: reframer func [f [frame!]] [
+        [# ^result]: trap [
+            do f
+        ] then error -> [
+            if error.id = 'need-non-null [return void]
+            do error
+        ]
+        return unmeta result
+    ]
+    true
+)
+
+(
+    ver: 1.2.3
+    date: null
+
+    x: spaced [curtail spaced ["Version:" ver] curtail spaced ["Date:" date]]
+    x = "Version: 1.2.3"
+)
+(
+    void? curtail compose [benefit of no nulls! (find [a b c] 'd)]
+)]
