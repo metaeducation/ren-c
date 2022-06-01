@@ -572,20 +572,6 @@ void Startup_Symbols(void)
 
     if (0 != strcmp("parse-reject", STR_UTF8(Canon(PARSE_REJECT))))
         panic (Canon(PARSE_REJECT));
-
-    ensureNullptr(PG_Bar_Canon) = Canon(BAR);
-    ensureNullptr(PG_Bar_Bar_Canon) = Canon(_B_B);
-    ensureNullptr(PG_Slash_1_Canon) = Canon(_SLASH_1_);
-    ensureNullptr(PG_Dot_1_Canon) = Canon(_DOT_1_);
-
-    ensureNullptr(PG_At_Symbol) = Intern_UTF8_Managed(
-        cast(const REBYTE *, "@"),
-        1
-    );
-    ensureNullptr(PG_Caret_Symbol) = Intern_UTF8_Managed(
-        cast(const REBYTE *, "^"),
-        1
-    );
 }
 
 
@@ -594,16 +580,6 @@ void Startup_Symbols(void)
 //
 void Shutdown_Symbols(void)
 {
-    PG_Bar_Canon = nullptr;
-    PG_Bar_Bar_Canon = nullptr;
-    PG_Slash_1_Canon = nullptr;
-    PG_Dot_1_Canon = nullptr;
-
-    PG_At_Symbol = nullptr;
-    PG_Caret_Symbol = nullptr;
-    PG_At_Word = nullptr;
-    PG_Caret_Word = nullptr;
-
     // The Shutdown_Interning() code checks for PG_Symbols_By_Hash to be
     // empty...the necessary removal happens in Decay_Series().  (Note that a
     // "dirty" shutdown--typically used--avoids all these balancing checks!)

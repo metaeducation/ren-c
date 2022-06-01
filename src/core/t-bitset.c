@@ -305,7 +305,7 @@ bool Set_Bits(REBBIN *bset, const RELVAL *val, bool set)
     if (
         item != tail
         && IS_WORD(item)
-        && VAL_WORD_ID(item) == SYM__NOT_  // see TO-C-NAME
+        && VAL_WORD_ID(item) == SYM_NOT_1  // see TO-C-NAME
     ){
         INIT_BITS_NOT(bset, true);
         item++;
@@ -325,7 +325,7 @@ bool Set_Bits(REBBIN *bset, const RELVAL *val, bool set)
             if (
                 item + 1 != tail
                 && IS_WORD(item + 1)
-                && VAL_WORD_ID(item + 1) == SYM_HYPHEN
+                && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
                 item += 2;
                 if (IS_CHAR(item)) {
@@ -350,7 +350,7 @@ bool Set_Bits(REBBIN *bset, const RELVAL *val, bool set)
             if (
                 item + 1 != tail
                 && IS_WORD(item + 1)
-                && VAL_WORD_ID(item + 1) == SYM_HYPHEN
+                && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
             ){
                 REBUNI c = n;
                 item += 2;
@@ -458,7 +458,10 @@ bool Check_Bits(const REBBIN *bset, const RELVAL *val, bool uncased)
                     return true;
             }
             REBUNI c = VAL_CHAR(item);
-            if (IS_WORD(item + 1) && VAL_WORD_ID(item + 1) == SYM_HYPHEN) {
+            if (
+                IS_WORD(item + 1)
+                && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
+            ){
                 item += 2;
                 if (IS_CHAR(item)) {
                     REBLEN n = VAL_CHAR(item);
@@ -480,7 +483,10 @@ bool Check_Bits(const REBBIN *bset, const RELVAL *val, bool uncased)
             REBLEN n = Int32s(SPECIFIC(item), 0);
             if (n > 0xffff)
                 return false;
-            if (IS_WORD(item + 1) && VAL_WORD_ID(item + 1) == SYM_HYPHEN) {
+            if (
+                IS_WORD(item + 1)
+                && VAL_WORD_SYMBOL(item + 1) == Canon(HYPHEN_1)
+            ){
                 REBUNI c = n;
                 item += 2;
                 if (IS_INTEGER(item)) {

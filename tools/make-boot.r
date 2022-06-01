@@ -161,19 +161,20 @@ syms-cscape: copy []
 
 sym-n: 1  ; skip SYM_0 (null added as #1)
 
-add-sym: function compose/deep [
+add-sym: function [
     {Add SYM_XXX to enumeration}
     return: [<opt> integer!]
-    word [word! bar!]  ; bootstrap needs | accepted for BAR!, new alias WORD!
+    word "Word (but may be in text form to gloss over bootstrap issues)"
+        [word! text!]
     /exists "return ID of existing SYM_XXX constant if already exists"
     <with> sym-n
 ][
-    if pos: find/only syms-words word [
+    if pos: find/only syms-words as text! word [
         if exists [return index of pos]
         fail ["Duplicate word specified" word]
     ]
 
-    append syms-words ^(word)
+    append syms-words as text! word
     append syms-cscape cscape/with {/* $<Word> */ SYM_${FORM WORD} = $<sym-n>} [
         sym-n word
     ]
@@ -540,7 +541,7 @@ for-each term load %symbols.r [
         add-sym term
     ] else [
         assert [issue? term]
-        if not find syms-words to word! term [
+        if not find syms-words as text! term [
             fail ["Expected symbol for" term "from native/generic/type"]
         ]
     ]

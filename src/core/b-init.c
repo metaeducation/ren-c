@@ -1023,37 +1023,11 @@ void Startup_Core(void)
     // Startup_Lib() they were created and bound, but the natives weren't
     // available to assign to them...do it here for now.
     //
-    ensureNullptr(PG_Caret_Word) = Append_Context(
-        Lib_Context,
-        nullptr,
-        PG_Caret_Symbol
-    );
-    ensureNullptr(PG_At_Word) = Append_Context(
-        Lib_Context,
-        nullptr,
-        PG_At_Symbol
-    );
+    REBVAL *caret_var = Append_Context(Lib_Context, nullptr, Canon(CARET_1));
+    REBVAL *at_var = Append_Context(Lib_Context, nullptr, Canon(AT_1));
 
-    Init_Any_Word_Bound(
-        PG_Caret_Word,
-        REB_WORD,
-        Lib_Context,
-        PG_Caret_Symbol,
-        INDEX_ATTACHED
-    );
-    mutable_KIND3Q_BYTE(PG_Caret_Word) = REB_SYMBOL;
-
-    Init_Any_Word_Bound(
-        PG_At_Word,
-        REB_WORD,
-        Lib_Context,
-        PG_At_Symbol,
-        INDEX_ATTACHED
-    );
-    mutable_KIND3Q_BYTE(PG_At_Word) = REB_SYMBOL;
-
-    Set_Var_May_Fail(PG_Caret_Word, SPECIFIED, Lib(META_P));
-    Set_Var_May_Fail(PG_At_Word, SPECIFIED, Lib(THE_P));
+    Copy_Cell(caret_var, Lib(META_P));
+    Copy_Cell(at_var, Lib(THE_P));
 
     // boot->errors is the error definition list from %errors.r
     //

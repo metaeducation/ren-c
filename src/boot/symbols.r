@@ -44,6 +44,7 @@ rootvar  ; used as placeholder in rootvar cells
 attached  ; answer from BINDING OF when variable is attached but unresolved
 inherited  ; answer from BINDING OF when variable is attached and inherited
 
+optimized-out
 
 ;=== LEGACY HELPERS ===
 

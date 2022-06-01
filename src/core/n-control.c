@@ -130,7 +130,7 @@ REBNATIVE(either)
 //      /decay "Pre-decay ~null~ isotope input to NULL"
 //  ]
 //
-REBNATIVE(_did_)  // see TO-C-NAME
+REBNATIVE(did_1)  // see TO-C-NAME
 //
 // DID exists as a complement to isotopes to help solve conflation of falsey
 // values with conditional tests.  One example:
@@ -151,7 +151,7 @@ REBNATIVE(_did_)  // see TO-C-NAME
 // success return the falsey ones as isotopes, incorrect uses can be caught
 // and guided to use DID or DIDN'T (or whatever they actually meant).
 {
-    INCLUDE_PARAMS_OF__DID_;
+    INCLUDE_PARAMS_OF_DID_1;
 
     Value *in = ARG(optional);
 

@@ -1101,7 +1101,7 @@ void RL_rebJumps(const void *p, va_list *vaptr)
 //
 // Analogue of DID, which is an isotope-tolerant version of NON NULL?.
 // e.g. "Would the supplied expression run a THEN"
-// See REBNATIVE(_did_) for explanation.
+// See REBNATIVE(did_1) for explanation.
 //
 bool RL_rebDid(const void *p, va_list *vaptr)
 {

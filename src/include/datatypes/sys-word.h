@@ -129,23 +129,23 @@ inline static const REBSTR *Intern_Unsized_Managed(const char *utf8)
 //
 inline static bool IS_BAR(const RELVAL *v) {
     return KIND3Q_BYTE_UNCHECKED(v) == REB_WORD
-        and VAL_WORD_SYMBOL(v) == PG_Bar_Canon;  // caseless | always canon
+        and VAL_WORD_SYMBOL(v) == Canon(BAR_1);  // caseless | always canon
 }
 
 inline static bool IS_BAR_BAR(const RELVAL *v) {
     return KIND3Q_BYTE_UNCHECKED(v) == REB_WORD
-        and VAL_WORD_SYMBOL(v) == PG_Bar_Bar_Canon;  // caseless || always canon
+        and VAL_WORD_SYMBOL(v) == Canon(_B_B);  // caseless || always canon
 }
 
 
 inline static REBVAL *Init_Meta(RELVAL *out) {
-    Init_Any_Word_Untracked(out, REB_WORD, PG_Caret_Symbol);
+    Init_Any_Word_Untracked(out, REB_WORD, Canon(CARET_1));
     mutable_KIND3Q_BYTE(out) = REB_SYMBOL;
     return cast(REBVAL*, out);
 }
 
 inline static REBVAL *Init_The(RELVAL *out) {
-    Init_Any_Word_Untracked(out, REB_WORD, PG_At_Symbol);
+    Init_Any_Word_Untracked(out, REB_WORD, Canon(AT_1));
     mutable_KIND3Q_BYTE(out) = REB_SYMBOL;
     return cast(REBVAL*, out);
 }
@@ -153,11 +153,11 @@ inline static REBVAL *Init_The(RELVAL *out) {
 inline static bool IS_META(const RELVAL *v) {
     if (not IS_SYMBOL(v))
         return false;
-    return VAL_WORD_SYMBOL(v) == PG_Caret_Symbol;
+    return VAL_WORD_SYMBOL(v) == Canon(CARET_1);
 }
 
 inline static bool IS_THE(const RELVAL *v) {
     if (not IS_SYMBOL(v))
         return false;
-    return VAL_WORD_SYMBOL(v) == PG_At_Symbol;
+    return VAL_WORD_SYMBOL(v) == Canon(AT_1);
 }

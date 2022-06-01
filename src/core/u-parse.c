@@ -167,7 +167,7 @@
 #define FETCH_TO_BAR_OR_END(f) \
     while (NOT_END(P_RULE) and not ( \
         KIND3Q_BYTE_UNCHECKED(P_RULE) == REB_WORD \
-        and VAL_WORD_SYMBOL(P_RULE) == PG_Bar_Canon \
+        and VAL_WORD_SYMBOL(P_RULE) == Canon(BAR_1) \
     )){ \
         FETCH_NEXT_RULE(f); \
     }
@@ -1765,13 +1765,13 @@ REBNATIVE(subparse)
                 }
                 goto pre_rule; }
 
-              case SYM__NOT_:  // see TO-C-NAME
+              case SYM_NOT_1:  // see TO-C-NAME
                 P_FLAGS |= PF_NOT;
                 P_FLAGS ^= PF_NOT2;
                 FETCH_NEXT_RULE(f);
                 goto pre_rule;
 
-              case SYM__AND_:  // see TO-C-NAME
+              case SYM_AND_1:  // see TO-C-NAME
               case SYM_AHEAD:
                 P_FLAGS |= PF_AHEAD;
                 FETCH_NEXT_RULE(f);

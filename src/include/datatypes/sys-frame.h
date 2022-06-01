@@ -126,10 +126,10 @@ inline static const REBSTR* FRM_FILE(REBFRM *f) {
 
 inline static const char* FRM_FILE_UTF8(REBFRM *f) {
     //
-    // !!! Note: Too early in boot at the moment to use Canon(__ANONYMOUS__).
+    // !!! Note: Too early in boot at the moment to use Canon(ANONYMOUS).
     //
     const REBSTR *str = FRM_FILE(f);
-    return str ? STR_UTF8(str) : "(anonymous)";
+    return str ? STR_UTF8(str) : "~anonymous~";
 }
 
 inline static int FRM_LINE(REBFRM *f) {

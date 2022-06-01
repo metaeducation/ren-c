@@ -36,6 +36,13 @@ PVAR REBINT PG_Boot_Level;  // User specified startup level
 PVAR REBU64 PG_Mem_Usage;   // Overall memory used
 PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 
+
+
+// This is a series that holds 8-platform-pointer REBARR nodes, arranged in
+// canon order.  It provides fast access to lib entries by symbol.
+//
+PVAR REBARR PG_Lib_Patches[LIB_SYMS_MAX];
+
 // In Ren-C, words are REBSER nodes (REBSTR subtype).  They may be GC'd (unless
 // they are in the %words.r list, in which case their canon forms are
 // protected in order to do SYM_XXX switch statements in the C source, etc.)
@@ -45,23 +52,6 @@ PVAR REBU64 PG_Mem_Limit;   // Memory limit set by SECURE
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR const REBSYM *PG_Slash_1_Canon;  // Preallocated "fake" word for `/`
-PVAR const REBSYM *PG_Dot_1_Canon;  // Preallocated "fake" word for `.`
-
-// SYMBOL! is a new concept that would act WORD!-like, but not have variants
-// (no SET-, GET-, META-, THE-).  The specific symbols of ^ and @ would have
-// behavior assigned to them in LIB.
-//
-PVAR const REBSYM *PG_At_Symbol;
-PVAR const REBSYM *PG_Caret_Symbol;
-PVAR REBVAL *PG_At_Word;
-PVAR REBVAL *PG_Caret_Word;
-
-// This is a series that holds 8-platform-pointer REBARR nodes, arranged in
-// canon order.  It provides fast access to lib entries by symbol.
-//
-PVAR REBARR PG_Lib_Patches[LIB_SYMS_MAX];
-
 PVAR REBSYM PG_Symbol_Canons[ALL_SYMS_MAX + 1];
 
 PVAR REBSER *PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
@@ -70,8 +60,6 @@ PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)
     PVAR REBLEN PG_Num_Symbol_Deleteds; // Deleted symbol hash slots "in use"
 #endif
 PVAR REBSTR PG_Deleted_Symbol;  // pointer used to indicate a deletion
-PVAR const REBSYM *PG_Bar_Canon;  // fast canon value for testing for `|`
-PVAR const REBSYM *PG_Bar_Bar_Canon;  // same, but for testing `||`
 
 PVAR REBVAL *Lib_Context_Value;
 PVAR REBVAL *Sys_Context_Value;

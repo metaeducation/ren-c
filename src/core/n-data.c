@@ -607,8 +607,8 @@ bool Get_Var_Push_Refinements_Throws(
 
           case REB_WORD:  // Note: will likely become SYMBOL! instances
             assert(
-                VAL_STRING(var) == PG_Dot_1_Canon
-                or VAL_STRING(var) == PG_Slash_1_Canon
+                VAL_STRING(var) == Canon(DOT_1)
+                or VAL_STRING(var) == Canon(SLASH_1)
             );
             goto get_source;
 
@@ -793,7 +793,7 @@ bool Get_Path_Push_Refinements_Throws(
         return false;
 
       case REB_WORD:  // Note: will become SYMBOL! instances
-        assert(VAL_STRING(path) == PG_Slash_1_Canon);
+        assert(VAL_STRING(path) == Canon(SLASH_1));
         Get_Word_May_Fail(out, path, path_specifier);
         return false;
 
@@ -1104,8 +1104,8 @@ bool Set_Var_Core_Updater_Throws(
 
           case REB_WORD:  // Note: will likely become SYMBOL! instances
             assert(
-                VAL_STRING(var) == PG_Dot_1_Canon
-                or VAL_STRING(var) == PG_Slash_1_Canon
+                VAL_STRING(var) == Canon(DOT_1)
+                or VAL_STRING(var) == Canon(SLASH_1)
             );
             goto set_target;
 
@@ -1835,8 +1835,8 @@ REBNATIVE(as)
 
               case REB_WORD:
                 assert(
-                    VAL_WORD_SYMBOL(v) == PG_Dot_1_Canon
-                    or VAL_WORD_SYMBOL(v) == PG_Slash_1_Canon
+                    VAL_WORD_SYMBOL(v) == Canon(DOT_1)
+                    or VAL_WORD_SYMBOL(v) == Canon(SLASH_1)
                 );
                 Init_Block(v, PG_2_Blanks_Array);
                 break;

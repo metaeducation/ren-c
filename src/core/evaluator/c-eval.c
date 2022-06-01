@@ -1243,7 +1243,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         );
 
         if (HEART_BYTE(v) == REB_WORD) {
-            assert(VAL_WORD_ID(v) == SYM__SLASH_1_);
+            assert(VAL_WORD_SYMBOL(v) == Canon(SLASH_1));
             STATE_BYTE(f) = ST_EVALUATOR_GET_WORD;
             goto process_get_word;
         }
@@ -1390,7 +1390,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             //
             // !!! Should both @(^) and ^(@) be allowed?
             //
-            if (IS_SYMBOL(check) and VAL_SYMBOL(check) == PG_Caret_Symbol) {
+            if (IS_SYMBOL(check) and VAL_SYMBOL(check) == Canon(CARET_1)) {
                 Init_Blackhole(DS_PUSH());
                 SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
                 continue;

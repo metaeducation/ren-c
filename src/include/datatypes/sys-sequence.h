@@ -155,10 +155,10 @@ inline static REBCTX *Error_Bad_Sequence_Init(const REBVAL *v) {
 
 inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
     if (ANY_PATH_KIND(kind))
-        Init_Word(out, PG_Slash_1_Canon);
+        Init_Word(out, Canon(SLASH_1));
     else {
         assert(ANY_TUPLE_KIND(kind));
-        Init_Word(out, PG_Dot_1_Canon);
+        Init_Word(out, Canon(DOT_1));
     }
     mutable_KIND3Q_BYTE(out) = kind;
     assert(HEART_BYTE(out) == REB_WORD);  // leave as-is
@@ -522,8 +522,8 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
       case REB_WORD: {
         assert(n < 2);
         assert(
-            VAL_STRING(sequence) == PG_Dot_1_Canon
-            or VAL_STRING(sequence) == PG_Slash_1_Canon
+            VAL_STRING(sequence) == Canon(DOT_1)
+            or VAL_STRING(sequence) == Canon(SLASH_1)
         );
         return Lib(BLANK); }
 

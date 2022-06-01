@@ -474,7 +474,7 @@ void Reify_Va_To_Array_In_Frame(
 
     if (truncated) {
         DS_PUSH();
-        Init_Word(DS_TOP, Canon(__OPTIMIZED_OUT__));
+        Init_Bad_Word(DS_TOP, Canon(OPTIMIZED_OUT));
     }
 
     REBLEN index;

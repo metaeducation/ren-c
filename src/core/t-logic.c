@@ -117,9 +117,9 @@ REBNATIVE(to_logic)
 //      optional [<opt> any-value!]
 //  ]
 //
-REBNATIVE(_not_)  // see TO-C-NAME
+REBNATIVE(not_1)  // see TO-C-NAME
 {
-    INCLUDE_PARAMS_OF__NOT_;
+    INCLUDE_PARAMS_OF_NOT_1;
 
     return Init_Logic(OUT, IS_FALSEY(ARG(optional)));
 }
@@ -162,9 +162,9 @@ inline static bool Do_Logic_Right_Side_Throws(
 //          [group! tuple! word!]
 //  ]
 //
-REBNATIVE(_and_)  // see TO-C-NAME
+REBNATIVE(and_1)  // see TO-C-NAME
 {
-    INCLUDE_PARAMS_OF__AND_;
+    INCLUDE_PARAMS_OF_AND_1;
 
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
@@ -193,9 +193,9 @@ REBNATIVE(_and_)  // see TO-C-NAME
 //          [group! tuple! word!]
 //  ]
 //
-REBNATIVE(_or_)  // see TO-C-NAME
+REBNATIVE(or_1)  // see TO-C-NAME
 {
-    INCLUDE_PARAMS_OF__OR_;
+    INCLUDE_PARAMS_OF_OR_1;
 
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);
@@ -224,9 +224,9 @@ REBNATIVE(_or_)  // see TO-C-NAME
 //          [group! tuple! word!]
 //  ]
 //
-REBNATIVE(_xor_)  // see TO-C-NAME
+REBNATIVE(xor_1)  // see TO-C-NAME
 {
-    INCLUDE_PARAMS_OF__XOR_;
+    INCLUDE_PARAMS_OF_XOR_1;
 
     REBVAL *left = ARG(left);
     REBVAL *right = ARG(right);

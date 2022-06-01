@@ -62,24 +62,36 @@ export to-c-name: function [
         ; !!! Note: this was ... but that is now a TUPLE!  So this has to
         ; be changed for the moment.
         ;
-        "***" [copy "ellipsis"]
+        "***" ["ellipsis_1"]
 
         ; Used to make SYM_HYPHEN which is needed by `charset [#"A" - #"Z"]`
         ;
-        "-" [copy "hyphen"]
+        "-" ["hyphen_1"]
 
         ; Used to deal with the /? refinements (which may not last)
         ;
-        "?" [copy "q"]
+        "?" ["question_1"]
 
         ; None of these are used at present, but included just in case
         ;
-        "*" [copy "asterisk"]
-        "." [copy "period"]
-        "!" [copy "exclamation"]
-        "+" [copy "plus"]
-        "~" [copy "tilde"]
-        "|" [copy "bar"]
+        "*" ["asterisk_1"]
+        "!" ["exclamation_1"]
+        "+" ["plus_1"]
+        "~" ["tilde_1"]
+        "|" ["bar_1"]
+
+        ; Special mechanics are required so that PATH! and TUPLE! collapse
+        ; to make these words:
+        ;
+        ;     >> compose '(_)/(_)
+        ;     == /  ; a word
+        ;
+        "." ["dot_1"]
+        "/" ["slash_1"]
+
+        "@" ["at_1"]
+        "^^" ["caret_1"]
+        ":" ["colon_1"]
 
         ; These are in the set of what are known as "alterative tokens".  They
         ; aren't exactly keywords (and in C they're just done with #define).
@@ -89,20 +101,22 @@ export to-c-name: function [
         ;
         ; (Complete list here for completeness, despite many being unused.)
         ;
-        "and" [copy "_and_"]
-        "and_eq" [copy "_and_eq_"]
-        "bitand" [copy "_bitand_"]
-        "bitor" [copy "_bitor_"]
-        "compl" [copy "_compl_"]
-        "not" [copy "_not_"]
-        "not_eq" [copy "_not_eq_"]
-        "or" [copy "_or_"]
-        "or_eq" [copy "_or_eq_"]
-        "xor" [copy "_xor_"]
-        "xor_eq" [copy "_xor_eq_"]
+        "and" ["and_1"]
+        "and_eq" ["and_eq_1"]
+        "bitand" ["bitand_1"]
+        "bitor" ["bitor_1"]
+        "compl" ["compl_1"]
+        "not" ["not_1"]
+        "not_eq" ["not_eq_1"]
+        "or" ["or_1"]
+        "or_eq" ["or_eq_1"]
+        "xor" ["xor_1"]
+        "xor_eq" ["xor_eq_1"]
 
-        "did" [copy "_did_"]  ; This is a macro in Ren-C code
-    ] else [
+        "did" ["did_1"]  ; This is a macro in Ren-C code
+    ] then (func [s] [
+        copy s
+    ]) else [
         ;
         ; If these symbols occur composite in a longer word, they use a
         ; shorthand; e.g. `foo?` => `foo_q`
@@ -116,6 +130,8 @@ export to-c-name: function [
             !   "_x"    ; e(x)clamation
             +   "_a"    ; (a)ddition
             |   "_b"    ; (b)ar
+            #"^^"  "_c" ; (c)aret
+            #"@" "_z"   ; a was taken, doesn't make less sense than * => p
         ][
             replace/all string (form reb) c
         ]

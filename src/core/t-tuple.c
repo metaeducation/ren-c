@@ -370,7 +370,7 @@ REBTYPE(Sequence)
             HEART_BYTE(sequence) == REB_WORD
             or HEART_BYTE(sequence) == REB_ISSUE
         ){
-            assert(VAL_WORD_ID(sequence) == SYM__SLASH_1_);
+            assert(VAL_WORD_SYMBOL(sequence) == Canon(SLASH_1));
             return Copy_Cell(frame_->out, sequence);
         }
 

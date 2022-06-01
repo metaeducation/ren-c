@@ -93,7 +93,7 @@ REBNATIVE(reduce)
                 processed = rebMeta(predicate, Meta_Quotify(OUT));
             else if (IS_NULLED(OUT))
                 processed = rebMeta(
-                    predicate, PG_At_Word, Init_Meta_Of_Null_Isotope(OUT)
+                    predicate, Lib(THE_P), Init_Meta_Of_Null_Isotope(OUT)
                 );
             else
                 processed = rebMeta(predicate, rebQ(OUT));

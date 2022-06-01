@@ -50,12 +50,17 @@ sys
 system
 lib
 
-; Actual underlying words for cells in lone `/` paths and lone `.` tuples,
-; allowing binding and execution of operations like division or identity.
-; Having these looked up optimized in the fixed lib block is worthwhile.
+; When building PATH! and TUPLE! the system collapses 2-element sequences
+; that are all BLANK! to these words.  Different meanings in bootstrap exe
+; so just use strings.
 ;
--slash-1-
--dot-1-
+"/"
+"."
+
+; Not loadable by bootstrap executable.
+"@"
+"^^"  ; actually just one caret
+":"
 
 ; PARSE - These words must not be reserved above!!  The range of consecutive
 ; index numbers are used by PARSE to detect keywords.
@@ -85,8 +90,8 @@ repeat
 limit
 seek  ; Ren-C addition
 ??
-|
-||
+"|"  ; Text form to gloss over bootstrap issue (was BAR! datatype)
+"||"
 accept
 break
 ; ^--prep words above

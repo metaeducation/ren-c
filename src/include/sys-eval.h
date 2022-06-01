@@ -207,7 +207,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         return true;  // paths do enfix processing if '/'
 
     if (HEART_BYTE(feed->value) == REB_WORD) {
-        if (VAL_WORD_SYMBOL(feed->value) == PG_Slash_1_Canon) {
+        if (VAL_WORD_SYMBOL(feed->value) == Canon(SLASH_1)) {
             *flags |=
                 FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
                 | EVAL_FLAG_INERT_OPTIMIZATION;
