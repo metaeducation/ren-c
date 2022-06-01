@@ -197,3 +197,5 @@
     for _ each [a b c] [sum: sum + 1]
     sum = 3
 )
+
+(5 = for-each x [1 2 3] [5 assert [x < 10]])

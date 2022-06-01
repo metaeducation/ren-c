@@ -611,10 +611,11 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 return nullptr;
             }
         }
+        Clear_Stale_Flag(temp);  // test for no product is IS_VOID()
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            if (Is_Stale(temp)) {
+            if (IS_VOID(temp)) {
                 //
                 //    for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
                 //
@@ -641,7 +642,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_EVERY:
-            if (Is_Stale(temp)) {
+            if (IS_VOID(temp)) {
                 //
                 // In light of other tolerances in the system for voids, EVERY
                 // treats a void as "no vote", whether MAYBE is used or not.
@@ -690,7 +691,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             //
             /* Predicate(temp) */
 
-            if (Is_Stale(temp)) {
+            if (IS_VOID(temp)) {
                 //
                 // MAP rules are different because we aren't conditionally
                 // testing, so void scenarios should be okay to skip.
