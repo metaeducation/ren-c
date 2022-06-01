@@ -72,8 +72,8 @@ inline static REBVAL *Init_Bad_Word_Untracked(
     // Debug behavior: `~` isotope with the CELL_FLAG_STALE set
     // Will trip up any access attempts via READABLE(), but can be overwritten
 
-    #define Init_Trash(out) \
-        Init_Bad_Word_Untracked(TRACK(out), nullptr, CELL_FLAG_STALE)
+    #define Init_Trash_Untracked(out) \
+        Init_Bad_Word_Untracked((out), nullptr, CELL_FLAG_STALE)
 
     inline static bool IS_TRASH(const RELVAL *v) {
         if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
@@ -83,8 +83,11 @@ inline static REBVAL *Init_Bad_Word_Untracked(
 #else
     // Release Build Behavior: Looks just like an unset (`~` isotope)
 
-    #define Init_Trash(out) \
-        Init_Bad_Word_Untracked(TRACK(out), nullptr, CELL_MASK_NONE)
+    #define Init_Trash_Untracked(out) \
+        Init_Bad_Word_Untracked((out), nullptr, CELL_MASK_NONE)
 
-    #define IS_TRASH(v) false
+    #define IS_TRASH(v) false  // should constant-fold out clauses in optimizer
 #endif
+
+#define Init_Trash(out) \
+    Init_Trash_Untracked(TRACK(out))
