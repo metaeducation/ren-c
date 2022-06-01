@@ -58,3 +58,21 @@
     (assert [comment "hi" (true)] true)
     (assert [(true) elide 2 + 3] true)
 ]
+
+
+; Custom handler, can request to ~ignore~ the assert, otherwise fails as usual
+[
+    (
+        [[1 = 2] [2 = 3]] = collect [
+            assert/handler [1 = 2, 2 = 2, 2 = 3] func [x] [keep ^x, ~ignore~]
+        ]
+    )
+    (
+        did all [
+            ["hooked"] = collect [e: trap [
+                assert/handler [1 = 2, 2 = 2, 2 = 3] [keep "hooked"]
+            ]]
+            e.id = 'assertion-failure
+        ]
+    )
+]

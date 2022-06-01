@@ -15,32 +15,45 @@ verify: function [
     {Verify all the conditions in the passed-in block are conditionally true}
 
     return: <void>
-    conditions [block!]
-        {Conditions to check}
-    <local> pos result
+    conditions "Conditions to check"
+        [block!]
+    /handler "Optional code to run if the assertion fails, receives condition"
+        [block! action!]
+    <local> pos result'
 ][
-    while [', = first conditions] [conditions: my next]
-
-    while [[^result @pos]: evaluate conditions] [
-        ;
-        ; including commas in the failure report looks messy, skip them
-        ;
-        while [', = first conditions] [conditions: my next]
-
+    while [[^result' @pos]: evaluate conditions] [
         any [
-            '~void~ = result  ; vanished
-            non bad-word! result then [to-logic unmeta result]
+            '~void~ = result'  ; vanished
+            non bad-word! result' then [to-logic unquote result']
+
+            if :handler [  ; may or may-not take two arguments
+                reaction: ^ if block? :handler [
+                    do handler
+                ] else [
+                    if (comment [1 = arity of :handler], true) [  ; TBD
+                        handler (copy/part conditions pos)
+                    ] else [
+                        handler (copy/part conditions pos) unmeta result'
+                    ]
+                ]
+
+                ; If the handler doesn't itself fail--and does not return
+                ; ~ignore~, then we go ahead and fail.  This lets you
+                ; write simple handlers that just print you a message...like
+                ; some context for the assert.
+                ;
+                reaction = '~ignore~
+            ]
         ] else [
             fail @conditions make error! [
                 type: 'Script
                 id: 'assertion-failure
                 arg1: compose [
                     ((copy/part conditions pos)) ** (case [
-                        bad-word? result [result]  ; isotope
-                        (elide result: my unmeta)
-                        null? result ['null]
-                        blank? result ['blank]
-                        result = false ['false]
+                        bad-word? result' [result']  ; isotope
+                        null? result' [the null]
+                        blank? unquote result' [the blank]
+                        false = unquote result' [the false]
                     ])
                 ]
             ]

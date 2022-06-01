@@ -21,8 +21,10 @@ assert: func* [
     {Ensure conditions are conditionally true if hooked by debugging}
 
     return: <void>
-    conditions [block!]
-        {Block of conditions to evaluate and test for logical truth}
+    conditions "Block of conditions to evaluate and test for logical truth"
+        [block!]
+    /handler "Optional code to run if the assertion fails, receives condition"
+        [block! action!]
 ][
     ; ASSERT has no default implementation, but can be HIJACKed by a debug
     ; mode with a custom validation or output routine.
