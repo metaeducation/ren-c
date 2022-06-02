@@ -279,10 +279,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
             // Doesn't make sense to type check some arbitrary other function's
             // return result we are passing through!
 
-            if (
-                NOT_EVAL_FLAG(f, META_OUT)  // allow under meta conditions
-                and NOT_PARAM_FLAG(param, VANISHABLE)  // e.g. can be invisible
-            ){
+            if (NOT_PARAM_FLAG(param, VANISHABLE)) {
                 Clear_Stale_Flag(f->out);  // let VAL_TYPE() work
                 assert(!"Native code violated return type contract!\n");
                 panic (Error_Bad_Return_Type(

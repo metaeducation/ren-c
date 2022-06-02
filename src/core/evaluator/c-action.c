@@ -530,8 +530,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
             REBFLGS flags = EVAL_MASK_DEFAULT
                 | EVAL_FLAG_FULFILLING_ARG;
-            if (pclass == PARAM_CLASS_META)
-                flags |= EVAL_FLAG_META_OUT;
 
             if (Eval_Step_In_Subframe_Maybe_Stale_Throws(ARG, f, flags)) {
                 Move_Cell(OUT, ARG);

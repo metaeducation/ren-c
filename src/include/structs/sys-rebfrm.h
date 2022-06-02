@@ -50,12 +50,9 @@ STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
     FLAG_LEFT_BIT(2)
 
 
-//=//// EVAL_FLAG_PATH_MODE ///////////////////////////////////////////////=//
+//=//// EVAL_FLAG_3 ///////////////////////////////////////////////////////=//
 //
-// The frame is for a PATH! dispatch.  Many of the Eval_Core() flags are not
-// applicable in this case.
-//
-#define EVAL_FLAG_PATH_MODE \
+#define EVAL_FLAG_3 \
     FLAG_LEFT_BIT(3)
 
 
@@ -88,7 +85,7 @@ STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 STATIC_ASSERT(EVAL_FLAG_CACHE_NO_LOOKAHEAD == FEED_FLAG_NO_LOOKAHEAD);
 
 
-//=//// EVAL_FLAG_NO_EVALUATIONS ///////////////////////////////////////////=//
+//=//// EVAL_FLAG_NO_EVALUATIONS //////////////////////////////////////////=//
 //
 // It might seem strange to have an evaluator mode in which no evaluations are
 // performed.  However, this simplifies the implementation of operators such
@@ -100,7 +97,7 @@ STATIC_ASSERT(EVAL_FLAG_CACHE_NO_LOOKAHEAD == FEED_FLAG_NO_LOOKAHEAD);
 //     >> any @[1 + 2]
 //     == 1
 //
-// Inert operations wind up costing a bit more because they are pushing a frame
+// Inert operations wind up costing a bit more because they're pushing a frame
 // when it seems "they don't need to"; but pushing a frame also locks the
 // series in question against enumeration.
 //
@@ -147,8 +144,6 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 
 //=//// EVAL_FLAG_RUNNING_ENFIX ///////////////////////////////////////////=//
 //
-// IF NOT(EVAL_FLAG_PATH_MODE)...
-//
 // Due to the unusual influences of partial refinement specialization, a frame
 // may wind up with its enfix parameter as being something like the last cell
 // in the argument list...when it has to then go back and fill earlier args
@@ -159,14 +154,8 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 // to run an ACTION! cell as enfix or not.  The reason this may be overridden
 // on what's in the action can be seen in the REBNATIVE(shove) code.
 //
-// IF EVAL_FLAG_PATH_MODE...
-//
-// (unused)
-
-#define EVAL_FLAG_16 \
+#define EVAL_FLAG_RUNNING_ENFIX \
     FLAG_LEFT_BIT(16)
-
-#define EVAL_FLAG_RUNNING_ENFIX         EVAL_FLAG_16
 
 
 //=//// EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH ///////////////////////////////////=//
@@ -193,12 +182,9 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(18)
 
 
-//=//// EVAL_FLAG_NO_PATH_GROUPS //////////////////////////////////////////=//
+//=//// EVAL_FLAG_19 //////////////////////////////////////////////////////=//
 //
-// This feature is used in PATH! evaluations to request no side effects.
-// It prevents GET of a PATH! from running GROUP!s.
-//
-#define EVAL_FLAG_NO_PATH_GROUPS \
+#define EVAL_FLAG_19 \
     FLAG_LEFT_BIT(19)
 
 
@@ -211,21 +197,10 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(20)
 
 
-//=//// EVAL_FLAG_PATH_HARD_QUOTE /////////////////////////////////////////=//
-//
-// IF EVAL_FLAG_PATH_MODE...
-// ...Path processing uses this flag, to say that if a path has GROUP!s in
-// it, operations like DEFAULT do not want to run them twice...once on a get
-// path and then on a set path.  This means the path needs to be COMPOSEd and
-// then use GET/HARD and SET/HARD.
-//
-// IF NOT(EVAL_FLAG_PATH_MODE)...
-// ...currently available!
+//=//// EVAL_FLAG_21 //////////////////////////////////////////////////////=//
 //
 #define EVAL_FLAG_21 \
     FLAG_LEFT_BIT(21)
-
-#define EVAL_FLAG_PATH_HARD_QUOTE       EVAL_FLAG_21
 
 
 //=//// EVAL_FLAG_INERT_OPTIMIZATION //////////////////////////////////////=//
@@ -265,28 +240,9 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(23)
 
 
-//=//// EVAL_FLAG_META_OUT /////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_24 //////////////////////////////////////////////////////=//
 //
-// The knowledge of whether a meta operation is in effect tells the action
-// dispatcher whether to suppress the "invisible intent" of non-purely
-// invisible functions (such as EVALUATE).
-//
-//    >> eval []
-//    == ~void~  ; isotope
-//
-//    >> ^ eval []
-//    == _
-//
-// This is not the behavior of all functions that return void isotopes.  The
-// "translucent" functions have different behavior:
-//
-//    >> if false [<a>]
-//    == ~void~  ; isotope
-//
-//    >> ^ if false [<a>]
-//    == ~void~
-//
-#define EVAL_FLAG_META_OUT \
+#define EVAL_FLAG_24 \
     FLAG_LEFT_BIT(24)
 
 
@@ -336,7 +292,7 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(27)
 
 
-//=//// EVAL_FLAG_28 ///////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_28 //////////////////////////////////////////////////////=//
 //
 // Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
 // could be exploited for some optimization.
@@ -347,30 +303,15 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
 STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
 
 
-//=//// EVAL_FLAG_PUSH_PATH_REFINES + EVAL_FLAG_BLAME_PARENT //////////////=//
-//
-// IF EVAL_FLAG_PATH_MODE...
-//
-// It is technically possible to produce a new specialized ACTION! each
-// time you used a PATH!.  This is needed for `apdo: :append/dup/only` as a
-// method of partial specialization, but would be costly if just invoking
-// a specialization once.  So path dispatch can be asked to push the path
-// refinements in the reverse order of their invocation.
-//
-// This mechanic is also used by SPECIALIZE, so that specializing refinements
-// in order via a path and values via a block of code can be done in one
-// step, vs needing to make an intermediate ACTION!.
-//
-// IF NOT(EVAL_FLAG_PATH_MODE)...
+//=//// EVAL_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
 //
 // Marks an error to hint that a frame is internal, and that reporting an
 // error on it probably won't give a good report.
 //
-#define EVAL_FLAG_29 \
+// !!! Currently unused.  Was this an important idea?
+//
+#define EVAL_FLAG_BLAME_PARENT \
     FLAG_LEFT_BIT(29)
-
-#define EVAL_FLAG_PUSH_PATH_REFINES         EVAL_FLAG_29
-#define EVAL_FLAG_BLAME_PARENT              EVAL_FLAG_29
 
 
 //=//// EVAL_FLAG_FULFILL_ONLY ////////////////////////////////////////////=//
@@ -388,7 +329,7 @@ STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
     FLAG_LEFT_BIT(30)
 
 
-//=//// EVAL_FLAG_OVERLAP_OUTPUT ///////////////////////////////////////////=//
+//=//// EVAL_FLAG_OVERLAP_OUTPUT //////////////////////////////////////////=//
 //
 // This is a flag that is passed to the evaluation to indicate that it should
 // not assert if it finds a value in the ouput cell already.  It is only

@@ -123,9 +123,7 @@
     DECLARE_FRAME (f, (parent)->feed, \
         EVAL_MASK_DEFAULT | /*EVAL_FLAG_KEEP_STALE_BIT |*/ ((parent)->flags.bits \
             & (EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_RUNNING_ENFIX \
-                | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH))) \
-    if (GET_EVAL_FLAG((parent), META_OUT)) \
-        SET_EVAL_FLAG(f, META_OUT)
+                | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
 
 
 #if DEBUG_EXPIRED_LOOKBACK
