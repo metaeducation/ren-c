@@ -463,8 +463,12 @@ inline static void Inertly_Derelativize_Inheriting_Const(
     const RELVAL *v,
     REBFED *feed
 ){
+    if (IS_BAD_WORD(v))
+        assert(NOT_CELL_FLAG(v, ISOTOPE));  // Source should not have isotopes
+
     Derelativize(out, v, FEED_SPECIFIER(feed));
     SET_CELL_FLAG(out, UNEVALUATED);
+
     if (NOT_CELL_FLAG(v, EXPLICITLY_MUTABLE))
         out->header.bits |= (feed->flags.bits & FEED_FLAG_CONST);
 }

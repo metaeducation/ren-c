@@ -88,6 +88,8 @@
 #define f_next f->feed->value
 #define f_next_gotten f->feed->gotten
 
+#define frame_ f  // for OUT, SPARE, STATE_BYTE macros
+
 // We make the macro for getting specifier a bit more complex here, to
 // account for reevaluation.  To help annotate why it's weird, we call it
 // `v_specifier` instead.
@@ -96,7 +98,7 @@
 //
 #undef f_specifier
 #define v_specifier \
-    (STATE_BYTE(f) == ST_EVALUATOR_REEVALUATING \
+    (STATE_BYTE == ST_EVALUATOR_REEVALUATING \
         ? SPECIFIED \
         : FEED_SPECIFIER(f->feed))
 
@@ -166,7 +168,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     //
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))  {
         CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
-        CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // this helper counts as eval
+        CLEAR_CELL_FLAG(OUT, UNEVALUATED);  // this helper counts as eval
         return false;
     }
 
@@ -180,7 +182,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     // enfix quoting operators that would quote backwards to see the `x:` would
     // have intercepted it during a lookahead...pre-empting this code.
     //
-    RESET(f->out);
+    RESET(OUT);
 
     if (IS_END(f_next)) {
         if (IS_META(v))  // allow (@), case makes END into ~void~
@@ -206,7 +208,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     else {  // !!! Reusing the frame, would inert optimization be worth it?
         // !!! If reevaluating, this will forget that we are doing so.
         //
-        STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
+        STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
 
         if (Eval_Maybe_Stale_Throws(f))  // reuse `f`
             return true;
@@ -227,8 +229,8 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
         // https://forum.rebol.info/t/1582/5
     }
 
-    CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // this helper counts as eval
-    Clear_Stale_Flag(f->out);  // started with RESET(), voidness is IS_VOID
+    CLEAR_CELL_FLAG(OUT, UNEVALUATED);  // this helper counts as eval
+    Clear_Stale_Flag(OUT);  // started with RESET(), voidness is IS_VOID
     return false;
 }
 
@@ -245,11 +247,15 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
 //
 bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 {
+    assert(DSP >= f->dsp_orig);  // REDUCE accrues, APPLY adds refinements
+    assert(INITABLE(OUT));  // all invisible will preserve output
+    assert(OUT != SPARE);  // overwritten by temporary calculations
+
     if (GET_EVAL_FLAG(f, NO_EVALUATIONS)) {  // see flag for why this exists
         if (IS_END(f->feed->value))
             return false;
-        Derelativize(f->out, f->feed->value, FEED_SPECIFIER(f->feed));
-        SET_CELL_FLAG(f->out, UNEVALUATED);
+        Derelativize(OUT, f->feed->value, FEED_SPECIFIER(f->feed));
+        SET_CELL_FLAG(OUT, UNEVALUATED);
         Fetch_Next_Forget_Lookback(f);
         return false;
     }
@@ -270,17 +276,13 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     );  // should be unchanged on exit
   #endif
 
-    assert(DSP >= f->dsp_orig);  // REDUCE accrues, APPLY adds refinements
-    assert(INITABLE(f->out));  // all invisible will preserve output
-    assert(f->out != f_spare);  // overwritten by temporary calculations
-
     // A barrier shouldn't cause an error in evaluation if code would be
     // willing to accept an <end>.  So we allow argument gathering to try to
     // run, but it may error if that's not acceptable.
     //
     if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
         if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
-            Mark_Eval_Out_Stale(f->out);
+            Mark_Eval_Out_Stale(OUT);
             return false;
         }
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);  // not an argument, clear flag
@@ -296,16 +298,16 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // have to be a test for points to `goto` before running normal eval.
     // This cost is paid on every entry to Eval_Core().
     //
-    switch (STATE_BYTE(f)) {
+    switch (STATE_BYTE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
         break;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
         goto lookahead;
 
-      case ST_EVALUATOR_REEVALUATING: {  // v-- IMPORTANT: Keep STATE_BYTE()
+      case ST_EVALUATOR_REEVALUATING: {  // v-- IMPORTANT: Keep STATE_BYTE
         //
-        // It's important to leave STATE_BYTE() as ST_EVALUATOR_REEVALUATING
+        // It's important to leave STATE_BYTE as ST_EVALUATOR_REEVALUATING
         // during the switch state, because that's how the evaluator knows
         // not to redundantly apply LET bindings.  See `v_specifier` above.
 
@@ -317,7 +319,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             CLEAR_EVAL_FLAG(f, RUNNING_ENFIX);  // for assertion
 
             DECLARE_ACTION_SUBFRAME (subframe, f);
-            Push_Frame(f->out, subframe);
+            Push_Frame(OUT, subframe);
             Push_Action(
                 subframe,
                 VAL_ACTION(f->u.reval.value),
@@ -328,12 +330,12 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
             SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
 
-            assert(Is_Fresh(f_spare));
+            assert(Is_Fresh(SPARE));
             goto process_action;
         }
 
         if (NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))
-            Mark_Eval_Out_Stale(f->out);
+            Mark_Eval_Out_Stale(OUT);
 
         v = f->u.reval.value;
         gotten = nullptr;
@@ -363,13 +365,13 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // it may spawn an entire interactive debugging session via
         // breakpoint before it returns.  It may also FAIL and longjmp out.
         //
-        if (Do_Signals_Throws(f->out))
+        if (Do_Signals_Throws(OUT))
             goto return_thrown;
     }
 
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));
 
-    // f->out might be merely "prepped" in which case the header is all 0 bits.
+    // OUT might be merely "prepped" in which case the header is all 0 bits.
     // This is considered INITABLE() but not WRITABLE(), so the SET_CELL_FLAG()
     // routines will reject it.  While we are already doing a flag masking
     // operation to add CELL_FLAG_STALE, ensure the cell carries the NODE and
@@ -379,7 +381,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // Note that adding CELL_FLAG_STALE means the out cell won't act as the
     // input to an enfix operation.
     //
-    f->out->header.bits |= (
+    OUT->header.bits |= (
         NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_STALE
     );
 
@@ -476,15 +478,15 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             goto give_up_backward_quote_priority;
     }
 
-    // Lookback args are fetched from f->out, then copied into an arg
-    // slot.  Put the backwards quoted value into f->out.
+    // Lookback args are fetched from OUT, then copied into an arg slot.
+    // Put the backwards quoted value into OUT.
     //
-    Derelativize(f->out, v, v_specifier);  // for NEXT_ARG_FROM_OUT
-    SET_CELL_FLAG(f->out, UNEVALUATED);  // so lookback knows it was quoted
+    Derelativize(OUT, v, v_specifier);  // for NEXT_ARG_FROM_OUT
+    SET_CELL_FLAG(OUT, UNEVALUATED);  // so lookback knows it was quoted
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
     // v will then hold a pointer to that word (possibly now resident in the
-    // frame spare).  (f->out holds what was the left)
+    // frame spare).  (OUT holds what was the left)
     //
     gotten = f_next_gotten;
     v = Lookback_While_Fetching_Next(f);
@@ -492,8 +494,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     if (
         IS_END(f_next)  // v-- out is what used to be on left
         and (
-            KIND3Q_BYTE(f->out) == REB_WORD
-            or KIND3Q_BYTE(f->out) == REB_PATH
+            KIND3Q_BYTE(OUT) == REB_WORD
+            or KIND3Q_BYTE(OUT) == REB_PATH
         )
     ){
         // We make a special exemption for left-stealing arguments, when
@@ -501,14 +503,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // and we run the left hand side with them as a priority instead.
         // This lets us do e.g. `(just =>)` or `help of`
         //
-        // Swap it around so that what we had put in the f->out goes back
-        // to being in the lookback cell and can be used as current.  Then put
-        // what was current into f->out so it can be consumed as the first
-        // parameter of whatever that was.
+        // Swap it around so that what we had put in OUT goes back to being in
+        // the lookback cell and can be used as current.  Then put what was
+        // current into OUT so it can be consumed as the first parameter of
+        // whatever that was.
 
-        Move_Cell(&f->feed->lookback, f->out);
-        Derelativize(f->out, v, v_specifier);
-        SET_CELL_FLAG(f->out, UNEVALUATED);
+        Move_Cell(&f->feed->lookback, OUT);
+        Derelativize(OUT, v, v_specifier);
+        SET_CELL_FLAG(OUT, UNEVALUATED);
 
         // leave *next at END
         v = &f->feed->lookback;
@@ -525,7 +527,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
   blockscope {
     DECLARE_ACTION_SUBFRAME (subframe, f);
-    Push_Frame(f->out, subframe);
+    Push_Frame(OUT, subframe);
     Push_Action(
         subframe,
         VAL_ACTION(unwrap(gotten)),
@@ -567,8 +569,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // making it impossible to "reify" the instruction stream as a BLOCK!
     // for the debugger.  Mechanically speaking, this is best left an error.
     //
-    // Note: The API can't allow splicing of null values in the instruction
-    // streams:
+    // Note: The API can't splice null values in the instruction stream:
     //
     //     REBVAL *v = nullptr;
     //     bool is_null = rebUnboxLogic("null?", v);  // should be rebQ(v)
@@ -609,11 +610,11 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
       case REB_ACTION: {
         DECLARE_ACTION_SUBFRAME (subframe, f);
-        Push_Frame(f->out, subframe);
+        Push_Frame(OUT, subframe);
         Push_Action(subframe, VAL_ACTION(v), VAL_ACTION_BINDING(v));
         Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(v));
 
-        // We'd like `10 -> = 5 + 5` to work, and to do so it reevaluates in
+        // We'd like `10 >- = 5 + 5` to work, and to do so it reevaluates in
         // a new frame, but has to run the `=` as "getting its next arg from
         // the output slot, but not being run in an enfix mode".
         //
@@ -660,7 +661,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         // Note: However, the evaluation of an invisible can leave a stale
         // value, e.g. `do [comment "hi" 10]`...there is no prior value in
-        // f->out to serve as a return.  At one time this retriggered, but the
+        // OUT to serve as a return.  At one time this retriggered, but the
         // new simplifying rule is that we do not support such non-interstitial
         // "looping" within one evaluator step.  The invisible result must
         // be dealt with by DO itself.
@@ -670,7 +671,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         //      if (
         //          GET_EVAL_FLAG(f, FULFILLING_ARG)
-        //          and Is_Stale(f->out)
+        //          and Is_Stale(OUT)
         //          and NOT_END(f_next)
         //      ){
         //          gotten = f_next_gotten;
@@ -716,14 +717,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                     if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
                         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
                         SET_FEED_FLAG(f->feed, DEFERRING_ENFIX);
-                        SET_END(f->out);
+                        SET_END(OUT);
                         goto finished;
                     }
                 }
             }
 
             DECLARE_ACTION_SUBFRAME (subframe, f);
-            Push_Frame(f->out, subframe);
+            Push_Frame(OUT, subframe);
             Push_Action(subframe, act, VAL_ACTION_BINDING(unwrap(gotten)));
             Begin_Action_Core(
                 subframe,
@@ -740,7 +741,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Is_Isotope(unwrap(gotten)))
             fail (Error_Bad_Word_Get(v, unwrap(gotten)));
 
-        Copy_Cell(f->out, unwrap(gotten));  // no CELL_FLAG_UNEVALUATED
+        Copy_Cell(OUT, unwrap(gotten));  // no CELL_FLAG_UNEVALUATED
         break;
 
 
@@ -754,7 +755,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
             goto return_thrown;
 
-        if (IS_VOID(f->out)) {
+        if (IS_VOID(OUT)) {
             //
             // Unset the variable.  We also propagate a none signal, instead of
             // a void.  This maintains `y: x: (...)` where y = x afterward.
@@ -766,17 +767,17 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             //    == ~  ; isotope
             //
             Init_None(Sink_Word_May_Fail(v, v_specifier));
-            Init_None(f->out);
+            Init_None(OUT);
         }
         else {
-            if (IS_ACTION(f->out))  // cache the word's label in the cell
-                INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
+            if (IS_ACTION(OUT))  // cache the word's label in the cell
+                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
 
             // Decay the isotope in variable, but don't decay overall result!
             //
             Copy_Cell(
                 Sink_Word_May_Fail(v, v_specifier),
-                Pointer_To_Decayed(f->out)
+                Pointer_To_Decayed(OUT)
             );
         }
 
@@ -810,36 +811,36 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // https://forum.rebol.info/t/1301
 
       case REB_META_WORD:
-        STATE_BYTE(f) = ST_EVALUATOR_META_WORD;
+        STATE_BYTE = ST_EVALUATOR_META_WORD;
         goto process_get_word;
 
       case REB_GET_WORD:
-        STATE_BYTE(f) = ST_EVALUATOR_GET_WORD;
+        STATE_BYTE = ST_EVALUATOR_GET_WORD;
         goto process_get_word;
 
       process_get_word:
         assert(
-            STATE_BYTE(f) == ST_EVALUATOR_META_WORD
-            || STATE_BYTE(f) == ST_EVALUATOR_GET_WORD
+            STATE_BYTE == ST_EVALUATOR_META_WORD
+            or STATE_BYTE == ST_EVALUATOR_GET_WORD
         );
 
         if (not gotten)
             gotten = Lookup_Word_May_Fail(v, v_specifier);
 
-        Copy_Cell(f->out, unwrap(gotten));
-        assert(NOT_CELL_FLAG(f->out, UNEVALUATED));
+        Copy_Cell(OUT, unwrap(gotten));
+        assert(NOT_CELL_FLAG(OUT, UNEVALUATED));
 
         // !!! All isotopic decay should have already happened.
         // Lookup_Word() should be asserting this!
 
-        if (STATE_BYTE(f) == ST_EVALUATOR_META_WORD)
-            Meta_Quotify(f->out);
+        if (STATE_BYTE == ST_EVALUATOR_META_WORD)
+            Meta_Quotify(OUT);
         else {
-            if (IS_BAD_WORD(f->out) and GET_CELL_FLAG(f->out, ISOTOPE))
-                fail (Error_Bad_Word_Get(v, f->out));
+            if (IS_BAD_WORD(OUT) and GET_CELL_FLAG(OUT, ISOTOPE))
+                fail (Error_Bad_Word_Get(v, OUT));
         }
 
-        STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
+        STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
         break;
 
 
@@ -865,7 +866,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     // It is supposed to be possible for DO to be implemented as a series of
     // successive single EVALUATE steps, giving no input beyond the block.  So
-    // that means even though the `f->out` may technically still hold bits of
+    // that means even though the `OUT` may technically still hold bits of
     // the last evaluation such that `do [1 (comment "hi") + 3]` *could* draw
     // from them to give a left hand argument, it should not do so...and it's
     // why those bits are marked "stale".
@@ -884,48 +885,48 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // the parent frame, e.g. to pick up the 3 above.
 
       case REB_META_GROUP:
-        STATE_BYTE(f) = ST_EVALUATOR_META_GROUP;
+        STATE_BYTE = ST_EVALUATOR_META_GROUP;
         goto eval_group;
 
       case REB_GROUP:
-        STATE_BYTE(f) = ST_EVALUATOR_GROUP;
+        STATE_BYTE = ST_EVALUATOR_GROUP;
         goto eval_group;
 
       eval_group: {
 
         assert(
-            STATE_BYTE(f) == ST_EVALUATOR_GROUP
-            || STATE_BYTE(f) == ST_EVALUATOR_META_GROUP
+            STATE_BYTE == ST_EVALUATOR_GROUP
+            or STATE_BYTE == ST_EVALUATOR_META_GROUP
         );
 
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        assert(Is_Stale(f->out));
+        assert(Is_Stale(OUT));
 
         DECLARE_FEED_AT_CORE (subfeed, v, v_specifier);
 
-        if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
+        if (STATE_BYTE == ST_EVALUATOR_META_GROUP) {
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
-            SET_END(f->out);  // guaranteed to make a value, not transparent
+            SET_END(OUT);  // guaranteed to make a value, not transparent
         }
         else {
             // We want to allow *non* ^META groups to be transparent if it's
             // invisible, so instead of using Do_Any_Array_At() we call the
-            // lower-level variant and leave what's in f->out there.
+            // lower-level variant and leave what's in OUT there.
         }
 
         if (Do_Feed_To_End_Maybe_Stale_Throws(
-            f->out,
+            OUT,
             subfeed,
             EVAL_MASK_DEFAULT
                 | EVAL_FLAG_ALLOCATED_FEED
-                | EVAL_FLAG_OVERLAP_OUTPUT  // f->out may contain value
+                | EVAL_FLAG_OVERLAP_OUTPUT  // OUT may contain value
         )){
             goto return_thrown;
         }
 
-        if (STATE_BYTE(f) == ST_EVALUATOR_META_GROUP) {
-            Reify_Eval_Out_Meta(f->out);
+        if (STATE_BYTE == ST_EVALUATOR_META_GROUP) {
+            Reify_Eval_Out_Meta(OUT);
         }
         else {
             // We evaluated a group into the output, but if it was something
@@ -936,7 +937,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             // if it's evaluative or not?  If we ran the 1 -and- ran the group
             // then we're in an evaluative context anyway.  Just clear always.
             //
-            CLEAR_CELL_FLAG(f->out, UNEVALUATED);
+            CLEAR_CELL_FLAG(OUT, UNEVALUATED);
 
             // What was in the group might have been stale from inside the
             // group, e.g.:
@@ -971,7 +972,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             //
         }
 
-        STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
+        STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
 
 
@@ -991,20 +992,20 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // fetching isotopes is what you actually intended.
 
       case REB_TUPLE: {
-        const RELVAL *head = VAL_SEQUENCE_AT(f_spare, v, 0);
+        const RELVAL *head = VAL_SEQUENCE_AT(SPARE, v, 0);
         if (ANY_INERT(head)) {
-            Derelativize(f->out, v, v_specifier);
+            Derelativize(OUT, v, v_specifier);
             break;
         }
 
         DECLARE_LOCAL (steps);
-        if (Get_Var_Core_Throws(f_spare, steps, v, v_specifier)) {
-            Move_Cell(f->out, f_spare);
+        if (Get_Var_Core_Throws(SPARE, steps, v, v_specifier)) {
+            Move_Cell(OUT, SPARE);
             goto return_thrown;
         }
 
-        if (IS_ACTION(f_spare)) {  // try this branch before fail on void+null
-            REBACT *act = VAL_ACTION(f_spare);
+        if (IS_ACTION(SPARE)) {  // try this branch before fail on void+null
+            REBACT *act = VAL_ACTION(SPARE);
 
             // PATH! dispatch is costly and can error in more ways than WORD!:
             //
@@ -1017,20 +1018,20 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 fail ("Use `>-` to shove left enfix operands into PATH!s");
 
             DECLARE_ACTION_SUBFRAME (subframe, f);
-            Push_Frame(f->out, subframe);
+            Push_Frame(OUT, subframe);
             Push_Action(
                 subframe,
-                VAL_ACTION(f_spare),
-                VAL_ACTION_BINDING(f_spare)
+                VAL_ACTION(SPARE),
+                VAL_ACTION_BINDING(SPARE)
             );
-            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_spare));
+            Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SPARE));
             goto process_action;
         }
 
-        if (IS_BAD_WORD(f_spare) and GET_CELL_FLAG(f_spare, ISOTOPE))
-            fail (Error_Bad_Word_Get(v, f_spare));
+        if (IS_BAD_WORD(SPARE) and GET_CELL_FLAG(SPARE, ISOTOPE))
+            fail (Error_Bad_Word_Get(v, SPARE));
 
-        Move_Cell(f->out, f_spare);  // won't move CELL_FLAG_UNEVALUATED
+        Move_Cell(OUT, SPARE);  // won't move CELL_FLAG_UNEVALUATED
         break; }
 
 
@@ -1055,24 +1056,24 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
       case REB_PATH: {
         if (HEART_BYTE(v) != REB_WORD) {
-            const RELVAL *temp = VAL_SEQUENCE_AT(f_spare, v, 0);
+            const RELVAL *temp = VAL_SEQUENCE_AT(SPARE, v, 0);
             if (ANY_INERT(temp)) {
-                Derelativize(f->out, v, v_specifier);
+                Derelativize(OUT, v, v_specifier);
                 break;
             }
         }
 
-        if (Get_Path_Push_Refinements_Throws(f_spare, f->out, v, v_specifier)) {
-            Move_Cell(f->out, f_spare);
+        if (Get_Path_Push_Refinements_Throws(SPARE, OUT, v, v_specifier)) {
+            Move_Cell(OUT, SPARE);
             goto return_thrown;
         }
 
-        if (not IS_ACTION(f_spare)) {
-            Move_Cell(f->out, f_spare);
+        if (not IS_ACTION(SPARE)) {
+            Move_Cell(OUT, SPARE);
             break;
         }
 
-        REBACT *act = VAL_ACTION(f_spare);
+        REBACT *act = VAL_ACTION(SPARE);
 
         // PATH! dispatch is costly and can error in more ways than WORD!:
         //
@@ -1085,13 +1086,10 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             fail ("Use `>-` to shove left enfix operands into PATH!s");
 
         DECLARE_ACTION_SUBFRAME (subframe, f);
-        Push_Frame(f->out, subframe);
-        Push_Action(
-            subframe,
-            VAL_ACTION(f_spare),
-            VAL_ACTION_BINDING(f_spare)
-        );
-        Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_spare));
+        Push_Frame(OUT, subframe);
+        Push_Action(subframe, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
+
+        Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SPARE));
         goto process_action; }
 
 
@@ -1122,18 +1120,18 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
       case REB_SET_PATH: {
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
         if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
-            Derelativize(f->out, v, v_specifier);
-            mutable_KIND3Q_BYTE(f->out) = REB_SET_TUPLE;
+            Derelativize(OUT, v, v_specifier);
+            mutable_KIND3Q_BYTE(OUT) = REB_SET_TUPLE;
 
-            Derelativize(f_spare, v, v_specifier);
+            Derelativize(SPARE, v, v_specifier);
             rebElide(
-                "echo [The SET-PATH!", f_spare, "is no longer the preferred",
+                "echo [The SET-PATH!", SPARE, "is no longer the preferred",
                     "way to do member assignments.]",
                 "echo [SYSTEM.OPTIONS.REDBOL-PATHS is FALSE, so SET-PATH!",
                     "is not allowed by default.]",
                 "echo [For now, we'll enable it automatically...but it",
                     "will slow down the system!]",
-                "echo [Please use TUPLE! instead, like", f->out, "]",
+                "echo [Please use TUPLE! instead, like", OUT, "]",
 
                 "system.options.redbol-paths: true",
                 "wait 3"
@@ -1166,33 +1164,33 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))
             goto return_thrown;
 
-        if (IS_VOID(f->out)) {  // ^-- also see REB_SET_WORD
+        if (IS_VOID(OUT)) {  // ^-- also see REB_SET_WORD
             if (Set_Var_Core_Throws(
-                f_spare,
-                f_spare,
+                SPARE,
+                SPARE,  // !!! can steps be the same as output?
                 v,
                 v_specifier,
-                NONE_ISOTOPE  // was ~void~ isotope or none, can only set none
+                NONE_ISOTOPE
             )){
-                Move_Cell(f->out, f_spare);
+                Move_Cell(OUT, SPARE);
                 goto return_thrown;
             }
-            Init_None(f->out);  // propagate none (same as SET-WORD!, SET)
+            Init_None(OUT);  // propagate none (same as SET-WORD!, SET)
         }
         else {
             /*  // !!! Should we figure out how to cache a label in the cell?
-            if (IS_ACTION(f->out))
-                INIT_VAL_ACTION_LABEL(f->out, VAL_WORD_SYMBOL(v));
+            if (IS_ACTION(OUT))
+                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
             */
 
             if (Set_Var_Core_Throws(
-                f_spare,
-                f_spare,
+                SPARE,
+                SPARE,  // can steps be the same as output?
                 v,
                 v_specifier,
-                Pointer_To_Decayed(f->out)
+                Pointer_To_Decayed(OUT)
             )){
-                Move_Cell(f->out, f_spare);
+                Move_Cell(OUT, SPARE);
                 goto return_thrown;
             }
         }
@@ -1217,39 +1215,39 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
       case REB_META_PATH:
       case REB_META_TUPLE:
-        STATE_BYTE(f) = ST_EVALUATOR_META_PATH_OR_META_TUPLE;
+        STATE_BYTE = ST_EVALUATOR_META_PATH_OR_META_TUPLE;
         goto eval_path_or_tuple;
 
       case REB_GET_PATH:
       case REB_GET_TUPLE:
-        STATE_BYTE(f) = ST_EVALUATOR_PATH_OR_TUPLE;
+        STATE_BYTE = ST_EVALUATOR_PATH_OR_TUPLE;
         goto eval_path_or_tuple;
 
       eval_path_or_tuple:
 
         assert(
-            STATE_BYTE(f) == ST_EVALUATOR_PATH_OR_TUPLE
-            or STATE_BYTE(f) == ST_EVALUATOR_META_PATH_OR_META_TUPLE
+            STATE_BYTE == ST_EVALUATOR_PATH_OR_TUPLE
+            or STATE_BYTE == ST_EVALUATOR_META_PATH_OR_META_TUPLE
         );
 
-        SET_END(f->out);  // !!! Not needed, should there be debug only TRASH()
-        if (Get_Var_Core_Throws(f->out, f_spare, v, v_specifier))
+        SET_END(OUT);  // !!! Not needed, should there be debug only TRASH()
+        if (Get_Var_Core_Throws(OUT, SPARE, v, v_specifier))
             goto return_thrown;
 
         // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
         // GET-PATH! of a variadic.  Review if it should be true.
         //
-        /* assert(NOT_CELL_FLAG(f->out, CELL_FLAG_UNEVALUATED)); */
-        CLEAR_CELL_FLAG(f->out, UNEVALUATED);
+        /* assert(NOT_CELL_FLAG(OUT, CELL_FLAG_UNEVALUATED)); */
+        CLEAR_CELL_FLAG(OUT, UNEVALUATED);
 
-        if (STATE_BYTE(f) == ST_EVALUATOR_META_PATH_OR_META_TUPLE)
-            Meta_Quotify(f->out);
+        if (STATE_BYTE == ST_EVALUATOR_META_PATH_OR_META_TUPLE)
+            Meta_Quotify(OUT);
         else {
-            if (IS_BAD_WORD(f->out) and GET_CELL_FLAG(f->out, ISOTOPE))
-                fail (Error_Bad_Word_Get(v, f->out));
+            if (IS_BAD_WORD(OUT) and GET_CELL_FLAG(OUT, ISOTOPE))
+                fail (Error_Bad_Word_Get(v, OUT));
         }
 
-        STATE_BYTE(f) = ST_EVALUATOR_INITIAL_ENTRY;
+        STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
         break;
 
 
@@ -1263,7 +1261,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // distinction.  For instance, it's used to escape soft quoted slots.
 
       case REB_GET_GROUP:
-        STATE_BYTE(f) = ST_EVALUATOR_GROUP;
+        STATE_BYTE = ST_EVALUATOR_GROUP;
         goto eval_group;
 
 
@@ -1278,9 +1276,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // necessary, as it's very easy for users to ask for blocks to be reduced.
 
       case REB_GET_BLOCK: {
-        Derelativize(f_spare, v, v_specifier);
-        mutable_HEART_BYTE(f_spare) = mutable_KIND3Q_BYTE(f_spare) = REB_BLOCK;
-        if (rebRunThrows(f->out, true, Lib(REDUCE), f_spare))
+        Derelativize(SPARE, v, v_specifier);
+        mutable_HEART_BYTE(SPARE) = mutable_KIND3Q_BYTE(SPARE) = REB_BLOCK;
+        if (rebRunThrows(OUT, true, Lib(REDUCE), SPARE))
             goto return_thrown;
         break; }
 
@@ -1316,7 +1314,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //     >> (10 [x]: comment "we don't want this to be 10")
         //     ** This should be an error.
         //
-        SET_END(f->out);
+        SET_END(OUT);
 
         // We pre-process the SET-BLOCK! first, because we are going to
         // advance the feed in order to build a frame for the following code.
@@ -1397,13 +1395,13 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 or IS_THE_GROUP(check)
                 or IS_META_GROUP(check)
             ){
-                SET_END(f_spare);
-                if (Do_Any_Array_At_Throws(f_spare, check, check_specifier)) {
-                    Move_Cell(f->out, f_spare);
+                SET_END(SPARE);
+                if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
+                    Move_Cell(OUT, SPARE);
                     DS_DROP_TO(f->dsp_orig);
                     goto return_thrown;
                 }
-                item = f_spare;
+                item = SPARE;
                 item_specifier = SPECIFIED;
             }
             else {
@@ -1463,16 +1461,16 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         bool error_on_deferred = false;
         if (Make_Frame_From_Feed_Throws(
-            f_spare,
+            SPARE,
             END_CELL,
             f->feed,
             error_on_deferred
         )){
-            Move_Cell(f->out, f_spare);
+            Move_Cell(OUT, SPARE);
             DS_DROP_TO(f->dsp_orig);
             goto return_thrown;
         }
-        if (not IS_FRAME(f_spare))  // can return QUOTED! if not action atm
+        if (not IS_FRAME(SPARE))  // can return QUOTED! if not action atm
             fail ("SET-BLOCK! is only allowed to have ACTION! on right ATM.");
 
         // Now we want to enumerate through the outputs, and fill them with
@@ -1482,7 +1480,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         REBDSP dsp_output = f->dsp_orig + 2;
 
       blockscope {
-        REBCTX *c = VAL_CONTEXT(f_spare);
+        REBCTX *c = VAL_CONTEXT(SPARE);
         const REBKEY *key_tail;
         const REBKEY *key = CTX_KEYS(&key_tail, c);
         REBVAR *var = CTX_VARS_HEAD(c);
@@ -1504,8 +1502,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         // Now run the frame...
         //
-        SET_END(f->out);  // clear prior output to detect ~end~/~void~
-        if (Do_Frame_Maybe_Stale_Throws(f->out, f_spare)) {
+        SET_END(OUT);  // clear prior output to detect ~end~/~void~
+        if (Do_Frame_Maybe_Stale_Throws(OUT, SPARE)) {
             DS_DROP_TO(f->dsp_orig);
             goto return_thrown;
         }
@@ -1542,7 +1540,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         DECLARE_FRAME (subframe, f->feed, flags);
 
-        Push_Frame(f->out, subframe);  // offer potential enfix previous f->out
+        Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
         bool threw = Eval_Maybe_Stale_Throws(subframe);
         Drop_Frame(subframe);
 
@@ -1567,30 +1565,27 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // in case there are GROUP! evaluations in the assignment; though that
         // needs more thinking (e.g. what if they throw?)
         //
-        Copy_Cell(f_spare, DS_AT(f->dsp_orig + 1));
-        if (IS_BLANK(f_spare))
-            Init_Isotope(f->out, Canon(BLANK));
+        Copy_Cell(SPARE, DS_AT(f->dsp_orig + 1));
+        if (IS_BLANK(SPARE))
+            Init_Isotope(OUT, Canon(BLANK));
         else {
             if (GET_CELL_FLAG(DS_AT(f->dsp_orig + 1), STACK_NOTE_METARETURN)) {
-                Reify_Eval_Out_Meta(f->out);
+                Reify_Eval_Out_Meta(OUT);
 
-                Set_Var_May_Fail(
-                    f_spare, SPECIFIED,
-                    f->out
-                );
+                Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
             }
-            else if (Is_Stale(f->out)) {
+            else if (Is_Stale(OUT)) {
                 Set_Var_May_Fail(
-                    f_spare, SPECIFIED,
+                    SPARE, SPECIFIED,
                     NONE_ISOTOPE  // still want to return the ~void~ isotope
                 );
-                Init_None(f->out);  // propagate none (same as SET, SET-WORD!)
+                Init_None(OUT);  // propagate none (same as SET, SET-WORD!)
             }
             else {  // ordinary assignment
-                Clear_Stale_Flag(f->out);
+                Clear_Stale_Flag(OUT);
                 Set_Var_May_Fail(
-                    f_spare, SPECIFIED,
-                    Pointer_To_Decayed(f->out)  // still want to return isotope
+                    SPARE, SPECIFIED,
+                    Pointer_To_Decayed(OUT)  // still want to return isotope
                 );
             }
         }
@@ -1607,21 +1602,21 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             ){
                 DECLARE_LOCAL (temp);
                 PUSH_GC_GUARD(temp);
-                Copy_Cell(f_spare, DS_AT(dsp));  // see note on GROUP! eval
+                Copy_Cell(SPARE, DS_AT(dsp));  // see note on GROUP! eval
                 Get_Var_May_Fail(
                     temp,
-                    f_spare,
+                    SPARE,
                     SPECIFIED,
                     true  // any
                 );
                 if (GET_CELL_FLAG(DS_AT(dsp), STACK_NOTE_METARETURN))
                     Meta_Quotify(temp);
                 Set_Var_May_Fail(
-                    f_spare, SPECIFIED,
+                    SPARE, SPECIFIED,
                     temp
                 );
                 if (dsp_circled == dsp)
-                    Move_Cell(f->out, temp);
+                    Move_Cell(OUT, temp);
                 DROP_GC_GUARD(temp);
             }
         }
@@ -1652,9 +1647,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
 
       case REB_META_BLOCK:
-        Inertly_Derelativize_Inheriting_Const(f->out, v, f->feed);
-        mutable_KIND3Q_BYTE(f->out) = REB_BLOCK + REB_64;  // quoted
-        mutable_HEART_BYTE(f->out) = REB_BLOCK;
+        Inertly_Derelativize_Inheriting_Const(OUT, v, f->feed);
+        mutable_KIND3Q_BYTE(OUT) = REB_BLOCK + REB_64;  // quoted
+        mutable_HEART_BYTE(OUT) = REB_BLOCK;
         break;
 
 
@@ -1733,7 +1728,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             // user wants actual invisibility, a function must be used (the
             // VOID function is included for this purpose)
             //
-            Mark_Eval_Out_Voided(f->out);
+            Mark_Eval_Out_Voided(OUT);
         }
         else if (VAL_BAD_WORD_ID(v) == SYM_END) {
             //
@@ -1756,8 +1751,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             // of them decay automatically in variable assignment...such as
             // ~null~, ~none~, ~false~, ~blank~, and ~blackhole~ isotopes.
             //
-            Derelativize(f->out, v, v_specifier);
-            SET_CELL_FLAG(f->out, ISOTOPE);
+            Derelativize(OUT, v, v_specifier);
+            SET_CELL_FLAG(OUT, ISOTOPE);
         }
         break;
 
@@ -1768,6 +1763,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     //=///////////////////////////////////////////////////////////////////=//
 
+    inert:
       case REB_BLANK:
         //
       case REB_LOGIC:
@@ -1784,12 +1780,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
       case REB_EVENT:
       case REB_HANDLE:
-
+        //
       case REB_CUSTOM:  // custom types (IMAGE!, VECTOR!) are all inert
-
-      inert:
-
-        Inertly_Derelativize_Inheriting_Const(f->out, v, f->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, v, f->feed);
         break;
 
 
@@ -1801,12 +1794,12 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     // (Highly escaped literals should be rare, but for completeness you need
     // to be able to escape any value, including any escaped one...!)
+    //
+    // Evaluation of a QUOTED! removes one level of quoting.
 
       case REB_QUOTED:
-        Derelativize(f->out, v, v_specifier);
-        Unquotify(f->out, 1);  // take off one level of quoting
-        if (IS_BAD_WORD(f->out))
-            assert(NOT_CELL_FLAG(f->out, ISOTOPE));
+        Derelativize(OUT, v, v_specifier);
+        Unquotify(OUT, 1);
         break;
 
 
@@ -1815,24 +1808,13 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // All the values for types at >= REB_64 currently represent the special
     // compact form of literals, which overlay inside the cell they escape.
     // The real type comes from the type modulo 64.
+    //
+    // Not all values are legitimate that could potentially get here, but
+    // Unquotify_In_Situ() does the checking for illegal REB_XXX bytes.
 
       default:
-        Derelativize(f->out, v, v_specifier);
-        Unquotify_In_Situ(f->out, 1);  // checks for illegal REB_XXX bytes
-
-        // Note: the evaluator decays a lone quote to plain null:
-        //
-        //    >> '
-        //    ; null
-        //
-        // So you don't get "null isotopes" from dequoting, only via the
-        // BAD-WORD! evaluation:
-        //
-        //   >> ~null~
-        //   == ~null~  ; isotope
-        //
-        if (IS_BAD_WORD(f->out))
-            assert(NOT_CELL_FLAG(f->out, ISOTOPE));
+        Derelativize(OUT, v, v_specifier);
+        Unquotify_In_Situ(OUT, 1);
         break;
     }
 
@@ -1847,9 +1829,9 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // Is it worth it to do so?
     //
     /*if (ANY_INERT_KIND(kind_current)) {  // if() to check which part failed
-        assert(GET_CELL_FLAG(f->out, UNEVALUATED));
+        assert(GET_CELL_FLAG(OUT, UNEVALUATED));
     }
-    else if (GET_CELL_FLAG(f->out, UNEVALUATED)) {
+    else if (GET_CELL_FLAG(OUT, UNEVALUATED)) {
         //
         // !!! Should ONLY happen if we processed a WORD! that looked up to
         // an invisible function, and left something behind that was not
@@ -1858,7 +1840,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // don't have the word anymore to look up (and even if we did, what
         // it looks up to may have changed).
         //
-        assert(kind_current == REB_WORD or ANY_INERT(f->out));
+        assert(kind_current == REB_WORD or ANY_INERT(OUT));
     }*/
 
     // We're sitting at what "looks like the end" of an evaluation step.
@@ -2071,11 +2053,11 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     // An evaluative lookback argument we don't want to defer, e.g. a normal
     // argument or a deferable one which is not being requested in the context
-    // of parameter fulfillment.  We want to reuse the f->out value and get it
+    // of parameter fulfillment.  We want to reuse the OUT value and get it
     // into the new function's frame.
 
     DECLARE_ACTION_SUBFRAME (subframe, f);
-    Push_Frame(f->out, subframe);
+    Push_Frame(OUT, subframe);
     Push_Action(subframe, enfixed, VAL_ACTION_BINDING(unwrap(f_next_gotten)));
     Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_next));
 

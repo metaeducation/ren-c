@@ -190,12 +190,15 @@ inline static option(const REBSYM*) FRM_LABEL(REBFRM *f) {
 
 
 #if (! CPLUSPLUS_11)
-    #define STATE_BYTE(f) \
+    #define FRM_STATE_BYTE(f) \
         mutable_SECOND_BYTE((f)->flags)
 #else
-    inline static REBYTE& STATE_BYTE(REBFRM *f)  // type checks f...
+    inline static REBYTE& FRM_STATE_BYTE(REBFRM *f)  // type checks f...
       { return mutable_SECOND_BYTE(f->flags); }  // ...but mutable
 #endif
+
+#define STATE_BYTE  FRM_STATE_BYTE(frame_)
+
 
 #define FLAG_STATE_BYTE(state) \
     FLAG_SECOND_BYTE(state)

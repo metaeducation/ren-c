@@ -142,7 +142,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     // frame is already filled, but each step after that uses enfix and
     // runs from the top.)
 
-    assert(STATE_BYTE(sub) == ST_ACTION_DISPATCHING);
+    assert(FRM_STATE_BYTE(sub) == ST_ACTION_DISPATCHING);
     while (true) {
         if (Process_Action_Maybe_Stale_Throws(sub)) {
             Abort_Frame(sub);
@@ -175,7 +175,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
         assert(NOT_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT));
         SET_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT);
 
-        STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;
+        FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;
     }
 
     Drop_Frame(sub);

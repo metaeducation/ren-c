@@ -51,6 +51,17 @@
 #define f_next f->feed->value
 #define f_next_gotten f->feed->gotten
 
+#undef ARG              // undefine the ARG(x) macro that natives use
+#define ARG f->arg      // ...and redefine to mean currently fulfilling arg
+
+#undef PARAM
+#define PARAM f->param
+
+#define KEY f->key
+
+#define frame_ f  // for OUT, SPARE, STATE_BYTE macros
+
+
 // In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
 // things down a little.  So we only use the checked version in the main
 // switch statement.  This abbreviation is also shorter and more legible.
@@ -115,9 +126,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
   #endif
 
     if (not Is_Action_Frame_Fulfilling(f))
-        goto dispatch;  // STATE_BYTE() belongs to the dispatcher if key=null
+        goto dispatch;  // STATE_BYTE belongs to the dispatcher if key=null
 
-    switch (STATE_BYTE(f)) {
+    switch (STATE_BYTE) {
       case ST_ACTION_INITIAL_ENTRY:
         goto fulfill;
 
@@ -168,19 +179,19 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // Their value comes from the exemplar frame in the slot where typesets
         // would be if it was unspecialized.
         //
-        if (Is_Specialized(f->param)) {  // specialized includes local
+        if (Is_Specialized(PARAM)) {  // specialized includes local
             //
             // For specialized cases, we assume type checking was done
             // when the parameter is hidden.  It cannot be manipulated
             // from the outside (e.g. by REFRAMER) so there is no benefit
             // to deferring the check, only extra cost on each invocation.
             //
-            Copy_Cell(f->arg, f->param);
+            Copy_Cell(ARG, PARAM);
 
             goto continue_fulfilling;
         }
 
-        assert(IS_TYPESET(f->param));
+        assert(IS_TYPESET(PARAM));
 
   //=//// CHECK FOR ORDER OVERRIDE ////////////////////////////////////////=//
 
@@ -208,23 +219,23 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         if (DSP != f->dsp_orig) {  // reorderings or refinements pushed
             STKVAL(*) ordered = DS_TOP;
             STKVAL(*) lowest_ordered = DS_AT(f->dsp_orig);
-            const REBSTR *param_symbol = KEY_SYMBOL(f->key);
+            const REBSTR *param_symbol = KEY_SYMBOL(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
                 if (VAL_WORD_SYMBOL(ordered) != param_symbol)
                     continue;
 
-                REBLEN offset = f->arg - FRM_ARGS_HEAD(f);
+                REBLEN offset = ARG - FRM_ARGS_HEAD(f);
                 INIT_VAL_WORD_BINDING(ordered, f->varlist);
                 INIT_VAL_WORD_INDEX(ordered, offset + 1);
 
-                if (Is_Typeset_Empty(f->param)) {
+                if (Is_Typeset_Empty(PARAM)) {
                     //
                     // There's no argument, so we won't need to come back
                     // for this one.  But we did need to set its index
                     // so we knew it was valid (errors later if not set).
                     //
-                    Init_Blackhole(f->arg);  // # means refinement used
+                    Init_Blackhole(ARG);  // # means refinement used
                     goto continue_fulfilling;
                 }
 
@@ -234,9 +245,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
   //=//// A /REFINEMENT ARG ///////////////////////////////////////////////=//
 
-        if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
+        if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
             assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));  // jump lower
-            Init_Nulled(f->arg);  // null means refinement not used
+            Init_Nulled(ARG);  // null means refinement not used
             goto continue_fulfilling;
         }
 
@@ -244,7 +255,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
       fulfill_arg: ;  // semicolon needed--next statement is declaration
 
-        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(f->param);
+        enum Reb_Param_Class pclass = VAL_PARAM_CLASS(PARAM);
 
   //=//// SKIP OVER RETURN /////////////////////////////////////////////////=//
 
@@ -252,7 +263,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
         if (pclass == PARAM_CLASS_RETURN) {
             assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));
-            Init_Nulled(f->arg);
+            Init_Nulled(ARG);
             goto continue_fulfilling;
         }
 
@@ -261,10 +272,10 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
             CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
 
-            if (Was_Eval_Step_Void(f->out)) {
+            if (Was_Eval_Step_Void(OUT)) {
                 if (pclass == PARAM_CLASS_META) {
-                    if (GET_PARAM_FLAG(f->param, VANISHABLE))
-                        Init_Meta_Of_Void(f->arg);
+                    if (GET_PARAM_FLAG(PARAM, VANISHABLE))
+                        Init_Meta_Of_Void(ARG);
                     else
                         fail (Error_Bad_Void());
                 }
@@ -298,18 +309,18 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // slot which will react with TRUE to TAIL?, so feed it
                 // from the global empty array.
                 //
-                if (GET_PARAM_FLAG(f->param, VARIADIC)) {
-                    Init_Varargs_Untyped_Enfix(f->arg, END_CELL);
+                if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
+                    Init_Varargs_Untyped_Enfix(ARG, END_CELL);
                     goto continue_fulfilling;
                 }
 
-                if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+                if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
 
                 if (pclass == PARAM_CLASS_META)
-                    Init_Meta_End(f->arg);  // no other way to make ~end~
+                    Init_Meta_End(ARG);  // no other way to make ~end~
                 else
-                    Init_Nulled(f->arg);  // conflation is unavoidable
+                    Init_Nulled(ARG);  // conflation is unavoidable
                 goto continue_fulfilling;
             }
 
@@ -323,30 +334,30 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // to TAKE be seen as an error?  Failing to take first
                 // gives out-of-order evaluation.
                 //
-                assert(NOT_END(f->out));
-                Init_Varargs_Untyped_Enfix(f->arg, f->out);
+                assert(NOT_END(OUT));
+                Init_Varargs_Untyped_Enfix(ARG, OUT);
             }
             else switch (pclass) {
               case PARAM_CLASS_NORMAL:
               case PARAM_CLASS_OUTPUT:
-                if (IS_END(f->out))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+                if (IS_END(OUT))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
                 else {
-                    Copy_Cell(f->arg, f->out);
-                    if (GET_CELL_FLAG(f->out, UNEVALUATED))
-                        SET_CELL_FLAG(f->arg, UNEVALUATED);
+                    Copy_Cell(ARG, OUT);
+                    if (GET_CELL_FLAG(OUT, UNEVALUATED))
+                        SET_CELL_FLAG(ARG, UNEVALUATED);
                 }
                 break;
 
               case PARAM_CLASS_META: {
-                Reify_Eval_Out_Meta(f->out);
-                Copy_Cell(f->arg, f->out);
-                if (GET_CELL_FLAG(f->out, UNEVALUATED))
-                    SET_CELL_FLAG(f->arg, UNEVALUATED);
+                Reify_Eval_Out_Meta(OUT);
+                Copy_Cell(ARG, OUT);
+                if (GET_CELL_FLAG(OUT, UNEVALUATED))
+                    SET_CELL_FLAG(ARG, UNEVALUATED);
                 break; }
 
               case PARAM_CLASS_HARD:
-                if (NOT_CELL_FLAG(f->out, UNEVALUATED)) {
+                if (NOT_CELL_FLAG(OUT, UNEVALUATED)) {
                     //
                     // This can happen e.g. with `x: 10 | x >- lit`.  We
                     // raise an error in this case, while still allowing
@@ -359,11 +370,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
                 // PARAM_FLAG_SKIPPABLE accounted for in pre-lookback
 
-                Copy_Cell(f->arg, f->out);
-                SET_CELL_FLAG(f->arg, UNEVALUATED);
-
-                if (IS_BAD_WORD(f->arg))  // source should only be isotope form
-                    assert(NOT_CELL_FLAG(f->arg, ISOTOPE));
+                Copy_Cell(ARG, OUT);
+                SET_CELL_FLAG(ARG, UNEVALUATED);
                 break;
 
               case PARAM_CLASS_SOFT:
@@ -382,22 +390,19 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // of one unit.  Thus when reaching this point, it must carry
                 // the UENEVALUATED FLAG.
                 //
-                assert(GET_CELL_FLAG(f->out, UNEVALUATED));
+                assert(GET_CELL_FLAG(OUT, UNEVALUATED));
                 goto escapable;
 
               escapable:
-                if (ANY_ESCAPABLE_GET(f->out)) {
-                    if (Eval_Value_Throws(f->arg, f->out, SPECIFIED)) {
-                        Copy_Cell(f->out, f->arg);
+                if (ANY_ESCAPABLE_GET(OUT)) {
+                    if (Eval_Value_Throws(ARG, OUT, SPECIFIED)) {
+                        Copy_Cell(OUT, ARG);
                         goto abort_action;
                     }
                 }
                 else {
-                    Copy_Cell(f->arg, f->out);
-                    SET_CELL_FLAG(f->arg, UNEVALUATED);
-
-                    if (IS_BAD_WORD(f->arg))  // !!! source should only be isotope
-                        assert(NOT_CELL_FLAG(f->arg, ISOTOPE));
+                    Copy_Cell(ARG, OUT);
+                    SET_CELL_FLAG(ARG, UNEVALUATED);
                 }
                 break;
 
@@ -428,7 +433,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             // function going to behave invisibly.  If it does, then we have
             // to *un-expire* the enfix invisible flag (!)
             //
-            Mark_Eval_Out_Stale(f->out);
+            Mark_Eval_Out_Stale(OUT);
 
             goto continue_fulfilling;
         }
@@ -441,7 +446,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // consume additional arguments during the function run.
         //
         if (GET_PARAM_FLAG(f->param, VARIADIC)) {
-            Init_Varargs_Untyped_Normal(f->arg, f);
+            Init_Varargs_Untyped_Normal(ARG, f);
             goto continue_fulfilling;
         }
 
@@ -496,12 +501,12 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
         if (IS_END(f_next)) {
             if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+                fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
 
             if (pclass == PARAM_CLASS_META)
-                Init_Meta_End(f->arg);
+                Init_Meta_End(ARG);
             else
-                Init_Nulled(f->arg);  // no way to avoid conflation
+                Init_Nulled(ARG);  // no way to avoid conflation
             goto continue_fulfilling;
         }
 
@@ -514,12 +519,12 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
           case PARAM_CLASS_META: {
             if (GET_FEED_FLAG(f->feed, BARRIER_HIT) or IS_END(f_next)) {
                 if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
 
                 if (pclass == PARAM_CLASS_META)
-                    Init_Meta_End(f->arg);
+                    Init_Meta_End(ARG);
                 else
-                    Init_Nulled(f->arg);
+                    Init_Nulled(ARG);
                 goto continue_fulfilling;
             }
 
@@ -528,56 +533,53 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             if (pclass == PARAM_CLASS_META)
                 flags |= EVAL_FLAG_META_OUT;
 
-            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(f->arg, f, flags)) {
-                Move_Cell(f->out, f->arg);
+            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(ARG, f, flags)) {
+                Move_Cell(OUT, ARG);
                 goto abort_action;
             }
 
-            Clear_Stale_Flag(f->arg);  // only cared about void/invisible
+            Clear_Stale_Flag(ARG);  // only cared about void/invisible
 
             if (pclass == PARAM_CLASS_META) {
                 if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
                     if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                        fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
-                    Init_Meta_End(f->arg);
+                        fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+                    Init_Meta_End(ARG);
                 }
                 else if (
-                    IS_VOID(f->arg)
+                    IS_VOID(ARG)
                     and NOT_PARAM_FLAG(f->param, VANISHABLE)
                 ){
                     fail (Error_Bad_Void());
                 }
                 else
-                    Reify_Eval_Out_Meta(f->arg);
+                    Reify_Eval_Out_Meta(ARG);
             }
             else {
                 if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
                     if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                        fail (Error_No_Arg(f->label, KEY_SYMBOL(f->key)));
-                    Init_Nulled(f->arg);
+                        fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+                    Init_Nulled(ARG);
                 }
                 else
-                    Reify_Eval_Out_Plain(f->arg);
+                    Reify_Eval_Out_Plain(ARG);
             }
             break; }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
           case PARAM_CLASS_HARD:
-            if (NOT_PARAM_FLAG(f->param, SKIPPABLE))
-                Literal_Next_In_Frame(f->arg, f);  // CELL_FLAG_UNEVALUATED
+            if (NOT_PARAM_FLAG(PARAM, SKIPPABLE))
+                Literal_Next_In_Frame(ARG, f);  // CELL_FLAG_UNEVALUATED
             else {
-                if (not Typecheck_Including_Constraints(f->param, f_next)) {
-                    assert(GET_PARAM_FLAG(f->param, ENDABLE));
-                    Init_Nulled(f->arg);  // not EVAL_FLAG_BARRIER_HIT
+                if (not Typecheck_Including_Constraints(PARAM, f_next)) {
+                    assert(GET_PARAM_FLAG(PARAM, ENDABLE));
+                    Init_Nulled(ARG);  // not EVAL_FLAG_BARRIER_HIT
                     goto continue_fulfilling;
                 }
-                Literal_Next_In_Frame(f->arg, f);
-                SET_CELL_FLAG(f->arg, UNEVALUATED);
+                Literal_Next_In_Frame(ARG, f);
+                SET_CELL_FLAG(ARG, UNEVALUATED);
             }
-
-            if (IS_BAD_WORD(f->arg))  // !!! Source should only be isotope form
-                assert(NOT_CELL_FLAG(f->arg, ISOTOPE));
 
             // Have to account for enfix deferrals in cases like:
             //
@@ -614,7 +616,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
           case PARAM_CLASS_SOFT:
           case PARAM_CLASS_MEDIUM:
-            Literal_Next_In_Frame(f->arg, f);  // CELL_FLAG_UNEVALUATED
+            Literal_Next_In_Frame(ARG, f);  // CELL_FLAG_UNEVALUATED
 
             // See remarks on Lookahead_To_Sync_Enfix_Defer_Flag().  We
             // have to account for enfix deferrals in cases like:
@@ -647,33 +649,29 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
                 DECLARE_FRAME (subframe, f->feed, flags);
 
-                Push_Frame(f->arg, subframe);
+                Push_Frame(ARG, subframe);
                 bool threw = Eval_Maybe_Stale_Throws(subframe);
                 Drop_Frame(subframe);
 
                 if (threw) {
-                    Copy_Cell(f->out, f->arg);
+                    Copy_Cell(SPARE, ARG);
                     goto abort_action;
                 }
 
-                Clear_Stale_Flag(f->arg);
-                Reify_Eval_Out_Plain(f->arg);
+                Clear_Stale_Flag(ARG);
+                Reify_Eval_Out_Plain(ARG);
             }
-            else if (ANY_ESCAPABLE_GET(f->arg)) {
+            else if (ANY_ESCAPABLE_GET(ARG)) {
                 //
                 // We did not defer the quoted argument.  If the argument
                 // is something like a GROUP!, GET-WORD!, or GET-PATH!...
                 // it has to be evaluated.
                 //
-                Move_Cell(f_spare, f->arg);
-                if (Eval_Value_Throws(f->arg, f_spare, f_specifier)) {
-                    Move_Cell(f->out, f->arg);
+                Move_Cell(SPARE, ARG);
+                if (Eval_Value_Throws(ARG, SPARE, f_specifier)) {
+                    Move_Cell(SPARE, ARG);
                     goto abort_action;
                 }
-            }
-            else {
-                if (IS_BAD_WORD(f->arg))  // !!! Source should only be isotope form
-                    assert(NOT_CELL_FLAG(f->arg, ISOTOPE));
             }
             break;
 
@@ -708,7 +706,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     }
 
   #if DEBUG_TERM_ARRAYS
-    assert(IS_CELL_FREE(f->arg));  // arg can otherwise point to any arg cell
+    assert(IS_CELL_FREE(ARG));  // arg can otherwise point to any arg cell
   #endif
 
     // There may have been refinements that were skipped because the
@@ -735,15 +733,15 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // But +1 is okay, because we want the slots after the refinement.
         //
         REBINT offset =
-            VAL_WORD_INDEX(DS_TOP) - (f->arg - FRM_ARGS_HEAD(f)) - 1;
+            VAL_WORD_INDEX(DS_TOP) - (ARG - FRM_ARGS_HEAD(f)) - 1;
         f->key += offset;
         f->arg += offset;
         f->param += offset;
 
-        assert(VAL_WORD_SYMBOL(DS_TOP) == KEY_SYMBOL(f->key));
+        assert(VAL_WORD_SYMBOL(DS_TOP) == KEY_SYMBOL(KEY));
         DS_DROP();
 
-        if (Is_Typeset_Empty(f->param)) {  // no callsite arg, just drop
+        if (Is_Typeset_Empty(PARAM)) {  // no callsite arg, just drop
             if (DSP != f->dsp_orig)
                 goto next_pickup;
 
@@ -752,9 +750,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             goto fulfill_and_any_pickups_done;
         }
 
-        if (not Is_Fresh(f->arg)) {
-            assert(IS_NULLED(f->arg));
-            RESET(f->arg);
+        if (not Is_Fresh(ARG)) {
+            assert(IS_NULLED(ARG));
+            RESET(ARG);
         }
 
         SET_EVAL_FLAG(f, DOING_PICKUPS);
@@ -768,7 +766,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     f->key_tail = nullptr;
 
     if (GET_EVAL_FLAG(f, FULFILL_ONLY)) {  // only fulfillment, no typecheck
-        assert(Is_Fresh(f->out));  // didn't touch out
+        assert(Is_Fresh(OUT));  // didn't touch out
         goto skip_output_check;
     }
 
@@ -791,14 +789,14 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
-        assert(NOT_END(f->arg));  // all END should be ~void~ or NULL by now
+        assert(NOT_END(ARG));  // all END should be ~void~ or NULL by now
 
         // Note that if you have a redo situation as with an ENCLOSE, a
         // specialized out parameter becomes visible in the frame and can be
         // modified.  Even though it's hidden, it may need to be typechecked
         // again, unless it was fully hidden.
         //
-        if (Is_Specialized(f->param))
+        if (Is_Specialized(PARAM))
             continue;
 
         // We can't a-priori typecheck the variadic argument, since the values
@@ -809,72 +807,72 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // The data feed is unchanged (can come from this frame, or another,
         // or just an array from MAKE VARARGS! of a BLOCK!)
         //
-        if (GET_PARAM_FLAG(f->param, VARIADIC)) {
+        if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
             //
             // The types on the parameter are for the values fetched later.
             // Actual argument must be a VARARGS!
             //
-            if (not IS_VARARGS(f->arg))
-                fail (Error_Not_Varargs(f, f->key, f->param, VAL_TYPE(f->arg)));
+            if (not IS_VARARGS(ARG))
+                fail (Error_Not_Varargs(f, KEY, PARAM, VAL_TYPE(ARG)));
 
-            INIT_VAL_VARARGS_PHASE(f->arg, FRM_PHASE(f));
+            INIT_VAL_VARARGS_PHASE(ARG, FRM_PHASE(f));
 
             // Store the offset so that both the arg and param locations can
             // quickly be recovered, while using only a single slot in the
             // REBVAL.  Sign denotes whether the parameter was enfixed or not.
             //
             bool enfix = false;  // !!! how does enfix matter?
-            VAL_VARARGS_SIGNED_PARAM_INDEX(f->arg) =
+            VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) =
                 enfix
-                    ? -(f->arg - FRM_ARGS_HEAD(f) + 1)
-                    : f->arg - FRM_ARGS_HEAD(f) + 1;
+                    ? -(ARG - FRM_ARGS_HEAD(f) + 1)
+                    : ARG - FRM_ARGS_HEAD(f) + 1;
 
-            assert(VAL_VARARGS_SIGNED_PARAM_INDEX(f->arg) != 0);
+            assert(VAL_VARARGS_SIGNED_PARAM_INDEX(ARG) != 0);
             continue;
         }
 
-        if (VAL_PARAM_CLASS(f->param) == PARAM_CLASS_RETURN)
+        if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
             continue;  // !!! hack
 
         // Refinements have a special rule beyond plain type checking, in that
         // they don't just want an ISSUE! or NULL, they want # or NULL.
         //
         if (
-            GET_PARAM_FLAG(f->param, REFINEMENT)
-            or GET_PARAM_FLAG(f->param, SKIPPABLE)
+            GET_PARAM_FLAG(PARAM, REFINEMENT)
+            or GET_PARAM_FLAG(PARAM, SKIPPABLE)
         ){
             if (
                 GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
-                and Is_None(f->arg)
+                and Is_None(ARG)
             ){
-                Init_Nulled(f->arg);
+                Init_Nulled(ARG);
             }
             else
-                Typecheck_Refinement(f->key, f->param, f->arg);
+                Typecheck_Refinement(KEY, PARAM, ARG);
             continue;
         }
 
-        REBYTE kind_byte = KIND3Q_BYTE(f->arg);
+        REBYTE kind_byte = KIND3Q_BYTE(ARG);
 
         if (
             kind_byte == REB_BLANK  // v-- e.g. <blank> param
-            and GET_PARAM_FLAG(f->param, NOOP_IF_BLANK)
+            and GET_PARAM_FLAG(PARAM, NOOP_IF_BLANK)
         ){
             SET_EVAL_FLAG(f, TYPECHECK_ONLY);
-            Init_Nulled(f->out);
+            Init_Nulled(OUT);
             continue;
         }
 
         if (
-            GET_PARAM_FLAG(f->param, NOOP_IF_BLACKHOLE)
-            and Is_Blackhole(f->arg)  // v-- e.g. <blackhole> param
+            GET_PARAM_FLAG(PARAM, NOOP_IF_BLACKHOLE)
+            and Is_Blackhole(ARG)  // v-- e.g. <blackhole> param
         ){
             SET_EVAL_FLAG(f, TYPECHECK_ONLY);
-            Init_Isotope(f->out, Canon(BLACKHOLE));
+            Init_Isotope(OUT, Canon(BLACKHOLE));
             continue;
         }
 
-        if (PARAM_CLASS_META == VAL_PARAM_CLASS(f->param)) {
+        if (PARAM_CLASS_META == VAL_PARAM_CLASS(PARAM)) {
             if (
                 kind_byte != REB_BAD_WORD
                 and kind_byte != REB_NULL
@@ -887,8 +885,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 );
             }
         }
-        else if (kind_byte == REB_BAD_WORD and GET_CELL_FLAG(f->arg, ISOTOPE))
-            fail (Error_Isotope_Arg(f, f->param));
+        else if (kind_byte == REB_BAD_WORD and GET_CELL_FLAG(ARG, ISOTOPE))
+            fail (Error_Isotope_Arg(f, PARAM));
 
         // Apply constness if requested.
         //
@@ -896,20 +894,20 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // like `foo: func [...] mutable [...]` ?  This seems bad, because the
         // contract of the function hasn't been "tweaked" with reskinning.
         //
-        if (GET_PARAM_FLAG(f->param, CONST))
-            SET_CELL_FLAG(f->arg, CONST);
+        if (GET_PARAM_FLAG(PARAM, CONST))
+            SET_CELL_FLAG(ARG, CONST);
 
         // !!! Review when # is used here
-        if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
-            Typecheck_Refinement(f->key, f->param, f->arg);
+        if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
+            Typecheck_Refinement(KEY, PARAM, ARG);
             continue;
         }
 
-        if (KEY_SYM(f->key) == SYM_RETURN)
+        if (KEY_SYM(KEY) == SYM_RETURN)
             continue;  // !!! let whatever go for now
 
-        if (not Typecheck_Including_Constraints(f->param, f->arg))
-            fail (Error_Arg_Type(f, f->key, VAL_TYPE(f->arg)));
+        if (not Typecheck_Including_Constraints(PARAM, ARG))
+            fail (Error_Arg_Type(f, KEY, VAL_TYPE(ARG)));
     }
 
 
@@ -931,7 +929,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
         assert(GET_EVAL_FLAG(f, RUNNING_ENFIX));
         CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
-        Mark_Eval_Out_Stale(f->out);
+        Mark_Eval_Out_Stale(OUT);
     }
 
     assert(not Is_Action_Frame_Fulfilling(f));
@@ -942,7 +940,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     );
 
     if (GET_EVAL_FLAG(f, TYPECHECK_ONLY)) {  // <blank> and <blackhole> use
-        assert(IS_NULLED(f->out) or Is_Isotope_With_Id(f->out, SYM_BLACKHOLE));
+        assert(IS_NULLED(OUT) or Is_Isotope_With_Id(OUT, SYM_BLACKHOLE));
         goto skip_output_check;
     }
 
@@ -976,18 +974,18 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     // the spare cell will give an assert, but it also means the cell is fresh
     // and ready to use (e.g. as a target of an Eval_Maybe_Stale() operation).
     //
-    SET_END(f_spare);
+    SET_END(SPARE);
 
     // !!! It's not clear why historically this was not being done.  We want
     // to be able to tell when a function did or did not write its output.  But
     // the code didn't seem to do it, it did some expiration based on the idea
     // that not all functions could be invisible.
     //
-    Mark_Eval_Out_Stale(f->out);
+    Mark_Eval_Out_Stale(OUT);
 
     const REBVAL *r = (*dispatcher)(f);
 
-    if (r == f->out) {  // common case, made fastest
+    if (r == OUT) {  // common case, made fastest
         //
         // The stale bit is set on the output before we run the dispatcher.
         // We check to make sure it's not set at the end--so that dispatch
@@ -995,16 +993,16 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // code path.  (To intentionally not write anything and "vaporize",
         // use `return_void` and not plain `return`.)
         //
-        assert(not Is_Stale(f->out));
+        assert(not Is_Stale(OUT));
 
-        CLEAR_CELL_FLAG(f->out, UNEVALUATED);
+        CLEAR_CELL_FLAG(OUT, UNEVALUATED);
     }
     else if (not r) {  // API and internal code can both return `nullptr`
-        Init_Nulled(f->out);
+        Init_Nulled(OUT);
     }
     else if (not IS_RETURN_SIGNAL(r)) {
         assert(not Is_Stale(r));
-        Copy_Cell(f->out, r);
+        Copy_Cell(OUT, r);
         if (Is_Api_Value(r))
             Release_Api_Value_If_Unmanaged(r);
     }
@@ -1019,7 +1017,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // values is a definite advantage--as header bits are scarce!
         //
       case C_THROWN: {
-        const REBVAL *label = VAL_THROWN_LABEL(f->out);
+        const REBVAL *label = VAL_THROWN_LABEL(OUT);
         if (IS_ACTION(label)) {
             if (
                 VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
@@ -1039,11 +1037,11 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // the user for other features, while this only takes one
                 // function away.
                 //
-                CATCH_THROWN_META(f->out, f->out);
-                if (Is_Meta_Of_Void(f->out))
-                    Mark_Eval_Out_Voided(f->out);
+                CATCH_THROWN_META(OUT, OUT);
+                if (Is_Meta_Of_Void(OUT))
+                    Mark_Eval_Out_Voided(OUT);
                 else
-                    Meta_Unquotify(f->out);
+                    Meta_Unquotify(OUT);
 
                 goto dispatch_completed;
             }
@@ -1054,9 +1052,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // This was issued by REDO, and should be a FRAME! with
                 // the phase and binding we are to resume with.
                 //
-                CATCH_THROWN_META(f->out, f->out);
-                Unquotify(f->out, 1);
-                assert(IS_FRAME(f->out));
+                CATCH_THROWN_META(OUT, OUT);
+                Unquotify(OUT, 1);
+                assert(IS_FRAME(OUT));
 
                 // We are reusing the frame and may be jumping to an
                 // "earlier phase" of a composite function, or even to
@@ -1074,18 +1072,18 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // !!! Consider folding this pass into an option for the
                 // typechecking loop itself.
                 //
-                REBACT *redo_phase = VAL_FRAME_PHASE(f->out);
+                REBACT *redo_phase = VAL_FRAME_PHASE(OUT);
                 f->key = ACT_KEYS(&f->key_tail, redo_phase);
                 f->param = ACT_PARAMS_HEAD(redo_phase);
                 f->arg = FRM_ARGS_HEAD(f);
                 for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
-                    if (Is_Specialized(f->param)) {
-                        Copy_Cell(f->arg, f->param);
+                    if (Is_Specialized(PARAM)) {
+                        Copy_Cell(ARG, PARAM);
                     }
                 }
 
                 INIT_FRM_PHASE(f, redo_phase);
-                INIT_FRM_BINDING(f, VAL_FRAME_BINDING(f->out));
+                INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
                 goto typecheck_then_dispatch;
             }
         }
@@ -1094,12 +1092,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         //
         goto abort_action; }
 
-      case C_INVISIBLE : {
-        //
-        // The invisible output is always in f->out.
-        //
-        assert(Is_Stale(f->out));
-        break; }
+      case C_INVISIBLE :
+        assert(Is_Stale(OUT));  // The invisible output is always in f->out.
+        break;
 
     // REDO instructions represent the idea that it is desired to run the
     // f->phase again.  The dispatcher may have changed the value of what

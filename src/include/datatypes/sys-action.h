@@ -500,7 +500,7 @@ inline static REBVAL *Init_Action_Core(
     Init_Action_Core(TRACK(out), (a), (label), (binding))
 
 
-// The action frame run dispatchers, which get to take over the STATE_BYTE()
+// The action frame run dispatchers, which get to take over the STATE_BYTE
 // of the frame for their own use.  But before then, the state byte is used
 // by action dispatch itself.
 //
