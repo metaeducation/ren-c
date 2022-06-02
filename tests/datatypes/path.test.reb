@@ -202,9 +202,12 @@
 )
 
 ; / is a length 2 PATH! in Ren-C
-(path! = type of the /)
-(2 = length of the /)
-(the / = to path! [_ _])
+(word! = type of the /)
+(
+    e: trap [to path! [_ _]]
+    e.id = 'bad-sequence-item
+)
+(the / = compose '(_)/(_))
 
 ; foo/ is also a length 2 PATH! in Ren-C
 (path! = type of the foo/ )

@@ -273,24 +273,47 @@ const REBSYM *Intern_UTF8_Managed_Core(
     REBBIN *s = BIN(Make_Series_Into(
         preallocated,  // if not nullptr, will use this memory for the node
         size + 1,  // if small, fits in a REBSER node (no data allocation)
-        FLAG_FLAVOR(INTERN) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED
+        FLAG_FLAVOR(SYMBOL) | SERIES_FLAG_FIXED_SIZE | NODE_FLAG_MANAGED
     ));
 
     // Cache whether this is an arrow word.
     //
     // !!! Note: The scanner should already know this, and also we could
-    // calculate it during the hash.
+    // calculate it during the hash.  But it's not such a huge deal because
+    // we only run this the first time a symbol is interned.
     //
   blockscope {
     for (REBLEN i = 0; i < size; ++i) {
+        if (utf8[i] == ' ') {
+            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_PLAIN);
+            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_WITH_SIGIL);
+            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+            break;
+        }
+
         if (
-            utf8[i] == '<'
+            utf8[i] == '/'
+            or utf8[i] == '.'
+            or utf8[i] == '<'
             or utf8[i] == '>'
+        ){
+            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+            continue;
+        }
+
+        // !!! Theoretically there would be more things permitted here, like
+        // dots in words and slashes, but the scanner won't allow it.
+        //
+        if (
+            utf8[i] == ':'
+            or utf8[i] == '$'
+            or utf8[i] == '%'
             or utf8[i] == '@'
             or utf8[i] == '^'
         ){
-            SET_SUBCLASS_FLAG(INTERN, s, ARROW);
-            break;
+            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_WITH_SIGIL);
+            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+            continue;
         }
     }
   }

@@ -2049,7 +2049,7 @@ default-combinators: make map! reduce [
         return eval f
     ]
 
-    === WORD!, SYMBOL!, and TUPLE COMBINATOR ===
+    === WORD! and TUPLE! COMBINATOR ===
 
     ; The WORD! combinator handles *non-keyword* WORD! dispatches.  It cannot
     ; also handle keywords, because that would mean it would have to be able
@@ -2062,7 +2062,7 @@ default-combinators: make map! reduce [
         return: "Result of running combinator from fetching the WORD!"
             [<opt> <void> any-value!]
         pending: [blank! block!]
-        value [word! symbol! tuple!]
+        value [word! tuple!]
         <local> r comb
     ][
         r: case [
@@ -2365,12 +2365,11 @@ default-combinators: make map! reduce [
 ]
 
 
-=== MAKE SYMBOL! AND TUPLE! COMBINATORS SAME AS WORD! COMBINATOR ===
+=== MAKE TUPLE! COMBINATOR SAME AS WORD! COMBINATOR ===
 
-; There's no easy way to do this in a MAP!, like `word!: symbol!: ...` would
+; There's no easy way to do this in a MAP!, like `word!: tuple!: ...` would
 ; work for OBJECT!.
 
-default-combinators.(symbol!): :default-combinators.(word!)
 default-combinators.(tuple!): :default-combinators.(word!)
 
 
@@ -2542,7 +2541,7 @@ parsify: func [
     rules: my next
 
     case [
-        any [word? :r, symbol? :r] [
+        word? :r [
             ;
             ; The first thing we do is see if the combinator list we are using
             ; has an entry for this word/symbol.

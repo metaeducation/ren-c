@@ -46,26 +46,49 @@
 //
 #define LINK_Synonym_TYPE       const REBSYM*
 #define LINK_Synonym_CAST       SYM
-#define HAS_LINK_Synonym        FLAVOR_INTERN
+#define HAS_LINK_Synonym        FLAVOR_SYMBOL
 
 // Hitches are a circularly linked list that includes transient binding info
 // for the word, as well as declared variables in "sea" contexts.
 //
 #define MISC_Hitch_TYPE         REBSER*
 #define MISC_Hitch_CAST         SER
-#define HAS_MISC_Hitch          FLAVOR_INTERN
+#define HAS_MISC_Hitch          FLAVOR_SYMBOL
 
 
-//=//// INTERN_FLAG_ARROW //////////////////////////////////////////////////=//
+//=//// SYMBOL_FLAG_ESCAPE_PLAIN ///////////////////////////////////////////=//
 //
-// Arrow words are marked when they are interned so it's known not to allow
-// them to be put in PATH!s or TUPLE!s, as dots and slashes are legal in the
-// internals of TAG!.
+// Some symbols need to be escaped even when not in paths/tuples/set/get/etc:
 //
-// https://forum.rebol.info/t/1702
+//   * Anything with a space in it, obviously
+//   * Anything with a dot or slash in it, that isn't all dots or all slashes
+//   * Anything with a comma in it
 //
-#define INTERN_FLAG_ARROW \
+// etc.  Examples of things that don't need to be plain-escaped would be
+// stuff like `::` or `@`
+//
+#define SYMBOL_FLAG_ESCAPE_PLAIN \
     SERIES_FLAG_24
+
+
+//=//// SYMBOL_FLAG_ESCAPE_WITH_SIGIL //////////////////////////////////////=//
+//
+// These are things that have to be escaped when used with a simple SET-WORD!
+// or META-WORD!, etc.  Examples of things that don't would be `///` or `.`
+//
+#define SYMBOL_FLAG_ESCAPE_WITH_SIGIL \
+    SERIES_FLAG_25
+
+
+//=//// SYMBOL_FLAG_ESCAPE_IN_SEQUENCE /////////////////////////////////////=//
+//
+// Some symbols cannot appear in PATHs or TUPLEs, or SET-WORD!s: notably
+// anything that has dots, slashes, or spaces.
+//
+//    object.|employee.name|
+//
+#define SYMBOL_FLAG_ESCAPE_IN_SEQUENCE \
+    SERIES_FLAG_26
 
 
 #if defined(NDEBUG) || (! CPLUSPLUS_11)

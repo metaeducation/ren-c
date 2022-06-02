@@ -90,7 +90,7 @@
 [#2516 (
     code: [1 / 2]
     obj: make object! [
-        -slash-1-: enfix func [a b] [
+        /: enfix func [a b] [
             reduce '(b a)
         ]
     ]

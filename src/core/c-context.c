@@ -357,7 +357,7 @@ static void Collect_Inner_Loop(
         REBCEL(const*) cell = VAL_UNESCAPED(v);  // X from ''''X
         enum Reb_Kind kind = CELL_KIND(cell);
 
-        if (ANY_WORD_KIND(kind) or kind == REB_SYMBOL) {
+        if (ANY_WORD_KIND(kind)) {
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue;  // kind of word we're not interested in collecting
 
@@ -379,18 +379,6 @@ static void Collect_Inner_Loop(
 
             Init_Word(DS_PUSH(), VAL_WORD_SYMBOL(cell));
 
-            continue;
-        }
-
-        if (kind == REB_SET_BLOCK and (cl->flags == COLLECT_ONLY_SET_WORDS)) {
-            assert(not (cl->flags & COLLECT_NO_DUP));
-            REBFLGS saved_flags = cl->flags;
-            cl->flags = COLLECT_ANY_WORD;  // don't recurse
-
-            const RELVAL *sub_tail;
-            const RELVAL *sub_at = VAL_ARRAY_AT(&sub_tail, cell);
-            Collect_Inner_Loop(cl, sub_at, sub_tail);
-            cl->flags = saved_flags;
             continue;
         }
 
@@ -611,9 +599,7 @@ void Rebind_Context_Deep(
 //
 // Create a context by detecting top-level set-words in an array of values.
 // So if the values were the contents of the block `[a: 10 b: 20]` then the
-// resulting context would be for two words, `a` and `b`.  This has been
-// extended to work with SET-BLOCK! too, so you can say [[@]: ...], which
-// permits SYMBOL! collection as well.
+// resulting context would be for two words, `a` and `b`.
 //
 // Optionally a parent context may be passed in, which will contribute its
 // keylist of words to the result if provided.
@@ -966,7 +952,7 @@ void Assert_Context_Core(REBCTX *c)
 
     REBLEN n;
     for (n = 1; n < vars_len; n++, var++, key++) {
-        if (not IS_INTERN(*key))
+        if (not IS_SYMBOL(*key))
             panic (*key);
 
       #if DEBUG_TERM_ARRAYS

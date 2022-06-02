@@ -22,7 +22,7 @@
 )
 
 [#1477
-    ((match get-path! the :/) = (load-value ":/"))
+    ((match get-word! the :/) = (load-value ":/"))
 
     ((match get-path! the ://) = (load-value "://"))
 

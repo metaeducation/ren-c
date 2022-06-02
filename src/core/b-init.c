@@ -1018,17 +1018,6 @@ void Startup_Core(void)
     Manage_Series(generics_catalog);
     PUSH_GC_GUARD(generics_catalog);
 
-    // ^ and @ used to be their own datatypes, but were transitioned to SYMBOL!
-    // and looked up like everything else.  But they are used early on.  In
-    // Startup_Lib() they were created and bound, but the natives weren't
-    // available to assign to them...do it here for now.
-    //
-    REBVAL *caret_var = Append_Context(Lib_Context, nullptr, Canon(CARET_1));
-    REBVAL *at_var = Append_Context(Lib_Context, nullptr, Canon(AT_1));
-
-    Copy_Cell(caret_var, Lib(META_P));
-    Copy_Cell(at_var, Lib(THE_P));
-
     // boot->errors is the error definition list from %errors.r
     //
     REBCTX *errors_catalog = Startup_Errors(SPECIFIC(&boot->errors));

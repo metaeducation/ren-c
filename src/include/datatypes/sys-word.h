@@ -137,27 +137,14 @@ inline static bool IS_BAR_BAR(const RELVAL *v) {
         and VAL_WORD_SYMBOL(v) == Canon(_B_B);  // caseless || always canon
 }
 
-
-inline static REBVAL *Init_Meta(RELVAL *out) {
-    Init_Any_Word_Untracked(out, REB_WORD, Canon(CARET_1));
-    mutable_KIND3Q_BYTE(out) = REB_SYMBOL;
-    return cast(REBVAL*, out);
-}
-
-inline static REBVAL *Init_The(RELVAL *out) {
-    Init_Any_Word_Untracked(out, REB_WORD, Canon(AT_1));
-    mutable_KIND3Q_BYTE(out) = REB_SYMBOL;
-    return cast(REBVAL*, out);
-}
-
 inline static bool IS_META(const RELVAL *v) {
-    if (not IS_SYMBOL(v))
+    if (not IS_WORD(v))
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(CARET_1);
 }
 
 inline static bool IS_THE(const RELVAL *v) {
-    if (not IS_SYMBOL(v))
+    if (not IS_WORD(v))
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(AT_1);
 }

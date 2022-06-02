@@ -336,8 +336,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
     // BLOCK! is universal container, and the only type that is converted.
     // Paths are not allowed... use MAKE PATH! for that.  Not all paths
-    // will be valid here, so the Init_Any_Path_Arraylike may fail (should
-    // probably be Try_Init_Any_Path_Arraylike()...)
+    // will be valid here, so the initializatoinmay fail
 
     REBLEN len = VAL_LEN_AT(arg);
     if (len < 2)
@@ -370,6 +369,11 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
         if (not Try_Init_Any_Sequence_Arraylike(out, kind, a))
             fail (Error_Bad_Sequence_Init(out));
+    }
+
+    if (VAL_TYPE(out) != kind) {
+        assert(VAL_TYPE(out) == REB_WORD);
+        fail (Error_Bad_Sequence_Init(out));
     }
 
     return out;

@@ -151,7 +151,7 @@
 //
 // Yet the link and misc actually mean different things for different subtypes.
 // A FLAVOR_STRING node's LINK points to a list that maps byte positions to
-// UTF-8 codepoint boundaries.  But a FLAVOR_INTERN series uses the LINK for a
+// UTF-8 codepoint boundaries.  But a FLAVOR_SYMBOL series uses the LINK for a
 // pointer to another symbol's synonym.
 //
 // A C program could typically deal with this using a union, to name the same

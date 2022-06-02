@@ -689,25 +689,18 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         break; }
 
 
-    //=//// WORD! and SYMBOL! //////////////////////////////////////////////=//
+    //=//// WORD! //////////////////////////////////////////////////////////=//
     //
     // A plain word tries to fetch its value through its binding.  It fails
     // if the word is unbound (or if the binding is to a variable which is
     // set, but to a non-isotope form of bad-word!).  Should the word look up
     // to an action, then that action will be invoked.
     //
-    // SYMBOL! behaves the same way.  The only reason SYMBOL! is in a different
-    // category is to communicate that it does not come in SET-/GET-/META-/THE-
-    // variations...but it can be overriden in the same way.  (It's possible
-    // to SET a symbol or to put it in a SET-BLOCK!, e.g. `[@]: 10`)
-    //
     // NOTE: The usual dispatch of enfix functions is *not* via a REB_WORD in
     // this switch, it's by some code at the `lookahead:` label.  You only see
     // enfix here when there was nothing to the left, so cases like `(+ 1 2)`
     // or in "stale" left hand situations like `10 comment "hi" + 20`.
 
-      case REB_SYMBOL:
-      process_word:
       case REB_WORD:
         if (not gotten)
             gotten = Lookup_Word_May_Fail(v, v_specifier);
@@ -998,9 +991,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // fetching isotopes is what you actually intended.
 
       case REB_TUPLE: {
-        if (HEART_BYTE(v) == REB_WORD)
-            goto process_word;  // special `.` case with hidden word
-
         const RELVAL *head = VAL_SEQUENCE_AT(f_spare, v, 0);
         if (ANY_INERT(head)) {
             Derelativize(f->out, v, v_specifier);
@@ -1242,12 +1232,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             or STATE_BYTE(f) == ST_EVALUATOR_META_PATH_OR_META_TUPLE
         );
 
-        if (HEART_BYTE(v) == REB_WORD) {
-            assert(VAL_WORD_SYMBOL(v) == Canon(SLASH_1));
-            STATE_BYTE(f) = ST_EVALUATOR_GET_WORD;
-            goto process_get_word;
-        }
-
         SET_END(f->out);  // !!! Not needed, should there be debug only TRASH()
         if (Get_Var_Core_Throws(f->out, f_spare, v, v_specifier))
             goto return_thrown;
@@ -1390,7 +1374,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             //
             // !!! Should both @(^) and ^(@) be allowed?
             //
-            if (IS_SYMBOL(check) and VAL_SYMBOL(check) == Canon(CARET_1)) {
+            if (IS_META(check)) {
                 Init_Blackhole(DS_PUSH());
                 SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
                 continue;
@@ -1400,7 +1384,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 or IS_META_PATH(check)
                 or IS_META_TUPLE(check)
             ){
-                Derelativize(DS_PUSH(), check, v_specifier);
+                Derelativize(DS_PUSH(), check, check_specifier);
                 Plainify(DS_TOP);
                 SET_CELL_FLAG(DS_TOP, STACK_NOTE_METARETURN);
                 continue;
@@ -1938,25 +1922,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
       case REB_WORD:
         break;  // need to check for lookahead
 
-      case REB_PATH: {  // need to check for lookahead *if* just a `/`
-        if (
-            GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)
-            or HEART_BYTE(f_next) != REB_WORD
-        ){
-            CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
-            goto finished;
-        }
-
-        // Although the `/` case appears to be a PATH!, it is actually a
-        // WORD! under the hood and can have a binding.  The "spelling" of
-        // this word is an alias, because `/` is purposefully not legal in
-        // words.)  Operations based on VAL_TYPE() or CELL_TYPE() will see it
-        // as PATH!, but CELL_KIND() will interpret the cell bits as a word.
-        //
-        if (VAL_WORD_SYMBOL(f_next) != Canon(SLASH_1))
-            goto finished;  // optimized refinement (see IS_REFINEMENT())
-        break; }
-
       default:
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
         goto finished;
@@ -1969,11 +1934,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     if (not f_next_gotten)
         f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
-    else {
-        if (f_next_gotten != Lookup_Word(f_next, FEED_SPECIFIER(f->feed)))
-            assert(false);
+    else
         assert(f_next_gotten == Lookup_Word(f_next, FEED_SPECIFIER(f->feed)));
-    }
 
   //=//// NEW EXPRESSION IF UNBOUND, NON-FUNCTION, OR NON-ENFIX ///////////=//
 

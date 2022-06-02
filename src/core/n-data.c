@@ -129,7 +129,7 @@ REBNATIVE(bind)
 
     REBLEN flags = REF(only) ? BIND_0 : BIND_DEEP;
 
-    REBU64 bind_types = TS_WORD | FLAGIT_KIND(REB_SYMBOL);
+    REBU64 bind_types = TS_WORD;
 
     REBU64 add_midstream_types;
     if (REF(new)) {
@@ -561,16 +561,14 @@ bool Get_Var_Push_Refinements_Throws(
         return false;
     }
 
-    if (ANY_WORD(var) or IS_SYMBOL(var)) {
+    if (ANY_WORD(var)) {
 
       get_source:  // Note: source may be `out`, due to GROUP fetch above!
 
         if (steps_out) {  // set the steps out *first* before overwriting out
             Derelativize(unwrap(steps_out), var, var_specifier);
-            if (not IS_SYMBOL(var)) {
-                mutable_KIND3Q_BYTE(unwrap(steps_out)) = REB_WORD;
-                mutable_HEART_BYTE(unwrap(steps_out)) = REB_WORD;
-            }
+            mutable_KIND3Q_BYTE(unwrap(steps_out)) = REB_WORD;
+            mutable_HEART_BYTE(unwrap(steps_out)) = REB_WORD;
         }
 
         Copy_Cell(out, Lookup_Word_May_Fail(var, var_specifier));
@@ -605,12 +603,8 @@ bool Get_Var_Push_Refinements_Throws(
           case REB_BYTES:
             fail (var);
 
-          case REB_WORD:  // Note: will likely become SYMBOL! instances
-            assert(
-                VAL_STRING(var) == Canon(DOT_1)
-                or VAL_STRING(var) == Canon(SLASH_1)
-            );
-            goto get_source;
+          case REB_WORD:
+            panic ("heart byte WORD! sequences are being reclaimed");
 
           case REB_GET_WORD:  // `/a` or `.a`
             goto get_source;
@@ -792,10 +786,8 @@ bool Get_Path_Push_Refinements_Throws(
         Derelativize(out, path, path_specifier);  // inert
         return false;
 
-      case REB_WORD:  // Note: will become SYMBOL! instances
-        assert(VAL_STRING(path) == Canon(SLASH_1));
-        Get_Word_May_Fail(out, path, path_specifier);
-        return false;
+      case REB_WORD:
+        panic ("heart byte WORD! sequences are being reclaimed");
 
       case REB_GET_WORD:  // `/a` - should you be able to GET these?
         Get_Word_May_Fail(out, path, path_specifier);
@@ -974,10 +966,10 @@ bool Get_Path_Push_Refinements_Throws(
 //
 //      return: [<opt> any-value!]
 //      steps: "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
-//          [the-block! the-word! symbol! blank!]
+//          [the-block! the-word! blank!]
 //
 //      source "Word or path to get, or block of PICK steps"
-//          [<blank> any-word! symbol! any-sequence! any-group! the-block!]
+//          [<blank> any-word! any-sequence! any-group! the-block!]
 //      /any "Do not error on BAD-WORD! isotopes"
 //  ]
 //
@@ -1073,7 +1065,7 @@ bool Set_Var_Core_Updater_Throws(
     //
     const REBVAL *decayed = Pointer_To_Decayed(setval);
 
-    if (ANY_WORD(var) or IS_SYMBOL(var)) {
+    if (ANY_WORD(var)) {
 
       set_target:
 
@@ -1082,10 +1074,12 @@ bool Set_Var_Core_Updater_Throws(
         if (steps_out) {
             if (steps_out != var)  // could be true if GROUP eval
                 Derelativize(unwrap(steps_out), var, var_specifier);
-            if (not IS_SYMBOL(var)) {
-                mutable_KIND3Q_BYTE(unwrap(steps_out)) = REB_WORD;
-                mutable_HEART_BYTE(unwrap(steps_out)) = REB_WORD;
-            }
+
+            // If the variable is a compressed path form like `a.` then turn
+            // it into a plain word.
+            //
+            mutable_KIND3Q_BYTE(unwrap(steps_out)) = REB_WORD;
+            mutable_HEART_BYTE(unwrap(steps_out)) = REB_WORD;
         }
         return false;  // did not throw
     }
@@ -1098,16 +1092,12 @@ bool Set_Var_Core_Updater_Throws(
     // caller has asked us to return steps.
 
     if (ANY_SEQUENCE(var)) {
-        switch (HEART_BYTE(var)) {
+        switch (HEART_BYTE(var)) {  // look for compressed sequence forms
           case REB_BYTES:
             fail (var);
 
-          case REB_WORD:  // Note: will likely become SYMBOL! instances
-            assert(
-                VAL_STRING(var) == Canon(DOT_1)
-                or VAL_STRING(var) == Canon(SLASH_1)
-            );
-            goto set_target;
+          case REB_WORD:
+            panic ("heart byte WORD! sequences are being reclaimed");
 
           case REB_GET_WORD:  // `/a` or `.a`
             goto set_target;
@@ -1310,10 +1300,10 @@ void Set_Var_May_Fail(
 //      return: "Same value as input"
 //          [<opt> <void> any-value!]
 //      steps: "Allow GROUP! evals, returns block of reusable PICK/POKE steps"
-//          [the-block! the-word! symbol! blackhole!]
+//          [the-block! the-word! blackhole!]
 //
 //      target "Word or path (# means ignore assignment, just return value)"
-//          [blackhole! any-word! symbol! any-sequence! any-group! any-block!]
+//          [blackhole! any-word! any-sequence! any-group! any-block!]
 //      ^value [<opt> <void> any-value!]
 //  ]
 //
@@ -2030,7 +2020,7 @@ REBNATIVE(as)
             if (VAL_INDEX(v) != 0)  // can't reuse non-head series AS WORD!
                 goto intern_utf8;
 
-            if (IS_INTERN(s)) {
+            if (IS_SYMBOL(s)) {
                 //
                 // This string's content was already frozen and checked, e.g.
                 // the string came from something like `as text! 'some-word`
@@ -2062,7 +2052,7 @@ REBNATIVE(as)
                     fail (Error_Alias_Constrains_Raw());
 
             const REBSTR *str;
-            if (IS_INTERN(bin))
+            if (IS_SYMBOL(bin))
                 str = STR(bin);
             else {
                 // !!! There isn't yet a mechanic for interning an existing

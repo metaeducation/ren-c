@@ -134,7 +134,7 @@ enum Reb_Series_Flavor {
     // store a pointer that is used in a circularly linked list to find their
     // canon spelling form...as well as hold binding information.
     //
-    FLAVOR_INTERN,
+    FLAVOR_SYMBOL,
 
     // Right now there is only one instance of FLAVOR_THE_GLOBAL_INACCESSIBLE
     // series.  All nodes that have SERIES_FLAG_INACCESSIBLE will be canonized
@@ -186,7 +186,7 @@ inline static size_t Wide_For_Flavor(enum Reb_Series_Flavor flavor) {
 #define IS_SER_UTF8(s)          (SER_FLAVOR(s) >= FLAVOR_MIN_UTF8)
 
 #define IS_NONSYMBOL_STRING(s)  (SER_FLAVOR(s) == FLAVOR_STRING)
-#define IS_INTERN(s)            (SER_FLAVOR(s) == FLAVOR_INTERN)
+#define IS_SYMBOL(s)            (SER_FLAVOR(s) == FLAVOR_SYMBOL)
 
 #define IS_KEYLIST(s)           (SER_FLAVOR(s) == FLAVOR_KEYLIST)
 

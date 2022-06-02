@@ -34,7 +34,7 @@
 [#1477 (
     set-slash: load-value "/:"
     did all [
-        set-path? set-slash
+        set-word? set-slash
         '/: = set-slash
     ]
 )]

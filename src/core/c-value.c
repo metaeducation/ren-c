@@ -303,10 +303,14 @@ void* Probe_Core_Debug(
             break;
         }
         REBSER *link = SER(node_LINK(Node, s));
-        if (FLAVOR_VARLIST == SER_FLAVOR(link))
+        if (link and FLAVOR_VARLIST == SER_FLAVOR(link))
             Probe_Print_Helper(p, expr, "Module Item Patch", file, line);
-        else
+        else {
+            // LINK(NextPatch) is the next specifier in the LET patch chain
+            // it can potentially be none.
+            //
             Probe_Print_Helper(p, expr, "LET Patch", file, line);
+        }
         break; }
 
       case FLAVOR_HITCH:
@@ -411,7 +415,7 @@ void* Probe_Core_Debug(
         Mold_Text_Series_At(mo, STR(s), 0);  // or could be TAG!, etc.
         break; }
 
-      case FLAVOR_INTERN: {
+      case FLAVOR_SYMBOL: {
         Probe_Print_Helper(p, expr, "Interned (Symbol) series", file, line);
         Mold_Text_Series_At(mo, STR(s), 0);
         break; }

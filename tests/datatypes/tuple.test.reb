@@ -14,12 +14,10 @@
 ;(.1 = to tuple! [_ 1])  ; No representation due to reservation
 ;(1. = to tuple! [1 _])  ; No representation due to reservation
 
-; !!! Should dot be inert?  Is there value to having it as an inert predicate
-; form for something like identity that does not execute on its own?  It is
-; both leading -and- trailing blank, which suggests non-executability...
-; (while slash can argue that trailing slashes execute)
-;
-('. = to tuple! [_ _])
+(
+    e: trap [to tuple! [_ _]]
+    e.id = 'bad-sequence-item
+)
 
 ("1.2.3" = mold 1.2.3)
 

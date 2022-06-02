@@ -27,6 +27,9 @@ REBOL [
 
 c-break-debug: :c-debug-break  ; easy to mix up
 
+|^|: :meta*
+|@|: :the*
+
 eval: :evaluate  ; shorthands should be synonyms, too confusing otherwise
 
 probe: func* [
@@ -95,14 +98,12 @@ tweak :*else 'defer on
 
 ; ARITHMETIC OPERATORS
 ;
-; Note that `/` is actually path containing two elements, both of which are
-; BLANK! so they do not render.  A special mechanism through a word binding
-; hidden in the cell allows it to dispatch.  See Startup_Sequence_1_Symbol()
+; Note that `/` is rather trickily not a PATH!, but a decayed form as a WORD!
 
 +: enfixed :add
 -: enfixed :subtract
 *: enfixed :multiply
--slash-1-: enfixed :divide  ; TBD: make `/: enfixed :divide` act equivalently
+/: enfixed :divide
 
 
 ; SET OPERATORS
@@ -501,7 +502,6 @@ reeval func* [
     pair?:
     time?:
     date?:
-    symbol?:
     word?:
     set-word?:
     get-word?:

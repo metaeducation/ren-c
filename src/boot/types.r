@@ -326,14 +326,6 @@ meta-word   "word that quotes its product or removes isotope status"
 ; <ANY-META> (order matters, see UNSETIFY_ANY_XXX_KIND())
 
 
-; SYMBOL! is a category for things that can be bound, but which do not have
-; variations like words do (there's no SET-SYMBOL! and such).  Hence it can
-; be things like @ and ^.
-
-symbol       "quoting operator which distinguishes NULL and BAD-WORD! isotopes"
-            symbol       -      +       [unit]
-
-
 ; COMMA! has a high number with bindable types it's evaluative, and the
 ; desire is to make the ANY_INERT() test fast with a single comparison.
 

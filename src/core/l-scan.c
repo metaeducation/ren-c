@@ -1243,6 +1243,38 @@ static enum Reb_Token Locate_Token_May_Push_Mold(
         }
 
       case LEX_CLASS_SPECIAL:
+        if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_BAR) {  // unusual word
+            ++cp;
+
+            // !!! we assume that |, ||, ||| etc. have been handled by the
+            // "arrow words".  If we are seeing anything here, it means it
+            // didn't fit that pattern... so |a b| etc.
+
+            for (; *cp != '|'; ++cp) {
+                if (IS_LEX_WORD_OR_NUMBER(*cp))
+                    continue;
+                if (
+                    *cp == ':'
+                    or *cp == '$'
+                    or *cp == '%'
+                    or *cp == '@'
+                    or *cp == '^'
+                ){
+                    continue;  // limit set of other things for now
+                }
+                if (*cp == ' ')
+                    continue;
+
+                ss->end = cp;
+                fail (Error_Syntax(ss, TOKEN_WORD));
+            }
+            ss->end = cp + 1;
+            if (IS_LEX_DELIMIT(cp[1]) or cp[1] == ':')
+                return TOKEN_ESCAPED_WORD;
+
+            fail (Error_Syntax(ss, TOKEN_WORD));
+        }
+
         if (GET_LEX_VALUE(*cp) == LEX_SPECIAL_SEMICOLON) {  // begin comment
             while (not ANY_CR_LF_END(*cp))
                 ++cp;
@@ -1948,7 +1980,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
       case TOKEN_CARET:
         assert(*bp == '^');
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
-            Init_Meta(DS_PUSH());
+            Init_Any_Word_Untracked(DS_PUSH(), REB_WORD, Canon(CARET_1));
             break;
         }
         goto token_prefixable_sigil;
@@ -1956,7 +1988,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
       case TOKEN_AT:
         assert(*bp == '@');
         if (IS_LEX_ANY_SPACE(*ep) or *ep == ']' or *ep == ')') {
-            Init_The(DS_PUSH());
+            Init_Any_Word_Untracked(DS_PUSH(), REB_WORD, Canon(AT_1));
             break;
         }
         goto token_prefixable_sigil;
@@ -2006,9 +2038,24 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         if (prefix_pending != TOKEN_END)
             fail (Error_Syntax(ss, token));  // can't make a GET-GET-WORD!
 
+        // !!! This is a hack to support plain colon.  It should support more
+        // than one colon, but this gets a little further for now.  :-/
+        //
+        if (IS_LEX_ANY_SPACE(bp[1])) {
+            Init_Word(DS_PUSH(), Canon(COLON_1));
+            break;
+        }
+
         prefix_pending = token;
         goto loop;
 
+      case TOKEN_ESCAPED_WORD:
+        assert(bp[0] == '|' and bp[len - 1] == '|');
+        len -= 2;
+        ++bp;
+        goto scan_word;
+
+    scan_word:
       case TOKEN_WORD:
         if (len == 0)
             fail (Error_Syntax(ss, token));
@@ -2418,7 +2465,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
     // object, it would be more complex...only for efficiency, and nothing
     // like it existed before.
     //
-    if (ss->context and (ANY_WORD(DS_TOP) or IS_SYMBOL(DS_TOP))) {
+    if (ss->context and ANY_WORD(DS_TOP)) {
         INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
         INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
     }
@@ -2601,7 +2648,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             fail (Error_Syntax(ss, token));
       }
 
-        assert(ANY_SEQUENCE(temp));  // Should be >= 2 elements, no decaying
+        assert(IS_WORD(temp) or ANY_SEQUENCE(temp));  // `/` and `...` decay
 
       push_temp:
         Copy_Cell(DS_PUSH(), temp);
@@ -2613,7 +2660,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         // word attachment code above.
         //
         if (ss->context) {
-            if (ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(DS_TOP)))) {
+            if (ANY_WORD(DS_TOP)) {
                 INIT_VAL_WORD_BINDING(DS_TOP, CTX_VARLIST(unwrap(ss->context)));
                 INIT_VAL_WORD_INDEX(DS_TOP, INDEX_ATTACHED);
             }

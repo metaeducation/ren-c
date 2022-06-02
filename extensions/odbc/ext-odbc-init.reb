@@ -155,7 +155,7 @@ sqlform: func [
     switch type of :value [
         comma! [join #"," space]  ; avoid spacing before the comma
 
-        integer! word! symbol! [as text! value]
+        integer! word! [as text! value]
         tuple! [mold value]
 
         ; !!! We need to express literal SQL somehow.  Things like 'T' might be

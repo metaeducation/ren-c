@@ -68,7 +68,7 @@
     ([] = reduce [
         maybe null
     ])
-    (['ZOMG <!!!> 1020 #wow] = apply :reduce [
+    ([ZOMG <!!!> 1020 #wow] = apply :reduce [
         ['ZOMG null 1000 + 20 #wow]
         /predicate func [x] [
             non [<opt>] x else [<!!!>]

@@ -367,10 +367,8 @@ REBTYPE(Sequence)
         //
       case SYM_COPY: {
         if (
-            HEART_BYTE(sequence) == REB_WORD
-            or HEART_BYTE(sequence) == REB_ISSUE
+            ANY_WORD_KIND(HEART_BYTE(sequence))  // `/a` or `.a` etc.
         ){
-            assert(VAL_WORD_SYMBOL(sequence) == Canon(SLASH_1));
             return Copy_Cell(frame_->out, sequence);
         }
 
@@ -470,7 +468,24 @@ void MF_Sequence(REB_MOLD *mo, REBCEL(const*) v, bool form)
         else
             Append_Codepoint(mo->series, interstitial);
 
-        if (element_kind != REB_BLANK) {  // no blank molding; implicit
+        if (element_kind == REB_BLANK) {
+            // no blank molding; implicit
+        }
+        else if (element_kind == REB_WORD) {
+            const REBSYM *sym = VAL_WORD_SYMBOL(element);
+            if (
+                not form
+                and GET_SUBCLASS_FLAG(SYMBOL, sym, ESCAPE_IN_SEQUENCE)
+                and NOT_SUBCLASS_FLAG(SYMBOL, sym, ESCAPE_PLAIN)  // does itself
+            ){
+                Append_Codepoint(mo->series, '|');
+                Mold_Value(mo, element);
+                Append_Codepoint(mo->series, '|');
+            }
+            else
+                Mold_Value(mo, element);
+        }
+        else {
             Mold_Value(mo, element);
 
             // Note: Ignore VALUE_FLAG_NEWLINE_BEFORE here for ANY-PATH,

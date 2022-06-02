@@ -270,8 +270,6 @@ uint32_t Hash_Value(const RELVAL *v)
 
       hash_any_word:
         //
-      case REB_SYMBOL:
-        //
       case REB_WORD:
       case REB_SET_WORD:
       case REB_GET_WORD:

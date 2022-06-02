@@ -62,7 +62,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
     if (
         IS_BINDABLE_KIND(heart)
         and (binding = BINDING(v))
-        and not IS_INTERN(binding)
+        and not IS_SYMBOL(binding)
         and NOT_SERIES_FLAG(binding, INACCESSIBLE)
     ){
         if (not IS_SER_ARRAY(binding))
@@ -417,10 +417,6 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
     switch (kind) {
       case REB_NULL:
         assert(heart == REB_NULL or heart == REB_BLANK);  // may be "isotope"
-        break;
-
-      case REB_SYMBOL:
-        assert(heart == REB_WORD);
         break;
 
       case REB_TUPLE:

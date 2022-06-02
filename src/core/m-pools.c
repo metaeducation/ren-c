@@ -1086,7 +1086,7 @@ void Decay_Series(REBSER *s)
         Free_Bookmarks_Maybe_Null(STR(s));
         break;
 
-      case FLAVOR_INTERN:
+      case FLAVOR_SYMBOL:
         GC_Kill_Interning(STR(s));  // special handling can adjust canons
         break;
 
@@ -1110,7 +1110,7 @@ void Decay_Series(REBSER *s)
             //
             while (node_MISC(Variant, temp) != s) {
                 temp = SER(node_MISC(Variant, temp));
-                assert(IS_PATCH(temp) or IS_INTERN(temp));
+                assert(IS_PATCH(temp) or IS_SYMBOL(temp));
             }
             node_MISC(Variant, temp) = node_MISC(Variant, s);
         }

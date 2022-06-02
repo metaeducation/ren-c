@@ -246,7 +246,7 @@ REBLEN Modify_String_Or_Binary(
     ENSURE_MUTABLE(dst);  // note this also rules out ANY-WORD!s
 
     REBBIN *dst_ser = BIN(VAL_SERIES_ENSURE_MUTABLE(dst));
-    assert(not IS_INTERN(dst_ser));  // would be immutable
+    assert(not IS_SYMBOL(dst_ser));  // would be immutable
 
     REBLEN dst_idx = VAL_INDEX(dst);
     REBSIZ dst_used = SER_USED(dst_ser);

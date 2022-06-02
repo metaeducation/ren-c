@@ -4,8 +4,6 @@
 (not module? 1)
 (module! = type of module [] [])
 
-(:divide = get first intern :[make path! [_ _]])
-
 ; Create a Module, but Don't Import It
 (
     var: <before>

@@ -975,22 +975,13 @@ void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
     while (Did_Advance_Evars(&e)) {
         New_Indented_Line(mo);
 
-        const REBSTR *spelling = KEY_SYMBOL(e.key);
+        const REBSYM *spelling = KEY_SYMBOL(e.key);
 
-        // If an interned string is for a SYMBOL! then it doesn't come in
-        // SET-WORD! form.  For example, `::` has no SET- or GET- version.
-        // Hence if the symbol is in a context, we have to use an alternate
-        // representation of a SET-BLOCK, like `[::]: 10`
-        //
-        if (GET_SUBCLASS_FLAG(INTERN, spelling, ARROW)) {
-            Append_Ascii(s, "[");
-            Append_Utf8(s, STR_UTF8(spelling), STR_SIZE(spelling));
-            Append_Ascii(s, "]");
-        }
-        else
-            Append_Utf8(s, STR_UTF8(spelling), STR_SIZE(spelling));
+        DECLARE_LOCAL (set_word);
+        Init_Set_Word(set_word, spelling);  // want escaping, e.g `|::|: 10`
 
-        Append_Ascii(s, ": ");
+        Mold_Value(mo, set_word);
+        Append_Codepoint(mo->series, ' ');
 
         if (IS_NULLED(e.var))
             Append_Ascii(s, "'");  // `field: '` would evaluate to null

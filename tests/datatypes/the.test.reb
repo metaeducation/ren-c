@@ -1,6 +1,6 @@
 ; %the.test.reb
 ;
-; @ (which is of type SYMBOL!) is a special operator
+; @ is a WORD! that is nominally used as a special operator
 ;
 ; The other THE-XXX! types are pretty simple since they are inert.
 ;

@@ -162,15 +162,19 @@
     for-each str [
         {<>} {<+>} {<|>} {<=>} {<->} {<>>} {<<>}
 
-        {<} '{+} '{|} '{=} '{-} {>}  ; tick marks mean valid in path
+        {<} '{+} '{|} '{=} '{-} {>}  ; tick marks mean unescaped in path
 
         {>=} {=|<} {<><} {-=>} {<-<=}
 
         {<<} {>>} {>>=} {<<=} {>>=<->}
 
-        {|->} {-<=>-} {-<>-} {>=<}
+        {|->} {-<=>-} {-<>-} {>=<} {|>} {|>>}
     ][
-        let legal-in-path: quoted? str
+        let assert: specialize :assert [
+            handler: [echo Failure on: @str]
+        ]
+
+        let unescaped-in-path: quoted? str
         str: noquote str
 
         [word pos]: transcode str
@@ -179,13 +183,17 @@
         assert [word = to word! str]
         assert [str = as text! word]
 
-        if legal-in-path [
+        if unescaped-in-path [
             [path pos]: transcode unspaced ["a/" str "/b"]
             assert [pos = ""]
             assert [path = compose 'a/(word)/b]
         ] else [
-            let e: trap [compose 'a/(word)/b]
-            assert [e.id = 'bad-sequence-item]
+            ; !!! The logistics for making this work aren't finished, and
+            ; there are higher priorities than rewriting the scanner.
+            ;
+            comment [
+                [path pos]: transcode unspaced ["a/|" str "|/b"]
+            ]
         ]
 
         [block pos]: transcode unspaced ["[" str "]"]
@@ -251,5 +259,15 @@
     ("%%" = as text! match get-word! first [:%%])
     ("%%" = as text! match meta-word! first [^%%])
 
-    ("%%/foo" = form match path! '%%/foo)
+    ("|%%|/foo" = form match path! '|%%|/foo)
+]
+
+[
+    (
+        w: '|word with spaces|
+        did all [
+            "word with spaces" = form w
+            "|word with spaces|" = mold w
+        ]
+    )
 ]

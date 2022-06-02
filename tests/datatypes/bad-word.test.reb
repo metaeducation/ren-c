@@ -203,11 +203,6 @@
     e.id = 'bad-word-get
 )
 
-(
-    is-barrier?: func [x [<end> integer!]] [null? x]
-    is-barrier? ()
-)
-
 [#68 https://github.com/metaeducation/ren-c/issues/876
     ('need-non-end = (trap [a:]).id)
     (

@@ -109,13 +109,11 @@ inline static bool Is_Valid_Sequence_Element(
         or k == REB_BLOCK
         or k == REB_TEXT
         or k == REB_TAG
+        or k == REB_WORD
         or k == REB_BAD_WORD  // legal, e.g. `~/home/Projects/ren-c/README.md`
     ){
         return true;
     }
-
-    if (k == REB_WORD)  // Words containing < or > not valid, others are
-        return NOT_SUBCLASS_FLAG(INTERN, VAL_WORD_SYMBOL(v), ARROW);
 
     if (k == REB_TUPLE)  // PATH! can have TUPLE!, not vice-versa
         return ANY_PATH_KIND(sequence_kind);
@@ -147,12 +145,18 @@ inline static REBCTX *Error_Bad_Sequence_Init(const REBVAL *v) {
 
 //=//// ALL-BLANK! SEQUENCE OPTIMIZATION //////////////////////////////////=//
 //
-// The `/` path maps to the 2-element array [_ _].  But to save on storage,
-// no array is used and paths of this form are always optimized into a single
-// cell.  Though the cell reports its VAL_TYPE() as a PATH!, it uses the
-// underlying contents of a word cell...which makes it pick up and carry
-// bindings.  That allows it to be bound to a function that runs divide.
-
+// At one time, the `/` path mapped to the 2-element array [_ _], and there
+// was a storage optimization here which put it into a single cell that was
+// a WORD! under the hood (with a PATH! veneer).  Same with `.` as a TUPLE!.
+// This was done for the sake of preventing the creation of a WORD! which
+// would be ambiguous if put in a PATH! or TUPLE!.
+//
+// But people still wanted `/` for division, and getting the mutant path to
+// act like a WORD! was too much of a hassle vs. just saying that the words
+// would be escaped if used in tuples or paths, like `obj.|/|`.  So the
+// mechanics that optimized as a word were just changed to make a real WORD!
+// with SYMBOL_FLAG_ESCAPE_IN_SEQUENCE.
+//
 inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
     if (ANY_PATH_KIND(kind))
         Init_Word(out, Canon(SLASH_1));
@@ -160,8 +164,6 @@ inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
         assert(ANY_TUPLE_KIND(kind));
         Init_Word(out, Canon(DOT_1));
     }
-    mutable_KIND3Q_BYTE(out) = kind;
-    assert(HEART_BYTE(out) == REB_WORD);  // leave as-is
     return cast(REBVAL*, out);
 }
 

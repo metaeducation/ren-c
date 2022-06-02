@@ -194,10 +194,15 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 }
 
 
-inline static void Mold_Word(REB_MOLD *mo, REBCEL(const*) v)
+inline static void Mold_Word(REB_MOLD *mo, const REBSYM *symbol, bool escape)
 {
-    const REBSTR *spelling = VAL_WORD_SYMBOL(v);
-    Append_Utf8(mo->series, STR_UTF8(spelling), STR_SIZE(spelling));
+    if (escape) {
+        Append_Codepoint(mo->series, '|');
+        Append_Utf8(mo->series, STR_UTF8(symbol), STR_SIZE(symbol));
+        Append_Codepoint(mo->series, '|');
+    }
+    else
+        Append_Utf8(mo->series, STR_UTF8(symbol), STR_SIZE(symbol));
 }
 
 
@@ -205,8 +210,12 @@ inline static void Mold_Word(REB_MOLD *mo, REBCEL(const*) v)
 //  MF_Word: C
 //
 void MF_Word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
-    UNUSED(form);
-    Mold_Word(mo, v);
+    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    bool escape = form
+        ? false
+        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_PLAIN);
+
+    Mold_Word(mo, symbol, escape);
 }
 
 
@@ -214,8 +223,12 @@ void MF_Word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 //  MF_Set_word: C
 //
 void MF_Set_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
-    UNUSED(form);
-    Mold_Word(mo, v);
+    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    bool escape = form
+        ? false
+        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+
+    Mold_Word(mo, symbol, escape);
     Append_Codepoint(mo->series, ':');
 }
 
@@ -224,9 +237,13 @@ void MF_Set_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 //  MF_Get_word: C
 //
 void MF_Get_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
-    UNUSED(form);
+    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    bool escape = form
+        ? false
+        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+
     Append_Codepoint(mo->series, ':');
-    Mold_Word(mo, v);
+    Mold_Word(mo, symbol, escape);
 }
 
 
@@ -234,9 +251,13 @@ void MF_Get_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 //  MF_Meta_word: C
 //
 void MF_Meta_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
-    UNUSED(form);
+    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    bool escape = form
+        ? false
+        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+
     Append_Codepoint(mo->series, '^');
-    Mold_Word(mo, v);
+    Mold_Word(mo, symbol, escape);
 }
 
 
@@ -244,9 +265,13 @@ void MF_Meta_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 //  MF_The_word: C
 //
 void MF_The_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
-    UNUSED(form);
+    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    bool escape = form
+        ? false
+        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+
     Append_Codepoint(mo->series, '@');
-    Mold_Word(mo, v);
+    Mold_Word(mo, symbol, escape);
 }
 
 

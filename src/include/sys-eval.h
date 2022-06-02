@@ -203,19 +203,6 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         return true;   // we're done!
     }
 
-    if (KIND3Q_BYTE_UNCHECKED(feed->value) != REB_PATH)
-        return true;  // paths do enfix processing if '/'
-
-    if (HEART_BYTE(feed->value) == REB_WORD) {
-        if (VAL_WORD_SYMBOL(feed->value) == Canon(SLASH_1)) {
-            *flags |=
-                FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-                | EVAL_FLAG_INERT_OPTIMIZATION;
-            return false;  // Let evaluator handle `/`
-        }
-        return true;  // refinement!s are inert, we're done
-    }
-
     return true;
 }
 
