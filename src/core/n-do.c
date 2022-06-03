@@ -776,7 +776,7 @@ REBNATIVE(redo)
 //
 //  {Invoke an ACTION! with all required arguments specified}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //      action [action!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
