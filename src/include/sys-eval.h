@@ -77,13 +77,11 @@
     #define UPDATE_TICK_DEBUG(v) \
         do { \
             if (TG_Tick < INTPTR_MAX)  /* avoid rollover (may be 32-bit!) */ \
-                tick = f->tick = ++TG_Tick; \
-            else \
-                tick = f->tick = INTPTR_MAX;  /* see tick for why signed! */ \
+                ++TG_Tick; \
             if ( \
-                (TG_Break_At_Tick != 0 and tick >= TG_Break_At_Tick) \
+                TG_Break_At_Tick != 0 and TG_Tick >= TG_Break_At_Tick \
             ){ \
-                printf("BREAKING AT TICK %u\n", cast(unsigned int, tick)); \
+                printf("BREAKING AT TICK %u\n", cast(unsigned int, TG_Tick)); \
                 Dump_Frame_Location((v), f); \
                 debug_break();  /* see %debug_break.h */ \
                 TG_Break_At_Tick = 0; \
@@ -221,7 +219,6 @@ inline static bool Eval_Step_Maybe_Stale_Throws(
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
 
     f->out = out;
-    f->dsp_orig = DSP;
     return Eval_Maybe_Stale_Throws(f);  // should already be pushed
 }
 

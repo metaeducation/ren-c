@@ -182,9 +182,13 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(18)
 
 
-//=//// EVAL_FLAG_19 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_ABRUPT_FAILURE ///////////////////////////////////////////=//
 //
-#define EVAL_FLAG_19 \
+// !!! This is a current guess for how to handle the case of re-entering an
+// executor when it fail()s abruptly.  We don't want to steal a STATE_BYTE
+// for this in case the status of that state byte is important for cleanup.
+//
+#define EVAL_FLAG_ABRUPT_FAILURE \
     FLAG_LEFT_BIT(19)
 
 
@@ -425,13 +429,6 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     //
     struct Reb_Frame *prior;
 
-    // The data stack pointer captured on entry to the evaluation.  It is used
-    // by debug checks to make sure the data stack stays balanced after each
-    // sub-operation.  It's also used to measure how many refinements have
-    // been pushed to the data stack by a path evaluation.
-    //
-    uintptr_t dsp_orig; // type is REBDSP, but enforce alignment here
-
     // This is where to write the result of the evaluation.  It should not be
     // in "movable" memory, hence not in a series data array.  Often it is
     // used as an intermediate free location to do calculations en route to
@@ -535,6 +532,30 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     } reval;
   } u;
 
+    // The "baseline" is a digest of the state of global variables at the
+    // beginning of a frame evaluation.  An example of one of the things the
+    // baseline captures is the data stack pointer at the start of an
+    // evaluation step...which allows the evaluator to know how much state
+    // it has accrued cheaply that belongs to it (such as refinements on
+    // the data stack.
+    //
+    // It may need to be updated.  For instance: if a frame gets pushed for
+    // reuse by multiple evaluations (like REDUCE, which pushes a single frame
+    // for its block traversal).  Then steps which accrue state in REDUCE must
+    // bump the baseline to account for any pushes it does--lest the next
+    // eval step in the subframe interpret what was pushed as its own data
+    // (e.g. as a refinement usage).  Anything like a YIELD which detaches a
+    // frame and then may re-enter it at a new global state must refresh
+    // the baseline of any global state that may have changed.
+    //
+    // !!! Accounting for global state baselines is a work-in-progress.  The
+    // mold buffer and manuals tracking are not currently covered.  This
+    // will involve review, and questions about the total performance value
+    // of global buffers (the data stack is almost certainly a win, but it
+    // might be worth testing).
+    //
+    struct Reb_State baseline;
+
     // While a frame is executing, any Alloc_Value() calls are linked into
     // a doubly-linked list.  This keeps them alive, and makes it quick for
     // them to be released.  In the case of an abrupt fail() call, they will
@@ -575,15 +596,6 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     //
     const char *file; // is REBYTE (UTF-8), but char* for debug watch
     int line;
-  #endif
-
-  #if DEBUG_BALANCE_STATE
-    //
-    // Debug reuses PUSH_TRAP's snapshotting to check for leaks at each stack
-    // level.  It can also be made to use a more aggresive leak check at every
-    // evaluator step--see BALANCE_CHECK_EVERY_EVALUATION_STEP.
-    //
-    struct Reb_State state;
   #endif
 
   #if DEBUG_ENSURE_FRAME_EVALUATES

@@ -29,17 +29,14 @@
 //
 //  Snap_State_Core: C
 //
-// Used by SNAP_STATE and PUSH_TRAP.
-//
 // **Note:** Modifying this routine likely means a necessary modification to
-// both `Assert_State_Balanced_Debug()` and `Trapped_Helper_Halted()`.
+// `Assert_State_Balanced_Debug()`.
 //
 void Snap_State_Core(struct Reb_State *s)
 {
     s->dsp = DSP;
 
     s->guarded_len = SER_USED(GC_Guarded);
-    s->frame = FS_TOP;
 
     s->manuals_len = SER_USED(GC_Manuals);
     s->mold_buf_len = STR_LEN(STR(MOLD_BUF));
@@ -47,9 +44,49 @@ void Snap_State_Core(struct Reb_State *s)
     s->mold_loop_tail = SER_USED(TG_Mold_Stack);
 
     s->saved_sigmask = Eval_Sigmask;
+}
 
-    // !!! Is this initialization necessary?
-    s->error = NULL;
+
+//
+//  Rollback_Globals_To_State: C
+//
+// This routine is used by things like Abort_Frame() when a fail occurs, to
+// automatically restore the state of globals to how they were at the time
+// the passed-in state was SNAP_STATE()'d.
+//
+void Rollback_Globals_To_State(struct Reb_State *s)
+{
+    DS_DROP_TO(s->dsp);
+
+    // Free any manual series that were extant (e.g. Make_Series() nodes
+    // which weren't created with NODE_FLAG_MANAGED and were not transitioned
+    // into the managed state).  This will include the series used as backing
+    // store for rebMalloc() calls.
+    //
+    assert(SER_USED(GC_Manuals) >= s->manuals_len);
+    while (SER_USED(GC_Manuals) != s->manuals_len) {
+        Free_Unmanaged_Series(
+            *SER_AT(REBSER*, GC_Manuals, SER_USED(GC_Manuals) - 1)
+        );  // ^-- Free_Unmanaged_Series will decrement SER_USED(GC_Manuals)
+    }
+
+    SET_SERIES_LEN(GC_Guarded, s->guarded_len);
+
+    TERM_STR_LEN_SIZE(STR(MOLD_BUF), s->mold_buf_len, s->mold_buf_size);
+
+  #if !defined(NDEBUG)
+    //
+    // Because reporting errors in the actual Push_Mold process leads to
+    // recursion, this debug flag helps make it clearer what happens if
+    // that does happen...and can land on the right comment.  If there's
+    // a fail of some kind, the flag for the warning needs to be cleared.
+    //
+    TG_Pushing_Mold = false;
+  #endif
+
+    SET_SERIES_LEN(TG_Mold_Stack, s->mold_loop_tail);
+
+    Eval_Sigmask = s->saved_sigmask;
 }
 
 
@@ -74,8 +111,6 @@ void Assert_State_Balanced_Debug(
         panic_at (nullptr, file, line);
     }
 
-    assert(s->frame == FS_TOP);
-
     if (s->guarded_len != SER_USED(GC_Guarded)) {
         printf(
             "PUSH_GC_GUARD()x%d without DROP_GC_GUARD()\n",
@@ -90,7 +125,7 @@ void Assert_State_Balanced_Debug(
     }
 
     // !!! Note that this inherits a test that uses GC_Manuals->content.xxx
-    // instead of SER_LEN().  The idea being that although some series
+    // instead of SER_USED().  The idea being that although some series
     // are able to fit in the series node, the GC_Manuals wouldn't ever
     // pay for that check because it would always be known not to.  Review
     // this in general for things that may not need "series" overhead,
@@ -122,9 +157,7 @@ void Assert_State_Balanced_Debug(
     assert(s->mold_buf_size == STR_SIZE(STR(MOLD_BUF)));
     assert(s->mold_loop_tail == SER_USED(TG_Mold_Stack));
 
-    assert(s->saved_sigmask == Eval_Sigmask);  // !!! is this always true?
-
-    assert(s->error == NULL); // !!! necessary?
+/*    assert(s->saved_sigmask == Eval_Sigmask);  // !!! is this always true? */
 }
 
 #endif
@@ -146,47 +179,17 @@ void Assert_State_Balanced_Debug(
 // without cost.  Rebol's greater concern is not so much the cost of setup for
 // stack unwinding, but being written without requiring a C++ compiler.
 //
-void Trapped_Helper(struct Reb_State *s)
+void Trapped_Helper(struct Reb_Jump *j)
 {
-    ASSERT_CONTEXT(s->error);
-    assert(CTX_TYPE(s->error) == REB_ERROR);
+    ASSERT_CONTEXT(j->error);
+    assert(CTX_TYPE(j->error) == REB_ERROR);
 
-    // Restore Rebol data stack pointer at time of Push_Trap
+    // !!! This isn't necessarily the perfect idea, but have to start
+    // somewhere...
     //
-    DS_DROP_TO(s->dsp);
+    SET_EVAL_FLAG(FS_TOP, ABRUPT_FAILURE);
 
-    // Free any manual series that were extant at the time of the error
-    // (that were created since this PUSH_TRAP started).  This includes
-    // any arglist series in call frames that have been wiped off the stack.
-    // (Closure series will be managed.)
-    //
-    assert(SER_USED(GC_Manuals) >= s->manuals_len);
-    while (SER_USED(GC_Manuals) != s->manuals_len) {
-        // Freeing the series will update the tail...
-        Free_Unmanaged_Series(
-            *SER_AT(REBSER*, GC_Manuals, SER_USED(GC_Manuals) - 1)
-        );
-    }
-
-    SET_SERIES_LEN(GC_Guarded, s->guarded_len);
-    TG_Top_Frame = s->frame;
-    TERM_STR_LEN_SIZE(STR(MOLD_BUF), s->mold_buf_len, s->mold_buf_size);
-
-  #if !defined(NDEBUG)
-    //
-    // Because reporting errors in the actual Push_Mold process leads to
-    // recursion, this debug flag helps make it clearer what happens if
-    // that does happen... and can land on the right comment.  But if there's
-    // a fail of some kind, the flag for the warning needs to be cleared.
-    //
-    TG_Pushing_Mold = false;
-  #endif
-
-    SET_SERIES_LEN(TG_Mold_Stack, s->mold_loop_tail);
-
-    Eval_Sigmask = s->saved_sigmask;
-
-    TG_Jump_List = s->last_jump;
+    TG_Jump_List = j->last_jump;
 }
 
 

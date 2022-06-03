@@ -135,7 +135,7 @@ REBNATIVE(reduce)
     return Init_Any_Array(
         OUT,
         VAL_TYPE(v),
-        Pop_Stack_Values_Core(dsp_orig, pop_flags)
+        Pop_Stack_Values_Core(FRAME->baseline.dsp, pop_flags)
     );
 }
 

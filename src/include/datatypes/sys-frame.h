@@ -386,11 +386,6 @@ inline static void Push_Frame(
         assert(f->out == f->prior->out);
     }
 
-  #if DEBUG_BALANCE_STATE
-    SNAP_STATE(&f->state); // to make sure stack balances, etc.
-    f->state.dsp = f->dsp_orig;
-  #endif
-
     assert(f->varlist == nullptr);  // Prep_Frame_Core() set to nullptr
 
     assert(IS_POINTER_TRASH_DEBUG(f->alloc_value_list));
@@ -427,6 +422,8 @@ inline static void Abort_Frame(REBFRM *f) {
         goto pop;
 
   pop:
+    Rollback_Globals_To_State(&f->baseline);
+
     assert(TG_Top_Frame == f);
     TG_Top_Frame = f->prior;
 
@@ -466,19 +463,20 @@ inline static void Drop_Frame_Unbalanced(REBFRM *f) {
 
 inline static void Drop_Frame(REBFRM *f)
 {
-  #if DEBUG_BALANCE_STATE
+  #if defined(DEBUG_BALANCE_STATE)
     //
     // To avoid slowing down the debug build a lot, Eval_Core() doesn't
     // check this every cycle, just on drop.  But if it's hard to find which
     // exact cycle caused the problem, see BALANCE_CHECK_EVERY_EVALUATION_STEP
     //
-    f->state.dsp = DSP; // e.g. Reduce_To_Stack_Throws() doesn't want check
-    ASSERT_STATE_BALANCED(&f->state);
+    ASSERT_STATE_BALANCED(&f->baseline);
+  #else
+    assert(DSP == f->baseline.dsp);  // Cheaper check
   #endif
 
-    assert(DSP == f->dsp_orig); // Drop_Frame_Core() does not check
     Drop_Frame_Unbalanced(f);
 }
+
 
 inline static void Prep_Frame_Core(
     REBFRM *f,
@@ -496,7 +494,6 @@ inline static void Prep_Frame_Core(
 
     f->feed = feed;
     Prep_Cell(&f->spare);
-    f->dsp_orig = DS_Index;
     TRASH_POINTER_IF_DEBUG(f->out);
 
   #if DEBUG_ENSURE_FRAME_EVALUATES
@@ -506,6 +503,18 @@ inline static void Prep_Frame_Core(
     f->varlist = nullptr;
 
     TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
+
+    // !!! Previously only the DSP was captured in f->baseline.dsp, but then
+    // redundantly captured via a SNAP_STATE() in Push_Frame().  The
+    // responsibilities of DECLARE_FRAME vs Push_Frame() aren't clearly laid
+    // out, but some clients do depend on the DSP being captured before
+    // Push_Frame() is called, so this snaps the whole baseline here.
+    //
+    SNAP_STATE(&f->baseline);  // see notes on `baseline` in Reb_Frame
+
+  #if defined(DEBUG_COUNT_TICKS)
+    f->tick = TG_Tick;
+  #endif
 }
 
 #define DECLARE_FRAME(name,feed,flags) \

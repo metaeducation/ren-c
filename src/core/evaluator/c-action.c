@@ -141,7 +141,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
 
   fulfill:
 
-    assert(DSP >= f->dsp_orig);  // path processing may push REFINEMENT!s
+    assert(DSP >= f->baseline.dsp);  // path processing may push REFINEMENT!s
 
     assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));
 
@@ -154,7 +154,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
       continue_fulfilling:
 
         if (GET_EVAL_FLAG(f, DOING_PICKUPS)) {
-            if (DSP != f->dsp_orig)
+            if (DSP != f->baseline.dsp)
                 goto next_pickup;
 
             f->key = nullptr;  // don't need f->key
@@ -216,9 +216,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         // two-pass mechanism to implement the reordering of non-optional
         // parameters at the callsite.
 
-        if (DSP != f->dsp_orig) {  // reorderings or refinements pushed
+        if (DSP != f->baseline.dsp) {  // reorderings or refinements pushed
             STKVAL(*) ordered = DS_TOP;
-            STKVAL(*) lowest_ordered = DS_AT(f->dsp_orig);
+            STKVAL(*) lowest_ordered = DS_AT(f->baseline.dsp);
             const REBSTR *param_symbol = KEY_SYMBOL(KEY);
 
             for (; ordered != lowest_ordered; --ordered) {
@@ -716,7 +716,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     // second time through, and we were just jumping up to check the
     // parameters in response to a R_REDO_CHECKED; if so, skip this.
     //
-    if (DSP != f->dsp_orig and IS_WORD(DS_TOP)) {
+    if (DSP != f->baseline.dsp and IS_WORD(DS_TOP)) {
 
       next_pickup:
 
@@ -740,7 +740,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         DS_DROP();
 
         if (Is_Typeset_Empty(PARAM)) {  // no callsite arg, just drop
-            if (DSP != f->dsp_orig)
+            if (DSP != f->baseline.dsp)
                 goto next_pickup;
 
             f->key = nullptr;  // don't need f->key
@@ -1151,7 +1151,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
   abort_action:
 
     Drop_Action(f);
-    DS_DROP_TO(f->dsp_orig);  // drop unprocessed refinements/chains on stack
+    DS_DROP_TO(f->baseline.dsp);  // drop unprocessed stack refinements/chains
 
     return true;  // true => thrown
 }

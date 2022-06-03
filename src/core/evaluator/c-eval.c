@@ -245,7 +245,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
 //
 bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 {
-    assert(DSP >= f->dsp_orig);  // REDUCE accrues, APPLY adds refinements
+    assert(DSP >= f->baseline.dsp);  // REDUCE accrues, APPLY adds refinements
     assert(INITABLE(OUT));  // all invisible will preserve output
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
@@ -260,10 +260,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
   #if DEBUG_ENSURE_FRAME_EVALUATES
     f->was_eval_called = true;  // see definition for why this flag exists
-  #endif
-
-  #if DEBUG_COUNT_TICKS
-    REBTCK tick = f->tick = TG_Tick;  // snapshot tick for C watchlist viewing
   #endif
 
   #if !defined(NDEBUG)
@@ -634,8 +630,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // not all parameters will consume arguments for all calls.
 
       process_action: {
-        FS_TOP->dsp_orig = f->dsp_orig;  // !!! How did this work in stackless
-
+        //
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
@@ -1061,17 +1056,28 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             }
         }
 
+        // The frame captures the stack pointer, and since refinements are
+        // pushed we want to capture it before that point (so it knows the
+        // refinements are for it).
+        //
+        DECLARE_ACTION_SUBFRAME (subframe, f);
+        Push_Frame(OUT, subframe);
+
         if (Get_Path_Push_Refinements_Throws(SPARE, OUT, v, v_specifier)) {
             Move_Cell(OUT, SPARE);
             goto return_thrown;
         }
 
         if (not IS_ACTION(SPARE)) {
+            //
+            // !!! This is legacy support, which will be done another way in
+            // the future.  You aren't supposed to use PATH! to get field
+            // access...just action execution.
+            //
+            Drop_Frame(subframe);
             Move_Cell(OUT, SPARE);
             break;
         }
-
-        REBACT *act = VAL_ACTION(SPARE);
 
         // PATH! dispatch is costly and can error in more ways than WORD!:
         //
@@ -1080,13 +1086,10 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         // Plus with GROUP!s in a path, their evaluations can't be undone.
         //
-        if (GET_ACTION_FLAG(act, ENFIXED))
+        if (GET_ACTION_FLAG(VAL_ACTION(SPARE), ENFIXED))
             fail ("Use `>-` to shove left enfix operands into PATH!s");
 
-        DECLARE_ACTION_SUBFRAME (subframe, f);
-        Push_Frame(OUT, subframe);
         Push_Action(subframe, VAL_ACTION(SPARE), VAL_ACTION_BINDING(SPARE));
-
         Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(SPARE));
         goto process_action; }
 
@@ -1396,7 +1399,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 SET_END(SPARE);
                 if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
                     Move_Cell(OUT, SPARE);
-                    DS_DROP_TO(f->dsp_orig);
+                    DS_DROP_TO(f->baseline.dsp);
                     goto return_thrown;
                 }
                 item = SPARE;
@@ -1416,7 +1419,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 // a variable location to write the result to.  For now, just
                 // fabricate a LET variable.
                 //
-                if (DSP == f->dsp_orig or not IS_THE_GROUP(check))
+                if (DSP == f->baseline.dsp or not IS_THE_GROUP(check))
                     Init_Blackhole(DS_PUSH());
                 else {
                     REBVAL *let = rebValue("let temp");
@@ -1446,7 +1449,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // to set it to nonzero in the case of `[@ ...]: ...` to give an error
         // if more than one return were circled.)
         //
-        if (dsp_circled == f->dsp_orig + 1)
+        if (dsp_circled == f->baseline.dsp + 1)
             dsp_circled = 0;
      }
 
@@ -1465,7 +1468,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             error_on_deferred
         )){
             Move_Cell(OUT, SPARE);
-            DS_DROP_TO(f->dsp_orig);
+            DS_DROP_TO(f->baseline.dsp);
             goto return_thrown;
         }
         if (not IS_FRAME(SPARE))  // can return QUOTED! if not action atm
@@ -1475,7 +1478,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // words/paths/_/# from the data stack.  Note the first slot is set
         // from the "primary" output so it doesn't go in a slot.
         //
-        REBDSP dsp_output = f->dsp_orig + 2;
+        REBDSP dsp_output = f->baseline.dsp + 2;
 
       blockscope {
         REBCTX *c = VAL_CONTEXT(SPARE);
@@ -1502,7 +1505,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //
         SET_END(OUT);  // clear prior output to detect ~end~/~void~
         if (Do_Frame_Maybe_Stale_Throws(OUT, SPARE)) {
-            DS_DROP_TO(f->dsp_orig);
+            DS_DROP_TO(f->baseline.dsp);
             goto return_thrown;
         }
 
@@ -1543,7 +1546,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         Drop_Frame(subframe);
 
         if (threw) {
-            DS_DROP_TO(f->dsp_orig);
+            DS_DROP_TO(f->baseline.dsp);
             goto return_thrown;
         }
       }
@@ -1563,11 +1566,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // in case there are GROUP! evaluations in the assignment; though that
         // needs more thinking (e.g. what if they throw?)
         //
-        Copy_Cell(SPARE, DS_AT(f->dsp_orig + 1));
+        Copy_Cell(SPARE, DS_AT(f->baseline.dsp + 1));
         if (IS_BLANK(SPARE))
             Init_Isotope(OUT, Canon(BLANK));
         else {
-            if (GET_CELL_FLAG(DS_AT(f->dsp_orig + 1), STACK_NOTE_METARETURN)) {
+            if (GET_CELL_FLAG(
+                DS_AT(f->baseline.dsp + 1),
+                STACK_NOTE_METARETURN)
+            ){
                 Reify_Eval_Out_Meta(OUT);
 
                 Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
@@ -1593,7 +1599,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // was "circled" then it becomes the overall return.
         //
         REBDSP dsp = DSP;
-        for (; dsp != f->dsp_orig + 1; --dsp) {
+        for (; dsp != f->baseline.dsp + 1; --dsp) {
             if (
                 GET_CELL_FLAG(DS_AT(dsp), STACK_NOTE_METARETURN)
                 or dsp_circled == dsp
@@ -1619,7 +1625,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             }
         }
 
-        DS_DROP_TO(f->dsp_orig);
+        DS_DROP_TO(f->baseline.dsp);
 
         // We've just changed the values of variables, and these variables
         // might be coming up next.  Consider:

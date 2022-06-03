@@ -133,7 +133,6 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
     }
 
     assert(f == FS_TOP);
-    assert(DSP == f->dsp_orig);
 
     // If this fires, it means that Flip_Series_To_White was not called an
     // equal number of times after Flip_Series_To_Black, which means that
@@ -190,11 +189,6 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
 //     well as the specifier.  The current value, its cached "gotten" value if
 //     it is a WORD!, and other information is stored here through a level of
 //     indirection so it may be shared and updated between recursions.
-//
-//     f->dsp_orig
-//     Must be set to the base stack location of the operation (this may be
-//     a deeper stack level than current DSP if this is an apply, and
-//     refinements were preloaded onto the stack)
 //
 // This routine attempts to "trash" a lot of frame state variables to help
 // make sure one evaluation does not leak data into the next.

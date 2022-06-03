@@ -1672,7 +1672,7 @@ REBVAL *RL_rebRescueWith(
 ){
     ENTER_API;
 
-    struct Reb_State jump;
+    struct Reb_Jump jump;
     PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE(&jump);
 
     // We want API allocations via rebValue() or rebMalloc() that occur in the

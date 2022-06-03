@@ -1287,10 +1287,6 @@ REBNATIVE(subparse)
     (void)pos_debug;  // UNUSED() forces corruption in C++11 debug builds
   #endif
 
-  #if DEBUG_COUNT_TICKS
-    REBTCK tick = TG_Tick;  // helpful to cache for visibility also
-  #endif
-
     REBIDX begin = P_POS;  // point at beginning of match
 
     // The loop iterates across each REBVAL's worth of "rule" in the rule

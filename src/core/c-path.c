@@ -240,7 +240,7 @@ REB_R MAKE_Path(
 
     REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(out, kind, dsp_orig);
 
-    Drop_Frame_Unbalanced(f); // !!! f->dsp_orig got captured each loop
+    Drop_Frame_Unbalanced(f); // !!! f->baseline.dsp got captured each loop
 
     if (not p)
         fail (Error_Bad_Sequence_Init(out));

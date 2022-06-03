@@ -73,6 +73,31 @@
 //
 
 
+// R3-Alpha set up a separate `jmp_buf` at each point in the stack that wanted
+// to be able to do a TRAP.  With stackless Ren-C, only one jmp_buf is needed
+// per instance of the Trampoline on the stack.  (The codebase ideally does
+// not invoke more than one trampoline to implement its native code, but if
+// it is to call out to C code that wishes to use synchronous forms of API
+// calls then nested trampolines may occur.)
+//
+struct Reb_Jump {
+    //
+    // We put the jmp_buf first, since it has alignment specifiers on Windows
+    //
+  #ifdef HAS_POSIX_SIGNAL
+    sigjmp_buf cpu_state;
+  #else
+    jmp_buf cpu_state;
+  #endif
+
+    struct Reb_Jump *last_jump;
+
+    REBFRM *frame;  // !!! Won't be relevant in stackless build
+
+    REBCTX *error;  // longjmp only takes `int`, pointer passed back via this
+};
+
+
 // "Under FreeBSD 5.2.1 and Mac OS X 10.3, setjmp and longjmp save and restore
 // the signal mask. Linux 2.4.22 and Solaris 9, however, do not do this.
 // FreeBSD and Mac OS X provide the functions _setjmp and _longjmp, which do
@@ -132,15 +157,6 @@
 #endif
 
 
-// SNAP_STATE will record the interpreter state but not include it into
-// the chain of trapping points.  This is used by PUSH_TRAP but also by
-// debug code that just wants to record the state to make sure it balances
-// back to where it was.
-//
-#define SNAP_STATE(s) \
-    Snap_State_Core(s)
-
-
 // PUSH_TRAP is a construct which is used to catch errors that have been
 // triggered by the Fail_Core() function.  This can be triggered by a usage
 // of the `fail` pseudo-"keyword" in C code, and in Rebol user code by the
@@ -175,10 +191,8 @@
 //
 #define PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE(j) \
     do { \
-        /* assert(TG_Jump_List or DSP == 0); */ \
-        Snap_State_Core(j); \
-        (j)->frame = FS_TOP; \
         (j)->last_jump = TG_Jump_List; \
+        (j)->frame = FS_TOP; \
         TG_Jump_List = (j); \
         if (0 == SET_JUMP((j)->cpu_state))  /* initial setjmp branch */ \
             (j)->error = nullptr;  /* this branch will always be run */ \
@@ -200,22 +214,10 @@
 //
 //      http://en.cppreference.com/w/c/program/longjmp
 //
-inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_State *j) {
+inline static void DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(struct Reb_Jump *j) {
     assert(j->error == nullptr);
     TG_Jump_List = j->last_jump;
 }
-
-
-// ASSERT_STATE_BALANCED is used to check that the situation modeled in a
-// SNAP_STATE has balanced out, without a trap (e.g. it is checked each time
-// the evaluator completes a cycle in the debug build)
-//
-#ifdef NDEBUG
-    #define ASSERT_STATE_BALANCED(s) NOOP
-#else
-    #define ASSERT_STATE_BALANCED(s) \
-        Assert_State_Balanced_Debug((s), __FILE__, __LINE__)
-#endif
 
 
 //
