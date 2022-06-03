@@ -485,7 +485,7 @@ REB_R Process_Group_For_Parse(
     if (P_POS > cast(REBIDX, P_INPUT_LEN))
         P_POS = P_INPUT_LEN;
 
-    if (not inject or IS_NULLED(cell))  // even GET-GROUP! discards nulls
+    if (not inject or IS_VOID(cell))  // even GET-GROUP! discards voids
         return R_INVISIBLE;
 
     return cell;

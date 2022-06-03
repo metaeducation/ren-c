@@ -586,8 +586,10 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
 #define return_branched(v) \
     do { \
         assert((v) == OUT); \
-        assert(not IS_VOID(OUT)); \
-        assert(not IS_NULLED(OUT)); \
+        if (IS_VOID(OUT)) \
+            Init_None(OUT); \
+        else if (IS_NULLED(OUT)) \
+            Init_Null_Isotope(OUT); \
         return OUT; \
     } while (false)
 
@@ -627,6 +629,14 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
         assert((v) == OUT); \
         Mark_Eval_Out_Voided(OUT); \
         return R_INVISIBLE; \
+    } while (false)
+
+#define return_non_void(v) \
+    do { \
+        assert((v) == OUT); \
+        if (IS_VOID(OUT)) \
+            return Init_None(OUT); \
+        return OUT; \
     } while (false)
 
 

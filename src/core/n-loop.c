@@ -33,14 +33,14 @@ typedef enum {
 
 
 //
-//  Catching_Break_Or_Continue_Maybe_Void: C
+//  Catching_Break_Or_Continue: C
 //
 // Determines if a thrown value is either a break or continue.  If so, `val`
 // is mutated to become the throw's argument.  Sets `broke` flag if BREAK.
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Catching_Break_Or_Continue_Maybe_Void(REBVAL *val, bool *broke)
+bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
 {
     const REBVAL *label = VAL_THROWN_LABEL(val);
 
@@ -73,13 +73,10 @@ bool Catching_Break_Or_Continue_Maybe_Void(REBVAL *val, bool *broke)
             // REMOVE-EACH might not.
             //
             RESET(val);
-            Mark_Eval_Out_Stale(val);
-            Mark_Eval_Out_Voided(val);
         }
-        else {
+        else
             Meta_Unquotify(val);
-            Isotopify_If_Nulled(val);  // reserve true NULL for BREAK
-        }
+
         return true;
     }
 
@@ -165,11 +162,10 @@ static REB_R Loop_Series_Common(
     if (s == end) {
         if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;  // BREAK -> NULL
-            Reify_Stale_Plain_Branch(OUT);
         }
         return OUT;  // guaranteed not stale
     }
@@ -189,11 +185,10 @@ static REB_R Loop_Series_Common(
     ){
         if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(OUT);
         }
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
@@ -243,11 +238,10 @@ static REB_R Loop_Integer_Common(
     if (start == end) {
         if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(OUT);
         }
         return_branched (OUT);  // BREAK -> NULL
     }
@@ -263,11 +257,10 @@ static REB_R Loop_Integer_Common(
     while (counting_up ? *state <= end : *state >= end) {
         if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(OUT);
         }
 
         if (not IS_INTEGER(var))
@@ -328,11 +321,10 @@ static REB_R Loop_Number_Common(
     if (s == e) {
         if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(OUT);
         }
         return_branched (OUT);  // BREAK -> NULL
     }
@@ -346,11 +338,10 @@ static REB_R Loop_Number_Common(
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(OUT, body)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(OUT);
         }
 
         if (not IS_DECIMAL(var))
@@ -601,7 +592,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         DECLARE_LOCAL (temp);
         if (Do_Any_Array_At_Maybe_Stale_Throws(temp, les->body, SPECIFIED)) {
-            if (not Catching_Break_Or_Continue_Maybe_Void(temp, &broke)) {
+            if (not Catching_Break_Or_Continue(temp, &broke)) {
                 Move_Cell(les->out, temp);
                 return R_THROWN;  // non-loop-related throw
             }
@@ -1079,11 +1070,10 @@ REBNATIVE(for_skip)
 
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
             if (broke)
                 return nullptr;
-            Reify_Stale_Plain_Branch(OUT);
         }
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
@@ -1110,7 +1100,7 @@ REBNATIVE(for_skip)
     if (Is_Stale(OUT))
         return_void (OUT);
 
-    return OUT;
+    return_branched (OUT);
 }
 
 
@@ -1168,7 +1158,7 @@ REBNATIVE(cycle)
     while (true) {
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke)) {
+            if (not Catching_Break_Or_Continue(OUT, &broke)) {
                 const REBVAL *label = VAL_THROWN_LABEL(OUT);
                 if (
                     IS_ACTION(label)
@@ -1197,8 +1187,6 @@ REBNATIVE(cycle)
             }
             if (broke)
                 return nullptr;
-
-            Reify_Stale_Plain_Branch(OUT);
         }
         // No need to isotopify result, it doesn't escape...
     }
@@ -1467,7 +1455,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             res->body,
             SPECIFIED
         )){
-            if (not Catching_Break_Or_Continue_Maybe_Void(
+            if (not Catching_Break_Or_Continue(
                 res->out,
                 &res->broke
             )){
@@ -1816,12 +1804,10 @@ REBNATIVE(repeat)
     for (; count > 0; count--) {
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
             if (broke)
                 return nullptr;
-
-            Reify_Stale_Plain_Branch(OUT);
         }
     }
 
@@ -1952,9 +1938,9 @@ REBNATIVE(until)
     do {
         SET_END(OUT);
 
-        if (Do_Any_Array_At_Maybe_Stale_Throws(RESET(OUT), body, SPECIFIED)) {
+        if (Do_Any_Array_At_Throws(RESET(OUT), body, SPECIFIED)) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
             if (broke)
                 return nullptr;
@@ -1962,7 +1948,7 @@ REBNATIVE(until)
             // continue acts like body evaluated to its argument, see [1]
         }
 
-        if (Is_Stale(OUT))
+        if (IS_VOID(OUT))
             continue;  // skip void results, see [2]
 
         if (IS_NULLED(predicate)) {
@@ -2045,13 +2031,11 @@ REBNATIVE(while)
 
         if (Do_Branch_With_Throws(OUT, body, SPARE)) {  // body result => OUT
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
 
             if (broke)
                 return nullptr;
-
-            Reify_Stale_Plain_Branch(OUT);  // no null/void continues, see [4]
         }
     }
 

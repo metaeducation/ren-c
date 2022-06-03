@@ -263,7 +263,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);
 
-        if (Is_Stale(f->out)) {
+        if (Is_Stale(f->out) or IS_VOID(f->out)) {
             //
             // If a function is void, it left whatever was in the output
             // from before it ran.  So there's no correspondence to the return

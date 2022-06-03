@@ -388,7 +388,7 @@ REBNATIVE(do)
             }
 
             SET_END(position); // convention for shared data at end point
-            return OUT;
+            return_non_void (OUT);
         }
 
         REBFRM *f;
@@ -441,7 +441,7 @@ REBNATIVE(do)
         )){
             return_thrown (OUT);
         }
-        return OUT;
+        return_non_void (OUT);
       }
 
       case REB_ERROR :
@@ -482,7 +482,7 @@ REBNATIVE(do)
         fail (Error_Do_Arity_Non_Zero_Raw());  // https://trello.com/c/YMAb89dv
     }
 
-    return OUT;
+    return_non_void (OUT);
 }
 
 

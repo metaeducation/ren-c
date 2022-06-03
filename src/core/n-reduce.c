@@ -146,7 +146,7 @@ REBNATIVE(reduce)
 //  {Evaluates expressions, keeping each result (DO only gives last result)}
 //
 //      return: "Last body result"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      :vars "Variable to receive each reduced value (multiple TBD)"
 //          [word!]
 //      block "Input block of expressions (@[block] acts like FOR-EACH)"
@@ -175,12 +175,13 @@ REBNATIVE(reduce_each)
     Push_Frame(nullptr, f);
 
     while (NOT_END(f_value)) {
-        if (Eval_Step_Maybe_Stale_Throws(SET_END(SPARE), f)) {
+        if (Eval_Step_Maybe_Stale_Throws(RESET(SPARE), f)) {
             Abort_Frame(f);
             return_thrown (SPARE);
         }
+        Clear_Stale_Flag(SPARE);
 
-        if (Is_Stale(SPARE))
+        if (IS_VOID(SPARE))
             continue;
 
         // !!! This needs to handle the case where the vars are ^META, as well
@@ -191,22 +192,23 @@ REBNATIVE(reduce_each)
 
         if (Do_Branch_Throws(OUT, ARG(body))) {
             bool broke;
-            if (not Catching_Break_Or_Continue_Maybe_Void(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
             if (broke)
                 return nullptr;
 
             // The way a CONTINUE with a value works is to act as if the loop
-            // body evaluated to the value.  (CONTINUE) acts as (CONTINUE NULL)
+            // body evaluated to the value.  (CONTINUE) acts as (CONTINUE VOID)
             // We don't have any special handling, just process stale normally.
-            //
-            Reify_Stale_Plain_Branch(OUT);
         }
     } while (NOT_END(f_value));
 
     Drop_Frame(f);
 
-    return OUT;
+    if (Is_Stale(OUT))
+        return_void (OUT);
+
+    return_non_void (OUT);
 }
 
 

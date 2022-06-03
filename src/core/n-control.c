@@ -927,9 +927,6 @@ REBNATIVE(switch)
                 SET_END(OUT);
                 if (Do_Any_Array_At_Throws(OUT, f_value, f_specifier))
                     goto threw;
-                if (IS_BLOCK(f_value)) {
-                    Isotopify_If_Nulled(OUT);
-                }
                 break;
             }
 

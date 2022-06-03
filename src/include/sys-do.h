@@ -110,9 +110,7 @@ inline static bool Do_Any_Array_At_Throws(
     assert(Is_Fresh(out));  // better if caller's RESET() does the TRACK() cell
 
     bool threw = Do_Any_Array_At_Maybe_Stale_Throws(out, any_array, specifier);
-
     Clear_Stale_Flag(out);
-    Reify_Eval_Out_Plain(out);
     return threw;
 }
 
@@ -177,18 +175,16 @@ inline static bool Do_Branch_Core_Throws(
 
     switch (kind) {
       case REB_BLANK:
-        Init_Null_Isotope(out);  // !!! Is this a good idea?
+        Init_Nulled(out);
         break;
 
       case REB_QUOTED:
         Unquotify(Copy_Cell(out, branch), 1);
-        Isotopify_If_Nulled(out);
         break;
 
       case REB_BLOCK:
         if (Do_Any_Array_At_Throws(SET_END(out), branch, SPECIFIED))
             return true;
-        Isotopify_If_Nulled(out);
         break;
 
       case REB_GET_BLOCK: {
@@ -243,7 +239,6 @@ inline static bool Do_Branch_Core_Throws(
         DROP_GC_GUARD(branch);
         if (threw)
             return true;
-        Isotopify_If_Nulled(out);
         break; }
 
       case REB_GROUP:
@@ -268,15 +263,13 @@ inline static bool Do_Branch_Core_Throws(
         fail (Error_Bad_Branch_Type_Raw());
     }
 
-    // Branches that run can't return pure NULL, nor can they return "light"
-    // ~void~ isotopes.  Those would trigger ELSE which is mutually exclusive
-    // with having RUN? a branch.
-    //
-    // We don't have to worry about "~void~ isotopes" here, because they are
-    // never reified and only a signal from Do_Any_Array_Maybe_Stale() and the
-    // other core functions.  Any void state has been turned to none by now.
-    //
-    assert(not IS_NULLED(out));
+    // Note: At one time, this code ensured the result could not be null and
+    // could not be void.  It makes a more homogenous model to put that
+    // decision in the hands of the caller, where this "Do Branch" is actually
+    // a more generic handler which may or may not want branch conventions.
+    // So it is `return_branched` which does the null => null isotope and the
+    // void => none conversion.  So perhaps it's more like "Do Clause" which
+    // could be used on loop conditions as well as bodies.
 
     return false;
 }

@@ -139,6 +139,9 @@ REB_R Block_Dispatcher(REBFRM *f)
     if (Do_Any_Array_At_Throws(SET_END(OUT), block, SPC(f->varlist)))
         return_thrown (OUT);
 
+    if (IS_VOID(OUT))
+        return_void (OUT);
+
     return OUT;
 }
 
@@ -148,7 +151,7 @@ REB_R Block_Dispatcher(REBFRM *f)
 //
 //  {Generate a surprise ANY-VALUE!}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //  ]
 //
 REBNATIVE(surprise)
