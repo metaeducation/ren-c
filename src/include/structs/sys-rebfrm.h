@@ -105,15 +105,9 @@ STATIC_ASSERT(EVAL_FLAG_CACHE_NO_LOOKAHEAD == FEED_FLAG_NO_LOOKAHEAD);
     FLAG_LEFT_BIT(5)
 
 
-//=//// EVAL_FLAG_FULLY_SPECIALIZED ///////////////////////////////////////=//
+//=//// EVAL_FLAG_6 ///////////////////////////////////////////////////////=//
 //
-// When a null is seen in f->param, the question is whether that is an
-// intentional "null specialization" or if it means the argument should be
-// gathered normally (if applicable), as it would in a typical invocation.
-// If the frame is considered fully specialized (as with DO F) then there
-// will be no further argument gathered at the callsite, nulls are as-is.
-//
-#define EVAL_FLAG_FULLY_SPECIALIZED \
+#define EVAL_FLAG_6 \
     FLAG_LEFT_BIT(6)
 
 

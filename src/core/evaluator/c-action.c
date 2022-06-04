@@ -698,8 +698,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
         /* assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD)); */
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
 
-        assert(NOT_EVAL_FLAG(f, FULLY_SPECIALIZED));
-
         goto continue_fulfilling;
     }
 
@@ -839,12 +837,8 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             GET_PARAM_FLAG(PARAM, REFINEMENT)
             or GET_PARAM_FLAG(PARAM, SKIPPABLE)
         ){
-            if (
-                GET_EVAL_FLAG(f, FULLY_SPECIALIZED)
-                and Is_None(ARG)
-            ){
+            if (Is_None(ARG))
                 Init_Nulled(ARG);
-            }
             else
                 Typecheck_Refinement(KEY, PARAM, ARG);
             continue;

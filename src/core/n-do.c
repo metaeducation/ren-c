@@ -256,7 +256,6 @@ bool Do_Frame_Ctx_Throws(
     option(const REBSYM*) label
 ){
     REBFLGS flags = EVAL_MASK_DEFAULT
-        | EVAL_FLAG_FULLY_SPECIALIZED
         | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING);
 
     DECLARE_END_FRAME (f, flags);
@@ -780,7 +779,6 @@ REBNATIVE(redo)
 //      action [action!]
 //      def "Frame definition block (will be bound and evaluated)"
 //          [block!]
-//      /partial "Treat nulls as unspecialized <<experimental!>>"
 //  ]
 //
 REBNATIVE(applique)
@@ -863,16 +861,7 @@ REBNATIVE(applique)
         return Copy_Cell(f->out, temp);
     }
 
-    if (not REF(partial)) {
-        //
-        // If nulls are taken literally as null arguments, then no arguments
-        // are gathered at the callsite, so the "ordering information"
-        // on the stack isn't needed.  Eval_Core() will just treat a
-        // slot with an INTEGER! for a refinement as if it were "true".
-        //
-        f->flags.bits |= EVAL_FLAG_FULLY_SPECIALIZED;
-        DS_DROP_TO(lowest_ordered_dsp); // zero refinements on stack, now
-    }
+    DS_DROP_TO(lowest_ordered_dsp); // zero refinements on stack, now
 
     f->varlist = varlist;
     f->rootvar = CTX_ROOTVAR(exemplar);
@@ -1116,7 +1105,6 @@ REBNATIVE(apply)
     DECLARE_END_FRAME (
         f,
         EVAL_MASK_DEFAULT
-            | EVAL_FLAG_FULLY_SPECIALIZED
             | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)  // skips fulfillment
     );
 
