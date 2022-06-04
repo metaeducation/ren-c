@@ -117,17 +117,19 @@ REBNATIVE(delimit)
             continue;
         }
 
-        if (Eval_Step_Maybe_Stale_Throws(SET_END(OUT), f)) {
+        if (Eval_Step_Maybe_Stale_Throws(RESET(OUT), f)) {
             Drop_Mold(mo);
             Abort_Frame(f);
             return_thrown (OUT);
         }
 
+        Clear_Stale_Flag(OUT);
+
         // These are all the things that we're willing to vaporize.  Since
         // operations like delimit are not positional, the risk is mitigated
         // of letting things like nulls and voids vaporize.
 
-        if (Is_Stale(OUT))
+        if (Is_Void(OUT))
             continue;  // spaced [comment "a" ...]
                        // spaced [if false [<a>] ...]
 

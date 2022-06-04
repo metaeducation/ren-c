@@ -493,7 +493,7 @@ inline static void Prep_Frame_Core(
     f->flags.bits = flags;
 
     f->feed = feed;
-    Prep_Cell(&f->spare);
+    Prep_Void(&f->spare);
     TRASH_POINTER_IF_DEBUG(f->out);
 
   #if DEBUG_ENSURE_FRAME_EVALUATES

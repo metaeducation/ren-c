@@ -523,7 +523,7 @@ e-cwrap/emit {
          * it must be initialized before any variadic libRebol API will work
          */
         reb.END = _malloc(2)
-        setValue(reb.END, -127, 'i8')  /* 0x80 */
+        setValue(reb.END, -64, 'i8')  /* 0xC0, see also `#define rebEND` */
         setValue(reb.END + 1, 0, 'i8')  /* 0x00 */
     }
 

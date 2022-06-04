@@ -41,7 +41,7 @@ static const REBVAL *Trap_Dangerous(REBFRM *frame_) {
     if (Do_Branch_Throws(OUT, ARG(code)))
         return Lib(BLANK);  // signal thrown without corrupting OUT
 
-    if (IS_VOID(OUT))
+    if (Is_Void(OUT))
         Init_None(OUT);
 
     return nullptr;

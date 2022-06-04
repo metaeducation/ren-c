@@ -93,7 +93,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
     // still can speed things up to go in order.
     //
     switch (heart) {
-      case REB_0_END:
+      case REB_0_VOID:
       case REB_NULL:
       case REB_BAD_WORD:
       case REB_BLANK:

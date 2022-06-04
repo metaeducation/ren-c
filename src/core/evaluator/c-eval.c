@@ -228,7 +228,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     }
 
     CLEAR_CELL_FLAG(OUT, UNEVALUATED);  // this helper counts as eval
-    Clear_Stale_Flag(OUT);  // started with RESET(), voidness is IS_VOID
+    Clear_Stale_Flag(OUT);  // started with RESET(), voidness is Is_Void
     return false;
 }
 
@@ -387,7 +387,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     // See DEBUG_ENSURE_FRAME_EVALUATES for why an empty array does not
     // bypass calling into the evaluator.
     //
-    if (KIND3Q_BYTE(f_next) == REB_0_END)
+    if (IS_END(f_next))
         goto finished;
 
     gotten = f_next_gotten;
@@ -549,6 +549,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     switch (KIND3Q_BYTE(v)) {  // checked version (once, else kind_current)
 
       case REB_0_END:
+        assert(IS_END(v));  // should be END, not void
         goto finished;
 
 
@@ -710,7 +711,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                     if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
                         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
                         SET_FEED_FLAG(f->feed, DEFERRING_ENFIX);
-                        SET_END(OUT);
+                        RESET(OUT);
                         goto finished;
                     }
                 }
@@ -748,7 +749,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
             goto return_thrown;
 
-        if (IS_VOID(OUT)) {
+        if (Is_Void(OUT)) {
             //
             // Unset the variable.  We also propagate a none signal, instead of
             // a void.  This maintains `y: x: (...)` where y = x afterward.
@@ -900,7 +901,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         if (STATE_BYTE == ST_EVALUATOR_META_GROUP) {
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
-            SET_END(OUT);  // guaranteed to make a value, not transparent
+            RESET(OUT);  // guaranteed to make a value, not transparent
         }
         else {
             // We want to allow *non* ^META groups to be transparent if it's
@@ -1165,7 +1166,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))
             goto return_thrown;
 
-        if (IS_VOID(OUT)) {  // ^-- also see REB_SET_WORD
+        if (Is_Void(OUT)) {  // ^-- also see REB_SET_WORD
             if (Set_Var_Core_Throws(
                 SPARE,
                 SPARE,  // !!! can steps be the same as output?
@@ -1231,7 +1232,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
             or STATE_BYTE == ST_EVALUATOR_META_PATH_OR_META_TUPLE
         );
 
-        SET_END(OUT);  // !!! Not needed, should there be debug only TRASH()
+        RESET(OUT);  // !!! Not needed, should there be debug only TRASH()
         if (Get_Var_Core_Throws(OUT, SPARE, v, v_specifier))
             goto return_thrown;
 
@@ -1315,7 +1316,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         //     >> (10 [x]: comment "we don't want this to be 10")
         //     ** This should be an error.
         //
-        SET_END(OUT);
+        RESET(OUT);
 
         // We pre-process the SET-BLOCK! first, because we are going to
         // advance the feed in order to build a frame for the following code.
@@ -1396,7 +1397,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 or IS_THE_GROUP(check)
                 or IS_META_GROUP(check)
             ){
-                SET_END(SPARE);
+                RESET(SPARE);
                 if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
                     Move_Cell(OUT, SPARE);
                     DS_DROP_TO(f->baseline.dsp);
@@ -1503,7 +1504,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         // Now run the frame...
         //
-        SET_END(OUT);  // clear prior output to detect ~end~/~void~
+        RESET(OUT);  // clear prior output to detect ~end~/~void~
         if (Do_Frame_Maybe_Stale_Throws(OUT, SPARE)) {
             DS_DROP_TO(f->baseline.dsp);
             goto return_thrown;
@@ -1902,6 +1903,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
     switch (KIND3Q_BYTE_UNCHECKED(f_next)) {
       case REB_0_END:
+        assert(IS_END(f_next));  // should be END, not void
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
         goto finished;  // hitting end is common, avoid do_next's switch()
 

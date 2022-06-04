@@ -263,7 +263,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
         const REBPAR *param = ACT_PARAMS_HEAD(phase);
         assert(KEY_SYM(key) == SYM_RETURN);
 
-        if (Is_Stale(f->out) or IS_VOID(f->out)) {
+        if (Is_Stale(f->out) or Is_Void(f->out)) {
             //
             // If a function is void, it left whatever was in the output
             // from before it ran.  So there's no correspondence to the return
@@ -278,7 +278,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
                 assert(!"Native code violated return type contract!\n");
                 panic (Error_Bad_Return_Type(
                     f,
-                    IS_END(f->out) ? REB_0_END : VAL_TYPE(f->out)
+                    Is_Void(f->out) ? REB_0_VOID : VAL_TYPE(f->out)
                 ));
             }
         }
@@ -292,7 +292,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
             assert(!"Native code violated return type contract!\n");
             panic (Error_Bad_Return_Type(
                 f,
-                IS_END(f->out) ? REB_0_END : VAL_TYPE(f->out)
+                Is_Void(f->out) ? REB_0_VOID : VAL_TYPE(f->out)
             ));
         }
     }

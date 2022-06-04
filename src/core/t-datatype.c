@@ -251,7 +251,7 @@ bool Matches_Fake_Type_Constraint(const RELVAL *v, enum Reb_Symbol_Id sym) {
 //
 REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
 {
-    if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_0_END
+    if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_0_VOID
         panic (boot_types);  // other types/internals should have a WORD!
 
     const RELVAL *word_tail = ARR_TAIL(boot_types);
@@ -289,7 +289,7 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
             continue;
         }
 
-        Init_Cell_Header_Untracked(
+        Reset_Cell_Header_Untracked(
             TRACK(value), REB_DATATYPE, CELL_FLAG_FIRST_IS_NODE
         );
         VAL_TYPE_KIND_ENUM(value) = kind;

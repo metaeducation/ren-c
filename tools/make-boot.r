@@ -246,6 +246,7 @@ e-types/emit 'rebs {
         * Aliases for REB_0 to clarify which purpose it is used for.
         */
         REB_0_END = REB_0,
+        REB_0_VOID = REB_0,
         REB_0_FREE = REB_0,
 
         /*

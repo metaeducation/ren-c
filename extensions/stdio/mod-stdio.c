@@ -178,7 +178,7 @@ REBNATIVE(read_stdin)
 
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
-        if (rebRunThrows(SET_END(OUT), true, "as binary! try read-line"))
+        if (rebRunThrows(RESET(OUT), true, "as binary! try read-line"))
             return_thrown (OUT);
         return OUT;
     }

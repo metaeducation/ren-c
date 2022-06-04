@@ -489,7 +489,7 @@ REBNATIVE(maybe_a)
         return_thrown (OUT);
     }
 
-    if (IS_VOID(OUT))
+    if (Is_Void(OUT))
         return_void (OUT);
 
     return OUT;

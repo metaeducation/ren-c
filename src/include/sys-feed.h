@@ -293,8 +293,6 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);
         break; }
 
-      case DETECTED_AS_FREED_SERIES:
-      case DETECTED_AS_FREED_CELL:
       default:
         panic (p);
     }

@@ -546,11 +546,6 @@ inline static void Clear_Stale_Flag(REBVAL *out) {
     assert(not Is_Isotope_With_Id(out, SYM_VOID));
 }
 
-inline static bool IS_VOID(const REBVAL *out) {
-    assert(not (out->header.bits & CELL_FLAG_STALE));
-    return KIND3Q_BYTE_UNCHECKED(out) == REB_0;
-}
-
 inline static bool Was_Eval_Step_Void(const REBVAL *out) {
     return did (out->header.bits & CELL_FLAG_OUT_NOTE_VOIDED);
 }
@@ -586,7 +581,7 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
 #define return_branched(v) \
     do { \
         assert((v) == OUT); \
-        if (IS_VOID(OUT)) \
+        if (Is_Void(OUT)) \
             Init_None(OUT); \
         else if (IS_NULLED(OUT)) \
             Init_Null_Isotope(OUT); \
@@ -634,7 +629,7 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
 #define return_non_void(v) \
     do { \
         assert((v) == OUT); \
-        if (IS_VOID(OUT)) \
+        if (Is_Void(OUT)) \
             return Init_None(OUT); \
         return OUT; \
     } while (false)
@@ -654,7 +649,7 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
 inline static REBVAL *Reify_Eval_Out_Plain(REBVAL *out) {
     Clear_Stale_Flag(out);
 
-    if (IS_VOID(out))
+    if (Is_Void(out))
         return Init_None(out);
 
     return out;
@@ -667,7 +662,7 @@ inline static REBVAL *Reify_Eval_Out_Plain(REBVAL *out) {
 inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {
     Clear_Stale_Flag(out);
 
-    if (IS_VOID(out))
+    if (Is_Void(out))
         return Init_Meta_Of_Void(out);
 
     return Meta_Quotify(out);
@@ -675,7 +670,7 @@ inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {
 
 
 inline static bool Process_Action_Throws(REBFRM *f) {
-    SET_END(f->out);
+    RESET(f->out);
 
     bool threw = Process_Action_Maybe_Stale_Throws(f);
 

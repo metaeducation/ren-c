@@ -344,9 +344,12 @@ static void Shutdown_Action_Spec_Tags(void)
 //
 static void Startup_End_Node(void)
 {
-    SET_END(&PG_End_Cell);
+    PG_End_Cell.header.bits = NODE_FLAG_NODE | NODE_FLAG_STALE;
     assert(IS_END(END_CELL));  // sanity check
 }
+
+static void Shutdown_End_Node(void)
+  { PG_End_Cell.header.bits = 0; }
 
 
 //
@@ -471,7 +474,6 @@ static void Init_Root_Vars(void)
 
 static void Shutdown_Root_Vars(void)
 {
-    RESET(&PG_End_Cell);
     RESET(&PG_None_Isotope);
 
     RESET(&PG_R_Thrown);
@@ -1165,6 +1167,8 @@ void Shutdown_Core(bool clean)
 
     Shutdown_Frame_Stack();  // all API calls (e.g. rebRelease()) before this
     Shutdown_Api();
+
+    Shutdown_End_Node();
 
 //=//// ALL MANAGED SERIES MUST HAVE THE KEEPALIVE REFERENCES GONE NOW ////=//
 

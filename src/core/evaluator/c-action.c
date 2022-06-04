@@ -284,7 +284,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 goto continue_fulfilling;
             }
 
-            if (Is_Stale(f->out)) {
+            if (Is_Stale(OUT)) {
                 //
                 // Something like `lib.help left-lit` is allowed to work,
                 // but if it were just `obj/int-value left-lit` then the
@@ -334,13 +334,13 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 // to TAKE be seen as an error?  Failing to take first
                 // gives out-of-order evaluation.
                 //
-                assert(NOT_END(OUT));
+                assert(not Is_Void(OUT));
                 Init_Varargs_Untyped_Enfix(ARG, OUT);
             }
             else switch (pclass) {
               case PARAM_CLASS_NORMAL:
               case PARAM_CLASS_OUTPUT:
-                if (IS_END(OUT))
+                if (Is_Void(OUT))
                     fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
                 else {
                     Copy_Cell(ARG, OUT);
@@ -545,7 +545,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                     Init_Meta_End(ARG);
                 }
                 else if (
-                    IS_VOID(ARG)
+                    Is_Void(ARG)
                     and NOT_PARAM_FLAG(f->param, VANISHABLE)
                 ){
                     fail (Error_Bad_Void());
@@ -966,7 +966,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     // the spare cell will give an assert, but it also means the cell is fresh
     // and ready to use (e.g. as a target of an Eval_Maybe_Stale() operation).
     //
-    SET_END(SPARE);
+    RESET(SPARE);
 
     // !!! It's not clear why historically this was not being done.  We want
     // to be able to tell when a function did or did not write its output.  But

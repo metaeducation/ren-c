@@ -360,8 +360,8 @@ void MF_Typeset(REB_MOLD *mo, REBCEL(const*) v, bool form)
     // "type" exists for their bits.  However, you can get them if you say
     // `TYPESETS OF` on an action.  This should be thought about.
 
-    if (TYPE_CHECK(v, REB_0_END))
-        Append_Ascii(mo->series, "<end> ");
+    if (TYPE_CHECK(v, REB_0_VOID))
+        Append_Ascii(mo->series, "<void> ");
 
     STATIC_ASSERT(REB_NULL == 1);
     if (TYPE_CHECK(v, REB_NULL))

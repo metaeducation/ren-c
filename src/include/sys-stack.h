@@ -215,7 +215,7 @@ inline static STKVAL(*) DS_PUSH(void) {
     if (DS_Movable_Top == DS_Movable_Tail)
         Expand_Data_Stack_May_Fail(STACK_EXPAND_BASIS);
     else
-        assert(IS_END(DS_Movable_Top));
+        assert(Is_Void(DS_Movable_Top));
     return DS_Movable_Top;
 }
 

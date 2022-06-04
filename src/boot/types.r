@@ -52,15 +52,14 @@ REBOL [
 ;
 ; But REB_0 had another use, as a "less than null" signal.  This was as the
 ; the true internal representation of an evaluation that produced nothing.
-; While it might be called REB_0_INVISIBLE or similar, the historical name
-; of REB_0_END is currently still used.
+; Today we call that use REB_0_VOID.
 ;
 ; It's also the cell type uninitialized cells wind up with.  It's a consequence
 ; of C-isms where memory initialization of zeros can be lower cost (globals
 ; always initialized to 0, calloc() and memset may be faster with 0.)  The
 ; alias REB_0_FREE is given to use when this is the intent for REB_0.
 
-#0          "!!! `END!` and `FREE!` aren't datatypes, not exposed to the user"
+#0          "!!! `VOID!` and `FREE!` aren't datatypes, not exposed to the user"
             0           0       0       []
 
 ; REB_NULL takes value 1, but it being 1 is less intrinsic.  It is also not

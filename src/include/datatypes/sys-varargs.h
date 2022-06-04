@@ -125,7 +125,7 @@ inline static bool Is_Block_Style_Varargs(
     REBARR *array1 = binding;
     *shared_out = cast(REBVAL*, ARR_SINGLE(array1));
     assert(
-        IS_END(*shared_out)
+        Is_Stale_Void(*shared_out)
         or (IS_SPECIFIC(cast(RELVAL*, *shared_out)) and IS_BLOCK(*shared_out))
     );
 

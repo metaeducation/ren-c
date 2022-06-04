@@ -348,7 +348,7 @@ void Shutdown_Pools(void)
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             REBYTE nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_FREE)
+            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             ++num_leaks;
@@ -495,7 +495,7 @@ REBNOD *Try_Find_Containing_Node_Debug(const void *p)
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             REBYTE nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_FREE)
+            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             if (nodebyte & NODE_BYTEMASK_0x01_CELL) { // a "pairing"
@@ -1260,19 +1260,21 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer(EMPTY_ARRAY) == DETECTED_AS_SERIES);
     assert(Detect_Rebol_Pointer(Lib(BLANK)) == DETECTED_AS_CELL);
 
-    // The system does not really intentionally "free" any cells, but they
-    // can happen in bad memory locations.  Along with CELL_FLAG_PROTECTED and
-    // the potential absence of NODE_FLAG_CELL or NODE_FLAG_NODE, they make
-    // four good ways that a random Copy_Cell() might fail in the debug
-    // build.
+    // The use of the "free" bit on cells is to mark them as "stale", e.g. not
+    // usable as the left hand side of an enfix operation in the evaluator
+    // (but still a known value that can fall out).  This state is "poisoned"
+    // and only a limited number of operations can deal with it.  They should
+    // never leak out to the broader system.
+    //
+    // But the actual specific "freed series byte" has NODE_FLAG_CELL set
     //
   #if DEBUG_POISON_CELLS
-    DECLARE_LOCAL (freed_cell);
-    freed_cell->header.bits =
+    DECLARE_LOCAL (stale_cell);
+    stale_cell->header.bits =
         NODE_FLAG_NODE | CELL_FLAG_STALE | NODE_FLAG_CELL
         | FLAG_KIND3Q_BYTE(REB_T_POISON)
         | FLAG_HEART_BYTE(REB_T_POISON);
-    assert(Detect_Rebol_Pointer(freed_cell) == DETECTED_AS_FREED_CELL);
+    assert(Detect_Rebol_Pointer(stale_cell) == DETECTED_AS_UTF8);  // conflated
   #endif
 
     assert(Detect_Rebol_Pointer(END_CELL) == DETECTED_AS_END);
@@ -1281,7 +1283,6 @@ void Assert_Pointer_Detection_Working(void)
     REBSER *ser = Make_Series(1, FLAG_FLAVOR(BINARY));
     assert(Detect_Rebol_Pointer(ser) == DETECTED_AS_SERIES);
     Free_Unmanaged_Series(ser);
-    assert(Detect_Rebol_Pointer(ser) == DETECTED_AS_FREED_SERIES);
 }
 
 
@@ -1306,7 +1307,7 @@ REBLEN Check_Memory_Debug(void)
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             REBYTE nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_FREE)
+            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             if (nodebyte & NODE_BYTEMASK_0x01_CELL)
@@ -1336,7 +1337,7 @@ REBLEN Check_Memory_Debug(void)
 
         REBPLU *unit = Mem_Pools[pool_num].first;
         for (; unit != nullptr; unit = unit->next_if_free) {
-            assert(*cast(const REBYTE*, unit) & NODE_BYTEMASK_0x40_FREE);
+            assert(*cast(const REBYTE*, unit) & NODE_BYTEMASK_0x40_STALE);
 
             ++pool_free_nodes;
 
@@ -1388,7 +1389,7 @@ void Dump_All_Series_Of_Width(REBSIZ wide)
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             REBYTE nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_FREE)
+            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             REBSER *s = SER(cast(void*, unit));
@@ -1420,7 +1421,7 @@ void Dump_Series_In_Pool(REBINT pool_id)
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             REBYTE nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_FREE)
+            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             if (nodebyte & NODE_BYTEMASK_0x01_CELL)
@@ -1528,7 +1529,7 @@ REBU64 Inspect_Series(bool show)
         REBLEN n = Mem_Pools[SER_POOL].num_units;
         for (; n > 0; --n, unit += sizeof(REBSER)) {
             REBYTE nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_FREE) {
+            if (nodebyte & NODE_BYTEMASK_0x40_STALE) {
                 ++fre;
                 continue;
             }

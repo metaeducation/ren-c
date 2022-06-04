@@ -68,6 +68,9 @@
 
 #define CELL_MASK_NONE 0
 
+#define CELL_MASK_PREP 0  // considered WRITABLE()
+
+
 // The GET_CELL_FLAG()/etc. macros splice together CELL_FLAG_ with the text
 // you pass in (token pasting).  Since it does this, alias NODE_FLAG_XXX to
 // CELL_FLAG_XXX so they can be used with those macros.  MARKED is kept in
@@ -675,8 +678,6 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // recursion into them must carry forward the resolving "specifier" pointer
 // to be combined with any relative words that are seen later.
 //
-
-#define CELL_MASK_PREP 0  // considered WRITABLE()
 
 #if CPLUSPLUS_11
     static_assert(

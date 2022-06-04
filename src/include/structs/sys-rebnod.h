@@ -402,7 +402,7 @@ union Reb_Header {
 //
 #define NODE_FLAG_STALE \
     FLAG_LEFT_BIT(1)
-#define NODE_BYTEMASK_0x40_FREE 0x40
+#define NODE_BYTEMASK_0x40_STALE 0x40
 
 
 //=//// NODE_FLAG_MANAGED (third-leftmost bit) ////////////////////////////=//
@@ -504,5 +504,5 @@ union Reb_Header {
 // bit pattern, which are freed nodes.  These two patterns are for freed series
 // and "stale cells" (see Is_Stale())
 //
-#define FREED_SERIES_BYTE 192
-#define STALE_CELL_BYTE 193
+#define END_SIGNAL_BYTE 192
+#define FREED_SERIES_BYTE 193

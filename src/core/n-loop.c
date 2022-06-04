@@ -602,11 +602,11 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 return nullptr;
             }
         }
-        Clear_Stale_Flag(temp);  // test for no product is IS_VOID()
+        Clear_Stale_Flag(temp);  // test for no product is Is_Void()
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
-            if (IS_VOID(temp)) {
+            if (Is_Void(temp)) {
                 //
                 //    for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
                 //
@@ -633,7 +633,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             break;
 
           case LOOP_EVERY:
-            if (IS_VOID(temp)) {
+            if (Is_Void(temp)) {
                 //
                 // In light of other tolerances in the system for voids, EVERY
                 // treats a void as "no vote", whether MAYBE is used or not.
@@ -682,7 +682,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             //
             /* Predicate(temp) */
 
-            if (IS_VOID(temp)) {
+            if (Is_Void(temp)) {
                 //
                 // MAP rules are different because we aren't conditionally
                 // testing, so void scenarios should be okay to skip.
@@ -1863,7 +1863,7 @@ REBNATIVE(for)
         // way around, with FOR-EACH delegating to FOR).
         //
         if (rebRunThrows(
-            SET_END(OUT),
+            RESET(OUT),
             true,
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         )){
@@ -1936,8 +1936,6 @@ REBNATIVE(until)
     REBVAL *predicate = ARG(predicate);
 
     do {
-        SET_END(OUT);
-
         if (Do_Any_Array_At_Throws(RESET(OUT), body, SPECIFIED)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
@@ -1948,7 +1946,7 @@ REBNATIVE(until)
             // continue acts like body evaluated to its argument, see [1]
         }
 
-        if (IS_VOID(OUT))
+        if (Is_Void(OUT))
             continue;  // skip void results, see [2]
 
         if (IS_NULLED(predicate)) {
@@ -2013,13 +2011,13 @@ REBNATIVE(while)
     REBVAL *condition = ARG(condition);  // condition is BLOCK! only, see [1]
     REBVAL *body = ARG(body);
 
-    while (true) {
-        SET_END(SPARE);
+    assert(Is_Void(SPARE));
 
-        if (Do_Any_Array_At_Maybe_Stale_Throws(SPARE, condition, SPECIFIED))
+    for (; ; RESET(SPARE)) {
+        if (Do_Any_Array_At_Throws(SPARE, condition, SPECIFIED))
             return_thrown (SPARE);  // break/continue in body only, see [2]
 
-        if (Is_Stale(SPARE))
+        if (Is_Void(SPARE))
             continue;  // restart loop when condition vanishes, see [3]
 
         if (IS_FALSEY(SPARE)) {  // falsey condition => return last body result

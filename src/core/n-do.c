@@ -360,7 +360,7 @@ REBNATIVE(do)
       // code here simpler.
       //
       case REB_BLOCK : {
-        if (Do_Any_Array_At_Throws(SET_END(OUT), source, SPECIFIED))
+        if (Do_Any_Array_At_Throws(RESET(OUT), source, SPECIFIED))
             return_thrown (OUT);
         break; }
 
@@ -375,7 +375,7 @@ REBNATIVE(do)
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            if (Do_Any_Array_At_Throws(SET_END(OUT), position, SPECIFIED)) {
+            if (Do_Any_Array_At_Throws(RESET(OUT), position, SPECIFIED)) {
                 //
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!
@@ -386,7 +386,7 @@ REBNATIVE(do)
                 return_thrown (OUT);
             }
 
-            SET_END(position); // convention for shared data at end point
+            Init_Stale_Void(position); // convention for shared data at endpoint
             return_non_void (OUT);
         }
 
@@ -407,7 +407,7 @@ REBNATIVE(do)
         DECLARE_FRAME (subframe, f->feed, flags);
 
         bool threw;
-        Push_Frame(SET_END(OUT), subframe);
+        Push_Frame(RESET(OUT), subframe);
         do {
             threw = Eval_Step_Maybe_Stale_Throws(OUT, subframe);
         } while (not threw and NOT_END(f->feed->value));
@@ -431,7 +431,7 @@ REBNATIVE(do)
         UNUSED(REF(args)); // detected via `value? :arg`
 
         if (rebRunThrows(
-            SET_END(OUT),
+            RESET(OUT),
             true,  // fully = true, error if not all arguments consumed
             Sys(SYM_DO_P),
             source,
@@ -462,12 +462,12 @@ REBNATIVE(do)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());
 
-        if (Eval_Value_Throws(SET_END(OUT), source, SPECIFIED))
+        if (Eval_Value_Throws(RESET(OUT), source, SPECIFIED))
             return_thrown (OUT);
         break;
 
       case REB_FRAME :
-        if (Do_Frame_Maybe_Stale_Throws(SET_END(OUT), source))
+        if (Do_Frame_Maybe_Stale_Throws(RESET(OUT), source))
             return_thrown (OUT); // prohibits recovery from exits
         Clear_Stale_Flag(OUT);
         Reify_Eval_Out_Plain(OUT);
@@ -534,6 +534,7 @@ REBNATIVE(evaluate)
         if (VAL_LEN_AT(source) == 0) {  // `evaluate []` is invisible intent
             // leave OUT as is
             Init_Nulled(source);
+            assert(Is_Void(SPARE));
         }
         else {
             DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);
@@ -690,7 +691,7 @@ REBNATIVE(evaluate)
     if (IS_TRUTHY(next))
         Set_Var_May_Fail(next, SPECIFIED, source);
 
-    if (IS_VOID(SPARE))
+    if (Is_Void(SPARE))
         return_void (OUT);
 
     return SPARE;

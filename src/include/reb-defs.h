@@ -154,6 +154,8 @@ struct Reb_Feed;
 typedef struct Reb_Feed REBFED;
 
 struct Reb_State;
+struct Reb_Jump;
+
 
 //=//// DATA STACK ////////////////////////////////////////////////////////=//
 //

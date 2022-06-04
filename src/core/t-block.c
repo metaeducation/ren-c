@@ -305,7 +305,7 @@ REB_R MAKE_Array(
                 return R_THROWN;
             }
 
-            if (IS_END(out))
+            if (Is_Void(out))
                 break;
 
             Move_Cell(DS_PUSH(), out);

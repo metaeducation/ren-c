@@ -24,24 +24,8 @@
 // C variadic, which has no length or intrinsic tail pointer...so we must use
 // some sort of signal...and `nullptr` is used in the API for NULL cells).
 //
-// END also can represent a state which is "more empty than NULL".  Some slots
-// (such as the output slot of a frame) will tolerate this marker, but they
-// are illegal most places...and will assert on typical tests like IS_BLOCK()
-// or IS_WORD().  So tests on values must be guarded with IS_END() to tolerate
-// them...or the KIND3Q_BYTE() lower-level accessors must be used.
-//
-// Another use for the END cell state is in an optimized array representation
-// that fits 0 or 1 cells into the series node itself.  Since the cell lives
-// where the content tracking information would usually be, there's no length.
-// Hence the presence of an END cell in the slot indicates length 0.
-//
 //=//// NOTES /////////////////////////////////////////////////////////////=//
-//
-// * There's some crossover in situations where you might use unreadable trash
-//   with when you would use an END.  But there are fewer places where
-//   ends are tolerated by the GC...such as frame output cells.  You can't put
-//   an END in an array, while an unreadable trash can go there.
-//
+///
 // * R3-Alpha terminated all arrays with an END! cell--much the way that
 //   C strings are terminated by '\0'.  This provided a convenient way to
 //   loop over arrays as `for (; NOT_END(value); ++value)`.  But it was
@@ -50,50 +34,38 @@
 //   to go in the 2 pool, 2-cell arrays had to go in the 4 pool, etc.  Ren-C
 //   eliminated this and instead enumerates to the tail pointer.
 //
+// * Some places (like the feed value) would be more efficient if it were
+//   to use nullptr instead of needing to go through an indirection to test
+//   for IS_END().  Though this does run greater risk of confusing with the API
+//   usage of nullptr, and for now it's clearer to read by emphasizing END.
+//
 
+// Note: can't cast rebEND to a REBVAL*, due to alignment (it's char aligned).
+// The END_CELL can be used to pass an end signal to things that take REBVAL*
+//
 #define END_CELL \
     c_cast(const REBVAL*, &PG_End_Cell)
 
-inline static REBVAL *SET_END_Untracked(RELVAL *out) {
-    Reset_Cell_Header_Untracked(out, REB_0_END, CELL_MASK_NONE);
-    return cast(REBVAL*, out);
-}
 
-#define SET_END(out) \
-    SET_END_Untracked(TRACK(out))
-
-
-// Optimized Prep + SET_END (optimize after it's finalized)
-//
-inline static REBVAL *Prep_End_Untracked(RELVAL *out)
-  { return SET_END_Untracked(Prep_Cell_Untracked(out)); }
-
-#define Prep_End(out) \
-    TRACK(Prep_End_Untracked(out))  // TRACK() expects REB_0, call *after*
-
-
-// IMPORTANT: Notice that END markers may not have NODE_FLAG_CELL, and may
-// be as short as 2 bytes long.
+// IMPORTANT: Notice that END markers may be as short as 2 bytes long.
 //
 #if (! DEBUG_CHECK_ENDS)
     #define IS_END(p) \
-        (((const REBYTE*)(p))[1] == REB_0_END)  // Note: needs (p) parens!
+        (((const REBYTE*)(p))[0] == END_SIGNAL_BYTE)  // Note: needs (p) parens!
 #else
     inline static bool IS_END(const void *p) {
-        if (((const REBYTE*)(p))[0] & NODE_BYTEMASK_0x40_FREE) {
-            printf("IS_END() called on garbage\n");
-            panic (p);
+        const REBYTE* bp = cast(const REBYTE*, p);
+
+        if (*bp != END_SIGNAL_BYTE) {
+            assert(*bp & NODE_BYTEMASK_0x01_CELL);
+            return false;
         }
 
-        if (((const REBYTE*)(p))[1] == REB_0_END)
-            return true;
+        assert(not (*bp & NODE_BYTEMASK_0x01_CELL));  // may not be full cell
 
-        if (not (((const REBYTE*)(p))[0] & NODE_BYTEMASK_0x01_CELL)) {
-            printf("IS_END() found non-END pointer that's not a cell\n");
-            panic (p);
-        }
+        assert(bp[1] == REB_0);  // true whether rebEND string, or a full cell
 
-        return false;
+        return true;
     }
 #endif
 

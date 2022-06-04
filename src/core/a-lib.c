@@ -866,8 +866,6 @@ inline static void Run_Va_May_Fail(
     const void *p,  // first pointer (may be END, nullptr means NULLED)
     va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
 ){
-    SET_END(out);
-
     Run_Va_Translucent_May_Fail(out, false, p, vaptr);
 
     // It's convenient to be able to write:
@@ -876,7 +874,7 @@ inline static void Run_Va_May_Fail(
     //
     // Conceptually we say that IF returns a "~void~ isotope", but there
     // is no representation for them that we store via SET-WORD!/etc.  So they
-    // decay to NULL.  We want this convenience here (assigning `v` is like
+    // decay to none.  We want this convenience here (assigning `v` is like
     // assigning a SET-WORD! in regular code.
     //
     // Also: we want cases like `rebNot(nullptr)` to work, but the variadic
@@ -974,7 +972,7 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
     ENTER_API;
 
     REBVAL *result = Alloc_Value();
-    SET_END(result);  // !!! Redundant?
+    assert(Is_Stale_Void(result));
 
     Run_Va_Translucent_May_Fail(result, false, p, vaptr);  // calls va_end()
     Reify_Eval_Out_Meta(result);

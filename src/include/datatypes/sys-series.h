@@ -449,22 +449,13 @@ inline static REBLEN SER_USED(const REBSER *s) {
         return s->content.dynamic.used;
     if (IS_SER_ARRAY(s)) {
         //
-        // !!! The distinguished case of an end cell which is not FREE is used
-        // to signal length 0.  If it's free, it's assumed to be just a length
-        // 1 array that the caller hasn't gotten around to filling a value
-        // with.  (This mirrors the usual ability of dynamic arrays to let
-        // you set the length independently of filling the values, up until
-        // when the GC is invoked where it must all be sorted out.)
+        // We report the array length as being 0 if it's the distinguished
+        // case of the stale void (a REB_0 cell marked as stale).  This will
+        // fail most tests of being read.
         //
-        // So here we look for a cell whose kind byte is zero, whose heart byte
-        // is 0, and that doesn't have SERIES_FLAG_FREE set to signal length 0.
-        //
-        if (0 == (SER_CELL(s)->header.bits & (
-            SERIES_FLAG_FREE | FLAG_KIND3Q_BYTE(255) | FLAG_HEART_BYTE(255)
-        ))){
+        if (Is_Stale_Void(SER_CELL(s)))
             return 0;
-        }
-        return 1;  // Note: might be a free cell
+        return 1;  // Note: might be a plain void cell
     }
     return USED_BYTE(s);
 }
@@ -576,21 +567,16 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
 
         if (IS_SER_ARRAY(s)) {
             //
-            // !!! This is a little odd, because we're trying to say whether
-            // it's a 0 or 1 element array based on the contents of a cell.
-            // But if the REB_0 state is used to convey this, it means that
-            // doing a RESET() on the cell will change the length.  The logic
-            // used here is that a readable REB_0 state is used for 0 length
-            // and if an expansion mechanic tries to change the length while
-            // leaving the END in the slot, it's mutated into a freed cell
-            // as a mitigation factor.  Review.
+            // An unreadable REB_0 state with (CELL_FLAG_STALE) is used to
+            // indicate length 0 (the "END" state).  To bump it to length 1,
+            // we flip it over to a readable REB_0 state (a.k.a. "VOID")
 
             if (used == 0)
-                SET_END(RESET_Untracked(mutable_SER_CELL(s)));
+                Init_Stale_Void(mutable_SER_CELL(s));
             else {
                 assert(used == 1);
-                if (KIND3Q_BYTE_UNCHECKED(SER_CELL(s)) == REB_0)
-                    SET_CELL_FREE(mutable_SER_CELL(s));
+                if (Is_Stale_Void(mutable_SER_CELL(s)))
+                    RESET(mutable_SER_CELL(s));
             }
         }
         else

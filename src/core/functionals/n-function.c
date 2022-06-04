@@ -145,7 +145,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
         );
     }
 
-    SET_END(spare);  // !!! END won't work with throw/return ?
+    assert(Is_Void(spare));
 
     if (Do_Any_Array_At_Maybe_Stale_Throws(spare, body, SPC(f->varlist))) {
         const REBVAL *label = VAL_THROWN_LABEL(spare);
@@ -163,7 +163,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
             //
             CATCH_THROWN_META(spare, spare);  // preserves CELL_FLAG_UNEVALUATED
             if (Is_Meta_Of_Void(spare))
-                SET_END(spare);
+                RESET(spare);
             else
                 Meta_Unquotify(spare);
 
@@ -173,7 +173,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
         return true;  // we didn't catch the throw
     }
 
-    Clear_Stale_Flag(spare);  // voidness knowledge comes from IS_VOID(spare)
+    Clear_Stale_Flag(spare);  // voidness knowledge comes from Is_Void(spare)
 
     *returned = false;
     return false;  // didn't throw
@@ -202,7 +202,7 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
         return_thrown (SPARE);
 
-    if (IS_VOID(SPARE))
+    if (Is_Void(SPARE))
         return_void (OUT);  // does not actually overwrite OUT
 
     return Move_Cell_Core(
@@ -249,7 +249,7 @@ REB_R Returner_Dispatcher(REBFRM *f)
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
         return_thrown (SPARE);
 
-    if (IS_VOID(SPARE)) {
+    if (Is_Void(SPARE)) {
         REBACT *phase = FRM_PHASE(f);
         if (ACT_HAS_RETURN(phase)) {
             const REBKEY *key = ACT_KEYS_HEAD(phase);

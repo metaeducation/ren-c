@@ -117,7 +117,7 @@
             return nullptr;
 
         if ((*reinterpret_cast<const REBYTE*>(p) & (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
+            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_STALE
         )) != (
             NODE_BYTEMASK_0x80_NODE
         )){
@@ -288,7 +288,7 @@
             return nullptr;
 
         if ((*reinterpret_cast<REBYTE*>(p) & (
-            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_FREE
+            NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_STALE
                 | NODE_BYTEMASK_0x01_CELL
         )) != (
             NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x01_CELL

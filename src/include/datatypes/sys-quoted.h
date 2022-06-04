@@ -148,7 +148,7 @@ inline static RELVAL *Quotify_Core(
         // essentially noise, and only the literal's specifier should be used.
 
         REBVAL *unquoted = Alloc_Pairing();
-        SET_END(PAIRING_KEY(unquoted));  // Key not used ATM, want GC-safe
+        assert(Is_Void(PAIRING_KEY(unquoted)));  // Key not used ATM, GC-safe
 
         Copy_Cell_Header(unquoted, v);
         mutable_KIND3Q_BYTE(unquoted) = kind;  // escaping only in literal
@@ -361,8 +361,6 @@ inline static bool Is_Blackhole(const RELVAL *v);  // forward decl
 // BAD-WORD! of ~void~.  It is done by ^ and the the REB_META_XXX family.
 
 inline static RELVAL *Meta_Quotify(RELVAL *v) {
-    if (IS_END(v))
-        return Init_Blank(v);
     if (IS_NULLED(v))
         return v;  // as-is
     return Isotopic_Quote(v);

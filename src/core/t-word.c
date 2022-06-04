@@ -166,7 +166,7 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     // a generalization of "refinement paths"
     //
     if (IS_PATH(arg) or IS_TUPLE(arg)) {
-        SET_END(out);
+        RESET(out);
 
         DECLARE_LOCAL (temp);
 
@@ -178,12 +178,12 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
                 continue;
             if (not IS_WORD(item))
                 fail ("Can't make ANY-WORD! from path unless it's one WORD!");
-            if (not IS_END(out))
+            if (not Is_Void(out))
                 fail ("Can't make ANY-WORD! from path w/more than one WORD!");
             Derelativize(out, item, VAL_SEQUENCE_SPECIFIER(arg));
         }
 
-        if (IS_END(out))
+        if (Is_Void(out))
             fail ("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
 
         mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = kind;
@@ -336,7 +336,7 @@ REBTYPE(Word)
             if (var)
                 return OUT;  // found variable actually in module.
 
-            SET_END(OUT);
+            RESET(OUT);
 
             if (MOD_VAR(Lib_Context, VAL_WORD_SYMBOL(v), true))
                 return Init_Bad_Word(OUT, Canon(INHERITED));

@@ -92,8 +92,8 @@ static REBI64 mark_count = 0;
 
 static void Queue_Mark_Opt_Value_Deep(const RELVAL *v);
 
-inline static void Queue_Mark_Opt_End_Cell_Deep(const RELVAL *v) {
-    if (KIND3Q_BYTE_UNCHECKED(v) != REB_0_END)  // faster than NOT_END()
+inline static void Queue_Mark_Opt_Void_Cell_Deep(const RELVAL *v) {
+    if (KIND3Q_BYTE_UNCHECKED(v) != REB_0_VOID)  // faster than Is_Void()
         Queue_Mark_Opt_Value_Deep(v);
 }
 
@@ -155,8 +155,7 @@ static void Queue_Mark_Pairing_Deep(REBVAL *paired)
   #endif
 
     Queue_Mark_Opt_Value_Deep(paired);
-    if (NOT_END(PAIRING_KEY(paired)))  // tolerate for QUOTED!
-        Queue_Mark_Opt_Value_Deep(PAIRING_KEY(paired));
+    Queue_Mark_Opt_Void_Cell_Deep(PAIRING_KEY(paired));  // QUOTED! uses void
 
     paired->header.bits |= NODE_FLAG_MARKED;
     ++mark_count;
@@ -343,8 +342,7 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *cv)
     if (IS_TRASH(cv))  // always false in release builds (no cost)
         return;
 
-    if (KIND3Q_BYTE_UNCHECKED(v) == REB_0_END)
-        assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
+    assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_VOID);
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want
@@ -417,7 +415,10 @@ static void Propagate_All_GC_Marks(void)
         RELVAL *v = ARR_HEAD(a);
         const RELVAL *tail = ARR_TAIL(a);
         for (; v != tail; ++v) {
-            Queue_Mark_Opt_Value_Deep(v);
+            if (GET_SERIES_FLAG(a, DYNAMIC))
+                Queue_Mark_Opt_Value_Deep(v);
+            else
+                Queue_Mark_Opt_Void_Cell_Deep(v);
 
           #if !defined(NDEBUG)
             //
@@ -558,7 +559,7 @@ static void Mark_Root_Series(void)
             // optimally...see the sweep code for an example.
             //
             REBYTE nodebyte = *unit;
-            if (nodebyte & NODE_BYTEMASK_0x40_FREE)
+            if (nodebyte & NODE_BYTEMASK_0x40_STALE)
                 continue;
 
             assert(nodebyte & NODE_BYTEMASK_0x80_NODE);
@@ -576,7 +577,7 @@ static void Mark_Root_Series(void)
                 //
                 if (not (a->leader.bits & NODE_FLAG_MANAGED)) {
                     // if it's not managed, don't mark it (don't have to?)
-                    Queue_Mark_Opt_End_Cell_Deep(ARR_SINGLE(a));
+                    Queue_Mark_Opt_Void_Cell_Deep(ARR_SINGLE(a));
                 }
                 else { // Note that Mark_Frame_Stack_Deep() will mark the owner
                     if (not (a->leader.bits & NODE_FLAG_MARKED)) {
@@ -733,7 +734,7 @@ static void Mark_Guarded_Nodes(void)
             //
             // !!! What if someone tried to GC_GUARD a managed paired REBSER?
             //
-            Queue_Mark_Opt_End_Cell_Deep(cast(const REBVAL*, *np));
+            Queue_Mark_Opt_Void_Cell_Deep(cast(const REBVAL*, *np));
         }
         else  // a series
             Queue_Mark_Node_Deep(np);
@@ -778,7 +779,8 @@ static void Mark_Frame_Stack_Deep(void)
         // will stay on the stack while the zero-arity function is running.
         // The array still might be used in an error, so can't GC it.
         //
-        Queue_Mark_Opt_End_Cell_Deep(f->feed->value);
+        if (NOT_END(f->feed->value))
+            Queue_Mark_Opt_Value_Deep(f->feed->value);
 
         // If ->gotten is set, it usually shouldn't need markeding because
         // it's fetched via f->value and so would be kept alive by it.  Any
@@ -843,7 +845,7 @@ static void Mark_Frame_Stack_Deep(void)
         // (e.g. path frames use nullptr to indicate no set value on a path)
         //
         if (f->key != f->key_tail and f->param)
-            Queue_Mark_Opt_End_Cell_Deep(f->param);
+            Queue_Mark_Opt_Void_Cell_Deep(f->param);
 
         if (f->varlist and GET_SERIES_FLAG(f->varlist, MANAGED)) {
             //
@@ -902,7 +904,7 @@ static void Mark_Frame_Stack_Deep(void)
                 if (key == f->key)
                     Queue_Mark_Maybe_Stale_Cell_Deep(arg);
                 else
-                    Queue_Mark_Opt_End_Cell_Deep(arg);
+                    Queue_Mark_Opt_Void_Cell_Deep(arg);
             }
         }
 

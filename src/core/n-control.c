@@ -536,7 +536,7 @@ REBNATIVE(all)
         }
         else {
             if (rebRunThrows(
-                SET_END(SPARE),
+                RESET(SPARE),
                 true,
                 predicate,
                 rebQ(NULLIFY_NULLED(OUT))
@@ -596,7 +596,7 @@ REBNATIVE(any)
     Push_Frame(nullptr, f);
 
     while (NOT_END(f_value)) {
-        if (Eval_Step_Maybe_Stale_Throws(SET_END(OUT), f)) {
+        if (Eval_Step_Maybe_Stale_Throws(RESET(OUT), f)) {
             Abort_Frame(f);
             return_thrown (OUT);
         }
@@ -615,7 +615,7 @@ REBNATIVE(any)
         }
         else {
             if (rebRunThrows(
-                SET_END(SPARE),
+                RESET(SPARE),
                 true,
                 predicate,
                 rebQ(NULLIFY_NULLED(OUT))
@@ -707,6 +707,8 @@ REBNATIVE(case)
     // We potentially want to return the previous result to act "translucent"
     // if no cases run.  So condition evaluation must be done into the spare.
 
+    assert(Is_Void(SPARE));  // spare starts out as void
+
     for (; NOT_END(f_value); RESET(SPARE)) {
 
         // Feed the frame forward one step for predicate argument.
@@ -792,7 +794,7 @@ REBNATIVE(case)
 
     Drop_Frame(f);
 
-    if (NOT_END(SPARE)) {  // prioritize fallout result, see [3]
+    if (not Is_Void(SPARE)) {  // prioritize fallout result, see [3]
         Isotopify_If_Nulled(SPARE);
         Move_Cell(OUT, SPARE);
         return_branched (OUT);  // asserts no ~void~ or pure null
@@ -840,7 +842,9 @@ REBNATIVE(switch)
     if (IS_BLOCK(left) and GET_CELL_FLAG(left, UNEVALUATED))
         fail (Error_Block_Switch_Raw(left));  // `switch [x] [...]` safeguard
 
-    while (NOT_END(f_value)) {
+    assert(Is_Void(SPARE));
+
+    for (; NOT_END(f_value); RESET(SPARE)) {  // clears fallout each `continue`
 
         if (IS_BLOCK(f_value) or IS_ACTION(f_value)) {
             Fetch_Next_Forget_Lookback(f);
@@ -862,7 +866,9 @@ REBNATIVE(switch)
             goto threw;
         }
 
-        if (Is_Stale(SPARE))  // skip comments or failed conditionals
+        Clear_Stale_Flag(SPARE);
+
+        if (Is_Void(SPARE))  // skip comments or failed conditionals
             continue;  // see note [2] in comments for CASE
 
         if (IS_END(f_value))
@@ -885,7 +891,7 @@ REBNATIVE(switch)
             //
             const bool strict = false;
             if (0 != Compare_Modify_Values(left, SPARE, strict))
-                goto clear_fallout_and_continue;
+                continue;
         }
         else {
             // `switch x .greater? [10 [...]]` acts like `case [x > 10 [...]]
@@ -911,7 +917,7 @@ REBNATIVE(switch)
                 goto threw;
             }
             if (IS_FALSEY(temp))
-                goto clear_fallout_and_continue;
+                continue;
         }
 
         // Skip ahead to try and find BLOCK!/ACTION! branch to take the match
@@ -924,7 +930,7 @@ REBNATIVE(switch)
                 //
                 // f_value is RELVAL, can't Do_Branch
                 //
-                SET_END(OUT);
+                RESET(OUT);
                 if (Do_Any_Array_At_Throws(OUT, f_value, f_specifier))
                     goto threw;
                 break;
@@ -954,10 +960,6 @@ REBNATIVE(switch)
         }
 
         Fetch_Next_Forget_Lookback(f);  // keep matching if /ALL
-
-      clear_fallout_and_continue:
-
-        SET_END(SPARE);
     }
 
   reached_end:
@@ -969,9 +971,9 @@ REBNATIVE(switch)
     // See remarks in CASE about why fallout result is prioritized, and why
     // it cannot be a pure NULL.
     //
-    if (NOT_END(SPARE)) {
-        Isotopify_If_Nulled(SPARE);  // gives RELVAL*, can't direct RETURN()
-        return SPARE;
+    if (not Is_Void(SPARE)) {
+        Move_Cell(OUT, SPARE);
+        return_branched (OUT);
     }
 
     // if no fallout, use last /ALL clause, or ~void~ isotope if END

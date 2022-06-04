@@ -613,6 +613,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         // notes on why we do this (you can augment a function that has a
         // local called `x` with a new parameter called `x`, and that's legal.)
         //
+        bool hidden;
         if (GET_CELL_FLAG(slot, STACK_NOTE_SEALED)) {
             assert(Is_Specialized(cast(REBPAR*, cast(REBVAL*, slot))));
 
@@ -620,12 +621,13 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             // remark "survives copy over".  But the copy puts the flag on
             // regardless below.  Was this specific to RETURNs?
             //
-            SET_END(param);
-            SET_CELL_FLAG(param, VAR_MARKED_HIDDEN);
+            hidden = true;
         }
         else {
             if (not Try_Add_Binder_Index(&binder, symbol, 1020))
                 duplicate = symbol;
+
+            hidden = false;
         }
 
         if (dsp == definitional_return_dsp)
@@ -638,6 +640,9 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             slot,
             CELL_MASK_COPY | CELL_FLAG_VAR_MARKED_HIDDEN
         );
+
+        if (hidden)
+            SET_CELL_FLAG(param, VAR_MARKED_HIDDEN);
 
       #if !defined(NDEBUG)
         SET_CELL_FLAG(param, PROTECTED);

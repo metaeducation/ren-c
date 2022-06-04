@@ -127,7 +127,7 @@
         if ( \
             (FIRST_BYTE((c)->header) & ( \
                 NODE_BYTEMASK_0x01_CELL | NODE_BYTEMASK_0x80_NODE \
-                    | NODE_BYTEMASK_0x40_FREE \
+                    | NODE_BYTEMASK_0x40_STALE \
             )) != 0x81 \
         ){ \
             if (not ((c)->header.bits & NODE_FLAG_CELL)) \
@@ -182,7 +182,11 @@
     // that.  Make a separate category (initable) that includes prep cells.
     //
     #define ASSERT_CELL_INITABLE_EVIL_MACRO(c) \
-        if ((c)->header.bits != CELL_MASK_PREP) { \
+        if ( \
+            ((c)->header.bits & \
+                (~ CELL_FLAG_STALE) & (~ CELL_FLAG_OUT_NOTE_VOIDED)) \
+            != CELL_MASK_PREP \
+        ){ \
             ASSERT_CELL_WRITABLE_EVIL_MACRO(c); \
         }
 
@@ -447,7 +451,6 @@ inline static void Init_Cell_Header_Untracked(
     if (not Is_Fresh(v))
         panic (v);
   #endif
-    v->header.bits &= CELL_MASK_PERSIST;
     v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
         | FLAG_KIND3Q_BYTE(k) | FLAG_HEART_BYTE(k) | extra;
 
@@ -487,16 +490,6 @@ inline static REBVAL *RESET_CUSTOM_CELL(
             panic (c); \
         }
 #endif
-
-
-inline static RELVAL *Prep_Cell_Untracked(RELVAL *c) {
-    ALIGN_CHECK_CELL_EVIL_MACRO(c);
-    c->header.bits = CELL_MASK_PREP;
-    return c;
-}
-
-#define Prep_Cell(c) \
-    TRACK(Prep_Cell_Untracked(c))  // TRACK() expects REB_0, so track *after*
 
 
 //=////////////////////////////////////////////////////////////////////////=//

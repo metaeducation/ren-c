@@ -472,7 +472,9 @@ REBNATIVE(some_combinator)
         return nullptr;  // didn't match even once, so not enough.
     }
 
-    while (true) {
+    assert(Is_Void(SPARE));
+
+    for (; ; RESET(SPARE)) {
         //
         // Make the remainder from previous call the new input
         //
@@ -481,7 +483,6 @@ REBNATIVE(some_combinator)
         // Don't overwrite the last output (if it's null we want the previous
         // iteration's successful output value)
         //
-        SET_END(SPARE);  // spare can be trash
         if (Call_Parser_Throws(SPARE, remainder, parser, input))
             return_thrown (SPARE);  // see notes above about not removing loop
 

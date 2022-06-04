@@ -33,15 +33,15 @@
 
 #ifdef NDEBUG
     #define IS_FREE_NODE(p) \
-        (did (*cast(const REBYTE*, (p)) & NODE_BYTEMASK_0x40_FREE))
+        (did (*cast(const REBYTE*, (p)) & NODE_BYTEMASK_0x40_STALE))
 #else
     inline static bool IS_FREE_NODE(const void *p) {
         REBYTE first = *cast(const REBYTE*, p);  // NODE_BYTE asserts on free!
 
-        if (not (first & NODE_BYTEMASK_0x40_FREE))
+        if (not (first & NODE_BYTEMASK_0x40_STALE))
             return false;  // byte access defeats strict alias
 
-        assert(first == FREED_SERIES_BYTE or first == STALE_CELL_BYTE);
+        assert(first == FREED_SERIES_BYTE or first == END_SIGNAL_BYTE);
         return true;
     }
 #endif
@@ -262,74 +262,47 @@ inline static void Free_Node(REBLEN pool_id, REBNOD* node)
 enum Reb_Pointer_Detect {
     DETECTED_AS_UTF8 = 0,
 
-    DETECTED_AS_SERIES = 1,
-    DETECTED_AS_FREED_SERIES = 2,
-
-    DETECTED_AS_CELL = 3,
-    DETECTED_AS_FREED_CELL = 4,
-
-    DETECTED_AS_END = 5  // may be a cell, or a rebEND signal
+    DETECTED_AS_END = 1,  // may be in a cell, or a rebEND signal (char* align)
+    DETECTED_AS_SERIES = 2,
+    DETECTED_AS_CELL = 3
 };
 
 inline static enum Reb_Pointer_Detect Detect_Rebol_Pointer(const void *p)
 {
     const REBYTE* bp = cast(const REBYTE*, p);
 
-    switch (bp[0] >> 4) {  // 4 left bits: 0xbNFGK -> Node Free manaGed marKed
-      case 0:
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-        return DETECTED_AS_UTF8;  // ASCII codepoints 0 - 127
+    if (*bp == END_SIGNAL_BYTE) {  // reserved illegal UTF-8 byte 192
+      #if DEBUG_POISON_CELLS
+        assert(bp[1] == REB_0 or bp[1] == REB_T_POISON);  // DETECTED_AS_POISON?
+      #else
+        assert(bp[1] == '\0');  // rebEND C string "\x81", terminates with '\0'
+      #endif
 
-    // v-- bit sequences starting with `10` (continuation bytes, so not
-    // valid starting points for a UTF-8 string)
-
-      case 8:  // 0xb1000
-        if (bp[1] == REB_0) {
-            if (bp[0] & NODE_BYTEMASK_0x01_CELL)  // may be series info flags
-                return DETECTED_AS_END;
-            return DETECTED_AS_SERIES;
-        }
-        if (bp[0] & NODE_BYTEMASK_0x01_CELL)
-            return DETECTED_AS_CELL;  // unmanaged
-        return DETECTED_AS_SERIES;  // unmanaged
-
-      case 9:  // 0xb1001 - marked bit set, should not see series in mid-GC
-        assert(bp[0] & NODE_BYTEMASK_0x01_CELL);  // must be cell / end header
-        if (bp[1] == REB_0)
-            return DETECTED_AS_END;
-        return DETECTED_AS_CELL;
-
-      case 10:  // 0b1010
-      case 11:  // 0b1011
-        if (bp[1] == REB_0) {
-            if (bp[0] & NODE_BYTEMASK_0x01_CELL)  // may be series info flags
-                return DETECTED_AS_END;  // managed, marked if `case 11`
-            return DETECTED_AS_SERIES;  // series that just has no [1] flags
-        }
-        return DETECTED_AS_SERIES;  // managed, marked if `case 11`
-
-    // v-- bit sequences starting with `11` are *usually* legal multi-byte
-    // valid starting points for UTF-8, with only the exceptions made for
-    // the illegal 192 and 193 bytes which represent freed series and cells.
-
-      case 12:  // 0b1100
-        if (bp[0] == FREED_SERIES_BYTE)
-            return DETECTED_AS_FREED_SERIES;
-        if (bp[0] == STALE_CELL_BYTE)
-            return DETECTED_AS_FREED_CELL;
-        return DETECTED_AS_UTF8;
-
-      case 13:  // 0b1101
-      case 14:  // 0b1110
-      case 15:  // 0b1111
-        return DETECTED_AS_UTF8;
+        return DETECTED_AS_END;
     }
 
-    DEAD_END;
+    if (
+        (*bp & (NODE_BYTEMASK_0x80_NODE | NODE_BYTEMASK_0x40_STALE))
+        == NODE_BYTEMASK_0x80_NODE  // e.g. leading bit pattern is 10xxxxxx
+    ){
+        // In UTF-8 these are all continuation bytes, so not a legal way to
+        // start a string.  We leverage that to distinguish cells and series.
+        //
+        if (*bp & NODE_BYTEMASK_0x01_CELL)
+            return DETECTED_AS_CELL;
+
+        // Clients of this function should not be passing in series in mid-GC.
+        // (PROBE uses it, so that throws a wrench into this check.  Review.)
+        //
+        /*assert(not (*bp & NODE_BYTEMASK_0x10_MARKED));*/
+
+        return DETECTED_AS_SERIES;
+    }
+
+    // Note: technically there are some internal states that overlap with UTF-8
+    // range, e.g. when a cell is marked "stale" in the output location of
+    // a frame.  Such states are not supposed to be leaked to where clients of
+    // this routine would be concerned about them.
+    //
+    return DETECTED_AS_UTF8;
 }

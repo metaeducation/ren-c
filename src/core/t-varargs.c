@@ -33,7 +33,7 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
     if (op == VARARG_OP_TAIL_Q)
         Init_True(out);
     else
-        SET_END(out);
+        RESET(out);
 }
 
 
@@ -164,8 +164,8 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         if (Vararg_Op_If_No_Advance_Handled(
             out,
             op,
-            IS_END(shared) ? END_CELL : VAL_ARRAY_ITEM_AT(shared),
-            IS_END(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
+            Is_Stale_Void(shared) ? END_CELL : VAL_ARRAY_ITEM_AT(shared),
+            Is_Stale_Void(shared) ? SPECIFIED : VAL_SPECIFIER(shared),
             pclass
         )){
             goto type_check_and_return;
@@ -204,7 +204,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
                 IS_END(f_temp->feed->value)
                 or GET_FEED_FLAG(f_temp->feed, BARRIER_HIT)
             ){
-                SET_END(shared);
+                Init_Stale_Void(shared);
             }
             else {
                 // The indexor is "prefetched", so though the temp_frame would
@@ -254,8 +254,12 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             fail ("Invalid variadic parameter class");
         }
 
-        if (NOT_END(shared) && VAL_INDEX(shared) >= VAL_LEN_HEAD(shared))
-            SET_END(shared);  // signal end to all varargs sharing value
+        if (
+            not Is_Stale_Void(shared)
+            and VAL_INDEX(shared) >= VAL_LEN_HEAD(shared)
+        ){
+            Init_Stale_Void(shared);  // signal end to all varargs sharing value
+        }
     }
     else if (Is_Frame_Style_Varargs_May_Fail(&f, vararg)) {
         //
@@ -297,7 +301,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         switch (pclass) {
         case PARAM_CLASS_NORMAL: {
             REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_FULFILLING_ARG;
-            SET_END(out);
+            RESET(out);
             if (Eval_Step_In_Subframe_Maybe_Stale_Throws(out, f, flags))
                 return true;
             break; }
@@ -331,7 +335,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
 
   type_check_and_return:;
 
-    if (IS_END(out))
+    if (Is_Void(out))
         return false;
 
     if (op == VARARG_OP_TAIL_Q) {
@@ -393,7 +397,7 @@ REB_R MAKE_Varargs(
         //
         REBARR *array1 = Alloc_Singular(NODE_FLAG_MANAGED);
         if (VAL_LEN_AT(arg) == 0)
-            SET_END(ARR_SINGLE(array1));
+            Init_Stale_Void(ARR_SINGLE(array1));
         else
             Copy_Cell(ARR_SINGLE(array1), arg);
 
@@ -483,7 +487,7 @@ REBTYPE(Varargs)
             assert(false); // VARARG_OP_FIRST can't throw
             return_thrown (OUT);
         }
-        if (IS_END(OUT))
+        if (Is_Void(OUT))
            Init_Nulled(OUT);
 
         return OUT; }
@@ -506,7 +510,7 @@ REBTYPE(Varargs)
             )){
                 return_thrown (OUT);
             }
-            if (IS_END(OUT))
+            if (Is_Void(OUT))
                 return Init_Nulled(OUT);
             return OUT;
         }

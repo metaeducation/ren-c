@@ -69,7 +69,7 @@ REBNATIVE(reduce)
     while (NOT_END(f_value)) {
         bool line = GET_CELL_FLAG(f_value, NEWLINE_BEFORE);
 
-        if (Eval_Step_Maybe_Stale_Throws(SET_END(OUT), f)) {
+        if (Eval_Step_Maybe_Stale_Throws(RESET(OUT), f)) {
             DS_DROP_TO(dsp_orig);
             Abort_Frame(f);
             return_thrown (OUT);
@@ -181,7 +181,7 @@ REBNATIVE(reduce_each)
         }
         Clear_Stale_Flag(SPARE);
 
-        if (IS_VOID(SPARE))
+        if (Is_Void(SPARE))
             continue;
 
         // !!! This needs to handle the case where the vars are ^META, as well
@@ -338,9 +338,8 @@ REB_R Compose_To_Stack_Core(
             if (not IS_NULLED(label))
                 Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-            SET_END(out);  // want empty `()` or `(comment "hi")` to vanish
             if (Do_Feed_To_End_Maybe_Stale_Throws(
-                out,
+                RESET(out),  // want empty `()` or `(comment "hi")` to vanish
                 subfeed,
                 EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
             )){
@@ -353,7 +352,7 @@ REB_R Compose_To_Stack_Core(
 
             if (predicate and not doubled_group) {
                 REBVAL *processed;
-                if (IS_VOID(out))
+                if (Is_Void(out))
                     processed = rebMeta(predicate, Init_Meta_Of_Void(out));
                 else if (IS_NULLED(out))
                     processed = rebMeta(predicate, Init_Meta_Of_Null_Isotope(out));
@@ -365,7 +364,7 @@ REB_R Compose_To_Stack_Core(
                 if (processed == nullptr)
                     Init_Nulled(out);
                 else if (Is_Meta_Of_Void(processed)) {
-                    SET_END(out);
+                    RESET(out);
                     rebRelease(processed);
                 }
                 else {
@@ -374,7 +373,7 @@ REB_R Compose_To_Stack_Core(
                 }
             }
 
-            if (IS_VOID(out)) {
+            if (Is_Void(out)) {
                 //
                 // compose [(void)] => []
                 //
@@ -496,7 +495,7 @@ REB_R Compose_To_Stack_Core(
                     CLEAR_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
             }
 
-            SET_END(out);  // shouldn't leak temp eval to caller
+            RESET(out);  // shouldn't leak temp eval to caller
 
             changed = true;
         }

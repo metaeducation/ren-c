@@ -161,14 +161,6 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
       #endif
         break; }
 
-      case DETECTED_AS_FREED_SERIES:
-      #if DEBUG_FANCY_PANIC
-        Panic_Series_Debug(m_cast(REBSER*, cast(const REBSER*, p)));
-      #else
-        strncat(buf, "freed series", PANIC_BUF_SIZE - strsize(buf));
-      #endif
-        break;
-
       case DETECTED_AS_CELL:
       case DETECTED_AS_END: {
         const REBVAL *v = cast(const REBVAL*, p);
@@ -183,14 +175,6 @@ ATTRIBUTE_NO_RETURN void Panic_Core(
         strncat(buf, "value", PANIC_BUF_SIZE - strsize(buf));
       #endif
         break; }
-
-      case DETECTED_AS_FREED_CELL:
-      #if DEBUG_FANCY_PANIC
-        Panic_Value_Debug(cast(const RELVAL*, p));
-      #else
-        strncat(buf, "freed cell", PANIC_BUF_SIZE - strsize(buf));
-      #endif
-        break;
     }
 
   #if DEBUG_FANCY_PANIC

@@ -239,7 +239,7 @@ inline static bool Eval_Step_In_Subframe_Maybe_Stale_Throws(
     if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a frame
 
-    // Can't SET_END() here, because sometimes it would be overwriting what
+    // Can't RESET() here, because sometimes it would be overwriting what
     // the optimization produced.  Trust that it has already done it if it
     // was necessary.
 

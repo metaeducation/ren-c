@@ -91,7 +91,7 @@ REB_R Lambda_Dispatcher(REBFRM *f)
     // Note: Invisibility is not allowed, e.g. `x -> [elide x]` or `x -> []`
     // will return a ~void~ isotope.  Hence prior `f->out` is always wiped out.
 
-    if (Do_Any_Array_At_Throws(SET_END(OUT), block, specifier))
+    if (Do_Any_Array_At_Throws(RESET(OUT), block, specifier))
         return_thrown (OUT);
 
     return OUT;

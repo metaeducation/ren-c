@@ -331,7 +331,7 @@ REBNATIVE(use)
         ARG(vars) // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
     );
 
-    if (Do_Any_Array_At_Throws(SET_END(OUT), ARG(body), SPECIFIED))
+    if (Do_Any_Array_At_Throws(RESET(OUT), ARG(body), SPECIFIED))
         return_thrown (OUT);
 
     return OUT;
@@ -638,7 +638,7 @@ bool Get_Var_Push_Refinements_Throws(
                 if (not steps_out)
                     fail (Error_Bad_Get_Group_Raw(var));
 
-                if (Do_Any_Array_At_Throws(SET_END(out), at, at_specifier)) {
+                if (Do_Any_Array_At_Throws(RESET(out), at, at_specifier)) {
                     DS_DROP_TO(dsp_orig);
                     return true;
                 }
@@ -1457,7 +1457,7 @@ REBNATIVE(resolve)
         REBVAL *dest = MOD_VAR(where, symbol, strict);
         if (dest != nullptr) {
             // Fail if found?
-            SET_END(dest);
+            RESET(dest);
         }
         else {
             dest = Append_Context(where, nullptr, symbol);

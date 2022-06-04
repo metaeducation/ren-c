@@ -183,7 +183,7 @@ inline static bool Do_Branch_Core_Throws(
         break;
 
       case REB_BLOCK:
-        if (Do_Any_Array_At_Throws(SET_END(out), branch, SPECIFIED))
+        if (Do_Any_Array_At_Throws(RESET(out), branch, SPECIFIED))
             return true;
         break;
 
@@ -229,7 +229,7 @@ inline static bool Do_Branch_Core_Throws(
             }
         }
         bool threw = rebRunThrows(
-            SET_END(out),
+            RESET(out),
             false,  // !fully, e.g. arity-0 functions can ignore condition
             branch,
             (condition != nullptr and IS_END(condition))

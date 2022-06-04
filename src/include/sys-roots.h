@@ -136,8 +136,8 @@ inline static REBVAL *Alloc_Value(void)
     //
     REBVAL *v = SPECIFIC(ARR_SINGLE(a));
 
-    assert(IS_END(v));  // see remarks above, trash could trip up Recycle()
-    v->header.bits |= NODE_FLAG_ROOT;  // it's END (can't use SET_CELL_FLAGS)
+    assert(Is_Stale_Void(v));  // see above, trash could trip up Recycle()
+    v->header.bits |= NODE_FLAG_ROOT;  // it's stale (can't use SET_CELL_FLAGS)
 
     // We link the API handle into a doubly linked list maintained by the
     // topmost frame at the time the allocation happens.  This frame will

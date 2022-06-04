@@ -212,7 +212,7 @@ inline static REBARR *Make_Array_Core_Into(
       #endif
     }
     else {
-        Prep_End(mutable_SER_CELL(s));  // optimized Prep_Cell() + SET_END()
+        Prep_Stale_Void(mutable_SER_CELL(s));  // optimized prep for 0 length
     }
 
     // Arrays created at runtime default to inheriting the file and line

@@ -413,6 +413,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
 #include "datatypes/sys-value.h"  // these defines don't need series accessors
 
 #include "sys-end.h"  // notably *not* a datatype (and not user exposed)
+#include "sys-void.h"  // not really a datatype either
 
 enum rebol_signals {
     //
