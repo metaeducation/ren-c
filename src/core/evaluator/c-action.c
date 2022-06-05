@@ -116,10 +116,13 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
 
 
 //
-//  Process_Action_Maybe_Stale_Throws: C
+//  Process_Action_Core_Throws: C
 //
-bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
+bool Process_Action_Core_Throws(REBFRM * const f)
 {
+    if (NOT_EVAL_FLAG(f, MAYBE_STALE))
+        assert(Is_Void(f->out));
+
   #if !defined(NDEBUG)
     assert(f->original);  // set by Begin_Action()
     Do_Process_Action_Checks_Debug(f);
@@ -531,12 +534,10 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
             REBFLGS flags = EVAL_MASK_DEFAULT
                 | EVAL_FLAG_FULFILLING_ARG;
 
-            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(ARG, f, flags)) {
+            if (Eval_Step_In_Subframe_Throws(ARG, f, flags)) {
                 Move_Cell(OUT, ARG);
                 goto abort_action;
             }
-
-            Clear_Stale_Flag(ARG);  // only cared about void/invisible
 
             if (pclass == PARAM_CLASS_META) {
                 if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
@@ -648,7 +649,7 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                 DECLARE_FRAME (subframe, f->feed, flags);
 
                 Push_Frame(ARG, subframe);
-                bool threw = Eval_Maybe_Stale_Throws(subframe);
+                bool threw = Eval_Core_Throws(subframe);
                 Drop_Frame(subframe);
 
                 if (threw) {
@@ -656,7 +657,6 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
                     goto abort_action;
                 }
 
-                Clear_Stale_Flag(ARG);
                 Reify_Eval_Out_Plain(ARG);
             }
             else if (ANY_ESCAPABLE_GET(ARG)) {
@@ -1139,6 +1139,9 @@ bool Process_Action_Maybe_Stale_Throws(REBFRM * const f)
     //
     CLEAR_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
+
+    if (NOT_EVAL_FLAG(f, MAYBE_STALE))
+        Clear_Stale_Flag(f->out);
 
     return false;  // false => not thrown
 

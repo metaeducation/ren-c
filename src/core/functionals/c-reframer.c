@@ -176,7 +176,7 @@ bool Make_Invokable_From_Feed_Throws(
     assert(FRM_BINDING(f) == VAL_ACTION_BINDING(action));  // no invocation
 
     assert(Is_Fresh(f->out));
-    if (Process_Action_Maybe_Stale_Throws(f)) {
+    if (Process_Action_Core_Throws(f)) {
         DROP_GC_GUARD(action);
         Drop_Frame(f);
         return true;

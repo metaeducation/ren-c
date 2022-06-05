@@ -542,7 +542,7 @@ REBNATIVE(let)
 
         bool enfix = false;  // !!! Detect this?
 
-        if (Reevaluate_In_Subframe_Maybe_Stale_Throws(
+        if (Reevaluate_In_Subframe_Throws(
             RESET(OUT),  // !!! this eval won't be invisible, right?
             frame_,
             SPARE,

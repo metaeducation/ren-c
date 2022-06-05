@@ -53,7 +53,7 @@ REBNATIVE(reduce)
     // !!! How should predicates interact with this case?
     //
     if (not ANY_ARRAY(v)) {
-        if (Eval_Value_Throws(OUT, v, SPECIFIED))
+        if (Eval_Value_Throws(RESET(OUT), v, SPECIFIED))
             return_thrown (OUT);
 
         return OUT;  // let caller worry about whether to error on nulls
@@ -69,14 +69,14 @@ REBNATIVE(reduce)
     while (NOT_END(f_value)) {
         bool line = GET_CELL_FLAG(f_value, NEWLINE_BEFORE);
 
-        if (Eval_Step_Maybe_Stale_Throws(RESET(OUT), f)) {
+        if (Eval_Step_Throws(RESET(OUT), f)) {
             DS_DROP_TO(dsp_orig);
             Abort_Frame(f);
             return_thrown (OUT);
         }
 
         if (IS_NULLED(ARG(predicate))) {  // default processing
-            if (Is_Stale(OUT))
+            if (Is_Void(OUT))
                 continue;  // reduce [<a> if false [<b>]] => [<a>]
                            // reduce [<a> comment "hi"] => [<a>]
         }
@@ -87,7 +87,7 @@ REBNATIVE(reduce)
             // If this works, it should be generalized and reused.
             //
             REBVAL *processed;
-            if (Is_Stale(OUT))
+            if (Is_Void(OUT))
                 processed = rebMeta(predicate, Init_Meta_Of_Void(OUT));
             else if (Is_Isotope(OUT))
                 processed = rebMeta(predicate, Meta_Quotify(OUT));
@@ -175,18 +175,16 @@ REBNATIVE(reduce_each)
     Push_Frame(nullptr, f);
 
     while (NOT_END(f_value)) {
-        if (Eval_Step_Maybe_Stale_Throws(RESET(SPARE), f)) {
+        if (Eval_Step_Throws(RESET(SPARE), f)) {
             Abort_Frame(f);
             return_thrown (SPARE);
         }
-        Clear_Stale_Flag(SPARE);
 
         if (Is_Void(SPARE))
             continue;
 
         // !!! This needs to handle the case where the vars are ^META, as well
-        // as multiple vars.  Eval_Step_Throws() discards information that we
-        // would get from Eval_Step_Maybe_Stale_Throws().  Review.
+        // as multiple vars.
 
         Move_Cell(CTX_VAR(context, 1), SPARE);
 
@@ -338,7 +336,7 @@ REB_R Compose_To_Stack_Core(
             if (not IS_NULLED(label))
                 Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
-            if (Do_Feed_To_End_Maybe_Stale_Throws(
+            if (Do_Feed_To_End_Throws(
                 RESET(out),  // want empty `()` or `(comment "hi")` to vanish
                 subfeed,
                 EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
@@ -347,8 +345,6 @@ REB_R Compose_To_Stack_Core(
                 Abort_Frame(f);
                 return R_THROWN;
             }
-
-            Clear_Stale_Flag(out);
 
             if (predicate and not doubled_group) {
                 REBVAL *processed;

@@ -327,13 +327,16 @@ STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
     FLAG_LEFT_BIT(30)
 
 
-//=//// EVAL_FLAG_OVERLAP_OUTPUT //////////////////////////////////////////=//
+//=//// EVAL_FLAG_MAYBE_STALE /////////////////////////////////////////////=//
 //
 // This is a flag that is passed to the evaluation to indicate that it should
-// not assert if it finds a value in the ouput cell already.  It is only
-// paid attention to in the debug build.
+// not assert if it finds a value in the ouput cell already.  But also that
+// it should not clear the stale flag at the end of the evaluation--because
+// the caller may wish to know whether a new value was written or not.  See
+// ALL for an optimized use of this property (to avoid needing to write to
+// a scratch cell in order to reverse the effects of a void evaluation step).
 //
-#define EVAL_FLAG_OVERLAP_OUTPUT \
+#define EVAL_FLAG_MAYBE_STALE \
     FLAG_LEFT_BIT(31)
 
 

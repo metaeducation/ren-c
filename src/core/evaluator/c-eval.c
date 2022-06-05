@@ -20,7 +20,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This file contains Eval_Maybe_Stale_Throws(), which is the central
+// This file contains Eval_Core_Throws(), which is the central
 // evaluator implementation.  Most callers should use higher level wrappers,
 // because the long name conveys any direct caller must handle the following:
 //
@@ -45,7 +45,7 @@
 // * See %sys-do.h for wrappers that make it easier to run multiple evaluator
 //   steps in a frame and return the final result, giving ~void~ by default.
 //
-// * Eval_Maybe_Stale_Throws() is LONG.  That is largely a purposeful choice.
+// * Eval_Core_Throws() is LONG.  That is largely a purposeful choice.
 //   Breaking it into functions would add overhead (in the debug build if not
 //   also release builds) and prevent interesting tricks and optimizations.
 //   It is separated into sections, and the invariants in each section are
@@ -121,7 +121,7 @@
 //
 #define DECLARE_ACTION_SUBFRAME(f,parent) \
     DECLARE_FRAME (f, (parent)->feed, \
-        EVAL_MASK_DEFAULT | /*EVAL_FLAG_KEEP_STALE_BIT |*/ ((parent)->flags.bits \
+        EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE | ((parent)->flags.bits \
             & (EVAL_FLAG_FULFILLING_ARG | EVAL_FLAG_RUNNING_ENFIX \
                 | EVAL_FLAG_DIDNT_LEFT_QUOTE_PATH)))
 
@@ -200,7 +200,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
             | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
     if (CURRENT_CHANGES_IF_FETCH_NEXT) {  // must use new frame
-        if (Eval_Step_In_Subframe_Maybe_Stale_Throws(f->out, f, flags))
+        if (Eval_Step_In_Subframe_Throws(OUT, f, flags))
             return true;
     }
     else {  // !!! Reusing the frame, would inert optimization be worth it?
@@ -208,8 +208,12 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
         //
         STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
 
-        if (Eval_Maybe_Stale_Throws(f))  // reuse `f`
+        if (Eval_Step_Throws(OUT, f))  // reuse `f`
             return true;
+
+        // Frame we are reusing may-or-may-not have had EVAL_FLAG_MAYBE_STALE
+        //
+        Clear_Stale_Flag(OUT);
 
         // We *could* keep evaluating as long as evaluations vanish:
         //
@@ -227,14 +231,15 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
         // https://forum.rebol.info/t/1582/5
     }
 
+    assert(not Is_Stale(OUT));
+
     CLEAR_CELL_FLAG(OUT, UNEVALUATED);  // this helper counts as eval
-    Clear_Stale_Flag(OUT);  // started with RESET(), voidness is Is_Void
     return false;
 }
 
 
 //
-//  Eval_Maybe_Stale_Throws: C
+//  Eval_Core_Throws: C
 //
 // See notes at top of file for general remarks on this central function's
 // name, and that wrappers should nearly always be used to call it.
@@ -243,7 +248,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
 // at each evaluation step are contained in %d-eval.c, to keep this file
 // more manageable in length.
 //
-bool Eval_Maybe_Stale_Throws(REBFRM * const f)
+bool Eval_Core_Throws(REBFRM * const f)
 {
     assert(DSP >= f->baseline.dsp);  // REDUCE accrues, APPLY adds refinements
     assert(INITABLE(OUT));  // all invisible will preserve output
@@ -276,7 +281,10 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
         if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
-            Mark_Eval_Out_Stale(OUT);
+            if (GET_EVAL_FLAG(f, MAYBE_STALE))
+                Mark_Eval_Out_Stale(OUT);
+            else
+                assert(Is_Void(OUT));
             return false;
         }
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);  // not an argument, clear flag
@@ -294,6 +302,8 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
     //
     switch (STATE_BYTE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
+        if (NOT_EVAL_FLAG(f, MAYBE_STALE))
+            assert(Is_Void(OUT));
         break;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
@@ -635,7 +645,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
-        bool threw = Process_Action_Maybe_Stale_Throws(FS_TOP);
+        bool threw = Process_Action_Core_Throws(FS_TOP);
 
         assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must consume
 
@@ -899,25 +909,25 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         DECLARE_FEED_AT_CORE (subfeed, v, v_specifier);
 
+        REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED;
+
         if (STATE_BYTE == ST_EVALUATOR_META_GROUP) {
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
             RESET(OUT);  // guaranteed to make a value, not transparent
         }
         else {
             // We want to allow *non* ^META groups to be transparent if it's
-            // invisible, so instead of using Do_Any_Array_At() we call the
-            // lower-level variant and leave what's in OUT there.
+            // invisible, e.g. `1 + 2 (comment "hi")` is 3.  This means we
+            // have to use EVAL_FLAG_MAYBE_STALE.
+            //
+            if (GET_EVAL_FLAG(f, MAYBE_STALE))
+                flags |= EVAL_FLAG_MAYBE_STALE;
+            else
+                RESET(OUT);
         }
 
-        if (Do_Feed_To_End_Maybe_Stale_Throws(
-            OUT,
-            subfeed,
-            EVAL_MASK_DEFAULT
-                | EVAL_FLAG_ALLOCATED_FEED
-                | EVAL_FLAG_OVERLAP_OUTPUT  // OUT may contain value
-        )){
+        if (Do_Feed_To_End_Throws(OUT, subfeed, flags))
             goto return_thrown;
-        }
 
         if (STATE_BYTE == ST_EVALUATOR_META_GROUP) {
             Reify_Eval_Out_Meta(OUT);
@@ -1502,10 +1512,10 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         }
       }
 
-        // Now run the frame...
+        // Now run the frame...no need to preserve OUT (always overwritten on
+        // an assignment)
         //
-        RESET(OUT);  // clear prior output to detect ~end~/~void~
-        if (Do_Frame_Maybe_Stale_Throws(OUT, SPARE)) {
+        if (Do_Frame_Throws(RESET(OUT), SPARE)) {
             DS_DROP_TO(f->baseline.dsp);
             goto return_thrown;
         }
@@ -1542,8 +1552,10 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
         DECLARE_FRAME (subframe, f->feed, flags);
 
+        assert(not Is_Stale(OUT));
+
         Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
-        bool threw = Eval_Maybe_Stale_Throws(subframe);
+        bool threw = Eval_Core_Throws(subframe);
         Drop_Frame(subframe);
 
         if (threw) {
@@ -1579,7 +1591,7 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
 
                 Set_Var_May_Fail(SPARE, SPECIFIED, OUT);
             }
-            else if (Is_Stale(OUT)) {
+            else if (Is_Void(OUT)) {
                 Set_Var_May_Fail(
                     SPARE, SPECIFIED,
                     NONE_ISOTOPE  // still want to return the ~void~ isotope
@@ -1587,7 +1599,6 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
                 Init_None(OUT);  // propagate none (same as SET, SET-WORD!)
             }
             else {  // ordinary assignment
-                Clear_Stale_Flag(OUT);
                 Set_Var_May_Fail(
                     SPARE, SPECIFIED,
                     Pointer_To_Decayed(OUT)  // still want to return isotope
@@ -2101,6 +2112,14 @@ bool Eval_Maybe_Stale_Throws(REBFRM * const f)
         (f->flags.bits & ~FLAG_STATE_BYTE(255)) == initial_flags
     );  // any change should be restored
   #endif
+
+    // Note: There may be some optimization possible here if the flag for
+    // controlling whether you wanted to keep the stale flag was also using
+    // the same EVAL_FLAG bit as the CELL_FLAG for stale.  It's tricky since
+    // for series nodes that's the bit for being free.  Review.
+    //
+    if (NOT_EVAL_FLAG(f, MAYBE_STALE))
+        Clear_Stale_Flag(f->out);
 
     return false;  // false => not thrown
 }

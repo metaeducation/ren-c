@@ -51,7 +51,7 @@
 //   ...what kind of actionability is there on the fact that the last step
 //   vanished, if that's the only think you know?  For this reason, you'll
 //   get an assert if you preload a frame with any values unless you use
-//   the EVAL_FLAG_OVERLAP_OUTPUT option on the frame.
+//   the EVAL_FLAG_MAYBE_STALE option on the frame.
 //
 
 
@@ -60,7 +60,7 @@
 // in Eval_Core()--where being able to know if a group "completely vaporized"
 // is important as distinct from an expression evaluating to void.
 //
-inline static bool Do_Feed_To_End_Maybe_Stale_Throws(
+inline static bool Do_Feed_To_End_Throws(
     REBVAL *out,  // must be initialized, unchanged if all empty/invisible
     REBFED *feed,  // feed mechanics always call va_end() if va_list
     REBFLGS flags
@@ -71,46 +71,37 @@ inline static bool Do_Feed_To_End_Maybe_Stale_Throws(
     // about the staleness after the run.  See comments at top of file for
     // why that's not the case--this assert helps avoid misunderstandings.
     //
-    if (not (flags & EVAL_FLAG_OVERLAP_OUTPUT))
+    if (not (flags & EVAL_FLAG_MAYBE_STALE))
         assert(Is_Fresh(out));
 
-    DECLARE_FRAME (f, feed, flags);
+    DECLARE_FRAME (f, feed, flags | EVAL_FLAG_MAYBE_STALE);
 
     bool threw;
     Push_Frame(out, f);
     do {
-        threw = Eval_Maybe_Stale_Throws(f);
+        threw = Eval_Core_Throws(f);
     } while (not threw and NOT_END(feed->value));
     Drop_Frame(f);
 
-    return threw;
-}
-
-inline static bool Do_Any_Array_At_Maybe_Stale_Throws(
-    REBVAL *out,
-    const RELVAL *any_array,
-    REBSPC *specifier
-){
-    DECLARE_FEED_AT_CORE (feed, any_array, specifier);
-
-    bool threw = Do_Feed_To_End_Maybe_Stale_Throws(
-        out,
-        feed,
-        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-    );
+    if (not (flags & EVAL_FLAG_MAYBE_STALE))
+        Clear_Stale_Flag(out);
 
     return threw;
 }
 
 inline static bool Do_Any_Array_At_Throws(
     REBVAL *out,
-    const RELVAL *any_array,  // same as `out` is allowed
+    const RELVAL *any_array,
     REBSPC *specifier
 ){
-    assert(Is_Fresh(out));  // better if caller's RESET() does the TRACK() cell
+    DECLARE_FEED_AT_CORE (feed, any_array, specifier);
 
-    bool threw = Do_Any_Array_At_Maybe_Stale_Throws(out, any_array, specifier);
-    Clear_Stale_Flag(out);
+    bool threw = Do_Feed_To_End_Throws(
+        out,
+        feed,
+        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
+    );
+
     return threw;
 }
 
@@ -140,11 +131,11 @@ inline static bool Do_At_Mutable_Maybe_Stale_Throws(
         FEED_MASK_DEFAULT  // different: does not
     );
 
-    return Do_Feed_To_End_Maybe_Stale_Throws(
+    return Do_Feed_To_End_Throws(
         out,
         feed,
         EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
-            | EVAL_FLAG_OVERLAP_OUTPUT  // !!! Used for HIJACK, but always?
+            | EVAL_FLAG_MAYBE_STALE  // !!! Used for HIJACK, but always?
     );
 }
 
@@ -188,10 +179,9 @@ inline static bool Do_Branch_Core_Throws(
         break;
 
       case REB_GET_BLOCK: {
-        if (Eval_Value_Maybe_Stale_Throws(out, branch, SPECIFIED))
+        if (Eval_Value_Throws(RESET(out), branch, SPECIFIED))
             return true;
         assert(IS_BLOCK(out));
-        assert(not Is_Stale(out));
         break; }
 
       case REB_ACTION: {
@@ -253,10 +243,10 @@ inline static bool Do_Branch_Core_Throws(
       case REB_META_BLOCK:
         if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
             return true;
-        if (IS_NULLED(out))
-            Init_Bad_Word(out, Canon(NULL));  // branch taken, so not pure NULL
+        if (Is_Void(out))
+            Init_Meta_Of_Void(out);
         else
-            Meta_Quotify(out);  // result can't be null or void isotope
+            Meta_Quotify(out);  // null result will be
         break;
 
       default:

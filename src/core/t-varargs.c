@@ -192,12 +192,11 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             // Note: Eval_Step_In_Subframe() is not needed here because
             // this is a single use frame, whose state can be overwritten.
             //
-            if (Eval_Step_Maybe_Stale_Throws(out, f_temp)) {
+            if (Eval_Step_Throws(RESET(out), f_temp)) {
                 Abort_Frame(f_temp);
                 return true;
             }
 
-            Clear_Stale_Flag(out);
             Reify_Eval_Out_Plain(out);
 
             if (
@@ -302,7 +301,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
         case PARAM_CLASS_NORMAL: {
             REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_FULFILLING_ARG;
             RESET(out);
-            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(out, f, flags))
+            if (Eval_Step_In_Subframe_Throws(out, f, flags))
                 return true;
             break; }
 
@@ -452,7 +451,7 @@ REBTYPE(Varargs)
         switch (property) {
         case SYM_TAIL_Q: {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                OUT,
+                RESET(OUT),
                 VARARG_OP_TAIL_Q,
                 value
             )){
@@ -480,7 +479,7 @@ REBTYPE(Varargs)
             fail (Error_Varargs_No_Look_Raw());
 
         if (Do_Vararg_Op_Maybe_End_Throws(
-            OUT,
+            RESET(OUT),
             VARARG_OP_FIRST,
             value
         )){
@@ -504,7 +503,7 @@ REBTYPE(Varargs)
 
         if (not REF(part)) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                OUT,
+                RESET(OUT),
                 VARARG_OP_TAKE,
                 value
             )){
@@ -526,13 +525,13 @@ REBTYPE(Varargs)
 
         while (limit-- > 0) {
             if (Do_Vararg_Op_Maybe_End_Throws(
-                OUT,
+                RESET(OUT),
                 VARARG_OP_TAKE,
                 value
             )){
                 return_thrown (OUT);
             }
-            if (IS_END(OUT))
+            if (Is_Void(OUT))
                 break;
             Move_Cell(DS_PUSH(), OUT);
         }

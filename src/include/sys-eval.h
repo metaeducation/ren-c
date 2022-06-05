@@ -209,17 +209,17 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 // operations like ANY or REDUCE that wish to perform several successive
 // operations on an array, without creating a new frame each time.
 //
-inline static bool Eval_Step_Maybe_Stale_Throws(
+inline static bool Eval_Step_Throws(
     REBVAL *out,
     REBFRM *f
 ){
-    if (NOT_EVAL_FLAG(f, OVERLAP_OUTPUT))
+    if (NOT_EVAL_FLAG(f, MAYBE_STALE))
         assert(Is_Fresh(out));
 
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
 
     f->out = out;
-    return Eval_Maybe_Stale_Throws(f);  // should already be pushed
+    return Eval_Core_Throws(f);  // should already be pushed
 }
 
 
@@ -228,32 +228,32 @@ inline static bool Eval_Step_Maybe_Stale_Throws(
 // that only happens if a function call is in effect -or- if a SET-WORD! or
 // SET-PATH! are running with an expiring `current` in effect.
 //
-inline static bool Eval_Step_In_Subframe_Maybe_Stale_Throws(
+inline static bool Eval_Step_In_Subframe_Throws(
     REBVAL *out,
     REBFRM *f,
     REBFLGS flags
 ){
-    if (not (flags & EVAL_FLAG_OVERLAP_OUTPUT))
+    if (not (flags & EVAL_FLAG_MAYBE_STALE))
         assert(Is_Fresh(out));
 
     if (Did_Init_Inert_Optimize_Complete(out, f->feed, &flags))
         return false;  // If eval not hooked, ANY-INERT! may not need a frame
 
-    // Can't RESET() here, because sometimes it would be overwriting what
-    // the optimization produced.  Trust that it has already done it if it
-    // was necessary.
+    // We need the MAYBE_STALE flag to get Eval_Core() to tolerate the
+    // preload of inert data.  So we're responsible for clearing the flag if
+    // the caller didn't actually want stale data.
 
     DECLARE_FRAME (subframe, f->feed, flags);
 
     Push_Frame(out, subframe);
-    bool threw = Eval_Maybe_Stale_Throws(subframe);
+    bool threw = Eval_Core_Throws(subframe);
     Drop_Frame(subframe);
 
     return threw;
 }
 
 
-inline static bool Reevaluate_In_Subframe_Maybe_Stale_Throws(
+inline static bool Reevaluate_In_Subframe_Throws(
     REBVAL *out,
     REBFRM *f,
     const REBVAL *reval,
@@ -269,7 +269,7 @@ inline static bool Reevaluate_In_Subframe_Maybe_Stale_Throws(
     subframe->u.reval.value = reval;
 
     Push_Frame(out, subframe);
-    bool threw = Eval_Maybe_Stale_Throws(subframe);
+    bool threw = Eval_Core_Throws(subframe);
     Drop_Frame(subframe);
 
     return threw;
@@ -295,9 +295,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
 
     Push_Frame(out, f);
-    bool threw = Eval_Maybe_Stale_Throws(f);
-
-    Clear_Stale_Flag(f->out);
+    bool threw = Eval_Core_Throws(f);
 
     if (threw)
         *index_out = TRASHED_INDEX;
@@ -328,7 +326,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
 // *and* check that you ended properly.  It means this function will need
 // two different signatures (and so will each caller of this routine).
 //
-inline static bool Eval_Step_In_Va_Maybe_Stale_Throws(
+inline static bool Eval_Step_In_Va_Throws(
     REBVAL *out,  // must be initialized, won't change if all empty/invisible
     REBFLGS feed_flags,
     const void *p,
@@ -340,7 +338,7 @@ inline static bool Eval_Step_In_Va_Maybe_Stale_Throws(
     DECLARE_FRAME (f, feed, eval_flags | EVAL_FLAG_ALLOCATED_FEED);
 
     Push_Frame(out, f);
-    bool threw = Eval_Maybe_Stale_Throws(f);
+    bool threw = Eval_Core_Throws(f);
 
     bool too_many = (eval_flags & EVAL_FLAG_NO_RESIDUE)
         and NOT_END(feed->value);  // feed will be freed in Drop_Frame()
@@ -362,12 +360,13 @@ inline static bool Eval_Step_In_Va_Maybe_Stale_Throws(
 }
 
 
-inline static bool Eval_Value_Maybe_Stale_Throws(
+inline static bool Eval_Value_Throws(
     REBVAL *out,
     const RELVAL *value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 ){
     assert(out != value);
+    assert(Is_Fresh(out));
 
     if (ANY_INERT(value)) {
         Derelativize(out, value, specifier);
@@ -388,25 +387,8 @@ inline static bool Eval_Value_Maybe_Stale_Throws(
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
 
     Push_Frame(out, f);
-    bool threw = Eval_Maybe_Stale_Throws(f);
+    bool threw = Eval_Core_Throws(f);
     Drop_Frame(f);
 
     return threw;
-}
-
-
-// Evaluate *one cell* (e.g. a BLOCK! here would just evaluate to itself!)
-//
-inline static bool Eval_Value_Throws(
-    REBVAL *out,
-    const RELVAL *value,  // note this is not `unstable`, direct pointer used
-    REBSPC *specifier
-){
-    if (Eval_Value_Maybe_Stale_Throws(out, value, specifier))
-        return true;
-
-    Clear_Stale_Flag(out);
-    Reify_Eval_Out_Plain(out);
-
-    return false;
 }

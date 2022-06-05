@@ -591,7 +591,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
         // cells don't need to make copies.  Review.
 
         DECLARE_LOCAL (temp);
-        if (Do_Any_Array_At_Maybe_Stale_Throws(temp, les->body, SPECIFIED)) {
+        if (Do_Any_Array_At_Throws(temp, les->body, SPECIFIED)) {
             if (not Catching_Break_Or_Continue(temp, &broke)) {
                 Move_Cell(les->out, temp);
                 return R_THROWN;  // non-loop-related throw
@@ -602,7 +602,6 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 return nullptr;
             }
         }
-        Clear_Stale_Flag(temp);  // test for no product is Is_Void()
 
         switch (les->mode) {
           case LOOP_FOR_EACH:
@@ -1450,11 +1449,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             ++index;
         }
 
-        if (Do_Any_Array_At_Maybe_Stale_Throws(
-            RESET(res->out),
-            res->body,
-            SPECIFIED
-        )){
+        if (Do_Any_Array_At_Throws(RESET(res->out), res->body, SPECIFIED)) {
             if (not Catching_Break_Or_Continue(
                 res->out,
                 &res->broke

@@ -126,7 +126,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
     // that gets calculated into spare).
     //
     assert(spare == FRM_SPARE(f));
-    assert(Is_Fresh(spare));  // so Clear_Stale_Flag() won't lose information
+    assert(Is_Void(spare));
 
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
@@ -145,9 +145,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
         );
     }
 
-    assert(Is_Void(spare));
-
-    if (Do_Any_Array_At_Maybe_Stale_Throws(spare, body, SPC(f->varlist))) {
+    if (Do_Any_Array_At_Throws(spare, body, SPC(f->varlist))) {
         const REBVAL *label = VAL_THROWN_LABEL(spare);
         if (
             IS_ACTION(label)
@@ -172,8 +170,6 @@ bool Interpreted_Dispatch_Details_1_Throws(
         }
         return true;  // we didn't catch the throw
     }
-
-    Clear_Stale_Flag(spare);  // voidness knowledge comes from Is_Void(spare)
 
     *returned = false;
     return false;  // didn't throw

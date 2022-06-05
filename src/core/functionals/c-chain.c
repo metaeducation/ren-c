@@ -62,6 +62,7 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
         f->feed,
         EVAL_MASK_DEFAULT
             | FLAG_STATE_BYTE(ST_ACTION_DISPATCHING)  // don't typecheck again
+            | EVAL_FLAG_MAYBE_STALE
     );
     Push_Frame(out, sub);
     assert(sub->varlist == nullptr);
@@ -144,7 +145,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
     assert(FRM_STATE_BYTE(sub) == ST_ACTION_DISPATCHING);
     while (true) {
-        if (Process_Action_Maybe_Stale_Throws(sub)) {
+        if (Process_Action_Core_Throws(sub)) {
             Abort_Frame(sub);
             return_thrown (sub->out);
         }

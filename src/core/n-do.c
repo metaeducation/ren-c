@@ -58,8 +58,8 @@ REBNATIVE(reeval)
 
     bool enfix = IS_ACTION(v) and GET_ACTION_FLAG(VAL_ACTION(v), ENFIXED);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT;
-    if (Reevaluate_In_Subframe_Maybe_Stale_Throws(
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
+    if (Reevaluate_In_Subframe_Throws(
         OUT,  // reeval :comment "this should leave old input"
         frame_,
         ARG(value),
@@ -72,8 +72,7 @@ REBNATIVE(reeval)
     if (Is_Stale(OUT))
         return_void (OUT);
 
-    Clear_Stale_Flag(OUT);
-    return OUT;  // don't clear stale flag...act invisibly
+    return OUT;
 }
 
 
@@ -212,10 +211,10 @@ REBNATIVE(shove)
             SET_CELL_FLAG(OUT, UNEVALUATED);
     }
 
-    REBFLGS flags = EVAL_MASK_DEFAULT;
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
     SET_FEED_FLAG(frame_->feed, NEXT_ARG_FROM_OUT);
 
-    if (Reevaluate_In_Subframe_Maybe_Stale_Throws(
+    if (Reevaluate_In_Subframe_Throws(
         OUT,
         frame_,
         shovee,
@@ -271,7 +270,7 @@ bool Do_Frame_Ctx_Throws(
 
     Begin_Prefix_Action(f, label);
 
-    bool threw = Process_Action_Maybe_Stale_Throws(f);
+    bool threw = Process_Action_Core_Throws(f);
     assert(threw or IS_END(f->feed->value));  // we started at END_FLAG
 
     Drop_Frame(f);
@@ -280,9 +279,9 @@ bool Do_Frame_Ctx_Throws(
 
 
 //
-//  Do_Frame_Maybe_Stale_Throws: C
+//  Do_Frame_Throws: C
 //
-bool Do_Frame_Maybe_Stale_Throws(REBVAL *out, REBVAL *frame) {
+bool Do_Frame_Throws(REBVAL *out, REBVAL *frame) {
     if (IS_FRAME_PHASED(frame))  // see REDO for tail-call recursion
         fail ("Use REDO to restart a running FRAME! (not DO)");
 
@@ -403,13 +402,13 @@ REBNATIVE(do)
             return OUT;
         }
 
-        REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_OVERLAP_OUTPUT;
+        REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
         DECLARE_FRAME (subframe, f->feed, flags);
 
         bool threw;
         Push_Frame(RESET(OUT), subframe);
         do {
-            threw = Eval_Step_Maybe_Stale_Throws(OUT, subframe);
+            threw = Eval_Step_Throws(OUT, subframe);
         } while (not threw and NOT_END(f->feed->value));
         Drop_Frame(subframe);
 
@@ -467,9 +466,8 @@ REBNATIVE(do)
         break;
 
       case REB_FRAME :
-        if (Do_Frame_Maybe_Stale_Throws(RESET(OUT), source))
+        if (Do_Frame_Throws(RESET(OUT), source))
             return_thrown (OUT); // prohibits recovery from exits
-        Clear_Stale_Flag(OUT);
         Reify_Eval_Out_Plain(OUT);
         break;
 
@@ -549,16 +547,11 @@ REBNATIVE(evaluate)
                 );
 
                 Push_Frame(SPARE, f);
-                threw = Eval_Maybe_Stale_Throws(f);
+                threw = Eval_Core_Throws(f);
                 if (threw) {
                     Drop_Frame(f);
                     return_thrown (SPARE);
                 }
-
-                // !!! Since we're passing in a clear cell, we don't really
-                // care about the stale (it's stale if the cell is still END).
-                //
-                Clear_Stale_Flag(SPARE);
 
                 if (not threw) {
                     VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
@@ -585,15 +578,13 @@ REBNATIVE(evaluate)
                     rebElide(Lib(SET), rebQ(next), source);
             }
             else {  // assume next position not requested means run-to-end
-                if (Do_Feed_To_End_Maybe_Stale_Throws(
+                if (Do_Feed_To_End_Throws(
                     SPARE,
                     feed,
                     EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
                 )){
                     return_thrown (SPARE);
                 }
-
-                Clear_Stale_Flag(SPARE);
 
                 if (REF(next))
                     rebElide(Lib(SET), rebQ(next), rebQ(Lib(NULL)));
@@ -613,9 +604,8 @@ REBNATIVE(evaluate)
         if (REF(next))
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
-        if (Do_Frame_Maybe_Stale_Throws(SPARE, source))
+        if (Do_Frame_Throws(SPARE, source))
             return_thrown (SPARE);  // prohibits recovery from exits
-        Clear_Stale_Flag(SPARE);
         break;
 
       case REB_ACTION: {
@@ -626,10 +616,9 @@ REBNATIVE(evaluate)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());
 
-        if (Eval_Value_Maybe_Stale_Throws(SPARE, source, SPECIFIED))
+        if (Eval_Value_Throws(SPARE, source, SPECIFIED))
             return_thrown (SPARE);
 
-        Clear_Stale_Flag(SPARE);
         break; }
 
       case REB_VARARGS : {
@@ -677,10 +666,8 @@ REBNATIVE(evaluate)
                 return nullptr;
 
             REBFLGS flags = EVAL_MASK_DEFAULT;
-            if (Eval_Step_In_Subframe_Maybe_Stale_Throws(SPARE, f, flags))
+            if (Eval_Step_In_Subframe_Throws(SPARE, f, flags))
                 return_thrown (SPARE);
-
-            Clear_Stale_Flag(SPARE);
         }
         break; }
 
@@ -793,6 +780,7 @@ REBNATIVE(applique)
     DECLARE_END_FRAME (
         f,
         EVAL_MASK_DEFAULT
+            | EVAL_FLAG_MAYBE_STALE
             | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)  // skips fulfillment
     );
 
@@ -873,7 +861,7 @@ REBNATIVE(applique)
 
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-    bool action_threw = Process_Action_Maybe_Stale_Throws(f);
+    bool action_threw = Process_Action_Core_Throws(f);
     assert(action_threw or IS_END(f->feed->value));  // we started at END_FLAG
 
     Drop_Frame(f);
@@ -973,13 +961,13 @@ REBNATIVE(apply)
             }
         }
 
-        if (Eval_Step_Maybe_Stale_Throws(RESET(SPARE), f)) {
+        if (Eval_Step_Throws(RESET(SPARE), f)) {
             Move_Cell(OUT, SPARE);
             arg_threw = true;
             goto end_loop;
         }
 
-        if (Is_Stale(SPARE)) {  // no output
+        if (Is_Void(SPARE)) {  // no output
             //
             // We let the frame logic inside the evaluator decide if we've
             // built a valid frame or not.  But the error we do check for is
@@ -1106,6 +1094,7 @@ REBNATIVE(apply)
     DECLARE_END_FRAME (
         f,
         EVAL_MASK_DEFAULT
+            | EVAL_FLAG_MAYBE_STALE
             | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)  // skips fulfillment
     );
 
@@ -1120,7 +1109,7 @@ REBNATIVE(apply)
 
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-    bool action_threw = Process_Action_Maybe_Stale_Throws(f);
+    bool action_threw = Process_Action_Core_Throws(f);
     assert(action_threw or IS_END(f->feed->value));
 
     Drop_Frame(f);

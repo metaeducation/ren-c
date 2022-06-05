@@ -539,8 +539,7 @@ inline static void Clear_Void_Flag(REBVAL *out) {
 // Must handle the Translucent and Invisible cases before clearing stale.
 //
 inline static void Clear_Stale_Flag(REBVAL *out) {
-    out->header.bits &= (~ CELL_FLAG_STALE);
-    out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
+    out->header.bits &= ~ (CELL_FLAG_STALE | CELL_FLAG_OUT_NOTE_VOIDED);
 
     assert(not Is_Isotope_With_Id(out, SYM_END));
     assert(not Is_Isotope_With_Id(out, SYM_VOID));
@@ -647,8 +646,6 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
 // explicitly.  See ANY and ALL for examples.
 //
 inline static REBVAL *Reify_Eval_Out_Plain(REBVAL *out) {
-    Clear_Stale_Flag(out);
-
     if (Is_Void(out))
         return Init_None(out);
 
@@ -660,8 +657,6 @@ inline static REBVAL *Reify_Eval_Out_Plain(REBVAL *out) {
 
 
 inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {
-    Clear_Stale_Flag(out);
-
     if (Is_Void(out))
         return Init_Meta_Of_Void(out);
 
@@ -672,7 +667,7 @@ inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {
 inline static bool Process_Action_Throws(REBFRM *f) {
     RESET(f->out);
 
-    bool threw = Process_Action_Maybe_Stale_Throws(f);
+    bool threw = Process_Action_Core_Throws(f);
 
     Reify_Eval_Out_Plain(f->out);
 

@@ -481,15 +481,15 @@ REBNATIVE(maybe_a)
 {
     INCLUDE_PARAMS_OF_MAYBE_A;
 
-    if (Eval_Step_In_Subframe_Maybe_Stale_Throws(
+    if (Eval_Step_In_Subframe_Throws(
         OUT,
         frame_,
-        EVAL_MASK_DEFAULT
+        EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE
     )){
         return_thrown (OUT);
     }
 
-    if (Is_Void(OUT))
+    if (Is_Stale(OUT))
         return_void (OUT);
 
     return OUT;

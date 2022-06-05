@@ -489,7 +489,7 @@ REBNATIVE(all)
 //    can be forced with (all [... null]) or (any [true ...])
 //
 // 3. When the ALL starts, the OUT cell is stale and may contain any value
-//    produced by a previous evaluation.  But we use EVAL_FLAG_OVERLAP_OUTPUT
+//    produced by a previous evaluation.  But we use EVAL_FLAG_MAYBE_STALE
 //    and may be skipping stale evaluations from inside the ALL:
 //
 //        >> <foo> all [<bar> comment "<bar> will be stale, due to comment"]
@@ -506,7 +506,7 @@ REBNATIVE(all)
 
     REBVAL *predicate = ARG(predicate);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_OVERLAP_OUTPUT;  // see [1]
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;  // see [1]
 
     if (IS_THE_BLOCK(ARG(block)))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
@@ -517,7 +517,7 @@ REBNATIVE(all)
     bool any_matches = false;
 
     while (NOT_END(f_value)) {
-        if (Eval_Step_Maybe_Stale_Throws(OUT, f)) {  // overlap output, see [1]
+        if (Eval_Step_Throws(OUT, f)) {  // overlap output, see [1]
             Abort_Frame(f);
             return_thrown (OUT);
         }
@@ -580,15 +580,14 @@ REBNATIVE(all)
 //
 REBNATIVE(any)
 //
-// Note: See ALL for more comments (ANY is very similar, though it does not
-// need to use EVAL_FLAG_OVERLAP_OUTPUT since it returns its first match.)
+// Note: See ALL for more comments (ANY is very similar)
 {
     INCLUDE_PARAMS_OF_ANY;
 
     REBVAL *predicate = ARG(predicate);
     REBVAL *block = ARG(block);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT;
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
     if (IS_THE_BLOCK(block))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
 
@@ -596,7 +595,7 @@ REBNATIVE(any)
     Push_Frame(nullptr, f);
 
     while (NOT_END(f_value)) {
-        if (Eval_Step_Maybe_Stale_Throws(RESET(OUT), f)) {
+        if (Eval_Step_Throws(OUT, f)) {
             Abort_Frame(f);
             return_thrown (OUT);
         }
@@ -718,12 +717,12 @@ REBNATIVE(case)
         // true/false answer *and* know what the right hand argument was, for
         // full case coverage and for DEFAULT to work.
 
-        if (Eval_Step_Maybe_Stale_Throws(SPARE, f)) {
+        if (Eval_Step_Throws(SPARE, f)) {
             Move_Cell(OUT, SPARE);
             goto threw;
         }
 
-        if (Is_Stale(SPARE))  // skip void expressions, see [1]
+        if (Is_Void(SPARE))  // skip void expressions, see [1]
             continue;
 
         if (IS_END(f_value))
@@ -861,12 +860,10 @@ REBNATIVE(switch)
         // !!! Advanced frame tricks *might* make this possible for N-ary
         // functions, the same way `match parse "aaa" [some "a"]` => "aaa"
 
-        if (Eval_Step_Maybe_Stale_Throws(SPARE, f)) {
+        if (Eval_Step_Throws(SPARE, f)) {
             Move_Cell(OUT, SPARE);
             goto threw;
         }
-
-        Clear_Stale_Flag(SPARE);
 
         if (Is_Void(SPARE))  // skip comments or failed conditionals
             continue;  // see note [2] in comments for CASE

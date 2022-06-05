@@ -839,13 +839,11 @@ static void Run_Va_Translucent_May_Fail(
         Eval_Sigmask &= ~SIG_HALT;  // disable
 
     DECLARE_VA_FEED (feed, p, vaptr, flags);
-    bool threw = Do_Feed_To_End_Maybe_Stale_Throws(
+    bool threw = Do_Feed_To_End_Throws(
         out,
         feed,
         EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
     );
-
-    Clear_Stale_Flag(out);
 
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
     Eval_Sigmask = saved_sigmask;
@@ -898,19 +896,20 @@ inline static void Run_Va_May_Fail(
 // This function runs one evaluation step, and allows you to say whether the
 // step must consume all input or not.  The output is written into a cell
 // that is provided--which is not something the API should do--especially
-// considering that this can evaluate to an "END" cell.
+// considering that this can evaluate to a void cell.
 //
 bool RL_rebRunMaybeStaleThrows(
     REBVAL *out,
     bool fully,
     const void *p, va_list *vaptr
 ){
-    bool threw = Eval_Step_In_Va_Maybe_Stale_Throws(
+    bool threw = Eval_Step_In_Va_Throws(
         out,
         FEED_MASK_DEFAULT,
         p,  // first argument (C variadic protocol: at least 1 normal arg)
         vaptr,  // va_end() handled by Eval_Va_Core on success/fail/throw
         EVAL_MASK_DEFAULT
+            | EVAL_FLAG_MAYBE_STALE
             | (fully ? EVAL_FLAG_NO_RESIDUE : 0)
     );
 
@@ -934,6 +933,7 @@ bool RL_rebRunThrows(
     if (RL_rebRunMaybeStaleThrows(out, fully, p, vaptr))
         return true;
 
+    Clear_Stale_Flag(out);
     Reify_Eval_Out_Plain(out);
 
     return false;
