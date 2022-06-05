@@ -415,6 +415,28 @@ default-combinators: make map! reduce [
         fail ~unreachable~
     ]
 
+    'cycle combinator [
+        {Run the body parser continuously in a loop until BREAK or STOP}
+        return: "Result of last body parser (or none if failure)"
+            [<opt> any-value!]
+        parser [action!]
+        <local> result' last-result' pos
+    ][
+        append state.loops binding of 'return
+
+        last-result': @void
+
+        cycle [
+            ([^result' pos]: parser input) then [
+                input: pos
+                last-result': result'
+            ] else [
+                last-result': '~
+            ]
+        ]
+        fail ~unreachable~
+    ]
+
     'tally combinator [
         {Iterate a rule and count the number of times it matches}
         return: "Number of matches (can be 0)"
