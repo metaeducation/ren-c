@@ -2391,7 +2391,7 @@ REBNATIVE(decay)
 //
 //  "Turn NULL, BLANK! and #[false] into their corresponding isotopes"
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> <void> any-value!]
 //      ^optional [<opt> any-value!]
 //  ]
 //
