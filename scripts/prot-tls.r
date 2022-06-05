@@ -2051,8 +2051,8 @@ sys.make-scheme [
             if port.data [copy port.data]
         ]
 
-        query: func [port [port!]] [
-            all [port.state query port.state.connection]
+        query: func [return: [<opt> object!] port [port!]] [
+            all [port.state, query port.state.connection]
         ]
     ]
 ]

@@ -733,10 +733,12 @@ sys.make-scheme [
         ]
 
         query: func [
+            return: [<opt> object!]
             port [port!]
             <local> error state
         ][
-            if state: port.state [
+            all [
+                state: port.state
                 state.info
             ]
         ]
