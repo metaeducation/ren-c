@@ -46,15 +46,19 @@
 ; continue cycle
 (
     success: true
-    for i each [1] [continue, success: false]
-    success
+    did all [
+        none? for i each [1] [continue, success: false]
+        success
+    ]
 )
 ; zero repetition
 (
     success: true
     blk: []
-    for i each blk [success: false]
-    success
+    did all [
+        void? for i each blk [success: false]
+        success
+    ]
 )
 ; Test that return stops the loop
 (

@@ -1822,7 +1822,7 @@ REBNATIVE(repeat)
 //  {Evaluates a branch a number of times or over a series, return last result}
 //
 //      return: "Last body result, or NULL if BREAK"
-//          [<opt> any-value!]
+//          [<opt> <void> any-value!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
 //      value "Maximum number or series to traverse"
