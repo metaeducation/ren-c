@@ -430,12 +430,11 @@ REBNATIVE(do)
         UNUSED(REF(args)); // detected via `value? :arg`
 
         if (rebRunThrows(
-            RESET(OUT),
-            true,  // fully = true, error if not all arguments consumed
+            OUT,  // <-- output cell
             Sys(SYM_DO_P),
-            source,
-            rebQ(REF(args)),
-            REF(only) ? Lib(TRUE) : Lib(FALSE)
+                source,
+                rebQ(REF(args)),
+                REF(only) ? Lib(TRUE) : Lib(FALSE)
         )){
             return_thrown (OUT);
         }

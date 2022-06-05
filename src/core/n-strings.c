@@ -179,8 +179,7 @@ REBNATIVE(delimit)
 
                 Move_Cell(SPARE, OUT);
                 if (rebRunThrows(
-                    OUT,
-                    true,
+                    OUT,  // <-- output cell
                     Lib(APPEND), Lib(COPY), EMPTY_TEXT, rebQ(SPARE)
                 )){
                     Drop_Mold(mo);

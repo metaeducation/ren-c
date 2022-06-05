@@ -857,8 +857,7 @@ void Pick_From_Gob(
     if (IS_INTEGER(picker)) {
         DECLARE_LOCAL(temp);
         if (rebRunThrows(
-            temp,
-            true,
+            temp,  // <-- output cell
             Lib(PICK),
                 "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
                 "@", SPECIFIC(picker)

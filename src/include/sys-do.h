@@ -55,6 +55,11 @@
 //
 
 
+#define rebRunThrows(out,...) \
+    rebRunCoreThrows(RESET(out), EVAL_MASK_DEFAULT | EVAL_FLAG_NO_RESIDUE, \
+        __VA_ARGS__)
+
+
 // This helper routine is able to take an arbitrary input cell to start with
 // that may not be END.  It is code that DO shares with GROUP! evaluation
 // in Eval_Core()--where being able to know if a group "completely vaporized"
@@ -219,8 +224,7 @@ inline static bool Do_Branch_Core_Throws(
             }
         }
         bool threw = rebRunThrows(
-            RESET(out),
-            false,  // !fully, e.g. arity-0 functions can ignore condition
+            out,
             branch,
             (condition != nullptr and IS_END(condition))
                 ? rebEND

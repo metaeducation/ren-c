@@ -888,19 +888,25 @@ inline static void Run_Va_May_Fail(
 
 
 //
-//  rebRunMaybeStaleThrows: RL_API
+//  rebRunCoreThrows: RL_API
 //
 // Most API routines (rebValue(), rebDid(), etc.) have no way of handling
 // thrown values or invisibles.  They also run more than one step.
 //
 // This function runs one evaluation step, and allows you to say whether the
-// step must consume all input or not.  The output is written into a cell
-// that is provided--which is not something the API should do--especially
-// considering that this can evaluate to a void cell.
+// step must consume all input or not (see EVAL_FLAG_NO_RESIDUE).
 //
-bool RL_rebRunMaybeStaleThrows(
+// The output is written into a cell that is provided--which is not something
+// the API should do--especially considering that this can evaluate to a void
+// cell.  But it's in the API file because we want the wrapping machinery
+// that handles the variadics to be applied here.
+//
+// There is a rebRunThrows() macro that passes in the flags EVAL_MASK_DEFAULT
+// and EVAL_FLAG_NO_RESIDUE defined in %sys-do.h
+//
+bool RL_rebRunCoreThrows(
     REBVAL *out,
-    bool fully,
+    uintptr_t flags,  // REBFLGS not exported in API
     const void *p, va_list *vaptr
 ){
     bool threw = Eval_Step_In_Va_Throws(
@@ -908,35 +914,10 @@ bool RL_rebRunMaybeStaleThrows(
         FEED_MASK_DEFAULT,
         p,  // first argument (C variadic protocol: at least 1 normal arg)
         vaptr,  // va_end() handled by Eval_Va_Core on success/fail/throw
-        EVAL_MASK_DEFAULT
-            | EVAL_FLAG_MAYBE_STALE
-            | (fully ? EVAL_FLAG_NO_RESIDUE : 0)
+        flags
     );
 
     return threw;
-}
-
-
-//
-//  rebRunThrows: RL_API
-//
-// Variant of rebRunMaybeStaleThrows() that will set the output cell to void
-// in case of a completely invisible evaluation.
-//
-bool RL_rebRunThrows(
-    REBVAL *out,
-    bool fully,
-    const void *p, va_list *vaptr
-){
-    assert(Is_Fresh(out));  // caller should wipe out input
-
-    if (RL_rebRunMaybeStaleThrows(out, fully, p, vaptr))
-        return true;
-
-    Clear_Stale_Flag(out);
-    Reify_Eval_Out_Plain(out);
-
-    return false;
 }
 
 

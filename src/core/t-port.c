@@ -53,12 +53,14 @@ REB_R MAKE_Port(
     if (parent)
         fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    const bool fully = true; // error if not all arguments consumed
-
     assert(not IS_NULLED(arg)); // API would require NULLIFY_NULLED
 
-    if (rebRunThrows(out, fully, Sys(SYM_MAKE_PORT_P), rebQ(arg)))
+    if (rebRunThrows(
+        out,  // <-- output cell
+        Sys(SYM_MAKE_PORT_P), rebQ(arg)
+    )){
         fail (Error_No_Catch_For_Throw(out));
+    }
 
     if (not IS_PORT(out))  // should always create a port
         fail (out);

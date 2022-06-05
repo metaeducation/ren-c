@@ -111,7 +111,10 @@ REBNATIVE(write_stdout)
     // cell...but ISSUE! has no position.  Alias it as a read-only TEXT!.
     //
     if (IS_ISSUE(v)) {
-        bool threw = rebRunThrows(SPARE, true, Lib(AS), Lib(TEXT_X), v);
+        bool threw = rebRunThrows(
+            SPARE,  // <-- output cell
+            Lib(AS), Lib(TEXT_X), v
+        );
         assert(not threw);
         UNUSED(threw);
         Move_Cell(v, SPARE);
@@ -178,8 +181,12 @@ REBNATIVE(read_stdin)
 
   #ifdef REBOL_SMART_CONSOLE
     if (Term_IO) {
-        if (rebRunThrows(RESET(OUT), true, "as binary! try read-line"))
+        if (rebRunThrows(
+            OUT,  // <-- output cell
+            "as binary! try read-line"
+        )){
             return_thrown (OUT);
+        }
         return OUT;
     }
     else  // we have a smart console but aren't using it (redirected to file?)

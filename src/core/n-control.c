@@ -388,12 +388,16 @@ REBNATIVE(match)
             return nullptr;
         break;
 
-      case REB_ACTION:
-        if (rebRunThrows(SPARE, true, test, rebQ(v)))
+      case REB_ACTION: {
+        if (rebRunThrows(
+            SPARE,  // <-- output cell
+            test, rebQ(v)
+        )){
             return_thrown (SPARE);
+        }
         if (IS_FALSEY(SPARE))
             return nullptr;
-        break;
+        break; }
 
       default:
         fail (PAR(test));  // all test types should be accounted for in switch
@@ -536,10 +540,8 @@ REBNATIVE(all)
         }
         else {
             if (rebRunThrows(
-                RESET(SPARE),
-                true,
-                predicate,
-                rebQ(NULLIFY_NULLED(OUT))
+                SPARE,  // <-- output cell
+                predicate, rebQ(NULLIFY_NULLED(OUT))
             )){
                 return_thrown (SPARE);
             }
@@ -614,10 +616,8 @@ REBNATIVE(any)
         }
         else {
             if (rebRunThrows(
-                RESET(SPARE),
-                true,
-                predicate,
-                rebQ(NULLIFY_NULLED(OUT))
+                SPARE,  // <-- output cell
+                predicate, rebQ(NULLIFY_NULLED(OUT))
             )){
                 return_thrown (SPARE);
             }
@@ -739,9 +739,7 @@ REBNATIVE(case)
             DECLARE_LOCAL (temp);
             if (rebRunThrows(
                 temp,  // target of rebRun() is kept GC-safe by evaluator
-                true,  // fully = true (e.g. argument must be taken)
-                predicate,
-                rebQ(SPARE)  // argument
+                predicate, rebQ(SPARE)
             )){
                 Move_Cell(OUT, temp);
                 goto threw;
@@ -904,11 +902,10 @@ REBNATIVE(switch)
             //
             DECLARE_LOCAL (temp);
             if (rebRunThrows(
-                temp,
-                true,  // fully = true (e.g. both arguments must be taken)
+                temp,  // <-- output cell
                 predicate,
-                rebQ(left),  // first arg (left hand side if infix)
-                rebQ(SPARE)  // second arg (right hand side if infix)
+                    rebQ(left),  // first arg (left hand side if infix)
+                    rebQ(SPARE)  // second arg (right hand side if infix)
             )){
                 Move_Cell(OUT, temp);
                 goto threw;
@@ -936,10 +933,9 @@ REBNATIVE(switch)
             if (IS_ACTION(f_value)) {  // must have been COMPOSE'd in cases
                 DECLARE_LOCAL (temp);
                 if (rebRunThrows(
-                    temp,
-                    false,  // fully = false, e.g. arity-0 functions are ok
+                    temp,  // <-- output cell
                     SPECIFIC(f_value),  // actions don't need specifiers
-                    rebQ(OUT)
+                        rebQ(OUT)
                 )){
                     Move_Cell(OUT, temp);
                     goto threw;

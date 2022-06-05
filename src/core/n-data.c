@@ -696,7 +696,10 @@ bool Get_Var_Push_Refinements_Throws(
         Move_Cell(temp, out);
         Quotify(temp, 1);
         const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
-        if (rebRunThrows(out, true, Lib(PICK_P), temp, ins)) {
+        if (rebRunThrows(
+            out,  // <-- output cell
+            Lib(PICK_P), temp, ins
+        )){
             DS_DROP_TO(dsp_orig);
             DROP_GC_GUARD(temp);
             fail (Error_No_Catch_For_Throw(out));
@@ -1200,7 +1203,10 @@ bool Set_Var_Core_Updater_Throws(
         Move_Cell(temp, out);
         Quotify(temp, 1);
         const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
-        if (rebRunThrows(out, true, Lib(PICK_P), temp, ins)) {
+        if (rebRunThrows(
+            out,  // <-- output cell
+            Lib(PICK_P), temp, ins
+        )){
             DROP_GC_GUARD(temp);
             DROP_GC_GUARD(writeback);
             fail (Error_No_Catch_For_Throw(out));  // don't let PICKs throw
@@ -1213,7 +1219,10 @@ bool Set_Var_Core_Updater_Throws(
     Move_Cell(temp, out);
     Quotify(temp, 1);
     const void *ins = rebQ(cast(REBVAL*, DS_AT(dsp_at)));
-    if (rebRunThrows(out, true, updater, temp, ins, rebQ(decayed))) {
+    if (rebRunThrows(
+        out,  // <-- output cell
+        updater, temp, ins, rebQ(decayed)
+    )){
         DROP_GC_GUARD(temp);
         DROP_GC_GUARD(writeback);
         fail (Error_No_Catch_For_Throw(out));  // don't let POKEs throw

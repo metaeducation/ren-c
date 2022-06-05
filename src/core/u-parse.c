@@ -1119,7 +1119,7 @@ static void Handle_Mark_Rule(
         DECLARE_LOCAL (temp);
         Quotify(Derelativize(OUT, rule, specifier), 1);
         if (rebRunThrows(
-            temp, true,
+            temp,  // <-- output cell
             Lib(SET), OUT, ARG(position)
         )){
             fail (Error_No_Catch_For_Throw(OUT));
@@ -2733,15 +2733,21 @@ REBNATIVE(parse_p)
     REBVAL *rules = ARG(rules);
 
     if (ANY_SEQUENCE(input)) {
-        if (rebRunThrows(SPARE, true, Lib(AS), Lib(BLOCK_X), rebQ(input)))
+        if (rebRunThrows(
+            SPARE,  // <-- output cell
+            Lib(AS), Lib(BLOCK_X), rebQ(input)
+        )){
             return_thrown (SPARE);
-
+        }
         Move_Cell(input, SPARE);
     }
     else if (IS_URL(input)) {
-        if (rebRunThrows(SPARE, true, Lib(AS), Lib(TEXT_X), input))
+        if (rebRunThrows(
+            SPARE,  // <-- output cell
+            Lib(AS), Lib(TEXT_X), input
+        )){
             return_thrown (SPARE);
-
+        }
         Move_Cell(input, SPARE);
     }
 

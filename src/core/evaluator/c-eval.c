@@ -1290,8 +1290,12 @@ bool Eval_Core_Throws(REBFRM * const f)
       case REB_GET_BLOCK: {
         Derelativize(SPARE, v, v_specifier);
         mutable_HEART_BYTE(SPARE) = mutable_KIND3Q_BYTE(SPARE) = REB_BLOCK;
-        if (rebRunThrows(OUT, true, Lib(REDUCE), SPARE))
+        if (rebRunThrows(
+            OUT,  // <-- output cell
+            Lib(REDUCE), SPARE
+        )){
             goto return_thrown;
+        }
         break; }
 
 

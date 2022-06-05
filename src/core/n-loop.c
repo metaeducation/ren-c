@@ -1858,8 +1858,7 @@ REBNATIVE(for)
         // way around, with FOR-EACH delegating to FOR).
         //
         if (rebRunThrows(
-            RESET(OUT),
-            true,
+            OUT,  // <-- output cell
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         )){
             return_thrown (OUT);

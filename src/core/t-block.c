@@ -553,15 +553,12 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
 {
     struct sort_flags *flags = cast(struct sort_flags*, arg);
 
-    const bool fully = true; // error if not all arguments consumed
-
     DECLARE_LOCAL (result);
     if (rebRunThrows(
-        result,
-        fully,
+        result,  // <-- output cell
         flags->comparator,
-        flags->reverse ? v1 : v2,
-        flags->reverse ? v2 : v1
+            flags->reverse ? v1 : v2,
+            flags->reverse ? v2 : v1
     )){
         fail (Error_No_Catch_For_Throw(result));
     }

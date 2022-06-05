@@ -97,8 +97,7 @@ bool Make_Invokable_From_Feed_Throws(
     // needs review.
     //
     if (IS_END(v)) {
-        if (rebRunThrows(out, true, "make frame! :void"))
-            return true;
+        Mark_Eval_Out_Voided(out);
         return false;
     }
 
