@@ -381,6 +381,40 @@ default-combinators: make map! reduce [
         fail ~unreachable~
     ]
 
+    'uwhile combinator [
+        {Run the body parser in a loop, for as long as condition matches}
+        return: "Result of last body parser (or none if failure)"
+            [<opt> any-value!]
+        condition-parser [action!]
+        body-parser [action!]
+        <local> result' last-result' pos
+    ][
+        append state.loops binding of 'return
+
+        last-result': '~void~
+
+        cycle [
+            ([# pos]: condition-parser input) else [
+                take/last state.loops
+                set remainder input
+                return unmeta last-result'
+            ]
+
+            input: pos
+
+            ; We don't worry about the body parser's success or failure, but
+            ; we do want to update the position and last result on success.
+            ;
+            ([^result' pos]: body-parser input) then [
+                input: pos
+                last-result': result'
+            ] else [
+                last-result': '~
+            ]
+        ]
+        fail ~unreachable~
+    ]
+
     'tally combinator [
         {Iterate a rule and count the number of times it matches}
         return: "Number of matches (can be 0)"
