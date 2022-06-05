@@ -2197,9 +2197,7 @@ default-combinators: make map! reduce [
                     fail ["The ANY combinator requires a BLOCK! of alternates"]
                 ]
             ]
-            the-block! [
-                block: as block! :arg
-            ]
+            block! [block: arg]
         ] else [
             fail [
                 "The ANY combinator in UPARSE is not an iterating construct."
