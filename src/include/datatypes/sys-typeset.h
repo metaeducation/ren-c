@@ -383,6 +383,9 @@ inline static bool Typecheck_Including_Constraints(
         else if (IS_NULLED(v)) {
             kind = REB_NULL;  // meaningful to check <opt> for ^META
         }
+        else if (IS_THE_WORD(v)) {
+            return true;  // for @void and @end
+        }
         else {
             assert(IS_QUOTED(v));  // must be quoted otherwise
             if (VAL_NUM_QUOTES(v) > 1)

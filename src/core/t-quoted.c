@@ -295,7 +295,7 @@ REBNATIVE(quote)
 //  {Turns BAD-WORD! isotopes into plain BAD-WORD!, ignores NULL, quotes rest}
 //
 //      return: "Will be invisible if input is purely invisible (see META*)"
-//          [<void> <opt> any-value!]
+//          [<void> <opt> quoted! bad-word!]
 //      ^optional [<void> <opt> any-value!]
 //  ]
 //
@@ -317,7 +317,7 @@ REBNATIVE(meta)
 //
 //  {Behavior of ^^ symbol, gives ~void~ BAD-WORD! vs. passing through voids}
 //
-//      return: [<opt> any-value!]
+//      return: [<opt> quoted! bad-word! the-word!]
 //      ^optional [<opt> <void> any-value!]
 //  ]
 //
@@ -368,7 +368,7 @@ REBNATIVE(unquote)
 //
 //      return: [<opt> <void> any-value!]
 //      ^value "Taken as ^META for passthru tolerance of pure and isotope void"
-//          [<opt> <void> quoted! bad-word!]
+//          [<opt> <void> quoted! the-word! bad-word!]
 //  ]
 //
 REBNATIVE(unmeta)
@@ -417,7 +417,7 @@ REBNATIVE(unmeta)
     assert(IS_QUOTED(v));  // handling the invisibility detour is done now...
     Unquotify(v, 1);  // drop quote level caused by ^META parameter convention
 
-    if (Is_Meta_End(v))
+    if (Is_Meta_Of_End(v))
         fail ("END not processed by UNMETA at this time");
 
     if (Is_Meta_Of_Void(v))

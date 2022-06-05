@@ -17,7 +17,7 @@
     ]
 
     did all [
-        '~void~ = ^ n-add 10 20
+        @void = ^ n-add 10 20
         25 = n-add 20 20
     ]
 )
@@ -60,7 +60,7 @@
         return eval f  ; now try unquoting
     ]
     did all [
-        '~void~ = ^(outer)
+        @void = ^(outer)
         var = 1020
     ]
 )]

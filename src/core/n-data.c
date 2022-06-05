@@ -2428,6 +2428,9 @@ REBNATIVE(reify)
     if (IS_NULLED(v))
         return Init_Bad_Word(OUT, Canon(NULL));
 
+    if (Is_Void(v))
+        return Init_Bad_Word(OUT, Canon(VOID));
+
     if (IS_BAD_WORD(v))  // e.g. the input was an isotope form
         return v;
 

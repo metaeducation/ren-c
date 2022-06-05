@@ -51,7 +51,7 @@
     ]
 )
 
-('~void~ = ^ every x [] [fail ~unreachable~])
+(@void = ^ every x [] [fail ~unreachable~])
 
 
 ('~ = ^ every x [1 2 3 4] [maybe if odd? x [x]])

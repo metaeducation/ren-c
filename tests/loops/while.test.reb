@@ -10,7 +10,7 @@
     num: 0
     1 = while [num < 1] [num: num + 1]
 )]
-('~void~ = ^ while [false] [])
+(@void = ^ while [false] [])
 ; zero repetition
 (
     success: true

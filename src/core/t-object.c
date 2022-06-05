@@ -515,20 +515,25 @@ REB_R MAKE_Frame(
     //
     if (IS_VARARGS(arg)) {
         REBFRM *f_varargs;
-        if (not Is_Frame_Style_Varargs_May_Fail(&f_varargs, arg))
-            fail (
-                "Currently MAKE FRAME! on a VARARGS! only works with a varargs"
-                " which is tied to an existing, running frame--not one that is"
-                " being simulated from a BLOCK! (e.g. MAKE VARARGS! [...])"
-            );
+        REBFED *feed;
+        if (Is_Frame_Style_Varargs_May_Fail(&f_varargs, arg)) {
+            assert(Is_Action_Frame(f_varargs));
+            feed = f_varargs->feed;
+        }
+        else {
+            REBVAL *shared;
+            if (not Is_Block_Style_Varargs(&shared, arg))
+                fail ("Expected BLOCK!-style varargs");  // shouldn't happen
 
-        assert(Is_Action_Frame(f_varargs));
+            DECLARE_FEED_AT_CORE(blockfeed, shared, SPECIFIED);
+            feed = blockfeed;
+        }
 
         bool error_on_deferred = true;
         if (Make_Frame_From_Feed_Throws(
             out,
             END_CELL,
-            f_varargs->feed,
+            feed,
             error_on_deferred
         )){
             return R_THROWN;

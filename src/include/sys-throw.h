@@ -127,6 +127,7 @@ inline static REB_R Init_Thrown_With_Label_Meta(
         IS_NULLED(arg)
         or IS_BAD_WORD(arg)
         or IS_QUOTED(arg)
+        or IS_THE_WORD(arg)
     );
     Copy_Cell(&TG_Thrown_Arg, arg);
     return Init_Thrown_Core(out, label);

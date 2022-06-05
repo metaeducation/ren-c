@@ -59,11 +59,11 @@
 
 ; ~void~ isotopes are considered vaporizations, other isotopes are errors
 [
-    ("Hello World" = spaced ["Hello" ~void~ "World"])
+    ("Hello World" = spaced ["Hello" void "World"])
     ("Hello World" = spaced ["Hello" if false ["Cruel"] "World"])
     ("Hello World" = spaced compose ["Hello" (if false ["Cruel"]) "World"])
 
-    ("HelloWorld" = unspaced ["Hello" ~void~ "World"])
+    ("HelloWorld" = unspaced ["Hello" void "World"])
     (
         f: make frame! :void
         "HelloWorld" = unspaced ["Hello" eval f "World"]

@@ -4,19 +4,19 @@
 
 ; The only way to see vanishing stuff is with meta operations.
 [
-    ('~void~ = ^())
-    ('~void~ = ^(comment "hi"))
-    ('~void~ = ^(void))
+    (@void = ^())
+    (@void = ^(comment "hi"))
+    (@void = ^(void))
 
-    ('~void~ = ^(maybe comment "hi"))
-    ('~void~ = ^(maybe void))
+    (@void = ^(maybe comment "hi"))
+    (@void = ^(maybe void))
 
-    ('~void~ = ^ ())
-    ('~void~ = ^ (comment "hi"))
-    ('~void~ = ^ (void))
+    (@void = ^ ())
+    (@void = ^ (comment "hi"))
+    (@void = ^ (void))
 
-    ('~void~ = ^ (maybe comment "hi"))
-    ('~void~ = ^ (maybe void))
+    (@void = ^ (maybe comment "hi"))
+    (@void = ^ (maybe void))
 ]
 
 ((the '10) = ^(10 comment "hi"))

@@ -147,6 +147,22 @@ export console!: make object! [
             return
         ]
 
+        === DISPLAY VOID AS IF IT WERE A COMMENT, ALSO ===
+
+        if v = @void [  ; true void's ^META state
+            ;
+            ; There are isotope states of ~void~, but they are used as
+            ; placeholders in frames that receive void parameters.  When a
+            ; frame is executed, those isotopes are interpreted as true void
+            ; states since as isotopes they cannot be actually used in frame
+            ; slots.
+            ;
+            ; So the @void signal portrays the actual state of a void.
+            ;
+            print "; void (decays to none)"
+            return
+        ]
+
         === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
 
         if v = '~ [  ; "none" isotope, don't show
@@ -188,7 +204,6 @@ export console!: make object! [
 
         if let d: select [
             ~null~ "null"
-            ~void~ "none"
             ~false~ "false"
             ~blank~ "blank"
             ~blackhole~ "#"
@@ -197,11 +212,11 @@ export console!: make object! [
             ; a note that they are unstable to help ground users when they see
             ; behaviors that might appear confusing:
             ;
-            ;     >> x: if false [<a>]
-            ;     == ~void~  ; isotope (decays to none)
+            ;     >> x: match logic! false
+            ;     == ~false~  ; isotope (decays to false)
             ;
             ;     >> get/any 'x
-            ;     ; this gives ~ isotope (a.k.a. none, not shown by console)
+            ;     == #[false]
             ;
             print unspaced [
                 result _ mold v _ _ {;} _ {isotope} _ "(" {decays to} _ d ")"
@@ -455,7 +470,7 @@ ext-console-impl: func [
     prior "BLOCK! or GROUP! that last invocation of HOST-CONSOLE requested"
         [blank! block! group!]
     result "^META result from evaluating PRIOR, or non-quoted error"
-        [<opt> blank! quoted! bad-word! error!]
+        [<opt> the-word! quoted! bad-word! error!]
     resumable "Is the RESUME function allowed to exit this console"
         [logic!]
     skin "Console skin to use if the console has to be launched"
@@ -729,9 +744,9 @@ ext-console-impl: func [
 
     === HANDLE RESULT FROM EXECUTION OF CODE ON USER'S BEHALF ===
 
-    ensure [<opt> blank! quoted! bad-word!] result
+    ensure [<opt> the-word! quoted! bad-word!] result
 
-    if blank? result [
+    if result = @void [
         ;
         ; !!! You can get nothing from an empty string, and having that print
         ; out "; void" is somewhat pedantic if you're just hitting enter to

@@ -160,7 +160,7 @@
     ; for UNMETA to be willing to take isotopes and return them as-is instead
     ; of raising an error, and that plays to our advantage here.
 
-    ('~void~ = ^ for-both x [] [] [fail "Body Never Runs"])
+    (@void = ^ for-both x [] [] [fail "Body Never Runs"])
     (
         <something> = do [
             <something>

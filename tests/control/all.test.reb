@@ -5,7 +5,7 @@
 ; some cases, many more benefits arise from being able to let it count as
 ; a kind of "non-vote", as a ~void~ isotope.
 [
-    ('~void~ = ^ all [])
+    (@void = ^ all [])
     (
         e: trap [if all [] [<safety>]]
         e.id = 'isotope-arg
@@ -17,8 +17,8 @@
             (unset? 'x)
         ]
     )
-    ('~void~ = ^ if did all [] [<did>])
-    ('~void~ = ^ all [] then [<then>])
+    (@void = ^ if did all [] [<did>])
+    (@void = ^ all [] then [<then>])
     (<else> = all [] else [<else>])
 
     (3 = (1 + 2 all []))
@@ -395,7 +395,7 @@
 
 ; When used with @ blocks, ALL will treat the block as already reduced
 [
-    ('~void~ = ^ all @[])
+    (@void = ^ all @[])
 
     (2 = all @[1 + 2])
     (null = all inert reduce [true true #[false]])

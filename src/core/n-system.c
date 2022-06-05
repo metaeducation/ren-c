@@ -63,7 +63,7 @@ REBNATIVE(quit)
 
     if (
         Is_Meta_Of_Void(v)  // (quit if false [<unused>])
-        or Is_Meta_End(v)  // (quit)
+        or Is_Meta_Of_End(v)  // (quit)
     ){
         // This returns an isotope if there is no arg, and labels it ~quit~
         // It's a pretty good generic signal of what happened if there's not

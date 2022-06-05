@@ -276,14 +276,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
 
             if (Was_Eval_Step_Void(OUT)) {
-                if (pclass == PARAM_CLASS_META) {
-                    if (GET_PARAM_FLAG(PARAM, VANISHABLE))
-                        Init_Meta_Of_Void(ARG);
-                    else
-                        fail (Error_Bad_Void());
-                }
-                else
-                    fail (Error_Bad_Void());
+                Init_Void_Isotope(ARG);
                 goto continue_fulfilling;
             }
 
@@ -317,13 +310,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                     goto continue_fulfilling;
                 }
 
-                if (NOT_PARAM_FLAG(PARAM, ENDABLE))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
-
-                if (pclass == PARAM_CLASS_META)
-                    Init_Meta_End(ARG);  // no other way to make ~end~
-                else
-                    Init_Nulled(ARG);  // conflation is unavoidable
+                Init_End_Isotope(ARG);
                 goto continue_fulfilling;
             }
 
@@ -344,7 +331,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
               case PARAM_CLASS_NORMAL:
               case PARAM_CLASS_OUTPUT:
                 if (Is_Void(OUT))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+                    Init_Void_Isotope(ARG);
                 else {
                     Copy_Cell(ARG, OUT);
                     if (GET_CELL_FLAG(OUT, UNEVALUATED))
@@ -503,13 +490,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
   //=//// ERROR ON END MARKER, BAR! IF APPLICABLE /////////////////////////=//
 
         if (IS_END(f_next)) {
-            if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
-
-            if (pclass == PARAM_CLASS_META)
-                Init_Meta_End(ARG);
-            else
-                Init_Nulled(ARG);  // no way to avoid conflation
+            Init_End_Isotope(ARG);
             goto continue_fulfilling;
         }
 
@@ -521,13 +502,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
           case PARAM_CLASS_OUTPUT:
           case PARAM_CLASS_META: {
             if (GET_FEED_FLAG(f->feed, BARRIER_HIT) or IS_END(f_next)) {
-                if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
-
-                if (pclass == PARAM_CLASS_META)
-                    Init_Meta_End(ARG);
-                else
-                    Init_Nulled(ARG);
+                Init_End_Isotope(ARG);
                 goto continue_fulfilling;
             }
 
@@ -539,30 +514,15 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 goto abort_action;
             }
 
-            if (pclass == PARAM_CLASS_META) {
-                if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
-                    if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                        fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
-                    Init_Meta_End(ARG);
-                }
-                else if (
-                    Is_Void(ARG)
-                    and NOT_PARAM_FLAG(f->param, VANISHABLE)
-                ){
-                    fail (Error_Bad_Void());
-                }
-                else
-                    Reify_Eval_Out_Meta(ARG);
+            if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
+                Init_End_Isotope(ARG);
+                goto continue_fulfilling;
             }
-            else {
-                if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
-                    if (NOT_PARAM_FLAG(f->param, ENDABLE))
-                        fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
-                    Init_Nulled(ARG);
-                }
-                else
-                    Reify_Eval_Out_Plain(ARG);
-            }
+
+            if (pclass == PARAM_CLASS_META)
+                Reify_Eval_Out_Meta(ARG);
+            else
+                Reify_Eval_Out_Plain(ARG);
             break; }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
@@ -785,7 +745,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
     f->param = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
-        assert(NOT_END(ARG));  // all END should be ~void~ or NULL by now
+        assert(not Is_Void(ARG));
 
         // Note that if you have a redo situation as with an ENCLOSE, a
         // specialized out parameter becomes visible in the frame and can be
@@ -794,6 +754,30 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         //
         if (Is_Specialized(PARAM))
             continue;
+
+        if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
+            continue;  // !!! hack
+
+        if (Is_End_Isotope(ARG)) {
+            if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+                fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+
+            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
+                Init_Meta_Of_End(ARG);  // no other way to make ~end~
+            else
+                Init_Nulled(ARG);  // conflation is unavoidable
+            continue;
+        }
+
+        if (Is_Void_Isotope(ARG)) {
+            if (NOT_PARAM_FLAG(PARAM, VANISHABLE))
+                fail (Error_Bad_Void());
+
+            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
+                Init_Meta_Of_Void(ARG);
+            else
+                Init_Nulled(ARG);  // conflation is unavoidable
+        }
 
         // We can't a-priori typecheck the variadic argument, since the values
         // aren't calculated until the function starts running.  Instead we
@@ -827,8 +811,6 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             continue;
         }
 
-        if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
-            continue;  // !!! hack
 
         // Refinements have a special rule beyond plain type checking, in that
         // they don't just want an ISSUE! or NULL, they want # or NULL.
@@ -869,11 +851,11 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 kind_byte != REB_BAD_WORD
                 and kind_byte != REB_NULL
                 and kind_byte != REB_BLANK
-                and kind_byte != REB_ISSUE  // blackhole
+                and kind_byte != REB_THE_WORD  // @end or @void
                 and not IS_QUOTED_KIND(kind_byte)
             ){
                 fail (
-                    "^META arguments must be one of [<null> bad-word! quoted!]"
+                    "^META arguments only [<null> bad-word! the-word! quoted!]"
                 );
             }
         }

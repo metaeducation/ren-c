@@ -74,6 +74,12 @@
 //   of ~trash~ in the release build.
 //
 
+inline static REBVAL *Init_Any_Word_Untracked(
+    RELVAL *out,
+    enum Reb_Kind kind,
+    const REBSYM *sym
+);
+
 
 // Note: Init_Bad_Word_Untracked() forward-declared in %sys-trash.h
 
@@ -133,9 +139,6 @@ inline static REBVAL *Init_Isotope_Untracked(
     RELVAL *out,
     option(const REBSYM*) label
 ){
-    assert(label != Canon(VOID));  // "~void~ isotopes" are never reified
-    assert(label != Canon(END));  // ~end~ BAD-WORD! is a ^META-signal only
-
     return Init_Bad_Word_Untracked(out, label, CELL_FLAG_ISOTOPE);
 }
 
@@ -178,29 +181,35 @@ inline static bool Is_Meta_Of_None(const RELVAL *v)
   { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_0; }
 
 
-//=//// "VOID ISOTOPE" (does not exist as reified state) ///////////////////=//
+//=//// VOID ISOTOPES AND VOID META STATE (@void) /////////////////////////=//
 //
 // Void states are actually just CELL_FLAG_OUT_NOTE_VOIDED on top of
 // an empty cell, to indicate something that has "invisible intent" but did
-// not actually vanish.  We call them "~void~ isotopes" because you can make
-// this state with a BAD-WORD!, you just can't store it:
+// not actually vanish.
 //
 //     >> x: ~void~
-//     == ~void~  ; isotope (decays to none)
+//     ; void (decays to none)
 //
 //     >> get/any 'x
 //     == ~  ; isotope (none, e.g. x is unset)
 //
-// There is thus no such thing as "Init_Void_Isotope()"; all instances that
-// encounter the void ephemeral state must either pass on the hot potato of
-// that state to another evaluative chain, reify it as something else, or
-// raise an error.
+// The isotope state exists to be used in frames as a signal of void intent,
+// but since it is reified it lays claim to the BAD-WORD! ~void~ when ^META'd.
+// True void is @void to distinguish it.
 //
 
-#define Init_Meta_Of_Void(out)   Init_Bad_Word((out), Canon(VOID))
+#define Init_Void_Isotope(out)              Init_Isotope((out), Canon(VOID))
+#define Is_Void_Isotope(v)                  Is_Isotope_With_Id(v, SYM_VOID)
+#define Init_Meta_Of_Void_Isotope(out)      Init_Bad_Word((out), Canon(VOID))
+
+inline static bool Is_Meta_Of_Void_Isotope(const RELVAL *v)
+  { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(VOID); }
+
+#define Init_Meta_Of_Void(out) \
+    Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(VOID))
 
 inline static bool Is_Meta_Of_Void(const RELVAL *v)
-  { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_VOID; }
+  { return IS_THE_WORD(v) and VAL_WORD_SYMBOL(v) == Canon(VOID); }
 
 
 //=//// NULL ISOTOPE (unfriendly ~null~) ///////////////////////////////////=//
@@ -238,18 +247,32 @@ inline static bool Is_Meta_Of_Void(const RELVAL *v)
 #define Init_Meta_Of_Null_Isotope(out)      Init_Bad_Word((out), Canon(NULL))
 
 inline static bool Is_Meta_Of_Null_Isotope(const RELVAL *v)
-  { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_NULL; }
+  { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(NULL); }
 
 
-//=//// END OF INPUT META STATE (~END~ BAD-WORD!) //////////////////////////=//
+//=//// END OF INPUT META STATE (@END THE-WORD!) //////////////////////////=//
 //
 // Reaching an end of input is something some functions want to be able to
-// handle.  The ~end~ meta state is reserved for this purpose.  However, no
-// reified ~end~ isotope exists, and they cannot be UNMETA'd.
+// handle.  The @end meta state is reserved for this purpose.
+//
+// The ~end~ isotope is used in function frames as a signal that the frame
+// slot has hit an end.  But this creates a situation where ~end~ isotopes
+// are reified and thus exist...which means their ^META state has to take
+// the ~end~ BAD-WORD!.
 
-#define Init_Meta_End(out) Init_Bad_Word((out), Canon(END))
-inline static bool Is_Meta_End(const RELVAL *v)
-  { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END; }
+#define Init_End_Isotope(out)              Init_Isotope((out), Canon(END))
+#define Is_End_Isotope(v)                  Is_Isotope_With_Id(v, SYM_END)
+#define Init_Meta_Of_End_Isotope(out)      Init_Bad_Word((out), Canon(END))
+
+inline static bool Is_Meta_Of_End_Isotope(const RELVAL *v)
+  { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(END); }
+
+
+#define Init_Meta_Of_End(out) \
+    Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(END))
+
+inline static bool Is_Meta_Of_End(const RELVAL *v)
+  { return IS_THE_WORD(v) and VAL_WORD_SYMBOL(v) == Canon(END); }
 
 
 //=//// ISOTOPIC DECAY /////////////////////////////////////////////////////=//
@@ -270,14 +293,6 @@ inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
       case SYM_BLACKHOLE :
         return Init_Blackhole(v);
 
-      case SYM_VOID :
-        assert(!"Attempt to decay ~VOID~ isotope, which should not exist!");
-        return Init_None(v);
-
-      case SYM_END :
-        assert(!"Attempt to decay ~END~ isotope, not possible!");
-        return Init_None(v);
-
       default:
         return v;
     }
@@ -296,14 +311,6 @@ inline static const REBVAL *Pointer_To_Decayed(const REBVAL *v) {
         return Lib(BLANK);
       case SYM_BLACKHOLE :
         return Lib(BLACKHOLE);
-
-      case SYM_VOID :
-        assert(!"Attempt to decay ~VOID~ isotope, which should not exist!");
-        return NONE_ISOTOPE;
-
-      case SYM_END :
-        assert(!"Attempt to decay ~END~ isotope, not possible!");
-        return NONE_ISOTOPE;
 
       default:
         return v;

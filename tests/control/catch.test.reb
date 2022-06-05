@@ -12,7 +12,7 @@
 (null? catch [()])
 (error? catch [throw trap [1 / 0]])
 (1 = catch [throw 1])
-(''~void~ = ^ catch [throw do ['~void~]])
+((the '~void~) = ^ catch [throw do ['~void~]])
 (error? first catch [throw reduce [trap [1 / 0]]])
 (1 = catch [throw 1])
 ; catch/name results

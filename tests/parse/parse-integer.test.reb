@@ -16,8 +16,8 @@
     (
         x: ~
         did all [
-            '~void~ = uparse "a" ["a" x: ^[0 "b"]]
-            '~void~ = x
+            @void = uparse "a" ["a" x: ^[0 "b"]]
+            @void = x
         ]
     )
 

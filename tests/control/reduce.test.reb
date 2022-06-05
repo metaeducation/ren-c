@@ -60,7 +60,7 @@
 ([] = reduce [maybe ~null~])
 
 
-([] = reduce [~void~])
+([] = reduce [void])
 
 ; There was a bug pertaining to trying to set the new line flag on the output
 ; in the case of a non-existent null, test that.

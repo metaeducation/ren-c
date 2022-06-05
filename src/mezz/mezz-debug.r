@@ -23,7 +23,7 @@ verify: function [
 ][
     while [[^result' @pos]: evaluate conditions] [
         any [
-            '~void~ = result'  ; vanished
+            @void = result'  ; vanished
             non bad-word! result' then [to-logic unquote result']
 
             if :handler [  ; may or may-not take two arguments

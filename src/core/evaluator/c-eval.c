@@ -1741,38 +1741,11 @@ bool Eval_Core_Throws(REBFRM * const f)
         //
         assert(NOT_CELL_FLAG(v, ISOTOPE));
 
-        if (VAL_BAD_WORD_ID(v) == SYM_VOID) {
-            //
-            // Doesn't "vanish" but produces a signal of void intent.  If the
-            // user wants actual invisibility, a function must be used (the
-            // VOID function is included for this purpose)
-            //
-            Mark_Eval_Out_Voided(OUT);
-        }
-        else if (VAL_BAD_WORD_ID(v) == SYM_END) {
-            //
-            // We skip through the rest of the feed when hitting ~end~, and
-            // also do not overwrite the result:
-            //
-            //    3 = do [1 + 2 ~end~ a * <b> c]
-            //
-            while (NOT_END(f_next))
-                Fetch_Next_Forget_Lookback(f);
-
-            // !!! This needs more thought, because as written it means that
-            // `x: ~end~` and `x: void` act the same.  Evaluation steps need
-            // to be taken to determine endness... not testing f->feed->value
-            // for END at the beginning of each step.  It's a big rework that
-            // will have to be done at some point to implement this feature.
-        }
-        else {
-            // All other isotopes can be said to actually "exist", but some
-            // of them decay automatically in variable assignment...such as
-            // ~null~, ~none~, ~false~, ~blank~, and ~blackhole~ isotopes.
-            //
-            Derelativize(OUT, v, v_specifier);
-            SET_CELL_FLAG(OUT, ISOTOPE);
-        }
+        // Note: Some isotopes will decay automatically in variable assignment:
+        // ~null~, ~false~, ~blank~, and ~blackhole~ isotopes.
+        //
+        Derelativize(OUT, v, v_specifier);
+        SET_CELL_FLAG(OUT, ISOTOPE);
         break;
 
 

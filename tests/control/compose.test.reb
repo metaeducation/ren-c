@@ -17,8 +17,8 @@
 ; Voids vaporize regardless of form.
 
 ([*] = compose [(comment "single") * ((comment "spliced"))])
-([* <ok>] = compose [(~void~) * <ok>])
-([<ok> *] = compose [<ok> * ((~void~))])
+([* <ok>] = compose [(void) * <ok>])
+([<ok> *] = compose [<ok> * ((void))])
 
 ; Isotopes raise errors if they are non-decaying.  For the moment, NULL gives
 ; a bad ~null~ isotope error as well (should likely be a different error)

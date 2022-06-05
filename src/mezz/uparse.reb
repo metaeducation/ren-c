@@ -391,7 +391,7 @@ default-combinators: make map! reduce [
     ][
         append state.loops binding of 'return
 
-        last-result': '~void~
+        last-result': @void
 
         cycle [
             ([# pos]: condition-parser input) else [
@@ -1342,17 +1342,14 @@ default-combinators: make map! reduce [
             fail "GET-GROUP! evaluated to NULL"  ; no NULL rules, mistake?
         ]
 
+        if r = @void [  ; like [:(if false [...])] or [:(comment "hi")]
+            set pending _
+            return void
+        ]
+
         if bad-word? r [
             if r = '~null~ [
                 fail "GET-GROUP! evaluated to ~NULL~ isotope"  ; also mistake?
-            ]
-
-            any [
-                blank? r        ; like [:(comment "void")]
-                r = the ~void~  ; like [:(if false [...])]
-            ] then [
-                set pending _
-                return void
             ]
 
             fail ["Bad isotope from GET-GROUP!" r]  ; fail all other isotopes
@@ -1553,7 +1550,7 @@ default-combinators: make map! reduce [
         ; Note: REPEAT is considered a loop, but INTEGER!'s combinator is not.
         ; Hence BREAK will not break a literal integer-specified loop
 
-        result': the ~void~  ; `0 <any>` => void intent
+        result': @void  ; `0 <any>` => void intent
         repeat value [
             ([^result' input]: parser input) else [
                 return null
@@ -1607,7 +1604,7 @@ default-combinators: make map! reduce [
 
         append state.loops binding of 'return
 
-        result': the ~void~  ; `repeat (0) <any>` => void intent
+        result': @void  ; `repeat (0) <any>` => void intent
 
         count-up i max [  ; will count infinitely if max is #
             ;
@@ -1907,14 +1904,14 @@ default-combinators: make map! reduce [
     ; just be sensitive to the received type of value.
 
     '^ combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted!]
+        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
         parser [action!]
     ][
         return [^ (remainder)]: parser input
     ]
 
     meta-word! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted!]
+        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
         pending: [blank! block!]
         value [meta-word!]
         <local> comb
@@ -1925,7 +1922,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-tuple! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted!]
+        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
         pending: [blank! block!]
         value [meta-tuple!]
         <local> comb
@@ -1936,7 +1933,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-path! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted!]
+        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
         pending: [blank! block!]
         value [meta-path!]
         <local> comb
@@ -1947,7 +1944,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-group! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted!]
+        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
         pending: [blank! block!]
         value [meta-group!]
         <local> comb
@@ -1958,7 +1955,7 @@ default-combinators: make map! reduce [
     ]
 
     meta-block! combinator [
-        return: "Meta quoted" [<opt> bad-word! quoted! issue! blank!]
+        return: "Meta quoted" [<opt> bad-word! quoted! the-word!]
         pending: [blank! block!]
         value [meta-block!]
         <local> comb
@@ -2254,7 +2251,7 @@ default-combinators: make map! reduce [
 
         totalpending: _  ; can become GLOM'd into a BLOCK!
 
-        result': '~void~  ; default result is void
+        result': @void  ; default result is void
 
         while [not tail? rules] [
             if state.verbose [
@@ -2328,12 +2325,12 @@ default-combinators: make map! reduce [
             ; maybe expression can vanish.
             ;
             (^ eval f) then temp -> [
-                if temp <> '~void~  [
+                if temp <> @void  [
                     result': temp  ; overwrite if was visible
                 ]
                 totalpending: glom totalpending subpending
             ] else [
-                result': '~void~  ; reset, e.g. `[false |]`
+                result': @void  ; reset, e.g. `[false |]`
 
                 free totalpending  ; proactively release memory
                 totalpending: _
@@ -2856,7 +2853,7 @@ uparse*: func [
         return null  ; full parse was requested but tail was not reached
     ]
 
-    if synthesized' = the ~void~ [
+    if synthesized' = @void [
         ;
         ; We can't return "invisible intent" and still convey that the parse
         ; succeeded.  So a UPARSE that succeeds is a bit like a branch that
@@ -3089,7 +3086,7 @@ append redbol-combinators reduce [
             fail "Can't make MAX less than MIN in range for INTEGER! combinator"
         ]
 
-        result': the ~void~  ; `0 <any>` => void intent
+        result': @void ; `0 <any>` => void intent
         repeat value [  ; do the required matches first
             ([^result' input]: parser input) else [
                 return null

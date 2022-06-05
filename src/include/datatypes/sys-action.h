@@ -540,9 +540,6 @@ inline static void Clear_Void_Flag(REBVAL *out) {
 //
 inline static void Clear_Stale_Flag(REBVAL *out) {
     out->header.bits &= ~ (CELL_FLAG_STALE | CELL_FLAG_OUT_NOTE_VOIDED);
-
-    assert(not Is_Isotope_With_Id(out, SYM_END));
-    assert(not Is_Isotope_With_Id(out, SYM_VOID));
 }
 
 inline static bool Was_Eval_Step_Void(const REBVAL *out) {

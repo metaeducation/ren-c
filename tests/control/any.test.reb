@@ -6,7 +6,7 @@
 ; importantly and uniquely, it counts as an invisible so that MAYBE can cause
 ; it to vanish completely.
 [
-    ('~void~ = ^ any [])
+    (@void = ^ any [])
     (
         e: trap [if any [] [<safety>]]
         e.id = 'isotope-arg
@@ -403,7 +403,7 @@
 
 ; When used with @ blocks, ANY will treat the block as already reduced
 [
-    ('~void~ = ^ any @[])
+    (@void = ^ any @[])
     (1 = any @[1 + 2])
     (null = any @[#[false] _])
     (null = any inert reduce [false blank])

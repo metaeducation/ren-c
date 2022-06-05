@@ -11,7 +11,7 @@
 )
 (1 = if true [1])
 
-('~void~ = ^ if false [])
+(@void = ^ if false [])
 ('~ = ^ if true [])
 
 (error? if true [trap [1 / 0]])
@@ -58,10 +58,10 @@
 (if first ['a/b] [true])
 (if first ['a] [true])
 (if true [true])
-('~void~ = ^ if false [true])
+(@void = ^ if false [true])
 (if $1 [true])
 (if (specialize :of [property: 'type]) [true])
-('~void~ = ^ if blank [true])
+(@void = ^ if blank [true])
 (if make object! [] [true])
 (if get '+ [true])
 (if 0x0 [true])
@@ -101,7 +101,7 @@
 )
 (1 = if not false [1])
 
-('~void~ = ^ if not true [1])
+(@void = ^ if not true [1])
 ('~null~ = ^ if not false [null])
 
 (error? if not false [trap [1 / 0]])

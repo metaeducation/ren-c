@@ -5,8 +5,8 @@
 ; picture.  Returning NULL might seem "friendlier" but it is misleading.
 [
     ('~ = ^(do []))
-    ('~void~ = ^ (eval []))
-    ('~void~ = ^ (maybe eval []))
+    (@void = ^ (eval []))
+    (@void = ^ (maybe eval []))
 
     (none? do [])
     (void? (eval []))
@@ -26,19 +26,19 @@
 
     (did all [
         x: <overwritten>
-        '~void~ = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
-        x = '~void~
+        @void = x: ^ comment "HI" comment "HI"  ; not eval'd in same step
+        x = @void
     ])
 
     (did all [
         x: <overwritten>
         '~ = (x: ^(comment "HI") ^ do [comment "HI"])
-        '~void~ = x
+        @void = x
     ])
 
-    ('~void~ = (10 + 20 ^(eval [])))
-    ('~void~ = (10 + 20 ^(eval [comment "hi"])))
-    ('~void~ = (10 + 20 ^(eval make frame! :void)))
+    (@void = (10 + 20 ^(eval [])))
+    (@void = (10 + 20 ^(eval [comment "hi"])))
+    (@void = (10 + 20 ^(eval make frame! :void)))
     (didn't ^(eval [null]))
     ('~null~ = ^(eval [if true [null]]))
 
@@ -50,9 +50,9 @@
     ('~null~ = ^ eval [if true [null]])
 
     ; Try standalone ^ operator so long as we're at it.
-    ('~void~ = ^ eval [])
-    ('~void~ = ^ eval [comment "hi"])
-    ('~void~ = ^ eval make frame! :void)
+    (@void = ^ eval [])
+    (@void = ^ eval [comment "hi"])
+    (@void = ^ eval make frame! :void)
     ('~ = ^ do :void)
 
     (didn't ^ eval [null])
@@ -71,7 +71,7 @@
 
 [
     (''3 = ^ (1 + 2 eval [comment "HI"]))
-    ('~void~ = ^ eval [comment "HI"])
+    (@void = ^ eval [comment "HI"])
 
     (3 = (1 + 2 eval [comment "HI"]))
     (void? eval [comment "HI"])

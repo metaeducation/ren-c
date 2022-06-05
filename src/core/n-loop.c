@@ -124,7 +124,7 @@ REBNATIVE(continue)
 
     REBVAL *v = ARG(value);
 
-    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END)
+    if (Is_Meta_Of_End(v))
         Init_Meta_Of_Void(v);  // Treat CONTINUE same as CONTINUE VOID
 
     return Init_Thrown_With_Label_Meta(OUT, v, Lib(CONTINUE));
@@ -1153,7 +1153,7 @@ REBNATIVE(stop)
 
     REBVAL *v = ARG(value);
 
-    if (IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_END)
+    if (Is_Meta_Of_End(v))
         Init_Meta_Of_Void(v);  // Treat STOP the same as STOP VOID
 
     return Init_Thrown_With_Label_Meta(OUT, ARG(value), Lib(STOP));

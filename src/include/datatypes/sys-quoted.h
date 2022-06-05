@@ -306,8 +306,6 @@ inline static RELVAL *Isotopic_Unquote(RELVAL *v) {
     assert(not IS_NULLED(v));  // use Meta_Unquotify() instead
     if (IS_BAD_WORD(v)) {  // Meta quote flipped isotope off, flip back on.
         assert(NOT_CELL_FLAG(v, ISOTOPE));
-        assert(VAL_BAD_WORD_ID(v) != SYM_VOID);  // enforce special handling
-        assert(VAL_BAD_WORD_ID(v) != SYM_END);  // END isotopes shouldn't exist
         SET_CELL_FLAG(v, ISOTOPE);
     }
     else {

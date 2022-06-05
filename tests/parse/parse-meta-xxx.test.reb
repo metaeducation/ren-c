@@ -4,12 +4,12 @@
 
 [
     (did all  [
-        '~void~ = uparse "" [synthesized: ^[]]
-        '~void~ = synthesized
+        @void = uparse "" [synthesized: ^[]]
+        @void = synthesized
     ])
     (did all  [
-        '~void~ = uparse "" [synthesized: ^[comment "hi"]]
-        '~void~ = synthesized
+        @void = uparse "" [synthesized: ^[comment "hi"]]
+        @void = synthesized
     ])
     (did all  [
         '~void~ == uparse "" [synthesized: ^[(~void~)]]

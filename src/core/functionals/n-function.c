@@ -653,7 +653,7 @@ REB_R Init_Thrown_Unwind_Value(
         }
     }
 
-    return Init_Thrown_With_Label(out, value, label);
+    return Init_Thrown_With_Label_Meta(out, value, label);
 }
 
 
@@ -682,7 +682,6 @@ REBNATIVE(unwind)
     INCLUDE_PARAMS_OF_UNWIND;
 
     REBVAL *v = ARG(result);
-    Meta_Unquotify(v);
 
     return Init_Thrown_Unwind_Value(OUT, ARG(level), v, frame_);
 }
@@ -760,7 +759,7 @@ REBNATIVE(definitional_return)
         goto skip_type_check;
     }
 
-    if (Is_Meta_End(v)) {  // plain `return` with no arguments
+    if (Is_Meta_Of_End(v)) {  // plain `return` with no arguments
         Init_Meta_Of_Void(v);  // act the same as `return void`
         goto skip_type_check;  // currently isotopes always allowed
     }

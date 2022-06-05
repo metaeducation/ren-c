@@ -14,10 +14,10 @@
 )
 
 (
-    '~void~ = ^ case [false []]  ; void isotope
+    @void = ^ case [false []]  ; void isotope
 )
 (
-    '~void~ = ^ case []  ; empty case block is legal (e.g. as COMPOSE product)
+    @void = ^ case []  ; empty case block is legal (e.g. as COMPOSE product)
 )
 (
     '~null~ = ^ case [
@@ -42,7 +42,7 @@
     3 = case [true (reduce ['add 1 2])]
 )
 (
-    '~void~ = ^ case [false (reduce ['add 1 2])]
+    @void = ^ case [false (reduce ['add 1 2])]
 )
 
 (

@@ -84,10 +84,10 @@
 
     (void? foo)
 
-    ('~void~ = ^ applique :foo [])
+    (@void = ^ applique :foo [])
     (void? applique :foo [])
 
-    ('~void~ = ^ eval :foo)
+    (@void = ^ eval :foo)
     (void? eval :foo)
 
     ('~ = ^ do :foo)
@@ -98,7 +98,7 @@
     (did foo: func [return: [<opt> <void> any-value!]] [return void])
 
     (void? foo)
-    ('~void~ = ^ foo)
+    (@void = ^ foo)
 
     (3 = (1 + 2 foo))
 ]
@@ -108,7 +108,7 @@
     (did foo: func [return: [<opt> <void> any-value!]] [return])
 
     (void? foo)
-    ('~void~ = ^ foo)
+    (@void = ^ foo)
 
     (3 = (1 + 2 foo))
 ]
@@ -117,11 +117,11 @@
 [
     (did foo: func [return: [<opt> <void> any-value!]] [return ~void~])
 
-    (void? foo)
+    (not void? foo)
     ('~void~ = ^ foo)
 
     ('~void~ = ^ applique :foo [])
-    (none? do :foo)
+    ('~void~ = ^ do :foo)
 ]
 
 
