@@ -85,13 +85,8 @@ REB_R Block_Dispatcher(REBFRM *f)
 
     if (IS_SPECIFIC(block)) {
         if (FRM_BINDING(f) == UNBOUND) {
-            if (Do_Any_Array_At_Throws(
-                RESET(OUT),
-                SPECIFIC(block),
-                SPECIFIED
-            )){
+            if (Do_Any_Array_At_Throws(OUT, SPECIFIC(block), SPECIFIED))
                 return_thrown (OUT);
-            }
             return OUT;
         }
 
@@ -136,7 +131,7 @@ REB_R Block_Dispatcher(REBFRM *f)
 
     assert(IS_RELATIVE(block));
 
-    if (Do_Any_Array_At_Throws(RESET(OUT), block, SPC(f->varlist)))
+    if (Do_Any_Array_At_Throws(OUT, block, SPC(f->varlist)))
         return_thrown (OUT);
 
     if (Is_Void(OUT))

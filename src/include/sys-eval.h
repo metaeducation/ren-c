@@ -110,6 +110,26 @@ enum {
 };
 
 
+// In conditionals, branches that run are not allowed to be void or pure null.
+// Both of these states trigger ELSE.  It's also the case that loop bodies
+// are not allowed to return void or pure null either (void is reserved for
+// the state of never having run the body, and null for BREAK).
+//
+// This function helps locate the cases that change the branch's actual result
+// to either a none (~) isotope for void, or a null isotope for null.  In
+// general this is triggered by EVAL_FLAG_BRANCH.
+//
+inline static REBVAL *Reify_Branch_Out(REBVAL *out) {
+    if (Is_Void(out))
+        return Init_None(out);
+
+    if (IS_NULLED(out))
+        return Init_Null_Isotope(out);
+
+    return out;
+}
+
+
 // Even though ANY_INERT() is a quick test, you can't skip the cost of frame
 // processing--due to enfix.  But a feed only looks ahead one unit at a time,
 // so advancing the frame past an inert item to find an enfix function means
@@ -213,9 +233,6 @@ inline static bool Eval_Step_Throws(
     REBVAL *out,
     REBFRM *f
 ){
-    if (NOT_EVAL_FLAG(f, MAYBE_STALE))
-        assert(Is_Fresh(out));
-
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
 
     f->out = out;
@@ -335,7 +352,11 @@ inline static bool Eval_Step_In_Va_Throws(
 ){
     DECLARE_VA_FEED (feed, p, vaptr, feed_flags);
 
-    DECLARE_FRAME (f, feed, eval_flags | EVAL_FLAG_ALLOCATED_FEED);
+    DECLARE_FRAME (
+        f,
+        feed,
+        (eval_flags | EVAL_FLAG_ALLOCATED_FEED) & (~ EVAL_FLAG_BRANCH)
+    );
 
     Push_Frame(out, f);
     bool threw = Eval_Core_Throws(f);
@@ -351,6 +372,9 @@ inline static bool Eval_Step_In_Va_Throws(
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
 
+    if (eval_flags & EVAL_FLAG_BRANCH)
+        Reify_Branch_Out(out);
+
     // A va_list-based feed has a lookahead, and also may be spooled due to
     // the GC being triggered.  So the va_list had ownership taken, and it's
     // not possible to return a REBIXO here to "resume the va_list later".
@@ -360,8 +384,9 @@ inline static bool Eval_Step_In_Va_Throws(
 }
 
 
-inline static bool Eval_Value_Throws(
+inline static bool Eval_Value_Core_Throws(
     REBVAL *out,
+    REBFLGS flags,
     const RELVAL *value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 ){
@@ -384,7 +409,7 @@ inline static bool Eval_Value_Throws(
         FEED_MASK_DEFAULT | (value->header.bits & FEED_FLAG_CONST)
     );
 
-    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+    DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
 
     Push_Frame(out, f);
     bool threw = Eval_Core_Throws(f);
@@ -392,3 +417,6 @@ inline static bool Eval_Value_Throws(
 
     return threw;
 }
+
+#define Eval_Value_Throws(out,value,specifier) \
+    Eval_Value_Core_Throws(RESET(out), EVAL_MASK_DEFAULT, (value), (specifier))

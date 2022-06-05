@@ -1411,7 +1411,6 @@ bool Eval_Core_Throws(REBFRM * const f)
                 or IS_THE_GROUP(check)
                 or IS_META_GROUP(check)
             ){
-                RESET(SPARE);
                 if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
                     Move_Cell(OUT, SPARE);
                     DS_DROP_TO(f->baseline.dsp);
@@ -2123,7 +2122,9 @@ bool Eval_Core_Throws(REBFRM * const f)
     // for series nodes that's the bit for being free.  Review.
     //
     if (NOT_EVAL_FLAG(f, MAYBE_STALE))
-        Clear_Stale_Flag(f->out);
+        Clear_Stale_Flag(OUT);
+
+    assert(NOT_EVAL_FLAG(f, BRANCH));  // handled by block exec on last step
 
     return false;  // false => not thrown
 }

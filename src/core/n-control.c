@@ -859,7 +859,7 @@ REBNATIVE(switch)
         // functions, the same way `match parse "aaa" [some "a"]` => "aaa"
 
         if (Eval_Step_Throws(SPARE, f)) {
-            Move_Cell(OUT, SPARE);
+            Move_Cell(OUT, SPARE);  // ^-- spare is already reset, exploit?
             goto threw;
         }
 
@@ -924,9 +924,14 @@ REBNATIVE(switch)
                 //
                 // f_value is RELVAL, can't Do_Branch
                 //
-                RESET(OUT);
-                if (Do_Any_Array_At_Throws(OUT, f_value, f_specifier))
+                if (Do_Any_Array_At_Core_Throws(
+                    RESET(OUT),
+                    EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH,
+                    f_value,
+                    f_specifier
+                )){
                     goto threw;
+                }
                 break;
             }
 
@@ -1081,7 +1086,7 @@ REBNATIVE(catch)
     if (REF(any) and REF(name))
         fail (Error_Bad_Refines_Raw());
 
-    if (not Do_Any_Array_At_Throws(RESET(OUT), ARG(block), SPECIFIED)) {
+    if (not Do_Any_Array_At_Throws(OUT, ARG(block), SPECIFIED)) {
         if (REF(result))
             rebElide(Lib(SET), rebQ(REF(result)), rebQ(OUT));
 

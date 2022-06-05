@@ -475,7 +475,7 @@ REB_R Process_Group_For_Parse(
         ? SPECIFIED
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
-    if (Do_Any_Array_At_Throws(RESET(cell), group, derived))
+    if (Do_Any_Array_At_Throws(cell, group, derived))
         return R_THROWN;
 
     // !!! The input is not locked from modification by agents other than the
@@ -1646,7 +1646,6 @@ REBNATIVE(subparse)
                     // that is not matched as a PARSE rule; this is an idea
                     // which is generalized in UPARSE
                     //
-                    assert(Is_Void(OUT));  // should be true until finish
                     if (Do_Any_Array_At_Throws(
                         OUT,
                         rule,

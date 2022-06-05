@@ -50,9 +50,13 @@ STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
     FLAG_LEFT_BIT(2)
 
 
-//=//// EVAL_FLAG_3 ///////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_BRANCH ///////////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_3 \
+// If something is a branch and it is evaluating, then it cannot result in
+// either a pure NULL or a void result.  So nulls must be turned into null
+// isotopes and voids are turned into none (~) isotopes.
+//
+#define EVAL_FLAG_BRANCH \
     FLAG_LEFT_BIT(3)
 
 

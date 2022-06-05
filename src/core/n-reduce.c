@@ -53,7 +53,7 @@ REBNATIVE(reduce)
     // !!! How should predicates interact with this case?
     //
     if (not ANY_ARRAY(v)) {
-        if (Eval_Value_Throws(RESET(OUT), v, SPECIFIED))
+        if (Eval_Value_Throws(OUT, v, SPECIFIED))
             return_thrown (OUT);
 
         return OUT;  // let caller worry about whether to error on nulls
@@ -195,9 +195,8 @@ REBNATIVE(reduce_each)
             if (broke)
                 return nullptr;
 
-            // The way a CONTINUE with a value works is to act as if the loop
-            // body evaluated to the value.  (CONTINUE) acts as (CONTINUE VOID)
-            // We don't have any special handling, just process stale normally.
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
     } while (NOT_END(f_value));
 

@@ -166,6 +166,9 @@ static REB_R Loop_Series_Common(
                 return R_THROWN;
             if (broke)
                 return nullptr;  // BREAK -> NULL
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
         return OUT;  // guaranteed not stale
     }
@@ -189,6 +192,9 @@ static REB_R Loop_Series_Common(
                 return R_THROWN;
             if (broke)
                 return nullptr;
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
         if (
             VAL_TYPE(var) != VAL_TYPE(start)
@@ -242,6 +248,9 @@ static REB_R Loop_Integer_Common(
                 return R_THROWN;
             if (broke)
                 return nullptr;
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
         return_branched (OUT);  // BREAK -> NULL
     }
@@ -261,6 +270,9 @@ static REB_R Loop_Integer_Common(
                 return R_THROWN;
             if (broke)
                 return nullptr;
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
 
         if (not IS_INTEGER(var))
@@ -325,6 +337,9 @@ static REB_R Loop_Number_Common(
                 return R_THROWN;
             if (broke)
                 return nullptr;
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
         return_branched (OUT);  // BREAK -> NULL
     }
@@ -342,6 +357,9 @@ static REB_R Loop_Number_Common(
                 return R_THROWN;
             if (broke)
                 return nullptr;
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
 
         if (not IS_DECIMAL(var))
@@ -1073,6 +1091,9 @@ REBNATIVE(for_skip)
                 return_thrown (OUT);
             if (broke)
                 return nullptr;
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
 
         // Modifications to var are allowed, to another ANY-SERIES! value.
@@ -1449,7 +1470,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             ++index;
         }
 
-        if (Do_Any_Array_At_Throws(RESET(res->out), res->body, SPECIFIED)) {
+        if (Do_Any_Array_At_Throws(res->out, res->body, SPECIFIED)) {
             if (not Catching_Break_Or_Continue(
                 res->out,
                 &res->broke
@@ -1474,7 +1495,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             }
         }
 
-        if (Is_Stale(res->out)) {
+        if (Is_Void(res->out)) {
             res->start = index;
             Init_None(res->out);  // void reserved for "loop never ran"
             continue;  // keep requested, don't mark for culling
@@ -1803,6 +1824,9 @@ REBNATIVE(repeat)
                 return_thrown (OUT);
             if (broke)
                 return nullptr;
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
     }
 
@@ -1930,7 +1954,7 @@ REBNATIVE(until)
     REBVAL *predicate = ARG(predicate);
 
     do {
-        if (Do_Any_Array_At_Throws(RESET(OUT), body, SPECIFIED)) {
+        if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
@@ -2007,7 +2031,7 @@ REBNATIVE(while)
 
     assert(Is_Void(SPARE));
 
-    for (; ; RESET(SPARE)) {
+    while (true) {
         if (Do_Any_Array_At_Throws(SPARE, condition, SPECIFIED))
             return_thrown (SPARE);  // break/continue in body only, see [2]
 
@@ -2021,13 +2045,16 @@ REBNATIVE(while)
             return_branched (OUT);
         }
 
-        if (Do_Branch_With_Throws(OUT, body, SPARE)) {  // body result => OUT
+        if (Do_Branch_With_Throws(OUT, body, SPARE)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
 
             if (broke)
                 return nullptr;
+
+            if (Is_Void(OUT))  // CONTINUE w/no argument
+                Init_None(OUT);
         }
     }
 

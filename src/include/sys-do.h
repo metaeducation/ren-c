@@ -79,7 +79,11 @@ inline static bool Do_Feed_To_End_Throws(
     if (not (flags & EVAL_FLAG_MAYBE_STALE))
         assert(Is_Fresh(out));
 
-    DECLARE_FRAME (f, feed, flags | EVAL_FLAG_MAYBE_STALE);
+    DECLARE_FRAME (
+        f,
+        feed,
+        (flags | EVAL_FLAG_MAYBE_STALE) & (~ EVAL_FLAG_BRANCH)
+    );
 
     bool threw;
     Push_Frame(out, f);
@@ -88,14 +92,21 @@ inline static bool Do_Feed_To_End_Throws(
     } while (not threw and NOT_END(feed->value));
     Drop_Frame(f);
 
+    if (threw)
+        return true;
+
     if (not (flags & EVAL_FLAG_MAYBE_STALE))
         Clear_Stale_Flag(out);
 
-    return threw;
+    if (flags & EVAL_FLAG_BRANCH)
+        Reify_Branch_Out(out);
+
+    return false;
 }
 
-inline static bool Do_Any_Array_At_Throws(
+inline static bool Do_Any_Array_At_Core_Throws(
     REBVAL *out,
+    REBFLGS flags,
     const RELVAL *any_array,
     REBSPC *specifier
 ){
@@ -104,11 +115,15 @@ inline static bool Do_Any_Array_At_Throws(
     bool threw = Do_Feed_To_End_Throws(
         out,
         feed,
-        EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
+        flags | EVAL_FLAG_ALLOCATED_FEED
     );
 
     return threw;
 }
+
+#define Do_Any_Array_At_Throws(out,any_array,specifier) \
+    Do_Any_Array_At_Core_Throws(RESET(out), EVAL_MASK_DEFAULT, (any_array), \
+        (specifier))
 
 
 // !!! When working with an array outside of the context of a REBVAL it was
@@ -156,8 +171,9 @@ inline static bool Do_At_Mutable_Maybe_Stale_Throws(
 // would be that it would only be a shorthand for what could be said another
 // way, and would conflate a fetching shorthand with non-isotopifying.  :-/
 //
-inline static bool Do_Branch_Core_Throws(
+inline static bool Do_Core_Throws(
     REBVAL *out,
+    REBFLGS flags,
     const REBVAL *branch,
     const REBVAL *condition  // can be END, but use nullptr vs. a NULLED cell!
 ){
@@ -171,21 +187,33 @@ inline static bool Do_Branch_Core_Throws(
 
     switch (kind) {
       case REB_BLANK:
-        Init_Nulled(out);
+        if (flags & EVAL_FLAG_BRANCH)
+            Init_Null_Isotope(out);
+        else
+            Init_Nulled(out);
         break;
 
       case REB_QUOTED:
         Unquotify(Copy_Cell(out, branch), 1);
+        if (flags & EVAL_FLAG_BRANCH)
+            if (IS_NULLED(out))
+                Init_Null_Isotope(out);
         break;
 
       case REB_BLOCK:
-        if (Do_Any_Array_At_Throws(RESET(out), branch, SPECIFIED))
+        if (Do_Any_Array_At_Core_Throws(out, flags, branch, SPECIFIED))
             return true;
         break;
 
       case REB_GET_BLOCK: {
-        if (Eval_Value_Throws(RESET(out), branch, SPECIFIED))
+        if (Eval_Value_Core_Throws(
+            out,
+            flags & (~ EVAL_FLAG_BRANCH),
+            branch,
+            SPECIFIED
+        )){
             return true;
+        }
         assert(IS_BLOCK(out));
         break; }
 
@@ -223,8 +251,10 @@ inline static bool Do_Branch_Core_Throws(
                 }
             }
         }
-        bool threw = rebRunThrows(
-            out,
+        assert(not (flags & EVAL_FLAG_NO_RESIDUE));
+        bool threw = rebRunCoreThrows(
+            out,  // <-- output cell
+            flags,
             branch,
             (condition != nullptr and IS_END(condition))
                 ? rebEND
@@ -236,7 +266,7 @@ inline static bool Do_Branch_Core_Throws(
         break; }
 
       case REB_GROUP:
-        if (Do_Any_Array_At_Throws(cell, branch, SPECIFIED))
+        if (Do_Any_Array_At_Core_Throws(cell, flags, branch, SPECIFIED))
             return true;
         if (ANY_GROUP(cell))
             fail ("Branch evaluation cannot produce GROUP!");
@@ -245,12 +275,22 @@ inline static bool Do_Branch_Core_Throws(
         goto redo;
 
       case REB_META_BLOCK:
-        if (Do_Any_Array_At_Throws(out, branch, SPECIFIED))
+        if (Do_Any_Array_At_Core_Throws(
+            RESET(out),
+            flags & (~ EVAL_FLAG_BRANCH),  // need to sense voids
+            branch,
+            SPECIFIED
+        )){
             return true;
+        }
         if (Is_Void(out))
             Init_Meta_Of_Void(out);
+        else if (IS_NULLED(out)) {
+            if (flags & EVAL_FLAG_BRANCH)
+                Init_Null_Isotope(out);
+        }
         else
-            Meta_Quotify(out);  // null result will be
+            Meta_Quotify(out);
         break;
 
       default:
@@ -269,11 +309,12 @@ inline static bool Do_Branch_Core_Throws(
 }
 
 #define Do_Branch_With_Throws(out,branch,condition) \
-    Do_Branch_Core_Throws((out), (branch), NULLIFY_NULLED(condition))
+    Do_Core_Throws(RESET(out), EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH, \
+        (branch), NULLIFY_NULLED(condition))
 
 #define Do_Branch_Throws(out,branch) \
-    Do_Branch_Core_Throws((out), (branch), END_CELL)
-
+    Do_Core_Throws(RESET(out), EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH, \
+        (branch), END_CELL)
 
 inline static REB_R Run_Generic_Dispatch_Core(
     const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?

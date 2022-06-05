@@ -143,7 +143,7 @@ REBNATIVE(shove)
         Move_Cell(shovee, OUT);
     }
     else if (IS_GROUP(f_value)) {
-        if (Do_Any_Array_At_Throws(RESET(OUT), f_value, f_specifier))
+        if (Do_Any_Array_At_Throws(OUT, f_value, f_specifier))
             return_thrown (OUT);
 
         Move_Cell(shovee, OUT);  // can't eval directly into arg slot
@@ -359,7 +359,7 @@ REBNATIVE(do)
       // code here simpler.
       //
       case REB_BLOCK : {
-        if (Do_Any_Array_At_Throws(RESET(OUT), source, SPECIFIED))
+        if (Do_Any_Array_At_Throws(OUT, source, SPECIFIED))
             return_thrown (OUT);
         break; }
 
@@ -374,7 +374,7 @@ REBNATIVE(do)
             // array during execution, there will be problems if it is TAKE'n
             // or DO'd while this operation is in progress.
             //
-            if (Do_Any_Array_At_Throws(RESET(OUT), position, SPECIFIED)) {
+            if (Do_Any_Array_At_Throws(OUT, position, SPECIFIED)) {
                 //
                 // !!! A BLOCK! varargs doesn't technically need to "go bad"
                 // on a throw, since the block is still around.  But a FRAME!
@@ -460,7 +460,7 @@ REBNATIVE(do)
         if (First_Unspecialized_Param(nullptr, VAL_ACTION(source)))
             fail (Error_Do_Arity_Non_Zero_Raw());
 
-        if (Eval_Value_Throws(RESET(OUT), source, SPECIFIED))
+        if (Eval_Value_Throws(OUT, source, SPECIFIED))
             return_thrown (OUT);
         break;
 
