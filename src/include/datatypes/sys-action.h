@@ -568,15 +568,15 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
 
 #define return_thrown(v) \
     do { \
-        Maybe_Move_Cell(OUT, (v)); \
-        assert(not Is_Stale(OUT)); \
+        Maybe_Move_Cell(OUT, (v)); /* must be first, if Init_Thrown() */ \
+        assert(not Is_Void(&TG_Thrown_Arg)); \
         return R_THROWN; \
     } while (false)
 
 
 #define return_branched(v) \
     do { \
-        assert((v) == OUT); \
+        assert((v) == OUT); /* must be first, if Init_XXX() */ \
         assert(not Is_Void(OUT)); \
         assert(not IS_NULLED(OUT)); \
         return OUT; \

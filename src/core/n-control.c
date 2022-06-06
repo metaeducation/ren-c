@@ -1210,9 +1210,9 @@ REBNATIVE(throw)
     REBVAL *v = ARG(value);
     Meta_Unquotify(v);
 
-    return Init_Thrown_With_Label(
+    return_thrown (Init_Thrown_With_Label(
         OUT,
         v,
         ARG(name)  // NULLED if unused
-    );
+    ));
 }

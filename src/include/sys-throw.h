@@ -79,7 +79,7 @@
     }
 #endif
 
-inline static REB_R Init_Thrown_Core(  // assumes `arg` in TG_Thrown_Arg
+inline static REBVAL *Init_Thrown_Core(  // assumes `arg` in TG_Thrown_Arg
     REBVAL *out,
     const REBVAL *label // Note: is allowed to be same as `out`
 ){
@@ -104,10 +104,10 @@ inline static REB_R Init_Thrown_Core(  // assumes `arg` in TG_Thrown_Arg
     }
   #endif
 
-    return R_THROWN; // for chaining to dispatcher output
+    return out; // for chaining to dispatcher output
 }
 
-inline static REB_R Init_Thrown_With_Label(
+inline static REBVAL *Init_Thrown_With_Label(
     REBVAL *out,
     const REBVAL *arg,
     const REBVAL *label // Note: is allowed to be same as `out`
@@ -117,7 +117,7 @@ inline static REB_R Init_Thrown_With_Label(
     return Init_Thrown_Core(out, label);
 }
 
-inline static REB_R Init_Thrown_With_Label_Meta(
+inline static REBVAL *Init_Thrown_With_Label_Meta(
     REBVAL *out,
     const REBVAL *arg,
     const REBVAL *label // Note: is allowed to be same as `out`

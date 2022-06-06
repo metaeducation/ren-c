@@ -753,7 +753,7 @@ REBNATIVE(redo)
     // to restart the phase at the point of parameter checking.  Make that
     // the actual value that Eval_Core() catches.
     //
-    return Init_Thrown_With_Label(OUT, restartee, SPARE);
+    return_thrown (Init_Thrown_With_Label(OUT, restartee, SPARE));
 }
 
 

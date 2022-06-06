@@ -597,7 +597,7 @@ REBNATIVE(skippable_q)
 //
 // See notes is %sys-frame.h about how there is no actual REB_THROWN type.
 //
-REB_R Init_Thrown_Unwind_Value(
+REBVAL *Init_Thrown_Unwind_Value(
     REBVAL *out,
     const REBVAL *level, // FRAME!, ACTION! (or INTEGER! relative to frame)
     const REBVAL *value,
@@ -683,7 +683,7 @@ REBNATIVE(unwind)
 
     REBVAL *v = ARG(result);
 
-    return Init_Thrown_Unwind_Value(OUT, ARG(level), v, frame_);
+    return_thrown (Init_Thrown_Unwind_Value(OUT, ARG(level), v, frame_));
 }
 
 
@@ -795,7 +795,11 @@ REBNATIVE(definitional_return)
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
     INIT_VAL_ACTION_BINDING(label, f_binding);
 
-    return Init_Thrown_With_Label_Meta(f->out, v, label);  // save UNEVALUATED?
+    return_thrown (Init_Thrown_With_Label_Meta(
+        f->out,
+        v,  // save UNEVALUATED?
+        label
+    ));
   }
 }
 

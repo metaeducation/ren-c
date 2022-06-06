@@ -1841,11 +1841,11 @@ REBNATIVE(subparse)
                 //
                 // Similarly, this is a break/continue style "throw"
                 //
-                return Init_Thrown_With_Label(
+                return_thrown (Init_Thrown_With_Label(
                     OUT,
                     Lib(NULL),
                     Lib(PARSE_REJECT)
-                ); }
+                )); }
 
               case SYM_FAIL:  // deprecated... use LOGIC! false instead
                 Init_Nulled(ARG(position));  // not found

@@ -37,7 +37,7 @@ REBNATIVE(halt)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    return Init_Thrown_With_Label(OUT, Lib(NULL), Lib(HALT));
+    return_thrown (Init_Thrown_With_Label(OUT, Lib(NULL), Lib(HALT)));
 }
 
 
@@ -77,7 +77,7 @@ REBNATIVE(quit)
         Init_Bad_Word(v, Canon(QUIT));
     }
 
-    return Init_Thrown_With_Label_Meta(OUT, v, Lib(QUIT));
+    return_thrown (Init_Thrown_With_Label_Meta(OUT, v, Lib(QUIT)));
 }
 
 

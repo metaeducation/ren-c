@@ -100,7 +100,7 @@ REBNATIVE(break)
 {
     INCLUDE_PARAMS_OF_BREAK;
 
-    return Init_Thrown_With_Label(OUT, Lib(NULL), Lib(BREAK));
+    return_thrown (Init_Thrown_With_Label(OUT, Lib(NULL), Lib(BREAK)));
 }
 
 
@@ -127,7 +127,7 @@ REBNATIVE(continue)
     if (Is_Meta_Of_End(v))
         Init_Meta_Of_Void(v);  // Treat CONTINUE same as CONTINUE VOID
 
-    return Init_Thrown_With_Label_Meta(OUT, v, Lib(CONTINUE));
+    return_thrown (Init_Thrown_With_Label_Meta(OUT, v, Lib(CONTINUE)));
 }
 
 
@@ -1156,7 +1156,7 @@ REBNATIVE(stop)
     if (Is_Meta_Of_End(v))
         Init_Meta_Of_Void(v);  // Treat STOP the same as STOP VOID
 
-    return Init_Thrown_With_Label_Meta(OUT, ARG(value), Lib(STOP));
+    return_thrown (Init_Thrown_With_Label_Meta(OUT, ARG(value), Lib(STOP)));
 }
 
 
