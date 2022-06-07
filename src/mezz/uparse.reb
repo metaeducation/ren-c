@@ -147,6 +147,7 @@ combinator: func [
             return unmeta (result' also [
                 all [  ; if success, mark state.furthest
                     state.furthest
+                    remainder <> #
                     (index? remainder: get remainder) > (index? get state.furthest)
                     set state.furthest remainder
                 ]

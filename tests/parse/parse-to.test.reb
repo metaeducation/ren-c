@@ -115,3 +115,13 @@
         true
     )
 ]
+
+; Furthest needs to tolerate combinators that didn't request a remainder
+; (TO is one of these).  Review: Should remainder storage be enforced?
+(
+    [value furthest]: uparse "abc" [to "c"]
+    did all [
+        value = null
+        furthest = "c"
+    ]
+)
