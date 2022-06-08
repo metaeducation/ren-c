@@ -468,7 +468,7 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
 // take as immutable...or you can create a `/foo`-style path in a more
 // optimized fashion using Refinify()
 
-inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
+inline static REBLEN VAL_SEQUENCE_LEN(noquote(const Cell*) sequence) {
     assert(ANY_SEQUENCE_KIND(CELL_KIND(sequence)));
 
     switch (CELL_HEART(sequence)) {
@@ -509,7 +509,7 @@ inline static REBLEN VAL_SEQUENCE_LEN(REBCEL(const*) sequence) {
 //
 inline static const RELVAL *VAL_SEQUENCE_AT(
     RELVAL *store,  // return may not point at this cell, ^-- SEE WHY!
-    REBCEL(const*) sequence,
+    noquote(const Cell*) sequence,
     REBLEN n
 ){
     assert(store != sequence);
@@ -574,7 +574,7 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
 }
 
 inline static REBYTE VAL_SEQUENCE_BYTE_AT(
-    REBCEL(const*) sequence,
+    noquote(const Cell*) sequence,
     REBLEN n
 ){
     DECLARE_LOCAL (temp);
@@ -585,7 +585,7 @@ inline static REBYTE VAL_SEQUENCE_BYTE_AT(
 }
 
 inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
-    REBCEL(const*) sequence
+    noquote(const Cell*) sequence
 ){
     assert(ANY_SEQUENCE_KIND(CELL_KIND(sequence)));
 
@@ -672,7 +672,7 @@ inline static REBVAL *Refinify(REBVAL *v) {
     return v;
 }
 
-inline static bool IS_REFINEMENT_CELL(REBCEL(const*) v) {
+inline static bool IS_REFINEMENT_CELL(noquote(const Cell*) v) {
     assert(ANY_PATH_KIND(CELL_KIND(v)));
     return CELL_HEART(v) == REB_GET_WORD;
 }
@@ -682,11 +682,11 @@ inline static bool IS_REFINEMENT(const RELVAL *v) {
     return HEART_BYTE(v) == REB_GET_WORD;
 }
 
-inline static bool IS_PREDICATE1_CELL(REBCEL(const*) cell)
+inline static bool IS_PREDICATE1_CELL(noquote(const Cell*) cell)
   { return CELL_KIND(cell) == REB_TUPLE and CELL_HEART(cell) == REB_GET_WORD; }
 
 inline static const REBSYM *VAL_PREDICATE1_SYMBOL(
-    REBCEL(const*) cell
+    noquote(const Cell*) cell
 ){
     assert(IS_PREDICATE1_CELL(cell));
     return VAL_WORD_SYMBOL(cell);
@@ -701,7 +701,7 @@ inline static bool IS_PREDICATE(const RELVAL *v) {
 }
 
 inline static const REBSYM *VAL_REFINEMENT_SYMBOL(
-    REBCEL(const*) v
+    noquote(const Cell*) v
 ){
     assert(IS_REFINEMENT_CELL(v));
     return VAL_WORD_SYMBOL(v);

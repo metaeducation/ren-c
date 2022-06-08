@@ -43,7 +43,7 @@ extern REBTYP *EG_Vector_Type;
 #define VAL_VECTOR_SIGN(v) \
     PAYLOAD(Any, VAL_VECTOR_SIGN_INTEGRAL_WIDE(v)).first.flag
 
-inline static bool VAL_VECTOR_INTEGRAL(REBCEL(const*) v) {
+inline static bool VAL_VECTOR_INTEGRAL(noquote(const Cell*) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Vector_Type);
     REBVAL *siw = VAL_VECTOR_SIGN_INTEGRAL_WIDE(v);
     if (PAYLOAD(Any, siw).second.flag != 0)
@@ -53,7 +53,7 @@ inline static bool VAL_VECTOR_INTEGRAL(REBCEL(const*) v) {
     return false;
 }
 
-inline static REBYTE VAL_VECTOR_WIDE(REBCEL(const*) v) {  // "wide" REBSER term
+inline static REBYTE VAL_VECTOR_WIDE(noquote(const Cell*) v) {  // "wide" REBSER term
     int32_t wide = EXTRA(Any, VAL_VECTOR_SIGN_INTEGRAL_WIDE(v)).i32;
     assert(wide == 1 or wide == 2 or wide == 3 or wide == 4);
     return wide;
@@ -62,13 +62,13 @@ inline static REBYTE VAL_VECTOR_WIDE(REBCEL(const*) v) {  // "wide" REBSER term
 #define VAL_VECTOR_BITSIZE(v) \
     (VAL_VECTOR_WIDE(v) * 8)
 
-inline static REBYTE *VAL_VECTOR_HEAD(REBCEL(const*) v) {
+inline static REBYTE *VAL_VECTOR_HEAD(noquote(const Cell*) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Vector_Type);
     REBVAL *binary = VAL(VAL_NODE1(v));
     return BIN_HEAD(VAL_BINARY_ENSURE_MUTABLE(binary));
 }
 
-inline static REBLEN VAL_VECTOR_LEN_AT(REBCEL(const*) v) {
+inline static REBLEN VAL_VECTOR_LEN_AT(noquote(const Cell*) v) {
     assert(CELL_CUSTOM_TYPE(v) == EG_Vector_Type);
     return VAL_LEN_HEAD(VAL_VECTOR_BINARY(v)) / VAL_VECTOR_WIDE(v);
 }
@@ -106,8 +106,8 @@ inline static REBVAL *Init_Vector(
 // !!! These hooks allow the REB_VECTOR cell type to dispatch to code in the
 // VECTOR! extension if it is loaded.
 //
-extern REBINT CT_Vector(REBCEL(const*) a, REBCEL(const*) b, bool strict);
+extern REBINT CT_Vector(noquote(const Cell*) a, noquote(const Cell*) b, bool strict);
 extern REB_R MAKE_Vector(REBVAL *out, enum Reb_Kind kind, option(const REBVAL*) parent, const REBVAL *arg);
 extern REB_R TO_Vector(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg);
-extern void MF_Vector(REB_MOLD *mo, REBCEL(const*) v, bool form);
+extern void MF_Vector(REB_MOLD *mo, noquote(const Cell*) v, bool form);
 extern REBTYPE(Vector);

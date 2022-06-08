@@ -47,7 +47,7 @@ inline static void INIT_BITS_NOT(REBSER *s, bool negated)
   { s->misc.negated = negated; }
 
 
-inline static REBBIN *VAL_BITSET(REBCEL(const*) v) {
+inline static REBBIN *VAL_BITSET(noquote(const Cell*) v) {
     assert(CELL_KIND(v) == REB_BITSET);
     return BIN(VAL_NODE1(v));
 }

@@ -273,6 +273,8 @@ export proto-parser: context [
             "option(" thru ")"
             | "(*)" | "(const*)"
             | "(const *)" (fail "use (const*) not (const *)")
+            | "(const Cell*)"
+            | "(const Cell *)" (fail "use (const Cell*) not (const Cell *)")
         ]
 
         function-proto: [

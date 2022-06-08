@@ -51,7 +51,7 @@ const struct {
 //
 //  CT_Gob: C
 //
-REBINT CT_Gob(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Gob(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
     if (VAL_GOB(a) != VAL_GOB(b))
@@ -104,7 +104,7 @@ REBGOB *Make_Gob(void)
 //
 //  Cmp_Gob: C
 //
-REBINT Cmp_Gob(REBCEL(const*) g1, REBCEL(const*) g2)
+REBINT Cmp_Gob(noquote(const Cell*) g1, noquote(const Cell*) g2)
 {
     REBINT n;
 
@@ -835,7 +835,7 @@ REB_R TO_Gob(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Gob: C
 //
-void MF_Gob(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Gob(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 

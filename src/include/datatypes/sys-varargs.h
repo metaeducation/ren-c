@@ -61,7 +61,7 @@
 #define INIT_VAL_VARARGS_PHASE          INIT_VAL_NODE2
 #define VAL_VARARGS_PHASE(v)            ACT(VAL_NODE2(v))
 
-inline static REBARR *VAL_VARARGS_BINDING(REBCEL(const*) v) {
+inline static REBARR *VAL_VARARGS_BINDING(noquote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_VARARGS);
     return ARR(BINDING(v));  // may be varlist or plain array
 }
@@ -108,7 +108,7 @@ inline static REBVAL *Init_Varargs_Untyped_Enfix(
 
 inline static bool Is_Block_Style_Varargs(
     REBVAL **shared_out,
-    REBCEL(const*) vararg
+    noquote(const Cell*) vararg
 ){
     assert(CELL_KIND(vararg) == REB_VARARGS);
 
@@ -135,7 +135,7 @@ inline static bool Is_Block_Style_Varargs(
 
 inline static bool Is_Frame_Style_Varargs_Maybe_Null(
     REBFRM **f_out,
-    REBCEL(const*) vararg
+    noquote(const Cell*) vararg
 ){
     assert(CELL_KIND(vararg) == REB_VARARGS);
 
@@ -187,7 +187,7 @@ inline static bool Is_Frame_Style_Varargs_May_Fail(
 
 inline static const REBPAR *Param_For_Varargs_Maybe_Null(
     const REBKEY **key,
-    REBCEL(const*) v
+    noquote(const Cell*) v
 ){
     assert(CELL_KIND(v) == REB_VARARGS);
 

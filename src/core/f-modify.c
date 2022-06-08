@@ -80,7 +80,7 @@ REBLEN Modify_Array(
 
     // Check /PART, compute LEN:
     if (flags & AM_SPLICE) {
-        REBCEL(const*) unescaped = VAL_UNESCAPED(src_val);
+        noquote(const Cell*) unescaped = VAL_UNESCAPED(src_val);
         assert(ANY_ARRAY_KIND(CELL_KIND(unescaped)));
 
         REBLEN len_at = VAL_LEN_AT(unescaped);

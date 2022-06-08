@@ -51,7 +51,7 @@ enum {
 //
 //  CT_String: C
 //
-REBINT CT_String(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_String(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     assert(
         ANY_STRING_KIND(CELL_KIND(a))
@@ -613,13 +613,13 @@ void Mold_Text_Series_At(REB_MOLD *mo, const REBSTR *s, REBLEN index) {
 // wishes to preserve round-trip copy-and-paste from URL bars in browsers
 // to source and back.  Encoding concerns are handled elsewhere.
 //
-static void Mold_Url(REB_MOLD *mo, REBCEL(const*) v)
+static void Mold_Url(REB_MOLD *mo, noquote(const Cell*) v)
 {
     Append_String(mo->series, v);
 }
 
 
-static void Mold_File(REB_MOLD *mo, REBCEL(const*) v)
+static void Mold_File(REB_MOLD *mo, noquote(const Cell*) v)
 {
 
     Append_Codepoint(mo->series, '%');
@@ -640,7 +640,7 @@ static void Mold_File(REB_MOLD *mo, REBCEL(const*) v)
 }
 
 
-static void Mold_Tag(REB_MOLD *mo, REBCEL(const*) v)
+static void Mold_Tag(REB_MOLD *mo, noquote(const Cell*) v)
 {
     Append_Codepoint(mo->series, '<');
     Append_String(mo->series, v);
@@ -651,7 +651,7 @@ static void Mold_Tag(REB_MOLD *mo, REBCEL(const*) v)
 //
 //  MF_String: C
 //
-void MF_String(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_String(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     REBSTR *buf = mo->series;
 

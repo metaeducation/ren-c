@@ -167,7 +167,7 @@ void Clonify(
     enum Reb_Kind kind = cast(enum Reb_Kind, KIND3Q_BYTE_UNCHECKED(v));
     assert(kind < REB_MAX);  // we dequoted it
 
-    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), v));
+    enum Reb_Kind heart = CELL_HEART(cast(noquote(const Cell*), v));
 
     if (deep_types & FLAGIT_KIND(kind) & TS_SERIES_OBJ) {
         //

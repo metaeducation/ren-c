@@ -177,7 +177,7 @@ void Fill_Rect(
 //
 //  CT_Image: C
 //
-REBINT CT_Image(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Image(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
 
@@ -517,7 +517,7 @@ void Bin_To_Alpha(REBYTE *rgba, REBLEN size, const REBYTE *bin, REBINT len)
 // to be consistent with the internal format, so the idea of "alpha-less"
 // images is removed from MAKE IMAGE! and related molding.
 //
-void Mold_Image_Data(REB_MOLD *mo, REBCEL(const*) value)
+void Mold_Image_Data(REB_MOLD *mo, noquote(const Cell*) value)
 {
     REBLEN num_pixels = VAL_IMAGE_LEN_AT(value); // # from index to tail
     const REBYTE *rgba = VAL_IMAGE_AT(value);
@@ -872,7 +872,7 @@ void Find_Image(REBFRM *frame_)
 //
 // !!! See code in R3-Alpha for VITT_ALPHA and the `save` flag.
 //
-bool Image_Has_Alpha(REBCEL(const*) v)
+bool Image_Has_Alpha(noquote(const Cell*) v)
 {
     REBYTE *p = VAL_IMAGE_HEAD(v);
 
@@ -908,7 +908,7 @@ static void Make_Complemented_Image(REBVAL *out, const REBVAL *v)
 //
 //  MF_Image: C
 //
-void MF_Image(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Image(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form); // no difference between MOLD and FORM at this time
 

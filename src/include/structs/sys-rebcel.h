@@ -40,9 +40,9 @@
 // cells should not be used for any other purposes.
 //
 #if (! CPLUSPLUS_11)
-    #define REBRAW struct Reb_Value
+    typedef struct Reb_Value RawCell;
 #else
-    #define REBRAW struct Reb_Cell  // usually only const, see REBCEL(const*)
+    typedef struct Reb_Raw RawCell;
 #endif
 
 
@@ -61,24 +61,26 @@
 #if (! CPLUSPLUS_11)
     #define RELVAL \
         struct Reb_Value // same as REBVAL, no checking in C build
+    typedef struct Reb_Value Cell;
 #else
     struct Reb_Relative_Value; // won't implicitly downcast to REBVAL
     #define RELVAL \
         struct Reb_Relative_Value // *might* be IS_RELATIVE()
+    typedef struct Reb_Relative_Value Cell;
 #endif
 
 
 //=//// EXTANT STACK POINTERS /////////////////////////////////////////////=//
 //
 // See %sys-stack.h for a deeper explanation.  This has to be declared in
-// order to put in one of REBCEL(const*)'s implicit constructors.  Because
+// order to put in one of noquote(const Cell*)'s implicit constructors.  Because
 // having the STKVAL(*) have a user-defined conversion to REBVAL* won't
-// get that...and you can't convert to both REBVAL* and REBCEL(const*) as
+// get that...and you can't convert to both REBVAL* and noquote(const Cell*) as
 // that would be ambiguous.
 //
 // Even with this definition, the intersecting needs of DEBUG_CHECK_CASTS and
 // DEBUG_EXTANT_STACK_POINTERS means there will be some cases where distinct
-// overloads of REBVAL* vs. REBCEL(const*) will wind up being ambiguous.
+// overloads of REBVAL* vs. noquote(const Cell*) will wind up being ambiguous.
 // For instance, VAL_DECIMAL(STKVAL(*)) can't tell which checked overload
 // to use.  In such cases, you have to cast, e.g. VAL_DECIMAL(VAL(stackval)).
 //
@@ -102,8 +104,8 @@
 // the "type that it is" and use CELL_KIND() and not VAL_TYPE(), this alias
 // for RELVAL prevents VAL_TYPE() operations.
 //
-// Because a REBCEL can be linked to by a QUOTED!, it's important not to
-// modify the potentially-shared escaped data.  So all REBCEL* should be
+// Because a raw cell can be linked to by a QUOTED!, it's important not to
+// modify the potentially-shared escaped data.  So all raw cells should be
 // const.  That's enforced in the C++ debug build, and a wrapping class is
 // used for the pointer to make sure one doesn't assume it lives in an array
 // and try to do pointer math on it...since it may be a singular allocation.
@@ -113,8 +115,8 @@
 //
 #if (! CPLUSPLUS_11)
 
-    #define REBCEL(const_star) \
-        const struct Reb_Value *  // same as RELVAL, no checking in C build
+    #define noquote(const_cell_star) \
+        const struct Reb_Value*  // same as RELVAL, no checking in C build
 
 #elif (! DEBUG_CHECK_CASTS)
     //
@@ -127,31 +129,31 @@
     // time.  But just make sure some C++ builds are possible without
     // using the active pointer class.  Choose debug builds for now.
     //
-    struct Reb_Cell;  // won't implicitly downcast to RELVAL
-    #define REBCEL(const_star) \
-        const struct Reb_Cell *  // not a class instance in %sys-internals.h
+    struct Reb_Raw;  // won't implicitly downcast to RELVAL
+    #define noquote(const_cell_star) \
+        const struct Reb_Raw*  // not a class instance in %sys-internals.h
 #else
-    // This heavier wrapper form of Reb_Cell() can be costly...empirically
+    // This heavier wrapper form of Reb_Raw() can be costly...empirically
     // up to 10% of the runtime, since it's called so often.  But it protects
-    // against pointer arithmetic on REBCEL().
+    // against pointer arithmetic on noquote() cells.
     //
-    struct Reb_Cell;  // won't implicitly downcast to RELVAL
+    struct Reb_Raw;  // won't implicitly downcast to RELVAL
     template<typename T>
-    struct RebcellPtr {
-        T p;
+    struct NoquotePtr {
+        const Reb_Raw *p;
         static_assert(
-            std::is_same<const Reb_Cell*, T>::value,
-            "Instantiations of REBCEL only work as REBCEL(const*)"
+            std::is_same<const Cell*, T>::value,
+            "Instantiations of `noquote()` only work as noquote(const Cell*)"
         );
 
-        RebcellPtr () { }
-        RebcellPtr (const Reb_Cell *p) : p (p) {}
+        NoquotePtr () { }
+        NoquotePtr (const Reb_Raw *p) : p (p) { }
 
-        const Reb_Cell **operator&() { return &p; }
-        const Reb_Cell *operator->() { return p; }
-        const Reb_Cell &operator*() { return *p; }
+        const Reb_Raw **operator&() { return &p; }
+        const Reb_Raw *operator->() { return p; }
+        const Reb_Raw &operator*() { return *p; }
 
-        operator const Reb_Cell* () { return p; }
+        operator const Reb_Raw* () { return p; }
 
         explicit operator const Reb_Value* ()
           { return reinterpret_cast<const Reb_Value*>(p); }
@@ -159,6 +161,6 @@
         explicit operator const Reb_Relative_Value* ()
           { return reinterpret_cast<const Reb_Relative_Value*>(p); }
     };
-    #define REBCEL(const_star) \
-        struct RebcellPtr<Reb_Cell const_star>
+    #define noquote(const_cell_star) \
+        struct NoquotePtr<const_cell_star>
 #endif

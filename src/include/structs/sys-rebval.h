@@ -594,12 +594,12 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 // cannot be assigned.  However, `struct Reb_Value` must be the type exported
 // in both C and C++ under the same name and bit patterns.  Pretty much any
 // attempt to work around this and create a base class that works in C too
-// (e.g. Reb_Cell) would wind up violating strict aliasing.  Think *very hard*
+// (e.g. Reb_Raw) would wind up violating strict aliasing.  Think *very hard*
 // before changing!
 //
 
 #if CPLUSPLUS_11
-    struct alignas(ALIGN_SIZE) Reb_Cell : public Reb_Node
+    struct alignas(ALIGN_SIZE) Reb_Raw : public Reb_Node
 #elif C_11
     struct alignas(ALIGN_SIZE) Reb_Value
 #else
@@ -629,7 +629,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     // KIND3Q_BYTE() > REB_64 are considered to be REB_QUOTED variants of the
     // byte modulo 64.
     //
-    struct Reb_Relative_Value : public Reb_Cell {
+    struct Reb_Relative_Value : public Reb_Raw {
       #if CPLUSPLUS_11
       public:
         Reb_Relative_Value () = default;

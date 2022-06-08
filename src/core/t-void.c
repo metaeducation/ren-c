@@ -31,7 +31,7 @@
 // Bad words have a label to help make it clearer why an ornery error-like
 // value would be existing.
 //
-void MF_Bad_word(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Bad_word(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form); // no distinction between MOLD and FORM
 
@@ -86,7 +86,7 @@ REB_R TO_Bad_word(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
 // To make BAD-WORD! more useful, the spellings are used in comparison.  This
 // makes this code very similar to CT_Word(), so it is shared.
 //
-REBINT CT_Bad_word(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Bad_word(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     const REBSYM* label_a = try_unwrap(VAL_BAD_WORD_LABEL(a));
     const REBSYM* label_b = try_unwrap(VAL_BAD_WORD_LABEL(b));

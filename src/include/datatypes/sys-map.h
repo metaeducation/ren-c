@@ -64,7 +64,7 @@ inline static REBARR *MAP_PAIRLIST(const_if_c REBMAP *map)
     SER_HEAD(MAP_HASHLIST(m))
 
 
-inline static const REBMAP *VAL_MAP(REBCEL(const*) v) {
+inline static const REBMAP *VAL_MAP(noquote(const Cell*) v) {
     assert(CELL_KIND(v) == REB_MAP);
 
     REBARR *a = ARR(VAL_NODE1(v));

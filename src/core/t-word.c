@@ -74,7 +74,7 @@ REBINT Compare_Spellings(const REBSYM *a, const REBSYM *b, bool strict)
 // Compare the names of two words and return the difference.
 // Note that words are kept UTF8 encoded.
 //
-REBINT CT_Word(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Word(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     return Compare_Spellings(
         VAL_WORD_SYMBOL(a),
@@ -209,7 +209,7 @@ inline static void Mold_Word(REB_MOLD *mo, const REBSYM *symbol, bool escape)
 //
 //  MF_Word: C
 //
-void MF_Word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
+void MF_Word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const REBSYM *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -222,7 +222,7 @@ void MF_Word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 //
 //  MF_Set_word: C
 //
-void MF_Set_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
+void MF_Set_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const REBSYM *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -236,7 +236,7 @@ void MF_Set_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 //
 //  MF_Get_word: C
 //
-void MF_Get_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
+void MF_Get_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const REBSYM *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -250,7 +250,7 @@ void MF_Get_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 //
 //  MF_Meta_word: C
 //
-void MF_Meta_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
+void MF_Meta_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const REBSYM *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
@@ -264,7 +264,7 @@ void MF_Meta_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
 //
 //  MF_The_word: C
 //
-void MF_The_word(REB_MOLD *mo, REBCEL(const*) v, bool form) {
+void MF_The_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const REBSYM *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false

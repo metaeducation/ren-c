@@ -283,7 +283,7 @@ REBNATIVE(unless)
 //
 //  CT_Logic: C
 //
-REBINT CT_Logic(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Logic(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
 
@@ -358,7 +358,7 @@ inline static bool Math_Arg_For_Logic(REBVAL *arg)
 //
 //  MF_Logic: C
 //
-void MF_Logic(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Logic(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     if (not form)
         Append_Ascii(mo->series, "#[");

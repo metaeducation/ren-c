@@ -423,7 +423,7 @@ REBNATIVE(shift)
 
 //  CT_Fail: C
 //
-REBINT CT_Fail(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Fail(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -435,7 +435,7 @@ REBINT CT_Fail(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 
 //  CT_Unhooked: C
 //
-REBINT CT_Unhooked(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Unhooked(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);

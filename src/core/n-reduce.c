@@ -209,7 +209,7 @@ REBNATIVE(reduce_each)
 }
 
 
-bool Match_For_Compose(REBCEL(const*) group, const REBVAL *label) {
+bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
     assert(ANY_GROUP_KIND(CELL_KIND(group)));
 
     if (IS_NULLED(label))
@@ -290,7 +290,7 @@ REB_R Compose_To_Stack_Core(
   #endif
 
     for (; NOT_END(f_value); Fetch_Next_Forget_Lookback(f)) {
-        REBCEL(const*) cell = VAL_UNESCAPED(f_value);
+        noquote(const Cell*) cell = VAL_UNESCAPED(f_value);
         enum Reb_Kind heart = CELL_HEART(cell); // notice `''(...)`
 
         if (not ANY_ARRAY_KIND(heart)) { // won't substitute/recurse
@@ -303,7 +303,7 @@ REB_R Compose_To_Stack_Core(
         bool doubled_group = false;  // override predicate with ((...))
 
         REBSPC *match_specifier = nullptr;
-        REBCEL(const*) match = nullptr;
+        noquote(const Cell*) match = nullptr;
 
         if (not ANY_GROUP_KIND(heart)) {
             //

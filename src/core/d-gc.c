@@ -50,13 +50,13 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         assert(HEART_BYTE(v) >= REB_QUOTED);
         assert(Is_Marked(VAL_NODE1(v)));
         assert(VAL_QUOTED_DEPTH(v) >= 3);
-        REBCEL(const*) cell = VAL_UNESCAPED(v);
+        noquote(const Cell*) cell = VAL_UNESCAPED(v);
         if (ANY_WORD_KIND(CELL_KIND(cell)))
             assert(BINDING(cell) == UNBOUND);  // escaped cell has no binding
         return;
     }
 
-    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), v));
+    enum Reb_Kind heart = CELL_HEART(cast(noquote(const Cell*), v));
 
     REBSER *binding;
     if (
@@ -413,7 +413,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         panic (v);
     }
 
-    enum Reb_Kind kind = CELL_KIND(cast(REBCEL(const*), v));
+    enum Reb_Kind kind = CELL_KIND(cast(noquote(const Cell*), v));
     switch (kind) {
       case REB_NULL:
         assert(heart == REB_NULL or heart == REB_BLANK);  // may be "isotope"

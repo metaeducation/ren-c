@@ -28,7 +28,7 @@
 //
 //  CT_Datatype: C
 //
-REBINT CT_Datatype(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Datatype(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
 
@@ -88,7 +88,7 @@ REB_R TO_Datatype(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 //  MF_Datatype: C
 //
-void MF_Datatype(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Datatype(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     if (not form)
         Pre_Mold_All(mo, v);  // e.g. `#[datatype!`

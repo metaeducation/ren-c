@@ -263,7 +263,7 @@ REB_R Reflect_Core(REBFRM *frame_)
     INCLUDE_PARAMS_OF_REFLECT;
 
     REBVAL *v = ARG(value);
-    REBCEL(const*) cell = VAL_UNESCAPED(v);
+    noquote(const Cell*) cell = VAL_UNESCAPED(v);
     enum Reb_Kind kind = CELL_KIND(cell);
 
     switch (VAL_WORD_ID(ARG(property))) {

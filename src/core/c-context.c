@@ -354,7 +354,7 @@ static void Collect_Inner_Loop(
 ){
     const RELVAL *v = head;
     for (; v != tail; ++v) {
-        REBCEL(const*) cell = VAL_UNESCAPED(v);  // X from ''''X
+        noquote(const Cell*) cell = VAL_UNESCAPED(v);  // X from ''''X
         enum Reb_Kind kind = CELL_KIND(cell);
 
         if (ANY_WORD_KIND(kind)) {
@@ -499,7 +499,7 @@ REBARR *Collect_Unique_Words_Managed(
         const RELVAL *ignore_tail;
         const RELVAL *ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            REBCEL(const*) cell = VAL_UNESCAPED(ignore);
+            noquote(const Cell*) cell = VAL_UNESCAPED(ignore);
             const REBSYM *symbol = VAL_WORD_SYMBOL(cell);
 
             // A block may have duplicate words in it (this situation could
@@ -547,7 +547,7 @@ REBARR *Collect_Unique_Words_Managed(
         const RELVAL *ignore_tail;
         const RELVAL *ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
-            REBCEL(const*) cell = VAL_UNESCAPED(ignore);
+            noquote(const Cell*) cell = VAL_UNESCAPED(ignore);
             const REBSYM *symbol = VAL_WORD_SYMBOL(cell);
 
           #if !defined(NDEBUG)

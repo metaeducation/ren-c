@@ -292,7 +292,7 @@ void Push_Paramlist_Triads_May_Fail(
             quoted = true;
         }
 
-        REBCEL(const*) cell = VAL_UNESCAPED(item);
+        noquote(const Cell*) cell = VAL_UNESCAPED(item);
         enum Reb_Kind kind = CELL_KIND(cell);
 
         const REBSYM* symbol = nullptr;  // avoids compiler warning

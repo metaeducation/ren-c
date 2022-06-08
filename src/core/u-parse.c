@@ -683,7 +683,7 @@ static REB_R Parse_One_Rule(
         // !!! The concept is based somewhat on what was legal in FIND for
         // Rebol2, and leverages quoting.  It's being experimented with.
         //
-        REBCEL(const*) rule_cell = VAL_UNESCAPED(rule);
+        noquote(const Cell*) rule_cell = VAL_UNESCAPED(rule);
         enum Reb_Kind rule_cell_kind = CELL_KIND(rule_cell);
         if (
             (ANY_WORD_KIND(rule_cell_kind) and VAL_NUM_QUOTES(rule) == 1)

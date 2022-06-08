@@ -46,7 +46,7 @@ void Bind_Values_Inner_Loop(
 ){
     RELVAL *v = head;
     for (; v != tail; ++v) {
-        REBCEL(const*) cell = VAL_UNESCAPED(v);
+        noquote(const Cell*) cell = VAL_UNESCAPED(v);
         enum Reb_Kind heart = CELL_HEART(cell);
 
         // !!! Review use of `heart` bit here, e.g. when a REB_PATH has an
@@ -681,7 +681,7 @@ static void Clonify_And_Bind_Relative(
     enum Reb_Kind kind = cast(enum Reb_Kind, KIND3Q_BYTE_UNCHECKED(v));
     assert(kind < REB_MAX);  // we dequoted it
 
-    enum Reb_Kind heart = CELL_HEART(cast(REBCEL(const*), v));
+    enum Reb_Kind heart = CELL_HEART(cast(noquote(const Cell*), v));
 
     if (deep_types & FLAGIT_KIND(kind) & TS_SERIES_OBJ) {
         //
@@ -1267,7 +1267,7 @@ void Bind_Nonspecifically(RELVAL *head, const RELVAL *tail, REBCTX *context)
 {
     RELVAL *v = head;
     for (; v != tail; ++v) {
-        REBCEL(const*) cell = VAL_UNESCAPED(v);
+        noquote(const Cell*) cell = VAL_UNESCAPED(v);
         enum Reb_Kind heart = CELL_HEART(cell);
 
         if (ANY_ARRAY_KIND(heart)) {

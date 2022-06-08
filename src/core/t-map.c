@@ -32,7 +32,7 @@
 // !!! Was never implemented in R3-Alpha; called into raw array comparison,
 // which is clearly incorrect.  Needs to be written.
 //
-REBINT CT_Map(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Map(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(a);
     UNUSED(b);
@@ -533,7 +533,7 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
 //
 //  MF_Map: C
 //
-void MF_Map(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Map(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     const REBMAP *m = VAL_MAP(v);
 

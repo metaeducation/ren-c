@@ -36,7 +36,7 @@
 // polymorphically access const data across ANY-STRING!, ANY-WORD!, and ISSUE!
 //
 
-inline static bool IS_CHAR_CELL(REBCEL(const*) v) {
+inline static bool IS_CHAR_CELL(noquote(const Cell*) v) {
     if (CELL_KIND(v) != REB_ISSUE)
         return false;
 
@@ -52,7 +52,7 @@ inline static bool IS_CHAR(const RELVAL *v) {
     return IS_CHAR_CELL(v);
 }
 
-inline static REBUNI VAL_CHAR(REBCEL(const*) v) {
+inline static REBUNI VAL_CHAR(noquote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_BYTES);
 
     if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
@@ -70,10 +70,10 @@ inline static REBUNI VAL_CHAR(REBCEL(const*) v) {
 // seems like a bad idea for something so cheap to calculate.  But keep a
 // separate entry point in case that cache comes back.
 //
-inline static REBYTE VAL_CHAR_ENCODED_SIZE(REBCEL(const*) v)
+inline static REBYTE VAL_CHAR_ENCODED_SIZE(noquote(const Cell*) v)
   { return Encoded_Size_For_Codepoint(VAL_CHAR(v)); }
 
-inline static const REBYTE *VAL_CHAR_ENCODED(REBCEL(const*) v) {
+inline static const REBYTE *VAL_CHAR_ENCODED(noquote(const Cell*) v) {
     assert(CELL_KIND(v) == REB_ISSUE and CELL_HEART(v) == REB_BYTES);
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
@@ -265,7 +265,7 @@ inline static const REBYTE *VAL_BYTES_LIMIT_AT(
 inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     option(REBLEN*) length_out,
     option(REBSIZ*) size_out,
-    REBCEL(const*) v,
+    noquote(const Cell*) v,
     REBINT limit
 ){
   #if !defined(NDEBUG)

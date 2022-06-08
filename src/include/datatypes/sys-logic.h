@@ -44,7 +44,7 @@ inline static REBVAL *Init_Logic_Core(RELVAL *out, bool flag) {
 #define Init_True(out)      Init_Logic((out), true)
 #define Init_False(out)     Init_Logic((out), false)
 
-inline static bool VAL_LOGIC(REBCEL(const*) v) {
+inline static bool VAL_LOGIC(noquote(const Cell*) v) {
     assert(CELL_KIND(v) == REB_LOGIC);
     return PAYLOAD(Logic, v).flag;
 }

@@ -52,7 +52,7 @@ inline static enum Reb_Kind KIND_FROM_SYM(SYMID s) {
 #define SYM_FROM_KIND(k) \
     cast(SYMID, cast(enum Reb_Kind, (k)))
 
-inline static SYMID VAL_TYPE_SYM(REBCEL(const*) v) {
+inline static SYMID VAL_TYPE_SYM(noquote(const Cell*) v) {
     //
     // !!! The extension type list is limited to a finite set as a first step
     // of generalizing the approach.  Bridge compatibility for things like
@@ -94,7 +94,7 @@ inline static SYMID VAL_TYPE_SYM(REBCEL(const*) v) {
 #define VAL_TYPESET_HIGH_BITS(v) \
     EXTRA(Typeset, (v)).high_bits
 
-inline static bool TYPE_CHECK(REBCEL(const*) v, REBYTE n) {
+inline static bool TYPE_CHECK(noquote(const Cell*) v, REBYTE n) {
     assert(CELL_HEART(v) == REB_TYPESET);
 
     if (n < 32)
@@ -104,7 +104,7 @@ inline static bool TYPE_CHECK(REBCEL(const*) v, REBYTE n) {
     return did (VAL_TYPESET_HIGH_BITS(v) & FLAGIT_KIND(n - 32));
 }
 
-inline static bool TYPE_CHECK_BITS(REBCEL(const*) v, REBU64 bits) {
+inline static bool TYPE_CHECK_BITS(noquote(const Cell*) v, REBU64 bits) {
     assert(CELL_HEART(v) == REB_TYPESET);
 
     uint_fast32_t low = bits & cast(uint32_t, 0xFFFFFFFF);
@@ -119,7 +119,7 @@ inline static bool TYPE_CHECK_BITS(REBCEL(const*) v, REBU64 bits) {
 }
 
 inline static bool TYPE_CHECK_EXACT_BITS(
-    REBCEL(const*) v,
+    noquote(const Cell*) v,
     REBU64 bits
 ){
     assert(CELL_HEART(v) == REB_TYPESET);
@@ -158,8 +158,8 @@ inline static void TYPE_CLEAR(RELVAL *v, REBYTE n) {
 }
 
 inline static bool EQUAL_TYPESET(
-    REBCEL(const*) v1,
-    REBCEL(const*) v2
+    noquote(const Cell*) v1,
+    noquote(const Cell*) v2
 ){
     assert(CELL_HEART(v1) == REB_TYPESET);
     assert(CELL_HEART(v2) == REB_TYPESET);
@@ -423,7 +423,7 @@ inline static bool Typecheck_Including_Constraints(
 }
 
 
-inline static bool Is_Typeset_Empty(REBCEL(const*) param) {
+inline static bool Is_Typeset_Empty(noquote(const Cell*) param) {
     assert(CELL_HEART(param) == REB_TYPESET);
     REBU64 bits = VAL_TYPESET_LOW_BITS(param);
     bits |= cast(REBU64, VAL_TYPESET_HIGH_BITS(param)) << 32;

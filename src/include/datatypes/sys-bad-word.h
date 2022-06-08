@@ -87,13 +87,13 @@ inline static REBVAL *Init_Any_Word_Untracked(
     Init_Bad_Word_Untracked(TRACK(out), (sym), CELL_MASK_NONE)
 
 inline static option(const REBSYM*) VAL_BAD_WORD_LABEL_UNCHECKED(
-    REBCEL(const*) v
+    noquote(const Cell*) v
 ){
     return cast(const REBSYM*, VAL_NODE1(v));
 }
 
 inline static option(const REBSYM*) VAL_BAD_WORD_LABEL(
-    REBCEL(const*) v
+    noquote(const Cell*) v
 ){
     assert(CELL_KIND(v) == REB_BAD_WORD);
     assert(GET_CELL_FLAG(v, FIRST_IS_NODE));

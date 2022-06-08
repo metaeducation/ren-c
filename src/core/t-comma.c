@@ -29,7 +29,7 @@
 // The special behavior of commas makes them "glue" their rendering to the
 // thing on their left.
 //
-void MF_Comma(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Comma(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
     UNUSED(v);
@@ -53,7 +53,7 @@ void MF_Comma(REB_MOLD *mo, REBCEL(const*) v, bool form)
 // Must have a comparison function, otherwise SORT would not work on arrays
 // with commas in them.
 //
-REBINT CT_Comma(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Comma(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // no strict form of comparison
     UNUSED(a);

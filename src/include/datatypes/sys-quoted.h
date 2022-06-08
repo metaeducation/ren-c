@@ -161,7 +161,7 @@ inline static RELVAL *Quotify_Core(
         INIT_VAL_NODE1(v, unquoted);
         mutable_HEART_BYTE(v) = REB_QUOTED + depth;
 
-        if (ANY_WORD_KIND(CELL_HEART(cast(REBCEL(const*), unquoted)))) {
+        if (ANY_WORD_KIND(CELL_HEART(cast(noquote(const Cell*), unquoted)))) {
             //
             // The shared word is put in an unbound state, since each quoted
             // instance can be bound differently.
@@ -229,7 +229,7 @@ inline static void Collapse_Quoted_Internal(RELVAL *v)
         and KIND3Q_BYTE(unquoted) < REB_MAX
     );
     Copy_Cell_Header(v, unquoted);
-    if (ANY_WORD_KIND(CELL_HEART(cast(REBCEL(const*), unquoted)))) {
+    if (ANY_WORD_KIND(CELL_HEART(cast(noquote(const Cell*), unquoted)))) {
         //
         // `v` needs to retain the primary binding index (which was
         // kept in its QUOTED! form), but sync with the virtual binding
@@ -379,7 +379,7 @@ inline static RELVAL *Meta_Unquotify(RELVAL *v) {
 #endif
 
 
-inline static REBCEL(const*) VAL_UNESCAPED(const RELVAL *v) {
+inline static noquote(const Cell*) VAL_UNESCAPED(const RELVAL *v) {
     if (KIND3Q_BYTE_UNCHECKED(v) != REB_QUOTED)  // allow unreadable trash
         return v;  // Note: kind byte may be > 64
 
@@ -423,7 +423,7 @@ inline static bool IS_QUOTED_PATH(const RELVAL *v) {
 
 // Checks if ANY-GROUP! is like ((...)) or (...), used by COMPOSE & PARSE
 //
-inline static bool Is_Any_Doubled_Group(REBCEL(const*) group) {
+inline static bool Is_Any_Doubled_Group(noquote(const Cell*) group) {
     assert(ANY_GROUP_KIND(CELL_HEART(group)));
     const RELVAL *tail;
     const RELVAL *inner = VAL_ARRAY_AT(&tail, group);

@@ -2234,7 +2234,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
                 = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
-            // a REBCEL(const*) or REBVAL* overload with DEBUG_CHECK_CASTS.
+            // a noquote(const Cell*) or REBVAL* overload with DEBUG_CHECK_CASTS.
             // Have to cast explicitly, use VAL()
             //
             VAL_DECIMAL(VAL(DS_TOP)) /= 100.0;

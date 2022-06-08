@@ -191,7 +191,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 // The init initializes to one behind the enumeration, so you have to call
 // Did_Advance_Evars() on even the first.
 //
-void Init_Evars(EVARS *e, REBCEL(const*) v) {
+void Init_Evars(EVARS *e, noquote(const Cell*) v) {
     enum Reb_Kind kind = CELL_KIND(v);
 
     if (kind == REB_ACTION) {
@@ -427,7 +427,7 @@ void Shutdown_Evars(EVARS *e)
 //
 //  CT_Context: C
 //
-REBINT CT_Context(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Context(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     assert(ANY_CONTEXT_KIND(CELL_KIND(a)));
     assert(ANY_CONTEXT_KIND(CELL_KIND(b)));
@@ -897,7 +897,7 @@ REBCTX *Copy_Context_Extra_Managed(
 //
 //  MF_Context: C
 //
-void MF_Context(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     REBSTR *s = mo->series;
 

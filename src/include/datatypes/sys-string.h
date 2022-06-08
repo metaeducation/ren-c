@@ -538,7 +538,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
 #endif
 
 
-inline static const REBSTR *VAL_STRING(REBCEL(const*) v) {
+inline static const REBSTR *VAL_STRING(noquote(const Cell*) v) {
     if (ANY_STRING_KIND(CELL_HEART(v)))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
@@ -554,17 +554,17 @@ inline static const REBSTR *VAL_STRING(REBCEL(const*) v) {
 // that type.  So if the series is a string and not a binary, the special
 // cache of the length in the series node for strings must be used.
 //
-inline static REBLEN VAL_LEN_HEAD(REBCEL(const*) v) {
+inline static REBLEN VAL_LEN_HEAD(noquote(const Cell*) v) {
     const REBSER *s = VAL_SERIES(v);
     if (IS_SER_UTF8(s) and CELL_KIND(v) != REB_BINARY)
         return STR_LEN(STR(s));
     return SER_USED(s);
 }
 
-inline static bool VAL_PAST_END(REBCEL(const*) v)
+inline static bool VAL_PAST_END(noquote(const Cell*) v)
    { return VAL_INDEX(v) > VAL_LEN_HEAD(v); }
 
-inline static REBLEN VAL_LEN_AT(REBCEL(const*) v) {
+inline static REBLEN VAL_LEN_AT(noquote(const Cell*) v) {
     //
     // !!! At present, it is considered "less of a lie" to tell people the
     // length of a series is 0 if its index is actually past the end, than
@@ -582,7 +582,7 @@ inline static REBLEN VAL_LEN_AT(REBCEL(const*) v) {
     return VAL_LEN_HEAD(v) - i;  // take current index into account
 }
 
-inline static REBCHR(const*) VAL_STRING_AT(REBCEL(const*) v) {
+inline static REBCHR(const*) VAL_STRING_AT(noquote(const Cell*) v) {
     const REBSTR *str = VAL_STRING(v);  // checks that it's ANY-STRING!
     REBIDX i = VAL_INDEX_RAW(v);
     REBLEN len = STR_LEN(str);
@@ -592,7 +592,7 @@ inline static REBCHR(const*) VAL_STRING_AT(REBCEL(const*) v) {
 }
 
 
-inline static REBCHR(const*) VAL_STRING_TAIL(REBCEL(const*) v) {
+inline static REBCHR(const*) VAL_STRING_TAIL(noquote(const Cell*) v) {
     const REBSTR *s = VAL_STRING(v);  // debug build checks it's ANY-STRING!
     return STR_TAIL(s);
 }
@@ -608,7 +608,7 @@ inline static REBCHR(const*) VAL_STRING_TAIL(REBCEL(const*) v) {
 
 inline static REBSIZ VAL_SIZE_LIMIT_AT(
     option(REBLEN*) length_out,  // length in chars to end (including limit)
-    REBCEL(const*) v,
+    noquote(const Cell*) v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
     assert(ANY_STRING_KIND(CELL_HEART(v)));
@@ -641,7 +641,7 @@ inline static REBSIZ VAL_OFFSET(const RELVAL *v) {
     return VAL_STRING_AT(v) - STR_HEAD(VAL_STRING(v));
 }
 
-inline static REBSIZ VAL_OFFSET_FOR_INDEX(REBCEL(const*) v, REBLEN index) {
+inline static REBSIZ VAL_OFFSET_FOR_INDEX(noquote(const Cell*) v, REBLEN index) {
     assert(ANY_STRING_KIND(CELL_HEART(v)));
 
     REBCHR(const*) at;

@@ -410,7 +410,7 @@ inline static void FAIL_IF_INACCESSIBLE_CTX(REBCTX *c) {
 // be checked elsewhere...or also check it before use.
 //
 
-inline static REBCTX *VAL_CONTEXT(REBCEL(const*) v) {
+inline static REBCTX *VAL_CONTEXT(noquote(const Cell*) v) {
     assert(ANY_CONTEXT_KIND(CELL_HEART(v)));
     REBCTX *c = CTX(VAL_NODE1(v));
     FAIL_IF_INACCESSIBLE_CTX(c);
@@ -438,7 +438,7 @@ inline static void INIT_VAL_FRAME_BINDING(RELVAL *v, REBCTX *binding) {
     EXTRA(Binding, v) = binding;
 }
 
-inline static REBCTX *VAL_FRAME_BINDING(REBCEL(const*) v) {
+inline static REBCTX *VAL_FRAME_BINDING(noquote(const Cell*) v) {
     assert(REB_FRAME == CELL_HEART(v));
     return CTX(BINDING(v));
 }
@@ -466,14 +466,14 @@ inline static void INIT_VAL_FRAME_PHASE(RELVAL *v, REBACT *phase) {
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
 
-inline static REBACT *VAL_FRAME_PHASE(REBCEL(const*) v) {
+inline static REBACT *VAL_FRAME_PHASE(noquote(const Cell*) v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (not s or IS_SYMBOL(s))  // ANONYMOUS or label, not a phase
         return CTX_FRAME_ACTION(VAL_CONTEXT(v));  // so use archetype
     return ACT(s);  // cell has its own phase, return it
 }
 
-inline static bool IS_FRAME_PHASED(REBCEL(const*) v) {
+inline static bool IS_FRAME_PHASED(noquote(const Cell*) v) {
     assert(CELL_KIND(v) == REB_FRAME);
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     return s and not IS_SYMBOL(s);
@@ -510,7 +510,7 @@ inline static void INIT_VAL_FRAME_LABEL(
 // visible for that phase of execution and which aren't.
 //
 
-inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(REBCEL(const*) context)
+inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(noquote(const Cell*) context)
 {
     if (CELL_KIND(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));

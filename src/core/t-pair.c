@@ -31,7 +31,7 @@
 //
 //  CT_Pair: C
 //
-REBINT CT_Pair(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Pair(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // !!! Should this be heeded for the decimal?
 
@@ -149,7 +149,7 @@ void Min_Max_Pair(REBVAL *out, const REBVAL *a, const REBVAL *b, bool maxed)
 //
 //  MF_Pair: C
 //
-void MF_Pair(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Pair(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     Mold_Or_Form_Value(mo, VAL_PAIR_X(v), form);
 

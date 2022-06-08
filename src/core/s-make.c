@@ -221,7 +221,7 @@ void Append_Spelling(REBSTR *dst, const REBSTR *spelling)
 //
 // Append a partial string to a REBSTR*.
 //
-void Append_String_Limit(REBSTR *dst, REBCEL(const*) src, REBLEN limit)
+void Append_String_Limit(REBSTR *dst, noquote(const Cell*) src, REBLEN limit)
 {
     assert(not IS_SYMBOL(dst));
     assert(ANY_UTF8_KIND(CELL_KIND(src)));

@@ -327,7 +327,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 
     if (arg_kind != REB_BLOCK) {
         Copy_Cell(out, arg);  // move value so we can modify it
-        Dequotify(out);  // remove quotes (should TO take a REBCEL()?)
+        Dequotify(out);  // remove quotes (should TO take a noquote(Cell*)?)
         Plainify(out);  // remove any decorations like @ or :
         if (not Try_Leading_Blank_Pathify(out, kind))
             fail (Error_Bad_Sequence_Init(out));
@@ -392,7 +392,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 // This behavior is not preserved in Ren-C, so `same-color?` or something
 // else would be needed to get that intent.
 //
-REBINT CT_Sequence(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Sequence(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     // If the internal representations used do not match, then the sequences
     // can't match.  For this to work reliably, there can't be aliased

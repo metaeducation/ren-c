@@ -29,7 +29,7 @@
 #include "sys-core.h"
 
 
-static REBCTX *Error_Bad_Date_Compare(REBCEL(const*) a, REBCEL(const*) b)
+static REBCTX *Error_Bad_Date_Compare(noquote(const Cell*) a, noquote(const Cell*) b)
 {
     return Error_Invalid_Compare_Raw(
         cast(const REBVAL*, a),
@@ -41,7 +41,7 @@ static REBCTX *Error_Bad_Date_Compare(REBCEL(const*) a, REBCEL(const*) b)
 //
 //  CT_Date: C
 //
-REBINT CT_Date(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Date(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     // Dates which lack times or time zones cannot be compared directly with
     // dates that do have times or time zones.  Error on those.
@@ -112,7 +112,7 @@ REBINT CT_Date(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 //  MF_Date: C
 //
-void MF_Date(REB_MOLD *mo, REBCEL(const*) v_orig, bool form)
+void MF_Date(REB_MOLD *mo, noquote(const Cell*) v_orig, bool form)
 {
     // We can't/shouldn't modify the incoming date value we are molding, so we
     // make a copy that we can tweak during the emit process

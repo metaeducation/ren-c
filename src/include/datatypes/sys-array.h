@@ -396,7 +396,7 @@ inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
 // These operations do not need to take the value's index position into
 // account; they strictly operate on the array series
 //
-inline static const REBARR *VAL_ARRAY(REBCEL(const*) v) {
+inline static const REBARR *VAL_ARRAY(noquote(const Cell*) v) {
     assert(ANY_ARRAY_KIND(CELL_HEART(v)));
 
     const REBARR *a = ARR(VAL_NODE1(v));
@@ -422,7 +422,7 @@ inline static const REBARR *VAL_ARRAY(REBCEL(const*) v) {
 //
 inline static const RELVAL *VAL_ARRAY_LEN_AT(
     option(REBLEN*) len_at_out,
-    REBCEL(const*) v
+    noquote(const Cell*) v
 ){
     const REBARR *arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
@@ -436,7 +436,7 @@ inline static const RELVAL *VAL_ARRAY_LEN_AT(
 
 inline static const RELVAL *VAL_ARRAY_AT(
     option(const RELVAL**) tail_out,
-    REBCEL(const*) v
+    noquote(const Cell*) v
 ){
     const REBARR *arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
@@ -451,7 +451,7 @@ inline static const RELVAL *VAL_ARRAY_AT(
 
 inline static const RELVAL *VAL_ARRAY_AT_HEAD_T(
     option(const RELVAL**) tail_out,
-    REBCEL(const*) v
+    noquote(const Cell*) v
 ){
     const REBARR *arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
@@ -463,7 +463,7 @@ inline static const RELVAL *VAL_ARRAY_AT_HEAD_T(
     return at;
 }
 
-inline static const RELVAL *VAL_ARRAY_ITEM_AT(REBCEL(const*) v) {
+inline static const RELVAL *VAL_ARRAY_ITEM_AT(noquote(const Cell*) v) {
     const RELVAL *tail;
     const RELVAL *item = VAL_ARRAY_AT(&tail, v);
     assert(item != tail);  // should be a valid value

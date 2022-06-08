@@ -37,7 +37,7 @@
 // It doesn't check key codes, doesn't check if EVF_HAS_XY but still compares
 // the x and y coordinates anyway...
 //
-REBINT Cmp_Event(REBCEL(const*) t1, REBCEL(const*) t2)
+REBINT Cmp_Event(noquote(const Cell*) t1, noquote(const Cell*) t2)
 {
     REBINT  diff;
 
@@ -55,7 +55,7 @@ REBINT Cmp_Event(REBCEL(const*) t1, REBCEL(const*) t2)
 //
 //  CT_Event: C
 //
-REBINT CT_Event(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Event(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
     return Cmp_Event(a, b);
@@ -264,7 +264,7 @@ void Set_Event_Vars(
 //
 static REBVAL *Get_Event_Var(
     RELVAL *out,
-    REBCEL(const*) v,
+    noquote(const Cell*) v,
     const REBSYM *symbol
 ){
     switch (ID_OF_SYMBOL(symbol)) {
@@ -464,7 +464,7 @@ REBTYPE(Event)
 //
 //  MF_Event: C
 //
-void MF_Event(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Event(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 

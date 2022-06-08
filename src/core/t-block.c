@@ -78,7 +78,7 @@ REBNATIVE(only)  // https://forum.rebol.info/t/1182/11
 // its implementation, so ANY_ARRAY(CELL_KIND()) may not be true...just
 // ANY_ARRAY(CELL_HEART()).
 //
-REBINT CT_Array(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Array(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     if (C_STACK_OVERFLOWING(&strict))
         Fail_Stack_Overflow();
@@ -704,7 +704,7 @@ RELVAL *Pick_Block(REBVAL *out, const REBVAL *block, const RELVAL *picker)
 //
 //  MF_Array: C
 //
-void MF_Array(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Array(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     // Routine may be called on value that reports REB_QUOTED, even if it
     // has no additional payload and is aliasing the cell itself.  Checking

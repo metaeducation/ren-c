@@ -73,7 +73,7 @@ const struct {
 //
 //  CT_Typeset: C
 //
-REBINT CT_Typeset(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Typeset(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
     if (EQUAL_TYPESET(a, b))
@@ -346,7 +346,7 @@ REBARR *Typeset_To_Array(const REBVAL *tset)
 //
 //  MF_Typeset: C
 //
-void MF_Typeset(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Typeset(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     REBINT n;
 

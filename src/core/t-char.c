@@ -72,7 +72,7 @@ const uint_fast8_t firstByteMark[7] = {
 // no non-strict comparisons.  To compare non-strictly, they must be aliased
 // as TEXT!.
 //
-REBINT CT_Issue(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Issue(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // always strict
 
@@ -194,7 +194,7 @@ static REBINT Math_Arg_For_Char(REBVAL *arg, const REBSYM *verb)
 //
 //  MF_Issue: C
 //
-void MF_Issue(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Issue(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     enum Reb_Kind heart = CELL_HEART(v);
     REBLEN len;

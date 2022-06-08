@@ -400,7 +400,7 @@ bool Eq_Decimal2(REBDEC a, REBDEC b)
 //
 //  CT_Decimal: C
 //
-REBINT CT_Decimal(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Decimal(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     if (strict) {
         if (almost_equal(VAL_DECIMAL(a), VAL_DECIMAL(b), 0))
@@ -420,7 +420,7 @@ REBINT CT_Decimal(REBCEL(const*) a, REBCEL(const*) b, bool strict)
 //
 // Code mostly duplicated in MF_Percent.
 //
-void MF_Decimal(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Decimal(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 
@@ -441,7 +441,7 @@ void MF_Decimal(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 // Code mostly duplicated in MF_Decimal.
 //
-void MF_Percent(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Percent(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 

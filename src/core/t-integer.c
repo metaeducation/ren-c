@@ -31,7 +31,7 @@
 //
 //  CT_Integer: C
 //
-REBINT CT_Integer(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Integer(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);  // no lax form of comparison
 
@@ -239,7 +239,7 @@ check_sign:
 //
 //  MF_Integer: C
 //
-void MF_Integer(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Integer(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 

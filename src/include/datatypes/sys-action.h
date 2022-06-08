@@ -216,7 +216,7 @@ inline static REBARR *ACT_IDENTITY(REBACT *a)
   { return x_cast(REBARR*, a); }
 
 
-inline static REBCTX *VAL_ACTION_BINDING(REBCEL(const*) v) {
+inline static REBCTX *VAL_ACTION_BINDING(noquote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     return CTX(BINDING(v));
 }
@@ -339,7 +339,7 @@ inline static void Init_Key(REBKEY *dest, const REBSYM *symbol)
 #define ACT_META(a)             MISC(DetailsMeta, ACT_IDENTITY(a))
 
 
-inline static REBACT *VAL_ACTION(REBCEL(const*) v) {
+inline static REBACT *VAL_ACTION(noquote(const Cell*) v) {
     assert(CELL_KIND(v) == REB_ACTION); // so it works on literals
     REBSER *s = SER(VAL_NODE1(v));
     if (GET_SERIES_FLAG(s, INACCESSIBLE))
@@ -362,7 +362,7 @@ inline static REBACT *VAL_ACTION(REBCEL(const*) v) {
 // the words, you get the currently executing label instead...which may
 // actually make more sense.
 
-inline static option(const REBSYM*) VAL_ACTION_LABEL(REBCEL(const *) v) {
+inline static option(const REBSYM*) VAL_ACTION_LABEL(noquote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     REBSER *s = VAL_ACTION_PARTIALS_OR_LABEL(v);
     if (not s)

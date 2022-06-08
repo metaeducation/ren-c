@@ -178,7 +178,7 @@ const REBYTE *Scan_Time(RELVAL *out, const REBYTE *cp, REBLEN len)
 //
 //  MF_Time: C
 //
-void MF_Time(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Time(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);  // no difference between MOLD and FORM at this time
 
@@ -215,7 +215,7 @@ void MF_Time(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 //  CT_Time: C
 //
-REBINT CT_Time(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Time(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
 

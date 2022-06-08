@@ -440,7 +440,7 @@ REBTYPE(Sequence)
 //
 //  MF_Sequence: C
 //
-void MF_Sequence(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Sequence(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 

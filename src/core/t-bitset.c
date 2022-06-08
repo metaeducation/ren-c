@@ -34,7 +34,7 @@
 // not attempt to answer any existential questions--as comparisons in R3-Alpha
 // need significant review.
 //
-REBINT CT_Bitset(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Bitset(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     DECLARE_LOCAL (atemp);
     DECLARE_LOCAL (btemp);
@@ -65,7 +65,7 @@ REBBIN *Make_Bitset(REBLEN num_bits)
 //
 //  MF_Bitset: C
 //
-void MF_Bitset(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Bitset(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form); // all bitsets are "molded" at this time
 

@@ -104,7 +104,7 @@ REBYTE *Prep_Mold_Overestimated(REB_MOLD *mo, REBLEN num_bytes)
 //
 // Emit the initial datatype function, depending on /ALL option
 //
-void Pre_Mold_Core(REB_MOLD *mo, REBCEL(const*) v, bool all)
+void Pre_Mold_Core(REB_MOLD *mo, noquote(const Cell*) v, bool all)
 {
     if (all)
         Append_Ascii(mo->series, "#[");
@@ -142,7 +142,7 @@ void End_Mold_Core(REB_MOLD *mo, bool all)
 // For series that has an index, add the index for mold/all.
 // Add closing block.
 //
-void Post_Mold(REB_MOLD *mo, REBCEL(const*) v)
+void Post_Mold(REB_MOLD *mo, noquote(const Cell*) v)
 {
     if (VAL_INDEX(v)) {
         Append_Codepoint(mo->series, ' ');
@@ -356,7 +356,7 @@ void Form_Array_At(
 //
 //  MF_Fail: C
 //
-void MF_Fail(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Fail(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 
@@ -382,7 +382,7 @@ void MF_Fail(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 //  MF_Unhooked: C
 //
-void MF_Unhooked(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Unhooked(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(mo);
     UNUSED(form);
@@ -401,7 +401,7 @@ void MF_Unhooked(REB_MOLD *mo, REBCEL(const*) v, bool form)
 //
 void Mold_Or_Form_Cell(
     REB_MOLD *mo,
-    REBCEL(const*) cell,
+    noquote(const Cell*) cell,
     bool form
 ){
     REBSTR *s = mo->series;
@@ -439,8 +439,8 @@ void Mold_Or_Form_Cell(
 //
 void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
 {
-    // Mold hooks take a REBCEL* and not a RELVAL*, so they expect any quotes
-    // applied to have already been done.
+    // Mold hooks take a noquote cell and not a RELVAL*, so they expect any
+    // quotes applied to have already been done.
 
   #if DEBUG_UNREADABLE_TRASH
     if (IS_TRASH(v)) {  // would assert otherwise
@@ -483,7 +483,7 @@ REBSTR *Copy_Mold_Or_Form_Value(const RELVAL *v, REBFLGS opts, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-REBSTR *Copy_Mold_Or_Form_Cell(REBCEL(const*) cell, REBFLGS opts, bool form)
+REBSTR *Copy_Mold_Or_Form_Cell(noquote(const Cell*) cell, REBFLGS opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;

@@ -73,7 +73,7 @@
         return cast(REBSPC*, c);
     }
 
-    inline static REBSPC *VAL_SPECIFIER(REBCEL(const*) v) {
+    inline static REBSPC *VAL_SPECIFIER(noquote(const Cell*) v) {
         assert(ANY_ARRAY_KIND(CELL_HEART(v)));
 
         REBARR *a = ARR(BINDING(v));

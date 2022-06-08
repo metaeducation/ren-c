@@ -39,7 +39,11 @@ typedef const REBVAL *REB_R;
 // no overrides for individual types (only if they are the only type in
 // their class).
 //
-typedef REBINT (COMPARE_HOOK)(REBCEL(const*) a, REBCEL(const*) b, bool strict);
+typedef REBINT (COMPARE_HOOK)(
+    noquote(const Cell*) a,
+    noquote(const Cell*) b,
+    bool strict
+);
 
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
@@ -78,7 +82,7 @@ typedef REB_R (TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
 // has a different handler than strings.  So not all molds are driven by
 // their class entirely.
 //
-typedef void (MOLD_HOOK)(REB_MOLD *mo, REBCEL(const*) v, bool form);
+typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(const Cell*) v, bool form);
 
 
 // These definitions are needed in %sys-rebval.h, and can't be put in

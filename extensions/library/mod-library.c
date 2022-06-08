@@ -35,7 +35,7 @@ REBTYP *EG_Library_Type = nullptr;  // (E)xtension (G)lobal LIBRARY! type
 //
 //  CT_Library: C
 //
-REBINT CT_Library(REBCEL(const*) a, REBCEL(const*) b, bool strict)
+REBINT CT_Library(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
     UNUSED(strict);
     return VAL_LIBRARY(a) == VAL_LIBRARY(b);
@@ -89,7 +89,7 @@ REB_R TO_Library(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 //
 //  MF_Library: C
 //
-void MF_Library(REB_MOLD *mo, REBCEL(const*) v, bool form)
+void MF_Library(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 

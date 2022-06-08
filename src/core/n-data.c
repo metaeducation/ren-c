@@ -1750,7 +1750,7 @@ bool Try_As_String(
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (IS_ISSUE(v)) {
-        if (CELL_HEART(cast(REBCEL(const*), v)) != REB_BYTES) {
+        if (CELL_HEART(cast(noquote(const Cell*), v)) != REB_BYTES) {
             assert(Is_Series_Frozen(VAL_STRING(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
@@ -1980,7 +1980,7 @@ REBNATIVE(as)
       case REB_META_WORD:
       case REB_THE_WORD: {
         if (IS_ISSUE(v)) {
-            if (CELL_KIND(cast(REBCEL(const*), v)) == REB_TEXT) {
+            if (CELL_KIND(cast(noquote(const Cell*), v)) == REB_TEXT) {
                 //
                 // Handle the same way we'd handle any other read-only text
                 // with a series allocation...e.g. reuse it if it's already
@@ -2093,7 +2093,7 @@ REBNATIVE(as)
 
       case REB_BINARY: {
         if (IS_ISSUE(v)) {
-            if (CELL_KIND(cast(REBCEL(const*), v)) == REB_TEXT)
+            if (CELL_KIND(cast(noquote(const Cell*), v)) == REB_TEXT)
                 goto any_string_as_binary;  // had a series allocation
 
             // Data lives in payload--make new frozen series for BINARY!

@@ -167,8 +167,8 @@
             panic (c); \
         } \
 
-    inline static REBCEL(const*) READABLE(REBCEL(const*) c) {
-        ASSERT_CELL_READABLE_EVIL_MACRO(c);
+    inline static const RawCell *READABLE(const RawCell *c) {
+        ASSERT_CELL_READABLE_EVIL_MACRO(c);  // ^-- should this be a template?
         return c;
     }
 
@@ -234,7 +234,7 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
     #define KIND3Q_BYTE KIND3Q_BYTE_UNCHECKED
 #else
     inline static REBYTE KIND3Q_BYTE_Debug(
-        const RELVAL *v,  // can't be used on REBCEL(const*)
+        const RELVAL *v,  // can't be used on noquote(const Cell*)
         const char *file,
         int line
     ){
@@ -306,12 +306,12 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
     #define CELL_KIND CELL_KIND_UNCHECKED
     #define CELL_HEART CELL_HEART_UNCHECKED
 #else
-    inline static enum Reb_Kind CELL_KIND(REBCEL(const*) cell) {
+    inline static enum Reb_Kind CELL_KIND(noquote(const Cell*) cell) {
         assert(HEART_BYTE(cell) != REB_QUOTED);
         return CELL_KIND_UNCHECKED(cell);
     }
 
-    inline static enum Reb_Kind CELL_HEART(REBCEL(const*) cell) {
+    inline static enum Reb_Kind CELL_HEART(noquote(const Cell*) cell) {
         assert(HEART_BYTE(cell) != REB_QUOTED);
         return CELL_HEART_UNCHECKED(cell);
     }
@@ -323,18 +323,18 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
     inline static enum Reb_Kind CELL_HEART(const RELVAL *v) = delete;
 #endif
 
-inline static const REBTYP *CELL_CUSTOM_TYPE(REBCEL(const*) v) {
+inline static const REBTYP *CELL_CUSTOM_TYPE(noquote(const Cell*) v) {
     assert(CELL_KIND(v) == REB_CUSTOM);
     return cast(const REBBIN*, EXTRA(Any, v).node);
 }
 
-// Sometimes you have a REBCEL* and need to pass a REBVAL* to something.  It
+// Sometimes you have a noquote and need to pass a REBVAL* to something.  It
 // doesn't seem there's too much bad that can happen if you do; you'll get
 // back something that might be quoted up to 3 levels...if it's an escaped
 // cell then it won't be quoted at all.  Main thing to know is that you don't
 // necessarily get the original value you had back.
 //
-inline static const RELVAL* CELL_TO_VAL(REBCEL(const*) cell)
+inline static const RELVAL* CELL_TO_VAL(noquote(const Cell*) cell)
   { return cast(const RELVAL*, cell); }
 
 #if CPLUSPLUS_11
@@ -620,7 +620,7 @@ inline static REBVAL *SPECIFIC(const_if_c RELVAL *v) {
 inline static void INIT_VAL_WORD_SYMBOL(RELVAL *v, const REBSYM *symbol)
   { INIT_VAL_NODE1(v, symbol); }
 
-inline static const REBSYM *VAL_WORD_SYMBOL(REBCEL(const*) cell) {
+inline static const REBSYM *VAL_WORD_SYMBOL(noquote(const Cell*) cell) {
     assert(ANY_WORD_KIND(CELL_HEART(cell)));
     return SYM(VAL_NODE1(cell));
 }
