@@ -93,7 +93,7 @@ static REBI64 mark_count = 0;
 static void Queue_Mark_Opt_Value_Deep(const RELVAL *v);
 
 inline static void Queue_Mark_Opt_Void_Cell_Deep(const RELVAL *v) {
-    if (KIND3Q_BYTE_UNCHECKED(v) != REB_0_VOID)  // faster than Is_Void()
+    if (VAL_TYPE_UNCHECKED(v) != REB_0_VOID)  // faster than Is_Void()
         Queue_Mark_Opt_Value_Deep(v);
 }
 
@@ -124,7 +124,7 @@ inline static void Queue_Mark_Maybe_Stale_Cell_Deep(RELVAL *v) {
 
 inline static void Queue_Mark_Value_Deep(const RELVAL *v)
 {
-    assert(KIND3Q_BYTE_UNCHECKED(v) != REB_NULL);  // faster than IS_NULLED()
+    assert(VAL_TYPE_UNCHECKED(v) != REB_NULL);  // faster than IS_NULLED()
     Queue_Mark_Opt_Value_Deep(v);  // unreadable trash is ok
 }
 
@@ -342,13 +342,13 @@ static void Queue_Mark_Opt_Value_Deep(const RELVAL *cv)
     if (IS_TRASH(cv))  // always false in release builds (no cost)
         return;
 
-    assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_VOID);
+    assert(VAL_TYPE_UNCHECKED(v) != REB_0_VOID);
 
     // We mark based on the type of payload in the cell, e.g. its "unescaped"
     // form.  So if '''a fits in a WORD! (despite being a QUOTED!), we want
-    // to mark the cell as if it were a plain word.  Use the CELL_KIND.
+    // to mark the cell as if it were a plain word.  Use the CELL_HEART().
     //
-    enum Reb_Kind heart = cast(enum Reb_Kind, HEART_BYTE(v));
+    enum Reb_Kind heart = CELL_HEART(v);
 
   #if !defined(NDEBUG)  // see Queue_Mark_Node_Deep() for notes on recursion
     assert(not in_mark);
@@ -425,7 +425,7 @@ static void Propagate_All_GC_Marks(void)
             // Nulls are illegal in most arrays, but context varlists use
             // "nulled cells" to denote that the variable is not set.
             //
-            if (KIND3Q_BYTE_UNCHECKED(v) == REB_NULL) {
+            if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {
                 if (not (IS_VARLIST(a) or IS_PATCH(a) or IS_PAIRLIST(a)))
                     panic (a);
             }
@@ -1387,7 +1387,7 @@ void Push_Guard_Node(const REBNOD *node)
         // valid before then.)
         //
         const REBVAL* v = cast(const REBVAL*, node);
-        assert(CELL_KIND_UNCHECKED(v) < REB_MAX);
+        assert(CELL_HEART_UNCHECKED(v) < REB_MAX);
 
       #ifdef STRESS_CHECK_GUARD_VALUE_POINTER
         //

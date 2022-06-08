@@ -74,9 +74,8 @@ REBNATIVE(only)  // https://forum.rebol.info/t/1182/11
 //
 // "Compare Type" dispatcher for arrays.
 //
-// Note this routine is delegated to by CT_Path() when it's using an array for
-// its implementation, so ANY_ARRAY(CELL_KIND()) may not be true...just
-// ANY_ARRAY(CELL_HEART()).
+// !!! Should CT_Path() delegate to this when it detects it has two arrays
+// to compare?  That requires canonization assurance.
 //
 REBINT CT_Array(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
@@ -711,7 +710,7 @@ void MF_Array(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     // the type could be avoided if each type had its own dispatcher, but
     // this routine seems to need to be generic.
     //
-    enum Reb_Kind kind = CELL_KIND(v);
+    enum Reb_Kind kind = CELL_HEART(v);
 
     if (form) {
         option(REBCTX*) context = nullptr;
@@ -1612,8 +1611,8 @@ void Assert_Array_Core(const REBARR *a)
     REBLEN i;
     REBLEN len = ARR_LEN(a);
     for (i = 0; i < len; ++i, ++item) {
-        if (KIND3Q_BYTE_UNCHECKED(item) % REB_64 >= REB_MAX) {
-            printf("Invalid KIND3Q_BYTE at index %d\n", cast(int, i));
+        if (VAL_TYPE(item) >= REB_MAX) {
+            printf("Invalid VAL_TYPE() at index %d\n", cast(int, i));
             panic (a);
         }
     }

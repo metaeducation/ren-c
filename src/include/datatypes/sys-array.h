@@ -397,7 +397,7 @@ inline static REBARR* Copy_Array_At_Extra_Deep_Flags_Managed(
 // account; they strictly operate on the array series
 //
 inline static const REBARR *VAL_ARRAY(noquote(const Cell*) v) {
-    assert(ANY_ARRAY_KIND(CELL_HEART(v)));
+    assert(ANY_ARRAYLIKE(v));
 
     const REBARR *a = ARR(VAL_NODE1(v));
     if (GET_SERIES_FLAG(a, INACCESSIBLE))

@@ -41,7 +41,7 @@
     // allows an assert, but also lvalue: `VAL_INT64(v) = xxx`
     //
     inline static REBI64 VAL_INT64(noquote(const Cell*) v) {
-        assert(CELL_KIND(v) == REB_INTEGER);
+        assert(CELL_HEART(v) == REB_INTEGER);
         return PAYLOAD(Integer, v).i64;
     }
     inline static REBI64 & VAL_INT64(RELVAL *v) {

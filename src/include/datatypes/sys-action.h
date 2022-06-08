@@ -144,7 +144,7 @@ inline static REBVAL *Init_Return_Signal_Untracked(RELVAL *out, char ch) {
     Init_Return_Signal_Untracked(TRACK(out), (ch))
 
 #define IS_RETURN_SIGNAL(v) \
-    (KIND3Q_BYTE(v) == REB_T_RETURN_SIGNAL)
+    (HEART_BYTE(v) == REB_T_RETURN_SIGNAL)
 
 inline static char VAL_RETURN_SIGNAL(const RELVAL *v) {
     assert(IS_RETURN_SIGNAL(v));
@@ -340,7 +340,7 @@ inline static void Init_Key(REBKEY *dest, const REBSYM *symbol)
 
 
 inline static REBACT *VAL_ACTION(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_ACTION); // so it works on literals
+    assert(CELL_HEART(v) == REB_ACTION);
     REBSER *s = SER(VAL_NODE1(v));
     if (GET_SERIES_FLAG(s, INACCESSIBLE))
         fail (Error_Series_Data_Freed_Raw());

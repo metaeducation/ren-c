@@ -50,7 +50,6 @@ void Startup_Data_Stack(REBLEN capacity)
     //
     SET_SERIES_LEN(DS_Array, 1);
     DS_Movable_Tail = ARR_TAIL(DS_Array);
-    ASSERT_ARRAY(DS_Array);
 
     // Reuse the expansion logic that happens on a DS_PUSH() to get the
     // initial stack size.  It requires you to be on an END to run.
@@ -308,7 +307,9 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     assert(cell == ARR_TAIL(DS_Array));
     DS_Movable_Tail = ARR_TAIL(DS_Array);
 
-    ASSERT_ARRAY(DS_Array);
+    // Note: this used to ASSERT_ARRAY(DS_Array), which doesn't make sense
+    // as it's about the most invalid array there is; with special marking
+    // taken care of in the GC.  It has its own subtype: FLAVOR_DATASTACK
 }
 
 
@@ -333,9 +334,9 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
     REBVAL *src = DS_AT(dsp_start + 1);  // not const, will be RESET()'ing
     RELVAL *dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
-        if (KIND3Q_BYTE_UNCHECKED(src) == REB_NULL)  // allow unreadable trash
+        if (VAL_TYPE_UNCHECKED(src) == REB_NULL)  // allow unreadable trash
             assert(IS_VARLIST(a));  // usually not legal
-        if (KIND3Q_BYTE_UNCHECKED(src) == REB_BAD_WORD)
+        if (VAL_TYPE_UNCHECKED(src) == REB_BAD_WORD)
             assert(NOT_CELL_FLAG(src, ISOTOPE));
 
         Move_Cell_Untracked(dest, src, CELL_MASK_COPY);

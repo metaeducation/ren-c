@@ -39,7 +39,7 @@
     // C++ has reference types--use them and add extra assert it's a date
 
     inline static const REBYMD & VAL_DATE(noquote(const Cell*) v) {
-        assert(CELL_KIND(v) == REB_DATE);
+        assert(CELL_HEART(v) == REB_DATE);
         return EXTRA(Date, v).ymdz;
     }
 
@@ -81,7 +81,7 @@
 
 inline static bool Does_Date_Have_Time(noquote(const Cell*) v)
 {
-    assert(CELL_KIND(v) == REB_DATE);
+    assert(CELL_HEART(v) == REB_DATE);
     if (PAYLOAD(Time, v).nanoseconds == NO_DATE_TIME) {
         assert(VAL_DATE(v).zone == NO_DATE_ZONE);
         return false;
@@ -91,7 +91,7 @@ inline static bool Does_Date_Have_Time(noquote(const Cell*) v)
 
 inline static bool Does_Date_Have_Zone(noquote(const Cell*) v)
 {
-    assert(CELL_KIND(v) == REB_DATE);
+    assert(CELL_HEART(v) == REB_DATE);
     if (VAL_DATE(v).zone == NO_DATE_ZONE)  // out of band of 7-bit field
         return false;
     assert(PAYLOAD(Time, v).nanoseconds != NO_DATE_TIME);
@@ -111,7 +111,7 @@ inline static int VAL_ZONE(noquote(const Cell*) v) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 inline static REBI64 VAL_NANO(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_TIME or Does_Date_Have_Time(v));
+    assert(CELL_HEART(v) == REB_TIME or Does_Date_Have_Time(v));
     return PAYLOAD(Time, v).nanoseconds;
 }
 

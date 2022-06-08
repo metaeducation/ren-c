@@ -2229,9 +2229,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             fail (Error_Syntax(ss, token));
 
         if (bp[len - 1] == '%') {
-            mutable_KIND3Q_BYTE(DS_TOP)
-                = mutable_HEART_BYTE(DS_TOP)
-                = REB_PERCENT;
+            mutable_HEART_BYTE(DS_TOP) = REB_PERCENT;
 
             // !!! DEBUG_EXTANT_STACK_POINTERS can't resolve if this is
             // a noquote(const Cell*) or REBVAL* overload with DEBUG_CHECK_CASTS.
@@ -2583,9 +2581,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         for (; cleanup <= DS_TOP; ++cleanup) {
             if (IS_GET_WORD(cleanup)) {
                 REBARR *a = Alloc_Singular(NODE_FLAG_MANAGED);
-                mutable_KIND3Q_BYTE(cleanup)
-                    = mutable_HEART_BYTE(cleanup)
-                    = REB_GET_WORD;
+                mutable_HEART_BYTE(cleanup) = REB_GET_WORD;
 
                 Move_Cell(ARR_SINGLE(a), cleanup);
                 Init_Group(cleanup, a);
@@ -2756,9 +2752,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
         if (not ANY_PLAIN_KIND(kind))
             fail (Error_Syntax(ss, token));
 
-        mutable_KIND3Q_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
-        if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
-            mutable_HEART_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
+        mutable_HEART_BYTE(DS_TOP) = SETIFY_ANY_PLAIN_KIND(kind);
 
         ss->begin = ++ss->end;  // !!! ?
     }
@@ -2769,21 +2763,15 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
 
         switch (prefix_pending) {
           case TOKEN_COLON:
-            mutable_KIND3Q_BYTE(DS_TOP) = GETIFY_ANY_PLAIN_KIND(kind);
-            if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
-                mutable_HEART_BYTE(DS_TOP) = GETIFY_ANY_PLAIN_KIND(kind);
+            mutable_HEART_BYTE(DS_TOP) = GETIFY_ANY_PLAIN_KIND(kind);
             break;
 
           case TOKEN_CARET:
-            mutable_KIND3Q_BYTE(DS_TOP) = METAFY_ANY_PLAIN_KIND(kind);
-            if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
-                mutable_HEART_BYTE(DS_TOP) = METAFY_ANY_PLAIN_KIND(kind);
+            mutable_HEART_BYTE(DS_TOP) = METAFY_ANY_PLAIN_KIND(kind);
             break;
 
           case TOKEN_AT:
-            mutable_KIND3Q_BYTE(DS_TOP) = THEIFY_ANY_PLAIN_KIND(kind);
-            if (kind != REB_PATH and kind != REB_TUPLE)  // keep "heart" as is
-                mutable_HEART_BYTE(DS_TOP) = THEIFY_ANY_PLAIN_KIND(kind);
+            mutable_HEART_BYTE(DS_TOP) = THEIFY_ANY_PLAIN_KIND(kind);
             break;
 
           default:

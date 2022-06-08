@@ -510,11 +510,10 @@ void Force_Value_Frozen_Core(
     if (Is_Value_Frozen_Deep(v))
         return;
 
-    noquote(const Cell*) cell = VAL_UNESCAPED(v);
-    enum Reb_Kind kind = CELL_KIND(cell);
+    enum Reb_Kind heart = CELL_HEART(v);
 
-    if (ANY_ARRAY_KIND(kind)) {
-        REBARR *a = m_cast(REBARR*, VAL_ARRAY(cell));  // mutate flags only
+    if (ANY_ARRAY_KIND(heart)) {
+        REBARR *a = m_cast(REBARR*, VAL_ARRAY(v));  // mutate flags only
         if (deep)
             Freeze_Array_Deep(a);
         else
@@ -522,8 +521,8 @@ void Force_Value_Frozen_Core(
         if (locker)
             SET_SERIES_INFO(a, AUTO_LOCKED);
     }
-    else if (ANY_CONTEXT_KIND(kind)) {
-        REBCTX *c = VAL_CONTEXT(cell);
+    else if (ANY_CONTEXT_KIND(heart)) {
+        REBCTX *c = VAL_CONTEXT(v);
         if (deep)
             Deep_Freeze_Context(c);
         else
@@ -531,19 +530,19 @@ void Force_Value_Frozen_Core(
         if (locker)
             SET_SERIES_INFO(m_cast(REBARR*, CTX_VARLIST(c)), AUTO_LOCKED);
     }
-    else if (ANY_SERIES_KIND(kind)) {
-        REBSER *s = m_cast(REBSER*, VAL_SERIES(cell));  // mutate flags only
+    else if (ANY_SERIES_KIND(heart)) {
+        REBSER *s = m_cast(REBSER*, VAL_SERIES(v));  // mutate flags only
         Freeze_Series(s);
         UNUSED(deep);
         if (locker)
             SET_SERIES_INFO(s, AUTO_LOCKED);
-    } else if (kind == REB_ACTION or kind == REB_DATATYPE) {
+    } else if (heart == REB_ACTION or heart == REB_DATATYPE) {
         // No freezing needed
-    } else if (ANY_SEQUENCE_KIND(kind)) {
+    } else if (ANY_SEQUENCE_KIND(heart)) {
         // No freezing needed
     }
     else
-        fail (Error_Invalid_Type(kind)); // not yet implemented
+        fail (Error_Invalid_Type(heart));  // not yet implemented
 }
 
 

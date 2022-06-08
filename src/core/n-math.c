@@ -466,14 +466,11 @@ REBINT Compare_Modify_Values(RELVAL *a, RELVAL *b, bool strict)
     if (VAL_NUM_QUOTES(a) != VAL_NUM_QUOTES(b))
         return VAL_NUM_QUOTES(a) > VAL_NUM_QUOTES(b) ? 1 : -1;
 
-    // This code wants to modify the value, but we can't modify the
-    // embedded values in highly-escaped literals.  Move the data out.
-
-    Dequotify(a);
+    Dequotify(a);  // !!! is dequotification necessary?
     Dequotify(b);
 
-    enum Reb_Kind ta = cast(enum Reb_Kind, KIND3Q_BYTE_UNCHECKED(a));
-    enum Reb_Kind tb = cast(enum Reb_Kind, KIND3Q_BYTE_UNCHECKED(b));
+    enum Reb_Kind ta = CELL_HEART(a);
+    enum Reb_Kind tb = CELL_HEART(b);
 
     assert(ta < REB_MAX);  // we dequoted it
     assert(tb < REB_MAX);  // we dequoted this as well

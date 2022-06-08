@@ -26,21 +26,21 @@
 // simply a sigle-length token, which is translated to a codepoint using the
 // `CODEPOINT OF` reflector, or by using FIRST on the token.
 //
-// REB_ISSUE presents as its own datatype, but the `heart` byte in the header
-// may be either REB_BYTES or REB_TEXT.  The REB_BYTES form uses the space
-// that would ordinarily hold a VAL_INDEX() integer and a VAL_STRING() pointer
-// for the actual encoded UTF-8 data.  Hence generically speaking, ISSUE! is
-// not considered an ANY-SERIES! or ANY-STRING! type.
+// REB_ISSUE has two forms: one with a separate node allocation and one that
+// stores its data where the node and index would be.  CELL_FLAG_ISSUE_HAS_NODE
+// is what discerns the two categories, and can only be treated as a string
+// when it has that flag.  Hence generically speaking, ISSUE! is not considered
+// an ANY-SERIES! or ANY-STRING! type.
 //
 // However, there are UTF-8-based accessors VAL_UTF8_XXX which can be used to
 // polymorphically access const data across ANY-STRING!, ANY-WORD!, and ISSUE!
 //
 
 inline static bool IS_CHAR_CELL(noquote(const Cell*) v) {
-    if (CELL_KIND(v) != REB_ISSUE)
+    if (CELL_HEART(v) != REB_ISSUE)
         return false;
 
-    if (CELL_HEART(v) != REB_BYTES)
+    if (GET_CELL_FLAG(v, ISSUE_HAS_NODE))
         return false;  // allocated form, too long to be a character
 
     return EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1;  // codepoint
@@ -53,7 +53,7 @@ inline static bool IS_CHAR(const RELVAL *v) {
 }
 
 inline static REBUNI VAL_CHAR(noquote(const Cell*) v) {
-    assert(CELL_HEART(v) == REB_BYTES);
+    assert(NOT_CELL_FLAG(v, ISSUE_HAS_NODE));
 
     if (EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] == 0)
         return 0;  // no '\0` bytes internal to series w/REB_TEXT "heart"
@@ -74,7 +74,7 @@ inline static REBYTE VAL_CHAR_ENCODED_SIZE(noquote(const Cell*) v)
   { return Encoded_Size_For_Codepoint(VAL_CHAR(v)); }
 
 inline static const REBYTE *VAL_CHAR_ENCODED(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_ISSUE and CELL_HEART(v) == REB_BYTES);
+    assert(CELL_HEART(v) == REB_ISSUE and NOT_CELL_FLAG(v, ISSUE_HAS_NODE));
     assert(EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1);  // e.g. codepoint
     return PAYLOAD(Bytes, v).at_least_8;  // !!! '\0' terminated or not?
 }
@@ -86,7 +86,7 @@ inline static REBVAL *Init_Issue_Utf8(
     REBLEN len  // while validating, you should have counted the codepoints
 ){
     if (size + 1 <= sizeof(PAYLOAD(Bytes, out)).at_least_8) {
-        Reset_Cell_Header_Untracked(out, REB_BYTES, CELL_MASK_NONE);
+        Reset_Cell_Header_Untracked(out, REB_ISSUE, CELL_MASK_NONE);
         memcpy(PAYLOAD(Bytes, out).at_least_8, utf8, size);
         PAYLOAD(Bytes, out).at_least_8[size] = '\0';
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = size;
@@ -97,8 +97,8 @@ inline static REBVAL *Init_Issue_Utf8(
         assert(STR_LEN(str) == len);  // ^-- revalidates :-/ should match
         Freeze_Series(str);
         Init_Text(out, str);
+        mutable_HEART_BYTE(out) = REB_ISSUE;
     }
-    mutable_KIND3Q_BYTE(out) = REB_ISSUE;
     return cast(REBVAL*, out);
 }
 
@@ -107,7 +107,7 @@ inline static REBVAL *Init_Issue_Utf8(
 // this routine can be used.
 //
 inline static REBVAL *Init_Char_Unchecked_Untracked(RELVAL *out, REBUNI c) {
-    Reset_Cell_Header_Untracked(out, REB_BYTES, CELL_MASK_NONE);
+    Reset_Cell_Header_Untracked(out, REB_ISSUE, CELL_MASK_NONE);
 
     if (c == 0) {
         //
@@ -129,7 +129,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(RELVAL *out, REBUNI c) {
         EXTRA(Bytes, out).exactly_4[IDX_EXTRA_LEN] = 1;  // just one codepoint
     }
 
-    mutable_KIND3Q_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
+    mutable_HEART_BYTE(out) = REB_ISSUE;  // heart is TEXT, presents as issue
     assert(VAL_CHAR(out) == c);
     return cast(REBVAL*, out);
 }
@@ -274,8 +274,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         size_out = &dummy_size;  // force size calculation for debug check
   #endif
 
-    if (CELL_HEART(v) == REB_BYTES) {
-        assert(CELL_KIND(v) == REB_ISSUE);
+    if (CELL_HEART(v) == REB_ISSUE and NOT_CELL_FLAG(v, ISSUE_HAS_NODE)) {
         REBLEN len;
         REBSIZ size;
         //
@@ -303,7 +302,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
     }
 
     REBCHR(const*) utf8;
-    if (ANY_STRING_KIND(CELL_HEART(v))) {
+    if (ANY_STRINGLIKE(v)) {
         utf8 = VAL_STRING_AT(v);
 
         if (size_out or length_out) {
@@ -314,7 +313,7 @@ inline static REBCHR(const*) VAL_UTF8_LEN_SIZE_AT_LIMIT(
         }
     }
     else {
-        assert(ANY_WORD_KIND(CELL_HEART(v)));
+        assert(ANY_WORDLIKE(v));
 
         const REBSTR *spelling = VAL_WORD_SYMBOL(v);
         utf8 = STR_HEAD(spelling);

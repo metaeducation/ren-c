@@ -111,8 +111,7 @@ REB_R Block_Dispatcher(REBFRM *f)
         REBARR *relativized = Copy_And_Bind_Relative_Deep_Managed(
             SPECIFIC(block),
             FRM_PHASE(f),
-            locals_visible,
-            TS_WORD
+            locals_visible
         );
 
         // Preserve file and line information from the original, if present.

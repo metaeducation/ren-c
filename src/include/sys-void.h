@@ -24,7 +24,7 @@
 // (such as the output slot of a frame) will tolerate this marker, but they
 // are illegal most places...and will assert on typical tests like IS_BLOCK()
 // or IS_WORD().  So tests on values must be guarded with Is_Void() to tolerate
-// them...or the KIND3Q_BYTE() lower-level accessors must be used.
+// them...or the HEART_BYTE() lower-level accessors must be used.
 //
 // Another use for the VOID cell state is in an optimized array representation
 // that fits 0 or 1 cells into the series node itself.  Since the cell lives
@@ -73,13 +73,13 @@ inline static REBVAL *Prep_Void_Untracked(RELVAL *out) {
 
 inline static bool Is_Void(const REBVAL *out) {
     assert(not (out->header.bits & CELL_FLAG_STALE));
-    return KIND3Q_BYTE_UNCHECKED(out) == REB_0;
+    return VAL_TYPE_UNCHECKED(out) == REB_0;
 }
 
 inline static bool Is_Stale_Void(const RELVAL *out) {
     if (not (out->header.bits & CELL_FLAG_STALE))
         return false;
-    return KIND3Q_BYTE_UNCHECKED(out) == REB_0;
+    return VAL_TYPE_UNCHECKED(out) == REB_0;
 }
 
 inline static REBVAL *Init_Stale_Void_Untracked(RELVAL *out) {

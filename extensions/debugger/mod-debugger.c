@@ -201,7 +201,7 @@ REBNATIVE(resume)
         Init_Any_Array(expr, REB_META_GROUP, EMPTY_ARRAY);
     else {
         assert(IS_BLOCK(expr));
-        mutable_KIND3Q_BYTE(expr) = mutable_HEART_BYTE(expr) = REB_META_GROUP;
+        mutable_HEART_BYTE(expr) = REB_META_GROUP;
     }
 
     // We throw with /NAME as identity of the RESUME function.  (Note: there

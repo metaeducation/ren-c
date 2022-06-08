@@ -98,7 +98,7 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
 
     CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
 
-    if (not IS_WORD(feed->value))
+    if (VAL_TYPE_UNCHECKED(feed->value) != REB_WORD)  // REB_0 is END
         return false;
 
     feed->gotten = Lookup_Word(feed->value, FEED_SPECIFIER(feed));
@@ -826,10 +826,10 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             continue;
         }
 
-        REBYTE kind_byte = KIND3Q_BYTE(ARG);
+        enum Reb_Kind kind = VAL_TYPE(ARG);
 
         if (
-            kind_byte == REB_BLANK  // v-- e.g. <blank> param
+            kind == REB_BLANK  // v-- e.g. <blank> param
             and GET_PARAM_FLAG(PARAM, NOOP_IF_BLANK)
         ){
             SET_EVAL_FLAG(f, TYPECHECK_ONLY);
@@ -848,18 +848,18 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
         if (PARAM_CLASS_META == VAL_PARAM_CLASS(PARAM)) {
             if (
-                kind_byte != REB_BAD_WORD
-                and kind_byte != REB_NULL
-                and kind_byte != REB_BLANK
-                and kind_byte != REB_THE_WORD  // @end or @void
-                and not IS_QUOTED_KIND(kind_byte)
+                kind != REB_BAD_WORD
+                and kind != REB_NULL
+                and kind != REB_BLANK
+                and kind != REB_THE_WORD  // @end or @void
+                and kind != REB_QUOTED
             ){
                 fail (
                     "^META arguments only [<null> bad-word! the-word! quoted!]"
                 );
             }
         }
-        else if (kind_byte == REB_BAD_WORD and GET_CELL_FLAG(ARG, ISOTOPE))
+        else if (kind == REB_BAD_WORD and GET_CELL_FLAG(ARG, ISOTOPE))
             fail (Error_Isotope_Arg(f, PARAM));
 
         // Apply constness if requested.
@@ -881,7 +881,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             continue;  // !!! let whatever go for now
 
         if (not Typecheck_Including_Constraints(PARAM, ARG))
-            fail (Error_Arg_Type(f, KEY, VAL_TYPE(ARG)));
+            fail (Error_Arg_Type(f, KEY, kind));
     }
 
 
@@ -1199,7 +1199,6 @@ void Push_Action(
             | NODE_FLAG_CELL
             | CELL_FLAG_PROTECTED  // payload/binding tweaked, but not by user
             | CELL_MASK_CONTEXT
-            | FLAG_KIND3Q_BYTE(REB_FRAME)
             | FLAG_HEART_BYTE(REB_FRAME);
     INIT_VAL_CONTEXT_VARLIST(f->rootvar, f->varlist);
 
@@ -1327,7 +1326,7 @@ void Drop_Action(REBFRM *f) {
     if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
 
-    if (Is_Stale(f->out) and KIND3Q_BYTE_UNCHECKED(f->out) != REB_0) {
+    if (Is_Stale(f->out) and VAL_TYPE_UNCHECKED(f->out) != REB_0) {
         //
         // If the whole evaluation of the action turned out to be invisible,
         // then refresh the feed's NO_LOOKAHEAD state to whatever it was

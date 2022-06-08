@@ -498,28 +498,26 @@ int64_t Mul_Max(enum Reb_Kind type, int64_t n, int64_t m, int64_t maxi)
 // unbound one).
 //
 REBVAL *Setify(REBVAL *out) {  // called on stack values; can't call evaluator
-    REBLEN quotes = Dequotify(out);
-
-    enum Reb_Kind kind = VAL_TYPE(out);
-    if (ANY_WORD_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_SET_WORD;
+    enum Reb_Kind heart = CELL_HEART(out);
+    if (ANY_WORD_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_SET_WORD;
     }
-    else if (ANY_PATH_KIND(kind)) {  // Don't change "heart"!
-        mutable_KIND3Q_BYTE(out) = REB_SET_PATH;
+    else if (ANY_PATH_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_SET_PATH;
     }
-    else if (ANY_TUPLE_KIND(kind)) {  // Don't change "heart"!
-        mutable_KIND3Q_BYTE(out) = REB_SET_TUPLE;
+    else if (ANY_TUPLE_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_SET_TUPLE;
     }
-    else if (ANY_BLOCK_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_SET_BLOCK;
+    else if (ANY_BLOCK_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_SET_BLOCK;
     }
-    else if (ANY_GROUP_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_SET_GROUP;
+    else if (ANY_GROUP_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_SET_GROUP;
     }
     else
-        fail ("Cannot SETIFY a NULL");
+        fail ("Cannot SETIFY");
 
-    return Quotify(out, quotes);
+    return out;
 }
 
 
@@ -546,28 +544,26 @@ REBNATIVE(setify)
 // Like Setify() but Makes GET-XXX! instead of SET-XXX!.
 //
 REBVAL *Getify(REBVAL *out) {  // called on stack values; can't call evaluator
-    REBLEN quotes = Dequotify(out);
-
-    enum Reb_Kind kind = VAL_TYPE(out);
-    if (ANY_BLOCK_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_GET_BLOCK;
+    enum Reb_Kind heart = CELL_HEART(out);
+    if (ANY_BLOCK_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_GET_BLOCK;
     }
-    else if (ANY_GROUP_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_GET_GROUP;
+    else if (ANY_GROUP_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_GET_GROUP;
     }
-    else if (ANY_PATH_KIND(kind)) {  // Don't change "heart"
-        mutable_KIND3Q_BYTE(out) = REB_GET_PATH;
+    else if (ANY_PATH_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_GET_PATH;
     }
-    else if (ANY_TUPLE_KIND(kind)) {    // Don't change "heart"
-        mutable_KIND3Q_BYTE(out) = REB_GET_TUPLE;
+    else if (ANY_TUPLE_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_GET_TUPLE;
     }
-    else if (ANY_WORD_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_GET_WORD;
+    else if (ANY_WORD_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_GET_WORD;
     }
     else
         fail ("Cannot GETIFY");
 
-    return Quotify(out, quotes);
+    return out;
 }
 
 
@@ -594,28 +590,26 @@ REBNATIVE(getify)
 // Turn a value into its META-XXX! equivalent, if possible.
 //
 REBVAL *Metafy(REBVAL *out) {  // called on stack values; can't call evaluator
-    REBLEN quotes = Dequotify(out);
-
-    enum Reb_Kind kind = VAL_TYPE(out);
-    if (ANY_WORD_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_META_WORD;
+    enum Reb_Kind heart = CELL_HEART(out);
+    if (ANY_WORD_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_META_WORD;
     }
-    else if (ANY_PATH_KIND(kind)) {  // Don't change "heart"!
-        mutable_KIND3Q_BYTE(out) = REB_META_PATH;
+    else if (ANY_PATH_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_META_PATH;
     }
-    else if (ANY_TUPLE_KIND(kind)) {    // Don't change "heart"
-        mutable_KIND3Q_BYTE(out) = REB_META_TUPLE;
+    else if (ANY_TUPLE_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_META_TUPLE;
     }
-    else if (ANY_BLOCK_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_META_BLOCK;
+    else if (ANY_BLOCK_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_META_BLOCK;
     }
-    else if (ANY_GROUP_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_META_GROUP;
+    else if (ANY_GROUP_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_META_GROUP;
     }
     else
         fail ("Cannot METAFY");
 
-    return Quotify(out, quotes);
+    return out;
 }
 
 
@@ -642,28 +636,26 @@ REBNATIVE(metafy)
 // Turn a value into its THE-XXX! equivalent, if possible.
 //
 REBVAL *Theify(REBVAL *out) {  // called on stack values; can't call evaluator
-    REBLEN quotes = Dequotify(out);
-
-    enum Reb_Kind kind = VAL_TYPE(out);
-    if (ANY_WORD_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_THE_WORD;
+    enum Reb_Kind heart = CELL_HEART(out);
+    if (ANY_WORD_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_THE_WORD;
     }
-    else if (ANY_PATH_KIND(kind)) {  // Don't change "heart"!
-        mutable_KIND3Q_BYTE(out) = REB_THE_PATH;
+    else if (ANY_PATH_KIND(heart)) {  // Don't change "heart"!
+        mutable_HEART_BYTE(out) = REB_THE_PATH;
     }
-    else if (ANY_TUPLE_KIND(kind)) {    // Don't change "heart"
-        mutable_KIND3Q_BYTE(out) = REB_THE_TUPLE;
+    else if (ANY_TUPLE_KIND(heart)) {    // Don't change "heart"
+        mutable_HEART_BYTE(out) = REB_THE_TUPLE;
     }
-    else if (ANY_BLOCK_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_THE_BLOCK;
+    else if (ANY_BLOCK_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_THE_BLOCK;
     }
-    else if (ANY_GROUP_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_THE_GROUP;
+    else if (ANY_GROUP_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_THE_GROUP;
     }
     else
         fail ("Cannot THEIFY");
 
-    return Quotify(out, quotes);
+    return out;
 }
 
 
@@ -694,28 +686,26 @@ REBNATIVE(inert)
 // Turn a value into its "plain" equivalent.  This works for all values.
 //
 REBVAL *Plainify(REBVAL *out) {
-    REBLEN quotes = Dequotify(out);
-
-    enum Reb_Kind kind = VAL_TYPE(out);
-    if (ANY_WORD_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_WORD;
+    enum Reb_Kind heart = CELL_HEART(out);
+    if (ANY_WORD_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_WORD;
     }
-    else if (ANY_PATH_KIND(kind)) {  // Don't change "heart"!
-        mutable_KIND3Q_BYTE(out) = REB_PATH;
+    else if (ANY_PATH_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_PATH;
     }
-    else if (ANY_TUPLE_KIND(kind)) {  // Don't change "heart"!
-        mutable_KIND3Q_BYTE(out) = REB_TUPLE;
+    else if (ANY_TUPLE_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_TUPLE;
     }
-    else if (ANY_BLOCK_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_BLOCK;
+    else if (ANY_BLOCK_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_BLOCK;
     }
-    else if (ANY_GROUP_KIND(kind)) {
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = REB_GROUP;
+    else if (ANY_GROUP_KIND(heart)) {
+        mutable_HEART_BYTE(out) = REB_GROUP;
     }
-    else if (kind == REB_NULL)
+    else if (heart == REB_NULL)
         fail ("Cannot PLAINIFY a NULL");
 
-    return Quotify(out, quotes);
+    return out;
 }
 
 

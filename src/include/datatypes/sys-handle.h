@@ -51,12 +51,12 @@
 
 
 inline static bool Is_Handle_Cfunc(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_HANDLE);
+    assert(CELL_HEART(v) == REB_HANDLE);
     return VAL_HANDLE_LENGTH_U(v) == 0;
 }
 
 inline static noquote(const Cell*) VAL_HANDLE_CANON(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_HANDLE);
+    assert(CELL_HEART(v) == REB_HANDLE);
     if (NOT_CELL_FLAG(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
     return ARR_SINGLE(VAL_HANDLE_SINGULAR(v));  // has shared node
@@ -88,7 +88,7 @@ inline static CFUNC *VAL_HANDLE_CFUNC(noquote(const Cell*) v) {
 }
 
 inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_HANDLE);
+    assert(CELL_HEART(v) == REB_HANDLE);
     if (NOT_CELL_FLAG(v, FIRST_IS_NODE))
         return nullptr;
     return VAL_HANDLE_SINGULAR(v)->misc.cleaner;

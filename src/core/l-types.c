@@ -263,8 +263,7 @@ REB_R Reflect_Core(REBFRM *frame_)
     INCLUDE_PARAMS_OF_REFLECT;
 
     REBVAL *v = ARG(value);
-    noquote(const Cell*) cell = VAL_UNESCAPED(v);
-    enum Reb_Kind kind = CELL_KIND(cell);
+    enum Reb_Kind heart = CELL_HEART(v);
 
     switch (VAL_WORD_ID(ARG(property))) {
       case SYM_0:
@@ -274,7 +273,7 @@ REB_R Reflect_Core(REBFRM *frame_)
         // operate on SYMs in a switch().  Longer term, a more extensible
         // idea will be necessary.
         //
-        fail (Error_Cannot_Reflect(kind, ARG(property)));
+        fail (Error_Cannot_Reflect(heart, ARG(property)));
 
       case SYM_KIND: // simpler answer, low-level datatype (e.g. QUOTED!)
         if (IS_NULLED(v))
@@ -282,12 +281,12 @@ REB_R Reflect_Core(REBFRM *frame_)
         return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
 
       case SYM_TYPE: // higher order-answer, may build structured result
-        if (kind == REB_NULL)  // not a real "datatype"
+        if (heart == REB_NULL)  // not a real "datatype"
             Init_Nulled(OUT);  // `null = type of null`
-        else if (kind == REB_CUSTOM)
-            Init_Custom_Datatype(OUT, CELL_CUSTOM_TYPE(cell));
+        else if (heart == REB_CUSTOM)
+            Init_Custom_Datatype(OUT, CELL_CUSTOM_TYPE(v));
         else
-            Init_Builtin_Datatype(OUT, kind);
+            Init_Builtin_Datatype(OUT, heart);
 
         // `type of just '''[a b c]` is `'''#[block!]`.  Until datatypes get
         // a firm literal notation, you can say `quote quote block!`
@@ -308,9 +307,9 @@ REB_R Reflect_Core(REBFRM *frame_)
     // but in general actions should not allow null first arguments...there's
     // no entry in the dispatcher table for them.
     //
-    if (kind == REB_NULL)  // including escaped nulls, `''''`
+    if (heart == REB_NULL)  // including escaped nulls, `''''`
         fail ("NULL isn't valid for REFLECT, except for TYPE OF ()");
-    if (kind == REB_BLANK)
+    if (heart == REB_BLANK)
         return nullptr; // only TYPE OF works on blank, otherwise it's null
 
     Dequotify(ARG(value));

@@ -45,18 +45,7 @@
 //
 void Assert_Cell_Marked_Correctly(const RELVAL *v)
 {
-    if (KIND3Q_BYTE_UNCHECKED(v) == REB_QUOTED) {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        assert(HEART_BYTE(v) >= REB_QUOTED);
-        assert(Is_Marked(VAL_NODE1(v)));
-        assert(VAL_QUOTED_DEPTH(v) >= 3);
-        noquote(const Cell*) cell = VAL_UNESCAPED(v);
-        if (ANY_WORD_KIND(CELL_KIND(cell)))
-            assert(BINDING(cell) == UNBOUND);  // escaped cell has no binding
-        return;
-    }
-
-    enum Reb_Kind heart = CELL_HEART(cast(noquote(const Cell*), v));
+    enum Reb_Kind heart = CELL_HEART_UNCHECKED(v);
 
     REBSER *binding;
     if (
@@ -107,8 +96,28 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
       case REB_MONEY:
         break;
 
-      case REB_BYTES:  // e.g. for ISSUE! when fits in cell
+      case REB_BYTES:  // used as inert storage by some extension types
         break;
+
+      case REB_ISSUE: {
+        if (GET_CELL_FLAG(v, ISSUE_HAS_NODE)) {
+            const REBSER *s = VAL_STRING(v);
+            assert(Is_Series_Frozen(s));
+
+            // We do not want ISSUE!s to use series if the payload fits in
+            // a cell.  It would offer some theoretical benefits for reuse,
+            // e.g. an `as text! as issue! "foo"` would share the same
+            // small series...the way it would share a larger one.  But this
+            // fringe-ish benefit comes at the cost of keeping a GC reference
+            // live on something that doesn't need to be live, and also makes
+            // the invariants more complex.
+            //
+            assert(SER_USED(s) + 1 > sizeof(PAYLOAD(Bytes, v).at_least_8));
+        }
+        else {
+            // it's bytes
+        }
+        break; }
 
       case REB_PAIR: {
         REBVAL *paired = VAL(VAL_NODE1(v));
@@ -321,26 +330,41 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
         goto any_sequence;
 
       any_sequence: {
-        assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
-        REBARR *a = ARR(VAL_NODE1(v));
-        assert(NOT_SERIES_FLAG(a, INACCESSIBLE));
+        if (NOT_CELL_FLAG(v, SEQUENCE_HAS_NODE))
+            break;  // should be just bytes
 
-        // With most arrays we may risk direct recursion, hence we have to
-        // use Queue_Mark_Array_Deep().  But paths are guaranteed to not have
-        // other paths directly in them.  Walk it here so that we can also
-        // check that there are no paths embedded.
-        //
-        // Note: This doesn't catch cases which don't wind up reachable from
-        // the root set, e.g. anything that would be GC'd.
-        //
-        // !!! Optimization abandoned
+        const REBNOD *node1 = VAL_NODE1(v);
+        assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
-        assert(ARR_LEN(a) >= 2);
-        const RELVAL *tail = ARR_TAIL(a);
-        const RELVAL *item = ARR_HEAD(a);
-        for (; item != tail; ++item)
-            assert(not ANY_PATH_KIND(KIND3Q_BYTE_UNCHECKED(item)));
-        assert(Is_Marked(a));
+        switch (SER_FLAVOR(SER(node1))) {
+          case FLAVOR_SYMBOL :
+            break;
+
+          // With most arrays we may risk direct recursion, hence we have to
+          // use Queue_Mark_Array_Deep().  But paths are guaranteed to not have
+          // other paths directly in them.  Walk it here so that we can also
+          // check that there are no paths embedded.
+          //
+          // Note: This doesn't catch cases which don't wind up reachable from
+          // the root set, e.g. anything that would be GC'd.
+          //
+          // !!! Optimization abandoned
+          //
+          case FLAVOR_ARRAY : {
+            REBARR *a = ARR(VAL_NODE1(v));
+            assert(NOT_SERIES_FLAG(a, INACCESSIBLE));
+
+            assert(ARR_LEN(a) >= 2);
+            const RELVAL *tail = ARR_TAIL(a);
+            const RELVAL *item = ARR_HEAD(a);
+            for (; item != tail; ++item)
+                assert(not ANY_PATH_KIND(VAL_TYPE_UNCHECKED(item)));
+            assert(Is_Marked(a));
+            break; }
+
+          default:
+            panic (v);
+        }
         break; }
 
       case REB_WORD:
@@ -399,10 +423,10 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
       case REB_QUOTED:
         //
-        // REB_QUOTED should not be contained in a quoted; instead, the
-        // depth of the existing literal should just have been incremented.
+        // REB_QUOTED should not have any instances in cells; it is a
+        // "pseudotype" added on by VAL_TYPE() for nonzero quote levels.
         //
-        panic ("REB_QUOTED with (KIND3Q_BYTE() % REB_64) > 0");
+        panic ("REB_QUOTED found in cell heart");
 
     //=//// BEGIN INTERNAL TYPES ////////////////////////////////////////=//
 
@@ -411,66 +435,6 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
 
       default:
         panic (v);
-    }
-
-    enum Reb_Kind kind = CELL_KIND(cast(noquote(const Cell*), v));
-    switch (kind) {
-      case REB_NULL:
-        assert(heart == REB_NULL or heart == REB_BLANK);  // may be "isotope"
-        break;
-
-      case REB_TUPLE:
-      case REB_THE_TUPLE:
-      case REB_SET_TUPLE:
-      case REB_GET_TUPLE:
-      case REB_META_TUPLE:
-      case REB_PATH:
-      case REB_THE_PATH:
-      case REB_SET_PATH:
-      case REB_GET_PATH:
-      case REB_META_PATH:
-         assert(
-            heart == REB_BYTES
-            or heart == REB_WORD
-            or heart == REB_GET_WORD
-            or heart == REB_GET_GROUP
-            or heart == REB_GET_BLOCK
-            or heart == REB_META_WORD
-            or heart == REB_META_GROUP
-            or heart == REB_META_BLOCK
-            or heart == REB_BLOCK
-         );
-         break;
-
-      case REB_ISSUE: {
-        if (heart == REB_TEXT) {
-            const REBSER *s = VAL_STRING(v);
-            assert(Is_Series_Frozen(s));
-
-            // We do not want ISSUE!s to use series if the payload fits in
-            // a cell.  It would offer some theoretical benefits for reuse,
-            // e.g. an `as text! as issue! "foo"` would share the same
-            // small series...the way it would share a larger one.  But this
-            // fringe-ish benefit comes at the cost of keeping a GC reference
-            // live on something that doesn't need to be live, and also makes
-            // the invariants more complex.
-            //
-            assert(SER_USED(s) + 1 > sizeof(PAYLOAD(Bytes, v).at_least_8));
-        }
-        else {
-            assert(heart == REB_BYTES);
-            assert(NOT_CELL_FLAG(v, FIRST_IS_NODE));
-        }
-        break; }
-
-      case REB_URL:
-        assert(heart == REB_TEXT);
-        break;
-
-      default:
-        if (kind < REB_MAX)  // psuedotypes for parameter are actually typeset
-           assert(kind == heart);
-        break;
     }
 }
 

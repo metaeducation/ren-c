@@ -95,7 +95,7 @@ inline static option(const REBSYM*) VAL_BAD_WORD_LABEL_UNCHECKED(
 inline static option(const REBSYM*) VAL_BAD_WORD_LABEL(
     noquote(const Cell*) v
 ){
-    assert(CELL_KIND(v) == REB_BAD_WORD);
+    assert(CELL_HEART(v) == REB_BAD_WORD);
     assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
     return cast(const REBSYM*, VAL_NODE1(v));
 }

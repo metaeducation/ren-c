@@ -47,18 +47,11 @@
 
 //=//// QUOTED ////////////////////////////////////////////////////////////=//
 //
-// Testing for QUOTED! is special, as it isn't just the REB_QUOTED type, but
-// also multiplexed as values > REB_QUOTED.  See %sys-quoted.h
+// Testing for QUOTED! is special, as it is stored in a different byte.  But
+// it still gets a type in the enum.
 //
-// !!! Currently this would register the "pseudotypes" (quoted variants of
-// REB_0 and REB_QUOTED) as quoted.  But those special cases will cause other
-// problems quickly enough that it's not worth paying to assert here.
-
-#define IS_QUOTED_KIND(k) \
-  ((k) >= REB_QUOTED)
-
 #define IS_QUOTED(v) \
-    IS_QUOTED_KIND(KIND3Q_BYTE(v))
+    (QUOTE_BYTE(v) != 0)
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//
@@ -82,7 +75,7 @@
     ((k) >= REB_OBJECT)
 
 #define Is_Bindable(v) \
-    IS_BINDABLE_KIND(HEART_BYTE(v))  // checked elsewhere
+    IS_BINDABLE_KIND(HEART_BYTE_UNCHECKED(v))  // checked elsewhere
 
 
 //=//// INERTNESS ////////////////////////////////////////////////////////=//
@@ -96,10 +89,10 @@ inline static bool ANY_INERT_KIND(REBYTE k) {
 }
 
 #define ANY_INERT(v) \
-    ANY_INERT_KIND(KIND3Q_BYTE(v))
+    ANY_INERT_KIND(VAL_TYPE(v))
 
 #define ANY_EVALUATIVE(v) \
-    (not ANY_INERT_KIND(KIND3Q_BYTE(v)))
+    (not ANY_INERT_KIND(VAL_TYPE(v)))
 
 
 //=//// FAST END+VOID+NULL TESTING ////////////////////////////////////////=//
@@ -125,25 +118,25 @@ inline static bool IS_NULLED_OR_BLANK_KIND(REBYTE k)
     { return k == REB_NULL or k == REB_BLANK; }
 
 #define IS_NULLED_OR_BLANK(v) \
-    IS_NULLED_OR_BLANK_KIND(KIND3Q_BYTE(v))
+    IS_NULLED_OR_BLANK_KIND(VAL_TYPE(v))
 
 
 //=//// TYPE CATEGORIES ///////////////////////////////////////////////////=//
 
 #define ANY_VALUE(v) \
-    (KIND3Q_BYTE(v) != REB_NULL)
+    (VAL_TYPE(v) != REB_NULL)
 
 inline static bool ANY_SCALAR_KIND(REBYTE k)  // !!! Should use TS_SCALAR?
     { return k == REB_TUPLE or (k >= REB_LOGIC and k <= REB_PAIR); }
 
 #define ANY_SCALAR(v) \
-    ANY_SCALAR_KIND(KIND3Q_BYTE(v))
+    ANY_SCALAR_KIND(VAL_TYPE(v))
 
 inline static bool ANY_STRING_KIND(REBYTE k)
     { return k >= REB_TEXT and k <= REB_TAG; }
 
 #define ANY_STRING(v) \
-    ANY_STRING_KIND(KIND3Q_BYTE(v))
+    ANY_STRING_KIND(VAL_TYPE(v))
 
 #define ANY_BINSTR_KIND_EVIL_MACRO \
     (k >= REB_BINARY and k <= REB_TAG)
@@ -153,37 +146,37 @@ inline static bool ANY_BINSTR_KIND(REBYTE k)
     { return ANY_BINSTR_KIND_EVIL_MACRO; }
 
 #define ANY_BINSTR(v) \
-    ANY_BINSTR_KIND(KIND3Q_BYTE(v))
+    ANY_BINSTR_KIND(VAL_TYPE(v))
 
 
 #define ANY_ARRAY_OR_SEQUENCE_KIND_EVIL_MACRO \
-    (k < REB_64 and did (FLAGIT_KIND(k) & (TS_ARRAY | TS_SEQUENCE)))
+    (did (FLAGIT_KIND(k) & (TS_ARRAY | TS_SEQUENCE)))
 
 inline static bool ANY_ARRAY_OR_SEQUENCE_KIND(REBYTE k)
     { return ANY_ARRAY_OR_SEQUENCE_KIND_EVIL_MACRO; }
 
 #define ANY_ARRAY_OR_SEQUENCE(v) \
-    ANY_ARRAY_OR_SEQUENCE_KIND(KIND3Q_BYTE(v))
+    ANY_ARRAY_OR_SEQUENCE_KIND(VAL_TYPE(v))
 
 
 #define ANY_ARRAY_KIND_EVIL_MACRO \
-    (k < REB_64 and did (FLAGIT_KIND(k) & TS_ARRAY))
+    (did (FLAGIT_KIND(k) & TS_ARRAY))
 
 inline static bool ANY_ARRAY_KIND(REBYTE k)
     { return ANY_ARRAY_KIND_EVIL_MACRO; }
 
 #define ANY_ARRAY(v) \
-    ANY_ARRAY_KIND(KIND3Q_BYTE(v))
+    ANY_ARRAY_KIND(VAL_TYPE(v))
 
 
 #define ANY_SEQUENCE_KIND_EVIL_MACRO \
-    (k < REB_64 and did (FLAGIT_KIND(k) & TS_SEQUENCE))
+    (did (FLAGIT_KIND(k) & TS_SEQUENCE))
 
 inline static bool ANY_SEQUENCE_KIND(REBYTE k)
     { return ANY_SEQUENCE_KIND_EVIL_MACRO; }
 
 #define ANY_SEQUENCE(v) \
-    ANY_SEQUENCE_KIND(KIND3Q_BYTE(v))
+    ANY_SEQUENCE_KIND(VAL_TYPE(v))
 
 
 #define ANY_SERIES_KIND_EVIL_MACRO \
@@ -193,7 +186,7 @@ inline static bool ANY_SERIES_KIND(REBYTE k)
     { return ANY_SERIES_KIND_EVIL_MACRO; }
 
 #define ANY_SERIES(v) \
-    ANY_SERIES_KIND(KIND3Q_BYTE(v))
+    ANY_SERIES_KIND(VAL_TYPE(v))
 
 #define ANY_WORD_KIND_EVIL_MACRO \
     (k < 64 and did (FLAGIT_KIND(k) & TS_WORD))
@@ -202,13 +195,13 @@ inline static bool ANY_WORD_KIND(REBYTE k)
     { return ANY_WORD_KIND_EVIL_MACRO; }
 
 #define ANY_WORD(v) \
-    ANY_WORD_KIND(KIND3Q_BYTE(v))
+    ANY_WORD_KIND(VAL_TYPE(v))
 
 inline static bool ANY_PLAIN_GET_SET_WORD_KIND(REBYTE k)
     { return k == REB_WORD or k == REB_GET_WORD or k == REB_SET_WORD; }
 
 #define ANY_PLAIN_GET_SET_WORD(v) \
-    ANY_PLAIN_GET_SET_WORD_KIND(KIND3Q_BYTE(v))
+    ANY_PLAIN_GET_SET_WORD_KIND(VAL_TYPE(v))
 
 
 #define ANY_PATH_KIND_EVIL_MACRO \
@@ -218,7 +211,7 @@ inline static bool ANY_PATH_KIND(REBYTE k)
     { return ANY_PATH_KIND_EVIL_MACRO; }
 
 #define ANY_PATH(v) \
-    ANY_PATH_KIND(KIND3Q_BYTE(v))
+    ANY_PATH_KIND(VAL_TYPE(v))
 
 
 #define ANY_TUPLE_KIND_EVIL_MACRO \
@@ -228,7 +221,7 @@ inline static bool ANY_TUPLE_KIND(REBYTE k)
     { return ANY_TUPLE_KIND_EVIL_MACRO; }
 
 #define ANY_TUPLE(v) \
-    ANY_TUPLE_KIND(KIND3Q_BYTE(v))
+    ANY_TUPLE_KIND(VAL_TYPE(v))
 
 
 // Used by scanner; it figures out what kind of path something would be, then
@@ -245,7 +238,7 @@ inline static bool ANY_BLOCK_KIND(REBYTE k)
         or k == REB_SET_BLOCK or k == REB_META_BLOCK or k == REB_THE_BLOCK; }
 
 #define ANY_BLOCK(v) \
-    ANY_BLOCK_KIND(KIND3Q_BYTE(v))
+    ANY_BLOCK_KIND(VAL_TYPE(v))
 
 
 inline static bool ANY_GROUP_KIND(REBYTE k)
@@ -253,21 +246,21 @@ inline static bool ANY_GROUP_KIND(REBYTE k)
         or k == REB_SET_GROUP or k == REB_META_GROUP or k == REB_THE_GROUP; }
 
 #define ANY_GROUP(v) \
-    ANY_GROUP_KIND(KIND3Q_BYTE(v))
+    ANY_GROUP_KIND(VAL_TYPE(v))
 
 
 inline static bool ANY_CONTEXT_KIND(REBYTE k)
     { return k >= REB_OBJECT and k <= REB_PORT; }
 
 #define ANY_CONTEXT(v) \
-    ANY_CONTEXT_KIND(KIND3Q_BYTE(v))
+    ANY_CONTEXT_KIND(VAL_TYPE(v))
 
 
 inline static bool ANY_NUMBER_KIND(REBYTE k)
     { return k == REB_INTEGER or k == REB_DECIMAL or k == REB_PERCENT; }
 
 #define ANY_NUMBER(v) \
-    ANY_NUMBER_KIND(KIND3Q_BYTE(v))
+    ANY_NUMBER_KIND(VAL_TYPE(v))
 
 
 //=//// XXX <=> SET-XXX! <=> GET-XXX! TRANSFORMATION //////////////////////=//
@@ -328,7 +321,7 @@ inline static enum Reb_Kind THEIFY_ANY_PLAIN_KIND(REBYTE k) {
 
 
 inline static bool IS_ANY_SIGIL_KIND(REBYTE k) {
-    assert(k < REB_64);  // can't do `@''x`
+    assert(k < REB_QUOTED);  // can't do `@''x`
     return k >= REB_SET_BLOCK and k <= REB_META_WORD;
 }
 
@@ -392,4 +385,4 @@ inline static bool ANY_UTF8_KIND(REBYTE k) {
 }
 
 #define ANY_UTF8(v) \
-    ANY_UTF8_KIND(KIND3Q_BYTE(v))
+    ANY_UTF8_KIND(VAL_TYPE(v))

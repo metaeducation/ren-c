@@ -37,7 +37,7 @@
 // least then we could check it's not a REBSER.
 //
 #define Is_Fresh(v) \
-    (0 == ((v)->header.bits & (FLAG_KIND3Q_BYTE(255) | FLAG_HEART_BYTE(255))))
+    (0 == ((v)->header.bits & (FLAG_HEART_BYTE(255) | FLAG_QUOTE_BYTE(255))))
 
 #if DEBUG_TRACK_EXTEND_CELLS  // assume DEBUG_COUNT_TICKS
 

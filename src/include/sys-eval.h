@@ -148,7 +148,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
     Literal_Next_In_Feed(out, feed);
 
-    if (KIND3Q_BYTE_UNCHECKED(feed->value) == REB_WORD) {
+    if (VAL_TYPE_UNCHECKED(feed->value) == REB_WORD) {
         feed->gotten = Lookup_Word(feed->value, FEED_SPECIFIER(feed));
         if (
             not feed->gotten
@@ -206,7 +206,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         //
         if (GET_ACTION_FLAG(action, SKIPPABLE_FIRST)) {
             const REBPAR *first = First_Unspecialized_Param(nullptr, action);
-            if (not TYPE_CHECK(first, KIND3Q_BYTE(out)))
+            if (not TYPE_CHECK(first, VAL_TYPE(out)))
                 return true;  // didn't actually want this parameter type
         }
 

@@ -106,7 +106,7 @@
 // things down a little.  So we only use the checked version in the main
 // switch statement.  This abbreviation is also shorter and more legible.
 //
-#define kind_current KIND3Q_BYTE_UNCHECKED(v)
+#define kind_current VAL_TYPE_UNCHECKED(v)
 
 
 // In the early development of FRAME!, the REBFRM* for evaluating across a
@@ -420,7 +420,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
     // v-- This is the TG_Break_At_Tick or C-DEBUG-BREAK landing spot --v
 
-    if (KIND3Q_BYTE(f_next) != REB_WORD)  // right's kind - END would be REB_0
+    if (VAL_TYPE_UNCHECKED(f_next) != REB_WORD)  // right's kind - END is REB_0
         goto give_up_backward_quote_priority;
 
     assert(not f_next_gotten);  // Fetch_Next_In_Frame() cleared it
@@ -498,8 +498,8 @@ bool Eval_Core_Throws(REBFRM * const f)
     if (
         IS_END(f_next)  // v-- out is what used to be on left
         and (
-            KIND3Q_BYTE(OUT) == REB_WORD
-            or KIND3Q_BYTE(OUT) == REB_PATH
+            VAL_TYPE_UNCHECKED(OUT) == REB_WORD
+            or VAL_TYPE_UNCHECKED(OUT) == REB_PATH
         )
     ){
         // We make a special exemption for left-stealing arguments, when
@@ -556,7 +556,14 @@ bool Eval_Core_Throws(REBFRM * const f)
     // fast tests like ANY_INERT() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
 
-    switch (KIND3Q_BYTE(v)) {  // checked version (once, else kind_current)
+    if (QUOTE_BYTE_UNCHECKED(v) != 0) {
+        //
+        // Evaluation of a QUOTED! simply removes one level of quoting
+        //
+        Derelativize(OUT, v, v_specifier);
+        Unquotify(OUT, 1);
+    }
+    else switch (CELL_HEART_UNCHECKED(v)) {  // unchecked so it sees REB_0
 
       case REB_0_END:
         assert(IS_END(v));  // should be END, not void
@@ -1059,12 +1066,10 @@ bool Eval_Core_Throws(REBFRM * const f)
     // blank at its head, and it evaluates to itself.
 
       case REB_PATH: {
-        if (HEART_BYTE(v) != REB_WORD) {
-            const RELVAL *temp = VAL_SEQUENCE_AT(SPARE, v, 0);
-            if (ANY_INERT(temp)) {
-                Derelativize(OUT, v, v_specifier);
-                break;
-            }
+        const RELVAL *temp = VAL_SEQUENCE_AT(SPARE, v, 0);
+        if (ANY_INERT(temp)) {
+            Derelativize(OUT, v, v_specifier);
+            break;
         }
 
         // The frame captures the stack pointer, and since refinements are
@@ -1133,7 +1138,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
         if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
             Derelativize(OUT, v, v_specifier);
-            mutable_KIND3Q_BYTE(OUT) = REB_SET_TUPLE;
+            mutable_HEART_BYTE(OUT) = REB_SET_TUPLE;
 
             Derelativize(SPARE, v, v_specifier);
             rebElide(
@@ -1289,7 +1294,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
       case REB_GET_BLOCK: {
         Derelativize(SPARE, v, v_specifier);
-        mutable_HEART_BYTE(SPARE) = mutable_KIND3Q_BYTE(SPARE) = REB_BLOCK;
+        mutable_HEART_BYTE(SPARE) = REB_BLOCK;
         if (rebRunThrows(
             OUT,  // <-- output cell
             Lib(REDUCE), SPARE
@@ -1664,11 +1669,12 @@ bool Eval_Core_Throws(REBFRM * const f)
     //    >> ^[a b c]
     //    == '[a b c]
     //
+    // (It's hard to think of another meaning that would be sensible.)
 
       case REB_META_BLOCK:
         Inertly_Derelativize_Inheriting_Const(OUT, v, f->feed);
-        mutable_KIND3Q_BYTE(OUT) = REB_BLOCK + REB_64;  // quoted
         mutable_HEART_BYTE(OUT) = REB_BLOCK;
+        mutable_QUOTE_BYTE(OUT) = 1;
         break;
 
 
@@ -1778,36 +1784,10 @@ bool Eval_Core_Throws(REBFRM * const f)
         break;
 
 
-    //=//// QUOTED! (at 4 or more levels of escaping) /////////////////////=//
-    //
-    // This is the form of literal that's too escaped to just overlay in the
-    // cell by using a higher kind byte.  See the `default:` case in this
-    // switch for handling the more compact forms, that are much more common.
-    //
-    // (Highly escaped literals should be rare, but for completeness you need
-    // to be able to escape any value, including any escaped one...!)
-    //
-    // Evaluation of a QUOTED! removes one level of quoting.
-
-      case REB_QUOTED:
-        Derelativize(OUT, v, v_specifier);
-        Unquotify(OUT, 1);
-        break;
-
-
-    //=//// QUOTED! (at 3 levels of escaping or less...or garbage) ////////=//
-    //
-    // All the values for types at >= REB_64 currently represent the special
-    // compact form of literals, which overlay inside the cell they escape.
-    // The real type comes from the type modulo 64.
-    //
-    // Not all values are legitimate that could potentially get here, but
-    // Unquotify_In_Situ() does the checking for illegal REB_XXX bytes.
+    //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//
 
       default:
-        Derelativize(OUT, v, v_specifier);
-        Unquotify_In_Situ(OUT, 1);
-        break;
+        panic (v);
     }
 
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//
@@ -1888,7 +1868,7 @@ bool Eval_Core_Throws(REBFRM * const f)
     // enfix.  If it's necessary to dispatch an enfix function via path, then
     // a word is used to do it, like `>-` in `x: >- lib.method [...] [...]`.
 
-    switch (KIND3Q_BYTE_UNCHECKED(f_next)) {
+    switch (VAL_TYPE_UNCHECKED(f_next)) {
       case REB_0_END:
         assert(IS_END(f_next));  // should be END, not void
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);

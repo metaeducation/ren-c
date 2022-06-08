@@ -196,7 +196,7 @@ struct Reb_Feed {
     // But the need to `unwrap(f_value)` constantly is annoying, and the
     // fact that the API uses nullptr to denote NULLED cells increases the
     // risk for confusion.  Plus, IS_END() is just more clear to what is
-    // actually happening, and makes it possible to fold with KIND3Q_BYTE
+    // actually happening, and makes it possible to fold with HEART_BYTE()
     // testing.  Having tried the idea of using nullptr for END here, it's
     // definitely less clear...and may not even be faster.
     //

@@ -111,13 +111,7 @@ void Pre_Mold_Core(REB_MOLD *mo, noquote(const Cell*) v, bool all)
     else
         Append_Ascii(mo->series, "make ");
 
-    // If asked for the type name of a PARAM in a paramlist, VAL_TYPE()
-    // will report an invalid value.  So use HEART_BYTE() so that TYPESET!
-    // comes back as the answer.
-    //
-    const REBSTR *type_name = Canon_Symbol(
-        SYM_FROM_KIND(cast(enum Reb_Kind, CELL_HEART(v)))
-    );
+    const REBSTR *type_name = Canon_Symbol(SYM_FROM_KIND(CELL_HEART(v)));
     Append_Spelling(mo->series, type_name);
 
     Append_Codepoint(mo->series, ' ');
@@ -360,7 +354,7 @@ void MF_Fail(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 
-    if (CELL_KIND(v) == REB_0) {
+    if (CELL_HEART(v) == REB_0) {
         //
         // REB_0 is reserved for special purposes, and should only be molded
         // in debug scenarios.
@@ -387,7 +381,7 @@ void MF_Unhooked(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     UNUSED(mo);
     UNUSED(form);
 
-    const REBVAL *type = Datatype_From_Kind(CELL_KIND(v));
+    const REBVAL *type = Datatype_From_Kind(CELL_HEART(v));
     UNUSED(type); // !!! put in error message?
 
     fail ("Datatype does not have extension with a MOLD handler registered");

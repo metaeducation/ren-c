@@ -33,7 +33,7 @@
 // But that's the API.  Internally, cells are the currency used, and if they
 // are to represent an "optional" value, there must be a special bit pattern
 // used to mark them as not containing any value at all.  These are called
-// "nulled cells" and marked by means of their KIND3Q_BYTE().
+// "nulled cells" and marked by means of their HEART_BYTE being REB_NULL.
 //
 
 #define IS_NULLED(v) \
@@ -60,7 +60,7 @@ inline static REBVAL *Init_Nulled_Untracked(RELVAL *out) {
 // be a "nulled cell" must translate any such cells to nullptr.
 //
 inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
-  return KIND3Q_BYTE(cell) == REB_NULL
+  return VAL_TYPE(cell) == REB_NULL
       ? cast(REBVAL*, nullptr)  // C++98 ambiguous w/o cast
       : cell;
 }

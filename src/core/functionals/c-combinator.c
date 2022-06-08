@@ -280,8 +280,7 @@ REBNATIVE(combinator)
     REBARR *relativized = Copy_And_Bind_Relative_Deep_Managed(
         ARG(body),
         combinator,
-        locals_visible,
-        TS_WORD
+        locals_visible
     );
 
     Init_Relative_Block(

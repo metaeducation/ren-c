@@ -292,16 +292,15 @@ void Push_Paramlist_Triads_May_Fail(
             quoted = true;
         }
 
-        noquote(const Cell*) cell = VAL_UNESCAPED(item);
-        enum Reb_Kind kind = CELL_KIND(cell);
+        enum Reb_Kind heart = CELL_HEART(item);
 
         const REBSYM* symbol = nullptr;  // avoids compiler warning
         enum Reb_Param_Class pclass = PARAM_CLASS_0;  // error if not changed
 
         bool local = false;
         bool refinement = false;  // paths with blanks at head are refinements
-        if (ANY_PATH_KIND(kind)) {
-            if (not IS_REFINEMENT_CELL(cell))
+        if (ANY_PATH_KIND(heart)) {
+            if (not IS_REFINEMENT_CELL(item))
                 fail (Error_Bad_Func_Def_Raw(item));
 
             refinement = true;
@@ -314,25 +313,26 @@ void Push_Paramlist_Triads_May_Fail(
             //
             mode = SPEC_MODE_NORMAL;
 
-            symbol = VAL_REFINEMENT_SYMBOL(cell);
-            if (ID_OF_SYMBOL(symbol) == SYM_LOCAL)  // /LOCAL
-                if (ANY_WORD_KIND(KIND3Q_BYTE(item + 1)))  // END is 0
+            symbol = VAL_REFINEMENT_SYMBOL(item);
+            if (ID_OF_SYMBOL(symbol) == SYM_LOCAL) {  // /LOCAL
+                if (item + 1 != tail and ANY_WORD(item + 1))
                     fail (Error_Legacy_Local_Raw(spec));  // -> <local>
+            }
 
-            if (CELL_KIND(cell) == REB_GET_PATH) {
+            if (heart == REB_GET_PATH) {
                 if (quoted)
                     pclass = PARAM_CLASS_MEDIUM;
                 else
                     pclass = PARAM_CLASS_SOFT;
             }
-            else if (CELL_KIND(cell) == REB_PATH) {
+            else if (heart == REB_PATH) {
                 if (quoted)
                     pclass = PARAM_CLASS_HARD;
                 else
                     pclass = PARAM_CLASS_NORMAL;
             }
         }
-        else if (ANY_TUPLE_KIND(kind)) {
+        else if (ANY_TUPLE_KIND(heart)) {
             //
             // !!! Tuples are theorized as a way to "name parameters out of
             // the way" so there can be an interface name, but then a local
@@ -343,15 +343,15 @@ void Push_Paramlist_Triads_May_Fail(
             //
             fail ("TUPLE! behavior in func spec not defined at present");
         }
-        else if (ANY_WORD_KIND(kind)) {
-            symbol = VAL_WORD_SYMBOL(cell);
+        else if (ANY_WORD_KIND(heart)) {
+            symbol = VAL_WORD_SYMBOL(item);
 
-            if (kind == REB_SET_WORD) {
+            if (heart == REB_SET_WORD) {
                 //
                 // Outputs are set to refinements, because they can act like
                 // refinements and be passed the word to set.
                 //
-                if (VAL_WORD_ID(cell) == SYM_RETURN and not quoted) {
+                if (VAL_WORD_ID(item) == SYM_RETURN and not quoted) {
                     pclass = PARAM_CLASS_RETURN;
                 }
                 else if (not quoted) {
@@ -367,19 +367,19 @@ void Push_Paramlist_Triads_May_Fail(
                     fail (Error_Legacy_Refinement_Raw(spec));
                 }
 
-                if (kind == REB_GET_WORD) {
+                if (heart == REB_GET_WORD) {
                     if (quoted)
                         pclass = PARAM_CLASS_MEDIUM;
                     else
                         pclass = PARAM_CLASS_SOFT;
                 }
-                else if (kind == REB_WORD) {
+                else if (heart == REB_WORD) {
                     if (quoted)
                         pclass = PARAM_CLASS_HARD;
                     else
                         pclass = PARAM_CLASS_NORMAL;
                 }
-                else if (kind == REB_META_WORD) {
+                else if (heart == REB_META_WORD) {
                     if (not quoted)
                         pclass = PARAM_CLASS_META;
                 }

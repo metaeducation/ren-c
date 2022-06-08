@@ -6,7 +6,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2012-2021 Ren-C Open Source Contributors
+// Copyright 2012-2022 Ren-C Open Source Contributors
 // Copyright 2012 REBOL Technologies
 // REBOL is a trademark of REBOL Technologies
 //
@@ -33,7 +33,7 @@
 // of creation.
 //
 // Both forms are allowed to contain WORD!, INTEGER!, GROUP!, BLOCK!, TEXT!,
-// and TAG! elements.  There are SET-, GET-, META-, and THE- forms:
+// BAD-WORD!, and TAG! elements.  There are SET-, GET-, META-, and THE- forms:
 //
 //     <abc>/(d e f)/[g h i]:   ; a 3-element SET-PATH!
 //     :foo.1.bar               ; a 3-element GET-TUPLE!
@@ -61,38 +61,36 @@
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
 // * Reduced cases like the 2-element path `/` and the 2-element tuple `.`
-//   have special handling that allows them to store a hidden WORD! and
-//   binding, which lets them be used in the evaluator as functions.  (It
-//   was considered non-negotiable that `/` be allowed to mean divide, and
-//   also non-negotiable that it be a PATH!...so this was the compromise.)
+//   are considered to be WORD!.  This was considered non-negotiable, that
+//   `/` be allowed to mean divide.  Making it a PATH! that ran code turned
+//   out to be much more convoluted than having special word flags.  (See
+//   SYMBOL_FLAG_ESCAPE_XXX for how these words are handled "gracefully".)
 //
 // * The immutability of sequences allows important optimizations in the
 //   implementation that minimize allocations.  For instance, the 2-element
 //   PATH! of `/foo` can be specially encoded to use no more space
-//   than a plain WORD!.  There are also optimizations for encoding short
-//   numeric sequences like IP addresses or colors into single cells.
+//   than a plain WORD!.
 //
-// * Which compressed implementation form that an ANY-PATH! or ANY-TUPLE! is
-//   using is indicated by the HEART_BYTE().  This says which actual cell
-//   format is in effect:
+//   (There are also optimizations for encoding short numeric sequences like IP
+//   addresses or colors into single cells...which aren't as important but
+//   carried over to preserve history of the feature.)
 //
-//   - REB_BYTES has raw bytes in the payload
-//   - REB_BLOCK is when the path or tuple are stored as an ordinary array
-//   - REB_WORD is used for the `/` and '.' cases
-//   - REB_GET_WORD is used for the `/a` and `.a` cases
-//   - REB_META_WORD is used for the `a/` and `a.` cases
-//        (REB_SET_WORD is currently avoided due to complications if binding
-//        were to see this "gimmick" as if it were a real SET-WORD! and
-//        treat this binding unusually...review)
-//   - REB_GET_BLOCK and REB_META_BLOCK for /[a] .[a] and [a]/ [a].
-//   - REB_GET_GROUP and REB_META_GROUP for /(a) .(a) and (a)/ (a).
+// * Compressed forms detect their compression as follows:
 //
-// Beyond that, how creative one gets to using the HEART_BYTE() depends on
-// how much complication you want to bear in code like binding.
+//   - Byte compressed forms do not have CELL_FLAG_SEQUENCE_HAS_NODE
 //
-// !!! This should probably use a plain form for the `/x` so that `/1` and
-// `/<foo>` are at least able to be covered by the same technique, although
-// there is something consistent about treating `/` as the plain WORD! case.
+//   - Pair compression (TBD) would have the first node with NODE_FLAG_CELL
+//
+//   - Single WORD! forms have the first node as FLAVOR_SYMBOL
+//        If CELL_FLAG_REFINEMENT_LIKE it is either a `/foo` or `.foo` case
+//        Without the flag, it is either a `foo/` or `foo.` case
+//
+//   - Uncompressed forms have the first node as FLAVOR_ARRAY
+//
+// !!! More ambitious compression could be pursued, especially since once an
+// array form is aliased to a path it can no longer be mutated.  So any slots
+// pertinent to mutation properties could be reused to indicate a compressed
+// form.  But this is really low priority.
 //
 
 inline static bool Is_Valid_Sequence_Element(
@@ -175,8 +173,7 @@ inline static REBVAL *Init_Any_Sequence_1(RELVAL *out, enum Reb_Kind kind) {
 //
 // In order to make this not cost more than a REFINEMENT! ANY-WORD! did in
 // R3-Alpha, the underlying representation of `/foo` in the cell is the same
-// as an ANY-WORD!.  The KIND3Q_BYTE() returned by VAL_TYPE() will reflect
-// the any sequence, while HEART_BYTE() reveals its word-oriented storage.
+// as an ANY-WORD!.
 
 inline static REBVAL *Try_Leading_Blank_Pathify(
     REBVAL *v,
@@ -190,19 +187,17 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     if (not Is_Valid_Sequence_Element(kind, v))
         return nullptr;  // leave element in v to indicate "the bad element"
 
-    // See notes at top of file regarding optimizing `/a`, `(a).`, `/[a]`,
-    // into a single cell by using special values for the HEART_BYTE().
+    // See notes at top of file regarding optimizing `/a` into a single cell.
     //
-    enum Reb_Kind inner = VAL_TYPE(v);
-    if (inner == REB_WORD or inner == REB_GROUP or inner == REB_BLOCK) {
-        assert(HEART_BYTE(v) == inner);
-        mutable_HEART_BYTE(v) = GETIFY_ANY_PLAIN_KIND(inner);  // "refinement"
-        mutable_KIND3Q_BYTE(v) = kind;  // give it the veneer of a sequence
+    enum Reb_Kind inner_kind = VAL_TYPE(v);
+    if (inner_kind == REB_WORD) {
+        SET_CELL_FLAG(v, REFINEMENT_LIKE);
+        mutable_HEART_BYTE(v) = kind;
         return v;
     }
 
     REBARR *a = Make_Array_Core(
-        2,  // optimize "pairlike"
+        2,  // TBD: optimize "pairlike" to use a pairing node
         NODE_FLAG_MANAGED
     );
     Init_Blank(Alloc_Tail_Array(a));
@@ -210,7 +205,7 @@ inline static REBVAL *Try_Leading_Blank_Pathify(
     Freeze_Array_Shallow(a);
 
     Init_Block(v, a);
-    mutable_KIND3Q_BYTE(v) = kind;
+    mutable_HEART_BYTE(v) = kind;
 
     return v;
 }
@@ -238,7 +233,10 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
     const REBYTE *data,
     REBSIZ size
 ){
-    if (size > sizeof(PAYLOAD(Bytes, out).at_least_8)) {  // too big for cell
+    Reset_Cell_Header_Untracked(out, kind, CELL_MASK_NONE);
+    mutable_BINDING(out) = nullptr;  // paths are bindable, can't have garbage
+
+    if (size > sizeof(PAYLOAD(Bytes, out).at_least_8) - 1) {  // too big
         REBARR *a = Make_Array_Core(size, NODE_FLAG_MANAGED);
         for (; size > 0; --size, ++data)
             Init_Integer(Alloc_Tail_Array(a), *data);
@@ -246,14 +244,12 @@ inline static REBVAL *Init_Any_Sequence_Bytes(
         Init_Block(out, Freeze_Array_Shallow(a));  // !!! TBD: compact BINARY!
     }
     else {
-        Reset_Cell_Header_Untracked(out, REB_BYTES, CELL_MASK_NONE);
-        EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = size;
-        REBYTE *dest = PAYLOAD(Bytes, out).at_least_8;
+        PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = size;
+        REBYTE *dest = PAYLOAD(Bytes, out).at_least_8 + 1;
         for (; size > 0; --size, ++data, ++dest)
             *dest = *data;
     }
 
-    mutable_KIND3Q_BYTE(out) = kind;  // "veneer" over "heart" type
     return cast(REBVAL*, out);
 }
 
@@ -266,13 +262,18 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
     const RELVAL *head,  // NOTE: Can't use DS_PUSH() or evaluation
     REBLEN len
 ){
-    if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8)
+    if (len > sizeof(PAYLOAD(Bytes, out)).at_least_8 - 1)
         return nullptr;  // no optimization yet if won't fit in payload bytes
 
     if (len < 2)
         return nullptr;
 
-    REBYTE *bp = PAYLOAD(Bytes, out).at_least_8;
+    Reset_Cell_Header_Untracked(out, kind, CELL_MASK_NONE);
+    mutable_BINDING(out) = nullptr;  // paths are bindable, can't be garbage
+
+    PAYLOAD(Bytes, out).at_least_8[IDX_SEQUENCE_USED] = len;
+
+    REBYTE *bp = PAYLOAD(Bytes, out).at_least_8 + 1;
 
     const RELVAL *item = head;
     REBLEN n;
@@ -285,10 +286,6 @@ inline static REBVAL *Try_Init_Any_Sequence_All_Integers(
         *bp = cast(REBYTE, i64);
     }
 
-    Reset_Cell_Header_Untracked(out, REB_BYTES, CELL_MASK_NONE);
-    EXTRA(Bytes, out).exactly_4[IDX_EXTRA_USED] = len;
-
-    mutable_KIND3Q_BYTE(out) = kind;
     return cast(REBVAL*, out);
 }
 
@@ -317,17 +314,12 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
         return nullptr;
     }
 
-    // See notes at top of file regarding optimizing `/a`, `(a).`, `/[a]`,
-    // into a single cell by using special values for the HEART_BYTE().
+    // See notes at top of file regarding optimizing `/a` and `.a`
     //
     enum Reb_Kind inner = VAL_TYPE(v1);
-    if (
-        IS_BLANK(v2)
-        and (inner == REB_WORD or inner == REB_BLOCK or inner == REB_GROUP)
-    ){
+    if (IS_BLANK(v2) and inner == REB_WORD) {
         Derelativize(out, v1, specifier);
-        mutable_KIND3Q_BYTE(out) = kind;
-        mutable_HEART_BYTE(out) = METAFY_ANY_PLAIN_KIND(inner);
+        mutable_HEART_BYTE(out) = kind;
         return cast(REBVAL*, out);
     }
 
@@ -359,7 +351,7 @@ inline static REBVAL *Try_Init_Any_Sequence_Pairlike_Core(
     Freeze_Array_Shallow(a);
 
     Init_Block(out, a);
-    mutable_KIND3Q_BYTE(out) = kind;
+    mutable_HEART_BYTE(out) = kind;
     return cast(REBVAL*, out);
 }
 
@@ -469,29 +461,30 @@ inline static REBVAL *Try_Pop_Sequence_Or_Element_Or_Nulled(
 // optimized fashion using Refinify()
 
 inline static REBLEN VAL_SEQUENCE_LEN(noquote(const Cell*) sequence) {
-    assert(ANY_SEQUENCE_KIND(CELL_KIND(sequence)));
+    assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
 
-    switch (CELL_HEART(sequence)) {
-      case REB_BYTES:  // packed sequence of bytes directly in cell
-        assert(NOT_CELL_FLAG(sequence, FIRST_IS_NODE));  // TBD: series form
-        return EXTRA(Bytes, sequence).exactly_4[IDX_EXTRA_USED];
+    if (NOT_CELL_FLAG(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
+        assert(NOT_CELL_FLAG(sequence, SECOND_IS_NODE));
+        return PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED];
+    }
 
-      case REB_WORD:  // simulated [_ _] sequence (`/`, `.`)
-      case REB_GET_WORD:  // compressed [_ word] sequence (`.foo`, `/foo`)
-      case REB_GET_GROUP:
-      case REB_GET_BLOCK:
-      case REB_META_WORD:  // compressed [word _] sequence (`foo.`, `foo.`)
-      case REB_META_GROUP:
-      case REB_META_BLOCK:
+    const REBNOD *node1 = VAL_NODE1(sequence);
+    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {  // see if it's a pairing
+        assert(false);  // these don't exist yet
+        return 2;  // compressed 2-element sequence
+    }
+
+    switch (SER_FLAVOR(SER(node1))) {
+      case FLAVOR_SYMBOL :  // compressed single WORD! sequence
         return 2;
 
-      case REB_BLOCK: {
+      case FLAVOR_ARRAY : {  // uncompressed sequence
         REBARR *a = ARR(VAL_NODE1(sequence));
         assert(ARR_LEN(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return ARR_LEN(a); }
 
-      default:
+      default :
         assert(false);
         DEAD_END;
     }
@@ -513,27 +506,23 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
     REBLEN n
 ){
     assert(store != sequence);
-    assert(ANY_SEQUENCE_KIND(CELL_KIND(sequence)));
+    assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
 
-    enum Reb_Kind heart = CELL_HEART(sequence);
-    switch (heart) {
-      case REB_BYTES:
-        assert(n < EXTRA(Bytes, sequence).exactly_4[IDX_EXTRA_USED]);
-        return Init_Integer(store, PAYLOAD(Bytes, sequence).at_least_8[n]);
+    if (NOT_CELL_FLAG(sequence, SEQUENCE_HAS_NODE)) {  // compressed bytes
+        assert(n < PAYLOAD(Bytes, sequence).at_least_8[IDX_SEQUENCE_USED]);
+        return Init_Integer(store, PAYLOAD(Bytes, sequence).at_least_8[n + 1]);
+    }
 
-      case REB_WORD: {
+    const REBNOD *node1 = VAL_NODE1(sequence);
+    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {  // test if it's a pairing
+        assert(false);  // these don't exist yet
+        return nullptr;  // compressed 2-element sequence
+    }
+
+    switch (SER_FLAVOR(SER(node1))) {
+      case FLAVOR_SYMBOL : {  // compressed single WORD! sequence
         assert(n < 2);
-        assert(
-            VAL_STRING(sequence) == Canon(DOT_1)
-            or VAL_STRING(sequence) == Canon(SLASH_1)
-        );
-        return Lib(BLANK); }
-
-      case REB_GET_WORD:  // `/a` or `.a`
-      case REB_GET_GROUP:  // `/(a)` or `.(a)`
-      case REB_GET_BLOCK: {  // `/[a]` or `.[a]`
-        assert(n < 2);
-        if (n == 0)
+        if (GET_CELL_FLAG(sequence, REFINEMENT_LIKE) ? n == 0 : n != 0)
             return Lib(BLANK);
 
         // Because the cell is being viewed as a PATH!, we cannot view it as
@@ -541,33 +530,17 @@ inline static const RELVAL *VAL_SEQUENCE_AT(
         //
         if (sequence != store)
             Copy_Cell(store, CELL_TO_VAL(sequence));
-        mutable_KIND3Q_BYTE(store)
-            = mutable_HEART_BYTE(store) = PLAINIFY_ANY_GET_KIND(heart);
+        mutable_HEART_BYTE(store) = REB_WORD;
+        mutable_QUOTE_BYTE(store) = 0;  // quote is actually "on" the sequence
         return store; }
 
-      case REB_META_WORD:  // `a/` or `a.`
-      case REB_META_GROUP:  // `(a)/` or `(a).`
-      case REB_META_BLOCK: {  // `[a]/` or `[a].`
-        assert(n < 2);
-        if (n == 1)
-            return Lib(BLANK);
-
-        // Because the cell is being viewed as a PATH!, we cannot view it as
-        // a WORD! also unless we fiddle the bits at a new location.
-        //
-        if (sequence != store)
-            Copy_Cell(store, CELL_TO_VAL(sequence));
-        mutable_KIND3Q_BYTE(store)
-            = mutable_HEART_BYTE(store) = PLAINIFY_ANY_META_KIND(heart);
-        return store; }
-
-      case REB_BLOCK: {
+      case FLAVOR_ARRAY : {  // uncompressed sequence
         const REBARR *a = ARR(VAL_NODE1(sequence));
         assert(ARR_LEN(a) >= 2);
         assert(Is_Array_Frozen_Shallow(a));
         return ARR_AT(a, n); }  // array is read only
 
-      default:
+      default :
         assert(false);
         DEAD_END;
     }
@@ -587,29 +560,30 @@ inline static REBYTE VAL_SEQUENCE_BYTE_AT(
 inline static REBSPC *VAL_SEQUENCE_SPECIFIER(
     noquote(const Cell*) sequence
 ){
-    assert(ANY_SEQUENCE_KIND(CELL_KIND(sequence)));
+    assert(ANY_SEQUENCE_KIND(CELL_HEART(sequence)));
 
-    switch (CELL_HEART(sequence)) {
-        //
-        // Getting the specifier for any of the optimized types means getting
-        // the specifier for *that item in the sequence*; the sequence itself
-        // does not provide a layer of communication connecting the insides
-        // to a frame instance (because there is no actual layer).
-        //
-      case REB_BYTES:
-      case REB_WORD:
-      case REB_GET_WORD:
-      case REB_GET_GROUP:
-      case REB_GET_BLOCK:
-      case REB_META_WORD:
-      case REB_META_GROUP:
-      case REB_META_BLOCK:
+    // Getting the specifier for any of the optimized types means getting
+    // the specifier for *that item in the sequence*; the sequence itself
+    // does not provide a layer of communication connecting the insides
+    // to a frame instance (because there is no actual layer).
+
+    if (NOT_CELL_FLAG(sequence, SEQUENCE_HAS_NODE))  // compressed bytes
         return SPECIFIED;
 
-      case REB_BLOCK:
+    const REBNOD *node1 = VAL_NODE1(sequence);
+    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {  // see if it's a pairing
+        assert(false);  // these don't exist yet
+        return SPECIFIED;  // compressed 2-element sequence
+    }
+
+    switch (SER_FLAVOR(SER(node1))) {
+      case FLAVOR_SYMBOL :  // compressed single WORD! sequence
+        return SPECIFIED;
+
+      case FLAVOR_ARRAY :  // uncompressed sequence
         return VAL_SPECIFIER(sequence);
 
-      default:
+      default :
         assert(false);
         DEAD_END;
     }
@@ -673,23 +647,47 @@ inline static REBVAL *Refinify(REBVAL *v) {
 }
 
 inline static bool IS_REFINEMENT_CELL(noquote(const Cell*) v) {
-    assert(ANY_PATH_KIND(CELL_KIND(v)));
-    return CELL_HEART(v) == REB_GET_WORD;
+    assert(ANY_PATH_KIND(CELL_HEART(v)));
+    if (NOT_CELL_FLAG(v, SEQUENCE_HAS_NODE))
+        return false;
+
+    const REBNOD *node1 = VAL_NODE1(v);
+    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
+        return false;
+
+    if (SER_FLAVOR(SER(node1)) != FLAVOR_SYMBOL)
+        return false;
+
+    return GET_CELL_FLAG(v, REFINEMENT_LIKE);  // !!! Review: test this first?
 }
 
 inline static bool IS_REFINEMENT(const RELVAL *v) {
     assert(ANY_PATH(v));
-    return HEART_BYTE(v) == REB_GET_WORD;
+    return IS_REFINEMENT_CELL(v);
 }
 
-inline static bool IS_PREDICATE1_CELL(noquote(const Cell*) cell)
-  { return CELL_KIND(cell) == REB_TUPLE and CELL_HEART(cell) == REB_GET_WORD; }
+inline static bool IS_PREDICATE1_CELL(noquote(const Cell*) v) {
+    if (CELL_HEART(v) != REB_TUPLE)
+        return false;
+
+    if (NOT_CELL_FLAG(v, SEQUENCE_HAS_NODE))
+        return false;
+
+    const REBNOD *node1 = VAL_NODE1(v);
+    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
+        return false;
+
+    if (SER_FLAVOR(SER(node1)) != FLAVOR_SYMBOL)
+        return false;
+
+    return GET_CELL_FLAG(v, REFINEMENT_LIKE);  // !!! Review: test this first?
+}
 
 inline static const REBSYM *VAL_PREDICATE1_SYMBOL(
-    noquote(const Cell*) cell
+    noquote(const Cell*) v
 ){
-    assert(IS_PREDICATE1_CELL(cell));
-    return VAL_WORD_SYMBOL(cell);
+    assert(IS_PREDICATE1_CELL(v));
+    return SYM(VAL_NODE1(v));
 }
 
 inline static bool IS_PREDICATE(const RELVAL *v) {
@@ -704,5 +702,5 @@ inline static const REBSYM *VAL_REFINEMENT_SYMBOL(
     noquote(const Cell*) v
 ){
     assert(IS_REFINEMENT_CELL(v));
-    return VAL_WORD_SYMBOL(v);
+    return SYM(VAL_NODE1(v));
 }

@@ -110,7 +110,7 @@ inline static bool Is_Block_Style_Varargs(
     REBVAL **shared_out,
     noquote(const Cell*) vararg
 ){
-    assert(CELL_KIND(vararg) == REB_VARARGS);
+    assert(CELL_HEART(vararg) == REB_VARARGS);
 
     REBARR *binding = ARR(BINDING(vararg));
     if (IS_VARLIST(binding)) {
@@ -137,7 +137,7 @@ inline static bool Is_Frame_Style_Varargs_Maybe_Null(
     REBFRM **f_out,
     noquote(const Cell*) vararg
 ){
-    assert(CELL_KIND(vararg) == REB_VARARGS);
+    assert(CELL_HEART(vararg) == REB_VARARGS);
 
     REBARR *binding = ARR(BINDING(vararg));
     if (IS_VARLIST(binding)) {
@@ -189,7 +189,7 @@ inline static const REBPAR *Param_For_Varargs_Maybe_Null(
     const REBKEY **key,
     noquote(const Cell*) v
 ){
-    assert(CELL_KIND(v) == REB_VARARGS);
+    assert(CELL_HEART(v) == REB_VARARGS);
 
     REBACT *phase = VAL_VARARGS_PHASE(v);
     if (phase) {

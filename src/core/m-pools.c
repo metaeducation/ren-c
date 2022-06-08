@@ -1118,7 +1118,7 @@ void Decay_Series(REBSER *s)
 
       case FLAVOR_HANDLE: {
         RELVAL *v = ARR_SINGLE(ARR(s));
-        assert(CELL_KIND_UNCHECKED(v) == REB_HANDLE);
+        assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to
         // the pointer in one instance to be seen by other instances...there
@@ -1272,7 +1272,6 @@ void Assert_Pointer_Detection_Working(void)
     DECLARE_LOCAL (stale_cell);
     stale_cell->header.bits =
         NODE_FLAG_NODE | CELL_FLAG_STALE | NODE_FLAG_CELL
-        | FLAG_KIND3Q_BYTE(REB_T_POISON)
         | FLAG_HEART_BYTE(REB_T_POISON);
     assert(Detect_Rebol_Pointer(stale_cell) == DETECTED_AS_UTF8);  // conflated
   #endif

@@ -87,7 +87,7 @@ REB_R TO_Port(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
     //
     REBCTX *context = Copy_Context_Shallow_Managed(VAL_CONTEXT(arg));
     REBVAL *rootvar = CTX_ROOTVAR(context);
-    mutable_KIND3Q_BYTE(rootvar) = mutable_HEART_BYTE(rootvar) = REB_PORT;
+    mutable_HEART_BYTE(rootvar) = REB_PORT;
 
     return Init_Port(out, context);
 }

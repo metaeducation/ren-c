@@ -391,7 +391,7 @@ inline static bool Typecheck_Including_Constraints(
             if (VAL_NUM_QUOTES(v) > 1)
                 kind = REB_QUOTED;
             else
-                kind = CELL_KIND(VAL_UNESCAPED(v));
+                kind = CELL_HEART(VAL_UNESCAPED(v));
         }
     }
     else {

@@ -39,11 +39,11 @@
 //
 // To keep memory usage in the same order of magnitude as R3-Alpha, the GOB!'s
 // array is only 7 cells in length.  This allows it to fit into the 8 cell
-// memory pool, when the END marker is taken into account.  To achieve this
-// goal, creative use is made of REB_BYTES cells--to allow the packing of
-// floats and flags into cells that don't participate in GC.  This gives an
-// approximation of "struct-like" compactness for that inert data, while still
-// giving the GC the insight via normal cells into what to guard.
+// memory pool.  To achieve this goal, creative use is made of REB_BYTES cells,
+// to allow the packing of floats and flags into cells that don't participate
+// in GC.  This gives an approximation of "struct-like" compactness for that
+// inert data, while still giving the GC the insight via normal cells into what
+// to guard.
 //
 ////=// NOTES ////////////////////////////////////////////////////////////=//
 //

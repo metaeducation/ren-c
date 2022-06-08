@@ -210,7 +210,7 @@ REBNATIVE(reduce_each)
 
 
 bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
-    assert(ANY_GROUP_KIND(CELL_KIND(group)));
+    assert(ANY_GROUP_KIND(CELL_HEART(group)));
 
     if (IS_NULLED(label))
         return true;
@@ -290,13 +290,18 @@ REB_R Compose_To_Stack_Core(
   #endif
 
     for (; NOT_END(f_value); Fetch_Next_Forget_Lookback(f)) {
-        noquote(const Cell*) cell = VAL_UNESCAPED(f_value);
-        enum Reb_Kind heart = CELL_HEART(cell); // notice `''(...)`
 
-        if (not ANY_ARRAY_KIND(heart)) { // won't substitute/recurse
-            Derelativize(DS_PUSH(), f_value, specifier); // keep newline flag
+        if (not ANY_ARRAYLIKE(f_value)) {  // won't substitute/recurse
+            Derelativize(DS_PUSH(), f_value, specifier);  // keep newline flag
             continue;
         }
+
+        // We look for GROUP! regardless of how quoted it is, so:
+        //
+        //    >> compose [a ''(1 + 2) b]
+        //    == [a 3 b]
+        //
+        enum Reb_Kind heart = CELL_HEART(f_value);  // heart is type w/o quotes
 
         REBLEN quotes = VAL_NUM_QUOTES(f_value);
 
@@ -310,8 +315,8 @@ REB_R Compose_To_Stack_Core(
             // Don't compose at this level, but may need to walk deeply to
             // find compositions inside it if /DEEP and it's an array
         }
-        else if (not only and Is_Any_Doubled_Group(cell)) {
-            const RELVAL *inner = VAL_ARRAY_ITEM_AT(cell);  // 1 item
+        else if (not only and Is_Any_Doubled_Group(f_value)) {
+            const RELVAL *inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
             assert(IS_GROUP(inner));
             if (Match_For_Compose(inner, label)) {
                 doubled_group = true;
@@ -320,8 +325,8 @@ REB_R Compose_To_Stack_Core(
             }
         }
         else {  // plain compose, if match
-            if (Match_For_Compose(cell, label)) {
-                match = cell;
+            if (Match_For_Compose(f_value, label)) {
+                match = f_value;
                 match_specifier = specifier;
             }
         }
@@ -500,7 +505,7 @@ REB_R Compose_To_Stack_Core(
             REBDSP dsp_deep = DSP;
             REB_R r = Compose_To_Stack_Core(
                 out,
-                cast(const RELVAL*, cell),  // unescaped array (w/no QUOTEs)
+                f_value,  // unescaped array (w/no QUOTEs)
                 specifier,
                 label,
                 true,  // deep (guaranteed true if we get here)
@@ -525,15 +530,14 @@ REB_R Compose_To_Stack_Core(
                 continue;
             }
 
-            enum Reb_Kind kind = CELL_KIND(cell);
-            if (ANY_SEQUENCE_KIND(kind)) {
+            if (ANY_SEQUENCE_KIND(heart)) {
                 DECLARE_LOCAL (temp);
                 if (not Try_Pop_Sequence_Or_Element_Or_Nulled(
                     temp,
-                    kind,
+                    heart,
                     dsp_deep
                 )){
-                    if (Is_Valid_Sequence_Element(kind, temp)) {
+                    if (Is_Valid_Sequence_Element(heart, temp)) {
                         //
                         // `compose '(null)/1:` would leave beind 1:
                         //
@@ -549,13 +553,18 @@ REB_R Compose_To_Stack_Core(
                     = NODE_FLAG_MANAGED
                     | ARRAY_MASK_HAS_FILE_LINE;
 
-                if (GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(cell), NEWLINE_AT_TAIL))
+                if (GET_SUBCLASS_FLAG(
+                    ARRAY,
+                    VAL_ARRAY(f_value),
+                    NEWLINE_AT_TAIL
+                )){
                     pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
+                }
 
                 REBARR *popped = Pop_Stack_Values_Core(dsp_deep, pop_flags);
                 Init_Any_Array(
                     DS_PUSH(),
-                    kind,
+                    heart,
                     popped  // can't push and pop in same step, need variable
                 );
             }

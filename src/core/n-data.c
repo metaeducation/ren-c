@@ -123,8 +123,6 @@ REBNATIVE(bind)
     INCLUDE_PARAMS_OF_BIND;
 
     REBVAL *v = ARG(value);
-    REBLEN num_quotes = Dequotify(v);
-
     REBVAL *target = ARG(target);
 
     REBLEN flags = REF(only) ? BIND_0 : BIND_DEEP;
@@ -160,18 +158,18 @@ REBNATIVE(bind)
         context = SPARE;
     }
 
-    if (ANY_WORD(v)) {
+    if (ANY_WORDLIKE(v)) {
         //
-        // Bind a single word
+        // Bind a single word (also works on refinements, `/a` ...or `a.`, etc.
 
         if (Try_Bind_Word(context, v))
-            return Quotify(v, num_quotes);
+            return v;
 
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
             Init_None(Append_Context(VAL_CONTEXT(context), v, nullptr));
-            return Quotify(v, num_quotes);
+            return v;
         }
 
         fail (Error_Not_In_Context_Raw(v));
@@ -182,16 +180,13 @@ REBNATIVE(bind)
     // binding pointer is also used in cases like RETURN to link them to the
     // FRAME! that they intend to return from.)
     //
-    if (IS_ACTION(v)) {
-        Copy_Cell(OUT, v);
-        INIT_VAL_ACTION_BINDING(OUT, VAL_CONTEXT(context));
-        return Quotify(OUT, num_quotes);
+    if (REB_ACTION == CELL_HEART(v)) {
+        INIT_VAL_ACTION_BINDING(v, VAL_CONTEXT(context));
+        return v;
     }
 
-    if (not ANY_ARRAY_OR_SEQUENCE(v)) {  // QUOTED! could have wrapped any type
-        Quotify(v, num_quotes);  // put quotes back on
+    if (not ANY_ARRAYLIKE(v))  // QUOTED! could have wrapped any type
         fail (Error_Invalid_Arg(frame_, PAR(value)));
-    }
 
     RELVAL *at;
     const RELVAL *tail;
@@ -224,7 +219,7 @@ REBNATIVE(bind)
         flags
     );
 
-    return Quotify(OUT, num_quotes);
+    return OUT;
 }
 
 
@@ -567,7 +562,6 @@ bool Get_Var_Push_Refinements_Throws(
 
         if (steps_out) {  // set the steps out *first* before overwriting out
             Derelativize(unwrap(steps_out), var, var_specifier);
-            mutable_KIND3Q_BYTE(unwrap(steps_out)) = REB_WORD;
             mutable_HEART_BYTE(unwrap(steps_out)) = REB_WORD;
         }
 
@@ -599,30 +593,28 @@ bool Get_Var_Push_Refinements_Throws(
     REBDSP dsp_orig = DSP;
 
     if (ANY_SEQUENCE(var)) {
-        switch (HEART_BYTE(var)) {
-          case REB_BYTES:
+        if (NOT_CELL_FLAG(var, SEQUENCE_HAS_NODE))  // byte compressed
             fail (var);
 
-          case REB_WORD:
-            panic ("heart byte WORD! sequences are being reclaimed");
+        const REBNOD *node1 = VAL_NODE1(var);
+        if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) { // pair compressed
+            assert(false);  // these don't exist yet
+            fail (var);
+        }
 
-          case REB_GET_WORD:  // `/a` or `.a`
-            goto get_source;
+        switch (SER_FLAVOR(SER(node1))) {
+          case FLAVOR_SYMBOL:
+            if (GET_CELL_FLAG(var, REFINEMENT_LIKE))  // `/a` or `.a`
+                goto get_source;
 
-          case REB_META_WORD:  // `a/` or `a.`
+            // `a/` or `a.`
             //
             // !!! If this is a PATH!, it should error if it's not an action...
             // and if it's a TUPLE! it should error if it is an action.  Review.
             //
             goto get_source;
 
-          case REB_GET_GROUP:  // `/(a)` or `.(a)`
-          case REB_GET_BLOCK:  // `/[a]` or `.[a]`
-          case REB_META_GROUP:  // `(a)/` or `(a).`
-          case REB_META_BLOCK:  // `[a]/` or `[a].`
-            fail (var);  // not handled yet
-
-          case REB_BLOCK:
+          case FLAVOR_ARRAY:
             break;
 
           default:
@@ -784,37 +776,35 @@ bool Get_Path_Push_Refinements_Throws(
     const RELVAL *path,
     REBSPC *path_specifier
 ){
-    switch (HEART_BYTE(path)) {
-      case REB_BYTES:
+    if (NOT_CELL_FLAG(path, SEQUENCE_HAS_NODE)) {  // byte compressed, inert
         Derelativize(out, path, path_specifier);  // inert
         return false;
+    }
 
-      case REB_WORD:
-        panic ("heart byte WORD! sequences are being reclaimed");
-
-      case REB_GET_WORD:  // `/a` - should you be able to GET these?
-        Get_Word_May_Fail(out, path, path_specifier);
+    const REBNOD *node1 = VAL_NODE1(path);
+    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {
+        assert(false);  // none of these exist yet
         return false;
+    }
 
-      case REB_META_WORD:  // `a/`
-        //
-        // !!! It should error if it's not an action...
+    switch (SER_FLAVOR(SER(node1))) {
+      case FLAVOR_SYMBOL : {
+        if (GET_CELL_FLAG(path, REFINEMENT_LIKE)) {  // `/a` - should these GET?
+            Get_Word_May_Fail(out, path, path_specifier);
+            return false;
+        }
+
+        // !!! `a/` should error if it's not an action...
         //
         Get_Word_May_Fail(out, path, path_specifier);
         if (not IS_ACTION(out))
             fail (Error_Inert_With_Slashed_Raw());
-        return false;
+        return false; }
 
-      case REB_GET_GROUP:  // `/(a)` or `.(a)`
-      case REB_GET_BLOCK:  // `/[a]` or `.[a]`
-      case REB_META_GROUP:  // `(a)/` or `(a).`
-      case REB_META_BLOCK:  // `[a]/` or `[a].`
-        fail (path);  // not handled yet
-
-      case REB_BLOCK:
+      case FLAVOR_ARRAY : {}
         break;
 
-      default:
+      default :
         panic (path);
     }
 
@@ -884,7 +874,7 @@ bool Get_Path_Push_Refinements_Throws(
             fail (Error_Bad_Word_Get(head, lookup));
 
         Derelativize(safe, path, path_specifier);
-        mutable_KIND3Q_BYTE(safe) = REB_TUPLE;
+        mutable_HEART_BYTE(safe) = REB_TUPLE;
 
         // ...but historical Rebol used PATH! for everything.  For Redbol
         // compatibility, we flip over to a TUPLE!.  We must be sure that
@@ -1081,7 +1071,6 @@ bool Set_Var_Core_Updater_Throws(
             // If the variable is a compressed path form like `a.` then turn
             // it into a plain word.
             //
-            mutable_KIND3Q_BYTE(unwrap(steps_out)) = REB_WORD;
             mutable_HEART_BYTE(unwrap(steps_out)) = REB_WORD;
         }
         return false;  // did not throw
@@ -1095,30 +1084,28 @@ bool Set_Var_Core_Updater_Throws(
     // caller has asked us to return steps.
 
     if (ANY_SEQUENCE(var)) {
-        switch (HEART_BYTE(var)) {  // look for compressed sequence forms
-          case REB_BYTES:
+        if (NOT_CELL_FLAG(var, SEQUENCE_HAS_NODE))  // compressed byte form
             fail (var);
 
-          case REB_WORD:
-            panic ("heart byte WORD! sequences are being reclaimed");
+        const REBNOD* node1 = VAL_NODE1(var);
+        if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL) {  // pair optimization
+            assert(false);  // these don't exist yet
+            fail (var);
+        }
 
-          case REB_GET_WORD:  // `/a` or `.a`
-            goto set_target;
+        switch (SER_FLAVOR(SER(node1))) {
+          case FLAVOR_SYMBOL: {
+            if (GET_CELL_FLAG(var, REFINEMENT_LIKE))  // `/a` or `.a`
+               goto set_target;
 
-          case REB_META_WORD:  // `a/` or `a.`
+            // `a/` or `a.`
             //
             // !!! If this is a PATH!, it should error if it's not an action...
             // and if it's a TUPLE! it should error if it is an action.  Review.
             //
-            goto set_target;
+            goto set_target; }
 
-          case REB_GET_GROUP:  // `/(a)` or `.(a)`
-          case REB_GET_BLOCK:  // `/[a]` or `.[a]`
-          case REB_META_GROUP:  // `(a)/` or `(a).`
-          case REB_META_BLOCK:  // `[a]/` or `[a].`
-            fail (var);  // not yet handled
-
-          case REB_BLOCK:
+          case FLAVOR_ARRAY:
             break;  // fall through
 
           default:
@@ -1750,7 +1737,7 @@ bool Try_As_String(
         Inherit_Const(Quotify(out, quotes), v);
     }
     else if (IS_ISSUE(v)) {
-        if (CELL_HEART(cast(noquote(const Cell*), v)) != REB_BYTES) {
+        if (GET_CELL_FLAG(v, ISSUE_HAS_NODE)) {
             assert(Is_Series_Frozen(VAL_STRING(v)));
             goto any_string;  // ISSUE! series must be immutable
         }
@@ -1774,11 +1761,7 @@ bool Try_As_String(
     else if (ANY_STRING(v) or IS_URL(v)) {
       any_string:
         Copy_Cell(out, v);
-        mutable_KIND3Q_BYTE(out) = new_kind;
-        if (new_kind == REB_URL)
-            mutable_HEART_BYTE(out) = REB_TEXT;
-        else
-            mutable_HEART_BYTE(out) = new_kind;
+        mutable_HEART_BYTE(out) = new_kind;
         Trust_Const(Quotify(out, quotes));
     }
     else
@@ -1828,42 +1811,33 @@ REBNATIVE(as)
       case REB_BLOCK:
       case REB_GROUP:
         if (ANY_SEQUENCE(v)) {  // internals vary based on optimization
-            switch (HEART_BYTE(v)) {
-              case REB_ISSUE:
+            if (NOT_CELL_FLAG(v, SEQUENCE_HAS_NODE))
                 fail ("Array Conversions of byte-oriented sequences TBD");
 
-              case REB_WORD:
-                assert(
-                    VAL_WORD_SYMBOL(v) == Canon(DOT_1)
-                    or VAL_WORD_SYMBOL(v) == Canon(SLASH_1)
-                );
-                Init_Block(v, PG_2_Blanks_Array);
-                break;
+            const REBNOD *node1 = VAL_NODE1(v);
+            assert(not (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL));
 
-              case REB_GET_WORD: {
+            switch (SER_FLAVOR(SER(node1))) {
+              case FLAVOR_SYMBOL: {
                 REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-                Init_Blank(ARR_HEAD(a));
-                Copy_Cell(ARR_AT(a, 1), v);
-                mutable_KIND3Q_BYTE(ARR_AT(a, 1)) = REB_WORD;
-                mutable_HEART_BYTE(ARR_AT(a, 1)) = REB_WORD;
+                if (GET_CELL_FLAG(v, REFINEMENT_LIKE)) {
+                    Init_Blank(ARR_AT(a, 0));
+                    Copy_Cell(ARR_AT(a, 1), v);
+                    mutable_HEART_BYTE(ARR_AT(a, 1)) = REB_WORD;
+                }
+                else {
+                    Copy_Cell(ARR_AT(a, 0), v);
+                    mutable_HEART_BYTE(ARR_AT(a, 0)) = REB_WORD;
+                    Init_Blank(ARR_AT(a, 1));
+                }
                 SET_SERIES_LEN(a, 2);
                 Init_Block(v, a);
                 break; }
 
-              case REB_META_WORD: {
-                REBARR *a = Make_Array_Core(2, NODE_FLAG_MANAGED);
-                Copy_Cell(ARR_HEAD(a), v);
-                mutable_KIND3Q_BYTE(ARR_HEAD(a)) = REB_WORD;
-                mutable_HEART_BYTE(ARR_HEAD(a)) = REB_WORD;
-                Init_Blank(ARR_AT(a, 1));
-                SET_SERIES_LEN(a, 2);
-                Init_Block(v, a);
-                break; }
-
-              case REB_BLOCK:
-                mutable_KIND3Q_BYTE(v) = REB_BLOCK;
+              case FLAVOR_ARRAY:
                 assert(Is_Array_Frozen_Shallow(VAL_ARRAY(v)));
                 assert(VAL_INDEX(v) == 0);
+                mutable_HEART_BYTE(v) = REB_BLOCK;
                 break;
 
               default:
@@ -1908,7 +1882,7 @@ REBNATIVE(as)
 
         if (ANY_SEQUENCE(v)) {
             Copy_Cell(OUT, v);
-            mutable_KIND3Q_BYTE(OUT)
+            mutable_HEART_BYTE(OUT)
                 = new_kind;
             return Trust_Const(OUT);
         }
@@ -1929,7 +1903,7 @@ REBNATIVE(as)
                 //
                 Reset_Cell_Header_Untracked(
                     TRACK(OUT),
-                    REB_BYTES,
+                    REB_ISSUE,
                     CELL_MASK_NONE
                 );
                 memcpy(
@@ -1952,7 +1926,7 @@ REBNATIVE(as)
                 }
                 Freeze_Series(VAL_SERIES(OUT));  // must be frozen
             }
-            mutable_KIND3Q_BYTE(OUT) = REB_ISSUE;
+            mutable_HEART_BYTE(OUT) = REB_ISSUE;
             return OUT;
         }
 
@@ -1980,7 +1954,7 @@ REBNATIVE(as)
       case REB_META_WORD:
       case REB_THE_WORD: {
         if (IS_ISSUE(v)) {
-            if (CELL_KIND(cast(noquote(const Cell*), v)) == REB_TEXT) {
+            if (GET_CELL_FLAG(v, ISSUE_HAS_NODE)) {
                 //
                 // Handle the same way we'd handle any other read-only text
                 // with a series allocation...e.g. reuse it if it's already
@@ -2093,7 +2067,7 @@ REBNATIVE(as)
 
       case REB_BINARY: {
         if (IS_ISSUE(v)) {
-            if (CELL_KIND(cast(noquote(const Cell*), v)) == REB_TEXT)
+            if (GET_CELL_FLAG(v, ISSUE_HAS_NODE))
                 goto any_string_as_binary;  // had a series allocation
 
             // Data lives in payload--make new frozen series for BINARY!
@@ -2154,9 +2128,7 @@ REBNATIVE(as)
     // updating the quotes is enough.
     //
     Copy_Cell(OUT, v);
-    mutable_KIND3Q_BYTE(OUT)
-        = mutable_HEART_BYTE(OUT)
-        = new_kind;
+    mutable_HEART_BYTE(OUT) = new_kind;
     return Trust_Const(OUT);
 }
 

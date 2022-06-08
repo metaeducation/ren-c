@@ -288,7 +288,7 @@ REBTYPE(Money)
                 return Init_Integer(OUT, i64);
             }
         }
-        mutable_KIND3Q_BYTE(OUT) = mutable_HEART_BYTE(OUT) = REB_MONEY;
+        mutable_HEART_BYTE(OUT) = REB_MONEY;
         return OUT; }
 
       case SYM_EVEN_Q:

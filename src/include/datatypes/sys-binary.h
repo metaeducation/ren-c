@@ -114,7 +114,7 @@ inline static REBBIN *Make_Binary_Core(REBLEN capacity, REBFLGS flags)
 //=//// BINARY! VALUES ////////////////////////////////////////////////////=//
 
 inline static const REBBIN *VAL_BINARY(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_BINARY);
+    assert(CELL_HEART(v) == REB_BINARY);
     return BIN(VAL_SERIES(v));
 }
 

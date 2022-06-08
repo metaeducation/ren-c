@@ -56,11 +56,11 @@ REBNOD *Dump_Value_Debug(const RELVAL *v)
   #endif
     fflush(stdout);
 
-    printf("kind_byte=%d\n", cast(int, KIND3Q_BYTE_UNCHECKED(v)));
+    printf("kind_byte=%d\n", cast(int, VAL_TYPE_UNCHECKED(v)));
 
-    enum Reb_Kind kind = CELL_KIND(VAL_UNESCAPED(v));
-    const char *type = STR_UTF8(Canon_Symbol(SYM_FROM_KIND(kind)));
-    printf("cell_kind=%s\n", type);
+    enum Reb_Kind heart = CELL_HEART(VAL_UNESCAPED(v));
+    const char *type = STR_UTF8(Canon_Symbol(SYM_FROM_KIND(heart)));
+    printf("cell_heart=%s\n", type);
     fflush(stdout);
 
     if (GET_CELL_FLAG(v, FIRST_IS_NODE))

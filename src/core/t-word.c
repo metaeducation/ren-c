@@ -104,7 +104,7 @@ REB_R MAKE_Word(
         // Rethink what it means to preserve the bits vs. not.
         //
         Copy_Cell(out, arg);
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = kind;
+        mutable_HEART_BYTE(out) = kind;
         return out;
     }
 
@@ -186,7 +186,7 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         if (Is_Void(out))
             fail ("Can't MAKE ANY-WORD! from PATH! that's all BLANK!s");
 
-        mutable_KIND3Q_BYTE(out) = mutable_HEART_BYTE(out) = kind;
+        mutable_HEART_BYTE(out) = kind;
         return out;
     }
 

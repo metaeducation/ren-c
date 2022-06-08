@@ -37,7 +37,7 @@ inline static OPT_SYMID VAL_WORD_ID(noquote(const Cell*) v) {
 }
 
 inline static void INIT_VAL_WORD_INDEX(RELVAL *v, REBLEN i) {
-    assert(ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(v))));
+    assert(ANY_WORDLIKE(v));
     VAL_WORD_INDEX_U32(v) = i;
 }
 
@@ -128,12 +128,12 @@ inline static const REBSTR *Intern_Unsized_Managed(const char *utf8)
 // storing their symbols in the word; this will likely have to hit a keylist.
 //
 inline static bool IS_BAR(const RELVAL *v) {
-    return KIND3Q_BYTE_UNCHECKED(v) == REB_WORD
+    return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and VAL_WORD_SYMBOL(v) == Canon(BAR_1);  // caseless | always canon
 }
 
 inline static bool IS_BAR_BAR(const RELVAL *v) {
-    return KIND3Q_BYTE_UNCHECKED(v) == REB_WORD
+    return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and VAL_WORD_SYMBOL(v) == Canon(_B_B);  // caseless || always canon
 }
 

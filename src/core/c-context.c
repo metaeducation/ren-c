@@ -354,14 +354,14 @@ static void Collect_Inner_Loop(
 ){
     const RELVAL *v = head;
     for (; v != tail; ++v) {
-        noquote(const Cell*) cell = VAL_UNESCAPED(v);  // X from ''''X
-        enum Reb_Kind kind = CELL_KIND(cell);
+        enum Reb_Kind kind = CELL_HEART(v);
 
         if (ANY_WORD_KIND(kind)) {
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue;  // kind of word we're not interested in collecting
 
-            const REBSYM *symbol = VAL_WORD_SYMBOL(cell);
+            const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+
             if (not Try_Add_Binder_Index(
                 &cl->binder,
                 symbol,
@@ -371,14 +371,13 @@ static void Collect_Inner_Loop(
                     Collect_End(cl);  // IMPORTANT: Can't fail with binder
 
                     DECLARE_LOCAL (duplicate);
-                    Init_Word(duplicate, VAL_WORD_SYMBOL(cell));
+                    Init_Word(duplicate, symbol);
                     fail (Error_Dup_Vars_Raw(duplicate));  // cleans bindings
                 }
                 continue;  // tolerate duplicate
             }
 
-            Init_Word(DS_PUSH(), VAL_WORD_SYMBOL(cell));
-
+            Init_Word(DS_PUSH(), symbol);
             continue;
         }
 
@@ -392,7 +391,7 @@ static void Collect_Inner_Loop(
         //
         if (ANY_ARRAY_KIND(kind)) {
             const RELVAL *sub_tail;
-            const RELVAL *sub_at = VAL_ARRAY_AT(&sub_tail, cell);
+            const RELVAL *sub_at = VAL_ARRAY_AT(&sub_tail, v);
             Collect_Inner_Loop(cl, sub_at, sub_tail);
         }
     }
@@ -480,7 +479,7 @@ REBARR *Collect_Unique_Words_Managed(
         const RELVAL *check_tail;
         const RELVAL *check = VAL_ARRAY_AT(&check_tail, ignorables);
         for (; check != check_tail; ++check) {
-            if (not ANY_WORD_KIND(CELL_KIND(VAL_UNESCAPED(check))))
+            if (not ANY_WORD_KIND(CELL_HEART(check)))
                 fail (Error_Bad_Value(check));
         }
     }

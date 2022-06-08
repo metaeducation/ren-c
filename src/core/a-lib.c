@@ -1685,11 +1685,14 @@ REBVAL *RL_rebRescueWith(
     if (not result) {
         // null is considered a legal result
     }
-    else if (rescuer == nullptr and KIND3Q_BYTE(result) == REB_ERROR) {
-        //
+    else if (
+        rescuer == nullptr
+        and QUOTE_BYTE(result) == 0
+        and HEART_BYTE(result) == REB_ERROR
+    ){
         // Analogous to how TRAP works, if you don't have a handler for the
         // error case then you can't return an ERROR!, since all errors
-        // indicate a failure.  Use KIND3Q_BYTE() since R_THROWN or other
+        // indicate a failure.  Use HEART_BYTE() since R_THROWN or other
         // special things can be used internally, and literal errors don't
         // count either.
         //

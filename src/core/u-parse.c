@@ -166,7 +166,7 @@
 
 #define FETCH_TO_BAR_OR_END(f) \
     while (NOT_END(P_RULE) and not ( \
-        KIND3Q_BYTE_UNCHECKED(P_RULE) == REB_WORD \
+        VAL_TYPE_UNCHECKED(P_RULE) == REB_WORD \
         and VAL_WORD_SYMBOL(P_RULE) == Canon(BAR_1) \
     )){ \
         FETCH_NEXT_RULE(f); \
@@ -257,7 +257,7 @@ static bool Subparse_Throws(
     option(REBARR*) collection,
     REBFLGS flags
 ){
-    assert(ANY_SERIES_KIND(CELL_KIND(VAL_UNESCAPED(input))));
+    assert(ANY_SERIES_KIND(CELL_HEART(input)));
 
     Push_Frame(out, f);  // checks for C stack overflow
     Push_Action(f, VAL_ACTION(Lib(SUBPARSE)), UNBOUND);
@@ -565,7 +565,7 @@ static REB_R Parse_One_Rule(
         }
     }
 
-    switch (KIND3Q_BYTE(rule)) {  // handle w/same behavior for all P_INPUT
+    switch (VAL_TYPE(rule)) {  // handle w/same behavior for all P_INPUT
 
       case REB_BLANK:  // blank rules "match" but don't affect parse position
         return Init_Integer(OUT, pos);
@@ -683,21 +683,20 @@ static REB_R Parse_One_Rule(
         // !!! The concept is based somewhat on what was legal in FIND for
         // Rebol2, and leverages quoting.  It's being experimented with.
         //
-        noquote(const Cell*) rule_cell = VAL_UNESCAPED(rule);
-        enum Reb_Kind rule_cell_kind = CELL_KIND(rule_cell);
+        enum Reb_Kind rule_heart = CELL_HEART(rule);
         if (
-            (ANY_WORD_KIND(rule_cell_kind) and VAL_NUM_QUOTES(rule) == 1)
-            or (ANY_STRING_KIND(rule_cell_kind) and VAL_NUM_QUOTES(rule) <= 1)
-            or (rule_cell_kind == REB_ISSUE and VAL_NUM_QUOTES(rule) <= 1)
-            or (rule_cell_kind == REB_BINARY and VAL_NUM_QUOTES(rule) == 0)
-            or (rule_cell_kind == REB_INTEGER and VAL_NUM_QUOTES(rule) == 1)
+            (ANY_WORD_KIND(rule_heart) and VAL_NUM_QUOTES(rule) == 1)
+            or (ANY_STRING_KIND(rule_heart) and VAL_NUM_QUOTES(rule) <= 1)
+            or (rule_heart == REB_ISSUE and VAL_NUM_QUOTES(rule) <= 1)
+            or (rule_heart == REB_BINARY and VAL_NUM_QUOTES(rule) == 0)
+            or (rule_heart == REB_INTEGER and VAL_NUM_QUOTES(rule) == 1)
         ){
             REBLEN len;
             REBINT index = Find_Value_In_Binstr(
                 &len,
                 ARG(position),
                 VAL_LEN_HEAD(ARG(position)),
-                rule_cell,
+                rule,
                 (P_FLAGS & PF_FIND_MASK) | AM_FIND_MATCH
                     | (IS_ISSUE(rule) ? AM_FIND_CASE : 0),
                 1  // skip
@@ -1004,7 +1003,7 @@ static REBIXO To_Thru_Non_Block_Rule(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    REBYTE kind = KIND3Q_BYTE(rule);
+    enum Reb_Kind kind = VAL_TYPE(rule);
     assert(kind != REB_BLOCK);
 
     if (IS_NULLED_OR_BLANK_KIND(kind))
@@ -1105,7 +1104,7 @@ static void Handle_Mark_Rule(
 
     Quotify(ARG(position), P_NUM_QUOTES);
 
-    REBYTE k = KIND3Q_BYTE(rule);
+    enum Reb_Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or k == REB_SET_WORD) {
         Copy_Cell(Sink_Word_May_Fail(rule, specifier), ARG(position));
     }
@@ -1140,11 +1139,11 @@ static REB_R Handle_Seek_Rule_Dont_Update_Begin(
 ){
     USE_PARAMS_OF_SUBPARSE;
 
-    REBYTE k = KIND3Q_BYTE(rule);
+    enum Reb_Kind k = VAL_TYPE(rule);
     if (k == REB_WORD or k == REB_GET_WORD or k == REB_TUPLE) {
         Get_Var_May_Fail(SPARE, rule, specifier, false);
         rule = SPARE;
-        k = KIND3Q_BYTE(rule);
+        k = VAL_TYPE(rule);
     }
 
     REBINT index;
@@ -2217,7 +2216,7 @@ REBNATIVE(subparse)
                     i = END_FLAG;  // `parse [] [into [...]]`, rejects
                     break;
                 }
-                else if (ANY_PATH_KIND(CELL_KIND(VAL_UNESCAPED(into)))) {
+                else if (ANY_PATH_KIND(CELL_HEART(into))) {
                     //
                     // Can't PARSE an ANY-PATH! because it has no position
                     // But would be inconvenient if INTO did not support.
@@ -2229,7 +2228,7 @@ REBNATIVE(subparse)
                     into = rebValue("as block! @", SPARE);
                 }
                 else if (
-                    not ANY_SERIES_KIND(CELL_KIND(VAL_UNESCAPED(into)))
+                    not ANY_SERIES_KIND(CELL_HEART(into))
                 ){
                     i = END_FLAG;  // `parse [1] [into [...]`, rejects
                     break;
@@ -2778,7 +2777,7 @@ REBNATIVE(parse_p)
         );
     }
 
-    if (not ANY_SERIES_KIND(CELL_KIND(VAL_UNESCAPED(input))))
+    if (not ANY_SERIES_KIND(CELL_HEART(input)))
         fail ("PARSE input must be an ANY-SERIES! (use AS BLOCK! for PATH!)");
 
     DECLARE_FRAME_AT (subframe, rules, EVAL_MASK_DEFAULT);
@@ -2825,9 +2824,8 @@ REBNATIVE(parse_p)
         and 0 == CT_String(rules_tail - 1, Root_Here_Tag, strict)  // <here>
     ){
         Copy_Cell(OUT, ARG(input));
-        REBLEN num_quotes = Dequotify(OUT);  // take quotes out
         VAL_INDEX_UNBOUNDED(OUT) = index;  // cell guaranteed not REB_QUOTED
-        return Quotify(OUT, num_quotes);  // put quotes back
+        return OUT;
     }
 
     // !!! Give back a value that triggers a THEN clause and won't trigger an

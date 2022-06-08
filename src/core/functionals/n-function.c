@@ -425,8 +425,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         copy = Copy_And_Bind_Relative_Deep_Managed(
             body,  // new copy has locals bound relatively to the new action
             a,
-            locals_visible,
-            TS_WORD
+            locals_visible
         );
     }
 

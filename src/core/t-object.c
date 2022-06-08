@@ -192,7 +192,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
 // Did_Advance_Evars() on even the first.
 //
 void Init_Evars(EVARS *e, noquote(const Cell*) v) {
-    enum Reb_Kind kind = CELL_KIND(v);
+    enum Reb_Kind kind = CELL_HEART(v);
 
     if (kind == REB_ACTION) {
         e->index = 0;  // will be bumped to 1
@@ -429,11 +429,11 @@ void Shutdown_Evars(EVARS *e)
 //
 REBINT CT_Context(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
-    assert(ANY_CONTEXT_KIND(CELL_KIND(a)));
-    assert(ANY_CONTEXT_KIND(CELL_KIND(b)));
+    assert(ANY_CONTEXT_KIND(CELL_HEART(a)));
+    assert(ANY_CONTEXT_KIND(CELL_HEART(b)));
 
-    if (CELL_KIND(a) != CELL_KIND(b))  // e.g. ERROR! won't equal OBJECT!
-        return CELL_KIND(a) > CELL_KIND(b) ? 1 : 0;
+    if (CELL_HEART(a) != CELL_HEART(b))  // e.g. ERROR! won't equal OBJECT!
+        return CELL_HEART(a) > CELL_HEART(b) ? 1 : 0;
 
     REBCTX *c1 = VAL_CONTEXT(a);
     REBCTX *c2 = VAL_CONTEXT(b);
@@ -920,7 +920,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     }
     Push_Pointer_To_Series(TG_Mold_Stack, c);
 
-    if (CELL_KIND(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
+    if (CELL_HEART(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
         REBARR *varlist = CTX_VARLIST(VAL_CONTEXT(v));
         if (GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");

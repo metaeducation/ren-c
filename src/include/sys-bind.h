@@ -340,7 +340,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
 // action, requiring a frame specifier to fully resolve).
 //
 inline static bool IS_WORD_UNBOUND(const RELVAL *v) {
-    assert(ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(v))));
+    assert(ANY_WORDLIKE(v));
     return BINDING(v) == UNBOUND;
 }
 
@@ -356,12 +356,12 @@ inline static REBLEN VAL_WORD_INDEX(const RELVAL *v) {
 }
 
 inline static REBARR *VAL_WORD_BINDING(const RELVAL *v) {
-    assert(ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(v))));
+    assert(ANY_WORDLIKE(v));
     return ARR(BINDING(v));  // could be nullptr / UNBOUND
 }
 
 inline static void INIT_VAL_WORD_BINDING(RELVAL *v, const REBSER *binding) {
-    assert(ANY_WORD_KIND(CELL_HEART(VAL_UNESCAPED(v))));
+    assert(ANY_WORDLIKE(v));
 
     mutable_BINDING(v) = binding;
 
@@ -535,7 +535,7 @@ inline static option(REBSER*) Get_Word_Container(
 
         if (
             IS_SET_WORD(ARR_SINGLE(specifier))
-            and REB_SET_WORD != CELL_KIND(VAL_UNESCAPED(any_word))
+            and REB_SET_WORD != CELL_HEART(any_word)
         ){
             goto skip_miss_patch;
         }
@@ -888,13 +888,10 @@ inline static REBVAL *Derelativize_Untracked(
         return cast(REBVAL*, out);
     }
 
-    enum Reb_Kind heart = CELL_HEART(VAL_UNESCAPED(v));
-
     // The specifier is not going to have a say in the derelativized cell.
     // This means any information it encodes must be taken into account now.
     //
-    //
-    if (ANY_WORD_KIND(heart)) {
+    if (ANY_WORDLIKE(v)) {
         REBLEN index;
         REBSER *s = try_unwrap(
             Get_Word_Container(&index, v, specifier, ATTACH_COPY)
@@ -913,7 +910,7 @@ inline static REBVAL *Derelativize_Untracked(
 
         return cast(REBVAL*, out);
     }
-    else if (ANY_ARRAY_KIND(heart)) {
+    else if (ANY_ARRAYLIKE(v)) {
         //
         // The job of an array in a derelativize operation is to carry along
         // the specifier.  However, it cannot lose any prior existing info

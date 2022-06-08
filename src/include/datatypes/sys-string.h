@@ -539,7 +539,7 @@ inline static REBCHR(*) STR_AT(const_if_c REBSTR *s, REBLEN at) {
 
 
 inline static const REBSTR *VAL_STRING(noquote(const Cell*) v) {
-    if (ANY_STRING_KIND(CELL_HEART(v)))
+    if (ANY_STRINGLIKE(v))
         return STR(VAL_NODE1(v));  // VAL_SERIES() would assert
 
     return VAL_WORD_SYMBOL(v);  // asserts ANY_WORD_KIND() for heart
@@ -556,7 +556,7 @@ inline static const REBSTR *VAL_STRING(noquote(const Cell*) v) {
 //
 inline static REBLEN VAL_LEN_HEAD(noquote(const Cell*) v) {
     const REBSER *s = VAL_SERIES(v);
-    if (IS_SER_UTF8(s) and CELL_KIND(v) != REB_BINARY)
+    if (IS_SER_UTF8(s) and CELL_HEART(v) != REB_BINARY)
         return STR_LEN(STR(s));
     return SER_USED(s);
 }
@@ -611,7 +611,7 @@ inline static REBSIZ VAL_SIZE_LIMIT_AT(
     noquote(const Cell*) v,
     REBINT limit  // UNLIMITED (e.g. a very large number) for no limit
 ){
-    assert(ANY_STRING_KIND(CELL_HEART(v)));
+    assert(ANY_STRINGLIKE(v));
 
     REBCHR(const*) at = VAL_STRING_AT(v);  // !!! update cache if needed
     REBCHR(const*) tail;
@@ -781,8 +781,6 @@ inline static REBVAL *Init_Any_String_At(
         index,
         UNBOUND
     );
-    if (kind == REB_URL)
-        mutable_HEART_BYTE(out) = REB_TEXT;
     return SPECIFIC(out);
 }
 

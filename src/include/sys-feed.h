@@ -566,7 +566,7 @@ inline static void Prep_Array_Feed(
         Init_Any_Array_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index, specifier
         );
-        assert(KIND3Q_BYTE_UNCHECKED(feed->value) != REB_0_END);
+        assert(VAL_TYPE_UNCHECKED(feed->value) != REB_0_END);
             // ^-- faster than NOT_END()
     }
     else {

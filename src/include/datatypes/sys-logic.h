@@ -45,7 +45,7 @@ inline static REBVAL *Init_Logic_Core(RELVAL *out, bool flag) {
 #define Init_False(out)     Init_Logic((out), false)
 
 inline static bool VAL_LOGIC(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_LOGIC);
+    assert(CELL_HEART(v) == REB_LOGIC);
     return PAYLOAD(Logic, v).flag;
 }
 
@@ -69,7 +69,7 @@ inline static bool VAL_LOGIC(noquote(const Cell*) v) {
 inline static bool IS_TRUTHY(const RELVAL *v) {
     if (IS_BAD_WORD(v))
         assert(NOT_CELL_FLAG(v, ISOTOPE));  // should never be passed isotopes!
-    if (KIND3Q_BYTE(v) > REB_LOGIC)
+    if (VAL_TYPE(v) > REB_LOGIC)
         return true;  // includes QUOTED! `if first ['_] [-- "this is truthy"]`
     if (IS_LOGIC(v))
         return VAL_LOGIC(v);
@@ -89,7 +89,7 @@ inline static bool IS_TRUTHY(const RELVAL *v) {
 inline static bool Is_Conditional_True(const REBVAL *v) {
     if (IS_FALSEY(v))
         return false;
-    if (KIND3Q_BYTE(v) == REB_BLOCK)
+    if (IS_BLOCK(v))
         if (GET_CELL_FLAG(v, UNEVALUATED))
             fail (Error_Block_Conditional_Raw(v));  // !!! Unintended_Literal?
     return true;

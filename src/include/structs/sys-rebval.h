@@ -111,6 +111,10 @@
 #define CELL_FLAG_FIRST_IS_NODE \
     NODE_FLAG_GC_ONE
 
+#define CELL_FLAG_ISSUE_HAS_NODE CELL_FLAG_FIRST_IS_NODE  // make findable
+#define CELL_FLAG_SEQUENCE_HAS_NODE CELL_FLAG_FIRST_IS_NODE  // make findable
+
+
 
 //=//// CELL_FLAG_SECOND_IS_NODE //////////////////////////////////////////=//
 //
@@ -121,42 +125,38 @@
     NODE_FLAG_GC_TWO
 
 
-//=//// BITS 8-15: KIND AND IN-SITU QUOTING BYTE ("KIND3Q") /////////////////=//
+//=//// BITS 8-15: CELL LAYOUT TYPE BYTE ("HEART") ////////////////////////=//
 //
-// The "kind" of fundamental datatype a cell is lives in the second byte for
+// The "heart" of fundamental datatype a cell is lives in the second byte for
 // a very deliberate reason.  This means that the signal for an end can be
 // a zero byte, allow a C string that is one character long (plus zero
 // terminator) to function as an end signal...using only two bytes, while
 // still not conflicting with arbitrary UTF-8 strings (including empty ones).
 //
-// An additional trick is that while there are only up to 64 fundamental types
-// in the system (including END), higher values in the byte are used to encode
-// escaping levels.  Up to 3 encoding levels can be in the cell itself, with
-// additional levels achieved with REB_QUOTED and pointing to another cell.
+// Most of the time code wants to check the VAL_TYPE() of a cell and not it's
+// HEART, because that treats QUOTED! cells differently.  If you only check
+// the heart, then (''''x) will equal (x) because both hearts are WORD!.
+
+#define FLAG_HEART_BYTE(kind)       FLAG_SECOND_BYTE(kind)
+#define HEART_BYTE_UNCHECKED(v)     SECOND_BYTE((v)->header)
+#define HEART_BYTE(v)               SECOND_BYTE(READABLE(v)->header)
+#define mutable_HEART_BYTE(v)       mutable_SECOND_BYTE(WRITABLE(v)->header)
+
+
+//=//// BITS 16-23: QUOTING DEPTH BYTE ("QUOTE") //////////////////////////=//
 //
-// The "3Q" in the name is to remind usage sites that the byte may contain
-// "up to 3 levels of quoting", in addition to the "KIND", which can be masked
-// out with `% REB_64`.  (Be sure to use REB_64 for this purpose instead of
-// just `64`, to make it easier to find places that are doing this.)
-
-#define FLAG_KIND3Q_BYTE(kind) \
-    FLAG_SECOND_BYTE(kind)
-
-#define KIND3Q_BYTE_UNCHECKED(v) \
-    SECOND_BYTE((v)->header)
-
-
-//=//// BITS 16-23: CELL LAYOUT BYTE ("HEART") ////////////////////////////=//
-//
-// The heart byte corresponds to the actual bit layout of the cell; it's what
-// the GC marks a cell as.  The CELL_HEART() will often match the CELL_KIND(),
-// but won't in cases where the KIND is REB_PATH but the HEART is REB_BLOCK...
-// indicating that the path is using the underlying implementation of a block.
+// Cells can be quote-escaped up to 255 levels.  So a cell's underlying "HEART"
+// can report it as something like a REB_WORD, but if this byte is nonzero
+// it will answer in the VAL_TYPE() that it is REB_QUOTED.  This has the
+// potential to cause confusion in the internals.  But the type system is used
+// to check at compile-time so that different views of the same cell don't
+// get conflated.  See `noquote(const Cell*)` for some of that mechanic.
 //
 
-#define FLAG_HEART_BYTE(b)         FLAG_THIRD_BYTE(b)
-#define HEART_BYTE(v)              THIRD_BYTE((v)->header)
-#define mutable_HEART_BYTE(v)      mutable_THIRD_BYTE((v)->header)
+#define FLAG_QUOTE_BYTE(b)          FLAG_THIRD_BYTE(b)
+#define QUOTE_BYTE_UNCHECKED(v)     THIRD_BYTE((v)->header)
+#define QUOTE_BYTE(v)               THIRD_BYTE(READABLE(v)->header)
+#define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
 
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
@@ -178,18 +178,31 @@
     FLAG_LEFT_BIT(24)
 
 
-//=//// CELL_FLAG_ISOTOPE //////////////////////////////////////////////////=//
+//=//// CELL_FLAG_TYPE_SPECIFIC ////////////////////////////////////////////=//
 //
-// This flag is currently for BAD-WORD!.  If bad words like ~void~ or ~none~
-// do not carry the flag, then they act like normal values...and can appear
-// in blocks, and be handled like anything else.  But if the ISOTOPE flag is
-// set, then BAD-WORD! values in variables will return errors.  There will
-// also be other "mystery" properties of decaying or acting in ways that are
-// specific to particular BAD-WORD!s if it's an isotope.  e.g. ~null~ isotopes
-// will turn into NULL when assigned to variables, and are also falsey.
+// This flag is used for one bit that is custom to the datatype, and is
+// persisted when the cell is copied.
 //
-// !!! Odds are that this should be unified with CELL_FLAG_UNEVALUATED, to
-// save a bit...although it's in the reverse sense.
+// CELL_FLAG_ISOTOPE (for BAD-WORD!)
+//
+// If bad words like ~void~ or ~none~ do not carry the flag, then they act like
+// normal values...and can appear in blocks, and be handled like anything else.
+// But if the ISOTOPE flag is set, then BAD-WORD! values in variables will
+// return errors on normal access.  There will also be other "mystery"
+// properties of decaying or acting in ways that are specific to particular
+// BAD-WORD!s if it's an isotope.  e.g. ~null~ isotopes will turn into NULL
+// when assigned to variables, and are also falsey.
+//
+// !!! Could this be unified with CELL_FLAG_UNEVALUATED, to save a bit...
+// although it's in the reverse sense?  Consider if the bit becomes necessary
+// on ANY-WORD! for some other reason.
+//
+// CELL_FLAG_REFINEMENT_LIKE (for ANY-SEQUENCE!)
+//
+// 2-element sequences can be stored in an optimized form if one of the two
+// elements is a BLANK!.  This permits things like `/a` and `b.` to fit in
+// a single cell.  It assumes that if the node flavor is FLAVOR_SYMBOL then
+// the nonblank thing is a WORD!.
 //
 // !!! Thought: Could FRAME! use this bit to encode when the frame is actually
 // a frame for the IDENTITY, and the value is just something that came from
@@ -198,8 +211,11 @@
 // lie, and that way you could make ACTION!s and FRAME!s which were really
 // just QUOTED!s under the hood.
 //
-#define CELL_FLAG_ISOTOPE \
+#define CELL_FLAG_TYPE_SPECIFIC \
     FLAG_LEFT_BIT(25)
+
+#define CELL_FLAG_ISOTOPE           CELL_FLAG_TYPE_SPECIFIC  // BAD-WORD!
+#define CELL_FLAG_REFINEMENT_LIKE   CELL_FLAG_TYPE_SPECIFIC  // ANY-SEQUENCE!
 
 
 //=//// CELL_FLAG_26 ///////////////////////////////////////////////////////=//
@@ -350,7 +366,7 @@
 
 #if DEBUG_POISON_CELLS
     #define CELL_MASK_POISON \
-        (FLAG_KIND3Q_BYTE(REB_T_POISON) | FLAG_HEART_BYTE(REB_T_POISON))
+        (FLAG_HEART_BYTE(REB_T_POISON) | FLAG_HEART_BYTE(REB_T_POISON))
 #endif
 
 
@@ -444,6 +460,12 @@ union Reb_Bytes_Extra {
 
 #define IDX_EXTRA_USED 0  // index into exactly_4 when used for in cell storage
 #define IDX_EXTRA_LEN 1  // index into exactly_4 when used for in cell storage
+
+// optimized TUPLE! and PATH! byte forms must leave extra field empty, as
+// it's used for binding/specifiers on these types.  So the length is in
+// the payload itself.
+//
+#define IDX_SEQUENCE_USED 0  // index into at_least_8 when used for storage
 
 union Reb_Value_Extra { //=/////////////////// ACTUAL EXTRA DEFINITION ////=//
 
@@ -625,9 +647,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #if CPLUSPLUS_11
     //
     // A Reb_Relative_Value is a point of view on a cell where VAL_TYPE() can
-    // be called and will always give back a value in range < REB_MAX.  All
-    // KIND3Q_BYTE() > REB_64 are considered to be REB_QUOTED variants of the
-    // byte modulo 64.
+    // be called and will always give back a value in range < REB_MAX.
     //
     struct Reb_Relative_Value : public Reb_Raw {
       #if CPLUSPLUS_11

@@ -366,25 +366,20 @@ REBTYPE(Sequence)
         // /DEEP copy of a path may copy groups that are mutable.
         //
       case SYM_COPY: {
-        if (
-            ANY_WORD_KIND(HEART_BYTE(sequence))  // `/a` or `.a` etc.
-        ){
+        if (not ANY_ARRAYLIKE(sequence))
             return Copy_Cell(frame_->out, sequence);
-        }
-
-        assert(HEART_BYTE(sequence) == REB_BLOCK);
 
         enum Reb_Kind kind = VAL_TYPE(sequence);
-        mutable_KIND3Q_BYTE(sequence) = REB_BLOCK;
+        mutable_HEART_BYTE(sequence) = REB_BLOCK;
 
         REB_R r = T_Array(frame_, verb);
-        assert(KIND3Q_BYTE(r) == REB_BLOCK);
+        assert(CELL_HEART(r) == REB_BLOCK);
 
         if (r != OUT)
             Copy_Cell(OUT, r);
 
         Freeze_Array_Shallow(VAL_ARRAY_KNOWN_MUTABLE(OUT));
-        mutable_KIND3Q_BYTE(OUT) = kind;
+        mutable_HEART_BYTE(OUT) = kind;
         return OUT; }
 
       case SYM_PICK_P: {
@@ -444,7 +439,7 @@ void MF_Sequence(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 {
     UNUSED(form);
 
-    enum Reb_Kind kind = CELL_KIND(v);  // ANY_SEQUENCE but CELL_HEART varies!
+    enum Reb_Kind kind = CELL_HEART(v);
     char interstitial = ANY_TUPLE_KIND(kind) ? '.' : '/';
 
     if (kind == REB_GET_PATH or kind == REB_GET_TUPLE)

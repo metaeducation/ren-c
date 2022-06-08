@@ -474,7 +474,7 @@ inline static REBACT *VAL_FRAME_PHASE(noquote(const Cell*) v) {
 }
 
 inline static bool IS_FRAME_PHASED(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_FRAME);
+    assert(CELL_HEART(v) == REB_FRAME);
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     return s and not IS_SYMBOL(s);
 }
@@ -512,7 +512,7 @@ inline static void INIT_VAL_FRAME_LABEL(
 
 inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(noquote(const Cell*) context)
 {
-    if (CELL_KIND(context) != REB_FRAME)
+    if (CELL_HEART(context) != REB_FRAME)
         return CTX_KEYS_HEAD(VAL_CONTEXT(context));
 
     REBACT *phase = VAL_FRAME_PHASE(context);
@@ -747,7 +747,6 @@ inline static REBCTX *Steal_Context_Vars(REBCTX *c, REBNOD *keysource) {
     REBVAL *single = cast(REBVAL*, &stub->content.fixed);
     single->header.bits =
         NODE_FLAG_NODE | NODE_FLAG_CELL
-            | FLAG_KIND3Q_BYTE(REB_FRAME)
             | FLAG_HEART_BYTE(REB_FRAME)
             | CELL_MASK_CONTEXT;
     INIT_VAL_CONTEXT_VARLIST(single, ARR(stub));

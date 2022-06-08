@@ -65,7 +65,7 @@ inline static REBARR *MAP_PAIRLIST(const_if_c REBMAP *map)
 
 
 inline static const REBMAP *VAL_MAP(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_MAP);
+    assert(CELL_HEART(v) == REB_MAP);
 
     REBARR *a = ARR(VAL_NODE1(v));
     if (GET_SERIES_FLAG(a, INACCESSIBLE))

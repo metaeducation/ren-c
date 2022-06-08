@@ -80,10 +80,9 @@ REBLEN Modify_Array(
 
     // Check /PART, compute LEN:
     if (flags & AM_SPLICE) {
-        noquote(const Cell*) unescaped = VAL_UNESCAPED(src_val);
-        assert(ANY_ARRAY_KIND(CELL_KIND(unescaped)));
+        assert(ANY_ARRAY_KIND(CELL_HEART(src_val)));
 
-        REBLEN len_at = VAL_LEN_AT(unescaped);
+        REBLEN len_at = VAL_LEN_AT(src_val);
         ilen = len_at;
 
         // Adjust length of insertion if changing /PART:
@@ -104,17 +103,17 @@ REBLEN Modify_Array(
                 tail_newline = false;
             else {
                 const RELVAL *tail_cell
-                    = VAL_ARRAY_ITEM_AT(unescaped) + ilen;
+                    = VAL_ARRAY_ITEM_AT(src_val) + ilen;
                 tail_newline = GET_CELL_FLAG(tail_cell, NEWLINE_BEFORE);
             }
         }
 
         // Are we modifying ourselves? If so, copy src_val block first:
-        if (dst_arr == VAL_ARRAY(unescaped)) {
+        if (dst_arr == VAL_ARRAY(src_val)) {
             REBARR *copy = Copy_Array_At_Extra_Shallow(
-                VAL_ARRAY(unescaped),
-                VAL_INDEX(unescaped),
-                VAL_SPECIFIER(unescaped),
+                VAL_ARRAY(src_val),
+                VAL_INDEX(src_val),
+                VAL_SPECIFIER(src_val),
                 0, // extra
                 NODE_FLAG_MANAGED // !!! Worth it to not manage and free?
             );
@@ -122,8 +121,8 @@ REBLEN Modify_Array(
             specifier = SPECIFIED; // copy already specified it
         }
         else {
-            src_rel = VAL_ARRAY_AT(nullptr, unescaped);  // may be tail
-            specifier = VAL_SPECIFIER(unescaped);
+            src_rel = VAL_ARRAY_AT(nullptr, src_val);  // may be tail
+            specifier = VAL_SPECIFIER(src_val);
         }
     }
     else {

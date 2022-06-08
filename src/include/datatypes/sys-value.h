@@ -226,105 +226,24 @@ inline static void INIT_VAL_NODE2(RELVAL *v, option(const REBNOD*) node) {
     m_cast(REBNOD*, PAYLOAD(Any, (v)).second.node)
 
 
-//=//// "KIND3Q" HEADER BYTE [REB_XXX + (n * REB_64)] /////////////////////=//
-//
-// See KIND3Q_BYTE_UNCHECKED in %sys-rebval.h for explanation.
-
-#if defined(NDEBUG)
-    #define KIND3Q_BYTE KIND3Q_BYTE_UNCHECKED
-#else
-    inline static REBYTE KIND3Q_BYTE_Debug(
-        const RELVAL *v,  // can't be used on noquote(const Cell*)
-        const char *file,
-        int line
-    ){
-        if (
-            (v->header.bits & (
-                NODE_FLAG_NODE
-                | NODE_FLAG_CELL
-                | CELL_FLAG_STALE
-            )) == (NODE_FLAG_CELL | NODE_FLAG_NODE)
-        ){
-            return KIND3Q_BYTE_UNCHECKED(v);  // majority return here
-        }
-
-        if (
-            (v->header.bits & CELL_FLAG_STALE)
-            and KIND3Q_BYTE_UNCHECKED(v) == REB_BAD_WORD
-        ){
-            printf("KIND3Q_BYTE() called on unreadable cell\n");
-          #if DEBUG_TRACK_EXTEND_CELLS
-            printf("Made on tick: %d\n", cast(int, v->tick));
-          #endif
-            panic_at (v, file, line);
-        }
-
-        // Non-cells are allowed to signal REB_END; see Init_Endlike_Header.
-        // (We should not be seeing any rebEND signals here, because we have
-        // a REBVAL*, and rebEND is a 2-byte character string that can be
-        // at any alignment...not necessarily that of a Reb_Header union!)
-        //
-        if (KIND3Q_BYTE_UNCHECKED(v) == REB_0_END)
-            if (v->header.bits & NODE_FLAG_NODE)
-                return REB_0_END;
-
-        if (not (v->header.bits & NODE_FLAG_CELL)) {
-            printf("KIND3Q_BYTE() called on non-cell\n");
-            panic_at (v, file, line);
-        }
-        if (v->header.bits & CELL_FLAG_STALE) {
-            printf(
-                "KIND3Q_BYTE() called on cell with CELL_FLAG_STALE\n"
-                "It may be valid but just having access to it limited\n"
-                "see Mark_Eval_Out_Stale()\n"
-            );
-            panic_at (v, file, line);
-        }
-        return KIND3Q_BYTE_UNCHECKED(v);
-    }
-
-    #define KIND3Q_BYTE(v) \
-        KIND3Q_BYTE_Debug((v), __FILE__, __LINE__)
-#endif
 
 // Note: Only change bits of existing cells if the new type payload matches
 // the type and bits (e.g. ANY-WORD! to another ANY-WORD!).  Otherwise the
 // value-specific flags might be misinterpreted.
 //
-#define mutable_KIND3Q_BYTE(v) \
+#define mutable_HEART_BYTE(v) \
     mutable_SECOND_BYTE(WRITABLE(v)->header)
 
 
-#define CELL_KIND_UNCHECKED(cell) \
-    cast(enum Reb_Kind, KIND3Q_BYTE_UNCHECKED(cell) % REB_64)
-
 #define CELL_HEART_UNCHECKED(cell) \
-    cast(enum Reb_Kind, HEART_BYTE(cell))
+    cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(cell))
 
+#define CELL_HEART(cell) \
+    CELL_HEART_UNCHECKED(READABLE(cell))
 
-#if defined(NDEBUG) || (! CPLUSPLUS_11)
-    #define CELL_KIND CELL_KIND_UNCHECKED
-    #define CELL_HEART CELL_HEART_UNCHECKED
-#else
-    inline static enum Reb_Kind CELL_KIND(noquote(const Cell*) cell) {
-        assert(HEART_BYTE(cell) != REB_QUOTED);
-        return CELL_KIND_UNCHECKED(cell);
-    }
-
-    inline static enum Reb_Kind CELL_HEART(noquote(const Cell*) cell) {
-        assert(HEART_BYTE(cell) != REB_QUOTED);
-        return CELL_HEART_UNCHECKED(cell);
-    }
-
-    // We want to disable asking for low level implementation details on a
-    // cell that may be a REB_QUOTED; you have to call VAL_UNESCAPED() first.
-    //
-    inline static enum Reb_Kind CELL_KIND(const RELVAL *v) = delete;
-    inline static enum Reb_Kind CELL_HEART(const RELVAL *v) = delete;
-#endif
 
 inline static const REBTYP *CELL_CUSTOM_TYPE(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_CUSTOM);
+    assert(CELL_HEART(v) == REB_CUSTOM);
     return cast(const REBBIN*, EXTRA(Any, v).node);
 }
 
@@ -345,46 +264,86 @@ inline static const RELVAL* CELL_TO_VAL(noquote(const Cell*) cell)
 //=//// VALUE TYPE (always REB_XXX <= REB_MAX) ////////////////////////////=//
 //
 // When asking about a value's "type", you want to see something like a
-// double-quoted WORD! as a QUOTED! value...despite the kind byte being
-// REB_WORD + REB_64 + REB_64.  Use CELL_KIND() if you wish to know that the
-// cell pointer you pass in is carrying a word payload, it does a modulus.
+// double-quoted WORD! as a QUOTED! value...though it's a WORD! underneath.
+//
+// (Instead of VAL_TYPE(), use CELL_HEART() if you wish to know that the cell
+// pointer you pass in is carrying a word payload.  It disregards the quotes.)
 //
 // This has additional checks as well, that you're not using "pseudotypes"
 // or garbage, or REB_0_END (which should be checked separately with IS_END())
 //
 
+inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const RELVAL *v) {
+    if (QUOTE_BYTE_UNCHECKED(v) != 0)
+        return REB_QUOTED;
+    return cast(enum Reb_Kind, HEART_BYTE_UNCHECKED(v));
+}
+
 #if defined(NDEBUG)
-    inline static enum Reb_Kind VAL_TYPE(const RELVAL *v) {
-        if (KIND3Q_BYTE(v) >= REB_64)
-            return REB_QUOTED;
-        return cast(enum Reb_Kind, KIND3Q_BYTE(v));
-    }
+    #define VAL_TYPE VAL_TYPE_UNCHECKED
 #else
     inline static enum Reb_Kind VAL_TYPE_Debug(
-        const RELVAL *v,
+        const RELVAL *v,  // can't be used on noquote(const Cell*)
         const char *file,
         int line
     ){
-        REBYTE kind_byte = KIND3Q_BYTE(v);
+        REBYTE heart_byte = HEART_BYTE_UNCHECKED(v);
 
-        // Special messages for END and trash (as these are common)
-        //
-        if (kind_byte == REB_0_END) {
-            printf("VAL_TYPE() on END marker (use IS_END() or KIND3Q_BYTE())\n");
+        if (
+            (v->header.bits & (
+                NODE_FLAG_NODE
+                | NODE_FLAG_CELL
+                | CELL_FLAG_STALE
+            )) == (NODE_FLAG_CELL | NODE_FLAG_NODE)
+            and heart_byte != REB_0
+            and heart_byte < REB_MAX
+        ){
+            if (QUOTE_BYTE_UNCHECKED(v) != 0)
+                return REB_QUOTED;
+            return cast(enum Reb_Kind, heart_byte);  // most return here
+        }
+
+        // Give more granular errors based on specific failure
+
+        if (HEART_BYTE_UNCHECKED(v) == REB_0_END) {
+            printf("VAL_TYPE() called on REB_0 cell (void, end)\n");
+          #if DEBUG_TRACK_EXTEND_CELLS
+            printf("Made on tick: %d\n", cast(int, v->tick));
+          #endif
             panic_at (v, file, line);
         }
-        if (kind_byte % REB_64 >= REB_MAX) {
-            printf("VAL_TYPE() on pseudotype/garbage (use KIND3Q_BYTE())\n");
+
+        if (heart_byte >= REB_MAX) {
+            printf("VAL_TYPE() on pseudotype/garbage (use HEART_BYTE())\n");
             panic_at (v, file, line);
         }
 
-        if (kind_byte >= REB_64)
-            return REB_QUOTED;
-        return cast(enum Reb_Kind, kind_byte);
+        if (
+            (v->header.bits & CELL_FLAG_STALE)
+            and HEART_BYTE_UNCHECKED(v) == REB_BAD_WORD
+        ){
+            printf("VAL_TYPE() called on unreadable cell\n");
+          #if DEBUG_TRACK_EXTEND_CELLS
+            printf("Made on tick: %d\n", cast(int, v->tick));
+          #endif
+            panic_at (v, file, line);
+        }
+
+        if (not (v->header.bits & NODE_FLAG_CELL)) {
+            printf("VAL_TYPE() called on non-cell\n");
+            panic_at (v, file, line);
+        }
+
+        printf(
+            "VAL_TYPE() called on cell with CELL_FLAG_STALE\n"
+            "It may be valid but just having access to it limited\n"
+            "see Mark_Eval_Out_Stale()\n"
+        );
+        panic_at (v, file, line);
     }
 
     #define VAL_TYPE(v) \
-        VAL_TYPE_Debug(v, __FILE__, __LINE__)
+        VAL_TYPE_Debug((v), __FILE__, __LINE__)
 #endif
 
 
@@ -452,7 +411,7 @@ inline static void Init_Cell_Header_Untracked(
         panic (v);
   #endif
     v->header.bits |= NODE_FLAG_NODE | NODE_FLAG_CELL  // must ensure NODE+CELL
-        | FLAG_KIND3Q_BYTE(k) | FLAG_HEART_BYTE(k) | extra;
+        | FLAG_HEART_BYTE(k) | extra;
 
     // Don't return a value to help convey the cell is likely incomplete
 }
@@ -617,11 +576,48 @@ inline static REBVAL *SPECIFIC(const_if_c RELVAL *v) {
 #define UNSPECIFIED nullptr
 
 
+inline static bool ANY_ARRAYLIKE(noquote(const Cell*) v) {
+    if (ANY_ARRAY_KIND(CELL_HEART(v)))
+        return true;
+    if (not ANY_SEQUENCE_KIND(CELL_HEART(v)))
+        return false;
+    if (NOT_CELL_FLAG(v, FIRST_IS_NODE))
+        return false;
+    const REBNOD *node1 = VAL_NODE1(v);
+    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
+        return false;
+    return SER_FLAVOR(SER(node1)) == FLAVOR_ARRAY;
+}
+
+inline static bool ANY_WORDLIKE(noquote(const Cell*) v) {
+    if (ANY_WORD_KIND(CELL_HEART(v)))
+        return true;
+    if (not ANY_SEQUENCE_KIND(CELL_HEART(v)))
+        return false;
+    if (NOT_CELL_FLAG(v, FIRST_IS_NODE))
+        return false;
+    const REBNOD *node1 = VAL_NODE1(v);
+    if (NODE_BYTE(node1) & NODE_BYTEMASK_0x01_CELL)
+        return false;
+    return SER_FLAVOR(SER(node1)) == FLAVOR_SYMBOL;
+}
+
+inline static bool ANY_STRINGLIKE(noquote(const Cell*) v) {
+    if (ANY_STRING_KIND(CELL_HEART(v)))
+        return true;
+    if (CELL_HEART(v) == REB_URL)
+        return true;
+    if (CELL_HEART(v) != REB_ISSUE)
+        return false;
+    return GET_CELL_FLAG(v, ISSUE_HAS_NODE);
+}
+
+
 inline static void INIT_VAL_WORD_SYMBOL(RELVAL *v, const REBSYM *symbol)
   { INIT_VAL_NODE1(v, symbol); }
 
 inline static const REBSYM *VAL_WORD_SYMBOL(noquote(const Cell*) cell) {
-    assert(ANY_WORD_KIND(CELL_HEART(cell)));
+    assert(ANY_WORDLIKE(cell));
     return SYM(VAL_NODE1(cell));
 }
 
@@ -641,7 +637,7 @@ inline static void Copy_Cell_Header(
     const RELVAL *v
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
+    assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
 
     ASSERT_CELL_INITABLE_EVIL_MACRO(out);  // may be CELL_MASK_PREP, all 0
 
@@ -671,7 +667,7 @@ inline static RELVAL *Copy_Cell_Untracked(
     REBFLGS copy_mask  // typically you don't copy UNEVALUATED, PROTECTED, etc
 ){
     assert(out != v);  // usually a sign of a mistake; not worth supporting
-    assert(KIND3Q_BYTE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
+    assert(VAL_TYPE_UNCHECKED(v) != REB_0_END);  // faster than NOT_END()
 
     RESET_Untracked(out);
 

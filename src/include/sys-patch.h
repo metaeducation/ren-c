@@ -74,7 +74,7 @@
     }
 
     inline static REBSPC *VAL_SPECIFIER(noquote(const Cell*) v) {
-        assert(ANY_ARRAY_KIND(CELL_HEART(v)));
+        assert(ANY_ARRAYLIKE(v));
 
         REBARR *a = ARR(BINDING(v));
         if (not a)

@@ -1000,7 +1000,11 @@ inline static void DROP_GC_GUARD(const REBNOD *node) {
 inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
   #if !defined(NDEBUG)
     enum Reb_Kind k = CELL_HEART(v);
-    assert(ANY_SERIES_KIND_EVIL_MACRO);
+    assert(
+        ANY_SERIES_KIND_EVIL_MACRO
+        or k == REB_ISSUE or k == REB_URL
+        or ANY_ARRAYLIKE(v)
+    );
   #endif
     const REBSER *s = SER(VAL_NODE1(v));
     if (GET_SERIES_FLAG(s, INACCESSIBLE))
@@ -1032,13 +1036,21 @@ inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
     //
     inline static REBIDX VAL_INDEX_UNBOUNDED(noquote(const Cell*) v) {
         enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
-        assert(ANY_SERIES_KIND_EVIL_MACRO);
+        assert(
+            ANY_SERIES_KIND_EVIL_MACRO
+            or k == REB_ISSUE or k == REB_URL
+            or ANY_ARRAYLIKE(v)
+        );
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
     }
     inline static REBIDX & VAL_INDEX_UNBOUNDED(RELVAL *v) {
         enum Reb_Kind k = VAL_TYPE(v);  // mutable allowed if nonquoted
-        assert(k == REB_ISSUE or ANY_SERIES_KIND_EVIL_MACRO);
+        assert(
+            ANY_SERIES_KIND_EVIL_MACRO
+            or k == REB_ISSUE or k == REB_URL
+            or ANY_ARRAYLIKE(v)
+        );
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);  // returns a C++ reference
     }
@@ -1053,7 +1065,11 @@ inline static REBLEN VAL_LEN_HEAD(noquote(const Cell*) v);  // forward decl
 //
 inline static REBLEN VAL_INDEX(noquote(const Cell*) v) {
     enum Reb_Kind k = CELL_HEART(v);  // only const access if heart!
-    assert(ANY_SERIES_KIND_EVIL_MACRO);
+    assert(
+        ANY_SERIES_KIND_EVIL_MACRO
+        or k == REB_ISSUE or k == REB_URL
+        or ANY_ARRAYLIKE(v)
+    );
     UNUSED(k);
     assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
     REBIDX i = VAL_INDEX_RAW(v);

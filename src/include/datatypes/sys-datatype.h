@@ -37,12 +37,12 @@
     EXTRA(Datatype, (v)).kind
 
 inline static enum Reb_Kind VAL_TYPE_KIND_OR_CUSTOM(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_DATATYPE);
+    assert(CELL_HEART(v) == REB_DATATYPE);
     return VAL_TYPE_KIND_ENUM(v);
 }
 
 inline static enum Reb_Kind VAL_TYPE_KIND(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_DATATYPE);
+    assert(CELL_HEART(v) == REB_DATATYPE);
     enum Reb_Kind k = VAL_TYPE_KIND_ENUM(v);
     assert(k != REB_CUSTOM);
     return k;
@@ -139,7 +139,7 @@ extern CFUNC* Builtin_Type_Hooks[REB_MAX][IDX_HOOKS_MAX];
 
 
 inline static CFUNC** VAL_TYPE_HOOKS(noquote(const Cell*) type) {
-    assert(CELL_KIND(type) == REB_DATATYPE);
+    assert(CELL_HEART(type) == REB_DATATYPE);
     enum Reb_Kind k = VAL_TYPE_KIND_OR_CUSTOM(type);
     if (k != REB_CUSTOM)
         return Builtin_Type_Hooks[k];
@@ -147,7 +147,7 @@ inline static CFUNC** VAL_TYPE_HOOKS(noquote(const Cell*) type) {
 }
 
 inline static CFUNC** HOOKS_FOR_TYPE_OF(noquote(const Cell*) v) {
-    enum Reb_Kind k = CELL_KIND(v);
+    enum Reb_Kind k = CELL_HEART(v);
     if (k != REB_CUSTOM)
         return Builtin_Type_Hooks[k];
     return cast(CFUNC**, m_cast(REBYTE*, SER_DATA(CELL_CUSTOM_TYPE(v))));

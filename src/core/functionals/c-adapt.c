@@ -135,8 +135,7 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     REBARR *prelude = Copy_And_Bind_Relative_Deep_Managed(
         ARG(prelude),
         adaptation,
-        locals_visible,
-        TS_WORD
+        locals_visible
     );
 
     // We can't use a simple Init_Block() here, because the prelude has been

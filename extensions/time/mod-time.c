@@ -109,12 +109,12 @@ REBNATIVE(now)
         VAL_DATE(OUT).zone = NO_DATE_ZONE;
     }
     else if (REF(time)) {
-        mutable_KIND3Q_BYTE(OUT) = mutable_HEART_BYTE(OUT) = REB_TIME;
+        mutable_HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(zone)) {
         PAYLOAD(Time, OUT).nanoseconds
             = VAL_ZONE(OUT) * ZONE_MINS * MIN_SEC;
-        mutable_KIND3Q_BYTE(OUT) = mutable_HEART_BYTE(OUT) = REB_TIME;
+        mutable_HEART_BYTE(OUT) = REB_TIME;
     }
     else if (REF(weekday))
         n = Week_Day(OUT);

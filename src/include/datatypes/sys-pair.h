@@ -39,7 +39,7 @@ inline static REBVAL *PAIRING_KEY(REBVAL *paired) {
     INIT_VAL_NODE1((v), (pairing))
 
 inline static REBVAL *VAL_PAIRING(noquote(const Cell*) v) {
-    assert(CELL_KIND(v) == REB_PAIR);
+    assert(CELL_HEART(v) == REB_PAIR);
     return VAL(VAL_NODE1(v));
 }
 

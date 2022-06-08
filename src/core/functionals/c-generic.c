@@ -185,8 +185,7 @@ REBARR *Startup_Generics(const REBVAL *boot_generics)
     for (; item != tail; ++item)
         if (IS_SET_WORD(item)) {
             Derelativize(DS_PUSH(), item, specifier);
-            mutable_KIND3Q_BYTE(DS_TOP) = REB_WORD; // change pushed to WORD!
-            mutable_HEART_BYTE(DS_TOP) = REB_WORD;
+            mutable_HEART_BYTE(DS_TOP) = REB_WORD; // change pushed to WORD!
         }
 
     return Pop_Stack_Values(dsp_orig); // catalog of generics

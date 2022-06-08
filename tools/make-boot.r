@@ -217,13 +217,6 @@ rebs: collect [
 
 e-types/emit 'rebs {
     /*
-     * Current hard limit, higher types used for QUOTED!.  In code which
-     * is using the 64 split to implement quoting, use REB_64 instead of just
-     * the constant value 64 to make places dependent on that trick findable.
-     */
-    #define REB_64 64
-
-    /*
      * INTERNAL DATATYPE CONSTANTS, e.g. REB_BLOCK or REB_TAG
      *
      * Do not export these values via libRebol, as the numbers can change.
@@ -243,59 +236,37 @@ e-types/emit 'rebs {
         REB_MAX,  /* one past valid types */
 
         /*
-        * Aliases for REB_0 to clarify which purpose it is used for.
+        * Invalid type bytes can currently be used for other purposes.  (If
+        * bits become scarce, then the HEART_BYTE could be processed % 64
+        * to get a couple more states at a slight performance cost)
         */
-        REB_0_END = REB_0,
-        REB_0_VOID = REB_0,
-        REB_0_FREE = REB_0,
-
-        /*
-        * There are no "quoted ends" and there are no "quoted REB_QUOTEDs".
-        * So these six distinct states are available for other uses.
-        */
-
-        REB_T_RETURN_SIGNAL = (REB_0 + REB_64),  /* signals throws, etc. */
 
       #if DEBUG_POISON_CELLS
-        REB_T_POISON = (REB_0 + 2 * REB_64),  /* simulate lack of GC safety */
+        REB_T_POISON,  /* simulate lack of GC safety */
       #endif
 
-        REB_PSEUDOTYPE_THREE = (REB_0 + 3 * REB_64),
-
-        REB_PSEUDOTYPE_FOUR = (REB_QUOTED + REB_64),
-
-        REB_PSEUDOTYPE_FIVE = (REB_QUOTED + 2 * REB_64),
-
-        REB_PSEUDOTYPE_SIX = (REB_QUOTED + 3 * REB_64)
+        REB_T_RETURN_SIGNAL  /* signals throws, etc. */
     };
 
+    /*
+    * Aliases for REB_0 to clarify which purpose it is used for.
+    */
+    #define REB_0_END REB_0
+    #define REB_0_VOID REB_0
+    #define REB_0_FREE REB_0
 
     /*
      * While the VAL_TYPE() is a full byte, only 64 states can fit in the
      * payload of a TYPESET! at the moment.  Significant rethinking would be
-     * necessary if this number exceeds 64, especially since the optimization
-     * of allowing up to three levels of quoting cheaply relies on using the
-     * gap between 64 and 256 in the KIND3Q_BYTE().
+     * necessary if this number exceeds 64.
      */
-    STATIC_ASSERT(REB_MAX <= REB_64);
+    STATIC_ASSERT(REB_MAX <= 64);
 }
 e-types/emit newline
 
 e-types/emit {
     /*
      * SINGLE TYPE CHECK MACROS, e.g. IS_BLOCK() or IS_TAG()
-     *
-     * These routines are based on KIND3Q_BYTE(), which is cheaper than
-     * VAL_TYPE() but still does a number of checks in the debug build for cell
-     * validity.  In some commonly called routines where performance in the
-     * debug build would suffer too much, it may be better to do comparisons
-     * like (REB_INTEGER == KIND3Q_BYTE_UNCHECKED()) instead of IS_INTEGER().
-     *
-     * Note that due to a raw type encoding trick, IS_QUOTED() is unusual.
-     * `KIND3Q_BYTE(v) == REB_QUOTED` isn't `VAL_TYPE(v) == REB_QUOTED`,
-     * they mean different things.  This is because raw types > REB_64 are
-     * used to encode literals whose escaping level is low enough that it
-     * can use the same cell bits as the escaped value.
      */
 }
 e-types/emit newline
@@ -318,7 +289,7 @@ for-each-record t type-table [
     ] then [
         e-types/emit 't {
             #define IS_${T/NAME}(v) \
-                (KIND3Q_BYTE(v) == REB_${T/NAME})  /* $<n> */
+                (VAL_TYPE(v) == REB_${T/NAME})  /* $<n> */
         }
         e-types/emit newline
     ]

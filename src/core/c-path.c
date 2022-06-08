@@ -102,8 +102,7 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
     // PATH! from non-head positions.
 
     Init_Any_Series_At_Core(out, REB_BLOCK, a, index, specifier);
-    mutable_KIND3Q_BYTE(out) = kind;
-    assert(HEART_BYTE(out) == REB_BLOCK);
+    mutable_HEART_BYTE(out) = kind;
 
     return cast(REBVAL*, out);
 }
@@ -321,7 +320,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         // new bindings in lookups.  Review!
         //
         Copy_Cell(out, arg);
-        mutable_KIND3Q_BYTE(out) = kind;
+        mutable_HEART_BYTE(out) = kind;
         return out;
     }
 
@@ -394,45 +393,25 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
 //
 REBINT CT_Sequence(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
-    // If the internal representations used do not match, then the sequences
-    // can't match.  For this to work reliably, there can't be aliased
-    // internal representations like [1 2] the array and #{0102} the bytes.
-    // See the Try_Init_Sequence() pecking order for how this is guaranteed.
-    //
-    int heart_diff = cast(int, CELL_HEART(a)) - CELL_HEART(b);
-    if (heart_diff != 0)
-        return heart_diff > 0 ? 1 : -1;
+    REBLEN len_a = VAL_SEQUENCE_LEN(a);
+    REBLEN len_b = VAL_SEQUENCE_LEN(b);
 
-    switch (CELL_HEART(a)) {  // now known to be same as CELL_HEART(b)
-      case REB_BYTES: {  // packed bytes
-        REBLEN a_len = VAL_SEQUENCE_LEN(a);
-        int diff = cast(int, a_len) - VAL_SEQUENCE_LEN(b);
-        if (diff != 0)
-            return diff > 0 ? 1 : -1;
+    if (len_a != len_b)
+        return len_a < len_b ? -1 : 1;
 
-        int cmp = memcmp(
-            &PAYLOAD(Bytes, a).at_least_8,
-            &PAYLOAD(Bytes, b).at_least_8,
-            a_len  // same as b_len at this point
+    DECLARE_LOCAL (temp_a);
+    DECLARE_LOCAL (temp_b);
+
+    REBLEN n;
+    for (n = 0; n < len_a; ++n) {
+        int compare = Cmp_Value(
+            VAL_SEQUENCE_AT(temp_a, a, n),
+            VAL_SEQUENCE_AT(temp_b, b, n),
+            strict
         );
-        if (cmp == 0)
-            return 0;
-        return cmp > 0 ? 1 : -1; }
-
-      case REB_WORD:  // `/` or `.`
-      case REB_GET_WORD:  // `/foo` or `.foo`
-      case REB_META_WORD:  // `foo/ or `foo.`
-        return CT_Word(a, b, strict);
-
-      case REB_GROUP:
-      case REB_GET_GROUP:
-      case REB_META_GROUP:
-      case REB_BLOCK:
-      case REB_GET_BLOCK:
-      case REB_META_BLOCK:
-        return CT_Array(a, b, strict);
-
-      default:
-        panic (nullptr);
+        if (compare != 0)
+            return compare;
     }
+
+    return 0;
 }

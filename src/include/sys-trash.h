@@ -76,7 +76,7 @@ inline static REBVAL *Init_Bad_Word_Untracked(
         Init_Bad_Word_Untracked((out), nullptr, CELL_FLAG_STALE)
 
     inline static bool IS_TRASH(const RELVAL *v) {
-        if (KIND3Q_BYTE_UNCHECKED(v) != REB_BAD_WORD)
+        if (CELL_HEART_UNCHECKED(v) != REB_BAD_WORD)
             return false;
         return did (v->header.bits & CELL_FLAG_STALE);
     }

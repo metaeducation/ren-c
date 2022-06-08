@@ -49,7 +49,7 @@ REB_R Copied_Dispatcher(REBFRM *f)
 
 static bool Same_Action(noquote(const Cell*) a, noquote(const Cell*) b)
 {
-    assert(CELL_KIND(a) == REB_ACTION and CELL_KIND(b) == REB_ACTION);
+    assert(CELL_HEART(a) == REB_ACTION and CELL_HEART(b) == REB_ACTION);
 
     if (VAL_ACTION_KEYLIST(a) == VAL_ACTION_KEYLIST(b)) {
         //

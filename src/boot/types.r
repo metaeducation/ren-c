@@ -350,12 +350,11 @@ bad-word    "value which evaluates to a form that triggers errors on access"
 
 
 ; ============================================================================
-; BEGIN QUOTED RANGE
+; QUOTED "PSEUDOTYPE"
 ; ============================================================================
 ;
-; QUOTED! claims "bindable", but null binding if containing an unbindable type
-; (is last basic type so that >= REB_QUOTED can also catch all in-situ quotes,
-; which use the value + REB_64, + REB_64*2, or + REB_64*3)
+; No instances of QUOTED! as the REB_QUOTED datatype exist.  Quotedness is
+; conveyed by the QUOTE_BYTE in the header being non-zero.
 
 quoted     "container for arbitrary levels of quoting"
             quoted       +       -      [branch]
@@ -363,7 +362,3 @@ quoted     "container for arbitrary levels of quoting"
 
 ; This is the end of the value cell enumerations (after REB_QUOTED is REB_MAX)
 ; and no valid cell should have bits between REB_QUOTED and REB_MAX.
-;
-; But after the 64 case, the remaining 196 possibilities in the byte are used
-; for an optimization that allows up to three levels of quote optimization to
-; fit into a single byte.

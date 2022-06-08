@@ -113,9 +113,9 @@ REBARR *Copy_Values_Len_Extra_Shallow_Core(
     const RELVAL *src = head;
     RELVAL *dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
-        if (KIND3Q_BYTE_UNCHECKED(src) == REB_NULL)  // allow unreadable trash
+        if (VAL_TYPE_UNCHECKED(src) == REB_NULL)  // allow unreadable trash
             assert(IS_VARLIST(a));  // usually not legal
-        if (KIND3Q_BYTE_UNCHECKED(src) == REB_BAD_WORD)
+        if (VAL_TYPE_UNCHECKED(src) == REB_BAD_WORD)
             assert(NOT_CELL_FLAG(src, ISOTOPE));
 
         Derelativize(dest, src, specifier);
@@ -156,20 +156,12 @@ void Clonify(
         return;
   #endif
 
-    // !!! It may be possible to do this faster/better, the impacts on higher
-    // quoting levels could be incurring more cost than necessary...but for
-    // now err on the side of correctness.  Unescape the value while cloning
-    // and then escape it back.
+    // !!! This used to have a distinguished `kind` but that was taken after
+    // it had been dequoted, so effectively it was the `heart`.
     //
-    REBLEN num_quotes = VAL_NUM_QUOTES(v);
-    Dequotify(v);
+    enum Reb_Kind heart = CELL_HEART(v);
 
-    enum Reb_Kind kind = cast(enum Reb_Kind, KIND3Q_BYTE_UNCHECKED(v));
-    assert(kind < REB_MAX);  // we dequoted it
-
-    enum Reb_Kind heart = CELL_HEART(cast(noquote(const Cell*), v));
-
-    if (deep_types & FLAGIT_KIND(kind) & TS_SERIES_OBJ) {
+    if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
         //
         // Objects and series get shallow copied at minimum
         //
@@ -184,11 +176,9 @@ void Clonify(
             series = CTX_VARLIST(VAL_CONTEXT(v));
             would_need_deep = true;
         }
-        else if (ANY_ARRAY_KIND(heart)) {
-            REBNOD *n = VAL_NODE1(v);
-            assert(not Is_Node_Cell(n));
+        else if (ANY_ARRAYLIKE(v)) {
             series = Copy_Array_At_Extra_Shallow(
-                ARR(n),
+                VAL_ARRAY(v),
                 0,  // index
                 VAL_SPECIFIER(v),
                 0,  // extra
@@ -200,7 +190,7 @@ void Clonify(
             // they are copied from...which requires new cells.  (Also any
             // nested blocks or groups need to be copied deeply.)
             //
-            if (ANY_SEQUENCE_KIND(kind))
+            if (ANY_SEQUENCE_KIND(heart))
                 Freeze_Array_Shallow(ARR(series));
 
             INIT_VAL_NODE1(v, series);
@@ -223,7 +213,7 @@ void Clonify(
         // If we're going to copy deeply, we go back over the shallow
         // copied series and "clonify" the values in it.
         //
-        if (would_need_deep and (deep_types & FLAGIT_KIND(kind))) {
+        if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
             const RELVAL *sub_tail = ARR_TAIL(ARR(series));
             RELVAL *sub = ARR_HEAD(ARR(series));
             for (; sub != sub_tail; ++sub)
@@ -237,8 +227,6 @@ void Clonify(
         if (NOT_CELL_FLAG(v, EXPLICITLY_MUTABLE))
             v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
-
-    Quotify(v, num_quotes);
 }
 
 

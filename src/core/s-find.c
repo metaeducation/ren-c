@@ -151,7 +151,7 @@ REBINT Find_Binstr_In_Binstr(
 
     assert((flags & ~(AM_FIND_CASE | AM_FIND_MATCH)) == 0);
 
-    bool is_2_str = (CELL_KIND(binstr2) != REB_BINARY);
+    bool is_2_str = (CELL_HEART(binstr2) != REB_BINARY);
     REBSIZ size2;
     REBLEN len2;
     const REBYTE* head2;
@@ -161,7 +161,7 @@ REBINT Find_Binstr_In_Binstr(
         // `find "" #` should not happen as NUL cannot exist in TEXT!, only
         // in BINARY!.
         //
-        assert(CELL_KIND(binstr1) == REB_BINARY);
+        assert(CELL_HEART(binstr1) == REB_BINARY);
         head2 = cast(const REBYTE*, "\0");
         size2 = 1;
         if (limit2 < size2)
@@ -195,7 +195,7 @@ REBINT Find_Binstr_In_Binstr(
         return VAL_INDEX(binstr1);
     }
 
-    bool is_1_str = (CELL_KIND(binstr1) != REB_BINARY);
+    bool is_1_str = (CELL_HEART(binstr1) != REB_BINARY);
     assert(not (is_1_str and not is_2_str));  // see `IMPORTANT` comment above
 
     // The search window size in units of binstr1.  It's the length or size of
@@ -230,9 +230,9 @@ REBINT Find_Binstr_In_Binstr(
     const REBYTE *cp1;  // binstr1 position that is current test head of match
     REBLEN len_head1;
     REBSIZ size_at1;
-    if (CELL_KIND(binstr1) == REB_ISSUE)  // no VAL_LEN_HEAD() atm
+    if (CELL_HEART(binstr1) == REB_ISSUE)  // no VAL_LEN_HEAD() atm
         cp1 = VAL_UTF8_LEN_SIZE_AT(&len_head1, &size_at1, binstr1);
-    else if (CELL_KIND(binstr1) != REB_BINARY) {
+    else if (CELL_HEART(binstr1) != REB_BINARY) {
         len_head1 = VAL_LEN_HEAD(binstr1);
         cp1 = VAL_UTF8_SIZE_AT(&size_at1, binstr1);
     }
@@ -459,7 +459,7 @@ REBINT Find_Bitset_In_Binstr(
 
     bool uncase = not (flags & AM_FIND_CASE); // case insensitive
 
-    bool is_str = (CELL_KIND(binstr) != REB_BINARY);
+    bool is_str = (CELL_HEART(binstr) != REB_BINARY);
 
     const REBYTE *cp1 = is_str ? VAL_STRING_AT(binstr) : VAL_BINARY_AT(binstr);
     REBUNI c1;
@@ -519,8 +519,8 @@ REBLEN Find_Value_In_Binstr(
     REBLEN flags,
     REBINT skip
 ){
-    enum Reb_Kind binstr_kind = CELL_KIND(binstr);
-    enum Reb_Kind pattern_kind = CELL_KIND(pattern);
+    enum Reb_Kind binstr_kind = CELL_HEART(binstr);
+    enum Reb_Kind pattern_kind = CELL_HEART(pattern);
 
     if (REB_BINARY == pattern_kind) {
         //
@@ -554,9 +554,9 @@ REBLEN Find_Value_In_Binstr(
 
         REBSTR *formed = nullptr;
         if (
-            CELL_KIND(pattern) != REB_ISSUE
-            and CELL_KIND(pattern) != REB_TEXT
-            and CELL_KIND(pattern) != REB_BINARY
+            CELL_HEART(pattern) != REB_ISSUE
+            and CELL_HEART(pattern) != REB_TEXT
+            and CELL_HEART(pattern) != REB_BINARY
          ){
             // !!! `<tag>`, `set-word:` but FILE!, etc?
             //

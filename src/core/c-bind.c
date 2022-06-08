@@ -96,7 +96,7 @@ void Bind_Values_Inner_Loop(
           }
         }
         else if (flags & BIND_DEEP) {
-            if (ANY_ARRAY_KIND(heart)) {
+            if (ANY_ARRAYLIKE(v)) {
                 const RELVAL *sub_tail;
                 RELVAL *sub_at = VAL_ARRAY_AT_MUTABLE_HACK(
                     &sub_tail,
@@ -190,19 +190,13 @@ void Unbind_Values_Core(
 ){
     RELVAL *v = head;
     for (; v != tail; ++v) {
-        //
-        // !!! We inefficiently dequote all values just to make sure we don't
-        // damage shared bindings; review more efficient means of doing this.
-        //
-        enum Reb_Kind heart = CELL_HEART(VAL_UNESCAPED(v));
-
         if (
-            ANY_WORD_KIND(heart)
+            ANY_WORDLIKE(v)
             and (not context or BINDING(v) == unwrap(context))
         ){
             Unbind_Any_Word(v);
         }
-        else if (ANY_ARRAY_KIND(heart) and deep) {
+        else if (ANY_ARRAYLIKE(v) and deep) {
             const RELVAL *sub_tail;
             RELVAL *sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Unbind_Values_Core(sub_at, sub_tail, context, true);
@@ -657,10 +651,9 @@ static void Clonify_And_Bind_Relative(
     REBFLGS flags,
     REBU64 deep_types,
     struct Reb_Binder *binder,
-    REBACT *relative,
-    REBU64 bind_types
+    REBACT *relative
 ){
-    if (C_STACK_OVERFLOWING(&bind_types))
+    if (C_STACK_OVERFLOWING(&relative))
         Fail_Stack_Overflow();
 
     assert(flags & NODE_FLAG_MANAGED);
@@ -670,20 +663,14 @@ static void Clonify_And_Bind_Relative(
     //
     assert(not (deep_types & FLAGIT_KIND(REB_ACTION)));
 
-    // !!! It may be possible to do this faster/better, the impacts on higher
-    // quoting levels could be incurring more cost than necessary...but for
-    // now err on the side of correctness.  Unescape the value while cloning
-    // and then escape it back.
+    // !!! This used to use KIND3Q_BYTE_UNCHECKED to get a "kind", but it
+    // applied it on a dequoted form.  This was effectively the heart.  That
+    // means if `deep_types` is passed in with something like REB_PATH it
+    // will get paths at arbitrary levels of quoting too.  Review.
     //
-    REBLEN num_quotes = VAL_NUM_QUOTES(v);
-    Dequotify(v);
+    enum Reb_Kind heart = CELL_HEART_UNCHECKED(v);
 
-    enum Reb_Kind kind = cast(enum Reb_Kind, KIND3Q_BYTE_UNCHECKED(v));
-    assert(kind < REB_MAX);  // we dequoted it
-
-    enum Reb_Kind heart = CELL_HEART(cast(noquote(const Cell*), v));
-
-    if (deep_types & FLAGIT_KIND(kind) & TS_SERIES_OBJ) {
+    if (deep_types & FLAGIT_KIND(heart) & TS_SERIES_OBJ) {
         //
         // Objects and series get shallow copied at minimum
         //
@@ -699,7 +686,7 @@ static void Clonify_And_Bind_Relative(
 
             would_need_deep = true;
         }
-        else if (ANY_ARRAY_KIND(heart)) {
+        else if (ANY_ARRAYLIKE(v)) {
             series = Copy_Array_At_Extra_Shallow(
                 VAL_ARRAY(v),
                 0, // !!! what if VAL_INDEX() is nonzero?
@@ -714,7 +701,7 @@ static void Clonify_And_Bind_Relative(
             // See notes in Clonify()...need to copy immutable paths so that
             // binding pointers can be changed in the "immutable" copy.
             //
-            if (ANY_SEQUENCE_KIND(kind))
+            if (ANY_SEQUENCE_KIND(heart))
                 Freeze_Array_Shallow(ARR(series));
 
             would_need_deep = true;
@@ -736,7 +723,7 @@ static void Clonify_And_Bind_Relative(
         // If we're going to copy deeply, we go back over the shallow
         // copied series and "clonify" the values in it.
         //
-        if (would_need_deep and (deep_types & FLAGIT_KIND(kind))) {
+        if (would_need_deep and (deep_types & FLAGIT_KIND(heart))) {
             RELVAL *sub = ARR_HEAD(ARR(series));
             RELVAL *sub_tail = ARR_TAIL(ARR(series));
             for (; sub != sub_tail; ++sub)
@@ -745,8 +732,7 @@ static void Clonify_And_Bind_Relative(
                     flags,
                     deep_types,
                     binder,
-                    relative,
-                    bind_types
+                    relative
                 );
         }
     }
@@ -758,9 +744,7 @@ static void Clonify_And_Bind_Relative(
             v->header.bits |= (flags & ARRAY_FLAG_CONST_SHALLOW);
     }
 
-    // !!! Review use of `heart` here, in terms of meaning
-    //
-    if (FLAGIT_KIND(heart) & bind_types) {
+    if (ANY_WORDLIKE(v)) {
         REBINT n = Get_Binder_Index_Else_0(binder, VAL_WORD_SYMBOL(v));
         if (n != 0) {
             //
@@ -771,7 +755,7 @@ static void Clonify_And_Bind_Relative(
             INIT_VAL_WORD_INDEX(v, n);
         }
     }
-    else if (ANY_ARRAY_KIND(heart)) {
+    else if (ANY_ARRAYLIKE(v)) {
 
         // !!! Technically speaking it is not necessary for an array to
         // be marked relative if it doesn't contain any relative words
@@ -781,8 +765,6 @@ static void Clonify_And_Bind_Relative(
         //
         INIT_SPECIFIER(v, relative);  // "incomplete func" (LETs gathering?)
     }
-
-    Quotify_Core(v, num_quotes);  // Quotify() won't work on RELVAL*
 }
 
 
@@ -800,8 +782,7 @@ static void Clonify_And_Bind_Relative(
 REBARR *Copy_And_Bind_Relative_Deep_Managed(
     const REBVAL *body,
     REBACT *relative,
-    bool locals_visible,
-    REBU64 bind_types
+    bool locals_visible
 ){
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
@@ -851,8 +832,7 @@ REBARR *Copy_And_Bind_Relative_Deep_Managed(
             flags | NODE_FLAG_MANAGED,
             deep_types,
             &binder,
-            relative,
-            bind_types
+            relative
         );
     }
 
@@ -1267,15 +1247,12 @@ void Bind_Nonspecifically(RELVAL *head, const RELVAL *tail, REBCTX *context)
 {
     RELVAL *v = head;
     for (; v != tail; ++v) {
-        noquote(const Cell*) cell = VAL_UNESCAPED(v);
-        enum Reb_Kind heart = CELL_HEART(cell);
-
-        if (ANY_ARRAY_KIND(heart)) {
+        if (ANY_ARRAYLIKE(v)) {
             const RELVAL *sub_tail;
-            RELVAL *sub_head = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, cell);
+            RELVAL *sub_head = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);
             Bind_Nonspecifically(sub_head, sub_tail, context);
         }
-        else if (ANY_WORD_KIND(heart)) {
+        else if (ANY_WORDLIKE(v)) {
             //
             // Give context but no index; this is how we attach to modules.
             //

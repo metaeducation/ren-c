@@ -94,21 +94,15 @@
 
 //=//// ESCAPE-ALIASABLE CELLS ////////////////////////////////////////////=//
 //
-// The system uses a trick in which the type byte is bumped by multiples of
-// 64 to indicate up to 3 levels of escaping.  VAL_TYPE() will report these
-// as being REB_QUOTED, but the entire payload for them is in the cell.
+// The system uses a trick in which the header byte contains a quote level
+// that can be up to 255 levels of quoting (or 0).  This is independent of
+// the cell's "heart", or underlying layout for its unquoted type.
 //
 // Most of the time, routines want to see these as being QUOTED!.  But some
 // lower-level routines (like molding or comparison) want to be able to act
 // on them in-place without making a copy.  To ensure they see the value for
-// the "type that it is" and use CELL_KIND() and not VAL_TYPE(), this alias
+// the "type that it is" and use CELL_HEART() and not VAL_TYPE(), this alias
 // for RELVAL prevents VAL_TYPE() operations.
-//
-// Because a raw cell can be linked to by a QUOTED!, it's important not to
-// modify the potentially-shared escaped data.  So all raw cells should be
-// const.  That's enforced in the C++ debug build, and a wrapping class is
-// used for the pointer to make sure one doesn't assume it lives in an array
-// and try to do pointer math on it...since it may be a singular allocation.
 //
 // Note: This needs special handling in %make-headers.r to recognize the
 // format.  See the `typemacro_parentheses` rule.

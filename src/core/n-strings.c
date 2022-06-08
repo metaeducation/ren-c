@@ -109,7 +109,7 @@ REBNATIVE(delimit)
         // at dialect "source level".
         // https://forum.rebol.info/t/1348
         //
-        if (KIND3Q_BYTE_UNCHECKED(f_value) == REB_BLANK) {
+        if (VAL_TYPE_UNCHECKED(f_value) == REB_BLANK) {
             Literal_Next_In_Frame(OUT, f);
             Append_Codepoint(mo->series, ' ');
             pending = false;

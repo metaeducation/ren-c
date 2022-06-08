@@ -871,7 +871,6 @@ REBCTX *Make_Error_Managed_Core(
 
     assert(CTX_LEN(error) == CTX_LEN(root_error) + expected_args);
 
-    mutable_KIND3Q_BYTE(CTX_ROOTVAR(error)) = REB_ERROR;
     mutable_HEART_BYTE(CTX_ROOTVAR(error)) = REB_ERROR;
 
     // C struct mirroring fixed portion of error fields
@@ -1044,7 +1043,7 @@ REBCTX *Error_No_Relative_Core(noquote(const Cell*) any_word)
     DECLARE_LOCAL (unbound);
     Init_Any_Word(
         unbound,
-        CELL_KIND(any_word),
+        CELL_HEART(any_word),
         VAL_WORD_SYMBOL(any_word)
     );
 
