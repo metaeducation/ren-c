@@ -296,7 +296,7 @@ inline static bool Reevaluate_In_Subframe_Throws(
 inline static bool Eval_Step_In_Any_Array_At_Throws(
     REBVAL *out,
     REBLEN *index_out,
-    const RELVAL *any_array,  // Note: legal to have any_array = out
+    const Cell *any_array,  // Note: legal to have any_array = out
     REBSPC *specifier,
     REBFLGS flags
 ){
@@ -387,7 +387,7 @@ inline static bool Eval_Step_In_Va_Throws(
 inline static bool Eval_Value_Core_Throws(
     REBVAL *out,
     REBFLGS flags,
-    const RELVAL *value,  // e.g. a BLOCK! here would just evaluate to itself!
+    const Cell *value,  // e.g. a BLOCK! here would just evaluate to itself!
     REBSPC *specifier
 ){
     assert(out != value);

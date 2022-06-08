@@ -39,7 +39,7 @@
 
 // !!! Find a better place for this!
 //
-inline static bool ANY_ESCAPABLE_GET(const RELVAL *v) {
+inline static bool ANY_ESCAPABLE_GET(const Cell *v) {
     //
     // !!! Note: GET-BLOCK! is used to mean reduce, e.g.
     //
@@ -242,7 +242,7 @@ inline static REBCTX *Context_For_Frame_May_Manage(REBFRM *f) {
 
 //=//// FRAME LABELING ////////////////////////////////////////////////////=//
 
-inline static void Get_Frame_Label_Or_Nulled(RELVAL *out, REBFRM *f) {
+inline static void Get_Frame_Label_Or_Nulled(Cell *out, REBFRM *f) {
     assert(Is_Action_Frame(f));
     if (f->label)
         Init_Word(out, unwrap(f->label));  // WORD!, PATH!, or stored invoke

@@ -46,7 +46,7 @@ inline static void Init_For_Vararg_End(REBVAL *out, enum Reb_Vararg_Op op) {
 inline static bool Vararg_Op_If_No_Advance_Handled(
     REBVAL *out,
     enum Reb_Vararg_Op op,
-    const RELVAL *opt_look, // the first value in the varargs input
+    const Cell *opt_look, // the first value in the varargs input
     REBSPC *specifier,
     enum Reb_Param_Class pclass
 ){
@@ -137,7 +137,7 @@ inline static bool Vararg_Op_If_No_Advance_Handled(
 bool Do_Vararg_Op_Maybe_End_Throws_Core(
     REBVAL *out,
     enum Reb_Vararg_Op op,
-    const RELVAL *vararg,
+    const Cell *vararg,
     enum Reb_Param_Class pclass  // PARAM_CLASS_0 to use vararg's class
 ){
     const REBKEY *key;
@@ -286,7 +286,7 @@ bool Do_Vararg_Op_Maybe_End_Throws_Core(
             op,
             hit_barrier
                 ? END_CELL
-                : cast(const RELVAL *, f->feed->value), // might be END
+                : cast(const Cell *, f->feed->value), // might be END
             f_specifier,
             pclass
         )){
@@ -471,7 +471,7 @@ REBTYPE(Varargs)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         if (not IS_INTEGER(picker))
             fail (picker);
 

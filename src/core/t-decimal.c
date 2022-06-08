@@ -110,7 +110,7 @@ bool almost_equal(REBDEC a, REBDEC b, REBLEN max_diff) {
 //
 //  Init_Decimal_Bits: C
 //
-REBVAL *Init_Decimal_Bits(RELVAL *out, const REBYTE *bp)
+REBVAL *Init_Decimal_Bits(Cell *out, const REBYTE *bp)
 {
     Reset_Cell_Header_Untracked(TRACK(out), REB_DECIMAL, CELL_MASK_NONE);
 
@@ -198,8 +198,8 @@ REB_R MAKE_Decimal(
 
         DECLARE_LOCAL (temp1);  // decompress path from cell into values
         DECLARE_LOCAL (temp2);
-        const RELVAL *num = VAL_SEQUENCE_AT(temp1, arg, 0);
-        const RELVAL *den = VAL_SEQUENCE_AT(temp2, arg, 1);
+        const Cell *num = VAL_SEQUENCE_AT(temp1, arg, 0);
+        const Cell *den = VAL_SEQUENCE_AT(temp2, arg, 1);
 
         DECLARE_LOCAL (numerator);
         DECLARE_LOCAL (denominator);
@@ -226,7 +226,7 @@ REB_R MAKE_Decimal(
 
       case REB_BLOCK: {
         REBLEN len;
-        const RELVAL *item = VAL_ARRAY_LEN_AT(&len, arg);
+        const Cell *item = VAL_ARRAY_LEN_AT(&len, arg);
 
         if (len != 2)
             fail (Error_Bad_Make(kind, arg));
@@ -333,8 +333,8 @@ REB_R TO_Decimal(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 
         DECLARE_LOCAL (temp1);  // decompress path from cell into values
         DECLARE_LOCAL (temp2);
-        const RELVAL *numerator = VAL_SEQUENCE_AT(temp1, arg, 0);
-        const RELVAL *denominator = VAL_SEQUENCE_AT(temp2, arg, 1);
+        const Cell *numerator = VAL_SEQUENCE_AT(temp1, arg, 0);
+        const Cell *denominator = VAL_SEQUENCE_AT(temp2, arg, 1);
 
         if (not IS_INTEGER(numerator))
             goto bad_to;

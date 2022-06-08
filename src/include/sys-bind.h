@@ -318,7 +318,7 @@ inline static REBSER *SPC_BINDING(REBSPC *specifier)
 // Payload and header should be valid prior to making this call.
 //
 inline static void INIT_BINDING_MAY_MANAGE(
-    RELVAL *out,
+    Cell *out,
     const REBSER* binding
 ){
     mutable_BINDING(out) = binding;
@@ -339,7 +339,7 @@ inline static void INIT_BINDING_MAY_MANAGE(
 // bound directly to a context) or into the paramlist (if relative to an
 // action, requiring a frame specifier to fully resolve).
 //
-inline static bool IS_WORD_UNBOUND(const RELVAL *v) {
+inline static bool IS_WORD_UNBOUND(const Cell *v) {
     assert(ANY_WORDLIKE(v));
     return BINDING(v) == UNBOUND;
 }
@@ -348,19 +348,19 @@ inline static bool IS_WORD_UNBOUND(const RELVAL *v) {
     (not IS_WORD_UNBOUND(v))
 
 
-inline static REBLEN VAL_WORD_INDEX(const RELVAL *v) {
+inline static REBLEN VAL_WORD_INDEX(const Cell *v) {
     assert(IS_WORD_BOUND(v));
     uint32_t i = VAL_WORD_INDEX_U32(v);
     assert(i > 0);
     return cast(REBLEN, i);
 }
 
-inline static REBARR *VAL_WORD_BINDING(const RELVAL *v) {
+inline static REBARR *VAL_WORD_BINDING(const Cell *v) {
     assert(ANY_WORDLIKE(v));
     return ARR(BINDING(v));  // could be nullptr / UNBOUND
 }
 
-inline static void INIT_VAL_WORD_BINDING(RELVAL *v, const REBSER *binding) {
+inline static void INIT_VAL_WORD_BINDING(Cell *v, const REBSER *binding) {
     assert(ANY_WORDLIKE(v));
 
     mutable_BINDING(v) = binding;
@@ -387,7 +387,7 @@ inline static void INIT_VAL_WORD_BINDING(RELVAL *v, const REBSER *binding) {
 // can overcomplicate code.  We'd break too many invariants to just say a
 // relativized value is "unbound", so make an expired frame if necessary.
 //
-inline static REBVAL* Unrelativize(RELVAL* out, const RELVAL* v) {
+inline static REBVAL* Unrelativize(Cell* out, const Cell* v) {
     if (not Is_Bindable(v) or IS_SPECIFIC(v))
         Copy_Cell(out, SPECIFIC(v));
     else {
@@ -404,7 +404,7 @@ inline static REBVAL* Unrelativize(RELVAL* out, const RELVAL* v) {
 #define rebUnrelativize(v) \
     Unrelativize(Alloc_Value(), (v))
 
-inline static void Unbind_Any_Word(RELVAL *v) {
+inline static void Unbind_Any_Word(Cell *v) {
     INIT_VAL_WORD_INDEX(v, 0);
     INIT_VAL_WORD_BINDING(v, nullptr);
 }
@@ -478,7 +478,7 @@ enum Reb_Attach_Mode {
 //
 inline static option(REBSER*) Get_Word_Container(
     REBLEN *index_out,
-    const RELVAL* any_word,
+    const Cell* any_word,
     REBSPC *specifier,
     enum Reb_Attach_Mode mode
 ){
@@ -618,8 +618,8 @@ inline static option(REBSER*) Get_Word_Container(
                 // inherited variable we'd not see an override if it came
                 // into existence in the actual context.
                 //
-                INIT_VAL_WORD_BINDING(m_cast(RELVAL*, any_word), patch);
-                INIT_VAL_WORD_INDEX(m_cast(RELVAL*, any_word), 1);
+                INIT_VAL_WORD_BINDING(m_cast(Cell*, any_word), patch);
+                INIT_VAL_WORD_INDEX(m_cast(Cell*, any_word), 1);
 
                 *index_out = 1;
                 return patch;
@@ -737,7 +737,7 @@ inline static option(REBSER*) Get_Word_Container(
 
 
 inline static const REBVAL *Lookup_Word_May_Fail(
-    const RELVAL *any_word,
+    const Cell *any_word,
     REBSPC *specifier
 ){
     REBLEN index;
@@ -759,7 +759,7 @@ inline static const REBVAL *Lookup_Word_May_Fail(
 }
 
 inline static option(const REBVAL*) Lookup_Word(
-    const RELVAL *any_word,
+    const Cell *any_word,
     REBSPC *specifier
 ){
     REBLEN index;
@@ -778,8 +778,8 @@ inline static option(const REBVAL*) Lookup_Word(
 }
 
 inline static const REBVAL *Get_Word_May_Fail(
-    RELVAL *out,
-    const RELVAL* any_word,
+    Cell *out,
+    const Cell* any_word,
     REBSPC *specifier
 ){
     const REBVAL *var = Lookup_Word_May_Fail(any_word, specifier);
@@ -790,7 +790,7 @@ inline static const REBVAL *Get_Word_May_Fail(
 }
 
 inline static REBVAL *Lookup_Mutable_Word_May_Fail(
-    const RELVAL* any_word,
+    const Cell* any_word,
     REBSPC *specifier
 ){
     REBLEN index;
@@ -831,7 +831,7 @@ inline static REBVAL *Lookup_Mutable_Word_May_Fail(
 }
 
 inline static REBVAL *Sink_Word_May_Fail(
-    const RELVAL* any_word,
+    const Cell* any_word,
     REBSPC *specifier
 ){
     REBVAL *var = Lookup_Mutable_Word_May_Fail(any_word, specifier);
@@ -845,7 +845,7 @@ inline static REBVAL *Sink_Word_May_Fail(
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This can be used to turn a RELVAL into a REBVAL.  If the RELVAL is indeed
+// This can be used to turn a Cell into a REBVAL.  If the Cell is indeed
 // relative and needs to be made specific to be put into the target, then the
 // specifier is used to do that.
 //
@@ -877,8 +877,8 @@ inline static REBSPC *Derive_Specifier(
 #endif
 
 inline static REBVAL *Derelativize_Untracked(
-    RELVAL *out,  // relative dest overwritten w/specific value
-    const RELVAL *v,
+    Cell *out,  // relative dest overwritten w/specific value
+    const Cell *v,
     REBSPC *specifier
 ){
     Copy_Cell_Header(out, v);
@@ -937,12 +937,12 @@ inline static REBVAL *Derelativize_Untracked(
 
 
 // In the C++ build, defining this overload that takes a REBVAL* instead of
-// a RELVAL*, and then not defining it...will tell you that you do not need
+// a Cell*, and then not defining it...will tell you that you do not need
 // to use Derelativize.  Juse Copy_Cell() if your source is a REBVAL!
 //
 #if CPLUSPLUS_11
     REBVAL *Derelativize_Untracked(
-        RELVAL *dest, const REBVAL *v, REBSPC *specifier
+        Cell *dest, const REBVAL *v, REBSPC *specifier
     );
 #endif
 

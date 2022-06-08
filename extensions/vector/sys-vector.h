@@ -77,7 +77,7 @@ inline static REBLEN VAL_VECTOR_LEN_AT(noquote(const Cell*) v) {
 #define VAL_VECTOR_LEN_HEAD(v) VAL_VECTOR_LEN_AT(v)
 
 inline static REBVAL *Init_Vector(
-    RELVAL *out,
+    Cell *out,
     REBBIN *bin,
     bool sign,
     bool integral,

@@ -262,10 +262,10 @@ REBINT Compare_Arrays_At_Indexes(
     if (s_array == t_array and s_index == t_index)
          return 0;
 
-    const RELVAL *s_tail = ARR_TAIL(s_array);
-    const RELVAL *t_tail = ARR_TAIL(t_array);
-    const RELVAL *s = ARR_AT(s_array, s_index);
-    const RELVAL *t = ARR_AT(t_array, t_index);
+    const Cell *s_tail = ARR_TAIL(s_array);
+    const Cell *t_tail = ARR_TAIL(t_array);
+    const Cell *s = ARR_AT(s_array, s_index);
+    const Cell *t = ARR_AT(t_array, t_index);
 
     if (s == s_tail or t == t_tail)
         goto diff_of_ends;
@@ -308,7 +308,7 @@ REBINT Compare_Arrays_At_Indexes(
 //
 // is_case should be true for case sensitive compare
 //
-REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
+REBINT Cmp_Value(const Cell *sval, const Cell *tval, bool strict)
 {
     REBLEN squotes = VAL_NUM_QUOTES(sval);
     REBLEN tquotes = VAL_NUM_QUOTES(tval);
@@ -485,9 +485,9 @@ REBINT Cmp_Value(const RELVAL *sval, const RELVAL *tval, bool strict)
 REBLEN Find_In_Array_Simple(
     const REBARR *array,
     REBLEN index,
-    const RELVAL *target
+    const Cell *target
 ){
-    const RELVAL *value = ARR_HEAD(array);
+    const Cell *value = ARR_HEAD(array);
 
     for (; index < ARR_LEN(array); index++) {
         if (0 == Cmp_Value(value + index, target, false))

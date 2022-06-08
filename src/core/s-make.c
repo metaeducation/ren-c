@@ -73,7 +73,7 @@ REBBIN *Copy_Bytes(const REBYTE *src, REBINT len)
 // other series due to the length being counted in characters and not
 // units of the series width.
 //
-REBSTR *Copy_String_At_Limit(const RELVAL *src, REBINT limit)
+REBSTR *Copy_String_At_Limit(const Cell *src, REBINT limit)
 {
     REBSIZ limited_size;
     REBLEN limited_length;
@@ -383,7 +383,7 @@ void Join_Binary_In_Byte_Buf(const REBVAL *blk, REBINT limit)
 
     SET_SERIES_LEN(buf, 0);
 
-    const RELVAL *val = VAL_ARRAY_ITEM_AT(blk);
+    const Cell *val = VAL_ARRAY_ITEM_AT(blk);
     for (; limit > 0; val++, limit--) {
         switch (VAL_TYPE(val)) {
           case REB_BLANK:

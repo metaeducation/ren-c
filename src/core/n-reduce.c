@@ -220,7 +220,7 @@ bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
     if (VAL_LEN_AT(group) == 0) // you have a pattern, so leave `()` as-is
         return false;
 
-    const RELVAL *first = VAL_ARRAY_ITEM_AT(group);
+    const Cell *first = VAL_ARRAY_ITEM_AT(group);
     if (VAL_TYPE(first) != VAL_TYPE(label))
         return false;
 
@@ -247,7 +247,7 @@ bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
 //
 REB_R Compose_To_Stack_Core(
     REBVAL *out, // if return result is R_THROWN, will hold the thrown value
-    const RELVAL *composee, // the template
+    const Cell *composee, // the template
     REBSPC *specifier, // specifier for relative any_array value
     const REBVAL *label, // e.g. if <*>, only match `(<*> ...)`
     bool deep, // recurse into sub-blocks
@@ -265,7 +265,7 @@ REB_R Compose_To_Stack_Core(
     // a more compressed form.  While this is being rethought, we just reuse
     // the logic of AS so it's in one place and gets tested more.
     //
-    const RELVAL *any_array;
+    const Cell *any_array;
     if (ANY_PATH(composee)) {
         DECLARE_LOCAL (temp);
         Derelativize(temp, composee, specifier);
@@ -279,7 +279,7 @@ REB_R Compose_To_Stack_Core(
     DECLARE_FEED_AT_CORE (feed, any_array, specifier);
 
     if (ANY_PATH(composee))
-        rebRelease(cast(REBVAL*, m_cast(RELVAL*, any_array)));
+        rebRelease(cast(REBVAL*, m_cast(Cell*, any_array)));
 
     DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
 
@@ -316,7 +316,7 @@ REB_R Compose_To_Stack_Core(
             // find compositions inside it if /DEEP and it's an array
         }
         else if (not only and Is_Any_Doubled_Group(f_value)) {
-            const RELVAL *inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
+            const Cell *inner = VAL_ARRAY_ITEM_AT(f_value);  // 1 item
             assert(IS_GROUP(inner));
             if (Match_For_Compose(inner, label)) {
                 doubled_group = true;
@@ -428,8 +428,8 @@ REB_R Compose_To_Stack_Core(
                     //
                     // The only splice type is BLOCK!...
 
-                    const RELVAL *push_tail;
-                    const RELVAL *push = VAL_ARRAY_AT(&push_tail, out);
+                    const Cell *push_tail;
+                    const Cell *push = VAL_ARRAY_AT(&push_tail, out);
                     if (push != push_tail) {
                         //
                         // Only proxy newline flag from the template on *first*
@@ -684,18 +684,18 @@ enum FLATTEN_LEVEL {
 
 
 static void Flatten_Core(
-    RELVAL *head,
-    const RELVAL *tail,
+    Cell *head,
+    const Cell *tail,
     REBSPC *specifier,
     enum FLATTEN_LEVEL level
 ) {
-    RELVAL *item = head;
+    Cell *item = head;
     for (; item != tail; ++item) {
         if (IS_BLOCK(item) and level != FLATTEN_NOT) {
             REBSPC *derived = Derive_Specifier(specifier, item);
 
-            const RELVAL *sub_tail;
-            RELVAL *sub = VAL_ARRAY_AT_ENSURE_MUTABLE(&sub_tail, item);
+            const Cell *sub_tail;
+            Cell *sub = VAL_ARRAY_AT_ENSURE_MUTABLE(&sub_tail, item);
             Flatten_Core(
                 sub,
                 sub_tail,
@@ -727,8 +727,8 @@ REBNATIVE(flatten)
 
     REBDSP dsp_orig = DSP;
 
-    const RELVAL *tail;
-    RELVAL *at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, ARG(block));
+    const Cell *tail;
+    Cell *at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, ARG(block));
     Flatten_Core(
         at,
         tail,

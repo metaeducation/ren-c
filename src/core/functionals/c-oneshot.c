@@ -56,7 +56,7 @@ REB_R Downshot_Dispatcher(REBFRM *f)  // runs until count is reached
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
-    RELVAL *n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
+    Cell *n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) == 0)
         return nullptr;  // always return null once 0 is reached
     --VAL_INT64(n);
@@ -76,7 +76,7 @@ REB_R Upshot_Dispatcher(REBFRM *f)  // won't run until count is reached
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ONESHOT_MAX);
 
-    RELVAL *n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
+    Cell *n = DETAILS_AT(details, IDX_ONESHOT_COUNTER);
     if (VAL_INT64(n) < 0) {
         ++VAL_INT64(n);
         return nullptr;  // return null until 0 is reached

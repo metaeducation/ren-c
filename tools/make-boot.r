@@ -611,9 +611,9 @@ e-errfuncs: make-emitter "Error structure and functions" (
 fields: collect [
     for-each word words-of ob/standard/error [
         either word = 'near [
-            keep {/* near/far are old C keywords */ RELVAL nearest}
+            keep {/* near/far are old C keywords */ Cell nearest}
         ][
-            keep cscape/with {RELVAL ${word}} 'word
+            keep cscape/with {Cell ${word}} 'word
         ]
     ]
 ]
@@ -690,7 +690,7 @@ for-each [sw-cat list] boot-errors [
                 ; calls are made.
                 ;
                 count-up i arity [
-                    keep unspaced ["const RELVAL *arg" i]
+                    keep unspaced ["const Cell *arg" i]
                 ]
             ]
             args: collect [
@@ -877,7 +877,7 @@ fields: collect [
     for-each word sections [
         word: form as word! word
         remove/part word 5 ; boot_
-        keep cscape/with {RELVAL ${word}} 'word
+        keep cscape/with {Cell ${word}} 'word
     ]
 ]
 

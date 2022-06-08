@@ -39,7 +39,7 @@
 #define IS_NULLED(v) \
     (VAL_TYPE(v) == REB_NULL)
 
-inline static REBVAL *Init_Nulled_Untracked(RELVAL *out) {
+inline static REBVAL *Init_Nulled_Untracked(Cell *out) {
     Reset_Cell_Header_Untracked(out, REB_NULL, CELL_MASK_NONE);
 
   #ifdef ZERO_UNUSED_CELL_FIELDS

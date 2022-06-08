@@ -87,7 +87,7 @@ inline static REBLEN VAL_IMAGE_LEN_AT(noquote(const Cell*) v) {
     return VAL_IMAGE_LEN_HEAD(v) - VAL_IMAGE_POS(v);
 }
 
-inline static bool IS_IMAGE(const RELVAL *v) {
+inline static bool IS_IMAGE(const Cell *v) {
     //
     // Note that for this test, if there's a quote level it doesn't count...
     // that would be QUOTED! (IS_QUOTED()).  To test for quoted images, you
@@ -97,7 +97,7 @@ inline static bool IS_IMAGE(const RELVAL *v) {
 }
 
 inline static REBVAL *Init_Image(
-    RELVAL *out,
+    Cell *out,
     const REBSER *bin,
     REBLEN width,
     REBLEN height
@@ -131,7 +131,7 @@ inline static void RESET_IMAGE(REBYTE *p, REBLEN num_pixels) {
 
 // Creates WxH image, black pixels, all opaque.
 //
-inline static REBVAL *Init_Image_Black_Opaque(RELVAL *out, REBLEN w, REBLEN h)
+inline static REBVAL *Init_Image_Black_Opaque(Cell *out, REBLEN w, REBLEN h)
 {
     REBSIZ size = (w * h) * 4;  // RGBA pixels, 4 bytes each
     REBBIN *bin = Make_Binary(size);

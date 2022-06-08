@@ -3255,7 +3255,7 @@ const REBYTE *Scan_Any_Word(
 // !!! Since this follows the same rules as FILE!, the code should merge,
 // though FILE! will make mutable strings and not have in-cell optimization.
 //
-const REBYTE *Scan_Issue(RELVAL *out, const REBYTE *cp, REBSIZ size)
+const REBYTE *Scan_Issue(Cell *out, const REBYTE *cp, REBSIZ size)
 {
     const REBYTE *bp = cp;
 

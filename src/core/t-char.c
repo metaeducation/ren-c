@@ -314,7 +314,7 @@ REBTYPE(Issue)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         if (not IS_INTEGER(picker))
             return R_UNHANDLED;
 

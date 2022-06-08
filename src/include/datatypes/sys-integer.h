@@ -44,13 +44,13 @@
         assert(CELL_HEART(v) == REB_INTEGER);
         return PAYLOAD(Integer, v).i64;
     }
-    inline static REBI64 & VAL_INT64(RELVAL *v) {
+    inline static REBI64 & VAL_INT64(Cell *v) {
         assert(VAL_TYPE(v) == REB_INTEGER);
         return PAYLOAD(Integer, v).i64;
     }
 #endif
 
-inline static REBVAL *Init_Integer_Untracked(RELVAL *out, REBI64 i64) {
+inline static REBVAL *Init_Integer_Untracked(Cell *out, REBI64 i64) {
     Reset_Cell_Header_Untracked(out, REB_INTEGER, CELL_MASK_NONE);
     PAYLOAD(Integer, out).i64 = i64;
   #ifdef ZERO_UNUSED_CELL_FIELDS

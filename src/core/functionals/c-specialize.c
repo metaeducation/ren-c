@@ -97,7 +97,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
     REBARR *varlist = Make_Array_Core(num_slots, SERIES_MASK_VARLIST);
     INIT_CTX_KEYLIST_SHARED(CTX(varlist), ACT_KEYLIST(act));
 
-    RELVAL *rootvar = ARR_HEAD(varlist);
+    Cell *rootvar = ARR_HEAD(varlist);
     INIT_VAL_FRAME_ROOTVAR(
         rootvar,
         varlist,
@@ -109,8 +109,8 @@ REBCTX *Make_Context_For_Action_Push_Partials(
     //
     REBARR *partials = try_unwrap(ACT_PARTIALS(act));
     if (partials) {
-        const RELVAL *word_tail = ARR_TAIL(partials);
-        const RELVAL *word = ARR_HEAD(partials);
+        const Cell *word_tail = ARR_TAIL(partials);
+        const Cell *word = ARR_HEAD(partials);
         for (; word != word_tail; ++word)
             Copy_Cell(DS_PUSH(), SPECIFIC(word));
     }
@@ -549,8 +549,8 @@ void For_Each_Unspecialized_Param(
         REBFLGS flags = 0;
 
         if (partials) {  // even normal parameters can appear in partials
-            const RELVAL *partial_tail = ARR_TAIL(unwrap(partials));
-            const RELVAL *partial = ARR_HEAD(unwrap(partials));
+            const Cell *partial_tail = ARR_TAIL(unwrap(partials));
+            const Cell *partial = ARR_HEAD(unwrap(partials));
             for (; partial != partial_tail; ++partial) {
                 if (Are_Synonyms(
                     VAL_WORD_SYMBOL(partial),
@@ -576,8 +576,8 @@ void For_Each_Unspecialized_Param(
         // the highest priority are at *top* of stack, so we have to go
         // "downward" in the push order...e.g. the reverse of the array.
 
-        RELVAL *partial = ARR_TAIL(unwrap(partials));
-        RELVAL *head = ARR_HEAD(unwrap(partials));
+        Cell *partial = ARR_TAIL(unwrap(partials));
+        Cell *head = ARR_HEAD(unwrap(partials));
         for (; partial-- != head; ) {
             const REBKEY *key = ACT_KEY(act, VAL_WORD_INDEX(partial));
             const REBPAR *param = ACT_PARAM(act, VAL_WORD_INDEX(partial));
@@ -606,8 +606,8 @@ void For_Each_Unspecialized_Param(
         }
 
         if (partials) {
-            const RELVAL *partial_tail = ARR_TAIL(unwrap(partials));
-            const RELVAL *partial = ARR_HEAD(unwrap(partials));
+            const Cell *partial_tail = ARR_TAIL(unwrap(partials));
+            const Cell *partial = ARR_HEAD(unwrap(partials));
             for (; partial != partial_tail; ++partial) {
                 if (Are_Synonyms(
                     VAL_WORD_SYMBOL(partial),

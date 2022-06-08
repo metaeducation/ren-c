@@ -67,7 +67,7 @@ inline static REBARR *VAL_VARARGS_BINDING(noquote(const Cell*) v) {
 }
 
 inline static void INIT_VAL_VARARGS_BINDING(
-    RELVAL *v,
+    Cell *v,
     REBARR *binding  // either an array or a frame varlist
 ){
     assert(IS_VARARGS(v));
@@ -75,7 +75,7 @@ inline static void INIT_VAL_VARARGS_BINDING(
 }
 
 
-inline static REBVAL *Init_Varargs_Untyped_Normal(RELVAL *out, REBFRM *f) {
+inline static REBVAL *Init_Varargs_Untyped_Normal(Cell *out, REBFRM *f) {
     Reset_Cell_Header_Untracked(out, REB_VARARGS, CELL_MASK_VARARGS);
     mutable_BINDING(out) = f->varlist;  // frame-based VARARGS!
     UNUSED(VAL_VARARGS_SIGNED_PARAM_INDEX(out));
@@ -84,7 +84,7 @@ inline static REBVAL *Init_Varargs_Untyped_Normal(RELVAL *out, REBFRM *f) {
 }
 
 inline static REBVAL *Init_Varargs_Untyped_Enfix(
-    RELVAL *out,
+    Cell *out,
     const REBVAL *left
 ){
     REBARR *feed;
@@ -126,7 +126,7 @@ inline static bool Is_Block_Style_Varargs(
     *shared_out = cast(REBVAL*, ARR_SINGLE(array1));
     assert(
         Is_Stale_Void(*shared_out)
-        or (IS_SPECIFIC(cast(RELVAL*, *shared_out)) and IS_BLOCK(*shared_out))
+        or (IS_SPECIFIC(cast(Cell*, *shared_out)) and IS_BLOCK(*shared_out))
     );
 
     return true;
@@ -155,7 +155,7 @@ inline static bool Is_Frame_Style_Varargs_Maybe_Null(
 
 inline static bool Is_Frame_Style_Varargs_May_Fail(
     REBFRM **f_out,
-    const RELVAL *vararg
+    const Cell *vararg
 ){
     if (not Is_Frame_Style_Varargs_Maybe_Null(f_out, vararg))
         return false;

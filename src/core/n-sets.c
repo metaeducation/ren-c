@@ -135,7 +135,7 @@ REBSER *Make_Set_Operation_Series(
             //
             i = VAL_INDEX(val1);
             for (; i < ARR_LEN(array1); i += skip) {
-                const RELVAL *item = ARR_AT(array1, i);
+                const Cell *item = ARR_AT(array1, i);
                 if (flags & SOP_FLAG_CHECK) {
                     h = Find_Key_Hashed(
                         m_cast(REBARR*, VAL_ARRAY(val2)),  // mode 1 unchanged

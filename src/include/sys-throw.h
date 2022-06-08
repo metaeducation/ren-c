@@ -134,7 +134,7 @@ inline static REBVAL *Init_Thrown_With_Label_Meta(
 }
 
 inline static void CATCH_THROWN_META(
-    RELVAL *arg_out,
+    Cell *arg_out,
     REBVAL *thrown // Note: may be same pointer as arg_out
 ){
     UNUSED(thrown);

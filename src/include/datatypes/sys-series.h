@@ -559,7 +559,7 @@ inline static void SET_SERIES_USED(REBSER *s, REBLEN used) {
         //
       #if DEBUG_TERM_ARRAYS
         if (IS_SER_ARRAY(s))
-            SET_CELL_FREE(SER_AT(RELVAL, s, used));
+            SET_CELL_FREE(SER_AT(Cell, s, used));
       #endif
     }
     else {
@@ -696,7 +696,7 @@ inline static void TERM_SERIES_IF_NECESSARY(REBSER *s)
     }
     else if (GET_SERIES_FLAG(s, DYNAMIC) and IS_SER_ARRAY(s)) {
       #if DEBUG_TERM_ARRAYS
-        SET_CELL_FREE(SER_TAIL(RELVAL, s));
+        SET_CELL_FREE(SER_TAIL(Cell, s));
       #endif
     }
 }
@@ -919,7 +919,7 @@ inline static void FAIL_IF_READ_ONLY_SER(REBSER *s) {
 #if defined(NDEBUG)
     #define KNOWN_MUTABLE(v) v
 #else
-    inline static const RELVAL* KNOWN_MUTABLE(const RELVAL* v) {
+    inline static const Cell* KNOWN_MUTABLE(const Cell* v) {
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         REBSER *s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
         assert(not Is_Series_Read_Only(s));
@@ -929,9 +929,9 @@ inline static void FAIL_IF_READ_ONLY_SER(REBSER *s) {
 #endif
 
 // Forward declaration needed
-inline static REBVAL* Unrelativize(RELVAL* out, const RELVAL* v);
+inline static REBVAL* Unrelativize(Cell* out, const Cell* v);
 
-inline static const RELVAL *ENSURE_MUTABLE(const RELVAL *v) {
+inline static const Cell *ENSURE_MUTABLE(const Cell *v) {
     assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
     REBSER *s = SER(VAL_NODE1(v));  // can be pairlist, varlist, etc.
 
@@ -1044,7 +1044,7 @@ inline static const REBSER *VAL_SERIES(noquote(const Cell*) v) {
         assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
         return VAL_INDEX_RAW(v);
     }
-    inline static REBIDX & VAL_INDEX_UNBOUNDED(RELVAL *v) {
+    inline static REBIDX & VAL_INDEX_UNBOUNDED(Cell *v) {
         enum Reb_Kind k = VAL_TYPE(v);  // mutable allowed if nonquoted
         assert(
             ANY_SERIES_KIND_EVIL_MACRO
@@ -1084,7 +1084,7 @@ inline static const REBYTE *VAL_DATA_AT(noquote(const Cell*) v) {
 }
 
 
-inline static void INIT_SPECIFIER(RELVAL *v, const void *p) {
+inline static void INIT_SPECIFIER(Cell *v, const void *p) {
     //
     // can be called on non-bindable series, but p must be nullptr
 
@@ -1115,7 +1115,7 @@ inline static void INIT_SPECIFIER(RELVAL *v, const void *p) {
 
 
 inline static REBVAL *Init_Any_Series_At_Core(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind type,
     const REBSER *s,  // ensured managed by calling macro
     REBLEN index,

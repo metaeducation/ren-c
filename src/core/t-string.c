@@ -229,7 +229,7 @@ REB_R MAKE_String(
         // to produce #{abcd2}.  That behavior is not available in Ren-C.
 
         REBLEN len;
-        const RELVAL *first = VAL_ARRAY_LEN_AT(&len, def);
+        const Cell *first = VAL_ARRAY_LEN_AT(&len, def);
 
         if (len != 2)
             goto bad_make;
@@ -237,7 +237,7 @@ REB_R MAKE_String(
         if (not ANY_STRING(first))
             goto bad_make;
 
-        const RELVAL *index = first + 1;
+        const Cell *index = first + 1;
         if (!IS_INTEGER(index))
             goto bad_make;
 
@@ -713,7 +713,7 @@ void MF_String(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 bool Did_Get_Series_Index_From_Picker(
     REBINT *out,
     const REBVAL *v,
-    const RELVAL *picker
+    const Cell *picker
 ){
     if (not IS_INTEGER(picker))
         fail (Error_Bad_Pick_Raw(picker));
@@ -758,7 +758,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             return nullptr;
@@ -774,7 +774,7 @@ REBTYPE(String)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         REBINT n;
         if (not Did_Get_Series_Index_From_Picker(&n, v, picker))
             fail (Error_Out_Of_Range(picker));

@@ -153,7 +153,7 @@
 //
 inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     REBFRM *f,
-    const RELVAL *v
+    const Cell *v
 ){
     // This flag is used for enfix processing, but it's also applied as an
     // internal trick to make SHOVE (>-) work:
@@ -290,7 +290,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);  // not an argument, clear flag
     }
 
-    const RELVAL *v;  // shorthand for the value we are switch()-ing on
+    const Cell *v;  // shorthand for the value we are switch()-ing on
     TRASH_POINTER_IF_DEBUG(v);
 
     option(const REBVAL*) gotten;
@@ -1003,7 +1003,7 @@ bool Eval_Core_Throws(REBFRM * const f)
     // fetching isotopes is what you actually intended.
 
       case REB_TUPLE: {
-        const RELVAL *head = VAL_SEQUENCE_AT(SPARE, v, 0);
+        const Cell *head = VAL_SEQUENCE_AT(SPARE, v, 0);
         if (ANY_INERT(head)) {
             Derelativize(OUT, v, v_specifier);
             break;
@@ -1066,7 +1066,7 @@ bool Eval_Core_Throws(REBFRM * const f)
     // blank at its head, and it evaluates to itself.
 
       case REB_PATH: {
-        const RELVAL *temp = VAL_SEQUENCE_AT(SPARE, v, 0);
+        const Cell *temp = VAL_SEQUENCE_AT(SPARE, v, 0);
         if (ANY_INERT(temp)) {
             Derelativize(OUT, v, v_specifier);
             break;
@@ -1352,8 +1352,8 @@ bool Eval_Core_Throws(REBFRM * const f)
         REBDSP dsp_circled = 0;  // which pushed address is main return
 
       blockscope {
-        const RELVAL *tail;
-        const RELVAL *check = VAL_ARRAY_AT(&tail, v);
+        const Cell *tail;
+        const Cell *check = VAL_ARRAY_AT(&tail, v);
         REBSPC *check_specifier = Derive_Specifier(v_specifier, v);
         for (; tail != check; ++check) {
             //
@@ -1409,7 +1409,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 continue;
             }
 
-            const RELVAL *item;
+            const Cell *item;
             REBSPC *item_specifier;
             if (
                 IS_GROUP(check)

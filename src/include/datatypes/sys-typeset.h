@@ -62,7 +62,7 @@ inline static SYMID VAL_TYPE_SYM(noquote(const Cell*) v) {
     if (k != REB_CUSTOM)
         return SYM_FROM_KIND(k);
 
-    RELVAL *ext = ARR_HEAD(PG_Extension_Types);
+    Cell *ext = ARR_HEAD(PG_Extension_Types);
     REBTYP *t = VAL_TYPE_CUSTOM(v);
     if (t == VAL_TYPE_CUSTOM(ext + 0))
         return SYM_LIBRARY_X;
@@ -135,7 +135,7 @@ inline static bool TYPE_CHECK_EXACT_BITS(
     return true;
 }
 
-inline static void TYPE_SET(RELVAL *v, REBYTE n) {
+inline static void TYPE_SET(Cell *v, REBYTE n) {
     assert(IS_TYPESET(v));
 
     if (n < 32) {
@@ -146,7 +146,7 @@ inline static void TYPE_SET(RELVAL *v, REBYTE n) {
     VAL_TYPESET_HIGH_BITS(v) |= FLAGIT_KIND(n - 32);
 }
 
-inline static void TYPE_CLEAR(RELVAL *v, REBYTE n) {
+inline static void TYPE_CLEAR(Cell *v, REBYTE n) {
     assert(IS_TYPESET(v));
 
     if (n < 32) {
@@ -171,7 +171,7 @@ inline static bool EQUAL_TYPESET(
     return true;
 }
 
-inline static void CLEAR_ALL_TYPESET_BITS(RELVAL *v) {
+inline static void CLEAR_ALL_TYPESET_BITS(Cell *v) {
     assert(VAL_TYPE(v) == REB_TYPESET);
 
     VAL_TYPESET_HIGH_BITS(v) = 0;
@@ -287,7 +287,7 @@ inline static bool Is_Specialized(const REBPAR *param) {
 
 // Parameter class should be PARAM_CLASS_0 unless typeset in func paramlist.
 
-inline static REBVAL *Init_Typeset_Core(RELVAL *out, REBU64 bits)
+inline static REBVAL *Init_Typeset_Core(Cell *out, REBU64 bits)
 {
     Reset_Cell_Header_Untracked(out, REB_TYPESET, CELL_MASK_NONE);
     VAL_PARAM_FLAGS(out) = FLAG_PARAM_CLASS_BYTE(PARAM_CLASS_0);
@@ -301,7 +301,7 @@ inline static REBVAL *Init_Typeset_Core(RELVAL *out, REBU64 bits)
 
 
 inline static REBPAR *Init_Param_Core(
-    RELVAL *out,
+    Cell *out,
     REBFLGS param_flags,
     REBU64 bits
 ){
@@ -323,8 +323,8 @@ inline static REBPAR *Init_Param_Core(
 
 
 inline static REBVAL *Refinify(REBVAL *v);  // forward declaration
-inline static bool IS_REFINEMENT(const RELVAL *v);  // forward decl
-inline static bool IS_PREDICATE(const RELVAL *v);  // forward decl
+inline static bool IS_REFINEMENT(const Cell *v);  // forward decl
+inline static bool IS_PREDICATE(const Cell *v);  // forward decl
 
 // This is an interim workaround for the need to be able check constrained
 // data types (e.g. PATH!-with-BLANK!-at-head being REFINEMENT!).  See
@@ -337,7 +337,7 @@ inline static bool IS_PREDICATE(const RELVAL *v);  // forward decl
 //
 inline static bool Typecheck_Including_Constraints(
     const REBPAR *param,
-    const RELVAL *v
+    const Cell *v
 ){
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_RETURN) {
         if (Is_Isotope(v)) {

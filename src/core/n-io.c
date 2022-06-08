@@ -172,8 +172,8 @@ REBNATIVE(new_line)
     bool mark = VAL_LOGIC(ARG(mark));
 
     REBVAL *pos = ARG(position);
-    const RELVAL *tail;
-    RELVAL *item = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, pos);
+    const Cell *tail;
+    Cell *item = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, pos);
     REBARR *a = VAL_ARRAY_KNOWN_MUTABLE(pos);  // need if setting flag at tail
 
     REBINT skip;
@@ -230,8 +230,8 @@ REBNATIVE(new_line_q)
     REBVAL *pos = ARG(position);
 
     const REBARR *arr;
-    const RELVAL *item;
-    const RELVAL *tail;
+    const Cell *item;
+    const Cell *tail;
 
     if (IS_VARARGS(pos)) {
         REBFRM *f;
@@ -279,7 +279,7 @@ REBNATIVE(new_line_q)
 //
 // Note that this routine is used by the SLEEP extension, as well as by WAIT.
 //
-REBLEN Milliseconds_From_Value(const RELVAL *v) {
+REBLEN Milliseconds_From_Value(const Cell *v) {
     REBINT msec;
 
     switch (VAL_TYPE(v)) {

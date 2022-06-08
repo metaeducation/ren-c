@@ -58,7 +58,7 @@ REBMAP *Make_Map(REBLEN capacity)
 
 
 static REBCTX *Error_Conflicting_Key(
-    const RELVAL *key,
+    const Cell *key,
     REBSPC *specifier
 ){
     DECLARE_LOCAL (specific);
@@ -83,7 +83,7 @@ static REBCTX *Error_Conflicting_Key(
 REBINT Find_Key_Hashed(
     REBARR *array,
     REBSER *hashlist,
-    const RELVAL *key,  // !!! assumes ++key finds the values
+    const Cell *key,  // !!! assumes ++key finds the values
     REBSPC *specifier,
     REBLEN wide,
     bool strict,
@@ -121,7 +121,7 @@ REBINT Find_Key_Hashed(
 
     REBLEN n;
     while ((n = indexes[slot]) != 0) {
-        RELVAL *k = ARR_AT(array, (n - 1) * wide); // stored key
+        Cell *k = ARR_AT(array, (n - 1) * wide); // stored key
         if (0 == Cmp_Value(k, key, true)) {
             if (strict)
                 return slot; // don't need to check synonyms, stop looking
@@ -163,7 +163,7 @@ REBINT Find_Key_Hashed(
     }
 
     if (mode > 1) { // append new value to the target series
-        const RELVAL *src = key;
+        const Cell *src = key;
         indexes[slot] = (ARR_LEN(array) / wide) + 1;
 
         REBLEN index;
@@ -253,9 +253,9 @@ void Expand_Hash(REBSER *ser)
 //
 REBLEN Find_Map_Entry(
     REBMAP *map,
-    const RELVAL *key,
+    const Cell *key,
     REBSPC *key_specifier,
-    const RELVAL *val,
+    const Cell *val,
     REBSPC *val_specifier,
     bool strict
 ) {
@@ -320,12 +320,12 @@ REBLEN Find_Map_Entry(
 //
 static void Append_Map(
     REBMAP *map,
-    const RELVAL *head,
-    const RELVAL *tail,
+    const Cell *head,
+    const Cell *tail,
     REBSPC *specifier,
     REBLEN len
 ){
-    const RELVAL *item = head;
+    const Cell *item = head;
     REBLEN n = 0;
 
     while (n < len and item != tail) {
@@ -403,7 +403,7 @@ inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
     //
     assert(ARR_LEN(copy) % 2 == 0); // should be [key value key value]...
 
-    const RELVAL *tail = ARR_TAIL(copy);
+    const Cell *tail = ARR_TAIL(copy);
     REBVAL *key = SPECIFIC(ARR_HEAD(copy));  // keys/vals specified
     for (; key != tail; key += 2) {
         assert(Is_Value_Frozen_Deep(key));  // immutable key
@@ -434,8 +434,8 @@ REB_R TO_Map(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         // make map! [word val word val]
         //
         REBLEN len = VAL_LEN_AT(arg);
-        const RELVAL *tail;
-        const RELVAL *at = VAL_ARRAY_AT(&tail, arg);
+        const Cell *tail;
+        const Cell *at = VAL_ARRAY_AT(&tail, arg);
         REBSPC *specifier = VAL_SPECIFIER(arg);
 
         REBMAP *map = Make_Map(len / 2); // [key value key value...] + END
@@ -469,9 +469,9 @@ REBARR *Map_To_Array(const REBMAP *map, REBINT what)
     REBLEN count = Length_Map(map);
     REBARR *a = Make_Array(count * ((what == 0) ? 2 : 1));
 
-    RELVAL *dest = ARR_HEAD(a);
-    const RELVAL *val_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    const RELVAL *val = ARR_HEAD(MAP_PAIRLIST(map));
+    Cell *dest = ARR_HEAD(a);
+    const Cell *val_tail = ARR_TAIL(MAP_PAIRLIST(map));
+    const Cell *val = ARR_HEAD(MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
         if (not IS_NULLED(val + 1)) {  // can't be END
             if (what <= 0) {
@@ -504,8 +504,8 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
     REBLEN count = 0;
 
   blockscope {
-    const RELVAL *mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    const RELVAL *mval = ARR_HEAD(MAP_PAIRLIST(map));
+    const Cell *mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
+    const Cell *mval = ARR_HEAD(MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not IS_NULLED(mval + 1))
             ++count;
@@ -516,8 +516,8 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
 
     REBCTX *c = Alloc_Context(REB_OBJECT, count);
 
-    const RELVAL *mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
-    const RELVAL *mval = ARR_HEAD(MAP_PAIRLIST(map));
+    const Cell *mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
+    const Cell *mval = ARR_HEAD(MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
         if (ANY_WORD(mval) and not IS_NULLED(mval + 1)) {
@@ -555,8 +555,8 @@ void MF_Map(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     //
     mo->indent++;
 
-    const RELVAL *tail = ARR_TAIL(MAP_PAIRLIST(m));
-    const RELVAL *key = ARR_HEAD(MAP_PAIRLIST(m));
+    const Cell *tail = ARR_TAIL(MAP_PAIRLIST(m));
+    const Cell *key = ARR_HEAD(MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
         if (IS_NULLED(key + 1))
@@ -691,8 +691,8 @@ REBTYPE(Map)
             fail (PAR(value));
 
         REBLEN len = Part_Len_May_Modify_Index(value, ARG(part));
-        const RELVAL *tail;
-        const RELVAL *at = VAL_ARRAY_AT(&tail, value);  // w/modified index
+        const Cell *tail;
+        const Cell *at = VAL_ARRAY_AT(&tail, value);  // w/modified index
 
         Append_Map(m, at, tail, VAL_SPECIFIER(value), len);
 
@@ -739,7 +739,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
 
         bool strict = false;
 
@@ -769,7 +769,7 @@ REBTYPE(Map)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
 
         // Fetching and setting with path-based access is case-preserving for
         // initial insertions.  However, the case-insensitivity means that all

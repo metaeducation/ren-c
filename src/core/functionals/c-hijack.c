@@ -101,7 +101,7 @@
 bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
 {
     REBARR *code_arr = Make_Array(FRM_NUM_ARGS(f)); // max, e.g. no refines
-    RELVAL *code = ARR_HEAD(code_arr);
+    Cell *code = ARR_HEAD(code_arr);
 
     // !!! For the moment, if refinements are needed we generate a PATH! with
     // the ACTION! at the head, and have the evaluator rediscover the stack

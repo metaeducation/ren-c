@@ -90,14 +90,14 @@ static REBI64 mark_count = 0;
     assert(SER_USED(GC_Mark_Stack) == 0)
 
 
-static void Queue_Mark_Opt_Value_Deep(const RELVAL *v);
+static void Queue_Mark_Opt_Value_Deep(const Cell *v);
 
-inline static void Queue_Mark_Opt_Void_Cell_Deep(const RELVAL *v) {
+inline static void Queue_Mark_Opt_Void_Cell_Deep(const Cell *v) {
     if (VAL_TYPE_UNCHECKED(v) != REB_0_VOID)  // faster than Is_Void()
         Queue_Mark_Opt_Value_Deep(v);
 }
 
-inline static void Queue_Mark_Maybe_Stale_Cell_Deep(RELVAL *v) {
+inline static void Queue_Mark_Maybe_Stale_Cell_Deep(Cell *v) {
     if (Is_Fresh(v))
         return;
 
@@ -122,7 +122,7 @@ inline static void Queue_Mark_Maybe_Stale_Cell_Deep(RELVAL *v) {
   #endif
 }
 
-inline static void Queue_Mark_Value_Deep(const RELVAL *v)
+inline static void Queue_Mark_Value_Deep(const Cell *v)
 {
     assert(VAL_TYPE_UNCHECKED(v) != REB_NULL);  // faster than IS_NULLED()
     Queue_Mark_Opt_Value_Deep(v);  // unreadable trash is ok
@@ -335,9 +335,9 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
 // If a slot is not supposed to allow END, use Queue_Mark_Opt_Value_Deep()
 // If a slot allows neither END nor NULLED cells, use Queue_Mark_Value_Deep()
 //
-static void Queue_Mark_Opt_Value_Deep(const RELVAL *cv)
+static void Queue_Mark_Opt_Value_Deep(const Cell *cv)
 {
-    RELVAL *v = m_cast(RELVAL*, cv);  // we're the system, we can do this
+    Cell *v = m_cast(Cell*, cv);  // we're the system, we can do this
 
     if (IS_TRASH(cv))  // always false in release builds (no cost)
         return;
@@ -412,8 +412,8 @@ static void Propagate_All_GC_Marks(void)
         //
         assert(a->leader.bits & NODE_FLAG_MARKED);
 
-        RELVAL *v = ARR_HEAD(a);
-        const RELVAL *tail = ARR_TAIL(a);
+        Cell *v = ARR_HEAD(a);
+        const Cell *tail = ARR_TAIL(a);
         for (; v != tail; ++v) {
             if (GET_SERIES_FLAG(a, DYNAMIC))
                 Queue_Mark_Opt_Value_Deep(v);
@@ -650,8 +650,8 @@ static void Mark_Root_Series(void)
                     if (node_MISC(Node, a))
                         Queue_Mark_Node_Deep(&a->misc.any.node);
 
-                const RELVAL *item_tail = ARR_TAIL(a);
-                RELVAL *item = ARR_HEAD(a);
+                const Cell *item_tail = ARR_TAIL(a);
+                Cell *item = ARR_HEAD(a);
                 for (; item != item_tail; ++item)
                     Queue_Mark_Value_Deep(item);
             }
@@ -682,7 +682,7 @@ static void Mark_Root_Series(void)
 //
 static void Mark_Data_Stack(void)
 {
-    const RELVAL *head = ARR_HEAD(DS_Array);
+    const Cell *head = ARR_HEAD(DS_Array);
     assert(IS_TRASH(head));  // DS_AT(0) is deliberately invalid
 
     REBVAL *stackval = DS_Movable_Top;

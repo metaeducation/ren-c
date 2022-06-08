@@ -149,7 +149,7 @@ enum Reb_Gob_Type {
 #define VAL_XYF_Y(v)    PAYLOAD(Any, (v)).second.d32
 
 inline static REBVAL *Init_XYF(
-    RELVAL *out,
+    Cell *out,
     REBD32 x,  // 32-bit floating point type, typically just `float`...
     REBD32 y   // there's no standard: https://stackoverflow.com/a/18705626/
 ){
@@ -224,7 +224,7 @@ typedef struct gob_window {  // Maps gob to window
 #define GOB_PANE_VALUE(g)       ARR_AT((g), IDX_GOB_PANE)
 
 inline static REBARR *GOB_PANE(REBGOB *g) {
-    RELVAL *v = GOB_PANE_VALUE(g);
+    Cell *v = GOB_PANE_VALUE(g);
     if (IS_BLANK(v))
         return nullptr;
 
@@ -274,7 +274,7 @@ inline static void SET_GOB_OWNER(REBGOB *g, REBGOB *owner)
 extern REBGOB *Gob_Root;  // Top level GOB (the screen)
 extern REBTYP *EG_Gob_Type;
 
-inline static bool IS_GOB(const RELVAL *v)  // Note: QUOTED! does not count
+inline static bool IS_GOB(const Cell *v)  // Note: QUOTED! does not count
   { return IS_CUSTOM(v) and CELL_CUSTOM_TYPE(v) == EG_Gob_Type; }
 
 #if defined(NDEBUG) || (! CPLUSPLUS_11)
@@ -294,13 +294,13 @@ inline static bool IS_GOB(const RELVAL *v)  // Note: QUOTED! does not count
         return PAYLOAD(Any, v).second.u;
     }
 
-    inline static uintptr_t & VAL_GOB_INDEX(RELVAL *v) {
+    inline static uintptr_t & VAL_GOB_INDEX(Cell *v) {
         assert(CELL_CUSTOM_TYPE(VAL_UNESCAPED(v)) == EG_Gob_Type);
         return PAYLOAD(Any, v).second.u;
     }
 #endif
 
-inline static REBVAL *Init_Gob(RELVAL *out, REBGOB *g) {
+inline static REBVAL *Init_Gob(Cell *out, REBGOB *g) {
     assert(GET_SERIES_FLAG(g, MANAGED));
 
     RESET_CUSTOM_CELL(out, EG_Gob_Type, CELL_FLAG_FIRST_IS_NODE);

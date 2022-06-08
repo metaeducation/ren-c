@@ -608,17 +608,17 @@ union Reb_Series_Content {
         RawCell cells[1];
 
       #if DEBUG_USE_UNION_PUNS
-        char utf8_pun[sizeof(RELVAL)];  // debug watchlist insight into UTF-8
-        REBWCHAR ucs2_pun[sizeof(RELVAL)/sizeof(REBUNI)];  // wchar_t insight
+        char utf8_pun[sizeof(Cell)];  // debug watchlist insight into UTF-8
+        REBWCHAR ucs2_pun[sizeof(Cell)/sizeof(REBUNI)];  // wchar_t insight
       #endif
     } fixed;
 };
 
 #define SER_CELL(s) \
-    cast(const RELVAL*, &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
+    cast(const Cell*, &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
 
 #define mutable_SER_CELL(s) \
-    cast(RELVAL*, &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
+    cast(Cell*, &(s)->content.fixed.cells[0])  // unchecked ARR_SINGLE()
 
 
 union Reb_Series_Link {

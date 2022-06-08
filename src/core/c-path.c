@@ -31,7 +31,7 @@
 //  Try_Init_Any_Sequence_At_Arraylike_Core: C
 //
 REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
-    RELVAL *out,  // NULL if array is too short, violating value otherwise
+    Cell *out,  // NULL if array is too short, violating value otherwise
     enum Reb_Kind kind,
     const REBARR *a,
     REBSPC *specifier,
@@ -82,8 +82,8 @@ REBVAL *Try_Init_Any_Sequence_At_Arraylike_Core(
         return cast(REBVAL*, out);
     }
 
-    const RELVAL *tail = ARR_TAIL(a);
-    const RELVAL *v = ARR_HEAD(a);
+    const Cell *tail = ARR_TAIL(a);
+    const Cell *v = ARR_HEAD(a);
     for (; v != tail; ++v) {
         if (not Is_Valid_Sequence_Element(kind, v)) {
             Derelativize(out, v, specifier);
@@ -342,7 +342,7 @@ REB_R TO_Sequence(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
         fail (Error_Sequence_Too_Short_Raw());
 
     if (len == 2) {
-        const RELVAL *at = VAL_ARRAY_ITEM_AT(arg);
+        const Cell *at = VAL_ARRAY_ITEM_AT(arg);
         if (not Try_Init_Any_Sequence_Pairlike_Core(
             out,
             kind,

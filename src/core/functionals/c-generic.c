@@ -150,8 +150,8 @@ REBNATIVE(generic)
 REBARR *Startup_Generics(const REBVAL *boot_generics)
 {
     assert(VAL_INDEX(boot_generics) == 0); // should be at head, sanity check
-    const RELVAL *tail;
-    RELVAL *head = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, boot_generics);
+    const Cell *tail;
+    Cell *head = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, boot_generics);
     REBSPC *specifier = VAL_SPECIFIER(boot_generics);
 
     // Add SET-WORD!s that are top-level in the generics block to the lib
@@ -181,7 +181,7 @@ REBARR *Startup_Generics(const REBVAL *boot_generics)
 
     REBDSP dsp_orig = DSP;
 
-    RELVAL *item = head;
+    Cell *item = head;
     for (; item != tail; ++item)
         if (IS_SET_WORD(item)) {
             Derelativize(DS_PUSH(), item, specifier);

@@ -737,8 +737,8 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 Plainify(Copy_Cell(DS_PUSH(), temp));
             }
             else if (IS_BLOCK(temp)) {
-                const RELVAL *tail;
-                const RELVAL *v = VAL_ARRAY_AT(&tail, temp);
+                const Cell *tail;
+                const Cell *v = VAL_ARRAY_AT(&tail, temp);
                 for (; v != tail; ++v)
                     Derelativize(DS_PUSH(), v, VAL_SPECIFIER(temp));
             }
@@ -1300,8 +1300,8 @@ inline static REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
     REBLEN count = 0;
     if (ANY_ARRAY(res->data)) {
         if (res->broke) {  // cleanup markers, don't do removals
-            const RELVAL *tail;
-            RELVAL *temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, res->data);
+            const Cell *tail;
+            Cell *temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, res->data);
             for (; temp != tail; ++temp) {
                 if (GET_CELL_FLAG(temp, NOTE_REMOVE))
                     CLEAR_CELL_FLAG(temp, NOTE_REMOVE);
@@ -1311,9 +1311,9 @@ inline static REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 
         REBLEN len = VAL_LEN_HEAD(res->data);
 
-        const RELVAL *tail;
-        RELVAL *dest = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, res->data);
-        RELVAL *src = dest;
+        const Cell *tail;
+        Cell *dest = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, res->data);
+        Cell *src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
         // do is to pass up all the unmarked (kept) cells.
@@ -1525,7 +1525,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
             do {
                 assert(res->start <= len);
                 SET_CELL_FLAG(  // v-- okay to mark despite read only
-                    m_cast(RELVAL*, ARR_AT(VAL_ARRAY(res->data), res->start)),
+                    m_cast(Cell*, ARR_AT(VAL_ARRAY(res->data), res->start)),
                     NOTE_REMOVE
                 );
                 ++res->start;

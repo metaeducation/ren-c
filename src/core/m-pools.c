@@ -1117,7 +1117,7 @@ void Decay_Series(REBSER *s)
         break; }
 
       case FLAVOR_HANDLE: {
-        RELVAL *v = ARR_SINGLE(ARR(s));
+        Cell *v = ARR_SINGLE(ARR(s));
         assert(CELL_HEART_UNCHECKED(v) == REB_HANDLE);
 
         // Some handles use the managed form just because they want changes to

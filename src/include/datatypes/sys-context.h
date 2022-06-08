@@ -182,7 +182,7 @@ inline static REBCTX *CTX_FRAME_BINDING(REBCTX *c) {
 }
 
 inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind kind,
     REBARR *varlist
 ){
@@ -201,7 +201,7 @@ inline static void INIT_VAL_CONTEXT_ROOTVAR_Core(
     INIT_VAL_CONTEXT_ROOTVAR_Core(TRACK(out), (kind), (varlist))
 
 inline static void INIT_VAL_FRAME_ROOTVAR_Core(
-    RELVAL *out,
+    Cell *out,
     REBARR *varlist,
     REBACT *phase,
     REBCTX *binding  // allowed to be UNBOUND
@@ -293,7 +293,7 @@ inline static const REBKEY *CTX_KEY(REBCTX *c, REBLEN n) {
     return SER_AT(const REBKEY, CTX_KEYLIST(c), n - 1);
 }
 
-inline static REBVAR *CTX_VAR(REBCTX *c, REBLEN n) {  // 1-based, no RELVAL*
+inline static REBVAR *CTX_VAR(REBCTX *c, REBLEN n) {  // 1-based, no Cell*
     assert(NOT_SERIES_FLAG(CTX_VARLIST(c), INACCESSIBLE));
     assert(n != 0 and n <= CTX_LEN(c));
     return cast(REBVAR*, cast(REBSER*, c)->content.dynamic.data) + n;
@@ -430,7 +430,7 @@ inline static REBCTX *VAL_CONTEXT(noquote(const Cell*) v) {
 // a running frame gets re-executed.  More study is needed.
 //
 
-inline static void INIT_VAL_FRAME_BINDING(RELVAL *v, REBCTX *binding) {
+inline static void INIT_VAL_FRAME_BINDING(Cell *v, REBCTX *binding) {
     assert(
         IS_FRAME(v)  // may be marked protected (e.g. archetype)
         or IS_ACTION(v)  // used by UNWIND
@@ -461,7 +461,7 @@ inline static REBCTX *VAL_FRAME_BINDING(noquote(const Cell*) v) {
 // So extraction of the phase has to be sensitive to this.
 //
 
-inline static void INIT_VAL_FRAME_PHASE(RELVAL *v, REBACT *phase) {
+inline static void INIT_VAL_FRAME_PHASE(Cell *v, REBACT *phase) {
     assert(IS_FRAME(v));  // may be marked protected (e.g. archetype)
     INIT_VAL_FRAME_PHASE_OR_LABEL(v, phase);
 }
@@ -479,7 +479,7 @@ inline static bool IS_FRAME_PHASED(noquote(const Cell*) v) {
     return s and not IS_SYMBOL(s);
 }
 
-inline static option(const REBSYM*) VAL_FRAME_LABEL(const RELVAL *v) {
+inline static option(const REBSYM*) VAL_FRAME_LABEL(const Cell *v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (s and IS_SYMBOL(s))  // label in value
         return SYM(s);
@@ -487,7 +487,7 @@ inline static option(const REBSYM*) VAL_FRAME_LABEL(const RELVAL *v) {
 }
 
 inline static void INIT_VAL_FRAME_LABEL(
-    RELVAL *v,
+    Cell *v,
     option(const REBSTR*) label
 ){
     assert(IS_FRAME(v));
@@ -505,7 +505,7 @@ inline static void INIT_VAL_FRAME_LABEL(
 //
 // However, this does not mean that all functions should early extract a
 // VAL_CONTEXT() and then do all operations in terms of that...because this
-// potentially loses information present in the RELVAL* cell.  If the value
+// potentially loses information present in the Cell* cell.  If the value
 // is a frame, then the phase information conveys which fields should be
 // visible for that phase of execution and which aren't.
 //
@@ -530,7 +530,7 @@ inline static const REBKEY *VAL_CONTEXT_KEYS_HEAD(noquote(const Cell*) context)
 // the 0 slot of the context's varlist.
 //
 inline static REBVAL *Init_Any_Context(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind kind,
     REBCTX *c
 ){
@@ -551,7 +551,7 @@ inline static REBVAL *Init_Any_Context(
     Init_Any_Context((out), REB_PORT, (c))
 
 inline static REBVAL *Init_Frame(
-    RELVAL *out,
+    Cell *out,
     REBCTX *c,
     option(const REBSTR*) label  // nullptr (ANONYMOUS) is okay
 ){

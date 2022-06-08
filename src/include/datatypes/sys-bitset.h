@@ -55,7 +55,7 @@ inline static REBBIN *VAL_BITSET(noquote(const Cell*) v) {
 #define VAL_BITSET_ENSURE_MUTABLE(v) \
     m_cast(REBBIN*, VAL_BITSET(ENSURE_MUTABLE(v)))
 
-inline static REBVAL *Init_Bitset(RELVAL *out, REBBIN *bits) {
+inline static REBVAL *Init_Bitset(Cell *out, REBBIN *bits) {
     Reset_Cell_Header_Untracked(out, REB_BITSET, CELL_FLAG_FIRST_IS_NODE);
     ASSERT_SERIES_MANAGED(bits);
     INIT_VAL_NODE1(out, bits);

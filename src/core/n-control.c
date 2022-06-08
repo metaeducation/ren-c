@@ -922,7 +922,7 @@ REBNATIVE(switch)
 
             if (IS_BLOCK(f_value) or IS_META_BLOCK(f_value)) {
                 //
-                // f_value is RELVAL, can't Do_Branch
+                // f_value is Cell, can't Do_Branch
                 //
                 if (Do_Any_Array_At_Core_Throws(
                     RESET(OUT),
@@ -1121,8 +1121,8 @@ REBNATIVE(catch)
             //
             // Test all the words in the block for a match to catch
 
-            const RELVAL *tail;
-            const RELVAL *candidate = VAL_ARRAY_AT(&tail, ARG(name));
+            const Cell *tail;
+            const Cell *candidate = VAL_ARRAY_AT(&tail, ARG(name));
             for (; candidate != tail; candidate++) {
                 //
                 // !!! Should we test a typeset for illegal name types?

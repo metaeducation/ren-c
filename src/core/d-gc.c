@@ -43,7 +43,7 @@
 //
 // Note: We assume the binding was marked correctly if the type was bindable.
 //
-void Assert_Cell_Marked_Correctly(const RELVAL *v)
+void Assert_Cell_Marked_Correctly(const Cell *v)
 {
     enum Reb_Kind heart = CELL_HEART_UNCHECKED(v);
 
@@ -169,7 +169,7 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
             assert(v->header.bits & CELL_FLAG_FIRST_IS_NODE);
             assert(Is_Marked(a));
 
-            RELVAL *single = ARR_SINGLE(a);
+            Cell *single = ARR_SINGLE(a);
             assert(IS_HANDLE(single));
             assert(VAL_HANDLE_SINGULAR(single) == a);
             if (v != single) {
@@ -355,8 +355,8 @@ void Assert_Cell_Marked_Correctly(const RELVAL *v)
             assert(NOT_SERIES_FLAG(a, INACCESSIBLE));
 
             assert(ARR_LEN(a) >= 2);
-            const RELVAL *tail = ARR_TAIL(a);
-            const RELVAL *item = ARR_HEAD(a);
+            const Cell *tail = ARR_TAIL(a);
+            const Cell *item = ARR_HEAD(a);
             for (; item != tail; ++item)
                 assert(not ANY_PATH_KIND(VAL_TYPE_UNCHECKED(item)));
             assert(Is_Marked(a));
@@ -467,7 +467,7 @@ void Assert_Array_Marked_Correctly(const REBARR *a) {
     #endif
 
     if (IS_DETAILS(a)) {
-        const RELVAL *archetype = ARR_HEAD(a);
+        const Cell *archetype = ARR_HEAD(a);
         assert(IS_ACTION(archetype));
         assert(VAL_ACTION_BINDING(archetype) == UNBOUND);
 

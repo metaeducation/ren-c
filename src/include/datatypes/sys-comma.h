@@ -39,7 +39,7 @@
 // function, so `|` could be used for this in normal evaluation.)
 
 
-inline static REBVAL *Init_Comma(RELVAL *out) {
+inline static REBVAL *Init_Comma(Cell *out) {
     Reset_Cell_Header_Untracked(out, REB_COMMA, CELL_MASK_NONE);
 
     // Although COMMA! carries no data, it is not inert.  To make ANY_INERT()

@@ -193,8 +193,8 @@ static void Process_Block_Helper(
         "ensure block! select", config, "as word!", rebT(label)
     );
 
-    const RELVAL *tail;
-    const RELVAL *text = VAL_ARRAY_AT(&tail, block);
+    const Cell *tail;
+    const Cell *text = VAL_ARRAY_AT(&tail, block);
     for (; text != tail; ++text)
         Process_Text_Helper_Core(some_tcc_api, state, SPECIFIC(text), label);
 
@@ -465,8 +465,8 @@ REBNATIVE(compile_p)
     REBDSP dsp_orig = DSP;  // natives are pushed to the stack
 
     if (REF(files)) {
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, compilables);
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, compilables);
         for (; item != tail; ++item) {
             if (not IS_TEXT(item))
                 fail ("If COMPILE*/FILES, compilables must be TEXT! paths");
@@ -493,8 +493,8 @@ REBNATIVE(compile_p)
         DECLARE_MOLD (mo);  // Note: mold buffer is UTF-8
         Push_Mold(mo);
 
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, compilables);
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, compilables);
         for (; item != tail; ++item) {
             if (IS_ACTION(item)) {
                 assert(Is_User_Native(VAL_ACTION(item)));
@@ -506,8 +506,8 @@ REBNATIVE(compile_p)
                 Copy_Cell(DS_PUSH(), SPECIFIC(item));
 
                 REBARR *details = ACT_DETAILS(VAL_ACTION(item));
-                RELVAL *source = ARR_AT(details, IDX_NATIVE_BODY);
-                RELVAL *linkname = ARR_AT(details, IDX_TCC_NATIVE_LINKNAME);
+                Cell *source = ARR_AT(details, IDX_NATIVE_BODY);
+                Cell *linkname = ARR_AT(details, IDX_TCC_NATIVE_LINKNAME);
 
                 // !!! REBFRM is not exported by libRebol, though it could be
                 // opaquely...and there could be some very narrow routines for

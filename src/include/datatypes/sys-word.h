@@ -36,13 +36,13 @@ inline static OPT_SYMID VAL_WORD_ID(noquote(const Cell*) v) {
     return ID_OF_SYMBOL(VAL_WORD_SYMBOL(v));
 }
 
-inline static void INIT_VAL_WORD_INDEX(RELVAL *v, REBLEN i) {
+inline static void INIT_VAL_WORD_INDEX(Cell *v, REBLEN i) {
     assert(ANY_WORDLIKE(v));
     VAL_WORD_INDEX_U32(v) = i;
 }
 
 inline static REBVAL *Init_Any_Word_Untracked(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind kind,
     const REBSYM *sym
 ){
@@ -63,7 +63,7 @@ inline static REBVAL *Init_Any_Word_Untracked(
 #define Init_Meta_Word(out,str)     Init_Any_Word((out), REB_META_WORD, (str))
 
 inline static REBVAL *Init_Any_Word_Bound_Untracked(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind type,
     REBARR *binding,  // spelling determined by linked-to thing
     const REBSYM *symbol,
@@ -94,7 +94,7 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
             (type), CTX_VARLIST(context), (symbol), (index))
 
 inline static REBVAL *Init_Any_Word_Patched(  // e.g. LET or MODULE! var
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind type,
     REBARR *patch
 ){
@@ -127,23 +127,23 @@ inline static const REBSTR *Intern_Unsized_Managed(const char *utf8)
 // !!! The quick check that was here was undermined by words no longer always
 // storing their symbols in the word; this will likely have to hit a keylist.
 //
-inline static bool IS_BAR(const RELVAL *v) {
+inline static bool IS_BAR(const Cell *v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and VAL_WORD_SYMBOL(v) == Canon(BAR_1);  // caseless | always canon
 }
 
-inline static bool IS_BAR_BAR(const RELVAL *v) {
+inline static bool IS_BAR_BAR(const Cell *v) {
     return VAL_TYPE_UNCHECKED(v) == REB_WORD
         and VAL_WORD_SYMBOL(v) == Canon(_B_B);  // caseless || always canon
 }
 
-inline static bool IS_META(const RELVAL *v) {
+inline static bool IS_META(const Cell *v) {
     if (not IS_WORD(v))
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(CARET_1);
 }
 
-inline static bool IS_THE(const RELVAL *v) {
+inline static bool IS_THE(const Cell *v) {
     if (not IS_WORD(v))
         return false;
     return VAL_WORD_SYMBOL(v) == Canon(AT_1);

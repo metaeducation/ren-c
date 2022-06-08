@@ -81,13 +81,13 @@ enum {
 //
 bool Make_Invokable_From_Feed_Throws(
     REBVAL *out,
-    const RELVAL *first,  // if not END, override first value (vs. feed->value)
+    const Cell *first,  // if not END, override first value (vs. feed->value)
     REBFED *feed,
     bool error_on_deferred  // if not planning to keep running, can't ELSE/THEN
 ){
     assert(NOT_FEED_FLAG(feed, NEXT_ARG_FROM_OUT));  // not supported?
 
-    const RELVAL *v = IS_END(first) ? feed->value : first;
+    const Cell *v = IS_END(first) ? feed->value : first;
 
     // !!! The case of `([x]: @)` wants to make something which when it
     // evaluates becomes invisible.  There's no QUOTED! value that can do
@@ -240,7 +240,7 @@ bool Make_Invokable_From_Feed_Throws(
 //
 bool Make_Frame_From_Feed_Throws(
     REBVAL *out,
-    const RELVAL *first,
+    const Cell *first,
     REBFED *feed,
     bool error_on_deferred
 ){

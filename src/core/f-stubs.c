@@ -34,7 +34,7 @@
 // Allow multiple types. Throw error if not valid.
 // Note that the result is one-based.
 //
-REBINT Get_Num_From_Arg(const RELVAL *val)
+REBINT Get_Num_From_Arg(const Cell *val)
 {
     REBINT n;
 
@@ -75,7 +75,7 @@ REBINT Float_Int16(REBD32 f)
 //
 //  Int32: C
 //
-REBINT Int32(const RELVAL *val)
+REBINT Int32(const Cell *val)
 {
     if (IS_DECIMAL(val)) {
         if (VAL_DECIMAL(val) > INT32_MAX or VAL_DECIMAL(val) < INT32_MIN)
@@ -105,7 +105,7 @@ out_of_range:
 //     1: >  0
 //    -1: <  0
 //
-REBINT Int32s(const RELVAL *val, REBINT sign)
+REBINT Int32s(const Cell *val, REBINT sign)
 {
     REBINT n;
 
@@ -225,7 +225,7 @@ const REBVAL *Datatype_From_Kind(enum Reb_Kind kind)
 // Returns the datatype value for the given value.
 // The datatypes are all at the head of the context.
 //
-const REBVAL *Type_Of(const RELVAL *value)
+const REBVAL *Type_Of(const Cell *value)
 {
     return Datatype_From_Kind(VAL_TYPE(value));
 }

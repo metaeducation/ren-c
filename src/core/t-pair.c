@@ -73,16 +73,16 @@ REB_R MAKE_Pair(
         return out;
     }
 
-    const RELVAL *x;
-    const RELVAL *y;
+    const Cell *x;
+    const Cell *y;
 
     if (ANY_NUMBER(arg)) {
         x = arg;
         y = arg;
     }
     else if (IS_BLOCK(arg)) {
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, arg);
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, arg);
 
         if (ANY_NUMBER(item))
             x = item;
@@ -161,7 +161,7 @@ void MF_Pair(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 
 REBINT Index_From_Picker_For_Pair(
     const REBVAL *pair,
-    const RELVAL *picker
+    const Cell *picker
 ){
     UNUSED(pair); // Might the picker be pair-sensitive?
 
@@ -219,7 +219,7 @@ REBTYPE(Pair)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
         const REBVAL *which = (n == 1) ? VAL_PAIR_X(v) : VAL_PAIR_Y(v);
 
@@ -232,7 +232,7 @@ REBTYPE(Pair)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         REBINT n = Index_From_Picker_For_Pair(v, picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));

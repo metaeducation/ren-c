@@ -260,8 +260,8 @@ void Mold_Array_At(
 
     bool first_item = true;
 
-    const RELVAL *item_tail = ARR_TAIL(a);
-    const RELVAL *item = ARR_AT(a, index);
+    const Cell *item_tail = ARR_TAIL(a);
+    const Cell *item = ARR_AT(a, index);
     while (item != item_tail) {
         if (GET_CELL_FLAG(item, NEWLINE_BEFORE)) {
            if (not indented and (sep[1] != '\0')) {
@@ -318,7 +318,7 @@ void Form_Array_At(
 
     REBINT n;
     for (n = 0; n < len;) {
-        const RELVAL *item = ARR_AT(array, index + n);
+        const Cell *item = ARR_AT(array, index + n);
         REBVAL *wval = nullptr;
         if (context and (IS_WORD(item) or IS_GET_WORD(item))) {
             wval = Select_Symbol_In_Context(
@@ -431,9 +431,9 @@ void Mold_Or_Form_Cell(
 //
 // Mold or form any value to string series tail.
 //
-void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
+void Mold_Or_Form_Value(REB_MOLD *mo, const Cell *v, bool form)
 {
-    // Mold hooks take a noquote cell and not a RELVAL*, so they expect any
+    // Mold hooks take a noquote cell and not a Cell*, so they expect any
     // quotes applied to have already been done.
 
   #if DEBUG_UNREADABLE_TRASH
@@ -461,7 +461,7 @@ void Mold_Or_Form_Value(REB_MOLD *mo, const RELVAL *v, bool form)
 //
 // Form a value based on the mold opts provided.
 //
-REBSTR *Copy_Mold_Or_Form_Value(const RELVAL *v, REBFLGS opts, bool form)
+REBSTR *Copy_Mold_Or_Form_Value(const Cell *v, REBFLGS opts, bool form)
 {
     DECLARE_MOLD (mo);
     mo->opts = opts;

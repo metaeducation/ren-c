@@ -54,7 +54,7 @@
 //
 //  Dump_Frame_Location: C
 //
-void Dump_Frame_Location(const RELVAL *v, REBFRM *f)
+void Dump_Frame_Location(const Cell *v, REBFRM *f)
 {
     DECLARE_LOCAL (dump);
 

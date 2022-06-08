@@ -76,39 +76,39 @@ inline static bool Has_File_Line(const REBARR *a) {
 // HEAD, TAIL, and LAST refer to specific value pointers in the array.  Since
 // empty arrays have no "last" value then ARR_LAST should not be called on it.
 
-inline static RELVAL *ARR_AT(const_if_c REBARR *a, REBLEN n)
-  { return SER_AT(RELVAL, a, n); }
+inline static Cell *ARR_AT(const_if_c REBARR *a, REBLEN n)
+  { return SER_AT(Cell, a, n); }
 
-inline static RELVAL *ARR_HEAD(const_if_c REBARR *a)
-  { return SER_HEAD(RELVAL, a); }
+inline static Cell *ARR_HEAD(const_if_c REBARR *a)
+  { return SER_HEAD(Cell, a); }
 
-inline static RELVAL *ARR_TAIL(const_if_c REBARR *a)
-  { return SER_TAIL(RELVAL, a); }
+inline static Cell *ARR_TAIL(const_if_c REBARR *a)
+  { return SER_TAIL(Cell, a); }
 
-inline static RELVAL *ARR_LAST(const_if_c REBARR *a)
-  { return SER_LAST(RELVAL, a); }
+inline static Cell *ARR_LAST(const_if_c REBARR *a)
+  { return SER_LAST(Cell, a); }
 
-inline static RELVAL *ARR_SINGLE(const_if_c REBARR *a) {
+inline static Cell *ARR_SINGLE(const_if_c REBARR *a) {
     assert(NOT_SERIES_FLAG(a, DYNAMIC));
-    return cast(RELVAL*, &a->content.fixed);
+    return cast(Cell*, &a->content.fixed);
 }
 
 #if CPLUSPLUS_11
-    inline static const RELVAL *ARR_AT(const REBARR *a, REBLEN n)
-        { return SER_AT(const RELVAL, a, n); }
+    inline static const Cell *ARR_AT(const REBARR *a, REBLEN n)
+        { return SER_AT(const Cell, a, n); }
 
-    inline static const RELVAL *ARR_HEAD(const REBARR *a)
-        { return SER_HEAD(const RELVAL, a); }
+    inline static const Cell *ARR_HEAD(const REBARR *a)
+        { return SER_HEAD(const Cell, a); }
 
-    inline static const RELVAL *ARR_TAIL(const REBARR *a)
-        { return SER_TAIL(const RELVAL, a); }
+    inline static const Cell *ARR_TAIL(const REBARR *a)
+        { return SER_TAIL(const Cell, a); }
 
-    inline static const RELVAL *ARR_LAST(const REBARR *a)
-        { return SER_LAST(const RELVAL, a); }
+    inline static const Cell *ARR_LAST(const REBARR *a)
+        { return SER_LAST(const Cell, a); }
 
-    inline static const RELVAL *ARR_SINGLE(const REBARR *a) {
+    inline static const Cell *ARR_SINGLE(const REBARR *a) {
         assert(NOT_SERIES_FLAG(a, DYNAMIC));
-        return cast(const RELVAL*, &a->content.fixed);
+        return cast(const Cell*, &a->content.fixed);
     }
 #endif
 
@@ -116,10 +116,10 @@ inline static RELVAL *ARR_SINGLE(const_if_c REBARR *a) {
 // It's possible to calculate the array from just a cell if you know it's a
 // cell inside a singular array.
 //
-inline static REBARR *Singular_From_Cell(const RELVAL *v) {
+inline static REBARR *Singular_From_Cell(const Cell *v) {
     REBARR *singular = ARR(  // some checking in debug builds is done by ARR()
         cast(void*,
-            cast(REBYTE*, m_cast(RELVAL*, v))
+            cast(REBYTE*, m_cast(Cell*, v))
             - offsetof(struct Reb_Series, content)
         )
     );
@@ -153,7 +153,7 @@ inline static void Prep_Array(
 ){
     assert(GET_SERIES_FLAG(a, DYNAMIC));
 
-    RELVAL *prep = ARR_HEAD(a);
+    Cell *prep = ARR_HEAD(a);
 
     if (NOT_SERIES_FLAG(a, FIXED_SIZE)) {
         //
@@ -420,7 +420,7 @@ inline static const REBARR *VAL_ARRAY(noquote(const Cell*) v) {
 // of bounds of the data.  If a function can deal with such out of bounds
 // arrays meaningfully, it should work with VAL_INDEX_UNBOUNDED().
 //
-inline static const RELVAL *VAL_ARRAY_LEN_AT(
+inline static const Cell *VAL_ARRAY_LEN_AT(
     option(REBLEN*) len_at_out,
     noquote(const Cell*) v
 ){
@@ -434,8 +434,8 @@ inline static const RELVAL *VAL_ARRAY_LEN_AT(
     return ARR_AT(arr, i);
 }
 
-inline static const RELVAL *VAL_ARRAY_AT(
-    option(const RELVAL**) tail_out,
+inline static const Cell *VAL_ARRAY_AT(
+    option(const Cell**) tail_out,
     noquote(const Cell*) v
 ){
     const REBARR *arr = VAL_ARRAY(v);
@@ -443,19 +443,19 @@ inline static const RELVAL *VAL_ARRAY_AT(
     REBLEN len = ARR_LEN(arr);
     if (i < 0 or i > cast(REBIDX, len))
         fail (Error_Index_Out_Of_Range_Raw());
-    const RELVAL *at = ARR_AT(arr, i);
+    const Cell *at = ARR_AT(arr, i);
     if (tail_out)  // inlining should remove this if() for no tail
         *unwrap(tail_out) = at + (len - i);
     return at;
 }
 
-inline static const RELVAL *VAL_ARRAY_AT_HEAD_T(
-    option(const RELVAL**) tail_out,
+inline static const Cell *VAL_ARRAY_AT_HEAD_T(
+    option(const Cell**) tail_out,
     noquote(const Cell*) v
 ){
     const REBARR *arr = VAL_ARRAY(v);
     REBIDX i = VAL_INDEX_RAW(v);  // VAL_ARRAY() already checks it's series
-    const RELVAL *at = ARR_AT(arr, i);
+    const Cell *at = ARR_AT(arr, i);
     if (tail_out) {  // inlining should remove this if() for no tail
         REBLEN len = ARR_LEN(arr);
         *unwrap(tail_out) = at + len;
@@ -463,19 +463,19 @@ inline static const RELVAL *VAL_ARRAY_AT_HEAD_T(
     return at;
 }
 
-inline static const RELVAL *VAL_ARRAY_ITEM_AT(noquote(const Cell*) v) {
-    const RELVAL *tail;
-    const RELVAL *item = VAL_ARRAY_AT(&tail, v);
+inline static const Cell *VAL_ARRAY_ITEM_AT(noquote(const Cell*) v) {
+    const Cell *tail;
+    const Cell *item = VAL_ARRAY_AT(&tail, v);
     assert(item != tail);  // should be a valid value
     return item;
 }
 
 
 #define VAL_ARRAY_AT_ENSURE_MUTABLE(tail_out,v) \
-    m_cast(RELVAL*, VAL_ARRAY_AT((tail_out), ENSURE_MUTABLE(v)))
+    m_cast(Cell*, VAL_ARRAY_AT((tail_out), ENSURE_MUTABLE(v)))
 
 #define VAL_ARRAY_KNOWN_MUTABLE_AT(tail_out,v) \
-    m_cast(RELVAL*, VAL_ARRAY_AT((tail_out), KNOWN_MUTABLE(v)))
+    m_cast(Cell*, VAL_ARRAY_AT((tail_out), KNOWN_MUTABLE(v)))
 
 
 // !!! R3-Alpha introduced concepts of immutable series with PROTECT, but
@@ -488,7 +488,7 @@ inline static const RELVAL *VAL_ARRAY_ITEM_AT(noquote(const Cell*) v) {
 // calls to this function get mutable access on non-mutable series.  :-/
 //
 #define VAL_ARRAY_AT_MUTABLE_HACK(tail_out,v) \
-    m_cast(RELVAL*, VAL_ARRAY_AT((tail_out), (v)))
+    m_cast(Cell*, VAL_ARRAY_AT((tail_out), (v)))
 
 #define VAL_ARRAY_TAIL(v) \
   ARR_TAIL(VAL_ARRAY(v))
@@ -505,8 +505,8 @@ inline static const RELVAL *VAL_ARRAY_ITEM_AT(noquote(const Cell*) v) {
 // head because it's taking an index.  So  it looks weird enough to suggest
 // looking here for what the story is.
 //
-inline static const RELVAL *VAL_ARRAY_AT_HEAD(
-    const RELVAL *v,
+inline static const Cell *VAL_ARRAY_AT_HEAD(
+    const Cell *v,
     REBLEN n
 ){
     const REBARR *a = VAL_ARRAY(v);  // debug build checks it's ANY-ARRAY!
@@ -521,7 +521,7 @@ inline static const RELVAL *VAL_ARRAY_AT_HEAD(
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 inline static REBVAL *Init_Any_Array_At_Core(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind kind,
     const_if_c REBARR *array,
     REBLEN index,
@@ -538,7 +538,7 @@ inline static REBVAL *Init_Any_Array_At_Core(
 
 #if CPLUSPLUS_11
     inline static REBVAL *Init_Any_Array_At_Core(
-        RELVAL *out,
+        Cell *out,
         enum Reb_Kind kind,
         const REBARR *array,  // all const arrays should be already managed
         REBLEN index,
@@ -558,8 +558,8 @@ inline static REBVAL *Init_Any_Array_At_Core(
 #define Init_Group(v,s)     Init_Any_Array((v), REB_GROUP, (s))
 
 
-inline static RELVAL *Init_Relative_Block_At(
-    RELVAL *out,
+inline static Cell *Init_Relative_Block_At(
+    Cell *out,
     REBACT *action,  // action to which array has relative bindings
     REBARR *array,
     REBLEN index

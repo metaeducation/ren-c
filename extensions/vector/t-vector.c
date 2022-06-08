@@ -35,7 +35,7 @@
 // Ren-C vectors are built on type of BINARY!.  This means that the memory
 // must be read via memcpy() in order to avoid strict aliasing violations.
 //
-REBVAL *Get_Vector_At(RELVAL *out, noquote(const Cell*) vec, REBLEN n)
+REBVAL *Get_Vector_At(Cell *out, noquote(const Cell*) vec, REBLEN n)
 {
     REBYTE *data = VAL_VECTOR_HEAD(vec);
 
@@ -112,7 +112,7 @@ REBVAL *Get_Vector_At(RELVAL *out, noquote(const Cell*) vec, REBLEN n)
 }
 
 
-static void Set_Vector_At(noquote(const Cell*) vec, REBLEN n, const RELVAL *set) {
+static void Set_Vector_At(noquote(const Cell*) vec, REBLEN n, const Cell *set) {
     assert(IS_INTEGER(set) or IS_DECIMAL(set));  // caller should error
 
     REBYTE *data = VAL_VECTOR_HEAD(vec);
@@ -236,8 +236,8 @@ void Set_Vector_Row(
     REBLEN idx = VAL_INDEX(blk);
 
     if (IS_BLOCK(blk)) {
-        const RELVAL *tail;
-        const RELVAL *val = VAL_ARRAY_AT(&tail, blk);
+        const Cell *tail;
+        const Cell *val = VAL_ARRAY_AT(&tail, blk);
 
         REBLEN n = 0;
         for (; val != tail; ++val) {
@@ -271,7 +271,7 @@ REBARR *Vector_To_Array(const REBVAL *vect)
         fail (vect);
 
     REBARR *arr = Make_Array(len);
-    RELVAL *dest = ARR_HEAD(arr);
+    Cell *dest = ARR_HEAD(arr);
     REBLEN n;
     for (n = VAL_INDEX(vect); n < VAL_LEN_HEAD(vect); ++n, ++dest)
         Get_Vector_At(dest, vect, n);
@@ -365,11 +365,11 @@ void Shuffle_Vector(REBVAL *vect, bool secure)
 //
 bool Make_Vector_Spec(
     REBVAL *out,
-    const RELVAL *block,
+    const Cell *block,
     REBSPC *specifier
 ){
-    const RELVAL *tail;
-    const RELVAL *item = VAL_ARRAY_AT(&tail, block);
+    const Cell *tail;
+    const Cell *item = VAL_ARRAY_AT(&tail, block);
 
     // The specifier would be needed if variables were going to be looked
     // up, but isn't required for just symbol comparisons or extracting
@@ -528,7 +528,7 @@ REBINT CT_Vector(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 //
 //  Pick_Vector: C
 //
-void Pick_Vector(REBVAL *out, const REBVAL *value, const RELVAL *picker) {
+void Pick_Vector(REBVAL *out, const REBVAL *value, const Cell *picker) {
     REBINT n;
     if (IS_INTEGER(picker) or IS_DECIMAL(picker)) // #2312
         n = Int32(picker);
@@ -559,7 +559,7 @@ void Pick_Vector(REBVAL *out, const REBVAL *value, const RELVAL *picker) {
 //
 void Poke_Vector_Fail_If_Read_Only(
     REBVAL *value,
-    const RELVAL *picker,
+    const Cell *picker,
     const REBVAL *poke
 ){
     // Because the vector uses Alloc_Pairing() for its 2-cells-of value,
@@ -608,7 +608,7 @@ REBTYPE(Vector)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
 
         Pick_Vector(OUT, v, picker);
         return OUT; }
@@ -620,7 +620,7 @@ REBTYPE(Vector)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 

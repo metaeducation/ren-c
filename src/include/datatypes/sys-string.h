@@ -637,7 +637,7 @@ inline static REBSIZ VAL_SIZE_LIMIT_AT(
 #define VAL_SIZE_AT(v) \
     VAL_SIZE_LIMIT_AT(nullptr, v, UNLIMITED)
 
-inline static REBSIZ VAL_OFFSET(const RELVAL *v) {
+inline static REBSIZ VAL_OFFSET(const Cell *v) {
     return VAL_STRING_AT(v) - STR_HEAD(VAL_STRING(v));
 }
 
@@ -769,7 +769,7 @@ inline static REBLEN Num_Codepoints_For_Bytes(
 // initialize, and the C++ build can also validate managed consistent w/const.
 
 inline static REBVAL *Init_Any_String_At(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind kind,
     const_if_c REBSTR *str,
     REBLEN index
@@ -786,7 +786,7 @@ inline static REBVAL *Init_Any_String_At(
 
 #if CPLUSPLUS_11
     inline static REBVAL *Init_Any_String_At(
-        RELVAL *out,
+        Cell *out,
         enum Reb_Kind kind,
         const REBSTR *str,
         REBLEN index

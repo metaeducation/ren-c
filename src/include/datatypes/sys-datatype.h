@@ -60,7 +60,7 @@ inline static enum Reb_Kind VAL_TYPE_KIND(noquote(const Cell*) v) {
 // the early 64-ish symbol IDs in lib, so just use kind as an index.
 //
 inline static REBVAL *Init_Builtin_Datatype(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind kind
 ){
     assert(kind > REB_0 and kind < REB_MAX);
@@ -76,7 +76,7 @@ inline static REBVAL *Init_Builtin_Datatype(
 // a URL, so that there is a way of MAKE-ing them.
 //
 inline static REBVAL *Init_Custom_Datatype(
-    RELVAL *out,
+    Cell *out,
     const REBTYP *type
 ){
     Reset_Cell_Header_Untracked(

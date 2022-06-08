@@ -44,8 +44,8 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     if (not IS_BLOCK(arg))
         fail (arg);
 
-    const RELVAL *tail;
-    const RELVAL *item = VAL_ARRAY_AT(&tail, arg);
+    const Cell *tail;
+    const Cell *item = VAL_ARRAY_AT(&tail, arg);
 
     struct Reb_Collector collector;
     //
@@ -73,7 +73,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
     // Should it allow ANY-WORD!?  Restrict to just SET-WORD!?
     //
   blockscope {
-    const RELVAL *word;
+    const Cell *word;
     for (word = item; word != tail; word += 2) {
         if (not IS_WORD(word) and not IS_SET_WORD(word)) {
             error = Error_Bad_Value(word);
@@ -105,7 +105,7 @@ static void Append_To_Context(REBVAL *context, REBVAL *arg)
   }  // end the non-module part
 
   blockscope {  // Set new values to obj words
-    const RELVAL *word = item;
+    const Cell *word = item;
     for (; word != tail; word += 2) {
         const REBSYM *symbol = VAL_WORD_SYMBOL(word);
         REBVAR *var;
@@ -603,8 +603,8 @@ REB_R MAKE_Context(
         : cast(REBCTX*, nullptr);  // C++98 ambiguous w/o cast
 
     if (IS_BLOCK(arg)) {
-        const RELVAL *tail;
-        const RELVAL *at = VAL_ARRAY_AT(&tail, arg);
+        const Cell *tail;
+        const Cell *at = VAL_ARRAY_AT(&tail, arg);
 
         REBCTX *ctx = Make_Context_Detect_Managed(
             kind,
@@ -775,7 +775,7 @@ REBCTX *Copy_Context_Extra_Managed(
         SERIES_MASK_VARLIST | NODE_FLAG_MANAGED,
         nullptr // original_array, N/A because LINK()/MISC() used otherwise
     );
-    RELVAL *dest = ARR_HEAD(varlist);
+    Cell *dest = ARR_HEAD(varlist);
 
     // The type information and fields in the rootvar (at head of the varlist)
     // get filled in with a copy, but the varlist needs to be updated in the
@@ -1091,7 +1091,7 @@ REB_R Context_Common_Action_Maybe_Unhandled(
 }
 
 
-const REBSYM *Symbol_From_Picker(const REBVAL *context, const RELVAL *picker)
+const REBSYM *Symbol_From_Picker(const REBVAL *context, const Cell *picker)
 {
     UNUSED(context);  // Might the picker be context-sensitive?
 
@@ -1126,7 +1126,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         const REBSYM *symbol = Symbol_From_Picker(context, picker);
 
         const REBVAL *var = TRY_VAL_CONTEXT_VAR(context, symbol);
@@ -1142,7 +1142,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         const REBSYM *symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
@@ -1162,7 +1162,7 @@ REBTYPE(Context)
         INCLUDE_PARAMS_OF_PROTECT_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         const REBSYM *symbol = Symbol_From_Picker(context, picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
@@ -1386,8 +1386,8 @@ REBNATIVE(construct)
     // refinement was passed in.
     //
   blockscope {
-    const RELVAL *tail;
-    RELVAL *at = VAL_ARRAY_AT_MUTABLE_HACK(&tail, spec);
+    const Cell *tail;
+    Cell *at = VAL_ARRAY_AT_MUTABLE_HACK(&tail, spec);
     if (REF(only)) {
         Init_Object(
             OUT,
@@ -1406,8 +1406,8 @@ REBNATIVE(construct)
     // Scan the object for top-level set words in order to make an
     // appropriately sized context.
     //
-    const RELVAL *tail;
-    RELVAL *at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, spec);
+    const Cell *tail;
+    Cell *at = VAL_ARRAY_AT_ENSURE_MUTABLE(&tail, spec);
 
     REBCTX *ctx = Make_Context_Detect_Managed(
         parent ? CTX_TYPE(parent) : REB_OBJECT,  // !!! Presume object?

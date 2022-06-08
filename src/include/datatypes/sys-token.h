@@ -46,7 +46,7 @@ inline static bool IS_CHAR_CELL(noquote(const Cell*) v) {
     return EXTRA(Bytes, v).exactly_4[IDX_EXTRA_LEN] <= 1;  // codepoint
 }
 
-inline static bool IS_CHAR(const RELVAL *v) {
+inline static bool IS_CHAR(const Cell *v) {
     if (not IS_ISSUE(v))
         return false;
     return IS_CHAR_CELL(v);
@@ -80,7 +80,7 @@ inline static const REBYTE *VAL_CHAR_ENCODED(noquote(const Cell*) v) {
 }
 
 inline static REBVAL *Init_Issue_Utf8(
-    RELVAL *out,
+    Cell *out,
     REBCHR(const*) utf8,  // previously validated UTF-8 (maybe not null term?)
     REBSIZ size,
     REBLEN len  // while validating, you should have counted the codepoints
@@ -106,7 +106,7 @@ inline static REBVAL *Init_Issue_Utf8(
 // If you know that a codepoint is good (e.g. it came from an ANY-STRING!)
 // this routine can be used.
 //
-inline static REBVAL *Init_Char_Unchecked_Untracked(RELVAL *out, REBUNI c) {
+inline static REBVAL *Init_Char_Unchecked_Untracked(Cell *out, REBUNI c) {
     Reset_Cell_Header_Untracked(out, REB_ISSUE, CELL_MASK_NONE);
 
     if (c == 0) {
@@ -137,7 +137,7 @@ inline static REBVAL *Init_Char_Unchecked_Untracked(RELVAL *out, REBUNI c) {
 #define Init_Char_Unchecked(out,c) \
     Init_Char_Unchecked_Untracked(TRACK(out), (c))
 
-inline static REBVAL *Init_Char_May_Fail_Untracked(RELVAL *out, REBUNI c) {
+inline static REBVAL *Init_Char_May_Fail_Untracked(Cell *out, REBUNI c) {
     if (c > MAX_UNI) {
         DECLARE_LOCAL (temp);
         fail (Error_Codepoint_Too_High_Raw(Init_Integer(temp, c)));
@@ -199,10 +199,10 @@ inline static REBVAL *Init_Char_May_Fail_Untracked(RELVAL *out, REBUNI c) {
 // it is also length 0.
 //
 
-inline static REBVAL *Init_Blackhole(RELVAL *out)
+inline static REBVAL *Init_Blackhole(Cell *out)
   { return Init_Char_Unchecked(out, 0); }
 
-inline static bool Is_Blackhole(const RELVAL *v) {
+inline static bool Is_Blackhole(const Cell *v) {
     if (not IS_CHAR(v))
         return false;
 
@@ -230,7 +230,7 @@ inline static bool Is_Blackhole(const RELVAL *v) {
 //
 inline static const REBYTE *VAL_BYTES_LIMIT_AT(
     REBSIZ *size_out,
-    const RELVAL *v,
+    const Cell *v,
     REBINT limit
 ){
     if (limit == UNLIMITED or limit > cast(REBINT, VAL_LEN_AT(v)))

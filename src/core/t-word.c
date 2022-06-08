@@ -173,7 +173,7 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
         REBLEN len = VAL_SEQUENCE_LEN(arg);
         REBLEN i;
         for (i = 0; i < len; ++i) {
-            const RELVAL *item = VAL_SEQUENCE_AT(temp, arg, i);
+            const Cell *item = VAL_SEQUENCE_AT(temp, arg, i);
             if (IS_BLANK(item))
                 continue;
             if (not IS_WORD(item))

@@ -132,8 +132,8 @@ REBTYPE(Datatype)
 
             REBVAR *var = CTX_VARS_HEAD(context);
 
-            const RELVAL *item_tail = ARR_TAIL(VAL_TYPE_SPEC(type));
-            RELVAL *item = ARR_HEAD(VAL_TYPE_SPEC(type));
+            const Cell *item_tail = ARR_TAIL(VAL_TYPE_SPEC(type));
+            Cell *item = ARR_HEAD(VAL_TYPE_SPEC(type));
 
             for (; key != key_tail; ++key, ++var) {
                 if (item == item_tail)
@@ -216,7 +216,7 @@ static void Startup_Fake_Type_Constraint(SYMID sym)
 //
 // Called on META-WORD!s by PARSE and MATCH.
 //
-bool Matches_Fake_Type_Constraint(const RELVAL *v, enum Reb_Symbol_Id sym) {
+bool Matches_Fake_Type_Constraint(const Cell *v, enum Reb_Symbol_Id sym) {
     switch (sym) {
       case SYM_CHAR_X:
         return IS_CHAR(v);
@@ -254,8 +254,8 @@ REBARR *Startup_Datatypes(REBARR *boot_types, REBARR *boot_typespecs)
     if (ARR_LEN(boot_types) != REB_MAX - 1)  // exclude REB_0_VOID
         panic (boot_types);  // other types/internals should have a WORD!
 
-    const RELVAL *word_tail = ARR_TAIL(boot_types);
-    RELVAL *word = ARR_HEAD(boot_types);
+    const Cell *word_tail = ARR_TAIL(boot_types);
+    Cell *word = ARR_HEAD(boot_types);
 
     if (VAL_WORD_ID(word) != SYM_NULL)
         panic (word);  // First internal byte type is NULL at 1

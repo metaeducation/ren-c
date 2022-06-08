@@ -75,7 +75,7 @@
 //
 
 inline static REBVAL *Init_Any_Word_Untracked(
-    RELVAL *out,
+    Cell *out,
     enum Reb_Kind kind,
     const REBSYM *sym
 );
@@ -100,7 +100,7 @@ inline static option(const REBSYM*) VAL_BAD_WORD_LABEL(
     return cast(const REBSYM*, VAL_NODE1(v));
 }
 
-inline static OPT_SYMID VAL_BAD_WORD_ID(const RELVAL *v) {
+inline static OPT_SYMID VAL_BAD_WORD_ID(const Cell *v) {
     assert(IS_BAD_WORD(v));
     assert(GET_CELL_FLAG(v, FIRST_IS_NODE));
     if (not VAL_NODE1(v))
@@ -121,7 +121,7 @@ inline static OPT_SYMID VAL_BAD_WORD_ID(const RELVAL *v) {
 // probably better to reserve it to mean something else for other types.
 
 inline static bool Is_Isotope_With_Id(
-    const RELVAL *v,
+    const Cell *v,
     enum Reb_Symbol_Id id  // want to take ID instead of canon, faster check!
 ){
     if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
@@ -129,14 +129,14 @@ inline static bool Is_Isotope_With_Id(
     return cast(REBLEN, id) == cast(REBLEN, VAL_BAD_WORD_ID(v));
 }
 
-inline static bool Is_Isotope(const RELVAL *v) {
+inline static bool Is_Isotope(const Cell *v) {
     if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
         return false;
     return true;
 }
 
 inline static REBVAL *Init_Isotope_Untracked(
-    RELVAL *out,
+    Cell *out,
     option(const REBSYM*) label
 ){
     return Init_Bad_Word_Untracked(out, label, CELL_FLAG_ISOTOPE);
@@ -177,7 +177,7 @@ inline static REBVAL *Init_Isotope_Untracked(
 #define Is_None(v)                  Is_Isotope_With_Id((v), SYM_0)
 #define Init_Meta_Of_None(out)      Init_Bad_Word((out), nullptr)
 
-inline static bool Is_Meta_Of_None(const RELVAL *v)
+inline static bool Is_Meta_Of_None(const Cell *v)
   { return IS_BAD_WORD(v) and VAL_BAD_WORD_ID(v) == SYM_0; }
 
 
@@ -202,13 +202,13 @@ inline static bool Is_Meta_Of_None(const RELVAL *v)
 #define Is_Void_Isotope(v)                  Is_Isotope_With_Id(v, SYM_VOID)
 #define Init_Meta_Of_Void_Isotope(out)      Init_Bad_Word((out), Canon(VOID))
 
-inline static bool Is_Meta_Of_Void_Isotope(const RELVAL *v)
+inline static bool Is_Meta_Of_Void_Isotope(const Cell *v)
   { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(VOID); }
 
 #define Init_Meta_Of_Void(out) \
     Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(VOID))
 
-inline static bool Is_Meta_Of_Void(const RELVAL *v)
+inline static bool Is_Meta_Of_Void(const Cell *v)
   { return IS_THE_WORD(v) and VAL_WORD_SYMBOL(v) == Canon(VOID); }
 
 
@@ -246,7 +246,7 @@ inline static bool Is_Meta_Of_Void(const RELVAL *v)
 #define Is_Null_Isotope(v)                  Is_Isotope_With_Id(v, SYM_NULL)
 #define Init_Meta_Of_Null_Isotope(out)      Init_Bad_Word((out), Canon(NULL))
 
-inline static bool Is_Meta_Of_Null_Isotope(const RELVAL *v)
+inline static bool Is_Meta_Of_Null_Isotope(const Cell *v)
   { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(NULL); }
 
 
@@ -264,22 +264,22 @@ inline static bool Is_Meta_Of_Null_Isotope(const RELVAL *v)
 #define Is_End_Isotope(v)                  Is_Isotope_With_Id(v, SYM_END)
 #define Init_Meta_Of_End_Isotope(out)      Init_Bad_Word((out), Canon(END))
 
-inline static bool Is_Meta_Of_End_Isotope(const RELVAL *v)
+inline static bool Is_Meta_Of_End_Isotope(const Cell *v)
   { return IS_BAD_WORD(v) and VAL_BAD_WORD_LABEL(v) == Canon(END); }
 
 
 #define Init_Meta_Of_End(out) \
     Init_Any_Word_Untracked(TRACK(out), REB_THE_WORD, Canon(END))
 
-inline static bool Is_Meta_Of_End(const RELVAL *v)
+inline static bool Is_Meta_Of_End(const Cell *v)
   { return IS_THE_WORD(v) and VAL_WORD_SYMBOL(v) == Canon(END); }
 
 
 //=//// ISOTOPIC DECAY /////////////////////////////////////////////////////=//
 
-inline static REBVAL *Init_Blackhole(RELVAL *out);  // defined in %sys-token.h
+inline static REBVAL *Init_Blackhole(Cell *out);  // defined in %sys-token.h
 
-inline static RELVAL *Decay_If_Isotope(RELVAL *v) {
+inline static Cell *Decay_If_Isotope(Cell *v) {
     if (not IS_BAD_WORD(v) or NOT_CELL_FLAG(v, ISOTOPE))
         return v;
 
@@ -330,7 +330,7 @@ inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
     return Pointer_To_Decayed(v);
 }
 
-inline static RELVAL *Isotopify_If_Falsey(RELVAL *v) {
+inline static Cell *Isotopify_If_Falsey(Cell *v) {
     if (IS_NULLED(v))
         Init_Isotope(v, Canon(NULL));
     else if (IS_BLANK(v))
@@ -340,7 +340,7 @@ inline static RELVAL *Isotopify_If_Falsey(RELVAL *v) {
     return v;
 }
 
-inline static RELVAL *Isotopify_If_Nulled(RELVAL *v) {
+inline static Cell *Isotopify_If_Nulled(Cell *v) {
     if (IS_NULLED(v))
         Init_Null_Isotope(v);
     return v;
@@ -357,7 +357,7 @@ inline static RELVAL *Isotopify_If_Nulled(RELVAL *v) {
 // In the meantime, this just does a Copy + RESET.
 
 inline static REBVAL *Move_Cell_Untracked(
-    RELVAL *out,
+    Cell *out,
     REBVAL *v,
     REBFLGS copy_mask
 ){

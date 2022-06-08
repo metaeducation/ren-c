@@ -86,7 +86,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
 {
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
-    RELVAL *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
 
     REB_R r;
     if (IS_ACTION(body)) {  // NATIVE-COMBINATOR
@@ -179,8 +179,8 @@ REBARR *Expanded_Combinator_Spec(const REBVAL *original)
 {
     REBDSP dsp_orig = DSP;
 
-    const RELVAL *tail;
-    const RELVAL *item = VAL_ARRAY_AT(&tail, original);
+    const Cell *tail;
+    const Cell *item = VAL_ARRAY_AT(&tail, original);
     REBSPC *specifier = VAL_SPECIFIER(original);
 
     if (IS_TEXT(item)) {
@@ -387,8 +387,8 @@ REBNATIVE(text_x_combinator)
     REBVAL *input = ARG(input);
 
     if (ANY_ARRAY(input)) {
-        const RELVAL *tail;
-        const RELVAL *at = VAL_ARRAY_AT(&tail, input);
+        const Cell *tail;
+        const Cell *at = VAL_ARRAY_AT(&tail, input);
         if (at == tail)  // no item to match against
             return nullptr;
         if (Cmp_Value(at, v, true) != 0)  // not case-insensitive equal
@@ -453,7 +453,7 @@ REBNATIVE(some_combinator)
     // FRAME_HAS_BEEN_INVOKED flag and prohibit things like STOP from advancing
     // the input because `f.input` assignment will raise an error.  Review.
     //
-    RELVAL *loop_last = Alloc_Tail_Array(loops);
+    Cell *loop_last = Alloc_Tail_Array(loops);
     Init_Frame(loop_last, CTX(frame_->varlist), Canon(SOME));
     INIT_VAL_FRAME_PHASE(loop_last, FRM_PHASE(frame_));
 
@@ -606,8 +606,8 @@ static bool Combinator_Param_Hook(
         //
         // !!! <skip>-able parameters would be useful as well.
         //
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, ARG(rules));
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, ARG(rules));
 
         if (
             item == tail
@@ -635,8 +635,8 @@ static bool Combinator_Param_Hook(
         //
         // Need to make PARSIFY a native!  Work around it for now...
         //
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, ARG(rules));
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, ARG(rules));
         if (
             item == tail
             or (IS_COMMA(item) or IS_BAR(item) or IS_BAR_BAR(item))

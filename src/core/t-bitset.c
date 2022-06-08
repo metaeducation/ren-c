@@ -138,7 +138,7 @@ REB_R TO_Bitset(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 // Return integer number for the maximum bit number defined by
 // the value. Used to determine how much space to allocate.
 //
-REBINT Find_Max_Bit(const RELVAL *val)
+REBINT Find_Max_Bit(const Cell *val)
 {
     REBLEN maxi = 0;
 
@@ -171,8 +171,8 @@ REBINT Find_Max_Bit(const RELVAL *val)
         break;
 
     case REB_BLOCK: {
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, val);
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, val);
         for (; item != tail; ++item) {
             REBINT n = Find_Max_Bit(item);
             if (n != NOT_FOUND and cast(REBLEN, n) > maxi)
@@ -264,7 +264,7 @@ void Set_Bit(REBBIN *bset, REBLEN n, bool set)
 //
 // Set/clear bits indicated by strings and chars and ranges.
 //
-bool Set_Bits(REBBIN *bset, const RELVAL *val, bool set)
+bool Set_Bits(REBBIN *bset, const Cell *val, bool set)
 {
     if (IS_INTEGER(val)) {
         REBLEN n = Int32s(val, 0);
@@ -299,8 +299,8 @@ bool Set_Bits(REBBIN *bset, const RELVAL *val, bool set)
     if (!ANY_ARRAY(val))
         fail (Error_Invalid_Type(VAL_TYPE(val)));
 
-    const RELVAL *tail;
-    const RELVAL *item = VAL_ARRAY_AT(&tail, val);
+    const Cell *tail;
+    const Cell *item = VAL_ARRAY_AT(&tail, val);
 
     if (
         item != tail
@@ -411,7 +411,7 @@ bool Set_Bits(REBBIN *bset, const RELVAL *val, bool set)
 // Check bits indicated by strings and chars and ranges.
 // If uncased is true, try to match either upper or lower case.
 //
-bool Check_Bits(const REBBIN *bset, const RELVAL *val, bool uncased)
+bool Check_Bits(const REBBIN *bset, const Cell *val, bool uncased)
 {
     if (IS_CHAR(val))
         return Check_Bit(bset, VAL_CHAR(val), uncased);
@@ -446,8 +446,8 @@ bool Check_Bits(const REBBIN *bset, const RELVAL *val, bool uncased)
 
     // Loop through block of bit specs
 
-    const RELVAL *tail;
-    const RELVAL *item = VAL_ARRAY_AT(&tail, val);
+    const Cell *tail;
+    const Cell *item = VAL_ARRAY_AT(&tail, val);
     for (; item != tail; item++) {
 
         switch (VAL_TYPE(item)) {
@@ -560,7 +560,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         bool bit = Check_Bits(VAL_BITSET(v), picker, false);
 
         return bit ? Init_True(OUT) : Init_Nulled(OUT); }
@@ -571,7 +571,7 @@ REBTYPE(Bitset)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 

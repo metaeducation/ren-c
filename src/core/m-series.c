@@ -347,7 +347,7 @@ void Assert_Series_Term_Core(const REBSER *s)
     if (IS_SER_ARRAY(s)) {
       #if DEBUG_TERM_ARRAYS
         if (GET_SERIES_FLAG(s, DYNAMIC)) {
-            const RELVAL *tail = ARR_TAIL(ARR(s));
+            const Cell *tail = ARR_TAIL(ARR(s));
             if (not (tail->header.bits & NODE_FLAG_CELL))
                 panic (s);
             if (not IS_CELL_FREE(tail))

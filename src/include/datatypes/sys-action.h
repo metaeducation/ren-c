@@ -129,7 +129,7 @@ inline static void INIT_BONUS_KEYSOURCE(REBARR *varlist, REBNOD *keysource) {
 // evaluator.
 //
 
-inline static REBVAL *Init_Return_Signal_Untracked(RELVAL *out, char ch) {
+inline static REBVAL *Init_Return_Signal_Untracked(Cell *out, char ch) {
     Reset_Cell_Header_Untracked(out, REB_T_RETURN_SIGNAL, CELL_MASK_NONE);
     mutable_BINDING(out) = nullptr;
 
@@ -146,7 +146,7 @@ inline static REBVAL *Init_Return_Signal_Untracked(RELVAL *out, char ch) {
 #define IS_RETURN_SIGNAL(v) \
     (HEART_BYTE(v) == REB_T_RETURN_SIGNAL)
 
-inline static char VAL_RETURN_SIGNAL(const RELVAL *v) {
+inline static char VAL_RETURN_SIGNAL(const Cell *v) {
     assert(IS_RETURN_SIGNAL(v));
     return PAYLOAD(Any, v).first.u;
 }
@@ -222,7 +222,7 @@ inline static REBCTX *VAL_ACTION_BINDING(noquote(const Cell*) v) {
 }
 
 inline static void INIT_VAL_ACTION_BINDING(
-    RELVAL *v,
+    Cell *v,
     REBCTX *binding
 ){
     assert(IS_ACTION(v));
@@ -373,7 +373,7 @@ inline static option(const REBSYM*) VAL_ACTION_LABEL(noquote(const Cell*) v) {
 }
 
 inline static void INIT_VAL_ACTION_LABEL(
-    RELVAL *v,
+    Cell *v,
     option(const REBSYM*) label
 ){
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // archetype R/O
@@ -478,7 +478,7 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
 // no label.
 //
 inline static REBVAL *Init_Action_Core(
-    RELVAL *out,
+    Cell *out,
     REBACT *a,
     option(const REBSYM*) label,  // allowed to be ANONYMOUS
     REBCTX *binding  // allowed to be UNBOUND

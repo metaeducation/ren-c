@@ -114,7 +114,7 @@ typedef REB_R (GENERIC_HOOK)(REBFRM *frame_, const REBSYM *verb);
 
 // PER-TYPE PATH HOOKS: for `a/b`, `:a/b`, `a/b:`, `pick a b`, `poke a b`
 //
-typedef REB_R (PATH_HOOK)(REBPVS *pvs, const RELVAL *picker);
+typedef REB_R (PATH_HOOK)(REBPVS *pvs, const Cell *picker);
 
 
 // Port hook: for implementing generic ACTION!s on a PORT! class

@@ -107,7 +107,7 @@ inline static bool Do_Feed_To_End_Throws(
 inline static bool Do_Any_Array_At_Core_Throws(
     REBVAL *out,
     REBFLGS flags,
-    const RELVAL *any_array,
+    const Cell *any_array,
     REBSPC *specifier
 ){
     DECLARE_FEED_AT_CORE (feed, any_array, specifier);
@@ -135,7 +135,7 @@ inline static bool Do_Any_Array_At_Core_Throws(
 //
 inline static bool Do_At_Mutable_Maybe_Stale_Throws(
     REBVAL *out,
-    option(const RELVAL*) first,  // element to inject *before* the array
+    option(const Cell*) first,  // element to inject *before* the array
     REBARR *array,
     REBLEN index,
     REBSPC *specifier  // must match array, but also first if relative

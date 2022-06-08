@@ -680,13 +680,13 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// A RELVAL is an equivalent struct layout to to REBVAL, but is allowed to
+// A Cell is an equivalent struct layout to to REBVAL, but is allowed to
 // have a REBACT* as its binding.  A relative value pointer can point to a
 // specific value, but a relative word or array cannot be pointed to by a
-// plain REBVAL*.  The RELVAL-vs-REBVAL distinction is purely commentary
-// in the C build, but the C++ build makes REBVAL a type derived from RELVAL.
+// plain REBVAL*.  The Cell-vs-REBVAL distinction is purely commentary
+// in the C build, but the C++ build makes REBVAL a type derived from Cell.
 //
-// RELVAL exists to help quarantine the bit patterns for relative words into
+// Cell exists to help quarantine the bit patterns for relative words into
 // the deep-copied-body of the function they are for.  To actually look them
 // up, they must be paired with a FRAME! matching the actual instance of the
 // running function on the stack they correspond to.  Once made specific,
@@ -702,7 +702,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
 #if CPLUSPLUS_11
     static_assert(
         std::is_standard_layout<struct Reb_Relative_Value>::value,
-        "C++ RELVAL must match C layout: http://stackoverflow.com/a/7189821/"
+        "C++ Cell must match C layout: http://stackoverflow.com/a/7189821/"
     );
 
     struct Reb_Value : public Reb_Relative_Value

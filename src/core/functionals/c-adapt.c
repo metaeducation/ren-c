@@ -139,7 +139,7 @@ REBNATIVE(adapt_p)  // see extended definition ADAPT in %base-defs.r
     );
 
     // We can't use a simple Init_Block() here, because the prelude has been
-    // relativized.  It is thus not a REBVAL*, but a RELVAL*...so the
+    // relativized.  It is thus not a REBVAL*, but a Cell*...so the
     // Adapter_Dispatcher() must combine it with the FRAME! instance before
     // it can be executed (e.g. the `REBFRM *f` it is dispatching).
     //

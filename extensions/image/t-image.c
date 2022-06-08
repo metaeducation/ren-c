@@ -36,13 +36,13 @@
 void Tuples_To_RGBA(
     REBYTE *rgba,
     REBLEN size,
-    const RELVAL *head,
+    const Cell *head,
     REBLEN len
 ){
     if (len > size)
         len = size;  // avoid over-run
 
-    const RELVAL *item = head;
+    const Cell *item = head;
     for (; len > 0; len--, rgba += 4, ++head)
         Get_Tuple_Bytes(rgba, item, 4);
 }
@@ -51,7 +51,7 @@ void Tuples_To_RGBA(
 //
 //  Set_Pixel_Tuple: C
 //
-void Set_Pixel_Tuple(REBYTE *dp, const RELVAL *tuple)
+void Set_Pixel_Tuple(REBYTE *dp, const Cell *tuple)
 {
     dp[0] = VAL_SEQUENCE_BYTE_AT(tuple, 0);  // red
     dp[1] = VAL_SEQUENCE_BYTE_AT(tuple, 1);  // green
@@ -71,7 +71,7 @@ void Set_Pixel_Tuple(REBYTE *dp, const RELVAL *tuple)
 // true and `index_out` will contain the index position from the head of
 // the array of the non-tuple.  Otherwise returns false.
 //
-bool Array_Has_Non_Tuple(REBLEN *index_out, const RELVAL *blk)
+bool Array_Has_Non_Tuple(REBLEN *index_out, const Cell *blk)
 {
     assert(ANY_ARRAY(blk));
 
@@ -261,8 +261,8 @@ REB_R MAKE_Image(
         Init_Image_Black_Opaque(out, w, h);
     }
     else if (IS_BLOCK(arg)) {  // make image! [size rgba index]
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, arg);
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, arg);
         if (item == tail or not IS_PAIR(item))
             goto bad_make;
 
@@ -377,7 +377,7 @@ void Reset_Height(REBVAL *value)
 //
 //  Init_Tuple_From_Pixel: C
 //
-REBVAL *Init_Tuple_From_Pixel(RELVAL *out, const REBYTE *dp)
+REBVAL *Init_Tuple_From_Pixel(Cell *out, const REBYTE *dp)
 {
     return Init_Tuple_Bytes(out, dp, 4);
 }
@@ -932,7 +932,7 @@ void MF_Image(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 inline static bool Adjust_Image_Pick_Index_Is_Valid(
     REBINT *index, // gets adjusted
     const REBVAL *value, // image
-    const RELVAL *picker
+    const Cell *picker
 ) {
     REBINT n;
     if (IS_PAIR(picker)) {
@@ -969,7 +969,7 @@ inline static bool Adjust_Image_Pick_Index_Is_Valid(
 //
 //  Pick_Image: C
 //
-void Pick_Image(REBVAL *out, const REBVAL *value, const RELVAL *picker)
+void Pick_Image(REBVAL *out, const REBVAL *value, const Cell *picker)
 {
     REBINT index = cast(REBINT, VAL_IMAGE_POS(value));
     REBINT len = VAL_IMAGE_LEN_HEAD(value) - index;
@@ -1021,7 +1021,7 @@ void Pick_Image(REBVAL *out, const REBVAL *value, const RELVAL *picker)
 //
 void Poke_Image_Fail_If_Read_Only(
     REBVAL *value,
-    const RELVAL *picker,
+    const Cell *picker,
     const REBVAL *poke
 ){
     ENSURE_MUTABLE(value);
@@ -1155,7 +1155,7 @@ REBTYPE(Image)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
 
         Pick_Image(OUT, image, picker);
         return OUT; }
@@ -1166,7 +1166,7 @@ REBTYPE(Image)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 

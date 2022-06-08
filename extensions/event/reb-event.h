@@ -180,7 +180,7 @@ extern void Shutdown_Event_Scheme(void);
 #define VAL_GOB_INDEX(v) \
     PAYLOAD(Any, v).second.u
 
-inline static REBVAL *Init_Gob(RELVAL *out, REBGOB *g) {
+inline static REBVAL *Init_Gob(Cell *out, REBGOB *g) {
     assert(GET_SERIES_FLAG(g, MANAGED));
 
     // !!! HACK... way of getting EG_Gob_Type.

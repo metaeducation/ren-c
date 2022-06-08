@@ -165,7 +165,7 @@ static void Protect_Var(REBVAL *var, REBFLGS flags)
 //
 // Anything that calls this must call Uncolor() when done.
 //
-void Protect_Value(const RELVAL *v, REBFLGS flags)
+void Protect_Value(const Cell *v, REBFLGS flags)
 {
     if (ANY_SERIES(v))
         Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
@@ -207,8 +207,8 @@ void Protect_Series(const REBSER *s_const, REBLEN index, REBFLGS flags)
 
     Flip_Series_To_Black(s); // recursion protection
 
-    const RELVAL *val_tail = ARR_TAIL(ARR(s));
-    const RELVAL *val = ARR_AT(ARR(s), index);
+    const Cell *val_tail = ARR_TAIL(ARR(s));
+    const Cell *val = ARR_AT(ARR(s), index);
     for (; val != val_tail; val++)
         Protect_Value(val, flags);
 }
@@ -306,10 +306,10 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
 
     if (IS_BLOCK(value)) {
         if (REF(words)) {
-            const RELVAL *tail;
-            const RELVAL *item = VAL_ARRAY_AT(&tail, value);
+            const Cell *tail;
+            const Cell *item = VAL_ARRAY_AT(&tail, value);
             for (; item != tail; ++item) {
-                DECLARE_LOCAL (word); // need binding, can't pass RELVAL
+                DECLARE_LOCAL (word); // need binding, can't pass Cell
                 Derelativize(word, item, VAL_SPECIFIER(value));
                 Protect_Word_Value(word, flags);  // will unmark if deep
             }
@@ -317,8 +317,8 @@ static REB_R Protect_Unprotect_Core(REBFRM *frame_, REBFLGS flags)
         }
         if (REF(values)) {
             REBVAL *var;
-            const RELVAL *tail;
-            const RELVAL *item = VAL_ARRAY_AT(&tail, value);
+            const Cell *tail;
+            const Cell *item = VAL_ARRAY_AT(&tail, value);
 
             DECLARE_LOCAL (safe);
 
@@ -453,7 +453,7 @@ REBNATIVE(unprotect)
 // series will never change in the future.  The frozen requirement is needed
 // in order to do things like use blocks as map keys, etc.
 //
-bool Is_Value_Frozen_Deep(const RELVAL *v) {
+bool Is_Value_Frozen_Deep(const Cell *v) {
     noquote(const Cell*) cell = VAL_UNESCAPED(v);
     UNUSED(v); // debug build trashes, to avoid accidental usage below
 
@@ -503,7 +503,7 @@ REBNATIVE(locked_q)
 // that would prevent *them* from later mutating it.
 //
 void Force_Value_Frozen_Core(
-    const RELVAL *v,
+    const Cell *v,
     bool deep,
     option(REBSER*) locker
 ){

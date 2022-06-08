@@ -36,7 +36,7 @@
 //
 // Returns the containing node.
 //
-REBNOD *Dump_Value_Debug(const RELVAL *v)
+REBNOD *Dump_Value_Debug(const Cell *v)
 {
     fflush(stdout);
     fflush(stderr);
@@ -99,7 +99,7 @@ REBNOD *Dump_Value_Debug(const RELVAL *v)
 // Additionally, it can dump out where the initialization happened if that
 // information was stored.  See DEBUG_TRACK_EXTEND_CELLS.
 //
-ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const RELVAL *v) {
+ATTRIBUTE_NO_RETURN void Panic_Value_Debug(const Cell *v) {
     REBNOD *containing = Dump_Value_Debug(v);
 
     if (containing) {

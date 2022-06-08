@@ -80,7 +80,7 @@ inline static deci VAL_MONEY_AMOUNT(noquote(const Cell*) v) {
     return amount;
 }
 
-inline static REBVAL *Init_Money(RELVAL *out, deci amount) {
+inline static REBVAL *Init_Money(Cell *out, deci amount) {
     Reset_Cell_Header_Untracked(out, REB_MONEY, CELL_MASK_NONE);
 
     EXTRA(Any, out).u = amount.m0;  // "significand, lowest part"

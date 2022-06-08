@@ -62,7 +62,7 @@ inline static noquote(const Cell*) VAL_HANDLE_CANON(noquote(const Cell*) v) {
     return ARR_SINGLE(VAL_HANDLE_SINGULAR(v));  // has shared node
 }
 
-inline static RELVAL *mutable_VAL_HANDLE_CANON(RELVAL *v) {
+inline static Cell *mutable_VAL_HANDLE_CANON(Cell *v) {
     assert(IS_HANDLE(v));
     if (NOT_CELL_FLAG(v, FIRST_IS_NODE))
         return v;  // changing handle instance won't be seen by copies
@@ -94,24 +94,24 @@ inline static CLEANUP_CFUNC *VAL_HANDLE_CLEANER(noquote(const Cell*) v) {
     return VAL_HANDLE_SINGULAR(v)->misc.cleaner;
 }
 
-inline static void SET_HANDLE_LEN(RELVAL *v, uintptr_t length)
+inline static void SET_HANDLE_LEN(Cell *v, uintptr_t length)
   { VAL_HANDLE_LENGTH_U(mutable_VAL_HANDLE_CANON(v)) = length; }
 
-inline static void SET_HANDLE_CDATA(RELVAL *v, void *cdata) {
-    RELVAL *canon = mutable_VAL_HANDLE_CANON(v);
+inline static void SET_HANDLE_CDATA(Cell *v, void *cdata) {
+    Cell *canon = mutable_VAL_HANDLE_CANON(v);
     assert(VAL_HANDLE_LENGTH_U(canon) != 0);
     VAL_HANDLE_CDATA_P(canon) = cdata;
 }
 
-inline static void SET_HANDLE_CFUNC(RELVAL *v, CFUNC *cfunc) {
+inline static void SET_HANDLE_CFUNC(Cell *v, CFUNC *cfunc) {
     assert(Is_Handle_Cfunc(v));
-    RELVAL *canon = mutable_VAL_HANDLE_CANON(v);
+    Cell *canon = mutable_VAL_HANDLE_CANON(v);
     assert(VAL_HANDLE_LENGTH_U(canon) == 0);
     VAL_HANDLE_CFUNC_P(canon) = cfunc;
 }
 
 inline static REBVAL *Init_Handle_Cdata(
-    RELVAL *out,
+    Cell *out,
     void *cdata,
     uintptr_t length
 ){
@@ -130,7 +130,7 @@ inline static REBVAL *Init_Handle_Cdata(
 }
 
 inline static REBVAL *Init_Handle_Cfunc(
-    RELVAL *out,
+    Cell *out,
     CFUNC *cfunc
 ){
     Reset_Cell_Header_Untracked(
@@ -147,14 +147,14 @@ inline static REBVAL *Init_Handle_Cfunc(
 }
 
 inline static void Init_Handle_Managed_Common(
-    RELVAL *out,
+    Cell *out,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
 ){
     REBARR *singular = Alloc_Singular(FLAG_FLAVOR(HANDLE) | NODE_FLAG_MANAGED);
     singular->misc.cleaner = cleaner;
 
-    RELVAL *single = ARR_SINGLE(singular);
+    Cell *single = ARR_SINGLE(singular);
     Reset_Cell_Header_Untracked(single, REB_HANDLE, CELL_FLAG_FIRST_IS_NODE);
     INIT_VAL_HANDLE_SINGULAR(single, singular);
     VAL_HANDLE_LENGTH_U(single) = length;
@@ -172,7 +172,7 @@ inline static void Init_Handle_Managed_Common(
 }
 
 inline static REBVAL *Init_Handle_Cdata_Managed(
-    RELVAL *out,
+    Cell *out,
     void *cdata,
     uintptr_t length,
     CLEANUP_CFUNC *cleaner
@@ -187,7 +187,7 @@ inline static REBVAL *Init_Handle_Cdata_Managed(
 }
 
 inline static REBVAL *Init_Handle_Cdata_Managed_Cfunc(
-    RELVAL *out,
+    Cell *out,
     CFUNC *cfunc,
     CLEANUP_CFUNC *cleaner
 ){

@@ -64,7 +64,7 @@
 // !!! Note: The FLAVOR_API state can be converted to an instruction for
 // releasing the handle...so beware using FLAVOR_API for detection.
 //
-inline static bool Is_Api_Value(const RELVAL *v) {
+inline static bool Is_Api_Value(const Cell *v) {
     assert(v->header.bits & NODE_FLAG_CELL);
     return did (v->header.bits & NODE_FLAG_ROOT);
 }
@@ -167,12 +167,12 @@ inline static void Free_Value(REBVAL *v)
 // GC.  It's mildly inefficient to do so compared to generating a local cell:
 //
 //      DECLARE_LOCAL (specific);
-//      Derelativize(specific, relval, specifier);
+//      Derelativize(specific, Cell, specifier);
 //      fail (Error_Something(specific));
 //
 // But assuming errors don't happen that often, it's cleaner to have one call.
 //
-inline static REBVAL *rebSpecific(const RELVAL *v, REBSPC *specifier)
+inline static REBVAL *rebSpecific(const Cell *v, REBSPC *specifier)
     { return Derelativize(Alloc_Value(), v, specifier);}
 
 

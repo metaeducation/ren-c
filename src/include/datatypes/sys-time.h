@@ -43,7 +43,7 @@
         return EXTRA(Date, v).ymdz;
     }
 
-    inline static REBYMD & VAL_DATE(RELVAL *v) {
+    inline static REBYMD & VAL_DATE(Cell *v) {
         assert(VAL_TYPE(v) == REB_DATE);
         return EXTRA(Date, v).ymdz; // const reference
     }
@@ -162,7 +162,7 @@ inline static REBI64 VAL_NANO(noquote(const Cell*) v) {
     SEC_TIME(cast(REBI64, SECS_IN_DAY))
 
 inline static REBVAL *Init_Time_Nanoseconds(
-    RELVAL *v,
+    Cell *v,
     REBI64 nanoseconds
 ){
     Reset_Cell_Header_Untracked(v, REB_TIME, CELL_MASK_NONE);

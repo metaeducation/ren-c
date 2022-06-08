@@ -43,7 +43,7 @@ REBLEN Modify_Array(
 
     REBLEN tail_idx = ARR_LEN(dst_arr);
 
-    const RELVAL *src_rel;
+    const Cell *src_rel;
     REBSPC *specifier;
 
     if (sym == SYM_CHANGE and IS_NULLED(src_val)) {
@@ -102,7 +102,7 @@ REBLEN Modify_Array(
             else if (ilen == 0)
                 tail_newline = false;
             else {
-                const RELVAL *tail_cell
+                const Cell *tail_cell
                     = VAL_ARRAY_ITEM_AT(src_val) + ilen;
                 tail_newline = GET_CELL_FLAG(tail_cell, NEWLINE_BEFORE);
             }
@@ -126,10 +126,10 @@ REBLEN Modify_Array(
         }
     }
     else {
-        // use passed in RELVAL and specifier
+        // use passed in Cell and specifier
         ilen = 1;
         src_rel = src_val;
-        specifier = SPECIFIED; // it's a REBVAL, not a RELVAL, so specified
+        specifier = SPECIFIED; // it's a REBVAL, not a Cell, so specified
     }
 
     REBLEN size = cast(REBLEN, dups) * ilen;  // total to insert (dups is > 0)
@@ -476,8 +476,8 @@ REBLEN Modify_String_Or_Binary(
             // between.  There is some rationale to this, though implications
             // for operations like TO TEXT! of a BLOCK! are unclear...
             //
-            const RELVAL *item_tail;
-            const RELVAL *item = VAL_ARRAY_AT(&item_tail, src);
+            const Cell *item_tail;
+            const Cell *item = VAL_ARRAY_AT(&item_tail, src);
             for (; item != item_tail; ++item)
                 Form_Value(mo, item);
             goto use_mold_buffer;

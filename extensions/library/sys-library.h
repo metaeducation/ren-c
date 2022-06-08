@@ -32,7 +32,7 @@ typedef REBARR REBLIB;
 
 extern REBTYP *EG_Library_Type;
 
-inline static bool IS_LIBRARY(const RELVAL *v) {  // Note: QUOTED! doesn't count
+inline static bool IS_LIBRARY(const Cell *v) {  // Note: QUOTED! doesn't count
     return IS_CUSTOM(v) and CELL_CUSTOM_TYPE(v) == EG_Library_Type;
 }
 

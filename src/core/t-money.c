@@ -32,7 +32,7 @@
 // Scan and convert money.  Return zero if error.
 //
 const REBYTE *Scan_Money(
-    RELVAL *out,
+    Cell *out,
     const REBYTE *cp,
     REBLEN len
 ){

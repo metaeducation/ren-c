@@ -128,8 +128,8 @@ REBNATIVE(lambda)
     //
     REBVAL *wordlist = ARG(words);
     REBSPC *item_specifier;
-    const RELVAL *item_tail;
-    const RELVAL *item;
+    const Cell *item_tail;
+    const Cell *item;
     if (IS_BLOCK(wordlist)) {
         item = VAL_ARRAY_AT(&item_tail, wordlist);
         item_specifier = VAL_SPECIFIER(wordlist);

@@ -44,8 +44,8 @@
     #define TOUCH_CELL(c) \
         ((c)->touch = TG_Tick)
 
-    inline static RELVAL *Track_Cell_Debug(
-        RELVAL *v,
+    inline static Cell *Track_Cell_Debug(
+        Cell *v,
         const char *file,
         int line
     ){

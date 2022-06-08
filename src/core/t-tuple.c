@@ -103,8 +103,8 @@ REB_R MAKE_Sequence(
         REBLEN len = 0;
         REBINT n;
 
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, arg);
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, arg);
 
         REBYTE buf[MAX_TUPLE];
         REBYTE *vp = buf;
@@ -386,7 +386,7 @@ REBTYPE(Sequence)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
 
         REBINT n;
         if (IS_INTEGER(picker) or IS_DECIMAL(picker)) { // #2312
@@ -396,7 +396,7 @@ REBTYPE(Sequence)
             fail (picker);
 
         REBSPC *specifier = VAL_SEQUENCE_SPECIFIER(sequence);
-        const RELVAL *at = VAL_SEQUENCE_AT(SPARE, sequence, n);
+        const Cell *at = VAL_SEQUENCE_AT(SPARE, sequence, n);
 
         if (n < 0 or n >= cast(REBINT, VAL_SEQUENCE_LEN(sequence)))
             return nullptr;
@@ -455,7 +455,7 @@ void MF_Sequence(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     REBLEN len = VAL_SEQUENCE_LEN(v);
     REBLEN i;
     for (i = 0; i < len; ++i) {
-        const RELVAL *element = VAL_SEQUENCE_AT(temp, v, i);
+        const Cell *element = VAL_SEQUENCE_AT(temp, v, i);
         enum Reb_Kind element_kind = VAL_TYPE(element);
 
         if (first)

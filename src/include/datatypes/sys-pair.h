@@ -74,9 +74,9 @@ inline static REBDEC VAL_PAIR_Y_INT(noquote(const Cell*) v) {
 }
 
 inline static REBVAL *Init_Pair(
-    RELVAL *out,
-    const RELVAL *x,
-    const RELVAL *y
+    Cell *out,
+    const Cell *x,
+    const Cell *y
 ){
     assert(ANY_NUMBER(x));
     assert(ANY_NUMBER(y));
@@ -90,7 +90,7 @@ inline static REBVAL *Init_Pair(
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL *Init_Pair_Int(RELVAL *out, REBI64 x, REBI64 y) {
+inline static REBVAL *Init_Pair_Int(Cell *out, REBI64 x, REBI64 y) {
     Reset_Cell_Header_Untracked(out, REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
     REBVAL *p = Alloc_Pairing();
     Init_Integer(PAIRING_KEY(p), x);
@@ -100,7 +100,7 @@ inline static REBVAL *Init_Pair_Int(RELVAL *out, REBI64 x, REBI64 y) {
     return cast(REBVAL*, out);
 }
 
-inline static REBVAL *Init_Pair_Dec(RELVAL *out, REBDEC x, REBDEC y) {
+inline static REBVAL *Init_Pair_Dec(Cell *out, REBDEC x, REBDEC y) {
     Reset_Cell_Header_Untracked(out, REB_PAIR, CELL_FLAG_FIRST_IS_NODE);
     REBVAL *p = Alloc_Pairing();
     Init_Decimal(PAIRING_KEY(p), x);

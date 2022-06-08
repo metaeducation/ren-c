@@ -46,26 +46,24 @@
 #endif
 
 
-//=//// RELATIVE VALUES ///////////////////////////////////////////////////=//
+//=//// UNITS OF ARRAYS (CELLS) ///////////////////////////////////////////=//
 //
-// A "relative" value is a view of a value cell that can't be looked up to
-// find a value unless it is coupled with a "specifier".  The bit pattern
-// inside the cell may actually be "absolute"--e.g. no specifier needed--but
-// many routines accept a relative view as a principle-of-least-privilege.
-// (e.g. you can get the symbol of a word regardless of whether it is
-// absolute or relative).
+// Cells are array units that don't (necessarily) have fully resolved binding.
+// If they are something like a WORD!, they cannot be looked up to find a
+// variable unless coupled with a "specifier".
+//
+// (The bit pattern inside the cell may actually be "absolute"--e.g. no
+// specifier needed--but many routines accept a relative view as a principle
+// of least privilege.  e.g. you can get the symbol of a word regardless of
+// whether it is absolute or relative).
 //
 // Note that in the C build, %rebol.h forward-declares `struct Reb_Value` and
 // then #defines REBVAL to that.
 //
 #if (! CPLUSPLUS_11)
-    #define RELVAL \
-        struct Reb_Value // same as REBVAL, no checking in C build
-    typedef struct Reb_Value Cell;
+    typedef struct Reb_Value Cell;  // no special checking in C builds
 #else
     struct Reb_Relative_Value; // won't implicitly downcast to REBVAL
-    #define RELVAL \
-        struct Reb_Relative_Value // *might* be IS_RELATIVE()
     typedef struct Reb_Relative_Value Cell;
 #endif
 
@@ -102,7 +100,7 @@
 // lower-level routines (like molding or comparison) want to be able to act
 // on them in-place without making a copy.  To ensure they see the value for
 // the "type that it is" and use CELL_HEART() and not VAL_TYPE(), this alias
-// for RELVAL prevents VAL_TYPE() operations.
+// for Cell prevents VAL_TYPE() operations.
 //
 // Note: This needs special handling in %make-headers.r to recognize the
 // format.  See the `typemacro_parentheses` rule.
@@ -110,7 +108,7 @@
 #if (! CPLUSPLUS_11)
 
     #define noquote(const_cell_star) \
-        const struct Reb_Value*  // same as RELVAL, no checking in C build
+        const struct Reb_Value*  // same as Cell, no checking in C build
 
 #elif (! DEBUG_CHECK_CASTS)
     //
@@ -123,7 +121,7 @@
     // time.  But just make sure some C++ builds are possible without
     // using the active pointer class.  Choose debug builds for now.
     //
-    struct Reb_Raw;  // won't implicitly downcast to RELVAL
+    struct Reb_Raw;  // won't implicitly downcast to Cell
     #define noquote(const_cell_star) \
         const struct Reb_Raw*  // not a class instance in %sys-internals.h
 #else
@@ -131,7 +129,7 @@
     // up to 10% of the runtime, since it's called so often.  But it protects
     // against pointer arithmetic on noquote() cells.
     //
-    struct Reb_Raw;  // won't implicitly downcast to RELVAL
+    struct Reb_Raw;  // won't implicitly downcast to Cell
     template<typename T>
     struct NoquotePtr {
         const Reb_Raw *p;

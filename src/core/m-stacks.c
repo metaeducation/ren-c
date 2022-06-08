@@ -55,7 +55,7 @@ void Startup_Data_Stack(REBLEN capacity)
     // initial stack size.  It requires you to be on an END to run.
     //
     DS_Index = 1;
-    DS_Movable_Top = SPECIFIC(ARR_AT(DS_Array, DS_Index));  // no RELVALs
+    DS_Movable_Top = SPECIFIC(ARR_AT(DS_Array, DS_Index));  // no Cells
     Expand_Data_Stack_May_Fail(capacity);
 
     DS_DROP();  // drop the hypothetical thing that triggered the expand
@@ -265,7 +265,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
     assert(len_old == DS_Index);
     assert(DS_Movable_Top == ARR_TAIL(DS_Array));
     assert(
-        cast(RELVAL*, DS_Movable_Top) - ARR_HEAD(DS_Array)
+        cast(Cell*, DS_Movable_Top) - ARR_HEAD(DS_Array)
         == cast(int, len_old)
     );
 
@@ -332,7 +332,7 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 
     REBLEN count = 0;
     REBVAL *src = DS_AT(dsp_start + 1);  // not const, will be RESET()'ing
-    RELVAL *dest = ARR_HEAD(a);
+    Cell *dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
         if (VAL_TYPE_UNCHECKED(src) == REB_NULL)  // allow unreadable trash
             assert(IS_VARLIST(a));  // usually not legal

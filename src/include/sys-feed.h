@@ -43,8 +43,8 @@
 #define LINK_Splice_CAST        ARR
 #define HAS_LINK_Splice         FLAVOR_FEED
 
-#define MISC_Pending_TYPE       const RELVAL*
-#define MISC_Pending_CAST       (const RELVAL*)
+#define MISC_Pending_TYPE       const Cell*
+#define MISC_Pending_CAST       (const Cell*)
 #define HAS_MISC_Pending        FLAVOR_FEED
 
 
@@ -263,7 +263,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 
       case DETECTED_AS_CELL: {
         const REBVAL *cell = cast(const REBVAL*, p);
-        assert(not IS_RELATIVE(cast(const RELVAL*, cell)));
+        assert(not IS_RELATIVE(cast(const Cell*, cell)));
 
         assert(FEED_SPECIFIER(feed) == SPECIFIED);
 
@@ -394,7 +394,7 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
 // taken when one is interested in that data, because it may have to be
 // moved.  So current can be returned from Fetch_Next_In_Frame_Core().
 
-inline static const RELVAL *Lookback_While_Fetching_Next(REBFRM *f) {
+inline static const Cell *Lookback_While_Fetching_Next(REBFRM *f) {
   #if DEBUG_EXPIRED_LOOKBACK
     if (feed->stress) {
         RESET(feed->stress);
@@ -416,7 +416,7 @@ inline static const RELVAL *Lookback_While_Fetching_Next(REBFRM *f) {
     // this is currently kind of an unknown, but in the scheme of things it
     // seems like it must be something favorable to optimization.)
     //
-    const RELVAL *lookback;
+    const Cell *lookback;
     if (f->feed->value == &f->feed->fetched) {
         Move_Cell_Core(
             &f->feed->lookback,
@@ -432,8 +432,8 @@ inline static const RELVAL *Lookback_While_Fetching_Next(REBFRM *f) {
 
   #if DEBUG_EXPIRED_LOOKBACK
     if (preserve) {
-        f->stress = cast(RELVAL*, malloc(sizeof(RELVAL)));
-        memcpy(f->stress, *opt_lookback, sizeof(RELVAL));
+        f->stress = cast(Cell*, malloc(sizeof(Cell)));
+        memcpy(f->stress, *opt_lookback, sizeof(Cell));
         lookback = f->stress;
     }
   #endif
@@ -458,7 +458,7 @@ inline static const RELVAL *Lookback_While_Fetching_Next(REBFRM *f) {
 //
 inline static void Inertly_Derelativize_Inheriting_Const(
     REBVAL *out,
-    const RELVAL *v,
+    const Cell *v,
     REBFED *feed
 ){
     if (IS_BAD_WORD(v))
@@ -552,7 +552,7 @@ inline static void Free_Feed(REBFED *feed) {
 
 inline static void Prep_Array_Feed(
     REBFED *feed,
-    option(const RELVAL*) first,
+    option(const Cell*) first,
     const REBARR *array,
     REBLEN index,
     REBSPC *specifier,

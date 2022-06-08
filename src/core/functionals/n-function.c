@@ -130,7 +130,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
 
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
-    RELVAL *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     if (ACT_HAS_RETURN(phase)) {
@@ -304,7 +304,7 @@ REB_R Commenter_Dispatcher(REBFRM *f)  // !!! unify with Empty_Dispatcher?
     USED(frame_);
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    RELVAL *body = ARR_AT(details, IDX_DETAILS_1);
+    Cell *body = ARR_AT(details, IDX_DETAILS_1);
     assert(VAL_LEN_AT(body) == 0);
     UNUSED(body);
 
@@ -450,12 +450,12 @@ REBACT *Make_Interpreted_Action_May_Fail(
     }
 
     // Save the relativized body in the action's details block.  Since it is
-    // a RELVAL* and not a REBVAL*, the dispatcher must combine it with a
+    // a Cell* and not a REBVAL*, the dispatcher must combine it with a
     // running frame instance (the REBFRM* received by the dispatcher) before
     // executing the interpreted code.
     //
     REBARR *details = ACT_DETAILS(a);
-    RELVAL *rebound = Init_Relative_Block(
+    Cell *rebound = Init_Relative_Block(
         ARR_AT(details, IDX_NATIVE_BODY),
         a,
         copy

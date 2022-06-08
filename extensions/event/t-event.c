@@ -66,7 +66,7 @@ REBINT CT_Event(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 //
 //  Set_Event_Var: C
 //
-static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
+static bool Set_Event_Var(REBVAL *event, const Cell *word, const REBVAL *val)
 {
     switch (VAL_WORD_ID(word)) {
       case SYM_TYPE: {
@@ -162,8 +162,8 @@ static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
         mutable_VAL_EVENT_FLAGS(event)
             &= ~(EVF_DOUBLE | EVF_CONTROL | EVF_SHIFT);
 
-        const RELVAL *tail;
-        const RELVAL *item = VAL_ARRAY_AT(&tail, val);
+        const Cell *tail;
+        const Cell *item = VAL_ARRAY_AT(&tail, val);
         for (; item != tail; ++item) {
             if (not IS_WORD(item))
                 continue;
@@ -209,14 +209,14 @@ static bool Set_Event_Var(REBVAL *event, const RELVAL *word, const REBVAL *val)
 //
 void Set_Event_Vars(
     REBVAL *evt,
-    const RELVAL *block,
+    const Cell *block,
     REBSPC *specifier
 ){
     DECLARE_LOCAL (var);
     DECLARE_LOCAL (val);
 
-    const RELVAL *tail;
-    const RELVAL *item = VAL_ARRAY_AT(&tail, block);
+    const Cell *tail;
+    const Cell *item = VAL_ARRAY_AT(&tail, block);
     while (item != tail) {
         if (IS_COMMA(item)) {
             ++item;
@@ -263,7 +263,7 @@ void Set_Event_Vars(
 // Will return BLANK! if the variable is not available.
 //
 static REBVAL *Get_Event_Var(
-    RELVAL *out,
+    Cell *out,
     noquote(const Cell*) v,
     const REBSYM *symbol
 ){
@@ -429,7 +429,7 @@ REBTYPE(Event)
         INCLUDE_PARAMS_OF_PICK_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = ARG(picker);
+        const Cell *picker = ARG(picker);
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 
@@ -443,7 +443,7 @@ REBTYPE(Event)
         INCLUDE_PARAMS_OF_POKE_P;
         UNUSED(ARG(location));
 
-        const RELVAL *picker = Meta_Unquotify(ARG(picker));
+        const Cell *picker = Meta_Unquotify(ARG(picker));
         if (not IS_WORD(picker))
             return R_UNHANDLED;
 

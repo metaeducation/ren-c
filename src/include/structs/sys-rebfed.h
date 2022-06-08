@@ -189,7 +189,7 @@ struct Reb_Feed {
     // !!! Review impacts on debugging; e.g. a debug mode should hold onto
     // the initial value in order to display full error messages.
     //
-    // Note: It was considered that this might be `option(const RELVAL*)`
+    // Note: It was considered that this might be `option(const Cell*)`
     // if an end state, which would be faster to test than IS_END() at
     // callsites (no dereference needd) and could also help document that
     // a function was willing to take an "end" with `option` on an argument.
@@ -200,7 +200,7 @@ struct Reb_Feed {
     // testing.  Having tried the idea of using nullptr for END here, it's
     // definitely less clear...and may not even be faster.
     //
-    const RELVAL *value;  // is never nullptr (ends w/END cells or rebEND)
+    const Cell *value;  // is never nullptr (ends w/END cells or rebEND)
     // Note: The specifier comes from FEED_SPECIFIER()
 
     //=//// ^-- be sure above fields align cells below to 64-bits --v /////=//
@@ -213,7 +213,7 @@ struct Reb_Feed {
     // read from transient sources that disappear as they go...if that is
     // the case, and lookback is needed, it is written into this cell.
     //
-    RELVAL lookback;
+    Cell lookback;
 
     // When feeding cells from a variadic, those cells may wish to mutate the
     // value in some way... e.g. to add a quoting level.  Rather than
@@ -222,7 +222,7 @@ struct Reb_Feed {
     // is returned by Fetch_Next_in_Frame(), where arbitrary mutations can
     // be applied without corrupting the value they operate on.
     //
-    RELVAL fetched;
+    Cell fetched;
 
     // Feeds are maintained in REBSER-sized "splice" units.  This is big
     // enough for a REBVAL to hold an array and an index, but it also lets
@@ -288,7 +288,7 @@ struct Reb_Feed {
     //
     // !!! Test currently leaks on shutdown, review how to not leak.
     //
-    RELVAL *stress;
+    Cell *stress;
   #endif
 
   #if DEBUG_COUNT_TICKS

@@ -119,8 +119,8 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 
     const REBARR *pipeline = VAL_ARRAY(ARR_AT(details, IDX_CHAINER_PIPELINE));
-    const RELVAL *chained_tail = ARR_TAIL(pipeline);
-    const RELVAL *chained = ARR_HEAD(pipeline);
+    const Cell *chained_tail = ARR_TAIL(pipeline);
+    const Cell *chained = ARR_HEAD(pipeline);
 
     assert(Is_Void(SPARE));
     REBFRM *sub = Push_Downshifted_Frame(SPARE, f);
@@ -202,14 +202,14 @@ REBNATIVE(chain_p)  // see extended definition CHAIN in %base-defs.r
     REBVAL *out = OUT;  // plan ahead for factoring into Chain_Action(out..
 
     REBVAL *pipeline = ARG(pipeline);
-    const RELVAL *tail;
-    const RELVAL *first = VAL_ARRAY_AT(&tail, pipeline);
+    const Cell *tail;
+    const Cell *first = VAL_ARRAY_AT(&tail, pipeline);
 
     // !!! Current validation is that all are actions.  Should there be other
     // checks?  (That inputs match outputs in the chain?)  Should it be
     // a dialect and allow things other than functions?
     //
-    const RELVAL *check = first;
+    const Cell *check = first;
     for (; check != tail; ++check) {
         if (not IS_ACTION(check)) {
             DECLARE_LOCAL (specific);

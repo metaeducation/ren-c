@@ -249,7 +249,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
         break; }
 
       case DETECTED_AS_CELL: {
-        const RELVAL *v = cast(const RELVAL*, p);
+        const Cell *v = cast(const Cell*, p);
 
         // Check to see if the REBVAL* cell is in the paramlist of the current
         // running native.  (We could theoretically do this with ARG(), or
@@ -579,8 +579,8 @@ REB_R MAKE_Error(
         // Bind and do an evaluation step (as with MAKE OBJECT! with A_MAKE
         // code in REBTYPE(Context) and code in REBNATIVE(construct))
 
-        const RELVAL *tail;
-        const RELVAL *head = VAL_ARRAY_AT(&tail, arg);
+        const Cell *tail;
+        const Cell *head = VAL_ARRAY_AT(&tail, arg);
 
         e = Make_Context_Detect_Managed(
             REB_ERROR, // type
@@ -795,8 +795,8 @@ REBCTX *Make_Error_Managed_Core(
 
     REBLEN expected_args = 0;
     if (IS_BLOCK(message)) { // GET-WORD!s in template should match va_list
-        const RELVAL *tail;
-        const RELVAL *temp = VAL_ARRAY_AT(&tail, message);
+        const Cell *tail;
+        const Cell *temp = VAL_ARRAY_AT(&tail, message);
         for (; temp != tail; ++temp) {
             if (IS_GET_WORD(temp))
                 ++expected_args;
@@ -823,8 +823,8 @@ REBCTX *Make_Error_Managed_Core(
     // They can also be a single TEXT! (which will just bypass this loop).
     //
     if (not IS_TEXT(message)) {
-        const RELVAL *msg_tail;
-        const RELVAL *msg_item = VAL_ARRAY_AT(&msg_tail, message);
+        const Cell *msg_tail;
+        const Cell *msg_item = VAL_ARRAY_AT(&msg_tail, message);
 
         for (; msg_item != msg_tail; ++msg_item) {
             if (IS_GET_WORD(msg_item)) {
@@ -845,7 +845,7 @@ REBCTX *Make_Error_Managed_Core(
                     assert(!"Not enough arguments in Make_Error_Managed()");
                     Init_None(var);
                 }
-                else if (IS_RELATIVE(cast(const RELVAL*, p))) {
+                else if (IS_RELATIVE(cast(const Cell*, p))) {
                     //
                     // Originally, relative values triggered assertions here.
                     // But specific values aren't always available to present
@@ -854,7 +854,7 @@ REBCTX *Make_Error_Managed_Core(
                     // just "unrelativize" the values now--and try to use the
                     // effort that would be spent derelativizing better ways.
                     //
-                    const RELVAL *relative = cast(const RELVAL*, p);
+                    const Cell *relative = cast(const Cell*, p);
                     Unrelativize(var, relative);
                 }
                 else {
@@ -946,7 +946,7 @@ REBCTX *Error_User(const char *utf8) {
 //
 //  Error_Need_Non_End: C
 //
-REBCTX *Error_Need_Non_End(const RELVAL *target) {
+REBCTX *Error_Need_Non_End(const Cell *target) {
     assert(
         IS_SET_WORD(target) or IS_SET_TUPLE(target) or IS_SET_GROUP(target)
         or IS_SET_PATH(target)  // only needed in legacy Redbol
@@ -959,8 +959,8 @@ REBCTX *Error_Need_Non_End(const RELVAL *target) {
 //  Error_Bad_Word_Get: C
 //
 REBCTX *Error_Bad_Word_Get(
-    const RELVAL *target,
-    const RELVAL *bad
+    const Cell *target,
+    const Cell *bad
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
@@ -1165,7 +1165,7 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
 //
 // Will turn into an unknown error if a nulled cell is passed in.
 //
-REBCTX *Error_Bad_Value(const RELVAL *value)
+REBCTX *Error_Bad_Value(const Cell *value)
 {
     if (IS_NULLED(value))
         return Error_Unknown_Error_Raw();
@@ -1180,7 +1180,7 @@ REBCTX *Error_Bad_Value(const RELVAL *value)
 //
 //  Error_No_Value: C
 //
-REBCTX *Error_No_Value(const RELVAL *target) {
+REBCTX *Error_No_Value(const Cell *target) {
     return Error_No_Value_Raw(target);
 }
 
@@ -1226,7 +1226,7 @@ REBCTX *Error_Invalid_Type(enum Reb_Kind kind)
 //
 // value out of range: <value>
 //
-REBCTX *Error_Out_Of_Range(const RELVAL *arg)
+REBCTX *Error_Out_Of_Range(const Cell *arg)
 {
     return Error_Out_Of_Range_Raw(arg);
 }
@@ -1257,7 +1257,7 @@ REBCTX *Error_Math_Args(enum Reb_Kind type, const REBSYM *verb)
 //
 //  Error_Cannot_Use: C
 //
-REBCTX *Error_Cannot_Use(const REBSYM *verb, const RELVAL *first_arg)
+REBCTX *Error_Cannot_Use(const REBSYM *verb, const Cell *first_arg)
 {
     DECLARE_LOCAL (verb_cell);
     Init_Word(verb_cell, verb);
@@ -1385,7 +1385,7 @@ REBCTX *Error_Bad_Invisible(REBFRM *f) {
 //
 //  Error_Bad_Make: C
 //
-REBCTX *Error_Bad_Make(enum Reb_Kind type, const RELVAL *spec)
+REBCTX *Error_Bad_Make(enum Reb_Kind type, const Cell *spec)
 {
     return Error_Bad_Make_Arg_Raw(Datatype_From_Kind(type), spec);
 }
@@ -1394,7 +1394,7 @@ REBCTX *Error_Bad_Make(enum Reb_Kind type, const RELVAL *spec)
 //
 //  Error_Bad_Make_Parent: C
 //
-REBCTX *Error_Bad_Make_Parent(enum Reb_Kind type, const RELVAL *parent)
+REBCTX *Error_Bad_Make_Parent(enum Reb_Kind type, const Cell *parent)
 {
     assert(parent != nullptr);
     return Error_Bad_Make_Parent_Raw(Datatype_From_Kind(type), parent);
@@ -1434,7 +1434,7 @@ REBCTX *Error_On_Port(enum Reb_Symbol_Id id_sym, REBVAL *port, REBINT err_code)
 //
 //  Error_Bad_Isotope: C
 //
-REBCTX *Error_Bad_Isotope(const RELVAL *isotope) {
+REBCTX *Error_Bad_Isotope(const Cell *isotope) {
     assert(Is_Isotope(isotope));
 
     DECLARE_LOCAL (plain);
@@ -1477,8 +1477,8 @@ REBCTX *Startup_Errors(const REBVAL *boot_errors)
     }
   #endif
 
-    const RELVAL *errors_tail;
-    RELVAL *errors_head
+    const Cell *errors_tail;
+    Cell *errors_head
         = VAL_ARRAY_KNOWN_MUTABLE_AT(&errors_tail, boot_errors);
 
     assert(VAL_INDEX(boot_errors) == 0);
@@ -1492,11 +1492,11 @@ REBCTX *Startup_Errors(const REBVAL *boot_errors)
 
     // Morph blocks into objects for all error categories.
     //
-    const RELVAL *category_tail = ARR_TAIL(CTX_VARLIST(catalog));
+    const Cell *category_tail = ARR_TAIL(CTX_VARLIST(catalog));
     REBVAL *category = CTX_VARS_HEAD(catalog);
     for (; category != category_tail; ++category) {
-        const RELVAL *tail = VAL_ARRAY_TAIL(category);
-        RELVAL *head = ARR_HEAD(VAL_ARRAY_KNOWN_MUTABLE(category));
+        const Cell *tail = VAL_ARRAY_TAIL(category);
+        Cell *head = ARR_HEAD(VAL_ARRAY_KNOWN_MUTABLE(category));
         REBCTX *error = Construct_Context_Managed(
             REB_OBJECT,
             head,  // modifies bindings
@@ -1555,7 +1555,7 @@ void Shutdown_Stackoverflow(void)
 // to the mold.  It was only used in error molding and was kept working
 // without a general review of such a facility.  Review.
 //
-static void Mold_Value_Limit(REB_MOLD *mo, RELVAL *v, REBLEN limit)
+static void Mold_Value_Limit(REB_MOLD *mo, Cell *v, REBLEN limit)
 {
     REBSTR *str = mo->series;
 

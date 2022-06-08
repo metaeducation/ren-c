@@ -422,7 +422,7 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     // legal evaluation targets, although they can be used as GC safe scratch
     // space for things other than evaluation.)
     //
-    RELVAL spare;
+    Cell spare;
 
     // The prior call frame.  This never needs to be checked against nullptr,
     // because the bottom of the stack is FS_BOTTOM which is allocated at

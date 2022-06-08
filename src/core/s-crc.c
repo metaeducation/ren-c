@@ -112,7 +112,7 @@ uint32_t Hash_UTF8_Len_Caseless(REBCHR(const*) cp, REBLEN len) {
 // Fails if datatype cannot be hashed.  Note that the specifier is not used
 // in hashing, because it is not used in comparisons either.
 //
-uint32_t Hash_Value(const RELVAL *cell)
+uint32_t Hash_Value(const Cell *cell)
 {
     enum Reb_Kind heart = CELL_HEART(cell);
 
@@ -378,7 +378,7 @@ REBSER *Make_Hash_Series(REBLEN len)
 // field of the REBSER which needs to be given to memory
 // management as well.
 //
-REBVAL *Init_Map(RELVAL *out, REBMAP *map)
+REBVAL *Init_Map(Cell *out, REBMAP *map)
 {
     if (MAP_HASHLIST(map))
         Force_Series_Managed(MAP_HASHLIST(map));
@@ -406,8 +406,8 @@ REBSER *Hash_Block(const REBVAL *block, REBLEN skip, bool cased)
     // Create the hash array (integer indexes):
     REBSER *hashlist = Make_Hash_Series(VAL_LEN_AT(block));
 
-    const RELVAL *tail;
-    const RELVAL *value = VAL_ARRAY_AT(&tail, block);
+    const Cell *tail;
+    const Cell *value = VAL_ARRAY_AT(&tail, block);
     if (value == tail)
         return hashlist;
 
