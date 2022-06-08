@@ -463,7 +463,7 @@ inline static void Drop_Frame_Unbalanced(REBFRM *f) {
 
 inline static void Drop_Frame(REBFRM *f)
 {
-  #if defined(DEBUG_BALANCE_STATE)
+  #if DEBUG_BALANCE_STATE
     //
     // To avoid slowing down the debug build a lot, Eval_Core() doesn't
     // check this every cycle, just on drop.  But if it's hard to find which
@@ -512,7 +512,7 @@ inline static void Prep_Frame_Core(
     //
     SNAP_STATE(&f->baseline);  // see notes on `baseline` in Reb_Frame
 
-  #if defined(DEBUG_COUNT_TICKS)
+  #if DEBUG_COUNT_TICKS
     f->tick = TG_Tick;
   #endif
 }
