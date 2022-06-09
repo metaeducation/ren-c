@@ -160,7 +160,7 @@ static REB_R Loop_Series_Common(
     //
     REBINT s = VAL_INDEX(start);
     if (s == end) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Do_Branch_Throws(OUT, body, END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
@@ -186,7 +186,7 @@ static REB_R Loop_Series_Common(
             ? cast(REBINT, *state) <= end
             : cast(REBINT, *state) >= end
     ){
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Do_Branch_Throws(OUT, body, END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
@@ -242,7 +242,7 @@ static REB_R Loop_Integer_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (start == end) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Do_Branch_Throws(OUT, body, END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
@@ -264,7 +264,7 @@ static REB_R Loop_Integer_Common(
         return nullptr;  // avoid infinite loops
 
     while (counting_up ? *state <= end : *state >= end) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Do_Branch_Throws(OUT, body, END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
@@ -331,7 +331,7 @@ static REB_R Loop_Number_Common(
     // Run only once if start is equal to end...edge case.
     //
     if (s == e) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Do_Branch_Throws(OUT, body, END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
@@ -351,7 +351,7 @@ static REB_R Loop_Number_Common(
         return_void (OUT);  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
-        if (Do_Branch_Throws(OUT, body)) {
+        if (Do_Branch_Throws(OUT, body, END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return R_THROWN;
@@ -1037,7 +1037,7 @@ REBNATIVE(for_skip)
             VAL_INDEX_UNBOUNDED(var) = index;
         }
 
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body), END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
@@ -1128,7 +1128,7 @@ REBNATIVE(cycle)
     INCLUDE_PARAMS_OF_CYCLE;
 
     while (true) {
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body), END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke)) {
                 const REBVAL *label = VAL_THROWN_LABEL(OUT);
@@ -1804,7 +1804,7 @@ REBNATIVE(repeat)
         count = Int64(ARG(count));
 
     for (; count > 0; count--) {
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body), END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);
@@ -2031,7 +2031,7 @@ REBNATIVE(while)
             return_branched (OUT);
         }
 
-        if (Do_Branch_With_Throws(OUT, body, SPARE)) {
+        if (Do_Branch_Throws(OUT, body, SPARE)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);

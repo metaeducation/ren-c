@@ -105,7 +105,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
     // END so that if something below causes a stack overflow before the
     // operation finishes, those crashes don't happen.
     //
-    feed->value = END_CELL;  // should be assigned below
+    feed->value = END;  // should be assigned below
 
     if (not p) {  // libRebol's null/<opt> (IS_NULLED prohibited in CELL case)
 
@@ -274,7 +274,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
         break; }
 
       case DETECTED_AS_END: {  // end of variadic input, so that's it for this
-        feed->value = END_CELL;
+        feed->value = END;
 
         // The va_end() is taken care of here, or if there is a throw/fail it
         // is taken care of by Abort_Frame_Core()
@@ -362,7 +362,7 @@ inline static void Fetch_Next_In_Feed(REBFED *feed) {
             ++FEED_INDEX(feed);
         }
         else {
-            feed->value = END_CELL;
+            feed->value = END;
 
             // !!! At first this dropped the hold here; but that created
             // problems if you write `do code: [clear code]`, because END
@@ -572,7 +572,7 @@ inline static void Prep_Array_Feed(
     else {
         feed->value = ARR_AT(array, index);
         if (feed->value == ARR_TAIL(array))
-            feed->value = END_CELL;
+            feed->value = END;
         Init_Any_Array_At_Core(
             FEED_SINGLE(feed), REB_BLOCK, array, index + 1, specifier
         );

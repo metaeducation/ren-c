@@ -188,7 +188,7 @@ REBNATIVE(reduce_each)
 
         Move_Cell(CTX_VAR(context, 1), SPARE);
 
-        if (Do_Branch_Throws(OUT, ARG(body))) {
+        if (Do_Branch_Throws(OUT, ARG(body), END)) {
             bool broke;
             if (not Catching_Break_Or_Continue(OUT, &broke))
                 return_thrown (OUT);

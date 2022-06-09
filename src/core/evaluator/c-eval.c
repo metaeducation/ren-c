@@ -1482,7 +1482,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         bool error_on_deferred = false;
         if (Make_Frame_From_Feed_Throws(
             SPARE,
-            END_CELL,
+            END,
             f->feed,
             error_on_deferred
         )){

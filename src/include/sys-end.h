@@ -41,9 +41,9 @@
 //
 
 // Note: can't cast rebEND to a REBVAL*, due to alignment (it's char aligned).
-// The END_CELL can be used to pass an end signal to things that take REBVAL*
+// The END can be used to pass an end signal to things that take REBVAL*
 //
-#define END_CELL \
+#define END \
     c_cast(const REBVAL*, &PG_End_Cell)
 
 

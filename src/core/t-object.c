@@ -532,7 +532,7 @@ REB_R MAKE_Frame(
         bool error_on_deferred = true;
         if (Make_Frame_From_Feed_Throws(
             out,
-            END_CELL,
+            END,
             feed,
             error_on_deferred
         )){
@@ -638,8 +638,8 @@ REB_R MAKE_Context(
     if (ANY_NUMBER(arg)) {
         REBCTX *context = Make_Context_Detect_Managed(
             kind,
-            END_CELL,  // values to scan for toplevel set-words (empty)
-            END_CELL,
+            END,  // values to scan for toplevel set-words (empty)
+            END,
             parent_ctx
         );
 

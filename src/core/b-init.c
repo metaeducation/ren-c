@@ -344,7 +344,7 @@ static void Shutdown_Action_Spec_Tags(void)
 static void Startup_End_Node(void)
 {
     PG_End_Cell.header.bits = NODE_FLAG_NODE | NODE_FLAG_STALE;
-    assert(IS_END(END_CELL));  // sanity check
+    assert(IS_END(END));  // sanity check
 }
 
 static void Shutdown_End_Node(void)

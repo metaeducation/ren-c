@@ -266,8 +266,8 @@ static bool Subparse_Throws(
 
     f->key = nullptr;  // informs infix lookahead
     f->key_tail = nullptr;
-    f->arg = m_cast(REBVAL*, END_CELL);
-    f->param = cast_PAR(END_CELL);
+    f->arg = m_cast(REBVAL*, END);
+    f->param = cast_PAR(END);
 
     // This needs to be set before INCLUDE_PARAMS_OF_SUBPARSE; it is what
     // ensures that usermode accesses to the frame won't be able to fiddle

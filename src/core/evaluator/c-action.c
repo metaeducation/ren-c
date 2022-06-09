@@ -306,7 +306,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 // from the global empty array.
                 //
                 if (GET_PARAM_FLAG(PARAM, VARIADIC)) {
-                    Init_Varargs_Untyped_Enfix(ARG, END_CELL);
+                    Init_Varargs_Untyped_Enfix(ARG, END);
                     goto continue_fulfilling;
                 }
 

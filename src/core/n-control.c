@@ -81,7 +81,7 @@ REBNATIVE(if)
     if (Is_Conditional_False(condition))
         return_void (OUT);  // ^-- test errors on literal block
 
-    if (Do_Branch_With_Throws(OUT, branch, condition))
+    if (Do_Branch_Throws(OUT, branch, condition))
         return_thrown (OUT);  // ^-- condition is passed to function branches
 
     return_branched (OUT);  // asserts not null or ~void~
@@ -112,7 +112,7 @@ REBNATIVE(either)
         ? ARG(true_branch)  // ^-- test errors on literal block
         : ARG(false_branch);
 
-    if (Do_Branch_With_Throws(OUT, branch, condition))
+    if (Do_Branch_Throws(OUT, branch, condition))
         return_thrown (OUT);  // ^-- condition is passed to function branches
 
     return_branched (OUT);  // asserts not null or ~void~
@@ -225,7 +225,7 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
 
     Meta_Unquotify(in);
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), in))
+    if (Do_Branch_Throws(OUT, ARG(branch), in))
         return_thrown (OUT);
 
     return_branched (OUT);  // asserts not null or ~void~
@@ -263,7 +263,7 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
     Meta_Unquotify(in);
 
-    if (Do_Branch_With_Throws(SPARE, ARG(branch), in))
+    if (Do_Branch_Throws(SPARE, ARG(branch), in))
         return_thrown (SPARE);
 
     Move_Cell(OUT, in);
@@ -310,7 +310,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         //
         // Since the input is a ^META parameter, this signals a null isotope.
         // When /DECAY is specified we trigger running the branch here also.
-        // Do_Branch_With() decays ~null~ isotopes to NULL for non-meta actions
+        // Do_Branch() decays ~null~ isotopes to NULL for non-meta actions
         //
         // !!! While it may be misleading to call it /DECAY to trigger and not
         // decay what's passed to the function, the ostensible only reason an
@@ -328,7 +328,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         return Meta_Unquotify(in);
     }
 
-    if (Do_Branch_With_Throws(OUT, ARG(branch), in))
+    if (Do_Branch_Throws(OUT, ARG(branch), in))
         return_thrown (OUT);
 
     return_branched (OUT);  // asserts not null or ~void~
@@ -776,7 +776,7 @@ REBNATIVE(case)
         // Once we run a branch, translucency is no longer an option, so go
         // ahead and write OUT.
 
-        if (Do_Branch_With_Throws(OUT, ARG(branch), SPARE))
+        if (Do_Branch_Throws(OUT, ARG(branch), SPARE))
             goto threw;
 
         if (not REF(all)) {
@@ -1043,7 +1043,7 @@ REBNATIVE(default)
         }
     }
 
-    if (Do_Branch_Throws(OUT, ARG(branch)))
+    if (Do_Branch_Throws(OUT, ARG(branch), END))
         return_thrown (OUT);
 
     if (Set_Var_Core_Throws(SPARE, nullptr, steps, SPECIFIED, OUT)) {

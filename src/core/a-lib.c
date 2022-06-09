@@ -2137,7 +2137,7 @@ REBVAL *RL_rebError_OS(int errnum)  // see also convenience macro rebFail_OS()
         REBVAL *message = rebTextWide(lpMsgBuf);
         LocalFree(lpMsgBuf);
 
-        error = Error(SYM_0, SYM_0, message, END_CELL);
+        error = Error(SYM_0, SYM_0, message, END);
         rebRelease(message);
     }
   #elif defined(USE_STRERROR_NOT_STRERROR_R)

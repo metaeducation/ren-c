@@ -143,10 +143,10 @@
     // macros work just as well and don't collide.
 
     #define ENDIFY_POINTER_IF_DEBUG(p) \
-        p = m_cast(REBVAL*, END_CELL)
+        p = m_cast(REBVAL*, END)
 
     #define IS_POINTER_END_DEBUG(p) \
-        (p == m_cast(REBVAL*, END_CELL))
+        (p == m_cast(REBVAL*, END))
 
     // One of the best pieces of information to follow for a TRACE() is what
     // the EM_ASM() calls.  So printing the JavaScript sent to execute is

@@ -1276,7 +1276,7 @@ void Assert_Pointer_Detection_Working(void)
     assert(Detect_Rebol_Pointer(stale_cell) == DETECTED_AS_UTF8);  // conflated
   #endif
 
-    assert(Detect_Rebol_Pointer(END_CELL) == DETECTED_AS_END);
+    assert(Detect_Rebol_Pointer(END) == DETECTED_AS_END);
     assert(Detect_Rebol_Pointer(rebEND) == DETECTED_AS_END);
 
     REBSER *ser = Make_Series(1, FLAG_FLAVOR(BINARY));

@@ -299,7 +299,7 @@ REB_R Reframer_Dispatcher(REBFRM *f)
     bool error_on_deferred = true;
     if (Make_Invokable_From_Feed_Throws(
         SPARE,
-        END_CELL,
+        END,
         f->feed,
         error_on_deferred
     )){

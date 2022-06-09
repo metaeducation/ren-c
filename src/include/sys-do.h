@@ -167,15 +167,13 @@ inline static bool Do_At_Mutable_Maybe_Stale_Throws(
 // Allowing other values was deemed to do more harm than good:
 // https://forum.rebol.info/t/backpedaling-on-non-block-branches/476
 //
-// Review if @word, @pa/th, @tu.p.le would make good branch types.  Issue
-// would be that it would only be a shorthand for what could be said another
-// way, and would conflate a fetching shorthand with non-isotopifying.  :-/
+// Review if @word, @pa/th, @tu.p.le would make good branch types.  :-/
 //
 inline static bool Do_Core_Throws(
     REBVAL *out,
     REBFLGS flags,
     const REBVAL *branch,
-    const REBVAL *condition  // can be END, but use nullptr vs. a NULLED cell!
+    const REBVAL *condition  // can be END
 ){
     assert(branch != out and condition != out);
 
@@ -235,8 +233,8 @@ inline static bool Do_Core_Throws(
         //         ; nulls that triggered the branch would have been isotopic?
         //     ]
         //
-        if (condition != nullptr and NOT_END(condition)) {
-            const REBVAL *decayed = rebPointerToDecayed(condition);
+        if (NOT_END(condition)) {
+            const REBVAL *decayed = Pointer_To_Decayed(condition);
             if (decayed != condition) {
                 const REBKEY *key;
                 const REBPAR *param = First_Unspecialized_Param(
@@ -256,9 +254,11 @@ inline static bool Do_Core_Throws(
             out,  // <-- output cell
             flags,
             branch,
-            (condition != nullptr and IS_END(condition))
+            IS_END(condition)
                 ? rebEND
-                : rebQ(condition)
+                : IS_NULLED(condition)
+                    ? nullptr
+                    : rebQ(condition)
         );
         DROP_GC_GUARD(branch);
         if (threw)
@@ -308,13 +308,10 @@ inline static bool Do_Core_Throws(
     return false;
 }
 
-#define Do_Branch_With_Throws(out,branch,condition) \
+#define Do_Branch_Throws(out,branch,condition) \
     Do_Core_Throws(RESET(out), EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH, \
-        (branch), NULLIFY_NULLED(condition))
+        (branch), (condition))
 
-#define Do_Branch_Throws(out,branch) \
-    Do_Core_Throws(RESET(out), EVAL_MASK_DEFAULT | EVAL_FLAG_BRANCH, \
-        (branch), END_CELL)
 
 inline static REB_R Run_Generic_Dispatch_Core(
     const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
