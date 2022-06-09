@@ -74,10 +74,12 @@ REBNATIVE(quit)
         // that we might not editorialize...as it means we can't distinguish
         // `quit ~quit~` at the catch site.
         //
-        Init_Bad_Word(v, Canon(QUIT));
+        Init_Isotope(v, Canon(QUIT));
     }
+    else
+        Meta_Unquotify(v);
 
-    return_thrown (Init_Thrown_With_Label_Meta(OUT, v, Lib(QUIT)));
+    return_thrown (Init_Thrown_With_Label(OUT, v, Lib(QUIT)));
 }
 
 

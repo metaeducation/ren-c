@@ -1161,9 +1161,9 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // between the time a function has been called and the throw is handled
     // can cause problems with this.
     //
-    assert(Is_Fresh(&TG_Thrown_Arg));
+    assert(Is_Stale_Void(&TG_Thrown_Arg));
   #if !defined(NDEBUG)
-    assert(Is_Fresh(&TG_Thrown_Label_Debug));
+    assert(Is_Stale_Void(&TG_Thrown_Label_Debug));
   #endif
 
     // If disabled by RECYCLE/OFF, exit now but set the pending flag.  (If

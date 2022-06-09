@@ -1166,8 +1166,7 @@ REBNATIVE(catch)
         REBARR *a = Make_Array(2);
 
         Copy_Cell(ARR_AT(a, 0), label); // throw name
-        CATCH_THROWN_META(ARR_AT(a, 1), OUT); // thrown value--may be null!
-        Meta_Unquotify(ARR_AT(a, 1));
+        CATCH_THROWN(ARR_AT(a, 1), OUT); // thrown value--may be null!
         if (IS_NULLED(ARR_AT(a, 1)))
             SET_SERIES_LEN(a, 1); // trim out null value (illegal in block)
         else
@@ -1175,12 +1174,11 @@ REBNATIVE(catch)
         return Init_Block(OUT, a);
     }
 
-    CATCH_THROWN_META(OUT, OUT); // thrown value
+    CATCH_THROWN(OUT, OUT); // thrown value
 
-    if (Is_Meta_Of_Void(OUT))
+    if (Is_Void(OUT))
         return Init_None(OUT);  // void would trigger ELSE
 
-    Meta_Unquotify(OUT);
     Isotopify_If_Nulled(OUT);  // a caught NULL triggers THEN, not ELSE
     return_branched (OUT);
 }

@@ -1011,11 +1011,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 // the user for other features, while this only takes one
                 // function away.
                 //
-                CATCH_THROWN_META(OUT, OUT);
-                if (Is_Meta_Of_Void(OUT))
-                    Mark_Eval_Out_Voided(OUT);
-                else
-                    Meta_Unquotify(OUT);
+                CATCH_THROWN(OUT, OUT);
 
                 goto dispatch_completed;
             }
@@ -1026,8 +1022,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 // This was issued by REDO, and should be a FRAME! with
                 // the phase and binding we are to resume with.
                 //
-                CATCH_THROWN_META(OUT, OUT);
-                Unquotify(OUT, 1);
+                CATCH_THROWN(OUT, OUT);
                 assert(IS_FRAME(OUT));
 
                 // We are reusing the frame and may be jumping to an

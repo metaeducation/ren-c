@@ -332,15 +332,13 @@ static bool Subparse_Throws(
         const REBVAL *label = VAL_THROWN_LABEL(out);
         if (IS_ACTION(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_REJECT))) {
-                CATCH_THROWN_META(out, out);
-                assert(IS_NULLED(out));
+                CATCH_THROWN(out, out);
                 *interrupted_out = true;
                 return false;
             }
 
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
-                CATCH_THROWN_META(out, out);
-                Unquotify(out, 1);
+                CATCH_THROWN(out, out);
                 assert(IS_INTEGER(out));
                 *interrupted_out = true;
                 return false;

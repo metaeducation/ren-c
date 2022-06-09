@@ -63,7 +63,7 @@
 
 #if !defined(NDEBUG)
     inline static bool Is_Evaluator_Throwing_Debug(void) {
-        return not Is_Fresh(&TG_Thrown_Arg);
+        return not Is_Stale_Void(&TG_Thrown_Arg);
     }
 #endif
 
@@ -72,21 +72,30 @@
         (thrown)
 #else
     inline static const REBVAL *VAL_THROWN_LABEL(const REBVAL *thrown) {
-        if (Is_Fresh(&TG_Thrown_Label_Debug))
+        if (Is_Stale_Void(&TG_Thrown_Label_Debug))
             return thrown;
         assert(Is_Isotope_With_Id(thrown, SYM_THROW));
         return &TG_Thrown_Label_Debug;
     }
 #endif
 
-inline static REBVAL *Init_Thrown_Core(  // assumes `arg` in TG_Thrown_Arg
+inline static REBVAL *Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
     REBVAL *out,
-    const REBVAL *label // Note: is allowed to be same as `out`
+    const REBVAL *arg,
+    const REBVAL *label  // Note: is allowed to be same as `out`
 ){
+    assert(Is_Stale_Void(&TG_Thrown_Arg));
+
+    if (Is_Void(arg))
+        RESET(&TG_Thrown_Arg);
+    else
+        Copy_Cell(&TG_Thrown_Arg, arg);
+
   #if defined(NDEBUG)
     if (out != label)
         Copy_Cell(out, label);
   #else
+    assert(Is_Stale_Void(&TG_Thrown_Label_Debug));
 
     // Help avoid accidental uses of thrown output as misunderstood plain
     // outputs, by forcing thrown label access through VAL_THROWN_LABEL()...
@@ -98,7 +107,6 @@ inline static REBVAL *Init_Thrown_Core(  // assumes `arg` in TG_Thrown_Arg
         Init_Isotope(out, Canon(THROW));
     }
     else {
-        assert(Is_Fresh(&TG_Thrown_Label_Debug));
         if (out != label)
             Copy_Cell(out, label);
     }
@@ -107,42 +115,30 @@ inline static REBVAL *Init_Thrown_Core(  // assumes `arg` in TG_Thrown_Arg
     return out; // for chaining to dispatcher output
 }
 
-inline static REBVAL *Init_Thrown_With_Label(
-    REBVAL *out,
-    const REBVAL *arg,
-    const REBVAL *label // Note: is allowed to be same as `out`
-){
-    Copy_Cell(&TG_Thrown_Arg, arg);
-    Meta_Quotify(&TG_Thrown_Arg);
-    return Init_Thrown_Core(out, label);
-}
-
-inline static REBVAL *Init_Thrown_With_Label_Meta(
-    REBVAL *out,
-    const REBVAL *arg,
-    const REBVAL *label // Note: is allowed to be same as `out`
-){
-    assert(not (IS_BAD_WORD(arg) and VAL_BAD_WORD_ID(arg) == SYM_END));
-    assert(
-        IS_NULLED(arg)
-        or IS_BAD_WORD(arg)
-        or IS_QUOTED(arg)
-        or IS_THE_WORD(arg)
-    );
-    Copy_Cell(&TG_Thrown_Arg, arg);
-    return Init_Thrown_Core(out, label);
-}
-
-inline static void CATCH_THROWN_META(
+inline static void CATCH_THROWN(
     Cell *arg_out,
     REBVAL *thrown // Note: may be same pointer as arg_out
 ){
+    if (Is_Void(&TG_Thrown_Arg))
+        RESET(arg_out);
+    else
+        Copy_Cell(arg_out, &TG_Thrown_Arg);
+
+    Init_Stale_Void(&TG_Thrown_Arg);
+
+  #if defined(NDEBUG)
     UNUSED(thrown);
-    Copy_Cell(arg_out, &TG_Thrown_Arg);
-
-    RESET(&TG_Thrown_Arg);
-
-  #if !defined(NDEBUG)
-    RESET(&TG_Thrown_Label_Debug);
+  #else
+    // The debug build may have taken the throw label out of the output slot
+    // and put it into a variable on the side (this helps avoid non-throw
+    // aware reads of f->out).  If this was done, put it back after catch
+    // (it is done SPORADICALLY()).  Only do so if they weren't trying to
+    // overwrite the frame's output slot and didn't care about the label.
+    //
+    if (not Is_Stale_Void(&TG_Thrown_Label_Debug)) {
+        if (arg_out != thrown)
+            Move_Cell(thrown, &TG_Thrown_Label_Debug);
+        Init_Stale_Void(&TG_Thrown_Label_Debug);
+    }
   #endif
 }

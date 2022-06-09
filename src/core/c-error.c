@@ -379,7 +379,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // If a throw was being processed up the stack when the error was raised,
     // then it had the thrown argument set.
     //
-    RESET(&TG_Thrown_Arg);
+    Init_Stale_Void(&TG_Thrown_Arg);
 
     LONG_JUMP(TG_Jump_List->cpu_state, 1);
 }
@@ -1194,12 +1194,10 @@ REBCTX *Error_No_Catch_For_Throw(REBVAL *thrown)
     Copy_Cell(label, VAL_THROWN_LABEL(thrown));
 
     DECLARE_LOCAL (arg);
-    CATCH_THROWN_META(arg, thrown);
+    CATCH_THROWN(arg, thrown);
 
-    if (Is_Meta_Of_Void(arg))
+    if (Is_Void(arg))
         Init_None(arg);
-    else
-        Meta_Unquotify(arg);
 
     return Error_No_Catch_Raw(arg, label);
 }

@@ -52,7 +52,7 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
         *broke = true;
-        CATCH_THROWN_META(val, val);
+        CATCH_THROWN(val, val);
         assert(IS_NULLED(val)); // BREAK must always return NULL
         return true;
     }
@@ -65,18 +65,7 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
         // as opposed to some ~void~ BAD-WORD!)  Other loops may vary.
         //
         *broke = false;
-        CATCH_THROWN_META(val, val);
-        if (Is_Meta_Of_Void(val)) {
-            //
-            // For instance, `continue if false [<a>]`.  The rules here may
-            // be different...a MAP-EACH might want to tolerate it, but a
-            // REMOVE-EACH might not.
-            //
-            RESET(val);
-        }
-        else
-            Meta_Unquotify(val);
-
+        CATCH_THROWN(val, val);
         return true;
     }
 
@@ -124,10 +113,12 @@ REBNATIVE(continue)
 
     REBVAL *v = ARG(value);
 
-    if (Is_Meta_Of_End(v))
-        Init_Meta_Of_Void(v);  // Treat CONTINUE same as CONTINUE VOID
+    if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
+        RESET(v);  // Treat CONTINUE same as CONTINUE VOID
+    else
+        Meta_Unquotify(v);
 
-    return_thrown (Init_Thrown_With_Label_Meta(OUT, v, Lib(CONTINUE)));
+    return_thrown (Init_Thrown_With_Label(OUT, v, Lib(CONTINUE)));
 }
 
 
@@ -1105,10 +1096,12 @@ REBNATIVE(stop)
 
     REBVAL *v = ARG(value);
 
-    if (Is_Meta_Of_End(v))
-        Init_Meta_Of_Void(v);  // Treat STOP the same as STOP VOID
+    if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
+        RESET(v);  // Treat STOP the same as STOP VOID
+    else
+        Meta_Unquotify(v);
 
-    return_thrown (Init_Thrown_With_Label_Meta(OUT, ARG(value), Lib(STOP)));
+    return_thrown (Init_Thrown_With_Label(OUT, v, Lib(STOP)));
 }
 
 
@@ -1139,7 +1132,7 @@ REBNATIVE(cycle)
                     // See notes on STOP for why CYCLE is unique among loop
                     // constructs, with a BREAK variant that returns a value.
                     //
-                    CATCH_THROWN_META(OUT, OUT);
+                    CATCH_THROWN(OUT, OUT);
 
                     // !!! Technically, we know CYCLE's body will always run,
                     // so we could make an exception to having it return
@@ -1147,10 +1140,9 @@ REBNATIVE(cycle)
                     // good reason to do that, so going with the usual branch
                     // rules unless there's a good demonstrated case otherwise.
 
-                    if (Is_Meta_Of_Void(OUT))
+                    if (Is_Void(OUT))
                         return Init_None(OUT);
 
-                    Meta_Unquotify(OUT);
                     Isotopify_If_Nulled(OUT);  // NULL reserved for BREAK
                     return OUT;
                 }

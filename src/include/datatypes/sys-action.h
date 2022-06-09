@@ -569,7 +569,7 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
 #define return_thrown(v) \
     do { \
         Maybe_Move_Cell(OUT, (v)); /* must be first, if Init_Thrown() */ \
-        assert(not Is_Void(&TG_Thrown_Arg)); \
+        assert(not Is_Stale_Void(&TG_Thrown_Arg)); \
         return R_THROWN; \
     } while (false)
 

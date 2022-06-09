@@ -159,11 +159,7 @@ bool Interpreted_Dispatch_Details_1_Throws(
             // concerns to handle the usermode RETURN here...but generic
             // UNWIND is a nice feature too.  Revisit later.
             //
-            CATCH_THROWN_META(spare, spare);  // preserves CELL_FLAG_UNEVALUATED
-            if (Is_Meta_Of_Void(spare))
-                RESET(spare);
-            else
-                Meta_Unquotify(spare);
+            CATCH_THROWN(spare, spare);  // preserves CELL_FLAG_UNEVALUATED
 
             *returned = true;
             return false;  // we caught the THROW
@@ -652,7 +648,7 @@ REBVAL *Init_Thrown_Unwind_Value(
         }
     }
 
-    return Init_Thrown_With_Label_Meta(out, value, label);
+    return Init_Thrown_With_Label(out, value, label);
 }
 
 
@@ -680,9 +676,15 @@ REBNATIVE(unwind)
 {
     INCLUDE_PARAMS_OF_UNWIND;
 
+    REBVAL *level = ARG(level);
     REBVAL *v = ARG(result);
 
-    return_thrown (Init_Thrown_Unwind_Value(OUT, ARG(level), v, frame_));
+    if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
+        RESET(v);
+    else
+        Meta_Unquotify(v);
+
+    return_thrown (Init_Thrown_Unwind_Value(OUT, level, v, frame_));
 }
 
 
@@ -755,15 +757,16 @@ REBNATIVE(definitional_return)
         // To make sure core clients know what they are doing, Meta_Unquotify()
         // won't make voids.  But we want to be able to return them.
         //
+        RESET(v);
         goto skip_type_check;
     }
 
     if (Is_Meta_Of_End(v)) {  // plain `return` with no arguments
-        Init_Meta_Of_Void(v);  // act the same as `return void`
+        RESET(v);  // act the same as `return void`
         goto skip_type_check;  // currently isotopes always allowed
     }
 
-    // Safe to unquotify long enough to do type checking, then quote back
+    // Safe to unquotify for type checking
 
     Meta_Unquotify(v);
 
@@ -787,18 +790,12 @@ REBNATIVE(definitional_return)
             fail (Error_Bad_Return_Type(target_frame, VAL_TYPE(v)));
     }
 
-    Meta_Quotify(v);
-
   skip_type_check: {
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
     INIT_VAL_ACTION_BINDING(label, f_binding);
 
-    return_thrown (Init_Thrown_With_Label_Meta(
-        f->out,
-        v,  // save UNEVALUATED?
-        label
-    ));
+    return_thrown (Init_Thrown_With_Label(f->out, v, label));
   }
 }
 
