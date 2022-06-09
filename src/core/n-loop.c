@@ -766,7 +766,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
 
 //
-//  Loop_Each: C
+//  Loop_Each_Throws: C
 //
 // Common implementation code of FOR-EACH, MAP-EACH, and EVERY.
 //
@@ -774,7 +774,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 // likely be factored in a better way...pushing more per-native code into the
 // natives themselves.
 //
-static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
+static bool Loop_Each_Throws(REBFRM *frame_, LOOP_MODE mode)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
 
@@ -802,11 +802,6 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
         ARG(vars)
     );
     Init_Object(ARG(vars), les.pseudo_vars_ctx);  // keep GC safe
-
-    // Currently the data stack is only used by MAP-EACH to accumulate results
-    // but it's faster to just save it than test the loop mode.
-    //
-    REBDSP dsp_orig = DSP;
 
     // Extract the series and index being enumerated, based on data type
 
@@ -883,60 +878,17 @@ static REB_R Loop_Each(REBFRM *frame_, LOOP_MODE mode)
 
     //=//// NOW FINISH UP /////////////////////////////////////////////////=//
 
-    if (r == R_THROWN) {  // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
-        if (mode == LOOP_MAP_EACH)
-            DS_DROP_TO(dsp_orig);
-        return R_THROWN;
-    }
+    if (r == R_THROWN)  // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
+        return true;
 
     if (r) {
         assert(IS_ERROR(r));
-        if (mode == LOOP_MAP_EACH)
-            DS_DROP_TO(dsp_orig);
         rebJumps ("fail", rebR(m_cast(REBVAL*, r)));
     }
 
-    // Otherwise, nullptr signals result in les.out (a.k.a. OUT)
+    assert(r == nullptr);  // signals result is in les.out (a.k.a. OUT)
 
-    switch (mode) {
-      case LOOP_FOR_EACH:
-        //
-        // pure NULL output means there was a BREAK
-        // stale means body never ran: `10 = (10 maybe for-each x [] [<skip>])`
-        // ~null~ isotope means body made NULL or ~null~ isotope
-        // ~none~ isotope means body made ~none~ isotope or ~void~ isotope
-        // any other value is the plain last body result
-        //
-        if (Is_Stale(OUT))
-            return_void (OUT);
-        return OUT;
-
-      case LOOP_EVERY:
-        //
-        // pure NULL output means there was a BREAK
-        // stale means body never ran: `10 = (10 maybe every x [] [<skip>])`
-        // pure null means loop ran, and at least one body result was "falsey"
-        // any other value is the last body result, and is truthy
-        //
-        if (Is_Stale(OUT))
-            return_void (OUT);
-        return OUT;
-
-      case LOOP_MAP_EACH:
-        if (not Is_Stale(OUT)) {  // only modifies on break
-            assert(IS_NULLED(OUT));  // BREAK, so *must* return null
-            DS_DROP_TO(dsp_orig);
-            return nullptr;
-        }
-
-        // !!! MAP-EACH always returns a block except in cases of BREAK, e.g.
-        // there's no way to detect from the outside if the body never ran.
-        // Review if variants would be useful.
-        //
-        return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
-    }
-
-    DEAD_END;  // all branches handled in enum switch
+    return false;
 }
 
 
@@ -1233,7 +1185,19 @@ REBNATIVE(cycle)
 //
 REBNATIVE(for_each)
 {
-    return Loop_Each(frame_, LOOP_FOR_EACH);
+    if (Loop_Each_Throws(frame_, LOOP_FOR_EACH))
+        return_thrown (OUT);
+
+    // pure NULL output means there was a BREAK
+    // stale means body never ran: `10 = (10 maybe for-each x [] [<skip>])`
+    // ~null~ isotope means body made NULL or ~null~ isotope
+    // ~none~ isotope means body made ~none~ isotope or ~void~ isotope
+    // any other value is the plain last body result
+    //
+    if (Is_Stale(OUT))
+        return_void (OUT);
+
+    return OUT;
 }
 
 
@@ -1254,7 +1218,17 @@ REBNATIVE(for_each)
 //
 REBNATIVE(every)
 {
-    return Loop_Each(frame_, LOOP_EVERY);
+    if (Loop_Each_Throws(frame_, LOOP_EVERY))
+        return_thrown (OUT);
+
+    // pure NULL output means there was a BREAK
+    // stale means body never ran: `10 = (10 maybe every x [] [<skip>])`
+    // pure null means loop ran, and at least one body result was "falsey"
+    // any other value is the last body result, and is truthy
+    //
+    if (Is_Stale(OUT))
+        return_void (OUT);
+    return OUT;
 }
 
 
@@ -1724,14 +1698,12 @@ REBNATIVE(map_each)
     INCLUDE_PARAMS_OF_MAP_EACH;
 
     UNUSED(PAR(vars));
-    UNUSED(PAR(data));
 
+    Quotify(ARG(data), 1);  // MAP wants data to be QUOTED! atm
     Metafy(ARG(body));  // want the body to effectively quote the argument
 
-    return Loop_Each(
-        frame_,
-        LOOP_MAP_EACH  // will transition to MAP_EACH_SPLICED as default
-    );
+    REBNAT dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));
+    return dispatcher(frame_);
 }
 
 
@@ -1773,10 +1745,24 @@ REBNATIVE(map)
         fail ("MAP only supports one-level QUOTED! series/path for the moment");
     }
 
-    return Loop_Each(
-        frame_,
-        LOOP_MAP_EACH  // will transition to MAP_EACH_SPLICED as default
-    );
+    REBDSP dsp_orig = DSP;
+
+    if (Loop_Each_Throws(frame_, LOOP_MAP_EACH)) {
+        DS_DROP_TO(dsp_orig);
+        return_thrown (OUT);
+    }
+
+    if (not Is_Stale(OUT)) {  // only modifies on break
+        assert(IS_NULLED(OUT));  // BREAK, so *must* return null
+        DS_DROP_TO(dsp_orig);
+        return nullptr;
+    }
+
+    // !!! MAP-EACH always returns a block except in cases of BREAK, e.g.
+    // there's no way to detect from the outside if the body never ran.
+    // Review if variants would be useful.
+    //
+    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
 }
 
 
