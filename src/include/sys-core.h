@@ -78,7 +78,35 @@
 // assert() is enabled by default; disable with `#define NDEBUG`
 // http://stackoverflow.com/a/17241278
 //
-#include <assert.h>
+#ifdef NDEBUG
+
+    #define assert(expression) ((void)0)
+
+#elif TO_WINDOWS && INCLUDE_C_DEBUG_BREAK_NATIVE
+
+    #include <assert.h>  // include so it will think it has been included
+    #undef assert  // (this way its include guard prevents it defining again)
+
+    #include "debugbreak.h"
+    #include <stdio.h>
+
+    // For some reason, Windows implementation of "_wassert" corrupts the stack
+    // by calling abort(), to where you only see at most 3 stack frames above
+    // the assert in the VSCode debugger.  That's unusable, so replace it.
+
+    inline static void asserted(const char* file, int line, const char* expr) {
+        printf("Assertion failure: %s\n", expr);
+        printf("Line %d, File: %s\n", line, file);
+        debug_break();  // calling debug_break() allows us to step afterward
+    }
+
+    #define assert(expr) \
+        ((expr) ? (void)0 : asserted(__FILE__, __LINE__, #expr))
+#else
+    #include <assert.h>
+#endif
+
+
 
 //=//// STANDARD DEPENDENCIES FOR CORE ////////////////////////////////////=//
 
