@@ -345,10 +345,23 @@ static void Startup_End_Node(void)
 {
     PG_End_Cell.header.bits = NODE_FLAG_NODE | NODE_FLAG_STALE;
     assert(IS_END(END));  // sanity check
+
+    assert(Is_Void(VOID_CELL));  // default all zero bits for C globals
+    Reset_Cell_Header_Untracked(
+        TRACK(&PG_Void_Cell),
+        REB_0_VOID,
+        NODE_FLAG_NODE | NODE_FLAG_CELL | CELL_FLAG_PROTECTED
+    );
+    assert(Is_Void(VOID_CELL));  // another readable void pattern
 }
 
-static void Shutdown_End_Node(void)
-  { PG_End_Cell.header.bits = 0; }
+static void Shutdown_End_Node(void) {
+    assert(IS_END(END));  // sanity check
+    PG_End_Cell.header.bits = 0;
+
+    assert(Is_Void(VOID_CELL));
+    PG_Void_Cell.header.bits = 0;
+}
 
 
 //

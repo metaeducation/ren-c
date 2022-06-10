@@ -41,6 +41,10 @@
 //  efficiency...even though they don't have NODE_FLAG_NODE or NODE_FLAG_CELL.
 
 
+#define VOID_CELL \
+    c_cast(const REBVAL*, &PG_Void_Cell)
+
+
 inline static Cell *Prep_Cell_Untracked(Cell *c) {
     ALIGN_CHECK_CELL_EVIL_MACRO(c);
     c->header.bits = CELL_MASK_PREP;

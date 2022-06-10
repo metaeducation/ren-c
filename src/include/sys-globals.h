@@ -94,9 +94,14 @@ PVAR REB_OPTS *Reb_Opts;
     PVAR bool PG_Always_Malloc;   // For memory-related troubleshooting
 #endif
 
-// These are some canon BLANK, TRUE, and FALSE values (and nulled/end cells).
+// These are some canon cells that cannot be offered via Lib(XXX).  e.g. if
+// NONE were a variable in Lib, users couldn't access it by typing `none`
+// (they'd get an error on isotope variable access)...hence it is a function.
+//
 
 PVAR REBVAL PG_End_Cell;
+
+PVAR REBVAL PG_Void_Cell;
 
 PVAR REBVAL PG_None_Isotope;
 
