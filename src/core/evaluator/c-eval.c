@@ -895,95 +895,39 @@ bool Eval_Core_Throws(REBFRM * const f)
     // result was produced (an output of END) and then re-trigger a step in
     // the parent frame, e.g. to pick up the 3 above.
 
-      case REB_META_GROUP:
-        STATE_BYTE = ST_EVALUATOR_META_GROUP;
-        goto eval_group;
-
-      case REB_GROUP:
-        STATE_BYTE = ST_EVALUATOR_GROUP;
-        goto eval_group;
-
-      eval_group: {
-
-        assert(
-            STATE_BYTE == ST_EVALUATOR_GROUP
-            or STATE_BYTE == ST_EVALUATOR_META_GROUP
-        );
-
+      case REB_META_GROUP: {
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
+        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
 
-        assert(Is_Stale(OUT));
-
-        DECLARE_FEED_AT_CORE (subfeed, v, v_specifier);
-
-        REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED;
-
-        if (STATE_BYTE == ST_EVALUATOR_META_GROUP) {
-            CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
-            RESET(OUT);  // guaranteed to make a value, not transparent
-        }
-        else {
-            // We want to allow *non* ^META groups to be transparent if it's
-            // invisible, e.g. `1 + 2 (comment "hi")` is 3.  This means we
-            // have to use EVAL_FLAG_MAYBE_STALE.
-            //
-            if (GET_EVAL_FLAG(f, MAYBE_STALE))
-                flags |= EVAL_FLAG_MAYBE_STALE;
-            else
-                RESET(OUT);
-        }
-
-        if (Do_Feed_To_End_Throws(OUT, subfeed, flags))
+        RESET(OUT);  // guaranteed to overwrite out, not transparent
+        if (Do_Any_Array_At_Throws(OUT, v, v_specifier))
             goto return_thrown;
+        Reify_Eval_Out_Meta(OUT);
+        break; }
 
-        if (STATE_BYTE == ST_EVALUATOR_META_GROUP) {
-            Reify_Eval_Out_Meta(OUT);
-        }
-        else {
-            // We evaluated a group into the output, but if it was something
-            // like (1) the output will hold a non-evaluative 1.  We need to
-            // make it clear that this group overhead itself counts as eval.
-            //
-            // !!! What about `1 ()` ?  It's stale, so does it matter any more
-            // if it's evaluative or not?  If we ran the 1 -and- ran the group
-            // then we're in an evaluative context anyway.  Just clear always.
-            //
-            CLEAR_CELL_FLAG(OUT, UNEVALUATED);
+    eval_group:
+      case REB_GROUP: {
+        f_next_gotten = nullptr;  // arbitrary code changes fetched variables
+        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
 
-            // What was in the group might have been stale from inside the
-            // group, e.g.:
-            //
-            //     (1 + 2 comment "left stale" also [print "nothing on left"])
-            //
-            // But from outside the group, it's not stale...it's valid input.
-            //
-            //     (1 + 2 comment "we clear stale") also [print "3 comes in"]
-            //
-            // !!! How do we catch the case of vaporizing left hand sides?
-            //
-            //     1 + 2 (comment "stale") + 3
-            //
-            // Is there a cheaper way to prohibit this that doesn't require
-            // writing into the spare cell and seeing if it was stale, and
-            // then copying it over?  Is it worth it to prohibit, when this
-            // feature was previously considered desirable?
-            //
-            // We actually don't want to clear the stale flag on end, otherwise
-            // it's too easy to make an unintentional "variable assignment
-            // skipper"...this is why the resolve is conservative:
-            //
-            //    >> eval []
-            //    == ~void~  ; isotope (safer than something that no-op assigns)
-            //
-            //    >> ()
-            //    == ~void~  ; isotope (we want parity between these two)
-            //
-            //    >> (maybe if false [<a>])
-            //    ; void  (okay, this seems intentional)
-            //
+        // We want to allow *non* ^META groups to be transparent if it's
+        // invisible, e.g. `1 + 2 (comment "hi")` is 3.  We also don't want
+        // the 2 in that case to be able to be legal as the input to an enfix
+        // operation--so it has to stay stale.
+        //
+        // It seems we have to target a new cell, as otherwise we can't tell
+        // the difference of `(20 (comment "hi")` and `(10 (20 comment "hi"))`
+        // by just the stale flag on OUT alone.
+        //
+        if (Do_Any_Array_At_Throws(SPARE, v, v_specifier)) {
+            Move_Cell(OUT, SPARE);
+            goto return_thrown;
         }
 
-        STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
+        if (not Is_Void(SPARE))
+            Move_Cell(OUT, SPARE);
+        else
+            assert(Is_Stale(OUT));
         break; }
 
 
@@ -1278,7 +1222,6 @@ bool Eval_Core_Throws(REBFRM * const f)
     // distinction.  For instance, it's used to escape soft quoted slots.
 
       case REB_GET_GROUP:
-        STATE_BYTE = ST_EVALUATOR_GROUP;
         goto eval_group;
 
 
