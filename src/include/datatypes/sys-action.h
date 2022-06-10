@@ -504,13 +504,20 @@ inline static REBVAL *Init_Action_Core(
 // of the frame for their own use.  But before then, the state byte is used
 // by action dispatch itself.
 //
-// So if f->key is END, then this state is not meaningful.
+
 //
 enum {
     ST_ACTION_INITIAL_ENTRY = 0,  // is separate "fulfilling" state needed?
-    ST_ACTION_TYPECHECKING,
-    ST_ACTION_DISPATCHING
+
+    ST_ACTION_FULFILLING_ARGS = 100,  // weird number if dispatcher gets it
+    ST_ACTION_TYPECHECKING
+
+    // Note: There is no ST_ACTION_DISPATCHING, because if an action is
+    // dispatching, the STATE_BYTE belongs to the dispatcher.  Detecting the
+    // state of being in dispatch is (f->key == f->key_tail), which tells you
+    // that argument enumeration is finished.
 };
+
 
 // This indicates that an evaluation step didn't add any new output, but it
 // does not overwrite the contents of the out cell.  This allows the evaluator

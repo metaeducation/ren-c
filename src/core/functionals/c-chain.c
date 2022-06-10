@@ -61,7 +61,6 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
         sub,
         f->feed,
         EVAL_MASK_DEFAULT
-            | FLAG_STATE_BYTE(ST_ACTION_DISPATCHING)  // don't typecheck again
             | EVAL_FLAG_MAYBE_STALE
     );
     Push_Frame(out, sub);
@@ -143,7 +142,6 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     // frame is already filled, but each step after that uses enfix and
     // runs from the top.)
 
-    assert(FRM_STATE_BYTE(sub) == ST_ACTION_DISPATCHING);
     while (true) {
         if (Process_Action_Core_Throws(sub)) {
             Abort_Frame(sub);
