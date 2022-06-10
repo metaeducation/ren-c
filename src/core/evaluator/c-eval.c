@@ -2006,7 +2006,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
   #if !defined(NDEBUG)
     Eval_Core_Exit_Checks_Debug(f);  // called unless a fail() longjmps
-    assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));
     assert(
         (f->flags.bits & ~FLAG_STATE_BYTE(255)) == initial_flags
     );  // any change should be restored

@@ -146,7 +146,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
     assert(DSP >= f->baseline.dsp);  // path processing may push REFINEMENT!s
 
-    assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));
+    assert(STATE_BYTE != ST_ACTION_DOING_PICKUPS);
 
     for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
 
@@ -156,7 +156,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
       continue_fulfilling:
 
-        if (GET_EVAL_FLAG(f, DOING_PICKUPS)) {
+        if (STATE_BYTE == ST_ACTION_DOING_PICKUPS) {
             if (DSP != f->baseline.dsp)
                 goto next_pickup;
 
@@ -249,7 +249,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
   //=//// A /REFINEMENT ARG ///////////////////////////////////////////////=//
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
-            assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));  // jump lower
+            assert(STATE_BYTE != ST_ACTION_DOING_PICKUPS);  // jump lower
             Init_Nulled(ARG);  // null means refinement not used
             goto continue_fulfilling;
         }
@@ -265,7 +265,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         // The return function is filled in by the dispatchers that provide it.
 
         if (pclass == PARAM_CLASS_RETURN) {
-            assert(NOT_EVAL_FLAG(f, DOING_PICKUPS));
+            assert(STATE_BYTE != ST_ACTION_DOING_PICKUPS);
             Init_Nulled(ARG);
             goto continue_fulfilling;
         }
@@ -711,13 +711,12 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             RESET(ARG);
         }
 
-        SET_EVAL_FLAG(f, DOING_PICKUPS);
+        STATE_BYTE = ST_ACTION_DOING_PICKUPS;
         goto fulfill_arg;
     }
 
   fulfill_and_any_pickups_done:
 
-    CLEAR_EVAL_FLAG(f, DOING_PICKUPS);  // reevaluate may set flag again
     f->key = nullptr;  // signals !Is_Action_Frame_Fulfilling()
     f->key_tail = nullptr;
 

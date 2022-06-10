@@ -281,16 +281,9 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(26)
 
 
-//=//// EVAL_FLAG_DOING_PICKUPS ///////////////////////////////////////////=//
+//=//// EVAL_FLAG_27 //////////////////////////////////////////////////////=//
 //
-// If an ACTION! is invoked through a path and uses refinements in a different
-// order from how they appear in the frame's parameter definition, then the
-// arguments at the callsite can't be gathered in sequence.  Revisiting them
-// will be necessary.  This flag is set while they are revisited, which is
-// important not only for Eval_Core() to know, but also the GC...since it
-// means it must protect *all* of the arguments--not just up thru f->key.
-//
-#define EVAL_FLAG_DOING_PICKUPS \
+#define EVAL_FLAG_27 \
     FLAG_LEFT_BIT(27)
 
 
