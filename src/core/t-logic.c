@@ -269,14 +269,14 @@ REBNATIVE(unless)
     REBVAL *right = ARG(right);
 
     if (Is_Meta_Of_Void(right))  // if right disappears (no branching), left
-        return left;
+        return_value (left);
 
     Meta_Unquotify(right);
 
     if (IS_TRUTHY(right))
-        return right;
+        return_value (right);
 
-    return left; // preserve the exact truthy or falsey value
+    return_value (left); // preserve the exact truthy or falsey value
 }
 
 

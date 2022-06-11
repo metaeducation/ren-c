@@ -824,7 +824,7 @@ REBNATIVE(inherit_meta)
 
     REBCTX *m1 = ACT_META(VAL_ACTION(original));
     if (not m1)  // nothing to copy
-        return ARG(derived);
+        return_value (ARG(derived));
 
     // Often the derived function won't have its own meta information yet.  But
     // if it was created via an AUGMENT, it will have some...only the notes
@@ -908,5 +908,5 @@ REBNATIVE(inherit_meta)
         Shutdown_Evars(&e);
     }
 
-    return ARG(derived);
+    return_value (ARG(derived));
 }

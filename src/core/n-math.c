@@ -410,7 +410,7 @@ REBNATIVE(shift)
         }
     }
 
-    return ARG(value);
+    return_value (ARG(value));
 }
 
 

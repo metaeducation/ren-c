@@ -354,9 +354,9 @@ inline static bool Run_Generic_Dispatch_Throws(
     }
     else {
         assert(not Is_Stale(r));
+        assert(Is_Api_Value(r));
         Copy_Cell(f->out, r);
-        if (Is_Api_Value(r))
-            Release_Api_Value_If_Unmanaged(r);
+        Release_Api_Value_If_Unmanaged(r);
     }
     return false;
 }

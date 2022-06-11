@@ -217,7 +217,7 @@ REBTYPE(Action)
 
         REBVAL *picker = ARG(picker);
         if (Is_Null_Isotope(picker) or IS_BLANK(picker))
-            return action;
+            return_value (action);
 
         const REBSYM *symbol;
         if (IS_WORD(picker))

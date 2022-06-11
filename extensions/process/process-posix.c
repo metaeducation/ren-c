@@ -106,7 +106,7 @@ REBNATIVE(set_uid)
     PROCESS_INCLUDE_PARAMS_OF_SET_UID;
 
     if (setuid(VAL_INT32(ARG(uid))) >= 0)
-        return ARG(uid);
+        return_value (ARG(uid));
 
     switch (errno) {
       case EINVAL:
@@ -137,7 +137,7 @@ REBNATIVE(set_euid)
     PROCESS_INCLUDE_PARAMS_OF_SET_EUID;
 
     if (seteuid(VAL_INT32(ARG(euid))) >= 0)
-        return ARG(euid);
+        return_value (ARG(euid));
 
     switch (errno) {
       case EINVAL:
@@ -168,7 +168,7 @@ REBNATIVE(set_gid)
     PROCESS_INCLUDE_PARAMS_OF_SET_GID;
 
     if (setgid(VAL_INT32(ARG(gid))) >= 0)
-        return ARG(gid);
+        return_value (ARG(gid));
 
     switch (errno) {
       case EINVAL:
@@ -199,7 +199,7 @@ REBNATIVE(set_egid)
     PROCESS_INCLUDE_PARAMS_OF_SET_EGID;
 
     if (setegid(VAL_INT32(ARG(egid))) >= 0)
-        return ARG(egid);
+        return_value (ARG(egid));
 
     switch (errno) {
       case EINVAL:

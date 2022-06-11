@@ -173,7 +173,7 @@ static REB_R Clipboard_Actor(
 
         assert(h_check == h);
 
-        return port; }
+        return_value (port); }
 
       case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
@@ -184,13 +184,13 @@ static REB_R Clipboard_Actor(
 
         // !!! Currently just ignore (it didn't do anything)
 
-        return port; }
+        return_value (port); }
 
       case SYM_CLOSE: {
 
         // !!! Currently just ignore (it didn't do anything)
 
-        return port; }
+        return_value (port); }
 
       default:
         break;

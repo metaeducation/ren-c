@@ -1282,5 +1282,5 @@ REBNATIVE(intern_p)
     Cell *head = VAL_ARRAY_AT_MUTABLE_HACK(&tail, ARG(data));
     Bind_Nonspecifically(head, tail, VAL_CONTEXT(ARG(where)));
 
-    return ARG(data);
+    return_value (ARG(data));
 }

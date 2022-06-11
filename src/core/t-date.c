@@ -1028,7 +1028,7 @@ REBTYPE(Date)
         // This is a case where the bits are stored in the cell, so
         // whoever owns this cell has to write it back.
         //
-        return v;
+        return_value (v);
     }
 
     if (id == SYM_SUBTRACT or id == SYM_ADD) {
@@ -1083,7 +1083,7 @@ REBTYPE(Date)
     else {
         switch (id) {
           case SYM_COPY:
-            return v;  // immediate type, just copy bits
+            return_value (v);  // immediate type, just copy bits
 
           case SYM_EVEN_Q:
             return Init_Logic(OUT, ((~day) & 1) == 0);

@@ -616,10 +616,10 @@ REBNATIVE(compose)
     INCLUDE_PARAMS_OF_COMPOSE;
 
     if (Is_Blackhole(ARG(value)))
-        return ARG(value);  // sink locations composed to avoid double eval
+        return_value (ARG(value));  // sink locations composed to avoid double eval
 
     if (ANY_WORD(ARG(value)) or IS_ACTION(ARG(value)))
-        return ARG(value);  // makes it easier to `set/hard compose target`
+        return_value (ARG(value));  // makes it easier to `set/hard compose target`
 
     REBDSP dsp_orig = DSP;
 

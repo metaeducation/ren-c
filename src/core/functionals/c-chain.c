@@ -179,7 +179,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
     Drop_Frame(sub);
 
-    return SPARE;
+    return_value (SPARE);
 }
 
 

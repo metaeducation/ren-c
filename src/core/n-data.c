@@ -163,13 +163,13 @@ REBNATIVE(bind)
         // Bind a single word (also works on refinements, `/a` ...or `a.`, etc.
 
         if (Try_Bind_Word(context, v))
-            return v;
+            return_value (v);
 
         // not in context, bind/new means add it if it's not.
         //
         if (REF(new) or (IS_SET_WORD(v) and REF(set))) {
             Init_None(Append_Context(VAL_CONTEXT(context), v, nullptr));
-            return v;
+            return_value (v);
         }
 
         fail (Error_Not_In_Context_Raw(v));
@@ -182,7 +182,7 @@ REBNATIVE(bind)
     //
     if (REB_ACTION == CELL_HEART(v)) {
         INIT_VAL_ACTION_BINDING(v, VAL_CONTEXT(context));
-        return v;
+        return_value (v);
     }
 
     if (not ANY_ARRAYLIKE(v))  // QUOTED! could have wrapped any type
@@ -256,7 +256,7 @@ REBNATIVE(in)
 
     assert(ANY_ARRAY(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
-    return v;
+    return_value (v);
 }
 
 
@@ -300,7 +300,7 @@ REBNATIVE(without)
 
     assert(ANY_ARRAY(v));
     Virtual_Bind_Deep_To_Existing_Context(v, ctx, nullptr, REB_WORD);
-    return v;
+    return_value (v);
 }
 
 //
@@ -484,7 +484,7 @@ REBNATIVE(unbind)
         Unbind_Values_Core(at, tail, context, did REF(deep));
     }
 
-    return word;
+    return_value (word);
 }
 
 
@@ -977,7 +977,7 @@ REBNATIVE(get)
 
     if (Get_Var_Core_Throws(OUT, steps_out, source, SPECIFIED)) {
         assert(steps_out);  // !!! should plain PICK* be allowed to throw?
-        return_thrown (OUT);
+        return R_THROWN;
     }
 
     if (not REF(any))
@@ -1335,7 +1335,7 @@ REBNATIVE(set)
     if (steps_out and not Is_Blackhole(steps))
         Set_Var_May_Fail(steps, SPECIFIED, SPARE);
 
-    return v;  // result does not decay unless void, see [1]
+    return_value (v);  // result does not decay unless void, see [1]
 }
 
 
@@ -1370,7 +1370,7 @@ REBNATIVE(try)
     if (Is_Isotope(v))
         fail (Error_Bad_Isotope(v));  // Don't tolerate other isotopes
 
-    return v;
+    return_value (v);
 }
 
 
@@ -1412,7 +1412,7 @@ REBNATIVE(opt)
     if (IS_NULLED(v))
         return Init_Null_Isotope(OUT);
 
-    return v;
+    return_value (v);
 }
 
 
@@ -1462,7 +1462,7 @@ REBNATIVE(resolve)
         Copy_Cell(dest, src);
     }
 
-    return ARG(where);
+    return_value (ARG(where));
 }
 
 
@@ -1509,7 +1509,7 @@ REBNATIVE(enfix)
 
     SET_ACTION_FLAG(VAL_ACTION(action), ENFIXED);
 
-    return action;
+    return_value (action);
 }
 
 
@@ -1559,7 +1559,7 @@ REBNATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
     if (Is_Meta_Of_Void(v))
         return_void (OUT);
 
-    return Meta_Unquotify(v);
+    return_value (Meta_Unquotify(v));
 }
 
 
@@ -1800,7 +1800,7 @@ REBNATIVE(as)
     REBVAL *t = ARG(type);
     enum Reb_Kind new_kind = VAL_TYPE_KIND(t);
     if (new_kind == VAL_TYPE(v))
-        return v;
+        return_value (v);
 
     switch (new_kind) {
       case REB_INTEGER: {
@@ -2155,7 +2155,7 @@ REBNATIVE(as_text)
 
     enum Reb_Kind new_kind = REB_TEXT;
     if (new_kind == VAL_TYPE(v) and not REF(strict))
-        return Quotify(v, quotes);  // just may change quotes
+        return_value (Quotify(v, quotes));  // just may change quotes
 
     if (not Try_As_String(
         OUT,
@@ -2404,10 +2404,10 @@ REBNATIVE(reify)
         return Init_Bad_Word(OUT, Canon(VOID));
 
     if (IS_BAD_WORD(v))  // e.g. the input was an isotope form
-        return v;
+        return_value (v);
 
     assert(IS_QUOTED(v));
-    return Unquotify(v, 1);
+    return_value (Unquotify(v, 1));
 }
 
 

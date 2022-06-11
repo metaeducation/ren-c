@@ -777,10 +777,10 @@ static REB_R Transport_Actor(
                     fail (listen_error);
             }
 
-            return port; }
+            return_value (port); }
 
           case SYM_CLOSE:
-            return port;
+            return_value (port);
 
           default:
             fail (Error_On_Port(SYM_NOT_OPEN, port, -12));
@@ -872,7 +872,7 @@ static REB_R Transport_Actor(
 
         rebFree(rebreq);
 
-        return port; }
+        return_value (port); }
 
       case SYM_WRITE: {
         INCLUDE_PARAMS_OF_WRITE;
@@ -941,7 +941,7 @@ static REB_R Transport_Actor(
 
         rebFree(rebreq);
 
-        return port; }
+        return_value (port); }
 
       case SYM_QUERY: {
         //
@@ -982,7 +982,7 @@ static REB_R Transport_Actor(
             if (error)
                 fail (error);
         }
-        return port; }
+        return_value (port); }
 
       case SYM_CONNECT: {
         //
@@ -995,7 +995,7 @@ static REB_R Transport_Actor(
         if (error != nullptr)
             fail (error);
 
-        return port; }
+        return_value (port); }
 
       default:
         break;

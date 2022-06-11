@@ -325,7 +325,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
         // does not run the branch, unless we are decaying).  But we don't want
         // to actually return a quoted parameter.
         //
-        return Meta_Unquotify(in);
+        return_value (Meta_Unquotify(in));
     }
 
     if (Do_Branch_Throws(OUT, ARG(branch), in))
@@ -447,7 +447,7 @@ REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
     if (IS_NULLED(ARG(value)))
         fail ("MUST requires argument to not be NULL");
 
-    return ARG(value);
+    return_value (ARG(value));
 }
 
 

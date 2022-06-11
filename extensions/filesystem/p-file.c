@@ -194,11 +194,11 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 
           case SYM_HEAD:
             file->offset = 0;
-            return port;
+            return_value (port);
 
           case SYM_TAIL:
             file->offset = File_Size_Cacheable_May_Fail(port);
-            return port;
+            return_value (port);
 
           case SYM_HEAD_Q:
             return Init_Logic(OUT, file->offset == 0);
@@ -467,7 +467,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         if (result)
             fail (result);
 
-        return port; }
+        return_value (port); }
 
     //=//// OPEN ///////////////////////////////////////////////////////////=//
     //
@@ -513,7 +513,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         if (error != nullptr)
             fail (Error_Cannot_Open_Raw(file->path, error));
 
-        return port; }
+        return_value (port); }
 
     //=//// COPY ///////////////////////////////////////////////////////////=//
     //
@@ -550,7 +550,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             if (error)
                 fail (error);
         }
-        return port; }
+        return_value (port); }
 
     //=//// DELETE /////////////////////////////////////////////////////////=//
     //
@@ -571,7 +571,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         if (error)
             fail (error);
 
-        return port; }
+        return_value (port); }
 
     //=//// RENAME /////////////////////////////////////////////////////////=//
     //
@@ -623,7 +623,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 
         Copy_Cell(file->path, ARG(to));  // !!! this mutates the spec, bad?
 
-        return port; }
+        return_value (port); }
 
     //=//// CREATE /////////////////////////////////////////////////////////=//
     //
@@ -688,7 +688,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         }
 
         file->offset += offset;
-        return port; }
+        return_value (port); }
 
     //=//// CLEAR //////////////////////////////////////////////////////////=//
     //
@@ -719,7 +719,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         if (truncate_error)
             fail (truncate_error);
 
-        return port; }
+        return_value (port); }
 
       default:
         break;

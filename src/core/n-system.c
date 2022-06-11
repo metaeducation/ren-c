@@ -272,7 +272,7 @@ REBNATIVE(check)
         ASSERT_ARRAY(ACT_DETAILS(VAL_ACTION(value)));
     }
 
-    return value;
+    return_value (value);
 #endif
 }
 

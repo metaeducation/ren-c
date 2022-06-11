@@ -279,7 +279,7 @@ REBNATIVE(quote)
     REBINT depth = REF(depth) ? VAL_INT32(ARG(depth)) : 1;
 
     if (depth == 0)
-        return ARG(optional);
+        return_value (ARG(optional));
 
     if (depth < 0)
         fail (PAR(depth));
@@ -308,7 +308,7 @@ REBNATIVE(meta)
     if (Is_Meta_Of_Void(v))
         return_void (OUT);  // see META* for non-passthru of ~void~ isotope
 
-    return v;  // argument was already ^META, no need to Meta_Quotify()
+    return_value (v);  // argument was already ^META, no need to Meta_Quotify()
 }
 
 
@@ -325,7 +325,9 @@ REBNATIVE(meta_p)
 {
     INCLUDE_PARAMS_OF_META_P;
 
-    return ARG(optional);  // argument was ^META, so no need to Meta_Quotify()
+    REBVAL *v = ARG(optional);
+
+    return_value (v);  // argument was ^META, so no need to Meta_Quotify()
 }
 
 
@@ -528,5 +530,5 @@ REBNATIVE(noquote)
 
     REBVAL *v = ARG(optional);
     Unquotify(v, VAL_NUM_QUOTES(v));
-    return v;
+    return_value (v);
 }

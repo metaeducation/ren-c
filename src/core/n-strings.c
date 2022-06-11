@@ -728,7 +728,7 @@ REBNATIVE(enline)
     }
 
     if (delta == 0)
-        return ARG(string); // nothing to do
+        return_value (ARG(string)); // nothing to do
 
     REBLEN old_len = s->misc.length;
     EXPAND_SERIES_TAIL(s, delta);  // corrupts str->misc.length
@@ -764,7 +764,7 @@ REBNATIVE(enline)
         --size;
     }
 
-    return ARG(string);
+    return_value (ARG(string));
 }
 
 

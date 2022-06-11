@@ -534,7 +534,7 @@ REBNATIVE(setify)
 {
     INCLUDE_PARAMS_OF_SETIFY;
 
-    return Setify(ARG(value));
+    return_value (Setify(ARG(value)));
 }
 
 
@@ -580,7 +580,7 @@ REBNATIVE(getify)
 {
     INCLUDE_PARAMS_OF_GETIFY;
 
-    return Getify(ARG(value));
+    return_value (Getify(ARG(value)));
 }
 
 
@@ -626,7 +626,7 @@ REBNATIVE(metafy)
 {
     INCLUDE_PARAMS_OF_METAFY;
 
-    return Metafy(ARG(value));
+    return_value (Metafy(ARG(value)));
 }
 
 
@@ -676,7 +676,7 @@ REBNATIVE(inert)
 {
     INCLUDE_PARAMS_OF_INERT;
 
-    return Theify(ARG(value));
+    return_value (Theify(ARG(value)));
 }
 
 
@@ -722,5 +722,5 @@ REBNATIVE(plain)
 {
     INCLUDE_PARAMS_OF_PLAIN;
 
-    return Plainify(ARG(value));
+    return_value (Plainify(ARG(value)));
 }

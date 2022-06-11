@@ -673,7 +673,7 @@ REBTYPE(Vector)
             fail (Error_Bad_Refines_Raw());
 
         Shuffle_Vector(v, did REF(secure));
-        return v; }
+        return_value (v); }
 
     default:
         break;

@@ -239,11 +239,11 @@ REBTYPE(Money)
 
       case SYM_NEGATE: // sign bit is the 32nd bit, highest one used
         PAYLOAD(Any, v).second.u ^= (cast(uintptr_t, 1) << 31);
-        return v;
+        return_value (v);
 
       case SYM_ABSOLUTE:
         PAYLOAD(Any, v).second.u &= ~(cast(uintptr_t, 1) << 31);
-        return v;
+        return_value (v);
 
       case SYM_ROUND: {
         INCLUDE_PARAMS_OF_ROUND;
@@ -299,7 +299,7 @@ REBTYPE(Money)
         return Init_Logic(OUT, result != 0); }
 
       case SYM_COPY:
-        return v;
+        return_value (v);
 
       default:
         break;

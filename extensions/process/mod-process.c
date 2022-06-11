@@ -536,7 +536,7 @@ REBNATIVE(set_env)
     rebFree(key_utf8);
   #endif
 
-    return ARG(value);
+    return_value (ARG(value));
 }
 
 

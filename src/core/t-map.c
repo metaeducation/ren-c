@@ -671,7 +671,7 @@ REBTYPE(Map)
         );
         UNUSED(n);
 
-        return ARG(value); }
+        return_value (ARG(value)); }
 
       case SYM_INSERT:
       case SYM_APPEND: {
@@ -680,7 +680,7 @@ REBTYPE(Map)
 
         REBVAL *value = ARG(value);
         if (IS_NULLED_OR_BLANK(value))
-            return map;  // don't fail on read only if it would be a no-op
+            return_value (map);  // don't fail on read only if it would be a no-op
 
         REBMAP *m = VAL_MAP_ENSURE_MUTABLE(map);
 

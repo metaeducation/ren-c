@@ -104,10 +104,9 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 
         if (r != OUT) {
             assert(not IS_RETURN_SIGNAL(r));  // R_THROWN etc. unsupported
-
+            assert(Is_Api_Value(r));
             Copy_Cell(OUT, r);
-            if (Is_Api_Value(r))
-                Release_Api_Value_If_Unmanaged(r);
+            Release_Api_Value_If_Unmanaged(r);
         }
 
         if ((REF(string) or REF(lines)) and not IS_TEXT(OUT)) {

@@ -139,7 +139,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         }
 
         VAL_INDEX_RAW(v) = i;
-        return Trust_Const(v); }
+        return_value (Trust_Const(v)); }
 
       case SYM_AT: {
         INCLUDE_PARAMS_OF_AT;
@@ -175,7 +175,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         }
 
         VAL_INDEX_RAW(v) = i;
-        return Trust_Const(v); }
+        return_value (Trust_Const(v)); }
 
       case SYM_REMOVE: {
         INCLUDE_PARAMS_OF_REMOVE;
@@ -193,7 +193,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
         if (index < cast(REBIDX, VAL_LEN_HEAD(v)) and len != 0)
             Remove_Any_Series_Len(v, index, len);
 
-        return v; }
+        return_value (v); }
 
       case SYM_UNIQUE:  // Note: only has 1 argument, so dummy second arg
         sop_flags = SOP_NONE;

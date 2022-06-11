@@ -591,11 +591,29 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     } while (false)
 
 
+// Convenience routine for returning a value which is *not* located in OUT.
+// (If at all possible, it's better to build values directly into OUT and
+// then return the OUT pointer...this is the fastest form of returning.)
+//
+// Note: We do not allow direct `return v` of arbitrary values to be copied
+// in the dispatcher because it's too easy to think that will work for an
+// arbitrary local variable, which would be dead after the return.
+//
+#define return_value(v) \
+    do { \
+        const REBVAL *x_check = (v); /* can only expand (v) once! */ \
+        assert(not Is_Api_Value(x_check)); /* too easy to not release() */ \
+        return Copy_Cell(OUT, x_check); /* will assert if v == OUT */ \
+    } while (0)
+
+
 #define return_branched(v) \
     do { \
-        assert((v) == OUT); /* must be first, if Init_XXX() */ \
+        const REBVAL *x_check = (v); /* can only expand (v) once! */ \
+        assert(x_check == OUT); \
         assert(not Is_Void(OUT)); \
         assert(not IS_NULLED(OUT)); \
+        UNUSED(x_check); /* name has x_ to not collide with locals */ \
         return OUT; \
     } while (false)
 

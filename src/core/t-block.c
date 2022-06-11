@@ -1027,7 +1027,7 @@ REBTYPE(Array)
             if (len == 0) {
                 if (id == SYM_APPEND)  // append always returns head
                     VAL_INDEX_RAW(array) = 0;
-                return array;  // don't fail on read only if would be a no-op
+                return_value (array);  // don't fail on read only if would be a no-op
             }
             Init_Nulled(ARG(value));  // low-level NULL acts as nothing
         }
@@ -1101,7 +1101,7 @@ REBTYPE(Array)
             else
                 SET_SERIES_LEN(arr, cast(REBLEN, index));
         }
-        return array;
+        return_value (array);
     }
 
     //-- Creation:
@@ -1173,7 +1173,7 @@ REBTYPE(Array)
             Copy_Cell(a, b);
             Copy_Cell(b, &temp);
         }
-        return array; }
+        return_value (array); }
 
       case SYM_REVERSE: {
         INCLUDE_PARAMS_OF_REVERSE;
@@ -1184,7 +1184,7 @@ REBTYPE(Array)
 
         REBLEN len = Part_Len_May_Modify_Index(array, ARG(part));
         if (len == 0)
-            return array; // !!! do 1-element reversals update newlines?
+            return_value (array); // !!! do 1-element reversals update newlines?
 
         Cell *front = ARR_AT(arr, index);
         Cell *back = front + len - 1;
@@ -1250,7 +1250,7 @@ REBTYPE(Array)
             else
                 CLEAR_CELL_FLAG(back, NEWLINE_BEFORE);
         }
-        return array; }
+        return_value (array); }
 
       case SYM_SORT: {
         INCLUDE_PARAMS_OF_SORT;
@@ -1335,7 +1335,7 @@ REBTYPE(Array)
 
         REBARR *arr = VAL_ARRAY_ENSURE_MUTABLE(array);
         Shuffle_Array(arr, VAL_INDEX(array), did REF(secure));
-        return array; }
+        return_value (array); }
 
       default:
         break; // fallthrough to error
@@ -1369,7 +1369,7 @@ REBNATIVE(blockify)
 
     REBVAL *v = ARG(value);
     if (IS_BLOCK(v))
-        return v;
+        return_value (v);
 
     REBARR *a = Make_Array_Core(
         1,
@@ -1402,7 +1402,7 @@ REBNATIVE(groupify)
 
     REBVAL *v = ARG(value);
     if (IS_GROUP(v))
-        return v;
+        return_value (v);
 
     REBARR *a = Make_Array_Core(
         1,
@@ -1517,7 +1517,7 @@ REBNATIVE(glom)
     assert(not IS_NULLED(result));  // type checking should prevent
 
     if (IS_BLANK(result)) {
-        return accumulator;
+        return_value (accumulator);
     }
     else if (IS_QUOTED(result)) {
         Unquotify(result, 1);
@@ -1531,7 +1531,7 @@ REBNATIVE(glom)
 
     if (IS_BLANK(accumulator)) {
         if (splice)  // it was a non-quoted block initially
-            return result;  // see note: index may be nonzero
+            return_value (result);  // see note: index may be nonzero
 
         REBARR *a = Make_Array_Core(1, SERIES_FLAG_MANAGED);
         Copy_Cell(ARR_HEAD(a), result);  // we know it was inert or quoted
@@ -1587,7 +1587,7 @@ REBNATIVE(glom)
         Decay_Series(r);
     }
 
-    return accumulator;
+    return_value (accumulator);
 }
 
 

@@ -119,7 +119,7 @@ REBNATIVE(shove)
     REBVAL *left = ARG(left);
 
     if (IS_END(f_value))  // ...shouldn't happen for WORD!/PATH! unless APPLY
-        return ARG(left);  // ...because evaluator wants `help <-` to work
+        return_value (ARG(left));  // ...because evaluator wants `help <-` to work
 
     // It's best for SHOVE to do type checking here, as opposed to setting
     // some kind of EVAL_FLAG_SHOVING and passing that into the evaluator, then
@@ -680,7 +680,7 @@ REBNATIVE(evaluate)
     if (Is_Void(SPARE))
         return_void (OUT);
 
-    return SPARE;
+    return_value (SPARE);
 }
 
 
@@ -846,7 +846,7 @@ REBNATIVE(applique)
 
     if (def_threw) {
         Drop_Frame(f);
-        return Copy_Cell(f->out, temp);
+        return_value (temp);
     }
 
     DS_DROP_TO(lowest_ordered_dsp); // zero refinements on stack, now

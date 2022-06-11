@@ -181,7 +181,7 @@ REBTYPE(Url)
         //
         // https://forum.rebol.info/t/copy-and-port/1699
         //
-        return url;
+        return_value (url);
     }
     else if (GET_CELL_FLAG(url, UNEVALUATED)) {
         //

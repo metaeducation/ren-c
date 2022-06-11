@@ -128,14 +128,14 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             || ID_OF_SYMBOL(verb) == SYM_APPEND
             || ID_OF_SYMBOL(verb) == SYM_REMOVE
         ){
-            return save_port;
+            return_value (save_port);
         }
         return r; }
 
     case SYM_CLEAR:
         SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(state), 0);
         CLR_SIGNAL(SIG_EVENT_PORT);
-        return port;
+        return_value (port);
 
     case SYM_OPEN: {
         INCLUDE_PARAMS_OF_OPEN;
@@ -145,10 +145,10 @@ REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         if (REF(new) or REF(read) or REF(write))
             fail (Error_Bad_Refines_Raw());
 
-        return port; }
+        return_value (port); }
 
     case SYM_CLOSE: {
-        return port; }
+        return_value (port); }
 
     case SYM_FIND:
         break; // !!! R3-Alpha said "add it" (e.g. unimplemented)

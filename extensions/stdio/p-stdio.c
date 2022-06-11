@@ -408,10 +408,10 @@ REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
         return rebValue("copy", data, "elide clear", data); }
 
       case SYM_OPEN:
-        return port;
+        return_value (port);
 
       case SYM_CLOSE:
-        return port;
+        return_value (port);
 
       default:
         break;

@@ -974,10 +974,9 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         Init_Nulled(OUT);
     }
     else if (not IS_RETURN_SIGNAL(r)) {
-        assert(not Is_Stale(r));
+        assert(Is_Api_Value(r));
         Copy_Cell(OUT, r);
-        if (Is_Api_Value(r))
-            Release_Api_Value_If_Unmanaged(r);
+        Release_Api_Value_If_Unmanaged(r);
     }
     else switch (VAL_RETURN_SIGNAL(r)) {  // it's a "pseudotype" instruction
         //

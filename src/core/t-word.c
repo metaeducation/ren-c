@@ -363,7 +363,7 @@ REBTYPE(Word)
         break; }
 
       case SYM_COPY:
-        return v;
+        return_value (v);
 
       default:
         break;

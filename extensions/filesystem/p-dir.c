@@ -195,7 +195,7 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             fail (Error_No_Create_Raw(dir->path));  // higher level error
         }
 
-        return port; }
+        return_value (port); }
 
     //=//// RENAME /////////////////////////////////////////////////////////=//
 
@@ -211,7 +211,7 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
 
         Copy_Cell(dir->path, ARG(to));  // !!! this mutates the spec, bad?
 
-        return port; }
+        return_value (port); }
 
     //=//// DELETE /////////////////////////////////////////////////////////=//
 
@@ -221,7 +221,7 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             rebRelease(error);  // !!! throws away details
             fail (Error_No_Delete_Raw(dir->path));  // higher level error
         }
-        return port; }
+        return_value (port); }
 
     //=//// OPEN ///////////////////////////////////////////////////////////=//
     //
@@ -250,13 +250,13 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
             }
         }
 
-        return port; }
+        return_value (port); }
 
     //=//// CLOSE //////////////////////////////////////////////////////////=//
 
       case SYM_CLOSE:
         Init_Nulled(state);
-        return port;
+        return_value (port);
 
     //=//// QUERY //////////////////////////////////////////////////////////=//
     //

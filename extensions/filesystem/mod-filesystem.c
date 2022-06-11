@@ -622,7 +622,7 @@ REBNATIVE(change_dir)
 
     Copy_Cell(current_path, arg);
 
-    return arg;
+    return_value (arg);
 }
 
 

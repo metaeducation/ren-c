@@ -516,10 +516,9 @@ static REB_R Parse_One_Rule(
 
     if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
         rule = Process_Group_For_Parse(frame_, SPARE, rule);
-        if (rule == R_THROWN) {
-            Move_Cell(OUT, SPARE);
-            return R_THROWN;
-        }
+        if (rule == R_THROWN)
+            return_thrown (SPARE);
+
         if (rule == R_INVISIBLE) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
             return Init_Integer(OUT, pos);
