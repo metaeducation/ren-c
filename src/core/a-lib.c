@@ -1894,6 +1894,9 @@ const REBINS *RL_rebRELEASING(REBVAL *v)
 {
     ENTER_API;
 
+    if (v == nullptr)
+        return nullptr;
+
     if (not Is_Api_Value(v))
         fail ("Cannot apply rebR() to non-API value");
 
