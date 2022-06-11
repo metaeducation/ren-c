@@ -1134,17 +1134,6 @@ void Startup_Core(void)
 //
 void Shutdown_Core(bool clean)
 {
-  #if !defined(NDEBUG)
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
-    RESET(&TG_Thrown_Arg);
-    assert(Is_Stale_Void(&TG_Thrown_Label_Debug));  // only used "SPORADICALLY()"
-    RESET(&TG_Thrown_Label_Debug);
-  #endif
-
-  #if !defined(NDEBUG)
-    Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
-  #endif
-
     assert(TG_Jump_List == nullptr);
 
     // Shutting down extensions is currently considered semantically mandatory,
@@ -1153,6 +1142,10 @@ void Shutdown_Core(bool clean)
     // call exit().
     //
     Shutdown_Extension_Loader();
+
+  #if !defined(NDEBUG)
+    Check_Memory_Debug(); // old R3-Alpha check, call here to keep it working
+  #endif
 
     if (not clean)
         return;
@@ -1193,6 +1186,14 @@ void Shutdown_Core(bool clean)
 
     const bool shutdown = true; // go ahead and free all managed series
     Recycle_Core(shutdown, NULL);
+
+    assert(Is_Stale_Void(&TG_Thrown_Arg));
+    RESET(&TG_Thrown_Arg);
+
+  #if !defined(NDEBUG)
+    assert(Is_Stale_Void(&TG_Thrown_Label_Debug));  // only used "SPORADICALLY()"
+    RESET(&TG_Thrown_Label_Debug);
+  #endif
 
     Shutdown_Mold();
     Shutdown_Collector();
