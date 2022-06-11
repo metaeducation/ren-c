@@ -448,7 +448,7 @@ static void Propagate_All_GC_Marks(void)
 
 
 //
-//  Reify_Va_To_Array_In_Frame: C
+//  Reify_Va_To_Array_In_Feed: C
 //
 // For performance and memory usage reasons, a variadic C function call that
 // wants to invoke the evaluator with just a comma-delimited list of REBVAL*
@@ -465,13 +465,13 @@ static void Propagate_All_GC_Marks(void)
 // (unless told that it's not truncated, e.g. a debug mode that calls it
 // before any items are consumed).
 //
-void Reify_Va_To_Array_In_Frame(
-    REBFRM *f,
+void Reify_Va_To_Array_In_Feed(
+    REBFED *feed,
     bool truncated
 ) {
     REBDSP dsp_orig = DSP;
 
-    assert(FRM_IS_VARIADIC(f));
+    assert(FEED_IS_VARIADIC(feed));
 
     if (truncated) {
         DS_PUSH();
@@ -480,12 +480,12 @@ void Reify_Va_To_Array_In_Frame(
 
     REBLEN index;
 
-    if (NOT_END(f_value)) {
+    if (NOT_END(feed->value)) {
         do {
-            Derelativize(DS_PUSH(), f_value, f_specifier);
+            Derelativize(DS_PUSH(), feed->value, FEED_SPECIFIER(feed));
             assert(not IS_NULLED(DS_TOP));
-            Fetch_Next_Forget_Lookback(f);
-        } while (NOT_END(f_value));
+            Fetch_Next_In_Feed(feed);
+        } while (NOT_END(feed->value));
 
         if (truncated)
             index = 2;  // skip the --optimized-out--
@@ -493,7 +493,7 @@ void Reify_Va_To_Array_In_Frame(
             index = 1;  // position at start of the extracted values
     }
     else {
-        assert(FEED_PENDING(f->feed) == nullptr);
+        assert(FEED_PENDING(feed) == nullptr);
 
         // Leave at end of frame, but give back the array to serve as
         // notice of the truncation (if it was truncated)
@@ -503,29 +503,29 @@ void Reify_Va_To_Array_In_Frame(
 
     // feeding forward should have called va_end
     //
-    assert(not FEED_IS_VARIADIC(f->feed));
+    assert(not FEED_IS_VARIADIC(feed));
 
     if (DSP == dsp_orig)
-        Init_Block(FEED_SINGLE(f->feed), EMPTY_ARRAY);  // reuse array
+        Init_Block(FEED_SINGLE(feed), EMPTY_ARRAY);  // reuse array
     else {
         REBARR *a = Pop_Stack_Values_Core(dsp_orig, SERIES_FLAG_MANAGED);
-        Init_Any_Array_At(FEED_SINGLE(f->feed), REB_BLOCK, a, index);
+        Init_Any_Array_At(FEED_SINGLE(feed), REB_BLOCK, a, index);
     }
 
     if (truncated)
-        f->feed->value = ARR_AT(f_array, 1);  // skip trunc
+        feed->value = ARR_AT(FEED_ARRAY(feed), 1);  // skip trunc
     else
-        f->feed->value = ARR_HEAD(f_array);
+        feed->value = ARR_HEAD(FEED_ARRAY(feed));
 
     // The array just popped into existence, and it's tied to a running
     // frame...so safe to say we're holding it (if not at the end).
     //
-    if (IS_END(f_value))
-        assert(FEED_PENDING(f->feed) == nullptr);
+    if (IS_END(feed->value))
+        assert(FEED_PENDING(feed) == nullptr);
     else {
-        assert(NOT_FEED_FLAG(f->feed, TOOK_HOLD));
-        SET_SERIES_INFO(m_cast(REBARR*, f_array), HOLD);
-        SET_FEED_FLAG(f->feed, TOOK_HOLD);
+        assert(NOT_FEED_FLAG(feed, TOOK_HOLD));
+        SET_SERIES_INFO(m_cast(REBARR*, FEED_ARRAY(feed)), HOLD);
+        SET_FEED_FLAG(feed, TOOK_HOLD);
     }
 }
 

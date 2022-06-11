@@ -90,7 +90,7 @@ void Dump_Frame_Location(const Cell *v, REBFRM *f)
             // related to va_list frame processing.
             //
             const bool truncated = true;
-            Reify_Va_To_Array_In_Frame(f, truncated);
+            Reify_Va_To_Array_In_Feed(f->feed, truncated);
         }
 
         Init_Any_Array_At_Core(
@@ -214,7 +214,7 @@ void Eval_Core_Expression_Checks_Debug(REBFRM *f)
     //
     if (FRM_IS_VARIADIC(f) and SPORADICALLY(50)) {
         const bool truncated = true;
-        Reify_Va_To_Array_In_Frame(f, truncated);
+        Reify_Va_To_Array_In_Feed(f->feed, truncated);
     }
 }
 

@@ -100,7 +100,7 @@ REBVAL *Init_Near_For_Frame(Cell *out, REBFRM *f)
         // Traversing a C va_arg, so reify into a (truncated) array.
         //
         const bool truncated = true;
-        Reify_Va_To_Array_In_Frame(f, truncated);
+        Reify_Va_To_Array_In_Feed(f->feed, truncated);
     }
 
     // Get at most 6 values out of the array.  Ideally 3 before and after

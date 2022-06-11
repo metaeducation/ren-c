@@ -839,6 +839,7 @@ static void Run_Va_Translucent_May_Fail(
         Eval_Sigmask &= ~SIG_HALT;  // disable
 
     DECLARE_VA_FEED (feed, p, vaptr, flags);
+
     bool threw = Do_Feed_To_End_Throws(
         out,
         feed,
