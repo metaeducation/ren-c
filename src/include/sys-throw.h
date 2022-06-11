@@ -61,12 +61,6 @@
 //   more checking that thrown values aren't being dropped or misused.
 //
 
-#if !defined(NDEBUG)
-    inline static bool Is_Evaluator_Throwing_Debug(void) {
-        return not Is_Stale_Void(&TG_Thrown_Arg);
-    }
-#endif
-
 #if defined(NDEBUG)
     #define VAL_THROWN_LABEL(thrown) \
         (thrown)
@@ -142,3 +136,22 @@ inline static void CATCH_THROWN(
     }
   #endif
 }
+
+inline static bool Is_Throwing(REBFRM *f) {
+    //
+    // !!! An original constraint on asking if something was throwing was
+    // that only the top frame could be asked about.  But Action_Executor()
+    // is called to re-dispatch when there may be a frame above (kept there
+    // by request from something like REDUCE).  We relax the constraint to
+    // only be able to return *true* to a throw request if there are no
+    // frames above on the stack.
+    //
+    if (not Is_Stale_Void(&TG_Thrown_Arg)) {
+        /*assert(f == FS_TOP);*/  // forget even that check
+        UNUSED(f);  // currently only used for debug build check
+        return true;
+    }
+    return false;
+}
+
+#define THROWING Is_Throwing(frame_)

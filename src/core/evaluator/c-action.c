@@ -940,7 +940,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
     REBNAT dispatcher = ACT_DISPATCHER(phase);
 
-    assert(not Is_Evaluator_Throwing_Debug());
+    assert(not Is_Throwing(f));
 
     // Resetting the spare cell here has a slight cost, but keeps from leaking
     // internal processing to actions.  It means that any attempts to read

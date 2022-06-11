@@ -156,7 +156,7 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
     if (IS_END(f_next))
         return;
 
-    if (not Is_Stale(f->out) and Is_Evaluator_Throwing_Debug())
+    if (not Is_Stale(f->out) and Is_Throwing(f))
         return;
 
     //=//// v-- BELOW CHECKS ONLY APPLY IN EXITS CASE WITH MORE CODE //////=//
@@ -199,7 +199,7 @@ void Eval_Core_Expression_Checks_Debug(REBFRM *f)
 
     Eval_Core_Shared_Checks_Debug(f);
 
-    assert(not Is_Evaluator_Throwing_Debug()); // no evals between throws
+    assert(not Is_Throwing(f)); // no evals between throws
 
     // Trash fields that GC won't be seeing unless Is_Action_Frame()
     //
@@ -243,7 +243,7 @@ void Do_Process_Action_Checks_Debug(REBFRM *f) {
 //  Do_After_Action_Checks_Debug: C
 //
 void Do_After_Action_Checks_Debug(REBFRM *f) {
-    assert(not Is_Evaluator_Throwing_Debug());
+    assert(not Is_Throwing(f));
 
     if (GET_SERIES_FLAG(f->varlist, INACCESSIBLE))  // e.g. ENCLOSE
         return;
@@ -308,7 +308,7 @@ void Eval_Core_Exit_Checks_Debug(REBFRM *f) {
 
     if (NOT_END(f_next) and not FRM_IS_VARIADIC(f)) {
         if (f_index > ARR_LEN(f_array)) {
-            assert(Is_Evaluator_Throwing_Debug());
+            assert(Is_Throwing(f));
             assert(f_index == ARR_LEN(f_array) + 1);
         }
     }
