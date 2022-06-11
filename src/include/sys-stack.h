@@ -80,7 +80,15 @@
 // destructor is not called in this case...and the fail mechanism sets the
 // outstanding count to zero.
 //
-#if DEBUG_EXTANT_STACK_POINTERS
+#if ! DEBUG_EXTANT_STACK_POINTERS
+
+    #define ASSERT_NO_DATA_STACK_POINTERS_EXTANT()
+
+#else
+
+    #define ASSERT_NO_DATA_STACK_POINTERS_EXTANT() \
+        assert(TG_Stack_Outstanding == 0);
+
     struct Reb_Stack_Value_Ptr {
         REBVAL *v;
 

@@ -323,9 +323,7 @@ void Expand_Data_Stack_May_Fail(REBLEN amount)
 //
 REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
 {
-  #if DEBUG_EXTANT_STACK_POINTERS
-    assert(TG_Stack_Outstanding == 0);  // in the future, pop may disrupt
-  #endif
+    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();  // in the future, pop may disrupt
 
     REBLEN len = DSP - dsp_start;
     REBARR *a = Make_Array_Core(len, flags);

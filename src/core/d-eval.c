@@ -119,10 +119,8 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
     // multiple calls by something like REDUCE or FORM, accumulating items
     // on the data stack or mold stack/etc.  See Drop_Frame() for the actual
     // balance check.
-
-  #if DEBUG_EXTANT_STACK_POINTERS
-    assert(TG_Stack_Outstanding == 0);
-  #endif
+    //
+    ASSERT_NO_DATA_STACK_POINTERS_EXTANT();
 
     // See notes on f->feed->gotten about the coherence issues in the face
     // of arbitrary function execution.
