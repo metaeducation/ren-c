@@ -84,16 +84,16 @@ inline static bool Do_Feed_To_End_Throws(
         feed,
         (flags | EVAL_FLAG_MAYBE_STALE) & (~ EVAL_FLAG_BRANCH)
     );
-
-    bool threw;
     Push_Frame(out, f);
-    do {
-        threw = Eval_Core_Throws(f);
-    } while (not threw and NOT_END(feed->value));
-    Drop_Frame(f);
 
-    if (threw)
-        return true;
+    do {
+        if (Eval_Core_Throws(f)) {
+            Abort_Frame(f);
+            return true;
+        }
+    } while (NOT_END(feed->value));
+
+    Drop_Frame(f);
 
     if (not (flags & EVAL_FLAG_MAYBE_STALE))
         Clear_Stale_Flag(out);

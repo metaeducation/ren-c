@@ -259,12 +259,16 @@ inline static bool Eval_Step_In_Subframe_Throws(
     // the caller didn't actually want stale data.
 
     DECLARE_FRAME (subframe, f->feed, flags);
-
     Push_Frame(out, subframe);
-    bool threw = Eval_Core_Throws(subframe);
+
+    if (Eval_Core_Throws(subframe)) {
+        Abort_Frame(subframe);
+        return true;
+    }
+
     Drop_Frame(subframe);
 
-    return threw;
+    return false;
 }
 
 
@@ -282,12 +286,16 @@ inline static bool Reevaluate_In_Subframe_Throws(
 
     DECLARE_FRAME (subframe, f->feed, flags);
     subframe->u.reval.value = reval;
-
     Push_Frame(out, subframe);
-    bool threw = Eval_Core_Throws(subframe);
+
+    if (Eval_Core_Throws(subframe)) {
+        Abort_Frame(subframe);
+        return true;
+    }
+
     Drop_Frame(subframe);
 
-    return threw;
+    return false;
 }
 
 
@@ -308,18 +316,17 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     }
 
     DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
-
     Push_Frame(out, f);
-    bool threw = Eval_Core_Throws(f);
 
-    if (threw)
+    if (Eval_Core_Throws(f)) {
+        Abort_Frame(f);
         *index_out = TRASHED_INDEX;
-    else
-        *index_out = FRM_INDEX(f);
+        return true;
+    }
 
     Drop_Frame(f);
-
-    return threw;
+    *index_out = FRM_INDEX(f);
+    return false;
 }
 
 
@@ -355,17 +362,17 @@ inline static bool Eval_Step_In_Va_Throws(
         feed,
         (eval_flags | EVAL_FLAG_ALLOCATED_FEED) & (~ EVAL_FLAG_BRANCH)
     );
-
     Push_Frame(out, f);
-    bool threw = Eval_Core_Throws(f);
+
+    if (Eval_Core_Throws(f)) {
+        Abort_Frame(f);
+        return true;
+    }
 
     bool too_many = (eval_flags & EVAL_FLAG_NO_RESIDUE)
         and NOT_END(feed->value);  // feed will be freed in Drop_Frame()
 
     Drop_Frame(f); // will va_end() if not reified during evaluation
-
-    if (threw)
-        return true;
 
     if (too_many)
         fail (Error_Apply_Too_Many_Raw());
@@ -408,12 +415,15 @@ inline static bool Eval_Value_Core_Throws(
     );
 
     DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
-
     Push_Frame(out, f);
-    bool threw = Eval_Core_Throws(f);
-    Drop_Frame(f);
 
-    return threw;
+    if (Eval_Core_Throws(f)) {
+        Abort_Frame(f);
+        return true;
+    }
+
+    Drop_Frame(f);
+    return false;
 }
 
 #define Eval_Value_Throws(out,value,specifier) \

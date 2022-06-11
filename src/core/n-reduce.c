@@ -190,8 +190,10 @@ REBNATIVE(reduce_each)
 
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
             bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
+            if (not Catching_Break_Or_Continue(OUT, &broke)) {
+                Abort_Frame(f);
                 return_thrown (OUT);
+            }
             if (broke)
                 return nullptr;
 

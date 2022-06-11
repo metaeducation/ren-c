@@ -983,7 +983,7 @@ REBNATIVE(switch)
 
   threw:
 
-    Drop_Frame(f);
+    Abort_Frame(f);
     return_thrown (OUT);
 }
 

@@ -1729,6 +1729,8 @@ REBVAL *RL_rebRescueWith(
     // internally to the system.  Some of these system routines accumulate
     // stack state, so Drop_Frame_Unbalanced() must be used.
     //
+    // !!! Note that Abort_Frame() cannot be used here as written.
+    //
     Drop_Frame_Unbalanced(dummy);
 
     return result;

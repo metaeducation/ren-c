@@ -270,11 +270,13 @@ bool Do_Frame_Ctx_Throws(
 
     Begin_Prefix_Action(f, label);
 
-    bool threw = Process_Action_Core_Throws(f);
-    assert(threw or IS_END(f->feed->value));  // we started at END_FLAG
+    if (Process_Action_Core_Throws(f)) {
+        Abort_Frame(f);
+        return true;
+    }
 
     Drop_Frame(f);
-    return threw;
+    return false;
 }
 
 
@@ -405,15 +407,15 @@ REBNATIVE(do)
         REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
         DECLARE_FRAME (subframe, f->feed, flags);
 
-        bool threw;
         Push_Frame(RESET(OUT), subframe);
         do {
-            threw = Eval_Step_Throws(OUT, subframe);
-        } while (not threw and NOT_END(f->feed->value));
-        Drop_Frame(subframe);
+            if (Eval_Step_Throws(OUT, subframe)) {
+                Abort_Frame(subframe);
+                return_thrown (OUT);
+            }
+        } while (NOT_END(f->feed->value));
 
-        if (threw)
-            return_thrown (OUT);
+        Drop_Frame(subframe);
 
         Clear_Stale_Flag(OUT);
         Reify_Eval_Out_Plain(OUT);
@@ -537,39 +539,35 @@ REBNATIVE(evaluate)
             DECLARE_FEED_AT_CORE (feed, source, SPECIFIED);
             assert(NOT_END(feed->value));  // checked for VAL_LEN_AT() == 0
 
-            bool threw;
             if (REF(next)) {  // only one step, want the output position
                 DECLARE_FRAME (
                     f,
                     feed,
                     EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
                 );
-
                 Push_Frame(SPARE, f);
-                threw = Eval_Core_Throws(f);
-                if (threw) {
-                    Drop_Frame(f);
+
+                if (Eval_Core_Throws(f)) {
+                    Abort_Frame(f);
                     return_thrown (SPARE);
                 }
 
-                if (not threw) {
-                    VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
+                VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
 
-                    // <ay have been a LET statement in the code.  If there
-                    // was, we have to incorporate the binding it added into
-                    // the reported state *somehow*.  Right now we add it to the
-                    // block we give back...this gives rise to questionable
-                    // properties, such as if the user goes backward in the
-                    // block and were to evaluate it again:
-                    //
-                    // https://forum.rebol.info/t/1496
-                    //
-                    // Right now we can politely ask "don't do that", but better
-                    // would probably be to make EVALUATE return something with
-                    // more limited privileges... more like a FRAME!/VARARGS!.
-                    //
-                    INIT_BINDING_MAY_MANAGE(source, f_specifier);
-                }
+                // <ay have been a LET statement in the code.  If there
+                // was, we have to incorporate the binding it added into
+                // the reported state *somehow*.  Right now we add it to the
+                // block we give back...this gives rise to questionable
+                // properties, such as if the user goes backward in the
+                // block and were to evaluate it again:
+                //
+                // https://forum.rebol.info/t/1496
+                //
+                // Right now we can politely ask "don't do that", but better
+                // would probably be to make EVALUATE return something with
+                // more limited privileges... more like a FRAME!/VARARGS!.
+                //
+                INIT_BINDING_MAY_MANAGE(source, f_specifier);
 
                 Drop_Frame(f);
 
@@ -845,7 +843,7 @@ REBNATIVE(applique)
     DROP_GC_GUARD(exemplar);
 
     if (def_threw) {
-        Drop_Frame(f);
+        Abort_Frame(f);
         return_value (temp);
     }
 
@@ -860,13 +858,12 @@ REBNATIVE(applique)
 
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-    bool action_threw = Process_Action_Core_Throws(f);
-    assert(action_threw or IS_END(f->feed->value));  // we started at END_FLAG
+    if (Process_Action_Core_Throws(f)) {
+        Abort_Frame(f);
+        return_thrown (OUT);
+    }
 
     Drop_Frame(f);
-
-    if (action_threw)
-        return_thrown (OUT);
 
     // The input may have been stale coming in, or the application of the frame
     // may have been stale.  We don't make any decisions either way when it
@@ -1108,13 +1105,12 @@ REBNATIVE(apply)
 
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-    bool action_threw = Process_Action_Core_Throws(f);
-    assert(action_threw or IS_END(f->feed->value));
+    if (Process_Action_Core_Throws(f)) {
+        Abort_Frame(f);
+        return_thrown (OUT);
+    }
 
     Drop_Frame(f);
-
-    if (action_threw)
-        return_thrown (OUT);
 
     if (Is_Stale(OUT))
         return_void (OUT);

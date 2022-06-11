@@ -652,14 +652,12 @@ bool Eval_Core_Throws(REBFRM * const f)
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
-        bool threw = Process_Action_Core_Throws(FS_TOP);
-
-        assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must consume
-
-        if (threw) {
+        if (Process_Action_Core_Throws(FS_TOP)) {
             Abort_Frame(FS_TOP);
             goto return_thrown;
         }
+
+        assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must consume
 
         Drop_Frame(FS_TOP);
 
@@ -1502,17 +1500,16 @@ bool Eval_Core_Throws(REBFRM * const f)
             | EVAL_FLAG_INERT_OPTIMIZATION;
 
         DECLARE_FRAME (subframe, f->feed, flags);
-
         assert(not Is_Stale(OUT));
-
         Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
-        bool threw = Eval_Core_Throws(subframe);
-        Drop_Frame(subframe);
 
-        if (threw) {
+        if (Eval_Core_Throws(subframe)) {
+            Abort_Frame(subframe);
             DS_DROP_TO(f->baseline.dsp);
             goto return_thrown;
         }
+
+        Drop_Frame(subframe);
       }
 
         // Take care of the SET for the main result.  For the moment, if you

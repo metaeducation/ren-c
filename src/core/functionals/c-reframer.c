@@ -121,7 +121,7 @@ bool Make_Invokable_From_Feed_Throws(
             v,
             FEED_SPECIFIER(feed)
         )){
-            Drop_Frame(f);
+            Abort_Frame(f);
             return true;
         }
     }
@@ -177,7 +177,7 @@ bool Make_Invokable_From_Feed_Throws(
     assert(Is_Fresh(f->out));
     if (Process_Action_Core_Throws(f)) {
         DROP_GC_GUARD(action);
-        Drop_Frame(f);
+        Abort_Frame(f);
         return true;
     }
     assert(Is_Fresh(f->out));  // should only have gathered arguments
@@ -216,7 +216,7 @@ bool Make_Invokable_From_Feed_Throws(
     // May not be at end or thrown, e.g. (x: does+ just y x = 'y)
     //
     DROP_GC_GUARD(action);  // before drop to balance at right time
-    Drop_Frame(f);
+    Abort_Frame(f);
 
     // The exemplar may or may not be managed as of yet.  We want it
     // managed, but Push_Action() does not use ordinary series creation to

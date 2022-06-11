@@ -607,15 +607,15 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                     | EVAL_FLAG_INERT_OPTIMIZATION;
 
                 DECLARE_FRAME (subframe, f->feed, flags);
-
                 Push_Frame(ARG, subframe);
-                bool threw = Eval_Core_Throws(subframe);
-                Drop_Frame(subframe);
 
-                if (threw) {
+                if (Eval_Core_Throws(subframe)) {
+                    Abort_Frame(subframe);
                     Copy_Cell(SPARE, ARG);
                     goto abort_action;
                 }
+
+                Drop_Frame(subframe);
 
                 Reify_Eval_Out_Plain(ARG);
             }

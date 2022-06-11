@@ -311,13 +311,13 @@ static bool Subparse_Throws(
     const REBVAL *r = N_subparse(f);
 
     Drop_Action(f);
-    Drop_Frame(f);
 
     if ((r == R_THROWN or IS_NULLED(out)) and collection)
         SET_SERIES_LEN(unwrap(collection), collect_tail);  // abort rollback
 
     if (r == R_THROWN) {
-        //
+        Abort_Frame(f);
+
         // ACCEPT and REJECT are special cases that can happen at nested parse
         // levels and bubble up through the throw mechanism to break a looping
         // construct.
@@ -347,6 +347,8 @@ static bool Subparse_Throws(
 
         return true;
     }
+
+    Drop_Frame(f);
 
     assert(r == out);
 

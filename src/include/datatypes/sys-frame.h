@@ -463,6 +463,8 @@ inline static void Drop_Frame_Unbalanced(REBFRM *f) {
 
 inline static void Drop_Frame(REBFRM *f)
 {
+    assert(not Is_Throwing(f));  // !!! We could decide to abort or not on this
+
   #if DEBUG_BALANCE_STATE
     //
     // To avoid slowing down the debug build a lot, Eval_Core() doesn't
