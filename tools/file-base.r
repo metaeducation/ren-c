@@ -76,6 +76,8 @@ core: [
         ;   const REBSTR *s = VAL_STRING(v);
         ;
         ; <gnu:-Wno-array-bounds>
+    ][
+        evaluator/c-trampoline.c  #prefer-O2-optimization
     ]
 
     c-function.c

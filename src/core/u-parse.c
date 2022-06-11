@@ -1129,7 +1129,7 @@ static void Handle_Mark_Rule(
 }
 
 
-static REB_R Handle_Seek_Rule_Dont_Update_Begin(
+static void Handle_Seek_Rule_Dont_Update_Begin(
     REBFRM *frame_,
     const Cell *rule,
     REBSPC *specifier
@@ -1165,8 +1165,6 @@ static REB_R Handle_Seek_Rule_Dont_Update_Begin(
         P_POS = P_INPUT_LEN;
     else
         P_POS = index;
-
-    return VOID;
 }
 
 // !!! Note callers will `continue` without any post-"match" processing, so

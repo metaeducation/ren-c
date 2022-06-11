@@ -120,37 +120,54 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
 
 
 //
-//  Process_Action_Core_Throws: C
+//  Action_Executor: C
 //
-bool Process_Action_Core_Throws(REBFRM * const f)
+REB_R Action_Executor(REBFRM *f)
 {
+    if (THROWING) {
+        if (GET_EVAL_FLAG(f, DISPATCHER_CATCHES))  // wants to see the throw
+            goto dispatch_phase;
+
+        goto handle_thrown_maybe_redo;
+    }
+
+    if (Is_Action_Frame_Fulfilling(f)) {
+        assert(NOT_EVAL_FLAG(f, DISPATCHER_CATCHES));  // trampoline cleans up
+
+        switch (STATE) {
+          case ST_ACTION_INITIAL_ENTRY:
+            goto fulfill;
+
+          case ST_ACTION_FULFILLING_ARGS:
+            assert(false);  // !!! Fulfillment stateful at moment
+            break;
+
+          case ST_ACTION_TYPECHECKING:
+            goto typecheck_then_dispatch;
+
+          default:
+            assert(false);
+        }
+    }
+
+    if (GET_EVAL_FLAG(f, DELEGATE_CONTROL)) {
+        CLEAR_EVAL_FLAG(f, DELEGATE_CONTROL);
+        goto dispatch_completed;  // the dispatcher didn't want a callback
+    }
+
+    goto dispatch_phase;  // STATE byte belongs to dispatcher after fulfill
+
+  fulfill:
+
     if (NOT_EVAL_FLAG(f, MAYBE_STALE))
         assert(Is_Void(f->out));
 
-  #if !defined(NDEBUG)
     assert(f->original);  // set by Begin_Action()
-    Do_Process_Action_Checks_Debug(f);
-  #endif
-
-    if (not Is_Action_Frame_Fulfilling(f))
-        goto dispatch;  // STATE belongs to the dispatcher if key=null
-
-    switch (STATE) {
-      case ST_ACTION_INITIAL_ENTRY:
-        goto fulfill;
-
-      case ST_ACTION_TYPECHECKING:
-        goto typecheck_then_dispatch;
-
-      default:
-        assert(false);
-    }
-
-  fulfill:
 
     assert(DSP >= f->baseline.dsp);  // path processing may push REFINEMENT!s
 
     assert(STATE != ST_ACTION_DOING_PICKUPS);
+    STATE = ST_ACTION_FULFILLING_ARGS;
 
     for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
 
@@ -390,7 +407,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
               escapable:
                 if (ANY_ESCAPABLE_GET(OUT)) {
                     if (Eval_Value_Throws(ARG, OUT, SPECIFIED))
-                        goto abort_action;
+                        goto handle_thrown_maybe_redo;
                 }
                 else {
                     Copy_Cell(ARG, OUT);
@@ -512,7 +529,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 | EVAL_FLAG_FULFILLING_ARG;
 
             if (Eval_Step_In_Subframe_Throws(ARG, f, flags))
-                goto abort_action;
+                goto handle_thrown_maybe_redo;
 
             if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
                 Init_End_Isotope(ARG);
@@ -609,9 +626,9 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 DECLARE_FRAME (subframe, f->feed, flags);
                 Push_Frame(ARG, subframe);
 
-                if (Eval_Core_Throws(subframe)) {
+                if (Trampoline_Throws(subframe)) {
                     Abort_Frame(subframe);
-                    goto abort_action;
+                    goto handle_thrown_maybe_redo;
                 }
 
                 Drop_Frame(subframe);
@@ -626,7 +643,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 //
                 Move_Cell(SPARE, ARG);
                 if (Eval_Value_Throws(ARG, SPARE, f_specifier))
-                    goto abort_action;
+                    goto handle_thrown_maybe_redo;
             }
             break;
 
@@ -722,6 +739,8 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         goto skip_output_check;
     }
 
+    STATE = ST_ACTION_TYPECHECKING;
+
   //=//// ACTION! ARGUMENTS NOW GATHERED, DO TYPECHECK PASS ///////////////=//
 
     // It might seem convenient to type check arguments while they are being
@@ -735,6 +754,9 @@ bool Process_Action_Core_Throws(REBFRM * const f)
     // So a second loop is required by the system's semantics.
 
   typecheck_then_dispatch:
+    assert(STATE == ST_ACTION_TYPECHECKING);
+
+    Mark_Eval_Out_Stale(OUT);
 
     f->key = ACT_KEYS(&f->key_tail, FRM_PHASE(f));
     f->arg = FRM_ARGS_HEAD(f);
@@ -925,12 +947,32 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         goto skip_output_check;
     }
 
+    // Resetting the spare cell here has a slight cost, but keeps from leaking
+    // internal processing to actions.  It means that any attempts to read
+    // the spare cell will give an assert, but it also means the cell is fresh
+    // and ready to use (e.g. as a target of an Eval_Maybe_Stale() operation).
+    //
+    RESET(SPARE);
+    STATE = 0;  // reset to zero for each phase
+
     f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
     // Note that the dispatcher may push ACTION! values to the data stack
     // which are used to process the return result after the switch.
     //
-  blockscope {
+  dispatch_phase: {
+    //
+    // These flags are optionally set by the dispatcher for use with
+    // REB_R_CONTINUATION.  They are EVAL_FLAGs instead of part of the
+    // REB_R signal because they apply after the `r` has been processed
+    // and forgotten, and the continuation is resuming.  They are cleared
+    // by Drop_Action() but must be cleared on each dispatcher re-entry.
+    //
+    f->flags.bits &= ~(
+        EVAL_FLAG_DELEGATE_CONTROL
+        | EVAL_FLAG_DISPATCHER_CATCHES
+    );
+
     REBACT *phase = FRM_PHASE(f);
 
     // Native code trusts that type checking has ensured it won't get bits
@@ -947,22 +989,6 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         SER_INFO(f->varlist) |= SERIES_INFO_HOLD;
 
     REBNAT dispatcher = ACT_DISPATCHER(phase);
-
-    assert(not Is_Throwing(f));
-
-    // Resetting the spare cell here has a slight cost, but keeps from leaking
-    // internal processing to actions.  It means that any attempts to read
-    // the spare cell will give an assert, but it also means the cell is fresh
-    // and ready to use (e.g. as a target of an Eval_Maybe_Stale() operation).
-    //
-    RESET(SPARE);
-
-    // !!! It's not clear why historically this was not being done.  We want
-    // to be able to tell when a function did or did not write its output.  But
-    // the code didn't seem to do it, it did some expiration based on the idea
-    // that not all functions could be invisible.
-    //
-    Mark_Eval_Out_Stale(OUT);
 
     const REBVAL *r = (*dispatcher)(f);
 
@@ -988,87 +1014,25 @@ bool Process_Action_Core_Throws(REBFRM * const f)
     }
     else switch (VAL_RETURN_SIGNAL(r)) {  // it's a "pseudotype" instruction
         //
-        // !!! Thrown values used to be indicated with a bit on the value
-        // itself, but now it's conveyed through a return value.  This
-        // means typical return values don't have to run through a test
-        // for if they're thrown or not, but it means Eval_Core has to
-        // return a boolean to pass up the state.  It may not be much of
-        // a performance win either way, but recovering the bit in the
-        // values is a definite advantage--as header bits are scarce!
+        // !!! As the workings of stackless continue to sift out, the general
+        // idea seems to be that ontinuations are based on building a
+        // frame as the currency for the continuation and linking it in...
+        // then getting an optional callback.  Initial concepts were that
+        // this would be memoized in some way that the dispatcher could help
+        // you with, but that help should be done another way.
         //
-      case C_THROWN: {
-        const REBVAL *label = VAL_THROWN_LABEL(frame_);
-        if (IS_ACTION(label)) {
-            if (
-                VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-                and CTX_VARLIST(VAL_ACTION_BINDING(label)) == f->varlist
-                    // !!! Note f->varlist may be INACCESSIBLE here
-                    // e.g. this happens with RETURN during ENCLOSE,
-                    // so don't use CTX(f->varlist) here as that would
-                    // try to validate it as not being inaccessible
-            ){
-                // Eval_Core catches unwinds to the current frame, so throws
-                // where the "/name" is the JUMP native with a binding to
-                // this frame, and the thrown value is the return code.
-                //
-                // !!! This might be a little more natural if the name of
-                // the throw was a FRAME! value.  But that also would mean
-                // throws named by frames couldn't be taken advantage by
-                // the user for other features, while this only takes one
-                // function away.
-                //
-                if (Is_Void(&TG_Thrown_Arg))
-                    CATCH_THROWN(SPARE, frame_);  // act invisibily, discard
-                else
-                    CATCH_THROWN(OUT, frame_);  // overwrite output
+        // Some cases do not actually push a frame, if it's quicker to just do
+        // an evaluation (like a QUOTED! branch).  So can't assert that FRAME
+        // is not FS_TOP here.
+        //
+      case C_CONTINUATION:
+        return R_CONTINUATION;
 
-                goto dispatch_completed;
-            }
-            else if (
-                VAL_ACTION(label) == VAL_ACTION(Lib(REDO))
-                and VAL_ACTION_BINDING(label) == CTX(f->varlist)
-            ){
-                // This was issued by REDO, and should be a FRAME! with
-                // the phase and binding we are to resume with.
-                //
-                CATCH_THROWN(OUT, frame_);
-                assert(IS_FRAME(OUT));
-
-                // We are reusing the frame and may be jumping to an
-                // "earlier phase" of a composite function, or even to
-                // a "not-even-earlier-just-compatible" phase of another
-                // function.  Type checking is necessary, as is zeroing
-                // out any locals...but if we're jumping to any higher
-                // or different phase we need to reset the specialization
-                // values as well.
-                //
-                // Since dispatchers run arbitrary code to pick how (and
-                // if) they want to change the phase on each redo, we
-                // have no easy way to tell if a phase is "earlier" or
-                // "later".
-                //
-                // !!! Consider folding this pass into an option for the
-                // typechecking loop itself.
-                //
-                REBACT *redo_phase = VAL_FRAME_PHASE(OUT);
-                f->key = ACT_KEYS(&f->key_tail, redo_phase);
-                f->param = ACT_PARAMS_HEAD(redo_phase);
-                f->arg = FRM_ARGS_HEAD(f);
-                for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
-                    if (Is_Specialized(PARAM)) {
-                        Copy_Cell(ARG, PARAM);
-                    }
-                }
-
-                INIT_FRM_PHASE(f, redo_phase);
-                INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
-                goto typecheck_then_dispatch;
-            }
-        }
-
+      case C_THROWN:
+        //
         // Stay THROWN and let stack levels above try and catch
         //
-        goto abort_action; }
+        goto handle_thrown_maybe_redo;
 
       case C_VOID :
         assert(Is_Stale(OUT));  // The invisible output is always in f->out.
@@ -1082,6 +1046,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         goto dispatch;
 
       case C_REDO_CHECKED:
+        STATE = ST_ACTION_TYPECHECKING;
         goto typecheck_then_dispatch;
 
         // !!! There were generic dispatchers that were returning this, and
@@ -1154,15 +1119,64 @@ bool Process_Action_Core_Throws(REBFRM * const f)
     if (NOT_EVAL_FLAG(f, MAYBE_STALE))
         Clear_Stale_Flag(f->out);
 
-    return false;  // false => not thrown
+    return OUT;  // not thrown
 
-  abort_action:
+  handle_thrown_maybe_redo: {  ///////////////////////////////////////////////
+
+    // Until stackless is universal, an action dispatcher may make a stackful
+    // call to something that issues a REDO.  So we can't handle REDO at the
+    // top of this executor where we test for THROWING, the way we might if
+    // we could always expect continuations as the sources of throws.
+    //
+    // 1. REDO is the mechanism for doing "tail calls", and it is a generic
+    //    feature offered on ACTION! frames regardless of what executor
+    //    they use.  It starts the function phase again from its top, and
+    //    reuses the frame already allocated.
+    //
+    // 2. Since dispatchers run arbitrary code to pick how (and if) they want
+    //    to change the phase on each redo, we have no easy way to tell if a
+    //    phase is "earlier" or "later".
+    //
+    // 3. We are reusing the frame and may be jumping to an "earlier phase" of
+    //    a composite function, or even to a "not-even-earlier-just-compatible"
+    //    phase of another function (sibling tail call).  Type checking is
+    //    necessary, as is zeroing out any locals...but if we're jumping to any
+    //    higher or different phase we need to reset the specialization
+    //    values as well.
+    //
+    //    !!! Consider folding this pass into the typechecking loop itself.
+
+    const REBVAL *label = VAL_THROWN_LABEL(frame_);
+    if (IS_ACTION(label)) {
+        if (
+            VAL_ACTION(label) == VAL_ACTION(Lib(REDO))  // REDO, see [1]
+            and VAL_ACTION_BINDING(label) == CTX(f->varlist)
+        ){
+            CATCH_THROWN(OUT, frame_);
+            assert(IS_FRAME(OUT));
+
+            REBACT *redo_phase = VAL_FRAME_PHASE(OUT);  // earlier?  see [2]
+            f->key = ACT_KEYS(&f->key_tail, redo_phase);
+            f->param = ACT_PARAMS_HEAD(redo_phase);
+            f->arg = FRM_ARGS_HEAD(f);
+            for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
+                if (Is_Specialized(PARAM))
+                    Copy_Cell(ARG, PARAM);  // must reset, see [3]
+            }
+
+            INIT_FRM_PHASE(f, redo_phase);
+            INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
+            STATE = ST_ACTION_TYPECHECKING;
+            CLEAR_EVAL_FLAG(f, DISPATCHER_CATCHES);  // else asserts
+            goto typecheck_then_dispatch;
+        }
+    }
 
     Drop_Action(f);
     DS_DROP_TO(f->baseline.dsp);  // drop unprocessed stack refinements/chains
 
-    return true;  // true => thrown
-}
+    return R_THROWN;
+}}
 
 
 //
@@ -1343,6 +1357,8 @@ void Begin_Action_Core(
         //
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
     }
+
+    f->executor = &Action_Executor;
 }
 
 

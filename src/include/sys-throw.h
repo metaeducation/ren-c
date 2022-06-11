@@ -101,4 +101,6 @@ inline static void CATCH_THROWN(
     Init_Stale_Void(&TG_Thrown_Arg);
 
     Init_Stale_Void(&TG_Thrown_Label);
+
+    TG_Unwind_Frame = nullptr;
 }

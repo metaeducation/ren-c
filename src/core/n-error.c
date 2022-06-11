@@ -31,23 +31,6 @@
 #include "sys-core.h"
 
 
-// This is the code which is protected by the exception mechanism.  See the
-// rebRescue() API for more information.
-//
-static const REBVAL *Trap_Dangerous(REBFRM *frame_) {
-    INCLUDE_PARAMS_OF_TRAP;
-    UNUSED(ARG(result));
-
-    if (Do_Branch_Throws(OUT, ARG(code), END))
-        return Lib(BLANK);  // signal thrown without corrupting OUT
-
-    if (Is_Void(OUT))
-        Init_None(OUT);
-
-    return nullptr;
-}
-
-
 //
 //  trap: native [
 //
@@ -63,22 +46,52 @@ static const REBVAL *Trap_Dangerous(REBFRM *frame_) {
 //  ]
 //
 REBNATIVE(trap)
+//
+// !!! For stackless, the implementation of TRAP is actually moved into the
+// trampoline.  A generic mechanism that allows dispatchers to register
+// interest in errors is likely needed to parallel such a mechanism for throws.
 {
     INCLUDE_PARAMS_OF_TRAP;
 
-    REBVAL *error = rebRescue(cast(REBDNG*, &Trap_Dangerous), frame_);
-    UNUSED(ARG(code)); // gets used by the above call, via the frame_ pointer
-    if (not error) {
-        if (REF(result))
-            rebElide(Lib(SET), rebQ(REF(result)), rebQ(OUT));
-        return nullptr; // code didn't fail() or throw
+    REBVAL *code = ARG(code);
+
+    enum {
+        ST_TRAP_INITIAL_ENTRY = 0,
+        ST_TRAP_EVALUATING
+    };
+
+    switch (STATE) {
+      case ST_TRAP_INITIAL_ENTRY: goto initial_entry;
+      case ST_TRAP_EVALUATING: goto evaluation_finished;
+      default: assert(false);
     }
 
-    if (IS_BLANK(error)) // signal used to indicate a throw
-        return THROWN;
+  initial_entry: {
+    if (NOT_CELL_FLAG(code, CONST))
+        SET_CELL_FLAG(code, EXPLICITLY_MUTABLE);  // see REBNATIVE(do) for why
 
-    assert(IS_ERROR(error));
-    return error;
+    STATE = ST_TRAP_EVALUATING;
+    continue_catchable (OUT, code, END);
+  }
+
+  evaluation_finished: {
+    if (not THROWING) {
+        if (REF(result)) {
+            Reify_Eval_Out_Plain(OUT);
+            rebElide(Lib(SET), rebQ(REF(result)), rebQ(OUT));
+        }
+        return nullptr;
+    }
+
+    if (not IS_ERROR(VAL_THROWN_LABEL(FRAME)))  // CATCH for non-ERROR! throws
+        return R_THROWN;
+
+    Copy_Cell(OUT, VAL_THROWN_LABEL(FRAME));
+    CATCH_THROWN(SPARE, FRAME);
+    assert(IS_NULLED(SPARE));  // all error throws are null-valued
+
+    return_branched (OUT);
+  }
 }
 
 

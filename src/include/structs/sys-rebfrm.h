@@ -116,9 +116,19 @@ STATIC_ASSERT(EVAL_FLAG_CACHE_NO_LOOKAHEAD == FEED_FLAG_NO_LOOKAHEAD);
     FLAG_LEFT_BIT(5)
 
 
-//=//// EVAL_FLAG_6 ///////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_TRAMPOLINE_KEEPALIVE ////////////////////////////////////=//
 //
-#define EVAL_FLAG_6 \
+// This flag asks the trampoline function to not call Drop_Frame() when it
+// sees that the frame's `executor` has reached the `nullptr` state.  Instead
+// it stays on the frame stack, and control is passed to the previous frame's
+// executor (which will then be receiving its frame pointer parameter that
+// will not be the current top of stack).
+//
+// It's a feature used by routines which want to make several successive
+// requests on a frame (REDUCE, ANY, CASE, etc.) without tearing down the
+// frame and putting it back together again.
+//
+#define EVAL_FLAG_TRAMPOLINE_KEEPALIVE \
     FLAG_LEFT_BIT(6)
 
 
@@ -181,9 +191,12 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(17)
 
 
-//=//// EVAL_FLAG_18 ///////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_DELEGATE_CONTROL ////////////////////////////////////////=//
 //
-#define EVAL_FLAG_18 \
+// A dispatcher may want to run a "continuation" but not be called back.
+// This is referred to as delegation.
+//
+#define EVAL_FLAG_DELEGATE_CONTROL \
     FLAG_LEFT_BIT(18)
 
 
@@ -206,9 +219,14 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(20)
 
 
-//=//// EVAL_FLAG_21 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_ROOT_FRAME //////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_21 \
+// This frame is the root of a trampoline stack, and hence it cannot be jumped
+// past by something like a YIELD, return, or other throw.  This would mean
+// crossing C stack levels that the interpreter does not control (e.g. some
+// code that called into Rebol as a library.)
+//
+#define EVAL_FLAG_ROOT_FRAME \
     FLAG_LEFT_BIT(21)
 
 
@@ -249,9 +267,15 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(23)
 
 
-//=//// EVAL_FLAG_24 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_DISPATCHER_CATCHES //////////////////////////////////////=//
 //
-#define EVAL_FLAG_24 \
+// Every Executor() gets called with the chance to cleanup in the THROWING
+// state.  But in the specific case of the Action_Executor(), it uses this
+// flag to keep track of whether the dispatcher it is calling (a kind of
+// "sub-executor") wants to be told about the thrown state.  This would be
+// something like a WHILE loop wanting to catch a BREAK.
+//
+#define EVAL_FLAG_DISPATCHER_CATCHES \
     FLAG_LEFT_BIT(24)
 
 
@@ -288,21 +312,34 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(26)
 
 
-//=//// EVAL_FLAG_27 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_META_RESULT ////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_27 \
+// When this is applied, the Trampoline is asked to return an evaluator result
+// in its ^META form.  Doing so saves on needing separate callback entry
+// points for things like meta-vs-non-meta arguments, and is a useful
+// general facility.
+//
+#define EVAL_FLAG_META_RESULT \
     FLAG_LEFT_BIT(27)
 
 
-//=//// EVAL_FLAG_28 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_TO_END //////////////////////////////////////////////////=//
+//
+// !!! This is a revival of an old idea that a frame flag would hold the state
+// of whether to do to the end or not.  The reason that idea was scrapped was
+// because if the Eval() routine was hooked (e.g. by a stepwise debugger)
+// then the hook would be unable to see successive calls to Eval() if it
+// didn't return and make another call.  That no longer applies, since it
+// always has to return in stackless to the Trampoline, so TO_END is really
+// just a convenience with no real different effect in evaluator returns.
 //
 // Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
 // could be exploited for some optimization.
 //
-#define EVAL_FLAG_28 \
+#define EVAL_FLAG_TO_END \
     FLAG_LEFT_BIT(28)
 
-STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
+STATIC_ASSERT(EVAL_FLAG_TO_END == CELL_FLAG_NOTE);
 
 
 //=//// EVAL_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
@@ -372,6 +409,21 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
 
 
 
+// The REB_R type is a REBVAL* but with the idea that it is legal to hold
+// types like REB_R_THROWN, etc.  This helps document interface contract.
+//
+typedef const REBVAL *REB_R;
+
+
+// These definitions are needed in %sys-rebval.h, and can't be put in
+// %sys-rebact.h because that depends on Reb_Array, which depends on
+// Reb_Series, which depends on values... :-/
+
+// C function implementing a native ACTION!
+//
+typedef REB_R (*REBNAT)(REBFRM *frame_);
+
+
 // NOTE: The ordering of the fields in `Reb_Frame` are specifically done so
 // as to accomplish correct 64-bit alignment of pointers on 64-bit systems.
 //
@@ -423,6 +475,13 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     // space for things other than evaluation.)
     //
     Cell spare;
+
+    // !!! The "executor" is an experimental new concept in the frame world,
+    // for who runs the continuation.  This was controlled with flags before,
+    // but the concept is that it be controlled with functions matching the
+    // signature of natives and dispatchers.
+    //
+    REBNAT executor;
 
     // The prior call frame.  This never needs to be checked against nullptr,
     // because the bottom of the stack is FS_BOTTOM which is allocated at

@@ -853,7 +853,10 @@ static void Mark_Frame_Stack_Deep(void)
             // then it can just be marked normally...no need to do custom
             // partial parameter traversal.
             //
-            assert(not Is_Action_Frame_Fulfilling(f));
+            assert(
+                not Is_Action_Frame_Fulfilling(f)
+                or FRM_STATE_BYTE(f) == ST_ACTION_TYPECHECKING  // filled, safe
+            );
 
             // "may not pass CTX() test"
             //
@@ -1156,14 +1159,6 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     }
   #endif
 
-    // It is currently assumed that no recycle will happen while in a thrown
-    // state.  Debug calls that do evaluation (or even Recycle() directly)
-    // between the time a function has been called and the throw is handled
-    // can cause problems with this.
-    //
-    assert(Is_Stale_Void(&TG_Thrown_Arg));
-    assert(Is_Stale_Void(&TG_Thrown_Label));
-
     // If disabled by RECYCLE/OFF, exit now but set the pending flag.  (If
     // shutdown, ignore so recycling runs and can be checked for balance.)
     //
@@ -1186,6 +1181,14 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
 
     if (not shutdown)
         Mark_Symbol_Series();
+
+    // It was previously assumed no recycle would happen while the evaluator
+    // was in a thrown state.  There's no particular reason to enforce that
+    // in stackless, so it has been relaxed.
+    //
+    Queue_Mark_Maybe_Stale_Cell_Deep(&TG_Thrown_Arg);
+    Queue_Mark_Maybe_Stale_Cell_Deep(&TG_Thrown_Label);
+    Propagate_All_GC_Marks();
 
     // MARKING PHASE: the "root set" from which we determine the liveness
     // (or deadness) of a series.  If we are shutting down, we do not mark

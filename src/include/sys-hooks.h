@@ -25,12 +25,6 @@
 //
 
 
-// The REB_R type is a REBVAL* but with the idea that it is legal to hold
-// types like REB_R_THROWN, etc.  This helps document interface contract.
-//
-typedef const REBVAL *REB_R;
-
-
 // PER-TYPE COMPARE HOOKS, to support GREATER?, EQUAL?, LESSER?...
 //
 // Every datatype should have a comparison function, because otherwise a
@@ -44,6 +38,11 @@ typedef REBINT (COMPARE_HOOK)(
     noquote(const Cell*) b,
     bool strict
 );
+
+// Helper for declaring a native dispatcher function
+//
+#define REBNATIVE(n) \
+    REB_R N_##n(REBFRM *frame_)
 
 
 // PER-TYPE MAKE HOOKS: for `make datatype def`
@@ -84,16 +83,6 @@ typedef REB_R (TO_HOOK)(REBVAL*, enum Reb_Kind, const REBVAL*);
 //
 typedef void (MOLD_HOOK)(REB_MOLD *mo, noquote(const Cell*) v, bool form);
 
-
-// These definitions are needed in %sys-rebval.h, and can't be put in
-// %sys-rebact.h because that depends on Reb_Array, which depends on
-// Reb_Series, which depends on values... :-/
-
-// C function implementing a native ACTION!
-//
-typedef REB_R (*REBNAT)(REBFRM *frame_);
-#define REBNATIVE(n) \
-    REB_R N_##n(REBFRM *frame_)
 
 //
 // PER-TYPE GENERIC HOOKS: e.g. for `append value x` or `select value y`

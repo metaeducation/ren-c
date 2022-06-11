@@ -210,6 +210,20 @@ inline static bool Is_Throwing(REBFRM *frame_) {
     cast(REBVAL*, &PG_R_Unhandled)
 
 
+// Continuations are used to mitigate the problems that occur when the C stack
+// contains a mirror of frames corresponding to the frames for each stack
+// level.  Avoiding this means that routines that would be conceived as doing
+// a recursion instead return to the evaluator with a new request.  This helps
+// avoid crashes from C stack overflows and has many other advantages.  For a
+// similar approach and explanation, see:
+//
+// https://en.wikipedia.org/wiki/Stackless_Python
+//
+#define C_CONTINUATION 'C'
+#define R_CONTINUATION \
+    cast(REBVAL*, &PG_R_Continuation)
+
+
 #define CELL_MASK_ACTION \
     (CELL_FLAG_FIRST_IS_NODE | CELL_FLAG_SECOND_IS_NODE)
 
@@ -520,14 +534,8 @@ inline static REBVAL *Init_Action_Core(
     Init_Action_Core(TRACK(out), (a), (label), (binding))
 
 
-// The action frame run dispatchers, which get to take over the STATE byte
-// of the frame for their own use.  But before then, the state byte is used
-// by action dispatch itself.
-//
-
-//
 enum {
-    ST_ACTION_INITIAL_ENTRY = 0,  // is separate "fulfilling" state needed?
+    ST_ACTION_INITIAL_ENTRY = 0,
 
     ST_ACTION_FULFILLING_ARGS = 100,  // weird number if dispatcher gets it
 
@@ -718,15 +726,4 @@ inline static REBVAL *Reify_Eval_Out_Meta(REBVAL *out) {
         return Init_Meta_Of_Void(out);
 
     return Meta_Quotify(out);
-}
-
-
-inline static bool Process_Action_Throws(REBFRM *f) {
-    RESET(f->out);
-
-    bool threw = Process_Action_Core_Throws(f);
-
-    Reify_Eval_Out_Plain(f->out);
-
-    return threw;
 }

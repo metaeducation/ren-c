@@ -82,7 +82,7 @@
                 TG_Break_At_Tick != 0 and TG_Tick >= TG_Break_At_Tick \
             ){ \
                 printf("BREAKING AT TICK %u\n", cast(unsigned int, TG_Tick)); \
-                Dump_Frame_Location((v), f); \
+                Dump_Frame_Location((v), frame_); \
                 debug_break();  /* see %debug_break.h */ \
                 TG_Break_At_Tick = 0; \
             } \
@@ -140,6 +140,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 ){
     assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
     assert(not IS_END(feed->value));  // would be wasting time to call
+    assert(not (*flags & EVAL_FLAG_BRANCH));  // it's a single step
 
     if (not ANY_INERT(feed->value))
         return false;  // general case evaluation requires a frame
@@ -153,18 +154,18 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(feed->gotten))
         ){
             CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
-            return true;  // not action
+            goto optimized;  // not action
         }
 
         if (GET_ACTION_FLAG(VAL_ACTION(unwrap(feed->gotten)), IS_BARRIER)) {
             SET_FEED_FLAG(feed, BARRIER_HIT);
             CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
-            return true;  // is barrier
+            goto optimized;  // is barrier
         }
 
         if (NOT_ACTION_FLAG(VAL_ACTION(unwrap(feed->gotten)), ENFIXED)) {
             CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
-            return true;  // not enfixed
+            goto optimized;  // not enfixed
         }
 
         REBACT *action = VAL_ACTION(unwrap(feed->gotten));
@@ -185,7 +186,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
             //
             const REBPAR *first = First_Unspecialized_Param(nullptr, action);
             if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT)
-                return true;  // don't look back, yield the lookahead
+                goto optimized;  // don't look back, yield the lookahead
 
             *flags |=
                 FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
@@ -195,7 +196,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
         if (GET_FEED_FLAG(feed, NO_LOOKAHEAD)) {
             CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
-            return true;   // we're done!
+            goto optimized;   // we're done!
         }
 
         // ST_EVALUATOR_LOOKING_AHEAD assumes that if the first arg were
@@ -205,7 +206,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         if (GET_ACTION_FLAG(action, SKIPPABLE_FIRST)) {
             const REBPAR *first = First_Unspecialized_Param(nullptr, action);
             if (not TYPE_CHECK(first, VAL_TYPE(out)))
-                return true;  // didn't actually want this parameter type
+                goto optimized;  // didn't actually want this parameter type
         }
 
         *flags |=
@@ -216,12 +217,16 @@ inline static bool Did_Init_Inert_Optimize_Complete(
 
     if (GET_FEED_FLAG(feed, NO_LOOKAHEAD)) {
         CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
-        return true;   // we're done!
+        goto optimized;   // we're done!
     }
+
+  optimized:
+
+    if (*flags & EVAL_FLAG_META_RESULT)
+        Quotify(out, 1);  // inert, so not a void (or NULL)
 
     return true;
 }
-
 
 // This is a very light wrapper over Eval_Core(), which is used with
 // operations like ANY or REDUCE that wish to perform several successive
@@ -231,10 +236,14 @@ inline static bool Eval_Step_Throws(
     REBVAL *out,
     REBFRM *f
 ){
+    assert(f == FS_TOP);
     assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
 
+    assert(f->executor == &Evaluator_Executor);
+
     f->out = out;
-    return Eval_Core_Throws(f);  // should already be pushed
+    assert(f->baseline.dsp == DSP);
+    return Trampoline_Throws(f);  // should already be pushed;
 }
 
 
@@ -261,13 +270,12 @@ inline static bool Eval_Step_In_Subframe_Throws(
     DECLARE_FRAME (subframe, f->feed, flags);
     Push_Frame(out, subframe);
 
-    if (Eval_Core_Throws(subframe)) {
+    if (Trampoline_Throws(subframe)) {
         Abort_Frame(subframe);
         return true;
     }
 
     Drop_Frame(subframe);
-
     return false;
 }
 
@@ -288,13 +296,12 @@ inline static bool Reevaluate_In_Subframe_Throws(
     subframe->u.reval.value = reval;
     Push_Frame(out, subframe);
 
-    if (Eval_Core_Throws(subframe)) {
+    if (Trampoline_Throws(subframe)) {
         Abort_Frame(subframe);
         return true;
     }
 
     Drop_Frame(subframe);
-
     return false;
 }
 
@@ -318,7 +325,7 @@ inline static bool Eval_Step_In_Any_Array_At_Throws(
     DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
     Push_Frame(out, f);
 
-    if (Eval_Core_Throws(f)) {
+    if (Trampoline_Throws(f)) {
         Abort_Frame(f);
         *index_out = TRASHED_INDEX;
         return true;
@@ -364,7 +371,7 @@ inline static bool Eval_Step_In_Va_Throws(
     );
     Push_Frame(out, f);
 
-    if (Eval_Core_Throws(f)) {
+    if (Trampoline_Throws(f)) {
         Abort_Frame(f);
         return true;
     }
@@ -417,7 +424,7 @@ inline static bool Eval_Value_Core_Throws(
     DECLARE_FRAME (f, feed, flags | EVAL_FLAG_ALLOCATED_FEED);
     Push_Frame(out, f);
 
-    if (Eval_Core_Throws(f)) {
+    if (Trampoline_Throws(f)) {
         Abort_Frame(f);
         return true;
     }

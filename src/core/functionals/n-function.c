@@ -465,7 +465,7 @@ REB_R Init_Thrown_Unwind_Value(
     Copy_Cell(label, Lib(UNWIND));
 
     if (IS_FRAME(level)) {
-        INIT_VAL_FRAME_BINDING(label, VAL_CONTEXT(level));
+        TG_Unwind_Frame = CTX_FRAME_IF_ON_STACK(VAL_CONTEXT(level));
     }
     else if (IS_INTEGER(level)) {
         REBLEN count = VAL_INT32(level);
@@ -485,7 +485,7 @@ REB_R Init_Thrown_Unwind_Value(
 
             --count;
             if (count == 0) {
-                INIT_BINDING_MAY_MANAGE(label, SPC(f->varlist));
+                TG_Unwind_Frame = f;
                 break;
             }
         }
@@ -505,7 +505,7 @@ REB_R Init_Thrown_Unwind_Value(
                 continue; // not ready to exit
 
             if (VAL_ACTION(level) == f->original) {
-                INIT_BINDING_MAY_MANAGE(label, SPC(f->varlist));
+                TG_Unwind_Frame = f;
                 break;
             }
         }
@@ -536,6 +536,11 @@ REBNATIVE(unwind)
 // !!! Allowing to pass an INTEGER! to jump from a function based on its
 // BACKTRACE number is a bit low-level, and perhaps should be restricted to
 // a debugging mode (though it is a useful tool in "code golf").
+//
+// !!! This might be a little more natural if the label of the throw was a
+// FRAME! value.  But that also would mean throws named by frames couldn't be
+// taken advantage by the user for other features, while this only takes one
+// function away.  (Or, perhaps Isotope frames could be used?)
 {
     INCLUDE_PARAMS_OF_UNWIND;
 
@@ -547,7 +552,7 @@ REBNATIVE(unwind)
     else
         Meta_Unquotify(v);
 
-    return Init_Thrown_Unwind_Value(FRAME, level, v, frame_);;
+    return Init_Thrown_Unwind_Value(FRAME, level, v, frame_);
 }
 
 
@@ -659,7 +664,7 @@ REBNATIVE(definitional_return)
   skip_type_check: {
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
-    INIT_VAL_ACTION_BINDING(label, f_binding);
+    TG_Unwind_Frame = CTX_FRAME_IF_ON_STACK(f_binding);
 
     return Init_Thrown_With_Label(FRAME, v, label);
   }

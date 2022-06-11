@@ -82,12 +82,16 @@ inline static bool Do_Feed_To_End_Throws(
     DECLARE_FRAME (
         f,
         feed,
-        (flags | EVAL_FLAG_MAYBE_STALE) & (~ EVAL_FLAG_BRANCH)
+        (flags
+            | EVAL_FLAG_MAYBE_STALE
+            | EVAL_FLAG_TO_END
+        ) & (~ EVAL_FLAG_BRANCH)
     );
+
     Push_Frame(out, f);
 
     do {
-        if (Eval_Core_Throws(f)) {
+        if (Trampoline_Throws(f)) {
             Abort_Frame(f);
             return true;
         }

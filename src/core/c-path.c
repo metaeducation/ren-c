@@ -235,6 +235,7 @@ REB_R MAKE_Path(
             fail (out);  // !!! BLANK! is legit in paths, should null opt out?
 
         Move_Cell(DS_PUSH(), out);
+        f->baseline.dsp += 1;  // compensate for push
     }
 
     REBVAL *p = Try_Pop_Sequence_Or_Element_Or_Nulled(out, kind, dsp_orig);

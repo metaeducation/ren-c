@@ -164,36 +164,6 @@ void Assert_State_Balanced_Debug(
 
 
 //
-//  Trapped_Helper: C
-//
-// This do the work of responding to a longjmp.  (Hence it is run when setjmp
-// returns true.)  Its job is to safely recover from a sudden interruption,
-// though the list of things which can be safely recovered from is finite.
-//
-// (Among the countless things that are not handled automatically would be a
-// memory allocation via malloc().)
-//
-// Note: This is a crucial difference between C and C++, as C++ will walk up
-// the stack at each level and make sure any constructors have their
-// associated destructors run.  *Much* safer for large systems, though not
-// without cost.  Rebol's greater concern is not so much the cost of setup for
-// stack unwinding, but being written without requiring a C++ compiler.
-//
-void Trapped_Helper(struct Reb_Jump *j)
-{
-    ASSERT_CONTEXT(j->error);
-    assert(CTX_TYPE(j->error) == REB_ERROR);
-
-    // !!! This isn't necessarily the perfect idea, but have to start
-    // somewhere...
-    //
-    SET_EVAL_FLAG(FS_TOP, ABRUPT_FAILURE);
-
-    TG_Jump_List = j->last_jump;
-}
-
-
-//
 //  Fail_Core: C
 //
 // Cause a "trap" of an error by longjmp'ing to the enclosing PUSH_TRAP.  Note
@@ -231,6 +201,19 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     //
     printf("%ld\n", cast(long, TG_Tick));  /* tick count prefix */
   #endif
+
+    // The topmost frame must be the one issuing the error.  If a frame was
+    // pushed with EVAL_FLAG_TRAMPOLINE_KEEPALIVE that finished executing
+    // but remained pushed, it must be dropped before the frame that pushes
+    // it issues a failure.
+    //
+    assert(FS_TOP->executor != nullptr);
+
+    // You can't abruptly fail during the handling of abrupt failure.  At the
+    // moment we're assuming that once a frame has failed it can't recover if
+    // it originated the failure...but this may be revisited.
+    //
+    assert(NOT_EVAL_FLAG(FS_TOP, ABRUPT_FAILURE));
 
     REBCTX *error;
     if (p == nullptr) {
@@ -353,33 +336,13 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     if (TG_Jump_List == nullptr)
         panic (error);
 
-    // The information for the Rebol call frames generally is held in stack
-    // variables, so the data will go bad in the longjmp.  We have to free
-    // the data *before* the jump.  Be careful not to let this code get too
-    // recursive or do other things that would be bad news if we're responding
-    // to C_STACK_OVERFLOWING.  (See notes on the sketchiness in general of
-    // the way R3-Alpha handles stack overflows, and alternative plans.)
-    //
-    REBFRM *f = FS_TOP;
-    while (f != TG_Jump_List->frame) {
-        if (Is_Action_Frame(f)) {
-            assert(f->varlist); // action must be running
-            Drop_Action(f);
-        }
-
-        REBFRM *prior = f->prior;
-        Abort_Frame(f); // will call va_end() if variadic frame
-        f = prior;
-    }
-
-    TG_Top_Frame = f; // TG_Top_Frame is writable FS_TOP
-
     TG_Jump_List->error = error;
 
     // If a throw was being processed up the stack when the error was raised,
     // then it had the thrown argument set.
     //
     Init_Stale_Void(&TG_Thrown_Arg);
+    Init_Stale_Void(&TG_Thrown_Label);
 
     LONG_JUMP(TG_Jump_List->cpu_state, 1);
 }
@@ -1193,6 +1156,11 @@ REBCTX *Error_No_Catch_For_Throw(REBFRM *frame_)
 
     DECLARE_LOCAL (arg);
     CATCH_THROWN(arg, frame_);
+
+    if (IS_ERROR(label)) {  // what would have been fail()
+        assert(IS_NULLED(arg));
+        return VAL_CONTEXT(label);
+    }
 
     if (Is_Void(arg))
         Init_None(arg);

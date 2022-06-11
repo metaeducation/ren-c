@@ -149,6 +149,8 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
         assert(NOT_SERIES_FLAG(f->varlist, INACCESSIBLE));
     }
 
+    assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // new expression
+
     //=//// ^-- ABOVE CHECKS *ALWAYS* APPLY ///////////////////////////////=//
 
     if (IS_END(f_next))
@@ -219,26 +221,6 @@ void Evaluator_Expression_Checks_Debug(REBFRM *f)
         const bool truncated = true;
         Reify_Va_To_Array_In_Feed(f->feed, truncated);
     }
-}
-
-
-//
-//  Do_Process_Action_Checks_Debug: C
-//
-void Do_Process_Action_Checks_Debug(REBFRM *f) {
-
-    assert(IS_FRAME(f->rootvar));
-    assert(f->arg == f->rootvar + 1);
-
-  #if DEBUG_EXTANT_STACK_POINTERS
-    assert(TG_Stack_Outstanding == 0);
-  #endif
-
-    REBACT *phase = VAL_FRAME_PHASE(f->rootvar);
-
-    //=//// v-- BELOW CHECKS ONLY APPLY WHEN FRM_PHASE() is VALID ////////=//
-
-    assert(IS_DETAILS(ACT_IDENTITY(phase)));
 }
 
 
@@ -323,7 +305,9 @@ void Evaluator_Exit_Checks_Debug(REBFRM *f) {
         filtered &= ~ (
             EVAL_FLAG_0_IS_TRUE  // always true
             | EVAL_FLAG_7_IS_TRUE  // always true
-            | EVAL_FLAG_ALLOCATED_FEED  // maybe true
+            | EVAL_FLAG_ALLOCATED_FEED
+            | EVAL_FLAG_ROOT_FRAME
+            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE
         );
 
         // These are provided as options to Evaluator_Executor, and should not
@@ -332,7 +316,9 @@ void Evaluator_Exit_Checks_Debug(REBFRM *f) {
         //
         filtered &= ~ (
             EVAL_FLAG_MAYBE_STALE
+            | EVAL_FLAG_TO_END
             | EVAL_FLAG_BRANCH
+            | EVAL_FLAG_META_RESULT
             | EVAL_FLAG_FULFILLING_ARG
             | EVAL_FLAG_NO_RESIDUE
         );

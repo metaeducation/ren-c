@@ -114,6 +114,7 @@ PVAR REBVAL PG_R_Redo_Unchecked;
 PVAR REBVAL PG_R_Redo_Checked;
 PVAR REBVAL PG_R_Thrown;
 PVAR REBVAL PG_R_Unhandled;
+PVAR REBVAL PG_R_Continuation;
 
 // These are root variables which used to be described in %root.r and kept
 // alive by keeping that array alive.  Now they are API handles, kept alive
@@ -178,8 +179,13 @@ PVAR REBDEV *PG_Device_List;  // Linked list of R3-Alpha-style "devices"
 // confusion using CELL_FLAG_STALE--and not overwriting the output cell made
 // it possible to do UNWIND throws that could be invisible.
 //
+// The frame to unwind to is something that could be slipped into the binding
+// of the TG_Thrown_Label, but REBFRM* bindings are not legal at the moment.
+// To get past the issue, the frame is just put in the TG_Unwind_Frame.
+//
 TVAR REBVAL TG_Thrown_Arg;
 TVAR REBVAL TG_Thrown_Label;
+TVAR REBFRM *TG_Unwind_Frame;
 
 // !!! These values were held in REBVALs for some reason in R3-Alpha, which
 // means that since they were INTEGER! they were signed 64-bit integers.  It

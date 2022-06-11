@@ -1676,6 +1676,9 @@ REBVAL *RL_rebRescueWith(
         Abort_Frame(dummy);
 
         REBVAL *error = Init_Error(Alloc_Value(), jump.error);
+
+        TG_Jump_List = jump.last_jump;
+
         if (not rescuer)
             return error;  // plain rebRescue() behavior
 

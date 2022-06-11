@@ -70,8 +70,8 @@ REBNATIVE(reduce)
         bool line = GET_CELL_FLAG(f_value, NEWLINE_BEFORE);
 
         if (Eval_Step_Throws(RESET(OUT), f)) {
-            DS_DROP_TO(dsp_orig);
             Abort_Frame(f);
+            DS_DROP_TO(dsp_orig);
             return THROWN;
         }
 
@@ -121,6 +121,7 @@ REBNATIVE(reduce)
             fail (Error_Bad_Isotope(OUT));
 
         Move_Cell(DS_PUSH(), OUT);
+        f->baseline.dsp += 1;  // compensate for push
 
         if (line)
             SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);

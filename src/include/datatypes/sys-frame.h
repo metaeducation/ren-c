@@ -501,6 +501,7 @@ inline static void Prep_Frame_Core(
   #endif
 
     f->varlist = nullptr;
+    f->executor = &Evaluator_Executor;  // compatible default (for now)
 
     TRASH_POINTER_IF_DEBUG(f->alloc_value_list);
 
@@ -599,6 +600,7 @@ inline static void Prep_Frame_Core(
     #define VOID    Native_Void_Result(frame_)
     #define NONE    Native_None_Result(frame_)
     #define THROWN  Native_Thrown_Result(frame_)
+    #define BASELINE   (&frame_->baseline)
 #endif
 
 
@@ -637,3 +639,238 @@ inline static void FAIL_IF_BAD_RETURN_TYPE(REBFRM *f) {
     if (not Typecheck_Including_Constraints(param, f->out))
         fail (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
 }
+
+
+inline static bool Eval_Value_Core_Throws(
+    REBVAL *out,
+    REBFLGS flags,
+    const Cell *value,  // e.g. a BLOCK! here would just evaluate to itself!
+    REBSPC *specifier
+);
+
+// Conveniences for returning a continuation.  The concept is that when a
+// R_CONTINUATION comes back via the C `return` for a native, that native's
+// C stack variables are all gone.  But the heap-allocated Rebol frame stays
+// intact and in the Rebol stack trace.  It will be resumed when the
+// continuation finishes.
+//
+inline static bool Push_Continuation_Throws(
+    REBVAL *out,
+    REBFRM *frame_,
+    REBFLGS flags,  // EVAL_FLAG_BRANCH, etc. for pushed frames
+    const Cell *branch,
+    REBSPC *branch_specifier,
+    const REBVAL *with  // gets copied if not END_VALUE, need not be GC-safe
+){
+    assert(out == &frame_->spare or out == frame_->out);  // anywhere else?
+    assert(branch != out);  // it's legal for `with` to be the same as out
+
+    // We don't want to force frames like IF that only do a delegation to
+    // muck with the state byte.  But 0 means "initial entry", and there are
+    // places to leverage this.  EVAL_FLAG_DELEGATE_CONTROL should be used with
+    // setting the state byte to something nonzero.
+    //
+    assert(FRM_STATE_BYTE(frame_) != 0);
+
+    // !!! This code came from Do_Branch_XXX_Throws() which was not
+    // continuation-based, and hence holds some reusable logic for
+    // branch types that do not require evaluation...like REB_QUOTED.
+    // It's the easiest way to reuse the logic for the time being,
+    // though some performance gain could be achieved for instance
+    // if it were reused in a way that allowed something like IF to
+    // not bother running again (like if `CONTINUE()` would do a plain
+    // return in those cases).  But more complex scenarios may have
+    // broken control flow if such shortcuts were taken.  Review.
+
+    DECLARE_LOCAL (temp);
+    if (IS_GROUP(branch)) {
+        REBFLGS group_flags = EVAL_MASK_DEFAULT;
+        if (Eval_Value_Core_Throws(temp, group_flags, branch, branch_specifier))
+            return true;
+
+        branch = temp;
+        branch_specifier = SPECIFIED;
+    }
+
+    switch (VAL_TYPE(branch)) {
+      case REB_BLANK:
+        if (flags & EVAL_FLAG_BRANCH)
+            Init_Null_Isotope(out);
+        else
+            Init_Nulled(out);
+        goto just_use_out;
+
+      case REB_QUOTED:
+        Unquotify(Derelativize(out, branch, branch_specifier), 1);
+        if (IS_NULLED(out) and (flags & EVAL_FLAG_BRANCH))
+            Init_Null_Isotope(out);
+        goto just_use_out;
+
+      case REB_BLOCK: {
+        DECLARE_FRAME_AT_CORE (
+            f,
+            branch,
+            branch_specifier,
+            flags | EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END
+        );
+
+        Push_Frame(out, f);
+        return false; }  // trampoline manages EVAL_FLAG_BRANCH atm.
+
+      case REB_GET_BLOCK: {  // effectively REDUCE
+        DECLARE_END_FRAME (
+            f,
+            EVAL_MASK_DEFAULT | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
+        );
+        Push_Frame(out, f);
+
+        const REBVAL *action = Lib(REDUCE);
+        Push_Action(f, VAL_ACTION(action), VAL_ACTION_BINDING(action));
+        Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
+
+        const REBKEY *key = f->key;
+        const REBPAR *param = f->param;
+        REBVAL *arg = f->arg;
+        for (; key != f->key_tail; ++key, ++param, ++arg) {
+            if (Is_Specialized(param))
+                Copy_Cell(arg, param);
+            else
+                Init_None(arg);
+        }
+
+        arg = First_Unspecialized_Arg(&param, f);
+        Derelativize(arg, branch, branch_specifier);
+        mutable_HEART_BYTE(arg) = REB_BLOCK;  // :[1 + 2] => [3], not :[3]
+        return false; }
+
+      case REB_ACTION : {
+        DECLARE_END_FRAME (
+            f,
+            EVAL_MASK_DEFAULT | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING)
+        );
+        Push_Frame(out, f);
+        Push_Action(f, VAL_ACTION(branch), VAL_ACTION_BINDING(branch));
+        Begin_Prefix_Action(f, VAL_ACTION_LABEL(branch));
+
+        const REBKEY *key = f->key;
+        const REBPAR *param = f->param;
+        REBVAL *arg = f->arg;
+        for (; key != f->key_tail; ++key, ++param, ++arg) {
+            if (Is_Specialized(param))
+                Copy_Cell(arg, param);
+            else
+                Init_None(arg);
+        }
+
+        if (NOT_END(with)) do {
+            arg = First_Unspecialized_Arg(&param, f);
+            if (not arg)
+                break;
+
+            if (Is_Void(with))
+              { Init_Void_Isotope(arg); break; }
+
+            Copy_Cell(arg, Pointer_To_Decayed(with));
+
+            if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META)
+              { Meta_Quotify(arg); break; }
+
+            if (Is_Isotope(arg))
+                fail ("Can't pass isotope to non-META parameter");
+        } while (0);
+
+        return false; }
+
+      default:
+        //
+        // !!! Things like CASE currently ask for a branch-based continuation
+        // on types they haven't checked, but encounter via evaluation.
+        // Hence we FAIL here instead of panic()...but that suggests this
+        // should be narrowed to the kinds of types branching permits.
+        //
+        fail ("Bad branch type");
+    }
+
+  just_use_out:
+    return false;
+}
+
+
+#define continue_core(out,flags,branch,specifier,with) \
+    do { \
+        if (Push_Continuation_Throws( \
+                RESET(out), \
+                frame_, \
+                (flags), \
+                (branch), \
+                (specifier), \
+                (with) \
+        )){ \
+            return R_THROWN;  /* no frame pushed, just get callback */ \
+        } \
+        return R_CONTINUATION; \
+    } while (0)
+
+
+// !!! Delegation doesn't want to use the frame that's pushed.  It leaves it
+// on the stack for sanity of debug tracing, but it could be more optimal
+// if the delegating frame were freed before running what's underneath it...
+// at least it could be collapsed into a more primordial state.  Review.
+//
+#define delegate(out,value,with) \
+    do { \
+        assert((out) == OUT); \
+        STATE = 1; \
+        SET_EVAL_FLAG(frame_, DELEGATE_CONTROL); \
+        continue_core(OUT, EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
+    } while (0)
+
+#define delegate_branch(out,branch,with) \
+    do { \
+        assert((out) == OUT); \
+        STATE = 1; \
+        SET_EVAL_FLAG(frame_, DELEGATE_CONTROL); \
+        continue_core(OUT, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
+    } while (0)
+
+// Normal continuations come in catching and non-catching forms; they evaluate
+// without tampering with the result.
+
+#define continue_uncatchable(out,value,with) \
+    continue_core((out), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with))
+
+#define continue_catchable(out,value,with) \
+    do { \
+        assert(Is_Action_Frame(frame_)); \
+        SET_EVAL_FLAG(frame_, DISPATCHER_CATCHES); \
+        continue_core((out), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
+    } while (0)
+
+// Branch continuations enforce the result not being pure null or void
+
+#define continue_uncatchable_branch(out,branch,with) \
+    continue_core((out), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))
+
+#define continue_catchable_branch(out,branch,with) \
+    do { \
+        assert(Is_Action_Frame(frame_)); \
+        SET_EVAL_FLAG(frame_, DISPATCHER_CATCHES); \
+        continue_core((out), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
+    } while (0)
+
+#define continue_subframe(f) \
+    do { \
+        assert((f) == FS_TOP); \
+        assert(FS_TOP != frame_); \
+        assert(STATE != 0);  /* must set to nonzero */ \
+        return R_CONTINUATION; \
+    } while (0)
+
+#define delegate_subframe(f) \
+    do { \
+        assert((f) == FS_TOP); \
+        assert(FS_TOP != frame_); \
+        SET_EVAL_FLAG(frame_, DELEGATE_CONTROL); \
+        STATE = 1;  /* STATE byte of 0 reserved for initial entry */ \
+        return R_CONTINUATION; \
+    } while (0)

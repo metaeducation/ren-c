@@ -78,6 +78,8 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
     sub->arg = sub->rootvar + 1;  // !!! enforced by entering Process_Action()
     sub->param = cast_PAR(END);
 
+    sub->executor = &Action_Executor;
+
     return sub;
 }
 
@@ -143,7 +145,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     // runs from the top.)
 
     while (true) {
-        if (Process_Action_Core_Throws(sub)) {
+        if (Trampoline_Throws(sub)) {
             Abort_Frame(sub);
             return THROWN;
         }
@@ -175,6 +177,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
         SET_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT);
 
         FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;
+        CLEAR_EVAL_FLAG(sub, DISPATCHER_CATCHES);
     }
 
     Drop_Frame(sub);

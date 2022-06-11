@@ -20,57 +20,41 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// This file contains Eval_Core_Throws(), which is the central
-// evaluator implementation.  Most callers should use higher level wrappers,
-// because the long name conveys any direct caller must handle the following:
+// This file contains code for the `Evaluator_Executor()`.  It is responsible
+// for the typical interpretation of BLOCK! or GROUP!, in terms of giving
+// sequences like `x: 1 + 2` a meaning for how SET-WORD! or INTEGER! behaves.
 //
-// * _Maybe_Stale_ => The evaluation targets an output cell which must be
-//   preloaded or set to END.  If there is no result (e.g. due to being just
-//   comments) then whatever was in that cell will still be there -but- will
-//   carry a stale marking.  This also means that END is a possible product
-//   of the evaluation.  Higher-level helpers blend in Reify_Eval_Out_Plain() or
-//   Reify_Eval_Out_Meta() to avoid having to deal with these low-level issues,
-//   but core code wanting to be efficient can get all the insight of a ^META
-//   detection without going through quoting/etc.
+// By design the evaluator is not recursive at the C level--it is "stackless".
+// At points where a sub-expression must be evaluated in a new frame, it will
+// heap-allocate that frame and then do a C `return` of R_CONTINUATION.
+// Processing then goes through the "Trampoline" (see %c-trampoline.c), which
+// later re-enters the suspended frame's executor with the result.  Setting
+// the frame's STATE byte prior to suspension is a common way of letting a
+// frame know where to pick up from when it left off.
 //
-// * _Throws => The return result is a boolean which all callers *must* heed.
-//   There is no "thrown value" data type or cell flag, so the only indication
-//   that a throw happened comes from this flag.  See %sys-throw.h
+// When it encounters something that needs to be handled as a function
+// application, it defers to %c-action.c for the Action_Executor().  The
+// action gets its own frame.
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// * See %sys-eval.h for wrappers that make it easier to set up frames and
-//   use the evaluator for a single step.
+// * Evaluator_Executor() is LONG.  That's largely on purpose.  Breaking it
+//   into functions would add overhead (in the debug build if not also release
+//   builds) and prevent interesting tricks and optimizations.  It is
+//   separated into sections, and the invariants in each section are made
+//   clear with comments and asserts.
 //
-// * See %sys-do.h for wrappers that make it easier to run multiple evaluator
-//   steps in a frame and return the final result, giving ~void~ by default.
-//
-// * Eval_Core_Throws() is LONG.  That is largely a purposeful choice.
-//   Breaking it into functions would add overhead (in the debug build if not
-//   also release builds) and prevent interesting tricks and optimizations.
-//   It is separated into sections, and the invariants in each section are
-//   made clear with comments and asserts.
+// * See %d-eval.c for more detailed assertions of the preconditions,
+//   postconditions, and state...which are broken out to help keep this file
+//   a more manageable length.
 //
 // * The evaluator only moves forward, and operates on a strict window of
 //   visibility of two elements at a time (current position and "lookback").
-//   See `Reb_Feed` for the code that provides this abstraction over Rebol
+//   See `Reb_Feed` for the code that provides this abstraction over Ren-C
 //   arrays as well as C va_list.
 //
 
 #include "sys-core.h"
-
-
-#if DEBUG_COUNT_TICKS  // <-- THIS IS VERY USEFUL, SEE %sys-eval.h!
-    //
-    // TG_Tick counter is incremented each time a function dispatcher is run
-    // or a parse rule is executed.  See UPDATE_TICK_COUNT().
-    //
-
-    //      *** DON'T COMMIT THIS v-- KEEP IT AT ZERO! ***
-    REBTCK TG_Break_At_Tick =      0;
-    //      *** DON'T COMMIT THIS --^ KEEP IT AT ZERO! ***
-
-#endif  // ^-- SERIOUSLY: READ ABOUT C-DEBUG-BREAK AND PLACES TICKS ARE STORED
 
 
 // The frame contains a "feed" whose ->value typically represents a "current"
@@ -197,37 +181,8 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     REBFLGS flags = EVAL_MASK_DEFAULT
             | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
-    if (CURRENT_CHANGES_IF_FETCH_NEXT) {  // must use new frame
-        if (Eval_Step_In_Subframe_Throws(OUT, f, flags))
-            return true;
-    }
-    else {  // !!! Reusing the frame, would inert optimization be worth it?
-        // !!! If reevaluating, this will forget that we are doing so.
-        //
-        STATE = ST_EVALUATOR_INITIAL_ENTRY;
-
-        if (Eval_Step_Throws(OUT, f))  // reuse `f`
-            return true;
-
-        // Frame we are reusing may-or-may-not have had EVAL_FLAG_MAYBE_STALE
-        //
-        Clear_Stale_Flag(OUT);
-
-        // We *could* keep evaluating as long as evaluations vanish:
-        //
-        //    >> x: 1020
-        //
-        //    >> x: comment "hi" 2
-        //    == 2
-        //
-        //    >> x
-        //    == 2
-        //
-        // But this is not done.  Instead, we treat an invisible evaluation
-        // step as a no-op that evaluates to the value of the variable.
-        //
-        // https://forum.rebol.info/t/1582/5
-    }
+    if (Eval_Step_In_Subframe_Throws(OUT, f, flags))
+        return true;
 
     assert(not Is_Stale(OUT));
 
@@ -237,28 +192,33 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
 
 
 //
-//  Eval_Core_Throws: C
+//  Evaluator_Executor: C
 //
-// See notes at top of file for general remarks on this central function's
-// name, and that wrappers should nearly always be used to call it.
+// Expression execution can be thought of as having four distinct states:
 //
-// More detailed assertions of the preconditions, postconditions, and state
-// at each evaluation step are contained in %d-eval.c, to keep this file
-// more manageable in length.
+//    * new_expression
+//    * evaluate
+//    * lookahead
+//    * finished -or- threw
 //
-bool Eval_Core_Throws(REBFRM * const f)
+// It is possible to preload states and start an evaluator at any of these.
+//
+REB_R Evaluator_Executor(REBFRM *f)
 {
+    if (THROWING)
+        return THROWN;  // no state to clean up
+
     assert(DSP >= f->baseline.dsp);  // REDUCE accrues, APPLY adds refinements
     assert(INITABLE(OUT));  // all invisible will preserve output
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
     if (GET_EVAL_FLAG(f, NO_EVALUATIONS)) {  // see flag for why this exists
         if (IS_END(f->feed->value))
-            return false;
+            return OUT;
         Derelativize(OUT, f->feed->value, FEED_SPECIFIER(f->feed));
         SET_CELL_FLAG(OUT, UNEVALUATED);
         Fetch_Next_Forget_Lookback(f);
-        return false;
+        return OUT;
     }
 
   #if DEBUG_ENSURE_FRAME_EVALUATES
@@ -275,7 +235,7 @@ bool Eval_Core_Throws(REBFRM * const f)
                 Mark_Eval_Out_Stale(OUT);
             else
                 assert(Is_Void(OUT));
-            return false;
+            return OUT;
         }
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);  // not an argument, clear flag
     }
@@ -343,21 +303,9 @@ bool Eval_Core_Throws(REBFRM * const f)
     Evaluator_Expression_Checks_Debug(f);
   #endif
 
+  new_expression:
+
   //=//// START NEW EXPRESSION ////////////////////////////////////////////=//
-
-    #if !defined(NDEBUG)  // Total_Eval_Cycles is periodically reconciled
-        ++Total_Eval_Cycles_Doublecheck;
-    #endif
-
-    if (--Eval_Countdown <= 0) {
-        //
-        // Note that Do_Signals_Throws() may do a recycle step of the GC, or
-        // it may spawn an entire interactive debugging session via
-        // breakpoint before it returns.  It may also FAIL and longjmp out.
-        //
-        if (Do_Signals_Throws(FRAME))
-            goto return_thrown;
-    }
 
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));
 
@@ -395,16 +343,6 @@ bool Eval_Core_Throws(REBFRM * const f)
     // ^-- doesn't advance expression index: `reeval x` starts with `reeval`
 
   //=//// LOOKAHEAD FOR ENFIXED FUNCTIONS THAT QUOTE THEIR LEFT ARG ///////=//
-
-    // Ren-C has an additional lookahead step *before* an evaluation in order
-    // to take care of this scenario.  To do this, it pre-emptively feeds the
-    // frame one unit that f->value is the *next* value, and a local variable
-    // called "current" holds the current head of the expression that the
-    // main switch would process.
-
-    UPDATE_TICK_DEBUG(v);
-
-    // v-- This is the TG_Break_At_Tick or C-DEBUG-BREAK landing spot --v
 
     if (VAL_TYPE_UNCHECKED(f_next) != REB_WORD)  // right's kind - END is REB_0
         goto give_up_backward_quote_priority;
@@ -642,7 +580,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
-        if (Process_Action_Core_Throws(FS_TOP)) {
+        if (Trampoline_Throws(FS_TOP)) {
             Abort_Frame(FS_TOP);
             goto return_thrown;
         }
@@ -1004,8 +942,10 @@ bool Eval_Core_Throws(REBFRM * const f)
         DECLARE_ACTION_SUBFRAME (subframe, f);
         Push_Frame(OUT, subframe);
 
-        if (Get_Path_Push_Refinements_Throws(SPARE, OUT, v, v_specifier))
+        if (Get_Path_Push_Refinements_Throws(SPARE, OUT, v, v_specifier)) {
+            Abort_Frame(subframe);
             goto return_thrown;
+        }
 
         if (not IS_ACTION(SPARE)) {
             //
@@ -1480,7 +1420,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             assert(not Is_Stale(OUT));
             Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
 
-            if (Eval_Core_Throws(subframe)) {
+            if (Trampoline_Throws(subframe)) {
                 Abort_Frame(subframe);
                 DS_DROP_TO(f->baseline.dsp);
                 goto return_thrown;
@@ -1915,8 +1855,16 @@ bool Eval_Core_Throws(REBFRM * const f)
 
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
 
-        if (not Is_Action_Frame_Fulfilling(f->prior)) {
+        if (
+            Is_Action_Frame(f->prior)
             //
+            // ^-- !!! Before stackless it was always the case when we got
+            // here that a function frame was fulfilling, because SET-WORD!
+            // would reuse frames while fulfilling arguments...but stackless
+            // changed this and has SET-WORD! start new frames.  Review.
+            //
+            and not Is_Action_Frame_Fulfilling(f->prior)
+        ){
             // This should mean it's a variadic frame, e.g. when we have
             // the 2 in the output slot and are at the THEN in:
             //
@@ -1957,15 +1905,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
     goto process_action; }
 
-  return_thrown:
-
-  #if !defined(NDEBUG)
-    Evaluator_Exit_Checks_Debug(f);   // called unless a fail() longjmps
-    // don't care if f->flags has changes; thrown frame is not resumable
-  #endif
-
-    return true;  // true => thrown
-
   finished:
 
     // Want to keep this flag between an operation and an ensuing enfix in
@@ -1982,6 +1921,9 @@ bool Eval_Core_Throws(REBFRM * const f)
     Evaluator_Exit_Checks_Debug(f);
   #endif
 
+    if (GET_EVAL_FLAG(f, TO_END) and NOT_END(f_next))
+        goto new_expression;
+
     // Note: There may be some optimization possible here if the flag for
     // controlling whether you wanted to keep the stale flag was also using
     // the same EVAL_FLAG bit as the CELL_FLAG for stale.  It's tricky since
@@ -1990,7 +1932,13 @@ bool Eval_Core_Throws(REBFRM * const f)
     if (NOT_EVAL_FLAG(f, MAYBE_STALE))
         Clear_Stale_Flag(OUT);
 
-    assert(NOT_EVAL_FLAG(f, BRANCH));  // handled by block exec on last step
+    return OUT;
 
-    return false;  // false => not thrown
+  return_thrown:
+
+  #if !defined(NDEBUG)
+    Evaluator_Exit_Checks_Debug(f);
+  #endif
+
+    return R_THROWN;
 }

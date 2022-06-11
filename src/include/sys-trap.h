@@ -196,8 +196,8 @@ struct Reb_Jump {
         TG_Jump_List = (j); \
         if (0 == SET_JUMP((j)->cpu_state))  /* initial setjmp branch */ \
             (j)->error = nullptr;  /* this branch will always be run */ \
-        else {  /* the longjmp happened */ \
-            Trapped_Helper(j); \
+        else { \
+            /* the longjmp happened */ \
         } \
     } while (0)
 

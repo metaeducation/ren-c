@@ -270,7 +270,7 @@ bool Do_Frame_Ctx_Throws(
 
     Begin_Prefix_Action(f, label);
 
-    if (Process_Action_Core_Throws(f)) {
+    if (Trampoline_Throws(f)) {
         Abort_Frame(f);
         return true;
     }
@@ -547,7 +547,7 @@ REBNATIVE(evaluate)
                 );
                 Push_Frame(SPARE, f);
 
-                if (Eval_Core_Throws(f)) {
+                if (Trampoline_Throws(f)) {
                     Abort_Frame(f);
                     return THROWN;
                 }
@@ -858,7 +858,7 @@ REBNATIVE(applique)
 
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-    if (Process_Action_Core_Throws(f)) {
+    if (Trampoline_Throws(f)) {
         Abort_Frame(f);
         return THROWN;
     }
@@ -1064,7 +1064,10 @@ REBNATIVE(apply)
     //
     Shutdown_Evars(&e);
 
-    Drop_Frame(f);
+    if (arg_threw)
+        Abort_Frame(f);
+    else
+        Drop_Frame(f);
 
     Init_Evars(&e, frame);
     while (Did_Advance_Evars(&e)) {
@@ -1104,7 +1107,7 @@ REBNATIVE(apply)
 
     Begin_Prefix_Action(f, VAL_ACTION_LABEL(action));
 
-    if (Process_Action_Core_Throws(f)) {
+    if (Trampoline_Throws(f)) {
         Abort_Frame(f);
         return THROWN;
     }

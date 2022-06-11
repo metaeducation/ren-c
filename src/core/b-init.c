@@ -453,6 +453,7 @@ static void Init_Root_Vars(void)
     Init_Return_Signal(&PG_R_Redo_Unchecked, C_REDO_UNCHECKED);
     Init_Return_Signal(&PG_R_Redo_Checked, C_REDO_CHECKED);
     Init_Return_Signal(&PG_R_Unhandled, C_UNHANDLED);
+    Init_Return_Signal(&PG_R_Continuation, C_CONTINUATION);
 
     ensureNullptr(Root_Empty_Block) = Init_Block(Alloc_Value(), PG_Empty_Array);
     Force_Value_Frozen_Deep(Root_Empty_Block);
@@ -493,6 +494,7 @@ static void Shutdown_Root_Vars(void)
     RESET(&PG_R_Redo_Unchecked);
     RESET(&PG_R_Redo_Checked);
     RESET(&PG_R_Unhandled);
+    RESET(&PG_R_Continuation);
 
     rebReleaseAndNull(&Root_Empty_Text);
     rebReleaseAndNull(&Root_Empty_Block);
@@ -680,6 +682,7 @@ void Startup_Signals(void)
     Init_Stale_Void(&TG_Thrown_Arg);
     assert(Is_Fresh(&TG_Thrown_Label));
     Init_Stale_Void(&TG_Thrown_Label);
+    assert(TG_Unwind_Frame == nullptr);
 }
 
 
@@ -1189,6 +1192,7 @@ void Shutdown_Core(bool clean)
     RESET(&TG_Thrown_Arg);
     assert(Is_Stale_Void(&TG_Thrown_Label));
     RESET(&TG_Thrown_Label);
+    assert(TG_Unwind_Frame == nullptr);
 
     Shutdown_Mold();
     Shutdown_Collector();
