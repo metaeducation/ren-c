@@ -1651,15 +1651,15 @@ REBVAL *RL_rebRescueWith(
 ){
     ENTER_API;
 
-    struct Reb_Jump jump;
-    PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE(&jump);
-
     // We want API allocations via rebValue() or rebMalloc() that occur in the
     // body of the C function for the rebRescue() to be automatically cleaned
     // up in the case of an error.  There must be a frame to attach them to.
     //
     DECLARE_END_FRAME (dummy, EVAL_MASK_DEFAULT);
     Push_Frame(nullptr, dummy);
+
+    struct Reb_Jump jump;
+    PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE(&jump);
 
   #if DEBUG_ENSURE_FRAME_EVALUATES
     f->was_eval_called = true;  // "fake" frame, okay to lie
