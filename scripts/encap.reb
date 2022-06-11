@@ -1258,7 +1258,7 @@ encap: func [
         join in-rebol-path "-encap"
     ]
 
-    print ["Encapping from original executable:" rebol]
+    print ["Encapping from original executable:" in-rebol-path]
 
     let executable: read in-rebol-path
 
