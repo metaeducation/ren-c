@@ -46,9 +46,16 @@ STATIC_ASSERT(EVAL_FLAG_1_IS_FALSE == NODE_FLAG_STALE);
 // If a frame allocated a feed, then it has to be freed...which is done when
 // the frame is dropped or aborted.
 //
+// !!! Note that this is NODE_FLAG_MANAGED.  Right now, the concept of
+// "managed" vs. "unmanaged" doesn't completely apply to frames--they are all
+// basically managed, but references to them in values are done through a
+// level of indirection (a varlist) which will be patched up to not point
+// to them if they are freed.  So this bit is used for another purpose.
+//
 #define EVAL_FLAG_ALLOCATED_FEED \
     FLAG_LEFT_BIT(2)
 
+STATIC_ASSERT(EVAL_FLAG_ALLOCATED_FEED == NODE_FLAG_MANAGED);  // should be ok
 
 //=//// EVAL_FLAG_BRANCH ///////////////////////////////////////////////////=//
 //
