@@ -424,7 +424,7 @@ REBNATIVE(match)
     //
     Isotopify_If_Falsey(v);
 
-    Move_Cell(OUT, v);  // Otherwise, input is the result
+    Copy_Cell(OUT, v);  // Otherwise, input is the result
 
     return_branched (OUT);  // asserts no pure NULL or isotope ~void~
 }
