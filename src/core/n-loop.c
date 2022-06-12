@@ -674,6 +674,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
                 }
                 else if (
                     Is_Stale(les->out)
+                    or Is_None(les->out)  // saw a void last time
                     or not IS_NULLED(les->out)  // null means we saw false
                 ){
                     Move_Cell(les->out, temp);

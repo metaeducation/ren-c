@@ -113,10 +113,12 @@ REBARR *Copy_Values_Len_Extra_Shallow_Core(
     const Cell *src = head;
     Cell *dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
-        if (VAL_TYPE_UNCHECKED(src) == REB_NULL)  // allow unreadable trash
+        if (
+            Is_Isotope(src)
+            or VAL_TYPE_UNCHECKED(src) == REB_NULL  // allow unreadable trash
+        ){
             assert(IS_VARLIST(a));  // usually not legal
-        if (VAL_TYPE_UNCHECKED(src) == REB_BAD_WORD)
-            assert(NOT_CELL_FLAG(src, ISOTOPE));
+        }
 
         Derelativize(dest, src, specifier);
     }
@@ -400,6 +402,9 @@ void Uncolor_Array(const REBARR *a)
 //
 void Uncolor(const Cell *v)
 {
+    if (Is_Isotope(v))
+        return;
+
     if (ANY_ARRAY(v))
         Uncolor_Array(VAL_ARRAY(v));
     else if (ANY_PATH(v)) {

@@ -121,7 +121,7 @@ inline static REBVAL *Reify_Branch_Out(REBVAL *out) {
     if (Is_Void(out))
         return Init_None(out);
 
-    if (IS_NULLED(out))
+    if (VAL_TYPE_UNCHECKED(out) == REB_NULL)
         return Init_Null_Isotope(out);
 
     return out;
@@ -150,7 +150,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
         feed->gotten = Lookup_Word(feed->value, FEED_SPECIFIER(feed));
         if (
             not feed->gotten
-            or not IS_ACTION(unwrap(feed->gotten))
+            or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(feed->gotten))
         ){
             CLEAR_FEED_FLAG(feed, NO_LOOKAHEAD);
             return true;  // not action

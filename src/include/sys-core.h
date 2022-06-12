@@ -556,7 +556,7 @@ inline static REBVAR *Force_Lib_Var(SYMID id) {
 #include "datatypes/sys-char.h"  // use Init_Integer() for bad codepoint error
 #include "datatypes/sys-string.h"  // SYMID needed for typesets
 
-#include "datatypes/sys-logic.h"  // ~null~ BAD-WORD! is falsey
+#include "datatypes/sys-logic.h"
 
 #include "datatypes/sys-bad-word.h"  // SYMID needed
 

@@ -67,8 +67,7 @@ inline static bool VAL_LOGIC(noquote(const Cell*) v) {
 // Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 
 inline static bool IS_TRUTHY(const Cell *v) {
-    if (IS_BAD_WORD(v))
-        assert(NOT_CELL_FLAG(v, ISOTOPE));  // should never be passed isotopes!
+    assert(QUOTE_BYTE(v) != ISOTOPE_255);  // should never be passed isotopes!
     if (VAL_TYPE(v) > REB_LOGIC)
         return true;  // includes QUOTED! `if first ['_] [-- "this is truthy"]`
     if (IS_LOGIC(v))

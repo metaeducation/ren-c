@@ -341,7 +341,7 @@ bool Specialize_Action_Throws(
         // It's an argument, either a normal one or a refinement arg.
 
         if (
-            IS_TAG(arg)
+            VAL_TYPE_UNCHECKED(arg) == REB_TAG  // tolerate isotopes
             and VAL_SERIES(arg) == VAL_SERIES(Root_Unspecialized_Tag)
         ){
             goto unspecialized_arg;

@@ -946,7 +946,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 
             if (Is_Isotope(e.var)) {
                 Append_Codepoint(mo->series, '~');
-                const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(e.var));
+                const REBSYM *label = try_unwrap(VAL_ISOTOPE_LABEL(e.var));
                 if (label) {
                     Append_Spelling(mo->series, label);
                     Append_Codepoint(mo->series, '~');
@@ -988,34 +988,34 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
         Mold_Value(mo, set_word);
         Append_Codepoint(mo->series, ' ');
 
-        if (IS_NULLED(e.var))
+        if (Is_Isotope(e.var)) {
+            //
+            // Mold_Value() rejects isotopes.  Do it manually.  (Service
+            // routine Mold_Bad_Word_Isotope_Ok() might be useful?  Calling
+            // it Mold_Isotope() would be confusing because the isotope
+            // status would be lost).
+            //
+            Append_Ascii(s, "~");
+            const REBSYM *label = try_unwrap(VAL_ISOTOPE_LABEL(e.var));
+            if (label) {
+                Append_Spelling(s, label);
+                Append_Ascii(s, "~");
+            }
+        }
+        else if (IS_NULLED(e.var))
             Append_Ascii(s, "'");  // `field: '` would evaluate to null
         else {
-            // We want the molded object to be able to "round trip" back to
-            // the state it's in based on reloading the values.  Currently
-            // this is conservative and doesn't put quote marks on things
-            // that don't need it because they are inert, but maybe that
-            // isn't a good idea...depends on the whole block/object model.
+            // We want the molded object to be able to "round trip" back to the
+            // state it's in based on reloading the values.  Currently this is
+            // conservative and doesn't put quote marks on things that don't
+            // need it because they are inert, but maybe not a good idea...
+            // depends on the whole block/object model.
             //
-            if (Is_Isotope(e.var)) {
-                //
-                // Mold_Value() rejects isotopes.  Do it manually.  (Service
-                // routine Mold_Bad_Word_Isotope_Ok() might be useful?  Calling
-                // it Mold_Isotope() would be confusing because the isotope
-                // status would be lost).
-                //
-                Append_Ascii(s, "~");
-                const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(e.var));
-                if (label) {
-                    Append_Spelling(s, label);
-                    Append_Ascii(s, "~");
-                }
-            }
-            else {
-                if (not ANY_INERT(e.var))
-                    Append_Ascii(s, "'");
-                Mold_Value(mo, e.var);
-            }
+            // https://forum.rebol.info/t/997
+            //
+            if (not ANY_INERT(e.var))
+                Append_Ascii(s, "'");
+            Mold_Value(mo, e.var);
         }
     }
     Shutdown_Evars(&e);

@@ -51,7 +51,7 @@
 // it still gets a type in the enum.
 //
 #define IS_QUOTED(v) \
-    (QUOTE_BYTE(v) != 0)
+    (VAL_TYPE(v) == REB_QUOTED)  // Note: QUOTE_BYTE() of 255 means isotope
 
 
 //=//// BINDABILITY ///////////////////////////////////////////////////////=//

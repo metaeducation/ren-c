@@ -212,7 +212,6 @@ REBNATIVE(the_p)
     REBVAL *v = ARG(value);
 
     if (IS_BAD_WORD(v)) {
-        assert(NOT_CELL_FLAG(v, ISOTOPE));
         if (VAL_BAD_WORD_ID(v) == SYM_NULL)
             Init_Nulled(OUT);
         else

@@ -332,10 +332,12 @@ REBARR *Pop_Stack_Values_Core(REBDSP dsp_start, REBFLGS flags)
     REBVAL *src = DS_AT(dsp_start + 1);  // not const, will be RESET()'ing
     Cell *dest = ARR_HEAD(a);
     for (; count < len; ++count, ++src, ++dest) {
-        if (VAL_TYPE_UNCHECKED(src) == REB_NULL)  // allow unreadable trash
+        if (
+            Is_Isotope(src)
+            or VAL_TYPE_UNCHECKED(src) == REB_NULL  // allow unreadable trash
+        ){
             assert(IS_VARLIST(a));  // usually not legal
-        if (VAL_TYPE_UNCHECKED(src) == REB_BAD_WORD)
-            assert(NOT_CELL_FLAG(src, ISOTOPE));
+        }
 
         Move_Cell_Untracked(dest, src, CELL_MASK_COPY);
     }

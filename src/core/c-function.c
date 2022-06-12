@@ -158,11 +158,13 @@ void Push_Paramlist_Triads_May_Fail(
                 or IS_TEXT(notes)  // !!! we overwrite, but should we append?
             );
 
-            if (IS_BAD_WORD(KEY_SLOT(DSP))) {  // no keys seen, act as description
+            if (Is_None(KEY_SLOT(DSP))) {
+                // no keys seen yet, act as description
                 Init_Text(notes, Copy_String_At(item));
                 *flags |= MKF_HAS_DESCRIPTION;
             }
             else {
+                assert(IS_WORD(KEY_SLOT(DSP)));
                 Init_Text(notes, Copy_String_At(item));
                 *flags |= MKF_HAS_NOTES;
             }
@@ -215,7 +217,7 @@ void Push_Paramlist_Triads_May_Fail(
     //=//// BLOCK! OF TYPES TO MAKE TYPESET FROM (PLUS PARAMETER TAGS) ////=//
 
         if (IS_BLOCK(item)) {
-            if (IS_BAD_WORD(KEY_SLOT(DSP)))  // too early, `func [[integer!] {!}]`
+            if (Is_None(KEY_SLOT(DSP)))  // too early, `func [[integer!] {!}]`
                 fail (Error_Bad_Func_Def_Raw(item));
 
             STKVAL(*) types = TYPES_SLOT(DSP);

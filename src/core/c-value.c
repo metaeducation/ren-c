@@ -170,17 +170,17 @@ void Probe_Cell_Print_Helper(
     else if (Is_Void(v)) {
         Append_Ascii(mo->series, "; void");
     }
-    else if (IS_NULLED(v)) {
-        Append_Ascii(mo->series, "; null");
-    }
-    else if (Is_Isotope(v)) {
+    if (Is_Isotope(v)) {
         Append_Codepoint(mo->series, '~');
-        const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(v));
+        const REBSYM *label = try_unwrap(VAL_ISOTOPE_LABEL(v));
         if (label) {
             Append_Spelling(mo->series, label);
             Append_Codepoint(mo->series, '~');
         }
         Append_Ascii(mo->series, "  ; isotope");
+    }
+    else if (IS_NULLED(v)) {
+        Append_Ascii(mo->series, "; null");
     }
     else
         Mold_Value(mo, v);

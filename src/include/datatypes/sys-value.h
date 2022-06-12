@@ -288,28 +288,35 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell *v) {
         int line
     ){
         REBYTE heart_byte = HEART_BYTE_UNCHECKED(v);
+        REBYTE quote_byte = QUOTE_BYTE_UNCHECKED(v);
 
         if (
             (v->header.bits & (
                 NODE_FLAG_NODE
                 | NODE_FLAG_CELL
                 | CELL_FLAG_STALE
-            )) == (NODE_FLAG_CELL | NODE_FLAG_NODE)
+            )) == (
+                NODE_FLAG_NODE
+                | NODE_FLAG_CELL
+            )
             and heart_byte != REB_0
             and heart_byte < REB_MAX
+            and quote_byte != ISOTOPE_255
         ){
-            if (QUOTE_BYTE_UNCHECKED(v) != 0)
+            if (quote_byte != 0)
                 return REB_QUOTED;
             return cast(enum Reb_Kind, heart_byte);  // most return here
         }
 
         // Give more granular errors based on specific failure
 
-        if (HEART_BYTE_UNCHECKED(v) == REB_0_END) {
+        if (quote_byte == ISOTOPE_255) {
+            printf("VAL_TYPE() called on isotope cell (quotelevel 255)");
+            panic_at (v, file, line);
+        }
+
+        if (heart_byte == REB_0_END) {
             printf("VAL_TYPE() called on REB_0 cell (void, end)\n");
-          #if DEBUG_TRACK_EXTEND_CELLS
-            printf("Made on tick: %d\n", cast(int, v->tick));
-          #endif
             panic_at (v, file, line);
         }
 
@@ -318,19 +325,15 @@ inline static enum Reb_Kind VAL_TYPE_UNCHECKED(const Cell *v) {
             panic_at (v, file, line);
         }
 
-        if (
-            (v->header.bits & CELL_FLAG_STALE)
-            and HEART_BYTE_UNCHECKED(v) == REB_BAD_WORD
-        ){
-            printf("VAL_TYPE() called on unreadable cell\n");
-          #if DEBUG_TRACK_EXTEND_CELLS
-            printf("Made on tick: %d\n", cast(int, v->tick));
-          #endif
+        if (not (v->header.bits & NODE_FLAG_CELL)) {
+            printf("VAL_TYPE() called on non-cell\n");
             panic_at (v, file, line);
         }
 
-        if (not (v->header.bits & NODE_FLAG_CELL)) {
-            printf("VAL_TYPE() called on non-cell\n");
+        assert(v->header.bits & CELL_FLAG_STALE);
+
+        if (heart_byte == REB_BAD_WORD) {
+            printf("VAL_TYPE() called on unreadable cell\n");
             panic_at (v, file, line);
         }
 

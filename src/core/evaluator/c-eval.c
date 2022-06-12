@@ -426,8 +426,12 @@ bool Eval_Core_Throws(REBFRM * const f)
     assert(not f_next_gotten);  // Fetch_Next_In_Frame() cleared it
     f_next_gotten = Lookup_Word(f_next, FEED_SPECIFIER(f->feed));
 
-    if (not f_next_gotten or not IS_ACTION(unwrap(f_next_gotten)))
+    if (
+        not f_next_gotten
+        or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(f_next_gotten))
+    ){
         goto give_up_backward_quote_priority;  // note only ACTION! is ENFIXED
+    }
 
     if (GET_ACTION_FLAG(VAL_ACTION(unwrap(f_next_gotten)), IS_BARRIER)) {
         //
@@ -715,7 +719,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (not gotten)
             gotten = Lookup_Word_May_Fail(v, v_specifier);
 
-        if (IS_ACTION(unwrap(gotten))) {  // before IS_BAD_WORD() is common case
+        if (VAL_TYPE_UNCHECKED(unwrap(gotten)) == REB_ACTION) {  // isotope ok
             REBACT *act = VAL_ACTION(unwrap(gotten));
 
             if (GET_ACTION_FLAG(act, ENFIXED)) {
@@ -747,7 +751,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto process_action;
         }
 
-        if (Is_Isotope(unwrap(gotten)))
+        if (Is_Isotope(unwrap(gotten)))  // checked second (helps common case)
             fail (Error_Bad_Word_Get(v, unwrap(gotten)));
 
         Copy_Cell(OUT, unwrap(gotten));  // no CELL_FLAG_UNEVALUATED
@@ -779,8 +783,8 @@ bool Eval_Core_Throws(REBFRM * const f)
             Init_None(OUT);
         }
         else {
-            if (IS_ACTION(OUT))  // cache the word's label in the cell
-                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));
+            if (REB_ACTION == VAL_TYPE_UNCHECKED(OUT))  // isotopes ok
+                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));  // cache name
 
             // Decay the isotope in variable, but don't decay overall result!
             //
@@ -845,7 +849,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (STATE_BYTE == ST_EVALUATOR_META_WORD)
             Meta_Quotify(OUT);
         else {
-            if (IS_BAD_WORD(OUT) and GET_CELL_FLAG(OUT, ISOTOPE))
+            if (Is_Isotope(OUT))
                 fail (Error_Bad_Word_Get(v, OUT));
         }
 
@@ -979,7 +983,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             goto process_action;
         }
 
-        if (IS_BAD_WORD(SPARE) and GET_CELL_FLAG(SPARE, ISOTOPE))
+        if (Is_Isotope(SPARE))
             fail (Error_Bad_Word_Get(v, SPARE));
 
         Move_Cell(OUT, SPARE);  // won't move CELL_FLAG_UNEVALUATED
@@ -1200,7 +1204,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (STATE_BYTE == ST_EVALUATOR_META_PATH_OR_META_TUPLE)
             Meta_Quotify(OUT);
         else {
-            if (IS_BAD_WORD(OUT) and GET_CELL_FLAG(OUT, ISOTOPE))
+            if (Is_Isotope(OUT))
                 fail (Error_Bad_Word_Get(v, OUT));
         }
 
@@ -1680,16 +1684,12 @@ bool Eval_Core_Throws(REBFRM * const f)
 
       case REB_BAD_WORD:
         //
-        // Source coming through the feed should be guaranteed to not be the
-        // isotope form of a BAD-WORD!.  Only objects/frames/etc. have them.
-        //
-        assert(NOT_CELL_FLAG(v, ISOTOPE));
-
         // Note: Some isotopes will decay automatically in variable assignment:
-        // ~null~, ~false~, ~blank~, and ~blackhole~ isotopes.
+        // ~null~, ~false~, ~blank~, and ~blackhole~ isotopes.  But all of
+        // them can exist transiently in evaluation.
         //
         Derelativize(OUT, v, v_specifier);
-        SET_CELL_FLAG(OUT, ISOTOPE);
+        Isotopify(OUT);
         break;
 
 
@@ -1839,7 +1839,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
     if (
         not f_next_gotten
-        or not IS_ACTION(unwrap(f_next_gotten))
+        or REB_ACTION != VAL_TYPE_UNCHECKED(unwrap(f_next_gotten))
         or NOT_ACTION_FLAG(VAL_ACTION(unwrap(f_next_gotten)), ENFIXED)
     ){
       lookback_quote_too_late: // run as if starting new expression

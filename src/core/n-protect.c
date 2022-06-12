@@ -167,6 +167,9 @@ static void Protect_Var(REBVAL *var, REBFLGS flags)
 //
 void Protect_Value(const Cell *v, REBFLGS flags)
 {
+    if (Is_Isotope(v))
+        return;
+
     if (ANY_SERIES(v))
         Protect_Series(VAL_SERIES(v), VAL_INDEX(v), flags);
     else if (IS_MAP(v))

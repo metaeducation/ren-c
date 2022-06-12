@@ -133,13 +133,17 @@ REBNATIVE(delimit)
 
         Decay_If_Isotope(OUT);  // spaced [match [logic!] false ...]
 
-        if (IS_BLANK(OUT))  // see note above on BLANK!
-            continue;  // opt-out and maybe keep option open to return NULL
+        if (Is_Isotope(OUT)) {
+            //
+            // It is better to error on isotopes or to reify them to BAD-WORD!
+            //
+            fail (Error_Bad_Isotope(OUT));
+        }
 
         if (IS_NULLED(OUT)) {
             //
-            // When NULL would vaporize it led to some confusing situations.
-            // We error, but you can REIFY nulls as ~null~ if you want
+            // Erroring on NULL catches bugs in practice, and enables CURTAIL.
+            // We error, but you can REIFY nulls as ~null~ if you want:
             //
             //    >> spaced [reify null "a" if true [null]]
             //    == "~null~ a"
@@ -147,12 +151,8 @@ REBNATIVE(delimit)
             fail (Error_Need_Non_Null_Raw());
         }
 
-        if (Is_Isotope(OUT)) {
-            //
-            // It is better to error on isotopes or to reify them to BAD-WORD!
-            //
-            fail (Error_Bad_Isotope(OUT));
-        }
+        if (IS_BLANK(OUT))  // see note above on BLANK!
+            continue;  // opt-out and maybe keep option open to return NULL
 
         nothing = false;
 

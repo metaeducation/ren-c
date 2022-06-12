@@ -158,6 +158,9 @@
 #define QUOTE_BYTE(v)               THIRD_BYTE(READABLE(v)->header)
 #define mutable_QUOTE_BYTE(v)       mutable_THIRD_BYTE(WRITABLE(v)->header)
 
+#define ISOTOPE_255                 255  // special quoted value for isotopes
+#define MAX_QUOTE_DEPTH             254  // highest legal quoting level
+
 
 //=//// BITS 24-31: CELL FLAGS ////////////////////////////////////////////=//
 //
@@ -183,20 +186,6 @@
 // This flag is used for one bit that is custom to the datatype, and is
 // persisted when the cell is copied.
 //
-// CELL_FLAG_ISOTOPE (for BAD-WORD!)
-//
-// If bad words like ~void~ or ~none~ do not carry the flag, then they act like
-// normal values...and can appear in blocks, and be handled like anything else.
-// But if the ISOTOPE flag is set, then BAD-WORD! values in variables will
-// return errors on normal access.  There will also be other "mystery"
-// properties of decaying or acting in ways that are specific to particular
-// BAD-WORD!s if it's an isotope.  e.g. ~null~ isotopes will turn into NULL
-// when assigned to variables, and are also falsey.
-//
-// !!! Could this be unified with CELL_FLAG_UNEVALUATED, to save a bit...
-// although it's in the reverse sense?  Consider if the bit becomes necessary
-// on ANY-WORD! for some other reason.
-//
 // CELL_FLAG_REFINEMENT_LIKE (for ANY-SEQUENCE!)
 //
 // 2-element sequences can be stored in an optimized form if one of the two
@@ -214,7 +203,6 @@
 #define CELL_FLAG_TYPE_SPECIFIC \
     FLAG_LEFT_BIT(25)
 
-#define CELL_FLAG_ISOTOPE           CELL_FLAG_TYPE_SPECIFIC  // BAD-WORD!
 #define CELL_FLAG_REFINEMENT_LIKE   CELL_FLAG_TYPE_SPECIFIC  // ANY-SEQUENCE!
 
 

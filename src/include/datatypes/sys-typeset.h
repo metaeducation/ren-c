@@ -274,13 +274,18 @@ inline static enum Reb_Param_Class VAL_PARAM_CLASS(const REBPAR *param) {
 }
 
 
+// A parameter can be any value (including isotopes) if it is specialized.
+// But a typeset that does not have param class 0 is unspecialized.
+//
 inline static bool Is_Specialized(const REBPAR *param) {
-    if (IS_TYPESET(param)) {
-        if (VAL_PARAM_CLASS(param) != PARAM_CLASS_0) {
-            if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN))
-                assert(!"Unspecialized parameter is marked hidden!");
-            return false;
-        }
+    if (
+        HEART_BYTE_UNCHECKED(param) == REB_TYPESET  // no assert on isotope
+        and VAL_PARAM_CLASS(param) != PARAM_CLASS_0  // non-parameter typeset
+    ){
+        assert(QUOTE_BYTE(param) == 0);  // no quoted parameters
+        if (GET_CELL_FLAG(param, VAR_MARKED_HIDDEN))
+            assert(!"Unspecialized parameter is marked hidden!");
+        return false;
     }
     return true;
 }
@@ -377,7 +382,6 @@ inline static bool Typecheck_Including_Constraints(
 
     if (VAL_PARAM_CLASS(param) == PARAM_CLASS_META) {
         if (IS_BAD_WORD(v)) {
-            assert(NOT_CELL_FLAG(v, ISOTOPE));
             return true;  // all META parameters take BAD-WORD!
         }
         else if (IS_NULLED(v)) {

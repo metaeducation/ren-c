@@ -461,8 +461,7 @@ inline static void Inertly_Derelativize_Inheriting_Const(
     const Cell *v,
     REBFED *feed
 ){
-    if (IS_BAD_WORD(v))
-        assert(NOT_CELL_FLAG(v, ISOTOPE));  // Source should not have isotopes
+    assert(not Is_Isotope(v));  // Source should not have isotopes
 
     Derelativize(out, v, FEED_SPECIFIER(feed));
     SET_CELL_FLAG(out, UNEVALUATED);

@@ -356,10 +356,10 @@ REB_R Compose_To_Stack_Core(
                 REBVAL *processed;
                 if (Is_Void(out))
                     processed = rebMeta(predicate, Init_Meta_Of_Void(out));
-                else if (IS_NULLED(out))
-                    processed = rebMeta(predicate, Init_Meta_Of_Null_Isotope(out));
                 else if (Is_Isotope(out))
                     processed = rebMeta(predicate, Meta_Quotify(out));
+                else if (IS_NULLED(out))
+                    processed = rebMeta(predicate, Init_Meta_Of_Null_Isotope(out));
                 else
                     processed = rebMeta(predicate, rebQ(out));
 
@@ -387,6 +387,9 @@ REB_R Compose_To_Stack_Core(
             else
                 Decay_If_Isotope(out);
 
+            if (Is_Isotope(out))
+                fail (Error_Bad_Isotope(out));
+
             if (
                 IS_NULLED(out)
                 and (heart != REB_GROUP or quotes == 0)  // [''(null)] => ['']
@@ -396,9 +399,6 @@ REB_R Compose_To_Stack_Core(
                 //
                 fail (Error_Need_Non_Null_Raw());
             }
-
-            if (Is_Isotope(out))
-                fail (Error_Bad_Isotope(out));
 
             if (predicate or doubled_group) {
                 //

@@ -839,7 +839,7 @@ REBTYPE(Array)
 
         REBVAL *setval = Meta_Unquotify(ARG(value));
 
-        if (IS_BAD_WORD(setval) and GET_CELL_FLAG(setval, ISOTOPE))
+        if (Is_Isotope(setval))
             fail (Error_Bad_Isotope(setval));  // can't put in blocks
 
         // !!! If we are jumping here from getting updated bits, then

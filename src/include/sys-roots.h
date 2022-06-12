@@ -189,7 +189,7 @@ inline static REBVAL *rebSpecific(const Cell *v, REBSPC *specifier)
 inline static void Release_Api_Value_If_Unmanaged(const REBVAL* r) {
     assert(GET_CELL_FLAG(r, ROOT));
 
-    if (IS_NULLED(r))
+    if (VAL_TYPE_UNCHECKED(r) == REB_NULL)  // tolerate isotopes
         assert(!"Dispatcher returned nulled cell, not C nullptr for API use");
 
     if (NOT_CELL_FLAG(r, MANAGED))

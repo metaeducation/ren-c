@@ -934,11 +934,13 @@ REBVAL *RL_rebValue(const void *p, va_list *vaptr)
     REBVAL *result = Alloc_Value();
     Run_Va_May_Fail(result, p, vaptr);  // calls va_end()
 
-    if (not IS_NULLED(result))
-        return result;  // caller must rebRelease()
+    if (VAL_TYPE_UNCHECKED(result) == REB_NULL) {  // tolerate isotopes
+        rebRelease(result);
+        return nullptr;  // No NULLED cells in API, see NULLIFY_NULLED()
+    }
 
-    rebRelease(result);
-    return nullptr;  // No NULLED cells in API, see notes on NULLIFY_NULLED()
+    return result;  // caller must rebRelease()
+
 }
 
 
@@ -959,7 +961,7 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
     Run_Va_Translucent_May_Fail(result, false, p, vaptr);  // calls va_end()
     Reify_Eval_Out_Meta(result);
 
-    if (IS_NULLED(result)) {
+    if (VAL_TYPE_UNCHECKED(result) == REB_NULL) {  // tolerate isotopes
         rebRelease(result);
         return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
     }

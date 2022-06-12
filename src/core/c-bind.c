@@ -868,6 +868,9 @@ void Rebind_Values_Deep(
 ) {
     Cell *v = head;
     for (; v != tail; ++v) {
+        if (Is_Isotope(v))
+            continue;
+
         if (ANY_ARRAY_OR_SEQUENCE(v)) {
             const Cell *sub_tail;
             Cell *sub_at = VAL_ARRAY_AT_MUTABLE_HACK(&sub_tail, v);

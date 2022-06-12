@@ -960,7 +960,7 @@ REBCTX *Error_Need_Non_End(const Cell *target) {
 //
 REBCTX *Error_Bad_Word_Get(
     const Cell *target,
-    const Cell *bad
+    const Cell *isotope
 ){
     // SET calls this, and doesn't work on just SET-WORD! and SET-PATH!
     //
@@ -970,16 +970,16 @@ REBCTX *Error_Bad_Word_Get(
         or ANY_BLOCK(target)
         or ANY_GROUP(target)
     );
-    assert(IS_BAD_WORD(bad));
+    assert(Is_Isotope(isotope));
 
     // Don't want the error message to have an isotope version as argument, as
     // they're already paying for an error regarding the state.
     //
-    DECLARE_LOCAL (bad_safe);
-    Copy_Cell(bad_safe, SPECIFIC(bad));
-    CLEAR_CELL_FLAG(bad_safe, ISOTOPE);
+    DECLARE_LOCAL (bad_word);
+    Copy_Cell(bad_word, SPECIFIC(isotope));
+    Reify_Isotope(bad_word);
 
-    return Error_Bad_Word_Get_Raw(target, bad_safe);
+    return Error_Bad_Word_Get_Raw(target, bad_word);
 }
 
 
@@ -1154,7 +1154,7 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
     REBVAL *arg = FRM_ARG(f, index);
     assert(Is_Isotope(arg));
     Copy_Cell(DS_PUSH(), arg);
-    CLEAR_CELL_FLAG(DS_TOP, ISOTOPE);
+    Reify_Isotope(DS_TOP);
 
     return Error_Isotope_Arg_Raw(label, param_name, DS_TOP);
 }
@@ -1435,11 +1435,11 @@ REBCTX *Error_On_Port(enum Reb_Symbol_Id id_sym, REBVAL *port, REBINT err_code)
 REBCTX *Error_Bad_Isotope(const Cell *isotope) {
     assert(Is_Isotope(isotope));
 
-    DECLARE_LOCAL (plain);
-    Copy_Cell(plain, SPECIFIC(isotope));
-    CLEAR_CELL_FLAG(plain, ISOTOPE);
+    DECLARE_LOCAL (bad_word);
+    Copy_Cell(bad_word, SPECIFIC(isotope));
+    Reify_Isotope(bad_word);
 
-    return Error_Bad_Isotope_Raw(plain);
+    return Error_Bad_Isotope_Raw(bad_word);
 }
 
 

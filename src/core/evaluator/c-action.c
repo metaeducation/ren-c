@@ -103,8 +103,12 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
 
     feed->gotten = Lookup_Word(feed->value, FEED_SPECIFIER(feed));
 
-    if (not feed->gotten or not IS_ACTION(unwrap(feed->gotten)))
+    if (
+        not feed->gotten
+        or VAL_TYPE_UNCHECKED(unwrap(feed->gotten)) != REB_ACTION
+    ){
         return false;
+    }
 
     if (NOT_ACTION_FLAG(VAL_ACTION(unwrap(feed->gotten)), ENFIXED))
         return false;
@@ -757,25 +761,39 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_RETURN)
             continue;  // !!! hack
 
-        if (Is_End_Isotope(ARG)) {
-            if (NOT_PARAM_FLAG(PARAM, ENDABLE))
-                fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
+        // Since isotopes are illegal in general (and become BAD-WORD! when
+        // passed to ^META parmaeters), ~void~ and ~end~ isotopes are chosen
+        // as special signals for actual void and end intent.
+        //
+        if (Is_Isotope(ARG)) {
+            switch (VAL_ISOTOPE_ID(ARG)) {
+              case SYM_0:  // e.g. (~) isotope, unspecialized
+                  Init_Nulled(ARG);
+                  break;
 
-            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
-                Init_Meta_Of_End(ARG);  // no other way to make ~end~
-            else
-                Init_Nulled(ARG);  // conflation is unavoidable
-            continue;
-        }
+              case SYM_END: {
+                if (NOT_PARAM_FLAG(PARAM, ENDABLE))
+                    fail (Error_No_Arg(f->label, KEY_SYMBOL(KEY)));
 
-        if (Is_Void_Isotope(ARG)) {
-            if (NOT_PARAM_FLAG(PARAM, VANISHABLE))
-                fail (Error_Bad_Void());
+                if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
+                    Init_Meta_Of_End(ARG);  // signal "true end"
+                else
+                    Init_Nulled(ARG);  // we must conflate (or raise error?)
+                continue; }
 
-            if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
-                Init_Meta_Of_Void(ARG);
-            else
-                Init_Nulled(ARG);  // conflation is unavoidable
+              case SYM_VOID: {
+                if (NOT_PARAM_FLAG(PARAM, VANISHABLE))
+                    fail (Error_Bad_Void());
+
+                if (VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_META)
+                    Init_Meta_Of_Void(ARG);  // signal "true void"
+                else
+                    Init_Nulled(ARG);  // we must conflate (or raise error?)
+                continue; }
+
+              default:
+                fail (Error_Isotope_Arg(f, PARAM));
+            }
         }
 
         // We can't a-priori typecheck the variadic argument, since the values
@@ -810,7 +828,6 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             continue;
         }
 
-
         // Refinements have a special rule beyond plain type checking, in that
         // they don't just want an ISSUE! or NULL, they want # or NULL.
         //
@@ -818,10 +835,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             GET_PARAM_FLAG(PARAM, REFINEMENT)
             or GET_PARAM_FLAG(PARAM, SKIPPABLE)
         ){
-            if (Is_None(ARG))
-                Init_Nulled(ARG);
-            else
-                Typecheck_Refinement(KEY, PARAM, ARG);
+            Typecheck_Refinement(KEY, PARAM, ARG);
             continue;
         }
 
@@ -858,8 +872,6 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 );
             }
         }
-        else if (kind == REB_BAD_WORD and GET_CELL_FLAG(ARG, ISOTOPE))
-            fail (Error_Isotope_Arg(f, PARAM));
 
         // Apply constness if requested.
         //
@@ -913,7 +925,10 @@ bool Process_Action_Core_Throws(REBFRM * const f)
     );
 
     if (GET_EVAL_FLAG(f, TYPECHECK_ONLY)) {  // <blank> and <blackhole> use
-        assert(IS_NULLED(OUT) or Is_Isotope_With_Id(OUT, SYM_BLACKHOLE));
+        assert(
+            Is_Isotope_With_Id(OUT, SYM_BLACKHOLE)
+            or IS_NULLED(OUT)
+        );
         goto skip_output_check;
     }
 

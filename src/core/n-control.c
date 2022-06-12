@@ -1032,10 +1032,15 @@ REBNATIVE(default)
     //     >> x: default [10]
     //     == ~
     //
-    if (not (IS_NULLED(OUT) or Is_None(OUT))) {
+    bool overwrite;
+    if (Is_Isotope(OUT))
+        overwrite = Is_None(OUT);
+    else
+        overwrite = IS_NULLED(OUT) or IS_BLANK(OUT);
+
+    if (not overwrite) {
         if (not REF(predicate)) {  // no custom additional constraint
-            if (not IS_BLANK(OUT))  // acts as `x: default .not.blank? [...]`
-                return OUT;  // count it as "already set"
+            return OUT;  // count it as "already set"
         }
         else {
             if (rebUnboxLogic(predicate, rebQ(OUT)))  // rebTruthy() ?

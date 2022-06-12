@@ -236,18 +236,18 @@ REBNATIVE(panic)
         p = v;
     }
     else {  // interpret reason as a message
-        if (IS_TEXT(v)) {
-            p = VAL_UTF8_AT(v);
-        }
-        else if (IS_ERROR(v)) {
-            p = VAL_CONTEXT(v);
-        }
-        else if (IS_BAD_WORD(v)) {
-            const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(v));
+      if (Is_Isotope(v)) {
+            const REBSYM *label = try_unwrap(VAL_ISOTOPE_LABEL(v));
             if (label)
                 p = STR_UTF8(label);
             else
                 p = Canon(UNSET);
+        }
+        else if (IS_TEXT(v)) {
+            p = VAL_UTF8_AT(v);
+        }
+        else if (IS_ERROR(v)) {
+            p = VAL_CONTEXT(v);
         }
         else {
             assert(!"Called PANIC without /VALUE on non-TEXT!, non-ERROR!");

@@ -256,7 +256,7 @@ inline static bool Do_Core_Throws(
             branch,
             IS_END(condition)
                 ? rebEND
-                : IS_NULLED(condition)
+                : (VAL_TYPE_UNCHECKED(condition) == REB_NULL)
                     ? nullptr
                     : rebQ(condition)
         );

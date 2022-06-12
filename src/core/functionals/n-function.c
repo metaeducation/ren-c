@@ -502,9 +502,12 @@ REBNATIVE(func_p)
 {
     INCLUDE_PARAMS_OF_FUNC_P;
 
+    REBVAL *spec = ARG(spec);
+    REBVAL *body = ARG(body);
+
     REBACT *func = Make_Interpreted_Action_May_Fail(
-        ARG(spec),
-        ARG(body),
+        spec,
+        body,
         MKF_RETURN | MKF_KEYWORDS,
         1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
     );
@@ -892,7 +895,7 @@ REBNATIVE(inherit_meta)
         Init_Evars(&e, val2);
 
         while (Did_Advance_Evars(&e)) {
-            if (not IS_NULLED(e.var) and not Is_None(e.var))
+            if (not Is_None(e.var) and not IS_NULLED(e.var))
                 continue;  // already set to something
 
             REBVAL *slot = Select_Symbol_In_Context(

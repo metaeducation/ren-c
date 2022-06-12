@@ -673,7 +673,7 @@ bool Get_Var_Push_Refinements_Throws(
             out,
             Lookup_Word_May_Fail(at, SPECIFIED)
         );
-        if (IS_BAD_WORD(out) and GET_CELL_FLAG(out, ISOTOPE))
+        if (Is_Isotope(out))
             fail (Error_Bad_Word_Get(at, out));
     }
     else
@@ -755,9 +755,8 @@ void Get_Var_May_Fail(
         fail (Error_No_Catch_For_Throw(out));
 
     if (not any)
-        if (IS_BAD_WORD(out))
-            if (GET_CELL_FLAG(out, ISOTOPE))
-                fail (Error_Bad_Word_Get(source, out));
+        if (Is_Isotope(out))
+            fail (Error_Bad_Word_Get(source, out));
 }
 
 
@@ -863,15 +862,15 @@ bool Get_Path_Push_Refinements_Throws(
             derived
         );
 
+        if (Is_Isotope(lookup))
+            fail (Error_Bad_Word_Get(head, lookup));
+
         // Under the new thinking, PATH! is only used to invoke actions.
         //
         if (IS_ACTION(lookup)) {
             Copy_Cell(out, lookup);
             goto action_in_out;
         }
-
-        if (Is_Isotope(lookup))
-            fail (Error_Bad_Word_Get(head, lookup));
 
         Derelativize(safe, path, path_specifier);
         mutable_HEART_BYTE(safe) = REB_TUPLE;
@@ -932,12 +931,13 @@ bool Get_Path_Push_Refinements_Throws(
                 return true;
             }
             Move_Cell(safe, temp);
+            Decay_If_Isotope(safe);
+            if (Is_Isotope(safe))
+                fail (Error_Bad_Isotope(safe));
+
             at = safe;
         }
-        if (
-            IS_NULLED(at) or Is_Null_Isotope(at)
-            or IS_BLANK(at) or Is_Isotope_With_Id(at, SYM_BLANK)
-        ){
+        if (IS_NULLED(at) or IS_BLANK(at)) {
             // just skip it
         }
         else if (IS_WORD(at))
@@ -981,9 +981,8 @@ REBNATIVE(get)
     }
 
     if (not REF(any))
-        if (IS_BAD_WORD(OUT))
-            if (GET_CELL_FLAG(OUT, ISOTOPE))
-                fail (Error_Bad_Word_Get(source, OUT));
+        if (Is_Isotope(OUT))
+            fail (Error_Bad_Word_Get(source, OUT));
 
     if (steps_out and not Is_Blackhole(steps))
         Set_Var_May_Fail(steps, SPECIFIED, SPARE);  // no GROUP! evals
@@ -1175,7 +1174,7 @@ bool Set_Var_Core_Updater_Throws(
             out,
             Lookup_Word_May_Fail(at, SPECIFIED)
         );
-        if (IS_BAD_WORD(out) and GET_CELL_FLAG(out, ISOTOPE))
+        if (Is_Isotope(out))
             fail (Error_Bad_Word_Get(at, out));
     }
     else
@@ -2272,10 +2271,13 @@ REBNATIVE(blackhole_q)
     REBVAL *v = ARG(optional);
     Meta_Unquotify(v);
 
-    return Init_Logic(
-        OUT,
-        Is_Blackhole(v) or Is_Isotope_With_Id(v, SYM_BLACKHOLE)
-    );
+    if (Is_Isotope(v)) {
+        if (VAL_ISOTOPE_ID(v) == SYM_BLACKHOLE)
+            return Init_True(OUT);
+        return Init_False(OUT);
+    }
+
+    return Init_Logic(OUT, Is_Blackhole(v));
 }
 
 //
@@ -2295,12 +2297,10 @@ REBNATIVE(heavy) {
     if (Is_Meta_Of_Void(v))
         return_void (OUT);
 
-    Move_Cell(OUT, Meta_Unquotify(v));
+    if (IS_NULLED(v))
+        return Init_Null_Isotope(OUT);
 
-    if (IS_NULLED(OUT))
-        Init_Null_Isotope(OUT);
-
-    return OUT;
+    return_value (Meta_Unquotify(v));
 }
 
 

@@ -47,8 +47,6 @@
 inline static void Unbind_Any_Word(Cell *v);  // forward define
 
 
-#define MAX_QUOTE_DEPTH 255
-
 
 inline static REBLEN VAL_QUOTED_DEPTH(const Cell *v) {
     assert(IS_QUOTED(v));
@@ -126,8 +124,8 @@ inline static Cell *Unquotify_Core(Cell *v, REBLEN unquotes) {
 // of "literalization".
 
 inline static Cell *Isotopic_Quote(Cell *v) {
-    if (IS_BAD_WORD(v) and GET_CELL_FLAG(v, ISOTOPE)) {
-        CLEAR_CELL_FLAG(v, ISOTOPE);  // ...make it "friendly" now...
+    if (Is_Isotope(v)) {
+        Reify_Isotope(v);  // ...make it "friendly" now...
         return v;  // ...but differentiate its status by not quoting it...
     }
     return Quotify(v, 1);  // a non-isotope BAD-WORD! winds up quoted
@@ -135,15 +133,10 @@ inline static Cell *Isotopic_Quote(Cell *v) {
 
 inline static Cell *Isotopic_Unquote(Cell *v) {
     assert(not IS_NULLED(v));  // use Meta_Unquotify() instead
-    if (IS_BAD_WORD(v)) {  // Meta quote flipped isotope off, flip back on.
-        assert(NOT_CELL_FLAG(v, ISOTOPE));
-        SET_CELL_FLAG(v, ISOTOPE);
-    }
-    else {
+    if (IS_BAD_WORD(v))  // Meta quote flipped isotope off, flip back on.
+        Isotopify(v);
+    else
         Unquotify_Core(v, 1);
-        if (IS_BAD_WORD(v))  // ...was friendly before meta-quoting it...
-            assert(NOT_CELL_FLAG(v, ISOTOPE));  // ...should still be friendly
-    }
     return v;
 }
 
@@ -169,7 +162,7 @@ inline static bool Is_Blackhole(const Cell *v);  // forward decl
 // BAD-WORD! of ~void~.  It is done by ^ and the the REB_META_XXX family.
 
 inline static Cell *Meta_Quotify(Cell *v) {
-    if (IS_NULLED(v))
+    if (VAL_TYPE_UNCHECKED(v) == REB_NULL)
         return v;  // as-is
     return Isotopic_Quote(v);
 }
