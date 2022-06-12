@@ -592,18 +592,7 @@ REBNATIVE(for_skip)
 //
 REBNATIVE(stop)
 //
-// Most loops are not allowed to explicitly return a value and stop looping,
-// because that would make it impossible to tell from the outside whether
-// they'd requested a stop or if they'd naturally completed.  It would be
-// impossible to propagate a value-bearing break-like request to an aggregate
-// looping construct without invasively rebinding the break.
-//
-// CYCLE is different because it doesn't have any loop exit condition.  Hence
-// it responds to a STOP request, which lets it return any value.
-//
-// Coupled with the unusualness of CYCLE, NULL is allowed to come from a STOP
-// request because it is given explicitly.  STOP NULL thus seems identical
-// to the outside to a BREAK.
+// See CYCLE for notes about STOP
 {
     INCLUDE_PARAMS_OF_STOP;
 
@@ -630,46 +619,74 @@ REBNATIVE(stop)
 //  ]
 //
 REBNATIVE(cycle)
+//
+// 1. Most loops are not allowed to explicitly return a value and stop looping,
+//    because that would make it impossible to tell from the outside whether
+//    they'd requested a stop or if they'd naturally completed.  It would be
+//    impossible to propagate a value-bearing break request to an aggregate
+//    looping construct without invasively rebinding the break.
+//
+//    CYCLE is different because it doesn't have any loop exit condition.
+//    Hence it responds to a STOP request, which lets it return any value.
+//
+// 2. Technically, we know CYCLE's body will always run.  So we could make an
+//    exception to having it return void from STOP (or pure NULL).  There's
+//    probably no good reason to do that, so right now we stick with the usual
+//    branch policies.  Review if a good use case shows up.
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
-    while (true) {
-        if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME)) {
-                const REBVAL *label = VAL_THROWN_LABEL(FRAME);
-                if (
-                    IS_ACTION(label)
-                    and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
-                ){
-                    // See notes on STOP for why CYCLE is unique among loop
-                    // constructs, with a BREAK variant that returns a value.
-                    //
-                    CATCH_THROWN(OUT, FRAME);
+    REBVAL *body = ARG(body);
 
-                    // !!! Technically, we know CYCLE's body will always run,
-                    // so we could make an exception to having it return
-                    // voids from STOP (or pure NULL).  There's probably no
-                    // good reason to do that, so going with the usual branch
-                    // rules unless there's a good demonstrated case otherwise.
+    enum {
+        ST_CYCLE_INITIAL_ENTRY = 0,
+        ST_CYCLE_EVALUATING_BODY
+    };
 
-                    if (Is_Void(OUT))
-                        return NONE;
-
-                    Isotopify_If_Nulled(OUT);  // NULL reserved for BREAK
-                    return OUT;
-                }
-
-                return THROWN;
-            }
-
-            if (Is_Breaking_Null(OUT))
-                return nullptr;
-        }
-        // No need to isotopify result, it doesn't escape...
+    switch (STATE) {
+      case ST_CYCLE_INITIAL_ENTRY: goto initial_entry;
+      case ST_CYCLE_EVALUATING_BODY: goto body_was_evaluated;
+      default: assert(false);
     }
 
-    DEAD_END;
-}
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    STATE = ST_CYCLE_EVALUATING_BODY;
+    continue_catchable (OUT, body, END);
+
+} body_was_evaluated: {  /////////////////////////////////////////////////////
+
+    if (THROWING)
+        goto handle_thrown;
+
+    continue_catchable (OUT, body, END);  // no break or stop, so keep going
+
+} handle_thrown: {  /////////////////////////////////////////////////////////
+
+    if (Try_Catch_Break_Or_Continue(OUT, FRAME)) {
+        if (Is_Breaking_Null(OUT))
+            return nullptr;
+
+        continue_catchable(OUT, body, END);  // plain continue
+    }
+
+    const REBVAL *label = VAL_THROWN_LABEL(FRAME);
+    if (
+        IS_ACTION(label)
+        and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
+    ){
+        CATCH_THROWN(OUT, FRAME);  // Unlike BREAK, STOP takes an arg--see [1]
+
+        if (Is_Void(OUT))  // STOP with no arg, void usually reserved, see [2]
+            return NONE;
+
+        Isotopify_If_Nulled(OUT);  // NULL usually reserved for BREAK, see [2]
+        return OUT;
+    }
+
+    return THROWN;
+}}
+
 
 void Clear_Evars(EVARS *evars) {
     // don't really do anything, just stops warning
