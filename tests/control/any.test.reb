@@ -366,10 +366,13 @@
 ; recursivity
 (any [false any [true]])
 (null? any [false any [false]])
+
 ; infinite recursion
 (
-    blk: [any blk]
-    error? trap blk
+    n: 0
+    blk: [all [either 10000 = n: n + 1 [throw <finished>] [true]]]
+    append blk.2 quote as group! blk
+    <finished> = catch blk
 )
 
 ; PREDICATES
@@ -398,8 +401,6 @@
         ]
     )
 ]
-
-(10 = any [(10 elide "hi")])
 
 ; When used with @ blocks, ANY will treat the block as already reduced
 [

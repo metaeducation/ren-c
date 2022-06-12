@@ -27,7 +27,7 @@
 //   will signal functions like ELSE and DIDN'T, much like the NULL state
 //   conveying soft failure does.
 //
-//   (Note: return_void() doesn't actually overwrite the contents of the
+//   (Note: `return VOID;` doesn't actually overwrite the contents of the
 //    output cell.  This makes it possible for functions like ALL to skip
 //    over void results and let the previous evaluation "drop out".
 //    See %sys-void.h for more information about this mechanic.)
@@ -476,7 +476,7 @@ REBNATIVE(all)
 //        == <kept>
 //
 //    When the second IF begins running, the <kept> value is in the OUT cell.
-//    Condition fails, so it uses `return_void` to set CELL_FLAG_NOTE_VOIDED on
+//    Condition fails, so it uses `return VOID` to set CELL_FLAG_NOTE_VOIDED on
 //    the OUT cell--but without overwriting it.  The void step is skipped,
 //    and then Clear_Void_Flag() is called at the end of the loop to clear
 //    CELL_FLAG_VOIDED and un-hide the <kept> result.
@@ -502,69 +502,125 @@ REBNATIVE(all)
 //    So the stale flag alone is not enough information to know if the output
 //    cell should be marked non-stale.  So we use `any_matches`.
 //
-// 4. The only way a falsey evaluation should make it to the end is if a
+// 4. The predicate-running condition gets pushed over the "keepalive" stepper,
+//    but we don't want the stepper to take a step before coming back to us.
+//    Temporarily patch out the Evaluator_Executor() so we get control back
+//    without that intermediate step.
+//
+// 5. The only way a falsey evaluation should make it to the end is if a
 //    predicate let it pass.  Don't want that to trip up `if all` so make it
 //    an isotope...but this way `(all/predicate [null] :not?) then [<runs>]`
 {
     INCLUDE_PARAMS_OF_ALL;
 
+    REBVAL *block = ARG(block);
     REBVAL *predicate = ARG(predicate);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;  // see [1]
+    REBVAL *any_matches = ARG(return);  // reuse return cell for flag, see [3]
+    Init_False(any_matches);
 
-    if (IS_THE_BLOCK(ARG(block)))
-        flags |= EVAL_FLAG_NO_EVALUATIONS;
+    REBVAL *condition;  // will be found in OUT or SPARE
 
-    DECLARE_FRAME_AT (f, ARG(block), flags);
-    Push_Frame(nullptr, f);
+    enum {
+        ST_ALL_INITIAL_ENTRY = 0,
+        ST_ALL_EVAL_STEP,
+        ST_ALL_PREDICATE
+    };
 
-    bool any_matches = false;
-
-    while (NOT_END(f_value)) {
-        if (Eval_Step_Throws(OUT, f)) {  // overlap output, see [1]
-            Abort_Frame(f);
-            return THROWN;
-        }
-
-        if (Is_Stale(OUT))  // void steps, e.g. (comment "hi") (if false [<a>])
-            continue;
-
-        if (Is_Isotope(OUT))
-            fail (Error_Bad_Isotope(OUT));
-
-        if (IS_NULLED(predicate)) {  // default predicate effectively .DID
-            if (IS_FALSEY(OUT)) {  // false/blank/null triggers failure
-                Abort_Frame(f);
-                return nullptr;
-            }
-        }
-        else {
-            if (rebRunThrows(
-                SPARE,  // <-- output cell
-                predicate, rebQ(NULLIFY_NULLED(OUT))
-            )){
-                return THROWN;
-            }
-
-            if (IS_FALSEY(SPARE)) {
-                Abort_Frame(f);
-                return nullptr;
-            }
-        }
-
-        any_matches = true;
+    switch (STATE) {
+      case ST_ALL_INITIAL_ENTRY: goto initial_entry;
+      case ST_ALL_EVAL_STEP: goto eval_step_finished;
+      case ST_ALL_PREDICATE: goto predicate_result_in_spare;
+      default: assert(false);
     }
 
-    Drop_Frame(f);
+  initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (not any_matches)  // e.g. `all []`, can't use Is_Stale(OUT), see [3]
+    if (VAL_LEN_AT(block) == 0)
+        return VOID;
+
+    REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_MAYBE_STALE
+        | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+
+    if (IS_THE_BLOCK(block))
+        flags |= EVAL_FLAG_NO_EVALUATIONS;
+
+    DECLARE_FRAME_AT (f, block, flags);
+    Push_Frame(OUT, f);
+
+    STATE = ST_ALL_EVAL_STEP;
+    continue_subframe(f);
+
+} eval_step_finished: {  /////////////////////////////////////////////////////
+
+    REBFRM *f = FS_TOP;
+
+    if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
+        if (IS_END(f_value))
+            goto reached_end;
+
+        assert(STATE == ST_ALL_EVAL_STEP);
+        continue_subframe (f);
+    }
+
+    if (not IS_NULLED(predicate)) {
+        f->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
+
+        STATE = ST_ALL_PREDICATE;
+        continue_uncatchable(SPARE, predicate, OUT);
+    }
+
+    condition = OUT;  // without predicate, `condition` is same as evaluation
+    goto process_condition;
+
+} predicate_result_in_spare: {  //////////////////////////////////////////////
+
+    REBFRM *f = FS_TOP;
+
+    if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
+        fail (Error_Bad_Void());
+
+    Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [5]
+
+    f->executor = &Evaluator_Executor;  // done tunneling, see [4]
+    STATE = ST_ALL_EVAL_STEP;
+
+    condition = SPARE;
+    goto process_condition;  // with predicate, `condition` is predicate result
+
+} process_condition: {  //////////////////////////////////////////////////////
+
+    REBFRM *f = FS_TOP;
+
+    if (Is_Isotope(condition))
+        fail (Error_Bad_Isotope(condition));
+
+    if (IS_FALSEY(condition)) {
+        Abort_Frame(f);
+        return nullptr;
+    }
+
+    Init_True(any_matches);
+
+    if (IS_END(f_value))
+        goto reached_end;
+
+    assert(STATE == ST_ALL_EVAL_STEP);
+    continue_subframe(f);  // leave OUT result as stale value
+
+} reached_end: {  ////////////////////////////////////////////////////////////
+
+    Drop_Frame(FS_TOP);
+
+    if (not VAL_LOGIC(any_matches))  // can't use Is_Stale(OUT), see [3]
         return VOID;
 
     Clear_Stale_Flag(OUT);  // un-hide values "underneath" void, again see [1]
 
     Isotopify_If_Falsey(OUT);  // predicates can approve falsey values, see [4]
     return_branched (OUT);
-}
+}}
 
 
 //
@@ -582,6 +638,11 @@ REBNATIVE(all)
 //
 REBNATIVE(any)
 //
+// 1. Don't let ANY return something falsey, but using an isotope means that
+//    it can work with DID/THEN
+//
+// 4. See ALL[4]
+//
 // Note: See ALL for more comments (ANY is very similar)
 {
     INCLUDE_PARAMS_OF_ANY;
@@ -589,60 +650,99 @@ REBNATIVE(any)
     REBVAL *predicate = ARG(predicate);
     REBVAL *block = ARG(block);
 
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
+    REBVAL *condition;  // could point to OUT or SPARE
+
+    enum {
+        ST_ANY_INITIAL_ENTRY = 0,
+        ST_ANY_EVAL_STEP,
+        ST_ANY_PREDICATE
+    };
+
+    switch (STATE) {
+      case ST_ANY_INITIAL_ENTRY: goto initial_entry;
+      case ST_ANY_EVAL_STEP: goto eval_step_finished;
+      case ST_ANY_PREDICATE: goto predicate_result_in_spare;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (VAL_LEN_AT(block) == 0)
+        return VOID;
+
+    REBFLGS flags = EVAL_MASK_DEFAULT
+        | EVAL_FLAG_MAYBE_STALE
+        | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+
     if (IS_THE_BLOCK(block))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
 
     DECLARE_FRAME_AT (f, block, flags);
-    Push_Frame(nullptr, f);
+    Push_Frame(OUT, f);
 
-    while (NOT_END(f_value)) {
-        if (Eval_Step_Throws(OUT, f)) {
-            Abort_Frame(f);
-            return THROWN;
-        }
+    STATE = ST_ANY_EVAL_STEP;
+    continue_subframe(f);
 
-        if (Is_Stale(OUT))  // void steps, e.g. (comment "hi") (if false [<a>])
-            continue;
+} eval_step_finished: {  /////////////////////////////////////////////////////
 
-        if (Is_Isotope(OUT))
-            fail (Error_Bad_Isotope(OUT));
+    REBFRM *f = FS_TOP;
 
-        if (IS_NULLED(predicate)) {  // default predicate effectively .DID
-            if (IS_TRUTHY(OUT)) {
-                Abort_Frame(f);
-                return OUT;  // successful ANY returns the value
-            }
-        }
-        else {
-            if (rebRunThrows(
-                SPARE,  // <-- output cell
-                predicate, rebQ(NULLIFY_NULLED(OUT))
-            )){
-                return THROWN;
-            }
+    if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
+        if (IS_END(f_value))
+            goto reached_end;
 
-            if (IS_TRUTHY(SPARE)) {
-                //
-                // Don't let ANY return something falsey, but using an isotope
-                // makes `any .not [null] then [<run>]` work
-                //
-                Isotopify_If_Falsey(OUT);
-
-                Abort_Frame(f);
-                return OUT;  // return input to the test, not result
-            }
-        }
-
+        assert(STATE == ST_ANY_EVAL_STEP);
+        continue_subframe (f);
     }
 
-    Drop_Frame(f);
+    if (not IS_NULLED(predicate)) {
+        f->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
 
-    if (Is_Stale(OUT))  // original staleness, or all the ANY steps were void
-        return VOID;  // `any []` is ~void~ isotope
+        STATE = ST_ANY_PREDICATE;
+        continue_uncatchable(SPARE, predicate, OUT);
+    }
 
-    return nullptr;
-}
+    condition = OUT;
+    goto process_condition;
+
+} predicate_result_in_spare: {  //////////////////////////////////////////////
+
+    REBFRM *f = FS_TOP;
+
+    if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
+        fail (Error_Bad_Void());
+
+    Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [5]
+
+    f->executor = &Evaluator_Executor;  // done tunneling, see [4]
+    STATE = ST_ANY_EVAL_STEP;
+
+    condition = SPARE;
+    goto process_condition;
+
+} process_condition: {  //////////////////////////////////////////////////////
+
+    REBFRM *f = FS_TOP;
+
+    if (Is_Isotope(condition))
+        fail (Error_Bad_Isotope(condition));
+
+    if (IS_TRUTHY(condition)) {
+        Abort_Frame(f);
+        return_branched (OUT);  // successful ANY returns the value
+    }
+
+    if (IS_END(f_value))
+        goto reached_end;
+
+    assert(STATE == ST_ANY_EVAL_STEP);
+    continue_subframe (f);
+
+} reached_end: {  ////////////////////////////////////////////////////////////
+
+    Drop_Frame(FS_TOP);
+    return nullptr;  // reached end of input and found nothing to return
+}}
 
 
 //

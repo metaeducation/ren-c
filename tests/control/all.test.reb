@@ -370,10 +370,12 @@
 ; recursivity
 (all [true all [true]])
 (not all [true all [false]])
+
 ; infinite recursion
 (
-    blk: [all blk]
-    error? trap blk
+    counter: 0
+    blk: [counter: me + 1, if counter = 10000 [throw <deep-enough>], all blk]
+    <deep-enough> = catch [do blk]
 )
 
 ; PREDICATES
