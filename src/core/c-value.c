@@ -442,4 +442,29 @@ void* Probe_Core_Debug(
 void Probe(const void *p)
   { Probe_Core_Debug(p, "C debug", "N/A", 0); }
 
+void Where(REBFRM *f) {
+    if (FEED_IS_VARIADIC(f->feed))
+        Reify_Va_To_Array_In_Feed(f->feed, false);
+
+    REBLEN index = FEED_INDEX(f->feed);
+
+    DECLARE_MOLD (mo);
+    mo->limit = 40 * 20;  // 20 lines of length 40, or so?
+
+    if (index > 0) {
+        REBLEN before_index = index > 3 ? index - 3 : 0;
+        Push_Mold(mo);
+        Mold_Array_At(mo, FEED_ARRAY(f->feed), before_index, "[]");
+        printf("Where(Before):\n");
+        printf("%s\n\n", BIN_AT(mo->series, mo->offset));
+        Drop_Mold(mo);
+    }
+
+    Push_Mold(mo);
+    Mold_Array_At(mo, FEED_ARRAY(f->feed), index, "[]");
+    printf("Where(At):\n");
+    printf("%s\n\n", BIN_AT(mo->series, mo->offset));
+    Drop_Mold(mo);
+}
+
 #endif  // DEBUG_HAS_PROBE
