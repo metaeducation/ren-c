@@ -173,7 +173,7 @@ REB_R TO_Issue(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 }
 
 
-static REBINT Math_Arg_For_Char(REBVAL *arg, const REBSYM *verb)
+static REBINT Math_Arg_For_Char(REBVAL *arg, const Symbol *verb)
 {
     switch (VAL_TYPE(arg)) {
       case REB_ISSUE:

@@ -756,7 +756,7 @@ const void *RL_rebArgR(const void *p, va_list *vaptr)
     if (Detect_Rebol_Pointer(p2) != DETECTED_AS_END)
         fail ("rebArg() isn't actually variadic, it's arity-1");
 
-    const REBSYM *symbol = Intern_UTF8_Managed(cb_cast(name), strsize(name));
+    const Symbol *symbol = Intern_UTF8_Managed(cb_cast(name), strsize(name));
 
     const REBKEY *tail;
     const REBKEY *key = ACT_KEYS(&tail, act);

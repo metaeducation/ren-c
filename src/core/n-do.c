@@ -252,7 +252,7 @@ bool Do_Frame_Ctx_Throws(
     REBVAL *out,
     REBCTX *c,
     REBCTX *binding,
-    option(const REBSYM*) label
+    option(const Symbol*) label
 ){
     REBFLGS flags = EVAL_MASK_DEFAULT
         | FLAG_STATE_BYTE(ST_ACTION_TYPECHECKING);
@@ -941,7 +941,7 @@ REBNATIVE(apply)
         // We do special handling if we see a /REFINEMENT ... that is taken
         // to mean we are naming the next argument.
 
-        const REBSYM *name = nullptr;
+        const Symbol *name = nullptr;
         if (IS_PATH(f_value) and IS_REFINEMENT(f_value)) {
             name = VAL_REFINEMENT_SYMBOL(f_value);
             Fetch_Next_Forget_Lookback(f);

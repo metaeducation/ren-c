@@ -569,7 +569,7 @@ void Clear_Image(REBVAL *img)
 // reason.  (!)  The code is deprecated, but kept around and building for any
 // sufficiently motivated individual who wanted to review it.
 //
-REB_R Modify_Image(REBFRM *frame_, const REBSYM *verb)
+REB_R Modify_Image(REBFRM *frame_, const Symbol *verb)
 {
     INCLUDE_PARAMS_OF_CHANGE;  // currently must have same frame as CHANGE
 

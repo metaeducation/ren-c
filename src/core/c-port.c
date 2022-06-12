@@ -37,7 +37,7 @@
 // NOTE: stack must already be setup correctly for action, and
 // the caller must cleanup the stack.
 //
-REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
+REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const Symbol *verb)
 {
     FAIL_IF_BAD_PORT(port);
 

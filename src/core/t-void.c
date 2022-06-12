@@ -88,8 +88,8 @@ REB_R TO_Bad_word(REBVAL *out, enum Reb_Kind kind, const REBVAL *data) {
 //
 REBINT CT_Bad_word(noquote(const Cell*) a, noquote(const Cell*) b, bool strict)
 {
-    const REBSYM* label_a = try_unwrap(VAL_BAD_WORD_LABEL(a));
-    const REBSYM* label_b = try_unwrap(VAL_BAD_WORD_LABEL(b));
+    const Symbol *label_a = try_unwrap(VAL_BAD_WORD_LABEL(a));
+    const Symbol *label_b = try_unwrap(VAL_BAD_WORD_LABEL(b));
 
     if (label_a == nullptr) {
         if (label_b != nullptr)
@@ -117,7 +117,7 @@ REBTYPE(Bad_word)
 
         switch (VAL_WORD_ID(ARG(property))) {
           case SYM_LABEL: {
-            const REBSYM *label = try_unwrap(VAL_BAD_WORD_LABEL(bad_word));
+            const Symbol *label = try_unwrap(VAL_BAD_WORD_LABEL(bad_word));
             if (label == nullptr)
                 return nullptr;  // "soft failure" safer than blank!, use TRY
 

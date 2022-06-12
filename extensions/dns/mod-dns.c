@@ -64,7 +64,7 @@
 //
 //  DNS_Actor: C
 //
-static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
+static REB_R DNS_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
     REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);

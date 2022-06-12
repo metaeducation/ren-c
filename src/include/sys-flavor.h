@@ -107,7 +107,7 @@ enum Reb_Series_Flavor {
     // For the moment all series that aren't a REBVAL or a binary store items
     // of size pointer.
     //
-    FLAVOR_KEYLIST,  // width = sizeof(REBSYM*)
+    FLAVOR_KEYLIST,  // width = sizeof(Symbol*)
     FLAVOR_POINTER,  // generic
     FLAVOR_CANONTABLE,  // for canons table
     FLAVOR_NODELIST,  // e.g. GC protect list

@@ -274,13 +274,13 @@ static void Queue_Unmarked_Accessible_Series_Deep(REBSER *s)
         REBKEY *key = SER_HEAD(REBKEY, s);
         for (; key != tail; ++key) {
             //
-            // REBSYM* are not available to the user to free out from under
+            // Symbol* are not available to the user to free out from under
             // a keylist (can't use FREE on them) and shouldn't vanish.
             //
             assert(NOT_SERIES_FLAG(*key, INACCESSIBLE));
             if (GET_SERIES_FLAG(*key, MARKED))
                 continue;
-            Queue_Unmarked_Accessible_Series_Deep(m_cast(REBSYM*, *key));
+            Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol*, *key));
         }
     }
     else if (IS_SER_ARRAY(s)) {
@@ -702,8 +702,8 @@ static void Mark_Data_Stack(void)
 //
 static void Mark_Symbol_Series(void)
 {
-    REBSYM *canon = &PG_Symbol_Canons[0];
-    REBSYM *tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
+    Symbol *canon = &PG_Symbol_Canons[0];
+    Symbol *tail = &PG_Symbol_Canons[0] + ALL_SYMS_MAX;
 
     assert(canon->leader.bits & SERIES_FLAG_FREE);  // SYM_0, we corrupt it
     ++canon;
@@ -833,10 +833,10 @@ static void Mark_Frame_Stack_Deep(void)
         );
 
         if (f->label) { // nullptr if anonymous
-            const REBSYM* sym = unwrap(f->label);
+            const Symbol *sym = unwrap(f->label);
             if (NOT_SERIES_FLAG(sym, MARKED)) {
                 assert(NOT_SERIES_FLAG(sym, INACCESSIBLE));  // can't happen
-                Queue_Unmarked_Accessible_Series_Deep(m_cast(REBSYM*, sym));
+                Queue_Unmarked_Accessible_Series_Deep(m_cast(Symbol*, sym));
             }
         }
 
@@ -1219,8 +1219,8 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     while (true) {
         REBI64 before_count = mark_count;
 
-        REBSYM **psym = SER_HEAD(REBSYM*, PG_Symbols_By_Hash);
-        REBSYM **psym_tail = SER_TAIL(REBSYM*, PG_Symbols_By_Hash);
+        Symbol **psym = SER_HEAD(Symbol*, PG_Symbols_By_Hash);
+        Symbol **psym_tail = SER_TAIL(Symbol*, PG_Symbols_By_Hash);
         for (; psym != psym_tail; ++psym) {
             if (*psym == nullptr or *psym == &PG_Deleted_Symbol)
                 continue;
@@ -1287,7 +1287,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // Unmark the Canon() fixed symbols
     //
     for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
-        REBSYM *canon = &PG_Symbol_Canons[i];
+        Symbol *canon = &PG_Symbol_Canons[i];
 
         if (not shutdown)
            assert(GET_SERIES_FLAG(canon, MARKED));

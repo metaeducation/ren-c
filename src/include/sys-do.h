@@ -316,7 +316,7 @@ inline static bool Do_Core_Throws(
 inline static REB_R Run_Generic_Dispatch_Core(
     const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
     REBFRM *f,
-    const REBSYM *verb
+    const Symbol *verb
 ){
     GENERIC_HOOK *hook = IS_QUOTED(first_arg)
         ? &T_Quoted  // a few things like COPY are supported by QUOTED!
@@ -337,7 +337,7 @@ inline static REB_R Run_Generic_Dispatch_Core(
 inline static bool Run_Generic_Dispatch_Throws(
     const REBVAL *first_arg,  // !!! Is this always same as FRM_ARG(f, 1)?
     REBFRM *f,
-    const REBSYM *verb
+    const Symbol *verb
 ){
     REB_R r = Run_Generic_Dispatch_Core(first_arg, f, verb);
 

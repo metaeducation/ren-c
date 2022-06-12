@@ -64,7 +64,7 @@ REBVAL *Try_Read_Directory_Entry(FILEREQ *dir);
 //
 // Internal port handler for file directories.
 //
-REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
+REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
 

@@ -175,7 +175,7 @@ void Bin_To_Money_May_Fail(REBVAL *result, const REBVAL *val)
 }
 
 
-static REBVAL *Math_Arg_For_Money(REBVAL *store, REBVAL *arg, const REBSYM *verb)
+static REBVAL *Math_Arg_For_Money(REBVAL *store, REBVAL *arg, const Symbol *verb)
 {
     if (IS_MONEY(arg))
         return arg;

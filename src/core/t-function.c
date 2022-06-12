@@ -219,7 +219,7 @@ REBTYPE(Action)
         if (Is_Null_Isotope(picker) or IS_BLANK(picker))
             return_value (action);
 
-        const REBSYM *symbol;
+        const Symbol *symbol;
         if (IS_WORD(picker))
             symbol = VAL_WORD_SYMBOL(picker);
         else if (IS_PATH(picker) and IS_REFINEMENT(picker))
@@ -329,7 +329,7 @@ REBTYPE(Action)
             return nullptr; }
 
           case SYM_LABEL: {
-            option(const REBSYM*) label = VAL_ACTION_LABEL(action);
+            option(const Symbol*) label = VAL_ACTION_LABEL(action);
             if (not label)
                 return nullptr;
             return Init_Word(OUT, unwrap(label)); }

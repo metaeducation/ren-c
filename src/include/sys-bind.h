@@ -182,10 +182,10 @@ inline static void SHUTDOWN_BINDER(struct Reb_Binder *binder) {
 //
 inline static bool Try_Add_Binder_Index(
     struct Reb_Binder *binder,
-    const REBSYM *sym,
+    const Symbol *sym,
     REBINT index
 ){
-    REBSTR *s = m_cast(REBSYM*, sym);
+    REBSTR *s = m_cast(Symbol*, sym);
     assert(index != 0);
     REBSER *old_hitch = MISC(Hitch, s);
     if (old_hitch != s and GET_SERIES_FLAG(old_hitch, BLACK))
@@ -214,7 +214,7 @@ inline static bool Try_Add_Binder_Index(
 
 inline static void Add_Binder_Index(
     struct Reb_Binder *binder,
-    const REBSYM *s,
+    const Symbol *s,
     REBINT index
 ){
     bool success = Try_Add_Binder_Index(binder, s, index);
@@ -225,7 +225,7 @@ inline static void Add_Binder_Index(
 
 inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
     struct Reb_Binder *binder,
-    const REBSYM *s
+    const Symbol *s
 ){
     UNUSED(binder);
     REBSER *hitch = MISC(Hitch, s);
@@ -240,9 +240,9 @@ inline static REBINT Get_Binder_Index_Else_0( // 0 if not present
 
 inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
     struct Reb_Binder *binder,
-    const REBSYM *str
+    const Symbol *str
 ){
-    REBSTR *s = m_cast(REBSYM*, str);
+    REBSTR *s = m_cast(Symbol*, str);
     if (MISC(Hitch, s) == s or NOT_SERIES_FLAG(MISC(Hitch, s), BLACK))
         return 0;
 
@@ -265,7 +265,7 @@ inline static REBINT Remove_Binder_Index_Else_0( // return old value if there
 
 inline static void Remove_Binder_Index(
     struct Reb_Binder *binder,
-    const REBSYM *s
+    const Symbol *s
 ){
     REBINT old_index = Remove_Binder_Index_Else_0(binder, s);
     assert(old_index != 0);
@@ -498,7 +498,7 @@ inline static option(REBSER*) Get_Word_Container(
     // this word is overridden without doing a linear search.  Do it
     // and then save the hit or miss information in the word for next use.
     //
-    const REBSYM *symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+    const Symbol *symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
 
     // !!! Virtual binding could use the bind table as a kind of next
     // level cache if it encounters a large enough object to make it
@@ -603,7 +603,7 @@ inline static option(REBSER*) Get_Word_Container(
         // lookup would say "I want that but be willing to make it."
         //
         if (CTX_TYPE(CTX(binding)) == REB_MODULE) {
-            const REBSYM *symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
+            const Symbol *symbol = VAL_WORD_SYMBOL(VAL_UNESCAPED(any_word));
             REBSER *patch = MISC(Hitch, symbol);
             while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
                 patch = SER(node_MISC(Hitch, patch));

@@ -296,7 +296,7 @@ void Push_Paramlist_Triads_May_Fail(
 
         enum Reb_Kind heart = CELL_HEART(item);
 
-        const REBSYM* symbol = nullptr;  // avoids compiler warning
+        const Symbol *symbol = nullptr;  // avoids compiler warning
         enum Reb_Param_Class pclass = PARAM_CLASS_0;  // error if not changed
 
         bool local = false;
@@ -590,7 +590,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
     struct Reb_Binder binder;
     INIT_BINDER(&binder);
 
-    const REBSYM *duplicate = nullptr;
+    const Symbol *duplicate = nullptr;
 
   blockscope {
     REBVAL *param = Init_Isotope(ARR_HEAD(paramlist), Canon(ROOTVAR)) + 1;
@@ -607,7 +607,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
 
     REBDSP dsp = dsp_orig + 8;
     for (; dsp <= DSP; dsp += 4) {
-        const REBSYM *symbol = VAL_WORD_SYMBOL(KEY_SLOT(dsp));
+        const Symbol *symbol = VAL_WORD_SYMBOL(KEY_SLOT(dsp));
 
         STKVAL(*) slot = PARAM_SLOT(dsp);
 

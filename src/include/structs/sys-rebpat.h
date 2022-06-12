@@ -65,7 +65,7 @@
 
 // The LINK() slot in a patch can be:
 //
-// * a REBSYM, if it's a standalone LET variable; there'd be no way to know
+// * a Symbol, if it's a standalone LET variable; there'd be no way to know
 //   its name otherwise.
 //
 // * a REBCTX, if it's an field in a "sea context" like Lib or User.  In this
@@ -74,7 +74,7 @@
 //
 // * Currently unused if the payload is for a virtual binding patch.
 //
-#define INODE_PatchSymbol_TYPE           const REBSYM*
+#define INODE_PatchSymbol_TYPE           const Symbol*
 #define INODE_PatchSymbol_CAST           SYM
 #define HAS_INODE_PatchSymbol            FLAVOR_PATCH
 

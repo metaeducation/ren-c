@@ -102,7 +102,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     INCLUDE_PARAMS_OF_REORDER_P;
 
     REBACT *reorderee = VAL_ACTION(ARG(action));
-    option(const REBSYM*) label  = VAL_ACTION_LABEL(ARG(action));
+    option(const Symbol*) label  = VAL_ACTION_LABEL(ARG(action));
 
     // Working with just the exemplar means we will lose the partials ordering
     // information from the interface.  But that's what we want, as the
@@ -147,7 +147,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
     const Cell *item;  // starts as tail
     const Cell *at = VAL_ARRAY_AT(&item, ARG(ordering));
     for (; at != item--; ) {
-        const REBSYM *symbol = VAL_WORD_SYMBOL(item);
+        const Symbol *symbol = VAL_WORD_SYMBOL(item);
 
         // !!! As a bit of a weird demo of a potential future direction, we
         // don't just allow WORD!s but allow you to do things like pass the
@@ -206,7 +206,7 @@ REBNATIVE(reorder_p)  // see REORDER in %base-defs.r, for inheriting meta
         if (Is_Specialized(param))
             continue;
 
-        const REBSYM *symbol = KEY_SYMBOL(key);
+        const Symbol *symbol = KEY_SYMBOL(key);
 
         // If we saw the parameter, we removed its index from the binder.
         //

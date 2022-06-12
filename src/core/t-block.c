@@ -408,7 +408,7 @@ REBINT Find_In_Array(
     if (ANY_WORD(target)) {
         for (; index >= start and index < end; index += skip) {
             const Cell *item = ARR_AT(array, index);
-            const REBSYM *target_symbol = VAL_WORD_SYMBOL(target);
+            const Symbol *target_symbol = VAL_WORD_SYMBOL(target);
             if (ANY_WORD(item)) {
                 if (flags & AM_FIND_CASE) { // Must be same type and spelling
                     if (
@@ -641,7 +641,7 @@ static REBINT Try_Get_Array_Index_From_Picker(
         //
         n = -1;
 
-        const REBSYM *symbol = VAL_WORD_SYMBOL(picker);
+        const Symbol *symbol = VAL_WORD_SYMBOL(picker);
         const Cell *tail;
         const Cell *item = VAL_ARRAY_AT(&tail, v);
         REBLEN index = VAL_INDEX(v);

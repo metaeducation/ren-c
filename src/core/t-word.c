@@ -30,7 +30,7 @@
 //
 // Used in CT_Word() and CT_Bad_Word()
 //
-REBINT Compare_Spellings(const REBSYM *a, const REBSYM *b, bool strict)
+REBINT Compare_Spellings(const Symbol *a, const Symbol *b, bool strict)
 {
     if (strict) {
         if (a == b)
@@ -194,7 +194,7 @@ REB_R TO_Word(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg)
 }
 
 
-inline static void Mold_Word(REB_MOLD *mo, const REBSYM *symbol, bool escape)
+inline static void Mold_Word(REB_MOLD *mo, const Symbol *symbol, bool escape)
 {
     if (escape) {
         Append_Codepoint(mo->series, '|');
@@ -210,7 +210,7 @@ inline static void Mold_Word(REB_MOLD *mo, const REBSYM *symbol, bool escape)
 //  MF_Word: C
 //
 void MF_Word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
-    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_PLAIN);
@@ -223,7 +223,7 @@ void MF_Word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
 //  MF_Set_word: C
 //
 void MF_Set_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
-    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -237,7 +237,7 @@ void MF_Set_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
 //  MF_Get_word: C
 //
 void MF_Get_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
-    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -251,7 +251,7 @@ void MF_Get_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
 //  MF_Meta_word: C
 //
 void MF_Meta_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
-    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
@@ -265,7 +265,7 @@ void MF_Meta_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
 //  MF_The_word: C
 //
 void MF_The_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
-    const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+    const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
         : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);

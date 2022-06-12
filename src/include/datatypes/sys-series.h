@@ -160,7 +160,7 @@
 //      REBBMK *bookmarks = string.link.bookmarks;
 //      string.link.bookmarks = bookmarks;
 //
-//      const REBSYM* synonym = symbol.link.synonym;
+//      const Symbol *synonym = symbol.link.synonym;
 //      symbol.link.synonym = synonym;
 //
 // The GC could then read a generic field like `series.link.node` when doing
@@ -182,7 +182,7 @@
 //      REBBMK *bookmarks = LINK(Bookmarks, string);  // actually reads `node`
 //      mutable_LINK(Bookmarks, string) = bookmarks;
 //
-//      const REBSYM* synonym = LINK(Synonym, symbol);  // also reads `node`
+//      const Symbol* synonym = LINK(Synonym, symbol);  // also reads `node`
 //      mutable_LINK(Synonym, symbol) = synonym;
 //
 // The syntax is *almost* as readable, but throws in benefits of offering some

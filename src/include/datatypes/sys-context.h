@@ -299,7 +299,7 @@ inline static REBVAR *CTX_VAR(REBCTX *c, REBLEN n) {  // 1-based, no Cell*
     return cast(REBVAR*, cast(REBSER*, c)->content.dynamic.data) + n;
 }
 
-inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
+inline static REBVAR *MOD_VAR(REBCTX *c, const Symbol *sym, bool strict) {
     //
     // Optimization for Lib_Context for datatypes + natives + generics; use
     // tailored order of SYM_XXX constants to beeline for the storage.  The
@@ -319,7 +319,7 @@ inline static REBVAR *MOD_VAR(REBCTX *c, const REBSYM *sym, bool strict) {
         }
     }
 
-    const REBSYM *synonym = sym;
+    const Symbol *synonym = sym;
     do {
         REBSER *patch = MISC(Hitch, sym);
         while (GET_SERIES_FLAG(patch, BLACK))  // binding temps
@@ -479,7 +479,7 @@ inline static bool IS_FRAME_PHASED(noquote(const Cell*) v) {
     return s and not IS_SYMBOL(s);
 }
 
-inline static option(const REBSYM*) VAL_FRAME_LABEL(const Cell *v) {
+inline static option(const Symbol*) VAL_FRAME_LABEL(const Cell *v) {
     REBSER *s = VAL_FRAME_PHASE_OR_LABEL(v);
     if (s and IS_SYMBOL(s))  // label in value
         return SYM(s);
@@ -672,7 +672,7 @@ inline static bool Is_Native_Port_Actor(const REBVAL *actor) {
 
 inline static const REBVAR *TRY_VAL_CONTEXT_VAR_CORE(
     const REBVAL *context,
-    const REBSYM *symbol,
+    const Symbol *symbol,
     bool writable
 ){
     bool strict = false;

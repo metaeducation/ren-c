@@ -172,7 +172,7 @@ void Probe_Cell_Print_Helper(
     }
     else if (Is_Isotope(v)) {
         Append_Codepoint(mo->series, '~');
-        const REBSYM *label = try_unwrap(VAL_ISOTOPE_LABEL(v));
+        const Symbol *label = try_unwrap(VAL_ISOTOPE_LABEL(v));
         if (label) {
             Append_Spelling(mo->series, label);
             Append_Codepoint(mo->series, '~');

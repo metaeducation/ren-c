@@ -199,8 +199,8 @@ static void Expand_Word_Table(void)
 // clear contract on the return result--as it wouldn't be possible to know if a
 // shared instance had been managed by someone else or not.
 //
-const REBSYM *Intern_UTF8_Managed_Core(
-    REBSYM *preallocated,  // if not nullptr, put symbol here
+const Symbol *Intern_UTF8_Managed_Core(
+    Symbol *preallocated,  // if not nullptr, put symbol here
     const REBYTE *utf8,
     size_t size
 ){
@@ -219,7 +219,7 @@ const REBSYM *Intern_UTF8_Managed_Core(
         num_slots = SER_USED(PG_Symbols_By_Hash);  // got larger
     }
 
-    REBSYM* *symbols_by_hash = SER_HEAD(REBSYM*, PG_Symbols_By_Hash);
+    Symbol* *symbols_by_hash = SER_HEAD(Symbol*, PG_Symbols_By_Hash);
 
     REBLEN skip; // how many slots to skip when occupied candidates found
     REBLEN slot = First_Hash_Candidate_Slot(
@@ -233,9 +233,9 @@ const REBSYM *Intern_UTF8_Managed_Core(
     // be skipped to try again) the search uses a comparison that is
     // case-insensitive...but reports if synonyms via > 0 results.
     //
-    REBSYM *synonym = nullptr;
-    REBSYM **deleted_slot = nullptr;
-    REBSYM* symbol;
+    Symbol *synonym = nullptr;
+    Symbol **deleted_slot = nullptr;
+    Symbol* symbol;
     while ((symbol = symbols_by_hash[slot])) {
         if (symbol == DELETED_SYMBOL) {
             deleted_slot = &symbols_by_hash[slot];
@@ -422,11 +422,11 @@ const REBSTR *Intern_Any_String_Managed(const Cell *v) {
 //
 void GC_Kill_Interning(REBSTR *intern)
 {
-    REBSYM *synonym = LINK(Synonym, intern);
+    Symbol *synonym = LINK(Synonym, intern);
 
     // Note synonym and intern may be the same here.
     //
-    REBSYM *temp = synonym;
+    Symbol *temp = synonym;
     while (LINK(Synonym, temp) != intern)
         temp = LINK(Synonym, temp);
     mutable_LINK(Synonym, temp) = synonym;  // cut the intern out (or no-op)
@@ -565,7 +565,7 @@ void Startup_Symbols(void)
         size_t size = *at;  // length prefix byte
         ++at;
 
-        REBSYM *canon = &PG_Symbol_Canons[id];  // pass as preallocated space
+        Symbol *canon = &PG_Symbol_Canons[id];  // pass as preallocated space
         Intern_UTF8_Managed_Core(canon, at, size);
         at += size;
 
@@ -608,7 +608,7 @@ void Shutdown_Symbols(void)
     // "dirty" shutdown--typically used--avoids all these balancing checks!)
     //
     for (REBLEN i = 1; i < ALL_SYMS_MAX; ++i) {
-        REBSYM *canon = &PG_Symbol_Canons[i];
+        Symbol *canon = &PG_Symbol_Canons[i];
         Decay_Series(canon);
     }
 }

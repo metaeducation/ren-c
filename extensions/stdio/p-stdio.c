@@ -292,7 +292,7 @@ REBVAL *Read_Line(STD_TERM *t)
 //
 //  Console_Actor: C
 //
-REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb)
+REB_R Console_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
 {
     REBCTX *ctx = VAL_CONTEXT(port);
 

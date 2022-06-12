@@ -52,7 +52,7 @@ PVAR REBARR PG_Lib_Patches[LIB_SYMS_MAX];
 // forms of words are created, and removed when they are GC'd.  It is scaled
 // according to the total number of canons in the system.
 //
-PVAR REBSYM PG_Symbol_Canons[ALL_SYMS_MAX + 1];
+PVAR Symbol PG_Symbol_Canons[ALL_SYMS_MAX + 1];
 
 PVAR REBSER *PG_Symbols_By_Hash; // Symbol REBSTR pointers indexed by hash
 PVAR REBLEN PG_Num_Symbol_Slots_In_Use; // Total symbol hash slots (+deleteds)

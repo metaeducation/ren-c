@@ -40,7 +40,7 @@
 //
 REB_R Series_Common_Action_Maybe_Unhandled(
     REBFRM *frame_,
-    const REBSYM *verb
+    const Symbol *verb
 ){
     REBVAL *v = D_ARG(1);
 

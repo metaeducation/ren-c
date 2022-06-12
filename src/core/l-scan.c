@@ -1957,7 +1957,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             Init_Bad_Word(DS_PUSH(), nullptr);
         else {
             assert(bp[len - 1] == '~');
-            const REBSYM *label = Intern_UTF8_Managed(bp + 1, len - 2);
+            const Symbol *label = Intern_UTF8_Managed(bp + 1, len - 2);
             Init_Bad_Word(DS_PUSH(), label);
         }
         break; }

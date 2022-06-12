@@ -230,7 +230,7 @@ struct Reb_Enum_Vars {
 
     // !!! Enumerating key/val pairs in modules in the "sea of words" model is
     // tricky, as what it really is hooks the variables in a linked list off
-    // the REBSYM series node for the symbol.  This is accessed via a global
+    // the Symbol series node for the symbol.  This is accessed via a global
     // hash table that can expand and rearrange freely...it's not possible
     // to lock the table during enumeration.  Locking the module itself may
     // be possible, but the iteration order could get messed up by a hash
@@ -243,7 +243,7 @@ struct Reb_Enum_Vars {
     REBARR *wordlist;
     REBVAL *word;
     REBVAL *word_tail;
-    const REBSYM *keybuf;  // backing store for key
+    const Symbol *keybuf;  // backing store for key
 };
 
 typedef struct Reb_Enum_Vars EVARS;

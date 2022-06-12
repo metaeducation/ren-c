@@ -56,7 +56,7 @@ REB_R Generic_Dispatcher(REBFRM *f)
 {
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
-    const REBSYM *verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
+    const Symbol *verb = VAL_WORD_SYMBOL(DETAILS_AT(details, IDX_GENERIC_VERB));
 
     // !!! It's technically possible to throw in locals or refinements at
     // any point in the sequence.  D_ARG() accounts for this...hackily.

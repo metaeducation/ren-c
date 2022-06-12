@@ -44,7 +44,7 @@
 //
 inline static REBVAL *Init_Bad_Word_Untracked(
     Cell *out,
-    option(const REBSYM *) label,
+    option(const Symbol *) label,
     REBFLGS flags
 ){
     Reset_Cell_Header_Untracked(

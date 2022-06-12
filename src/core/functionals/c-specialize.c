@@ -134,7 +134,7 @@ REBCTX *Make_Context_For_Action_Push_Partials(
             continue;
         }
 
-        const REBSYM *symbol = KEY_SYMBOL(key);  // added to binding
+        const Symbol *symbol = KEY_SYMBOL(key);  // added to binding
         if (NOT_PARAM_FLAG(param, REFINEMENT)) {  // nothing to push
 
           continue_unspecialized:

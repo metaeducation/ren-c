@@ -237,7 +237,7 @@ REBNATIVE(panic)
     }
     else {  // interpret reason as a message
       if (Is_Isotope(v)) {
-            const REBSYM *label = try_unwrap(VAL_ISOTOPE_LABEL(v));
+            const Symbol *label = try_unwrap(VAL_ISOTOPE_LABEL(v));
             if (label)
                 p = STR_UTF8(label);
             else

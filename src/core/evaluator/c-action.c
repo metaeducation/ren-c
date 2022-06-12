@@ -1269,7 +1269,7 @@ void Push_Action(
 //
 void Begin_Action_Core(
     REBFRM *f,
-    option(const REBSYM*) label,
+    option(const Symbol*) label,
     bool enfix
 ){
     assert(NOT_EVAL_FLAG(f, RUNNING_ENFIX));

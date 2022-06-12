@@ -312,11 +312,11 @@ enum {
 };
 
 
-inline static const REBSYM *KEY_SYMBOL(const REBKEY *key)
+inline static const Symbol *KEY_SYMBOL(const REBKEY *key)
   { return *key; }
 
 
-inline static void Init_Key(REBKEY *dest, const REBSYM *symbol)
+inline static void Init_Key(REBKEY *dest, const Symbol *symbol)
   { *dest = symbol; }
 
 #define KEY_SYM(key) \
@@ -362,7 +362,7 @@ inline static REBACT *VAL_ACTION(noquote(const Cell*) v) {
 // the words, you get the currently executing label instead...which may
 // actually make more sense.
 
-inline static option(const REBSYM*) VAL_ACTION_LABEL(noquote(const Cell*) v) {
+inline static option(const Symbol*) VAL_ACTION_LABEL(noquote(const Cell*) v) {
     assert(CELL_HEART(v) == REB_ACTION);
     REBSER *s = VAL_ACTION_PARTIALS_OR_LABEL(v);
     if (not s)
@@ -374,7 +374,7 @@ inline static option(const REBSYM*) VAL_ACTION_LABEL(noquote(const Cell*) v) {
 
 inline static void INIT_VAL_ACTION_LABEL(
     Cell *v,
-    option(const REBSYM*) label
+    option(const Symbol*) label
 ){
     ASSERT_CELL_WRITABLE_EVIL_MACRO(v);  // archetype R/O
     if (label)
@@ -480,7 +480,7 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
 inline static REBVAL *Init_Action_Core(
     Cell *out,
     REBACT *a,
-    option(const REBSYM*) label,  // allowed to be ANONYMOUS
+    option(const Symbol*) label,  // allowed to be ANONYMOUS
     REBCTX *binding  // allowed to be UNBOUND
 ){
   #if !defined(NDEBUG)

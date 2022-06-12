@@ -464,7 +464,7 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     // The evaluator only enforces that the symbol be set during function
     // calls--in the release build, it is allowed to be garbage otherwise.
     //
-    option(const REBSYM*) label;
+    option(const Symbol*) label;
 
     // The varlist is where arguments for the frame are kept.  Though it is
     // ultimately usable as an ordinary CTX_VARLIST() for a FRAME! value, it

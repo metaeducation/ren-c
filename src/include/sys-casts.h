@@ -71,7 +71,7 @@
     #define CTX(p)          m_cast(REBCTX*, x_cast(const REBCTX*, (p)))
 
     #define STR(p)          m_cast(REBSTR*, x_cast(const REBSTR*, (p)))
-    #define SYM(p)          m_cast(REBSYM*, x_cast(const REBSYM*, (p)))
+    #define SYM(p)          m_cast(Symbol*, x_cast(const Symbol*, (p)))
 
     #define VAL(p)          x_cast(REBVAL*, (p))
 
@@ -261,11 +261,11 @@
     // when bits are being tweaked in binding slots.  Stored or external
     // pointers should always be const if downcasting.
 
-    inline static REBSYM *SYM(void *p)
-      { return cast(REBSYM*, p); }
+    inline static Symbol *SYM(void *p)
+      { return cast(Symbol*, p); }
 
-    inline static const REBSYM *SYM(const void *p)
-      { return cast(const REBSYM*, p); }
+    inline static const Symbol *SYM(const void *p)
+      { return cast(const Symbol*, p); }
 
     // !!! There aren't currently that many VAL() casts in the system.  When
     // some arise, consider beefing up this cast.

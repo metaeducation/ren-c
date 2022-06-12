@@ -147,7 +147,7 @@ void Expand_Context(REBCTX *context, REBLEN delta)
 REBVAR *Append_Context(
     REBCTX *context,
     option(Cell*) any_word,  // binding modified (Note: quoted words allowed)
-    option(const REBSYM*) symbol
+    option(const Symbol*) symbol
 ) {
     if (CTX_TYPE(context) == REB_MODULE) {
         //
@@ -218,7 +218,7 @@ REBVAR *Append_Context(
 
         // skip over binding-related hitches
         //
-        REBSER *updating = m_cast(REBSYM*, unwrap(symbol));
+        REBSER *updating = m_cast(Symbol*, unwrap(symbol));
         while (GET_SERIES_FLAG(SER(node_MISC(Hitch, updating)), BLACK))
             updating = SER(node_MISC(Hitch, updating));
 
@@ -299,7 +299,7 @@ void Collect_End(struct Reb_Collector *cl)
 {
     REBDSP dsp = DSP;
     for (; dsp != cl->dsp_orig; --dsp) {
-        const REBSYM *symbol = VAL_WORD_SYMBOL(DS_TOP);
+        const Symbol *symbol = VAL_WORD_SYMBOL(DS_TOP);
         Remove_Binder_Index(&cl->binder, symbol);
         DS_DROP();
     }
@@ -326,7 +326,7 @@ void Collect_Context_Keys(
         *unwrap(duplicate) = nullptr;
 
     for (; key != tail; ++key) {
-        const REBSYM *symbol = KEY_SYMBOL(key);
+        const Symbol *symbol = KEY_SYMBOL(key);
         if (not Try_Add_Binder_Index(
             &cl->binder,
             symbol,
@@ -360,7 +360,7 @@ static void Collect_Inner_Loop(
             if (kind != REB_SET_WORD and not (cl->flags & COLLECT_ANY_WORD))
                 continue;  // kind of word we're not interested in collecting
 
-            const REBSYM *symbol = VAL_WORD_SYMBOL(v);
+            const Symbol *symbol = VAL_WORD_SYMBOL(v);
 
             if (not Try_Add_Binder_Index(
                 &cl->binder,
@@ -499,7 +499,7 @@ REBARR *Collect_Unique_Words_Managed(
         const Cell *ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
             noquote(const Cell*) cell = VAL_UNESCAPED(ignore);
-            const REBSYM *symbol = VAL_WORD_SYMBOL(cell);
+            const Symbol *symbol = VAL_WORD_SYMBOL(cell);
 
             // A block may have duplicate words in it (this situation could
             // arise when `function [/test /test] []` calls COLLECT-WORDS
@@ -547,7 +547,7 @@ REBARR *Collect_Unique_Words_Managed(
         const Cell *ignore = VAL_ARRAY_AT(&ignore_tail, ignorables);
         for (; ignore != ignore_tail; ++ignore) {
             noquote(const Cell*) cell = VAL_UNESCAPED(ignore);
-            const REBSYM *symbol = VAL_WORD_SYMBOL(cell);
+            const Symbol *symbol = VAL_WORD_SYMBOL(cell);
 
           #if !defined(NDEBUG)
             REBINT i = Get_Binder_Index_Else_0(&cl->binder, symbol);
@@ -821,7 +821,7 @@ REBARR *Context_To_Array(const Cell *context, REBINT mode)
 //
 REBLEN Find_Symbol_In_Context(
     const Cell *context,
-    const REBSYM *symbol,
+    const Symbol *symbol,
     bool strict
 ){
     if (IS_MODULE(context)) {
@@ -861,7 +861,7 @@ REBLEN Find_Symbol_In_Context(
 // Search a context's keylist looking for the given symbol, and return the
 // value for the word.  Return NULL if the symbol is not found.
 //
-REBVAL *Select_Symbol_In_Context(const Cell *context, const REBSYM *symbol)
+REBVAL *Select_Symbol_In_Context(const Cell *context, const Symbol *symbol)
 {
     const bool strict = false;
     REBLEN n = Find_Symbol_In_Context(context, symbol, strict);

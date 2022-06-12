@@ -155,7 +155,7 @@ extern REBTYPE(Event);
 
 // !!! The port scheme is also being included in the extension.
 
-extern REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const REBSYM *verb);
+extern REB_R Event_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb);
 extern void Startup_Event_Scheme(void);
 extern void Shutdown_Event_Scheme(void);
 

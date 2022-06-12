@@ -1098,7 +1098,7 @@ void Decay_Series(REBSER *s)
         // Note: If this is a LET, the chain should be to other examples
         // of the LET.  However, if it's a variable definition for a module,
         // then it will circle back to the symbol for the variable.  This
-        // means it may hit a REBSYM* or may not in this encircling.
+        // means it may hit a Symbol* or may not in this encircling.
         //
         // !!! This feature only is happening with the variable definitions
         // for modules at the moment; the other feature is on hold.
