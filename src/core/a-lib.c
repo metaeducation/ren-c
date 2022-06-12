@@ -958,7 +958,7 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
 
     REBVAL *v = Alloc_Value();
     if (Run_Va_Translucent_Throws(v, false, p, vaptr))  // calls va_end()
-        fail (Error_No_Catch_For_Throw(v));  // panic?
+        fail (Error_No_Catch_For_Throw(FS_TOP));  // panic?
 
     if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {  // tolerate isotopes
         rebRelease(v);
@@ -982,7 +982,7 @@ REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
 
     REBVAL *v = Alloc_Value();
     if (Run_Va_Translucent_Throws(v, false, p, vaptr)) {  // calls va_end()
-        Init_Error(v, Error_No_Catch_For_Throw(v));
+        Init_Error(v, Error_No_Catch_For_Throw(FS_TOP));
         return v;
     }
 
@@ -1010,7 +1010,7 @@ REBVAL *RL_rebEntrapInterruptible(
 
     REBVAL *v = Alloc_Value();
     if (Run_Va_Translucent_Throws(v, true, p, vaptr)) {  // calls va_end()
-        Init_Error(v, Error_No_Catch_For_Throw(v));
+        Init_Error(v, Error_No_Catch_For_Throw(FS_TOP));
         return v;
     }
 

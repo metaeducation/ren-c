@@ -399,38 +399,6 @@ EXTERN_C intptr_t RL_rebPromise(void *p, va_list *vaptr)
     return info->promise_id;
 }
 
-struct ArrayAndBool {
-    REBARR *code;
-    bool failed;
-};
-
-// Function passed to rebRescue() so code can be run but trap errors safely.
-//
-REBVAL *Run_Array_Dangerous(void *opaque) {
-    struct ArrayAndBool *x = cast(struct ArrayAndBool*, opaque);
-
-    x->failed = true;  // assume it failed if the end was not reached
-
-    REBVAL *v = Alloc_Value();
-
-    REBVAL *first = nullptr;  // optional element to inject before array
-
-    if (Do_At_Mutable_Maybe_Stale_Throws(v, first, x->code, 0, SPECIFIED)) {
-        TRACE("Run_Array_Dangerous() is converting a throw to a failure");
-        fail (Error_No_Catch_For_Throw(FS_TOP));
-    }
-
-    Clear_Stale_Flag(v);
-    Reify_Eval_Out_Plain(v);
-
-    x->failed = false;  // Since end was reached, it did not fail...
-
-    if (IS_NULLED(v))  // don't leak API cell with nulled in it
-        return nullptr;
-
-    return v;
-}
-
 
 void RunPromise(void)
 {
@@ -438,25 +406,60 @@ void RunPromise(void)
     assert(info->state == PROMISE_STATE_QUEUEING);
     info->state = PROMISE_STATE_RUNNING;
 
-    REBARR *code = ARR(Pointer_From_Heapaddr(info->promise_id));
-    assert(NOT_SERIES_FLAG(code, MANAGED));  // took off so it didn't GC
-    SET_SERIES_FLAG(code, MANAGED);  // but need it back on to execute it
+    REBARR *a = ARR(Pointer_From_Heapaddr(info->promise_id));
+    assert(NOT_SERIES_FLAG(a, MANAGED));  // took off so it didn't GC
+    SET_SERIES_FLAG(a, MANAGED);  // but need it back on to execute it
 
-    // We run the code using rebRescue() so that if there are errors, we
-    // will be able to trap them.  the difference between `throw()`
-    // and `reject()` in JS is subtle.
+    DECLARE_LOCAL (code);
+    Init_Group(code, a);
+    PUSH_GC_GUARD(code);
+
+    // Note: The difference between `throw()` and `reject()` in JS is subtle.
     //
     // https://stackoverflow.com/q/33445415/
 
-    struct ArrayAndBool x;  // bool needed to know if it failed
-    x.code = code;
-    REBVAL *result = rebRescue(&Run_Array_Dangerous, &x);
-    TRACE("RunPromise() finished Run_Array_Dangerous()");
-    assert(not result or not IS_NULLED(result));  // NULL is nullptr in API
+    REBVAL *metaresult = rebEntrap(code);
+    DROP_GC_GUARD(code);
+    TRACE("RunPromise() finished Running Array");
 
-    if (info->state == PROMISE_STATE_REJECTED) {
-        assert(IS_FRAME(result));
+    if (info->state == PROMISE_STATE_RUNNING) {
+        if (rebUnboxLogic("error? @", metaresult)) {
+            //
+            // Note this could be an uncaught throw error, or a specific
+            // fail() error.
+            //
+            info->state = PROMISE_STATE_REJECTED;
+            TRACE("RunPromise() => promise is rejecting due to error");
+            rebRelease(metaresult);  // !!! report the error?
+        }
+        else {
+            info->state = PROMISE_STATE_RESOLVED;
+            TRACE("RunPromise() => promise is resolving");
+
+            REBVAL *result = rebValue("unmeta @", rebR(metaresult));
+
+            EM_ASM(
+                { reb.ResolvePromise_internal($0, $1); },
+                info->promise_id,  // => $0 (table entry will be freed)
+                result  // => $1 (recipient takes over handle)
+            );
+
+            rebRelease(result);
+        }
+    }
+    else {
+        // !!! It's not clear what this code was supposed to handle; it seems
+        // to have been leftover from the pthreads build.  It was using the
+        // result of the block evaluation and asserting it was a FRAME!.
+        // Keeping it here to see if it triggers the trace; but it's not
+        // likely to because there's only one reb.Promise() wrapping all of
+        // the ReplPad at this time.
+
         TRACE("RunPromise() => promise is rejecting due to...something (?)");
+
+        assert(info->state == PROMISE_STATE_REJECTED);
+
+        REBVAL *result = nullptr;  // !!! What was this supposed to be?
 
         // Note: Expired, can't use VAL_CONTEXT
         //
@@ -470,32 +473,6 @@ void RunPromise(void)
             throw_id  // => $1 (table entry will be freed)
         );
     }
-    else {
-        assert(info->state == PROMISE_STATE_RUNNING);
-
-        if (x.failed) {
-            //
-            // Note this could be an uncaught throw error, raised by the
-            // Run_Array_Dangerous() itself...or a failure rebRescue()
-            // caught...
-            //
-            assert(IS_ERROR(result));
-            info->state = PROMISE_STATE_REJECTED;
-            TRACE("RunPromise() => promise is rejecting due to error");
-        }
-        else {
-            info->state = PROMISE_STATE_RESOLVED;
-            TRACE("RunPromise() => promise is resolving");
-
-            EM_ASM(
-                { reb.ResolvePromise_internal($0, $1); },
-                info->promise_id,  // => $0 (table entry will be freed)
-                result  // => $1 (recipient takes over handle)
-            );
-        }
-    }
-
-    rebRelease(result);
 
     assert(PG_Promises == info);
     PG_Promises = info->next;
