@@ -1636,50 +1636,73 @@ REBNATIVE(map)
 //  ]
 //
 REBNATIVE(repeat)
+//
+// 1. We pass the index into the body if it's an ACTION! as we count.  But if
+//    it's a LOGIC! TRUE no index is passed, because we don't count.  If we
+//    were using arbitrary precision arithmetic, the count could have a
+//    non-trivial cost to upkeep in large loops.
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    if (IS_FALSEY(ARG(count))) {
-        assert(IS_LOGIC(ARG(count)));  // is false (opposite of infinite loop)
-        return VOID;
+    REBVAL *count = ARG(count);
+    REBVAL *body = ARG(body);
+
+    REBVAL *index = SPARE;  // use spare cell to hold current index
+
+    enum {
+        ST_REPEAT_INITIAL_ENTRY = 0,
+        ST_REPEAT_EVALUATING_BODY
+    };
+
+    switch (STATE) {
+      case ST_REPEAT_INITIAL_ENTRY : goto initial_entry;
+      case ST_REPEAT_EVALUATING_BODY : goto body_result_in_out;
+      default: assert(false);
     }
 
-    REBI64 count;
+  initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (IS_LOGIC(ARG(count))) {
-        assert(VAL_LOGIC(ARG(count)) == true);
+    if (IS_LOGIC(count)) {
+        if (VAL_LOGIC(count) == false)
+            return VOID;  // treat false as "don't run"
 
-        // Run forever, and as a micro-optimization don't handle specially
-        // in the loop, just seed with a very large integer.  In the off
-        // chance that we exhaust it, jump here to re-seed and loop again.
-        //
-      restart:
-        count = INT64_MAX;
-    }
-    else
-        count = Int64(ARG(count));
-
-    for (; count > 0; count--) {
-        if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
-                return THROWN;
-
-            if (Is_Breaking_Null(OUT))
-                return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_None(OUT);
-        }
+        STATE = ST_REPEAT_EVALUATING_BODY;  // true is "infinite loop"
+        continue_catchable_branch (OUT, ARG(body), END);  // no index, see [1]
     }
 
-    if (IS_LOGIC(ARG(count)))
-        goto restart;  // "infinite" loop exhausted MAX_I64 steps (rare case)
+    if (VAL_INT64(count) <= 0)
+        return VOID;  // negative means "don't run" (vs. error)
 
-    if (Is_Stale(OUT))
-        return VOID;
+    Init_Integer(index, 1);
 
-    return_branched (OUT);  // asserts no pure NULL or isotope ~void~
-}
+    STATE = ST_REPEAT_EVALUATING_BODY;
+    continue_catchable_branch (OUT, ARG(body), index);
+
+} body_result_in_out: {  /////////////////////////////////////////////////////
+
+    if (THROWING) {
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            return THROWN;
+
+        if (Is_Breaking_Null(OUT))
+            return nullptr;
+
+        if (Is_Void(OUT))  // CONTINUE w/no argument
+            Init_None(OUT);
+    }
+
+    if (IS_LOGIC(count)) {
+        assert(VAL_LOGIC(count) == true);  // false already returned
+        continue_catchable_branch(OUT, body, END);  // true infinite loops
+    }
+
+    if (VAL_INT64(count) == VAL_INT64(index))  // reached the desired count
+        return_branched (OUT);
+
+    ++VAL_INT64(index);  // bump index by one
+
+    continue_catchable_branch (OUT, body, index);  // keep looping
+}}
 
 
 //
