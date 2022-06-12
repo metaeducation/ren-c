@@ -206,28 +206,6 @@ void Enable_Halting(void)
 
 
 
-// This is called when either the console is running some untrusted skin code
-// for its own implementation, or when it wants to execute code on the user's
-// behalf.  If the code is on the user's behalf, then any tracing or debug
-// hooks will have been enabled before the rebRescue() call invoking this.
-//
-//
-static REBVAL *Run_Sandboxed_Group(REBVAL *group) {
-    //
-    // DON'T ADD ANY MORE LIBREBOL CODE HERE.  If this is a user-requested
-    // evaluation, then any extra libRebol code run here will wind up being
-    // shown in a TRACE.  The only thing that's acceptable to see in the
-    // backtrace is the GROUP! itself that we are running.  (If we didn't
-    // want that, getting rid of it would take some magic).
-    //
-    // So don't add superfluous libRebol calls here, except to debug.
-    //
-    // Meta helps us discern if the value vaporizes completely or not.
-    //
-    return rebMetaInterruptible(group);  // ownership gets proxied
-}
-
-
 //
 //  export console: native [
 //
@@ -274,7 +252,7 @@ REBNATIVE(console)
     if (was_halting_enabled)
         Disable_Halting();
 
-    REBVAL *result = nullptr;
+    REBVAL *metaresult = nullptr;
     bool no_recover = false;  // allow one try at HOST-CONSOLE internal error
 
     REBVAL *code;
@@ -284,7 +262,7 @@ REBNATIVE(console)
     }
     else {
         code = rebBlank();
-        result = rebValue("'~startup~");  // signal starting
+        metaresult = rebValue("'~startup~");  // signal starting
     }
 
     while (true) {
@@ -295,8 +273,8 @@ REBNATIVE(console)
         // This runs the HOST-CONSOLE, which returns *requests* to execute
         // arbitrary code by way of its return results.  The ENTRAP is thus
         // here to intercept bugs *in HOST-CONSOLE itself*.  Any evaluations
-        // for the user (or on behalf of the console skin) are done in
-        // Run_Sandboxed_Group().
+        // for the user (or on behalf of the console skin) are done in their
+        // own separate step with rebMetaInterruptible()
         //
         // !!! We use rebQ() here and not "@" due to the current behavior of
         // @ which will make BAD-WORD!s into isotopes.  That behavior is to
@@ -304,19 +282,19 @@ REBNATIVE(console)
         // to ~null~.  Either way, rebQ() would be needed if the distinction
         // were to be important.
         //
-        REBVAL *trapped;  // Note: goto would cross initialization
-        trapped = rebValue("entrap [",
+        REBVAL *metacode;  // Note: goto would cross initialization
+        metacode = rebEntrap(
             "ext-console-impl",  // action! that takes 4 args, run it
                 rebQ(code),  // group! or block! executed prior (or blank!)
-                rebQ(result),  // prior result quoted, or error (or blank!)
+                rebQ(metaresult),  // prior result quoted, or error (or blank!)
                 "did", rebQ(REF(resumable)),
-                rebQ(REF(skin)),
-        "]");
+                rebQ(REF(skin))
+        );
 
         rebRelease(code);
-        rebRelease(result);
+        rebRelease(metaresult);
 
-        if (rebUnboxLogic("error? @", trapped)) {
+        if (rebUnboxLogic("error? @", metacode)) {
             //
             // If the HOST-CONSOLE function has any of its own implementation
             // that could raise an error (or act as an uncaught throw) it
@@ -328,16 +306,16 @@ REBNATIVE(console)
             // it might have generated (a BLOCK!) asking itself to crash.
 
             if (no_recover)
-                rebJumps("panic @", trapped);
+                rebJumps("panic @", metacode);
 
             code = rebValue("[#host-console-error]");
-            result = trapped;
+            metaresult = metacode;
             no_recover = true;  // no second chances until user code runs
             goto recover;
         }
 
-        code = rebValue("unquote @", trapped);  // entrap quotes non-error
-        rebRelease(trapped); // don't need the outer block any more
+        code = rebValue("unquote @", metacode);  // meta quotes non-error
+        rebRelease(metacode); // don't need the outer block any more
 
       provoked:
 
@@ -370,8 +348,21 @@ REBNATIVE(console)
         // condition or a reason to fall back to the default skin).
         //
         Enable_Halting();
-        result = rebRescue(cast(REBDNG*, &Run_Sandboxed_Group), group);
+
+        // DON'T ADD ANY MORE LIBREBOL CODE HERE.  If this is a user-requested
+        // evaluation, then any extra libRebol code run here will wind up being
+        // shown in a TRACE.  The only thing that's acceptable to see in the
+        // backtrace is the GROUP! itself that we are running.  (If we didn't
+        // want that, getting rid of it would take some magic).
+        //
+        // So don't add superfluous libRebol calls here, except to debug.
+        //
+        // Meta lets us catch errors, as well as discern if the value vaporizes
+        // completely or not.
+        //
+        metaresult = rebEntrapInterruptible(group);
         rebRelease(group);  // Note: does not release `code`
+
         Disable_Halting();
     }
 

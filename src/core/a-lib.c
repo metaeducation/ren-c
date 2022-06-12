@@ -817,7 +817,7 @@ REBVAL *RL_rebArg(const void *p, va_list *vaptr)
 //
 //=////////////////////////////////////////////////////////////////////////=//
 
-static void Run_Va_Translucent_May_Fail(
+static bool Run_Va_Translucent_Throws(
     REBVAL *out,
     bool interruptible,  // whether a HALT can cause a longjmp/throw
     const void *p,  // first pointer (may be END, nullptr means NULLED)
@@ -850,7 +850,15 @@ static void Run_Va_Translucent_May_Fail(
     // (see also Reb_State->saved_sigmask RE: if a longjmp happens)
     Eval_Sigmask = saved_sigmask;
 
-    if (threw) {
+    return threw;
+}
+
+inline static void Run_Va_May_Fail(
+    REBVAL *out,
+    const void *p,  // first pointer (may be END, nullptr means NULLED)
+    va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
+){
+    if (Run_Va_Translucent_Throws(out, false, p, vaptr)) {
         //
         // !!! Being able to THROW across C stacks is necessary in the general
         // case (consider implementing QUIT or HALT).  Probably need to be
@@ -859,14 +867,6 @@ static void Run_Va_Translucent_May_Fail(
         //
         fail (Error_No_Catch_For_Throw(FS_TOP));
     }
-}
-
-inline static void Run_Va_May_Fail(
-    REBVAL *out,
-    const void *p,  // first pointer (may be END, nullptr means NULLED)
-    va_list *vaptr  // va_end() handled by feed for all cases (throws, fails)
-){
-    Run_Va_Translucent_May_Fail(out, false, p, vaptr);
 
     // It's convenient to be able to write:
     //
@@ -956,18 +956,70 @@ REBVAL *RL_rebMeta(const void *p, va_list *vaptr)
 {
     ENTER_API;
 
-    REBVAL *result = Alloc_Value();
-    assert(Is_Stale_Void(result));
+    REBVAL *v = Alloc_Value();
+    if (Run_Va_Translucent_Throws(v, false, p, vaptr))  // calls va_end()
+        fail (Error_No_Catch_For_Throw(v));  // panic?
 
-    Run_Va_Translucent_May_Fail(result, false, p, vaptr);  // calls va_end()
-    Reify_Eval_Out_Meta(result);
-
-    if (VAL_TYPE_UNCHECKED(result) == REB_NULL) {  // tolerate isotopes
-        rebRelease(result);
+    if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {  // tolerate isotopes
+        rebRelease(v);
         return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
     }
 
-    return result;  // caller must rebRelease()
+    return Reify_Eval_Out_Meta(v);  // caller must rebRelease()
+}
+
+
+//
+//  rebEntrap: RL_API
+//
+// Builds in an ENTRAP operation to rebValue; shorthand that's more efficient.
+//
+//     rebEntrap(...) => rebValue("entrap [", ..., "]")
+//
+REBVAL *RL_rebEntrap(const void *p, va_list *vaptr)
+{
+    ENTER_API;
+
+    REBVAL *v = Alloc_Value();
+    if (Run_Va_Translucent_Throws(v, false, p, vaptr)) {  // calls va_end()
+        Init_Error(v, Error_No_Catch_For_Throw(v));
+        return v;
+    }
+
+    if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {  // tolerate isotopes
+        rebRelease(v);
+        return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
+    }
+
+    return Reify_Eval_Out_Meta(v);  // caller must rebRelease()
+}
+
+
+//
+//  rebEntrapInterruptible: RL_API
+//
+// !!! The core interruptible routine used is this one inside of console code.
+// More will be needed, but this is made to quarantine the unfinished design
+// points to one routine for now.
+//
+REBVAL *RL_rebEntrapInterruptible(
+    const void *p,
+    va_list *vaptr
+){
+    ENTER_API;
+
+    REBVAL *v = Alloc_Value();
+    if (Run_Va_Translucent_Throws(v, true, p, vaptr)) {  // calls va_end()
+        Init_Error(v, Error_No_Catch_For_Throw(v));
+        return v;
+    }
+
+    if (VAL_TYPE_UNCHECKED(v) == REB_NULL) {  // tolerate isotopes
+        rebRelease(v);
+        return nullptr;  // No NULLED API cells, see notes on NULLIFY_NULLED()
+    }
+
+    return Reify_Eval_Out_Meta(v);  // caller must rebRelease()
 }
 
 
@@ -992,31 +1044,6 @@ REBVAL *RL_rebQuote(const void *p, va_list *vaptr)
     return Quotify(result, 1);  // nulled cells legal for API if quoted
 }
 
-
-//
-//  rebMetaInterruptible: RL_API
-//
-// !!! The core interruptible routine used is this one inside of console code.
-// More will be needed, but this is made to quarantine the unfinished design
-// points to one routine for now.
-//
-REBVAL *RL_rebMetaInterruptible(
-    const void *p,
-    va_list *vaptr
-){
-    ENTER_API;
-
-    REBVAL *v = Alloc_Value();
-    Run_Va_Translucent_May_Fail(v, true, p, vaptr);  // calls va_end()
-
-    Reify_Eval_Out_Meta(v);
-
-    if (not IS_NULLED(v))
-        return v;  // caller must rebRelease()
-
-    rebRelease(v);
-    return nullptr;  // No NULLED cells in API, see notes on NULLIFY_NULLED()
-}
 
 //
 //  rebElide: RL_API
