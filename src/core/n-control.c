@@ -44,9 +44,13 @@
 //
 // * Zero-arity function values used as branches will be executed, and
 //   single-arity functions used as branches will also be executed--but passed
-//   the value of the triggering condition.  Isotopes of NULL, FALSE, and
-//   BLANK are decayed before being passed to the function, unless the argument
-//   is taken as a ^META parameter.
+//   the value of the triggering condition.  Especially useful with lambda:
+//
+//       >> if 1 < 2 [10 + 20] then x -> [print ["THEN got" x]]
+//       THEN got 30
+//
+//   Isotopes of NULL, FALSE, and BLANK are decayed before being passed to the
+//   function, unless the argument is taken as a ^META parameter.
 //
 //   (See Do_Branch_Throws() for supported ANY-BRANCH! types and behaviors.)
 //
@@ -64,7 +68,7 @@
 //
 //  {When TO LOGIC! CONDITION is true, execute branch}
 //
-//      return: "null if branch not run, otherwise branch result"
+//      return: "void if branch not run, otherwise branch result"
 //          [<opt> <void> any-value!]
 //      condition [<opt> any-value!]
 //      :branch "If arity-1 ACTION!, receives the evaluated condition"
@@ -72,19 +76,28 @@
 //  ]
 //
 REBNATIVE(if)
+//
+// 1. It's a common mistake to write something like `if [1 > 2]` and be
+//    surprised that is considered "truthy" (as it's an unevaluated block).
+//    So Is_Conditional_False() notices a hidden bit on ARG(condition) that
+//    tells IF whether a BLOCK! argument is the product of an evaluation.
+//    (See CELL_FLAG_UNEVALUATED for more information on this feature.)
+//
+// 2. Evaluations must be performed through continuations, so IF can't be on
+//    the C function stack while the branch runs.  Rather than asking to be
+//    called back after the evaluation so it can turn null into null isotopes
+//    and voids into none, it requests "branch semantics" so that the evaluator
+//    does that automatically.  `delegate` means it doesn't need a callback.
 {
     INCLUDE_PARAMS_OF_IF;
 
     Value *condition = ARG(condition);
     Value *branch = ARG(branch);
 
-    if (Is_Conditional_False(condition))
-        return VOID;  // ^-- test errors on literal block
+    if (Is_Conditional_False(condition))  // errors on literal block, see [1]
+        return VOID;
 
-    if (Do_Branch_Throws(OUT, branch, condition))
-        return THROWN;  // ^-- condition is passed to function branches
-
-    return_branched (OUT);  // asserts not null or ~void~
+    delegate_branch (OUT, branch, condition);  // no callback needed, see [2]
 }
 
 
@@ -108,14 +121,11 @@ REBNATIVE(either)
 
     Value *condition = ARG(condition);
 
-    Value *branch = Is_Conditional_True(condition)
-        ? ARG(true_branch)  // ^-- test errors on literal block
+    Value *branch = Is_Conditional_True(condition)  // see [1] on REBNATIVE(if)
+        ? ARG(true_branch)
         : ARG(false_branch);
 
-    if (Do_Branch_Throws(OUT, branch, condition))
-        return THROWN;  // ^-- condition is passed to function branches
-
-    return_branched (OUT);  // asserts not null or ~void~
+    delegate_branch (OUT, branch, condition);  // see [2] on REBNATIVE(if)
 }
 
 
@@ -617,8 +627,6 @@ REBNATIVE(all)
         return VOID;
 
     Clear_Stale_Flag(OUT);  // un-hide values "underneath" void, again see [1]
-
-    Isotopify_If_Falsey(OUT);  // predicates can approve falsey values, see [4]
     return_branched (OUT);
 }}
 
