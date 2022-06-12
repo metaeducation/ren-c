@@ -78,11 +78,7 @@
 // assert() is enabled by default; disable with `#define NDEBUG`
 // http://stackoverflow.com/a/17241278
 //
-#ifdef NDEBUG
-
-    #define assert(expression) ((void)0)
-
-#elif TO_WINDOWS && INCLUDE_C_DEBUG_BREAK_NATIVE
+#if !defined(NDEBUG) && TO_WINDOWS && INCLUDE_C_DEBUG_BREAK_NATIVE
 
     #include <assert.h>  // include so it will think it has been included
     #undef assert  // (this way its include guard prevents it defining again)
