@@ -229,3 +229,8 @@
     some-var: me + 1 * 10
     some-var = 210
 )
+
+(did all [
+    equal? 20 1 * 2 + (3) * 4
+    equal? 20 1 * 2 + 3 * 4
+])

@@ -895,7 +895,6 @@ bool Eval_Core_Throws(REBFRM * const f)
 
       case REB_META_GROUP: {
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
 
         RESET(OUT);  // guaranteed to overwrite out, not transparent
         if (Do_Any_Array_At_Throws(OUT, v, v_specifier))
@@ -906,7 +905,6 @@ bool Eval_Core_Throws(REBFRM * const f)
     eval_group:
       case REB_GROUP: {
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
-        CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // !!! asserts otherwise?
 
         // We want to allow *non* ^META groups to be transparent if it's
         // invisible, e.g. `1 + 2 (comment "hi")` is 3.  We also don't want
