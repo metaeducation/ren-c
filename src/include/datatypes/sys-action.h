@@ -602,18 +602,19 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
 #define return_value(v) \
     do { \
         const REBVAL *x_check = (v); /* can only expand (v) once! */ \
+        assert(x_check != OUT); /* name has x_ to not collide with locals */ \
         assert(not Is_Api_Value(x_check)); /* too easy to not release() */ \
-        return Copy_Cell(OUT, x_check); /* will assert if v == OUT */ \
+        return Copy_Cell(OUT, x_check); \
     } while (0)
 
 
 #define return_branched(v) \
     do { \
         const REBVAL *x_check = (v); /* can only expand (v) once! */ \
-        assert(x_check == OUT); \
+        assert(x_check == OUT); /* name has x_ to not collide with locals */ \
         assert(not Is_Void(OUT)); \
-        assert(not IS_NULLED(OUT)); \
-        UNUSED(x_check); /* name has x_ to not collide with locals */ \
+        assert(VAL_TYPE_UNCHECKED(OUT) != REB_NULL); /* isotopes ok */ \
+        UNUSED(x_check); \
         return OUT; \
     } while (false)
 
