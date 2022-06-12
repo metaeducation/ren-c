@@ -837,7 +837,7 @@ pe-format: context [
     ][
         change pos let new-section: join binary! :[
             copy/part (head of insert/dup
-                tail of to binary! copy section/name
+                tail of to binary! copy section.name
                 #{00}
                 8
             ) 8  ; name, must be 8 bytes long
@@ -848,15 +848,15 @@ pe-format: context [
             to-u32-le section.physical-offset
 
             copy/part (head of insert/dup
-                tail of to binary! copy section/reserved
+                tail of to binary! copy section.reserved
                 #{00}
                 12
             ) 12  ; reserved, must be 12 bytes long
 
-            if binary? section/flags [
-                section/flags
+            if binary? section.flags [
+                section.flags
             ] else [
-                to-u32-le section/flags
+                to-u32-le section.flags
             ]
         ]
 
