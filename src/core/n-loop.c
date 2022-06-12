@@ -1765,16 +1765,16 @@ REBNATIVE(for)
 //      return: [<opt> any-value!]
 //          {Last body result, or null if a BREAK occurred}
 //      body [<const> block!]
-//      /predicate "Function to apply to body result (default is DID)"
+//      /predicate "Function to apply to body result"
 //          [action!]
 //  ]
 //
 REBNATIVE(until)
 //
 // 1. When CONTINUE has an argument, it acts as if the loop body evaluated to
-//    that argument.  UNTIL's condition and body are the same.  That means that
+//    that argument.  But UNTIL's condition and body are the same.  That means
 //    CONTINUE TRUE will stop the UNTIL and return TRUE, CONTINUE 10 will stop
-//    the loop and return 10, etc.
+//    and return 10, etc.
 //
 // 2. Purusant to [1], we want CONTINUE (or CONTINUE VOID) to keep the loop
 //    running.  For parity between what continue does with an argument and
@@ -1787,7 +1787,7 @@ REBNATIVE(until)
 //        until [match blank! get-queue-item]
 //
 //    The likely intent is that BLANK! is supposed to stop the loop, and return
-//    a BLANK! value.  Erroring on the ~blank~ isotope draw attention to the
+//    a BLANK! value.  Erroring on the ~blank~ isotope draws attention to the
 //    problem, so they know to use DID MATCH or CATCH/THROW the blank.
 {
     INCLUDE_PARAMS_OF_UNTIL;
@@ -1795,33 +1795,66 @@ REBNATIVE(until)
     REBVAL *body = ARG(body);
     REBVAL *predicate = ARG(predicate);
 
-    do {
-        if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
-                return THROWN;
+    REBVAL *condition;  // can point to OUT or SPARE
 
-            if (Is_Breaking_Null(OUT))
-                return nullptr;
+    enum {
+        ST_UNTIL_INITIAL_ENTRY = 0,
+        ST_UNTIL_EVALUATING_BODY,
+        ST_UNTIL_RUNNING_PREDICATE
+    };
 
-            // continue acts like body evaluated to its argument, see [1]
-        }
+    switch (STATE) {
+      case ST_UNTIL_INITIAL_ENTRY : goto initial_entry;
+      case ST_UNTIL_EVALUATING_BODY : goto body_result_in_out;
+      case ST_UNTIL_RUNNING_PREDICATE : goto predicate_result_in_spare;
+      default: assert(false);
+    }
 
-        if (Is_Void(OUT))
-            continue;  // skip void results, see [2]
+  initial_entry: {  //////////////////////////////////////////////////////////
 
-        if (IS_NULLED(predicate)) {
-            if (Is_Isotope(OUT))
-                fail (Error_Bad_Isotope(OUT));  // all isotopes fail, see [3]
+    STATE = ST_UNTIL_EVALUATING_BODY;
+    continue_catchable (OUT, body, END);
 
-            if (IS_TRUTHY(OUT))
-                return OUT;  // truthy body result--return value
-        }
-        else {
-            if (rebUnboxLogic(predicate, rebQ(OUT)))  // rebTruthy() ?
-                return OUT;
-        }
-    } while (true);
-}
+} body_result_in_out: {  /////////////////////////////////////////////////////
+
+    if (THROWING) {
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            return THROWN;
+
+        if (Is_Breaking_Null(OUT))
+            return nullptr;
+
+        // continue acts like body evaluated to its argument, see [1]
+    }
+
+    if (IS_NULLED(predicate)) {
+        condition = OUT;  // default is just test truthiness of body product
+        goto test_condition;
+    }
+
+    STATE = ST_UNTIL_RUNNING_PREDICATE;
+    continue_uncatchable (SPARE, predicate, OUT);
+
+} predicate_result_in_spare: {  //////////////////////////////////////////////
+
+    Isotopify_If_Nulled(OUT);  // predicates can like NULL, reserved for BREAK
+
+    condition = SPARE;
+    goto test_condition;
+
+} test_condition: {  /////////////////////////////////////////////////////////
+
+    if (not Is_Void(condition)) {  // skip voids, see [2]
+        if (Is_Isotope(condition))
+            fail (Error_Bad_Isotope(condition));  // all isotopes fail, see [3]
+
+        if (IS_TRUTHY(condition))
+            return_branched (OUT);  // truthy result, return value!
+    }
+
+    STATE = ST_UNTIL_EVALUATING_BODY;
+    continue_catchable(OUT, body, END);  // not truthy, keep going
+}}
 
 
 //

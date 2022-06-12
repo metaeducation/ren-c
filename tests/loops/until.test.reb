@@ -73,3 +73,8 @@
         true = until [did match logic! false]
     )
 ]
+
+(
+    n: 1
+    9 = until/predicate [n: n + 2] lambda [x] [x > 7]
+)
