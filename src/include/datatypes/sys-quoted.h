@@ -150,33 +150,12 @@ inline static Cell *Isotopic_Unquote(Cell *v) {
 // It's easiest to write the isotopic general forms by doing a single isotopic
 // step, and then N - 1 non-isotopic steps.
 
-inline static Cell *Isotopic_Quotify(Cell *v, REBLEN depth) {
-    if (depth == 0)
-        return v;
-    Isotopic_Quote(v);
-    return Quotify(v, depth - 1);
-}
-
-inline static Cell *Isotopic_Unquotify(Cell *v, REBLEN depth) {
-    assert(not IS_NULLED(v));  // see Meta_Unquotify
-    if (depth == 0)
-        return v;
-    Unquotify(v, depth - 1);
-    return Isotopic_Unquote(v);
-}
-
 #if CPLUSPLUS_11
     inline static REBVAL *Isotopic_Quote(REBVAL *v)
       { return SPECIFIC(Isotopic_Quote(cast(Cell*, v))); }
 
     inline static REBVAL *Isotopic_Unquote(REBVAL *v)
       { return SPECIFIC(Isotopic_Unquote(cast(Cell*, v))); }
-
-    inline static REBVAL *Isotopic_Quotify(REBVAL *v, REBLEN depth)
-      { return SPECIFIC(Isotopic_Quotify(cast(Cell*, v), depth)); }
-
-    inline static REBVAL *Isotopic_Unquotify(REBVAL *v, REBLEN depth)
-      { return SPECIFIC(Isotopic_Unquotify(cast(Cell*, v), depth)); }
 #endif
 
 

@@ -285,7 +285,7 @@ REBNATIVE(quote)
         fail (PAR(depth));
 
     Copy_Cell(OUT, ARG(optional));
-    return Isotopic_Quotify(OUT, depth);
+    return Quotify(OUT, depth);
 }
 
 
