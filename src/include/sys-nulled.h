@@ -67,3 +67,12 @@ inline static const REBVAL *NULLIFY_NULLED(const REBVAL *cell) {
 
 inline static const REBVAL *REIFY_NULL(const REBVAL *cell)
   { return cell == nullptr ? Lib(NULL) : cell; }
+
+
+// We test for null on an arbitrary result that may be an isotope.  Since we
+// don't have generic isotope handling we usually just pass them through, so
+// the unchecked type test for null is done first.  But plain IS_NULLED() will
+// assert on isotopes.  Make the code look friendlier with this simple macro.
+//
+#define Is_Breaking_Null(out) \
+    (VAL_TYPE_UNCHECKED(out) == REB_NULL)

@@ -33,14 +33,16 @@ typedef enum {
 
 
 //
-//  Catching_Break_Or_Continue: C
+//  Try_Catch_Break_Or_Continue: C
 //
 // Determines if a thrown value is either a break or continue.  If so, `val`
-// is mutated to become the throw's argument.  Sets `broke` flag if BREAK.
+// is mutated to become the throw's argument.  For BREAK this is NULL, and
+// for continue it can be any non-NULL state (including VOID, which must be
+// handled by the caller.)
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
+bool Try_Catch_Break_Or_Continue(REBVAL* val)
 {
     const REBVAL *label = VAL_THROWN_LABEL(val);
 
@@ -51,7 +53,6 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
         return false;
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
-        *broke = true;
         CATCH_THROWN(val, val);
         assert(IS_NULLED(val)); // BREAK must always return NULL
         return true;
@@ -64,8 +65,8 @@ bool Catching_Break_Or_Continue(REBVAL *val, bool *broke)
         // in cases like MAP-EACH (one wants a continue to not add any value,
         // as opposed to some ~void~ BAD-WORD!)  Other loops may vary.
         //
-        *broke = false;
         CATCH_THROWN(val, val);
+        assert(VAL_TYPE_UNCHECKED(val) != REB_NULL);
         return true;
     }
 
@@ -115,6 +116,9 @@ REBNATIVE(continue)
 
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
         RESET(v);  // Treat CONTINUE same as CONTINUE VOID
+    else if (IS_NULLED(v)) {
+        Init_Null_Isotope(v);  // Pure NULL is reserved for BREAK
+    }
     else
         Meta_Unquotify(v);
 
@@ -152,16 +156,16 @@ static REB_R Loop_Series_Common(
     REBINT s = VAL_INDEX(start);
     if (s == end) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
-            if (broke)
-                return nullptr;  // BREAK -> NULL
+            if (not Try_Catch_Break_Or_Continue(OUT))
+                return_thrown (OUT);
+
+            if (Is_Breaking_Null(OUT))
+                return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
                 Init_None(OUT);
         }
-        return OUT;  // guaranteed not stale
+        return OUT;
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -178,10 +182,10 @@ static REB_R Loop_Series_Common(
             : cast(REBINT, *state) >= end
     ){
         if (Do_Branch_Throws(OUT, body, END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
-            if (broke)
+            if (not Try_Catch_Break_Or_Continue(OUT))
+                return_thrown (OUT);
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
@@ -234,16 +238,16 @@ static REB_R Loop_Integer_Common(
     //
     if (start == end) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
-            if (broke)
+            if (not Try_Catch_Break_Or_Continue(OUT))
+                return_thrown (OUT);
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
                 Init_None(OUT);
         }
-        return_branched (OUT);  // BREAK -> NULL
+        return_branched (OUT);
     }
 
     // As per #1993, start relative to end determines the "direction" of the
@@ -256,10 +260,10 @@ static REB_R Loop_Integer_Common(
 
     while (counting_up ? *state <= end : *state >= end) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
-            if (broke)
+            if (not Try_Catch_Break_Or_Continue(OUT))
+                return_thrown (OUT);
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
@@ -323,10 +327,10 @@ static REB_R Loop_Number_Common(
     //
     if (s == e) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
-            if (broke)
+            if (not Try_Catch_Break_Or_Continue(OUT))
+                return_thrown (OUT);
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
@@ -343,10 +347,10 @@ static REB_R Loop_Number_Common(
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
-                return R_THROWN;
-            if (broke)
+            if (not Try_Catch_Break_Or_Continue(OUT))
+                return_thrown (OUT);
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
@@ -416,7 +420,6 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
     assert(IS_BLOCK(les->body) or IS_META_BLOCK(les->body));
 
     bool more_data = true;
-    bool broke = false;
 
     assert(Is_Stale(les->out));  // return_void requires stale to work
 
@@ -601,12 +604,12 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         DECLARE_LOCAL (temp);
         if (Do_Any_Array_At_Throws(temp, les->body, SPECIFIED)) {
-            if (not Catching_Break_Or_Continue(temp, &broke)) {
+            if (not Try_Catch_Break_Or_Continue(temp)) {
                 Move_Cell(les->out, temp);
                 return R_THROWN;  // non-loop-related throw
             }
 
-            if (broke) {
+            if (Is_Breaking_Null(temp)) {
                 Init_Nulled(les->out);
                 return nullptr;
             }
@@ -745,7 +748,7 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
             assert(Is_Stale(les->out));
             break;
         }
-    } while (more_data and not broke);
+    } while (more_data);
 
   finished:;
 
@@ -1030,10 +1033,10 @@ REBNATIVE(for_skip)
         }
 
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
+            if (not Try_Catch_Break_Or_Continue(OUT))
                 return_thrown (OUT);
-            if (broke)
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
@@ -1123,8 +1126,7 @@ REBNATIVE(cycle)
 
     while (true) {
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke)) {
+            if (not Try_Catch_Break_Or_Continue(OUT)) {
                 const REBVAL *label = VAL_THROWN_LABEL(OUT);
                 if (
                     IS_ACTION(label)
@@ -1148,9 +1150,10 @@ REBNATIVE(cycle)
                     return OUT;
                 }
 
-                return R_THROWN;
+                return_thrown (OUT);
             }
-            if (broke)
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
         }
         // No need to isotopify result, it doesn't escape...
@@ -1245,7 +1248,6 @@ struct Remove_Each_State {
     REBVAL *out;
     REBVAL *data;
     REBSER *series;
-    bool broke;  // e.g. a BREAK ran
     const REBVAL *body;
     REBCTX *context;
     REBLEN start;
@@ -1266,7 +1268,7 @@ inline static REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
 
     REBLEN count = 0;
     if (ANY_ARRAY(res->data)) {
-        if (res->broke) {  // cleanup markers, don't do removals
+        if (Is_Breaking_Null(res->out)) {  // clean markers, don't do removals
             const Cell *tail;
             Cell *temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, res->data);
             for (; temp != tail; ++temp) {
@@ -1312,7 +1314,7 @@ inline static REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
         assert(len == VAL_LEN_HEAD(res->data));
     }
     else if (IS_BINARY(res->data)) {
-        if (res->broke) { // leave data unchanged
+        if (Is_Breaking_Null(res->out)) {  // leave data unchanged
             Drop_Mold(res->mo);
             return 0;
         }
@@ -1348,7 +1350,7 @@ inline static REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
     }
     else {
         assert(ANY_STRING(res->data));
-        if (res->broke) { // leave data unchanged
+        if (Is_Breaking_Null(res->out)) {  // leave data unchanged
             Drop_Mold(res->mo);
             return 0;
         }
@@ -1438,17 +1440,14 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
         }
 
         if (Do_Any_Array_At_Throws(res->out, res->body, SPECIFIED)) {
-            if (not Catching_Break_Or_Continue(
-                res->out,
-                &res->broke
-            )){
+            if (not Try_Catch_Break_Or_Continue(res->out)) {
                 REBLEN removals = Finalize_Remove_Each(res);
                 UNUSED(removals);
 
                 return R_THROWN; // we'll bubble it up, but will also finalize
             }
 
-            if (res->broke) {
+            if (Is_Breaking_Null(res->out)) {
                 //
                 // BREAK; this means we will return nullptr and not run any
                 // removals (we couldn't report how many if we did)
@@ -1456,8 +1455,6 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
                 assert(res->start < len);
                 REBLEN removals = Finalize_Remove_Each(res);
                 UNUSED(removals);
-
-                Init_Nulled(res->out);
                 return nullptr;
             }
         }
@@ -1530,7 +1527,8 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
 
     // We get here on normal completion (THROW and BREAK will return above)
 
-    assert(not res->broke and res->start == len);
+    Isotopify_If_Nulled(res->out);
+    assert(res->start == len);
 
     REBLEN removals = Finalize_Remove_Each(res);
     Init_Integer(res->out, removals);
@@ -1636,8 +1634,6 @@ REBNATIVE(remove_each)
 
     res.out = OUT;
 
-    res.broke = false;  // will be set to true if there is a BREAK
-
     REB_R r = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
 
     if (r == R_THROWN)
@@ -1658,10 +1654,10 @@ REBNATIVE(remove_each)
         rebJumps("fail", rebR(m_cast(REBVAL*, r)));
     }
 
-    if (res.broke)
-        assert(IS_NULLED(OUT));  // BREAK in loop
-    else
-        assert(IS_INTEGER(OUT));  // no break--plain removal count
+    assert(
+        IS_NULLED(OUT)  // BREAK in loop
+        or IS_INTEGER(OUT)  // no break--plain removal count
+    );
 
     return OUT;
 }
@@ -1798,10 +1794,10 @@ REBNATIVE(repeat)
 
     for (; count > 0; count--) {
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
+            if (not Try_Catch_Break_Or_Continue(OUT))
                 return_thrown (OUT);
-            if (broke)
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
@@ -1934,10 +1930,10 @@ REBNATIVE(until)
 
     do {
         if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
+            if (not Try_Catch_Break_Or_Continue(OUT))
                 return_thrown (OUT);
-            if (broke)
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             // continue acts like body evaluated to its argument, see [1]
@@ -2025,11 +2021,10 @@ REBNATIVE(while)
         }
 
         if (Do_Branch_Throws(OUT, body, SPARE)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke))
+            if (not Try_Catch_Break_Or_Continue(OUT))
                 return_thrown (OUT);
 
-            if (broke)
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument

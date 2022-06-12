@@ -189,12 +189,12 @@ REBNATIVE(reduce_each)
         Move_Cell(CTX_VAR(context, 1), SPARE);
 
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            bool broke;
-            if (not Catching_Break_Or_Continue(OUT, &broke)) {
+            if (not Try_Catch_Break_Or_Continue(OUT)) {
                 Abort_Frame(f);
                 return_thrown (OUT);
             }
-            if (broke)
+
+            if (Is_Breaking_Null(OUT))
                 return nullptr;
 
             if (Is_Void(OUT))  // CONTINUE w/no argument
