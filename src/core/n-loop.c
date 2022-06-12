@@ -1982,7 +1982,7 @@ REBNATIVE(until)
 //
 //  {So long as a condition is truthy, evaluate the body}
 //
-//      return: "Last body result, or null if BREAK"
+//      return: "Void if body never run, else last body result, null if BREAK"
 //          [<opt> <void> any-value!]
 //      condition [<const> block!]
 //      body [<const> block! action!]
@@ -1991,7 +1991,7 @@ REBNATIVE(until)
 REBNATIVE(while)
 //
 // 1. It was considered if `while true [...]` should infinite loop, and then
-//    `while false [...]` never ran.  However, that could lead to accidents of
+//    `while false [...]` never ran.  However, that could lead to accidents
 //    like `while x > 10 [...]` instead of `while [x > 10] [...]`.  It is
 //    probably safer to require a BLOCK! vs. falling back on such behaviors.
 //
@@ -2017,40 +2017,61 @@ REBNATIVE(while)
 //    We don't want that to evaluate to NULL--because NULL is reserved for
 //    signaling BREAK.  So the result of a body with a CONTINUE in it will be
 //    turned from null to a ~null~ isotope.  Similarly, void results are
-//    reserved for when the body never runs--so they're  turned into none (~)
+//    reserved for when the body never runs--so they're turned into none (~)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
     REBVAL *condition = ARG(condition);  // condition is BLOCK! only, see [1]
     REBVAL *body = ARG(body);
 
-    assert(Is_Void(SPARE));
+    enum {
+        ST_WHILE_INITIAL_ENTRY = 0,
+        ST_WHILE_EVALUATING_CONDITION,
+        ST_WHILE_EVALUATING_BODY
+    };
 
-    while (true) {
-        if (Do_Any_Array_At_Throws(SPARE, condition, SPECIFIED))
-            return THROWN;  // break/continue in body only, see [2]
-
-        if (Is_Void(SPARE))
-            continue;  // restart loop when condition vanishes, see [3]
-
-        if (IS_FALSEY(SPARE)) {  // falsey condition => return last body result
-            if (Is_Stale(OUT))
-                return VOID;  // body never ran, so no result to return!
-
-            return_branched (OUT);
-        }
-
-        if (Do_Branch_Throws(OUT, body, SPARE)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
-                return THROWN;
-
-            if (Is_Breaking_Null(OUT))
-                return nullptr;
-
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_None(OUT);
-        }
+    switch (STATE) {
+      case ST_WHILE_INITIAL_ENTRY : goto evaluate_condition;
+      case ST_WHILE_EVALUATING_CONDITION : goto condition_was_evaluated;
+      case ST_WHILE_EVALUATING_BODY : goto body_was_evaluated;
+      default: assert(false);
     }
 
-    // ~unreachable~
-}
+  evaluate_condition: {  /////////////////////////////////////////////////////
+
+    STATE = ST_WHILE_EVALUATING_CONDITION;
+    continue_uncatchable (SPARE, condition, END);  // ignore BREAKs, see [2]
+
+} condition_was_evaluated: {  ////////////////////////////////////////////////
+
+    if (Is_Void(SPARE))
+        goto evaluate_condition;  // skip body, see [3]
+
+    if (Is_Isotope(SPARE))
+        fail (Error_Bad_Isotope(SPARE));
+
+    if (IS_FALSEY(SPARE)) {  // falsey condition => return last body result
+        if (Is_Stale(OUT))
+            return VOID;  // body never ran, so no result to return!
+
+        return_branched (OUT);  // see [4]
+    }
+
+    STATE = ST_WHILE_EVALUATING_BODY;  // body result => OUT
+    continue_catchable_branch (OUT, body, SPARE);  // catch break & continue
+
+} body_was_evaluated: {  /////////////////////////////////////////////////////
+
+    if (THROWING) {
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            return THROWN;
+
+        if (Is_Breaking_Null(OUT))
+            return nullptr;
+
+        if (Is_Void(OUT))  // CONTINUE with no argument
+            Init_None(OUT);
+    }
+
+    goto evaluate_condition;
+}}
