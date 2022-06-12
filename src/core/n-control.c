@@ -1093,65 +1093,85 @@ REBNATIVE(switch)
 //          [set-group! set-word! set-tuple!]  ; to left of DEFAULT
 //      :branch "If target needs default, this is evaluated and stored there"
 //          [any-branch!]
-//      /predicate "Test beyond null/void for defaulting, else NOT BLANK?"
+//      /predicate "Test beyond null/unset for defaulting, else NOT BLANK?"
 //          [action!]
 //  ]
 //
 REBNATIVE(default)
+//
+// 1. The TARGET may be something like a TUPLE! that contains GROUP!s.  This
+//    could put us at risk of double-evaluation if we do a GET to check the
+//    variable--find it's unset--and then use that tuple again.  GET and SET
+//    have an answer for this problem in the form of giving back a block of
+//    `steps` which can resolve the variable without doing more evaluations.
+//
+// 2. Usually we only want to consider variables with states that are known
+//    to mean "emptiness" as candidates for overriding.  We go with NULL and
+//    NONE (the ~ isotope, which is an unset variable.
 {
     INCLUDE_PARAMS_OF_DEFAULT;
 
     REBVAL *target = ARG(target);
-
+    REBVAL *branch = ARG(branch);
     REBVAL *predicate = ARG(predicate);
 
-    REBVAL *steps = SPARE;
+    REBVAL *steps = ARG(return);  // reuse slot to save resolved steps, see [1]
 
-    // The TARGET may be something like a TUPLE! that contains GROUP!s, or a
-    // SET-GROUP!.  When we ask for `steps` back from Get, it will give a
-    // block back that has the evaluations processed out and can be used for
-    // the SET without doing a double evaluation.
-    //
-    if (Get_Var_Core_Throws(OUT, steps, target, SPECIFIED))
-        return THROWN;
+    enum {
+        ST_DEFAULT_INITIAL_ENTRY = 0,
+        ST_DEFAULT_GETTING_TARGET,
+        ST_DEFAULT_RUNNING_PREDICATE,
+        ST_DEFAULT_EVALUATING_BRANCH
+    };
 
-    // We only consider those bad words which are in the "unfriendly" state
-    // that the system also knows to mean "emptiness" as candidates for
-    // overriding.  That's ~ isotopes at the moment.  Note that friendly ones
-    // do not count:
-    //
-    //     >> x: first [~]
-    //     == ~
-    //
-    //     >> x: default [10]
-    //     == ~
-    //
-    bool overwrite;
-    if (Is_Isotope(OUT))
-        overwrite = Is_None(OUT);
-    else
-        overwrite = IS_NULLED(OUT) or IS_BLANK(OUT);
-
-    if (not overwrite) {
-        if (not REF(predicate)) {  // no custom additional constraint
-            return OUT;  // count it as "already set"
-        }
-        else {
-            if (rebUnboxLogic(predicate, rebQ(OUT)))  // rebTruthy() ?
-                return OUT;
-        }
+    switch (STATE) {
+      case ST_DEFAULT_INITIAL_ENTRY: goto initial_entry;
+      case ST_DEFAULT_GETTING_TARGET: assert(false); break;  // !!! TBD
+      case ST_DEFAULT_RUNNING_PREDICATE: goto predicate_result_in_spare;
+      case ST_DEFAULT_EVALUATING_BRANCH: goto branch_result_in_spare;
+      default: assert(false);
     }
 
-    if (Do_Branch_Throws(OUT, ARG(branch), END))
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    if (Get_Var_Core_Throws(OUT, steps, target, SPECIFIED))  // see [1]
         return THROWN;
 
-    if (Set_Var_Core_Throws(SPARE, nullptr, steps, SPECIFIED, OUT)) {
+    if (not IS_NULLED(predicate)) {
+        STATE = ST_DEFAULT_RUNNING_PREDICATE;
+        continue_uncatchable(SPARE, predicate, OUT);
+    }
+
+    if (Is_Isotope(OUT)) {
+        if (not Is_None(OUT))
+            return OUT;  // consider it a "value", see [2]
+    }
+    else if (not IS_NULLED(OUT) and not IS_BLANK(OUT))  // also see [2]
+        return OUT;
+
+    STATE = ST_DEFAULT_EVALUATING_BRANCH;
+    continue_uncatchable(SPARE, branch, OUT);
+
+} predicate_result_in_spare: {  //////////////////////////////////////////////
+
+    if (Is_Isotope(SPARE))
+        fail (Error_Bad_Isotope(SPARE));
+
+    if (IS_TRUTHY(SPARE))
+        return OUT;
+
+    STATE = ST_DEFAULT_EVALUATING_BRANCH;
+    continue_uncatchable(SPARE, branch, OUT);
+
+} branch_result_in_spare: {  /////////////////////////////////////////////////
+
+    if (Set_Var_Core_Throws(OUT, nullptr, steps, SPECIFIED, SPARE)) {
         assert(false);  // shouldn't be able to happen.
         fail (Error_No_Catch_For_Throw(FRAME));
     }
 
-    return OUT;
-}
+    return_value (SPARE);
+}}
 
 
 //
