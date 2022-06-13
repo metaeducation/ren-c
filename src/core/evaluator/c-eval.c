@@ -290,6 +290,12 @@ REB_R Evaluator_Executor(REBFRM *f)
         f_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
+      case ST_EVALUATOR_RUNNING_GROUP : goto group_result_in_spare;
+
+      case ST_EVALUATOR_RUNNING_META_GROUP :
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
+        goto lookahead;
+
       case ST_EVALUATOR_RUNNING_ACTION :
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         goto lookahead;
@@ -742,76 +748,83 @@ REB_R Evaluator_Executor(REBFRM *f)
         break;
 
 
-    //=//// GROUP! ////////////////////////////////////////////////////////=//
+    //=//// GROUP! and GET-GROUP! /////////////////////////////////////////=//
     //
-    // A GROUP! whose contents wind up vaporizing wants to be invisible:
+    // Groups simply evaluate their contents, and will evaluate to void if
+    // the contents completely disappear.
     //
-    //     >> 1 + 2 ()
-    //     == 3
+    // GET-GROUP! currently acts as a synonym for group, see [1].
     //
-    //     >> 1 + 2 (comment "hi")
-    //     == 3
+    //////////////////////////////////////////////////////////////////////////
     //
-    // But there's a limit with group invisibility and enfix.  A single step
-    // of the evaluator only has one lookahead, because it doesn't know if it
-    // wants to evaluate the next thing or not:
+    // 1. It was initially theorized that `:(x)` would act a shorthand for the
+    //   expression `get x`.  But that's already pretty short--and arguably a
+    //   cleaner way of saying the same thing.  Making it a synonym for GROUP!
+    //   seems wasteful on the surface, but it means dialects can be free to
+    //   use it to make a distinction--like escaping soft-quoted slots.
     //
-    //     >> evaluate [1 (2) + 3]
-    //     == [(2) + 3]  ; takes one step...so next step will add 2 and 3
+    // 2. A group can vanish, leaving what was to the left of it stale:
     //
-    //     >> evaluate [1 (comment "hi") + 3]
-    //     == [(comment "hi") + 3]  ; next step errors: + has no left argument
+    //        >> 1 + 2 (comment "hi") * 3
+    //        ** Error: The 3 is stale
     //
-    // It is supposed to be possible for DO to be implemented as a series of
-    // successive single EVALUATE steps, giving no input beyond the block.  So
-    // that means even though the `OUT` may technically still hold bits of
-    // the last evaluation such that `do [1 (comment "hi") + 3]` *could* draw
-    // from them to give a left hand argument, it should not do so...and it's
-    // why those bits are marked "stale".
+    //    But some evaluation clients (like ALL) need to know the difference
+    //    between when a result wasn't overwritten, or when it was overwritten
+    //    with a stale value, e.g.
     //
-    // The right of the operator is different story.  Turning up no result,
-    // the group can just invoke a reevaluate without breaking any rules:
+    //        all [10 (comment "hi")] => 10
+    //        all [10 (20 comment "hi")] => 20
     //
-    //     >> evaluate [1 + (2) 3]
-    //     == [3]
-    //
-    //     >> evaluate [1 + (comment "hi") 3]
-    //     == []
-    //
-    // This subtlety means running a GROUP! must be able to notice when no
-    // result was produced (an output of END) and then re-trigger a step in
-    // the parent frame, e.g. to pick up the 3 above.
+    //    If we evaluated the GROUP! into the OUT cell overlapping with the
+    //    previous result, the stale bit alone wouldn't tell us which situation
+    //    we had.  So we evaluate into the SPARE cell to discern.  (We could
+    //    also mark the out cell with some other bit, if one were available?)
 
-      case REB_META_GROUP: {
-        f_next_gotten = nullptr;  // arbitrary code changes fetched variables
-
-        RESET(OUT);  // guaranteed to overwrite out, not transparent
-        if (Do_Any_Array_At_Throws(OUT, f_current, f_specifier))
-            goto return_thrown;
-        Reify_Eval_Out_Meta(OUT);
-        break; }
-
-    eval_group:
+      case REB_GET_GROUP:  // synonym for GROUP!, see [1]
       case REB_GROUP: {
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
-        // We want to allow *non* ^META groups to be transparent if it's
-        // invisible, e.g. `1 + 2 (comment "hi")` is 3.  We also don't want
-        // the 2 in that case to be able to be legal as the input to an enfix
-        // operation--so it has to stay stale.
-        //
-        // It seems we have to target a new cell, as otherwise we can't tell
-        // the difference of `(20 (comment "hi")` and `(10 (20 comment "hi"))`
-        // by just the stale flag on OUT alone.
-        //
-        if (Do_Any_Array_At_Throws(SPARE, f_current, f_specifier))
-            goto return_thrown;
+        DECLARE_FRAME_AT_CORE (
+            subframe,
+            f_current,
+            f_specifier,
+            EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END
+        );
+        Push_Frame(RESET(SPARE), subframe);
+
+        STATE = ST_EVALUATOR_RUNNING_GROUP;  // must target spare, see [2]
+        continue_subframe (subframe);
+
+      } group_result_in_spare: {  ////////////////////////////////////////////
 
         if (not Is_Void(SPARE))
             Move_Cell(OUT, SPARE);
         else
             assert(Is_Stale(OUT));
+
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
+
+
+    //=//// META-GROUP! ///////////////////////////////////////////////////=//
+    //
+    // A META-GROUP! simply gives the meta form of its evaluation.  Unlike the
+    // GROUP! and GET-GROUP!, it doesn't need to be concerned about staleness
+    // as it always overwrites the result.
+
+      case REB_META_GROUP: {
+        f_next_gotten = nullptr;  // arbitrary code changes fetched variables
+
+        DECLARE_FRAME_AT_CORE (
+            subframe,
+            f_current,
+            f_specifier,
+            EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END | EVAL_FLAG_META_RESULT
+        );
+        Push_Frame(RESET(OUT), subframe);
+
+        STATE = ST_EVALUATOR_RUNNING_META_GROUP;
+        continue_subframe (subframe); }
 
 
     //=//// TUPLE! /////////////////////////////////////////////////////////=//
@@ -1093,19 +1106,6 @@ REB_R Evaluator_Executor(REBFRM *f)
 
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break;
-
-
-    //=//// GET-GROUP! ////////////////////////////////////////////////////=//
-    //
-    // This was initially conceived such that `:(x)` was a shorthand for the
-    // expression `get x`.  But that's already pretty short--and arguably a
-    // cleaner way of saying the same thing.  So instead, it's given the same
-    // meaning in the evaluator as plain GROUP!...which seems wasteful on the
-    // surface, but it means dialects can be free to use it to make a
-    // distinction.  For instance, it's used to escape soft quoted slots.
-
-      case REB_GET_GROUP:
-        goto eval_group;
 
 
     //=//// GET-BLOCK! ////////////////////////////////////////////////////=//

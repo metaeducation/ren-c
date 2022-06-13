@@ -23,10 +23,16 @@
     insert/only tail of last fact fact
     24 = eval fact
 )
+
 ; infinite recursion
-[#1665 (
-    fact: to group! []
-    insert/only fact fact
-    e: trap [eval fact]
-    e.id = 'stack-overflow
+; Ren-C has "stackless" recursion of GROUP! execution, so it can go to high
+; numbers without exceeding the underlying system stack (e.g. the "C stack")
+; (this means stack overflow errors vs. infinite loops or out of memory
+; errors is a policy decision, which could utilize a counter the user sets)
+;
+[#859 #1665 (
+    n: 0
+    fact: to group! [n: n + 1 if n = 10000 [throw <done>]]
+    append/only fact fact
+    <done> = catch [eval fact]
 )]
