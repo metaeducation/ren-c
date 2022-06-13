@@ -119,75 +119,66 @@
 #endif
 
 
-// SET-WORD!, SET-PATH!, SET-GROUP!, and SET-BLOCK! all want to do roughly
-// the same thing as the first step of their evaluation.  They evaluate the
-// right hand side into f->out.
 //
-// -but- because you can be asked to evaluate something like `x: y: z: ...`,
-// there could be any number of SET-XXX! before the value to assign is found.
-//
-// This inline function attempts to keep that stack by means of the local
-// variable `v`, if it points to a stable location.  If so, it simply reuses
-// the frame it already has.
+// SET-WORD! and SET-TUPLE! want to do roughly the same thing as the first step
+// of their evaluation.  They evaluate the right hand side into f->out.
 //
 // What makes this slightly complicated is that the current value may be in
 // a place that doing a Fetch_Next_In_Frame() might corrupt it.  This could
 // be accounted for by pushing the value to some other stack--e.g. the data
-// stack.  But for the moment this (uncommon?) case uses a new frame.
+// stack.  That would mean `x: y: z: ...` would only accrue one cell of
+// space for each level instead of one whole frame.
 //
-inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(REBFRM *f)
+// But for the moment, a new frame is used each time.
+//
+//////////////////////////////////////////////////////////////////////////////
+//
+// 1. Using a SET-XXX! means you always have at least two elements; it's like
+//    an arity-1 function.  `1 + x: whatever ...`.  This overrides the no
+//    lookahead behavior flag right up front.
+//
+// 2. Beyond the trick for `>-`, output should not be visible to the assign:
+//
+//     >> (1 + 2 x: comment "x should not be three")
+//     == ~  ; isotope
+//
+//    So all rightward evaluations set the output to end.  Note that any
+//    enfix quoting operators that would quote backwards to see the `x:` would
+//    have intercepted it during a lookahead...pre-empting any of this code.
+//
+// 3. If current is pointing into the lookback buffer or the fetched value,
+//    it will not work to hold onto this pointer while evaluating the right
+//    hand side.  The old stackless build wrote current into the spare and
+//    restored it in the state switch().  Did this ever happen?
+//
+inline static REBFRM *Maybe_Rightward_Continuation_Needed(REBFRM *f)
 {
-    // This flag is used for enfix processing, but it's also applied as an
-    // internal trick to make SHOVE (>-) work:
-    //
-    //    >> 10 >- x:
-    //    == 10
-    //
-    //    >> x
-    //    == 10
-    //
-    if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))  {
+    if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))  {  // e.g. `10 -> x:`
         CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
-        CLEAR_CELL_FLAG(OUT, UNEVALUATED);  // this helper counts as eval
-        return false;
+        CLEAR_CELL_FLAG(f->out, UNEVALUATED);  // this helper counts as eval
+        return nullptr;
     }
 
-    // Beyond the trick for `>-` the output cell should not be visible to the
-    // assignment:
-    //
-    //    >> (1 + 2 x: comment "x should not be three")
-    //    == <the prior value of X, cool feature!, awesome used with MAYBE!>
-    //
-    // So all rightward evaluations set the output to end.  Note that any
-    // enfix quoting operators that would quote backwards to see the `x:` would
-    // have intercepted it during a lookahead...pre-empting this code.
-    //
-    RESET(OUT);
-
-    if (IS_END(f_next)) {
-        if (IS_META(f_current))  // allow (@), case makes END into ~void~
-            return false;
-
-        // `do [x:]`, `do [o.x:]`, etc. are illegal
+    if (IS_END(f_next))  // `do [x:]`, `do [o.x:]`, etc. are illegal
         fail (Error_Need_Non_End(f_current));
-    }
 
-    // Using a SET-XXX! means you always have at least two elements; it's like
-    // an arity-1 function.  `1 + x: whatever ...`.  This overrides the no
-    // lookahead behavior flag right up front.
-    //
-    CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+    CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);  // always >= 2 elements, see [1]
+
+    RESET(OUT);  // all SET-XXX! overwrite out, see [2]
 
     REBFLGS flags = EVAL_MASK_DEFAULT
             | (f->flags.bits & EVAL_FLAG_FULFILLING_ARG);  // if f was, we are
 
-    if (Eval_Step_In_Subframe_Throws(OUT, f, flags))
-        return true;
+    if (Did_Init_Inert_Optimize_Complete(OUT, f->feed, &flags))
+        return nullptr;  // If eval not hooked, ANY-INERT! may not need a frame
 
-    assert(not Is_Stale(OUT));
+    DECLARE_FRAME (subframe, f->feed, flags);  // inert optimize adjusts flags
+    Push_Frame(OUT, subframe);
 
-    CLEAR_CELL_FLAG(OUT, UNEVALUATED);  // this helper counts as eval
-    return false;
+    assert(f_current != &f->feed->lookback);  // are these possible?  see [3]
+    assert(f_current != &f->feed->fetched);
+
+    return subframe;
 }
 
 
@@ -295,6 +286,10 @@ REB_R Evaluator_Executor(REBFRM *f)
       case ST_EVALUATOR_RUNNING_META_GROUP :
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         goto lookahead;
+
+      case ST_EVALUATOR_SET_WORD_RIGHTSIDE : goto set_word_rightside_in_out;
+
+      case ST_EVALUATOR_SET_TUPLE_RIGHTSIDE : goto set_tuple_rightside_in_out;
 
       case ST_EVALUATOR_RUNNING_ACTION :
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
@@ -653,22 +648,40 @@ REB_R Evaluator_Executor(REBFRM *f)
     // Right side is evaluated into `out`, and then copied to the variable.
     //
     // Null and void assigns are allowed: https://forum.rebol.info/t/895/4
+    //
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // 1. Void unsets the variable, and propagates a none signal, instead of
+    //    a void.  This maintains `y: x: (...)` where y = x afterward:
+    //
+    //        >> x: comment "hi"
+    //        == ~  ; isotope
+    //
+    //        >> get/any 'x
+    //        == ~  ; isotope
+    //
+    // 2. Running functions flushes the f_next_gotten cache.  But a plain
+    //    assignment can cause trouble too:
+    //
+    //        >> x: <before> x: 1 x
+    //                            ^-- x value was cached in infix lookahead
+    //
+    //    It used to not be a problem, when variables didn't just pop into
+    //    existence or have their caching states changed.  But INDEX_ATTACHED
+    //    and the various complexities involved with that means we have to
+    //    flush here if the symbols match.
 
       case REB_SET_WORD: {
-        if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f))  // see notes
-            goto return_thrown;
+        REBFRM *subframe = Maybe_Rightward_Continuation_Needed(f);
+        if (not subframe)
+            goto set_word_rightside_in_out;
 
-        if (Is_Void(OUT)) {
-            //
-            // Unset the variable.  We also propagate a none signal, instead of
-            // a void.  This maintains `y: x: (...)` where y = x afterward.
-            //
-            //    >> x: comment "hi"
-            //    == ~  ; isotope
-            //
-            //    >> get/any 'x
-            //    == ~  ; isotope
-            //
+        STATE = ST_EVALUATOR_SET_WORD_RIGHTSIDE;
+        continue_subframe (subframe);  // throws not caught
+
+      } set_word_rightside_in_out: {  ////////////////////////////////////////
+
+        if (Is_Void(OUT)) {  // unset variable, see [1]
             Init_None(Sink_Word_May_Fail(f_current, f_specifier));
             Init_None(OUT);
         }
@@ -676,30 +689,17 @@ REB_R Evaluator_Executor(REBFRM *f)
             if (REB_ACTION == VAL_TYPE_UNCHECKED(OUT))  // isotopes ok
                 INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
 
-            // Decay the isotope in variable, but don't decay overall result!
-            //
             Copy_Cell(
                 Sink_Word_May_Fail(f_current, f_specifier),
                 Pointer_To_Decayed(OUT)
             );
         }
 
-        // Running functions flushes the f_next_gotten cache.  But a plain
-        // assignment can cause trouble too, if it doesn't trigger a function
-        // call:
-        //
-        //     >> x: <before> x: 1 x
-        //                         ^-- x value was cachedd in infix lookahead
-        //
-        // It used to not be a problem, when variables didn't just pop into
-        // existence or have their caching states changed.  But INDEX_ATTACHED
-        // and the various complexities involved with that means we have to
-        // flush here if the symbols match.
-        //
-        if (f_next_gotten)
+        if (f_next_gotten)  // cache can tamper with lookahead, see [2]
             if (VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(f_current))
                 f_next_gotten = nullptr;
 
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
 
 
@@ -996,7 +996,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                 "wait 3"
             );
         }
-        goto set_common; }
+        goto generic_set_common; }
 
 
     //=//// SET-TUPLE! /////////////////////////////////////////////////////=//
@@ -1017,11 +1017,17 @@ REB_R Evaluator_Executor(REBFRM *f)
     //
     // Isotope and NULL assigns are allowed: https://forum.rebol.info/t/895/4
 
-      set_common:
-      case REB_SET_GROUP:
+    generic_set_common: //////////////////////////////////////////////////////
+
       case REB_SET_TUPLE: {
-        if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f))
-            goto return_thrown;
+        REBFRM *subframe = Maybe_Rightward_Continuation_Needed(f);
+        if (not subframe)
+            goto set_tuple_rightside_in_out;
+
+        STATE = ST_EVALUATOR_SET_TUPLE_RIGHTSIDE;
+        continue_subframe (subframe);  // throws not caught
+
+      } set_tuple_rightside_in_out: {  ///////////////////////////////////////
 
         if (Is_Void(OUT)) {  // ^-- also see REB_SET_WORD
             if (Set_Var_Core_Throws(
@@ -1051,6 +1057,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                 goto return_thrown;
             }
         }
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
 
 
