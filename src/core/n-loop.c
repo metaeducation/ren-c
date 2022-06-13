@@ -396,495 +396,6 @@ REBVAL *Real_Var_From_Pseudo(REBVAL *pseudo_var) {
 }
 
 
-struct Loop_Each_State {
-    REBVAL *out;  // where to write the output data (must be GC safe)
-    const REBVAL *body;  // body to run on each loop iteration
-    LOOP_MODE mode;  // FOR-EACH, MAP-EACH, EVERY
-    REBCTX *pseudo_vars_ctx;  // vars made by Virtual_Bind_To_New_Context()
-    REBVAL *data;  // the data argument passed in
-    const REBSER *data_ser;  // series data being enumerated (if applicable)
-    EVARS evars;
-    REBSPC *specifier;  // specifier (if applicable)
-    REBLEN data_idx;  // index into the data for filling current variable
-    REBLEN data_len;  // length of the data
-};
-
-// Isolation of central logic for FOR-EACH, MAP-EACH, and EVERY so that it
-// can be rebRescue()'d in case of failure (to remove SERIES_INFO_HOLD, etc.)
-//
-// Returns nullptr or R_THROWN, where the relevant result is in les->out.
-// (That result may be IS_NULLED() if there was a break during the loop)
-//
-static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
-
-    assert(IS_BLOCK(les->body) or IS_META_BLOCK(les->body));
-
-    bool more_data = true;
-
-    assert(Is_Stale(les->out));  // return_void requires stale to work
-
-    do {
-        // Sub-loop: set variables.  This is a loop because blocks with
-        // multiple variables are allowed, e.g.
-        //
-        //      >> for-each [a b] [1 2 3 4] [-- a b]]
-        //      -- a: 1 b: 2
-        //      -- a: 3 b: 4
-        //
-        // ANY-CONTEXT! and MAP! allow one var (keys) or two vars (keys/vals)
-        //
-        const REBVAR *pseudo_tail;
-        REBVAL *pseudo_var = CTX_VARS(&pseudo_tail, les->pseudo_vars_ctx);
-        for (; pseudo_var != pseudo_tail; ++pseudo_var) {
-            REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
-
-            // Even if data runs out, we could still have one last loop body
-            // incarnation to run...with some variables unset.  Null those
-            // variables here.
-            //
-            //     >> for-each [x y] [1] [-- x y]
-            //     -- x: 1 y: \null\  ; Seems like an okay rendering
-            //
-            if (not more_data) {
-                Init_Nulled(var);
-                continue;
-            }
-
-            enum Reb_Kind kind = VAL_TYPE(les->data);
-            switch (kind) {
-              case REB_BLOCK:
-              case REB_SET_BLOCK:
-              case REB_GET_BLOCK:
-              case REB_META_BLOCK:
-              case REB_GROUP:
-              case REB_SET_GROUP:
-              case REB_GET_GROUP:
-              case REB_META_GROUP:
-              case REB_PATH:
-              case REB_SET_PATH:
-              case REB_GET_PATH:
-              case REB_META_PATH:
-              case REB_TUPLE:
-              case REB_SET_TUPLE:
-              case REB_GET_TUPLE:
-              case REB_META_TUPLE:
-                if (var)
-                    Derelativize(
-                        var,
-                        ARR_AT(ARR(les->data_ser), les->data_idx),
-                        les->specifier
-                    );
-                if (++les->data_idx == les->data_len)
-                    more_data = false;
-                break;
-
-              case REB_OBJECT:
-              case REB_ERROR:
-              case REB_PORT:
-              case REB_MODULE:
-              case REB_FRAME: {
-                if (var)
-                    Init_Any_Word_Bound(
-                        var,
-                        REB_WORD,
-                        VAL_CONTEXT(les->data),
-                        KEY_SYMBOL(les->evars.key),
-                        les->evars.index
-                    );
-
-                if (CTX_LEN(les->pseudo_vars_ctx) == 1) {
-                    //
-                    // Only wanted the key (`for-each key obj [...]`)
-                }
-                else if (CTX_LEN(les->pseudo_vars_ctx) == 2) {
-                    //
-                    // Want keys and values (`for-each key val obj [...]`)
-                    //
-                    ++pseudo_var;
-                    var = Real_Var_From_Pseudo(pseudo_var);
-                    Copy_Cell(var, les->evars.var);
-                }
-                else
-                    fail ("Loop enumeration of contexts must be 1 or 2 vars");
-
-                more_data = Did_Advance_Evars(&les->evars);
-
-                break; }
-
-              case REB_MAP: {
-                assert(les->data_idx % 2 == 0);  // should be on key slot
-
-                const REBVAL *key;
-                const REBVAL *val;
-                while (true) {  // pass over the unused map slots
-                    key = SPECIFIC(ARR_AT(ARR(les->data_ser), les->data_idx));
-                    ++les->data_idx;
-                    val = SPECIFIC(ARR_AT(ARR(les->data_ser), les->data_idx));
-                    ++les->data_idx;
-                    if (les->data_idx == les->data_len)
-                        more_data = false;
-                    if (not IS_NULLED(val))
-                        break;
-                    if (not more_data)
-                        goto finished;
-                } while (IS_NULLED(val));
-
-                if (var)
-                    Copy_Cell(var, key);
-
-                if (CTX_LEN(les->pseudo_vars_ctx) == 1) {
-                    //
-                    // Only wanted the key (`for-each key map [...]`)
-                }
-                else if (CTX_LEN(les->pseudo_vars_ctx) == 2) {
-                    //
-                    // Want keys and values (`for-each key val map [...]`)
-                    //
-                    ++pseudo_var;
-                    var = Real_Var_From_Pseudo(pseudo_var);
-                    Copy_Cell(var, val);
-                }
-                else
-                    fail ("Loop enumeration of contexts must be 1 or 2 vars");
-
-                break; }
-
-              case REB_BINARY: {
-                const REBBIN *bin = BIN(les->data_ser);
-                if (var)
-                    Init_Integer(var, BIN_HEAD(bin)[les->data_idx]);
-                if (++les->data_idx == les->data_len)
-                    more_data = false;
-                break; }
-
-              case REB_TEXT:
-              case REB_TAG:
-              case REB_FILE:
-              case REB_EMAIL:
-              case REB_URL:
-                if (var)
-                    Init_Char_Unchecked(
-                        var,
-                        GET_CHAR_AT(STR(les->data_ser), les->data_idx)
-                    );
-                if (++les->data_idx == les->data_len)
-                    more_data = false;
-                break;
-
-              case REB_ACTION: {
-                REBVAL *generated = rebValue(les->data);
-                if (generated) {
-                    if (var)
-                        Copy_Cell(var, generated);
-                    rebRelease(generated);
-                }
-                else {
-                    more_data = false;  // any remaining vars must be unset
-                    if (pseudo_var == CTX_VARS_HEAD(les->pseudo_vars_ctx)) {
-                        //
-                        // If we don't have at least *some* of the variables
-                        // set for this body loop run, don't run the body.
-                        //
-                        goto finished;
-                    }
-                    if (var)
-                        Init_Nulled(var);
-                }
-                break; }
-
-              default:
-                panic ("Unsupported type");
-            }
-        }
-
-        // !!! Throwing e.g. CONTINUE can overwrite the output, but we don't
-        // want that.  This is a good argument for making throws "out of band"
-        // so that processing mechanics that want to take advantage of "stale"
-        // cells don't need to make copies.  Review.
-
-        DECLARE_LOCAL (temp);
-        if (Do_Any_Array_At_Throws(temp, les->body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(temp, FS_TOP))
-                return R_THROWN;  // non-loop-related throw
-
-            if (Is_Breaking_Null(temp)) {
-                Init_Nulled(les->out);
-                return nullptr;
-            }
-        }
-
-        switch (les->mode) {
-          case LOOP_FOR_EACH:
-            if (Is_Void(temp)) {
-                //
-                //    for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
-                //
-                // It may seem tempting to drop out the last result:
-                //
-                //     for-each x [1 2 3] [if x = 3 [continue] x]  => 2
-                //
-                // But this is too difficult to deal with in loop compositions.
-                // We want to tell from the outside if a loop ran or not...
-                // that's more important than this esoteric feature.  And if
-                // you write something like FOR-BOTH with two FOR-EACH loops,
-                // the fact that the second loop would have to use some signal
-                // if all branches are erased would make it too difficult to
-                // drop out the prior result.
-                //
-                Init_None(les->out);
-            }
-            else {
-                Move_Cell(les->out, temp);
-                Isotopify_If_Nulled(les->out);
-                if (IS_META_BLOCK(les->body))
-                    Meta_Quotify(les->out);
-            }
-            break;
-
-          case LOOP_EVERY:
-            if (Is_Void(temp)) {
-                //
-                // In light of other tolerances in the system for voids, EVERY
-                // treats a void as "no vote", whether MAYBE is used or not.
-                //
-                // every x [1 2 3 4] [if odd? x [x]]  =>  [1 3]
-                //
-                // every x [1 2 3 4] [maybe if odd? x [x]]  => none (~) isotope
-                //
-                // every x [1 2 3 4] [comment "heavy"]  => none (~) isotope
-                //
-                // But it returns a none isotope (~) on the skipped bodies,
-                // as loop composition breaks down if we try to keep old values.
-                //
-                Init_None(les->out);
-            }
-            else {
-                // We don't decay isotopes here, for the reason we don't decay
-                // them in ALL/ANY etc:
-                //
-                //    every x [#[false] #[true]] [match logic! x]
-                //
-                // The ~false~ isotope here catches the misunderstanding by
-                // giving an error.  Conditional testing makes us care!
-                //
-                if (Is_Isotope(temp))
-                    fail (Error_Bad_Isotope(temp));
-
-                if (IS_FALSEY(temp)) {
-                    Init_Nulled(les->out);
-                }
-                else if (
-                    Is_Stale(les->out)
-                    or Is_None(les->out)  // saw a void last time
-                    or not IS_NULLED(les->out)  // null means we saw false
-                ){
-                    Move_Cell(les->out, temp);
-                    if (IS_META_BLOCK(les->body))
-                        Meta_Quotify(les->out);
-                }
-            }
-            break;
-
-          case LOOP_MAP_EACH:  // don't worry about stale les->out (unused)
-            //
-            // Here is where we would run a predicate to process the block
-            // result before appending.
-            //
-            /* Predicate(temp) */
-
-            if (Is_Void(temp)) {
-                //
-                // MAP rules are different because we aren't conditionally
-                // testing, so void scenarios should be okay to skip.
-                //
-                // map x each [1 2 3] [if even? x [x * 10]] => [20]
-                //
-                // map x each [1 2] [maybe if odd? x [x]] => [1]
-                //
-                continue;
-            }
-
-            Decay_If_Isotope(temp);
-            if (IS_META_BLOCK(les->body))
-                Meta_Quotify(temp);
-
-            if (IS_NULLED(temp))
-                Init_Isotope(temp, Canon(NULL));
-            if (Is_Isotope(temp))
-                fail (Error_Bad_Isotope(temp));
-
-            // !!! We use APPEND semantics on les->out; whatever APPEND does,
-            // we should do here.  Unify logic.
-
-            if (IS_BLANK(temp))
-                continue;
-
-            if (IS_QUOTED(temp)) {
-                Unquotify(temp, 1);
-                if (IS_NULLED(temp))
-                    Init_Bad_Word(DS_PUSH(), Canon(NULL));  // APPEND semantics
-                else
-                    Copy_Cell(DS_PUSH(), temp);
-            }
-            else if (ANY_THE_KIND(VAL_TYPE(temp))) {
-                Plainify(Copy_Cell(DS_PUSH(), temp));
-            }
-            else if (IS_BLOCK(temp)) {
-                const Cell *tail;
-                const Cell *v = VAL_ARRAY_AT(&tail, temp);
-                for (; v != tail; ++v)
-                    Derelativize(DS_PUSH(), v, VAL_SPECIFIER(temp));
-            }
-            else if (ANY_INERT(temp)) {
-                Copy_Cell(DS_PUSH(), temp);  // non nulls added to result
-            }
-            else
-                fail ("Cannot MAP evaluative values w/o QUOTE");
-
-            // MAP-EACH only changes les->out if BREAK
-            //
-            assert(Is_Stale(les->out));
-            break;
-        }
-    } while (more_data);
-
-  finished:;
-
-    // We use nullptr to signal the result is in out.  If we returned les->out
-    // it would be subject to the rebRescue() rules, and the loop could not
-    // return an ERROR! value normally.
-    //
-    return nullptr;
-}
-
-
-//
-//  Loop_Each_Throws: C
-//
-// Common implementation code of FOR-EACH, MAP-EACH, and EVERY.
-//
-// !!! This routine has been slowly clarifying since R3-Alpha, and can
-// likely be factored in a better way...pushing more per-native code into the
-// natives themselves.
-//
-static bool Loop_Each_Throws(REBFRM *frame_, LOOP_MODE mode)
-{
-    INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
-
-    if (ANY_SEQUENCE(ARG(data))) {
-        //
-        // !!! Temporarily turn any sequences into a BLOCK!, rather than
-        // worry about figuring out how to iterate optimized series.  Review
-        // as part of an overall vetting of "generic iteration" (which this
-        // is a poor substitute for).
-        //
-        REBVAL *block = rebValue("as block! @", ARG(data));
-        Copy_Cell(ARG(data), block);
-        rebRelease(block);
-    }
-
-    struct Loop_Each_State les;
-    les.mode = mode;
-    les.out = OUT;
-    les.data = ARG(data);
-    les.body = ARG(body);
-
-    Virtual_Bind_Deep_To_New_Context(
-        ARG(body),  // may be updated, will still be GC safe
-        &les.pseudo_vars_ctx,
-        ARG(vars)
-    );
-    Init_Object(ARG(vars), les.pseudo_vars_ctx);  // keep GC safe
-
-    // Extract the series and index being enumerated, based on data type
-
-    REB_R r;
-
-    bool took_hold;
-    if (IS_ACTION(les.data)) {
-        //
-        // The value is generated each time by calling the data action.
-        // Assign values to avoid compiler warnings.
-        //
-        les.data_ser = nullptr;
-        les.data_idx = 0;
-        les.data_len = 0;
-        took_hold = false;
-    }
-    else {
-        if (ANY_SERIES(les.data)) {
-            les.data_ser = VAL_SERIES(les.data);
-            les.data_idx = VAL_INDEX(les.data);
-            if (ANY_ARRAY(les.data))
-                les.specifier = VAL_SPECIFIER(les.data);
-            les.data_len = VAL_LEN_HEAD(les.data);  // has HOLD, won't change
-        }
-        else if (ANY_CONTEXT(les.data)) {
-            les.data_ser = CTX_VARLIST(VAL_CONTEXT(les.data));
-            Init_Evars(&les.evars, les.data);
-        }
-        else if (IS_MAP(les.data)) {
-            les.data_ser = MAP_PAIRLIST(VAL_MAP(les.data));
-            les.data_idx = 0;
-            les.data_len = SER_USED(les.data_ser);  // has HOLD, won't change
-        }
-        else
-            panic ("Illegal type passed to Loop_Each()");
-
-        // HOLD so length can't change
-
-        took_hold = NOT_SERIES_FLAG(les.data_ser, FIXED_SIZE);
-        if (took_hold)
-            SET_SERIES_FLAG(m_cast(REBSER*, les.data_ser), FIXED_SIZE);
-
-        if (ANY_CONTEXT(les.data)) {
-            if (not Did_Advance_Evars(&les.evars)) {
-                assert(Is_Stale(OUT));  // body never ran
-                r = nullptr;
-                goto cleanup;
-            }
-        }
-        else if (les.data_idx >= les.data_len) {
-            assert(Is_Stale(OUT));  // body never ran
-            r = nullptr;
-            goto cleanup;
-        }
-    }
-
-    // If there is a fail() and we took a SERIES_INFO_FIXED_SIZE, that hold
-    // needs to be released.  For this reason, the code has to trap errors.
-
-    r = rebRescue(cast(REBDNG*, &Loop_Each_Core), &les);
-
-    //=//// CLEANUPS THAT NEED TO BE DONE DESPITE ERROR, THROW, ETC. //////=//
-
-  cleanup:;
-
-    if (took_hold)  // release read-only lock
-        CLEAR_SERIES_FLAG(m_cast(REBSER*, les.data_ser), FIXED_SIZE);
-
-    if (IS_DATATYPE(les.data))  // must free temp array of instances
-        Free_Unmanaged_Series(m_cast(REBARR*, ARR(les.data_ser)));
-
-    if (ANY_CONTEXT(les.data))
-        Shutdown_Evars(&les.evars);
-
-    //=//// NOW FINISH UP /////////////////////////////////////////////////=//
-
-    if (r == R_THROWN)  // generic THROW/RETURN/QUIT (not BREAK/CONTINUE)
-        return true;
-
-    if (r) {
-        assert(IS_ERROR(r));
-        rebJumps ("fail", rebR(m_cast(REBVAL*, r)));
-    }
-
-    assert(r == nullptr);  // signals result is in les.out (a.k.a. OUT)
-
-    return false;
-}
-
-
 //
 //  cfor: native [
 //
@@ -1158,6 +669,472 @@ REBNATIVE(cycle)
     }
 
     DEAD_END;
+}
+
+void Clear_Evars(EVARS *evars) {
+    // don't really do anything, just stops warning
+    UNUSED(evars);
+}
+
+
+//
+//  Loop_Each_Throws: C
+//
+// Common implementation code of FOR-EACH, MAP-EACH, and EVERY.
+//
+// !!! This routine has been slowly clarifying since R3-Alpha, and can
+// likely be factored in a better way...pushing more per-native code into the
+// natives themselves.
+//
+static bool Loop_Each_Throws(REBFRM *frame_, LOOP_MODE mode)
+{
+    INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
+
+    assert(Is_Stale(OUT));  // return_void requires stale to work
+
+    REBVAL *data = ARG(data);
+    REBVAL *body = ARG(body);
+    assert(IS_BLOCK(body) or IS_META_BLOCK(body));
+
+    if (ANY_SEQUENCE(data)) {
+        //
+        // !!! Temporarily turn any sequences into a BLOCK!, rather than
+        // worry about figuring out how to iterate optimized series.  Review
+        // as part of an overall vetting of "generic iteration" (which this
+        // is a poor substitute for).
+        //
+        if (rebRunThrows(SPARE, "as block! @", data)) {
+            Move_Cell(OUT, SPARE);
+            return true;
+        }
+
+        Copy_Cell(data, SPARE);
+    }
+
+    const REBSER *series;  // series data being enumerated (if applicable)
+    EVARS evars;
+    Clear_Evars(&evars);
+    REBSPC *specifier = SPECIFIED;  // specifier (if applicable)
+    REBLEN index;  // index into the data for filling current variable
+    REBLEN len;  // length of the data
+
+    REBCTX *pseudo_vars_ctx;
+    Virtual_Bind_Deep_To_New_Context(
+        body,  // may be updated, will still be GC safe
+        &pseudo_vars_ctx,
+        ARG(vars)
+    );
+    Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
+
+    // Extract the series and index being enumerated, based on data type
+
+    bool threw = false;
+
+    // If there is a fail() and we took a SERIES_INFO_FIXED_SIZE, that hold
+    // needs to be released.  For this reason, the code has to trap errors.
+    //
+    bool took_hold;
+    bool more_data;
+
+    if (IS_ACTION(data)) {
+        //
+        // The value is generated each time by calling the data action.
+        // Assign values to avoid compiler warnings.
+        //
+        series = nullptr;
+        index = 0;  // not used
+        len = 0;  // not used
+        took_hold = false;
+        more_data = true;  // !!! Needs to do first call
+    }
+    else {
+        if (ANY_SERIES(data)) {
+            series = VAL_SERIES(data);
+            index = VAL_INDEX(data);
+            if (ANY_ARRAY(data))
+                specifier = VAL_SPECIFIER(data);
+            len = VAL_LEN_HEAD(data);  // has HOLD, won't change
+        }
+        else if (ANY_CONTEXT(data)) {
+            series = CTX_VARLIST(VAL_CONTEXT(data));
+            index = 0;  // not used
+            len = 0;  // not used
+            Init_Evars(&evars, data);
+        }
+        else if (IS_MAP(data)) {
+            series = MAP_PAIRLIST(VAL_MAP(data));
+            index = 0;
+            len = SER_USED(series);  // has HOLD, won't change
+        }
+        else
+            panic ("Illegal type passed to Loop_Each()");
+
+        // HOLD so length can't change
+
+        took_hold = NOT_SERIES_FLAG(series, FIXED_SIZE);
+        if (took_hold)
+            SET_SERIES_FLAG(m_cast(REBSER*, series), FIXED_SIZE);
+
+        if (ANY_CONTEXT(data)) {
+            more_data = Did_Advance_Evars(&evars);
+        }
+        else {
+            more_data = (index < len);
+        }
+    }
+
+    while (more_data) {
+        // Sub-loop: set variables.  This is a loop because blocks with
+        // multiple variables are allowed, e.g.
+        //
+        //      >> for-each [a b] [1 2 3 4] [-- a b]]
+        //      -- a: 1 b: 2
+        //      -- a: 3 b: 4
+        //
+        // ANY-CONTEXT! and MAP! allow one var (keys) or two vars (keys/vals)
+        //
+        const REBVAR *pseudo_tail;
+        REBVAL *pseudo_var = CTX_VARS(&pseudo_tail, pseudo_vars_ctx);
+        for (; pseudo_var != pseudo_tail; ++pseudo_var) {
+            REBVAL *var = Real_Var_From_Pseudo(pseudo_var);
+
+            if (not more_data) {
+                Init_Nulled(var);  // Y is null in `for-each [x y] [1] ...`
+                continue;  // the `for` variable acquisition loop
+            }
+
+            enum Reb_Kind kind = VAL_TYPE(data);
+            switch (kind) {
+              case REB_BLOCK:
+              case REB_SET_BLOCK:
+              case REB_GET_BLOCK:
+              case REB_META_BLOCK:
+              case REB_GROUP:
+              case REB_SET_GROUP:
+              case REB_GET_GROUP:
+              case REB_META_GROUP:
+              case REB_PATH:
+              case REB_SET_PATH:
+              case REB_GET_PATH:
+              case REB_META_PATH:
+              case REB_TUPLE:
+              case REB_SET_TUPLE:
+              case REB_GET_TUPLE:
+              case REB_META_TUPLE:
+                if (var)
+                    Derelativize(
+                        var,
+                        ARR_AT(ARR(series), index),
+                        specifier
+                    );
+                if (++index == len)
+                    more_data = false;
+                break;
+
+              case REB_OBJECT:
+              case REB_ERROR:
+              case REB_PORT:
+              case REB_MODULE:
+              case REB_FRAME: {
+                if (var)
+                    Init_Any_Word_Bound(
+                        var,
+                        REB_WORD,
+                        VAL_CONTEXT(data),
+                        KEY_SYMBOL(evars.key),
+                        evars.index
+                    );
+
+                if (CTX_LEN(pseudo_vars_ctx) == 1) {
+                    //
+                    // Only wanted the key (`for-each key obj [...]`)
+                }
+                else if (CTX_LEN(pseudo_vars_ctx) == 2) {
+                    //
+                    // Want keys and values (`for-each key val obj [...]`)
+                    //
+                    ++pseudo_var;
+                    var = Real_Var_From_Pseudo(pseudo_var);
+                    Copy_Cell(var, evars.var);
+                }
+                else {
+                    Init_Error(
+                        SPARE,
+                        Error_User(
+                            "Loop enumeration of contexts must be 1 or 2 vars"
+                        )
+                    );
+                    Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
+                    goto finalize_loop_each;
+                }
+
+                more_data = Did_Advance_Evars(&evars);
+                break; }
+
+              case REB_MAP: {
+                assert(index % 2 == 0);  // should be on key slot
+
+                const REBVAL *key;
+                const REBVAL *val;
+                while (true) {  // pass over the unused map slots
+                    key = SPECIFIC(ARR_AT(ARR(series), index));
+                    ++index;
+                    val = SPECIFIC(ARR_AT(ARR(series), index));
+                    ++index;
+                    if (index == len)
+                        more_data = false;
+                    if (not IS_NULLED(val))
+                        break;
+                    if (not more_data)
+                        goto finalize_loop_each;
+                } while (IS_NULLED(val));
+
+                if (var)
+                    Copy_Cell(var, key);
+
+                if (CTX_LEN(pseudo_vars_ctx) == 1) {
+                    //
+                    // Only wanted the key (`for-each key map [...]`)
+                }
+                else if (CTX_LEN(pseudo_vars_ctx) == 2) {
+                    //
+                    // Want keys and values (`for-each key val map [...]`)
+                    //
+                    ++pseudo_var;
+                    var = Real_Var_From_Pseudo(pseudo_var);
+                    Copy_Cell(var, val);
+                }
+                else
+                    fail ("Loop enumeration of contexts must be 1 or 2 vars");
+
+                break; }
+
+              case REB_BINARY: {
+                const REBBIN *bin = BIN(series);
+                if (var)
+                    Init_Integer(var, BIN_HEAD(bin)[index]);
+                if (++index == len)
+                    more_data = false;
+                break; }
+
+              case REB_TEXT:
+              case REB_TAG:
+              case REB_FILE:
+              case REB_EMAIL:
+              case REB_URL:
+                if (var)
+                    Init_Char_Unchecked(
+                        var,
+                        GET_CHAR_AT(STR(series), index)
+                    );
+                if (++index == len)
+                    more_data = false;
+                break;
+
+              case REB_ACTION: {
+                REBVAL *generated = rebValue(data);
+                if (generated) {
+                    if (var)
+                        Copy_Cell(var, generated);
+                    rebRelease(generated);
+                }
+                else {
+                    more_data = false;  // any remaining vars must be unset
+                    if (pseudo_var == CTX_VARS_HEAD(pseudo_vars_ctx)) {
+                        //
+                        // If we don't have at least *some* of the variables
+                        // set for this body loop run, don't run the body.
+                        //
+                        goto finalize_loop_each;
+                    }
+                    if (var)
+                        Init_Nulled(var);
+                }
+                break; }
+
+              default:
+                panic ("Unsupported type");
+            }
+        }
+
+        // We evaluate into SPARE instead of OUT because the loop handlers
+        // may give meaning to NULL evaluations of the body distinct from
+        // BREAK.  If the output cell becomes NULL, that means BREAK.
+        //
+        if (Do_Any_Array_At_Throws(SPARE, body, SPECIFIED)) {
+            if (not Try_Catch_Break_Or_Continue(SPARE, FRAME)) {
+                threw = true;  // non-loop-related throw or error
+                goto finalize_loop_each;
+            }
+
+            if (Is_Breaking_Null(SPARE)) {
+                Init_Nulled(OUT);
+                goto finalize_loop_each;
+            }
+        }
+
+        switch (mode) {
+          case LOOP_FOR_EACH:
+            if (Is_Void(SPARE)) {
+                //
+                //    for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
+                //
+                // It may seem tempting to drop out the last result:
+                //
+                //     for-each x [1 2 3] [if x = 3 [continue] x]  => 2
+                //
+                // But this is too difficult to deal with in loop compositions.
+                // We want to tell from the outside if a loop ran or not...
+                // that's more important than this esoteric feature.  And if
+                // you write something like FOR-BOTH with two FOR-EACH loops,
+                // the fact that the second loop would have to use some signal
+                // if all branches are erased would make it too difficult to
+                // drop out the prior result.
+                //
+                Init_None(OUT);
+            }
+            else {
+                Move_Cell(OUT, SPARE);
+                Isotopify_If_Nulled(OUT);
+                if (IS_META_BLOCK(body))
+                    Meta_Quotify(OUT);
+            }
+            break;
+
+          case LOOP_EVERY:
+            if (Is_Void(SPARE)) {
+                //
+                // In light of other tolerances in the system for voids, EVERY
+                // treats a void as "no vote", whether MAYBE is used or not.
+                //
+                // every x [1 2 3 4] [if odd? x [x]]  =>  [1 3]
+                //
+                // every x [1 2 3 4] [maybe if odd? x [x]]  => none (~) isotope
+                //
+                // every x [1 2 3 4] [comment "heavy"]  => none (~) isotope
+                //
+                // But it returns a none isotope (~) on the skipped bodies,
+                // as loop composition breaks down if we try to keep old values.
+                //
+                Init_None(OUT);
+            }
+            else {
+                // We don't decay isotopes here, for the reason we don't decay
+                // them in ALL/ANY etc:
+                //
+                //    every x [#[false] #[true]] [match logic! x]
+                //
+                // The ~false~ isotope here catches the misunderstanding by
+                // giving an error.  Conditional testing makes us care!
+                //
+                if (Is_Isotope(SPARE)) {
+                    Init_Error(SPARE, Error_Bad_Isotope(SPARE));
+                    Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
+                    goto finalize_loop_each;
+                }
+
+                if (IS_FALSEY(SPARE)) {
+                    Init_Nulled(OUT);
+                }
+                else if (
+                    Is_Stale(OUT)
+                    or Is_None(OUT)  // saw a void last time
+                    or not IS_NULLED(OUT)  // null means we saw false
+                ){
+                    Move_Cell(OUT, SPARE);
+                    if (IS_META_BLOCK(body))
+                        Meta_Quotify(OUT);
+                }
+            }
+            break;
+
+          case LOOP_MAP_EACH:  // don't worry about stale les->out (unused)
+            //
+            // Here is where we would run a predicate to process the block
+            // result before appending.
+            //
+            /* Predicate(temp) */
+
+            if (Is_Void(SPARE)) {
+                //
+                // MAP rules are different because we aren't conditionally
+                // testing, so void scenarios should be okay to skip.
+                //
+                // map x each [1 2 3] [if even? x [x * 10]] => [20]
+                //
+                // map x each [1 2] [maybe if odd? x [x]] => [1]
+                //
+                continue;
+            }
+
+            Decay_If_Isotope(SPARE);
+            if (IS_META_BLOCK(body))
+                Meta_Quotify(SPARE);
+
+            if (IS_NULLED(SPARE))
+                Init_Isotope(SPARE, Canon(NULL));
+            if (Is_Isotope(SPARE)) {
+                Init_Error(SPARE, Error_Bad_Isotope(SPARE));
+                Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
+                goto finalize_loop_each;
+            }
+
+            // !!! We use APPEND semantics on les->out; whatever APPEND does,
+            // we should do here.  Unify logic.
+
+            if (IS_BLANK(SPARE))
+                continue;
+
+            if (IS_QUOTED(SPARE)) {
+                Unquotify(SPARE, 1);
+                if (IS_NULLED(SPARE))
+                    Init_Bad_Word(DS_PUSH(), Canon(NULL));  // APPEND semantics
+                else
+                    Copy_Cell(DS_PUSH(), SPARE);
+            }
+            else if (ANY_THE_KIND(VAL_TYPE(SPARE))) {
+                Plainify(Copy_Cell(DS_PUSH(), SPARE));
+            }
+            else if (IS_BLOCK(SPARE)) {
+                const Cell *tail;
+                const Cell *v = VAL_ARRAY_AT(&tail, SPARE);
+                for (; v != tail; ++v)
+                    Derelativize(DS_PUSH(), v, VAL_SPECIFIER(SPARE));
+            }
+            else if (ANY_INERT(SPARE)) {
+                Copy_Cell(DS_PUSH(), SPARE);  // non nulls added to result
+            }
+            else {
+                Init_Error(
+                    SPARE,
+                    Error_User("Cannot MAP evaluative values w/o QUOTE")
+                );
+                Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
+                goto finalize_loop_each;
+            }
+
+            // MAP-EACH only changes OUT if BREAK
+            //
+            assert(Is_Stale(OUT));
+            break;
+        }
+    } while (more_data);
+
+
+    //=//// CLEANUPS THAT NEED TO BE DONE DESPITE ERROR, THROW, ETC. //////=//
+
+  finalize_loop_each:;
+
+    if (took_hold)  // release read-only lock
+        CLEAR_SERIES_FLAG(m_cast(REBSER*, series), FIXED_SIZE);
+
+    if (IS_DATATYPE(data))  // must free temp array of instances
+        Free_Unmanaged_Series(m_cast(REBARR*, ARR(series)));
+
+    if (ANY_CONTEXT(data))
+        Shutdown_Evars(&evars);
+
+    return threw;
 }
 
 
