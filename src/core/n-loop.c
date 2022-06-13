@@ -1226,60 +1226,237 @@ REBNATIVE(every)
 }
 
 
-// For important reasons of semantics and performance, the REMOVE-EACH native
-// does not actually perform removals "as it goes".  It could run afoul of
-// any number of problems, including the mutable series becoming locked during
-// the iteration.  Hence the iterated series is locked, and the removals are
-// applied all at once atomically.
 //
-// However, this means that there's state which must be finalized on every
-// possible exit path...be that BREAK, THROW, FAIL, or just ordinary finishing
-// of the loop.  That finalization is done by this routine, which will clean
-// up the state and remove any indicated items.  (It is assumed that all
-// forms of exit, including raising an error, would like to apply any
-// removals indicated thus far.)
+//  remove-each: native [
 //
-// Because it's necessary to intercept, finalize, and then re-throw any
-// fail() exceptions, rebRescue() must be used with a state structure.
+//  {Removes values for each block that returns true.}
 //
-struct Remove_Each_State {
-    REBVAL *out;
-    REBVAL *data;
-    REBSER *series;
-    const REBVAL *body;
-    REBCTX *context;
-    REBLEN start;
-    REB_MOLD *mo;
-};
-
-
-// See notes on Remove_Each_State
+//      return: [<opt> integer!]
+//          {Number of removed series items, or null if BREAK}
+//      :vars "Word or block of words to set each time, no new var if quoted"
+//          [blank! word! lit-word! block! group!]
+//      data [<blank> any-series! any-sequence! action!]
+//          "The series to traverse (modified)" ; should BLANK! opt-out?
+//      body [<const> block!]
+//          "Block to evaluate (return TRUE to remove)"
+//  ]
 //
-inline static REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
+REBNATIVE(remove_each)
+//
+// 1. For reasons of semantics and performance, REMOVE-EACH does not actually
+//    perform removals "as it goes".  It could run afoul of any number of
+//    problems, including the mutable series becoming locked during iteration.
+//    Hence the series is locked, and removals aren't applied until the end.
+//    However, this means that there's state which must be finalized on every
+//    possible exit path.  (Errors, throws, completion)
+//
+// 2. Updating arrays in place may not be better than pushing kept values to
+//    the data stack and then creating a precisely-sized output blob to swap as
+//    underlying memory for the array.  (Imagine a large array from which there
+//    are many removals, and the ensuing wasted space being left behind).  We
+//    use the method anyway, to test novel techinques and error handling.
+//
+// 3. For binaries and strings, we push new data as the loop runs.  Then at
+//    the end of the enumeration, the identity of the incoming series is kept
+//    but the new underlying data is poked into it--and the old data free.
+//
+// 4. When a BREAK happens there is no change applied to the series.  It is
+//    conceivable that might not be what people want--and that if they did
+//    want that, they would likely use a MAP-EACH or something to generate
+//    a new series.  However, NULL is reserved for when loops break, so there
+//    would not be a way to get the number of removals in this case.  Hence
+//    it is semantically easiest to say BREAK goes along with "no effect".
+//
+//    UPDATE: With multi-returns, the number of removals could be a secondary
+//    result.  It still feels a bit uncomfortable to have the result usually
+//    be the modified series, but then NULL if there's a BREAK.
+//
+// 5. We do not want to decay isotopes, e.g. if someone tried to say:
+//
+//        remove-each x [...] [n: null, ..., match [<opt> integer!] n]
+//
+//    The ~null~ isotope protects from having a condition you thought should be
+//    truthy come back NULL and be falsey.
+//
+// 6. Currently any "truthy" body result signals keeping the value.  But to be
+//    more coherent, limiting to LOGIC! might be a good idea.
+//
+// 7. We are reusing the mold buffer for BINARY!, but *not putting UTF-8 data*
+//    into it.  Revisit if this inhibits cool UTF-8 based tricks the mold
+//    buffer might do otherwise.
 {
-    assert(GET_SERIES_INFO(res->series, HOLD));
-    CLEAR_SERIES_INFO(res->series, HOLD);
+    INCLUDE_PARAMS_OF_REMOVE_EACH;
 
-    // If there was a BREAK, we return NULL to indicate that as part of
-    // the loop protocol.  This prevents giving back a return value of
-    // how many removals there were, so we don't do the removals.
+    REBVAL *data = ARG(data);
+    REBVAL *body = ARG(body);
 
-    REBLEN count = 0;
-    if (ANY_ARRAY(res->data)) {
-        if (Is_Breaking_Null(res->out)) {  // clean markers, don't do removals
+    if (not (
+        ANY_ARRAY(data) or ANY_STRING(data) or IS_BINARY(data)
+    )){
+        fail (PAR(data));  // !!! not generalized to IMAGE!, VECTOR!, etc.
+    }
+
+    REBSER *series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
+
+    if (VAL_INDEX(data) >= VAL_LEN_AT(data))  // past series end
+        return Init_Integer(OUT, 0);
+
+    REBCTX *context;
+    Virtual_Bind_Deep_To_New_Context(
+        body,  // may be updated, will still be GC safe
+        &context,
+        ARG(vars)
+    );
+    Init_Object(ARG(vars), context);  // keep GC safe
+
+    REBLEN start = VAL_INDEX(data);
+
+    DECLARE_MOLD (mo);
+    if (ANY_ARRAY(data)) {
+        //
+        // We're going to use NODE_FLAG_MARKED on the elements of data's
+        // array for those items we wish to remove later.  See [2]
+        //
+        TRASH_POINTER_IF_DEBUG(mo);
+    }
+    else {
+        // Generate a new data allocation, but then swap its underlying content
+        // to back the series we were given.  See [3]
+        //
+        Push_Mold(mo);
+    }
+
+    SET_SERIES_INFO(series, HOLD);  // disallow mutations until finalize
+
+    REBLEN len = ANY_STRING(data)
+        ? STR_LEN(STR(series))
+        : SER_USED(series);  // temp read-only, this won't change
+
+    bool threw = false;
+
+    REBLEN index = start;
+    while (index < len) {
+        assert(start == index);
+
+        const REBVAR *var_tail;
+        REBVAL *var = CTX_VARS(&var_tail, context);  // fixed (#2274)
+        for (; var != var_tail; ++var) {
+            if (index == len) {
+                Init_Nulled(var);  // Y on 2nd step of remove-each [x y] "abc"
+                continue;  // the `for` loop setting variables
+            }
+
+            if (ANY_ARRAY(data))
+                Derelativize(
+                    var,
+                    VAL_ARRAY_AT_HEAD(data, index),
+                    VAL_SPECIFIER(data)
+                );
+            else if (IS_BINARY(data)) {
+                REBBIN *bin = BIN(series);
+                Init_Integer(var, cast(REBI64, BIN_HEAD(bin)[index]));
+            }
+            else {
+                assert(ANY_STRING(data));
+                Init_Char_Unchecked(
+                    var,
+                    GET_CHAR_AT(STR(series), index)
+                );
+            }
+            ++index;
+        }
+
+        if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED)) {
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME)) {
+                threw = true;
+                goto finalize_remove_each;
+            }
+
+            if (Is_Breaking_Null(OUT)) {  // break semantics are no-op, see [4]
+                assert(start < len);
+                goto finalize_remove_each;
+            }
+        }
+
+        if (Is_Void(OUT)) {
+            start = index;
+            Init_None(OUT);  // void reserved for "loop never ran"
+            continue;  // keep requested, don't mark for culling
+        }
+
+        if (Is_Isotope(OUT)) {  // don't decay isotopes, see [5]
+            threw = true;
+            Init_Error(SPARE, Error_Bad_Isotope(OUT));
+            Init_Thrown_With_Label(FRAME, Lib(NULL), SPARE);
+            goto finalize_remove_each;
+        }
+
+        if (ANY_ARRAY(data)) {
+            if (IS_FALSEY(OUT)) {  // pure logic not required, see [6]
+                start = index;
+                continue;  // keep requested, don't mark for culling
+            }
+
+            do {
+                assert(start <= len);
+                SET_CELL_FLAG(  // v-- okay to mark despite read only
+                    m_cast(Cell*, ARR_AT(VAL_ARRAY(data), start)),
+                    NOTE_REMOVE
+                );
+                ++start;
+            } while (start != index);
+        }
+        else {
+            if (IS_TRUTHY(OUT)) {  // pure logic not required, see [6]
+                start = index;
+                continue;  // remove requested, don't save to buffer
+            }
+
+            do {
+                assert(start <= len);
+                if (IS_BINARY(data)) {
+                    REBBIN *bin = BIN(series);
+                    Append_Ascii_Len(
+                        mo->series,
+                        cs_cast(BIN_AT(bin, start)),
+                        1
+                    );
+                }
+                else {
+                    Append_Codepoint(
+                        mo->series,
+                        GET_CHAR_AT(STR(series), start)
+                    );
+                }
+                ++start;
+            } while (start != index);
+        }
+
+        Isotopify_If_Nulled(OUT);  // reserve NULL for BREAK
+    }
+
+    assert(start == len);  // normal completion (otherwise a `goto` happened)
+
+  finalize_remove_each: {  ///////////////////////////////////////////////////
+
+    REBLEN removals = 0;
+
+    assert(GET_SERIES_INFO(series, HOLD));
+    CLEAR_SERIES_INFO(series, HOLD);
+
+    if (ANY_ARRAY(data)) {
+        if (Is_Breaking_Null(OUT)) {  // clean markers, don't do removals
             const Cell *tail;
-            Cell *temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, res->data);
+            Cell *temp = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
             for (; temp != tail; ++temp) {
                 if (GET_CELL_FLAG(temp, NOTE_REMOVE))
                     CLEAR_CELL_FLAG(temp, NOTE_REMOVE);
             }
-            return 0;
+            goto done_finalizing;
         }
 
-        REBLEN len = VAL_LEN_HEAD(res->data);
-
         const Cell *tail;
-        Cell *dest = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, res->data);
+        Cell *dest = VAL_ARRAY_KNOWN_MUTABLE_AT(&tail, data);
         Cell *src = dest;
 
         // avoid blitting cells onto themselves by making the first thing we
@@ -1297,368 +1474,83 @@ inline static REBLEN Finalize_Remove_Each(struct Remove_Each_State *res)
             while (src != tail and GET_CELL_FLAG(src, NOTE_REMOVE)) {
                 ++src;
                 --len;
-                ++count;
+                ++removals;
             }
             if (src == tail) {
-                SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(res->data), len);
-                return count;
+                SET_SERIES_LEN(VAL_ARRAY_KNOWN_MUTABLE(data), len);
+                goto done_finalizing;
             }
             Copy_Cell(dest, src);  // same array, so we can do this
         }
 
-        // If we get here, there were no removals, and length is unchanged.
-        //
-        assert(count == 0);
-        assert(len == VAL_LEN_HEAD(res->data));
+        assert(removals == 0);  // didn't goto, so no removals
     }
-    else if (IS_BINARY(res->data)) {
-        if (Is_Breaking_Null(res->out)) {  // leave data unchanged
-            Drop_Mold(res->mo);
-            return 0;
+    else if (IS_BINARY(data)) {
+        if (Is_Breaking_Null(OUT)) {  // leave data unchanged
+            Drop_Mold(mo);
+            goto done_finalizing;
         }
 
-        REBBIN *bin = BIN(res->series);
+        REBBIN *bin = BIN(series);
 
         // If there was a THROW, or fail() we need the remaining data
         //
-        REBLEN orig_len = VAL_LEN_HEAD(res->data);
-        assert(res->start <= orig_len);
+        REBLEN orig_len = VAL_LEN_HEAD(data);
+        assert(start <= orig_len);
         Append_Ascii_Len(
-            res->mo->series,
-            cs_cast(BIN_AT(bin, res->start)),
-            orig_len - res->start
+            mo->series,
+            cs_cast(BIN_AT(bin, start)),
+            orig_len - start
         );
 
-        // !!! We are reusing the mold buffer, but *not putting UTF-8 data*
-        // into it.  Revisit if this inhibits cool UTF-8 based tricks the
-        // mold buffer might do otherwise.
-        //
-        REBBIN *popped = Pop_Molded_Binary(res->mo);
+        REBBIN *popped = Pop_Molded_Binary(mo);  // not UTF-8 if binary, see [7]
 
-        assert(BIN_LEN(popped) <= VAL_LEN_HEAD(res->data));
-        count = VAL_LEN_HEAD(res->data) - BIN_LEN(popped);
+        assert(BIN_LEN(popped) <= VAL_LEN_HEAD(data));
+        removals = VAL_LEN_HEAD(data) - BIN_LEN(popped);
 
-        // We want to swap out the data properties of the series, so the
-        // identity of the incoming series is kept but now with different
-        // underlying data.
-        //
-        Swap_Series_Content(popped, res->series);
+        Swap_Series_Content(popped, series);  // swap series identity, see [3]
 
         Free_Unmanaged_Series(popped);  // now frees incoming series's data
     }
     else {
-        assert(ANY_STRING(res->data));
-        if (Is_Breaking_Null(res->out)) {  // leave data unchanged
-            Drop_Mold(res->mo);
-            return 0;
+        assert(ANY_STRING(data));
+        if (Is_Breaking_Null(OUT)) {  // leave data unchanged
+            Drop_Mold(mo);
+            goto done_finalizing;
         }
 
-        // If there was a BREAK, THROW, or fail() we need the remaining data
+        // If there was a THROW, or fail() we need the remaining data
         //
-        REBLEN orig_len = VAL_LEN_HEAD(res->data);
-        assert(res->start <= orig_len);
+        REBLEN orig_len = VAL_LEN_HEAD(data);
+        assert(start <= orig_len);
 
-        for (; res->start != orig_len; ++res->start) {
+        for (; start != orig_len; ++start) {
             Append_Codepoint(
-                res->mo->series,
-                GET_CHAR_AT(STR(res->series), res->start)
+                mo->series,
+                GET_CHAR_AT(STR(series), start)
             );
         }
 
-        REBSTR *popped = Pop_Molded_String(res->mo);
+        REBSTR *popped = Pop_Molded_String(mo);
 
-        assert(STR_LEN(popped) <= VAL_LEN_HEAD(res->data));
-        count = VAL_LEN_HEAD(res->data) - STR_LEN(popped);
+        assert(STR_LEN(popped) <= VAL_LEN_HEAD(data));
+        removals = VAL_LEN_HEAD(data) - STR_LEN(popped);
 
-        // We want to swap out the data properties of the series, so the
-        // identity of the incoming series is kept but now with different
-        // underlying data.
-        //
-        Swap_Series_Content(popped, res->series);
+        Swap_Series_Content(popped, series);  // swap series identity, see [3]
 
         Free_Unmanaged_Series(popped);  // frees incoming series's data
     }
 
-    return count;
-}
+  done_finalizing:
 
-
-// See notes on Remove_Each_State
-//
-static REB_R Remove_Each_Core(struct Remove_Each_State *res)
-{
-    // Set a bit saying we are iterating the series, which will disallow
-    // mutations (including a nested REMOVE-EACH) until completion or failure.
-    // This flag will be cleaned up by Finalize_Remove_Each(), which is run
-    // even if there is a fail().
-    //
-    SET_SERIES_INFO(res->series, HOLD);
-
-    REBLEN index = res->start;  // up here to avoid longjmp clobber warnings
-
-    REBLEN len = ANY_STRING(res->data)
-        ? STR_LEN(STR(res->series))
-        : SER_USED(res->series);  // temp read-only, this won't change
-
-    while (index < len) {
-        assert(res->start == index);
-
-        const REBVAR *var_tail;
-        REBVAL *var = CTX_VARS(&var_tail, res->context);  // fixed (#2274)
-        for (; var != var_tail; ++var) {
-            if (index == len) {
-                //
-                // The second iteration here needs x = #"c" and y as void.
-                //
-                //     data: copy "abc"
-                //     remove-each [x y] data [...]
-                //
-                Init_Nulled(var);
-                continue;  // the `for` loop setting variables
-            }
-
-            if (ANY_ARRAY(res->data))
-                Derelativize(
-                    var,
-                    VAL_ARRAY_AT_HEAD(res->data, index),
-                    VAL_SPECIFIER(res->data)
-                );
-            else if (IS_BINARY(res->data)) {
-                REBBIN *bin = BIN(res->series);
-                Init_Integer(var, cast(REBI64, BIN_HEAD(bin)[index]));
-            }
-            else {
-                assert(ANY_STRING(res->data));
-                Init_Char_Unchecked(
-                    var,
-                    GET_CHAR_AT(STR(res->series), index)
-                );
-            }
-            ++index;
-        }
-
-        if (Do_Any_Array_At_Throws(res->out, res->body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(res->out, FS_TOP)) {
-                REBLEN removals = Finalize_Remove_Each(res);
-                UNUSED(removals);
-
-                return R_THROWN; // we'll bubble it up, but will also finalize
-            }
-
-            if (Is_Breaking_Null(res->out)) {
-                //
-                // BREAK; this means we will return nullptr and not run any
-                // removals (we couldn't report how many if we did)
-                //
-                assert(res->start < len);
-                REBLEN removals = Finalize_Remove_Each(res);
-                UNUSED(removals);
-                return nullptr;
-            }
-        }
-
-        if (Is_Void(res->out)) {
-            res->start = index;
-            Init_None(res->out);  // void reserved for "loop never ran"
-            continue;  // keep requested, don't mark for culling
-        }
-
-        Reify_Eval_Out_Plain(res->out);
-
-        // We do not want to decay isotopes, e.g. if someone tried to say:
-        //
-        //    remove-each x [...] [n: null, ..., match [<opt> integer!] n]
-        //
-        // The ~null~ isotope protects from having a condition you thought
-        // should be truthy come back NULL and be falsey.
-        //
-        // !!! To be more safe it could be limited to logic!, but at bare
-        // minimum it needs to fail on isotopes.
-        //
-        if (Is_Isotope(res->out))
-            fail (Error_Bad_Isotope(res->out));
-
-        if (ANY_ARRAY(res->data)) {
-            if (IS_FALSEY(res->out)) {
-                res->start = index;
-                continue;  // keep requested, don't mark for culling
-            }
-
-            do {
-                assert(res->start <= len);
-                SET_CELL_FLAG(  // v-- okay to mark despite read only
-                    m_cast(Cell*, ARR_AT(VAL_ARRAY(res->data), res->start)),
-                    NOTE_REMOVE
-                );
-                ++res->start;
-            } while (res->start != index);
-        }
-        else {
-            if (
-                not Is_Null_Isotope(res->out)
-                and IS_TRUTHY(res->out)
-            ){
-                res->start = index;
-                continue;  // remove requested, don't save to buffer
-            }
-
-            do {
-                assert(res->start <= len);
-                if (IS_BINARY(res->data)) {
-                    REBBIN *bin = BIN(res->series);
-                    Append_Ascii_Len(
-                        res->mo->series,
-                        cs_cast(BIN_AT(bin, res->start)),
-                        1
-                    );
-                }
-                else {
-                    Append_Codepoint(
-                        res->mo->series,
-                        GET_CHAR_AT(STR(res->series), res->start)
-                    );
-                }
-                ++res->start;
-            } while (res->start != index);
-        }
-    }
-
-    // We get here on normal completion (THROW and BREAK will return above)
-
-    Isotopify_If_Nulled(res->out);
-    assert(res->start == len);
-
-    REBLEN removals = Finalize_Remove_Each(res);
-    Init_Integer(res->out, removals);
-
-    return nullptr;
-}
-
-
-//
-//  remove-each: native [
-//
-//  {Removes values for each block that returns true.}
-//
-//      return: [<opt> integer!]
-//          {Number of removed series items, or null if BREAK}
-//      :vars "Word or block of words to set each time, no new var if quoted"
-//          [blank! word! lit-word! block! group!]
-//      data [<blank> any-series! any-sequence! action!]
-//          "The series to traverse (modified)" ; should BLANK! opt-out?
-//      body [<const> block!]
-//          "Block to evaluate (return TRUE to remove)"
-//  ]
-//
-REBNATIVE(remove_each)
-{
-    INCLUDE_PARAMS_OF_REMOVE_EACH;
-
-    struct Remove_Each_State res;
-    res.data = ARG(data);
-
-    // !!! Currently there is no support for VECTOR!, or IMAGE! (what would
-    // that even *mean*?) yet these are in the ANY-SERIES! typeset.
-    //
-    if (not (
-        ANY_ARRAY(res.data) or ANY_STRING(res.data) or IS_BINARY(res.data)
-    )){
-        fail (res.data);
-    }
-
-    // Check the series for whether it is read only, in which case we should
-    // not be running a REMOVE-EACH on it.  This check for permissions applies
-    // even if the REMOVE-EACH turns out to be a no-op.
-    //
-    res.series = VAL_SERIES_ENSURE_MUTABLE(res.data);
-
-    if (VAL_INDEX(res.data) >= SER_USED(res.series)) {
-        //
-        // If index is past the series end, then there's nothing removable.
-        //
-        // !!! Should REMOVE-EACH follow the "loop conventions" where if the
-        // body never gets a chance to run, the return value is bad-word?
-        //
-        return Init_Integer(OUT, 0);
-    }
-
-    // Create a context for the loop variables, and bind the body to it.
-    // Do this before PUSH_TRAP, so that if there is any failure related to
-    // memory or a poorly formed ARG(vars) that it doesn't try to finalize
-    // the REMOVE-EACH, as `res` is not ready yet.
-    //
-    Virtual_Bind_Deep_To_New_Context(
-        ARG(body),  // may be updated, will still be GC safe
-        &res.context,
-        ARG(vars)
-    );
-    Init_Object(ARG(vars), res.context);  // keep GC safe
-    res.body = ARG(body);
-
-    res.start = VAL_INDEX(res.data);
-
-    REB_MOLD mold_struct;
-    if (ANY_ARRAY(res.data)) {
-        //
-        // We're going to use NODE_FLAG_MARKED on the elements of data's
-        // array for those items we wish to remove later.
-        //
-        // !!! This may not be better than pushing kept values to the data
-        // stack and then creating a precisely-sized output blob to swap as
-        // the underlying memory for the array.  (Imagine a large array from
-        // which there are many removals, and the ensuing wasted space being
-        // left behind).  But worth testing the technique of marking in case
-        // it's ever required for other scenarios.
-        //
-        TRASH_POINTER_IF_DEBUG(res.mo);
-    }
-    else {
-        // We're going to generate a new data allocation, but then swap its
-        // underlying content to back the series we were given.  (See notes
-        // above on how this might be the better way to deal with arrays too.)
-        //
-        // !!! Uses the mold buffer even for binaries, and since we know
-        // we're never going to be pushing a value bigger than 0xFF it will
-        // not require a wide string.  So the series we pull off should be
-        // byte-sized.  In a sense this is wasteful and there should be a
-        // byte-buffer-backed parallel to mold, but the logic for nesting mold
-        // stacks already exists and the mold buffer is "hot", so it's not
-        // necessarily *that* wasteful in the scheme of things.
-        //
-        memset(&mold_struct, 0, sizeof(mold_struct));
-        res.mo = &mold_struct;
-        Push_Mold(res.mo);
-    }
-
-    res.out = OUT;
-
-    REB_R r = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
-
-    if (r == R_THROWN)
+    if (threw)
         return THROWN;
 
-    if (r) {  // Remove_Each_Core() couldn't finalize in this case due to fail
-        assert(IS_ERROR(r));
+    if (Is_Breaking_Null(OUT))
+        return nullptr;
 
-        // !!! Because we use the mold buffer to achieve removals from strings
-        // and the mold buffer has to equalize at the end of rebRescue(), we
-        // cannot mutate the string here to account for the removals.  So
-        // FAIL means no removals--but we need to get in and take out the
-        // marks on the array cells.
-        //
-        REBLEN removals = Finalize_Remove_Each(&res);
-        UNUSED(removals);
-
-        rebJumps("fail", rebR(m_cast(REBVAL*, r)));
-    }
-
-    assert(
-        IS_NULLED(OUT)  // BREAK in loop
-        or IS_INTEGER(OUT)  // no break--plain removal count
-    );
-
-    return OUT;
-}
+    return Init_Integer(OUT, removals);
+}}
 
 
 //
