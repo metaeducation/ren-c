@@ -287,6 +287,8 @@ REB_R Evaluator_Executor(REBFRM *f)
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         goto lookahead;
 
+      case ST_EVALUATOR_RUNNING_SET_GROUP : goto set_group_result_in_spare;
+
       case ST_EVALUATOR_SET_WORD_RIGHTSIDE : goto set_word_rightside_in_out;
 
       case ST_EVALUATOR_SET_TUPLE_RIGHTSIDE : goto set_tuple_rightside_in_out;
@@ -671,6 +673,13 @@ REB_R Evaluator_Executor(REBFRM *f)
     //    and the various complexities involved with that means we have to
     //    flush here if the symbols match.
 
+    set_word_in_spare: ///////////////////////////////////////////////////////
+
+        f_current = SPARE;
+        goto set_word_common;
+
+    set_word_common: /////////////////////////////////////////////////////////
+
       case REB_SET_WORD: {
         REBFRM *subframe = Maybe_Rightward_Continuation_Needed(f);
         if (not subframe)
@@ -1017,6 +1026,11 @@ REB_R Evaluator_Executor(REBFRM *f)
     //
     // Isotope and NULL assigns are allowed: https://forum.rebol.info/t/895/4
 
+    set_tuple_in_spare: //////////////////////////////////////////////////////
+
+        f_current = SPARE;
+        goto generic_set_common;
+
     generic_set_common: //////////////////////////////////////////////////////
 
       case REB_SET_TUPLE: {
@@ -1059,6 +1073,53 @@ REB_R Evaluator_Executor(REBFRM *f)
         }
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break; }
+
+
+    //=//// SET-GROUP! /////////////////////////////////////////////////////=//
+    //
+    // A SET-GROUP! will act as a SET-WORD!, SET-TUPLE!, or SET-BLOCK! based
+    // on what the group evaluates to.
+
+      case REB_SET_GROUP: {
+        f_next_gotten = nullptr;  // arbitrary code changes fetched variables
+
+        DECLARE_FRAME_AT_CORE (
+            subframe,
+            f_current,
+            f_specifier,
+            EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END
+        );
+        Push_Frame(RESET(SPARE), subframe);
+
+        STATE = ST_EVALUATOR_RUNNING_SET_GROUP;
+        continue_subframe (subframe);
+
+      } set_group_result_in_spare: {  ////////////////////////////////////////
+
+        if (Is_Void(SPARE))
+            fail (Error_Bad_Void());
+
+        if (Is_Isotope(SPARE))
+            fail (Error_Bad_Isotope(SPARE));
+
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
+
+        f_current = SPARE;
+
+        switch (VAL_TYPE(SPARE)) {
+          case REB_BLOCK:
+            goto set_block_in_spare;
+
+          case REB_WORD:
+            goto set_word_in_spare;
+
+          case REB_TUPLE:
+            goto set_tuple_in_spare;
+
+          default:
+            fail ("Unknown type for use in SET-GROUP!");
+        }
+      break; }
 
 
     //=//// GET-PATH! and GET-TUPLE! //////////////////////////////////////=//
@@ -1158,6 +1219,13 @@ REB_R Evaluator_Executor(REBFRM *f)
     // to be the overall result of the expression (defaults to the normal
     // main return value).
 
+    set_block_in_spare: //////////////////////////////////////////////////////
+
+        f_current = SPARE;
+        goto set_block_common;
+
+    set_block_common: ////////////////////////////////////////////////////////
+
       case REB_SET_BLOCK: {
         assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));
 
@@ -1188,6 +1256,9 @@ REB_R Evaluator_Executor(REBFRM *f)
         const Cell *tail;
         const Cell *check = VAL_ARRAY_AT(&tail, f_current);
         REBSPC *check_specifier = Derive_Specifier(f_specifier, f_current);
+
+        TRASH_POINTER_IF_DEBUG(f_current);  // might be SPARE, we use it now
+
         for (; tail != check; ++check) {
             //
             // THE-XXX! types are used to mark which result should be the

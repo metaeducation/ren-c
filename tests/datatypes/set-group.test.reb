@@ -26,17 +26,21 @@
 
 (
     o: make object! [f: <before>]
-    path: 'o.f
-    (path): 304
-    (path = 'o.f) and (o.f = 304)
+    tuple: 'o.f
+    (tuple): 304
+    (tuple = 'o.f) and (o.f = 304)
 )
 
-; Retriggering multi-returns is useful, but not yet implemented.
+; Retriggering multi-returns is useful
 (
-    m: <before>
-    o: make object! [f: <before>]
-    block: [m o.f]
-    error? trap [(block): [1020 304]]
+    value: ~
+    o: make object! [rest: ~]
+    block: [value o.rest]
+    did all [
+        10 = (block): transcode "10 20"
+        10 = value
+        o.rest = " 20"
+    ]
 )
 
 ; Weird dropped idea: SET-GROUP! running arity-1 functions.  Right hand side
