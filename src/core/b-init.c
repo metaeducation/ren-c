@@ -707,116 +707,6 @@ void Startup_Signals(void)
 #endif
 
 
-
-// By this point, the Lib_Context contains basic definitions for things
-// like true, false, the natives, and the generics.
-//
-// It's also possible to trap failures and exit in a graceful fashion.  This is
-// the routine protected by rebRescue() so initialization can handle exceptions.
-//
-static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
-{
-  //=//// BASE STARTUP /////////////////////////////////////////////////////=//
-
-    // The code in "base" is the lowest level of initialization written as
-    // Rebol code.  This is where things like `+` being an infix form of ADD is
-    // set up, or FIRST being a specialization of PICK.  It also has wrappers
-    // for more basic natives like FUNC* or SPECIALIZE*, that handle aspects
-    // that are easier to write in usermode than in C (like inheriting HELP
-    // information).
-
-    rebElide(
-        //
-        // Code is already interned to Lib_Context by TRANSCODE.  Create
-        // actual variables for top-level SET-WORD!s only, and run.
-        //
-        "bind/only/set", &boot->base, Lib_Context_Value,
-        "do", &boot->base  // ENSURE not available yet (but returns blank)
-    );
-
-
-  //=//// SYS STARTUP //////////////////////////////////////////////////////=//
-
-    // The SYS context contains supporting Rebol code for implementing "system"
-    // features.  It is lower-level than the LIB context, but has natives,
-    // generics, and the definitions from Startup_Base() available.
-    //
-    // See the helper Sys() for a quick way of getting at the functions by
-    // their symbol.
-    //
-    // (Note: The SYS context should not be confused with "the system object",
-    // which is a different thing.)
-
-    rebElide(
-        //
-        // The scan of the boot block interned everything to Lib_Context, but
-        // we want to overwrite that with the Sys_Context here.
-        //
-        "intern*", Sys_Context_Value, &boot->sys,
-
-        "bind/only/set", &boot->sys, Sys_Context_Value,
-        "ensure blank! do", &boot->sys,
-
-        // SYS contains the implementation of the module machinery itself, so
-        // we don't have MODULE or EXPORT available.  Do the exports manually,
-        // and then import the results to lib.
-        //
-        "set-meta", Sys_Context_Value, "make object! [",
-            "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
-            "Exports: [module load load-value decode encode encoding-of]",
-        "]",
-        "sys.import*", Lib_Context_Value, Sys_Context_Value
-    );
-
-    // !!! It was a stated goal at one point that it should be possible to
-    // protect the entire system object and still run the interpreter.  That
-    // was commented out in R3-Alpha
-    //
-    //    comment [if :lib.secure [protect-system-object]]
-
-
-  //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//
-
-    rebElide(
-        //
-        // The code is already bound non-specifically to the Lib_Context during
-        // scanning.
-        //
-        // (It's not necessarily the greatest idea to have LIB be this
-        // flexible.  But as it's not hardened from mutations altogether then
-        // prohibiting it doesn't offer any real security...and only causes
-        // headaches when trying to do something weird.)
-
-        // Create actual variables for top-level SET-WORD!s only, and run.
-        //
-        "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context_Value,
-        "do", SPECIFIC(&boot->mezz)
-    );
-
-
-  //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
-
-    // None of the above code should have needed the "user" context, which is
-    // purely application-space.  We probably shouldn't even create it during
-    // boot at all.  But at the moment, code like JS-NATIVE or TCC natives
-    // need to bind the code they run somewhere.  It's also where API called
-    // code runs if called from something like an int main() after boot.
-    //
-    // Doing this as a proper module creation gives us IMPORT and INTERN (as
-    // well as EXPORT...?  When do you export from the user context?)
-    //
-    rebElide("system.contexts.user: module [Name: User] []");
-    ensureNullptr(User_Context_Value) = Copy_Cell(
-        Alloc_Value(),
-        Get_System(SYS_CONTEXTS, CTX_USER)
-    );
-    rebUnmanage(User_Context_Value);
-    User_Context = VAL_CONTEXT(User_Context_Value);
-
-    return nullptr;
-}
-
-
 //
 //  Startup_Core: C
 //
@@ -833,11 +723,6 @@ static REBVAL *Startup_Mezzanine(BOOT_BLK *boot)
 // in Rebol.  For instance, GENERIC is a function registered very early on in
 // the boot process, which is run from within a block to register more
 // functions.
-//
-// At the tail of the initialization, `finish-init-core` is run.  This Rebol
-// function lives in %sys-start.r.   It should be "host agnostic" and not
-// assume things about command-line switches (or even that there is a command
-// line!)  Converting the code that made such assumptions ongoing.
 //
 void Startup_Core(void)
 {
@@ -1068,32 +953,147 @@ void Startup_Core(void)
     //
     Startup_Stackoverflow();
 
+    assert(DSP == 0 and FS_TOP == FS_BOTTOM);
+
 //=//// RUN MEZZANINE CODE NOW THAT ERROR HANDLING IS INITIALIZED /////////=//
+
+    // By this point, the Lib_Context contains basic definitions for things
+    // like true, false, the natives, and the generics.
+    //
+    // It's also possible to trap failures and exit in a graceful fashion.
+    //
+    // There is theoretically some level of error recovery that could be done
+    // here.  e.g. the evaluator works, it just doesn't have many functions you
+    // would expect.  How bad it is depends on whether base and sys ran, so
+    // perhaps only errors running "mezz" should be tolerated.  But the
+    // console may-or-may-not run.
+    //
+    // For now, assume any failure to declare the functions in those sections
+    // is a critical one.  It may be desirable to tell the caller that the user
+    // halted (quitting may not be appropriate if the app is more than just
+    // the interpreter)
+    //
+    // !!! If halt cannot be handled cleanly, it should be set up so that the
+    // user isn't even *able* to request a halt at this boot phase.
 
     PG_Boot_Phase = BOOT_MEZZ;
 
-    assert(DSP == 0 and FS_TOP == FS_BOTTOM);
+    REBVAL *error;
 
-    REBVAL *error = rebRescue(cast(REBDNG*, &Startup_Mezzanine), boot);
-    if (error) {
+ //=//// BASE STARTUP ////////////////////////////////////////////////////=//
+
+    // The code in "base" is the lowest level of initialization written as
+    // Rebol code.  This is where things like `+` being an infix form of ADD is
+    // set up, or FIRST being a specialization of PICK.  It also has wrappers
+    // for more basic natives like FUNC* or SPECIALIZE*, that handle aspects
+    // that are easier to write in usermode than in C (like inheriting HELP
+    // information).
+
+    error = rebEntrap(
         //
-        // There is theoretically some level of error recovery that could
-        // be done here.  e.g. the evaluator works, it just doesn't have
-        // many functions you would expect.  How bad it is depends on
-        // whether base and sys ran, so perhaps only errors running "mezz"
-        // should be returned.
+        // Code is already interned to Lib_Context by TRANSCODE.  Create
+        // actual variables for top-level SET-WORD!s only, and run.
         //
-        // For now, assume any failure to declare the functions in those
-        // sections is a critical one.  It may be desirable to tell the
-        // caller that the user halted (quitting may not be appropriate if
-        // the app is more than just the interpreter)
-        //
-        // !!! If halt cannot be handled cleanly, it should be set up so
-        // that the user isn't even *able* to request a halt at this boot
-        // phase.
-        //
+        "bind/only/set", &boot->base, Lib_Context_Value,
+        "do", &boot->base,  // ENSURE not available yet (but returns blank)
+
+        "null"  // falsey for `if (error)`
+    );
+    if (error)
         panic (error);
-    }
+
+  //=//// SYS STARTUP //////////////////////////////////////////////////////=//
+
+    // The SYS context contains supporting Rebol code for implementing "system"
+    // features.  It is lower-level than the LIB context, but has natives,
+    // generics, and the definitions from Startup_Base() available.
+    //
+    // See the helper Sys() for a quick way of getting at the functions by
+    // their symbol.
+    //
+    // (Note: The SYS context should not be confused with "the system object",
+    // which is a different thing.)
+
+    error = rebEntrap(
+        //
+        // The scan of the boot block interned everything to Lib_Context, but
+        // we want to overwrite that with the Sys_Context here.
+        //
+        "intern*", Sys_Context_Value, &boot->sys,
+
+        "bind/only/set", &boot->sys, Sys_Context_Value,
+        "ensure blank! do", &boot->sys,
+
+        // SYS contains the implementation of the module machinery itself, so
+        // we don't have MODULE or EXPORT available.  Do the exports manually,
+        // and then import the results to lib.
+        //
+        "set-meta", Sys_Context_Value, "make object! [",
+            "Name: 'System",  // this is MAKE OBJECT!, not MODULE, must quote
+            "Exports: [module load load-value decode encode encoding-of]",
+        "]",
+        "sys.import*", Lib_Context_Value, Sys_Context_Value,
+
+        "null"  // falsey for `if (error)`
+    );
+    if (error)
+        panic (error);
+
+    // !!! It was a stated goal at one point that it should be possible to
+    // protect the entire system object and still run the interpreter.  That
+    // was commented out in R3-Alpha
+    //
+    //    comment [if :lib.secure [protect-system-object]]
+
+  //=//// MEZZ STARTUP /////////////////////////////////////////////////////=//
+
+    error = rebEntrap(
+        //
+        // The code is already bound non-specifically to the Lib_Context during
+        // scanning.
+        //
+        // (It's not necessarily the greatest idea to have LIB be this
+        // flexible.  But as it's not hardened from mutations altogether then
+        // prohibiting it doesn't offer any real security...and only causes
+        // headaches when trying to do something weird.)
+
+        // Create actual variables for top-level SET-WORD!s only, and run.
+        //
+        "bind/only/set", SPECIFIC(&boot->mezz), Lib_Context_Value,
+        "do", SPECIFIC(&boot->mezz),
+
+        "null"  // falsey for `if (error)`
+    );
+    if (error)
+        panic (error);
+
+  //=//// MAKE USER CONTEXT ////////////////////////////////////////////////=//
+
+    // None of the above code should have needed the "user" context, which is
+    // purely application-space.  We probably shouldn't even create it during
+    // boot at all.  But at the moment, code like JS-NATIVE or TCC natives
+    // need to bind the code they run somewhere.  It's also where API called
+    // code runs if called from something like an int main() after boot.
+    //
+    // Doing this as a proper module creation gives us IMPORT and INTERN (as
+    // well as EXPORT...?  When do you export from the user context?)
+    //
+    error = rebEntrap(
+        "system.contexts.user: module [Name: User] []"
+
+        "null"  // falsey for `if (error)`
+    );
+    if (error)
+        panic (error);
+
+    ensureNullptr(User_Context_Value) = Copy_Cell(
+        Alloc_Value(),
+        Get_System(SYS_CONTEXTS, CTX_USER)
+    );
+    rebUnmanage(User_Context_Value);
+    User_Context = VAL_CONTEXT(User_Context_Value);
+
+  //=//// FINISH UP ///////////////////////////////////////////////////////=//
 
     assert(DSP == 0 and FS_TOP == FS_BOTTOM);
 
