@@ -3163,24 +3163,29 @@ REBNATIVE(transcode)
         Init_Block(OUT, a);
     }
 
-    if (ANY_WORD(ARG(line)))  // they wanted the line number updated
-        Init_Integer(Sink_Word_May_Fail(ARG(line), SPECIFIED), ss.line);
+    if (REF(line) and IS_WORD(ARG(line))) {  // wanted the line number updated
+        REBVAL *line_int = ARG(return);  // use return as scratch slot
+        Init_Integer(line_int, ss.line);
+        if (Set_Var_Core_Throws(SPARE, nullptr, ARG(line), SPECIFIED, line_int))
+            return_thrown (SPARE);
+    }
 
     // Return the input BINARY! or TEXT! advanced by how much the transcode
     // operation consumed.
     //
     if (REF(next) and not Is_Blackhole(ARG(next))) {
-        REBVAL *var = Sink_Word_May_Fail(ARG(next), SPECIFIED);
-        Copy_Cell(var, source);
+        REBVAL *rest = ARG(return);  // use return as scratch slot
+        Copy_Cell(rest, source);
 
-        if (IS_BINARY(var)) {
+        if (IS_BINARY(source)) {
+            const REBBIN *bin = VAL_BINARY(source);
             if (ss.begin)
-                VAL_INDEX_UNBOUNDED(var) = ss.begin - BIN_HEAD(VAL_BINARY(var));
+                VAL_INDEX_UNBOUNDED(rest) = ss.begin - BIN_HEAD(bin);
             else
-                VAL_INDEX_UNBOUNDED(var) = BIN_LEN(VAL_BINARY(var));
+                VAL_INDEX_UNBOUNDED(rest) = BIN_LEN(bin);
         }
         else {
-            assert(IS_TEXT(var));
+            assert(IS_TEXT(source));
 
             // !!! The scanner does not currently keep track of how many
             // codepoints it went past, it only advances bytes.  But the TEXT!
@@ -3193,10 +3198,13 @@ REBNATIVE(transcode)
             // maybe that would make it slower when this isn't needed?)
             //
             if (ss.begin)
-                VAL_INDEX_RAW(var) += Num_Codepoints_For_Bytes(bp, ss.begin);
+                VAL_INDEX_RAW(rest) += Num_Codepoints_For_Bytes(bp, ss.begin);
             else
-                VAL_INDEX_RAW(var) += BIN_TAIL(VAL_STRING(var)) - bp;
+                VAL_INDEX_RAW(rest) += BIN_TAIL(VAL_STRING(source)) - bp;
         }
+
+        if (Set_Var_Core_Throws(SPARE, nullptr, ARG(next), SPECIFIED, rest))
+            return_thrown (SPARE);
     }
 
     return OUT;
