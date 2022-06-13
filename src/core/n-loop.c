@@ -1217,16 +1217,16 @@ REBNATIVE(every)
 //
 //  remove-each: native [
 //
-//  {Removes values for each block that returns true.}
+//  {Removes values for each block that returns true}
 //
-//      return: [<opt> integer!]
-//          {Number of removed series items, or null if BREAK}
+//      return: "Number of removed series items, or null if BREAK"
+//          [<opt> integer!]
 //      :vars "Word or block of words to set each time, no new var if quoted"
 //          [blank! word! lit-word! block! group!]
-//      data [<blank> any-series! any-sequence! action!]
-//          "The series to traverse (modified)" ; should BLANK! opt-out?
-//      body [<const> block!]
-//          "Block to evaluate (return TRUE to remove)"
+//      data "The series to traverse (modified)"
+//          [<blackhole> any-series!]
+//      body "Block to evaluate (return TRUE to remove)"
+//          [<const> block!]
 //  ]
 //
 REBNATIVE(remove_each)
@@ -1261,13 +1261,14 @@ REBNATIVE(remove_each)
 //
 // 5. We do not want to decay isotopes, e.g. if someone tried to say:
 //
-//        remove-each x [...] [n: null, ..., match [<opt> integer!] n]
+//        remove-each x [...] [n: null, ..., match [logic! integer!] false]
 //
-//    The ~null~ isotope protects from having a condition you thought should be
-//    truthy come back NULL and be falsey.
+//    The ~false~ isotope protects from having a condition you thought should
+//    be truthy come back #[false] and be falsey.
 //
-// 6. Currently any "truthy" body result signals keeping the value.  But to be
-//    more coherent, limiting to LOGIC! might be a good idea.
+// 6. The only signals allowed are LOGIC! and void.  This is believed to be
+//    more coherent, and likely would catch more errors than just allowing any
+//    truthy value to mean "remove".
 //
 // 7. We are reusing the mold buffer for BINARY!, but *not putting UTF-8 data*
 //    into it.  Revisit if this inhibits cool UTF-8 based tricks the mold
@@ -1277,12 +1278,6 @@ REBNATIVE(remove_each)
 
     REBVAL *data = ARG(data);
     REBVAL *body = ARG(body);
-
-    if (not (
-        ANY_ARRAY(data) or ANY_STRING(data) or IS_BINARY(data)
-    )){
-        fail (PAR(data));  // !!! not generalized to IMAGE!, VECTOR!, etc.
-    }
 
     REBSER *series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
 
@@ -1366,23 +1361,31 @@ REBNATIVE(remove_each)
             }
         }
 
-        if (Is_Void(OUT)) {
-            start = index;
-            Init_None(OUT);  // void reserved for "loop never ran"
-            continue;  // keep requested, don't mark for culling
-        }
+        bool keep;
 
-        if (Is_Isotope(OUT)) {  // don't decay isotopes, see [5]
+        if (Is_Void(OUT)) {
+            keep = true;  // treat same as logic false (e.g. don't remove)
+        }
+        else if (Is_Isotope(OUT)) {  // don't decay isotopes, see [5]
             threw = true;
             Init_Error(SPARE, Error_Bad_Isotope(OUT));
             Init_Thrown_With_Label(FRAME, Lib(NULL), SPARE);
             goto finalize_remove_each;
         }
+        else if (IS_LOGIC(OUT)) {  // pure logic required, see [6]
+            keep = not VAL_LOGIC(OUT);
+        }
+        else {
+            threw = true;
+            Init_Error(SPARE, Error_User("LOGIC! required for REMOVE-EACH"));
+            Init_Thrown_With_Label(FRAME, Lib(NULL), SPARE);
+            goto finalize_remove_each;
+        }
 
         if (ANY_ARRAY(data)) {
-            if (IS_FALSEY(OUT)) {  // pure logic not required, see [6]
+            if (keep) {
                 start = index;
-                continue;  // keep requested, don't mark for culling
+                continue;  // keeping, don't mark for culling
             }
 
             do {
@@ -1395,9 +1398,9 @@ REBNATIVE(remove_each)
             } while (start != index);
         }
         else {
-            if (IS_TRUTHY(OUT)) {  // pure logic not required, see [6]
+            if (not keep) {
                 start = index;
-                continue;  // remove requested, don't save to buffer
+                continue;  // not keeping, don't save to buffer
             }
 
             do {

@@ -77,7 +77,7 @@
 (
     string: copy "1234"
     remove-each i string [
-        any [i = #"2", i = #"3"]
+        did any [i = #"2", i = #"3"]
     ]
     string = "14"
 )
@@ -166,4 +166,9 @@
         ]
     ]
     b-was-null
+)
+
+; You can opt out of the series input with a "blackhole"
+(
+    '~blackhole~ = ^ remove-each x # [true]
 )

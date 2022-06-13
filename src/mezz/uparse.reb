@@ -953,7 +953,7 @@ default-combinators: make map! reduce [
         ; unquoted forms.  Punt on such optimizations for now.
         ;
         collected: collect [
-            remove-each item subpending [
+            remove-each item any [subpending #] [
                 if quoted? :item [keep item, true]
             ]
         ]
@@ -1052,7 +1052,7 @@ default-combinators: make map! reduce [
         ; intended for GATHER.
 
         obj: make object! collect [
-            remove-each item subpending [
+            remove-each item any [subpending #] [
                 if block? :item [keep item, true]
             ] else [
                 ; should it error or fail if subpending was BLANK! ?
@@ -1309,7 +1309,7 @@ default-combinators: make map! reduce [
 
         ; Run GROUP!s in order, removing them as one goes
         ;
-        remove-each item subpending [
+        remove-each item any [subpending #] [
             if group? :item [eval item, true]
         ]
 
