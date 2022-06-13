@@ -25,12 +25,6 @@
 #include "sys-core.h"
 #include "sys-int-funcs.h" //REB_I64_ADD_OF
 
-typedef enum {
-    LOOP_FOR_EACH,
-    LOOP_EVERY,
-    LOOP_MAP_EACH
-} LOOP_MODE;
-
 
 //
 //  Try_Catch_Break_Or_Continue: C
@@ -703,11 +697,11 @@ void Clear_Evars(EVARS *evars) {
 // likely be factored in a better way...pushing more per-native code into the
 // natives themselves.
 //
-static bool Loop_Each_Throws(REBFRM *frame_, LOOP_MODE mode)
+static bool Loop_Each_Throws(REBFRM *frame_)
 {
     INCLUDE_PARAMS_OF_FOR_EACH;  // MAP-EACH & EVERY must subset interface
 
-    assert(Is_Stale(OUT));  // return_void requires stale to work
+    assert(Is_Stale(OUT));  // return VOID requires stale to work
 
     REBVAL *data = ARG(data);
     REBVAL *body = ARG(body);
@@ -990,151 +984,22 @@ static bool Loop_Each_Throws(REBFRM *frame_, LOOP_MODE mode)
             }
         }
 
-        switch (mode) {
-          case LOOP_FOR_EACH:
-            if (Is_Void(SPARE)) {
-                //
-                //    for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
-                //
-                // It may seem tempting to drop out the last result:
-                //
-                //     for-each x [1 2 3] [if x = 3 [continue] x]  => 2
-                //
-                // But this is too difficult to deal with in loop compositions.
-                // We want to tell from the outside if a loop ran or not...
-                // that's more important than this esoteric feature.  And if
-                // you write something like FOR-BOTH with two FOR-EACH loops,
-                // the fact that the second loop would have to use some signal
-                // if all branches are erased would make it too difficult to
-                // drop out the prior result.
-                //
-                Init_None(OUT);
-            }
-            else {
-                Move_Cell(OUT, SPARE);
-                Isotopify_If_Nulled(OUT);
-                if (IS_META_BLOCK(body))
-                    Meta_Quotify(OUT);
-            }
-            break;
+        // Here is where we would run a predicate to process the result.  (Is
+        // it necessary to have predicates?  EVERY in the negative since,
+        // like EVERY-NOT...could be useful for instance)
+        //
+        /* Predicate(SPARE) */
 
-          case LOOP_EVERY:
-            if (Is_Void(SPARE)) {
-                //
-                // In light of other tolerances in the system for voids, EVERY
-                // treats a void as "no vote", whether MAYBE is used or not.
-                //
-                // every x [1 2 3 4] [if odd? x [x]]  =>  [1 3]
-                //
-                // every x [1 2 3 4] [maybe if odd? x [x]]  => none (~) isotope
-                //
-                // every x [1 2 3 4] [comment "heavy"]  => none (~) isotope
-                //
-                // But it returns a none isotope (~) on the skipped bodies,
-                // as loop composition breaks down if we try to keep old values.
-                //
-                Init_None(OUT);
-            }
-            else {
-                // We don't decay isotopes here, for the reason we don't decay
-                // them in ALL/ANY etc:
-                //
-                //    every x [#[false] #[true]] [match logic! x]
-                //
-                // The ~false~ isotope here catches the misunderstanding by
-                // giving an error.  Conditional testing makes us care!
-                //
-                if (Is_Isotope(SPARE)) {
-                    Init_Error(SPARE, Error_Bad_Isotope(SPARE));
-                    Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
-                    goto finalize_loop_each;
-                }
+        //=//// CALL BACK INTO NATIVE TO HANDLE BODY RESULTS //////////////=//
 
-                if (IS_FALSEY(SPARE)) {
-                    Init_Nulled(OUT);
-                }
-                else if (
-                    Is_Stale(OUT)
-                    or Is_None(OUT)  // saw a void last time
-                    or not IS_NULLED(OUT)  // null means we saw false
-                ){
-                    Move_Cell(OUT, SPARE);
-                    if (IS_META_BLOCK(body))
-                        Meta_Quotify(OUT);
-                }
-            }
-            break;
-
-          case LOOP_MAP_EACH:  // don't worry about stale les->out (unused)
-            //
-            // Here is where we would run a predicate to process the block
-            // result before appending.
-            //
-            /* Predicate(temp) */
-
-            if (Is_Void(SPARE)) {
-                //
-                // MAP rules are different because we aren't conditionally
-                // testing, so void scenarios should be okay to skip.
-                //
-                // map x each [1 2 3] [if even? x [x * 10]] => [20]
-                //
-                // map x each [1 2] [maybe if odd? x [x]] => [1]
-                //
-                continue;
-            }
-
-            Decay_If_Isotope(SPARE);
-            if (IS_META_BLOCK(body))
-                Meta_Quotify(SPARE);
-
-            if (IS_NULLED(SPARE))
-                Init_Isotope(SPARE, Canon(NULL));
-            if (Is_Isotope(SPARE)) {
-                Init_Error(SPARE, Error_Bad_Isotope(SPARE));
-                Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
-                goto finalize_loop_each;
-            }
-
-            // !!! We use APPEND semantics on les->out; whatever APPEND does,
-            // we should do here.  Unify logic.
-
-            if (IS_BLANK(SPARE))
-                continue;
-
-            if (IS_QUOTED(SPARE)) {
-                Unquotify(SPARE, 1);
-                if (IS_NULLED(SPARE))
-                    Init_Bad_Word(DS_PUSH(), Canon(NULL));  // APPEND semantics
-                else
-                    Copy_Cell(DS_PUSH(), SPARE);
-            }
-            else if (ANY_THE_KIND(VAL_TYPE(SPARE))) {
-                Plainify(Copy_Cell(DS_PUSH(), SPARE));
-            }
-            else if (IS_BLOCK(SPARE)) {
-                const Cell *tail;
-                const Cell *v = VAL_ARRAY_AT(&tail, SPARE);
-                for (; v != tail; ++v)
-                    Derelativize(DS_PUSH(), v, VAL_SPECIFIER(SPARE));
-            }
-            else if (ANY_INERT(SPARE)) {
-                Copy_Cell(DS_PUSH(), SPARE);  // non nulls added to result
-            }
-            else {
-                Init_Error(
-                    SPARE,
-                    Error_User("Cannot MAP evaluative values w/o QUOTE")
-                );
-                Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
-                goto finalize_loop_each;
-            }
-
-            // MAP-EACH only changes OUT if BREAK
-            //
-            assert(Is_Stale(OUT));
-            break;
+        REB_R r = (*ACT_DISPATCHER(FRM_PHASE(frame_)))(frame_);
+        if (r == R_THROWN) {
+            threw = true;
+            goto finalize_loop_each;
         }
+        assert(r == R_CONTINUATION);
+        UNUSED(r);
+
     } while (more_data);
 
 
@@ -1172,21 +1037,74 @@ static bool Loop_Each_Throws(REBFRM *frame_, LOOP_MODE mode)
 //  ]
 //
 REBNATIVE(for_each)
+//
+// 1. On a "void" continue, it may seem tempting to drop out the last result:
+//
+//        for-each x [1 2 3] [if x = 3 [continue] x]  => 2  ; would be bad
+//
+//    But our goal is that a loop which never runs its body be distinguishable
+//    from one that has CONTINUE'd each body.  Unless those are allowed to be
+//    indistinguishable, loop compositions that work don't work.  So instead:
+//
+//        for-each x [1 2 3] [if x != 3 [x]]  =>  none (~) isotope
 {
-    if (Loop_Each_Throws(frame_, LOOP_FOR_EACH))
+    INCLUDE_PARAMS_OF_FOR_EACH;
+
+    UNUSED(ARG(vars));  // used by Loop_Each_Throws()
+    UNUSED(ARG(data));  // used by Loop_Each_Throws()
+    REBVAL *body = ARG(body);
+
+    enum {
+        ST_FOR_EACH_INITIAL_ENTRY = 0,
+        ST_FOR_EACH_RUNNING_BODY,
+        ST_FOR_EACH_FINISHING
+    };
+
+    switch (STATE) {
+      case ST_FOR_EACH_INITIAL_ENTRY : goto initial_entry;
+      case ST_FOR_EACH_RUNNING_BODY : goto body_result_in_spare;
+      case ST_FOR_EACH_FINISHING : goto last_result_in_out;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    STATE = ST_FOR_EACH_RUNNING_BODY;
+
+    if (Loop_Each_Throws(frame_))  // !!! temp hack, calls phase dispatcher
         return THROWN;
+
+    STATE = ST_FOR_EACH_FINISHING;
+
+    goto last_result_in_out;
+
+} body_result_in_spare: {  ///////////////////////////////////////////////////
+
+    if (Is_Void(SPARE)) {
+        Init_None(OUT);
+    }
+    else {
+        Move_Cell(OUT, SPARE);
+        Isotopify_If_Nulled(OUT);  // NULL is reserved for BREAK
+        if (IS_META_BLOCK(body))
+            Meta_Quotify(OUT);
+    }
+
+    return R_CONTINUATION;  // !!! actually just returning to Loop_Each() ATM
+
+} last_result_in_out: {  /////////////////////////////////////////////////////
 
     // pure NULL output means there was a BREAK
     // stale means body never ran: `10 = (10 maybe for-each x [] [<skip>])`
     // ~null~ isotope means body made NULL or ~null~ isotope
     // ~none~ isotope means body made ~none~ isotope or ~void~ isotope
     // any other value is the plain last body result
-    //
+
     if (Is_Stale(OUT))
         return VOID;
 
     return OUT;
-}
+}}
 
 
 //
@@ -1205,19 +1123,95 @@ REBNATIVE(for_each)
 //  ]
 //
 REBNATIVE(every)
+//
+// 1. In light of other tolerances in the system for voids in logic tests
+//    (see ALL & ANY), EVERY treats a void as "no vote".
+//
+//        every x [1 2 3 4] [if odd? x [x]]  =>  [1 3]
+//
+//        every x [1 2 3 4] [maybe if odd? x [x]]  => none (~) isotope
+//
+//        every x [1 2 3 4] [comment "heavy"]  => none (~) isotope
+//
+//    But it returns a none isotope (~) on the skipped bodies, as loop
+//    composition breaks down if we try to keep old values.
+//
+// 2. We don't decay isotopes, for the reason we don't decay them in ALL etc:
+//
+//        every x [#[false] #[true]] [match logic! x]
+//
+//    The ~false~ isotope here catches the misunderstanding by erroring.
 {
-    if (Loop_Each_Throws(frame_, LOOP_EVERY))
+    INCLUDE_PARAMS_OF_EVERY;
+
+    UNUSED(ARG(vars));  // used by Loop_Each_Throws()
+    UNUSED(ARG(data));  // used by Loop_Each_Throws()
+    REBVAL *body = ARG(body);
+
+    enum {
+        ST_EVERY_INITIAL_ENTRY = 0,
+        ST_EVERY_RUNNING_BODY,
+        ST_EVERY_FINISHING
+    };
+
+    switch (STATE) {
+      case ST_EVERY_INITIAL_ENTRY : goto initial_entry;
+      case ST_EVERY_RUNNING_BODY : goto body_result_in_spare;
+      case ST_EVERY_FINISHING : goto last_result_in_out;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
+    STATE = ST_EVERY_RUNNING_BODY;
+
+    if (Loop_Each_Throws(frame_))  // !!! temp hack, calls phase dispatcher
         return THROWN;
+
+    STATE = ST_EVERY_FINISHING;
+
+    goto last_result_in_out;
+
+} body_result_in_spare: {  ///////////////////////////////////////////////////
+
+    if (Is_Void(SPARE)) {  // every treats as no vote, see [1]
+        Init_None(OUT);
+    }
+    else {
+        if (Is_Isotope(SPARE)) {  // don't decay isotopes, see [2]
+            Init_Error(SPARE, Error_Bad_Isotope(SPARE));
+
+            return Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));;
+        }
+
+        if (IS_FALSEY(SPARE)) {
+            Init_Nulled(OUT);
+        }
+        else if (
+            Is_Stale(OUT)
+            or Is_None(OUT)  // saw a void last time
+            or not IS_NULLED(OUT)  // null means we saw false
+        ){
+            Move_Cell(OUT, SPARE);
+            if (IS_META_BLOCK(body))
+                Meta_Quotify(OUT);
+        }
+    }
+
+    return R_CONTINUATION;  // not really (yet)
+
+} last_result_in_out: {  /////////////////////////////////////////////////////
 
     // pure NULL output means there was a BREAK
     // stale means body never ran: `10 = (10 maybe every x [] [<skip>])`
     // pure null means loop ran, and at least one body result was "falsey"
     // any other value is the last body result, and is truthy
-    //
+
     if (Is_Stale(OUT))
         return VOID;
+
     return OUT;
-}
+}}
 
 
 //
@@ -1575,6 +1569,9 @@ REBNATIVE(map_each)
     Quotify(ARG(data), 1);  // MAP wants data to be QUOTED! atm
     Metafy(ARG(body));  // want the body to effectively quote the argument
 
+    INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(MAP)));
+    // INIT_FRM_BINDING ?
+
     REBNAT dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));
     return dispatcher(frame_);
 }
@@ -1596,13 +1593,34 @@ REBNATIVE(map_each)
 //  ]
 //
 REBNATIVE(map)
+//
+// 1. Void is allowed for skipping map elements:
+//
+//        map x each [1 2 3] [if even? x [x * 10]] => [20]
+//
+// 2. We use APPEND semantics on the body result; whatever APPEND would do with
+//    the value, we do the same.  (Ideally the logic could be unified.)
 {
     INCLUDE_PARAMS_OF_MAP;
 
-    UNUSED(PAR(vars));
-    UNUSED(PAR(body));
-
+    UNUSED(ARG(vars));  // used by Loop_Each_Throws()
     REBVAL *data = ARG(data);
+    REBVAL *body = ARG(body);
+
+    enum {
+        ST_MAP_INITIAL_ENTRY = 0,
+        ST_MAP_RUNNING_BODY,
+        ST_MAP_FINISHING
+    };
+
+    switch (STATE) {
+      case ST_MAP_INITIAL_ENTRY : goto initial_entry;
+      case ST_MAP_RUNNING_BODY : goto body_result_in_spare;
+      case ST_MAP_FINISHING : goto last_result_in_out;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     if (IS_ACTION(data)) {
         // treat as a generator
@@ -1618,16 +1636,75 @@ REBNATIVE(map)
         fail ("MAP only supports one-level QUOTED! series/path for the moment");
     }
 
-    REBDSP dsp_orig = DSP;
+    STATE = ST_MAP_RUNNING_BODY;
 
-    if (Loop_Each_Throws(frame_, LOOP_MAP_EACH)) {
-        DS_DROP_TO(dsp_orig);
+    if (Loop_Each_Throws(frame_)) {  // !!! temp hack, calls phase dispatcher
+        DS_DROP_TO(FRAME->baseline.dsp);
         return THROWN;
     }
 
+    STATE = ST_MAP_FINISHING;
+
+    goto last_result_in_out;
+
+} body_result_in_spare: {  ///////////////////////////////////////////////////
+
+    if (Is_Void(SPARE))
+        return R_CONTINUATION;  // okay to skip
+
+    Decay_If_Isotope(SPARE);
+    if (IS_META_BLOCK(body))
+        Meta_Quotify(SPARE);
+
+    if (IS_NULLED(SPARE))
+        Init_Isotope(SPARE, Canon(NULL));
+    if (Is_Isotope(SPARE)) {
+        Init_Error(SPARE, Error_Bad_Isotope(SPARE));
+        Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
+        return THROWN;
+    }
+
+    if (IS_BLANK(SPARE))  // blank also skips
+        return R_CONTINUATION;
+
+    if (IS_QUOTED(SPARE)) {
+        Unquotify(SPARE, 1);
+        if (IS_NULLED(SPARE))
+            Init_Bad_Word(DS_PUSH(), Canon(NULL));  // APPEND semantics
+        else
+            Copy_Cell(DS_PUSH(), SPARE);
+    }
+    else if (ANY_THE_KIND(VAL_TYPE(SPARE))) {
+        Plainify(Copy_Cell(DS_PUSH(), SPARE));
+    }
+    else if (IS_BLOCK(SPARE)) {
+        const Cell *tail;
+        const Cell *v = VAL_ARRAY_AT(&tail, SPARE);
+        for (; v != tail; ++v)
+            Derelativize(DS_PUSH(), v, VAL_SPECIFIER(SPARE));
+    }
+    else if (ANY_INERT(SPARE)) {
+        Copy_Cell(DS_PUSH(), SPARE);  // non nulls added to result
+    }
+    else {
+        Init_Error(
+            SPARE,
+            Error_User("Cannot MAP evaluative values w/o QUOTE")
+        );
+        return Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));
+    }
+
+    // MAP-EACH only changes OUT if BREAK
+    //
+    assert(Is_Stale(OUT));
+
+    return R_CONTINUATION;  // not really (yet)
+
+} last_result_in_out: {  /////////////////////////////////////////////////////
+
     if (not Is_Stale(OUT)) {  // only modifies on break
         assert(IS_NULLED(OUT));  // BREAK, so *must* return null
-        DS_DROP_TO(dsp_orig);
+        DS_DROP_TO(FRAME->baseline.dsp);
         return nullptr;
     }
 
@@ -1635,8 +1712,8 @@ REBNATIVE(map)
     // there's no way to detect from the outside if the body never ran.
     // Review if variants would be useful.
     //
-    return Init_Block(OUT, Pop_Stack_Values(dsp_orig));
-}
+    return Init_Block(OUT, Pop_Stack_Values(FRAME->baseline.dsp));
+}}
 
 
 //
