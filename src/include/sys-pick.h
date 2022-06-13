@@ -94,3 +94,18 @@ inline static REB_R Run_Pickpoke_Dispatch(
     DS_DROP();
     return r;
 }
+
+// If you pass in a nullptr for the steps in the Get_Var() and Set_Var()
+// mechanics, they will disallow groups.  This is a safety measure which helps
+// avoid unwanted side effects in SET and GET, and motivates passing in a
+// variable that will be assigned a "hardened" path of steps to get to the
+// location more repeatedly (e.g. if something like default wanted to make
+// sure it updates the same variable it checked to see if it had a value...
+// and only run code in groups once.)
+//
+// Requesting steps will supress that, but sometimes you don't actually need
+// the steps (as the evaluator doesn't when doing SET-TUPLE!).  Rather than
+// passing a separate flag, the END pointer is used.
+//
+#define GROUPS_OK \
+    m_cast(REBVAL*, END)

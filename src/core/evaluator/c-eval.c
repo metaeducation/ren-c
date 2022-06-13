@@ -953,8 +953,7 @@ bool Eval_Core_Throws(REBFRM * const f)
             break;
         }
 
-        DECLARE_LOCAL (steps);
-        if (Get_Var_Core_Throws(SPARE, steps, v, v_specifier)) {
+        if (Get_Var_Core_Throws(SPARE, GROUPS_OK, v, v_specifier)) {
             Move_Cell(OUT, SPARE);
             goto return_thrown;
         }
@@ -1128,7 +1127,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (Is_Void(OUT)) {  // ^-- also see REB_SET_WORD
             if (Set_Var_Core_Throws(
                 SPARE,
-                SPARE,  // !!! can steps be the same as output?
+                GROUPS_OK,
                 v,
                 v_specifier,
                 NONE_ISOTOPE
@@ -1146,7 +1145,7 @@ bool Eval_Core_Throws(REBFRM * const f)
 
             if (Set_Var_Core_Throws(
                 SPARE,
-                SPARE,  // can steps be the same as output?
+                GROUPS_OK,
                 v,
                 v_specifier,
                 Pointer_To_Decayed(OUT)
@@ -1192,7 +1191,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         );
 
         RESET(OUT);  // !!! Not needed, should there be debug only TRASH()
-        if (Get_Var_Core_Throws(OUT, SPARE, v, v_specifier))
+        if (Get_Var_Core_Throws(OUT, GROUPS_OK, v, v_specifier))
             goto return_thrown;
 
         // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
