@@ -193,18 +193,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     REBVAL *rootcopy = Copy_Cell(SPARE, rootvar);
     INIT_VAL_FRAME_PHASE_OR_LABEL(SPARE, VAL_ACTION_LABEL(inner));
 
-    if (rebRunCoreThrows(
-        OUT,  // <-- output cell
-        EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_NO_RESIDUE,
-        outer, rootcopy
-    )){
-        return THROWN;
-    }
-
-    if (Is_Stale(OUT))
-        return VOID;
-
-    return OUT;
+    delegate (OUT, outer, rootcopy);
 }
 
 
