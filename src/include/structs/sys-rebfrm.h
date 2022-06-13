@@ -607,8 +607,9 @@ typedef REB_R (*REBNAT)(REBFRM *frame_);
     // Used to slip cell to re-evaluate into Eval_Core()
     //
     struct {
-        const REBVAL *value;
-    } reval;
+        const Cell *current;
+        option(const REBVAL*) current_gotten;
+    } eval;
   } u;
 
     // The "baseline" is a digest of the state of global variables at the

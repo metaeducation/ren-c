@@ -69,26 +69,28 @@
 //
 #undef f_value
 #undef f_gotten
-#define f_next f->feed->value
-#define f_next_gotten f->feed->gotten
-
-#define frame_ f  // for OUT, SPARE, STATE macros
-
-// We make the macro for getting specifier a bit more complex here, to
-// account for reevaluation.  To help annotate why it's weird, we call it
-// `v_specifier` instead.
-//
-// https://forum.rebol.info/t/should-reevaluate-apply-let-bindings/1521
-//
-#undef f_specifier
-#define v_specifier \
-    (STATE == ST_EVALUATOR_REEVALUATING ? SPECIFIED : FEED_SPECIFIER(f->feed))
+#define f_next              f->feed->value
+#define f_next_gotten       f->feed->gotten
+#define f_current           f->u.eval.current
+#define f_current_gotten    f->u.eval.current_gotten
 
 // In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
 // things down a little.  So we only use the checked version in the main
 // switch statement.  This abbreviation is also shorter and more legible.
 //
-#define kind_current VAL_TYPE_UNCHECKED(v)
+#define kind_current VAL_TYPE_UNCHECKED(f_current)
+
+
+#define frame_ f  // for OUT, SPARE, STATE macros
+
+// We make the macro for getting specifier a bit more complex here, to
+// account for reevaluation.
+//
+// https://forum.rebol.info/t/should-reevaluate-apply-let-bindings/1521
+//
+#undef f_specifier
+#define f_specifier \
+    (STATE == ST_EVALUATOR_REEVALUATING ? SPECIFIED : FEED_SPECIFIER(f->feed))
 
 
 // In the early development of FRAME!, the REBFRM* for evaluating across a
@@ -113,7 +115,7 @@
         (f->feed->stress != nullptr)
 #else
     #define CURRENT_CHANGES_IF_FETCH_NEXT \
-        (v == &f->feed->lookback)
+        (f_current == &f->feed->lookback)
 #endif
 
 
@@ -133,10 +135,8 @@
 // be accounted for by pushing the value to some other stack--e.g. the data
 // stack.  But for the moment this (uncommon?) case uses a new frame.
 //
-inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
-    REBFRM *f,
-    const Cell *v
-){
+inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(REBFRM *f)
+{
     // This flag is used for enfix processing, but it's also applied as an
     // internal trick to make SHOVE (>-) work:
     //
@@ -165,11 +165,11 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     RESET(OUT);
 
     if (IS_END(f_next)) {
-        if (IS_META(v))  // allow (@), case makes END into ~void~
+        if (IS_META(f_current))  // allow (@), case makes END into ~void~
             return false;
 
         // `do [x:]`, `do [o.x:]`, etc. are illegal
-        fail (Error_Need_Non_End(v));
+        fail (Error_Need_Non_End(f_current));
     }
 
     // Using a SET-XXX! means you always have at least two elements; it's like
@@ -240,12 +240,6 @@ REB_R Evaluator_Executor(REBFRM *f)
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);  // not an argument, clear flag
     }
 
-    const Cell *v;  // shorthand for the value we are switch()-ing on
-    TRASH_POINTER_IF_DEBUG(v);
-
-    option(const REBVAL*) gotten;
-    TRASH_OPTION_IF_DEBUG(gotten);
-
     // Given how the evaluator is written, it's inevitable that there will
     // have to be a test for points to `goto` before running normal eval.
     // This cost is paid on every entry to Eval_Core().
@@ -254,6 +248,8 @@ REB_R Evaluator_Executor(REBFRM *f)
       case ST_EVALUATOR_INITIAL_ENTRY:
         if (NOT_EVAL_FLAG(f, MAYBE_STALE))
             assert(Is_Void(OUT));
+        TRASH_POINTER_IF_DEBUG(f_current);
+        /*TRASH_POINTER_IF_DEBUG(f_current_gotten);*/  // trash option() ptrs?
         break;
 
       case ST_EVALUATOR_LOOKING_AHEAD:
@@ -263,7 +259,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         //
         // It's important to leave STATE as ST_EVALUATOR_REEVALUATING
         // during the switch state, because that's how the evaluator knows
-        // not to redundantly apply LET bindings.  See `v_specifier` above.
+        // not to redundantly apply LET bindings.  See `f_specifier` above.
 
         // The re-evaluate functionality may not want to heed the enfix state
         // in the action itself.  See REBNATIVE(shove)'s /ENFIX for instance.
@@ -276,10 +272,10 @@ REB_R Evaluator_Executor(REBFRM *f)
             Push_Frame(OUT, subframe);
             Push_Action(
                 subframe,
-                VAL_ACTION(f->u.reval.value),
-                VAL_ACTION_BINDING(f->u.reval.value)
+                VAL_ACTION(f_current),
+                VAL_ACTION_BINDING(f_current)
             );
-            Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f->u.reval.value));
+            Begin_Enfix_Action(subframe, VAL_ACTION_LABEL(f_current));
                 // ^-- invisibles cache NO_LOOKAHEAD
 
             SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
@@ -291,8 +287,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         if (NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT))
             Mark_Eval_Out_Stale(OUT);
 
-        v = f->u.reval.value;
-        gotten = nullptr;
+        f_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
       default:
@@ -334,9 +329,9 @@ REB_R Evaluator_Executor(REBFRM *f)
     if (IS_END(f_next))
         goto finished;
 
-    gotten = f_next_gotten;
-    v = Lookback_While_Fetching_Next(f);
-    // ^-- can't just `v = f_next`, fetch may overwrite--request lookback!
+    f_current = Lookback_While_Fetching_Next(f);
+    f_current_gotten = f_next_gotten;
+    f_next_gotten = nullptr;
 
   evaluate: ;  // meaningful semicolon--subsequent macro may declare things
 
@@ -413,15 +408,15 @@ REB_R Evaluator_Executor(REBFRM *f)
     // Lookback args are fetched from OUT, then copied into an arg slot.
     // Put the backwards quoted value into OUT.
     //
-    Derelativize(OUT, v, v_specifier);  // for NEXT_ARG_FROM_OUT
+    Derelativize(OUT, f_current, f_specifier);  // for NEXT_ARG_FROM_OUT
     SET_CELL_FLAG(OUT, UNEVALUATED);  // so lookback knows it was quoted
 
     // We skip over the word that invoked the action (e.g. ->-, OF, =>).
     // v will then hold a pointer to that word (possibly now resident in the
     // frame spare).  (OUT holds what was the left)
     //
-    gotten = f_next_gotten;
-    v = Lookback_While_Fetching_Next(f);
+    f_current_gotten = f_next_gotten;
+    f_current = Lookback_While_Fetching_Next(f);
 
     if (
         IS_END(f_next)  // v-- out is what used to be on left
@@ -441,12 +436,12 @@ REB_R Evaluator_Executor(REBFRM *f)
         // whatever that was.
 
         Move_Cell(&f->feed->lookback, OUT);
-        Derelativize(OUT, v, v_specifier);
+        Derelativize(OUT, f_current, f_specifier);
         SET_CELL_FLAG(OUT, UNEVALUATED);
 
         // leave *next at END
-        v = &f->feed->lookback;
-        gotten = nullptr;
+        f_current = &f->feed->lookback;
+        f_current_gotten = nullptr;
 
         SET_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);  // for better error message
         SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);  // literal right op is arg
@@ -462,10 +457,10 @@ REB_R Evaluator_Executor(REBFRM *f)
     Push_Frame(OUT, subframe);
     Push_Action(
         subframe,
-        VAL_ACTION(unwrap(gotten)),
-        VAL_ACTION_BINDING(unwrap(gotten))
+        VAL_ACTION(unwrap(f_current_gotten)),
+        VAL_ACTION_BINDING(unwrap(f_current_gotten))
     );
-    Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(v));
+    Begin_Enfix_Action(subframe, VAL_WORD_SYMBOL(f_current));
 
     SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
 
@@ -484,17 +479,17 @@ REB_R Evaluator_Executor(REBFRM *f)
     // fast tests like ANY_INERT() and IS_NULLED_OR_VOID_OR_END() has shown
     // to reduce performance in practice.  The compiler does the right thing.
 
-    if (QUOTE_BYTE_UNCHECKED(v) != 0) {
+    if (QUOTE_BYTE_UNCHECKED(f_current) != 0) {
         //
         // Evaluation of a QUOTED! simply removes one level of quoting
         //
-        Derelativize(OUT, v, v_specifier);
+        Derelativize(OUT, f_current, f_specifier);
         Unquotify(OUT, 1);
     }
-    else switch (CELL_HEART_UNCHECKED(v)) {  // unchecked so it sees REB_0
+    else switch (CELL_HEART_UNCHECKED(f_current)) {  // unchecked to see REB_0
 
       case REB_0_END:
-        assert(IS_END(v));  // should be END, not void
+        assert(IS_END(f_current));  // should be END, not void
         goto finished;
 
 
@@ -551,8 +546,12 @@ REB_R Evaluator_Executor(REBFRM *f)
       case REB_ACTION: {
         DECLARE_ACTION_SUBFRAME (subframe, f);
         Push_Frame(OUT, subframe);
-        Push_Action(subframe, VAL_ACTION(v), VAL_ACTION_BINDING(v));
-        Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(v));
+        Push_Action(
+            subframe,
+            VAL_ACTION(f_current),
+            VAL_ACTION_BINDING(f_current)
+        );
+        Begin_Prefix_Action(subframe, VAL_ACTION_LABEL(f_current));
 
         // We'd like `10 >- = 5 + 5` to work, and to do so it reevaluates in
         // a new frame, but has to run the `=` as "getting its next arg from
@@ -640,16 +639,16 @@ REB_R Evaluator_Executor(REBFRM *f)
     // or in "stale" left hand situations like `10 comment "hi" + 20`.
 
       case REB_WORD:
-        if (not gotten)
-            gotten = Lookup_Word_May_Fail(v, v_specifier);
+        if (not f_current_gotten)
+            f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
 
-        if (VAL_TYPE_UNCHECKED(unwrap(gotten)) == REB_ACTION) {  // isotope ok
-            REBACT *act = VAL_ACTION(unwrap(gotten));
+        if (VAL_TYPE_UNCHECKED(unwrap(f_current_gotten)) == REB_ACTION) {
+            REBACT *action = VAL_ACTION(unwrap(f_current_gotten));
 
-            if (GET_ACTION_FLAG(act, ENFIXED)) {
+            if (GET_ACTION_FLAG(action, ENFIXED)) {
                 if (
-                    GET_ACTION_FLAG(act, POSTPONES_ENTIRELY)
-                    or GET_ACTION_FLAG(act, DEFERS_LOOKBACK)
+                    GET_ACTION_FLAG(action, POSTPONES_ENTIRELY)
+                    or GET_ACTION_FLAG(action, DEFERS_LOOKBACK)
                 ){
                     if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
                         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
@@ -660,25 +659,25 @@ REB_R Evaluator_Executor(REBFRM *f)
                 }
             }
 
+            REBCTX *binding = VAL_ACTION_BINDING(unwrap(f_current_gotten));
+            const Symbol *label = VAL_WORD_SYMBOL(f_current);  // use WORD!
+            bool enfixed = GET_ACTION_FLAG(action, ENFIXED);
+
             DECLARE_ACTION_SUBFRAME (subframe, f);
             Push_Frame(OUT, subframe);
-            Push_Action(subframe, act, VAL_ACTION_BINDING(unwrap(gotten)));
-            Begin_Action_Core(
-                subframe,
-                VAL_WORD_SYMBOL(v),  // use word as label
-                GET_ACTION_FLAG(act, ENFIXED)
-            );
+            Push_Action(subframe, action, binding);
+            Begin_Action_Core(subframe, label, enfixed);
 
-            if (GET_ACTION_FLAG(act, ENFIXED))
+            if (enfixed)
                 SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
 
             goto process_action;
         }
 
-        if (Is_Isotope(unwrap(gotten)))  // checked second (helps common case)
-            fail (Error_Bad_Word_Get(v, unwrap(gotten)));
+        if (Is_Isotope(unwrap(f_current_gotten)))  // checked second
+            fail (Error_Bad_Word_Get(f_current, unwrap(f_current_gotten)));
 
-        Copy_Cell(OUT, unwrap(gotten));  // no CELL_FLAG_UNEVALUATED
+        Copy_Cell(OUT, unwrap(f_current_gotten));  // no CELL_FLAG_UNEVALUATED
         break;
 
 
@@ -689,7 +688,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // Null and void assigns are allowed: https://forum.rebol.info/t/895/4
 
       case REB_SET_WORD: {
-        if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))  // see notes
+        if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f))  // see notes
             goto return_thrown;
 
         if (Is_Void(OUT)) {
@@ -703,17 +702,17 @@ REB_R Evaluator_Executor(REBFRM *f)
             //    >> get/any 'x
             //    == ~  ; isotope
             //
-            Init_None(Sink_Word_May_Fail(v, v_specifier));
+            Init_None(Sink_Word_May_Fail(f_current, f_specifier));
             Init_None(OUT);
         }
         else {
             if (REB_ACTION == VAL_TYPE_UNCHECKED(OUT))  // isotopes ok
-                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(v));  // cache name
+                INIT_VAL_ACTION_LABEL(OUT, VAL_WORD_SYMBOL(f_current));
 
             // Decay the isotope in variable, but don't decay overall result!
             //
             Copy_Cell(
-                Sink_Word_May_Fail(v, v_specifier),
+                Sink_Word_May_Fail(f_current, f_specifier),
                 Pointer_To_Decayed(OUT)
             );
         }
@@ -730,8 +729,9 @@ REB_R Evaluator_Executor(REBFRM *f)
         // and the various complexities involved with that means we have to
         // flush here if the symbols match.
         //
-        if (f_next_gotten and VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(v))
-            f_next_gotten = nullptr;
+        if (f_next_gotten)
+            if (VAL_WORD_SYMBOL(f_next) == VAL_WORD_SYMBOL(f_current))
+                f_next_gotten = nullptr;
 
         break; }
 
@@ -761,10 +761,10 @@ REB_R Evaluator_Executor(REBFRM *f)
             or STATE == ST_EVALUATOR_GET_WORD
         );
 
-        if (not gotten)
-            gotten = Lookup_Word_May_Fail(v, v_specifier);
+        if (not f_current_gotten)
+            f_current_gotten = Lookup_Word_May_Fail(f_current, f_specifier);
 
-        Copy_Cell(OUT, unwrap(gotten));
+        Copy_Cell(OUT, unwrap(f_current_gotten));
         assert(NOT_CELL_FLAG(OUT, UNEVALUATED));
 
         // !!! All isotopic decay should have already happened.
@@ -774,7 +774,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             Meta_Quotify(OUT);
         else {
             if (Is_Isotope(OUT))
-                fail (Error_Bad_Word_Get(v, OUT));
+                fail (Error_Bad_Word_Get(f_current, OUT));
         }
 
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
@@ -825,7 +825,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         f_next_gotten = nullptr;  // arbitrary code changes fetched variables
 
         RESET(OUT);  // guaranteed to overwrite out, not transparent
-        if (Do_Any_Array_At_Throws(OUT, v, v_specifier))
+        if (Do_Any_Array_At_Throws(OUT, f_current, f_specifier))
             goto return_thrown;
         Reify_Eval_Out_Meta(OUT);
         break; }
@@ -843,7 +843,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         // the difference of `(20 (comment "hi")` and `(10 (20 comment "hi"))`
         // by just the stale flag on OUT alone.
         //
-        if (Do_Any_Array_At_Throws(SPARE, v, v_specifier))
+        if (Do_Any_Array_At_Throws(SPARE, f_current, f_specifier))
             goto return_thrown;
 
         if (not Is_Void(SPARE))
@@ -869,13 +869,13 @@ REB_R Evaluator_Executor(REBFRM *f)
     // fetching isotopes is what you actually intended.
 
       case REB_TUPLE: {
-        const Cell *head = VAL_SEQUENCE_AT(SPARE, v, 0);
+        const Cell *head = VAL_SEQUENCE_AT(SPARE, f_current, 0);
         if (ANY_INERT(head)) {
-            Derelativize(OUT, v, v_specifier);
+            Derelativize(OUT, f_current, f_specifier);
             break;
         }
 
-        if (Get_Var_Core_Throws(SPARE, GROUPS_OK, v, v_specifier))
+        if (Get_Var_Core_Throws(SPARE, GROUPS_OK, f_current, f_specifier))
             goto return_thrown;
 
         if (IS_ACTION(SPARE)) {  // try this branch before fail on void+null
@@ -903,7 +903,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         }
 
         if (Is_Isotope(SPARE))
-            fail (Error_Bad_Word_Get(v, SPARE));
+            fail (Error_Bad_Word_Get(f_current, SPARE));
 
         Move_Cell(OUT, SPARE);  // won't move CELL_FLAG_UNEVALUATED
         break; }
@@ -929,9 +929,9 @@ REB_R Evaluator_Executor(REBFRM *f)
     // blank at its head, and it evaluates to itself.
 
       case REB_PATH: {
-        const Cell *temp = VAL_SEQUENCE_AT(SPARE, v, 0);
+        const Cell *temp = VAL_SEQUENCE_AT(SPARE, f_current, 0);
         if (ANY_INERT(temp)) {
-            Derelativize(OUT, v, v_specifier);
+            Derelativize(OUT, f_current, f_specifier);
             break;
         }
 
@@ -942,7 +942,12 @@ REB_R Evaluator_Executor(REBFRM *f)
         DECLARE_ACTION_SUBFRAME (subframe, f);
         Push_Frame(OUT, subframe);
 
-        if (Get_Path_Push_Refinements_Throws(SPARE, OUT, v, v_specifier)) {
+        if (Get_Path_Push_Refinements_Throws(
+            SPARE,
+            OUT,
+            f_current,
+            f_specifier
+        )){
             Abort_Frame(subframe);
             goto return_thrown;
         }
@@ -1000,10 +1005,10 @@ REB_R Evaluator_Executor(REBFRM *f)
       case REB_SET_PATH: {
         REBVAL *redbol = Get_System(SYS_OPTIONS, OPTIONS_REDBOL_PATHS);
         if (not IS_LOGIC(redbol) or VAL_LOGIC(redbol) == false) {
-            Derelativize(OUT, v, v_specifier);
+            Derelativize(OUT, f_current, f_specifier);
             mutable_HEART_BYTE(OUT) = REB_SET_TUPLE;
 
-            Derelativize(SPARE, v, v_specifier);
+            Derelativize(SPARE, f_current, f_specifier);
             rebElide(
                 "echo [The SET-PATH!", SPARE, "is no longer the preferred",
                     "way to do member assignments.]",
@@ -1041,15 +1046,15 @@ REB_R Evaluator_Executor(REBFRM *f)
       set_common:
       case REB_SET_GROUP:
       case REB_SET_TUPLE: {
-        if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f, v))
+        if (Rightward_Evaluate_Nonvoid_Into_Out_Throws(f))
             goto return_thrown;
 
         if (Is_Void(OUT)) {  // ^-- also see REB_SET_WORD
             if (Set_Var_Core_Throws(
                 SPARE,
                 GROUPS_OK,
-                v,
-                v_specifier,
+                f_current,
+                f_specifier,
                 NONE_ISOTOPE
             )){
                 goto return_thrown;
@@ -1065,8 +1070,8 @@ REB_R Evaluator_Executor(REBFRM *f)
             if (Set_Var_Core_Throws(
                 SPARE,
                 GROUPS_OK,
-                v,
-                v_specifier,
+                f_current,
+                f_specifier,
                 Pointer_To_Decayed(OUT)
             )){
                 goto return_thrown;
@@ -1109,7 +1114,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         );
 
         RESET(OUT);  // !!! Not needed, should there be debug only TRASH()
-        if (Get_Var_Core_Throws(OUT, GROUPS_OK, v, v_specifier))
+        if (Get_Var_Core_Throws(OUT, GROUPS_OK, f_current, f_specifier))
             goto return_thrown;
 
         // !!! This didn't appear to be true for `-- "hi" "hi"`, processing
@@ -1122,7 +1127,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             Meta_Quotify(OUT);
         else {
             if (Is_Isotope(OUT))
-                fail (Error_Bad_Word_Get(v, OUT));
+                fail (Error_Bad_Word_Get(f_current, OUT));
         }
 
         STATE = ST_EVALUATOR_INITIAL_ENTRY;
@@ -1153,7 +1158,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // necessary, as it's very easy for users to ask for blocks to be reduced.
 
       case REB_GET_BLOCK: {
-        Derelativize(SPARE, v, v_specifier);
+        Derelativize(SPARE, f_current, f_specifier);
         mutable_HEART_BYTE(SPARE) = REB_BLOCK;
         if (rebRunThrows(
             OUT,  // <-- output cell
@@ -1206,15 +1211,15 @@ REB_R Evaluator_Executor(REBFRM *f)
         // wouldn't need to be since everything is on the stack before code
         // is run on the right...but it might reduce confusion.
 
-        if (VAL_LEN_AT(v) == 0)
+        if (VAL_LEN_AT(f_current) == 0)
             fail ("SET-BLOCK! must not be empty for now.");
 
         REBDSP dsp_circled = 0;  // which pushed address is main return
 
       blockscope {
         const Cell *tail;
-        const Cell *check = VAL_ARRAY_AT(&tail, v);
-        REBSPC *check_specifier = Derive_Specifier(v_specifier, v);
+        const Cell *check = VAL_ARRAY_AT(&tail, f_current);
+        REBSPC *check_specifier = Derive_Specifier(f_specifier, f_current);
         for (; tail != check; ++check) {
             //
             // THE-XXX! types are used to mark which result should be the
@@ -1529,7 +1534,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // (It's hard to think of another meaning that would be sensible.)
 
       case REB_META_BLOCK:
-        Inertly_Derelativize_Inheriting_Const(OUT, v, f->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, f_current, f->feed);
         mutable_HEART_BYTE(OUT) = REB_BLOCK;
         mutable_QUOTE_BYTE(OUT) = 1;
         break;
@@ -1603,7 +1608,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         // ~null~, ~false~, ~blank~, and ~blackhole~ isotopes.  But all of
         // them can exist transiently in evaluation.
         //
-        Derelativize(OUT, v, v_specifier);
+        Derelativize(OUT, f_current, f_specifier);
         Isotopify(OUT);
         break;
 
@@ -1633,14 +1638,14 @@ REB_R Evaluator_Executor(REBFRM *f)
       case REB_HANDLE:
         //
       case REB_CUSTOM:  // custom types (IMAGE!, VECTOR!) are all inert
-        Inertly_Derelativize_Inheriting_Const(OUT, v, f->feed);
+        Inertly_Derelativize_Inheriting_Const(OUT, f_current, f->feed);
         break;
 
 
     //=//// GARBAGE (pseudotypes or otherwise //////////////////////////////=//
 
       default:
-        panic (v);
+        panic (f_current);
     }
 
   //=//// END MAIN SWITCH STATEMENT ///////////////////////////////////////=//

@@ -293,7 +293,7 @@ inline static bool Reevaluate_In_Subframe_Throws(
         flags |= EVAL_FLAG_RUNNING_ENFIX;
 
     DECLARE_FRAME (subframe, f->feed, flags);
-    subframe->u.reval.value = reval;
+    subframe->u.eval.current = reval;
     Push_Frame(out, subframe);
 
     if (Trampoline_Throws(subframe)) {
