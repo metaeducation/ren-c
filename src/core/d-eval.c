@@ -25,14 +25,14 @@
 // debug-only routines are separated out here.  (Note that these are in
 // addition to the checks already done by Push_Frame() and Drop_Frame() time)
 //
-// * Eval_Core_Expression_Checks_Debug() runs before each full "expression"
+// * Evaluator_Expression_Checks_Debug() runs before each full "expression"
 //   is evaluated, e.g. before each EVALUATE step.  It makes sure the state
 //   balanced completely--so no DS_PUSH() that wasn't balanced by a DS_DROP()
 //   (for example).  It also trashes variables in the frame which might
 //   accidentally carry over from one step to another, so that there will be
 //   a crash instead of a casual reuse.
 //
-// * Eval_Core_Exit_Checks_Debug() runs only if the Eval_Core() call makes
+// * Evaluator_Exit_Checks_Debug() runs only if Evaluator_Executor() makes
 //   it to the end without a fail() longjmping out from under it.  It also
 //   checks to make sure the state has balanced, and that the return result is
 //   consistent with the state being returned.
@@ -112,7 +112,7 @@ void Dump_Frame_Location(const Cell *v, REBFRM *f)
 // These are checks common to Expression and Exit checks (hence also common
 // to the "end of Start" checks, since that runs on the first expression)
 //
-static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
+static void Evaluator_Shared_Checks_Debug(REBFRM *f)
 {
     // The state isn't actually guaranteed to balance overall until a frame
     // is completely dropped.  This is because a frame may be reused over
@@ -167,20 +167,20 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
 
 
 //
-//  Eval_Core_Expression_Checks_Debug: C
+//  Evaluator_Expression_Checks_Debug: C
 //
 // These fields are required upon initialization:
 //
 //     f->out
 //     REBVAL pointer to which the evaluation's result should be written.
 //     Should be to writable memory in a cell that lives above this call to
-//     Eval_Core in stable memory that is not user-visible (e.g. DECLARE_LOCAL
+//     the evalutor in stable memory (not user-visible, e.g. DECLARE_LOCAL
 //     or the parent's f->spare).  This can't point into an array whose memory
 //     may move during arbitrary evaluation, and that includes cells on the
 //     expandable data stack.  It also usually can't write a function argument
 //     cell, because that could expose an unfinished calculation during this
-//     Eval_Core() through its FRAME!...though a Eval_Core(f) must write f's
-//     *own* arg slots to fulfill them.
+//     Action_Executor() through its FRAME!...though an Action_Executor(f) must
+//     write f's *own* arg slots to fulfill them.
 //
 //     f->feed
 //     Contains the REBARR* or C va_list of subsequent values to fetch...as
@@ -191,11 +191,16 @@ static void Eval_Core_Shared_Checks_Debug(REBFRM *f)
 // This routine attempts to "trash" a lot of frame state variables to help
 // make sure one evaluation does not leak data into the next.
 //
-void Eval_Core_Expression_Checks_Debug(REBFRM *f)
+void Evaluator_Expression_Checks_Debug(REBFRM *f)
 {
     assert(f == FS_TOP); // should be topmost frame, still
 
-    Eval_Core_Shared_Checks_Debug(f);
+    assert(NOT_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH));
+    if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
+        assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
+    assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
+
+    Evaluator_Shared_Checks_Debug(f);
 
     assert(not Is_Throwing(f)); // no evals between throws
 
@@ -299,15 +304,46 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
 
 
 //
-//  Eval_Core_Exit_Checks_Debug: C
+//  Evaluator_Exit_Checks_Debug: C
 //
-void Eval_Core_Exit_Checks_Debug(REBFRM *f) {
-    Eval_Core_Shared_Checks_Debug(f);
+void Evaluator_Exit_Checks_Debug(REBFRM *f) {
+    Evaluator_Shared_Checks_Debug(f);
 
     if (NOT_END(f_next) and not FRM_IS_VARIADIC(f)) {
         if (f_index > ARR_LEN(f_array)) {
             assert(Is_Throwing(f));
             assert(f_index == ARR_LEN(f_array) + 1);
+        }
+    }
+
+  //=//// CHECK FOR STRAY FLAGS ///////////////////////////////////////////=//
+
+    if (not Is_Throwing(f)) {
+        REBFLGS filtered = (f->flags.bits & ~FLAG_STATE_BYTE(255));
+        filtered &= ~ (
+            EVAL_FLAG_0_IS_TRUE  // always true
+            | EVAL_FLAG_7_IS_TRUE  // always true
+            | EVAL_FLAG_ALLOCATED_FEED  // maybe true
+        );
+
+        // These are provided as options to Evaluator_Executor, and should not
+        // change over the course of the evaluation (could check this?)  But in
+        // any case they are okay if they are set.
+        //
+        filtered &= ~ (
+            EVAL_FLAG_MAYBE_STALE
+            | EVAL_FLAG_BRANCH
+            | EVAL_FLAG_FULFILLING_ARG
+            | EVAL_FLAG_NO_RESIDUE
+        );
+
+        if (filtered != 0) {
+            int bit;
+            for (bit = 0; bit < 32; ++bit)
+                if (filtered & FLAG_LEFT_BIT(bit))
+                    printf("BIT %d SET in EVAL_FLAGS\n", bit);
+
+            assert(!"Unexpected stray flags found in evaluator finalization");
         }
     }
 }

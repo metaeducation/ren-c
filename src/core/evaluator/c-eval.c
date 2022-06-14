@@ -267,15 +267,6 @@ bool Eval_Core_Throws(REBFRM * const f)
     f->was_eval_called = true;  // see definition for why this flag exists
   #endif
 
-  #if !defined(NDEBUG)
-    REBFLGS initial_flags = f->flags.bits & ~(
-        EVAL_FLAG_FULFILL_ONLY  // can be requested or <blank> can trigger
-        | EVAL_FLAG_RUNNING_ENFIX  // can be requested with REEVALUATE_CELL
-        | FLAG_STATE_BYTE(255)  // state is forgettable
-        | EVAL_FLAG_INERT_OPTIMIZATION // shouldn't be set at end
-    );  // should be unchanged on exit
-  #endif
-
     // A barrier shouldn't cause an error in evaluation if code would be
     // willing to accept an <end>.  So we allow argument gathering to try to
     // run, but it may error if that's not acceptable.
@@ -351,11 +342,7 @@ bool Eval_Core_Throws(REBFRM * const f)
     }
 
   #if !defined(NDEBUG)
-    Eval_Core_Expression_Checks_Debug(f);
-    assert(NOT_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH));
-    if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
-        assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
-    assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
+    Evaluator_Expression_Checks_Debug(f);
   #endif
 
   //=//// START NEW EXPRESSION ////////////////////////////////////////////=//
@@ -1985,7 +1972,7 @@ bool Eval_Core_Throws(REBFRM * const f)
   return_thrown:
 
   #if !defined(NDEBUG)
-    Eval_Core_Exit_Checks_Debug(f);   // called unless a fail() longjmps
+    Evaluator_Exit_Checks_Debug(f);   // called unless a fail() longjmps
     // don't care if f->flags has changes; thrown frame is not resumable
   #endif
 
@@ -2004,10 +1991,7 @@ bool Eval_Core_Throws(REBFRM * const f)
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
 
   #if !defined(NDEBUG)
-    Eval_Core_Exit_Checks_Debug(f);  // called unless a fail() longjmps
-    assert(
-        (f->flags.bits & ~FLAG_STATE_BYTE(255)) == initial_flags
-    );  // any change should be restored
+    Evaluator_Exit_Checks_Debug(f);
   #endif
 
     // Note: There may be some optimization possible here if the flag for
