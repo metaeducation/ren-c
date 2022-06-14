@@ -290,6 +290,10 @@ REB_R Evaluator_Executor(REBFRM *f)
         f_current_gotten = nullptr;  // !!! allow/require to be passe in?
         goto evaluate; }
 
+      case ST_EVALUATOR_RUNNING_ACTION :
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
+        goto lookahead;
+
       default:
         assert(false);
     }
@@ -579,51 +583,8 @@ REB_R Evaluator_Executor(REBFRM *f)
         // Gather args and execute function (the arg gathering makes nested
         // eval calls that lookahead, but no lookahead after the action runs)
         //
-        if (Trampoline_Throws(FS_TOP)) {
-            Abort_Frame(FS_TOP);
-            goto return_thrown;
-        }
-
-        assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must consume
-
-        Drop_Frame(FS_TOP);
-
-        // The Action_Executor does not get involved in Lookahead; so you
-        // only get lookahead behavior when an action has been spawned from
-        // a parent frame (such as one evaluating a block, or evaluating an
-        // action's arguments).  Trying to dispatch lookahead from the
-        // Action_Executor causes pain with `null then [x] => [1] else [2]`
-        // cases (for instance).
-        //
-        // Note: However, the evaluation of an invisible can leave a stale
-        // value, e.g. `do [comment "hi" 10]`...there is no prior value in
-        // OUT to serve as a return.  At one time this retriggered, but the
-        // new simplifying rule is that we do not support such non-interstitial
-        // "looping" within one evaluator step.  The invisible result must
-        // be dealt with by DO itself.
-        //
-        // When the idea was more ambitious, like `1 + comment [2 * 3] 4`,
-        // the retriggering was done like this:
-        //
-        //      if (
-        //          GET_EVAL_FLAG(f, FULFILLING_ARG)
-        //          and Is_Stale(OUT)
-        //          and NOT_END(f_next)
-        //      ){
-        //          gotten = f_next_gotten;
-        //          v = Lookback_While_Fetching_Next(f);
-        //          goto evaluate;
-        //      }
-        //
-        // But experience taught us this led to brittle, confusing, and
-        // unsustainable behavior.  It certainly can't be done by UPARSE, as
-        // it wires together combinators in advance; so the warping of
-        // structure implied by this is impossible.  In the name of simplicity,
-        // only interstitial invisibility is supported (between function calls)
-        // and you must put invisibles in groups to collect them as part of
-        // processing a single argument.
-        //
-        break; }
+        STATE = ST_EVALUATOR_RUNNING_ACTION;
+        continue_subframe (FS_TOP); }
 
 
     //=//// WORD! //////////////////////////////////////////////////////////=//

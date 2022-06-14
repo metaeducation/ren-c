@@ -97,25 +97,45 @@ REB_R Macro_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for RETURN macros
 
-    // Must trap RETURN ourselves, as letting it bubble up to generic UNWIND
-    // handling would
+    REBACT *phase = FRM_PHASE(f);
+    REBARR *details = ACT_DETAILS(phase);
+    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
+
+    assert(ACT_HAS_RETURN(phase));
+    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+
+    // !!! Using this form of RETURN is based on UNWIND, which means we must
+    // catch UNWIND ourselves to process that return.  This is probably not
+    // a good idea, and if macro wants a RETURN that it processes it should
+    // use a different form of return.  Because under this model, UNWIND
+    // can't unwind a macro frame to make it return an arbitrary result.
     //
-    bool returned = false;
-    if (Interpreted_Dispatch_Details_1_Throws(SPARE, f)) {
+    REBVAL *cell = FRM_ARG(f, 1);
+    Init_Action(
+        cell,
+        VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
+        Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
+        CTX(f->varlist)  // bind this return to know where to return from
+    );
+
+    // Must trap RETURN ourselves, as letting it bubble up to generic UNWIND
+    // handling would return a BLOCK! instead of splice it.
+    //
+    if (Do_Any_Array_At_Throws(SPARE, body, SPC(f->varlist))) {
         const REBVAL *label = VAL_THROWN_LABEL(f);
         if (
             IS_ACTION(label)  // catch UNWIND here, see [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-            and VAL_ACTION_BINDING(label) == CTX(f->varlist)
+            and TG_Unwind_Frame == f
         ){
             CATCH_THROWN(SPARE, f);  // preserves CELL_FLAG_UNEVALUATED
-            returned = true;
         }
         else
             return THROWN;  // we didn't catch the throw
     }
 
-    if (Is_Void(SPARE) or Is_Stale(SPARE) or not IS_BLOCK(SPARE))
+    if (Is_Void(SPARE) or not IS_BLOCK(SPARE))
         fail ("MACRO must return BLOCK! for the moment");
 
     Splice_Block_Into_Feed(f->feed, SPARE);

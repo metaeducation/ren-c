@@ -76,43 +76,6 @@
 
 #include "sys-core.h"
 
-//
-//  Interpreted_Dispatch_Details_1_Throws: C
-//
-// Common behavior shared by dispatchers which execute on BLOCK!s of code.
-// Runs the code in the ACT_DETAILS() array of the frame phase for the
-// function instance at the first index (hence "Details 0").  Also puts a
-// definitional return into the RETURN slot of the frame.
-//
-//=////////////////////////////////////////////////////////////////////////=//
-//
-bool Interpreted_Dispatch_Details_1_Throws(
-    REBVAL *out,
-    REBFRM *f
-){
-    REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
-    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
-
-    assert(ACT_HAS_RETURN(phase));
-    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
-
-    REBVAL *cell = FRM_ARG(f, 1);
-    Init_Action(
-        cell,
-        VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
-        Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
-        CTX(f->varlist)  // bind this return to know where to return from
-    );
-
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
-    if (Do_Any_Array_At_Core_Throws(out, flags, body, SPC(f->varlist)))
-        return true;
-
-    return false;  // didn't throw
-}
-
 
 //
 //  Lambda_Unoptimized_Dispatcher: C
@@ -144,21 +107,25 @@ REB_R Lambda_Unoptimized_Dispatcher(REBFRM *f)
 //
 //  Func_Dispatcher: C
 //
-// Runs block and puts a definitional return ACTION! in the RETURN slot.
-//
-// Note: Natives get this check only in the debug build, but not here (their
-// "dispatcher" *is* the native!)  So the extra check is in Eval_Core().
+// Puts a definitional return ACTION! in the RETURN slot of the frame, and
+// runs the body block associated with this function.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
 // 1. FUNC(TION) does its evaluation into the SPARE cell, because the idea is
 //    that arbitrary code may want to return void--even if the body itself
 //    produces evaluative products.  This voidness can come from either a
-//    `return: <void>` annotation in the spec, or a RETURN passed void.
-//    A RETURN that uses a void UNWIND to pass by this dispatcher will be able
-//    to be invisible because OUT will not have been corrupted.
+//    `return: <void>` annotation in the spec, or code like `(return void)`.
+//    A RETURN that uses a void trampoline UNWIND to pass by this dispatcher
+//    will be able to be invisible because OUT will not have been corrupted.
 //
-// 2. There is an exception made for tolerating the lack of a RETURN call for
+// 2. A design point here is that Func_Dispatcher() does no typechecking, and
+//    does not even request to catch THROWN values.  This makes it easier to
+//    write usermode parallels to FUNC because there is no need for any special
+//    CATCH logic--the usermode RETURN can simply use UNWIND and the trampoline
+//    will catch the result.  Hence the full typechecking burden is on RETURN.
+//
+// 3. There is an exception made for tolerating the lack of a RETURN call for
 //    the cases of `return: <none>` and `return: <void>`.  This has a little
 //    bit of a negative side in that if someone is to hook the RETURN function,
 //    it will not be called in these "fallout" cases.  It's deemed too ugly
@@ -170,31 +137,60 @@ REB_R Func_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // so we can use OUT
 
-    if (Interpreted_Dispatch_Details_1_Throws(SPARE, f))  // use spare, see [1]
-        return THROWN;  // pass up RETURN's UNWIND (typechecked at callsite)
+    enum {
+        ST_FUNC_INITIAL_ENTRY = 0,
+        ST_FUNC_BODY_EXECUTING
+    };
 
-    // If we get here, the function reached end of the body without a RETURN
-    // (We are not concerned with the evaluative result if there wasn't one.)
+    switch (STATE) {
+      case ST_FUNC_INITIAL_ENTRY: goto initial_entry;
+      case ST_FUNC_BODY_EXECUTING: goto body_finished_without_returning;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     REBACT *phase = FRM_PHASE(f);
-    assert(ACT_HAS_RETURN(phase));  // all FUNC have RETURN
+    REBARR *details = ACT_DETAILS(phase);
+    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    const REBKEY *key = ACT_KEYS_HEAD(phase);
-    const REBPAR *param = ACT_PARAMS_HEAD(phase);
-    assert(KEY_SYM(key) == SYM_RETURN);
-    UNUSED(key);
+    assert(ACT_HAS_RETURN(phase));  // all FUNC have RETURN
+    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
+
+    REBVAL *cell = FRM_ARG(f, 1);
+    Init_Action(
+        cell,
+        VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
+        Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
+        CTX(f->varlist)  // bind this return to know where to return from
+    );
+
+    STATE = ST_FUNC_BODY_EXECUTING;
+
+    continue_core(
+        SPARE,  // body evaluative result discarded, see [1]
+        EVAL_MASK_DEFAULT,  // no DISPATCHER_CATCHES, so RETURN skips, see [2]
+        body,
+        SPC(f->varlist),
+        END
+    );
+
+} body_finished_without_returning: {  ////////////////////////////////////////
+
+    const REBPAR *param = ACT_PARAMS_HEAD(FRM_PHASE(f));
 
     if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED))
         return NONE;  // none falls out of FUNC by default
 
     if (GET_PARAM_FLAG(param, RETURN_VOID))
-        return VOID;  // void, regardless of body result, see [2]
+        return VOID;  // void, regardless of body result, see [3]
 
     if (GET_PARAM_FLAG(param, RETURN_NONE))
-        return NONE;  // none, regardless of body result, see [2]
+        return NONE;  // none, regardless of body result, see [3]
 
     fail ("Functions with RETURN: in spec must use RETURN to typecheck");
-}
+}}
 
 
 //

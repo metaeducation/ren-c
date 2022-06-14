@@ -138,9 +138,17 @@ REB_R Action_Executor(REBFRM *f)
           case ST_ACTION_INITIAL_ENTRY:
             goto fulfill;
 
+          case ST_ACTION_DOING_PICKUPS:
           case ST_ACTION_FULFILLING_ARGS:
-            assert(false);  // !!! Fulfillment stateful at moment
-            break;
+            if (Is_Void(ARG)) {
+                assert(
+                    VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_NORMAL
+                    or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_SOFT
+                    or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_MEDIUM
+                );
+                Reify_Eval_Out_Plain(ARG);
+            }
+            goto continue_fulfilling;
 
           case ST_ACTION_TYPECHECKING:
             goto typecheck_then_dispatch;
@@ -160,7 +168,7 @@ REB_R Action_Executor(REBFRM *f)
   fulfill:
 
     if (NOT_EVAL_FLAG(f, MAYBE_STALE))
-        assert(Is_Void(f->out));
+        assert(Is_Void(OUT));
 
     assert(f->original);  // set by Begin_Action()
 
@@ -176,7 +184,7 @@ REB_R Action_Executor(REBFRM *f)
         goto fulfill_loop_body;  // optimized out
 
       continue_fulfilling:
-
+        assert(not Is_Void(ARG));
         if (STATE == ST_ACTION_DOING_PICKUPS) {
             if (DSP != f->baseline.dsp)
                 goto next_pickup;
@@ -188,7 +196,7 @@ REB_R Action_Executor(REBFRM *f)
         continue;
 
       skip_fulfilling_arg_for_now:  // the GC marks args up through f->arg...
-
+        assert(Is_Void(ARG));
         continue;
 
   //=//// ACTUAL LOOP BODY ////////////////////////////////////////////////=//
@@ -204,14 +212,7 @@ REB_R Action_Executor(REBFRM *f)
         // would be if it was unspecialized.
         //
         if (Is_Specialized(PARAM)) {  // specialized includes local
-            //
-            // For specialized cases, we assume type checking was done
-            // when the parameter is hidden.  It cannot be manipulated
-            // from the outside (e.g. by REFRAMER) so there is no benefit
-            // to deferring the check, only extra cost on each invocation.
-            //
             Copy_Cell(ARG, PARAM);
-
             goto continue_fulfilling;
         }
 
@@ -527,20 +528,16 @@ REB_R Action_Executor(REBFRM *f)
 
             REBFLGS flags = EVAL_MASK_DEFAULT
                 | EVAL_FLAG_FULFILLING_ARG;
-
-            if (Eval_Step_In_Subframe_Throws(ARG, f, flags))
-                goto handle_thrown_maybe_redo;
-
-            if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
-                Init_End_Isotope(ARG);
-                goto continue_fulfilling;
-            }
-
             if (pclass == PARAM_CLASS_META)
-                Reify_Eval_Out_Meta(ARG);
-            else
-                Reify_Eval_Out_Plain(ARG);
-            break; }
+                flags |= EVAL_FLAG_META_RESULT;
+
+            if (Did_Init_Inert_Optimize_Complete(ARG, f->feed, &flags))
+                break;  // no frame needed
+
+            DECLARE_FRAME (subframe, f->feed, flags);
+            Push_Frame(ARG, subframe);
+
+            continue_subframe (subframe); }
 
   //=//// HARD QUOTED ARG-OR-REFINEMENT-ARG ///////////////////////////////=//
 
@@ -625,24 +622,16 @@ REB_R Action_Executor(REBFRM *f)
 
                 DECLARE_FRAME (subframe, f->feed, flags);
                 Push_Frame(ARG, subframe);
-
-                if (Trampoline_Throws(subframe)) {
-                    Abort_Frame(subframe);
-                    goto handle_thrown_maybe_redo;
-                }
-
-                Drop_Frame(subframe);
-
-                Reify_Eval_Out_Plain(ARG);
+                continue_subframe (subframe);
             }
             else if (ANY_ESCAPABLE_GET(ARG)) {
                 //
                 // We did not defer the quoted argument.  If the argument
-                // is something like a GROUP!, GET-WORD!, or GET-PATH!...
+                // is something like a GET-GROUP!, GET-WORD!, or GET-PATH!...
                 // it has to be evaluated.
                 //
                 Move_Cell(SPARE, ARG);
-                if (Eval_Value_Throws(ARG, SPARE, f_specifier))
+                if (Get_Var_Core_Throws(ARG, GROUPS_OK, SPARE, SPECIFIED))
                     goto handle_thrown_maybe_redo;
             }
             break;
@@ -765,7 +754,12 @@ REB_R Action_Executor(REBFRM *f)
     for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
         assert(not Is_Void(ARG));
 
-        // Note that if you have a redo situation as with an ENCLOSE, a
+        // We assume typecheck was done when the parameter was specialized.
+        // It cannot be manipulated from the outside (e.g. by REFRAMER) so
+        // there is no benefit to deferring the check, only extra cost on
+        // each invocation.
+        //
+        // BUT note that if you have a redo situation as with an ENCLOSE, a
         // specialized out parameter becomes visible in the frame and can be
         // modified.  Even though it's hidden, it may need to be typechecked
         // again, unless it was fully hidden.
