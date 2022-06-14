@@ -112,7 +112,6 @@ jobs:
 
   #====# TOOLCHAIN INSTALLATION STEPS #=======================================#
 
-
     # !!! Ideally this would use the same step that clients can use to build
     # the system with `make.sh`.  Unfortunately, something about the GitHub
     # Ubuntus do not like the old bootstrap executable.  Make sure the
@@ -387,6 +386,43 @@ jobs:
                   g2g4 d8h4
               ]
           ]
+
+
+    # The Marionette test process has been replaced with Cypress, which
+    # can run multiple browsers.  See results here:
+    #
+    #   https://dashboard.cypress.io/projects/wqxv1u/runs
+    #
+    # 1. Environment variables starting with CYPRESS_ are automatically
+    #    imported by Cypress.  Alternately, there is a `with: env:` option
+    #    (that requires all environment variables to be on the same line)
+    #
+    # 2. The Cypress recording key allows us to upload videos and results
+    #    of the run to cypress.io, which is easier than having to locate
+    #    and retrieve "GitHub artifacts".  It requires a Cypress account,
+    #    and there are 3 users per organization in the free tier.
+    #
+    # 3. We pass a GitHub token "to allow accurately detecting a build
+    #    vs. a re-run build".  GitHub tokens are automatically generated.
+    #
+    # 4. By default, the Replpad will load the last greenlit hash from the
+    #    server.  But we're trying to decide if a library version should be
+    #    greenlit, so we want the Cypress scripts to specifically ask the
+    #    loader to use an arbitrary commit.  Passing it via an environment
+    #    variable that Cypress will proxy to the browser is easiest.
+    #
+    - name: Run Replpad using Chrome
+      uses: cypress-io/github-action@v4
+      with:
+        working-directory: tests/cypress
+        browser: chrome
+        config-file: cypress.config.js
+        record: true
+      env:  # see [1]
+        CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}  # see [2]
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # see [3]
+        CYPRESS_GIT_COMMIT_SHORT: ${{ env.GIT_COMMIT_SHORT }}  # see [4]
+        # DEBUG: '@cypress/github-action'  # verbose debug output
 
 
   #====# GREENLIGHT STEP (MARK THE UPLOADED BUILD AS CURRENT) #===============#

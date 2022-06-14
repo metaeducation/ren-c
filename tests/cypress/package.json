@@ -1,0 +1,22 @@
+{
+  "name": "discord",
+  "version": "1.0.0",
+  "description": "Made a basic repo with a git command and GitHub Actions",
+  "main": "cypress.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/conversaShawn/cypress10.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/conversaShawn/cypress10/issues"
+  },
+  "homepage": "https://github.com/conversaShawn/cypress10#readme",
+  "devDependencies": {
+    "cypress": "^10.0.3"
+  }
+}
