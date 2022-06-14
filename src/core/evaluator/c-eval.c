@@ -272,6 +272,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         EVAL_FLAG_FULFILL_ONLY  // can be requested or <blank> can trigger
         | EVAL_FLAG_RUNNING_ENFIX  // can be requested with REEVALUATE_CELL
         | FLAG_STATE_BYTE(255)  // state is forgettable
+        | EVAL_FLAG_INERT_OPTIMIZATION // shouldn't be set at end
     );  // should be unchanged on exit
   #endif
 
@@ -1495,23 +1496,23 @@ bool Eval_Core_Throws(REBFRM * const f)
         // feed will be in a waiting state for enfix that we can continue by
         // jumping into the evaluator at the ST_EVALUATOR_LOOKING_AHEAD state.
         //
-      blockscope {
-        REBFLGS flags = EVAL_MASK_DEFAULT
-            | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
-            | EVAL_FLAG_INERT_OPTIMIZATION;
+        if (VAL_TYPE_UNCHECKED(f_next) == REB_WORD) {  // tolerate REB_0_END
+            REBFLGS flags = EVAL_MASK_DEFAULT
+                | FLAG_STATE_BYTE(ST_EVALUATOR_LOOKING_AHEAD)
+                | EVAL_FLAG_INERT_OPTIMIZATION;  // don't error on enfix late
 
-        DECLARE_FRAME (subframe, f->feed, flags);
-        assert(not Is_Stale(OUT));
-        Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
+            DECLARE_FRAME (subframe, f->feed, flags);
+            assert(not Is_Stale(OUT));
+            Push_Frame(OUT, subframe);  // offer potential enfix previous OUT
 
-        if (Eval_Core_Throws(subframe)) {
-            Abort_Frame(subframe);
-            DS_DROP_TO(f->baseline.dsp);
-            goto return_thrown;
+            if (Eval_Core_Throws(subframe)) {
+                Abort_Frame(subframe);
+                DS_DROP_TO(f->baseline.dsp);
+                goto return_thrown;
+            }
+
+            Drop_Frame(subframe);
         }
-
-        Drop_Frame(subframe);
-      }
 
         // Take care of the SET for the main result.  For the moment, if you
         // asked to opt out of the main result this will give you a ~blank~
@@ -1844,6 +1845,7 @@ bool Eval_Core_Throws(REBFRM * const f)
       lookback_quote_too_late: // run as if starting new expression
 
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+        CLEAR_EVAL_FLAG(f, INERT_OPTIMIZATION);
 
         // Since it's a new expression, EVALUATE doesn't want to run it
         // even if invisible, as it's not completely invisible (enfixed)
@@ -1876,12 +1878,15 @@ bool Eval_Core_Throws(REBFRM * const f)
         if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
             if (GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)) {
                 CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
+                CLEAR_EVAL_FLAG(f, INERT_OPTIMIZATION);
                 goto finished;
             }
         }
         else if (NOT_EVAL_FLAG(f, INERT_OPTIMIZATION))
             goto lookback_quote_too_late;
     }
+
+    CLEAR_EVAL_FLAG(f, INERT_OPTIMIZATION);  // if set, it served its purpose
 
     if (
         GET_EVAL_FLAG(f, FULFILLING_ARG)
