@@ -388,6 +388,30 @@ jobs:
           ]
 
 
+    # If these scripts pass, we will consider the new wasm binary to be
+    # suitable for greenlighting to be pulled by the ReplPad by default.
+    #
+    # Cypress runs all `.cy.js` files in the e2e ("End To End") directory.
+    # That directory exists with a README.md saying where to get the .cy.js
+    # files from, so we just go ahead and parse those URLs out here.
+    #
+    - name: Collect Cypress Tests from Repositories We Want to Keep Working
+      uses: metaeducation/ren-c-action@release
+      with:
+        script: |
+          cd %tests/cypress/e2e/
+          list: uparse as text! read %README.md [
+              collect some [
+                  keep ["*" space url! elide newline]
+                  | thru newline
+              ]
+          ]
+          for-each url list [
+              filename: second split-path url
+              write filename (read url)
+          ]
+
+
     # The Marionette test process has been replaced with Cypress, which
     # can run multiple browsers.  See results here:
     #
