@@ -210,12 +210,9 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(19)
 
 
-//=//// EVAL_FLAG_TYPECHECK_ONLY //////////////////////////////////////////=//
+//=//// EVAL_FLAG_20 //////////////////////////////////////////////////////=//
 //
-// This is used by <blank> to indicate that once the frame is fulfilled, the
-// only thing that should be done is typechecking...don't run the action.
-//
-#define EVAL_FLAG_TYPECHECK_ONLY \
+#define EVAL_FLAG_20 \
     FLAG_LEFT_BIT(20)
 
 
@@ -230,13 +227,16 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(21)
 
 
-//=//// EVAL_FLAG_INERT_OPTIMIZATION //////////////////////////////////////=//
+//=//// EVAL_FLAG_MAYBE_STALE /////////////////////////////////////////////=//
 //
-// If ST_EVALUATOR_LOOKING_AHEAD is being used due to an inert optimization,
-// this flag is set, so that the quoting machinery can realize the lookback
-// quote is not actually too late.
+// This is a flag that is passed to the evaluation to indicate that it should
+// not assert if it finds a value in the ouput cell already.  But also that
+// it should not clear the stale flag at the end of the evaluation--because
+// the caller may wish to know whether a new value was written or not.  See
+// ALL for an optimized use of this property (to avoid needing to write to
+// a scratch cell in order to reverse the effects of a void evaluation step).
 //
-#define EVAL_FLAG_INERT_OPTIMIZATION \
+#define EVAL_FLAG_MAYBE_STALE \
     FLAG_LEFT_BIT(22)
 
 
@@ -323,23 +323,15 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
     FLAG_LEFT_BIT(27)
 
 
-//=//// EVAL_FLAG_TO_END //////////////////////////////////////////////////=//
-//
-// !!! This is a revival of an old idea that a frame flag would hold the state
-// of whether to do to the end or not.  The reason that idea was scrapped was
-// because if the Eval() routine was hooked (e.g. by a stepwise debugger)
-// then the hook would be unable to see successive calls to Eval() if it
-// didn't return and make another call.  That no longer applies, since it
-// always has to return in stackless to the Trampoline, so TO_END is really
-// just a convenience with no real different effect in evaluator returns.
+//=//// EVAL_FLAG_28 //////////////////////////////////////////////////////=//
 //
 // Note: This bit is the same as CELL_FLAG_NOTE, which may be something that
 // could be exploited for some optimization.
 //
-#define EVAL_FLAG_TO_END \
+#define EVAL_FLAG_28 \
     FLAG_LEFT_BIT(28)
 
-STATIC_ASSERT(EVAL_FLAG_TO_END == CELL_FLAG_NOTE);
+STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
 
 
 //=//// EVAL_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
@@ -353,7 +345,21 @@ STATIC_ASSERT(EVAL_FLAG_TO_END == CELL_FLAG_NOTE);
     FLAG_LEFT_BIT(29)
 
 
-//=//// EVAL_FLAG_FULFILL_ONLY ////////////////////////////////////////////=//
+//=//// EVAL_FLAG_EXECUTOR_30 /////////////////////////////////////////////=//
+//
+// This is a flag that can be used specific to the executor that is running.
+//
+// * EVAL_FLAG_TO_END: Evaluator_Executor()
+//
+// !!! This is a revival of an old idea that a frame flag would hold the state
+// of whether to do to the end or not.  The reason that idea was scrapped was
+// because if the Eval() routine was hooked (e.g. by a stepwise debugger)
+// then the hook would be unable to see successive calls to Eval() if it
+// didn't return and make another call.  That no longer applies, since it
+// always has to return in stackless to the Trampoline, so TO_END is really
+// just a convenience with no real different effect in evaluator returns.
+//
+// * EVAL_FLAG_FULFILL_ONLY: Action_Executor()
 //
 // In some scenarios, the desire is to fill up the frame but not actually run
 // an action.  At one point this was done with a special "dummy" action to
@@ -364,21 +370,34 @@ STATIC_ASSERT(EVAL_FLAG_TO_END == CELL_FLAG_NOTE);
 // case that had to be accounted for, since the dummy's arguments did not
 // line up with the frame being filled).
 //
-#define EVAL_FLAG_FULFILL_ONLY \
+#define EVAL_FLAG_EXECUTOR_30 \
     FLAG_LEFT_BIT(30)
 
+#define EVAL_FLAG_TO_END EVAL_FLAG_EXECUTOR_30
+#define EVAL_FLAG_FULFILL_ONLY EVAL_FLAG_EXECUTOR_30
 
-//=//// EVAL_FLAG_MAYBE_STALE /////////////////////////////////////////////=//
+
+
+//=//// EVAL_FLAG_EXECUTOR_31 /////////////////////////////////////////////=//
 //
-// This is a flag that is passed to the evaluation to indicate that it should
-// not assert if it finds a value in the ouput cell already.  But also that
-// it should not clear the stale flag at the end of the evaluation--because
-// the caller may wish to know whether a new value was written or not.  See
-// ALL for an optimized use of this property (to avoid needing to write to
-// a scratch cell in order to reverse the effects of a void evaluation step).
+// Another flag that can be picked specific to the running executor.
 //
-#define EVAL_FLAG_MAYBE_STALE \
+// * EVAL_FLAG_INERT_OPTIMIZATION: Evaluator_Executor()
+//
+// If ST_EVALUATOR_LOOKING_AHEAD is being used due to an inert optimization,
+// this flag is set, so that the quoting machinery can realize the lookback
+// quote is not actually too late.
+//
+// *  EVAL_FLAG_TYPECHECK_ONLY: Action_Executor()
+//
+// This is used by <blank> to indicate that once the frame is fulfilled, the
+// only thing that should be done is typechecking...don't run the action.
+//
+#define EVAL_FLAG_EXECUTOR_31 \
     FLAG_LEFT_BIT(31)
+
+#define EVAL_FLAG_INERT_OPTIMIZATION EVAL_FLAG_EXECUTOR_31
+#define EVAL_FLAG_TYPECHECK_ONLY EVAL_FLAG_EXECUTOR_31
 
 
 STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
