@@ -595,5 +595,5 @@ export config-system: func [
         ]
     ]
 
-    result
+    return result
 ]

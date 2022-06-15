@@ -39,12 +39,13 @@ mold64: function [
     system.options.binary-base: 64
     data: mold :data
     system.options.binary-base: :base
-    data
+    return data
 ]
 
 save: function [
     {Saves a value, block, or other data to a file, URL, binary, or text}
 
+    return: <none>  ; !!! should it just return WHERE back?
     where "Where to save (suffix determines encoding)"
         [file! url! binary! text! blank!]
     value "Value(s) to save"

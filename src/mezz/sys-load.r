@@ -638,7 +638,8 @@ import*: func [
 export*: func [
     {Add words to module's `Exports: []` list}
 
-    return: [<opt> any-value!]
+    return: "Evaluated expression if used with SET-WORD!"
+        [<opt> any-value!]
     where "Specialized for each module via EXPORT"
         [module!]
     'set-word [<skip> set-word!]
@@ -683,4 +684,6 @@ export*: func [
         ]
         append exports ^word
     ]
+
+    return none  ; !!! Return the exported words list?
 ]

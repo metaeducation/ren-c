@@ -61,7 +61,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
         focus-index: 1
     ]
 
-    print-prompt: function [] [
+    print-prompt: func [return: <none>] [
         ;
         ; If a debug frame is in focus then show it in the prompt, e.g.
         ; as `if:|4|>>` to indicate stack frame 4 is being examined, and
@@ -84,6 +84,7 @@ Expect crashes and mayhem.  But see BACKTRACE, RESUME, and STEP.}
 
     dialect-hook: meth [
         {Receives code block, parse/transform, send back to CONSOLE eval}
+        return: [block!]
         b [block!]
     ][
         if empty? b [
@@ -334,7 +335,7 @@ interrupt: adapt :breakpoint* [
 ]
 
 
-debug: function [
+debug: func [
     {Dialect for interactive debugging, see documentation for details}
     return: <none>
     'value [<opt> integer! frame! action! block!]
@@ -353,7 +354,7 @@ debug: function [
 ]
 
 
-locals: function [return: <none>] [
+locals: func [return: <none>] [
     print [debug-console-skin/focus-frame]
 ]
 

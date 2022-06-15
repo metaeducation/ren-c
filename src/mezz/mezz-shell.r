@@ -44,7 +44,7 @@ cd: func [
     return what-dir
 ]
 
-more: func [
+more: lambda [
     {Print file (shell shortcut function).}
 
     'file "Accepts %file and also just words (as file names)"

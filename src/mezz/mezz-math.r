@@ -61,7 +61,7 @@ sign-of: func [
     "Returns sign of number as 1, 0, or -1 (to use as multiplier)."
     number [any-number! money! time!]
 ][
-    case [
+    return case [
         positive? number [1]
         negative? number [-1]
     ] else [0]
@@ -107,7 +107,7 @@ factorial: func [n [integer!]] [
     if n < 2 [return 1]
     let res: 1
     ; should avoid doing the loop for i = 1...
-    count-up i n [res: res * i]
+    return count-up i n [res: res * i]
 ]
 
 
@@ -233,18 +233,18 @@ math: func [
     let res: either parse expr expression [expr-val] [blank]
 
     either only [
-        res
+        return res
     ][
         ret: reduce res
         all [
             1 = length of ret
-            any-number? ret/1
+            any-number? ret.1
         ] else [
             fail [
                 unspaced ["Cannot be REDUCED to a number (" mold ret ")"]
                 ":" mold res
             ]
         ]
-        ret/1
+        return ret.1
     ]
 ]

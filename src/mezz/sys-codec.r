@@ -92,7 +92,7 @@ decode: function [
     ] else [
         cause-error 'access 'no-codec type
     ]
-    data
+    return data
 ]
 
 

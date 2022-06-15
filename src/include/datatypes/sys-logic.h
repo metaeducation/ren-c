@@ -58,7 +58,7 @@ inline static bool VAL_LOGIC(noquote(const Cell*) v) {
 // quoted, and BAD-WORD!s are also truthy; specifically for patterns like this:
 //
 //     for-both: func ['var blk1 blk2 body] [
-//         unmeta all [
+//         return unmeta all [
 //             meta for-each :var blk1 body  ; isotope results become BAD-WORD!
 //             meta for-each :var blk2 body  ; only NULL is falsey for BREAK
 //         ]

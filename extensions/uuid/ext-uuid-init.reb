@@ -10,7 +10,7 @@ to-text: function [
     "Convert the UUID to the text string form ({8-4-4-4-12})"
     uuid [binary!]
 ][
-    delimit "-" map-each w reduce [
+    return delimit "-" map-each w reduce [
         copy/part uuid 4
         copy/part (skip uuid 4) 2
         copy/part (skip uuid 6) 2

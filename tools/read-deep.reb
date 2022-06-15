@@ -39,7 +39,7 @@ read-deep-seq: func [
         insert queue map-each x read %% (repo-dir)/(item) [join item x]
     ]
 
-    item
+    return item
 ]
 
 ; read-deep provide convenience over read-deep-seq.
@@ -72,5 +72,5 @@ export read-deep: func [
         ]
     ]
 
-    result
+    return result
 ]

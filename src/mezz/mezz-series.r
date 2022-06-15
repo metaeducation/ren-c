@@ -18,7 +18,7 @@ REBOL [
 ; if all it's doing is plain subtraction it seems like a poor primitive to
 ; be stuck with giving a name and suggested greater semantics to.  Review.
 ;
-offset-of: func [
+offset-of: lambda [
     "Returns the offset between two series positions."
     series1 [any-series!]
     series2 [any-series!]
@@ -27,7 +27,7 @@ offset-of: func [
 ]
 
 
-last?: single?: func [
+last?: single?: lambda [
     "Returns TRUE if the series length is 1."
     series [any-series! port! map! tuple! bitset! object! any-word!]
 ][
@@ -341,6 +341,7 @@ reword: function [
 move: func [
     {Move a value or span of values in a series}
 
+    return: <none>  ; !!! Define return value?
     source "Source series (modified)"
         [any-series!]
     offset "Offset to move by, or index to move to"
@@ -386,6 +387,7 @@ extract: function [
     iterate-skip series width [
         append out try ^(pick series index)
     ]
+    return out
 ]
 
 
@@ -518,7 +520,7 @@ format: function [
 
     ; Provided enough rules? If not, append rest:
     if not tail? values [append out values]
-    head of out
+    return head of out
 ]
 
 
@@ -646,6 +648,7 @@ split: function [
 find-all: function [
     "Find all occurrences of a value within a series (allows modification)."
 
+    return: <none>
     'series [word!]
         "Variable for block, string, or other series"
     value

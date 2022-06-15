@@ -347,14 +347,14 @@ export uppercase-of: func [
     {Copying variant of UPPERCASE, also FORMs words}
     string [text! word!]
 ][
-    uppercase form string
+    return uppercase form string
 ]
 
 export lowercase-of: func [
     {Copying variant of LOWERCASE, also FORMs words}
     string [text! word!]
 ][
-    lowercase form string
+    return lowercase form string
 ]
 
 export propercase: func [value] [uppercase/part (copy value) 1]
@@ -363,7 +363,7 @@ export propercase-of: func [
     {Make a copy of a string with just the first character uppercase}
     string [text! word!]
 ][
-    propercase form string
+    return propercase form string
 ]
 
 export write-if-changed: function [

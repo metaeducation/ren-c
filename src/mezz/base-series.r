@@ -209,12 +209,13 @@ join: function [
 charset: function [
     {Makes a bitset of chars for the parse function.}
 
+    return: [bitset!]
     chars [text! block! binary! char! integer!]
     /length "Preallocate this many bits (must be > 0)"
         [integer!]
 ][
     init: either length [length] [[]]
-    append make bitset! init chars
+    return append make bitset! init chars
 ]
 
 

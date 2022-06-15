@@ -218,7 +218,7 @@ summarize-obj: function [
     pattern: match
     match: :lib.match
 
-    form-pad: func [
+    form-pad: lambda [
         {Form a value with fixed size (space padding follows)}
         val
         size

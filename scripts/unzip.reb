@@ -69,28 +69,31 @@ to-ishort: (<- enbin [LE + 2])  ; Little endian 2-byte positive integer
 to-long: (<- enbin [BE + 4])  ; Big endian 4-byte positive integer
 
 to-msdos-time: func [
-    "Converts to a msdos time."
+    {Converts to a MS-DOS time}
+    return: [integer!]
     time [time!] "AnyValue to convert"
 ][
-    to-ishort (time.hour * 2048)
+    return to-ishort (time.hour * 2048)
         or+ (time.minute * 32)
         or+ to integer! time.second / 2
 ]
 
 to-msdos-date: func [
-    "Converts to a msdos date."
+    {Converts to a MS-DOS date}
+    return: [integer!]
     date [date!]
 ][
-    to-ishort 512 * (max 0 date.year - 1980)
+    return to-ishort 512 * (max 0 date.year - 1980)
         or+ (date.month * 32) or+ date.day
 ]
 
 get-msdos-time: func [
-    "Converts from a msdos time."
+    {Converts from a MS-DOS time}
+    return: [time!]
     binary [binary!]
 ][
     let i: debin [LE + 2] binary
-    to time! reduce [
+    return to time! reduce [
         63488 and+ i / 2048
         2016 and+ i / 32
         31 and+ i * 2
@@ -98,11 +101,12 @@ get-msdos-time: func [
 ]
 
 get-msdos-date: func [
-    "Converts from a msdos date."
+    {Converts from a MS-DOS date}
+    return: [date!]
     binary [binary!]
 ][
     let i: debin [LE + 2] binary
-    to date! reduce [
+    return to date! reduce [
         65024 and+ i / 512 + 1980
         480 and+ i / 32
         31 and+ i
@@ -203,7 +207,7 @@ to-path-file: func [
         return value
     ]
     value: decode-url value
-    join %"" reduce [value.host "/" value.path value.target]
+    return join %"" reduce [value.host "/" value.path value.target]
 ]
 
 zip: func [

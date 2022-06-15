@@ -189,7 +189,7 @@ debug: (comment [:print] blank)
 ; SHA1 was removed from the core.  We could do it in userspace if it were
 ; deemed important.
 ;
-random-secure: func [range [integer!]] [random range]
+random-secure: lambda [range [integer!]] [random range]
 
 
 version-to-bytes: [
@@ -241,7 +241,7 @@ to-3bin: (<- enbin [be + 3])
 to-4bin: (<- enbin [be + 4])
 to-8bin: (<- enbin [be + 8])
 
-make-tls-error: func [
+make-tls-error: lambda [
     message [text! block!]
 ][
     if block? message [message: unspaced message]
@@ -822,6 +822,7 @@ application-data: func [
 
 
 alert-close-notify: func [
+    return: <none>
     ctx [object!]
 ][
     let encrypted: encrypt-data ctx #{0100} ; close notify
@@ -1618,7 +1619,7 @@ make-master-secret: func [
 
 
 do-commands: func [
-    return: [logic!]
+    return: <none>  ; some paths returned LOGIC!, others none...was unused
     tls-port [port!]
     commands [block!]
 ][
@@ -1665,10 +1666,10 @@ do-commands: func [
 
     switch tls-port.state.mode [
         <close-notify> [
-            return true
+            return  ; at one point returned TRUE, wasn't used
         ]
         #application [
-            return false
+            return  ; at one point returned FALSE, wasn't used
         ]
         ; Note: Even if state is <finished>, it seems to still want to READ.
     ]
@@ -1998,7 +1999,7 @@ sys.make-scheme [
         ]
 
         reflect: func [port [port!] property [word!]] [
-            switch property [
+            return switch property [
                 'open? [
                     did all [port.state, open? port.state.connection]
                 ]
@@ -2048,11 +2049,11 @@ sys.make-scheme [
         ]
 
         copy: func [port [port!]] [
-            if port.data [copy port.data]
+            return if port.data [copy port.data]
         ]
 
         query: func [return: [<opt> object!] port [port!]] [
-            all [port.state, query port.state.connection]
+            return all [port.state, query port.state.connection]
         ]
     ]
 ]

@@ -38,7 +38,7 @@ REBOL [
 
 digit: charset [#"0" - #"9"]
 alpha: charset [#"a" - #"z" #"A" - #"Z"]
-idate-to-date: function [return: [date!] date [text!]] [
+idate-to-date: lambda [date [text!]] [
     parse3 date [
         5 skip
         copy day: 2 digit
@@ -54,10 +54,10 @@ idate-to-date: function [return: [date!] date [text!]] [
         fail ["Invalid idate:" date]
     ]
     if zone = "GMT" [zone: copy "+0"]
-    return to date! unspaced [day "-" month "-" year "/" time zone]
+    to date! unspaced [day "-" month "-" year "/" time zone]
 ]
 
-make-http-error: func [
+make-http-error: lambda [
     {Make an error for the HTTP protocol}
 
     message [text! block!]
@@ -388,6 +388,7 @@ http-response-headers: context [
 ]
 
 do-redirect: func [
+    return: <none>
     port [port!]
     new-uri [url! text! file!]
     headers
@@ -425,7 +426,6 @@ do-redirect: func [
         close port.state.connection
         open port.state.connection
         do-request port
-        false
     ]
     else [
         fail make error! [
@@ -688,11 +688,11 @@ sys.make-scheme [
             connect conn
             port.state.mode: <ready>
 
-            port
+            return port
         ]
 
         reflect: func [port [port!] property [word!]] [
-            switch property [
+            return switch property [
                 'open? [
                     did all [port.state, open? port.state.connection]
                 ]
@@ -729,7 +729,7 @@ sys.make-scheme [
 
             close state.connection
             port.state: _
-            port
+            return port
         ]
 
         query: func [
@@ -737,7 +737,7 @@ sys.make-scheme [
             port [port!]
             <local> error state
         ][
-            all [
+            return all [
                 state: port.state
                 state.info
             ]

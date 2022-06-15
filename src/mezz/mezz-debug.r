@@ -92,7 +92,7 @@ delta-time: function [
     ; for short precise timings it could still span midnight.
     ;
     timer: :lib.now/precise  ; Note: NOW comes from an Extension
-    do compose [negate difference timer (:elide) (:do) (block) (:timer)]
+    return do compose [negate difference timer (:elide) (:do) (block) (:timer)]
 ]
 
 delta-profile: func [
@@ -164,10 +164,10 @@ speed?: function [
         append result to integer! do calc
         if times [append result secs]
     ]
-    result
+    return result
 ]
 
-net-log: func [txt /C /S][txt]
+net-log: lambda [txt /C /S][txt]
 
 net-trace: function [
     "Switch between using a no-op or a print operation for net-tracing"

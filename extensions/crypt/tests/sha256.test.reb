@@ -64,7 +64,7 @@
         insert/dup ipad: copy #{} #{36} blocksize
         o_key_pad: opad xor+ key
         i_key_pad: ipad xor+ key
-        sha256 join o_key_pad (sha256 join i_key_pad message)
+        return sha256 join o_key_pad (sha256 join i_key_pad message)
     ]
 
     random/seed "Deterministic Behavior Desired"

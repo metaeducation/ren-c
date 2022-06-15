@@ -874,8 +874,8 @@ e-cwrap/write-emitted
 ;     EXPORTED_FUNCTIONS=@libr3.exports.json
 ;
 
-json-collect: function [return: [text!] body [block!]] [
-    results: collect compose [
+json-collect: func [return: [text!] body [block!]] [
+    let results: collect compose [
         keep: adapt :keep [  ; Emscripten prefixes functions w/underscore
             value: unspaced [{"} {_} value {"}]
         ]

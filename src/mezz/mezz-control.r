@@ -23,10 +23,10 @@ launch: function [
     if file? script [script: file-to-local clean-path script]
     command: reduce [file-to-local system.options.boot script]
     append command opt arg
-    apply :call* [command, /wait wait]
+    return apply :call* [command, /wait wait]
 ]
 
-wrap: func [
+wrap: lambda [
     "Evaluates a block, wrapping all set-words as locals."
     body [block!] "Block to evaluate"
 ][

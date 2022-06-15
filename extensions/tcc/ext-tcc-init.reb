@@ -636,6 +636,7 @@ c99: func [
 
 bootstrap: func [
     {Download Rebol sources from GitHub and build using TCC}
+    return: <none>
     /options "Use system.options.ARGS to get additional make.r options"
 ][
     ; We fetch the .ZIP file of the master branch from GitHub.  Note that this

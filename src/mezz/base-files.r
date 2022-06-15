@@ -59,7 +59,7 @@ size-of: size?: function [
     return: [<opt> integer!]
     target [file! url!]
 ][
-    all [
+    return all [
         info: attempt [info? target]  ; !!! Why not let the error report?
         info.size
     ]
@@ -70,7 +70,7 @@ modified?: function [
     return: [<opt> date!]
     target [file! url!]
 ][
-    all [
+    return all [
         info: attempt [info? target]  ; !!! Why not let the error report?
         info.date
     ]
@@ -103,7 +103,7 @@ dirize: func [
 ][
     path: copy path
     if slash <> last path [append path slash]
-    path
+    return path
 ]
 
 make-dir: func [
@@ -168,7 +168,7 @@ delete-dir: func [
     ] [
         for-each file files [delete-dir (join dir file)]
     ]
-    attempt [delete dir]
+    return attempt [delete dir]
 ]
 
 script?: func [

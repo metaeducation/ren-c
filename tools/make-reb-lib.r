@@ -54,13 +54,13 @@ ver: load-value join repo-dir %src/boot/version.r
 api-objects: make block! 50
 
 map-each-api: func [code [block!]] [
-    map-each api api-objects compose/only [
+    return map-each api api-objects compose/only [
         eval in api (code)  ; want API variable visible to `code` while running
     ]
 ]
 
 for-each-api: func [code [block!]] [
-    for-each api api-objects compose/only [
+    return for-each api api-objects compose/only [
         eval in api (code)  ; want API variable visible to `code` while running
     ]
 ]
@@ -159,7 +159,7 @@ emit-proto: func [return: <none> proto] [
     ]
 ]
 
-process: func [file] [
+process: func [return: <none> file] [
     proto-parser/file: file
     proto-parser/emit-proto: :emit-proto
     proto-parser/process as text! read file

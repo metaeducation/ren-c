@@ -10,11 +10,12 @@ lower: charset [#"a" - #"z"]
 letter: charset [#"a" - #"z" #"A" - #"Z"]
 
 capitalize: func [
+    return: [text!]
     n
 ][
     ret: copy ""
     words: split to text! n " "
-    spaced [
+    return spaced [
         map-each w words [
             case [
                 w = "OF" [

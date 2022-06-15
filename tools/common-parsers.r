@@ -28,6 +28,7 @@ import <parsing-tools.reb>
 
 decode-key-value-text: function [
     {Decode key value formatted text.}
+    return: [block!]
     text [text!]
 ][
     data-fields: [
@@ -54,7 +55,10 @@ decode-key-value-text: function [
         opt some [#" " some data-field-char] #":"
     ]
 
-    emit-meta: func [<local> key] [
+    emit-meta: func [
+        return: <none>
+        <local> key
+    ][
         key: replace/all copy/part position eof #" " #"-"
         remove back tail-of key
         append meta reduce [
@@ -72,7 +76,7 @@ decode-key-value-text: function [
         ]
     ]
 
-    new-line/all/skip meta true 2
+    return new-line/all/skip meta true 2
 ]
 
 load-until-blank: function [
@@ -99,7 +103,7 @@ load-until-blank: function [
         to end
     ]
 
-    parse2 text rule then [
+    return parse2 text rule then [
         values: load copy/part text position
         reduce [values position]
     ] else [
@@ -304,6 +308,7 @@ export proto-parser: context [
 
 export rewrite-if-directives: function [
     {Bottom up rewrite conditional directives to remove unnecessary sections.}
+    return: <none>
     position
 ][
     until [

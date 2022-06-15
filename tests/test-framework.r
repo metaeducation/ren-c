@@ -20,7 +20,10 @@ import %test-parsing.r
 
 log-file: ~
 
-log: func [report [block!]] [
+log: func [
+    return: <none>
+    report [block!]
+][
     write/append log-file unspaced report
 
     ; By default we echo the log to the screen also.  This should be an option.
@@ -45,6 +48,7 @@ error: ~
 run-single-test: func [
     {Run code and write the success or failure to the log file}
 
+    return: <none>
     code "Code GROUP! from test file, assumed bound into isolated module"
         [group!]
 ][
@@ -103,8 +107,8 @@ run-test-cluster: func [
     ; Modules created with module "inherit" from LIB by default.
     ;
     let isolate: module _ [
-        print: func [x] [
-            fail "Don't use PRINT in tests"
+        print: lambda [x] [
+            fail @x "Don't use PRINT in tests"
         ]
     ]
 

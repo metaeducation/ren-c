@@ -282,23 +282,23 @@ export console!: make object! [
         ]
     ]
 
-    print-warning: meth [s] [print [warning reduce s]]
+    print-warning: meth [return: <none> s] [print [warning reduce s]]
 
-    print-error: meth [e [error!]] [
+    print-error: meth [return: <none> e [error!]] [
         if :e.file = 'tmp-boot.r [
             e.file: e.line: _  ; errors in console showed this, junk
         ]
         print [e]
     ]
 
-    print-halted: meth [] [
+    print-halted: meth [return: <none>] [
         print newline  ; interrupts happen anytime, clearer to start newline
         print "[interrupted by Ctrl-C or HALT instruction]"
     ]
 
-    print-info: meth [s] [print [info reduce s]]
+    print-info: meth [return: <none> s] [print [info reduce s]]
 
-    print-gap: meth [] [print newline]
+    print-gap: meth [return: <none>] [print newline]
 
     === BEHAVIOR (can be overridden) ===
 
@@ -313,6 +313,7 @@ export console!: make object! [
 
     dialect-hook: meth [
         {Receives code block, parse/transform/bind, send back to CONSOLE eval}
+        return: [block!]
         b [block!]
     ][
         ; By default we bind the code to system.contexts.user
@@ -323,7 +324,7 @@ export console!: make object! [
         ;
         ; https://forum.rebol.info/t/1071
 
-        bind b system.contexts.user
+        return bind b system.contexts.user
     ]
 
     shortcuts: make object! compose/deep [
@@ -488,6 +489,7 @@ ext-console-impl: func [
     let emit: func [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
+        return: <none>
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction

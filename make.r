@@ -186,7 +186,7 @@ to-obj-path: func [
 ][
     let ext: find-last file #"."
     remove/part ext (length of ext)
-    join %objs/ head-of append ext rebmake/target-platform/obj-suffix
+    return join %objs/ head-of append ext rebmake/target-platform/obj-suffix
 ]
 
 gen-obj: func [
@@ -772,7 +772,7 @@ extension-class: make object! [
     directory: meth [
         return: [text!]  ; Should this be [file!]?
     ][
-        lowercase to text! name  ; !!! Should remember where it was found
+        return lowercase to text! name  ; !!! Should remember where it was found
     ]
 ]
 
@@ -932,9 +932,11 @@ indent: func [
     text [text!]
     /space
 ][
-    replace/all text ;\
+    return apply :replace/all [
+        text
         either space [" "] [newline]
         "^/    "
+    ]
 ]
 
 help-topics: reduce [
@@ -1022,7 +1024,10 @@ CURRENT VALUE:
 replace help-topics/usage "HELP-TOPICS" ;\
     form append (map-each x help-topics [either text? x ['|] [x]]) [all]
 
-help: function [topic [text! blank!]] [
+help: function [
+    return: <none>
+    topic [text! blank!]
+][
     topic: try attempt [to-word topic]
     print ""
     case [

@@ -100,7 +100,7 @@ disable-user-includes: function [
 ; Stern warning not to edit the files
 ;
 
-make-warning-lines: func [name [file!] title [text!]] [
+make-warning-lines: lamda [name [file!] title [text!]] [
     reduce [
         {/*}
         { * Extraction of ZLIB compression and decompression routines}
@@ -290,7 +290,7 @@ fix-kr: function [
         <end> | (fail)
     ] c-lexical.grammar
 
-    source
+    return source
 ]
 
 fix-const-char: func [
@@ -306,7 +306,7 @@ fix-const-char: func [
         ]
         <end> | (fail)
     ] c-lexical.grammar
-    source
+    return source
 ]
 
 

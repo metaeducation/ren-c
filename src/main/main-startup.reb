@@ -223,6 +223,7 @@ main-startup: func [
     let emit: func [
         {Builds up sandboxed code to submit to C, hooked RETURN will finalize}
 
+        return: <none>
         item "ISSUE! directive, TEXT! comment, (<*> composed) code BLOCK!"
             [block! issue! text!]
         <with> instruction
@@ -246,6 +247,7 @@ main-startup: func [
     return: func [
         {Hooked RETURN function which finalizes any gathered EMIT lines}
 
+        return: []  ; !!! syntax for divergent functions?
         state "Describes the RESULT that the next call to HOST-CONSOLE gets"
             [integer! tag! group! datatype!]
         <with> instruction prior
@@ -345,14 +347,13 @@ main-startup: func [
 
     === HELPER FUNCTIONS ===
 
-    let die: func [
+    let die: lambda [
         {A graceful way to "FAIL" during startup}
 
         reason "Error message"
             [text! block!]
         /error "Error object, shown if --verbose option used"
             [error!]
-        <with> return
     ][
         print "Startup encountered an error!"
         print ["**" if block? reason [spaced reason] else [reason]]

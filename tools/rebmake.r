@@ -89,11 +89,12 @@ filter-flag: function [
 ]
 
 run-command: func [
+    return: [text!]
     cmd [block! text!]
 ][
     let x: copy ""
     call/shell/output cmd x
-    trim/with x "^/^M"
+    return trim/with x "^/^M"
 ]
 
 pkg-config: func [
@@ -128,24 +129,24 @@ pkg-config: func [
     ]
 
     let x: run-command spaced reduce [pkg opt lib]
-    ;dump x
-    either dlm [
-        let ret: make block! 1
-        let item
-        parse2 x [
-            some [
-                thru dlm
-                copy item: to [dlm | end] (
-                    ;dump item
-                    append ret to file! item
-                )
-            ]
-            end
-        ]
-        ret
-    ][
-        x
+
+    if not dlm [
+        return x
     ]
+
+    let ret: make block! 1
+    let item
+    parse2 x [
+        some [
+            thru dlm
+            copy item: to [dlm | end] (
+                ;dump item
+                append ret to file! item
+            )
+        ]
+        end
+    ]
+    return ret
 ]
 
 platform-class: make object! [
@@ -269,6 +270,7 @@ windows: make platform-class [
 ]
 
 set-target-platform: func [
+    return: <none>
     platform
 ][
     switch platform [
@@ -467,10 +469,9 @@ gcc: make compiler-class [
                     to integer! minor
                     to integer! macro
                 ]
-                true
-            ] else [
-                false
+                return true
             ]
+            return false
         ]
     ]
 
@@ -822,6 +823,7 @@ ld: make linker-class [
             exec-file: exec: default ["gcc"]
             call/output [(exec) "--version"] version
         ;]
+        return false  ; !!! Ever called?
     ]
 ]
 
@@ -1016,7 +1018,7 @@ strip-class: make object! [
         target [file!]
         /params [block! any-string!]
     ][
-        reduce [spaced collect [
+        return reduce [spaced collect [
             keep any [file-to-local/pass exec-file, "strip"]
             params: default [options]
             switch type of params [
@@ -1213,7 +1215,7 @@ generator-class: make object! [
         ;
         let letter: charset [#"a" - #"z" #"A" - #"Z"]
         let digit: charset "0123456789"
-        let localize: func [v][either file? v [file-to-local v][v]]
+        let localize: func [v][return either file? v [file-to-local v][v]]
 
         if object? cmd [
             assert [
@@ -1247,7 +1249,7 @@ generator-class: make object! [
                 fail ["failed to do var substitution:" cmd]
             ]
         ]
-        cmd
+        return cmd
     ]
 
     prepare: meth [

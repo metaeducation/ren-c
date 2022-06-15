@@ -304,7 +304,6 @@ function: specialize :func [gather: #]
     ] else [
         until [equal? '=== take remarks]
     ]
-    return  ; return no value (invisible)
 ]
 
 what-dir: func [  ; This can be HIJACK'd by a "smarter" version
@@ -319,7 +318,7 @@ change-dir: func [  ; This can be HIJACK'd by a "smarter" version
     return: [file! url!]
     path [file! url!]
 ][
-    system.options.current-path: path
+    return system.options.current-path: path
 ]
 
 
@@ -703,7 +702,7 @@ entrap: func [
     code [block! action!]
     <local> result
 ][
-    any [trap/result code 'result, ^result]
+    return any [trap/result code 'result, ^result]
 ]
 
 reduce*: redescribe [
@@ -988,7 +987,9 @@ fail: func [
 ]
 
 
-generate: func [ "Make a generator."
+generate: func [
+    {Make a generator}
+    return: [action!]
     init [block!] "Init code"
     condition [block! blank!] "While condition"
     iteration [block!] "Step code"
@@ -1023,7 +1024,8 @@ generate: func [ "Make a generator."
 ]
 
 read-lines: func [
-    {Makes a generator that yields lines from a file or port.}
+    {Makes a generator that yields lines from a file or port}
+    return: [action!]
     src [port! file! blank!]
     /delimiter [binary! char! text! bitset!]
     /keep "Don't remove delimiter"
@@ -1046,7 +1048,7 @@ read-lines: func [
         ]
     ]
 
-    let f: function compose [
+    return func compose [
         <static> buffer (to group! [make binary! 4096])
         <static> port (groupify src)
     ] compose/deep [

@@ -526,7 +526,7 @@ e-sysobj: make-emitter "System Object" (
     join prep-dir %include/tmp-sysobj.h
 )
 
-at-value: func ['field] [next find/only boot-sysobj to-set-word field]
+at-value: func ['field] [return next find/only boot-sysobj to-set-word field]
 
 boot-sysobj: load strip-commas-and-null-apostrophes read/string %sysobj.r
 change at-value version ^(version)

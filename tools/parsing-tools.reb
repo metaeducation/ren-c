@@ -23,13 +23,14 @@ REBOL [
 seek: []  ; Temporary measure, SEEK as no-op in bootstrap
 
 export parsing-at: func [
-    {Defines a rule which evaluates a block for the next input position, fails otherwise.}
+    {Make rule that evaluates a block for next input position, fails otherwise}
+    return: [block!]
     'word [word!] {Word set to input position (will be local).}
     block [block!]
         {Block to evaluate. Return next input position, or blank/false.}
     /end {Drop the default tail check (allows evaluation at the tail).}
-] [
-    use [result position][
+][
+    return use [result position][
         block: compose/only [try (as group! block)]
         if not end [
             block: compose/deep [try if not tail? (word) [((block))]]

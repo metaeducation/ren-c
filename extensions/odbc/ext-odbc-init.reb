@@ -68,7 +68,7 @@ sys.make-scheme [
     title: "ODBC Open Database Connectivity Scheme"
 
     actor: context [
-        open: function [
+        open: func [
             {Open a database port}
             port [port!]
                 {WORD! spec then assume DSN, else BLOCK! DSN-less datasource}
@@ -85,18 +85,18 @@ sys.make-scheme [
                 cause-error 'access 'invalid-spec port.spec
             ]
 
-            port
+            return port
         ]
 
-        pick: function [
+        pick: func [
             port [port!]
             index
                 {Index to pick from (only supports 1, for FIRST)}
         ][
-            ; !!! This is now ODBC-STATEMENT-OF
+            fail "This is now ODBC-STATEMENT-OF"
         ]
 
-        update: function [port [port!]] [
+        update: func [return: [port!] port [port!]] [
             if get in connection: port.locals 'hdbc [
                 (update-odbc
                     connection
@@ -126,16 +126,17 @@ sys.make-scheme [
             ]
         ]
 
-        insert: function [
+        insert: func [
+            return: [integer! block!]
             port [port!]
             sql [text! word! block!]
                 {SQL statement or catalog, parameter blocks are reduced first}
         ][
-            insert-odbc port.locals reduce compose [((sql))]
+            return insert-odbc port.locals reduce compose [((sql))]
         ]
 
         copy: function [port [port!] /part [integer!]] [
-            copy-odbc/part port.locals part
+            return copy-odbc/part port.locals part
         ]
     ]
 ]
@@ -152,7 +153,7 @@ sqlform: func [
     value "Item to form"
         [any-value!]
 ][
-    switch type of :value [
+    return switch type of :value [
         comma! [join #"," space]  ; avoid spacing before the comma
 
         integer! word! [as text! value]
@@ -238,7 +239,7 @@ odbc-execute: func [
         print ["** PARAMETERS:" mold parameters]
     ]
 
-    insert statement compose [(query) ((parameters))]
+    return insert statement compose [(query) ((parameters))]
 ]
 
 export [odbc-execute]

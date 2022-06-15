@@ -104,6 +104,8 @@ Rebol [
 combinator: func [
     {Make a stylized ACTION! that fulfills the interface of a combinator}
 
+    return: [action!]
+
     spec [block!]
     body [block!]
 
@@ -217,7 +219,7 @@ combinator: func [
     ; Enclosing with the wrapper permits us to inject behavior before and
     ; after each combinator is executed.
     ;
-    enclose :action :wrapper
+    return enclose :action :wrapper
 ]
 
 
@@ -3227,6 +3229,9 @@ uparse2: specialize :uparse*/fully [
 ; !!! This operation will likely take over the name USE.  It is put here since
 ; the UPARSE tests involve it.
 ;
-using: func [obj [<blank> object!]] [
+using: func [
+    return: <none>  ; should it return a value?  (e.g. the object?)
+    obj [<blank> object!]
+][
     add-use-object (binding of 'obj) obj
 ]

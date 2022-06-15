@@ -109,7 +109,7 @@ elf-format: context [
     ; explicit at the callsites.
     ;
     mode: ~
-    handler: func [name [word!] num-bytes [integer!]] [
+    handler: func [return: <none> name [word!] num-bytes [integer!]] [
         assert [
             binary? begin, num-bytes <= length of begin,
             find [read write] ^mode
@@ -779,22 +779,25 @@ pe-format: context [
     size-of-section-header: 40  ; Size of one entry
 
     to-u32-le: func [
+        return: [binary!]
         i [integer!]
     ][
-        reverse skip (to binary! i) 4
+        return reverse skip (to binary! i) 4
     ]
 
     to-u16-le: func [
+        return: [binary!]
         i [integer!]
     ][
-        reverse skip (to binary! i) 6
+        return reverse skip (to binary! i) 6
     ]
 
     align-to: func [
+        return: [integer!]
         offset [integer!]
         align [integer!]
     ][
-        if zero? let rem: remainder offset align [
+        return if zero? let rem: remainder offset align [
             offset
         ] else [
             offset + align - rem
@@ -827,7 +830,7 @@ pe-format: context [
         if err [  ; hard failure (was an EXE, but something wrong with it)
             fail ["err:" err, "at:" copy/part fail-at 16]
         ]
-        true
+        return true
     ]
 
     update-section-header: func [
@@ -991,7 +994,7 @@ pe-format: context [
             fail "Last section has been truncated"
         ]
 
-        head of exe-data
+        return head of exe-data
     ]
 
     find-section: func [
@@ -1019,7 +1022,7 @@ pe-format: context [
             return null
         ]
 
-        case [
+        return case [
             header [
                 target-sec
             ]

@@ -40,7 +40,7 @@ decode-lines: func [
         ]
     ]
     if pos: back tail-of text [remove pos]
-    text
+    return text
 ]
 
 encode-lines: func [
@@ -74,12 +74,13 @@ encode-lines: func [
     if indent = pos: skip tail-of text 0 - length of indent [clear pos]
     append text newline
 
-    text
+    return text
 ]
 
 for-each-line: func [
     {Iterate over text lines}
 
+    return: <none>
     'record "Word set to metadata for each line"
         [word!]
     text "Text with lines"
@@ -204,7 +205,7 @@ text-location-of: func [
         line: reduce [line 1 + subtract index? position index? eol]
     ]
 
-    line
+    return line
 ]
 
 export [

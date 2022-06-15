@@ -52,7 +52,7 @@ description-of: function [
     return: [<opt> text!]
     v [<blank> any-value!]
 ][
-    opt switch type of reify get/any 'v [
+    return opt switch type of reify get/any 'v [
         bad-word! [null]
         any-array! [spaced ["array of length:" length of v]]
         image! [spaced ["size:" v.size]]
@@ -363,7 +363,7 @@ help: function [
     print [_ _ _ _ meta.description else ["(undocumented)"]]
     print [_ _ _ _ (uppercase mold topic) {is an ACTION!}]
 
-    print-args: function [list /indent-words] [
+    print-args: [list /indent-words] -> [
         for-each param list [
             types: ensure [<opt> block!] (
                 select try meta.parameter-types to-word noquote param
@@ -507,18 +507,19 @@ what: function [
     list: sort/skip list 2
 
     name: make text! size
-    either not as-block [
-        for-each [word arg] list [
-            append/dup clear name #" " size
-            change name word
-            print [
-                name
-                :arg
-            ]
-        ]
-    ][
-         list
+    if as-block [
+        return list
     ]
+
+    for-each [word arg] list [
+        append/dup clear name #" " size
+        change name word
+        print [
+            name
+            :arg
+        ]
+    ]
+    return none
 ]
 
 

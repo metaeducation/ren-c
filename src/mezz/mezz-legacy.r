@@ -29,11 +29,12 @@ loop: :while
 
 onlify: func [
     {Add /ONLY behavior to APPEND, INSERT, CHANGE}
+    return: [action!]
     action [action!]
     /param [word!]
 ][
     param: default ['value]
-    adapt (
+    return adapt (
         augment :action [/only "DEPRECATED: Use QUOTE, JUST, [] or ^^ instead"]
     ) compose/deep [
         all [only, any-array? series] then [

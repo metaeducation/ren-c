@@ -1,7 +1,7 @@
 ; AES streaming cipher tests
 
 [
-    (test: function [data check] [
+    (test: func [data check] [
         bin: as binary! data
         bin-len: length of bin
         key-128: #{01020304050607080910111213141516}
@@ -9,7 +9,7 @@
         encrypted: aes-stream ctx as binary! data
         ctx: aes-key/decrypt key-128 _
         decrypted: aes-stream ctx encrypted
-        did all [
+        return did all [
             bin = copy/part decrypted bin-len
             check = encrypted
         ]

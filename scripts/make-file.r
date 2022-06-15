@@ -48,7 +48,7 @@ REBOL [
     }
 ]
 
-doubled-file-slash-error: func [item] [
+doubled-file-slash-error: lambda [item] [
     make error! [
         id: 'doubled-file-slash
         message: ["Doubled / encountered while generating filename:" :arg1]
@@ -56,7 +56,7 @@ doubled-file-slash-error: func [item] [
     ]
 ]
 
-embedded-file-slash-error: func [item] [
+embedded-file-slash-error: lambda [item] [
     make error! [
         id: 'embedded-file-slash
         message: ["Embedded / encountered inside filename component:" :arg1]

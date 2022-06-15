@@ -381,7 +381,7 @@ REBNATIVE(unmeta)
 //
 // Consider what FOR-BOTH would need to do in order to please UNMETA here:
 //
-//      for-both: func ['var blk1 blk2 body] [
+//      for-both: lambda ['var blk1 blk2 body] [
 //          unmeta all [
 //              '~void~  ; <-- this is the nuisance we want to avoid
 //              meta for-each (var) blk1 body

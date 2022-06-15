@@ -57,8 +57,7 @@ get-git-log: function [
 ][
     git-log: make text! 0
     call/shell/output "git log --pretty=format:'[commit: {%h} author: {%an} email: {%ae} date-string: {%ai} summary: {%s}]'" git-log
-    split git-log newline
-
+    return split git-log newline
 ]
 
 make-changes-block: function [
@@ -99,7 +98,7 @@ make-changes-block: function [
         ]
     ]
 
-    block
+    return block
 ]
 
 parse-credits-for-authors: function [  ; used as switch in github-user-name
@@ -107,7 +106,7 @@ parse-credits-for-authors: function [  ; used as switch in github-user-name
     return: [block!]
     credits-file [file!] {CREDITS.md file}
 ][
-    collect [
+    return collect [
         keep [{Carl Sassenrath} [{@carls}]]
 
         parse3 to-text read credits-file [
@@ -202,7 +201,7 @@ notable?: function [
     if not empty? cc [return true]
 
     ; this not a notable change
-    false
+    return false
 ]
 
 
@@ -228,7 +227,7 @@ make-changes-file: function [
         author "Author name in commit log"
             [text!]
     ][
-        any [
+        return any [
             switch author authors
             switch trim/all copy author authors  ; try again w/space trimmed
             author
@@ -240,7 +239,7 @@ make-changes-file: function [
         write changes to-text newline
     ]
 
-    md-link: func [s link] [
+    md-link: [s link] -> [
         unspaced [{ [} s {](} link {)}]
     ]
 
@@ -253,7 +252,7 @@ make-changes-file: function [
         ; remove any preceding * or - from summary
         if find [{* } {- }] copy/part text 2 [remove/part text 2]
 
-        unspaced [
+        return unspaced [
             {```} _ text _ {```} _
 
             ; github username or git author name

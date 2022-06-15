@@ -132,7 +132,7 @@ emit-directive: function [return: <none> directive] [
     process-conditional directive proto-parser/parse-position e-funcs
 ]
 
-process: function [file] [
+process: function [return: <none> file] [
     proto-parser/emit-proto: :emit-proto
     proto-parser/file: file
     proto-parser/emit-directive: :emit-directive

@@ -49,7 +49,7 @@ REBOL [
 ]
 
 
-%%: func [ ; %make-file.r shared with bootstrap, can't load %%
+%%: lambda [ ; %make-file.r shared with bootstrap, can't load %%
     {Quoting MAKE FILE! Operator}
     'value [word! path! tuple! block! group!]
 ][
@@ -92,7 +92,7 @@ shell: func [
     let shellify-tag: func [value [any-value!]] [
         if not tag? value [return value]
 
-        if system.version.4 = 3 [   ; Windows
+        return if system.version.4 = 3 [   ; Windows
             unspaced ["%" as text! value "%"]
         ] else [
             unspaced ["${" as text! value "}"]
@@ -105,7 +105,7 @@ shell: func [
     ; the expressions.
     ;
     let process-tag: func [container [path! tuple! block!]] [
-        to type-of-container map-each item container [
+        return to type-of-container map-each item container [
             if group? item [
                 item: eval item
             ]
@@ -218,7 +218,7 @@ $: func [
         ]
     ]
 
-    apply :shell [code, /inspect inspect, /pipe pipe]
+    return apply :shell [code, /inspect inspect, /pipe pipe]
 ]
 
 export [shell %% $]

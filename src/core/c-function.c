@@ -527,7 +527,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             // function has a body and you don't use RETURN, because the entire
             // body has to be void.  If it does, we want to allow it:
             //
-            //    >> wrapper: func [x] [comment x]
+            //    >> wrapper: func [x] [return comment x]
             //
             //    >> 1 + 2 wrapper "This is desirable"
             //    == 3

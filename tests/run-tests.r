@@ -48,7 +48,10 @@ log-file-prefix: join %r collect [
 
 === TEST RUNNER FUNCTION ===
 
-run-tests: func [file [file!]] [
+run-tests: func [
+    return: <none>
+    file [file!]
+][
     print ["=== Running Tests implied by" mold file "==="]
 
     [log-file summary]: do-recover tests flags check log-file-prefix

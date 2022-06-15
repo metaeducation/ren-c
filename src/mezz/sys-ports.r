@@ -129,7 +129,7 @@ make-port*: function [
     ; scheme has not yet been initialized, it can be done
     ; at this time.
     if in scheme 'init [scheme.init port]
-    port
+    return port
 ]
 
 *parse-url: make object! [
@@ -207,7 +207,7 @@ make-port*: function [
         return: [object!]
         url [url! text!]
     ][
-        uparse as text! url [gather rules] else [
+        return uparse as text! url [gather rules] else [
             fail ["Could not decode URL to an object:" url]
         ]
     ]
@@ -220,6 +220,7 @@ decode-url: :*parse-url.decode-url  ; wrapped in context, expose main function
 make-scheme: function [
     {Make a scheme from a specification and add it to the system}
 
+    return: <none>
     def "Scheme specification"
         [block!]
     /with "Scheme name to use as base"

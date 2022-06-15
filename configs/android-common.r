@@ -70,8 +70,8 @@ ndk-version: make object! [major: minor: patch: _]
 ;
 detect-ndk-host: func [
     return: [word!]
-] [
-    switch let os: system/version/4 [
+][
+    return switch let os: system/version/4 [
         2 ['darwin-x86_64]  ; Mac
         3 ['windows-x86_64]  ; Windows  !!! 32bit is just `windows`, ignore atm
         4 ['linux-x86_64]  ; Linux
@@ -208,7 +208,7 @@ android-api-level: either ndk-version/major < 18 [
 ;
 sysroot-for-compile: func [
     return: [text!]
-] [
+][
     let path: spaced [
         "--sysroot" (file-to-local either ndk-version/major < 18 [
              [
@@ -255,7 +255,7 @@ sysroot-for-compile: func [
 sysroot-for-link: func [
     return: [text!]
     /host [word!] "defaults to detecting current system, e.g. linux-x86_64"
-] [
+][
     host: default [detect-ndk-host]
 
     let path: spaced [

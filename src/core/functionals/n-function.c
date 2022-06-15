@@ -194,6 +194,9 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
         return_thrown (SPARE);
 
+    if (not returned)
+        fail ("Temporary: FUNC without RETURN: will be making ~ if no RETURN");
+
     if (Is_Void(SPARE))
         return_void (OUT);  // does not actually overwrite OUT
 

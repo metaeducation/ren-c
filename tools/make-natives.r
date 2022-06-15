@@ -86,7 +86,10 @@ all-protos: copy []
 output-buffer: make text! 20000
 
 
-gather-natives: func [dir] [
+gather-natives: func [
+    return: <none>
+    dir
+][
     files: read dir
     for-each file files [
         file: join dir file

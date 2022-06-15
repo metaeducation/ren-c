@@ -415,7 +415,7 @@ null: emulate [
 ;
 unset!: bad-word!  ; isotope! ?
 unset?: emulate [func [^x] [x = '~]]  ; checks *value* is unset, not var
-unset: func [var [word! path! block!]] [  ; historically blocks are legal
+unset: lambda [var] [  ; historically blocks are legal
     set/any var ~
 ]
 
