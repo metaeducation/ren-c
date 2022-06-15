@@ -45,7 +45,7 @@ mold64: function [
 save: function [
     {Saves a value, block, or other data to a file, URL, binary, or text}
 
-    return: <none>  ; !!! should it just return WHERE back?
+    ; !!! what RETURN values make sense?
     where "Where to save (suffix determines encoding)"
         [file! url! binary! text! blank!]
     value "Value(s) to save"
@@ -154,19 +154,19 @@ save: function [
 
     case [
         file? where [
-            write where data  ; "WRITE converts to UTF-8, saves overhead" (?)
+            return write where data
         ]
 
         url? where [
             ; !!! Comment said "But some schemes don't support it"
             ; Presumably saying that the URL scheme does not support UTF-8 (?)
-            write where data
+            return write where data
         ]
 
         blank? where [
-            data  ; just return the UTF-8 binary
+            return data  ; just return the UTF-8 binary
         ]
-    ] else [
-        insert tail of where data  ; text! or binary!, insert data
     ]
+
+    return insert tail of where data  ; text! or binary!, insert data
 ]
