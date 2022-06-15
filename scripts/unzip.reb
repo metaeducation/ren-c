@@ -225,8 +225,6 @@ zip: func [
         where: open/write/new where  ; !!! /NEW is needed (should it be?)
     ]
 
-    let out: func [value] [append where value]
-
     let offset: 0
     let num-entries: 0
     let central-directory: copy #{}
