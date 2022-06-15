@@ -874,8 +874,12 @@ e-cwrap/write-emitted
 ;     EXPORTED_FUNCTIONS=@libr3.exports.json
 ;
 
-json-collect: func [return: [text!] body [block!]] [
-    let results: collect compose [
+json-collect: func [
+    return: [text!]
+    body [block!]
+    <local> results  ; !!! CSCAPE does not work with LET right now
+][
+    results: collect compose [
         keep: adapt :keep [  ; Emscripten prefixes functions w/underscore
             value: unspaced [{"} {_} value {"}]
         ]
