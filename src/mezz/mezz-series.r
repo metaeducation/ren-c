@@ -440,9 +440,10 @@ collect*: func [
         series: <replaced>
     ]
 
-    ; use FUNC for binding work of connecting KEEP with the keeper function
+    ; use LAMBDA for binding work of connecting KEEP with the keeper function
+    ; (Doesn't have or enforce RETURN)
     ;
-    reeval func* [keep [action!] <with> return] body :keeper
+    reeval lambda [keep [action!]] body :keeper
 
     return :out  ; might be null if no non-BLANK! KEEPs yet
 ]

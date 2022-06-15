@@ -206,6 +206,32 @@ REB_R Unchecked_Dispatcher(REBFRM *f)
 
 
 //
+//  Lambda_Unoptimized_Dispatcher: C
+//
+// Used by LAMBDA when it can't use the optimized form.
+//
+REB_R Lambda_Unoptimized_Dispatcher(REBFRM *f)
+{
+    REBFRM *frame_ = f;  // for RETURN macros
+
+    // write to spare in case invisible RETURN
+    //
+    bool returned;
+    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
+        return_thrown (SPARE);
+
+    if (Is_Void(SPARE))
+        return_void (OUT);  // does not actually overwrite OUT
+
+    return Move_Cell_Core(
+        OUT,
+        SPARE,
+        CELL_MASK_COPY | CELL_FLAG_UNEVALUATED  // keep unevaluated status
+    );
+}
+
+
+//
 //  None_Dispatcher: C
 //
 // Runs block, then overwrites result w/a ~none~ isotope (e.g. RETURN: <none>)

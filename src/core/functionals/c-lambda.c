@@ -119,6 +119,8 @@ REBNATIVE(lambda)
     //
     REBVAL *body = Constify(ARG(body));
 
+    bool optimizable = true;
+
     // The reason <end> is allowed is for the enfix case, `x: -> [print "hi"]`
     // Though you could use DOES for this, it's still up in the air whether
     // DOES will be different or not.
@@ -183,13 +185,36 @@ REBNATIVE(lambda)
                 fail (item);
             pclass = PARAM_CLASS_HARD;
         }
-        else
-            fail (item);
+        else if (IS_SET_WORD(item) and VAL_WORD_ID(item) == SYM_RETURN) {
+            fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");
+        }
+        else {
+            if (not IS_BLOCK(wordlist))
+                fail ("Invalid LAMBDA specification");
+
+            optimizable = false;
+            continue;
+        }
 
         Init_Param(DS_PUSH(), pclass | PARAM_FLAG_VANISHABLE, TS_OPT_VALUE);
 
         Init_Nulled(DS_PUSH());  // types (not supported)
         Init_Nulled(DS_PUSH());  // notes (not supported)
+    }
+
+    if (not optimizable) {
+        DS_DROP_TO(dsp_orig);
+
+        REBACT *lambda = Make_Interpreted_Action_May_Fail(
+            wordlist,
+            body,
+            MKF_KEYWORDS,  // no MKF_RETURN
+            1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
+        );
+
+        INIT_ACT_DISPATCHER(lambda, &Lambda_Unoptimized_Dispatcher);
+
+        return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
     }
 
     REBCTX *meta;

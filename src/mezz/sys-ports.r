@@ -234,13 +234,13 @@ make-scheme: function [
     ; If actor is block build a non-contextual actor object:
     if block? :scheme.actor [
         actor: make object! (length of scheme.actor) / 4
-        for-each [name func* args body] scheme.actor [
+        for-each [name op args body] scheme.actor [
             ; !!! Comment here said "Maybe PARSE is better here", though
             ; knowing would depend on understanding precisely what the goal
             ; is in only allowing FUNC vs. alternative function generators.
             assert [
                 set-word? name
-                func* = 'func
+                find [func lambda function] op
                 block? args
                 block? body
             ]
