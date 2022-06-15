@@ -275,6 +275,10 @@ main-startup: func [
                 emit [print mold '(<*> prior)]
                 emit [fail ["Bad REPL continuation:" '(<*> result)]]
             ]
+            <quit> [
+                emit [quit 0]
+                emit [fail ~unreachable~]
+            ]
         ] then [
             return-to-c instruction
         ]
@@ -813,8 +817,7 @@ main-startup: func [
     main-startup: '~main-startup-done~  ; free function for GC
 
     if quit-when-done [
-        emit [quit 0]
-        return <unreachable>
+        return <quit>
     ]
 
     emit #start-console
