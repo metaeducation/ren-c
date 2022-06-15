@@ -448,20 +448,26 @@ void Where(REBFRM *f) {
 
     REBLEN index = FEED_INDEX(f->feed);
 
-    DECLARE_MOLD (mo);
-    mo->limit = 40 * 20;  // 20 lines of length 40, or so?
-
     if (index > 0) {
+        DECLARE_MOLD (mo);
+        SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
+        mo->limit = 40 * 20;  // 20 lines of length 40, or so?
+
         REBLEN before_index = index > 3 ? index - 3 : 0;
         Push_Mold(mo);
         Mold_Array_At(mo, FEED_ARRAY(f->feed), before_index, "[]");
+        Throttle_Mold(mo);
         printf("Where(Before):\n");
         printf("%s\n\n", BIN_AT(mo->series, mo->offset));
         Drop_Mold(mo);
     }
 
+    DECLARE_MOLD (mo);
+    SET_MOLD_FLAG(mo, MOLD_FLAG_LIMIT);
+    mo->limit = 40 * 20;  // 20 lines of length 40, or so?
     Push_Mold(mo);
     Mold_Array_At(mo, FEED_ARRAY(f->feed), index, "[]");
+    Throttle_Mold(mo);
     printf("Where(At):\n");
     printf("%s\n\n", BIN_AT(mo->series, mo->offset));
     Drop_Mold(mo);
