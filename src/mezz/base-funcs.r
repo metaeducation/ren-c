@@ -652,19 +652,6 @@ prohibit: redescribe [
 )
 
 
-; !!! For a time this was THE, until it took its unevaluating role.  It is
-; now called ENSURE-VALUE until a better name is thought of.
-;
-ensure-value: func [
-    {FAIL if value is null, otherwise pass it through}
-
-    return: [any-value!]
-    value [any-value!]  ; not <opt>!
-][
-    ; Note: Doesn't check explicitly for NULL, as parameter is not marked <opt>
-    :value
-]
-
 oneshot: specialize :n-shot [n: 1]
 upshot: specialize :n-shot [n: -1]
 
