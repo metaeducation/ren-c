@@ -64,26 +64,6 @@ Rebol [
 ]
 
 
-uparse?: func [] [
-    fail @return [
-        "Please change UPARSE? to DID UPARSE and NOT UPARSE? to DIDN'T UPARSE"
-        "(Or consider using THEN and ELSE to react to a parse completion.)"
-        "(Or know your rule well enough it won't return a falsey isotope.)"
-        https://forum.rebol.info/t/498/2
-    ]
-]
-
-parse?: func [] [
-    fail @return [
-        "Please change PARSE? to DID PARSE3 and NOT PARSE? to DIDN'T UPARSE3"
-        "(Or consider using THEN and ELSE to react to a parse completion.)"
-        "(Or know your rule well enough it won't return a falsey isotope.)"
-        "(Also consider using UPARSE for non performance critical code.)"
-        https://forum.rebol.info/t/498/2
-    ]
-]
-
-
 ; All combinators receive the INPUT to be processed.  They are also given an
 ; object representing the STATE of the parse (currently that is just the
 ; FRAME! of the main UPARSE call which triggered the operation, so any of the
