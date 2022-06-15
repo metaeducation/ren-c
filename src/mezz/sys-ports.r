@@ -246,7 +246,7 @@ make-scheme: function [
                 block? body
             ]
             append actor reduce [
-                name (func args body) ; add action! to object! w/name
+                name (op args body) ; add action! to object! w/name
             ]
         ]
         scheme.actor: actor
