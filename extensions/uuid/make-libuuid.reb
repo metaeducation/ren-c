@@ -23,8 +23,6 @@ ROOT: https://raw.githubusercontent.com/karelzak/util-linux/master/
 
 mkdir %libuuid
 
-pass: func [x][x]
-
 add-config.h: [
     to "/*" thru "*/"
     thru "^/"
