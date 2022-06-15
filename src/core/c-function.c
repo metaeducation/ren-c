@@ -355,6 +355,7 @@ void Push_Paramlist_Triads_May_Fail(
                 //
                 if (VAL_WORD_ID(item) == SYM_RETURN and not quoted) {
                     pclass = PARAM_CLASS_RETURN;
+                    *flags |= MKF_HAS_CHECKED_RETURN;
                 }
                 else if (not quoted) {
                     refinement = true;  // sets PARAM_FLAG_REFINEMENT

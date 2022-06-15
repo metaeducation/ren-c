@@ -382,7 +382,8 @@ enum {
     //
     MKF_HAS_NONE_RETURN = 1 << 6,
     MKF_IS_ELIDER = 1 << 7,
-    MKF_HAS_RETURN = 1 << 8
+    MKF_HAS_RETURN = 1 << 8,
+    MKF_HAS_CHECKED_RETURN = 1 << 9
 };
 
 #define MKF_MASK_NONE 0 // no special handling (e.g. MAKE ACTION!)

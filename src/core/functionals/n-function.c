@@ -270,6 +270,9 @@ REB_R Returner_Dispatcher(REBFRM *f)
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
         return_thrown (SPARE);
 
+    if (not returned)
+        fail ("Functions with RETURN: in spec must RETURN their value");
+
     if (Is_Void(SPARE)) {
         REBACT *phase = FRM_PHASE(f);
         if (ACT_HAS_RETURN(phase)) {
@@ -420,7 +423,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
         else if (mkf_flags & MKF_HAS_NONE_RETURN) {
             INIT_ACT_DISPATCHER(a, &None_Dispatcher);  // !!! ^-- see note
         }
-        else if (ACT_HAS_RETURN(a)) {
+        else if (mkf_flags & MKF_HAS_CHECKED_RETURN) {
             const REBPAR *param = ACT_PARAMS_HEAD(a);
             assert(KEY_SYM(ACT_KEYS_HEAD(a)) == SYM_RETURN);
 
@@ -441,7 +444,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
             INIT_ACT_DISPATCHER(a, &Elider_Dispatcher);  // no f->out mutation
         else if (mkf_flags & MKF_HAS_NONE_RETURN) // !!! see note
             INIT_ACT_DISPATCHER(a, &None_Dispatcher);  // forces f->out to ~
-        else if (ACT_HAS_RETURN(a))
+        else if (mkf_flags & MKF_HAS_CHECKED_RETURN)
             INIT_ACT_DISPATCHER(a, &Returner_Dispatcher);  // typecheck f->out
         else
             INIT_ACT_DISPATCHER(a, &Unchecked_Dispatcher); // unchecked f->out
