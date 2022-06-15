@@ -241,20 +241,3 @@ hijack :find adapt copy :find [
         ]
     ]
 ]
-
-
-to-integer: func [
-    {Deprecated overload: see https://forum.rebol.info/t/1270}
-
-    value [
-       integer! decimal! percent! money! char! time!
-       issue! binary! any-string!
-    ]
-    /unsigned "For BINARY! interpret as unsigned, otherwise error if signed."
-][
-    either binary? value [
-        debin [be (either unsigned ['+] ['+/-])] value
-    ][
-        to integer! value  ; could check for error, but deprecated
-    ]
-]

@@ -21,8 +21,8 @@ REBOL [
 ; These must be listed explicitly in order for the words to be collected
 ; as legal "globals" for the mezzanine context (otherwise SET would fail)
 
-; Note that TO-LOGIC and TO-TEXT are currently their own natives (even with
-; additional refinements), and thus should not be overwritten here.
+; Note that TO-TEXT is currently its own native (with an /INVISIBLE refinement)
+; and thus should not be overwritten here.  This may not be permanent.
 
 to-integer: to-decimal: to-percent: to-money: to-pair:
 to-tuple: to-time: to-date: to-binary: to-file: to-email: to-url: to-tag:
@@ -37,21 +37,13 @@ to-gob: to-event:
 use [word] [
     for-each type system.catalog.datatypes [
         word: make word! head of remove back tail of unspaced ["to-" type]
-
-        ; The list above determines what will be made here, but we must not
-        ; overwrite any NATIVE! implementations.  (e.g. TO-INTEGER is a
-        ; native with a refinement for interpreting as unsigned.)
-
-        all [
-            word: in lib word
-            unset? word
-        ] then [
-            set word redescribe compose [
-                (spaced ["Converts to" form type "value."])
-            ](
-                specialize :to [type: get type]
-            )
-        ]
+        word: in lib word else [continue]
+        if set? word [continue]  ; don't overwrite existing definition
+        set word redescribe compose [
+            (spaced ["Converts to" form type "value."])
+        ](
+            specialize :to [type: get type]
+        )
     ]
 ]
 
