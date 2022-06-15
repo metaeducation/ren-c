@@ -78,6 +78,7 @@ sys.make-scheme [
                 commit: 'auto
             ]
 
+            let spec
             port.locals: open-connection case [
                 text? spec: select port.spec 'target [spec]
                 text? spec: select port.spec 'host [unspaced ["dsn=" spec]]
@@ -194,11 +195,17 @@ sqlform: func [
         ]
 
         meta-word! meta-tuple! meta-path! [
-            as text! [# #]: get value
+            any [
+                as text! [# #]: get value
+                {}
+            ]
         ]
 
         meta-group! [
-            as text! do as block! value
+            any [
+                as text! do as block! value
+                {}
+            ]
         ]
     ]
     else [
