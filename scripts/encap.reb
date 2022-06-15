@@ -889,7 +889,7 @@ pe-format: context [
             print ["Section headers end at:" index of end-of-section-header]
         ]
 
-        sort/compare sections func [a b][a.physical-offset < b.physical-offset]
+        sort/compare sections [a b] -> [a.physical-offset < b.physical-offset]
 
         let first-section-by-phy-offset: any [
             sections.1
@@ -917,7 +917,7 @@ pe-format: context [
 
         let last-section-by-phy-offset: sections.(COFF-header.number-of-sections)
 
-        sort/compare sections func [a b][a.virtual-offset < b.virtual-offset]
+        sort/compare sections [a b] -> [a.virtual-offset < b.virtual-offset]
 
         let last-section-by-virt-offset:
             sections.(COFF-header.number-of-sections)

@@ -1170,7 +1170,7 @@ switch: emulate [  ; Ren-C evaluates cases: https://trello.com/c/9ChhSWC4/
     enclose (augment :switch [
         /default "Default case if no others are found"
             [block!]
-    ]) func [f [frame!]] [
+    ]) lambda [f [frame!]] [
         f.cases: map-each c f.cases [
             either block? :c [c] [quote c]  ; suppress eval on non-blocks
         ]
@@ -1263,7 +1263,7 @@ find: emulate [
             empty? f.pattern
         ] then [return _]
 
-        do f else '_  ; NULL -> BLANK!
+        return do f else '_  ; NULL -> BLANK!
     ]
 ]
 select: emulate [denuller :select]
@@ -1271,7 +1271,7 @@ pick: emulate [denuller :pick]
 
 first: emulate [denuller :first]
 first+: emulate [
-    enclose :first func [f] [
+    enclose :first lambda [f] [
         use [loc] [
             loc: f.location
             do f

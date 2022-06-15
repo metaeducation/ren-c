@@ -115,7 +115,7 @@ export to-c-name: function [
 
         "did" ["did_1"]  ; This is a macro in Ren-C code
     ] then (func [s] [
-        copy s
+        return copy s
     ]) else [
         ;
         ; If these symbols occur composite in a longer word, they use a
@@ -357,7 +357,7 @@ export lowercase-of: func [
     return lowercase form string
 ]
 
-export propercase: func [value] [uppercase/part (copy value) 1]
+export propercase: func [value] [return uppercase/part (copy value) 1]
 
 export propercase-of: func [
     {Make a copy of a string with just the first character uppercase}

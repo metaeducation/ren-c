@@ -209,7 +209,7 @@ combinator: func [
             ]
         ]))
 
-        (as group! body)
+        return (as group! body)
 
         ; If the body does not return and falls through here, the function
         ; will fail as it has a RETURN: that needs to be used to type check
@@ -2894,7 +2894,7 @@ match-uparse: (comment [redescribe [  ; redescribe not working at the moment (?)
     enclose :uparse*/fully func [f [frame!]] [
         let input: f.input  ; DO FRAME! invalidates args; cache for returning
 
-        (^ eval f) then [input]
+        return all [^ eval f, input]
     ]
 )
 

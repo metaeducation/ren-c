@@ -129,7 +129,7 @@ run-test-cluster: func [
     ;
     ;    [
     ;        port: (open %something.txt)  ; group not line start--not a test
-    ;        foo: func [x] [x + 1]  ; not a test
+    ;        foo: func [x] [return x + 1]  ; not a test
     ;
     ;        (2 = foo 1)  ; a test--result is checked and logged
     ;        (3 = foo 2)  ; a test--result is checked and logged

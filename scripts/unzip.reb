@@ -70,7 +70,7 @@ to-long: (<- enbin [BE + 4])  ; Big endian 4-byte positive integer
 
 to-msdos-time: func [
     {Converts to a MS-DOS time}
-    return: [integer!]
+    return: [binary!]
     time [time!] "AnyValue to convert"
 ][
     return to-ishort (time.hour * 2048)
@@ -80,7 +80,7 @@ to-msdos-time: func [
 
 to-msdos-date: func [
     {Converts to a MS-DOS date}
-    return: [integer!]
+    return: [binary!]
     date [date!]
 ][
     return to-ishort 512 * (max 0 date.year - 1980)

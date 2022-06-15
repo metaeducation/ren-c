@@ -561,7 +561,7 @@ match?: chain [:match | :value?]
 was: enfixed redescribe [
     "Assert that the left hand side--when fully evaluated--IS the right"
 ](
-    func [left [<opt> any-value!] right [<opt> any-value!]] [
+    lambda [left [<opt> any-value!] right [<opt> any-value!]] [
         if :left != :right [
             fail @return make error! [
                 type: 'Script
@@ -607,7 +607,7 @@ ensure: redescribe [
     ; meaning of NULL coming back from MATCH to know if the test failed...
     ; and then use DECAY to turn the isotopes back to their meanings.
     ;
-    enclose :match func [f] [
+    enclose :match lambda [f] [
         let value: :f.value  ; DO makes frame arguments unavailable
         decay (do f else [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
@@ -625,7 +625,7 @@ ensure: redescribe [
 non: redescribe [
     {Pass through value if it *doesn't* match test, else null (e.g. MATCH/NOT)}
 ](
-    enclose :match func [f] [
+    enclose :match lambda [f] [
         let value: :f.value  ; DO makes frame arguments unavailable
         decay do f then [null] else [:value]
     ]
@@ -634,7 +634,7 @@ non: redescribe [
 prohibit: redescribe [
     {Pass through value if it *doesn't* match test, else fail (e.g. ENSURE/NOT)}
 ](
-    enclose :match func [f] [
+    enclose :match lambda [f] [
         let value: :f.value  ; DO makes frame arguments unavailable
         do f then [
             ; !!! Can't use FAIL/WHERE until we can implicate the callsite.
@@ -742,8 +742,7 @@ iterate-skip: redescribe [
             :result
         ]
 
-        do f
-        elide set word saved
+        return (do f, elide set word saved)
     ][
         series: <overwritten>
     ]

@@ -294,23 +294,23 @@ pointfree*: func* [
 ; https://forum.rebol.info/t/performance-of-inherit-meta/1619
 ;
 
-enclose: enclose* :enclose* func* [f] [  ; uses low-level ENCLOSE* to make
+enclose: enclose* :enclose* lambda [f] [  ; uses low-level ENCLOSE* to make
     set let inner :f.inner  ; don't cache name via SET-WORD!
     inherit-meta do f :inner
 ]
 inherit-meta :enclose :enclose*  ; needed since we used ENCLOSE*
 
-specialize: enclose :specialize* func* [f] [  ; now we have high-level ENCLOSE
+specialize: enclose :specialize* lambda [f] [  ; now we have high-level ENCLOSE
     set let action :f.action  ; don't cache name via SET-WORD!
     inherit-meta do f :action
 ]
 
-adapt: enclose :adapt* func* [f] [
+adapt: enclose :adapt* lambda [f] [
     set let action :f.action
     inherit-meta do f :action
 ]
 
-chain: enclose :chain* func* [f] [
+chain: enclose :chain* lambda [f] [
     ;
     ; !!! Historically CHAIN supported | for "pipe" but it was really just an
     ; expression barrier.  Review this idea, but for now let it work in a
@@ -329,18 +329,18 @@ chain: enclose :chain* func* [f] [
     inherit-meta do f :pipeline1
 ]
 
-augment: enclose :augment* func* [f] [
+augment: enclose :augment* lambda [f] [
     set let action :f.action  ; don't cache name via SET-WORD!
     let spec: :f.spec
     inherit-meta/augment do f :action spec
 ]
 
-reframer: enclose :reframer* func* [f] [
+reframer: enclose :reframer* lambda [f] [
     set let shim :f.shim  ; don't cache name via SET-WORD!
     inherit-meta do f :shim
 ]
 
-reorder: enclose :reorder* func* [f] [
+reorder: enclose :reorder* lambda [f] [
     set let action :f.action  ; don't cache name via SET-WORD!
     inherit-meta do f :action
 ]
@@ -364,7 +364,7 @@ parse2: :parse*/redbol/fully
 ; the higher level one uses a block.  Specialize out the action, and then
 ; overwrite it in the enclosure with an action taken out of the block.
 ;
-pointfree: specialize* (enclose :pointfree* func* [f] [
+pointfree: specialize* (enclose :pointfree* lambda [f] [
     set let action f.action: (match action! any [  ; don't SET-WORD! cache name
         if match [word! path!] :f.block.1 [get compose f.block.1]
         :f.block.1
@@ -383,7 +383,7 @@ pointfree: specialize* (enclose :pointfree* func* [f] [
 
 ; REQUOTE is helpful when functions do not accept QUOTED! values.
 ;
-requote: reframer func* [
+requote: reframer lambda [
     {Remove Quoting Levels From First Argument and Re-Apply to Result}
     f [frame!]
     <local> p num-quotes result
@@ -431,7 +431,7 @@ unspaced: specialize :delimit [delimiter: null]
 spaced: specialize :delimit [delimiter: space]
 newlined: specialize :delimit [delimiter: newline, tail: #]
 
-an: func* [
+an: lambda [
     {Prepends the correct "a" or "an" to a string, based on leading character}
     value <local> s
 ][
@@ -572,27 +572,27 @@ reeval func* [
 ; set up in %b-init.c.  Also LIT-WORD! and LIT-PATH! are handled specially in
 ; %words.r for bootstrap compatibility as a parse keyword.
 
-lit-word?: func* [value [<opt> any-value!]] [
-    to-logic all [
+lit-word?: func* [return: [logic!] value [<opt> any-value!]] [
+    return to-logic all [
         quoted? :value
         word! = type of unquote value
     ]
 ]
-to-lit-word: func* [value [any-value!]] [
-    quote to word! noquote :value
+to-lit-word: func* [return: [quoted!] value [any-value!]] [
+    return quote to word! noquote :value
 ]
-lit-path?: func* [value [<opt> any-value!]] [
-    to-logic all [
+lit-path?: func* [return: [logic!] value [<opt> any-value!]] [
+    return to-logic all [
         quoted? :value
         path! = type of unquote value
     ]
 ]
-to-lit-path: func* [value [any-value!]] [
-    quote to path! noquote :value
+to-lit-path: func* [return: [quoted!] value [any-value!]] [
+    return quote to path! noquote :value
 ]
 
-refinement?: func* [value [<opt> any-value!]] [
-    to-logic all [
+refinement?: func* [return: [logic!] value [<opt> any-value!]] [
+    return to-logic all [
         path? :value
         2 = length of value
         blank? :value.1
@@ -600,8 +600,8 @@ refinement?: func* [value [<opt> any-value!]] [
     ]
 ]
 
-char?: func* [value [<opt> any-value!]] [
-    (issue? :value) and (1 >= length of value)
+char?: func* [return: [logic!] value [<opt> any-value!]] [
+    return (issue? :value) and (1 >= length of value)
 ]
 
 print: func* [
@@ -672,9 +672,10 @@ immediate!: make typeset! [
 
 ok?: func* [
     "Returns TRUE on all values that are not ERROR!"
+    return: [logic!]
     value [<opt> any-value!]
 ][
-    not error? :value
+    return not error? :value
 ]
 
 ; Convenient alternatives for readability

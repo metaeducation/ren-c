@@ -90,7 +90,7 @@ trap [
 
     export bar!: word!  ; signal there is no BAR! type, and | is a WORD!
 
-    export strip-commas-and-null-apostrophes: func [x] [x]  ; not needed
+    export strip-commas-and-null-apostrophes: x -> [x]  ; not needed
 
     quit
 ]

@@ -428,7 +428,7 @@ collect*: func [
 ][
     let out: null
     let keeper: specialize* (  ; SPECIALIZE to hide series argument
-        enclose* :append func* [  ; Derive from APPEND for /ONLY /LINE /DUP
+        enclose* :append lambda [  ; Derive from APPEND for /ONLY /LINE /DUP
             f [frame!]
             <with> out
         ][

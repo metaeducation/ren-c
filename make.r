@@ -1636,7 +1636,7 @@ calculate-sequence: function [
 ]
 
 for-each ext extensions [calculate-sequence ext]
-sort/compare extensions func [a b] [a/sequence < b/sequence]
+sort/compare extensions func [a b] [return a/sequence < b/sequence]
 
 
 === {PRODUCE COMPILER/LINKER PROCESSABLE OBJECTS FROM EXTENSION SPECS} ===

@@ -51,14 +51,14 @@ boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose :print func [f] [if not system.options.quiet [do f]]
+    enclose :print f -> [if not system.options.quiet [do f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
     ; !!! Duplicates code in %main-startup.reb, where this isn't exported.
-    enclose :print func [f] [if system.options.verbose [do f]]
+    enclose :print f -> [if system.options.verbose [do f]]
 )
 
 

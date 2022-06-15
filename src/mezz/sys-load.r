@@ -296,7 +296,7 @@ load-value: redescribe [
     chain [
         :load
             |
-        func [x] [
+        lambda [x] [
             assert [block? x]
             if 1 <> length of x [
                 fail ["LOAD-VALUE got length" length of x "block, not 1"]

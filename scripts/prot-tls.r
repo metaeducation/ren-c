@@ -417,6 +417,7 @@ make-state-updater: func [
     ]
 
     return func [
+        return: <none>  ; !!! Should it have a return?
         ctx [object!]
         new [tag! issue!]
     ][
@@ -1018,7 +1019,7 @@ grab: enfixed func [
     return set left result  ; must manually assign if SET-WORD! overridden
 ]
 
-grab-int: enfixed enclose :grab func [f [frame!]] [
+grab-int: enfixed enclose :grab lambda [f [frame!]] [
     set f.left (debin [be +] do copy f)
 ]
 
