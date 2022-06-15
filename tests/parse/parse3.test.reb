@@ -456,7 +456,7 @@
             ]
             keep [fail]
         ]
-        parse3 data (compose/deep [
+        return parse3 data (compose/deep [
             opt some [((rules))]  ; could be `opt some [rules]`, but it's a test
         ]) then [
             collect [

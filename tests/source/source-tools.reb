@@ -410,7 +410,7 @@ list: context [
         sort files
         new-line/all files true
 
-        files
+        return files
     ]
 
     source-files-seq: function [

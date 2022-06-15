@@ -9,8 +9,8 @@
 [
     (
         foo: func [/A [integer!] /B [integer!] /C [integer!]] [
-            compose [
-                /A (A else '<null>) /B (B else '<null>) /C (C else '<null>)
+            return compose [
+                /A (reify A) /B (reify B) /C (reify C)
             ]
         ]
 
@@ -19,10 +19,10 @@
         true
     )
 
-    ([/A <null> /B 10 /C 20] = fooBC 10 20)
+    ([/A ~null~ /B 10 /C 20] = fooBC 10 20)
     ([/A 30 /B 10 /C 20] = fooBC/A 10 20 30)
 
-    ([/A <null> /B 20 /C 10] = fooCB 10 20)
+    ([/A ~null~ /B 20 /C 10] = fooCB 10 20)
     ([/A 30 /B 20 /C 10] = fooCB/A 10 20 30)
 
     (error? trap [fooBC/B 1 2 3 4 5 6])
@@ -164,20 +164,20 @@
 [
     (
         foo: function [/a [integer!] '/b [<skip> word!]] [
-            reduce [/A (try a) /B (try b)]
+            return reduce [/A (reify a) /B (reify b)]
         ]
         foob: enfixed :foo/b
         true
     )
 
-    ([/A _ /B word] = (word foob ||))
-    ([/A _ /B _] = (<not a word> foob ||))
+    ([/A ~null~ /B word] = (word foob ||))
+    ([/A ~null~ /B ~null~] = (<not a word> foob ||))
     ([/A 20 /B word] = (word ->- foob/a 20))
 
     (comment [
         {Currently SHOVE and <skip> don't work together, maybe shouldn't}
         https://github.com/metaeducation/ren-c/issues/909
-        [/A 20 /B _] = (<not a word> ->- foob/a 20)
+        [/A 20 /B ~null~] = (<not a word> ->- foob/a 20)
     ] true)
 ]
 

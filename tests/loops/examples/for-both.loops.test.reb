@@ -45,7 +45,7 @@
 [
     (
         for-both: func ['var blk1 blk2 body] [
-            unmeta all [
+            return unmeta all [
                 meta for-each (var) blk1 body
                 meta for-each (var) blk2 body
             ]

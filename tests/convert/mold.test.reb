@@ -122,7 +122,7 @@
                 append buff form reduce [reduce [<td> 'OK </td>] cr lf]
             ]
         ]
-        buff
+        return buff
     ]
     f
     recycle

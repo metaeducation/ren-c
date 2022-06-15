@@ -50,7 +50,7 @@
             ]
         ]
 
-        do frame  ; nulls are optionals
+        return do frame  ; nulls are optionals
     ])
 
     [#44 (
@@ -65,31 +65,31 @@
     ; BLANK! or NULL instead.  It's not clear why support for too few args
     ; would be desirable.
     ;
-    ;    (null = redbol-apply func [a] [a] [])
-    ;    (null = redbol-apply/only func [a] [a] [])
+    ;    (null = redbol-apply lambda [a] [a] [])
+    ;    (null = redbol-apply/only lambda [a] [a] [])
 
     [#2237
-        (error? trap [redbol-apply func [a] [a] [1 2]])
-        (error? trap [redbol-apply/only func [a] [a] [1 2]])
+        (error? trap [redbol-apply lambda [a] [a] [1 2]])
+        (error? trap [redbol-apply/only lambda [a] [a] [1 2]])
     ]
 
     (error? redbol-apply :make [error! ""])
 
-    (# = redbol-apply func [/a] [a] [#[true]])
-    (null = redbol-apply func [/a] [a] [#[false]])
-    (null = redbol-apply func [/a] [a] [])
-    (# = redbol-apply/only func [/a] [a] [#[true]])
+    (# = redbol-apply lambda [/a] [a] [#[true]])
+    (null = redbol-apply lambda [/a] [a] [#[false]])
+    (null = redbol-apply lambda [/a] [a] [])
+    (# = redbol-apply/only lambda [/a] [a] [#[true]])
 
     (
         comment {The WORD! false, not #[false], but allowed in Rebol2}
 
-        # = redbol-apply/only func [/a] [a] [false]
+        # = redbol-apply/only lambda [/a] [a] [false]
     )
-    (null == redbol-apply/only func [/a] [a] [])
-    (use [a] [a: true # = redbol-apply func [/a] [a] [a]])
-    (use [a] [a: false null == redbol-apply func [/a] [a] [a]])
-    (use [a] [a: false # = redbol-apply func [/a] [a] [/a]])
-    (use [a] [a: false /a = redbol-apply/only func [/a] [/a] [/a]])
+    (null == redbol-apply/only lambda [/a] [a] [])
+    (use [a] [a: true # = redbol-apply lambda [/a] [a] [a]])
+    (use [a] [a: false null == redbol-apply lambda [/a] [a] [a]])
+    (use [a] [a: false # = redbol-apply lambda [/a] [a] [/a]])
+    (use [a] [a: false /a = redbol-apply/only lambda [/a] [/a] [/a]])
     (group! == redbol-apply/only (specialize :of [property: 'type]) [()])
     ([1] == head of redbol-apply :insert [copy [] [1] blank blank])
     ([1] == head of redbol-apply :insert [copy [] [1] blank blank blank false])
@@ -109,8 +109,7 @@
     ]
 
     (
-        null? redbol-apply func [
-            return: [<opt> any-value!]
+        null? redbol-apply lambda [
             x [<opt> any-value!]
         ][
             get 'x
@@ -119,8 +118,7 @@
         ]
     )
     (
-        null? redbol-apply func [
-            return: [<opt> any-value!]
+        null? redbol-apply lambda [
             'x [<opt> any-value!]
         ][
             get 'x
@@ -165,12 +163,12 @@
             return get 'x
         ] head of insert copy [] make error! ""
     )
-    (use [x] [x: 1 strict-equal? 1 redbol-apply func ['x] [:x] [:x]])
-    (use [x] [x: 1 strict-equal? 1 redbol-apply func ['x] [:x] [:x]])
+    (use [x] [x: 1 strict-equal? 1 redbol-apply lambda ['x] [:x] [:x]])
+    (use [x] [x: 1 strict-equal? 1 redbol-apply lambda ['x] [:x] [:x]])
     (
         use [x] [
             x: 1
-            strict-equal? first [:x] redbol-apply/only func [:x] [:x] [:x]
+            strict-equal? first [:x] redbol-apply/only lambda [:x] [:x] [:x]
         ]
     )
     (
@@ -181,9 +179,9 @@
             ] [:x]
         ]
     )
-    (use [x] [x: 1 strict-equal? 1 redbol-apply func [:x] [:x] [x]])
-    (use [x] [x: 1 strict-equal? 'x redbol-apply func [:x] [:x] ['x]])
-    (use [x] [x: 1 strict-equal? 'x redbol-apply/only func [:x] [:x] [x]])
+    (use [x] [x: 1 strict-equal? 1 redbol-apply lambda [:x] [:x] [x]])
+    (use [x] [x: 1 strict-equal? 'x redbol-apply lambda [:x] [:x] ['x]])
+    (use [x] [x: 1 strict-equal? 'x redbol-apply/only lambda [:x] [:x] [x]])
     (use [x] [x: 1 strict-equal? 'x redbol-apply/only func [:x] [return :x] [x]])
     (
         use [x] [
@@ -199,6 +197,6 @@
         1 == reeval func [] [redbol-apply :return [1] 2]
     )]
 
-    (null == redbol-apply/only func [/a] [a] [#[false]])
+    (null == redbol-apply/only lambda [/a] [a] [#[false]])
     (group! == redbol-apply/only :type-of [()])
 ]

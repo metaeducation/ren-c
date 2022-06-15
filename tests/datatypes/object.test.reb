@@ -44,7 +44,7 @@
 ; object cloning
 [#2045 (
     a: 1
-    f: func [] [a]
+    f: lambda [] [a]
     g: :f
     o: make object! [a: 2 g: :f]
     p: make o [a: 3]
@@ -128,12 +128,12 @@
 ; binding set up with BIND to get the derived behavior, which is done
 ; "magically" by METHOD.
 (
-    o1: make object! [a: 10 b: func [] [f: func [] [a] f]]
+    o1: make object! [a: 10 b: func [] [f: lambda [] [a] return f]]
     o2: make o1 [a: 20]
 
     o2.b = 10
 )(
-    o1: make object! [a: 10 b: meth [] [f: func [] [a] f]]
+    o1: make object! [a: 10 b: meth [] [f: lambda [] [a] return f]]
     o2: make o1 [a: 20]
 
     o2.b = 20
@@ -161,6 +161,7 @@
             ;
             keep compose [
                 (as word! unspaced ["meth-" n]): meth [] (collect [
+                    keep [return]
                     count-up i n [
                         keep compose [
                             (as word! unspaced ["var-" i]) ((if i <> n '[+]))
@@ -188,7 +189,7 @@
 
 ; object cloning
 [#2050 (
-    o: make object! [n: 'o b: reduce [func [] [n]]]
+    o: make object! [n: 'o b: reduce [lambda [] [n]]]
     p: make o [n: 'p]
     (o.b).1 = 'o
 )]

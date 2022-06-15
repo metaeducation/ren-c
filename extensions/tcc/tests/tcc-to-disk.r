@@ -34,10 +34,10 @@ c99-logged: enclose :c99 function [f [frame!]] [
     ; f.runtime: "..."  ; set this to override CONFIG_TCCDIR
 
     fdebug: copy f
-    fdebug/inspect: true
+    fdebug.inspect: true
     do fdebug  ; Run command once with /INSPECT (don't compile)
 
-    do f  ; Run original command without /INSPECT
+    return do f  ; Run original command without /INSPECT
 ]
 
 print "== ONE STEP COMPILATION (direct to executable) =="

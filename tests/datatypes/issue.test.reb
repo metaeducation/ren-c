@@ -70,7 +70,7 @@
 
     add-period: func [x [<blackhole> text!]] [
         runs: me + 1
-        append x "."
+        return append x "."
     ]
 
     did all [

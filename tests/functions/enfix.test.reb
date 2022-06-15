@@ -27,7 +27,7 @@
     ]
 )
 (
-    set 'postfix-thing enfixed func [x] [x * 2]
+    set 'postfix-thing enfixed lambda [x] [x * 2]
     all [
        enfixed? :postfix-thing
        20 = (10 postfix-thing)
@@ -39,12 +39,12 @@
 
 ; Only hard-quoted parameters are <skip>-able
 (
-    error? trap [bad-skippy: func [x [<skip> integer!] y] [reduce [try :x y]]]
+    error? trap [bad-skippy: lambda [x [<skip> integer!] y] [reduce [try :x y]]]
 )
 
 [
     (
-        skippy: func ['x [<skip> integer!] y] [reduce [try :x y]]
+        skippy: lambda ['x [<skip> integer!] y] [reduce [try :x y]]
         lefty: enfixed :skippy
         true
     )
@@ -107,7 +107,7 @@
 ; SHOVE should be able to handle refinements and contexts.
 [
     (did obj: make object! [
-        magic: enfixed func [a b /minus] [
+        magic: enfixed lambda [a b /minus] [
             either minus [a - b] [a + b]
         ]
     ])
@@ -197,7 +197,7 @@
 (
     count: 0
     o: make object! [x: _]
-    nuller: function [y] [null]
+    nuller: function [y] [return null]
     o.(count: count + 1, first [x]): my nuller
     did all [
         :o.x = null
@@ -216,7 +216,7 @@
             var == 1020
         ]
     )(
-        enfoo: enfixed func [] [<enfoo>]
+        enfoo: enfixed func [] [return <enfoo>]
         did all [
             [304] == [var @]: evaluate [1020 enfoo 304]
             var == <enfoo>
@@ -260,7 +260,7 @@
             ]
         ]
     )(
-        enifoo: enfixed func ['i [<skip> integer!]] [compose '<enifoo>/(i)]
+        enifoo: enfixed lambda ['i [<skip> integer!]] [compose '<enifoo>/(i)]
         did all [
             did all [
                 [304] == [var @]: evaluate [1020 enifoo 304]
@@ -348,13 +348,13 @@
 ; first.
 [
     (
-        rightq: func [:x] [compose [<rightq> was (x)]]
-        leftq: enfixed func [:y] [compose [<leftq> was (y)]]
+        rightq: lambda [:x] [compose [<rightq> was (x)]]
+        leftq: enfixed lambda [:y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )(
-        rightq: func [:x] [compose [<rightq> was (x)]]
-        leftq: enfixed func ['y] [compose [<leftq> was (y)]]
+        rightq: lambda [:x] [compose [<rightq> was (x)]]
+        leftq: enfixed lambda ['y] [compose [<leftq> was (y)]]
 
         [<rightq> was [<leftq> was foo]] = rightq foo leftq
     )

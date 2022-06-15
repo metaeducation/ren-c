@@ -64,7 +64,7 @@
 [
     (
         [[1 = 2] [2 = 3]] = collect [
-            assert/handler [1 = 2, 2 = 2, 2 = 3] func [x] [keep ^x, ~ignore~]
+            assert/handler [1 = 2, 2 = 2, 2 = 3] [x] -> [keep ^x, ~ignore~]
         ]
     )
     (

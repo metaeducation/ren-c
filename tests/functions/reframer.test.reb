@@ -16,7 +16,7 @@
     f1.only: null
     f1.line: null
 
-    mirror: reframer func [f [frame!]] [f]
+    mirror: reframer lambda [f [frame!]] [f]
     f2: mirror append [a b c] <d>
     f2.return: null
     f1 = f2
@@ -26,7 +26,7 @@
 ; Executing frames is the typical mode of a reframer.
 ; It may also execute frames more than once.
 (
-    two-times: reframer func [f [frame!]] [do copy f, do f]
+    two-times: reframer func [f [frame!]] [do copy f, return do f]
 
     [a b c <d> <d>] = two-times append [a b c] <d>
 )
@@ -36,7 +36,7 @@
 (
     data: []
 
-    bracketer: reframer func [msg f] [
+    bracketer: reframer lambda [msg f] [
         append data msg
         do f
         append data msg

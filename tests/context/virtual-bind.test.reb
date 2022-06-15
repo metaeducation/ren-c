@@ -29,7 +29,7 @@
             rule: compose/deep [
                 [[position: <here>, "a"]]
             ]
-            use [x] compose/deep [
+            return use [x] compose/deep [
                 [(as group! rule) rule]
             ]
         ]
@@ -47,15 +47,15 @@
 ; in a nested faction.
 [
     (
-        add1020: func [x] [use [y] [y: 1020, '(((x + y)))]]
+        add1020: func [x] [return use [y] [y: 1020, '(((x + y)))]]
         add1324: func [x] [
-            use [z] compose/deep <*> [
+            return use [z] compose/deep <*> [
                 z: 304
                 '(((z + (<*> add1020 x))))
             ]
         ]
         add2020: func [x] [
-            use [zz] compose/deep <*> [
+            return use [zz] compose/deep <*> [
                 zz: 696
                 '(((zz + (<*> add1324 x))))
             ]

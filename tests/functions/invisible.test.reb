@@ -118,7 +118,7 @@
 ;
 ; Keeping as a test of the variadic feature it exercised.
 [
-    (|1|: func [
+    (|1|: lambda [
         {Barrier that's willing to only run one expression after it}
 
         right [<opt> <end> any-value! <variadic>]
@@ -152,10 +152,10 @@
     3 = do [1 + 2 ||| 10 + 20, 100 + 200]
 )
 (
-    ok? trap [reeval (func [x [<end>]] []) ||| 1 2 3]
+    ok? trap [reeval (lambda [x [<end>]] []) ||| 1 2 3]
 )
 (
-    error? trap [reeval (func [x [<opt>]] []) ||| 1 2 3]
+    error? trap [reeval (lambda [x [<opt>]] []) ||| 1 2 3]
 )
 
 (

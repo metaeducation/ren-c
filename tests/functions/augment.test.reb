@@ -2,7 +2,7 @@
 ; same, but has more parameters.
 
 (
-    foo: func [x] [x]
+    foo: lambda [x] [x]
     bar: augment :foo [y]
     did all [
         [x y] = parameters of :bar
@@ -12,18 +12,18 @@
 
 ; Error Tests
 (
-    'dup-vars = (trap [augment func [x] [x] [x]]).id
+    'dup-vars = (trap [augment func [x] [return x] [x]]).id
 )
 
 
 ; Tests with ADAPT
 (
-    sum: adapt augment (func [x] [x]) [y] [
+    sum: adapt augment (func [x] [return x]) [y] [
         x: x + y
     ]
     1020 = sum 1000 20
 )(
-    mix: adapt augment (func [x] [x]) [y /sub] [
+    mix: adapt augment (x -> [x]) [y /sub] [
         x: reeval (either sub [:subtract] [:add]) x y
     ]
     did all [
@@ -38,7 +38,7 @@
     (switch-d: enclose (augment :switch [
         /default "Default case if no others are found"
             [block!]
-    ]) func [f [frame!]] [
+    ]) lambda [f [frame!]] [
         let def: f.default
         eval f else (try def)
     ]
@@ -51,14 +51,14 @@
 
 ; Augmenting a specialized function
 (
-    two-a-plus-three-b: func [a [integer!] /b [integer!]] [
+    two-a-plus-three-b: lambda [a [integer!] /b [integer!]] [
         (2 * a) + either b [3 * b] [0]
     ]
     two-a-plus-six: specialize :two-a-plus-three-b [b: 2]
 
     two-a-plus-six-plus-four-c: enclose augment :two-a-plus-six [
         /c [integer!]
-    ] func [f [frame!]] [
+    ] lambda [f [frame!]] [
         let old-c: f.c
         let x: do f
         if old-c [
@@ -77,7 +77,7 @@
 ; Check to see that AUGMENT of the help expands it.
 [(
     did all [
-        orig: func ["description" a "a" /b "b"] []
+        orig: func ["description" a "a" /b "b"] [return <unused>]
         aug: augment :orig [c "c" /d "d"]
         m: meta-of :aug
         m.description = "description"

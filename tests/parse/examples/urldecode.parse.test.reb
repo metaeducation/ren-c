@@ -15,7 +15,7 @@ urldecoder: make object! [
     host-char:   complement make bitset! ":/?"
     s1: s2: _ ; in R3, input datatype is preserved - these are now URL strings
     out: []
-    emit: func ['w v] [
+    emit: lambda ['w v] [
         append out reduce [
             to set-word! w (either :v [to text! :v] [_])
         ]
@@ -103,7 +103,7 @@ urldecoder: make object! [
     decode: func ["Decode a URL according to rules of sys/*parse-url." url] [
         out: make block! 8
         uparse2 as text! url rules
-        out
+        return out
     ]
 ]
 true

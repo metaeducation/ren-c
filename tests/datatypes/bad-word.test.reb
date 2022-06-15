@@ -136,10 +136,13 @@
 
 ; `~` isotope is the type of locals before they are assigned
 (
-    f: func [<local> loc] [reify get/any 'loc]
+    f: func [<local> loc] [return reify get/any 'loc]
     f = '~
 )(
-    f: func [<local> loc] [^loc]
+    f: func [<local> loc] [return ^loc]
+    f = '~
+)(
+    f: lambda [<local> loc] [^loc]
     f = '~
 )
 

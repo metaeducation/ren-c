@@ -4,7 +4,7 @@
 ; NULL, ~null~ isotope, and END states.
 
 [
-    (did detector: func [^x [<opt> <end> <void> any-value!]] [x])
+    (did detector: lambda [^x [<opt> <end> <void> any-value!]] [x])
 
     ((the '10) = detector 10)
     (null = detector null)

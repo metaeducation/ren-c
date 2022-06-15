@@ -102,7 +102,7 @@
         ; It is running in the same frame's memory, but...
         ; CAPTURED-FRAME is a FRAME! value that stowed outer's "phase"
 
-        do f
+        return do f
     ]
 
     <success> = outer 1
@@ -188,7 +188,7 @@
            comment {fall through to base}
         ]
             |
-        func [x] [
+        lambda [x] [
             if x = "base done" [
                 <success>
             ] else [

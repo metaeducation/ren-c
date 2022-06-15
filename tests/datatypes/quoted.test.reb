@@ -32,6 +32,7 @@
     foo: function [] [
         set 'x: 20
         set 'y x
+        return
     ]
     foo
     (x = 10) and (y = 20)
@@ -46,7 +47,7 @@
 )(
     x: 10
     y: _
-    foo: function [] [
+    foo: function [return: <none>] [
         set unquote the 'x: 20
         set unquote the 'y x
     ]
@@ -63,8 +64,8 @@
 )(
     x: 10
     y: _
-    foo: function [] [
-        set noquote the '''''''x: 20
+    foo: function [return: <none>] [
+        set noquote the '''''''x: 20  ; SET-WORD! gathered, no assignment
         set noquote the '''''''y x
     ]
     foo
@@ -93,7 +94,9 @@
         word: ''''''''''a:
         w1: bind word o1
         w2: bind word o2
-        (0 = get noquote word) and (1 = get noquote w1) and (2 = get noquote w2)
+        return (0 = get noquote word)
+            and (1 = get noquote w1)
+            and (2 = get noquote w2)
     ]
     foo
 )
@@ -149,7 +152,7 @@
 ((the '''a/b/c/d/e/f) = requote join the '''a/b/c '/d/e/f)
 
 (
-    match-parse3: enclose :parse3 func* [f] [
+    match-parse3: enclose :parse3 lambda [f] [
         let input: f.input
         do f then [input]
     ]

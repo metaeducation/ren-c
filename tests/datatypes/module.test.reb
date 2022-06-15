@@ -113,7 +113,7 @@
             ; assert [this <> binding of first source]
             ; assert [lib = binding of first source]
 
-            lib.do rebound
+            return lib.do rebound
         ]
 
         test: does [emulate [do "1 + 2"]]

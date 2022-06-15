@@ -29,13 +29,13 @@ REBOL [
 boot-print: redescribe [
     "Prints during boot when not quiet."
 ](
-    enclose :print func [f] [if not system.options.quiet [do f]]
+    enclose :print f -> [if not system.options.quiet [do f]]
 )
 
 loud-print: redescribe [
     "Prints during boot when verbose."
 ](
-    enclose :print func [f] [if system.options.verbose [do f]]
+    enclose :print f -> [if system.options.verbose [do f]]
 )
 
 make-banner: func [

@@ -20,7 +20,7 @@
 ; BIND works 'as expected' in function body
 [#1549 (
     b1: [self]
-    f: func [<local> b2] [
+    f: lambda [<local> b2] [
         b2: [self]
         same? first b2 first bind/copy b1 'b2
     ]
@@ -38,7 +38,7 @@
     (not head? bind next [1] 'rebol)
 ]
 [#892 #216
-    (y: 'x reeval func [<local> x] [x: true get bind y 'x])
+    (y: 'x reeval lambda [<local> x] [x: true get bind y 'x])
 ]
 
 [#2086 (
@@ -47,6 +47,6 @@
 )]
 
 [#1893 (
-    word: reeval func [x] ['x] 1
+    word: reeval lambda [x] ['x] 1
     same? word bind 'x word
 )]

@@ -66,7 +66,7 @@
 ([[_ _ _] [_ _ _]] = array [2 3])
 ([[0 0 0] [0 0 0]] = array/initial [2 3] 0)
 (
-    counter: function [<static> n (0)] [n: n + 1]
+    counter: func [<static> n (0)] [return n: n + 1]
     [1 2 3 4 5] = array/initial 5 :counter
 )
 

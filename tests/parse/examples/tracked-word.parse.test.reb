@@ -71,7 +71,7 @@
 
     trackparse*: specialize :uparse [combinators: tracked-combinators]
 
-    trackparse: enclose :trackparse* func [f [frame!]] [
+    trackparse: enclose :trackparse* lambda [f [frame!]] [
         stack: copy []
         do f then [
             append stack ""  ; give final newline

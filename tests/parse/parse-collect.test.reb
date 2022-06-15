@@ -440,7 +440,7 @@ https://github.com/metaeducation/ren-c/issues/935
 [https://github.com/red/red/issues/3108
     (
         partition3108: function [elems [block!] size [integer!]] [
-            uparse elems [
+            return uparse elems [
                 collect some [not <end> ||
                     keep ^ across repeat (size) <any>
                     | keep ^ collect keep across to <end>
@@ -463,7 +463,7 @@ https://github.com/metaeducation/ren-c/issues/935
 
 [
     (
-        foo: func [value] [value]
+        foo: func [value] [return value]
         res: uparse [a 3 4 t [t 9] "test" 8] [
             collect [
                 some [

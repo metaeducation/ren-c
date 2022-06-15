@@ -77,7 +77,7 @@
     ; has to wait.
 
     (
-        takes-2-logics: func [x [logic!] y [logic!]] [x]
+        takes-2-logics: func [x [logic!] y [logic!]] [return x]
         infix-voider: enfixed func [return: [bad-word!] x y] [
             return '~none~
         ]

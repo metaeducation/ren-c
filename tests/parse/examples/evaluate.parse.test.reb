@@ -28,7 +28,7 @@
         set saved copy []
 
         mode: #save
-        uparse input [collect [
+        return uparse input [collect [
             some [
                 mode: ['<K> (#keep) | '<S> (#save) | tag! (fail "BAD MODE")]
                 |

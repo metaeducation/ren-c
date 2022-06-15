@@ -185,7 +185,7 @@
 ; This is a speculative technique, but it is being tried.
 [
     (
-        f: func [x /augmented [frame!]] [
+        f: lambda [x /augmented [frame!]] [
             reduce [x if augmented [augmented.y]]
         ]
         a: adapt augment :f [y] [augmented: binding of 'y]

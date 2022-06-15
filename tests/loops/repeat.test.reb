@@ -57,7 +57,7 @@
 )
 ; recursive use of 'break
 (
-    f: func [x] [
+    f: lambda [x] [
         repeat 1 [
             either x = 1 [
                 use [break] [

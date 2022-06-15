@@ -224,7 +224,7 @@
 ; BREAK out leaves a "running" function in a "clean" state
 (
     1 = repeat 1 [
-        f: func [x] [
+        f: lambda [x] [
             either x = 1 [
                 repeat 1 [f 2]
                 x
@@ -237,7 +237,7 @@
 (
     did all [
         null? catch [
-            f: func [x] [
+            f: lambda [x] [
                 either x = 1 [
                     catch [f 2]
                     x
@@ -251,7 +251,7 @@
 
 ; "error out" leaves a "running" function in a "clean" state
 (
-    f: func [x] [
+    f: lambda [x] [
         either x = 1 [
             error? trap [f 2]
             x = 1
@@ -263,7 +263,7 @@
 ; Argument passing of "hard literal arguments"
 [
     (
-        hard: func ['x] [:x]
+        hard: func ['x] [return :x]
         true
     )
 
@@ -282,11 +282,11 @@
 ; Argument passing of "medium literal arguments"
 [
     (
-        medium: func [':x <with> got] [got: :x, 1000]
+        medium: func [':x <with> got] [got: :x, return 1000]
         Lmedium: enfixed :medium
 
         got: null
-        test: func [expr [block!]] [
+        test: lambda [expr [block!]] [
             got: '~trash~
             compose [(do expr), (:got)]
         ]
@@ -306,7 +306,7 @@
 
     ; Key point on which MEDIUM and SOFT differ, enfix quote handling
     (
-        +Q: enfix func ['x [<end> integer!] y] [if x [x + y] else [<null>]]
+        +Q: enfix lambda ['x [<end> integer!] y] [if x [x + y] else [<null>]]
         [<null>, 10] = test [medium 10 +Q 20]
     )
 
@@ -318,13 +318,13 @@
 ; Argument passing of "soft literal arguments"
 [
     (
-        soft: func [:x <with> got] [got: :x, 1000]
+        soft: lambda [:x <with> got] [got: :x, 1000]
         Lsoft: enfixed :soft
 
         got: null
         test: func [expr [block!]] [
             got: '~trash~
-            compose [(do expr), (:got)]
+            return compose [(do expr), (:got)]
         ]
         true
     )
@@ -343,7 +343,7 @@
 
     ; Key point on which MEDIUM and SOFT differ, enfix quote handling
     (
-        +Q: enfix func ['x y] [x + y]
+        +Q: enfix lambda ['x y] [x + y]
         [1000, 30] = test [soft 10 +Q 20]
     )
 
@@ -354,7 +354,7 @@
 ; basic test for recursive action! invocation
 (
     i: 0
-    countdown: func [n] [if n > 0 [i: i + 1, countdown n - 1]]
+    countdown: lambda [n] [if n > 0 [i: i + 1, countdown n - 1]]
     countdown 10
     i = 10
 )
@@ -362,19 +362,19 @@
 ; In Ren-C's specific binding, a function-local word that escapes the
 ; function's extent cannot be used when re-entering the same function later
 (
-    f: func [code value] [either blank? code ['value] [do code]]
+    f: func [code value] [return either blank? code ['value] [do code]]
     f-value: f blank blank
     error? trap [f compose [2 * (f-value)] 21]  ; re-entering same function
 )
 (
-    f: func [code value] [either blank? code ['value] [do code]]
-    g: func [code value] [either blank? code ['value] [do code]]
+    f: func [code value] [return either blank? code ['value] [do code]]
+    g: func [code value] [return either blank? code ['value] [do code]]
     f-value: f blank blank
     error? trap [g compose [2 * (f-value)] 21]  ; re-entering different function
 )
 [#19 ; but duplicate specializations currently not legal in Ren-C
     (
-    f: func [/r [integer!]] [x]
+    f: func [/r [integer!]] [return x]
     error? trap [2 == f/r/r 1 2]
     )
 ]
@@ -393,11 +393,11 @@
 ; closure semantics for functions so the c: [d] where d is 1 survives.
 ; R3-Alpha recycles variables based on stack searching (non-specific binding).
 (
-    a: func [b] [
+    a: lambda [b] [
         a: _  comment "erases a so only first call saves c"
         c: b
     ]
-    f: func [d] [
+    f: lambda [d] [
         a [d]
         do c
     ]
@@ -412,13 +412,13 @@
     unset 'x
     unset 'y
 
-    body: [x + y]
+    body: [return x + y]
     f: func [x] body
     g: func [y] body
     error? trap [f 1]
 )]
 [#2044 (
-    o: make object! [f: func [x] ['x]]
+    o: make object! [f: func [x] [return 'x]]
     p: make o []
     not same? o.f 1 p.f 1
 )]
@@ -436,7 +436,7 @@
     ][
         count: default [2]
         data: reduce [count x y outer static]
-        case [
+        return case [
             count = 0 [reduce [data]]
             true [
                append/only (f/count count - 1) data
@@ -453,21 +453,21 @@
 
 ; Duplicate arguments or refinements.
 (
-    error? trap [func [a b a] []]
+    error? trap [func [a b a] [return 0]]
 )
 (
-    error? trap [function [a b a] []]
+    error? trap [function [a b a] [return 0]]
 )
 (
-    error? trap [func [/test /test] []]
+    error? trap [func [/test /test] [return 0]]
 )
 (
-    error? trap [function [/test /test] []]
+    error? trap [function [/test /test] [return 0]]
 )
 
 ; /LOCAL is an ordinary refinement in Ren-C
 (
-    a-value: func [/local [integer!]] [local]
+    a-value: func [/local [integer!]] [return local]
     1 == a-value/local 1
 )
 

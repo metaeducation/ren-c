@@ -36,7 +36,7 @@
 ; a WORD! or PATH!.  Now that REFRAMER exists as a generalized facility, if
 ; you wanted a DOES that was like that, you make one...here's DOES+
 [
-    (does+: reframer func [f [frame!]] [
+    (does+: reframer lambda [f [frame!]] [
         does [do copy f]
     ]
     true)
@@ -95,7 +95,7 @@
 )(
     o1: make object! [
         a: 10
-        b: bind (does [f: func [] [a] f]) binding of 'b
+        b: bind (does [f: lambda [] [a] f]) binding of 'b
         bind :b binding of 'b
     ]
     o2: make o1 [a: 20]
@@ -104,7 +104,7 @@
 )(
     o1: make object! [
         a: 10
-        b: meth [] [f: does [a] f]
+        b: meth [] [f: does [a], return f]
     ]
     o2: make o1 [a: 20]
 

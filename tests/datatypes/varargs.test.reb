@@ -1,34 +1,34 @@
 (
-    foo: func [x [integer! <variadic>]] [
+    foo: lambda [x [integer! <variadic>]] [
         sum: 0
         while [not tail? x] [
             sum: sum + take x
         ]
     ]
     y: (z: foo 1 2 3, 4 5)
-    all [y = 5, z = 6]
+    all [y = 5, z = 6, 0 = (foo)]
 )
 (
-    foo: func [x [integer! <variadic>]] [make block! x]
+    foo: func [x [integer! <variadic>]] [return make block! x]
     [1 2 3 4] = foo 1 2 3 4
 )
 
 ; leaked VARARGS! cannot be accessed after call is over
 (
-    error? trap [take reeval (foo: func [x [integer! <variadic>]] [x])]
+    error? trap [take reeval (foo: lambda [x [integer! <variadic>]] [x])]
 )
 
 (
     f: func [args [any-value! <opt> <variadic>]] [
        b: take args
-       either tail? args [b] ["not at end"]
+       return either tail? args [b] ["not at end"]
     ]
     x: make varargs! [_]
     blank? applique :f [args: x]
 )
 
 (
-    f: func ['look [<variadic>]] [try first look]
+    f: lambda ['look [<variadic>]] [try first look]
     blank? applique :f [look: make varargs! []]
 )
 
@@ -74,7 +74,7 @@
 ][
     (
         soft: enfixed function [:v [any-value! <variadic>]] [
-            collect [
+            return collect [
                 while [not tail? v] [
                     keep ^(take v)
                 ]
@@ -91,8 +91,8 @@
     ([7] = do [:(1 + 2) :(3 + 4) soft])
 ][
     (
-        hard: enfixed function [:v [any-value! <variadic>]] [
-            collect [
+        hard: enfixed func [:v [any-value! <variadic>]] [
+            return collect [
                 while [not tail? v] [
                     keep ^(take v)
                 ]

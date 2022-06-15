@@ -69,7 +69,7 @@
 
 [https://github.com/red/red/issues/563
     (
-        f563: func [t [text!]] [did uparse t [opt some r]]
+        f563: lambda [t [text!]] [did uparse t [opt some r]]
 
         r: [#+, :(res: f563 "-", assert [not res], res)]
 
@@ -99,7 +99,7 @@
                     | #"]" :(f x)
                 ]
             ]
-            "" == uparse s [opt some r <end>]
+            return "" == uparse s [opt some r <end>]
         ]
 
         f "420,]]"

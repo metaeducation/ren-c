@@ -16,7 +16,7 @@
             ]
             keep [false]
         ]
-        uparse data (compose/deep [
+        return uparse data (compose/deep [
             opt some [((rules))]  ; could be `opt some [rules]`, but it's a test
         ]) then [
             collect [

@@ -8,7 +8,7 @@
 
 ; Returning of Rebol values from called to calling script via QUIT/WITH.
 (
-    do-script-returning: func [value <local> script] [
+    do-script-returning: lambda [value <local> script] [
         script: %tmp-inner.reb
         save/header script compose [quit (value)] []
         do script

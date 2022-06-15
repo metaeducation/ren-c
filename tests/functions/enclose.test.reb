@@ -1,7 +1,7 @@
 ; better-than-nothing ENCLOSE tests
 
 (
-    e-multiply: enclose :multiply function [f [frame!]] [
+    e-multiply: enclose :multiply lambda [f [frame!]] [
         let diff: abs (f.value1 - f.value2)
         diff + do f
     ]
@@ -9,7 +9,7 @@
     73 = e-multiply 7 10
 )
 (
-    n-add: enclose :add function [f [frame!]] [
+    n-add: enclose :add lambda [f [frame!]] [
         if 10 <> f.value1 [
             f.value1: 5
             do f
@@ -26,7 +26,7 @@
 [(
     var: #before
     inner: func [] [
-        var: 1020
+        return var: 1020
     ]
     outer: enclose :inner func [f] [
         assert [1020 = do f]
@@ -47,7 +47,7 @@
         return ^(eval f)  ; don't unquote it here
     ]
     did all [
-        '~void~ = outer
+        @void = outer
         var = 1020
     ]
 )(

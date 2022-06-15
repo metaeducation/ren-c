@@ -1,14 +1,14 @@
 ; better than-nothing HIJACK tests
 
 (
-    foo: func [x] [x + 1]
+    foo: func [x] [return x + 1]
     another-foo: :foo
 
     old-foo: copy :foo
 
     did all [
         (old-foo 10) = 11
-        hijack :foo func [x] [(old-foo x) + 20]
+        hijack :foo func [x] [return (old-foo x) + 20]
         (old-foo 10) = 11
         (foo 10) = 31
         (another-foo 10) = 31
@@ -21,7 +21,7 @@
 [
     (
         three: func [x y z /available "add me" [integer!]] [
-            x + y + z + either available [available] [0]
+            return x + y + z + either available [available] [0]
         ]
         60 = (three 10 20 30)
     )
@@ -37,7 +37,7 @@
         hijack :three func [
             a b c /unavailable /available "mul me" [integer!]
         ][
-            a * b * c * either available [available] [1]
+            return a * b * c * either available [available] [1]
         ]
         true
     )
@@ -55,7 +55,7 @@
         one-20: specialize :two-30 [y: 20]
 
         hijack :three func [q r s] [
-            q - r - s
+            return q - r - s
         ]
 
         true
@@ -77,6 +77,6 @@
 (
     two: func [a b] [a + b]
     one: specialize :two [a: 10]
-    hijack :one func [b] [20 - b]
+    hijack :one lambda [b] [20 - b]
     0 = one 20
 )

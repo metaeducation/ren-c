@@ -67,7 +67,7 @@ https://github.com/metaeducation/ren-c/commit/e57c147465f3ed47f297e7a3ce3bb03196
             (system.options.boot) --suppress {"*"} -q
             --do "write-stdout read system.ports.input"
         ]
-    ] function [frame [frame!]] [
+    ] frame -> [
         out: frame.output
         do frame
         out

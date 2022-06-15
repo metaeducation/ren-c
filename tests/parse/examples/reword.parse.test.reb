@@ -142,8 +142,8 @@
 ; Functions can optionally take the keyword being replaced
 (
     "zero is one-B" = uparse-reword "$A is $B" reduce [
-        "A" func [] ["zero"]
-        "B" func [w] [join "one-" w]
+        "A" lambda [] ["zero"]
+        "B" lambda [w] [join "one-" w]
     ]
 )
 (
