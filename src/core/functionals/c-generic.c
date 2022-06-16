@@ -95,8 +95,6 @@ REBNATIVE(generic)
         spec,
         &flags  // return type checked only in debug build
     );
-    assert(not (flags & MKF_HAS_NONE_RETURN));
-    assert(not (flags & MKF_IS_ELIDER));
 
     REBACT *generic = Make_Action(
         paramlist,

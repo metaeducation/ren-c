@@ -248,6 +248,15 @@ inline static void CLEAR_ALL_TYPESET_BITS(Cell *v) {
 #define PARAM_FLAG_VANISHABLE \
     FLAG_LEFT_BIT(16)
 
+#define PARAM_FLAG_RETURN_NONE \
+    FLAG_LEFT_BIT(17)
+
+#define PARAM_FLAG_RETURN_VOID \
+    FLAG_LEFT_BIT(18)
+
+#define PARAM_FLAG_RETURN_TYPECHECKED \
+    FLAG_LEFT_BIT(19)
+
 
 #define SET_PARAM_FLAG(v,name) \
     (VAL_PARAM_FLAGS(v) |= PARAM_FLAG_##name)

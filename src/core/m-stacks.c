@@ -230,7 +230,7 @@ REBCTX *Get_Context_From_Stack(void)
     }
 
     // This would happen if you call the API from something like a traced
-    // eval hook, or a Returner_Dispatcher().  For now, just assume that means
+    // eval hook, or a Func_Dispatcher().  For now, just assume that means
     // you want the code to bind into the lib context.
     //
     if (NOT_ACTION_FLAG(phase, IS_NATIVE))

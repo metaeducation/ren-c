@@ -212,10 +212,9 @@ REBNATIVE(lambda)
             spec,
             body,
             MKF_KEYWORDS,  // no MKF_RETURN
+            &Lambda_Unoptimized_Dispatcher,
             1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
         );
-
-        INIT_ACT_DISPATCHER(lambda, &Lambda_Unoptimized_Dispatcher);
 
         return Init_Action(OUT, lambda, ANONYMOUS, UNBOUND);
     }

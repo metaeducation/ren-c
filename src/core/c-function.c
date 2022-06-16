@@ -185,14 +185,8 @@ void Push_Paramlist_Triads_May_Fail(
                 continue;
             }
             else if (0 == CT_String(item, Root_None_Tag, strict)) {
-                *flags |= MKF_HAS_NONE_RETURN;  // use None_Dispatcher()
-
-                // Setting to ENDABLE allows RETURN with no argument, but it
-                // uses None_Dispatcher() so the produced invisible is
-                // collapsed to ~none~
-                //
                 STKVAL(*) param = PARAM_SLOT(DSP);
-                SET_PARAM_FLAG(param, ENDABLE);
+                SET_PARAM_FLAG(param, RETURN_NONE);  // enforce RETURN NONE
 
                 // Fake as if they said []
                 //
@@ -200,13 +194,12 @@ void Push_Paramlist_Triads_May_Fail(
                 continue;
             }
             else if (0 == CT_String(item, Root_Void_Tag, strict)) {
-                *flags |= MKF_IS_ELIDER;
-
+                //
                 // Fake as if they said [<void>] !!! make more efficient
                 //
                 STKVAL(*) param = PARAM_SLOT(DSP);
                 CLEAR_ALL_TYPESET_BITS(param);
-                SET_PARAM_FLAG(param, VANISHABLE);
+                SET_PARAM_FLAG(param, RETURN_VOID);
                 SET_PARAM_FLAG(param, ENDABLE);
                 continue;
             }
@@ -355,7 +348,6 @@ void Push_Paramlist_Triads_May_Fail(
                 //
                 if (VAL_WORD_ID(item) == SYM_RETURN and not quoted) {
                     pclass = PARAM_CLASS_RETURN;
-                    *flags |= MKF_HAS_CHECKED_RETURN;
                 }
                 else if (not quoted) {
                     refinement = true;  // sets PARAM_FLAG_REFINEMENT
@@ -547,9 +539,12 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
             Init_Nulled(NOTES_SLOT(DSP));
         }
         else {
+            STKVAL(*) param = PARAM_SLOT(definitional_return_dsp);
+
             assert(
                 VAL_WORD_ID(KEY_SLOT(definitional_return_dsp)) == SYM_RETURN
             );
+            SET_PARAM_FLAG(param, RETURN_TYPECHECKED);  // was explicit
         }
 
         // definitional_return handled specially when paramlist copied
@@ -1061,11 +1056,9 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
     UNUSED(binding);
 
     if (
-        ACT_DISPATCHER(a) == &Empty_Dispatcher
-        or ACT_DISPATCHER(a) == &Unchecked_Dispatcher
-        or ACT_DISPATCHER(a) == &None_Dispatcher
-        or ACT_DISPATCHER(a) == &Returner_Dispatcher
+        ACT_DISPATCHER(a) == &Func_Dispatcher
         or ACT_DISPATCHER(a) == &Block_Dispatcher
+        or ACT_DISPATCHER(a) == &Lambda_Unoptimized_Dispatcher
     ){
         // Interpreted code, the body is a block with some bindings relative
         // to the action.
@@ -1080,7 +1073,7 @@ void Get_Maybe_Fake_Action_Body(REBVAL *out, const REBVAL *action)
 
         REBVAL *example;
         REBLEN real_body_index;
-        if (ACT_DISPATCHER(a) == &None_Dispatcher) {
+        if (ACT_DISPATCHER(a) == &Lambda_Dispatcher) {
             example = Get_System(SYS_STANDARD, STD_PROC_BODY);
             real_body_index = 4;
         }

@@ -731,20 +731,6 @@ REBNATIVE(js_native)
         &flags
     );
 
-    // !!! There's some question as to whether the <void> and <none> feature
-    // available in user functions is a good idea.  They are analyzed out of
-    // the spec, and would require additional support in JavaScript_Dispatcher
-    // but since JS functions don't have results "fall out" of the bottom,
-    // they will produce undefined (e.g. void) by default anyway.  So it's
-    // less of an issue.  Punt on it for now.
-    //
-    if (
-        (flags & MKF_HAS_NONE_RETURN)
-        or (flags & MKF_IS_ELIDER)
-    ){
-        fail ("<none> and <void> not supported, use [] / ())");
-    }
-
     REBACT *native = Make_Action(
         paramlist,
         nullptr,  // no partials

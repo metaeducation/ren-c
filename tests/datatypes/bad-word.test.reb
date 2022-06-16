@@ -80,7 +80,7 @@
 )
 
 [
-    (foo: func [] [], true)
+    (foo: lambda [] [], true)
 
     (void? foo)
 
@@ -89,6 +89,20 @@
 
     (@void = ^ eval :foo)
     (void? eval :foo)
+
+    ('~ = ^ do :foo)
+]
+
+[
+    (foo: func [] [], true)
+
+    (none? foo)
+
+    ('~ = ^ applique :foo [])
+    (none? applique :foo [])
+
+    ('~ = ^ eval :foo)
+    (none? eval :foo)
 
     ('~ = ^ do :foo)
 ]

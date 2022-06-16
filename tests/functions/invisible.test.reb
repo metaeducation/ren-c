@@ -412,8 +412,7 @@
 
 
 ; Invisibility is a checked return type, if you use a type spec...but allowed
-; by default if not.  If you use a type spec and try to return invisibly
-; you will get a none.
+; by default if not.
 [
     (
         no-spec: func [x] [return void]
@@ -425,11 +424,13 @@
     )
     (
         int-spec: func [return: [integer!] x] [return void]
-        none? int-spec 10
+        e: trap [int-spec 10]
+        e.id = 'bad-invisible
     )
     (
         int-spec: func [return: [integer!] x] [return]
-        none? int-spec 10
+        e: trap [int-spec 10]
+        e.id = 'bad-invisible
     )
 
     (

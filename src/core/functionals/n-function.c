@@ -76,36 +76,6 @@
 
 #include "sys-core.h"
 
-
-//
-//  Empty_Dispatcher: C
-//
-// If you write `func [...] []` it uses this dispatcher instead of running
-// Eval_Core() on an empty block.  It is synonymous with `do []`
-//
-// This serves more of a point than it sounds, because you can make fast stub
-// actions that only cost if they are HIJACK'd (e.g. ASSERT is done this way).
-//
-// !!! At present, the resulting function is purely invisible--hence it acts
-// the same as Commenter_Dispatcher(). This is something that can be up for
-// debate, but "voidness" has evolved to where it's difficult to leak
-// emptiness out of a function on accident...so the purity of being able to
-// wrap an invisible function makes some sense here.  It's kept as a separate
-// entry point for the moment.
-//
-REB_R Empty_Dispatcher(REBFRM *f)
-{
-    REBFRM *frame_ = f;  // for return_xxx macros
-    USED(frame_);
-
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    assert(VAL_LEN_AT(ARR_AT(details, IDX_DETAILS_1)) == 0);  // empty body
-    UNUSED(details);
-
-    return_void (OUT);
-}
-
-
 //
 //  Interpreted_Dispatch_Details_1_Throws: C
 //
@@ -113,19 +83,26 @@ REB_R Empty_Dispatcher(REBFRM *f)
 // Runs the code in the ACT_DETAILS() array of the frame phase for the
 // function instance at the first index (hence "Details 0").
 //
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// 1. All callers have the output written into the frame's spare cell.  This
+//    is because we don't want to ovewrite the `f->out` contents in the case
+//    of a RETURN that wishes to be invisible.  The overwrite should only
+//    occur after the body has finished successfully.
+//
+// 2. Historically, UNWIND was caught by the main action evaluation loop.
+//    However, because throws bubble up through f->out, it would destroy the
+//    stale previous value and inhibit invisible evaluation.  So it was thought
+//    as a better separation of concerns to handle the usermode RETURN here...
+//    but generic UNWIND would be preferable for use by a usermode FUNC
+//    implementation.  So this might not have parity.  Revisit.
+//
 bool Interpreted_Dispatch_Details_1_Throws(
     bool *returned,
     REBVAL *spare,
     REBFRM *f
 ){
-    // All callers have the output written into the frame's spare cell.  This
-    // is because we don't want to ovewrite the `f->out` contents in the case
-    // of a RETURN that wishes to be invisible.  The overwrite should only
-    // occur after the body has finished successfully (if it occurs at all,
-    // e.g. the Elider_Dispatcher() discards the body's evaluated result
-    // that gets calculated into spare).
-    //
-    assert(spare == FRM_SPARE(f));
+    assert(spare == FRM_SPARE(f));  // all callers pass in spare, see [1]
     assert(Is_Void(spare));
 
     REBACT *phase = FRM_PHASE(f);
@@ -148,17 +125,10 @@ bool Interpreted_Dispatch_Details_1_Throws(
     if (Do_Any_Array_At_Throws(spare, body, SPC(f->varlist))) {
         const REBVAL *label = VAL_THROWN_LABEL(spare);
         if (
-            IS_ACTION(label)
+            IS_ACTION(label)  // catch UNWIND here, see [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and VAL_ACTION_BINDING(label) == CTX(f->varlist)
         ){
-            // !!! Historically, UNWIND was caught by the main action
-            // evaluation loop.  However, because throws bubble up through
-            // f->out, it would destroy the stale previous value and inhibit
-            // invisible evaluation.  It's probably a better separation of
-            // concerns to handle the usermode RETURN here...but generic
-            // UNWIND is a nice feature too.  Revisit later.
-            //
             CATCH_THROWN(spare, spare);  // preserves CELL_FLAG_UNEVALUATED
 
             *returned = true;
@@ -169,42 +139,6 @@ bool Interpreted_Dispatch_Details_1_Throws(
 
     *returned = false;
     return false;  // didn't throw
-}
-
-
-//
-//  Unchecked_Dispatcher: C
-//
-// Runs block, then no typechecking (e.g. had no RETURN: [...] type spec)
-//
-// In order to do additional checking or output tweaking, the best way is to
-// change the phase of the frame so that instead of re-entering this unchecked
-// dispatcher, it will call some other function to do it.  This is different
-// from natives which are their own dispatchers, and able to declare locals
-// in their frames to act as a kind of state machine.  But the dispatchers
-// are for generic code--hence messing with the frames is not ideal.
-//
-REB_R Unchecked_Dispatcher(REBFRM *f)
-{
-    REBFRM *frame_ = f;  // for RETURN macros
-
-    // write to spare in case invisible RETURN
-    //
-    bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
-        return_thrown (SPARE);
-
-    if (not returned)
-        fail ("Temporary: FUNC without RETURN: will be making ~ if no RETURN");
-
-    if (Is_Void(SPARE))
-        return_void (OUT);  // does not actually overwrite OUT
-
-    return Move_Cell_Core(
-        OUT,
-        SPARE,
-        CELL_MASK_COPY | CELL_FLAG_UNEVALUATED  // keep unevaluated status
-    );
 }
 
 
@@ -236,37 +170,24 @@ REB_R Lambda_Unoptimized_Dispatcher(REBFRM *f)
 
 
 //
-//  None_Dispatcher: C
-//
-// Runs block, then overwrites result w/a ~none~ isotope (e.g. RETURN: <none>)
-//
-REB_R None_Dispatcher(REBFRM *f)
-{
-    REBFRM *frame_ = f;  // for RETURN macros
-
-    bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
-        return_thrown (SPARE);
-
-    if (returned) {
-        if (not Is_None(SPARE))
-            fail ("Function marked [return: <none>] in spec must RETURN NONE");
-    }
-
-    UNUSED(returned);  // no additional work to bypass
-    return Init_None(OUT);
-}
-
-
-//
-//  Returner_Dispatcher: C
+//  Func_Dispatcher: C
 //
 // Runs block, ensure type matches RETURN: [...] specification, else fail.
 //
 // Note: Natives get this check only in the debug build, but not here (their
 // "dispatcher" *is* the native!)  So the extra check is in Eval_Core().
 //
-REB_R Returner_Dispatcher(REBFRM *f)
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// 1. There is an exception made for tolerating the lack of a RETURN call for
+//    the cases of `return: <none>` and `return: <void>`.  This has a little
+//    bit of a negative side in that if someone is to hook the RETURN function,
+//    it will not be called in these "fallout" cases.  It's deemed too ugly
+//    to slip in a "hidden" call to RETURN for these cases, and too much of
+//    a hassle to force people to put RETURN NONE or RETURN at the end.  So
+//    this is the compromise chosen.
+//
+REB_R Func_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // so we can use OUT
 
@@ -276,73 +197,37 @@ REB_R Returner_Dispatcher(REBFRM *f)
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
         return_thrown (SPARE);
 
-    if (not returned)
-        fail ("Functions with RETURN: in spec must RETURN their value");
+    if (returned) {  // assume RETURN did any necessary type checking
+        if (Is_Void(SPARE))
+            return_void (OUT);
 
-    if (Is_Void(SPARE)) {
-        REBACT *phase = FRM_PHASE(f);
-        if (ACT_HAS_RETURN(phase)) {
-            const REBKEY *key = ACT_KEYS_HEAD(phase);
-            const REBPAR *param = ACT_PARAMS_HEAD(phase);
-            assert(KEY_SYM(key) == SYM_RETURN);
-            UNUSED(key);
-            if (GET_PARAM_FLAG(param, VANISHABLE))
-                return_void (OUT);  // does not actually overwrite OUT
-        }
-        return Init_None(OUT);
+        return Move_Cell_Core(
+            OUT,
+            SPARE,
+            CELL_MASK_COPY | CELL_FLAG_UNEVALUATED
+        );
     }
 
-    Move_Cell_Core(
-        OUT,
-        SPARE,
-        CELL_MASK_COPY | CELL_FLAG_UNEVALUATED
-    );
+    // If we get here, the function fell through without a RETURN
 
-    FAIL_IF_BAD_RETURN_TYPE(f);
+    REBACT *phase = FRM_PHASE(f);
+    assert(ACT_HAS_RETURN(phase));  // all FUNC have RETURN
 
-    return OUT;
-}
+    const REBKEY *key = ACT_KEYS_HEAD(phase);
+    const REBPAR *param = ACT_PARAMS_HEAD(phase);
+    assert(KEY_SYM(key) == SYM_RETURN);
+    UNUSED(key);
 
+    if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED))
+        return Init_None(OUT);  // none falls out of FUNC by default
 
-//
-//  Elider_Dispatcher: C
-//
-// Used by functions that in their spec say `RETURN: <void>`.
-// Runs block but with no net change to f->out.
-//
-REB_R Elider_Dispatcher(REBFRM *f)
-{
-    REBFRM *frame_ = f;  // for return_xxx macros
+    if (GET_PARAM_FLAG(param, RETURN_VOID))
+        return_void (OUT);  // void, regardless of body result, see [1]
 
-    // write to spare to leave OUT cell as-is, achieving invisibility
-    //
-    bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
-        return_thrown (SPARE);
+    if (GET_PARAM_FLAG(param, RETURN_NONE))
+        return Init_None(OUT);  // none, regardless of body result, see [1]
 
-    UNUSED(returned);  // no additional work to bypass
-
-    return_void (OUT);
-}
-
-
-//
-//  Commenter_Dispatcher: C
-//
-// This is a specialized version of Elider_Dispatcher() for when the body of
-// a function is empty.  This helps COMMENT and functions like it run faster.
-//
-REB_R Commenter_Dispatcher(REBFRM *f)  // !!! unify with Empty_Dispatcher?
-{
-    REBFRM *frame_ = f;  // for RETURN macros
-    USED(frame_);
-
-    REBARR *details = ACT_DETAILS(FRM_PHASE(f));
-    Cell *body = ARR_AT(details, IDX_DETAILS_1);
-    assert(VAL_LEN_AT(body) == 0);
-    UNUSED(body);
-
-    return_void (OUT);
+    fail ("Functions with RETURN: in spec must use RETURN to typecheck");
 }
 
 
@@ -390,10 +275,20 @@ REB_R Commenter_Dispatcher(REBFRM *f)  // !!! unify with Empty_Dispatcher?
 // but must be explicit about what frame is being exited.  This can be used
 // by usermode generators that want to create something return-like.
 //
+//=////////////////////////////////////////////////////////////////////////=//
+//
+// 1. At one time there were many optimized dispatchers for cases like
+//    `func [...] []` which would not bother running empty blocks, and which
+//    did not write into a temporary cell and then copy over the result in
+//    a later phase.  The introduction of LAMBDA as an alternative generator
+//    made these optimizations give diminishing returns, so they were all
+//    eliminated (though they set useful precedent for varying dispatchers).
+//
 REBACT *Make_Interpreted_Action_May_Fail(
     const REBVAL *spec,
     const REBVAL *body,
     REBFLGS mkf_flags,  // MKF_RETURN, etc.
+    REBNAT dispatcher,
     REBLEN details_capacity
 ){
     assert(IS_BLOCK(spec) and IS_BLOCK(body));
@@ -409,59 +304,19 @@ REBACT *Make_Interpreted_Action_May_Fail(
     REBACT *a = Make_Action(
         paramlist,
         nullptr,  // no partials
-        &Empty_Dispatcher,  // will be overwritten if non-[] body
+        dispatcher,
         details_capacity  // we fill in details[0], caller fills any extra
     );
 
     assert(ACT_META(a) == nullptr);
     mutable_ACT_META(a) = meta;
 
-    // We look at the *actual* function flags; e.g. the person may have used
-    // the FUNC generator (with MKF_RETURN) but then named a parameter RETURN
-    // which overrides it, so the value won't have PARAMLIST_HAS_RETURN.
-
-    REBARR *copy;
-    if (VAL_LEN_AT(body) == 0) {  // optimize empty body case
-
-        if (mkf_flags & MKF_IS_ELIDER) {
-            INIT_ACT_DISPATCHER(a, &Commenter_Dispatcher);
-        }
-        else if (mkf_flags & MKF_HAS_NONE_RETURN) {
-            INIT_ACT_DISPATCHER(a, &None_Dispatcher);  // !!! ^-- see note
-        }
-        else if (mkf_flags & MKF_HAS_CHECKED_RETURN) {
-            const REBPAR *param = ACT_PARAMS_HEAD(a);
-            assert(KEY_SYM(ACT_KEYS_HEAD(a)) == SYM_RETURN);
-
-            if (not TYPE_CHECK(param, REB_BAD_WORD))  // `do []` returns
-                INIT_ACT_DISPATCHER(a, &Returner_Dispatcher);  // error later
-        }
-        else {
-            // Keep the Void_Dispatcher passed in above
-        }
-
-        // Reusing EMPTY_ARRAY won't allow adding ARRAY_HAS_FILE_LINE bits
-        //
-        copy = Make_Array_Core(1, NODE_FLAG_MANAGED);
-    }
-    else {  // body not empty, pick dispatcher based on output disposition
-
-        if (mkf_flags & MKF_IS_ELIDER)
-            INIT_ACT_DISPATCHER(a, &Elider_Dispatcher);  // no f->out mutation
-        else if (mkf_flags & MKF_HAS_NONE_RETURN) // !!! see note
-            INIT_ACT_DISPATCHER(a, &None_Dispatcher);  // forces f->out to ~
-        else if (mkf_flags & MKF_HAS_CHECKED_RETURN)
-            INIT_ACT_DISPATCHER(a, &Returner_Dispatcher);  // typecheck f->out
-        else
-            INIT_ACT_DISPATCHER(a, &Unchecked_Dispatcher); // unchecked f->out
-
-        const bool locals_visible = true;  // we created exemplar, see all!
-        copy = Copy_And_Bind_Relative_Deep_Managed(
-            body,  // new copy has locals bound relatively to the new action
-            a,
-            locals_visible
-        );
-    }
+    const bool locals_visible = true;  // we created exemplar, see all!
+    REBARR *copy = Copy_And_Bind_Relative_Deep_Managed(
+        body,  // new copy has locals bound relatively to the new action
+        a,
+        locals_visible
+    );
 
     // Favor the spec first, then the body, for file and line information.
     //
@@ -547,6 +402,7 @@ REBNATIVE(func_p)
         spec,
         body,
         MKF_RETURN | MKF_KEYWORDS,
+        &Func_Dispatcher,
         1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)
     );
 
@@ -793,18 +649,18 @@ REBNATIVE(definitional_return)
     const REBPAR *param = ACT_PARAMS_HEAD(target_fun);
     assert(KEY_SYM(ACT_KEYS_HEAD(target_fun)) == SYM_RETURN);
 
-    if (Is_Meta_Of_Void(v)) {  // `return comment "hi"`, `return void`
-        //
+    if (
+        Is_Meta_Of_Void(v)  // `return comment "hi"`, `return void`
+        or Is_Meta_Of_End(v)  // plain `return` with no arguments--act as void
+    ){
+        if (NOT_PARAM_FLAG(param, VANISHABLE))
+            fail (Error_Bad_Invisible(f));
+
         // To make sure core clients know what they are doing, Meta_Unquotify()
         // won't make voids.  But we want to be able to return them.
         //
         RESET(v);
         goto skip_type_check;
-    }
-
-    if (Is_Meta_Of_End(v)) {  // plain `return` with no arguments
-        RESET(v);  // act the same as `return void`
-        goto skip_type_check;  // currently isotopes always allowed
     }
 
     // Safe to unquotify for type checking
@@ -825,6 +681,9 @@ REBNATIVE(definitional_return)
         //
         // allow, so that you can say `return ~xxx~` in functions whose spec
         // is written as `return: []`
+
+        if (GET_PARAM_FLAG(param, RETURN_NONE) and not Is_None(v))
+            fail ("If RETURN: <none> is in a function spec, RETURN NONE only");
     }
     else {
         if (not TYPE_CHECK(param, VAL_TYPE(v)))

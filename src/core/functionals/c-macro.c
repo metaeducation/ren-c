@@ -132,10 +132,9 @@ REBNATIVE(macro)
         ARG(spec),
         ARG(body),
         MKF_RETURN | MKF_KEYWORDS,
+        &Macro_Dispatcher,
         IDX_DETAILS_1 + 1  // details capacity, just body slot (and archetype)
     );
-
-    INIT_ACT_DISPATCHER(macro, &Macro_Dispatcher);
 
     if (ACT_HAS_RETURN(macro)) {
         REBPAR *param = ACT_PARAMS_HEAD(macro);

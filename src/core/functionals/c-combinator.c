@@ -96,7 +96,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
     }
     else {  // usermode COMBINATOR
         assert(IS_BLOCK(body));
-        r = Returner_Dispatcher(f);
+        r = Func_Dispatcher(f);
     }
 
     if (r == R_THROWN)

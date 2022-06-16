@@ -253,7 +253,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
 
     REBACT *phase = FRM_PHASE(f);
 
-    // Usermode functions check the return type via Returner_Dispatcher(),
+    // Usermode functions check the return type via Func_Dispatcher(),
     // with everything else assumed to return the correct type.  But this
     // double checks any function marked with RETURN in the debug build,
     // so native return types are checked instead of just trusting the C.

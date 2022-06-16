@@ -634,15 +634,3 @@ inline static void FAIL_IF_BAD_RETURN_TYPE(REBFRM *f) {
     if (not Typecheck_Including_Constraints(param, f->out))
         fail (Error_Bad_Return_Type(f, VAL_TYPE(f->out)));
 }
-
-inline static void FAIL_IF_NO_INVISIBLE_RETURN(REBFRM *f) {
-    REBACT *phase = FRM_PHASE(f);
-    const REBPAR *param = ACT_PARAMS_HEAD(phase);
-    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
-
-    if (ACT_DISPATCHER(phase) == &None_Dispatcher)
-        return;  // allow plain RETURN in <none> functions
-
-    if (NOT_PARAM_FLAG(param, VANISHABLE))
-        fail (Error_Bad_Invisible(f));
-}

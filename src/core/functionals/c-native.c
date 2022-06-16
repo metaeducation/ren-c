@@ -86,27 +86,6 @@ REBACT *Make_Native(
     );
     ASSERT_SERIES_TERM_IF_NEEDED(paramlist);
 
-    // Natives are their own dispatchers; there is no wrapper added for cases
-    // like `return: <void>` or `return: <none>`.  They must return a value
-    // consistent with the response.  Make sure the typesets are right for the
-    // debug build to check it.
-    //
-  #if !defined(NDEBUG)
-    if (flags & MKF_IS_ELIDER) {
-        assert(GET_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), VANISHABLE));
-        assert(GET_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), ENDABLE));
-        assert(Is_Typeset_Empty(cast(REBPAR*, ARR_AT(paramlist, 1))));
-    }
-    if (flags & MKF_HAS_NONE_RETURN) {
-        //
-        // ENDABLE guides the willingness of the RETURN to take no argument,
-        // but the None_Dispatcher() will turn whatever it gets into ~ isotope.
-        //
-        assert(GET_PARAM_FLAG(cast(REBPAR*, ARR_AT(paramlist, 1)), ENDABLE));
-        assert(Is_Typeset_Empty(cast(REBPAR*, ARR_AT(paramlist, 1))));
-    }
-  #endif
-
     REBACT *native = Make_Action(
         paramlist,
         nullptr,  // no partials
