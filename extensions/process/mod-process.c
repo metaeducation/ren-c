@@ -232,7 +232,7 @@ REBNATIVE(sleep)
     usleep(msec * 1000);
   #endif
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 

@@ -148,7 +148,7 @@ REBNATIVE(write_stdout)
         VAL_INDEX_RAW(v) += part;
     }
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 

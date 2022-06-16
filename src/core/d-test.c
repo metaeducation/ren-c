@@ -143,7 +143,7 @@ REBNATIVE(diagnose)
 
     Dump_Value_Debug(v);
 
-    return Init_None(OUT);
+    return NONE;
   #endif
 }
 
@@ -178,6 +178,6 @@ REBNATIVE(fuzz)
         assert(IS_PERCENT(ARG(factor)));
         PG_Fuzz_Factor = 10000 * VAL_DECIMAL(ARG(factor));
     }
-    return Init_None(OUT);
+    return NONE;
   #endif
 }

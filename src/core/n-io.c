@@ -145,7 +145,7 @@ REBNATIVE(write_stdout)
         fail ("Boot WRITE-STDOUT received BINARY!, needs DEBUG_HAS_PROBE");
       #endif
     }
-    return Init_None(OUT);
+    return NONE;
   #endif
 }
 

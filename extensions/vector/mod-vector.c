@@ -57,7 +57,7 @@ REBNATIVE(startup_p)
         &MF_Vector
     );
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 
@@ -75,5 +75,5 @@ REBNATIVE(shutdown_p)
 
     Unhook_Datatype(EG_Vector_Type);
 
-    return Init_None(OUT);
+    return NONE;
 }

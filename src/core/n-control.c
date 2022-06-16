@@ -1176,7 +1176,7 @@ REBNATIVE(catch)
     CATCH_THROWN(OUT, frame_); // thrown value
 
     if (Is_Void(OUT))
-        return Init_None(OUT);  // void would trigger ELSE
+        return NONE;  // void would trigger ELSE
 
     Isotopify_If_Nulled(OUT);  // a caught NULL triggers THEN, not ELSE
     return_branched (OUT);

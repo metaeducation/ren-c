@@ -356,11 +356,11 @@ REBNATIVE(unload_extension)
        true
     );
    if (shutdown_action == nullptr)
-        return Init_None(OUT);
+        return NONE;
 
    rebElide(shutdown_action);
 
-   return Init_None(OUT);
+   return NONE;
 }
 
 

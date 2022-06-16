@@ -154,7 +154,7 @@ REBNATIVE(startup_p)
 
     Extend_Generics_Someday(nullptr);  // !!! See comments
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 
@@ -220,5 +220,5 @@ REBNATIVE(shutdown_p)
     Unhook_Datatype(EG_Library_Type);
     EG_Library_Type = nullptr;
 
-    return Init_None(OUT);
+    return NONE;
 }

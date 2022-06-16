@@ -62,7 +62,7 @@ REB_R Series_Common_Action_Maybe_Unhandled(
           case SYM_LENGTH: {
             REBI64 len_head = VAL_LEN_HEAD(v);
             if (VAL_INDEX_RAW(v) < 0 or VAL_INDEX_RAW(v) > len_head)
-                return Init_None(OUT);  // !!! better than error?
+                return NONE;  // !!! better than error?
             return Init_Integer(OUT, len_head - VAL_INDEX_RAW(v)); }
 
           case SYM_HEAD:

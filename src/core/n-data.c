@@ -1598,7 +1598,7 @@ REBNATIVE(free)
         fail ("Cannot FREE already freed series");
 
     Decay_Series(s);
-    return Init_None(OUT); // !!! Could return freed value
+    return NONE; // !!! Could return freed value
 }
 
 
@@ -2347,7 +2347,7 @@ REBNATIVE(light) {
 REBNATIVE(none) {
     INCLUDE_PARAMS_OF_NONE;
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 

@@ -630,7 +630,7 @@ REBNATIVE(add_use_object) {
 
     mutable_BINDING(FEED_SINGLE(f->feed)) = patch;
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 

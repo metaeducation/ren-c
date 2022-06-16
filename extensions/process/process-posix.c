@@ -238,7 +238,7 @@ REBNATIVE(send_signal)
     //
     kill_process(pid, signal);
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 #endif  // TO_LINUX || TO_ANDROID || TO_POSIX || TO_OSX

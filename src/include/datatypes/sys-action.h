@@ -677,12 +677,16 @@ inline static REB_R Native_Void_Result(REBFRM *frame_) {
     return R_VOID;
 }
 
+inline static REB_R Native_None_Result(REBFRM *frame_) {
+    return Init_None(frame_->out);
+}
+
 
 #define return_non_void(v) \
     do { \
         assert((v) == OUT); \
         if (Is_Void(OUT)) \
-            return Init_None(OUT); \
+            return NONE; \
         return OUT; \
     } while (false)
 

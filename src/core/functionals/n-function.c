@@ -185,13 +185,13 @@ REB_R Func_Dispatcher(REBFRM *f)
     UNUSED(key);
 
     if (NOT_PARAM_FLAG(param, RETURN_TYPECHECKED))
-        return Init_None(OUT);  // none falls out of FUNC by default
+        return NONE;  // none falls out of FUNC by default
 
     if (GET_PARAM_FLAG(param, RETURN_VOID))
         return VOID;  // void, regardless of body result, see [2]
 
     if (GET_PARAM_FLAG(param, RETURN_NONE))
-        return Init_None(OUT);  // none, regardless of body result, see [2]
+        return NONE;  // none, regardless of body result, see [2]
 
     fail ("Functions with RETURN: in spec must use RETURN to typecheck");
 }

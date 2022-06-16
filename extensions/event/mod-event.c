@@ -67,7 +67,7 @@ REBNATIVE(startup_p)
 
     Startup_Events();  // initialize other event stuff
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 
@@ -96,7 +96,7 @@ REBNATIVE(shutdown_p)
     // !!! currently no shutdown code, but there once was for destroying an
     // invisible handle in windows...
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 

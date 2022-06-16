@@ -223,7 +223,7 @@ REBNATIVE(limit_usage)
     else
         fail (PAR(field));
 
-    return Init_None(OUT);
+    return NONE;
 }
 
 

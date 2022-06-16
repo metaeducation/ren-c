@@ -1142,7 +1142,7 @@ REBNATIVE(cycle)
                     // rules unless there's a good demonstrated case otherwise.
 
                     if (Is_Void(OUT))
-                        return Init_None(OUT);
+                        return NONE;
 
                     Isotopify_If_Nulled(OUT);  // NULL reserved for BREAK
                     return OUT;

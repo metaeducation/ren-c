@@ -1805,5 +1805,5 @@ REBNATIVE(shutdown_p)
     }
   #endif
 
-    return Init_None(OUT);
+    return NONE;
 }
