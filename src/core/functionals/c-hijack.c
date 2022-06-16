@@ -226,7 +226,7 @@ REB_R Hijacker_Dispatcher(REBFRM *f)
     // the hijacking...and has to be remapped.
     //
     if (Redo_Action_Maybe_Stale_Throws(OUT, f, hijacker))
-        return_thrown (OUT);
+        return THROWN;
 
     if (Is_Stale(OUT))
         return_void (OUT);

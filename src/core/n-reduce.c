@@ -54,7 +54,7 @@ REBNATIVE(reduce)
     //
     if (not ANY_ARRAY(v)) {
         if (Eval_Value_Throws(OUT, v, SPECIFIED))
-            return_thrown (OUT);
+            return THROWN;
 
         return OUT;  // let caller worry about whether to error on nulls
     }
@@ -72,7 +72,7 @@ REBNATIVE(reduce)
         if (Eval_Step_Throws(RESET(OUT), f)) {
             DS_DROP_TO(dsp_orig);
             Abort_Frame(f);
-            return_thrown (OUT);
+            return THROWN;
         }
 
         if (IS_NULLED(ARG(predicate))) {  // default processing
@@ -177,7 +177,7 @@ REBNATIVE(reduce_each)
     while (NOT_END(f_value)) {
         if (Eval_Step_Throws(RESET(SPARE), f)) {
             Abort_Frame(f);
-            return_thrown (SPARE);
+            return THROWN;
         }
 
         if (Is_Void(SPARE))
@@ -189,9 +189,9 @@ REBNATIVE(reduce_each)
         Move_Cell(CTX_VAR(context, 1), SPARE);
 
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT)) {
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME)) {
                 Abort_Frame(f);
-                return_thrown (OUT);
+                return THROWN;
             }
 
             if (Is_Breaking_Null(OUT))
@@ -636,7 +636,7 @@ REBNATIVE(compose)
     );
 
     if (r == R_THROWN)
-        return_thrown (OUT);
+        return THROWN;
 
     if (r == R_UNHANDLED) {
         //

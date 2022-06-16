@@ -164,7 +164,7 @@ REBNATIVE(the)
 
     if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
         if (Eval_Value_Throws(OUT, v, SPECIFIED))
-            return_thrown (OUT);
+            return THROWN;
         return OUT;  // Don't set UNEVALUATED flag
     }
 
@@ -249,7 +249,7 @@ REBNATIVE(just)
 
     if (REF(soft) and ANY_ESCAPABLE_GET(v)) {
         if (Eval_Value_Throws(OUT, v, SPECIFIED))
-            return_thrown (OUT);
+            return THROWN;
         return Quotify(OUT, 1);  // Don't set UNEVALUATED flag
     }
 
@@ -487,7 +487,7 @@ REBNATIVE(maybe_a)
         frame_,
         EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE
     )){
-        return_thrown (OUT);
+        return THROWN;
     }
 
     if (Is_Stale(OUT))

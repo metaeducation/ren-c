@@ -356,7 +356,7 @@ REBNATIVE(opt_combinator)
     UNUSED(ARG(state));
 
     if (Call_Parser_Throws(OUT, ARG(remainder), ARG(parser), ARG(input)))
-        return_thrown (OUT);
+        return THROWN;
 
     if (not IS_NULLED(OUT))  // parser succeeded...
         return OUT;  // so return its result (note: may be null *isotope*)
@@ -463,7 +463,7 @@ REBNATIVE(some_combinator)
         // frames from the loops list in usermode.  Mirror that limitation here
         // for now.
         //
-        return_thrown (OUT);
+        return THROWN;
     }
 
     if (IS_NULLED(OUT)) {
@@ -483,7 +483,7 @@ REBNATIVE(some_combinator)
         // iteration's successful output value)
         //
         if (Call_Parser_Throws(SPARE, remainder, parser, input))
-            return_thrown (SPARE);  // see notes above about not removing loop
+            return THROWN;  // see notes above about not removing loop
 
         if (IS_NULLED(SPARE)) {
             //
@@ -523,7 +523,7 @@ REBNATIVE(further_combinator)
     UNUSED(ARG(state));
 
     if (Call_Parser_Throws(OUT, remainder, parser, input))
-        return_thrown (OUT);
+        return THROWN;
 
     if (IS_NULLED(OUT))
         return nullptr;  // the parse rule did not match

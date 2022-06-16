@@ -1162,9 +1162,7 @@ REBLEN Recycle_Core(bool shutdown, REBSER *sweeplist)
     // can cause problems with this.
     //
     assert(Is_Stale_Void(&TG_Thrown_Arg));
-  #if !defined(NDEBUG)
-    assert(Is_Stale_Void(&TG_Thrown_Label_Debug));
-  #endif
+    assert(Is_Stale_Void(&TG_Thrown_Label));
 
     // If disabled by RECYCLE/OFF, exit now but set the pending flag.  (If
     // shutdown, ignore so recycling runs and can be checked for balance.)

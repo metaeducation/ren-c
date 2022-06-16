@@ -99,7 +99,7 @@ REB_R Macro_Dispatcher(REBFRM *f)
 
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
-        return_thrown (SPARE);
+        return THROWN;
 
     UNUSED(returned);  // no additional work to bypass
 

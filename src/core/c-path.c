@@ -178,7 +178,7 @@ REBNATIVE(poke)
     //
     REB_R r = Run_Generic_Dispatch_Core(location, frame_, Canon(POKE_P));
     if (r == R_THROWN)
-        return_thrown (OUT);
+        return THROWN;
     assert(r == nullptr or not IS_RETURN_SIGNAL(r));  // other signals invalid
 
     // Note: if r is not nullptr here, that means there was a modification

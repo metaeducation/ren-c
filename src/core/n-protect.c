@@ -395,7 +395,7 @@ REBNATIVE(protect)
             Lib(TRUE),
             Lib(PROTECT_P)
         )){
-            return_thrown (OUT);
+            return THROWN;
         }
         return_value (v);
     }

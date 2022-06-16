@@ -61,20 +61,14 @@
 //   more checking that thrown values aren't being dropped or misused.
 //
 
-#if defined(NDEBUG)
-    #define VAL_THROWN_LABEL(thrown) \
-        (thrown)
-#else
-    inline static const REBVAL *VAL_THROWN_LABEL(const REBVAL *thrown) {
-        if (Is_Stale_Void(&TG_Thrown_Label_Debug))
-            return thrown;
-        assert(Is_Isotope_With_Id(thrown, SYM_THROW));
-        return &TG_Thrown_Label_Debug;
-    }
-#endif
+inline static const REBVAL *VAL_THROWN_LABEL(REBFRM *frame_) {
+    UNUSED(frame_);
+    assert(not Is_Stale_Void(&TG_Thrown_Label));
+    return &TG_Thrown_Label;
+}
 
-inline static REBVAL *Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
-    REBVAL *out,
+inline static REB_R Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
+    REBFRM *frame_,
     const REBVAL *arg,
     const REBVAL *label  // Note: is allowed to be same as `out`
 ){
@@ -85,34 +79,20 @@ inline static REBVAL *Init_Thrown_With_Label(  // assumes `arg` in TG_Thrown_Arg
     else
         Copy_Cell(&TG_Thrown_Arg, arg);
 
-  #if defined(NDEBUG)
-    if (out != label)
-        Copy_Cell(out, label);
-  #else
-    assert(Is_Stale_Void(&TG_Thrown_Label_Debug));
+    assert(Is_Stale_Void(&TG_Thrown_Label));
 
-    // Help avoid accidental uses of thrown output as misunderstood plain
-    // outputs, by forcing thrown label access through VAL_THROWN_LABEL()...
-    // but still test the release code path half the time.  (Causes different
-    // reifications, but outside performance should still work the same.)
-    //
-    if (SPORADICALLY(2)) {
-        Copy_Cell(&TG_Thrown_Label_Debug, label);
-        Init_Isotope(out, Canon(THROW));
-    }
-    else {
-        if (out != label)
-            Copy_Cell(out, label);
-    }
-  #endif
+    Copy_Cell(&TG_Thrown_Label, label);
 
-    return out; // for chaining to dispatcher output
+    Mark_Eval_Out_Stale(frame_->out);
+    return R_THROWN;
 }
 
 inline static void CATCH_THROWN(
     Cell *arg_out,
-    REBVAL *thrown // Note: may be same pointer as arg_out
+    REBFRM *frame_
 ){
+    UNUSED(frame_);
+
     if (Is_Void(&TG_Thrown_Arg))
         RESET(arg_out);
     else
@@ -120,38 +100,5 @@ inline static void CATCH_THROWN(
 
     Init_Stale_Void(&TG_Thrown_Arg);
 
-  #if defined(NDEBUG)
-    UNUSED(thrown);
-  #else
-    // The debug build may have taken the throw label out of the output slot
-    // and put it into a variable on the side (this helps avoid non-throw
-    // aware reads of f->out).  If this was done, put it back after catch
-    // (it is done SPORADICALLY()).  Only do so if they weren't trying to
-    // overwrite the frame's output slot and didn't care about the label.
-    //
-    if (not Is_Stale_Void(&TG_Thrown_Label_Debug)) {
-        if (arg_out != thrown)
-            Move_Cell(thrown, &TG_Thrown_Label_Debug);
-        Init_Stale_Void(&TG_Thrown_Label_Debug);
-    }
-  #endif
+    Init_Stale_Void(&TG_Thrown_Label);
 }
-
-inline static bool Is_Throwing(REBFRM *f) {
-    //
-    // !!! An original constraint on asking if something was throwing was
-    // that only the top frame could be asked about.  But Action_Executor()
-    // is called to re-dispatch when there may be a frame above (kept there
-    // by request from something like REDUCE).  We relax the constraint to
-    // only be able to return *true* to a throw request if there are no
-    // frames above on the stack.
-    //
-    if (not Is_Stale_Void(&TG_Thrown_Arg)) {
-        /*assert(f == FS_TOP);*/  // forget even that check
-        UNUSED(f);  // currently only used for debug build check
-        return true;
-    }
-    return false;
-}
-
-#define THROWING Is_Throwing(frame_)

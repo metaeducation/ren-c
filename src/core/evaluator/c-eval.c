@@ -357,7 +357,7 @@ bool Eval_Core_Throws(REBFRM * const f)
         // it may spawn an entire interactive debugging session via
         // breakpoint before it returns.  It may also FAIL and longjmp out.
         //
-        if (Do_Signals_Throws(OUT))
+        if (Do_Signals_Throws(FRAME))
             goto return_thrown;
     }
 
@@ -907,10 +907,8 @@ bool Eval_Core_Throws(REBFRM * const f)
         // the difference of `(20 (comment "hi")` and `(10 (20 comment "hi"))`
         // by just the stale flag on OUT alone.
         //
-        if (Do_Any_Array_At_Throws(SPARE, v, v_specifier)) {
-            Move_Cell(OUT, SPARE);
+        if (Do_Any_Array_At_Throws(SPARE, v, v_specifier))
             goto return_thrown;
-        }
 
         if (not Is_Void(SPARE))
             Move_Cell(OUT, SPARE);
@@ -941,10 +939,8 @@ bool Eval_Core_Throws(REBFRM * const f)
             break;
         }
 
-        if (Get_Var_Core_Throws(SPARE, GROUPS_OK, v, v_specifier)) {
-            Move_Cell(OUT, SPARE);
+        if (Get_Var_Core_Throws(SPARE, GROUPS_OK, v, v_specifier))
             goto return_thrown;
-        }
 
         if (IS_ACTION(SPARE)) {  // try this branch before fail on void+null
             REBACT *act = VAL_ACTION(SPARE);
@@ -1010,10 +1006,8 @@ bool Eval_Core_Throws(REBFRM * const f)
         DECLARE_ACTION_SUBFRAME (subframe, f);
         Push_Frame(OUT, subframe);
 
-        if (Get_Path_Push_Refinements_Throws(SPARE, OUT, v, v_specifier)) {
-            Move_Cell(OUT, SPARE);
+        if (Get_Path_Push_Refinements_Throws(SPARE, OUT, v, v_specifier))
             goto return_thrown;
-        }
 
         if (not IS_ACTION(SPARE)) {
             //
@@ -1120,7 +1114,6 @@ bool Eval_Core_Throws(REBFRM * const f)
                 v_specifier,
                 NONE_ISOTOPE
             )){
-                Move_Cell(OUT, SPARE);
                 goto return_thrown;
             }
             Init_None(OUT);  // propagate none (same as SET-WORD!, SET)
@@ -1138,7 +1131,6 @@ bool Eval_Core_Throws(REBFRM * const f)
                 v_specifier,
                 Pointer_To_Decayed(OUT)
             )){
-                Move_Cell(OUT, SPARE);
                 goto return_thrown;
             }
         }
@@ -1347,7 +1339,6 @@ bool Eval_Core_Throws(REBFRM * const f)
                 or IS_META_GROUP(check)
             ){
                 if (Do_Any_Array_At_Throws(SPARE, check, check_specifier)) {
-                    Move_Cell(OUT, SPARE);
                     DS_DROP_TO(f->baseline.dsp);
                     goto return_thrown;
                 }
@@ -1416,7 +1407,6 @@ bool Eval_Core_Throws(REBFRM * const f)
             f->feed,
             error_on_deferred
         )){
-            Move_Cell(OUT, SPARE);
             DS_DROP_TO(f->baseline.dsp);
             goto return_thrown;
         }

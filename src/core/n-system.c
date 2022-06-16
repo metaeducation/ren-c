@@ -37,7 +37,7 @@ REBNATIVE(halt)
 {
     INCLUDE_PARAMS_OF_HALT;
 
-    return_thrown (Init_Thrown_With_Label(OUT, Lib(NULL), Lib(HALT)));
+    return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
 }
 
 
@@ -79,7 +79,7 @@ REBNATIVE(quit)
     else
         Meta_Unquotify(v);
 
-    return_thrown (Init_Thrown_With_Label(OUT, v, Lib(QUIT)));
+    return Init_Thrown_With_Label(FRAME, v, Lib(QUIT));
 }
 
 

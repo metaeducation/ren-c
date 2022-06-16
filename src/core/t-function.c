@@ -230,7 +230,7 @@ REBTYPE(Action)
         REBDSP dsp_orig = DSP;
         Init_Word(DS_PUSH(), symbol);
         if (Specialize_Action_Throws(OUT, action, nullptr, dsp_orig))
-            return_thrown (OUT);
+            return THROWN;
 
         return OUT; }
 

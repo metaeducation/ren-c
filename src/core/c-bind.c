@@ -396,7 +396,7 @@ REBNATIVE(let)
         IS_GROUP(vars) or IS_SET_GROUP(vars)
     ){
         if (Do_Any_Array_At_Throws(SPARE, vars, SPECIFIED))
-            return_thrown (SPARE);
+            return THROWN;
 
         switch (VAL_TYPE(SPARE)) {  // need to type check eval product
           case REB_WORD:
@@ -471,7 +471,7 @@ REBNATIVE(let)
 
             if (IS_GROUP(temp)) {  // evaluate non-QUOTED! groups in LET block
                 if (Do_Any_Array_At_Throws(OUT, temp, item_specifier))
-                    return_thrown (OUT);
+                    return THROWN;
 
                 temp = OUT;
                 temp_specifier = SPECIFIED;
@@ -543,7 +543,7 @@ REBNATIVE(let)
             flags,
             enfix
         )){
-            return_thrown (OUT);
+            return THROWN;
         }
 
         if (f_specifier and IS_PATCH(f_specifier))  // add bindings, see [7]
@@ -968,7 +968,7 @@ void Virtual_Bind_Deep_To_New_Context(
     if (IS_GROUP(spec)) {
         DECLARE_LOCAL (temp);
         if (Do_Any_Array_At_Throws(temp, spec, SPECIFIED))
-            fail (Error_No_Catch_For_Throw(temp));
+            fail (Error_No_Catch_For_Throw(FS_TOP));
         Move_Cell(spec, temp);
     }
 

@@ -417,7 +417,7 @@ REBVAL *Run_Array_Dangerous(void *opaque) {
 
     if (Do_At_Mutable_Maybe_Stale_Throws(v, first, x->code, 0, SPECIFIED)) {
         TRACE("Run_Array_Dangerous() is converting a throw to a failure");
-        fail (Error_No_Catch_For_Throw(v));
+        fail (Error_No_Catch_For_Throw(FS_TOP));
     }
 
     Clear_Stale_Flag(v);
@@ -667,7 +667,7 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
             //
             CLR_SIGNAL(SIG_HALT);
 
-            return_thrown (Init_Thrown_With_Label(OUT, Lib(NULL), Lib(HALT)));
+            return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(HALT));
         }
 
         REBVAL *error = VAL(Pointer_From_Heapaddr(error_addr));

@@ -92,7 +92,7 @@ REB_R Lambda_Dispatcher(REBFRM *f)
 
     REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
     if (Do_Any_Array_At_Core_Throws(OUT, flags, block, specifier))
-        return_thrown (OUT);
+        return THROWN;
 
     if (Is_Stale(OUT))
         return_void (OUT);

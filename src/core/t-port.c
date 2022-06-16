@@ -59,7 +59,7 @@ REB_R MAKE_Port(
         out,  // <-- output cell
         Sys(SYM_MAKE_PORT_P), rebQ(arg)
     )){
-        fail (Error_No_Catch_For_Throw(out));
+        fail (Error_No_Catch_For_Throw(FS_TOP));
     }
 
     if (not IS_PORT(out))  // should always create a port

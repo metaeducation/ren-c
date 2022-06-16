@@ -327,7 +327,7 @@ REBNATIVE(use)
     );
 
     if (Do_Any_Array_At_Throws(OUT, ARG(body), SPECIFIED))
-        return_thrown (OUT);
+        return THROWN;
 
     return OUT;
 }
@@ -539,10 +539,8 @@ bool Get_Var_Push_Refinements_Throws(
             fail (Error_Bad_Get_Group_Raw(var));
 
         DECLARE_LOCAL (temp);
-        if (Do_Any_Array_At_Throws(temp, var, var_specifier)) {
-            Move_Cell(out, temp);
+        if (Do_Any_Array_At_Throws(temp, var, var_specifier))
             return true;
-        }
 
         Move_Cell(out, temp);  // if spare was source, we are replacing it
         var = out;
@@ -697,7 +695,7 @@ bool Get_Var_Push_Refinements_Throws(
         )){
             DS_DROP_TO(dsp_orig);
             DROP_GC_GUARD(temp);
-            fail (Error_No_Catch_For_Throw(out));
+            fail (Error_No_Catch_For_Throw(FS_TOP));
         }
         ++dsp_at;
     }
@@ -755,7 +753,7 @@ void Get_Var_May_Fail(
     REBVAL *steps_out = nullptr;
 
     if (Get_Var_Core_Throws(out, steps_out, source, specifier))
-        fail (Error_No_Catch_For_Throw(out));
+        fail (Error_No_Catch_For_Throw(FS_TOP));
 
     if (not any)
         if (Is_Isotope(out))
@@ -929,10 +927,9 @@ bool Get_Path_Push_Refinements_Throws(
                 path_specifier,
                 at
             );
-            if (Eval_Value_Throws(temp, at, derived)) {
-                Move_Cell(out, temp);
+            if (Eval_Value_Throws(temp, at, derived))
                 return true;
-            }
+
             Move_Cell(safe, temp);
             Decay_If_Isotope(safe);
             if (Is_Isotope(safe))
@@ -987,8 +984,8 @@ REBNATIVE(get)
         steps_out = nullptr;  // no GROUP! evals
 
     if (Get_Var_Core_Throws(OUT, steps_out, source, SPECIFIED)) {
-        assert(steps_out or IS_ERROR(VAL_THROWN_LABEL(OUT)));  // see [1]
-        return_thrown (OUT);
+        assert(steps_out or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [1]
+        return THROWN;
     }
 
     if (not REF(any))
@@ -1046,10 +1043,8 @@ bool Set_Var_Core_Updater_Throws(
         if (not steps_out)
             fail (Error_Bad_Get_Group_Raw(var));
 
-        if (Do_Any_Array_At_Throws(temp, var, var_specifier)) {
-            Move_Cell(out, temp);
+        if (Do_Any_Array_At_Throws(temp, var, var_specifier))
             return true;
-        }
 
         Move_Cell(out, temp);  // if spare was var, we are replacing it
         var = out;
@@ -1132,7 +1127,6 @@ bool Set_Var_Core_Updater_Throws(
                     fail (Error_Bad_Get_Group_Raw(var));
 
                 if (Do_Any_Array_At_Throws(temp, at, at_specifier)) {
-                    Move_Cell(out, temp);
                     DS_DROP_TO(dsp_orig);
                     return true;
                 }
@@ -1206,7 +1200,7 @@ bool Set_Var_Core_Updater_Throws(
         )){
             DROP_GC_GUARD(temp);
             DROP_GC_GUARD(writeback);
-            fail (Error_No_Catch_For_Throw(out));  // don't let PICKs throw
+            fail (Error_No_Catch_For_Throw(FS_TOP));  // don't let PICKs throw
         }
         ++dsp_at;
     }
@@ -1222,7 +1216,7 @@ bool Set_Var_Core_Updater_Throws(
     )){
         DROP_GC_GUARD(temp);
         DROP_GC_GUARD(writeback);
-        fail (Error_No_Catch_For_Throw(out));  // don't let POKEs throw
+        fail (Error_No_Catch_For_Throw(FS_TOP));  // don't let POKEs throw
     }
 
     // Subsequent updates become pokes, regardless of initial updater function
@@ -1294,7 +1288,7 @@ void Set_Var_May_Fail(
 
     DECLARE_LOCAL (dummy);
     if (Set_Var_Core_Throws(dummy, steps_out, target, target_specifier, setval))
-        fail (Error_No_Catch_For_Throw(dummy));
+        fail (Error_No_Catch_For_Throw(FS_TOP));
 }
 
 
@@ -1346,8 +1340,8 @@ REBNATIVE(set)
         Meta_Unquotify(v);
 
     if (Set_Var_Core_Throws(OUT, steps_out, target, SPECIFIED, v)) {
-        assert(steps_out or IS_ERROR(VAL_THROWN_LABEL(OUT)));  // see [2]
-        return_thrown (OUT);
+        assert(steps_out or IS_ERROR(VAL_THROWN_LABEL(frame_)));  // see [2]
+        return THROWN;
     }
 
     if (steps_out and steps_out != GROUPS_OK)

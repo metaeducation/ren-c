@@ -224,7 +224,7 @@ REBNATIVE(to)
     REB_R r = hook(OUT, new_kind, v); // may fail();
     if (r == R_THROWN) {
         assert(!"Illegal throw in TO conversion handler");
-        fail (Error_No_Catch_For_Throw(OUT));
+        fail (Error_No_Catch_For_Throw(FRAME));
     }
     if (r == nullptr or VAL_TYPE(r) != new_kind) {
         assert(!"TO conversion did not return intended type");
@@ -376,7 +376,7 @@ REBNATIVE(of)
 
     if (ANY_ESCAPABLE_GET(prop)) {  // !!! See note above
         if (Eval_Value_Throws(SPARE, prop, SPECIFIED))
-            return_thrown (SPARE);
+            return THROWN;
 
         if (not IS_WORD(SPARE)) {
             Move_Cell(prop, SPARE);

@@ -123,13 +123,13 @@ bool Interpreted_Dispatch_Details_1_Throws(
     }
 
     if (Do_Any_Array_At_Throws(spare, body, SPC(f->varlist))) {
-        const REBVAL *label = VAL_THROWN_LABEL(spare);
+        const REBVAL *label = VAL_THROWN_LABEL(f);
         if (
             IS_ACTION(label)  // catch UNWIND here, see [2]
             and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
             and VAL_ACTION_BINDING(label) == CTX(f->varlist)
         ){
-            CATCH_THROWN(spare, spare);  // preserves CELL_FLAG_UNEVALUATED
+            CATCH_THROWN(spare, f);  // preserves CELL_FLAG_UNEVALUATED
 
             *returned = true;
             return false;  // we caught the THROW
@@ -160,7 +160,7 @@ REB_R Lambda_Unoptimized_Dispatcher(REBFRM *f)
 
     REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
     if (Do_Any_Array_At_Core_Throws(OUT, flags, body, SPC(f->varlist)))
-        return_thrown (OUT);
+        return THROWN;
 
     if (Is_Stale(OUT))
         return_void (OUT);
@@ -195,7 +195,7 @@ REB_R Func_Dispatcher(REBFRM *f)
     //
     bool returned;
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
-        return_thrown (SPARE);
+        return THROWN;
 
     if (returned) {  // assume RETURN did any necessary type checking
         if (Is_Void(SPARE))
@@ -489,11 +489,11 @@ REBNATIVE(skippable_q)
 //
 // See notes is %sys-frame.h about how there is no actual REB_THROWN type.
 //
-REBVAL *Init_Thrown_Unwind_Value(
-    REBVAL *out,
+REB_R Init_Thrown_Unwind_Value(
+    REBFRM *frame_,
     const REBVAL *level, // FRAME!, ACTION! (or INTEGER! relative to frame)
     const REBVAL *value,
-    REBFRM *frame // required if level is INTEGER! or ACTION!
+    REBFRM *target // required if level is INTEGER! or ACTION!
 ) {
     DECLARE_LOCAL (label);
     Copy_Cell(label, Lib(UNWIND));
@@ -506,7 +506,7 @@ REBVAL *Init_Thrown_Unwind_Value(
         if (count <= 0)
             fail (Error_Invalid_Exit_Raw());
 
-        REBFRM *f = frame->prior;
+        REBFRM *f = target->prior;
         for (; true; f = f->prior) {
             if (f == FS_BOTTOM)
                 fail (Error_Invalid_Exit_Raw());
@@ -527,7 +527,7 @@ REBVAL *Init_Thrown_Unwind_Value(
     else {
         assert(IS_ACTION(level));
 
-        REBFRM *f = frame->prior;
+        REBFRM *f = target->prior;
         for (; true; f = f->prior) {
             if (f == FS_BOTTOM)
                 fail (Error_Invalid_Exit_Raw());
@@ -545,7 +545,7 @@ REBVAL *Init_Thrown_Unwind_Value(
         }
     }
 
-    return Init_Thrown_With_Label(out, value, label);
+    return Init_Thrown_With_Label(frame_, value, label);
 }
 
 
@@ -581,7 +581,7 @@ REBNATIVE(unwind)
     else
         Meta_Unquotify(v);
 
-    return_thrown (Init_Thrown_Unwind_Value(OUT, level, v, frame_));
+    return Init_Thrown_Unwind_Value(FRAME, level, v, frame_);;
 }
 
 
@@ -695,7 +695,7 @@ REBNATIVE(definitional_return)
     Copy_Cell(label, Lib(UNWIND)); // see also Make_Thrown_Unwind_Value
     INIT_VAL_ACTION_BINDING(label, f_binding);
 
-    return_thrown (Init_Thrown_With_Label(f->out, v, label));
+    return Init_Thrown_With_Label(FRAME, v, label);
   }
 }
 

@@ -3167,7 +3167,7 @@ REBNATIVE(transcode)
         REBVAL *line_int = ARG(return);  // use return as scratch slot
         Init_Integer(line_int, ss.line);
         if (Set_Var_Core_Throws(SPARE, nullptr, ARG(line), SPECIFIED, line_int))
-            return_thrown (SPARE);
+            return THROWN;
     }
 
     // Return the input BINARY! or TEXT! advanced by how much the transcode
@@ -3204,7 +3204,7 @@ REBNATIVE(transcode)
         }
 
         if (Set_Var_Core_Throws(SPARE, nullptr, ARG(next), SPECIFIED, rest))
-            return_thrown (SPARE);
+            return THROWN;
     }
 
     return OUT;

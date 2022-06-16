@@ -329,16 +329,16 @@ static bool Subparse_Throws(
         // or not found.  This returns the interrupted flag which is still
         // ignored by most callers, but makes that fact more apparent.
         //
-        const REBVAL *label = VAL_THROWN_LABEL(out);
+        const REBVAL *label = VAL_THROWN_LABEL(FRAME);
         if (IS_ACTION(label)) {
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_REJECT))) {
-                CATCH_THROWN(out, out);
+                CATCH_THROWN(out, FRAME);
                 *interrupted_out = true;
                 return false;
             }
 
             if (VAL_ACTION(label) == VAL_ACTION(Lib(PARSE_ACCEPT))) {
-                CATCH_THROWN(out, out);
+                CATCH_THROWN(out, FRAME);
                 assert(IS_INTEGER(out));
                 *interrupted_out = true;
                 return false;
@@ -476,7 +476,7 @@ REB_R Process_Group_For_Parse(
         : Derive_Specifier(P_RULE_SPECIFIER, group);
 
     if (Do_Any_Array_At_Throws(cell, group, derived))
-        return R_THROWN;
+        return THROWN;
 
     // !!! The input is not locked from modification by agents other than the
     // PARSE's own REMOVE/etc.  This is a sketchy idea, but as long as it's
@@ -519,7 +519,7 @@ static REB_R Parse_One_Rule(
     if (IS_GROUP(rule) or IS_GET_GROUP(rule)) {
         rule = Process_Group_For_Parse(frame_, SPARE, rule);
         if (rule == R_THROWN)
-            return_thrown (SPARE);
+            return THROWN;
 
         if (rule == R_INVISIBLE) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
@@ -605,8 +605,7 @@ static REB_R Parse_One_Rule(
             (P_FLAGS & PF_FIND_MASK)
                 | (P_FLAGS & PF_REDBOL)
         )){
-            Move_Cell(OUT, subresult);
-            return R_THROWN;
+            return THROWN;
         }
 
         UNUSED(interrupted);  // !!! ignore "interrupted" (ACCEPT or REJECT?)
@@ -774,10 +773,9 @@ static REBIXO To_Thru_Block_Rule(
                 rule = blk;
             else {
                 rule = Process_Group_For_Parse(frame_, cell, blk);
-                if (rule == R_THROWN) {
-                    Move_Cell(OUT, cell);
+                if (rule == R_THROWN)
                     return THROWN_FLAG;
-                }
+
                 if (rule == R_INVISIBLE)
                     continue;
             }
@@ -1120,7 +1118,7 @@ static void Handle_Mark_Rule(
             temp,  // <-- output cell
             Lib(SET), OUT, ARG(position)
         )){
-            fail (Error_No_Catch_For_Throw(OUT));
+            fail (Error_No_Catch_For_Throw(FRAME));
         }
         RESET(OUT);
     }
@@ -1391,10 +1389,9 @@ REBNATIVE(subparse)
       process_group:
 
         rule = Process_Group_For_Parse(f, SPARE, rule);
-        if (rule == R_THROWN) {
-            Move_Cell(OUT, SPARE);
-            return R_THROWN;
-        }
+        if (rule == R_THROWN)
+            return THROWN;
+
         if (rule == R_INVISIBLE) {  // was a (...), or null-bearing :(...)
             FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
             goto pre_rule;
@@ -1419,14 +1416,8 @@ REBNATIVE(subparse)
       #endif
 
         if (--Eval_Countdown <= 0) {
-            RESET(SPARE);
-
-            if (Do_Signals_Throws(SPARE)) {
-                Move_Cell(OUT, SPARE);
-                return R_THROWN;
-            }
-
-            assert(Is_Void(SPARE));
+            if (Do_Signals_Throws(FRAME))
+                return THROWN;
         }
     }
 
@@ -1810,7 +1801,6 @@ REBNATIVE(subparse)
                     P_RULE,
                     P_RULE_SPECIFIER
                 )) {
-                    Copy_Cell(OUT, condition);
                     goto return_thrown;
                 }
 
@@ -1832,18 +1822,15 @@ REBNATIVE(subparse)
                 DECLARE_LOCAL (thrown_arg);
                 Init_Integer(thrown_arg, P_POS);
 
-                Init_Thrown_With_Label(OUT, thrown_arg, Lib(PARSE_ACCEPT));
+                Init_Thrown_With_Label(FRAME, thrown_arg, Lib(PARSE_ACCEPT));
                 goto return_thrown; }
 
               case SYM_REJECT: {
                 //
                 // Similarly, this is a break/continue style "throw"
                 //
-                return_thrown (Init_Thrown_With_Label(
-                    OUT,
-                    Lib(NULL),
-                    Lib(PARSE_REJECT)
-                )); }
+                Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(PARSE_REJECT));
+                goto return_thrown; }
 
               case SYM_FAIL:  // deprecated... use LOGIC! false instead
                 Init_Nulled(ARG(position));  // not found
@@ -2294,8 +2281,7 @@ REBNATIVE(subparse)
                 (P_FLAGS & PF_FIND_MASK)  // no PF_ONE_RULE
                     | (P_FLAGS & PF_REDBOL)
             )){
-                Move_Cell(OUT, SPARE);
-                return R_THROWN;
+                return THROWN;
             }
 
             // Non-breaking out of loop instances of match or not.
@@ -2328,7 +2314,7 @@ REBNATIVE(subparse)
 
             REB_R r = Parse_One_Rule(f, P_POS, rule);
             if (r == R_THROWN)
-                return R_THROWN;
+                return THROWN;
 
             if (r == R_UNHANDLED)
                 i = END_FLAG;
@@ -2476,8 +2462,7 @@ REBNATIVE(subparse)
                         set_or_copy_word,
                         P_RULE_SPECIFIER
                     )){
-                        Move_Cell(OUT, SPARE);
-                        return R_THROWN;
+                        return THROWN;
                     }
 
                     // !!! What SET-GROUP! can do in PARSE is more
@@ -2696,10 +2681,10 @@ REBNATIVE(subparse)
 
   return_thrown:
     if (not IS_NULLED(ARG(collection)))  // throw -> drop COLLECT additions
-        if (VAL_THROWN_LABEL(OUT) != Lib(PARSE_ACCEPT))  // ...unless
+        if (VAL_THROWN_LABEL(FRAME) != Lib(PARSE_ACCEPT))  // ...unless
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
-    return R_THROWN;
+    return THROWN;
 }
 
 
@@ -2734,7 +2719,7 @@ REBNATIVE(parse_p)
             SPARE,  // <-- output cell
             Lib(AS), Lib(BLOCK_X), rebQ(input)
         )){
-            return_thrown (SPARE);
+            return THROWN;
         }
         Move_Cell(input, SPARE);
     }
@@ -2743,7 +2728,7 @@ REBNATIVE(parse_p)
             SPARE,  // <-- output cell
             Lib(AS), Lib(TEXT_X), input
         )){
-            return_thrown (SPARE);
+            return THROWN;
         }
         Move_Cell(input, SPARE);
     }
@@ -2797,7 +2782,7 @@ REBNATIVE(parse_p)
         // stack) should be handled here.  However, RETURN was eliminated,
         // in favor of enforcing a more clear return value protocol for PARSE
 
-        return_thrown (OUT);
+        return THROWN;
     }
 
     if (IS_NULLED(OUT))

@@ -154,7 +154,7 @@ static void Evaluator_Shared_Checks_Debug(REBFRM *f)
     if (IS_END(f_next))
         return;
 
-    if (not Is_Stale(f->out) and Is_Throwing(f))
+    if (Is_Throwing(f))
         return;
 
     //=//// v-- BELOW CHECKS ONLY APPLY IN EXITS CASE WITH MORE CODE //////=//

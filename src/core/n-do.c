@@ -66,7 +66,7 @@ REBNATIVE(reeval)
         flags,
         enfix
     )){
-        return_thrown (OUT);
+        return THROWN;
     }
 
     if (Is_Stale(OUT))
@@ -144,7 +144,7 @@ REBNATIVE(shove)
     }
     else if (IS_GROUP(f_value)) {
         if (Do_Any_Array_At_Throws(OUT, f_value, f_specifier))
-            return_thrown (OUT);
+            return THROWN;
 
         Move_Cell(shovee, OUT);  // can't eval directly into arg slot
     }
@@ -203,7 +203,7 @@ REBNATIVE(shove)
         )
     ){
         if (Eval_Value_Throws(OUT, left, SPECIFIED))
-            return_thrown (OUT);
+            return THROWN;
     }
     else {
         Copy_Cell(OUT, left);
@@ -222,7 +222,7 @@ REBNATIVE(shove)
         enfix
     )){
         rebRelease(composed_set_path);  // ok if nullptr
-        return_thrown (OUT);
+        return THROWN;
     }
 
     assert(not Is_Stale(OUT));  // !!! can this happen?
@@ -362,7 +362,7 @@ REBNATIVE(do)
       //
       case REB_BLOCK : {
         if (Do_Any_Array_At_Throws(OUT, source, SPECIFIED))
-            return_thrown (OUT);
+            return THROWN;
         break; }
 
       case REB_VARARGS : {
@@ -384,7 +384,7 @@ REBNATIVE(do)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
-                return_thrown (OUT);
+                return THROWN;
             }
 
             Init_Stale_Void(position); // convention for shared data at endpoint
@@ -411,7 +411,7 @@ REBNATIVE(do)
         do {
             if (Eval_Step_Throws(OUT, subframe)) {
                 Abort_Frame(subframe);
-                return_thrown (OUT);
+                return THROWN;
             }
         } while (NOT_END(f->feed->value));
 
@@ -438,7 +438,7 @@ REBNATIVE(do)
                 rebQ(REF(args)),
                 REF(only) ? Lib(TRUE) : Lib(FALSE)
         )){
-            return_thrown (OUT);
+            return THROWN;
         }
         return_non_void (OUT);
       }
@@ -463,12 +463,12 @@ REBNATIVE(do)
             fail (Error_Do_Arity_Non_Zero_Raw());
 
         if (Eval_Value_Throws(OUT, source, SPECIFIED))
-            return_thrown (OUT);
+            return THROWN;
         break;
 
       case REB_FRAME :
         if (Do_Frame_Throws(RESET(OUT), source))
-            return_thrown (OUT); // prohibits recovery from exits
+            return THROWN; // prohibits recovery from exits
         Reify_Eval_Out_Plain(OUT);
         break;
 
@@ -549,7 +549,7 @@ REBNATIVE(evaluate)
 
                 if (Eval_Core_Throws(f)) {
                     Abort_Frame(f);
-                    return_thrown (SPARE);
+                    return THROWN;
                 }
 
                 VAL_INDEX_UNBOUNDED(source) = FRM_INDEX(f);  // new index
@@ -580,7 +580,7 @@ REBNATIVE(evaluate)
                     feed,
                     EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED
                 )){
-                    return_thrown (SPARE);
+                    return THROWN;
                 }
 
                 if (REF(next))
@@ -602,7 +602,7 @@ REBNATIVE(evaluate)
             fail ("/NEXT Behavior not implemented for FRAME! in EVALUATE");
 
         if (Do_Frame_Throws(SPARE, source))
-            return_thrown (SPARE);  // prohibits recovery from exits
+            return THROWN;  // prohibits recovery from exits
         break;
 
       case REB_ACTION: {
@@ -614,7 +614,7 @@ REBNATIVE(evaluate)
             fail (Error_Do_Arity_Non_Zero_Raw());
 
         if (Eval_Value_Throws(SPARE, source, SPECIFIED))
-            return_thrown (SPARE);
+            return THROWN;
 
         break; }
 
@@ -645,7 +645,7 @@ REBNATIVE(evaluate)
                 // having BLANK! mean "thrown" may evolve into a convention.
                 //
                 Init_Trash(position);
-                return_thrown (SPARE);
+                return THROWN;
             }
 
             VAL_INDEX_UNBOUNDED(position) = index;
@@ -664,7 +664,7 @@ REBNATIVE(evaluate)
 
             REBFLGS flags = EVAL_MASK_DEFAULT;
             if (Eval_Step_In_Subframe_Throws(SPARE, f, flags))
-                return_thrown (SPARE);
+                return THROWN;
         }
         break; }
 
@@ -751,7 +751,7 @@ REBNATIVE(redo)
     // to restart the phase at the point of parameter checking.  Make that
     // the actual value that Eval_Core() catches.
     //
-    return_thrown (Init_Thrown_With_Label(OUT, restartee, SPARE));
+    return Init_Thrown_With_Label(FRAME, restartee, SPARE);
 }
 
 
@@ -860,7 +860,7 @@ REBNATIVE(applique)
 
     if (Process_Action_Core_Throws(f)) {
         Abort_Frame(f);
-        return_thrown (OUT);
+        return THROWN;
     }
 
     Drop_Frame(f);
@@ -958,7 +958,6 @@ REBNATIVE(apply)
         }
 
         if (Eval_Step_Throws(RESET(SPARE), f)) {
-            Move_Cell(OUT, SPARE);
             arg_threw = true;
             goto end_loop;
         }
@@ -1082,7 +1081,7 @@ REBNATIVE(apply)
         fail (error);  // only safe to fail *AFTER* we have cleared binder
 
     if (arg_threw)
-        return_thrown (OUT);
+        return THROWN;
   }
 
     // Need to do this up front, because it captures f->dsp.
@@ -1107,7 +1106,7 @@ REBNATIVE(apply)
 
     if (Process_Action_Core_Throws(f)) {
         Abort_Frame(f);
-        return_thrown (OUT);
+        return THROWN;
     }
 
     Drop_Frame(f);

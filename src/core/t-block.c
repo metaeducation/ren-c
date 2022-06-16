@@ -559,7 +559,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
             flags->reverse ? v1 : v2,
             flags->reverse ? v2 : v1
     )){
-        fail (Error_No_Catch_For_Throw(result));
+        fail (Error_No_Catch_For_Throw(FS_TOP));
     }
 
     REBINT tristate = -1;

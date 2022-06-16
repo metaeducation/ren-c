@@ -76,7 +76,7 @@ REB_R Do_Port_Action(REBFRM *frame_, REBVAL *port, const Symbol *verb)
     }
 
     if (Redo_Action_Maybe_Stale_Throws(OUT, frame_, VAL_ACTION(action)))
-        return_thrown (OUT);
+        return THROWN;
 
     Clear_Stale_Flag(OUT);
 

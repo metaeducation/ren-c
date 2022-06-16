@@ -145,7 +145,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     while (true) {
         if (Process_Action_Core_Throws(sub)) {
             Abort_Frame(sub);
-            return_thrown (sub->out);
+            return THROWN;
         }
 
         // We reuse the subframe's REBFRM structure, but have to drop the

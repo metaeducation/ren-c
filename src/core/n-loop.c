@@ -42,9 +42,9 @@ typedef enum {
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Try_Catch_Break_Or_Continue(REBVAL* val)
+bool Try_Catch_Break_Or_Continue(REBVAL *out, REBFRM* frame_)
 {
-    const REBVAL *label = VAL_THROWN_LABEL(val);
+    const REBVAL *label = VAL_THROWN_LABEL(frame_);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
@@ -53,8 +53,8 @@ bool Try_Catch_Break_Or_Continue(REBVAL* val)
         return false;
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
-        CATCH_THROWN(val, val);
-        assert(IS_NULLED(val)); // BREAK must always return NULL
+        CATCH_THROWN(out, frame_);
+        assert(IS_NULLED(out)); // BREAK must always return NULL
         return true;
     }
 
@@ -65,8 +65,8 @@ bool Try_Catch_Break_Or_Continue(REBVAL* val)
         // in cases like MAP-EACH (one wants a continue to not add any value,
         // as opposed to some ~void~ BAD-WORD!)  Other loops may vary.
         //
-        CATCH_THROWN(val, val);
-        assert(VAL_TYPE_UNCHECKED(val) != REB_NULL);
+        CATCH_THROWN(out, frame_);
+        assert(VAL_TYPE_UNCHECKED(out) != REB_NULL);
         return true;
     }
 
@@ -90,7 +90,7 @@ REBNATIVE(break)
 {
     INCLUDE_PARAMS_OF_BREAK;
 
-    return_thrown (Init_Thrown_With_Label(OUT, Lib(NULL), Lib(BREAK)));
+    return Init_Thrown_With_Label(FRAME, Lib(NULL), Lib(BREAK));
 }
 
 
@@ -122,7 +122,7 @@ REBNATIVE(continue)
     else
         Meta_Unquotify(v);
 
-    return_thrown (Init_Thrown_With_Label(OUT, v, Lib(CONTINUE)));
+    return Init_Thrown_With_Label(FRAME, v, Lib(CONTINUE));
 }
 
 
@@ -156,8 +156,8 @@ static REB_R Loop_Series_Common(
     REBINT s = VAL_INDEX(start);
     if (s == end) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -182,8 +182,8 @@ static REB_R Loop_Series_Common(
             : cast(REBINT, *state) >= end
     ){
         if (Do_Branch_Throws(OUT, body, END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -238,8 +238,8 @@ static REB_R Loop_Integer_Common(
     //
     if (start == end) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -260,8 +260,8 @@ static REB_R Loop_Integer_Common(
 
     while (counting_up ? *state <= end : *state >= end) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -327,8 +327,8 @@ static REB_R Loop_Number_Common(
     //
     if (s == e) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -347,8 +347,8 @@ static REB_R Loop_Number_Common(
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(OUT, body, END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -604,10 +604,8 @@ static REB_R Loop_Each_Core(struct Loop_Each_State *les) {
 
         DECLARE_LOCAL (temp);
         if (Do_Any_Array_At_Throws(temp, les->body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(temp)) {
-                Move_Cell(les->out, temp);
+            if (not Try_Catch_Break_Or_Continue(temp, FS_TOP))
                 return R_THROWN;  // non-loop-related throw
-            }
 
             if (Is_Breaking_Null(temp)) {
                 Init_Nulled(les->out);
@@ -1033,8 +1031,8 @@ REBNATIVE(for_skip)
         }
 
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -1105,7 +1103,7 @@ REBNATIVE(stop)
     else
         Meta_Unquotify(v);
 
-    return_thrown (Init_Thrown_With_Label(OUT, v, Lib(STOP)));
+    return Init_Thrown_With_Label(FRAME, v, Lib(STOP));
 }
 
 
@@ -1126,8 +1124,8 @@ REBNATIVE(cycle)
 
     while (true) {
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT)) {
-                const REBVAL *label = VAL_THROWN_LABEL(OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME)) {
+                const REBVAL *label = VAL_THROWN_LABEL(FRAME);
                 if (
                     IS_ACTION(label)
                     and ACT_DISPATCHER(VAL_ACTION(label)) == &N_stop
@@ -1135,7 +1133,7 @@ REBNATIVE(cycle)
                     // See notes on STOP for why CYCLE is unique among loop
                     // constructs, with a BREAK variant that returns a value.
                     //
-                    CATCH_THROWN(OUT, OUT);
+                    CATCH_THROWN(OUT, FRAME);
 
                     // !!! Technically, we know CYCLE's body will always run,
                     // so we could make an exception to having it return
@@ -1150,7 +1148,7 @@ REBNATIVE(cycle)
                     return OUT;
                 }
 
-                return_thrown (OUT);
+                return THROWN;
             }
 
             if (Is_Breaking_Null(OUT))
@@ -1182,7 +1180,7 @@ REBNATIVE(cycle)
 REBNATIVE(for_each)
 {
     if (Loop_Each_Throws(frame_, LOOP_FOR_EACH))
-        return_thrown (OUT);
+        return THROWN;
 
     // pure NULL output means there was a BREAK
     // stale means body never ran: `10 = (10 maybe for-each x [] [<skip>])`
@@ -1215,7 +1213,7 @@ REBNATIVE(for_each)
 REBNATIVE(every)
 {
     if (Loop_Each_Throws(frame_, LOOP_EVERY))
-        return_thrown (OUT);
+        return THROWN;
 
     // pure NULL output means there was a BREAK
     // stale means body never ran: `10 = (10 maybe every x [] [<skip>])`
@@ -1440,7 +1438,7 @@ static REB_R Remove_Each_Core(struct Remove_Each_State *res)
         }
 
         if (Do_Any_Array_At_Throws(res->out, res->body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(res->out)) {
+            if (not Try_Catch_Break_Or_Continue(res->out, FS_TOP)) {
                 REBLEN removals = Finalize_Remove_Each(res);
                 UNUSED(removals);
 
@@ -1637,7 +1635,7 @@ REBNATIVE(remove_each)
     REB_R r = rebRescue(cast(REBDNG*, &Remove_Each_Core), &res);
 
     if (r == R_THROWN)
-        return_thrown (OUT);
+        return THROWN;
 
     if (r) {  // Remove_Each_Core() couldn't finalize in this case due to fail
         assert(IS_ERROR(r));
@@ -1738,7 +1736,7 @@ REBNATIVE(map)
 
     if (Loop_Each_Throws(frame_, LOOP_MAP_EACH)) {
         DS_DROP_TO(dsp_orig);
-        return_thrown (OUT);
+        return THROWN;
     }
 
     if (not Is_Stale(OUT)) {  // only modifies on break
@@ -1794,8 +1792,8 @@ REBNATIVE(repeat)
 
     for (; count > 0; count--) {
         if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -1838,7 +1836,7 @@ REBNATIVE(for)
 
     if (IS_GROUP(body)) {
         if (Eval_Value_Throws(SPARE, body, SPECIFIED))
-            return_thrown (SPARE);
+            return THROWN;
         Move_Cell(body, SPARE);
     }
 
@@ -1860,7 +1858,7 @@ REBNATIVE(for)
             OUT,  // <-- output cell
             Lib(FOR_EACH), ARG(vars), rebQ(value), body
         )){
-            return_thrown (OUT);
+            return THROWN;
         }
         return OUT;
     }
@@ -1930,8 +1928,8 @@ REBNATIVE(until)
 
     do {
         if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;
@@ -2008,7 +2006,7 @@ REBNATIVE(while)
 
     while (true) {
         if (Do_Any_Array_At_Throws(SPARE, condition, SPECIFIED))
-            return_thrown (SPARE);  // break/continue in body only, see [2]
+            return THROWN;  // break/continue in body only, see [2]
 
         if (Is_Void(SPARE))
             continue;  // restart loop when condition vanishes, see [3]
@@ -2021,8 +2019,8 @@ REBNATIVE(while)
         }
 
         if (Do_Branch_Throws(OUT, body, SPARE)) {
-            if (not Try_Catch_Break_Or_Continue(OUT))
-                return_thrown (OUT);
+            if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+                return THROWN;
 
             if (Is_Breaking_Null(OUT))
                 return nullptr;

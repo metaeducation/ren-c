@@ -389,10 +389,8 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
               escapable:
                 if (ANY_ESCAPABLE_GET(OUT)) {
-                    if (Eval_Value_Throws(ARG, OUT, SPECIFIED)) {
-                        Copy_Cell(OUT, ARG);
+                    if (Eval_Value_Throws(ARG, OUT, SPECIFIED))
                         goto abort_action;
-                    }
                 }
                 else {
                     Copy_Cell(ARG, OUT);
@@ -513,10 +511,8 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             REBFLGS flags = EVAL_MASK_DEFAULT
                 | EVAL_FLAG_FULFILLING_ARG;
 
-            if (Eval_Step_In_Subframe_Throws(ARG, f, flags)) {
-                Move_Cell(OUT, ARG);
+            if (Eval_Step_In_Subframe_Throws(ARG, f, flags))
                 goto abort_action;
-            }
 
             if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
                 Init_End_Isotope(ARG);
@@ -615,7 +611,6 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
                 if (Eval_Core_Throws(subframe)) {
                     Abort_Frame(subframe);
-                    Copy_Cell(SPARE, ARG);
                     goto abort_action;
                 }
 
@@ -630,10 +625,8 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 // it has to be evaluated.
                 //
                 Move_Cell(SPARE, ARG);
-                if (Eval_Value_Throws(ARG, SPARE, f_specifier)) {
-                    Move_Cell(SPARE, ARG);
+                if (Eval_Value_Throws(ARG, SPARE, f_specifier))
                     goto abort_action;
-                }
             }
             break;
 
@@ -1004,7 +997,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         // values is a definite advantage--as header bits are scarce!
         //
       case C_THROWN: {
-        const REBVAL *label = VAL_THROWN_LABEL(OUT);
+        const REBVAL *label = VAL_THROWN_LABEL(frame_);
         if (IS_ACTION(label)) {
             if (
                 VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
@@ -1024,7 +1017,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 // the user for other features, while this only takes one
                 // function away.
                 //
-                CATCH_THROWN(OUT, OUT);
+                CATCH_THROWN(OUT, frame_);
 
                 goto dispatch_completed;
             }
@@ -1035,7 +1028,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 // This was issued by REDO, and should be a FRAME! with
                 // the phase and binding we are to resume with.
                 //
-                CATCH_THROWN(OUT, OUT);
+                CATCH_THROWN(OUT, frame_);
                 assert(IS_FRAME(OUT));
 
                 // We are reusing the frame and may be jumping to an
@@ -1334,7 +1327,10 @@ void Drop_Action(REBFRM *f) {
     if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
 
-    if (Is_Stale(f->out) and VAL_TYPE_UNCHECKED(f->out) != REB_0) {
+    if (
+        not Is_Throwing(f)
+        and (Is_Stale(f->out) and VAL_TYPE_UNCHECKED(f->out) != REB_0)
+    ){
         //
         // If the whole evaluation of the action turned out to be invisible,
         // then refresh the feed's NO_LOOKAHEAD state to whatever it was

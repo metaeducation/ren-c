@@ -456,7 +456,7 @@ REBTYPE(Varargs)
                 value
             )){
                 assert(false);
-                return_thrown (OUT);
+                return THROWN;
             }
             assert(IS_LOGIC(OUT));
             return OUT; }
@@ -484,7 +484,7 @@ REBTYPE(Varargs)
             value
         )){
             assert(false); // VARARG_OP_FIRST can't throw
-            return_thrown (OUT);
+            return THROWN;
         }
         if (Is_Void(OUT))
            Init_Nulled(OUT);
@@ -507,7 +507,7 @@ REBTYPE(Varargs)
                 VARARG_OP_TAKE,
                 value
             )){
-                return_thrown (OUT);
+                return THROWN;
             }
             if (Is_Void(OUT))
                 return Init_Nulled(OUT);
@@ -529,7 +529,7 @@ REBTYPE(Varargs)
                 VARARG_OP_TAKE,
                 value
             )){
-                return_thrown (OUT);
+                return THROWN;
             }
             if (Is_Void(OUT))
                 break;

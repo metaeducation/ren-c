@@ -606,10 +606,8 @@ REB_R MAKE_Error(
         );
 
         DECLARE_LOCAL (evaluated);
-        if (Do_Any_Array_At_Throws(evaluated, virtual_arg, SPECIFIED)) {
-            Move_Cell(out, evaluated);
+        if (Do_Any_Array_At_Throws(evaluated, virtual_arg, SPECIFIED))
             return R_THROWN;
-        }
 
         vars = ERR_VARS(e);
     }
@@ -1188,13 +1186,13 @@ REBCTX *Error_No_Value(const Cell *target) {
 //
 //  Error_No_Catch_For_Throw: C
 //
-REBCTX *Error_No_Catch_For_Throw(REBVAL *thrown)
+REBCTX *Error_No_Catch_For_Throw(REBFRM *frame_)
 {
     DECLARE_LOCAL (label);
-    Copy_Cell(label, VAL_THROWN_LABEL(thrown));
+    Copy_Cell(label, VAL_THROWN_LABEL(frame_));
 
     DECLARE_LOCAL (arg);
-    CATCH_THROWN(arg, thrown);
+    CATCH_THROWN(arg, frame_);
 
     if (Is_Void(arg))
         Init_None(arg);

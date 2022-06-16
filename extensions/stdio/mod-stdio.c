@@ -134,9 +134,8 @@ REBNATIVE(write_stdout)
         //
         // Yield to signals processing for cancellation requests.
         //
-        if (Do_Signals_Throws(SPARE))
-            fail (Error_No_Catch_For_Throw(SPARE));
-        assert(Is_Fresh(SPARE));
+        if (Do_Signals_Throws(FRAME))
+            fail (Error_No_Catch_For_Throw(FRAME));
 
         REBLEN part;
         if (remaining <= 1024)
@@ -185,7 +184,7 @@ REBNATIVE(read_stdin)
             OUT,  // <-- output cell
             "as binary! try read-line"
         )){
-            return_thrown (OUT);
+            return THROWN;
         }
         return OUT;
     }

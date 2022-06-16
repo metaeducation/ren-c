@@ -856,7 +856,7 @@ static void Run_Va_Translucent_May_Fail(
         // converted to a kind of error, and then re-converted into a THROW
         // to bubble up through Rebol stacks?  Development on this is ongoing.
         //
-        fail (Error_No_Catch_For_Throw(out));
+        fail (Error_No_Catch_For_Throw(FS_TOP));
     }
 }
 

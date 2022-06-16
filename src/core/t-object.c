@@ -625,10 +625,8 @@ REB_R MAKE_Context(
         );
 
         DECLARE_LOCAL (dummy);
-        if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED)) {
-            Move_Cell(out, dummy);  // GC-guarded context was in out
+        if (Do_Any_Array_At_Throws(dummy, virtual_arg, SPECIFIED))
             return R_THROWN;
-        }
 
         return out;
     }
@@ -1422,9 +1420,8 @@ REBNATIVE(construct)
     //
     Bind_Values_Deep(at, tail, CTX_ARCHETYPE(ctx));
 
-    DECLARE_LOCAL (dummy);
-    if (Do_Any_Array_At_Throws(dummy, spec, SPECIFIED))
-        return_thrown (dummy);  // evaluation result ignored unless thrown
+    if (Do_Any_Array_At_Throws(SPARE, spec, SPECIFIED)) // eval result ignored
+        return THROWN;
 
     return OUT;
 }

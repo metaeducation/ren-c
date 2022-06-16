@@ -82,7 +82,7 @@ REBNATIVE(if)
         return_void (OUT);  // ^-- test errors on literal block
 
     if (Do_Branch_Throws(OUT, branch, condition))
-        return_thrown (OUT);  // ^-- condition is passed to function branches
+        return THROWN;  // ^-- condition is passed to function branches
 
     return_branched (OUT);  // asserts not null or ~void~
 }
@@ -113,7 +113,7 @@ REBNATIVE(either)
         : ARG(false_branch);
 
     if (Do_Branch_Throws(OUT, branch, condition))
-        return_thrown (OUT);  // ^-- condition is passed to function branches
+        return THROWN;  // ^-- condition is passed to function branches
 
     return_branched (OUT);  // asserts not null or ~void~
 }
@@ -226,7 +226,7 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     Meta_Unquotify(in);
 
     if (Do_Branch_Throws(OUT, ARG(branch), in))
-        return_thrown (OUT);
+        return THROWN;
 
     return_branched (OUT);  // asserts not null or ~void~
 }
@@ -264,7 +264,7 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     Meta_Unquotify(in);
 
     if (Do_Branch_Throws(SPARE, ARG(branch), in))
-        return_thrown (SPARE);
+        return THROWN;
 
     Move_Cell(OUT, in);
     return_branched (OUT);  // also wouldn't run if `in` was null or ~void~
@@ -329,7 +329,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     }
 
     if (Do_Branch_Throws(OUT, ARG(branch), in))
-        return_thrown (OUT);
+        return THROWN;
 
     return_branched (OUT);  // asserts not null or ~void~
 }
@@ -378,7 +378,7 @@ REBNATIVE(match)
       case REB_BLOCK: {
         REB_R r = MAKE_Typeset(SPARE, REB_TYPESET, nullptr, test);
         if (r == R_THROWN)
-            return_thrown (SPARE);
+            return THROWN;
         test = SPARE;
         goto test_is_typeset; }
 
@@ -393,7 +393,7 @@ REBNATIVE(match)
             SPARE,  // <-- output cell
             test, rebQ(v)
         )){
-            return_thrown (SPARE);
+            return THROWN;
         }
         if (IS_FALSEY(SPARE))
             return nullptr;
@@ -523,7 +523,7 @@ REBNATIVE(all)
     while (NOT_END(f_value)) {
         if (Eval_Step_Throws(OUT, f)) {  // overlap output, see [1]
             Abort_Frame(f);
-            return_thrown (OUT);
+            return THROWN;
         }
 
         if (Is_Stale(OUT))  // void steps, e.g. (comment "hi") (if false [<a>])
@@ -543,7 +543,7 @@ REBNATIVE(all)
                 SPARE,  // <-- output cell
                 predicate, rebQ(NULLIFY_NULLED(OUT))
             )){
-                return_thrown (SPARE);
+                return THROWN;
             }
 
             if (IS_FALSEY(SPARE)) {
@@ -599,7 +599,7 @@ REBNATIVE(any)
     while (NOT_END(f_value)) {
         if (Eval_Step_Throws(OUT, f)) {
             Abort_Frame(f);
-            return_thrown (OUT);
+            return THROWN;
         }
 
         if (Is_Stale(OUT))  // void steps, e.g. (comment "hi") (if false [<a>])
@@ -619,7 +619,7 @@ REBNATIVE(any)
                 SPARE,  // <-- output cell
                 predicate, rebQ(NULLIFY_NULLED(OUT))
             )){
-                return_thrown (SPARE);
+                return THROWN;
             }
 
             if (IS_TRUTHY(SPARE)) {
@@ -717,10 +717,8 @@ REBNATIVE(case)
         // true/false answer *and* know what the right hand argument was, for
         // full case coverage and for DEFAULT to work.
 
-        if (Eval_Step_Throws(SPARE, f)) {
-            Move_Cell(OUT, SPARE);
+        if (Eval_Step_Throws(SPARE, f))
             goto threw;
-        }
 
         if (Is_Void(SPARE))  // skip void expressions, see [1]
             continue;
@@ -755,10 +753,8 @@ REBNATIVE(case)
             // Note: Can't evaluate directly into ARG(branch)...frame cell.
             //
             DECLARE_LOCAL (temp);  // target of Eval_Value() kept save by eval
-            if (Eval_Value_Throws(temp, f_value, f_specifier)) {
-                Move_Cell(OUT, temp);
+            if (Eval_Value_Throws(temp, f_value, f_specifier))
                 goto threw;
-            }
             Move_Cell(ARG(branch), temp);
         }
         else
@@ -805,7 +801,7 @@ REBNATIVE(case)
   threw:
 
     Abort_Frame(f);
-    return_thrown (OUT);
+    return THROWN;
 }
 
 
@@ -858,10 +854,8 @@ REBNATIVE(switch)
         // !!! Advanced frame tricks *might* make this possible for N-ary
         // functions, the same way `match parse "aaa" [some "a"]` => "aaa"
 
-        if (Eval_Step_Throws(SPARE, f)) {
-            Move_Cell(OUT, SPARE);  // ^-- spare is already reset, exploit?
-            goto threw;
-        }
+        if (Eval_Step_Throws(SPARE, f))
+            goto threw;  // ^-- spare is already reset, exploit?
 
         if (Is_Void(SPARE))  // skip comments or failed conditionals
             continue;  // see note [2] in comments for CASE
@@ -984,7 +978,7 @@ REBNATIVE(switch)
   threw:
 
     Abort_Frame(f);
-    return_thrown (OUT);
+    return THROWN;
 }
 
 
@@ -1019,7 +1013,7 @@ REBNATIVE(default)
     // the SET without doing a double evaluation.
     //
     if (Get_Var_Core_Throws(OUT, steps, target, SPECIFIED))
-        return_thrown (OUT);
+        return THROWN;
 
     // We only consider those bad words which are in the "unfriendly" state
     // that the system also knows to mean "emptiness" as candidates for
@@ -1049,11 +1043,11 @@ REBNATIVE(default)
     }
 
     if (Do_Branch_Throws(OUT, ARG(branch), END))
-        return_thrown (OUT);
+        return THROWN;
 
     if (Set_Var_Core_Throws(SPARE, nullptr, steps, SPECIFIED, OUT)) {
         assert(false);  // shouldn't be able to happen.
-        fail (Error_No_Catch_For_Throw(SPARE));
+        fail (Error_No_Catch_For_Throw(FRAME));
     }
 
     return OUT;
@@ -1098,7 +1092,7 @@ REBNATIVE(catch)
         return nullptr;  // no throw means just return null
     }
 
-    const REBVAL *label = VAL_THROWN_LABEL(OUT);
+    const REBVAL *label = VAL_THROWN_LABEL(frame_);
 
     if (REF(any) and not (
         IS_ACTION(label)
@@ -1163,7 +1157,7 @@ REBNATIVE(catch)
             goto was_caught;
     }
 
-    return_thrown (OUT); // throw name is in OUT, value is held task local
+    return THROWN; // throw label and value are held task local
 
   was_caught:
 
@@ -1171,7 +1165,7 @@ REBNATIVE(catch)
         REBARR *a = Make_Array(2);
 
         Copy_Cell(ARR_AT(a, 0), label); // throw name
-        CATCH_THROWN(ARR_AT(a, 1), OUT); // thrown value--may be null!
+        CATCH_THROWN(ARR_AT(a, 1), frame_); // thrown value--may be null!
         if (IS_NULLED(ARR_AT(a, 1)))
             SET_SERIES_LEN(a, 1); // trim out null value (illegal in block)
         else
@@ -1179,7 +1173,7 @@ REBNATIVE(catch)
         return Init_Block(OUT, a);
     }
 
-    CATCH_THROWN(OUT, OUT); // thrown value
+    CATCH_THROWN(OUT, frame_); // thrown value
 
     if (Is_Void(OUT))
         return Init_None(OUT);  // void would trigger ELSE
@@ -1213,9 +1207,5 @@ REBNATIVE(throw)
     REBVAL *v = ARG(value);
     Meta_Unquotify(v);
 
-    return_thrown (Init_Thrown_With_Label(
-        OUT,
-        v,
-        ARG(name)  // NULLED if unused
-    ));
+    return Init_Thrown_With_Label(FRAME, v, ARG(name));  // name can be nulled
 }

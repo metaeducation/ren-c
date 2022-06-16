@@ -158,6 +158,26 @@ inline static char VAL_RETURN_SIGNAL(const Cell *v) {
 #define R_THROWN \
     cast(REBVAL*, &PG_R_Thrown)
 
+inline static bool Is_Throwing(REBFRM *frame_) {
+    //
+    // !!! An original constraint on asking if something was throwing was
+    // that only the top frame could be asked about.  But Action_Executor()
+    // is called to re-dispatch when there may be a frame above (kept there
+    // by request from something like REDUCE).  We relax the constraint to
+    // only be able to return *true* to a throw request if there are no
+    // frames above on the stack.
+    //
+    if (not Is_Stale_Void(&TG_Thrown_Arg)) {
+        /*assert(frame_ == FS_TOP);*/  // forget even that check
+        UNUSED(frame_);  // currently only used for debug build check
+        return true;
+    }
+    return false;
+}
+
+#define THROWING Is_Throwing(frame_)
+
+
 // It is also used by path dispatch when it has taken performing a SET-PATH!
 // into its own hands, but doesn't want to bother saying to move the value
 // into the output slot...instead leaving that to the evaluator (as a
@@ -545,21 +565,24 @@ enum {
 // slots to have the CELL_FLAG_STALE bit set; it's not usually legal.
 //
 inline static void Mark_Eval_Out_Stale(REBVAL *out) {
-    out->header.bits |= CELL_FLAG_STALE;
+    out->header.bits |= CELL_FLAG_STALE;  // note: used by throw also
     out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
 inline static void Clear_Void_Flag(REBVAL *out) {
+    assert(not Is_Throwing(FS_TOP));  // stale outs during throw means thrown
     out->header.bits &= (~ CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
 // Must handle the Translucent and Invisible cases before clearing stale.
 //
 inline static void Clear_Stale_Flag(REBVAL *out) {
+    assert(not Is_Throwing(FS_TOP));  // stale outs during throw means thrown
     out->header.bits &= ~ (CELL_FLAG_STALE | CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
 inline static bool Was_Eval_Step_Void(const REBVAL *out) {
+    assert(not Is_Throwing(FS_TOP));  // stale outs during throw means thrown
     return did (out->header.bits & CELL_FLAG_OUT_NOTE_VOIDED);
 }
 
@@ -571,6 +594,7 @@ inline static bool Was_Eval_Step_Void(const REBVAL *out) {
 // CELL_FLAG_STALE set).  Review design of this.
 //
 inline static bool Is_Stale(const REBVAL *out) {
+    assert(not Is_Throwing(FS_TOP));  // stale outs during throw means thrown
     ASSERT_CELL_INITABLE_EVIL_MACRO(out);
 
     return did (out->header.bits & CELL_FLAG_STALE);
@@ -583,12 +607,10 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     return Move_Cell(out, v);
 }
 
-#define return_thrown(v) \
-    do { \
-        Maybe_Move_Cell(OUT, (v)); /* must be first, if Init_Thrown() */ \
-        assert(not Is_Stale_Void(&TG_Thrown_Arg)); \
-        return R_THROWN; \
-    } while (false)
+#define THROWN \
+    (assert(not Is_Stale_Void(&TG_Thrown_Arg)), \
+     Mark_Eval_Out_Stale(OUT), \
+     R_THROWN)
 
 
 // Convenience routine for returning a value which is *not* located in OUT.

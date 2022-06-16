@@ -120,7 +120,7 @@ REBNATIVE(delimit)
         if (Eval_Step_Throws(RESET(OUT), f)) {
             Drop_Mold(mo);
             Abort_Frame(f);
-            return_thrown (OUT);
+            return THROWN;
         }
 
         // These are all the things that we're willing to vaporize.  Since
@@ -184,7 +184,7 @@ REBNATIVE(delimit)
                 )){
                     Drop_Mold(mo);
                     Abort_Frame(f);
-                    return_thrown (OUT);
+                    return THROWN;
                 }
                 Form_Value(mo, OUT);
 

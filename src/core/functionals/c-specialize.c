@@ -494,7 +494,7 @@ REBNATIVE(specialize_p)  // see extended definition SPECIALIZE in %base-defs.r
         ARG(def),
         lowest_ordered_dsp
     )){
-        return_thrown (OUT);  // e.g. `specialize :append/dup [value: throw 10]`
+        return THROWN;  // e.g. `specialize :append/dup [value: throw 10]`
     }
 
     return OUT;

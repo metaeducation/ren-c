@@ -862,7 +862,7 @@ void Pick_From_Gob(
                 "@", SPECIFIC(ARR_AT(gob, IDX_GOB_PANE)),
                 "@", SPECIFIC(picker)
         )){
-            fail (Error_No_Catch_For_Throw(temp));
+            fail (Error_No_Catch_For_Throw(FS_TOP));
         }
         Move_Cell(out, temp);
     }

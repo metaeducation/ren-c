@@ -82,7 +82,7 @@ REB_R Adapter_Dispatcher(REBFRM *f)
     // Evaluate prelude into the SPARE cell (result discarded, see [1])
     //
     if (Do_Any_Array_At_Throws(SPARE, prelude, SPC(f->varlist)))
-        return_thrown (SPARE);  // won't be a RETURN, see [2]
+        return THROWN;  // won't be a RETURN, see [2]
 
     // The second thing to do is update the phase and binding to run the
     // function that is being adapted, and pass it to the evaluator to redo.

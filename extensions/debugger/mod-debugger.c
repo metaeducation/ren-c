@@ -67,7 +67,7 @@ bool Do_Breakpoint_Throws(
     REBVAL *inst = rebValue("debug-console");
 
     if (IS_INTEGER(inst)) {
-        Init_Thrown_With_Label(out, inst, Lib(QUIT));
+        Init_Thrown_With_Label(FS_TOP, inst, Lib(QUIT));
         rebRelease(inst);
         return true;
     }
@@ -121,7 +121,7 @@ REBNATIVE(breakpoint_p)
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
         Lib(BLANK)  // default result if RESUME does not override
     )){
-        return_thrown (SPARE);
+        return THROWN;
     }
 
     // !!! Should use a more specific protocol (e.g. pass in END).  But also,
@@ -158,7 +158,7 @@ REBNATIVE(pause)
         false,  // not a Ctrl-C, it's an actual BREAKPOINT
         ARG(code)  // default result if RESUME does not override
     )){
-        return_thrown (OUT);
+        return THROWN;
     }
 
     return OUT;
@@ -219,7 +219,7 @@ REBNATIVE(resume)
     // this stack level--and it failed or threw--we'd stay stuck in the
     // breakpoint's sandbox.  We throw it as-is and it gets evaluated later.
     //
-    return Init_Thrown_With_Label(OUT, expr, resume);
+    return Init_Thrown_With_Label(FRAME, expr, resume);
 }
 
 

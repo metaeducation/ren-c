@@ -198,7 +198,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
         EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE | EVAL_FLAG_NO_RESIDUE,
         outer, rootcopy
     )){
-        return_thrown (OUT);
+        return THROWN;
     }
 
     if (Is_Stale(OUT))

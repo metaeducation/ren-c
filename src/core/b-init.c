@@ -676,12 +676,10 @@ void Startup_Signals(void)
     // The thrown arg is not intended to ever be around long enough to be
     // seen by the GC.
     //
-  #if !defined(NDEBUG)
     assert(Is_Fresh(&TG_Thrown_Arg));
     Init_Stale_Void(&TG_Thrown_Arg);
-    assert(Is_Fresh(&TG_Thrown_Label_Debug));  // only used "SPORADICALLY()"
-    Init_Stale_Void(&TG_Thrown_Label_Debug);
-  #endif
+    assert(Is_Fresh(&TG_Thrown_Label));
+    Init_Stale_Void(&TG_Thrown_Label);
 }
 
 
@@ -1189,11 +1187,8 @@ void Shutdown_Core(bool clean)
 
     assert(Is_Stale_Void(&TG_Thrown_Arg));
     RESET(&TG_Thrown_Arg);
-
-  #if !defined(NDEBUG)
-    assert(Is_Stale_Void(&TG_Thrown_Label_Debug));  // only used "SPORADICALLY()"
-    RESET(&TG_Thrown_Label_Debug);
-  #endif
+    assert(Is_Stale_Void(&TG_Thrown_Label));
+    RESET(&TG_Thrown_Label);
 
     Shutdown_Mold();
     Shutdown_Collector();

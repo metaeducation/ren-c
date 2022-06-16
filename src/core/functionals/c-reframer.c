@@ -303,7 +303,7 @@ REB_R Reframer_Dispatcher(REBFRM *f)
         f->feed,
         error_on_deferred
     )){
-        return_thrown (SPARE);
+        return THROWN;
     }
 
     REBVAL *arg = FRM_ARG(f, VAL_INT32(param_index));

@@ -176,7 +176,7 @@ REBNATIVE(and_1)  // see TO-C-NAME
         return Init_False(OUT);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
-        return_thrown (SPARE);
+        return THROWN;
 
     return Init_Logic(OUT, IS_TRUTHY(SPARE));
 }
@@ -207,7 +207,7 @@ REBNATIVE(or_1)  // see TO-C-NAME
         return Init_True(OUT);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
-        return_thrown (SPARE);
+        return THROWN;
 
     return Init_Logic(OUT, IS_TRUTHY(SPARE));
 }
@@ -235,7 +235,7 @@ REBNATIVE(xor_1)  // see TO-C-NAME
         fail (Error_Unintended_Literal_Raw(left));
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
-        return_thrown (SPARE);
+        return THROWN;
 
     if (IS_FALSEY(left))
         return Init_Logic(OUT, IS_TRUTHY(SPARE));

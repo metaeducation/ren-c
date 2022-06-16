@@ -172,15 +172,14 @@ PVAR REBDEV *PG_Device_List;  // Linked list of R3-Alpha-style "devices"
 **
 ***********************************************************************/
 
-TVAR REBVAL TG_Thrown_Arg;  // Non-GC protected argument to THROW
-#if !defined(NDEBUG)
-    //
-    // For reasons explained in %sys-frame.h, the thrown label is typically
-    // stored in the output cell...but to make sure access goes through the
-    // VAL_THROWN_LABEL(), a global is used "SPORADICALLY()"
-    //
-    TVAR REBVAL TG_Thrown_Label_Debug;
-#endif
+// The thrown label was once tunneled through the frame output cell, with the
+// idea that this would help avoid confusion by thinking there was an actual
+// valid result in the output.  Better means came along later of avoiding
+// confusion using CELL_FLAG_STALE--and not overwriting the output cell made
+// it possible to do UNWIND throws that could be invisible.
+//
+TVAR REBVAL TG_Thrown_Arg;
+TVAR REBVAL TG_Thrown_Label;
 
 // !!! These values were held in REBVALs for some reason in R3-Alpha, which
 // means that since they were INTEGER! they were signed 64-bit integers.  It
