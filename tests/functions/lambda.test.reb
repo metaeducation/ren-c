@@ -29,3 +29,10 @@
 [
     (quoter: 'x -> [x], (the a) = quoter a)
 ]
+
+; Lambdas can be invisible
+[
+    (lammy: x -> [], void? lammy 1)
+    (lammy: lambda '[x y] [elide x + y], void? lammy 1 2)
+    (lammy: lambda [x y <local> z] [elide x + y], void? lammy 1 2)
+]

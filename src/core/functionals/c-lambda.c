@@ -88,11 +88,14 @@ REB_R Lambda_Dispatcher(REBFRM *f)
         REB_WORD
     );
 
-    // Note: Invisibility is not allowed, e.g. `x -> [elide x]` or `x -> []`
-    // will return a ~void~ isotope.  Hence prior `f->out` is always wiped out.
+    // Note: Invisibility is allowed in lambda, so `x -> []` is void
 
-    if (Do_Any_Array_At_Throws(OUT, block, specifier))
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
+    if (Do_Any_Array_At_Core_Throws(OUT, flags, block, specifier))
         return_thrown (OUT);
+
+    if (Is_Stale(OUT))
+        return_void (OUT);
 
     return OUT;
 }
