@@ -520,7 +520,7 @@ inline static REBVAL *Init_Action_Core(
     Init_Action_Core(TRACK(out), (a), (label), (binding))
 
 
-// The action frame run dispatchers, which get to take over the STATE_BYTE
+// The action frame run dispatchers, which get to take over the STATE byte
 // of the frame for their own use.  But before then, the state byte is used
 // by action dispatch itself.
 //
@@ -543,7 +543,7 @@ enum {
     ST_ACTION_TYPECHECKING
 
     // Note: There is no ST_ACTION_DISPATCHING, because if an action is
-    // dispatching, the STATE_BYTE belongs to the dispatcher.  Detecting the
+    // dispatching, the STATE byte belongs to the dispatcher.  Detecting the
     // state of being in dispatch is (f->key == f->key_tail), which tells you
     // that argument enumeration is finished.
 };

@@ -59,7 +59,7 @@
 
 #define KEY f->key
 
-#define frame_ f  // for OUT, SPARE, STATE_BYTE macros
+#define frame_ f  // for OUT, SPARE, STATE macros
 
 
 // In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
@@ -133,9 +133,9 @@ bool Process_Action_Core_Throws(REBFRM * const f)
   #endif
 
     if (not Is_Action_Frame_Fulfilling(f))
-        goto dispatch;  // STATE_BYTE belongs to the dispatcher if key=null
+        goto dispatch;  // STATE belongs to the dispatcher if key=null
 
-    switch (STATE_BYTE) {
+    switch (STATE) {
       case ST_ACTION_INITIAL_ENTRY:
         goto fulfill;
 
@@ -150,7 +150,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
     assert(DSP >= f->baseline.dsp);  // path processing may push REFINEMENT!s
 
-    assert(STATE_BYTE != ST_ACTION_DOING_PICKUPS);
+    assert(STATE != ST_ACTION_DOING_PICKUPS);
 
     for (; f->key != f->key_tail; ++f->key, ++f->arg, ++f->param) {
 
@@ -160,7 +160,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
       continue_fulfilling:
 
-        if (STATE_BYTE == ST_ACTION_DOING_PICKUPS) {
+        if (STATE == ST_ACTION_DOING_PICKUPS) {
             if (DSP != f->baseline.dsp)
                 goto next_pickup;
 
@@ -253,7 +253,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
   //=//// A /REFINEMENT ARG ///////////////////////////////////////////////=//
 
         if (GET_PARAM_FLAG(PARAM, REFINEMENT)) {
-            assert(STATE_BYTE != ST_ACTION_DOING_PICKUPS);  // jump lower
+            assert(STATE != ST_ACTION_DOING_PICKUPS);  // jump lower
             Init_Nulled(ARG);  // null means refinement not used
             goto continue_fulfilling;
         }
@@ -269,7 +269,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         // The return function is filled in by the dispatchers that provide it.
 
         if (pclass == PARAM_CLASS_RETURN) {
-            assert(STATE_BYTE != ST_ACTION_DOING_PICKUPS);
+            assert(STATE != ST_ACTION_DOING_PICKUPS);
             Init_None(ARG);
             goto continue_fulfilling;
         }
@@ -708,7 +708,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
             RESET(ARG);
         }
 
-        STATE_BYTE = ST_ACTION_DOING_PICKUPS;
+        STATE = ST_ACTION_DOING_PICKUPS;
         goto fulfill_arg;
     }
 

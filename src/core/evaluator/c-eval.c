@@ -88,7 +88,7 @@
 #define f_next f->feed->value
 #define f_next_gotten f->feed->gotten
 
-#define frame_ f  // for OUT, SPARE, STATE_BYTE macros
+#define frame_ f  // for OUT, SPARE, STATE macros
 
 // We make the macro for getting specifier a bit more complex here, to
 // account for reevaluation.  To help annotate why it's weird, we call it
@@ -98,9 +98,7 @@
 //
 #undef f_specifier
 #define v_specifier \
-    (STATE_BYTE == ST_EVALUATOR_REEVALUATING \
-        ? SPECIFIED \
-        : FEED_SPECIFIER(f->feed))
+    (STATE == ST_EVALUATOR_REEVALUATING ? SPECIFIED : FEED_SPECIFIER(f->feed))
 
 // In debug builds, the KIND_BYTE() calls enforce cell validity...but slow
 // things down a little.  So we only use the checked version in the main
@@ -206,7 +204,7 @@ inline static bool Rightward_Evaluate_Nonvoid_Into_Out_Throws(
     else {  // !!! Reusing the frame, would inert optimization be worth it?
         // !!! If reevaluating, this will forget that we are doing so.
         //
-        STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
 
         if (Eval_Step_Throws(OUT, f))  // reuse `f`
             return true;
@@ -292,7 +290,7 @@ bool Eval_Core_Throws(REBFRM * const f)
     // have to be a test for points to `goto` before running normal eval.
     // This cost is paid on every entry to Eval_Core().
     //
-    switch (STATE_BYTE) {
+    switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
         if (NOT_EVAL_FLAG(f, MAYBE_STALE))
             assert(Is_Void(OUT));
@@ -301,9 +299,9 @@ bool Eval_Core_Throws(REBFRM * const f)
       case ST_EVALUATOR_LOOKING_AHEAD:
         goto lookahead;
 
-      case ST_EVALUATOR_REEVALUATING: {  // v-- IMPORTANT: Keep STATE_BYTE
+      case ST_EVALUATOR_REEVALUATING: {  // v-- IMPORTANT: Keep STATE
         //
-        // It's important to leave STATE_BYTE as ST_EVALUATOR_REEVALUATING
+        // It's important to leave STATE as ST_EVALUATOR_REEVALUATING
         // during the switch state, because that's how the evaluator knows
         // not to redundantly apply LET bindings.  See `v_specifier` above.
 
@@ -812,17 +810,17 @@ bool Eval_Core_Throws(REBFRM * const f)
     // https://forum.rebol.info/t/1301
 
       case REB_META_WORD:
-        STATE_BYTE = ST_EVALUATOR_META_WORD;
+        STATE = ST_EVALUATOR_META_WORD;
         goto process_get_word;
 
       case REB_GET_WORD:
-        STATE_BYTE = ST_EVALUATOR_GET_WORD;
+        STATE = ST_EVALUATOR_GET_WORD;
         goto process_get_word;
 
       process_get_word:
         assert(
-            STATE_BYTE == ST_EVALUATOR_META_WORD
-            or STATE_BYTE == ST_EVALUATOR_GET_WORD
+            STATE == ST_EVALUATOR_META_WORD
+            or STATE == ST_EVALUATOR_GET_WORD
         );
 
         if (not gotten)
@@ -834,14 +832,14 @@ bool Eval_Core_Throws(REBFRM * const f)
         // !!! All isotopic decay should have already happened.
         // Lookup_Word() should be asserting this!
 
-        if (STATE_BYTE == ST_EVALUATOR_META_WORD)
+        if (STATE == ST_EVALUATOR_META_WORD)
             Meta_Quotify(OUT);
         else {
             if (Is_Isotope(OUT))
                 fail (Error_Bad_Word_Get(v, OUT));
         }
 
-        STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break;
 
 
@@ -1155,19 +1153,19 @@ bool Eval_Core_Throws(REBFRM * const f)
 
       case REB_META_PATH:
       case REB_META_TUPLE:
-        STATE_BYTE = ST_EVALUATOR_META_PATH_OR_META_TUPLE;
+        STATE = ST_EVALUATOR_META_PATH_OR_META_TUPLE;
         goto eval_path_or_tuple;
 
       case REB_GET_PATH:
       case REB_GET_TUPLE:
-        STATE_BYTE = ST_EVALUATOR_PATH_OR_TUPLE;
+        STATE = ST_EVALUATOR_PATH_OR_TUPLE;
         goto eval_path_or_tuple;
 
       eval_path_or_tuple:
 
         assert(
-            STATE_BYTE == ST_EVALUATOR_PATH_OR_TUPLE
-            or STATE_BYTE == ST_EVALUATOR_META_PATH_OR_META_TUPLE
+            STATE == ST_EVALUATOR_PATH_OR_TUPLE
+            or STATE == ST_EVALUATOR_META_PATH_OR_META_TUPLE
         );
 
         RESET(OUT);  // !!! Not needed, should there be debug only TRASH()
@@ -1180,14 +1178,14 @@ bool Eval_Core_Throws(REBFRM * const f)
         /* assert(NOT_CELL_FLAG(OUT, CELL_FLAG_UNEVALUATED)); */
         CLEAR_CELL_FLAG(OUT, UNEVALUATED);
 
-        if (STATE_BYTE == ST_EVALUATOR_META_PATH_OR_META_TUPLE)
+        if (STATE == ST_EVALUATOR_META_PATH_OR_META_TUPLE)
             Meta_Quotify(OUT);
         else {
             if (Is_Isotope(OUT))
                 fail (Error_Bad_Word_Get(v, OUT));
         }
 
-        STATE_BYTE = ST_EVALUATOR_INITIAL_ENTRY;
+        STATE = ST_EVALUATOR_INITIAL_ENTRY;
         break;
 
 

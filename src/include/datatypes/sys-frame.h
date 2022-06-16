@@ -197,8 +197,6 @@ inline static option(const Symbol*) FRM_LABEL(REBFRM *f) {
       { return mutable_SECOND_BYTE(f->flags); }  // ...but mutable
 #endif
 
-#define STATE_BYTE  FRM_STATE_BYTE(frame_)
-
 
 #define FLAG_STATE_BYTE(state) \
     FLAG_SECOND_BYTE(state)
@@ -596,6 +594,8 @@ inline static void Prep_Frame_Core(
     #define FRAME   frame_
     #define OUT     FRM_OUT(frame_)         // GC-safe slot for output value
     #define SPARE   FRM_SPARE(frame_)       // scratch GC-safe cell
+    #define STATE   FRM_STATE_BYTE(frame_)
+
     #define VOID    Native_Void_Result(frame_)
     #define NONE    Native_None_Result(frame_)
     #define THROWN  Native_Thrown_Result(frame_)

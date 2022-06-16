@@ -138,7 +138,7 @@ inline static bool Did_Init_Inert_Optimize_Complete(
     REBFED *feed,
     REBFLGS *flags
 ){
-    assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE_BYTE
+    assert(SECOND_BYTE(*flags) == 0);  // we might set the STATE byte
     assert(not IS_END(feed->value));  // would be wasting time to call
 
     if (not ANY_INERT(feed->value))

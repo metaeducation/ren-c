@@ -131,7 +131,7 @@ STATIC_ASSERT(EVAL_FLAG_CACHE_NO_LOOKAHEAD == FEED_FLAG_NO_LOOKAHEAD);
 STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 
 
-//=//// FLAGS 8-15 ARE USED FOR THE STATE_BYTE() //////////////////////////=//
+//=//// FLAGS 8-15 ARE USED FOR THE "STATE" byte ///////////////////////////=//
 //
 // One byte's worth is used to encode a "frame state" that can be used by
 // natives or dispatchers, e.g. to encode which step they are on.
@@ -190,7 +190,7 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
 //=//// EVAL_FLAG_ABRUPT_FAILURE ///////////////////////////////////////////=//
 //
 // !!! This is a current guess for how to handle the case of re-entering an
-// executor when it fail()s abruptly.  We don't want to steal a STATE_BYTE
+// executor when it fail()s abruptly.  We don't want to steal a STATE byte
 // for this in case the status of that state byte is important for cleanup.
 //
 #define EVAL_FLAG_ABRUPT_FAILURE \
