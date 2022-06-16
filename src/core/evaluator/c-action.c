@@ -1124,7 +1124,32 @@ bool Process_Action_Core_Throws(REBFRM * const f)
     //     o.f left-the  ; want error suggesting -> here, need flag for that
     //
     CLEAR_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);
-    assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
+
+    if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
+        //
+        // !!! This used to assert that there was no NEXT_ARG_FROM_OUT flag
+        // set, but this can happen, e.g.:
+        //
+        //     >> left-soft: enfixed func ['x [word!]] [return x]
+        //     >> (|| left-soft)
+        //
+        // The LEFT-SOFT looked back, and would have been able to take the ||
+        // except it noticed that it took no arguments.  So it allowed the ||
+        // to win the context (this is how HELP can quote things that quote
+        // left and would usually win, but don't when they have no args).
+        //
+        // The problem is that || doesn't take any arguments, so the LEFT-SOFT
+        // has put itself into the output cell to be quoted, but the || has
+        // this tweak:
+        //
+        //      tweak :|| 'barrier on
+        //
+        // It's not important enough to fix at time of writing, so error.  But
+        // a good answer needs to reactivate/reevaluate LEFT-SOFT as a new
+        // expression, somehow.
+        //
+        fail ("Left lookback toward thing that took no args, look at later");
+    }
 
     if (NOT_EVAL_FLAG(f, MAYBE_STALE))
         Clear_Stale_Flag(f->out);
