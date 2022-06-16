@@ -732,12 +732,11 @@ sys.make-scheme [
             return port
         ]
 
-        query: func [
-            return: [<opt> object!]
+        query: lambda [
             port [port!]
             <local> error state
         ][
-            return all [
+            all [
                 state: port.state
                 state.info
             ]

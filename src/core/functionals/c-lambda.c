@@ -101,11 +101,11 @@ REB_R Lambda_Dispatcher(REBFRM *f)
 //
 //  lambda: native [
 //
-//  {Create an ACTION! variant that acts the same, but has added parameters}
+//  {Makes an anonymous function that evaluates to its body, and has no RETURN}
 //
 //      return: [action!]
-//      :words "Names of arguments (will not be type checked)"
-//          [<end> word! lit-word! meta-word! block!]
+//      spec "Names of arguments (will not be type checked)"
+//          [blank! word! lit-word! meta-word! block!]
 //      body "Code to execute"
 //          [block!]
 //  ]
@@ -128,26 +128,26 @@ REBNATIVE(lambda)
     // (Arguably the <end> tolerance should be specially implemented by the
     // enfix form and not applicable to the prefix form, but it seems fine.)
     //
-    REBVAL *wordlist = ARG(words);
+    REBVAL *spec = ARG(spec);
     REBSPC *item_specifier;
     const Cell *item_tail;
     const Cell *item;
-    if (IS_BLOCK(wordlist)) {
-        item = VAL_ARRAY_AT(&item_tail, wordlist);
-        item_specifier = VAL_SPECIFIER(wordlist);
+    if (IS_BLOCK(spec)) {
+        item = VAL_ARRAY_AT(&item_tail, spec);
+        item_specifier = VAL_SPECIFIER(spec);
     }
     else if (
-        IS_WORD(wordlist)
-        or IS_META_WORD(wordlist)
-        or IS_QUOTED(wordlist)
+        IS_WORD(spec)
+        or IS_META_WORD(spec)
+        or IS_QUOTED(spec)
     ){
-        item = ARG(words);
+        item = spec;
         item_specifier = SPECIFIED;
         item_tail = item + 1;
     }
     else {
+        assert(IS_BLANK(spec));
         item_specifier = SPECIFIED;
-        assert(IS_NULLED(wordlist));
         item = nullptr;
         item_tail = nullptr;
     }
@@ -189,7 +189,7 @@ REBNATIVE(lambda)
             fail ("LAMBDA (->) does not offer RETURN facilities, use FUNCTION");
         }
         else {
-            if (not IS_BLOCK(wordlist))
+            if (not IS_BLOCK(spec))
                 fail ("Invalid LAMBDA specification");
 
             optimizable = false;
@@ -206,7 +206,7 @@ REBNATIVE(lambda)
         DS_DROP_TO(dsp_orig);
 
         REBACT *lambda = Make_Interpreted_Action_May_Fail(
-            wordlist,
+            spec,
             body,
             MKF_KEYWORDS,  // no MKF_RETURN
             1 + IDX_DETAILS_1  // archetype and one array slot (will be filled)

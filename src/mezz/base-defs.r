@@ -402,7 +402,15 @@ requote: reframer lambda [
 ]
 
 
-->: enfixed :lambda
+->: enfixed lambda [
+    :words "Names of arguments (will not be type checked)"
+        [<end> word! lit-word! meta-word! block!]
+    body "Code to execute"
+        [block!]
+][
+    lambda try words body
+]
+
 
 <-: enfixed func* [
     {Declare action by example instantiation, missing args left unspecialized}
