@@ -58,32 +58,31 @@ enum {
 // Each time a function created with ADAPT is executed, this code runs to
 // invoke the "prelude" before passing control to the "adaptee" function.
 //
+// 1. When an ADAPT is done, it does not leave its product in the output
+//    cell.  This means ADAPT of COMMENT will still be invisible.
+//
+// 2. The adapted action's RETURN slot--if it has one--will not be filled when
+//    the prelude runs.  It would also be somewhat ambiguous what RETURN
+//    would mean (Return from the prelude but still run the body?  Don't run
+//    the body at all?)  ENCLOSE should be used for these complex intents.
+//
 REB_R Adapter_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for RETURN macros
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
+    Cell *prelude = ARR_AT(details, IDX_ADAPTER_PRELUDE);  // code to run
+    assert(
+        IS_BLOCK(prelude)
+        and IS_RELATIVE(prelude)
+        and VAL_INDEX(prelude) == 0
+    );
 
-    // The first thing to do is run the prelude code, which may throw.  If it
-    // does throw--including a RETURN--that means the adapted function will
-    // not be run.
+    // Evaluate prelude into the SPARE cell (result discarded, see [1])
     //
-    // Note that Interpreted_Dispatch...() is what sets the function's RETURN
-    // slot to a returner function that knows what frame to return from.
-    // So simply DO-ing the array wouldn't have that effect.
-
-    assert(IDX_ADAPTER_PRELUDE == IDX_DETAILS_1);  // same as interpreted body
-
-    bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
-        return_thrown (SPARE);
-
-    if (returned) {
-        if (Is_Void(SPARE))
-            return_void (OUT);
-        return Move_Cell(OUT, SPARE);
-    }
+    if (Do_Any_Array_At_Throws(SPARE, prelude, SPC(f->varlist)))
+        return_thrown (SPARE);  // won't be a RETURN, see [2]
 
     // The second thing to do is update the phase and binding to run the
     // function that is being adapted, and pass it to the evaluator to redo.

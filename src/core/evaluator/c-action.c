@@ -270,7 +270,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
 
         if (pclass == PARAM_CLASS_RETURN) {
             assert(STATE_BYTE != ST_ACTION_DOING_PICKUPS);
-            Init_Nulled(ARG);
+            Init_None(ARG);
             goto continue_fulfilling;
         }
 

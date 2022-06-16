@@ -25,12 +25,13 @@ dump: function [
 
     <static> enablements (make map! [])
 ][
-    print: adapt :lib.print [
+    print: enclose :lib.print lambda [f [frame!]] [
         if prefix [
-            if select enablements prefix <> #on [return]
+            if select enablements prefix <> #on [return none]
             write-stdout prefix
             write-stdout space
         ]
+        do f
     ]
 
     val-to-text: function [return: [text!] ^val [<opt> any-value!]] [
