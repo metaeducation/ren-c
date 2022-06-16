@@ -116,14 +116,14 @@ sys.make-scheme [
             if get try in (statement: port.locals) 'hstmt [
                 remove find head statement.database.statements port
                 close-statement statement
-                return
+                return none
             ]
 
             if get try in (connection: port.locals) 'hdbc [
                 for-each stmt-port connection.statements [close stmt-port]
                 clear connection.statements
                 close-connection connection
-                return
+                return none
             ]
         ]
 

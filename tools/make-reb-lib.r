@@ -80,7 +80,7 @@ emit-proto: func [return: <none> proto] [
         ]
     ]
 
-    if header/2 != 'RL_API [return]
+    if header/2 != 'RL_API [return none]
     if not set-word? header/1 [
         fail ["API declaration should be a SET-WORD!, not" (header/1)]
     ]

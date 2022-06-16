@@ -300,7 +300,7 @@ confirm: function [
 list-dir: function [
     "Print contents of a directory (ls)."
 
-    return: <none>
+    return: <none>  ; don't want console to print evaluative result
     'path [<end> file! word! path! text!]
         "Accepts %file, :variables, and just words (as dirs)"
     /l "Line of info format"
@@ -332,7 +332,7 @@ list-dir: function [
     files: attempt [read %./] else [
         print ["Not found:" :path]
         change-dir save-dir
-        return  ; signal so console doesn't print result
+        return none
     ]
 
     for-each file files [

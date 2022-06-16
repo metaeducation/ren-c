@@ -190,7 +190,7 @@ export analyse: context [
             ]
 
             emit-proto: function [return: <none> proto] [
-                if not block? proto-parser.data [return]
+                if not block? proto-parser.data [return none]
 
                 do in c-parser-extension [
                     if last-func-end [

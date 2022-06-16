@@ -459,7 +459,6 @@ comment: emulate [
         return: <none> {Not invisible: https://trello.com/c/dWQnsspG}
         :discarded [block! any-string! binary! any-scalar!]
     ][
-        return none
     ]
 ]
 
@@ -977,7 +976,6 @@ print: emulate [
             form :value
         ]
         write-stdout newline
-        return none
     ]
 ]
 

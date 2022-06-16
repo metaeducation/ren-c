@@ -95,7 +95,7 @@ help: function [
         ; of specific void usages.
         ;
         print [mold get/any 'topic "is an error-inducing BAD-WORD! value"]
-        return
+        return none
     ]
 
     if null? :topic [
@@ -155,7 +155,7 @@ help: function [
                 upgrade - check for newer versions
                 usage - program cmd line options
         }
-        return
+        return none
     ]
 
     ; HELP quotes, but someone might want to use an expression, e.g.
@@ -168,7 +168,7 @@ help: function [
     if match [group! get-word! get-path! get-tuple!] :topic [
         topic: reeval topic else [
             print "NULL is a non-valued state that cannot be put in arrays"
-            return
+            return none
         ]
     ]
 
@@ -196,7 +196,7 @@ help: function [
 
             browse join https://r3n.github.io/topics/ as text! topic
             print newline
-            return
+            return none
         ]
 
         text! [
@@ -210,7 +210,7 @@ help: function [
             ] else [
                 print ["No information on" topic]
             ]
-            return
+            return none
         ]
 
         path! word! [
@@ -221,12 +221,12 @@ help: function [
                 null? binding of topic
             ] then [
                 print [topic "is an unbound WORD!"]
-                return
+                return none
             ]
 
             if '~attached~ = binding of topic [
                 print [topic "is ~attached~ to a context, but has no variable"]
-                return
+                return none
             ]
 
             switch type of value: reify get/any topic [
@@ -237,7 +237,7 @@ help: function [
                     print [topic "is not defined (e.g. has a BAD-WORD! value)"]
                 ]
             ] then [
-                return
+                return none
             ]
             enfixed: (action? :value) and (enfixed? :value)
         ]
@@ -252,7 +252,7 @@ help: function [
         ] else [
             print [mold topic "is" an mold type of :topic]
         ]
-        return
+        return none
     ]
 
     ; Open the web page for it?
@@ -300,7 +300,7 @@ help: function [
         ] else [
             print [topic {is a datatype}]
         ]
-        return
+        return none
     ]
 
     if not action? :value [
@@ -321,7 +321,7 @@ help: function [
                 ]
             ]
         ]
-        return
+        return none
     ]
 
     ; The HELP mechanics for ACTION! are more complex in Ren-C due to the
@@ -405,8 +405,6 @@ help: function [
         print "REFINEMENTS:"
         print-args/indent-words refinements
     ]
-
-    return
 ]
 
 
@@ -431,7 +429,7 @@ source: function [
             name: arg
             f: get arg else [
                 print [name "is not set to a value"]
-                return
+                return none
             ]
         ]
     ] else [
@@ -447,7 +445,7 @@ source: function [
             print [name "is" an mold type of :f "and not an ACTION!"]
         ]
     ] then [
-        return
+        return none
     ]
 
     ; ACTION!

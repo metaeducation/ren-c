@@ -99,6 +99,7 @@ trap [
 ;=== THESE REMAPPINGS ARE OKAY TO USE IN THE BOOTSTRAP SHIM ITSELF ===
 
 set '~ :null  ; most similar behavior to bad-word isotope available
+none: :void  ; again, most similar thing
 
 ; Done is used as a signal in the boot files that the expected end is reached.
 ; This is a BAD-WORD! in modern Ren-C, but a plain word in the bootstrap EXE.

@@ -247,6 +247,11 @@ REB_R None_Dispatcher(REBFRM *f)
     if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
         return_thrown (SPARE);
 
+    if (returned) {
+        if (not Is_None(SPARE))
+            fail ("Function marked [return: <none>] in spec must RETURN NONE");
+    }
+
     UNUSED(returned);  // no additional work to bypass
     return Init_None(OUT);
 }

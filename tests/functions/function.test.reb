@@ -473,7 +473,7 @@
 
 [#539 https://github.com/metaeducation/ren-c/issues/755 (
     f: func [return: <none>] [
-        use [x] [return]
+        use [x] [return none]
         42
     ]
     '~ = ^ f

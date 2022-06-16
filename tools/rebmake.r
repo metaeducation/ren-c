@@ -1301,7 +1301,7 @@ generator-class: make object! [
             #static-library try target-platform/archive-suffix
             #object-library try target-platform/archive-suffix
             #object-file try target-platform/obj-suffix
-        ] project/class [return]
+        ] project/class [return none]
 
         suffix: second suffix
 
@@ -1353,7 +1353,7 @@ generator-class: make object! [
             #static-library
             #solution
             #object-library [
-                if project/generated? [return]
+                if project/generated? [return none]
                 setup-output project
                 project/generated?: true
                 for-each dep project/depends [
@@ -1363,7 +1363,7 @@ generator-class: make object! [
             #object-file [
                 setup-output project
             ]
-        ] else [return]
+        ] else [return none]
     ]
 ]
 
@@ -1460,7 +1460,7 @@ makefile: make generator-class [
     ][
         ;print ["emitting..."]
         ;dump project
-        ;if project/generated? [return]
+        ;if project/generated? [return none]
         ;project/generated?: true
 
         for-each dep project/depends [
@@ -1618,12 +1618,12 @@ export execution: make generator-class [
             [object!]
     ][
         ;dump project
-        if not object? project [return]
+        if not object? project [return none]
 
         prepare project
 
         if not find [#dynamic-extension #static-extension] project/class [
-            if project/generated? [return]
+            if project/generated? [return none]
             project/generated?: true
         ]
 

@@ -145,7 +145,7 @@ browse*: func [
         ]
         trap [
             call/shell command  ; open with no /WAIT, so don't use CALL*
-            return
+            return none
         ] then [
             ; Just keep trying
         ]

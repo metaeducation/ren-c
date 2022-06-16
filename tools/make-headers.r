@@ -57,7 +57,7 @@ emit-proto: func [
         ; Should we allow macro expansion or do the REBTYPE another way?
         ; `not find proto "REBTYPE("]`
     ] then [
-        return
+        return none
     ]
 
     header: proto-parser/data
@@ -83,7 +83,7 @@ emit-proto: func [
             ; and considers itself to have "non-extension linkage" to the API,
             ; so the calls can be directly linked without a struct.
             ;
-            return
+            return none
         ]
         'C [
             ; The only accepted type for now

@@ -144,7 +144,7 @@ export console!: make object! [
             ; ground users in what is going on.
             ;
             print "; null"
-            return
+            return none
         ]
 
         === DISPLAY VOID AS IF IT WERE A COMMENT, ALSO ===
@@ -160,7 +160,7 @@ export console!: make object! [
             ; So the @void signal portrays the actual state of a void.
             ;
             print "; void (decays to none)"
-            return
+            return none
         ]
 
         === ISOTOPE BAD WORDS (^META v parameter means they look plain) ===
@@ -199,7 +199,7 @@ export console!: make object! [
             ; But doing it the other way around would force functions like
             ; HELP to be invisible, and that's not desirable.
             ;
-            return
+            return none
         ]
 
         if let d: select [
@@ -221,7 +221,7 @@ export console!: make object! [
             print unspaced [
                 result _ mold v _ _ {;} _ {isotope} _ "(" {decays to} _ d ")"
             ]
-            return
+            return none
         ]
 
         if bad-word? v [  ; all other isotopes
@@ -242,7 +242,7 @@ export console!: make object! [
             ; just for the isotopes.
             ;
             print unspaced [result _ mold v _ _ {;} _ "isotope"]
-            return
+            return none
         ]
 
         === "ORDINARY" VALUES (^META v parameter means they get quoted) ===
