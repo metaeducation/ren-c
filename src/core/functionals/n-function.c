@@ -81,63 +81,35 @@
 //
 // Common behavior shared by dispatchers which execute on BLOCK!s of code.
 // Runs the code in the ACT_DETAILS() array of the frame phase for the
-// function instance at the first index (hence "Details 0").
+// function instance at the first index (hence "Details 0").  Also puts a
+// definitional return into the RETURN slot of the frame.
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// 1. All callers have the output written into the frame's spare cell.  This
-//    is because we don't want to ovewrite the `f->out` contents in the case
-//    of a RETURN that wishes to be invisible.  The overwrite should only
-//    occur after the body has finished successfully.
-//
-// 2. Historically, UNWIND was caught by the main action evaluation loop.
-//    However, because throws bubble up through f->out, it would destroy the
-//    stale previous value and inhibit invisible evaluation.  So it was thought
-//    as a better separation of concerns to handle the usermode RETURN here...
-//    but generic UNWIND would be preferable for use by a usermode FUNC
-//    implementation.  So this might not have parity.  Revisit.
-//
 bool Interpreted_Dispatch_Details_1_Throws(
-    bool *returned,
-    REBVAL *spare,
+    REBVAL *out,
     REBFRM *f
 ){
-    assert(spare == FRM_SPARE(f));  // all callers pass in spare, see [1]
-    assert(Is_Void(spare));
-
     REBACT *phase = FRM_PHASE(f);
     REBARR *details = ACT_DETAILS(phase);
     Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
     assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
-    if (ACT_HAS_RETURN(phase)) {
-        assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
-        REBVAL *cell = FRM_ARG(f, 1);
+    assert(ACT_HAS_RETURN(phase));
+    assert(KEY_SYM(ACT_KEYS_HEAD(phase)) == SYM_RETURN);
 
-        Init_Action(
-            cell,
-            VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
-            Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
-            CTX(f->varlist)  // bind this return to know where to return from
-        );
-    }
+    REBVAL *cell = FRM_ARG(f, 1);
+    Init_Action(
+        cell,
+        VAL_ACTION(Lib(DEFINITIONAL_RETURN)),
+        Canon(RETURN),  // relabel (the RETURN in lib is a dummy action)
+        CTX(f->varlist)  // bind this return to know where to return from
+    );
 
-    if (Do_Any_Array_At_Throws(spare, body, SPC(f->varlist))) {
-        const REBVAL *label = VAL_THROWN_LABEL(f);
-        if (
-            IS_ACTION(label)  // catch UNWIND here, see [2]
-            and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
-            and VAL_ACTION_BINDING(label) == CTX(f->varlist)
-        ){
-            CATCH_THROWN(spare, f);  // preserves CELL_FLAG_UNEVALUATED
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
+    if (Do_Any_Array_At_Core_Throws(out, flags, body, SPC(f->varlist)))
+        return true;
 
-            *returned = true;
-            return false;  // we caught the THROW
-        }
-        return true;  // we didn't catch the throw
-    }
-
-    *returned = false;
     return false;  // didn't throw
 }
 
@@ -172,14 +144,21 @@ REB_R Lambda_Unoptimized_Dispatcher(REBFRM *f)
 //
 //  Func_Dispatcher: C
 //
-// Runs block, ensure type matches RETURN: [...] specification, else fail.
+// Runs block and puts a definitional return ACTION! in the RETURN slot.
 //
 // Note: Natives get this check only in the debug build, but not here (their
 // "dispatcher" *is* the native!)  So the extra check is in Eval_Core().
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// 1. There is an exception made for tolerating the lack of a RETURN call for
+// 1. FUNC(TION) does its evaluation into the SPARE cell, because the idea is
+//    that arbitrary code may want to return void--even if the body itself
+//    produces evaluative products.  This voidness can come from either a
+//    `return: <void>` annotation in the spec, or a RETURN passed void.
+//    A RETURN that uses a void UNWIND to pass by this dispatcher will be able
+//    to be invisible because OUT will not have been corrupted.
+//
+// 2. There is an exception made for tolerating the lack of a RETURN call for
 //    the cases of `return: <none>` and `return: <void>`.  This has a little
 //    bit of a negative side in that if someone is to hook the RETURN function,
 //    it will not be called in these "fallout" cases.  It's deemed too ugly
@@ -191,24 +170,11 @@ REB_R Func_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // so we can use OUT
 
-    // write to spare in case invisible RETURN
-    //
-    bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
-        return THROWN;
+    if (Interpreted_Dispatch_Details_1_Throws(SPARE, f))  // use spare, see [1]
+        return THROWN;  // pass up RETURN's UNWIND (typechecked at callsite)
 
-    if (returned) {  // assume RETURN did any necessary type checking
-        if (Is_Void(SPARE))
-            return_void (OUT);
-
-        return Move_Cell_Core(
-            OUT,
-            SPARE,
-            CELL_MASK_COPY | CELL_FLAG_UNEVALUATED
-        );
-    }
-
-    // If we get here, the function fell through without a RETURN
+    // If we get here, the function reached end of the body without a RETURN
+    // (We are not concerned with the evaluative result if there wasn't one.)
 
     REBACT *phase = FRM_PHASE(f);
     assert(ACT_HAS_RETURN(phase));  // all FUNC have RETURN
@@ -222,10 +188,10 @@ REB_R Func_Dispatcher(REBFRM *f)
         return Init_None(OUT);  // none falls out of FUNC by default
 
     if (GET_PARAM_FLAG(param, RETURN_VOID))
-        return_void (OUT);  // void, regardless of body result, see [1]
+        return_void (OUT);  // void, regardless of body result, see [2]
 
     if (GET_PARAM_FLAG(param, RETURN_NONE))
-        return Init_None(OUT);  // none, regardless of body result, see [1]
+        return Init_None(OUT);  // none, regardless of body result, see [2]
 
     fail ("Functions with RETURN: in spec must use RETURN to typecheck");
 }

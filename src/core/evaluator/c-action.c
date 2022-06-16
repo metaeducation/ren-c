@@ -1017,7 +1017,10 @@ bool Process_Action_Core_Throws(REBFRM * const f)
                 // the user for other features, while this only takes one
                 // function away.
                 //
-                CATCH_THROWN(OUT, frame_);
+                if (Is_Void(&TG_Thrown_Arg))
+                    CATCH_THROWN(SPARE, frame_);  // act invisibily, discard
+                else
+                    CATCH_THROWN(OUT, frame_);  // overwrite output
 
                 goto dispatch_completed;
             }

@@ -97,13 +97,25 @@ REB_R Macro_Dispatcher(REBFRM *f)
 {
     REBFRM *frame_ = f;  // for RETURN macros
 
-    bool returned;
-    if (Interpreted_Dispatch_Details_1_Throws(&returned, SPARE, f))
-        return THROWN;
+    // Must trap RETURN ourselves, as letting it bubble up to generic UNWIND
+    // handling would
+    //
+    bool returned = false;
+    if (Interpreted_Dispatch_Details_1_Throws(SPARE, f)) {
+        const REBVAL *label = VAL_THROWN_LABEL(f);
+        if (
+            IS_ACTION(label)  // catch UNWIND here, see [2]
+            and VAL_ACTION(label) == VAL_ACTION(Lib(UNWIND))
+            and VAL_ACTION_BINDING(label) == CTX(f->varlist)
+        ){
+            CATCH_THROWN(SPARE, f);  // preserves CELL_FLAG_UNEVALUATED
+            returned = true;
+        }
+        else
+            return THROWN;  // we didn't catch the throw
+    }
 
-    UNUSED(returned);  // no additional work to bypass
-
-    if (not IS_BLOCK(SPARE))
+    if (Is_Void(SPARE) or Is_Stale(SPARE) or not IS_BLOCK(SPARE))
         fail ("MACRO must return BLOCK! for the moment");
 
     Splice_Block_Into_Feed(f->feed, SPARE);
