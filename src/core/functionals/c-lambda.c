@@ -95,7 +95,7 @@ REB_R Lambda_Dispatcher(REBFRM *f)
         return THROWN;
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }

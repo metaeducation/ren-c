@@ -305,7 +305,7 @@ REBNATIVE(meta)
     REBVAL *v = ARG(optional);
 
     if (Is_Meta_Of_Void(v))
-        return_void (OUT);  // see META* for non-passthru of ~void~ isotope
+        return VOID;  // see META* for non-passthru of ~void~ isotope
 
     return_value (v);  // argument was already ^META, no need to Meta_Quotify()
 }
@@ -410,7 +410,7 @@ REBNATIVE(unmeta)
         return nullptr;  // ^(null) => null, so the reverse must be true
 
     if (Is_Meta_Of_Void(v))
-        return_void (OUT);  // ^-- see explanation
+        return VOID;  // ^-- see explanation
 
     if (IS_BAD_WORD(v))
         fail (Error_Bad_Isotope(v));  // no other isotopes valid for the trick
@@ -422,7 +422,7 @@ REBNATIVE(unmeta)
         fail ("END not processed by UNMETA at this time");
 
     if (Is_Meta_Of_Void(v))
-        return_void (OUT);
+        return VOID;
 
     // Now remove the level of meta the user was asking for.
     //
@@ -451,7 +451,7 @@ REBNATIVE(maybe)
         or Is_Meta_Of_Void(v)
         or Is_Meta_Of_None(v)
     ){
-        return_void (OUT);
+        return VOID;
     }
 
     Move_Cell(OUT, v);
@@ -491,7 +491,7 @@ REBNATIVE(maybe_a)
     }
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }

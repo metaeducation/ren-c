@@ -449,7 +449,7 @@ static void Init_Root_Vars(void)
     // to the GC's root set.
 
     Init_Return_Signal(&PG_R_Thrown, C_THROWN);
-    Init_Return_Signal(&PG_R_Invisible, C_INVISIBLE);
+    Init_Return_Signal(&PG_R_Void, C_VOID);
     Init_Return_Signal(&PG_R_Redo_Unchecked, C_REDO_UNCHECKED);
     Init_Return_Signal(&PG_R_Redo_Checked, C_REDO_CHECKED);
     Init_Return_Signal(&PG_R_Unhandled, C_UNHANDLED);
@@ -489,7 +489,7 @@ static void Shutdown_Root_Vars(void)
     RESET(&PG_None_Isotope);
 
     RESET(&PG_R_Thrown);
-    RESET(&PG_R_Invisible);
+    RESET(&PG_R_Void);
     RESET(&PG_R_Redo_Unchecked);
     RESET(&PG_R_Redo_Checked);
     RESET(&PG_R_Unhandled);

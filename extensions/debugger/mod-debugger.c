@@ -132,7 +132,7 @@ REBNATIVE(breakpoint_p)
     if (not IS_BAD_WORD(SPARE))
         fail ("BREAKPOINT is invisible, can't RESUME/WITH code (use PAUSE)");
 
-    return_void (OUT);
+    return VOID;
 }
 
 

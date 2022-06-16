@@ -1070,7 +1070,7 @@ bool Process_Action_Core_Throws(REBFRM * const f)
         //
         goto abort_action; }
 
-      case C_INVISIBLE :
+      case C_VOID :
         assert(Is_Stale(OUT));  // The invisible output is always in f->out.
         break;
 

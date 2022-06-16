@@ -205,7 +205,7 @@ REBNATIVE(reduce_each)
     Drop_Frame(f);
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return_non_void (OUT);
 }

@@ -134,7 +134,7 @@ REB_R Block_Dispatcher(REBFRM *f)
         return THROWN;
 
     if (Is_Void(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }

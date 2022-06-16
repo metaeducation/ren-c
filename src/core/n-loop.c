@@ -174,7 +174,7 @@ static REB_R Loop_Series_Common(
     //
     const bool counting_up = (s < end); // equal checked above
     if ((counting_up and bump <= 0) or (not counting_up and bump >= 0))
-        return_void (OUT);  // avoid infinite loops
+        return VOID;  // avoid infinite loops
 
     while (
         counting_up
@@ -209,7 +209,7 @@ static REB_R Loop_Series_Common(
     }
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return_branched (OUT);
 }
@@ -343,7 +343,7 @@ static REB_R Loop_Number_Common(
     //
     const bool counting_up = (s < e); // equal checked above
     if ((counting_up and b <= 0) or (not counting_up and b >= 0))
-        return_void (OUT);  // avoid inf. loop, means never ran
+        return VOID;  // avoid inf. loop, means never ran
 
     while (counting_up ? *state <= e : *state >= e) {
         if (Do_Branch_Throws(OUT, body, END)) {
@@ -364,7 +364,7 @@ static REB_R Loop_Number_Common(
     }
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return_branched (OUT);
 }
@@ -991,7 +991,7 @@ REBNATIVE(for_skip)
         //
         // !!! https://forum.rebol.info/t/infinite-loops-vs-errors/936
         //
-        return_void (OUT);
+        return VOID;
     }
 
     REBCTX *context;
@@ -1063,7 +1063,7 @@ REBNATIVE(for_skip)
     }
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return_branched (OUT);
 }
@@ -1189,7 +1189,7 @@ REBNATIVE(for_each)
     // any other value is the plain last body result
     //
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }
@@ -1221,7 +1221,7 @@ REBNATIVE(every)
     // any other value is the last body result, and is truthy
     //
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
     return OUT;
 }
 
@@ -1772,7 +1772,7 @@ REBNATIVE(repeat)
 
     if (IS_FALSEY(ARG(count))) {
         assert(IS_LOGIC(ARG(count)));  // is false (opposite of infinite loop)
-        return_void (OUT);
+        return VOID;
     }
 
     REBI64 count;
@@ -1807,7 +1807,7 @@ REBNATIVE(repeat)
         goto restart;  // "infinite" loop exhausted MAX_I64 steps (rare case)
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return_branched (OUT);  // asserts no pure NULL or isotope ~void~
 }
@@ -1880,7 +1880,7 @@ REBNATIVE(for)
 
     REBI64 n = VAL_INT64(value);
     if (n < 1)  // Loop_Integer from 1 to 0 with bump of 1 is infinite
-        return_void (OUT);
+        return VOID;
 
     return Loop_Integer_Common(
         frame_, var, body, 1, VAL_INT64(value), 1
@@ -2013,7 +2013,7 @@ REBNATIVE(while)
 
         if (IS_FALSEY(SPARE)) {  // falsey condition => return last body result
             if (Is_Stale(OUT))
-                return_void (OUT);  // body never ran, so no result to return!
+                return VOID;  // body never ran, so no result to return!
 
             return_branched (OUT);
         }

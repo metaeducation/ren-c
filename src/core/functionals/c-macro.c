@@ -120,7 +120,7 @@ REB_R Macro_Dispatcher(REBFRM *f)
 
     Splice_Block_Into_Feed(f->feed, SPARE);
 
-    return_void (OUT);
+    return VOID;
 }
 
 
@@ -174,7 +174,7 @@ REBNATIVE(inline)
 
     REBVAL *splice = ARG(splice);
     if (IS_BLANK(splice))
-        return_void (OUT);  // do nothing, just return invisibly
+        return VOID;  // do nothing, just return invisibly
 
     if (IS_QUOTED(splice)) {
         //
@@ -189,5 +189,5 @@ REBNATIVE(inline)
     assert(IS_BLOCK(splice));
     Splice_Block_Into_Feed(frame_->feed, ARG(splice));
 
-    return_void (OUT);
+    return VOID;
 }

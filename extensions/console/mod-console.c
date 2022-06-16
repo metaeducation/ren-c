@@ -32,6 +32,7 @@
 
     #undef IS_ERROR  // %windows.h defines this, but so does %sys-core.h
     #undef OUT  // %minwindef.h defines this, we have a better use for it
+    #undef VOID  // %winnt.h defines this, we have a better use for it
 
 #elif defined(TO_EMSCRIPTEN)
     //

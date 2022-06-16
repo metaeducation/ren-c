@@ -202,7 +202,7 @@ REB_R Encloser_Dispatcher(REBFRM *f)
     }
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }

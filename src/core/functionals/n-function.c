@@ -135,7 +135,7 @@ REB_R Lambda_Unoptimized_Dispatcher(REBFRM *f)
         return THROWN;
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }
@@ -188,7 +188,7 @@ REB_R Func_Dispatcher(REBFRM *f)
         return Init_None(OUT);  // none falls out of FUNC by default
 
     if (GET_PARAM_FLAG(param, RETURN_VOID))
-        return_void (OUT);  // void, regardless of body result, see [2]
+        return VOID;  // void, regardless of body result, see [2]
 
     if (GET_PARAM_FLAG(param, RETURN_NONE))
         return Init_None(OUT);  // none, regardless of body result, see [2]

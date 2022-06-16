@@ -70,7 +70,7 @@ REBNATIVE(reeval)
     }
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }
@@ -676,7 +676,7 @@ REBNATIVE(evaluate)
         Set_Var_May_Fail(next, SPECIFIED, source);
 
     if (Is_Void(SPARE))
-        return_void (OUT);
+        return VOID;
 
     return_value (SPARE);
 }
@@ -873,7 +873,7 @@ REBNATIVE(applique)
     // actually came from.
     //
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }
@@ -1112,7 +1112,7 @@ REBNATIVE(apply)
     Drop_Frame(f);
 
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return OUT;
 }

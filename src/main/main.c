@@ -65,6 +65,7 @@
 #else
     #undef IS_ERROR  // windows.h has its own definition of this macro
     #undef OUT  // %minwindef.h defines this, we have a better use for it
+    #undef VOID  // %winnt.h defines this, we have a better use for it
     #include "sys-core.h"
 #endif
 

@@ -79,7 +79,7 @@ REBNATIVE(if)
     Value *branch = ARG(branch);
 
     if (Is_Conditional_False(condition))
-        return_void (OUT);  // ^-- test errors on literal block
+        return VOID;  // ^-- test errors on literal block
 
     if (Do_Branch_Throws(OUT, branch, condition))
         return THROWN;  // ^-- condition is passed to function branches
@@ -217,7 +217,7 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
         or Is_Meta_Of_Void(in)
         or (REF(decay) and Is_Meta_Of_Null_Isotope(in))  // null isotope
     ){
-        return_void (OUT);
+        return VOID;
     }
 
     // We received the left hand side as ^meta, so it's quoted in order
@@ -256,7 +256,7 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
         return nullptr;  // telegraph pure null
 
     if (Is_Meta_Of_Void(in))
-        return_void (OUT);  // telegraph invisible intent
+        return VOID;  // telegraph invisible intent
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
         return Init_Isotope(OUT, Canon(NULL));  // telegraph null isotope
@@ -558,7 +558,7 @@ REBNATIVE(all)
     Drop_Frame(f);
 
     if (not any_matches)  // e.g. `all []`, can't use Is_Stale(OUT), see [3]
-        return_void (OUT);
+        return VOID;
 
     Clear_Stale_Flag(OUT);  // un-hide values "underneath" void, again see [1]
 
@@ -639,7 +639,7 @@ REBNATIVE(any)
     Drop_Frame(f);
 
     if (Is_Stale(OUT))  // original staleness, or all the ANY steps were void
-        return_void (OUT);  // `any []` is ~void~ isotope
+        return VOID;  // `any []` is ~void~ isotope
 
     return nullptr;
 }
@@ -794,7 +794,7 @@ REBNATIVE(case)
     }
 
     if (Is_Stale(OUT))  // none of the clauses of an /ALL ran a branch
-        return_void (OUT);
+        return VOID;
 
     return_branched (OUT);  // asserts no ~void~ or pure null
 
@@ -971,7 +971,7 @@ REBNATIVE(switch)
     // if no fallout, use last /ALL clause, or ~void~ isotope if END
     //
     if (Is_Stale(OUT))
-        return_void (OUT);
+        return VOID;
 
     return_branched (OUT);  // asserts no pure NULL or isotope ~void~
 

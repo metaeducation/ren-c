@@ -596,6 +596,8 @@ inline static void Prep_Frame_Core(
     #define FRAME   frame_
     #define OUT     FRM_OUT(frame_)         // GC-safe slot for output value
     #define SPARE   FRM_SPARE(frame_)       // scratch GC-safe cell
+    #define VOID    Native_Void_Result(frame_)
+    #define THROWN  Native_Thrown_Result(frame_)
 #endif
 
 

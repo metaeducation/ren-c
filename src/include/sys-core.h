@@ -50,7 +50,7 @@
 //     #undef max // same
 //     #undef min // same
 //     #undef OUT  // %minwindef.h defines this, we have a better use for it
-//
+//     #undef VOID  // %winnt.h defines this, we have a better use for it
 //     #include "sys-core.h"
 //
 // !!! Because this header is included by all files in the core, it has been a

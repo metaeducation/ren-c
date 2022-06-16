@@ -52,6 +52,9 @@
 #ifdef OUT
     #undef OUT  // %minwindef.h defines this, we have a better use for it
 #endif
+#ifdef VOID
+    #undef VOID  // %winnt.h defines this, we have a better use for it
+#endif
 
 #include "sys-core.h"
 

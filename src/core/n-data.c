@@ -1569,7 +1569,7 @@ REBNATIVE(identity) // sample uses: https://stackoverflow.com/q/3136338
     REBVAL *v = ARG(value);
 
     if (Is_Meta_Of_Void(v))
-        return_void (OUT);
+        return VOID;
 
     return_value (Meta_Unquotify(v));
 }
@@ -2247,7 +2247,7 @@ REBNATIVE(void)
 {
     INCLUDE_PARAMS_OF_VOID;
 
-    return_void (OUT);
+    return VOID;
 }
 
 
@@ -2308,7 +2308,7 @@ REBNATIVE(heavy) {
     REBVAL *v = ARG(optional);
 
     if (Is_Meta_Of_Void(v))
-        return_void (OUT);
+        return VOID;
 
     if (IS_NULLED(v))
         return Init_Null_Isotope(OUT);
@@ -2387,7 +2387,7 @@ REBNATIVE(isotopify_if_falsey)
     REBVAL *v = ARG(optional);
 
     if (Is_Meta_Of_Void(v))
-        return_void (OUT);
+        return VOID;
 
     Meta_Unquotify(v);
     Isotopify_If_Falsey(v);

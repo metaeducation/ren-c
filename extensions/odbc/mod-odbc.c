@@ -40,8 +40,15 @@
 #if TO_WINDOWS
     #define WIN32_LEAN_AND_MEAN  // trim down the Win32 headers
     #include <windows.h>
+#endif
+
+#include <sql.h>  // depends on defines like VOID on Windows
+#include <sqlext.h>
+
+#if TO_WINDOWS
     #undef IS_ERROR
     #undef OUT  // %minwindef.h defines this, we have a better use for it
+    #undef VOID  // %winnt.h defines this, we have a better use for it
 #endif
 
 #include "sys-core.h"
@@ -50,9 +57,6 @@
 
 // https://stackoverflow.com/q/58438456
 #define USE_SQLITE_DESCRIBECOL_WORKAROUND
-
-#include <sql.h>
-#include <sqlext.h>
 
 // The version of ODBC that this is written to use is 3.0, which was released
 // around 1995.  At time of writing (2017) it is uncommon to encounter ODBC

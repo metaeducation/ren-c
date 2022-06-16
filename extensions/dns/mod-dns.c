@@ -43,6 +43,7 @@
     #include <winsock2.h>
     #undef IS_ERROR  // Windows defines this, so does %sys-core.h
     #undef OUT  // %minwindef.h defines this, we have a better use for it
+    #undef VOID  // %winnt.h defines this, we have a better use for it
 
 #else
     #include <errno.h>

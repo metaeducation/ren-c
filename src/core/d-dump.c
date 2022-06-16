@@ -168,6 +168,6 @@ REBNATIVE(dump)
             PROBE(var);
     }
 
-    return_void (OUT);
+    return VOID;
 #endif
 }

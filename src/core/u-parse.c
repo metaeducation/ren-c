@@ -486,7 +486,7 @@ REB_R Process_Group_For_Parse(
         P_POS = P_INPUT_LEN;
 
     if (not inject or Is_Void(cell))  // even GET-GROUP! discards voids
-        return R_INVISIBLE;
+        return R_VOID;
 
     return cell;
 }
@@ -521,7 +521,7 @@ static REB_R Parse_One_Rule(
         if (rule == R_THROWN)
             return THROWN;
 
-        if (rule == R_INVISIBLE) {  // !!! Should this be legal?
+        if (rule == R_VOID) {  // !!! Should this be legal?
             assert(pos <= P_INPUT_LEN);  // !!! Process_Group ensures
             return Init_Integer(OUT, pos);
         }
@@ -776,7 +776,7 @@ static REBIXO To_Thru_Block_Rule(
                 if (rule == R_THROWN)
                     return THROWN_FLAG;
 
-                if (rule == R_INVISIBLE)
+                if (rule == R_VOID)
                     continue;
             }
 
@@ -1166,7 +1166,7 @@ static REB_R Handle_Seek_Rule_Dont_Update_Begin(
     else
         P_POS = index;
 
-    return R_INVISIBLE;
+    return VOID;
 }
 
 // !!! Note callers will `continue` without any post-"match" processing, so
@@ -1392,7 +1392,7 @@ REBNATIVE(subparse)
         if (rule == R_THROWN)
             return THROWN;
 
-        if (rule == R_INVISIBLE) {  // was a (...), or null-bearing :(...)
+        if (rule == R_VOID) {  // was a (...), or null-bearing :(...)
             FETCH_NEXT_RULE(f);  // ignore result and go on to next rule
             goto pre_rule;
         }

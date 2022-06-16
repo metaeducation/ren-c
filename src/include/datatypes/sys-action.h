@@ -183,9 +183,9 @@ inline static bool Is_Throwing(REBFRM *frame_) {
 // into the output slot...instead leaving that to the evaluator (as a
 // SET-PATH! should always evaluate to what was just set)
 //
-#define C_INVISIBLE 'I'
-#define R_INVISIBLE \
-    cast(REBVAL*, &PG_R_Invisible)
+#define C_VOID 'V'
+#define R_VOID \
+    cast(REBVAL*, &PG_R_Void)
 
 // If Eval_Core gets back an REB_R_REDO from a dispatcher, it will re-execute
 // the f->phase in the frame.  This function may be changed by the dispatcher
@@ -607,10 +607,11 @@ inline static REBVAL *Maybe_Move_Cell(REBVAL *out, REBVAL *v) {
     return Move_Cell(out, v);
 }
 
-#define THROWN \
-    (assert(not Is_Stale_Void(&TG_Thrown_Arg)), \
-     Mark_Eval_Out_Stale(OUT), \
-     R_THROWN)
+inline static REB_R Native_Thrown_Result(REBFRM *frame_) {
+    assert(not Is_Stale_Void(&TG_Thrown_Arg));
+    Mark_Eval_Out_Stale(frame_->out);
+    return R_THROWN;
+}
 
 
 // Convenience routine for returning a value which is *not* located in OUT.
@@ -671,12 +672,11 @@ inline static REBVAL *Mark_Eval_Out_Voided(REBVAL *out) {
     return out;
 }
 
-#define return_void(v) \
-    do { \
-        assert((v) == OUT); \
-        Mark_Eval_Out_Voided(OUT); \
-        return R_INVISIBLE; \
-    } while (false)
+inline static REB_R Native_Void_Result(REBFRM *frame_) {
+    Mark_Eval_Out_Voided(frame_->out);
+    return R_VOID;
+}
+
 
 #define return_non_void(v) \
     do { \

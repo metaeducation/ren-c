@@ -35,6 +35,7 @@
 
     #undef IS_ERROR  // winerror.h defines, Rebol has a different meaning
     #undef OUT  // %minwindef.h defines this, we have a better use for it
+    #undef VOID  // %winnt.h defines this, we have a better use for it
 #elif TO_OSX
     #include <CoreFoundation/CFUUID.h>
 #else

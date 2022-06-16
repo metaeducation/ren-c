@@ -109,7 +109,7 @@ PVAR REBVAL PG_None_Isotope;
 // could be checked even faster if they were fake immediate values, like
 // (REBVAL*)0x00000010...but that is not standard C.
 //
-PVAR REBVAL PG_R_Invisible;
+PVAR REBVAL PG_R_Void;
 PVAR REBVAL PG_R_Redo_Unchecked;
 PVAR REBVAL PG_R_Redo_Checked;
 PVAR REBVAL PG_R_Thrown;

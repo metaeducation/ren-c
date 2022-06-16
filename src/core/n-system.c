@@ -423,14 +423,14 @@ REBNATIVE(c_debug_break)
         // happened and has been passed as an argument.
         //
         TG_Break_At_Tick = frame_->tick + 1;
-        return_void (OUT);
+        return VOID;
      #else
         // No tick counting or tick-break checking, but still want some
         // debug break functionality (e.g. callgrind build).  Break here--
         // you'll have to step up out into the evaluator stack.
         //
         debug_break();
-        return_void (OUT);
+        return VOID;
       #endif
   #endif
 }
