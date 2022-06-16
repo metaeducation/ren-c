@@ -44,16 +44,14 @@ REBOL [
 ; into EMULATE, which lets you select whether you want to replace the
 ; functionality or just warn about it.
 ;
-helper: enfixed lib.func [
-    return: <none>
+helper: enfixed lib.lambda [
     :set-word [set-word!]
     code [block!]
 ] lib.in lib [
     set set-word do in lib code
 ]
 
-emulate: enfixed lib.func [
-    return: [<opt> any-value!]
+emulate: enfixed lib.lambda [
     :set-word [set-word!]
     code [block!]
 ] lib.in lib [
@@ -77,7 +75,7 @@ to-string: emulate [specialize :to [type: text!]]
 ; Currently AS is serving as the numeric converter.
 ;
 to-char: emulate [
-    func [value] [
+    lambda [value] [
         either integer? value [
             as issue! value
         ][
@@ -119,6 +117,8 @@ any-object?: emulate [:any-context?]
 ;
 rewrite-spec-and-body: helper [
     function [
+        return: "New spec" [block!]
+        body-out: "New body" [block!]
         spec "(modified)" [block!]
         body "(modified)" [block!]
     ][
@@ -237,13 +237,22 @@ rewrite-spec-and-body: helper [
 
         spec: head spec  ; At tail, so seek head for any debugging!
 
-        ; We don't go to an effort to provide a non-definitional return.  But
-        ; add support for an EXIT that's a synonym for returning void.
-        ;
-        insert body [
+        set body-out compose [
+            ;
+            ; We don't go to an effort to provide a non-definitional return.
+            ; But support for an EXIT that's a synonym for returning void.
+            ;
             exit: specialize :return [value: '~]
+
+            ; Historical Rebol supports an implicit RETURN, which was vetoed
+            ; in the design of Ren-C (but easy to customize, just like this)
+            ;
+            ; https://forum.rebol.info/t/1656
+            ;
+            return (as group! body)
         ]
         append spec [<local> exit]  ; FUNC needs it (function doesn't...)
+        return spec
     ]
 ]
 
@@ -289,9 +298,7 @@ redbol-func: func: emulate [
             return func-nonconst spec body  ; assume "new style" function
         ]
 
-        spec: copy spec
-        body: copy body
-        rewrite-spec-and-body spec body
+        [spec body]: rewrite-spec-and-body spec body
 
         return func-nonconst spec body
     ]
@@ -311,9 +318,7 @@ redbol-function: function: emulate [
 
         if block? with [with: make object! with]
 
-        spec: copy spec
-        body: copy body
-        rewrite-spec-and-body spec body
+        [spec body]: rewrite-spec-and-body (copy spec) (copy body)
 
         ; The shift in Ren-C is to remove the refinements from FUNCTION, and
         ; put everything into the spec dialect...marked with <tags>
@@ -384,7 +389,7 @@ apply: emulate [
             ]
         ]
 
-        do frame  ; nulls are optionals
+        return do frame  ; nulls are optionals
     ]
 ]
 
@@ -454,20 +459,22 @@ comment: emulate [
         return: <none> {Not invisible: https://trello.com/c/dWQnsspG}
         :discarded [block! any-string! binary! any-scalar!]
     ][
+        return none
     ]
 ]
 
 value?: emulate [
     func [
         {See SET? in Ren-C: https://trello.com/c/BlktEl2M}
+        return: [logic!]
         value
     ][
-        either any-word? :value [set? value] [true]  ; bizarre.  :-/
+        return either any-word? :value [set? value] [true]  ; bizarre.  :-/
     ]
 ]
 
 type?: emulate [
-    function [
+    lambda [
         value [<opt> any-value!]
         /word {Note: SWITCH evaluates https://trello.com/c/fjJb3eR2}
     ][
@@ -487,9 +494,10 @@ type?: emulate [
 found?: emulate [
     func [
         {See DID and NOT: https://trello.com/c/Cz0qs5d7}
+        return: [logic!]
         value
     ][
-        not blank? :value
+        return not blank? :value
     ]
 ]
 
@@ -554,11 +562,10 @@ get: emulate [
         if block? :source [
             return source  ; this is what it did :-/
         ]
-        let result: either any-context? source [
-            apply :get [words of source /any any_GET]
-        ][
-            apply :get [source /any any_GET]
+        if any-context? source [
+            return apply :get [words of source /any any_GET]
         ]
+        return apply :get [source /any any_GET]
     ]
 ]
 
@@ -609,10 +616,9 @@ do: emulate [
                     fail ["bad param type" params.1]
                 ]
             ]
-            do code
-        ] else [
-            do/args :source :args  ; if args is null, refinement is "revoked"
+            return do code
         ]
+        return do/args :source :args  ; if args is null, refinement is "revoked"
     ]
 ]
 
@@ -641,9 +647,8 @@ to: emulate [
 ]
 
 try: emulate [
-    func [
+    lambda [
         {See TRAP for Ren-C equivalent: https://trello.com/c/IbnfBaLI}
-        return: [<opt> any-value!]
         block [block!]
         /except "Note TRAP doesn't take a handler...use THEN instead"
             [block! action!]
@@ -663,7 +668,7 @@ try: emulate [
 ]
 
 default: emulate [
-    func [
+    lambda [
         {See the new enfixed DEFAULT: https://trello.com/c/cTCwc5vX}
         'word [word! set-word! lit-word!]
         value
@@ -680,9 +685,8 @@ default: emulate [
 ]
 
 also: emulate [
-    func [
+    lambda [
         {Supplanted by ELIDE: https://trello.com/c/pGhk9EbV}
-        return: [<opt> any-value!]
         returned [<opt> any-value!]
         discarded [<opt> any-value!]
     ][
@@ -701,7 +705,7 @@ also: emulate [
 ; goal is to speed it up over time.  But Redbol uses it today anyway.
 
 parse: emulate [
-    function [
+    func [
         {Non-block rules replaced by SPLIT: https://trello.com/c/EiA56IMR}
         return: [logic! block!]
         input [any-series!]
@@ -725,7 +729,7 @@ parse: emulate [
 ]
 
 reduce: emulate [
-    function [
+    lambda [
         value "Not just BLOCK!s evaluated: https://trello.com/c/evTPswH3"
         /into "https://forum.rebol.info/t/stopping-the-into-virus/705"
             [any-array!]
@@ -740,7 +744,7 @@ reduce: emulate [
 ]
 
 compose: emulate [
-    function [
+    lambda [
         value "Ren-C composes ANY-ARRAY!: https://trello.com/c/8WMgdtMp"
             [any-value!]
         /deep "Ren-C recurses into PATH!s: https://trello.com/c/8WMgdtMp"
@@ -780,8 +784,7 @@ compose: emulate [
 ]
 
 collect: emulate [
-    func [
-        return: [any-series!]
+    lambda [
         body [block!]
         /into "https://forum.rebol.info/t/stopping-the-into-virus/705"
             [any-series!]
@@ -813,7 +816,7 @@ collect: emulate [
 ; different.  This snapshots their implementation.
 
 repend: emulate [
-    function [
+    lambda [
         series [any-series! port! map! object! bitset!]
         value
         /part [any-number! any-series! pair!]
@@ -896,7 +899,7 @@ ajoin: emulate [:unspaced]
 reform: emulate [:spaced]
 
 redbol-form: form: emulate [
-    function [
+    lambda [
         value [<opt> any-value!]
         /unspaced "Outer level, append "" [1 2 [3 4]] => {123 4}"
     ][
@@ -974,11 +977,12 @@ print: emulate [
             form :value
         ]
         write-stdout newline
+        return none
     ]
 ]
 
 quit: emulate [
-    function [
+    lambda [
         /return "Ren-C is variadic, 0 or 1 arg: https://trello.com/c/3hCNux3z"
             [<opt> any-value!]
     ][
@@ -991,8 +995,7 @@ does: emulate [
 ]
 
 has: emulate [
-    func [
-        return: [action!]
+    lambda [
         vars [block!]
         body [block!]
     ][
@@ -1010,7 +1013,7 @@ object: emulate [
 ]
 
 construct: emulate [
-    func [
+    lambda [
         spec [block!]
         /with [object!]
         /only
@@ -1026,7 +1029,7 @@ construct: emulate [
 ]
 
 break: emulate [
-    func [
+    lambda [
         /return "/RETURN is deprecated: https://trello.com/c/cOgdiOAD"
             [any-value!]
     ][
@@ -1055,7 +1058,7 @@ break: emulate [
 
 comment [  ; ^-- see remark above
     ++: emulate [
-        function [
+        lambda [
             {Deprecated, use ME and MY: https://trello.com/c/8Bmwvwya}
             'word [word!]
         ][
@@ -1070,7 +1073,7 @@ comment [  ; ^-- see remark above
     ]
 
     --: emulate [
-        function [
+        lambda [
             {Deprecated, use ME and MY: https://trello.com/c/8Bmwvwya}
             'word [word!]
         ][
@@ -1151,11 +1154,11 @@ mod: emulate [:modulo]  ; MOD is enfix in Ren-C, MODULO still prefix
 ; Ren-C NULL means no branch ran, Rebol2 this is communicated by #[none]
 ;
 denuller: helper [
-    func [action [action!]] [
+    lambda [action [action!]] [
         chain [
             :action
                 |
-            func [^x] [  ; needs to be META to handle ~none~ isotopes/etc.
+            lambda [^x] [  ; needs to be META to handle ~none~ isotopes/etc.
                 x then [unmeta x] else [_]
             ]
         ]
@@ -1201,7 +1204,7 @@ foreach: emulate [
         ;
         use :vars [
             position: data
-            while [not tail? position] compose [
+            return while [not tail? position] compose [
                 ((collect [
                     for-each item vars [
                         case [
@@ -1301,7 +1304,7 @@ bound?: emulate [denuller specialize :of [property: 'binding]]
 ; https://forum.rebol.info/t/1133/7
 
 noquoter: helper [
-    func [f] [adapt :f [value1: my noquote, value2: my noquote]]
+    lambda [f] [adapt :f [value1: my noquote, value2: my noquote]]
 ]
 
 equal?: emulate [noquoter :equal?]
@@ -1327,7 +1330,7 @@ splice-adjuster: helper [
 ; https://forum.rebol.info/t/justifiable-asymmetry-to-on-block/751
 ;
 oldsplicer: helper [
-    func [action [action!]] [
+    lambda [action [action!]] [
         adapt :action [
             all [not only, any-array? series, any-path? :value] then [
                 value: as block! value  ; guarantees splicing
@@ -1568,7 +1571,7 @@ hijack :lib.transcode enclose copy :lib.transcode function [f [frame!]] [
 
         result: lib.do f  ; this time if it fails, we won't TRAP it
     ]
-    result
+    return result
 ]
 
 
