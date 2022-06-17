@@ -412,10 +412,8 @@ REBNATIVE(cfor)
 {
     INCLUDE_PARAMS_OF_CFOR;
 
-    REBCTX *context;
-    Virtual_Bind_Deep_To_New_Context(
+    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
-        &context,
         ARG(word)
     );
     Init_Object(ARG(word), context);  // keep GC safe
@@ -499,10 +497,8 @@ REBNATIVE(for_skip)
         return VOID;
     }
 
-    REBCTX *context;
-    Virtual_Bind_Deep_To_New_Context(
+    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
-        &context,
         ARG(word)
     );
     Init_Object(ARG(word), context);  // keep GC safe
@@ -729,10 +725,8 @@ static bool Loop_Each_Throws(REBFRM *frame_)
     REBLEN index;  // index into the data for filling current variable
     REBLEN len;  // length of the data
 
-    REBCTX *pseudo_vars_ctx;
-    Virtual_Bind_Deep_To_New_Context(
+    REBCTX *pseudo_vars_ctx = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
-        &pseudo_vars_ctx,
         ARG(vars)
     );
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
@@ -1284,10 +1278,8 @@ REBNATIVE(remove_each)
     if (VAL_INDEX(data) >= VAL_LEN_AT(data))  // past series end
         return Init_Integer(OUT, 0);
 
-    REBCTX *context;
-    Virtual_Bind_Deep_To_New_Context(
+    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
         body,  // may be updated, will still be GC safe
-        &context,
         ARG(vars)
     );
     Init_Object(ARG(vars), context);  // keep GC safe
@@ -1865,10 +1857,8 @@ REBNATIVE(for)
     if (IS_DECIMAL(value) or IS_PERCENT(value))
         Init_Integer(value, Int64(value));
 
-    REBCTX *context;
-    Virtual_Bind_Deep_To_New_Context(
+    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
         body,
-        &context,
         ARG(vars)
     );
     Init_Object(ARG(vars), context);  // keep GC safe

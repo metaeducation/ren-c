@@ -956,9 +956,8 @@ void Rebind_Values_Deep(
 //
 // !!! Loops should probably free their objects by default when finished
 //
-void Virtual_Bind_Deep_To_New_Context(
+REBCTX *Virtual_Bind_Deep_To_New_Context(
     REBVAL *body_in_out, // input *and* output parameter
-    REBCTX **context_out,
     REBVAL *spec
 ){
     // !!! This just hacks in GROUP! behavior, because the :param convention
@@ -1015,9 +1014,7 @@ void Virtual_Bind_Deep_To_New_Context(
     // Keylists are always managed, but varlist is unmanaged by default (so
     // it can be freed if there is a problem)
     //
-    *context_out = Alloc_Context(REB_OBJECT, num_vars);
-
-    REBCTX *c = *context_out; // for convenience...
+    REBCTX *c = Alloc_Context(REB_OBJECT, num_vars);
 
     // We want to check for duplicates and a Binder can be used for that
     // purpose--but note that a fail() cannot happen while binders are
@@ -1159,7 +1156,7 @@ void Virtual_Bind_Deep_To_New_Context(
     Manage_Series(CTX_VARLIST(c));
 
     if (not rebinding)
-        return; // nothing else needed to do
+        return c;  // nothing else needed to do
 
     if (not duplicate) {
         //
@@ -1207,6 +1204,8 @@ void Virtual_Bind_Deep_To_New_Context(
     // not been robust to the memory moving.
     //
     SET_SERIES_FLAG(CTX_VARLIST(c), FIXED_SIZE);
+
+    return c;
 }
 
 

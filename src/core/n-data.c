@@ -306,27 +306,37 @@ REBNATIVE(without)
 //
 //  use: native [
 //
-//  {Defines words local to a block.}
+//  {Defines words local to a block (See also: LET)}
 //
 //      return: [<opt> any-value!]
-//      vars [block! word!]
-//          {Local word(s) to the block}
-//      body [block!]
-//          {Block to evaluate}
+//      vars "Local word(s) to the block"
+//          [block! word!]
+//      body "Block to evaluate"
+//          [block!]
 //  ]
 //
 REBNATIVE(use)
+//
+// !!! USE is somewhat deprecated, because LET does something very similar
+// without bringing in indentation and an extra block.  The USE word is being
+// considered for a more interesting purpose--of being able to import an
+// object into a scope, like a WITH statement.
+//
+// 1. The new context created here winds up being managed.  So if no references
+//    exist, GC is ok.  For instance, someone can write `use [x] [print "hi"]`
 {
     INCLUDE_PARAMS_OF_USE;
 
-    REBCTX *context;
-    Virtual_Bind_Deep_To_New_Context(
-        ARG(body), // may be replaced with rebound copy, or left the same
-        &context, // winds up managed; if no references exist, GC is ok
-        ARG(vars) // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
-    );
+    Value *vars = ARG(vars);
+    Value *body = ARG(body);
 
-    if (Do_Any_Array_At_Throws(OUT, ARG(body), SPECIFIED))
+    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
+        body,  // may be replaced with rebound copy, or left the same
+        vars  // similar to the "spec" of a loop: WORD!/LIT-WORD!/BLOCK!
+    );
+    UNUSED(context);  // managed, but see [1]
+
+    if (Do_Any_Array_At_Throws(OUT, body, SPECIFIED))
         return THROWN;
 
     return OUT;

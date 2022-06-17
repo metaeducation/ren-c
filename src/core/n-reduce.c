@@ -160,10 +160,8 @@ REBNATIVE(reduce_each)
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
 
-    REBCTX *context;
-    Virtual_Bind_Deep_To_New_Context(
+    REBCTX *context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
-        &context,
         ARG(vars)
     );
     Init_Object(ARG(vars), context);  // keep GC safe
