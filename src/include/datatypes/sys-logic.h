@@ -66,7 +66,7 @@ inline static bool VAL_LOGIC(noquote(const Cell*) v) {
 //
 // Despite Rebol's C heritage, the INTEGER! 0 is purposefully not "falsey".
 
-inline static bool IS_TRUTHY(const Cell *v) {
+inline static bool Is_Truthy(const Cell *v) {
     assert(QUOTE_BYTE(v) != ISOTOPE_255);  // should never be passed isotopes!
     if (VAL_TYPE(v) > REB_LOGIC)
         return true;  // includes QUOTED! `if first ['_] [-- "this is truthy"]`
@@ -76,17 +76,17 @@ inline static bool IS_TRUTHY(const Cell *v) {
     return false;
 }
 
-#define IS_FALSEY(v) \
-    (not IS_TRUTHY(v))
+#define Is_Falsey(v) \
+    (not Is_Truthy(v))
 
 // Although a BLOCK! value is true, some constructs are safer by not allowing
 // literal blocks.  e.g. `if [x] [print "this is not safe"]`.  The evaluated
 // bit can let these instances be distinguished.  Note that making *all*
 // evaluations safe would be limiting, e.g. `foo: any [false-thing []]`...
-// So ANY and ALL use IS_TRUTHY() directly
+// So ANY and ALL use Is_Truthy() directly
 //
 inline static bool Is_Conditional_True(const REBVAL *v) {
-    if (IS_FALSEY(v))
+    if (Is_Falsey(v))
         return false;
     if (IS_BLOCK(v))
         if (GET_CELL_FLAG(v, UNEVALUATED))

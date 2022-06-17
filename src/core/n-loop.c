@@ -1184,7 +1184,7 @@ REBNATIVE(every)
             return Init_Thrown_With_Label(FRAME, SPARE, Lib(NULL));;
         }
 
-        if (IS_FALSEY(SPARE)) {
+        if (Is_Falsey(SPARE)) {
             Init_Nulled(OUT);
         }
         else if (
@@ -1968,7 +1968,7 @@ REBNATIVE(until)
         if (Is_Isotope(condition))
             fail (Error_Bad_Isotope(condition));  // all isotopes fail, see [3]
 
-        if (IS_TRUTHY(condition))
+        if (Is_Truthy(condition))
             return_branched (OUT);  // truthy result, return value!
     }
 
@@ -2050,7 +2050,7 @@ REBNATIVE(while)
     if (Is_Isotope(SPARE))
         fail (Error_Bad_Isotope(SPARE));
 
-    if (IS_FALSEY(SPARE)) {  // falsey condition => return last body result
+    if (Is_Falsey(SPARE)) {  // falsey condition => return last body result
         if (Is_Stale(OUT))
             return VOID;  // body never ran, so no result to return!
 

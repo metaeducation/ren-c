@@ -1804,7 +1804,7 @@ REBNATIVE(subparse)
 
                 FETCH_NEXT_RULE(f);
 
-                if (IS_TRUTHY(condition))
+                if (Is_Truthy(condition))
                     goto pre_rule;
 
                 Init_Nulled(ARG(position));  // not found

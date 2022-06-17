@@ -40,7 +40,7 @@ REBNATIVE(and_q)
 {
     INCLUDE_PARAMS_OF_AND_Q;
 
-    if (IS_TRUTHY(ARG(value1)) && IS_TRUTHY(ARG(value2)))
+    if (Is_Truthy(ARG(value1)) && Is_Truthy(ARG(value2)))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -61,7 +61,7 @@ REBNATIVE(nor_q)
 {
     INCLUDE_PARAMS_OF_NOR_Q;
 
-    if (IS_FALSEY(ARG(value1)) && IS_FALSEY(ARG(value2)))
+    if (Is_Falsey(ARG(value1)) && Is_Falsey(ARG(value2)))
         return Init_True(OUT);
 
     return Init_False(OUT);
@@ -84,7 +84,7 @@ REBNATIVE(nand_q)
 
     return Init_Logic(
         OUT,
-        IS_TRUTHY(ARG(value1)) and IS_TRUTHY(ARG(value2))
+        Is_Truthy(ARG(value1)) and Is_Truthy(ARG(value2))
     );
 }
 
@@ -103,7 +103,7 @@ REBNATIVE(to_logic)
 {
     INCLUDE_PARAMS_OF_TO_LOGIC;
 
-    return Init_Logic(OUT, IS_TRUTHY(ARG(optional)));
+    return Init_Logic(OUT, Is_Truthy(ARG(optional)));
 }
 
 
@@ -121,7 +121,7 @@ REBNATIVE(not_1)  // see TO-C-NAME
 {
     INCLUDE_PARAMS_OF_NOT_1;
 
-    return Init_Logic(OUT, IS_FALSEY(ARG(optional)));
+    return Init_Logic(OUT, Is_Falsey(ARG(optional)));
 }
 
 
@@ -172,13 +172,13 @@ REBNATIVE(and_1)  // see TO-C-NAME
     if (GET_CELL_FLAG(left, UNEVALUATED))
         fail (Error_Unintended_Literal_Raw(left));
 
-    if (IS_FALSEY(left))
+    if (Is_Falsey(left))
         return Init_False(OUT);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    return Init_Logic(OUT, IS_TRUTHY(SPARE));
+    return Init_Logic(OUT, Is_Truthy(SPARE));
 }
 
 
@@ -203,13 +203,13 @@ REBNATIVE(or_1)  // see TO-C-NAME
     if (GET_CELL_FLAG(left, UNEVALUATED))
         fail (Error_Unintended_Literal_Raw(left));
 
-    if (IS_TRUTHY(left))
+    if (Is_Truthy(left))
         return Init_True(OUT);
 
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    return Init_Logic(OUT, IS_TRUTHY(SPARE));
+    return Init_Logic(OUT, Is_Truthy(SPARE));
 }
 
 
@@ -237,10 +237,10 @@ REBNATIVE(xor_1)  // see TO-C-NAME
     if (Do_Logic_Right_Side_Throws(SPARE, right))
         return THROWN;
 
-    if (IS_FALSEY(left))
-        return Init_Logic(OUT, IS_TRUTHY(SPARE));
+    if (Is_Falsey(left))
+        return Init_Logic(OUT, Is_Truthy(SPARE));
 
-    return Init_Logic(OUT, IS_FALSEY(SPARE));
+    return Init_Logic(OUT, Is_Falsey(SPARE));
 }
 
 
@@ -273,7 +273,7 @@ REBNATIVE(unless)
 
     Meta_Unquotify(right);
 
-    if (IS_TRUTHY(right))
+    if (Is_Truthy(right))
         return_value (right);
 
     return_value (left); // preserve the exact truthy or falsey value
@@ -313,7 +313,7 @@ REB_R MAKE_Logic(
     // "zero is false" concept?  Is there a reason it should?
     //
     if (
-        IS_FALSEY(arg)
+        Is_Falsey(arg)
         || (IS_INTEGER(arg) && VAL_INT64(arg) == 0)
         || (
             (IS_DECIMAL(arg) || IS_PERCENT(arg))
@@ -339,7 +339,7 @@ REB_R TO_Logic(REBVAL *out, enum Reb_Kind kind, const REBVAL *arg) {
     // interpreter canon that all non-none non-logic-false values are
     // considered effectively "truth".
     //
-    return Init_Logic(out, IS_TRUTHY(arg));
+    return Init_Logic(out, Is_Truthy(arg));
 }
 
 

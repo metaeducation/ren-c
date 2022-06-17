@@ -672,7 +672,7 @@ REBNATIVE(evaluate)
         fail (PAR(source));
     }
 
-    if (IS_TRUTHY(next))
+    if (Is_Truthy(next))
         Set_Var_May_Fail(next, SPECIFIED, source);
 
     if (Is_Void(SPARE))

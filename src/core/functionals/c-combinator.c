@@ -381,7 +381,7 @@ REBNATIVE(text_x_combinator)
     INCLUDE_PARAMS_OF_TEXT_X_COMBINATOR;
 
     REBCTX *state = VAL_CONTEXT(ARG(state));
-    bool cased = IS_TRUTHY(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
+    bool cased = Is_Truthy(CTX_VAR(state, IDX_UPARSE_PARAM_CASE));
 
     REBVAL *v = ARG(value);
     REBVAL *input = ARG(input);

@@ -223,10 +223,10 @@ static void Startup_Lib(void)
     // seed the values to get the ball rolling.
 
     Init_Nulled(force_Lib(NULL));
-    assert(IS_FALSEY(Lib(NULL)) and IS_NULLED(Lib(NULL)));
+    assert(Is_Falsey(Lib(NULL)) and IS_NULLED(Lib(NULL)));
 
     Init_Blank(force_Lib(BLANK));
-    assert(IS_FALSEY(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
+    assert(Is_Falsey(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));
 
     // !!! Rebol is firm on TRUE and FALSE being WORD!s, as opposed to the
     // literal forms of logical true and false.  Not only does this frequently
@@ -238,8 +238,8 @@ static void Startup_Lib(void)
     //
     Init_True(force_Lib(TRUE));
     Init_False(force_Lib(FALSE));
-    assert(IS_TRUTHY(Lib(TRUE)) and VAL_LOGIC(Lib(TRUE)) == true);
-    assert(IS_FALSEY(Lib(FALSE)) and VAL_LOGIC(Lib(FALSE)) == false);
+    assert(Is_Truthy(Lib(TRUE)) and VAL_LOGIC(Lib(TRUE)) == true);
+    assert(Is_Falsey(Lib(FALSE)) and VAL_LOGIC(Lib(FALSE)) == false);
 
     // !!! Other constants are just initialized as part of Startup_Base().
 }

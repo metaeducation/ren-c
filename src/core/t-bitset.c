@@ -579,7 +579,7 @@ REBTYPE(Bitset)
         if (not Set_Bits(
             bset,
             picker,
-            BITS_NOT(bset) ? IS_FALSEY(setval) : IS_TRUTHY(setval)
+            BITS_NOT(bset) ? Is_Falsey(setval) : Is_Truthy(setval)
         )){
             return R_UNHANDLED;
         }

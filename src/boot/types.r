@@ -81,7 +81,7 @@ logic       "boolean true or false"
             logic       +       +       []
 
 ; ============================================================================
-; BEGIN TYPES THAT ARE ALWAYS "TRUTHY" - IS_TRUTHY()/IS_CONDITIONALLY_TRUE()
+; BEGIN TYPES THAT ARE ALWAYS "TRUTHY" - Is_Truthy()/IS_CONDITIONALLY_TRUE()
 ; ============================================================================
 
 #bytes      "!!! `BYTES!` isn't a datatype, `heart` type  for optimizations"

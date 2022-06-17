@@ -376,7 +376,7 @@ REBNATIVE(match)
         break;
 
       case REB_LOGIC:
-        if (IS_TRUTHY(v) != VAL_LOGIC(test))
+        if (Is_Truthy(v) != VAL_LOGIC(test))
             return nullptr;
         break;
 
@@ -405,7 +405,7 @@ REBNATIVE(match)
         )){
             return THROWN;
         }
-        if (IS_FALSEY(SPARE))
+        if (Is_Falsey(SPARE))
             return nullptr;
         break; }
 
@@ -606,7 +606,7 @@ REBNATIVE(all)
     if (Is_Isotope(condition))
         fail (Error_Bad_Isotope(condition));
 
-    if (IS_FALSEY(condition)) {
+    if (Is_Falsey(condition)) {
         Abort_Frame(f);
         return nullptr;
     }
@@ -735,7 +735,7 @@ REBNATIVE(any)
     if (Is_Isotope(condition))
         fail (Error_Bad_Isotope(condition));
 
-    if (IS_TRUTHY(condition)) {
+    if (Is_Truthy(condition)) {
         Abort_Frame(f);
         return_branched (OUT);  // successful ANY returns the value
     }
@@ -839,7 +839,7 @@ REBNATIVE(case)
             if (Is_Isotope(SPARE))
                 fail (Error_Bad_Isotope(SPARE));
 
-            matched = IS_TRUTHY(SPARE);
+            matched = Is_Truthy(SPARE);
         }
         else {
             DECLARE_LOCAL (temp);
@@ -850,7 +850,7 @@ REBNATIVE(case)
                 Move_Cell(OUT, temp);
                 goto threw;
             }
-            matched = IS_TRUTHY(temp);
+            matched = Is_Truthy(temp);
         }
 
         if (IS_GET_GROUP(f_value)) {
@@ -1012,7 +1012,7 @@ REBNATIVE(switch)
                 Move_Cell(OUT, temp);
                 goto threw;
             }
-            if (IS_FALSEY(temp))
+            if (Is_Falsey(temp))
                 continue;
         }
 
@@ -1165,7 +1165,7 @@ REBNATIVE(default)
     if (Is_Isotope(SPARE))
         fail (Error_Bad_Isotope(SPARE));
 
-    if (IS_TRUTHY(SPARE))
+    if (Is_Truthy(SPARE))
         return OUT;
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;

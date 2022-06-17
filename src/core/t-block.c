@@ -580,7 +580,7 @@ static int Compare_Val_Custom(void *arg, const void *v1, const void *v2)
         else if (VAL_DECIMAL(result) == 0)
             tristate = 0;
     }
-    else if (IS_TRUTHY(result))
+    else if (Is_Truthy(result))
         tristate = 1;
 
     return tristate;
