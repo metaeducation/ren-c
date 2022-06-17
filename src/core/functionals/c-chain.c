@@ -177,7 +177,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
         SET_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT);
 
         FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;
-        CLEAR_EVAL_FLAG(sub, DISPATCHER_CATCHES);
+        Clear_Eval_Flag(sub, DISPATCHER_CATCHES);
     }
 
     Drop_Frame(sub);

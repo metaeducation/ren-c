@@ -213,7 +213,7 @@ ATTRIBUTE_NO_RETURN void Fail_Core(const void *p)
     // moment we're assuming that once a frame has failed it can't recover if
     // it originated the failure...but this may be revisited.
     //
-    assert(NOT_EVAL_FLAG(FS_TOP, ABRUPT_FAILURE));
+    assert(Not_Eval_Flag(FS_TOP, ABRUPT_FAILURE));
 
     REBCTX *error;
     if (p == nullptr) {
@@ -427,7 +427,7 @@ void Set_Location_Of_Error(
     REBCTX *error,
     REBFRM *where  // must be valid and executing on the stack
 ) {
-    while (GET_EVAL_FLAG(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
+    while (Get_Eval_Flag(where, BLAME_PARENT))  // e.g. Apply_Only_Throws()
         where = where->prior;
 
     REBDSP dsp_orig = DSP;

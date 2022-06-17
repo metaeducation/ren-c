@@ -203,7 +203,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     assert(INITABLE(OUT));  // all invisible will preserve output
     assert(OUT != SPARE);  // overwritten by temporary calculations
 
-    if (GET_EVAL_FLAG(f, NO_EVALUATIONS)) {  // see flag for why this exists
+    if (Get_Eval_Flag(f, NO_EVALUATIONS)) {  // see flag for why this exists
         if (IS_END(f->feed->value))
             return OUT;
         Derelativize(OUT, f->feed->value, FEED_SPECIFIER(f->feed));
@@ -221,8 +221,8 @@ REB_R Evaluator_Executor(REBFRM *f)
     // run, but it may error if that's not acceptable.
     //
     if (GET_FEED_FLAG(f->feed, BARRIER_HIT)) {
-        if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
-            if (GET_EVAL_FLAG(f, MAYBE_STALE))
+        if (Get_Eval_Flag(f, FULFILLING_ARG)) {
+            if (Get_Eval_Flag(f, MAYBE_STALE))
                 Mark_Eval_Out_Stale(OUT);
             else
                 assert(Is_Void(OUT));
@@ -237,7 +237,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     //
     switch (STATE) {
       case ST_EVALUATOR_INITIAL_ENTRY:
-        if (NOT_EVAL_FLAG(f, MAYBE_STALE))
+        if (Not_Eval_Flag(f, MAYBE_STALE))
             assert(Is_Void(OUT));
         TRASH_POINTER_IF_DEBUG(f_current);
         /*TRASH_POINTER_IF_DEBUG(f_current_gotten);*/  // trash option() ptrs?
@@ -256,8 +256,8 @@ REB_R Evaluator_Executor(REBFRM *f)
         // in the action itself.  See REBNATIVE(shove)'s /ENFIX for instance.
         // So we go by the state of EVAL_FLAG_RUNNING_ENFIX on entry.
         //
-        if (GET_EVAL_FLAG(f, RUNNING_ENFIX)) {
-            CLEAR_EVAL_FLAG(f, RUNNING_ENFIX);  // for assertion
+        if (Get_Eval_Flag(f, RUNNING_ENFIX)) {
+            Clear_Eval_Flag(f, RUNNING_ENFIX);  // for assertion
 
             DECLARE_ACTION_SUBFRAME (subframe, f);
             Push_Frame(OUT, subframe);
@@ -450,7 +450,7 @@ REB_R Evaluator_Executor(REBFRM *f)
         f_current = &f->feed->lookback;
         f_current_gotten = nullptr;
 
-        SET_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);  // for better error message
+        Set_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);  // for better error message
         SET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);  // literal right op is arg
 
         goto give_up_backward_quote_priority;  // run PATH!/WORD! normal
@@ -534,7 +534,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // A comma is a lightweight looking expression barrier.
 
        case REB_COMMA:
-        if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
+        if (Get_Eval_Flag(f, FULFILLING_ARG)) {
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
             SET_FEED_FLAG(f->feed, BARRIER_HIT);
             goto finished;
@@ -614,7 +614,7 @@ REB_R Evaluator_Executor(REBFRM *f)
                     GET_ACTION_FLAG(action, POSTPONES_ENTIRELY)
                     or GET_ACTION_FLAG(action, DEFERS_LOOKBACK)
                 ){
-                    if (GET_EVAL_FLAG(f, FULFILLING_ARG)) {
+                    if (Get_Eval_Flag(f, FULFILLING_ARG)) {
                         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
                         SET_FEED_FLAG(f->feed, DEFERRING_ENFIX);
                         RESET(OUT);
@@ -1753,7 +1753,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // retriggers and lets x run.
 
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
-        if (GET_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH))
+        if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))
             fail (Error_Literal_Left_Path_Raw());
 
         assert(!"Unexpected lack of use of NEXT_ARG_FROM_OUT");
@@ -1804,7 +1804,7 @@ REB_R Evaluator_Executor(REBFRM *f)
       lookback_quote_too_late: // run as if starting new expression
 
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
-        CLEAR_EVAL_FLAG(f, INERT_OPTIMIZATION);
+        Clear_Eval_Flag(f, INERT_OPTIMIZATION);
 
         // Since it's a new expression, EVALUATE doesn't want to run it
         // even if invisible, as it's not completely invisible (enfixed)
@@ -1829,26 +1829,26 @@ REB_R Evaluator_Executor(REBFRM *f)
         // the left quoting function might be okay with seeing nothing on the
         // left.  Start a new expression and let it error if that's not ok.
         //
-        assert(NOT_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH));
-        if (GET_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH))
+        assert(Not_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH));
+        if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))
             fail (Error_Literal_Left_Path_Raw());
 
         const REBPAR *first = First_Unspecialized_Param(nullptr, enfixed);
         if (VAL_PARAM_CLASS(first) == PARAM_CLASS_SOFT) {
             if (GET_FEED_FLAG(f->feed, NO_LOOKAHEAD)) {
                 CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
-                CLEAR_EVAL_FLAG(f, INERT_OPTIMIZATION);
+                Clear_Eval_Flag(f, INERT_OPTIMIZATION);
                 goto finished;
             }
         }
-        else if (NOT_EVAL_FLAG(f, INERT_OPTIMIZATION))
+        else if (Not_Eval_Flag(f, INERT_OPTIMIZATION))
             goto lookback_quote_too_late;
     }
 
-    CLEAR_EVAL_FLAG(f, INERT_OPTIMIZATION);  // if set, it served its purpose
+    Clear_Eval_Flag(f, INERT_OPTIMIZATION);  // if set, it served its purpose
 
     if (
-        GET_EVAL_FLAG(f, FULFILLING_ARG)
+        Get_Eval_Flag(f, FULFILLING_ARG)
         and not (GET_ACTION_FLAG(enfixed, DEFERS_LOOKBACK)
                                        // ^-- `1 + if false [2] else [3]` => 4
         )
@@ -1877,7 +1877,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // to know not to do the deferral more than once.
     //
     if (
-        GET_EVAL_FLAG(f, FULFILLING_ARG)
+        Get_Eval_Flag(f, FULFILLING_ARG)
         and (
             GET_ACTION_FLAG(enfixed, POSTPONES_ENTIRELY)
             or (
@@ -1886,7 +1886,7 @@ REB_R Evaluator_Executor(REBFRM *f)
             )
         )
     ){
-        if (GET_EVAL_FLAG(f->prior, ERROR_ON_DEFERRED_ENFIX)) {
+        if (Get_Eval_Flag(f->prior, ERROR_ON_DEFERRED_ENFIX)) {
             //
             // Operations that inline functions by proxy (such as MATCH and
             // ENSURE) cannot directly interoperate with THEN or ELSE...they
@@ -1958,14 +1958,14 @@ REB_R Evaluator_Executor(REBFRM *f)
     //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting >- here, need flag for that
     //
-    CLEAR_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);
+    Clear_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);
     assert(NOT_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT));  // must be consumed
 
   #if !defined(NDEBUG)
     Evaluator_Exit_Checks_Debug(f);
   #endif
 
-    if (GET_EVAL_FLAG(f, TO_END) and NOT_END(f_next))
+    if (Get_Eval_Flag(f, TO_END) and NOT_END(f_next))
         goto new_expression;
 
     // Note: There may be some optimization possible here if the flag for
@@ -1973,7 +1973,7 @@ REB_R Evaluator_Executor(REBFRM *f)
     // the same EVAL_FLAG bit as the CELL_FLAG for stale.  It's tricky since
     // for series nodes that's the bit for being free.  Review.
     //
-    if (NOT_EVAL_FLAG(f, MAYBE_STALE))
+    if (Not_Eval_Flag(f, MAYBE_STALE))
         Clear_Stale_Flag(OUT);
 
     return OUT;

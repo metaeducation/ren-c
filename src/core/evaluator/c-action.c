@@ -125,14 +125,14 @@ bool Lookahead_To_Sync_Enfix_Defer_Flag(struct Reb_Feed *feed) {
 REB_R Action_Executor(REBFRM *f)
 {
     if (THROWING) {
-        if (GET_EVAL_FLAG(f, DISPATCHER_CATCHES))  // wants to see the throw
+        if (Get_Eval_Flag(f, DISPATCHER_CATCHES))  // wants to see the throw
             goto dispatch_phase;
 
         goto handle_thrown_maybe_redo;
     }
 
     if (Is_Action_Frame_Fulfilling(f)) {
-        assert(NOT_EVAL_FLAG(f, DISPATCHER_CATCHES));  // trampoline cleans up
+        assert(Not_Eval_Flag(f, DISPATCHER_CATCHES));  // trampoline cleans up
 
         switch (STATE) {
           case ST_ACTION_INITIAL_ENTRY:
@@ -158,8 +158,8 @@ REB_R Action_Executor(REBFRM *f)
         }
     }
 
-    if (GET_EVAL_FLAG(f, DELEGATE_CONTROL)) {
-        CLEAR_EVAL_FLAG(f, DELEGATE_CONTROL);
+    if (Get_Eval_Flag(f, DELEGATE_CONTROL)) {
+        Clear_Eval_Flag(f, DELEGATE_CONTROL);
         goto dispatch_completed;  // the dispatcher didn't want a callback
     }
 
@@ -167,7 +167,7 @@ REB_R Action_Executor(REBFRM *f)
 
   fulfill:
 
-    if (NOT_EVAL_FLAG(f, MAYBE_STALE))
+    if (Not_Eval_Flag(f, MAYBE_STALE))
         assert(Is_Void(OUT));
 
     assert(f->original);  // set by Begin_Action()
@@ -311,7 +311,7 @@ REB_R Action_Executor(REBFRM *f)
                 // remembered what happened we can give an informative
                 // error message vs. a perplexing one.
                 //
-                if (GET_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH))
+                if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))
                     fail (Error_Literal_Left_Path_Raw());
 
                 // Seeing an END in the output slot could mean that there
@@ -427,7 +427,7 @@ REB_R Action_Executor(REBFRM *f)
             //
             // This effectively puts the enfix into a *single step defer*.
             //
-            if (GET_EVAL_FLAG(f, RUNNING_ENFIX)) {
+            if (Get_Eval_Flag(f, RUNNING_ENFIX)) {
                 assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
                 if (
                     NOT_ACTION_FLAG(FRM_PHASE(f), POSTPONES_ENTIRELY)
@@ -486,7 +486,7 @@ REB_R Action_Executor(REBFRM *f)
         //      >> 1 + 2 * 3
         //      == 9
         //
-        if (NOT_EVAL_FLAG(f, RUNNING_ENFIX))
+        if (Not_Eval_Flag(f, RUNNING_ENFIX))
             CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
 
         // Once a deferred flag is set, it must be cleared during the
@@ -723,7 +723,7 @@ REB_R Action_Executor(REBFRM *f)
     f->key = nullptr;  // signals !Is_Action_Frame_Fulfilling()
     f->key_tail = nullptr;
 
-    if (GET_EVAL_FLAG(f, FULFILL_ONLY)) {  // only fulfillment, no typecheck
+    if (Get_Eval_Flag(f, FULFILL_ONLY)) {  // only fulfillment, no typecheck
         assert(Is_Fresh(OUT));  // didn't touch out
         goto skip_output_check;
     }
@@ -854,7 +854,7 @@ REB_R Action_Executor(REBFRM *f)
             kind == REB_BLANK  // v-- e.g. <blank> param
             and GET_PARAM_FLAG(PARAM, NOOP_IF_BLANK)
         ){
-            SET_EVAL_FLAG(f, TYPECHECK_ONLY);
+            Set_Eval_Flag(f, TYPECHECK_ONLY);
             Init_Nulled(OUT);
             continue;
         }
@@ -863,7 +863,7 @@ REB_R Action_Executor(REBFRM *f)
             GET_PARAM_FLAG(PARAM, NOOP_IF_BLACKHOLE)
             and Is_Blackhole(ARG)  // v-- e.g. <blackhole> param
         ){
-            SET_EVAL_FLAG(f, TYPECHECK_ONLY);
+            Set_Eval_Flag(f, TYPECHECK_ONLY);
             Init_Isotope(OUT, Canon(BLACKHOLE));
             continue;
         }
@@ -910,7 +910,7 @@ REB_R Action_Executor(REBFRM *f)
   dispatch:
 
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
-        if (GET_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH))  // see notes on flag
+        if (Get_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH))  // see notes on flag
             fail (Error_Literal_Left_Path_Raw());
     }
 
@@ -921,7 +921,7 @@ REB_R Action_Executor(REBFRM *f)
     // hand side.  This is how expression work (see `|:`)
     //
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
-        assert(GET_EVAL_FLAG(f, RUNNING_ENFIX));
+        assert(Get_Eval_Flag(f, RUNNING_ENFIX));
         CLEAR_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT);
         Mark_Eval_Out_Stale(OUT);
     }
@@ -933,7 +933,7 @@ REB_R Action_Executor(REBFRM *f)
         or IS_VALUE_IN_ARRAY_DEBUG(FEED_ARRAY(f->feed), f_next)
     );
 
-    if (GET_EVAL_FLAG(f, TYPECHECK_ONLY)) {  // <blank> and <blackhole> use
+    if (Get_Eval_Flag(f, TYPECHECK_ONLY)) {  // <blank> and <blackhole> use
         assert(
             Is_Isotope_With_Id(OUT, SYM_BLACKHOLE)
             or IS_NULLED(OUT)
@@ -1082,7 +1082,7 @@ REB_R Action_Executor(REBFRM *f)
     //     o: make object! [f: does [1]]
     //     o.f left-the  ; want error suggesting -> here, need flag for that
     //
-    CLEAR_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH);
+    Clear_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH);
 
     if (GET_FEED_FLAG(f->feed, NEXT_ARG_FROM_OUT)) {
         //
@@ -1110,7 +1110,7 @@ REB_R Action_Executor(REBFRM *f)
         fail ("Left lookback toward thing that took no args, look at later");
     }
 
-    if (NOT_EVAL_FLAG(f, MAYBE_STALE))
+    if (Not_Eval_Flag(f, MAYBE_STALE))
         Clear_Stale_Flag(f->out);
 
     return OUT;  // not thrown
@@ -1161,7 +1161,7 @@ REB_R Action_Executor(REBFRM *f)
             INIT_FRM_PHASE(f, redo_phase);
             INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
             STATE = ST_ACTION_TYPECHECKING;
-            CLEAR_EVAL_FLAG(f, DISPATCHER_CATCHES);  // else asserts
+            Clear_Eval_Flag(f, DISPATCHER_CATCHES);  // else asserts
             goto typecheck_then_dispatch;
         }
     }
@@ -1200,8 +1200,8 @@ void Push_Action(
     REBACT *act,
     REBCTX *binding  // actions may only be bound to contexts ATM
 ){
-    assert(NOT_EVAL_FLAG(f, FULFILL_ONLY));
-    assert(NOT_EVAL_FLAG(f, RUNNING_ENFIX));
+    assert(Not_Eval_Flag(f, FULFILL_ONLY));
+    assert(Not_Eval_Flag(f, RUNNING_ENFIX));
 
     STATIC_ASSERT(EVAL_FLAG_FULFILLING_ARG == DETAILS_FLAG_IS_BARRIER);
     REBARR *identity = ACT_IDENTITY(act);
@@ -1301,7 +1301,7 @@ void Begin_Action_Core(
     option(const Symbol*) label,
     bool enfix
 ){
-    assert(NOT_EVAL_FLAG(f, RUNNING_ENFIX));
+    assert(Not_Eval_Flag(f, RUNNING_ENFIX));
     assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
 
     assert(NOT_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
@@ -1326,7 +1326,7 @@ void Begin_Action_Core(
     // the evaluation turns out to be invisible.
     //
     STATIC_ASSERT(FEED_FLAG_NO_LOOKAHEAD == EVAL_FLAG_CACHE_NO_LOOKAHEAD);
-    assert(NOT_EVAL_FLAG(f, CACHE_NO_LOOKAHEAD));
+    assert(Not_Eval_Flag(f, CACHE_NO_LOOKAHEAD));
     f->flags.bits |= f->feed->flags.bits & FEED_FLAG_NO_LOOKAHEAD;
 
     if (enfix) {
@@ -1343,7 +1343,7 @@ void Begin_Action_Core(
         // and intends to call Fetch_Next_In_Feed() as the next step.  So
         // the caller must set it.
         //
-        SET_EVAL_FLAG(f, RUNNING_ENFIX);
+        Set_Eval_Flag(f, RUNNING_ENFIX);
 
         // All the enfix call sites cleared this flag on the feed, so it was
         // moved into the Begin_Enfix_Action() case.  Note this has to be done
@@ -1362,7 +1362,7 @@ void Begin_Action_Core(
 void Drop_Action(REBFRM *f) {
     assert(not f->label or IS_SYMBOL(unwrap(f->label)));
 
-    if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
+    if (Not_Eval_Flag(f, FULFILLING_ARG))
         CLEAR_FEED_FLAG(f->feed, BARRIER_HIT);
 
     if (
@@ -1378,10 +1378,10 @@ void Drop_Action(REBFRM *f) {
         f->feed->flags.bits &= ~FEED_FLAG_NO_LOOKAHEAD;
         f->feed->flags.bits |= f->flags.bits & EVAL_FLAG_CACHE_NO_LOOKAHEAD;
     }
-    CLEAR_EVAL_FLAG(f, CACHE_NO_LOOKAHEAD);
+    Clear_Eval_Flag(f, CACHE_NO_LOOKAHEAD);
 
-    CLEAR_EVAL_FLAG(f, RUNNING_ENFIX);
-    CLEAR_EVAL_FLAG(f, FULFILL_ONLY);
+    Clear_Eval_Flag(f, RUNNING_ENFIX);
+    Clear_Eval_Flag(f, FULFILL_ONLY);
 
     assert(
         GET_SERIES_FLAG(f->varlist, INACCESSIBLE)

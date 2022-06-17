@@ -197,8 +197,8 @@ void Evaluator_Expression_Checks_Debug(REBFRM *f)
 {
     assert(f == FS_TOP); // should be topmost frame, still
 
-    assert(NOT_EVAL_FLAG(f, DIDNT_LEFT_QUOTE_PATH));
-    if (NOT_EVAL_FLAG(f, FULFILLING_ARG))
+    assert(Not_Eval_Flag(f, DIDNT_LEFT_QUOTE_PATH));
+    if (Not_Eval_Flag(f, FULFILLING_ARG))
         assert(NOT_FEED_FLAG(f->feed, NO_LOOKAHEAD));
     assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
 
@@ -271,7 +271,7 @@ void Do_After_Action_Checks_Debug(REBFRM *f) {
             not Typecheck_Including_Constraints(param, f->out)
             and not (
                 GET_PARAM_FLAG(param, VANISHABLE)
-                and GET_EVAL_FLAG(f, RUNNING_ENFIX)
+                and Get_Eval_Flag(f, RUNNING_ENFIX)
             )  // exemption, e.g. `1 comment "hi" + 2` infix non-stale
         ){
             assert(!"Native code violated return type contract!\n");

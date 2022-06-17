@@ -414,16 +414,16 @@ STATIC_ASSERT(31 < 32);  // otherwise EVAL_FLAG_XXX too high
     (EVAL_FLAG_0_IS_TRUE | EVAL_FLAG_7_IS_TRUE)
 
 
-#define SET_EVAL_FLAG(f,name) \
+#define Set_Eval_Flag(f,name) \
     (FRM(f)->flags.bits |= EVAL_FLAG_##name)
 
-#define GET_EVAL_FLAG(f,name) \
+#define Get_Eval_Flag(f,name) \
     ((FRM(f)->flags.bits & EVAL_FLAG_##name) != 0)
 
-#define CLEAR_EVAL_FLAG(f,name) \
+#define Clear_Eval_Flag(f,name) \
     (FRM(f)->flags.bits &= ~EVAL_FLAG_##name)
 
-#define NOT_EVAL_FLAG(f,name) \
+#define Not_Eval_Flag(f,name) \
     ((FRM(f)->flags.bits & EVAL_FLAG_##name) == 0)
 
 

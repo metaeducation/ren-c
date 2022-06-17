@@ -282,7 +282,7 @@ inline static const char* Frame_Label_Or_Anonymous_UTF8(REBFRM *f) {
 // optimize performance by working with the evaluator directly.
 
 inline static void Free_Frame_Internal(REBFRM *f) {
-    if (GET_EVAL_FLAG(f, ALLOCATED_FEED))
+    if (Get_Eval_Flag(f, ALLOCATED_FEED))
         Free_Feed(f->feed);  // didn't inherit from parent, and not END_FRAME
 
     if (f->varlist and NOT_SERIES_FLAG(f->varlist, MANAGED))
@@ -822,7 +822,7 @@ inline static bool Push_Continuation_Throws(
     do { \
         assert((out) == OUT); \
         STATE = 1; \
-        SET_EVAL_FLAG(frame_, DELEGATE_CONTROL); \
+        Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
         continue_core(OUT, EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
     } while (0)
 
@@ -830,7 +830,7 @@ inline static bool Push_Continuation_Throws(
     do { \
         assert((out) == OUT); \
         STATE = 1; \
-        SET_EVAL_FLAG(frame_, DELEGATE_CONTROL); \
+        Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
         continue_core(OUT, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
     } while (0)
 
@@ -843,7 +843,7 @@ inline static bool Push_Continuation_Throws(
 #define continue_catchable(out,value,with) \
     do { \
         assert(Is_Action_Frame(frame_)); \
-        SET_EVAL_FLAG(frame_, DISPATCHER_CATCHES); \
+        Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
         continue_core((out), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
     } while (0)
 
@@ -855,7 +855,7 @@ inline static bool Push_Continuation_Throws(
 #define continue_catchable_branch(out,branch,with) \
     do { \
         assert(Is_Action_Frame(frame_)); \
-        SET_EVAL_FLAG(frame_, DISPATCHER_CATCHES); \
+        Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
         continue_core((out), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
     } while (0)
 
@@ -871,7 +871,7 @@ inline static bool Push_Continuation_Throws(
     do { \
         assert((f) == FS_TOP); \
         assert(FS_TOP != frame_); \
-        SET_EVAL_FLAG(frame_, DELEGATE_CONTROL); \
+        Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
         STATE = 1;  /* STATE byte of 0 reserved for initial entry */ \
         return R_CONTINUATION; \
     } while (0)

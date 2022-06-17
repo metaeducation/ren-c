@@ -113,7 +113,7 @@ bool Trampoline_Throws(REBFRM *root)
 
     // !!! More efficient if caller sets this, but set it ourselves for now.
     //
-    SET_EVAL_FLAG(root, ROOT_FRAME);  // can't unwind across, see [1]
+    Set_Eval_Flag(root, ROOT_FRAME);  // can't unwind across, see [1]
 
     assert(root == FS_TOP);  // this could be relaxed, see [2]
 
@@ -132,7 +132,7 @@ bool Trampoline_Throws(REBFRM *root)
         ASSERT_CONTEXT(jump.error);
         assert(CTX_TYPE(jump.error) == REB_ERROR);
 
-        SET_EVAL_FLAG(FS_TOP, ABRUPT_FAILURE);
+        Set_Eval_Flag(FS_TOP, ABRUPT_FAILURE);
 
         CLEAR_FEED_FLAG(FS_TOP->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
 
@@ -152,10 +152,10 @@ bool Trampoline_Throws(REBFRM *root)
         // that set can't have allocations that aren't undone by aborting.
         //
         while (
-            NOT_EVAL_FLAG(FS_TOP, ROOT_FRAME)
+            Not_Eval_Flag(FS_TOP, ROOT_FRAME)
             and not (  // can't trap the abrupt failure
-                GET_EVAL_FLAG(FS_TOP, DISPATCHER_CATCHES)
-                and NOT_EVAL_FLAG(FS_TOP, ABRUPT_FAILURE)
+                Get_Eval_Flag(FS_TOP, DISPATCHER_CATCHES)
+                and Not_Eval_Flag(FS_TOP, ABRUPT_FAILURE)
             )
         ){
             Abort_Frame(FS_TOP);  // restores to baseline
@@ -175,13 +175,13 @@ bool Trampoline_Throws(REBFRM *root)
         TG_Jump_List = jump.last_jump;  // unlink *after* error/etc. extracted
 
         if (
-            GET_EVAL_FLAG(FS_TOP, DISPATCHER_CATCHES)
-            and NOT_EVAL_FLAG(FS_TOP, ABRUPT_FAILURE)
+            Get_Eval_Flag(FS_TOP, DISPATCHER_CATCHES)
+            and Not_Eval_Flag(FS_TOP, ABRUPT_FAILURE)
         ){
             goto push_trap_for_longjmp;  // have to push again to trap again
         }
 
-        assert(GET_EVAL_FLAG(FS_TOP, ROOT_FRAME));
+        assert(Get_Eval_Flag(FS_TOP, ROOT_FRAME));
         return true;
     }
 
@@ -211,7 +211,7 @@ bool Trampoline_Throws(REBFRM *root)
         }
     }
 
-    assert(NOT_EVAL_FLAG(FRAME, ABRUPT_FAILURE));
+    assert(Not_Eval_Flag(FRAME, ABRUPT_FAILURE));
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
 
@@ -238,19 +238,19 @@ bool Trampoline_Throws(REBFRM *root)
       result_in_out:
         assert(IS_SPECIFIC(cast(Cell*, OUT)));
 
-        if (GET_EVAL_FLAG(FRAME, MAYBE_STALE)) {
-            assert(NOT_EVAL_FLAG(FRAME, BRANCH));
-            assert(NOT_EVAL_FLAG(FRAME, META_RESULT));
+        if (Get_Eval_Flag(FRAME, MAYBE_STALE)) {
+            assert(Not_Eval_Flag(FRAME, BRANCH));
+            assert(Not_Eval_Flag(FRAME, META_RESULT));
         }
         else {
             Clear_Stale_Flag(OUT);
-            if (GET_EVAL_FLAG(FRAME, BRANCH))
+            if (Get_Eval_Flag(FRAME, BRANCH))
                 Reify_Branch_Out(OUT);
-            else if (GET_EVAL_FLAG(FRAME, META_RESULT))
+            else if (Get_Eval_Flag(FRAME, META_RESULT))
                 Reify_Eval_Out_Meta(OUT);
         }
 
-        if (GET_EVAL_FLAG(FRAME, ROOT_FRAME)) {
+        if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {
             STATE = 0;  // !!! Frame gets reused, review
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
             return false;
@@ -261,7 +261,7 @@ bool Trampoline_Throws(REBFRM *root)
         // means that when those executors run, their frame parameter is
         // not the technical top of the stack.
         //
-        if (GET_EVAL_FLAG(FRAME, TRAMPOLINE_KEEPALIVE)) {
+        if (Get_Eval_Flag(FRAME, TRAMPOLINE_KEEPALIVE)) {
             FRAME = FRAME->prior;
             assert(FRAME != FS_TOP);  // sanity check (*not* the top of stack)
         }
@@ -327,8 +327,8 @@ bool Trampoline_Throws(REBFRM *root)
             goto result_in_out;
         }
 
-        if (GET_EVAL_FLAG(FRAME, ROOT_FRAME)) {  // don't abort top
-            assert(NOT_EVAL_FLAG(FS_TOP, TRAMPOLINE_KEEPALIVE));
+        if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
+            assert(Not_Eval_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE));
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
             return true;
         }
