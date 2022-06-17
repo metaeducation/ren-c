@@ -1375,9 +1375,19 @@ REBNATIVE(remove_each)
         else if (IS_LOGIC(OUT)) {  // pure logic required, see [6]
             keep = not VAL_LOGIC(OUT);
         }
+        else if (IS_NULLED(OUT)) {  // don't remove
+            keep = true;
+            Init_Null_Isotope(OUT);  // NULL reserved for BREAK signal
+        }
+        else if (Is_Blackhole(OUT)) {  // do remove
+            keep = false;
+        }
         else {
             threw = true;
-            Init_Error(SPARE, Error_User("LOGIC! required for REMOVE-EACH"));
+            Init_Error(
+                SPARE,
+                Error_User("Use [LOGIC! NULL BLACKHOLE VOID] with REMOVE-EACH")
+            );
             Init_Thrown_With_Label(FRAME, Lib(NULL), SPARE);
             goto finalize_remove_each;
         }

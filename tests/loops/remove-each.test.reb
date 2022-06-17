@@ -13,7 +13,7 @@
 (
     block: copy [1 2 3 4]
     remove-each i block [
-        did all [i > 1, i < 4]  ; without DID, ALL's NULL => ~null~ isotope
+        all [i > 1, i < 4]
     ]
     block = [1 4]
 )
@@ -77,7 +77,7 @@
 (
     string: copy "1234"
     remove-each i string [
-        did any [i = #"2", i = #"3"]
+        any [i = #"2", i = #"3"]
     ]
     string = "14"
 )
@@ -128,7 +128,7 @@
 (
     binary: copy #{01020304}
     remove-each i binary [
-        did any [i = 2, i = 3]
+        any [i = 2, i = 3]
     ]
     binary = #{0104}
 )
@@ -161,7 +161,7 @@
 
     binary: copy #{0102030405}
     remove-each [a b] binary [
-        did if a = 5 [
+        if a = 5 [
             b-was-null: null? :b
         ]
     ]
