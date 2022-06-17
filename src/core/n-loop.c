@@ -36,9 +36,9 @@
 //
 // Returning false means the throw was neither BREAK nor CONTINUE.
 //
-bool Try_Catch_Break_Or_Continue(REBVAL *out, REBFRM* frame_)
+bool Try_Catch_Break_Or_Continue(Value *out, REBFRM* frame_)
 {
-    const REBVAL *label = VAL_THROWN_LABEL(frame_);
+    const Value *label = VAL_THROWN_LABEL(frame_);
 
     // Throw /NAME-s used by CONTINUE and BREAK are the actual native
     // function values of the routines themselves.
@@ -106,7 +106,7 @@ REBNATIVE(continue)
 {
     INCLUDE_PARAMS_OF_CONTINUE;
 
-    REBVAL *v = ARG(value);
+    Value *v = ARG(value);
 
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
         RESET(v);  // Treat CONTINUE same as CONTINUE VOID
@@ -590,7 +590,7 @@ REBNATIVE(stop)
 {
     INCLUDE_PARAMS_OF_STOP;
 
-    REBVAL *v = ARG(value);
+    Value *v = ARG(value);
 
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
         RESET(v);  // Treat STOP the same as STOP VOID
@@ -630,7 +630,7 @@ REBNATIVE(cycle)
 {
     INCLUDE_PARAMS_OF_CYCLE;
 
-    REBVAL *body = ARG(body);
+    Value *body = ARG(body);
 
     enum {
         ST_CYCLE_INITIAL_ENTRY = 0,
@@ -703,8 +703,8 @@ static bool Loop_Each_Throws(REBFRM *frame_)
 
     assert(Is_Stale(OUT));  // return VOID requires stale to work
 
-    REBVAL *data = ARG(data);
-    REBVAL *body = ARG(body);
+    Value *data = ARG(data);
+    Value *body = ARG(body);
     assert(IS_BLOCK(body) or IS_META_BLOCK(body));
 
     if (ANY_SEQUENCE(data)) {
@@ -1052,7 +1052,7 @@ REBNATIVE(for_each)
 
     UNUSED(ARG(vars));  // used by Loop_Each_Throws()
     UNUSED(ARG(data));  // used by Loop_Each_Throws()
-    REBVAL *body = ARG(body);
+    Value *body = ARG(body);
 
     enum {
         ST_FOR_EACH_INITIAL_ENTRY = 0,
@@ -1146,7 +1146,7 @@ REBNATIVE(every)
 
     UNUSED(ARG(vars));  // used by Loop_Each_Throws()
     UNUSED(ARG(data));  // used by Loop_Each_Throws()
-    REBVAL *body = ARG(body);
+    Value *body = ARG(body);
 
     enum {
         ST_EVERY_INITIAL_ENTRY = 0,
@@ -1276,8 +1276,8 @@ REBNATIVE(remove_each)
 {
     INCLUDE_PARAMS_OF_REMOVE_EACH;
 
-    REBVAL *data = ARG(data);
-    REBVAL *body = ARG(body);
+    Value *data = ARG(data);
+    Value *body = ARG(body);
 
     REBSER *series = VAL_SERIES_ENSURE_MUTABLE(data);  // check even if empty
 
@@ -1607,8 +1607,8 @@ REBNATIVE(map)
     INCLUDE_PARAMS_OF_MAP;
 
     UNUSED(ARG(vars));  // used by Loop_Each_Throws()
-    REBVAL *data = ARG(data);
-    REBVAL *body = ARG(body);
+    Value *data = ARG(data);
+    Value *body = ARG(body);
 
     enum {
         ST_MAP_INITIAL_ENTRY = 0,
@@ -1741,10 +1741,10 @@ REBNATIVE(repeat)
 {
     INCLUDE_PARAMS_OF_REPEAT;
 
-    REBVAL *count = ARG(count);
-    REBVAL *body = ARG(body);
+    Value *count = ARG(count);
+    Value *body = ARG(body);
 
-    REBVAL *index = SPARE;  // use spare cell to hold current index
+    Value *index = SPARE;  // use spare cell to hold current index
 
     enum {
         ST_REPEAT_INITIAL_ENTRY = 0,
@@ -1912,10 +1912,10 @@ REBNATIVE(until)
 {
     INCLUDE_PARAMS_OF_UNTIL;
 
-    REBVAL *body = ARG(body);
-    REBVAL *predicate = ARG(predicate);
+    Value *body = ARG(body);
+    Value *predicate = ARG(predicate);
 
-    REBVAL *condition;  // can point to OUT or SPARE
+    Value *condition;  // can point to OUT or SPARE
 
     enum {
         ST_UNTIL_INITIAL_ENTRY = 0,
@@ -2021,8 +2021,8 @@ REBNATIVE(while)
 {
     INCLUDE_PARAMS_OF_WHILE;
 
-    REBVAL *condition = ARG(condition);  // condition is BLOCK! only, see [1]
-    REBVAL *body = ARG(body);
+    Value *condition = ARG(condition);  // condition is BLOCK! only, see [1]
+    Value *body = ARG(body);
 
     enum {
         ST_WHILE_INITIAL_ENTRY = 0,

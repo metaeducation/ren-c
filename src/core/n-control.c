@@ -60,8 +60,6 @@
 
 #include "sys-core.h"
 
-#define Value REBVAL
-
 
 //
 //  if: native [

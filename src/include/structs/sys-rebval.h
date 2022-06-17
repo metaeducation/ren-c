@@ -712,6 +712,7 @@ union Reb_Value_Payload { //=/////////////// ACTUAL PAYLOAD DEFINITION ////=//
     );
 #endif
 
+typedef struct Reb_Value Value;  // Friendly alias uses inside core for REBVAL
 
 
 //=//// VARS and PARAMs ///////////////////////////////////////////////////=//
