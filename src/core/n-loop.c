@@ -711,7 +711,6 @@ static bool Loop_Each_Throws(REBFRM *frame_)
         // is a poor substitute for).
         //
         if (rebRunThrows(SPARE, "as block! @", data)) {
-            Move_Cell(OUT, SPARE);
             return true;
         }
 

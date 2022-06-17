@@ -845,7 +845,6 @@ REBNATIVE(case)
                 temp,  // target of rebRun() is kept GC-safe by evaluator
                 predicate, rebQ(SPARE)
             )){
-                Move_Cell(OUT, temp);
                 goto threw;
             }
             matched = Is_Truthy(temp);
@@ -1007,7 +1006,6 @@ REBNATIVE(switch)
                     rebQ(left),  // first arg (left hand side if infix)
                     rebQ(SPARE)  // second arg (right hand side if infix)
             )){
-                Move_Cell(OUT, temp);
                 goto threw;
             }
             if (Is_Falsey(temp))
@@ -1042,7 +1040,6 @@ REBNATIVE(switch)
                     SPECIFIC(f_value),  // actions don't need specifiers
                         rebQ(OUT)
                 )){
-                    Move_Cell(OUT, temp);
                     goto threw;
                 }
                 Move_Cell(OUT, temp);
