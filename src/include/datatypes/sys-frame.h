@@ -671,6 +671,7 @@ inline static bool Push_Continuation_Throws(
     // setting the state byte to something nonzero.
     //
     assert(FRM_STATE_BYTE(frame_) != 0);
+    UNUSED(frame_);
 
     // !!! This code came from Do_Branch_XXX_Throws() which was not
     // continuation-based, and hence holds some reusable logic for

@@ -170,7 +170,7 @@ inline static bool Is_Isotope_With_Id(
     if (not Is_Isotope(v))
         return false;
 
-    return cast(REBLEN, id) == VAL_ISOTOPE_ID(v);
+    return id == cast(enum Reb_Symbol_Id, VAL_ISOTOPE_ID(v));
 }
 
 
