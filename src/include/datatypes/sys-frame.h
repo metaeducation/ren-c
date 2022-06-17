@@ -693,7 +693,8 @@ inline static bool Push_Continuation_Throws(
         branch_specifier = SPECIFIED;
     }
 
-    switch (VAL_TYPE(branch)) {
+    enum Reb_Kind kind = VAL_TYPE(branch);
+    switch (kind) {
       case REB_BLANK:
         if (flags & EVAL_FLAG_BRANCH)
             Init_Null_Isotope(out);
@@ -707,6 +708,7 @@ inline static bool Push_Continuation_Throws(
             Init_Null_Isotope(out);
         goto just_use_out;
 
+      case REB_META_BLOCK:
       case REB_BLOCK: {
         DECLARE_FRAME_AT_CORE (
             f,
@@ -714,6 +716,8 @@ inline static bool Push_Continuation_Throws(
             branch_specifier,
             flags | EVAL_MASK_DEFAULT | EVAL_FLAG_TO_END
         );
+        if (kind == REB_META_BLOCK)
+            Set_Eval_Flag(f, META_RESULT);
 
         Push_Frame(out, f);
         return false; }  // trampoline manages EVAL_FLAG_BRANCH atm.
