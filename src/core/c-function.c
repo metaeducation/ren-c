@@ -918,7 +918,7 @@ REBARR *Make_Paramlist_Managed_May_Fail(
 REBACT *Make_Action(
     REBARR *paramlist,
     option(REBARR*) partials,
-    REBNAT dispatcher,  // native C function called by Eval_Core
+    Dispatcher* dispatcher,  // native C function called by Action_Executor()
     REBLEN details_capacity  // capacity of ACT_DETAILS (including archetype)
 ){
     assert(details_capacity >= 1);  // must have room for archetype

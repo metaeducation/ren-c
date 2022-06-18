@@ -740,7 +740,7 @@ REBVAL *First_Unspecialized_Arg(option(const REBPAR **) param_out, REBFRM *f)
 //
 REBACT *Alloc_Action_From_Exemplar(
     REBCTX *exemplar,
-    REBNAT dispatcher,
+    Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
     REBACT *unspecialized = CTX_FRAME_ACTION(exemplar);

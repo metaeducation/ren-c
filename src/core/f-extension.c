@@ -146,7 +146,7 @@ REBNATIVE(load_extension)
     INCLUDE_PARAMS_OF_LOAD_EXTENSION;
 
     // See IDX_COLLATOR_MAX for collated block contents, which include init
-    // and shutdown functions, as well as Rebol script source, plus the REBNAT
+    // and shutdown functions, as well as Rebol script source, plus Dispatcher
     // functions for each native.
     //
     const REBARR *details;
@@ -185,7 +185,10 @@ REBNATIVE(load_extension)
         = DETAILS_AT(details, IDX_COLLATOR_DISPATCHERS);
 
     REBLEN num_natives = VAL_HANDLE_LEN(dispatchers_handle);
-    REBNAT *dispatchers = VAL_HANDLE_POINTER(REBNAT, dispatchers_handle);
+    Dispatcher* *dispatchers = VAL_HANDLE_POINTER(
+        Dispatcher*,
+        dispatchers_handle
+    );
 
     // !!! used to use STD_EXT_CTX, now this would go in META OF
 

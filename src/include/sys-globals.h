@@ -69,7 +69,7 @@ PVAR REBCTX *Lib_Context;
 PVAR REBCTX *Sys_Context;
 PVAR REBCTX *User_Context;
 
-PVAR const REBNAT *PG_Next_Native_Dispatcher;
+PVAR Dispatcher* const *PG_Next_Native_Dispatcher;
 PVAR REBCTX *PG_Currently_Loading_Module;
 
 //-- Various char tables:

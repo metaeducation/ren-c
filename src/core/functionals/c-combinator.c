@@ -91,7 +91,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
     REB_R r;
     if (IS_ACTION(body)) {  // NATIVE-COMBINATOR
         SET_SERIES_INFO(f->varlist, HOLD);  // mandatory for natives.
-        REBNAT dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
+        Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(body));
         r = dispatcher(f);
     }
     else {  // usermode COMBINATOR

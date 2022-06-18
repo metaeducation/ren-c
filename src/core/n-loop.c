@@ -1570,7 +1570,7 @@ REBNATIVE(map_each)
     INIT_FRM_PHASE(frame_, VAL_ACTION(Lib(MAP)));
     // INIT_FRM_BINDING ?
 
-    REBNAT dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));
+    Dispatcher* dispatcher = ACT_DISPATCHER(VAL_ACTION(Lib(MAP)));
     return dispatcher(frame_);
 }
 

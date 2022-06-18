@@ -311,7 +311,7 @@ inline static REBPAR *ACT_PARAMS_HEAD(REBACT *a) {
     return cast(REBPAR*, list->content.dynamic.data) + 1;  // skip archetype
 }
 
-#define LINK_DISPATCHER(a)              cast(REBNAT, (a)->link.any.cfunc)
+#define LINK_DISPATCHER(a)              cast(Dispatcher*, (a)->link.any.cfunc)
 #define mutable_LINK_DISPATCHER(a)      (a)->link.any.cfunc
 
 #define ACT_DISPATCHER(a) \

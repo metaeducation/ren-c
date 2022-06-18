@@ -818,7 +818,7 @@ e-bootblock/emit 'nats {
     #define NUM_NATIVES $<length of nats>
     const REBLEN Num_Natives = NUM_NATIVES;
 
-    const REBNAT Native_C_Funcs[NUM_NATIVES] = {
+    Dispatcher* const Native_C_Funcs[NUM_NATIVES] = {
         $(Nats),
     };
 }
@@ -898,7 +898,7 @@ e-boot/emit 'fields {
      * Raw C function pointers for natives, take REBFRM* and return REBVAL*.
      */
     EXTERN_C const REBLEN Num_Natives;
-    EXTERN_C const REBNAT Native_C_Funcs[];
+    EXTERN_C Dispatcher* const Native_C_Funcs[];
 
     typedef struct REBOL_Boot_Block {
         $[Fields];

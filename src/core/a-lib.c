@@ -2352,7 +2352,7 @@ REBVAL *RL_rebCollateExtension_internal(
     const unsigned char *script_compressed,
     size_t script_compressed_size,
     int script_num_codepoints,
-    void *dispatchers,  // REBNAT*, but REBNAT is not in the API
+    void *dispatchers,  // Dispatcher*, but Dispatcher is not in the API
     int dispatchers_len
 ){
     REBARR *a = Make_Array(IDX_COLLATOR_MAX);  // details

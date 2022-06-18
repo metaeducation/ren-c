@@ -314,8 +314,8 @@ bool Trampoline_Throws(REBFRM *root)
     if (r == R_THROWN) {
       thrown:
 
-        assert(not IS_CFUNC_TRASH_DEBUG(REBNAT, FRAME->executor));
-        TRASH_CFUNC_IF_DEBUG(REBNAT, FRAME->executor);
+        assert(not IS_CFUNC_TRASH_DEBUG(Executor*, FRAME->executor));
+        TRASH_CFUNC_IF_DEBUG(Executor*, FRAME->executor);
 
         while (FS_TOP != FRAME)
             Abort_Frame(FS_TOP);  // !!! Should all inert frames be aborted?

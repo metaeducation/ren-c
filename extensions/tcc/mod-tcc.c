@@ -661,7 +661,7 @@ REBNATIVE(compile_p)
 
         // Circumvent ISO C++ forbidding cast between function/data pointers
         //
-        REBNAT c_func;
+        Dispatcher* c_func;
         assert(sizeof(c_func) == sizeof(void*));
         memcpy(&c_func, &sym, sizeof(c_func));
 

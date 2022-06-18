@@ -455,8 +455,8 @@ typedef const REBVAL *REB_R;
 
 // C function implementing a native ACTION!
 //
-typedef REB_R (*REBNAT)(REBFRM *frame_);
-
+typedef REB_R (Executor)(REBFRM *frame_);
+typedef Executor Dispatcher;  // sub-dispatched in Action_Executor()
 
 // NOTE: The ordering of the fields in `Reb_Frame` are specifically done so
 // as to accomplish correct 64-bit alignment of pointers on 64-bit systems.
@@ -515,7 +515,7 @@ typedef REB_R (*REBNAT)(REBFRM *frame_);
     // but the concept is that it be controlled with functions matching the
     // signature of natives and dispatchers.
     //
-    REBNAT executor;
+    Executor* executor;
 
     // The prior call frame.  This never needs to be checked against nullptr,
     // because the bottom of the stack is FS_BOTTOM which is allocated at

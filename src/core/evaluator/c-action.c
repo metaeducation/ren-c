@@ -988,7 +988,7 @@ REB_R Action_Executor(REBFRM *f)
     if (GET_ACTION_FLAG(phase, IS_NATIVE))
         SER_INFO(f->varlist) |= SERIES_INFO_HOLD;
 
-    REBNAT dispatcher = ACT_DISPATCHER(phase);
+    Dispatcher* dispatcher = ACT_DISPATCHER(phase);
 
     const REBVAL *r = (*dispatcher)(f);
 

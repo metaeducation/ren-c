@@ -328,7 +328,7 @@ e/emit 'mod {
      * Pointers to function dispatchers for natives (in same order as the
      * order of native specs after being loaded).
      */
-    static REBNAT native_dispatchers[$<num-natives> + 1] = {
+    static Dispatcher* native_dispatchers[$<num-natives> + 1] = {
         $[Dispatcher_C_Names],
         nullptr /* just here to ensure > 0 length array (C++ requirement) */
     };

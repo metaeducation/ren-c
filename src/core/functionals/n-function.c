@@ -223,7 +223,7 @@ REBACT *Make_Interpreted_Action_May_Fail(
     const REBVAL *spec,
     const REBVAL *body,
     REBFLGS mkf_flags,  // MKF_RETURN, etc.
-    REBNAT dispatcher,
+    Dispatcher* dispatcher,
     REBLEN details_capacity
 ){
     assert(IS_BLOCK(spec) and IS_BLOCK(body));

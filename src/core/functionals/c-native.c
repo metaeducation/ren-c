@@ -58,7 +58,7 @@
 REBACT *Make_Native(
     REBVAL *spec,
     bool is_combinator,
-    REBNAT dispatcher,
+    Dispatcher* dispatcher,
     REBCTX *module
 ){
     // There are implicit parameters to both NATIVE/COMBINATOR and usermode
@@ -145,7 +145,7 @@ REBNATIVE(native)
     if (not PG_Next_Native_Dispatcher)
         fail ("NATIVE is for internal use during boot and extension loading");
 
-    REBNAT dispatcher = *PG_Next_Native_Dispatcher;
+    Dispatcher* dispatcher = *PG_Next_Native_Dispatcher;
     ++PG_Next_Native_Dispatcher;
 
     REBACT *native = Make_Native(
