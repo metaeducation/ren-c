@@ -215,28 +215,24 @@ REBNATIVE(didnt)
 //  ]
 //
 REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
+//
+// 1. We received the left hand side as ^meta, so it's quoted in order to be
+//    isotope-tolerant.  If passed to a branch action, unquote back to normal.
 {
     INCLUDE_PARAMS_OF_THEN;
 
     Value *in = ARG(optional);
+    Value *branch = ARG(branch);
 
     if (
         IS_NULLED(in)  // soft failure signal
-        or Is_Meta_Of_Void(in)
+        or Is_Meta_Of_Void(in)  // meta parameter, e.g. input was true void
         or (REF(decay) and Is_Meta_Of_Null_Isotope(in))  // null isotope
     ){
         return VOID;
     }
 
-    // We received the left hand side as ^meta, so it's quoted in order
-    // to be isotope-tolerant.  Now that's tested, unquote it back to normal.
-
-    Meta_Unquotify(in);
-
-    if (Do_Branch_Throws(OUT, ARG(branch), in))
-        return THROWN;
-
-    return_branched (OUT);  // asserts not null or ~void~
+    delegate_branch (OUT, branch, Meta_Unquotify(in));  // need unmeta, see [1]
 }
 
 
