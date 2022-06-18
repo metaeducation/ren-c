@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2016-2020 Ren-C Open Source Contributors
+// Copyright 2016-2022 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -70,8 +70,17 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
     INIT_BONUS_KEYSOURCE(sub->varlist, sub);
     sub->rootvar = SPECIFIC(ARR_HEAD(sub->varlist));
 
-    f->varlist = &PG_Inaccessible_Series;
+    // Note that it can occur that this may be a TRAMPOLINE_KEEPALIVE subframe
+    // of something like another CHAIN, that it intends to reuse (!)  This
+    // means it started out thinking we were going to run an action in that
+    // frame and drop it, when in reality we're changing the executor and
+    // everything.  This is clearly voodoo but maybe it can be formalized.
+    //
+    f->varlist = &PG_Inaccessible_Series;  // trash?  nullptr?
     f->rootvar = nullptr;
+    TRASH_POINTER_IF_DEBUG(f->executor);  // caller must set
+    TRASH_POINTER_IF_DEBUG(f->original);  // not an action frame anymore
+    TRASH_POINTER_IF_DEBUG(f->label);
 
     sub->key = nullptr;
     sub->key_tail = nullptr;
@@ -108,25 +117,61 @@ REBFRM *Push_Downshifted_Frame(REBVAL *out, REBFRM *f) {
 // user invoked in the stack trace...instead of just the chained item that
 // causes an error.)
 //
-// !!! Note: Stealing the built varlist to give to a new REBFRM for the head
-// of the chain leaves the actual chainer frame with no varlist content.  That
-// means debuggers introspecting the stack may see a "stolen" frame state.
-//
 REB_R Chainer_Dispatcher(REBFRM *f)
+//
+// 1. Stealing the varlist leaves the actual chainer frame with no varlist
+//    content.  That means debuggers introspecting the stack may see a
+//    "stolen" frame state.
+//
+// 2. You can't have an Action_Executor()-based frame on the stack unless it
+//    has a lot of things (like a varlist, which provides the phase, etc.)
+//    So we switch it around to where the frame that had its varlist stolen
+//    just uses this function as its executor, so we get called back.
+//
+// 3. At the head of the chain we start at the dispatching phase since the
+//    frame is already filled, but each step after that uses enfix and runs
+//    from the top.)
+//
+// 4. We use the same mechanism as enfix operations do...give the next chain
+//    step its first argument coming from f->out.
+//
+//    !!! One side effect of this is that unless CHAIN is changed to check,
+//    your chains can consume more than one argument.  It might be interesting
+//    or it might be bugs waiting to happen, trying it this way for now.
 {
     REBFRM *frame_ = f;  // for RETURN macros
+
+    if (THROWING)  // this routine is both dispatcher and executor, see [2]
+        return THROWN;
+
+    enum {
+        ST_CHAINER_INITIAL_ENTRY = 0,
+        ST_CHAINER_RUNNING_SUBFUNCTION
+    };
+
+    switch (STATE) {
+      case ST_CHAINER_INITIAL_ENTRY: goto initial_entry;
+      case ST_CHAINER_RUNNING_SUBFUNCTION: goto run_next_in_chain;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_CHAINER_MAX);
 
-    const REBARR *pipeline = VAL_ARRAY(ARR_AT(details, IDX_CHAINER_PIPELINE));
-    const Cell *chained_tail = ARR_TAIL(pipeline);
-    const Cell *chained = ARR_HEAD(pipeline);
+    Value *pipeline_at = Init_Block(
+        SPARE,  // index of BLOCK! is current step
+        VAL_ARRAY(ARR_AT(details, IDX_CHAINER_PIPELINE))
+    );
 
-    assert(Is_Void(SPARE));
-    REBFRM *sub = Push_Downshifted_Frame(SPARE, f);
+    REBFRM *sub = Push_Downshifted_Frame(OUT, f);  // steals varlist, see [1]
+    f->executor = &Chainer_Dispatcher;  // so trampoline calls us, see [2]
 
-    INIT_FRM_PHASE(sub, VAL_ACTION(chained));
+    const Cell *chained = VAL_ARRAY_ITEM_AT(pipeline_at);
+    ++VAL_INDEX_RAW(pipeline_at);
+
+    INIT_FRM_PHASE(sub, VAL_ACTION(chained));  // has varlist already, see [3]
     INIT_FRM_BINDING(sub, VAL_ACTION_BINDING(chained));
 
     sub->original = VAL_ACTION(chained);
@@ -137,54 +182,51 @@ REB_R Chainer_Dispatcher(REBFRM *f)
         : "(anonymous)";
   #endif
 
-    // Now apply the functions that follow.  The original code reused the
-    // frame of the chain, this reuses the subframe.
-    //
-    // (On the head of the chain we start at the dispatching phase since the
-    // frame is already filled, but each step after that uses enfix and
-    // runs from the top.)
+    STATE = ST_CHAINER_RUNNING_SUBFUNCTION;
+    Set_Eval_Flag(sub, TRAMPOLINE_KEEPALIVE);
+    continue_subframe (sub);
 
-    while (true) {
-        if (Trampoline_Throws(sub)) {
-            Abort_Frame(sub);
-            return THROWN;
-        }
+} run_next_in_chain: {  //////////////////////////////////////////////////////
 
-        // We reuse the subframe's REBFRM structure, but have to drop the
-        // action args, as the paramlist is almost certainly completely
-        // incompatible with the next chain step.
+    REBFRM *sub = FS_TOP;
+    assert(sub != f and Get_Eval_Flag(sub, TRAMPOLINE_KEEPALIVE));
 
-        ++chained;
-        if (chained == chained_tail)
-            break;
+    if (sub->varlist and NOT_SERIES_FLAG(sub->varlist, MANAGED))
+        GC_Kill_Series(sub->varlist);
 
-        if (sub->varlist and NOT_SERIES_FLAG(sub->varlist, MANAGED))
-            GC_Kill_Series(sub->varlist);
+    sub->varlist = nullptr;
 
-        sub->varlist = nullptr;
-        Push_Action(sub, VAL_ACTION(chained), VAL_ACTION_BINDING(chained));
+    Value *pipeline_at = SPARE;
+    const Cell *chained_tail;
+    const Cell *chained = VAL_ARRAY_AT(&chained_tail, pipeline_at);
 
-        // We use the same mechanism as enfix operations do...give the
-        // next chain step its first argument coming from f->out
-        //
-        // !!! One side effect of this is that unless CHAIN is changed
-        // to check, your chains can consume more than one argument.
-        // This might be interesting or it might be bugs waiting to
-        // happen, trying it out of curiosity for now.
-        //
-        Begin_Prefix_Action(sub, VAL_ACTION_LABEL(chained));
-        assert(NOT_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT));
-        SET_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT);
+    if (chained == chained_tail)
+        goto finished;
 
-        FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;
-        Clear_Eval_Flag(sub, DISPATCHER_CATCHES);
-        Clear_Eval_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
-    }
+    ++VAL_INDEX_RAW(pipeline_at);
+
+    Push_Action(sub, VAL_ACTION(chained), VAL_ACTION_BINDING(chained));
+
+    Begin_Prefix_Action(sub, VAL_ACTION_LABEL(chained));
+    assert(NOT_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT));
+    SET_FEED_FLAG(sub->feed, NEXT_ARG_FROM_OUT);  // act like infix, see [4]
+
+    FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;  // maybe zeroed (or not)?
+    Clear_Eval_Flag(sub, DISPATCHER_CATCHES);
+    Clear_Eval_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
+
+    assert(STATE == ST_CHAINER_RUNNING_SUBFUNCTION);
+    continue_subframe (sub);
+
+ finished:  //////////////////////////////////////////////////////////////////
 
     Drop_Frame(sub);
 
-    return_value (SPARE);
-}
+    if (Is_Stale(OUT))
+        return VOID;
+
+    return OUT;
+}}
 
 
 //
