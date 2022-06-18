@@ -255,6 +255,20 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     INCLUDE_PARAMS_OF_ALSO;  // `then func [x] [(...) :x]` => `also [...]`
 
     Value *in = ARG(optional);
+    Value *branch = ARG(branch);
+
+    enum {
+        ST_ALSO_INITIAL_ENTRY = 0,
+        ST_ALSO_RUNNING_BRANCH
+    };
+
+    switch (STATE) {
+      case ST_ALSO_INITIAL_ENTRY: goto initial_entry;
+      case ST_ALSO_RUNNING_BRANCH: goto return_original_input;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     if (IS_NULLED(in))
         return nullptr;  // telegraph pure null
@@ -265,14 +279,13 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
         return Init_Isotope(OUT, Canon(NULL));  // telegraph null isotope
 
-    Meta_Unquotify(in);
+    STATE = ST_ALSO_RUNNING_BRANCH;
+    continue_uncatchable (SPARE, branch, Meta_Unquotify(in));
 
-    if (Do_Branch_Throws(SPARE, ARG(branch), in))
-        return THROWN;
+} return_original_input: {  //////////////////////////////////////////////////
 
-    Move_Cell(OUT, in);
-    return_branched (OUT);  // also wouldn't run if `in` was null or ~void~
-}
+    return_value (in);  // in argument has already been Meta_Unquotify()'d
+}}
 
 
 //
