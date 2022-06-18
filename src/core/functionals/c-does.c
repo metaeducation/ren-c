@@ -85,9 +85,9 @@ REB_R Block_Dispatcher(REBFRM *f)
 
     if (IS_SPECIFIC(block)) {
         if (FRM_BINDING(f) == UNBOUND) {
-            if (Do_Any_Array_At_Throws(OUT, SPECIFIC(block), SPECIFIED))
-                return THROWN;
-            return OUT;
+            delegate (OUT, block, END);
+
+            // ~unreachable~
         }
 
         // Until "virtual binding" is implemented, we would lose f->binding's
@@ -130,13 +130,8 @@ REB_R Block_Dispatcher(REBFRM *f)
 
     assert(IS_RELATIVE(block));
 
-    if (Do_Any_Array_At_Throws(OUT, block, SPC(f->varlist)))
-        return THROWN;
-
-    if (Is_Void(OUT))
-        return VOID;
-
-    return OUT;
+    RESET(OUT);  // Note: DOES will not evaluate invisibly (see LAMBDA)
+    delegate_core (OUT, EVAL_MASK_DEFAULT, block, SPC(f->varlist), END);
 }
 
 
@@ -150,7 +145,7 @@ REB_R Block_Dispatcher(REBFRM *f)
 //
 REBNATIVE(surprise)
 //
-// !!! DOES needed a specialization for block that had no arguments an no
+// !!! DOES needed a specialization for block that had no arguments and no
 // constraint on the return value.  That's a pretty weird function spec, and
 // the only thing I could think of was something that just surprises you with
 // a random value.  Neat idea, but writing it isn't the purpose...getting the
