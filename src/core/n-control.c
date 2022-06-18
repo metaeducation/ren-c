@@ -289,53 +289,48 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 //  ]
 //
 REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
+//
+// 1. ELSE is not reactive to "nothing" isotopes (~) by design:
+//
+//        >> if true [print "branch ran", if false [<a>]]
+//        == ~  ; isotope
+//
+//        >> if true [print "branch ran, if false [<a>]] else [<b>]
+//        == ~  ; isotope
+//
+// 2. We want to convey the notion that a branch is pure void.  In usermode,
+//    this can only be done with ^META parameters.  But in the implementation,
+//    the SPARE and OUT cells can "cheat" by using the void state.  (It would
+//    not be legal to make ARG(in) VOID and pass it to the branch, and the
+//    GC would error).  Void is the default state of the spare cell.
+//
+// 3. Since the input is a ^META parameter, meta-of-null signals null isotope
+//    was the input.  When /DECAY is specified we trigger running the branch.
+//    (branch execution decays ~null~ isotopes to NULL for non-meta actions,
+//    but ^META actions will see that it was an isotope)
+//
+// 4. The input is a ^META parameter in order to react to voids and tolerate
+//    isotopes.  But we don't want to actually return a quoted version of the
+//    input if the ELSE doesn't run, so unmeta it.
 {
-    INCLUDE_PARAMS_OF_ELSE;
+    INCLUDE_PARAMS_OF_ELSE;  // ELSE reacts to null and void, not none, see [1]
 
     Value *in = ARG(optional);
+    Value *branch = ARG(branch);
 
     if (IS_NULLED(in)) {
-        //
-        // Triggers for running an ELSE are null and void
-        //
-        // Note ELSE is not reactive to "nothing" isotopes (~) by design:
-        //
-        //    >> if true [print "branch ran", if false [<a>]]
-        //    == ~  ; isotope
-        //
-        //    >> if true [print "branch ran, if false [<a>]] else [<b>]
-        //    == ~  ; isotope
-        //
+        Init_Nulled(SPARE);
     }
     else if (Is_Meta_Of_Void(in)) {
-        Init_Bad_Word(in, Canon(VOID));
+        assert(Is_Void(SPARE));  // branch argument is SPARE for void, see [2]
     }
     else if (REF(decay) and Is_Meta_Of_Null_Isotope(in)) {
-        //
-        // Since the input is a ^META parameter, this signals a null isotope.
-        // When /DECAY is specified we trigger running the branch here also.
-        // Do_Branch() decays ~null~ isotopes to NULL for non-meta actions
-        //
-        // !!! While it may be misleading to call it /DECAY to trigger and not
-        // decay what's passed to the function, the ostensible only reason an
-        // ELSE would ever have a function taking a parameter would be to know
-        // the distinction.
-        //
-        Init_Null_Isotope(in);
+        Init_Null_Isotope(SPARE);  // action branch decays if non-meta, see [3]
     }
-    else {
-        // We have to use a ^meta parameter in order to detect the difference
-        // between NULL (which runs the branch) and a ~null~ isotope (which
-        // does not run the branch, unless we are decaying).  But we don't want
-        // to actually return a quoted parameter.
-        //
-        return_value (Meta_Unquotify(in));
-    }
+    else
+        return_value (Meta_Unquotify(in));  // unquotify to pass thru, see [4]
 
-    if (Do_Branch_Throws(OUT, ARG(branch), in))
-        return THROWN;
-
-    return_branched (OUT);  // asserts not null or ~void~
+    delegate_branch (OUT, branch, SPARE);
 }
 
 
