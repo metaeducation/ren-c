@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2021 Ren-C Open Source Contributors
+// Copyright 2021-2022 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -39,6 +39,8 @@
 //   need to weigh in the question of how AS FRAME! SOME-LAMBDA could work,
 //   and if it would be worth it in the scheme of things.
 //
+// * Invisibility is allowed in lambda, so `x -> []` is void
+//
 
 #include "sys-core.h"
 
@@ -59,6 +61,16 @@ enum {
 // "derived binding" that need a going-over.
 //
 REB_R Lambda_Dispatcher(REBFRM *f)
+//
+// 1. We have to use Make_Or_Reuse_Patch() here, because it could be the case
+//    that a higher level wrapper used the frame and virtually bound it.
+//
+// 2. Currently, since we are evaluating the block with its own virtual
+//    binding being taken into account, using that block's binding as the
+//    `next` (VAL_SPECIFIER(block)) means it's redundant when creating the
+//    feed, since it tries to apply this specifier on top of that *again*.
+//    The merging notices the redundancy and doesn't create a new specifier
+//    which is good...but this is still inefficient.  This all needs review.
 {
     REBFRM *frame_ = f;
 
@@ -71,33 +83,34 @@ REB_R Lambda_Dispatcher(REBFRM *f)
 
     SET_SERIES_FLAG(f->varlist, MANAGED);  // not manually tracked...
 
-    // We have to use Make_Or_Reuse_Patch() here, because it could be the
-    // case that a higher level wrapper used the frame and virtually bound it.
-    //
-    // !!! Currently, since we are evaluating the block with its own virtual
-    // binding being taken into account, using that block's binding as the
-    // `next` (VAL_SPECIFIER(block)) means it's redundant when creating the
-    // feed, since it tries to apply this specifier on top of that *again*.
-    // The merging notices the redundancy and doesn't create a new specifier
-    // which is good...but this is still inefficient.  This all needs review.
-    //
-    REBSPC *specifier = Make_Or_Reuse_Patch(
+    REBSPC *specifier = Make_Or_Reuse_Patch(  // may reuse, see [1]
         CTX(f->varlist),
         CTX_LEN(CTX(f->varlist)),
-        VAL_SPECIFIER(block),
+        VAL_SPECIFIER(block),  // redundant with feed, see [2]
         REB_WORD
     );
 
-    // Note: Invisibility is allowed in lambda, so `x -> []` is void
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
+    delegate_core (OUT, flags, block, specifier, END);
+}
+
+
+//
+//  Lambda_Unoptimized_Dispatcher: C
+//
+// Used by LAMBDA when it can't use the optimized form.  This runs very much
+// like function dispatch, except there's no RETURN to catch.  So it can
+// execute directly into the output cell.
+//
+REB_R Lambda_Unoptimized_Dispatcher(REBFRM *frame_)
+{
+    REBACT *phase = FRM_PHASE(FRAME);
+    REBARR *details = ACT_DETAILS(phase);
+    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
+    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
 
     REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
-    if (Do_Any_Array_At_Core_Throws(OUT, flags, block, specifier))
-        return THROWN;
-
-    if (Is_Stale(OUT))
-        return VOID;
-
-    return OUT;
+    delegate_core (OUT, flags, body, SPC(FRAME->varlist), END);
 }
 
 
@@ -110,28 +123,22 @@ REB_R Lambda_Dispatcher(REBFRM *f)
 //      spec "Names of arguments (will not be type checked)"
 //          [blank! word! lit-word! meta-word! block!]
 //      body "Code to execute"
-//          [block!]
+//          [<const> block!]
 //  ]
 //
 REBNATIVE(lambda)
+//
+// 1. For the moment, this lazily reuses Pop_Paramlist(), just because that
+//    code is a vetted path.  It could be done much more efficiently, but at
+//    the risk of getting the incantation wrong.  Optimize later if needed.
 {
     INCLUDE_PARAMS_OF_LAMBDA;
 
-    // The view of the body of the lambda needs to be const.  (Like a FUNC, it
-    // is potentially run many times.  Additionally, it's virtually bound.)
-    //
-    REBVAL *body = Constify(ARG(body));
+    REBVAL *spec = ARG(spec);
+    REBVAL *body = ARG(body);
 
     bool optimizable = true;
 
-    // The reason <end> is allowed is for the enfix case, `x: -> [print "hi"]`
-    // Though you could use DOES for this, it's still up in the air whether
-    // DOES will be different or not.
-    //
-    // (Arguably the <end> tolerance should be specially implemented by the
-    // enfix form and not applicable to the prefix form, but it seems fine.)
-    //
-    REBVAL *spec = ARG(spec);
     REBSPC *item_specifier;
     const Cell *item_tail;
     const Cell *item;
@@ -155,15 +162,8 @@ REBNATIVE(lambda)
         item_tail = nullptr;
     }
 
-    // For the moment, this lazily reuses Pop_Paramlist(), just because that
-    // code is a vetted path.  It could be done much more efficiently, but
-    // at the risk of getting the incantation wrong.  Optimize this when
-    // things are more fully pinned down.
+    REBDSP dsp_orig = DSP;  // reuses Pop_Paramlist(), see [1]
 
-    REBDSP dsp_orig = DSP;
-
-    // Start with pushing nothings for the [0] slot
-    //
     Init_None(DS_PUSH());  // key slot (signal for no pushes)
     Init_Trash(DS_PUSH());  // unused
     Init_Trash(DS_PUSH());  // unused

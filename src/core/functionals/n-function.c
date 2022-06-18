@@ -78,33 +78,6 @@
 
 
 //
-//  Lambda_Unoptimized_Dispatcher: C
-//
-// Used by LAMBDA when it can't use the optimized form.  This runs very much
-// like function dispatch, except there's no RETURN to catch.  So it can
-// execute directly into the output cell.
-//
-REB_R Lambda_Unoptimized_Dispatcher(REBFRM *f)
-{
-    REBFRM *frame_ = f;  // for RETURN macros
-
-    REBACT *phase = FRM_PHASE(f);
-    REBARR *details = ACT_DETAILS(phase);
-    Cell *body = ARR_AT(details, IDX_DETAILS_1);  // code to run
-    assert(IS_BLOCK(body) and IS_RELATIVE(body) and VAL_INDEX(body) == 0);
-
-    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_MAYBE_STALE;
-    if (Do_Any_Array_At_Core_Throws(OUT, flags, body, SPC(f->varlist)))
-        return THROWN;
-
-    if (Is_Stale(OUT))
-        return VOID;
-
-    return OUT;
-}
-
-
-//
 //  Func_Dispatcher: C
 //
 // Puts a definitional return ACTION! in the RETURN slot of the frame, and

@@ -400,6 +400,9 @@ requote: reframer lambda [
 ]
 
 
+; If <end> is used, e.g. `x: -> [print "hi"]` then this will act like DOES.
+; (It's still up in the air whether DOES has different semantics or not.)
+;
 ->: enfixed lambda [
     :words "Names of arguments (will not be type checked)"
         [<end> word! lit-word! meta-word! block!]
