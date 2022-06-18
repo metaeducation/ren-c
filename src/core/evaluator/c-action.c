@@ -128,11 +128,17 @@ REB_R Action_Executor(REBFRM *f)
         if (Get_Eval_Flag(f, DISPATCHER_CATCHES))  // wants to see the throw
             goto dispatch_phase;
 
+        if (Get_Eval_Flag(f, ABRUPT_FAILURE)) {
+            assert(Get_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
+            goto dispatch_phase;
+        }
+
         goto handle_thrown_maybe_redo;
     }
 
     if (Is_Action_Frame_Fulfilling(f)) {
         assert(Not_Eval_Flag(f, DISPATCHER_CATCHES));  // trampoline cleans up
+        assert(Not_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE));
 
         switch (STATE) {
           case ST_ACTION_INITIAL_ENTRY:
@@ -1162,6 +1168,7 @@ REB_R Action_Executor(REBFRM *f)
             INIT_FRM_BINDING(f, VAL_FRAME_BINDING(OUT));
             STATE = ST_ACTION_TYPECHECKING;
             Clear_Eval_Flag(f, DISPATCHER_CATCHES);  // else asserts
+            Clear_Eval_Flag(f, NOTIFY_ON_ABRUPT_FAILURE);
             goto typecheck_then_dispatch;
         }
     }

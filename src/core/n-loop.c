@@ -1034,6 +1034,7 @@ REBNATIVE(for_each)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
+    Set_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 
@@ -1142,6 +1143,7 @@ REBNATIVE(every)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
+    Set_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 
@@ -1650,6 +1652,7 @@ REBNATIVE(map)
     Init_Object(ARG(vars), pseudo_vars_ctx);  // keep GC safe
 
     Init_Loop_Each(iterator, data);
+    Set_Eval_Flag(frame_, NOTIFY_ON_ABRUPT_FAILURE);  // to clean up iterator
 
     goto next_iteration;
 

@@ -210,9 +210,12 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(19)
 
 
-//=//// EVAL_FLAG_20 //////////////////////////////////////////////////////=//
+//=//// EVAL_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
 //
-#define EVAL_FLAG_20 \
+// Marks an error to hint that a frame is internal, and that reporting an
+// error on it probably won't give a good report.
+//
+#define EVAL_FLAG_BLAME_PARENT \
     FLAG_LEFT_BIT(20)
 
 
@@ -267,15 +270,18 @@ STATIC_ASSERT(EVAL_FLAG_7_IS_TRUE == NODE_FLAG_CELL);
     FLAG_LEFT_BIT(23)
 
 
-//=//// EVAL_FLAG_DISPATCHER_CATCHES //////////////////////////////////////=//
+//=//// EVAL_FLAG_NOTIFY_ON_ABRUPT_FAILURE ////////////////////////////////=//
 //
-// Every Executor() gets called with the chance to cleanup in the THROWING
-// state.  But in the specific case of the Action_Executor(), it uses this
-// flag to keep track of whether the dispatcher it is calling (a kind of
-// "sub-executor") wants to be told about the thrown state.  This would be
-// something like a WHILE loop wanting to catch a BREAK.
+// Most frames don't want to be told about the errors that they themselves...
+// and if they have cleanup to do, they could do that cleanup before calling
+// the fail().  However, some code calls nested C stacks which use fail() and
+// it's hard to hook all the cases.  So this flag can be used to tell the
+// trampoline to give a callback even if the frame itself caused the problem.
 //
-#define EVAL_FLAG_DISPATCHER_CATCHES \
+// To help avoid misunderstandings, trying to read the STATE byte when in the
+// abrupt failure case causes an assert() in the C++ build.
+//
+#define EVAL_FLAG_NOTIFY_ON_ABRUPT_FAILURE \
     FLAG_LEFT_BIT(24)
 
 
@@ -334,15 +340,24 @@ STATIC_ASSERT(DETAILS_FLAG_IS_BARRIER == EVAL_FLAG_FULFILLING_ARG);
 STATIC_ASSERT(EVAL_FLAG_28 == CELL_FLAG_NOTE);
 
 
-//=//// EVAL_FLAG_BLAME_PARENT ////////////////////////////////////////////=//
+//=//// EVAL_FLAG_EXECUTOR_29 //////////////////////////////////////////////=//
 //
-// Marks an error to hint that a frame is internal, and that reporting an
-// error on it probably won't give a good report.
+// * EVAL_FLAG_XXX: Evaluator_Executor()
 //
-// !!! Currently unused.  Was this an important idea?
+// None defined yet.
 //
-#define EVAL_FLAG_BLAME_PARENT \
+// * EVAL_FLAG_DISPATCHER_CATCHES: Action_Executor()
+//
+// Every Executor() gets called with the chance to cleanup in the THROWING
+// state.  But in the specific case of the Action_Executor(), it uses this
+// flag to keep track of whether the dispatcher it is calling (a kind of
+// "sub-executor") wants to be told about the thrown state.  This would be
+// something like a WHILE loop wanting to catch a BREAK.
+//
+#define EVAL_FLAG_EXECUTOR_29 \
     FLAG_LEFT_BIT(29)
+
+#define EVAL_FLAG_DISPATCHER_CATCHES EVAL_FLAG_EXECUTOR_29
 
 
 //=//// EVAL_FLAG_EXECUTOR_30 /////////////////////////////////////////////=//

@@ -178,6 +178,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
         FRM_STATE_BYTE(sub) = ST_ACTION_INITIAL_ENTRY;
         Clear_Eval_Flag(sub, DISPATCHER_CATCHES);
+        Clear_Eval_Flag(sub, NOTIFY_ON_ABRUPT_FAILURE);
     }
 
     Drop_Frame(sub);

@@ -132,11 +132,15 @@ bool Trampoline_Throws(REBFRM *root)
         ASSERT_CONTEXT(jump.error);
         assert(CTX_TYPE(jump.error) == REB_ERROR);
 
-        Set_Eval_Flag(FS_TOP, ABRUPT_FAILURE);
+        Set_Eval_Flag(FRAME, ABRUPT_FAILURE);
 
-        CLEAR_FEED_FLAG(FS_TOP->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
+        CLEAR_FEED_FLAG(FRAME->feed, NEXT_ARG_FROM_OUT);  // !!! stops asserts
 
         while (FS_TOP != FRAME) {  // drop idle frames above the fail, see [4]
+            assert(Not_Eval_Flag(FS_TOP, NOTIFY_ON_ABRUPT_FAILURE));
+            assert(Not_Eval_Flag(FS_TOP, DISPATCHER_CATCHES));
+            assert(Not_Eval_Flag(FS_TOP, ROOT_FRAME));
+
             if (Is_Action_Frame(FS_TOP)) {
                 assert(not Is_Action_Frame_Fulfilling(FS_TOP));
                 Drop_Action(FS_TOP);
@@ -145,21 +149,15 @@ bool Trampoline_Throws(REBFRM *root)
             Abort_Frame(FS_TOP);  // will call va_end() if variadic frame
         }
 
-        TRASH_POINTER_IF_DEBUG(FRAME);  // note to not use until next setjmp
-
-        // The trampoline can drop frames until it finds one which actually
-        // has the DISPATCHER_CATCHES flag set.  Any frame that doesn't have
-        // that set can't have allocations that aren't undone by aborting.
-        //
-        while (
-            Not_Eval_Flag(FS_TOP, ROOT_FRAME)
-            and not (  // can't trap the abrupt failure
-                Get_Eval_Flag(FS_TOP, DISPATCHER_CATCHES)
-                and Not_Eval_Flag(FS_TOP, ABRUPT_FAILURE)
-            )
+        bool abrupt_is_root_frame = Get_Eval_Flag(FRAME, ROOT_FRAME);
+        if (
+            Not_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE)
+            and not abrupt_is_root_frame
         ){
-            Abort_Frame(FS_TOP);  // restores to baseline
+            Abort_Frame(FRAME);  // restores to baseline
         }
+
+        TRASH_POINTER_IF_DEBUG(FRAME);  // go by FS_TOP until FRAME reset
 
         // The mechanisms for THROW-ing and FAIL-ing are somewhat unified in
         // stackless...(a TRAPpable failure is just any "thrown" value with
@@ -172,17 +170,14 @@ bool Trampoline_Throws(REBFRM *root)
             CTX_ARCHETYPE(jump.error)  // only the ERROR! as a label
         );
 
-        TG_Jump_List = jump.last_jump;  // unlink *after* error/etc. extracted
+        TG_Jump_List = jump.last_jump;  // ** Note: this changes FRAME **
 
-        if (
-            Get_Eval_Flag(FS_TOP, DISPATCHER_CATCHES)
-            and Not_Eval_Flag(FS_TOP, ABRUPT_FAILURE)
-        ){
-            goto push_trap_for_longjmp;  // have to push again to trap again
+        if (abrupt_is_root_frame) {
+            Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
+            return true;  // say the frame threw
         }
 
-        assert(Get_Eval_Flag(FS_TOP, ROOT_FRAME));
-        return true;
+        goto push_trap_for_longjmp;  // have to push again to trap again
     }
 
     FRAME = FS_TOP;
@@ -211,7 +206,10 @@ bool Trampoline_Throws(REBFRM *root)
         }
     }
 
-    assert(Not_Eval_Flag(FRAME, ABRUPT_FAILURE));
+    if (Get_Eval_Flag(FRAME, ABRUPT_FAILURE)) {
+        assert(Get_Eval_Flag(FRAME, NOTIFY_ON_ABRUPT_FAILURE));
+        assert(Is_Throwing(FRAME));
+    }
 
 { //=//// CALL THE EXECUTOR ///////////////////////////////////////////////=//
 
@@ -253,6 +251,7 @@ bool Trampoline_Throws(REBFRM *root)
         if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {
             STATE = 0;  // !!! Frame gets reused, review
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
+            Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
             return false;
         }
 
@@ -330,6 +329,7 @@ bool Trampoline_Throws(REBFRM *root)
         if (Get_Eval_Flag(FRAME, ROOT_FRAME)) {  // don't abort top
             assert(Not_Eval_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE));
             DROP_TRAP_SAME_STACKLEVEL_AS_PUSH(&jump);
+            Clear_Eval_Flag(FS_TOP, ROOT_FRAME);
             return true;
         }
 

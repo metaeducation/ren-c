@@ -193,8 +193,15 @@ inline static option(const Symbol*) FRM_LABEL(REBFRM *f) {
     #define FRM_STATE_BYTE(f) \
         mutable_SECOND_BYTE((f)->flags)
 #else
-    inline static REBYTE& FRM_STATE_BYTE(REBFRM *f)  // type checks f...
-      { return mutable_SECOND_BYTE(f->flags); }  // ...but mutable
+    // Having a special accessor in the C++ build serves two purposes.  One,
+    // it can actually type check that `f` is a frame.  But secondly, it also
+    // is a good place to inject an assertion that you're not ignoring the
+    // fact that a frame "self-errored" and was notified of an abrupt failure.
+    //
+    inline static REBYTE& FRM_STATE_BYTE(REBFRM *f) {
+        assert(Not_Eval_Flag(f, ABRUPT_FAILURE));
+        return mutable_SECOND_BYTE(f->flags);
+    }
 #endif
 
 

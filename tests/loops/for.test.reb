@@ -203,3 +203,10 @@
 )
 
 (5 = for-each x [1 2 3] [5 assert [x < 10]])
+
+; Abrupt failure (needs more comprehensive tests, but this is an example of
+; where the enumeration state is held by the FOR-EACH frame, and the error
+; on trying to use 3 variables to enumerate an object originates from the
+; C stack when FOR-EACH's dispatcher is on the stack.
+;
+(error? trap [for-each [x y z] make object! [key: <value>] []])
