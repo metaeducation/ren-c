@@ -38,96 +38,138 @@
 //  ]
 //
 REBNATIVE(reduce)
+//
+// 1. It's not completely clear what the semantics of non-block REDUCE should
+//    be, but right now single value REDUCE does a REEVALUATE where it does
+//    not allow arguments.  This is a variant of REEVAL with an END feed.
+//
+//    (R3-Alpha, would return the input, e.g. `reduce ':foo` => :foo)
+//
+// 2. We want the output newline status to mirror the newlines of the start
+//    of the eval positions.  But when the evaluation callback happens, we
+//    won't have the starting value anymore.  Cache the newline flag on the
+//    ARG(value) cell, as newline flags on ARG()s are available.
+//
+// 3. The subframe that is pushed to run the reduce evaluations uses the data
+//    stack position captured in BASELINE to tell things like whether a
+//    function dispatch has pushed refinements, etc.  So when the REDUCE frame
+//    underneath it pushes a value to the data stack, that frame must be
+//    informed the stack element is "not for it" before the next call.
 {
     INCLUDE_PARAMS_OF_REDUCE;
 
-    REBVAL *v = ARG(value);
-    REBVAL *predicate = ARG(predicate);
+    Value *v = ARG(value);  // newline flag on `v` cell is leveraged, see [2]
+    Value *predicate = ARG(predicate);
 
-    // Single element REDUCE is currently limited only to certain types.
-    // (R3-Alpha, would just return the input, e.g. `reduce :foo` => :foo)
-    // If there are arguments required, Eval_Value_Throws() will error.
-    //
-    // !!! Should the error be more "reduce-specific" if args were required?
-    //
-    // !!! How should predicates interact with this case?
-    //
-    if (not ANY_ARRAY(v)) {
-        if (Eval_Value_Throws(OUT, v, SPECIFIED))
-            return THROWN;
+    Value *processed;  // will be set to either OUT or SPARE
 
-        return OUT;  // let caller worry about whether to error on nulls
+    enum {
+        ST_REDUCE_INITIAL_ENTRY = 0,
+        ST_REDUCE_EVAL_STEP,
+        ST_REDUCE_RUNNING_PREDICATE
+    };
+
+    switch (STATE) {
+      case ST_REDUCE_INITIAL_ENTRY:
+        if (ANY_ARRAY(v))
+            goto initial_entry_any_array;
+        goto initial_entry_non_array;  // semantics in question, see [1]
+
+      case ST_REDUCE_EVAL_STEP:
+        goto reduce_step_result_in_out;
+
+      case ST_REDUCE_RUNNING_PREDICATE:
+        goto predicate_result_in_spare;
+
+      default: assert(false);
     }
 
-    REBDSP dsp_orig = DSP;
+  initial_entry_non_array: {  /////////////////////////////////////////////////
 
-    DECLARE_FEED_AT (feed, v);
-    DECLARE_FRAME (f, feed, EVAL_MASK_DEFAULT | EVAL_FLAG_ALLOCATED_FEED);
+    if (ANY_INERT(v))
+        return_value (v);  // save time if it's something like a TEXT!
 
-    Push_Frame(nullptr, f);
+    DECLARE_END_FRAME (
+        subframe,
+        EVAL_MASK_DEFAULT | FLAG_STATE_BYTE(ST_EVALUATOR_REEVALUATING)
+    );
+    Push_Frame(OUT, subframe);
 
-    while (NOT_END(f_value)) {
-        bool line = GET_CELL_FLAG(f_value, NEWLINE_BEFORE);
+    subframe->u.eval.current = v;
+    subframe->u.eval.current_gotten = nullptr;
 
-        if (Eval_Step_Throws(RESET(OUT), f)) {
-            Abort_Frame(f);
-            DS_DROP_TO(dsp_orig);
-            return THROWN;
-        }
+    delegate_subframe (subframe);
 
-        if (IS_NULLED(ARG(predicate))) {  // default processing
-            if (Is_Void(OUT))
-                continue;  // reduce [<a> if false [<b>]] => [<a>]
-                           // reduce [<a> comment "hi"] => [<a>]
-        }
-        else {
-            // usermode post-processing of result if requested
-            //
-            // !!! Experiment with pattern for passing predicate parameters.
-            // If this works, it should be generalized and reused.
-            //
-            REBVAL *processed;
-            if (Is_Void(OUT))
-                processed = rebMeta(predicate, Init_Meta_Of_Void(OUT));
-            else if (Is_Isotope(OUT))
-                processed = rebMeta(predicate, Meta_Quotify(OUT));
-            else if (IS_NULLED(OUT))
-                processed = rebMeta(
-                    predicate, Lib(THE_P), Init_Meta_Of_Null_Isotope(OUT)
-                );
-            else
-                processed = rebMeta(predicate, rebQ(OUT));
+} initial_entry_any_array: {  ////////////////////////////////////////////////
 
-            if (not processed) {
-                Init_Nulled(OUT);
-            }
-            else {
-                Move_Cell(OUT, processed);
-                rebRelease(processed);
+    DECLARE_FRAME_AT (
+        subframe,
+        v,  // REB_BLOCK or REB_GROUP
+        EVAL_MASK_DEFAULT
+            | EVAL_FLAG_ALLOCATED_FEED
+            | EVAL_FLAG_TRAMPOLINE_KEEPALIVE  // reused for each step
+    );
+    Push_Frame(OUT, subframe);
+    goto next_reduce_step;
 
-                if (Is_Meta_Of_Void(OUT))
-                    continue;  // `reduce/predicate [null] :maybe`
+} next_reduce_step: {  ///////////////////////////////////////////////////////
 
-                Meta_Unquotify(OUT);
-            }
-        }
+    if (IS_END(SUBFRAME->feed->value))
+        goto finished;
 
-        Decay_If_Isotope(OUT);
+    if (GET_CELL_FLAG(SUBFRAME->feed->value, NEWLINE_BEFORE))
+        SET_CELL_FLAG(v, NEWLINE_BEFORE);  // cache newline flag, see [2]
+    else
+        CLEAR_CELL_FLAG(v, NEWLINE_BEFORE);
 
-        if (IS_NULLED(OUT))
-            fail (Error_Need_Non_Null_Raw());  // trigger error below
+    RESET(OUT);
+    SUBFRAME->executor = &Evaluator_Executor;
+    STATE = ST_REDUCE_EVAL_STEP;
+    continue_uncatchable_subframe (SUBFRAME);
 
-        if (Is_Isotope(OUT))
-            fail (Error_Bad_Isotope(OUT));
+} reduce_step_result_in_out: {  //////////////////////////////////////////////
 
-        Move_Cell(DS_PUSH(), OUT);
-        f->baseline.dsp += 1;  // compensate for push
+    if (Is_Void(OUT))  // voids aren't offered to predicates, by design
+        goto next_reduce_step;  // reduce skips over voids
 
-        if (line)
-            SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+    if (IS_NULLED(predicate)) {  // default is no processing
+        processed = OUT;
+        goto push_processed;
     }
 
-    Drop_Frame_Unbalanced(f);  // Drop_Frame() asserts on accumulation
+    SUBFRAME->executor = &Just_Use_Out_Executor;
+    STATE = ST_REDUCE_RUNNING_PREDICATE;
+    continue_uncatchable (SPARE, predicate, OUT);  // predicate processing
+
+} predicate_result_in_spare: {  //////////////////////////////////////////////
+
+    if (Is_Void(SPARE))
+        goto next_reduce_step;  // void products of predicates are skipped
+
+    processed = SPARE;
+    goto push_processed;
+
+} push_processed: {  /////////////////////////////////////////////////////////
+
+    Decay_If_Isotope(processed);
+
+    if (IS_NULLED(processed))
+        fail (Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
+
+    if (Is_Isotope(processed))
+        fail (Error_Bad_Isotope(processed));
+
+    Move_Cell(DS_PUSH(), processed);
+    SUBFRAME->baseline.dsp += 1;  // subframe must be adjusted, see [3]
+
+    if (GET_CELL_FLAG(v, NEWLINE_BEFORE))  // propagate cached newline, see [2]
+        SET_CELL_FLAG(DS_TOP, NEWLINE_BEFORE);
+
+    goto next_reduce_step;
+
+} finished: {  ///////////////////////////////////////////////////////////////
+
+    Drop_Frame_Unbalanced(SUBFRAME);  // Drop_Frame() asserts on accumulation
 
     REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
     if (GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(v), NEWLINE_AT_TAIL))
@@ -138,7 +180,7 @@ REBNATIVE(reduce)
         VAL_TYPE(v),
         Pop_Stack_Values_Core(FRAME->baseline.dsp, pop_flags)
     );
-}
+}}
 
 
 //

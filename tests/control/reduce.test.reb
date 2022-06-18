@@ -17,10 +17,12 @@
 (1 = reeval func [return: [integer!]] [reduce [return 1 2] 2])
 ; recursive behaviour
 (1 = first reduce [first reduce [1]])
+
 ; infinite recursion
 (
-    blk: [reduce blk]
-    error? trap blk
+    x: 0
+    blk: [x: x + 1, if x = 10000 [throw <deep-enough>] reduce blk]
+    <deep-enough> = catch blk
 )
 
 ; Quick flatten test, here for now
