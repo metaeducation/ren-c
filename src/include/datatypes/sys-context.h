@@ -381,7 +381,7 @@ inline static REBFRM *CTX_FRAME_IF_ON_STACK(REBCTX *c) {
     assert(IS_FRAME(CTX_ARCHETYPE(c)));
 
     REBFRM *f = FRM(keysource);
-    assert(f->original); // inline Is_Action_Frame() to break dependency
+    assert(f->executor == &Action_Executor);
     return f;
 }
 

@@ -61,12 +61,8 @@ inline static bool ANY_ESCAPABLE_GET(const Cell *v) {
 //=////////////////////////////////////////////////////////////////////////=//
 
 
-// When Push_Action() happens, it sets f->original, but it's guaranteed to be
-// null if an action is not running.  This is tested via a macro because the
-// debug build doesn't do any inlining, and it's called often.
-//
 #define Is_Action_Frame(f) \
-    ((f)->original != nullptr)
+    ((f)->executor == &Action_Executor)
 
 
 // While a function frame is fulfilling its arguments, the `f->key` will
@@ -357,14 +353,7 @@ inline static void Push_Frame(
     }
   #endif
 
-    // Some initialized bit pattern is needed to check to see if a
-    // function call is actually in progress, or if eval_type is just
-    // REB_ACTION but doesn't have valid args/state.  The original action is a
-    // good choice because it is only affected by the function call case,
-    // see Is_Action_Frame_Fulfilling().
-    //
-    f->original = nullptr;
-
+    TRASH_POINTER_IF_DEBUG(f->original);
     TRASH_OPTION_IF_DEBUG(f->label);
   #if DEBUG_FRAME_LABELS
     TRASH_POINTER_IF_DEBUG(f->label_utf8);

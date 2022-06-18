@@ -176,7 +176,7 @@ REB_R Action_Executor(REBFRM *f)
     if (Not_Eval_Flag(f, MAYBE_STALE))
         assert(Is_Void(OUT));
 
-    assert(f->original);  // set by Begin_Action()
+    assert(not IS_POINTER_TRASH_DEBUG(f->original));  // set by Begin_Action()
 
     assert(DSP >= f->baseline.dsp);  // path processing may push REFINEMENT!s
 
@@ -1314,7 +1314,9 @@ void Begin_Action_Core(
     assert(NOT_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
     SET_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
 
-    assert(not f->original);
+    f->executor = &Action_Executor;
+
+    assert(IS_POINTER_TRASH_DEBUG(f->original));
     f->original = FRM_PHASE(f);
 
     // f->key_tail = v-- set here
@@ -1358,8 +1360,6 @@ void Begin_Action_Core(
         //
         CLEAR_FEED_FLAG(f->feed, NO_LOOKAHEAD);
     }
-
-    f->executor = &Action_Executor;
 }
 
 
@@ -1480,7 +1480,7 @@ void Drop_Action(REBFRM *f) {
     }
   #endif
 
-    f->original = nullptr; // signal an action is no longer running
+    TRASH_POINTER_IF_DEBUG(f->original); // action is no longer running
 
     TRASH_OPTION_IF_DEBUG(f->label);
   #if DEBUG_FRAME_LABELS
