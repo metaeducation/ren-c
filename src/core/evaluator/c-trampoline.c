@@ -302,6 +302,14 @@ bool Trampoline_Throws(REBFRM *root)
     //    happen with RETURN during ENCLOSE.  So don't use CTX(FRAME->varlist)
     //    here, as that would try to validate it as not being inaccessible.
     //
+    // 3. Constructs like REDUCE-EACH keep a subframe pushed to do evaluation,
+    //    but then want to keep that state while doing another evaluation
+    //    (e.g. the body block).  To "punch a hole" through the evaluation
+    //    frame it sets the executor to Just_Use_Out and can get the result
+    //    without dropping the frame.  But thrown values like CONTINUE lead
+    //    to a problem of how to express wanting TRAMPOLINE_KEEPALIVE to be
+    //    applicable to throw situations as well--not all want it.  For now
+    //    we conflate Just_Use_Out with the intent of keepalive on throw.
 
     if (r == R_THROWN) {
       thrown:
@@ -335,6 +343,12 @@ bool Trampoline_Throws(REBFRM *root)
 
         Abort_Frame(FRAME);  // restores to baseline
         FRAME = FS_TOP;
+
+        if (FRAME->executor == &Just_Use_Out_Executor) {
+            assert(Get_Eval_Flag(FRAME, TRAMPOLINE_KEEPALIVE));
+            FRAME = FRAME->prior;  // hack, don't let it be aborted, see [3]
+        }
+
         goto bounce_on_the_trampoline;  // executor will see the throw
     }
 
