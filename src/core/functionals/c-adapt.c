@@ -7,7 +7,7 @@
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
-// Copyright 2016-2020 Ren-C Open Source Contributors
+// Copyright 2016-2022 Ren-C Open Source Contributors
 //
 // See README.md and CREDITS.md for more information.
 //
@@ -58,6 +58,8 @@ enum {
 // Each time a function created with ADAPT is executed, this code runs to
 // invoke the "prelude" before passing control to the "adaptee" function.
 //
+REB_R Adapter_Dispatcher(REBFRM *f)
+//
 // 1. When an ADAPT is done, it does not leave its product in the output
 //    cell.  This means ADAPT of COMMENT will still be invisible.
 //
@@ -66,12 +68,28 @@ enum {
 //    would mean (Return from the prelude but still run the body?  Don't run
 //    the body at all?)  ENCLOSE should be used for these complex intents.
 //
-REB_R Adapter_Dispatcher(REBFRM *f)
+// 3. We want to run the adapted function in the same frame, but the prelude
+//    may have put invalid types in parameter slots.  So it needs to be
+//    typechecked before executing.
 {
     REBFRM *frame_ = f;  // for RETURN macros
 
     REBARR *details = ACT_DETAILS(FRM_PHASE(f));
     assert(ARR_LEN(details) == IDX_ADAPTER_MAX);
+
+    enum {
+        ST_ADAPTER_INITIAL_ENTRY = 0,
+        ST_ADAPTER_RUNNING_PRELUDE
+    };
+
+    switch (STATE) {
+      case ST_ADAPTER_INITIAL_ENTRY: goto initial_entry;
+      case ST_ADAPTER_RUNNING_PRELUDE: goto run_adaptee_in_same_frame;
+      default: assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
+
     Cell *prelude = ARR_AT(details, IDX_ADAPTER_PRELUDE);  // code to run
     assert(
         IS_BLOCK(prelude)
@@ -79,21 +97,24 @@ REB_R Adapter_Dispatcher(REBFRM *f)
         and VAL_INDEX(prelude) == 0
     );
 
-    // Evaluate prelude into the SPARE cell (result discarded, see [1])
-    //
-    if (Do_Any_Array_At_Throws(SPARE, prelude, SPC(f->varlist)))
-        return THROWN;  // won't be a RETURN, see [2]
+    STATE = ST_ADAPTER_RUNNING_PRELUDE;
+    continue_core(
+        SPARE,  // Evaluate prelude into SPARE cell (result discarded, see [1])
+        EVAL_MASK_DEFAULT,  // don't catch throws or errors
+        prelude,  // definitional RETURN not available yet, see [2]
+        SPC(f->varlist),
+        END
+    );
 
-    // The second thing to do is update the phase and binding to run the
-    // function that is being adapted, and pass it to the evaluator to redo.
+} run_adaptee_in_same_frame: {  //////////////////////////////////////////////
 
     REBVAL* adaptee = DETAILS_AT(details, IDX_ADAPTER_ADAPTEE);
 
     INIT_FRM_PHASE(f, VAL_ACTION(adaptee));
     INIT_FRM_BINDING(f, VAL_ACTION_BINDING(adaptee));
 
-    return R_REDO_CHECKED;  // the redo will use the updated phase & binding
-}
+    return R_REDO_CHECKED;  // redo uses updated phase & binding, see [3]
+}}
 
 
 //
