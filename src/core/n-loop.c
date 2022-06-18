@@ -1152,8 +1152,6 @@ REBNATIVE(every)
     if (not Try_Loop_Each_Next(iterator, VAL_CONTEXT(vars)))
         goto finalize_every;
 
-    Init_None(OUT);  // running body at least once
-
     STATE = ST_EVERY_RUNNING_BODY;
     continue_catchable (SPARE, body, END);
 
@@ -1169,8 +1167,10 @@ REBNATIVE(every)
         }
     }
 
-    if (Is_Void(SPARE) or (IS_META_BLOCK(body) and Is_Meta_Of_Void(SPARE)))
-        goto next_iteration;  // treat void as no vote, see [1]
+    if (Is_Void(SPARE) or (IS_META_BLOCK(body) and Is_Meta_Of_Void(SPARE))) {
+        Init_None(OUT);  // *forget* old result, for loop composition, see [1]
+        goto next_iteration;  // ...but void does not NULL-lock output
+    }
 
     if (Is_Isotope(SPARE)) {  // don't decay isotopes, see [2]
         Init_Error(SPARE, Error_Bad_Isotope(SPARE));
@@ -1181,12 +1181,8 @@ REBNATIVE(every)
     if (Is_Falsey(SPARE)) {
         Init_Nulled(OUT);
     }
-    else if (
-        Is_Stale(OUT)
-        or Is_None(OUT)  // saw a void last time
-        or not IS_NULLED(OUT)  // null means we saw false
-    ){
-        Move_Cell(OUT, SPARE);
+    else if (Is_Stale(OUT) or VAL_TYPE_UNCHECKED(OUT) != REB_NULL) {
+        Move_Cell(OUT, SPARE);  // will overwrite a none, e.g. from void
     }
 
     goto next_iteration;
