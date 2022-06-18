@@ -152,7 +152,7 @@ REB_R Action_Executor(REBFRM *f)
                     or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_SOFT
                     or VAL_PARAM_CLASS(PARAM) == PARAM_CLASS_MEDIUM
                 );
-                Reify_Eval_Out_Plain(ARG);
+                Init_Void_Isotope(ARG);  // typecheck would turn ~ to NULL
             }
             goto continue_fulfilling;
 
