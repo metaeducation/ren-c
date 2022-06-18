@@ -593,6 +593,13 @@ inline static void Prep_Frame_Core(
     #define SPARE   FRM_SPARE(frame_)       // scratch GC-safe cell
     #define STATE   FRM_STATE_BYTE(frame_)
 
+    #define SUBFRAME ( \
+        assert( \
+            FS_TOP != frame_ and Get_Eval_Flag(FS_TOP, TRAMPOLINE_KEEPALIVE) \
+        ), \
+        FS_TOP \
+    )
+
     #define VOID    Native_Void_Result(frame_)
     #define NONE    Native_None_Result(frame_)
     #define THROWN  Native_Thrown_Result(frame_)

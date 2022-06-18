@@ -558,26 +558,24 @@ REBNATIVE(all)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
 
-    DECLARE_FRAME_AT (f, block, flags);
-    Push_Frame(OUT, f);
+    DECLARE_FRAME_AT (subframe, block, flags);
+    Push_Frame(OUT, subframe);
 
     STATE = ST_ALL_EVAL_STEP;
-    continue_uncatchable_subframe(f);
+    continue_uncatchable_subframe(subframe);
 
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
-    REBFRM *f = FS_TOP;
-
     if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
-        if (IS_END(f_value))
+        if (IS_END(SUBFRAME->feed->value))
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
-        continue_uncatchable_subframe (f);
+        continue_uncatchable_subframe (SUBFRAME);
     }
 
     if (not IS_NULLED(predicate)) {
-        f->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
+        SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
 
         STATE = ST_ALL_PREDICATE;
         continue_uncatchable(SPARE, predicate, OUT);
@@ -588,14 +586,12 @@ REBNATIVE(all)
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    REBFRM *f = FS_TOP;
-
     if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
         fail (Error_Bad_Void());
 
     Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [5]
 
-    f->executor = &Evaluator_Executor;  // done tunneling, see [4]
+    SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [4]
     STATE = ST_ALL_EVAL_STEP;
 
     condition = SPARE;
@@ -603,27 +599,25 @@ REBNATIVE(all)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    REBFRM *f = FS_TOP;
-
     if (Is_Isotope(condition))
         fail (Error_Bad_Isotope(condition));
 
     if (Is_Falsey(condition)) {
-        Abort_Frame(f);
+        Abort_Frame(SUBFRAME);
         return nullptr;
     }
 
     Init_True(any_matches);
 
-    if (IS_END(f_value))
+    if (IS_END(SUBFRAME->feed->value))
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
-    continue_uncatchable_subframe(f);  // leave OUT result as stale value
+    continue_uncatchable_subframe(SUBFRAME);  // leave OUT as stale value
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
-    Drop_Frame(FS_TOP);
+    Drop_Frame(SUBFRAME);
 
     if (not VAL_LOGIC(any_matches))  // can't use Is_Stale(OUT), see [3]
         return VOID;
@@ -687,26 +681,24 @@ REBNATIVE(any)
     if (IS_THE_BLOCK(block))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
 
-    DECLARE_FRAME_AT (f, block, flags);
-    Push_Frame(OUT, f);
+    DECLARE_FRAME_AT (subframe, block, flags);
+    Push_Frame(OUT, subframe);
 
     STATE = ST_ANY_EVAL_STEP;
-    continue_uncatchable_subframe(f);
+    continue_uncatchable_subframe(subframe);
 
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
-    REBFRM *f = FS_TOP;
-
     if (Is_Stale(OUT)) {  // void steps, e.g. (comment "hi") (if false [<a>])
-        if (IS_END(f_value))
+        if (IS_END(SUBFRAME->feed->value))
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
-        continue_uncatchable_subframe (f);
+        continue_uncatchable_subframe (SUBFRAME);
     }
 
     if (not IS_NULLED(predicate)) {
-        f->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
+        SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
 
         STATE = ST_ANY_PREDICATE;
         continue_uncatchable(SPARE, predicate, OUT);
@@ -717,14 +709,12 @@ REBNATIVE(any)
 
 } predicate_result_in_spare: {  //////////////////////////////////////////////
 
-    REBFRM *f = FS_TOP;
-
     if (Is_Void(SPARE))  // !!! Should void predicate results signal opt-out?
         fail (Error_Bad_Void());
 
     Isotopify_If_Falsey(OUT);  // predicates can approve "falseys", see [5]
 
-    f->executor = &Evaluator_Executor;  // done tunneling, see [4]
+    SUBFRAME->executor = &Evaluator_Executor;  // done tunneling, see [4]
     STATE = ST_ANY_EVAL_STEP;
 
     condition = SPARE;
@@ -732,25 +722,23 @@ REBNATIVE(any)
 
 } process_condition: {  //////////////////////////////////////////////////////
 
-    REBFRM *f = FS_TOP;
-
     if (Is_Isotope(condition))
         fail (Error_Bad_Isotope(condition));
 
     if (Is_Truthy(condition)) {
-        Abort_Frame(f);
+        Abort_Frame(SUBFRAME);
         return_branched (OUT);  // successful ANY returns the value
     }
 
-    if (IS_END(f_value))
+    if (IS_END(SUBFRAME->feed->value))
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
-    continue_uncatchable_subframe (f);
+    continue_uncatchable_subframe (SUBFRAME);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
-    Drop_Frame(FS_TOP);
+    Drop_Frame(SUBFRAME);
     return nullptr;  // reached end of input and found nothing to return
 }}
 

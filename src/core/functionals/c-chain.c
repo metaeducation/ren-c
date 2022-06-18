@@ -188,8 +188,7 @@ REB_R Chainer_Dispatcher(REBFRM *f)
 
 } run_next_in_chain: {  //////////////////////////////////////////////////////
 
-    REBFRM *sub = FS_TOP;
-    assert(sub != f and Get_Eval_Flag(sub, TRAMPOLINE_KEEPALIVE));
+    REBFRM *sub = SUBFRAME;
 
     if (sub->varlist and NOT_SERIES_FLAG(sub->varlist, MANAGED))
         GC_Kill_Series(sub->varlist);
@@ -218,9 +217,9 @@ REB_R Chainer_Dispatcher(REBFRM *f)
     assert(STATE == ST_CHAINER_RUNNING_SUBFUNCTION);
     continue_subframe (sub);
 
- finished:  //////////////////////////////////////////////////////////////////
+} finished: {  ///////////////////////////////////////////////////////////////
 
-    Drop_Frame(sub);
+    Drop_Frame(SUBFRAME);
 
     if (Is_Stale(OUT))
         return VOID;
