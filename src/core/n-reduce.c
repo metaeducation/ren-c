@@ -157,8 +157,31 @@ REBNATIVE(reduce)
 //  ]
 //
 REBNATIVE(reduce_each)
+//
+// 1. This current REDUCE-EACH only works with one variable, and it has to
+//    be a plain WORD!.  It should be able to support ^META words, as well as
+//    multiple variables.  See the code behind Loop_Each() for pattern to use.
 {
     INCLUDE_PARAMS_OF_REDUCE_EACH;
+
+    Value *vars = ARG(vars);
+    Value *block = ARG(block);
+    Value *body = ARG(body);
+
+    enum {
+        ST_REDUCE_EACH_INITIAL_ENTRY = 0,
+        ST_REDUCE_EACH_REDUCING_STEP,
+        ST_REDUCE_EACH_RUNNING_BODY
+    };
+
+    switch (STATE) {
+      case ST_REDUCE_EACH_INITIAL_ENTRY : goto initial_entry;
+      case ST_REDUCE_EACH_REDUCING_STEP : goto reduce_step_output_in_spare;
+      case ST_REDUCE_EACH_RUNNING_BODY : goto body_result_in_out;
+      default : assert(false);
+    }
+
+  initial_entry: {  //////////////////////////////////////////////////////////
 
     REBCTX *context = Virtual_Bind_Deep_To_New_Context(
         ARG(body),  // may be updated, will still be GC safe
@@ -166,48 +189,69 @@ REBNATIVE(reduce_each)
     );
     Init_Object(ARG(vars), context);  // keep GC safe
 
-    REBFLGS flags = EVAL_MASK_DEFAULT;
-    if (IS_THE_BLOCK(ARG(block)))
+    REBFLGS flags = EVAL_MASK_DEFAULT | EVAL_FLAG_TRAMPOLINE_KEEPALIVE;
+    if (IS_THE_BLOCK(block))
         flags |= EVAL_FLAG_NO_EVALUATIONS;
 
-    DECLARE_FRAME_AT (f, ARG(block), flags);
-    Push_Frame(nullptr, f);
+    DECLARE_FRAME_AT (subframe, block, flags);
+    Push_Frame(SPARE, subframe);
+    goto reduce_next;
 
-    while (NOT_END(f_value)) {
-        if (Eval_Step_Throws(RESET(SPARE), f)) {
-            Abort_Frame(f);
-            return THROWN;
-        }
+} reduce_next: {  ////////////////////////////////////////////////////////////
 
-        if (Is_Void(SPARE))
-            continue;
+    if (IS_END(SUBFRAME->feed->value))
+        goto finished;
 
-        // !!! This needs to handle the case where the vars are ^META, as well
-        // as multiple vars.
+    SUBFRAME->executor = &Evaluator_Executor;  // restore from pass through
 
-        Move_Cell(CTX_VAR(context, 1), SPARE);
+    STATE = ST_REDUCE_EACH_REDUCING_STEP;
+    continue_uncatchable_subframe (SUBFRAME);
 
-        if (Do_Branch_Throws(OUT, ARG(body), END)) {
-            if (not Try_Catch_Break_Or_Continue(OUT, FRAME)) {
-                Abort_Frame(f);
-                return THROWN;
-            }
+} reduce_step_output_in_spare: {  ////////////////////////////////////////////
 
-            if (Is_Breaking_Null(OUT))
-                return nullptr;
+    if (Is_Void(SPARE)) {
+        if (Is_Stale(OUT))
+            Init_None(OUT);
+        goto reduce_next;
+    }
 
-            if (Is_Void(OUT))  // CONTINUE w/no argument
-                Init_None(OUT);
-        }
-    } while (NOT_END(f_value));
+    Move_Cell(CTX_VAR(VAL_CONTEXT(vars), 1), SPARE);  // do multiple? see [1]
 
-    Drop_Frame(f);
+    SUBFRAME->executor = &Just_Use_Out_Executor;  // pass through subframe
 
-    if (Is_Stale(OUT))
+    STATE = ST_REDUCE_EACH_RUNNING_BODY;
+    continue_catchable_branch(OUT, body, END);
+
+} body_result_in_out: {  /////////////////////////////////////////////////////
+
+    if (THROWING) {
+        if (not Try_Catch_Break_Or_Continue(OUT, FRAME))
+            goto finished;
+
+        if (Is_Breaking_Null(OUT))
+            goto finished;
+    }
+
+    if (Is_Void(OUT))  // vaporized body or CONTINUE w/no argument
+        Init_None(OUT);  // void reserved for body never ran
+
+    goto reduce_next;
+
+} finished: {  ///////////////////////////////////////////////////////////////
+
+    Drop_Frame(SUBFRAME);
+
+    if (THROWING)
+        return THROWN;
+
+    if (Is_Stale(OUT))  // body never ran
         return VOID;
 
-    return_non_void (OUT);
-}
+    if (Is_Breaking_Null(OUT))
+        return nullptr;  // BREAK encountered
+
+    return_branched (OUT);
+}}
 
 
 bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
