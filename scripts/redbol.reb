@@ -622,26 +622,23 @@ do: emulate [
 ]
 
 to: emulate [
-    adapt :to [
+    enclose :to func [f] [
         all [
-            :value = group!
-            find any-word! type
+            :f.value = group!
+            find any-word! f.type
             return as type! 'paren!
         ]
         all [
-            type = char!
-            integer? :value
-            return make issue! :value
+            f.type = char!
+            integer? :f.value
+            return make issue! :f.value
         ]
-        if any-array? :type [
-            if match [text! typeset! map! any-context! vector!] :spec [
-                return make :type :value
-            ]
-            if binary? :spec [  ; would scan UTF-8 data
-                return make :type as text! :value
-            ]
+        all [
+            find any-array! f.type
+            binary? :f.value
+            return as f.type transcode f.value
         ]
-        ; fallthrough
+        return do f
     ]
 ]
 
