@@ -521,13 +521,13 @@ REBNATIVE(all)
 {
     INCLUDE_PARAMS_OF_ALL;
 
-    REBVAL *block = ARG(block);
-    REBVAL *predicate = ARG(predicate);
+    Value *block = ARG(block);
+    Value *predicate = ARG(predicate);
 
-    REBVAL *any_matches = ARG(return);  // reuse return cell for flag, see [3]
+    Value *any_matches = ARG(return);  // reuse return cell for flag, see [3]
     Init_False(any_matches);
 
-    REBVAL *condition;  // will be found in OUT or SPARE
+    Value *condition;  // will be found in OUT or SPARE
 
     enum {
         ST_ALL_INITIAL_ENTRY = 0,
@@ -558,7 +558,7 @@ REBNATIVE(all)
     Push_Frame(OUT, f);
 
     STATE = ST_ALL_EVAL_STEP;
-    continue_subframe(f);
+    continue_uncatchable_subframe(f);
 
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
@@ -569,7 +569,7 @@ REBNATIVE(all)
             goto reached_end;
 
         assert(STATE == ST_ALL_EVAL_STEP);
-        continue_subframe (f);
+        continue_uncatchable_subframe (f);
     }
 
     if (not IS_NULLED(predicate)) {
@@ -615,7 +615,7 @@ REBNATIVE(all)
         goto reached_end;
 
     assert(STATE == ST_ALL_EVAL_STEP);
-    continue_subframe(f);  // leave OUT result as stale value
+    continue_uncatchable_subframe(f);  // leave OUT result as stale value
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 
@@ -653,10 +653,10 @@ REBNATIVE(any)
 {
     INCLUDE_PARAMS_OF_ANY;
 
-    REBVAL *predicate = ARG(predicate);
-    REBVAL *block = ARG(block);
+    Value *predicate = ARG(predicate);
+    Value *block = ARG(block);
 
-    REBVAL *condition;  // could point to OUT or SPARE
+    Value *condition;  // could point to OUT or SPARE
 
     enum {
         ST_ANY_INITIAL_ENTRY = 0,
@@ -687,7 +687,7 @@ REBNATIVE(any)
     Push_Frame(OUT, f);
 
     STATE = ST_ANY_EVAL_STEP;
-    continue_subframe(f);
+    continue_uncatchable_subframe(f);
 
 } eval_step_finished: {  /////////////////////////////////////////////////////
 
@@ -698,7 +698,7 @@ REBNATIVE(any)
             goto reached_end;
 
         assert(STATE == ST_ANY_EVAL_STEP);
-        continue_subframe (f);
+        continue_uncatchable_subframe (f);
     }
 
     if (not IS_NULLED(predicate)) {
@@ -742,7 +742,7 @@ REBNATIVE(any)
         goto reached_end;
 
     assert(STATE == ST_ANY_EVAL_STEP);
-    continue_subframe (f);
+    continue_uncatchable_subframe (f);
 
 } reached_end: {  ////////////////////////////////////////////////////////////
 

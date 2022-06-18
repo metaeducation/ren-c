@@ -808,10 +808,10 @@ inline static bool Push_Continuation_Throws(
 }
 
 
-#define continue_core(out,flags,branch,specifier,with) \
+#define continue_core(o,flags,branch,specifier,with) \
     do { \
         if (Push_Continuation_Throws( \
-                RESET(out), \
+                RESET(o), \
                 frame_, \
                 (flags), \
                 (branch), \
@@ -823,66 +823,100 @@ inline static bool Push_Continuation_Throws(
         return R_CONTINUATION; \
     } while (0)
 
+#define delegate_core(o,flags,branch,specifier,with) \
+    do { \
+        Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
+        FRM_STATE_BYTE(frame_) = 1; \
+        continue_core((o), (flags), (branch), (specifier), (with)); \
+    } while (0)
+
 
 // !!! Delegation doesn't want to use the frame that's pushed.  It leaves it
 // on the stack for sanity of debug tracing, but it could be more optimal
 // if the delegating frame were freed before running what's underneath it...
 // at least it could be collapsed into a more primordial state.  Review.
 //
-#define delegate(out,value,with) \
+#define delegate(o,value,with) \
     do { \
-        assert((out) == OUT); \
-        STATE = 1; \
+        assert((o) == frame_->out); \
+        FRM_STATE_BYTE(frame_) = 255; /* 0 reserved for initial entry */ \
         Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
-        continue_core(OUT, EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
+        continue_core( \
+            frame_->out, EVAL_MASK_DEFAULT, (value), SPECIFIED, (with) \
+        ); \
     } while (0)
 
-#define delegate_branch(out,branch,with) \
+#define delegate_branch(o,branch,with) \
     do { \
-        assert((out) == OUT); \
-        STATE = 1; \
+        assert((o) == frame_->out); \
+        FRM_STATE_BYTE(frame_) = 255; /* 0 reserved for initial entry */ \
         Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
-        continue_core(OUT, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
+        continue_core( \
+            frame_->out, EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with) \
+        ); \
     } while (0)
 
 // Normal continuations come in catching and non-catching forms; they evaluate
 // without tampering with the result.
 
-#define continue_uncatchable(out,value,with) \
-    continue_core((out), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with))
+#define continue_uncatchable(o,value,with) \
+    continue_core((o), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with))
 
-#define continue_catchable(out,value,with) \
+#define continue_catchable(o,value,with) \
     do { \
         assert(Is_Action_Frame(frame_)); \
         Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
-        continue_core((out), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
+        continue_core((o), EVAL_MASK_DEFAULT, (value), SPECIFIED, (with)); \
     } while (0)
 
 // Branch continuations enforce the result not being pure null or void
 
-#define continue_uncatchable_branch(out,branch,with) \
-    continue_core((out), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))
+#define continue_uncatchable_branch(o,branch,with) \
+    continue_core((o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with))
 
-#define continue_catchable_branch(out,branch,with) \
+#define continue_catchable_branch(o,branch,with) \
     do { \
         assert(Is_Action_Frame(frame_)); \
         Set_Eval_Flag(frame_, DISPATCHER_CATCHES); \
-        continue_core((out), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
+        continue_core((o), EVAL_FLAG_BRANCH, (branch), SPECIFIED, (with)); \
     } while (0)
 
-#define continue_subframe(f) \
-    do { \
-        assert((f) == FS_TOP); \
-        assert(FS_TOP != frame_); \
-        assert(STATE != 0);  /* must set to nonzero */ \
-        return R_CONTINUATION; \
-    } while (0)
 
-#define delegate_subframe(f) \
+inline static REB_R Continue_Subframe_Helper(
+    REBFRM *f,
+    bool must_be_dispatcher,
+    REBFLGS catches_flag,
+    REBFRM *sub
+){
+    if (must_be_dispatcher)
+        assert(Is_Action_Frame(f) and not Is_Action_Frame_Fulfilling(f));
+    else
+        assert(not Is_Action_Frame(f) or Is_Action_Frame_Fulfilling(f));
+
+    assert(FRM_STATE_BYTE(f) != 0);  // reserved for initial entry
+
+    if (catches_flag != 0) {
+        assert(catches_flag == EVAL_FLAG_DISPATCHER_CATCHES);
+        f->flags.bits |= catches_flag;
+    }
+
+    assert(sub == FS_TOP);  // currently subframe must be pushed and top frame
+    return R_CONTINUATION;
+}
+
+#define continue_subframe(sub) \
+    return Continue_Subframe_Helper(frame_, false, 0, (sub))
+
+#define continue_catchable_subframe(sub) \
+    return Continue_Subframe_Helper( \
+        _frame, true, EVAL_FLAG_DISPATCHER_CATCHES, (sub))
+
+#define continue_uncatchable_subframe(sub) \
+    return Continue_Subframe_Helper(frame_, true, 0, (sub))
+
+#define delegate_subframe(sub) \
     do { \
-        assert((f) == FS_TOP); \
-        assert(FS_TOP != frame_); \
+        FRM_STATE_BYTE(frame_) = 255;  /* 0 reserved for initial entry */ \
         Set_Eval_Flag(frame_, DELEGATE_CONTROL); \
-        STATE = 1;  /* STATE byte of 0 reserved for initial entry */ \
-        return R_CONTINUATION; \
+        return Continue_Subframe_Helper(frame_, true, 0, (sub)); \
     } while (0)
