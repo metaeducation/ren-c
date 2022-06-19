@@ -261,7 +261,7 @@ export for-each-record: function [
         spec: collect [
             for-each column-name headings [
                 keep ^(column-name)
-                keep compose/only [the (table/1)]
+                keep compose2/only [the (table/1)]
                 table: next table
             ]
         ]

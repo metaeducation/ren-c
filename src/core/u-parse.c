@@ -458,7 +458,7 @@ static const Cell *Get_Parse_Value(
 // Historically a single group in PARSE ran code, discarding the value (with
 // a few exceptions when appearing in an argument position to a rule).  Ren-C
 // adds another behavior for GET-GROUP!, e.g. :(...).  This makes them act
-// like a COMPOSE/ONLY that runs each time they are visited.
+// like a COMPOSE that runs each time they are visited.
 //
 REB_R Process_Group_For_Parse(
     REBFRM *frame_,

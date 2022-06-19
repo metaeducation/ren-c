@@ -59,6 +59,7 @@ REBOL [
     }
 ]
 
+import <bootstrap-shim.r>
 
 systems: [
 
@@ -532,7 +533,7 @@ use [
         for-each flag s/libraries [assert [word? flag]]
         for-each flag s/ldflags [assert [word? flag]]
 
-        for-each [word context] compose/only [
+        for-each [word context] compose2/only [
             definitions (system-definitions)
             libraries (system-libraries)
             cflags (compiler-flags)
@@ -551,7 +552,7 @@ use [
         ]
     ]
 
-    unused-flags: exclude compose [
+    unused-flags: exclude compose2 [
         ((words-of compiler-flags))
         ((words-of linker-flags))
         ((words-of system-definitions))

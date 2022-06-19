@@ -158,20 +158,20 @@
     y: 200
     plus-global: [x + y]
     minus-global: [x - y]
-    alpha: make object! compose/only [  ; virtual binds body to obj
+    alpha: make object! compose [  ; virtual binds body to obj
         x: 10
         y: 20
         plus: (plus-global)
         minus: (minus-global)
     ]
-    beta: make object! compose/only [  ; virtual binds body to obj
+    beta: make object! compose [  ; virtual binds body to obj
         x: 1000
         y: 2000
         plus: (plus-global)
         minus: (minus-global)
     ]
     [11 1001 999 9 30 -10 3000 -1000 300 -100] = collect [
-        for-each y [1] compose/only [
+        for-each y [1] compose [
             keep do (alpha.plus)  ; needs chain y -> alpha
             keep do (beta.plus)  ; needs chain y -> beta
             keep do (beta.minus)  ; also needs chain y -> beta

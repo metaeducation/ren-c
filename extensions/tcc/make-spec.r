@@ -48,18 +48,19 @@ libtcc-lib-dir: try any [
 ]
 
 
-cflags: compose [
-    ((if libtcc-include-dir [
+cflags: compose [  ; Note: must work in COMPOSE and COMPOSE2 !
+    (if libtcc-include-dir [
         unspaced [{-I} {"} file-to-local libtcc-include-dir {"}]
-    ]))
+    ])
 ]
 
-ldflags: compose [
-    ((if libtcc-lib-dir [
+ldflags: compose [  ; Note: must work in COMPOSE and COMPOSE2 !
+    (if libtcc-lib-dir [
         unspaced [{-L} {"} file-to-local libtcc-lib-dir {"}]
-    ]))
+    ])
 ]
 
+; Note: must work in COMPOSE and COMPOSE2 !
 libraries: compose [  ; Note: dependent libraries first, dependencies after.
     %tcc
 
@@ -75,7 +76,7 @@ libraries: compose [  ; Note: dependent libraries first, dependencies after.
     ;
     ; https://stackoverflow.com/a/38672664/
     ;
-    ((if not find/only [Windows Android] system-config/os-base [%pthread]))
+    (if not find/only [Windows Android] system-config/os-base [%pthread])
 ]
 
 requires: [

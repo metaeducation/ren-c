@@ -46,7 +46,6 @@ REBOL [
     }
 ]
 
-
 ; The snapshotted Ren-C existed right before <blank> was legal to mark an
 ; argument as meaning a function returns null if that argument is blank.
 ; See if this causes an error, and if so assume it's the old Ren-C, not a
@@ -62,6 +61,8 @@ trap [
     if in (pick system 'options) 'redbol-paths [
         system.options.redbol-paths: true
     ]
+] then [
+    ; Fall through to the body of this file, we are shimming version ~8994d23
 ] else [
     trap [
         lib/func [i [<blank> integer!]] [...]
@@ -73,6 +74,27 @@ trap [
         ; generally inefficient to shim multiple times.
         ;
         quit
+    ]
+
+    === {TWEAKS SO MODERN REN-C DOESN'T ACT TOO MODERN} ===
+
+    export parse: func [] [
+        fail/where "Use PARSE2 in Bootstrap Process, not UPARSE/PARSE" 'return
+    ]
+
+    ; Don't want to try and write a foolproof new-compose for bootstrap exe,
+    ; so just make a COMPOSE2 that splices by default.  (You can still use the
+    ; notation of (( )) to hint that splicing is requested, and it will do
+    ; the checks when built with newer executables it's a spliceable type.)
+    ;
+    export compose2: adapt augment :compose [/only] [
+        if not only [
+            predicate: :blockify  ; in block if not already, only blocks splice
+        ]
+    ]
+
+    export compose: func [] [
+        fail/where "Use COMPOSE2 in Bootstrap Process, not COMPOSE" 'return
     ]
 
     ; LOAD changed to have no /ALL, so it always enforces getting a block.
@@ -109,6 +131,11 @@ none: :void  ; again, most similar thing
 set '~done~ :null
 
 repeat: :loop
+
+compose2: :compose
+compose: func [] [
+    fail/where "Use COMPOSE2 in Bootstrap Process, not COMPOSE" 'return
+]
 
 loop: :while  ; !!! Temporary, will be reclaimed.
 
@@ -273,7 +300,7 @@ change: adapt :change [
 ; and a notion that ENFIX is applied to SET-WORD!s not ACTION!s (which was
 ; later overturned), remapping lambda to `->` is complicated.
 ;
-do compose [(to set-word! first [->]) enfix :lambda]
+do compose2 [(to set-word! first [->]) enfix :lambda]
 unset first [=>]
 
 ; SET was changed to accept BAD-WORD! isotopes
@@ -439,7 +466,7 @@ modernize-action: lib/function [
                 keep/only proxy
                 keep/only spec/1
 
-                lib/append proxiers compose [
+                lib/append proxiers compose2 [
                     (as set-word! last-refine-word) lib/try (as get-word! proxy)
                     set (as lit-word! proxy) void
                 ]
@@ -493,7 +520,7 @@ modernize-action: lib/function [
                 ;
                 if lib/find (lib/try match block! spec/1) <blank> [
                     keep/only replace copy spec/1 <blank> 'blank!
-                    lib/append blankers compose [
+                    lib/append blankers compose2 [
                         if blank? (as get-word! w) [return null]
                     ]
                     spec: my next
@@ -523,7 +550,7 @@ modernize-action: lib/function [
     lib/append spec <local>
     lib/append spec collect-lets body
 
-    body: compose [
+    body: compose2 [
         ((blankers))
         ((proxiers))
         (as group! body)
@@ -602,7 +629,7 @@ has: ~
 const?: lib/func [x] [return false]
 
 call*: adapt 'call [
-    if block? command [command: compose command]
+    if block? command [command: compose2 command]
 ]
 call: specialize :call* [wait: true]
 

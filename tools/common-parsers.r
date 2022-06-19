@@ -84,7 +84,7 @@ load-until-blank: function [
     text [text!]
     /next {Return values and next position.}
 ] [
-    wsp: compose [some (charset { ^-})]
+    wsp: compose2 [some (charset { ^-})]
 
     res: _  ; !!! collect as SET-WORD!s for locals, evolving...
     rebol-value: parsing-at x [

@@ -3,7 +3,7 @@
 ; GET-GROUP!s will splice rules, null means no rule but succeeds...FALSE is
 ; useful for failing, and TRUE is a synonym for NULL in this context.
 ;
-; They act like a COMPOSE/ONLY that runs each time the GET-GROUP! is passed.
+; They act like a COMPOSE that runs each time the GET-GROUP! is passed.
 
 ("aaa" == uparse "aaa" [:(if false ["bbb"]) "aaa"])
 ("aaa" == uparse "bbbaaa" [:(if true ["bbb"]) "aaa"])

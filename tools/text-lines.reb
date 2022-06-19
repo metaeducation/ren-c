@@ -14,14 +14,16 @@ REBOL [
     Purpose: {Functions operating on lines of text.}
 ]
 
+import <bootstrap-shim.r>
+
 decode-lines: func [
     {Decode text encoded using a line prefix e.g. comments (modifies).}
     text [text!]
     line-prefix [text! block!] {Usually "**" or "//". Matched using parse.}
     indent [text! block!] {Usually "  ". Matched using parse.}
 ] [
-    let pattern: compose/only [(line-prefix)]
-    if not empty? indent [append pattern compose/only [opt (indent)]]
+    let pattern: compose2/only [(line-prefix)]
+    if not empty? indent [append pattern compose2/only [opt (indent)]]
 
     let [pos rest]
     let line-rule: [
@@ -91,7 +93,7 @@ for-each-line: func [
     while [not tail? text] [
         let eol: any [find text newline, tail of text]
 
-        set record compose [
+        set record compose2 [
             position (text) length (subtract index of eol index of text)
         ]
         text: next eol

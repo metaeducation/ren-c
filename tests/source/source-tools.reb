@@ -49,7 +49,7 @@ import %% (repo-dir)/tools/read-deep.reb
 ; rebsource is organised along the lines of a context sensitive vocabulary.
 ;
 
-logfn: func [message][print mold new-line/all compose/only message false]
+logfn: func [message][print mold new-line/all compose message false]
 log: :logfn
 
 standard: context [

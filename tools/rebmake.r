@@ -1085,9 +1085,9 @@ object-file-class: make object! [
             output
             source
 
-            /I compose [((maybe includes)) ((maybe I))]
-            /D compose [((maybe definitions)) ((maybe D))]
-            /F compose [((maybe F)) ((maybe cflags))]  ; extra cflags override
+            /I compose2 [((maybe includes)) ((maybe I))]
+            /D compose2 [((maybe definitions)) ((maybe D))]
+            /F compose2 [((maybe F)) ((maybe cflags))]  ; extra cflags override
 
             ; "current setting overwrites /refinement"
             ; "because the refinements are inherited from the parent" (?)
@@ -1180,21 +1180,21 @@ generator-class: make object! [
             #cmd-create [
                 applique any [
                     :gen-cmd-create :target-platform/gen-cmd-create
-                ] compose [
+                ] compose2 [
                     cmd: (cmd)
                 ]
             ]
             #cmd-delete [
                 applique any [
                     :gen-cmd-delete :target-platform/gen-cmd-delete
-                ] compose [
+                ] compose2 [
                     cmd: (cmd)
                 ]
             ]
             #cmd-strip [
                 applique any [
                     :gen-cmd-strip :target-platform/gen-cmd-strip
-                ] compose [
+                ] compose2 [
                     cmd: (cmd)
                 ]
             ]

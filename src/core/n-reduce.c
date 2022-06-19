@@ -691,10 +691,13 @@ REB_R Compose_To_Stack_Core(
 //          [action!]
 //  ]
 //
-REBNATIVE(compose)
+//  ; Note: /INTO is intentionally no longer supported
+//  ; https://forum.rebol.info/t/stopping-the-into-virus/705
 //
-// Note: /INTO is intentionally no longer supported
-// https://forum.rebol.info/t/stopping-the-into-virus/705
+//  ; Note: /ONLY is intentionally no longer supported
+//  https://forum.rebol.info/t/the-superpowers-of-ren-cs-revamped-compose/979/7
+//
+REBNATIVE(compose)
 {
     INCLUDE_PARAMS_OF_COMPOSE;
 

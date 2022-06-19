@@ -84,7 +84,7 @@
 )
 (
     blk: []
-    same? blk first compose/only [(blk)]
+    same? blk first compose [(blk)]
 )
 ; recursion
 (

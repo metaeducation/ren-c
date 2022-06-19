@@ -92,7 +92,7 @@ export cscape: function [
                 )
                 copy suffix: remove to newline
             ] (
-                keep ^ compose [
+                keep ^ compose2 [
                     (pattern) (col) (mode) (expr) (prefix) (suffix)
                 ]
                 num: num + 1
@@ -267,7 +267,7 @@ export make-emitter: function [
 
     is-js: did parse2 stem [thru ".js" end]
 
-    e: make object! compose [
+    e: make object! compose2 [
         ;
         ; NOTE: %make-headers.r directly manipulates the buffer, because it
         ; wishes to merge #ifdef/#endif cases
@@ -371,7 +371,7 @@ export make-emitter: function [
         e/emit newline
     ]
     else [
-        e/emit mold/only compose/deep [
+        e/emit mold/only compose2/deep [
             REBOL [
                 System: "REBOL [R3] Language Interpreter and Run-time Environment"
                 Title: (title)

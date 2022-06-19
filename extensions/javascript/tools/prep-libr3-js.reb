@@ -879,7 +879,7 @@ json-collect: func [
     body [block!]
     <local> results  ; !!! CSCAPE does not work with LET right now
 ][
-    results: collect compose [
+    results: collect compose2 [
         keep: adapt :keep [  ; Emscripten prefixes functions w/underscore
             value: unspaced [{"} {_} value {"}]
         ]

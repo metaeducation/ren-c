@@ -54,13 +54,13 @@ ver: load-value join repo-dir %src/boot/version.r
 api-objects: make block! 50
 
 map-each-api: func [code [block!]] [
-    return map-each api api-objects compose/only [
+    return map-each api api-objects compose2/only [
         eval in api (code)  ; want API variable visible to `code` while running
     ]
 ]
 
 for-each-api: func [code [block!]] [
-    return for-each api api-objects compose/only [
+    return for-each api api-objects compose2/only [
         eval in api (code)  ; want API variable visible to `code` while running
     ]
 ]
@@ -149,7 +149,7 @@ emit-proto: func [return: <none> proto] [
     ; Note: Cannot set object fields directly from PARSE, tried it :-(
     ; https://github.com/rebol/rebol-issues/issues/2317
     ;
-    append api-objects make object! compose/only [
+    append api-objects make object! compose2/only [
         spec: try match block! third header  ; Rebol metadata API comment
         name: (ensure text! name)
         returns: (ensure text! trim/tail returns)
@@ -182,13 +182,15 @@ extern-prototypes: map-each-api [
 ]
 
 lib-struct-fields: map-each-api [
-    cfunc-params: delimit ", " compose [
+    cfunc-params: delimit ", " compose2 [
         ((map-each [type var] paramlist [spaced [type var]]))
         (if is-variadic ["const void *p"])
         (if is-variadic ["va_list *vaptr"])
     ]
     cfunc-params: default ["void"]
-    cscape/with {$<Returns> (*$<Name>)($<Cfunc-Params>)} compose [c-func-params (api)]
+    cscape/with {$<Returns> (*$<Name>)($<Cfunc-Params>)} compose2 [
+        c-func-params (api)
+    ]
 ]
 
 non-variadics: make block! length of api-objects
@@ -225,7 +227,7 @@ for-each api api-objects [do in api [
                 $<opt-return> LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
                 $<OPT-DEAD-END>
             }
-        } compose [
+        } compose2 [
             wrapper-params  ; "global" where locals undefined, must be first
             (api)
             inline
@@ -248,7 +250,7 @@ for-each api api-objects [do in api [
                 $<opt-return> LIBREBOL_PREFIX($<Name>)($<Proxied-Args>);
                 $<OPT-DEAD-END>
             }
-        } compose [
+        } compose2 [
             wrapper-params  ; "global" where locals undefined, must be first
             (api)
         ]
@@ -261,7 +263,7 @@ for-each api api-objects [do in api [
 
         opt-va-start: {va_list va; va_start(va, p);}
 
-        wrapper-params: delimit ", " compose [
+        wrapper-params: delimit ", " compose2 [
             ((map-each [type var] paramlist [spaced [type var]]))
             "const void *p"
             "..."
@@ -270,7 +272,7 @@ for-each api api-objects [do in api [
         ; We need two versions of the inline function for C89, one for Q to
         ; quote spliced slots and one normal.
 
-        proxied-args: delimit ", " compose [
+        proxied-args: delimit ", " compose2 [
             ((map-each [type var] paramlist [to-text var])) "p" "&va"
         ]
         append c89-variadic-inlines make-c-proxy/inline
@@ -279,7 +281,7 @@ for-each api api-objects [do in api [
         ; NOW THE C++ VERSIONS
         ; these take `const Ts &... args`
 
-        wrapper-params: delimit ", " compose [
+        wrapper-params: delimit ", " compose2 [
             ((map-each [type var] paramlist [spaced [type var]]))
             "const Ts &... args"
         ]
@@ -287,7 +289,7 @@ for-each api api-objects [do in api [
         ; We need two versions of the inline function for C++, one for Q to
         ; quote spliced slots and one normal.
 
-        proxied-args: delimit ", " compose [
+        proxied-args: delimit ", " compose2 [
             ((map-each [type var] paramlist [to-text var]))
             "packed"
             "nullptr"

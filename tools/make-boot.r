@@ -306,7 +306,7 @@ nontypes: collect [
     ]
 ]
 
-value-flagnots: compose [
+value-flagnots: compose2 [
     "(FLAGIT_KIND(REB_MAX) - 1)"  ; Subtract 1 to get mask for everything
     ((nontypes))  ; take out all nontypes
 ]

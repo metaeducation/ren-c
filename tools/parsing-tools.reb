@@ -20,6 +20,8 @@ REBOL [
     }
 ]
 
+import <bootstrap-shim.r>
+
 seek: []  ; Temporary measure, SEEK as no-op in bootstrap
 
 export parsing-at: func [
@@ -31,18 +33,18 @@ export parsing-at: func [
     /end {Drop the default tail check (allows evaluation at the tail).}
 ][
     return use [result position][
-        block: compose/only [try (as group! block)]
+        block: compose2/only [try (as group! block)]
         if not end [
-            block: compose/deep [try if not tail? (word) [((block))]]
+            block: compose2/deep [try if not tail? (word) [((block))]]
         ]
-        block: compose/deep [
+        block: compose2/deep [
             result: either position: ((block)) [[
                 :position  ; seek
             ]] [[
                 end skip
             ]]
         ]
-        use compose [(word)] compose/deep [
+        use compose2 [(word)] compose2/deep [
             [
                 (as set-word! :word)  ; <here>
                 (as group! block) result

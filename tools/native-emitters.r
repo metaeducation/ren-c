@@ -79,7 +79,7 @@ export extract-native-protos: func [
                 replace/all proto "//  " {}
                 replace/all proto "//" {}
 
-                keep make native-info! compose [
+                keep make native-info! compose2 [
                     proto: (proto)
                     name: (name)
                     exported: (exported)

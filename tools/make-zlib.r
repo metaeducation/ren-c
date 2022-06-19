@@ -62,10 +62,10 @@ disable-user-includes: function [
     open-include (charset {"<})
     close-include (charset {">})
 ] [
-    include-rule: compose [
-        ((if stdio [
+    include-rule: compose2 [
+        (if stdio [
             [open-include name: across "stdio.h" close-include |]
-        ]))
+        ])
         {"} name: across to {"}
     ]
 

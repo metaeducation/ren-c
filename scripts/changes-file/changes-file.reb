@@ -168,7 +168,7 @@ notable?: function [
             | skip
         ]
     ]
-    if not empty? cc [append c compose/only [cc: (cc)]]
+    if not empty? cc [append c compose [cc: (cc)]]
 
     ; if find commit in our cherry-pick map then apply logic / meta info
     if cherry-value: select cherry-pick c.commit [

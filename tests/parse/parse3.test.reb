@@ -289,7 +289,7 @@
 
 ; GET-GROUP!
 ; These evaluate and inject their material into the PARSE, if it is not null.
-; They act like a COMPOSE/ONLY that runs each time the GET-GROUP! is passed.
+; They act like a COMPOSE that runs each time the GET-GROUP! is passed.
 
 (did parse3 "aaabbb" [:([some "a"]) :([some "b"])])
 (did parse3 "aaabbb" [:([some "a"]) :(if false [some "c"]) :([some "b"])])
