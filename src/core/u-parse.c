@@ -1303,15 +1303,6 @@ REBNATIVE(subparse)
     REBINT mincount = 1;  // min pattern count
     REBINT maxcount = 1;  // max pattern count
 
-  #if DEBUG_ENSURE_FRAME_EVALUATES
-    //
-    // For the same reasons that the evaluator always wants to run through and
-    // not shortcut, PARSE wants to.  This makes it better for tracing and
-    // hooking, and presents Ctrl-C opportunities.
-    //
-    f->was_eval_called = true;
-  #endif
-
 
     //==////////////////////////////////////////////////////////////////==//
     //

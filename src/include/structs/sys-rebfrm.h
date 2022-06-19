@@ -692,15 +692,6 @@ typedef REB_R (*REBNAT)(REBFRM *frame_);
     const char *file; // is REBYTE (UTF-8), but char* for debug watch
     int line;
   #endif
-
-  #if DEBUG_ENSURE_FRAME_EVALUATES
-    //
-    // Originally in R3-Alpha the evaluator would be skipped for empty arrays.
-    // This meant that `forever []` would never get a chance to run.  Ren-C
-    // always runs the evaluator--see DEBUG_ENSURE_FRAME_EVALUATES definition.
-    //
-    bool was_eval_called;
-  #endif
 };
 
 // These are needed protoyped by the array code because it wants to put file

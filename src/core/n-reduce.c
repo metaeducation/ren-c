@@ -372,10 +372,6 @@ REB_R Compose_To_Stack_Core(
 
     Push_Frame(nullptr, f);
 
-  #if DEBUG_ENSURE_FRAME_EVALUATES
-    f->was_eval_called = true;  // lie since we're using frame for enumeration
-  #endif
-
     for (; NOT_END(f_value); Fetch_Next_Forget_Lookback(f)) {
 
         if (not ANY_ARRAYLIKE(f_value)) {  // won't substitute/recurse

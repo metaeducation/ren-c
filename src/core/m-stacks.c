@@ -101,10 +101,6 @@ void Startup_Frame_Stack(void)
 
     Push_Frame(nullptr, f);
 
-  #if DEBUG_ENSURE_FRAME_EVALUATES
-    f->was_eval_called = true;  // fake frame, lie and say it evaluated
-  #endif
-
     TRASH_POINTER_IF_DEBUG(f->prior); // help catch enumeration past FS_BOTTOM
     TG_Bottom_Frame = f;
 

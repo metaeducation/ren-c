@@ -391,30 +391,6 @@ Special internal defines used by RT, not Host-Kit developers:
     #define INCLUDE_TEST_LIBREBOL_NATIVE DEBUG
 #endif
 
-// !!! This was a concept that may have merit, but doesn't actually work
-// when something creates a frame for purposes of iteration where it *may*
-// or may not evaluate.  The FFI struct analysis was an example.  Hence
-// disabling it for now, but there may be value in it enough to have a
-// frame flag for explicitly saying you don't necessarily plan to call
-// the evaluator.
-//
-// ---
-//
-// Note: We enforce going through the evaluator and not "skipping out" on
-// the frame generation in case it is hooked and something like a debug
-// step wanted to see it.  Or also, if you write `cycle []` there has to
-// be an opportunity for Do_Signals_Throws() to check for cancellation
-// via Ctrl-C.)
-//
-// This ties into a broader question of considering empty blocks to be
-// places that are debug step or breakpoint opportunities, so we make
-// sure you use `do { eval } while (NOT_END(...))` instead of potentially
-// skipping that opportunity with `while (NOT_END(...)) { eval }`:
-//
-// https://github.com/rebol/rebol-issues/issues/2229
-//
-#define DEBUG_ENSURE_FRAME_EVALUATES 0
-
 #if !defined(DEBUG_CELL_WRITABILITY)
     #define DEBUG_CELL_WRITABILITY DEBUG
 #endif

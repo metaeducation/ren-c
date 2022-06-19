@@ -1692,10 +1692,6 @@ REBVAL *RL_rebRescueWith(
     struct Reb_Jump jump;
     PUSH_TRAP_SO_FAIL_CAN_JUMP_BACK_HERE(&jump);
 
-  #if DEBUG_ENSURE_FRAME_EVALUATES
-    f->was_eval_called = true;  // "fake" frame, okay to lie
-  #endif
-
     // The first time through the following code 'error' will be null, but...
     // `fail` can longjmp here, so 'error' won't be null *if* that happens!
     //

@@ -212,10 +212,6 @@ REB_R Evaluator_Executor(REBFRM *f)
         return OUT;
     }
 
-  #if DEBUG_ENSURE_FRAME_EVALUATES
-    f->was_eval_called = true;  // see definition for why this flag exists
-  #endif
-
     // A barrier shouldn't cause an error in evaluation if code would be
     // willing to accept an <end>.  So we allow argument gathering to try to
     // run, but it may error if that's not acceptable.
@@ -329,9 +325,6 @@ REB_R Evaluator_Executor(REBFRM *f)
 
     // If asked to evaluate `[]` then we have now done all the work the
     // evaluator needs to do--including marking the output stale.
-    //
-    // See DEBUG_ENSURE_FRAME_EVALUATES for why an empty array does not
-    // bypass calling into the evaluator.
     //
     if (IS_END(f_next))
         goto finished;
