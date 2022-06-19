@@ -790,10 +790,10 @@ parse-ext-build-spec: function [
     ; here is an undeveloped feature, of needing a module environment to
     ; import into but also wanting to use a "base module" of definitions--a
     ; feature only available in objects.  If we could do it, it would probably
-    ; be precarious in bootstrap.  For now, just use plain COMPOSE in the
-    ; make specs...use caution.
+    ; be precarious in bootstrap.  Instead, the bootstrap-shim puts COMPOSE2
+    ; and PARSE2 into the lib context.
     ;
-    ext: make extension-class probe compose2 [
+    ext: make extension-class compose2 [
         comment [import (join (clean-path repo-dir) %tools/bootstrap-shim.r)]
         ((spec))
     ]

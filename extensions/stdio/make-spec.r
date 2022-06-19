@@ -6,7 +6,7 @@ includes: [
     %prep/extensions/stdio
 ]
 
-depends: compose [  ; Note: must work in COMPOSE and COMPOSE2 !
+depends: compose2 [
     %stdio/p-stdio.c
 
     ((switch system-config/os-base [

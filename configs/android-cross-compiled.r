@@ -4,7 +4,7 @@ REBOL [
 ]
 
 
-toolset: compose [
+toolset: compose2 [
     gcc (tool-for-host <compiler>)  ; detect /host as current OS
     ld  (tool-for-host <linker>)    ; same
 ]

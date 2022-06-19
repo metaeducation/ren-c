@@ -4,7 +4,7 @@ name: 'Event
 source: %event/mod-event.c
 includes: [%prep/extensions/event]
 
-depends: compose [  ; Note: must work in COMPOSE and COMPOSE2 !
+depends: compose2 [
     %event/t-event.c
 
     ((switch system-config/os-base [

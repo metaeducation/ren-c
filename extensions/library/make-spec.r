@@ -6,7 +6,7 @@ includes: [
     %prep/extensions/library
 ]
 
-depends: compose [  ; Note: must work in COMPOSE and COMPOSE2 !
+depends: compose2 [
     ((switch system-config/os-base [
         'Windows [
             [

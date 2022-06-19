@@ -93,10 +93,6 @@ trap [
         ]
     ]
 
-    export compose: func [] [
-        fail/where "Use COMPOSE2 in Bootstrap Process, not COMPOSE" 'return
-    ]
-
     ; LOAD changed to have no /ALL, so it always enforces getting a block.
     ; But LOAD-VALUE comes in the box to load a single value.
     ;
@@ -113,6 +109,22 @@ trap [
     export bar!: word!  ; signal there is no BAR! type, and | is a WORD!
 
     export strip-commas-and-null-apostrophes: x -> [x]  ; not needed
+
+    ; !!! The %make-spec.r processing for extension specs does something
+    ; complex, loading files that are implied as deriving some members.  These
+    ; files would ideally be modules and able to import, but the inheritance
+    ; makes this complex...so binding the bootstrap-shim doesn't work.  It is
+    ; experimental territory for new Ren-C, and making a shim version would
+    ; be even shakier...so just export COMPOSE2 to LIB so %make-spec.r sees it.
+
+    append lib compose [
+        compose2: (:compose2)
+        load-all: (:load)
+    ]
+
+    export compose: func [] [
+        fail/where "Use COMPOSE2 in Bootstrap Process, not COMPOSE" 'return
+    ]
 
     quit
 ]

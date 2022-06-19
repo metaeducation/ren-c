@@ -98,7 +98,7 @@ extensions: make map! [
 ;
 ; Note environment variable EMCC_DEBUG for diagnostic output
 
-cflags: compose [
+cflags: compose2 [
     ((if debug-javascript-extension [[
         {-DDEBUG_JAVASCRIPT_EXTENSION=1}
 
@@ -115,7 +115,7 @@ cflags: compose [
     ]]))
 ]
 
-ldflags: compose [
+ldflags: compose2 [
     (unspaced ["-O" optimize])
 
     ; Emscripten tries to do a lot of automatic linking "magic" for you, and
