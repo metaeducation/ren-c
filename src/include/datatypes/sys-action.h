@@ -503,7 +503,7 @@ inline static bool Action_Is_Base_Of(REBACT *base, REBACT *derived) {
 //
 
 #define ACT_HAS_RETURN(a) \
-    GET_SUBCLASS_FLAG(VARLIST, ACT_PARAMLIST(a), PARAMLIST_HAS_RETURN)
+    Get_Subclass_Flag(VARLIST, ACT_PARAMLIST(a), PARAMLIST_HAS_RETURN)
 
 
 // A fully constructed action can reconstitute the ACTION! REBVAL

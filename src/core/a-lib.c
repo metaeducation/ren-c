@@ -1846,7 +1846,7 @@ const REBINS *RL_rebQUOTING(const void *p)
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
         a = m_cast(REBARR*, cast(const REBARR*, p));
-        if (NOT_SUBCLASS_FLAG(API, a, RELEASE))
+        if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't quote instructions (besides rebR())");
         break; }
 
@@ -1854,7 +1854,7 @@ const REBINS *RL_rebQUOTING(const void *p)
       case DETECTED_AS_CELL: {
         const REBVAL *v = Copy_Cell(Alloc_Value(), cast(const REBVAL*, p));
         a = Singular_From_Cell(v);
-        SET_SUBCLASS_FLAG(API, a, RELEASE);
+        Set_Subclass_Flag(API, a, RELEASE);
         break; }
 
       default:
@@ -1887,14 +1887,14 @@ const REBINS *RL_rebUNQUOTING(const void *p)
     switch (Detect_Rebol_Pointer(p)) {
       case DETECTED_AS_SERIES: {
         a = m_cast(REBARR*, cast(const REBARR*, p));
-        if (NOT_SUBCLASS_FLAG(API, a, RELEASE))
+        if (Not_Subclass_Flag(API, a, RELEASE))
             fail ("Can't unquote instructions (besides rebR())");
         break; }
 
       case DETECTED_AS_CELL: {
         REBVAL *v = Copy_Cell(Alloc_Value(), cast(const REBVAL*, p));
         a = Singular_From_Cell(v);
-        SET_SUBCLASS_FLAG(API, a, RELEASE);
+        Set_Subclass_Flag(API, a, RELEASE);
         break; }
 
       default:
@@ -1932,10 +1932,10 @@ const REBINS *RL_rebRELEASING(REBVAL *v)
         fail ("Cannot apply rebR() to non-API value");
 
     REBARR *a = Singular_From_Cell(v);
-    if (GET_SUBCLASS_FLAG(API, a, RELEASE))
+    if (Get_Subclass_Flag(API, a, RELEASE))
         fail ("Cannot apply rebR() more than once to the same API value");
 
-    SET_SUBCLASS_FLAG(API, a, RELEASE);
+    Set_Subclass_Flag(API, a, RELEASE);
     return cast(REBINS*, a);
 }
 
@@ -2295,7 +2295,7 @@ REBNATIVE(api_transient)
     REBVAL *v = Copy_Cell(Alloc_Value(), ARG(value));
     rebUnmanage(v);  // has to survive the API-TRANSIENT's frame
     REBARR *a = Singular_From_Cell(v);
-    SET_SUBCLASS_FLAG(API, a, RELEASE);
+    Set_Subclass_Flag(API, a, RELEASE);
 
     // Regarding adddresses in WASM:
     //

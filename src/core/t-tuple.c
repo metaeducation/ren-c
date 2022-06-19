@@ -470,8 +470,8 @@ void MF_Sequence(REB_MOLD *mo, noquote(const Cell*) v, bool form)
             const Symbol *sym = VAL_WORD_SYMBOL(element);
             if (
                 not form
-                and GET_SUBCLASS_FLAG(SYMBOL, sym, ESCAPE_IN_SEQUENCE)
-                and NOT_SUBCLASS_FLAG(SYMBOL, sym, ESCAPE_PLAIN)  // does itself
+                and Get_Subclass_Flag(SYMBOL, sym, ESCAPE_IN_SEQUENCE)
+                and Not_Subclass_Flag(SYMBOL, sym, ESCAPE_PLAIN)  // does itself
             ){
                 Append_Codepoint(mo->series, '|');
                 Mold_Value(mo, element);

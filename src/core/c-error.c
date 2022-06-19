@@ -485,7 +485,7 @@ void Set_Location_Of_Error(
             //
             continue;
         }
-        if (NOT_SUBCLASS_FLAG(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
+        if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
             continue;
         break;
     }

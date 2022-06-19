@@ -121,19 +121,19 @@
     #endif
 #endif
 
-#define GET_SUBCLASS_FLAG(subclass,s,name) \
+#define Get_Subclass_Flag(subclass,s,name) \
     ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
         & subclass##_FLAG_##name) != 0)
 
-#define NOT_SUBCLASS_FLAG(subclass,s,name) \
+#define Not_Subclass_Flag(subclass,s,name) \
     ((ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
         & subclass##_FLAG_##name) == 0)
 
-#define SET_SUBCLASS_FLAG(subclass,s,name) \
+#define Set_Subclass_Flag(subclass,s,name) \
     (ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
         |= subclass##_FLAG_##name)
 
-#define CLEAR_SUBCLASS_FLAG(subclass,s,name) \
+#define Clear_Subclass_Flag(subclass,s,name) \
     (ensure_flavor(FLAVOR_##subclass, (s))->leader.bits \
         &= ~subclass##_FLAG_##name)
 

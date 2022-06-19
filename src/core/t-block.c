@@ -1196,7 +1196,7 @@ REBTYPE(Array)
 
         bool line_back;
         if (back == ARR_LAST(arr)) // !!! review tail newline handling
-            line_back = GET_SUBCLASS_FLAG(ARRAY, arr, NEWLINE_AT_TAIL);
+            line_back = Get_Subclass_Flag(ARRAY, arr, NEWLINE_AT_TAIL);
         else
             line_back = Get_Cell_Flag(back + 1, NEWLINE_BEFORE);
 

@@ -942,7 +942,7 @@ REBACT *Make_Action(
 
     ASSERT_SERIES_MANAGED(keylist);  // paramlists/keylists, can be shared
     assert(SER_USED(keylist) + 1 == ARR_LEN(paramlist));
-    if (GET_SUBCLASS_FLAG(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
+    if (Get_Subclass_Flag(VARLIST, paramlist, PARAMLIST_HAS_RETURN)) {
         const REBKEY *key = SER_AT(const REBKEY, keylist, 0);
         assert(KEY_SYM(key) == SYM_RETURN);
         UNUSED(key);

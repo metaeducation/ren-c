@@ -159,16 +159,16 @@
 
 
 #define SET_ACTION_FLAG(act,name) \
-    SET_SUBCLASS_FLAG(DETAILS, ACT_IDENTITY(act), name)
+    Set_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 #define GET_ACTION_FLAG(act,name) \
-    GET_SUBCLASS_FLAG(DETAILS, ACT_IDENTITY(act), name)
+    Get_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 #define CLEAR_ACTION_FLAG(act,name) \
-    CLEAR_SUBCLASS_FLAG(DETAILS, ACT_IDENTITY(act), name)
+    Clear_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 #define NOT_ACTION_FLAG(act,name) \
-    NOT_SUBCLASS_FLAG(DETAILS, ACT_IDENTITY(act), name)
+    Not_Subclass_Flag(DETAILS, ACT_IDENTITY(act), name)
 
 
 // Includes SERIES_FLAG_DYNAMIC because an action's paramlist is always

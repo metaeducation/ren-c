@@ -114,7 +114,7 @@ inline static REBARR *Make_Patch_Core(
             or limit <= CTX_LEN(CTX(binding))
         );
     else
-        assert(GET_SUBCLASS_FLAG(PATCH, binding, LET));
+        assert(Get_Subclass_Flag(PATCH, binding, LET));
 
     // 0 happens with `make object! []` and similar cases.
     //

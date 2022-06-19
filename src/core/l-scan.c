@@ -2693,7 +2693,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             REBARR *a = ARR(VAL_NODE1(DS_TOP));
             a->misc.line = ss->line;
             mutable_LINK(Filename, a) = ss->file;
-            SET_SUBCLASS_FLAG(ARRAY, a, HAS_FILE_LINE_UNMASKED);
+            Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
             SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
 
             // !!! Does this mean anything for paths?  The initial code
@@ -2701,7 +2701,7 @@ REBVAL *Scan_To_Stack(SCAN_LEVEL *level) {
             // are currently being used to solidify paths.
             //
             if (level->newline_pending)
-                SET_SUBCLASS_FLAG(ARRAY, a, NEWLINE_AT_TAIL);
+                Set_Subclass_Flag(ARRAY, a, NEWLINE_AT_TAIL);
         }
 
         if (token == TOKEN_TUPLE) {
@@ -2931,7 +2931,7 @@ static REBARR *Scan_Child_Array(SCAN_LEVEL *parent, REBYTE mode)
     //
     a->misc.line = ss->line;
     mutable_LINK(Filename, a) = ss->file;
-    SET_SUBCLASS_FLAG(ARRAY, a, HAS_FILE_LINE_UNMASKED);
+    Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
     SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
 
     --ss->depth;
@@ -2966,7 +2966,7 @@ REBARR *Scan_UTF8_Managed(
 
     a->misc.line = ss.line;
     mutable_LINK(Filename, a) = ss.file;
-    SET_SUBCLASS_FLAG(ARRAY, a, HAS_FILE_LINE_UNMASKED);
+    Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
     SET_SERIES_FLAG(a, LINK_NODE_NEEDS_MARK);
 
     return a;

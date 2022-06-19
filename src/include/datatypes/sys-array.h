@@ -58,7 +58,7 @@ inline static bool Has_Newline_At_Tail(const REBARR *a) {
     if (SER_FLAVOR(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
-    // Using GET_SUBCLASS_FLAG() would redundantly check it's a plain array.
+    // Using Get_Subclass_Flag() would redundantly check it's a plain array.
     //
     return did (a->leader.bits & ARRAY_FLAG_NEWLINE_AT_TAIL);
 }
@@ -67,7 +67,7 @@ inline static bool Has_File_Line(const REBARR *a) {
     if (SER_FLAVOR(a) != FLAVOR_ARRAY)
         return false;  // only plain arrays can have newlines
 
-    // Using GET_SUBCLASS_FLAG() would redundantly check it's a plain array.
+    // Using Get_Subclass_Flag() would redundantly check it's a plain array.
     //
     return did (a->leader.bits & ARRAY_FLAG_HAS_FILE_LINE_UNMASKED);
 }
@@ -225,13 +225,13 @@ inline static REBARR *Make_Array_Core_Into(
         assert(flags & SERIES_FLAG_LINK_NODE_NEEDS_MARK);
         if (
             not FRM_IS_VARIADIC(FS_TOP) and
-            GET_SUBCLASS_FLAG(ARRAY, FRM_ARRAY(FS_TOP), HAS_FILE_LINE_UNMASKED)
+            Get_Subclass_Flag(ARRAY, FRM_ARRAY(FS_TOP), HAS_FILE_LINE_UNMASKED)
         ){
             mutable_LINK(Filename, s) = LINK_FILENAME_HACK(FRM_ARRAY(FS_TOP));
             s->misc.line = FRM_ARRAY(FS_TOP)->misc.line;
         }
         else {
-            CLEAR_SUBCLASS_FLAG(ARRAY, s, HAS_FILE_LINE_UNMASKED);
+            Clear_Subclass_Flag(ARRAY, s, HAS_FILE_LINE_UNMASKED);
             CLEAR_SERIES_FLAG(s, LINK_NODE_NEEDS_MARK);
         }
     }
@@ -281,7 +281,7 @@ inline static REBARR *Make_Array_For_Copy(
         );
         mutable_LINK(Filename, a) = LINK_FILENAME_HACK(original);
         a->misc.line = original->misc.line;
-        SET_SUBCLASS_FLAG(ARRAY, a, HAS_FILE_LINE_UNMASKED);
+        Set_Subclass_Flag(ARRAY, a, HAS_FILE_LINE_UNMASKED);
         return a;
     }
 

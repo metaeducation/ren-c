@@ -81,7 +81,7 @@ inline static REBVAL *Init_Any_Word_Bound_Untracked(
             assert(symbol == *CTX_KEY(CTX(binding), index));
     }
     else {
-        assert(GET_SUBCLASS_FLAG(PATCH, binding, LET));
+        assert(Get_Subclass_Flag(PATCH, binding, LET));
         assert(index == INDEX_PATCHED);
         assert(symbol == INODE(PatchSymbol, binding));
     }

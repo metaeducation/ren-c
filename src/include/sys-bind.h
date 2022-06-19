@@ -505,7 +505,7 @@ inline static option(REBSER*) Get_Word_Container(
     // wortwhile?
     //
     do {
-        if (GET_SUBCLASS_FLAG(PATCH, specifier, LET)) {
+        if (Get_Subclass_Flag(PATCH, specifier, LET)) {
             if (INODE(PatchSymbol, specifier) == symbol) {
                 *index_out = INDEX_PATCHED;
                 return specifier;
@@ -590,7 +590,7 @@ inline static option(REBSER*) Get_Word_Container(
         // LET BINDING: Directly bound to a LET variable.  This happens when
         // a word that is bound to a LET gets copied so it's not virtual.
         //
-        assert(GET_SUBCLASS_FLAG(PATCH, binding, LET));
+        assert(Get_Subclass_Flag(PATCH, binding, LET));
         *index_out = 1;  // !!! lie, review
         return binding;
     }
@@ -1027,7 +1027,7 @@ inline static REBARR *Merge_Patches_May_Reuse(
     // apply the Y virtual link again.  !!! Review if that's just inefficient.
     //
     if (NextPatch(parent) == child) {
-        SET_SUBCLASS_FLAG(PATCH, parent, REUSED);
+        Set_Subclass_Flag(PATCH, parent, REUSED);
         return parent;
     }
 
@@ -1042,7 +1042,7 @@ inline static REBARR *Merge_Patches_May_Reuse(
     }
     else {
         next = Merge_Patches_May_Reuse(NextPatch(parent), child);
-        was_next_reused = GET_SUBCLASS_FLAG(PATCH, next, REUSED);
+        was_next_reused = Get_Subclass_Flag(PATCH, next, REUSED);
     }
 
     // If we have to make a new patch due to non-reuse, then we cannot make
@@ -1059,7 +1059,7 @@ inline static REBARR *Merge_Patches_May_Reuse(
     REBARR *binding;
     REBLEN limit;
     enum Reb_Kind kind;
-    if (GET_SUBCLASS_FLAG(PATCH, parent, LET)) {
+    if (Get_Subclass_Flag(PATCH, parent, LET)) {
         binding = parent;
         limit = 1;
 

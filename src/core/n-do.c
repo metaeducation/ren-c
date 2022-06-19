@@ -289,7 +289,7 @@ bool Do_Frame_Throws(REBVAL *out, REBVAL *frame) {
 
     REBCTX *c = VAL_CONTEXT(frame);  // checks for INACCESSIBLE
 
-    if (GET_SUBCLASS_FLAG(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
+    if (Get_Subclass_Flag(VARLIST, CTX_VARLIST(c), FRAME_HAS_BEEN_INVOKED))
         fail (Error_Stale_Frame_Raw());
 
     return Do_Frame_Ctx_Throws(

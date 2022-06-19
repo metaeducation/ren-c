@@ -228,7 +228,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
             // flip the "release" flag and then return the existing API handle
             // back, now behaving as an instruction.
             //
-            assert(GET_SUBCLASS_FLAG(API, inst1, RELEASE));
+            assert(Get_Subclass_Flag(API, inst1, RELEASE));
 
             // !!! Originally this asserted it was a managed handle, but the
             // needs of API-TRANSIENT are such that a handle which outlives

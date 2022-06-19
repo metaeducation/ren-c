@@ -1311,8 +1311,8 @@ void Begin_Action_Core(
     assert(Not_Eval_Flag(f, RUNNING_ENFIX));
     assert(NOT_FEED_FLAG(f->feed, DEFERRING_ENFIX));
 
-    assert(NOT_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
-    SET_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
+    assert(Not_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED));
+    Set_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
 
     f->executor = &Action_Executor;
 
@@ -1459,7 +1459,7 @@ void Drop_Action(REBFRM *f) {
         // only DETAILS_FLAG_IS_NATIVE sets HOLD.  Clear that.
         //
         CLEAR_SERIES_INFO(f->varlist, HOLD);
-        CLEAR_SUBCLASS_FLAG(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
+        Clear_Subclass_Flag(VARLIST, f->varlist, FRAME_HAS_BEEN_INVOKED);
 
         assert(
             0 == (SER_INFO(f->varlist) & ~(  // <- note bitwise not

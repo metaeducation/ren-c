@@ -213,7 +213,7 @@ void MF_Word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
-        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_PLAIN);
+        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_PLAIN);
 
     Mold_Word(mo, symbol, escape);
 }
@@ -226,7 +226,7 @@ void MF_Set_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
-        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
 
     Mold_Word(mo, symbol, escape);
     Append_Codepoint(mo->series, ':');
@@ -240,7 +240,7 @@ void MF_Get_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
-        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
 
     Append_Codepoint(mo->series, ':');
     Mold_Word(mo, symbol, escape);
@@ -254,7 +254,7 @@ void MF_Meta_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
-        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
 
     Append_Codepoint(mo->series, '^');
     Mold_Word(mo, symbol, escape);
@@ -268,7 +268,7 @@ void MF_The_word(REB_MOLD *mo, noquote(const Cell*) v, bool form) {
     const Symbol *symbol = VAL_WORD_SYMBOL(v);
     bool escape = form
         ? false
-        : GET_SUBCLASS_FLAG(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
+        : Get_Subclass_Flag(SYMBOL, symbol, ESCAPE_WITH_SIGIL);
 
     Append_Codepoint(mo->series, '@');
     Mold_Word(mo, symbol, escape);

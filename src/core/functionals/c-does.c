@@ -116,10 +116,10 @@ REB_R Block_Dispatcher(REBFRM *f)
 
         // Preserve file and line information from the original, if present.
         //
-        if (GET_SUBCLASS_FLAG(ARRAY, body, HAS_FILE_LINE_UNMASKED)) {
+        if (Get_Subclass_Flag(ARRAY, body, HAS_FILE_LINE_UNMASKED)) {
             mutable_LINK(Filename, relativized) = LINK(Filename, body);
             relativized->misc.line = body->misc.line;
-            SET_SUBCLASS_FLAG(ARRAY, relativized, HAS_FILE_LINE_UNMASKED);
+            Set_Subclass_Flag(ARRAY, relativized, HAS_FILE_LINE_UNMASKED);
         }
 
         // Update block cell as a relativized copy (we won't do this again).

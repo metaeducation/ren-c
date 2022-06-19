@@ -251,12 +251,12 @@ inline static REBSER *CTX_KEYLIST(REBCTX *c) {
 }
 
 inline static void INIT_CTX_KEYLIST_SHARED(REBCTX *c, REBSER *keylist) {
-    SET_SUBCLASS_FLAG(KEYLIST, keylist, SHARED);
+    Set_Subclass_Flag(KEYLIST, keylist, SHARED);
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 
 inline static void INIT_CTX_KEYLIST_UNIQUE(REBCTX *c, REBSER *keylist) {
-    assert(NOT_SUBCLASS_FLAG(KEYLIST, keylist, SHARED));
+    assert(Not_Subclass_Flag(KEYLIST, keylist, SHARED));
     INIT_BONUS_KEYSOURCE(CTX_VARLIST(c), keylist);
 }
 

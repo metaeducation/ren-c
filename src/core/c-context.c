@@ -68,7 +68,7 @@ bool Expand_Context_Keylist_Core(REBCTX *context, REBLEN delta)
     REBSER *keylist = CTX_KEYLIST(context);
     assert(IS_KEYLIST(keylist));
 
-    if (GET_SUBCLASS_FLAG(KEYLIST, keylist, SHARED)) {
+    if (Get_Subclass_Flag(KEYLIST, keylist, SHARED)) {
         //
         // INIT_CTX_KEYLIST_SHARED was used to set the flag that indicates
         // this keylist is shared with one or more other contexts.  Can't

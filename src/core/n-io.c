@@ -191,9 +191,9 @@ REBNATIVE(new_line)
     for (n = 0; true; ++n, ++item) {
         if (item == tail) {  // no cell at tail; use flag on array
             if (mark)
-                SET_SUBCLASS_FLAG(ARRAY, a, NEWLINE_AT_TAIL);
+                Set_Subclass_Flag(ARRAY, a, NEWLINE_AT_TAIL);
             else
-                CLEAR_SUBCLASS_FLAG(ARRAY, a, NEWLINE_AT_TAIL);
+                Clear_Subclass_Flag(ARRAY, a, NEWLINE_AT_TAIL);
             break;
         }
 
@@ -270,7 +270,7 @@ REBNATIVE(new_line_q)
     if (item != tail and NOT_END(item))  // !!! Review if END should be here
         return Init_Logic(OUT, Get_Cell_Flag(item, NEWLINE_BEFORE));
 
-    return Init_Logic(OUT, GET_SUBCLASS_FLAG(ARRAY, arr, NEWLINE_AT_TAIL));
+    return Init_Logic(OUT, Get_Subclass_Flag(ARRAY, arr, NEWLINE_AT_TAIL));
 }
 
 

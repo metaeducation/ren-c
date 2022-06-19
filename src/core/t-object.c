@@ -296,7 +296,7 @@ void Init_Evars(EVARS *e, noquote(const Cell*) v) {
                 // being run where the action could've tainted the arguments.
                 //
                 REBARR *varlist = CTX_VARLIST(e->ctx);
-                if (GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
+                if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED))
                     fail (Error_Stale_Frame_Raw());
 
                 phase = CTX_FRAME_ACTION(e->ctx);
@@ -920,7 +920,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 
     if (CELL_HEART(v) == REB_FRAME and not IS_FRAME_PHASED(v)) {
         REBARR *varlist = CTX_VARLIST(VAL_CONTEXT(v));
-        if (GET_SUBCLASS_FLAG(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
+        if (Get_Subclass_Flag(VARLIST, varlist, FRAME_HAS_BEEN_INVOKED)) {
             Append_Ascii(s, "make frame! [...invoked frame...]\n");
             Drop_Pointer_From_Series(TG_Mold_Stack, c);
             return;

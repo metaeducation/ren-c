@@ -283,7 +283,7 @@ void* Probe_Core_Debug(
         break;
 
       case FLAVOR_PATCH: {
-        if (NOT_SUBCLASS_FLAG(PATCH, s, LET)) {
+        if (Not_Subclass_Flag(PATCH, s, LET)) {
             Probe_Print_Helper(p, expr, "non-LET Patch", file, line);
             break;
         }

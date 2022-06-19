@@ -172,7 +172,7 @@ REBNATIVE(reduce)
     Drop_Frame_Unbalanced(SUBFRAME);  // Drop_Frame() asserts on accumulation
 
     REBFLGS pop_flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(v), NEWLINE_AT_TAIL))
+    if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(v), NEWLINE_AT_TAIL))
         pop_flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;
 
     return Init_Any_Array(
@@ -401,7 +401,7 @@ static Value* Finalize_Composer_Frame(
     }
 
     REBFLGS flags = NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE;
-    if (GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(composee), NEWLINE_AT_TAIL))
+    if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(composee), NEWLINE_AT_TAIL))
         flags |= ARRAY_FLAG_NEWLINE_AT_TAIL;  // proxy newline flag, see [3]
 
     Init_Any_Array(

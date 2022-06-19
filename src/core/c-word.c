@@ -285,9 +285,9 @@ const Symbol *Intern_UTF8_Managed_Core(
   blockscope {
     for (REBLEN i = 0; i < size; ++i) {
         if (utf8[i] == ' ') {
-            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_PLAIN);
-            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_WITH_SIGIL);
-            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+            Set_Subclass_Flag(SYMBOL, s, ESCAPE_PLAIN);
+            Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
+            Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
             break;
         }
 
@@ -297,7 +297,7 @@ const Symbol *Intern_UTF8_Managed_Core(
             or utf8[i] == '<'
             or utf8[i] == '>'
         ){
-            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+            Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
             continue;
         }
 
@@ -311,8 +311,8 @@ const Symbol *Intern_UTF8_Managed_Core(
             or utf8[i] == '@'
             or utf8[i] == '^'
         ){
-            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_WITH_SIGIL);
-            SET_SUBCLASS_FLAG(SYMBOL, s, ESCAPE_IN_SEQUENCE);
+            Set_Subclass_Flag(SYMBOL, s, ESCAPE_WITH_SIGIL);
+            Set_Subclass_Flag(SYMBOL, s, ESCAPE_IN_SEQUENCE);
             continue;
         }
     }

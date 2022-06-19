@@ -115,7 +115,7 @@ inline static REBLEN FRM_EXPR_INDEX(REBFRM *f) {
 inline static const REBSTR* FRM_FILE(REBFRM *f) {
     if (FRM_IS_VARIADIC(f))
         return nullptr;
-    if (NOT_SUBCLASS_FLAG(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
+    if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
         return nullptr;
     return LINK(Filename, FRM_ARRAY(f));
 }
@@ -131,7 +131,7 @@ inline static const char* FRM_FILE_UTF8(REBFRM *f) {
 inline static int FRM_LINE(REBFRM *f) {
     if (FRM_IS_VARIADIC(f))
         return 0;
-    if (NOT_SUBCLASS_FLAG(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
+    if (Not_Subclass_Flag(ARRAY, FRM_ARRAY(f), HAS_FILE_LINE_UNMASKED))
         return 0;
     return FRM_ARRAY(f)->misc.line;
 }

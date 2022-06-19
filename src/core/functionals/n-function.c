@@ -255,17 +255,17 @@ REBACT *Make_Interpreted_Action_May_Fail(
 
     // Favor the spec first, then the body, for file and line information.
     //
-    if (GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(spec), HAS_FILE_LINE_UNMASKED)) {
+    if (Get_Subclass_Flag(ARRAY, VAL_ARRAY(spec), HAS_FILE_LINE_UNMASKED)) {
         mutable_LINK(Filename, copy) = LINK(Filename, VAL_ARRAY(spec));
         copy->misc.line = VAL_ARRAY(spec)->misc.line;
-        SET_SUBCLASS_FLAG(ARRAY, copy, HAS_FILE_LINE_UNMASKED);
+        Set_Subclass_Flag(ARRAY, copy, HAS_FILE_LINE_UNMASKED);
     }
     else if (
-        GET_SUBCLASS_FLAG(ARRAY, VAL_ARRAY(body), HAS_FILE_LINE_UNMASKED)
+        Get_Subclass_Flag(ARRAY, VAL_ARRAY(body), HAS_FILE_LINE_UNMASKED)
     ){
         mutable_LINK(Filename, copy) = LINK(Filename, VAL_ARRAY(body));
         copy->misc.line = VAL_ARRAY(body)->misc.line;
-        SET_SUBCLASS_FLAG(ARRAY, copy, HAS_FILE_LINE_UNMASKED);
+        Set_Subclass_Flag(ARRAY, copy, HAS_FILE_LINE_UNMASKED);
     }
     else {
         // Ideally all source series should have a file and line numbering
