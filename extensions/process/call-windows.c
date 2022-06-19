@@ -87,7 +87,7 @@ static bool Try_Init_Startupinfo_Sink(
     assert(*hread == 0 and *hwrite == 0);
     *hsink = INVALID_HANDLE_VALUE;  // this function must set unless error
 
-    if (IS_NULLED(arg)) {  // write normally (usually to console)
+    if (Is_Nulled(arg)) {  // write normally (usually to console)
         *hsink = GetStdHandle(std_handle_id);
     }
     else switch (VAL_TYPE(arg)) {

@@ -488,7 +488,7 @@ REBNATIVE(rsa_generate_keypair)
         fail ("RSA key bits exceeds MBEDTLS_MPI_MAX_BITS");
 
     REBVAL *private_var = ARG(private_key);
-    if (IS_NULLED(private_var))
+    if (Is_Nulled(private_var))
         fail ("/PRIVATE-KEY return result is required");
 
     REBVAL *error = nullptr;

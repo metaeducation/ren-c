@@ -349,7 +349,7 @@ inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
     if (v == nullptr)
         return v;  // API tolerance
     if (not Is_Isotope(v)) {
-        assert(not IS_NULLED(v));  // API speaks nullptr, not nulled cells
+        assert(not Is_Nulled(v));  // API speaks nullptr, not nulled cells
         return v;
     }
     if (VAL_ISOTOPE_ID(v) == SYM_NULL)
@@ -361,7 +361,7 @@ inline static const REBVAL *rebPointerToDecayed(const REBVAL *v) {
 inline static Cell *Isotopify_If_Falsey(Cell *v) {
     if (Is_Isotope(v))
         return v;  // already an isotope (would trigger asserts on IS_X tests)
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         Init_Isotope(v, Canon(NULL));
     else if (IS_BLANK(v))
         Init_Isotope(v, Canon(BLANK));

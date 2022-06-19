@@ -732,7 +732,7 @@ static REBARR *Gob_To_Array(REBGOB *gob)
         // !!! Can't have nulls in arrays.  Is using BAD-WORD! correct here?
         // Gobs used none (blank) historically.
         //
-        if (IS_NULLED(slot))
+        if (Is_Nulled(slot))
             Init_Bad_Word(slot, Canon(NULL));
     }
 

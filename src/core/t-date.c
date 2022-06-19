@@ -846,7 +846,7 @@ void Pick_Or_Poke_Date(
             break;
 
           case SYM_TIME:
-            if (IS_NULLED(poke)) {  // clear out the time component
+            if (Is_Nulled(poke)) {  // clear out the time component
                 nano = NO_DATE_TIME;
                 zone = NO_DATE_ZONE;
             }
@@ -871,7 +871,7 @@ void Pick_Or_Poke_Date(
             break;
 
           case SYM_ZONE:
-            if (IS_NULLED(poke)) {  // clear out the zone component
+            if (Is_Nulled(poke)) {  // clear out the zone component
                 zone = NO_DATE_ZONE;
             }
             else {

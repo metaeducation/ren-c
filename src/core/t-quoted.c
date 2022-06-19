@@ -406,7 +406,7 @@ REBNATIVE(unmeta)
 
     REBVAL *v = ARG(value);
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return nullptr;  // ^(null) => null, so the reverse must be true
 
     if (Is_Meta_Of_Void(v))
@@ -447,7 +447,7 @@ REBNATIVE(maybe)
     REBVAL *v = ARG(optional);
 
     if (
-        IS_NULLED(v) or Is_Meta_Of_Null_Isotope(v)
+        Is_Nulled(v) or Is_Meta_Of_Null_Isotope(v)
         or Is_Meta_Of_Void(v)
         or Is_Meta_Of_None(v)
     ){

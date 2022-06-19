@@ -126,7 +126,7 @@ inline static bool Is_Valid_Sequence_Element(
 // too short) or it will be the first badly-typed value that was problematic.
 //
 inline static REBCTX *Error_Bad_Sequence_Init(const REBVAL *v) {
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return Error_Sequence_Too_Short_Raw();
     fail (Error_Bad_Sequence_Item_Raw(v));
 }

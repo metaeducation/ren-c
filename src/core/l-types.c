@@ -276,7 +276,7 @@ REB_R Reflect_Core(REBFRM *frame_)
         fail (Error_Cannot_Reflect(heart, ARG(property)));
 
       case SYM_KIND: // simpler answer, low-level datatype (e.g. QUOTED!)
-        if (IS_NULLED(v))
+        if (Is_Nulled(v))
             return nullptr;
         return Init_Builtin_Datatype(OUT, VAL_TYPE(v));
 

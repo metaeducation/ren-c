@@ -3093,7 +3093,7 @@ REBNATIVE(transcode)
         line_number = ARG(line);
 
     REBLIN start_line;
-    if (IS_NULLED(line_number)) {
+    if (Is_Nulled(line_number)) {
         start_line = 1;
     }
     else if (IS_INTEGER(line_number)) {

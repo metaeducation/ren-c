@@ -48,7 +48,7 @@ bool Try_Catch_Break_Or_Continue(Value *out, REBFRM* frame_)
 
     if (ACT_DISPATCHER(VAL_ACTION(label)) == &N_break) {
         CATCH_THROWN(out, frame_);
-        assert(IS_NULLED(out)); // BREAK must always return NULL
+        assert(Is_Nulled(out)); // BREAK must always return NULL
         return true;
     }
 
@@ -110,7 +110,7 @@ REBNATIVE(continue)
 
     if (Is_Meta_Of_Void(v) or Is_Meta_Of_End(v))
         RESET(v);  // Treat CONTINUE same as CONTINUE VOID
-    else if (IS_NULLED(v)) {
+    else if (Is_Nulled(v)) {
         Init_Null_Isotope(v);  // Pure NULL is reserved for BREAK
     }
     else
@@ -550,7 +550,7 @@ REBNATIVE(for_skip)
         //
         var = Real_Var_From_Pseudo(pseudo_var);
 
-        if (IS_NULLED(var))
+        if (Is_Nulled(var))
             fail (PAR(word));
         if (not ANY_SERIES(var))
             fail (var);
@@ -871,11 +871,11 @@ static bool Try_Loop_Each_Next(const Value *iterator, REBCTX *vars_ctx)
                 ++les->u.eser.index;
                 if (les->u.eser.index == les->u.eser.len)
                     les->more_data = false;
-                if (not IS_NULLED(val))
+                if (not Is_Nulled(val))
                     break;
                 if (not les->more_data)
                     return false;
-            } while (IS_NULLED(val));
+            } while (Is_Nulled(val));
 
             if (var)
                 Copy_Cell(var, key);
@@ -1360,7 +1360,7 @@ REBNATIVE(remove_each)
         else if (IS_LOGIC(OUT)) {  // pure logic required, see [6]
             keep = not VAL_LOGIC(OUT);
         }
-        else if (IS_NULLED(OUT)) {  // don't remove
+        else if (Is_Nulled(OUT)) {  // don't remove
             keep = true;
             Init_Null_Isotope(OUT);  // NULL reserved for BREAK signal
         }
@@ -1677,7 +1677,7 @@ REBNATIVE(map)
 
     Decay_If_Isotope(SPARE);
 
-    if (IS_NULLED(SPARE))
+    if (Is_Nulled(SPARE))
         Init_Isotope(SPARE, Canon(NULL));
     if (Is_Isotope(SPARE)) {
         Init_Error(SPARE, Error_Bad_Isotope(SPARE));
@@ -1690,7 +1690,7 @@ REBNATIVE(map)
 
     if (IS_QUOTED(SPARE)) {
         Unquotify(SPARE, 1);
-        if (IS_NULLED(SPARE))
+        if (Is_Nulled(SPARE))
             Init_Bad_Word(DS_PUSH(), Canon(NULL));  // APPEND semantics
         else
             Copy_Cell(DS_PUSH(), SPARE);
@@ -1726,7 +1726,7 @@ REBNATIVE(map)
         return THROWN;  // automatically drops to baseline
 
     if (not Is_Stale(OUT)) {  // only modifies on break
-        assert(IS_NULLED(OUT));  // BREAK, so *must* return null
+        assert(Is_Nulled(OUT));  // BREAK, so *must* return null
         DS_DROP_TO(FRAME->baseline.dsp);
         return nullptr;
     }
@@ -1964,7 +1964,7 @@ REBNATIVE(until)
         // continue acts like body evaluated to its argument, see [1]
     }
 
-    if (IS_NULLED(predicate)) {
+    if (Is_Nulled(predicate)) {
         condition = OUT;  // default is just test truthiness of body product
         goto test_condition;
     }

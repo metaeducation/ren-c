@@ -197,7 +197,7 @@ REBNATIVE(resume)
     DEBUGGER_INCLUDE_PARAMS_OF_RESUME;
 
     REBVAL *expr = ARG(expression);
-    if (IS_NULLED(expr))  // e.g. <end> (actuall null not legal)
+    if (Is_Nulled(expr))  // e.g. <end> (actuall null not legal)
         Init_Any_Array(expr, REB_META_GROUP, EMPTY_ARRAY);
     else {
         assert(IS_BLOCK(expr));

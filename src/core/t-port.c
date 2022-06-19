@@ -53,7 +53,7 @@ REB_R MAKE_Port(
     if (parent)
         fail (Error_Bad_Make_Parent(kind, unwrap(parent)));
 
-    assert(not IS_NULLED(arg)); // API would require NULLIFY_NULLED
+    assert(not Is_Nulled(arg)); // API would require NULLIFY_NULLED
 
     if (rebRunThrows(
         out,  // <-- output cell

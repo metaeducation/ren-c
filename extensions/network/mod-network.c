@@ -464,7 +464,7 @@ void on_read_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
         bufsize = rebreq->length - rebreq->actual;  // !!! use suggestion here?
 
     REBBIN *bin;
-    if (IS_NULLED(port_data)) {
+    if (Is_Nulled(port_data)) {
         bin = Make_Binary(bufsize);
         Init_Binary(port_data, bin);
     }
@@ -503,7 +503,7 @@ void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
     REBVAL *port_data = CTX_VAR(port_ctx, STD_PORT_DATA);
 
     REBBIN *bin;
-    if (IS_NULLED(port_data)) {
+    if (Is_Nulled(port_data)) {
         //
         // An error like "connection reset by peer" can occur before a call to
         // on_read_alloc() is made, so the buffer might be null in that case.
@@ -671,7 +671,7 @@ static REB_R Transport_Actor(
     // characters, a likely oversight from the addition of unicode).
     //
     REBVAL *port_data = CTX_VAR(ctx, STD_PORT_DATA);
-    assert(IS_BINARY(port_data) or IS_NULLED(port_data));
+    assert(IS_BINARY(port_data) or Is_Nulled(port_data));
 
     SOCKREQ *sock;
     REBVAL *state = CTX_VAR(ctx, STD_PORT_STATE);
@@ -683,7 +683,7 @@ static REB_R Transport_Actor(
         // !!! The Make_Devreq() code would zero out the struct, so to keep
         // things compatible while ripping out the devreq code this must too.
         //
-        assert(IS_NULLED(state));
+        assert(Is_Nulled(state));
         REBBIN *bin = Make_Binary(sizeof(SOCKREQ));
         Init_Binary(state, bin);
         memset(BIN_HEAD(bin), 0, sizeof(SOCKREQ));

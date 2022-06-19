@@ -88,7 +88,7 @@ REBNATIVE(trap)
 
     Copy_Cell(OUT, VAL_THROWN_LABEL(FRAME));
     CATCH_THROWN(SPARE, FRAME);
-    assert(IS_NULLED(SPARE));  // all error throws are null-valued
+    assert(Is_Nulled(SPARE));  // all error throws are null-valued
 
     return_branched (OUT);
   }

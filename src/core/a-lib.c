@@ -1127,7 +1127,7 @@ bool RL_rebDid(const void *p, va_list *vaptr)
             " https://forum.rebol.info/t/498/2"
         );
 
-    return not IS_NULLED(condition);  // isotopes okay for this test
+    return not Is_Nulled(condition);  // isotopes okay for this test
 }
 
 
@@ -1144,7 +1144,7 @@ bool RL_rebDidnt(const void *p, va_list *vaptr)
     DECLARE_LOCAL (condition);
     Run_Va_May_Fail(condition, p, vaptr);  // calls va_end()
 
-    return IS_NULLED(condition);  // isotopes are okay with this test
+    return Is_Nulled(condition);  // isotopes are okay with this test
 }
 
 //
@@ -1377,7 +1377,7 @@ char *RL_rebSpell(const void *p, va_list *vaptr)
     DECLARE_LOCAL (v);
     Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         fail ("rebSpell() does not take NULL (use TRY/BLANK! to opt out)");
     if (IS_BLANK(v))
         return nullptr;  // blank in, null out
@@ -1483,7 +1483,7 @@ REBWCHAR *RL_rebSpellWide(const void *p, va_list *vaptr)
     DECLARE_LOCAL (v);
     Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         fail ("rebSpellWide() does not take NULL (use TRY/BLANK! to opt out)");
     if (IS_BLANK(v))
         return nullptr;  // blank in, null out
@@ -1594,7 +1594,7 @@ unsigned char *RL_rebBytes(
     DECLARE_LOCAL (v);
     Run_Va_May_Fail(v, p, vaptr);  // calls va_end()
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         fail ("rebBytes() does not take NULL (use TRY/BLANK! to opt out)");
     if (IS_BLANK(v)) {
         *size_out = 0;
@@ -1737,7 +1737,7 @@ REBVAL *RL_rebRescueWith(
             // no proxying needed
         }
         else {
-            assert(not IS_NULLED(result));  // leaked API nulled cell
+            assert(not Is_Nulled(result));  // leaked API nulled cell
 
             // !!! Automatically proxy the ownership of any managed handles
             // to the caller.  Any other handles that leak out (e.g. via
@@ -1902,7 +1902,7 @@ const REBINS *RL_rebUNQUOTING(const void *p)
     }
 
     Cell *v = ARR_SINGLE(a);
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         fail ("Cannot unquote NULL");
 
     if (Is_Isotope(v))

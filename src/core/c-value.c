@@ -156,7 +156,7 @@ void Probe_Cell_Print_Helper(
     const REBVAL *v = cast(const REBVAL*, p);
 
   #if DEBUG_UNREADABLE_TRASH
-    if (IS_TRASH(v)) {  // IS_NULLED() asserts on trash
+    if (IS_TRASH(v)) {  // Is_Nulled() asserts on trash
         Probe_Print_Helper(p, expr, "Value", file, line);
         Append_Ascii(mo->series, "~trash~");
         return;
@@ -179,7 +179,7 @@ void Probe_Cell_Print_Helper(
         }
         Append_Ascii(mo->series, "  ; isotope");
     }
-    else if (IS_NULLED(v)) {
+    else if (Is_Nulled(v)) {
         Append_Ascii(mo->series, "; null");
     }
     else

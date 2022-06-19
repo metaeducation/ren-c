@@ -102,7 +102,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
     if (r == R_THROWN)
         return r;
 
-    if (r == nullptr or (not IS_END(r) and IS_NULLED(r)))
+    if (r == nullptr or (not IS_END(r) and Is_Nulled(r)))
         return r;  // did not advance, don't update furthest
 
     // This particular parse succeeded, but did the furthest point exceed the
@@ -113,7 +113,7 @@ REB_R Combinator_Dispatcher(REBFRM *f)
     assert(IS_FRAME(state));  // combinators *must* have this as the UPARSE.
     REBFRM *frame_ = CTX_FRAME_MAY_FAIL(VAL_CONTEXT(state));
     REBVAL *furthest_word = FRM_ARG(frame_, IDX_UPARSE_PARAM_FURTHEST);
-    if (IS_NULLED(furthest_word))
+    if (Is_Nulled(furthest_word))
         return r;
 
     REBVAL *furthest_var = Lookup_Mutable_Word_May_Fail(
@@ -358,7 +358,7 @@ REBNATIVE(opt_combinator)
     if (Call_Parser_Throws(OUT, ARG(remainder), ARG(parser), ARG(input)))
         return THROWN;
 
-    if (not IS_NULLED(OUT))  // parser succeeded...
+    if (not Is_Nulled(OUT))  // parser succeeded...
         return OUT;  // so return its result (note: may be null *isotope*)
 
     Set_Var_May_Fail(ARG(remainder), SPECIFIED, ARG(input));
@@ -466,7 +466,7 @@ REBNATIVE(some_combinator)
         return THROWN;
     }
 
-    if (IS_NULLED(OUT)) {
+    if (Is_Nulled(OUT)) {
         Remove_Series_Units(loops, ARR_LEN(loops) - 1, 1);  // drop loop
         return nullptr;  // didn't match even once, so not enough.
     }
@@ -485,7 +485,7 @@ REBNATIVE(some_combinator)
         if (Call_Parser_Throws(SPARE, remainder, parser, input))
             return THROWN;  // see notes above about not removing loop
 
-        if (IS_NULLED(SPARE)) {
+        if (Is_Nulled(SPARE)) {
             //
             // There's no guarantee that a parser that fails leaves the
             // remainder as-is (in fact multi-returns have historically unset
@@ -525,7 +525,7 @@ REBNATIVE(further_combinator)
     if (Call_Parser_Throws(OUT, remainder, parser, input))
         return THROWN;
 
-    if (IS_NULLED(OUT))
+    if (Is_Nulled(OUT))
         return nullptr;  // the parse rule did not match
 
     if (Is_Stale(OUT))

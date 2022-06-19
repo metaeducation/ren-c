@@ -48,7 +48,7 @@ REBNATIVE(only)  // https://forum.rebol.info/t/1182/11
 {
     INCLUDE_PARAMS_OF_ONLY;
 
-    if (IS_NULLED(ARG(value)))
+    if (Is_Nulled(ARG(value)))
         return Init_Block(OUT, EMPTY_ARRAY);  // global immutable array
 
     // This uses a "singular" array which is the size of a node (8 platform
@@ -923,7 +923,7 @@ REBTYPE(Array)
 
         REBVAL *pattern = ARG(pattern);
 
-        if (IS_NULLED(pattern))
+        if (Is_Nulled(pattern))
             fail ("Cannot FIND/SELECT null (use BLANK!, see TRY)");
         if (IS_BLANK(pattern))
             return nullptr;  // BLANK! in, NULL out
@@ -1041,7 +1041,7 @@ REBTYPE(Array)
 
         REBVAL *v = ARG(value);
 
-        if (IS_NULLED(v)) {
+        if (Is_Nulled(v)) {
             // handled before mutability check
         }
         else if (IS_QUOTED(v)) {
@@ -1059,7 +1059,7 @@ REBTYPE(Array)
             //     >> compose [(null) * ((null))]
             //     == [~null~ *]
             //
-            if (IS_NULLED(v))
+            if (Is_Nulled(v))
                 Init_Bad_Word(v, Canon(NULL));
         }
         else if (IS_BLOCK(v))
@@ -1273,7 +1273,7 @@ REBTYPE(Array)
             flags.offset = Int32(cmp) - 1;
         }
         else {
-            assert(IS_NULLED(cmp));
+            assert(Is_Nulled(cmp));
             flags.comparator = nullptr;
             flags.offset = 0;
         }
@@ -1287,7 +1287,7 @@ REBTYPE(Array)
 
         // Skip factor:
         REBLEN skip;
-        if (IS_NULLED(ARG(skip)))
+        if (Is_Nulled(ARG(skip)))
             skip = 1;
         else {
             skip = Get_Num_From_Arg(ARG(skip));
@@ -1325,7 +1325,7 @@ REBTYPE(Array)
             );
 
             Cell *slot = Pick_Block(OUT, array, ARG(seed));
-            if (IS_NULLED(OUT)) {
+            if (Is_Nulled(OUT)) {
                 assert(slot);
                 UNUSED(slot);
                 return nullptr;
@@ -1376,7 +1376,7 @@ REBNATIVE(blockify)
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
 
-    if (IS_NULLED(v)) {
+    if (Is_Nulled(v)) {
         // leave empty
     } else {
         Copy_Cell(ARR_HEAD(a), v);
@@ -1409,7 +1409,7 @@ REBNATIVE(groupify)
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
 
-    if (IS_NULLED(v)) {
+    if (Is_Nulled(v)) {
         // leave empty
     } else {
         Copy_Cell(ARR_HEAD(a), v);
@@ -1440,7 +1440,7 @@ REBNATIVE(enblock)
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
 
-    if (IS_NULLED(v)) {
+    if (Is_Nulled(v)) {
         // leave empty
     } else {
         Copy_Cell(ARR_HEAD(a), v);
@@ -1471,7 +1471,7 @@ REBNATIVE(engroup)
         NODE_FLAG_MANAGED | ARRAY_MASK_HAS_FILE_LINE
     );
 
-    if (IS_NULLED(v)) {
+    if (Is_Nulled(v)) {
         // leave empty
     } else {
         Copy_Cell(ARR_HEAD(a), v);
@@ -1514,7 +1514,7 @@ REBNATIVE(glom)
     //
     bool splice = false;
 
-    assert(not IS_NULLED(result));  // type checking should prevent
+    assert(not Is_Nulled(result));  // type checking should prevent
 
     if (IS_BLANK(result)) {
         return_value (accumulator);

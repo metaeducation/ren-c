@@ -124,7 +124,7 @@ inline static void Queue_Mark_Maybe_Stale_Cell_Deep(Cell *v) {
 
 inline static void Queue_Mark_Value_Deep(const Cell *v)
 {
-    assert(VAL_TYPE_UNCHECKED(v) != REB_NULL);  // faster than IS_NULLED()
+    assert(VAL_TYPE_UNCHECKED(v) != REB_NULL);  // faster than Is_Nulled()
     Queue_Mark_Opt_Value_Deep(v);  // unreadable trash is ok
 }
 
@@ -483,7 +483,7 @@ void Reify_Va_To_Array_In_Feed(
     if (NOT_END(feed->value)) {
         do {
             Derelativize(DS_PUSH(), feed->value, FEED_SPECIFIER(feed));
-            assert(not IS_NULLED(DS_TOP));
+            assert(not Is_Nulled(DS_TOP));
             Fetch_Next_In_Feed(feed);
         } while (NOT_END(feed->value));
 

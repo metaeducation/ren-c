@@ -161,7 +161,7 @@ REBNATIVE(dump)
         if (not var) {
             PROBE("\\unbound\\");
         }
-        else if (IS_NULLED(var)) {
+        else if (Is_Nulled(var)) {
             PROBE("\\null\\");
         }
         else

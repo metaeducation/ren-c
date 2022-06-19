@@ -130,11 +130,11 @@ bool Redo_Action_Maybe_Stale_Throws(REBVAL *out, REBFRM *f, REBACT *run)
         if (VAL_PARAM_CLASS(f->param) == PARAM_CLASS_RETURN)
             continue;  // !!! hack, has PARAM_FLAG_REFINEMENT, don't stack it
 
-        if (GET_PARAM_FLAG(f->param, SKIPPABLE) and IS_NULLED(f->arg))
+        if (GET_PARAM_FLAG(f->param, SKIPPABLE) and Is_Nulled(f->arg))
             continue;  // don't throw in skippable args that are nulled out
 
         if (GET_PARAM_FLAG(f->param, REFINEMENT)) {
-            if (IS_NULLED(f->arg))  // don't add to PATH!
+            if (Is_Nulled(f->arg))  // don't add to PATH!
                 continue;
 
             Init_Word(DS_PUSH(), KEY_SYMBOL(f->key));

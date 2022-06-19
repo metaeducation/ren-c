@@ -667,7 +667,7 @@ REB_R JavaScript_Dispatcher(REBFRM *frame_)
     if (native_result == nullptr)
         Init_Nulled(OUT);
     else {
-        assert(not IS_NULLED(native_result));  // API uses nullptr only
+        assert(not Is_Nulled(native_result));  // API uses nullptr only
         Copy_Cell(OUT, native_result);
         rebRelease(native_result);
     }

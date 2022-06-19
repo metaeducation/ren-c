@@ -562,7 +562,7 @@ REBNATIVE(what_dir)
 
     REBVAL *current_path = Get_System(SYS_OPTIONS, OPTIONS_CURRENT_PATH);
 
-    if (IS_FILE(current_path) || IS_NULLED(current_path)) {
+    if (IS_FILE(current_path) || Is_Nulled(current_path)) {
         //
         // !!! Because of the need to track a notion of "current path" which
         // could be a URL! as well as a FILE!, the state is stored in the

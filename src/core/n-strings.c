@@ -140,7 +140,7 @@ REBNATIVE(delimit)
             fail (Error_Bad_Isotope(OUT));
         }
 
-        if (IS_NULLED(OUT)) {
+        if (Is_Nulled(OUT)) {
             //
             // Erroring on NULL catches bugs in practice, and enables CURTAIL.
             // We error, but you can REIFY nulls as ~null~ if you want:

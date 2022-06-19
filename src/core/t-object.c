@@ -734,7 +734,7 @@ REBNATIVE(set_meta)
         meta_ctx = VAL_CONTEXT(meta);
     }
     else {
-        assert(IS_NULLED(meta));
+        assert(Is_Nulled(meta));
         meta_ctx = nullptr;
     }
 
@@ -950,7 +950,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
                     Append_Codepoint(mo->series, '~');
                 }
             }
-            else if (not IS_NULLED(e.var) and not IS_BLANK(e.var))
+            else if (not Is_Nulled(e.var) and not IS_BLANK(e.var))
                 Mold_Value(mo, e.var);
 
             Append_Codepoint(mo->series, LF);
@@ -1000,7 +1000,7 @@ void MF_Context(REB_MOLD *mo, noquote(const Cell*) v, bool form)
                 Append_Ascii(s, "~");
             }
         }
-        else if (IS_NULLED(e.var))
+        else if (Is_Nulled(e.var))
             Append_Ascii(s, "'");  // `field: '` would evaluate to null
         else {
             // We want the molded object to be able to "round trip" back to the

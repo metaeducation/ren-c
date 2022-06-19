@@ -231,7 +231,7 @@ REB_R MAKE_Path(
         if (Is_Stale(out))
             continue;
 
-        if (IS_NULLED(out))
+        if (Is_Nulled(out))
             fail (out);  // !!! BLANK! is legit in paths, should null opt out?
 
         Move_Cell(DS_PUSH(), out);

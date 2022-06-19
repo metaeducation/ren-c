@@ -461,7 +461,7 @@ REBNATIVE(any_inert_q)
 
     REBVAL *v = ARG(optional);
 
-    return Init_Logic(OUT, not IS_NULLED(v) and ANY_INERT(v));
+    return Init_Logic(OUT, not Is_Nulled(v) and ANY_INERT(v));
 }
 
 
@@ -947,7 +947,7 @@ bool Get_Path_Push_Refinements_Throws(
 
             at = safe;
         }
-        if (IS_NULLED(at) or IS_BLANK(at)) {
+        if (Is_Nulled(at) or IS_BLANK(at)) {
             // just skip it
         }
         else if (IS_WORD(at))
@@ -1233,7 +1233,7 @@ bool Set_Var_Core_Updater_Throws(
 
     updater = Lib(POKE_P);
 
-    if (not IS_NULLED(out)) {
+    if (not Is_Nulled(out)) {
         Move_Cell(writeback, out);
         decayed = writeback;  // e.g. decayed setval
 
@@ -1377,7 +1377,7 @@ REBNATIVE(try)
 
     REBVAL *v = ARG(optional);
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return Init_Blank(OUT);
 
     if (Is_Meta_Of_Void(v))
@@ -1386,7 +1386,7 @@ REBNATIVE(try)
     Meta_Unquotify(v);
     Decay_If_Isotope(v);  // Decay "normal" isotopes, including ~null~ isotopes
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return Init_Blank(OUT);
 
     if (Is_Isotope(v))
@@ -1431,7 +1431,7 @@ REBNATIVE(opt)
     // don't put OPT on expressions you believe can be null, so this permits
     // creating a likely error in those cases.  To get around it, OPT TRY
     //
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return Init_Null_Isotope(OUT);
 
     return_value (v);
@@ -2224,7 +2224,7 @@ REBNATIVE(null_q)
 {
     INCLUDE_PARAMS_OF_NULL_Q;
 
-    return Init_Logic(OUT, IS_NULLED(ARG(optional)));
+    return Init_Logic(OUT, Is_Nulled(ARG(optional)));
 }
 
 
@@ -2320,7 +2320,7 @@ REBNATIVE(heavy) {
     if (Is_Meta_Of_Void(v))
         return VOID;
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return Init_Null_Isotope(OUT);
 
     return_value (Meta_Unquotify(v));
@@ -2420,7 +2420,7 @@ REBNATIVE(reify)
 
     REBVAL *v = ARG(optional);
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return Init_Bad_Word(OUT, Canon(NULL));
 
     if (Is_Meta_Of_Void(v))

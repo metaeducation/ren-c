@@ -123,7 +123,7 @@
 #define P_FLAGS             VAL_INT64(ARG(flags))
 
 #define P_COLLECTION \
-    (IS_NULLED(ARG(collection)) \
+    (Is_Nulled(ARG(collection)) \
         ? cast(REBARR*, nullptr) \
         : VAL_ARRAY_KNOWN_MUTABLE(ARG(collection)) \
     )
@@ -312,7 +312,7 @@ static bool Subparse_Throws(
 
     Drop_Action(f);
 
-    if ((r == R_THROWN or IS_NULLED(out)) and collection)
+    if ((r == R_THROWN or Is_Nulled(out)) and collection)
         SET_SERIES_LEN(unwrap(collection), collect_tail);  // abort rollback
 
     if (r == R_THROWN) {
@@ -442,7 +442,7 @@ static const Cell *Get_Parse_Value(
     else
         return rule;
 
-    if (IS_NULLED(cell))
+    if (Is_Nulled(cell))
         fail (Error_No_Value(rule));
 
     if (IS_INTEGER(cell))
@@ -612,7 +612,7 @@ static REB_R Parse_One_Rule(
 
         P_POS = pos_before;  // restore input position
 
-        if (IS_NULLED(subresult))
+        if (Is_Nulled(subresult))
             return R_UNHANDLED;
 
         REBINT index = VAL_INT32(subresult);
@@ -1677,7 +1677,7 @@ REBNATIVE(subparse)
                     if (threw)
                         goto return_thrown;
 
-                    if (IS_NULLED(OUT)) {  // match of rule failed
+                    if (Is_Nulled(OUT)) {  // match of rule failed
                         RESET(OUT);  // restore invariant
                         goto next_alternate;  // backtrack collect, seek |
                     }
@@ -1950,7 +1950,7 @@ REBNATIVE(subparse)
             if (threw)
                 goto return_thrown;
 
-            if (IS_NULLED(OUT)) {  // match of rule failed
+            if (Is_Nulled(OUT)) {  // match of rule failed
                 RESET(OUT);  // restore invariant
                 goto next_alternate;  // backtrack collect, seek |
             }
@@ -2231,7 +2231,7 @@ REBNATIVE(subparse)
 
                 // !!! ignore interrupted? (e.g. ACCEPT or REJECT ran)
 
-                if (IS_NULLED(OUT)) {
+                if (Is_Nulled(OUT)) {
                     i = END_FLAG;
                 }
                 else {
@@ -2275,7 +2275,7 @@ REBNATIVE(subparse)
 
             // Non-breaking out of loop instances of match or not.
 
-            if (IS_NULLED(SPARE))
+            if (Is_Nulled(SPARE))
                 i = END_FLAG;
             else {
                 assert(IS_INTEGER(SPARE));
@@ -2352,7 +2352,7 @@ REBNATIVE(subparse)
     // up...but at the very least, such checks should only be needed right
     // after potential group executions (which includes subrules).
     //
-    if (not IS_NULLED(ARG(position)))
+    if (not Is_Nulled(ARG(position)))
         if (P_POS > cast(REBIDX, P_INPUT_LEN))
             Init_Nulled(ARG(position));  // not found
 
@@ -2373,7 +2373,7 @@ REBNATIVE(subparse)
 
     if (P_FLAGS & PF_STATE_MASK) {
         if (P_FLAGS & PF_NOT) {
-            if ((P_FLAGS & PF_NOT2) and not IS_NULLED(ARG(position)))
+            if ((P_FLAGS & PF_NOT2) and not Is_Nulled(ARG(position)))
                 Init_Nulled(ARG(position));  // not found
             else {
                 Copy_Cell(ARG(position), ARG(input));
@@ -2381,7 +2381,7 @@ REBNATIVE(subparse)
             }
         }
 
-        if (not IS_NULLED(ARG(position))) {
+        if (not Is_Nulled(ARG(position))) {
             //
             // Set count to how much input was advanced
             //
@@ -2622,7 +2622,7 @@ REBNATIVE(subparse)
         set_or_copy_word = NULL;
     }
 
-    if (IS_NULLED(ARG(position))) {
+    if (Is_Nulled(ARG(position))) {
 
       next_alternate:
 
@@ -2663,13 +2663,13 @@ REBNATIVE(subparse)
     return Init_Integer(OUT, P_POS);  // !!! return switched input series??
 
   return_null:
-    if (not IS_NULLED(ARG(collection)))  // fail -> drop COLLECT additions
+    if (not Is_Nulled(ARG(collection)))  // fail -> drop COLLECT additions
       SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
     return Init_Nulled(OUT);
 
   return_thrown:
-    if (not IS_NULLED(ARG(collection)))  // throw -> drop COLLECT additions
+    if (not Is_Nulled(ARG(collection)))  // throw -> drop COLLECT additions
         if (VAL_THROWN_LABEL(FRAME) != Lib(PARSE_ACCEPT))  // ...unless
             SET_SERIES_LEN(P_COLLECTION, collection_tail);
 
@@ -2774,7 +2774,7 @@ REBNATIVE(parse_p)
         return THROWN;
     }
 
-    if (IS_NULLED(OUT))
+    if (Is_Nulled(OUT))
         return nullptr;  // the match failed
 
     REBLEN index = VAL_UINT32(OUT);

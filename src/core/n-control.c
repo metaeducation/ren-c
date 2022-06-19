@@ -163,7 +163,7 @@ REBNATIVE(did_1)  // see TO-C-NAME
 
     Value *in = ARG(optional);
 
-    if (IS_NULLED(in) or Is_Meta_Of_Void(in))
+    if (Is_Nulled(in) or Is_Meta_Of_Void(in))
         return Init_False(OUT);
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -190,7 +190,7 @@ REBNATIVE(didnt)
 
     Value *in = ARG(optional);
 
-    if (IS_NULLED(in) or Is_Meta_Of_Void(in))
+    if (Is_Nulled(in) or Is_Meta_Of_Void(in))
         return Init_True(OUT);
 
     if (REF(decay) and Is_Meta_Of_Null_Isotope(in))
@@ -225,7 +225,7 @@ REBNATIVE(then)  // see `tweak :then 'defer on` in %base-defs.r
     Value *branch = ARG(branch);
 
     if (
-        IS_NULLED(in)  // soft failure signal
+        Is_Nulled(in)  // soft failure signal
         or Is_Meta_Of_Void(in)  // meta parameter, e.g. input was true void
         or (REF(decay) and Is_Meta_Of_Null_Isotope(in))  // null isotope
     ){
@@ -270,7 +270,7 @@ REBNATIVE(also)  // see `tweak :also 'defer on` in %base-defs.r
 
   initial_entry: {  //////////////////////////////////////////////////////////
 
-    if (IS_NULLED(in))
+    if (Is_Nulled(in))
         return nullptr;  // telegraph pure null
 
     if (Is_Meta_Of_Void(in))
@@ -331,7 +331,7 @@ REBNATIVE(else)  // see `tweak :else 'defer on` in %base-defs.r
     Value *in = ARG(optional);
     Value *branch = ARG(branch);
 
-    if (IS_NULLED(in)) {
+    if (Is_Nulled(in)) {
         Init_Nulled(SPARE);
     }
     else if (Is_Meta_Of_Void(in)) {
@@ -373,7 +373,7 @@ REBNATIVE(match)
 
     switch (VAL_TYPE(test)) {
       case REB_NULL:
-        if (not IS_NULLED(v))
+        if (not Is_Nulled(v))
             return nullptr;
         break;
 
@@ -456,7 +456,7 @@ REBNATIVE(must)  // `must x` is a faster synonym for `non null x`
 {
     INCLUDE_PARAMS_OF_MUST;
 
-    if (IS_NULLED(ARG(value)))
+    if (Is_Nulled(ARG(value)))
         fail ("MUST requires argument to not be NULL");
 
     return_value (ARG(value));
@@ -574,7 +574,7 @@ REBNATIVE(all)
         continue_uncatchable_subframe (SUBFRAME);
     }
 
-    if (not IS_NULLED(predicate)) {
+    if (not Is_Nulled(predicate)) {
         SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
 
         STATE = ST_ALL_PREDICATE;
@@ -697,7 +697,7 @@ REBNATIVE(any)
         continue_uncatchable_subframe (SUBFRAME);
     }
 
-    if (not IS_NULLED(predicate)) {
+    if (not Is_Nulled(predicate)) {
         SUBFRAME->executor = &Just_Use_Out_Executor;  // tunnel thru, see [4]
 
         STATE = ST_ANY_PREDICATE;
@@ -825,7 +825,7 @@ REBNATIVE(case)
             goto reached_end;  // we tolerate "fallout" from a condition
 
         bool matched;
-        if (IS_NULLED(predicate)) {
+        if (Is_Nulled(predicate)) {
             if (Is_Isotope(SPARE))
                 fail (Error_Bad_Isotope(SPARE));
 
@@ -960,7 +960,7 @@ REBNATIVE(switch)
         if (IS_END(f_value))
             goto reached_end;  // nothing left, so drop frame and return
 
-        if (IS_NULLED(predicate)) {
+        if (Is_Nulled(predicate)) {
             //
             // It's okay that we are letting the comparison change `value`
             // here, because equality is supposed to be transitive.  So if it
@@ -1132,7 +1132,7 @@ REBNATIVE(default)
     if (Get_Var_Core_Throws(OUT, steps, target, SPECIFIED))  // see [1]
         return THROWN;
 
-    if (not IS_NULLED(predicate)) {
+    if (not Is_Nulled(predicate)) {
         STATE = ST_DEFAULT_RUNNING_PREDICATE;
         continue_uncatchable(SPARE, predicate, OUT);
     }
@@ -1141,7 +1141,7 @@ REBNATIVE(default)
         if (not Is_None(OUT))
             return OUT;  // consider it a "value", see [2]
     }
-    else if (not IS_NULLED(OUT) and not IS_BLANK(OUT))  // also see [2]
+    else if (not Is_Nulled(OUT) and not IS_BLANK(OUT))  // also see [2]
         return OUT;
 
     STATE = ST_DEFAULT_EVALUATING_BRANCH;
@@ -1268,7 +1268,7 @@ REBNATIVE(catch)
     else {
         // Return THROW's arg only if it did not have a /NAME supplied
         //
-        if (IS_NULLED(label) and (REF(any) or not REF(quit)))
+        if (Is_Nulled(label) and (REF(any) or not REF(quit)))
             goto was_caught;
     }
 
@@ -1281,7 +1281,7 @@ REBNATIVE(catch)
 
         Copy_Cell(ARR_AT(a, 0), label); // throw name
         CATCH_THROWN(ARR_AT(a, 1), frame_); // thrown value--may be null!
-        if (IS_NULLED(ARR_AT(a, 1)))
+        if (Is_Nulled(ARR_AT(a, 1)))
             SET_SERIES_LEN(a, 1); // trim out null value (illegal in block)
         else
             SET_SERIES_LEN(a, 2);

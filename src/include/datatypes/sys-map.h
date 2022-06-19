@@ -87,7 +87,7 @@ inline static REBLEN Length_Map(const REBMAP *map)
 
     REBLEN count = 0;
     for (; v != tail; v += 2) {
-        if (not IS_NULLED(v + 1))
+        if (not Is_Nulled(v + 1))
             ++count;
     }
 

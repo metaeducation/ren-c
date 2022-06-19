@@ -393,7 +393,7 @@ inline static bool Typecheck_Including_Constraints(
         if (IS_BAD_WORD(v)) {
             return true;  // all META parameters take BAD-WORD!
         }
-        else if (IS_NULLED(v)) {
+        else if (Is_Nulled(v)) {
             kind = REB_NULL;  // meaningful to check <opt> for ^META
         }
         else if (IS_THE_WORD(v)) {
@@ -465,7 +465,7 @@ inline static void Typecheck_Refinement(
         or GET_PARAM_FLAG(param, SKIPPABLE)
     );
 
-    if (IS_NULLED(arg)) {
+    if (Is_Nulled(arg)) {
         //
         // Not in use
     }

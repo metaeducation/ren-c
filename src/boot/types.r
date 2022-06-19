@@ -66,7 +66,7 @@ REBOL [
 ; a "type"...but it is falsey, hence it has to be before LOGIC! in the table.
 ; In the API, a cell isn't used but it is transformed into the language NULL.
 ; To help distinguish it from C's NULL in places where it is undecorated,
-; functions are given names like `Init_Nulled` or `IS_NULLED()`, but the
+; functions are given names like `Init_Nulled` or `Is_Nulled()`, but the
 ; type itself is simply called REB_NULL...which is distinct enough.
 
 #null       "!!! `NULL!` isn't a datatype, `null` can't be stored in blocks"

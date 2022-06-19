@@ -122,7 +122,7 @@ REBVAL *Init_Near_For_Frame(Cell *out, REBFRM *f)
     const Cell *tail = ARR_TAIL(FRM_ARRAY(f));
     const Cell *item = ARR_AT(FRM_ARRAY(f), start);
     for (; item != tail and count < 6; ++item, ++count) {
-        assert(not IS_NULLED(item));  // can't be in arrays, API won't splice
+        assert(not Is_Nulled(item));  // can't be in arrays, API won't splice
         Derelativize(DS_PUSH(), item, f_specifier);
 
         if (count == FRM_INDEX(f) - start - 1) {

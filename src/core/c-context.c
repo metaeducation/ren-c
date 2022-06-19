@@ -475,7 +475,7 @@ REBARR *Collect_Unique_Words_Managed(
     // the "ignore" bindings.)  Do a pre-pass to fail first, if there are
     // any non-words in a block the user passed in.
     //
-    if (not IS_NULLED(ignorables)) {
+    if (not Is_Nulled(ignorables)) {
         const Cell *check_tail;
         const Cell *check = VAL_ARRAY_AT(&check_tail, ignorables);
         for (; check != check_tail; ++check) {
@@ -528,7 +528,7 @@ REBARR *Collect_Unique_Words_Managed(
         }
     }
     else
-        assert(IS_NULLED(ignorables));
+        assert(Is_Nulled(ignorables));
 
     Collect_Inner_Loop(cl, head, tail);
 
@@ -569,7 +569,7 @@ REBARR *Collect_Unique_Words_Managed(
             Remove_Binder_Index(&cl->binder, KEY_SYMBOL(key));
     }
     else
-        assert(IS_NULLED(ignorables));
+        assert(Is_Nulled(ignorables));
 
     Collect_End(cl);
     return array;
@@ -672,7 +672,7 @@ REBCTX *Make_Context_Detect_Managed(
         REBVAL *src = CTX_VARS(&src_tail, unwrap(parent));
         for (; src != src_tail; ++dest, ++src) {
             REBFLGS flags = NODE_FLAG_MANAGED;  // !!! Review, what flags?
-            assert(IS_NULLED(dest));
+            assert(Is_Nulled(dest));
             Copy_Cell(dest, src);
             Clonify(dest, flags, TS_CLONE);
         }
@@ -794,7 +794,7 @@ REBARR *Context_To_Array(const Cell *context, REBINT mode)
             // been set.  These contexts cannot be converted to blocks,
             // since user arrays may not contain void.
             //
-            if (IS_NULLED(e.var))
+            if (Is_Nulled(e.var))
                 fail (Error_Null_Object_Block_Raw());
 
             Copy_Cell(DS_PUSH(), e.var);

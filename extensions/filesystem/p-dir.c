@@ -75,7 +75,7 @@ REB_R Dir_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
         dir = File_Of_Port(port);
     }
     else {
-        assert(IS_NULLED(state));
+        assert(Is_Nulled(state));
 
         REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
         if (not IS_OBJECT(spec))

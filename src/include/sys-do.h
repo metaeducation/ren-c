@@ -198,7 +198,7 @@ inline static bool Do_Core_Throws(
       case REB_QUOTED:
         Unquotify(Copy_Cell(out, branch), 1);
         if (flags & EVAL_FLAG_BRANCH)
-            if (IS_NULLED(out))
+            if (Is_Nulled(out))
                 Init_Null_Isotope(out);
         break;
 
@@ -289,7 +289,7 @@ inline static bool Do_Core_Throws(
         }
         if (Is_Void(out))
             Init_Meta_Of_Void(out);
-        else if (IS_NULLED(out)) {
+        else if (Is_Nulled(out)) {
             if (flags & EVAL_FLAG_BRANCH)
                 Init_Null_Isotope(out);
         }

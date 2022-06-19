@@ -223,7 +223,7 @@ static void Startup_Lib(void)
     // seed the values to get the ball rolling.
 
     Init_Nulled(force_Lib(NULL));
-    assert(Is_Falsey(Lib(NULL)) and IS_NULLED(Lib(NULL)));
+    assert(Is_Falsey(Lib(NULL)) and Is_Nulled(Lib(NULL)));
 
     Init_Blank(force_Lib(BLANK));
     assert(Is_Falsey(Lib(BLANK)) and IS_BLANK(Lib(BLANK)));

@@ -39,7 +39,7 @@ REBNATIVE(const) {
     INCLUDE_PARAMS_OF_CONST;
 
     REBVAL *v = ARG(value);
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return nullptr;
 
     Clear_Cell_Flag(v, EXPLICITLY_MUTABLE);
@@ -86,7 +86,7 @@ REBNATIVE(mutable)
 
     REBVAL *v = ARG(value);
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return nullptr; // make it easier to pass through values
 
     // !!! The reason no error is given here is to make it easier to write

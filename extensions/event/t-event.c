@@ -111,7 +111,7 @@ static bool Set_Event_Var(REBVAL *event, const Cell *word, const REBVAL *val)
         return false;
 
       case SYM_OFFSET:
-        if (IS_NULLED(val)) {  // use null to unset the coordinates
+        if (Is_Nulled(val)) {  // use null to unset the coordinates
             mutable_VAL_EVENT_FLAGS(event) &= ~EVF_HAS_XY;
           #if !defined(NDEBUG)
             SET_VAL_EVENT_X(event, 1020);

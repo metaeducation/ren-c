@@ -132,7 +132,7 @@ inline static Cell *Isotopic_Quote(Cell *v) {
 }
 
 inline static Cell *Isotopic_Unquote(Cell *v) {
-    assert(not IS_NULLED(v));  // use Meta_Unquotify() instead
+    assert(not Is_Nulled(v));  // use Meta_Unquotify() instead
     if (IS_BAD_WORD(v))  // Meta quote flipped isotope off, flip back on.
         Isotopify(v);
     else
@@ -168,7 +168,7 @@ inline static Cell *Meta_Quotify(Cell *v) {
 }
 
 inline static Cell *Meta_Unquotify(Cell *v) {
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return v;  // do nothing
     return Isotopic_Unquote(v);
 }

@@ -72,7 +72,7 @@ REBNATIVE(mold)
 
     REBVAL *v = ARG(value);
 
-    if (IS_NULLED(v))
+    if (Is_Nulled(v))
         return nullptr;
 
     DECLARE_MOLD (mo);

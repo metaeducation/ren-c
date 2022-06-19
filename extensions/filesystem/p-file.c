@@ -131,7 +131,7 @@ REB_R File_Actor(REBFRM *frame_, REBVAL *port, const Symbol *verb)
       #endif
     }
     else {
-        assert(IS_NULLED(state));
+        assert(Is_Nulled(state));
 
         REBVAL *spec = CTX_VAR(ctx, STD_PORT_SPEC);
         if (not IS_OBJECT(spec))

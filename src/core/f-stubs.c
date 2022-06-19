@@ -352,7 +352,7 @@ REBLEN Part_Len_May_Modify_Index(
     const REBVAL *part  // /PART (number, position in value, or BLANK! cell)
 ){
     if (ANY_SEQUENCE(series)) {
-        if (not IS_NULLED(part))
+        if (not Is_Nulled(part))
             fail ("/PART cannot be used with ANY-SEQUENCE");
 
         return VAL_SEQUENCE_LEN(series);
@@ -360,7 +360,7 @@ REBLEN Part_Len_May_Modify_Index(
 
     assert(IS_ISSUE(series) or ANY_SERIES(series));
 
-    if (IS_NULLED(part)) {  // indicates /PART refinement unused
+    if (Is_Nulled(part)) {  // indicates /PART refinement unused
         if (not IS_ISSUE(series))
             return VAL_LEN_AT(series);  // leave index alone, use plain length
 
@@ -449,7 +449,7 @@ REBLEN Part_Tail_May_Modify_Index(REBVAL *series, const REBVAL *limit)
 // https://github.com/rebol/rebol-issues/issues/1570
 //
 REBLEN Part_Limit_Append_Insert(const REBVAL *part) {
-    if (IS_NULLED(part))
+    if (Is_Nulled(part))
         return UINT32_MAX;  // treat as no limit
 
     if (IS_INTEGER(part)) {

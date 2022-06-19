@@ -699,7 +699,7 @@ inline static bool Push_Continuation_Throws(
 
       case REB_QUOTED:
         Unquotify(Derelativize(out, branch, branch_specifier), 1);
-        if (IS_NULLED(out) and (flags & EVAL_FLAG_BRANCH))
+        if (Is_Nulled(out) and (flags & EVAL_FLAG_BRANCH))
             Init_Null_Isotope(out);
         goto just_use_out;
 

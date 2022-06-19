@@ -474,7 +474,7 @@ REBNATIVE(set_env)
   #else
     char *key_utf8 = rebSpell(variable);
 
-    if (IS_NULLED(value)) {
+    if (Is_Nulled(value)) {
       #ifdef unsetenv
         if (unsetenv(key_utf8) == -1)
             rebJumps ("fail {unsetenv() couldn't unset environment variable}");

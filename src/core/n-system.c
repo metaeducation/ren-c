@@ -98,7 +98,7 @@ REBNATIVE(exit_rebol)
     INCLUDE_PARAMS_OF_EXIT_REBOL;
 
     int status;
-    if (IS_NULLED(ARG(status)))
+    if (Is_Nulled(ARG(status)))
         status = EXIT_SUCCESS;
     else
         status = VAL_INT32(ARG(status));

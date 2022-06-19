@@ -132,7 +132,7 @@ REBNATIVE(reduce)
     if (Is_Void(OUT))  // voids aren't offered to predicates, by design
         goto next_reduce_step;  // reduce skips over voids
 
-    if (IS_NULLED(predicate)) {  // default is no processing
+    if (Is_Nulled(predicate)) {  // default is no processing
         processed = OUT;
         goto push_processed;
     }
@@ -153,7 +153,7 @@ REBNATIVE(reduce)
 
     Decay_If_Isotope(processed);
 
-    if (IS_NULLED(processed))
+    if (Is_Nulled(processed))
         fail (Error_Need_Non_Null_Raw());  // error enables e.g. CURTAIL
 
     if (Is_Isotope(processed))
@@ -299,7 +299,7 @@ REBNATIVE(reduce_each)
 bool Match_For_Compose(noquote(const Cell*) group, const REBVAL *label) {
     assert(ANY_GROUP_KIND(CELL_HEART(group)));
 
-    if (IS_NULLED(label))
+    if (Is_Nulled(label))
         return true;
 
     assert(IS_TAG(label) or IS_FILE(label));
@@ -483,10 +483,10 @@ REB_R Composer_Executor(REBFRM *f)
     UNUSED(FRM_ARG(main_frame, p_return_));
     Value *label = FRM_ARG(main_frame, p_label_);
     UNUSED(FRM_ARG(main_frame, p_value_));
-    bool deep = not IS_NULLED(FRM_ARG(main_frame, p_deep_));
+    bool deep = not Is_Nulled(FRM_ARG(main_frame, p_deep_));
     Value *predicate = FRM_ARG(main_frame, p_predicate_);
 
-    assert(IS_NULLED(predicate) or IS_ACTION(predicate));
+    assert(Is_Nulled(predicate) or IS_ACTION(predicate));
 
     Value *processed;  // will point to either OUT or SPARE
 
@@ -562,7 +562,7 @@ REB_R Composer_Executor(REBFRM *f)
     // If <*> is the label and (<*> 1 + 2) is found, run just (1 + 2).
     //
     DECLARE_FEED_AT_CORE (subfeed, match, match_specifier);
-    if (not IS_NULLED(label))
+    if (not Is_Nulled(label))
         Fetch_Next_In_Feed(subfeed);  // wasn't possibly at END
 
     DECLARE_FRAME (
@@ -582,7 +582,7 @@ REB_R Composer_Executor(REBFRM *f)
 
 } group_result_in_out: {  ////////////////////////////////////////////////////
 
-    if (IS_NULLED(predicate)) {
+    if (Is_Nulled(predicate)) {
         processed = OUT;
         goto push_processed_result;
     }
@@ -627,7 +627,7 @@ REB_R Composer_Executor(REBFRM *f)
         fail (Error_Bad_Isotope(processed));
 
     if (
-        IS_NULLED(processed)
+        Is_Nulled(processed)
         and (
             group_heart != REB_GROUP
             or group_quotes == 0
@@ -636,7 +636,7 @@ REB_R Composer_Executor(REBFRM *f)
         fail (Error_Need_Non_Null_Raw());
     }
 
-    if (not IS_NULLED(predicate) or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP)
+    if (not Is_Nulled(predicate) or STATE == ST_COMPOSER_EVAL_DOUBLED_GROUP)
         goto push_processed_spliced;
 
     goto push_processed_as_is;
@@ -646,7 +646,7 @@ REB_R Composer_Executor(REBFRM *f)
     // compose [(1 + 2) inserts as-is] => [3 inserts as-is]
     // compose [([a b c]) unmerged] => [[a b c] unmerged]
 
-    if (IS_NULLED(processed)) {
+    if (Is_Nulled(processed)) {
         assert(group_quotes != 0);  // handled above
         Init_Nulled(DS_PUSH());
     }

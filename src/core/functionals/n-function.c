@@ -683,7 +683,7 @@ REBNATIVE(inherit_meta)
         CTX_ARCHETYPE(m2),
         Canon(DESCRIPTION)
     );
-    if (IS_NULLED(description2)) {
+    if (Is_Nulled(description2)) {
         REBVAL *description1 = Select_Symbol_In_Context(
             CTX_ARCHETYPE(m1),
             Canon(DESCRIPTION)
@@ -699,7 +699,7 @@ REBNATIVE(inherit_meta)
             CTX_ARCHETYPE(m1),
             Canon_Symbol(syms[which])
         );
-        if (not val1 or IS_NULLED(val1) or Is_None(val1))
+        if (not val1 or Is_Nulled(val1) or Is_None(val1))
             continue;  // nothing to inherit from
         if (not ANY_CONTEXT(val1))
             fail ("Expected context in original meta information");
@@ -714,7 +714,7 @@ REBNATIVE(inherit_meta)
             continue;
 
         REBCTX *ctx2;
-        if (IS_NULLED(val2) or Is_None(val2)) {
+        if (Is_Nulled(val2) or Is_None(val2)) {
             ctx2 = Make_Context_For_Action(
                 derived,  // the action
                 DSP,  // will weave in any refinements pushed (none apply)
@@ -732,7 +732,7 @@ REBNATIVE(inherit_meta)
         Init_Evars(&e, val2);
 
         while (Did_Advance_Evars(&e)) {
-            if (not Is_None(e.var) and not IS_NULLED(e.var))
+            if (not Is_None(e.var) and not Is_Nulled(e.var))
                 continue;  // already set to something
 
             REBVAL *slot = Select_Symbol_In_Context(

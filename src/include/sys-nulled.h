@@ -36,7 +36,7 @@
 // "nulled cells" and marked by means of their HEART_BYTE being REB_NULL.
 //
 
-#define IS_NULLED(v) \
+#define Is_Nulled(v) \
     (VAL_TYPE(v) == REB_NULL)
 
 inline static REBVAL *Init_Nulled_Untracked(Cell *out) {
@@ -71,7 +71,7 @@ inline static const REBVAL *REIFY_NULL(const REBVAL *cell)
 
 // We test for null on an arbitrary result that may be an isotope.  Since we
 // don't have generic isotope handling we usually just pass them through, so
-// the unchecked type test for null is done first.  But plain IS_NULLED() will
+// the unchecked type test for null is done first.  But plain Is_Nulled() will
 // assert on isotopes.  Make the code look friendlier with this simple macro.
 //
 #define Is_Breaking_Null(out) \

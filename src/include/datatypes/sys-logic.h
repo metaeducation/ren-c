@@ -72,7 +72,7 @@ inline static bool Is_Truthy(const Cell *v) {
         return true;  // includes QUOTED! `if first ['_] [-- "this is truthy"]`
     if (IS_LOGIC(v))
         return VAL_LOGIC(v);
-    assert(IS_BLANK(v) or IS_NULLED(v));
+    assert(IS_BLANK(v) or Is_Nulled(v));
     return false;
 }
 

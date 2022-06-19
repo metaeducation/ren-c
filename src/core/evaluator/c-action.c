@@ -716,7 +716,7 @@ REB_R Action_Executor(REBFRM *f)
         }
 
         if (not Is_Fresh(ARG)) {
-            assert(IS_NULLED(ARG));
+            assert(Is_Nulled(ARG));
             RESET(ARG);
         }
 
@@ -942,7 +942,7 @@ REB_R Action_Executor(REBFRM *f)
     if (Get_Eval_Flag(f, TYPECHECK_ONLY)) {  // <blank> and <blackhole> use
         assert(
             Is_Isotope_With_Id(OUT, SYM_BLACKHOLE)
-            or IS_NULLED(OUT)
+            or Is_Nulled(OUT)
         );
         goto skip_output_check;
     }

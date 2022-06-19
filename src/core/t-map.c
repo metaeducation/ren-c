@@ -139,7 +139,7 @@ REBINT Find_Key_Hashed(
             }
         }
 
-        if (wide > 1 && IS_NULLED(k + 1) && zombie_slot == -1)
+        if (wide > 1 && Is_Nulled(k + 1) && zombie_slot == -1)
             zombie_slot = slot;
 
         slot += skip;
@@ -195,7 +195,7 @@ static void Rehash_Map(REBMAP *map)
     for (n = 0; n < ARR_LEN(pairlist); n += 2, key += 2) {
         const bool cased = true; // cased=true is always fine
 
-        if (IS_NULLED(key + 1)) {
+        if (Is_Nulled(key + 1)) {
             //
             // It's a "zombie", move last key to overwrite it
             //
@@ -215,7 +215,7 @@ static void Rehash_Map(REBMAP *map)
 
         // discard zombies at end of pairlist
         //
-        while (IS_NULLED(ARR_AT(pairlist, ARR_LEN(pairlist) - 1))) {
+        while (Is_Nulled(ARR_AT(pairlist, ARR_LEN(pairlist) - 1))) {
             SET_SERIES_LEN(pairlist, ARR_LEN(pairlist) - 2);
         }
     }
@@ -259,7 +259,7 @@ REBLEN Find_Map_Entry(
     REBSPC *val_specifier,
     bool strict
 ) {
-    assert(not IS_NULLED(key));
+    assert(not Is_Nulled(key));
 
     REBSER *hashlist = MAP_HASHLIST(map); // can be null
     REBARR *pairlist = MAP_PAIRLIST(map);
@@ -303,7 +303,7 @@ REBLEN Find_Map_Entry(
         return n;
     }
 
-    if (IS_NULLED(val)) return 0; // trying to remove non-existing key
+    if (Is_Nulled(val)) return 0; // trying to remove non-existing key
 
     // Create new entry.  Note that it does not copy underlying series (e.g.
     // the data of a string), which is why the immutability test is necessary
@@ -410,7 +410,7 @@ inline static REBMAP *Copy_Map(const REBMAP *map, REBU64 types) {
 
         REBVAL *v = key + 1;
         assert(v != tail);
-        if (IS_NULLED(v))
+        if (Is_Nulled(v))
             continue; // "zombie" map element (not present)
 
         REBFLGS flags = NODE_FLAG_MANAGED;  // !!! Review
@@ -473,7 +473,7 @@ REBARR *Map_To_Array(const REBMAP *map, REBINT what)
     const Cell *val_tail = ARR_TAIL(MAP_PAIRLIST(map));
     const Cell *val = ARR_HEAD(MAP_PAIRLIST(map));
     for (; val != val_tail; val += 2) {
-        if (not IS_NULLED(val + 1)) {  // can't be END
+        if (not Is_Nulled(val + 1)) {  // can't be END
             if (what <= 0) {
                 Copy_Cell(dest, SPECIFIC(&val[0]));
                 ++dest;
@@ -507,7 +507,7 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
     const Cell *mval_tail = ARR_TAIL(MAP_PAIRLIST(map));
     const Cell *mval = ARR_HEAD(MAP_PAIRLIST(map));
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
-        if (ANY_WORD(mval) and not IS_NULLED(mval + 1))
+        if (ANY_WORD(mval) and not Is_Nulled(mval + 1))
             ++count;
     }
   }
@@ -520,7 +520,7 @@ REBCTX *Alloc_Context_From_Map(const REBMAP *map)
     const Cell *mval = ARR_HEAD(MAP_PAIRLIST(map));
 
     for (; mval != mval_tail; mval += 2) {  // note mval must not be END
-        if (ANY_WORD(mval) and not IS_NULLED(mval + 1)) {
+        if (ANY_WORD(mval) and not Is_Nulled(mval + 1)) {
             REBVAL *var = Append_Context(c, nullptr, VAL_WORD_SYMBOL(mval));
             Copy_Cell(var, SPECIFIC(mval + 1));
         }
@@ -559,7 +559,7 @@ void MF_Map(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     const Cell *key = ARR_HEAD(MAP_PAIRLIST(m));
     for (; key != tail; key += 2) {  // note value slot must not be END
         assert(key + 1 != tail);
-        if (IS_NULLED(key + 1))
+        if (Is_Nulled(key + 1))
             continue; // if value for this key is void, key has been removed
 
         if (not form)
@@ -650,7 +650,7 @@ REBTYPE(Map)
         );
 
         if (ID_OF_SYMBOL(verb) == SYM_FIND) {
-            if (IS_NULLED(OUT))
+            if (Is_Nulled(OUT))
                 return OUT;
             return Init_True(OUT);
         }
@@ -758,7 +758,7 @@ REBTYPE(Map)
         const REBVAL *val = SPECIFIC(
             ARR_AT(MAP_PAIRLIST(VAL_MAP(map)), ((n - 1) * 2) + 1)
         );
-        if (IS_NULLED(val))  // zombie entry, means unused
+        if (Is_Nulled(val))  // zombie entry, means unused
             return nullptr;
 
         return Copy_Cell(OUT, val); }

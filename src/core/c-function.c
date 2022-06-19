@@ -154,7 +154,7 @@ void Push_Paramlist_Triads_May_Fail(
 
             STKVAL(*) notes = NOTES_SLOT(DSP);
             assert(
-                IS_NULLED(notes)  // hasn't been written to yet
+                Is_Nulled(notes)  // hasn't been written to yet
                 or IS_TEXT(notes)  // !!! we overwrite, but should we append?
             );
 
@@ -218,7 +218,7 @@ void Push_Paramlist_Triads_May_Fail(
             if (IS_BLOCK(types))  // too many, `func [x [integer!] [blank!]]`
                 fail (Error_Bad_Func_Def_Raw(item));
 
-            assert(IS_NULLED(types));
+            assert(Is_Nulled(types));
 
             // You currently can't say `<local> x [integer!]`, because locals
             // are hidden from the interface, and hidden values (notably
@@ -741,7 +741,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         REBDSP dsp = dsp_orig + 8;
         for (; dsp <= DSP; dsp += 4) {
             STKVAL(*) types = TYPES_SLOT(dsp);
-            assert(IS_NULLED(types) or IS_BLOCK(types));
+            assert(Is_Nulled(types) or IS_BLOCK(types));
 
             if (dsp == definitional_return_dsp)
                 continue;  // was added to the head of the list already
@@ -788,7 +788,7 @@ REBARR *Pop_Paramlist_With_Meta_May_Fail(
         REBDSP dsp = dsp_orig + 8;
         for (; dsp <= DSP; dsp += 4) {
             STKVAL(*) notes = NOTES_SLOT(dsp);
-            assert(IS_TEXT(notes) or IS_NULLED(notes));
+            assert(IS_TEXT(notes) or Is_Nulled(notes));
 
             if (dsp == definitional_return_dsp)
                 continue;  // was added to the head of the list already

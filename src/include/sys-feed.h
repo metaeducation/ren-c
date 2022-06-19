@@ -107,7 +107,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
     //
     feed->value = END;  // should be assigned below
 
-    if (not p) {  // libRebol's null/<opt> (IS_NULLED prohibited in CELL case)
+    if (not p) {  // libRebol's null/<opt> (Is_Nulled prohibited in CELL case)
 
         // This is the compromise of convenience, where ~null~ is put in
         // to the feed.  If it's converted into an array we've told a
@@ -267,7 +267,7 @@ inline static void Detect_Feed_Pointer_Maybe_Fetch(
 
         assert(FEED_SPECIFIER(feed) == SPECIFIED);
 
-        if (IS_NULLED(cell))  // API enforces use of C's nullptr (0) for NULL
+        if (Is_Nulled(cell))  // API enforces use of C's nullptr (0) for NULL
             assert(!"NULLED cell API leak, see NULLIFY_NULLED() in C source");
 
         feed->value = cell;  // cell can be used as-is

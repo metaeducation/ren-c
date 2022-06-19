@@ -453,7 +453,7 @@ void Set_Location_Of_Error(
         // option...it's not as informative as (anonymous) but also takes up
         // less space, so people might come to appreciate it.  Review.
         //
-        if (IS_NULLED(DS_TOP))
+        if (Is_Nulled(DS_TOP))
             Init_Blank(DS_TOP);
     }
     Init_Block(&vars->where, Pop_Stack_Values(dsp_orig));
@@ -468,7 +468,7 @@ void Set_Location_Of_Error(
     // LOAD was being called in the "where".  For the moment don't overwrite
     // any existing near, but a less-random design is needed here.
     //
-    if (IS_NULLED(&vars->nearest))
+    if (Is_Nulled(&vars->nearest))
         Init_Near_For_Frame(&vars->nearest, where);
 
     // Try to fill in the file and line information of the error from the
@@ -589,8 +589,8 @@ REB_R MAKE_Error(
         Init_Error(out, e);
 
         vars = ERR_VARS(e);
-        assert(IS_NULLED(&vars->type));
-        assert(IS_NULLED(&vars->id));
+        assert(Is_Nulled(&vars->type));
+        assert(Is_Nulled(&vars->id));
 
         Init_Text(&vars->message, Copy_String_At(arg));
     }
@@ -632,7 +632,7 @@ REB_R MAKE_Error(
             if (message) {
                 assert(IS_TEXT(message) or IS_BLOCK(message));
 
-                if (not IS_NULLED(&vars->message))
+                if (not Is_Nulled(&vars->message))
                     fail (Error_Invalid_Error_Raw(arg));
 
                 Copy_Cell(&vars->message, message);
@@ -668,12 +668,12 @@ REB_R MAKE_Error(
         // good for general purposes.
 
         if (not (
-            (IS_WORD(&vars->id) or IS_NULLED(&vars->id))
-            and (IS_WORD(&vars->type) or IS_NULLED(&vars->type))
+            (IS_WORD(&vars->id) or Is_Nulled(&vars->id))
+            and (IS_WORD(&vars->type) or Is_Nulled(&vars->type))
             and (
                 IS_BLOCK(&vars->message)
                 or IS_TEXT(&vars->message)
-                or IS_NULLED(&vars->message)
+                or Is_Nulled(&vars->message)
             )
         )){
             fail (Error_Invalid_Error_Raw(CTX_ARCHETYPE(e)));
@@ -1077,7 +1077,7 @@ REBCTX *Error_Invalid_Arg(REBFRM *f, const REBPAR *param)
     Init_Word(param_name, KEY_SYMBOL(ACT_KEY(FRM_PHASE(f), index)));
 
     REBVAL *arg = FRM_ARG(f, index);
-    if (IS_NULLED(arg))
+    if (Is_Nulled(arg))
         return Error_Arg_Required_Raw(label, param_name);
 
     return Error_Invalid_Arg_Raw(label, param_name, arg);
@@ -1128,7 +1128,7 @@ REBCTX *Error_Isotope_Arg(REBFRM *f, const REBPAR *param)
 //
 REBCTX *Error_Bad_Value(const Cell *value)
 {
-    if (IS_NULLED(value))
+    if (Is_Nulled(value))
         return Error_Unknown_Error_Raw();
 
     if (Is_Isotope(value))
@@ -1158,7 +1158,7 @@ REBCTX *Error_No_Catch_For_Throw(REBFRM *frame_)
     CATCH_THROWN(arg, frame_);
 
     if (IS_ERROR(label)) {  // what would have been fail()
-        assert(IS_NULLED(arg));
+        assert(Is_Nulled(arg));
         return VAL_CONTEXT(label);
     }
 
@@ -1569,7 +1569,7 @@ void MF_Error(REB_MOLD *mo, noquote(const Cell*) v, bool form)
         Append_Codepoint(mo->series, ' ');
     }
     else
-        assert(IS_NULLED(&vars->type));  // no <type>
+        assert(Is_Nulled(&vars->type));  // no <type>
     Append_Ascii(mo->series, RM_ERROR_LABEL);  // "Error:"
 
     // Append: error message ARG1, ARG2, etc.
@@ -1583,7 +1583,7 @@ void MF_Error(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     // Form: ** Where: function
     REBVAL *where = SPECIFIC(&vars->where);
     if (
-        not IS_NULLED(where)
+        not Is_Nulled(where)
         and not (IS_BLOCK(where) and VAL_LEN_AT(where) == 0)
     ){
         Append_Codepoint(mo->series, '\n');
@@ -1593,7 +1593,7 @@ void MF_Error(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 
     // Form: ** Near: location
     REBVAL *nearest = SPECIFIC(&vars->nearest);
-    if (not IS_NULLED(nearest)) {
+    if (not Is_Nulled(nearest)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_NEAR);
 
@@ -1621,7 +1621,7 @@ void MF_Error(REB_MOLD *mo, noquote(const Cell*) v, bool form)
     // not a FILE!.
     //
     REBVAL *file = SPECIFIC(&vars->file);
-    if (not IS_NULLED(file)) {
+    if (not Is_Nulled(file)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_FILE);
         if (IS_FILE(file))
@@ -1632,7 +1632,7 @@ void MF_Error(REB_MOLD *mo, noquote(const Cell*) v, bool form)
 
     // Form: ** Line: line-number
     REBVAL *line = SPECIFIC(&vars->line);
-    if (not IS_NULLED(line)) {
+    if (not Is_Nulled(line)) {
         Append_Codepoint(mo->series, '\n');
         Append_Ascii(mo->series, RM_ERROR_LINE);
         if (IS_INTEGER(line))
